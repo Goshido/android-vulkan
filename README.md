@@ -26,6 +26,6 @@ Requirements:
 
 To begin, clone this repository onto your local drive.
 
-Compile project shaders to _SPIR_V_ representation_ via _DirectX Shader Compiler_. See manual [here](docs/shader-compilation.md).
+Compile project shaders to _SPIR-V_ representation via _DirectX Shader Compiler_. See manual [here](docs/shader-compilation.md).
 
 Next step is to compile project via _Android Studio IDE_ as usual.

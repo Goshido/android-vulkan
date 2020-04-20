@@ -24,3 +24,6 @@
 # CMake
 app/.cxx
 app/build
+
+# SPIR-V
+app/src/main/assets/shaders/*.spv

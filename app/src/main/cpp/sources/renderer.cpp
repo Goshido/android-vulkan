@@ -606,6 +606,7 @@ const std::map<VkResult, const char*> Renderer::_vulkanResultMap =
     { VK_ERROR_INVALID_EXTERNAL_HANDLE, "VK_ERROR_INVALID_EXTERNAL_HANDLE" },
     { VK_ERROR_INVALID_SHADER_NV, "VK_ERROR_INVALID_SHADER_NV" },
     { VK_ERROR_LAYER_NOT_PRESENT, "VK_ERROR_LAYER_NOT_PRESENT" },
+    { VK_ERROR_MEMORY_MAP_FAILED, "VK_ERROR_MEMORY_MAP_FAILED" },
     { VK_ERROR_NATIVE_WINDOW_IN_USE_KHR, "VK_ERROR_NATIVE_WINDOW_IN_USE_KHR" },
     { VK_ERROR_OUT_OF_DATE_KHR, "VK_ERROR_OUT_OF_DATE_KHR" },
     { VK_ERROR_OUT_OF_DEVICE_MEMORY, "VK_ERROR_OUT_OF_DEVICE_MEMORY" },
@@ -882,6 +883,26 @@ void Renderer::OnDestroy ()
     DestroyDevice ();
     DestroyDebugFeatures ();
     DestroyInstance ();
+}
+
+bool Renderer::SelectTargetMemoryTypeIndex ( uint32_t &targetMemoryTypeIndex,
+    const VkMemoryRequirements &memoryRequirements,
+    VkMemoryPropertyFlags memoryProperties
+) const
+{
+    for ( uint32_t i = 0U; i < _physicalDeviceMemoryProperties.memoryTypeCount; ++i )
+    {
+        if ( !( memoryRequirements.memoryTypeBits & ( 1U << i ) ) ) continue;
+
+        const VkMemoryType& memoryType = _physicalDeviceMemoryProperties.memoryTypes[ i ];
+
+        if ( ( memoryType.propertyFlags & memoryProperties ) != memoryProperties ) continue;
+
+        targetMemoryTypeIndex = i;
+        return true;
+    }
+
+    return false;
 }
 
 bool Renderer::DeployDebugFeatures ()
@@ -2379,26 +2400,6 @@ bool Renderer::SelectTargetHardware ( VkPhysicalDevice &targetPhysicalDevice, ui
 
     LogError ( "Renderer::SelectTargetHardware - Can't find target hardware!" );
     assert ( !"Renderer::SelectTargetHardware - Can't find target hardware!" );
-    return false;
-}
-
-bool Renderer::SelectTargetMemoryTypeIndex ( uint32_t &targetMemoryTypeIndex,
-    const VkMemoryRequirements &memoryRequirements,
-    VkMemoryPropertyFlags memoryProperties
-) const
-{
-    for ( uint32_t i = 0U; i < _physicalDeviceMemoryProperties.memoryTypeCount; ++i )
-    {
-        if ( !( memoryRequirements.memoryTypeBits & ( 1U << i ) ) ) continue;
-
-        const VkMemoryType& memoryType = _physicalDeviceMemoryProperties.memoryTypes[ i ];
-
-        if ( ( memoryType.propertyFlags & memoryProperties ) != memoryProperties ) continue;
-
-        targetMemoryTypeIndex = i;
-        return true;
-    }
-
     return false;
 }
 

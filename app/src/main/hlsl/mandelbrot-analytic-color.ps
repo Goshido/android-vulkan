@@ -1,8 +1,7 @@
-#define TWO_PI                      6.28318f
-#define SQUARE_MODULE_STOP_TRAIT    4.0F
+#include "mandelbrot.ps"
 
-#define MAX_ITERATIONS              512U
-#define INV_MAX_ITERATIONS          ( 1.0f / (float)MAX_ITERATIONS )
+
+#define TWO_PI                      6.28318f
 #define ITERATION_TO_ANGLE          ( TWO_PI * INV_MAX_ITERATIONS )
 
 #define HUE_OFFSET_RED              0.0f
@@ -11,30 +10,6 @@
 #define HUE_OFFSET_RGB              float3 ( HUE_OFFSET_RED, HUE_OFFSET_GREEN, HUE_OFFSET_BLUE )
 
 //----------------------------------------------------------------------------------------------------------------------
-
-float2 SquareComplex ( in float2 value )
-{
-    return float2 ( value.x * value.x - value.y * value.y, 2.0f * value.x * value.y );
-}
-
-float SquareModuleComplex ( in float2 value )
-{
-    return dot ( value, value );
-}
-
-uint CountIterations ( in float2 coordinate )
-{
-    uint iteration = 0U;
-    float2 z = (float2)0.0F;
-
-    while ( iteration <= MAX_ITERATIONS && SquareModuleComplex ( z ) <= SQUARE_MODULE_STOP_TRAIT )
-    {
-        z = SquareComplex ( z ) + coordinate;
-        ++iteration;
-    }
-
-    return iteration;
-}
 
 float4 MapColor ( in uint iterations )
 {

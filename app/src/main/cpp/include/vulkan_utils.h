@@ -18,6 +18,9 @@
 
 #define AV_CHECK_VULKAN_LEAKS()
 
+#define AV_REGISTER_BUFFER(where)
+#define AV_UNREGISTER_BUFFER(where)
+
 #define AV_REGISTER_COMMAND_POOL(where)
 #define AV_UNREGISTER_COMMAND_POOL(where)
 
@@ -67,6 +70,9 @@
 
 #define AV_CHECK_VULKAN_LEAKS() android_vulkan::CheckVulkanLeaks ();
 
+#define AV_REGISTER_BUFFER(where) android_vulkan::RegisterBuffer ( where );
+#define AV_UNREGISTER_BUFFER(where) android_vulkan::UnregisterBuffer ( where );
+
 #define AV_REGISTER_COMMAND_POOL(where) android_vulkan::RegisterCommandPool ( where );
 #define AV_UNREGISTER_COMMAND_POOL(where) android_vulkan::UnregisterCommandPool ( where );
 
@@ -112,6 +118,9 @@
 namespace android_vulkan {
 
 void CheckVulkanLeaks ();
+
+void RegisterBuffer ( std::string &&where );
+void UnregisterBuffer ( std::string &&where );
 
 void RegisterCommandPool ( std::string &&where );
 void UnregisterCommandPool ( std::string &&where );

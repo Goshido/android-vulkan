@@ -12,6 +12,7 @@ namespace android_vulkan {
 constexpr static const char* INDENT = "    ";
 
 static std::shared_timed_mutex      g_Lock;
+static std::set<std::string>        g_Buffers;
 static std::set<std::string>        g_CommandPools;
 static std::set<std::string>        g_Devices;
 static std::set<std::string>        g_DeviceMemory;
@@ -99,6 +100,7 @@ void CheckVulkanLeaks ()
 {
     std::shared_lock<std::shared_timed_mutex> lock ( g_Lock );
 
+    CheckNonDispatchableObjectLeaks ( "Buffer", g_Buffers );
     CheckNonDispatchableObjectLeaks ( "Command pool", g_CommandPools );
     CheckNonDispatchableObjectLeaks ( "Device", g_Devices );
     CheckNonDispatchableObjectLeaks ( "Device memory", g_DeviceMemory );
@@ -113,6 +115,24 @@ void CheckVulkanLeaks ()
     CheckNonDispatchableObjectLeaks ( "Shader module", g_ShaderModules );
     CheckNonDispatchableObjectLeaks ( "Surface", g_Surfaces );
     CheckNonDispatchableObjectLeaks ( "Swapchain", g_Swapchains );
+}
+
+void RegisterBuffer ( std::string &&where )
+{
+    RegisterNonDispatchableObject ( "AV_REGISTER_BUFFER",
+        "buffer",
+        std::move ( where ),
+        g_Buffers
+    );
+}
+
+void UnregisterBuffer ( std::string &&where )
+{
+    UnregisterNonDispatchableObject ( "AV_UNREGISTER_BUFFER",
+        "buffer",
+        std::move ( where ),
+        g_Buffers
+    );
 }
 
 void RegisterCommandPool ( std::string &&where )

@@ -53,7 +53,9 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/main.cpp
     app/src/main/cpp/sources/renderer.cpp
     app/src/main/cpp/sources/vulkan_utils.cpp
-    app/src/main/cpp/sources/mandelbrot/mandelbrot.cpp
+    app/src/main/cpp/sources/mandelbrot/mandelbrot_analytic_color.cpp
+    app/src/main/cpp/sources/mandelbrot/mandelbrot_base.cpp
+    app/src/main/cpp/sources/mandelbrot/mandelbrot_lut_color.cpp
     app/src/main/cpp/sources/rainbow/rainbow.cpp
 )
 

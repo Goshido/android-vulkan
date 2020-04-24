@@ -10,17 +10,26 @@ namespace mandelbrot {
 class MandelbrotLUTColor final : public MandelbrotBase
 {
     private:
+        // Note VkDescriptorPool is a VK_DEFINE_NON_DISPATCHABLE_HANDLE type.
+        VkDescriptorPool            _descriptorPool;
+
+        // Note VkDescriptorSet is a VK_DEFINE_NON_DISPATCHABLE_HANDLE type.
+        VkDescriptorSet             _descriptorSet;
+
+        // Note VkDescriptorSetLayout is a VK_DEFINE_NON_DISPATCHABLE_HANDLE type.
+        VkDescriptorSetLayout       _descriptorSetLayout;
+
         // Note VkImage is a VK_DEFINE_NON_DISPATCHABLE_HANDLE type.
-        VkImage             _lut;
+        VkImage                     _lut;
 
         // Note VkDeviceMemory is a VK_DEFINE_NON_DISPATCHABLE_HANDLE type.
-        VkDeviceMemory      _lutDeviceMemory;
+        VkDeviceMemory              _lutDeviceMemory;
 
-        // Note VkBuffer is a VK_DEFINE_NON_DISPATCHABLE_HANDLE type.
-        VkBuffer            _transfer;
+        // Note VkImageView is a VK_DEFINE_NON_DISPATCHABLE_HANDLE type.
+        VkImageView                 _lutView;
 
-        // Note VkDeviceMemory is a VK_DEFINE_NON_DISPATCHABLE_HANDLE type.
-        VkDeviceMemory      _transferDeviceMemory;
+        // Note VkSampler is a VK_DEFINE_NON_DISPATCHABLE_HANDLE type.
+        VkSampler                   _sampler;
 
     public:
         MandelbrotLUTColor ();
@@ -30,8 +39,17 @@ class MandelbrotLUTColor final : public MandelbrotBase
         MandelbrotLUTColor& operator = ( const MandelbrotLUTColor &other ) = delete;
 
     private:
-        bool CreateCommandBuffer ( android_vulkan::Renderer &renderer ) override;
-        void DestroyCommandBuffer ( android_vulkan::Renderer &renderer ) override;
+        bool OnInit ( android_vulkan::Renderer &renderer ) override;
+        bool OnDestroy ( android_vulkan::Renderer &renderer ) override;
+
+        bool CreatePipelineLayout ( android_vulkan::Renderer &renderer ) override;
+        void DestroyPipelineLayout ( android_vulkan::Renderer &renderer ) override;
+
+        bool CreateCommandBuffer ( android_vulkan::Renderer &renderer );
+        void DestroyCommandBuffer ( android_vulkan::Renderer &renderer );
+
+        bool CreateDescriptorSet ( android_vulkan::Renderer &renderer );
+        void DestroyDescriptorSet ( android_vulkan::Renderer &renderer );
 
         bool CreateLUT ( android_vulkan::Renderer &renderer );
         void DestroyLUT ( android_vulkan::Renderer &renderer );
@@ -45,6 +63,8 @@ class MandelbrotLUTColor final : public MandelbrotBase
             const char* where,
             const char* checkFailMessage
         ) const;
+
+        bool UploadLUTSamples ( android_vulkan::Renderer &renderer );
 };
 
 } // namespace mandelbrot

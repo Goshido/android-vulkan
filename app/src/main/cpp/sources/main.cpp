@@ -1,7 +1,7 @@
 #include <android_native_app_glue.h>
 #include <core.h>
 #include <logger.h>
-#include <mandelbrot/mandelbrot_analytic_color.h>
+#include <mandelbrot/mandelbrot_lut_color.h>
 
 
 void android_main ( android_app* app )
@@ -13,8 +13,8 @@ void android_main ( android_app* app )
 
 #endif // ANDROID_VULKAN_DEBUG
 
-    mandelbrot::MandelbrotAnalyticColor mandelbrotAnalyticColorGame;
-    android_vulkan::Core core ( *app, mandelbrotAnalyticColorGame );
+    mandelbrot::MandelbrotLUTColor mandelbrotLUTColorGame;
+    android_vulkan::Core core ( *app, mandelbrotLUTColorGame );
 
     for ( ; ; )
     {

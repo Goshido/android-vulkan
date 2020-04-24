@@ -23,33 +23,20 @@ bool MandelbrotBase::OnInit ( android_vulkan::Renderer &renderer )
 
     if ( !CreatePresentationSyncPrimitive ( renderer ) )
     {
-        DestroyRenderPass ( renderer );
+        OnDestroy ( renderer );
         return false;
     }
 
     if ( !CreatePipeline ( renderer ) )
     {
-        DestroyPresentationSyncPrimitive ( renderer );
-        DestroyRenderPass ( renderer );
+        OnDestroy ( renderer );
         return false;
     }
 
-    if ( !CreateCommandPool ( renderer ) )
-    {
-        DestroyPipeline ( renderer );
-        DestroyPresentationSyncPrimitive ( renderer );
-        DestroyRenderPass ( renderer );
-        return false;
-    }
-
-    if ( CreateCommandBuffer ( renderer ) )
+    if ( CreateCommandPool ( renderer ) )
         return true;
 
-    DestroyCommandPool ( renderer );
-    DestroyPipeline ( renderer );
-    DestroyPresentationSyncPrimitive ( renderer );
-    DestroyRenderPass ( renderer );
-
+    OnDestroy ( renderer );
     return false;
 }
 
@@ -98,8 +85,8 @@ bool MandelbrotBase::OnDestroy ( android_vulkan::Renderer &renderer )
 MandelbrotBase::MandelbrotBase ( const char* fragmentShaderSpirV ):
     _commandPool ( VK_NULL_HANDLE ),
     _pipeline ( VK_NULL_HANDLE ),
-    _renderPass ( VK_NULL_HANDLE ),
     _pipelineLayout ( VK_NULL_HANDLE ),
+    _renderPass ( VK_NULL_HANDLE ),
     _presentationFence ( VK_NULL_HANDLE ),
     _presentationSemaphore ( VK_NULL_HANDLE ),
     _vertexShader ( VK_NULL_HANDLE ),
@@ -396,27 +383,11 @@ bool MandelbrotBase::CreatePipeline ( android_vulkan::Renderer &renderer )
     depthStencilInfo.depthBoundsTestEnable = VK_FALSE;
     depthStencilInfo.stencilTestEnable = VK_FALSE;
 
-    VkPipelineLayoutCreateInfo pipelineLayoutInfo;
-    pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipelineLayoutInfo.flags = 0U;
-    pipelineLayoutInfo.pNext = nullptr;
-    pipelineLayoutInfo.pushConstantRangeCount = 0U;
-    pipelineLayoutInfo.pPushConstantRanges = nullptr;
-    pipelineLayoutInfo.setLayoutCount = 0U;
-    pipelineLayoutInfo.pSetLayouts = nullptr;
-
-    const VkDevice device = renderer.GetDevice ();
-
-    bool result = renderer.CheckVkResult (
-        vkCreatePipelineLayout ( device, &pipelineLayoutInfo, nullptr, &_pipelineLayout ),
-        "MandelbrotBase::CreatePipeline",
-        "Can't create pipeline layout"
-    );
-
-    if ( !result )
+    if ( !CreatePipelineLayout ( renderer ) )
+    {
+        DestroyPipeline ( renderer );
         return false;
-
-    AV_REGISTER_PIPELINE_LAYOUT ( "MandelbrotBase::_pipelineLayout" )
+    }
 
     VkGraphicsPipelineCreateInfo pipelineInfo;
     pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -438,14 +409,17 @@ bool MandelbrotBase::CreatePipeline ( android_vulkan::Renderer &renderer )
     pipelineInfo.pDynamicState = nullptr;
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 
-    result = renderer.CheckVkResult (
-        vkCreateGraphicsPipelines ( device, VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
+    const bool result = renderer.CheckVkResult (
+        vkCreateGraphicsPipelines ( renderer.GetDevice (), VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
         "MandelbrotBase::CreatePipeline",
         "Can't create pipeline"
     );
 
     if ( !result )
+    {
+        DestroyPipeline ( renderer );
         return false;
+    }
 
     AV_REGISTER_PIPELINE ( "MandelbrotBase::_pipeline" )
     return true;
@@ -462,12 +436,7 @@ void MandelbrotBase::DestroyPipeline ( android_vulkan::Renderer &renderer )
         AV_UNREGISTER_PIPELINE ( "MandelbrotBase::_pipeline" )
     }
 
-    if ( _pipelineLayout != VK_NULL_HANDLE )
-    {
-        vkDestroyPipelineLayout ( device, _pipelineLayout, nullptr );
-        _pipelineLayout = VK_NULL_HANDLE;
-        AV_UNREGISTER_PIPELINE_LAYOUT ( "MandelbrotBase::_pipelineLayout" )
-    }
+    DestroyPipelineLayout ( renderer );
 
     if ( _vertexShader != VK_NULL_HANDLE )
     {

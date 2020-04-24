@@ -16,13 +16,13 @@ class MandelbrotBase : public android_vulkan::Game
         // Note VkPipeline is a VK_DEFINE_NON_DISPATCHABLE_HANDLE type.
         VkPipeline                      _pipeline;
 
+        // Note VkPipelineLayout is a VK_DEFINE_NON_DISPATCHABLE_HANDLE type.
+        VkPipelineLayout                _pipelineLayout;
+
         // Note VkRenderPass is a VK_DEFINE_NON_DISPATCHABLE_HANDLE.
         VkRenderPass                    _renderPass;
 
     private:
-        // Note VkPipelineLayout is a VK_DEFINE_NON_DISPATCHABLE_HANDLE type.
-        VkPipelineLayout                _pipelineLayout;
-
         // Note VkFence is a VK_DEFINE_NON_DISPATCHABLE_HANDLE type.
         VkFence                         _presentationFence;
 
@@ -52,8 +52,8 @@ class MandelbrotBase : public android_vulkan::Game
         MandelbrotBase ( const char* fragmentShaderFile );
         ~MandelbrotBase () override = default;
 
-        virtual bool CreateCommandBuffer ( android_vulkan::Renderer &renderer ) = 0;
-        virtual void DestroyCommandBuffer ( android_vulkan::Renderer &renderer ) = 0;
+        virtual bool CreatePipelineLayout ( android_vulkan::Renderer &renderer ) = 0;
+        virtual void DestroyPipelineLayout ( android_vulkan::Renderer &renderer ) = 0;
 
     private:
         bool BeginFrame ( uint32_t &presentationImageIndex, android_vulkan::Renderer &renderer );

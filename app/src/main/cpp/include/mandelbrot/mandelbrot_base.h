@@ -1,5 +1,5 @@
-#ifndef MANDELBROT_H
-#define MANDELBROT_H
+#ifndef MANDELBROT_BASE_H
+#define MANDELBROT_BASE_H
 
 
 #include <game.h>
@@ -7,9 +7,9 @@
 
 namespace mandelbrot {
 
-class Mandelbrot final : public android_vulkan::Game
+class MandelbrotBase : public android_vulkan::Game
 {
-    private:
+    protected:
         // Note VkImage is a VK_DEFINE_NON_DISPATCHABLE_HANDLE type.
         VkCommandPool                   _commandPool;
 
@@ -19,27 +19,28 @@ class Mandelbrot final : public android_vulkan::Game
         // Note VkPipelineLayout is a VK_DEFINE_NON_DISPATCHABLE_HANDLE type.
         VkPipelineLayout                _pipelineLayout;
 
+        // Note VkRenderPass is a VK_DEFINE_NON_DISPATCHABLE_HANDLE.
+        VkRenderPass                    _renderPass;
+
+    private:
         // Note VkFence is a VK_DEFINE_NON_DISPATCHABLE_HANDLE type.
         VkFence                         _presentationFence;
 
         // Note VkSemaphore is a VK_DEFINE_NON_DISPATCHABLE_HANDLE type.
         VkSemaphore                     _presentationSemaphore;
 
-        // Note VkRenderPass is a VK_DEFINE_NON_DISPATCHABLE_HANDLE.
-        VkRenderPass                    _renderPass;
-
         // Note VkShaderModule is a VK_DEFINE_NON_DISPATCHABLE_HANDLE type.
         VkShaderModule                  _vertexShader;
-        VkShaderModule                  _fragmentShader;
 
+        VkShaderModule                  _fragmentShader;
+        const char*                     _fragmentShaderSpirV;
+
+    protected:
         std::vector<VkCommandBuffer>    _commandBuffer;
 
     public:
-        Mandelbrot ();
-        ~Mandelbrot () override = default;
-
-        Mandelbrot ( const Mandelbrot &other ) = delete;
-        Mandelbrot& operator = ( const Mandelbrot &other ) = delete;
+        MandelbrotBase ( const MandelbrotBase &other ) = delete;
+        MandelbrotBase& operator = ( const MandelbrotBase &other ) = delete;
 
         bool IsReady () override;
 
@@ -47,12 +48,19 @@ class Mandelbrot final : public android_vulkan::Game
         bool OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) override;
         bool OnDestroy ( android_vulkan::Renderer &renderer ) override;
 
+    protected:
+        MandelbrotBase ( const char* fragmentShaderFile );
+        ~MandelbrotBase () override = default;
+
+        virtual bool CreatePipelineLayout ( android_vulkan::Renderer &renderer ) = 0;
+        virtual void DestroyPipelineLayout ( android_vulkan::Renderer &renderer ) = 0;
+
     private:
         bool BeginFrame ( uint32_t &presentationImageIndex, android_vulkan::Renderer &renderer );
         bool EndFrame ( uint32_t presentationImageIndex, android_vulkan::Renderer &renderer );
 
-        bool CreateCommandBuffer ( android_vulkan::Renderer &renderer );
-        void DestroyCommandBuffer ( android_vulkan::Renderer &renderer );
+        bool CreateCommandPool ( android_vulkan::Renderer &renderer );
+        bool DestroyCommandPool ( android_vulkan::Renderer &renderer );
 
         bool CreatePresentationSyncPrimitive ( android_vulkan::Renderer &renderer );
         void DestroyPresentationSyncPrimitive ( android_vulkan::Renderer &renderer );
@@ -69,4 +77,4 @@ class Mandelbrot final : public android_vulkan::Game
 } // namespace mandelbrot
 
 
-#endif // MANDELBROT_H
+#endif // MANDELBROT_BASE_H

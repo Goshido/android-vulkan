@@ -18,8 +18,17 @@
 
 #define AV_CHECK_VULKAN_LEAKS()
 
+#define AV_REGISTER_BUFFER(where)
+#define AV_UNREGISTER_BUFFER(where)
+
 #define AV_REGISTER_COMMAND_POOL(where)
 #define AV_UNREGISTER_COMMAND_POOL(where)
+
+#define AV_REGISTER_DESCRIPTOR_POOL(where)
+#define AV_UNREGISTER_DESCRIPTOR_POOL(where)
+
+#define AV_REGISTER_DESCRIPTOR_SET_LAYOUT(where)
+#define AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT(where)
 
 #define AV_REGISTER_DEVICE(where)
 #define AV_UNREGISTER_DEVICE(where)
@@ -48,6 +57,9 @@
 #define AV_REGISTER_RENDER_PASS(where)
 #define AV_UNREGISTER_RENDER_PASS(where)
 
+#define AV_REGISTER_SAMPLER(where)
+#define AV_UNREGISTER_SAMPLER(where)
+
 #define AV_REGISTER_SEMAPHORE(where)
 #define AV_UNREGISTER_SEMAPHORE(where)
 
@@ -67,8 +79,17 @@
 
 #define AV_CHECK_VULKAN_LEAKS() android_vulkan::CheckVulkanLeaks ();
 
+#define AV_REGISTER_BUFFER(where) android_vulkan::RegisterBuffer ( where );
+#define AV_UNREGISTER_BUFFER(where) android_vulkan::UnregisterBuffer ( where );
+
 #define AV_REGISTER_COMMAND_POOL(where) android_vulkan::RegisterCommandPool ( where );
 #define AV_UNREGISTER_COMMAND_POOL(where) android_vulkan::UnregisterCommandPool ( where );
+
+#define AV_REGISTER_DESCRIPTOR_POOL(where) android_vulkan::RegisterDescriptorPool ( where );
+#define AV_UNREGISTER_DESCRIPTOR_POOL(where) android_vulkan::UnregisterDescriptorPool ( where );
+
+#define AV_REGISTER_DESCRIPTOR_SET_LAYOUT(where) android_vulkan::RegisterDescriptorSetLayout ( where );
+#define AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT(where) android_vulkan::UnregisterDescriptorSetLayout ( where );
 
 #define AV_REGISTER_DEVICE(where) android_vulkan::RegisterDevice ( where );
 #define AV_UNREGISTER_DEVICE(where) android_vulkan::UnregisterDevice ( where );
@@ -97,6 +118,9 @@
 #define AV_REGISTER_RENDER_PASS(where) android_vulkan::RegisterRenderPass ( where );
 #define AV_UNREGISTER_RENDER_PASS(where) android_vulkan::UnregisterRenderPass ( where );
 
+#define AV_REGISTER_SAMPLER(where) android_vulkan::RegisterSampler ( where );
+#define AV_UNREGISTER_SAMPLER(where) android_vulkan::UnregisterSampler ( where );
+
 #define AV_REGISTER_SEMAPHORE(where) android_vulkan::RegisterSemaphore ( where );
 #define AV_UNREGISTER_SEMAPHORE(where) android_vulkan::UnregisterSemaphore ( where );
 
@@ -113,8 +137,17 @@ namespace android_vulkan {
 
 void CheckVulkanLeaks ();
 
+void RegisterBuffer ( std::string &&where );
+void UnregisterBuffer ( std::string &&where );
+
 void RegisterCommandPool ( std::string &&where );
 void UnregisterCommandPool ( std::string &&where );
+
+void RegisterDescriptorPool ( std::string &&where );
+void UnregisterDescriptorPool ( std::string &&where );
+
+void RegisterDescriptorSetLayout ( std::string &&where );
+void UnregisterDescriptorSetLayout ( std::string &&where );
 
 void RegisterDevice ( std::string &&where );
 void UnregisterDevice ( std::string &&where );
@@ -142,6 +175,9 @@ void UnregisterPipelineLayout ( std::string &&where );
 
 void RegisterRenderPass ( std::string &&where );
 void UnregisterRenderPass ( std::string &&where );
+
+void RegisterSampler ( std::string &&where );
+void UnregisterSampler ( std::string &&where );
 
 void RegisterSemaphore ( std::string &&where );
 void UnregisterSemaphore ( std::string &&where );

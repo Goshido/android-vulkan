@@ -12,7 +12,10 @@ namespace android_vulkan {
 constexpr static const char* INDENT = "    ";
 
 static std::shared_timed_mutex      g_Lock;
+static std::set<std::string>        g_Buffers;
 static std::set<std::string>        g_CommandPools;
+static std::set<std::string>        g_DescriptorPools;
+static std::set<std::string>        g_DescriptorSetLayouts;
 static std::set<std::string>        g_Devices;
 static std::set<std::string>        g_DeviceMemory;
 static std::set<std::string>        g_Fences;
@@ -22,6 +25,7 @@ static std::set<std::string>        g_ImageViews;
 static std::set<std::string>        g_Pipelines;
 static std::set<std::string>        g_PipelineLayouts;
 static std::set<std::string>        g_RenderPasses;
+static std::set<std::string>        g_Samplers;
 static std::set<std::string>        g_Semaphores;
 static std::set<std::string>        g_ShaderModules;
 static std::set<std::string>        g_Surfaces;
@@ -99,7 +103,10 @@ void CheckVulkanLeaks ()
 {
     std::shared_lock<std::shared_timed_mutex> lock ( g_Lock );
 
+    CheckNonDispatchableObjectLeaks ( "Buffer", g_Buffers );
     CheckNonDispatchableObjectLeaks ( "Command pool", g_CommandPools );
+    CheckNonDispatchableObjectLeaks ( "Descriptor pool", g_DescriptorPools );
+    CheckNonDispatchableObjectLeaks ( "Descriptor set layout", g_DescriptorSetLayouts );
     CheckNonDispatchableObjectLeaks ( "Device", g_Devices );
     CheckNonDispatchableObjectLeaks ( "Device memory", g_DeviceMemory );
     CheckNonDispatchableObjectLeaks ( "Fence", g_Fences );
@@ -109,10 +116,29 @@ void CheckVulkanLeaks ()
     CheckNonDispatchableObjectLeaks ( "Pipeline", g_Pipelines );
     CheckNonDispatchableObjectLeaks ( "Pipeline layout", g_PipelineLayouts );
     CheckNonDispatchableObjectLeaks ( "Render pass", g_RenderPasses );
+    CheckNonDispatchableObjectLeaks ( "Sampler", g_Samplers );
     CheckNonDispatchableObjectLeaks ( "Semaphore", g_Semaphores );
     CheckNonDispatchableObjectLeaks ( "Shader module", g_ShaderModules );
     CheckNonDispatchableObjectLeaks ( "Surface", g_Surfaces );
     CheckNonDispatchableObjectLeaks ( "Swapchain", g_Swapchains );
+}
+
+void RegisterBuffer ( std::string &&where )
+{
+    RegisterNonDispatchableObject ( "AV_REGISTER_BUFFER",
+        "buffer",
+        std::move ( where ),
+        g_Buffers
+    );
+}
+
+void UnregisterBuffer ( std::string &&where )
+{
+    UnregisterNonDispatchableObject ( "AV_UNREGISTER_BUFFER",
+        "buffer",
+        std::move ( where ),
+        g_Buffers
+    );
 }
 
 void RegisterCommandPool ( std::string &&where )
@@ -130,6 +156,42 @@ void UnregisterCommandPool ( std::string &&where )
         "command pool",
         std::move ( where ),
         g_CommandPools
+    );
+}
+
+void RegisterDescriptorPool ( std::string &&where )
+{
+    RegisterNonDispatchableObject ( "AV_REGISTER_DESCRIPTOR_POOL",
+        "descriptor pool",
+        std::move ( where ),
+        g_DescriptorPools
+    );
+}
+
+void UnregisterDescriptorPool ( std::string &&where )
+{
+    UnregisterNonDispatchableObject ( "AV_UNREGISTER_DESCRIPTOR_POOL",
+        "descriptor pool",
+        std::move ( where ),
+        g_DescriptorPools
+    );
+}
+
+void RegisterDescriptorSetLayout ( std::string &&where )
+{
+    RegisterNonDispatchableObject ( "AV_REGISTER_DESCRIPTOR_SET_LAYOUT",
+        "descriptor set layout",
+        std::move ( where ),
+        g_DescriptorSetLayouts
+    );
+}
+
+void UnregisterDescriptorSetLayout ( std::string &&where )
+{
+    UnregisterNonDispatchableObject ( "AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT",
+        "descriptor set layout",
+        std::move ( where ),
+        g_DescriptorSetLayouts
     );
 }
 
@@ -292,6 +354,24 @@ void UnregisterRenderPass ( std::string &&where )
         "render pass",
         std::move ( where ),
         g_RenderPasses
+    );
+}
+
+void RegisterSampler ( std::string &&where )
+{
+    RegisterNonDispatchableObject ( "AV_REGISTER_SAMPLER",
+        "sampler",
+        std::move ( where ),
+        g_Samplers
+    );
+}
+
+void UnregisterSampler ( std::string &&where )
+{
+    UnregisterNonDispatchableObject ( "AV_UNREGISTER_SAMPLER",
+        "sampler",
+        std::move ( where ),
+        g_Samplers
     );
 }
 

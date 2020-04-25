@@ -107,6 +107,11 @@ void Core::OnOSCommand ( android_app* app, int32_t cmd )
             AV_CHECK_VULKAN_LEAKS ()
         break;
 
+        case APP_CMD_DESTROY:
+            app->onAppCmd = nullptr;
+            app->userData = nullptr;
+        break;
+
         default:
             // NOTHING
         break;

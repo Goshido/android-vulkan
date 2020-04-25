@@ -1,7 +1,7 @@
 #include <android_native_app_glue.h>
 #include <core.h>
 #include <logger.h>
-#include <mandelbrot/mandelbrot.h>
+#include <mandelbrot/mandelbrot_lut_color.h>
 
 
 void android_main ( android_app* app )
@@ -13,12 +13,12 @@ void android_main ( android_app* app )
 
 #endif // ANDROID_VULKAN_DEBUG
 
-    mandelbrot::Mandelbrot mandelbrotGame;
-    android_vulkan::Core core ( *app, mandelbrotGame );
+    mandelbrot::MandelbrotLUTColor mandelbrotLUTColorGame;
+    android_vulkan::Core core ( *app, mandelbrotLUTColorGame );
 
     for ( ; ; )
     {
-        for ( ; ; )
+        do
         {
             int events;
             android_poll_source* source;
@@ -29,12 +29,15 @@ void android_main ( android_app* app )
                 reinterpret_cast<void**> ( &source )
             );
 
-            if ( pollResult < 0 || !source ) break;
+            if ( pollResult < 0 || !source )
+                break;
 
             source->process ( app, source );
         }
+        while ( !app->destroyRequested );
 
-        if ( app->destroyRequested ) break;
+        if ( app->destroyRequested )
+            break;
 
         core.OnFrame ();
     }

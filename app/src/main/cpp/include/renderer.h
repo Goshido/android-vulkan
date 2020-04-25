@@ -116,6 +116,11 @@ class Renderer final
         bool OnInit ( ANativeWindow &nativeWindow, bool vSync );
         void OnDestroy ();
 
+        bool SelectTargetMemoryTypeIndex ( uint32_t &targetMemoryTypeIndex,
+            const VkMemoryRequirements &memoryRequirements,
+            VkMemoryPropertyFlags memoryProperties
+        ) const;
+
     private:
         bool DeployDebugFeatures ();
         void DestroyDebugFeatures ();
@@ -198,10 +203,7 @@ class Renderer final
 
         bool SelectTargetHardware ( VkPhysicalDevice &targetPhysicalDevice, uint32_t &targetQueueFamilyIndex ) const;
 
-        bool SelectTargetMemoryTypeIndex ( uint32_t &targetMemoryTypeIndex,
-            const VkMemoryRequirements &memoryRequirements,
-            VkMemoryPropertyFlags memoryProperties
-        ) const;
+
 
         bool SelectTargetPresentMode ( VkPresentModeKHR &targetPresentMode, bool vSync ) const;
 

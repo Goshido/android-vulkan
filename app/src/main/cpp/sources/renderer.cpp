@@ -2,6 +2,7 @@
 #include <cassert>
 #include <cinttypes>
 #include <cmath>
+#include <set>
 #include <string>
 #include "vulkan_utils.h"
 
@@ -600,12 +601,14 @@ const std::map<VkResult, const char*> Renderer::_vulkanResultMap =
 {
     { VK_ERROR_DEVICE_LOST, "VK_ERROR_DEVICE_LOST" },
     { VK_ERROR_EXTENSION_NOT_PRESENT, "VK_ERROR_EXTENSION_NOT_PRESENT" },
+    { VK_ERROR_FRAGMENTATION_EXT, "VK_ERROR_FRAGMENTATION_EXT" },
     { VK_ERROR_FULL_SCREEN_EXCLUSIVE_MODE_LOST_EXT, "VK_ERROR_FULL_SCREEN_EXCLUSIVE_MODE_LOST_EXT" },
     { VK_ERROR_INCOMPATIBLE_DRIVER, "VK_ERROR_INCOMPATIBLE_DRIVER" },
     { VK_ERROR_INITIALIZATION_FAILED, "VK_ERROR_INITIALIZATION_FAILED" },
     { VK_ERROR_INVALID_EXTERNAL_HANDLE, "VK_ERROR_INVALID_EXTERNAL_HANDLE" },
     { VK_ERROR_INVALID_SHADER_NV, "VK_ERROR_INVALID_SHADER_NV" },
     { VK_ERROR_LAYER_NOT_PRESENT, "VK_ERROR_LAYER_NOT_PRESENT" },
+    { VK_ERROR_MEMORY_MAP_FAILED, "VK_ERROR_MEMORY_MAP_FAILED" },
     { VK_ERROR_NATIVE_WINDOW_IN_USE_KHR, "VK_ERROR_NATIVE_WINDOW_IN_USE_KHR" },
     { VK_ERROR_OUT_OF_DATE_KHR, "VK_ERROR_OUT_OF_DATE_KHR" },
     { VK_ERROR_OUT_OF_DEVICE_MEMORY, "VK_ERROR_OUT_OF_DEVICE_MEMORY" },
@@ -882,6 +885,26 @@ void Renderer::OnDestroy ()
     DestroyDevice ();
     DestroyDebugFeatures ();
     DestroyInstance ();
+}
+
+bool Renderer::SelectTargetMemoryTypeIndex ( uint32_t &targetMemoryTypeIndex,
+    const VkMemoryRequirements &memoryRequirements,
+    VkMemoryPropertyFlags memoryProperties
+) const
+{
+    for ( uint32_t i = 0U; i < _physicalDeviceMemoryProperties.memoryTypeCount; ++i )
+    {
+        if ( !( memoryRequirements.memoryTypeBits & ( 1U << i ) ) ) continue;
+
+        const VkMemoryType& memoryType = _physicalDeviceMemoryProperties.memoryTypes[ i ];
+
+        if ( ( memoryType.propertyFlags & memoryProperties ) != memoryProperties ) continue;
+
+        targetMemoryTypeIndex = i;
+        return true;
+    }
+
+    return false;
 }
 
 bool Renderer::DeployDebugFeatures ()
@@ -1747,10 +1770,14 @@ bool Renderer::PrintPhysicalDeviceExtensionInfo ( VkPhysicalDevice physicalDevic
 
 bool Renderer::PrintPhysicalDeviceFeatureInfo ( VkPhysicalDevice physicalDevice )
 {
+    LogInfo ( ">>> Features:" );
+
     auto& features = _physicalDeviceInfo[ physicalDevice ];
     vkGetPhysicalDeviceFeatures ( physicalDevice, &features._features );
 
-    bool featureDetected = false;
+    // Note std::set will sort strings too.
+    std::set<std::string> supportedFeatures;
+    std::set<std::string> unsupportedFeatures;
 
     for ( auto const& probe : g_vkFeatureMap )
     {
@@ -1758,24 +1785,26 @@ bool Renderer::PrintPhysicalDeviceFeatureInfo ( VkPhysicalDevice physicalDevice 
             reinterpret_cast<const uint8_t*> ( &features._features ) + probe.first
         );
 
-        if ( !enable ) continue;
-
-        if ( !featureDetected )
+        if ( enable )
         {
-            LogInfo ( ">>> Features:" );
-            featureDetected = true;
+            supportedFeatures.insert ( probe.second );
+            continue;
         }
 
-        LogInfo ( "%s%s", INDENT_1, probe.second );
+        unsupportedFeatures.insert ( probe.second );
     }
 
-    if ( featureDetected )
-        return true;
+    LogInfo ( "%sSupported:", INDENT_2 );
 
-    LogError ( "Renderer::PrintPhysicalDeviceFeatureInfo - Feature list is empty!" );
-    assert ( !"Renderer::PrintPhysicalDeviceFeatureInfo - Feature list is empty!" );
+    for ( auto &item : supportedFeatures )
+        LogInfo ( "%s%s", INDENT_3, item.c_str () );
 
-    return false;
+    LogInfo ( "%sUnsupported:", INDENT_2 );
+
+    for ( auto &item : unsupportedFeatures )
+        LogInfo ( "%s%s", INDENT_3, item.c_str () );
+
+    return true;
 }
 
 void Renderer::PrintPhysicalDeviceGroupInfo ( uint32_t groupIndex,
@@ -2379,26 +2408,6 @@ bool Renderer::SelectTargetHardware ( VkPhysicalDevice &targetPhysicalDevice, ui
 
     LogError ( "Renderer::SelectTargetHardware - Can't find target hardware!" );
     assert ( !"Renderer::SelectTargetHardware - Can't find target hardware!" );
-    return false;
-}
-
-bool Renderer::SelectTargetMemoryTypeIndex ( uint32_t &targetMemoryTypeIndex,
-    const VkMemoryRequirements &memoryRequirements,
-    VkMemoryPropertyFlags memoryProperties
-) const
-{
-    for ( uint32_t i = 0U; i < _physicalDeviceMemoryProperties.memoryTypeCount; ++i )
-    {
-        if ( !( memoryRequirements.memoryTypeBits & ( 1U << i ) ) ) continue;
-
-        const VkMemoryType& memoryType = _physicalDeviceMemoryProperties.memoryTypes[ i ];
-
-        if ( ( memoryType.propertyFlags & memoryProperties ) != memoryProperties ) continue;
-
-        targetMemoryTypeIndex = i;
-        return true;
-    }
-
     return false;
 }
 

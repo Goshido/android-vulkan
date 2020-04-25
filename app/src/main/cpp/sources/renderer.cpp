@@ -2,6 +2,7 @@
 #include <cassert>
 #include <cinttypes>
 #include <cmath>
+#include <set>
 #include <string>
 #include "vulkan_utils.h"
 
@@ -1769,10 +1770,14 @@ bool Renderer::PrintPhysicalDeviceExtensionInfo ( VkPhysicalDevice physicalDevic
 
 bool Renderer::PrintPhysicalDeviceFeatureInfo ( VkPhysicalDevice physicalDevice )
 {
+    LogInfo ( ">>> Features:" );
+
     auto& features = _physicalDeviceInfo[ physicalDevice ];
     vkGetPhysicalDeviceFeatures ( physicalDevice, &features._features );
 
-    bool featureDetected = false;
+    // Note std::set will sort strings too.
+    std::set<std::string> supportedFeatures;
+    std::set<std::string> unsupportedFeatures;
 
     for ( auto const& probe : g_vkFeatureMap )
     {
@@ -1780,24 +1785,26 @@ bool Renderer::PrintPhysicalDeviceFeatureInfo ( VkPhysicalDevice physicalDevice 
             reinterpret_cast<const uint8_t*> ( &features._features ) + probe.first
         );
 
-        if ( !enable ) continue;
-
-        if ( !featureDetected )
+        if ( enable )
         {
-            LogInfo ( ">>> Features:" );
-            featureDetected = true;
+            supportedFeatures.insert ( probe.second );
+            continue;
         }
 
-        LogInfo ( "%s%s", INDENT_1, probe.second );
+        unsupportedFeatures.insert ( probe.second );
     }
 
-    if ( featureDetected )
-        return true;
+    LogInfo ( "%sSupported:", INDENT_2 );
 
-    LogError ( "Renderer::PrintPhysicalDeviceFeatureInfo - Feature list is empty!" );
-    assert ( !"Renderer::PrintPhysicalDeviceFeatureInfo - Feature list is empty!" );
+    for ( auto &item : supportedFeatures )
+        LogInfo ( "%s%s", INDENT_3, item.c_str () );
 
-    return false;
+    LogInfo ( "%sUnsupported:", INDENT_2 );
+
+    for ( auto &item : unsupportedFeatures )
+        LogInfo ( "%s%s", INDENT_3, item.c_str () );
+
+    return true;
 }
 
 void Renderer::PrintPhysicalDeviceGroupInfo ( uint32_t groupIndex,

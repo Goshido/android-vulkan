@@ -18,7 +18,7 @@ void android_main ( android_app* app )
 
     for ( ; ; )
     {
-        for ( ; ; )
+        do
         {
             int events;
             android_poll_source* source;
@@ -29,12 +29,15 @@ void android_main ( android_app* app )
                 reinterpret_cast<void**> ( &source )
             );
 
-            if ( pollResult < 0 || !source ) break;
+            if ( pollResult < 0 || !source )
+                break;
 
             source->process ( app, source );
         }
+        while ( !app->destroyRequested );
 
-        if ( app->destroyRequested ) break;
+        if ( app->destroyRequested )
+            break;
 
         core.OnFrame ();
     }

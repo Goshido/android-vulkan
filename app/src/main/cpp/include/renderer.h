@@ -2,10 +2,17 @@
 #define RENDERER_H
 
 
+#include "warning.h"
+
+AV_DISABLE_COMMON_WARNINGS
+
 #include <map>
 #include <vector>
 #include <vulkan_wrapper.h>
 #include <android/native_window.h>
+
+AV_RESTORE_WARNING_STATE
+
 #include "logger.h"
 
 
@@ -119,6 +126,14 @@ class Renderer final
         bool SelectTargetMemoryTypeIndex ( uint32_t &targetMemoryTypeIndex,
             const VkMemoryRequirements &memoryRequirements,
             VkMemoryPropertyFlags memoryProperties
+        ) const;
+
+        // Note method will invoke AV_REGISTER_DEVICE_MEMORY internally if success.
+        bool TryAllocateMemory ( VkDeviceMemory &memory,
+            const VkMemoryRequirements &requirements,
+            VkMemoryPropertyFlags memoryProperties,
+            const char* where,
+            const char* checkFailMessage
         ) const;
 
     private:

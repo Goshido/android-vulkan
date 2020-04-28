@@ -1,5 +1,5 @@
 cmake_minimum_required ( VERSION 3.10.2 )
-set ( CMAKE_CXX_STANDARD 14 )
+set ( CMAKE_CXX_STANDARD 17 )
 
 # Android native activity glue
 
@@ -57,6 +57,8 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/mandelbrot/mandelbrot_base.cpp
     app/src/main/cpp/sources/mandelbrot/mandelbrot_lut_color.cpp
     app/src/main/cpp/sources/rainbow/rainbow.cpp
+    app/src/main/cpp/sources/rotating_mesh/game.cpp
+    app/src/main/cpp/sources/rotating_mesh/texture2D.cpp
 )
 
 target_include_directories ( android-vulkan

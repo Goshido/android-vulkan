@@ -55,15 +55,6 @@ class MandelbrotLUTColor final : public MandelbrotBase
         void DestroyLUT ( android_vulkan::Renderer &renderer );
 
         void InitLUTSamples ( uint8_t* samples ) const;
-
-        bool TryAllocateMemory ( VkDeviceMemory &memory,
-            android_vulkan::Renderer &renderer,
-            const VkMemoryRequirements &requirements,
-            VkMemoryPropertyFlags memoryProperties,
-            const char* where,
-            const char* checkFailMessage
-        ) const;
-
         bool UploadLUTSamples ( android_vulkan::Renderer &renderer );
 };
 

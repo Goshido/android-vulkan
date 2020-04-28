@@ -1,5 +1,11 @@
 #include <mandelbrot/mandelbrot_base.h>
+
+AV_DISABLE_COMMON_WARNINGS
+
 #include <cmath>
+
+AV_RESTORE_WARNING_STATE
+
 #include <file.h>
 #include <vulkan_utils.h>
 
@@ -124,17 +130,9 @@ bool MandelbrotBase::BeginFrame ( uint32_t &presentationImageIndex, android_vulk
     if ( !result )
         return false;
 
-    result = renderer.CheckVkResult ( vkResetFences ( device, 1U, &_presentationFence ),
-        "Rainbow::BeginFrame",
-        "Resetting fence has been failed"
-    );
-
-    if ( !result )
-        return false;
-
-    return renderer.CheckVkResult ( vkQueueWaitIdle ( renderer.GetQueue () ),
+    return renderer.CheckVkResult ( vkResetFences ( device, 1U, &_presentationFence ),
         "MandelbrotBase::BeginFrame",
-        "Waiting queue idle has been failed"
+        "Resetting fence has been failed"
     );
 }
 
@@ -170,7 +168,7 @@ bool MandelbrotBase::CreateCommandPool ( android_vulkan::Renderer &renderer )
     commandPoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
     commandPoolInfo.pNext = nullptr;
     commandPoolInfo.queueFamilyIndex = renderer.GetQueueFamilyIndex ();
-    commandPoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT | VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
+    commandPoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
     const VkDevice device = renderer.GetDevice ();
 
@@ -241,6 +239,9 @@ bool MandelbrotBase::CreatePresentationSyncPrimitive ( android_vulkan::Renderer 
 
 void MandelbrotBase::DestroyPresentationSyncPrimitive ( android_vulkan::Renderer &renderer )
 {
+    if ( _presentationFence == VK_NULL_HANDLE )
+        return;
+
     const VkDevice device = renderer.GetDevice ();
 
     if ( _presentationFence )

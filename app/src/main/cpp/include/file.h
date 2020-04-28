@@ -2,8 +2,14 @@
 #define ANDROID_VULKAN_FILE_H
 
 
+#include "warning.h"
+
+AV_DISABLE_COMMON_WARNINGS
+
 #include <string>
 #include <vector>
+
+AV_RESTORE_WARNING_STATE
 
 
 namespace android_vulkan {
@@ -22,7 +28,7 @@ class File final
         explicit File ( std::string &&filePath );
 
         File ( File &other ) = delete;
-        File& operator = ( File &other ) = delete;
+        File& operator = ( const File &other ) = delete;
 
         ~File () = default;
 

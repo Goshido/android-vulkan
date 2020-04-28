@@ -20,6 +20,9 @@
 # Android studio
 .gradle
 .idea
+local.properties
+android-vulkan.iml
+app/app.iml
 
 # CMake
 app/.cxx

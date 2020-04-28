@@ -74,8 +74,15 @@
 
 #else
 
+#include "warning.h"
+
+AV_DISABLE_COMMON_WARNINGS
+
 #include <string>
 #include <vulkan_wrapper.h>
+
+AV_RESTORE_WARNING_STATE
+
 
 #define AV_CHECK_VULKAN_LEAKS() android_vulkan::CheckVulkanLeaks ();
 

@@ -1,9 +1,15 @@
 #include <renderer.h>
+
+AV_DISABLE_COMMON_WARNINGS
+
 #include <cassert>
 #include <cinttypes>
 #include <cmath>
 #include <set>
 #include <string>
+
+AV_RESTORE_WARNING_STATE
+
 #include "vulkan_utils.h"
 
 
@@ -905,6 +911,39 @@ bool Renderer::SelectTargetMemoryTypeIndex ( uint32_t &targetMemoryTypeIndex,
     }
 
     return false;
+}
+
+bool Renderer::TryAllocateMemory ( VkDeviceMemory &memory,
+    const VkMemoryRequirements &requirements,
+    VkMemoryPropertyFlags memoryProperties,
+    const char* where,
+    const char* checkFailMessage
+) const
+{
+    VkMemoryAllocateInfo allocateInfo;
+    allocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    allocateInfo.pNext = nullptr;
+    allocateInfo.allocationSize = requirements.size;
+
+    bool result = SelectTargetMemoryTypeIndex ( allocateInfo.memoryTypeIndex,
+        requirements,
+        memoryProperties
+    );
+
+    if ( !result )
+        return false;
+
+    result = CheckVkResult (
+        vkAllocateMemory ( _device, &allocateInfo, nullptr, &memory ),
+        "Renderer::TryAllocateMemory",
+        checkFailMessage
+    );
+
+    if ( !result )
+        return false;
+
+    AV_REGISTER_DEVICE_MEMORY ( std::move ( where ) )
+    return true;
 }
 
 bool Renderer::DeployDebugFeatures ()

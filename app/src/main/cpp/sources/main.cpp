@@ -1,4 +1,11 @@
+#include <warning.h>
+
+AV_DISABLE_COMMON_WARNINGS
+
 #include <android_native_app_glue.h>
+
+AV_RESTORE_WARNING_STATE
+
 #include <core.h>
 #include <logger.h>
 #include <mandelbrot/mandelbrot_lut_color.h>

@@ -2,8 +2,15 @@
 #define ANDROID_VULKAN_CORE_H
 
 
+#include "warning.h"
+
+AV_DISABLE_COMMON_WARNINGS
+
 #include <chrono>
 #include <android_native_app_glue.h>
+
+AV_RESTORE_WARNING_STATE
+
 #include "game.h"
 
 

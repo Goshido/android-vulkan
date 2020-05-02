@@ -112,7 +112,7 @@ bool Texture2D::FreeTransferResources ( android_vulkan::Renderer &renderer )
     return false;
 }
 
-bool Texture2D::UploadData ( android_vulkan::Renderer &renderer, VkCommandBuffer /*commandBuffer*/ )
+bool Texture2D::UploadData ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer )
 {
     if ( _imageView != VK_NULL_HANDLE )
     {
@@ -299,10 +299,190 @@ bool Texture2D::UploadData ( android_vulkan::Renderer &renderer, VkCommandBuffer
     memcpy ( destination, pixelData.data (), static_cast<size_t> ( bufferInfo.size ) );
     vkUnmapMemory ( device, _transferDeviceMemory );
 
-    vkCmdPipelineBarrier ()
+    VkCommandBufferBeginInfo beginInfo;
+    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    beginInfo.pNext = nullptr;
+    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+    beginInfo.pInheritanceInfo = nullptr;
 
-    assert ( !"Texture2D::UploadData - Implement me!" );
-    return false;
+    result = renderer.CheckVkResult ( vkBeginCommandBuffer ( commandBuffer, &beginInfo ),
+        "Texture2D::UploadData",
+        "Can't begin command buffer"
+    );
+
+    if ( !result )
+    {
+        FreeResources ( renderer );
+        return false;
+    }
+
+    VkImageMemoryBarrier barrierInfo;
+    barrierInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    barrierInfo.pNext = nullptr;
+    barrierInfo.image = _image;
+    barrierInfo.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    barrierInfo.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    barrierInfo.srcAccessMask = 0U;
+    barrierInfo.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    barrierInfo.srcQueueFamilyIndex = barrierInfo.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrierInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    barrierInfo.subresourceRange.layerCount = 1U;
+    barrierInfo.subresourceRange.levelCount = imageInfo.mipLevels;
+    barrierInfo.subresourceRange.baseArrayLayer = 0U;
+    barrierInfo.subresourceRange.baseMipLevel = 0U;
+
+    vkCmdPipelineBarrier ( commandBuffer,
+        VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+        VK_PIPELINE_STAGE_TRANSFER_BIT,
+        0U,
+        0U,
+        nullptr,
+        0U,
+        nullptr,
+        1U,
+        &barrierInfo
+    );
+
+    VkBufferImageCopy copyRegion;
+    copyRegion.imageOffset.x = 0;
+    copyRegion.imageOffset.y = 0;
+    copyRegion.imageOffset.z = 0;
+    copyRegion.imageExtent = imageInfo.extent;
+    copyRegion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    copyRegion.imageSubresource.layerCount = 1U;
+    copyRegion.imageSubresource.baseArrayLayer = 0U;
+    copyRegion.imageSubresource.mipLevel = 0U;
+    copyRegion.bufferRowLength = imageInfo.extent.width;
+    copyRegion.bufferImageHeight = imageInfo.extent.height;
+    copyRegion.bufferOffset = 0U;
+
+    vkCmdCopyBufferToImage ( commandBuffer, _transfer, _image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1U, &copyRegion );
+
+    barrierInfo.subresourceRange.levelCount = 1U;
+    barrierInfo.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    barrierInfo.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+    barrierInfo.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    barrierInfo.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+
+    vkCmdPipelineBarrier ( commandBuffer,
+        VK_PIPELINE_STAGE_TRANSFER_BIT,
+        VK_PIPELINE_STAGE_TRANSFER_BIT,
+        0U,
+        0U,
+        nullptr,
+        0U,
+        nullptr,
+        1U,
+        &barrierInfo
+    );
+
+    VkImageBlit blitInfo;
+    blitInfo.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    blitInfo.srcSubresource.layerCount = 1U;
+    blitInfo.srcSubresource.baseArrayLayer = 0U;
+    memset ( blitInfo.srcOffsets, 0, sizeof ( VkOffset3D ) );
+    blitInfo.srcOffsets[ 1U ].z = 1;
+    blitInfo.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    blitInfo.dstSubresource.layerCount = 1U;
+    blitInfo.dstSubresource.baseArrayLayer = 0U;
+    memset ( blitInfo.dstOffsets, 0, sizeof ( VkOffset3D ) );
+    blitInfo.dstOffsets[ 1U ].z = 1;
+
+    auto commitMipLevel = [&] ( uint32_t baseMipLevel ) {
+        barrierInfo.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+        barrierInfo.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+        barrierInfo.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+        barrierInfo.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        barrierInfo.subresourceRange.baseMipLevel = baseMipLevel;
+
+        vkCmdPipelineBarrier ( commandBuffer,
+            VK_PIPELINE_STAGE_TRANSFER_BIT,
+            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+            0U,
+            0U,
+            nullptr,
+            0U,
+            nullptr,
+            1U,
+            &barrierInfo
+        );
+    };
+
+    for ( uint32_t i = 1U; i < imageInfo.mipLevels; ++i )
+    {
+        const uint32_t previousMip = i - 1U;
+        blitInfo.srcSubresource.mipLevel = previousMip;
+        blitInfo.srcOffsets[ 1U ].x = static_cast<int32_t> ( std::max ( imageInfo.extent.width >> previousMip, 1U ) );
+        blitInfo.srcOffsets[ 1U ].y = static_cast<int32_t> ( std::max ( imageInfo.extent.height >> previousMip, 1U ) );
+        blitInfo.dstSubresource.mipLevel = i;
+        blitInfo.dstOffsets[ 1U ].x = static_cast<int32_t> ( std::max ( imageInfo.extent.width >> i, 1U ) );
+        blitInfo.dstOffsets[ 1U ].y = static_cast<int32_t> ( std::max ( imageInfo.extent.height >> i, 1U ) );
+
+        vkCmdBlitImage ( commandBuffer,
+            _image,
+            VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+            _image,
+            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            1U,
+            &blitInfo,
+            VK_FILTER_LINEAR
+        );
+
+        commitMipLevel ( previousMip );
+
+        if ( i + 1U >= imageInfo.mipLevels )
+            continue;
+
+        // There are more unprocessed mip maps. But now done with current mip map.
+
+        barrierInfo.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+        barrierInfo.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+        barrierInfo.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        barrierInfo.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+        barrierInfo.subresourceRange.baseMipLevel = i;
+
+        vkCmdPipelineBarrier ( commandBuffer,
+            VK_PIPELINE_STAGE_TRANSFER_BIT,
+            VK_PIPELINE_STAGE_TRANSFER_BIT,
+            0U,
+            0U,
+            nullptr,
+            0U,
+            nullptr,
+            1U,
+            &barrierInfo
+        );
+    }
+
+    // Note last mip must must be translated to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL state.
+    commitMipLevel ( imageInfo.mipLevels - 1U );
+
+    result = renderer.CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
+        "Texture2D::UploadData",
+        "Can't end command buffer"
+    );
+
+    if ( !result )
+    {
+        FreeResources ( renderer );
+        return false;
+    }
+
+    VkSubmitInfo submitInfo;
+    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submitInfo.pNext = nullptr;
+    submitInfo.commandBufferCount = 1U;
+    submitInfo.pCommandBuffers = &commandBuffer;
+    submitInfo.waitSemaphoreCount = 0U;
+    submitInfo.pWaitSemaphores = nullptr;
+    submitInfo.signalSemaphoreCount = 0U;
+    submitInfo.pSignalSemaphores = nullptr;
+    submitInfo.pWaitDstStageMask = nullptr;
+
+    return renderer.CheckVkResult ( vkQueueSubmit ( renderer.GetQueue (), 1U, &submitInfo, VK_NULL_HANDLE ),
+        "Texture2D::UploadData",
+        "Can't submit command"
+    );
 }
 
 bool Texture2D::UploadData ( std::string& /*fileName*/,

@@ -83,8 +83,6 @@ target_compile_definitions ( android-vulkan
 
 target_link_libraries ( android-vulkan
     android
-    EGL
-    GLESv3
     ${log-lib}
     native_app_glue
     vulkan-wrapper

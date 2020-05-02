@@ -20,7 +20,7 @@ Core::Core ( android_app &app, Game &game ):
 
 bool Core::IsSuspend () const
 {
-    return _renderer.IsReady ();
+    return !_renderer.IsReady ();
 }
 
 void Core::OnFrame ()

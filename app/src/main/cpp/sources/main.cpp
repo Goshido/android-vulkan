@@ -30,7 +30,7 @@ void android_main ( android_app* app )
             int events;
             android_poll_source* source;
 
-            const int pollResult = ALooper_pollAll ( core.IsSuspend () ? 0 : -1,
+            const int pollResult = ALooper_pollAll ( core.IsSuspend () ? -1 : 0,
                 nullptr,
                 &events,
                 reinterpret_cast<void**> ( &source )

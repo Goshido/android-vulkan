@@ -40,13 +40,13 @@ class Texture2D final
         Texture2D ( const Texture2D &other ) = delete;
         Texture2D& operator = ( const Texture2D &other ) = delete;
 
-        bool FreeResources ( android_vulkan::Renderer &renderer );
+        void FreeResources ( android_vulkan::Renderer &renderer );
 
         // optimization: _transfer and _transferDeviceMemory are needed only for uploading pixel data to the Vulkan
         // texture object. Uploading itself is done via command submit: vkCmdCopyBufferToImage. So you can make a
         // bunch of vkCmdCopyBufferToImage call for different textures and after completion you can free
         // _transfer and _transferDeviceMemory for Texture2D objects.
-        bool FreeTransferResources ( android_vulkan::Renderer &renderer );
+        void FreeTransferResources ( android_vulkan::Renderer &renderer );
 
         // Method is used when file name and format are passed via constructor.
         bool UploadData ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer );
@@ -72,14 +72,14 @@ class Texture2D final
 
     private:
         uint32_t CountMipLevels ( const VkExtent2D &resolution ) const;
-        bool IsFormatCompatible ( VkFormat target, VkFormat candidate ) const;
+        bool IsFormatCompatible ( VkFormat target, VkFormat candidate, android_vulkan::Renderer &renderer ) const;
 
         bool LoadImage ( std::vector<uint8_t> &pixelData,
             const std::string &fileName,
             int &width,
             int &height,
             int &channels
-        ) const;
+        );
 
         VkFormat PickupFormat ( int channels ) const;
 };

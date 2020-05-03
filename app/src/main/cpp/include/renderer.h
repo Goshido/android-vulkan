@@ -123,6 +123,8 @@ class Renderer final
         bool OnInit ( ANativeWindow &nativeWindow, bool vSync );
         void OnDestroy ();
 
+        const char* ResolveVkFormat ( VkFormat format ) const;
+
         bool SelectTargetMemoryTypeIndex ( uint32_t &targetMemoryTypeIndex,
             const VkMemoryRequirements &memoryRequirements,
             VkMemoryPropertyFlags memoryProperties
@@ -212,14 +214,10 @@ class Renderer final
         const char* ResolvePhysicalDeviceType ( VkPhysicalDeviceType type ) const;
         const char* ResolveVkDebugReportObjectType ( VkDebugReportObjectTypeEXT type ) const;
         const char* ResolveVkColorSpaceKHR ( VkColorSpaceKHR colorSpace ) const;
-        const char* ResolveVkFormat ( VkFormat format ) const;
         const char* ResolveVkPresentModeKHR ( VkPresentModeKHR mode ) const;
         const char* ResolveVkResult ( VkResult result ) const;
 
         bool SelectTargetHardware ( VkPhysicalDevice &targetPhysicalDevice, uint32_t &targetQueueFamilyIndex ) const;
-
-
-
         bool SelectTargetPresentMode ( VkPresentModeKHR &targetPresentMode, bool vSync ) const;
 
         bool SelectTargetSurfaceFormat ( VkFormat &targetColorFormat,

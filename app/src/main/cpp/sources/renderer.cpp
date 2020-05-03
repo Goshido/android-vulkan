@@ -893,6 +893,12 @@ void Renderer::OnDestroy ()
     DestroyInstance ();
 }
 
+const char* Renderer::ResolveVkFormat ( VkFormat format ) const
+{
+    const auto findResult = _vulkanFormatMap.find ( format );
+    return findResult == _vulkanFormatMap.cend () ? UNKNOWN_RESULT : findResult->second;
+}
+
 bool Renderer::SelectTargetMemoryTypeIndex ( uint32_t &targetMemoryTypeIndex,
     const VkMemoryRequirements &memoryRequirements,
     VkMemoryPropertyFlags memoryProperties
@@ -2397,12 +2403,6 @@ const char* Renderer::ResolveVkColorSpaceKHR ( VkColorSpaceKHR colorSpace ) cons
 {
     const auto findResult = _vulkanColorSpaceMap.find ( colorSpace );
     return findResult == _vulkanColorSpaceMap.cend () ? UNKNOWN_RESULT : findResult->second;
-}
-
-const char* Renderer::ResolveVkFormat ( VkFormat format ) const
-{
-    const auto findResult = _vulkanFormatMap.find ( format );
-    return findResult == _vulkanFormatMap.cend () ? UNKNOWN_RESULT : findResult->second;
 }
 
 const char* Renderer::ResolveVkPresentModeKHR ( VkPresentModeKHR mode ) const

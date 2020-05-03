@@ -2,7 +2,10 @@
 
 AV_DISABLE_COMMON_WARNINGS
 
+#include <array>
 #include <cassert>
+#include <set>
+#include <thread>
 
 #define STBI_NO_FAILURE_STRINGS
 #define STBI_ONLY_JPEG
@@ -15,11 +18,37 @@ AV_DISABLE_COMMON_WARNINGS
 
 AV_RESTORE_WARNING_STATE
 
+#include <file.h>
 #include <logger.h>
 #include <vulkan_utils.h>
 
 
 namespace rotating_mesh {
+
+constexpr static const size_t EXPANDER_THREADS = 4U;
+constexpr static const size_t RGB_BYTES_PER_PIXEL = 3U;
+constexpr static const size_t RGBA_BYTES_PER_PIXEL = 4U;
+
+static const std::map<VkFormat, std::set<VkFormat>> g_CompatibleFormats =
+{
+    {
+        VK_FORMAT_R8G8B8A8_SRGB,
+
+        {
+            VK_FORMAT_R8G8B8A8_UNORM
+        }
+    },
+
+    {
+        VK_FORMAT_R8G8B8A8_UNORM,
+
+        {
+            VK_FORMAT_R8G8B8A8_SRGB
+        }
+    }
+};
+
+//----------------------------------------------------------------------------------------------------------------------
 
 Texture2D::Texture2D ():
     _format ( VK_FORMAT_UNDEFINED ),
@@ -59,7 +88,7 @@ Texture2D::Texture2D ( std::string &&fileName, VkFormat format ):
     // NOTHING
 }
 
-bool Texture2D::FreeResources ( android_vulkan::Renderer &renderer )
+void Texture2D::FreeResources ( android_vulkan::Renderer &renderer )
 {
     FreeTransferResources ( renderer );
 
@@ -86,11 +115,10 @@ bool Texture2D::FreeResources ( android_vulkan::Renderer &renderer )
         AV_UNREGISTER_IMAGE ( "Texture2D::_image" )
     }
 
-    assert ( !"Texture2D::FreeResources - Implement me!" );
-    return false;
+    _fileName.clear ();
 }
 
-bool Texture2D::FreeTransferResources ( android_vulkan::Renderer &renderer )
+void Texture2D::FreeTransferResources ( android_vulkan::Renderer &renderer )
 {
     const VkDevice device = renderer.GetDevice ();
 
@@ -101,15 +129,12 @@ bool Texture2D::FreeTransferResources ( android_vulkan::Renderer &renderer )
         AV_UNREGISTER_DEVICE_MEMORY ( "Texture2D::_transferDeviceMemory" )
     }
 
-    if ( _transfer != VK_NULL_HANDLE )
-    {
-        vkDestroyBuffer ( device, _transfer, nullptr );
-        _transfer = VK_NULL_HANDLE;
-        AV_UNREGISTER_BUFFER ( "Texture2D::_transfer" )
-    }
+    if ( _transfer == VK_NULL_HANDLE )
+        return;
 
-    assert ( !"Texture2D::FreeTransferResources - Implement me!" );
-    return false;
+    vkDestroyBuffer ( device, _transfer, nullptr );
+    _transfer = VK_NULL_HANDLE;
+    AV_UNREGISTER_BUFFER ( "Texture2D::_transfer" )
 }
 
 bool Texture2D::UploadData ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer )
@@ -126,8 +151,7 @@ bool Texture2D::UploadData ( android_vulkan::Renderer &renderer, VkCommandBuffer
         return false;
     }
 
-    if ( !FreeResources ( renderer ) )
-        return false;
+    FreeResources ( renderer );
 
     std::vector<uint8_t> pixelData;
 
@@ -140,11 +164,110 @@ bool Texture2D::UploadData ( android_vulkan::Renderer &renderer, VkCommandBuffer
 
     const VkFormat actualFormat = PickupFormat ( channels );
 
-    if ( IsFormatCompatible ( _format, actualFormat ) )
+    if ( IsFormatCompatible ( _format, actualFormat, renderer ) )
         return false;
 
-    _resolution.width = static_cast<uint32_t> ( width );
-    _resolution.height = static_cast<uint32_t> ( width );
+    return UploadData ( pixelData,
+        VkExtent2D { .width = static_cast<uint32_t> ( width ), .height = static_cast<uint32_t> ( height ) },
+        _format,
+        renderer,
+        commandBuffer
+    );
+}
+
+bool Texture2D::UploadData ( std::string &fileName,
+    VkFormat format,
+    android_vulkan::Renderer &renderer,
+    VkCommandBuffer commandBuffer
+)
+{
+    if ( fileName.empty () )
+    {
+        android_vulkan::LogError ( "Texture2D::UploadData - Can't upload data. Filename is empty." );
+        return false;
+    }
+
+    FreeResources ( renderer );
+
+    std::vector<uint8_t> pixelData;
+
+    int width = 0;
+    int height = 0;
+    int channels = 0;
+
+    if ( !LoadImage ( pixelData, fileName, width, height, channels ) )
+        return false;
+
+    const VkFormat actualFormat = PickupFormat ( channels );
+
+    if ( IsFormatCompatible ( format, actualFormat, renderer ) )
+        return false;
+
+    const bool result = UploadData ( pixelData,
+        VkExtent2D { .width = static_cast<uint32_t> ( width ), .height = static_cast<uint32_t> ( height ) },
+        format,
+        renderer,
+        commandBuffer
+    );
+
+    if ( !result )
+        return false;
+
+    _fileName = fileName;
+    return true;
+}
+
+bool Texture2D::UploadData ( std::string &&fileName,
+    VkFormat format,
+    android_vulkan::Renderer &renderer,
+    VkCommandBuffer commandBuffer
+)
+{
+    if ( fileName.empty () )
+    {
+        android_vulkan::LogError ( "Texture2D::UploadData - Can't upload data. Filename is empty." );
+        return false;
+    }
+
+    FreeResources ( renderer );
+
+    std::vector<uint8_t> pixelData;
+
+    int width = 0;
+    int height = 0;
+    int channels = 0;
+
+    if ( !LoadImage ( pixelData, fileName, width, height, channels ) )
+        return false;
+
+    const VkFormat actualFormat = PickupFormat ( channels );
+
+    if ( IsFormatCompatible ( format, actualFormat, renderer ) )
+        return false;
+
+    const bool result = UploadData ( pixelData,
+        VkExtent2D { .width = static_cast<uint32_t> ( width ), .height = static_cast<uint32_t> ( height ) },
+        format,
+        renderer,
+        commandBuffer
+    );
+
+    if ( !result )
+        return false;
+
+    _fileName = std::move ( fileName );
+    return true;
+}
+
+bool Texture2D::UploadData ( const std::vector<uint8_t> &data,
+    const VkExtent2D &resolution,
+    VkFormat format,
+    android_vulkan::Renderer &renderer,
+    VkCommandBuffer commandBuffer
+)
+{
+    _format = format;
+    _resolution = resolution;
 
     VkImageCreateInfo imageInfo;
     imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -241,7 +364,7 @@ bool Texture2D::UploadData ( android_vulkan::Renderer &renderer, VkCommandBuffer
     bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
     bufferInfo.queueFamilyIndexCount = 0U;
     bufferInfo.pQueueFamilyIndices = nullptr;
-    bufferInfo.size = static_cast<VkDeviceSize> ( pixelData.size () );
+    bufferInfo.size = static_cast<VkDeviceSize> ( data.size () );
 
     result = renderer.CheckVkResult ( vkCreateBuffer ( device, &bufferInfo, nullptr, &_transfer ),
         "Texture2D::UploadData",
@@ -296,7 +419,7 @@ bool Texture2D::UploadData ( android_vulkan::Renderer &renderer, VkCommandBuffer
         return false;
     }
 
-    memcpy ( destination, pixelData.data (), static_cast<size_t> ( bufferInfo.size ) );
+    memcpy ( destination, data.data (), static_cast<size_t> ( bufferInfo.size ) );
     vkUnmapMemory ( device, _transferDeviceMemory );
 
     VkCommandBufferBeginInfo beginInfo;
@@ -485,58 +608,144 @@ bool Texture2D::UploadData ( android_vulkan::Renderer &renderer, VkCommandBuffer
     );
 }
 
-bool Texture2D::UploadData ( std::string& /*fileName*/,
-    VkFormat /*format*/,
-    android_vulkan::Renderer& /*renderer*/,
-    VkCommandBuffer /*commandBuffer*/
+uint32_t Texture2D::CountMipLevels ( const VkExtent2D &resolution ) const
+{
+    uint32_t pivot = std::max ( resolution.width, resolution.height );
+    uint32_t mipCount = 1U;
+
+    while ( pivot != 1U )
+    {
+        ++mipCount;
+        pivot >>= 1U;
+    }
+
+    return mipCount;
+}
+
+bool Texture2D::IsFormatCompatible ( VkFormat target, VkFormat candidate, android_vulkan::Renderer &renderer ) const
+{
+    if ( target == candidate )
+        return true;
+
+    const auto t = g_CompatibleFormats.find ( target );
+
+    if ( t == g_CompatibleFormats.cend () )
+    {
+        android_vulkan::LogError ( "Texture2D::IsFormatCompatible - Unexpected format %s (%i)",
+            renderer.ResolveVkFormat ( target ),
+            static_cast<int> ( target )
+        );
+
+        return false;
+    }
+
+    const auto& options = t->second;
+
+    if ( options.count ( candidate ) == 1U )
+        return true;
+
+    android_vulkan::LogError (
+        "Texture2D::IsFormatCompatible - Candidate format %s (%i) is not compatible with target format %s (%i).",
+        renderer.ResolveVkFormat ( candidate ),
+        static_cast<int> ( candidate ),
+        renderer.ResolveVkFormat ( candidate ),
+        static_cast<int> ( candidate )
+    );
+
+    return false;
+}
+
+bool Texture2D::LoadImage ( std::vector<uint8_t> &pixelData,
+    const std::string& fileName,
+    int &width,
+    int &height,
+    int &channels
 )
 {
-    assert ( !"Texture2D::UploadData - Implement me!" );
-    return false;
-}
+    android_vulkan::File file ( const_cast<std::string&> ( fileName ) );
 
-bool Texture2D::UploadData ( std::string&& /*fileName*/,
-    VkFormat /*format*/,
-    android_vulkan::Renderer& /*renderer*/,
-    VkCommandBuffer /*commandBuffer*/
-)
-{
-    assert ( !"Texture2D::UploadData - Implement me!" );
-    return false;
-}
+    if ( !file.LoadContent () )
+        return false;
 
-bool Texture2D::UploadData ( const std::vector<uint8_t>& /*data*/,
-    const VkExtent2D& /*resolution*/,
-    VkFormat /*format*/,
-    android_vulkan::Renderer& /*renderer*/,
-    VkCommandBuffer /*commandBuffer*/
-)
-{
-    assert ( !"Texture2D::UploadData - Implement me!" );
-    return false;
-}
+    const std::vector<uint8_t>& imageContent = file.GetContent ();
+    const stbi_uc* stbInData = imageContent.data ();
+    const auto stbInSize = static_cast<const int> ( imageContent.size () );
 
-uint32_t Texture2D::CountMipLevels ( const VkExtent2D& /*resolution*/ ) const
-{
-    assert ( !"Texture2D::CountMipLevels - Implement me!" );
-    return 0U;
-}
+    auto* imagePixels = stbi_load_from_memory ( stbInData, stbInSize, &width, &height, &channels, 0 );
 
-bool Texture2D::IsFormatCompatible ( VkFormat /*target*/, VkFormat /*candidate*/ ) const
-{
-    assert ( !"Texture2D::IsFormatCompatible - Implement me!" );
-    return false;
-}
+    if ( channels != 3 )
+    {
+        const auto size = static_cast<const size_t> ( width * height * channels );
+        pixelData.resize ( size );
+        memcpy ( pixelData.data (), imagePixels, size );
+        free ( imagePixels );
 
-bool Texture2D::LoadImage ( std::vector<uint8_t>& /*pixelData*/,
-    const std::string& /*fileName*/,
-    int& /*width*/,
-    int& /*height*/,
-    int& /*channels*/
-) const
-{
-    assert ( !"Texture2D::LoadImage - Implement me!" );
-    return false;
+        return true;
+    }
+
+    // We don't support 24bit per pixel mode.
+    // Expanding up to 32bit per pixel mode...
+
+    const auto size = static_cast<const size_t> ( RGBA_BYTES_PER_PIXEL * width * height );
+    pixelData.resize ( size );
+    uint8_t* dst = pixelData.data ();
+
+    auto expander = [] ( uint32_t* dst,
+        size_t dstRowSkipPixels,
+        const uint32_t* nonDstMemory,
+        const uint8_t* src,
+        size_t srcRowSkipPixels,
+        size_t rowPixelCount,
+        uint32_t oneAlphaMask
+    ) {
+        while ( dst < nonDstMemory )
+        {
+            for ( size_t i = 0U; i < rowPixelCount; ++i )
+            {
+                *dst = *reinterpret_cast<const uint32_t*> ( src );
+                *dst |= oneAlphaMask;
+
+                ++dst;
+                src += RGB_BYTES_PER_PIXEL;
+            }
+
+            src += srcRowSkipPixels;
+            dst += dstRowSkipPixels;
+        }
+    };
+
+    const auto rowPixelCount = static_cast<const size_t> ( width );
+    const auto srcRowSize = RGB_BYTES_PER_PIXEL * rowPixelCount;
+    const auto srcRowSkipPixels = EXPANDER_THREADS * srcRowSize;
+    const auto dstRowSize = RGBA_BYTES_PER_PIXEL * rowPixelCount;
+    const auto dstRowSkipPixels = EXPANDER_THREADS * rowPixelCount;
+    const auto* nonDstMemory = reinterpret_cast<uint32_t*> ( dst + size );
+
+    constexpr const uint8_t oneAlphaRaw[ RGBA_BYTES_PER_PIXEL ] = { 0x00U, 0x00U, 0x00U, 0xFFU };
+    const uint32_t oneAlphaMask = *reinterpret_cast<const uint32_t*> ( oneAlphaRaw );
+
+    std::array<std::thread, EXPANDER_THREADS> expanders;
+
+    for ( size_t i = 0U; i < EXPANDER_THREADS; ++i )
+    {
+        expanders[ i ] = std::thread ( expander,
+            reinterpret_cast<uint32_t*> ( dst + i * dstRowSize ),
+            dstRowSkipPixels,
+            nonDstMemory,
+            imagePixels + i * srcRowSize,
+            srcRowSkipPixels,
+            rowPixelCount,
+            oneAlphaMask
+        );
+    }
+
+    for ( size_t i = 0U; i < EXPANDER_THREADS; ++i )
+        expanders[ i ].join ();
+
+    free ( imagePixels );
+    channels = static_cast<int> ( RGBA_BYTES_PER_PIXEL );
+
+    return true;
 }
 
 VkFormat Texture2D::PickupFormat ( int channels ) const

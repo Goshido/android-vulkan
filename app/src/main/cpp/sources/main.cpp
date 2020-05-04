@@ -8,7 +8,9 @@ AV_RESTORE_WARNING_STATE
 
 #include <core.h>
 #include <logger.h>
-#include <mandelbrot/mandelbrot_lut_color.h>
+#include <rotating_mesh/game.h>
+//#include <mandelbrot/mandelbrot_lut_color.h>
+//#include <mandelbrot/mandelbrot_analytic_color.h>
 
 
 void android_main ( android_app* app )
@@ -20,8 +22,10 @@ void android_main ( android_app* app )
 
 #endif // ANDROID_VULKAN_DEBUG
 
-    mandelbrot::MandelbrotLUTColor mandelbrotLUTColorGame;
-    android_vulkan::Core core ( *app, mandelbrotLUTColorGame );
+    rotating_mesh::Game game;
+    //mandelbrot::MandelbrotLUTColor game;
+    //mandelbrot::MandelbrotAnalyticColor game;
+    android_vulkan::Core core ( *app, game );
 
     for ( ; ; )
     {

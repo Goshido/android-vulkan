@@ -261,20 +261,23 @@ void MandelbrotBase::DestroyPresentationSyncPrimitive ( android_vulkan::Renderer
 
 bool MandelbrotBase::CreatePipeline ( android_vulkan::Renderer &renderer )
 {
-    if ( !CreateShader ( _vertexShader, VERTEX_SHADER, renderer ) )
-    {
-        android_vulkan::LogError ( "MandelbrotBase::CreatePipeline - Can't create vertex shader." );
+    bool result = renderer.CreateShader ( _vertexShader,
+        VERTEX_SHADER,
+        "Can't create vertex shader (MandelbrotBase::CreatePipeline)"
+    );
+
+    if ( !result )
         return false;
-    }
 
     AV_REGISTER_SHADER_MODULE ( "MandelbrotBase::_vertexShader" )
 
-    if ( !CreateShader ( _fragmentShader, _fragmentShaderSpirV, renderer ) )
-    {
-        android_vulkan::LogError ( "MandelbrotBase::CreatePipeline - Can't create fragment shader %s.",
-            _fragmentShaderSpirV
-        );
+    result = renderer.CreateShader ( _fragmentShader,
+        _fragmentShaderSpirV,
+        "Can't create fragment shader (MandelbrotBase::CreatePipeline)"
+    );
 
+    if ( !result )
+    {
         DestroyPipeline ( renderer );
         return false;
     }
@@ -404,13 +407,13 @@ bool MandelbrotBase::CreatePipeline ( android_vulkan::Renderer &renderer )
     pipelineInfo.pColorBlendState = &colorBlendStateInfo;
     pipelineInfo.pDepthStencilState = &depthStencilInfo;
     pipelineInfo.layout = _pipelineLayout;
-    pipelineInfo.renderPass = renderer.GetPresentRenderPass ();
+    pipelineInfo.renderPass = _renderPass;
     pipelineInfo.subpass = 0U;
     pipelineInfo.pTessellationState = nullptr;
     pipelineInfo.pDynamicState = nullptr;
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 
-    const bool result = renderer.CheckVkResult (
+    result = renderer.CheckVkResult (
         vkCreateGraphicsPipelines ( renderer.GetDevice (), VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
         "MandelbrotBase::CreatePipeline",
         "Can't create pipeline"
@@ -515,32 +518,6 @@ void MandelbrotBase::DestroyRenderPass ( android_vulkan::Renderer &renderer )
     vkDestroyRenderPass ( renderer.GetDevice (), _renderPass, nullptr );
     _renderPass = VK_NULL_HANDLE;
     AV_UNREGISTER_RENDER_PASS ( "MandelbrotBase::_renderPass" )
-}
-
-bool MandelbrotBase::CreateShader ( VkShaderModule &shader,
-    const char* shaderFile,
-    android_vulkan::Renderer &renderer
-) const
-{
-    android_vulkan::File vertexShader ( shaderFile );
-
-    if ( !vertexShader.LoadContent () )
-        return false;
-
-    const std::vector<uint8_t>& spirV = vertexShader.GetContent ();
-
-    VkShaderModuleCreateInfo shaderModuleCreateInfo;
-    shaderModuleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-    shaderModuleCreateInfo.pNext = nullptr;
-    shaderModuleCreateInfo.flags = 0U;
-    shaderModuleCreateInfo.codeSize = spirV.size ();
-    shaderModuleCreateInfo.pCode = reinterpret_cast<const uint32_t*> ( spirV.data () );
-
-    return renderer.CheckVkResult (
-        vkCreateShaderModule ( renderer.GetDevice (), &shaderModuleCreateInfo, nullptr, &shader ),
-        "MandelbrotBase::CreateShader",
-        "Can't create shader"
-    );
 }
 
 } // namespace mandelbrot

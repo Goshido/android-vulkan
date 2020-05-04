@@ -352,7 +352,6 @@ bool MandelbrotLUTColor::CreateLUT ( android_vulkan::Renderer &renderer )
     result = renderer.TryAllocateMemory ( _lutDeviceMemory,
         requirements,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-        "MandelbrotLUTColor::_lutDeviceMemory",
         "Can't allocate LUT memory (MandelbrotLUTColor::CreateLUT)"
     );
 
@@ -361,6 +360,8 @@ bool MandelbrotLUTColor::CreateLUT ( android_vulkan::Renderer &renderer )
         DestroyLUT ( renderer );
         return false;
     }
+
+    AV_REGISTER_DEVICE_MEMORY ( "MandelbrotLUTColor::_lutDeviceMemory" )
 
     result = renderer.CheckVkResult ( vkBindImageMemory ( device, _lut, _lutDeviceMemory, 0U ),
         "MandelbrotLUTColor::_lutDeviceMemory",
@@ -548,7 +549,6 @@ bool MandelbrotLUTColor::UploadLUTSamples ( android_vulkan::Renderer &renderer )
     result = renderer.TryAllocateMemory ( transferDeviceMemory,
         requirements,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-        "MandelbrotLUTColor::UploadLUTSamples::transferDeviceMemory",
         "Can't allocate transfer memory (MandelbrotLUTColor::UploadLUTSamples)"
     );
 
@@ -568,6 +568,8 @@ bool MandelbrotLUTColor::UploadLUTSamples ( android_vulkan::Renderer &renderer )
         freeTransferResource ();
         return false;
     }
+
+    AV_REGISTER_DEVICE_MEMORY ( "MandelbrotLUTColor::UploadLUTSamples::transferDeviceMemory" )
 
     result = renderer.CheckVkResult ( vkBindBufferMemory ( device, transfer, transferDeviceMemory, 0U ),
         "MandelbrotLUTColor::CreateLUT",

@@ -10,7 +10,8 @@ AV_DISABLE_COMMON_WARNINGS
 
 AV_RESTORE_WARNING_STATE
 
-#include "vulkan_utils.h"
+#include <vulkan_utils.h>
+#include <file.h>
 
 
 namespace android_vulkan {
@@ -657,6 +658,31 @@ bool Renderer::CheckVkResult ( VkResult result, const char* from, const char* me
     return false;
 }
 
+bool Renderer::CreateShader ( VkShaderModule &shader,
+    std::string &&shaderFile,
+    const char* errorMessage
+) const
+{
+    android_vulkan::File vertexShader ( shaderFile );
+
+    if ( !vertexShader.LoadContent () )
+        return false;
+
+    const std::vector<uint8_t>& spirV = vertexShader.GetContent ();
+
+    VkShaderModuleCreateInfo shaderModuleCreateInfo;
+    shaderModuleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+    shaderModuleCreateInfo.pNext = nullptr;
+    shaderModuleCreateInfo.flags = 0U;
+    shaderModuleCreateInfo.codeSize = spirV.size ();
+    shaderModuleCreateInfo.pCode = reinterpret_cast<const uint32_t*> ( spirV.data () );
+
+    return CheckVkResult ( vkCreateShaderModule ( _device, &shaderModuleCreateInfo, nullptr, &shader ),
+        "Renderer::CreateShader",
+        errorMessage
+    );
+}
+
 VkFormat Renderer::GetDefaultDepthStencilFormat () const
 {
     return _depthStencilImageFormat;
@@ -922,8 +948,7 @@ bool Renderer::SelectTargetMemoryTypeIndex ( uint32_t &targetMemoryTypeIndex,
 bool Renderer::TryAllocateMemory ( VkDeviceMemory &memory,
     const VkMemoryRequirements &requirements,
     VkMemoryPropertyFlags memoryProperties,
-    const char* where,
-    const char* checkFailMessage
+    const char* errorMessage
 ) const
 {
     VkMemoryAllocateInfo allocateInfo;
@@ -939,17 +964,10 @@ bool Renderer::TryAllocateMemory ( VkDeviceMemory &memory,
     if ( !result )
         return false;
 
-    result = CheckVkResult (
-        vkAllocateMemory ( _device, &allocateInfo, nullptr, &memory ),
+    return CheckVkResult ( vkAllocateMemory ( _device, &allocateInfo, nullptr, &memory ),
         "Renderer::TryAllocateMemory",
-        checkFailMessage
+        errorMessage
     );
-
-    if ( !result )
-        return false;
-
-    AV_REGISTER_DEVICE_MEMORY ( std::move ( where ) )
-    return true;
 }
 
 bool Renderer::DeployDebugFeatures ()

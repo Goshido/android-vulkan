@@ -70,8 +70,6 @@ class MandelbrotBase : public android_vulkan::Game
 
         bool CreateRenderPass ( android_vulkan::Renderer &renderer );
         void DestroyRenderPass ( android_vulkan::Renderer &renderer );
-
-        bool CreateShader ( VkShaderModule &shader, const char* shaderFile, android_vulkan::Renderer &renderer ) const;
 };
 
 } // namespace mandelbrot

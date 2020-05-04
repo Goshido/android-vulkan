@@ -107,6 +107,11 @@ class Renderer final
         // Method returns true is "result" equals VK_SUCCESS. Otherwise method returns false.
         bool CheckVkResult ( VkResult result, const char* from, const char* message ) const;
 
+        bool CreateShader ( VkShaderModule &shader,
+            std::string &&shaderFile,
+            const char* errorMessage
+        ) const;
+
         VkFormat GetDefaultDepthStencilFormat () const;
         VkDevice GetDevice () const;
         VkFramebuffer GetPresentFramebuffer ( uint32_t framebufferIndex ) const;
@@ -134,8 +139,7 @@ class Renderer final
         bool TryAllocateMemory ( VkDeviceMemory &memory,
             const VkMemoryRequirements &requirements,
             VkMemoryPropertyFlags memoryProperties,
-            const char* where,
-            const char* checkFailMessage
+            const char* errorMessage
         ) const;
 
     private:

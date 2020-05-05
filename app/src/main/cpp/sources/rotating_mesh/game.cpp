@@ -19,24 +19,28 @@ constexpr static const char* VERTEX_SHADER_ENTRY_POINT = "VS";
 constexpr static const char* FRAGMENT_SHADER = "shaders/static-mesh-ps.spv";
 constexpr static const char* FRAGMENT_SHADER_ENTRY_POINT = "PS";
 
+constexpr static const char* MATERIAL_1_DIFFUSE = "textures/rotating_mesh/sonic-material-1-diffuse.png";
+constexpr static const char* MATERIAL_2_DIFFUSE = "textures/rotating_mesh/sonic-material-2-diffuse.png";
+constexpr static const char* MATERIAL_2_NORMAL = "textures/rotating_mesh/sonic-material-2-normal.png";
+constexpr static const char* MATERIAL_3_DIFFUSE = "textures/rotating_mesh/sonic-material-3-diffuse.png";
+constexpr static const char* MATERIAL_3_NORMAL = "textures/rotating_mesh/sonic-material-3-normal.png";
+
+//----------------------------------------------------------------------------------------------------------------------
+
 Game::Game ():
     _commandPool ( VK_NULL_HANDLE ),
-    _material1Diffuse ( "textures/rotating_mesh/sonic-material-1-diffuse.png", VK_FORMAT_R8G8B8A8_SRGB ),
-    _material2Diffuse ( "textures/rotating_mesh/sonic-material-2-diffuse.png", VK_FORMAT_R8G8B8A8_SRGB ),
-    _material2Normal ( "textures/rotating_mesh/sonic-material-2-normal.png", VK_FORMAT_R8G8B8A8_SRGB ),
-    _material3Diffuse ( "textures/rotating_mesh/sonic-material-3-diffuse.png", VK_FORMAT_R8G8B8A8_SRGB ),
-    _material3Normal ( "textures/rotating_mesh/sonic-material-3-normal.png", VK_FORMAT_R8G8B8A8_SRGB ),
 //    _constantBuffer ( VK_NULL_HANDLE ),
 //    _constantBufferDeviceMemory ( VK_NULL_HANDLE ),
-//    _descriptorPool ( VK_NULL_HANDLE ),
+    _descriptorPool ( VK_NULL_HANDLE ),
+    _descriptorSet ( VK_NULL_HANDLE ),
     _descriptorSetLayout ( VK_NULL_HANDLE ),
 //    _mesh ( VK_NULL_HANDLE ),
 //    _meshDeviceMemory ( VK_NULL_HANDLE ),
     _pipeline ( VK_NULL_HANDLE ),
     _pipelineLayout ( VK_NULL_HANDLE ),
-    _presentationImageFence ( VK_NULL_HANDLE ),
     _renderPass ( VK_NULL_HANDLE ),
     _renderPassEndSemaphore ( VK_NULL_HANDLE ),
+    _renderTargetAcquiredSemaphore ( VK_NULL_HANDLE ),
     _sampler09Mips ( VK_NULL_HANDLE ),
     _sampler10Mips ( VK_NULL_HANDLE ),
     _sampler11Mips ( VK_NULL_HANDLE ),
@@ -48,8 +52,7 @@ Game::Game ():
 
 bool Game::IsReady ()
 {
-    //assert ( !"Game::IsReady - Implement me!" );
-    return false;
+    return _descriptorSet != VK_NULL_HANDLE;
 }
 
 bool Game::OnInit ( android_vulkan::Renderer &renderer )
@@ -102,14 +105,19 @@ bool Game::OnInit ( android_vulkan::Renderer &renderer )
         return false;
     }
 
+    if ( !CreateDescriptorSet ( renderer ) )
+    {
+        OnDestroy ( renderer );
+        return false;
+    }
+
     if ( !InitCommandBuffers ( renderer ) )
     {
         OnDestroy ( renderer );
         return false;
     }
 
-    assert ( !"Game::OnInit - Implement me!" );
-    return false;
+    return true;
 }
 
 bool Game::OnFrame ( android_vulkan::Renderer &renderer, double /*deltaTime*/ )
@@ -119,13 +127,35 @@ bool Game::OnFrame ( android_vulkan::Renderer &renderer, double /*deltaTime*/ )
     if ( !BeginFrame ( presentationImageIndex, renderer ) )
         return false;
 
-    assert ( !"Game::OnFrame - Implement me!" );
+    constexpr const VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT |
+        VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+
+    VkSubmitInfo submitInfo;
+    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submitInfo.pNext = nullptr;
+    submitInfo.commandBufferCount = 1U;
+    submitInfo.pCommandBuffers = &_commandBuffers[ static_cast<uint32_t> ( presentationImageIndex ) ];
+    submitInfo.waitSemaphoreCount = 1U;
+    submitInfo.pWaitDstStageMask = &waitStage;
+    submitInfo.pWaitSemaphores = &_renderTargetAcquiredSemaphore;
+    submitInfo.signalSemaphoreCount = 1U;
+    submitInfo.pSignalSemaphores = &_renderPassEndSemaphore;
+
+    const bool result = renderer.CheckVkResult (
+        vkQueueSubmit ( renderer.GetQueue (), 1U, &submitInfo, VK_NULL_HANDLE ),
+        "Game::OnFrame",
+        "Can't submit command buffer"
+    );
+
+    if ( !result )
+        return false;
 
     return EndFrame ( presentationImageIndex, renderer );
 }
 
 bool Game::OnDestroy ( android_vulkan::Renderer &renderer )
 {
+    DestroyDescriptorSet ( renderer );
     DestroyPipeline ( renderer );
     DestroyPipelineLayout ( renderer );
     DestroyShaderModules ( renderer );
@@ -135,47 +165,28 @@ bool Game::OnDestroy ( android_vulkan::Renderer &renderer )
     DestroySyncPrimitives ( renderer );
     DestroyRenderPass ( renderer );
 
-    assert ( !"Game::OnDestroy - Implement me!" );
-    return false;
+    return true;
 }
 
 bool Game::BeginFrame ( uint32_t &presentationImageIndex, android_vulkan::Renderer &renderer )
 {
-    const VkDevice device = renderer.GetDevice ();
-
-    bool result = renderer.CheckVkResult (
-        vkAcquireNextImageKHR ( device,
+    return renderer.CheckVkResult (
+        vkAcquireNextImageKHR ( renderer.GetDevice (),
             renderer.GetSwapchain (),
             UINT64_MAX,
+            _renderTargetAcquiredSemaphore,
             VK_NULL_HANDLE,
-            _presentationImageFence,
             &presentationImageIndex
         ),
 
         "Game::BeginFrame",
         "Can't get presentation image index"
     );
-
-    if ( !result )
-        return false;
-
-    result = renderer.CheckVkResult ( vkWaitForFences ( device, 1U, &_presentationImageFence, VK_TRUE, UINT64_MAX ),
-        "Game::BeginFrame",
-        "Can't wain for presentation image index fence"
-    );
-
-    if ( !result )
-        return false;
-
-    return renderer.CheckVkResult ( vkResetFences ( device, 1U, &_presentationImageFence ),
-        "Game::BeginFrame",
-        "Can't resent presentation image index fence"
-    );
 }
 
 bool Game::EndFrame ( uint32_t presentationImageIndex, android_vulkan::Renderer &renderer )
 {
-    VkResult presentResult;
+    VkResult presentResult = VK_ERROR_DEVICE_LOST;
 
     VkPresentInfoKHR presentInfo;
     presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -228,6 +239,98 @@ void Game::DestroyCommandPool ( android_vulkan::Renderer &renderer )
     vkDestroyCommandPool ( renderer.GetDevice (), _commandPool, nullptr );
     _commandPool = VK_NULL_HANDLE;
     AV_UNREGISTER_COMMAND_POOL ( "Game::_commandPool" )
+}
+
+bool Game::CreateDescriptorSet ( android_vulkan::Renderer &renderer )
+{
+    const VkDevice device = renderer.GetDevice ();
+
+    VkDescriptorPoolSize samplerFeature;
+    samplerFeature.descriptorCount = 1U;
+    samplerFeature.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+
+    VkDescriptorPoolCreateInfo poolInfo;
+    poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+    poolInfo.pNext = nullptr;
+    poolInfo.flags = 0U;
+    poolInfo.maxSets = 1U;
+    poolInfo.poolSizeCount = 1U;
+    poolInfo.pPoolSizes = &samplerFeature;
+
+    bool result = renderer.CheckVkResult ( vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_descriptorPool ),
+        "Game::CreateDescriptorSet",
+        "Can't create descriptor pool"
+    );
+
+    if ( !result )
+        return false;
+
+    AV_REGISTER_DESCRIPTOR_POOL ( "Game::_descriptorPool" )
+
+    VkDescriptorSetAllocateInfo setAllocateInfo;
+    setAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+    setAllocateInfo.pNext = nullptr;
+    setAllocateInfo.descriptorPool = _descriptorPool;
+    setAllocateInfo.pSetLayouts = &_descriptorSetLayout;
+    setAllocateInfo.descriptorSetCount = 1U;
+
+    result = renderer.CheckVkResult ( vkAllocateDescriptorSets ( device, &setAllocateInfo, &_descriptorSet ),
+        "Game::CreateDescriptorSet",
+        "Can't allocate descriptor set"
+    );
+
+    if ( !result )
+        return false;
+
+    auto selector = [ this ] ( const Texture2D &texture ) -> VkSampler {
+        const uint8_t mips = texture.GetMipLevelCount ();
+
+        if ( mips == 9U )
+            return _sampler09Mips;
+
+        if ( mips == 10U )
+            return _sampler10Mips;
+
+        if ( mips == 11U )
+            return _sampler11Mips;
+
+        assert ( !"Game::CreateDescriptorSet::selector - Can't select sampler" );
+        return VK_NULL_HANDLE;
+    };
+
+    const Texture2D& target = _material1Diffuse;
+
+    VkDescriptorImageInfo imageInfo;
+    imageInfo.sampler = selector ( target );
+    imageInfo.imageView = target.GetImageView ();
+    imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+    VkWriteDescriptorSet writeSet;
+    writeSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    writeSet.pNext = nullptr;
+    writeSet.dstSet = _descriptorSet;
+    writeSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    writeSet.dstBinding = 0U;
+    writeSet.dstArrayElement = 0U;
+    writeSet.descriptorCount = 1U;
+    writeSet.pImageInfo = &imageInfo;
+    writeSet.pBufferInfo = nullptr;
+    writeSet.pTexelBufferView = nullptr;
+
+    vkUpdateDescriptorSets ( device, 1U, &writeSet, 0U, nullptr );
+    return true;
+}
+
+void Game::DestroyDescriptorSet ( android_vulkan::Renderer &renderer )
+{
+    if ( _descriptorPool == VK_NULL_HANDLE )
+        return;
+
+    vkDestroyDescriptorPool ( renderer.GetDevice (), _descriptorPool, nullptr );
+    _descriptorPool = VK_NULL_HANDLE;
+    AV_UNREGISTER_DESCRIPTOR_POOL ( "Game::_descriptorPool" )
+
+    _descriptorSet = VK_NULL_HANDLE;
 }
 
 bool Game::CreateConstantBuffer ( android_vulkan::Renderer& /*renderer*/ )
@@ -682,27 +785,12 @@ bool Game::CreateSyncPrimitives ( android_vulkan::Renderer &renderer )
 {
     const VkDevice device = renderer.GetDevice ();
 
-    VkFenceCreateInfo fenceInfo;
-    fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-    fenceInfo.pNext = nullptr;
-    fenceInfo.flags = 0U;
-
-    bool result = renderer.CheckVkResult ( vkCreateFence ( device, &fenceInfo, nullptr, &_presentationImageFence ),
-        "Game::CreateSyncPrimitives",
-        "Can't create presentation fence"
-    );
-
-    if ( !result )
-        return false;
-
-    AV_REGISTER_FENCE ( "Game::_presentationImageFence" )
-
     VkSemaphoreCreateInfo semaphoreInfo;
     semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
     semaphoreInfo.pNext = nullptr;
     semaphoreInfo.flags = 0U;
 
-    result = renderer.CheckVkResult ( vkCreateSemaphore ( device, &semaphoreInfo, nullptr, &_renderPassEndSemaphore ),
+    bool result = renderer.CheckVkResult ( vkCreateSemaphore ( device, &semaphoreInfo, nullptr, &_renderPassEndSemaphore ),
         "Game::CreateSyncPrimitives",
         "Can't create render pass end semaphore"
     );
@@ -711,28 +799,37 @@ bool Game::CreateSyncPrimitives ( android_vulkan::Renderer &renderer )
         return false;
 
     AV_REGISTER_SEMAPHORE ( "Game::_renderPassEndSemaphore" )
+
+    result = renderer.CheckVkResult (
+        vkCreateSemaphore ( device, &semaphoreInfo, nullptr, &_renderTargetAcquiredSemaphore ),
+        "Game::CreateSyncPrimitives",
+        "Can't create render target acquired semaphore"
+    );
+
+    if ( !result )
+        return false;
+
+    AV_REGISTER_SEMAPHORE ( "Game::_renderTargetAcquiredSemaphore" )
     return true;
 }
 
 void Game::DestroySyncPrimitives ( android_vulkan::Renderer &renderer )
 {
-    assert ( !"Game::DestroySyncPrimitives - Implement me!" );
-
     const VkDevice device = renderer.GetDevice ();
 
-    if ( _renderPassEndSemaphore != VK_NULL_HANDLE )
+    if ( _renderTargetAcquiredSemaphore != VK_NULL_HANDLE )
     {
-        vkDestroySemaphore ( device, _renderPassEndSemaphore, nullptr );
-        _renderPassEndSemaphore = VK_NULL_HANDLE;
-        AV_UNREGISTER_SEMAPHORE ( "Game::_renderPassEndSemaphore" )
+        vkDestroySemaphore ( device, _renderTargetAcquiredSemaphore, nullptr );
+        _renderTargetAcquiredSemaphore = VK_NULL_HANDLE;
+        AV_UNREGISTER_SEMAPHORE ( "Game::_renderTargetAcquiredSemaphore" )
     }
 
-    if ( _presentationImageFence == VK_NULL_HANDLE )
+    if ( _renderPassEndSemaphore == VK_NULL_HANDLE )
         return;
 
-    vkDestroyFence ( device, _presentationImageFence, nullptr );
-    _presentationImageFence = VK_NULL_HANDLE;
-    AV_UNREGISTER_FENCE ( "Game::_presentationImageFence" )
+    vkDestroySemaphore ( device, _renderPassEndSemaphore, nullptr );
+    _renderPassEndSemaphore = VK_NULL_HANDLE;
+    AV_UNREGISTER_SEMAPHORE ( "Game::_renderPassEndSemaphore" )
 }
 
 bool Game::CreateTextures ( android_vulkan::Renderer &renderer )
@@ -757,19 +854,49 @@ bool Game::CreateTextures ( android_vulkan::Renderer &renderer )
     if ( !result )
         return false;
 
-    if ( !_material1Diffuse.UploadData ( renderer, textureCommandBuffers[ 0U ] ) )
+    result = _material1Diffuse.UploadData ( MATERIAL_1_DIFFUSE,
+        VK_FORMAT_R8G8B8A8_SRGB,
+        renderer,
+        textureCommandBuffers[ 0U ]
+    );
+
+    if ( !result )
         return false;
 
-    if ( !_material2Diffuse.UploadData ( renderer, textureCommandBuffers[ 1U ] ) )
+    result = _material2Diffuse.UploadData ( MATERIAL_2_DIFFUSE,
+        VK_FORMAT_R8G8B8A8_SRGB,
+        renderer,
+        textureCommandBuffers[ 1U ]
+    );
+
+    if ( !result )
         return false;
 
-    if ( !_material2Normal.UploadData ( renderer, textureCommandBuffers[ 2U ] ) )
+    result = _material2Normal.UploadData ( MATERIAL_2_NORMAL,
+        VK_FORMAT_R8G8B8A8_SRGB,
+        renderer,
+        textureCommandBuffers[ 2U ]
+    );
+
+    if ( !result )
         return false;
 
-    if ( !_material3Diffuse.UploadData ( renderer, textureCommandBuffers[ 3U ] ) )
+    result = _material3Diffuse.UploadData ( MATERIAL_3_DIFFUSE,
+        VK_FORMAT_R8G8B8A8_SRGB,
+        renderer,
+        textureCommandBuffers[ 3U ]
+    );
+
+    if ( !result )
         return false;
 
-    if ( !_material3Normal.UploadData ( renderer, textureCommandBuffers[ 4U ] ) )
+    result = _material3Normal.UploadData ( MATERIAL_3_NORMAL,
+        VK_FORMAT_R8G8B8A8_SRGB,
+        renderer,
+        textureCommandBuffers[ 4U ]
+    );
+
+    if ( !result )
         return false;
 
     result = renderer.CheckVkResult ( vkQueueWaitIdle ( renderer.GetQueue () ),
@@ -804,10 +931,95 @@ void Game::DestroyTextures ( android_vulkan::Renderer &renderer )
     _material1Diffuse.FreeResources ( renderer );
 }
 
-bool Game::InitCommandBuffers ( android_vulkan::Renderer& /*renderer*/ )
+bool Game::InitCommandBuffers ( android_vulkan::Renderer &renderer )
 {
-    assert ( !"Game::InitCommandBuffers - Implement me!" );
-    return false;
+    const size_t framebuffers = renderer.GetPresentFramebufferCount ();
+    _commandBuffers.resize ( framebuffers );
+    VkCommandBuffer* commandBuffers = _commandBuffers.data ();
+
+    VkCommandBufferAllocateInfo allocateInfo;
+    allocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    allocateInfo.pNext = nullptr;
+    allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    allocateInfo.commandBufferCount = static_cast<uint32_t> ( framebuffers );
+    allocateInfo.commandPool = _commandPool;
+
+    const VkDevice device = renderer.GetDevice ();
+
+    bool result = renderer.CheckVkResult ( vkAllocateCommandBuffers ( device, &allocateInfo, commandBuffers ),
+        "Game::InitCommandBuffers",
+        "Can't allocate command buffer"
+    );
+
+    if ( !result )
+        return false;
+
+    VkCommandBufferBeginInfo bufferBeginInfo;
+    bufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    bufferBeginInfo.pNext = nullptr;
+    bufferBeginInfo.flags = 0U;
+    bufferBeginInfo.pInheritanceInfo = nullptr;
+
+    VkClearValue clearValues[ 2U ];
+    VkClearValue& colorTarget = clearValues[ 0U ];
+    memset ( &colorTarget.color, 0, sizeof ( colorTarget.color ) );
+
+    VkClearValue& depthStencilTarget = clearValues[ 1U ];
+    depthStencilTarget.depthStencil.depth = 1.0F;
+    depthStencilTarget.depthStencil.stencil = 0x00000000U;
+
+    VkRenderPassBeginInfo renderPassBeginInfo;
+    renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+    renderPassBeginInfo.pNext = nullptr;
+    renderPassBeginInfo.renderArea.offset.x = 0;
+    renderPassBeginInfo.renderArea.offset.y = 0;
+    renderPassBeginInfo.renderArea.extent = renderer.GetSurfaceSize ();
+    renderPassBeginInfo.renderPass = _renderPass;
+    renderPassBeginInfo.clearValueCount = 2U;
+    renderPassBeginInfo.pClearValues = clearValues;
+
+    for ( size_t i = 0U; i < framebuffers; ++i )
+    {
+        const VkCommandBuffer commandBuffer = commandBuffers[ i ];
+
+        result = renderer.CheckVkResult ( vkBeginCommandBuffer ( commandBuffer, &bufferBeginInfo ),
+            "Game::InitCommandBuffers",
+            "Can't begin command buffer"
+        );
+
+        if ( !result )
+            return false;
+
+        renderPassBeginInfo.framebuffer = renderer.GetPresentFramebuffer ( static_cast<uint32_t> ( i ) );
+        vkCmdBeginRenderPass ( commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE );
+
+        vkCmdBindPipeline ( commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline );
+
+        vkCmdBindDescriptorSets ( commandBuffer,
+            VK_PIPELINE_BIND_POINT_GRAPHICS,
+            _pipelineLayout,
+            0U,
+            1U,
+            &_descriptorSet,
+            0U,
+            nullptr
+        );
+
+        vkCmdDraw ( commandBuffer, 4U, 1U, 0U, 0U );
+        vkCmdEndRenderPass ( commandBuffer );
+
+        result = renderer.CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
+            "Game::InitCommandBuffers",
+            "Can't end command buffer"
+        );
+
+        if ( result )
+            continue;
+
+        return false;
+    }
+
+    return true;
 }
 
 } // namespace rotating_mesh

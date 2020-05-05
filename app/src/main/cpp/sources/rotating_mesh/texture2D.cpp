@@ -118,6 +118,11 @@ void Texture2D::FreeTransferResources ( android_vulkan::Renderer &renderer )
     AV_UNREGISTER_BUFFER ( "Texture2D::_transfer" )
 }
 
+VkImageView Texture2D::GetImageView () const
+{
+    return _imageView;
+}
+
 uint8_t Texture2D::GetMipLevelCount () const
 {
     return _mipLevels;

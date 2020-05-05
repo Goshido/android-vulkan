@@ -13,16 +13,11 @@ class Game final : public android_vulkan::Game
     private:
         VkCommandPool                   _commandPool;
 
-        Texture2D                       _material1Diffuse;
-        Texture2D                       _material2Diffuse;
-        Texture2D                       _material2Normal;
-        Texture2D                       _material3Diffuse;
-        Texture2D                       _material3Normal;
-
         //VkBuffer                        _constantBuffer;
         //VkDeviceMemory                  _constantBufferDeviceMemory;
 
-        //VkDescriptorPool                _descriptorPool;
+        VkDescriptorPool                _descriptorPool;
+        VkDescriptorSet                 _descriptorSet;
         VkDescriptorSetLayout           _descriptorSetLayout;
 
         //VkBuffer                        _mesh;
@@ -31,9 +26,10 @@ class Game final : public android_vulkan::Game
         VkPipeline                      _pipeline;
         VkPipelineLayout                _pipelineLayout;
 
-        VkFence                         _presentationImageFence;
         VkRenderPass                    _renderPass;
+
         VkSemaphore                     _renderPassEndSemaphore;
+        VkSemaphore                     _renderTargetAcquiredSemaphore;
 
         VkSampler                       _sampler09Mips;
         VkSampler                       _sampler10Mips;
@@ -42,7 +38,13 @@ class Game final : public android_vulkan::Game
         VkShaderModule                  _vertexShaderModule;
         VkShaderModule                  _fragmentShaderModule;
 
-        //std::vector<VkCommandBuffer>    _commandBuffers;
+        std::vector<VkCommandBuffer>    _commandBuffers;
+
+        Texture2D                       _material1Diffuse;
+        Texture2D                       _material2Diffuse;
+        Texture2D                       _material2Normal;
+        Texture2D                       _material3Diffuse;
+        Texture2D                       _material3Normal;
 
     public:
         Game ();
@@ -63,6 +65,9 @@ class Game final : public android_vulkan::Game
 
         bool CreateCommandPool ( android_vulkan::Renderer &renderer );
         void DestroyCommandPool ( android_vulkan::Renderer &renderer );
+
+        bool CreateDescriptorSet ( android_vulkan::Renderer &renderer );
+        void DestroyDescriptorSet ( android_vulkan::Renderer &renderer );
 
         bool CreateConstantBuffer ( android_vulkan::Renderer &renderer );
         void DestroyConstantBuffer ( android_vulkan::Renderer &renderer );

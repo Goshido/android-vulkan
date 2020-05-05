@@ -49,6 +49,7 @@ class Texture2D final
         // _transfer and _transferDeviceMemory for Texture2D objects.
         void FreeTransferResources ( android_vulkan::Renderer &renderer );
 
+        VkImageView GetImageView () const;
         uint8_t GetMipLevelCount () const;
 
         // Method is used when file name and format are passed via constructor.

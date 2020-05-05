@@ -113,6 +113,7 @@ class Renderer final
         ) const;
 
         VkFormat GetDefaultDepthStencilFormat () const;
+        VkImage GetDefaultDepthStencilImage () const;
         VkDevice GetDevice () const;
         VkFramebuffer GetPresentFramebuffer ( uint32_t framebufferIndex ) const;
         size_t GetPresentFramebufferCount () const;

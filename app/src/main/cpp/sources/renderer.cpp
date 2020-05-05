@@ -653,7 +653,7 @@ bool Renderer::CheckVkResult ( VkResult result, const char* from, const char* me
     if ( result == VK_SUCCESS )
         return true;
 
-    LogError ( "Renderer::%s - %s. Error: %s.", from, message, ResolveVkResult ( result ) );
+    LogError ( "%s - %s. Error: %s.", from, message, ResolveVkResult ( result ) );
     assert ( false );
     return false;
 }
@@ -686,6 +686,11 @@ bool Renderer::CreateShader ( VkShaderModule &shader,
 VkFormat Renderer::GetDefaultDepthStencilFormat () const
 {
     return _depthStencilImageFormat;
+}
+
+VkImage Renderer::GetDefaultDepthStencilImage () const
+{
+    return _depthStencilImage;
 }
 
 VkDevice Renderer::GetDevice () const

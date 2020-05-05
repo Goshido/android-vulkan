@@ -8,10 +8,10 @@ static const float4 g_vertices[ 4u ] =
 
 static const float2 g_coordiantes[ 4u ] =
 {
-    float2 ( -2.79505f, 1.0f ),
-    float2 ( 1.39752f, 1.0f ),
-    float2 ( -2.79505f, -1.0f ),
-    float2 ( 1.39752f, -1.0f )
+    float2 ( 0.0f, 0.0f ),
+    float2 ( 1.0f, 0.0f ),
+    float2 ( 0.0f, 1.0f ),
+    float2 ( 1.0f, 1.0f )
 };
 
 struct OutputData

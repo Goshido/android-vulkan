@@ -66,11 +66,11 @@ class Game final : public android_vulkan::Game
         bool CreateCommandPool ( android_vulkan::Renderer &renderer );
         void DestroyCommandPool ( android_vulkan::Renderer &renderer );
 
-        bool CreateDescriptorSet ( android_vulkan::Renderer &renderer );
-        void DestroyDescriptorSet ( android_vulkan::Renderer &renderer );
-
         bool CreateConstantBuffer ( android_vulkan::Renderer &renderer );
         void DestroyConstantBuffer ( android_vulkan::Renderer &renderer );
+
+        bool CreateDescriptorSet ( android_vulkan::Renderer &renderer );
+        void DestroyDescriptorSet ( android_vulkan::Renderer &renderer );
 
         bool CreateMesh ( android_vulkan::Renderer &renderer );
         void DestroyMesh ( android_vulkan::Renderer &renderer );

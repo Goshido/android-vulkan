@@ -241,6 +241,17 @@ void Game::DestroyCommandPool ( android_vulkan::Renderer &renderer )
     AV_UNREGISTER_COMMAND_POOL ( "Game::_commandPool" )
 }
 
+bool Game::CreateConstantBuffer ( android_vulkan::Renderer& /*renderer*/ )
+{
+    assert ( !"Game::CreateConstantBuffer - Implement me!" );
+    return false;
+}
+
+void Game::DestroyConstantBuffer ( android_vulkan::Renderer& /*renderer*/ )
+{
+    assert ( !"Game::DestroyConstantBuffer - Implement me!" );
+}
+
 bool Game::CreateDescriptorSet ( android_vulkan::Renderer &renderer )
 {
     const VkDevice device = renderer.GetDevice ();
@@ -331,17 +342,6 @@ void Game::DestroyDescriptorSet ( android_vulkan::Renderer &renderer )
     AV_UNREGISTER_DESCRIPTOR_POOL ( "Game::_descriptorPool" )
 
     _descriptorSet = VK_NULL_HANDLE;
-}
-
-bool Game::CreateConstantBuffer ( android_vulkan::Renderer& /*renderer*/ )
-{
-    assert ( !"Game::CreateConstantBuffer - Implement me!" );
-    return false;
-}
-
-void Game::DestroyConstantBuffer ( android_vulkan::Renderer& /*renderer*/ )
-{
-    assert ( !"Game::DestroyConstantBuffer - Implement me!" );
 }
 
 bool Game::CreateMesh ( android_vulkan::Renderer& /*renderer*/ )

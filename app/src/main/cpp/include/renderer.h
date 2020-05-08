@@ -26,6 +26,7 @@ struct VulkanPhysicalDeviceInfo final
     VkPhysicalDeviceFeatures                        _features;
 
     std::vector<std::pair<VkFlags, uint32_t>>       _queueFamilyInfo;
+    VkSurfaceCapabilitiesKHR                        _surfaceCapabilities;
 
     VulkanPhysicalDeviceInfo ();
     ~VulkanPhysicalDeviceInfo () = default;
@@ -91,6 +92,7 @@ class Renderer final
         std::vector<VkImageView>                                            _swapchainImageViews;
 
         static const std::map<VkColorSpaceKHR, const char*>                 _vulkanColorSpaceMap;
+        static const std::map<VkCompositeAlphaFlagBitsKHR, const char*>     _vulkanCompositeAlphaMap;
         static const std::map<VkFormat, const char*>                        _vulkanFormatMap;
         static const std::map<VkDebugReportObjectTypeEXT, const char*>      _vulkanObjectTypeMap;
         static const std::map<VkPhysicalDeviceType, const char*>            _vulkanPhysicalDeviceTypeMap;
@@ -113,11 +115,9 @@ class Renderer final
         ) const;
 
         VkFormat GetDefaultDepthStencilFormat () const;
-        VkImage GetDefaultDepthStencilImage () const;
         VkDevice GetDevice () const;
         VkFramebuffer GetPresentFramebuffer ( uint32_t framebufferIndex ) const;
         size_t GetPresentFramebufferCount () const;
-        VkRenderPass GetPresentRenderPass () const;
         VkQueue GetQueue () const;
         uint32_t GetQueueFamilyIndex () const;
         VkFormat GetSurfaceFormat () const;
@@ -219,9 +219,11 @@ class Renderer final
         const char* ResolvePhysicalDeviceType ( VkPhysicalDeviceType type ) const;
         const char* ResolveVkDebugReportObjectType ( VkDebugReportObjectTypeEXT type ) const;
         const char* ResolveVkColorSpaceKHR ( VkColorSpaceKHR colorSpace ) const;
+        const char* ResolveVkCompositeAlpha ( VkCompositeAlphaFlagBitsKHR compositeAlpha ) const;
         const char* ResolveVkPresentModeKHR ( VkPresentModeKHR mode ) const;
         const char* ResolveVkResult ( VkResult result ) const;
 
+        bool SelectTargetCompositeAlpha ( VkCompositeAlphaFlagBitsKHR &targetCompositeAlpha ) const;
         bool SelectTargetHardware ( VkPhysicalDevice &targetPhysicalDevice, uint32_t &targetQueueFamilyIndex ) const;
         bool SelectTargetPresentMode ( VkPresentModeKHR &targetPresentMode, bool vSync ) const;
 

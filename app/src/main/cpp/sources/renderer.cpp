@@ -279,6 +279,14 @@ const std::map<VkColorSpaceKHR, const char*> Renderer::_vulkanColorSpaceMap =
     { VK_COLOR_SPACE_SRGB_NONLINEAR_KHR, "VK_COLOR_SPACE_SRGB_NONLINEAR_KHR" }
 };
 
+const std::map<VkCompositeAlphaFlagBitsKHR, const char*> Renderer::_vulkanCompositeAlphaMap =
+{
+    { VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR, "VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR" },
+    { VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR, "VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR" },
+    { VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR, "VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR" },
+    { VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR, "VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR" }
+};
+
 const std::map<VkFormat, const char*> Renderer::_vulkanFormatMap =
 {
     { VK_FORMAT_A1R5G5B5_UNORM_PACK16, "VK_FORMAT_A1R5G5B5_UNORM_PACK16" },
@@ -688,11 +696,6 @@ VkFormat Renderer::GetDefaultDepthStencilFormat () const
     return _depthStencilImageFormat;
 }
 
-VkImage Renderer::GetDefaultDepthStencilImage () const
-{
-    return _depthStencilImage;
-}
-
 VkDevice Renderer::GetDevice () const
 {
     return _device;
@@ -706,11 +709,6 @@ VkFramebuffer Renderer::GetPresentFramebuffer ( uint32_t framebufferIndex ) cons
 size_t Renderer::GetPresentFramebufferCount () const
 {
     return _presentFramebuffers.size ();
-}
-
-VkRenderPass Renderer::GetPresentRenderPass () const
-{
-    return _renderPass;
 }
 
 VkQueue Renderer::GetQueue () const
@@ -1314,7 +1312,8 @@ bool Renderer::DeploySurface ( ANativeWindow &nativeWindow )
         return false;
 
     AV_REGISTER_SURFACE ( "Renderer::_surface" )
-    VkSurfaceCapabilitiesKHR surfaceCapabilitiesKHR;
+
+    VkSurfaceCapabilitiesKHR& surfaceCapabilitiesKHR = _physicalDeviceInfo[ _physicalDevice ]._surfaceCapabilities;
 
     result = CheckVkResult (
         vkGetPhysicalDeviceSurfaceCapabilitiesKHR ( _physicalDevice, _surface, &surfaceCapabilitiesKHR ),
@@ -1413,12 +1412,22 @@ bool Renderer::DeploySwapchain ( bool vSync )
     swapchainCreateInfoKHR.queueFamilyIndexCount = VK_QUEUE_FAMILY_IGNORED;
     swapchainCreateInfoKHR.pQueueFamilyIndices = nullptr;
     swapchainCreateInfoKHR.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
-    swapchainCreateInfoKHR.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
     swapchainCreateInfoKHR.clipped = VK_TRUE;
     swapchainCreateInfoKHR.oldSwapchain = VK_NULL_HANDLE;
 
     if ( !SelectTargetPresentMode ( swapchainCreateInfoKHR.presentMode, vSync ) )
+    {
+        LogError ( "Renderer::DeploySwapchain - Can't select present mode." );
+        assert ( !"Renderer::DeploySwapchain - Can't select present mode." );
         return false;
+    }
+
+    if ( !SelectTargetCompositeAlpha ( swapchainCreateInfoKHR.compositeAlpha ) )
+    {
+        LogError ( "Renderer::DeploySwapchain - Can't select composite alpha mode." );
+        assert ( !"Renderer::DeploySwapchain - Can't select composite alpha mode." );
+        return false;
+    }
 
     bool result = SelectTargetSurfaceFormat ( _surfaceFormat,
         swapchainCreateInfoKHR.imageColorSpace,
@@ -2428,6 +2437,12 @@ const char* Renderer::ResolveVkColorSpaceKHR ( VkColorSpaceKHR colorSpace ) cons
     return findResult == _vulkanColorSpaceMap.cend () ? UNKNOWN_RESULT : findResult->second;
 }
 
+const char* Renderer::ResolveVkCompositeAlpha ( VkCompositeAlphaFlagBitsKHR compositeAlpha ) const
+{
+    const auto findResult = _vulkanCompositeAlphaMap.find ( compositeAlpha );
+    return findResult == _vulkanCompositeAlphaMap.cend () ? UNKNOWN_RESULT : findResult->second;
+}
+
 const char* Renderer::ResolveVkPresentModeKHR ( VkPresentModeKHR mode ) const
 {
     const auto findResult = _vulkanPresentModeMap.find ( mode );
@@ -2443,6 +2458,44 @@ const char* Renderer::ResolveVkResult ( VkResult result ) const
 
     constexpr static const char* unknownResult = "UNKNOWN";
     return unknownResult;
+}
+
+bool Renderer::SelectTargetCompositeAlpha ( VkCompositeAlphaFlagBitsKHR &targetCompositeAlpha ) const
+{
+    // Priority mode: VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR.
+    constexpr const VkCompositeAlphaFlagBitsKHR priorityMode = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+
+    const auto findResult = _physicalDeviceInfo.find ( _physicalDevice );
+    const VkSurfaceCapabilitiesKHR& surfaceCapabilitiesKHR = findResult->second._surfaceCapabilities;
+
+    targetCompositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+
+    if ( surfaceCapabilitiesKHR.supportedCompositeAlpha & priorityMode )
+    {
+        targetCompositeAlpha = priorityMode;
+    }
+    else
+    {
+        constexpr unsigned int limit = static_cast<unsigned int> ( VK_COMPOSITE_ALPHA_FLAG_BITS_MAX_ENUM_KHR );
+        const unsigned int available = static_cast<unsigned int> ( surfaceCapabilitiesKHR.supportedCompositeAlpha );
+        unsigned int probe = 1U;
+
+        while ( probe != limit )
+        {
+            if ( available & probe )
+                break;
+
+            probe <<= 1U;
+        }
+
+        targetCompositeAlpha = static_cast<VkCompositeAlphaFlagBitsKHR> ( probe );
+    }
+
+    LogInfo ( "Renderer::SelectTargetCompositeAlpha - Composite alpha selected: %s.",
+        ResolveVkCompositeAlpha ( targetCompositeAlpha )
+    );
+
+    return targetCompositeAlpha != VK_COMPOSITE_ALPHA_FLAG_BITS_MAX_ENUM_KHR;
 }
 
 bool Renderer::SelectTargetHardware ( VkPhysicalDevice &targetPhysicalDevice, uint32_t &targetQueueFamilyIndex ) const
@@ -2528,7 +2581,7 @@ bool Renderer::SelectTargetSurfaceFormat ( VkFormat &targetColorFormat,
 {
     // Find sRGBA8 format.
 
-    if ( _surfaceFormats[ 0U ].format == VK_FORMAT_UNDEFINED )
+    if ( _surfaceFormats.size () == 1U && _surfaceFormats[ 0U ].format == VK_FORMAT_UNDEFINED )
     {
         targetColorFormat = VK_FORMAT_R8G8B8A8_SRGB;
         targetColorSpace = _surfaceFormats[ 0U ].colorSpace;

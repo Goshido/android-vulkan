@@ -800,7 +800,10 @@ bool Texture2D::UploadDataInternal ( const std::vector<uint8_t> &data,
     );
 
     if ( !result )
+    {
+        FreeResources ( renderer );
         return false;
+    }
 
     _mipLevels = static_cast<uint8_t> ( imageInfo.mipLevels );
     return true;

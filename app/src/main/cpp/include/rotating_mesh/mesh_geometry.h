@@ -62,6 +62,8 @@ class MeshGeometry final
         void FreeResources ( android_vulkan::Renderer &renderer );
         void FreeTransferResources ( android_vulkan::Renderer &renderer );
 
+        const VkBuffer& GetBuffer () const;
+
         bool LoadMesh ( std::string &&fileName,
             VkBufferUsageFlags usage,
             android_vulkan::Renderer &renderer,

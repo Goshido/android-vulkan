@@ -7,11 +7,13 @@ AV_DISABLE_COMMON_WARNINGS
 AV_RESTORE_WARNING_STATE
 
 #include <vulkan_utils.h>
+#include <rotating_mesh/vertex_info.h>
 
 
 namespace rotating_mesh {
 
 constexpr static const size_t TEXTURE_COMMAND_BUFFERS = 5U;
+constexpr static const size_t BUFFER_COMMAND_BUFFERS = 1U;
 
 constexpr static const char* VERTEX_SHADER = "shaders/static-mesh-vs.spv";
 constexpr static const char* VERTEX_SHADER_ENTRY_POINT = "VS";
@@ -34,8 +36,6 @@ Game::Game ():
     _descriptorPool ( VK_NULL_HANDLE ),
     _descriptorSet ( VK_NULL_HANDLE ),
     _descriptorSetLayout ( VK_NULL_HANDLE ),
-//    _mesh ( VK_NULL_HANDLE ),
-//    _meshDeviceMemory ( VK_NULL_HANDLE ),
     _pipeline ( VK_NULL_HANDLE ),
     _pipelineLayout ( VK_NULL_HANDLE ),
     _renderPass ( VK_NULL_HANDLE ),
@@ -75,7 +75,7 @@ bool Game::OnInit ( android_vulkan::Renderer &renderer )
         return false;
     }
 
-    if ( !CreateTextures ( renderer ) )
+    if ( !LoadGPUContent ( renderer ) )
     {
         OnDestroy ( renderer );
         return false;
@@ -160,6 +160,7 @@ bool Game::OnDestroy ( android_vulkan::Renderer &renderer )
     DestroyPipelineLayout ( renderer );
     DestroyShaderModules ( renderer );
     DestroySamplers ( renderer );
+    DestroyMeshes ( renderer );
     DestroyTextures ( renderer );
     DestroyCommandPool ( renderer );
     DestroySyncPrimitives ( renderer );
@@ -344,15 +345,27 @@ void Game::DestroyDescriptorSet ( android_vulkan::Renderer &renderer )
     _descriptorSet = VK_NULL_HANDLE;
 }
 
-bool Game::CreateMesh ( android_vulkan::Renderer& /*renderer*/ )
+bool Game::CreateMeshes ( android_vulkan::Renderer &renderer, VkCommandBuffer* commandBuffers )
 {
-    assert ( !"Game::CreateMesh - Implement me!" );
-    return false;
+    constexpr VertexInfo quad[ 4U ] =
+    {
+        VertexInfo ( -1.0F, -1.0F, 0.5f, 1.0F, 0.0F, 0.0F ),
+        VertexInfo ( 1.0F, -1.0F, 0.5f, 1.0F, 1.0F, 0.0F ),
+        VertexInfo ( -1.0F, 1.0F, 0.5f, 1.0F, 0.0F, 1.0F ),
+        VertexInfo ( 1.0F, 1.0F, 0.5f, 1.0F, 1.0F, 1.0F )
+    };
+
+    return _mesh.LoadMesh ( reinterpret_cast<const uint8_t*> ( quad ),
+        sizeof ( quad ),
+        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+        renderer,
+        commandBuffers[ 0U ]
+    );
 }
 
-void Game::DestroyMesh ( android_vulkan::Renderer& /*renderer*/ )
+void Game::DestroyMeshes ( android_vulkan::Renderer &renderer )
 {
-    assert ( !"Game::DestroyMesh - Implement me!" );
+    _mesh.FreeResources ( renderer );
 }
 
 bool Game::CreatePipeline ( android_vulkan::Renderer &renderer )
@@ -383,14 +396,32 @@ bool Game::CreatePipeline ( android_vulkan::Renderer &renderer )
     assemblyInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
     assemblyInfo.primitiveRestartEnable = VK_FALSE;
 
+    VkVertexInputAttributeDescription attributeDescriptions[ 2U ];
+    VkVertexInputAttributeDescription& vertexDescription = attributeDescriptions[ 0U ];
+    vertexDescription.location = 0U;
+    vertexDescription.binding = 0U;
+    vertexDescription.offset = static_cast<uint32_t> ( offsetof ( VertexInfo, _vx ) );
+    vertexDescription.format = VK_FORMAT_R32G32B32A32_SFLOAT;
+
+    VkVertexInputAttributeDescription& uvDescription = attributeDescriptions[ 1U ];
+    uvDescription.location = 1U;
+    uvDescription.binding = 0U;
+    uvDescription.offset = static_cast<uint32_t> ( offsetof ( VertexInfo, _tu ) );
+    uvDescription.format = VK_FORMAT_R32G32_SFLOAT;
+
+    VkVertexInputBindingDescription bindingDescription;
+    bindingDescription.binding = 0U;
+    bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+    bindingDescription.stride = sizeof ( VertexInfo );
+
     VkPipelineVertexInputStateCreateInfo vertexInputInfo;
     vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
     vertexInputInfo.pNext = nullptr;
     vertexInputInfo.flags = 0U;
-    vertexInputInfo.vertexAttributeDescriptionCount = 0U;
-    vertexInputInfo.pVertexAttributeDescriptions = nullptr;
-    vertexInputInfo.vertexBindingDescriptionCount = 0U;
-    vertexInputInfo.pVertexBindingDescriptions = nullptr;
+    vertexInputInfo.vertexAttributeDescriptionCount = 2U;
+    vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions;
+    vertexInputInfo.vertexBindingDescriptionCount = 1U;
+    vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
 
     VkPipelineDepthStencilStateCreateInfo depthStencilInfo;
     depthStencilInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
@@ -832,32 +863,12 @@ void Game::DestroySyncPrimitives ( android_vulkan::Renderer &renderer )
     AV_UNREGISTER_SEMAPHORE ( "Game::_renderPassEndSemaphore" )
 }
 
-bool Game::CreateTextures ( android_vulkan::Renderer &renderer )
+bool Game::CreateTextures ( android_vulkan::Renderer &renderer, VkCommandBuffer* commandBuffers )
 {
-    VkCommandBuffer textureCommandBuffers[ TEXTURE_COMMAND_BUFFERS ] = { VK_NULL_HANDLE };
-
-    VkCommandBufferAllocateInfo allocateInfo;
-    allocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    allocateInfo.pNext = nullptr;
-    allocateInfo.commandPool = _commandPool;
-    allocateInfo.commandBufferCount = static_cast<uint32_t> ( TEXTURE_COMMAND_BUFFERS );
-    allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-
-    const VkDevice device = renderer.GetDevice ();
-
-    bool result = renderer.CheckVkResult (
-        vkAllocateCommandBuffers ( renderer.GetDevice (), &allocateInfo, textureCommandBuffers ),
-        "Game::CreateTextures",
-        "Can't allocate texture command buffers"
-    );
-
-    if ( !result )
-        return false;
-
-    result = _material1Diffuse.UploadData ( MATERIAL_1_DIFFUSE,
+    bool result = _material1Diffuse.UploadData ( MATERIAL_1_DIFFUSE,
         VK_FORMAT_R8G8B8A8_SRGB,
         renderer,
-        textureCommandBuffers[ 0U ]
+        commandBuffers[ 0U ]
     );
 
     if ( !result )
@@ -866,7 +877,7 @@ bool Game::CreateTextures ( android_vulkan::Renderer &renderer )
     result = _material2Diffuse.UploadData ( MATERIAL_2_DIFFUSE,
         VK_FORMAT_R8G8B8A8_SRGB,
         renderer,
-        textureCommandBuffers[ 1U ]
+        commandBuffers[ 1U ]
     );
 
     if ( !result )
@@ -875,7 +886,7 @@ bool Game::CreateTextures ( android_vulkan::Renderer &renderer )
     result = _material2Normal.UploadData ( MATERIAL_2_NORMAL,
         VK_FORMAT_R8G8B8A8_SRGB,
         renderer,
-        textureCommandBuffers[ 2U ]
+        commandBuffers[ 2U ]
     );
 
     if ( !result )
@@ -884,37 +895,17 @@ bool Game::CreateTextures ( android_vulkan::Renderer &renderer )
     result = _material3Diffuse.UploadData ( MATERIAL_3_DIFFUSE,
         VK_FORMAT_R8G8B8A8_SRGB,
         renderer,
-        textureCommandBuffers[ 3U ]
+        commandBuffers[ 3U ]
     );
 
     if ( !result )
         return false;
 
-    result = _material3Normal.UploadData ( MATERIAL_3_NORMAL,
+    return _material3Normal.UploadData ( MATERIAL_3_NORMAL,
         VK_FORMAT_R8G8B8A8_SRGB,
         renderer,
-        textureCommandBuffers[ 4U ]
+        commandBuffers[ 4U ]
     );
-
-    if ( !result )
-        return false;
-
-    result = renderer.CheckVkResult ( vkQueueWaitIdle ( renderer.GetQueue () ),
-        "Game::CreateTextures",
-        "Can't run texture upload commands"
-    );
-
-    if ( !result )
-        return false;
-
-    _material3Normal.FreeTransferResources ( renderer );
-    _material3Diffuse.FreeTransferResources ( renderer );
-    _material2Normal.FreeTransferResources ( renderer );
-    _material2Diffuse.FreeTransferResources ( renderer );
-    _material1Diffuse.FreeTransferResources ( renderer );
-
-    vkFreeCommandBuffers ( device, _commandPool, allocateInfo.commandBufferCount, textureCommandBuffers );
-    return true;
 }
 
 void Game::DestroyTextures ( android_vulkan::Renderer &renderer )
@@ -1005,6 +996,9 @@ bool Game::InitCommandBuffers ( android_vulkan::Renderer &renderer )
             nullptr
         );
 
+        constexpr VkDeviceSize offset = 0U;
+        vkCmdBindVertexBuffers ( commandBuffer, 0U, 1U, &_mesh.GetBuffer (), &offset );
+
         vkCmdDraw ( commandBuffer, 4U, 1U, 0U, 0U );
         vkCmdEndRenderPass ( commandBuffer );
 
@@ -1019,6 +1013,55 @@ bool Game::InitCommandBuffers ( android_vulkan::Renderer &renderer )
         return false;
     }
 
+    return true;
+}
+
+bool Game::LoadGPUContent ( android_vulkan::Renderer &renderer )
+{
+    constexpr const size_t commandBufferCount = TEXTURE_COMMAND_BUFFERS + BUFFER_COMMAND_BUFFERS;
+    VkCommandBuffer commandBuffers[ commandBufferCount ] = { VK_NULL_HANDLE };
+
+    VkCommandBufferAllocateInfo allocateInfo;
+    allocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    allocateInfo.pNext = nullptr;
+    allocateInfo.commandPool = _commandPool;
+    allocateInfo.commandBufferCount = static_cast<uint32_t> ( commandBufferCount );
+    allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+
+    const VkDevice device = renderer.GetDevice ();
+
+    bool result = renderer.CheckVkResult (
+        vkAllocateCommandBuffers ( renderer.GetDevice (), &allocateInfo, commandBuffers ),
+        "Game::LoadGPUContent",
+        "Can't allocate command buffers"
+    );
+
+    if ( !result )
+        return false;
+
+    if ( !CreateTextures ( renderer, commandBuffers ) )
+        return false;
+
+    if ( !CreateMeshes ( renderer, commandBuffers + TEXTURE_COMMAND_BUFFERS ) )
+        return false;
+
+    result = renderer.CheckVkResult ( vkQueueWaitIdle ( renderer.GetQueue () ),
+        "Game::LoadGPUContent",
+        "Can't run upload commands"
+    );
+
+    if ( !result )
+        return false;
+
+    _mesh.FreeTransferResources ( renderer );
+
+    _material3Normal.FreeTransferResources ( renderer );
+    _material3Diffuse.FreeTransferResources ( renderer );
+    _material2Normal.FreeTransferResources ( renderer );
+    _material2Diffuse.FreeTransferResources ( renderer );
+    _material1Diffuse.FreeTransferResources ( renderer );
+
+    vkFreeCommandBuffers ( device, _commandPool, allocateInfo.commandBufferCount, commandBuffers );
     return true;
 }
 

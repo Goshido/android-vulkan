@@ -17,8 +17,8 @@ const std::map<VkBufferUsageFlags, BufferSyncItem> MeshGeometry::_accessMapper =
     {
         VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
 
-        BufferSyncItem ( VK_ACCESS_TRANSFER_READ_BIT,
-            0,
+        BufferSyncItem ( VK_ACCESS_TRANSFER_WRITE_BIT,
+            VK_PIPELINE_STAGE_TRANSFER_BIT,
             VK_ACCESS_INDEX_READ_BIT,
             VK_PIPELINE_STAGE_VERTEX_INPUT_BIT
         )
@@ -27,8 +27,8 @@ const std::map<VkBufferUsageFlags, BufferSyncItem> MeshGeometry::_accessMapper =
     {
         VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
 
-        BufferSyncItem ( VK_ACCESS_TRANSFER_READ_BIT,
-            0,
+        BufferSyncItem ( VK_ACCESS_TRANSFER_WRITE_BIT,
+            VK_PIPELINE_STAGE_TRANSFER_BIT,
             VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT,
             VK_PIPELINE_STAGE_VERTEX_INPUT_BIT
         )
@@ -75,7 +75,7 @@ void MeshGeometry::FreeTransferResources ( android_vulkan::Renderer &renderer )
     if ( _transferMemory != VK_NULL_HANDLE )
     {
         vkFreeMemory ( device, _transferMemory, nullptr );
-        _transferBuffer = VK_NULL_HANDLE;
+        _transferMemory = VK_NULL_HANDLE;
         AV_UNREGISTER_DEVICE_MEMORY ( "MeshGeometry::_transferMemory" )
     }
 
@@ -83,8 +83,13 @@ void MeshGeometry::FreeTransferResources ( android_vulkan::Renderer &renderer )
         return;
 
     vkDestroyBuffer ( device, _transferBuffer, nullptr );
-    _buffer = VK_NULL_HANDLE;
+    _transferBuffer = VK_NULL_HANDLE;
     AV_UNREGISTER_BUFFER ( "MeshGeometry::_transferBuffer" )
+}
+
+const VkBuffer& MeshGeometry::GetBuffer () const
+{
+    return _buffer;
 }
 
 bool MeshGeometry::LoadMesh ( std::string&& /*fileName*/,
@@ -143,6 +148,17 @@ bool MeshGeometry::LoadMesh ( const uint8_t* data,
 
     AV_REGISTER_DEVICE_MEMORY ( "MeshGeometry::_bufferMemory" )
 
+    result = renderer.CheckVkResult ( vkBindBufferMemory ( device, _buffer, _bufferMemory, 0U ),
+        "MeshGeometry::LoadMesh",
+        "Can't bind buffer memory"
+    );
+
+    if ( !result )
+    {
+        FreeResources ( renderer );
+        return false;
+    }
+
     bufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 
     result = renderer.CheckVkResult ( vkCreateBuffer ( device, &bufferInfo, nullptr, &_transferBuffer ),
@@ -170,6 +186,17 @@ bool MeshGeometry::LoadMesh ( const uint8_t* data,
     }
 
     AV_REGISTER_DEVICE_MEMORY ( "MeshGeometry::_transferMemory" )
+
+    result = renderer.CheckVkResult ( vkBindBufferMemory ( device, _transferBuffer, _transferMemory, 0U ),
+        "MeshGeometry::LoadMesh",
+        "Can't bind transfer memory"
+    );
+
+    if ( !result )
+    {
+        FreeResources ( renderer );
+        return false;
+    }
 
     void* transferData = nullptr;
 
@@ -221,6 +248,7 @@ bool MeshGeometry::LoadMesh ( const uint8_t* data,
     barrierInfo.srcAccessMask = syncItem._srcAccessMask;
     barrierInfo.dstAccessMask = syncItem._dstAccessMask;
     barrierInfo.size = size;
+    barrierInfo.offset = 0U;
     barrierInfo.srcQueueFamilyIndex = barrierInfo.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 
     vkCmdPipelineBarrier ( commandBuffer,
@@ -238,6 +266,28 @@ bool MeshGeometry::LoadMesh ( const uint8_t* data,
     result = renderer.CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
         "MeshGeometry::LoadMesh",
         "Can't end command buffer"
+    );
+
+    if ( !result )
+    {
+        FreeResources ( renderer );
+        return false;
+    }
+
+    VkSubmitInfo submitInfo;
+    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submitInfo.pNext = nullptr;
+    submitInfo.commandBufferCount = 1U;
+    submitInfo.pCommandBuffers = &commandBuffer;
+    submitInfo.waitSemaphoreCount = 0U;
+    submitInfo.pWaitSemaphores = nullptr;
+    submitInfo.signalSemaphoreCount = 0U;
+    submitInfo.pSignalSemaphores = nullptr;
+    submitInfo.pWaitDstStageMask = nullptr;
+
+    result = renderer.CheckVkResult ( vkQueueSubmit ( renderer.GetQueue (), 1U, &submitInfo, VK_NULL_HANDLE ),
+        "MeshGeometry::LoadMesh",
+        "Can't submit command"
     );
 
     if ( result )

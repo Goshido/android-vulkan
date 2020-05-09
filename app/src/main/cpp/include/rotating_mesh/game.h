@@ -3,6 +3,7 @@
 
 
 #include <game.h>
+#include "mesh_geometry.h"
 #include "texture2D.h"
 
 
@@ -20,9 +21,6 @@ class Game final : public android_vulkan::Game
         VkDescriptorSet                 _descriptorSet;
         VkDescriptorSetLayout           _descriptorSetLayout;
 
-        //VkBuffer                        _mesh;
-        //VkDeviceMemory                  _meshDeviceMemory;
-
         VkPipeline                      _pipeline;
         VkPipelineLayout                _pipelineLayout;
 
@@ -39,6 +37,8 @@ class Game final : public android_vulkan::Game
         VkShaderModule                  _fragmentShaderModule;
 
         std::vector<VkCommandBuffer>    _commandBuffers;
+
+        MeshGeometry                    _mesh;
 
         Texture2D                       _material1Diffuse;
         Texture2D                       _material2Diffuse;
@@ -72,8 +72,8 @@ class Game final : public android_vulkan::Game
         bool CreateDescriptorSet ( android_vulkan::Renderer &renderer );
         void DestroyDescriptorSet ( android_vulkan::Renderer &renderer );
 
-        bool CreateMesh ( android_vulkan::Renderer &renderer );
-        void DestroyMesh ( android_vulkan::Renderer &renderer );
+        bool CreateMeshes ( android_vulkan::Renderer &renderer, VkCommandBuffer* commandBuffers );
+        void DestroyMeshes ( android_vulkan::Renderer &renderer );
 
         bool CreatePipeline ( android_vulkan::Renderer &renderer );
         void DestroyPipeline ( android_vulkan::Renderer &renderer );
@@ -93,10 +93,11 @@ class Game final : public android_vulkan::Game
         bool CreateSyncPrimitives ( android_vulkan::Renderer &renderer );
         void DestroySyncPrimitives ( android_vulkan::Renderer &renderer );
 
-        bool CreateTextures ( android_vulkan::Renderer &renderer );
+        bool CreateTextures ( android_vulkan::Renderer &renderer, VkCommandBuffer* commandBuffers );
         void DestroyTextures ( android_vulkan::Renderer &renderer );
 
         bool InitCommandBuffers ( android_vulkan::Renderer &renderer );
+        bool LoadGPUContent ( android_vulkan::Renderer &renderer );
 };
 
 } // namespace rotating_mesh

@@ -5,7 +5,7 @@ SamplerState            textureSampler:     register ( s0 );
 
 //----------------------------------------------------------------------------------------------------------------------
 
-float4 PS ( [[ vk::location ( 0 ) ]] in linear float2 coordinate: COORDINATE ): SV_Target0
+float4 PS ( [[ vk::location ( 0 ) ]] in linear float2 uv: UV ): SV_Target0
 {
-    return diffuseTexture.Sample ( textureSampler, coordinate );
+    return diffuseTexture.Sample ( textureSampler, uv );
 }

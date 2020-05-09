@@ -1,34 +1,27 @@
-static const float4 g_vertices[ 4u ] =
+struct InputData
 {
-    float4 ( -1.0f, -1.0f, 0.5f, 1.0f ),
-    float4 ( 1.0f, -1.0f, 0.5f, 1.0f ),
-    float4 ( -1.0f, 1.0f, 0.5f, 1.0f ),
-    float4 ( 1.0f, 1.0f, 0.5f, 1.0f )
-};
+    [[ vk::location ( 0 ) ]]
+    float4              _vertex:    VERTEX;
 
-static const float2 g_coordiantes[ 4u ] =
-{
-    float2 ( 0.0f, 0.0f ),
-    float2 ( 1.0f, 0.0f ),
-    float2 ( 0.0f, 1.0f ),
-    float2 ( 1.0f, 1.0f )
+    [[ vk::location ( 1 ) ]]
+    float2              _uv:        UV;
 };
 
 struct OutputData
 {
-    linear float4      _vertexH:        SV_Position;
+    linear float4      _vertexH:    SV_Position;
 
     [[ vk::location ( 0 ) ]]
-    linear float2      _coordinate:     COORDINATE;
+    linear float2      _uv:         UV;
 };
 
 //----------------------------------------------------------------------------------------------------------------------
 
-OutputData VS ( in uint vertexID: SV_VertexID )
+OutputData VS ( in InputData inputData )
 {
     OutputData result;
-    result._vertexH = g_vertices[ vertexID ];
-    result._coordinate = g_coordiantes[ vertexID ];
+    result._vertexH = inputData._vertex;
+    result._uv = inputData._uv;
 
     return result;
 }

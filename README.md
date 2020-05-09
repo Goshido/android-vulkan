@@ -14,9 +14,9 @@ Requirements:
 * _Android Studio 3.6.3_
 * _Android NDK 21.1.6352462 (side by side)_
 * _Android SDK 10.0 (API level 29)_
-* _Android SDK Build-Tools 30.0.0-rc2_
+* _Android SDK Build-Tools 30.0.0-rc4_
 * _Android SDK Tools 26.1.1_
-* _Android SDK Platform-Tools 30.0.0_
+* _Android SDK Platform-Tools 30.0.1_
 * _CMake 3.10.2.4988404_
 * _DirectX Shader Compiler 1.5.0.12642_
 * _Gradle 6.3_

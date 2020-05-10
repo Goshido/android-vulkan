@@ -1,10 +1,10 @@
 #include <mandelbrot/mandelbrot_base.h>
 
-AV_DISABLE_COMMON_WARNINGS
+GX_DISABLE_COMMON_WARNINGS
 
 #include <cmath>
 
-AV_RESTORE_WARNING_STATE
+GX_RESTORE_WARNING_STATE
 
 #include <file.h>
 #include <vulkan_utils.h>

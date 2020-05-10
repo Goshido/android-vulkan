@@ -1,13 +1,13 @@
 #include <mandelbrot/mandelbrot_lut_color.h>
 
-AV_DISABLE_COMMON_WARNINGS
+GX_DISABLE_COMMON_WARNINGS
 
 #include <array>
 #include <cassert>
 #include <cmath>
 #include <thread>
 
-AV_RESTORE_WARNING_STATE
+GX_RESTORE_WARNING_STATE
 
 #include <vulkan_utils.h>
 

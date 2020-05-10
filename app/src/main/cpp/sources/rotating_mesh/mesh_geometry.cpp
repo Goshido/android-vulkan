@@ -1,10 +1,10 @@
 #include <rotating_mesh/mesh_geometry.h>
 
-AV_DISABLE_COMMON_WARNINGS
+GX_DISABLE_COMMON_WARNINGS
 
 #include <cassert>
 
-AV_RESTORE_WARNING_STATE
+GX_RESTORE_WARNING_STATE
 
 #include <logger.h>
 #include <vulkan_utils.h>

@@ -1,11 +1,11 @@
 #include <file.h>
 
-AV_DISABLE_COMMON_WARNINGS
+GX_DISABLE_COMMON_WARNINGS
 
 #include <cassert>
 #include <android/asset_manager.h>
 
-AV_RESTORE_WARNING_STATE
+GX_RESTORE_WARNING_STATE
 
 #include <logger.h>
 

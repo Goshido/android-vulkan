@@ -1,10 +1,10 @@
 #include <rotating_mesh/game.h>
 
-AV_DISABLE_COMMON_WARNINGS
+GX_DISABLE_COMMON_WARNINGS
 
 #include <cassert>
 
-AV_RESTORE_WARNING_STATE
+GX_RESTORE_WARNING_STATE
 
 #include <vulkan_utils.h>
 #include <rotating_mesh/vertex_info.h>
@@ -347,12 +347,12 @@ void Game::DestroyDescriptorSet ( android_vulkan::Renderer &renderer )
 
 bool Game::CreateMeshes ( android_vulkan::Renderer &renderer, VkCommandBuffer* commandBuffers )
 {
-    constexpr VertexInfo quad[ 4U ] =
+    constexpr const VertexInfo quad[ 4U ] =
     {
-        VertexInfo ( -1.0F, -1.0F, 0.5f, 1.0F, 0.0F, 0.0F ),
-        VertexInfo ( 1.0F, -1.0F, 0.5f, 1.0F, 1.0F, 0.0F ),
-        VertexInfo ( -1.0F, 1.0F, 0.5f, 1.0F, 0.0F, 1.0F ),
-        VertexInfo ( 1.0F, 1.0F, 0.5f, 1.0F, 1.0F, 1.0F )
+        VertexInfo ( GXVec4 ( -1.0F, -1.0F, 0.5F, 1.0F ), GXVec2 ( 0.0F, 0.0F ) ),
+        VertexInfo ( GXVec4 ( 1.0F, -1.0F, 0.5F, 1.0F ), GXVec2 ( 1.0F, 0.0F ) ),
+        VertexInfo ( GXVec4 ( -1.0F, 1.0F, 0.5F, 1.0F ), GXVec2 ( 0.0F, 1.0F ) ),
+        VertexInfo ( GXVec4 ( 1.0F, 1.0F, 0.5F, 1.0F ), GXVec2 ( 1.0F, 1.0F ) )
     };
 
     return _mesh.LoadMesh ( reinterpret_cast<const uint8_t*> ( quad ),
@@ -400,13 +400,13 @@ bool Game::CreatePipeline ( android_vulkan::Renderer &renderer )
     VkVertexInputAttributeDescription& vertexDescription = attributeDescriptions[ 0U ];
     vertexDescription.location = 0U;
     vertexDescription.binding = 0U;
-    vertexDescription.offset = static_cast<uint32_t> ( offsetof ( VertexInfo, _vx ) );
+    vertexDescription.offset = static_cast<uint32_t> ( offsetof ( VertexInfo, _vertex ) );
     vertexDescription.format = VK_FORMAT_R32G32B32A32_SFLOAT;
 
     VkVertexInputAttributeDescription& uvDescription = attributeDescriptions[ 1U ];
     uvDescription.location = 1U;
     uvDescription.binding = 0U;
-    uvDescription.offset = static_cast<uint32_t> ( offsetof ( VertexInfo, _tu ) );
+    uvDescription.offset = static_cast<uint32_t> ( offsetof ( VertexInfo, _uv ) );
     uvDescription.format = VK_FORMAT_R32G32_SFLOAT;
 
     VkVertexInputBindingDescription bindingDescription;

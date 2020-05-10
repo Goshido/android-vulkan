@@ -3,12 +3,12 @@
 
 #include <vulkan_utils.h>
 
-AV_DISABLE_COMMON_WARNINGS
+GX_DISABLE_COMMON_WARNINGS
 
 #include <set>
 #include <shared_mutex>
 
-AV_RESTORE_WARNING_STATE
+GX_RESTORE_WARNING_STATE
 
 #include "logger.h"
 

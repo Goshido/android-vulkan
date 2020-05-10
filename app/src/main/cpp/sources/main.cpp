@@ -1,16 +1,14 @@
-#include <warning.h>
+#include <GXCommon/GXWarning.h>
 
-AV_DISABLE_COMMON_WARNINGS
+GX_DISABLE_COMMON_WARNINGS
 
 #include <android_native_app_glue.h>
 
-AV_RESTORE_WARNING_STATE
+GX_RESTORE_WARNING_STATE
 
 #include <core.h>
 #include <logger.h>
 #include <rotating_mesh/game.h>
-//#include <mandelbrot/mandelbrot_lut_color.h>
-//#include <mandelbrot/mandelbrot_analytic_color.h>
 
 
 void android_main ( android_app* app )
@@ -23,8 +21,6 @@ void android_main ( android_app* app )
 #endif // ANDROID_VULKAN_DEBUG
 
     rotating_mesh::Game game;
-    //mandelbrot::MandelbrotLUTColor game;
-    //mandelbrot::MandelbrotAnalyticColor game;
     android_vulkan::Core core ( *app, game );
 
     for ( ; ; )

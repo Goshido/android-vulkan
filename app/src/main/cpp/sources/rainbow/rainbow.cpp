@@ -1,10 +1,10 @@
 #include <rainbow/rainbow.h>
 
-AV_DISABLE_COMMON_WARNINGS
+GX_DISABLE_COMMON_WARNINGS
 
 #include <cmath>
 
-AV_RESTORE_WARNING_STATE
+GX_RESTORE_WARNING_STATE
 
 #include <vulkan_utils.h>
 

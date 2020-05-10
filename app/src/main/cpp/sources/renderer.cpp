@@ -1,6 +1,6 @@
 #include <renderer.h>
 
-AV_DISABLE_COMMON_WARNINGS
+GX_DISABLE_COMMON_WARNINGS
 
 #include <cassert>
 #include <cinttypes>
@@ -8,7 +8,7 @@ AV_DISABLE_COMMON_WARNINGS
 #include <set>
 #include <string>
 
-AV_RESTORE_WARNING_STATE
+GX_RESTORE_WARNING_STATE
 
 #include <vulkan_utils.h>
 #include <file.h>

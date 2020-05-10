@@ -2,14 +2,14 @@
 #define ROTATING_MESH_TEXTURE_2D_H
 
 
-#include "warning.h"
+#include <GXCommon/GXWarning.h>
 
-AV_DISABLE_COMMON_WARNINGS
+GX_DISABLE_COMMON_WARNINGS
 
 #include <string>
 #include <vector>
 
-AV_RESTORE_WARNING_STATE
+GX_RESTORE_WARNING_STATE
 
 #include "renderer.h"
 

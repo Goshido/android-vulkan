@@ -2,6 +2,9 @@
 #define VULKAN_UTILS_H
 
 
+#define AV_DX_ALIGNMENT_BEGIN _Pragma ( "pack ( push, 1 )" )
+#define AV_DX_ALIGNMENT_END _Pragma ( "pack ( pop )" )
+
 // Note there is two types Vulkan handles:
 // VK_DEFINE_HANDLE
 // VK_DEFINE_NON_DISPATCHABLE_HANDLE

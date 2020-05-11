@@ -27,15 +27,17 @@ constexpr static const char* MATERIAL_2_NORMAL = "textures/rotating_mesh/sonic-m
 constexpr static const char* MATERIAL_3_DIFFUSE = "textures/rotating_mesh/sonic-material-3-diffuse.png";
 constexpr static const char* MATERIAL_3_NORMAL = "textures/rotating_mesh/sonic-material-3-normal.png";
 
+constexpr static const double MIP_DELAY = 1.0;
+
 //----------------------------------------------------------------------------------------------------------------------
 
 Game::Game ():
+    _activeTexture ( nullptr ),
     _commandPool ( VK_NULL_HANDLE ),
-//    _constantBuffer ( VK_NULL_HANDLE ),
-//    _constantBufferDeviceMemory ( VK_NULL_HANDLE ),
     _descriptorPool ( VK_NULL_HANDLE ),
     _descriptorSet ( VK_NULL_HANDLE ),
     _descriptorSetLayout ( VK_NULL_HANDLE ),
+    _mipTimeout ( -1.0 ),
     _pipeline ( VK_NULL_HANDLE ),
     _pipelineLayout ( VK_NULL_HANDLE ),
     _renderPass ( VK_NULL_HANDLE ),
@@ -70,6 +72,12 @@ bool Game::OnInit ( android_vulkan::Renderer &renderer )
     }
 
     if ( !CreateCommandPool ( renderer ) )
+    {
+        OnDestroy ( renderer );
+        return false;
+    }
+
+    if ( !CreateUniformBuffer ( renderer ) )
     {
         OnDestroy ( renderer );
         return false;
@@ -120,8 +128,11 @@ bool Game::OnInit ( android_vulkan::Renderer &renderer )
     return true;
 }
 
-bool Game::OnFrame ( android_vulkan::Renderer &renderer, double /*deltaTime*/ )
+bool Game::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime )
 {
+    if ( !UpdateUniformBuffer ( deltaTime ) )
+        return false;
+
     uint32_t presentationImageIndex = UINT32_MAX;
 
     if ( !BeginFrame ( presentationImageIndex, renderer ) )
@@ -155,6 +166,9 @@ bool Game::OnFrame ( android_vulkan::Renderer &renderer, double /*deltaTime*/ )
 
 bool Game::OnDestroy ( android_vulkan::Renderer &renderer )
 {
+    _activeTexture = nullptr;
+    _mipTimeout = -1.0;
+
     DestroyDescriptorSet ( renderer );
     DestroyPipeline ( renderer );
     DestroyPipelineLayout ( renderer );
@@ -162,6 +176,7 @@ bool Game::OnDestroy ( android_vulkan::Renderer &renderer )
     DestroySamplers ( renderer );
     DestroyMeshes ( renderer );
     DestroyTextures ( renderer );
+    DestroyUniformBuffer ();
     DestroyCommandPool ( renderer );
     DestroySyncPrimitives ( renderer );
     DestroyRenderPass ( renderer );
@@ -242,22 +257,16 @@ void Game::DestroyCommandPool ( android_vulkan::Renderer &renderer )
     AV_UNREGISTER_COMMAND_POOL ( "Game::_commandPool" )
 }
 
-bool Game::CreateConstantBuffer ( android_vulkan::Renderer& /*renderer*/ )
-{
-    assert ( !"Game::CreateConstantBuffer - Implement me!" );
-    return false;
-}
-
-void Game::DestroyConstantBuffer ( android_vulkan::Renderer& /*renderer*/ )
-{
-    assert ( !"Game::DestroyConstantBuffer - Implement me!" );
-}
-
 bool Game::CreateDescriptorSet ( android_vulkan::Renderer &renderer )
 {
     const VkDevice device = renderer.GetDevice ();
 
-    VkDescriptorPoolSize samplerFeature;
+    VkDescriptorPoolSize features[ 2U ];
+    VkDescriptorPoolSize& ubFeature = features[ 0U ];
+    ubFeature.descriptorCount = 1U;
+    ubFeature.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+
+    VkDescriptorPoolSize& samplerFeature = features[ 1U ];
     samplerFeature.descriptorCount = 1U;
     samplerFeature.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 
@@ -266,8 +275,8 @@ bool Game::CreateDescriptorSet ( android_vulkan::Renderer &renderer )
     poolInfo.pNext = nullptr;
     poolInfo.flags = 0U;
     poolInfo.maxSets = 1U;
-    poolInfo.poolSizeCount = 1U;
-    poolInfo.pPoolSizes = &samplerFeature;
+    poolInfo.poolSizeCount = 2U;
+    poolInfo.pPoolSizes = features;
 
     bool result = renderer.CheckVkResult ( vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_descriptorPool ),
         "Game::CreateDescriptorSet",
@@ -310,26 +319,44 @@ bool Game::CreateDescriptorSet ( android_vulkan::Renderer &renderer )
         return VK_NULL_HANDLE;
     };
 
-    const Texture2D& target = _material1Diffuse;
+    _activeTexture = &_material1Diffuse;
 
     VkDescriptorImageInfo imageInfo;
-    imageInfo.sampler = selector ( target );
-    imageInfo.imageView = target.GetImageView ();
+    imageInfo.sampler = selector ( *_activeTexture );
+    imageInfo.imageView = _activeTexture->GetImageView ();
     imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-    VkWriteDescriptorSet writeSet;
-    writeSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    writeSet.pNext = nullptr;
-    writeSet.dstSet = _descriptorSet;
-    writeSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    writeSet.dstBinding = 0U;
-    writeSet.dstArrayElement = 0U;
-    writeSet.descriptorCount = 1U;
-    writeSet.pImageInfo = &imageInfo;
-    writeSet.pBufferInfo = nullptr;
-    writeSet.pTexelBufferView = nullptr;
+    VkDescriptorBufferInfo bufferInfo;
+    bufferInfo.buffer = _mipInfoBuffer.GetBuffer ();
+    bufferInfo.range = sizeof ( _mipInfo );
+    bufferInfo.offset = 0U;
 
-    vkUpdateDescriptorSets ( device, 1U, &writeSet, 0U, nullptr );
+    VkWriteDescriptorSet writeSets[ 2U ];
+    VkWriteDescriptorSet& ubWriteSet = writeSets[ 0U ];
+    ubWriteSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    ubWriteSet.pNext = nullptr;
+    ubWriteSet.dstSet = _descriptorSet;
+    ubWriteSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    ubWriteSet.dstBinding = 0U;
+    ubWriteSet.dstArrayElement = 0U;
+    ubWriteSet.descriptorCount = 1U;
+    ubWriteSet.pBufferInfo = &bufferInfo;
+    ubWriteSet.pImageInfo = nullptr;
+    ubWriteSet.pTexelBufferView = nullptr;
+
+    VkWriteDescriptorSet& samplerWriteSet = writeSets[ 1U ];
+    samplerWriteSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    samplerWriteSet.pNext = nullptr;
+    samplerWriteSet.dstSet = _descriptorSet;
+    samplerWriteSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    samplerWriteSet.dstBinding = 2U;
+    samplerWriteSet.dstArrayElement = 0U;
+    samplerWriteSet.descriptorCount = 1U;
+    samplerWriteSet.pBufferInfo = nullptr;
+    samplerWriteSet.pImageInfo = &imageInfo;
+    samplerWriteSet.pTexelBufferView = nullptr;
+
+    vkUpdateDescriptorSets ( device, 2U, writeSets, 0U, nullptr );
     return true;
 }
 
@@ -540,19 +567,27 @@ void Game::DestroyPipeline ( android_vulkan::Renderer &renderer )
 
 bool Game::CreatePipelineLayout ( android_vulkan::Renderer &renderer )
 {
-    VkDescriptorSetLayoutBinding bindingInfo;
-    bindingInfo.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-    bindingInfo.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    bindingInfo.descriptorCount = 1U;
-    bindingInfo.binding = 0U;
-    bindingInfo.pImmutableSamplers = nullptr;
+    VkDescriptorSetLayoutBinding bindings[ 2U ];
+    VkDescriptorSetLayoutBinding& ubInfo = bindings[ 0U ];
+    ubInfo.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    ubInfo.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    ubInfo.descriptorCount = 1U;
+    ubInfo.binding = 0U;
+    ubInfo.pImmutableSamplers = nullptr;
+
+    VkDescriptorSetLayoutBinding& samplerInfo = bindings[ 1U ];
+    samplerInfo.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    samplerInfo.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    samplerInfo.descriptorCount = 1U;
+    samplerInfo.binding = 2U;
+    samplerInfo.pImmutableSamplers = nullptr;
 
     VkDescriptorSetLayoutCreateInfo descriptorSetInfo;
     descriptorSetInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
     descriptorSetInfo.pNext = nullptr;
     descriptorSetInfo.flags = 0U;
-    descriptorSetInfo.bindingCount = 1U;
-    descriptorSetInfo.pBindings = &bindingInfo;
+    descriptorSetInfo.bindingCount = 2U;
+    descriptorSetInfo.pBindings = bindings;
 
     const VkDevice device = renderer.GetDevice ();
 
@@ -922,6 +957,21 @@ void Game::DestroyTextures ( android_vulkan::Renderer &renderer )
     _material1Diffuse.FreeResources ( renderer );
 }
 
+bool Game::CreateUniformBuffer ( android_vulkan::Renderer& renderer )
+{
+    _mipInfo._level = 0.0F;
+
+    if ( !_mipInfoBuffer.Init ( renderer, _commandPool, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT ) )
+        return false;
+
+    return _mipInfoBuffer.Update ( reinterpret_cast<const uint8_t*> ( &_mipInfo ), sizeof ( _mipInfo ) );
+}
+
+void Game::DestroyUniformBuffer ()
+{
+    _mipInfoBuffer.FreeResources ();
+}
+
 bool Game::InitCommandBuffers ( android_vulkan::Renderer &renderer )
 {
     const size_t framebuffers = renderer.GetPresentFramebufferCount ();
@@ -1062,6 +1112,25 @@ bool Game::LoadGPUContent ( android_vulkan::Renderer &renderer )
     _material1Diffuse.FreeTransferResources ( renderer );
 
     vkFreeCommandBuffers ( device, _commandPool, allocateInfo.commandBufferCount, commandBuffers );
+    return true;
+}
+
+bool Game::UpdateUniformBuffer ( double deltaTime )
+{
+    _mipTimeout -= deltaTime;
+
+    if ( _mipTimeout >= 0.0 )
+        return true;
+
+    _mipInfo._level += 1.0F;
+
+    if ( static_cast<uint8_t> ( _mipInfo._level + 0.5F ) >= _activeTexture->GetMipLevelCount () )
+        _mipInfo._level = 0.0F;
+
+    if ( !_mipInfoBuffer.Update ( reinterpret_cast<const uint8_t*> ( &_mipInfo ), sizeof ( _mipInfo ) ) )
+        return false;
+
+    _mipTimeout = MIP_DELAY;
     return true;
 }
 

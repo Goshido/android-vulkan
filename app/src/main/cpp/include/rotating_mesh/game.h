@@ -3,8 +3,11 @@
 
 
 #include <game.h>
+#include <vulkan_utils.h>
+#include <GXCommon/GXMath.h>
 #include "mesh_geometry.h"
 #include "texture2D.h"
+#include "uniform_buffer.h"
 
 
 namespace rotating_mesh {
@@ -12,14 +15,24 @@ namespace rotating_mesh {
 class Game final : public android_vulkan::Game
 {
     private:
-        VkCommandPool                   _commandPool;
+AV_DX_ALIGNMENT_BEGIN
+        struct MipInfo final
+        {
+            float                       _level;
+            GXVec3                      _padding0_0;
+        };
+AV_DX_ALIGNMENT_END
 
-        //VkBuffer                        _constantBuffer;
-        //VkDeviceMemory                  _constantBufferDeviceMemory;
+    private:
+        const Texture2D*                _activeTexture;
+
+        VkCommandPool                   _commandPool;
 
         VkDescriptorPool                _descriptorPool;
         VkDescriptorSet                 _descriptorSet;
         VkDescriptorSetLayout           _descriptorSetLayout;
+
+        double                          _mipTimeout;
 
         VkPipeline                      _pipeline;
         VkPipelineLayout                _pipelineLayout;
@@ -46,6 +59,9 @@ class Game final : public android_vulkan::Game
         Texture2D                       _material3Diffuse;
         Texture2D                       _material3Normal;
 
+        MipInfo                         _mipInfo;
+        UniformBuffer                   _mipInfoBuffer;
+
     public:
         Game ();
         ~Game () override = default;
@@ -65,9 +81,6 @@ class Game final : public android_vulkan::Game
 
         bool CreateCommandPool ( android_vulkan::Renderer &renderer );
         void DestroyCommandPool ( android_vulkan::Renderer &renderer );
-
-        bool CreateConstantBuffer ( android_vulkan::Renderer &renderer );
-        void DestroyConstantBuffer ( android_vulkan::Renderer &renderer );
 
         bool CreateDescriptorSet ( android_vulkan::Renderer &renderer );
         void DestroyDescriptorSet ( android_vulkan::Renderer &renderer );
@@ -96,8 +109,12 @@ class Game final : public android_vulkan::Game
         bool CreateTextures ( android_vulkan::Renderer &renderer, VkCommandBuffer* commandBuffers );
         void DestroyTextures ( android_vulkan::Renderer &renderer );
 
+        bool CreateUniformBuffer ( android_vulkan::Renderer &renderer );
+        void DestroyUniformBuffer ();
+
         bool InitCommandBuffers ( android_vulkan::Renderer &renderer );
         bool LoadGPUContent ( android_vulkan::Renderer &renderer );
+        bool UpdateUniformBuffer ( double deltaTime );
 };
 
 } // namespace rotating_mesh

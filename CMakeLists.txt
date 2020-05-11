@@ -61,6 +61,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/rotating_mesh/game.cpp
     app/src/main/cpp/sources/rotating_mesh/mesh_geometry.cpp
     app/src/main/cpp/sources/rotating_mesh/texture2D.cpp
+    app/src/main/cpp/sources/rotating_mesh/uniform_buffer.cpp
 )
 
 target_include_directories ( android-vulkan

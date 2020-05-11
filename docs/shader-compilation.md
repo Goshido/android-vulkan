@@ -8,18 +8,32 @@ The _android-vulkan_ project is using _HLSL_ shader language as high level progr
 
 `<android-vulkan directory>/app/src/main/hlsl`
 
-Note the resulting shaders must be placed in the following directory:
+**Note:** the resulting shaders must be placed in the following directory:
 
 `<android-vulkan directory>/app/src/main/assets/shaders/`
+
+**Note:** the project is using _DirectX_ alignment layout rules for _SPIR-V_ packing. It's achieved via [_DXC_'s flag](https://github.com/microsoft/DirectXShaderCompiler/blob/master/docs/SPIR-V.rst#memory-layout-rules):
+
+```txt
+-fvk-use-dx-layout
+```
 
 ## Compile and deploy vertex shader module
 
 ```txt
-dxc.exe -spirv -WX -O3 -T vs_6_6 -E VS -I <android-vulkan directory>\app\src\main\hlsl -Fo <android-vulkan directory>\app\src\main\assets\shaders\<file name>-vs.spv <file name>.vs
+dxc.exe -spirv -WX -O3 -fvk-use-dx-layout -T vs_6_6 -E VS -I <android-vulkan directory>\app\src\main\hlsl -Fo <android-vulkan directory>\app\src\main\assets\shaders\<file name>-vs.spv <file name>.vs
 ```
 
 ## Compile and deploy fragment shader module
 
 ```txt
-dxc.exe -spirv -WX -O3 -T ps_6_6 -E PS -I <android-vulkan directory>\app\src\main\hlsl -Fo <android-vulkan directory>\app\src\main\assets\shaders\<file name>-ps.spv <file name>.ps
+dxc.exe -spirv -WX -O3 -fvk-use-dx-layout -T ps_6_6 -E PS -I <android-vulkan directory>\app\src\main\hlsl -Fo <android-vulkan directory>\app\src\main\assets\shaders\<file name>-ps.spv <file name>.ps
+```
+
+## _SPIR-V_ disassembler via _DXC_
+
+The [_DXC_](https://github.com/microsoft/DirectXShaderCompiler) has special flag to print out _SPIR-V_ disassembler code of the binary representation. Use the following command:
+
+```txt
+-Fc <file name>
 ```

@@ -1,11 +1,19 @@
+[[ vk::binding ( 0 ) ]]
+cbuffer MipInfo:                            register ( b0 )
+{
+    float               _mipLevel;
+    float3              _padding0_0;
+};
+
+[[ vk::binding ( 1 ) ]]
 Texture2D<float4>       diffuseTexture:     register ( t0 );
 
-[[ vk::binding ( 0 ) ]]
+[[ vk::binding ( 2 ) ]]
 SamplerState            textureSampler:     register ( s0 );
 
 //----------------------------------------------------------------------------------------------------------------------
 
 float4 PS ( [[ vk::location ( 0 ) ]] in linear float2 uv: UV ): SV_Target0
 {
-    return diffuseTexture.Sample ( textureSampler, uv );
+    return diffuseTexture.SampleLevel ( textureSampler, uv, _mipLevel );
 }

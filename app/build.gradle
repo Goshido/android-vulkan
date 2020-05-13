@@ -26,9 +26,52 @@ android {
             version "3.10.2"
         }
     }
+
+    // See https://developer.android.com/ndk/guides/graphics/validation-layer#apk-containing-layers
+    sourceSets {
+        main {
+            ext.makeVulkanLayerPath = { ->
+                return buildDir.toString() + "/vulkan-debug-layers"
+            }
+
+            jniLibs {
+                srcDir makeVulkanLayerPath()
+            }
+        }
+    }
 }
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation 'androidx.appcompat:appcompat:1.1.0'
 }
+
+// Automation for building result APK with Vulkan's debug layer libraries from from Android NDK...
+
+ext.getVulkanLayerSourceDirectory = { ->
+    return "sources/third_party/vulkan/src/build-android/jniLibs"
+}
+
+ext.getVulkanLayerTargetDirectory = { ->
+    return "vulkan-debug-layers"
+}
+
+ext.getVulkanDebugLayerFilter = { ->
+    return "**/libVkLayer_khronos_validation.so"
+}
+
+// See https://gist.github.com/bertrandmartel/99b5fb1e668d17435dc5
+ext.getNdkDirectory = { ->
+    Properties properties = new Properties()
+    properties.load(project.rootProject.file('local.properties').newDataInputStream())
+    return properties.getProperty('ndk.dir')
+}
+
+// Custom task to copy .so family from Android NDK.
+task copyVulkanLayerLib(type: Copy) {
+    from(new File(getNdkDirectory(), getVulkanLayerSourceDirectory())) { include getVulkanDebugLayerFilter() }
+    into new File(buildDir, getVulkanLayerTargetDirectory())
+}
+
+// Inject copyVulkanLayerLib to build graph.
+preBuild.dependsOn copyVulkanLayerLib

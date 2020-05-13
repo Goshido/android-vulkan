@@ -46,7 +46,7 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.1.0'
 }
 
-// Automation for building result APK with Vulkan's debug layer libraries from from Android NDK...
+// Automation for building result APK with Vulkan's debug layer libraries from Android NDK.
 
 ext.getVulkanLayerSourceDirectory = { ->
     return "sources/third_party/vulkan/src/build-android/jniLibs"

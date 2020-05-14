@@ -42,15 +42,9 @@ class Renderer final
     using LogType = void (*) ( const char* format, ... );
 
     private:
-        // Note VkImage is a VK_DEFINE_NON_DISPATCHABLE_HANDLE type.
-        VkDebugReportCallbackEXT                                            _debugReportCallback;
-
-        // Note VkImage is a VK_DEFINE_NON_DISPATCHABLE_HANDLE type.
         VkImage                                                             _depthStencilImage;
 
         VkFormat                                                            _depthStencilImageFormat;
-
-        // Note VkDeviceMemory and VkImageView are a VK_DEFINE_NON_DISPATCHABLE_HANDLE types.
         VkDeviceMemory                                                      _depthStencilImageMemory;
         VkImageView                                                         _depthStencilImageView;
 
@@ -61,23 +55,23 @@ class Renderer final
         VkQueue                                                             _queue;
         uint32_t                                                            _queueFamilyIndex;
 
-        // Note VkRenderPass is a VK_DEFINE_NON_DISPATCHABLE_HANDLE.
         VkRenderPass                                                        _renderPass;
-
-        // Note VkSurfaceKHR is a VK_DEFINE_NON_DISPATCHABLE_HANDLE.
         VkSurfaceKHR                                                        _surface;
-
         VkFormat                                                            _surfaceFormat;
-
-        // Note VkSwapchainKHR is a VK_DEFINE_NON_DISPATCHABLE_HANDLE.
         VkSwapchainKHR                                                      _swapchain;
+
+#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
         PFN_vkCreateDebugReportCallbackEXT                                  vkCreateDebugReportCallbackEXT;
         PFN_vkDestroyDebugReportCallbackEXT                                 vkDestroyDebugReportCallbackEXT;
 
+        VkDebugReportCallbackEXT                                            _debugReportCallback;
         VkDebugReportCallbackCreateInfoEXT                                  _debugReportCallbackCreateInfoEXT;
 
         std::map<VkDebugReportFlagsEXT, std::pair<LogType, const char*>>    _loggerMapper;
+        static const std::map<VkDebugReportObjectTypeEXT, const char*>      _vulkanObjectTypeMap;
+
+#endif
 
         std::vector<VkPhysicalDeviceGroupProperties>                        _physicalDeviceGroups;
         std::map<VkPhysicalDevice, VulkanPhysicalDeviceInfo>                _physicalDeviceInfo;
@@ -94,7 +88,6 @@ class Renderer final
         static const std::map<VkColorSpaceKHR, const char*>                 _vulkanColorSpaceMap;
         static const std::map<VkCompositeAlphaFlagBitsKHR, const char*>     _vulkanCompositeAlphaMap;
         static const std::map<VkFormat, const char*>                        _vulkanFormatMap;
-        static const std::map<VkDebugReportObjectTypeEXT, const char*>      _vulkanObjectTypeMap;
         static const std::map<VkPhysicalDeviceType, const char*>            _vulkanPhysicalDeviceTypeMap;
         static const std::map<VkPresentModeKHR, const char*>                _vulkanPresentModeMap;
         static const std::map<VkResult, const char*>                        _vulkanResultMap;
@@ -144,8 +137,13 @@ class Renderer final
         ) const;
 
     private:
+
+#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+
         bool DeployDebugFeatures ();
         void DestroyDebugFeatures ();
+
+#endif
 
         bool DeployDevice ();
         void DestroyDevice ();
@@ -232,6 +230,8 @@ class Renderer final
             VkFormat &targetDepthStencilFormat
         ) const;
 
+#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+
         static VkBool32 VKAPI_PTR OnVulkanDebugReport ( VkDebugReportFlagsEXT flags,
             VkDebugReportObjectTypeEXT objectType,
             uint64_t object,
@@ -241,6 +241,9 @@ class Renderer final
             const char* pMessage,
             void* pUserData
         );
+
+#endif
+
 };
 
 } // namespace android_vulkan

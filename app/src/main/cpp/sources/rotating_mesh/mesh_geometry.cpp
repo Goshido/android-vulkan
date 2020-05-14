@@ -44,7 +44,7 @@ MeshGeometry::MeshGeometry ():
     // NOTHING
 
     // TODO REMOVE THIS
-    android_vulkan::LogDebug ( "%zu", _fileName.size () );
+    printf ( "%zu", _fileName.size () );
 }
 
 void MeshGeometry::FreeResources ( android_vulkan::Renderer &renderer )

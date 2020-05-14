@@ -259,6 +259,71 @@ VulkanPhysicalDeviceInfo::VulkanPhysicalDeviceInfo ():
 
 //----------------------------------------------------------------------------------------------------------------------
 
+#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+
+const std::map<VkDebugReportObjectTypeEXT, const char*> Renderer::_vulkanObjectTypeMap =
+{
+    { VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_VIEW_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_VIEW_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_POOL_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_POOL_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_POOL_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_POOL_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_SET_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_SET_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_DEVICE_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_DEVICE_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_DEVICE_MEMORY_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_DEVICE_MEMORY_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_DISPLAY_KHR_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_DISPLAY_KHR_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_DISPLAY_MODE_KHR_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_DISPLAY_MODE_KHR_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_EVENT_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_EVENT_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_FENCE_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_FENCE_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_FRAMEBUFFER_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_FRAMEBUFFER_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_INSTANCE_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_INSTANCE_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_OBJECT_TABLE_NVX_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_OBJECT_TABLE_NVX_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_PHYSICAL_DEVICE_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_PHYSICAL_DEVICE_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_CACHE_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_CACHE_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_LAYOUT_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_LAYOUT_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_QUERY_POOL_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_QUERY_POOL_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_QUEUE_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_QUEUE_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_RENDER_PASS_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_RENDER_PASS_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_SEMAPHORE_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_SEMAPHORE_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_SHADER_MODULE_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_SHADER_MODULE_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_SURFACE_KHR_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_SURFACE_KHR_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_SWAPCHAIN_KHR_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_SWAPCHAIN_KHR_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_UNKNOWN_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_UNKNOWN_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_VALIDATION_CACHE_EXT_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_VALIDATION_CACHE_EXT_EXT" },
+
+    {
+        VK_DEBUG_REPORT_OBJECT_TYPE_ACCELERATION_STRUCTURE_NV_EXT,
+        "VK_DEBUG_REPORT_OBJECT_TYPE_ACCELERATION_STRUCTURE_NV_EXT"
+    },
+
+    {
+        VK_DEBUG_REPORT_OBJECT_TYPE_DEBUG_REPORT_CALLBACK_EXT_EXT,
+        "VK_DEBUG_REPORT_OBJECT_TYPE_DEBUG_REPORT_CALLBACK_EXT_EXT"
+    },
+
+    {
+        VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_UPDATE_TEMPLATE_EXT,
+        "VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_UPDATE_TEMPLATE_EXT"
+    },
+
+    {
+        VK_DEBUG_REPORT_OBJECT_TYPE_INDIRECT_COMMANDS_LAYOUT_NVX_EXT,
+        "VK_DEBUG_REPORT_OBJECT_TYPE_INDIRECT_COMMANDS_LAYOUT_NVX_EXT"
+    },
+
+    {
+        VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_YCBCR_CONVERSION_EXT,
+        "VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_YCBCR_CONVERSION_EXT"
+    }
+};
+
+#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+
 const std::map<VkColorSpaceKHR, const char*> Renderer::_vulkanColorSpaceMap =
 {
     { VK_COLOR_SPACE_ADOBERGB_LINEAR_EXT, "VK_COLOR_SPACE_ADOBERGB_LINEAR_EXT" },
@@ -532,67 +597,6 @@ const std::map<VkFormat, const char*> Renderer::_vulkanFormatMap =
     { VK_FORMAT_X8_D24_UNORM_PACK32, "VK_FORMAT_X8_D24_UNORM_PACK32" }
 };
 
-const std::map<VkDebugReportObjectTypeEXT, const char*> Renderer::_vulkanObjectTypeMap =
-{
-    { VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_VIEW_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_VIEW_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_POOL_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_POOL_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_POOL_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_POOL_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_SET_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_SET_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_DEVICE_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_DEVICE_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_DEVICE_MEMORY_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_DEVICE_MEMORY_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_DISPLAY_KHR_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_DISPLAY_KHR_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_DISPLAY_MODE_KHR_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_DISPLAY_MODE_KHR_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_EVENT_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_EVENT_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_FENCE_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_FENCE_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_FRAMEBUFFER_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_FRAMEBUFFER_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_INSTANCE_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_INSTANCE_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_OBJECT_TABLE_NVX_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_OBJECT_TABLE_NVX_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_PHYSICAL_DEVICE_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_PHYSICAL_DEVICE_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_CACHE_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_CACHE_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_LAYOUT_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_LAYOUT_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_QUERY_POOL_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_QUERY_POOL_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_QUEUE_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_QUEUE_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_RENDER_PASS_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_RENDER_PASS_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_SEMAPHORE_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_SEMAPHORE_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_SHADER_MODULE_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_SHADER_MODULE_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_SURFACE_KHR_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_SURFACE_KHR_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_SWAPCHAIN_KHR_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_SWAPCHAIN_KHR_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_UNKNOWN_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_UNKNOWN_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_VALIDATION_CACHE_EXT_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_VALIDATION_CACHE_EXT_EXT" },
-
-    {
-        VK_DEBUG_REPORT_OBJECT_TYPE_ACCELERATION_STRUCTURE_NV_EXT,
-        "VK_DEBUG_REPORT_OBJECT_TYPE_ACCELERATION_STRUCTURE_NV_EXT"
-    },
-
-    {
-        VK_DEBUG_REPORT_OBJECT_TYPE_DEBUG_REPORT_CALLBACK_EXT_EXT,
-        "VK_DEBUG_REPORT_OBJECT_TYPE_DEBUG_REPORT_CALLBACK_EXT_EXT"
-    },
-
-    {
-        VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_UPDATE_TEMPLATE_EXT,
-        "VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_UPDATE_TEMPLATE_EXT"
-    },
-
-    {
-        VK_DEBUG_REPORT_OBJECT_TYPE_INDIRECT_COMMANDS_LAYOUT_NVX_EXT,
-        "VK_DEBUG_REPORT_OBJECT_TYPE_INDIRECT_COMMANDS_LAYOUT_NVX_EXT"
-    },
-
-    {
-        VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_YCBCR_CONVERSION_EXT,
-        "VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_YCBCR_CONVERSION_EXT"
-    }
-};
-
 const std::map<VkPhysicalDeviceType, const char*> Renderer::_vulkanPhysicalDeviceTypeMap =
 {
     { VK_PHYSICAL_DEVICE_TYPE_CPU, "VK_PHYSICAL_DEVICE_TYPE_CPU" },
@@ -636,7 +640,6 @@ const std::map<VkResult, const char*> Renderer::_vulkanResultMap =
 //----------------------------------------------------------------------------------------------------------------------
 
 Renderer::Renderer ():
-    _debugReportCallback ( VK_NULL_HANDLE ),
     _depthStencilImage ( VK_NULL_HANDLE ),
     _depthStencilImageFormat ( VK_FORMAT_UNDEFINED ),
     _depthStencilImageMemory (  VK_NULL_HANDLE ),
@@ -649,9 +652,20 @@ Renderer::Renderer ():
     _renderPass ( VK_NULL_HANDLE ),
     _surface ( VK_NULL_HANDLE ),
     _surfaceFormat ( VK_FORMAT_UNDEFINED ),
+
+#ifndef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+
+    _swapchain ( VK_NULL_HANDLE )
+
+#else
+
     _swapchain ( VK_NULL_HANDLE ),
     vkCreateDebugReportCallbackEXT ( nullptr ),
-    vkDestroyDebugReportCallbackEXT ( nullptr )
+    vkDestroyDebugReportCallbackEXT ( nullptr ),
+    _debugReportCallback ( VK_NULL_HANDLE )
+
+#endif
+
 {
     // NOTHING
 }
@@ -751,16 +765,26 @@ bool Renderer::OnInit ( ANativeWindow &nativeWindow, bool vSync )
     }
 
     PrintInstanceLayerInfo ();
-
     DeployInstance ();
+
+#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+
     DeployDebugFeatures ();
+
+#endif
 
     uint32_t physicalDeviceCount = 0U;
     vkEnumeratePhysicalDevices ( _instance, &physicalDeviceCount, nullptr );
 
     if ( !physicalDeviceCount )
     {
+
+#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+
         DestroyDebugFeatures ();
+
+#endif
+
         DestroyInstance ();
 
         LogError ( "Renderer::OnInit - There is no any Vulkan physical device." );
@@ -781,7 +805,13 @@ bool Renderer::OnInit ( ANativeWindow &nativeWindow, bool vSync )
 
     if ( !result )
     {
+
+#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+
         DestroyDebugFeatures ();
+
+#endif
+
         DestroyInstance ();
         return false;
     }
@@ -791,9 +821,14 @@ bool Renderer::OnInit ( ANativeWindow &nativeWindow, bool vSync )
         if ( PrintPhysicalDeviceInfo ( i, deviceList[ i ] ) ) continue;
 
         _physicalDeviceInfo.clear ();
-        DestroyDebugFeatures ();
-        DestroyInstance ();
 
+#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+
+        DestroyDebugFeatures ();
+
+#endif
+
+        DestroyInstance ();
         return false;
     }
 
@@ -803,7 +838,13 @@ bool Renderer::OnInit ( ANativeWindow &nativeWindow, bool vSync )
     if ( !physicalDeviceGroupCount )
     {
         _physicalDeviceInfo.clear ();
+
+#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+
         DestroyDebugFeatures ();
+
+#endif
+
         DestroyInstance ();
 
         LogError ( "Renderer::OnInit - There is no any Vulkan physical device groups." );
@@ -827,9 +868,13 @@ bool Renderer::OnInit ( ANativeWindow &nativeWindow, bool vSync )
         _physicalDeviceGroups.clear ();
         _physicalDeviceInfo.clear ();
 
-        DestroyDebugFeatures ();
-        DestroyInstance ();
+#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
+        DestroyDebugFeatures ();
+
+#endif
+
+        DestroyInstance ();
         return false;
     }
 
@@ -841,9 +886,13 @@ bool Renderer::OnInit ( ANativeWindow &nativeWindow, bool vSync )
         _physicalDeviceGroups.clear ();
         _physicalDeviceInfo.clear ();
 
-        DestroyDebugFeatures ();
-        DestroyInstance ();
+#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
+        DestroyDebugFeatures ();
+
+#endif
+
+        DestroyInstance ();
         return false;
     }
 
@@ -853,9 +902,14 @@ bool Renderer::OnInit ( ANativeWindow &nativeWindow, bool vSync )
         _physicalDeviceInfo.clear ();
 
         DestroyDevice ();
-        DestroyDebugFeatures ();
-        DestroyInstance ();
 
+#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+
+        DestroyDebugFeatures ();
+
+#endif
+
+        DestroyInstance ();
         return false;
     }
 
@@ -866,9 +920,14 @@ bool Renderer::OnInit ( ANativeWindow &nativeWindow, bool vSync )
 
         DestroySurface ();
         DestroyDevice ();
-        DestroyDebugFeatures ();
-        DestroyInstance ();
 
+#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+
+        DestroyDebugFeatures ();
+
+#endif
+
+        DestroyInstance ();
         return false;
     }
 
@@ -880,9 +939,14 @@ bool Renderer::OnInit ( ANativeWindow &nativeWindow, bool vSync )
         DestroySwapchain ();
         DestroySurface ();
         DestroyDevice ();
-        DestroyDebugFeatures ();
-        DestroyInstance ();
 
+#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+
+        DestroyDebugFeatures ();
+
+#endif
+
+        DestroyInstance ();
         return false;
     }
 
@@ -896,7 +960,13 @@ bool Renderer::OnInit ( ANativeWindow &nativeWindow, bool vSync )
     DestroySwapchain ();
     DestroySurface ();
     DestroyDevice ();
+
+#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+
     DestroyDebugFeatures ();
+
+#endif
+
     DestroyInstance ();
 
     return false;
@@ -918,7 +988,13 @@ void Renderer::OnDestroy ()
     DestroyRenderPass ();
     DestroySurface ();
     DestroyDevice ();
+
+#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+
     DestroyDebugFeatures ();
+
+#endif
+
     DestroyInstance ();
 }
 
@@ -972,6 +1048,8 @@ bool Renderer::TryAllocateMemory ( VkDeviceMemory &memory,
         errorMessage
     );
 }
+
+#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
 bool Renderer::DeployDebugFeatures ()
 {
@@ -1031,12 +1109,14 @@ bool Renderer::DeployDebugFeatures ()
 
 void Renderer::DestroyDebugFeatures ()
 {
-    if ( !_debugReportCallback )
+    if ( _debugReportCallback == VK_NULL_HANDLE )
         return;
 
     vkDestroyDebugReportCallbackEXT ( _instance, _debugReportCallback, nullptr );
     _debugReportCallback = VK_NULL_HANDLE;
 }
+
+#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
 bool Renderer::DeployDevice ()
 {
@@ -1160,18 +1240,6 @@ void Renderer::DestroyPresentFramebuffers ()
 
 bool Renderer::DeployInstance ()
 {
-    _debugReportCallbackCreateInfoEXT.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
-    _debugReportCallbackCreateInfoEXT.pNext = nullptr;
-    _debugReportCallbackCreateInfoEXT.pUserData = this;
-    _debugReportCallbackCreateInfoEXT.pfnCallback = &Renderer::OnVulkanDebugReport;
-
-    _debugReportCallbackCreateInfoEXT.flags =
-        VK_DEBUG_REPORT_INFORMATION_BIT_EXT |
-        VK_DEBUG_REPORT_WARNING_BIT_EXT |
-        VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT |
-        VK_DEBUG_REPORT_ERROR_BIT_EXT |
-        VK_DEBUG_REPORT_DEBUG_BIT_EXT;
-
     VkApplicationInfo applicationInfo;
     applicationInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
     applicationInfo.pNext = nullptr;
@@ -1181,6 +1249,28 @@ bool Renderer::DeployInstance ()
     applicationInfo.pEngineName = ENGINE_NAME;
     applicationInfo.engineVersion = 1U;
 
+    VkInstanceCreateInfo instanceCreateInfo;
+    instanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+    instanceCreateInfo.flags = 0U;
+    instanceCreateInfo.pApplicationInfo = &applicationInfo;
+
+#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+
+    _debugReportCallbackCreateInfoEXT.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
+    _debugReportCallbackCreateInfoEXT.pNext = nullptr;
+    _debugReportCallbackCreateInfoEXT.pUserData = this;
+    _debugReportCallbackCreateInfoEXT.pfnCallback = &Renderer::OnVulkanDebugReport;
+
+    _debugReportCallbackCreateInfoEXT.flags =
+        VK_DEBUG_REPORT_ERROR_BIT_EXT |
+        VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT |
+        VK_DEBUG_REPORT_WARNING_BIT_EXT;
+
+    constexpr static const char* layers[] =
+    {
+        "VK_LAYER_KHRONOS_validation"
+    };
+
     constexpr static const char* extensions[] =
     {
         VK_EXT_DEBUG_REPORT_EXTENSION_NAME,
@@ -1188,17 +1278,25 @@ bool Renderer::DeployInstance ()
         "VK_KHR_android_surface"
     };
 
-    constexpr const uint32_t extensionCount =
-        static_cast<const uint32_t> ( sizeof ( extensions ) / sizeof ( extensions[ 0U ] ) );
-
-    VkInstanceCreateInfo instanceCreateInfo;
-    instanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     instanceCreateInfo.pNext = &_debugReportCallbackCreateInfoEXT;
-    instanceCreateInfo.flags = 0U;
-    instanceCreateInfo.pApplicationInfo = &applicationInfo;
+    instanceCreateInfo.enabledLayerCount = static_cast<uint32_t> ( std::size ( layers ) );
+    instanceCreateInfo.ppEnabledLayerNames = layers;
+
+#else
+
+    constexpr static const char* extensions[] =
+    {
+        VK_KHR_SURFACE_EXTENSION_NAME,
+        "VK_KHR_android_surface"
+    };
+
+    instanceCreateInfo.pNext = nullptr;
     instanceCreateInfo.enabledLayerCount = 0U;
     instanceCreateInfo.ppEnabledLayerNames = nullptr;
-    instanceCreateInfo.enabledExtensionCount = extensionCount;
+
+#endif
+
+    instanceCreateInfo.enabledExtensionCount = static_cast<const uint32_t> ( std::size ( extensions ) );
     instanceCreateInfo.ppEnabledExtensionNames = extensions;
 
     return CheckVkResult ( vkCreateInstance ( &instanceCreateInfo, nullptr, &_instance ),
@@ -2425,11 +2523,15 @@ const char* Renderer::ResolvePhysicalDeviceType ( VkPhysicalDeviceType type ) co
     return findResult == _vulkanPhysicalDeviceTypeMap.cend () ? UNKNOWN_RESULT : findResult->second;
 }
 
+#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+
 const char* Renderer::ResolveVkDebugReportObjectType ( VkDebugReportObjectTypeEXT type ) const
 {
     const auto findResult = _vulkanObjectTypeMap.find ( type );
     return findResult == _vulkanObjectTypeMap.cend () ? UNKNOWN_RESULT : findResult->second;
 }
+
+#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
 const char* Renderer::ResolveVkColorSpaceKHR ( VkColorSpaceKHR colorSpace ) const
 {
@@ -2648,6 +2750,8 @@ bool Renderer::SelectTargetSurfaceFormat ( VkFormat &targetColorFormat,
     return false;
 }
 
+#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+
 VkBool32 VKAPI_PTR Renderer::OnVulkanDebugReport ( VkDebugReportFlagsEXT flags,
     VkDebugReportObjectTypeEXT objectType,
     uint64_t object,
@@ -2698,7 +2802,15 @@ message: %s
         pMessage
     );
 
+#ifdef ANDROID_VULKAN_LEAK_STRICT_MODE
+
+    assert ( !"Renderer::OnVulkanDebugReport - Triggered!" );
+
+#endif
+
     return VK_FALSE;
 }
+
+#endif
 
 } // namespace android_vulkan

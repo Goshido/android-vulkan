@@ -467,7 +467,12 @@ bool Texture2D::UploadDataInternal ( const std::vector<uint8_t> &data,
     imageInfo.imageType = VK_IMAGE_TYPE_2D;
     imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
     imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-    imageInfo.usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+
+    imageInfo.usage =
+        VK_IMAGE_USAGE_SAMPLED_BIT |
+        VK_IMAGE_USAGE_TRANSFER_DST_BIT |
+        VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+
     imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
     imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     imageInfo.extent.width = _resolution.width;
@@ -632,7 +637,7 @@ bool Texture2D::UploadDataInternal ( const std::vector<uint8_t> &data,
     }
 
     VkImageMemoryBarrier barrierInfo;
-    barrierInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    barrierInfo.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
     barrierInfo.pNext = nullptr;
     barrierInfo.image = _image;
     barrierInfo.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -703,26 +708,6 @@ bool Texture2D::UploadDataInternal ( const std::vector<uint8_t> &data,
     memset ( blitInfo.dstOffsets, 0, sizeof ( VkOffset3D ) );
     blitInfo.dstOffsets[ 1U ].z = 1;
 
-    auto commitMipLevel = [&] ( uint32_t baseMipLevel ) {
-        barrierInfo.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-        barrierInfo.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-        barrierInfo.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-        barrierInfo.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        barrierInfo.subresourceRange.baseMipLevel = baseMipLevel;
-
-        vkCmdPipelineBarrier ( commandBuffer,
-            VK_PIPELINE_STAGE_TRANSFER_BIT,
-            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-            0U,
-            0U,
-            nullptr,
-            0U,
-            nullptr,
-            1U,
-            &barrierInfo
-        );
-    };
-
     for ( uint32_t i = 1U; i < imageInfo.mipLevels; ++i )
     {
         const uint32_t previousMip = i - 1U;
@@ -743,7 +728,23 @@ bool Texture2D::UploadDataInternal ( const std::vector<uint8_t> &data,
             VK_FILTER_LINEAR
         );
 
-        commitMipLevel ( previousMip );
+        barrierInfo.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+        barrierInfo.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+        barrierInfo.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+        barrierInfo.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        barrierInfo.subresourceRange.baseMipLevel = previousMip;
+
+        vkCmdPipelineBarrier ( commandBuffer,
+            VK_PIPELINE_STAGE_TRANSFER_BIT,
+            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+            0U,
+            0U,
+            nullptr,
+            0U,
+            nullptr,
+            1U,
+            &barrierInfo
+        );
 
         if ( i + 1U >= imageInfo.mipLevels )
             continue;
@@ -769,8 +770,25 @@ bool Texture2D::UploadDataInternal ( const std::vector<uint8_t> &data,
         );
     }
 
-    // Note last mip must must be translated to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL state.
-    commitMipLevel ( imageInfo.mipLevels - 1U );
+    // Note last mip must be translated to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL state.
+
+    barrierInfo.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+    barrierInfo.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+    barrierInfo.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    barrierInfo.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    barrierInfo.subresourceRange.baseMipLevel = imageInfo.mipLevels - 1U;
+
+    vkCmdPipelineBarrier ( commandBuffer,
+        VK_PIPELINE_STAGE_TRANSFER_BIT,
+        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+        0U,
+        0U,
+        nullptr,
+        0U,
+        nullptr,
+        1U,
+        &barrierInfo
+    );
 
     result = renderer.CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
         "Texture2D::UploadDataInternal",

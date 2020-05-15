@@ -632,6 +632,7 @@ const std::map<VkResult, const char*> Renderer::_vulkanResultMap =
     { VK_ERROR_OUT_OF_DATE_KHR, "VK_ERROR_OUT_OF_DATE_KHR" },
     { VK_ERROR_OUT_OF_DEVICE_MEMORY, "VK_ERROR_OUT_OF_DEVICE_MEMORY" },
     { VK_ERROR_OUT_OF_HOST_MEMORY, "VK_ERROR_OUT_OF_HOST_MEMORY" },
+    { VK_ERROR_OUT_OF_POOL_MEMORY, "VK_ERROR_OUT_OF_POOL_MEMORY" },
     { VK_ERROR_SURFACE_LOST_KHR, "VK_ERROR_SURFACE_LOST_KHR" },
     { VK_ERROR_TOO_MANY_OBJECTS, "VK_ERROR_TOO_MANY_OBJECTS" },
     { VK_SUBOPTIMAL_KHR, "VK_SUBOPTIMAL_KHR" }
@@ -857,6 +858,9 @@ bool Renderer::OnInit ( ANativeWindow &nativeWindow, bool vSync )
 
     _physicalDeviceGroups.resize ( static_cast<size_t> ( physicalDeviceGroupCount ) );
     VkPhysicalDeviceGroupProperties* groupProps = _physicalDeviceGroups.data ();
+
+    for ( auto& item : _physicalDeviceGroups )
+        item.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GROUP_PROPERTIES;
 
     result = CheckVkResult ( vkEnumeratePhysicalDeviceGroups ( _instance, &physicalDeviceGroupCount, groupProps ),
         "Renderer::OnInit",
@@ -1136,6 +1140,13 @@ bool Renderer::DeployDevice ()
 
     const auto& caps = _physicalDeviceInfo[ _physicalDevice ];
 
+    constexpr const char* extensions[] =
+    {
+        VK_KHR_SWAPCHAIN_EXTENSION_NAME
+    };
+
+    // TODO check if extensions is available.
+
     VkDeviceCreateInfo deviceCreateInfo;
     deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
     deviceCreateInfo.pNext = nullptr;
@@ -1144,8 +1155,8 @@ bool Renderer::DeployDevice ()
     deviceCreateInfo.pQueueCreateInfos = &deviceQueueCreateInfo;
     deviceCreateInfo.enabledLayerCount = 0U;
     deviceCreateInfo.ppEnabledLayerNames = nullptr;
-    deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t> ( caps._extensions.size () );
-    deviceCreateInfo.ppEnabledExtensionNames = caps._extensions.data ();
+    deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t> ( std::size ( extensions ) );
+    deviceCreateInfo.ppEnabledExtensionNames = extensions;
     deviceCreateInfo.pEnabledFeatures = &caps._features;
 
     const bool result = CheckVkResult ( vkCreateDevice ( _physicalDevice, &deviceCreateInfo, nullptr, &_device ),
@@ -1339,9 +1350,6 @@ bool Renderer::DeployRenderPass ()
     attachment1.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     attachment1.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
-    constexpr const auto attachmentCount =
-        static_cast<const uint32_t> ( sizeof ( attachmentDescriptions ) / sizeof ( attachmentDescriptions[ 0U ] ) );
-
     VkAttachmentReference colorAttachmentReference;
     colorAttachmentReference.attachment = 0U;
     colorAttachmentReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
@@ -1366,7 +1374,7 @@ bool Renderer::DeployRenderPass ()
     renderPassCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
     renderPassCreateInfo.pNext = nullptr;
     renderPassCreateInfo.flags = 0U;
-    renderPassCreateInfo.attachmentCount = attachmentCount;
+    renderPassCreateInfo.attachmentCount = static_cast<uint32_t> ( std::size ( attachmentDescriptions ) );
     renderPassCreateInfo.pAttachments = attachmentDescriptions;
     renderPassCreateInfo.subpassCount = 1U;
     renderPassCreateInfo.pSubpasses = &subpassDescription;
@@ -1509,7 +1517,12 @@ bool Renderer::DeploySwapchain ( bool vSync )
     swapchainCreateInfoKHR.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
     swapchainCreateInfoKHR.queueFamilyIndexCount = VK_QUEUE_FAMILY_IGNORED;
     swapchainCreateInfoKHR.pQueueFamilyIndices = nullptr;
-    swapchainCreateInfoKHR.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
+
+    // TODO it's need to figure out how to setup presentation engine to work with landscape layout without
+    // Vulkan validation errors.
+    //swapchainCreateInfoKHR.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
+    swapchainCreateInfoKHR.preTransform = VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR;
+
     swapchainCreateInfoKHR.clipped = VK_TRUE;
     swapchainCreateInfoKHR.oldSwapchain = VK_NULL_HANDLE;
 

@@ -261,21 +261,25 @@ bool Game::CreateDescriptorSet ( android_vulkan::Renderer &renderer )
 {
     const VkDevice device = renderer.GetDevice ();
 
-    VkDescriptorPoolSize features[ 2U ];
+    VkDescriptorPoolSize features[ 3U ];
     VkDescriptorPoolSize& ubFeature = features[ 0U ];
     ubFeature.descriptorCount = 1U;
     ubFeature.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 
-    VkDescriptorPoolSize& samplerFeature = features[ 1U ];
+    VkDescriptorPoolSize& imageFeature = features[ 1U ];
+    imageFeature.descriptorCount = 1U;
+    imageFeature.type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+
+    VkDescriptorPoolSize& samplerFeature = features[ 2U ];
     samplerFeature.descriptorCount = 1U;
-    samplerFeature.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    samplerFeature.type = VK_DESCRIPTOR_TYPE_SAMPLER;
 
     VkDescriptorPoolCreateInfo poolInfo;
     poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
     poolInfo.pNext = nullptr;
     poolInfo.flags = 0U;
     poolInfo.maxSets = 1U;
-    poolInfo.poolSizeCount = 2U;
+    poolInfo.poolSizeCount = static_cast<uint32_t> ( std::size ( features ) );
     poolInfo.pPoolSizes = features;
 
     bool result = renderer.CheckVkResult ( vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_descriptorPool ),
@@ -331,7 +335,7 @@ bool Game::CreateDescriptorSet ( android_vulkan::Renderer &renderer )
     bufferInfo.range = sizeof ( _mipInfo );
     bufferInfo.offset = 0U;
 
-    VkWriteDescriptorSet writeSets[ 2U ];
+    VkWriteDescriptorSet writeSets[ 3U ];
     VkWriteDescriptorSet& ubWriteSet = writeSets[ 0U ];
     ubWriteSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     ubWriteSet.pNext = nullptr;
@@ -344,11 +348,23 @@ bool Game::CreateDescriptorSet ( android_vulkan::Renderer &renderer )
     ubWriteSet.pImageInfo = nullptr;
     ubWriteSet.pTexelBufferView = nullptr;
 
-    VkWriteDescriptorSet& samplerWriteSet = writeSets[ 1U ];
+    VkWriteDescriptorSet& imageWriteSet = writeSets[ 1U ];
+    imageWriteSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    imageWriteSet.pNext = nullptr;
+    imageWriteSet.dstSet = _descriptorSet;
+    imageWriteSet.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+    imageWriteSet.dstBinding = 1U;
+    imageWriteSet.dstArrayElement = 0U;
+    imageWriteSet.descriptorCount = 1U;
+    imageWriteSet.pBufferInfo = nullptr;
+    imageWriteSet.pImageInfo = &imageInfo;
+    imageWriteSet.pTexelBufferView = nullptr;
+
+    VkWriteDescriptorSet& samplerWriteSet = writeSets[ 2U ];
     samplerWriteSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     samplerWriteSet.pNext = nullptr;
     samplerWriteSet.dstSet = _descriptorSet;
-    samplerWriteSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    samplerWriteSet.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
     samplerWriteSet.dstBinding = 2U;
     samplerWriteSet.dstArrayElement = 0U;
     samplerWriteSet.descriptorCount = 1U;
@@ -356,7 +372,7 @@ bool Game::CreateDescriptorSet ( android_vulkan::Renderer &renderer )
     samplerWriteSet.pImageInfo = &imageInfo;
     samplerWriteSet.pTexelBufferView = nullptr;
 
-    vkUpdateDescriptorSets ( device, 2U, writeSets, 0U, nullptr );
+    vkUpdateDescriptorSets ( device, static_cast<uint32_t> ( std::size ( writeSets ) ), writeSets, 0U, nullptr );
     return true;
 }
 
@@ -456,17 +472,38 @@ bool Game::CreatePipeline ( android_vulkan::Renderer &renderer )
     depthStencilInfo.flags = 0U;
     depthStencilInfo.stencilTestEnable = VK_FALSE;
     depthStencilInfo.depthTestEnable = VK_TRUE;
-    depthStencilInfo.depthBoundsTestEnable = VK_TRUE;
+    depthStencilInfo.depthBoundsTestEnable = VK_FALSE;
     depthStencilInfo.depthCompareOp = VK_COMPARE_OP_LESS;
     depthStencilInfo.depthWriteEnable = VK_TRUE;
     depthStencilInfo.minDepthBounds = 0.0F;
     depthStencilInfo.maxDepthBounds = 1.0F;
+    depthStencilInfo.front.compareOp = VK_COMPARE_OP_ALWAYS;
+    depthStencilInfo.front.compareMask = 0U;
+    depthStencilInfo.front.failOp = VK_STENCIL_OP_KEEP;
+    depthStencilInfo.front.passOp = VK_STENCIL_OP_KEEP;
+    depthStencilInfo.front.depthFailOp = VK_STENCIL_OP_KEEP;
+    depthStencilInfo.front.reference = UINT32_MAX;
+    depthStencilInfo.front.writeMask = UINT32_MAX;
+    depthStencilInfo.back.compareOp = VK_COMPARE_OP_ALWAYS;
+    depthStencilInfo.back.compareMask = 0U;
+    depthStencilInfo.back.failOp = VK_STENCIL_OP_KEEP;
+    depthStencilInfo.back.passOp = VK_STENCIL_OP_KEEP;
+    depthStencilInfo.back.depthFailOp = VK_STENCIL_OP_KEEP;
+    depthStencilInfo.back.reference = UINT32_MAX;
+    depthStencilInfo.back.writeMask = UINT32_MAX;
 
     VkPipelineColorBlendAttachmentState attachmentInfo;
     attachmentInfo.blendEnable = VK_FALSE;
 
     attachmentInfo.colorWriteMask =
         VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+
+    attachmentInfo.alphaBlendOp = VK_BLEND_OP_ADD;
+    attachmentInfo.colorBlendOp = VK_BLEND_OP_ADD;
+    attachmentInfo.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
+    attachmentInfo.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+    attachmentInfo.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
+    attachmentInfo.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
 
     VkPipelineColorBlendStateCreateInfo blendInfo;
     blendInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
@@ -526,7 +563,7 @@ bool Game::CreatePipeline ( android_vulkan::Renderer &renderer )
     pipelineInfo.pNext = nullptr;
     pipelineInfo.flags = 0U;
     pipelineInfo.subpass = 0U;
-    pipelineInfo.stageCount = 2U;
+    pipelineInfo.stageCount = static_cast<uint32_t> ( std::size ( stageInfo ) );
     pipelineInfo.pStages = stageInfo;
     pipelineInfo.renderPass = _renderPass;
     pipelineInfo.pDynamicState = nullptr;
@@ -567,7 +604,7 @@ void Game::DestroyPipeline ( android_vulkan::Renderer &renderer )
 
 bool Game::CreatePipelineLayout ( android_vulkan::Renderer &renderer )
 {
-    VkDescriptorSetLayoutBinding bindings[ 2U ];
+    VkDescriptorSetLayoutBinding bindings[ 3U ];
     VkDescriptorSetLayoutBinding& ubInfo = bindings[ 0U ];
     ubInfo.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
     ubInfo.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -575,9 +612,16 @@ bool Game::CreatePipelineLayout ( android_vulkan::Renderer &renderer )
     ubInfo.binding = 0U;
     ubInfo.pImmutableSamplers = nullptr;
 
-    VkDescriptorSetLayoutBinding& samplerInfo = bindings[ 1U ];
+    VkDescriptorSetLayoutBinding& imageInfo = bindings[ 1U ];
+    imageInfo.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    imageInfo.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+    imageInfo.descriptorCount = 1U;
+    imageInfo.binding = 1U;
+    imageInfo.pImmutableSamplers = nullptr;
+
+    VkDescriptorSetLayoutBinding& samplerInfo = bindings[ 2U ];
     samplerInfo.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-    samplerInfo.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    samplerInfo.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
     samplerInfo.descriptorCount = 1U;
     samplerInfo.binding = 2U;
     samplerInfo.pImmutableSamplers = nullptr;
@@ -586,7 +630,7 @@ bool Game::CreatePipelineLayout ( android_vulkan::Renderer &renderer )
     descriptorSetInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
     descriptorSetInfo.pNext = nullptr;
     descriptorSetInfo.flags = 0U;
-    descriptorSetInfo.bindingCount = 2U;
+    descriptorSetInfo.bindingCount = static_cast<uint32_t> ( std::size ( bindings ) );
     descriptorSetInfo.pBindings = bindings;
 
     const VkDevice device = renderer.GetDevice ();
@@ -653,6 +697,8 @@ bool Game::CreateRenderPass ( android_vulkan::Renderer &renderer )
     colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
     colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 
     VkAttachmentDescription& depthStencilAttachment = attachmentInfo[ 1U ];
     depthStencilAttachment.format = renderer.GetDefaultDepthStencilFormat ();
@@ -689,7 +735,7 @@ bool Game::CreateRenderPass ( android_vulkan::Renderer &renderer )
     renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
     renderPassInfo.pNext = nullptr;
     renderPassInfo.flags = 0U;
-    renderPassInfo.attachmentCount = 2U;
+    renderPassInfo.attachmentCount = static_cast<uint32_t> ( std::size ( attachmentInfo ) );
     renderPassInfo.pAttachments = attachmentInfo;
     renderPassInfo.dependencyCount = 0U;
     renderPassInfo.pDependencies = nullptr;
@@ -1010,13 +1056,13 @@ bool Game::InitCommandBuffers ( android_vulkan::Renderer &renderer )
     depthStencilTarget.depthStencil.stencil = 0x00000000U;
 
     VkRenderPassBeginInfo renderPassBeginInfo;
-    renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+    renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     renderPassBeginInfo.pNext = nullptr;
     renderPassBeginInfo.renderArea.offset.x = 0;
     renderPassBeginInfo.renderArea.offset.y = 0;
     renderPassBeginInfo.renderArea.extent = renderer.GetSurfaceSize ();
     renderPassBeginInfo.renderPass = _renderPass;
-    renderPassBeginInfo.clearValueCount = 2U;
+    renderPassBeginInfo.clearValueCount = static_cast<uint32_t> ( std::size ( clearValues ) );
     renderPassBeginInfo.pClearValues = clearValues;
 
     for ( size_t i = 0U; i < framebuffers; ++i )

@@ -242,7 +242,7 @@ bool MeshGeometry::LoadMesh ( const uint8_t* data,
     const BufferSyncItem& syncItem = findResult->second;
 
     VkBufferMemoryBarrier barrierInfo;
-    barrierInfo.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+    barrierInfo.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
     barrierInfo.pNext = nullptr;
     barrierInfo.buffer = _buffer;
     barrierInfo.srcAccessMask = syncItem._srcAccessMask;

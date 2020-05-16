@@ -138,6 +138,11 @@ class Renderer final
 
     private:
 
+        bool CheckRequiredDeviceExtensions ( const std::vector<const char*> &deviceExtensions,
+            char const* const* requiredExtensions,
+            size_t requiredExtensionCount
+        ) const;
+
 #ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
         bool DeployDebugFeatures ();

@@ -234,7 +234,7 @@ bool UniformBuffer::InitResources ( size_t size )
     VkCommandBufferBeginInfo beginInfo;
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     beginInfo.pNext = nullptr;
-    beginInfo.flags = 0U;
+    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
     beginInfo.pInheritanceInfo = nullptr;
 
     result = _renderer->CheckVkResult ( vkBeginCommandBuffer ( _commandBuffer, &beginInfo ),

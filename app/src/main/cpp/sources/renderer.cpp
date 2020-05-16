@@ -1053,6 +1053,43 @@ bool Renderer::TryAllocateMemory ( VkDeviceMemory &memory,
     );
 }
 
+bool Renderer::CheckRequiredDeviceExtensions ( const std::vector<const char*> &deviceExtensions,
+    char const* const* requiredExtensions,
+    size_t requiredExtensionCount
+) const
+{
+    static bool doesCheckedAlready = false;
+    static bool isOk;
+
+    if ( doesCheckedAlready )
+        return isOk;
+
+    std::set<std::string> allExtensions;
+    allExtensions.insert ( deviceExtensions.cbegin (), deviceExtensions.cend () );
+
+    android_vulkan::LogInfo ( "Renderer::CheckRequiredDeviceExtensions - Checking required device extensions..." );
+    isOk = true;
+    std::string tmp;
+
+    for ( size_t i = 0U; i < requiredExtensionCount; ++i )
+    {
+        const char* requiredExtension =  requiredExtensions[ i ];
+        tmp = requiredExtension;
+
+        if ( allExtensions.count ( tmp ) > 0U )
+        {
+            android_vulkan::LogInfo ( "%sOK: %s", INDENT_1, requiredExtension );
+            continue;
+        }
+
+        android_vulkan::LogError ( "%sFAIL: %s", INDENT_1, requiredExtension );
+        isOk = false;
+    }
+
+    doesCheckedAlready = true;
+    return isOk;
+}
+
 #ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
 bool Renderer::DeployDebugFeatures ()
@@ -1137,7 +1174,6 @@ bool Renderer::DeployDevice ()
         return false;
 
     deviceQueueCreateInfo.queueFamilyIndex = _queueFamilyIndex;
-
     const auto& caps = _physicalDeviceInfo[ _physicalDevice ];
 
     constexpr const char* extensions[] =
@@ -1145,7 +1181,10 @@ bool Renderer::DeployDevice ()
         VK_KHR_SWAPCHAIN_EXTENSION_NAME
     };
 
-    // TODO check if extensions is available.
+    constexpr const size_t extensionCount = std::size ( extensions );
+
+    if ( !CheckRequiredDeviceExtensions ( caps._extensions, extensions, extensionCount ) )
+        return false;
 
     VkDeviceCreateInfo deviceCreateInfo;
     deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -1155,7 +1194,7 @@ bool Renderer::DeployDevice ()
     deviceCreateInfo.pQueueCreateInfos = &deviceQueueCreateInfo;
     deviceCreateInfo.enabledLayerCount = 0U;
     deviceCreateInfo.ppEnabledLayerNames = nullptr;
-    deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t> ( std::size ( extensions ) );
+    deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t> ( extensionCount );
     deviceCreateInfo.ppEnabledExtensionNames = extensions;
     deviceCreateInfo.pEnabledFeatures = &caps._features;
 
@@ -1518,9 +1557,10 @@ bool Renderer::DeploySwapchain ( bool vSync )
     swapchainCreateInfoKHR.queueFamilyIndexCount = VK_QUEUE_FAMILY_IGNORED;
     swapchainCreateInfoKHR.pQueueFamilyIndices = nullptr;
 
-    // TODO it's need to figure out how to setup presentation engine to work with landscape layout without
-    // Vulkan validation errors.
-    //swapchainCreateInfoKHR.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
+    // There is no much to say but you have to consider image rotation after projection transform in your code.
+    // That's a cost for memory bandwidth saving in the mobile device world.
+    // See https://community.arm.com/developer/tools-software/graphics/b/blog/posts/appropriate-use-of-surface-rotation
+    // See https://github.com/KhronosGroup/Vulkan-Samples/blob/master/samples/performance/surface_rotation/surface_rotation_tutorial.md
     swapchainCreateInfoKHR.preTransform = VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR;
 
     swapchainCreateInfoKHR.clipped = VK_TRUE;
@@ -2815,7 +2855,7 @@ message: %s
         pMessage
     );
 
-#ifdef ANDROID_VULKAN_LEAK_STRICT_MODE
+#ifdef ANDROID_VULKAN_STRICT_MODE
 
     assert ( !"Renderer::OnVulkanDebugReport - Triggered!" );
 
@@ -2827,3 +2867,4 @@ message: %s
 #endif
 
 } // namespace android_vulkan
+     

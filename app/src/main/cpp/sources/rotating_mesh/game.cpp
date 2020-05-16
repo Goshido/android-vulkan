@@ -166,6 +166,14 @@ bool Game::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime )
 
 bool Game::OnDestroy ( android_vulkan::Renderer &renderer )
 {
+    const bool result = renderer.CheckVkResult ( vkQueueWaitIdle ( renderer.GetQueue () ),
+        "Game::OnDestroy",
+        "Can't wait queue idle"
+    );
+
+    if ( !result )
+        return false;
+
     _activeTexture = nullptr;
     _mipTimeout = -1.0;
 
@@ -1044,7 +1052,7 @@ bool Game::InitCommandBuffers ( android_vulkan::Renderer &renderer )
     VkCommandBufferBeginInfo bufferBeginInfo;
     bufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     bufferBeginInfo.pNext = nullptr;
-    bufferBeginInfo.flags = 0U;
+    bufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
     bufferBeginInfo.pInheritanceInfo = nullptr;
 
     VkClearValue clearValues[ 2U ];

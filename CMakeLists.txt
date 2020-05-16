@@ -81,8 +81,8 @@ target_compile_options ( android-vulkan PRIVATE
 target_compile_definitions ( android-vulkan
     PRIVATE
     -DANDROID_VULKAN_DEBUG
-    -DANDROID_VULKAN_LEAK_STRICT_MODE
-    #-DANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+    -DANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+    -DANDROID_VULKAN_STRICT_MODE
 )
 
 target_link_libraries ( android-vulkan

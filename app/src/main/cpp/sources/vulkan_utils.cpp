@@ -109,7 +109,7 @@ static void CheckNonDispatchableObjectLeaks ( const char* objectType, std::set<V
 
     LogError ( "<<<" );
 
-#ifdef ANDROID_VULKAN_LEAK_STRICT_MODE
+#ifdef ANDROID_VULKAN_STRICT_MODE
 
     assert ( !"CheckNonDispatchableObjectLeaks triggered!" );
 
@@ -146,7 +146,7 @@ static void UnregisterNonDispatchableObject ( const char* method,
             where.c_str ()
         );
 
-#ifdef ANDROID_VULKAN_LEAK_STRICT_MODE
+#ifdef ANDROID_VULKAN_STRICT_MODE
 
         assert ( !"UnregisterNonDispatchableObject triggered!" );
 

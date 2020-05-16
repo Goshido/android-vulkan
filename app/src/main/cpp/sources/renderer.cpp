@@ -647,12 +647,16 @@ Renderer::Renderer ():
     _depthStencilImageView ( VK_NULL_HANDLE ),
     _device ( VK_NULL_HANDLE ),
     _instance ( VK_NULL_HANDLE ),
+    _isDeviceExtensionChecked ( false ),
+    _isDeviceExtensionSupported ( false ),
     _physicalDevice ( VK_NULL_HANDLE ),
     _queue ( VK_NULL_HANDLE ),
     _queueFamilyIndex ( VK_QUEUE_FAMILY_IGNORED ),
     _renderPass ( VK_NULL_HANDLE ),
     _surface ( VK_NULL_HANDLE ),
     _surfaceFormat ( VK_FORMAT_UNDEFINED ),
+    _surfaceSize { .width = 0U, .height = 0U },
+    _surfaceTransform ( VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR ),
 
 #ifndef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
@@ -669,6 +673,34 @@ Renderer::Renderer ():
 
 {
     // NOTHING
+}
+
+bool Renderer::CheckSwapchainStatus ()
+{
+    VkSurfaceCapabilitiesKHR caps;
+
+    bool tmp = CheckVkResult (
+        vkGetPhysicalDeviceSurfaceCapabilitiesKHR ( _physicalDevice, _surface, &caps ),
+        "Renderer::CheckSwapchainStatus",
+        "Can't get Vulkan surface capabilities"
+    );
+
+    if ( !tmp )
+        return false;
+
+    if ( _surfaceTransform != caps.currentTransform )
+    {
+        _surfaceTransform = caps.currentTransform;
+        tmp = false;
+    }
+
+    if ( memcmp ( &_surfaceSize, &caps.currentExtent, sizeof ( _surfaceSize ) ) != 0 )
+    {
+        _surfaceSize = caps.currentExtent;
+        tmp = false;
+    }
+
+    return tmp;
 }
 
 bool Renderer::CheckVkResult ( VkResult result, const char* from, const char* message ) const
@@ -1056,19 +1088,16 @@ bool Renderer::TryAllocateMemory ( VkDeviceMemory &memory,
 bool Renderer::CheckRequiredDeviceExtensions ( const std::vector<const char*> &deviceExtensions,
     char const* const* requiredExtensions,
     size_t requiredExtensionCount
-) const
+)
 {
-    static bool doesCheckedAlready = false;
-    static bool isOk;
-
-    if ( doesCheckedAlready )
-        return isOk;
+    if ( _isDeviceExtensionChecked )
+        return _isDeviceExtensionSupported;
 
     std::set<std::string> allExtensions;
     allExtensions.insert ( deviceExtensions.cbegin (), deviceExtensions.cend () );
 
     android_vulkan::LogInfo ( "Renderer::CheckRequiredDeviceExtensions - Checking required device extensions..." );
-    isOk = true;
+    _isDeviceExtensionSupported = true;
     std::string tmp;
 
     for ( size_t i = 0U; i < requiredExtensionCount; ++i )
@@ -1083,11 +1112,11 @@ bool Renderer::CheckRequiredDeviceExtensions ( const std::vector<const char*> &d
         }
 
         android_vulkan::LogError ( "%sFAIL: %s", INDENT_1, requiredExtension );
-        isOk = false;
+        _isDeviceExtensionSupported = false;
     }
 
-    doesCheckedAlready = true;
-    return isOk;
+    _isDeviceExtensionChecked = true;
+    return _isDeviceExtensionSupported;
 }
 
 #ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
@@ -1474,6 +1503,7 @@ bool Renderer::DeploySurface ( ANativeWindow &nativeWindow )
 
     PrintVkSurfaceCapabilities ( surfaceCapabilitiesKHR );
     _surfaceSize = surfaceCapabilitiesKHR.currentExtent;
+    _surfaceTransform = surfaceCapabilitiesKHR.currentTransform;
 
     VkBool32 isSupported = VK_FALSE;
 
@@ -1561,7 +1591,7 @@ bool Renderer::DeploySwapchain ( bool vSync )
     // That's a cost for memory bandwidth saving in the mobile device world.
     // See https://community.arm.com/developer/tools-software/graphics/b/blog/posts/appropriate-use-of-surface-rotation
     // See https://github.com/KhronosGroup/Vulkan-Samples/blob/master/samples/performance/surface_rotation/surface_rotation_tutorial.md
-    swapchainCreateInfoKHR.preTransform = VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR;
+    swapchainCreateInfoKHR.preTransform = _surfaceTransform;
 
     swapchainCreateInfoKHR.clipped = VK_TRUE;
     swapchainCreateInfoKHR.oldSwapchain = VK_NULL_HANDLE;
@@ -2867,4 +2897,3 @@ message: %s
 #endif
 
 } // namespace android_vulkan
-     

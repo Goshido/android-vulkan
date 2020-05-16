@@ -50,6 +50,10 @@ class Renderer final
 
         VkDevice                                                            _device;
         VkInstance                                                          _instance;
+
+        bool                                                                _isDeviceExtensionChecked;
+        bool                                                                _isDeviceExtensionSupported;
+
         VkPhysicalDevice                                                    _physicalDevice;
 
         VkQueue                                                             _queue;
@@ -58,6 +62,8 @@ class Renderer final
         VkRenderPass                                                        _renderPass;
         VkSurfaceKHR                                                        _surface;
         VkFormat                                                            _surfaceFormat;
+        VkExtent2D                                                          _surfaceSize;
+        VkSurfaceTransformFlagBitsKHR                                       _surfaceTransform;
         VkSwapchainKHR                                                      _swapchain;
 
 #ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
@@ -80,7 +86,6 @@ class Renderer final
         std::vector<VkFramebuffer>                                          _presentFramebuffers;
 
         std::vector<VkSurfaceFormatKHR>                                     _surfaceFormats;
-        VkExtent2D                                                          _surfaceSize;
 
         std::vector<VkImage>                                                _swapchainImages;
         std::vector<VkImageView>                                            _swapchainImageViews;
@@ -98,6 +103,10 @@ class Renderer final
 
         Renderer ( const Renderer &other ) = delete;
         Renderer& operator = ( const Renderer &other ) = delete;
+
+        // Method returns true if swapchain does not change. User code can safely render frames.
+        // Otherwise method returns false.
+        bool CheckSwapchainStatus ();
 
         // Method returns true is "result" equals VK_SUCCESS. Otherwise method returns false.
         bool CheckVkResult ( VkResult result, const char* from, const char* message ) const;
@@ -141,7 +150,7 @@ class Renderer final
         bool CheckRequiredDeviceExtensions ( const std::vector<const char*> &deviceExtensions,
             char const* const* requiredExtensions,
             size_t requiredExtensionCount
-        ) const;
+        );
 
 #ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 

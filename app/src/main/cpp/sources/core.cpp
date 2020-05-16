@@ -1,4 +1,11 @@
 #include <core.h>
+
+GX_DISABLE_COMMON_WARNINGS
+
+#include <map>
+
+GX_RESTORE_WARNING_STATE
+
 #include "vulkan_utils.h"
 
 
@@ -31,7 +38,8 @@ void Core::OnFrame ()
     const timestamp now = std::chrono::system_clock::now ();
     const std::chrono::duration<double> delta = now - _frameTimestamp;
 
-    _game.OnFrame ( _renderer, delta.count () );
+    if ( _renderer.CheckSwapchainStatus () )
+        _game.OnFrame ( _renderer, delta.count () );
 
     _frameTimestamp = now;
     UpdateFPS ( now );
@@ -101,7 +109,7 @@ void Core::OnOSCommand ( android_app* app, int32_t cmd )
             core._frameTimestamp = core._fpsTimestamp;
         break;
 
-        case APP_CMD_LOST_FOCUS:
+        case APP_CMD_TERM_WINDOW:
             core._game.OnDestroy ( core._renderer );
             core._renderer.OnDestroy ();
             AV_CHECK_VULKAN_LEAKS ()

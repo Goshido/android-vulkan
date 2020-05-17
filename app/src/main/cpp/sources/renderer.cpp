@@ -744,7 +744,7 @@ bool Renderer::CreateShader ( VkShaderModule &shader,
     const char* errorMessage
 ) const
 {
-    android_vulkan::File vertexShader ( shaderFile );
+    File vertexShader ( shaderFile );
 
     if ( !vertexShader.LoadContent () )
         return false;
@@ -1127,7 +1127,7 @@ bool Renderer::CheckRequiredDeviceExtensions ( const std::vector<const char*> &d
     std::set<std::string> allExtensions;
     allExtensions.insert ( deviceExtensions.cbegin (), deviceExtensions.cend () );
 
-    android_vulkan::LogInfo ( "Renderer::CheckRequiredDeviceExtensions - Checking required device extensions..." );
+    LogInfo ( "Renderer::CheckRequiredDeviceExtensions - Checking required device extensions..." );
     _isDeviceExtensionSupported = true;
     std::string tmp;
 
@@ -1138,11 +1138,11 @@ bool Renderer::CheckRequiredDeviceExtensions ( const std::vector<const char*> &d
 
         if ( allExtensions.count ( tmp ) > 0U )
         {
-            android_vulkan::LogInfo ( "%sOK: %s", INDENT_1, requiredExtension );
+            LogInfo ( "%sOK: %s", INDENT_1, requiredExtension );
             continue;
         }
 
-        android_vulkan::LogError ( "%sFAIL: %s", INDENT_1, requiredExtension );
+        LogError ( "%sFAIL: %s", INDENT_1, requiredExtension );
         _isDeviceExtensionSupported = false;
     }
 
@@ -1538,7 +1538,7 @@ bool Renderer::DeploySurface ( ANativeWindow &nativeWindow )
 
     if ( _surfaceTransform != VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR )
     {
-        android_vulkan::LogError ( "Renderer::DeploySurface - Unexpected surface transform: %s",
+        LogError ( "Renderer::DeploySurface - Unexpected surface transform: %s",
             ResolveVkSurfaceTransform ( _surfaceTransform )
         );
 

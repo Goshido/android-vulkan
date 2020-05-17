@@ -1053,7 +1053,7 @@ bool Game::CreateUniformBuffer ( android_vulkan::Renderer& renderer )
         return false;
 
     const GXMat4& peTransform = renderer.GetPresentationEngineTransform ();
-    return _peTransformBuffer.Update ( reinterpret_cast<const uint8_t*> ( &peTransform ), sizeof ( GXMat4 ) );
+    return _peTransformBuffer.Update ( reinterpret_cast<const uint8_t*> ( &peTransform ), sizeof ( peTransform ) );
 }
 
 void Game::DestroyUniformBuffer ()

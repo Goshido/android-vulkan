@@ -35,6 +35,7 @@ class UniformBuffer final
 
         void FreeResources ();
         VkBuffer GetBuffer () const;
+        size_t GetSize () const;
 
         // Note this method must be invoked before UniformBuffer::Update.
         // This method must be used only once except situation when user invokes UniformBuffer::FreeResources.

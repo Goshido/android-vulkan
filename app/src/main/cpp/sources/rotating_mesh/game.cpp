@@ -269,7 +269,7 @@ bool Game::CreateDescriptorSet ( android_vulkan::Renderer &renderer )
 {
     const VkDevice device = renderer.GetDevice ();
 
-    VkDescriptorPoolSize features[ 3U ];
+    VkDescriptorPoolSize features[ 4U ];
     VkDescriptorPoolSize& ubFeature = features[ 0U ];
     ubFeature.descriptorCount = 1U;
     ubFeature.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -281,6 +281,10 @@ bool Game::CreateDescriptorSet ( android_vulkan::Renderer &renderer )
     VkDescriptorPoolSize& samplerFeature = features[ 2U ];
     samplerFeature.descriptorCount = 1U;
     samplerFeature.type = VK_DESCRIPTOR_TYPE_SAMPLER;
+
+    VkDescriptorPoolSize& ubFeature2 = features[ 3U ];
+    ubFeature2.descriptorCount = 1U;
+    ubFeature2.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 
     VkDescriptorPoolCreateInfo poolInfo;
     poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -343,7 +347,12 @@ bool Game::CreateDescriptorSet ( android_vulkan::Renderer &renderer )
     bufferInfo.range = sizeof ( _mipInfo );
     bufferInfo.offset = 0U;
 
-    VkWriteDescriptorSet writeSets[ 3U ];
+    VkDescriptorBufferInfo bufferInfo2;
+    bufferInfo2.buffer = _peTransformBuffer.GetBuffer ();
+    bufferInfo2.range = _peTransformBuffer.GetSize ();
+    bufferInfo2.offset = 0U;
+
+    VkWriteDescriptorSet writeSets[ 4U ];
     VkWriteDescriptorSet& ubWriteSet = writeSets[ 0U ];
     ubWriteSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     ubWriteSet.pNext = nullptr;
@@ -379,6 +388,18 @@ bool Game::CreateDescriptorSet ( android_vulkan::Renderer &renderer )
     samplerWriteSet.pBufferInfo = nullptr;
     samplerWriteSet.pImageInfo = &imageInfo;
     samplerWriteSet.pTexelBufferView = nullptr;
+
+    VkWriteDescriptorSet& ubWriteSet2 = writeSets[ 3U ];
+    ubWriteSet2.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    ubWriteSet2.pNext = nullptr;
+    ubWriteSet2.dstSet = _descriptorSet;
+    ubWriteSet2.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    ubWriteSet2.dstBinding = 3U;
+    ubWriteSet2.dstArrayElement = 0U;
+    ubWriteSet2.descriptorCount = 1U;
+    ubWriteSet2.pBufferInfo = &bufferInfo2;
+    ubWriteSet2.pImageInfo = nullptr;
+    ubWriteSet2.pTexelBufferView = nullptr;
 
     vkUpdateDescriptorSets ( device, static_cast<uint32_t> ( std::size ( writeSets ) ), writeSets, 0U, nullptr );
     return true;
@@ -612,7 +633,7 @@ void Game::DestroyPipeline ( android_vulkan::Renderer &renderer )
 
 bool Game::CreatePipelineLayout ( android_vulkan::Renderer &renderer )
 {
-    VkDescriptorSetLayoutBinding bindings[ 3U ];
+    VkDescriptorSetLayoutBinding bindings[ 4U ];
     VkDescriptorSetLayoutBinding& ubInfo = bindings[ 0U ];
     ubInfo.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
     ubInfo.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -633,6 +654,13 @@ bool Game::CreatePipelineLayout ( android_vulkan::Renderer &renderer )
     samplerInfo.descriptorCount = 1U;
     samplerInfo.binding = 2U;
     samplerInfo.pImmutableSamplers = nullptr;
+
+    VkDescriptorSetLayoutBinding& ubInfo2 = bindings[ 3U ];
+    ubInfo2.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+    ubInfo2.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    ubInfo2.descriptorCount = 1U;
+    ubInfo2.binding = 3U;
+    ubInfo2.pImmutableSamplers = nullptr;
 
     VkDescriptorSetLayoutCreateInfo descriptorSetInfo;
     descriptorSetInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -1018,11 +1046,19 @@ bool Game::CreateUniformBuffer ( android_vulkan::Renderer& renderer )
     if ( !_mipInfoBuffer.Init ( renderer, _commandPool, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT ) )
         return false;
 
-    return _mipInfoBuffer.Update ( reinterpret_cast<const uint8_t*> ( &_mipInfo ), sizeof ( _mipInfo ) );
+    if ( !_mipInfoBuffer.Update ( reinterpret_cast<const uint8_t*> ( &_mipInfo ), sizeof ( _mipInfo ) ) )
+        return false;
+
+    if ( !_peTransformBuffer.Init ( renderer, _commandPool, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT ) )
+        return false;
+
+    const GXMat4& peTransform = renderer.GetPresentationEngineTransform ();
+    return _peTransformBuffer.Update ( reinterpret_cast<const uint8_t*> ( &peTransform ), sizeof ( GXMat4 ) );
 }
 
 void Game::DestroyUniformBuffer ()
 {
+    _peTransformBuffer.FreeResources ();
     _mipInfoBuffer.FreeResources ();
 }
 

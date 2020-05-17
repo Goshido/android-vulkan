@@ -638,6 +638,32 @@ const std::map<VkResult, const char*> Renderer::_vulkanResultMap =
     { VK_SUBOPTIMAL_KHR, "VK_SUBOPTIMAL_KHR" }
 };
 
+const std::map<VkSurfaceTransformFlagsKHR, const char*> Renderer::_vulkanSurfaceTransformMap =
+{
+    { VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_BIT_KHR, "VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_BIT_KHR" },
+
+    {
+        VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_180_BIT_KHR,
+        "VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_180_BIT_KHR"
+    },
+
+    {
+        VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_270_BIT_KHR,
+        "VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_270_BIT_KHR"
+    },
+
+    {
+        VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_90_BIT_KHR,
+        "VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_90_BIT_KHR"
+    },
+
+    { VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR, "VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR" },
+    { VK_SURFACE_TRANSFORM_INHERIT_BIT_KHR, "VK_SURFACE_TRANSFORM_INHERIT_BIT_KHR" },
+    { VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR, "VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR" },
+    { VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR, "VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR" },
+    { VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR, "VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR" }
+};
+
 //----------------------------------------------------------------------------------------------------------------------
 
 Renderer::Renderer ():
@@ -756,6 +782,11 @@ VkFramebuffer Renderer::GetPresentFramebuffer ( uint32_t framebufferIndex ) cons
 size_t Renderer::GetPresentFramebufferCount () const
 {
     return _presentFramebuffers.size ();
+}
+
+const GXMat4& Renderer::GetPresentationEngineTransform () const
+{
+    return _presentationEngineTransform;
 }
 
 VkQueue Renderer::GetQueue () const
@@ -1504,6 +1535,30 @@ bool Renderer::DeploySurface ( ANativeWindow &nativeWindow )
     PrintVkSurfaceCapabilities ( surfaceCapabilitiesKHR );
     _surfaceSize = surfaceCapabilitiesKHR.currentExtent;
     _surfaceTransform = surfaceCapabilitiesKHR.currentTransform;
+
+    if ( _surfaceTransform != VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR )
+    {
+        android_vulkan::LogError ( "Renderer::DeploySurface - Unexpected surface transform: %s",
+            ResolveVkSurfaceTransform ( _surfaceTransform )
+        );
+
+        DestroySurface ();
+        return false;
+    }
+
+#ifdef ANDROID_NATIVE_MODE_PORTRAIT
+
+    _presentationEngineTransform.RotationZ ( -GX_MATH_HALF_PI );
+
+#elif defined ( ANDROID_NATIVE_MODE_LANDSCAPE )
+
+    _presentationEngineTransform.Identity ();
+
+#else
+
+#error Please specify ANDROID_NATIVE_MODE_PORTRAIT or ANDROID_NATIVE_MODE_LANDSCAPE in the preprocessor macros.
+
+#endif
 
     VkBool32 isSupported = VK_FALSE;
 
@@ -2534,12 +2589,7 @@ void Renderer::PrintVkSurfaceCapabilities ( const VkSurfaceCapabilitiesKHR &caps
         g_vkSurfaceTransformFlagBitsKHRMapper
     );
 
-    PrintVkFlagsProp ( INDENT_1,
-        "currentTransform",
-        caps.currentTransform,
-        g_vkSurfaceTransformFlagBitsKHRMapperItems,
-        g_vkSurfaceTransformFlagBitsKHRMapper
-    );
+    LogInfo ( "%scurrentTransform: %s", INDENT_1, ResolveVkSurfaceTransform ( caps.currentTransform ) );
 
     PrintVkFlagsProp ( INDENT_1,
         "supportedCompositeAlpha",
@@ -2639,6 +2689,17 @@ const char* Renderer::ResolveVkResult ( VkResult result ) const
     const auto findResult = _vulkanResultMap.find ( result );
 
     if ( findResult != _vulkanResultMap.cend () )
+        return findResult->second;
+
+    constexpr static const char* unknownResult = "UNKNOWN";
+    return unknownResult;
+}
+
+const char* Renderer::ResolveVkSurfaceTransform ( VkSurfaceTransformFlagsKHR transform ) const
+{
+    const auto findResult = _vulkanSurfaceTransformMap.find ( transform );
+
+    if ( findResult != _vulkanSurfaceTransformMap.cend () )
         return findResult->second;
 
     constexpr static const char* unknownResult = "UNKNOWN";

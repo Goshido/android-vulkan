@@ -62,6 +62,8 @@ AV_DX_ALIGNMENT_END
         MipInfo                         _mipInfo;
         UniformBuffer                   _mipInfoBuffer;
 
+        UniformBuffer                   _peTransformBuffer;
+
     public:
         Game ();
         ~Game () override = default;

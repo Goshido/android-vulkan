@@ -13,6 +13,7 @@ GX_DISABLE_COMMON_WARNINGS
 
 GX_RESTORE_WARNING_STATE
 
+#include <GXCommon/GXMath.h>
 #include "logger.h"
 
 
@@ -90,12 +91,15 @@ class Renderer final
         std::vector<VkImage>                                                _swapchainImages;
         std::vector<VkImageView>                                            _swapchainImageViews;
 
+        GXMat4                                                              _presentationEngineTransform;
+
         static const std::map<VkColorSpaceKHR, const char*>                 _vulkanColorSpaceMap;
         static const std::map<VkCompositeAlphaFlagBitsKHR, const char*>     _vulkanCompositeAlphaMap;
         static const std::map<VkFormat, const char*>                        _vulkanFormatMap;
         static const std::map<VkPhysicalDeviceType, const char*>            _vulkanPhysicalDeviceTypeMap;
         static const std::map<VkPresentModeKHR, const char*>                _vulkanPresentModeMap;
         static const std::map<VkResult, const char*>                        _vulkanResultMap;
+        static const std::map<VkSurfaceTransformFlagsKHR, const char*>      _vulkanSurfaceTransformMap;
 
     public:
         Renderer ();
@@ -120,6 +124,13 @@ class Renderer final
         VkDevice GetDevice () const;
         VkFramebuffer GetPresentFramebuffer ( uint32_t framebufferIndex ) const;
         size_t GetPresentFramebufferCount () const;
+
+        // Note this transform MUST be applied after projection transform to compensate screen orientation on the
+        // mobile device. For more information please reference by links:
+        // https://community.arm.com/developer/tools-software/graphics/b/blog/posts/appropriate-use-of-surface-rotation
+        // https://github.com/KhronosGroup/Vulkan-Samples/blob/master/samples/performance/surface_rotation/surface_rotation_tutorial.md
+        const GXMat4& GetPresentationEngineTransform () const;
+
         VkQueue GetQueue () const;
         uint32_t GetQueueFamilyIndex () const;
         VkFormat GetSurfaceFormat () const;
@@ -234,6 +245,7 @@ class Renderer final
         const char* ResolveVkCompositeAlpha ( VkCompositeAlphaFlagBitsKHR compositeAlpha ) const;
         const char* ResolveVkPresentModeKHR ( VkPresentModeKHR mode ) const;
         const char* ResolveVkResult ( VkResult result ) const;
+        const char* ResolveVkSurfaceTransform ( VkSurfaceTransformFlagsKHR transform ) const;
 
         bool SelectTargetCompositeAlpha ( VkCompositeAlphaFlagBitsKHR &targetCompositeAlpha ) const;
         bool SelectTargetHardware ( VkPhysicalDevice &targetPhysicalDevice, uint32_t &targetQueueFamilyIndex ) const;

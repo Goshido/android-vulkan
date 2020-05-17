@@ -78,8 +78,10 @@ target_compile_options ( android-vulkan PRIVATE
     -Wshadow
 )
 
+# See docs/preprocessor-macros.md
 target_compile_definitions ( android-vulkan
     PRIVATE
+    -DANDROID_NATIVE_MODE_PORTRAIT
     -DANDROID_VULKAN_DEBUG
     -DANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
     -DANDROID_VULKAN_STRICT_MODE

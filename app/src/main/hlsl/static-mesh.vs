@@ -1,3 +1,9 @@
+[[ vk::binding ( 3 ) ]]
+cbuffer PETransform:                register ( b0 )
+{
+    matrix              _transform;
+};
+
 struct InputData
 {
     [[ vk::location ( 0 ) ]]
@@ -20,7 +26,7 @@ struct OutputData
 OutputData VS ( in InputData inputData )
 {
     OutputData result;
-    result._vertexH = inputData._vertex;
+    result._vertexH = mul ( inputData._vertex, _transform );
     result._uv = inputData._uv;
 
     return result;

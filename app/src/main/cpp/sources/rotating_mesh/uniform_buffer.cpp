@@ -74,6 +74,11 @@ VkBuffer UniformBuffer::GetBuffer () const
     return _buffer;
 }
 
+size_t UniformBuffer::GetSize () const
+{
+    return _size;
+}
+
 bool UniformBuffer::Init ( android_vulkan::Renderer &renderer,
     VkCommandPool commandPool,
     VkPipelineStageFlags targetStages

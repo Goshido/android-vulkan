@@ -15,6 +15,8 @@ namespace rotating_mesh {
 class Game final : public android_vulkan::Game
 {
     private:
+        using CommandContext = std::pair<VkCommandBuffer, VkFence>;
+
 AV_DX_ALIGNMENT_BEGIN
         struct MipInfo final
         {
@@ -55,7 +57,7 @@ AV_DX_ALIGNMENT_END
         VkShaderModule                  _vertexShaderModule;
         VkShaderModule                  _fragmentShaderModule;
 
-        std::vector<VkCommandBuffer>    _commandBuffers;
+        std::vector<CommandContext>     _commandBuffers;
 
         MeshGeometry                    _mesh;
 
@@ -84,8 +86,8 @@ AV_DX_ALIGNMENT_END
         bool OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) override;
         bool OnDestroy ( android_vulkan::Renderer &renderer ) override;
 
-        bool BeginFrame ( uint32_t &presentationImageIndex, android_vulkan::Renderer &renderer );
-        bool EndFrame ( uint32_t presentationImageIndex, android_vulkan::Renderer &renderer );
+        bool BeginFrame ( size_t &imageIndex, android_vulkan::Renderer &renderer );
+        bool EndFrame ( uint32_t imageIndex, android_vulkan::Renderer &renderer );
 
         bool CreateCommandPool ( android_vulkan::Renderer &renderer );
         void DestroyCommandPool ( android_vulkan::Renderer &renderer );

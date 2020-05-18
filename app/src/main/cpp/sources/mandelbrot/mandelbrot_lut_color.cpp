@@ -59,6 +59,14 @@ bool MandelbrotLUTColor::OnInit ( android_vulkan::Renderer &renderer )
 
 bool MandelbrotLUTColor::OnDestroy ( android_vulkan::Renderer &renderer )
 {
+    const bool result = renderer.CheckVkResult ( vkQueueWaitIdle ( renderer.GetQueue () ),
+        "MandelbrotLUTColor::OnDestroy",
+        "Can't wait queue idle"
+    );
+
+    if ( !result )
+        return false;
+
     DestroyCommandBuffer ( renderer );
     DestroyDescriptorSet ( renderer );
     DestroyLUT ( renderer );
@@ -137,7 +145,7 @@ void MandelbrotLUTColor::DestroyPipelineLayout ( android_vulkan::Renderer &rende
 
 bool MandelbrotLUTColor::CreateCommandBuffer ( android_vulkan::Renderer &renderer )
 {
-    const size_t framebufferCount = renderer.GetPresentFramebufferCount ();
+    const size_t framebufferCount = _framebuffers.size ();
     _commandBuffer.resize ( framebufferCount );
 
     VkCommandBufferAllocateInfo commandBufferInfo;
@@ -162,19 +170,14 @@ bool MandelbrotLUTColor::CreateCommandBuffer ( android_vulkan::Renderer &rendere
     VkCommandBufferBeginInfo commandBufferBeginInfo;
     commandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     commandBufferBeginInfo.pNext = nullptr;
-    commandBufferBeginInfo.flags = 0U;
+    commandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
     commandBufferBeginInfo.pInheritanceInfo = nullptr;
 
-    VkClearValue clearValues[ 2U ];
-    VkClearValue& colorClearValue = clearValues[ 0U ];
+    VkClearValue colorClearValue;
     colorClearValue.color.float32[ 0U ] = 0.0F;
     colorClearValue.color.float32[ 1U ] = 0.0F;
     colorClearValue.color.float32[ 2U ] = 0.0F;
     colorClearValue.color.float32[ 3U ] = 1.0F;
-
-    VkClearValue& depthStencilClearValue = clearValues[ 1U ];
-    depthStencilClearValue.depthStencil.depth = 1.0F;
-    depthStencilClearValue.depthStencil.stencil = 0U;
 
     VkRenderPassBeginInfo renderPassBeginInfo;
     renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -183,8 +186,8 @@ bool MandelbrotLUTColor::CreateCommandBuffer ( android_vulkan::Renderer &rendere
     renderPassBeginInfo.renderArea.offset.x = 0;
     renderPassBeginInfo.renderArea.offset.y = 0;
     renderPassBeginInfo.renderArea.extent = renderer.GetSurfaceSize ();
-    renderPassBeginInfo.clearValueCount = 2U;
-    renderPassBeginInfo.pClearValues = clearValues;
+    renderPassBeginInfo.clearValueCount = 1U;
+    renderPassBeginInfo.pClearValues = &colorClearValue;
 
     for ( size_t i = 0U; i < framebufferCount; ++i )
     {
@@ -201,7 +204,7 @@ bool MandelbrotLUTColor::CreateCommandBuffer ( android_vulkan::Renderer &rendere
             return false;
         }
 
-        renderPassBeginInfo.framebuffer = renderer.GetPresentFramebuffer ( static_cast<uint32_t> ( i ) );
+        renderPassBeginInfo.framebuffer = _framebuffers[ i ];
 
         vkCmdBeginRenderPass ( commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE );
         vkCmdBindPipeline ( commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline );
@@ -682,7 +685,7 @@ bool MandelbrotLUTColor::UploadLUTSamples ( android_vulkan::Renderer &renderer )
     barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
     barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
     barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-    barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+    barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
     barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;

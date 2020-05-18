@@ -43,12 +43,7 @@ class Renderer final
     using LogType = void (*) ( const char* format, ... );
 
     private:
-        VkImage                                                             _depthStencilImage;
-
         VkFormat                                                            _depthStencilImageFormat;
-        VkDeviceMemory                                                      _depthStencilImageMemory;
-        VkImageView                                                         _depthStencilImageView;
-
         VkDevice                                                            _device;
         VkInstance                                                          _instance;
 
@@ -60,7 +55,6 @@ class Renderer final
         VkQueue                                                             _queue;
         uint32_t                                                            _queueFamilyIndex;
 
-        VkRenderPass                                                        _renderPass;
         VkSurfaceKHR                                                        _surface;
         VkFormat                                                            _surfaceFormat;
         VkExtent2D                                                          _surfaceSize;
@@ -83,8 +77,6 @@ class Renderer final
         std::vector<VkPhysicalDeviceGroupProperties>                        _physicalDeviceGroups;
         std::map<VkPhysicalDevice, VulkanPhysicalDeviceInfo>                _physicalDeviceInfo;
         VkPhysicalDeviceMemoryProperties                                    _physicalDeviceMemoryProperties;
-
-        std::vector<VkFramebuffer>                                          _presentFramebuffers;
 
         std::vector<VkSurfaceFormatKHR>                                     _surfaceFormats;
 
@@ -122,8 +114,9 @@ class Renderer final
 
         VkFormat GetDefaultDepthStencilFormat () const;
         VkDevice GetDevice () const;
-        VkFramebuffer GetPresentFramebuffer ( uint32_t framebufferIndex ) const;
-        size_t GetPresentFramebufferCount () const;
+
+        size_t GetPresentImageCount () const;
+        const VkImageView& GetPresentImageView ( size_t imageIndex ) const;
 
         // Note this transform MUST be applied after projection transform to compensate screen orientation on the
         // mobile device. For more information please reference by links:
@@ -173,14 +166,8 @@ class Renderer final
         bool DeployDevice ();
         void DestroyDevice ();
 
-        bool DeployPresentFramebuffers ();
-        void DestroyPresentFramebuffers ();
-
         bool DeployInstance ();
         void DestroyInstance ();
-
-        bool DeployRenderPass ();
-        void DestroyRenderPass ();
 
         bool DeploySurface ( ANativeWindow &nativeWindow );
         void DestroySurface ();

@@ -10,25 +10,14 @@ namespace mandelbrot {
 class MandelbrotLUTColor final : public MandelbrotBase
 {
     private:
-        // Note VkDescriptorPool is a VK_DEFINE_NON_DISPATCHABLE_HANDLE type.
         VkDescriptorPool            _descriptorPool;
-
-        // Note VkDescriptorSet is a VK_DEFINE_NON_DISPATCHABLE_HANDLE type.
         VkDescriptorSet             _descriptorSet;
-
-        // Note VkDescriptorSetLayout is a VK_DEFINE_NON_DISPATCHABLE_HANDLE type.
         VkDescriptorSetLayout       _descriptorSetLayout;
 
-        // Note VkImage is a VK_DEFINE_NON_DISPATCHABLE_HANDLE type.
         VkImage                     _lut;
-
-        // Note VkDeviceMemory is a VK_DEFINE_NON_DISPATCHABLE_HANDLE type.
         VkDeviceMemory              _lutDeviceMemory;
-
-        // Note VkImageView is a VK_DEFINE_NON_DISPATCHABLE_HANDLE type.
         VkImageView                 _lutView;
 
-        // Note VkSampler is a VK_DEFINE_NON_DISPATCHABLE_HANDLE type.
         VkSampler                   _sampler;
 
     public:

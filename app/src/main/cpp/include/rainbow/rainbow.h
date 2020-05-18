@@ -10,19 +10,14 @@ namespace rainbow {
 class Rainbow final : public android_vulkan::Game
 {
     private:
-        VkCommandBuffer     _commandBuffer;
+        using CommandContext = std::pair<VkCommandBuffer, VkFence>;
 
-        // Note VkImage is a VK_DEFINE_NON_DISPATCHABLE_HANDLE type.
-        VkCommandPool       _commandPool;
-
-        // Note VkFence is a VK_DEFINE_NON_DISPATCHABLE_HANDLE types.
-        VkFence             _presentationFence;
-
-        // Note VkSemaphore is a VK_DEFINE_NON_DISPATCHABLE_HANDLE types.
-        VkSemaphore         _presentationSemaphore;
-
-        // Note VkRenderPass is a VK_DEFINE_NON_DISPATCHABLE_HANDLE.
-        VkRenderPass        _renderPass;
+        std::vector<CommandContext>     _commandBuffers;
+        VkCommandPool                   _commandPool;
+        std::vector<VkFramebuffer>      _framebuffers;
+        VkRenderPass                    _renderPass;
+        VkSemaphore                     _renderPassEndedSemaphore;
+        VkSemaphore                     _renderTargetAcquiredSemaphore;
 
     public:
         Rainbow ();
@@ -43,6 +38,9 @@ class Rainbow final : public android_vulkan::Game
 
         bool CreateCommandBuffer ( android_vulkan::Renderer &renderer );
         void DestroyCommandBuffer ( android_vulkan::Renderer &renderer );
+
+        bool CreateFramebuffers ( android_vulkan::Renderer &renderer );
+        void DestroyFramebuffers ( android_vulkan::Renderer &renderer );
 
         bool CreatePresentationSyncPrimitive ( android_vulkan::Renderer &renderer );
         void DestroyPresentationSyncPrimitive ( android_vulkan::Renderer &renderer );

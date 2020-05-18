@@ -28,9 +28,15 @@ AV_DX_ALIGNMENT_END
 
         VkCommandPool                   _commandPool;
 
+        VkImage                         _depthStencil;
+        VkImageView                     _depthStencilView;
+        VkDeviceMemory                  _depthStencilMemory;
+
         VkDescriptorPool                _descriptorPool;
         VkDescriptorSet                 _descriptorSet;
         VkDescriptorSetLayout           _descriptorSetLayout;
+
+        std::vector<VkFramebuffer>      _framebuffers;
 
         double                          _mipTimeout;
 
@@ -86,6 +92,9 @@ AV_DX_ALIGNMENT_END
 
         bool CreateDescriptorSet ( android_vulkan::Renderer &renderer );
         void DestroyDescriptorSet ( android_vulkan::Renderer &renderer );
+
+        bool CreateFramebuffers ( android_vulkan::Renderer &renderer );
+        void DestroyFramebuffers ( android_vulkan::Renderer &renderer );
 
         bool CreateMeshes ( android_vulkan::Renderer &renderer, VkCommandBuffer* commandBuffers );
         void DestroyMeshes ( android_vulkan::Renderer &renderer );

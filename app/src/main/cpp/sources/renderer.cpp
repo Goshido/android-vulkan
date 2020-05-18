@@ -667,10 +667,7 @@ const std::map<VkSurfaceTransformFlagsKHR, const char*> Renderer::_vulkanSurface
 //----------------------------------------------------------------------------------------------------------------------
 
 Renderer::Renderer ():
-    _depthStencilImage ( VK_NULL_HANDLE ),
     _depthStencilImageFormat ( VK_FORMAT_UNDEFINED ),
-    _depthStencilImageMemory (  VK_NULL_HANDLE ),
-    _depthStencilImageView ( VK_NULL_HANDLE ),
     _device ( VK_NULL_HANDLE ),
     _instance ( VK_NULL_HANDLE ),
     _isDeviceExtensionChecked ( false ),
@@ -678,7 +675,6 @@ Renderer::Renderer ():
     _physicalDevice ( VK_NULL_HANDLE ),
     _queue ( VK_NULL_HANDLE ),
     _queueFamilyIndex ( VK_QUEUE_FAMILY_IGNORED ),
-    _renderPass ( VK_NULL_HANDLE ),
     _surface ( VK_NULL_HANDLE ),
     _surfaceFormat ( VK_FORMAT_UNDEFINED ),
     _surfaceSize { .width = 0U, .height = 0U },
@@ -715,16 +711,10 @@ bool Renderer::CheckSwapchainStatus ()
         return false;
 
     if ( _surfaceTransform != caps.currentTransform )
-    {
-        _surfaceTransform = caps.currentTransform;
         tmp = false;
-    }
 
     if ( memcmp ( &_surfaceSize, &caps.currentExtent, sizeof ( _surfaceSize ) ) != 0 )
-    {
-        _surfaceSize = caps.currentExtent;
         tmp = false;
-    }
 
     return tmp;
 }
@@ -774,14 +764,14 @@ VkDevice Renderer::GetDevice () const
     return _device;
 }
 
-VkFramebuffer Renderer::GetPresentFramebuffer ( uint32_t framebufferIndex ) const
+size_t Renderer::GetPresentImageCount () const
 {
-    return _presentFramebuffers[ framebufferIndex ];
+    return _swapchainImageViews.size ();
 }
 
-size_t Renderer::GetPresentFramebufferCount () const
+const VkImageView& Renderer::GetPresentImageView ( size_t imageIndex ) const
 {
-    return _presentFramebuffers.size ();
+    return _swapchainImageViews[ imageIndex ];
 }
 
 const GXMat4& Renderer::GetPresentationEngineTransform () const
@@ -816,7 +806,7 @@ VkSwapchainKHR& Renderer::GetSwapchain ()
 
 bool Renderer::IsReady () const
 {
-    return _renderPass != VK_NULL_HANDLE;
+    return _swapchain != VK_NULL_HANDLE;
 }
 
 bool Renderer::OnInit ( ANativeWindow &nativeWindow, bool vSync )
@@ -980,51 +970,12 @@ bool Renderer::OnInit ( ANativeWindow &nativeWindow, bool vSync )
         return false;
     }
 
-    if ( !DeploySwapchain ( vSync ) )
-    {
-        _physicalDeviceGroups.clear ();
-        _physicalDeviceInfo.clear ();
-
-        DestroySurface ();
-        DestroyDevice ();
-
-#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
-
-        DestroyDebugFeatures ();
-
-#endif
-
-        DestroyInstance ();
-        return false;
-    }
-
-    if ( !DeployRenderPass () )
-    {
-        _physicalDeviceGroups.clear ();
-        _physicalDeviceInfo.clear ();
-
-        DestroySwapchain ();
-        DestroySurface ();
-        DestroyDevice ();
-
-#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
-
-        DestroyDebugFeatures ();
-
-#endif
-
-        DestroyInstance ();
-        return false;
-    }
-
-    if ( DeployPresentFramebuffers () )
+    if ( DeploySwapchain ( vSync ) )
         return true;
 
     _physicalDeviceGroups.clear ();
     _physicalDeviceInfo.clear ();
 
-    DestroyRenderPass ();
-    DestroySwapchain ();
     DestroySurface ();
     DestroyDevice ();
 
@@ -1035,7 +986,6 @@ bool Renderer::OnInit ( ANativeWindow &nativeWindow, bool vSync )
 #endif
 
     DestroyInstance ();
-
     return false;
 }
 
@@ -1050,9 +1000,7 @@ void Renderer::OnDestroy ()
     _physicalDeviceGroups.clear ();
     _physicalDeviceInfo.clear ();
 
-    DestroyPresentFramebuffers ();
     DestroySwapchain ();
-    DestroyRenderPass ();
     DestroySurface ();
     DestroyDevice ();
 
@@ -1283,71 +1231,6 @@ void Renderer::DestroyDevice ()
     _queue = VK_NULL_HANDLE;
 }
 
-bool Renderer::DeployPresentFramebuffers ()
-{
-    _presentFramebuffers.clear ();
-    _presentFramebuffers.reserve ( _swapchainImages.size () );
-
-    VkImageView attachments[ 2U ];
-    attachments[ 1U ] = _depthStencilImageView;
-
-    constexpr const auto attachmentCount =
-        static_cast<const uint32_t> ( sizeof ( attachments ) / sizeof ( attachments[ 0U ] ) );
-
-    VkFramebufferCreateInfo framebufferInfo;
-    framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-    framebufferInfo.pNext = nullptr;
-    framebufferInfo.renderPass = _renderPass;
-    framebufferInfo.flags = 0U;
-    framebufferInfo.attachmentCount = attachmentCount;
-    framebufferInfo.pAttachments = attachments;
-    framebufferInfo.width = _surfaceSize.width;
-    framebufferInfo.height = _surfaceSize.height;
-    framebufferInfo.layers = 1U;
-
-    const size_t count = _swapchainImageViews.size ();
-
-    for ( size_t i = 0U; i < count; ++i )
-    {
-        attachments[ 0U ] = _swapchainImageViews[ i ];
-        VkFramebuffer framebuffer = VK_NULL_HANDLE;
-
-        const bool result = CheckVkResult (
-            vkCreateFramebuffer ( _device, &framebufferInfo, nullptr, &framebuffer ),
-            "Renderer::DeployPresentFramebuffers",
-            "Can't create framebuffer."
-        );
-
-        if ( !result )
-        {
-            DestroyPresentFramebuffers ();
-            return false;
-        }
-
-        _presentFramebuffers.push_back ( framebuffer );
-
-        AV_REGISTER_FRAMEBUFFER (
-            "Renderer::_presentFramebuffers[ " + std::to_string ( static_cast<int> ( i ) ) + "U ]"
-        )
-    }
-
-    return true;
-}
-
-void Renderer::DestroyPresentFramebuffers ()
-{
-    const size_t count = _presentFramebuffers.size ();
-
-    for ( size_t i = 0U; i < count; ++i )
-    {
-        vkDestroyFramebuffer ( _device, _presentFramebuffers[ i ], nullptr );
-
-        AV_UNREGISTER_FRAMEBUFFER (
-            "Renderer::_presentFramebuffers[ " + std::to_string ( static_cast<int> ( i ) ) + "U ]"
-        )
-    }
-}
-
 bool Renderer::DeployInstance ()
 {
     VkApplicationInfo applicationInfo;
@@ -1422,81 +1305,6 @@ void Renderer::DestroyInstance ()
 
     vkDestroyInstance ( _instance, nullptr );
     _instance = VK_NULL_HANDLE;
-}
-
-bool Renderer::DeployRenderPass ()
-{
-    VkAttachmentDescription attachmentDescriptions[ 2U ];
-    VkAttachmentDescription& attachment0 = attachmentDescriptions[ 0U ];
-    attachment0.flags = 0U;
-    attachment0.format = _surfaceFormat;
-    attachment0.samples = VK_SAMPLE_COUNT_1_BIT;
-    attachment0.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    attachment0.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    attachment0.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    attachment0.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    attachment0.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    attachment0.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
-    VkAttachmentDescription& attachment1 = attachmentDescriptions[ 1U ];
-    attachment1.flags = 0U;
-    attachment1.format = _depthStencilImageFormat;
-    attachment1.samples = VK_SAMPLE_COUNT_1_BIT;
-    attachment1.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    attachment1.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    attachment1.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    attachment1.stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
-    attachment1.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    attachment1.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-    VkAttachmentReference colorAttachmentReference;
-    colorAttachmentReference.attachment = 0U;
-    colorAttachmentReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-    VkAttachmentReference depthStencilAttachmentReference;
-    depthStencilAttachmentReference.attachment = 1U;
-    depthStencilAttachmentReference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-    VkSubpassDescription subpassDescription;
-    subpassDescription.flags = 0U;
-    subpassDescription.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-    subpassDescription.inputAttachmentCount = 0U;
-    subpassDescription.pInputAttachments = nullptr;
-    subpassDescription.colorAttachmentCount = 1U;
-    subpassDescription.pColorAttachments = &colorAttachmentReference;
-    subpassDescription.pResolveAttachments = nullptr;
-    subpassDescription.pDepthStencilAttachment = &depthStencilAttachmentReference;
-    subpassDescription.preserveAttachmentCount = 0U;
-    subpassDescription.pPreserveAttachments = nullptr;
-
-    VkRenderPassCreateInfo renderPassCreateInfo;
-    renderPassCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-    renderPassCreateInfo.pNext = nullptr;
-    renderPassCreateInfo.flags = 0U;
-    renderPassCreateInfo.attachmentCount = static_cast<uint32_t> ( std::size ( attachmentDescriptions ) );
-    renderPassCreateInfo.pAttachments = attachmentDescriptions;
-    renderPassCreateInfo.subpassCount = 1U;
-    renderPassCreateInfo.pSubpasses = &subpassDescription;
-    renderPassCreateInfo.dependencyCount = 0U;
-    renderPassCreateInfo.pDependencies = nullptr;
-
-    const bool result = CheckVkResult ( vkCreateRenderPass ( _device, &renderPassCreateInfo, nullptr, &_renderPass ),
-        "Renderer::DeployRenderPass",
-        "Can't create render pass"
-    );
-
-    if ( !result )
-        return false;
-
-    AV_REGISTER_RENDER_PASS ( "Renderer::_renderPass" )
-    return true;
-}
-
-void Renderer::DestroyRenderPass ()
-{
-    vkDestroyRenderPass ( _device, _renderPass, nullptr );
-    _renderPass = VK_NULL_HANDLE;
-    AV_UNREGISTER_RENDER_PASS ( "Renderer::_renderPass" )
 }
 
 bool Renderer::DeploySurface ( ANativeWindow &nativeWindow )
@@ -1758,138 +1566,11 @@ bool Renderer::DeploySwapchain ( bool vSync )
         return false;
     }
 
-    VkImageCreateInfo imageCreateInfo;
-    imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    imageCreateInfo.pNext = nullptr;
-    imageCreateInfo.flags = 0U;
-    imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
-    imageCreateInfo.format = _depthStencilImageFormat;
-    imageCreateInfo.extent.width = _surfaceSize.width;
-    imageCreateInfo.extent.height = _surfaceSize.height;
-    imageCreateInfo.extent.depth = 1U;
-    imageCreateInfo.mipLevels = 1U;
-    imageCreateInfo.arrayLayers = 1U;
-    imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-    imageCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-    imageCreateInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-    imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    imageCreateInfo.queueFamilyIndexCount = VK_QUEUE_FAMILY_IGNORED;
-    imageCreateInfo.pQueueFamilyIndices = nullptr;
-    imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-
-    result = CheckVkResult ( vkCreateImage ( _device, &imageCreateInfo, nullptr, &_depthStencilImage ),
-        "Renderer::DeploySwapchain",
-        "Can't create depth stencil image"
-    );
-
-    if ( !result )
-    {
-        DestroySwapchain ();
-        return false;
-    }
-
-    AV_REGISTER_IMAGE ( "Renderer::_depthStencilImage" )
-
-    VkMemoryRequirements memoryRequirements;
-    vkGetImageMemoryRequirements ( _device, _depthStencilImage, &memoryRequirements );
-
-    VkMemoryAllocateInfo memoryAllocateInfo;
-    memoryAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-    memoryAllocateInfo.pNext = nullptr;
-    memoryAllocateInfo.allocationSize = memoryRequirements.size;
-    memoryAllocateInfo.memoryTypeIndex = 0U;
-
-    result = SelectTargetMemoryTypeIndex ( memoryAllocateInfo.memoryTypeIndex,
-        memoryRequirements,
-        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
-    );
-
-    if ( !result )
-    {
-        LogError ( "Renderer::DeploySwapchain - Can't resolve memory type index for depth|stencil image.");
-        assert ( !"Renderer::DeploySwapchain - Can't resolve memory type index for depth|stencil image." );
-        DestroySwapchain ();
-        return false;
-    }
-
-    result = CheckVkResult ( vkAllocateMemory ( _device, &memoryAllocateInfo, nullptr, &_depthStencilImageMemory ),
-        "Renderer::DeploySwapchain",
-        "Can't allocate depth stencil image memory"
-    );
-
-    if ( !result )
-    {
-        DestroySwapchain ();
-        return false;
-    }
-
-    AV_REGISTER_DEVICE_MEMORY ( "Renderer::_depthStencilImageMemory" )
-
-    result = CheckVkResult ( vkBindImageMemory ( _device, _depthStencilImage, _depthStencilImageMemory, 0U ),
-        "Renderer::DeploySwapchain",
-        "Can't bind depth stencil image with memory"
-    );
-
-    if ( !result )
-    {
-        DestroySwapchain ();
-        return false;
-    }
-
-    imageViewCreateInfo.image = _depthStencilImage;
-    imageViewCreateInfo.pNext = nullptr;
-    imageViewCreateInfo.flags = 0U;
-    imageViewCreateInfo.image = _depthStencilImage;
-    imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-    imageViewCreateInfo.format = _depthStencilImageFormat;
-    imageViewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-    imageViewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-    imageViewCreateInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-    imageViewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-    imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
-    imageViewCreateInfo.subresourceRange.layerCount = 1U;
-    imageViewCreateInfo.subresourceRange.baseArrayLayer = 0U;
-    imageViewCreateInfo.subresourceRange.levelCount = 1U;
-    imageViewCreateInfo.subresourceRange.baseMipLevel = 0U;
-
-    result = CheckVkResult ( vkCreateImageView ( _device, &imageViewCreateInfo, nullptr, &_depthStencilImageView ),
-        "Renderer::DeploySwapchain",
-        "Can't bind depth stencil image with memory"
-    );
-
-    if ( result )
-    {
-        AV_REGISTER_IMAGE_VIEW ( "Renderer::_depthStencilImageView" )
-        return true;
-    }
-
-    DestroySwapchain ();
-    return false;
+    return true;
 }
 
 void Renderer::DestroySwapchain ()
 {
-    if ( _depthStencilImageView )
-    {
-        vkDestroyImageView ( _device, _depthStencilImageView, nullptr );
-        _depthStencilImageView = VK_NULL_HANDLE;
-        AV_UNREGISTER_IMAGE_VIEW ( "Renderer::_depthStencilImageView" )
-    }
-
-    if ( _depthStencilImageMemory )
-    {
-        vkFreeMemory ( _device, _depthStencilImageMemory, nullptr );
-        _depthStencilImageMemory = VK_NULL_HANDLE;
-        AV_UNREGISTER_DEVICE_MEMORY ( "Renderer::_depthStencilImageMemory" )
-    }
-
-    if ( _depthStencilImage )
-    {
-        vkDestroyImage ( _device, _depthStencilImage, nullptr );
-        _depthStencilImage = VK_NULL_HANDLE;
-        AV_UNREGISTER_IMAGE ( "Renderer::_depthStencilImage" )
-    }
-
     const size_t count = _swapchainImageViews.size ();
 
     for ( size_t i = 0U; i < count; ++i )

@@ -10,33 +10,21 @@ namespace mandelbrot {
 class MandelbrotBase : public android_vulkan::Game
 {
     protected:
-        // Note VkImage is a VK_DEFINE_NON_DISPATCHABLE_HANDLE type.
+        std::vector<VkCommandBuffer>    _commandBuffer;
         VkCommandPool                   _commandPool;
-
-        // Note VkPipeline is a VK_DEFINE_NON_DISPATCHABLE_HANDLE type.
+        std::vector<VkFramebuffer>      _framebuffers;
         VkPipeline                      _pipeline;
-
-        // Note VkPipelineLayout is a VK_DEFINE_NON_DISPATCHABLE_HANDLE type.
         VkPipelineLayout                _pipelineLayout;
-
-        // Note VkRenderPass is a VK_DEFINE_NON_DISPATCHABLE_HANDLE.
         VkRenderPass                    _renderPass;
 
     private:
-        // Note VkFence is a VK_DEFINE_NON_DISPATCHABLE_HANDLE type.
-        VkFence                         _presentationFence;
+        VkSemaphore                     _renderPassEndedSemaphore;
+        VkSemaphore                     _renderTargetAcquiredSemaphore;
 
-        // Note VkSemaphore is a VK_DEFINE_NON_DISPATCHABLE_HANDLE type.
-        VkSemaphore                     _presentationSemaphore;
-
-        // Note VkShaderModule is a VK_DEFINE_NON_DISPATCHABLE_HANDLE type.
         VkShaderModule                  _vertexShader;
 
         VkShaderModule                  _fragmentShader;
         const char*                     _fragmentShaderSpirV;
-
-    protected:
-        std::vector<VkCommandBuffer>    _commandBuffer;
 
     public:
         MandelbrotBase ( const MandelbrotBase &other ) = delete;
@@ -61,6 +49,9 @@ class MandelbrotBase : public android_vulkan::Game
 
         bool CreateCommandPool ( android_vulkan::Renderer &renderer );
         bool DestroyCommandPool ( android_vulkan::Renderer &renderer );
+
+        bool CreateFramebuffers ( android_vulkan::Renderer &renderer );
+        bool DestroyFramebuffers ( android_vulkan::Renderer &renderer );
 
         bool CreatePresentationSyncPrimitive ( android_vulkan::Renderer &renderer );
         void DestroyPresentationSyncPrimitive ( android_vulkan::Renderer &renderer );

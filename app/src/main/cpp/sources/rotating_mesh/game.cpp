@@ -34,9 +34,13 @@ constexpr static const double MIP_DELAY = 1.0;
 Game::Game ():
     _activeTexture ( nullptr ),
     _commandPool ( VK_NULL_HANDLE ),
+    _depthStencil ( VK_NULL_HANDLE ),
+    _depthStencilView ( VK_NULL_HANDLE ),
+    _depthStencilMemory ( VK_NULL_HANDLE ),
     _descriptorPool ( VK_NULL_HANDLE ),
     _descriptorSet ( VK_NULL_HANDLE ),
     _descriptorSetLayout ( VK_NULL_HANDLE ),
+    _framebuffers {},
     _mipTimeout ( -1.0 ),
     _pipeline ( VK_NULL_HANDLE ),
     _pipelineLayout ( VK_NULL_HANDLE ),
@@ -60,6 +64,12 @@ bool Game::IsReady ()
 bool Game::OnInit ( android_vulkan::Renderer &renderer )
 {
     if ( !CreateRenderPass ( renderer ) )
+    {
+        OnDestroy ( renderer );
+        return false;
+    }
+
+    if ( !CreateFramebuffers ( renderer ) )
     {
         OnDestroy ( renderer );
         return false;
@@ -187,6 +197,7 @@ bool Game::OnDestroy ( android_vulkan::Renderer &renderer )
     DestroyUniformBuffer ();
     DestroyCommandPool ( renderer );
     DestroySyncPrimitives ( renderer );
+    DestroyFramebuffers ( renderer );
     DestroyRenderPass ( renderer );
 
     return true;
@@ -415,6 +426,160 @@ void Game::DestroyDescriptorSet ( android_vulkan::Renderer &renderer )
     AV_UNREGISTER_DESCRIPTOR_POOL ( "Game::_descriptorPool" )
 
     _descriptorSet = VK_NULL_HANDLE;
+}
+
+bool Game::CreateFramebuffers ( android_vulkan::Renderer &renderer )
+{
+    const VkDevice device = renderer.GetDevice ();
+    const VkExtent2D& resolution = renderer.GetSurfaceSize ();
+
+    VkImageCreateInfo imageInfo;
+    imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    imageInfo.pNext = nullptr;
+    imageInfo.flags = 0U;
+    imageInfo.imageType = VK_IMAGE_TYPE_2D;
+    imageInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+    imageInfo.format = renderer.GetDefaultDepthStencilFormat ();
+    imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+    imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+    imageInfo.arrayLayers = imageInfo.mipLevels = 1U;
+    imageInfo.extent.width = resolution.width;
+    imageInfo.extent.height = resolution.height;
+    imageInfo.extent.depth = 1U;
+    imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    imageInfo.queueFamilyIndexCount = 0U;
+    imageInfo.pQueueFamilyIndices = nullptr;
+
+    bool result = renderer.CheckVkResult ( vkCreateImage ( device, &imageInfo, nullptr, &_depthStencil ),
+        "Game::CreateFramebuffers",
+        "Can't create depth stencil image"
+    );
+
+    if ( !result )
+        return false;
+
+    AV_REGISTER_IMAGE ( "Game::_depthStencil" )
+
+    VkMemoryRequirements requirements;
+    vkGetImageMemoryRequirements ( device, _depthStencil, &requirements );
+
+    result = renderer.TryAllocateMemory ( _depthStencilMemory,
+        requirements,
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+        "Can't allocate memory (Game::CreateFramebuffers)"
+    );
+
+    if ( !result )
+        return false;
+
+    AV_REGISTER_DEVICE_MEMORY ( "Game::_depthStencilMemory" )
+
+    result = renderer.CheckVkResult ( vkBindImageMemory ( device, _depthStencil, _depthStencilMemory, 0U ),
+        "Game::CreateFramebuffers",
+        "Can't bind depth stencil memory"
+    );
+
+    if ( !result )
+        return false;
+
+    VkImageViewCreateInfo viewCreateInfo;
+    viewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    viewCreateInfo.pNext = nullptr;
+    viewCreateInfo.flags = 0U;
+    viewCreateInfo.image = _depthStencil;
+    viewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    viewCreateInfo.format = imageInfo.format;
+    viewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+    viewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+    viewCreateInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+    viewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+    viewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+    viewCreateInfo.subresourceRange.layerCount = viewCreateInfo.subresourceRange.levelCount = 1U;
+    viewCreateInfo.subresourceRange.baseArrayLayer = viewCreateInfo.subresourceRange.baseMipLevel = 0U;
+
+    result = renderer.CheckVkResult ( vkCreateImageView ( device, &viewCreateInfo, nullptr, &_depthStencilView ),
+        "Game::CreateFramebuffers",
+        "Can't create depth stencil view"
+    );
+
+    if ( !result )
+        return false;
+
+    AV_REGISTER_IMAGE_VIEW ( "Game::_depthStencilView" )
+
+    const size_t framebufferCount = renderer.GetPresentImageCount ();
+    _framebuffers.reserve ( framebufferCount );
+    VkFramebuffer framebuffer = VK_NULL_HANDLE;
+
+    VkImageView attachments[ 2U ];
+    attachments[ 1U ] = _depthStencilView;
+
+    VkFramebufferCreateInfo framebufferInfo;
+    framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+    framebufferInfo.pNext = nullptr;
+    framebufferInfo.flags = 0U;
+    framebufferInfo.renderPass = _renderPass;
+    framebufferInfo.layers = 1U;
+    framebufferInfo.width = resolution.width;
+    framebufferInfo.height = resolution.height;
+    framebufferInfo.attachmentCount = static_cast<uint32_t> ( std::size ( attachments ) );
+    framebufferInfo.pAttachments = attachments;
+
+    for ( size_t i = 0U; i < framebufferCount; ++i )
+    {
+        attachments[ 0U ] = renderer.GetPresentImageView ( i );
+
+        result = renderer.CheckVkResult ( vkCreateFramebuffer ( device, &framebufferInfo, nullptr, &framebuffer ),
+            "Game::CreateFramebuffers",
+            "Can't create a framebuffer"
+        );
+
+        if ( !result )
+            return false;
+
+        _framebuffers.push_back ( framebuffer );
+        AV_REGISTER_FRAMEBUFFER ( "Game::_framebuffers" )
+    }
+
+    return true;
+}
+
+void Game::DestroyFramebuffers ( android_vulkan::Renderer &renderer )
+{
+    const VkDevice device = renderer.GetDevice ();
+
+    if ( !_framebuffers.empty () )
+    {
+        for ( auto framebuffer : _framebuffers )
+        {
+            vkDestroyFramebuffer ( device, framebuffer, nullptr );
+            AV_UNREGISTER_FRAMEBUFFER ( "Game::_framebuffers" )
+        }
+
+        _framebuffers.clear ();
+    }
+
+    if ( _depthStencilView != VK_NULL_HANDLE )
+    {
+        vkDestroyImageView ( device, _depthStencilView, nullptr );
+        _depthStencilView = VK_NULL_HANDLE;
+        AV_UNREGISTER_IMAGE_VIEW ( "Game::_depthStencilView" )
+    }
+
+    if ( _depthStencilMemory != VK_NULL_HANDLE )
+    {
+        vkFreeMemory ( device, _depthStencilMemory, nullptr );
+        _depthStencilMemory = VK_NULL_HANDLE;
+        AV_UNREGISTER_DEVICE_MEMORY ( "Game::_depthStencilMemory" )
+    }
+
+    if ( _depthStencil == VK_NULL_HANDLE )
+        return;
+
+    vkDestroyImage ( device, _depthStencil, nullptr );
+    _depthStencil = VK_NULL_HANDLE;
+    AV_UNREGISTER_IMAGE ( "Game::_depthStencil" )
 }
 
 bool Game::CreateMeshes ( android_vulkan::Renderer &renderer, VkCommandBuffer* commandBuffers )
@@ -1064,7 +1229,7 @@ void Game::DestroyUniformBuffer ()
 
 bool Game::InitCommandBuffers ( android_vulkan::Renderer &renderer )
 {
-    const size_t framebuffers = renderer.GetPresentFramebufferCount ();
+    const size_t framebuffers = renderer.GetPresentImageCount ();
     _commandBuffers.resize ( framebuffers );
     VkCommandBuffer* commandBuffers = _commandBuffers.data ();
 
@@ -1121,7 +1286,7 @@ bool Game::InitCommandBuffers ( android_vulkan::Renderer &renderer )
         if ( !result )
             return false;
 
-        renderPassBeginInfo.framebuffer = renderer.GetPresentFramebuffer ( static_cast<uint32_t> ( i ) );
+        renderPassBeginInfo.framebuffer = _framebuffers[ i ];
         vkCmdBeginRenderPass ( commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE );
 
         vkCmdBindPipeline ( commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline );

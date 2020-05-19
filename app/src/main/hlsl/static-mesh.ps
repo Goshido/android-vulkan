@@ -1,10 +1,3 @@
-[[ vk::binding ( 0 ) ]]
-cbuffer MipInfo:                                register ( b0 )
-{
-    float               _mipLevel;
-    float3              _padding0_0;
-};
-
 [[ vk::binding ( 1 ) ]]
 Texture2D<float4>       g_diffuseTexture:       register ( t0 );
 
@@ -13,7 +6,7 @@ SamplerState            g_textureSampler:       register ( s0 );
 
 //----------------------------------------------------------------------------------------------------------------------
 
-float4 PS ( [[ vk::location ( 0 ) ]] in linear float2 uv: UV ): SV_Target0
+float4 PS ( [[ vk::location ( 0 ) ]] in linear half2 uv: UV ): SV_Target0
 {
-    return g_diffuseTexture.SampleLevel ( g_textureSampler, uv, _mipLevel );
+    return g_diffuseTexture.Sample ( g_textureSampler, (float2)uv );
 }

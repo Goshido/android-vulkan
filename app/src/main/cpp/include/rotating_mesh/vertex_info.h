@@ -11,22 +11,30 @@ namespace rotating_mesh {
 
 struct VertexInfo final
 {
-    GXVec4      _vertex;
+    GXVec3      _vertex;
     GXVec2      _uv;
+    GXVec3      _normal;
+    GXVec3      _tangent;
+    GXVec3      _bitangent;
 
-    constexpr VertexInfo ( float vx, float vy, float vz, float vw, float tu, float tv ):
-        _vertex ( vx, vy, vz, vw ),
-        _uv ( tu, tv )
+    VertexInfo () = default;
+
+    constexpr VertexInfo ( const GXVec3 &vertex,
+        const GXVec2 &uv,
+        const GXVec3 &normal,
+        const GXVec3 &tangent,
+        const GXVec3 &bitangent
+    ):
+        _vertex ( vertex._data[ 0U ], vertex._data[ 1U ], vertex._data[ 2U ] ),
+        _uv ( uv._data[ 0U ], uv._data[ 1U ] ),
+        _normal ( normal._data[ 0U ], normal._data[ 1U ], normal._data[ 2U ] ),
+        _tangent ( tangent._data[ 0U ], tangent._data[ 1U ], tangent._data[ 2U ] ),
+        _bitangent ( bitangent._data[ 0U ], bitangent._data[ 1U ], bitangent._data[ 2U ] )
     {
         // NOTHING
     }
 
-    constexpr VertexInfo ( const GXVec4 &vertex, const GXVec2 &uv ):
-        _vertex ( vertex._data[ 0U ], vertex._data[ 1U ], vertex._data[ 2U ], vertex._data[ 3U ] ),
-        _uv ( uv._data[ 0U ], uv._data[ 1U ] )
-    {
-        // NOTHING
-    }
+    ~VertexInfo () = default;
 };
 
 #pragma pack ( pop )

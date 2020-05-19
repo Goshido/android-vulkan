@@ -679,20 +679,17 @@ Renderer::Renderer ():
     _surfaceFormat ( VK_FORMAT_UNDEFINED ),
     _surfaceSize { .width = 0U, .height = 0U },
     _surfaceTransform ( VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR ),
-
-#ifndef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
-
-    _swapchain ( VK_NULL_HANDLE )
-
-#else
-
     _swapchain ( VK_NULL_HANDLE ),
+
+#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+
     vkCreateDebugReportCallbackEXT ( nullptr ),
     vkDestroyDebugReportCallbackEXT ( nullptr ),
-    _debugReportCallback ( VK_NULL_HANDLE )
+    _debugReportCallback ( VK_NULL_HANDLE ),
 
 #endif
 
+    _viewportResolution { .width = 0U, .height = 0U }
 {
     // NOTHING
 }
@@ -802,6 +799,11 @@ const VkExtent2D& Renderer::GetSurfaceSize () const
 VkSwapchainKHR& Renderer::GetSwapchain ()
 {
     return _swapchain;
+}
+
+const VkExtent2D& Renderer::GetViewportResolution () const
+{
+    return _viewportResolution;
 }
 
 bool Renderer::IsReady () const
@@ -1081,7 +1083,7 @@ bool Renderer::CheckRequiredDeviceExtensions ( const std::vector<const char*> &d
 
     for ( size_t i = 0U; i < requiredExtensionCount; ++i )
     {
-        const char* requiredExtension =  requiredExtensions[ i ];
+        const char* requiredExtension = requiredExtensions[ i ];
         tmp = requiredExtension;
 
         if ( allExtensions.count ( tmp ) > 0U )
@@ -1186,6 +1188,7 @@ bool Renderer::DeployDevice ()
 
     constexpr const char* extensions[] =
     {
+        VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME,
         VK_KHR_SWAPCHAIN_EXTENSION_NAME
     };
 
@@ -1194,9 +1197,15 @@ bool Renderer::DeployDevice ()
     if ( !CheckRequiredDeviceExtensions ( caps._extensions, extensions, extensionCount ) )
         return false;
 
+    VkPhysicalDeviceFloat16Int8FeaturesKHR float16Int8Feature;
+    float16Int8Feature.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT16_INT8_FEATURES_KHR;
+    float16Int8Feature.pNext = nullptr;
+    float16Int8Feature.shaderFloat16 = VK_TRUE;
+    float16Int8Feature.shaderInt8 = VK_FALSE;
+
     VkDeviceCreateInfo deviceCreateInfo;
     deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-    deviceCreateInfo.pNext = nullptr;
+    deviceCreateInfo.pNext = &float16Int8Feature;
     deviceCreateInfo.flags = 0U;
     deviceCreateInfo.queueCreateInfoCount = 1U;
     deviceCreateInfo.pQueueCreateInfos = &deviceQueueCreateInfo;
@@ -1356,11 +1365,14 @@ bool Renderer::DeploySurface ( ANativeWindow &nativeWindow )
 
 #ifdef ANDROID_NATIVE_MODE_PORTRAIT
 
-    _presentationEngineTransform.RotationZ ( -GX_MATH_HALF_PI );
+    _presentationEngineTransform.RotationZ ( GX_MATH_HALF_PI );
+    _viewportResolution.width = _surfaceSize.height;
+    _viewportResolution.height = _surfaceSize.width;
 
 #elif defined ( ANDROID_NATIVE_MODE_LANDSCAPE )
 
     _presentationEngineTransform.Identity ();
+    _viewportResolution = _surfaceSize;
 
 #else
 

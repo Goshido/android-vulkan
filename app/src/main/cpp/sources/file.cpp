@@ -26,6 +26,11 @@ File::File ( std::string &&filePath ):
     // NOTHING
 }
 
+std::vector<uint8_t>& File::GetContent ()
+{
+    return _content;
+}
+
 const std::vector<uint8_t>& File::GetContent () const
 {
     return _content;

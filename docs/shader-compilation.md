@@ -18,16 +18,22 @@ The _android-vulkan_ project is using _HLSL_ shader language as high level progr
 -fvk-use-dx-layout
 ```
 
+**Note:** the project is using `float16` type support because it is critical type for performance on mobile devices. To enable this feature you have to specify the following _DXC_ flag:
+
+```txt
+-enable-16bit-types
+```
+
 ## Compile and deploy vertex shader module
 
 ```txt
-dxc.exe -spirv -WX -O3 -fvk-use-dx-layout -T vs_6_6 -E VS -I <android-vulkan directory>\app\src\main\hlsl -Fo <android-vulkan directory>\app\src\main\assets\shaders\<file name>-vs.spv <file name>.vs
+dxc.exe -spirv -WX -O3 -fvk-use-dx-layout -enable-16bit-types -T vs_6_6 -E VS -I <android-vulkan directory>\app\src\main\hlsl -Fo <android-vulkan directory>\app\src\main\assets\shaders\<file name>-vs.spv <file name>.vs
 ```
 
 ## Compile and deploy fragment shader module
 
 ```txt
-dxc.exe -spirv -WX -O3 -fvk-use-dx-layout -T ps_6_6 -E PS -I <android-vulkan directory>\app\src\main\hlsl -Fo <android-vulkan directory>\app\src\main\assets\shaders\<file name>-ps.spv <file name>.ps
+dxc.exe -spirv -WX -O3 -fvk-use-dx-layout -enable-16bit-types -T ps_6_6 -E PS -I <android-vulkan directory>\app\src\main\hlsl -Fo <android-vulkan directory>\app\src\main\assets\shaders\<file name>-ps.spv <file name>.ps
 ```
 
 ## _SPIR-V_ disassembler via _DXC_

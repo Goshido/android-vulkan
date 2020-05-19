@@ -32,7 +32,9 @@ class File final
 
         ~File () = default;
 
+        std::vector<uint8_t>& GetContent ();
         const std::vector<uint8_t>& GetContent () const;
+
         bool IsContentLoaded () const;
         bool LoadContent ();
 };

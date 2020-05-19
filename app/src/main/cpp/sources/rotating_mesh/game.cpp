@@ -21,18 +21,23 @@ constexpr static const char* VERTEX_SHADER_ENTRY_POINT = "VS";
 constexpr static const char* FRAGMENT_SHADER = "shaders/static-mesh-ps.spv";
 constexpr static const char* FRAGMENT_SHADER_ENTRY_POINT = "PS";
 
+constexpr static const char* MATERIAL_1_MESH = "meshes/rotating_mesh/sonic-material-1.mesh";
 constexpr static const char* MATERIAL_1_DIFFUSE = "textures/rotating_mesh/sonic-material-1-diffuse.png";
 constexpr static const char* MATERIAL_2_DIFFUSE = "textures/rotating_mesh/sonic-material-2-diffuse.png";
 constexpr static const char* MATERIAL_2_NORMAL = "textures/rotating_mesh/sonic-material-2-normal.png";
 constexpr static const char* MATERIAL_3_DIFFUSE = "textures/rotating_mesh/sonic-material-3-diffuse.png";
 constexpr static const char* MATERIAL_3_NORMAL = "textures/rotating_mesh/sonic-material-3-normal.png";
 
-constexpr static const double MIP_DELAY = 1.0;
+constexpr static const float ROTATION_SPEED = GX_MATH_HALF_PI;
+constexpr static const float FIELD_OF_VIEW = 60.0F;
+constexpr static const float Z_NEAR = 0.1F;
+constexpr static const float Z_FAR = 1.0e+3F;
 
 //----------------------------------------------------------------------------------------------------------------------
 
 Game::Game ():
     _activeTexture ( nullptr ),
+    _angle ( 0.0F ),
     _commandPool ( VK_NULL_HANDLE ),
     _depthStencil ( VK_NULL_HANDLE ),
     _depthStencilView ( VK_NULL_HANDLE ),
@@ -63,6 +68,14 @@ bool Game::IsReady ()
 
 bool Game::OnInit ( android_vulkan::Renderer &renderer )
 {
+    const VkExtent2D& resolution = renderer.GetViewportResolution ();
+
+    _projectionMatrix.Perspective ( GXDegToRad ( FIELD_OF_VIEW ),
+        resolution.width / static_cast<float> ( resolution.height ),
+        Z_NEAR,
+        Z_FAR
+    );
+
     if ( !CreateRenderPass ( renderer ) )
     {
         OnDestroy ( renderer );
@@ -135,12 +148,14 @@ bool Game::OnInit ( android_vulkan::Renderer &renderer )
         return false;
     }
 
+
+
     return true;
 }
 
 bool Game::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime )
 {
-    if ( !UpdateUniformBuffer ( deltaTime ) )
+    if ( !UpdateUniformBuffer ( renderer, deltaTime ) )
         return false;
 
     size_t imageIndex = SIZE_MAX;
@@ -317,7 +332,7 @@ bool Game::CreateDescriptorSet ( android_vulkan::Renderer &renderer )
 {
     const VkDevice device = renderer.GetDevice ();
 
-    VkDescriptorPoolSize features[ 4U ];
+    VkDescriptorPoolSize features[ 3U ];
     VkDescriptorPoolSize& ubFeature = features[ 0U ];
     ubFeature.descriptorCount = 1U;
     ubFeature.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -329,10 +344,6 @@ bool Game::CreateDescriptorSet ( android_vulkan::Renderer &renderer )
     VkDescriptorPoolSize& samplerFeature = features[ 2U ];
     samplerFeature.descriptorCount = 1U;
     samplerFeature.type = VK_DESCRIPTOR_TYPE_SAMPLER;
-
-    VkDescriptorPoolSize& ubFeature2 = features[ 3U ];
-    ubFeature2.descriptorCount = 1U;
-    ubFeature2.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 
     VkDescriptorPoolCreateInfo poolInfo;
     poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -391,16 +402,11 @@ bool Game::CreateDescriptorSet ( android_vulkan::Renderer &renderer )
     imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
     VkDescriptorBufferInfo bufferInfo;
-    bufferInfo.buffer = _mipInfoBuffer.GetBuffer ();
-    bufferInfo.range = sizeof ( _mipInfo );
+    bufferInfo.buffer = _transformBuffer.GetBuffer ();
+    bufferInfo.range = _transformBuffer.GetSize ();
     bufferInfo.offset = 0U;
 
-    VkDescriptorBufferInfo bufferInfo2;
-    bufferInfo2.buffer = _peTransformBuffer.GetBuffer ();
-    bufferInfo2.range = _peTransformBuffer.GetSize ();
-    bufferInfo2.offset = 0U;
-
-    VkWriteDescriptorSet writeSets[ 4U ];
+    VkWriteDescriptorSet writeSets[ 3U ];
     VkWriteDescriptorSet& ubWriteSet = writeSets[ 0U ];
     ubWriteSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     ubWriteSet.pNext = nullptr;
@@ -436,18 +442,6 @@ bool Game::CreateDescriptorSet ( android_vulkan::Renderer &renderer )
     samplerWriteSet.pBufferInfo = nullptr;
     samplerWriteSet.pImageInfo = &imageInfo;
     samplerWriteSet.pTexelBufferView = nullptr;
-
-    VkWriteDescriptorSet& ubWriteSet2 = writeSets[ 3U ];
-    ubWriteSet2.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    ubWriteSet2.pNext = nullptr;
-    ubWriteSet2.dstSet = _descriptorSet;
-    ubWriteSet2.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    ubWriteSet2.dstBinding = 3U;
-    ubWriteSet2.dstArrayElement = 0U;
-    ubWriteSet2.descriptorCount = 1U;
-    ubWriteSet2.pBufferInfo = &bufferInfo2;
-    ubWriteSet2.pImageInfo = nullptr;
-    ubWriteSet2.pTexelBufferView = nullptr;
 
     vkUpdateDescriptorSets ( device, static_cast<uint32_t> ( std::size ( writeSets ) ), writeSets, 0U, nullptr );
     return true;
@@ -621,25 +615,15 @@ void Game::DestroyFramebuffers ( android_vulkan::Renderer &renderer )
 
 bool Game::CreateMeshes ( android_vulkan::Renderer &renderer, VkCommandBuffer* commandBuffers )
 {
-    constexpr const VertexInfo quad[ 4U ] =
-    {
-        VertexInfo ( GXVec4 ( -1.0F, -1.0F, 0.5F, 1.0F ), GXVec2 ( 0.0F, 0.0F ) ),
-        VertexInfo ( GXVec4 ( 1.0F, -1.0F, 0.5F, 1.0F ), GXVec2 ( 1.0F, 0.0F ) ),
-        VertexInfo ( GXVec4 ( -1.0F, 1.0F, 0.5F, 1.0F ), GXVec2 ( 0.0F, 1.0F ) ),
-        VertexInfo ( GXVec4 ( 1.0F, 1.0F, 0.5F, 1.0F ), GXVec2 ( 1.0F, 1.0F ) )
-    };
-
-    return _mesh.LoadMesh ( reinterpret_cast<const uint8_t*> ( quad ),
-        sizeof ( quad ),
+    return _material1Mesh.LoadMesh ( MATERIAL_1_MESH,
         VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-        renderer,
-        commandBuffers[ 0U ]
+        renderer, commandBuffers[ 0U ]
     );
 }
 
 void Game::DestroyMeshes ( android_vulkan::Renderer &renderer )
 {
-    _mesh.FreeResources ( renderer );
+    _material1Mesh.FreeResources ( renderer );
 }
 
 bool Game::CreatePipeline ( android_vulkan::Renderer &renderer )
@@ -667,7 +651,7 @@ bool Game::CreatePipeline ( android_vulkan::Renderer &renderer )
     assemblyInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
     assemblyInfo.pNext = nullptr;
     assemblyInfo.flags = 0U;
-    assemblyInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
+    assemblyInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
     assemblyInfo.primitiveRestartEnable = VK_FALSE;
 
     VkVertexInputAttributeDescription attributeDescriptions[ 2U ];
@@ -675,7 +659,7 @@ bool Game::CreatePipeline ( android_vulkan::Renderer &renderer )
     vertexDescription.location = 0U;
     vertexDescription.binding = 0U;
     vertexDescription.offset = static_cast<uint32_t> ( offsetof ( VertexInfo, _vertex ) );
-    vertexDescription.format = VK_FORMAT_R32G32B32A32_SFLOAT;
+    vertexDescription.format = VK_FORMAT_R32G32B32_SFLOAT;
 
     VkVertexInputAttributeDescription& uvDescription = attributeDescriptions[ 1U ];
     uvDescription.location = 1U;
@@ -692,7 +676,7 @@ bool Game::CreatePipeline ( android_vulkan::Renderer &renderer )
     vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
     vertexInputInfo.pNext = nullptr;
     vertexInputInfo.flags = 0U;
-    vertexInputInfo.vertexAttributeDescriptionCount = 2U;
+    vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t> ( std::size ( attributeDescriptions ) );
     vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions;
     vertexInputInfo.vertexBindingDescriptionCount = 1U;
     vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
@@ -764,7 +748,7 @@ bool Game::CreatePipeline ( android_vulkan::Renderer &renderer )
     rasterizationInfo.rasterizerDiscardEnable = VK_FALSE;
     rasterizationInfo.polygonMode = VK_POLYGON_MODE_FILL;
     rasterizationInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
-    rasterizationInfo.cullMode = VK_CULL_MODE_NONE;
+    rasterizationInfo.cullMode = VK_CULL_MODE_BACK_BIT;
     rasterizationInfo.lineWidth = 1.0F;
 
     const VkExtent2D& surfaceSize = renderer.GetSurfaceSize ();
@@ -835,9 +819,9 @@ void Game::DestroyPipeline ( android_vulkan::Renderer &renderer )
 
 bool Game::CreatePipelineLayout ( android_vulkan::Renderer &renderer )
 {
-    VkDescriptorSetLayoutBinding bindings[ 4U ];
+    VkDescriptorSetLayoutBinding bindings[ 3U ];
     VkDescriptorSetLayoutBinding& ubInfo = bindings[ 0U ];
-    ubInfo.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    ubInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
     ubInfo.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     ubInfo.descriptorCount = 1U;
     ubInfo.binding = 0U;
@@ -856,13 +840,6 @@ bool Game::CreatePipelineLayout ( android_vulkan::Renderer &renderer )
     samplerInfo.descriptorCount = 1U;
     samplerInfo.binding = 2U;
     samplerInfo.pImmutableSamplers = nullptr;
-
-    VkDescriptorSetLayoutBinding& ubInfo2 = bindings[ 3U ];
-    ubInfo2.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-    ubInfo2.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    ubInfo2.descriptorCount = 1U;
-    ubInfo2.binding = 3U;
-    ubInfo2.pImmutableSamplers = nullptr;
 
     VkDescriptorSetLayoutCreateInfo descriptorSetInfo;
     descriptorSetInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -1243,25 +1220,16 @@ void Game::DestroyTextures ( android_vulkan::Renderer &renderer )
 
 bool Game::CreateUniformBuffer ( android_vulkan::Renderer& renderer )
 {
-    _mipInfo._level = 0.0F;
-
-    if ( !_mipInfoBuffer.Init ( renderer, _commandPool, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT ) )
-        return false;
-
-    if ( !_mipInfoBuffer.Update ( reinterpret_cast<const uint8_t*> ( &_mipInfo ), sizeof ( _mipInfo ) ) )
-        return false;
-
-    if ( !_peTransformBuffer.Init ( renderer, _commandPool, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT ) )
+    if ( !_transformBuffer.Init ( renderer, _commandPool, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT ) )
         return false;
 
     const GXMat4& peTransform = renderer.GetPresentationEngineTransform ();
-    return _peTransformBuffer.Update ( reinterpret_cast<const uint8_t*> ( &peTransform ), sizeof ( peTransform ) );
+    return _transformBuffer.Update ( reinterpret_cast<const uint8_t*> ( &peTransform ), sizeof ( peTransform ) );
 }
 
 void Game::DestroyUniformBuffer ()
 {
-    _peTransformBuffer.FreeResources ();
-    _mipInfoBuffer.FreeResources ();
+    _transformBuffer.FreeResources ();
 }
 
 bool Game::InitCommandBuffers ( android_vulkan::Renderer &renderer )
@@ -1356,9 +1324,9 @@ bool Game::InitCommandBuffers ( android_vulkan::Renderer &renderer )
         );
 
         constexpr VkDeviceSize offset = 0U;
-        vkCmdBindVertexBuffers ( commandBuffer, 0U, 1U, &_mesh.GetBuffer (), &offset );
+        vkCmdBindVertexBuffers ( commandBuffer, 0U, 1U, &_material1Mesh.GetBuffer (), &offset );
 
-        vkCmdDraw ( commandBuffer, 4U, 1U, 0U, 0U );
+        vkCmdDraw ( commandBuffer, _material1Mesh.GetVertexCount (), 1U, 0U, 0U );
         vkCmdEndRenderPass ( commandBuffer );
 
         result = renderer.CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
@@ -1412,7 +1380,7 @@ bool Game::LoadGPUContent ( android_vulkan::Renderer &renderer )
     if ( !result )
         return false;
 
-    _mesh.FreeTransferResources ( renderer );
+    _material1Mesh.FreeTransferResources ( renderer );
 
     _material3Normal.FreeTransferResources ( renderer );
     _material3Diffuse.FreeTransferResources ( renderer );
@@ -1424,23 +1392,19 @@ bool Game::LoadGPUContent ( android_vulkan::Renderer &renderer )
     return true;
 }
 
-bool Game::UpdateUniformBuffer ( double deltaTime )
+bool Game::UpdateUniformBuffer ( android_vulkan::Renderer &renderer, double deltaTime )
 {
-    _mipTimeout -= deltaTime;
+    _angle += static_cast<float> ( deltaTime ) * ROTATION_SPEED;
 
-    if ( _mipTimeout >= 0.0 )
-        return true;
+    GXMat4 tmp1;
+    tmp1.RotationY ( _angle );
+    tmp1.SetOrigin ( GXVec3 ( 0.0F, -1.0F, 3.0F ) );
 
-    _mipInfo._level += 1.0F;
+    GXMat4 tmp2;
+    tmp2.Multiply ( tmp1, _projectionMatrix );
+    tmp1.Multiply ( tmp2, renderer.GetPresentationEngineTransform () );
 
-    if ( static_cast<uint8_t> ( _mipInfo._level + 0.5F ) >= _activeTexture->GetMipLevelCount () )
-        _mipInfo._level = 0.0F;
-
-    if ( !_mipInfoBuffer.Update ( reinterpret_cast<const uint8_t*> ( &_mipInfo ), sizeof ( _mipInfo ) ) )
-        return false;
-
-    _mipTimeout = MIP_DELAY;
-    return true;
+    return _transformBuffer.Update ( reinterpret_cast<const uint8_t*> ( &tmp1 ), sizeof ( tmp1 ) );
 }
 
 } // namespace rotating_mesh

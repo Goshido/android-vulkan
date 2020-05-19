@@ -6,8 +6,11 @@ GX_DISABLE_COMMON_WARNINGS
 
 GX_RESTORE_WARNING_STATE
 
+#include <file.h>
 #include <logger.h>
 #include <vulkan_utils.h>
+#include <GXCommon/GXNativeMesh.h>
+#include <rotating_mesh/vertex_info.h>
 
 
 namespace rotating_mesh {
@@ -39,7 +42,8 @@ MeshGeometry::MeshGeometry ():
     _buffer ( VK_NULL_HANDLE ),
     _bufferMemory ( VK_NULL_HANDLE ),
     _transferBuffer ( VK_NULL_HANDLE ),
-    _transferMemory ( VK_NULL_HANDLE )
+    _transferMemory ( VK_NULL_HANDLE ),
+    _vertexCount ( 0U )
 {
     // NOTHING
 
@@ -92,18 +96,61 @@ const VkBuffer& MeshGeometry::GetBuffer () const
     return _buffer;
 }
 
-bool MeshGeometry::LoadMesh ( std::string&& /*fileName*/,
-    VkBufferUsageFlags /*usage*/,
-    android_vulkan::Renderer& /*renderer*/,
-    VkCommandBuffer /*commandBuffer*/
+uint32_t MeshGeometry::GetVertexCount () const
+{
+    return _vertexCount;
+}
+
+bool MeshGeometry::LoadMesh ( std::string &&fileName,
+    VkBufferUsageFlags usage,
+    android_vulkan::Renderer &renderer,
+    VkCommandBuffer commandBuffer
 )
 {
-    assert ( !"MeshGeometry::LoadMesh - Implement me!" );
-    return false;
+    if ( fileName.empty () )
+    {
+        android_vulkan::LogError ( "MeshGeometry::LoadMesh - Can't upload data. Filename is empty." );
+        return false;
+    }
+
+    // TODO mesh reload support
+
+    android_vulkan::File file ( fileName );
+
+    if ( !file.LoadContent () )
+        return false;
+
+    std::vector<uint8_t>& content = file.GetContent ();
+    const auto& header = *reinterpret_cast<const GXNativeMeshHeader*> ( content.data () );
+
+    // TODO UV inverse to several threads
+
+    auto* vertices = reinterpret_cast<VertexInfo*> ( content.data () + header.vboOffset );
+
+    for ( size_t i = 0U; i < header.totalVertices; ++i )
+    {
+        GXVec2& uv = vertices[ i ]._uv;
+        uv._data[ 1U ] = 1.0F - uv._data[ 1U ];
+    }
+
+    const bool result = LoadMesh ( reinterpret_cast<const uint8_t*> ( vertices ),
+        header.totalVertices * sizeof ( VertexInfo ),
+        header.totalVertices,
+        usage,
+        renderer,
+        commandBuffer
+    );
+
+    if ( !result )
+        return false;
+
+    _fileName = std::move ( fileName );
+    return true;
 }
 
 bool MeshGeometry::LoadMesh ( const uint8_t* data,
     size_t size,
+    uint32_t vertexCount,
     VkBufferUsageFlags usage,
     android_vulkan::Renderer &renderer,
     VkCommandBuffer commandBuffer
@@ -291,7 +338,10 @@ bool MeshGeometry::LoadMesh ( const uint8_t* data,
     );
 
     if ( result )
+    {
+        _vertexCount = vertexCount;
         return true;
+    }
 
     FreeResources ( renderer );
     return false;

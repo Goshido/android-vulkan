@@ -74,6 +74,8 @@ class Renderer final
 
 #endif
 
+        VkExtent2D                                                          _viewportResolution;
+
         std::vector<VkPhysicalDeviceGroupProperties>                        _physicalDeviceGroups;
         std::map<VkPhysicalDevice, VulkanPhysicalDeviceInfo>                _physicalDeviceInfo;
         VkPhysicalDeviceMemoryProperties                                    _physicalDeviceMemoryProperties;
@@ -129,6 +131,11 @@ class Renderer final
         VkFormat GetSurfaceFormat () const;
         const VkExtent2D& GetSurfaceSize () const;
         VkSwapchainKHR& GetSwapchain ();
+
+        // This resolution must be used by projection matrices. Resolution takes into consideration
+        // current device orientation. The actual presentation image resolution can be acquired
+        // by Renderer::GetSurfaceSize API.
+        const VkExtent2D& GetViewportResolution () const;
 
         bool IsReady () const;
 

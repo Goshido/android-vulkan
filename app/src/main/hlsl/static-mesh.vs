@@ -1,5 +1,5 @@
-[[ vk::binding ( 3 ) ]]
-cbuffer PETransform:                register ( b0 )
+[[ vk::binding ( 0 ) ]]
+cbuffer Transform:                      register ( b0 )
 {
     matrix              _transform;
 };
@@ -7,18 +7,18 @@ cbuffer PETransform:                register ( b0 )
 struct InputData
 {
     [[ vk::location ( 0 ) ]]
-    float4              _vertex:    VERTEX;
+    float3              _vertex:        VERTEX;
 
     [[ vk::location ( 1 ) ]]
-    float2              _uv:        UV;
+    float2              _uv:            UV;
 };
 
 struct OutputData
 {
-    linear float4      _vertexH:    SV_Position;
+    linear float4       _vertexH:       SV_Position;
 
     [[ vk::location ( 0 ) ]]
-    linear float2      _uv:         UV;
+    linear half2        _uv:            UV;
 };
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -26,8 +26,8 @@ struct OutputData
 OutputData VS ( in InputData inputData )
 {
     OutputData result;
-    result._vertexH = mul ( inputData._vertex, _transform );
-    result._uv = inputData._uv;
+    result._vertexH = mul ( _transform, float4 ( inputData._vertex, 1.0f ) );
+    result._uv = (half2)inputData._uv;
 
     return result;
 }

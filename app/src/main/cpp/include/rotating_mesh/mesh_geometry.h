@@ -45,6 +45,8 @@ class MeshGeometry final
         VkBuffer                                                        _transferBuffer;
         VkDeviceMemory                                                  _transferMemory;
 
+        uint32_t                                                        _vertexCount;
+
         std::string                                                     _fileName;
 
         static const std::map<VkBufferUsageFlags, BufferSyncItem>       _accessMapper;
@@ -63,6 +65,7 @@ class MeshGeometry final
         void FreeTransferResources ( android_vulkan::Renderer &renderer );
 
         const VkBuffer& GetBuffer () const;
+        uint32_t GetVertexCount () const;
 
         bool LoadMesh ( std::string &&fileName,
             VkBufferUsageFlags usage,
@@ -72,6 +75,7 @@ class MeshGeometry final
 
         bool LoadMesh ( const uint8_t* data,
             size_t size,
+            uint32_t vertexCount,
             VkBufferUsageFlags usage,
             android_vulkan::Renderer &renderer,
             VkCommandBuffer commandBuffer

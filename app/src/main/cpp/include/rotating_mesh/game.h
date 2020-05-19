@@ -17,16 +17,9 @@ class Game final : public android_vulkan::Game
     private:
         using CommandContext = std::pair<VkCommandBuffer, VkFence>;
 
-AV_DX_ALIGNMENT_BEGIN
-        struct MipInfo final
-        {
-            float                       _level;
-            GXVec3                      _padding0_0;
-        };
-AV_DX_ALIGNMENT_END
-
     private:
         const Texture2D*                _activeTexture;
+        float                           _angle;
 
         VkCommandPool                   _commandPool;
 
@@ -59,18 +52,15 @@ AV_DX_ALIGNMENT_END
 
         std::vector<CommandContext>     _commandBuffers;
 
-        MeshGeometry                    _mesh;
-
+        MeshGeometry                    _material1Mesh;
         Texture2D                       _material1Diffuse;
         Texture2D                       _material2Diffuse;
         Texture2D                       _material2Normal;
         Texture2D                       _material3Diffuse;
         Texture2D                       _material3Normal;
 
-        MipInfo                         _mipInfo;
-        UniformBuffer                   _mipInfoBuffer;
-
-        UniformBuffer                   _peTransformBuffer;
+        UniformBuffer                   _transformBuffer;
+        GXMat4                          _projectionMatrix;
 
     public:
         Game ();
@@ -127,7 +117,7 @@ AV_DX_ALIGNMENT_END
 
         bool InitCommandBuffers ( android_vulkan::Renderer &renderer );
         bool LoadGPUContent ( android_vulkan::Renderer &renderer );
-        bool UpdateUniformBuffer ( double deltaTime );
+        bool UpdateUniformBuffer ( android_vulkan::Renderer &renderer, double deltaTime );
 };
 
 } // namespace rotating_mesh

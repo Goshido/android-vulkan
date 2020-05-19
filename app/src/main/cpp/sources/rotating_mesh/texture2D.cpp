@@ -390,11 +390,13 @@ bool Texture2D::LoadImage ( std::vector<uint8_t> &pixelData,
         }
     };
 
+    constexpr const size_t SKIP_ROWS = EXPANDER_THREADS - 1U;
+
     const auto rowPixelCount = static_cast<const size_t> ( width );
     const auto srcRowSize = RGB_BYTES_PER_PIXEL * rowPixelCount;
-    const auto srcRowSkipPixels = EXPANDER_THREADS * srcRowSize;
+    const auto srcRowSkipPixels = SKIP_ROWS * srcRowSize;
     const auto dstRowSize = RGBA_BYTES_PER_PIXEL * rowPixelCount;
-    const auto dstRowSkipPixels = EXPANDER_THREADS * rowPixelCount;
+    const auto dstRowSkipPixels = SKIP_ROWS * rowPixelCount;
     const auto* nonDstMemory = reinterpret_cast<uint32_t*> ( dst + size );
 
     constexpr const uint8_t oneAlphaRaw[ RGBA_BYTES_PER_PIXEL ] = { 0x00U, 0x00U, 0x00U, 0xFFU };

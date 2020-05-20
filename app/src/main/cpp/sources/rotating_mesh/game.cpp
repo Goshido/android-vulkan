@@ -13,7 +13,7 @@ GX_RESTORE_WARNING_STATE
 namespace rotating_mesh {
 
 constexpr static const size_t TEXTURE_COMMAND_BUFFERS = 5U;
-constexpr static const size_t BUFFER_COMMAND_BUFFERS = 1U;
+constexpr static const size_t MESH_COMMAND_BUFFERS = 3U;
 
 constexpr static const char* VERTEX_SHADER = "shaders/static-mesh-vs.spv";
 constexpr static const char* VERTEX_SHADER_ENTRY_POINT = "VS";
@@ -23,8 +23,12 @@ constexpr static const char* FRAGMENT_SHADER_ENTRY_POINT = "PS";
 
 constexpr static const char* MATERIAL_1_MESH = "meshes/rotating_mesh/sonic-material-1.mesh";
 constexpr static const char* MATERIAL_1_DIFFUSE = "textures/rotating_mesh/sonic-material-1-diffuse.png";
+
+constexpr static const char* MATERIAL_2_MESH = "meshes/rotating_mesh/sonic-material-2.mesh";
 constexpr static const char* MATERIAL_2_DIFFUSE = "textures/rotating_mesh/sonic-material-2-diffuse.png";
 constexpr static const char* MATERIAL_2_NORMAL = "textures/rotating_mesh/sonic-material-2-normal.png";
+
+constexpr static const char* MATERIAL_3_MESH = "meshes/rotating_mesh/sonic-material-3.mesh";
 constexpr static const char* MATERIAL_3_DIFFUSE = "textures/rotating_mesh/sonic-material-3-diffuse.png";
 constexpr static const char* MATERIAL_3_NORMAL = "textures/rotating_mesh/sonic-material-3-normal.png";
 
@@ -36,17 +40,14 @@ constexpr static const float Z_FAR = 1.0e+3F;
 //----------------------------------------------------------------------------------------------------------------------
 
 Game::Game ():
-    _activeTexture ( nullptr ),
     _angle ( 0.0F ),
     _commandPool ( VK_NULL_HANDLE ),
     _depthStencil ( VK_NULL_HANDLE ),
     _depthStencilView ( VK_NULL_HANDLE ),
     _depthStencilMemory ( VK_NULL_HANDLE ),
     _descriptorPool ( VK_NULL_HANDLE ),
-    _descriptorSet ( VK_NULL_HANDLE ),
     _descriptorSetLayout ( VK_NULL_HANDLE ),
     _framebuffers {},
-    _mipTimeout ( -1.0 ),
     _pipeline ( VK_NULL_HANDLE ),
     _pipelineLayout ( VK_NULL_HANDLE ),
     _renderPass ( VK_NULL_HANDLE ),
@@ -63,7 +64,7 @@ Game::Game ():
 
 bool Game::IsReady ()
 {
-    return _descriptorSet != VK_NULL_HANDLE;
+    return _material3Mesh.GetBuffer () != VK_NULL_HANDLE;
 }
 
 bool Game::OnInit ( android_vulkan::Renderer &renderer )
@@ -148,8 +149,6 @@ bool Game::OnInit ( android_vulkan::Renderer &renderer )
         return false;
     }
 
-
-
     return true;
 }
 
@@ -200,9 +199,6 @@ bool Game::OnDestroy ( android_vulkan::Renderer &renderer )
 
     if ( !result )
         return false;
-
-    _activeTexture = nullptr;
-    _mipTimeout = -1.0;
 
     DestroyDescriptorSet ( renderer );
     DestroyPipeline ( renderer );
@@ -331,25 +327,26 @@ void Game::DestroyCommandPool ( android_vulkan::Renderer &renderer )
 bool Game::CreateDescriptorSet ( android_vulkan::Renderer &renderer )
 {
     const VkDevice device = renderer.GetDevice ();
+    constexpr const size_t featureCount = 3U;
 
-    VkDescriptorPoolSize features[ 3U ];
+    VkDescriptorPoolSize features[ featureCount ];
     VkDescriptorPoolSize& ubFeature = features[ 0U ];
-    ubFeature.descriptorCount = 1U;
+    ubFeature.descriptorCount = static_cast<uint32_t> ( MATERIAL_COUNT );
     ubFeature.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 
     VkDescriptorPoolSize& imageFeature = features[ 1U ];
-    imageFeature.descriptorCount = 1U;
+    imageFeature.descriptorCount = static_cast<uint32_t> ( MATERIAL_COUNT );
     imageFeature.type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
 
     VkDescriptorPoolSize& samplerFeature = features[ 2U ];
-    samplerFeature.descriptorCount = 1U;
+    samplerFeature.descriptorCount = static_cast<uint32_t> ( MATERIAL_COUNT );
     samplerFeature.type = VK_DESCRIPTOR_TYPE_SAMPLER;
 
     VkDescriptorPoolCreateInfo poolInfo;
     poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
     poolInfo.pNext = nullptr;
     poolInfo.flags = 0U;
-    poolInfo.maxSets = 1U;
+    poolInfo.maxSets = static_cast<uint32_t> ( std::size ( _materialDescriptorSets ) );
     poolInfo.poolSizeCount = static_cast<uint32_t> ( std::size ( features ) );
     poolInfo.pPoolSizes = features;
 
@@ -363,14 +360,19 @@ bool Game::CreateDescriptorSet ( android_vulkan::Renderer &renderer )
 
     AV_REGISTER_DESCRIPTOR_POOL ( "Game::_descriptorPool" )
 
+    VkDescriptorSetLayout layouts[ std::size ( _materialDescriptorSets ) ];
+
+    for ( auto& item : layouts )
+        item = _descriptorSetLayout;
+
     VkDescriptorSetAllocateInfo setAllocateInfo;
     setAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
     setAllocateInfo.pNext = nullptr;
     setAllocateInfo.descriptorPool = _descriptorPool;
-    setAllocateInfo.pSetLayouts = &_descriptorSetLayout;
-    setAllocateInfo.descriptorSetCount = 1U;
+    setAllocateInfo.pSetLayouts = layouts;
+    setAllocateInfo.descriptorSetCount = poolInfo.maxSets;
 
-    result = renderer.CheckVkResult ( vkAllocateDescriptorSets ( device, &setAllocateInfo, &_descriptorSet ),
+    result = renderer.CheckVkResult ( vkAllocateDescriptorSets ( device, &setAllocateInfo, _materialDescriptorSets ),
         "Game::CreateDescriptorSet",
         "Can't allocate descriptor set"
     );
@@ -394,56 +396,75 @@ bool Game::CreateDescriptorSet ( android_vulkan::Renderer &renderer )
         return VK_NULL_HANDLE;
     };
 
-    _activeTexture = &_material1Diffuse;
+    VkDescriptorImageInfo imageInfo[ MATERIAL_COUNT ];
+    VkDescriptorImageInfo& imageInfo1 = imageInfo[ 0U ];
+    imageInfo1.sampler = selector ( _material1Diffuse );
+    imageInfo1.imageView = _material1Diffuse.GetImageView ();
+    imageInfo1.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-    VkDescriptorImageInfo imageInfo;
-    imageInfo.sampler = selector ( *_activeTexture );
-    imageInfo.imageView = _activeTexture->GetImageView ();
-    imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    VkDescriptorImageInfo& imageInfo2 = imageInfo[ 1U ];
+    imageInfo2.sampler = selector ( _material2Diffuse );
+    imageInfo2.imageView = _material2Diffuse.GetImageView ();
+    imageInfo2.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+    VkDescriptorImageInfo& imageInfo3 = imageInfo[ 2U ];
+    imageInfo3.sampler = selector ( _material3Diffuse );
+    imageInfo3.imageView = _material3Diffuse.GetImageView ();
+    imageInfo3.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
     VkDescriptorBufferInfo bufferInfo;
     bufferInfo.buffer = _transformBuffer.GetBuffer ();
     bufferInfo.range = _transformBuffer.GetSize ();
     bufferInfo.offset = 0U;
 
-    VkWriteDescriptorSet writeSets[ 3U ];
-    VkWriteDescriptorSet& ubWriteSet = writeSets[ 0U ];
-    ubWriteSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    ubWriteSet.pNext = nullptr;
-    ubWriteSet.dstSet = _descriptorSet;
-    ubWriteSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    ubWriteSet.dstBinding = 0U;
-    ubWriteSet.dstArrayElement = 0U;
-    ubWriteSet.descriptorCount = 1U;
-    ubWriteSet.pBufferInfo = &bufferInfo;
-    ubWriteSet.pImageInfo = nullptr;
-    ubWriteSet.pTexelBufferView = nullptr;
+    constexpr const size_t writeSetCount = featureCount * MATERIAL_COUNT;
+    VkWriteDescriptorSet writeSets[ writeSetCount ];
 
-    VkWriteDescriptorSet& imageWriteSet = writeSets[ 1U ];
-    imageWriteSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    imageWriteSet.pNext = nullptr;
-    imageWriteSet.dstSet = _descriptorSet;
-    imageWriteSet.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-    imageWriteSet.dstBinding = 1U;
-    imageWriteSet.dstArrayElement = 0U;
-    imageWriteSet.descriptorCount = 1U;
-    imageWriteSet.pBufferInfo = nullptr;
-    imageWriteSet.pImageInfo = &imageInfo;
-    imageWriteSet.pTexelBufferView = nullptr;
+    for ( size_t i = 0U; i < MATERIAL_COUNT; ++i )
+    {
+        VkWriteDescriptorSet& ubWriteSet = writeSets[ i ];
+        ubWriteSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        ubWriteSet.pNext = nullptr;
+        ubWriteSet.dstSet = _materialDescriptorSets[ i ];
+        ubWriteSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        ubWriteSet.dstBinding = 0U;
+        ubWriteSet.dstArrayElement = 0U;
+        ubWriteSet.descriptorCount = 1U;
+        ubWriteSet.pBufferInfo = &bufferInfo;
+        ubWriteSet.pImageInfo = nullptr;
+        ubWriteSet.pTexelBufferView = nullptr;
+    }
 
-    VkWriteDescriptorSet& samplerWriteSet = writeSets[ 2U ];
-    samplerWriteSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    samplerWriteSet.pNext = nullptr;
-    samplerWriteSet.dstSet = _descriptorSet;
-    samplerWriteSet.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
-    samplerWriteSet.dstBinding = 2U;
-    samplerWriteSet.dstArrayElement = 0U;
-    samplerWriteSet.descriptorCount = 1U;
-    samplerWriteSet.pBufferInfo = nullptr;
-    samplerWriteSet.pImageInfo = &imageInfo;
-    samplerWriteSet.pTexelBufferView = nullptr;
+    for ( size_t i = 0U; i < MATERIAL_COUNT; ++i )
+    {
+        const size_t base = MATERIAL_COUNT + i * 2U;
 
-    vkUpdateDescriptorSets ( device, static_cast<uint32_t> ( std::size ( writeSets ) ), writeSets, 0U, nullptr );
+        VkWriteDescriptorSet& imageWriteSet = writeSets[ base ];
+        imageWriteSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        imageWriteSet.pNext = nullptr;
+        imageWriteSet.dstSet = _materialDescriptorSets[ i ];
+        imageWriteSet.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+        imageWriteSet.dstBinding = 1U;
+        imageWriteSet.dstArrayElement = 0U;
+        imageWriteSet.descriptorCount = 1U;
+        imageWriteSet.pBufferInfo = nullptr;
+        imageWriteSet.pImageInfo = imageInfo + i;
+        imageWriteSet.pTexelBufferView = nullptr;
+
+        VkWriteDescriptorSet& samplerWriteSet = writeSets[ base + 1U ];
+        samplerWriteSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        samplerWriteSet.pNext = nullptr;
+        samplerWriteSet.dstSet = _materialDescriptorSets[ i ];
+        samplerWriteSet.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
+        samplerWriteSet.dstBinding = 2U;
+        samplerWriteSet.dstArrayElement = 0U;
+        samplerWriteSet.descriptorCount = 1U;
+        samplerWriteSet.pBufferInfo = nullptr;
+        samplerWriteSet.pImageInfo = imageInfo + i;
+        samplerWriteSet.pTexelBufferView = nullptr;
+    }
+
+    vkUpdateDescriptorSets ( device, static_cast<uint32_t> ( writeSetCount ), writeSets, 0U, nullptr );
     return true;
 }
 
@@ -455,8 +476,6 @@ void Game::DestroyDescriptorSet ( android_vulkan::Renderer &renderer )
     vkDestroyDescriptorPool ( renderer.GetDevice (), _descriptorPool, nullptr );
     _descriptorPool = VK_NULL_HANDLE;
     AV_UNREGISTER_DESCRIPTOR_POOL ( "Game::_descriptorPool" )
-
-    _descriptorSet = VK_NULL_HANDLE;
 }
 
 bool Game::CreateFramebuffers ( android_vulkan::Renderer &renderer )
@@ -615,14 +634,32 @@ void Game::DestroyFramebuffers ( android_vulkan::Renderer &renderer )
 
 bool Game::CreateMeshes ( android_vulkan::Renderer &renderer, VkCommandBuffer* commandBuffers )
 {
-    return _material1Mesh.LoadMesh ( MATERIAL_1_MESH,
+    bool result = _material1Mesh.LoadMesh ( MATERIAL_1_MESH,
         VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
         renderer, commandBuffers[ 0U ]
+    );
+
+    if ( !result )
+        return false;
+
+    result = _material2Mesh.LoadMesh ( MATERIAL_2_MESH,
+        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+        renderer, commandBuffers[ 1U ]
+    );
+
+    if ( !result )
+        return false;
+
+    return _material3Mesh.LoadMesh ( MATERIAL_3_MESH,
+        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+        renderer, commandBuffers[ 2U ]
     );
 }
 
 void Game::DestroyMeshes ( android_vulkan::Renderer &renderer )
 {
+    _material3Mesh.FreeResources ( renderer );
+    _material2Mesh.FreeResources ( renderer );
     _material1Mesh.FreeResources ( renderer );
 }
 
@@ -1318,15 +1355,42 @@ bool Game::InitCommandBuffers ( android_vulkan::Renderer &renderer )
             _pipelineLayout,
             0U,
             1U,
-            &_descriptorSet,
+            _materialDescriptorSets,
             0U,
             nullptr
         );
 
         constexpr VkDeviceSize offset = 0U;
-        vkCmdBindVertexBuffers ( commandBuffer, 0U, 1U, &_material1Mesh.GetBuffer (), &offset );
 
+        vkCmdBindVertexBuffers ( commandBuffer, 0U, 1U, &_material1Mesh.GetBuffer (), &offset );
         vkCmdDraw ( commandBuffer, _material1Mesh.GetVertexCount (), 1U, 0U, 0U );
+
+        vkCmdBindDescriptorSets ( commandBuffer,
+            VK_PIPELINE_BIND_POINT_GRAPHICS,
+            _pipelineLayout,
+            0U,
+            1U,
+            _materialDescriptorSets + 1U,
+            0U,
+            nullptr
+        );
+
+        vkCmdBindVertexBuffers ( commandBuffer, 0U, 1U, &_material2Mesh.GetBuffer (), &offset );
+        vkCmdDraw ( commandBuffer, _material2Mesh.GetVertexCount (), 1U, 0U, 0U );
+
+        vkCmdBindDescriptorSets ( commandBuffer,
+            VK_PIPELINE_BIND_POINT_GRAPHICS,
+            _pipelineLayout,
+            0U,
+            1U,
+            _materialDescriptorSets + 2U,
+            0U,
+            nullptr
+        );
+
+        vkCmdBindVertexBuffers ( commandBuffer, 0U, 1U, &_material3Mesh.GetBuffer (), &offset );
+        vkCmdDraw ( commandBuffer, _material3Mesh.GetVertexCount (), 1U, 0U, 0U );
+
         vkCmdEndRenderPass ( commandBuffer );
 
         result = renderer.CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
@@ -1345,7 +1409,7 @@ bool Game::InitCommandBuffers ( android_vulkan::Renderer &renderer )
 
 bool Game::LoadGPUContent ( android_vulkan::Renderer &renderer )
 {
-    constexpr const size_t commandBufferCount = TEXTURE_COMMAND_BUFFERS + BUFFER_COMMAND_BUFFERS;
+    constexpr const size_t commandBufferCount = TEXTURE_COMMAND_BUFFERS + MESH_COMMAND_BUFFERS;
     VkCommandBuffer commandBuffers[ commandBufferCount ] = { VK_NULL_HANDLE };
 
     VkCommandBufferAllocateInfo allocateInfo;
@@ -1380,6 +1444,8 @@ bool Game::LoadGPUContent ( android_vulkan::Renderer &renderer )
     if ( !result )
         return false;
 
+    _material3Mesh.FreeTransferResources ( renderer );
+    _material2Mesh.FreeTransferResources ( renderer );
     _material1Mesh.FreeTransferResources ( renderer );
 
     _material3Normal.FreeTransferResources ( renderer );

@@ -2,7 +2,9 @@
 
 GX_DISABLE_COMMON_WARNINGS
 
+#include <array>
 #include <cassert>
+#include <thread>
 
 GX_RESTORE_WARNING_STATE
 
@@ -14,6 +16,8 @@ GX_RESTORE_WARNING_STATE
 
 
 namespace rotating_mesh {
+
+constexpr static const size_t UV_THREADS = 4U;
 
 const std::map<VkBufferUsageFlags, BufferSyncItem> MeshGeometry::_accessMapper =
 {
@@ -54,22 +58,8 @@ MeshGeometry::MeshGeometry ():
 void MeshGeometry::FreeResources ( android_vulkan::Renderer &renderer )
 {
     FreeTransferResources ( renderer );
-
-    const VkDevice device = renderer.GetDevice ();
-
-    if ( _bufferMemory != VK_NULL_HANDLE )
-    {
-        vkFreeMemory ( device, _bufferMemory, nullptr );
-        _bufferMemory = VK_NULL_HANDLE;
-        AV_UNREGISTER_DEVICE_MEMORY ( "MeshGeometry::_bufferMemory" )
-    }
-
-    if ( _buffer == VK_NULL_HANDLE )
-        return;
-
-    vkDestroyBuffer ( device, _buffer, nullptr );
-    _buffer = VK_NULL_HANDLE;
-    AV_UNREGISTER_BUFFER ( "MeshGeometry::_buffer" )
+    FreeResourceInternal ( renderer );
+    _fileName.clear ();
 }
 
 void MeshGeometry::FreeTransferResources ( android_vulkan::Renderer &renderer )
@@ -113,7 +103,7 @@ bool MeshGeometry::LoadMesh ( std::string &&fileName,
         return false;
     }
 
-    // TODO mesh reload support
+    FreeResourceInternal ( renderer );
 
     android_vulkan::File file ( fileName );
 
@@ -123,17 +113,49 @@ bool MeshGeometry::LoadMesh ( std::string &&fileName,
     std::vector<uint8_t>& content = file.GetContent ();
     const auto& header = *reinterpret_cast<const GXNativeMeshHeader*> ( content.data () );
 
-    // TODO UV inverse to several threads
-
+    constexpr size_t skipFactor = UV_THREADS - 1U;
+    const size_t verticesPerBatch = static_cast<size_t> ( header.totalVertices ) / UV_THREADS;
+    const size_t toNextBatch = verticesPerBatch * skipFactor;
+    const auto lastIndex = static_cast<const size_t> ( header.totalVertices - 1U );
     auto* vertices = reinterpret_cast<VertexInfo*> ( content.data () + header.vboOffset );
 
-    for ( size_t i = 0U; i < header.totalVertices; ++i )
+    auto converter = [ & ] ( VertexInfo* vertices,
+        size_t currentIndex,
+        size_t lastIndex,
+        size_t toNextBatch,
+        size_t verticesPerBatch
+    ) {
+        while ( currentIndex <= lastIndex )
+        {
+            const size_t limit = std::min ( lastIndex, currentIndex + verticesPerBatch );
+
+            for ( ; currentIndex < limit; ++currentIndex )
+            {
+                GXVec2& uv = vertices[ currentIndex ]._uv;
+                uv._data[ 1U ] = 1.0F - uv._data[ 1U ];
+            }
+
+            currentIndex += toNextBatch;
+        }
+    };
+
+    std::array<std::thread, UV_THREADS> converters;
+
+    for ( size_t i = 0U; i < UV_THREADS; ++i )
     {
-        GXVec2& uv = vertices[ i ]._uv;
-        uv._data[ 1U ] = 1.0F - uv._data[ 1U ];
+        converters[ i ] = std::thread ( converter,
+            vertices,
+            i * verticesPerBatch,
+            lastIndex,
+            toNextBatch,
+            verticesPerBatch
+        );
     }
 
-    const bool result = LoadMesh ( reinterpret_cast<const uint8_t*> ( vertices ),
+    for ( auto& item : converters )
+        item.join ();
+
+    const bool result = LoadMeshInternal ( reinterpret_cast<const uint8_t*> ( vertices ),
         header.totalVertices * sizeof ( VertexInfo ),
         header.totalVertices,
         usage,
@@ -156,6 +178,38 @@ bool MeshGeometry::LoadMesh ( const uint8_t* data,
     VkCommandBuffer commandBuffer
 )
 {
+    FreeResources ( renderer );
+    return LoadMeshInternal ( data, size, vertexCount, usage, renderer, commandBuffer );
+}
+
+void MeshGeometry::FreeResourceInternal ( android_vulkan::Renderer &renderer )
+{
+    _vertexCount = 0U;
+    const VkDevice device = renderer.GetDevice ();
+
+    if ( _bufferMemory != VK_NULL_HANDLE )
+    {
+        vkFreeMemory ( device, _bufferMemory, nullptr );
+        _bufferMemory = VK_NULL_HANDLE;
+        AV_UNREGISTER_DEVICE_MEMORY ( "MeshGeometry::_bufferMemory" )
+    }
+
+    if ( _buffer == VK_NULL_HANDLE )
+        return;
+
+    vkDestroyBuffer ( device, _buffer, nullptr );
+    _buffer = VK_NULL_HANDLE;
+    AV_UNREGISTER_BUFFER ( "MeshGeometry::_buffer" )
+}
+
+bool MeshGeometry::LoadMeshInternal ( const uint8_t* data,
+    size_t size,
+    uint32_t vertexCount,
+    VkBufferUsageFlags usage,
+    android_vulkan::Renderer &renderer,
+    VkCommandBuffer commandBuffer
+)
+{
     VkBufferCreateInfo bufferInfo;
     bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
     bufferInfo.pNext = nullptr;
@@ -169,7 +223,7 @@ bool MeshGeometry::LoadMesh ( const uint8_t* data,
     const VkDevice device = renderer.GetDevice ();
 
     bool result = renderer.CheckVkResult ( vkCreateBuffer ( device, &bufferInfo, nullptr, &_buffer ),
-        "MeshGeometry::LoadMesh",
+        "MeshGeometry::LoadMeshInternal",
         "Can't create buffer"
     );
 
@@ -184,7 +238,7 @@ bool MeshGeometry::LoadMesh ( const uint8_t* data,
     result = renderer.TryAllocateMemory ( _bufferMemory,
         memoryRequirements,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-        "Can't allocate buffer memory (MeshGeometry::LoadMesh)"
+        "Can't allocate buffer memory (MeshGeometry::LoadMeshInternal)"
     );
 
     if ( !result )
@@ -196,7 +250,7 @@ bool MeshGeometry::LoadMesh ( const uint8_t* data,
     AV_REGISTER_DEVICE_MEMORY ( "MeshGeometry::_bufferMemory" )
 
     result = renderer.CheckVkResult ( vkBindBufferMemory ( device, _buffer, _bufferMemory, 0U ),
-        "MeshGeometry::LoadMesh",
+        "MeshGeometry::LoadMeshInternal",
         "Can't bind buffer memory"
     );
 
@@ -209,7 +263,7 @@ bool MeshGeometry::LoadMesh ( const uint8_t* data,
     bufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 
     result = renderer.CheckVkResult ( vkCreateBuffer ( device, &bufferInfo, nullptr, &_transferBuffer ),
-        "MeshGeometry::LoadMesh",
+        "MeshGeometry::LoadMeshInternal",
         "Can't create transfer buffer"
     );
 
@@ -223,7 +277,7 @@ bool MeshGeometry::LoadMesh ( const uint8_t* data,
     result = renderer.TryAllocateMemory ( _transferMemory,
         memoryRequirements,
         VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
-        "Can't allocate transfer memory (MeshGeometry::LoadMesh)"
+        "Can't allocate transfer memory (MeshGeometry::LoadMeshInternal)"
     );
 
     if ( !result )
@@ -235,7 +289,7 @@ bool MeshGeometry::LoadMesh ( const uint8_t* data,
     AV_REGISTER_DEVICE_MEMORY ( "MeshGeometry::_transferMemory" )
 
     result = renderer.CheckVkResult ( vkBindBufferMemory ( device, _transferBuffer, _transferMemory, 0U ),
-        "MeshGeometry::LoadMesh",
+        "MeshGeometry::LoadMeshInternal",
         "Can't bind transfer memory"
     );
 
@@ -248,7 +302,7 @@ bool MeshGeometry::LoadMesh ( const uint8_t* data,
     void* transferData = nullptr;
 
     result = renderer.CheckVkResult ( vkMapMemory ( device, _transferMemory, 0U, size, 0U, &transferData ),
-        "MeshGeometry::LoadMesh",
+        "MeshGeometry::LoadMeshInternal",
         "Can't map data"
     );
 
@@ -268,7 +322,7 @@ bool MeshGeometry::LoadMesh ( const uint8_t* data,
     commandBufferBeginInfo.pInheritanceInfo = nullptr;
 
     result = renderer.CheckVkResult ( vkBeginCommandBuffer ( commandBuffer, &commandBufferBeginInfo ),
-        "MeshGeometry::LoadMesh",
+        "MeshGeometry::LoadMeshInternal",
         "Can't begin command buffer"
     );
 
@@ -282,7 +336,7 @@ bool MeshGeometry::LoadMesh ( const uint8_t* data,
 
     if ( findResult == _accessMapper.cend () )
     {
-        android_vulkan::LogError ( "MeshGeometry::LoadMesh - Unexpected usage 0x%08X", usage );
+        android_vulkan::LogError ( "MeshGeometry::LoadMeshInternal - Unexpected usage 0x%08X", usage );
         return false;
     }
 
@@ -311,7 +365,7 @@ bool MeshGeometry::LoadMesh ( const uint8_t* data,
     );
 
     result = renderer.CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
-        "MeshGeometry::LoadMesh",
+        "MeshGeometry::LoadMeshInternal",
         "Can't end command buffer"
     );
 
@@ -333,7 +387,7 @@ bool MeshGeometry::LoadMesh ( const uint8_t* data,
     submitInfo.pWaitDstStageMask = nullptr;
 
     result = renderer.CheckVkResult ( vkQueueSubmit ( renderer.GetQueue (), 1U, &submitInfo, VK_NULL_HANDLE ),
-        "MeshGeometry::LoadMesh",
+        "MeshGeometry::LoadMeshInternal",
         "Can't submit command"
     );
 

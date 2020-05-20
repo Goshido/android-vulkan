@@ -12,13 +12,14 @@
 
 namespace rotating_mesh {
 
+constexpr const size_t MATERIAL_COUNT = 3U;
+
 class Game final : public android_vulkan::Game
 {
     private:
         using CommandContext = std::pair<VkCommandBuffer, VkFence>;
 
     private:
-        const Texture2D*                _activeTexture;
         float                           _angle;
 
         VkCommandPool                   _commandPool;
@@ -28,12 +29,9 @@ class Game final : public android_vulkan::Game
         VkDeviceMemory                  _depthStencilMemory;
 
         VkDescriptorPool                _descriptorPool;
-        VkDescriptorSet                 _descriptorSet;
         VkDescriptorSetLayout           _descriptorSetLayout;
 
         std::vector<VkFramebuffer>      _framebuffers;
-
-        double                          _mipTimeout;
 
         VkPipeline                      _pipeline;
         VkPipelineLayout                _pipelineLayout;
@@ -54,10 +52,16 @@ class Game final : public android_vulkan::Game
 
         MeshGeometry                    _material1Mesh;
         Texture2D                       _material1Diffuse;
+
+        MeshGeometry                    _material2Mesh;
         Texture2D                       _material2Diffuse;
         Texture2D                       _material2Normal;
+
+        MeshGeometry                    _material3Mesh;
         Texture2D                       _material3Diffuse;
         Texture2D                       _material3Normal;
+
+        VkDescriptorSet                 _materialDescriptorSets[ MATERIAL_COUNT ];
 
         UniformBuffer                   _transformBuffer;
         GXMat4                          _projectionMatrix;

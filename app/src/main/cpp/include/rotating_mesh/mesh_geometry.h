@@ -80,6 +80,17 @@ class MeshGeometry final
             android_vulkan::Renderer &renderer,
             VkCommandBuffer commandBuffer
         );
+
+    private:
+        void FreeResourceInternal ( android_vulkan::Renderer &renderer );
+
+        bool LoadMeshInternal ( const uint8_t* data,
+            size_t size,
+            uint32_t vertexCount,
+            VkBufferUsageFlags usage,
+            android_vulkan::Renderer &renderer,
+            VkCommandBuffer commandBuffer
+        );
 };
 
 } // namespace rotating_mesh

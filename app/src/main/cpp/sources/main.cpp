@@ -8,8 +8,31 @@ GX_RESTORE_WARNING_STATE
 
 #include <core.h>
 #include <logger.h>
+#include <mandelbrot/mandelbrot_analytic_color.h>
+#include <mandelbrot/mandelbrot_lut_color.h>
+#include <rainbow/rainbow.h>
 #include <rotating_mesh/game.h>
 
+
+namespace android_vulkan {
+
+enum class eGame : uint8_t
+{
+    MandelbrotAnalyticColor,
+    MandelbrotLutColor,
+    Rainbow,
+    RotatingMesh
+};
+
+static const std::map<eGame, std::shared_ptr<Game>> g_Games =
+{
+    { eGame::MandelbrotAnalyticColor, std::make_shared<mandelbrot::MandelbrotAnalyticColor> () },
+    { eGame::MandelbrotLutColor, std::make_shared<mandelbrot::MandelbrotLUTColor> () },
+    { eGame::Rainbow, std::make_shared<rainbow::Rainbow> () },
+    { eGame::RotatingMesh, std::make_shared<rotating_mesh::Game> () }
+};
+
+} // namespace android_vulkan
 
 void android_main ( android_app* app )
 {
@@ -20,8 +43,9 @@ void android_main ( android_app* app )
 
 #endif // ANDROID_VULKAN_DEBUG
 
-    rotating_mesh::Game game;
-    android_vulkan::Core core ( *app, game );
+    android_vulkan::Core core ( *app,
+        *( android_vulkan::g_Games.find ( android_vulkan::eGame::RotatingMesh )->second )
+    );
 
     for ( ; ; )
     {

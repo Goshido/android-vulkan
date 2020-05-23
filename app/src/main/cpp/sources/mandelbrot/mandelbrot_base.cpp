@@ -143,13 +143,12 @@ bool MandelbrotBase::EndFrame ( uint32_t presentationImageIndex, android_vulkan:
     presentInfoKHR.pImageIndices = &presentationImageIndex;
     presentInfoKHR.pResults = &presentResult;
 
-    // Note vkQueuePresentKHR may return VK_SUBOPTIMAL_KHR right before application is minimized.
-    const VkResult mainResult = vkQueuePresentKHR ( renderer.GetQueue (), &presentInfoKHR );
+    const bool result = renderer.CheckVkResult ( vkQueuePresentKHR ( renderer.GetQueue (), &presentInfoKHR ),
+        "MandelbrotBase::EndFrame",
+        "Can't present frame"
+    );
 
-    if ( mainResult == VK_SUBOPTIMAL_KHR )
-        return true;
-
-    if ( !renderer.CheckVkResult ( mainResult, "MandelbrotBase::EndFrame", "Can't present frame" ) )
+    if ( !result )
         return false;
 
     return renderer.CheckVkResult ( presentResult, "MandelbrotBase::EndFrame", "Present queue has been failed" );

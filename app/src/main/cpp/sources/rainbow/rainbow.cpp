@@ -205,13 +205,12 @@ bool Rainbow::EndFrame ( uint32_t presentationFramebufferIndex, android_vulkan::
     presentInfoKHR.pImageIndices = &presentationFramebufferIndex;
     presentInfoKHR.pResults = &presentResult;
 
-    // Note vkQueuePresentKHR may return VK_SUBOPTIMAL_KHR right before application is minimized.
-    const VkResult mainResult = vkQueuePresentKHR ( renderer.GetQueue (), &presentInfoKHR );
+    const bool result = renderer.CheckVkResult ( vkQueuePresentKHR ( renderer.GetQueue (), &presentInfoKHR ),
+        "Rainbow::EndFrame",
+        "Can't present frame"
+    );
 
-    if ( mainResult == VK_SUBOPTIMAL_KHR )
-        return true;
-
-    if ( !renderer.CheckVkResult ( mainResult, "Rainbow::EndFrame", "Can't present frame" ) )
+    if ( !result )
         return false;
 
     return renderer.CheckVkResult ( presentResult, "Rainbow::EndFrame", "Present queue has been failed" );

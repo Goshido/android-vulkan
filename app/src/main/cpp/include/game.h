@@ -12,6 +12,7 @@ class Game
     public:
         Game ( const Game &other ) = delete;
         Game& operator = ( const Game &other ) = delete;
+        virtual ~Game () = default;
 
         virtual bool IsReady () = 0;
 
@@ -21,7 +22,6 @@ class Game
 
     protected:
         Game () = default;
-        virtual ~Game () = default;
 };
 
 } // namespace android_vulkan

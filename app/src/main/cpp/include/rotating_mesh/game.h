@@ -5,6 +5,7 @@
 #include <game.h>
 #include <vulkan_utils.h>
 #include <GXCommon/GXMath.h>
+#include "drawcall.h"
 #include "mesh_geometry.h"
 #include "texture2D.h"
 #include "uniform_buffer.h"
@@ -31,6 +32,8 @@ class Game final : public android_vulkan::Game
         VkDescriptorPool                _descriptorPool;
         VkDescriptorSetLayout           _descriptorSetLayout;
 
+        Drawcall                        _drawcalls[ MATERIAL_COUNT ];
+
         std::vector<VkFramebuffer>      _framebuffers;
 
         VkPipeline                      _pipeline;
@@ -49,19 +52,6 @@ class Game final : public android_vulkan::Game
         VkShaderModule                  _fragmentShaderModule;
 
         std::vector<CommandContext>     _commandBuffers;
-
-        MeshGeometry                    _material1Mesh;
-        Texture2D                       _material1Diffuse;
-
-        MeshGeometry                    _material2Mesh;
-        Texture2D                       _material2Diffuse;
-        Texture2D                       _material2Normal;
-
-        MeshGeometry                    _material3Mesh;
-        Texture2D                       _material3Diffuse;
-        Texture2D                       _material3Normal;
-
-        VkDescriptorSet                 _materialDescriptorSets[ MATERIAL_COUNT ];
 
         UniformBuffer                   _transformBuffer;
         GXMat4                          _projectionMatrix;

@@ -43,3 +43,19 @@ The [_DXC_](https://github.com/microsoft/DirectXShaderCompiler) has special flag
 ```txt
 -Fc <file name>
 ```
+
+## Compilation automation (_Windows OS only_)
+
+To compile all shaders to _SPIR-V_ representation you can invoke special `make-all.bat` script which is located here:
+
+```txt
+<android-vulkan directory>/app/src/main/hlsl/build-system/windows
+```
+
+But **before** that you have to specify root directory where _dxc.exe_ is located on you system via environment varible `ANDROID_VULKAN_DXC_ROOT`
+
+For example:
+
+Variable name | Value
+--- | ---
+`ANDROID_VULKAN_DXC_ROOT` | `D:\Development\DXC-builds\Release-2020-05-23\bin`

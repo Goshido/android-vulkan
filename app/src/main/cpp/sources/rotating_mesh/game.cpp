@@ -661,7 +661,7 @@ bool Game::CreatePipeline ( android_vulkan::Renderer &renderer )
     assemblyInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
     assemblyInfo.primitiveRestartEnable = VK_FALSE;
 
-    VkVertexInputAttributeDescription attributeDescriptions[ 2U ];
+    VkVertexInputAttributeDescription attributeDescriptions[ 5U ];
     VkVertexInputAttributeDescription& vertexDescription = attributeDescriptions[ 0U ];
     vertexDescription.location = 0U;
     vertexDescription.binding = 0U;
@@ -673,6 +673,24 @@ bool Game::CreatePipeline ( android_vulkan::Renderer &renderer )
     uvDescription.binding = 0U;
     uvDescription.offset = static_cast<uint32_t> ( offsetof ( VertexInfo, _uv ) );
     uvDescription.format = VK_FORMAT_R32G32_SFLOAT;
+
+    VkVertexInputAttributeDescription& normalDescription = attributeDescriptions[ 2U ];
+    normalDescription.location = 2U;
+    normalDescription.binding = 0U;
+    normalDescription.offset = static_cast<uint32_t> ( offsetof ( VertexInfo, _normal ) );
+    normalDescription.format = VK_FORMAT_R32G32B32_SFLOAT;
+
+    VkVertexInputAttributeDescription& tangentDescription = attributeDescriptions[ 3U ];
+    tangentDescription.location = 3U;
+    tangentDescription.binding = 0U;
+    tangentDescription.offset = static_cast<uint32_t> ( offsetof ( VertexInfo, _tangent ) );
+    tangentDescription.format = VK_FORMAT_R32G32B32_SFLOAT;
+
+    VkVertexInputAttributeDescription& bitangentDescription = attributeDescriptions[ 4U ];
+    bitangentDescription.location = 4U;
+    bitangentDescription.binding = 0U;
+    bitangentDescription.offset = static_cast<uint32_t> ( offsetof ( VertexInfo, _bitangent ) );
+    bitangentDescription.format = VK_FORMAT_R32G32B32_SFLOAT;
 
     VkVertexInputBindingDescription bindingDescription;
     bindingDescription.binding = 0U;
@@ -1243,8 +1261,8 @@ bool Game::CreateUniformBuffer ( android_vulkan::Renderer& renderer )
     if ( !_transformBuffer.Init ( renderer, _commandPool, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT ) )
         return false;
 
-    const GXMat4& peTransform = renderer.GetPresentationEngineTransform ();
-    return _transformBuffer.Update ( reinterpret_cast<const uint8_t*> ( &peTransform ), sizeof ( peTransform ) );
+    _transform._transform = renderer.GetPresentationEngineTransform ();
+    return _transformBuffer.Update ( reinterpret_cast<const uint8_t*> ( &_transform ), sizeof ( _transform ) );
 }
 
 void Game::DestroyUniformBuffer ()
@@ -1414,15 +1432,14 @@ bool Game::UpdateUniformBuffer ( android_vulkan::Renderer &renderer, double delt
 {
     _angle += static_cast<float> ( deltaTime ) * ROTATION_SPEED;
 
+    _transform._normalTransform.RotationY ( _angle );
+    _transform._normalTransform.SetOrigin ( GXVec3 ( 0.0F, -1.0F, 3.0F ) );
+
     GXMat4 tmp1;
-    tmp1.RotationY ( _angle );
-    tmp1.SetOrigin ( GXVec3 ( 0.0F, -1.0F, 3.0F ) );
+    tmp1.Multiply ( _transform._normalTransform, _projectionMatrix );
+    _transform._transform.Multiply ( tmp1, renderer.GetPresentationEngineTransform () );
 
-    GXMat4 tmp2;
-    tmp2.Multiply ( tmp1, _projectionMatrix );
-    tmp1.Multiply ( tmp2, renderer.GetPresentationEngineTransform () );
-
-    return _transformBuffer.Update ( reinterpret_cast<const uint8_t*> ( &tmp1 ), sizeof ( tmp1 ) );
+    return _transformBuffer.Update ( reinterpret_cast<const uint8_t*> ( &_transform ), sizeof ( _transform ) );
 }
 
 } // namespace rotating_mesh

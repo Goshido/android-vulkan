@@ -4,9 +4,32 @@ Texture2D<float4>       g_diffuseTexture:       register ( t0 );
 [[ vk::binding ( 2 ) ]]
 SamplerState            g_textureSampler:       register ( s0 );
 
+struct InputData
+{
+    [[ vk::location ( 0 ) ]]
+    linear float3       _fragmentView:          FRAGMENT;
+
+    [[ vk::location ( 1 ) ]]
+    linear half2        _uv:                    UV;
+
+    [[ vk::location ( 2 ) ]]
+    linear half3        _normalView:            NORMAL;
+
+    [[ vk::location ( 3 ) ]]
+    linear half3        _tangentView:           TANGENT;
+
+    [[ vk::location ( 4 ) ]]
+    linear half3        _bitangentView:         BITANGENT;
+};
+
 //----------------------------------------------------------------------------------------------------------------------
 
-float4 PS ( [[ vk::location ( 0 ) ]] in linear half2 uv: UV ): SV_Target0
+float4 PS ( [[ vk::location ( 0 ) ]] in InputData inputData ): SV_Target0
 {
-    return g_diffuseTexture.Sample ( g_textureSampler, (float2)uv );
+    const float4 diffuseData = g_diffuseTexture.Sample ( g_textureSampler, (float2)inputData._uv );
+
+    const half3 toView = -(half3)normalize ( inputData._fragmentView );
+    const float lambertian = (float)max ( 0.0h, dot ( toView, inputData._normalView ) );
+
+    return diffuseData * lambertian;
 }

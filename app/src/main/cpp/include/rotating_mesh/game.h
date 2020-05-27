@@ -20,6 +20,16 @@ class Game final : public android_vulkan::Game
     private:
         using CommandContext = std::pair<VkCommandBuffer, VkFence>;
 
+        AV_DX_ALIGNMENT_BEGIN
+
+        struct Transform
+        {
+            GXMat4      _transform;
+            GXMat4      _normalTransform;
+        };
+
+        AV_DX_ALIGNMENT_END
+
     private:
         float                           _angle;
 
@@ -53,8 +63,10 @@ class Game final : public android_vulkan::Game
 
         std::vector<CommandContext>     _commandBuffers;
 
-        UniformBuffer                   _transformBuffer;
         GXMat4                          _projectionMatrix;
+
+        UniformBuffer                   _transformBuffer;
+        Transform                       _transform;
 
     public:
         Game ();

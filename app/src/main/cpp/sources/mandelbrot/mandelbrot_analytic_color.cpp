@@ -49,7 +49,7 @@ bool MandelbrotAnalyticColor::CreatePipelineLayout ( android_vulkan::Renderer &r
     pipelineLayoutInfo.setLayoutCount = 0U;
     pipelineLayoutInfo.pSetLayouts = nullptr;
 
-    const VkDevice device = renderer.GetDevice ();
+    VkDevice device = renderer.GetDevice ();
 
     bool result = renderer.CheckVkResult (
         vkCreatePipelineLayout ( device, &pipelineLayoutInfo, nullptr, &_pipelineLayout ),
@@ -123,7 +123,7 @@ bool MandelbrotAnalyticColor::CreateCommandBuffer ( android_vulkan::Renderer &re
 
     for ( size_t i = 0U; i < framebufferCount; ++i )
     {
-        const VkCommandBuffer commandBuffer = _commandBuffer[ i ];
+        VkCommandBuffer commandBuffer = _commandBuffer[ i ];
 
         result = renderer.CheckVkResult ( vkBeginCommandBuffer ( commandBuffer, &commandBufferBeginInfo ),
             "MandelbrotAnalyticColor::CreateCommandBuffer",

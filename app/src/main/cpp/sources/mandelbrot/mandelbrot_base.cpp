@@ -162,7 +162,7 @@ bool MandelbrotBase::CreateCommandPool ( android_vulkan::Renderer &renderer )
     commandPoolInfo.queueFamilyIndex = renderer.GetQueueFamilyIndex ();
     commandPoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
-    const VkDevice device = renderer.GetDevice ();
+    VkDevice device = renderer.GetDevice ();
 
     bool result = renderer.CheckVkResult (
         vkCreateCommandPool ( device, &commandPoolInfo, nullptr, &_commandPool ),
@@ -191,7 +191,7 @@ bool MandelbrotBase::DestroyCommandPool ( android_vulkan::Renderer &renderer )
 
 bool MandelbrotBase::CreateFramebuffers ( android_vulkan::Renderer &renderer )
 {
-    const VkDevice device = renderer.GetDevice ();
+    VkDevice device = renderer.GetDevice ();
 
     const size_t presentationImageCount = renderer.GetPresentImageCount ();
     _framebuffers.reserve ( presentationImageCount );
@@ -234,7 +234,7 @@ bool MandelbrotBase::DestroyFramebuffers ( android_vulkan::Renderer &renderer )
     if ( _framebuffers.empty () )
         return true;
 
-    const VkDevice device = renderer.GetDevice ();
+    VkDevice device = renderer.GetDevice ();
 
     for ( const auto framebuffer : _framebuffers )
     {
@@ -248,7 +248,7 @@ bool MandelbrotBase::DestroyFramebuffers ( android_vulkan::Renderer &renderer )
 
 bool MandelbrotBase::CreatePresentationSyncPrimitive ( android_vulkan::Renderer &renderer )
 {
-    const VkDevice device = renderer.GetDevice ();
+    VkDevice device = renderer.GetDevice ();
 
     VkSemaphoreCreateInfo semaphoreCreateInfo;
     semaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -287,7 +287,7 @@ bool MandelbrotBase::CreatePresentationSyncPrimitive ( android_vulkan::Renderer 
 
 void MandelbrotBase::DestroyPresentationSyncPrimitive ( android_vulkan::Renderer &renderer )
 {
-    const VkDevice device = renderer.GetDevice ();
+    VkDevice device = renderer.GetDevice ();
 
     if ( _renderPassEndedSemaphore != VK_NULL_HANDLE )
     {
@@ -413,7 +413,10 @@ bool MandelbrotBase::CreatePipeline ( android_vulkan::Renderer &renderer )
     colorBlendAttachmentInfo.blendEnable = VK_FALSE;
 
     colorBlendAttachmentInfo.colorWriteMask =
-        VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+        AV_VK_FLAG ( VK_COLOR_COMPONENT_R_BIT ) |
+        AV_VK_FLAG ( VK_COLOR_COMPONENT_G_BIT ) |
+        AV_VK_FLAG ( VK_COLOR_COMPONENT_B_BIT ) |
+        AV_VK_FLAG ( VK_COLOR_COMPONENT_A_BIT );
 
     colorBlendAttachmentInfo.colorBlendOp = VK_BLEND_OP_ADD;
     colorBlendAttachmentInfo.alphaBlendOp = VK_BLEND_OP_ADD;
@@ -483,7 +486,7 @@ bool MandelbrotBase::CreatePipeline ( android_vulkan::Renderer &renderer )
 
 void MandelbrotBase::DestroyPipeline ( android_vulkan::Renderer &renderer )
 {
-    const VkDevice device = renderer.GetDevice ();
+    VkDevice device = renderer.GetDevice ();
 
     if ( _pipeline != VK_NULL_HANDLE )
     {

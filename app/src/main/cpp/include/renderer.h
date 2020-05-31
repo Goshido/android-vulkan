@@ -193,7 +193,7 @@ class Renderer final
         bool PrintPhysicalDeviceExtensionInfo ( VkPhysicalDevice physicalDevice );
         bool PrintPhysicalDeviceFeatureInfo ( VkPhysicalDevice physicalDevice );
         void PrintPhysicalDeviceGroupInfo ( uint32_t groupIndex, const VkPhysicalDeviceGroupProperties &props ) const;
-        bool PrintPhysicalDeviceLayerInfo ( const VkPhysicalDevice physicalDevice ) const;
+        bool PrintPhysicalDeviceLayerInfo ( VkPhysicalDevice physicalDevice ) const;
         void PrintPhysicalDeviceLimits ( const VkPhysicalDeviceLimits &limits ) const;
         void PrintPhysicalDeviceMemoryProperties ( VkPhysicalDevice physicalDevice );
         bool PrintPhysicalDeviceInfo ( uint32_t deviceIndex, VkPhysicalDevice physicalDevice );

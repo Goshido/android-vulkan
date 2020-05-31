@@ -60,7 +60,7 @@ bool Rainbow::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime )
         return true;
 
     const CommandContext& commandContext = _commandBuffers[ static_cast<size_t> ( framebufferIndex ) ];
-    const VkDevice device = renderer.GetDevice ();
+    VkDevice device = renderer.GetDevice ();
 
     bool result = renderer.CheckVkResult ( vkWaitForFences ( device, 1U, &commandContext.second, VK_TRUE, UINT64_MAX ),
         "Rainbow::OnFrame",
@@ -226,7 +226,7 @@ bool Rainbow::CreateCommandBuffer ( android_vulkan::Renderer &renderer )
     commandPoolCreateInfo.flags =
         VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT | VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
 
-    const VkDevice device = renderer.GetDevice ();
+    VkDevice device = renderer.GetDevice ();
 
     bool result = renderer.CheckVkResult (
         vkCreateCommandPool ( device, &commandPoolCreateInfo, nullptr, &_commandPool ),
@@ -277,8 +277,8 @@ bool Rainbow::CreateCommandBuffer ( android_vulkan::Renderer &renderer )
         if ( !result )
             return false;
 
-        AV_REGISTER_FENCE ( "Rainbow::_commandBuffers::_fence" );
-        _commandBuffers.push_back ( std::make_pair ( commandBuffer, fence ) );
+        AV_REGISTER_FENCE ( "Rainbow::_commandBuffers::_fence" )
+        _commandBuffers.emplace_back ( std::make_pair ( commandBuffer, fence ) );
     }
 
     return true;
@@ -286,14 +286,14 @@ bool Rainbow::CreateCommandBuffer ( android_vulkan::Renderer &renderer )
 
 void Rainbow::DestroyCommandBuffer ( android_vulkan::Renderer &renderer )
 {
-    const VkDevice device = renderer.GetDevice ();
+    VkDevice device = renderer.GetDevice ();
 
     if ( !_commandBuffers.empty () )
     {
         for ( const auto& item : _commandBuffers )
         {
             vkDestroyFence ( device, item.second, nullptr );
-            AV_UNREGISTER_FENCE ( "Rainbow::_commandBuffers::_fence" );
+            AV_UNREGISTER_FENCE ( "Rainbow::_commandBuffers::_fence" )
         }
 
         _commandBuffers.clear ();
@@ -309,7 +309,7 @@ void Rainbow::DestroyCommandBuffer ( android_vulkan::Renderer &renderer )
 
 bool Rainbow::CreateFramebuffers ( android_vulkan::Renderer &renderer )
 {
-    const VkDevice device = renderer.GetDevice ();
+    VkDevice device = renderer.GetDevice ();
     const size_t framebufferCount = renderer.GetPresentImageCount ();
     _framebuffers.reserve ( framebufferCount );
 
@@ -352,7 +352,7 @@ void Rainbow::DestroyFramebuffers ( android_vulkan::Renderer &renderer )
     if ( _framebuffers.empty () )
         return;
 
-    const VkDevice device = renderer.GetDevice ();
+    VkDevice device = renderer.GetDevice ();
 
     for ( const auto framebuffer : _framebuffers )
     {
@@ -365,7 +365,7 @@ void Rainbow::DestroyFramebuffers ( android_vulkan::Renderer &renderer )
 
 bool Rainbow::CreatePresentationSyncPrimitive ( android_vulkan::Renderer &renderer )
 {
-    const VkDevice device = renderer.GetDevice ();
+    VkDevice device = renderer.GetDevice ();
 
     VkSemaphoreCreateInfo semaphoreCreateInfo;
     semaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -404,7 +404,7 @@ bool Rainbow::CreatePresentationSyncPrimitive ( android_vulkan::Renderer &render
 
 void Rainbow::DestroyPresentationSyncPrimitive ( android_vulkan::Renderer &renderer )
 {
-    const VkDevice device = renderer.GetDevice ();
+    VkDevice device = renderer.GetDevice ();
 
     if ( _renderTargetAcquiredSemaphore != VK_NULL_HANDLE )
     {

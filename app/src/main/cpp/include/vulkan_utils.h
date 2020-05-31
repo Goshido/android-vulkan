@@ -5,6 +5,8 @@
 #define AV_DX_ALIGNMENT_BEGIN _Pragma ( "pack ( push, 1 )" )
 #define AV_DX_ALIGNMENT_END _Pragma ( "pack ( pop )" )
 
+#define AV_VK_FLAG(x) ( static_cast<uint32_t> ( x ) )
+
 // Note there is two types Vulkan handles:
 // VK_DEFINE_HANDLE
 // VK_DEFINE_NON_DISPATCHABLE_HANDLE

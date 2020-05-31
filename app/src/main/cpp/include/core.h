@@ -38,9 +38,9 @@ class Core final
         void OnFrame ();
 
     private:
-        void ActivateFullScreen ( android_app &app );
         void UpdateFPS ( timestamp now );
 
+        static void ActivateFullScreen ( android_app &app );
         static void OnOSCommand ( android_app* app, int32_t cmd );
 };
 

@@ -64,7 +64,7 @@ void MeshGeometry::FreeResources ( android_vulkan::Renderer &renderer )
 
 void MeshGeometry::FreeTransferResources ( android_vulkan::Renderer &renderer )
 {
-    const VkDevice device = renderer.GetDevice ();
+    VkDevice device = renderer.GetDevice ();
 
     if ( _transferMemory != VK_NULL_HANDLE )
     {
@@ -185,7 +185,7 @@ bool MeshGeometry::LoadMesh ( const uint8_t* data,
 void MeshGeometry::FreeResourceInternal ( android_vulkan::Renderer &renderer )
 {
     _vertexCount = 0U;
-    const VkDevice device = renderer.GetDevice ();
+    VkDevice device = renderer.GetDevice ();
 
     if ( _bufferMemory != VK_NULL_HANDLE )
     {
@@ -220,7 +220,7 @@ bool MeshGeometry::LoadMeshInternal ( const uint8_t* data,
     bufferInfo.pQueueFamilyIndices = nullptr;
     bufferInfo.size = size;
 
-    const VkDevice device = renderer.GetDevice ();
+    VkDevice device = renderer.GetDevice ();
 
     bool result = renderer.CheckVkResult ( vkCreateBuffer ( device, &bufferInfo, nullptr, &_buffer ),
         "MeshGeometry::LoadMeshInternal",
@@ -325,6 +325,12 @@ bool MeshGeometry::LoadMeshInternal ( const uint8_t* data,
         "MeshGeometry::LoadMeshInternal",
         "Can't begin command buffer"
     );
+
+    if ( !result )
+    {
+        FreeResources ( renderer );
+        return false;
+    }
 
     VkBufferCopy copyInfo;
     copyInfo.size = size;

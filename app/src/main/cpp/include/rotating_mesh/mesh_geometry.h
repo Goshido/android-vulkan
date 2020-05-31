@@ -73,7 +73,7 @@ class MeshGeometry final
             VkCommandBuffer commandBuffer
         );
 
-        bool LoadMesh ( const uint8_t* data,
+        [[maybe_unused]] bool LoadMesh ( const uint8_t* data,
             size_t size,
             uint32_t vertexCount,
             VkBufferUsageFlags usage,

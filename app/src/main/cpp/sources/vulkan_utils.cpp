@@ -24,7 +24,7 @@ class VulkanItem final
         std::string     _where;
 
     public:
-        VulkanItem () = default;
+        VulkanItem ();
         VulkanItem ( const VulkanItem &other ) = default;
         explicit VulkanItem ( std::string &&where );
 
@@ -33,10 +33,17 @@ class VulkanItem final
         void IncrementInstanceCount ();
         void DecrementInstanceCount ();
         void GetInfo ( std::string &info ) const;
-        bool IsLastInstance () const;
+        [[nodiscard]] bool IsLastInstance () const;
 
         bool operator < ( const VulkanItem &other ) const;
 };
+
+VulkanItem::VulkanItem ():
+    _instances ( 1U ),
+    _where {}
+{
+    // NOTHING
+}
 
 VulkanItem::VulkanItem ( std::string &&where ):
     _instances ( 1U ),
@@ -136,6 +143,7 @@ static void UnregisterNonDispatchableObject ( const char* method,
 )
 {
     std::unique_lock<std::shared_timed_mutex> lock ( g_Lock );
+    const char* str = where.c_str ();
     const auto findResult = storage.find ( VulkanItem ( std::move ( where ) ) );
 
     if ( findResult == storage.cend () )
@@ -143,7 +151,7 @@ static void UnregisterNonDispatchableObject ( const char* method,
         LogError ( "%s - Can't find %s with ID: %s. Please check logic.",
             method,
             objectType,
-            where.c_str ()
+            str
         );
 
 #ifdef ANDROID_VULKAN_STRICT_MODE

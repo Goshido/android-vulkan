@@ -168,8 +168,10 @@ bool Game::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime )
 
     const CommandContext& commandContext = _commandBuffers[ imageIndex ];
 
-    constexpr const VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT |
-        VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+    constexpr const VkPipelineStageFlags waitStage =
+        AV_VK_FLAG ( VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT ) |
+        AV_VK_FLAG ( VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT ) |
+        AV_VK_FLAG ( VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT );
 
     VkSubmitInfo submitInfo;
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -222,7 +224,7 @@ bool Game::OnDestroy ( android_vulkan::Renderer &renderer )
 
 bool Game::BeginFrame ( size_t &imageIndex, android_vulkan::Renderer &renderer )
 {
-    const VkDevice device = renderer.GetDevice ();
+    VkDevice device = renderer.GetDevice ();
     uint32_t i = UINT32_MAX;
 
     bool result = renderer.CheckVkResult (
@@ -306,7 +308,7 @@ bool Game::CreateCommandPool ( android_vulkan::Renderer &renderer )
 
 void Game::DestroyCommandPool ( android_vulkan::Renderer &renderer )
 {
-    const VkDevice device = renderer.GetDevice ();
+    VkDevice device = renderer.GetDevice ();
 
     if ( !_commandBuffers.empty () )
     {
@@ -329,7 +331,7 @@ void Game::DestroyCommandPool ( android_vulkan::Renderer &renderer )
 
 bool Game::CreateDescriptorSet ( android_vulkan::Renderer &renderer )
 {
-    const VkDevice device = renderer.GetDevice ();
+    VkDevice device = renderer.GetDevice ();
     constexpr const size_t featureCount = 3U;
 
     VkDescriptorPoolSize features[ featureCount ];
@@ -448,7 +450,7 @@ void Game::DestroyDescriptorSet ( android_vulkan::Renderer &renderer )
 
 bool Game::CreateFramebuffers ( android_vulkan::Renderer &renderer )
 {
-    const VkDevice device = renderer.GetDevice ();
+    VkDevice device = renderer.GetDevice ();
     const VkExtent2D& resolution = renderer.GetSurfaceSize ();
 
     VkImageCreateInfo imageInfo;
@@ -565,7 +567,7 @@ bool Game::CreateFramebuffers ( android_vulkan::Renderer &renderer )
 
 void Game::DestroyFramebuffers ( android_vulkan::Renderer &renderer )
 {
-    const VkDevice device = renderer.GetDevice ();
+    VkDevice device = renderer.GetDevice ();
 
     if ( !_framebuffers.empty () )
     {
@@ -736,7 +738,10 @@ bool Game::CreatePipeline ( android_vulkan::Renderer &renderer )
     attachmentInfo.blendEnable = VK_FALSE;
 
     attachmentInfo.colorWriteMask =
-        VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+        AV_VK_FLAG ( VK_COLOR_COMPONENT_R_BIT ) |
+        AV_VK_FLAG ( VK_COLOR_COMPONENT_G_BIT ) |
+        AV_VK_FLAG ( VK_COLOR_COMPONENT_B_BIT ) |
+        AV_VK_FLAG ( VK_COLOR_COMPONENT_A_BIT );
 
     attachmentInfo.alphaBlendOp = VK_BLEND_OP_ADD;
     attachmentInfo.colorBlendOp = VK_BLEND_OP_ADD;
@@ -873,7 +878,7 @@ bool Game::CreatePipelineLayout ( android_vulkan::Renderer &renderer )
     descriptorSetInfo.bindingCount = static_cast<uint32_t> ( std::size ( bindings ) );
     descriptorSetInfo.pBindings = bindings;
 
-    const VkDevice device = renderer.GetDevice ();
+    VkDevice device = renderer.GetDevice ();
 
     bool result = renderer.CheckVkResult (
         vkCreateDescriptorSetLayout ( device, &descriptorSetInfo, nullptr, &_descriptorSetLayout ),
@@ -909,7 +914,7 @@ bool Game::CreatePipelineLayout ( android_vulkan::Renderer &renderer )
 
 void Game::DestroyPipelineLayout ( android_vulkan::Renderer &renderer )
 {
-    const VkDevice device = renderer.GetDevice ();
+    VkDevice device = renderer.GetDevice ();
 
     if ( _descriptorSetLayout != VK_NULL_HANDLE )
     {
@@ -1116,7 +1121,7 @@ bool Game::CreateShaderModules ( android_vulkan::Renderer &renderer )
 
 void Game::DestroyShaderModules ( android_vulkan::Renderer &renderer )
 {
-    const VkDevice device = renderer.GetDevice ();
+    VkDevice device = renderer.GetDevice ();
 
     if ( _fragmentShaderModule != VK_NULL_HANDLE )
     {
@@ -1135,7 +1140,7 @@ void Game::DestroyShaderModules ( android_vulkan::Renderer &renderer )
 
 bool Game::CreateSyncPrimitives ( android_vulkan::Renderer &renderer )
 {
-    const VkDevice device = renderer.GetDevice ();
+    VkDevice device = renderer.GetDevice ();
 
     VkSemaphoreCreateInfo semaphoreInfo;
     semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -1167,7 +1172,7 @@ bool Game::CreateSyncPrimitives ( android_vulkan::Renderer &renderer )
 
 void Game::DestroySyncPrimitives ( android_vulkan::Renderer &renderer )
 {
-    const VkDevice device = renderer.GetDevice ();
+    VkDevice device = renderer.GetDevice ();
 
     if ( _renderTargetAcquiredSemaphore != VK_NULL_HANDLE )
     {
@@ -1281,7 +1286,7 @@ bool Game::InitCommandBuffers ( android_vulkan::Renderer &renderer )
     allocateInfo.commandBufferCount = static_cast<uint32_t> ( framebufferCount );
     allocateInfo.commandPool = _commandPool;
 
-    const VkDevice device = renderer.GetDevice ();
+    VkDevice device = renderer.GetDevice ();
     std::vector<VkCommandBuffer> commandBuffers ( framebufferCount );
 
     bool result = renderer.CheckVkResult ( vkAllocateCommandBuffers ( device, &allocateInfo, commandBuffers.data () ),
@@ -1336,7 +1341,7 @@ bool Game::InitCommandBuffers ( android_vulkan::Renderer &renderer )
 
         AV_REGISTER_FENCE ( "Game::_commandBuffers::_fence" )
 
-        const VkCommandBuffer commandBuffer = commandBuffers[ i ];
+        VkCommandBuffer commandBuffer = commandBuffers[ i ];
 
         result = renderer.CheckVkResult ( vkBeginCommandBuffer ( commandBuffer, &bufferBeginInfo ),
             "Game::InitCommandBuffers",
@@ -1374,7 +1379,7 @@ bool Game::InitCommandBuffers ( android_vulkan::Renderer &renderer )
         if ( !result )
             return false;
 
-        _commandBuffers.push_back ( std::make_pair ( commandBuffer, fence ) );
+        _commandBuffers.emplace_back ( std::make_pair ( commandBuffer, fence ) );
     }
 
     return true;
@@ -1392,7 +1397,7 @@ bool Game::LoadGPUContent ( android_vulkan::Renderer &renderer )
     allocateInfo.commandBufferCount = static_cast<uint32_t> ( commandBufferCount );
     allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 
-    const VkDevice device = renderer.GetDevice ();
+    VkDevice device = renderer.GetDevice ();
 
     bool result = renderer.CheckVkResult (
         vkAllocateCommandBuffers ( renderer.GetDevice (), &allocateInfo, commandBuffers ),

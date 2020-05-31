@@ -101,7 +101,7 @@ void Texture2D::FreeResources ( android_vulkan::Renderer &renderer )
 
 void Texture2D::FreeTransferResources ( android_vulkan::Renderer &renderer )
 {
-    const VkDevice device = renderer.GetDevice ();
+    VkDevice device = renderer.GetDevice ();
 
     if ( _transferDeviceMemory != VK_NULL_HANDLE )
     {
@@ -274,7 +274,7 @@ uint32_t Texture2D::CountMipLevels ( const VkExtent2D &resolution ) const
 void Texture2D::FreeResourceInternal ( android_vulkan::Renderer &renderer )
 {
     _mipLevels = 0U;
-    const VkDevice device = renderer.GetDevice ();
+    VkDevice device = renderer.GetDevice ();
 
     if ( _imageView != VK_NULL_HANDLE )
     {
@@ -331,101 +331,6 @@ bool Texture2D::IsFormatCompatible ( VkFormat target, VkFormat candidate, androi
     return false;
 }
 
-bool Texture2D::LoadImage ( std::vector<uint8_t> &pixelData,
-    const std::string& fileName,
-    int &width,
-    int &height,
-    int &channels
-)
-{
-    android_vulkan::File file ( const_cast<std::string&> ( fileName ) );
-
-    if ( !file.LoadContent () )
-        return false;
-
-    const std::vector<uint8_t>& imageContent = file.GetContent ();
-    const stbi_uc* stbInData = imageContent.data ();
-    const auto stbInSize = static_cast<const int> ( imageContent.size () );
-
-    auto* imagePixels = stbi_load_from_memory ( stbInData, stbInSize, &width, &height, &channels, 0 );
-
-    if ( channels != 3 )
-    {
-        const auto size = static_cast<const size_t> ( width * height * channels );
-        pixelData.resize ( size );
-        memcpy ( pixelData.data (), imagePixels, size );
-        free ( imagePixels );
-
-        return true;
-    }
-
-    // We don't support 24bit per pixel mode.
-    // Expanding up to 32bit per pixel mode...
-
-    const auto size = static_cast<const size_t> ( RGBA_BYTES_PER_PIXEL * width * height );
-    pixelData.resize ( size );
-    uint8_t* dst = pixelData.data ();
-
-    auto expander = [] ( uint32_t* dst,
-        size_t dstRowSkipPixels,
-        const uint32_t* nonDstMemory,
-        const uint8_t* src,
-        size_t srcRowSkipPixels,
-        size_t rowPixelCount,
-        uint32_t oneAlphaMask
-    ) {
-        while ( dst < nonDstMemory )
-        {
-            for ( size_t i = 0U; i < rowPixelCount; ++i )
-            {
-                *dst = *reinterpret_cast<const uint32_t*> ( src );
-                *dst |= oneAlphaMask;
-
-                ++dst;
-                src += RGB_BYTES_PER_PIXEL;
-            }
-
-            src += srcRowSkipPixels;
-            dst += dstRowSkipPixels;
-        }
-    };
-
-    constexpr const size_t SKIP_ROWS = EXPANDER_THREADS - 1U;
-
-    const auto rowPixelCount = static_cast<const size_t> ( width );
-    const auto srcRowSize = RGB_BYTES_PER_PIXEL * rowPixelCount;
-    const auto srcRowSkipPixels = SKIP_ROWS * srcRowSize;
-    const auto dstRowSize = RGBA_BYTES_PER_PIXEL * rowPixelCount;
-    const auto dstRowSkipPixels = SKIP_ROWS * rowPixelCount;
-    const auto* nonDstMemory = reinterpret_cast<uint32_t*> ( dst + size );
-
-    constexpr const uint8_t oneAlphaRaw[ RGBA_BYTES_PER_PIXEL ] = { 0x00U, 0x00U, 0x00U, 0xFFU };
-    const uint32_t oneAlphaMask = *reinterpret_cast<const uint32_t*> ( oneAlphaRaw );
-
-    std::array<std::thread, EXPANDER_THREADS> expanders;
-
-    for ( size_t i = 0U; i < EXPANDER_THREADS; ++i )
-    {
-        expanders[ i ] = std::thread ( expander,
-            reinterpret_cast<uint32_t*> ( dst + i * dstRowSize ),
-            dstRowSkipPixels,
-            nonDstMemory,
-            imagePixels + i * srcRowSize,
-            srcRowSkipPixels,
-            rowPixelCount,
-            oneAlphaMask
-        );
-    }
-
-    for ( size_t i = 0U; i < EXPANDER_THREADS; ++i )
-        expanders[ i ].join ();
-
-    free ( imagePixels );
-    channels = static_cast<int> ( RGBA_BYTES_PER_PIXEL );
-
-    return true;
-}
-
 VkFormat Texture2D::PickupFormat ( int channels ) const
 {
     switch ( channels )
@@ -471,9 +376,9 @@ bool Texture2D::UploadDataInternal ( const std::vector<uint8_t> &data,
     imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 
     imageInfo.usage =
-        VK_IMAGE_USAGE_SAMPLED_BIT |
-        VK_IMAGE_USAGE_TRANSFER_DST_BIT |
-        VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+        AV_VK_FLAG ( VK_IMAGE_USAGE_SAMPLED_BIT ) |
+        AV_VK_FLAG ( VK_IMAGE_USAGE_TRANSFER_DST_BIT ) |
+        AV_VK_FLAG ( VK_IMAGE_USAGE_TRANSFER_SRC_BIT );
 
     imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
     imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -485,7 +390,7 @@ bool Texture2D::UploadDataInternal ( const std::vector<uint8_t> &data,
     imageInfo.queueFamilyIndexCount = 0U;
     imageInfo.pQueueFamilyIndices = nullptr;
 
-    const VkDevice device = renderer.GetDevice ();
+    VkDevice device = renderer.GetDevice ();
 
     bool result = renderer.CheckVkResult ( vkCreateImage ( device, &imageInfo, nullptr, &_image ),
         "Texture2D::UploadDataInternal",
@@ -826,6 +731,101 @@ bool Texture2D::UploadDataInternal ( const std::vector<uint8_t> &data,
     }
 
     _mipLevels = static_cast<uint8_t> ( imageInfo.mipLevels );
+    return true;
+}
+
+bool Texture2D::LoadImage ( std::vector<uint8_t> &pixelData,
+    const std::string& fileName,
+    int &width,
+    int &height,
+    int &channels
+)
+{
+    android_vulkan::File file ( const_cast<std::string&> ( fileName ) );
+
+    if ( !file.LoadContent () )
+        return false;
+
+    const std::vector<uint8_t>& imageContent = file.GetContent ();
+    const stbi_uc* stbInData = imageContent.data ();
+    const auto stbInSize = static_cast<const int> ( imageContent.size () );
+
+    auto* imagePixels = stbi_load_from_memory ( stbInData, stbInSize, &width, &height, &channels, 0 );
+
+    if ( channels != 3 )
+    {
+        const auto size = static_cast<const size_t> ( width * height * channels );
+        pixelData.resize ( size );
+        memcpy ( pixelData.data (), imagePixels, size );
+        free ( imagePixels );
+
+        return true;
+    }
+
+    // We don't support 24bit per pixel mode.
+    // Expanding up to 32bit per pixel mode...
+
+    const auto size = static_cast<const size_t> ( RGBA_BYTES_PER_PIXEL * width * height );
+    pixelData.resize ( size );
+    uint8_t* dst = pixelData.data ();
+
+    auto expander = [] ( uint32_t* dst,
+        size_t dstRowSkipPixels,
+        const uint32_t* nonDstMemory,
+        const uint8_t* src,
+        size_t srcRowSkipPixels,
+        size_t rowPixelCount,
+        uint32_t oneAlphaMask
+    ) {
+        while ( dst < nonDstMemory )
+        {
+            for ( size_t i = 0U; i < rowPixelCount; ++i )
+            {
+                *dst = *reinterpret_cast<const uint32_t*> ( src );
+                *dst |= oneAlphaMask;
+
+                ++dst;
+                src += RGB_BYTES_PER_PIXEL;
+            }
+
+            src += srcRowSkipPixels;
+            dst += dstRowSkipPixels;
+        }
+    };
+
+    constexpr const size_t SKIP_ROWS = EXPANDER_THREADS - 1U;
+
+    const auto rowPixelCount = static_cast<const size_t> ( width );
+    const auto srcRowSize = RGB_BYTES_PER_PIXEL * rowPixelCount;
+    const auto srcRowSkipPixels = SKIP_ROWS * srcRowSize;
+    const auto dstRowSize = RGBA_BYTES_PER_PIXEL * rowPixelCount;
+    const auto dstRowSkipPixels = SKIP_ROWS * rowPixelCount;
+    const auto* nonDstMemory = reinterpret_cast<uint32_t*> ( dst + size );
+
+    constexpr const uint8_t oneAlphaRaw[ RGBA_BYTES_PER_PIXEL ] = { 0x00U, 0x00U, 0x00U, 0xFFU };
+    const uint32_t oneAlphaMask = *reinterpret_cast<const uint32_t*> ( oneAlphaRaw );
+
+    std::array<std::thread, EXPANDER_THREADS> expanders;
+
+    for ( size_t i = 0U; i < EXPANDER_THREADS; ++i )
+    {
+        expanders[ i ] = std::thread ( expander,
+            reinterpret_cast<uint32_t*> ( dst + i * dstRowSize ),
+            dstRowSkipPixels,
+            nonDstMemory,
+            imagePixels + i * srcRowSize,
+            srcRowSkipPixels,
+            rowPixelCount,
+            oneAlphaMask
+        );
+    }
+
+    for ( size_t i = 0U; i < EXPANDER_THREADS; ++i )
+        expanders[ i ].join ();
+
+    free ( imagePixels );
+    channels = static_cast<int> ( RGBA_BYTES_PER_PIXEL );
+
     return true;
 }
 

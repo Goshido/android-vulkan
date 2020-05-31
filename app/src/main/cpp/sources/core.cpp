@@ -45,6 +45,22 @@ void Core::OnFrame ()
     UpdateFPS ( now );
 }
 
+void Core::UpdateFPS ( timestamp now )
+{
+    static uint32_t frameCount = 0U;
+    ++frameCount;
+
+    const std::chrono::duration<double> seconds = now - _fpsTimestamp;
+    const double delta = seconds.count ();
+
+    if ( delta < FPS_PERIOD )
+        return;
+
+    LogInfo ( "FPS: %g", frameCount / delta );
+    _fpsTimestamp = now;
+    frameCount = 0U;
+}
+
 void Core::ActivateFullScreen ( android_app &app )
 {
     // Based on https://stackoverflow.com/a/50831255
@@ -72,27 +88,16 @@ void Core::ActivateFullScreen ( android_app &app )
     const int flagFullscreen = env->GetStaticIntField ( viewClass, flagFullscreenID );
     const int flagHideNavigation = env->GetStaticIntField ( viewClass, flagHideNavigationID );
     const int flagImmersiveSticky = env->GetStaticIntField ( viewClass, flagImmersiveStickyID );
-    const int flag = flagFullscreen | flagHideNavigation | flagImmersiveSticky;
+
+    const int flag = static_cast<int> (
+        static_cast<uint> ( flagFullscreen ) |
+        static_cast<uint> ( flagHideNavigation ) |
+        static_cast<uint> ( flagImmersiveSticky )
+    );
 
     env->CallVoidMethod ( decorView, setSystemUiVisibility, flag );
 
     app.activity->vm->DetachCurrentThread ();
-}
-
-void Core::UpdateFPS ( timestamp now )
-{
-    static uint32_t frameCount = 0U;
-    ++frameCount;
-
-    const std::chrono::duration<double> seconds = now - _fpsTimestamp;
-    const double delta = seconds.count ();
-
-    if ( delta < FPS_PERIOD )
-        return;
-
-    LogInfo ( "FPS: %g", frameCount / delta );
-    _fpsTimestamp = now;
-    frameCount = 0U;
 }
 
 void Core::OnOSCommand ( android_app* app, int32_t cmd )

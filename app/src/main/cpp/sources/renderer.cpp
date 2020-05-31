@@ -22,7 +22,7 @@ constexpr static const char* INDENT_1 = "    ";
 constexpr static const char* INDENT_2 = "        ";
 constexpr static const char* INDENT_3 = "            ";
 constexpr static const size_t INITIAL_EXTENSION_STORAGE_SIZE = 64U;
-constexpr static const uint32_t TARGET_VULKAN_VERSION = VK_MAKE_VERSION ( 1, 1, 108 );
+constexpr static const uint32_t TARGET_VULKAN_VERSION = VK_MAKE_VERSION ( 1U, 1U, 108U );
 constexpr static const char* UNKNOWN_RESULT = "UNKNOWN";
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -252,7 +252,11 @@ constexpr static const std::pair<size_t, const char*> g_vkFeatureMap[] =
 //----------------------------------------------------------------------------------------------------------------------
 
 VulkanPhysicalDeviceInfo::VulkanPhysicalDeviceInfo ():
-    _extensionStorage ( INITIAL_EXTENSION_STORAGE_SIZE )
+    _extensionStorage ( INITIAL_EXTENSION_STORAGE_SIZE ),
+    _extensions {},
+    _features {},
+    _queueFamilyInfo {},
+    _surfaceCapabilities {}
 {
     // NOTHING
 }
@@ -686,10 +690,19 @@ Renderer::Renderer ():
     vkCreateDebugReportCallbackEXT ( nullptr ),
     vkDestroyDebugReportCallbackEXT ( nullptr ),
     _debugReportCallback ( VK_NULL_HANDLE ),
+    _debugReportCallbackCreateInfoEXT {},
 
 #endif
 
-    _viewportResolution { .width = 0U, .height = 0U }
+    _viewportResolution { .width = 0U, .height = 0U },
+    _physicalDeviceGroups {},
+    _physicalDeviceInfo {},
+    _physicalDeviceMemoryProperties {},
+    _surfaceFormats {},
+    _swapchainImages {},
+    _swapchainImageViews {},
+    _presentationEngineTransform {}
+
 {
     // NOTHING
 }
@@ -1264,9 +1277,9 @@ bool Renderer::DeployInstance ()
     _debugReportCallbackCreateInfoEXT.pfnCallback = &Renderer::OnVulkanDebugReport;
 
     _debugReportCallbackCreateInfoEXT.flags =
-        VK_DEBUG_REPORT_ERROR_BIT_EXT |
-        VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT |
-        VK_DEBUG_REPORT_WARNING_BIT_EXT;
+        AV_VK_FLAG ( VK_DEBUG_REPORT_ERROR_BIT_EXT ) |
+        AV_VK_FLAG ( VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT ) |
+        AV_VK_FLAG ( VK_DEBUG_REPORT_WARNING_BIT_EXT );
 
     constexpr static const char* layers[] =
     {
@@ -1569,7 +1582,7 @@ bool Renderer::DeploySwapchain ( bool vSync )
 
             AV_REGISTER_IMAGE_VIEW (
                 "Renderer::_swapchainImageViews[ " + std::to_string ( static_cast<int> ( i ) ) + "U ]"
-            );
+            )
 
             continue;
         }
@@ -1591,7 +1604,7 @@ void Renderer::DestroySwapchain ()
 
         AV_UNREGISTER_IMAGE_VIEW (
             "Renderer::_swapchainImageViews[ " + std::to_string ( static_cast<int> ( i ) ) + "U ]"
-        );
+        )
     }
 
     vkDestroySwapchainKHR ( _device, _swapchain, nullptr );
@@ -1827,7 +1840,7 @@ void Renderer::PrintPhysicalDeviceGroupInfo ( uint32_t groupIndex,
     PrintVkBool32Prop ( INDENT_1, "subsetAllocation", props.subsetAllocation );
 }
 
-bool Renderer::PrintPhysicalDeviceLayerInfo ( const VkPhysicalDevice physicalDevice ) const
+bool Renderer::PrintPhysicalDeviceLayerInfo ( VkPhysicalDevice physicalDevice ) const
 {
     uint32_t layerCount = 0U;
     vkEnumerateDeviceLayerProperties ( physicalDevice, &layerCount, nullptr );
@@ -2152,7 +2165,7 @@ bool Renderer::PrintPhysicalDeviceInfo ( uint32_t deviceIndex, VkPhysicalDevice 
     {
         const VkQueueFamilyProperties& familyProps = queueFamilyPropList[ i ];
         PrintPhysicalDeviceQueueFamilyInfo ( i, familyProps );
-        queueFamilies.push_back ( std::make_pair ( familyProps.queueFlags, familyProps.queueCount ) );
+        queueFamilies.emplace_back ( std::make_pair ( familyProps.queueFlags, familyProps.queueCount ) );
     }
 
     return true;
@@ -2415,8 +2428,8 @@ bool Renderer::SelectTargetCompositeAlpha ( VkCompositeAlphaFlagBitsKHR &targetC
     }
     else
     {
-        constexpr unsigned int limit = static_cast<unsigned int> ( VK_COMPOSITE_ALPHA_FLAG_BITS_MAX_ENUM_KHR );
-        const unsigned int available = static_cast<unsigned int> ( surfaceCapabilitiesKHR.supportedCompositeAlpha );
+        constexpr auto limit = static_cast<unsigned int> ( VK_COMPOSITE_ALPHA_FLAG_BITS_MAX_ENUM_KHR );
+        const auto available = static_cast<const unsigned int> ( surfaceCapabilitiesKHR.supportedCompositeAlpha );
         unsigned int probe = 1U;
 
         while ( probe != limit )

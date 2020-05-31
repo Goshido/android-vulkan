@@ -35,8 +35,8 @@ class Texture2D final
 
     public:
         Texture2D ();
-        Texture2D ( std::string &fileName, VkFormat format );
-        Texture2D ( std::string &&fileName, VkFormat format );
+        [[maybe_unused]] Texture2D ( std::string &fileName, VkFormat format );
+        [[maybe_unused]] Texture2D ( std::string &&fileName, VkFormat format );
 
         Texture2D ( const Texture2D &other ) = delete;
         Texture2D& operator = ( const Texture2D &other ) = delete;
@@ -53,9 +53,9 @@ class Texture2D final
         uint8_t GetMipLevelCount () const;
 
         // Method is used when file name and format are passed via constructor.
-        bool UploadData ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer );
+        [[maybe_unused]] bool UploadData ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer );
 
-        bool UploadData ( std::string &fileName,
+        [[maybe_unused]] bool UploadData ( std::string &fileName,
             VkFormat format,
             android_vulkan::Renderer &renderer,
             VkCommandBuffer commandBuffer
@@ -67,7 +67,7 @@ class Texture2D final
             VkCommandBuffer commandBuffer
         );
 
-        bool UploadData ( const std::vector<uint8_t> &data,
+        [[maybe_unused]] bool UploadData ( const std::vector<uint8_t> &data,
             const VkExtent2D &resolution,
             VkFormat format,
             android_vulkan::Renderer &renderer,
@@ -79,13 +79,6 @@ class Texture2D final
         void FreeResourceInternal ( android_vulkan::Renderer &renderer );
         bool IsFormatCompatible ( VkFormat target, VkFormat candidate, android_vulkan::Renderer &renderer ) const;
 
-        bool LoadImage ( std::vector<uint8_t> &pixelData,
-            const std::string &fileName,
-            int &width,
-            int &height,
-            int &channels
-        );
-
         VkFormat PickupFormat ( int channels ) const;
 
         bool UploadDataInternal ( const std::vector<uint8_t> &data,
@@ -93,6 +86,13 @@ class Texture2D final
             VkFormat format,
             android_vulkan::Renderer &renderer,
             VkCommandBuffer commandBuffer
+        );
+
+        static bool LoadImage ( std::vector<uint8_t> &pixelData,
+            const std::string &fileName,
+            int &width,
+            int &height,
+            int &channels
         );
 };
 

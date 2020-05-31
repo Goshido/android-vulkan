@@ -25,7 +25,7 @@ class File final
 
         // note "const std::string &" version is not implemented to distinguish rvalue|lvalue reference.
         explicit File ( std::string &filePath );
-        explicit File ( std::string &&filePath );
+        [[maybe_unused]] explicit File ( std::string &&filePath );
 
         File ( File &other ) = delete;
         File& operator = ( const File &other ) = delete;
@@ -33,7 +33,7 @@ class File final
         ~File () = default;
 
         std::vector<uint8_t>& GetContent ();
-        const std::vector<uint8_t>& GetContent () const;
+        [[maybe_unused]] const std::vector<uint8_t>& GetContent () const;
 
         bool IsContentLoaded () const;
         bool LoadContent ();

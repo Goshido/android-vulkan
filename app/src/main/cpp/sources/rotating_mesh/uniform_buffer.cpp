@@ -27,7 +27,7 @@ UniformBuffer::UniformBuffer ():
 
 void UniformBuffer::FreeResources ()
 {
-    const VkDevice device = _renderer->GetDevice ();
+    VkDevice device = _renderer->GetDevice ();
 
     if ( _transferMemory != VK_NULL_HANDLE )
     {
@@ -115,7 +115,7 @@ bool UniformBuffer::Update ( const uint8_t* data, size_t size )
     if ( !data )
         return true;
 
-    const VkDevice device = _renderer->GetDevice ();
+    VkDevice device = _renderer->GetDevice ();
     void* dst = nullptr;
 
     bool result = _renderer->CheckVkResult ( vkMapMemory ( device, _transferMemory, 0U, size, 0U, &dst ),
@@ -148,7 +148,7 @@ bool UniformBuffer::Update ( const uint8_t* data, size_t size )
 
 bool UniformBuffer::InitResources ( size_t size )
 {
-    const VkDevice device = _renderer->GetDevice ();
+    VkDevice device = _renderer->GetDevice ();
 
     VkBufferCreateInfo bufferInfo;
     bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;

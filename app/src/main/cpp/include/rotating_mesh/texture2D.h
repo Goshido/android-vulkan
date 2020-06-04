@@ -25,6 +25,8 @@ class Texture2D final
         VkDeviceMemory      _imageDeviceMemory;
         VkImageView         _imageView;
 
+        bool                _isGenerateMipmaps;
+
         uint8_t             _mipLevels;
         VkExtent2D          _resolution;
 
@@ -35,8 +37,8 @@ class Texture2D final
 
     public:
         Texture2D ();
-        [[maybe_unused]] Texture2D ( std::string &fileName, VkFormat format );
-        [[maybe_unused]] Texture2D ( std::string &&fileName, VkFormat format );
+        [[maybe_unused]] Texture2D ( std::string &fileName, VkFormat format, bool isGenerateMipmaps );
+        [[maybe_unused]] Texture2D ( std::string &&fileName, VkFormat format, bool isGenerateMipmaps );
 
         Texture2D ( const Texture2D &other ) = delete;
         Texture2D& operator = ( const Texture2D &other ) = delete;
@@ -57,19 +59,23 @@ class Texture2D final
 
         [[maybe_unused]] bool UploadData ( std::string &fileName,
             VkFormat format,
+            bool isGenerateMipmaps,
             android_vulkan::Renderer &renderer,
             VkCommandBuffer commandBuffer
         );
 
         bool UploadData ( std::string &&fileName,
             VkFormat format,
+            bool isGenerateMipmaps,
             android_vulkan::Renderer &renderer,
             VkCommandBuffer commandBuffer
         );
 
-        [[maybe_unused]] bool UploadData ( const std::vector<uint8_t> &data,
+        [[maybe_unused]] bool UploadData ( const uint8_t* data,
+            size_t size,
             const VkExtent2D &resolution,
             VkFormat format,
+            bool isGenerateMipmaps,
             android_vulkan::Renderer &renderer,
             VkCommandBuffer commandBuffer
         );
@@ -81,9 +87,11 @@ class Texture2D final
 
         VkFormat PickupFormat ( int channels ) const;
 
-        bool UploadDataInternal ( const std::vector<uint8_t> &data,
+        bool UploadDataInternal ( const uint8_t* data,
+            size_t size,
             const VkExtent2D &resolution,
             VkFormat format,
+            bool isGenerateMipmaps,
             android_vulkan::Renderer &renderer,
             VkCommandBuffer commandBuffer
         );

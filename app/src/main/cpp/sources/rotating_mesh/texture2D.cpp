@@ -63,11 +63,12 @@ Texture2D::Texture2D ():
     // NOTHING
 }
 
-Texture2D::Texture2D ( std::string &fileName, VkFormat format ):
+Texture2D::Texture2D ( std::string &fileName, VkFormat format, bool isGenerateMipmaps ):
     _format ( format ),
     _image ( VK_NULL_HANDLE ),
     _imageDeviceMemory ( VK_NULL_HANDLE ),
     _imageView ( VK_NULL_HANDLE ),
+    _isGenerateMipmaps ( isGenerateMipmaps ),
     _resolution { .width = 0U, .height = 0U },
     _transfer ( VK_NULL_HANDLE ),
     _transferDeviceMemory ( VK_NULL_HANDLE ),
@@ -76,11 +77,12 @@ Texture2D::Texture2D ( std::string &fileName, VkFormat format ):
     // NOTHING
 }
 
-Texture2D::Texture2D ( std::string &&fileName, VkFormat format ):
+Texture2D::Texture2D ( std::string &&fileName, VkFormat format, bool isGenerateMipmaps ):
     _format ( format ),
     _image ( VK_NULL_HANDLE ),
     _imageDeviceMemory ( VK_NULL_HANDLE ),
     _imageView ( VK_NULL_HANDLE ),
+    _isGenerateMipmaps ( isGenerateMipmaps ),
     _resolution { .width = 0U, .height = 0U },
     _transfer ( VK_NULL_HANDLE ),
     _transferDeviceMemory ( VK_NULL_HANDLE ),
@@ -156,9 +158,11 @@ bool Texture2D::UploadData ( android_vulkan::Renderer &renderer, VkCommandBuffer
     if ( !IsFormatCompatible ( _format, actualFormat, renderer ) )
         return false;
 
-    return UploadDataInternal ( pixelData,
+    return UploadDataInternal ( pixelData.data (),
+        pixelData.size (),
         VkExtent2D { .width = static_cast<uint32_t> ( width ), .height = static_cast<uint32_t> ( height ) },
         _format,
+        _isGenerateMipmaps,
         renderer,
         commandBuffer
     );
@@ -166,6 +170,7 @@ bool Texture2D::UploadData ( android_vulkan::Renderer &renderer, VkCommandBuffer
 
 bool Texture2D::UploadData ( std::string &fileName,
     VkFormat format,
+    bool isGenerateMipmaps,
     android_vulkan::Renderer &renderer,
     VkCommandBuffer commandBuffer
 )
@@ -191,9 +196,11 @@ bool Texture2D::UploadData ( std::string &fileName,
     if ( !IsFormatCompatible ( format, actualFormat, renderer ) )
         return false;
 
-    const bool result = UploadDataInternal ( pixelData,
+    const bool result = UploadDataInternal ( pixelData.data (),
+        pixelData.size (),
         VkExtent2D { .width = static_cast<uint32_t> ( width ), .height = static_cast<uint32_t> ( height ) },
         format,
+        isGenerateMipmaps,
         renderer,
         commandBuffer
     );
@@ -207,6 +214,7 @@ bool Texture2D::UploadData ( std::string &fileName,
 
 bool Texture2D::UploadData ( std::string &&fileName,
     VkFormat format,
+    bool isGenerateMipmaps,
     android_vulkan::Renderer &renderer,
     VkCommandBuffer commandBuffer
 )
@@ -232,9 +240,11 @@ bool Texture2D::UploadData ( std::string &&fileName,
     if ( !IsFormatCompatible ( format, actualFormat, renderer ) )
         return false;
 
-    const bool result = UploadDataInternal ( pixelData,
+    const bool result = UploadDataInternal ( pixelData.data (),
+        pixelData.size (),
         VkExtent2D { .width = static_cast<uint32_t> ( width ), .height = static_cast<uint32_t> ( height ) },
         format,
+        isGenerateMipmaps,
         renderer,
         commandBuffer
     );
@@ -246,15 +256,17 @@ bool Texture2D::UploadData ( std::string &&fileName,
     return true;
 }
 
-bool Texture2D::UploadData ( const std::vector<uint8_t> &data,
+bool Texture2D::UploadData ( const uint8_t* data,
+    size_t size,
     const VkExtent2D &resolution,
     VkFormat format,
+    bool isGenerateMipmaps,
     android_vulkan::Renderer &renderer,
     VkCommandBuffer commandBuffer
 )
 {
     FreeResources ( renderer );
-    return UploadDataInternal ( data, resolution, format, renderer, commandBuffer );
+    return UploadDataInternal ( data, size, resolution, format, isGenerateMipmaps, renderer, commandBuffer );
 }
 
 uint32_t Texture2D::CountMipLevels ( const VkExtent2D &resolution ) const
@@ -356,9 +368,11 @@ VkFormat Texture2D::PickupFormat ( int channels ) const
     }
 }
 
-bool Texture2D::UploadDataInternal ( const std::vector<uint8_t> &data,
+bool Texture2D::UploadDataInternal ( const uint8_t* data,
+    size_t size,
     const VkExtent2D &resolution,
     VkFormat format,
+    bool isGenerateMipmaps,
     android_vulkan::Renderer &renderer,
     VkCommandBuffer commandBuffer
 )
@@ -385,7 +399,7 @@ bool Texture2D::UploadDataInternal ( const std::vector<uint8_t> &data,
     imageInfo.extent.width = _resolution.width;
     imageInfo.extent.height = _resolution.height;
     imageInfo.extent.depth = 1U;
-    imageInfo.mipLevels = CountMipLevels ( _resolution );
+    imageInfo.mipLevels = isGenerateMipmaps ? CountMipLevels ( _resolution ) : 1U;
     imageInfo.arrayLayers = 1U;
     imageInfo.queueFamilyIndexCount = 0U;
     imageInfo.pQueueFamilyIndices = nullptr;
@@ -467,7 +481,7 @@ bool Texture2D::UploadDataInternal ( const std::vector<uint8_t> &data,
     bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
     bufferInfo.queueFamilyIndexCount = 0U;
     bufferInfo.pQueueFamilyIndices = nullptr;
-    bufferInfo.size = static_cast<VkDeviceSize> ( data.size () );
+    bufferInfo.size = static_cast<VkDeviceSize> ( size );
 
     result = renderer.CheckVkResult ( vkCreateBuffer ( device, &bufferInfo, nullptr, &_transfer ),
         "Texture2D::UploadDataInternal",
@@ -523,7 +537,7 @@ bool Texture2D::UploadDataInternal ( const std::vector<uint8_t> &data,
         return false;
     }
 
-    memcpy ( destination, data.data (), static_cast<size_t> ( bufferInfo.size ) );
+    memcpy ( destination, data, static_cast<size_t> ( bufferInfo.size ) );
     vkUnmapMemory ( device, _transferDeviceMemory );
 
     VkCommandBufferBeginInfo beginInfo;
@@ -584,6 +598,63 @@ bool Texture2D::UploadDataInternal ( const std::vector<uint8_t> &data,
     copyRegion.bufferOffset = 0U;
 
     vkCmdCopyBufferToImage ( commandBuffer, _transfer, _image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1U, &copyRegion );
+
+    if ( !isGenerateMipmaps )
+    {
+        barrierInfo.subresourceRange.levelCount = 1U;
+        barrierInfo.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        barrierInfo.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        barrierInfo.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+        barrierInfo.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+        vkCmdPipelineBarrier ( commandBuffer,
+            VK_PIPELINE_STAGE_TRANSFER_BIT,
+            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+            0U,
+            0U,
+            nullptr,
+            0U,
+            nullptr,
+            1U,
+            &barrierInfo
+        );
+
+        result = renderer.CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
+            "Texture2D::UploadDataInternal",
+            "Can't end command buffer"
+        );
+
+        if ( !result )
+        {
+            FreeResources ( renderer );
+            return false;
+        }
+
+        VkSubmitInfo submitInfo;
+        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        submitInfo.pNext = nullptr;
+        submitInfo.commandBufferCount = 1U;
+        submitInfo.pCommandBuffers = &commandBuffer;
+        submitInfo.waitSemaphoreCount = 0U;
+        submitInfo.pWaitSemaphores = nullptr;
+        submitInfo.signalSemaphoreCount = 0U;
+        submitInfo.pSignalSemaphores = nullptr;
+        submitInfo.pWaitDstStageMask = nullptr;
+
+        result = renderer.CheckVkResult ( vkQueueSubmit ( renderer.GetQueue (), 1U, &submitInfo, VK_NULL_HANDLE ),
+            "Texture2D::UploadDataInternal",
+            "Can't submit command"
+        );
+
+        if ( !result )
+        {
+            FreeResources ( renderer );
+            return false;
+        }
+
+        _mipLevels = static_cast<uint8_t> ( imageInfo.mipLevels );
+        return true;
+    }
 
     barrierInfo.subresourceRange.levelCount = 1U;
     barrierInfo.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;

@@ -54,6 +54,7 @@ class Game final : public android_vulkan::Game
         VkSemaphore                     _renderPassEndSemaphore;
         VkSemaphore                     _renderTargetAcquiredSemaphore;
 
+        VkSampler                       _sampler01Mips;
         VkSampler                       _sampler09Mips;
         VkSampler                       _sampler10Mips;
         VkSampler                       _sampler11Mips;

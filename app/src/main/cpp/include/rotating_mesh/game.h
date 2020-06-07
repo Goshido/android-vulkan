@@ -59,6 +59,9 @@ class Game final : public android_vulkan::Game
         VkSampler                       _sampler10Mips;
         VkSampler                       _sampler11Mips;
 
+        VkSampler                       _specularLUTSampler;
+        Texture2D                       _specularLUTTexture;
+
         VkShaderModule                  _vertexShaderModule;
         VkShaderModule                  _fragmentShaderModule;
 
@@ -112,6 +115,9 @@ class Game final : public android_vulkan::Game
 
         bool CreateShaderModules ( android_vulkan::Renderer &renderer );
         void DestroyShaderModules ( android_vulkan::Renderer &renderer );
+
+        bool CreateSpecularLUTTexture ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer );
+        void DestroySpecularLUTTexture ( android_vulkan::Renderer &renderer );
 
         bool CreateSyncPrimitives ( android_vulkan::Renderer &renderer );
         void DestroySyncPrimitives ( android_vulkan::Renderer &renderer );

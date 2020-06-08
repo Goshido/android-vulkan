@@ -1310,20 +1310,17 @@ bool Game::CreateSpecularLUTTexture ( android_vulkan::Renderer &renderer, VkComm
 {
     constexpr const size_t totalSamples = SPECULAR_ANGLE_SAMPLES * SPECULAR_EXPONENT_SAMPLES;
 
-    std::vector<uint8_t> lutData ( totalSamples * sizeof ( float ) );
-    auto* samples = reinterpret_cast<float*> ( lutData.data () );
+    std::vector<uint8_t> lutData ( totalSamples * sizeof ( android_vulkan::Half ) );
+    auto* samples = reinterpret_cast<android_vulkan::Half*> ( lutData.data () );
 
     auto jobThread = [ samples ] ( size_t startIndex, int shininess ) {
         do
         {
-            constexpr const auto nextOffset = ( SPECULAR_GENERATOR_THREADS - 1U ) * SPECULAR_ANGLE_SAMPLES;
+            constexpr const auto nextOffset = SPECULAR_GENERATOR_THREADS * SPECULAR_ANGLE_SAMPLES;
             constexpr const auto convert = 1.0F / static_cast<const float> ( SPECULAR_ANGLE_SAMPLES );
 
-            const auto limit = startIndex + static_cast<const size_t> ( SPECULAR_ANGLE_SAMPLES );
-            const auto base = startIndex;
-
-            for ( ; startIndex < limit; ++startIndex )
-                samples[ startIndex ] = std::pow ( ( startIndex - base ) * convert, shininess );
+            for ( size_t i = 0U; i < SPECULAR_ANGLE_SAMPLES; ++i )
+                samples[ startIndex + i ] = std::pow ( static_cast<float> ( i ) * convert, shininess );
 
             shininess += static_cast<int> ( SPECULAR_GENERATOR_THREADS );
             startIndex += nextOffset;
@@ -1347,7 +1344,7 @@ bool Game::CreateSpecularLUTTexture ( android_vulkan::Renderer &renderer, VkComm
             .height = static_cast<uint32_t> ( SPECULAR_EXPONENT_SAMPLES )
         },
 
-        VK_FORMAT_R32_SFLOAT,
+        VK_FORMAT_R16_SFLOAT,
         false,
         renderer,
         commandBuffer

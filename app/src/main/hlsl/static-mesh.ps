@@ -51,7 +51,7 @@ half3 GetFinalNormalView ( in half3 tangentView, in half3 bitangentView, in half
     return normalize ( mul ( normalData, tbnView ) );
 }
 
-float GetSpecular ( in half3 finalNormalView, in half3 toViewerView, in half3 toLightView, in float shininess )
+half GetSpecular ( in half3 finalNormalView, in half3 toViewerView, in half3 toLightView, in float shininess )
 {
     // See https://en.wikipedia.org/wiki/Blinn%E2%80%93Phong_reflection_model
 
@@ -59,13 +59,13 @@ float GetSpecular ( in half3 finalNormalView, in half3 toViewerView, in half3 to
     const float angleFactor = (float)max ( dot ( halfVector, finalNormalView ), 0.0h );
     const float2 uv = float2 ( angleFactor, shininess * SHININESS_CONVERT );
 
-    return g_specLUTTexture.SampleLevel ( g_specLUTSampler, uv, 0.0f ).x;
+    return (half)g_specLUTTexture.SampleLevel ( g_specLUTSampler, uv, 0.0f ).x;
 }
 
 float4 PS ( [[ vk::location ( 0 ) ]] in InputData inputData ): SV_Target0
 {
     const float2 uv = (float2)inputData._uv;
-    const float4 diffuseData = g_diffuseTexture.Sample ( g_textureSampler, uv );
+    const half4 diffuseData = (half4)g_diffuseTexture.Sample ( g_textureSampler, uv );
 
     const half3 normalView = GetFinalNormalView ( inputData._tangentView,
         inputData._bitangentView,
@@ -74,10 +74,10 @@ float4 PS ( [[ vk::location ( 0 ) ]] in InputData inputData ): SV_Target0
     );
 
     const half3 toView = -(half3)normalize ( inputData._fragmentView );
-    const float lambertian = (float)max ( 0.0h, dot ( toView, normalView ) );
+    const half lambertian = max ( 0.0h, dot ( toView, normalView ) );
 
     const half3 toLight = (half3)normalize ( TARGET_LIGHT_SOURCE_ORIGIN - inputData._fragmentView );
-    const float specularFactor = GetSpecular ( normalView, toView, toLight, TARGET_SHININESS );
+    const half specularFactor = GetSpecular ( normalView, toView, toLight, TARGET_SHININESS );
 
-    return diffuseData * lambertian + specularFactor;
+    return (float4)( diffuseData * lambertian + specularFactor );
 }

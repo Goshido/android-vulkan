@@ -1,10 +1,17 @@
 #include <renderer.h>
+
+GX_DISABLE_COMMON_WARNINGS
+
 #include <cassert>
 #include <cinttypes>
 #include <cmath>
 #include <set>
 #include <string>
-#include "vulkan_utils.h"
+
+GX_RESTORE_WARNING_STATE
+
+#include <vulkan_utils.h>
+#include <file.h>
 
 
 namespace android_vulkan {
@@ -15,7 +22,7 @@ constexpr static const char* INDENT_1 = "    ";
 constexpr static const char* INDENT_2 = "        ";
 constexpr static const char* INDENT_3 = "            ";
 constexpr static const size_t INITIAL_EXTENSION_STORAGE_SIZE = 64U;
-constexpr static const uint32_t TARGET_VULKAN_VERSION = VK_MAKE_VERSION ( 1, 1, 108 );
+constexpr static const uint32_t TARGET_VULKAN_VERSION = VK_MAKE_VERSION ( 1U, 1U, 108U );
 constexpr static const char* UNKNOWN_RESULT = "UNKNOWN";
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -245,12 +252,81 @@ constexpr static const std::pair<size_t, const char*> g_vkFeatureMap[] =
 //----------------------------------------------------------------------------------------------------------------------
 
 VulkanPhysicalDeviceInfo::VulkanPhysicalDeviceInfo ():
-    _extensionStorage ( INITIAL_EXTENSION_STORAGE_SIZE )
+    _extensionStorage ( INITIAL_EXTENSION_STORAGE_SIZE ),
+    _extensions {},
+    _features {},
+    _queueFamilyInfo {},
+    _surfaceCapabilities {}
 {
     // NOTHING
 }
 
 //----------------------------------------------------------------------------------------------------------------------
+
+#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+
+const std::map<VkDebugReportObjectTypeEXT, const char*> Renderer::_vulkanObjectTypeMap =
+{
+    { VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_VIEW_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_VIEW_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_POOL_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_POOL_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_POOL_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_POOL_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_SET_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_SET_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_DEVICE_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_DEVICE_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_DEVICE_MEMORY_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_DEVICE_MEMORY_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_DISPLAY_KHR_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_DISPLAY_KHR_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_DISPLAY_MODE_KHR_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_DISPLAY_MODE_KHR_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_EVENT_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_EVENT_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_FENCE_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_FENCE_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_FRAMEBUFFER_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_FRAMEBUFFER_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_INSTANCE_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_INSTANCE_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_OBJECT_TABLE_NVX_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_OBJECT_TABLE_NVX_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_PHYSICAL_DEVICE_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_PHYSICAL_DEVICE_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_CACHE_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_CACHE_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_LAYOUT_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_LAYOUT_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_QUERY_POOL_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_QUERY_POOL_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_QUEUE_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_QUEUE_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_RENDER_PASS_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_RENDER_PASS_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_SEMAPHORE_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_SEMAPHORE_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_SHADER_MODULE_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_SHADER_MODULE_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_SURFACE_KHR_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_SURFACE_KHR_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_SWAPCHAIN_KHR_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_SWAPCHAIN_KHR_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_UNKNOWN_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_UNKNOWN_EXT" },
+    { VK_DEBUG_REPORT_OBJECT_TYPE_VALIDATION_CACHE_EXT_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_VALIDATION_CACHE_EXT_EXT" },
+
+    {
+        VK_DEBUG_REPORT_OBJECT_TYPE_ACCELERATION_STRUCTURE_NV_EXT,
+        "VK_DEBUG_REPORT_OBJECT_TYPE_ACCELERATION_STRUCTURE_NV_EXT"
+    },
+
+    {
+        VK_DEBUG_REPORT_OBJECT_TYPE_DEBUG_REPORT_CALLBACK_EXT_EXT,
+        "VK_DEBUG_REPORT_OBJECT_TYPE_DEBUG_REPORT_CALLBACK_EXT_EXT"
+    },
+
+    {
+        VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_UPDATE_TEMPLATE_EXT,
+        "VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_UPDATE_TEMPLATE_EXT"
+    },
+
+    {
+        VK_DEBUG_REPORT_OBJECT_TYPE_INDIRECT_COMMANDS_LAYOUT_NVX_EXT,
+        "VK_DEBUG_REPORT_OBJECT_TYPE_INDIRECT_COMMANDS_LAYOUT_NVX_EXT"
+    },
+
+    {
+        VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_YCBCR_CONVERSION_EXT,
+        "VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_YCBCR_CONVERSION_EXT"
+    }
+};
+
+#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
 const std::map<VkColorSpaceKHR, const char*> Renderer::_vulkanColorSpaceMap =
 {
@@ -270,6 +346,14 @@ const std::map<VkColorSpaceKHR, const char*> Renderer::_vulkanColorSpaceMap =
     { VK_COLOR_SPACE_HDR10_ST2084_EXT, "VK_COLOR_SPACE_HDR10_ST2084_EXT" },
     { VK_COLOR_SPACE_PASS_THROUGH_EXT, "VK_COLOR_SPACE_PASS_THROUGH_EXT" },
     { VK_COLOR_SPACE_SRGB_NONLINEAR_KHR, "VK_COLOR_SPACE_SRGB_NONLINEAR_KHR" }
+};
+
+const std::map<VkCompositeAlphaFlagBitsKHR, const char*> Renderer::_vulkanCompositeAlphaMap =
+{
+    { VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR, "VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR" },
+    { VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR, "VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR" },
+    { VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR, "VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR" },
+    { VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR, "VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR" }
 };
 
 const std::map<VkFormat, const char*> Renderer::_vulkanFormatMap =
@@ -517,67 +601,6 @@ const std::map<VkFormat, const char*> Renderer::_vulkanFormatMap =
     { VK_FORMAT_X8_D24_UNORM_PACK32, "VK_FORMAT_X8_D24_UNORM_PACK32" }
 };
 
-const std::map<VkDebugReportObjectTypeEXT, const char*> Renderer::_vulkanObjectTypeMap =
-{
-    { VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_VIEW_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_VIEW_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_POOL_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_POOL_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_POOL_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_POOL_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_SET_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_SET_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_DEVICE_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_DEVICE_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_DEVICE_MEMORY_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_DEVICE_MEMORY_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_DISPLAY_KHR_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_DISPLAY_KHR_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_DISPLAY_MODE_KHR_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_DISPLAY_MODE_KHR_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_EVENT_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_EVENT_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_FENCE_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_FENCE_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_FRAMEBUFFER_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_FRAMEBUFFER_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_INSTANCE_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_INSTANCE_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_OBJECT_TABLE_NVX_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_OBJECT_TABLE_NVX_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_PHYSICAL_DEVICE_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_PHYSICAL_DEVICE_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_CACHE_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_CACHE_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_LAYOUT_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_LAYOUT_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_QUERY_POOL_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_QUERY_POOL_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_QUEUE_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_QUEUE_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_RENDER_PASS_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_RENDER_PASS_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_SEMAPHORE_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_SEMAPHORE_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_SHADER_MODULE_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_SHADER_MODULE_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_SURFACE_KHR_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_SURFACE_KHR_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_SWAPCHAIN_KHR_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_SWAPCHAIN_KHR_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_UNKNOWN_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_UNKNOWN_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_VALIDATION_CACHE_EXT_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_VALIDATION_CACHE_EXT_EXT" },
-
-    {
-        VK_DEBUG_REPORT_OBJECT_TYPE_ACCELERATION_STRUCTURE_NV_EXT,
-        "VK_DEBUG_REPORT_OBJECT_TYPE_ACCELERATION_STRUCTURE_NV_EXT"
-    },
-
-    {
-        VK_DEBUG_REPORT_OBJECT_TYPE_DEBUG_REPORT_CALLBACK_EXT_EXT,
-        "VK_DEBUG_REPORT_OBJECT_TYPE_DEBUG_REPORT_CALLBACK_EXT_EXT"
-    },
-
-    {
-        VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_UPDATE_TEMPLATE_EXT,
-        "VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_UPDATE_TEMPLATE_EXT"
-    },
-
-    {
-        VK_DEBUG_REPORT_OBJECT_TYPE_INDIRECT_COMMANDS_LAYOUT_NVX_EXT,
-        "VK_DEBUG_REPORT_OBJECT_TYPE_INDIRECT_COMMANDS_LAYOUT_NVX_EXT"
-    },
-
-    {
-        VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_YCBCR_CONVERSION_EXT,
-        "VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_YCBCR_CONVERSION_EXT"
-    }
-};
-
 const std::map<VkPhysicalDeviceType, const char*> Renderer::_vulkanPhysicalDeviceTypeMap =
 {
     { VK_PHYSICAL_DEVICE_TYPE_CPU, "VK_PHYSICAL_DEVICE_TYPE_CPU" },
@@ -613,32 +636,97 @@ const std::map<VkResult, const char*> Renderer::_vulkanResultMap =
     { VK_ERROR_OUT_OF_DATE_KHR, "VK_ERROR_OUT_OF_DATE_KHR" },
     { VK_ERROR_OUT_OF_DEVICE_MEMORY, "VK_ERROR_OUT_OF_DEVICE_MEMORY" },
     { VK_ERROR_OUT_OF_HOST_MEMORY, "VK_ERROR_OUT_OF_HOST_MEMORY" },
+    { VK_ERROR_OUT_OF_POOL_MEMORY, "VK_ERROR_OUT_OF_POOL_MEMORY" },
     { VK_ERROR_SURFACE_LOST_KHR, "VK_ERROR_SURFACE_LOST_KHR" },
     { VK_ERROR_TOO_MANY_OBJECTS, "VK_ERROR_TOO_MANY_OBJECTS" },
     { VK_SUBOPTIMAL_KHR, "VK_SUBOPTIMAL_KHR" }
 };
 
+const std::map<VkSurfaceTransformFlagsKHR, const char*> Renderer::_vulkanSurfaceTransformMap =
+{
+    { VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_BIT_KHR, "VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_BIT_KHR" },
+
+    {
+        VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_180_BIT_KHR,
+        "VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_180_BIT_KHR"
+    },
+
+    {
+        VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_270_BIT_KHR,
+        "VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_270_BIT_KHR"
+    },
+
+    {
+        VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_90_BIT_KHR,
+        "VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_90_BIT_KHR"
+    },
+
+    { VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR, "VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR" },
+    { VK_SURFACE_TRANSFORM_INHERIT_BIT_KHR, "VK_SURFACE_TRANSFORM_INHERIT_BIT_KHR" },
+    { VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR, "VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR" },
+    { VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR, "VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR" },
+    { VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR, "VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR" }
+};
+
 //----------------------------------------------------------------------------------------------------------------------
 
 Renderer::Renderer ():
-    _debugReportCallback ( VK_NULL_HANDLE ),
-    _depthStencilImage ( VK_NULL_HANDLE ),
     _depthStencilImageFormat ( VK_FORMAT_UNDEFINED ),
-    _depthStencilImageMemory (  VK_NULL_HANDLE ),
-    _depthStencilImageView ( VK_NULL_HANDLE ),
     _device ( VK_NULL_HANDLE ),
     _instance ( VK_NULL_HANDLE ),
+    _isDeviceExtensionChecked ( false ),
+    _isDeviceExtensionSupported ( false ),
     _physicalDevice ( VK_NULL_HANDLE ),
     _queue ( VK_NULL_HANDLE ),
     _queueFamilyIndex ( VK_QUEUE_FAMILY_IGNORED ),
-    _renderPass ( VK_NULL_HANDLE ),
     _surface ( VK_NULL_HANDLE ),
     _surfaceFormat ( VK_FORMAT_UNDEFINED ),
+    _surfaceSize { .width = 0U, .height = 0U },
+    _surfaceTransform ( VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR ),
     _swapchain ( VK_NULL_HANDLE ),
+
+#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+
     vkCreateDebugReportCallbackEXT ( nullptr ),
-    vkDestroyDebugReportCallbackEXT ( nullptr )
+    vkDestroyDebugReportCallbackEXT ( nullptr ),
+    _debugReportCallback ( VK_NULL_HANDLE ),
+    _debugReportCallbackCreateInfoEXT {},
+
+#endif
+
+    _viewportResolution { .width = 0U, .height = 0U },
+    _physicalDeviceGroups {},
+    _physicalDeviceInfo {},
+    _physicalDeviceMemoryProperties {},
+    _surfaceFormats {},
+    _swapchainImages {},
+    _swapchainImageViews {},
+    _presentationEngineTransform {}
+
 {
     // NOTHING
+}
+
+bool Renderer::CheckSwapchainStatus ()
+{
+    VkSurfaceCapabilitiesKHR caps;
+
+    bool tmp = CheckVkResult (
+        vkGetPhysicalDeviceSurfaceCapabilitiesKHR ( _physicalDevice, _surface, &caps ),
+        "Renderer::CheckSwapchainStatus",
+        "Can't get Vulkan surface capabilities"
+    );
+
+    if ( !tmp )
+        return false;
+
+    if ( _surfaceTransform != caps.currentTransform )
+        tmp = false;
+
+    if ( memcmp ( &_surfaceSize, &caps.currentExtent, sizeof ( _surfaceSize ) ) != 0 )
+        tmp = false;
+
+    return tmp;
 }
 
 bool Renderer::CheckVkResult ( VkResult result, const char* from, const char* message ) const
@@ -646,9 +734,34 @@ bool Renderer::CheckVkResult ( VkResult result, const char* from, const char* me
     if ( result == VK_SUCCESS )
         return true;
 
-    LogError ( "Renderer::%s - %s. Error: %s.", from, message, ResolveVkResult ( result ) );
+    LogError ( "%s - %s. Error: %s.", from, message, ResolveVkResult ( result ) );
     assert ( false );
     return false;
+}
+
+bool Renderer::CreateShader ( VkShaderModule &shader,
+    std::string &&shaderFile,
+    const char* errorMessage
+) const
+{
+    File vertexShader ( shaderFile );
+
+    if ( !vertexShader.LoadContent () )
+        return false;
+
+    const std::vector<uint8_t>& spirV = vertexShader.GetContent ();
+
+    VkShaderModuleCreateInfo shaderModuleCreateInfo;
+    shaderModuleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+    shaderModuleCreateInfo.pNext = nullptr;
+    shaderModuleCreateInfo.flags = 0U;
+    shaderModuleCreateInfo.codeSize = spirV.size ();
+    shaderModuleCreateInfo.pCode = reinterpret_cast<const uint32_t*> ( spirV.data () );
+
+    return CheckVkResult ( vkCreateShaderModule ( _device, &shaderModuleCreateInfo, nullptr, &shader ),
+        "Renderer::CreateShader",
+        errorMessage
+    );
 }
 
 VkFormat Renderer::GetDefaultDepthStencilFormat () const
@@ -661,19 +774,19 @@ VkDevice Renderer::GetDevice () const
     return _device;
 }
 
-VkFramebuffer Renderer::GetPresentFramebuffer ( uint32_t framebufferIndex ) const
+size_t Renderer::GetPresentImageCount () const
 {
-    return _presentFramebuffers[ framebufferIndex ];
+    return _swapchainImageViews.size ();
 }
 
-size_t Renderer::GetPresentFramebufferCount () const
+const VkImageView& Renderer::GetPresentImageView ( size_t imageIndex ) const
 {
-    return _presentFramebuffers.size ();
+    return _swapchainImageViews[ imageIndex ];
 }
 
-VkRenderPass Renderer::GetPresentRenderPass () const
+const GXMat4& Renderer::GetPresentationEngineTransform () const
 {
-    return _renderPass;
+    return _presentationEngineTransform;
 }
 
 VkQueue Renderer::GetQueue () const
@@ -701,9 +814,14 @@ VkSwapchainKHR& Renderer::GetSwapchain ()
     return _swapchain;
 }
 
+const VkExtent2D& Renderer::GetViewportResolution () const
+{
+    return _viewportResolution;
+}
+
 bool Renderer::IsReady () const
 {
-    return _renderPass != VK_NULL_HANDLE;
+    return _swapchain != VK_NULL_HANDLE;
 }
 
 bool Renderer::OnInit ( ANativeWindow &nativeWindow, bool vSync )
@@ -716,16 +834,26 @@ bool Renderer::OnInit ( ANativeWindow &nativeWindow, bool vSync )
     }
 
     PrintInstanceLayerInfo ();
-
     DeployInstance ();
+
+#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+
     DeployDebugFeatures ();
+
+#endif
 
     uint32_t physicalDeviceCount = 0U;
     vkEnumeratePhysicalDevices ( _instance, &physicalDeviceCount, nullptr );
 
     if ( !physicalDeviceCount )
     {
+
+#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+
         DestroyDebugFeatures ();
+
+#endif
+
         DestroyInstance ();
 
         LogError ( "Renderer::OnInit - There is no any Vulkan physical device." );
@@ -746,7 +874,13 @@ bool Renderer::OnInit ( ANativeWindow &nativeWindow, bool vSync )
 
     if ( !result )
     {
+
+#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+
         DestroyDebugFeatures ();
+
+#endif
+
         DestroyInstance ();
         return false;
     }
@@ -756,9 +890,14 @@ bool Renderer::OnInit ( ANativeWindow &nativeWindow, bool vSync )
         if ( PrintPhysicalDeviceInfo ( i, deviceList[ i ] ) ) continue;
 
         _physicalDeviceInfo.clear ();
-        DestroyDebugFeatures ();
-        DestroyInstance ();
 
+#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+
+        DestroyDebugFeatures ();
+
+#endif
+
+        DestroyInstance ();
         return false;
     }
 
@@ -768,7 +907,13 @@ bool Renderer::OnInit ( ANativeWindow &nativeWindow, bool vSync )
     if ( !physicalDeviceGroupCount )
     {
         _physicalDeviceInfo.clear ();
+
+#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+
         DestroyDebugFeatures ();
+
+#endif
+
         DestroyInstance ();
 
         LogError ( "Renderer::OnInit - There is no any Vulkan physical device groups." );
@@ -782,6 +927,9 @@ bool Renderer::OnInit ( ANativeWindow &nativeWindow, bool vSync )
     _physicalDeviceGroups.resize ( static_cast<size_t> ( physicalDeviceGroupCount ) );
     VkPhysicalDeviceGroupProperties* groupProps = _physicalDeviceGroups.data ();
 
+    for ( auto& item : _physicalDeviceGroups )
+        item.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GROUP_PROPERTIES;
+
     result = CheckVkResult ( vkEnumeratePhysicalDeviceGroups ( _instance, &physicalDeviceGroupCount, groupProps ),
         "Renderer::OnInit",
         "Can't get Vulkan physical device groups"
@@ -792,9 +940,13 @@ bool Renderer::OnInit ( ANativeWindow &nativeWindow, bool vSync )
         _physicalDeviceGroups.clear ();
         _physicalDeviceInfo.clear ();
 
-        DestroyDebugFeatures ();
-        DestroyInstance ();
+#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
+        DestroyDebugFeatures ();
+
+#endif
+
+        DestroyInstance ();
         return false;
     }
 
@@ -806,9 +958,13 @@ bool Renderer::OnInit ( ANativeWindow &nativeWindow, bool vSync )
         _physicalDeviceGroups.clear ();
         _physicalDeviceInfo.clear ();
 
-        DestroyDebugFeatures ();
-        DestroyInstance ();
+#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
+        DestroyDebugFeatures ();
+
+#endif
+
+        DestroyInstance ();
         return false;
     }
 
@@ -818,52 +974,33 @@ bool Renderer::OnInit ( ANativeWindow &nativeWindow, bool vSync )
         _physicalDeviceInfo.clear ();
 
         DestroyDevice ();
-        DestroyDebugFeatures ();
-        DestroyInstance ();
 
+#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+
+        DestroyDebugFeatures ();
+
+#endif
+
+        DestroyInstance ();
         return false;
     }
 
-    if ( !DeploySwapchain ( vSync ) )
-    {
-        _physicalDeviceGroups.clear ();
-        _physicalDeviceInfo.clear ();
-
-        DestroySurface ();
-        DestroyDevice ();
-        DestroyDebugFeatures ();
-        DestroyInstance ();
-
-        return false;
-    }
-
-    if ( !DeployRenderPass () )
-    {
-        _physicalDeviceGroups.clear ();
-        _physicalDeviceInfo.clear ();
-
-        DestroySwapchain ();
-        DestroySurface ();
-        DestroyDevice ();
-        DestroyDebugFeatures ();
-        DestroyInstance ();
-
-        return false;
-    }
-
-    if ( DeployPresentFramebuffers () )
+    if ( DeploySwapchain ( vSync ) )
         return true;
 
     _physicalDeviceGroups.clear ();
     _physicalDeviceInfo.clear ();
 
-    DestroyRenderPass ();
-    DestroySwapchain ();
     DestroySurface ();
     DestroyDevice ();
-    DestroyDebugFeatures ();
-    DestroyInstance ();
 
+#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+
+    DestroyDebugFeatures ();
+
+#endif
+
+    DestroyInstance ();
     return false;
 }
 
@@ -878,13 +1015,23 @@ void Renderer::OnDestroy ()
     _physicalDeviceGroups.clear ();
     _physicalDeviceInfo.clear ();
 
-    DestroyPresentFramebuffers ();
     DestroySwapchain ();
-    DestroyRenderPass ();
     DestroySurface ();
     DestroyDevice ();
+
+#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+
     DestroyDebugFeatures ();
+
+#endif
+
     DestroyInstance ();
+}
+
+const char* Renderer::ResolveVkFormat ( VkFormat format ) const
+{
+    const auto findResult = _vulkanFormatMap.find ( format );
+    return findResult == _vulkanFormatMap.cend () ? UNKNOWN_RESULT : findResult->second;
 }
 
 bool Renderer::SelectTargetMemoryTypeIndex ( uint32_t &targetMemoryTypeIndex,
@@ -906,6 +1053,67 @@ bool Renderer::SelectTargetMemoryTypeIndex ( uint32_t &targetMemoryTypeIndex,
 
     return false;
 }
+
+bool Renderer::TryAllocateMemory ( VkDeviceMemory &memory,
+    const VkMemoryRequirements &requirements,
+    VkMemoryPropertyFlags memoryProperties,
+    const char* errorMessage
+) const
+{
+    VkMemoryAllocateInfo allocateInfo;
+    allocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    allocateInfo.pNext = nullptr;
+    allocateInfo.allocationSize = requirements.size;
+
+    bool result = SelectTargetMemoryTypeIndex ( allocateInfo.memoryTypeIndex,
+        requirements,
+        memoryProperties
+    );
+
+    if ( !result )
+        return false;
+
+    return CheckVkResult ( vkAllocateMemory ( _device, &allocateInfo, nullptr, &memory ),
+        "Renderer::TryAllocateMemory",
+        errorMessage
+    );
+}
+
+bool Renderer::CheckRequiredDeviceExtensions ( const std::vector<const char*> &deviceExtensions,
+    char const* const* requiredExtensions,
+    size_t requiredExtensionCount
+)
+{
+    if ( _isDeviceExtensionChecked )
+        return _isDeviceExtensionSupported;
+
+    std::set<std::string> allExtensions;
+    allExtensions.insert ( deviceExtensions.cbegin (), deviceExtensions.cend () );
+
+    LogInfo ( "Renderer::CheckRequiredDeviceExtensions - Checking required device extensions..." );
+    _isDeviceExtensionSupported = true;
+    std::string tmp;
+
+    for ( size_t i = 0U; i < requiredExtensionCount; ++i )
+    {
+        const char* requiredExtension = requiredExtensions[ i ];
+        tmp = requiredExtension;
+
+        if ( allExtensions.count ( tmp ) > 0U )
+        {
+            LogInfo ( "%sOK: %s", INDENT_1, requiredExtension );
+            continue;
+        }
+
+        LogError ( "%sFAIL: %s", INDENT_1, requiredExtension );
+        _isDeviceExtensionSupported = false;
+    }
+
+    _isDeviceExtensionChecked = true;
+    return _isDeviceExtensionSupported;
+}
+
+#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
 bool Renderer::DeployDebugFeatures ()
 {
@@ -965,12 +1173,14 @@ bool Renderer::DeployDebugFeatures ()
 
 void Renderer::DestroyDebugFeatures ()
 {
-    if ( !_debugReportCallback )
+    if ( _debugReportCallback == VK_NULL_HANDLE )
         return;
 
     vkDestroyDebugReportCallbackEXT ( _instance, _debugReportCallback, nullptr );
     _debugReportCallback = VK_NULL_HANDLE;
 }
+
+#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
 bool Renderer::DeployDevice ()
 {
@@ -987,19 +1197,35 @@ bool Renderer::DeployDevice ()
         return false;
 
     deviceQueueCreateInfo.queueFamilyIndex = _queueFamilyIndex;
-
     const auto& caps = _physicalDeviceInfo[ _physicalDevice ];
+
+    constexpr const char* extensions[] =
+    {
+        VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME,
+        VK_KHR_SWAPCHAIN_EXTENSION_NAME
+    };
+
+    constexpr const size_t extensionCount = std::size ( extensions );
+
+    if ( !CheckRequiredDeviceExtensions ( caps._extensions, extensions, extensionCount ) )
+        return false;
+
+    VkPhysicalDeviceFloat16Int8FeaturesKHR float16Int8Feature;
+    float16Int8Feature.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT16_INT8_FEATURES_KHR;
+    float16Int8Feature.pNext = nullptr;
+    float16Int8Feature.shaderFloat16 = VK_TRUE;
+    float16Int8Feature.shaderInt8 = VK_FALSE;
 
     VkDeviceCreateInfo deviceCreateInfo;
     deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-    deviceCreateInfo.pNext = nullptr;
+    deviceCreateInfo.pNext = &float16Int8Feature;
     deviceCreateInfo.flags = 0U;
     deviceCreateInfo.queueCreateInfoCount = 1U;
     deviceCreateInfo.pQueueCreateInfos = &deviceQueueCreateInfo;
     deviceCreateInfo.enabledLayerCount = 0U;
     deviceCreateInfo.ppEnabledLayerNames = nullptr;
-    deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t> ( caps._extensions.size () );
-    deviceCreateInfo.ppEnabledExtensionNames = caps._extensions.data ();
+    deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t> ( extensionCount );
+    deviceCreateInfo.ppEnabledExtensionNames = extensions;
     deviceCreateInfo.pEnabledFeatures = &caps._features;
 
     const bool result = CheckVkResult ( vkCreateDevice ( _physicalDevice, &deviceCreateInfo, nullptr, &_device ),
@@ -1027,85 +1253,8 @@ void Renderer::DestroyDevice ()
     _queue = VK_NULL_HANDLE;
 }
 
-bool Renderer::DeployPresentFramebuffers ()
-{
-    _presentFramebuffers.clear ();
-    _presentFramebuffers.reserve ( _swapchainImages.size () );
-
-    VkImageView attachments[ 2U ];
-    attachments[ 1U ] = _depthStencilImageView;
-
-    constexpr const auto attachmentCount =
-        static_cast<const uint32_t> ( sizeof ( attachments ) / sizeof ( attachments[ 0U ] ) );
-
-    VkFramebufferCreateInfo framebufferInfo;
-    framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-    framebufferInfo.pNext = nullptr;
-    framebufferInfo.renderPass = _renderPass;
-    framebufferInfo.flags = 0U;
-    framebufferInfo.attachmentCount = attachmentCount;
-    framebufferInfo.pAttachments = attachments;
-    framebufferInfo.width = _surfaceSize.width;
-    framebufferInfo.height = _surfaceSize.height;
-    framebufferInfo.layers = 1U;
-
-    const size_t count = _swapchainImageViews.size ();
-
-    for ( size_t i = 0U; i < count; ++i )
-    {
-        attachments[ 0U ] = _swapchainImageViews[ i ];
-        VkFramebuffer framebuffer = VK_NULL_HANDLE;
-
-        const bool result = CheckVkResult (
-            vkCreateFramebuffer ( _device, &framebufferInfo, nullptr, &framebuffer ),
-            "Renderer::DeployPresentFramebuffers",
-            "Can't create framebuffer."
-        );
-
-        if ( !result )
-        {
-            DestroyPresentFramebuffers ();
-            return false;
-        }
-
-        _presentFramebuffers.push_back ( framebuffer );
-
-        AV_REGISTER_FRAMEBUFFER (
-            "Renderer::_presentFramebuffers[ " + std::to_string ( static_cast<int> ( i ) ) + "U ]"
-        )
-    }
-
-    return true;
-}
-
-void Renderer::DestroyPresentFramebuffers ()
-{
-    const size_t count = _presentFramebuffers.size ();
-
-    for ( size_t i = 0U; i < count; ++i )
-    {
-        vkDestroyFramebuffer ( _device, _presentFramebuffers[ i ], nullptr );
-
-        AV_UNREGISTER_FRAMEBUFFER (
-            "Renderer::_presentFramebuffers[ " + std::to_string ( static_cast<int> ( i ) ) + "U ]"
-        )
-    }
-}
-
 bool Renderer::DeployInstance ()
 {
-    _debugReportCallbackCreateInfoEXT.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
-    _debugReportCallbackCreateInfoEXT.pNext = nullptr;
-    _debugReportCallbackCreateInfoEXT.pUserData = this;
-    _debugReportCallbackCreateInfoEXT.pfnCallback = &Renderer::OnVulkanDebugReport;
-
-    _debugReportCallbackCreateInfoEXT.flags =
-        VK_DEBUG_REPORT_INFORMATION_BIT_EXT |
-        VK_DEBUG_REPORT_WARNING_BIT_EXT |
-        VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT |
-        VK_DEBUG_REPORT_ERROR_BIT_EXT |
-        VK_DEBUG_REPORT_DEBUG_BIT_EXT;
-
     VkApplicationInfo applicationInfo;
     applicationInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
     applicationInfo.pNext = nullptr;
@@ -1115,6 +1264,28 @@ bool Renderer::DeployInstance ()
     applicationInfo.pEngineName = ENGINE_NAME;
     applicationInfo.engineVersion = 1U;
 
+    VkInstanceCreateInfo instanceCreateInfo;
+    instanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+    instanceCreateInfo.flags = 0U;
+    instanceCreateInfo.pApplicationInfo = &applicationInfo;
+
+#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+
+    _debugReportCallbackCreateInfoEXT.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
+    _debugReportCallbackCreateInfoEXT.pNext = nullptr;
+    _debugReportCallbackCreateInfoEXT.pUserData = this;
+    _debugReportCallbackCreateInfoEXT.pfnCallback = &Renderer::OnVulkanDebugReport;
+
+    _debugReportCallbackCreateInfoEXT.flags =
+        AV_VK_FLAG ( VK_DEBUG_REPORT_ERROR_BIT_EXT ) |
+        AV_VK_FLAG ( VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT ) |
+        AV_VK_FLAG ( VK_DEBUG_REPORT_WARNING_BIT_EXT );
+
+    constexpr static const char* layers[] =
+    {
+        "VK_LAYER_KHRONOS_validation"
+    };
+
     constexpr static const char* extensions[] =
     {
         VK_EXT_DEBUG_REPORT_EXTENSION_NAME,
@@ -1122,17 +1293,25 @@ bool Renderer::DeployInstance ()
         "VK_KHR_android_surface"
     };
 
-    constexpr const uint32_t extensionCount =
-        static_cast<const uint32_t> ( sizeof ( extensions ) / sizeof ( extensions[ 0U ] ) );
-
-    VkInstanceCreateInfo instanceCreateInfo;
-    instanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     instanceCreateInfo.pNext = &_debugReportCallbackCreateInfoEXT;
-    instanceCreateInfo.flags = 0U;
-    instanceCreateInfo.pApplicationInfo = &applicationInfo;
+    instanceCreateInfo.enabledLayerCount = static_cast<uint32_t> ( std::size ( layers ) );
+    instanceCreateInfo.ppEnabledLayerNames = layers;
+
+#else
+
+    constexpr static const char* extensions[] =
+    {
+        VK_KHR_SURFACE_EXTENSION_NAME,
+        "VK_KHR_android_surface"
+    };
+
+    instanceCreateInfo.pNext = nullptr;
     instanceCreateInfo.enabledLayerCount = 0U;
     instanceCreateInfo.ppEnabledLayerNames = nullptr;
-    instanceCreateInfo.enabledExtensionCount = extensionCount;
+
+#endif
+
+    instanceCreateInfo.enabledExtensionCount = static_cast<const uint32_t> ( std::size ( extensions ) );
     instanceCreateInfo.ppEnabledExtensionNames = extensions;
 
     return CheckVkResult ( vkCreateInstance ( &instanceCreateInfo, nullptr, &_instance ),
@@ -1148,84 +1327,6 @@ void Renderer::DestroyInstance ()
 
     vkDestroyInstance ( _instance, nullptr );
     _instance = VK_NULL_HANDLE;
-}
-
-bool Renderer::DeployRenderPass ()
-{
-    VkAttachmentDescription attachmentDescriptions[ 2U ];
-    VkAttachmentDescription& attachment0 = attachmentDescriptions[ 0U ];
-    attachment0.flags = 0U;
-    attachment0.format = _surfaceFormat;
-    attachment0.samples = VK_SAMPLE_COUNT_1_BIT;
-    attachment0.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    attachment0.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    attachment0.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    attachment0.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    attachment0.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    attachment0.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
-    VkAttachmentDescription& attachment1 = attachmentDescriptions[ 1U ];
-    attachment1.flags = 0U;
-    attachment1.format = _depthStencilImageFormat;
-    attachment1.samples = VK_SAMPLE_COUNT_1_BIT;
-    attachment1.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    attachment1.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    attachment1.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    attachment1.stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
-    attachment1.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    attachment1.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-    constexpr const auto attachmentCount =
-        static_cast<const uint32_t> ( sizeof ( attachmentDescriptions ) / sizeof ( attachmentDescriptions[ 0U ] ) );
-
-    VkAttachmentReference colorAttachmentReference;
-    colorAttachmentReference.attachment = 0U;
-    colorAttachmentReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-    VkAttachmentReference depthStencilAttachmentReference;
-    depthStencilAttachmentReference.attachment = 1U;
-    depthStencilAttachmentReference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-    VkSubpassDescription subpassDescription;
-    subpassDescription.flags = 0U;
-    subpassDescription.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-    subpassDescription.inputAttachmentCount = 0U;
-    subpassDescription.pInputAttachments = nullptr;
-    subpassDescription.colorAttachmentCount = 1U;
-    subpassDescription.pColorAttachments = &colorAttachmentReference;
-    subpassDescription.pResolveAttachments = nullptr;
-    subpassDescription.pDepthStencilAttachment = &depthStencilAttachmentReference;
-    subpassDescription.preserveAttachmentCount = 0U;
-    subpassDescription.pPreserveAttachments = nullptr;
-
-    VkRenderPassCreateInfo renderPassCreateInfo;
-    renderPassCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-    renderPassCreateInfo.pNext = nullptr;
-    renderPassCreateInfo.flags = 0U;
-    renderPassCreateInfo.attachmentCount = attachmentCount;
-    renderPassCreateInfo.pAttachments = attachmentDescriptions;
-    renderPassCreateInfo.subpassCount = 1U;
-    renderPassCreateInfo.pSubpasses = &subpassDescription;
-    renderPassCreateInfo.dependencyCount = 0U;
-    renderPassCreateInfo.pDependencies = nullptr;
-
-    const bool result = CheckVkResult ( vkCreateRenderPass ( _device, &renderPassCreateInfo, nullptr, &_renderPass ),
-        "Renderer::DeployRenderPass",
-        "Can't create render pass"
-    );
-
-    if ( !result )
-        return false;
-
-    AV_REGISTER_RENDER_PASS ( "Renderer::_renderPass" )
-    return true;
-}
-
-void Renderer::DestroyRenderPass ()
-{
-    vkDestroyRenderPass ( _device, _renderPass, nullptr );
-    _renderPass = VK_NULL_HANDLE;
-    AV_UNREGISTER_RENDER_PASS ( "Renderer::_renderPass" )
 }
 
 bool Renderer::DeploySurface ( ANativeWindow &nativeWindow )
@@ -1246,7 +1347,8 @@ bool Renderer::DeploySurface ( ANativeWindow &nativeWindow )
         return false;
 
     AV_REGISTER_SURFACE ( "Renderer::_surface" )
-    VkSurfaceCapabilitiesKHR surfaceCapabilitiesKHR;
+
+    VkSurfaceCapabilitiesKHR& surfaceCapabilitiesKHR = _physicalDeviceInfo[ _physicalDevice ]._surfaceCapabilities;
 
     result = CheckVkResult (
         vkGetPhysicalDeviceSurfaceCapabilitiesKHR ( _physicalDevice, _surface, &surfaceCapabilitiesKHR ),
@@ -1262,6 +1364,34 @@ bool Renderer::DeploySurface ( ANativeWindow &nativeWindow )
 
     PrintVkSurfaceCapabilities ( surfaceCapabilitiesKHR );
     _surfaceSize = surfaceCapabilitiesKHR.currentExtent;
+    _surfaceTransform = surfaceCapabilitiesKHR.currentTransform;
+
+    if ( _surfaceTransform != VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR )
+    {
+        LogError ( "Renderer::DeploySurface - Unexpected surface transform: %s",
+            ResolveVkSurfaceTransform ( _surfaceTransform )
+        );
+
+        DestroySurface ();
+        return false;
+    }
+
+#ifdef ANDROID_NATIVE_MODE_PORTRAIT
+
+    _presentationEngineTransform.RotationZ ( GX_MATH_HALF_PI );
+    _viewportResolution.width = _surfaceSize.height;
+    _viewportResolution.height = _surfaceSize.width;
+
+#elif defined ( ANDROID_NATIVE_MODE_LANDSCAPE )
+
+    _presentationEngineTransform.Identity ();
+    _viewportResolution = _surfaceSize;
+
+#else
+
+#error Please specify ANDROID_NATIVE_MODE_PORTRAIT or ANDROID_NATIVE_MODE_LANDSCAPE in the preprocessor macros.
+
+#endif
 
     VkBool32 isSupported = VK_FALSE;
 
@@ -1344,13 +1474,29 @@ bool Renderer::DeploySwapchain ( bool vSync )
     swapchainCreateInfoKHR.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
     swapchainCreateInfoKHR.queueFamilyIndexCount = VK_QUEUE_FAMILY_IGNORED;
     swapchainCreateInfoKHR.pQueueFamilyIndices = nullptr;
-    swapchainCreateInfoKHR.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
-    swapchainCreateInfoKHR.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+
+    // There is no much to say but you have to consider image rotation after projection transform in your code.
+    // That's a cost for memory bandwidth saving in the mobile device world.
+    // See https://community.arm.com/developer/tools-software/graphics/b/blog/posts/appropriate-use-of-surface-rotation
+    // See https://github.com/KhronosGroup/Vulkan-Samples/blob/master/samples/performance/surface_rotation/surface_rotation_tutorial.md
+    swapchainCreateInfoKHR.preTransform = _surfaceTransform;
+
     swapchainCreateInfoKHR.clipped = VK_TRUE;
     swapchainCreateInfoKHR.oldSwapchain = VK_NULL_HANDLE;
 
     if ( !SelectTargetPresentMode ( swapchainCreateInfoKHR.presentMode, vSync ) )
+    {
+        LogError ( "Renderer::DeploySwapchain - Can't select present mode." );
+        assert ( !"Renderer::DeploySwapchain - Can't select present mode." );
         return false;
+    }
+
+    if ( !SelectTargetCompositeAlpha ( swapchainCreateInfoKHR.compositeAlpha ) )
+    {
+        LogError ( "Renderer::DeploySwapchain - Can't select composite alpha mode." );
+        assert ( !"Renderer::DeploySwapchain - Can't select composite alpha mode." );
+        return false;
+    }
 
     bool result = SelectTargetSurfaceFormat ( _surfaceFormat,
         swapchainCreateInfoKHR.imageColorSpace,
@@ -1436,7 +1582,7 @@ bool Renderer::DeploySwapchain ( bool vSync )
 
             AV_REGISTER_IMAGE_VIEW (
                 "Renderer::_swapchainImageViews[ " + std::to_string ( static_cast<int> ( i ) ) + "U ]"
-            );
+            )
 
             continue;
         }
@@ -1445,138 +1591,11 @@ bool Renderer::DeploySwapchain ( bool vSync )
         return false;
     }
 
-    VkImageCreateInfo imageCreateInfo;
-    imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    imageCreateInfo.pNext = nullptr;
-    imageCreateInfo.flags = 0U;
-    imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
-    imageCreateInfo.format = _depthStencilImageFormat;
-    imageCreateInfo.extent.width = _surfaceSize.width;
-    imageCreateInfo.extent.height = _surfaceSize.height;
-    imageCreateInfo.extent.depth = 1U;
-    imageCreateInfo.mipLevels = 1U;
-    imageCreateInfo.arrayLayers = 1U;
-    imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-    imageCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-    imageCreateInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-    imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    imageCreateInfo.queueFamilyIndexCount = VK_QUEUE_FAMILY_IGNORED;
-    imageCreateInfo.pQueueFamilyIndices = nullptr;
-    imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-
-    result = CheckVkResult ( vkCreateImage ( _device, &imageCreateInfo, nullptr, &_depthStencilImage ),
-        "Renderer::DeploySwapchain",
-        "Can't create depth stencil image"
-    );
-
-    if ( !result )
-    {
-        DestroySwapchain ();
-        return false;
-    }
-
-    AV_REGISTER_IMAGE ( "Renderer::_depthStencilImage" )
-
-    VkMemoryRequirements memoryRequirements;
-    vkGetImageMemoryRequirements ( _device, _depthStencilImage, &memoryRequirements );
-
-    VkMemoryAllocateInfo memoryAllocateInfo;
-    memoryAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-    memoryAllocateInfo.pNext = nullptr;
-    memoryAllocateInfo.allocationSize = memoryRequirements.size;
-    memoryAllocateInfo.memoryTypeIndex = 0U;
-
-    result = SelectTargetMemoryTypeIndex ( memoryAllocateInfo.memoryTypeIndex,
-        memoryRequirements,
-        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
-    );
-
-    if ( !result )
-    {
-        LogError ( "Renderer::DeploySwapchain - Can't resolve memory type index for depth|stencil image.");
-        assert ( !"Renderer::DeploySwapchain - Can't resolve memory type index for depth|stencil image." );
-        DestroySwapchain ();
-        return false;
-    }
-
-    result = CheckVkResult ( vkAllocateMemory ( _device, &memoryAllocateInfo, nullptr, &_depthStencilImageMemory ),
-        "Renderer::DeploySwapchain",
-        "Can't allocate depth stencil image memory"
-    );
-
-    if ( !result )
-    {
-        DestroySwapchain ();
-        return false;
-    }
-
-    AV_REGISTER_DEVICE_MEMORY ( "Renderer::_depthStencilImageMemory" )
-
-    result = CheckVkResult ( vkBindImageMemory ( _device, _depthStencilImage, _depthStencilImageMemory, 0U ),
-        "Renderer::DeploySwapchain",
-        "Can't bind depth stencil image with memory"
-    );
-
-    if ( !result )
-    {
-        DestroySwapchain ();
-        return false;
-    }
-
-    imageViewCreateInfo.image = _depthStencilImage;
-    imageViewCreateInfo.pNext = nullptr;
-    imageViewCreateInfo.flags = 0U;
-    imageViewCreateInfo.image = _depthStencilImage;
-    imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-    imageViewCreateInfo.format = _depthStencilImageFormat;
-    imageViewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-    imageViewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-    imageViewCreateInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-    imageViewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-    imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
-    imageViewCreateInfo.subresourceRange.layerCount = 1U;
-    imageViewCreateInfo.subresourceRange.baseArrayLayer = 0U;
-    imageViewCreateInfo.subresourceRange.levelCount = 1U;
-    imageViewCreateInfo.subresourceRange.baseMipLevel = 0U;
-
-    result = CheckVkResult ( vkCreateImageView ( _device, &imageViewCreateInfo, nullptr, &_depthStencilImageView ),
-        "Renderer::DeploySwapchain",
-        "Can't bind depth stencil image with memory"
-    );
-
-    if ( result )
-    {
-        AV_REGISTER_IMAGE_VIEW ( "Renderer::_depthStencilImageView" )
-        return true;
-    }
-
-    DestroySwapchain ();
-    return false;
+    return true;
 }
 
 void Renderer::DestroySwapchain ()
 {
-    if ( _depthStencilImageView )
-    {
-        vkDestroyImageView ( _device, _depthStencilImageView, nullptr );
-        _depthStencilImageView = VK_NULL_HANDLE;
-        AV_UNREGISTER_IMAGE_VIEW ( "Renderer::_depthStencilImageView" )
-    }
-
-    if ( _depthStencilImageMemory )
-    {
-        vkFreeMemory ( _device, _depthStencilImageMemory, nullptr );
-        _depthStencilImageMemory = VK_NULL_HANDLE;
-        AV_UNREGISTER_DEVICE_MEMORY ( "Renderer::_depthStencilImageMemory" )
-    }
-
-    if ( _depthStencilImage )
-    {
-        vkDestroyImage ( _device, _depthStencilImage, nullptr );
-        _depthStencilImage = VK_NULL_HANDLE;
-        AV_UNREGISTER_IMAGE ( "Renderer::_depthStencilImage" )
-    }
-
     const size_t count = _swapchainImageViews.size ();
 
     for ( size_t i = 0U; i < count; ++i )
@@ -1585,7 +1604,7 @@ void Renderer::DestroySwapchain ()
 
         AV_UNREGISTER_IMAGE_VIEW (
             "Renderer::_swapchainImageViews[ " + std::to_string ( static_cast<int> ( i ) ) + "U ]"
-        );
+        )
     }
 
     vkDestroySwapchainKHR ( _device, _swapchain, nullptr );
@@ -1821,7 +1840,7 @@ void Renderer::PrintPhysicalDeviceGroupInfo ( uint32_t groupIndex,
     PrintVkBool32Prop ( INDENT_1, "subsetAllocation", props.subsetAllocation );
 }
 
-bool Renderer::PrintPhysicalDeviceLayerInfo ( const VkPhysicalDevice physicalDevice ) const
+bool Renderer::PrintPhysicalDeviceLayerInfo ( VkPhysicalDevice physicalDevice ) const
 {
     uint32_t layerCount = 0U;
     vkEnumerateDeviceLayerProperties ( physicalDevice, &layerCount, nullptr );
@@ -2146,7 +2165,7 @@ bool Renderer::PrintPhysicalDeviceInfo ( uint32_t deviceIndex, VkPhysicalDevice 
     {
         const VkQueueFamilyProperties& familyProps = queueFamilyPropList[ i ];
         PrintPhysicalDeviceQueueFamilyInfo ( i, familyProps );
-        queueFamilies.push_back ( std::make_pair ( familyProps.queueFlags, familyProps.queueCount ) );
+        queueFamilies.emplace_back ( std::make_pair ( familyProps.queueFlags, familyProps.queueCount ) );
     }
 
     return true;
@@ -2276,12 +2295,7 @@ void Renderer::PrintVkSurfaceCapabilities ( const VkSurfaceCapabilitiesKHR &caps
         g_vkSurfaceTransformFlagBitsKHRMapper
     );
 
-    PrintVkFlagsProp ( INDENT_1,
-        "currentTransform",
-        caps.currentTransform,
-        g_vkSurfaceTransformFlagBitsKHRMapperItems,
-        g_vkSurfaceTransformFlagBitsKHRMapper
-    );
+    LogInfo ( "%scurrentTransform: %s", INDENT_1, ResolveVkSurfaceTransform ( caps.currentTransform ) );
 
     PrintVkFlagsProp ( INDENT_1,
         "supportedCompositeAlpha",
@@ -2348,11 +2362,15 @@ const char* Renderer::ResolvePhysicalDeviceType ( VkPhysicalDeviceType type ) co
     return findResult == _vulkanPhysicalDeviceTypeMap.cend () ? UNKNOWN_RESULT : findResult->second;
 }
 
+#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+
 const char* Renderer::ResolveVkDebugReportObjectType ( VkDebugReportObjectTypeEXT type ) const
 {
     const auto findResult = _vulkanObjectTypeMap.find ( type );
     return findResult == _vulkanObjectTypeMap.cend () ? UNKNOWN_RESULT : findResult->second;
 }
+
+#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
 const char* Renderer::ResolveVkColorSpaceKHR ( VkColorSpaceKHR colorSpace ) const
 {
@@ -2360,10 +2378,10 @@ const char* Renderer::ResolveVkColorSpaceKHR ( VkColorSpaceKHR colorSpace ) cons
     return findResult == _vulkanColorSpaceMap.cend () ? UNKNOWN_RESULT : findResult->second;
 }
 
-const char* Renderer::ResolveVkFormat ( VkFormat format ) const
+const char* Renderer::ResolveVkCompositeAlpha ( VkCompositeAlphaFlagBitsKHR compositeAlpha ) const
 {
-    const auto findResult = _vulkanFormatMap.find ( format );
-    return findResult == _vulkanFormatMap.cend () ? UNKNOWN_RESULT : findResult->second;
+    const auto findResult = _vulkanCompositeAlphaMap.find ( compositeAlpha );
+    return findResult == _vulkanCompositeAlphaMap.cend () ? UNKNOWN_RESULT : findResult->second;
 }
 
 const char* Renderer::ResolveVkPresentModeKHR ( VkPresentModeKHR mode ) const
@@ -2381,6 +2399,55 @@ const char* Renderer::ResolveVkResult ( VkResult result ) const
 
     constexpr static const char* unknownResult = "UNKNOWN";
     return unknownResult;
+}
+
+const char* Renderer::ResolveVkSurfaceTransform ( VkSurfaceTransformFlagsKHR transform ) const
+{
+    const auto findResult = _vulkanSurfaceTransformMap.find ( transform );
+
+    if ( findResult != _vulkanSurfaceTransformMap.cend () )
+        return findResult->second;
+
+    constexpr static const char* unknownResult = "UNKNOWN";
+    return unknownResult;
+}
+
+bool Renderer::SelectTargetCompositeAlpha ( VkCompositeAlphaFlagBitsKHR &targetCompositeAlpha ) const
+{
+    // Priority mode: VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR.
+    constexpr const VkCompositeAlphaFlagBitsKHR priorityMode = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+
+    const auto findResult = _physicalDeviceInfo.find ( _physicalDevice );
+    const VkSurfaceCapabilitiesKHR& surfaceCapabilitiesKHR = findResult->second._surfaceCapabilities;
+
+    targetCompositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+
+    if ( surfaceCapabilitiesKHR.supportedCompositeAlpha & priorityMode )
+    {
+        targetCompositeAlpha = priorityMode;
+    }
+    else
+    {
+        constexpr auto limit = static_cast<unsigned int> ( VK_COMPOSITE_ALPHA_FLAG_BITS_MAX_ENUM_KHR );
+        const auto available = static_cast<const unsigned int> ( surfaceCapabilitiesKHR.supportedCompositeAlpha );
+        unsigned int probe = 1U;
+
+        while ( probe != limit )
+        {
+            if ( available & probe )
+                break;
+
+            probe <<= 1U;
+        }
+
+        targetCompositeAlpha = static_cast<VkCompositeAlphaFlagBitsKHR> ( probe );
+    }
+
+    LogInfo ( "Renderer::SelectTargetCompositeAlpha - Composite alpha selected: %s.",
+        ResolveVkCompositeAlpha ( targetCompositeAlpha )
+    );
+
+    return targetCompositeAlpha != VK_COMPOSITE_ALPHA_FLAG_BITS_MAX_ENUM_KHR;
 }
 
 bool Renderer::SelectTargetHardware ( VkPhysicalDevice &targetPhysicalDevice, uint32_t &targetQueueFamilyIndex ) const
@@ -2466,7 +2533,7 @@ bool Renderer::SelectTargetSurfaceFormat ( VkFormat &targetColorFormat,
 {
     // Find sRGBA8 format.
 
-    if ( _surfaceFormats[ 0U ].format == VK_FORMAT_UNDEFINED )
+    if ( _surfaceFormats.size () == 1U && _surfaceFormats[ 0U ].format == VK_FORMAT_UNDEFINED )
     {
         targetColorFormat = VK_FORMAT_R8G8B8A8_SRGB;
         targetColorSpace = _surfaceFormats[ 0U ].colorSpace;
@@ -2533,6 +2600,8 @@ bool Renderer::SelectTargetSurfaceFormat ( VkFormat &targetColorFormat,
     return false;
 }
 
+#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+
 VkBool32 VKAPI_PTR Renderer::OnVulkanDebugReport ( VkDebugReportFlagsEXT flags,
     VkDebugReportObjectTypeEXT objectType,
     uint64_t object,
@@ -2583,7 +2652,15 @@ message: %s
         pMessage
     );
 
+#ifdef ANDROID_VULKAN_STRICT_MODE
+
+    assert ( !"Renderer::OnVulkanDebugReport - Triggered!" );
+
+#endif
+
     return VK_FALSE;
 }
+
+#endif
 
 } // namespace android_vulkan

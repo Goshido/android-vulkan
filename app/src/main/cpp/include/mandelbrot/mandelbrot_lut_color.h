@@ -10,25 +10,14 @@ namespace mandelbrot {
 class MandelbrotLUTColor final : public MandelbrotBase
 {
     private:
-        // Note VkDescriptorPool is a VK_DEFINE_NON_DISPATCHABLE_HANDLE type.
         VkDescriptorPool            _descriptorPool;
-
-        // Note VkDescriptorSet is a VK_DEFINE_NON_DISPATCHABLE_HANDLE type.
         VkDescriptorSet             _descriptorSet;
-
-        // Note VkDescriptorSetLayout is a VK_DEFINE_NON_DISPATCHABLE_HANDLE type.
         VkDescriptorSetLayout       _descriptorSetLayout;
 
-        // Note VkImage is a VK_DEFINE_NON_DISPATCHABLE_HANDLE type.
         VkImage                     _lut;
-
-        // Note VkDeviceMemory is a VK_DEFINE_NON_DISPATCHABLE_HANDLE type.
         VkDeviceMemory              _lutDeviceMemory;
-
-        // Note VkImageView is a VK_DEFINE_NON_DISPATCHABLE_HANDLE type.
         VkImageView                 _lutView;
 
-        // Note VkSampler is a VK_DEFINE_NON_DISPATCHABLE_HANDLE type.
         VkSampler                   _sampler;
 
     public:
@@ -55,15 +44,6 @@ class MandelbrotLUTColor final : public MandelbrotBase
         void DestroyLUT ( android_vulkan::Renderer &renderer );
 
         void InitLUTSamples ( uint8_t* samples ) const;
-
-        bool TryAllocateMemory ( VkDeviceMemory &memory,
-            android_vulkan::Renderer &renderer,
-            const VkMemoryRequirements &requirements,
-            VkMemoryPropertyFlags memoryProperties,
-            const char* where,
-            const char* checkFailMessage
-        ) const;
-
         bool UploadLUTSamples ( android_vulkan::Renderer &renderer );
 };
 

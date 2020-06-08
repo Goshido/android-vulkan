@@ -1,4 +1,11 @@
 #include <core.h>
+
+GX_DISABLE_COMMON_WARNINGS
+
+#include <map>
+
+GX_RESTORE_WARNING_STATE
+
 #include "vulkan_utils.h"
 
 
@@ -20,7 +27,7 @@ Core::Core ( android_app &app, Game &game ):
 
 bool Core::IsSuspend () const
 {
-    return _renderer.IsReady ();
+    return !_renderer.IsReady ();
 }
 
 void Core::OnFrame ()
@@ -31,10 +38,27 @@ void Core::OnFrame ()
     const timestamp now = std::chrono::system_clock::now ();
     const std::chrono::duration<double> delta = now - _frameTimestamp;
 
-    _game.OnFrame ( _renderer, delta.count () );
+    if ( _renderer.CheckSwapchainStatus () )
+        _game.OnFrame ( _renderer, delta.count () );
 
     _frameTimestamp = now;
     UpdateFPS ( now );
+}
+
+void Core::UpdateFPS ( timestamp now )
+{
+    static uint32_t frameCount = 0U;
+    ++frameCount;
+
+    const std::chrono::duration<double> seconds = now - _fpsTimestamp;
+    const double delta = seconds.count ();
+
+    if ( delta < FPS_PERIOD )
+        return;
+
+    LogInfo ( "FPS: %g", frameCount / delta );
+    _fpsTimestamp = now;
+    frameCount = 0U;
 }
 
 void Core::ActivateFullScreen ( android_app &app )
@@ -64,27 +88,16 @@ void Core::ActivateFullScreen ( android_app &app )
     const int flagFullscreen = env->GetStaticIntField ( viewClass, flagFullscreenID );
     const int flagHideNavigation = env->GetStaticIntField ( viewClass, flagHideNavigationID );
     const int flagImmersiveSticky = env->GetStaticIntField ( viewClass, flagImmersiveStickyID );
-    const int flag = flagFullscreen | flagHideNavigation | flagImmersiveSticky;
+
+    const int flag = static_cast<int> (
+        static_cast<uint> ( flagFullscreen ) |
+        static_cast<uint> ( flagHideNavigation ) |
+        static_cast<uint> ( flagImmersiveSticky )
+    );
 
     env->CallVoidMethod ( decorView, setSystemUiVisibility, flag );
 
     app.activity->vm->DetachCurrentThread ();
-}
-
-void Core::UpdateFPS ( timestamp now )
-{
-    static uint32_t frameCount = 0U;
-    ++frameCount;
-
-    const std::chrono::duration<double> seconds = now - _fpsTimestamp;
-    const double delta = seconds.count ();
-
-    if ( delta < FPS_PERIOD )
-        return;
-
-    LogInfo ( "FPS: %g", frameCount / delta );
-    _fpsTimestamp = now;
-    frameCount = 0U;
 }
 
 void Core::OnOSCommand ( android_app* app, int32_t cmd )
@@ -101,7 +114,7 @@ void Core::OnOSCommand ( android_app* app, int32_t cmd )
             core._frameTimestamp = core._fpsTimestamp;
         break;
 
-        case APP_CMD_LOST_FOCUS:
+        case APP_CMD_TERM_WINDOW:
             core._game.OnDestroy ( core._renderer );
             core._renderer.OnDestroy ();
             AV_CHECK_VULKAN_LEAKS ()

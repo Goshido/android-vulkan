@@ -1,8 +1,41 @@
+#include <GXCommon/GXWarning.h>
+
+GX_DISABLE_COMMON_WARNINGS
+
 #include <android_native_app_glue.h>
+
+GX_RESTORE_WARNING_STATE
+
 #include <core.h>
 #include <logger.h>
+#include <mandelbrot/mandelbrot_analytic_color.h>
 #include <mandelbrot/mandelbrot_lut_color.h>
+#include <rainbow/rainbow.h>
+#include <rotating_mesh/game_analytic.h>
+#include <rotating_mesh/game_lut.h>
 
+
+namespace android_vulkan {
+
+enum class eGame : uint16_t
+{
+    MandelbrotAnalyticColor,
+    MandelbrotLutColor,
+    Rainbow,
+    RotatingMeshAnalytic,
+    RotatingMeshLUT
+};
+
+static const std::map<eGame, std::shared_ptr<Game>> g_Games =
+{
+    { eGame::MandelbrotAnalyticColor, std::make_shared<mandelbrot::MandelbrotAnalyticColor> () },
+    { eGame::MandelbrotLutColor, std::make_shared<mandelbrot::MandelbrotLUTColor> () },
+    { eGame::Rainbow, std::make_shared<rainbow::Rainbow> () },
+    { eGame::RotatingMeshAnalytic, std::make_shared<rotating_mesh::GameAnalytic> () },
+    { eGame::RotatingMeshLUT, std::make_shared<rotating_mesh::GameLUT> () }
+};
+
+} // namespace android_vulkan
 
 void android_main ( android_app* app )
 {
@@ -13,8 +46,9 @@ void android_main ( android_app* app )
 
 #endif // ANDROID_VULKAN_DEBUG
 
-    mandelbrot::MandelbrotLUTColor mandelbrotLUTColorGame;
-    android_vulkan::Core core ( *app, mandelbrotLUTColorGame );
+    android_vulkan::Core core ( *app,
+        *( android_vulkan::g_Games.find ( android_vulkan::eGame::RotatingMeshLUT )->second )
+    );
 
     for ( ; ; )
     {
@@ -23,7 +57,7 @@ void android_main ( android_app* app )
             int events;
             android_poll_source* source;
 
-            const int pollResult = ALooper_pollAll ( core.IsSuspend () ? 0 : -1,
+            const int pollResult = ALooper_pollAll ( core.IsSuspend () ? -1 : 0,
                 nullptr,
                 &events,
                 reinterpret_cast<void**> ( &source )

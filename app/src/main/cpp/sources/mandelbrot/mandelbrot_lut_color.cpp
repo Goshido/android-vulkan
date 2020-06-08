@@ -1,8 +1,14 @@
 #include <mandelbrot/mandelbrot_lut_color.h>
+
+GX_DISABLE_COMMON_WARNINGS
+
 #include <array>
 #include <cassert>
 #include <cmath>
 #include <thread>
+
+GX_RESTORE_WARNING_STATE
+
 #include <vulkan_utils.h>
 
 
@@ -53,6 +59,14 @@ bool MandelbrotLUTColor::OnInit ( android_vulkan::Renderer &renderer )
 
 bool MandelbrotLUTColor::OnDestroy ( android_vulkan::Renderer &renderer )
 {
+    const bool result = renderer.CheckVkResult ( vkQueueWaitIdle ( renderer.GetQueue () ),
+        "MandelbrotLUTColor::OnDestroy",
+        "Can't wait queue idle"
+    );
+
+    if ( !result )
+        return false;
+
     DestroyCommandBuffer ( renderer );
     DestroyDescriptorSet ( renderer );
     DestroyLUT ( renderer );
@@ -75,7 +89,7 @@ bool MandelbrotLUTColor::CreatePipelineLayout ( android_vulkan::Renderer &render
     descriptorSetInfo.bindingCount = 1U;
     descriptorSetInfo.pBindings = &binding;
 
-    const VkDevice device = renderer.GetDevice ();
+    VkDevice device = renderer.GetDevice ();
 
     bool result = renderer.CheckVkResult (
         vkCreateDescriptorSetLayout ( renderer.GetDevice (), &descriptorSetInfo, nullptr, &_descriptorSetLayout ),
@@ -112,7 +126,7 @@ bool MandelbrotLUTColor::CreatePipelineLayout ( android_vulkan::Renderer &render
 
 void MandelbrotLUTColor::DestroyPipelineLayout ( android_vulkan::Renderer &renderer )
 {
-    const VkDevice device = renderer.GetDevice ();
+    VkDevice device = renderer.GetDevice ();
 
     if ( _pipelineLayout != VK_NULL_HANDLE )
     {
@@ -131,7 +145,7 @@ void MandelbrotLUTColor::DestroyPipelineLayout ( android_vulkan::Renderer &rende
 
 bool MandelbrotLUTColor::CreateCommandBuffer ( android_vulkan::Renderer &renderer )
 {
-    const size_t framebufferCount = renderer.GetPresentFramebufferCount ();
+    const size_t framebufferCount = _framebuffers.size ();
     _commandBuffer.resize ( framebufferCount );
 
     VkCommandBufferAllocateInfo commandBufferInfo;
@@ -156,34 +170,28 @@ bool MandelbrotLUTColor::CreateCommandBuffer ( android_vulkan::Renderer &rendere
     VkCommandBufferBeginInfo commandBufferBeginInfo;
     commandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     commandBufferBeginInfo.pNext = nullptr;
-    commandBufferBeginInfo.flags = 0U;
+    commandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
     commandBufferBeginInfo.pInheritanceInfo = nullptr;
 
-    VkClearValue clearValues[ 2U ];
-    VkClearValue& colorClearValue = clearValues[ 0U ];
+    VkClearValue colorClearValue;
     colorClearValue.color.float32[ 0U ] = 0.0F;
     colorClearValue.color.float32[ 1U ] = 0.0F;
     colorClearValue.color.float32[ 2U ] = 0.0F;
     colorClearValue.color.float32[ 3U ] = 1.0F;
 
-    VkClearValue& depthStencilClearValue = clearValues[ 1U ];
-    depthStencilClearValue.depthStencil.depth = 1.0F;
-    depthStencilClearValue.depthStencil.stencil = 0U;
-
     VkRenderPassBeginInfo renderPassBeginInfo;
     renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     renderPassBeginInfo.pNext = nullptr;
     renderPassBeginInfo.renderPass = _renderPass;
-
     renderPassBeginInfo.renderArea.offset.x = 0;
     renderPassBeginInfo.renderArea.offset.y = 0;
     renderPassBeginInfo.renderArea.extent = renderer.GetSurfaceSize ();
-    renderPassBeginInfo.clearValueCount = 2U;
-    renderPassBeginInfo.pClearValues = clearValues;
+    renderPassBeginInfo.clearValueCount = 1U;
+    renderPassBeginInfo.pClearValues = &colorClearValue;
 
     for ( size_t i = 0U; i < framebufferCount; ++i )
     {
-        const VkCommandBuffer commandBuffer = _commandBuffer[ i ];
+        VkCommandBuffer commandBuffer = _commandBuffer[ i ];
 
         result = renderer.CheckVkResult ( vkBeginCommandBuffer ( commandBuffer, &commandBufferBeginInfo ),
             "MandelbrotLUTColor::CreateCommandBuffer",
@@ -196,7 +204,7 @@ bool MandelbrotLUTColor::CreateCommandBuffer ( android_vulkan::Renderer &rendere
             return false;
         }
 
-        renderPassBeginInfo.framebuffer = renderer.GetPresentFramebuffer ( static_cast<uint32_t> ( i ) );
+        renderPassBeginInfo.framebuffer = _framebuffers[ i ];
 
         vkCmdBeginRenderPass ( commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE );
         vkCmdBindPipeline ( commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline );
@@ -246,7 +254,7 @@ bool MandelbrotLUTColor::CreateDescriptorSet (  android_vulkan::Renderer &render
     poolInfo.poolSizeCount = 1U;
     poolInfo.pPoolSizes = &poolSize;
 
-    const VkDevice device = renderer.GetDevice ();
+    VkDevice device = renderer.GetDevice ();
 
     bool result = renderer.CheckVkResult ( vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_descriptorPool ),
         "MandelbrotLUTColor::CreateDescriptorSet",
@@ -328,7 +336,7 @@ bool MandelbrotLUTColor::CreateLUT ( android_vulkan::Renderer &renderer )
     imageInfo.queueFamilyIndexCount = 0U;
     imageInfo.pQueueFamilyIndices = nullptr;
 
-    const VkDevice device = renderer.GetDevice ();
+    VkDevice device = renderer.GetDevice ();
 
     bool result = renderer.CheckVkResult ( vkCreateImage ( device, &imageInfo, nullptr, &_lut ),
         "MandelbrotLUTColor::CreateLUT",
@@ -343,12 +351,10 @@ bool MandelbrotLUTColor::CreateLUT ( android_vulkan::Renderer &renderer )
     VkMemoryRequirements requirements;
     vkGetImageMemoryRequirements ( device, _lut, &requirements );
 
-    result = TryAllocateMemory ( _lutDeviceMemory,
-        renderer,
+    result = renderer.TryAllocateMemory ( _lutDeviceMemory,
         requirements,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-        "MandelbrotLUTColor::_lutDeviceMemory",
-        "Can't allocate LUT memory"
+        "Can't allocate LUT memory (MandelbrotLUTColor::CreateLUT)"
     );
 
     if ( !result )
@@ -356,6 +362,8 @@ bool MandelbrotLUTColor::CreateLUT ( android_vulkan::Renderer &renderer )
         DestroyLUT ( renderer );
         return false;
     }
+
+    AV_REGISTER_DEVICE_MEMORY ( "MandelbrotLUTColor::_lutDeviceMemory" )
 
     result = renderer.CheckVkResult ( vkBindImageMemory ( device, _lut, _lutDeviceMemory, 0U ),
         "MandelbrotLUTColor::_lutDeviceMemory",
@@ -436,7 +444,7 @@ bool MandelbrotLUTColor::CreateLUT ( android_vulkan::Renderer &renderer )
 
 void MandelbrotLUTColor::DestroyLUT ( android_vulkan::Renderer &renderer )
 {
-    const VkDevice device = renderer.GetDevice ();
+    VkDevice device = renderer.GetDevice ();
 
     if ( _sampler != VK_NULL_HANDLE )
     {
@@ -479,7 +487,7 @@ void MandelbrotLUTColor::InitLUTSamples ( uint8_t* samples ) const
 
         auto evaluator = [] ( float angle ) -> uint8_t {
             const float n = std::sinf ( angle ) * 0.5F + 0.5F;
-            return static_cast<uint8_t> ( n * 255.0F + 0.5F );
+            return static_cast<uint8_t> ( std::lroundf ( n * 255.0F ) );
         };
 
         const size_t limit = startIndex + samplePerThread;
@@ -509,43 +517,9 @@ void MandelbrotLUTColor::InitLUTSamples ( uint8_t* samples ) const
     }
 }
 
-bool MandelbrotLUTColor::TryAllocateMemory ( VkDeviceMemory &memory,
-    android_vulkan::Renderer &renderer,
-    const VkMemoryRequirements &requirements,
-    VkMemoryPropertyFlags memoryProperties,
-    const char* where,
-    const char* checkFailMessage
-) const
-{
-    VkMemoryAllocateInfo allocateInfo;
-    allocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-    allocateInfo.pNext = nullptr;
-    allocateInfo.allocationSize = requirements.size;
-
-    bool result = renderer.SelectTargetMemoryTypeIndex ( allocateInfo.memoryTypeIndex,
-        requirements,
-        memoryProperties
-    );
-
-    if ( !result )
-        return false;
-
-    result = renderer.CheckVkResult (
-        vkAllocateMemory ( renderer.GetDevice (), &allocateInfo, nullptr, &memory ),
-        "MandelbrotLUTColor::TryAllocateMemory",
-        checkFailMessage
-    );
-
-    if ( !result )
-        return false;
-
-    AV_REGISTER_DEVICE_MEMORY ( std::move ( where ) )
-    return true;
-}
-
 bool MandelbrotLUTColor::UploadLUTSamples ( android_vulkan::Renderer &renderer )
 {
-    const VkDevice device = renderer.GetDevice ();
+    VkDevice device = renderer.GetDevice ();
 
     VkBufferCreateInfo bufferInfo;
     bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -574,12 +548,10 @@ bool MandelbrotLUTColor::UploadLUTSamples ( android_vulkan::Renderer &renderer )
 
     VkDeviceMemory transferDeviceMemory = VK_NULL_HANDLE;
 
-    result = TryAllocateMemory ( transferDeviceMemory,
-        renderer,
+    result = renderer.TryAllocateMemory ( transferDeviceMemory,
         requirements,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-        "MandelbrotLUTColor::UploadLUTSamples::transferDeviceMemory",
-        "Can't allocate transfer memory"
+        "Can't allocate transfer memory (MandelbrotLUTColor::UploadLUTSamples)"
     );
 
     auto freeTransferResource = [ & ] () {
@@ -598,6 +570,8 @@ bool MandelbrotLUTColor::UploadLUTSamples ( android_vulkan::Renderer &renderer )
         freeTransferResource ();
         return false;
     }
+
+    AV_REGISTER_DEVICE_MEMORY ( "MandelbrotLUTColor::UploadLUTSamples::transferDeviceMemory" )
 
     result = renderer.CheckVkResult ( vkBindBufferMemory ( device, transfer, transferDeviceMemory, 0U ),
         "MandelbrotLUTColor::CreateLUT",
@@ -711,7 +685,7 @@ bool MandelbrotLUTColor::UploadLUTSamples ( android_vulkan::Renderer &renderer )
     barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
     barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
     barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-    barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+    barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
     barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -752,7 +726,7 @@ bool MandelbrotLUTColor::UploadLUTSamples ( android_vulkan::Renderer &renderer )
     submitInfo.signalSemaphoreCount = 0U;
     submitInfo.pSignalSemaphores = nullptr;
 
-    const VkQueue queue = renderer.GetQueue ();
+    VkQueue queue = renderer.GetQueue ();
 
     result = renderer.CheckVkResult (
         vkQueueSubmit ( queue, 1U, &submitInfo, VK_NULL_HANDLE ),

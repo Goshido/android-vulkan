@@ -2,8 +2,15 @@
 #define ANDROID_VULKAN_CORE_H
 
 
+#include <GXCommon/GXWarning.h>
+
+GX_DISABLE_COMMON_WARNINGS
+
 #include <chrono>
 #include <android_native_app_glue.h>
+
+GX_RESTORE_WARNING_STATE
+
 #include "game.h"
 
 
@@ -31,9 +38,9 @@ class Core final
         void OnFrame ();
 
     private:
-        void ActivateFullScreen ( android_app &app );
         void UpdateFPS ( timestamp now );
 
+        static void ActivateFullScreen ( android_app &app );
         static void OnOSCommand ( android_app* app, int32_t cmd );
 };
 

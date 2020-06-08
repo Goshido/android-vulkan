@@ -1,5 +1,11 @@
 #include <mandelbrot/mandelbrot_base.h>
+
+GX_DISABLE_COMMON_WARNINGS
+
 #include <cmath>
+
+GX_RESTORE_WARNING_STATE
+
 #include <file.h>
 #include <vulkan_utils.h>
 
@@ -13,13 +19,19 @@ constexpr static const char* FRAGMENT_SHADER_ENTRY_POINT = "PS";
 
 bool MandelbrotBase::IsReady ()
 {
-    return _presentationSemaphore != VK_NULL_HANDLE;
+    return _renderPassEndedSemaphore != VK_NULL_HANDLE;
 }
 
 bool MandelbrotBase::OnInit ( android_vulkan::Renderer &renderer )
 {
     if ( !CreateRenderPass ( renderer ) )
         return false;
+
+    if ( !CreateFramebuffers ( renderer ) )
+    {
+        OnDestroy ( renderer );
+        return false;
+    }
 
     if ( !CreatePresentationSyncPrimitive ( renderer ) )
     {
@@ -49,19 +61,21 @@ bool MandelbrotBase::OnFrame ( android_vulkan::Renderer &renderer, double /*delt
 
     VkCommandBuffer commandBuffer = _commandBuffer[ static_cast<size_t> ( presentationImageIndex ) ];
 
+    constexpr const VkPipelineStageFlags waitFlags = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+
     VkSubmitInfo submitInfo;
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     submitInfo.pNext = nullptr;
-    submitInfo.waitSemaphoreCount = 0U;
-    submitInfo.pWaitSemaphores = nullptr;
-    submitInfo.pWaitDstStageMask = nullptr;
+    submitInfo.waitSemaphoreCount = 1U;
+    submitInfo.pWaitSemaphores = &_renderTargetAcquiredSemaphore;
+    submitInfo.pWaitDstStageMask = &waitFlags;
     submitInfo.commandBufferCount = 1U;
     submitInfo.pCommandBuffers = &commandBuffer;
     submitInfo.signalSemaphoreCount = 1U;
-    submitInfo.pSignalSemaphores = &_presentationSemaphore;
+    submitInfo.pSignalSemaphores = &_renderPassEndedSemaphore;
 
     const bool result = renderer.CheckVkResult (
-        vkQueueSubmit ( renderer.GetQueue (), 1U, &submitInfo, _presentationFence ),
+        vkQueueSubmit ( renderer.GetQueue (), 1U, &submitInfo, VK_NULL_HANDLE ),
         "MandelbrotBase::OnFrame",
         "Can't submit command buffer"
     );
@@ -77,18 +91,21 @@ bool MandelbrotBase::OnDestroy ( android_vulkan::Renderer &renderer )
     DestroyCommandPool ( renderer );
     DestroyPipeline ( renderer );
     DestroyPresentationSyncPrimitive ( renderer );
+    DestroyFramebuffers ( renderer );
     DestroyRenderPass ( renderer );
 
     return true;
 }
 
 MandelbrotBase::MandelbrotBase ( const char* fragmentShaderSpirV ):
+    _commandBuffer {},
     _commandPool ( VK_NULL_HANDLE ),
+    _framebuffers {},
     _pipeline ( VK_NULL_HANDLE ),
     _pipelineLayout ( VK_NULL_HANDLE ),
     _renderPass ( VK_NULL_HANDLE ),
-    _presentationFence ( VK_NULL_HANDLE ),
-    _presentationSemaphore ( VK_NULL_HANDLE ),
+    _renderPassEndedSemaphore ( VK_NULL_HANDLE ),
+    _renderTargetAcquiredSemaphore ( VK_NULL_HANDLE ),
     _vertexShader ( VK_NULL_HANDLE ),
     _fragmentShader ( VK_NULL_HANDLE ),
     _fragmentShaderSpirV ( fragmentShaderSpirV )
@@ -98,43 +115,17 @@ MandelbrotBase::MandelbrotBase ( const char* fragmentShaderSpirV ):
 
 bool MandelbrotBase::BeginFrame ( uint32_t &presentationImageIndex, android_vulkan::Renderer &renderer )
 {
-    const VkDevice device = renderer.GetDevice ();
-
-    bool result = renderer.CheckVkResult (
-        vkAcquireNextImageKHR ( device,
+    return renderer.CheckVkResult (
+        vkAcquireNextImageKHR ( renderer.GetDevice (),
             renderer.GetSwapchain (),
             UINT64_MAX,
+            _renderTargetAcquiredSemaphore,
             VK_NULL_HANDLE,
-            _presentationFence,
             &presentationImageIndex
         ),
 
         "MandelbrotBase::BeginFrame",
         "Can't acquire next image"
-    );
-
-    if ( !result )
-        return false;
-
-    result = renderer.CheckVkResult ( vkWaitForFences ( device, 1U, &_presentationFence, VK_TRUE, UINT64_MAX ),
-        "MandelbrotBase::BeginFrame",
-        "Waiting fence has been failed"
-    );
-
-    if ( !result )
-        return false;
-
-    result = renderer.CheckVkResult ( vkResetFences ( device, 1U, &_presentationFence ),
-        "Rainbow::BeginFrame",
-        "Resetting fence has been failed"
-    );
-
-    if ( !result )
-        return false;
-
-    return renderer.CheckVkResult ( vkQueueWaitIdle ( renderer.GetQueue () ),
-        "MandelbrotBase::BeginFrame",
-        "Waiting queue idle has been failed"
     );
 }
 
@@ -146,22 +137,21 @@ bool MandelbrotBase::EndFrame ( uint32_t presentationImageIndex, android_vulkan:
     presentInfoKHR.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
     presentInfoKHR.pNext = nullptr;
     presentInfoKHR.waitSemaphoreCount = 1U;
-    presentInfoKHR.pWaitSemaphores = &_presentationSemaphore;
+    presentInfoKHR.pWaitSemaphores = &_renderPassEndedSemaphore;
     presentInfoKHR.swapchainCount = 1U;
     presentInfoKHR.pSwapchains = &renderer.GetSwapchain ();
     presentInfoKHR.pImageIndices = &presentationImageIndex;
     presentInfoKHR.pResults = &presentResult;
 
-    // Note vkQueuePresentKHR may return VK_SUBOPTIMAL_KHR right before application is minimized.
-    const VkResult mainResult = vkQueuePresentKHR ( renderer.GetQueue (), &presentInfoKHR );
+    const bool result = renderer.CheckVkResult ( vkQueuePresentKHR ( renderer.GetQueue (), &presentInfoKHR ),
+        "MandelbrotBase::EndFrame",
+        "Can't present frame"
+    );
 
-    if ( mainResult == VK_SUBOPTIMAL_KHR )
-        return true;
-
-    if ( !renderer.CheckVkResult ( mainResult, "Rainbow::EndFrame", "Can't present frame" ) )
+    if ( !result )
         return false;
 
-    return renderer.CheckVkResult ( presentResult, "Rainbow::EndFrame", "Present queue has been failed" );
+    return renderer.CheckVkResult ( presentResult, "MandelbrotBase::EndFrame", "Present queue has been failed" );
 }
 
 bool MandelbrotBase::CreateCommandPool ( android_vulkan::Renderer &renderer )
@@ -170,9 +160,9 @@ bool MandelbrotBase::CreateCommandPool ( android_vulkan::Renderer &renderer )
     commandPoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
     commandPoolInfo.pNext = nullptr;
     commandPoolInfo.queueFamilyIndex = renderer.GetQueueFamilyIndex ();
-    commandPoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT | VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
+    commandPoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
-    const VkDevice device = renderer.GetDevice ();
+    VkDevice device = renderer.GetDevice ();
 
     bool result = renderer.CheckVkResult (
         vkCreateCommandPool ( device, &commandPoolInfo, nullptr, &_commandPool ),
@@ -199,81 +189,140 @@ bool MandelbrotBase::DestroyCommandPool ( android_vulkan::Renderer &renderer )
     return true;
 }
 
+bool MandelbrotBase::CreateFramebuffers ( android_vulkan::Renderer &renderer )
+{
+    VkDevice device = renderer.GetDevice ();
+
+    const size_t presentationImageCount = renderer.GetPresentImageCount ();
+    _framebuffers.reserve ( presentationImageCount );
+
+    const VkExtent2D& resolution = renderer.GetSurfaceSize ();
+
+    VkFramebufferCreateInfo createInfo;
+    createInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+    createInfo.pNext = nullptr;
+    createInfo.flags = 0U;
+    createInfo.renderPass = _renderPass;
+    createInfo.width = resolution.width;
+    createInfo.height = resolution.height;
+    createInfo.attachmentCount = 1U;
+    createInfo.layers = 1U;
+
+    VkFramebuffer framebuffer = VK_NULL_HANDLE;
+
+    for ( size_t i = 0U; i < presentationImageCount; ++i )
+    {
+        createInfo.pAttachments = &renderer.GetPresentImageView ( i );
+
+        bool result = renderer.CheckVkResult ( vkCreateFramebuffer ( device, &createInfo, nullptr, &framebuffer ),
+            "MandelbrotBase::CreateFramebuffers",
+            "Can't create framebuffer"
+        );
+
+        if ( !result )
+            return false;
+
+        _framebuffers.push_back ( framebuffer );
+        AV_REGISTER_FRAMEBUFFER ( "MandelbrotBase::_framebuffers" )
+    }
+
+    return true;
+}
+
+bool MandelbrotBase::DestroyFramebuffers ( android_vulkan::Renderer &renderer )
+{
+    if ( _framebuffers.empty () )
+        return true;
+
+    VkDevice device = renderer.GetDevice ();
+
+    for ( const auto framebuffer : _framebuffers )
+    {
+        vkDestroyFramebuffer ( device, framebuffer, nullptr );
+        AV_UNREGISTER_FRAMEBUFFER ( "MandelbrotBase::_framebuffers" )
+    }
+
+    _framebuffers.clear ();
+    return true;
+}
+
 bool MandelbrotBase::CreatePresentationSyncPrimitive ( android_vulkan::Renderer &renderer )
 {
-    VkFenceCreateInfo fenceCreateInfo;
-    fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-    fenceCreateInfo.pNext = nullptr;
-    fenceCreateInfo.flags = 0U;
-
-    const VkDevice device = renderer.GetDevice ();
-
-    bool result = renderer.CheckVkResult ( vkCreateFence ( device, &fenceCreateInfo, nullptr, &_presentationFence ),
-        "MandelbrotBase::CreatePresentationSyncPrimitive",
-        "Can't crate fence"
-    );
-
-    if ( !result )
-        return false;
-
-    AV_REGISTER_FENCE ( "MandelbrotBase::_presentationFence" )
+    VkDevice device = renderer.GetDevice ();
 
     VkSemaphoreCreateInfo semaphoreCreateInfo;
     semaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
     semaphoreCreateInfo.pNext = nullptr;
     semaphoreCreateInfo.flags = 0U;
 
-    result = renderer.CheckVkResult (
-        vkCreateSemaphore ( device, &semaphoreCreateInfo, nullptr, &_presentationSemaphore ),
+    bool result = renderer.CheckVkResult (
+        vkCreateSemaphore ( device, &semaphoreCreateInfo, nullptr, &_renderTargetAcquiredSemaphore ),
         "MandelbrotBase::CreatePresentationSyncPrimitive",
-        "Can't create semaphore"
+        "Can't create render target acquired semaphore"
     );
 
-    if ( result )
+    if ( !result )
     {
-        AV_REGISTER_SEMAPHORE ( "MandelbrotBase::_presentationSemaphore" )
-        return true;
+        DestroyPresentationSyncPrimitive ( renderer );
+        return false;
     }
 
-    DestroyPresentationSyncPrimitive ( renderer );
-    return false;
+    AV_REGISTER_SEMAPHORE ( "MandelbrotBase::_renderTargetAcquiredSemaphore" )
+
+    result = renderer.CheckVkResult (
+        vkCreateSemaphore ( device, &semaphoreCreateInfo, nullptr, &_renderPassEndedSemaphore ),
+        "MandelbrotBase::CreatePresentationSyncPrimitive",
+        "Can't create render pass ended semaphore"
+    );
+
+    if ( !result )
+    {
+        DestroyPresentationSyncPrimitive ( renderer );
+        return false;
+    }
+
+    AV_REGISTER_SEMAPHORE ( "MandelbrotBase::_renderPassEndedSemaphore" )
+    return true;
 }
 
 void MandelbrotBase::DestroyPresentationSyncPrimitive ( android_vulkan::Renderer &renderer )
 {
-    const VkDevice device = renderer.GetDevice ();
+    VkDevice device = renderer.GetDevice ();
 
-    if ( _presentationFence )
+    if ( _renderPassEndedSemaphore != VK_NULL_HANDLE )
     {
-        vkDestroyFence ( device, _presentationFence, nullptr );
-        _presentationFence = VK_NULL_HANDLE;
-        AV_UNREGISTER_FENCE ( "MandelbrotBase::_presentationFence" )
+        vkDestroySemaphore ( device, _renderPassEndedSemaphore, nullptr );
+        _renderPassEndedSemaphore = VK_NULL_HANDLE;
+        AV_UNREGISTER_SEMAPHORE ( "MandelbrotBase::_renderPassEndedSemaphore" )
     }
 
-    if ( !_presentationSemaphore )
+    if ( _renderTargetAcquiredSemaphore == VK_NULL_HANDLE )
         return;
 
-    vkDestroySemaphore ( device, _presentationSemaphore, nullptr );
-    _presentationSemaphore = VK_NULL_HANDLE;
-    AV_UNREGISTER_SEMAPHORE ( "MandelbrotBase::_presentationSemaphore" )
+    vkDestroySemaphore ( device, _renderTargetAcquiredSemaphore, nullptr );
+    _renderTargetAcquiredSemaphore = VK_NULL_HANDLE;
+    AV_UNREGISTER_SEMAPHORE ( "MandelbrotBase::_renderTargetAcquiredSemaphore" )
 }
 
 bool MandelbrotBase::CreatePipeline ( android_vulkan::Renderer &renderer )
 {
-    if ( !CreateShader ( _vertexShader, VERTEX_SHADER, renderer ) )
-    {
-        android_vulkan::LogError ( "MandelbrotBase::CreatePipeline - Can't create vertex shader." );
+    bool result = renderer.CreateShader ( _vertexShader,
+        VERTEX_SHADER,
+        "Can't create vertex shader (MandelbrotBase::CreatePipeline)"
+    );
+
+    if ( !result )
         return false;
-    }
 
     AV_REGISTER_SHADER_MODULE ( "MandelbrotBase::_vertexShader" )
 
-    if ( !CreateShader ( _fragmentShader, _fragmentShaderSpirV, renderer ) )
-    {
-        android_vulkan::LogError ( "MandelbrotBase::CreatePipeline - Can't create fragment shader %s.",
-            _fragmentShaderSpirV
-        );
+    result = renderer.CreateShader ( _fragmentShader,
+        _fragmentShaderSpirV,
+        "Can't create fragment shader (MandelbrotBase::CreatePipeline)"
+    );
 
+    if ( !result )
+    {
         DestroyPipeline ( renderer );
         return false;
     }
@@ -364,7 +413,17 @@ bool MandelbrotBase::CreatePipeline ( android_vulkan::Renderer &renderer )
     colorBlendAttachmentInfo.blendEnable = VK_FALSE;
 
     colorBlendAttachmentInfo.colorWriteMask =
-        VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+        AV_VK_FLAG ( VK_COLOR_COMPONENT_R_BIT ) |
+        AV_VK_FLAG ( VK_COLOR_COMPONENT_G_BIT ) |
+        AV_VK_FLAG ( VK_COLOR_COMPONENT_B_BIT ) |
+        AV_VK_FLAG ( VK_COLOR_COMPONENT_A_BIT );
+
+    colorBlendAttachmentInfo.colorBlendOp = VK_BLEND_OP_ADD;
+    colorBlendAttachmentInfo.alphaBlendOp = VK_BLEND_OP_ADD;
+    colorBlendAttachmentInfo.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
+    colorBlendAttachmentInfo.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+    colorBlendAttachmentInfo.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
+    colorBlendAttachmentInfo.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
 
     VkPipelineColorBlendStateCreateInfo colorBlendStateInfo;
     colorBlendStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
@@ -403,13 +462,13 @@ bool MandelbrotBase::CreatePipeline ( android_vulkan::Renderer &renderer )
     pipelineInfo.pColorBlendState = &colorBlendStateInfo;
     pipelineInfo.pDepthStencilState = &depthStencilInfo;
     pipelineInfo.layout = _pipelineLayout;
-    pipelineInfo.renderPass = renderer.GetPresentRenderPass ();
+    pipelineInfo.renderPass = _renderPass;
     pipelineInfo.subpass = 0U;
     pipelineInfo.pTessellationState = nullptr;
     pipelineInfo.pDynamicState = nullptr;
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 
-    const bool result = renderer.CheckVkResult (
+    result = renderer.CheckVkResult (
         vkCreateGraphicsPipelines ( renderer.GetDevice (), VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
         "MandelbrotBase::CreatePipeline",
         "Can't create pipeline"
@@ -427,7 +486,7 @@ bool MandelbrotBase::CreatePipeline ( android_vulkan::Renderer &renderer )
 
 void MandelbrotBase::DestroyPipeline ( android_vulkan::Renderer &renderer )
 {
-    const VkDevice device = renderer.GetDevice ();
+    VkDevice device = renderer.GetDevice ();
 
     if ( _pipeline != VK_NULL_HANDLE )
     {
@@ -514,32 +573,6 @@ void MandelbrotBase::DestroyRenderPass ( android_vulkan::Renderer &renderer )
     vkDestroyRenderPass ( renderer.GetDevice (), _renderPass, nullptr );
     _renderPass = VK_NULL_HANDLE;
     AV_UNREGISTER_RENDER_PASS ( "MandelbrotBase::_renderPass" )
-}
-
-bool MandelbrotBase::CreateShader ( VkShaderModule &shader,
-    const char* shaderFile,
-    android_vulkan::Renderer &renderer
-) const
-{
-    android_vulkan::File vertexShader ( shaderFile );
-
-    if ( !vertexShader.LoadContent () )
-        return false;
-
-    const std::vector<uint8_t>& spirV = vertexShader.GetContent ();
-
-    VkShaderModuleCreateInfo shaderModuleCreateInfo;
-    shaderModuleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-    shaderModuleCreateInfo.pNext = nullptr;
-    shaderModuleCreateInfo.flags = 0U;
-    shaderModuleCreateInfo.codeSize = spirV.size ();
-    shaderModuleCreateInfo.pCode = reinterpret_cast<const uint32_t*> ( spirV.data () );
-
-    return renderer.CheckVkResult (
-        vkCreateShaderModule ( renderer.GetDevice (), &shaderModuleCreateInfo, nullptr, &shader ),
-        "MandelbrotBase::CreateShader",
-        "Can't create shader"
-    );
 }
 
 } // namespace mandelbrot

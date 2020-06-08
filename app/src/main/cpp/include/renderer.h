@@ -2,10 +2,18 @@
 #define RENDERER_H
 
 
+#include <GXCommon/GXWarning.h>
+
+GX_DISABLE_COMMON_WARNINGS
+
 #include <map>
 #include <vector>
 #include <vulkan_wrapper.h>
 #include <android/native_window.h>
+
+GX_RESTORE_WARNING_STATE
+
+#include <GXCommon/GXMath.h>
 #include "logger.h"
 
 
@@ -19,6 +27,7 @@ struct VulkanPhysicalDeviceInfo final
     VkPhysicalDeviceFeatures                        _features;
 
     std::vector<std::pair<VkFlags, uint32_t>>       _queueFamilyInfo;
+    VkSurfaceCapabilitiesKHR                        _surfaceCapabilities;
 
     VulkanPhysicalDeviceInfo ();
     ~VulkanPhysicalDeviceInfo () = default;
@@ -34,61 +43,57 @@ class Renderer final
     using LogType = void (*) ( const char* format, ... );
 
     private:
-        // Note VkImage is a VK_DEFINE_NON_DISPATCHABLE_HANDLE type.
-        VkDebugReportCallbackEXT                                            _debugReportCallback;
-
-        // Note VkImage is a VK_DEFINE_NON_DISPATCHABLE_HANDLE type.
-        VkImage                                                             _depthStencilImage;
-
         VkFormat                                                            _depthStencilImageFormat;
-
-        // Note VkDeviceMemory and VkImageView are a VK_DEFINE_NON_DISPATCHABLE_HANDLE types.
-        VkDeviceMemory                                                      _depthStencilImageMemory;
-        VkImageView                                                         _depthStencilImageView;
-
         VkDevice                                                            _device;
         VkInstance                                                          _instance;
+
+        bool                                                                _isDeviceExtensionChecked;
+        bool                                                                _isDeviceExtensionSupported;
+
         VkPhysicalDevice                                                    _physicalDevice;
 
         VkQueue                                                             _queue;
         uint32_t                                                            _queueFamilyIndex;
 
-        // Note VkRenderPass is a VK_DEFINE_NON_DISPATCHABLE_HANDLE.
-        VkRenderPass                                                        _renderPass;
-
-        // Note VkSurfaceKHR is a VK_DEFINE_NON_DISPATCHABLE_HANDLE.
         VkSurfaceKHR                                                        _surface;
-
         VkFormat                                                            _surfaceFormat;
-
-        // Note VkSwapchainKHR is a VK_DEFINE_NON_DISPATCHABLE_HANDLE.
+        VkExtent2D                                                          _surfaceSize;
+        VkSurfaceTransformFlagBitsKHR                                       _surfaceTransform;
         VkSwapchainKHR                                                      _swapchain;
+
+#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
         PFN_vkCreateDebugReportCallbackEXT                                  vkCreateDebugReportCallbackEXT;
         PFN_vkDestroyDebugReportCallbackEXT                                 vkDestroyDebugReportCallbackEXT;
 
+        VkDebugReportCallbackEXT                                            _debugReportCallback;
         VkDebugReportCallbackCreateInfoEXT                                  _debugReportCallbackCreateInfoEXT;
 
         std::map<VkDebugReportFlagsEXT, std::pair<LogType, const char*>>    _loggerMapper;
+        static const std::map<VkDebugReportObjectTypeEXT, const char*>      _vulkanObjectTypeMap;
+
+#endif
+
+        VkExtent2D                                                          _viewportResolution;
 
         std::vector<VkPhysicalDeviceGroupProperties>                        _physicalDeviceGroups;
         std::map<VkPhysicalDevice, VulkanPhysicalDeviceInfo>                _physicalDeviceInfo;
         VkPhysicalDeviceMemoryProperties                                    _physicalDeviceMemoryProperties;
 
-        std::vector<VkFramebuffer>                                          _presentFramebuffers;
-
         std::vector<VkSurfaceFormatKHR>                                     _surfaceFormats;
-        VkExtent2D                                                          _surfaceSize;
 
         std::vector<VkImage>                                                _swapchainImages;
         std::vector<VkImageView>                                            _swapchainImageViews;
 
+        GXMat4                                                              _presentationEngineTransform;
+
         static const std::map<VkColorSpaceKHR, const char*>                 _vulkanColorSpaceMap;
+        static const std::map<VkCompositeAlphaFlagBitsKHR, const char*>     _vulkanCompositeAlphaMap;
         static const std::map<VkFormat, const char*>                        _vulkanFormatMap;
-        static const std::map<VkDebugReportObjectTypeEXT, const char*>      _vulkanObjectTypeMap;
         static const std::map<VkPhysicalDeviceType, const char*>            _vulkanPhysicalDeviceTypeMap;
         static const std::map<VkPresentModeKHR, const char*>                _vulkanPresentModeMap;
         static const std::map<VkResult, const char*>                        _vulkanResultMap;
+        static const std::map<VkSurfaceTransformFlagsKHR, const char*>      _vulkanSurfaceTransformMap;
 
     public:
         Renderer ();
@@ -97,45 +102,79 @@ class Renderer final
         Renderer ( const Renderer &other ) = delete;
         Renderer& operator = ( const Renderer &other ) = delete;
 
+        // Method returns true if swapchain does not change. User code can safely render frames.
+        // Otherwise method returns false.
+        bool CheckSwapchainStatus ();
+
         // Method returns true is "result" equals VK_SUCCESS. Otherwise method returns false.
         bool CheckVkResult ( VkResult result, const char* from, const char* message ) const;
 
+        bool CreateShader ( VkShaderModule &shader,
+            std::string &&shaderFile,
+            const char* errorMessage
+        ) const;
+
         VkFormat GetDefaultDepthStencilFormat () const;
         VkDevice GetDevice () const;
-        VkFramebuffer GetPresentFramebuffer ( uint32_t framebufferIndex ) const;
-        size_t GetPresentFramebufferCount () const;
-        VkRenderPass GetPresentRenderPass () const;
+
+        size_t GetPresentImageCount () const;
+        const VkImageView& GetPresentImageView ( size_t imageIndex ) const;
+
+        // Note this transform MUST be applied after projection transform to compensate screen orientation on the
+        // mobile device. For more information please reference by links:
+        // https://community.arm.com/developer/tools-software/graphics/b/blog/posts/appropriate-use-of-surface-rotation
+        // https://github.com/KhronosGroup/Vulkan-Samples/blob/master/samples/performance/surface_rotation/surface_rotation_tutorial.md
+        const GXMat4& GetPresentationEngineTransform () const;
+
         VkQueue GetQueue () const;
         uint32_t GetQueueFamilyIndex () const;
         VkFormat GetSurfaceFormat () const;
         const VkExtent2D& GetSurfaceSize () const;
         VkSwapchainKHR& GetSwapchain ();
 
+        // This resolution must be used by projection matrices. Resolution takes into consideration
+        // current device orientation. The actual presentation image resolution can be acquired
+        // by Renderer::GetSurfaceSize API.
+        const VkExtent2D& GetViewportResolution () const;
+
         bool IsReady () const;
 
         bool OnInit ( ANativeWindow &nativeWindow, bool vSync );
         void OnDestroy ();
+
+        const char* ResolveVkFormat ( VkFormat format ) const;
 
         bool SelectTargetMemoryTypeIndex ( uint32_t &targetMemoryTypeIndex,
             const VkMemoryRequirements &memoryRequirements,
             VkMemoryPropertyFlags memoryProperties
         ) const;
 
+        // Note method will invoke AV_REGISTER_DEVICE_MEMORY internally if success.
+        bool TryAllocateMemory ( VkDeviceMemory &memory,
+            const VkMemoryRequirements &requirements,
+            VkMemoryPropertyFlags memoryProperties,
+            const char* errorMessage
+        ) const;
+
     private:
+
+        bool CheckRequiredDeviceExtensions ( const std::vector<const char*> &deviceExtensions,
+            char const* const* requiredExtensions,
+            size_t requiredExtensionCount
+        );
+
+#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+
         bool DeployDebugFeatures ();
         void DestroyDebugFeatures ();
+
+#endif
 
         bool DeployDevice ();
         void DestroyDevice ();
 
-        bool DeployPresentFramebuffers ();
-        void DestroyPresentFramebuffers ();
-
         bool DeployInstance ();
         void DestroyInstance ();
-
-        bool DeployRenderPass ();
-        void DestroyRenderPass ();
 
         bool DeploySurface ( ANativeWindow &nativeWindow );
         void DestroySurface ();
@@ -154,7 +193,7 @@ class Renderer final
         bool PrintPhysicalDeviceExtensionInfo ( VkPhysicalDevice physicalDevice );
         bool PrintPhysicalDeviceFeatureInfo ( VkPhysicalDevice physicalDevice );
         void PrintPhysicalDeviceGroupInfo ( uint32_t groupIndex, const VkPhysicalDeviceGroupProperties &props ) const;
-        bool PrintPhysicalDeviceLayerInfo ( const VkPhysicalDevice physicalDevice ) const;
+        bool PrintPhysicalDeviceLayerInfo ( VkPhysicalDevice physicalDevice ) const;
         void PrintPhysicalDeviceLimits ( const VkPhysicalDeviceLimits &limits ) const;
         void PrintPhysicalDeviceMemoryProperties ( VkPhysicalDevice physicalDevice );
         bool PrintPhysicalDeviceInfo ( uint32_t deviceIndex, VkPhysicalDevice physicalDevice );
@@ -197,20 +236,21 @@ class Renderer final
         const char* ResolvePhysicalDeviceType ( VkPhysicalDeviceType type ) const;
         const char* ResolveVkDebugReportObjectType ( VkDebugReportObjectTypeEXT type ) const;
         const char* ResolveVkColorSpaceKHR ( VkColorSpaceKHR colorSpace ) const;
-        const char* ResolveVkFormat ( VkFormat format ) const;
+        const char* ResolveVkCompositeAlpha ( VkCompositeAlphaFlagBitsKHR compositeAlpha ) const;
         const char* ResolveVkPresentModeKHR ( VkPresentModeKHR mode ) const;
         const char* ResolveVkResult ( VkResult result ) const;
+        const char* ResolveVkSurfaceTransform ( VkSurfaceTransformFlagsKHR transform ) const;
 
+        bool SelectTargetCompositeAlpha ( VkCompositeAlphaFlagBitsKHR &targetCompositeAlpha ) const;
         bool SelectTargetHardware ( VkPhysicalDevice &targetPhysicalDevice, uint32_t &targetQueueFamilyIndex ) const;
-
-
-
         bool SelectTargetPresentMode ( VkPresentModeKHR &targetPresentMode, bool vSync ) const;
 
         bool SelectTargetSurfaceFormat ( VkFormat &targetColorFormat,
             VkColorSpaceKHR &targetColorSpace,
             VkFormat &targetDepthStencilFormat
         ) const;
+
+#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
         static VkBool32 VKAPI_PTR OnVulkanDebugReport ( VkDebugReportFlagsEXT flags,
             VkDebugReportObjectTypeEXT objectType,
@@ -221,6 +261,9 @@ class Renderer final
             const char* pMessage,
             void* pUserData
         );
+
+#endif
+
 };
 
 } // namespace android_vulkan

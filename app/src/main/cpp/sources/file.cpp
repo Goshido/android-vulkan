@@ -1,6 +1,12 @@
 #include <file.h>
+
+GX_DISABLE_COMMON_WARNINGS
+
 #include <cassert>
 #include <android/asset_manager.h>
+
+GX_RESTORE_WARNING_STATE
+
 #include <logger.h>
 
 
@@ -18,6 +24,11 @@ File::File ( std::string &&filePath ):
     _filePath ( std::move ( filePath ) )
 {
     // NOTHING
+}
+
+std::vector<uint8_t>& File::GetContent ()
+{
+    return _content;
 }
 
 const std::vector<uint8_t>& File::GetContent () const

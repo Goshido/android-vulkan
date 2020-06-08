@@ -15,13 +15,9 @@ GX_RESTORE_WARNING_STATE
 
 namespace rotating_mesh {
 
-constexpr static const size_t TEXTURE_COMMAND_BUFFERS = 7U;
-constexpr static const size_t MESH_COMMAND_BUFFERS = 3U;
-
 constexpr static const char* VERTEX_SHADER = "shaders/static-mesh-vs.spv";
 constexpr static const char* VERTEX_SHADER_ENTRY_POINT = "VS";
 
-constexpr static const char* FRAGMENT_SHADER = "shaders/static-mesh-ps.spv";
 constexpr static const char* FRAGMENT_SHADER_ENTRY_POINT = "PS";
 
 constexpr static const char* MATERIAL_1_DIFFUSE = "textures/rotating_mesh/sonic-material-1-diffuse.png";
@@ -40,24 +36,22 @@ constexpr static const float FIELD_OF_VIEW = 60.0F;
 constexpr static const float Z_NEAR = 0.1F;
 constexpr static const float Z_FAR = 1.0e+3F;
 
-constexpr static const size_t SPECULAR_ANGLE_SAMPLES = 512U;
-constexpr static const size_t SPECULAR_EXPONENT_SAMPLES = 150U;
-constexpr static const size_t SPECULAR_GENERATOR_THREADS = 4U;
-
 //----------------------------------------------------------------------------------------------------------------------
 
-Game::Game ():
-    _angle ( 0.0F ),
+Game::Game ( const char* fragmentShader ):
     _commandPool ( VK_NULL_HANDLE ),
-    _depthStencil ( VK_NULL_HANDLE ),
-    _depthStencilView ( VK_NULL_HANDLE ),
-    _depthStencilMemory ( VK_NULL_HANDLE ),
     _descriptorPool ( VK_NULL_HANDLE ),
     _descriptorSetLayout ( VK_NULL_HANDLE ),
     _drawcalls {},
+    _pipelineLayout ( VK_NULL_HANDLE ),
+    _transformBuffer {},
+    _angle ( 0.0F ),
+    _depthStencil ( VK_NULL_HANDLE ),
+    _depthStencilView ( VK_NULL_HANDLE ),
+    _depthStencilMemory ( VK_NULL_HANDLE ),
+    _fragmentShader ( fragmentShader ),
     _framebuffers {},
     _pipeline ( VK_NULL_HANDLE ),
-    _pipelineLayout ( VK_NULL_HANDLE ),
     _renderPass ( VK_NULL_HANDLE ),
     _renderPassEndSemaphore ( VK_NULL_HANDLE ),
     _renderTargetAcquiredSemaphore ( VK_NULL_HANDLE ),
@@ -65,12 +59,313 @@ Game::Game ():
     _sampler09Mips ( VK_NULL_HANDLE ),
     _sampler10Mips ( VK_NULL_HANDLE ),
     _sampler11Mips ( VK_NULL_HANDLE ),
-    _specularLUTSampler ( VK_NULL_HANDLE ),
-    _specularLUTTexture {},
     _vertexShaderModule ( VK_NULL_HANDLE ),
     _fragmentShaderModule ( VK_NULL_HANDLE )
 {
     // NOTHING
+}
+
+bool Game::CreateSamplers ( android_vulkan::Renderer &renderer )
+{
+    VkSamplerCreateInfo samplerInfo;
+    samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+    samplerInfo.pNext = nullptr;
+    samplerInfo.flags = 0U;
+    samplerInfo.unnormalizedCoordinates = VK_FALSE;
+    samplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
+    samplerInfo.mipLodBias = 0.0F;
+    samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+    samplerInfo.minLod = 0.0F;
+    samplerInfo.maxLod = 8.0F;
+    samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    samplerInfo.magFilter = VK_FILTER_LINEAR;
+    samplerInfo.minFilter = VK_FILTER_LINEAR;
+    samplerInfo.anisotropyEnable = VK_FALSE;
+    samplerInfo.maxAnisotropy = 1.0F;
+    samplerInfo.compareEnable = VK_FALSE;
+    samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+
+    VkDevice device = renderer.GetDevice ();
+
+    bool result = renderer.CheckVkResult (
+        vkCreateSampler ( device, &samplerInfo, nullptr, &_sampler09Mips ),
+        "Game::CreateSamplers",
+        "Can't create sampler with 9 mips"
+    );
+
+    if ( !result )
+        return false;
+
+    AV_REGISTER_SAMPLER ( "Game::_sampler09Mips" )
+
+    samplerInfo.maxLod = 9.0F;
+
+    result = renderer.CheckVkResult (
+        vkCreateSampler ( device, &samplerInfo, nullptr, &_sampler10Mips ),
+        "Game::CreateSamplers",
+        "Can't create sampler with 10 mips"
+    );
+
+    if ( !result )
+        return false;
+
+    AV_REGISTER_SAMPLER ( "Game::_sampler10Mips" )
+
+    samplerInfo.maxLod = 10.0F;
+
+    result = renderer.CheckVkResult (
+        vkCreateSampler ( device, &samplerInfo, nullptr, &_sampler11Mips ),
+        "Game::CreateSamplers",
+        "Can't create sampler with 11 mips"
+    );
+
+    if ( !result )
+        return false;
+
+    AV_REGISTER_SAMPLER ( "Game::_sampler11Mips" )
+
+    samplerInfo.maxLod = 1.0F;
+    samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
+    samplerInfo.magFilter = VK_FILTER_NEAREST;
+    samplerInfo.minFilter = VK_FILTER_NEAREST;
+
+    result = renderer.CheckVkResult (
+        vkCreateSampler ( device, &samplerInfo, nullptr, &_sampler01Mips ),
+        "Game::CreateSamplers",
+        "Can't create sampler with 1 mip"
+    );
+
+    if ( !result )
+        return false;
+
+    AV_REGISTER_SAMPLER ( "Game::_sampler01Mips" )
+    return true;
+}
+
+void Game::DestroySamplers ( android_vulkan::Renderer &renderer )
+{
+    if ( _sampler11Mips != VK_NULL_HANDLE )
+    {
+        vkDestroySampler ( renderer.GetDevice (), _sampler11Mips, nullptr );
+        _sampler11Mips = VK_NULL_HANDLE;
+        AV_UNREGISTER_SAMPLER ( "Game::_sampler11Mips" )
+    }
+
+    if ( _sampler10Mips != VK_NULL_HANDLE )
+    {
+        vkDestroySampler ( renderer.GetDevice (), _sampler10Mips, nullptr );
+        _sampler10Mips = VK_NULL_HANDLE;
+        AV_UNREGISTER_SAMPLER ( "Game::_sampler10Mips" )
+    }
+
+    if ( _sampler09Mips != VK_NULL_HANDLE )
+    {
+        vkDestroySampler ( renderer.GetDevice (), _sampler09Mips, nullptr );
+        _sampler09Mips = VK_NULL_HANDLE;
+        AV_UNREGISTER_SAMPLER ( "Game::_sampler09Mips" )
+    }
+
+    if ( _sampler01Mips == VK_NULL_HANDLE )
+        return;
+
+    vkDestroySampler ( renderer.GetDevice (), _sampler01Mips, nullptr );
+    _sampler01Mips = VK_NULL_HANDLE;
+    AV_UNREGISTER_SAMPLER ( "Game::_sampler01Mips" )
+}
+
+void Game::DestroyTextures ( android_vulkan::Renderer &renderer )
+{
+    renderer.CheckVkResult ( vkQueueWaitIdle ( renderer.GetQueue () ),
+        "Game::DestroyTextures",
+        "Can't wait queue idle"
+    );
+
+    for ( auto& item : _drawcalls )
+    {
+        item._diffuse.FreeResources ( renderer );
+        item._normal.FreeResources ( renderer );
+        item._diffuseSampler = item._normalSampler = VK_NULL_HANDLE;
+    }
+}
+
+bool Game::CreateCommonTextures ( android_vulkan::Renderer &renderer, VkCommandBuffer* commandBuffers )
+{
+    auto selector = [ this ] ( const Texture2D &texture ) -> VkSampler {
+        const uint8_t mips = texture.GetMipLevelCount ();
+
+        if ( mips == 1U )
+            return _sampler01Mips;
+
+        if ( mips == 9U )
+            return _sampler09Mips;
+
+        if ( mips == 10U )
+            return _sampler10Mips;
+
+        if ( mips == 11U )
+            return _sampler11Mips;
+
+        assert ( !"Game::CreateCommonTextures::selector - Can't select sampler" );
+        return VK_NULL_HANDLE;
+    };
+
+    constexpr char const* textureFiles[ MATERIAL_COUNT ] =
+        {
+            MATERIAL_1_DIFFUSE,
+            MATERIAL_2_DIFFUSE,
+            MATERIAL_3_DIFFUSE
+        };
+
+    for ( size_t i = 0U; i < MATERIAL_COUNT; ++i )
+    {
+        auto& drawcall = _drawcalls[ i ];
+
+        bool result = drawcall._diffuse.UploadData ( textureFiles[ i ],
+            VK_FORMAT_R8G8B8A8_SRGB,
+            true,
+            renderer,
+            commandBuffers[ i ]
+        );
+
+        if ( !result )
+            return false;
+
+        drawcall._diffuseSampler = selector ( drawcall._diffuse );
+    }
+
+    Drawcall& secondMaterial = _drawcalls[ 1U ];
+
+    bool result = secondMaterial._normal.UploadData ( MATERIAL_2_NORMAL,
+        VK_FORMAT_R8G8B8A8_UNORM,
+        true,
+        renderer,
+        commandBuffers[ 3U ]
+    );
+
+    if ( !result )
+        return false;
+
+    secondMaterial._normalSampler = selector ( secondMaterial._normal );
+
+    Drawcall& thirdMaterial = _drawcalls[ 2U ];
+
+    result = thirdMaterial._normal.UploadData ( MATERIAL_3_NORMAL,
+        VK_FORMAT_R8G8B8A8_UNORM,
+        true,
+        renderer,
+        commandBuffers[ 4U ]
+    );
+
+    if ( !result )
+        return false;
+
+    thirdMaterial._normalSampler = selector ( thirdMaterial._normal );
+
+    Drawcall& firstMaterial = _drawcalls[ 0U ];
+    constexpr const uint8_t defaultNormal[] = { 128U, 128U, 255U, 128U };
+
+    result = firstMaterial._normal.UploadData ( defaultNormal,
+        std::size ( defaultNormal ),
+        VkExtent2D { .width = 1U, .height = 1U },
+        VK_FORMAT_R8G8B8A8_UNORM,
+        false,
+        renderer,
+        commandBuffers[ 5U ]
+    );
+
+    if ( !result )
+        return false;
+
+    firstMaterial._normalSampler = selector ( firstMaterial._normal );
+    return true;
+}
+
+bool Game::CreateMeshes ( android_vulkan::Renderer &renderer, VkCommandBuffer* commandBuffers )
+{
+    constexpr const char* meshFiles[ MATERIAL_COUNT ] =
+        {
+            MATERIAL_1_MESH,
+            MATERIAL_2_MESH,
+            MATERIAL_3_MESH,
+        };
+
+    for ( size_t i = 0U; i < MATERIAL_COUNT; ++i )
+    {
+        const bool result = _drawcalls[ i ]._mesh.LoadMesh ( meshFiles[ i ],
+            VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+            renderer, commandBuffers[ i ]
+        );
+
+        if ( result )
+            continue;
+
+        return false;
+    }
+
+    return true;
+}
+
+void Game::InitDescriptorPoolSizeCommon ( VkDescriptorPoolSize* features )
+{
+    VkDescriptorPoolSize& ubFeature = features[ 0U ];
+    ubFeature.descriptorCount = static_cast<uint32_t> ( MATERIAL_COUNT );
+    ubFeature.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+
+    VkDescriptorPoolSize& diffuseTextureFeature = features[ 1U ];
+    diffuseTextureFeature.descriptorCount = static_cast<uint32_t> ( MATERIAL_COUNT );
+    diffuseTextureFeature.type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+
+    VkDescriptorPoolSize& diffuseSamplerFeature = features[ 2U ];
+    diffuseSamplerFeature.descriptorCount = static_cast<uint32_t> ( MATERIAL_COUNT );
+    diffuseSamplerFeature.type = VK_DESCRIPTOR_TYPE_SAMPLER;
+
+    VkDescriptorPoolSize& normalTextureFeature = features[ 3U ];
+    normalTextureFeature.descriptorCount = static_cast<uint32_t> ( MATERIAL_COUNT );
+    normalTextureFeature.type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+
+    VkDescriptorPoolSize& normalSamplerFeature = features[ 4U ];
+    normalSamplerFeature.descriptorCount = static_cast<uint32_t> ( MATERIAL_COUNT );
+    normalSamplerFeature.type = VK_DESCRIPTOR_TYPE_SAMPLER;
+}
+
+void Game::InitDescriptorSetLayoutBindingCommon ( VkDescriptorSetLayoutBinding* bindings )
+{
+    VkDescriptorSetLayoutBinding& ubInfo = bindings[ 0U ];
+    ubInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+    ubInfo.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    ubInfo.descriptorCount = 1U;
+    ubInfo.binding = 0U;
+    ubInfo.pImmutableSamplers = nullptr;
+
+    VkDescriptorSetLayoutBinding& diffuseImageInfo = bindings[ 1U ];
+    diffuseImageInfo.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    diffuseImageInfo.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+    diffuseImageInfo.descriptorCount = 1U;
+    diffuseImageInfo.binding = 1U;
+    diffuseImageInfo.pImmutableSamplers = nullptr;
+
+    VkDescriptorSetLayoutBinding& diffuseSamplerInfo = bindings[ 2U ];
+    diffuseSamplerInfo.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    diffuseSamplerInfo.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
+    diffuseSamplerInfo.descriptorCount = 1U;
+    diffuseSamplerInfo.binding = 2U;
+    diffuseSamplerInfo.pImmutableSamplers = nullptr;
+
+    VkDescriptorSetLayoutBinding& normalImageInfo = bindings[ 3U ];
+    normalImageInfo.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    normalImageInfo.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+    normalImageInfo.descriptorCount = 1U;
+    normalImageInfo.binding = 3U;
+    normalImageInfo.pImmutableSamplers = nullptr;
+
+    VkDescriptorSetLayoutBinding& normalSamplerInfo = bindings[ 4U ];
+    normalSamplerInfo.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    normalSamplerInfo.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
+    normalSamplerInfo.descriptorCount = 1U;
+    normalSamplerInfo.binding = 4U;
+    normalSamplerInfo.pImmutableSamplers = nullptr;
 }
 
 bool Game::IsReady ()
@@ -336,201 +631,6 @@ void Game::DestroyCommandPool ( android_vulkan::Renderer &renderer )
     AV_UNREGISTER_COMMAND_POOL ( "Game::_commandPool" )
 }
 
-bool Game::CreateDescriptorSet ( android_vulkan::Renderer &renderer )
-{
-    VkDevice device = renderer.GetDevice ();
-    constexpr const size_t featureCount = 7U;
-
-    VkDescriptorPoolSize features[ featureCount ];
-    VkDescriptorPoolSize& ubFeature = features[ 0U ];
-    ubFeature.descriptorCount = static_cast<uint32_t> ( MATERIAL_COUNT );
-    ubFeature.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-
-    VkDescriptorPoolSize& diffuseTextureFeature = features[ 1U ];
-    diffuseTextureFeature.descriptorCount = static_cast<uint32_t> ( MATERIAL_COUNT );
-    diffuseTextureFeature.type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-
-    VkDescriptorPoolSize& diffuseSamplerFeature = features[ 2U ];
-    diffuseSamplerFeature.descriptorCount = static_cast<uint32_t> ( MATERIAL_COUNT );
-    diffuseSamplerFeature.type = VK_DESCRIPTOR_TYPE_SAMPLER;
-
-    VkDescriptorPoolSize& normalTextureFeature = features[ 3U ];
-    normalTextureFeature.descriptorCount = static_cast<uint32_t> ( MATERIAL_COUNT );
-    normalTextureFeature.type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-
-    VkDescriptorPoolSize& normalSamplerFeature = features[ 4U ];
-    normalSamplerFeature.descriptorCount = static_cast<uint32_t> ( MATERIAL_COUNT );
-    normalSamplerFeature.type = VK_DESCRIPTOR_TYPE_SAMPLER;
-
-    VkDescriptorPoolSize& specLUTTextureFeature = features[ 5U ];
-    specLUTTextureFeature.descriptorCount = static_cast<uint32_t> ( MATERIAL_COUNT );
-    specLUTTextureFeature.type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-
-    VkDescriptorPoolSize& specLUTSamplerFeature = features[ 6U ];
-    specLUTSamplerFeature.descriptorCount = static_cast<uint32_t> ( MATERIAL_COUNT );
-    specLUTSamplerFeature.type = VK_DESCRIPTOR_TYPE_SAMPLER;
-
-    VkDescriptorPoolCreateInfo poolInfo;
-    poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    poolInfo.pNext = nullptr;
-    poolInfo.flags = 0U;
-    poolInfo.maxSets = static_cast<uint32_t> ( MATERIAL_COUNT );
-    poolInfo.poolSizeCount = static_cast<uint32_t> ( std::size ( features ) );
-    poolInfo.pPoolSizes = features;
-
-    bool result = renderer.CheckVkResult ( vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_descriptorPool ),
-        "Game::CreateDescriptorSet",
-        "Can't create descriptor pool"
-    );
-
-    if ( !result )
-        return false;
-
-    AV_REGISTER_DESCRIPTOR_POOL ( "Game::_descriptorPool" )
-
-    VkDescriptorSetLayout layouts[ MATERIAL_COUNT ];
-    VkDescriptorSet sets[ MATERIAL_COUNT ];
-
-    for ( auto& item : layouts )
-        item = _descriptorSetLayout;
-
-    VkDescriptorSetAllocateInfo setAllocateInfo;
-    setAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    setAllocateInfo.pNext = nullptr;
-    setAllocateInfo.descriptorPool = _descriptorPool;
-    setAllocateInfo.pSetLayouts = layouts;
-    setAllocateInfo.descriptorSetCount = poolInfo.maxSets;
-
-    result = renderer.CheckVkResult ( vkAllocateDescriptorSets ( device, &setAllocateInfo, sets ),
-        "Game::CreateDescriptorSet",
-        "Can't allocate descriptor set"
-    );
-
-    if ( !result )
-        return false;
-
-    constexpr const size_t writeSetCount = featureCount * MATERIAL_COUNT;
-    VkWriteDescriptorSet writeSets[ writeSetCount ];
-    VkDescriptorImageInfo diffuseInfo[ MATERIAL_COUNT ];
-    VkDescriptorImageInfo normalInfo[ MATERIAL_COUNT ];
-    VkDescriptorImageInfo specInfo[ MATERIAL_COUNT ];
-
-    VkDescriptorBufferInfo bufferInfo;
-    bufferInfo.buffer = _transformBuffer.GetBuffer ();
-    bufferInfo.range = _transformBuffer.GetSize ();
-    bufferInfo.offset = 0U;
-
-    for ( size_t i = 0U; i < MATERIAL_COUNT; ++i )
-    {
-        Drawcall& drawcall = _drawcalls[ i ];
-        drawcall._descriptorSet = sets[ i ];
-
-        VkDescriptorImageInfo& diffuseImage = diffuseInfo[ i ];
-        diffuseImage.sampler = drawcall._diffuseSampler;
-        diffuseImage.imageView = drawcall._diffuse.GetImageView ();
-        diffuseImage.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-        VkDescriptorImageInfo& normalImage = normalInfo[ i ];
-        normalImage.sampler = drawcall._normalSampler;
-        normalImage.imageView = drawcall._normal.GetImageView ();
-        normalImage.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-        VkDescriptorImageInfo& specImage = specInfo[ i ];
-        specImage.sampler = _specularLUTSampler;
-        specImage.imageView = _specularLUTTexture.GetImageView ();
-        specImage.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-        const size_t pivotIndex = i * featureCount;
-
-        VkWriteDescriptorSet& ubWriteSet = writeSets[ pivotIndex ];
-        ubWriteSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        ubWriteSet.pNext = nullptr;
-        ubWriteSet.dstSet = drawcall._descriptorSet;
-        ubWriteSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        ubWriteSet.dstBinding = 0U;
-        ubWriteSet.dstArrayElement = 0U;
-        ubWriteSet.descriptorCount = 1U;
-        ubWriteSet.pBufferInfo = &bufferInfo;
-        ubWriteSet.pImageInfo = nullptr;
-        ubWriteSet.pTexelBufferView = nullptr;
-
-        VkWriteDescriptorSet& diffuseImageWriteSet = writeSets[ pivotIndex + 1U ];
-        diffuseImageWriteSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        diffuseImageWriteSet.pNext = nullptr;
-        diffuseImageWriteSet.dstSet = drawcall._descriptorSet;
-        diffuseImageWriteSet.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-        diffuseImageWriteSet.dstBinding = 1U;
-        diffuseImageWriteSet.dstArrayElement = 0U;
-        diffuseImageWriteSet.descriptorCount = 1U;
-        diffuseImageWriteSet.pBufferInfo = nullptr;
-        diffuseImageWriteSet.pImageInfo = &diffuseImage;
-        diffuseImageWriteSet.pTexelBufferView = nullptr;
-
-        VkWriteDescriptorSet& diffuseSamplerWriteSet = writeSets[ pivotIndex + 2U ];
-        diffuseSamplerWriteSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        diffuseSamplerWriteSet.pNext = nullptr;
-        diffuseSamplerWriteSet.dstSet = drawcall._descriptorSet;
-        diffuseSamplerWriteSet.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
-        diffuseSamplerWriteSet.dstBinding = 2U;
-        diffuseSamplerWriteSet.dstArrayElement = 0U;
-        diffuseSamplerWriteSet.descriptorCount = 1U;
-        diffuseSamplerWriteSet.pBufferInfo = nullptr;
-        diffuseSamplerWriteSet.pImageInfo = &diffuseImage;
-        diffuseSamplerWriteSet.pTexelBufferView = nullptr;
-
-        VkWriteDescriptorSet& normalImageWriteSet = writeSets[ pivotIndex + 3U ];
-        normalImageWriteSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        normalImageWriteSet.pNext = nullptr;
-        normalImageWriteSet.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-        normalImageWriteSet.dstSet = drawcall._descriptorSet;
-        normalImageWriteSet.dstBinding = 3U;
-        normalImageWriteSet.dstArrayElement = 0U;
-        normalImageWriteSet.descriptorCount = 1U;
-        normalImageWriteSet.pBufferInfo = nullptr;
-        normalImageWriteSet.pImageInfo = &normalImage;
-        normalImageWriteSet.pTexelBufferView = nullptr;
-
-        VkWriteDescriptorSet& normalSamplerWriteSet = writeSets[ pivotIndex + 4U ];
-        normalSamplerWriteSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        normalSamplerWriteSet.pNext = nullptr;
-        normalSamplerWriteSet.dstSet = drawcall._descriptorSet;
-        normalSamplerWriteSet.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
-        normalSamplerWriteSet.dstBinding = 4U;
-        normalSamplerWriteSet.dstArrayElement = 0U;
-        normalSamplerWriteSet.descriptorCount = 1U;
-        normalSamplerWriteSet.pBufferInfo = nullptr;
-        normalSamplerWriteSet.pImageInfo = &normalImage;
-        normalSamplerWriteSet.pTexelBufferView = nullptr;
-
-        VkWriteDescriptorSet& specImageWriteSet = writeSets[ pivotIndex + 5U ];
-        specImageWriteSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        specImageWriteSet.pNext = nullptr;
-        specImageWriteSet.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-        specImageWriteSet.dstSet = drawcall._descriptorSet;
-        specImageWriteSet.dstBinding = 5U;
-        specImageWriteSet.dstArrayElement = 0U;
-        specImageWriteSet.descriptorCount = 1U;
-        specImageWriteSet.pBufferInfo = nullptr;
-        specImageWriteSet.pImageInfo = &specImage;
-        specImageWriteSet.pTexelBufferView = nullptr;
-
-        VkWriteDescriptorSet& specSamplerWriteSet = writeSets[ pivotIndex + 6U ];
-        specSamplerWriteSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        specSamplerWriteSet.pNext = nullptr;
-        specSamplerWriteSet.dstSet = drawcall._descriptorSet;
-        specSamplerWriteSet.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
-        specSamplerWriteSet.dstBinding = 6U;
-        specSamplerWriteSet.dstArrayElement = 0U;
-        specSamplerWriteSet.descriptorCount = 1U;
-        specSamplerWriteSet.pBufferInfo = nullptr;
-        specSamplerWriteSet.pImageInfo = &specImage;
-        specSamplerWriteSet.pTexelBufferView = nullptr;
-    }
-
-    vkUpdateDescriptorSets ( device, static_cast<uint32_t> ( writeSetCount ), writeSets, 0U, nullptr );
-    return true;
-}
-
 void Game::DestroyDescriptorSet ( android_vulkan::Renderer &renderer )
 {
     if ( _descriptorPool == VK_NULL_HANDLE )
@@ -539,6 +639,14 @@ void Game::DestroyDescriptorSet ( android_vulkan::Renderer &renderer )
     vkDestroyDescriptorPool ( renderer.GetDevice (), _descriptorPool, nullptr );
     _descriptorPool = VK_NULL_HANDLE;
     AV_UNREGISTER_DESCRIPTOR_POOL ( "Game::_descriptorPool" )
+}
+
+void Game::DestroyMeshes ( android_vulkan::Renderer &renderer )
+{
+    for ( auto& item : _drawcalls )
+    {
+        item._mesh.FreeResources ( renderer );
+    }
 }
 
 bool Game::CreateFramebuffers ( android_vulkan::Renderer &renderer )
@@ -693,39 +801,6 @@ void Game::DestroyFramebuffers ( android_vulkan::Renderer &renderer )
     vkDestroyImage ( device, _depthStencil, nullptr );
     _depthStencil = VK_NULL_HANDLE;
     AV_UNREGISTER_IMAGE ( "Game::_depthStencil" )
-}
-
-bool Game::CreateMeshes ( android_vulkan::Renderer &renderer, VkCommandBuffer* commandBuffers )
-{
-    constexpr const char* meshFiles[ MATERIAL_COUNT ] =
-    {
-        MATERIAL_1_MESH,
-        MATERIAL_2_MESH,
-        MATERIAL_3_MESH,
-    };
-
-    for ( size_t i = 0U; i < MATERIAL_COUNT; ++i )
-    {
-        const bool result = _drawcalls[ i ]._mesh.LoadMesh ( meshFiles[ i ],
-            VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-            renderer, commandBuffers[ i ]
-        );
-
-        if ( result )
-            continue;
-
-        return false;
-    }
-
-    return true;
-}
-
-void Game::DestroyMeshes ( android_vulkan::Renderer &renderer )
-{
-    for ( auto& item : _drawcalls )
-    {
-        item._mesh.FreeResources ( renderer );
-    }
 }
 
 bool Game::CreatePipeline ( android_vulkan::Renderer &renderer )
@@ -940,99 +1015,6 @@ void Game::DestroyPipeline ( android_vulkan::Renderer &renderer )
     AV_UNREGISTER_PIPELINE ( "Game::_pipeline" )
 }
 
-bool Game::CreatePipelineLayout ( android_vulkan::Renderer &renderer )
-{
-    VkDescriptorSetLayoutBinding bindings[ 7U ];
-    VkDescriptorSetLayoutBinding& ubInfo = bindings[ 0U ];
-    ubInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-    ubInfo.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    ubInfo.descriptorCount = 1U;
-    ubInfo.binding = 0U;
-    ubInfo.pImmutableSamplers = nullptr;
-
-    VkDescriptorSetLayoutBinding& diffuseImageInfo = bindings[ 1U ];
-    diffuseImageInfo.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-    diffuseImageInfo.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-    diffuseImageInfo.descriptorCount = 1U;
-    diffuseImageInfo.binding = 1U;
-    diffuseImageInfo.pImmutableSamplers = nullptr;
-
-    VkDescriptorSetLayoutBinding& diffuseSamplerInfo = bindings[ 2U ];
-    diffuseSamplerInfo.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-    diffuseSamplerInfo.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
-    diffuseSamplerInfo.descriptorCount = 1U;
-    diffuseSamplerInfo.binding = 2U;
-    diffuseSamplerInfo.pImmutableSamplers = nullptr;
-
-    VkDescriptorSetLayoutBinding& normalImageInfo = bindings[ 3U ];
-    normalImageInfo.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-    normalImageInfo.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-    normalImageInfo.descriptorCount = 1U;
-    normalImageInfo.binding = 3U;
-    normalImageInfo.pImmutableSamplers = nullptr;
-
-    VkDescriptorSetLayoutBinding& normalSamplerInfo = bindings[ 4U ];
-    normalSamplerInfo.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-    normalSamplerInfo.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
-    normalSamplerInfo.descriptorCount = 1U;
-    normalSamplerInfo.binding = 4U;
-    normalSamplerInfo.pImmutableSamplers = nullptr;
-
-    VkDescriptorSetLayoutBinding& specImageInfo = bindings[ 5U ];
-    specImageInfo.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-    specImageInfo.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-    specImageInfo.descriptorCount = 1U;
-    specImageInfo.binding = 5U;
-    specImageInfo.pImmutableSamplers = nullptr;
-
-    VkDescriptorSetLayoutBinding& specSamplerInfo = bindings[ 6U ];
-    specSamplerInfo.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-    specSamplerInfo.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
-    specSamplerInfo.descriptorCount = 1U;
-    specSamplerInfo.binding = 6U;
-    specSamplerInfo.pImmutableSamplers = nullptr;
-
-    VkDescriptorSetLayoutCreateInfo descriptorSetInfo;
-    descriptorSetInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    descriptorSetInfo.pNext = nullptr;
-    descriptorSetInfo.flags = 0U;
-    descriptorSetInfo.bindingCount = static_cast<uint32_t> ( std::size ( bindings ) );
-    descriptorSetInfo.pBindings = bindings;
-
-    VkDevice device = renderer.GetDevice ();
-
-    bool result = renderer.CheckVkResult (
-        vkCreateDescriptorSetLayout ( device, &descriptorSetInfo, nullptr, &_descriptorSetLayout ),
-        "Game::CreatePipelineLayout",
-        "Can't create descriptor set layout"
-    );
-
-    if ( !result )
-        return false;
-
-    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "Game::_descriptorSetLayout" )
-
-    VkPipelineLayoutCreateInfo pipelineLayoutInfo;
-    pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipelineLayoutInfo.pNext = nullptr;
-    pipelineLayoutInfo.flags = 0U;
-    pipelineLayoutInfo.pushConstantRangeCount = 0U;
-    pipelineLayoutInfo.pPushConstantRanges = nullptr;
-    pipelineLayoutInfo.setLayoutCount = 1U;
-    pipelineLayoutInfo.pSetLayouts = &_descriptorSetLayout;
-
-    result = renderer.CheckVkResult ( vkCreatePipelineLayout ( device, &pipelineLayoutInfo, nullptr, &_pipelineLayout ),
-        "Game::CreatePipelineLayout",
-        "Can't create pipeline layout"
-    );
-
-    if ( !result )
-        return false;
-
-    AV_REGISTER_PIPELINE_LAYOUT ( "Game::_pipelineLayout" )
-    return true;
-}
-
 void Game::DestroyPipelineLayout ( android_vulkan::Renderer &renderer )
 {
     VkDevice device = renderer.GetDevice ();
@@ -1131,138 +1113,6 @@ void Game::DestroyRenderPass ( android_vulkan::Renderer &renderer )
     AV_UNREGISTER_RENDER_PASS ( "Game::_renderPass" )
 }
 
-bool Game::CreateSamplers ( android_vulkan::Renderer &renderer )
-{
-    VkSamplerCreateInfo samplerInfo;
-    samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-    samplerInfo.pNext = nullptr;
-    samplerInfo.flags = 0U;
-    samplerInfo.unnormalizedCoordinates = VK_FALSE;
-    samplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
-    samplerInfo.mipLodBias = 0.0F;
-    samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-    samplerInfo.minLod = 0.0F;
-    samplerInfo.maxLod = 8.0F;
-    samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    samplerInfo.magFilter = VK_FILTER_LINEAR;
-    samplerInfo.minFilter = VK_FILTER_LINEAR;
-    samplerInfo.anisotropyEnable = VK_FALSE;
-    samplerInfo.maxAnisotropy = 1.0F;
-    samplerInfo.compareEnable = VK_FALSE;
-    samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
-
-    VkDevice device = renderer.GetDevice ();
-
-    bool result = renderer.CheckVkResult (
-        vkCreateSampler ( device, &samplerInfo, nullptr, &_sampler09Mips ),
-        "Game::CreateSamplers",
-        "Can't create sampler with 9 mips"
-    );
-
-    if ( !result )
-        return false;
-
-    AV_REGISTER_SAMPLER ( "Game::_sampler09Mips" )
-
-    samplerInfo.maxLod = 9.0F;
-
-    result = renderer.CheckVkResult (
-        vkCreateSampler ( device, &samplerInfo, nullptr, &_sampler10Mips ),
-        "Game::CreateSamplers",
-        "Can't create sampler with 10 mips"
-    );
-
-    if ( !result )
-        return false;
-
-    AV_REGISTER_SAMPLER ( "Game::_sampler10Mips" )
-
-    samplerInfo.maxLod = 10.0F;
-
-    result = renderer.CheckVkResult (
-        vkCreateSampler ( device, &samplerInfo, nullptr, &_sampler11Mips ),
-        "Game::CreateSamplers",
-        "Can't create sampler with 11 mips"
-    );
-
-    if ( !result )
-        return false;
-
-    AV_REGISTER_SAMPLER ( "Game::_sampler11Mips" )
-
-    samplerInfo.maxLod = 1.0F;
-    samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
-    samplerInfo.magFilter = VK_FILTER_NEAREST;
-    samplerInfo.minFilter = VK_FILTER_NEAREST;
-
-    result = renderer.CheckVkResult (
-        vkCreateSampler ( device, &samplerInfo, nullptr, &_sampler01Mips ),
-        "Game::CreateSamplers",
-        "Can't create sampler with 1 mip"
-    );
-
-    if ( !result )
-        return false;
-
-    AV_REGISTER_SAMPLER ( "Game::_sampler01Mips" )
-
-    samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-    samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-    samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-
-    result = renderer.CheckVkResult (
-        vkCreateSampler ( device, &samplerInfo, nullptr, &_specularLUTSampler ),
-        "Game::CreateSamplers",
-        "Can't create specular LUT sampler"
-    );
-
-    if ( !result )
-        return false;
-
-    AV_REGISTER_SAMPLER ( "Game::_specularLUTSampler" )
-    return true;
-}
-
-void Game::DestroySamplers ( android_vulkan::Renderer &renderer )
-{
-    if ( _sampler11Mips != VK_NULL_HANDLE )
-    {
-        vkDestroySampler ( renderer.GetDevice (), _sampler11Mips, nullptr );
-        _sampler11Mips = VK_NULL_HANDLE;
-        AV_UNREGISTER_SAMPLER ( "Game::_sampler11Mips" )
-    }
-
-    if ( _sampler10Mips != VK_NULL_HANDLE )
-    {
-        vkDestroySampler ( renderer.GetDevice (), _sampler10Mips, nullptr );
-        _sampler10Mips = VK_NULL_HANDLE;
-        AV_UNREGISTER_SAMPLER ( "Game::_sampler10Mips" )
-    }
-
-    if ( _sampler09Mips != VK_NULL_HANDLE )
-    {
-        vkDestroySampler ( renderer.GetDevice (), _sampler09Mips, nullptr );
-        _sampler09Mips = VK_NULL_HANDLE;
-        AV_UNREGISTER_SAMPLER ( "Game::_sampler09Mips" )
-    }
-
-    if ( _sampler01Mips != VK_NULL_HANDLE )
-    {
-        vkDestroySampler ( renderer.GetDevice (), _sampler01Mips, nullptr );
-        _sampler01Mips = VK_NULL_HANDLE;
-        AV_UNREGISTER_SAMPLER ( "Game::_sampler01Mips" )
-    }
-
-    if ( _specularLUTSampler == VK_NULL_HANDLE )
-        return;
-
-    vkDestroySampler ( renderer.GetDevice (), _specularLUTSampler, nullptr );
-    _specularLUTSampler = VK_NULL_HANDLE;
-    AV_UNREGISTER_SAMPLER ( "Game::_specularLUTSampler" )
-}
-
 bool Game::CreateShaderModules ( android_vulkan::Renderer &renderer )
 {
     bool result = renderer.CreateShader ( _vertexShaderModule,
@@ -1276,7 +1126,7 @@ bool Game::CreateShaderModules ( android_vulkan::Renderer &renderer )
     AV_REGISTER_SHADER_MODULE ( "Game::_vertexShaderModule" )
 
     result = renderer.CreateShader ( _fragmentShaderModule,
-        FRAGMENT_SHADER,
+        _fragmentShader,
         "Can't create fragment shader (Game::CreateShaderModules)"
     );
 
@@ -1304,56 +1154,6 @@ void Game::DestroyShaderModules ( android_vulkan::Renderer &renderer )
     vkDestroyShaderModule ( device, _vertexShaderModule, nullptr );
     _vertexShaderModule = VK_NULL_HANDLE;
     AV_UNREGISTER_SHADER_MODULE ( "Game::_vertexShaderModule" )
-}
-
-bool Game::CreateSpecularLUTTexture ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer )
-{
-    constexpr const size_t totalSamples = SPECULAR_ANGLE_SAMPLES * SPECULAR_EXPONENT_SAMPLES;
-
-    std::vector<uint8_t> lutData ( totalSamples * sizeof ( android_vulkan::Half ) );
-    auto* samples = reinterpret_cast<android_vulkan::Half*> ( lutData.data () );
-
-    auto jobThread = [ samples ] ( size_t startIndex, int shininess ) {
-        do
-        {
-            constexpr const auto nextOffset = SPECULAR_GENERATOR_THREADS * SPECULAR_ANGLE_SAMPLES;
-            constexpr const auto convert = 1.0F / static_cast<const float> ( SPECULAR_ANGLE_SAMPLES );
-
-            for ( size_t i = 0U; i < SPECULAR_ANGLE_SAMPLES; ++i )
-                samples[ startIndex + i ] = std::pow ( static_cast<float> ( i ) * convert, shininess );
-
-            shininess += static_cast<int> ( SPECULAR_GENERATOR_THREADS );
-            startIndex += nextOffset;
-        }
-        while ( startIndex < totalSamples );
-    };
-
-    std::array<std::thread, SPECULAR_GENERATOR_THREADS> jobPool;
-
-    for ( size_t i = 0U; i < SPECULAR_GENERATOR_THREADS; ++i )
-        jobPool[ i ] = std::thread ( jobThread, i * SPECULAR_ANGLE_SAMPLES, static_cast<int> ( i ) );
-
-    for ( size_t i = 0U; i < SPECULAR_GENERATOR_THREADS; ++i )
-        jobPool[ i ].join ();
-
-    return _specularLUTTexture.UploadData ( lutData.data (),
-        lutData.size (),
-
-        VkExtent2D {
-            .width = static_cast<uint32_t> ( SPECULAR_ANGLE_SAMPLES ),
-            .height = static_cast<uint32_t> ( SPECULAR_EXPONENT_SAMPLES )
-        },
-
-        VK_FORMAT_R16_SFLOAT,
-        false,
-        renderer,
-        commandBuffer
-    );
-}
-
-void Game::DestroySpecularLUTTexture ( android_vulkan::Renderer &renderer )
-{
-    _specularLUTTexture.FreeResources ( renderer );
 }
 
 bool Game::CreateSyncPrimitives ( android_vulkan::Renderer &renderer )
@@ -1405,116 +1205,6 @@ void Game::DestroySyncPrimitives ( android_vulkan::Renderer &renderer )
     vkDestroySemaphore ( device, _renderPassEndSemaphore, nullptr );
     _renderPassEndSemaphore = VK_NULL_HANDLE;
     AV_UNREGISTER_SEMAPHORE ( "Game::_renderPassEndSemaphore" )
-}
-
-bool Game::CreateTextures ( android_vulkan::Renderer &renderer, VkCommandBuffer* commandBuffers )
-{
-    auto selector = [ this ] ( const Texture2D &texture ) -> VkSampler {
-        const uint8_t mips = texture.GetMipLevelCount ();
-
-        if ( mips == 1U )
-            return _sampler01Mips;
-
-        if ( mips == 9U )
-            return _sampler09Mips;
-
-        if ( mips == 10U )
-            return _sampler10Mips;
-
-        if ( mips == 11U )
-            return _sampler11Mips;
-
-        assert ( !"Game::CreateTextures::selector - Can't select sampler" );
-        return VK_NULL_HANDLE;
-    };
-
-    constexpr char const* textureFiles[ MATERIAL_COUNT ] =
-    {
-        MATERIAL_1_DIFFUSE,
-        MATERIAL_2_DIFFUSE,
-        MATERIAL_3_DIFFUSE
-    };
-
-    for ( size_t i = 0U; i < MATERIAL_COUNT; ++i )
-    {
-        auto& drawcall = _drawcalls[ i ];
-
-        bool result = drawcall._diffuse.UploadData ( textureFiles[ i ],
-            VK_FORMAT_R8G8B8A8_SRGB,
-            true,
-            renderer,
-            commandBuffers[ i ]
-        );
-
-        if ( !result )
-            return false;
-
-        drawcall._diffuseSampler = selector ( drawcall._diffuse );
-    }
-
-    Drawcall& secondMaterial = _drawcalls[ 1U ];
-
-    bool result = secondMaterial._normal.UploadData ( MATERIAL_2_NORMAL,
-        VK_FORMAT_R8G8B8A8_UNORM,
-        true,
-        renderer,
-        commandBuffers[ 3U ]
-    );
-
-    if ( !result )
-        return false;
-
-    secondMaterial._normalSampler = selector ( secondMaterial._normal );
-
-    Drawcall& thirdMaterial = _drawcalls[ 2U ];
-
-    result = thirdMaterial._normal.UploadData ( MATERIAL_3_NORMAL,
-        VK_FORMAT_R8G8B8A8_UNORM,
-        true,
-        renderer,
-        commandBuffers[ 4U ]
-    );
-
-    if ( !result )
-        return false;
-
-    thirdMaterial._normalSampler = selector ( thirdMaterial._normal );
-
-    Drawcall& firstMaterial = _drawcalls[ 0U ];
-    constexpr const uint8_t defaultNormal[] = { 128U, 128U, 255U, 128U };
-
-    result = firstMaterial._normal.UploadData ( defaultNormal,
-        std::size ( defaultNormal ),
-        VkExtent2D { .width = 1U, .height = 1U },
-        VK_FORMAT_R8G8B8A8_UNORM,
-        false,
-        renderer,
-        commandBuffers[ 5U ]
-    );
-
-    if ( !result )
-        return false;
-
-    firstMaterial._normalSampler = selector ( firstMaterial._normal );
-
-    return CreateSpecularLUTTexture ( renderer, commandBuffers[ 6U ] );
-}
-
-void Game::DestroyTextures ( android_vulkan::Renderer &renderer )
-{
-    renderer.CheckVkResult ( vkQueueWaitIdle ( renderer.GetQueue () ),
-        "Game::DestroyTextures",
-        "Can't wait queue idle"
-    );
-
-    for ( auto& item : _drawcalls )
-    {
-        item._diffuse.FreeResources ( renderer );
-        item._normal.FreeResources ( renderer );
-        item._diffuseSampler = item._normalSampler = VK_NULL_HANDLE;
-    }
-
-    DestroySpecularLUTTexture ( renderer );
 }
 
 bool Game::CreateUniformBuffer ( android_vulkan::Renderer& renderer )
@@ -1638,56 +1328,6 @@ bool Game::InitCommandBuffers ( android_vulkan::Renderer &renderer )
         _commandBuffers.emplace_back ( std::make_pair ( commandBuffer, fence ) );
     }
 
-    return true;
-}
-
-bool Game::LoadGPUContent ( android_vulkan::Renderer &renderer )
-{
-    constexpr const size_t commandBufferCount = TEXTURE_COMMAND_BUFFERS + MESH_COMMAND_BUFFERS;
-    VkCommandBuffer commandBuffers[ commandBufferCount ] = { VK_NULL_HANDLE };
-
-    VkCommandBufferAllocateInfo allocateInfo;
-    allocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    allocateInfo.pNext = nullptr;
-    allocateInfo.commandPool = _commandPool;
-    allocateInfo.commandBufferCount = static_cast<uint32_t> ( commandBufferCount );
-    allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-
-    VkDevice device = renderer.GetDevice ();
-
-    bool result = renderer.CheckVkResult (
-        vkAllocateCommandBuffers ( renderer.GetDevice (), &allocateInfo, commandBuffers ),
-        "Game::LoadGPUContent",
-        "Can't allocate command buffers"
-    );
-
-    if ( !result )
-        return false;
-
-    if ( !CreateTextures ( renderer, commandBuffers ) )
-        return false;
-
-    if ( !CreateMeshes ( renderer, commandBuffers + TEXTURE_COMMAND_BUFFERS ) )
-        return false;
-
-    result = renderer.CheckVkResult ( vkQueueWaitIdle ( renderer.GetQueue () ),
-        "Game::LoadGPUContent",
-        "Can't run upload commands"
-    );
-
-    if ( !result )
-        return false;
-
-    for ( auto& item : _drawcalls )
-    {
-        item._mesh.FreeTransferResources ( renderer );
-        item._diffuse.FreeTransferResources ( renderer );
-        item._normal.FreeTransferResources ( renderer );
-    }
-
-    _specularLUTTexture.FreeTransferResources ( renderer );
-
-    vkFreeCommandBuffers ( device, _commandPool, allocateInfo.commandBufferCount, commandBuffers );
     return true;
 }
 

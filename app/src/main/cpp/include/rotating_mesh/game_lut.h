@@ -10,8 +10,8 @@ namespace rotating_mesh {
 class GameLUT final : public Game
 {
     private:
-        VkSampler       _specularLUTSampler;
-        Texture2D       _specularLUTTexture;
+        VkSampler                       _specularLUTSampler;
+        android_vulkan::Texture2D       _specularLUTTexture;
 
     public:
         GameLUT ();
@@ -30,9 +30,10 @@ class GameLUT final : public Game
 
         void DestroyTextures ( android_vulkan::Renderer &renderer ) override;
 
-        bool CreateTextures ( android_vulkan::Renderer &renderer, VkCommandBuffer* commandBuffers );
+        [[nodiscard]] bool CreateSpecularLUTTexture ( android_vulkan::Renderer &renderer,
+            VkCommandBuffer commandBuffer
+        );
 
-        bool CreateSpecularLUTTexture ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer );
         void DestroySpecularLUTTexture ( android_vulkan::Renderer &renderer );
 };
 

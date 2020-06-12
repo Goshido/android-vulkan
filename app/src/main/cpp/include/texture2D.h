@@ -7,14 +7,13 @@
 GX_DISABLE_COMMON_WARNINGS
 
 #include <string>
-#include <vector>
 
 GX_RESTORE_WARNING_STATE
 
 #include "renderer.h"
 
 
-namespace rotating_mesh {
+namespace android_vulkan {
 
 class Texture2D final
 {
@@ -37,11 +36,15 @@ class Texture2D final
 
     public:
         Texture2D ();
-        [[maybe_unused]] Texture2D ( std::string &fileName, VkFormat format, bool isGenerateMipmaps );
-        [[maybe_unused]] Texture2D ( std::string &&fileName, VkFormat format, bool isGenerateMipmaps );
 
         Texture2D ( const Texture2D &other ) = delete;
         Texture2D& operator = ( const Texture2D &other ) = delete;
+
+        [[maybe_unused]] [[nodiscard]] bool CreateRenderTarget ( const VkExtent2D &resolution,
+            VkFormat format,
+            VkImageUsageFlags usage,
+            android_vulkan::Renderer &renderer
+        );
 
         void FreeResources ( android_vulkan::Renderer &renderer );
 
@@ -51,27 +54,29 @@ class Texture2D final
         // _transfer and _transferDeviceMemory for Texture2D objects.
         void FreeTransferResources ( android_vulkan::Renderer &renderer );
 
-        VkImageView GetImageView () const;
-        uint8_t GetMipLevelCount () const;
+        [[nodiscard]] VkImageView GetImageView () const;
+        [[nodiscard]] uint8_t GetMipLevelCount () const;
 
         // Method is used when file name and format are passed via constructor.
-        [[maybe_unused]] bool UploadData ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer );
+        [[maybe_unused]] [[nodiscard]] bool UploadData ( android_vulkan::Renderer &renderer,
+            VkCommandBuffer commandBuffer
+        );
 
-        [[maybe_unused]] bool UploadData ( std::string &fileName,
+        [[maybe_unused]] [[nodiscard]] bool UploadData ( std::string &fileName,
             VkFormat format,
             bool isGenerateMipmaps,
             android_vulkan::Renderer &renderer,
             VkCommandBuffer commandBuffer
         );
 
-        bool UploadData ( std::string &&fileName,
+        [[nodiscard]] bool UploadData ( std::string &&fileName,
             VkFormat format,
             bool isGenerateMipmaps,
             android_vulkan::Renderer &renderer,
             VkCommandBuffer commandBuffer
         );
 
-        [[maybe_unused]] bool UploadData ( const uint8_t* data,
+        [[nodiscard]] bool UploadData ( const uint8_t* data,
             size_t size,
             const VkExtent2D &resolution,
             VkFormat format,
@@ -81,22 +86,34 @@ class Texture2D final
         );
 
     private:
-        uint32_t CountMipLevels ( const VkExtent2D &resolution ) const;
-        void FreeResourceInternal ( android_vulkan::Renderer &renderer );
-        bool IsFormatCompatible ( VkFormat target, VkFormat candidate, android_vulkan::Renderer &renderer ) const;
+        [[nodiscard]] uint32_t CountMipLevels ( const VkExtent2D &resolution ) const;
 
-        VkFormat PickupFormat ( int channels ) const;
-
-        bool UploadDataInternal ( const uint8_t* data,
-            size_t size,
+        [[nodiscard]] bool CreateCommonResources ( VkImageCreateInfo &imageInfo,
             const VkExtent2D &resolution,
             VkFormat format,
+            VkImageUsageFlags usage,
             bool isGenerateMipmaps,
+            android_vulkan::Renderer &renderer
+        );
+
+        void FreeResourceInternal ( android_vulkan::Renderer &renderer );
+
+        [[nodiscard]] bool IsFormatCompatible ( VkFormat target,
+            VkFormat candidate,
+            android_vulkan::Renderer &renderer
+        ) const;
+
+        [[nodiscard]] VkFormat PickupFormat ( int channels ) const;
+
+        [[nodiscard]] bool UploadDataInternal ( const uint8_t* data,
+            size_t size,
+            bool isGenerateMipmaps,
+            const VkImageCreateInfo &imageInfo,
             android_vulkan::Renderer &renderer,
             VkCommandBuffer commandBuffer
         );
 
-        static bool LoadImage ( std::vector<uint8_t> &pixelData,
+        [[nodiscard]] static bool LoadImage ( std::vector<uint8_t> &pixelData,
             const std::string &fileName,
             int &width,
             int &height,
@@ -104,7 +121,7 @@ class Texture2D final
         );
 };
 
-} // namespace rotating_mesh
+} // namespace android_vulkan
 
 
 #endif // ROTATING_MESH_TEXTURE_2D_H

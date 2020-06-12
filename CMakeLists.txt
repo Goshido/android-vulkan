@@ -52,18 +52,19 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/logger.cpp
     app/src/main/cpp/sources/main.cpp
     app/src/main/cpp/sources/renderer.cpp
+    app/src/main/cpp/sources/texture2D.cpp
     app/src/main/cpp/sources/vulkan_utils.cpp
     app/src/main/cpp/sources/GXCommon/GXMath.cpp
     app/src/main/cpp/sources/GXCommon/Vulkan/GXMathBackend.cpp
     app/src/main/cpp/sources/mandelbrot/mandelbrot_analytic_color.cpp
     app/src/main/cpp/sources/mandelbrot/mandelbrot_base.cpp
     app/src/main/cpp/sources/mandelbrot/mandelbrot_lut_color.cpp
+    app/src/main/cpp/sources/pbr/pbr_game.cpp
     app/src/main/cpp/sources/rainbow/rainbow.cpp
     app/src/main/cpp/sources/rotating_mesh/game.cpp
     app/src/main/cpp/sources/rotating_mesh/game_analytic.cpp
     app/src/main/cpp/sources/rotating_mesh/game_lut.cpp
     app/src/main/cpp/sources/rotating_mesh/mesh_geometry.cpp
-    app/src/main/cpp/sources/rotating_mesh/texture2D.cpp
     app/src/main/cpp/sources/rotating_mesh/uniform_buffer.cpp
 )
 

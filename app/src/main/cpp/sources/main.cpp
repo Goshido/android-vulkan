@@ -10,6 +10,7 @@ GX_RESTORE_WARNING_STATE
 #include <logger.h>
 #include <mandelbrot/mandelbrot_analytic_color.h>
 #include <mandelbrot/mandelbrot_lut_color.h>
+#include <pbr/pbr_game.h>
 #include <rainbow/rainbow.h>
 #include <rotating_mesh/game_analytic.h>
 #include <rotating_mesh/game_lut.h>
@@ -21,6 +22,7 @@ enum class eGame : uint16_t
 {
     MandelbrotAnalyticColor,
     MandelbrotLutColor,
+    PBR,
     Rainbow,
     RotatingMeshAnalytic,
     RotatingMeshLUT
@@ -30,6 +32,7 @@ static const std::map<eGame, std::shared_ptr<Game>> g_Games =
 {
     { eGame::MandelbrotAnalyticColor, std::make_shared<mandelbrot::MandelbrotAnalyticColor> () },
     { eGame::MandelbrotLutColor, std::make_shared<mandelbrot::MandelbrotLUTColor> () },
+    { eGame::PBR, std::make_shared<pbr::PBRGame> () },
     { eGame::Rainbow, std::make_shared<rainbow::Rainbow> () },
     { eGame::RotatingMeshAnalytic, std::make_shared<rotating_mesh::GameAnalytic> () },
     { eGame::RotatingMeshLUT, std::make_shared<rotating_mesh::GameLUT> () }

@@ -6,6 +6,7 @@ GX_DISABLE_COMMON_WARNINGS
 
 GX_RESTORE_WARNING_STATE
 
+#include "logger.h"
 #include "vulkan_utils.h"
 
 
@@ -38,8 +39,8 @@ void Core::OnFrame ()
     const timestamp now = std::chrono::system_clock::now ();
     const std::chrono::duration<double> delta = now - _frameTimestamp;
 
-    if ( _renderer.CheckSwapchainStatus () )
-        _game.OnFrame ( _renderer, delta.count () );
+    if ( _renderer.CheckSwapchainStatus () && !_game.OnFrame ( _renderer, delta.count () ) )
+        LogError ( "Core::OnFrame - Frame rendering failed." );
 
     _frameTimestamp = now;
     UpdateFPS ( now );
@@ -107,15 +108,17 @@ void Core::OnOSCommand ( android_app* app, int32_t cmd )
     switch ( cmd )
     {
         case APP_CMD_INIT_WINDOW:
-            if ( core._renderer.OnInit ( *app->window, false ) )
-                core._game.OnInit ( core._renderer );
+            if ( core._renderer.OnInit ( *app->window, false ) && !core._game.OnInit ( core._renderer ) )
+                LogError ( "Core::OnOSCommand - Init failed." );
 
             core._fpsTimestamp = std::chrono::system_clock::now ();
             core._frameTimestamp = core._fpsTimestamp;
         break;
 
         case APP_CMD_TERM_WINDOW:
-            core._game.OnDestroy ( core._renderer );
+            if ( !core._game.OnDestroy ( core._renderer ) )
+                LogError ( "Core::OnOSCommand - Game destroy failed." );
+
             core._renderer.OnDestroy ();
             AV_CHECK_VULKAN_LEAKS ()
         break;

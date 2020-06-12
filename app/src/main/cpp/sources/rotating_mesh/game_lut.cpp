@@ -372,14 +372,6 @@ void GameLUT::DestroySamplers ( android_vulkan::Renderer &renderer )
     AV_UNREGISTER_SAMPLER ( "GameLUT::_specularLUTSampler" )
 }
 
-bool GameLUT::CreateTextures ( android_vulkan::Renderer &renderer, VkCommandBuffer* commandBuffers )
-{
-    if ( !CreateCommonTextures ( renderer, commandBuffers ) )
-        return false;
-
-    return CreateSpecularLUTTexture ( renderer, commandBuffers[ 6U ] );
-}
-
 void GameLUT::DestroyTextures ( android_vulkan::Renderer &renderer )
 {
     DestroySpecularLUTTexture ( renderer );

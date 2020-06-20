@@ -50,7 +50,7 @@ void android_main ( android_app* app )
 #endif // ANDROID_VULKAN_DEBUG
 
     android_vulkan::Core core ( *app,
-        *( android_vulkan::g_Games.find ( android_vulkan::eGame::RotatingMeshLUT )->second )
+        *( android_vulkan::g_Games.find ( android_vulkan::eGame::PBR )->second )
     );
 
     for ( ; ; )

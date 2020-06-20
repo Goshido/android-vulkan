@@ -2,8 +2,8 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 29
-    buildToolsVersion "30.0.0-rc4"
-    ndkVersion "21.2.6472646"
+    buildToolsVersion "30.0.0"
+    ndkVersion "21.3.6528147"
 
     defaultConfig {
         applicationId "com.goshido.android_vulkan"

@@ -60,6 +60,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/mandelbrot/mandelbrot_base.cpp
     app/src/main/cpp/sources/mandelbrot/mandelbrot_lut_color.cpp
     app/src/main/cpp/sources/pbr/pbr_game.cpp
+    app/src/main/cpp/sources/pbr/gbuffer.cpp
     app/src/main/cpp/sources/rainbow/rainbow.cpp
     app/src/main/cpp/sources/rotating_mesh/game.cpp
     app/src/main/cpp/sources/rotating_mesh/game_analytic.cpp

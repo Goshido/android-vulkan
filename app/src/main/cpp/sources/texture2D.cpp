@@ -110,7 +110,13 @@ bool Texture2D::CreateRenderTarget ( const VkExtent2D &resolution,
 {
     FreeResources ( renderer );
     VkImageCreateInfo imageInfo;
-    return CreateCommonResources ( imageInfo, resolution, format, usage, false, renderer);
+    const bool result = CreateCommonResources ( imageInfo, resolution, format, usage, false, renderer);
+
+    if ( !result )
+        return false;
+
+    _mipLevels = 1U;
+    return true;
 }
 
 void Texture2D::FreeTransferResources ( android_vulkan::Renderer &renderer )

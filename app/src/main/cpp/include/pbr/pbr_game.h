@@ -3,6 +3,7 @@
 
 
 #include <game.h>
+#include "gbuffer.h"
 
 
 namespace pbr {
@@ -10,13 +11,10 @@ namespace pbr {
 class PBRGame final : public android_vulkan::Game
 {
     private:
-        [[maybe_unused]] VkCommandPool                  _commandPool;
-
-        [[maybe_unused]] VkImage                        _depthImage;
-        [[maybe_unused]] VkDeviceMemory                 _depthMemory;
-        [[maybe_unused]] VkImageView                    _depthView;
-
-        [[maybe_unused]] std::vector<VkFramebuffer>     _frameBuffers;
+        VkCommandPool                       _commandPool;
+        std::vector<VkFramebuffer>          _frameBuffers;
+        GBuffer                             _gBuffer;
+        [[maybe_unused]] VkRenderPass       _lightupRenderPass;
 
     public:
         PBRGame ();
@@ -31,6 +29,15 @@ class PBRGame final : public android_vulkan::Game
         bool OnInit ( android_vulkan::Renderer &renderer ) override;
         bool OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) override;
         bool OnDestroy ( android_vulkan::Renderer &renderer ) override;
+
+        [[nodiscard]] bool CreateCommandPool ( android_vulkan::Renderer &renderer );
+        void DestroyCommandPool ( android_vulkan::Renderer &renderer );
+
+        [[nodiscard]] bool CreateFramebuffers ( android_vulkan::Renderer &renderer );
+        void DestroyFramebuffers ( android_vulkan::Renderer &renderer );
+
+        [[nodiscard]] bool CreateRenderPasses ( android_vulkan::Renderer &renderer );
+        void DestroyRenderPasses ( android_vulkan::Renderer &renderer );
 };
 
 } // namespace pbr

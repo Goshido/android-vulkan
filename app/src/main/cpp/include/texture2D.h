@@ -40,7 +40,7 @@ class Texture2D final
         Texture2D ( const Texture2D &other ) = delete;
         Texture2D& operator = ( const Texture2D &other ) = delete;
 
-        [[maybe_unused]] [[nodiscard]] bool CreateRenderTarget ( const VkExtent2D &resolution,
+        [[nodiscard]] bool CreateRenderTarget ( const VkExtent2D &resolution,
             VkFormat format,
             VkImageUsageFlags usage,
             android_vulkan::Renderer &renderer
@@ -54,6 +54,7 @@ class Texture2D final
         // _transfer and _transferDeviceMemory for Texture2D objects.
         void FreeTransferResources ( android_vulkan::Renderer &renderer );
 
+        [[nodiscard]] VkFormat GetFormat () const;
         [[nodiscard]] VkImageView GetImageView () const;
         [[nodiscard]] uint8_t GetMipLevelCount () const;
 

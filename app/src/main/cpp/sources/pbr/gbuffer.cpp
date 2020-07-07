@@ -15,6 +15,36 @@ GBuffer::GBuffer ():
     // NOTHING
 }
 
+android_vulkan::Texture2D& GBuffer::GetAlbedo ()
+{
+    return _albedo;
+}
+
+android_vulkan::Texture2D& GBuffer::GetEmission ()
+{
+    return _emission;
+}
+
+android_vulkan::Texture2D& GBuffer::GetNormal ()
+{
+    return _normal;
+}
+
+android_vulkan::Texture2D& GBuffer::GetParams ()
+{
+    return _params;
+}
+
+android_vulkan::Texture2D& GBuffer::GetDepthStencil ()
+{
+    return _depthStencil;
+}
+
+const VkExtent2D& GBuffer::GetResolution () const
+{
+    return _resolution;
+}
+
 bool GBuffer::Init ( const VkExtent2D &resolution, android_vulkan::Renderer &renderer )
 {
     constexpr const VkImageUsageFlags usageColor = AV_VK_FLAG ( VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT ) |
@@ -55,11 +85,6 @@ void GBuffer::Destroy ( android_vulkan::Renderer &renderer )
     _normal.FreeResources ( renderer );
     _emission.FreeResources ( renderer );
     _albedo.FreeResources ( renderer );
-}
-
-const VkExtent2D& GBuffer::GetResolution () const
-{
-    return _resolution;
 }
 
 } // namespace pbr

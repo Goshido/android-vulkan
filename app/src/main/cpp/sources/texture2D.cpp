@@ -138,6 +138,12 @@ void Texture2D::FreeTransferResources ( android_vulkan::Renderer &renderer )
     AV_UNREGISTER_BUFFER ( "Texture2D::_transfer" )
 }
 
+VkFormat Texture2D::GetFormat () const
+{
+    assert ( _format != VK_FORMAT_UNDEFINED );
+    return _format;
+}
+
 VkImageView Texture2D::GetImageView () const
 {
     return _imageView;

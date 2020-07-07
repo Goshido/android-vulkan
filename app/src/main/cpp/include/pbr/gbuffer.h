@@ -26,10 +26,16 @@ class GBuffer final
         GBuffer ( const GBuffer &other ) = delete;
         GBuffer& operator = ( const GBuffer &other ) = delete;
 
+        [[nodiscard]] android_vulkan::Texture2D& GetAlbedo ();
+        [[nodiscard]] android_vulkan::Texture2D& GetEmission ();
+        [[nodiscard]] android_vulkan::Texture2D& GetNormal ();
+        [[nodiscard]] android_vulkan::Texture2D& GetParams ();
+        [[nodiscard]] android_vulkan::Texture2D& GetDepthStencil ();
+
+        [[nodiscard]] const VkExtent2D& GetResolution () const;
+
         [[nodiscard]] bool Init ( const VkExtent2D &resolution, android_vulkan::Renderer &renderer );
         void Destroy ( android_vulkan::Renderer &renderer );
-
-        [[nodiscard]] [[maybe_unused]] const VkExtent2D& GetResolution () const;
 };
 
 } // namespace pbr

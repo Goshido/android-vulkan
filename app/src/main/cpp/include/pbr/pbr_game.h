@@ -4,6 +4,7 @@
 
 #include <game.h>
 #include "gbuffer.h"
+#include "opaque_program.h"
 
 
 namespace pbr {
@@ -15,6 +16,8 @@ class PBRGame final : public android_vulkan::Game
         GBuffer                             _gBuffer;
         VkFramebuffer                       _gBufferFramebuffer;
         VkRenderPass                        _gBufferRenderPass;
+
+        OpaqueProgram                       _opaqueProgram;
 
         std::vector<VkFramebuffer>          _presentFrameBuffers;
         VkRenderPass                        _presentRenderPass;

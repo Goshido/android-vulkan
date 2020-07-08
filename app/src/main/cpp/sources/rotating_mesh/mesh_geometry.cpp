@@ -10,9 +10,9 @@ GX_RESTORE_WARNING_STATE
 
 #include <file.h>
 #include <logger.h>
+#include <vertex_info.h>
 #include <vulkan_utils.h>
 #include <GXCommon/GXNativeMesh.h>
-#include <rotating_mesh/vertex_info.h>
 
 
 namespace rotating_mesh {
@@ -117,9 +117,9 @@ bool MeshGeometry::LoadMesh ( std::string &&fileName,
     const size_t verticesPerBatch = static_cast<size_t> ( header.totalVertices ) / UV_THREADS;
     const size_t toNextBatch = verticesPerBatch * skipFactor;
     const auto lastIndex = static_cast<const size_t> ( header.totalVertices - 1U );
-    auto* vertices = reinterpret_cast<VertexInfo*> ( content.data () + header.vboOffset );
+    auto* vertices = reinterpret_cast<android_vulkan::VertexInfo*> ( content.data () + header.vboOffset );
 
-    auto converter = [ & ] ( VertexInfo* vertices,
+    auto converter = [ & ] ( android_vulkan::VertexInfo* vertices,
         size_t currentIndex,
         size_t lastIndex,
         size_t toNextBatch,
@@ -156,7 +156,7 @@ bool MeshGeometry::LoadMesh ( std::string &&fileName,
         item.join ();
 
     const bool result = LoadMeshInternal ( reinterpret_cast<const uint8_t*> ( vertices ),
-        header.totalVertices * sizeof ( VertexInfo ),
+        header.totalVertices * sizeof ( android_vulkan::VertexInfo ),
         header.totalVertices,
         usage,
         renderer,

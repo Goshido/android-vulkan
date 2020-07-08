@@ -1,11 +1,11 @@
-#ifndef ROTATING_MESH_VERTEX_INFO
-#define ROTATING_MESH_VERTEX_INFO
+#ifndef ANDROID_VULKAN_MESH_VERTEX_INFO_H
+#define ANDROID_VULKAN_MESH_VERTEX_INFO_H
 
 
 #include <GXCommon/GXMath.h>
 
 
-namespace rotating_mesh {
+namespace android_vulkan {
 
 #pragma pack ( push, 1 )
 
@@ -39,7 +39,7 @@ struct VertexInfo final
 
 #pragma pack ( pop )
 
-} // namespace rotating_mesh
+} // namespace android_vulkan
 
 
-#endif // ROTATING_MESH_VERTEX_INFO
+#endif // ANDROID_VULKAN_MESH_VERTEX_INFO_H

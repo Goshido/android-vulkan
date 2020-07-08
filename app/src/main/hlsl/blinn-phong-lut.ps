@@ -6,39 +6,39 @@
 #define TARGET_SHININESS                128.0f
 #define TARGET_LIGHT_SOURCE_ORIGIN      float3 ( 0.0f, 0.0f, 0.0f )
 
-[[ vk::binding ( 1 ) ]]
+[[vk::binding ( 1 )]]
 Texture2D<float4>       g_diffuseTexture:       register ( t0 );
 
-[[ vk::binding ( 2 ) ]]
+[[vk::binding ( 2 )]]
 SamplerState            g_textureSampler:       register ( s0 );
 
-[[ vk::binding ( 3 ) ]]
+[[vk::binding ( 3 )]]
 Texture2D<float4>       g_normalTexture:        register ( t1 );
 
-[[ vk::binding ( 4 ) ]]
+[[vk::binding ( 4 )]]
 SamplerState            g_normalSampler:        register ( s1 );
 
-[[ vk::binding ( 5 ) ]]
+[[vk::binding ( 5 )]]
 Texture2D<float4>       g_specLUTTexture:       register ( t2 );
 
-[[ vk::binding ( 6 ) ]]
+[[vk::binding ( 6 )]]
 SamplerState            g_specLUTSampler:       register ( s2 );
 
 struct InputData
 {
-    [[ vk::location ( 0 ) ]]
+    [[vk::location ( 0 )]]
     linear float3       _fragmentView:          FRAGMENT;
 
-    [[ vk::location ( 1 ) ]]
+    [[vk::location ( 1 )]]
     linear half2        _uv:                    UV;
 
-    [[ vk::location ( 2 ) ]]
+    [[vk::location ( 2 )]]
     linear half3        _normalView:            NORMAL;
 
-    [[ vk::location ( 3 ) ]]
+    [[vk::location ( 3 )]]
     linear half3        _tangentView:           TANGENT;
 
-    [[ vk::location ( 4 ) ]]
+    [[vk::location ( 4 )]]
     linear half3        _bitangentView:         BITANGENT;
 };
 
@@ -62,7 +62,7 @@ half GetSpecular ( in half3 finalNormalView, in half3 toViewerView, in half3 toL
     return (half)g_specLUTTexture.SampleLevel ( g_specLUTSampler, uv, 0.0f ).x;
 }
 
-float4 PS ( [[ vk::location ( 0 ) ]] in InputData inputData ): SV_Target0
+float4 PS ( in InputData inputData ): SV_Target0
 {
     const float2 uv = (float2)inputData._uv;
     const half4 diffuseData = (half4)g_diffuseTexture.Sample ( g_textureSampler, uv );

@@ -5,12 +5,12 @@ GX_DISABLE_COMMON_WARNINGS
 #include <array>
 #include <cassert>
 #include <cmath>
+#include <thread>
 
 GX_RESTORE_WARNING_STATE
 
 #include <vulkan_utils.h>
-#include <rotating_mesh/vertex_info.h>
-#include <thread>
+#include <vertex_info.h>
 
 
 namespace rotating_mesh {
@@ -748,37 +748,37 @@ bool Game::CreatePipeline ( android_vulkan::Renderer &renderer )
     VkVertexInputAttributeDescription& vertexDescription = attributeDescriptions[ 0U ];
     vertexDescription.location = 0U;
     vertexDescription.binding = 0U;
-    vertexDescription.offset = static_cast<uint32_t> ( offsetof ( VertexInfo, _vertex ) );
+    vertexDescription.offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _vertex ) );
     vertexDescription.format = VK_FORMAT_R32G32B32_SFLOAT;
 
     VkVertexInputAttributeDescription& uvDescription = attributeDescriptions[ 1U ];
     uvDescription.location = 1U;
     uvDescription.binding = 0U;
-    uvDescription.offset = static_cast<uint32_t> ( offsetof ( VertexInfo, _uv ) );
+    uvDescription.offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _uv ) );
     uvDescription.format = VK_FORMAT_R32G32_SFLOAT;
 
     VkVertexInputAttributeDescription& normalDescription = attributeDescriptions[ 2U ];
     normalDescription.location = 2U;
     normalDescription.binding = 0U;
-    normalDescription.offset = static_cast<uint32_t> ( offsetof ( VertexInfo, _normal ) );
+    normalDescription.offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _normal ) );
     normalDescription.format = VK_FORMAT_R32G32B32_SFLOAT;
 
     VkVertexInputAttributeDescription& tangentDescription = attributeDescriptions[ 3U ];
     tangentDescription.location = 3U;
     tangentDescription.binding = 0U;
-    tangentDescription.offset = static_cast<uint32_t> ( offsetof ( VertexInfo, _tangent ) );
+    tangentDescription.offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _tangent ) );
     tangentDescription.format = VK_FORMAT_R32G32B32_SFLOAT;
 
     VkVertexInputAttributeDescription& bitangentDescription = attributeDescriptions[ 4U ];
     bitangentDescription.location = 4U;
     bitangentDescription.binding = 0U;
-    bitangentDescription.offset = static_cast<uint32_t> ( offsetof ( VertexInfo, _bitangent ) );
+    bitangentDescription.offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _bitangent ) );
     bitangentDescription.format = VK_FORMAT_R32G32B32_SFLOAT;
 
     VkVertexInputBindingDescription bindingDescription;
     bindingDescription.binding = 0U;
     bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-    bindingDescription.stride = sizeof ( VertexInfo );
+    bindingDescription.stride = sizeof ( android_vulkan::VertexInfo );
 
     VkPipelineVertexInputStateCreateInfo vertexInputInfo;
     vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;

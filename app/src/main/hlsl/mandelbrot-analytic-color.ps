@@ -23,7 +23,7 @@ float4 MapColor ( in uint iterations )
 
 //----------------------------------------------------------------------------------------------------------------------
 
-float4 PS ( [[ vk::location ( 0 ) ]] in linear float2 coordinate: COORDINATE ): SV_Target0
+float4 PS ( [[vk::location ( 0 )]] in linear float2 coordinate: COORDINATE ): SV_Target0
 {
     return MapColor ( CountIterations ( coordinate ) );
 }

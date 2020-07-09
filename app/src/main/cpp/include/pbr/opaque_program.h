@@ -3,6 +3,7 @@
 
 
 #include <texture2D.h>
+#include <vulkan_utils.h>
 #include "program.h"
 
 
@@ -10,6 +11,17 @@ namespace pbr {
 
 class OpaqueProgram final : public Program
 {
+    public:
+        AV_DX_ALIGNMENT_BEGIN
+
+        struct PushConstants final
+        {
+            GXMat4                      _localView;
+            GXMat4                      _localViewProjection;
+        };
+
+        AV_DX_ALIGNMENT_END
+
     private:
         android_vulkan::Texture2D*      _albedoTexture;
         VkSampler                       _albedoSampler;
@@ -23,7 +35,7 @@ class OpaqueProgram final : public Program
         android_vulkan::Texture2D*      _paramTexture;
         VkSampler                       _paramSampler;
 
-        VkDescriptorSetLayout           _descriptorSetLayouts[ 2U ];
+        VkDescriptorSetLayout           _descriptorSetLayout;
 
     public:
         OpaqueProgram ();

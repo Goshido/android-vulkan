@@ -1,13 +1,7 @@
-[[vk::binding ( 0, 0 )]]
-cbuffer FrameData:                          register ( b0 )
-{
-    matrix              _viewProjection;
-    matrix              _normalTransform;
-};
-
 struct ObjectData
 {
-    matrix              _localTransform;
+    matrix              _localView;
+    matrix              _localViewProjection;
 };
 
 [[vk::push_constant]]
@@ -53,14 +47,15 @@ struct OutputData
 OutputData VS ( in InputData inputData )
 {
     OutputData result;
-    result._vertexH = mul ( _viewProjection, mul ( g_objectData._localTransform, float4 ( inputData._vertex, 1.0f ) ) );
+
+    result._vertexH = mul ( g_objectData._localViewProjection, float4 ( inputData._vertex, 1.0f ) );
 
     result._uv = (half2)inputData._uv;
 
-    const float3x3 normalTransform = mul ( (float3x3)g_objectData._localTransform, (float3x3)_normalTransform );
-    result._normalView = (half3)mul ( normalTransform, inputData._normal );
-    result._tangentView = (half3)mul ( normalTransform, inputData._tangent );
-    result._bitangentView = (half3)mul ( normalTransform, inputData._bitangent );
+    const float3x3 orientation = (float3x3)g_objectData._localView;
+    result._normalView = (half3)mul ( orientation, inputData._normal );
+    result._tangentView = (half3)mul ( orientation, inputData._tangent );
+    result._bitangentView = (half3)mul ( orientation, inputData._bitangent );
 
     return result;
 }

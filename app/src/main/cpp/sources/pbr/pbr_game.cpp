@@ -11,6 +11,7 @@ PBRGame::PBRGame ():
     _gBufferFramebuffer ( VK_NULL_HANDLE ),
     _gBufferRenderPass ( VK_NULL_HANDLE ),
     _opaqueProgram {},
+    _texturePresentProgram {},
     _presentFrameBuffers {},
     _presentRenderPass ( VK_NULL_HANDLE )
 {
@@ -55,6 +56,12 @@ bool PBRGame::OnInit ( android_vulkan::Renderer &renderer )
         return false;
     }
 
+    if ( !_texturePresentProgram.Init ( renderer, _presentRenderPass, renderer.GetSurfaceSize () ) )
+    {
+        OnDestroy ( renderer );
+        return false;
+    }
+
     assert ( !"PBRGame::OnInit - Implement me!" );
     return false;
 }
@@ -67,6 +74,7 @@ bool PBRGame::OnFrame ( android_vulkan::Renderer& /*renderer*/, double /*deltaTi
 
 bool PBRGame::OnDestroy ( android_vulkan::Renderer &renderer )
 {
+    _texturePresentProgram.Destroy( renderer );
     _opaqueProgram.Destroy( renderer );
 
     DestroyFramebuffers ( renderer );

@@ -5,6 +5,7 @@
 #include <game.h>
 #include "gbuffer.h"
 #include "opaque_program.h"
+#include "texture_present_program.h"
 
 
 namespace pbr {
@@ -12,15 +13,16 @@ namespace pbr {
 class PBRGame final : public android_vulkan::Game
 {
     private:
-        VkCommandPool                       _commandPool;
-        GBuffer                             _gBuffer;
-        VkFramebuffer                       _gBufferFramebuffer;
-        VkRenderPass                        _gBufferRenderPass;
+        VkCommandPool                   _commandPool;
+        GBuffer                         _gBuffer;
+        VkFramebuffer                   _gBufferFramebuffer;
+        VkRenderPass                    _gBufferRenderPass;
 
-        OpaqueProgram                       _opaqueProgram;
+        OpaqueProgram                   _opaqueProgram;
+        TexturePresentProgram           _texturePresentProgram;
 
-        std::vector<VkFramebuffer>          _presentFrameBuffers;
-        VkRenderPass                        _presentRenderPass;
+        std::vector<VkFramebuffer>      _presentFrameBuffers;
+        VkRenderPass                    _presentRenderPass;
 
     public:
         PBRGame ();

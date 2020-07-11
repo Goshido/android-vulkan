@@ -1,5 +1,5 @@
-#ifndef OPAQUE_PROGRAM_H
-#define OPAQUE_PROGRAM_H
+#ifndef TEXTURE_PRESENT_PROGRAM_H
+#define TEXTURE_PRESENT_PROGRAM_H
 
 
 #include <texture2D.h>
@@ -9,40 +9,27 @@
 
 namespace pbr {
 
-class OpaqueProgram final : public Program
+class TexturePresentProgram final : public Program
 {
     public:
         AV_DX_ALIGNMENT_BEGIN
 
         struct PushConstants final
         {
-            GXMat4                      _localView;
-            GXMat4                      _localViewProjection;
+            GXMat4                  _transform;
         };
 
         AV_DX_ALIGNMENT_END
 
     private:
-        android_vulkan::Texture2D*      _albedoTexture;
-        VkSampler                       _albedoSampler;
-
-        android_vulkan::Texture2D*      _emissionTexture;
-        VkSampler                       _emissionSampler;
-
-        android_vulkan::Texture2D*      _normalTexture;
-        VkSampler                       _normalSampler;
-
-        android_vulkan::Texture2D*      _paramTexture;
-        VkSampler                       _paramSampler;
-
-        VkDescriptorSetLayout           _descriptorSetLayout;
+        VkDescriptorSetLayout       _descriptorSetLayout;
 
     public:
-        OpaqueProgram ();
-        ~OpaqueProgram () override = default;
+        TexturePresentProgram ();
+        ~TexturePresentProgram () override = default;
 
-        OpaqueProgram ( const OpaqueProgram &other ) = delete;
-        OpaqueProgram& operator = ( const OpaqueProgram &other ) = delete;
+        TexturePresentProgram ( const TexturePresentProgram &other ) = delete;
+        TexturePresentProgram& operator = ( const TexturePresentProgram &other ) = delete;
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
             VkRenderPass renderPass,
@@ -50,11 +37,6 @@ class OpaqueProgram final : public Program
         ) override;
 
         void Destroy ( android_vulkan::Renderer &renderer ) override;
-
-        [[maybe_unused]] void SetAlbedo ( android_vulkan::Texture2D &texture, VkSampler sampler );
-        [[maybe_unused]] void SetEmission ( android_vulkan::Texture2D &texture, VkSampler sampler );
-        [[maybe_unused]] void SetNormal ( android_vulkan::Texture2D &texture, VkSampler sampler );
-        [[maybe_unused]] void SetParams ( android_vulkan::Texture2D &texture, VkSampler sampler );
 
     private:
         void BeginSetup () override;
@@ -104,7 +86,8 @@ class OpaqueProgram final : public Program
         ) const override;
 };
 
+
 } // namespace pbr
 
 
-#endif // OPAQUE_PROGRAM_H
+#endif // TEXTURE_PRESENT_PROGRAM_H

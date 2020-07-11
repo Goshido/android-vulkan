@@ -4,9 +4,9 @@
 
 #include <game.h>
 #include <vulkan_utils.h>
+#include <mesh_geometry.h>
 #include <GXCommon/GXMath.h>
 #include "drawcall.h"
-#include "mesh_geometry.h"
 #include "uniform_buffer.h"
 
 

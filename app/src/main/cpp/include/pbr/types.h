@@ -1,0 +1,19 @@
+#ifndef PBR_TYPES_H
+#define PBR_TYPES_H
+
+
+#include <mesh_geometry.h>
+#include <texture2D.h>
+#include "material.h"
+
+
+namespace pbr {
+
+using MeshRef = std::shared_ptr<android_vulkan::MeshGeometry>;
+using Texture2DRef = std::shared_ptr<android_vulkan::Texture2D>;
+using MaterialRef = std::shared_ptr<Material>;
+
+} // namespace pbr
+
+
+#endif // PBR_TYPES_H

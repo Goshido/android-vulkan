@@ -1222,7 +1222,7 @@ bool Game::InitCommandBuffers ( android_vulkan::Renderer &renderer )
                 &item._descriptorSet, 0U, nullptr
             );
 
-            MeshGeometry& mesh = item._mesh;
+            android_vulkan::MeshGeometry& mesh = item._mesh;
 
             vkCmdBindVertexBuffers ( commandBuffer, 0U, 1U, &mesh.GetBuffer (), &offset );
             vkCmdDraw ( commandBuffer, mesh.GetVertexCount (), 1U, 0U, 0U );

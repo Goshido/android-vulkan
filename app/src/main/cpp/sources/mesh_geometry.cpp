@@ -1,4 +1,4 @@
-#include <rotating_mesh/mesh_geometry.h>
+#include <mesh_geometry.h>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -15,7 +15,7 @@ GX_RESTORE_WARNING_STATE
 #include <GXCommon/GXNativeMesh.h>
 
 
-namespace rotating_mesh {
+namespace android_vulkan {
 
 constexpr static const size_t UV_THREADS = 4U;
 
@@ -407,4 +407,4 @@ bool MeshGeometry::LoadMeshInternal ( const uint8_t* data,
     return false;
 }
 
-} // namespace rotating_mesh
+} // namespace android_vulkan

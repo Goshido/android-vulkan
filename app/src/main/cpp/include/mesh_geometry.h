@@ -1,5 +1,5 @@
-#ifndef ROTATING_MESH_MESH_GEOMETRY_H
-#define ROTATING_MESH_MESH_GEOMETRY_H
+#ifndef MESH_GEOMETRY_H
+#define MESH_GEOMETRY_H
 
 
 #include <GXCommon/GXWarning.h>
@@ -10,10 +10,10 @@ GX_DISABLE_COMMON_WARNINGS
 
 GX_RESTORE_WARNING_STATE
 
-#include <renderer.h>
+#include "renderer.h"
 
 
-namespace rotating_mesh {
+namespace android_vulkan {
 
 struct BufferSyncItem final
 {
@@ -93,7 +93,7 @@ class MeshGeometry final
         );
 };
 
-} // namespace rotating_mesh
+} // namespace android_vulkan
 
 
-#endif // ROTATING_MESH_MESH_GEOMETRY_H
+#endif // MESH_GEOMETRY_H

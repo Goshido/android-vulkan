@@ -1,0 +1,12 @@
+[[vk::binding ( 0, 0 )]]
+Texture2D<float4>       g_Texture;
+
+[[vk::binding ( 1, 0 )]]
+SamplerState            g_Sampler;
+
+//----------------------------------------------------------------------------------------------------------------------
+
+float4 PS ( [[vk::location ( 0 )]] in noperspective half2 uv: COORDINATE ): SV_Target0
+{
+    return g_Texture.SampleLevel ( g_Sampler, (float2)uv, 0.0f );
+}

@@ -15,7 +15,7 @@ struct Drawcall final
     android_vulkan::Texture2D       _diffuse;
     VkSampler                       _diffuseSampler;
 
-    MeshGeometry                    _mesh;
+    android_vulkan::MeshGeometry    _mesh;
 
     android_vulkan::Texture2D       _normal;
     VkSampler                       _normalSampler;

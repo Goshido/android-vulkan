@@ -3,6 +3,9 @@
 
 
 #include <GXCommon/GXMath.h>
+#include "gbuffer.h"
+#include "opaque_program.h"
+#include "texture_present_program.h"
 #include "types.h"
 
 
@@ -20,8 +23,25 @@ enum class ePresentTarget : uint8_t
 class RenderSession final
 {
     public:
-        size_t      _meshCount;
-        GXMat4      _viewProjection;
+        Texture2DRef                _albedoDefault;
+        Texture2DRef                _emissionDefault;
+        Texture2DRef                _normalDefault;
+        Texture2DRef                _paramDefault;
+
+        VkCommandPool               _commandPool;
+
+        GBuffer                     _gBuffer;
+        VkFramebuffer               _gBufferFramebuffer;
+        VkRenderPass                _gBufferRenderPass;
+
+        bool                        _isFreeTransferResources;
+
+        size_t                      _meshCount;
+
+        OpaqueProgram               _opaqueProgram;
+        TexturePresentProgram       _texturePresentProgram;
+
+        GXMat4                      _viewProjection;
 
     public:
         RenderSession ();
@@ -34,6 +54,13 @@ class RenderSession final
 
         [[maybe_unused]] void Begin ( const GXMat4 &view, const GXMat4 &projection );
         [[maybe_unused]] void End ( ePresentTarget target, android_vulkan::Renderer &renderer );
+
+        [[maybe_unused]] [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, VkRenderPass presentRenderPass );
+        void Destroy ( android_vulkan::Renderer &renderer );
+
+    private:
+        [[nodiscard]] bool CreateGBufferFramebuffer ( android_vulkan::Renderer &renderer );
+        [[nodiscard]] bool CreateGBufferRenderPass ( android_vulkan::Renderer &renderer );
 };
 
 } // namespace pbr

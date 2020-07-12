@@ -1,5 +1,5 @@
-#ifndef ROTATING_MESH_TEXTURE_2D_H
-#define ROTATING_MESH_TEXTURE_2D_H
+#ifndef TEXTURE_2D_H
+#define TEXTURE_2D_H
 
 
 #include <GXCommon/GXWarning.h>
@@ -125,4 +125,4 @@ class Texture2D final
 } // namespace android_vulkan
 
 
-#endif // ROTATING_MESH_TEXTURE_2D_H
+#endif // TEXTURE_2D_H

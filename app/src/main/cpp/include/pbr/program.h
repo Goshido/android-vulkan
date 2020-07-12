@@ -1,5 +1,5 @@
-#ifndef PBR_MATERIAL_H
-#define PBR_MATERIAL_H
+#ifndef PBR_PROGRAM_H
+#define PBR_PROGRAM_H
 
 
 #include <renderer.h>
@@ -109,4 +109,4 @@ class Program
 } // namespace pbr
 
 
-#endif // PBR_MATERIAL_H
+#endif // PBR_PROGRAM_H

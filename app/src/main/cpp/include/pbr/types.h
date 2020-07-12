@@ -5,6 +5,7 @@
 #include <mesh_geometry.h>
 #include <texture2D.h>
 #include "material.h"
+#include "sampler.h"
 
 
 namespace pbr {
@@ -12,6 +13,7 @@ namespace pbr {
 using MeshRef = std::shared_ptr<android_vulkan::MeshGeometry>;
 using Texture2DRef = std::shared_ptr<android_vulkan::Texture2D>;
 using MaterialRef = std::shared_ptr<Material>;
+using SamplerRef = std::shared_ptr<Sampler>;
 
 } // namespace pbr
 

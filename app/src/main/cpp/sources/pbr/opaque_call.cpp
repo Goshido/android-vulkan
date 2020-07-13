@@ -5,7 +5,7 @@ namespace pbr {
 
 OpaqueCall::OpaqueCall ( MeshRef &mesh, const GXMat4 &local )
 {
-    _batch.insert ( std::make_pair ( std::string_view ( mesh->GetName () ), MeshGroup ( mesh, local ) ) );
+    Append ( mesh, local );
 }
 
 void OpaqueCall::Append ( MeshRef &mesh, const GXMat4 &local )

@@ -65,7 +65,12 @@ class MeshGeometry final
         void FreeTransferResources ( android_vulkan::Renderer &renderer );
 
         const VkBuffer& GetBuffer () const;
-        uint32_t GetVertexCount () const;
+        const std::string& GetName () const;
+        [[nodiscard]] uint32_t GetVertexCount () const;
+
+        // Mesh geometry is not unique if it was loaded from .mesh file.
+        // Mesh geometry is unique if it was created from raw data.
+        [[nodiscard]] bool IsUnique () const;
 
         bool LoadMesh ( std::string &&fileName,
             VkBufferUsageFlags usage,

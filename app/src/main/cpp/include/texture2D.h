@@ -57,6 +57,7 @@ class Texture2D final
         [[nodiscard]] VkFormat GetFormat () const;
         [[nodiscard]] VkImageView GetImageView () const;
         [[nodiscard]] uint8_t GetMipLevelCount () const;
+        [[nodiscard]] const std::string& GetName () const;
 
         // Method is used when file name and format are passed via constructor.
         [[maybe_unused]] [[nodiscard]] bool UploadData ( android_vulkan::Renderer &renderer,

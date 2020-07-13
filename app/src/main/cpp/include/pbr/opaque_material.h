@@ -17,22 +17,27 @@ class OpaqueMaterial final : public Material
 
     public:
         OpaqueMaterial ();
+        OpaqueMaterial ( const OpaqueMaterial &other ) = default;
         ~OpaqueMaterial () override = default;
 
-        OpaqueMaterial ( const OpaqueMaterial &other ) = delete;
-        OpaqueMaterial& operator = ( const OpaqueMaterial &other ) = delete;
-
-        [[maybe_unused]] void SetAlbedo ( Texture2DRef &texture );
+        [[nodiscard]] Texture2DRef& GetAlbedo ();
+        void SetAlbedo ( Texture2DRef &texture );
         [[maybe_unused]] void SetAlbedoDefault ();
 
+        [[nodiscard]] Texture2DRef& GetEmission ();
         [[maybe_unused]] void SetEmission ( Texture2DRef &texture );
         [[maybe_unused]] void SetEmissionDefault ();
 
-        [[maybe_unused]] void SetNormal ( Texture2DRef &texture );
+        [[nodiscard]] Texture2DRef& GetNormal ();
+        void SetNormal ( Texture2DRef &texture );
         [[maybe_unused]] void SetNormalDefault ();
 
+        [[nodiscard]] Texture2DRef& GetParam ();
         [[maybe_unused]] void SetParam ( Texture2DRef &texture );
         [[maybe_unused]] void SetParamDefault ();
+
+        [[nodiscard]] bool operator < ( const OpaqueMaterial &other ) const;
+        OpaqueMaterial& operator = ( const OpaqueMaterial &other ) = default;
 };
 
 } // namespace pbr

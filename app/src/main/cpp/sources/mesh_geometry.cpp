@@ -86,9 +86,19 @@ const VkBuffer& MeshGeometry::GetBuffer () const
     return _buffer;
 }
 
+const std::string& MeshGeometry::GetName () const
+{
+    return _fileName;
+}
+
 uint32_t MeshGeometry::GetVertexCount () const
 {
     return _vertexCount;
+}
+
+bool MeshGeometry::IsUnique () const
+{
+    return _fileName.empty ();
 }
 
 bool MeshGeometry::LoadMesh ( std::string &&fileName,

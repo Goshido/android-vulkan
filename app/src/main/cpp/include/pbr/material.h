@@ -26,14 +26,14 @@ class Material
     public:
         Material () = delete;
 
-        Material ( const Material &other ) = delete;
-        Material& operator = ( const Material &other ) = delete;
-
-        [[maybe_unused]] [[nodiscard]] eMaterialType GetMaterialType () const;
+        [[nodiscard]] eMaterialType GetMaterialType () const;
 
     protected:
         explicit Material ( eMaterialType type );
         virtual ~Material () = default;
+
+        Material ( const Material &other ) = default;
+        Material& operator = ( const Material &other ) = default;
 };
 
 } // namespace pbr

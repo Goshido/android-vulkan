@@ -3,17 +3,44 @@
 
 namespace pbr {
 
+constexpr static const char* MATERIAL_1_DIFFUSE = "textures/rotating_mesh/sonic-material-1-diffuse.png";
+constexpr static const char* MATERIAL_1_MESH = "meshes/rotating_mesh/sonic-material-1.mesh";
+
+constexpr static const char* MATERIAL_2_DIFFUSE = "textures/rotating_mesh/sonic-material-2-diffuse.png";
+constexpr static const char* MATERIAL_2_MESH = "meshes/rotating_mesh/sonic-material-2.mesh";
+constexpr static const char* MATERIAL_2_NORMAL = "textures/rotating_mesh/sonic-material-2-normal.png";
+
+constexpr static const char* MATERIAL_3_DIFFUSE = "textures/rotating_mesh/sonic-material-3-diffuse.png";
+constexpr static const char* MATERIAL_3_MESH = "meshes/rotating_mesh/sonic-material-3.mesh";
+constexpr static const char* MATERIAL_3_NORMAL = "textures/rotating_mesh/sonic-material-3-normal.png";
+
+constexpr static const size_t MATERIAL_TEXTURE_COUNT = 5U;
+constexpr static const size_t MESH_COUNT = 3U;
+
+constexpr static const float FIELD_OF_VIEW = 60.0F;
+constexpr static const float Z_NEAR = 0.1F;
+constexpr static const float Z_FAR = 1.0e+3F;
+
+//----------------------------------------------------------------------------------------------------------------------
+
 PBRGame::PBRGame ():
+    _commandPool ( VK_NULL_HANDLE ),
+    _commandBuffers {},
     _presentFrameBuffers {},
-    _presentRenderPass ( VK_NULL_HANDLE )
+    _presentRenderPass ( VK_NULL_HANDLE ),
+    _sonicMaterial0 {},
+    _sonicMaterial1 {},
+    _sonicMaterial2 {},
+    _sonicMesh0 {},
+    _sonicMesh1 {},
+    _sonicMesh2 {}
 {
     // NOTHING
 }
 
 bool PBRGame::IsReady ()
 {
-    //assert ( !"PBRGame::IsReady - Implement me!" );
-    return false;
+    return static_cast<bool> ( _sonicMesh2 );
 }
 
 bool PBRGame::OnInit ( android_vulkan::Renderer &renderer )
@@ -36,18 +63,64 @@ bool PBRGame::OnInit ( android_vulkan::Renderer &renderer )
         return false;
     }
 
-    assert ( !"PBRGame::OnInit - Implement me!" );
+    if ( !CreateCommandPool ( renderer ) )
+    {
+        OnDestroy ( renderer );
+        return false;
+    }
+
+    if ( !CreateMaterials ( renderer ) )
+    {
+        OnDestroy ( renderer );
+        return false;
+    }
+
+    if ( !CreateMeshes ( renderer ) )
+    {
+        OnDestroy ( renderer );
+        return false;
+    }
+
     return true;
 }
 
-bool PBRGame::OnFrame ( android_vulkan::Renderer& /*renderer*/, double /*deltaTime*/ )
+bool PBRGame::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime )
 {
+    GXMat4 view;
+    view.Identity ();
+
+    const VkExtent2D& resolution = _renderSession.GetResolution ();
+
+    GXMat4 projection;
+
+    projection.Perspective ( GXDegToRad ( FIELD_OF_VIEW ),
+        resolution.width / static_cast<float> ( resolution.height ),
+        Z_NEAR,
+        Z_FAR
+    );
+
+    static float angle = 0.0F;
+    angle += static_cast<float> ( deltaTime );
+
+    GXMat4 local;
+    local.RotationY ( angle );
+
+    _renderSession.Begin ( view, projection );
+    _renderSession.SubmitMesh ( _sonicMesh0, _sonicMaterial0, local );
+    _renderSession.SubmitMesh ( _sonicMesh1, _sonicMaterial1, local );
+    _renderSession.SubmitMesh ( _sonicMesh2, _sonicMaterial2, local );
+    _renderSession.End ( ePresentTarget::Normal, renderer );
+
     assert ( !"PBRGame::OnFrame - Implement me!" );
     return false;
 }
 
 bool PBRGame::OnDestroy ( android_vulkan::Renderer &renderer )
 {
+    DestroyMeshes ( renderer );
+    DestroyMaterials ( renderer );
+    DestroyCommandPool ( renderer );
+
     _renderSession.Destroy( renderer );
 
     DestroyPresentFramebuffer ( renderer );
@@ -61,6 +134,197 @@ bool PBRGame::OnDestroy ( android_vulkan::Renderer &renderer )
 
     assert ( !"PBRGame::OnDestroy - Implement me!" );
     return true;
+}
+
+bool PBRGame::CreateCommandPool ( android_vulkan::Renderer &renderer )
+{
+    VkCommandPoolCreateInfo createInfo;
+    createInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+    createInfo.pNext = nullptr;
+    createInfo.flags = 0U;
+    createInfo.queueFamilyIndex = renderer.GetQueueFamilyIndex ();
+
+    VkDevice device = renderer.GetDevice ();
+
+    bool result = renderer.CheckVkResult (
+        vkCreateCommandPool ( device, &createInfo, nullptr, &_commandPool ),
+        "PBRGame::CreateCommandPool",
+        "Can't create command pool"
+    );
+
+    if ( !result )
+        return false;
+
+    AV_REGISTER_COMMAND_POOL ( "PBRGame::_commandPool" )
+
+    constexpr const size_t commandBufferCount = MATERIAL_TEXTURE_COUNT + MESH_COUNT;
+    _commandBuffers.resize ( commandBufferCount );
+
+    VkCommandBufferAllocateInfo allocateInfo;
+    allocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    allocateInfo.pNext = nullptr;
+    allocateInfo.commandBufferCount = static_cast<uint32_t> ( commandBufferCount );
+    allocateInfo.commandPool = _commandPool;
+    allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+
+    result = renderer.CheckVkResult (
+        vkAllocateCommandBuffers ( device, &allocateInfo, _commandBuffers.data () ),
+        "PBRGame::CreateCommandPool",
+        "Can't allocate command buffers"
+    );
+
+    if ( result )
+        return true;
+
+    _commandBuffers.clear ();
+    return false;
+}
+
+void PBRGame::DestroyCommandPool ( android_vulkan::Renderer &renderer )
+{
+    if ( _commandPool == VK_NULL_HANDLE )
+        return;
+
+    vkDestroyCommandPool ( renderer.GetDevice (), _commandPool, nullptr );
+    _commandPool = VK_NULL_HANDLE;
+    AV_UNREGISTER_COMMAND_POOL ( "PBRGame::_commandPool" )
+}
+
+bool PBRGame::CreateMaterials ( android_vulkan::Renderer &renderer )
+{
+    auto loadTexture = [ & ] ( Texture2DRef &texture,
+        const char* file,
+        VkFormat format,
+        VkCommandBuffer commandBuffer
+    ) -> bool {
+        texture = std::make_shared<android_vulkan::Texture2D> ();
+
+        if ( texture->UploadData ( file, format, true, renderer, commandBuffer ) )
+            return true;
+
+        texture = nullptr;
+        return false;
+    };
+
+    Texture2DRef texture;
+    _sonicMaterial0 = std::make_shared<OpaqueMaterial> ();
+    auto* opaqueMaterial = dynamic_cast<OpaqueMaterial*> ( _sonicMaterial0.get () );
+
+    if ( !loadTexture ( texture, MATERIAL_1_DIFFUSE, VK_FORMAT_R8G8B8A8_SRGB, _commandBuffers[ 0U ] ) )
+    {
+        _sonicMaterial0 = nullptr;
+        return false;
+    }
+
+    opaqueMaterial->SetAlbedo ( texture );
+
+    _sonicMaterial1 = std::make_shared<OpaqueMaterial> ();
+    opaqueMaterial = dynamic_cast<OpaqueMaterial*> ( _sonicMaterial1.get () );
+
+    if ( !loadTexture ( texture, MATERIAL_2_DIFFUSE, VK_FORMAT_R8G8B8A8_SRGB, _commandBuffers[ 1U ] ) )
+    {
+        _sonicMaterial1 = nullptr;
+        return false;
+    }
+
+    opaqueMaterial->SetAlbedo ( texture );
+
+    if ( !loadTexture ( texture, MATERIAL_2_NORMAL, VK_FORMAT_R8G8B8A8_UNORM, _commandBuffers[ 2U ] ) )
+    {
+        _sonicMaterial1 = nullptr;
+        return false;
+    }
+
+    opaqueMaterial->SetNormal ( texture );
+
+    _sonicMaterial2 = std::make_shared<OpaqueMaterial> ();
+    opaqueMaterial = dynamic_cast<OpaqueMaterial*> ( _sonicMaterial2.get () );
+
+    if ( !loadTexture ( texture, MATERIAL_3_DIFFUSE, VK_FORMAT_R8G8B8A8_SRGB, _commandBuffers[ 3U ] ) )
+    {
+        _sonicMaterial2 = nullptr;
+        return false;
+    }
+
+    opaqueMaterial->SetAlbedo ( texture );
+
+    if ( !loadTexture ( texture, MATERIAL_3_NORMAL, VK_FORMAT_R8G8B8A8_UNORM, _commandBuffers[ 4U ] ) )
+    {
+        _sonicMaterial2 = nullptr;
+        return false;
+    }
+
+    opaqueMaterial->SetNormal ( texture );
+    return true;
+}
+
+void PBRGame::DestroyMaterials ( android_vulkan::Renderer &renderer )
+{
+    auto wipeMaterial = [ & ] ( MaterialRef &material ) {
+        if ( !material )
+            return;
+
+        auto* m = dynamic_cast<OpaqueMaterial*> ( material.get () );
+
+        if ( m->GetAlbedo () )
+            m->GetAlbedo ()->FreeResources ( renderer );
+
+        if ( m->GetEmission () )
+            m->GetEmission ()->FreeResources ( renderer );
+
+        if ( m->GetNormal () )
+            m->GetNormal ()->FreeResources ( renderer );
+
+        if ( m->GetParam () )
+            m->GetParam ()->FreeResources ( renderer );
+
+        material = nullptr;
+    };
+
+    wipeMaterial ( _sonicMaterial2 );
+    wipeMaterial ( _sonicMaterial1 );
+    wipeMaterial ( _sonicMaterial0 );
+}
+
+bool PBRGame::CreateMeshes ( android_vulkan::Renderer &renderer )
+{
+    auto loadMesh = [ & ] ( MeshRef &mesh,
+        const char* file,
+        VkCommandBuffer commandBuffer
+    ) -> bool {
+        mesh = std::make_shared<android_vulkan::MeshGeometry> ();
+
+        if ( mesh->LoadMesh ( file, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, renderer, commandBuffer ) )
+            return true;
+
+        mesh = nullptr;
+        return false;
+    };
+
+    VkCommandBuffer* meshCommandBuffers = _commandBuffers.data () + MATERIAL_TEXTURE_COUNT;
+
+    if ( !loadMesh ( _sonicMesh0, MATERIAL_1_MESH, meshCommandBuffers[ 0U ] ) )
+        return false;
+
+    if ( !loadMesh ( _sonicMesh1, MATERIAL_2_MESH, meshCommandBuffers[ 1U ] ) )
+        return false;
+
+    return loadMesh ( _sonicMesh2, MATERIAL_3_MESH, meshCommandBuffers[ 2U ] );
+}
+
+void PBRGame::DestroyMeshes ( android_vulkan::Renderer &renderer )
+{
+    auto wipeMesh = [ & ] ( MeshRef &mesh ) {
+        if ( !mesh )
+            return;
+
+        mesh->FreeResources ( renderer );
+        mesh = nullptr;
+    };
+
+    wipeMesh ( _sonicMesh2 );
+    wipeMesh ( _sonicMesh1 );
+    wipeMesh ( _sonicMesh0 );
 }
 
 bool PBRGame::CreatePresentFramebuffer ( android_vulkan::Renderer &renderer )

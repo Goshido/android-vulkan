@@ -14,6 +14,80 @@ namespace pbr {
 constexpr static const size_t DEFAULT_TEXTURE_COUNT = 4U;
 constexpr static size_t GBUFFER_ATTACHMENT_COUNT = 5U;
 
+// 1 2 4 8 16 32 64 128 256 512 1024 2048 4096
+constexpr static size_t MAX_SUPPORTED_MIP_COUNT = 13U;
+
+//----------------------------------------------------------------------------------------------------------------------
+
+class SamplerStorage final
+{
+    private:
+        SamplerRef      _storage[ MAX_SUPPORTED_MIP_COUNT ];
+
+    public:
+        SamplerStorage () = default;
+        ~SamplerStorage () = default;
+
+        SamplerStorage ( const SamplerStorage &other ) = delete;
+        SamplerStorage& operator = ( const SamplerStorage &other ) = delete;
+
+        [[maybe_unused]] void FreeResources ( android_vulkan::Renderer &renderer );
+
+        [[maybe_unused]] [[nodiscard]] SamplerRef GetSampler ( Texture2DRef &texture,
+            android_vulkan::Renderer &renderer
+        );
+};
+
+void SamplerStorage::FreeResources ( android_vulkan::Renderer &renderer )
+{
+    for ( auto& sampler : _storage )
+    {
+        if ( !sampler )
+            continue;
+
+        sampler->Destroy( renderer );
+        sampler = nullptr;
+    }
+}
+
+SamplerRef SamplerStorage::GetSampler ( Texture2DRef &texture, android_vulkan::Renderer &renderer )
+{
+    const uint8_t mips = texture->GetMipLevelCount ();
+    SamplerRef& target = _storage[ static_cast<size_t> ( mips ) ];
+
+    if ( target )
+        return target;
+
+    target = std::make_shared<Sampler> ();
+
+    VkSamplerCreateInfo info;
+    info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+    info.pNext = nullptr;
+    info.flags = 0U;
+    info.unnormalizedCoordinates = VK_FALSE;
+    info.compareEnable = VK_FALSE;
+    info.compareOp = VK_COMPARE_OP_ALWAYS;
+    info.borderColor = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
+    info.anisotropyEnable = VK_FALSE;
+    info.maxAnisotropy = 1.0F;
+    info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+    info.minFilter = VK_FILTER_LINEAR;
+    info.magFilter = VK_FILTER_LINEAR;
+    info.minLod = 0.0F;
+    info.maxLod = static_cast<float> ( mips - 1U );
+    info.mipLodBias = 0.0F;
+    info.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    info.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    info.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+
+    if ( !target->Init ( info, renderer ) )
+        target = nullptr;
+
+    return target;
+}
+
+static SamplerStorage g_SamplerStorage;
+
 //----------------------------------------------------------------------------------------------------------------------
 
 RenderSession::RenderSession ():
@@ -27,6 +101,7 @@ RenderSession::RenderSession ():
     _gBufferRenderPass ( VK_NULL_HANDLE ),
     _isFreeTransferResources ( false ),
     _meshCount ( 0U ),
+    _opaqueCalls {},
     _opaqueProgram {},
     _texturePresentProgram {},
     _viewProjection {}
@@ -34,24 +109,23 @@ RenderSession::RenderSession ():
     // NOTHING
 }
 
-void RenderSession::AddMesh ( MeshRef &/*mesh*/,
-    MaterialRef &/*material*/,
-    const GXMat4 &/*local*/
+void RenderSession::SubmitMesh ( MeshRef &mesh,
+    MaterialRef &material,
+    const GXMat4 &local
 )
 {
     ++_meshCount;
 
-    // TODO
-    assert ( !"RenderSession::AddMesh - Implement me!" );
+    if ( material->GetMaterialType() != eMaterialType::Opaque )
+        return;
+
+    SubmitOpaqueCall ( mesh, material, local );
 }
 
 void RenderSession::Begin ( const GXMat4 &view, const GXMat4 &projection )
 {
     _meshCount = 0U;
     _viewProjection.Multiply ( view, projection );
-
-    // TODO
-    assert ( !"RenderSession::Begin - Implement me!" );
 }
 
 void RenderSession::End ( ePresentTarget /*target*/, android_vulkan::Renderer &renderer )
@@ -75,7 +149,14 @@ void RenderSession::End ( ePresentTarget /*target*/, android_vulkan::Renderer &r
 
     // TODO
 
+    _opaqueCalls.clear ();
+
     assert ( !"RenderSession::End - Implement me!" );
+}
+
+const VkExtent2D& RenderSession::GetResolution () const
+{
+    return _gBuffer.GetResolution ();
 }
 
 bool RenderSession::Init ( android_vulkan::Renderer &renderer, VkRenderPass presentRenderPass )
@@ -442,6 +523,20 @@ bool RenderSession::CreateGBufferRenderPass ( android_vulkan::Renderer &renderer
 
     AV_REGISTER_RENDER_PASS ( "RenderSession::_gBufferRenderPass" )
     return true;
+}
+
+void RenderSession::SubmitOpaqueCall ( MeshRef &mesh, MaterialRef &material, const GXMat4 &local )
+{
+    auto& opaqueMaterial = *dynamic_cast<OpaqueMaterial*> ( material.get () );
+    auto findResult = _opaqueCalls.find ( opaqueMaterial );
+
+    if ( findResult != _opaqueCalls.cend () )
+    {
+        findResult->second.Append ( mesh, local );
+        return;
+    }
+
+    _opaqueCalls.insert ( std::make_pair ( opaqueMaterial, OpaqueCall ( mesh, local ) ) );
 }
 
 } // namespace pbr

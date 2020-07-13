@@ -11,10 +11,21 @@ namespace pbr {
 class PBRGame final : public android_vulkan::Game
 {
     private:
+        VkCommandPool                   _commandPool;
+        std::vector<VkCommandBuffer>    _commandBuffers;
+
         std::vector<VkFramebuffer>      _presentFrameBuffers;
         VkRenderPass                    _presentRenderPass;
 
         RenderSession                   _renderSession;
+
+        MaterialRef                     _sonicMaterial0;
+        MaterialRef                     _sonicMaterial1;
+        MaterialRef                     _sonicMaterial2;
+
+        MeshRef                         _sonicMesh0;
+        MeshRef                         _sonicMesh1;
+        MeshRef                         _sonicMesh2;
 
     public:
         PBRGame ();
@@ -29,6 +40,15 @@ class PBRGame final : public android_vulkan::Game
         bool OnInit ( android_vulkan::Renderer &renderer ) override;
         bool OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) override;
         bool OnDestroy ( android_vulkan::Renderer &renderer ) override;
+
+        [[nodiscard]] bool CreateCommandPool ( android_vulkan::Renderer &renderer );
+        void DestroyCommandPool ( android_vulkan::Renderer &renderer );
+
+        [[nodiscard]] bool CreateMaterials ( android_vulkan::Renderer &renderer );
+        void DestroyMaterials ( android_vulkan::Renderer &renderer );
+
+        [[nodiscard]] bool CreateMeshes ( android_vulkan::Renderer &renderer );
+        void DestroyMeshes ( android_vulkan::Renderer &renderer );
 
         [[nodiscard]] bool CreatePresentFramebuffer ( android_vulkan::Renderer &renderer );
         void DestroyPresentFramebuffer ( android_vulkan::Renderer &renderer );

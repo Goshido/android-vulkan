@@ -154,6 +154,11 @@ uint8_t Texture2D::GetMipLevelCount () const
     return _mipLevels;
 }
 
+const std::string& Texture2D::GetName () const
+{
+    return _fileName;
+}
+
 bool Texture2D::UploadData ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer )
 {
     if ( _imageView != VK_NULL_HANDLE )

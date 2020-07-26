@@ -99,6 +99,7 @@ RenderSession::RenderSession ():
     _gBuffer {},
     _gBufferFramebuffer ( VK_NULL_HANDLE ),
     _gBufferRenderPass ( VK_NULL_HANDLE ),
+    _geometryPassCommandBuffer ( VK_NULL_HANDLE ),
     _isFreeTransferResources ( false ),
     _meshCount ( 0U ),
     _opaqueCalls {},
@@ -146,6 +147,71 @@ void RenderSession::End ( ePresentTarget /*target*/, android_vulkan::Renderer &r
 
         _isFreeTransferResources = false;
     }
+
+    VkCommandBufferBeginInfo beginInfo;
+    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    beginInfo.pNext = nullptr;
+    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+    beginInfo.pInheritanceInfo = nullptr;
+
+    bool result = renderer.CheckVkResult ( vkBeginCommandBuffer ( _geometryPassCommandBuffer, &beginInfo ),
+        "RenderSession::End",
+        "Can't begin command buffer"
+    );
+
+    if ( !result )
+        return;
+
+    VkClearValue clearValues[ GBUFFER_ATTACHMENT_COUNT ];
+    VkClearValue& albedoClear = clearValues[ 0U ];
+    albedoClear.color.float32[ 0U ] = 0.0F;
+    albedoClear.color.float32[ 1U ] = 0.0F;
+    albedoClear.color.float32[ 2U ] = 0.0F;
+    albedoClear.color.float32[ 3U ] = 0.0F;
+
+    VkClearValue& emissionClear = clearValues[ 1U ];
+    emissionClear.color.float32[ 1U ] = 0.0F;
+    emissionClear.color.float32[ 2U ] = 0.0F;
+    emissionClear.color.float32[ 3U ] = 0.0F;
+    emissionClear.color.float32[ 0U ] = 0.0F;
+
+    VkClearValue& normalClear = clearValues[ 2U ];
+    normalClear.color.float32[ 1U ] = 0.5F;
+    normalClear.color.float32[ 2U ] = 0.5F;
+    normalClear.color.float32[ 3U ] = 0.5F;
+    normalClear.color.float32[ 0U ] = 0.0F;
+
+    VkClearValue& paramClear = clearValues[ 3U ];
+    paramClear.color.float32[ 1U ] = 0.5F;
+    paramClear.color.float32[ 2U ] = 0.5F;
+    paramClear.color.float32[ 3U ] = 0.5F;
+    paramClear.color.float32[ 0U ] = 0.0F;
+
+    VkClearValue& depthStencilClear = clearValues[ 4U ];
+    depthStencilClear.depthStencil.depth = 1.0F;
+    depthStencilClear.depthStencil.stencil = 0U;
+
+    VkRenderPassBeginInfo renderPassInfo;
+    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    renderPassInfo.pNext = nullptr;
+    renderPassInfo.renderPass = _gBufferRenderPass;
+    renderPassInfo.framebuffer = _gBufferFramebuffer;
+    renderPassInfo.clearValueCount = static_cast<uint32_t> ( std::size ( clearValues ) );
+    renderPassInfo.pClearValues = clearValues;
+    renderPassInfo.renderArea.offset.x = 0;
+    renderPassInfo.renderArea.offset.y = 0;
+    renderPassInfo.renderArea.extent = _gBuffer.GetResolution ();
+
+    vkCmdBeginRenderPass ( _geometryPassCommandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE );
+
+    // TODO
+
+    vkCmdEndRenderPass ( _geometryPassCommandBuffer );
+
+    result = renderer.CheckVkResult ( vkEndCommandBuffer ( _geometryPassCommandBuffer ),
+        "RenderSession::End",
+        "Can't end command buffer"
+    );
 
     // TODO
 
@@ -209,7 +275,7 @@ bool RenderSession::Init ( android_vulkan::Renderer &renderer, VkRenderPass pres
 
     AV_REGISTER_COMMAND_POOL ( "RenderSession::_commandPool" )
 
-    VkCommandBuffer commandBuffers[ DEFAULT_TEXTURE_COUNT ];
+    VkCommandBuffer commandBuffers[ DEFAULT_TEXTURE_COUNT + 1U ];
     VkCommandBufferAllocateInfo allocateInfo;
     allocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     allocateInfo.pNext = nullptr;
@@ -227,6 +293,8 @@ bool RenderSession::Init ( android_vulkan::Renderer &renderer, VkRenderPass pres
         Destroy ( renderer );
         return false;
     }
+
+    _geometryPassCommandBuffer = commandBuffers[ DEFAULT_TEXTURE_COUNT ];
 
     auto textureLoader = [ &renderer ] ( Texture2DRef &texture,
         const uint8_t* data,

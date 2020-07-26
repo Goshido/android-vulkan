@@ -63,19 +63,7 @@ bool PBRGame::OnInit ( android_vulkan::Renderer &renderer )
         return false;
     }
 
-    if ( !CreateCommandPool ( renderer ) )
-    {
-        OnDestroy ( renderer );
-        return false;
-    }
-
-    if ( !CreateMaterials ( renderer ) )
-    {
-        OnDestroy ( renderer );
-        return false;
-    }
-
-    if ( !CreateMeshes ( renderer ) )
+    if ( !UploadGPUContent ( renderer ) )
     {
         OnDestroy ( renderer );
         return false;
@@ -434,6 +422,26 @@ bool PBRGame::CreatePresentRenderPass ( android_vulkan::Renderer &renderer )
 
     AV_REGISTER_RENDER_PASS ( "PBRGame::_presentRenderPass" )
     return true;
+}
+
+bool PBRGame::UploadGPUContent ( android_vulkan::Renderer& renderer )
+{
+    if ( !CreateCommandPool ( renderer ) ) {
+        return false;
+    }
+
+    if ( !CreateMaterials ( renderer ) ) {
+        return false;
+    }
+
+    if ( !CreateMeshes ( renderer ) ) {
+        return false;
+    }
+
+    return renderer.CheckVkResult ( vkQueueWaitIdle ( renderer.GetQueue () ),
+        "PBRGame::UploadGPUContent",
+        "Can't run upload commands"
+    );
 }
 
 } // namespace pbr

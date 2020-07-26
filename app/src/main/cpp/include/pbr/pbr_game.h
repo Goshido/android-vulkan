@@ -54,6 +54,8 @@ class PBRGame final : public android_vulkan::Game
         void DestroyPresentFramebuffer ( android_vulkan::Renderer &renderer );
 
         [[nodiscard]] bool CreatePresentRenderPass ( android_vulkan::Renderer &renderer );
+
+        [[nodiscard]] bool UploadGPUContent ( android_vulkan::Renderer &renderer );
 };
 
 } // namespace pbr

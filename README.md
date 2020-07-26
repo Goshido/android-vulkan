@@ -15,16 +15,16 @@ Usefull documentation is located [here](docs/documentation.md).
 Requirements:
 
 * _Windows Vista_+
-* _Android Studio 4.0_
-* _Android Studio Gradle Plugin 4.0.0_
+* _Android Studio 4.0.1_
+* _Android Studio Gradle Plugin 4.0.1_
 * _Android NDK 21.3.6528147 (side by side)_
 * _Android SDK 10.0 (API level 29)_
 * _Android SDK Build-Tools 30.0.1_
 * _Android SDK Tools 26.1.1_
 * _Android SDK Platform-Tools 30.0.3_
 * _CMake 3.10.2.4988404_
-* _DirectX Shader Compiler 1.5.2005.10082_
-* _Gradle 6.5.1_
+* _DirectX Shader Compiler 1.5.2005.10092_
+* _Gradle 6.6-rc-3_
 * _Google USB Driver 12_
 * _LLDB 3.1.4508709_
 * Real _Android 10_ device with _Vulkan 1.1.108_ support

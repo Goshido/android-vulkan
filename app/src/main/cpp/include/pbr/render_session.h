@@ -35,6 +35,8 @@ class RenderSession final
         VkFramebuffer                           _gBufferFramebuffer;
         VkRenderPass                            _gBufferRenderPass;
 
+        VkCommandBuffer                         _geometryPassCommandBuffer;
+
         bool                                    _isFreeTransferResources;
 
         size_t                                  _meshCount;

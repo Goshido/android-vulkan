@@ -23,8 +23,7 @@ OpaqueProgram::OpaqueProgram ():
     _normalTexture ( nullptr ),
     _normalSampler ( VK_NULL_HANDLE ),
     _paramTexture ( nullptr ),
-    _paramSampler ( VK_NULL_HANDLE ),
-    _descriptorSetLayout ( VK_NULL_HANDLE )
+    _paramSampler ( VK_NULL_HANDLE )
 {
     // NOTHING
 }
@@ -142,6 +141,17 @@ void OpaqueProgram::Destroy ( android_vulkan::Renderer &renderer )
     vkDestroyShaderModule ( device, _vertexShader, nullptr );
     _vertexShader = VK_NULL_HANDLE;
     AV_UNREGISTER_SHADER_MODULE ( "OpaqueProgram::_vertexShader" )
+}
+
+const std::vector<ProgramResource>& OpaqueProgram::GetResourceInfo () const
+{
+    static const std::vector<ProgramResource> info
+    {
+        ProgramResource ( VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 4U ),
+        ProgramResource ( VK_DESCRIPTOR_TYPE_SAMPLER, 4U )
+    };
+
+    return info;
 }
 
 void OpaqueProgram::SetAlbedo ( android_vulkan::Texture2D &texture, VkSampler sampler )

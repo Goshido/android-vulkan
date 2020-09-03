@@ -96,6 +96,7 @@ RenderSession::RenderSession ():
     _normalDefault {},
     _paramDefault {},
     _commandPool ( VK_NULL_HANDLE ),
+    _descriptorPool ( VK_NULL_HANDLE ),
     _gBuffer {},
     _gBufferFramebuffer ( VK_NULL_HANDLE ),
     _gBufferRenderPass ( VK_NULL_HANDLE ),
@@ -127,6 +128,7 @@ void RenderSession::Begin ( const GXMat4 &view, const GXMat4 &projection )
 {
     _meshCount = 0U;
     _viewProjection.Multiply ( view, projection );
+    _opaqueCalls.clear ();
 }
 
 void RenderSession::End ( ePresentTarget /*target*/, android_vulkan::Renderer &renderer )
@@ -204,7 +206,136 @@ void RenderSession::End ( ePresentTarget /*target*/, android_vulkan::Renderer &r
 
     vkCmdBeginRenderPass ( _geometryPassCommandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE );
 
-    // TODO
+    const size_t opaqueCountRaw = _opaqueCalls.size ();
+    const auto opaqueCount = static_cast<const uint32_t> ( opaqueCountRaw );
+
+    const std::vector<ProgramResource>& resourceInfo = _opaqueProgram.GetResourceInfo ();
+    const size_t uniqueFeatures = resourceInfo.size ();
+
+    std::vector<VkDescriptorPoolSize> poolSizeStorage;
+    poolSizeStorage.reserve ( uniqueFeatures );
+
+    for ( auto const& item : resourceInfo )
+    {
+        poolSizeStorage.emplace_back (
+            VkDescriptorPoolSize {
+                .type = item._type,
+                .descriptorCount = item._count * opaqueCount
+            }
+        );
+    }
+
+    VkDescriptorPoolCreateInfo poolInfo;
+    poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+    poolInfo.pNext = nullptr;
+    poolInfo.flags = 0U;
+    poolInfo.maxSets = opaqueCount;
+    poolInfo.poolSizeCount = static_cast<uint32_t> ( uniqueFeatures );
+    poolInfo.pPoolSizes = poolSizeStorage.data ();
+
+    VkDevice device = renderer.GetDevice ();
+
+    if ( _descriptorPool )
+    {
+        vkDestroyDescriptorPool ( device, _descriptorPool, nullptr );
+        AV_UNREGISTER_DESCRIPTOR_POOL ( "RenderSession::_descriptorPool" )
+    }
+
+    result = renderer.CheckVkResult (
+        vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_descriptorPool ),
+        "RenderSession::End",
+        "Can't create descriptor pool"
+    );
+
+    if ( !result )
+        return;
+
+    AV_REGISTER_DESCRIPTOR_POOL ( "RenderSession::_descriptorPool" )
+
+    VkDescriptorSetLayout layout = _opaqueProgram.GetDescriptorSetLayout ();
+
+    std::vector<VkDescriptorSetLayout> layouts;
+    layouts.reserve ( opaqueCount );
+
+    for ( size_t i = 0U; i < opaqueCount; ++i )
+        layouts.push_back ( layout );
+
+    VkDescriptorSetAllocateInfo allocateInfo;
+    allocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+    allocateInfo.pNext = nullptr;
+    allocateInfo.descriptorPool = _descriptorPool;
+    allocateInfo.descriptorSetCount = opaqueCount;
+    allocateInfo.pSetLayouts = layouts.data ();
+
+    std::vector<VkDescriptorSet> descriptorSetStorage ( opaqueCount );
+    VkDescriptorSet* descriptorSets = descriptorSetStorage.data ();
+
+    result = renderer.CheckVkResult ( vkAllocateDescriptorSets ( device, &allocateInfo, descriptorSets ),
+        "RenderSession::End",
+        "Can't allocate descriptor sets"
+    );
+
+    if ( !result )
+        return;
+
+    const size_t textureCount = opaqueCountRaw * 4U;
+    std::vector<VkDescriptorImageInfo> imageStorage;
+    imageStorage.reserve ( textureCount );
+
+    std::vector<VkWriteDescriptorSet> writeStorage;
+    writeStorage.reserve ( textureCount * 2U );
+
+    VkWriteDescriptorSet writeInfo;
+    writeInfo.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    writeInfo.pNext = nullptr;
+    writeInfo.descriptorCount = 1U;
+    writeInfo.dstArrayElement = 0U;
+    writeInfo.pBufferInfo = nullptr;
+    writeInfo.pTexelBufferView = nullptr;
+
+    auto textureBinder = [ & ] ( Texture2DRef &texture, uint32_t imageBindSlot, uint32_t samplerBindSlot ) {
+        SamplerRef sampler = g_SamplerStorage.GetSampler ( texture, renderer );
+
+        writeInfo.pImageInfo = &imageStorage.emplace_back (
+            VkDescriptorImageInfo {
+                .sampler = sampler->GetSampler (),
+                .imageView = texture->GetImageView (),
+                .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+            }
+        );
+
+        writeInfo.dstBinding = imageBindSlot;
+        writeInfo.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+        writeStorage.push_back ( writeInfo );
+
+        writeInfo.dstBinding = samplerBindSlot;
+        writeInfo.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
+        writeStorage.push_back ( writeInfo );
+    };
+
+    size_t i = 0U;
+
+    for ( auto& opaque : _opaqueCalls )
+    {
+        writeInfo.dstSet = descriptorSets[ i ];
+        ++i;
+
+        auto& material = const_cast<OpaqueMaterial&> ( opaque.first );
+
+        textureBinder ( material.GetAlbedo (), 0U, 1U );
+        textureBinder ( material.GetEmission (), 2U, 3U );
+        textureBinder ( material.GetNormal (), 4U, 5U );
+        textureBinder ( material.GetParam (), 6U, 7U );
+
+        // TODO emit draw calls
+    }
+
+    vkUpdateDescriptorSets ( device,
+        static_cast<uint32_t> ( writeStorage.size () ),
+        writeStorage.data (),
+        0U,
+        nullptr
+    );
 
     vkCmdEndRenderPass ( _geometryPassCommandBuffer );
 
@@ -213,9 +344,10 @@ void RenderSession::End ( ePresentTarget /*target*/, android_vulkan::Renderer &r
         "Can't end command buffer"
     );
 
-    // TODO
+    if ( !result )
+        return;
 
-    _opaqueCalls.clear ();
+    // TODO
 
     assert ( !"RenderSession::End - Implement me!" );
 }

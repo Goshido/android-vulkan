@@ -21,9 +21,6 @@ class TexturePresentProgram final : public Program
 
         AV_DX_ALIGNMENT_END
 
-    private:
-        VkDescriptorSetLayout       _descriptorSetLayout;
-
     public:
         TexturePresentProgram ();
         ~TexturePresentProgram () override = default;
@@ -37,6 +34,7 @@ class TexturePresentProgram final : public Program
         ) override;
 
         void Destroy ( android_vulkan::Renderer &renderer ) override;
+        const std::vector<ProgramResource>& GetResourceInfo () const override;
 
     private:
         void BeginSetup () override;

@@ -24,7 +24,7 @@ void OpaqueCall::AddBatch ( MeshRef &mesh, const GXMat4 &local )
     const std::string& name = mesh->GetName ();
     auto findResult = _batch.find ( name );
 
-    if ( findResult == _batch.cend() )
+    if ( findResult == _batch.cend () )
     {
         _batch.insert ( std::make_pair ( std::string_view ( name ), MeshGroup ( mesh, local ) ) );
         return;

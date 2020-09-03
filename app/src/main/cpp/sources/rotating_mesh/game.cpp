@@ -312,20 +312,12 @@ void Game::InitDescriptorPoolSizeCommon ( VkDescriptorPoolSize* features )
     ubFeature.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 
     VkDescriptorPoolSize& diffuseTextureFeature = features[ 1U ];
-    diffuseTextureFeature.descriptorCount = static_cast<uint32_t> ( MATERIAL_COUNT );
+    diffuseTextureFeature.descriptorCount = static_cast<uint32_t> ( MATERIAL_COUNT * 2U );
     diffuseTextureFeature.type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
 
     VkDescriptorPoolSize& diffuseSamplerFeature = features[ 2U ];
-    diffuseSamplerFeature.descriptorCount = static_cast<uint32_t> ( MATERIAL_COUNT );
+    diffuseSamplerFeature.descriptorCount = static_cast<uint32_t> ( MATERIAL_COUNT * 2U );
     diffuseSamplerFeature.type = VK_DESCRIPTOR_TYPE_SAMPLER;
-
-    VkDescriptorPoolSize& normalTextureFeature = features[ 3U ];
-    normalTextureFeature.descriptorCount = static_cast<uint32_t> ( MATERIAL_COUNT );
-    normalTextureFeature.type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-
-    VkDescriptorPoolSize& normalSamplerFeature = features[ 4U ];
-    normalSamplerFeature.descriptorCount = static_cast<uint32_t> ( MATERIAL_COUNT );
-    normalSamplerFeature.type = VK_DESCRIPTOR_TYPE_SAMPLER;
 }
 
 void Game::InitDescriptorSetLayoutBindingCommon ( VkDescriptorSetLayoutBinding* bindings )

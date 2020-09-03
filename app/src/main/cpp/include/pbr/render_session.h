@@ -30,6 +30,7 @@ class RenderSession final
         Texture2DRef                            _paramDefault;
 
         VkCommandPool                           _commandPool;
+        VkDescriptorPool                        _descriptorPool;
 
         GBuffer                                 _gBuffer;
         VkFramebuffer                           _gBufferFramebuffer;

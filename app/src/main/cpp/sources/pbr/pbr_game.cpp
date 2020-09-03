@@ -94,9 +94,16 @@ bool PBRGame::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime )
     local.RotationY ( angle );
 
     _renderSession.Begin ( view, projection );
+
+    local.SetW ( GXVec3 ( -1.0F, 0.0F, 0.0F ) );
     _renderSession.SubmitMesh ( _sonicMesh0, _sonicMaterial0, local );
+
+    local.SetW ( GXVec3 ( 0.0F, 0.0F, 0.0F ) );
     _renderSession.SubmitMesh ( _sonicMesh1, _sonicMaterial1, local );
+
+    local.SetW ( GXVec3 ( 1.0F, 0.0F, 0.0F ) );
     _renderSession.SubmitMesh ( _sonicMesh2, _sonicMaterial2, local );
+
     _renderSession.End ( ePresentTarget::Normal, renderer );
 
     assert ( !"PBRGame::OnFrame - Implement me!" );

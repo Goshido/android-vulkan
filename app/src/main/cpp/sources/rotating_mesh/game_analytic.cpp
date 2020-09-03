@@ -17,9 +17,10 @@ GameAnalytic::GameAnalytic ():
 bool GameAnalytic::CreateDescriptorSet ( android_vulkan::Renderer &renderer )
 {
     VkDevice device = renderer.GetDevice ();
+    constexpr const size_t uniqueFeatureCount = 3U;
     constexpr const size_t featureCount = 5U;
 
-    VkDescriptorPoolSize features[ featureCount ];
+    VkDescriptorPoolSize features[ uniqueFeatureCount ];
     InitDescriptorPoolSizeCommon ( features );
 
     VkDescriptorPoolCreateInfo poolInfo;

@@ -33,18 +33,14 @@ GameLUT::GameLUT ():
 bool GameLUT::CreateDescriptorSet ( android_vulkan::Renderer &renderer )
 {
     VkDevice device = renderer.GetDevice ();
+    constexpr const size_t uniqueFeatureCount = 3U;
     constexpr const size_t featureCount = 7U;
 
-    VkDescriptorPoolSize features[ featureCount ];
+    VkDescriptorPoolSize features[ uniqueFeatureCount ];
     InitDescriptorPoolSizeCommon ( features );
 
-    VkDescriptorPoolSize& specLUTTextureFeature = features[ 5U ];
-    specLUTTextureFeature.descriptorCount = static_cast<uint32_t> ( MATERIAL_COUNT );
-    specLUTTextureFeature.type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-
-    VkDescriptorPoolSize& specLUTSamplerFeature = features[ 6U ];
-    specLUTSamplerFeature.descriptorCount = static_cast<uint32_t> ( MATERIAL_COUNT );
-    specLUTSamplerFeature.type = VK_DESCRIPTOR_TYPE_SAMPLER;
+    features[ 1U ].descriptorCount = static_cast<uint32_t> ( MATERIAL_COUNT * 3U );
+    features[ 2U ].descriptorCount = static_cast<uint32_t> ( MATERIAL_COUNT * 3U );
 
     VkDescriptorPoolCreateInfo poolInfo;
     poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -86,6 +82,7 @@ bool GameLUT::CreateDescriptorSet ( android_vulkan::Renderer &renderer )
         return false;
 
     constexpr const size_t writeSetCount = featureCount * MATERIAL_COUNT;
+
     VkWriteDescriptorSet writeSets[ writeSetCount ];
     VkDescriptorImageInfo diffuseInfo[ MATERIAL_COUNT ];
     VkDescriptorImageInfo normalInfo[ MATERIAL_COUNT ];

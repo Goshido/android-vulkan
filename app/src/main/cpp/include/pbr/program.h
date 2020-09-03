@@ -25,12 +25,30 @@ enum class eProgramState : uint8_t
     Unknown
 };
 
+struct ProgramResource final
+{
+    VkDescriptorType    _type;
+    uint32_t            _count;
+
+    ProgramResource () = delete;
+    explicit ProgramResource ( VkDescriptorType type, uint32_t count );
+
+    ProgramResource ( const ProgramResource &other ) = delete;
+    ProgramResource& operator = ( const ProgramResource &other ) = delete;
+
+    ProgramResource ( ProgramResource &&other ) = default;
+    ProgramResource& operator = ( ProgramResource &&other ) = default;
+};
+
+//----------------------------------------------------------------------------------------------------------------------
+
 class Program
 {
     protected:
         VkShaderModule                  _fragmentShader;
         VkShaderModule                  _vertexShader;
 
+        VkDescriptorSetLayout           _descriptorSetLayout;
         const std::string               _name;
         VkPipeline                      _pipeline;
         VkPipelineLayout                _pipelineLayout;
@@ -57,6 +75,9 @@ class Program
         ) = 0;
 
         [[maybe_unused]] virtual void Destroy ( android_vulkan::Renderer &renderer ) = 0;
+        [[nodiscard]] virtual const std::vector<ProgramResource>& GetResourceInfo () const = 0;
+
+        [[nodiscard]] VkDescriptorSetLayout GetDescriptorSetLayout () const;
 
     protected:
         explicit Program ( std::string &&name );

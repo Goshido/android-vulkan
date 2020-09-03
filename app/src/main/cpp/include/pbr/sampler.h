@@ -25,6 +25,7 @@ class Sampler final
         );
 
         [[maybe_unused]] void Destroy ( android_vulkan::Renderer &renderer );
+        [[nodiscard]] VkSampler GetSampler () const;
 };
 
 

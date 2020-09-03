@@ -128,6 +128,12 @@ void TexturePresentProgram::Destroy ( android_vulkan::Renderer &renderer )
     AV_UNREGISTER_SHADER_MODULE ( "TexturePresentProgram::_vertexShader" )
 }
 
+const std::vector<ProgramResource>& TexturePresentProgram::GetResourceInfo () const
+{
+    static const std::vector<ProgramResource> info {};
+    return info;
+}
+
 void TexturePresentProgram::BeginSetup ()
 {
     assert ( !"TexturePresentProgram::BeginSetup - Implement me!" );

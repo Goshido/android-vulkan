@@ -35,8 +35,6 @@ class OpaqueProgram final : public Program
         android_vulkan::Texture2D*      _paramTexture;
         VkSampler                       _paramSampler;
 
-        VkDescriptorSetLayout           _descriptorSetLayout;
-
     public:
         OpaqueProgram ();
         ~OpaqueProgram () override = default;
@@ -50,6 +48,7 @@ class OpaqueProgram final : public Program
         ) override;
 
         void Destroy ( android_vulkan::Renderer &renderer ) override;
+        const std::vector<ProgramResource>& GetResourceInfo () const override;
 
         [[maybe_unused]] void SetAlbedo ( android_vulkan::Texture2D &texture, VkSampler sampler );
         [[maybe_unused]] void SetEmission ( android_vulkan::Texture2D &texture, VkSampler sampler );

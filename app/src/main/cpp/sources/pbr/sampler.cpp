@@ -37,4 +37,9 @@ void Sampler::Destroy ( android_vulkan::Renderer &renderer )
     AV_UNREGISTER_SAMPLER ( "Sampler::_sampler" )
 }
 
+VkSampler Sampler::GetSampler () const
+{
+    return _sampler;
+}
+
 } // namespace pbr

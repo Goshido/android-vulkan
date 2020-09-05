@@ -16,24 +16,11 @@ class OpaqueProgram final : public Program
 
         struct PushConstants final
         {
-            GXMat4                      _localView;
-            GXMat4                      _localViewProjection;
+            GXMat4      _localView;
+            GXMat4      _localViewProjection;
         };
 
         AV_DX_ALIGNMENT_END
-
-    private:
-        android_vulkan::Texture2D*      _albedoTexture;
-        VkSampler                       _albedoSampler;
-
-        android_vulkan::Texture2D*      _emissionTexture;
-        VkSampler                       _emissionSampler;
-
-        android_vulkan::Texture2D*      _normalTexture;
-        VkSampler                       _normalSampler;
-
-        android_vulkan::Texture2D*      _paramTexture;
-        VkSampler                       _paramSampler;
 
     public:
         OpaqueProgram ();
@@ -50,16 +37,12 @@ class OpaqueProgram final : public Program
         void Destroy ( android_vulkan::Renderer &renderer ) override;
         const std::vector<ProgramResource>& GetResourceInfo () const override;
 
-        [[maybe_unused]] void SetAlbedo ( android_vulkan::Texture2D &texture, VkSampler sampler );
-        [[maybe_unused]] void SetEmission ( android_vulkan::Texture2D &texture, VkSampler sampler );
-        [[maybe_unused]] void SetNormal ( android_vulkan::Texture2D &texture, VkSampler sampler );
-        [[maybe_unused]] void SetParams ( android_vulkan::Texture2D &texture, VkSampler sampler );
+        void SetDescriptorSet ( VkCommandBuffer commandBuffer, VkDescriptorSet descriptorSet ) const;
+        void SetTransform ( VkCommandBuffer commandBuffer, const PushConstants &transform ) const;
 
     private:
         void BeginSetup () override;
         void EndSetup () override;
-
-        bool Bind ( android_vulkan::Renderer &renderer ) override;
 
         [[nodiscard]] const VkPipelineColorBlendStateCreateInfo* InitColorBlendInfo (
             VkPipelineColorBlendStateCreateInfo &info,

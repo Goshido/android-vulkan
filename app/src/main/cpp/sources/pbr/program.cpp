@@ -12,6 +12,11 @@ ProgramResource::ProgramResource ( VkDescriptorType type, uint32_t count ):
 
 //----------------------------------------------------------------------------------------------------------------------
 
+void Program::Bind ( VkCommandBuffer commandBuffer ) const
+{
+    vkCmdBindPipeline ( commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline );
+}
+
 VkDescriptorSetLayout Program::GetDescriptorSetLayout () const
 {
     return _descriptorSetLayout;

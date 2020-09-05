@@ -15,15 +15,7 @@ constexpr static const size_t VERTEX_ATTRIBUTE_COUNT = 5U;
 //----------------------------------------------------------------------------------------------------------------------
 
 OpaqueProgram::OpaqueProgram ():
-    Program ( "pbr::OpaqueProgram" ),
-    _albedoTexture ( nullptr ),
-    _albedoSampler ( VK_NULL_HANDLE ),
-    _emissionTexture ( nullptr ),
-    _emissionSampler ( VK_NULL_HANDLE ),
-    _normalTexture ( nullptr ),
-    _normalSampler ( VK_NULL_HANDLE ),
-    _paramTexture ( nullptr ),
-    _paramSampler ( VK_NULL_HANDLE )
+    Program ( "pbr::OpaqueProgram" )
 {
     // NOTHING
 }
@@ -154,32 +146,28 @@ const std::vector<ProgramResource>& OpaqueProgram::GetResourceInfo () const
     return info;
 }
 
-void OpaqueProgram::SetAlbedo ( android_vulkan::Texture2D &texture, VkSampler sampler )
+void OpaqueProgram::SetDescriptorSet ( VkCommandBuffer commandBuffer, VkDescriptorSet descriptorSet ) const
 {
-    assert ( _state == eProgramState::Setup );
-    _albedoTexture = &texture;
-    _albedoSampler = sampler;
+    vkCmdBindDescriptorSets ( commandBuffer,
+        VK_PIPELINE_BIND_POINT_GRAPHICS,
+        _pipelineLayout,
+        0U,
+        1U,
+        &descriptorSet,
+        0U,
+        nullptr
+    );
 }
 
-void OpaqueProgram::SetEmission ( android_vulkan::Texture2D &texture, VkSampler sampler )
+void OpaqueProgram::SetTransform ( VkCommandBuffer commandBuffer, const PushConstants &transform ) const
 {
-    assert ( _state == eProgramState::Setup );
-    _emissionTexture = &texture;
-    _emissionSampler = sampler;
-}
-
-void OpaqueProgram::SetNormal ( android_vulkan::Texture2D &texture, VkSampler sampler )
-{
-    assert ( _state == eProgramState::Setup );
-    _normalTexture = &texture;
-    _normalSampler = sampler;
-}
-
-void OpaqueProgram::SetParams ( android_vulkan::Texture2D &texture, VkSampler sampler )
-{
-    assert ( _state == eProgramState::Setup );
-    _paramTexture = &texture;
-    _paramSampler = sampler;
+    vkCmdPushConstants ( commandBuffer,
+        _pipelineLayout,
+        VK_SHADER_STAGE_VERTEX_BIT,
+        0U,
+        sizeof ( PushConstants ),
+        &transform
+    );
 }
 
 void OpaqueProgram::BeginSetup ()
@@ -192,17 +180,6 @@ void OpaqueProgram::EndSetup ()
 {
     assert ( _state == eProgramState::Setup );
     _state = eProgramState::Ready;
-}
-
-bool OpaqueProgram::Bind ( android_vulkan::Renderer &/*renderer*/ )
-{
-    assert ( _state == eProgramState::Ready );
-    _state = eProgramState::Bind;
-
-    // TODO
-
-    assert ( !"OpaqueProgram::Bind - Implement me!" );
-    return false;
 }
 
 const VkPipelineColorBlendStateCreateInfo* OpaqueProgram::InitColorBlendInfo (

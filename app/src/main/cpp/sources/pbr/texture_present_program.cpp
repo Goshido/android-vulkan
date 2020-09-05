@@ -144,12 +144,6 @@ void TexturePresentProgram::EndSetup ()
     assert ( !"TexturePresentProgram::EndSetup - Implement me!" );
 }
 
-bool TexturePresentProgram::Bind ( android_vulkan::Renderer &/*renderer*/ )
-{
-    assert ( !"TexturePresentProgram::Bind - Implement me!" );
-    return false;
-}
-
 const VkPipelineColorBlendStateCreateInfo* TexturePresentProgram::InitColorBlendInfo (
     VkPipelineColorBlendStateCreateInfo &info,
     VkPipelineColorBlendAttachmentState* attachments

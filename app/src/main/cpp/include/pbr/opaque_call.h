@@ -9,22 +9,27 @@ namespace pbr {
 
 class OpaqueCall final
 {
+    public:
+        using UniqueList = std::vector<std::pair<MeshRef, GXMat4>>;
+        using BatchList = std::map<std::string_view, MeshGroup>;
+
     private:
-        std::map<std::string_view, MeshGroup>       _batch;
-        std::vector<std::pair<MeshRef, GXMat4>>     _unique;
+        BatchList       _batch;
+        UniqueList      _unique;
 
     public:
-        explicit OpaqueCall ( MeshRef &mesh, const GXMat4 &local );
-        OpaqueCall ( OpaqueCall &&other ) = default;
-        ~OpaqueCall () = default;
-
         OpaqueCall () = delete;
         OpaqueCall ( const OpaqueCall &other ) = delete;
         OpaqueCall& operator = ( const OpaqueCall &other ) = delete;
-
+        OpaqueCall ( OpaqueCall &&other ) = default;
         OpaqueCall& operator = ( OpaqueCall &&other ) = default;
+        explicit OpaqueCall ( MeshRef &mesh, const GXMat4 &local );
+        ~OpaqueCall () = default;
 
         void Append ( MeshRef &mesh, const GXMat4 &local );
+
+        [[maybe_unused]] [[nodiscard]] const BatchList& GetBatchList () const;
+        [[nodiscard]] const UniqueList& GetUniqueList () const;
 
     private:
         void AddBatch ( MeshRef &mesh, const GXMat4 &local );

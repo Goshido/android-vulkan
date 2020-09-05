@@ -59,14 +59,12 @@ class Program
         Program () = delete;
         Program ( const Program &other ) = delete;
         Program& operator = ( const Program &other ) = delete;
+        Program ( Program &&other ) = delete;
+        Program& operator = ( Program &&other ) = delete;
 
         // Methods must be called between changing input shader parameters: VkImageView, VkSampler, VkBuffer.
         [[maybe_unused]] virtual void BeginSetup () = 0;
         [[maybe_unused]] virtual void EndSetup () = 0;
-
-        // Method commits active material parameters and assigns VkPipeline as active pipeline.
-        // Method return true is success. Otherwise method returns false.
-        [[maybe_unused]] [[nodiscard]] virtual bool Bind ( android_vulkan::Renderer &renderer ) = 0;
 
         // Method return true is success. Otherwise method returns false.
         [[nodiscard]] virtual bool Init ( android_vulkan::Renderer &renderer,
@@ -76,6 +74,9 @@ class Program
 
         [[maybe_unused]] virtual void Destroy ( android_vulkan::Renderer &renderer ) = 0;
         [[nodiscard]] virtual const std::vector<ProgramResource>& GetResourceInfo () const = 0;
+
+        // The method assigns VkPipeline as active pipeline.
+        void Bind ( VkCommandBuffer commandBuffer ) const;
 
         [[nodiscard]] VkDescriptorSetLayout GetDescriptorSetLayout () const;
 

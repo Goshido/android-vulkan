@@ -104,10 +104,7 @@ bool PBRGame::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime )
     local.SetW ( GXVec3 ( 1.0F, 0.0F, 0.0F ) );
     _renderSession.SubmitMesh ( _sonicMesh2, _sonicMaterial2, local );
 
-    _renderSession.End ( ePresentTarget::Normal, renderer );
-
-    assert ( !"PBRGame::OnFrame - Implement me!" );
-    return false;
+    return _renderSession.End ( ePresentTarget::Normal, renderer );
 }
 
 bool PBRGame::OnDestroy ( android_vulkan::Renderer &renderer )

@@ -16,17 +16,21 @@ class TexturePresentProgram final : public Program
 
         struct PushConstants final
         {
-            GXMat4                  _transform;
+            GXMat4      _transform;
         };
 
         AV_DX_ALIGNMENT_END
 
     public:
         TexturePresentProgram ();
-        ~TexturePresentProgram () override = default;
 
         TexturePresentProgram ( const TexturePresentProgram &other ) = delete;
         TexturePresentProgram& operator = ( const TexturePresentProgram &other ) = delete;
+
+        TexturePresentProgram ( TexturePresentProgram &&other ) = delete;
+        TexturePresentProgram& operator = ( TexturePresentProgram &&other ) = delete;
+
+        ~TexturePresentProgram () override = default;
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
             VkRenderPass renderPass,
@@ -39,8 +43,6 @@ class TexturePresentProgram final : public Program
     private:
         void BeginSetup () override;
         void EndSetup () override;
-
-        bool Bind ( android_vulkan::Renderer &renderer ) override;
 
         [[nodiscard]] const VkPipelineColorBlendStateCreateInfo* InitColorBlendInfo (
             VkPipelineColorBlendStateCreateInfo &info,

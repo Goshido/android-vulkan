@@ -23,7 +23,7 @@ enum class ePresentTarget : uint8_t
 // Single threaded class
 class RenderSession final
 {
-    public:
+    private:
         Texture2DRef                            _albedoDefault;
         Texture2DRef                            _emissionDefault;
         Texture2DRef                            _normalDefault;
@@ -37,6 +37,7 @@ class RenderSession final
         VkRenderPass                            _gBufferRenderPass;
 
         VkCommandBuffer                         _geometryPassCommandBuffer;
+        VkFence                                 _geometryPassFence;
 
         bool                                    _isFreeTransferResources;
 
@@ -47,17 +48,22 @@ class RenderSession final
         OpaqueProgram                           _opaqueProgram;
         TexturePresentProgram                   _texturePresentProgram;
 
+        GXMat4                                  _view;
         GXMat4                                  _viewProjection;
 
     public:
         RenderSession ();
-        ~RenderSession () = default;
 
         RenderSession ( const RenderSession &other ) = delete;
         RenderSession& operator = ( const RenderSession &other ) = delete;
 
+        RenderSession ( RenderSession &&other ) = delete;
+        RenderSession& operator = ( RenderSession &&other ) = delete;
+
+        ~RenderSession () = default;
+
         void Begin ( const GXMat4 &view, const GXMat4 &projection );
-        void End ( ePresentTarget target, android_vulkan::Renderer &renderer );
+        [[nodiscard]] bool End ( ePresentTarget target, android_vulkan::Renderer &renderer );
 
         [[nodiscard]] const VkExtent2D& GetResolution () const;
 

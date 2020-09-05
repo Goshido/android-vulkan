@@ -8,9 +8,21 @@ OpaqueCall::OpaqueCall ( MeshRef &mesh, const GXMat4 &local )
     Append ( mesh, local );
 }
 
+const OpaqueCall::BatchList& OpaqueCall::GetBatchList () const
+{
+    return _batch;
+}
+
+const OpaqueCall::UniqueList& OpaqueCall::GetUniqueList () const
+{
+    return _unique;
+}
+
 void OpaqueCall::Append ( MeshRef &mesh, const GXMat4 &local )
 {
-    if ( mesh->IsUnique () )
+    // HACK fix this mess. For debug purposes.
+
+    if ( !mesh->IsUnique () )
     {
         AddUnique ( mesh, local );
         return;

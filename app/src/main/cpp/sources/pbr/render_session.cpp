@@ -101,11 +101,13 @@ RenderSession::RenderSession ():
     _gBufferFramebuffer ( VK_NULL_HANDLE ),
     _gBufferRenderPass ( VK_NULL_HANDLE ),
     _geometryPassCommandBuffer ( VK_NULL_HANDLE ),
+    _geometryPassFence ( VK_NULL_HANDLE ),
     _isFreeTransferResources ( false ),
     _meshCount ( 0U ),
     _opaqueCalls {},
     _opaqueProgram {},
     _texturePresentProgram {},
+    _view {},
     _viewProjection {}
 {
     // NOTHING
@@ -127,11 +129,12 @@ void RenderSession::SubmitMesh ( MeshRef &mesh,
 void RenderSession::Begin ( const GXMat4 &view, const GXMat4 &projection )
 {
     _meshCount = 0U;
+    _view = view;
     _viewProjection.Multiply ( view, projection );
     _opaqueCalls.clear ();
 }
 
-void RenderSession::End ( ePresentTarget /*target*/, android_vulkan::Renderer &renderer )
+bool RenderSession::End ( ePresentTarget /*target*/, android_vulkan::Renderer &renderer )
 {
     if ( _isFreeTransferResources )
     {
@@ -150,19 +153,38 @@ void RenderSession::End ( ePresentTarget /*target*/, android_vulkan::Renderer &r
         _isFreeTransferResources = false;
     }
 
+    VkDevice device = renderer.GetDevice ();
+
+    bool result = renderer.CheckVkResult (
+        vkWaitForFences ( device, 1U, &_geometryPassFence, VK_TRUE, UINT64_MAX ),
+        "RenderSession::End",
+        "Can't wait for geometry pass fence"
+    );
+
+    if ( !result )
+        return false;
+
+    result = renderer.CheckVkResult ( vkResetFences ( device, 1U, &_geometryPassFence ),
+        "RenderSession::End",
+        "Can't reset geometry pass fence"
+    );
+
+    if ( !result )
+        return false;
+
     VkCommandBufferBeginInfo beginInfo;
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     beginInfo.pNext = nullptr;
     beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
     beginInfo.pInheritanceInfo = nullptr;
 
-    bool result = renderer.CheckVkResult ( vkBeginCommandBuffer ( _geometryPassCommandBuffer, &beginInfo ),
+    result = renderer.CheckVkResult ( vkBeginCommandBuffer ( _geometryPassCommandBuffer, &beginInfo ),
         "RenderSession::End",
         "Can't begin command buffer"
     );
 
     if ( !result )
-        return;
+        return false;
 
     VkClearValue clearValues[ GBUFFER_ATTACHMENT_COUNT ];
     VkClearValue& albedoClear = clearValues[ 0U ];
@@ -233,8 +255,6 @@ void RenderSession::End ( ePresentTarget /*target*/, android_vulkan::Renderer &r
     poolInfo.poolSizeCount = static_cast<uint32_t> ( uniqueFeatures );
     poolInfo.pPoolSizes = poolSizeStorage.data ();
 
-    VkDevice device = renderer.GetDevice ();
-
     if ( _descriptorPool )
     {
         vkDestroyDescriptorPool ( device, _descriptorPool, nullptr );
@@ -248,7 +268,7 @@ void RenderSession::End ( ePresentTarget /*target*/, android_vulkan::Renderer &r
     );
 
     if ( !result )
-        return;
+        return false;
 
     AV_REGISTER_DESCRIPTOR_POOL ( "RenderSession::_descriptorPool" )
 
@@ -276,7 +296,7 @@ void RenderSession::End ( ePresentTarget /*target*/, android_vulkan::Renderer &r
     );
 
     if ( !result )
-        return;
+        return false;
 
     const size_t textureCount = opaqueCountRaw * 4U;
     std::vector<VkDescriptorImageInfo> imageStorage;
@@ -293,13 +313,18 @@ void RenderSession::End ( ePresentTarget /*target*/, android_vulkan::Renderer &r
     writeInfo.pBufferInfo = nullptr;
     writeInfo.pTexelBufferView = nullptr;
 
-    auto textureBinder = [ & ] ( Texture2DRef &texture, uint32_t imageBindSlot, uint32_t samplerBindSlot ) {
-        SamplerRef sampler = g_SamplerStorage.GetSampler ( texture, renderer );
+    auto textureBinder = [ & ] ( Texture2DRef &texture,
+        Texture2DRef defaultTexture,
+        uint32_t imageBindSlot,
+        uint32_t samplerBindSlot
+    ) {
+        Texture2DRef& t = texture ? texture : defaultTexture;
+        SamplerRef sampler = g_SamplerStorage.GetSampler ( t, renderer );
 
         writeInfo.pImageInfo = &imageStorage.emplace_back (
             VkDescriptorImageInfo {
                 .sampler = sampler->GetSampler (),
-                .imageView = texture->GetImageView (),
+                .imageView = t->GetImageView (),
                 .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
             }
         );
@@ -315,19 +340,18 @@ void RenderSession::End ( ePresentTarget /*target*/, android_vulkan::Renderer &r
 
     size_t i = 0U;
 
-    for ( auto& opaque : _opaqueCalls )
+    _opaqueProgram.Bind ( _geometryPassCommandBuffer );
+
+    for ( auto const &material : _opaqueCalls )
     {
         writeInfo.dstSet = descriptorSets[ i ];
         ++i;
 
-        auto& material = const_cast<OpaqueMaterial&> ( opaque.first );
-
-        textureBinder ( material.GetAlbedo (), 0U, 1U );
-        textureBinder ( material.GetEmission (), 2U, 3U );
-        textureBinder ( material.GetNormal (), 4U, 5U );
-        textureBinder ( material.GetParam (), 6U, 7U );
-
-        // TODO emit draw calls
+        auto &m = const_cast<OpaqueMaterial&> ( material.first );
+        textureBinder ( m.GetAlbedo (), _albedoDefault, 0U, 1U );
+        textureBinder ( m.GetEmission (), _emissionDefault, 2U, 3U );
+        textureBinder ( m.GetNormal (), _normalDefault, 4U, 5U );
+        textureBinder ( m.GetParam (), _paramDefault, 6U, 7U );
     }
 
     vkUpdateDescriptorSets ( device,
@@ -337,6 +361,33 @@ void RenderSession::End ( ePresentTarget /*target*/, android_vulkan::Renderer &r
         nullptr
     );
 
+    OpaqueProgram::PushConstants transform {};
+    i = 0U;
+
+    for ( auto const &call : _opaqueCalls )
+    {
+        // HACK for debugging purposes.
+        _opaqueProgram.SetDescriptorSet ( _geometryPassCommandBuffer, descriptorSets[ i ] );
+        ++i;
+
+        OpaqueCall::UniqueList const &uniqueList = call.second.GetUniqueList ();
+
+        for ( auto const &[mesh, local] : uniqueList )
+        {
+            // TODO frustum test
+
+            transform._localView.Multiply ( local, _view );
+            transform._localViewProjection.Multiply ( local, _viewProjection );
+            _opaqueProgram.SetTransform ( _geometryPassCommandBuffer, transform );
+
+            constexpr const VkDeviceSize offset = 0U;
+            vkCmdBindVertexBuffers ( _geometryPassCommandBuffer, 0U, 1U, &mesh->GetBuffer (), &offset );
+            vkCmdDraw ( _geometryPassCommandBuffer, mesh->GetVertexCount (), 1U, 0U, 0U );
+        }
+
+        // TODO emit batched draw calls
+    }
+
     vkCmdEndRenderPass ( _geometryPassCommandBuffer );
 
     result = renderer.CheckVkResult ( vkEndCommandBuffer ( _geometryPassCommandBuffer ),
@@ -345,11 +396,23 @@ void RenderSession::End ( ePresentTarget /*target*/, android_vulkan::Renderer &r
     );
 
     if ( !result )
-        return;
+        return false;
 
-    // TODO
+    VkSubmitInfo submitInfo;
+    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submitInfo.pNext = nullptr;
+    submitInfo.waitSemaphoreCount = 0U;
+    submitInfo.pWaitSemaphores = nullptr;
+    submitInfo.pWaitDstStageMask = nullptr;
+    submitInfo.commandBufferCount = 1U;
+    submitInfo.pCommandBuffers = &_geometryPassCommandBuffer;
+    submitInfo.signalSemaphoreCount = 0U;
+    submitInfo.pSignalSemaphores = nullptr;
 
-    assert ( !"RenderSession::End - Implement me!" );
+    return renderer.CheckVkResult ( vkQueueSubmit ( renderer.GetQueue (), 1U, &submitInfo, _geometryPassFence ),
+        "RenderSession::End",
+        "Can't submit geometry pass command buffer"
+    );
 }
 
 const VkExtent2D& RenderSession::GetResolution () const
@@ -376,6 +439,24 @@ bool RenderSession::Init ( android_vulkan::Renderer &renderer, VkRenderPass pres
         return false;
     }
 
+    VkFenceCreateInfo fenceInfo;
+    fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+    fenceInfo.pNext = nullptr;
+    fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+    bool result = renderer.CheckVkResult ( vkCreateFence ( device, &fenceInfo, nullptr, &_geometryPassFence ),
+        "RenderSession::Init",
+        "Can't create GBuffer fence"
+    );
+
+    if ( !result )
+    {
+        Destroy ( renderer );
+        return false;
+    }
+
+    AV_REGISTER_FENCE ( "RenderSession::_geometryPassFence" )
+
     if ( !_opaqueProgram.Init ( renderer, _gBufferRenderPass, _gBuffer.GetResolution () ) )
     {
         Destroy ( renderer );
@@ -394,7 +475,7 @@ bool RenderSession::Init ( android_vulkan::Renderer &renderer, VkRenderPass pres
     info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
     info.queueFamilyIndex = renderer.GetQueueFamilyIndex ();
 
-    bool result = renderer.CheckVkResult ( vkCreateCommandPool ( device, &info, nullptr, &_commandPool ),
+    result = renderer.CheckVkResult ( vkCreateCommandPool ( device, &info, nullptr, &_commandPool ),
         "RenderSession::Init",
         "Can't create command pool"
     );
@@ -553,6 +634,13 @@ void RenderSession::Destroy ( android_vulkan::Renderer &renderer )
 
     _texturePresentProgram.Destroy ( renderer );
     _opaqueProgram.Destroy ( renderer );
+
+    if ( _geometryPassFence != VK_NULL_HANDLE )
+    {
+        vkDestroyFence ( device, _geometryPassFence, nullptr );
+        _geometryPassFence = VK_NULL_HANDLE;
+        AV_UNREGISTER_FENCE ( "RenderSession::_geometryPassFence" )
+    }
 
     if ( _gBufferFramebuffer != VK_NULL_HANDLE )
     {

@@ -233,13 +233,14 @@ bool RenderSession::End ( ePresentTarget /*target*/, android_vulkan::Renderer &r
     const size_t opaqueCountRaw = _opaqueCalls.size ();
     const auto opaqueCount = static_cast<const uint32_t> ( opaqueCountRaw );
 
-    const std::vector<ProgramResource>& resourceInfo = _opaqueProgram.GetResourceInfo ();
-    const size_t uniqueFeatures = resourceInfo.size ();
+    std::vector<DescriptorSetInfo> const& descriptoSetInfo = _opaqueProgram.GetResourceInfo ();
+    DescriptorSetInfo const& descriptorSet0 = descriptoSetInfo[ 0U ];
+    const size_t uniqueFeatures = descriptorSet0.size ();
 
     std::vector<VkDescriptorPoolSize> poolSizeStorage;
     poolSizeStorage.reserve ( uniqueFeatures );
 
-    for ( auto const& item : resourceInfo )
+    for ( auto const& item : descriptorSet0 )
     {
         poolSizeStorage.emplace_back (
             VkDescriptorPoolSize {
@@ -274,13 +275,14 @@ bool RenderSession::End ( ePresentTarget /*target*/, android_vulkan::Renderer &r
 
     AV_REGISTER_DESCRIPTOR_POOL ( "RenderSession::_descriptorPool" )
 
-    VkDescriptorSetLayout layout = _opaqueProgram.GetDescriptorSetLayout ();
+    /*std::vector<VkDescriptorSetLayout> const& layouts = _opaqueProgram.GetDescriptorSetLayouts ();
+    VkDescriptorSetLayout layout = layouts[ 0U ];*/
 
     std::vector<VkDescriptorSetLayout> layouts;
-    layouts.reserve ( opaqueCount );
+    /*layouts.reserve ( opaqueCount );
 
     for ( size_t i = 0U; i < opaqueCount; ++i )
-        layouts.push_back ( layout );
+        layouts.push_back ( layout );*/
 
     VkDescriptorSetAllocateInfo allocateInfo;
     allocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;

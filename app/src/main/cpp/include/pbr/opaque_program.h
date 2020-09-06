@@ -39,7 +39,7 @@ class OpaqueProgram final : public Program
         ) override;
 
         void Destroy ( android_vulkan::Renderer &renderer ) override;
-        const std::vector<ProgramResource>& GetResourceInfo () const override;
+        [[nodiscard]] std::vector<DescriptorSetInfo> const& GetResourceInfo () const override;
 
         void SetDescriptorSet ( VkCommandBuffer commandBuffer, VkDescriptorSet descriptorSet ) const;
         void SetTransform ( VkCommandBuffer commandBuffer, PushConstants const &transform ) const;

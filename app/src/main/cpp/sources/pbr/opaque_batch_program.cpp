@@ -9,13 +9,14 @@ constexpr static const char* VERTEX_SHADER = "shaders/common-opaque-batch-vs.spv
 constexpr static const char* FRAGMENT_SHADER = "shaders/opaque-ps.spv";
 
 constexpr static const size_t COLOR_RENDER_TARGET_COUNT = 4U;
+constexpr static const size_t DESCRIPTOR_SET_COUNT = 2U;
 constexpr static const size_t STAGE_COUNT = 2U;
 constexpr static const size_t VERTEX_ATTRIBUTE_COUNT = 5U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
 OpaqueBatchProgram::OpaqueBatchProgram ():
-    Program ( "OpaqueBatchProgram" )
+    Program ( "OpaqueBatchProgram", DESCRIPTOR_SET_COUNT )
 {
     // NOTHING
 }
@@ -118,11 +119,23 @@ void OpaqueBatchProgram::Destroy ( android_vulkan::Renderer &renderer )
     AV_UNREGISTER_SHADER_MODULE ( "OpaqueBatchProgram::_vertexShader" )
 }
 
-std::vector<ProgramResource> const& OpaqueBatchProgram::GetResourceInfo () const
+std::vector<DescriptorSetInfo> const& OpaqueBatchProgram::GetResourceInfo () const
 {
-    // TODO
-    static std::vector<ProgramResource> resources;
-    return resources;
+    static const std::vector<DescriptorSetInfo> info
+    {
+        DescriptorSetInfo
+        {
+            ProgramResource ( VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 4U ),
+            ProgramResource ( VK_DESCRIPTOR_TYPE_SAMPLER, 4U )
+        },
+
+        DescriptorSetInfo
+        {
+            ProgramResource ( VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1U )
+        }
+    };
+
+    return info;
 }
 
 VkPipelineColorBlendStateCreateInfo const* OpaqueBatchProgram::InitColorBlendInfo (

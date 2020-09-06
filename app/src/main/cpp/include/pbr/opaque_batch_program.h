@@ -25,7 +25,7 @@ class OpaqueBatchProgram final : public Program
         ) override;
 
         [[maybe_unused]] void Destroy ( android_vulkan::Renderer &renderer ) override;
-        [[nodiscard]] std::vector<ProgramResource> const& GetResourceInfo () const override;
+        [[nodiscard]] std::vector<DescriptorSetInfo> const& GetResourceInfo () const override;
 
     private:
         [[nodiscard]] VkPipelineColorBlendStateCreateInfo const* InitColorBlendInfo (

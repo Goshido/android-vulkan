@@ -9,13 +9,14 @@ constexpr static const char* VERTEX_SHADER = "shaders/common-opaque-vs.spv";
 constexpr static const char* FRAGMENT_SHADER = "shaders/opaque-ps.spv";
 
 constexpr static const size_t COLOR_RENDER_TARGET_COUNT = 4U;
+constexpr static const size_t DESCRIPTOR_SET_COUNT = 1U;
 constexpr static const size_t STAGE_COUNT = 2U;
 constexpr static const size_t VERTEX_ATTRIBUTE_COUNT = 5U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
 OpaqueProgram::OpaqueProgram ():
-    Program ( "pbr::OpaqueProgram" )
+    Program ( "pbr::OpaqueProgram", DESCRIPTOR_SET_COUNT )
 {
     // NOTHING
 }
@@ -113,11 +114,14 @@ void OpaqueProgram::Destroy ( android_vulkan::Renderer &renderer )
         AV_UNREGISTER_PIPELINE_LAYOUT ( "OpaqueProgram::_pipelineLayout" )
     }
 
-    if ( _descriptorSetLayout != VK_NULL_HANDLE )
+    for ( auto& descriptorSet : _descriptorSetLayouts )
     {
-        vkDestroyDescriptorSetLayout ( device, _descriptorSetLayout, nullptr );
-        _descriptorSetLayout = VK_NULL_HANDLE;
-        AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "OpaqueProgram::_descriptorSetLayout" )
+        if ( descriptorSet == VK_NULL_HANDLE )
+            continue;
+
+        vkDestroyDescriptorSetLayout ( device, descriptorSet, nullptr );
+        descriptorSet = VK_NULL_HANDLE;
+        AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "OpaqueProgram::_descriptorSetLayouts" )
     }
 
     if ( _fragmentShader != VK_NULL_HANDLE )
@@ -135,12 +139,15 @@ void OpaqueProgram::Destroy ( android_vulkan::Renderer &renderer )
     AV_UNREGISTER_SHADER_MODULE ( "OpaqueProgram::_vertexShader" )
 }
 
-const std::vector<ProgramResource>& OpaqueProgram::GetResourceInfo () const
+std::vector<DescriptorSetInfo> const& OpaqueProgram::GetResourceInfo () const
 {
-    static const std::vector<ProgramResource> info
+    static const std::vector<DescriptorSetInfo> info
     {
-        ProgramResource ( VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 4U ),
-        ProgramResource ( VK_DESCRIPTOR_TYPE_SAMPLER, 4U )
+        DescriptorSetInfo
+        {
+            ProgramResource ( VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 4U ),
+            ProgramResource ( VK_DESCRIPTOR_TYPE_SAMPLER, 4U )
+        }
     };
 
     return info;
@@ -314,9 +321,10 @@ bool OpaqueProgram::InitLayout ( VkPipelineLayout &layout, android_vulkan::Rende
     descriptorSetLayoutInfo.pBindings = bindingInfo;
 
     VkDevice device = renderer.GetDevice ();
+    VkDescriptorSetLayout& descriptorSetLayout = _descriptorSetLayouts[ 0U ];
 
     bool result = renderer.CheckVkResult (
-        vkCreateDescriptorSetLayout ( device, &descriptorSetLayoutInfo, nullptr, &_descriptorSetLayout ),
+        vkCreateDescriptorSetLayout ( device, &descriptorSetLayoutInfo, nullptr, &descriptorSetLayout ),
         "OpaqueProgram::InitLayout",
         "Can't create descriptor set layout (pbr::OpaqueProgram)"
     );
@@ -324,7 +332,7 @@ bool OpaqueProgram::InitLayout ( VkPipelineLayout &layout, android_vulkan::Rende
     if ( !result )
         return false;
 
-    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "OpaqueProgram::_descriptorSetLayout" )
+    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "OpaqueProgram::_descriptorSetLayouts" )
 
     VkPushConstantRange pushConstantRange;
     pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
@@ -338,7 +346,7 @@ bool OpaqueProgram::InitLayout ( VkPipelineLayout &layout, android_vulkan::Rende
     layoutInfo.pushConstantRangeCount = 1U;
     layoutInfo.pPushConstantRanges = &pushConstantRange;
     layoutInfo.setLayoutCount = 1U;
-    layoutInfo.pSetLayouts = &_descriptorSetLayout;
+    layoutInfo.pSetLayouts = &descriptorSetLayout;
 
     result = renderer.CheckVkResult ( vkCreatePipelineLayout ( device, &layoutInfo, nullptr, &_pipelineLayout ),
         "OpaqueProgram::InitLayout",

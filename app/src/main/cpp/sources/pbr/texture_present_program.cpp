@@ -12,7 +12,7 @@ constexpr static const size_t STAGE_COUNT = 2U;
 //----------------------------------------------------------------------------------------------------------------------
 
 TexturePresentProgram::TexturePresentProgram ():
-    Program ( "pbr::TexturePresentProgram" )
+    Program ( "pbr::TexturePresentProgram", 1U )
 {
     // NOTHING
 }
@@ -106,12 +106,12 @@ void TexturePresentProgram::Destroy ( android_vulkan::Renderer &renderer )
         AV_UNREGISTER_PIPELINE_LAYOUT ( "TexturePresentProgram::_pipelineLayout" )
     }
 
-    if ( _descriptorSetLayout != VK_NULL_HANDLE )
+    /*if ( _descriptorSetLayout != VK_NULL_HANDLE )
     {
         vkDestroyDescriptorSetLayout ( device, _descriptorSetLayout, nullptr );
         _descriptorSetLayout = VK_NULL_HANDLE;
         AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "TexturePresentProgram::_descriptorSetLayout" )
-    }
+    }*/
 
     if ( _fragmentShader != VK_NULL_HANDLE )
     {
@@ -128,9 +128,9 @@ void TexturePresentProgram::Destroy ( android_vulkan::Renderer &renderer )
     AV_UNREGISTER_SHADER_MODULE ( "TexturePresentProgram::_vertexShader" )
 }
 
-const std::vector<ProgramResource>& TexturePresentProgram::GetResourceInfo () const
+std::vector<DescriptorSetInfo> const& TexturePresentProgram::GetResourceInfo () const
 {
-    static const std::vector<ProgramResource> info {};
+    static const std::vector<DescriptorSetInfo> info {};
     return info;
 }
 
@@ -232,7 +232,7 @@ bool TexturePresentProgram::InitLayout ( VkPipelineLayout &layout, android_vulka
     VkDevice device = renderer.GetDevice ();
 
     bool result = renderer.CheckVkResult (
-        vkCreateDescriptorSetLayout ( device, &descriptorSetLayoutInfo, nullptr, &_descriptorSetLayout ),
+        vkCreateDescriptorSetLayout ( device, &descriptorSetLayoutInfo, nullptr, &_descriptorSetLayouts[ 0U ] ),
         "TexturePresentProgram::InitLayout",
         "Can't create descriptor set layout (pbr::TexturePresentProgram)"
     );
@@ -254,7 +254,7 @@ bool TexturePresentProgram::InitLayout ( VkPipelineLayout &layout, android_vulka
     layoutInfo.pushConstantRangeCount = 1U;
     layoutInfo.pPushConstantRanges = &pushConstantRange;
     layoutInfo.setLayoutCount = 1U;
-    layoutInfo.pSetLayouts = &_descriptorSetLayout;
+    layoutInfo.pSetLayouts = &_descriptorSetLayouts[ 0U ];
 
     result = renderer.CheckVkResult ( vkCreatePipelineLayout ( device, &layoutInfo, nullptr, &_pipelineLayout ),
         "TexturePresentProgram::InitLayout",

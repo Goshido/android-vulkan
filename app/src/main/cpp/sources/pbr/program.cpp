@@ -3,29 +3,20 @@
 
 namespace pbr {
 
-ProgramResource::ProgramResource ( VkDescriptorType type, uint32_t count ):
-    _type ( type ),
-    _count ( count )
-{
-    // NOTHING
-}
-
-//----------------------------------------------------------------------------------------------------------------------
-
 void Program::Bind ( VkCommandBuffer commandBuffer ) const
 {
     vkCmdBindPipeline ( commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline );
 }
 
-VkDescriptorSetLayout Program::GetDescriptorSetLayout () const
+std::vector<VkDescriptorSetLayout> const& Program::GetDescriptorSetLayouts () const
 {
-    return _descriptorSetLayout;
+    return _descriptorSetLayouts;
 }
 
-Program::Program ( std::string &&name ):
+Program::Program ( std::string &&name, size_t descriptorSetCount ):
     _fragmentShader ( VK_NULL_HANDLE ),
     _vertexShader ( VK_NULL_HANDLE ),
-    _descriptorSetLayout ( VK_NULL_HANDLE ),
+    _descriptorSetLayouts ( descriptorSetCount, VK_NULL_HANDLE ),
     _name ( std::move ( name ) ),
     _pipeline ( VK_NULL_HANDLE ),
     _pipelineLayout ( VK_NULL_HANDLE ),

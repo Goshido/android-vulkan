@@ -2,13 +2,16 @@
 #define PBR_PROGRAM_H
 
 
-#include <renderer.h>
+#include <GXCommon/GXWarning.h>
 
 GX_DISABLE_COMMON_WARNINGS
 
 #include <string>
 
 GX_RESTORE_WARNING_STATE
+
+#include <renderer.h>
+#include "program_resource.h"
 
 
 namespace pbr {
@@ -25,35 +28,20 @@ enum class eProgramState : uint8_t
     Unknown
 };
 
-struct ProgramResource final
-{
-    VkDescriptorType    _type;
-    uint32_t            _count;
-
-    ProgramResource () = delete;
-    explicit ProgramResource ( VkDescriptorType type, uint32_t count );
-
-    ProgramResource ( const ProgramResource &other ) = delete;
-    ProgramResource& operator = ( const ProgramResource &other ) = delete;
-
-    ProgramResource ( ProgramResource &&other ) = default;
-    ProgramResource& operator = ( ProgramResource &&other ) = default;
-};
-
 //----------------------------------------------------------------------------------------------------------------------
 
 class Program
 {
     protected:
-        VkShaderModule                  _fragmentShader;
-        VkShaderModule                  _vertexShader;
+        VkShaderModule                          _fragmentShader;
+        VkShaderModule                          _vertexShader;
 
-        VkDescriptorSetLayout           _descriptorSetLayout;
-        const std::string               _name;
-        VkPipeline                      _pipeline;
-        VkPipelineLayout                _pipelineLayout;
+        std::vector<VkDescriptorSetLayout>      _descriptorSetLayouts;
+        const std::string                       _name;
+        VkPipeline                              _pipeline;
+        VkPipelineLayout                        _pipelineLayout;
 
-        eProgramState                   _state;
+        eProgramState                           _state;
 
     public:
         Program () = delete;
@@ -70,15 +58,15 @@ class Program
         ) = 0;
 
         [[maybe_unused]] virtual void Destroy ( android_vulkan::Renderer &renderer ) = 0;
-        [[nodiscard]] virtual std::vector<ProgramResource> const& GetResourceInfo () const = 0;
+        [[nodiscard]] virtual std::vector<DescriptorSetInfo> const& GetResourceInfo () const = 0;
 
         // The method assigns VkPipeline as active pipeline.
         void Bind ( VkCommandBuffer commandBuffer ) const;
 
-        [[nodiscard]] VkDescriptorSetLayout GetDescriptorSetLayout () const;
+        [[nodiscard]] std::vector<VkDescriptorSetLayout> const& GetDescriptorSetLayouts () const;
 
     protected:
-        explicit Program ( std::string &&name );
+        explicit Program ( std::string &&name, size_t descriptorSetCount );
         virtual ~Program () = default;
 
         [[nodiscard]] virtual VkPipelineColorBlendStateCreateInfo const* InitColorBlendInfo (

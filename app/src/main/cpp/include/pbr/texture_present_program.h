@@ -38,7 +38,7 @@ class TexturePresentProgram final : public Program
         ) override;
 
         void Destroy ( android_vulkan::Renderer &renderer ) override;
-        const std::vector<ProgramResource>& GetResourceInfo () const override;
+        [[nodiscard]] std::vector<DescriptorSetInfo> const& GetResourceInfo () const override;
 
     private:
         [[nodiscard]] VkPipelineColorBlendStateCreateInfo const* InitColorBlendInfo (

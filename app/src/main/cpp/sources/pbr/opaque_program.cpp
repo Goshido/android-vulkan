@@ -44,7 +44,7 @@ bool OpaqueProgram::Init ( android_vulkan::Renderer &renderer, VkRenderPass rend
     pipelineInfo.pNext = nullptr;
     pipelineInfo.flags = 0U;
     pipelineInfo.subpass = 0U;
-    pipelineInfo.stageCount = std::size ( stageInfo );
+    pipelineInfo.stageCount = static_cast<uint32_t> ( std::size ( stageInfo ) );
     pipelineInfo.renderPass = renderPass;
     pipelineInfo.pDynamicState = nullptr;
     pipelineInfo.basePipelineIndex = 0;
@@ -159,7 +159,7 @@ void OpaqueProgram::SetDescriptorSet ( VkCommandBuffer commandBuffer, VkDescript
     );
 }
 
-void OpaqueProgram::SetTransform ( VkCommandBuffer commandBuffer, const PushConstants &transform ) const
+void OpaqueProgram::SetTransform ( VkCommandBuffer commandBuffer, PushConstants const &transform ) const
 {
     vkCmdPushConstants ( commandBuffer,
         _pipelineLayout,
@@ -170,19 +170,7 @@ void OpaqueProgram::SetTransform ( VkCommandBuffer commandBuffer, const PushCons
     );
 }
 
-void OpaqueProgram::BeginSetup ()
-{
-    assert ( _state != eProgramState::Setup );
-    _state = eProgramState::Setup;
-}
-
-void OpaqueProgram::EndSetup ()
-{
-    assert ( _state == eProgramState::Setup );
-    _state = eProgramState::Ready;
-}
-
-const VkPipelineColorBlendStateCreateInfo* OpaqueProgram::InitColorBlendInfo (
+VkPipelineColorBlendStateCreateInfo const* OpaqueProgram::InitColorBlendInfo (
     VkPipelineColorBlendStateCreateInfo &info,
     VkPipelineColorBlendAttachmentState* attachments
 ) const
@@ -220,7 +208,7 @@ const VkPipelineColorBlendStateCreateInfo* OpaqueProgram::InitColorBlendInfo (
     return &info;
 }
 
-const VkPipelineDepthStencilStateCreateInfo* OpaqueProgram::InitDepthStencilInfo (
+VkPipelineDepthStencilStateCreateInfo const* OpaqueProgram::InitDepthStencilInfo (
     VkPipelineDepthStencilStateCreateInfo &info
 ) const
 {
@@ -246,7 +234,7 @@ const VkPipelineDepthStencilStateCreateInfo* OpaqueProgram::InitDepthStencilInfo
     return &info;
 }
 
-const VkPipelineInputAssemblyStateCreateInfo* OpaqueProgram::InitInputAssemblyInfo (
+VkPipelineInputAssemblyStateCreateInfo const* OpaqueProgram::InitInputAssemblyInfo (
     VkPipelineInputAssemblyStateCreateInfo &info
 ) const
 {
@@ -365,7 +353,7 @@ bool OpaqueProgram::InitLayout ( VkPipelineLayout &layout, android_vulkan::Rende
     return true;
 }
 
-const VkPipelineMultisampleStateCreateInfo* OpaqueProgram::InitMultisampleInfo (
+VkPipelineMultisampleStateCreateInfo const* OpaqueProgram::InitMultisampleInfo (
     VkPipelineMultisampleStateCreateInfo &info
 ) const
 {
@@ -382,7 +370,7 @@ const VkPipelineMultisampleStateCreateInfo* OpaqueProgram::InitMultisampleInfo (
     return &info;
 }
 
-const VkPipelineRasterizationStateCreateInfo* OpaqueProgram::InitRasterizationInfo (
+VkPipelineRasterizationStateCreateInfo const* OpaqueProgram::InitRasterizationInfo (
     VkPipelineRasterizationStateCreateInfo &info
 ) const
 {
@@ -403,7 +391,7 @@ const VkPipelineRasterizationStateCreateInfo* OpaqueProgram::InitRasterizationIn
     return &info;
 }
 
-bool OpaqueProgram::InitShaderInfo ( const VkPipelineShaderStageCreateInfo* &targetInfo,
+bool OpaqueProgram::InitShaderInfo ( VkPipelineShaderStageCreateInfo const* &targetInfo,
     VkPipelineShaderStageCreateInfo* sourceInfo,
     android_vulkan::Renderer &renderer )
 {
@@ -449,10 +437,10 @@ bool OpaqueProgram::InitShaderInfo ( const VkPipelineShaderStageCreateInfo* &tar
     return true;
 }
 
-const VkPipelineViewportStateCreateInfo* OpaqueProgram::InitViewportInfo ( VkPipelineViewportStateCreateInfo &info,
+VkPipelineViewportStateCreateInfo const* OpaqueProgram::InitViewportInfo ( VkPipelineViewportStateCreateInfo &info,
     VkRect2D &scissorInfo,
     VkViewport &viewportInfo,
-    const VkExtent2D &viewport
+    VkExtent2D const &viewport
 ) const
 {
     viewportInfo.x = 0.0F;
@@ -477,7 +465,7 @@ const VkPipelineViewportStateCreateInfo* OpaqueProgram::InitViewportInfo ( VkPip
     return &info;
 }
 
-const VkPipelineVertexInputStateCreateInfo* OpaqueProgram::InitVertexInputInfo (
+VkPipelineVertexInputStateCreateInfo const* OpaqueProgram::InitVertexInputInfo (
     VkPipelineVertexInputStateCreateInfo &info,
     VkVertexInputAttributeDescription* attributes,
     VkVertexInputBindingDescription* binds

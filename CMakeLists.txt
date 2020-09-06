@@ -67,6 +67,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/pbr/opaque_call.cpp
     app/src/main/cpp/sources/pbr/opaque_material.cpp
     app/src/main/cpp/sources/pbr/opaque_program.cpp
+    app/src/main/cpp/sources/pbr/opaque_batch_program.cpp
     app/src/main/cpp/sources/pbr/program.cpp
     app/src/main/cpp/sources/pbr/render_session.cpp
     app/src/main/cpp/sources/pbr/sampler.cpp

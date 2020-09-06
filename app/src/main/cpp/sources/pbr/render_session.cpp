@@ -103,6 +103,7 @@ RenderSession::RenderSession ():
     _geometryPassCommandBuffer ( VK_NULL_HANDLE ),
     _geometryPassFence ( VK_NULL_HANDLE ),
     _isFreeTransferResources ( false ),
+    _maximumOpaqueBatchCount ( 0U ),
     _meshCount ( 0U ),
     _opaqueCalls {},
     _opaqueProgram {},
@@ -126,8 +127,9 @@ void RenderSession::SubmitMesh ( MeshRef &mesh,
     SubmitOpaqueCall ( mesh, material, local );
 }
 
-void RenderSession::Begin ( const GXMat4 &view, const GXMat4 &projection )
+void RenderSession::Begin ( GXMat4 const &view, GXMat4 const &projection )
 {
+    _maximumOpaqueBatchCount = 0U;
     _meshCount = 0U;
     _view = view;
     _viewProjection.Multiply ( view, projection );
@@ -813,18 +815,29 @@ bool RenderSession::CreateGBufferRenderPass ( android_vulkan::Renderer &renderer
     return true;
 }
 
-void RenderSession::SubmitOpaqueCall ( MeshRef &mesh, MaterialRef &material, const GXMat4 &local )
+void RenderSession::SubmitOpaqueCall ( MeshRef &mesh, MaterialRef &material, GXMat4 const &local )
 {
     auto& opaqueMaterial = *dynamic_cast<OpaqueMaterial*> ( material.get () );
     auto findResult = _opaqueCalls.find ( opaqueMaterial );
 
     if ( findResult != _opaqueCalls.cend () )
     {
-        findResult->second.Append ( mesh, local );
+        const size_t count = findResult->second.Append ( mesh, local );
+
+        if ( count > _maximumOpaqueBatchCount )
+            _maximumOpaqueBatchCount = count;
+
         return;
     }
 
     _opaqueCalls.insert ( std::make_pair ( opaqueMaterial, OpaqueCall ( mesh, local ) ) );
+
+    // HACK for debuging purposes
+
+    if ( !mesh->IsUnique () || _maximumOpaqueBatchCount > 1U )
+        return;
+
+    _maximumOpaqueBatchCount = 1U;
 }
 
 } // namespace pbr

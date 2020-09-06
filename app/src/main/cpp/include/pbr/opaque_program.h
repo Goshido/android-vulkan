@@ -24,10 +24,14 @@ class OpaqueProgram final : public Program
 
     public:
         OpaqueProgram ();
-        ~OpaqueProgram () override = default;
 
-        OpaqueProgram ( const OpaqueProgram &other ) = delete;
-        OpaqueProgram& operator = ( const OpaqueProgram &other ) = delete;
+        OpaqueProgram ( OpaqueProgram const &other ) = delete;
+        OpaqueProgram& operator = ( OpaqueProgram const &other ) = delete;
+
+        OpaqueProgram ( OpaqueProgram &&other ) = delete;
+        OpaqueProgram& operator = ( OpaqueProgram &&other ) = delete;
+
+        ~OpaqueProgram () override = default;
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
             VkRenderPass renderPass,
@@ -38,48 +42,45 @@ class OpaqueProgram final : public Program
         const std::vector<ProgramResource>& GetResourceInfo () const override;
 
         void SetDescriptorSet ( VkCommandBuffer commandBuffer, VkDescriptorSet descriptorSet ) const;
-        void SetTransform ( VkCommandBuffer commandBuffer, const PushConstants &transform ) const;
+        void SetTransform ( VkCommandBuffer commandBuffer, PushConstants const &transform ) const;
 
     private:
-        void BeginSetup () override;
-        void EndSetup () override;
-
-        [[nodiscard]] const VkPipelineColorBlendStateCreateInfo* InitColorBlendInfo (
+        [[nodiscard]] VkPipelineColorBlendStateCreateInfo const* InitColorBlendInfo (
             VkPipelineColorBlendStateCreateInfo &info,
             VkPipelineColorBlendAttachmentState* attachments
         ) const override;
 
-        [[nodiscard]] const VkPipelineDepthStencilStateCreateInfo* InitDepthStencilInfo (
+        [[nodiscard]] VkPipelineDepthStencilStateCreateInfo const* InitDepthStencilInfo (
             VkPipelineDepthStencilStateCreateInfo &info
         ) const override;
 
-        [[nodiscard]] const VkPipelineInputAssemblyStateCreateInfo* InitInputAssemblyInfo (
+        [[nodiscard]] VkPipelineInputAssemblyStateCreateInfo const* InitInputAssemblyInfo (
             VkPipelineInputAssemblyStateCreateInfo &info
         ) const override;
 
         [[nodiscard]] bool InitLayout ( VkPipelineLayout &layout, android_vulkan::Renderer &renderer ) override;
 
-        [[nodiscard]] const VkPipelineMultisampleStateCreateInfo* InitMultisampleInfo (
+        [[nodiscard]] VkPipelineMultisampleStateCreateInfo const* InitMultisampleInfo (
             VkPipelineMultisampleStateCreateInfo &info
         ) const override;
 
-        [[nodiscard]] const VkPipelineRasterizationStateCreateInfo* InitRasterizationInfo (
+        [[nodiscard]] VkPipelineRasterizationStateCreateInfo const* InitRasterizationInfo (
             VkPipelineRasterizationStateCreateInfo &info
         ) const override;
 
-        [[nodiscard]] bool InitShaderInfo ( const VkPipelineShaderStageCreateInfo* &targetInfo,
+        [[nodiscard]] bool InitShaderInfo ( VkPipelineShaderStageCreateInfo const* &targetInfo,
             VkPipelineShaderStageCreateInfo* sourceInfo,
             android_vulkan::Renderer &renderer
         ) override;
 
-        [[nodiscard]] const VkPipelineViewportStateCreateInfo* InitViewportInfo (
+        [[nodiscard]] VkPipelineViewportStateCreateInfo const* InitViewportInfo (
             VkPipelineViewportStateCreateInfo &info,
             VkRect2D &scissorInfo,
             VkViewport &viewportInfo,
-            const VkExtent2D &viewport
+            VkExtent2D const &viewport
         ) const override;
 
-        [[nodiscard]] const VkPipelineVertexInputStateCreateInfo* InitVertexInputInfo (
+        [[nodiscard]] VkPipelineVertexInputStateCreateInfo const* InitVertexInputInfo (
             VkPipelineVertexInputStateCreateInfo &info,
             VkVertexInputAttributeDescription* attributes,
             VkVertexInputBindingDescription* binds

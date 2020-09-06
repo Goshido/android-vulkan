@@ -41,6 +41,7 @@ class RenderSession final
 
         bool                                    _isFreeTransferResources;
 
+        size_t                                  _maximumOpaqueBatchCount;
         size_t                                  _meshCount;
 
         std::map<OpaqueMaterial, OpaqueCall>    _opaqueCalls;
@@ -54,15 +55,15 @@ class RenderSession final
     public:
         RenderSession ();
 
-        RenderSession ( const RenderSession &other ) = delete;
-        RenderSession& operator = ( const RenderSession &other ) = delete;
+        RenderSession ( RenderSession const &other ) = delete;
+        RenderSession& operator = ( RenderSession const &other ) = delete;
 
         RenderSession ( RenderSession &&other ) = delete;
         RenderSession& operator = ( RenderSession &&other ) = delete;
 
         ~RenderSession () = default;
 
-        void Begin ( const GXMat4 &view, const GXMat4 &projection );
+        void Begin ( GXMat4 const &view, GXMat4 const &projection );
         [[nodiscard]] bool End ( ePresentTarget target, android_vulkan::Renderer &renderer );
 
         [[nodiscard]] const VkExtent2D& GetResolution () const;
@@ -70,12 +71,12 @@ class RenderSession final
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, VkRenderPass presentRenderPass );
         void Destroy ( android_vulkan::Renderer &renderer );
 
-        void SubmitMesh ( MeshRef &mesh, MaterialRef &material, const GXMat4 &local );
+        void SubmitMesh ( MeshRef &mesh, MaterialRef &material, GXMat4 const &local );
 
     private:
         [[nodiscard]] bool CreateGBufferFramebuffer ( android_vulkan::Renderer &renderer );
         [[nodiscard]] bool CreateGBufferRenderPass ( android_vulkan::Renderer &renderer );
-        void SubmitOpaqueCall ( MeshRef &mesh, MaterialRef &material, const GXMat4 &local );
+        void SubmitOpaqueCall ( MeshRef &mesh, MaterialRef &material, GXMat4 const &local );
 };
 
 } // namespace pbr

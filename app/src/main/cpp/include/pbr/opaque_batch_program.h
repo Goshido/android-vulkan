@@ -1,44 +1,31 @@
-#ifndef TEXTURE_PRESENT_PROGRAM_H
-#define TEXTURE_PRESENT_PROGRAM_H
+#ifndef PBR_OPAQUE_BATCH_PROGRAM_H
+#define PBR_OPAQUE_BATCH_PROGRAM_H
 
 
-#include <texture2D.h>
-#include <vulkan_utils.h>
 #include "program.h"
 
 
 namespace pbr {
 
-class TexturePresentProgram final : public Program
+class OpaqueBatchProgram final : public Program
 {
     public:
-        AV_DX_ALIGNMENT_BEGIN
+        OpaqueBatchProgram ();
+        OpaqueBatchProgram ( OpaqueBatchProgram const &other ) = delete;
+        OpaqueBatchProgram& operator = ( OpaqueBatchProgram const &other ) = delete;
 
-        struct PushConstants final
-        {
-            GXMat4      _transform;
-        };
+        OpaqueBatchProgram ( OpaqueBatchProgram &&other ) = delete;
+        OpaqueBatchProgram& operator = ( OpaqueBatchProgram &&other ) = delete;
 
-        AV_DX_ALIGNMENT_END
-
-    public:
-        TexturePresentProgram ();
-
-        TexturePresentProgram ( TexturePresentProgram const &other ) = delete;
-        TexturePresentProgram& operator = ( TexturePresentProgram const  &other ) = delete;
-
-        TexturePresentProgram ( TexturePresentProgram &&other ) = delete;
-        TexturePresentProgram& operator = ( TexturePresentProgram &&other ) = delete;
-
-        ~TexturePresentProgram () override = default;
+        ~OpaqueBatchProgram () override = default;
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
             VkRenderPass renderPass,
             VkExtent2D const &viewport
         ) override;
 
-        void Destroy ( android_vulkan::Renderer &renderer ) override;
-        const std::vector<ProgramResource>& GetResourceInfo () const override;
+        [[maybe_unused]] void Destroy ( android_vulkan::Renderer &renderer ) override;
+        [[nodiscard]] std::vector<ProgramResource> const& GetResourceInfo () const override;
 
     private:
         [[nodiscard]] VkPipelineColorBlendStateCreateInfo const* InitColorBlendInfo (
@@ -54,7 +41,9 @@ class TexturePresentProgram final : public Program
             VkPipelineInputAssemblyStateCreateInfo &info
         ) const override;
 
-        [[nodiscard]] bool InitLayout ( VkPipelineLayout &layout, android_vulkan::Renderer &renderer ) override;
+        [[nodiscard]] bool InitLayout ( VkPipelineLayout &layout,
+            android_vulkan::Renderer &renderer
+        ) override;
 
         [[nodiscard]] VkPipelineMultisampleStateCreateInfo const* InitMultisampleInfo (
             VkPipelineMultisampleStateCreateInfo &info
@@ -83,8 +72,7 @@ class TexturePresentProgram final : public Program
         ) const override;
 };
 
-
 } // namespace pbr
 
 
-#endif // TEXTURE_PRESENT_PROGRAM_H
+#endif // PBR_OPAQUE_BATCH_PROGRAM_H

@@ -19,7 +19,7 @@ TexturePresentProgram::TexturePresentProgram ():
 
 bool TexturePresentProgram::Init ( android_vulkan::Renderer &renderer,
     VkRenderPass renderPass,
-    const VkExtent2D &viewport
+    VkExtent2D const &viewport
 )
 {
     assert ( _state == eProgramState::Unknown );
@@ -134,17 +134,7 @@ const std::vector<ProgramResource>& TexturePresentProgram::GetResourceInfo () co
     return info;
 }
 
-void TexturePresentProgram::BeginSetup ()
-{
-    assert ( !"TexturePresentProgram::BeginSetup - Implement me!" );
-}
-
-void TexturePresentProgram::EndSetup ()
-{
-    assert ( !"TexturePresentProgram::EndSetup - Implement me!" );
-}
-
-const VkPipelineColorBlendStateCreateInfo* TexturePresentProgram::InitColorBlendInfo (
+VkPipelineColorBlendStateCreateInfo const* TexturePresentProgram::InitColorBlendInfo (
     VkPipelineColorBlendStateCreateInfo &info,
     VkPipelineColorBlendAttachmentState* attachments
 ) const
@@ -176,7 +166,7 @@ const VkPipelineColorBlendStateCreateInfo* TexturePresentProgram::InitColorBlend
     return &info;
 }
 
-const VkPipelineDepthStencilStateCreateInfo* TexturePresentProgram::InitDepthStencilInfo (
+VkPipelineDepthStencilStateCreateInfo const* TexturePresentProgram::InitDepthStencilInfo (
     VkPipelineDepthStencilStateCreateInfo &info
 ) const
 {
@@ -202,7 +192,7 @@ const VkPipelineDepthStencilStateCreateInfo* TexturePresentProgram::InitDepthSte
     return &info;
 }
 
-const VkPipelineInputAssemblyStateCreateInfo* TexturePresentProgram::InitInputAssemblyInfo (
+VkPipelineInputAssemblyStateCreateInfo const* TexturePresentProgram::InitInputAssemblyInfo (
     VkPipelineInputAssemblyStateCreateInfo &info
 ) const
 {
@@ -279,7 +269,7 @@ bool TexturePresentProgram::InitLayout ( VkPipelineLayout &layout, android_vulka
     return true;
 }
 
-const VkPipelineMultisampleStateCreateInfo* TexturePresentProgram::InitMultisampleInfo (
+VkPipelineMultisampleStateCreateInfo const* TexturePresentProgram::InitMultisampleInfo (
     VkPipelineMultisampleStateCreateInfo &info
 ) const
 {
@@ -296,7 +286,7 @@ const VkPipelineMultisampleStateCreateInfo* TexturePresentProgram::InitMultisamp
     return &info;
 }
 
-const VkPipelineRasterizationStateCreateInfo* TexturePresentProgram::InitRasterizationInfo (
+VkPipelineRasterizationStateCreateInfo const* TexturePresentProgram::InitRasterizationInfo (
     VkPipelineRasterizationStateCreateInfo &info
 ) const
 {
@@ -317,7 +307,7 @@ const VkPipelineRasterizationStateCreateInfo* TexturePresentProgram::InitRasteri
     return &info;
 }
 
-bool TexturePresentProgram::InitShaderInfo ( const VkPipelineShaderStageCreateInfo* &targetInfo,
+bool TexturePresentProgram::InitShaderInfo ( VkPipelineShaderStageCreateInfo const* &targetInfo,
     VkPipelineShaderStageCreateInfo* sourceInfo,
     android_vulkan::Renderer &renderer
 )
@@ -364,11 +354,11 @@ bool TexturePresentProgram::InitShaderInfo ( const VkPipelineShaderStageCreateIn
     return true;
 }
 
-const VkPipelineViewportStateCreateInfo* TexturePresentProgram::InitViewportInfo (
+VkPipelineViewportStateCreateInfo const* TexturePresentProgram::InitViewportInfo (
     VkPipelineViewportStateCreateInfo &info,
     VkRect2D &scissorInfo,
     VkViewport &viewportInfo,
-    const VkExtent2D &viewport
+    VkExtent2D const &viewport
 ) const
 {
     viewportInfo.x = 0.0F;
@@ -393,7 +383,7 @@ const VkPipelineViewportStateCreateInfo* TexturePresentProgram::InitViewportInfo
     return &info;
 }
 
-const VkPipelineVertexInputStateCreateInfo* TexturePresentProgram::InitVertexInputInfo (
+VkPipelineVertexInputStateCreateInfo const* TexturePresentProgram::InitVertexInputInfo (
     VkPipelineVertexInputStateCreateInfo &info,
     VkVertexInputAttributeDescription* attributes,
     VkVertexInputBindingDescription* binds

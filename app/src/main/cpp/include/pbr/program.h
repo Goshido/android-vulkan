@@ -57,23 +57,20 @@ class Program
 
     public:
         Program () = delete;
-        Program ( const Program &other ) = delete;
-        Program& operator = ( const Program &other ) = delete;
+        Program ( Program const &other ) = delete;
+        Program& operator = ( Program const &other ) = delete;
         Program ( Program &&other ) = delete;
         Program& operator = ( Program &&other ) = delete;
 
-        // Methods must be called between changing input shader parameters: VkImageView, VkSampler, VkBuffer.
-        [[maybe_unused]] virtual void BeginSetup () = 0;
-        [[maybe_unused]] virtual void EndSetup () = 0;
-
         // Method return true is success. Otherwise method returns false.
+        // The method MUST invoke vkCreateGraphicsPipelines at the end.
         [[nodiscard]] virtual bool Init ( android_vulkan::Renderer &renderer,
             VkRenderPass renderPass,
-            const VkExtent2D &viewport
+            VkExtent2D const &viewport
         ) = 0;
 
         [[maybe_unused]] virtual void Destroy ( android_vulkan::Renderer &renderer ) = 0;
-        [[nodiscard]] virtual const std::vector<ProgramResource>& GetResourceInfo () const = 0;
+        [[nodiscard]] virtual std::vector<ProgramResource> const& GetResourceInfo () const = 0;
 
         // The method assigns VkPipeline as active pipeline.
         void Bind ( VkCommandBuffer commandBuffer ) const;
@@ -84,16 +81,16 @@ class Program
         explicit Program ( std::string &&name );
         virtual ~Program () = default;
 
-        [[nodiscard]] virtual const VkPipelineColorBlendStateCreateInfo* InitColorBlendInfo (
+        [[nodiscard]] virtual VkPipelineColorBlendStateCreateInfo const* InitColorBlendInfo (
             VkPipelineColorBlendStateCreateInfo &info,
             VkPipelineColorBlendAttachmentState* attachments
         ) const = 0;
 
-        [[nodiscard]] virtual const VkPipelineDepthStencilStateCreateInfo* InitDepthStencilInfo (
+        [[nodiscard]] virtual VkPipelineDepthStencilStateCreateInfo const* InitDepthStencilInfo (
             VkPipelineDepthStencilStateCreateInfo &info
         ) const = 0;
 
-        [[nodiscard]] virtual const VkPipelineInputAssemblyStateCreateInfo* InitInputAssemblyInfo (
+        [[nodiscard]] virtual VkPipelineInputAssemblyStateCreateInfo const* InitInputAssemblyInfo (
             VkPipelineInputAssemblyStateCreateInfo &info
         ) const = 0;
 
@@ -101,27 +98,27 @@ class Program
             android_vulkan::Renderer &renderer
         ) = 0;
 
-        [[nodiscard]] virtual const VkPipelineMultisampleStateCreateInfo* InitMultisampleInfo (
+        [[nodiscard]] virtual VkPipelineMultisampleStateCreateInfo const* InitMultisampleInfo (
             VkPipelineMultisampleStateCreateInfo &info
         ) const = 0;
 
-        [[nodiscard]] virtual const VkPipelineRasterizationStateCreateInfo* InitRasterizationInfo (
+        [[nodiscard]] virtual VkPipelineRasterizationStateCreateInfo const* InitRasterizationInfo (
             VkPipelineRasterizationStateCreateInfo &info
         ) const = 0;
 
-        [[nodiscard]] virtual bool InitShaderInfo ( const VkPipelineShaderStageCreateInfo* &targetInfo,
+        [[nodiscard]] virtual bool InitShaderInfo ( VkPipelineShaderStageCreateInfo const* &targetInfo,
             VkPipelineShaderStageCreateInfo* sourceInfo,
             android_vulkan::Renderer &renderer
         ) = 0;
 
-        [[nodiscard]] virtual const VkPipelineViewportStateCreateInfo* InitViewportInfo (
+        [[nodiscard]] virtual VkPipelineViewportStateCreateInfo const* InitViewportInfo (
             VkPipelineViewportStateCreateInfo &info,
             VkRect2D &scissorInfo,
             VkViewport &viewportInfo,
-            const VkExtent2D &viewport
+            VkExtent2D const &viewport
         ) const = 0;
 
-        [[nodiscard]] virtual const VkPipelineVertexInputStateCreateInfo* InitVertexInputInfo (
+        [[nodiscard]] virtual VkPipelineVertexInputStateCreateInfo const* InitVertexInputInfo (
             VkPipelineVertexInputStateCreateInfo &info,
             VkVertexInputAttributeDescription* attributes,
             VkVertexInputBindingDescription* binds

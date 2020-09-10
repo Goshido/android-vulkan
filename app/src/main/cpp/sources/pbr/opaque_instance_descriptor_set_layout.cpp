@@ -92,7 +92,7 @@ bool OpaqueInstanceDescriptorSetLayoutImpl::Init ( android_vulkan::Renderer &ren
     AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "OpaqueInstanceDescriptorSetLayoutImpl::_descriptorSetLayout" )
 
     ++_references;
-    return false;
+    return true;
 }
 
 static OpaqueInstanceDescriptorSetLayoutImpl g_opaqueInstanceDescriptorSetLayout;

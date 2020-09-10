@@ -12,7 +12,7 @@ constexpr static const size_t STAGE_COUNT = 2U;
 //----------------------------------------------------------------------------------------------------------------------
 
 TexturePresentProgram::TexturePresentProgram ():
-    Program ( "pbr::TexturePresentProgram", 1U )
+    Program ( "pbr::TexturePresentProgram" )
 {
     // NOTHING
 }
@@ -22,9 +22,6 @@ bool TexturePresentProgram::Init ( android_vulkan::Renderer &renderer,
     VkExtent2D const &viewport
 )
 {
-    assert ( _state == eProgramState::Unknown );
-    _state = eProgramState::Initializing;
-
     VkPipelineInputAssemblyStateCreateInfo assemblyInfo;
     VkPipelineColorBlendAttachmentState attachmentInfo[ COLOR_RENDER_TARGET_COUNT ];
     VkPipelineColorBlendStateCreateInfo blendInfo;
@@ -71,7 +68,7 @@ bool TexturePresentProgram::Init ( android_vulkan::Renderer &renderer,
     const bool result = renderer.CheckVkResult (
         vkCreateGraphicsPipelines ( renderer.GetDevice (), VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
         "TexturePresentProgram::Init",
-        "Can't create pipeline (pbr::TexturePresentProgram)"
+        "Can't create pipeline"
     );
 
     if ( !result )
@@ -81,15 +78,11 @@ bool TexturePresentProgram::Init ( android_vulkan::Renderer &renderer,
     }
 
     AV_REGISTER_PIPELINE ( "TexturePresentProgram::_pipeline" )
-    _state = eProgramState::Ready;
-
     return true;
 }
 
 void TexturePresentProgram::Destroy ( android_vulkan::Renderer &renderer )
 {
-    assert ( _state != eProgramState::Unknown );
-
     VkDevice device = renderer.GetDevice ();
 
     if ( _pipeline != VK_NULL_HANDLE )
@@ -106,12 +99,7 @@ void TexturePresentProgram::Destroy ( android_vulkan::Renderer &renderer )
         AV_UNREGISTER_PIPELINE_LAYOUT ( "TexturePresentProgram::_pipelineLayout" )
     }
 
-    /*if ( _descriptorSetLayout != VK_NULL_HANDLE )
-    {
-        vkDestroyDescriptorSetLayout ( device, _descriptorSetLayout, nullptr );
-        _descriptorSetLayout = VK_NULL_HANDLE;
-        AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "TexturePresentProgram::_descriptorSetLayout" )
-    }*/
+    _descriptorSetLayout.Destroy ( renderer );
 
     if ( _fragmentShader != VK_NULL_HANDLE )
     {
@@ -207,40 +195,13 @@ VkPipelineInputAssemblyStateCreateInfo const* TexturePresentProgram::InitInputAs
 
 bool TexturePresentProgram::InitLayout ( VkPipelineLayout &layout, android_vulkan::Renderer &renderer )
 {
-    VkDescriptorSetLayoutBinding bindingInfo[ 2U ];
-    VkDescriptorSetLayoutBinding& textureBind = bindingInfo[ 0U ];
-    textureBind.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-    textureBind.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-    textureBind.descriptorCount = 1U;
-    textureBind.binding = 0U;
-    textureBind.pImmutableSamplers = nullptr;
-
-    VkDescriptorSetLayoutBinding& samplerBind = bindingInfo[ 1U ];
-    samplerBind.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-    samplerBind.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
-    samplerBind.descriptorCount = 1U;
-    samplerBind.binding = 1U;
-    samplerBind.pImmutableSamplers = nullptr;
-
-    VkDescriptorSetLayoutCreateInfo descriptorSetLayoutInfo;
-    descriptorSetLayoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    descriptorSetLayoutInfo.pNext = nullptr;
-    descriptorSetLayoutInfo.flags = 0U;
-    descriptorSetLayoutInfo.bindingCount = static_cast<uint32_t> ( std::size ( bindingInfo ) );
-    descriptorSetLayoutInfo.pBindings = bindingInfo;
-
-    VkDevice device = renderer.GetDevice ();
-
-    bool result = renderer.CheckVkResult (
-        vkCreateDescriptorSetLayout ( device, &descriptorSetLayoutInfo, nullptr, &_descriptorSetLayouts[ 0U ] ),
-        "TexturePresentProgram::InitLayout",
-        "Can't create descriptor set layout (pbr::TexturePresentProgram)"
-    );
-
-    if ( !result )
+    if ( !_descriptorSetLayout.Init ( renderer ) )
         return false;
 
-    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "TexturePresentProgram::_descriptorSetLayout" )
+    VkDescriptorSetLayout layouts[] =
+    {
+        _descriptorSetLayout.GetLayout ()
+    };
 
     VkPushConstantRange pushConstantRange;
     pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
@@ -253,12 +214,13 @@ bool TexturePresentProgram::InitLayout ( VkPipelineLayout &layout, android_vulka
     layoutInfo.flags = 0U;
     layoutInfo.pushConstantRangeCount = 1U;
     layoutInfo.pPushConstantRanges = &pushConstantRange;
-    layoutInfo.setLayoutCount = 1U;
-    layoutInfo.pSetLayouts = &_descriptorSetLayouts[ 0U ];
+    layoutInfo.setLayoutCount = static_cast<uint32_t> ( std::size ( layouts ) );
+    layoutInfo.pSetLayouts = layouts;
 
-    result = renderer.CheckVkResult ( vkCreatePipelineLayout ( device, &layoutInfo, nullptr, &_pipelineLayout ),
+    const bool result = renderer.CheckVkResult (
+        vkCreatePipelineLayout ( renderer.GetDevice (), &layoutInfo, nullptr, &_pipelineLayout ),
         "TexturePresentProgram::InitLayout",
-        "Can't create pipeline layout (pbr::TexturePresentProgram)"
+        "Can't create pipeline layout"
     );
 
     if ( !result )

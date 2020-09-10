@@ -9,14 +9,15 @@ constexpr static const char* VERTEX_SHADER = "shaders/common-opaque-batch-vs.spv
 constexpr static const char* FRAGMENT_SHADER = "shaders/opaque-ps.spv";
 
 constexpr static const size_t COLOR_RENDER_TARGET_COUNT = 4U;
-constexpr static const size_t DESCRIPTOR_SET_COUNT = 2U;
 constexpr static const size_t STAGE_COUNT = 2U;
 constexpr static const size_t VERTEX_ATTRIBUTE_COUNT = 5U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
 OpaqueBatchProgram::OpaqueBatchProgram ():
-    Program ( "OpaqueBatchProgram", DESCRIPTOR_SET_COUNT )
+    Program ( "OpaqueBatchProgram" ),
+    _instanceLayout {},
+    _textureLayout {}
 {
     // NOTHING
 }
@@ -96,6 +97,16 @@ bool OpaqueBatchProgram::Init ( android_vulkan::Renderer &renderer,
 void OpaqueBatchProgram::Destroy ( android_vulkan::Renderer &renderer )
 {
     VkDevice device = renderer.GetDevice ();
+
+    if ( _pipelineLayout != VK_NULL_HANDLE )
+    {
+        vkDestroyPipelineLayout ( device, _pipelineLayout, nullptr );
+        _pipelineLayout = VK_NULL_HANDLE;
+        AV_UNREGISTER_PIPELINE_LAYOUT ( "OpaqueBatchProgram::_pipelineLayout" )
+    }
+
+    _textureLayout.Destroy ( renderer );
+    _instanceLayout.Destroy ( renderer );
 
     if ( _pipeline != VK_NULL_HANDLE )
     {
@@ -216,10 +227,41 @@ VkPipelineInputAssemblyStateCreateInfo const* OpaqueBatchProgram::InitInputAssem
     return &info;
 }
 
-bool OpaqueBatchProgram::InitLayout ( VkPipelineLayout &/*layout*/, android_vulkan::Renderer &/*renderer*/ )
+bool OpaqueBatchProgram::InitLayout ( VkPipelineLayout &layout, android_vulkan::Renderer &renderer )
 {
-    // TODO
-    return false;
+    if ( !_instanceLayout.Init ( renderer ) )
+        return false;
+
+    if ( !_textureLayout.Init ( renderer ) )
+        return false;
+
+    VkDescriptorSetLayout layouts[] =
+    {
+        _textureLayout.GetLayout (),
+        _instanceLayout.GetLayout ()
+    };
+
+    VkPipelineLayoutCreateInfo layoutInfo;
+    layoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    layoutInfo.pNext = nullptr;
+    layoutInfo.flags = 0U;
+    layoutInfo.setLayoutCount = static_cast<uint32_t> ( std::size ( layouts ) );
+    layoutInfo.pSetLayouts = layouts;
+    layoutInfo.pushConstantRangeCount = 0U;
+    layoutInfo.pPushConstantRanges = nullptr;
+
+    const bool result = renderer.CheckVkResult (
+        vkCreatePipelineLayout ( renderer.GetDevice (), &layoutInfo, nullptr, &_pipelineLayout ),
+        "OpaqueBatchProgram::InitLayout",
+        "Can't create pipeline layout"
+    );
+
+    if ( !result )
+        return false;
+
+    AV_REGISTER_PIPELINE_LAYOUT ( "OpaqueBatchProgram::_pipelineLayout" )
+    layout = _pipelineLayout;
+    return true;
 }
 
 VkPipelineMultisampleStateCreateInfo const* OpaqueBatchProgram::InitMultisampleInfo (

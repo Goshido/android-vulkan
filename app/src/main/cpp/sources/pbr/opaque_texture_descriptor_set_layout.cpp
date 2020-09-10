@@ -142,7 +142,7 @@ bool OpaqueTextureDescriptorSetLayoutImpl::Init ( android_vulkan::Renderer &rend
     AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "OpaqueTextureDescriptorSetLayoutImpl::_descriptorSetLayout" )
 
     ++_references;
-    return false;
+    return true;
 }
 
 static OpaqueTextureDescriptorSetLayoutImpl g_opaqueTextureDescriptorSetLayout;

@@ -20,12 +20,10 @@ const OpaqueCall::UniqueList& OpaqueCall::GetUniqueList () const
 
 size_t OpaqueCall::Append ( MeshRef &mesh, const GXMat4 &local )
 {
-    // HACK fix this mess. For debug purposes.
-
     if ( mesh->IsUnique () )
-        AddBatch ( mesh, local );
-    else
         AddUnique ( mesh, local );
+    else
+        AddBatch ( mesh, local );
 
     return _batch.size ();
 }

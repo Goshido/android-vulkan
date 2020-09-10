@@ -9,23 +9,20 @@ constexpr static const char* VERTEX_SHADER = "shaders/common-opaque-vs.spv";
 constexpr static const char* FRAGMENT_SHADER = "shaders/opaque-ps.spv";
 
 constexpr static const size_t COLOR_RENDER_TARGET_COUNT = 4U;
-constexpr static const size_t DESCRIPTOR_SET_COUNT = 1U;
 constexpr static const size_t STAGE_COUNT = 2U;
 constexpr static const size_t VERTEX_ATTRIBUTE_COUNT = 5U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
 OpaqueProgram::OpaqueProgram ():
-    Program ( "pbr::OpaqueProgram", DESCRIPTOR_SET_COUNT )
+    Program ( "pbr::OpaqueProgram" ),
+    _textureLayout {}
 {
     // NOTHING
 }
 
 bool OpaqueProgram::Init ( android_vulkan::Renderer &renderer, VkRenderPass renderPass, const VkExtent2D &viewport )
 {
-    assert ( _state == eProgramState::Unknown );
-    _state = eProgramState::Initializing;
-
     VkPipelineInputAssemblyStateCreateInfo assemblyInfo;
     VkPipelineColorBlendAttachmentState attachmentInfo[ COLOR_RENDER_TARGET_COUNT ];
     VkVertexInputAttributeDescription attributeDescriptions[ VERTEX_ATTRIBUTE_COUNT ];
@@ -89,15 +86,11 @@ bool OpaqueProgram::Init ( android_vulkan::Renderer &renderer, VkRenderPass rend
     }
 
     AV_REGISTER_PIPELINE ( "OpaqueProgram::_pipeline" )
-    _state = eProgramState::Ready;
-
     return true;
 }
 
 void OpaqueProgram::Destroy ( android_vulkan::Renderer &renderer )
 {
-    assert ( _state != eProgramState::Unknown );
-
     VkDevice device = renderer.GetDevice ();
 
     if ( _pipeline != VK_NULL_HANDLE )
@@ -114,15 +107,7 @@ void OpaqueProgram::Destroy ( android_vulkan::Renderer &renderer )
         AV_UNREGISTER_PIPELINE_LAYOUT ( "OpaqueProgram::_pipelineLayout" )
     }
 
-    for ( auto& descriptorSet : _descriptorSetLayouts )
-    {
-        if ( descriptorSet == VK_NULL_HANDLE )
-            continue;
-
-        vkDestroyDescriptorSetLayout ( device, descriptorSet, nullptr );
-        descriptorSet = VK_NULL_HANDLE;
-        AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "OpaqueProgram::_descriptorSetLayouts" )
-    }
+    _textureLayout.Destroy ( renderer );
 
     if ( _fragmentShader != VK_NULL_HANDLE )
     {
@@ -256,88 +241,18 @@ VkPipelineInputAssemblyStateCreateInfo const* OpaqueProgram::InitInputAssemblyIn
 
 bool OpaqueProgram::InitLayout ( VkPipelineLayout &layout, android_vulkan::Renderer &renderer )
 {
-    VkDescriptorSetLayoutBinding bindingInfo[ 8U ];
-    VkDescriptorSetLayoutBinding& diffuseTextureBind = bindingInfo[ 0U ];
-    diffuseTextureBind.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-    diffuseTextureBind.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-    diffuseTextureBind.descriptorCount = 1U;
-    diffuseTextureBind.binding = 0U;
-    diffuseTextureBind.pImmutableSamplers = nullptr;
-
-    VkDescriptorSetLayoutBinding& diffuseSamplerBind = bindingInfo[ 1U ];
-    diffuseSamplerBind.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-    diffuseSamplerBind.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
-    diffuseSamplerBind.descriptorCount = 1U;
-    diffuseSamplerBind.binding = 1U;
-    diffuseSamplerBind.pImmutableSamplers = nullptr;
-
-    VkDescriptorSetLayoutBinding& emissionTextureBind = bindingInfo[ 2U ];
-    emissionTextureBind.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-    emissionTextureBind.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-    emissionTextureBind.descriptorCount = 1U;
-    emissionTextureBind.binding = 2U;
-    emissionTextureBind.pImmutableSamplers = nullptr;
-
-    VkDescriptorSetLayoutBinding& emissionSamplerBind = bindingInfo[ 3U ];
-    emissionSamplerBind.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-    emissionSamplerBind.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
-    emissionSamplerBind.descriptorCount = 1U;
-    emissionSamplerBind.binding = 3U;
-    emissionSamplerBind.pImmutableSamplers = nullptr;
-
-    VkDescriptorSetLayoutBinding& normalTextureBind = bindingInfo[ 4U ];
-    normalTextureBind.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-    normalTextureBind.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-    normalTextureBind.descriptorCount = 1U;
-    normalTextureBind.binding = 4U;
-    normalTextureBind.pImmutableSamplers = nullptr;
-
-    VkDescriptorSetLayoutBinding& normalSamplerBind = bindingInfo[ 5U ];
-    normalSamplerBind.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-    normalSamplerBind.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
-    normalSamplerBind.descriptorCount = 1U;
-    normalSamplerBind.binding = 5U;
-    normalSamplerBind.pImmutableSamplers = nullptr;
-
-    VkDescriptorSetLayoutBinding& paramTextureBind = bindingInfo[ 6U ];
-    paramTextureBind.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-    paramTextureBind.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-    paramTextureBind.descriptorCount = 1U;
-    paramTextureBind.binding = 6U;
-    paramTextureBind.pImmutableSamplers = nullptr;
-
-    VkDescriptorSetLayoutBinding& paramSamplerBind = bindingInfo[ 7U ];
-    paramSamplerBind.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-    paramSamplerBind.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
-    paramSamplerBind.descriptorCount = 1U;
-    paramSamplerBind.binding = 7U;
-    paramSamplerBind.pImmutableSamplers = nullptr;
-
-    VkDescriptorSetLayoutCreateInfo descriptorSetLayoutInfo;
-    descriptorSetLayoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    descriptorSetLayoutInfo.pNext = nullptr;
-    descriptorSetLayoutInfo.flags = 0U;
-    descriptorSetLayoutInfo.bindingCount = static_cast<uint32_t> ( std::size ( bindingInfo ) );
-    descriptorSetLayoutInfo.pBindings = bindingInfo;
-
-    VkDevice device = renderer.GetDevice ();
-    VkDescriptorSetLayout& descriptorSetLayout = _descriptorSetLayouts[ 0U ];
-
-    bool result = renderer.CheckVkResult (
-        vkCreateDescriptorSetLayout ( device, &descriptorSetLayoutInfo, nullptr, &descriptorSetLayout ),
-        "OpaqueProgram::InitLayout",
-        "Can't create descriptor set layout (pbr::OpaqueProgram)"
-    );
-
-    if ( !result )
+    if ( !_textureLayout.Init ( renderer ) )
         return false;
-
-    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "OpaqueProgram::_descriptorSetLayouts" )
 
     VkPushConstantRange pushConstantRange;
     pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
     pushConstantRange.offset = 0U;
     pushConstantRange.size = static_cast<uint32_t> ( sizeof ( PushConstants ) );
+
+    VkDescriptorSetLayout layouts[] =
+    {
+        _textureLayout.GetLayout ()
+    };
 
     VkPipelineLayoutCreateInfo layoutInfo;
     layoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -345,12 +260,13 @@ bool OpaqueProgram::InitLayout ( VkPipelineLayout &layout, android_vulkan::Rende
     layoutInfo.flags = 0U;
     layoutInfo.pushConstantRangeCount = 1U;
     layoutInfo.pPushConstantRanges = &pushConstantRange;
-    layoutInfo.setLayoutCount = 1U;
-    layoutInfo.pSetLayouts = &descriptorSetLayout;
+    layoutInfo.setLayoutCount = static_cast<uint32_t> ( std::size ( layouts ) );
+    layoutInfo.pSetLayouts = layouts;
 
-    result = renderer.CheckVkResult ( vkCreatePipelineLayout ( device, &layoutInfo, nullptr, &_pipelineLayout ),
+    const bool result = renderer.CheckVkResult (
+        vkCreatePipelineLayout ( renderer.GetDevice (), &layoutInfo, nullptr, &_pipelineLayout ),
         "OpaqueProgram::InitLayout",
-        "Can't create pipeline layout (pbr::OpaqueProgram)"
+        "Can't create pipeline layout"
     );
 
     if ( !result )

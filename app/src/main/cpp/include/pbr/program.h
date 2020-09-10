@@ -19,15 +19,6 @@ namespace pbr {
 constexpr static const char* VERTEX_SHADER_ENTRY_POINT = "VS";
 constexpr static const char* FRAGMENT_SHADER_ENTRY_POINT = "PS";
 
-enum class eProgramState : uint8_t
-{
-    Bind,
-    Initializing,
-    Ready,
-    Setup,
-    Unknown
-};
-
 //----------------------------------------------------------------------------------------------------------------------
 
 class Program
@@ -36,12 +27,9 @@ class Program
         VkShaderModule                          _fragmentShader;
         VkShaderModule                          _vertexShader;
 
-        std::vector<VkDescriptorSetLayout>      _descriptorSetLayouts;
         const std::string                       _name;
         VkPipeline                              _pipeline;
         VkPipelineLayout                        _pipelineLayout;
-
-        eProgramState                           _state;
 
     public:
         Program () = delete;
@@ -63,10 +51,8 @@ class Program
         // The method assigns VkPipeline as active pipeline.
         void Bind ( VkCommandBuffer commandBuffer ) const;
 
-        [[nodiscard]] std::vector<VkDescriptorSetLayout> const& GetDescriptorSetLayouts () const;
-
     protected:
-        explicit Program ( std::string &&name, size_t descriptorSetCount );
+        explicit Program ( std::string &&name );
         virtual ~Program () = default;
 
         [[nodiscard]] virtual VkPipelineColorBlendStateCreateInfo const* InitColorBlendInfo (

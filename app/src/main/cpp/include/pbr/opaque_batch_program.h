@@ -3,12 +3,18 @@
 
 
 #include "program.h"
+#include "opaque_instance_descriptor_set_layout.h"
+#include "opaque_texture_descriptor_set_layout.h"
 
 
 namespace pbr {
 
 class OpaqueBatchProgram final : public Program
 {
+    private:
+        OpaqueInstanceDescriptorSetLayout       _instanceLayout;
+        OpaqueTextureDescriptorSetLayout        _textureLayout;
+
     public:
         OpaqueBatchProgram ();
         OpaqueBatchProgram ( OpaqueBatchProgram const &other ) = delete;

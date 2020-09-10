@@ -45,7 +45,7 @@ void SamplerStorage::FreeResources ( android_vulkan::Renderer &renderer )
         if ( !sampler )
             continue;
 
-        sampler->Destroy( renderer );
+        sampler->Destroy ( renderer );
         sampler = nullptr;
     }
 }
@@ -106,6 +106,7 @@ RenderSession::RenderSession ():
     _maximumOpaqueBatchCount ( 0U ),
     _meshCount ( 0U ),
     _opaqueCalls {},
+    _opaqueBatchProgram {},
     _opaqueProgram {},
     _texturePresentProgram {},
     _view {},
@@ -258,11 +259,7 @@ bool RenderSession::End ( ePresentTarget /*target*/, android_vulkan::Renderer &r
     poolInfo.poolSizeCount = static_cast<uint32_t> ( uniqueFeatures );
     poolInfo.pPoolSizes = poolSizeStorage.data ();
 
-    if ( _descriptorPool )
-    {
-        vkDestroyDescriptorPool ( device, _descriptorPool, nullptr );
-        AV_UNREGISTER_DESCRIPTOR_POOL ( "RenderSession::_descriptorPool" )
-    }
+    DestroyDescriptorPool ( renderer );
 
     result = renderer.CheckVkResult (
         vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_descriptorPool ),
@@ -275,14 +272,14 @@ bool RenderSession::End ( ePresentTarget /*target*/, android_vulkan::Renderer &r
 
     AV_REGISTER_DESCRIPTOR_POOL ( "RenderSession::_descriptorPool" )
 
-    /*std::vector<VkDescriptorSetLayout> const& layouts = _opaqueProgram.GetDescriptorSetLayouts ();
-    VkDescriptorSetLayout layout = layouts[ 0U ];*/
+    const OpaqueTextureDescriptorSetLayout opaqueTextureLayout;
+    VkDescriptorSetLayout opaqueTextureLayoutNative = opaqueTextureLayout.GetLayout ();
 
     std::vector<VkDescriptorSetLayout> layouts;
-    /*layouts.reserve ( opaqueCount );
+    layouts.reserve ( opaqueCount );
 
     for ( size_t i = 0U; i < opaqueCount; ++i )
-        layouts.push_back ( layout );*/
+        layouts.push_back ( opaqueTextureLayoutNative );
 
     VkDescriptorSetAllocateInfo allocateInfo;
     allocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -419,7 +416,7 @@ bool RenderSession::End ( ePresentTarget /*target*/, android_vulkan::Renderer &r
     );
 }
 
-const VkExtent2D& RenderSession::GetResolution () const
+ VkExtent2D const& RenderSession::GetResolution () const
 {
     return _gBuffer.GetResolution ();
 }
@@ -461,7 +458,15 @@ bool RenderSession::Init ( android_vulkan::Renderer &renderer, VkRenderPass pres
 
     AV_REGISTER_FENCE ( "RenderSession::_geometryPassFence" )
 
-    if ( !_opaqueProgram.Init ( renderer, _gBufferRenderPass, _gBuffer.GetResolution () ) )
+    VkExtent2D const& resolution = _gBuffer.GetResolution ();
+
+    if ( !_opaqueBatchProgram.Init ( renderer, _gBufferRenderPass, resolution ) )
+    {
+        Destroy ( renderer );
+        return false;
+    }
+
+    if ( !_opaqueProgram.Init ( renderer, _gBufferRenderPass, resolution ) )
     {
         Destroy ( renderer );
         return false;
@@ -627,6 +632,9 @@ void RenderSession::Destroy ( android_vulkan::Renderer &renderer )
     freeTexture ( _emissionDefault );
     freeTexture ( _albedoDefault );
 
+    g_SamplerStorage.FreeResources ( renderer );
+    DestroyDescriptorPool ( renderer );
+
     VkDevice device = renderer.GetDevice ();
 
     if ( _commandPool != VK_NULL_HANDLE )
@@ -638,6 +646,7 @@ void RenderSession::Destroy ( android_vulkan::Renderer &renderer )
 
     _texturePresentProgram.Destroy ( renderer );
     _opaqueProgram.Destroy ( renderer );
+    _opaqueBatchProgram.Destroy ( renderer );
 
     if ( _geometryPassFence != VK_NULL_HANDLE )
     {
@@ -817,6 +826,16 @@ bool RenderSession::CreateGBufferRenderPass ( android_vulkan::Renderer &renderer
     return true;
 }
 
+void RenderSession::DestroyDescriptorPool ( android_vulkan::Renderer &renderer )
+{
+    if ( _descriptorPool == VK_NULL_HANDLE )
+        return;
+
+    vkDestroyDescriptorPool ( renderer.GetDevice (), _descriptorPool, nullptr );
+    _descriptorPool = VK_NULL_HANDLE;
+    AV_UNREGISTER_DESCRIPTOR_POOL ( "RenderSession::_descriptorPool" )
+}
+
 void RenderSession::SubmitOpaqueCall ( MeshRef &mesh, MaterialRef &material, GXMat4 const &local )
 {
     auto& opaqueMaterial = *dynamic_cast<OpaqueMaterial*> ( material.get () );
@@ -834,9 +853,7 @@ void RenderSession::SubmitOpaqueCall ( MeshRef &mesh, MaterialRef &material, GXM
 
     _opaqueCalls.insert ( std::make_pair ( opaqueMaterial, OpaqueCall ( mesh, local ) ) );
 
-    // HACK for debuging purposes
-
-    if ( !mesh->IsUnique () || _maximumOpaqueBatchCount > 1U )
+    if ( mesh->IsUnique () || _maximumOpaqueBatchCount > 0U )
         return;
 
     _maximumOpaqueBatchCount = 1U;

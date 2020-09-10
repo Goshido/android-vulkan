@@ -5,6 +5,7 @@
 #include <texture2D.h>
 #include <vulkan_utils.h>
 #include "program.h"
+#include "opaque_texture_descriptor_set_layout.h"
 
 
 namespace pbr {
@@ -16,11 +17,14 @@ class OpaqueProgram final : public Program
 
         struct PushConstants final
         {
-            GXMat4      _localView;
-            GXMat4      _localViewProjection;
+            GXMat4                          _localView;
+            GXMat4                          _localViewProjection;
         };
 
         AV_DX_ALIGNMENT_END
+
+    private:
+        OpaqueTextureDescriptorSetLayout    _textureLayout;
 
     public:
         OpaqueProgram ();

@@ -1,9 +1,10 @@
-#ifndef RENDER_SESSION_H
-#define RENDER_SESSION_H
+#ifndef PBR_RENDER_SESSION_H
+#define PBR_RENDER_SESSION_H
 
 
 #include <GXCommon/GXMath.h>
 #include "gbuffer.h"
+#include "opaque_batch_program.h"
 #include "opaque_call.h"
 #include "opaque_material.h"
 #include "opaque_program.h"
@@ -46,6 +47,7 @@ class RenderSession final
 
         std::map<OpaqueMaterial, OpaqueCall>    _opaqueCalls;
 
+        OpaqueBatchProgram                      _opaqueBatchProgram;
         OpaqueProgram                           _opaqueProgram;
         TexturePresentProgram                   _texturePresentProgram;
 
@@ -66,7 +68,7 @@ class RenderSession final
         void Begin ( GXMat4 const &view, GXMat4 const &projection );
         [[nodiscard]] bool End ( ePresentTarget target, android_vulkan::Renderer &renderer );
 
-        [[nodiscard]] const VkExtent2D& GetResolution () const;
+        [[nodiscard]] VkExtent2D const& GetResolution () const;
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, VkRenderPass presentRenderPass );
         void Destroy ( android_vulkan::Renderer &renderer );
@@ -76,10 +78,11 @@ class RenderSession final
     private:
         [[nodiscard]] bool CreateGBufferFramebuffer ( android_vulkan::Renderer &renderer );
         [[nodiscard]] bool CreateGBufferRenderPass ( android_vulkan::Renderer &renderer );
+        void DestroyDescriptorPool ( android_vulkan::Renderer &renderer );
         void SubmitOpaqueCall ( MeshRef &mesh, MaterialRef &material, GXMat4 const &local );
 };
 
 } // namespace pbr
 
 
-#endif // RENDER_SESSION_H
+#endif // PBR_RENDER_SESSION_H

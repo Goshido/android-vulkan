@@ -5,6 +5,7 @@
 #include <texture2D.h>
 #include <vulkan_utils.h>
 #include "program.h"
+#include "texture_present_descriptor_set_layout.h"
 
 
 namespace pbr {
@@ -16,10 +17,13 @@ class TexturePresentProgram final : public Program
 
         struct PushConstants final
         {
-            GXMat4      _transform;
+            GXMat4                              _transform;
         };
 
         AV_DX_ALIGNMENT_END
+
+    private:
+        TexturePresentDescriptorSetLayout       _descriptorSetLayout;
 
     public:
         TexturePresentProgram ();

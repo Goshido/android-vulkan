@@ -95,13 +95,13 @@ bool PBRGame::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime )
 
     _renderSession.Begin ( view, projection );
 
-    local.SetW ( GXVec3 ( -1.0F, 0.0F, 0.0F ) );
+    local.SetW ( GXVec3 ( -1.0F, 0.0F, 6.0F ) );
     _renderSession.SubmitMesh ( _sonicMesh0, _sonicMaterial0, local );
 
-    local.SetW ( GXVec3 ( 0.0F, 0.0F, 0.0F ) );
+    local.SetW ( GXVec3 ( 0.0F, 0.0F, 6.0F ) );
     _renderSession.SubmitMesh ( _sonicMesh1, _sonicMaterial1, local );
 
-    local.SetW ( GXVec3 ( 1.0F, 0.0F, 0.0F ) );
+    local.SetW ( GXVec3 ( 1.0F, 0.0F, 6.0F ) );
     _renderSession.SubmitMesh ( _sonicMesh2, _sonicMaterial2, local );
 
     return _renderSession.End ( ePresentTarget::Normal, renderer );
@@ -109,6 +109,14 @@ bool PBRGame::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime )
 
 bool PBRGame::OnDestroy ( android_vulkan::Renderer &renderer )
 {
+    const bool result = renderer.CheckVkResult ( vkDeviceWaitIdle ( renderer.GetDevice () ),
+        "PBRGame::OnDestroy",
+        "Can't wait device idle"
+    );
+
+    if ( !result )
+        return false;
+
     DestroyMeshes ( renderer );
     DestroyMaterials ( renderer );
     DestroyCommandPool ( renderer );
@@ -124,7 +132,6 @@ bool PBRGame::OnDestroy ( android_vulkan::Renderer &renderer )
         AV_UNREGISTER_RENDER_PASS ( "PBRGame::_presentRenderPass" )
     }
 
-    assert ( !"PBRGame::OnDestroy - Implement me!" );
     return true;
 }
 
@@ -442,10 +449,44 @@ bool PBRGame::UploadGPUContent ( android_vulkan::Renderer& renderer )
         return false;
     }
 
-    return renderer.CheckVkResult ( vkQueueWaitIdle ( renderer.GetQueue () ),
+    const bool result = renderer.CheckVkResult ( vkQueueWaitIdle ( renderer.GetQueue () ),
         "PBRGame::UploadGPUContent",
         "Can't run upload commands"
     );
+
+    if ( !result )
+        return false;
+
+    _sonicMesh2->FreeTransferResources ( renderer );
+    _sonicMesh1->FreeTransferResources ( renderer );
+    _sonicMesh0->FreeTransferResources ( renderer );
+
+    auto wipeMaterial = [ & ] ( MaterialRef &material ) {
+        if ( !material )
+            return;
+
+        auto* m = dynamic_cast<OpaqueMaterial*> ( material.get () );
+
+        if ( m->GetAlbedo () )
+            m->GetAlbedo ()->FreeTransferResources ( renderer );
+
+        if ( m->GetEmission () )
+            m->GetEmission ()->FreeTransferResources ( renderer );
+
+        if ( m->GetNormal () )
+            m->GetNormal ()->FreeTransferResources ( renderer );
+
+        if ( !m->GetParam () )
+            return;
+
+        m->GetParam ()->FreeTransferResources ( renderer );
+    };
+
+    wipeMaterial ( _sonicMaterial2 );
+    wipeMaterial ( _sonicMaterial1 );
+    wipeMaterial ( _sonicMaterial0 );
+
+    return true;
 }
 
 } // namespace pbr

@@ -1,5 +1,4 @@
 #include <pbr/opaque_batch_program.h>
-#include <vulkan_utils.h>
 #include <vertex_info.h>
 
 

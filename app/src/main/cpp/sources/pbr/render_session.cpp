@@ -100,8 +100,9 @@ RenderSession::RenderSession ():
     _gBuffer {},
     _gBufferFramebuffer ( VK_NULL_HANDLE ),
     _gBufferRenderPass ( VK_NULL_HANDLE ),
-    _geometryPassCommandBuffer ( VK_NULL_HANDLE ),
     _geometryPassFence ( VK_NULL_HANDLE ),
+    _geometryPassRendering ( VK_NULL_HANDLE ),
+    _geometryPassTransfer ( VK_NULL_HANDLE ),
     _isFreeTransferResources ( false ),
     _maximumOpaqueBatchCount ( 0U ),
     _meshCount ( 0U ),
@@ -181,13 +182,26 @@ bool RenderSession::End ( ePresentTarget /*target*/, android_vulkan::Renderer &r
     beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
     beginInfo.pInheritanceInfo = nullptr;
 
-    result = renderer.CheckVkResult ( vkBeginCommandBuffer ( _geometryPassCommandBuffer, &beginInfo ),
+    result = renderer.CheckVkResult ( vkBeginCommandBuffer ( _geometryPassRendering, &beginInfo ),
         "RenderSession::End",
-        "Can't begin command buffer"
+        "Can't begin geometry pass rendering command buffer"
     );
 
     if ( !result )
         return false;
+
+    if ( _maximumOpaqueBatchCount > 0U )
+    {
+        result = renderer.CheckVkResult ( vkBeginCommandBuffer ( _geometryPassTransfer, &beginInfo ),
+            "RenderSession::End",
+            "Can't begin geometry pass transfer command buffer"
+        );
+
+        if ( !result )
+        {
+            return false;
+        }
+    }
 
     VkClearValue clearValues[ GBUFFER_ATTACHMENT_COUNT ];
     VkClearValue& albedoClear = clearValues[ 0U ];
@@ -229,7 +243,7 @@ bool RenderSession::End ( ePresentTarget /*target*/, android_vulkan::Renderer &r
     renderPassInfo.renderArea.offset.y = 0;
     renderPassInfo.renderArea.extent = _gBuffer.GetResolution ();
 
-    vkCmdBeginRenderPass ( _geometryPassCommandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE );
+    vkCmdBeginRenderPass ( _geometryPassRendering, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE );
 
     const size_t opaqueCountRaw = _opaqueCalls.size ();
     const auto opaqueCount = static_cast<const uint32_t> ( opaqueCountRaw );
@@ -341,14 +355,18 @@ bool RenderSession::End ( ePresentTarget /*target*/, android_vulkan::Renderer &r
 
     size_t i = 0U;
 
-    _opaqueProgram.Bind ( _geometryPassCommandBuffer );
+    _opaqueProgram.Bind ( _geometryPassRendering );
 
-    for ( auto const &material : _opaqueCalls )
+    for ( auto const &[material, call] : _opaqueCalls )
     {
         writeInfo.dstSet = descriptorSets[ i ];
         ++i;
 
-        auto &m = const_cast<OpaqueMaterial&> ( material.first );
+        // Warning less casting.
+        auto& m = const_cast<OpaqueMaterial&> (
+            *static_cast<OpaqueMaterial const*> ( reinterpret_cast<void const*> ( &material ) )
+        );
+
         textureBinder ( m.GetAlbedo (), _albedoDefault, 0U, 1U );
         textureBinder ( m.GetEmission (), _emissionDefault, 2U, 3U );
         textureBinder ( m.GetNormal (), _normalDefault, 4U, 5U );
@@ -368,7 +386,7 @@ bool RenderSession::End ( ePresentTarget /*target*/, android_vulkan::Renderer &r
     for ( auto const &call : _opaqueCalls )
     {
         // HACK for debugging purposes.
-        _opaqueProgram.SetDescriptorSet ( _geometryPassCommandBuffer, descriptorSets[ i ] );
+        _opaqueProgram.SetDescriptorSet ( _geometryPassRendering, descriptorSets[ i ] );
         ++i;
 
         OpaqueCall::UniqueList const &uniqueList = call.second.GetUniqueList ();
@@ -379,25 +397,27 @@ bool RenderSession::End ( ePresentTarget /*target*/, android_vulkan::Renderer &r
 
             transform._localView.Multiply ( local, _view );
             transform._localViewProjection.Multiply ( local, _viewProjection );
-            _opaqueProgram.SetTransform ( _geometryPassCommandBuffer, transform );
+            _opaqueProgram.SetTransform ( _geometryPassRendering, transform );
 
             constexpr const VkDeviceSize offset = 0U;
-            vkCmdBindVertexBuffers ( _geometryPassCommandBuffer, 0U, 1U, &mesh->GetBuffer (), &offset );
-            vkCmdDraw ( _geometryPassCommandBuffer, mesh->GetVertexCount (), 1U, 0U, 0U );
+            vkCmdBindVertexBuffers ( _geometryPassRendering, 0U, 1U, &mesh->GetBuffer (), &offset );
+            vkCmdDraw ( _geometryPassRendering, mesh->GetVertexCount (), 1U, 0U, 0U );
         }
 
         // TODO emit batched draw calls
     }
 
-    vkCmdEndRenderPass ( _geometryPassCommandBuffer );
+    vkCmdEndRenderPass ( _geometryPassRendering );
 
-    result = renderer.CheckVkResult ( vkEndCommandBuffer ( _geometryPassCommandBuffer ),
+    result = renderer.CheckVkResult ( vkEndCommandBuffer ( _geometryPassRendering ),
         "RenderSession::End",
         "Can't end command buffer"
     );
 
     if ( !result )
         return false;
+
+    // TODO make transfer submit too
 
     VkSubmitInfo submitInfo;
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -406,7 +426,7 @@ bool RenderSession::End ( ePresentTarget /*target*/, android_vulkan::Renderer &r
     submitInfo.pWaitSemaphores = nullptr;
     submitInfo.pWaitDstStageMask = nullptr;
     submitInfo.commandBufferCount = 1U;
-    submitInfo.pCommandBuffers = &_geometryPassCommandBuffer;
+    submitInfo.pCommandBuffers = &_geometryPassRendering;
     submitInfo.signalSemaphoreCount = 0U;
     submitInfo.pSignalSemaphores = nullptr;
 
@@ -478,6 +498,12 @@ bool RenderSession::Init ( android_vulkan::Renderer &renderer, VkRenderPass pres
         return false;
     }
 
+    if ( !_uniformBufferPool.Init ( sizeof ( OpaqueBatchProgram::InstanceData ), renderer ) )
+    {
+        Destroy ( renderer );
+        return false;
+    }
+
     VkCommandPoolCreateInfo info;
     info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
     info.pNext = nullptr;
@@ -497,7 +523,7 @@ bool RenderSession::Init ( android_vulkan::Renderer &renderer, VkRenderPass pres
 
     AV_REGISTER_COMMAND_POOL ( "RenderSession::_commandPool" )
 
-    VkCommandBuffer commandBuffers[ DEFAULT_TEXTURE_COUNT + 1U ];
+    VkCommandBuffer commandBuffers[ DEFAULT_TEXTURE_COUNT + 2U ];
     VkCommandBufferAllocateInfo allocateInfo;
     allocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     allocateInfo.pNext = nullptr;
@@ -516,7 +542,8 @@ bool RenderSession::Init ( android_vulkan::Renderer &renderer, VkRenderPass pres
         return false;
     }
 
-    _geometryPassCommandBuffer = commandBuffers[ DEFAULT_TEXTURE_COUNT ];
+    _geometryPassTransfer = commandBuffers[ DEFAULT_TEXTURE_COUNT ];
+    _geometryPassRendering = commandBuffers[ DEFAULT_TEXTURE_COUNT + 1U ];
 
     auto textureLoader = [ &renderer ] ( Texture2DRef &texture,
         const uint8_t* data,
@@ -644,6 +671,7 @@ void RenderSession::Destroy ( android_vulkan::Renderer &renderer )
         AV_UNREGISTER_COMMAND_POOL ( "RenderSession::_commandPool" )
     }
 
+    _uniformBufferPool.Destroy ( renderer );
     _texturePresentProgram.Destroy ( renderer );
     _opaqueProgram.Destroy ( renderer );
     _opaqueBatchProgram.Destroy ( renderer );

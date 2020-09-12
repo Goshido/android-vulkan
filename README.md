@@ -23,9 +23,9 @@ Requirements:
 * _Android SDK Tools 26.1.1_
 * _Android SDK Platform-Tools 30.0.3_
 * _CMake 3.10.2.4988404_
-* _DirectX Shader Compiler 1.5.2005.10092_
+* _DirectX Shader Compiler 1.5.2005.10132_
 * _Gradle 6.6.1_
-* _Google USB Driver 12_
+* _Google USB Driver 13_
 * _LLDB 3.1.4508709_
 * Real _Android 10_ device with _Vulkan 1.1.108_ support
 

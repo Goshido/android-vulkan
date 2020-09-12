@@ -76,6 +76,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/pbr/sampler.cpp
     app/src/main/cpp/sources/pbr/texture_present_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/texture_present_program.cpp
+    app/src/main/cpp/sources/pbr/uniform_buffer_pool.cpp
     app/src/main/cpp/sources/rainbow/rainbow.cpp
     app/src/main/cpp/sources/rotating_mesh/game.cpp
     app/src/main/cpp/sources/rotating_mesh/game_analytic.cpp

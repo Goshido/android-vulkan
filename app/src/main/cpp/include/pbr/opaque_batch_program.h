@@ -3,14 +3,32 @@
 
 
 #include "program.h"
+#include <vulkan_utils.h>
 #include "opaque_instance_descriptor_set_layout.h"
 #include "opaque_texture_descriptor_set_layout.h"
+#include "gpgpu_limits.inc"
 
 
 namespace pbr {
 
 class OpaqueBatchProgram final : public Program
 {
+    public:
+        AV_DX_ALIGNMENT_BEGIN
+
+        struct ObjectData final
+        {
+            GXMat4                              _localView;
+            GXMat4                              _localViewProjection;
+        };
+
+        struct InstanceData final
+        {
+             ObjectData                         _instanceData[ PBR_OPAQUE_MAX_INSTANCE_COUNT ];
+        };
+
+        AV_DX_ALIGNMENT_END
+
     private:
         OpaqueInstanceDescriptorSetLayout       _instanceLayout;
         OpaqueTextureDescriptorSetLayout        _textureLayout;

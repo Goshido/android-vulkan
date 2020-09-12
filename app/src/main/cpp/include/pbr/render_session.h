@@ -9,6 +9,7 @@
 #include "opaque_material.h"
 #include "opaque_program.h"
 #include "texture_present_program.h"
+#include "uniform_buffer_pool.h"
 
 
 namespace pbr {
@@ -37,8 +38,9 @@ class RenderSession final
         VkFramebuffer                           _gBufferFramebuffer;
         VkRenderPass                            _gBufferRenderPass;
 
-        VkCommandBuffer                         _geometryPassCommandBuffer;
         VkFence                                 _geometryPassFence;
+        VkCommandBuffer                         _geometryPassRendering;
+        VkCommandBuffer                         _geometryPassTransfer;
 
         bool                                    _isFreeTransferResources;
 
@@ -53,6 +55,8 @@ class RenderSession final
 
         GXMat4                                  _view;
         GXMat4                                  _viewProjection;
+
+        UniformBufferPool                       _uniformBufferPool;
 
     public:
         RenderSession ();

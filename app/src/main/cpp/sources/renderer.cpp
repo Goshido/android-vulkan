@@ -16,18 +16,18 @@ GX_RESTORE_WARNING_STATE
 
 namespace android_vulkan {
 
-constexpr static const char* APPLICATION_NAME = "android vulkan";
-constexpr static const char* ENGINE_NAME = "renderer";
-constexpr static const char* INDENT_1 = "    ";
-constexpr static const char* INDENT_2 = "        ";
-constexpr static const char* INDENT_3 = "            ";
-constexpr static const size_t INITIAL_EXTENSION_STORAGE_SIZE = 64U;
-constexpr static const uint32_t TARGET_VULKAN_VERSION = VK_MAKE_VERSION ( 1U, 1U, 108U );
-constexpr static const char* UNKNOWN_RESULT = "UNKNOWN";
+constexpr static char const* APPLICATION_NAME = "android vulkan";
+constexpr static char const* ENGINE_NAME = "renderer";
+constexpr static char const* INDENT_1 = "    ";
+constexpr static char const* INDENT_2 = "        ";
+constexpr static char const* INDENT_3 = "            ";
+constexpr static size_t const INITIAL_EXTENSION_STORAGE_SIZE = 64U;
+constexpr static uint32_t const TARGET_VULKAN_VERSION = VK_MAKE_VERSION ( 1U, 1U, 108U );
+constexpr static char const* UNKNOWN_RESULT = "UNKNOWN";
 
 //----------------------------------------------------------------------------------------------------------------------
 
-constexpr static const std::pair<uint32_t, const char*> g_vkCompositeAlphaFlagBitsKHRMapper[] =
+constexpr static std::pair<uint32_t, char const*> const g_vkCompositeAlphaFlagBitsKHRMapper[] =
 {
     { static_cast<uint32_t> ( VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR ), "VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR" },
     { static_cast<uint32_t> ( VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR ), "VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR" },
@@ -43,19 +43,19 @@ constexpr static const std::pair<uint32_t, const char*> g_vkCompositeAlphaFlagBi
     }
 };
 
-constexpr static const size_t g_vkCompositeAlphaFlagBitsKHRMapperItems =
+constexpr static size_t const g_vkCompositeAlphaFlagBitsKHRMapperItems =
     sizeof ( g_vkCompositeAlphaFlagBitsKHRMapper ) / sizeof ( g_vkCompositeAlphaFlagBitsKHRMapper[ 0U ] );
 
-constexpr static const std::pair<uint32_t, const char*> g_vkMemoryHeapFlagBitsMapper[] =
+constexpr static std::pair<uint32_t, char const*> const g_vkMemoryHeapFlagBitsMapper[] =
 {
     { static_cast<uint32_t> ( VK_MEMORY_HEAP_DEVICE_LOCAL_BIT ), "VK_MEMORY_HEAP_DEVICE_LOCAL_BIT" },
     { static_cast<uint32_t> ( VK_MEMORY_HEAP_MULTI_INSTANCE_BIT ), "VK_MEMORY_HEAP_MULTI_INSTANCE_BIT" }
 };
 
-constexpr static const size_t g_vkMemoryHeapFlagBitsMapperItems =
+constexpr static size_t const g_vkMemoryHeapFlagBitsMapperItems =
     sizeof ( g_vkMemoryHeapFlagBitsMapper ) / sizeof ( g_vkMemoryHeapFlagBitsMapper[ 0U ] );
 
-constexpr static const std::pair<uint32_t, const char*> g_vkMemoryPropertyFlagBitsMapper[] =
+constexpr static std::pair<uint32_t, char const*> const g_vkMemoryPropertyFlagBitsMapper[] =
 {
     { static_cast<uint32_t> ( VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT ), "VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT" },
     { static_cast<uint32_t> ( VK_MEMORY_PROPERTY_HOST_CACHED_BIT ), "VK_MEMORY_PROPERTY_HOST_CACHED_BIT" },
@@ -75,10 +75,10 @@ constexpr static const std::pair<uint32_t, const char*> g_vkMemoryPropertyFlagBi
     }
 };
 
-constexpr static const size_t g_vkMemoryPropertyFlagBitsMapperItems =
+constexpr static size_t const g_vkMemoryPropertyFlagBitsMapperItems =
     sizeof ( g_vkMemoryPropertyFlagBitsMapper ) / sizeof ( g_vkMemoryPropertyFlagBitsMapper[ 0U ] );
 
-constexpr static const std::pair<uint32_t, const char*> g_vkImageUsageFlagBitsMapper[] =
+constexpr static std::pair<uint32_t, char const*> const g_vkImageUsageFlagBitsMapper[] =
 {
     { static_cast<uint32_t> ( VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT ), "VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT" },
     { static_cast<uint32_t> ( VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT ), "VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT" },
@@ -100,10 +100,10 @@ constexpr static const std::pair<uint32_t, const char*> g_vkImageUsageFlagBitsMa
     }
 };
 
-constexpr static const size_t g_vkImageUsageFlagBitsMapperItems =
+constexpr static size_t const g_vkImageUsageFlagBitsMapperItems =
     sizeof ( g_vkImageUsageFlagBitsMapper ) / sizeof ( g_vkImageUsageFlagBitsMapper[ 0U ] );
 
-constexpr static const std::pair<uint32_t, const char*> g_vkSampleCountFlagMapper[] =
+constexpr static std::pair<uint32_t, char const*> const g_vkSampleCountFlagMapper[] =
 {
     { static_cast<uint32_t> ( VK_SAMPLE_COUNT_1_BIT ), "VK_SAMPLE_COUNT_1_BIT" },
     { static_cast<uint32_t> ( VK_SAMPLE_COUNT_2_BIT ), "VK_SAMPLE_COUNT_2_BIT" },
@@ -114,10 +114,10 @@ constexpr static const std::pair<uint32_t, const char*> g_vkSampleCountFlagMappe
     { static_cast<uint32_t> ( VK_SAMPLE_COUNT_64_BIT ), "VK_SAMPLE_COUNT_64_BIT" }
 };
 
-constexpr static const size_t g_vkSampleCountFlagMapperItems =
+constexpr static size_t const g_vkSampleCountFlagMapperItems =
     sizeof ( g_vkSampleCountFlagMapper ) / sizeof ( g_vkSampleCountFlagMapper[ 0U ] );
 
-constexpr static const std::pair<uint32_t, const char*> g_vkQueueFlagMapper[] =
+constexpr static std::pair<uint32_t, char const*> const g_vkQueueFlagMapper[] =
 {
     { static_cast<uint32_t> ( VK_QUEUE_COMPUTE_BIT ), "VK_QUEUE_COMPUTE_BIT" },
     { static_cast<uint32_t> ( VK_QUEUE_GRAPHICS_BIT ), "VK_QUEUE_GRAPHICS_BIT" },
@@ -126,10 +126,10 @@ constexpr static const std::pair<uint32_t, const char*> g_vkQueueFlagMapper[] =
     { static_cast<uint32_t> ( VK_QUEUE_TRANSFER_BIT ), "VK_QUEUE_TRANSFER_BIT" }
 };
 
-constexpr static const size_t g_vkQueueFlagMapperItems =
+constexpr static size_t const g_vkQueueFlagMapperItems =
     sizeof ( g_vkQueueFlagMapper ) / sizeof ( g_vkQueueFlagMapper[ 0U ] );
 
-constexpr static const std::pair<uint32_t, const char*> g_vkSurfaceTransformFlagBitsKHRMapper[] =
+constexpr static std::pair<uint32_t, char const*> const g_vkSurfaceTransformFlagBitsKHRMapper[] =
 {
     { VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_BIT_KHR, "VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_BIT_KHR" },
     { VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR, "VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR" },
@@ -154,11 +154,11 @@ constexpr static const std::pair<uint32_t, const char*> g_vkSurfaceTransformFlag
     }
 };
 
-constexpr static const size_t g_vkSurfaceTransformFlagBitsKHRMapperItems =
+constexpr static size_t const g_vkSurfaceTransformFlagBitsKHRMapperItems =
     sizeof ( g_vkSurfaceTransformFlagBitsKHRMapper ) / sizeof ( g_vkSurfaceTransformFlagBitsKHRMapper[ 0U ] );
 
 // Kung-Fu: used in Renderer::PrintPhysicalDeviceGroupInfo to print physical device features.
-constexpr static const std::pair<size_t, const char*> g_vkFeatureMap[] =
+constexpr static std::pair<size_t, char const*> const g_vkFeatureMap[] =
 {
     { offsetof ( VkPhysicalDeviceFeatures, alphaToOne ), "alphaToOne" },
     { offsetof ( VkPhysicalDeviceFeatures, depthBiasClamp ), "depthBiasClamp" },
@@ -265,7 +265,7 @@ VulkanPhysicalDeviceInfo::VulkanPhysicalDeviceInfo ():
 
 #ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
-const std::map<VkDebugReportObjectTypeEXT, const char*> Renderer::_vulkanObjectTypeMap =
+std::map<VkDebugReportObjectTypeEXT, char const*> const Renderer::_vulkanObjectTypeMap =
 {
     { VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT" },
     { VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_VIEW_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_VIEW_EXT" },
@@ -328,7 +328,7 @@ const std::map<VkDebugReportObjectTypeEXT, const char*> Renderer::_vulkanObjectT
 
 #endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
-const std::map<VkColorSpaceKHR, const char*> Renderer::_vulkanColorSpaceMap =
+std::map<VkColorSpaceKHR, char const*> const Renderer::_vulkanColorSpaceMap =
 {
     { VK_COLOR_SPACE_ADOBERGB_LINEAR_EXT, "VK_COLOR_SPACE_ADOBERGB_LINEAR_EXT" },
     { VK_COLOR_SPACE_ADOBERGB_NONLINEAR_EXT, "VK_COLOR_SPACE_ADOBERGB_NONLINEAR_EXT" },
@@ -348,7 +348,7 @@ const std::map<VkColorSpaceKHR, const char*> Renderer::_vulkanColorSpaceMap =
     { VK_COLOR_SPACE_SRGB_NONLINEAR_KHR, "VK_COLOR_SPACE_SRGB_NONLINEAR_KHR" }
 };
 
-const std::map<VkCompositeAlphaFlagBitsKHR, const char*> Renderer::_vulkanCompositeAlphaMap =
+std::map<VkCompositeAlphaFlagBitsKHR, char const*> const Renderer::_vulkanCompositeAlphaMap =
 {
     { VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR, "VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR" },
     { VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR, "VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR" },
@@ -356,7 +356,7 @@ const std::map<VkCompositeAlphaFlagBitsKHR, const char*> Renderer::_vulkanCompos
     { VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR, "VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR" }
 };
 
-const std::map<VkFormat, const char*> Renderer::_vulkanFormatMap =
+std::map<VkFormat, char const*> const Renderer::_vulkanFormatMap =
 {
     { VK_FORMAT_A1R5G5B5_UNORM_PACK16, "VK_FORMAT_A1R5G5B5_UNORM_PACK16" },
     { VK_FORMAT_A2B10G10R10_SINT_PACK32, "VK_FORMAT_A2B10G10R10_SINT_PACK32" },
@@ -601,7 +601,7 @@ const std::map<VkFormat, const char*> Renderer::_vulkanFormatMap =
     { VK_FORMAT_X8_D24_UNORM_PACK32, "VK_FORMAT_X8_D24_UNORM_PACK32" }
 };
 
-const std::map<VkPhysicalDeviceType, const char*> Renderer::_vulkanPhysicalDeviceTypeMap =
+std::map<VkPhysicalDeviceType, char const*> const Renderer::_vulkanPhysicalDeviceTypeMap =
 {
     { VK_PHYSICAL_DEVICE_TYPE_CPU, "VK_PHYSICAL_DEVICE_TYPE_CPU" },
     { VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, "VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU" },
@@ -610,7 +610,7 @@ const std::map<VkPhysicalDeviceType, const char*> Renderer::_vulkanPhysicalDevic
     { VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU, "VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU" }
 };
 
-const std::map<VkPresentModeKHR, const char*> Renderer::_vulkanPresentModeMap =
+std::map<VkPresentModeKHR, char const*> const Renderer::_vulkanPresentModeMap =
 {
     { VK_PRESENT_MODE_FIFO_KHR, "VK_PRESENT_MODE_FIFO_KHR" },
     { VK_PRESENT_MODE_FIFO_RELAXED_KHR, "VK_PRESENT_MODE_FIFO_RELAXED_KHR" },
@@ -620,7 +620,7 @@ const std::map<VkPresentModeKHR, const char*> Renderer::_vulkanPresentModeMap =
     { VK_PRESENT_MODE_SHARED_DEMAND_REFRESH_KHR, "VK_PRESENT_MODE_SHARED_DEMAND_REFRESH_KHR" }
 };
 
-const std::map<VkResult, const char*> Renderer::_vulkanResultMap =
+std::map<VkResult, char const*> const Renderer::_vulkanResultMap =
 {
     { VK_ERROR_DEVICE_LOST, "VK_ERROR_DEVICE_LOST" },
     { VK_ERROR_EXTENSION_NOT_PRESENT, "VK_ERROR_EXTENSION_NOT_PRESENT" },
@@ -642,7 +642,7 @@ const std::map<VkResult, const char*> Renderer::_vulkanResultMap =
     { VK_SUBOPTIMAL_KHR, "VK_SUBOPTIMAL_KHR" }
 };
 
-const std::map<VkSurfaceTransformFlagsKHR, const char*> Renderer::_vulkanSurfaceTransformMap =
+std::map<VkSurfaceTransformFlagsKHR, char const*> const Renderer::_vulkanSurfaceTransformMap =
 {
     { VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_BIT_KHR, "VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_BIT_KHR" },
 
@@ -729,7 +729,7 @@ bool Renderer::CheckSwapchainStatus ()
     return tmp;
 }
 
-bool Renderer::CheckVkResult ( VkResult result, const char* from, const char* message ) const
+bool Renderer::CheckVkResult ( VkResult result, char const* from, char const* message ) const
 {
     if ( result == VK_SUCCESS )
         return true;
@@ -741,7 +741,7 @@ bool Renderer::CheckVkResult ( VkResult result, const char* from, const char* me
 
 bool Renderer::CreateShader ( VkShaderModule &shader,
     std::string &&shaderFile,
-    const char* errorMessage
+    char const* errorMessage
 ) const
 {
     File vertexShader ( shaderFile );
@@ -749,14 +749,14 @@ bool Renderer::CreateShader ( VkShaderModule &shader,
     if ( !vertexShader.LoadContent () )
         return false;
 
-    const std::vector<uint8_t>& spirV = vertexShader.GetContent ();
+    std::vector<uint8_t> const& spirV = vertexShader.GetContent ();
 
     VkShaderModuleCreateInfo shaderModuleCreateInfo;
     shaderModuleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
     shaderModuleCreateInfo.pNext = nullptr;
     shaderModuleCreateInfo.flags = 0U;
     shaderModuleCreateInfo.codeSize = spirV.size ();
-    shaderModuleCreateInfo.pCode = reinterpret_cast<const uint32_t*> ( spirV.data () );
+    shaderModuleCreateInfo.pCode = reinterpret_cast<uint32_t const*> ( spirV.data () );
 
     return CheckVkResult ( vkCreateShaderModule ( _device, &shaderModuleCreateInfo, nullptr, &shader ),
         "Renderer::CreateShader",
@@ -774,17 +774,22 @@ VkDevice Renderer::GetDevice () const
     return _device;
 }
 
+size_t Renderer::GetMaxUniformBufferRange () const
+{
+    return _maxUniformBufferRange;
+}
+
 size_t Renderer::GetPresentImageCount () const
 {
     return _swapchainImageViews.size ();
 }
 
-const VkImageView& Renderer::GetPresentImageView ( size_t imageIndex ) const
+VkImageView const& Renderer::GetPresentImageView ( size_t imageIndex ) const
 {
     return _swapchainImageViews[ imageIndex ];
 }
 
-const GXMat4& Renderer::GetPresentationEngineTransform () const
+GXMat4 const& Renderer::GetPresentationEngineTransform () const
 {
     return _presentationEngineTransform;
 }
@@ -804,7 +809,7 @@ VkFormat Renderer::GetSurfaceFormat () const
     return _surfaceFormat;
 }
 
-const VkExtent2D& Renderer::GetSurfaceSize () const
+VkExtent2D const& Renderer::GetSurfaceSize () const
 {
     return _surfaceSize;
 }
@@ -814,7 +819,7 @@ VkSwapchainKHR& Renderer::GetSwapchain ()
     return _swapchain;
 }
 
-const VkExtent2D& Renderer::GetViewportResolution () const
+VkExtent2D const& Renderer::GetViewportResolution () const
 {
     return _viewportResolution;
 }
@@ -833,12 +838,16 @@ bool Renderer::OnInit ( ANativeWindow &nativeWindow, bool vSync )
         return false;
     }
 
-    PrintInstanceLayerInfo ();
-    DeployInstance ();
+    if ( !PrintInstanceLayerInfo () )
+        return false;
+
+    if ( !DeployInstance () )
+        return false;
 
 #ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
-    DeployDebugFeatures ();
+    if ( !DeployDebugFeatures () )
+        return false;
 
 #endif
 
@@ -1030,34 +1039,36 @@ void Renderer::OnDestroy ()
 
 const char* Renderer::ResolveVkFormat ( VkFormat format ) const
 {
-    const auto findResult = _vulkanFormatMap.find ( format );
+    auto const findResult = _vulkanFormatMap.find ( format );
     return findResult == _vulkanFormatMap.cend () ? UNKNOWN_RESULT : findResult->second;
 }
 
-bool Renderer::SelectTargetMemoryTypeIndex ( uint32_t &targetMemoryTypeIndex,
-    const VkMemoryRequirements &memoryRequirements,
-    VkMemoryPropertyFlags memoryProperties
+bool Renderer::TryAllocateMemory ( VkDeviceMemory &memory,
+    size_t size,
+    VkMemoryPropertyFlags memoryProperties,
+    char const* errorMessage
 ) const
 {
-    for ( uint32_t i = 0U; i < _physicalDeviceMemoryProperties.memoryTypeCount; ++i )
-    {
-        if ( !( memoryRequirements.memoryTypeBits & ( 1U << i ) ) ) continue;
+    VkMemoryAllocateInfo allocateInfo;
+    allocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    allocateInfo.pNext = nullptr;
+    allocateInfo.allocationSize = static_cast<uint32_t> ( size );
 
-        const VkMemoryType& memoryType = _physicalDeviceMemoryProperties.memoryTypes[ i ];
+    const bool result = SelectTargetMemoryTypeIndex ( allocateInfo.memoryTypeIndex, memoryProperties );
 
-        if ( ( memoryType.propertyFlags & memoryProperties ) != memoryProperties ) continue;
+    if ( !result )
+        return false;
 
-        targetMemoryTypeIndex = i;
-        return true;
-    }
-
-    return false;
+    return CheckVkResult ( vkAllocateMemory ( _device, &allocateInfo, nullptr, &memory ),
+        "Renderer::TryAllocateMemory",
+        errorMessage
+    );
 }
 
 bool Renderer::TryAllocateMemory ( VkDeviceMemory &memory,
-    const VkMemoryRequirements &requirements,
+    VkMemoryRequirements const &requirements,
     VkMemoryPropertyFlags memoryProperties,
-    const char* errorMessage
+    char const* errorMessage
 ) const
 {
     VkMemoryAllocateInfo allocateInfo;
@@ -1079,7 +1090,7 @@ bool Renderer::TryAllocateMemory ( VkDeviceMemory &memory,
     );
 }
 
-bool Renderer::CheckRequiredDeviceExtensions ( const std::vector<const char*> &deviceExtensions,
+bool Renderer::CheckRequiredDeviceExtensions ( std::vector<char const*> const &deviceExtensions,
     char const* const* requiredExtensions,
     size_t requiredExtensionCount
 )
@@ -1096,7 +1107,7 @@ bool Renderer::CheckRequiredDeviceExtensions ( const std::vector<const char*> &d
 
     for ( size_t i = 0U; i < requiredExtensionCount; ++i )
     {
-        const char* requiredExtension = requiredExtensions[ i ];
+        char const* requiredExtension = requiredExtensions[ i ];
         tmp = requiredExtension;
 
         if ( allExtensions.count ( tmp ) > 0U )
@@ -1184,7 +1195,7 @@ void Renderer::DestroyDebugFeatures ()
 
 bool Renderer::DeployDevice ()
 {
-    constexpr const float priorities = 1.0F;
+    constexpr float const priorities = 1.0F;
 
     VkDeviceQueueCreateInfo deviceQueueCreateInfo;
     deviceQueueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
@@ -1197,15 +1208,15 @@ bool Renderer::DeployDevice ()
         return false;
 
     deviceQueueCreateInfo.queueFamilyIndex = _queueFamilyIndex;
-    const auto& caps = _physicalDeviceInfo[ _physicalDevice ];
+    auto const& caps = _physicalDeviceInfo[ _physicalDevice ];
 
-    constexpr const char* extensions[] =
+    constexpr char const* extensions[] =
     {
         VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME,
         VK_KHR_SWAPCHAIN_EXTENSION_NAME
     };
 
-    constexpr const size_t extensionCount = std::size ( extensions );
+    constexpr size_t const extensionCount = std::size ( extensions );
 
     if ( !CheckRequiredDeviceExtensions ( caps._extensions, extensions, extensionCount ) )
         return false;
@@ -1228,7 +1239,7 @@ bool Renderer::DeployDevice ()
     deviceCreateInfo.ppEnabledExtensionNames = extensions;
     deviceCreateInfo.pEnabledFeatures = &caps._features;
 
-    const bool result = CheckVkResult ( vkCreateDevice ( _physicalDevice, &deviceCreateInfo, nullptr, &_device ),
+    bool const result = CheckVkResult ( vkCreateDevice ( _physicalDevice, &deviceCreateInfo, nullptr, &_device ),
         "Renderer::DeployDevice",
         "Can't create device"
     );
@@ -1281,12 +1292,12 @@ bool Renderer::DeployInstance ()
         AV_VK_FLAG ( VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT ) |
         AV_VK_FLAG ( VK_DEBUG_REPORT_WARNING_BIT_EXT );
 
-    constexpr static const char* layers[] =
+    constexpr static char const* layers[] =
     {
         "VK_LAYER_KHRONOS_validation"
     };
 
-    constexpr static const char* extensions[] =
+    constexpr static char const* extensions[] =
     {
         VK_EXT_DEBUG_REPORT_EXTENSION_NAME,
         VK_KHR_SURFACE_EXTENSION_NAME,
@@ -1299,7 +1310,7 @@ bool Renderer::DeployInstance ()
 
 #else
 
-    constexpr static const char* extensions[] =
+    constexpr static char const* extensions[] =
     {
         VK_KHR_SURFACE_EXTENSION_NAME,
         "VK_KHR_android_surface"
@@ -1311,7 +1322,7 @@ bool Renderer::DeployInstance ()
 
 #endif
 
-    instanceCreateInfo.enabledExtensionCount = static_cast<const uint32_t> ( std::size ( extensions ) );
+    instanceCreateInfo.enabledExtensionCount = static_cast<uint32_t const> ( std::size ( extensions ) );
     instanceCreateInfo.ppEnabledExtensionNames = extensions;
 
     return CheckVkResult ( vkCreateInstance ( &instanceCreateInfo, nullptr, &_instance ),
@@ -1596,7 +1607,7 @@ bool Renderer::DeploySwapchain ( bool vSync )
 
 void Renderer::DestroySwapchain ()
 {
-    const size_t count = _swapchainImageViews.size ();
+    size_t const count = _swapchainImageViews.size ();
 
     for ( size_t i = 0U; i < count; ++i )
     {
@@ -1630,7 +1641,7 @@ bool Renderer::PrintCoreExtensions () const
     std::vector<VkExtensionProperties> extensions ( static_cast<size_t> ( extensionCount ) );
     VkExtensionProperties* extensionList = extensions.data ();
 
-    const bool result = CheckVkResult (
+    bool const result = CheckVkResult (
         vkEnumerateInstanceExtensionProperties ( nullptr, &extensionCount, extensionList ),
         "Renderer::PrintCoreExtensions",
         "Can't get instance core extensions"
@@ -1645,17 +1656,17 @@ bool Renderer::PrintCoreExtensions () const
     return true;
 }
 
-void Renderer::PrintFloatProp ( const char* indent, const char* name, float value ) const
+void Renderer::PrintFloatProp ( char const* indent, char const* name, float value ) const
 {
     LogInfo ( "%s%s: %g", indent, name, value );
 }
 
-void Renderer::PrintFloatVec2Prop ( const char* indent, const char* name, const float value[] ) const
+void Renderer::PrintFloatVec2Prop ( char const* indent, char const* name, float const value[] ) const
 {
     LogInfo ( "%s%s: %g, %g", indent, name, value[ 0U ], value[ 1U ] );
 }
 
-void Renderer::PrintINT32Prop ( const char* indent, const char* name, int32_t value ) const
+void Renderer::PrintINT32Prop ( char const* indent, char const* name, int32_t value ) const
 {
     LogInfo ( "%s%s: %i", indent, name, value );
 }
@@ -1676,7 +1687,7 @@ bool Renderer::PrintInstanceLayerInfo () const
     std::vector<VkLayerProperties> layers ( static_cast<size_t> ( layerCount ) );
     VkLayerProperties* layerList = layers.data ();
 
-    const bool result = CheckVkResult ( vkEnumerateInstanceLayerProperties ( &layerCount, layerList ),
+    bool const result = CheckVkResult ( vkEnumerateInstanceLayerProperties ( &layerCount, layerList ),
         "Renderer::PrintCoreExtensions",
         "Can't get instance core extensions"
     );
@@ -1690,7 +1701,7 @@ bool Renderer::PrintInstanceLayerInfo () const
     return PrintCoreExtensions ();
 }
 
-void Renderer::PrintPhysicalDeviceCommonProps ( const VkPhysicalDeviceProperties &props ) const
+void Renderer::PrintPhysicalDeviceCommonProps ( VkPhysicalDeviceProperties const &props ) const
 {
     LogInfo ( ">>> Common properties:" );
 
@@ -1740,7 +1751,7 @@ bool Renderer::PrintPhysicalDeviceExtensionInfo ( VkPhysicalDevice physicalDevic
     std::vector<VkExtensionProperties> extensions ( static_cast<size_t> ( extensionCount ) );
     VkExtensionProperties* extensionList = extensions.data ();
 
-    const bool result = CheckVkResult (
+    bool const result = CheckVkResult (
         vkEnumerateDeviceExtensionProperties ( physicalDevice,
             nullptr,
             &extensionCount,
@@ -1755,7 +1766,7 @@ bool Renderer::PrintPhysicalDeviceExtensionInfo ( VkPhysicalDevice physicalDevic
         return false;
 
     VulkanPhysicalDeviceInfo& capabilities = _physicalDeviceInfo[ physicalDevice ];
-    std::vector<const char*>& targetExtensions = capabilities._extensions;
+    std::vector<char const*>& targetExtensions = capabilities._extensions;
     std::vector<char>& targetExtensionStorage = capabilities._extensionStorage;
 
     targetExtensions.reserve ( static_cast<size_t> ( extensionCount ) );
@@ -1763,17 +1774,17 @@ bool Renderer::PrintPhysicalDeviceExtensionInfo ( VkPhysicalDevice physicalDevic
 
     for ( uint32_t i = 0U; i < extensionCount; ++i )
     {
-        const VkExtensionProperties& prop = extensionList[ i ];
+        VkExtensionProperties const& prop = extensionList[ i ];
         PrintVkExtensionProp ( i, "Physical device", prop );
 
-        const size_t size = strlen ( prop.extensionName ) + 1U;
-        const size_t neededSpace = offset + size;
+        size_t const size = strlen ( prop.extensionName ) + 1U;
+        size_t const neededSpace = offset + size;
 
         while ( targetExtensionStorage.size () < neededSpace )
             targetExtensionStorage.resize ( targetExtensionStorage.size () * 2U );
 
         memcpy ( targetExtensionStorage.data () + offset, prop.extensionName, size );
-        targetExtensions.push_back ( reinterpret_cast<const char*> ( offset ) );
+        targetExtensions.push_back ( reinterpret_cast<char const*> ( offset ) );
 
         offset = neededSpace;
     }
@@ -1800,8 +1811,8 @@ bool Renderer::PrintPhysicalDeviceFeatureInfo ( VkPhysicalDevice physicalDevice 
 
     for ( auto const& probe : g_vkFeatureMap )
     {
-        const auto enable = *reinterpret_cast<const VkBool32*> (
-            reinterpret_cast<const uint8_t*> ( &features._features ) + probe.first
+        auto const enable = *reinterpret_cast<VkBool32 const*> (
+            reinterpret_cast<uint8_t const*> ( &features._features ) + probe.first
         );
 
         if ( enable )
@@ -1827,7 +1838,7 @@ bool Renderer::PrintPhysicalDeviceFeatureInfo ( VkPhysicalDevice physicalDevice 
 }
 
 void Renderer::PrintPhysicalDeviceGroupInfo ( uint32_t groupIndex,
-    const VkPhysicalDeviceGroupProperties &props
+    VkPhysicalDeviceGroupProperties const &props
 ) const
 {
     LogInfo ( "Renderer::PrintPhysicalDeviceGroupInfo - Vulkan physical device group #%u", groupIndex );
@@ -1853,7 +1864,7 @@ bool Renderer::PrintPhysicalDeviceLayerInfo ( VkPhysicalDevice physicalDevice ) 
     std::vector<VkLayerProperties> layers ( static_cast<size_t> ( layerCount ) );
     VkLayerProperties* layerList = layers.data ();
 
-    const bool result = CheckVkResult ( vkEnumerateDeviceLayerProperties ( physicalDevice, &layerCount, layerList ),
+    bool const result = CheckVkResult ( vkEnumerateDeviceLayerProperties ( physicalDevice, &layerCount, layerList ),
         "Renderer::PrintPhysicalDeviceLayerInfo",
         "Can't get physical device layers"
     );
@@ -1867,7 +1878,7 @@ bool Renderer::PrintPhysicalDeviceLayerInfo ( VkPhysicalDevice physicalDevice ) 
     return true;
 }
 
-void Renderer::PrintPhysicalDeviceLimits ( const VkPhysicalDeviceLimits &limits ) const
+void Renderer::PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits )
 {
     LogInfo ( ">>> Limits:" );
 
@@ -1877,7 +1888,10 @@ void Renderer::PrintPhysicalDeviceLimits ( const VkPhysicalDeviceLimits &limits 
     PrintUINT32Prop ( INDENT_1, "maxImageDimensionCube", limits.maxImageDimensionCube );
     PrintUINT32Prop ( INDENT_1, "maxImageArrayLayers", limits.maxImageArrayLayers );
     PrintUINT32Prop ( INDENT_1, "maxTexelBufferElements", limits.maxTexelBufferElements );
+
+    _maxUniformBufferRange = static_cast<size_t> ( limits.maxUniformBufferRange );
     PrintUINT32Prop ( INDENT_1, "maxUniformBufferRange", limits.maxUniformBufferRange );
+
     PrintUINT32Prop ( INDENT_1, "maxStorageBufferRange", limits.maxStorageBufferRange );
     PrintUINT32Prop ( INDENT_1, "maxPushConstantsSize", limits.maxPushConstantsSize );
     PrintUINT32Prop ( INDENT_1, "maxMemoryAllocationCount", limits.maxMemoryAllocationCount );
@@ -2092,7 +2106,7 @@ void Renderer::PrintPhysicalDeviceMemoryProperties ( VkPhysicalDevice physicalDe
 
     for ( uint32_t i = 0U; i < _physicalDeviceMemoryProperties.memoryTypeCount; ++i )
     {
-        const VkMemoryType& type = _physicalDeviceMemoryProperties.memoryTypes[ i ];
+        VkMemoryType const& type = _physicalDeviceMemoryProperties.memoryTypes[ i ];
         LogInfo ( "%smemoryType: #%u", INDENT_2, i );
 
         PrintVkFlagsProp ( INDENT_3,
@@ -2109,7 +2123,7 @@ void Renderer::PrintPhysicalDeviceMemoryProperties ( VkPhysicalDevice physicalDe
 
     for ( uint32_t i = 0U; i < _physicalDeviceMemoryProperties.memoryHeapCount; ++i )
     {
-        const VkMemoryHeap& heap = _physicalDeviceMemoryProperties.memoryHeaps[ i ];
+        VkMemoryHeap const& heap = _physicalDeviceMemoryProperties.memoryHeaps[ i ];
 
         LogInfo ( "%smemoryHeap: #%u", INDENT_2, i );
         PrintSizeProp ( INDENT_3, "size", static_cast<size_t> ( heap.size ) );
@@ -2135,9 +2149,16 @@ bool Renderer::PrintPhysicalDeviceInfo ( uint32_t deviceIndex, VkPhysicalDevice 
     PrintPhysicalDeviceCommonProps ( props );
     PrintPhysicalDeviceLimits ( props.limits );
     PrintPhysicalDeviceSparse ( props.sparseProperties );
-    PrintPhysicalDeviceFeatureInfo ( physicalDevice );
-    PrintPhysicalDeviceExtensionInfo ( physicalDevice );
-    PrintPhysicalDeviceLayerInfo ( physicalDevice );
+
+    if ( !PrintPhysicalDeviceFeatureInfo ( physicalDevice ) )
+        return false;
+
+    if ( !PrintPhysicalDeviceExtensionInfo ( physicalDevice ) )
+        return false;
+
+    if ( !PrintPhysicalDeviceLayerInfo ( physicalDevice ) )
+        return false;
+
     PrintPhysicalDeviceMemoryProperties ( physicalDevice );
 
     uint32_t queueFamilyCount = 0U;
@@ -2163,7 +2184,7 @@ bool Renderer::PrintPhysicalDeviceInfo ( uint32_t deviceIndex, VkPhysicalDevice 
 
     for ( uint32_t i = 0U; i < queueFamilyCount; ++i )
     {
-        const VkQueueFamilyProperties& familyProps = queueFamilyPropList[ i ];
+        VkQueueFamilyProperties const& familyProps = queueFamilyPropList[ i ];
         PrintPhysicalDeviceQueueFamilyInfo ( i, familyProps );
         queueFamilies.emplace_back ( std::make_pair ( familyProps.queueFlags, familyProps.queueCount ) );
     }
@@ -2172,7 +2193,7 @@ bool Renderer::PrintPhysicalDeviceInfo ( uint32_t deviceIndex, VkPhysicalDevice 
 }
 
 void Renderer::PrintPhysicalDeviceQueueFamilyInfo ( uint32_t queueFamilyIndex,
-    const VkQueueFamilyProperties &props
+    VkQueueFamilyProperties const &props
 ) const
 {
     LogInfo ( "%sQueue family: #%u", INDENT_1, queueFamilyIndex );
@@ -2183,7 +2204,7 @@ void Renderer::PrintPhysicalDeviceQueueFamilyInfo ( uint32_t queueFamilyIndex,
     PrintVkExtent3DProp ( INDENT_2, "minImageTransferGranularity", props.minImageTransferGranularity );
 }
 
-void Renderer::PrintPhysicalDeviceSparse ( const VkPhysicalDeviceSparseProperties &sparse ) const
+void Renderer::PrintPhysicalDeviceSparse ( VkPhysicalDeviceSparseProperties const &sparse ) const
 {
     LogInfo ( ">>> Sparse:" );
 
@@ -2199,19 +2220,19 @@ void Renderer::PrintPhysicalDeviceSparse ( const VkPhysicalDeviceSparsePropertie
     PrintVkBool32Prop ( INDENT_1, "residencyNonResidentStrict", sparse.residencyNonResidentStrict );
 }
 
-void Renderer::PrintVkBool32Prop ( const char* indent, const char* name, VkBool32 value ) const
+void Renderer::PrintVkBool32Prop ( char const* indent, char const* name, VkBool32 value ) const
 {
     LogInfo ( "%s%s: %s", indent, name, value ? "VK_TRUE" : "VK_FALSE" );
 }
 
-void Renderer::PrintVkExtent2DProp ( const char* indent, const char* name, const VkExtent2D &value ) const
+void Renderer::PrintVkExtent2DProp ( char const* indent, char const* name, VkExtent2D const &value ) const
 {
     LogInfo ( "%s%s:", indent, name );
     LogInfo ( "%s%swidth: %u", indent, INDENT_1, value.width );
     LogInfo ( "%s%sheight: %u", indent, INDENT_1, value.height );
 }
 
-void Renderer::PrintVkExtent3DProp ( const char* indent, const char* name, const VkExtent3D &value ) const
+void Renderer::PrintVkExtent3DProp ( char const* indent, char const* name, VkExtent3D const &value ) const
 {
     LogInfo ( "%s%s:", indent, name );
     LogInfo ( "%s%swidth: %u", indent, INDENT_1, value.width );
@@ -2219,7 +2240,9 @@ void Renderer::PrintVkExtent3DProp ( const char* indent, const char* name, const
     LogInfo ( "%s%sdepth: %u", indent, INDENT_1, value.depth );
 }
 
-void Renderer::PrintVkExtensionProp ( uint32_t extensionIndex, const char* category, const VkExtensionProperties &extension ) const
+void Renderer::PrintVkExtensionProp ( uint32_t extensionIndex, char const* category,
+    VkExtensionProperties const &extension
+) const
 {
     LogInfo ( "%s%s extension: #%u", INDENT_1, category, extensionIndex );
 
@@ -2227,11 +2250,11 @@ void Renderer::PrintVkExtensionProp ( uint32_t extensionIndex, const char* categ
     PrintUINT32Prop ( INDENT_2, "specVersion", extension.specVersion );
 }
 
-void Renderer::PrintVkFlagsProp ( const char* indent,
-    const char* name,
+void Renderer::PrintVkFlagsProp ( char const* indent,
+    char const* name,
     VkFlags flags,
     size_t flagSetCount,
-    const std::pair<uint32_t, const char*> flagSet[]
+    std::pair<uint32_t, char const*> const flagSet[]
 ) const
 {
     if ( !flags )
@@ -2241,13 +2264,14 @@ void Renderer::PrintVkFlagsProp ( const char* indent,
     }
 
     std::string result;
-    const auto bitmask = static_cast<const uint32_t> ( flags );
+    auto const bitmask = static_cast<uint32_t const> ( flags );
 
     for ( size_t i = 0U; i < flagSetCount; ++i )
     {
-        const auto& item = flagSet[ i ];
+        auto const& item = flagSet[ i ];
 
-        if ( !( item.first & bitmask ) ) continue;
+        if ( !( item.first & bitmask ) )
+            continue;
 
         result += " ";
         result += item.second;
@@ -2256,7 +2280,7 @@ void Renderer::PrintVkFlagsProp ( const char* indent,
     LogInfo ( "%s%s:%s", indent, name, result.c_str () );
 }
 
-void Renderer::PrintVkHandler ( const char* indent, const char* name, void* handler ) const
+void Renderer::PrintVkHandler ( char const* indent, char const* name, void* handler ) const
 {
     LogInfo ( "%s%s: %p", indent, name, handler );
 }
@@ -2277,7 +2301,7 @@ void Renderer::PrintVkPresentModeProp ( uint32_t modeIndex, VkPresentModeKHR mod
     PrintUTF8Prop ( INDENT_2, "type", ResolveVkPresentModeKHR ( mode ) );
 }
 
-void Renderer::PrintVkSurfaceCapabilities ( const VkSurfaceCapabilitiesKHR &caps )
+void Renderer::PrintVkSurfaceCapabilities ( VkSurfaceCapabilitiesKHR const &caps )
 {
     LogInfo ( ">>> Surface:" );
 
@@ -2312,7 +2336,7 @@ void Renderer::PrintVkSurfaceCapabilities ( const VkSurfaceCapabilitiesKHR &caps
     );
 }
 
-void Renderer::PrintVkSurfaceFormatKHRProp ( uint32_t formatIndex, const VkSurfaceFormatKHR &format ) const
+void Renderer::PrintVkSurfaceFormatKHRProp ( uint32_t formatIndex, VkSurfaceFormatKHR const &format ) const
 {
     LogInfo ( "%sSurface format: #%u", INDENT_1, formatIndex );
 
@@ -2320,7 +2344,7 @@ void Renderer::PrintVkSurfaceFormatKHRProp ( uint32_t formatIndex, const VkSurfa
     PrintUTF8Prop ( INDENT_2, "colorSpace ", ResolveVkColorSpaceKHR ( format.colorSpace ) );
 }
 
-void Renderer::PrintVkVersion ( const char* indent, const char* name, uint32_t version ) const
+void Renderer::PrintVkVersion ( char const* indent, char const* name, uint32_t version ) const
 {
     LogInfo ( "%s%s: %u.%u.%u",
         indent,
@@ -2331,94 +2355,94 @@ void Renderer::PrintVkVersion ( const char* indent, const char* name, uint32_t v
     );
 }
 
-void Renderer::PrintSizeProp ( const char* indent, const char* name, size_t value ) const
+void Renderer::PrintSizeProp ( char const* indent, char const* name, size_t value ) const
 {
     LogInfo ( "%s%s: %zu", indent, name, value );
 }
 
-void Renderer::PrintUINT32Prop ( const char* indent, const char* name, uint32_t value ) const
+void Renderer::PrintUINT32Prop ( char const* indent, char const* name, uint32_t value ) const
 {
     LogInfo ( "%s%s: %u", indent, name, value );
 }
 
-void Renderer::PrintUINT32Vec2Prop ( const char* indent, const char* name, const uint32_t value[] ) const
+void Renderer::PrintUINT32Vec2Prop ( char const* indent, char const* name, uint32_t const value[] ) const
 {
     LogInfo ( "%s%s: %u, %u", indent, name, value[ 0U ], value[ 1U ] );
 }
 
-void Renderer::PrintUINT32Vec3Prop ( const char* indent, const char* name, const uint32_t value[] ) const
+void Renderer::PrintUINT32Vec3Prop ( char const* indent, char const* name, uint32_t const value[] ) const
 {
     LogInfo ( "%s%s: %u, %u, %u", indent, name, value[ 0U ], value[ 1U ], value[ 2U ] );
 }
 
-void Renderer::PrintUTF8Prop ( const char* indent, const char* name, const char* value ) const
+void Renderer::PrintUTF8Prop ( char const* indent, char const* name, char const* value ) const
 {
     LogInfo ( "%s%s: %s", indent, name, value );
 }
 
-const char* Renderer::ResolvePhysicalDeviceType ( VkPhysicalDeviceType type ) const
+char const* Renderer::ResolvePhysicalDeviceType ( VkPhysicalDeviceType type ) const
 {
-    const auto findResult = _vulkanPhysicalDeviceTypeMap.find ( type );
+    auto const findResult = _vulkanPhysicalDeviceTypeMap.find ( type );
     return findResult == _vulkanPhysicalDeviceTypeMap.cend () ? UNKNOWN_RESULT : findResult->second;
 }
 
 #ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
-const char* Renderer::ResolveVkDebugReportObjectType ( VkDebugReportObjectTypeEXT type ) const
+char const* Renderer::ResolveVkDebugReportObjectType ( VkDebugReportObjectTypeEXT type ) const
 {
-    const auto findResult = _vulkanObjectTypeMap.find ( type );
+    auto const findResult = _vulkanObjectTypeMap.find ( type );
     return findResult == _vulkanObjectTypeMap.cend () ? UNKNOWN_RESULT : findResult->second;
 }
 
 #endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
-const char* Renderer::ResolveVkColorSpaceKHR ( VkColorSpaceKHR colorSpace ) const
+char const* Renderer::ResolveVkColorSpaceKHR ( VkColorSpaceKHR colorSpace ) const
 {
-    const auto findResult = _vulkanColorSpaceMap.find ( colorSpace );
+    auto const findResult = _vulkanColorSpaceMap.find ( colorSpace );
     return findResult == _vulkanColorSpaceMap.cend () ? UNKNOWN_RESULT : findResult->second;
 }
 
-const char* Renderer::ResolveVkCompositeAlpha ( VkCompositeAlphaFlagBitsKHR compositeAlpha ) const
+char const* Renderer::ResolveVkCompositeAlpha ( VkCompositeAlphaFlagBitsKHR compositeAlpha ) const
 {
-    const auto findResult = _vulkanCompositeAlphaMap.find ( compositeAlpha );
+    auto const findResult = _vulkanCompositeAlphaMap.find ( compositeAlpha );
     return findResult == _vulkanCompositeAlphaMap.cend () ? UNKNOWN_RESULT : findResult->second;
 }
 
-const char* Renderer::ResolveVkPresentModeKHR ( VkPresentModeKHR mode ) const
+char const* Renderer::ResolveVkPresentModeKHR ( VkPresentModeKHR mode ) const
 {
-    const auto findResult = _vulkanPresentModeMap.find ( mode );
+    auto const findResult = _vulkanPresentModeMap.find ( mode );
     return findResult == _vulkanPresentModeMap.cend () ? UNKNOWN_RESULT : findResult->second;
 }
 
-const char* Renderer::ResolveVkResult ( VkResult result ) const
+char const* Renderer::ResolveVkResult ( VkResult result ) const
 {
-    const auto findResult = _vulkanResultMap.find ( result );
+    auto const findResult = _vulkanResultMap.find ( result );
 
     if ( findResult != _vulkanResultMap.cend () )
         return findResult->second;
 
-    constexpr static const char* unknownResult = "UNKNOWN";
+    constexpr static char const* unknownResult = "UNKNOWN";
     return unknownResult;
 }
 
-const char* Renderer::ResolveVkSurfaceTransform ( VkSurfaceTransformFlagsKHR transform ) const
+char const* Renderer::ResolveVkSurfaceTransform ( VkSurfaceTransformFlagsKHR transform ) const
 {
-    const auto findResult = _vulkanSurfaceTransformMap.find ( transform );
+    auto const findResult = _vulkanSurfaceTransformMap.find ( transform );
 
     if ( findResult != _vulkanSurfaceTransformMap.cend () )
         return findResult->second;
 
-    constexpr static const char* unknownResult = "UNKNOWN";
+    constexpr static char const* unknownResult = "UNKNOWN";
     return unknownResult;
 }
 
 bool Renderer::SelectTargetCompositeAlpha ( VkCompositeAlphaFlagBitsKHR &targetCompositeAlpha ) const
 {
     // Priority mode: VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR.
-    constexpr const VkCompositeAlphaFlagBitsKHR priorityMode = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+    constexpr VkCompositeAlphaFlagBitsKHR const priorityMode = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
 
-    const auto findResult = _physicalDeviceInfo.find ( _physicalDevice );
-    const VkSurfaceCapabilitiesKHR& surfaceCapabilitiesKHR = findResult->second._surfaceCapabilities;
+    auto const findResult = _physicalDeviceInfo.find ( _physicalDevice );
+    VkSurfaceCapabilitiesKHR const& surfaceCapabilitiesKHR = findResult->second._surfaceCapabilities;
 
     targetCompositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
 
@@ -2429,7 +2453,7 @@ bool Renderer::SelectTargetCompositeAlpha ( VkCompositeAlphaFlagBitsKHR &targetC
     else
     {
         constexpr auto limit = static_cast<unsigned int> ( VK_COMPOSITE_ALPHA_FLAG_BITS_MAX_ENUM_KHR );
-        const auto available = static_cast<const unsigned int> ( surfaceCapabilitiesKHR.supportedCompositeAlpha );
+        auto const available = static_cast<unsigned int const> ( surfaceCapabilitiesKHR.supportedCompositeAlpha );
         unsigned int probe = 1U;
 
         while ( probe != limit )
@@ -2456,12 +2480,12 @@ bool Renderer::SelectTargetHardware ( VkPhysicalDevice &targetPhysicalDevice, ui
 
     for ( auto const& device : _physicalDeviceInfo )
     {
-        const auto& queueFamilyInfo = device.second._queueFamilyInfo;
-        const size_t count = queueFamilyInfo.size ();
+        auto const& queueFamilyInfo = device.second._queueFamilyInfo;
+        size_t const count = queueFamilyInfo.size ();
 
         for ( size_t i = 0U; i < count; ++i )
         {
-            const VkFlags queueFamilyFlags = queueFamilyInfo[ i ].first;
+            VkFlags const queueFamilyFlags = queueFamilyInfo[ i ].first;
 
             if ( !( queueFamilyFlags & VK_QUEUE_COMPUTE_BIT ) || !( queueFamilyFlags & VK_QUEUE_GRAPHICS_BIT ) )
                 continue;
@@ -2478,15 +2502,55 @@ bool Renderer::SelectTargetHardware ( VkPhysicalDevice &targetPhysicalDevice, ui
     return false;
 }
 
+bool Renderer::SelectTargetMemoryTypeIndex ( uint32_t &targetMemoryTypeIndex,
+    VkMemoryPropertyFlags memoryProperties
+) const
+{
+    for ( uint32_t i = 0U; i < _physicalDeviceMemoryProperties.memoryTypeCount; ++i )
+    {
+        VkMemoryType const& memoryType = _physicalDeviceMemoryProperties.memoryTypes[ i ];
+
+        if ( ( memoryType.propertyFlags & memoryProperties ) != memoryProperties )
+            continue;
+
+        targetMemoryTypeIndex = i;
+        return true;
+    }
+
+    return false;
+}
+
+bool Renderer::SelectTargetMemoryTypeIndex ( uint32_t &targetMemoryTypeIndex,
+    VkMemoryRequirements const &memoryRequirements,
+    VkMemoryPropertyFlags memoryProperties
+) const
+{
+    for ( uint32_t i = 0U; i < _physicalDeviceMemoryProperties.memoryTypeCount; ++i )
+    {
+        if ( !( memoryRequirements.memoryTypeBits & ( 1U << i ) ) )
+            continue;
+
+        VkMemoryType const& memoryType = _physicalDeviceMemoryProperties.memoryTypes[ i ];
+
+        if ( ( memoryType.propertyFlags & memoryProperties ) != memoryProperties )
+            continue;
+
+        targetMemoryTypeIndex = i;
+        return true;
+    }
+
+    return false;
+}
+
 bool Renderer::SelectTargetPresentMode ( VkPresentModeKHR &targetPresentMode, bool vSync ) const
 {
     // Try to find VK_PRESENT_MODE_MAILBOX_KHR present mode.
 
-    const VkPresentModeKHR desirableMode = vSync ? VK_PRESENT_MODE_FIFO_KHR : VK_PRESENT_MODE_MAILBOX_KHR;
+    VkPresentModeKHR const desirableMode = vSync ? VK_PRESENT_MODE_FIFO_KHR : VK_PRESENT_MODE_MAILBOX_KHR;
 
     uint32_t modeCount = 0U;
 
-    const bool result = CheckVkResult (
+    bool const result = CheckVkResult (
         vkGetPhysicalDeviceSurfacePresentModesKHR ( _physicalDevice,
             _surface,
             &modeCount,
@@ -2510,7 +2574,7 @@ bool Renderer::SelectTargetPresentMode ( VkPresentModeKHR &targetPresentMode, bo
 
     for ( uint32_t i = 0U; i < modeCount; ++i )
     {
-        const VkPresentModeKHR mode = modeList[ i ];
+        VkPresentModeKHR const mode = modeList[ i ];
         PrintVkPresentModeProp ( i, mode );
 
         if ( mode != desirableMode )
@@ -2560,7 +2624,7 @@ bool Renderer::SelectTargetSurfaceFormat ( VkFormat &targetColorFormat,
         }
     }
 
-    constexpr const VkFormat depthStencilOptions[]
+    constexpr VkFormat const depthStencilOptions[]
     {
         VK_FORMAT_D32_SFLOAT_S8_UINT,
         VK_FORMAT_D24_UNORM_S8_UINT,
@@ -2576,7 +2640,7 @@ bool Renderer::SelectTargetSurfaceFormat ( VkFormat &targetColorFormat,
 
         targetDepthStencilFormat = probe;
 
-        constexpr const char* format = R"__(Renderer::SelectTargetSurfaceFormat - Surface format selected:
+        constexpr char const* format = R"__(Renderer::SelectTargetSurfaceFormat - Surface format selected:
 %sColor format: %s
 %sColor space: %s
 %sDepth|stencil format: %s
@@ -2607,15 +2671,15 @@ VkBool32 VKAPI_PTR Renderer::OnVulkanDebugReport ( VkDebugReportFlagsEXT flags,
     uint64_t object,
     size_t location,
     int32_t messageCode,
-    const char* pLayerPrefix,
-    const char* pMessage,
+    char const* pLayerPrefix,
+    char const* pMessage,
     void* pUserData
 )
 {
     Renderer& renderer = *static_cast<Renderer*> ( pUserData );
-    const auto findResult = renderer._loggerMapper.find ( flags );
+    auto const findResult = renderer._loggerMapper.find ( flags );
 
-    const char* category = nullptr;
+    char const* category = nullptr;
     LogType logger = nullptr;
 
     if ( findResult != renderer._loggerMapper.cend () )
@@ -2625,12 +2689,12 @@ VkBool32 VKAPI_PTR Renderer::OnVulkanDebugReport ( VkDebugReportFlagsEXT flags,
     }
     else
     {
-        constexpr static const char* unknownCategory = "UNKNOWN";
+        constexpr static char const* unknownCategory = "UNKNOWN";
         category = unknownCategory;
         logger = &LogError;
     }
 
-    constexpr const char* format =
+    constexpr char const* format =
 R"__(Renderer::OnVulkanDebugReport:
 category: %s
 object type: %s

@@ -21,24 +21,45 @@ UniformBufferPool::UniformBufferPool ():
     // NOTHING
 }
 
-VkBuffer UniformBufferPool::Acquire ( VkCommandBuffer commandBuffer, void const* data,
+VkBuffer UniformBufferPool::Acquire ( VkCommandBuffer commandBuffer,
+    void const* data,
+    VkPipelineStageFlags targetStages,
     android_vulkan::Renderer &renderer
 )
 {
-    assert ( _index >= _pool.size () );
+    assert ( _index < _pool.capacity () );
 
     size_t const usedItems = _pool.size ();
 
     if ( usedItems <= _index && !AllocateItem ( renderer ) )
         return VK_NULL_HANDLE;
 
-    // TODO sync here!
+    VkBufferMemoryBarrier barrier;
+    barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+    barrier.pNext = nullptr;
+    barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    barrier.dstAccessMask = VK_ACCESS_UNIFORM_READ_BIT;
+    barrier.srcQueueFamilyIndex = barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.buffer = _pool[ _index ];
+    barrier.offset = 0U;
+    barrier.size = _itemSize;
 
-    VkBuffer buffer = _pool[ _index ];
-    vkCmdUpdateBuffer ( commandBuffer, buffer, 0U, _itemSize, data );
+    vkCmdUpdateBuffer ( commandBuffer, barrier.buffer, 0U, _itemSize, data );
+
+    vkCmdPipelineBarrier ( commandBuffer,
+        VK_PIPELINE_STAGE_TRANSFER_BIT,
+        targetStages,
+        0U,
+        0U,
+        nullptr,
+        1U,
+        &barrier,
+        0U,
+        nullptr
+    );
 
     ++_index;
-    return buffer;
+    return barrier.buffer;
 }
 
 void UniformBufferPool::Reset ()
@@ -61,13 +82,16 @@ bool UniformBufferPool::Init ( size_t itemSize, android_vulkan::Renderer &render
     _pool.reserve ( itemCount );
 
     bool const result = renderer.TryAllocateMemory ( _gpuMemory,
-        VRAM_PER_POOL_BYTES,
+        itemCount * itemSize,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
         "Can't allocate GPU memory"
     );
 
     if ( result )
+    {
+        AV_REGISTER_DEVICE_MEMORY ( "UniformBufferPool::_gpuMemory" )
         return true;
+    }
 
     Destroy ( renderer );
     return false;
@@ -77,10 +101,10 @@ void UniformBufferPool::Destroy ( android_vulkan::Renderer &renderer )
 {
     VkDevice device = renderer.GetDevice ();
 
-    for ( auto const item : _pool )
+    for ( auto item : _pool )
     {
         vkDestroyBuffer ( device, item, nullptr );
-        AV_UNREGISTER_BUFFER ( "UniformBuffer::_pool::item" )
+        AV_UNREGISTER_BUFFER ( "UniformBufferPool::_pool::item" )
     }
 
     _pool.clear ();
@@ -112,7 +136,7 @@ bool UniformBufferPool::AllocateItem ( android_vulkan::Renderer &renderer )
     VkDevice device = renderer.GetDevice ();
     VkBuffer buffer = VK_NULL_HANDLE;
 
-    bool const result = renderer.CheckVkResult ( vkCreateBuffer ( device, &bufferInfo, nullptr, &buffer ),
+    bool result = renderer.CheckVkResult ( vkCreateBuffer ( device, &bufferInfo, nullptr, &buffer ),
         "UniformBufferPool::AllocateItem",
         "Can't create uniform buffer"
     );
@@ -120,14 +144,29 @@ bool UniformBufferPool::AllocateItem ( android_vulkan::Renderer &renderer )
     if ( !result )
         return false;
 
-    AV_REGISTER_BUFFER ( "UniformBuffer::_pool::item" )
+    AV_REGISTER_BUFFER ( "UniformBufferPool::_pool::item" )
 
-    VkDeviceSize const offset = _itemSize * _pool.size ();
+    VkMemoryRequirements requirements;
+    vkGetBufferMemoryRequirements ( device, buffer, &requirements );
 
-    return renderer.CheckVkResult ( vkBindBufferMemory ( device, buffer, _gpuMemory, offset ),
+    assert ( ( _pool.size () + 1U ) * requirements.size <= VRAM_PER_POOL_BYTES );
+
+    result = renderer.CheckVkResult (
+        vkBindBufferMemory ( device,
+            buffer,
+            _gpuMemory,
+            static_cast<VkDeviceSize> ( _pool.size () * requirements.size )
+        ),
+
         "UniformBufferPool::AllocateItem",
         "Can't bind uniform buffer memory"
     );
+
+    if ( !result )
+        return false;
+
+    _pool.push_back ( buffer );
+    return true;
 }
 
 } // namespace pbr

@@ -148,6 +148,24 @@ std::vector<DescriptorSetInfo> const& OpaqueBatchProgram::GetResourceInfo () con
     return info;
 }
 
+void OpaqueBatchProgram::SetDescriptorSet ( VkCommandBuffer commandBuffer,
+    VkDescriptorSet set0,
+    VkDescriptorSet set1
+) const
+{
+    VkDescriptorSet sets[ 2U ] = { set0, set1 };
+
+    vkCmdBindDescriptorSets ( commandBuffer,
+        VK_PIPELINE_BIND_POINT_GRAPHICS,
+        _pipelineLayout,
+        0U,
+        static_cast<uint32_t> ( std::size ( sets ) ),
+        sets,
+        0U,
+        nullptr
+    );
+}
+
 VkPipelineColorBlendStateCreateInfo const* OpaqueBatchProgram::InitColorBlendInfo (
     VkPipelineColorBlendStateCreateInfo &info,
     VkPipelineColorBlendAttachmentState* attachments

@@ -80,10 +80,16 @@ class RenderSession final
         void SubmitMesh ( MeshRef &mesh, MaterialRef &material, GXMat4 const &local );
 
     private:
+        [[nodiscard]] bool BeginGeometryRenderPass ( android_vulkan::Renderer &renderer );
+        void CleanupTransferResources ( android_vulkan::Renderer &renderer );
         [[nodiscard]] bool CreateGBufferFramebuffer ( android_vulkan::Renderer &renderer );
         [[nodiscard]] bool CreateGBufferRenderPass ( android_vulkan::Renderer &renderer );
         void DestroyDescriptorPool ( android_vulkan::Renderer &renderer );
         void SubmitOpaqueCall ( MeshRef &mesh, MaterialRef &material, GXMat4 const &local );
+
+        [[nodiscard]] bool UpdateGPUData ( std::vector<VkDescriptorSet> &descriptorSetStorage,
+            android_vulkan::Renderer &renderer
+        );
 };
 
 } // namespace pbr

@@ -2,6 +2,7 @@
 
 GX_DISABLE_COMMON_WARNINGS
 
+#include <algorithm>
 #include <cassert>
 
 GX_RESTORE_WARNING_STATE
@@ -140,256 +141,39 @@ void RenderSession::Begin ( GXMat4 const &view, GXMat4 const &projection )
 
 bool RenderSession::End ( ePresentTarget /*target*/, android_vulkan::Renderer &renderer )
 {
-    if ( _isFreeTransferResources )
-    {
-        if ( _albedoDefault )
-            _albedoDefault->FreeTransferResources ( renderer );
+    CleanupTransferResources ( renderer );
 
-        if ( _emissionDefault )
-            _emissionDefault->FreeTransferResources ( renderer );
-
-        if ( _normalDefault )
-            _normalDefault->FreeTransferResources ( renderer );
-
-        if ( _paramDefault )
-            _paramDefault->FreeTransferResources ( renderer );
-
-        _isFreeTransferResources = false;
-    }
-
-    VkDevice device = renderer.GetDevice ();
-
-    bool result = renderer.CheckVkResult (
-        vkWaitForFences ( device, 1U, &_geometryPassFence, VK_TRUE, UINT64_MAX ),
-        "RenderSession::End",
-        "Can't wait for geometry pass fence"
-    );
-
-    if ( !result )
+    if ( !BeginGeometryRenderPass ( renderer ) )
         return false;
 
-    result = renderer.CheckVkResult ( vkResetFences ( device, 1U, &_geometryPassFence ),
-        "RenderSession::End",
-        "Can't reset geometry pass fence"
-    );
+    std::vector<VkDescriptorSet> descriptorSetStorage;
 
-    if ( !result )
+    if ( !UpdateGPUData ( descriptorSetStorage, renderer ) )
         return false;
-
-    VkCommandBufferBeginInfo beginInfo;
-    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    beginInfo.pNext = nullptr;
-    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-    beginInfo.pInheritanceInfo = nullptr;
-
-    result = renderer.CheckVkResult ( vkBeginCommandBuffer ( _geometryPassRendering, &beginInfo ),
-        "RenderSession::End",
-        "Can't begin geometry pass rendering command buffer"
-    );
-
-    if ( !result )
-        return false;
-
-    if ( _maximumOpaqueBatchCount > 0U )
-    {
-        result = renderer.CheckVkResult ( vkBeginCommandBuffer ( _geometryPassTransfer, &beginInfo ),
-            "RenderSession::End",
-            "Can't begin geometry pass transfer command buffer"
-        );
-
-        if ( !result )
-        {
-            return false;
-        }
-    }
-
-    VkClearValue clearValues[ GBUFFER_ATTACHMENT_COUNT ];
-    VkClearValue& albedoClear = clearValues[ 0U ];
-    albedoClear.color.float32[ 0U ] = 0.0F;
-    albedoClear.color.float32[ 1U ] = 0.0F;
-    albedoClear.color.float32[ 2U ] = 0.0F;
-    albedoClear.color.float32[ 3U ] = 0.0F;
-
-    VkClearValue& emissionClear = clearValues[ 1U ];
-    emissionClear.color.float32[ 1U ] = 0.0F;
-    emissionClear.color.float32[ 2U ] = 0.0F;
-    emissionClear.color.float32[ 3U ] = 0.0F;
-    emissionClear.color.float32[ 0U ] = 0.0F;
-
-    VkClearValue& normalClear = clearValues[ 2U ];
-    normalClear.color.float32[ 1U ] = 0.5F;
-    normalClear.color.float32[ 2U ] = 0.5F;
-    normalClear.color.float32[ 3U ] = 0.5F;
-    normalClear.color.float32[ 0U ] = 0.0F;
-
-    VkClearValue& paramClear = clearValues[ 3U ];
-    paramClear.color.float32[ 1U ] = 0.5F;
-    paramClear.color.float32[ 2U ] = 0.5F;
-    paramClear.color.float32[ 3U ] = 0.5F;
-    paramClear.color.float32[ 0U ] = 0.0F;
-
-    VkClearValue& depthStencilClear = clearValues[ 4U ];
-    depthStencilClear.depthStencil.depth = 1.0F;
-    depthStencilClear.depthStencil.stencil = 0U;
-
-    VkRenderPassBeginInfo renderPassInfo;
-    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    renderPassInfo.pNext = nullptr;
-    renderPassInfo.renderPass = _gBufferRenderPass;
-    renderPassInfo.framebuffer = _gBufferFramebuffer;
-    renderPassInfo.clearValueCount = static_cast<uint32_t> ( std::size ( clearValues ) );
-    renderPassInfo.pClearValues = clearValues;
-    renderPassInfo.renderArea.offset.x = 0;
-    renderPassInfo.renderArea.offset.y = 0;
-    renderPassInfo.renderArea.extent = _gBuffer.GetResolution ();
-
-    vkCmdBeginRenderPass ( _geometryPassRendering, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE );
-
-    const size_t opaqueCountRaw = _opaqueCalls.size ();
-    const auto opaqueCount = static_cast<const uint32_t> ( opaqueCountRaw );
-
-    std::vector<DescriptorSetInfo> const& descriptoSetInfo = _opaqueProgram.GetResourceInfo ();
-    DescriptorSetInfo const& descriptorSet0 = descriptoSetInfo[ 0U ];
-    const size_t uniqueFeatures = descriptorSet0.size ();
-
-    std::vector<VkDescriptorPoolSize> poolSizeStorage;
-    poolSizeStorage.reserve ( uniqueFeatures );
-
-    for ( auto const& item : descriptorSet0 )
-    {
-        poolSizeStorage.emplace_back (
-            VkDescriptorPoolSize {
-                .type = item._type,
-                .descriptorCount = item._count * opaqueCount
-            }
-        );
-    }
-
-    VkDescriptorPoolCreateInfo poolInfo;
-    poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    poolInfo.pNext = nullptr;
-    poolInfo.flags = 0U;
-    poolInfo.maxSets = opaqueCount;
-    poolInfo.poolSizeCount = static_cast<uint32_t> ( uniqueFeatures );
-    poolInfo.pPoolSizes = poolSizeStorage.data ();
-
-    DestroyDescriptorPool ( renderer );
-
-    result = renderer.CheckVkResult (
-        vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_descriptorPool ),
-        "RenderSession::End",
-        "Can't create descriptor pool"
-    );
-
-    if ( !result )
-        return false;
-
-    AV_REGISTER_DESCRIPTOR_POOL ( "RenderSession::_descriptorPool" )
-
-    const OpaqueTextureDescriptorSetLayout opaqueTextureLayout;
-    VkDescriptorSetLayout opaqueTextureLayoutNative = opaqueTextureLayout.GetLayout ();
-
-    std::vector<VkDescriptorSetLayout> layouts;
-    layouts.reserve ( opaqueCount );
-
-    for ( size_t i = 0U; i < opaqueCount; ++i )
-        layouts.push_back ( opaqueTextureLayoutNative );
-
-    VkDescriptorSetAllocateInfo allocateInfo;
-    allocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    allocateInfo.pNext = nullptr;
-    allocateInfo.descriptorPool = _descriptorPool;
-    allocateInfo.descriptorSetCount = opaqueCount;
-    allocateInfo.pSetLayouts = layouts.data ();
-
-    std::vector<VkDescriptorSet> descriptorSetStorage ( opaqueCount );
-    VkDescriptorSet* descriptorSets = descriptorSetStorage.data ();
-
-    result = renderer.CheckVkResult ( vkAllocateDescriptorSets ( device, &allocateInfo, descriptorSets ),
-        "RenderSession::End",
-        "Can't allocate descriptor sets"
-    );
-
-    if ( !result )
-        return false;
-
-    const size_t textureCount = opaqueCountRaw * 4U;
-    std::vector<VkDescriptorImageInfo> imageStorage;
-    imageStorage.reserve ( textureCount );
-
-    std::vector<VkWriteDescriptorSet> writeStorage;
-    writeStorage.reserve ( textureCount * 2U );
-
-    VkWriteDescriptorSet writeInfo;
-    writeInfo.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    writeInfo.pNext = nullptr;
-    writeInfo.descriptorCount = 1U;
-    writeInfo.dstArrayElement = 0U;
-    writeInfo.pBufferInfo = nullptr;
-    writeInfo.pTexelBufferView = nullptr;
-
-    auto textureBinder = [ & ] ( Texture2DRef &texture,
-        Texture2DRef defaultTexture,
-        uint32_t imageBindSlot,
-        uint32_t samplerBindSlot
-    ) {
-        Texture2DRef& t = texture ? texture : defaultTexture;
-        SamplerRef sampler = g_SamplerStorage.GetSampler ( t, renderer );
-
-        writeInfo.pImageInfo = &imageStorage.emplace_back (
-            VkDescriptorImageInfo {
-                .sampler = sampler->GetSampler (),
-                .imageView = t->GetImageView (),
-                .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-            }
-        );
-
-        writeInfo.dstBinding = imageBindSlot;
-        writeInfo.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-        writeStorage.push_back ( writeInfo );
-
-        writeInfo.dstBinding = samplerBindSlot;
-        writeInfo.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
-        writeStorage.push_back ( writeInfo );
-    };
-
-    size_t i = 0U;
-
-    _opaqueProgram.Bind ( _geometryPassRendering );
-
-    for ( auto const &[material, call] : _opaqueCalls )
-    {
-        writeInfo.dstSet = descriptorSets[ i ];
-        ++i;
-
-        // Warning less casting.
-        auto& m = const_cast<OpaqueMaterial&> (
-            *static_cast<OpaqueMaterial const*> ( reinterpret_cast<void const*> ( &material ) )
-        );
-
-        textureBinder ( m.GetAlbedo (), _albedoDefault, 0U, 1U );
-        textureBinder ( m.GetEmission (), _emissionDefault, 2U, 3U );
-        textureBinder ( m.GetNormal (), _normalDefault, 4U, 5U );
-        textureBinder ( m.GetParam (), _paramDefault, 6U, 7U );
-    }
-
-    vkUpdateDescriptorSets ( device,
-        static_cast<uint32_t> ( writeStorage.size () ),
-        writeStorage.data (),
-        0U,
-        nullptr
-    );
 
     OpaqueProgram::PushConstants transform {};
-    i = 0U;
+
+    size_t i = 0U;
+    size_t uniformUsed = 0U;
+
+    constexpr VkDeviceSize const offset = 0U;
+    VkDescriptorSet const* textureSets = descriptorSetStorage.data ();
+    VkDescriptorSet const* instanceSets = textureSets + _opaqueCalls.size ();
 
     for ( auto const &call : _opaqueCalls )
     {
-        // HACK for debugging purposes.
-        _opaqueProgram.SetDescriptorSet ( _geometryPassRendering, descriptorSets[ i ] );
+        VkDescriptorSet textureSet = textureSets[ i ];
         ++i;
 
+        _opaqueProgram.SetDescriptorSet ( _geometryPassRendering, textureSet );
         OpaqueCall::UniqueList const &uniqueList = call.second.GetUniqueList ();
+
+        if ( !uniqueList.empty () )
+        {
+            // TODO fix to reduce pipeline changes.
+            _opaqueProgram.Bind ( _geometryPassRendering );
+            _opaqueProgram.SetDescriptorSet ( _geometryPassRendering, textureSet );
+        }
 
         for ( auto const &[mesh, local] : uniqueList )
         {
@@ -399,25 +183,88 @@ bool RenderSession::End ( ePresentTarget /*target*/, android_vulkan::Renderer &r
             transform._localViewProjection.Multiply ( local, _viewProjection );
             _opaqueProgram.SetTransform ( _geometryPassRendering, transform );
 
-            constexpr const VkDeviceSize offset = 0U;
             vkCmdBindVertexBuffers ( _geometryPassRendering, 0U, 1U, &mesh->GetBuffer (), &offset );
             vkCmdDraw ( _geometryPassRendering, mesh->GetVertexCount (), 1U, 0U, 0U );
         }
 
-        // TODO emit batched draw calls
+        OpaqueCall::BatchList const &batchList = call.second.GetBatchList ();
+
+        if ( batchList.empty () )
+            continue;
+
+        // TODO fix to reduce pipeline changes.
+        _opaqueBatchProgram.Bind ( _geometryPassRendering );
+
+        auto instanceDrawer = [&] ( MeshRef const &mesh, uint32_t batches ) {
+            _opaqueBatchProgram.SetDescriptorSet ( _geometryPassRendering,
+                textureSet,
+                instanceSets[ uniformUsed ]
+            );
+
+            vkCmdBindVertexBuffers ( _geometryPassRendering, 0U, 1U, &mesh->GetBuffer (), &offset );
+
+            vkCmdDraw ( _geometryPassRendering,
+                mesh->GetVertexCount (),
+                static_cast<uint32_t> ( batches ),
+                0U,
+                0U
+            );
+
+            ++uniformUsed;
+        };
+
+        for ( auto const &item : batchList )
+        {
+            MeshGroup const& group = item.second;
+            MeshRef const& mesh = group._mesh;
+            size_t const instanceCount = group._locals.size ();
+            size_t instanceIndex = 0U;
+            size_t batches = 0U;
+
+            while ( instanceIndex < instanceCount )
+            {
+                batches = std::min ( instanceCount - instanceIndex,
+                    static_cast<size_t> ( PBR_OPAQUE_MAX_INSTANCE_COUNT )
+                );
+
+                instanceIndex += batches;
+
+                if ( batches < PBR_OPAQUE_MAX_INSTANCE_COUNT )
+                    continue;
+
+                instanceDrawer ( mesh, static_cast<uint32_t> ( batches ) );
+                batches = 0U;
+            }
+
+            if ( !batches )
+                continue;
+
+            instanceDrawer ( mesh, static_cast<uint32_t> ( batches ) );
+        }
     }
 
     vkCmdEndRenderPass ( _geometryPassRendering );
 
-    result = renderer.CheckVkResult ( vkEndCommandBuffer ( _geometryPassRendering ),
+    if ( _maximumOpaqueBatchCount > 0U )
+    {
+        bool const result = renderer.CheckVkResult ( vkEndCommandBuffer ( _geometryPassTransfer ),
+            "RenderSession::End",
+            "Can't end transfer command buffer"
+        );
+
+        if ( !result )
+        {
+            return false;
+        }
+    }
+
+    bool result = renderer.CheckVkResult ( vkEndCommandBuffer ( _geometryPassRendering ),
         "RenderSession::End",
         "Can't end command buffer"
     );
 
     if ( !result )
         return false;
-
-    // TODO make transfer submit too
 
     VkSubmitInfo submitInfo;
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -426,13 +273,23 @@ bool RenderSession::End ( ePresentTarget /*target*/, android_vulkan::Renderer &r
     submitInfo.pWaitSemaphores = nullptr;
     submitInfo.pWaitDstStageMask = nullptr;
     submitInfo.commandBufferCount = 1U;
-    submitInfo.pCommandBuffers = &_geometryPassRendering;
+    submitInfo.pCommandBuffers = &_geometryPassTransfer;
     submitInfo.signalSemaphoreCount = 0U;
     submitInfo.pSignalSemaphores = nullptr;
 
+    result = renderer.CheckVkResult ( vkQueueSubmit ( renderer.GetQueue (), 1U, &submitInfo, VK_NULL_HANDLE ),
+        "RenderSession::End",
+        "Can't submit geometry transfer command buffer"
+    );
+
+    if ( !result )
+        return false;
+
+    submitInfo.pCommandBuffers = &_geometryPassRendering;
+
     return renderer.CheckVkResult ( vkQueueSubmit ( renderer.GetQueue (), 1U, &submitInfo, _geometryPassFence ),
         "RenderSession::End",
-        "Can't submit geometry pass command buffer"
+        "Can't submit geometry render command buffer"
     );
 }
 
@@ -700,6 +557,105 @@ void RenderSession::Destroy ( android_vulkan::Renderer &renderer )
     _gBuffer.Destroy ( renderer );
 }
 
+bool RenderSession::BeginGeometryRenderPass ( android_vulkan::Renderer &renderer )
+{
+    VkDevice device = renderer.GetDevice ();
+
+    bool result = renderer.CheckVkResult (
+        vkWaitForFences ( device, 1U, &_geometryPassFence, VK_TRUE, UINT64_MAX ),
+        "RenderSession::BeginGeometryRenderPass",
+        "Can't wait for geometry pass fence"
+    );
+
+    if ( !result )
+        return false;
+
+    result = renderer.CheckVkResult ( vkResetFences ( device, 1U, &_geometryPassFence ),
+        "RenderSession::BeginGeometryRenderPass",
+        "Can't reset geometry pass fence"
+    );
+
+    if ( !result )
+        return false;
+
+    VkCommandBufferBeginInfo beginInfo;
+    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    beginInfo.pNext = nullptr;
+    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+    beginInfo.pInheritanceInfo = nullptr;
+
+    result = renderer.CheckVkResult ( vkBeginCommandBuffer ( _geometryPassRendering, &beginInfo ),
+        "RenderSession::End",
+        "Can't begin geometry pass rendering command buffer"
+    );
+
+    if ( !result )
+        return false;
+
+    VkClearValue clearValues[ GBUFFER_ATTACHMENT_COUNT ];
+    VkClearValue& albedoClear = clearValues[ 0U ];
+    albedoClear.color.float32[ 0U ] = 0.0F;
+    albedoClear.color.float32[ 1U ] = 0.0F;
+    albedoClear.color.float32[ 2U ] = 0.0F;
+    albedoClear.color.float32[ 3U ] = 0.0F;
+
+    VkClearValue& emissionClear = clearValues[ 1U ];
+    emissionClear.color.float32[ 1U ] = 0.0F;
+    emissionClear.color.float32[ 2U ] = 0.0F;
+    emissionClear.color.float32[ 3U ] = 0.0F;
+    emissionClear.color.float32[ 0U ] = 0.0F;
+
+    VkClearValue& normalClear = clearValues[ 2U ];
+    normalClear.color.float32[ 1U ] = 0.5F;
+    normalClear.color.float32[ 2U ] = 0.5F;
+    normalClear.color.float32[ 3U ] = 0.5F;
+    normalClear.color.float32[ 0U ] = 0.0F;
+
+    VkClearValue& paramClear = clearValues[ 3U ];
+    paramClear.color.float32[ 1U ] = 0.5F;
+    paramClear.color.float32[ 2U ] = 0.5F;
+    paramClear.color.float32[ 3U ] = 0.5F;
+    paramClear.color.float32[ 0U ] = 0.0F;
+
+    VkClearValue& depthStencilClear = clearValues[ 4U ];
+    depthStencilClear.depthStencil.depth = 1.0F;
+    depthStencilClear.depthStencil.stencil = 0U;
+
+    VkRenderPassBeginInfo renderPassInfo;
+    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    renderPassInfo.pNext = nullptr;
+    renderPassInfo.renderPass = _gBufferRenderPass;
+    renderPassInfo.framebuffer = _gBufferFramebuffer;
+    renderPassInfo.clearValueCount = static_cast<uint32_t> ( std::size ( clearValues ) );
+    renderPassInfo.pClearValues = clearValues;
+    renderPassInfo.renderArea.offset.x = 0;
+    renderPassInfo.renderArea.offset.y = 0;
+    renderPassInfo.renderArea.extent = _gBuffer.GetResolution ();
+
+    vkCmdBeginRenderPass ( _geometryPassRendering, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE );
+    return true;
+}
+
+void RenderSession::CleanupTransferResources ( android_vulkan::Renderer &renderer )
+{
+    if ( !_isFreeTransferResources )
+        return;
+
+    if ( _albedoDefault )
+        _albedoDefault->FreeTransferResources ( renderer );
+
+    if ( _emissionDefault )
+        _emissionDefault->FreeTransferResources ( renderer );
+
+    if ( _normalDefault )
+        _normalDefault->FreeTransferResources ( renderer );
+
+    if ( _paramDefault )
+        _paramDefault->FreeTransferResources ( renderer );
+
+    _isFreeTransferResources = false;
+}
+
 bool RenderSession::CreateGBufferFramebuffer ( android_vulkan::Renderer &renderer )
 {
     const VkExtent2D& resolution = _gBuffer.GetResolution ();
@@ -885,6 +841,292 @@ void RenderSession::SubmitOpaqueCall ( MeshRef &mesh, MaterialRef &material, GXM
         return;
 
     _maximumOpaqueBatchCount = 1U;
+}
+
+bool RenderSession::UpdateGPUData (  std::vector<VkDescriptorSet> &descriptorSetStorage,
+    android_vulkan::Renderer &renderer
+)
+{
+    size_t const opaqueCount = _opaqueCalls.size ();
+    size_t const textureCount = opaqueCount * 4U;
+
+    std::vector<VkDescriptorImageInfo> imageStorage;
+    imageStorage.reserve ( textureCount );
+
+    std::vector<VkWriteDescriptorSet> writeStorage0;
+    writeStorage0.reserve ( textureCount * 2U );
+
+    std::vector<DescriptorSetInfo> const& descriptorSetInfo = _opaqueProgram.GetResourceInfo ();
+    DescriptorSetInfo const& descriptorSet0 = descriptorSetInfo[ 0U ];
+    size_t uniqueFeatures = descriptorSet0.size ();
+
+    std::vector<VkDescriptorBufferInfo> uniformStorage;
+    std::vector<VkWriteDescriptorSet> writeStorage1;
+    size_t estimationUniformCount = 0U;
+
+    if ( _maximumOpaqueBatchCount > 0U )
+    {
+        VkCommandBufferBeginInfo beginInfo;
+        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        beginInfo.pNext = nullptr;
+        beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+        beginInfo.pInheritanceInfo = nullptr;
+
+        bool const result = renderer.CheckVkResult ( vkBeginCommandBuffer ( _geometryPassTransfer, &beginInfo ),
+            "RenderSession::UpdateGPUData",
+            "Can't begin geometry pass transfer command buffer"
+        );
+
+        if ( !result )
+            return false;
+
+        // Note reserve size is a of top estimation.
+        estimationUniformCount = _maximumOpaqueBatchCount * _opaqueCalls.size ();
+        uniformStorage.reserve ( estimationUniformCount );
+        writeStorage1.reserve ( estimationUniformCount );
+        ++uniqueFeatures;
+    }
+
+    std::vector<VkDescriptorPoolSize> poolSizeStorage;
+    poolSizeStorage.reserve ( uniqueFeatures );
+
+    for ( auto const &item : descriptorSet0 )
+    {
+        poolSizeStorage.emplace_back (
+            VkDescriptorPoolSize {
+                .type = item._type,
+                .descriptorCount = static_cast<uint32_t> ( item._count * opaqueCount )
+            }
+        );
+    }
+
+    if ( _maximumOpaqueBatchCount > 0U )
+    {
+        poolSizeStorage.emplace_back (
+            VkDescriptorPoolSize {
+                .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                .descriptorCount = static_cast<uint32_t> ( estimationUniformCount )
+            }
+        );
+    }
+
+    VkDescriptorPoolCreateInfo poolInfo;
+    poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+    poolInfo.pNext = nullptr;
+    poolInfo.flags = 0U;
+    poolInfo.maxSets = static_cast<uint32_t> ( opaqueCount + estimationUniformCount );
+    poolInfo.poolSizeCount = static_cast<uint32_t> ( poolSizeStorage.size () );
+    poolInfo.pPoolSizes = poolSizeStorage.data ();
+
+    DestroyDescriptorPool ( renderer );
+    VkDevice device = renderer.GetDevice ();
+
+    bool result = renderer.CheckVkResult (
+        vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_descriptorPool ),
+        "RenderSession::UpdateGPUData",
+        "Can't create descriptor pool"
+    );
+
+    if ( !result )
+        return false;
+
+    AV_REGISTER_DESCRIPTOR_POOL ( "RenderSession::_descriptorPool" )
+
+    const OpaqueTextureDescriptorSetLayout opaqueTextureLayout;
+    VkDescriptorSetLayout opaqueTextureLayoutNative = opaqueTextureLayout.GetLayout ();
+
+    std::vector<VkDescriptorSetLayout> layouts;
+    layouts.reserve ( static_cast<size_t> ( poolInfo.maxSets ) );
+
+    for ( uint32_t i = 0U; i < opaqueCount; ++i )
+        layouts.push_back ( opaqueTextureLayoutNative );
+
+    const OpaqueInstanceDescriptorSetLayout instanceLayout;
+    VkDescriptorSetLayout instanceLayoutNative = instanceLayout.GetLayout ();
+
+    for ( uint32_t i = opaqueCount; i < poolInfo.maxSets; ++i )
+        layouts.push_back ( instanceLayoutNative );
+
+    VkDescriptorSetAllocateInfo allocateInfo;
+    allocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+    allocateInfo.pNext = nullptr;
+    allocateInfo.descriptorPool = _descriptorPool;
+    allocateInfo.descriptorSetCount = poolInfo.maxSets;
+    allocateInfo.pSetLayouts = layouts.data ();
+
+    descriptorSetStorage.resize ( static_cast<size_t> ( poolInfo.maxSets ) );
+    VkDescriptorSet* descriptorSets = descriptorSetStorage.data ();
+
+    result = renderer.CheckVkResult ( vkAllocateDescriptorSets ( device, &allocateInfo, descriptorSets ),
+        "RenderSession::UpdateGPUData",
+        "Can't allocate descriptor sets"
+    );
+
+    if ( !result )
+        return false;
+
+    VkWriteDescriptorSet writeInfo0;
+    writeInfo0.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    writeInfo0.pNext = nullptr;
+    writeInfo0.descriptorCount = 1U;
+    writeInfo0.dstArrayElement = 0U;
+    writeInfo0.pBufferInfo = nullptr;
+    writeInfo0.pTexelBufferView = nullptr;
+
+    auto textureBinder = [ & ] ( Texture2DRef &texture,
+        Texture2DRef defaultTexture,
+        uint32_t imageBindSlot,
+        uint32_t samplerBindSlot
+    ) {
+        Texture2DRef& t = texture ? texture : defaultTexture;
+        SamplerRef sampler = g_SamplerStorage.GetSampler ( t, renderer );
+
+        writeInfo0.pImageInfo = &imageStorage.emplace_back (
+            VkDescriptorImageInfo {
+                .sampler = sampler->GetSampler (),
+                .imageView = t->GetImageView (),
+                .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+            }
+        );
+
+        writeInfo0.dstBinding = imageBindSlot;
+        writeInfo0.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+        writeStorage0.push_back ( writeInfo0 );
+
+        writeInfo0.dstBinding = samplerBindSlot;
+        writeInfo0.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
+        writeStorage0.push_back ( writeInfo0 );
+    };
+
+    VkWriteDescriptorSet writeInfo1;
+    writeInfo1.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    writeInfo1.pNext = nullptr;
+    writeInfo1.dstBinding = 0U;
+    writeInfo1.dstArrayElement = 0U;
+    writeInfo1.descriptorCount = 1U;
+    writeInfo1.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    writeInfo1.pImageInfo = nullptr;
+    writeInfo1.pTexelBufferView = nullptr;
+
+    auto uniformBinder = [ & ] ( VkBuffer uniformBuffer, VkDescriptorSet descriptorSet ) {
+        writeInfo1.pBufferInfo = &uniformStorage.emplace_back (
+            VkDescriptorBufferInfo {
+                .buffer = uniformBuffer,
+                .offset = 0U,
+                .range = static_cast<VkDeviceSize> ( sizeof ( OpaqueBatchProgram::InstanceData ) )
+            }
+        );
+
+        writeInfo1.dstSet = descriptorSet;
+        writeInfo1.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        writeStorage1.push_back ( writeInfo1 );
+    };
+
+    size_t i = 0U;
+
+    for ( auto const &[material, call] : _opaqueCalls )
+    {
+        writeInfo0.dstSet = descriptorSets[ i ];
+        ++i;
+
+        // Warning less casting.
+        auto& m = const_cast<OpaqueMaterial&> (
+            *static_cast<OpaqueMaterial const*> ( reinterpret_cast<void const*> ( &material ) )
+        );
+
+        textureBinder ( m.GetAlbedo (), _albedoDefault, 0U, 1U );
+        textureBinder ( m.GetEmission (), _emissionDefault, 2U, 3U );
+        textureBinder ( m.GetNormal (), _normalDefault, 4U, 5U );
+        textureBinder ( m.GetParam (), _paramDefault, 6U, 7U );
+    }
+
+    vkUpdateDescriptorSets ( device,
+        static_cast<uint32_t> ( writeStorage0.size () ),
+        writeStorage0.data (),
+        0U,
+        nullptr
+    );
+
+    OpaqueBatchProgram::InstanceData instanceData {};
+    _uniformBufferPool.Reset ();
+
+    size_t uniformUsed = 0U;
+    size_t const maxUniforms = _uniformBufferPool.GetItemCount ();
+    VkDescriptorSet const* instanceDescriptorSet = descriptorSets + _opaqueCalls.size ();
+
+    for ( auto const &call : _opaqueCalls )
+    {
+        OpaqueCall::BatchList const &batchList = call.second.GetBatchList ();
+
+        if ( batchList.empty () )
+            continue;
+
+        for ( auto const &item : batchList )
+        {
+            MeshGroup const& group = item.second;
+            size_t instanceIndex = 0U;
+
+            for ( auto const &local : group._locals )
+            {
+                if ( uniformUsed >= maxUniforms )
+                {
+                    android_vulkan::LogError (
+                        "RenderSession::UpdateGPUData - Uniform pool overflow has been detected!"
+                    );
+
+                    return false;
+                }
+
+                if ( instanceIndex >= PBR_OPAQUE_MAX_INSTANCE_COUNT )
+                {
+                    uniformBinder (
+                        _uniformBufferPool.Acquire ( _geometryPassTransfer,
+                            instanceData._instanceData,
+                            VK_PIPELINE_STAGE_VERTEX_SHADER_BIT,
+                            renderer
+                        ),
+
+                        instanceDescriptorSet[ uniformUsed ]
+                    );
+
+                    instanceIndex = 0U;
+                    ++uniformUsed;
+                }
+
+                OpaqueBatchProgram::ObjectData& objectData = instanceData._instanceData[ instanceIndex ];
+                ++instanceIndex;
+
+                // TODO frustum test
+
+                objectData._localView.Multiply ( local, _view );
+                objectData._localViewProjection.Multiply ( local, _viewProjection );
+            }
+
+            if ( !instanceIndex )
+                continue;
+
+            uniformBinder (
+                _uniformBufferPool.Acquire ( _geometryPassTransfer,
+                    instanceData._instanceData,
+                    VK_PIPELINE_STAGE_VERTEX_SHADER_BIT,
+                    renderer
+                ),
+
+                instanceDescriptorSet[ uniformUsed ]
+            );
+
+            ++uniformUsed;
+        }
+    }
+
+    vkUpdateDescriptorSets ( device,
+        static_cast<uint32_t> ( writeStorage1.size () ),
+        writeStorage1.data (),
+        0U,
+        nullptr
+    );
+
+    return true;
 }
 
 } // namespace pbr

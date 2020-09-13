@@ -26,11 +26,13 @@ class UniformBufferPool final
         UniformBufferPool& operator = ( UniformBufferPool &&other ) = delete;
 
         // The method acquires one uniform buffer from the pool, inits it with data and returns the buffer to the user.
-        [[nodiscard]] [[maybe_unused]] VkBuffer Acquire ( VkCommandBuffer commandBuffer, void const* data,
+        [[nodiscard]] VkBuffer Acquire ( VkCommandBuffer commandBuffer,
+            void const* data,
+            VkPipelineStageFlags targetStages,
             android_vulkan::Renderer &renderer
         );
 
-        [[nodiscard]] [[maybe_unused]] size_t GetItemCount () const;
+        [[nodiscard]] size_t GetItemCount () const;
 
         // The method return all items to the pool.
         [[maybe_unused]] void Reset ();

@@ -32,11 +32,9 @@ class SamplerStorage final
         SamplerStorage ( const SamplerStorage &other ) = delete;
         SamplerStorage& operator = ( const SamplerStorage &other ) = delete;
 
-        [[maybe_unused]] void FreeResources ( android_vulkan::Renderer &renderer );
+        void FreeResources ( android_vulkan::Renderer &renderer );
 
-        [[maybe_unused]] [[nodiscard]] SamplerRef GetSampler ( Texture2DRef &texture,
-            android_vulkan::Renderer &renderer
-        );
+        [[nodiscard]] SamplerRef GetSampler ( uint8_t mips, android_vulkan::Renderer &renderer );
 };
 
 void SamplerStorage::FreeResources ( android_vulkan::Renderer &renderer )
@@ -51,9 +49,8 @@ void SamplerStorage::FreeResources ( android_vulkan::Renderer &renderer )
     }
 }
 
-SamplerRef SamplerStorage::GetSampler ( Texture2DRef &texture, android_vulkan::Renderer &renderer )
+SamplerRef SamplerStorage::GetSampler ( uint8_t mips, android_vulkan::Renderer &renderer )
 {
-    const uint8_t mips = texture->GetMipLevelCount ();
     SamplerRef& target = _storage[ static_cast<size_t> ( mips ) ];
 
     if ( target )
@@ -111,6 +108,10 @@ RenderSession::RenderSession ():
     _opaqueBatchProgram {},
     _opaqueProgram {},
     _texturePresentProgram {},
+    _presentFramebuffers {},
+    _presentRenderPass ( VK_NULL_HANDLE ),
+    _presentRenderPassEndSemaphore ( VK_NULL_HANDLE ),
+    _presentRenderTargetAcquiredSemaphore ( VK_NULL_HANDLE ),
     _view {},
     _viewProjection {}
 {
@@ -158,7 +159,7 @@ bool RenderSession::End ( ePresentTarget /*target*/, android_vulkan::Renderer &r
 
     constexpr VkDeviceSize const offset = 0U;
     VkDescriptorSet const* textureSets = descriptorSetStorage.data ();
-    VkDescriptorSet const* instanceSets = textureSets + _opaqueCalls.size ();
+    VkDescriptorSet const* instanceSets = textureSets + ( _opaqueCalls.size () + 1U );
 
     for ( auto const &call : _opaqueCalls )
     {
@@ -245,20 +246,83 @@ bool RenderSession::End ( ePresentTarget /*target*/, android_vulkan::Renderer &r
 
     vkCmdEndRenderPass ( _geometryPassRendering );
 
-    if ( _maximumOpaqueBatchCount > 0U )
-    {
-        bool const result = renderer.CheckVkResult ( vkEndCommandBuffer ( _geometryPassTransfer ),
-            "RenderSession::End",
-            "Can't end transfer command buffer"
-        );
+    android_vulkan::Texture2D& targetTexture = _gBuffer.GetAlbedo ();
 
-        if ( !result )
-        {
-            return false;
-        }
-    }
+    VkImageMemoryBarrier imageBarrier;
+    imageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    imageBarrier.pNext = nullptr;
+    imageBarrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+    imageBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+    imageBarrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    imageBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    imageBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    imageBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    imageBarrier.image = targetTexture.GetImage ();
+    imageBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    imageBarrier.subresourceRange.baseMipLevel = 0U;
+    imageBarrier.subresourceRange.levelCount = static_cast<uint32_t> ( targetTexture.GetMipLevelCount () );
+    imageBarrier.subresourceRange.baseArrayLayer = 0U;
+    imageBarrier.subresourceRange.layerCount = 1U;
 
-    bool result = renderer.CheckVkResult ( vkEndCommandBuffer ( _geometryPassRendering ),
+    vkCmdPipelineBarrier ( _geometryPassRendering,
+        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+        0U,
+        0U,
+        nullptr,
+        0U,
+        nullptr,
+        1U,
+        &imageBarrier
+    );
+
+    uint32_t framebufferIndex = UINT32_MAX;
+
+    bool result = renderer.CheckVkResult (
+        vkAcquireNextImageKHR ( renderer.GetDevice (),
+            renderer.GetSwapchain (),
+            UINT64_MAX,
+            _presentRenderTargetAcquiredSemaphore,
+            VK_NULL_HANDLE,
+            &framebufferIndex
+        ),
+
+        "RenderSession::End",
+        "Can't get presentation image index"
+    );
+
+    if ( !result )
+        return false;
+
+    VkClearValue clearValue;
+    clearValue.color.float32[ 0U ] = 0.0F;
+    clearValue.color.float32[ 1U ] = 0.0F;
+    clearValue.color.float32[ 2U ] = 0.0F;
+    clearValue.color.float32[ 3U ] = 0.0F;
+
+    VkRenderPassBeginInfo renderPassInfo;
+    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    renderPassInfo.pNext = nullptr;
+    renderPassInfo.renderPass = _presentRenderPass;
+    renderPassInfo.framebuffer = _presentFramebuffers[ framebufferIndex ];
+    renderPassInfo.clearValueCount = 1U;
+    renderPassInfo.pClearValues = &clearValue;
+    renderPassInfo.renderArea.offset.x = 0;
+    renderPassInfo.renderArea.offset.y = 0;
+    renderPassInfo.renderArea.extent = renderer.GetSurfaceSize ();
+
+    vkCmdBeginRenderPass ( _geometryPassRendering, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE );
+    _texturePresentProgram.Bind ( _geometryPassRendering );
+
+    _texturePresentProgram.SetData ( _geometryPassRendering,
+        descriptorSetStorage[ _opaqueCalls.size () ],
+        renderer.GetPresentationEngineTransform ()
+    );
+
+    vkCmdDraw ( _geometryPassRendering, 4U, 1U, 0U, 0U );
+    vkCmdEndRenderPass ( _geometryPassRendering );
+
+    result = renderer.CheckVkResult ( vkEndCommandBuffer ( _geometryPassRendering ),
         "RenderSession::End",
         "Can't end command buffer"
     );
@@ -266,44 +330,71 @@ bool RenderSession::End ( ePresentTarget /*target*/, android_vulkan::Renderer &r
     if ( !result )
         return false;
 
+    constexpr VkPipelineStageFlags const waitStage =
+        AV_VK_FLAG ( VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT ) |
+        AV_VK_FLAG ( VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT ) |
+        AV_VK_FLAG ( VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT );
+
     VkSubmitInfo submitInfo;
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     submitInfo.pNext = nullptr;
-    submitInfo.waitSemaphoreCount = 0U;
-    submitInfo.pWaitSemaphores = nullptr;
-    submitInfo.pWaitDstStageMask = nullptr;
+    submitInfo.waitSemaphoreCount = 1U;
+    submitInfo.pWaitSemaphores = &_presentRenderTargetAcquiredSemaphore;
+    submitInfo.pWaitDstStageMask = &waitStage;
     submitInfo.commandBufferCount = 1U;
-    submitInfo.pCommandBuffers = &_geometryPassTransfer;
-    submitInfo.signalSemaphoreCount = 0U;
-    submitInfo.pSignalSemaphores = nullptr;
+    submitInfo.pCommandBuffers = &_geometryPassRendering;
+    submitInfo.signalSemaphoreCount = 1U;
+    submitInfo.pSignalSemaphores = &_presentRenderPassEndSemaphore;
 
-    result = renderer.CheckVkResult ( vkQueueSubmit ( renderer.GetQueue (), 1U, &submitInfo, VK_NULL_HANDLE ),
+    result = renderer.CheckVkResult ( vkQueueSubmit ( renderer.GetQueue (), 1U, &submitInfo, _geometryPassFence ),
         "RenderSession::End",
-        "Can't submit geometry transfer command buffer"
+        "Can't submit geometry render command buffer"
     );
 
     if ( !result )
         return false;
 
-    submitInfo.pCommandBuffers = &_geometryPassRendering;
+    VkResult presentResult = VK_ERROR_DEVICE_LOST;
 
-    return renderer.CheckVkResult ( vkQueueSubmit ( renderer.GetQueue (), 1U, &submitInfo, _geometryPassFence ),
-        "RenderSession::End",
-        "Can't submit geometry render command buffer"
+    VkPresentInfoKHR presentInfo;
+    presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+    presentInfo.pNext = nullptr;
+    presentInfo.waitSemaphoreCount = 1U;
+    presentInfo.pWaitSemaphores = &_presentRenderPassEndSemaphore;
+    presentInfo.pResults = &presentResult;
+    presentInfo.swapchainCount = 1U;
+    presentInfo.pSwapchains = &renderer.GetSwapchain ();
+    presentInfo.pImageIndices = &framebufferIndex;
+
+    result = renderer.CheckVkResult ( vkQueuePresentKHR ( renderer.GetQueue (), &presentInfo ),
+        "RenderSession::EndFrame",
+        "Can't present frame"
     );
+
+    if ( !result )
+        return false;
+
+    return renderer.CheckVkResult ( presentResult, "RenderSession::EndFrame", "Present queue has been failed" );
 }
 
- VkExtent2D const& RenderSession::GetResolution () const
+VkExtent2D const& RenderSession::GetResolution () const
 {
     return _gBuffer.GetResolution ();
 }
 
-bool RenderSession::Init ( android_vulkan::Renderer &renderer, VkRenderPass presentRenderPass )
+bool RenderSession::Init ( android_vulkan::Renderer &renderer,
+    VkRenderPass presentRenderPass,
+    VkExtent2D const &resolution
+)
 {
-    VkDevice device = renderer.GetDevice ();
-
-    if ( !_gBuffer.Init ( renderer.GetViewportResolution (), renderer ) )
+    if ( !_gBuffer.Init ( resolution, renderer ) )
         return false;
+
+    if ( !CreateSyncPrimitives ( renderer ) )
+    {
+        Destroy ( renderer );
+        return false;
+    }
 
     if ( !CreateGBufferRenderPass ( renderer ) )
     {
@@ -317,10 +408,24 @@ bool RenderSession::Init ( android_vulkan::Renderer &renderer, VkRenderPass pres
         return false;
     }
 
+    if ( !CreatePresentRenderPass ( renderer ) )
+    {
+        Destroy ( renderer );
+        return false;
+    }
+
+    if ( !CreatePresentFramebuffers ( renderer ) )
+    {
+        Destroy ( renderer );
+        return false;
+    }
+
     VkFenceCreateInfo fenceInfo;
     fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
     fenceInfo.pNext = nullptr;
     fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+    VkDevice device = renderer.GetDevice ();
 
     bool result = renderer.CheckVkResult ( vkCreateFence ( device, &fenceInfo, nullptr, &_geometryPassFence ),
         "RenderSession::Init",
@@ -334,8 +439,6 @@ bool RenderSession::Init ( android_vulkan::Renderer &renderer, VkRenderPass pres
     }
 
     AV_REGISTER_FENCE ( "RenderSession::_geometryPassFence" )
-
-    VkExtent2D const& resolution = _gBuffer.GetResolution ();
 
     if ( !_opaqueBatchProgram.Init ( renderer, _gBufferRenderPass, resolution ) )
     {
@@ -540,6 +643,15 @@ void RenderSession::Destroy ( android_vulkan::Renderer &renderer )
         AV_UNREGISTER_FENCE ( "RenderSession::_geometryPassFence" )
     }
 
+    DestroyPresentFramebuffers ( renderer );
+
+    if ( _presentRenderPass != VK_NULL_HANDLE )
+    {
+        vkDestroyRenderPass ( device, _presentRenderPass, nullptr );
+        _presentRenderPass = VK_NULL_HANDLE;
+        AV_UNREGISTER_RENDER_PASS ( "RenderSession::_presentRenderPass" )
+    }
+
     if ( _gBufferFramebuffer != VK_NULL_HANDLE )
     {
         vkDestroyFramebuffer ( device, _gBufferFramebuffer, nullptr );
@@ -554,6 +666,7 @@ void RenderSession::Destroy ( android_vulkan::Renderer &renderer )
         AV_UNREGISTER_RENDER_PASS ( "RenderSession::_gBufferRenderPass" )
     }
 
+    DestroySyncPrimitives ( renderer );
     _gBuffer.Destroy ( renderer );
 }
 
@@ -656,18 +769,19 @@ void RenderSession::CleanupTransferResources ( android_vulkan::Renderer &rendere
     _isFreeTransferResources = false;
 }
 
+
 bool RenderSession::CreateGBufferFramebuffer ( android_vulkan::Renderer &renderer )
 {
     const VkExtent2D& resolution = _gBuffer.GetResolution ();
 
     VkImageView attachments[ GBUFFER_ATTACHMENT_COUNT ] =
-    {
-        _gBuffer.GetAlbedo ().GetImageView (),
-        _gBuffer.GetEmission ().GetImageView (),
-        _gBuffer.GetNormal ().GetImageView (),
-        _gBuffer.GetParams ().GetImageView (),
-        _gBuffer.GetDepthStencil ().GetImageView ()
-    };
+        {
+            _gBuffer.GetAlbedo ().GetImageView (),
+            _gBuffer.GetEmission ().GetImageView (),
+            _gBuffer.GetNormal ().GetImageView (),
+            _gBuffer.GetParams ().GetImageView (),
+            _gBuffer.GetDepthStencil ().GetImageView ()
+        };
 
     VkFramebufferCreateInfo framebufferInfo;
     framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
@@ -810,6 +924,164 @@ bool RenderSession::CreateGBufferRenderPass ( android_vulkan::Renderer &renderer
     return true;
 }
 
+bool RenderSession::CreatePresentFramebuffers ( android_vulkan::Renderer &renderer )
+{
+    size_t const framebufferCount = renderer.GetPresentImageCount ();
+    _presentFramebuffers.reserve ( framebufferCount );
+    VkFramebuffer framebuffer = VK_NULL_HANDLE;
+
+    VkExtent2D const& resolution = renderer.GetSurfaceSize ();
+
+    VkFramebufferCreateInfo framebufferInfo;
+    framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+    framebufferInfo.pNext = nullptr;
+    framebufferInfo.flags = 0U;
+    framebufferInfo.renderPass = _presentRenderPass;
+    framebufferInfo.layers = 1U;
+    framebufferInfo.width = resolution.width;
+    framebufferInfo.height = resolution.height;
+    framebufferInfo.attachmentCount = 1U;
+
+    VkDevice device = renderer.GetDevice ();
+
+    for ( size_t i = 0U; i < framebufferCount; ++i )
+    {
+        framebufferInfo.pAttachments = &renderer.GetPresentImageView ( i );
+
+        bool const result = renderer.CheckVkResult (
+            vkCreateFramebuffer ( device, &framebufferInfo, nullptr, &framebuffer ),
+            "RenderSession::CreatePresentFramebuffers",
+            "Can't create a framebuffer"
+        );
+
+        if ( !result )
+            return false;
+
+        _presentFramebuffers.push_back ( framebuffer );
+        AV_REGISTER_FRAMEBUFFER ( "RenderSession::_presentFramebuffers" )
+    }
+
+    return true;
+}
+
+void RenderSession::DestroyPresentFramebuffers ( android_vulkan::Renderer &renderer )
+{
+    VkDevice device = renderer.GetDevice ();
+
+    for ( auto framebuffer : _presentFramebuffers )
+    {
+        vkDestroyFramebuffer ( device, framebuffer, nullptr );
+        AV_UNREGISTER_FRAMEBUFFER ( "RenderSession::_presentFramebuffers" )
+    }
+
+    _presentFramebuffers.clear ();
+}
+
+bool RenderSession::CreatePresentRenderPass ( android_vulkan::Renderer &renderer )
+{
+    VkAttachmentDescription attachment;
+    attachment.flags = 0U;
+    attachment.format = renderer.GetSurfaceFormat ();
+    attachment.samples = VK_SAMPLE_COUNT_1_BIT;
+    attachment.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+    VkAttachmentReference reference;
+    reference.attachment = 0U;
+    reference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+    VkSubpassDescription subpass;
+    subpass.flags = 0U;
+    subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+    subpass.inputAttachmentCount = 0U;
+    subpass.pInputAttachments = nullptr;
+    subpass.colorAttachmentCount = 1U;
+    subpass.pColorAttachments = &reference;
+    subpass.pResolveAttachments = nullptr;
+    subpass.pDepthStencilAttachment = nullptr;
+    subpass.preserveAttachmentCount = 0U;
+    subpass.pPreserveAttachments = nullptr;
+
+    VkRenderPassCreateInfo info;
+    info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+    info.pNext = nullptr;
+    info.flags = 0U;
+    info.attachmentCount = 1U;
+    info.pAttachments = &attachment;
+    info.subpassCount = 1U;
+    info.pSubpasses = &subpass;
+    info.dependencyCount = 0U;
+    info.pDependencies = nullptr;
+
+    bool const result = renderer.CheckVkResult (
+        vkCreateRenderPass ( renderer.GetDevice (), &info, nullptr, &_presentRenderPass ),
+        "RenderSession::CreatePresentRenderPass",
+        "Can't create render pass"
+    );
+
+    if ( !result )
+        return false;
+
+    AV_REGISTER_RENDER_PASS ( "RenderSession::_presentRenderPass" )
+    return true;
+}
+
+bool RenderSession::CreateSyncPrimitives ( android_vulkan::Renderer &renderer )
+{
+    VkSemaphoreCreateInfo semaphoreInfo;
+    semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+    semaphoreInfo.pNext = nullptr;
+    semaphoreInfo.flags = 0U;
+
+    VkDevice device = renderer.GetDevice ();
+
+    bool result = renderer.CheckVkResult (
+        vkCreateSemaphore ( device, &semaphoreInfo, nullptr, &_presentRenderPassEndSemaphore ),
+        "RenderSession::CreateSyncPrimitives",
+        "Can't create render pass end semaphore"
+    );
+
+    if ( !result )
+        return false;
+
+    AV_REGISTER_SEMAPHORE ( "RenderSession::_presentRenderPassEndSemaphore" )
+
+    result = renderer.CheckVkResult (
+        vkCreateSemaphore ( device, &semaphoreInfo, nullptr, &_presentRenderTargetAcquiredSemaphore ),
+        "RenderSession::CreateSyncPrimitives",
+        "Can't create render target acquired semaphore"
+    );
+
+    if ( !result )
+        return false;
+
+    AV_REGISTER_SEMAPHORE ( "RenderSession::_presentRenderTargetAcquiredSemaphore" )
+    return true;
+}
+
+void RenderSession::DestroySyncPrimitives ( android_vulkan::Renderer &renderer )
+{
+    VkDevice device = renderer.GetDevice ();
+
+    if ( _presentRenderTargetAcquiredSemaphore != VK_NULL_HANDLE )
+    {
+        vkDestroySemaphore ( device, _presentRenderTargetAcquiredSemaphore, nullptr );
+        _presentRenderTargetAcquiredSemaphore = VK_NULL_HANDLE;
+        AV_UNREGISTER_SEMAPHORE ( "RenderSession::_presentRenderTargetAcquiredSemaphore" )
+    }
+
+    if ( _presentRenderPassEndSemaphore == VK_NULL_HANDLE )
+        return;
+
+    vkDestroySemaphore ( device, _presentRenderPassEndSemaphore, nullptr );
+    _presentRenderPassEndSemaphore = VK_NULL_HANDLE;
+    AV_UNREGISTER_SEMAPHORE ( "RenderSession::_presentRenderPassEndSemaphore" )
+}
+
 void RenderSession::DestroyDescriptorPool ( android_vulkan::Renderer &renderer )
 {
     if ( _descriptorPool == VK_NULL_HANDLE )
@@ -848,7 +1120,7 @@ bool RenderSession::UpdateGPUData (  std::vector<VkDescriptorSet> &descriptorSet
 )
 {
     size_t const opaqueCount = _opaqueCalls.size ();
-    size_t const textureCount = opaqueCount * 4U;
+    size_t const textureCount = opaqueCount * 4U + 1U;
 
     std::vector<VkDescriptorImageInfo> imageStorage;
     imageStorage.reserve ( textureCount );
@@ -895,7 +1167,7 @@ bool RenderSession::UpdateGPUData (  std::vector<VkDescriptorSet> &descriptorSet
         poolSizeStorage.emplace_back (
             VkDescriptorPoolSize {
                 .type = item._type,
-                .descriptorCount = static_cast<uint32_t> ( item._count * opaqueCount )
+                .descriptorCount = static_cast<uint32_t> ( item._count * opaqueCount + 1U )
             }
         );
     }
@@ -914,7 +1186,7 @@ bool RenderSession::UpdateGPUData (  std::vector<VkDescriptorSet> &descriptorSet
     poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
     poolInfo.pNext = nullptr;
     poolInfo.flags = 0U;
-    poolInfo.maxSets = static_cast<uint32_t> ( opaqueCount + estimationUniformCount );
+    poolInfo.maxSets = static_cast<uint32_t> ( opaqueCount + 1U + estimationUniformCount );
     poolInfo.poolSizeCount = static_cast<uint32_t> ( poolSizeStorage.size () );
     poolInfo.pPoolSizes = poolSizeStorage.data ();
 
@@ -941,10 +1213,13 @@ bool RenderSession::UpdateGPUData (  std::vector<VkDescriptorSet> &descriptorSet
     for ( uint32_t i = 0U; i < opaqueCount; ++i )
         layouts.push_back ( opaqueTextureLayoutNative );
 
+    const TexturePresentDescriptorSetLayout texturePresentLayout;
+    layouts.emplace_back ( texturePresentLayout.GetLayout () );
+
     const OpaqueInstanceDescriptorSetLayout instanceLayout;
     VkDescriptorSetLayout instanceLayoutNative = instanceLayout.GetLayout ();
 
-    for ( uint32_t i = opaqueCount; i < poolInfo.maxSets; ++i )
+    for ( uint32_t i = opaqueCount + 1U; i < poolInfo.maxSets; ++i )
         layouts.push_back ( instanceLayoutNative );
 
     VkDescriptorSetAllocateInfo allocateInfo;
@@ -974,12 +1249,12 @@ bool RenderSession::UpdateGPUData (  std::vector<VkDescriptorSet> &descriptorSet
     writeInfo0.pTexelBufferView = nullptr;
 
     auto textureBinder = [ & ] ( Texture2DRef &texture,
-        Texture2DRef defaultTexture,
+        Texture2DRef &defaultTexture,
         uint32_t imageBindSlot,
         uint32_t samplerBindSlot
     ) {
         Texture2DRef& t = texture ? texture : defaultTexture;
-        SamplerRef sampler = g_SamplerStorage.GetSampler ( t, renderer );
+        SamplerRef sampler = g_SamplerStorage.GetSampler ( t->GetMipLevelCount (), renderer );
 
         writeInfo0.pImageInfo = &imageStorage.emplace_back (
             VkDescriptorImageInfo {
@@ -1040,6 +1315,26 @@ bool RenderSession::UpdateGPUData (  std::vector<VkDescriptorSet> &descriptorSet
         textureBinder ( m.GetParam (), _paramDefault, 6U, 7U );
     }
 
+    android_vulkan::Texture2D& albedo = _gBuffer.GetAlbedo ();
+    SamplerRef sampler = g_SamplerStorage.GetSampler ( albedo.GetMipLevelCount (), renderer );
+
+    writeInfo0.pImageInfo = &imageStorage.emplace_back (
+        VkDescriptorImageInfo {
+            .sampler = sampler->GetSampler (),
+            .imageView = albedo.GetImageView (),
+            .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+        }
+    );
+
+    writeInfo0.dstSet = descriptorSets[ _opaqueCalls.size () ];
+    writeInfo0.dstBinding = 0U;
+    writeInfo0.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+    writeStorage0.push_back ( writeInfo0 );
+
+    writeInfo0.dstBinding = 1U;
+    writeInfo0.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
+    writeStorage0.push_back ( writeInfo0 );
+
     vkUpdateDescriptorSets ( device,
         static_cast<uint32_t> ( writeStorage0.size () ),
         writeStorage0.data (),
@@ -1052,7 +1347,7 @@ bool RenderSession::UpdateGPUData (  std::vector<VkDescriptorSet> &descriptorSet
 
     size_t uniformUsed = 0U;
     size_t const maxUniforms = _uniformBufferPool.GetItemCount ();
-    VkDescriptorSet const* instanceDescriptorSet = descriptorSets + _opaqueCalls.size ();
+    VkDescriptorSet const* instanceDescriptorSet = descriptorSets + ( _opaqueCalls.size () + 1U );
 
     for ( auto const &call : _opaqueCalls )
     {
@@ -1119,6 +1414,9 @@ bool RenderSession::UpdateGPUData (  std::vector<VkDescriptorSet> &descriptorSet
         }
     }
 
+    if ( _maximumOpaqueBatchCount == 0U )
+        return true;
+
     vkUpdateDescriptorSets ( device,
         static_cast<uint32_t> ( writeStorage1.size () ),
         writeStorage1.data (),
@@ -1126,7 +1424,29 @@ bool RenderSession::UpdateGPUData (  std::vector<VkDescriptorSet> &descriptorSet
         nullptr
     );
 
-    return true;
+    result = renderer.CheckVkResult ( vkEndCommandBuffer ( _geometryPassTransfer ),
+        "RenderSession::UpdateGPUData",
+        "Can't end transfer command buffer"
+    );
+
+    if ( !result )
+        return false;
+
+    VkSubmitInfo submitInfo;
+    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submitInfo.pNext = nullptr;
+    submitInfo.waitSemaphoreCount = 0U;
+    submitInfo.pWaitSemaphores = nullptr;
+    submitInfo.pWaitDstStageMask = nullptr;
+    submitInfo.commandBufferCount = 1U;
+    submitInfo.pCommandBuffers = &_geometryPassTransfer;
+    submitInfo.signalSemaphoreCount = 0U;
+    submitInfo.pSignalSemaphores = nullptr;
+
+    return renderer.CheckVkResult ( vkQueueSubmit ( renderer.GetQueue (), 1U, &submitInfo, VK_NULL_HANDLE ),
+        "RenderSession::UpdateGPUData",
+        "Can't submit geometry transfer command buffer"
+    );
 }
 
 } // namespace pbr

@@ -55,6 +55,7 @@ class Texture2D final
         void FreeTransferResources ( android_vulkan::Renderer &renderer );
 
         [[nodiscard]] VkFormat GetFormat () const;
+        [[nodiscard]] VkImage GetImage () const;
         [[nodiscard]] VkImageView GetImageView () const;
         [[nodiscard]] uint8_t GetMipLevelCount () const;
         [[nodiscard]] const std::string& GetName () const;

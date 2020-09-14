@@ -144,6 +144,11 @@ VkFormat Texture2D::GetFormat () const
     return _format;
 }
 
+VkImage Texture2D::GetImage () const
+{
+    return _image;
+}
+
 VkImageView Texture2D::GetImageView () const
 {
     return _imageView;

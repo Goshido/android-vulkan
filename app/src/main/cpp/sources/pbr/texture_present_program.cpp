@@ -122,6 +122,30 @@ std::vector<DescriptorSetInfo> const& TexturePresentProgram::GetResourceInfo () 
     return info;
 }
 
+void TexturePresentProgram::SetData ( VkCommandBuffer commandBuffer,
+    VkDescriptorSet set,
+    GXMat4 const &transform
+) const
+{
+    vkCmdPushConstants ( commandBuffer,
+        _pipelineLayout,
+        VK_SHADER_STAGE_VERTEX_BIT,
+        0U,
+        sizeof ( PushConstants ),
+        &transform
+    );
+
+    vkCmdBindDescriptorSets ( commandBuffer,
+        VK_PIPELINE_BIND_POINT_GRAPHICS,
+        _pipelineLayout,
+        0U,
+        1U,
+        &set,
+        0U,
+        nullptr
+    );
+}
+
 VkPipelineColorBlendStateCreateInfo const* TexturePresentProgram::InitColorBlendInfo (
     VkPipelineColorBlendStateCreateInfo &info,
     VkPipelineColorBlendAttachmentState* attachments

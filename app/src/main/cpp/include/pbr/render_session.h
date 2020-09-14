@@ -53,6 +53,11 @@ class RenderSession final
         OpaqueProgram                           _opaqueProgram;
         TexturePresentProgram                   _texturePresentProgram;
 
+        std::vector<VkFramebuffer>              _presentFramebuffers;
+        VkRenderPass                            _presentRenderPass;
+        VkSemaphore                             _presentRenderPassEndSemaphore;
+        VkSemaphore                             _presentRenderTargetAcquiredSemaphore;
+
         GXMat4                                  _view;
         GXMat4                                  _viewProjection;
 
@@ -74,7 +79,11 @@ class RenderSession final
 
         [[nodiscard]] VkExtent2D const& GetResolution () const;
 
-        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, VkRenderPass presentRenderPass );
+        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
+            VkRenderPass presentRenderPass,
+            VkExtent2D const &resolution
+        );
+
         void Destroy ( android_vulkan::Renderer &renderer );
 
         void SubmitMesh ( MeshRef &mesh, MaterialRef &material, GXMat4 const &local );
@@ -82,8 +91,18 @@ class RenderSession final
     private:
         [[nodiscard]] bool BeginGeometryRenderPass ( android_vulkan::Renderer &renderer );
         void CleanupTransferResources ( android_vulkan::Renderer &renderer );
+
         [[nodiscard]] bool CreateGBufferFramebuffer ( android_vulkan::Renderer &renderer );
         [[nodiscard]] bool CreateGBufferRenderPass ( android_vulkan::Renderer &renderer );
+
+        [[nodiscard]] bool CreatePresentFramebuffers ( android_vulkan::Renderer &renderer );
+        void DestroyPresentFramebuffers ( android_vulkan::Renderer &renderer );
+
+        [[nodiscard]] bool CreatePresentRenderPass ( android_vulkan::Renderer &renderer );
+
+        [[nodiscard]] bool CreateSyncPrimitives ( android_vulkan::Renderer &renderer );
+        void DestroySyncPrimitives ( android_vulkan::Renderer &renderer );
+
         void DestroyDescriptorPool ( android_vulkan::Renderer &renderer );
         void SubmitOpaqueCall ( MeshRef &mesh, MaterialRef &material, GXMat4 const &local );
 

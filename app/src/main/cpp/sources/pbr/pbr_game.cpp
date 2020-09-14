@@ -3,23 +3,26 @@
 
 namespace pbr {
 
-constexpr static const char* MATERIAL_1_DIFFUSE = "textures/rotating_mesh/sonic-material-1-diffuse.png";
-constexpr static const char* MATERIAL_1_MESH = "meshes/rotating_mesh/sonic-material-1.mesh";
+constexpr static char const* MATERIAL_1_DIFFUSE = "textures/rotating_mesh/sonic-material-1-diffuse.png";
+constexpr static char const* MATERIAL_1_MESH = "meshes/rotating_mesh/sonic-material-1.mesh";
 
-constexpr static const char* MATERIAL_2_DIFFUSE = "textures/rotating_mesh/sonic-material-2-diffuse.png";
-constexpr static const char* MATERIAL_2_MESH = "meshes/rotating_mesh/sonic-material-2.mesh";
-constexpr static const char* MATERIAL_2_NORMAL = "textures/rotating_mesh/sonic-material-2-normal.png";
+constexpr static char const* MATERIAL_2_DIFFUSE = "textures/rotating_mesh/sonic-material-2-diffuse.png";
+constexpr static char const* MATERIAL_2_MESH = "meshes/rotating_mesh/sonic-material-2.mesh";
+constexpr static char const* MATERIAL_2_NORMAL = "textures/rotating_mesh/sonic-material-2-normal.png";
 
-constexpr static const char* MATERIAL_3_DIFFUSE = "textures/rotating_mesh/sonic-material-3-diffuse.png";
-constexpr static const char* MATERIAL_3_MESH = "meshes/rotating_mesh/sonic-material-3.mesh";
-constexpr static const char* MATERIAL_3_NORMAL = "textures/rotating_mesh/sonic-material-3-normal.png";
+constexpr static char const* MATERIAL_3_DIFFUSE = "textures/rotating_mesh/sonic-material-3-diffuse.png";
+constexpr static char const* MATERIAL_3_MESH = "meshes/rotating_mesh/sonic-material-3.mesh";
+constexpr static char const* MATERIAL_3_NORMAL = "textures/rotating_mesh/sonic-material-3-normal.png";
 
-constexpr static const size_t MATERIAL_TEXTURE_COUNT = 5U;
-constexpr static const size_t MESH_COUNT = 3U;
+constexpr static size_t const MATERIAL_TEXTURE_COUNT = 5U;
+constexpr static size_t const MESH_COUNT = 3U;
 
-constexpr static const float FIELD_OF_VIEW = 60.0F;
-constexpr static const float Z_NEAR = 0.1F;
-constexpr static const float Z_FAR = 1.0e+3F;
+constexpr static float const FIELD_OF_VIEW = 60.0F;
+constexpr static float const Z_NEAR = 0.1F;
+constexpr static float const Z_FAR = 1.0e+3F;
+
+constexpr static uint32_t const RESOLUTION_SCALE_WIDTH = 100U;
+constexpr static uint32_t const RESOLUTION_SCALE_HEIGHT = 100U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -57,7 +60,11 @@ bool PBRGame::OnInit ( android_vulkan::Renderer &renderer )
         return false;
     }
 
-    if ( !_renderSession.Init ( renderer, _presentRenderPass ) )
+    VkExtent2D resolution = renderer.GetSurfaceSize ();
+    resolution.width = resolution.width * RESOLUTION_SCALE_WIDTH / 100U;
+    resolution.height = resolution.height * RESOLUTION_SCALE_HEIGHT / 100U;
+
+    if ( !_renderSession.Init ( renderer, _presentRenderPass, resolution ) )
     {
         OnDestroy ( renderer );
         return false;
@@ -77,12 +84,11 @@ bool PBRGame::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime )
     GXMat4 view;
     view.Identity ();
 
-    const VkExtent2D& resolution = _renderSession.GetResolution ();
-
     GXMat4 projection;
+    VkExtent2D const& surfaceResolution = renderer.GetViewportResolution ();
 
     projection.Perspective ( GXDegToRad ( FIELD_OF_VIEW ),
-        resolution.width / static_cast<float> ( resolution.height ),
+        surfaceResolution.width / static_cast<float> ( surfaceResolution.height ),
         Z_NEAR,
         Z_FAR
     );
@@ -92,16 +98,12 @@ bool PBRGame::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime )
 
     GXMat4 local;
     local.RotationY ( angle );
+    local.SetW ( GXVec3 ( 0.0F, -1.0F, 3.0F ) );
 
     _renderSession.Begin ( view, projection );
 
-    local.SetW ( GXVec3 ( -1.0F, 0.0F, 6.0F ) );
     _renderSession.SubmitMesh ( _sonicMesh0, _sonicMaterial0, local );
-
-    local.SetW ( GXVec3 ( 0.0F, 0.0F, 6.0F ) );
     _renderSession.SubmitMesh ( _sonicMesh1, _sonicMaterial1, local );
-
-    local.SetW ( GXVec3 ( 1.0F, 0.0F, 6.0F ) );
     _renderSession.SubmitMesh ( _sonicMesh2, _sonicMaterial2, local );
 
     return _renderSession.End ( ePresentTarget::Normal, renderer );
@@ -156,7 +158,7 @@ bool PBRGame::CreateCommandPool ( android_vulkan::Renderer &renderer )
 
     AV_REGISTER_COMMAND_POOL ( "PBRGame::_commandPool" )
 
-    constexpr const size_t commandBufferCount = MATERIAL_TEXTURE_COUNT + MESH_COUNT;
+    constexpr size_t const commandBufferCount = MATERIAL_TEXTURE_COUNT + MESH_COUNT;
     _commandBuffers.resize ( commandBufferCount );
 
     VkCommandBufferAllocateInfo allocateInfo;
@@ -192,7 +194,7 @@ void PBRGame::DestroyCommandPool ( android_vulkan::Renderer &renderer )
 bool PBRGame::CreateMaterials ( android_vulkan::Renderer &renderer )
 {
     auto loadTexture = [ & ] ( Texture2DRef &texture,
-        const char* file,
+        char const* file,
         VkFormat format,
         VkCommandBuffer commandBuffer
     ) -> bool {
@@ -288,7 +290,7 @@ void PBRGame::DestroyMaterials ( android_vulkan::Renderer &renderer )
 bool PBRGame::CreateMeshes ( android_vulkan::Renderer &renderer )
 {
     auto loadMesh = [ & ] ( MeshRef &mesh,
-        const char* file,
+        char const* file,
         VkCommandBuffer commandBuffer
     ) -> bool {
         mesh = std::make_shared<android_vulkan::MeshGeometry> ();
@@ -373,7 +375,7 @@ void PBRGame::DestroyPresentFramebuffer ( android_vulkan::Renderer &renderer )
     if ( _presentFrameBuffers.empty() )
         return;
 
-    for ( const auto framebuffer : _presentFrameBuffers )
+    for ( auto const framebuffer : _presentFrameBuffers )
     {
         vkDestroyFramebuffer ( device, framebuffer, nullptr );
         AV_UNREGISTER_FRAMEBUFFER ( "PBRGame::_presentFrameBuffers" )
@@ -422,7 +424,7 @@ bool PBRGame::CreatePresentRenderPass ( android_vulkan::Renderer &renderer )
     renderPassInfo.attachmentCount = 1U;
     renderPassInfo.pAttachments = &attachments;
 
-    const bool result = renderer.CheckVkResult (
+    bool const result = renderer.CheckVkResult (
         vkCreateRenderPass ( renderer.GetDevice (), &renderPassInfo, nullptr, &_presentRenderPass ),
         "PBRGame::CreatePresentRenderPass",
         "Can't create present render pass"
@@ -449,7 +451,7 @@ bool PBRGame::UploadGPUContent ( android_vulkan::Renderer& renderer )
         return false;
     }
 
-    const bool result = renderer.CheckVkResult ( vkQueueWaitIdle ( renderer.GetQueue () ),
+    bool const result = renderer.CheckVkResult ( vkQueueWaitIdle ( renderer.GetQueue () ),
         "PBRGame::UploadGPUContent",
         "Can't run upload commands"
     );

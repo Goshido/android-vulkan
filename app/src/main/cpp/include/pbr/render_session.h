@@ -77,13 +77,7 @@ class RenderSession final
         void Begin ( GXMat4 const &view, GXMat4 const &projection );
         [[nodiscard]] bool End ( ePresentTarget target, android_vulkan::Renderer &renderer );
 
-        [[nodiscard]] VkExtent2D const& GetResolution () const;
-
-        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
-            VkRenderPass presentRenderPass,
-            VkExtent2D const &resolution
-        );
-
+        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, VkExtent2D const &resolution );
         void Destroy ( android_vulkan::Renderer &renderer );
 
         void SubmitMesh ( MeshRef &mesh, MaterialRef &material, GXMat4 const &local );
@@ -104,6 +98,10 @@ class RenderSession final
         void DestroySyncPrimitives ( android_vulkan::Renderer &renderer );
 
         void DestroyDescriptorPool ( android_vulkan::Renderer &renderer );
+
+        void DrawOpaqueBatched ( VkDescriptorSet const* textureSets, VkDescriptorSet const* instanceSets ) const;
+        void DrawOpaqueUnique ( VkDescriptorSet const* textureSets ) const;
+
         void SubmitOpaqueCall ( MeshRef &mesh, MaterialRef &material, GXMat4 const &local );
 
         [[nodiscard]] bool UpdateGPUData ( std::vector<VkDescriptorSet> &descriptorSetStorage,

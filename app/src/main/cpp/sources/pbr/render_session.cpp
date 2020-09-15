@@ -23,6 +23,7 @@ constexpr static size_t MAX_SUPPORTED_MIP_COUNT = 13U;
 class SamplerStorage final
 {
     private:
+        SamplerRef      _pointSampler;
         SamplerRef      _storage[ MAX_SUPPORTED_MIP_COUNT ];
 
     public:
@@ -34,12 +35,19 @@ class SamplerStorage final
 
         void FreeResources ( android_vulkan::Renderer &renderer );
 
+        [[nodiscard]] SamplerRef GetPointSampler ( android_vulkan::Renderer &renderer );
         [[nodiscard]] SamplerRef GetSampler ( uint8_t mips, android_vulkan::Renderer &renderer );
 };
 
 void SamplerStorage::FreeResources ( android_vulkan::Renderer &renderer )
 {
-    for ( auto& sampler : _storage )
+    if ( _pointSampler )
+    {
+        _pointSampler->Destroy ( renderer );
+        _pointSampler = nullptr;
+    }
+
+    for ( auto &sampler : _storage )
     {
         if ( !sampler )
             continue;
@@ -47,6 +55,39 @@ void SamplerStorage::FreeResources ( android_vulkan::Renderer &renderer )
         sampler->Destroy ( renderer );
         sampler = nullptr;
     }
+}
+
+SamplerRef SamplerStorage::GetPointSampler ( android_vulkan::Renderer &renderer )
+{
+    if ( _pointSampler )
+        return _pointSampler;
+
+    _pointSampler = std::make_shared<Sampler> ();
+
+    VkSamplerCreateInfo info;
+    info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+    info.pNext = nullptr;
+    info.flags = 0U;
+    info.unnormalizedCoordinates = VK_FALSE;
+    info.compareEnable = VK_FALSE;
+    info.compareOp = VK_COMPARE_OP_ALWAYS;
+    info.borderColor = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
+    info.anisotropyEnable = VK_FALSE;
+    info.maxAnisotropy = 1.0F;
+    info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
+    info.minFilter = VK_FILTER_NEAREST;
+    info.magFilter = VK_FILTER_NEAREST;
+    info.minLod = 0.0F;
+    info.maxLod = 0.0F;
+    info.mipLodBias = 0.0F;
+    info.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+    info.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+    info.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+
+    if ( !_pointSampler->Init ( info, renderer ) )
+        _pointSampler = nullptr;
+
+    return _pointSampler;
 }
 
 SamplerRef SamplerStorage::GetSampler ( uint8_t mips, android_vulkan::Renderer &renderer )
@@ -144,6 +185,24 @@ bool RenderSession::End ( ePresentTarget /*target*/, android_vulkan::Renderer &r
 {
     CleanupTransferResources ( renderer );
 
+    uint32_t framebufferIndex = UINT32_MAX;
+
+    bool result = renderer.CheckVkResult (
+        vkAcquireNextImageKHR ( renderer.GetDevice (),
+            renderer.GetSwapchain (),
+            UINT64_MAX,
+            _presentRenderTargetAcquiredSemaphore,
+            VK_NULL_HANDLE,
+            &framebufferIndex
+        ),
+
+        "RenderSession::End",
+        "Can't get presentation image index"
+    );
+
+    if ( !result )
+        return false;
+
     if ( !BeginGeometryRenderPass ( renderer ) )
         return false;
 
@@ -152,97 +211,10 @@ bool RenderSession::End ( ePresentTarget /*target*/, android_vulkan::Renderer &r
     if ( !UpdateGPUData ( descriptorSetStorage, renderer ) )
         return false;
 
-    OpaqueProgram::PushConstants transform {};
-
-    size_t i = 0U;
-    size_t uniformUsed = 0U;
-
-    constexpr VkDeviceSize const offset = 0U;
     VkDescriptorSet const* textureSets = descriptorSetStorage.data ();
-    VkDescriptorSet const* instanceSets = textureSets + ( _opaqueCalls.size () + 1U );
 
-    for ( auto const &call : _opaqueCalls )
-    {
-        VkDescriptorSet textureSet = textureSets[ i ];
-        ++i;
-
-        _opaqueProgram.SetDescriptorSet ( _geometryPassRendering, textureSet );
-        OpaqueCall::UniqueList const &uniqueList = call.second.GetUniqueList ();
-
-        if ( !uniqueList.empty () )
-        {
-            // TODO fix to reduce pipeline changes.
-            _opaqueProgram.Bind ( _geometryPassRendering );
-            _opaqueProgram.SetDescriptorSet ( _geometryPassRendering, textureSet );
-        }
-
-        for ( auto const &[mesh, local] : uniqueList )
-        {
-            // TODO frustum test
-
-            transform._localView.Multiply ( local, _view );
-            transform._localViewProjection.Multiply ( local, _viewProjection );
-            _opaqueProgram.SetTransform ( _geometryPassRendering, transform );
-
-            vkCmdBindVertexBuffers ( _geometryPassRendering, 0U, 1U, &mesh->GetBuffer (), &offset );
-            vkCmdDraw ( _geometryPassRendering, mesh->GetVertexCount (), 1U, 0U, 0U );
-        }
-
-        OpaqueCall::BatchList const &batchList = call.second.GetBatchList ();
-
-        if ( batchList.empty () )
-            continue;
-
-        // TODO fix to reduce pipeline changes.
-        _opaqueBatchProgram.Bind ( _geometryPassRendering );
-
-        auto instanceDrawer = [&] ( MeshRef const &mesh, uint32_t batches ) {
-            _opaqueBatchProgram.SetDescriptorSet ( _geometryPassRendering,
-                textureSet,
-                instanceSets[ uniformUsed ]
-            );
-
-            vkCmdBindVertexBuffers ( _geometryPassRendering, 0U, 1U, &mesh->GetBuffer (), &offset );
-
-            vkCmdDraw ( _geometryPassRendering,
-                mesh->GetVertexCount (),
-                static_cast<uint32_t> ( batches ),
-                0U,
-                0U
-            );
-
-            ++uniformUsed;
-        };
-
-        for ( auto const &item : batchList )
-        {
-            MeshGroup const& group = item.second;
-            MeshRef const& mesh = group._mesh;
-            size_t const instanceCount = group._locals.size ();
-            size_t instanceIndex = 0U;
-            size_t batches = 0U;
-
-            while ( instanceIndex < instanceCount )
-            {
-                batches = std::min ( instanceCount - instanceIndex,
-                    static_cast<size_t> ( PBR_OPAQUE_MAX_INSTANCE_COUNT )
-                );
-
-                instanceIndex += batches;
-
-                if ( batches < PBR_OPAQUE_MAX_INSTANCE_COUNT )
-                    continue;
-
-                instanceDrawer ( mesh, static_cast<uint32_t> ( batches ) );
-                batches = 0U;
-            }
-
-            if ( !batches )
-                continue;
-
-            instanceDrawer ( mesh, static_cast<uint32_t> ( batches ) );
-        }
-    }
+    DrawOpaqueUnique ( textureSets );
+    DrawOpaqueBatched ( textureSets, textureSets + ( _opaqueCalls.size () + 1U ) );
 
     vkCmdEndRenderPass ( _geometryPassRendering );
 
@@ -275,24 +247,6 @@ bool RenderSession::End ( ePresentTarget /*target*/, android_vulkan::Renderer &r
         1U,
         &imageBarrier
     );
-
-    uint32_t framebufferIndex = UINT32_MAX;
-
-    bool result = renderer.CheckVkResult (
-        vkAcquireNextImageKHR ( renderer.GetDevice (),
-            renderer.GetSwapchain (),
-            UINT64_MAX,
-            _presentRenderTargetAcquiredSemaphore,
-            VK_NULL_HANDLE,
-            &framebufferIndex
-        ),
-
-        "RenderSession::End",
-        "Can't get presentation image index"
-    );
-
-    if ( !result )
-        return false;
 
     VkClearValue clearValue;
     clearValue.color.float32[ 0U ] = 0.0F;
@@ -330,10 +284,7 @@ bool RenderSession::End ( ePresentTarget /*target*/, android_vulkan::Renderer &r
     if ( !result )
         return false;
 
-    constexpr VkPipelineStageFlags const waitStage =
-        AV_VK_FLAG ( VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT ) |
-        AV_VK_FLAG ( VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT ) |
-        AV_VK_FLAG ( VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT );
+    constexpr VkPipelineStageFlags const waitStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 
     VkSubmitInfo submitInfo;
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -377,15 +328,7 @@ bool RenderSession::End ( ePresentTarget /*target*/, android_vulkan::Renderer &r
     return renderer.CheckVkResult ( presentResult, "RenderSession::EndFrame", "Present queue has been failed" );
 }
 
-VkExtent2D const& RenderSession::GetResolution () const
-{
-    return _gBuffer.GetResolution ();
-}
-
-bool RenderSession::Init ( android_vulkan::Renderer &renderer,
-    VkRenderPass presentRenderPass,
-    VkExtent2D const &resolution
-)
+bool RenderSession::Init ( android_vulkan::Renderer &renderer, VkExtent2D const &resolution )
 {
     if ( !_gBuffer.Init ( resolution, renderer ) )
         return false;
@@ -452,7 +395,7 @@ bool RenderSession::Init ( android_vulkan::Renderer &renderer,
         return false;
     }
 
-    if ( !_texturePresentProgram.Init ( renderer, presentRenderPass, renderer.GetSurfaceSize () ) )
+    if ( !_texturePresentProgram.Init ( renderer, _presentRenderPass, renderer.GetSurfaceSize () ) )
     {
         Destroy ( renderer );
         return false;
@@ -768,7 +711,6 @@ void RenderSession::CleanupTransferResources ( android_vulkan::Renderer &rendere
 
     _isFreeTransferResources = false;
 }
-
 
 bool RenderSession::CreateGBufferFramebuffer ( android_vulkan::Renderer &renderer )
 {
@@ -1092,6 +1034,138 @@ void RenderSession::DestroyDescriptorPool ( android_vulkan::Renderer &renderer )
     AV_UNREGISTER_DESCRIPTOR_POOL ( "RenderSession::_descriptorPool" )
 }
 
+void RenderSession::DrawOpaqueBatched ( VkDescriptorSet const* textureSets, VkDescriptorSet const* instanceSets ) const
+{
+    size_t textureSetIndex = 0U;
+    size_t uniformUsed = 0U;
+    bool isProgramBind = false;
+
+    constexpr VkDeviceSize const offset = 0U;
+
+    for ( auto const &call : _opaqueCalls )
+    {
+        VkDescriptorSet textureSet = textureSets[ textureSetIndex ];
+        ++textureSetIndex;
+
+        OpaqueCall::BatchList const &batchList = call.second.GetBatchList ();
+
+        if ( batchList.empty () )
+            continue;
+
+        if ( !isProgramBind )
+        {
+            _opaqueBatchProgram.Bind ( _geometryPassRendering );
+            isProgramBind = true;
+        }
+
+        bool isUniformBind = false;
+
+        auto instanceDrawer = [ & ] ( MeshRef const &mesh, uint32_t batches ) {
+            if ( isUniformBind )
+            {
+                _opaqueBatchProgram.SetDescriptorSet ( _geometryPassRendering, instanceSets + uniformUsed, 1U, 1U );
+            }
+            else
+            {
+                VkDescriptorSet sets[] = { textureSet, instanceSets[ uniformUsed ] };
+
+                _opaqueBatchProgram.SetDescriptorSet ( _geometryPassRendering,
+                    sets,
+                    0U,
+                    static_cast<uint32_t> ( std::size ( sets ) )
+                );
+
+                isUniformBind = true;
+            }
+
+            vkCmdBindVertexBuffers ( _geometryPassRendering, 0U, 1U, &mesh->GetBuffer (), &offset );
+
+            vkCmdDraw ( _geometryPassRendering,
+                mesh->GetVertexCount (),
+                static_cast<uint32_t> ( batches ),
+                0U,
+                0U
+            );
+
+            ++uniformUsed;
+        };
+
+        for ( auto const &item : batchList )
+        {
+            MeshGroup const& group = item.second;
+            MeshRef const& mesh = group._mesh;
+            size_t const instanceCount = group._locals.size ();
+            size_t instanceIndex = 0U;
+            size_t batches = 0U;
+
+            while ( instanceIndex < instanceCount )
+            {
+                batches = std::min ( instanceCount - instanceIndex,
+                    static_cast<size_t> ( PBR_OPAQUE_MAX_INSTANCE_COUNT )
+                );
+
+                instanceIndex += batches;
+
+                if ( batches < PBR_OPAQUE_MAX_INSTANCE_COUNT )
+                    continue;
+
+                instanceDrawer ( mesh, static_cast<uint32_t> ( batches ) );
+                batches = 0U;
+            }
+
+            if ( !batches )
+                continue;
+
+            instanceDrawer ( mesh, static_cast<uint32_t> ( batches ) );
+        }
+    }
+}
+
+void RenderSession::DrawOpaqueUnique ( VkDescriptorSet const* textureSets ) const
+{
+    size_t setIndex = 0U;
+    bool isProgramBind = false;
+    OpaqueProgram::PushConstants transform {};
+    constexpr VkDeviceSize const offset = 0U;
+
+    for ( auto const &call : _opaqueCalls )
+    {
+        VkDescriptorSet textureSet = textureSets[ setIndex ];
+        ++setIndex;
+
+        OpaqueCall::UniqueList const& uniqueList = call.second.GetUniqueList ();
+
+        if ( uniqueList.empty () )
+            continue;
+
+        bool isDescriptorSetBind = false;
+
+        for ( auto const &[mesh, local] : uniqueList )
+        {
+            // TODO frustum test
+
+            if ( !isProgramBind )
+            {
+                _opaqueProgram.Bind ( _geometryPassRendering );
+                isProgramBind = true;
+            }
+
+            if ( !isDescriptorSetBind )
+            {
+                _opaqueProgram.SetDescriptorSet ( _geometryPassRendering, textureSet );
+                isDescriptorSetBind = true;
+            }
+
+            transform._localView.Multiply ( local, _view );
+            transform._localViewProjection.Multiply ( local, _viewProjection );
+            _opaqueProgram.SetTransform ( _geometryPassRendering, transform );
+
+            vkCmdBindVertexBuffers ( _geometryPassRendering, 0U, 1U, &mesh->GetBuffer (), &offset );
+            vkCmdDraw ( _geometryPassRendering, mesh->GetVertexCount (), 1U, 0U, 0U );
+        }
+    }
+}
+
 void RenderSession::SubmitOpaqueCall ( MeshRef &mesh, MaterialRef &material, GXMat4 const &local )
 {
     auto& opaqueMaterial = *dynamic_cast<OpaqueMaterial*> ( material.get () );
@@ -1316,7 +1390,7 @@ bool RenderSession::UpdateGPUData (  std::vector<VkDescriptorSet> &descriptorSet
     }
 
     android_vulkan::Texture2D& albedo = _gBuffer.GetAlbedo ();
-    SamplerRef sampler = g_SamplerStorage.GetSampler ( albedo.GetMipLevelCount (), renderer );
+    SamplerRef sampler = g_SamplerStorage.GetPointSampler ( renderer );
 
     writeInfo0.pImageInfo = &imageStorage.emplace_back (
         VkDescriptorImageInfo {

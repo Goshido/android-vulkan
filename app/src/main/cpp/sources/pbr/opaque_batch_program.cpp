@@ -77,7 +77,7 @@ bool OpaqueBatchProgram::Init ( android_vulkan::Renderer &renderer,
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
     pipelineInfo.basePipelineIndex = 0;
 
-    const bool result = renderer.CheckVkResult (
+    bool const result = renderer.CheckVkResult (
         vkCreateGraphicsPipelines ( renderer.GetDevice (), VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
         "OpaqueBatchProgram::Init",
         "Can't create pipeline"
@@ -131,7 +131,7 @@ void OpaqueBatchProgram::Destroy ( android_vulkan::Renderer &renderer )
 
 std::vector<DescriptorSetInfo> const& OpaqueBatchProgram::GetResourceInfo () const
 {
-    static const std::vector<DescriptorSetInfo> info
+    static std::vector<DescriptorSetInfo> const info
     {
         DescriptorSetInfo
         {
@@ -149,17 +149,16 @@ std::vector<DescriptorSetInfo> const& OpaqueBatchProgram::GetResourceInfo () con
 }
 
 void OpaqueBatchProgram::SetDescriptorSet ( VkCommandBuffer commandBuffer,
-    VkDescriptorSet set0,
-    VkDescriptorSet set1
+    VkDescriptorSet const* sets,
+    uint32_t startIndex,
+    uint32_t count
 ) const
 {
-    VkDescriptorSet sets[ 2U ] = { set0, set1 };
-
     vkCmdBindDescriptorSets ( commandBuffer,
         VK_PIPELINE_BIND_POINT_GRAPHICS,
         _pipelineLayout,
-        0U,
-        static_cast<uint32_t> ( std::size ( sets ) ),
+        startIndex,
+        count,
         sets,
         0U,
         nullptr
@@ -186,7 +185,7 @@ VkPipelineColorBlendStateCreateInfo const* OpaqueBatchProgram::InitColorBlendInf
         AV_VK_FLAG ( VK_COLOR_COMPONENT_B_BIT ) |
         AV_VK_FLAG ( VK_COLOR_COMPONENT_A_BIT );
 
-    constexpr const auto limit = static_cast<const ptrdiff_t> ( COLOR_RENDER_TARGET_COUNT );
+    constexpr auto const limit = static_cast<ptrdiff_t const> ( COLOR_RENDER_TARGET_COUNT );
 
     for ( ptrdiff_t i = 1; i < limit; ++i )
         memcpy ( attachments + i, &albedo, sizeof ( albedo ) );

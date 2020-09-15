@@ -14,9 +14,6 @@ class PBRGame final : public android_vulkan::Game
         VkCommandPool                   _commandPool;
         std::vector<VkCommandBuffer>    _commandBuffers;
 
-        std::vector<VkFramebuffer>      _presentFrameBuffers;
-        VkRenderPass                    _presentRenderPass;
-
         RenderSession                   _renderSession;
 
         MaterialRef                     _sonicMaterial0;
@@ -49,11 +46,6 @@ class PBRGame final : public android_vulkan::Game
 
         [[nodiscard]] bool CreateMeshes ( android_vulkan::Renderer &renderer );
         void DestroyMeshes ( android_vulkan::Renderer &renderer );
-
-        [[nodiscard]] bool CreatePresentFramebuffer ( android_vulkan::Renderer &renderer );
-        void DestroyPresentFramebuffer ( android_vulkan::Renderer &renderer );
-
-        [[nodiscard]] bool CreatePresentRenderPass ( android_vulkan::Renderer &renderer );
 
         [[nodiscard]] bool UploadGPUContent ( android_vulkan::Renderer &renderer );
 };

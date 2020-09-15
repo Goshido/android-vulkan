@@ -1,7 +1,5 @@
-#ifdef ANDROID_VULKAN_DEBUG
-
-
 #include <vulkan_utils.h>
+#include <GXCommon/GXWarning.h>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -15,11 +13,7 @@ GX_RESTORE_WARNING_STATE
 
 namespace android_vulkan {
 
-constexpr static const char* INDENT = "    ";
-
-//----------------------------------------------------------------------------------------------------------------------
-
-Half::Half ():
+Half::Half () :
     data ( 0U )
 {
     // NOTHING
@@ -105,13 +99,19 @@ Half::Half ( float value )
 
     // input number is normalized by design. reassemble it
     data = static_cast<uint16_t> (
-        ( sign >> 16U ) |
-        ( static_cast<uint32_t> ( restoredExponent ) << 10U ) |
-        ( mantissa >> 13U )
+        ( sign >> 16U ) | ( static_cast<uint32_t> ( restoredExponent ) << 10U ) | ( mantissa >> 13U )
     );
 }
 
+} // namespace android_vulkan
+
 //----------------------------------------------------------------------------------------------------------------------
+
+#ifdef ANDROID_VULKAN_DEBUG
+
+namespace android_vulkan {
+
+constexpr static const char* INDENT = "    ";
 
 class VulkanItem final
 {

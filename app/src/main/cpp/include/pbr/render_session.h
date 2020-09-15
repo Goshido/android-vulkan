@@ -14,6 +14,8 @@
 
 namespace pbr {
 
+constexpr static size_t const GBUFFER_ATTACHMENT_COUNT = 5U;
+
 enum class ePresentTarget : uint8_t
 {
     Albedo,
@@ -36,8 +38,11 @@ class RenderSession final
 
         GBuffer                                 _gBuffer;
         VkFramebuffer                           _gBufferFramebuffer;
+        VkImageMemoryBarrier                    _gBufferImageBarrier;
         VkRenderPass                            _gBufferRenderPass;
 
+        VkRenderPassBeginInfo                   _geometryPassBeginInfo;
+        VkClearValue                            _geometryPassClearValue[ GBUFFER_ATTACHMENT_COUNT ];
         VkFence                                 _geometryPassFence;
         VkCommandBuffer                         _geometryPassRendering;
         VkCommandBuffer                         _geometryPassTransfer;
@@ -53,15 +58,21 @@ class RenderSession final
         OpaqueProgram                           _opaqueProgram;
         TexturePresentProgram                   _texturePresentProgram;
 
+        VkPresentInfoKHR                        _presentInfo;
+        VkRenderPassBeginInfo                   _presentBeginInfo;
+        VkClearValue                            _presentClearValue;
         std::vector<VkFramebuffer>              _presentFramebuffers;
         VkRenderPass                            _presentRenderPass;
         VkSemaphore                             _presentRenderPassEndSemaphore;
         VkSemaphore                             _presentRenderTargetAcquiredSemaphore;
 
-        GXMat4                                  _view;
-        GXMat4                                  _viewProjection;
+        VkSubmitInfo                            _submitInfoRender;
+        VkSubmitInfo                            _submitInfoTransfer;
 
         UniformBufferPool                       _uniformBufferPool;
+
+        GXMat4                                  _view;
+        GXMat4                                  _viewProjection;
 
     public:
         RenderSession ();
@@ -102,6 +113,7 @@ class RenderSession final
         void DrawOpaqueBatched ( VkDescriptorSet const* textureSets, VkDescriptorSet const* instanceSets ) const;
         void DrawOpaqueUnique ( VkDescriptorSet const* textureSets ) const;
 
+        void InitCommonStructures ();
         void SubmitOpaqueCall ( MeshRef &mesh, MaterialRef &material, GXMat4 const &local );
 
         [[nodiscard]] bool UpdateGPUData ( std::vector<VkDescriptorSet> &descriptorSetStorage,

@@ -13,7 +13,6 @@ GX_RESTORE_WARNING_STATE
 namespace pbr {
 
 constexpr static const size_t DEFAULT_TEXTURE_COUNT = 4U;
-constexpr static size_t GBUFFER_ATTACHMENT_COUNT = 5U;
 
 // 1 2 4 8 16 32 64 128 256 512 1024 2048 4096
 constexpr static size_t MAX_SUPPORTED_MIP_COUNT = 13U;
@@ -138,7 +137,10 @@ RenderSession::RenderSession ():
     _descriptorPool ( VK_NULL_HANDLE ),
     _gBuffer {},
     _gBufferFramebuffer ( VK_NULL_HANDLE ),
+    _gBufferImageBarrier {},
     _gBufferRenderPass ( VK_NULL_HANDLE ),
+    _geometryPassBeginInfo {},
+    _geometryPassClearValue {},
     _geometryPassFence ( VK_NULL_HANDLE ),
     _geometryPassRendering ( VK_NULL_HANDLE ),
     _geometryPassTransfer ( VK_NULL_HANDLE ),
@@ -149,20 +151,23 @@ RenderSession::RenderSession ():
     _opaqueBatchProgram {},
     _opaqueProgram {},
     _texturePresentProgram {},
+    _presentInfo {},
+    _presentBeginInfo {},
+    _presentClearValue {},
     _presentFramebuffers {},
     _presentRenderPass ( VK_NULL_HANDLE ),
     _presentRenderPassEndSemaphore ( VK_NULL_HANDLE ),
     _presentRenderTargetAcquiredSemaphore ( VK_NULL_HANDLE ),
+    _submitInfoRender {},
+    _submitInfoTransfer {},
+    _uniformBufferPool {},
     _view {},
     _viewProjection {}
 {
     // NOTHING
 }
 
-void RenderSession::SubmitMesh ( MeshRef &mesh,
-    MaterialRef &material,
-    const GXMat4 &local
-)
+void RenderSession::SubmitMesh ( MeshRef &mesh, MaterialRef &material, const GXMat4 &local )
 {
     ++_meshCount;
 
@@ -220,21 +225,8 @@ bool RenderSession::End ( ePresentTarget /*target*/, android_vulkan::Renderer &r
 
     android_vulkan::Texture2D& targetTexture = _gBuffer.GetAlbedo ();
 
-    VkImageMemoryBarrier imageBarrier;
-    imageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-    imageBarrier.pNext = nullptr;
-    imageBarrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-    imageBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-    imageBarrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-    imageBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-    imageBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    imageBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    imageBarrier.image = targetTexture.GetImage ();
-    imageBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    imageBarrier.subresourceRange.baseMipLevel = 0U;
-    imageBarrier.subresourceRange.levelCount = static_cast<uint32_t> ( targetTexture.GetMipLevelCount () );
-    imageBarrier.subresourceRange.baseArrayLayer = 0U;
-    imageBarrier.subresourceRange.layerCount = 1U;
+    _gBufferImageBarrier.image = targetTexture.GetImage ();
+    _gBufferImageBarrier.subresourceRange.levelCount = static_cast<uint32_t> ( targetTexture.GetMipLevelCount () );
 
     vkCmdPipelineBarrier ( _geometryPassRendering,
         VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
@@ -245,27 +237,13 @@ bool RenderSession::End ( ePresentTarget /*target*/, android_vulkan::Renderer &r
         0U,
         nullptr,
         1U,
-        &imageBarrier
+        &_gBufferImageBarrier
     );
 
-    VkClearValue clearValue;
-    clearValue.color.float32[ 0U ] = 0.0F;
-    clearValue.color.float32[ 1U ] = 0.0F;
-    clearValue.color.float32[ 2U ] = 0.0F;
-    clearValue.color.float32[ 3U ] = 0.0F;
+    _presentBeginInfo.framebuffer = _presentFramebuffers[ framebufferIndex ];
+    _presentBeginInfo.renderArea.extent = renderer.GetSurfaceSize ();
 
-    VkRenderPassBeginInfo renderPassInfo;
-    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    renderPassInfo.pNext = nullptr;
-    renderPassInfo.renderPass = _presentRenderPass;
-    renderPassInfo.framebuffer = _presentFramebuffers[ framebufferIndex ];
-    renderPassInfo.clearValueCount = 1U;
-    renderPassInfo.pClearValues = &clearValue;
-    renderPassInfo.renderArea.offset.x = 0;
-    renderPassInfo.renderArea.offset.y = 0;
-    renderPassInfo.renderArea.extent = renderer.GetSurfaceSize ();
-
-    vkCmdBeginRenderPass ( _geometryPassRendering, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE );
+    vkCmdBeginRenderPass ( _geometryPassRendering, &_presentBeginInfo, VK_SUBPASS_CONTENTS_INLINE );
     _texturePresentProgram.Bind ( _geometryPassRendering );
 
     _texturePresentProgram.SetData ( _geometryPassRendering,
@@ -284,20 +262,7 @@ bool RenderSession::End ( ePresentTarget /*target*/, android_vulkan::Renderer &r
     if ( !result )
         return false;
 
-    constexpr VkPipelineStageFlags const waitStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-
-    VkSubmitInfo submitInfo;
-    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    submitInfo.pNext = nullptr;
-    submitInfo.waitSemaphoreCount = 1U;
-    submitInfo.pWaitSemaphores = &_presentRenderTargetAcquiredSemaphore;
-    submitInfo.pWaitDstStageMask = &waitStage;
-    submitInfo.commandBufferCount = 1U;
-    submitInfo.pCommandBuffers = &_geometryPassRendering;
-    submitInfo.signalSemaphoreCount = 1U;
-    submitInfo.pSignalSemaphores = &_presentRenderPassEndSemaphore;
-
-    result = renderer.CheckVkResult ( vkQueueSubmit ( renderer.GetQueue (), 1U, &submitInfo, _geometryPassFence ),
+    result = renderer.CheckVkResult ( vkQueueSubmit ( renderer.GetQueue (), 1U, &_submitInfoRender, _geometryPassFence ),
         "RenderSession::End",
         "Can't submit geometry render command buffer"
     );
@@ -307,17 +272,11 @@ bool RenderSession::End ( ePresentTarget /*target*/, android_vulkan::Renderer &r
 
     VkResult presentResult = VK_ERROR_DEVICE_LOST;
 
-    VkPresentInfoKHR presentInfo;
-    presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-    presentInfo.pNext = nullptr;
-    presentInfo.waitSemaphoreCount = 1U;
-    presentInfo.pWaitSemaphores = &_presentRenderPassEndSemaphore;
-    presentInfo.pResults = &presentResult;
-    presentInfo.swapchainCount = 1U;
-    presentInfo.pSwapchains = &renderer.GetSwapchain ();
-    presentInfo.pImageIndices = &framebufferIndex;
+    _presentInfo.pResults = &presentResult;
+    _presentInfo.pSwapchains = &renderer.GetSwapchain ();
+    _presentInfo.pImageIndices = &framebufferIndex;
 
-    result = renderer.CheckVkResult ( vkQueuePresentKHR ( renderer.GetQueue (), &presentInfo ),
+    result = renderer.CheckVkResult ( vkQueuePresentKHR ( renderer.GetQueue (), &_presentInfo ),
         "RenderSession::EndFrame",
         "Can't present frame"
     );
@@ -541,7 +500,10 @@ bool RenderSession::Init ( android_vulkan::Renderer &renderer, VkExtent2D const 
     );
 
     if ( result )
+    {
+        InitCommonStructures ();
         return true;
+    }
 
     Destroy ( renderer );
     return false;
@@ -648,47 +610,7 @@ bool RenderSession::BeginGeometryRenderPass ( android_vulkan::Renderer &renderer
     if ( !result )
         return false;
 
-    VkClearValue clearValues[ GBUFFER_ATTACHMENT_COUNT ];
-    VkClearValue& albedoClear = clearValues[ 0U ];
-    albedoClear.color.float32[ 0U ] = 0.0F;
-    albedoClear.color.float32[ 1U ] = 0.0F;
-    albedoClear.color.float32[ 2U ] = 0.0F;
-    albedoClear.color.float32[ 3U ] = 0.0F;
-
-    VkClearValue& emissionClear = clearValues[ 1U ];
-    emissionClear.color.float32[ 1U ] = 0.0F;
-    emissionClear.color.float32[ 2U ] = 0.0F;
-    emissionClear.color.float32[ 3U ] = 0.0F;
-    emissionClear.color.float32[ 0U ] = 0.0F;
-
-    VkClearValue& normalClear = clearValues[ 2U ];
-    normalClear.color.float32[ 1U ] = 0.5F;
-    normalClear.color.float32[ 2U ] = 0.5F;
-    normalClear.color.float32[ 3U ] = 0.5F;
-    normalClear.color.float32[ 0U ] = 0.0F;
-
-    VkClearValue& paramClear = clearValues[ 3U ];
-    paramClear.color.float32[ 1U ] = 0.5F;
-    paramClear.color.float32[ 2U ] = 0.5F;
-    paramClear.color.float32[ 3U ] = 0.5F;
-    paramClear.color.float32[ 0U ] = 0.0F;
-
-    VkClearValue& depthStencilClear = clearValues[ 4U ];
-    depthStencilClear.depthStencil.depth = 1.0F;
-    depthStencilClear.depthStencil.stencil = 0U;
-
-    VkRenderPassBeginInfo renderPassInfo;
-    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    renderPassInfo.pNext = nullptr;
-    renderPassInfo.renderPass = _gBufferRenderPass;
-    renderPassInfo.framebuffer = _gBufferFramebuffer;
-    renderPassInfo.clearValueCount = static_cast<uint32_t> ( std::size ( clearValues ) );
-    renderPassInfo.pClearValues = clearValues;
-    renderPassInfo.renderArea.offset.x = 0;
-    renderPassInfo.renderArea.offset.y = 0;
-    renderPassInfo.renderArea.extent = _gBuffer.GetResolution ();
-
-    vkCmdBeginRenderPass ( _geometryPassRendering, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE );
+    vkCmdBeginRenderPass ( _geometryPassRendering, &_geometryPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE );
     return true;
 }
 
@@ -717,13 +639,13 @@ bool RenderSession::CreateGBufferFramebuffer ( android_vulkan::Renderer &rendere
     const VkExtent2D& resolution = _gBuffer.GetResolution ();
 
     VkImageView attachments[ GBUFFER_ATTACHMENT_COUNT ] =
-        {
-            _gBuffer.GetAlbedo ().GetImageView (),
-            _gBuffer.GetEmission ().GetImageView (),
-            _gBuffer.GetNormal ().GetImageView (),
-            _gBuffer.GetParams ().GetImageView (),
-            _gBuffer.GetDepthStencil ().GetImageView ()
-        };
+    {
+        _gBuffer.GetAlbedo ().GetImageView (),
+        _gBuffer.GetEmission ().GetImageView (),
+        _gBuffer.GetNormal ().GetImageView (),
+        _gBuffer.GetParams ().GetImageView (),
+        _gBuffer.GetDepthStencil ().GetImageView ()
+    };
 
     VkFramebufferCreateInfo framebufferInfo;
     framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
@@ -751,7 +673,7 @@ bool RenderSession::CreateGBufferFramebuffer ( android_vulkan::Renderer &rendere
 
 bool RenderSession::CreateGBufferRenderPass ( android_vulkan::Renderer &renderer )
 {
-    constexpr const size_t colorAttachmentCount = GBUFFER_ATTACHMENT_COUNT - 1U;
+    constexpr size_t const colorAttachmentCount = GBUFFER_ATTACHMENT_COUNT - 1U;
 
     VkAttachmentReference colorAttachmentReferences[ colorAttachmentCount ];
     VkAttachmentReference& albedoRef = colorAttachmentReferences[ 0U ];
@@ -853,7 +775,7 @@ bool RenderSession::CreateGBufferRenderPass ( android_vulkan::Renderer &renderer
     renderPassInfo.attachmentCount = static_cast<uint32_t> ( std::size ( attachments ) );
     renderPassInfo.pAttachments = attachments;
 
-    const bool result = renderer.CheckVkResult (
+    bool const result = renderer.CheckVkResult (
         vkCreateRenderPass ( renderer.GetDevice (), &renderPassInfo, nullptr, &_gBufferRenderPass ),
         "RenderSession::CreateGBufferRenderPass",
         "Can't create GBuffer render pass"
@@ -1166,6 +1088,101 @@ void RenderSession::DrawOpaqueUnique ( VkDescriptorSet const* textureSets ) cons
     }
 }
 
+void RenderSession::InitCommonStructures ()
+{
+    VkClearValue& albedoClear = _geometryPassClearValue[ 0U ];
+    albedoClear.color.float32[ 0U ] = 0.0F;
+    albedoClear.color.float32[ 1U ] = 0.0F;
+    albedoClear.color.float32[ 2U ] = 0.0F;
+    albedoClear.color.float32[ 3U ] = 0.0F;
+
+    VkClearValue& emissionClear = _geometryPassClearValue[ 1U ];
+    emissionClear.color.float32[ 1U ] = 0.0F;
+    emissionClear.color.float32[ 2U ] = 0.0F;
+    emissionClear.color.float32[ 3U ] = 0.0F;
+    emissionClear.color.float32[ 0U ] = 0.0F;
+
+    VkClearValue& normalClear = _geometryPassClearValue[ 2U ];
+    normalClear.color.float32[ 1U ] = 0.5F;
+    normalClear.color.float32[ 2U ] = 0.5F;
+    normalClear.color.float32[ 3U ] = 0.5F;
+    normalClear.color.float32[ 0U ] = 0.0F;
+
+    VkClearValue& paramClear = _geometryPassClearValue[ 3U ];
+    paramClear.color.float32[ 1U ] = 0.5F;
+    paramClear.color.float32[ 2U ] = 0.5F;
+    paramClear.color.float32[ 3U ] = 0.5F;
+    paramClear.color.float32[ 0U ] = 0.0F;
+
+    VkClearValue& depthStencilClear = _geometryPassClearValue[ 4U ];
+    depthStencilClear.depthStencil.depth = 1.0F;
+    depthStencilClear.depthStencil.stencil = 0U;
+
+    _geometryPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    _geometryPassBeginInfo.pNext = nullptr;
+    _geometryPassBeginInfo.renderPass = _gBufferRenderPass;
+    _geometryPassBeginInfo.framebuffer = _gBufferFramebuffer;
+    _geometryPassBeginInfo.clearValueCount = static_cast<uint32_t> ( std::size ( _geometryPassClearValue ) );
+    _geometryPassBeginInfo.pClearValues = _geometryPassClearValue;
+    _geometryPassBeginInfo.renderArea.offset.x = 0;
+    _geometryPassBeginInfo.renderArea.offset.y = 0;
+    _geometryPassBeginInfo.renderArea.extent = _gBuffer.GetResolution ();
+
+    _gBufferImageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    _gBufferImageBarrier.pNext = nullptr;
+    _gBufferImageBarrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+    _gBufferImageBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+    _gBufferImageBarrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    _gBufferImageBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    _gBufferImageBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    _gBufferImageBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    _gBufferImageBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    _gBufferImageBarrier.subresourceRange.baseMipLevel = 0U;
+    _gBufferImageBarrier.subresourceRange.baseArrayLayer = 0U;
+    _gBufferImageBarrier.subresourceRange.layerCount = 1U;
+
+    _presentClearValue.color.float32[ 0U ] = 0.0F;
+    _presentClearValue.color.float32[ 1U ] = 0.0F;
+    _presentClearValue.color.float32[ 2U ] = 0.0F;
+    _presentClearValue.color.float32[ 3U ] = 0.0F;
+
+    _presentBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    _presentBeginInfo.pNext = nullptr;
+    _presentBeginInfo.renderPass = _presentRenderPass;
+    _presentBeginInfo.clearValueCount = 1U;
+    _presentBeginInfo.pClearValues = &_presentClearValue;
+    _presentBeginInfo.renderArea.offset.x = 0;
+    _presentBeginInfo.renderArea.offset.y = 0;
+
+    constexpr static VkPipelineStageFlags const waitStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+
+    _submitInfoRender.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    _submitInfoRender.pNext = nullptr;
+    _submitInfoRender.waitSemaphoreCount = 1U;
+    _submitInfoRender.pWaitSemaphores = &_presentRenderTargetAcquiredSemaphore;
+    _submitInfoRender.pWaitDstStageMask = &waitStage;
+    _submitInfoRender.commandBufferCount = 1U;
+    _submitInfoRender.pCommandBuffers = &_geometryPassRendering;
+    _submitInfoRender.signalSemaphoreCount = 1U;
+    _submitInfoRender.pSignalSemaphores = &_presentRenderPassEndSemaphore;
+
+    _presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+    _presentInfo.pNext = nullptr;
+    _presentInfo.waitSemaphoreCount = 1U;
+    _presentInfo.pWaitSemaphores = &_presentRenderPassEndSemaphore;
+    _presentInfo.swapchainCount = 1U;
+
+    _submitInfoTransfer.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    _submitInfoTransfer.pNext = nullptr;
+    _submitInfoTransfer.waitSemaphoreCount = 0U;
+    _submitInfoTransfer.pWaitSemaphores = nullptr;
+    _submitInfoTransfer.pWaitDstStageMask = nullptr;
+    _submitInfoTransfer.commandBufferCount = 1U;
+    _submitInfoTransfer.pCommandBuffers = &_geometryPassTransfer;
+    _submitInfoTransfer.signalSemaphoreCount = 0U;
+    _submitInfoTransfer.pSignalSemaphores = nullptr;
+}
+
 void RenderSession::SubmitOpaqueCall ( MeshRef &mesh, MaterialRef &material, GXMat4 const &local )
 {
     auto& opaqueMaterial = *dynamic_cast<OpaqueMaterial*> ( material.get () );
@@ -1173,7 +1190,7 @@ void RenderSession::SubmitOpaqueCall ( MeshRef &mesh, MaterialRef &material, GXM
 
     if ( findResult != _opaqueCalls.cend () )
     {
-        const size_t count = findResult->second.Append ( mesh, local );
+        size_t const count = findResult->second.Append ( mesh, local );
 
         if ( count > _maximumOpaqueBatchCount )
             _maximumOpaqueBatchCount = count;
@@ -1278,7 +1295,7 @@ bool RenderSession::UpdateGPUData (  std::vector<VkDescriptorSet> &descriptorSet
 
     AV_REGISTER_DESCRIPTOR_POOL ( "RenderSession::_descriptorPool" )
 
-    const OpaqueTextureDescriptorSetLayout opaqueTextureLayout;
+    OpaqueTextureDescriptorSetLayout const opaqueTextureLayout;
     VkDescriptorSetLayout opaqueTextureLayoutNative = opaqueTextureLayout.GetLayout ();
 
     std::vector<VkDescriptorSetLayout> layouts;
@@ -1287,10 +1304,10 @@ bool RenderSession::UpdateGPUData (  std::vector<VkDescriptorSet> &descriptorSet
     for ( uint32_t i = 0U; i < opaqueCount; ++i )
         layouts.push_back ( opaqueTextureLayoutNative );
 
-    const TexturePresentDescriptorSetLayout texturePresentLayout;
+    TexturePresentDescriptorSetLayout const texturePresentLayout;
     layouts.emplace_back ( texturePresentLayout.GetLayout () );
 
-    const OpaqueInstanceDescriptorSetLayout instanceLayout;
+    OpaqueInstanceDescriptorSetLayout const instanceLayout;
     VkDescriptorSetLayout instanceLayoutNative = instanceLayout.GetLayout ();
 
     for ( uint32_t i = opaqueCount + 1U; i < poolInfo.maxSets; ++i )
@@ -1506,18 +1523,7 @@ bool RenderSession::UpdateGPUData (  std::vector<VkDescriptorSet> &descriptorSet
     if ( !result )
         return false;
 
-    VkSubmitInfo submitInfo;
-    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    submitInfo.pNext = nullptr;
-    submitInfo.waitSemaphoreCount = 0U;
-    submitInfo.pWaitSemaphores = nullptr;
-    submitInfo.pWaitDstStageMask = nullptr;
-    submitInfo.commandBufferCount = 1U;
-    submitInfo.pCommandBuffers = &_geometryPassTransfer;
-    submitInfo.signalSemaphoreCount = 0U;
-    submitInfo.pSignalSemaphores = nullptr;
-
-    return renderer.CheckVkResult ( vkQueueSubmit ( renderer.GetQueue (), 1U, &submitInfo, VK_NULL_HANDLE ),
+    return renderer.CheckVkResult ( vkQueueSubmit ( renderer.GetQueue (), 1U, &_submitInfoTransfer, VK_NULL_HANDLE ),
         "RenderSession::UpdateGPUData",
         "Can't submit geometry transfer command buffer"
     );

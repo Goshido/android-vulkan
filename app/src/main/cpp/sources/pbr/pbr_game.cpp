@@ -46,7 +46,7 @@ bool PBRGame::IsReady ()
 
 bool PBRGame::OnInit ( android_vulkan::Renderer &renderer )
 {
-    VkExtent2D resolution = renderer.GetSurfaceSize ();
+    VkExtent2D resolution = renderer.GetViewportResolution ();
     resolution.width = resolution.width * RESOLUTION_SCALE_WIDTH / 100U;
     resolution.height = resolution.height * RESOLUTION_SCALE_HEIGHT / 100U;
 

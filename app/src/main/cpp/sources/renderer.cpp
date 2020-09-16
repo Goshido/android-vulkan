@@ -1224,9 +1224,9 @@ bool Renderer::CheckRequiredDeviceExtensions ( std::vector<char const*> const &d
     return _isDeviceExtensionSupported;
 }
 
-bool Renderer::CheckRequiredImageFormats ()
+bool Renderer::CheckRequiredFormats ()
 {
-    LogInfo ( "Renderer::CheckRequiredImageFormats - Checking required formats..." );
+    LogInfo ( "Renderer::CheckRequiredFormats - Checking required formats..." );
     std::vector<char const*> unsupportedFormats;
 
     auto probe = [&] ( VkFormat format, char const* name ) {
@@ -1381,7 +1381,7 @@ bool Renderer::DeployDevice ()
     if ( !CheckRequiredDeviceExtensions ( caps._extensions, extensions, extensionCount ) )
         return false;
 
-    if ( !CheckRequiredImageFormats () )
+    if ( !CheckRequiredFormats () )
         return false;
 
     VkPhysicalDeviceFloat16Int8FeaturesKHR float16Int8Feature;

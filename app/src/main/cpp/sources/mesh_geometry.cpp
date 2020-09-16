@@ -17,9 +17,9 @@ GX_RESTORE_WARNING_STATE
 
 namespace android_vulkan {
 
-constexpr static const size_t UV_THREADS = 4U;
+constexpr static size_t const UV_THREADS = 4U;
 
-const std::map<VkBufferUsageFlags, BufferSyncItem> MeshGeometry::_accessMapper =
+std::map<VkBufferUsageFlags, BufferSyncItem> const MeshGeometry::_accessMapper =
 {
     {
         VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
@@ -81,12 +81,12 @@ void MeshGeometry::FreeTransferResources ( android_vulkan::Renderer &renderer )
     AV_UNREGISTER_BUFFER ( "MeshGeometry::_transferBuffer" )
 }
 
-const VkBuffer& MeshGeometry::GetBuffer () const
+VkBuffer const& MeshGeometry::GetBuffer () const
 {
     return _buffer;
 }
 
-const std::string& MeshGeometry::GetName () const
+std::string const& MeshGeometry::GetName () const
 {
     return _fileName;
 }
@@ -121,12 +121,12 @@ bool MeshGeometry::LoadMesh ( std::string &&fileName,
         return false;
 
     std::vector<uint8_t>& content = file.GetContent ();
-    const auto& header = *reinterpret_cast<const GXNativeMeshHeader*> ( content.data () );
+    auto const& header = *reinterpret_cast<GXNativeMeshHeader const*> ( content.data () );
 
     constexpr size_t skipFactor = UV_THREADS - 1U;
-    const size_t verticesPerBatch = static_cast<size_t> ( header.totalVertices ) / UV_THREADS;
-    const size_t toNextBatch = verticesPerBatch * skipFactor;
-    const auto lastIndex = static_cast<const size_t> ( header.totalVertices - 1U );
+    auto const verticesPerBatch = static_cast<size_t const> ( header.totalVertices ) / UV_THREADS;
+    size_t const toNextBatch = verticesPerBatch * skipFactor;
+    auto const lastIndex = static_cast<size_t const> ( header.totalVertices - 1U );
     auto* vertices = reinterpret_cast<android_vulkan::VertexInfo*> ( content.data () + header.vboOffset );
 
     auto converter = [ & ] ( android_vulkan::VertexInfo* vertices,
@@ -137,7 +137,7 @@ bool MeshGeometry::LoadMesh ( std::string &&fileName,
     ) {
         while ( currentIndex <= lastIndex )
         {
-            const size_t limit = std::min ( lastIndex, currentIndex + verticesPerBatch );
+            size_t const limit = std::min ( lastIndex, currentIndex + verticesPerBatch );
 
             for ( ; currentIndex < limit; ++currentIndex )
             {
@@ -162,10 +162,10 @@ bool MeshGeometry::LoadMesh ( std::string &&fileName,
         );
     }
 
-    for ( auto& item : converters )
+    for ( auto &item : converters )
         item.join ();
 
-    const bool result = LoadMeshInternal ( reinterpret_cast<const uint8_t*> ( vertices ),
+    bool const result = LoadMeshInternal ( reinterpret_cast<uint8_t const*> ( vertices ),
         header.totalVertices * sizeof ( android_vulkan::VertexInfo ),
         header.totalVertices,
         usage,
@@ -180,7 +180,7 @@ bool MeshGeometry::LoadMesh ( std::string &&fileName,
     return true;
 }
 
-bool MeshGeometry::LoadMesh ( const uint8_t* data,
+bool MeshGeometry::LoadMesh ( uint8_t const* data,
     size_t size,
     uint32_t vertexCount,
     VkBufferUsageFlags usage,
@@ -212,7 +212,7 @@ void MeshGeometry::FreeResourceInternal ( android_vulkan::Renderer &renderer )
     AV_UNREGISTER_BUFFER ( "MeshGeometry::_buffer" )
 }
 
-bool MeshGeometry::LoadMeshInternal ( const uint8_t* data,
+bool MeshGeometry::LoadMeshInternal ( uint8_t const* data,
     size_t size,
     uint32_t vertexCount,
     VkBufferUsageFlags usage,
@@ -348,7 +348,7 @@ bool MeshGeometry::LoadMeshInternal ( const uint8_t* data,
 
     vkCmdCopyBuffer ( commandBuffer, _transferBuffer, _buffer, 1U, &copyInfo );
 
-    const auto findResult = _accessMapper.find ( usage );
+    auto const findResult = _accessMapper.find ( usage );
 
     if ( findResult == _accessMapper.cend () )
     {
@@ -356,7 +356,7 @@ bool MeshGeometry::LoadMeshInternal ( const uint8_t* data,
         return false;
     }
 
-    const BufferSyncItem& syncItem = findResult->second;
+    BufferSyncItem const& syncItem = findResult->second;
 
     VkBufferMemoryBarrier barrierInfo;
     barrierInfo.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;

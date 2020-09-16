@@ -43,8 +43,112 @@ constexpr static std::pair<uint32_t, char const*> const g_vkCompositeAlphaFlagBi
     }
 };
 
-constexpr static size_t const g_vkCompositeAlphaFlagBitsKHRMapperItems =
-    sizeof ( g_vkCompositeAlphaFlagBitsKHRMapper ) / sizeof ( g_vkCompositeAlphaFlagBitsKHRMapper[ 0U ] );
+constexpr static size_t const g_vkCompositeAlphaFlagBitsKHRMapperItems = std::size (
+    g_vkCompositeAlphaFlagBitsKHRMapper
+);
+
+constexpr static std::pair<uint32_t, char const*> const g_vkFormatFeatureFlagBitsMapper[] =
+{
+    { static_cast<uint32_t> ( VK_FORMAT_FEATURE_BLIT_DST_BIT ), "VK_FORMAT_FEATURE_BLIT_DST_BIT" },
+    { static_cast<uint32_t> ( VK_FORMAT_FEATURE_BLIT_SRC_BIT ), "VK_FORMAT_FEATURE_BLIT_SRC_BIT" },
+    { static_cast<uint32_t> ( VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT ), "VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT" },
+
+    {
+        static_cast<uint32_t> ( VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BLEND_BIT ),
+        "VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BLEND_BIT"
+    },
+
+    {
+        static_cast<uint32_t> ( VK_FORMAT_FEATURE_COSITED_CHROMA_SAMPLES_BIT ),
+        "VK_FORMAT_FEATURE_COSITED_CHROMA_SAMPLES_BIT"
+    },
+
+    {
+        static_cast<uint32_t> ( VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT ),
+        "VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT"
+    },
+
+    { static_cast<uint32_t> ( VK_FORMAT_FEATURE_DISJOINT_BIT ), "VK_FORMAT_FEATURE_DISJOINT_BIT" },
+
+    {
+        static_cast<uint32_t> ( VK_FORMAT_FEATURE_FRAGMENT_DENSITY_MAP_BIT_EXT ),
+        "VK_FORMAT_FEATURE_FRAGMENT_DENSITY_MAP_BIT_EXT"
+    },
+
+    {
+        static_cast<uint32_t> ( VK_FORMAT_FEATURE_MIDPOINT_CHROMA_SAMPLES_BIT ),
+        "VK_FORMAT_FEATURE_MIDPOINT_CHROMA_SAMPLES_BIT"
+    },
+
+    { static_cast<uint32_t> ( VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT ), "VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT" },
+
+    {
+        static_cast<uint32_t> ( VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_CUBIC_BIT_IMG ),
+        "VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_CUBIC_BIT_IMG"
+    },
+
+    {
+        static_cast<uint32_t> ( VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT ),
+        "VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT"
+    },
+
+    {
+        static_cast<uint32_t> ( VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_MINMAX_BIT_EXT ),
+        "VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_MINMAX_BIT_EXT"
+    },
+
+    {
+        static_cast<uint32_t> ( VK_FORMAT_FEATURE_SAMPLED_IMAGE_YCBCR_CONVERSION_CHROMA_RECONSTRUCTION_EXPLICIT_BIT ),
+        "VK_FORMAT_FEATURE_SAMPLED_IMAGE_YCBCR_CONVERSION_CHROMA_RECONSTRUCTION_EXPLICIT_BIT"
+    },
+
+    {
+        static_cast<uint32_t> (
+            VK_FORMAT_FEATURE_SAMPLED_IMAGE_YCBCR_CONVERSION_CHROMA_RECONSTRUCTION_EXPLICIT_FORCEABLE_BIT
+        ),
+
+        "VK_FORMAT_FEATURE_SAMPLED_IMAGE_YCBCR_CONVERSION_CHROMA_RECONSTRUCTION_EXPLICIT_FORCEABLE_BIT"
+    },
+
+    {
+        static_cast<uint32_t> ( VK_FORMAT_FEATURE_SAMPLED_IMAGE_YCBCR_CONVERSION_LINEAR_FILTER_BIT ),
+        "VK_FORMAT_FEATURE_SAMPLED_IMAGE_YCBCR_CONVERSION_LINEAR_FILTER_BIT"
+    },
+
+    {
+        static_cast<uint32_t> ( VK_FORMAT_FEATURE_SAMPLED_IMAGE_YCBCR_CONVERSION_SEPARATE_RECONSTRUCTION_FILTER_BIT ),
+        "VK_FORMAT_FEATURE_SAMPLED_IMAGE_YCBCR_CONVERSION_SEPARATE_RECONSTRUCTION_FILTER_BIT"
+    },
+
+    {
+        static_cast<uint32_t> ( VK_FORMAT_FEATURE_STORAGE_IMAGE_ATOMIC_BIT ),
+        "VK_FORMAT_FEATURE_STORAGE_IMAGE_ATOMIC_BIT"
+    },
+
+    { static_cast<uint32_t> ( VK_FORMAT_FEATURE_STORAGE_IMAGE_BIT ), "VK_FORMAT_FEATURE_STORAGE_IMAGE_BIT" },
+
+    {
+        static_cast<uint32_t> ( VK_FORMAT_FEATURE_STORAGE_TEXEL_BUFFER_ATOMIC_BIT ),
+        "VK_FORMAT_FEATURE_STORAGE_TEXEL_BUFFER_ATOMIC_BIT"
+    },
+
+    {
+        static_cast<uint32_t> ( VK_FORMAT_FEATURE_STORAGE_TEXEL_BUFFER_BIT ),
+        "VK_FORMAT_FEATURE_STORAGE_TEXEL_BUFFER_BIT"
+    },
+
+    { static_cast<uint32_t> ( VK_FORMAT_FEATURE_TRANSFER_DST_BIT ), "VK_FORMAT_FEATURE_TRANSFER_DST_BIT" },
+    { static_cast<uint32_t> ( VK_FORMAT_FEATURE_TRANSFER_SRC_BIT ), "VK_FORMAT_FEATURE_TRANSFER_SRC_BIT" },
+
+    {
+        static_cast<uint32_t> ( VK_FORMAT_FEATURE_UNIFORM_TEXEL_BUFFER_BIT ),
+        "VK_FORMAT_FEATURE_UNIFORM_TEXEL_BUFFER_BIT"
+    },
+
+    { static_cast<uint32_t> ( VK_FORMAT_FEATURE_VERTEX_BUFFER_BIT ), "VK_FORMAT_FEATURE_VERTEX_BUFFER_BIT" }
+};
+
+constexpr static size_t const g_vkFormatFeatureFlagBitsMapperItems = std::size ( g_vkFormatFeatureFlagBitsMapper );
 
 constexpr static std::pair<uint32_t, char const*> const g_vkMemoryHeapFlagBitsMapper[] =
 {
@@ -52,8 +156,7 @@ constexpr static std::pair<uint32_t, char const*> const g_vkMemoryHeapFlagBitsMa
     { static_cast<uint32_t> ( VK_MEMORY_HEAP_MULTI_INSTANCE_BIT ), "VK_MEMORY_HEAP_MULTI_INSTANCE_BIT" }
 };
 
-constexpr static size_t const g_vkMemoryHeapFlagBitsMapperItems =
-    sizeof ( g_vkMemoryHeapFlagBitsMapper ) / sizeof ( g_vkMemoryHeapFlagBitsMapper[ 0U ] );
+constexpr static size_t const g_vkMemoryHeapFlagBitsMapperItems = std::size ( g_vkMemoryHeapFlagBitsMapper );
 
 constexpr static std::pair<uint32_t, char const*> const g_vkMemoryPropertyFlagBitsMapper[] =
 {
@@ -75,8 +178,7 @@ constexpr static std::pair<uint32_t, char const*> const g_vkMemoryPropertyFlagBi
     }
 };
 
-constexpr static size_t const g_vkMemoryPropertyFlagBitsMapperItems =
-    sizeof ( g_vkMemoryPropertyFlagBitsMapper ) / sizeof ( g_vkMemoryPropertyFlagBitsMapper[ 0U ] );
+constexpr static size_t const g_vkMemoryPropertyFlagBitsMapperItems = std::size ( g_vkMemoryPropertyFlagBitsMapper );
 
 constexpr static std::pair<uint32_t, char const*> const g_vkImageUsageFlagBitsMapper[] =
 {
@@ -100,8 +202,7 @@ constexpr static std::pair<uint32_t, char const*> const g_vkImageUsageFlagBitsMa
     }
 };
 
-constexpr static size_t const g_vkImageUsageFlagBitsMapperItems =
-    sizeof ( g_vkImageUsageFlagBitsMapper ) / sizeof ( g_vkImageUsageFlagBitsMapper[ 0U ] );
+constexpr static size_t const g_vkImageUsageFlagBitsMapperItems = std::size ( g_vkImageUsageFlagBitsMapper );
 
 constexpr static std::pair<uint32_t, char const*> const g_vkSampleCountFlagMapper[] =
 {
@@ -114,8 +215,7 @@ constexpr static std::pair<uint32_t, char const*> const g_vkSampleCountFlagMappe
     { static_cast<uint32_t> ( VK_SAMPLE_COUNT_64_BIT ), "VK_SAMPLE_COUNT_64_BIT" }
 };
 
-constexpr static size_t const g_vkSampleCountFlagMapperItems =
-    sizeof ( g_vkSampleCountFlagMapper ) / sizeof ( g_vkSampleCountFlagMapper[ 0U ] );
+constexpr static size_t const g_vkSampleCountFlagMapperItems = std::size ( g_vkSampleCountFlagMapper );
 
 constexpr static std::pair<uint32_t, char const*> const g_vkQueueFlagMapper[] =
 {
@@ -126,8 +226,7 @@ constexpr static std::pair<uint32_t, char const*> const g_vkQueueFlagMapper[] =
     { static_cast<uint32_t> ( VK_QUEUE_TRANSFER_BIT ), "VK_QUEUE_TRANSFER_BIT" }
 };
 
-constexpr static size_t const g_vkQueueFlagMapperItems =
-    sizeof ( g_vkQueueFlagMapper ) / sizeof ( g_vkQueueFlagMapper[ 0U ] );
+constexpr static size_t const g_vkQueueFlagMapperItems = std::size ( g_vkQueueFlagMapper );
 
 constexpr static std::pair<uint32_t, char const*> const g_vkSurfaceTransformFlagBitsKHRMapper[] =
 {
@@ -154,8 +253,9 @@ constexpr static std::pair<uint32_t, char const*> const g_vkSurfaceTransformFlag
     }
 };
 
-constexpr static size_t const g_vkSurfaceTransformFlagBitsKHRMapperItems =
-    sizeof ( g_vkSurfaceTransformFlagBitsKHRMapper ) / sizeof ( g_vkSurfaceTransformFlagBitsKHRMapper[ 0U ] );
+constexpr static size_t const g_vkSurfaceTransformFlagBitsKHRMapperItems = std::size (
+    g_vkSurfaceTransformFlagBitsKHRMapper
+);
 
 // Kung-Fu: used in Renderer::PrintPhysicalDeviceGroupInfo to print physical device features.
 constexpr static std::pair<size_t, char const*> const g_vkFeatureMap[] =
@@ -1124,6 +1224,66 @@ bool Renderer::CheckRequiredDeviceExtensions ( std::vector<char const*> const &d
     return _isDeviceExtensionSupported;
 }
 
+bool Renderer::CheckRequiredImageFormats ()
+{
+    LogInfo ( "Renderer::CheckRequiredImageFormats - Checking required formats..." );
+    std::vector<char const*> unsupportedFormats;
+
+    auto probe = [&] ( VkFormat format, char const* name ) {
+        VkFormatProperties props;
+        vkGetPhysicalDeviceFormatProperties ( _physicalDevice, format, &props );
+
+        if ( !props.linearTilingFeatures && !props.optimalTilingFeatures && !props.bufferFeatures )
+        {
+            unsupportedFormats.push_back ( name );
+            return;
+        }
+
+        LogInfo ( "%sOK: %s", INDENT_1, name );
+
+        PrintVkFlagsProp ( INDENT_2,
+            "linearTilingFeatures",
+            props.linearTilingFeatures,
+            g_vkFormatFeatureFlagBitsMapperItems,
+            g_vkFormatFeatureFlagBitsMapper
+        );
+
+        PrintVkFlagsProp ( INDENT_2,
+            "optimalTilingFeatures",
+            props.optimalTilingFeatures,
+            g_vkFormatFeatureFlagBitsMapperItems,
+            g_vkFormatFeatureFlagBitsMapper
+        );
+
+        PrintVkFlagsProp ( INDENT_2,
+            "bufferFeatures",
+            props.bufferFeatures,
+            g_vkFormatFeatureFlagBitsMapperItems,
+            g_vkFormatFeatureFlagBitsMapper
+        );
+    };
+
+    probe ( VK_FORMAT_A2R10G10B10_UNORM_PACK32, "VK_FORMAT_A2R10G10B10_UNORM_PACK32" );
+    probe ( VK_FORMAT_D16_UNORM, "VK_FORMAT_D16_UNORM" );
+    probe ( VK_FORMAT_D24_UNORM_S8_UINT, "VK_FORMAT_D24_UNORM_S8_UINT" );
+    probe ( VK_FORMAT_D32_SFLOAT, "VK_FORMAT_D32_SFLOAT" );
+    probe ( VK_FORMAT_R16G16B16A16_SFLOAT, "VK_FORMAT_R16G16B16A16_SFLOAT" );
+    probe ( VK_FORMAT_R8G8B8A8_SRGB, "VK_FORMAT_R8G8B8A8_SRGB" );
+    probe ( VK_FORMAT_R8G8B8A8_UNORM, "VK_FORMAT_R8G8B8A8_UNORM" );
+    probe ( VK_FORMAT_R8G8_SRGB, "VK_FORMAT_R8G8_SRGB" );
+    probe ( VK_FORMAT_R8_SRGB, "VK_FORMAT_R8_SRGB" );
+    probe ( VK_FORMAT_S8_UINT, "VK_FORMAT_S8_UINT" );
+    probe ( VK_FORMAT_X8_D24_UNORM_PACK32, "VK_FORMAT_X8_D24_UNORM_PACK32" );
+
+    if ( unsupportedFormats.empty () )
+        return true;
+
+    for ( char const* format : unsupportedFormats )
+        android_vulkan::LogError ( "%sFAIL: %s", INDENT_1, format );
+
+    return false;
+}
+
 #ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
 bool Renderer::DeployDebugFeatures ()
@@ -1221,6 +1381,9 @@ bool Renderer::DeployDevice ()
     if ( !CheckRequiredDeviceExtensions ( caps._extensions, extensions, extensionCount ) )
         return false;
 
+    if ( !CheckRequiredImageFormats () )
+        return false;
+
     VkPhysicalDeviceFloat16Int8FeaturesKHR float16Int8Feature;
     float16Int8Feature.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT16_INT8_FEATURES_KHR;
     float16Int8Feature.pNext = nullptr;
@@ -1310,7 +1473,7 @@ bool Renderer::DeployInstance ()
 
 #else
 
-    constexpr static char const* extensions[] =
+    constexpr static const char* extensions[] =
     {
         VK_KHR_SURFACE_EXTENSION_NAME,
         "VK_KHR_android_surface"

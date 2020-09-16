@@ -64,8 +64,8 @@ class MeshGeometry final
         void FreeResources ( android_vulkan::Renderer &renderer );
         void FreeTransferResources ( android_vulkan::Renderer &renderer );
 
-        const VkBuffer& GetBuffer () const;
-        const std::string& GetName () const;
+        VkBuffer const& GetBuffer () const;
+        std::string const& GetName () const;
         [[nodiscard]] uint32_t GetVertexCount () const;
 
         // Mesh geometry is not unique if it was loaded from .mesh file.
@@ -78,7 +78,7 @@ class MeshGeometry final
             VkCommandBuffer commandBuffer
         );
 
-        [[maybe_unused]] bool LoadMesh ( const uint8_t* data,
+        [[maybe_unused]] bool LoadMesh ( uint8_t const* data,
             size_t size,
             uint32_t vertexCount,
             VkBufferUsageFlags usage,
@@ -89,7 +89,7 @@ class MeshGeometry final
     private:
         void FreeResourceInternal ( android_vulkan::Renderer &renderer );
 
-        bool LoadMeshInternal ( const uint8_t* data,
+        bool LoadMeshInternal ( uint8_t const* data,
             size_t size,
             uint32_t vertexCount,
             VkBufferUsageFlags usage,

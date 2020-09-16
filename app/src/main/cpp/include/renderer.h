@@ -171,6 +171,8 @@ class Renderer final
             size_t requiredExtensionCount
         );
 
+        [[nodiscard]] bool CheckRequiredImageFormats ();
+
 #ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
         [[nodiscard]] bool DeployDebugFeatures ();

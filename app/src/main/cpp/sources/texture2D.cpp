@@ -66,13 +66,6 @@ static const std::map<VkFormat, VkImageAspectFlags> g_DepthStencilAspectMapper =
         AV_VK_FLAG ( VK_IMAGE_ASPECT_DEPTH_BIT ) | AV_VK_FLAG ( VK_IMAGE_ASPECT_STENCIL_BIT )
     },
 
-    { VK_FORMAT_D32_SFLOAT, VK_IMAGE_ASPECT_DEPTH_BIT },
-
-    {
-        VK_FORMAT_D32_SFLOAT_S8_UINT,
-        AV_VK_FLAG ( VK_IMAGE_ASPECT_DEPTH_BIT ) | AV_VK_FLAG ( VK_IMAGE_ASPECT_STENCIL_BIT )
-    },
-
     { VK_FORMAT_S8_UINT, VK_IMAGE_ASPECT_STENCIL_BIT },
     { VK_FORMAT_X8_D24_UNORM_PACK32, VK_IMAGE_ASPECT_DEPTH_BIT }
 };
@@ -102,7 +95,7 @@ void Texture2D::FreeResources ( android_vulkan::Renderer &renderer )
     _fileName.clear ();
 }
 
-bool Texture2D::CreateRenderTarget ( const VkExtent2D &resolution,
+bool Texture2D::CreateRenderTarget ( VkExtent2D const &resolution,
     VkFormat format,
     VkImageUsageFlags usage,
     android_vulkan::Renderer &renderer
@@ -159,59 +152,9 @@ uint8_t Texture2D::GetMipLevelCount () const
     return _mipLevels;
 }
 
-const std::string& Texture2D::GetName () const
+std::string const& Texture2D::GetName () const
 {
     return _fileName;
-}
-
-bool Texture2D::UploadData ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer )
-{
-    if ( _imageView != VK_NULL_HANDLE )
-    {
-        android_vulkan::LogWarning ( "Texture2D::UploadData - Data is uploaded already. Skipping..." );
-        return true;
-    }
-
-    if ( _fileName.empty () )
-    {
-        android_vulkan::LogError ( "Texture2D::UploadData - Can't upload data. Filename is empty." );
-        return false;
-    }
-
-    std::vector<uint8_t> pixelData;
-
-    int width = 0;
-    int height = 0;
-    int channels = 0;
-
-    if ( !LoadImage ( pixelData, _fileName, width, height, channels ) )
-        return false;
-
-    const VkFormat actualFormat = PickupFormat ( channels );
-
-    if ( !IsFormatCompatible ( _format, actualFormat, renderer ) )
-        return false;
-
-    VkImageCreateInfo imageInfo;
-
-    const bool result = CreateCommonResources ( imageInfo,
-        VkExtent2D { .width = static_cast<uint32_t> ( width ), .height = static_cast<uint32_t> ( height ) },
-        _format,
-        IMMUTABLE_TEXTURE_USAGE,
-        _isGenerateMipmaps,
-        renderer
-    );
-
-    if ( !result )
-        return false;
-
-    return UploadDataInternal ( pixelData.data (),
-        pixelData.size (),
-        _isGenerateMipmaps,
-        imageInfo,
-        renderer,
-        commandBuffer
-    );
 }
 
 bool Texture2D::UploadData ( std::string &fileName,
@@ -328,7 +271,7 @@ bool Texture2D::UploadData ( std::string &&fileName,
 
 bool Texture2D::UploadData ( const uint8_t* data,
     size_t size,
-    const VkExtent2D &resolution,
+    VkExtent2D const &resolution,
     VkFormat format,
     bool isGenerateMipmaps,
     android_vulkan::Renderer &renderer,
@@ -338,7 +281,7 @@ bool Texture2D::UploadData ( const uint8_t* data,
     FreeResources ( renderer );
     VkImageCreateInfo imageInfo;
 
-    const bool result = CreateCommonResources ( imageInfo,
+    bool const result = CreateCommonResources ( imageInfo,
         resolution,
         format,
         IMMUTABLE_TEXTURE_USAGE,
@@ -367,7 +310,7 @@ uint32_t Texture2D::CountMipLevels ( const VkExtent2D &resolution ) const
 }
 
 bool Texture2D::CreateCommonResources ( VkImageCreateInfo &imageInfo,
-    const VkExtent2D &resolution,
+    VkExtent2D const &resolution,
     VkFormat format,
     VkImageUsageFlags usage,
     bool isGenerateMipmaps,
@@ -435,7 +378,7 @@ bool Texture2D::CreateCommonResources ( VkImageCreateInfo &imageInfo,
         return false;
     }
 
-    const auto depthStencilAspectTest = g_DepthStencilAspectMapper.find ( _format );
+    auto const depthStencilAspectTest = g_DepthStencilAspectMapper.find ( _format );
 
     VkImageViewCreateInfo viewInfo;
     viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -504,7 +447,7 @@ bool Texture2D::IsFormatCompatible ( VkFormat target, VkFormat candidate, androi
     if ( target == candidate )
         return true;
 
-    const auto t = g_CompatibleFormats.find ( target );
+    auto const t = g_CompatibleFormats.find ( target );
 
     if ( t == g_CompatibleFormats.cend () )
     {
@@ -516,7 +459,7 @@ bool Texture2D::IsFormatCompatible ( VkFormat target, VkFormat candidate, androi
         return false;
     }
 
-    const auto& options = t->second;
+    auto const& options = t->second;
 
     if ( options.count ( candidate ) == 1U )
         return true;
@@ -557,10 +500,10 @@ VkFormat Texture2D::PickupFormat ( int channels ) const
     }
 }
 
-bool Texture2D::UploadDataInternal ( const uint8_t* data,
+bool Texture2D::UploadDataInternal ( uint8_t const* data,
     size_t size,
     bool isGenerateMipmaps,
-    const VkImageCreateInfo &imageInfo,
+    VkImageCreateInfo const &imageInfo,
     android_vulkan::Renderer &renderer,
     VkCommandBuffer commandBuffer
 )
@@ -783,7 +726,7 @@ bool Texture2D::UploadDataInternal ( const uint8_t* data,
 
     for ( uint32_t i = 1U; i < imageInfo.mipLevels; ++i )
     {
-        const uint32_t previousMip = i - 1U;
+        uint32_t const previousMip = i - 1U;
         blitInfo.srcSubresource.mipLevel = previousMip;
         blitInfo.srcOffsets[ 1U ].x = static_cast<int32_t> ( std::max ( imageInfo.extent.width >> previousMip, 1U ) );
         blitInfo.srcOffsets[ 1U ].y = static_cast<int32_t> ( std::max ( imageInfo.extent.height >> previousMip, 1U ) );
@@ -901,7 +844,7 @@ bool Texture2D::UploadDataInternal ( const uint8_t* data,
 }
 
 bool Texture2D::LoadImage ( std::vector<uint8_t> &pixelData,
-    const std::string& fileName,
+    std::string const& fileName,
     int &width,
     int &height,
     int &channels
@@ -912,15 +855,15 @@ bool Texture2D::LoadImage ( std::vector<uint8_t> &pixelData,
     if ( !file.LoadContent () )
         return false;
 
-    const std::vector<uint8_t>& imageContent = file.GetContent ();
-    const stbi_uc* stbInData = imageContent.data ();
-    const auto stbInSize = static_cast<const int> ( imageContent.size () );
+    std::vector<uint8_t> const& imageContent = file.GetContent ();
+    stbi_uc const* stbInData = imageContent.data ();
+    auto const stbInSize = static_cast<const int> ( imageContent.size () );
 
     auto* imagePixels = stbi_load_from_memory ( stbInData, stbInSize, &width, &height, &channels, 0 );
 
     if ( channels != 3 )
     {
-        const auto size = static_cast<const size_t> ( width * height * channels );
+        auto const size = static_cast<size_t const> ( width * height * channels );
         pixelData.resize ( size );
         memcpy ( pixelData.data (), imagePixels, size );
         free ( imagePixels );
@@ -931,14 +874,14 @@ bool Texture2D::LoadImage ( std::vector<uint8_t> &pixelData,
     // We don't support 24bit per pixel mode.
     // Expanding up to 32bit per pixel mode...
 
-    const auto size = static_cast<const size_t> ( RGBA_BYTES_PER_PIXEL * width * height );
+    auto const size = static_cast<const size_t> ( RGBA_BYTES_PER_PIXEL * width * height );
     pixelData.resize ( size );
     uint8_t* dst = pixelData.data ();
 
     auto expander = [] ( uint32_t* dst,
         size_t dstRowSkipPixels,
-        const uint32_t* nonDstMemory,
-        const uint8_t* src,
+        uint32_t const* nonDstMemory,
+        uint8_t const* src,
         size_t srcRowSkipPixels,
         size_t rowPixelCount,
         uint32_t oneAlphaMask
@@ -947,7 +890,7 @@ bool Texture2D::LoadImage ( std::vector<uint8_t> &pixelData,
         {
             for ( size_t i = 0U; i < rowPixelCount; ++i )
             {
-                *dst = *reinterpret_cast<const uint32_t*> ( src );
+                *dst = *reinterpret_cast<uint32_t const*> ( src );
                 *dst |= oneAlphaMask;
 
                 ++dst;
@@ -959,17 +902,17 @@ bool Texture2D::LoadImage ( std::vector<uint8_t> &pixelData,
         }
     };
 
-    constexpr const size_t SKIP_ROWS = EXPANDER_THREADS - 1U;
+    constexpr size_t const SKIP_ROWS = EXPANDER_THREADS - 1U;
 
-    const auto rowPixelCount = static_cast<const size_t> ( width );
-    const auto srcRowSize = RGB_BYTES_PER_PIXEL * rowPixelCount;
-    const auto srcRowSkipPixels = SKIP_ROWS * srcRowSize;
-    const auto dstRowSize = RGBA_BYTES_PER_PIXEL * rowPixelCount;
-    const auto dstRowSkipPixels = SKIP_ROWS * rowPixelCount;
-    const auto* nonDstMemory = reinterpret_cast<uint32_t*> ( dst + size );
+    auto const rowPixelCount = static_cast<size_t const> ( width );
+    auto const srcRowSize = RGB_BYTES_PER_PIXEL * rowPixelCount;
+    auto const srcRowSkipPixels = SKIP_ROWS * srcRowSize;
+    auto const dstRowSize = RGBA_BYTES_PER_PIXEL * rowPixelCount;
+    auto const dstRowSkipPixels = SKIP_ROWS * rowPixelCount;
+    auto const* nonDstMemory = reinterpret_cast<uint32_t const*> ( dst + size );
 
-    constexpr const uint8_t oneAlphaRaw[ RGBA_BYTES_PER_PIXEL ] = { 0x00U, 0x00U, 0x00U, 0xFFU };
-    const uint32_t oneAlphaMask = *reinterpret_cast<const uint32_t*> ( oneAlphaRaw );
+    constexpr uint8_t const oneAlphaRaw[ RGBA_BYTES_PER_PIXEL ] = { 0x00U, 0x00U, 0x00U, 0xFFU };
+    auto const oneAlphaMask = *reinterpret_cast<uint32_t const*> ( oneAlphaRaw );
 
     std::array<std::thread, EXPANDER_THREADS> expanders;
 

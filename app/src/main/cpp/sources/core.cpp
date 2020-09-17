@@ -16,13 +16,19 @@ AAssetManager* g_AssetManager = nullptr;
 constexpr static const double FPS_PERIOD = 3.0;
 
 Core::Core ( android_app &app, Game &game ):
-    _game ( game )
+    _game ( game ),
+    _gamepad ( Gamepad::GetInstance () ),
+    _renderer {},
+    _fpsTimestamp {},
+    _frameTimestamp {}
 {
     // grab asset manager
     g_AssetManager = app.activity->assetManager;
 
     app.onAppCmd = &Core::OnOSCommand;
+    app.onInputEvent = &Core::OnOSInputEvent;
     app.userData = this;
+
     ActivateFullScreen ( app );
 }
 
@@ -113,12 +119,15 @@ void Core::OnOSCommand ( android_app* app, int32_t cmd )
 
             core._fpsTimestamp = std::chrono::system_clock::now ();
             core._frameTimestamp = core._fpsTimestamp;
+
+            core._gamepad.Start ();
         break;
 
         case APP_CMD_TERM_WINDOW:
             if ( !core._game.OnDestroy ( core._renderer ) )
                 LogError ( "Core::OnOSCommand - Game destroy failed." );
 
+            core._gamepad.Stop ();
             core._renderer.OnDestroy ();
             AV_CHECK_VULKAN_LEAKS ()
         break;
@@ -132,6 +141,12 @@ void Core::OnOSCommand ( android_app* app, int32_t cmd )
             // NOTHING
         break;
     }
+}
+
+int32_t Core::OnOSInputEvent ( android_app* app, AInputEvent *event )
+{
+    auto& core = *static_cast<Core*> ( app->userData );
+    return core._gamepad.OnOSInputEvent ( event );
 }
 
 } // namespace android_vulkan

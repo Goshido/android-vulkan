@@ -49,6 +49,7 @@ add_library ( android-vulkan
     SHARED
     app/src/main/cpp/sources/core.cpp
     app/src/main/cpp/sources/file.cpp
+    app/src/main/cpp/sources/gamepad.cpp
     app/src/main/cpp/sources/logger.cpp
     app/src/main/cpp/sources/main.cpp
     app/src/main/cpp/sources/mesh_geometry.cpp

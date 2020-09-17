@@ -47,7 +47,33 @@ class PBRGame final : public android_vulkan::Game
         [[nodiscard]] bool CreateMeshes ( android_vulkan::Renderer &renderer );
         void DestroyMeshes ( android_vulkan::Renderer &renderer );
 
+        void InitGamepad ();
         [[nodiscard]] bool UploadGPUContent ( android_vulkan::Renderer &renderer );
+
+        static void OnADown ( void* context );
+        static void OnAUp ( void* context );
+        static void OnBDown ( void* context );
+        static void OnBUp ( void* context );
+        static void OnXDown ( void* context );
+        static void OnXUp ( void* context );
+        static void OnYDown ( void* context );
+        static void OnYUp ( void* context );
+        static void OnLeftBumperDown ( void* context );
+        static void OnLeftBumperUp ( void* context );
+        static void OnRightBumperDown ( void* context );
+        static void OnRightBumperUp ( void* context );
+        static void OnDownDown ( void* context );
+        static void OnDownUp ( void* context );
+        static void OnLeftDown ( void* context );
+        static void OnLeftUp ( void* context );
+        static void OnRightDown ( void* context );
+        static void OnRightUp ( void* context );
+        static void OnUpDown ( void* context );
+        static void OnUpUp ( void* context );
+        static void OnLeftStickDown ( void* context );
+        static void OnLeftStickUp ( void* context );
+        static void OnRightStickDown ( void* context );
+        static void OnRightStickUp ( void* context );
 };
 
 } // namespace pbr

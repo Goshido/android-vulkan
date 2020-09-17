@@ -1,4 +1,5 @@
 #include <pbr/pbr_game.h>
+#include <gamepad.h>
 #include <vulkan_utils.h>
 
 namespace pbr {
@@ -62,6 +63,7 @@ bool PBRGame::OnInit ( android_vulkan::Renderer &renderer )
         return false;
     }
 
+    InitGamepad ();
     return true;
 }
 
@@ -304,6 +306,107 @@ void PBRGame::DestroyMeshes ( android_vulkan::Renderer &renderer )
     wipeMesh ( _sonicMesh0 );
 }
 
+void PBRGame::InitGamepad ()
+{
+    android_vulkan::Gamepad& gamepad = android_vulkan::Gamepad::GetInstance ();
+
+    gamepad.BindKey ( this, &PBRGame::OnADown, android_vulkan::eGamepadKey::A, android_vulkan::eButtonState::Down );
+    gamepad.BindKey ( this, &PBRGame::OnAUp, android_vulkan::eGamepadKey::A, android_vulkan::eButtonState::Up );
+    gamepad.BindKey ( this, &PBRGame::OnBDown, android_vulkan::eGamepadKey::B, android_vulkan::eButtonState::Down );
+    gamepad.BindKey ( this, &PBRGame::OnBUp, android_vulkan::eGamepadKey::B, android_vulkan::eButtonState::Up );
+    gamepad.BindKey ( this, &PBRGame::OnXDown, android_vulkan::eGamepadKey::X, android_vulkan::eButtonState::Down );
+    gamepad.BindKey ( this, &PBRGame::OnXUp, android_vulkan::eGamepadKey::X, android_vulkan::eButtonState::Up );
+    gamepad.BindKey ( this, &PBRGame::OnYDown, android_vulkan::eGamepadKey::Y, android_vulkan::eButtonState::Down );
+    gamepad.BindKey ( this, &PBRGame::OnYUp, android_vulkan::eGamepadKey::Y, android_vulkan::eButtonState::Up );
+
+    gamepad.BindKey ( this,
+        &PBRGame::OnLeftBumperDown,
+        android_vulkan::eGamepadKey::LeftBumper,
+        android_vulkan::eButtonState::Down
+    );
+
+    gamepad.BindKey ( this,
+        &PBRGame::OnLeftBumperUp,
+        android_vulkan::eGamepadKey::LeftBumper,
+        android_vulkan::eButtonState::Up
+    );
+
+    gamepad.BindKey ( this,
+        &PBRGame::OnRightBumperDown,
+        android_vulkan::eGamepadKey::RightBumper,
+        android_vulkan::eButtonState::Down
+    );
+
+    gamepad.BindKey ( this,
+        &PBRGame::OnRightBumperUp,
+        android_vulkan::eGamepadKey::RightBumper,
+        android_vulkan::eButtonState::Up
+    );
+
+    gamepad.BindKey ( this,
+        &PBRGame::OnDownDown,
+        android_vulkan::eGamepadKey::Down,
+        android_vulkan::eButtonState::Down
+    );
+
+    gamepad.BindKey ( this,
+        &PBRGame::OnDownUp,
+        android_vulkan::eGamepadKey::Down,
+        android_vulkan::eButtonState::Up
+    );
+
+    gamepad.BindKey ( this,
+        &PBRGame::OnLeftDown,
+        android_vulkan::eGamepadKey::Left,
+        android_vulkan::eButtonState::Down
+    );
+
+    gamepad.BindKey ( this,
+        &PBRGame::OnLeftUp,
+        android_vulkan::eGamepadKey::Left,
+        android_vulkan::eButtonState::Up
+    );
+
+    gamepad.BindKey ( this,
+        &PBRGame::OnRightDown,
+        android_vulkan::eGamepadKey::Right,
+        android_vulkan::eButtonState::Down
+    );
+
+    gamepad.BindKey ( this,
+        &PBRGame::OnRightUp,
+        android_vulkan::eGamepadKey::Right,
+        android_vulkan::eButtonState::Up
+    );
+
+    gamepad.BindKey ( this, &PBRGame::OnUpDown, android_vulkan::eGamepadKey::Up, android_vulkan::eButtonState::Down );
+    gamepad.BindKey ( this, &PBRGame::OnUpUp, android_vulkan::eGamepadKey::Up, android_vulkan::eButtonState::Up );
+
+    gamepad.BindKey ( this,
+        &PBRGame::OnLeftStickDown,
+        android_vulkan::eGamepadKey::LeftStick,
+        android_vulkan::eButtonState::Down
+    );
+
+    gamepad.BindKey ( this,
+        &PBRGame::OnLeftStickUp,
+        android_vulkan::eGamepadKey::LeftStick,
+        android_vulkan::eButtonState::Up
+    );
+
+    gamepad.BindKey ( this,
+        &PBRGame::OnRightStickDown,
+        android_vulkan::eGamepadKey::RightStick,
+        android_vulkan::eButtonState::Down
+    );
+
+    gamepad.BindKey ( this,
+        &PBRGame::OnRightStickUp,
+        android_vulkan::eGamepadKey::RightStick,
+        android_vulkan::eButtonState::Up
+    );
+}
+
 bool PBRGame::UploadGPUContent ( android_vulkan::Renderer& renderer )
 {
     if ( !CreateCommandPool ( renderer ) ) {
@@ -356,6 +459,126 @@ bool PBRGame::UploadGPUContent ( android_vulkan::Renderer& renderer )
     wipeMaterial ( _sonicMaterial0 );
 
     return true;
+}
+
+void PBRGame::OnADown ( void* /*context*/ )
+{
+    android_vulkan::LogDebug ( "OnADown" );
+}
+
+void PBRGame::OnAUp ( void* /*context*/ )
+{
+    android_vulkan::LogDebug ( "OnAUp" );
+}
+
+void PBRGame::OnBDown ( void* /*context*/ )
+{
+    android_vulkan::LogDebug ( "OnBDown" );
+}
+
+void PBRGame::OnBUp ( void* /*context*/ )
+{
+    android_vulkan::LogDebug ( "OnBUp" );
+}
+
+void PBRGame::OnXDown ( void* /*context*/ )
+{
+    android_vulkan::LogDebug ( "OnXDown" );
+}
+
+void PBRGame::OnXUp ( void* /*context*/ )
+{
+    android_vulkan::LogDebug ( "OnXUp" );
+}
+
+void PBRGame::OnYDown ( void* /*context*/ )
+{
+    android_vulkan::LogDebug ( "OnYDown" );
+}
+
+void PBRGame::OnYUp ( void* /*context*/ )
+{
+    android_vulkan::LogDebug ( "OnYUp" );
+}
+
+void PBRGame::OnLeftBumperDown ( void* /*context*/ )
+{
+    android_vulkan::LogDebug ( "OnLeftBumperDown" );
+}
+
+void PBRGame::OnLeftBumperUp ( void* /*context*/ )
+{
+    android_vulkan::LogDebug ( "OnLeftBumperUp" );
+}
+
+void PBRGame::OnRightBumperDown ( void* /*context*/ )
+{
+    android_vulkan::LogDebug ( "OnRightBumperDown" );
+}
+
+void PBRGame::OnRightBumperUp ( void* /*context*/ )
+{
+    android_vulkan::LogDebug ( "OnRightBumperUp" );
+}
+
+void PBRGame::OnDownDown ( void* /*context*/ )
+{
+    android_vulkan::LogDebug ( "OnDownDown" );
+}
+
+void PBRGame::OnDownUp ( void* /*context*/ )
+{
+    android_vulkan::LogDebug ( "OnDownUp" );
+}
+
+void PBRGame::OnLeftDown ( void* /*context*/ )
+{
+    android_vulkan::LogDebug ( "OnLeftDown" );
+}
+
+void PBRGame::OnLeftUp ( void* /*context*/ )
+{
+    android_vulkan::LogDebug ( "OnLeftUp" );
+}
+
+void PBRGame::OnRightDown ( void* /*context*/ )
+{
+    android_vulkan::LogDebug ( "OnRightDown" );
+}
+
+void PBRGame::OnRightUp ( void* /*context*/ )
+{
+    android_vulkan::LogDebug ( "OnRightUp" );
+}
+
+void PBRGame::OnUpDown ( void* /*context*/ )
+{
+    android_vulkan::LogDebug ( "OnUpDown" );
+}
+
+void PBRGame::OnUpUp ( void* /*context*/ )
+{
+    android_vulkan::LogDebug ( "OnUpUp" );
+}
+
+void PBRGame::OnLeftStickDown ( void* /*context*/ )
+{
+    android_vulkan::LogDebug ( "OnLeftStickDown" );
+}
+
+void PBRGame::OnLeftStickUp ( void* /*context*/ )
+{
+    android_vulkan::LogDebug ( "OnLeftStickUp" );
+}
+
+void PBRGame::OnRightStickDown ( void* /*context*/ )
+{
+    android_vulkan::LogDebug ( "OnRightStickDown" );
+}
+
+void PBRGame::OnRightStickUp ( void* /*context*/ )
+{
+    android_vulkan::LogDebug ( "OnRightStickUp" );
 }
 
 } // namespace pbr

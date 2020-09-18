@@ -1,5 +1,5 @@
-#ifndef GAMEPAD_H
-#define GAMEPAD_H
+#ifndef ANDROID_VULKAN_GAMEPAD_H
+#define ANDROID_VULKAN_GAMEPAD_H
 
 
 #include <GXCommon/GXWarning.h>
@@ -9,11 +9,13 @@ GX_DISABLE_COMMON_WARNINGS
 #include <cinttypes>
 #include <shared_mutex>
 #include <thread>
-#include <android/input.h>
 
 GX_RESTORE_WARNING_STATE
 
-#include <GXCommon/GXMath.h>
+#include "dpad.h"
+#include "key_action.h"
+#include "stick.h"
+#include "trigger.h"
 
 
 namespace android_vulkan {
@@ -31,11 +33,14 @@ enum class eGamepadKey : uint8_t
     LeftStick,
     RightStick,
     LeftBumper,
-    RightBumper
+    RightBumper,
+    Home,
+    Menu,
+    View
 };
 
 constexpr auto const TOTAL_GAMEPAD_KEYS = static_cast<size_t> (
-    static_cast<uint8_t> ( eGamepadKey::RightBumper ) + 1U
+    static_cast<uint8_t> ( eGamepadKey::View ) + 1U
 );
 
 enum class eButtonState : uint8_t
@@ -47,102 +52,14 @@ enum class eButtonState : uint8_t
 constexpr auto const TOTAL_BUTTON_STATES = static_cast<size_t> ( static_cast<uint8_t> ( eButtonState::Up ) + 1U );
 constexpr size_t const ACTION_POOL_ELEMENT_COUNT = TOTAL_GAMEPAD_KEYS * TOTAL_BUTTON_STATES;
 
-typedef void ( *KeyHandler ) ( void* context );
-typedef void ( *StickHandler ) ( void* context, float horizontal, float vertical );
-typedef void ( *TriggerHandler ) ( void* context, float push );
-
 class Gamepad final
 {
-    private:
-        class KeyBind final
-        {
-            public:
-                void*               _context;
-                KeyHandler          _handler;
-
-            public:
-                KeyBind ();
-
-                KeyBind ( KeyBind const &other ) = default;
-                KeyBind& operator = ( KeyBind const &other ) = default;
-
-                KeyBind ( KeyBind &&other ) = default;
-                KeyBind& operator = ( KeyBind &&other ) = default;
-
-                ~KeyBind () = default;
-
-                void Init ( void* context, KeyHandler handler );
-                void Reset ();
-        };
-
-        class KeyAction final
-        {
-            public:
-                KeyBind             _bind;
-                KeyAction*          _next;
-
-            public:
-                KeyAction ();
-
-                KeyAction ( KeyAction const &other ) = delete;
-                KeyAction& operator = ( KeyAction const &other ) = delete;
-
-                KeyAction ( KeyAction &&other ) = delete;
-                KeyAction& operator = ( KeyAction &&other ) = delete;
-
-                ~KeyAction () = default;
-        };
-
-        struct Stick final
-        {
-            bool                    _isEvent;
-            GXVec2                  _state;
-            void*                   _context;
-            StickHandler            _handler;
-
-            Stick ();
-
-            Stick ( Stick const &other ) = delete;
-            Stick& operator = ( Stick const &other ) = delete;
-
-            Stick ( Stick &&other ) = delete;
-            Stick& operator = ( Stick &&other ) = delete;
-
-            ~Stick () = default;
-
-            void Bind ( void* context, StickHandler handler );
-            void Unbind ();
-
-            void Execute ();
-        };
-
-        struct Trigger final
-        {
-            bool                    _isEvent;
-            float                   _push;
-            void*                   _context;
-            TriggerHandler          _handler;
-
-            Trigger ();
-
-            Trigger ( Trigger const &other ) = delete;
-            Trigger& operator = ( Trigger const &other ) = delete;
-
-            Trigger ( Trigger &&other ) = delete;
-            Trigger& operator = ( Trigger &&other ) = delete;
-
-            ~Trigger () = default;
-
-            void Bind ( void* context, TriggerHandler handler );
-            void Unbind ();
-
-            void Execute ();
-        };
-
     private:
         KeyBind                     _downKeyBinds[ TOTAL_GAMEPAD_KEYS ];
         KeyBind                     _upKeyBinds[ TOTAL_GAMEPAD_KEYS ];
 
+        DPad                        _dPadCurrent;
+        DPad                        _dPadOld;
         bool                        _loop;
 
         KeyAction                   _keyActionPool[ ACTION_POOL_ELEMENT_COUNT ];
@@ -182,7 +99,7 @@ class Gamepad final
         [[maybe_unused]] void BindRightTrigger ( void* context, TriggerHandler handler );
         [[maybe_unused]] void UnbindRightTrigger ();
 
-        int32_t OnOSInputEvent ( AInputEvent* event );
+        [[nodiscard]] int32_t OnOSInputEvent ( AInputEvent* event );
 
         void Start ();
         void Stop ();
@@ -197,12 +114,19 @@ class Gamepad final
         void ExecuteStickEvents ();
         void ExecuteTriggerEvents ();
 
-        int32_t HandleKey ( AInputEvent* event );
+        void HandleDPad ( AInputEvent* event );
+
+        [[nodiscard]] int32_t HandleKey ( AInputEvent* event );
+        [[nodiscard]] int32_t HandleMotion ( AInputEvent* event );
+
+        void HandleSticks ( AInputEvent* event );
+        void HandleTriggers ( AInputEvent* event );
 
         void InitActionPool ();
+        void ResolveDPad ();
 };
 
 } // namespace android_vulkan
 
 
-#endif // GAMEPAD_H
+#endif // ANDROID_VULKAN_GAMEPAD_H

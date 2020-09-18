@@ -74,6 +74,18 @@ class PBRGame final : public android_vulkan::Game
         static void OnLeftStickUp ( void* context );
         static void OnRightStickDown ( void* context );
         static void OnRightStickUp ( void* context );
+        static void OnHomeDown ( void* context );
+        static void OnHomeUp ( void* context );
+        static void OnMenuDown ( void* context );
+        static void OnMenuUp ( void* context );
+        static void OnViewDown ( void* context );
+        static void OnViewUp ( void* context );
+
+        static void OnLeftStick ( void* context, float horizontal, float vertical );
+        static void OnRightStick ( void* context, float horizontal, float vertical );
+
+        static void OnLeftTrigger ( void* context, float push );
+        static void OnRightTrigger ( void* context, float push );
 };
 
 } // namespace pbr

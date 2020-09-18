@@ -50,11 +50,14 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/core.cpp
     app/src/main/cpp/sources/file.cpp
     app/src/main/cpp/sources/gamepad.cpp
+    app/src/main/cpp/sources/key_bind.cpp
     app/src/main/cpp/sources/logger.cpp
     app/src/main/cpp/sources/main.cpp
     app/src/main/cpp/sources/mesh_geometry.cpp
     app/src/main/cpp/sources/renderer.cpp
+    app/src/main/cpp/sources/stick.cpp
     app/src/main/cpp/sources/texture2D.cpp
+    app/src/main/cpp/sources/trigger.cpp
     app/src/main/cpp/sources/vulkan_utils.cpp
     app/src/main/cpp/sources/GXCommon/GXMath.cpp
     app/src/main/cpp/sources/GXCommon/Vulkan/GXMathBackend.cpp

@@ -8,114 +8,12 @@ GX_DISABLE_COMMON_WARNINGS
 
 GX_RESTORE_WARNING_STATE
 
-#include <logger.h>
-
 
 namespace android_vulkan {
 
 constexpr static useconds_t const TIMEOUT_MICROSECONDS = 20000U;
 constexpr static int32_t const EVENT_HANDLED = 1;
 constexpr static int32_t const EVENT_IGNORED = 0;
-
-//----------------------------------------------------------------------------------------------------------------------
-
-Gamepad::KeyBind::KeyBind ():
-    _context ( nullptr ),
-    _handler ( nullptr )
-{
-    // NOTHING
-}
-
-void Gamepad::KeyBind::Init ( void* context, KeyHandler handler )
-{
-    _context = context;
-    _handler = handler;
-}
-
-void Gamepad::KeyBind::Reset ()
-{
-    _context = nullptr;
-    _handler = nullptr;
-}
-
-//----------------------------------------------------------------------------------------------------------------------
-
-Gamepad::KeyAction::KeyAction ():
-    _bind {},
-    _next ( nullptr )
-{
-    // NOTHING
-}
-
-//----------------------------------------------------------------------------------------------------------------------
-
-Gamepad::Stick::Stick ():
-    _isEvent ( false ),
-    _state ( 0.0F, 0.0F ),
-    _context ( nullptr ),
-    _handler ( nullptr )
-{
-    // NOTHING
-}
-
-void Gamepad::Stick::Bind ( void* context, StickHandler handler )
-{
-    _isEvent = false;
-    _state = GXVec2 ( 0.0F, 0.0F );
-    _context = context;
-    _handler = handler;
-}
-
-void Gamepad::Stick::Unbind ()
-{
-    _isEvent = false;
-    _context = nullptr;
-    _handler = nullptr;
-}
-
-void Gamepad::Stick::Execute ()
-{
-    if ( !_isEvent )
-        return;
-
-    _handler ( _context, _state._data[ 0U ], _state._data[ 1U ] );
-    _isEvent = false;
-}
-
-//----------------------------------------------------------------------------------------------------------------------
-
-Gamepad::Trigger::Trigger ():
-    _isEvent ( false ),
-    _push ( 0.0F ),
-    _context ( nullptr ),
-    _handler ( nullptr )
-{
-    // TODO
-}
-
-void Gamepad::Trigger::Bind ( void* context, TriggerHandler handler )
-{
-    _isEvent = false;
-    _push = 0.0F;
-    _context = context;
-    _handler = handler;
-}
-
-void Gamepad::Trigger::Unbind ()
-{
-    _isEvent = false;
-    _context = nullptr;
-    _handler = nullptr;
-}
-
-void Gamepad::Trigger::Execute ()
-{
-    if ( !_isEvent )
-        return;
-
-    _handler ( _context, _push );
-    _isEvent = false;
-}
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -212,20 +110,12 @@ int32_t Gamepad::OnOSInputEvent ( AInputEvent* event )
 
     auto const source = static_cast<uint32_t> ( AInputEvent_getSource ( event ) );
 
-    if ( ( source & AINPUT_SOURCE_GAMEPAD ) != AINPUT_SOURCE_GAMEPAD )
-        return EVENT_IGNORED;
+    if ( ( source & AINPUT_SOURCE_GAMEPAD ) == AINPUT_SOURCE_GAMEPAD )
+        return AInputEvent_getType ( event ) == AINPUT_EVENT_TYPE_KEY ? HandleKey ( event ) : EVENT_IGNORED;
 
-    switch ( AInputEvent_getType ( event ) )
-    {
-        case AINPUT_EVENT_TYPE_KEY:
-        return HandleKey ( event );
+    if ( ( source & AINPUT_SOURCE_JOYSTICK ) == AINPUT_SOURCE_JOYSTICK )
+        return AInputEvent_getType ( event ) == AINPUT_EVENT_TYPE_MOTION ? HandleMotion ( event ) : EVENT_IGNORED;
 
-        default:
-            // NOTHING
-        break;
-    }
-
-    // TODO
     return EVENT_IGNORED;
 }
 
@@ -235,6 +125,8 @@ void Gamepad::Start ()
         while ( _loop )
         {
             std::unique_lock<std::shared_timed_mutex> lock ( _mutex );
+
+            ResolveDPad ();
 
             ExecuteKeyEvents ();
             ExecuteStickEvents ();
@@ -257,6 +149,8 @@ void Gamepad::Stop ()
 Gamepad::Gamepad ():
     _downKeyBinds {},
     _upKeyBinds {},
+    _dPadCurrent {},
+    _dPadOld {},
     _loop ( false ),
     _keyActionPool {},
     _freeKeyActions ( nullptr ),
@@ -312,6 +206,40 @@ void Gamepad::ExecuteStickEvents ()
     _rightStick.Execute ();
 }
 
+void Gamepad::ExecuteTriggerEvents ()
+{
+    _leftTrigger.Execute ();
+    _rightTrigger.Execute ();
+}
+
+void Gamepad::HandleDPad ( AInputEvent* event )
+{
+    GXVec2 const raw ( AMotionEvent_getAxisValue ( event, AMOTION_EVENT_AXIS_HAT_X, 0U ),
+        AMotionEvent_getAxisValue ( event, AMOTION_EVENT_AXIS_HAT_Y, 0U )
+    );
+
+    if ( raw._data[ 0U ] < 0.0F )
+    {
+        _dPadCurrent._left = true;
+        _dPadCurrent._right = false;
+    }
+    else
+    {
+        _dPadCurrent._left = false;
+        _dPadCurrent._right = raw._data[ 0U ] > 0.0F;
+    }
+
+    if ( raw._data[ 1U ] < 0.0F )
+    {
+        _dPadCurrent._up = true;
+        _dPadCurrent._down = false;
+        return;
+    }
+
+    _dPadCurrent._up = false;
+    _dPadCurrent._down = raw._data[ 1U ] > 0.0F;
+}
+
 int32_t Gamepad::HandleKey ( AInputEvent* event )
 {
     if ( AKeyEvent_getRepeatCount ( event ) > 0 )
@@ -334,7 +262,10 @@ int32_t Gamepad::HandleKey ( AInputEvent* event )
         { AKEYCODE_BUTTON_THUMBL, static_cast<size_t> ( static_cast<uint8_t> ( eGamepadKey::LeftStick ) ) },
         { AKEYCODE_BUTTON_THUMBR, static_cast<size_t> ( static_cast<uint8_t> ( eGamepadKey::RightStick ) ) },
         { AKEYCODE_BUTTON_L1, static_cast<size_t> ( static_cast<uint8_t> ( eGamepadKey::LeftBumper ) ) },
-        { AKEYCODE_BUTTON_R1, static_cast<size_t> ( static_cast<uint8_t> ( eGamepadKey::RightBumper ) ) }
+        { AKEYCODE_BUTTON_R1, static_cast<size_t> ( static_cast<uint8_t> ( eGamepadKey::RightBumper ) ) },
+        { AKEYCODE_BUTTON_MODE, static_cast<size_t> ( static_cast<uint8_t> ( eGamepadKey::Home ) ) },
+        { AKEYCODE_BUTTON_START, static_cast<size_t> ( static_cast<uint8_t> ( eGamepadKey::Menu ) ) },
+        { AKEYCODE_BUTTON_SELECT, static_cast<size_t> ( static_cast<uint8_t> ( eGamepadKey::View ) ) }
     };
 
     auto const findResult = mapper.find ( AKeyEvent_getKeyCode ( event ) );
@@ -366,10 +297,25 @@ int32_t Gamepad::HandleKey ( AInputEvent* event )
     return EVENT_HANDLED;
 }
 
-void Gamepad::ExecuteTriggerEvents ()
+int32_t Gamepad::HandleMotion ( AInputEvent* event )
 {
-    _leftTrigger.Execute ();
-    _rightTrigger.Execute ();
+    HandleDPad ( event );
+    HandleSticks ( event );
+    HandleTriggers ( event );
+
+    return EVENT_HANDLED;
+}
+
+void Gamepad::HandleSticks ( AInputEvent* event )
+{
+    _leftStick.Update ( event, AMOTION_EVENT_AXIS_X, AMOTION_EVENT_AXIS_Y );
+    _rightStick.Update ( event, AMOTION_EVENT_AXIS_Z, AMOTION_EVENT_AXIS_RZ );
+}
+
+void Gamepad::HandleTriggers ( AInputEvent* event )
+{
+    _leftTrigger.Update ( event, AMOTION_EVENT_AXIS_LTRIGGER );
+    _rightTrigger.Update ( event, AMOTION_EVENT_AXIS_RTRIGGER );
 }
 
 void Gamepad::InitActionPool ()
@@ -381,6 +327,31 @@ void Gamepad::InitActionPool ()
 
     _keyActionPool[ lastKey ]._next = nullptr;
     _freeKeyActions = _keyActionPool;
+}
+
+void Gamepad::ResolveDPad ()
+{
+    auto resolve = [ & ] ( bool current, bool old, eGamepadKey key )
+    {
+        if ( current == old )
+            return;
+
+        KeyBind& target = current ?
+            _downKeyBinds[ static_cast<size_t> ( static_cast<uint8_t> ( key ) ) ]:
+            _upKeyBinds[ static_cast<size_t> ( static_cast<uint8_t> ( key ) ) ];
+
+        if ( !target._handler )
+            return;
+
+        AddAction ( target );
+    };
+
+    resolve ( _dPadCurrent._down, _dPadOld._down, eGamepadKey::Down );
+    resolve ( _dPadCurrent._left, _dPadOld._left, eGamepadKey::Left );
+    resolve ( _dPadCurrent._right, _dPadOld._right, eGamepadKey::Right );
+    resolve ( _dPadCurrent._up, _dPadOld._up, eGamepadKey::Up );
+
+    _dPadOld = _dPadCurrent;
 }
 
 } // namespace android_vulkan

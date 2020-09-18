@@ -405,6 +405,36 @@ void PBRGame::InitGamepad ()
         android_vulkan::eGamepadKey::RightStick,
         android_vulkan::eButtonState::Up
     );
+
+    gamepad.BindKey ( this,
+        &PBRGame::OnHomeDown,
+        android_vulkan::eGamepadKey::Home,
+        android_vulkan::eButtonState::Down
+    );
+
+    gamepad.BindKey ( this, &PBRGame::OnHomeUp, android_vulkan::eGamepadKey::Home, android_vulkan::eButtonState::Up );
+
+    gamepad.BindKey ( this,
+        &PBRGame::OnMenuDown,
+        android_vulkan::eGamepadKey::Menu,
+        android_vulkan::eButtonState::Down
+    );
+
+    gamepad.BindKey ( this, &PBRGame::OnMenuUp, android_vulkan::eGamepadKey::Menu, android_vulkan::eButtonState::Up );
+
+    gamepad.BindKey ( this,
+        &PBRGame::OnViewDown,
+        android_vulkan::eGamepadKey::View,
+        android_vulkan::eButtonState::Down
+    );
+
+    gamepad.BindKey ( this, &PBRGame::OnViewUp, android_vulkan::eGamepadKey::View, android_vulkan::eButtonState::Up );
+
+    gamepad.BindLeftStick ( this, &PBRGame::OnLeftStick );
+    gamepad.BindRightStick ( this, &PBRGame::OnRightStick );
+
+    gamepad.BindLeftTrigger( this, &PBRGame::OnLeftTrigger );
+    gamepad.BindRightTrigger ( this, &PBRGame::OnRightTrigger );
 }
 
 bool PBRGame::UploadGPUContent ( android_vulkan::Renderer& renderer )
@@ -579,6 +609,56 @@ void PBRGame::OnRightStickDown ( void* /*context*/ )
 void PBRGame::OnRightStickUp ( void* /*context*/ )
 {
     android_vulkan::LogDebug ( "OnRightStickUp" );
+}
+
+void PBRGame::OnHomeDown ( void* /*context*/ )
+{
+    android_vulkan::LogDebug ( "OnHomeDown" );
+}
+
+void PBRGame::OnHomeUp ( void* /*context*/ )
+{
+    android_vulkan::LogDebug ( "OnHomeUp" );
+}
+
+void PBRGame::OnMenuDown ( void* /*context*/ )
+{
+    android_vulkan::LogDebug ( "OnMenuDown" );
+}
+
+void PBRGame::OnMenuUp ( void* /*context*/ )
+{
+    android_vulkan::LogDebug ( "OnMenuUp" );
+}
+
+void PBRGame::OnViewDown ( void* /*context*/ )
+{
+    android_vulkan::LogDebug ( "OnViewDown" );
+}
+
+void PBRGame::OnViewUp ( void* /*context*/ )
+{
+    android_vulkan::LogDebug ( "OnViewUp" );
+}
+
+void PBRGame::OnLeftStick ( void* /*context*/, float horizontal, float vertical )
+{
+    android_vulkan::LogDebug ( "OnLeftStick: h: %5.2f, v: %5.2f", horizontal, vertical );
+}
+
+void PBRGame::OnRightStick ( void* /*context*/, float horizontal, float vertical )
+{
+    android_vulkan::LogDebug ( "OnRightStick: h: %5.2f, v: %5.2f", horizontal, vertical );
+}
+
+void PBRGame::OnLeftTrigger ( void* /*context*/, float push )
+{
+    android_vulkan::LogDebug ( "OnLeftTrigger: push: %5.2f", push );
+}
+
+void PBRGame::OnRightTrigger ( void* /*context*/, float push )
+{
+    android_vulkan::LogDebug ( "OnRightTrigger: push: %5.2f", push );
 }
 
 } // namespace pbr

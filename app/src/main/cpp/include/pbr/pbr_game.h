@@ -4,6 +4,7 @@
 
 #include <game.h>
 #include "render_session.h"
+#include "camera.h"
 
 
 namespace pbr {
@@ -11,6 +12,7 @@ namespace pbr {
 class PBRGame final : public android_vulkan::Game
 {
     private:
+        Camera                          _camera;
         VkCommandPool                   _commandPool;
         std::vector<VkCommandBuffer>    _commandBuffers;
 
@@ -47,45 +49,7 @@ class PBRGame final : public android_vulkan::Game
         [[nodiscard]] bool CreateMeshes ( android_vulkan::Renderer &renderer );
         void DestroyMeshes ( android_vulkan::Renderer &renderer );
 
-        void InitGamepad ();
         [[nodiscard]] bool UploadGPUContent ( android_vulkan::Renderer &renderer );
-
-        static void OnADown ( void* context );
-        static void OnAUp ( void* context );
-        static void OnBDown ( void* context );
-        static void OnBUp ( void* context );
-        static void OnXDown ( void* context );
-        static void OnXUp ( void* context );
-        static void OnYDown ( void* context );
-        static void OnYUp ( void* context );
-        static void OnLeftBumperDown ( void* context );
-        static void OnLeftBumperUp ( void* context );
-        static void OnRightBumperDown ( void* context );
-        static void OnRightBumperUp ( void* context );
-        static void OnDownDown ( void* context );
-        static void OnDownUp ( void* context );
-        static void OnLeftDown ( void* context );
-        static void OnLeftUp ( void* context );
-        static void OnRightDown ( void* context );
-        static void OnRightUp ( void* context );
-        static void OnUpDown ( void* context );
-        static void OnUpUp ( void* context );
-        static void OnLeftStickDown ( void* context );
-        static void OnLeftStickUp ( void* context );
-        static void OnRightStickDown ( void* context );
-        static void OnRightStickUp ( void* context );
-        static void OnHomeDown ( void* context );
-        static void OnHomeUp ( void* context );
-        static void OnMenuDown ( void* context );
-        static void OnMenuUp ( void* context );
-        static void OnViewDown ( void* context );
-        static void OnViewUp ( void* context );
-
-        static void OnLeftStick ( void* context, float horizontal, float vertical );
-        static void OnRightStick ( void* context, float horizontal, float vertical );
-
-        static void OnLeftTrigger ( void* context, float push );
-        static void OnRightTrigger ( void* context, float push );
 };
 
 } // namespace pbr

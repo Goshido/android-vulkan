@@ -64,6 +64,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/mandelbrot/mandelbrot_analytic_color.cpp
     app/src/main/cpp/sources/mandelbrot/mandelbrot_base.cpp
     app/src/main/cpp/sources/mandelbrot/mandelbrot_lut_color.cpp
+    app/src/main/cpp/sources/pbr/camera.cpp
     app/src/main/cpp/sources/pbr/gbuffer.cpp
     app/src/main/cpp/sources/pbr/material.cpp
     app/src/main/cpp/sources/pbr/mesh_group.cpp

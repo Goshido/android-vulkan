@@ -87,11 +87,11 @@ class Gamepad final
         [[maybe_unused]] void BindKey ( void* context, KeyHandler handler, eGamepadKey key, eButtonState state );
         [[maybe_unused]] void UnbindKey ( eGamepadKey key, eButtonState state );
 
-        [[maybe_unused]] void BindLeftStick ( void* context, StickHandler handler );
-        [[maybe_unused]] void UnbindLeftStick ();
+        void BindLeftStick ( void* context, StickHandler handler );
+        void UnbindLeftStick ();
 
-        [[maybe_unused]] void BindRightStick ( void* context, StickHandler handler );
-        [[maybe_unused]] void UnbindRightStick ();
+        void BindRightStick ( void* context, StickHandler handler );
+        void UnbindRightStick ();
 
         [[maybe_unused]] void BindLeftTrigger ( void* context, TriggerHandler handler );
         [[maybe_unused]] void UnbindLeftTrigger ();

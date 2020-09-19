@@ -11,7 +11,7 @@ GX_RESTORE_WARNING_STATE
 
 namespace android_vulkan {
 
-constexpr static useconds_t const TIMEOUT_MICROSECONDS = 20000U;
+constexpr static useconds_t const TIMEOUT_MICROSECONDS = 10000U;
 constexpr static int32_t const EVENT_HANDLED = 1;
 constexpr static int32_t const EVENT_IGNORED = 0;
 

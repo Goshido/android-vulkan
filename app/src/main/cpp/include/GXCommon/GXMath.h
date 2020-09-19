@@ -9,6 +9,7 @@
 
 GX_DISABLE_COMMON_WARNINGS
 
+#include <cmath>
 #include <math.h>
 #include <limits.h>
 #include <float.h>

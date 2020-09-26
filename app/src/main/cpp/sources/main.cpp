@@ -28,7 +28,7 @@ enum class eGame : uint16_t
     RotatingMeshLUT
 };
 
-static const std::map<eGame, std::shared_ptr<Game>> g_Games =
+static std::map<eGame, std::shared_ptr<Game>> const g_Games =
 {
     { eGame::MandelbrotAnalyticColor, std::make_shared<mandelbrot::MandelbrotAnalyticColor> () },
     { eGame::MandelbrotLutColor, std::make_shared<mandelbrot::MandelbrotLUTColor> () },
@@ -60,7 +60,7 @@ void android_main ( android_app* app )
             int events;
             android_poll_source* source;
 
-            const int pollResult = ALooper_pollAll ( core.IsSuspend () ? -1 : 0,
+            int const pollResult = ALooper_pollAll ( core.IsSuspend () ? -1 : 0,
                 nullptr,
                 &events,
                 reinterpret_cast<void**> ( &source )

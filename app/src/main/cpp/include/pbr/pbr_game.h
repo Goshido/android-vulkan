@@ -18,10 +18,12 @@ class PBRGame final : public android_vulkan::Game
 
         RenderSession                   _renderSession;
 
+        MaterialRef                     _customMaterial;
         MaterialRef                     _sonicMaterial0;
         MaterialRef                     _sonicMaterial1;
         MaterialRef                     _sonicMaterial2;
 
+        MeshRef                         _customMesh;
         MeshRef                         _sonicMesh0;
         MeshRef                         _sonicMesh1;
         MeshRef                         _sonicMesh2;

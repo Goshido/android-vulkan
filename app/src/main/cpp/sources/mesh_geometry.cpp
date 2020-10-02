@@ -124,7 +124,11 @@ bool MeshGeometry::LoadMesh ( std::string &&fileName,
     auto const& header = *reinterpret_cast<GXNativeMeshHeader const*> ( content.data () );
 
     constexpr size_t skipFactor = UV_THREADS - 1U;
-    auto const verticesPerBatch = static_cast<size_t const> ( header.totalVertices ) / UV_THREADS;
+
+    auto const verticesPerBatch = std::max ( static_cast<size_t const> ( 1U ),
+        static_cast<size_t const> ( header.totalVertices ) / UV_THREADS
+    );
+
     size_t const toNextBatch = verticesPerBatch * skipFactor;
     auto const lastIndex = static_cast<size_t const> ( header.totalVertices - 1U );
     auto* vertices = reinterpret_cast<android_vulkan::VertexInfo*> ( content.data () + header.vboOffset );
@@ -137,7 +141,7 @@ bool MeshGeometry::LoadMesh ( std::string &&fileName,
     ) {
         while ( currentIndex <= lastIndex )
         {
-            size_t const limit = std::min ( lastIndex, currentIndex + verticesPerBatch );
+            size_t const limit = std::min ( lastIndex + 1U, currentIndex + verticesPerBatch );
 
             for ( ; currentIndex < limit; ++currentIndex )
             {

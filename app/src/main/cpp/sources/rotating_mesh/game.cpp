@@ -20,16 +20,16 @@ constexpr static const char* VERTEX_SHADER_ENTRY_POINT = "VS";
 
 constexpr static const char* FRAGMENT_SHADER_ENTRY_POINT = "PS";
 
-constexpr static const char* MATERIAL_1_DIFFUSE = "textures/rotating_mesh/sonic-material-1-diffuse.png";
+constexpr static std::string_view const MATERIAL_1_DIFFUSE = "textures/rotating_mesh/sonic-material-1-diffuse.png";
 constexpr static const char* MATERIAL_1_MESH = "meshes/rotating_mesh/sonic-material-1.mesh";
 
-constexpr static const char* MATERIAL_2_DIFFUSE = "textures/rotating_mesh/sonic-material-2-diffuse.png";
+constexpr static std::string_view const MATERIAL_2_DIFFUSE = "textures/rotating_mesh/sonic-material-2-diffuse.png";
 constexpr static const char* MATERIAL_2_MESH = "meshes/rotating_mesh/sonic-material-2.mesh";
-constexpr static const char* MATERIAL_2_NORMAL = "textures/rotating_mesh/sonic-material-2-normal.png";
+constexpr static std::string_view const MATERIAL_2_NORMAL = "textures/rotating_mesh/sonic-material-2-normal.png";
 
-constexpr static const char* MATERIAL_3_DIFFUSE = "textures/rotating_mesh/sonic-material-3-diffuse.png";
+constexpr static std::string_view const MATERIAL_3_DIFFUSE = "textures/rotating_mesh/sonic-material-3-diffuse.png";
 constexpr static const char* MATERIAL_3_MESH = "meshes/rotating_mesh/sonic-material-3.mesh";
-constexpr static const char* MATERIAL_3_NORMAL = "textures/rotating_mesh/sonic-material-3-normal.png";
+constexpr static std::string_view const MATERIAL_3_NORMAL = "textures/rotating_mesh/sonic-material-3-normal.png";
 
 constexpr static const float ROTATION_SPEED = GX_MATH_HALF_PI;
 constexpr static const float FIELD_OF_VIEW = 60.0F;
@@ -209,12 +209,12 @@ bool Game::CreateCommonTextures ( android_vulkan::Renderer &renderer, VkCommandB
         return VK_NULL_HANDLE;
     };
 
-    constexpr char const* textureFiles[ MATERIAL_COUNT ] =
-        {
-            MATERIAL_1_DIFFUSE,
-            MATERIAL_2_DIFFUSE,
-            MATERIAL_3_DIFFUSE
-        };
+    constexpr std::string_view const textureFiles[ MATERIAL_COUNT ] =
+    {
+        MATERIAL_1_DIFFUSE,
+        MATERIAL_2_DIFFUSE,
+        MATERIAL_3_DIFFUSE
+    };
 
     for ( size_t i = 0U; i < MATERIAL_COUNT; ++i )
     {

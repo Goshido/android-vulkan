@@ -269,6 +269,16 @@ bool Texture2D::UploadData ( std::string &&fileName,
     return true;
 }
 
+bool Texture2D::UploadData ( std::string_view const &fileName,
+    VkFormat format,
+    bool isGenerateMipmaps,
+    android_vulkan::Renderer &renderer,
+    VkCommandBuffer commandBuffer
+)
+{
+    return UploadData ( std::string ( fileName ), format, isGenerateMipmaps, renderer, commandBuffer );
+}
+
 bool Texture2D::UploadData ( const uint8_t* data,
     size_t size,
     VkExtent2D const &resolution,

@@ -1,23 +1,25 @@
 #include <pbr/pbr_game.h>
 #include <vulkan_utils.h>
+#include <pbr/material_manager.h>
+
 
 namespace pbr {
 
-constexpr static char const* CUSTOM_DIFFUSE = "pbr/N7_ADM_Reception/Props/Furniture/WorkChair_D.png";
 constexpr static char const* CUSTOM_MESH = "pbr/N7_ADM_Reception/Props/Furniture/WorkChair.mesh";
+constexpr static std::string_view const CUSTOM_MATERIAL = "pbr/N7_ADM_Reception/Props/Furniture/WorkChair.mtl";
 
-constexpr static char const* MATERIAL_1_DIFFUSE = "textures/rotating_mesh/sonic-material-1-diffuse.png";
+constexpr static std::string_view const MATERIAL_1_DIFFUSE = "textures/rotating_mesh/sonic-material-1-diffuse.png";
 constexpr static char const* MATERIAL_1_MESH = "meshes/rotating_mesh/sonic-material-1.mesh";
 
-constexpr static char const* MATERIAL_2_DIFFUSE = "textures/rotating_mesh/sonic-material-2-diffuse.png";
+constexpr static std::string_view const MATERIAL_2_DIFFUSE = "textures/rotating_mesh/sonic-material-2-diffuse.png";
 constexpr static char const* MATERIAL_2_MESH = "meshes/rotating_mesh/sonic-material-2.mesh";
-constexpr static char const* MATERIAL_2_NORMAL = "textures/rotating_mesh/sonic-material-2-normal.png";
+constexpr static std::string_view const MATERIAL_2_NORMAL = "textures/rotating_mesh/sonic-material-2-normal.png";
 
-constexpr static char const* MATERIAL_3_DIFFUSE = "textures/rotating_mesh/sonic-material-3-diffuse.png";
+constexpr static std::string_view const MATERIAL_3_DIFFUSE = "textures/rotating_mesh/sonic-material-3-diffuse.png";
 constexpr static char const* MATERIAL_3_MESH = "meshes/rotating_mesh/sonic-material-3.mesh";
-constexpr static char const* MATERIAL_3_NORMAL = "textures/rotating_mesh/sonic-material-3-normal.png";
+constexpr static std::string_view const MATERIAL_3_NORMAL = "textures/rotating_mesh/sonic-material-3-normal.png";
 
-constexpr static size_t const MATERIAL_TEXTURE_COUNT = 6U;
+constexpr static size_t const MATERIAL_TEXTURE_COUNT = 9U;
 constexpr static size_t const MESH_COUNT = 4U;
 
 constexpr static float const FIELD_OF_VIEW = 60.0F;
@@ -96,7 +98,7 @@ bool PBRGame::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime )
     _renderSession.SubmitMesh ( _sonicMesh1, _sonicMaterial1, local );
     _renderSession.SubmitMesh ( _sonicMesh2, _sonicMaterial2, local );
 
-    local.SetW ( GXVec3 ( 0.0F, -1.0F, 70.0F ) );
+    local.SetW ( GXVec3 ( 20.0F, -1.0F, 70.0F ) );
     _renderSession.SubmitMesh ( _customMesh, _customMaterial, local );
 
     return _renderSession.End ( ePresentTarget::Normal, renderer );
@@ -119,6 +121,8 @@ bool PBRGame::OnDestroy ( android_vulkan::Renderer &renderer )
     DestroyCommandPool ( renderer );
 
     _renderSession.Destroy( renderer );
+    MaterialManager::Destroy ();
+
     return true;
 }
 
@@ -179,7 +183,7 @@ void PBRGame::DestroyCommandPool ( android_vulkan::Renderer &renderer )
 bool PBRGame::CreateMaterials ( android_vulkan::Renderer &renderer )
 {
     auto loadTexture = [ & ] ( Texture2DRef &texture,
-        char const* file,
+        std::string_view const &file,
         VkFormat format,
         VkCommandBuffer commandBuffer
     ) -> bool {
@@ -193,22 +197,10 @@ bool PBRGame::CreateMaterials ( android_vulkan::Renderer &renderer )
     };
 
     Texture2DRef texture;
-
-    _customMaterial = std::make_shared<OpaqueMaterial> ();
-    auto* opaqueMaterial = dynamic_cast<OpaqueMaterial*> ( _customMaterial.get () );
-
-    if ( !loadTexture ( texture, CUSTOM_DIFFUSE, VK_FORMAT_R8G8B8A8_SRGB, _commandBuffers[ 0U ] ) )
-    {
-        _sonicMaterial0 = nullptr;
-        return false;
-    }
-
-    opaqueMaterial->SetAlbedo ( texture );
-
     _sonicMaterial0 = std::make_shared<OpaqueMaterial> ();
-    opaqueMaterial = dynamic_cast<OpaqueMaterial*> ( _sonicMaterial0.get () );
+    auto* opaqueMaterial = dynamic_cast<OpaqueMaterial*> ( _sonicMaterial0.get () );
 
-    if ( !loadTexture ( texture, MATERIAL_1_DIFFUSE, VK_FORMAT_R8G8B8A8_SRGB, _commandBuffers[ 1U ] ) )
+    if ( !loadTexture ( texture, MATERIAL_1_DIFFUSE, VK_FORMAT_R8G8B8A8_SRGB, _commandBuffers[ 0U ] ) )
     {
         _sonicMaterial0 = nullptr;
         return false;
@@ -219,7 +211,7 @@ bool PBRGame::CreateMaterials ( android_vulkan::Renderer &renderer )
     _sonicMaterial1 = std::make_shared<OpaqueMaterial> ();
     opaqueMaterial = dynamic_cast<OpaqueMaterial*> ( _sonicMaterial1.get () );
 
-    if ( !loadTexture ( texture, MATERIAL_2_DIFFUSE, VK_FORMAT_R8G8B8A8_SRGB, _commandBuffers[ 2U ] ) )
+    if ( !loadTexture ( texture, MATERIAL_2_DIFFUSE, VK_FORMAT_R8G8B8A8_SRGB, _commandBuffers[ 1U ] ) )
     {
         _sonicMaterial1 = nullptr;
         return false;
@@ -227,7 +219,7 @@ bool PBRGame::CreateMaterials ( android_vulkan::Renderer &renderer )
 
     opaqueMaterial->SetAlbedo ( texture );
 
-    if ( !loadTexture ( texture, MATERIAL_2_NORMAL, VK_FORMAT_R8G8B8A8_UNORM, _commandBuffers[ 3U ] ) )
+    if ( !loadTexture ( texture, MATERIAL_2_NORMAL, VK_FORMAT_R8G8B8A8_UNORM, _commandBuffers[ 2U ] ) )
     {
         _sonicMaterial1 = nullptr;
         return false;
@@ -238,7 +230,7 @@ bool PBRGame::CreateMaterials ( android_vulkan::Renderer &renderer )
     _sonicMaterial2 = std::make_shared<OpaqueMaterial> ();
     opaqueMaterial = dynamic_cast<OpaqueMaterial*> ( _sonicMaterial2.get () );
 
-    if ( !loadTexture ( texture, MATERIAL_3_DIFFUSE, VK_FORMAT_R8G8B8A8_SRGB, _commandBuffers[ 4U ] ) )
+    if ( !loadTexture ( texture, MATERIAL_3_DIFFUSE, VK_FORMAT_R8G8B8A8_SRGB, _commandBuffers[ 3U ] ) )
     {
         _sonicMaterial2 = nullptr;
         return false;
@@ -246,13 +238,16 @@ bool PBRGame::CreateMaterials ( android_vulkan::Renderer &renderer )
 
     opaqueMaterial->SetAlbedo ( texture );
 
-    if ( !loadTexture ( texture, MATERIAL_3_NORMAL, VK_FORMAT_R8G8B8A8_UNORM, _commandBuffers[ 5U ] ) )
+    if ( !loadTexture ( texture, MATERIAL_3_NORMAL, VK_FORMAT_R8G8B8A8_UNORM, _commandBuffers[ 4U ] ) )
     {
         _sonicMaterial2 = nullptr;
         return false;
     }
 
     opaqueMaterial->SetNormal ( texture );
+
+    MaterialManager& manager = MaterialManager::GetInstance ();
+    _customMaterial = manager.LoadMaterial ( CUSTOM_MATERIAL, renderer, &_commandBuffers[ 5U ] );
     return true;
 }
 

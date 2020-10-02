@@ -20,6 +20,12 @@ File::File ( std::string &filePath ):
     // NOTHING
 }
 
+File::File ( std::string_view const &filePath ):
+    _filePath ( filePath )
+{
+    // NOTHING
+}
+
 File::File ( std::string &&filePath ):
     _filePath ( std::move ( filePath ) )
 {
@@ -31,7 +37,7 @@ std::vector<uint8_t>& File::GetContent ()
     return _content;
 }
 
-const std::vector<uint8_t>& File::GetContent () const
+std::vector<uint8_t> const& File::GetContent () const
 {
     return _content;
 }

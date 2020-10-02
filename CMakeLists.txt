@@ -67,6 +67,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/pbr/camera.cpp
     app/src/main/cpp/sources/pbr/gbuffer.cpp
     app/src/main/cpp/sources/pbr/material.cpp
+    app/src/main/cpp/sources/pbr/material_manager.cpp
     app/src/main/cpp/sources/pbr/mesh_group.cpp
     app/src/main/cpp/sources/pbr/opaque_call.cpp
     app/src/main/cpp/sources/pbr/opaque_material.cpp

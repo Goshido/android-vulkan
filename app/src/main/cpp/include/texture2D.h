@@ -74,6 +74,14 @@ class Texture2D final
             VkCommandBuffer commandBuffer
         );
 
+        // Supported formats: PNG.
+        [[nodiscard]] bool UploadData ( std::string_view const &fileName,
+            VkFormat format,
+            bool isGenerateMipmaps,
+            android_vulkan::Renderer &renderer,
+            VkCommandBuffer commandBuffer
+        );
+
         [[nodiscard]] bool UploadData ( uint8_t const* data,
             size_t size,
             VkExtent2D const &resolution,

@@ -43,7 +43,7 @@ MaterialRef MaterialManager::LoadMaterial ( std::string_view const &fileName,
         return texture;
     };
 
-    if ( header->_diffuseOffset != MATERIAL_NO_TEXTURE )
+    if ( header->_diffuseOffset != NO_UTF8_OFFSET )
     {
         Texture2DRef texture = loadTexture ( header->_diffuseOffset, VK_FORMAT_R8G8B8A8_SRGB, commandBuffers[ 0U ] );
 
@@ -53,7 +53,7 @@ MaterialRef MaterialManager::LoadMaterial ( std::string_view const &fileName,
         opaqueMaterial->SetAlbedo ( texture );
     }
 
-    if ( header->_emissionOffset != MATERIAL_NO_TEXTURE )
+    if ( header->_emissionOffset != NO_UTF8_OFFSET )
     {
         Texture2DRef texture = loadTexture ( header->_emissionOffset, VK_FORMAT_R8G8B8A8_SRGB, commandBuffers[ 1U ] );
 
@@ -63,7 +63,7 @@ MaterialRef MaterialManager::LoadMaterial ( std::string_view const &fileName,
         opaqueMaterial->SetEmission ( texture );
     }
 
-    if ( header->_normalOffset != MATERIAL_NO_TEXTURE )
+    if ( header->_normalOffset != NO_UTF8_OFFSET )
     {
         Texture2DRef texture = loadTexture ( header->_normalOffset, VK_FORMAT_R8G8B8A8_SRGB, commandBuffers[ 2U ] );
 
@@ -73,7 +73,7 @@ MaterialRef MaterialManager::LoadMaterial ( std::string_view const &fileName,
         opaqueMaterial->SetNormal ( texture );
     }
 
-    if ( header->_paramOffset != MATERIAL_NO_TEXTURE )
+    if ( header->_paramOffset != NO_UTF8_OFFSET )
     {
         Texture2DRef texture = loadTexture ( header->_paramOffset, VK_FORMAT_R8G8B8A8_SRGB, commandBuffers[ 3U ] );
 

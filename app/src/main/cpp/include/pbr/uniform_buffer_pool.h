@@ -35,7 +35,7 @@ class UniformBufferPool final
         [[nodiscard]] size_t GetItemCount () const;
 
         // The method return all items to the pool.
-        [[maybe_unused]] void Reset ();
+        void Reset ();
 
         [[nodiscard]] bool Init ( size_t itemSize, android_vulkan::Renderer &renderer );
         void Destroy ( android_vulkan::Renderer &renderer );

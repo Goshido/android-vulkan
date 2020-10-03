@@ -84,8 +84,8 @@ class Gamepad final
         Gamepad ( Gamepad &&other ) = delete;
         Gamepad& operator = ( Gamepad &&other ) = delete;
 
-        [[maybe_unused]] void BindKey ( void* context, KeyHandler handler, eGamepadKey key, eButtonState state );
-        [[maybe_unused]] void UnbindKey ( eGamepadKey key, eButtonState state );
+        void BindKey ( void* context, KeyHandler handler, eGamepadKey key, eButtonState state );
+        void UnbindKey ( eGamepadKey key, eButtonState state );
 
         void BindLeftStick ( void* context, StickHandler handler );
         void UnbindLeftStick ();
@@ -96,8 +96,8 @@ class Gamepad final
         [[maybe_unused]] void BindLeftTrigger ( void* context, TriggerHandler handler );
         [[maybe_unused]] void UnbindLeftTrigger ();
 
-        [[maybe_unused]] void BindRightTrigger ( void* context, TriggerHandler handler );
-        [[maybe_unused]] void UnbindRightTrigger ();
+        void BindRightTrigger ( void* context, TriggerHandler handler );
+        void UnbindRightTrigger ();
 
         [[nodiscard]] int32_t OnOSInputEvent ( AInputEvent* event );
 

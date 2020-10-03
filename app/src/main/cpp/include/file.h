@@ -25,7 +25,7 @@ class File final
 
         [[maybe_unused]] explicit File ( std::string &&filePath );
         explicit File ( std::string_view const &filePath );
-        [[maybe_unused]] explicit File ( char const* filePath );
+        explicit File ( char const* filePath );
 
         File ( File &other ) = delete;
         File& operator = ( const File &other ) = delete;

@@ -48,7 +48,7 @@ class OpaqueBatchProgram final : public Program
             VkExtent2D const &viewport
         ) override;
 
-        [[maybe_unused]] void Destroy ( android_vulkan::Renderer &renderer ) override;
+        void Destroy ( android_vulkan::Renderer &renderer ) override;
         [[nodiscard]] std::vector<DescriptorSetInfo> const& GetResourceInfo () const override;
 
         void SetDescriptorSet ( VkCommandBuffer commandBuffer,

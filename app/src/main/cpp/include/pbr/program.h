@@ -45,7 +45,7 @@ class Program
             VkExtent2D const &viewport
         ) = 0;
 
-        [[maybe_unused]] virtual void Destroy ( android_vulkan::Renderer &renderer ) = 0;
+        virtual void Destroy ( android_vulkan::Renderer &renderer ) = 0;
         [[nodiscard]] virtual std::vector<DescriptorSetInfo> const& GetResourceInfo () const = 0;
 
         // The method assigns VkPipeline as active pipeline.

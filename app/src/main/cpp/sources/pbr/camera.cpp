@@ -8,7 +8,7 @@ namespace pbr {
 constexpr static float const ANGULAR_SPEED = 0.87F * GX_MATH_PI;
 constexpr static float const STICK_DEAD_ZONE = 0.2F;
 constexpr static float const TRIGGER_DEAD_ZONE = 0.2F;
-constexpr static float const LINEAR_SPEED = 5.0F;
+constexpr static float const LINEAR_SPEED = 50.0F;
 constexpr static float const MOVE_BOOST = 10.0F;
 
 //----------------------------------------------------------------------------------------------------------------------

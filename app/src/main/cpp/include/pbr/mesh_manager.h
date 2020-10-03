@@ -32,18 +32,13 @@ class MeshManager final
         MeshManager ( MeshManager &&other ) = delete;
         MeshManager& operator = ( MeshManager &&other ) = delete;
 
-        // Note commandBuffers must point to at least 4 free command buffers.
-        [[maybe_unused]] [[nodiscard]] MeshRef LoadMesh ( std::string_view const &fileName,
+        [[nodiscard]] MeshRef LoadMesh ( size_t &commandBufferConsumed,
+            char const* fileName,
             android_vulkan::Renderer &renderer,
             VkCommandBuffer commandBuffer
         );
 
-        [[maybe_unused]] [[nodiscard]] MeshRef LoadMesh ( char const* fileName,
-            android_vulkan::Renderer &renderer,
-            VkCommandBuffer commandBuffer
-        );
-
-        [[maybe_unused]] [[nodiscard]] MeshManager& GetInstance ();
+        [[nodiscard]] static MeshManager& GetInstance ();
         static void Destroy ( android_vulkan::Renderer &renderer );
 
     protected:
@@ -51,11 +46,6 @@ class MeshManager final
         ~MeshManager () = default;
 
         void DestroyInternal ( android_vulkan::Renderer &renderer );
-
-        [[nodiscard]] MeshRef LoadMesh ( std::string &&fileName,
-            android_vulkan::Renderer &renderer,
-            VkCommandBuffer commandBuffer
-        );
 };
 
 } // namespace pbr

@@ -31,7 +31,7 @@ class OpaqueMaterial final : public Material
         [[maybe_unused]] void SetAlbedoDefault ();
 
         [[nodiscard]] Texture2DRef& GetEmission ();
-        [[maybe_unused]] void SetEmission ( Texture2DRef &texture );
+        void SetEmission ( Texture2DRef &texture );
         [[maybe_unused]] void SetEmissionDefault ();
 
         [[nodiscard]] Texture2DRef& GetNormal ();
@@ -39,7 +39,7 @@ class OpaqueMaterial final : public Material
         [[maybe_unused]] void SetNormalDefault ();
 
         [[nodiscard]] Texture2DRef& GetParam ();
-        [[maybe_unused]] void SetParam ( Texture2DRef &texture );
+        void SetParam ( Texture2DRef &texture );
         [[maybe_unused]] void SetParamDefault ();
 
         [[nodiscard]] bool operator < ( const OpaqueMaterial &other ) const;

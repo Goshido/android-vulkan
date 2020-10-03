@@ -883,7 +883,7 @@ bool Texture2D::LoadImage ( std::vector<uint8_t> &pixelData,
 
     if ( channels != 3 )
     {
-        auto const size = static_cast<size_t const> ( width * height * channels );
+        size_t const size = width * height * channels;
         pixelData.resize ( size );
         memcpy ( pixelData.data (), imagePixels, size );
         free ( imagePixels );
@@ -952,7 +952,7 @@ bool Texture2D::LoadImage ( std::vector<uint8_t> &pixelData,
     for ( size_t i = 0U; i < EXPANDER_THREADS; ++i )
         expanders[ i ].join ();
 
-    free ( imagePixels );
+    STBI_FREE ( imagePixels );
     channels = static_cast<int> ( RGBA_BYTES_PER_PIXEL );
 
     return true;

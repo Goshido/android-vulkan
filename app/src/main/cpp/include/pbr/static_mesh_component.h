@@ -31,15 +31,17 @@ class StaticMeshComponent final : public Component
         StaticMeshComponent& operator = ( StaticMeshComponent &&other ) = delete;
 
         // "commandBuffer" array MUST contain at least 5 free command buffers.
-        [[maybe_unused]] explicit StaticMeshComponent ( StaticMeshComponentDesc const &desc,
+        explicit StaticMeshComponent ( size_t &commandBufferConsumed,
+            ComponentDesc const &desc,
             uint8_t const *data,
             android_vulkan::Renderer &renderer,
-            VkCommandBuffer* commandBuffers
+            VkCommandBuffer const* commandBuffers
         );
 
         ~StaticMeshComponent () override = default;
 
     private:
+        void FreeTransferResources ( android_vulkan::Renderer &renderer ) override;
         void Submit ( RenderSession &renderSession ) override;
 };
 

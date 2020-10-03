@@ -10,10 +10,13 @@
 
 namespace pbr {
 
-using MeshRef = std::shared_ptr<android_vulkan::MeshGeometry>;
-using Texture2DRef = std::shared_ptr<android_vulkan::Texture2D>;
+class Component;
+using ComponentRef = std::shared_ptr<Component>;
+
 using MaterialRef = std::shared_ptr<Material>;
+using MeshRef = std::shared_ptr<android_vulkan::MeshGeometry>;
 using SamplerRef = std::shared_ptr<Sampler>;
+using Texture2DRef = std::shared_ptr<android_vulkan::Texture2D>;
 
 } // namespace pbr
 

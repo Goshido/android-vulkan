@@ -29,7 +29,7 @@ class OpaqueCall final
         // The method returns the maximum batch item count.
         size_t Append ( MeshRef &mesh, const GXMat4 &local );
 
-        [[maybe_unused]] [[nodiscard]] const BatchList& GetBatchList () const;
+        [[nodiscard]] const BatchList& GetBatchList () const;
         [[nodiscard]] const UniqueList& GetUniqueList () const;
 
     private:

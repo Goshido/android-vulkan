@@ -20,11 +20,11 @@ class Sampler final
         Sampler ( const Sampler &other ) = delete;
         Sampler& operator = ( const Sampler &other ) = delete;
 
-        [[maybe_unused]] [[nodiscard]] bool Init ( const VkSamplerCreateInfo &info,
+        [[nodiscard]] bool Init ( const VkSamplerCreateInfo &info,
             android_vulkan::Renderer &renderer
         );
 
-        [[maybe_unused]] void Destroy ( android_vulkan::Renderer &renderer );
+        void Destroy ( android_vulkan::Renderer &renderer );
         [[nodiscard]] VkSampler GetSampler () const;
 };
 

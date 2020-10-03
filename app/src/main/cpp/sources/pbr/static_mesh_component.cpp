@@ -1,33 +1,71 @@
 #include <pbr/static_mesh_component.h>
 #include <pbr/material_manager.h>
+#include <pbr/mesh_manager.h>
 
 
 namespace pbr {
 
 constexpr static uint32_t const STATIC_MESH_COMPONENT_DESC_FORMAT_VERSION = 1U;
 
-StaticMeshComponent::StaticMeshComponent ( StaticMeshComponentDesc const &desc,
+StaticMeshComponent::StaticMeshComponent ( size_t &commandBufferConsumed,
+    ComponentDesc const &desc,
     uint8_t const *data,
     android_vulkan::Renderer &renderer,
-    VkCommandBuffer* commandBuffers
+    VkCommandBuffer const* commandBuffers
 )
 {
-    // sanity checks
-    static_assert ( sizeof ( StaticMeshComponent::_localMatrix ) == sizeof ( desc._localMatrix ) );
-    assert ( desc._classID == ClassID::StaticMesh );
-    assert ( desc._formatVersion == STATIC_MESH_COMPONENT_DESC_FORMAT_VERSION );
+    auto const& d = reinterpret_cast<StaticMeshComponentDesc const&> ( desc );
 
-    _color0.Init ( desc._color0._red, desc._color0._green, desc._color0._blue, desc._color0._alpha );
-    _color1.Init ( desc._color1._red, desc._color1._green, desc._color1._blue, desc._color1._alpha );
-    _color2.Init ( desc._color2._red, desc._color2._green, desc._color2._blue, desc._color2._alpha );
-    _color3.Init ( desc._color3._red, desc._color3._green, desc._color3._blue, desc._color3._alpha );
+    // Sanity checks.
+    static_assert ( sizeof ( StaticMeshComponent::_localMatrix ) == sizeof ( d._localMatrix ) );
+    assert ( d._classID == ClassID::StaticMesh );
+    assert ( d._formatVersion == STATIC_MESH_COMPONENT_DESC_FORMAT_VERSION );
 
-    memcpy ( _localMatrix._data, &desc._localMatrix, sizeof ( _localMatrix ) );
+    _color0.From ( d._color0._red, d._color0._green, d._color0._blue, d._color0._alpha );
+    _color1.From ( d._color1._red, d._color1._green, d._color1._blue, d._color1._alpha );
+    _color2.From ( d._color2._red, d._color2._green, d._color2._blue, d._color2._alpha );
+    _color3.From ( d._color3._red, d._color3._green, d._color3._blue, d._color3._alpha );
 
-    _material = MaterialManager::GetInstance ().LoadMaterial ( reinterpret_cast<char const*> ( data + desc._material ),
+    memcpy ( _localMatrix._data, &d._localMatrix, sizeof ( _localMatrix ) );
+
+    _material = MaterialManager::GetInstance ().LoadMaterial ( commandBufferConsumed,
+        reinterpret_cast<char const*> ( data + d._material ),
         renderer,
         commandBuffers
     );
+
+    size_t consumed = 0U;
+
+    _mesh = MeshManager::GetInstance ().LoadMesh ( consumed,
+        reinterpret_cast<char const*> ( data + d._mesh ),
+        renderer,
+        commandBuffers[ commandBufferConsumed ]
+    );
+
+    commandBufferConsumed += consumed;
+}
+
+void StaticMeshComponent::FreeTransferResources ( android_vulkan::Renderer &renderer )
+{
+    if ( !_material )
+        return;
+
+    auto* m = dynamic_cast<OpaqueMaterial*> ( _material.get () );
+
+    if ( m->GetAlbedo () )
+        m->GetAlbedo ()->FreeTransferResources ( renderer );
+
+    if ( m->GetEmission () )
+        m->GetEmission ()->FreeTransferResources ( renderer );
+
+    if ( m->GetNormal () )
+        m->GetNormal ()->FreeTransferResources ( renderer );
+
+    if ( !m->GetParam () )
+        return;
+
+    m->GetParam ()->FreeTransferResources ( renderer );
+    _mesh->FreeTransferResources ( renderer );
 }
 
 void StaticMeshComponent::Submit ( RenderSession &renderSession )

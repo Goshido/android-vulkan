@@ -41,7 +41,7 @@ class Camera final
 
         void SetProjection ( float fieldOfViewRadians, float aspectRatio, float zNear, float zFar );
         [[maybe_unused]] void SetLocation ( float x, float y, float z );
-        [[maybe_unused]] void SetLocation ( GXVec3 const &location );
+        void SetLocation ( GXVec3 const &location );
 
         void Update ( float deltaTime );
 

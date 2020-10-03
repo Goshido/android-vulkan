@@ -17,7 +17,13 @@ class OpaqueMaterial final : public Material
 
     public:
         OpaqueMaterial ();
+
         OpaqueMaterial ( const OpaqueMaterial &other ) = default;
+        OpaqueMaterial& operator = ( OpaqueMaterial const &other ) = default;
+
+        OpaqueMaterial ( OpaqueMaterial &&other ) = default;
+        OpaqueMaterial& operator = ( OpaqueMaterial &&other ) = default;
+
         ~OpaqueMaterial () override = default;
 
         [[nodiscard]] Texture2DRef& GetAlbedo ();
@@ -37,7 +43,7 @@ class OpaqueMaterial final : public Material
         [[maybe_unused]] void SetParamDefault ();
 
         [[nodiscard]] bool operator < ( const OpaqueMaterial &other ) const;
-        OpaqueMaterial& operator = ( const OpaqueMaterial &other ) = default;
+
 };
 
 } // namespace pbr

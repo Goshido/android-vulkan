@@ -69,6 +69,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/pbr/material.cpp
     app/src/main/cpp/sources/pbr/material_manager.cpp
     app/src/main/cpp/sources/pbr/mesh_group.cpp
+    app/src/main/cpp/sources/pbr/mesh_manager.cpp
     app/src/main/cpp/sources/pbr/opaque_call.cpp
     app/src/main/cpp/sources/pbr/opaque_material.cpp
     app/src/main/cpp/sources/pbr/opaque_program.cpp
@@ -80,6 +81,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/pbr/program_resource.cpp
     app/src/main/cpp/sources/pbr/render_session.cpp
     app/src/main/cpp/sources/pbr/sampler.cpp
+    app/src/main/cpp/sources/pbr/static_mesh_component.cpp
     app/src/main/cpp/sources/pbr/texture_present_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/texture_present_program.cpp
     app/src/main/cpp/sources/pbr/uniform_buffer_pool.cpp

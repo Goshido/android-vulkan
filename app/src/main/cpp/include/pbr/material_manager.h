@@ -7,11 +7,11 @@
 GX_DISABLE_COMMON_WARNINGS
 
 #include <shared_mutex>
+#include <unordered_map>
 
 GX_RESTORE_WARNING_STATE
 
-
-#include "material.h"
+#include <file.h>
 #include "types.h"
 
 
@@ -20,8 +20,10 @@ namespace pbr {
 class MaterialManager final
 {
     private:
-        static MaterialManager*             _instance;
-        static std::shared_timed_mutex      _mutex;
+        std::unordered_map<std::string_view, Texture2DRef>      _textureStorage;
+
+        static MaterialManager*                                 _instance;
+        static std::shared_timed_mutex                          _mutex;
 
     public:
         MaterialManager ( MaterialManager const &other ) = delete;
@@ -31,17 +33,29 @@ class MaterialManager final
         MaterialManager& operator = ( MaterialManager &&other ) = delete;
 
         // Note commandBuffers must point to at least 4 free command buffers.
-        [[maybe_unused]] [[nodiscard]] MaterialRef LoadMaterial ( std::string_view const &fileName,
+        [[nodiscard]] MaterialRef LoadMaterial ( std::string_view const &fileName,
+            android_vulkan::Renderer &renderer,
+            VkCommandBuffer const* commandBuffers
+        );
+
+        [[nodiscard]] MaterialRef LoadMaterial ( char const* fileName,
             android_vulkan::Renderer &renderer,
             VkCommandBuffer const* commandBuffers
         );
 
         [[nodiscard]] static MaterialManager& GetInstance ();
-        static void Destroy ();
+        static void Destroy ( android_vulkan::Renderer &renderer );
 
     private:
         MaterialManager() = default;
         ~MaterialManager () = default;
+
+        void DestroyInternal ( android_vulkan::Renderer &renderer );
+
+        [[nodiscard]] MaterialRef LoadMaterial ( android_vulkan::File &&file,
+            android_vulkan::Renderer &renderer,
+            VkCommandBuffer const* commandBuffers
+        );
 };
 
 } // namespace pbr

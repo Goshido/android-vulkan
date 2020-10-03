@@ -1,4 +1,5 @@
 #include <pbr/opaque_material.h>
+#include <logger.h>
 
 
 namespace pbr {

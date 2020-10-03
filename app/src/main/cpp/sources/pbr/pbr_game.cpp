@@ -121,7 +121,6 @@ bool PBRGame::OnDestroy ( android_vulkan::Renderer &renderer )
     DestroyCommandPool ( renderer );
 
     _renderSession.Destroy( renderer );
-    MaterialManager::Destroy ();
 
     return true;
 }
@@ -277,7 +276,9 @@ void PBRGame::DestroyMaterials ( android_vulkan::Renderer &renderer )
     wipeMaterial ( _sonicMaterial2 );
     wipeMaterial ( _sonicMaterial1 );
     wipeMaterial ( _sonicMaterial0 );
-    wipeMaterial ( _customMaterial );
+
+    _customMaterial = nullptr;
+    MaterialManager::Destroy ( renderer );
 }
 
 bool PBRGame::CreateMeshes ( android_vulkan::Renderer &renderer )

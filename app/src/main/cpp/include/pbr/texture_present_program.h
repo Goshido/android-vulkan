@@ -89,7 +89,6 @@ class TexturePresentProgram final : public Program
         ) const override;
 };
 
-
 } // namespace pbr
 
 

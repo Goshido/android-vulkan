@@ -1,11 +1,19 @@
+#include "gpgpu_limits.inc"
+
+
 struct ObjectData
 {
     matrix              _localView;
     matrix              _localViewProjection;
 };
 
-[[vk::push_constant]]
-const ObjectData        g_objectData;
+[[vk::binding ( 0, 1 )]]
+cbuffer InstanceData:                       register ( b0 )
+{
+    // sizeof ( ObjectData ) = 128 bytes
+    // sizeof ( InstanceData ) = 16384 bytes
+    ObjectData          g_instanceData[ PBR_OPAQUE_MAX_INSTANCE_COUNT ];
+}
 
 struct InputData
 {
@@ -44,15 +52,16 @@ struct OutputData
 
 //----------------------------------------------------------------------------------------------------------------------
 
-OutputData VS ( in InputData inputData )
+OutputData VS ( in InputData inputData, in uint instanceIndex: SV_InstanceID )
 {
     OutputData result;
 
-    result._vertexH = mul ( g_objectData._localViewProjection, float4 ( inputData._vertex, 1.0f ) );
+    const ObjectData objectData = g_instanceData[ instanceIndex ];
+    result._vertexH = mul ( objectData._localViewProjection, float4 ( inputData._vertex, 1.0F ) );
 
     result._uv = (half2)inputData._uv;
 
-    const float3x3 orientation = (float3x3)g_objectData._localView;
+    const float3x3 orientation = (float3x3)objectData._localView;
     result._normalView = (half3)mul ( orientation, inputData._normal );
     result._tangentView = (half3)mul ( orientation, inputData._tangent );
     result._bitangentView = (half3)mul ( orientation, inputData._bitangent );

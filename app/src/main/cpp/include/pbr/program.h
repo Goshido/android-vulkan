@@ -24,12 +24,12 @@ constexpr static const char* FRAGMENT_SHADER_ENTRY_POINT = "PS";
 class Program
 {
     protected:
-        VkShaderModule                          _fragmentShader;
-        VkShaderModule                          _vertexShader;
+        VkShaderModule          _fragmentShader;
+        VkShaderModule          _vertexShader;
 
-        const std::string                       _name;
-        VkPipeline                              _pipeline;
-        VkPipelineLayout                        _pipelineLayout;
+        const std::string       _name;
+        VkPipeline              _pipeline;
+        VkPipelineLayout        _pipelineLayout;
 
     public:
         Program () = delete;

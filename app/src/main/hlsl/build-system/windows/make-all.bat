@@ -2,7 +2,6 @@
 
 :: vertex shaders
 call make-vs.bat common-opaque
-call make-vs.bat common-opaque-batch
 call make-vs.bat mandelbrot
 call make-vs.bat screen-quad
 call make-vs.bat static-mesh

@@ -145,11 +145,10 @@ RenderSession::RenderSession ():
     _geometryPassRendering ( VK_NULL_HANDLE ),
     _geometryPassTransfer ( VK_NULL_HANDLE ),
     _isFreeTransferResources ( false ),
-    _maximumOpaqueBatchCount ( 0U ),
-    _meshCount ( 0U ),
+    _maxBatchCount ( 0U ),
+    _maxUniqueCount ( 0U ),
     _opaqueCalls {},
     _opaqueBatchProgram {},
-    _opaqueProgram {},
     _texturePresentProgram {},
     _presentInfo {},
     _presentBeginInfo {},
@@ -169,8 +168,6 @@ RenderSession::RenderSession ():
 
 void RenderSession::SubmitMesh ( MeshRef &mesh, MaterialRef &material, const GXMat4 &local )
 {
-    ++_meshCount;
-
     if ( material->GetMaterialType() != eMaterialType::Opaque )
         return;
 
@@ -179,8 +176,7 @@ void RenderSession::SubmitMesh ( MeshRef &mesh, MaterialRef &material, const GXM
 
 void RenderSession::Begin ( GXMat4 const &view, GXMat4 const &projection )
 {
-    _maximumOpaqueBatchCount = 0U;
-    _meshCount = 0U;
+    _maxBatchCount = 0U;
     _view = view;
     _viewProjection.Multiply ( view, projection );
     _opaqueCalls.clear ();
@@ -217,9 +213,7 @@ bool RenderSession::End ( ePresentTarget /*target*/, android_vulkan::Renderer &r
         return false;
 
     VkDescriptorSet const* textureSets = descriptorSetStorage.data ();
-
-    DrawOpaqueUnique ( textureSets );
-    DrawOpaqueBatched ( textureSets, textureSets + ( _opaqueCalls.size () + 1U ) );
+    DrawOpaque ( textureSets, textureSets + ( _opaqueCalls.size () + 1U ) );
 
     vkCmdEndRenderPass ( _geometryPassRendering );
 
@@ -348,19 +342,13 @@ bool RenderSession::Init ( android_vulkan::Renderer &renderer, VkExtent2D const 
         return false;
     }
 
-    if ( !_opaqueProgram.Init ( renderer, _gBufferRenderPass, resolution ) )
-    {
-        Destroy ( renderer );
-        return false;
-    }
-
     if ( !_texturePresentProgram.Init ( renderer, _presentRenderPass, renderer.GetSurfaceSize () ) )
     {
         Destroy ( renderer );
         return false;
     }
 
-    if ( !_uniformBufferPool.Init ( sizeof ( OpaqueBatchProgram::InstanceData ), renderer ) )
+    if ( !_uniformBufferPool.Init ( sizeof ( OpaqueProgram::InstanceData ), renderer ) )
     {
         Destroy ( renderer );
         return false;
@@ -538,7 +526,6 @@ void RenderSession::Destroy ( android_vulkan::Renderer &renderer )
 
     _uniformBufferPool.Destroy ( renderer );
     _texturePresentProgram.Destroy ( renderer );
-    _opaqueProgram.Destroy ( renderer );
     _opaqueBatchProgram.Destroy ( renderer );
 
     if ( _geometryPassFence != VK_NULL_HANDLE )
@@ -956,7 +943,7 @@ void RenderSession::DestroyDescriptorPool ( android_vulkan::Renderer &renderer )
     AV_UNREGISTER_DESCRIPTOR_POOL ( "RenderSession::_descriptorPool" )
 }
 
-void RenderSession::DrawOpaqueBatched ( VkDescriptorSet const* textureSets, VkDescriptorSet const* instanceSets ) const
+void RenderSession::DrawOpaque ( VkDescriptorSet const* textureSets, VkDescriptorSet const* instanceSets ) const
 {
     size_t textureSetIndex = 0U;
     size_t uniformUsed = 0U;
@@ -966,13 +953,10 @@ void RenderSession::DrawOpaqueBatched ( VkDescriptorSet const* textureSets, VkDe
 
     for ( auto const &call : _opaqueCalls )
     {
+        OpaqueCall const &opaqueCall = call.second;
+
         VkDescriptorSet textureSet = textureSets[ textureSetIndex ];
         ++textureSetIndex;
-
-        OpaqueCall::BatchList const &batchList = call.second.GetBatchList ();
-
-        if ( batchList.empty () )
-            continue;
 
         if ( !isProgramBind )
         {
@@ -1012,7 +996,13 @@ void RenderSession::DrawOpaqueBatched ( VkDescriptorSet const* textureSets, VkDe
             ++uniformUsed;
         };
 
-        for ( auto const &item : batchList )
+        for ( auto const &item : opaqueCall.GetUniqueList () )
+        {
+            // TODO take into consideration frustum test
+            instanceDrawer ( item.first, 1U );
+        }
+
+        for ( auto const &item : opaqueCall.GetBatchList () )
         {
             MeshGroup const& group = item.second;
             MeshRef const& mesh = group._mesh;
@@ -1022,6 +1012,8 @@ void RenderSession::DrawOpaqueBatched ( VkDescriptorSet const* textureSets, VkDe
 
             while ( instanceIndex < instanceCount )
             {
+                // TODO take into consideration frustum test
+
                 batches = std::min ( instanceCount - instanceIndex,
                     static_cast<size_t> ( PBR_OPAQUE_MAX_INSTANCE_COUNT )
                 );
@@ -1038,52 +1030,8 @@ void RenderSession::DrawOpaqueBatched ( VkDescriptorSet const* textureSets, VkDe
             if ( !batches )
                 continue;
 
+            // TODO take into consideration frustum test
             instanceDrawer ( mesh, static_cast<uint32_t> ( batches ) );
-        }
-    }
-}
-
-void RenderSession::DrawOpaqueUnique ( VkDescriptorSet const* textureSets ) const
-{
-    size_t setIndex = 0U;
-    bool isProgramBind = false;
-    OpaqueProgram::PushConstants transform {};
-    constexpr VkDeviceSize const offset = 0U;
-
-    for ( auto const &call : _opaqueCalls )
-    {
-        VkDescriptorSet textureSet = textureSets[ setIndex ];
-        ++setIndex;
-
-        OpaqueCall::UniqueList const& uniqueList = call.second.GetUniqueList ();
-
-        if ( uniqueList.empty () )
-            continue;
-
-        bool isDescriptorSetBind = false;
-
-        for ( auto const &[mesh, local] : uniqueList )
-        {
-            // TODO frustum test
-
-            if ( !isProgramBind )
-            {
-                _opaqueProgram.Bind ( _geometryPassRendering );
-                isProgramBind = true;
-            }
-
-            if ( !isDescriptorSetBind )
-            {
-                _opaqueProgram.SetDescriptorSet ( _geometryPassRendering, textureSet );
-                isDescriptorSetBind = true;
-            }
-
-            transform._localView.Multiply ( local, _view );
-            transform._localViewProjection.Multiply ( local, _viewProjection );
-            _opaqueProgram.SetTransform ( _geometryPassRendering, transform );
-
-            vkCmdBindVertexBuffers ( _geometryPassRendering, 0U, 1U, &mesh->GetBuffer (), &offset );
-            vkCmdDraw ( _geometryPassRendering, mesh->GetVertexCount (), 1U, 0U, 0U );
         }
     }
 }
@@ -1190,26 +1138,21 @@ void RenderSession::SubmitOpaqueCall ( MeshRef &mesh, MaterialRef &material, GXM
 
     if ( findResult != _opaqueCalls.cend () )
     {
-        size_t const count = findResult->second.Append ( mesh, local );
-
-        if ( count > _maximumOpaqueBatchCount )
-            _maximumOpaqueBatchCount = count;
-
+        findResult->second.Append ( _maxBatchCount, _maxUniqueCount, mesh, local );
         return;
     }
 
-    _opaqueCalls.insert ( std::make_pair ( opaqueMaterial, OpaqueCall ( mesh, local ) ) );
-
-    if ( mesh->IsUnique () || _maximumOpaqueBatchCount > 0U )
-        return;
-
-    _maximumOpaqueBatchCount = 1U;
+    _opaqueCalls.insert (
+        std::make_pair ( opaqueMaterial, OpaqueCall ( _maxBatchCount, _maxUniqueCount, mesh, local ) )
+    );
 }
 
 bool RenderSession::UpdateGPUData (  std::vector<VkDescriptorSet> &descriptorSetStorage,
     android_vulkan::Renderer &renderer
 )
 {
+    // TODO no any elements have been submitted.
+
     size_t const opaqueCount = _opaqueCalls.size ();
     size_t const textureCount = opaqueCount * 4U + 1U;
 
@@ -1219,36 +1162,32 @@ bool RenderSession::UpdateGPUData (  std::vector<VkDescriptorSet> &descriptorSet
     std::vector<VkWriteDescriptorSet> writeStorage0;
     writeStorage0.reserve ( textureCount * 2U );
 
-    std::vector<DescriptorSetInfo> const& descriptorSetInfo = _opaqueProgram.GetResourceInfo ();
+    std::vector<DescriptorSetInfo> const& descriptorSetInfo = _opaqueBatchProgram.GetResourceInfo ();
     DescriptorSetInfo const& descriptorSet0 = descriptorSetInfo[ 0U ];
     size_t uniqueFeatures = descriptorSet0.size ();
 
     std::vector<VkDescriptorBufferInfo> uniformStorage;
     std::vector<VkWriteDescriptorSet> writeStorage1;
-    size_t estimationUniformCount = 0U;
 
-    if ( _maximumOpaqueBatchCount > 0U )
-    {
-        VkCommandBufferBeginInfo beginInfo;
-        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-        beginInfo.pNext = nullptr;
-        beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-        beginInfo.pInheritanceInfo = nullptr;
+    VkCommandBufferBeginInfo beginInfo;
+    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    beginInfo.pNext = nullptr;
+    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+    beginInfo.pInheritanceInfo = nullptr;
 
-        bool const result = renderer.CheckVkResult ( vkBeginCommandBuffer ( _geometryPassTransfer, &beginInfo ),
-            "RenderSession::UpdateGPUData",
-            "Can't begin geometry pass transfer command buffer"
-        );
+    bool result = renderer.CheckVkResult ( vkBeginCommandBuffer ( _geometryPassTransfer, &beginInfo ),
+        "RenderSession::UpdateGPUData",
+        "Can't begin geometry pass transfer command buffer"
+    );
 
-        if ( !result )
-            return false;
+    if ( !result )
+        return false;
 
-        // Note reserve size is a of top estimation.
-        estimationUniformCount = _maximumOpaqueBatchCount * _opaqueCalls.size ();
-        uniformStorage.reserve ( estimationUniformCount );
-        writeStorage1.reserve ( estimationUniformCount );
-        ++uniqueFeatures;
-    }
+    // Note reserve size is a of top estimation.
+    size_t const estimationUniformCount = ( _maxBatchCount + _maxUniqueCount ) * opaqueCount;
+    uniformStorage.reserve ( estimationUniformCount );
+    writeStorage1.reserve ( estimationUniformCount );
+    ++uniqueFeatures;
 
     std::vector<VkDescriptorPoolSize> poolSizeStorage;
     poolSizeStorage.reserve ( uniqueFeatures );
@@ -1263,15 +1202,12 @@ bool RenderSession::UpdateGPUData (  std::vector<VkDescriptorSet> &descriptorSet
         );
     }
 
-    if ( _maximumOpaqueBatchCount > 0U )
-    {
-        poolSizeStorage.emplace_back (
-            VkDescriptorPoolSize {
-                .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                .descriptorCount = static_cast<uint32_t> ( estimationUniformCount )
-            }
-        );
-    }
+    poolSizeStorage.emplace_back (
+        VkDescriptorPoolSize {
+            .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            .descriptorCount = static_cast<uint32_t> ( estimationUniformCount )
+        }
+    );
 
     VkDescriptorPoolCreateInfo poolInfo;
     poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -1284,7 +1220,7 @@ bool RenderSession::UpdateGPUData (  std::vector<VkDescriptorSet> &descriptorSet
     DestroyDescriptorPool ( renderer );
     VkDevice device = renderer.GetDevice ();
 
-    bool result = renderer.CheckVkResult (
+    result = renderer.CheckVkResult (
         vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_descriptorPool ),
         "RenderSession::UpdateGPUData",
         "Can't create descriptor pool"
@@ -1379,7 +1315,7 @@ bool RenderSession::UpdateGPUData (  std::vector<VkDescriptorSet> &descriptorSet
             VkDescriptorBufferInfo {
                 .buffer = uniformBuffer,
                 .offset = 0U,
-                .range = static_cast<VkDeviceSize> ( sizeof ( OpaqueBatchProgram::InstanceData ) )
+                .range = static_cast<VkDeviceSize> ( sizeof ( OpaqueProgram::InstanceData ) )
             }
         );
 
@@ -1417,7 +1353,7 @@ bool RenderSession::UpdateGPUData (  std::vector<VkDescriptorSet> &descriptorSet
         }
     );
 
-    writeInfo0.dstSet = descriptorSets[ _opaqueCalls.size () ];
+    writeInfo0.dstSet = descriptorSets[ opaqueCount ];
     writeInfo0.dstBinding = 0U;
     writeInfo0.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
     writeStorage0.push_back ( writeInfo0 );
@@ -1433,21 +1369,49 @@ bool RenderSession::UpdateGPUData (  std::vector<VkDescriptorSet> &descriptorSet
         nullptr
     );
 
-    OpaqueBatchProgram::InstanceData instanceData {};
+    OpaqueProgram::InstanceData instanceData {};
     _uniformBufferPool.Reset ();
 
     size_t uniformUsed = 0U;
     size_t const maxUniforms = _uniformBufferPool.GetItemCount ();
-    VkDescriptorSet const* instanceDescriptorSet = descriptorSets + ( _opaqueCalls.size () + 1U );
+    VkDescriptorSet const* instanceDescriptorSet = descriptorSets + opaqueCount + 1U;
 
     for ( auto const &call : _opaqueCalls )
     {
-        OpaqueCall::BatchList const &batchList = call.second.GetBatchList ();
+        OpaqueCall const &opaqueCall = call.second;
 
-        if ( batchList.empty () )
-            continue;
+        for ( auto const &item : opaqueCall.GetUniqueList () )
+        {
+            OpaqueProgram::ObjectData& objectData = instanceData._instanceData[ 0U ];
 
-        for ( auto const &item : batchList )
+            if ( uniformUsed >= maxUniforms )
+            {
+                android_vulkan::LogError (
+                    "RenderSession::UpdateGPUData - Uniform pool overflow has been detected (branch 1)!"
+                );
+
+                return false;
+            }
+
+            // TODO Frustum test.
+
+            objectData._localView.Multiply ( item.second, _view );
+            objectData._localViewProjection.Multiply ( item.second, _viewProjection );
+
+            uniformBinder (
+                _uniformBufferPool.Acquire ( _geometryPassTransfer,
+                    instanceData._instanceData,
+                    VK_PIPELINE_STAGE_VERTEX_SHADER_BIT,
+                    renderer
+                ),
+
+                instanceDescriptorSet[ uniformUsed ]
+            );
+
+            ++uniformUsed;
+        }
+
+        for ( auto const &item : opaqueCall.GetBatchList () )
         {
             MeshGroup const& group = item.second;
             size_t instanceIndex = 0U;
@@ -1457,7 +1421,7 @@ bool RenderSession::UpdateGPUData (  std::vector<VkDescriptorSet> &descriptorSet
                 if ( uniformUsed >= maxUniforms )
                 {
                     android_vulkan::LogError (
-                        "RenderSession::UpdateGPUData - Uniform pool overflow has been detected!"
+                        "RenderSession::UpdateGPUData - Uniform pool overflow has been detected (branch 0)!"
                     );
 
                     return false;
@@ -1479,7 +1443,7 @@ bool RenderSession::UpdateGPUData (  std::vector<VkDescriptorSet> &descriptorSet
                     ++uniformUsed;
                 }
 
-                OpaqueBatchProgram::ObjectData& objectData = instanceData._instanceData[ instanceIndex ];
+                OpaqueProgram::ObjectData& objectData = instanceData._instanceData[ instanceIndex ];
                 ++instanceIndex;
 
                 // TODO frustum test
@@ -1504,9 +1468,6 @@ bool RenderSession::UpdateGPUData (  std::vector<VkDescriptorSet> &descriptorSet
             ++uniformUsed;
         }
     }
-
-    if ( _maximumOpaqueBatchCount == 0U )
-        return true;
 
     vkUpdateDescriptorSets ( device,
         static_cast<uint32_t> ( writeStorage1.size () ),

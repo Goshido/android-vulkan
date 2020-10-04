@@ -74,7 +74,6 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/pbr/opaque_call.cpp
     app/src/main/cpp/sources/pbr/opaque_material.cpp
     app/src/main/cpp/sources/pbr/opaque_program.cpp
-    app/src/main/cpp/sources/pbr/opaque_batch_program.cpp
     app/src/main/cpp/sources/pbr/opaque_instance_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/opaque_texture_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/pbr_game.cpp

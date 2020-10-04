@@ -4,10 +4,9 @@
 
 #include <GXCommon/GXMath.h>
 #include "gbuffer.h"
-#include "opaque_batch_program.h"
+#include "opaque_program.h"
 #include "opaque_call.h"
 #include "opaque_material.h"
-#include "opaque_program.h"
 #include "texture_present_program.h"
 #include "uniform_buffer_pool.h"
 
@@ -49,13 +48,13 @@ class RenderSession final
 
         bool                                    _isFreeTransferResources;
 
-        size_t                                  _maximumOpaqueBatchCount;
-        size_t                                  _meshCount;
+        // The variable is needed for theoretical maximum uniform buffer elements estimation.
+        size_t                                  _maxBatchCount;
+        size_t                                  _maxUniqueCount;
 
         std::map<OpaqueMaterial, OpaqueCall>    _opaqueCalls;
 
-        OpaqueBatchProgram                      _opaqueBatchProgram;
-        OpaqueProgram                           _opaqueProgram;
+        OpaqueProgram                      _opaqueBatchProgram;
         TexturePresentProgram                   _texturePresentProgram;
 
         VkPresentInfoKHR                        _presentInfo;
@@ -109,9 +108,7 @@ class RenderSession final
         void DestroySyncPrimitives ( android_vulkan::Renderer &renderer );
 
         void DestroyDescriptorPool ( android_vulkan::Renderer &renderer );
-
-        void DrawOpaqueBatched ( VkDescriptorSet const* textureSets, VkDescriptorSet const* instanceSets ) const;
-        void DrawOpaqueUnique ( VkDescriptorSet const* textureSets ) const;
+        void DrawOpaque ( VkDescriptorSet const* textureSets, VkDescriptorSet const* instanceSets ) const;
 
         void InitCommonStructures ();
         void SubmitOpaqueCall ( MeshRef &mesh, MaterialRef &material, GXMat4 const &local );

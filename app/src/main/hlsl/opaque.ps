@@ -1,3 +1,6 @@
+#include "instance-layout.inc"
+
+
 [[vk::binding ( 0, 0 )]]
 Texture2D<float4>       g_diffuseTexture:       register ( t0 );
 
@@ -21,6 +24,7 @@ Texture2D<float4>       g_paramTexture:         register ( t3 );
 
 [[vk::binding ( 7, 0 )]]
 SamplerState            g_paramSampler:         register ( s3 );
+
 
 struct InputData
 {

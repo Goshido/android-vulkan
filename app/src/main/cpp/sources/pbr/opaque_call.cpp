@@ -3,9 +3,17 @@
 
 namespace pbr {
 
-OpaqueCall::OpaqueCall ( size_t &maxBatch, size_t &maxUnique, MeshRef &mesh, const GXMat4 &local )
+OpaqueCall::OpaqueCall ( size_t &maxBatch,
+    size_t &maxUnique,
+    MeshRef &mesh,
+    GXMat4 const &local,
+    GXColorRGB const &color0,
+    GXColorRGB const &color1,
+    GXColorRGB const &color2,
+    GXColorRGB const &color3
+)
 {
-    Append ( maxBatch, maxUnique, mesh, local );
+    Append ( maxBatch, maxUnique, mesh, local, color0, color1, color2, color3 );
 }
 
 const OpaqueCall::BatchList& OpaqueCall::GetBatchList () const
@@ -18,26 +26,54 @@ const OpaqueCall::UniqueList& OpaqueCall::GetUniqueList () const
     return _unique;
 }
 
-void OpaqueCall::Append ( size_t &maxBatch, size_t &maxUnique, MeshRef &mesh, const GXMat4 &local )
+void OpaqueCall::Append ( size_t &maxBatch,
+    size_t &maxUnique,
+    MeshRef &mesh,
+    GXMat4 const &local,
+    GXColorRGB const &color0,
+    GXColorRGB const &color1,
+    GXColorRGB const &color2,
+    GXColorRGB const &color3
+)
 {
     if ( mesh->IsUnique () )
     {
-        AddUnique ( maxUnique, mesh, local );
+        AddUnique ( maxUnique, mesh, local, color0, color1, color2, color3 );
         return;
     }
 
-    AddBatch ( maxBatch, mesh, local );
+    AddBatch ( maxBatch, mesh, local, color0, color1, color2, color3 );
 }
 
-void OpaqueCall::AddBatch ( size_t &maxBatch, MeshRef &mesh, const GXMat4 &local )
+void OpaqueCall::AddBatch ( size_t &maxBatch, MeshRef &mesh,
+    GXMat4 const &local,
+    GXColorRGB const &color0,
+    GXColorRGB const &color1,
+    GXColorRGB const &color2,
+    GXColorRGB const &color3
+)
 {
     const std::string& name = mesh->GetName ();
     auto findResult = _batch.find ( name );
 
     if ( findResult == _batch.cend () )
-        _batch.insert ( std::make_pair ( std::string_view ( name ), MeshGroup ( mesh, local ) ) );
+    {
+        _batch.insert (
+            std::make_pair ( std::string_view ( name ), MeshGroup ( mesh, local, color0, color1, color2, color3 ) )
+        );
+    }
     else
-        findResult->second._locals.push_back ( local );
+    {
+        findResult->second._opaqueData.emplace_back (
+            OpaqueData {
+                ._local = local,
+                ._color0 = color0,
+                ._color1 = color1,
+                ._color2 = color2,
+                ._color3 = color3
+            }
+        );
+    }
 
     size_t const count = _batch.size ();
 
@@ -47,9 +83,27 @@ void OpaqueCall::AddBatch ( size_t &maxBatch, MeshRef &mesh, const GXMat4 &local
     maxBatch = count;
 }
 
-void OpaqueCall::AddUnique ( size_t &maxUnique, MeshRef &mesh, const GXMat4 &local )
+void OpaqueCall::AddUnique ( size_t &maxUnique,
+    MeshRef &mesh,
+    GXMat4 const &local,
+    GXColorRGB const &color0,
+    GXColorRGB const &color1,
+    GXColorRGB const &color2,
+    GXColorRGB const &color3
+)
 {
-    _unique.emplace_back ( std::make_pair ( mesh, local ) );
+    _unique.emplace_back (
+        std::make_pair ( mesh,
+            OpaqueData {
+                ._local = local,
+                ._color0 = color0,
+                ._color1 = color1,
+                ._color2 = color2,
+                ._color3 = color3
+            }
+        )
+    );
+
     size_t const count = _unique.size ();
 
     if ( maxUnique >= count )

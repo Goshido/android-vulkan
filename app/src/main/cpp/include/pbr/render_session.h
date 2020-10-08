@@ -54,7 +54,7 @@ class RenderSession final
 
         std::map<OpaqueMaterial, OpaqueCall>    _opaqueCalls;
 
-        OpaqueProgram                      _opaqueBatchProgram;
+        OpaqueProgram                           _opaqueBatchProgram;
         TexturePresentProgram                   _texturePresentProgram;
 
         VkPresentInfoKHR                        _presentInfo;
@@ -90,7 +90,14 @@ class RenderSession final
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, VkExtent2D const &resolution );
         void Destroy ( android_vulkan::Renderer &renderer );
 
-        void SubmitMesh ( MeshRef &mesh, MaterialRef &material, GXMat4 const &local );
+        void SubmitMesh ( MeshRef &mesh,
+            MaterialRef &material,
+            GXMat4 const &local,
+            GXColorRGB const &color0,
+            GXColorRGB const &color1,
+            GXColorRGB const &color2,
+            GXColorRGB const &color3
+        );
 
     private:
         [[nodiscard]] bool BeginGeometryRenderPass ( android_vulkan::Renderer &renderer );
@@ -111,7 +118,15 @@ class RenderSession final
         void DrawOpaque ( VkDescriptorSet const* textureSets, VkDescriptorSet const* instanceSets ) const;
 
         void InitCommonStructures ();
-        void SubmitOpaqueCall ( MeshRef &mesh, MaterialRef &material, GXMat4 const &local );
+
+        void SubmitOpaqueCall ( MeshRef &mesh,
+            MaterialRef &material,
+            GXMat4 const &local,
+            GXColorRGB const &color0,
+            GXColorRGB const &color1,
+            GXColorRGB const &color2,
+            GXColorRGB const &color3
+        );
 
         [[nodiscard]] bool UpdateGPUData ( std::vector<VkDescriptorSet> &descriptorSetStorage,
             android_vulkan::Renderer &renderer

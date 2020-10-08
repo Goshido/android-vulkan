@@ -20,7 +20,7 @@ class OpaqueInstanceDescriptorSetLayoutImpl final
         std::atomic<size_t>         _references;
 
     public:
-        OpaqueInstanceDescriptorSetLayoutImpl ();
+        OpaqueInstanceDescriptorSetLayoutImpl () noexcept;
 
         OpaqueInstanceDescriptorSetLayoutImpl ( OpaqueInstanceDescriptorSetLayoutImpl const &other ) = delete;
         OpaqueInstanceDescriptorSetLayoutImpl& operator = ( OpaqueInstanceDescriptorSetLayoutImpl const &other ) = delete;
@@ -34,7 +34,7 @@ class OpaqueInstanceDescriptorSetLayoutImpl final
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer );
 };
 
-OpaqueInstanceDescriptorSetLayoutImpl::OpaqueInstanceDescriptorSetLayoutImpl ():
+OpaqueInstanceDescriptorSetLayoutImpl::OpaqueInstanceDescriptorSetLayoutImpl () noexcept:
     _descriptorSetLayout ( VK_NULL_HANDLE ),
     _references ( 0U )
 {
@@ -65,7 +65,7 @@ bool OpaqueInstanceDescriptorSetLayoutImpl::Init ( android_vulkan::Renderer &ren
     }
 
     VkDescriptorSetLayoutBinding uniformBuffer;
-    uniformBuffer.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+    uniformBuffer.stageFlags = AV_VK_FLAG ( VK_SHADER_STAGE_VERTEX_BIT )/* | AV_VK_FLAG ( VK_SHADER_STAGE_FRAGMENT_BIT )*/;
     uniformBuffer.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     uniformBuffer.descriptorCount = 1U;
     uniformBuffer.binding = 0U;

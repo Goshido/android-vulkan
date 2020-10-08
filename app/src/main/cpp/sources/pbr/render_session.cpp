@@ -166,14 +166,6 @@ RenderSession::RenderSession ():
     // NOTHING
 }
 
-void RenderSession::SubmitMesh ( MeshRef &mesh, MaterialRef &material, const GXMat4 &local )
-{
-    if ( material->GetMaterialType() != eMaterialType::Opaque )
-        return;
-
-    SubmitOpaqueCall ( mesh, material, local );
-}
-
 void RenderSession::Begin ( GXMat4 const &view, GXMat4 const &projection )
 {
     _maxBatchCount = 0U;
@@ -560,6 +552,21 @@ void RenderSession::Destroy ( android_vulkan::Renderer &renderer )
 
     DestroySyncPrimitives ( renderer );
     _gBuffer.Destroy ( renderer );
+}
+
+void RenderSession::SubmitMesh ( MeshRef &mesh,
+    MaterialRef &material,
+    GXMat4 const &local,
+    GXColorRGB const &color0,
+    GXColorRGB const &color1,
+    GXColorRGB const &color2,
+    GXColorRGB const &color3
+)
+{
+    if ( material->GetMaterialType() == eMaterialType::Opaque )
+    {
+        SubmitOpaqueCall ( mesh, material, local, color0, color1, color2, color3 );
+    }
 }
 
 bool RenderSession::BeginGeometryRenderPass ( android_vulkan::Renderer &renderer )
@@ -1006,7 +1013,7 @@ void RenderSession::DrawOpaque ( VkDescriptorSet const* textureSets, VkDescripto
         {
             MeshGroup const& group = item.second;
             MeshRef const& mesh = group._mesh;
-            size_t const instanceCount = group._locals.size ();
+            size_t const instanceCount = group._opaqueData.size ();
             size_t instanceIndex = 0U;
             size_t batches = 0U;
 
@@ -1131,19 +1138,28 @@ void RenderSession::InitCommonStructures ()
     _submitInfoTransfer.pSignalSemaphores = nullptr;
 }
 
-void RenderSession::SubmitOpaqueCall ( MeshRef &mesh, MaterialRef &material, GXMat4 const &local )
+void RenderSession::SubmitOpaqueCall ( MeshRef &mesh,
+    MaterialRef &material,
+    GXMat4 const &local,
+    GXColorRGB const &color0,
+    GXColorRGB const &color1,
+    GXColorRGB const &color2,
+    GXColorRGB const &color3
+)
 {
     auto& opaqueMaterial = *dynamic_cast<OpaqueMaterial*> ( material.get () );
     auto findResult = _opaqueCalls.find ( opaqueMaterial );
 
     if ( findResult != _opaqueCalls.cend () )
     {
-        findResult->second.Append ( _maxBatchCount, _maxUniqueCount, mesh, local );
+        findResult->second.Append ( _maxBatchCount, _maxUniqueCount, mesh, local, color0, color1, color2, color3 );
         return;
     }
 
     _opaqueCalls.insert (
-        std::make_pair ( opaqueMaterial, OpaqueCall ( _maxBatchCount, _maxUniqueCount, mesh, local ) )
+        std::make_pair ( opaqueMaterial,
+            OpaqueCall ( _maxBatchCount, _maxUniqueCount, mesh, local, color0, color1, color2, color3 )
+        )
     );
 }
 
@@ -1395,8 +1411,16 @@ bool RenderSession::UpdateGPUData (  std::vector<VkDescriptorSet> &descriptorSet
 
             // TODO Frustum test.
 
-            objectData._localView.Multiply ( item.second, _view );
-            objectData._localViewProjection.Multiply ( item.second, _viewProjection );
+            OpaqueData const& opaqueData = item.second;
+
+            GXMat4 const& local = opaqueData._local;
+            objectData._localView.Multiply ( local, _view );
+            objectData._localViewProjection.Multiply ( local, _viewProjection );
+
+            /*objectData._color0 = opaqueData._color0;
+            objectData._color1 = opaqueData._color1;
+            objectData._color2 = opaqueData._color2;
+            objectData._color3 = opaqueData._color3;*/
 
             uniformBinder (
                 _uniformBufferPool.Acquire ( _geometryPassTransfer,
@@ -1416,7 +1440,7 @@ bool RenderSession::UpdateGPUData (  std::vector<VkDescriptorSet> &descriptorSet
             MeshGroup const& group = item.second;
             size_t instanceIndex = 0U;
 
-            for ( auto const &local : group._locals )
+            for ( auto const &opaqueData : group._opaqueData )
             {
                 if ( uniformUsed >= maxUniforms )
                 {
@@ -1448,8 +1472,14 @@ bool RenderSession::UpdateGPUData (  std::vector<VkDescriptorSet> &descriptorSet
 
                 // TODO frustum test
 
+                GXMat4 const& local = opaqueData._local;
                 objectData._localView.Multiply ( local, _view );
                 objectData._localViewProjection.Multiply ( local, _viewProjection );
+
+                /*objectData._color0 = opaqueData._color0;
+                objectData._color1 = opaqueData._color1;
+                objectData._color2 = opaqueData._color2;
+                objectData._color3 = opaqueData._color3;*/
             }
 
             if ( !instanceIndex )

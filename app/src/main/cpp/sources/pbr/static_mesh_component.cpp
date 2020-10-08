@@ -70,7 +70,7 @@ void StaticMeshComponent::FreeTransferResources ( android_vulkan::Renderer &rend
 
 void StaticMeshComponent::Submit ( RenderSession &renderSession )
 {
-    renderSession.SubmitMesh ( _mesh, _material, _localMatrix );
+    renderSession.SubmitMesh ( _mesh, _material, _localMatrix, _color0, _color1, _color2, _color3 );
 }
 
 } // namespace pbr

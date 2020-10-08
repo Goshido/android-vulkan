@@ -15,13 +15,13 @@ Usefull documentation is located [here](docs/documentation.md).
 Requirements:
 
 * _Windows Vista_+
-* _Android Studio 4.0.1_
-* _Android Studio Gradle Plugin 4.0.1_
+* _Android Studio 4.0.2_
+* _Android Studio Gradle Plugin 4.0.2_
 * _Android NDK 21.3.6528147 (side by side)_
 * _Android SDK 10.0 (API level 29)_
 * _Android SDK Build-Tools 30.0.2_
 * _Android SDK Tools 26.1.1_
-* _Android SDK Platform-Tools 30.0.3_
+* _Android SDK Platform-Tools 30.0.4_
 * _CMake 3.10.2.4988404_
 * _DirectX Shader Compiler 1.5.2005.10152_
 * _Gradle 6.6.1_

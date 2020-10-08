@@ -1,19 +1,5 @@
-#include "gpgpu_limits.inc"
+#include "instance-layout.inc"
 
-
-struct ObjectData
-{
-    matrix              _localView;
-    matrix              _localViewProjection;
-};
-
-[[vk::binding ( 0, 1 )]]
-cbuffer InstanceData:                       register ( b0 )
-{
-    // sizeof ( ObjectData ) = 128 bytes
-    // sizeof ( InstanceData ) = 16384 bytes
-    ObjectData          g_instanceData[ PBR_OPAQUE_MAX_INSTANCE_COUNT ];
-}
 
 struct InputData
 {

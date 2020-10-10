@@ -40,6 +40,21 @@ void OpaqueMaterial::SetEmissionDefault ()
     _emission = nullptr;
 }
 
+Texture2DRef& OpaqueMaterial::GetMask ()
+{
+    return _mask;
+}
+
+void OpaqueMaterial::SetMask ( Texture2DRef &texture )
+{
+    _mask = texture;
+}
+
+void OpaqueMaterial::SetMaskDefault ()
+{
+    _mask = nullptr;
+}
+
 Texture2DRef& OpaqueMaterial::GetNormal ()
 {
     return _normal;
@@ -92,6 +107,11 @@ bool OpaqueMaterial::operator < ( const OpaqueMaterial &other ) const
         return result == less;
 
     result = compare ( _param, other._param );
+
+    if ( result != equal )
+        return result == less;
+
+    result = compare ( _mask, other._mask );
 
     if ( result != equal )
         return result == less;

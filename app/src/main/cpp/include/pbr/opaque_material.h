@@ -12,6 +12,7 @@ class OpaqueMaterial final : public Material
     private:
         Texture2DRef    _albedo;
         Texture2DRef    _emission;
+        Texture2DRef    _mask;
         Texture2DRef    _normal;
         Texture2DRef    _param;
 
@@ -33,6 +34,10 @@ class OpaqueMaterial final : public Material
         [[nodiscard]] Texture2DRef& GetEmission ();
         void SetEmission ( Texture2DRef &texture );
         [[maybe_unused]] void SetEmissionDefault ();
+
+        [[nodiscard]] Texture2DRef& GetMask ();
+        void SetMask ( Texture2DRef &texture );
+        [[maybe_unused]] void SetMaskDefault ();
 
         [[nodiscard]] Texture2DRef& GetNormal ();
         void SetNormal ( Texture2DRef &texture );

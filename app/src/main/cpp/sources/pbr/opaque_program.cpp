@@ -135,8 +135,8 @@ std::vector<DescriptorSetInfo> const& OpaqueProgram::GetResourceInfo () const
     {
         DescriptorSetInfo
         {
-            ProgramResource ( VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 4U ),
-            ProgramResource ( VK_DESCRIPTOR_TYPE_SAMPLER, 4U )
+            ProgramResource ( VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 5U ),
+            ProgramResource ( VK_DESCRIPTOR_TYPE_SAMPLER, 5U )
         },
 
         DescriptorSetInfo

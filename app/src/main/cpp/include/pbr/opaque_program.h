@@ -20,10 +20,10 @@ class OpaqueProgram final : public Program
         {
             GXMat4                              _localView;
             GXMat4                              _localViewProjection;
-            /*GXColorRGB                          _color0;
+            GXColorRGB                          _color0;
             GXColorRGB                          _color1;
             GXColorRGB                          _color2;
-            GXColorRGB                          _color3;*/
+            GXColorRGB                          _color3;
         };
 
         struct InstanceData final

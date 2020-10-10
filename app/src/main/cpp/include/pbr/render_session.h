@@ -29,6 +29,7 @@ class RenderSession final
     private:
         Texture2DRef                            _albedoDefault;
         Texture2DRef                            _emissionDefault;
+        Texture2DRef                            _maskDefault;
         Texture2DRef                            _normalDefault;
         Texture2DRef                            _paramDefault;
 

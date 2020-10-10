@@ -12,7 +12,7 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-constexpr static const size_t DEFAULT_TEXTURE_COUNT = 4U;
+constexpr static const size_t DEFAULT_TEXTURE_COUNT = 5U;
 
 // 1 2 4 8 16 32 64 128 256 512 1024 2048 4096
 constexpr static size_t MAX_SUPPORTED_MIP_COUNT = 13U;
@@ -131,6 +131,7 @@ static SamplerStorage g_SamplerStorage;
 RenderSession::RenderSession ():
     _albedoDefault {},
     _emissionDefault {},
+    _maskDefault {},
     _normalDefault {},
     _paramDefault {},
     _commandPool ( VK_NULL_HANDLE ),
@@ -450,6 +451,21 @@ bool RenderSession::Init ( android_vulkan::Renderer &renderer, VkExtent2D const 
         return false;
     }
 
+    constexpr const uint8_t mask[ 4U ] = { 255U, 0U, 0U, 0U };
+
+    result = textureLoader ( _maskDefault,
+        mask,
+        sizeof ( mask ),
+        VK_FORMAT_R8G8B8A8_UNORM,
+        commandBuffers[ 2U ]
+    );
+
+    if ( !result )
+    {
+        Destroy ( renderer );
+        return false;
+    }
+
     // See Table 53. Bit mappings for packed 32-bit formats of Vulkan 1.1.108 spec.
     // https://vulkan.lunarg.com/doc/view/1.1.108.0/mac/chunked_spec/chap37.html#formats-packed
     //                                        A         R              G              B
@@ -461,7 +477,7 @@ bool RenderSession::Init ( android_vulkan::Renderer &renderer, VkExtent2D const 
         normal,
         sizeof ( normal ),
         VK_FORMAT_A2R10G10B10_UNORM_PACK32,
-        commandBuffers[ 2U ]
+        commandBuffers[ 3U ]
     );
 
     if ( !result )
@@ -476,7 +492,7 @@ bool RenderSession::Init ( android_vulkan::Renderer &renderer, VkExtent2D const 
         param,
         sizeof ( param ),
         VK_FORMAT_R8G8B8A8_UNORM,
-        commandBuffers[ 3U ]
+        commandBuffers[ 4U ]
     );
 
     if ( result )
@@ -501,6 +517,7 @@ void RenderSession::Destroy ( android_vulkan::Renderer &renderer )
 
     freeTexture ( _paramDefault );
     freeTexture ( _normalDefault );
+    freeTexture ( _maskDefault );
     freeTexture ( _emissionDefault );
     freeTexture ( _albedoDefault );
 
@@ -618,6 +635,9 @@ void RenderSession::CleanupTransferResources ( android_vulkan::Renderer &rendere
 
     if ( _emissionDefault )
         _emissionDefault->FreeTransferResources ( renderer );
+
+    if ( _maskDefault )
+        _maskDefault->FreeTransferResources ( renderer );
 
     if ( _normalDefault )
         _normalDefault->FreeTransferResources ( renderer );
@@ -1326,6 +1346,9 @@ bool RenderSession::UpdateGPUData (  std::vector<VkDescriptorSet> &descriptorSet
     writeInfo1.pImageInfo = nullptr;
     writeInfo1.pTexelBufferView = nullptr;
 
+    constexpr VkPipelineStageFlags const syncFlags = AV_VK_FLAG ( VK_PIPELINE_STAGE_VERTEX_SHADER_BIT ) |
+        AV_VK_FLAG ( VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT );
+
     auto uniformBinder = [ & ] ( VkBuffer uniformBuffer, VkDescriptorSet descriptorSet ) {
         writeInfo1.pBufferInfo = &uniformStorage.emplace_back (
             VkDescriptorBufferInfo {
@@ -1354,8 +1377,9 @@ bool RenderSession::UpdateGPUData (  std::vector<VkDescriptorSet> &descriptorSet
 
         textureBinder ( m.GetAlbedo (), _albedoDefault, 0U, 1U );
         textureBinder ( m.GetEmission (), _emissionDefault, 2U, 3U );
-        textureBinder ( m.GetNormal (), _normalDefault, 4U, 5U );
-        textureBinder ( m.GetParam (), _paramDefault, 6U, 7U );
+        textureBinder ( m.GetMask (), _maskDefault, 4U, 5U );
+        textureBinder ( m.GetNormal (), _normalDefault, 6U, 7U );
+        textureBinder ( m.GetParam (), _paramDefault, 8U, 9U );
     }
 
     android_vulkan::Texture2D& albedo = _gBuffer.GetAlbedo ();
@@ -1417,15 +1441,15 @@ bool RenderSession::UpdateGPUData (  std::vector<VkDescriptorSet> &descriptorSet
             objectData._localView.Multiply ( local, _view );
             objectData._localViewProjection.Multiply ( local, _viewProjection );
 
-            /*objectData._color0 = opaqueData._color0;
+            objectData._color0 = opaqueData._color0;
             objectData._color1 = opaqueData._color1;
             objectData._color2 = opaqueData._color2;
-            objectData._color3 = opaqueData._color3;*/
+            objectData._color3 = opaqueData._color3;
 
             uniformBinder (
                 _uniformBufferPool.Acquire ( _geometryPassTransfer,
                     instanceData._instanceData,
-                    VK_PIPELINE_STAGE_VERTEX_SHADER_BIT,
+                    syncFlags,
                     renderer
                 ),
 
@@ -1456,7 +1480,7 @@ bool RenderSession::UpdateGPUData (  std::vector<VkDescriptorSet> &descriptorSet
                     uniformBinder (
                         _uniformBufferPool.Acquire ( _geometryPassTransfer,
                             instanceData._instanceData,
-                            VK_PIPELINE_STAGE_VERTEX_SHADER_BIT,
+                            syncFlags,
                             renderer
                         ),
 
@@ -1476,10 +1500,10 @@ bool RenderSession::UpdateGPUData (  std::vector<VkDescriptorSet> &descriptorSet
                 objectData._localView.Multiply ( local, _view );
                 objectData._localViewProjection.Multiply ( local, _viewProjection );
 
-                /*objectData._color0 = opaqueData._color0;
+                objectData._color0 = opaqueData._color0;
                 objectData._color1 = opaqueData._color1;
                 objectData._color2 = opaqueData._color2;
-                objectData._color3 = opaqueData._color3;*/
+                objectData._color3 = opaqueData._color3;
             }
 
             if ( !instanceIndex )
@@ -1488,7 +1512,7 @@ bool RenderSession::UpdateGPUData (  std::vector<VkDescriptorSet> &descriptorSet
             uniformBinder (
                 _uniformBufferPool.Acquire ( _geometryPassTransfer,
                     instanceData._instanceData,
-                    VK_PIPELINE_STAGE_VERTEX_SHADER_BIT,
+                    syncFlags,
                     renderer
                 ),
 

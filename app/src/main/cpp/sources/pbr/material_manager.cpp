@@ -75,6 +75,16 @@ MaterialRef MaterialManager::LoadMaterial ( size_t &commandBufferConsumed,
         opaqueMaterial->SetEmission ( texture );
     }
 
+    if ( header->_maskOffset != NO_UTF8_OFFSET )
+    {
+        Texture2DRef texture = loadTexture ( header->_maskOffset, VK_FORMAT_R8G8B8A8_UNORM );
+
+        if ( !texture )
+            return material;
+
+        opaqueMaterial->SetMask ( texture );
+    }
+
     if ( header->_normalOffset != NO_UTF8_OFFSET )
     {
         Texture2DRef texture = loadTexture ( header->_normalOffset, VK_FORMAT_R8G8B8A8_SRGB );

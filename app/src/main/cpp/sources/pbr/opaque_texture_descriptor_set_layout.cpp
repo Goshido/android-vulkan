@@ -64,7 +64,7 @@ bool OpaqueTextureDescriptorSetLayoutImpl::Init ( android_vulkan::Renderer &rend
         return true;
     }
 
-    VkDescriptorSetLayoutBinding bindingInfo[ 8U ];
+    VkDescriptorSetLayoutBinding bindingInfo[ 10U ];
     VkDescriptorSetLayoutBinding& albedoTexture = bindingInfo[ 0U ];
     albedoTexture.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
     albedoTexture.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
@@ -93,32 +93,46 @@ bool OpaqueTextureDescriptorSetLayoutImpl::Init ( android_vulkan::Renderer &rend
     emissionSampler.binding = 3U;
     emissionSampler.pImmutableSamplers = nullptr;
 
-    VkDescriptorSetLayoutBinding& normalTexture = bindingInfo[ 4U ];
+    VkDescriptorSetLayoutBinding& maskTexture = bindingInfo[ 4U ];
+    maskTexture.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    maskTexture.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+    maskTexture.descriptorCount = 1U;
+    maskTexture.binding = 4U;
+    maskTexture.pImmutableSamplers = nullptr;
+
+    VkDescriptorSetLayoutBinding& maskSampler = bindingInfo[ 5U ];
+    maskSampler.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    maskSampler.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
+    maskSampler.descriptorCount = 1U;
+    maskSampler.binding = 5U;
+    maskSampler.pImmutableSamplers = nullptr;
+
+    VkDescriptorSetLayoutBinding& normalTexture = bindingInfo[ 6U ];
     normalTexture.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
     normalTexture.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
     normalTexture.descriptorCount = 1U;
-    normalTexture.binding = 4U;
+    normalTexture.binding = 6U;
     normalTexture.pImmutableSamplers = nullptr;
 
-    VkDescriptorSetLayoutBinding& normalSampler = bindingInfo[ 5U ];
+    VkDescriptorSetLayoutBinding& normalSampler = bindingInfo[ 7U ];
     normalSampler.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
     normalSampler.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
     normalSampler.descriptorCount = 1U;
-    normalSampler.binding = 5U;
+    normalSampler.binding = 7U;
     normalSampler.pImmutableSamplers = nullptr;
 
-    VkDescriptorSetLayoutBinding& paramTexture = bindingInfo[ 6U ];
+    VkDescriptorSetLayoutBinding& paramTexture = bindingInfo[ 8U ];
     paramTexture.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
     paramTexture.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
     paramTexture.descriptorCount = 1U;
-    paramTexture.binding = 6U;
+    paramTexture.binding = 8U;
     paramTexture.pImmutableSamplers = nullptr;
 
-    VkDescriptorSetLayoutBinding& paramSampler = bindingInfo[ 7U ];
+    VkDescriptorSetLayoutBinding& paramSampler = bindingInfo[ 9U ];
     paramSampler.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
     paramSampler.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
     paramSampler.descriptorCount = 1U;
-    paramSampler.binding = 7U;
+    paramSampler.binding = 9U;
     paramSampler.pImmutableSamplers = nullptr;
 
     VkDescriptorSetLayoutCreateInfo descriptorSetLayoutInfo;

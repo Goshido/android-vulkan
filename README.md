@@ -15,8 +15,8 @@ Usefull documentation is located [here](docs/documentation.md).
 Requirements:
 
 * _Windows Vista_+
-* _Android Studio 4.0.2_
-* _Android Studio Gradle Plugin 4.0.2_
+* _Android Studio 4.1.0_
+* _Android Studio Gradle Plugin 4.1.0_
 * _Android NDK 21.3.6528147 (side by side)_
 * _Android SDK 10.0 (API level 29)_
 * _Android SDK Build-Tools 30.0.2_

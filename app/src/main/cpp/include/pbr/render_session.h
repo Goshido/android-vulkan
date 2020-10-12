@@ -77,11 +77,11 @@ class RenderSession final
     public:
         RenderSession ();
 
-        RenderSession ( RenderSession const &other ) = delete;
-        RenderSession& operator = ( RenderSession const &other ) = delete;
+        RenderSession ( RenderSession const & ) = delete;
+        RenderSession& operator = ( RenderSession const & ) = delete;
 
-        RenderSession ( RenderSession &&other ) = delete;
-        RenderSession& operator = ( RenderSession &&other ) = delete;
+        RenderSession ( RenderSession && ) = delete;
+        RenderSession& operator = ( RenderSession && ) = delete;
 
         ~RenderSession () = default;
 

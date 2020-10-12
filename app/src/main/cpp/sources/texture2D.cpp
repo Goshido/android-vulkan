@@ -315,20 +315,6 @@ bool Texture2D::UploadData ( const uint8_t* data,
     return UploadDataInternal ( data, size, isGenerateMipmaps, imageInfo, renderer, commandBuffer );
 }
 
-uint32_t Texture2D::CountMipLevels ( const VkExtent2D &resolution ) const
-{
-    uint32_t pivot = std::max ( resolution.width, resolution.height );
-    uint32_t mipCount = 1U;
-
-    while ( pivot != 1U )
-    {
-        ++mipCount;
-        pivot >>= 1U;
-    }
-
-    return mipCount;
-}
-
 bool Texture2D::CreateCommonResources ( VkImageCreateInfo &imageInfo,
     VkExtent2D const &resolution,
     VkFormat format,
@@ -460,64 +446,6 @@ void Texture2D::FreeResourceInternal ( android_vulkan::Renderer &renderer )
     vkDestroyImage ( device, _image, nullptr );
     _image = VK_NULL_HANDLE;
     AV_UNREGISTER_IMAGE ( "Texture2D::_image" )
-}
-
-bool Texture2D::IsFormatCompatible ( VkFormat target, VkFormat candidate, android_vulkan::Renderer &renderer ) const
-{
-    if ( target == candidate )
-        return true;
-
-    auto const t = g_CompatibleFormats.find ( target );
-
-    if ( t == g_CompatibleFormats.cend () )
-    {
-        android_vulkan::LogError ( "Texture2D::IsFormatCompatible - Unexpected format %s (%i)",
-            renderer.ResolveVkFormat ( target ),
-            static_cast<int> ( target )
-        );
-
-        return false;
-    }
-
-    auto const& options = t->second;
-
-    if ( options.count ( candidate ) == 1U )
-        return true;
-
-    android_vulkan::LogError (
-        "Texture2D::IsFormatCompatible - Candidate format %s (%i) is not compatible with target format %s (%i).",
-        renderer.ResolveVkFormat ( candidate ),
-        static_cast<int> ( candidate ),
-        renderer.ResolveVkFormat ( candidate ),
-        static_cast<int> ( candidate )
-    );
-
-    return false;
-}
-
-VkFormat Texture2D::PickupFormat ( int channels ) const
-{
-    switch ( channels )
-    {
-        case 1:
-        return VK_FORMAT_R8_SRGB;
-
-        case 2:
-        return VK_FORMAT_R8G8_SRGB;
-
-        case 3:
-            android_vulkan::LogError ( "Texture2D::PickupFormat - Three channel formats are not supported!" );
-        return VK_FORMAT_UNDEFINED;
-
-        case 4:
-        return VK_FORMAT_R8G8B8A8_SRGB;
-
-        default:
-            android_vulkan::LogError (
-                "Texture2D::PickupFormat - Unexpected channel count: %i! Supported channel count: 1, 2 or 4."
-            );
-        return VK_FORMAT_UNDEFINED;
-    }
 }
 
 bool Texture2D::UploadDataInternal ( uint8_t const* data,
@@ -956,6 +884,79 @@ bool Texture2D::LoadImage ( std::vector<uint8_t> &pixelData,
     channels = static_cast<int> ( RGBA_BYTES_PER_PIXEL );
 
     return true;
+}
+
+uint32_t Texture2D::CountMipLevels ( VkExtent2D const &resolution )
+{
+    uint32_t pivot = std::max ( resolution.width, resolution.height );
+    uint32_t mipCount = 1U;
+
+    while ( pivot != 1U )
+    {
+        ++mipCount;
+        pivot >>= 1U;
+    }
+
+    return mipCount;
+}
+
+bool Texture2D::IsFormatCompatible ( VkFormat target, VkFormat candidate, android_vulkan::Renderer &renderer )
+{
+    if ( target == candidate )
+        return true;
+
+    auto const t = g_CompatibleFormats.find ( target );
+
+    if ( t == g_CompatibleFormats.cend () )
+    {
+        android_vulkan::LogError ( "Texture2D::IsFormatCompatible - Unexpected format %s (%i)",
+            renderer.ResolveVkFormat ( target ),
+            static_cast<int> ( target )
+        );
+
+        return false;
+    }
+
+    auto const& options = t->second;
+
+    if ( options.count ( candidate ) == 1U )
+        return true;
+
+    android_vulkan::LogError (
+        "Texture2D::IsFormatCompatible - Candidate format %s (%i) is not compatible with target format %s (%i).",
+        renderer.ResolveVkFormat ( candidate ),
+        static_cast<int> ( candidate ),
+        renderer.ResolveVkFormat ( candidate ),
+        static_cast<int> ( candidate )
+    );
+
+    return false;
+}
+
+
+VkFormat Texture2D::PickupFormat ( int channels )
+{
+    switch ( channels )
+    {
+        case 1:
+        return VK_FORMAT_R8_SRGB;
+
+        case 2:
+        return VK_FORMAT_R8G8_SRGB;
+
+        case 3:
+            android_vulkan::LogError ( "Texture2D::PickupFormat - Three channel formats are not supported!" );
+        return VK_FORMAT_UNDEFINED;
+
+        case 4:
+            return VK_FORMAT_R8G8B8A8_SRGB;
+
+        default:
+            android_vulkan::LogError (
+                "Texture2D::PickupFormat - Unexpected channel count: %i! Supported channel count: 1, 2 or 4."
+            );
+        return VK_FORMAT_UNDEFINED;
+    }
 }
 
 } // namespace android_vulkan

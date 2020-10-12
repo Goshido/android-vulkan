@@ -60,16 +60,9 @@ ext.getVulkanDebugLayerFilter = { ->
     return "**/libVkLayer_khronos_validation.so"
 }
 
-// See https://gist.github.com/bertrandmartel/99b5fb1e668d17435dc5
-ext.getNdkDirectory = { ->
-    Properties properties = new Properties()
-    properties.load(project.rootProject.file('local.properties').newDataInputStream())
-    return properties.getProperty('ndk.dir')
-}
-
 // Custom task to copy .so family from Android NDK.
 task copyVulkanLayerLib(type: Copy) {
-    from(new File(getNdkDirectory(), getVulkanLayerSourceDirectory())) { include getVulkanDebugLayerFilter() }
+    from(new File(android.ndkDirectory, getVulkanLayerSourceDirectory())) { include getVulkanDebugLayerFilter() }
     into new File(buildDir, getVulkanLayerTargetDirectory())
 }
 

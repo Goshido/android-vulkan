@@ -35,10 +35,15 @@ class Texture2D final
     public:
         Texture2D ();
 
-        Texture2D ( Texture2D const &other ) = delete;
-        Texture2D& operator = ( Texture2D const &other ) = delete;
+        Texture2D ( Texture2D const & ) = delete;
+        Texture2D& operator = ( Texture2D const & ) = delete;
 
-        [[nodiscard]] bool CreateRenderTarget ( const VkExtent2D &resolution,
+        Texture2D ( Texture2D && ) = delete;
+        Texture2D& operator = ( Texture2D && ) = delete;
+
+        ~Texture2D () = default;
+
+        [[nodiscard]] bool CreateRenderTarget ( VkExtent2D const &resolution,
             VkFormat format,
             VkImageUsageFlags usage,
             android_vulkan::Renderer &renderer
@@ -59,7 +64,7 @@ class Texture2D final
         [[nodiscard]] std::string const& GetName () const;
 
         // Supported formats: PNG.
-        [[maybe_unused]] [[nodiscard]] bool UploadData ( std::string &fileName,
+        [[nodiscard]] [[maybe_unused]] bool UploadData ( std::string &fileName,
             VkFormat format,
             bool isGenerateMipmaps,
             android_vulkan::Renderer &renderer,
@@ -100,8 +105,6 @@ class Texture2D final
         );
 
     private:
-        [[nodiscard]] uint32_t CountMipLevels ( const VkExtent2D &resolution ) const;
-
         [[nodiscard]] bool CreateCommonResources ( VkImageCreateInfo &imageInfo,
             VkExtent2D const &resolution,
             VkFormat format,
@@ -111,13 +114,6 @@ class Texture2D final
         );
 
         void FreeResourceInternal ( android_vulkan::Renderer &renderer );
-
-        [[nodiscard]] bool IsFormatCompatible ( VkFormat target,
-            VkFormat candidate,
-            android_vulkan::Renderer &renderer
-        ) const;
-
-        [[nodiscard]] VkFormat PickupFormat ( int channels ) const;
 
         [[nodiscard]] bool UploadDataInternal ( uint8_t const* data,
             size_t size,
@@ -133,6 +129,15 @@ class Texture2D final
             int &height,
             int &channels
         );
+
+        [[nodiscard]] static uint32_t CountMipLevels ( VkExtent2D const &resolution );
+
+        [[nodiscard]] static bool IsFormatCompatible ( VkFormat target,
+            VkFormat candidate,
+            android_vulkan::Renderer &renderer
+        );
+
+        [[nodiscard]] static VkFormat PickupFormat ( int channels );
 };
 
 } // namespace android_vulkan

@@ -56,12 +56,13 @@ OutputData VS ( in InputData inputData )
 
     // MALI-G76 optimizes _colorX members and breaks memory layout if no any references to those members in the shader.
     // Investigating...
-    /*result._normalView = (half3)mul ( orientation, inputData._normal );
-    result._tangentView = (half3)mul ( orientation, inputData._tangent );
-    result._bitangentView = (half3)mul ( orientation, inputData._bitangent );*/
+    //result._normalView = (half3)mul ( orientation, inputData._normal );
+    //result._tangentView = (half3)mul ( orientation, inputData._tangent );
+    //result._bitangentView = (half3)mul ( orientation, inputData._bitangent );
     result._normalView = (half3)mul ( orientation, inputData._normal ) + (half3)objectData._color0.xyz;
     result._tangentView = (half3)mul ( orientation, inputData._tangent ) + (half3)objectData._color1.xyz;
     result._bitangentView = (half3)mul ( orientation, inputData._bitangent ) + (half3)objectData._color2.xyz + (half3)objectData._color3.xyz;
+
     result._instanceIndex = inputData._instanceIndex;
 
     return result;

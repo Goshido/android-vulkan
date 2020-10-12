@@ -27,10 +27,14 @@ class SamplerStorage final
 
     public:
         SamplerStorage () = default;
-        ~SamplerStorage () = default;
 
-        SamplerStorage ( const SamplerStorage &other ) = delete;
-        SamplerStorage& operator = ( const SamplerStorage &other ) = delete;
+        SamplerStorage ( SamplerStorage const & ) = delete;
+        SamplerStorage& operator = ( SamplerStorage const & ) = delete;
+
+        SamplerStorage ( SamplerStorage && ) = delete;
+        SamplerStorage& operator = ( SamplerStorage && ) = delete;
+
+        ~SamplerStorage () = default;
 
         void FreeResources ( android_vulkan::Renderer &renderer );
 

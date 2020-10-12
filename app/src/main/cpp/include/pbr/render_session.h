@@ -17,10 +17,10 @@ constexpr static size_t const GBUFFER_ATTACHMENT_COUNT = 5U;
 
 enum class ePresentTarget : uint8_t
 {
-    Albedo,
-    Emission,
-    Normal,
-    Param
+    Albedo [[maybe_unused]],
+    Emission [[maybe_unused]],
+    Normal [[maybe_unused]],
+    Param [[maybe_unused]]
 };
 
 // Single threaded class

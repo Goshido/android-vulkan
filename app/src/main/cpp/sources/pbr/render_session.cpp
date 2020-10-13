@@ -26,7 +26,7 @@ class SamplerStorage final
         SamplerRef      _storage[ MAX_SUPPORTED_MIP_COUNT ];
 
     public:
-        SamplerStorage () = default;
+        SamplerStorage () noexcept = default;
 
         SamplerStorage ( SamplerStorage const & ) = delete;
         SamplerStorage& operator = ( SamplerStorage const & ) = delete;
@@ -132,7 +132,7 @@ static SamplerStorage g_SamplerStorage;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-RenderSession::RenderSession ():
+RenderSession::RenderSession () noexcept:
     _albedoDefault {},
     _emissionDefault {},
     _maskDefault {},

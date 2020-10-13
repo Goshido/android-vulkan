@@ -15,7 +15,7 @@ namespace android_vulkan {
 AAssetManager* g_AssetManager = nullptr;
 constexpr static const double FPS_PERIOD = 3.0;
 
-Core::Core ( android_app &app, Game &game ):
+Core::Core ( android_app &app, Game &game ) noexcept:
     _game ( game ),
     _gamepad ( Gamepad::GetInstance () ),
     _renderer {},

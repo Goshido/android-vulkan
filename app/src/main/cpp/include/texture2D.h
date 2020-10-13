@@ -115,6 +115,12 @@ class Texture2D final
 
         void FreeResourceInternal ( android_vulkan::Renderer &renderer );
 
+        [[nodiscard]] bool UploadCompressed ( std::string const &fileName,
+            VkFormat format,
+            android_vulkan::Renderer &renderer,
+            VkCommandBuffer commandBuffer
+        );
+
         [[nodiscard]] bool UploadDataInternal ( uint8_t const* data,
             size_t size,
             bool isGenerateMipmaps,
@@ -122,6 +128,8 @@ class Texture2D final
             android_vulkan::Renderer &renderer,
             VkCommandBuffer commandBuffer
         );
+
+        [[nodiscard]] static bool IsCompressed ( std::string const &fileName );
 
         [[nodiscard]] static bool LoadImage ( std::vector<uint8_t> &pixelData,
             std::string const &fileName,

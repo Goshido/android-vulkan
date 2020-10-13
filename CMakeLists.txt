@@ -51,6 +51,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/file.cpp
     app/src/main/cpp/sources/gamepad.cpp
     app/src/main/cpp/sources/key_bind.cpp
+    app/src/main/cpp/sources/ktx_media_container.cpp
     app/src/main/cpp/sources/logger.cpp
     app/src/main/cpp/sources/main.cpp
     app/src/main/cpp/sources/mesh_geometry.cpp

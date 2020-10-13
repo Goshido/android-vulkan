@@ -75,7 +75,7 @@ class RenderSession final
         GXMat4                                  _viewProjection;
 
     public:
-        RenderSession ();
+        RenderSession () noexcept;
 
         RenderSession ( RenderSession const & ) = delete;
         RenderSession& operator = ( RenderSession const & ) = delete;

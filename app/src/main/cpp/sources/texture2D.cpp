@@ -4,6 +4,7 @@ GX_DISABLE_COMMON_WARNINGS
 
 #include <array>
 #include <cassert>
+#include <regex>
 #include <set>
 #include <thread>
 
@@ -19,6 +20,7 @@ GX_DISABLE_COMMON_WARNINGS
 GX_RESTORE_WARNING_STATE
 
 #include <file.h>
+#include <ktx_media_container.h>
 #include <logger.h>
 #include <vulkan_utils.h>
 
@@ -227,6 +229,19 @@ bool Texture2D::UploadData ( std::string &&fileName,
     }
 
     FreeResourceInternal ( renderer );
+
+    if ( IsCompressed ( fileName ) )
+    {
+        if ( !UploadCompressed ( fileName, format, renderer, commandBuffer ) )
+        {
+            assert ( false );
+            return false;
+        }
+
+        _fileName = std::move ( fileName );
+        return true;
+    }
+
     std::vector<uint8_t> pixelData;
 
     int width = 0;
@@ -446,6 +461,22 @@ void Texture2D::FreeResourceInternal ( android_vulkan::Renderer &renderer )
     vkDestroyImage ( device, _image, nullptr );
     _image = VK_NULL_HANDLE;
     AV_UNREGISTER_IMAGE ( "Texture2D::_image" )
+}
+
+bool Texture2D::UploadCompressed ( std::string const &fileName,
+    VkFormat /*format*/,
+    android_vulkan::Renderer &/*renderer*/,
+    VkCommandBuffer /*commandBuffer*/
+)
+{
+    KTXMediaContainer ktx;
+
+    if ( !ktx.Init ( fileName ) )
+        return false;
+
+    // TODO check supported format
+
+    return false;
 }
 
 bool Texture2D::UploadDataInternal ( uint8_t const* data,
@@ -789,6 +820,13 @@ bool Texture2D::UploadDataInternal ( uint8_t const* data,
 
     _mipLevels = static_cast<uint8_t> ( imageInfo.mipLevels );
     return true;
+}
+
+bool Texture2D::IsCompressed ( std::string const &fileName )
+{
+    static std::regex const isKTX ( R"__(^.+\.(?:ktx|KTX)$)__" );
+    std::smatch match;
+    return std::regex_match ( fileName, match, isKTX );
 }
 
 bool Texture2D::LoadImage ( std::vector<uint8_t> &pixelData,

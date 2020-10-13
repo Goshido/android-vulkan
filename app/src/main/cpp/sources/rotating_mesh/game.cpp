@@ -20,14 +20,14 @@ constexpr static const char* VERTEX_SHADER_ENTRY_POINT = "VS";
 
 constexpr static const char* FRAGMENT_SHADER_ENTRY_POINT = "PS";
 
-constexpr static std::string_view const MATERIAL_1_DIFFUSE = "textures/rotating_mesh/sonic-material-1-diffuse.png";
+constexpr static std::string_view const MATERIAL_1_DIFFUSE = "textures/rotating_mesh/sonic-material-1-diffuse.ktx";
 constexpr static const char* MATERIAL_1_MESH = "meshes/rotating_mesh/sonic-material-1.mesh";
 
-constexpr static std::string_view const MATERIAL_2_DIFFUSE = "textures/rotating_mesh/sonic-material-2-diffuse.png";
+constexpr static std::string_view const MATERIAL_2_DIFFUSE = "textures/rotating_mesh/sonic-material-2-diffuse.ktx";
 constexpr static const char* MATERIAL_2_MESH = "meshes/rotating_mesh/sonic-material-2.mesh";
 constexpr static std::string_view const MATERIAL_2_NORMAL = "textures/rotating_mesh/sonic-material-2-normal.png";
 
-constexpr static std::string_view const MATERIAL_3_DIFFUSE = "textures/rotating_mesh/sonic-material-3-diffuse.png";
+constexpr static std::string_view const MATERIAL_3_DIFFUSE = "textures/rotating_mesh/sonic-material-3-diffuse.ktx";
 constexpr static const char* MATERIAL_3_MESH = "meshes/rotating_mesh/sonic-material-3.mesh";
 constexpr static std::string_view const MATERIAL_3_NORMAL = "textures/rotating_mesh/sonic-material-3-normal.png";
 
@@ -221,7 +221,7 @@ bool Game::CreateCommonTextures ( android_vulkan::Renderer &renderer, VkCommandB
         auto& drawcall = _drawcalls[ i ];
 
         bool result = drawcall._diffuse.UploadData ( textureFiles[ i ],
-            VK_FORMAT_R8G8B8A8_SRGB,
+            android_vulkan::eFormat::sRGB,
             true,
             renderer,
             commandBuffers[ i ]
@@ -236,7 +236,7 @@ bool Game::CreateCommonTextures ( android_vulkan::Renderer &renderer, VkCommandB
     Drawcall& secondMaterial = _drawcalls[ 1U ];
 
     bool result = secondMaterial._normal.UploadData ( MATERIAL_2_NORMAL,
-        VK_FORMAT_R8G8B8A8_UNORM,
+        android_vulkan::eFormat::Unorm,
         true,
         renderer,
         commandBuffers[ 3U ]
@@ -250,7 +250,7 @@ bool Game::CreateCommonTextures ( android_vulkan::Renderer &renderer, VkCommandB
     Drawcall& thirdMaterial = _drawcalls[ 2U ];
 
     result = thirdMaterial._normal.UploadData ( MATERIAL_3_NORMAL,
-        VK_FORMAT_R8G8B8A8_UNORM,
+        android_vulkan::eFormat::Unorm,
         true,
         renderer,
         commandBuffers[ 4U ]

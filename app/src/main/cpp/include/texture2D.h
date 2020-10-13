@@ -15,6 +15,12 @@ GX_RESTORE_WARNING_STATE
 
 namespace android_vulkan {
 
+enum class eFormat : uint8_t
+{
+    Unorm,
+    sRGB
+};
+
 class Texture2D final
 {
     private:
@@ -64,32 +70,38 @@ class Texture2D final
         [[nodiscard]] std::string const& GetName () const;
 
         // Supported formats: PNG.
-        [[nodiscard]] [[maybe_unused]] bool UploadData ( std::string &fileName,
-            VkFormat format,
+        [[nodiscard]] [[maybe_unused]] bool UploadData ( std::string const &fileName,
+            eFormat format,
             bool isGenerateMipmaps,
             android_vulkan::Renderer &renderer,
             VkCommandBuffer commandBuffer
         );
 
-        // Supported formats: PNG.
+        // Supported media containers:
+        // - PNG
+        // - KTXv1 (ASTC with mipmaps)
         [[nodiscard]] bool UploadData ( std::string &&fileName,
-            VkFormat format,
+            eFormat format,
             bool isGenerateMipmaps,
             android_vulkan::Renderer &renderer,
             VkCommandBuffer commandBuffer
         );
 
-        // Supported formats: PNG.
+        // Supported media containers:
+        // - PNG
+        // - KTXv1 (ASTC with mipmaps)
         [[nodiscard]] bool UploadData ( std::string_view const &fileName,
-            VkFormat format,
+            eFormat format,
             bool isGenerateMipmaps,
             android_vulkan::Renderer &renderer,
             VkCommandBuffer commandBuffer
         );
 
-        // Supported formats: PNG.
+        // Supported media containers:
+        // - PNG
+        // - KTXv1 (ASTC with mipmaps)
         [[nodiscard]] bool UploadData ( char const* fileName,
-            VkFormat format,
+            eFormat format,
             bool isGenerateMipmaps,
             android_vulkan::Renderer &renderer,
             VkCommandBuffer commandBuffer
@@ -113,10 +125,17 @@ class Texture2D final
             android_vulkan::Renderer &renderer
         );
 
+        // The method returns true if success. Otherwise the method returns false.
+        // Note the method maps "_transferDeviceMemory" to the "mappedBuffer". So user code MUST invoke vkUnmapMemory.
+        [[nodiscard]] bool CreateTransferResources ( uint8_t* &mappedBuffer,
+            VkDeviceSize size,
+            android_vulkan::Renderer &renderer
+        );
+
         void FreeResourceInternal ( android_vulkan::Renderer &renderer );
 
         [[nodiscard]] bool UploadCompressed ( std::string const &fileName,
-            VkFormat format,
+            eFormat format,
             android_vulkan::Renderer &renderer,
             VkCommandBuffer commandBuffer
         );
@@ -139,13 +158,12 @@ class Texture2D final
         );
 
         [[nodiscard]] static uint32_t CountMipLevels ( VkExtent2D const &resolution );
+        [[nodiscard]] static VkFormat PickupFormat ( int channels );
 
-        [[nodiscard]] static bool IsFormatCompatible ( VkFormat target,
-            VkFormat candidate,
+        [[nodiscard]] static VkFormat ResolveFormat ( VkFormat baseFormat,
+            eFormat format,
             android_vulkan::Renderer &renderer
         );
-
-        [[nodiscard]] static VkFormat PickupFormat ( int channels );
 };
 
 } // namespace android_vulkan

@@ -7,6 +7,7 @@ GX_DISABLE_COMMON_WARNINGS
 #include <regex>
 #include <set>
 #include <thread>
+#include <unordered_map>
 
 #define STBI_NO_FAILURE_STRINGS
 #define STBI_ONLY_JPEG
@@ -31,30 +32,11 @@ constexpr static const size_t EXPANDER_THREADS = 4U;
 constexpr static const size_t RGB_BYTES_PER_PIXEL = 3U;
 constexpr static const size_t RGBA_BYTES_PER_PIXEL = 4U;
 
-constexpr static VkImageUsageFlags IMMUTABLE_TEXTURE_USAGE = AV_VK_FLAG ( VK_IMAGE_USAGE_SAMPLED_BIT ) |
+constexpr static VkImageUsageFlags const IMMUTABLE_TEXTURE_USAGE = AV_VK_FLAG ( VK_IMAGE_USAGE_SAMPLED_BIT ) |
     AV_VK_FLAG ( VK_IMAGE_USAGE_TRANSFER_DST_BIT ) |
     AV_VK_FLAG ( VK_IMAGE_USAGE_TRANSFER_SRC_BIT );
 
-static const std::map<VkFormat, std::set<VkFormat>> g_CompatibleFormats =
-{
-    {
-        VK_FORMAT_R8G8B8A8_SRGB,
-
-        {
-            VK_FORMAT_R8G8B8A8_UNORM
-        }
-    },
-
-    {
-        VK_FORMAT_R8G8B8A8_UNORM,
-
-        {
-            VK_FORMAT_R8G8B8A8_SRGB
-        }
-    }
-};
-
-static const std::map<VkFormat, VkImageAspectFlags> g_DepthStencilAspectMapper =
+static std::unordered_map<VkFormat, VkImageAspectFlags> const g_DepthStencilAspectMapper =
 {
     { VK_FORMAT_D16_UNORM, VK_IMAGE_ASPECT_DEPTH_BIT },
 
@@ -70,6 +52,12 @@ static const std::map<VkFormat, VkImageAspectFlags> g_DepthStencilAspectMapper =
 
     { VK_FORMAT_S8_UINT, VK_IMAGE_ASPECT_STENCIL_BIT },
     { VK_FORMAT_X8_D24_UNORM_PACK32, VK_IMAGE_ASPECT_DEPTH_BIT }
+};
+
+static std::unordered_map<VkFormat, VkFormat> const g_FormatMapper =
+{
+    { VK_FORMAT_R8G8B8A8_UNORM, VK_FORMAT_R8G8B8A8_SRGB },
+    { VK_FORMAT_ASTC_6x6_UNORM_BLOCK, VK_FORMAT_ASTC_6x6_SRGB_BLOCK }
 };
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -159,8 +147,8 @@ std::string const& Texture2D::GetName () const
     return _fileName;
 }
 
-bool Texture2D::UploadData ( std::string &fileName,
-    VkFormat format,
+bool Texture2D::UploadData ( std::string const &fileName,
+    eFormat format,
     bool isGenerateMipmaps,
     android_vulkan::Renderer &renderer,
     VkCommandBuffer commandBuffer
@@ -183,15 +171,11 @@ bool Texture2D::UploadData ( std::string &fileName,
         return false;
 
     const VkFormat actualFormat = PickupFormat ( channels );
-
-    if ( !IsFormatCompatible ( format, actualFormat, renderer ) )
-        return false;
-
     VkImageCreateInfo imageInfo;
 
     bool result = CreateCommonResources ( imageInfo,
         VkExtent2D { .width = static_cast<uint32_t> ( width ), .height = static_cast<uint32_t> ( height ) },
-        format,
+        ResolveFormat ( actualFormat, format, renderer ),
         IMMUTABLE_TEXTURE_USAGE,
         isGenerateMipmaps,
         renderer
@@ -216,7 +200,7 @@ bool Texture2D::UploadData ( std::string &fileName,
 }
 
 bool Texture2D::UploadData ( std::string &&fileName,
-    VkFormat format,
+    eFormat format,
     bool isGenerateMipmaps,
     android_vulkan::Renderer &renderer,
     VkCommandBuffer commandBuffer
@@ -233,10 +217,7 @@ bool Texture2D::UploadData ( std::string &&fileName,
     if ( IsCompressed ( fileName ) )
     {
         if ( !UploadCompressed ( fileName, format, renderer, commandBuffer ) )
-        {
-            assert ( false );
             return false;
-        }
 
         _fileName = std::move ( fileName );
         return true;
@@ -251,16 +232,12 @@ bool Texture2D::UploadData ( std::string &&fileName,
     if ( !LoadImage ( pixelData, fileName, width, height, channels ) )
         return false;
 
-    const VkFormat actualFormat = PickupFormat ( channels );
-
-    if ( !IsFormatCompatible ( format, actualFormat, renderer ) )
-        return false;
-
+    VkFormat const actualFormat = PickupFormat ( channels );
     VkImageCreateInfo imageInfo;
 
     bool result = CreateCommonResources ( imageInfo,
         VkExtent2D { .width = static_cast<uint32_t> ( width ), .height = static_cast<uint32_t> ( height ) },
-        format,
+        ResolveFormat ( actualFormat, format, renderer ),
         IMMUTABLE_TEXTURE_USAGE,
         isGenerateMipmaps,
         renderer
@@ -285,7 +262,7 @@ bool Texture2D::UploadData ( std::string &&fileName,
 }
 
 bool Texture2D::UploadData ( std::string_view const &fileName,
-    VkFormat format,
+    eFormat format,
     bool isGenerateMipmaps,
     android_vulkan::Renderer &renderer,
     VkCommandBuffer commandBuffer
@@ -295,7 +272,7 @@ bool Texture2D::UploadData ( std::string_view const &fileName,
 }
 
 bool Texture2D::UploadData ( char const *fileName,
-    VkFormat format,
+    eFormat format,
     bool isGenerateMipmaps,
     android_vulkan::Renderer &renderer,
     VkCommandBuffer commandBuffer
@@ -436,6 +413,79 @@ bool Texture2D::CreateCommonResources ( VkImageCreateInfo &imageInfo,
     return true;
 }
 
+bool Texture2D::CreateTransferResources ( uint8_t* &mappedBuffer, VkDeviceSize size, android_vulkan::Renderer &renderer )
+{
+    VkBufferCreateInfo bufferInfo;
+    bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    bufferInfo.pNext = nullptr;
+    bufferInfo.flags = 0U;
+    bufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+    bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    bufferInfo.queueFamilyIndexCount = 0U;
+    bufferInfo.pQueueFamilyIndices = nullptr;
+    bufferInfo.size = size;
+
+    VkDevice device = renderer.GetDevice ();
+
+    bool result = renderer.CheckVkResult ( vkCreateBuffer ( device, &bufferInfo, nullptr, &_transfer ),
+        "Texture2D::CreateTransferResources",
+        "Can't create transfer buffer"
+    );
+
+    if ( !result )
+    {
+        FreeResources ( renderer );
+        return false;
+    }
+
+    AV_REGISTER_BUFFER ( "Texture2D::_transfer" )
+
+    VkMemoryRequirements memoryRequirements;
+    vkGetBufferMemoryRequirements ( device, _transfer, &memoryRequirements );
+
+    result = renderer.TryAllocateMemory ( _transferDeviceMemory,
+        memoryRequirements,
+        AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_COHERENT_BIT ) | AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT ),
+        "Can't allocate transfer device memory (Texture2D::CreateTransferResources)"
+    );
+
+    if ( !result )
+    {
+        FreeResources ( renderer );
+        return false;
+    }
+
+    AV_REGISTER_DEVICE_MEMORY ( "Texture2D::_transferDeviceMemory" )
+
+    result = renderer.CheckVkResult ( vkBindBufferMemory ( device, _transfer, _transferDeviceMemory, 0U ),
+        "Texture2D::CreateTransferResources",
+        "Can't bind transfer memory"
+    );
+
+    if ( !result )
+    {
+        FreeResources ( renderer );
+        return false;
+    }
+
+    void* destination = nullptr;
+
+    result = renderer.CheckVkResult (
+        vkMapMemory ( device, _transferDeviceMemory, 0U, bufferInfo.size, 0U, &destination ),
+        "Texture2D::CreateTransferResources",
+        "Can't map transfer memory"
+    );
+
+    if ( !result )
+    {
+        FreeResources ( renderer );
+        return false;
+    }
+
+    mappedBuffer = static_cast<uint8_t*> ( destination );
+    return true;
+}
+
 void Texture2D::FreeResourceInternal ( android_vulkan::Renderer &renderer )
 {
     _mipLevels = 0U;
@@ -464,9 +514,9 @@ void Texture2D::FreeResourceInternal ( android_vulkan::Renderer &renderer )
 }
 
 bool Texture2D::UploadCompressed ( std::string const &fileName,
-    VkFormat /*format*/,
-    android_vulkan::Renderer &/*renderer*/,
-    VkCommandBuffer /*commandBuffer*/
+    eFormat format,
+    android_vulkan::Renderer &renderer,
+    VkCommandBuffer commandBuffer
 )
 {
     KTXMediaContainer ktx;
@@ -474,9 +524,166 @@ bool Texture2D::UploadCompressed ( std::string const &fileName,
     if ( !ktx.Init ( fileName ) )
         return false;
 
-    // TODO check supported format
+    VkImageCreateInfo imageInfo;
 
-    return false;
+    bool result = CreateCommonResources ( imageInfo,
+        ktx.GetMip ( 0U )._resolution,
+        ResolveFormat ( ktx.GetFormat (), format, renderer ),
+        IMMUTABLE_TEXTURE_USAGE,
+        true,
+        renderer
+    );
+
+    if ( !result )
+        return false;
+
+    uint8_t* mappedBuffer = nullptr;
+
+    if ( !CreateTransferResources ( mappedBuffer, ktx.GetTotalSize (), renderer ) )
+        return false;
+
+    size_t offset = 0U;
+    uint8_t const mips = ktx.GetMipCount ();
+
+    for ( uint8_t i = 0U; i < mips; ++i )
+    {
+        MipInfo const& mip = ktx.GetMip ( i );
+        memcpy ( mappedBuffer + offset, mip._data, static_cast<size_t> ( mip._size ) );
+        offset += static_cast<size_t> ( mip._size );
+    }
+
+    vkUnmapMemory ( renderer.GetDevice (), _transferDeviceMemory );
+
+    VkCommandBufferBeginInfo beginInfo;
+    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    beginInfo.pNext = nullptr;
+    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+    beginInfo.pInheritanceInfo = nullptr;
+
+    result = renderer.CheckVkResult ( vkBeginCommandBuffer ( commandBuffer, &beginInfo ),
+        "Texture2D::UploadCompressed",
+        "Can't begin command buffer"
+    );
+
+    if ( !result )
+    {
+        FreeResources ( renderer );
+        return false;
+    }
+
+    VkImageMemoryBarrier barrierInfo;
+    barrierInfo.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    barrierInfo.pNext = nullptr;
+    barrierInfo.image = _image;
+    barrierInfo.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    barrierInfo.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    barrierInfo.srcAccessMask = 0U;
+    barrierInfo.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    barrierInfo.srcQueueFamilyIndex = barrierInfo.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrierInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    barrierInfo.subresourceRange.layerCount = 1U;
+    barrierInfo.subresourceRange.levelCount = static_cast<uint32_t> ( mips );
+    barrierInfo.subresourceRange.baseArrayLayer = 0U;
+    barrierInfo.subresourceRange.baseMipLevel = 0U;
+
+    vkCmdPipelineBarrier ( commandBuffer,
+        VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+        VK_PIPELINE_STAGE_TRANSFER_BIT,
+        0U,
+        0U,
+        nullptr,
+        0U,
+        nullptr,
+        1U,
+        &barrierInfo
+    );
+
+    VkBufferImageCopy copyRegion;
+    copyRegion.imageOffset.x = 0;
+    copyRegion.imageOffset.y = 0;
+    copyRegion.imageOffset.z = 0;
+    copyRegion.imageExtent.depth = 1U;
+    copyRegion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    copyRegion.imageSubresource.layerCount = 1U;
+    copyRegion.imageSubresource.baseArrayLayer = 0U;
+    copyRegion.bufferRowLength = 0U;
+    copyRegion.bufferImageHeight = 0U;
+
+    offset = 0U;
+
+    for ( uint8_t i = 0U; i < mips; ++i )
+    {
+        MipInfo const& mip = ktx.GetMip ( i );
+
+        copyRegion.imageSubresource.mipLevel = static_cast<uint32_t> ( i );
+        copyRegion.imageExtent.width = mip._resolution.width;
+        copyRegion.imageExtent.height = mip._resolution.height;
+        copyRegion.bufferOffset = static_cast<VkDeviceSize> ( offset );
+
+        vkCmdCopyBufferToImage ( commandBuffer,
+            _transfer,
+            _image,
+            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            1U,
+            &copyRegion
+        );
+
+        offset += static_cast<size_t> ( mip._size );
+    }
+
+    barrierInfo.subresourceRange.levelCount = static_cast<uint32_t> ( mips );
+    barrierInfo.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    barrierInfo.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    barrierInfo.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    barrierInfo.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+    vkCmdPipelineBarrier ( commandBuffer,
+        VK_PIPELINE_STAGE_TRANSFER_BIT,
+        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+        0U,
+        0U,
+        nullptr,
+        0U,
+        nullptr,
+        1U,
+        &barrierInfo
+    );
+
+    result = renderer.CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
+        "Texture2D::UploadCompressed",
+        "Can't end command buffer"
+    );
+
+    if ( !result )
+    {
+        FreeResources ( renderer );
+        return false;
+    }
+
+    VkSubmitInfo submitInfo;
+    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submitInfo.pNext = nullptr;
+    submitInfo.commandBufferCount = 1U;
+    submitInfo.pCommandBuffers = &commandBuffer;
+    submitInfo.waitSemaphoreCount = 0U;
+    submitInfo.pWaitSemaphores = nullptr;
+    submitInfo.signalSemaphoreCount = 0U;
+    submitInfo.pSignalSemaphores = nullptr;
+    submitInfo.pWaitDstStageMask = nullptr;
+
+    result = renderer.CheckVkResult ( vkQueueSubmit ( renderer.GetQueue (), 1U, &submitInfo, VK_NULL_HANDLE ),
+        "Texture2D::UploadCompressed",
+        "Can't submit command"
+    );
+
+    if ( !result )
+    {
+        FreeResources ( renderer );
+        return false;
+    }
+
+    _mipLevels = mips;
+    return true;
 }
 
 bool Texture2D::UploadDataInternal ( uint8_t const* data,
@@ -487,75 +694,13 @@ bool Texture2D::UploadDataInternal ( uint8_t const* data,
     VkCommandBuffer commandBuffer
 )
 {
-    VkBufferCreateInfo bufferInfo;
-    bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-    bufferInfo.pNext = nullptr;
-    bufferInfo.flags = 0U;
-    bufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-    bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    bufferInfo.queueFamilyIndexCount = 0U;
-    bufferInfo.pQueueFamilyIndices = nullptr;
-    bufferInfo.size = static_cast<VkDeviceSize> ( size );
+    uint8_t* mappedBuffer = nullptr;
 
-    VkDevice device =  renderer.GetDevice ();
-
-    bool result = renderer.CheckVkResult ( vkCreateBuffer ( device, &bufferInfo, nullptr, &_transfer ),
-        "Texture2D::UploadDataInternal",
-        "Can't create transfer buffer"
-    );
-
-    if ( !result )
-    {
-        FreeResources ( renderer );
+    if ( !CreateTransferResources ( mappedBuffer, static_cast<VkDeviceSize> ( size ), renderer ) )
         return false;
-    }
 
-    AV_REGISTER_BUFFER ( "Texture2D::_transfer" )
-
-    VkMemoryRequirements memoryRequirements;
-    vkGetBufferMemoryRequirements ( device, _transfer, &memoryRequirements );
-
-    result = renderer.TryAllocateMemory ( _transferDeviceMemory,
-        memoryRequirements,
-        VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
-        "Can't allocate transfer device memory (Texture2D::UploadDataInternal)"
-    );
-
-    if ( !result )
-    {
-        FreeResources ( renderer );
-        return false;
-    }
-
-    AV_REGISTER_DEVICE_MEMORY ( "Texture2D::_transferDeviceMemory" )
-
-    result = renderer.CheckVkResult ( vkBindBufferMemory ( device, _transfer, _transferDeviceMemory, 0U ),
-        "Texture2D::UploadDataInternal",
-        "Can't bind transfer memory"
-    );
-
-    if ( !result )
-    {
-        FreeResources ( renderer );
-        return false;
-    }
-
-    void* destination = nullptr;
-
-    result = renderer.CheckVkResult (
-        vkMapMemory ( device, _transferDeviceMemory, 0U, bufferInfo.size, 0U, &destination ),
-        "Texture2D::UploadDataInternal",
-        "Can't map transfer memory"
-    );
-
-    if ( !result )
-    {
-        FreeResources ( renderer );
-        return false;
-    }
-
-    memcpy ( destination, data, static_cast<size_t> ( bufferInfo.size ) );
-    vkUnmapMemory ( device, _transferDeviceMemory );
+    memcpy ( mappedBuffer, data, size );
+    vkUnmapMemory ( renderer.GetDevice (), _transferDeviceMemory );
 
     VkCommandBufferBeginInfo beginInfo;
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -563,7 +708,7 @@ bool Texture2D::UploadDataInternal ( uint8_t const* data,
     beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
     beginInfo.pInheritanceInfo = nullptr;
 
-    result = renderer.CheckVkResult ( vkBeginCommandBuffer ( commandBuffer, &beginInfo ),
+    bool result = renderer.CheckVkResult ( vkBeginCommandBuffer ( commandBuffer, &beginInfo ),
         "Texture2D::UploadDataInternal",
         "Can't begin command buffer"
     );
@@ -938,56 +1083,22 @@ uint32_t Texture2D::CountMipLevels ( VkExtent2D const &resolution )
     return mipCount;
 }
 
-bool Texture2D::IsFormatCompatible ( VkFormat target, VkFormat candidate, android_vulkan::Renderer &renderer )
-{
-    if ( target == candidate )
-        return true;
-
-    auto const t = g_CompatibleFormats.find ( target );
-
-    if ( t == g_CompatibleFormats.cend () )
-    {
-        android_vulkan::LogError ( "Texture2D::IsFormatCompatible - Unexpected format %s (%i)",
-            renderer.ResolveVkFormat ( target ),
-            static_cast<int> ( target )
-        );
-
-        return false;
-    }
-
-    auto const& options = t->second;
-
-    if ( options.count ( candidate ) == 1U )
-        return true;
-
-    android_vulkan::LogError (
-        "Texture2D::IsFormatCompatible - Candidate format %s (%i) is not compatible with target format %s (%i).",
-        renderer.ResolveVkFormat ( candidate ),
-        static_cast<int> ( candidate ),
-        renderer.ResolveVkFormat ( candidate ),
-        static_cast<int> ( candidate )
-    );
-
-    return false;
-}
-
-
 VkFormat Texture2D::PickupFormat ( int channels )
 {
     switch ( channels )
     {
         case 1:
-        return VK_FORMAT_R8_SRGB;
+        return VK_FORMAT_R8_UNORM;
 
         case 2:
-        return VK_FORMAT_R8G8_SRGB;
+        return VK_FORMAT_R8G8_UNORM;
 
         case 3:
             android_vulkan::LogError ( "Texture2D::PickupFormat - Three channel formats are not supported!" );
         return VK_FORMAT_UNDEFINED;
 
         case 4:
-            return VK_FORMAT_R8G8B8A8_SRGB;
+            return VK_FORMAT_R8G8B8A8_UNORM;
 
         default:
             android_vulkan::LogError (
@@ -995,6 +1106,24 @@ VkFormat Texture2D::PickupFormat ( int channels )
             );
         return VK_FORMAT_UNDEFINED;
     }
+}
+
+VkFormat Texture2D::ResolveFormat ( VkFormat baseFormat, eFormat format, android_vulkan::Renderer &renderer )
+{
+    if ( format == eFormat::Unorm )
+        return baseFormat;
+
+    auto const findResult = g_FormatMapper.find ( baseFormat );
+    assert ( findResult != g_FormatMapper.cend () );
+
+    if ( findResult != g_FormatMapper.cend () )
+        return findResult->second;
+
+    LogError ( "Texture2D::ResolveFormat - Can't find sRGB pair for %s format.",
+        renderer.ResolveVkFormat ( baseFormat )
+    );
+
+    return VK_FORMAT_UNDEFINED;
 }
 
 } // namespace android_vulkan

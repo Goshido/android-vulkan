@@ -121,7 +121,7 @@ class Texture2D final
             VkExtent2D const &resolution,
             VkFormat format,
             VkImageUsageFlags usage,
-            bool isGenerateMipmaps,
+            uint8_t mips,
             android_vulkan::Renderer &renderer
         );
 

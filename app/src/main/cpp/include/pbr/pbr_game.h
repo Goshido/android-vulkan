@@ -29,10 +29,14 @@ class PBRGame final : public android_vulkan::Game
 
     public:
         PBRGame ();
-        ~PBRGame () override = default;
 
-        PBRGame ( const PBRGame &other ) = delete;
-        PBRGame& operator = ( const PBRGame &other ) = delete;
+        PBRGame ( PBRGame const & ) = delete;
+        PBRGame& operator = ( PBRGame const & ) = delete;
+
+        PBRGame ( PBRGame && ) = delete;
+        PBRGame& operator = ( PBRGame && ) = delete;
+
+        ~PBRGame () override = default;
 
     private:
         bool IsReady () override;

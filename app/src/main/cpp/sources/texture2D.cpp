@@ -93,7 +93,7 @@ bool Texture2D::CreateRenderTarget ( VkExtent2D const &resolution,
 {
     FreeResources ( renderer );
     VkImageCreateInfo imageInfo;
-    const bool result = CreateCommonResources ( imageInfo, resolution, format, usage, false, renderer);
+    const bool result = CreateCommonResources ( imageInfo, resolution, format, usage, 1U, renderer);
 
     if ( !result )
         return false;
@@ -173,11 +173,17 @@ bool Texture2D::UploadData ( std::string const &fileName,
     const VkFormat actualFormat = PickupFormat ( channels );
     VkImageCreateInfo imageInfo;
 
+    VkExtent2D const resolution
+    {
+        .width = static_cast<uint32_t> ( width ),
+        .height = static_cast<uint32_t> ( height )
+    };
+
     bool result = CreateCommonResources ( imageInfo,
-        VkExtent2D { .width = static_cast<uint32_t> ( width ), .height = static_cast<uint32_t> ( height ) },
+        resolution,
         ResolveFormat ( actualFormat, format, renderer ),
         IMMUTABLE_TEXTURE_USAGE,
-        isGenerateMipmaps,
+        isGenerateMipmaps ? CountMipLevels ( resolution ) : 1U,
         renderer
     );
 
@@ -235,11 +241,17 @@ bool Texture2D::UploadData ( std::string &&fileName,
     VkFormat const actualFormat = PickupFormat ( channels );
     VkImageCreateInfo imageInfo;
 
+    VkExtent2D const resolution
+    {
+        .width = static_cast<uint32_t> ( width ),
+        .height = static_cast<uint32_t> ( height )
+    };
+
     bool result = CreateCommonResources ( imageInfo,
-        VkExtent2D { .width = static_cast<uint32_t> ( width ), .height = static_cast<uint32_t> ( height ) },
+        resolution,
         ResolveFormat ( actualFormat, format, renderer ),
         IMMUTABLE_TEXTURE_USAGE,
-        isGenerateMipmaps,
+        isGenerateMipmaps ? CountMipLevels ( resolution ) : 1U,
         renderer
     );
 
@@ -297,7 +309,7 @@ bool Texture2D::UploadData ( const uint8_t* data,
         resolution,
         format,
         IMMUTABLE_TEXTURE_USAGE,
-        isGenerateMipmaps,
+        isGenerateMipmaps ? CountMipLevels ( resolution ) : 1U,
         renderer
     );
 
@@ -311,7 +323,7 @@ bool Texture2D::CreateCommonResources ( VkImageCreateInfo &imageInfo,
     VkExtent2D const &resolution,
     VkFormat format,
     VkImageUsageFlags usage,
-    bool isGenerateMipmaps,
+    uint8_t mips,
     android_vulkan::Renderer &renderer
 )
 {
@@ -331,7 +343,7 @@ bool Texture2D::CreateCommonResources ( VkImageCreateInfo &imageInfo,
     imageInfo.extent.width = _resolution.width;
     imageInfo.extent.height = _resolution.height;
     imageInfo.extent.depth = 1U;
-    imageInfo.mipLevels = isGenerateMipmaps ? CountMipLevels ( _resolution ) : 1U;
+    imageInfo.mipLevels = static_cast<uint32_t> ( mips );
     imageInfo.arrayLayers = 1U;
     imageInfo.queueFamilyIndexCount = 0U;
     imageInfo.pQueueFamilyIndices = nullptr;
@@ -530,7 +542,7 @@ bool Texture2D::UploadCompressed ( std::string const &fileName,
         ktx.GetMip ( 0U )._resolution,
         ResolveFormat ( ktx.GetFormat (), format, renderer ),
         IMMUTABLE_TEXTURE_USAGE,
-        true,
+        ktx.GetMipCount (),
         renderer
     );
 

@@ -141,7 +141,7 @@ void KTXMediaContainer::ExtractMips ( uint8_t const* rawData, size_t size, KTXHe
     uint8_t const* view = GetMipmapData ( rawData, header, reader );
     auto const mips = static_cast<size_t const> ( reader ( header._numberOfMipmapLevels ) );
 
-    assert ( mips < MAX_MIPS );
+    assert ( mips <= MAX_MIPS );
 
     VkExtent2D resolution;
     resolution.width = reader ( header._pixelWidth );

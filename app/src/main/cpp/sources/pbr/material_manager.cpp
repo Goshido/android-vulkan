@@ -67,7 +67,7 @@ MaterialRef MaterialManager::LoadMaterial ( size_t &commandBufferConsumed,
 
     if ( header->_emissionOffset != NO_UTF8_OFFSET )
     {
-        Texture2DRef texture = loadTexture ( header->_emissionOffset, android_vulkan::eFormat::sRGB );
+        Texture2DRef texture = loadTexture ( header->_emissionOffset, android_vulkan::eFormat::Unorm );
 
         if ( !texture )
             return material;
@@ -87,7 +87,7 @@ MaterialRef MaterialManager::LoadMaterial ( size_t &commandBufferConsumed,
 
     if ( header->_normalOffset != NO_UTF8_OFFSET )
     {
-        Texture2DRef texture = loadTexture ( header->_normalOffset, android_vulkan::eFormat::sRGB );
+        Texture2DRef texture = loadTexture ( header->_normalOffset, android_vulkan::eFormat::Unorm );
 
         if ( !texture )
             return material;
@@ -97,7 +97,7 @@ MaterialRef MaterialManager::LoadMaterial ( size_t &commandBufferConsumed,
 
     if ( header->_paramOffset != NO_UTF8_OFFSET )
     {
-        Texture2DRef texture = loadTexture ( header->_paramOffset, android_vulkan::eFormat::sRGB );
+        Texture2DRef texture = loadTexture ( header->_paramOffset, android_vulkan::eFormat::Unorm );
 
         if ( !texture )
             return material;

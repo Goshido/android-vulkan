@@ -9,7 +9,7 @@
 namespace pbr {
 
 constexpr static char const* SCENE = "pbr/N7_ADM_Reception/scene.scene";
-constexpr static uint32_t const SCENE_DESC_FORMAT_VERSION = 1U;
+[[maybe_unused]] constexpr static uint32_t const SCENE_DESC_FORMAT_VERSION = 1U;
 
 constexpr static float const FIELD_OF_VIEW = 60.0F;
 constexpr static float const Z_NEAR = 0.1F;

@@ -41,10 +41,6 @@ find_library ( log-lib
 
 # Main app
 
-set (
-    CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -u ANativeActivity_onCreate"
-)
-
 add_library ( android-vulkan
     SHARED
     app/src/main/cpp/sources/core.cpp
@@ -115,6 +111,12 @@ target_compile_definitions ( android-vulkan
     -DANDROID_VULKAN_DEBUG
     -DANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
     -DANDROID_VULKAN_STRICT_MODE
+)
+
+# Exporting native app glue entry point.
+# https://gcc.gnu.org/onlinedocs/gcc/Link-Options.html
+set (
+    CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -u ANativeActivity_onCreate"
 )
 
 target_link_libraries ( android-vulkan

@@ -8,7 +8,7 @@ constexpr static size_t const VRAM_PER_POOL_MEGABYTES = 64U;
 constexpr static size_t const VRAM_PER_POOL_BYTES = VRAM_PER_POOL_MEGABYTES * 1024U * 1024U;
 
 // see https://vulkan.lunarg.com/doc/view/1.1.108.0/mac/chunked_spec/chap18.html#vkCmdUpdateBuffer
-constexpr static size_t const UPDATE_BUFFER_MAX_SIZE = 65536U;
+[[maybe_unused]] constexpr static size_t const UPDATE_BUFFER_MAX_SIZE = 65536U;
 
 //----------------------------------------------------------------------------------------------------------------------
 

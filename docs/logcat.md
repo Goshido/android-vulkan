@@ -1,4 +1,4 @@
-# 
+# _Logcat™_ best practices
 
 _android-vulkan_ project is using `android_vulkan::C++` tag for logging. But it's better to check output from the following standart libraries too:
 

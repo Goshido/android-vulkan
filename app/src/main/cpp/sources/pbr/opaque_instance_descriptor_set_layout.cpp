@@ -65,7 +65,7 @@ bool OpaqueInstanceDescriptorSetLayoutImpl::Init ( android_vulkan::Renderer &ren
     }
 
     VkDescriptorSetLayoutBinding uniformBuffer;
-    uniformBuffer.stageFlags = AV_VK_FLAG ( VK_SHADER_STAGE_VERTEX_BIT ) | AV_VK_FLAG ( VK_SHADER_STAGE_FRAGMENT_BIT );
+    uniformBuffer.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
     uniformBuffer.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     uniformBuffer.descriptorCount = 1U;
     uniformBuffer.binding = 0U;

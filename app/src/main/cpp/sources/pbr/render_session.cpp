@@ -7,6 +7,7 @@ GX_DISABLE_COMMON_WARNINGS
 
 GX_RESTORE_WARNING_STATE
 
+#include <half_types.h>
 #include <vulkan_utils.h>
 
 
@@ -434,16 +435,10 @@ bool RenderSession::Init ( android_vulkan::Renderer &renderer, VkExtent2D const 
 
     _isFreeTransferResources = true;
 
-    const android_vulkan::Half emission[ 4U ] =
-    {
-        android_vulkan::Half ( 0.0F ),
-        android_vulkan::Half ( 0.0F ),
-        android_vulkan::Half ( 0.0F ),
-        android_vulkan::Half ( 0.0F )
-    };
+    android_vulkan::Half4 const emission ( 0.0F, 0.0F, 0.0F, 0.0F );
 
     result = textureLoader ( _emissionDefault,
-        reinterpret_cast<const uint8_t*> ( emission ),
+        reinterpret_cast<const uint8_t*> ( emission._data ),
         sizeof ( emission ),
         VK_FORMAT_R16G16B16A16_SFLOAT,
         commandBuffers[ 1U ]
@@ -578,10 +573,10 @@ void RenderSession::Destroy ( android_vulkan::Renderer &renderer )
 void RenderSession::SubmitMesh ( MeshRef &mesh,
     MaterialRef &material,
     GXMat4 const &local,
-    GXColorRGB const &color0,
-    GXColorRGB const &color1,
-    GXColorRGB const &color2,
-    GXColorRGB const &color3
+    GXVec4 const &color0,
+    GXVec4 const &color1,
+    GXVec4 const &color2,
+    GXVec4 const &color3
 )
 {
     if ( material->GetMaterialType() == eMaterialType::Opaque )
@@ -1165,10 +1160,10 @@ void RenderSession::InitCommonStructures ()
 void RenderSession::SubmitOpaqueCall ( MeshRef &mesh,
     MaterialRef &material,
     GXMat4 const &local,
-    GXColorRGB const &color0,
-    GXColorRGB const &color1,
-    GXColorRGB const &color2,
-    GXColorRGB const &color3
+    GXVec4 const &color0,
+    GXVec4 const &color1,
+    GXVec4 const &color2,
+    GXVec4 const &color3
 )
 {
     auto& opaqueMaterial = *dynamic_cast<OpaqueMaterial*> ( material.get () );

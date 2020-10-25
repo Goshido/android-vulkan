@@ -4,6 +4,7 @@
 
 #include "program.h"
 #include <vulkan_utils.h>
+#include <half_types.h>
 #include "gpgpu_limits.inc"
 #include "opaque_instance_descriptor_set_layout.h"
 #include "opaque_texture_descriptor_set_layout.h"
@@ -20,10 +21,10 @@ class OpaqueProgram final : public Program
         {
             GXMat4                              _localView;
             GXMat4                              _localViewProjection;
-            GXColorRGB                          _color0;
-            GXColorRGB                          _color1;
-            GXColorRGB                          _color2;
-            GXColorRGB                          _color3;
+            GXVec4               _color0;
+            GXVec4               _color1;
+            GXVec4               _color2;
+            GXVec4               _color3;
         };
 
         struct InstanceData final

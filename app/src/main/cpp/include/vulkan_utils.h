@@ -2,32 +2,19 @@
 #define VULKAN_UTILS_H
 
 
+#include <GXCommon/GXWarning.h>
+
+GX_DISABLE_COMMON_WARNINGS
+
 #include <cstdint>
+
+GX_RESTORE_WARNING_STATE
 
 #define AV_DX_ALIGNMENT_BEGIN _Pragma ( "pack ( push, 1 )" )
 #define AV_DX_ALIGNMENT_END _Pragma ( "pack ( pop )" )
 
 #define AV_VK_FLAG(x) ( static_cast<uint32_t> ( x ) )
 
-namespace android_vulkan {
-
-// float16 data type
-class Half final
-{
-    private:
-        uint16_t        data;
-
-    public:
-        Half ();
-        Half ( float value );
-
-        Half ( const Half &other ) = default;
-        ~Half () = default;
-
-        Half& operator = ( const Half &other ) = default;
-};
-
-} // namespace android_vulkan
 
 // Note there is two types Vulkan handles:
 // VK_DEFINE_HANDLE

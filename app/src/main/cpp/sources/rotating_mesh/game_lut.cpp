@@ -9,6 +9,8 @@ GX_DISABLE_COMMON_WARNINGS
 
 GX_RESTORE_WARNING_STATE
 
+#include <half_types.h>
+
 
 namespace rotating_mesh {
 

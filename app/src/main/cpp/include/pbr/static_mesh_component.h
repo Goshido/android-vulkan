@@ -13,22 +13,22 @@ namespace pbr {
 class StaticMeshComponent final : public Component
 {
     private:
-        GXColorRGB      _color0;
-        GXColorRGB      _color1;
-        GXColorRGB      _color2;
-        GXColorRGB      _color3;
-        GXMat4          _localMatrix;
-        MaterialRef     _material;
-        MeshRef         _mesh;
+        GXColorRGB       _color0;
+        GXColorRGB       _color1;
+        GXColorRGB       _color2;
+        GXColorRGB       _color3;
+        GXMat4                      _localMatrix;
+        MaterialRef                 _material;
+        MeshRef                     _mesh;
 
     public:
         StaticMeshComponent () = delete;
 
-        StaticMeshComponent ( StaticMeshComponent const &other ) = delete;
-        StaticMeshComponent& operator = ( StaticMeshComponent const &other ) = delete;
+        StaticMeshComponent ( StaticMeshComponent const & ) = delete;
+        StaticMeshComponent& operator = ( StaticMeshComponent const & ) = delete;
 
-        StaticMeshComponent ( StaticMeshComponent &&other ) = delete;
-        StaticMeshComponent& operator = ( StaticMeshComponent &&other ) = delete;
+        StaticMeshComponent ( StaticMeshComponent && ) = delete;
+        StaticMeshComponent& operator = ( StaticMeshComponent && ) = delete;
 
         // "commandBuffer" array MUST contain at least 5 free command buffers.
         explicit StaticMeshComponent ( size_t &commandBufferConsumed,

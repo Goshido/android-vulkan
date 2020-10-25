@@ -3,6 +3,7 @@
 
 
 #include <vulkan_utils.h>
+#include <half_types.h>
 
 
 namespace pbr {
@@ -11,11 +12,11 @@ AV_DX_ALIGNMENT_BEGIN
 
 struct OpaqueData final
 {
-    GXMat4          _local;
-    GXColorRGB      _color0;
-    GXColorRGB      _color1;
-    GXColorRGB      _color2;
-    GXColorRGB      _color3;
+    GXMat4                      _local;
+    GXVec4       _color0;
+    GXVec4       _color1;
+    GXVec4       _color2;
+    GXVec4       _color3;
 };
 
 AV_DX_ALIGNMENT_END

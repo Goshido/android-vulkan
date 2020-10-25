@@ -94,10 +94,10 @@ class RenderSession final
         void SubmitMesh ( MeshRef &mesh,
             MaterialRef &material,
             GXMat4 const &local,
-            GXColorRGB const &color0,
-            GXColorRGB const &color1,
-            GXColorRGB const &color2,
-            GXColorRGB const &color3
+            GXVec4 const &color0,
+            GXVec4 const &color1,
+            GXVec4 const &color2,
+            GXVec4 const &color3
         );
 
     private:
@@ -123,10 +123,10 @@ class RenderSession final
         void SubmitOpaqueCall ( MeshRef &mesh,
             MaterialRef &material,
             GXMat4 const &local,
-            GXColorRGB const &color0,
-            GXColorRGB const &color1,
-            GXColorRGB const &color2,
-            GXColorRGB const &color3
+            GXVec4 const &color0,
+            GXVec4 const &color1,
+            GXVec4 const &color2,
+            GXVec4 const &color3
         );
 
         [[nodiscard]] bool UpdateGPUData ( std::vector<VkDescriptorSet> &descriptorSetStorage,

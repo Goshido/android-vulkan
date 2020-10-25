@@ -70,7 +70,16 @@ void StaticMeshComponent::FreeTransferResources ( android_vulkan::Renderer &rend
 
 void StaticMeshComponent::Submit ( RenderSession &renderSession )
 {
-    renderSession.SubmitMesh ( _mesh, _material, _localMatrix, _color0, _color1, _color2, _color3 );
+    //renderSession.SubmitMesh ( _mesh, _material, _localMatrix, _color0, _color1, _color2, _color3 );
+
+    renderSession.SubmitMesh ( _mesh,
+        _material,
+        _localMatrix,
+        GXVec4 ( _color0._data[ 0U ], _color0._data[ 1U ], _color0._data[ 2U ], _color0._data[ 3U ] ),
+        GXVec4 ( _color1._data[ 0U ], _color1._data[ 1U ], _color1._data[ 2U ], _color1._data[ 3U ] ),
+        GXVec4 ( _color2._data[ 0U ], _color2._data[ 1U ], _color2._data[ 2U ], _color2._data[ 3U ] ),
+        GXVec4 ( _color3._data[ 0U ], _color3._data[ 1U ], _color3._data[ 2U ], _color3._data[ 3U ] )
+    );
 }
 
 } // namespace pbr

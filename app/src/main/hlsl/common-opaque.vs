@@ -1,4 +1,4 @@
-#include "instance-layout.inc"
+#include "instance-layout.vs"
 
 
 struct InputData
@@ -23,22 +23,31 @@ struct InputData
 
 struct OutputData
 {
-    linear float4           _vertexH:           SV_Position;
+    linear float4               _vertexH:           SV_Position;
 
     [[vk::location ( 0 )]]
-    linear half2            _uv:                UV;
+    linear half2                _uv:                UV;
 
     [[vk::location ( 1 )]]
-    linear half3            _normalView:        NORMAL;
+    linear half3                _normalView:        NORMAL;
 
     [[vk::location ( 2 )]]
-    linear half3            _tangentView:       TANGENT;
+    linear half3                _tangentView:       TANGENT;
 
     [[vk::location ( 3 )]]
-    linear half3            _bitangentView:     BITANGENT;
+    linear half3                _bitangentView:     BITANGENT;
 
     [[vk::location ( 4 )]]
-    nointerpolation uint    _instanceIndex:     INSTANCE_INDEX;
+    nointerpolation half4       _color0:            COLOR_0;
+
+    [[vk::location ( 5 )]]
+    nointerpolation half4       _color1:            COLOR_1;
+
+    [[vk::location ( 6 )]]
+    nointerpolation half4       _color2:            COLOR_2;
+
+    [[vk::location ( 7 )]]
+    nointerpolation half4       _color3:            COLOR_3;
 };
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -54,16 +63,19 @@ OutputData VS ( in InputData inputData )
 
     const float3x3 orientation = (float3x3)objectData._localView;
 
+    // Note current implementation is suboptimal because of known MALI driver bug.
     // MALI-G76 optimizes _colorX members and breaks memory layout if no any references to those members in the shader.
-    // Investigating...
-    //result._normalView = (half3)mul ( orientation, inputData._normal );
-    //result._tangentView = (half3)mul ( orientation, inputData._tangent );
-    //result._bitangentView = (half3)mul ( orientation, inputData._bitangent );
-    result._normalView = (half3)mul ( orientation, inputData._normal ) + (half3)objectData._color0.xyz;
-    result._tangentView = (half3)mul ( orientation, inputData._tangent ) + (half3)objectData._color1.xyz;
-    result._bitangentView = (half3)mul ( orientation, inputData._bitangent ) + (half3)objectData._color2.xyz + (half3)objectData._color3.xyz;
+    // https://community.arm.com/developer/tools-software/graphics/f/discussions/47814/mali-g76-mc4-vulkan-driver-bug
+    result._normalView = (half3)mul ( orientation, inputData._normal );
+    result._tangentView = (half3)mul ( orientation, inputData._tangent );
+    result._bitangentView = (half3)mul ( orientation, inputData._bitangent );
 
-    result._instanceIndex = inputData._instanceIndex;
+    // So pass the color data to the fragment shader :(
+    // Disclimer: the color data is visible in the fragment shader already but MALI driver bug... :(
+    result._color0 = (half4)objectData._color0;
+    result._color1 = (half4)objectData._color1;
+    result._color2 = (half4)objectData._color2;
+    result._color3 = (half4)objectData._color3;
 
     return result;
 }

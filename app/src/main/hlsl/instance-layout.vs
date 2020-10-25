@@ -3,12 +3,12 @@
 
 struct ObjectData
 {
-    matrix          _localView;
-    matrix          _localViewProjection;
-    float4          _color0;
-    float4          _color1;
-    float4          _color2;
-    float4          _color3;
+    matrix      _localView;
+    matrix      _localViewProjection;
+    float4      _color0;
+    float4      _color1;
+    float4      _color2;
+    float4      _color3;
 };
 
 [[vk::binding ( 0, 1 )]]

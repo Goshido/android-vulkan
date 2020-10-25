@@ -3,6 +3,7 @@
 
 
 #include "mesh_group.h"
+#include <half_types.h>
 
 
 namespace pbr {
@@ -20,11 +21,11 @@ class OpaqueCall final
     public:
         OpaqueCall () = delete;
 
-        OpaqueCall ( const OpaqueCall &other ) = delete;
-        OpaqueCall& operator = ( const OpaqueCall &other ) = delete;
+        OpaqueCall ( OpaqueCall const & ) = delete;
+        OpaqueCall& operator = ( OpaqueCall const & ) = delete;
 
-        OpaqueCall ( OpaqueCall &&other ) = default;
-        OpaqueCall& operator = ( OpaqueCall &&other ) = default;
+        OpaqueCall ( OpaqueCall && ) = default;
+        OpaqueCall& operator = ( OpaqueCall && ) = default;
 
         // Note maxBatch will be updated only if it's less than current max unique elements of this drawcall.
         // Note maxUnique will be updated only if it's less than current max unique elements of this drawcall.
@@ -32,10 +33,10 @@ class OpaqueCall final
             size_t &maxUnique,
             MeshRef &mesh,
             const GXMat4 &local,
-            GXColorRGB const &color0,
-            GXColorRGB const &color1,
-            GXColorRGB const &color2,
-            GXColorRGB const &color3
+            GXVec4 const &color0,
+            GXVec4 const &color1,
+            GXVec4 const &color2,
+            GXVec4 const &color3
         );
 
         ~OpaqueCall () = default;
@@ -44,10 +45,10 @@ class OpaqueCall final
         // Note maxBatch will be updated only if it's less than current max unique elements of this drawcall.
         // Note maxUnique will be updated only if it's less than current max unique elements of this drawcall.
         void Append ( size_t &maxBatch, size_t &maxUnique, MeshRef &mesh, const GXMat4 &local,
-            GXColorRGB const &color0,
-            GXColorRGB const &color1,
-            GXColorRGB const &color2,
-            GXColorRGB const &color3
+            GXVec4 const &color0,
+            GXVec4 const &color1,
+            GXVec4 const &color2,
+            GXVec4 const &color3
         );
 
         [[nodiscard]] const BatchList& GetBatchList () const;
@@ -55,17 +56,17 @@ class OpaqueCall final
 
     private:
         void AddBatch ( size_t &maxBatch, MeshRef &mesh, const GXMat4 &local,
-            GXColorRGB const &color0,
-            GXColorRGB const &color1,
-            GXColorRGB const &color2,
-            GXColorRGB const &color3
+            GXVec4 const &color0,
+            GXVec4 const &color1,
+            GXVec4 const &color2,
+            GXVec4 const &color3
         );
 
         void AddUnique ( size_t &maxUnique, MeshRef &mesh, const GXMat4 &local,
-            GXColorRGB const &color0,
-            GXColorRGB const &color1,
-            GXColorRGB const &color2,
-            GXColorRGB const &color3
+            GXVec4 const &color0,
+            GXVec4 const &color1,
+            GXVec4 const &color2,
+            GXVec4 const &color3
         );
 };
 

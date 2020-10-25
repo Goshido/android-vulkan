@@ -573,10 +573,10 @@ void RenderSession::Destroy ( android_vulkan::Renderer &renderer )
 void RenderSession::SubmitMesh ( MeshRef &mesh,
     MaterialRef &material,
     GXMat4 const &local,
-    GXVec4 const &color0,
-    GXVec4 const &color1,
-    GXVec4 const &color2,
-    GXVec4 const &color3
+    android_vulkan::Half4 const &color0,
+    android_vulkan::Half4 const &color1,
+    android_vulkan::Half4 const &color2,
+    android_vulkan::Half4 const &color3
 )
 {
     if ( material->GetMaterialType() == eMaterialType::Opaque )
@@ -1160,10 +1160,10 @@ void RenderSession::InitCommonStructures ()
 void RenderSession::SubmitOpaqueCall ( MeshRef &mesh,
     MaterialRef &material,
     GXMat4 const &local,
-    GXVec4 const &color0,
-    GXVec4 const &color1,
-    GXVec4 const &color2,
-    GXVec4 const &color3
+    android_vulkan::Half4 const &color0,
+    android_vulkan::Half4 const &color1,
+    android_vulkan::Half4 const &color2,
+    android_vulkan::Half4 const &color3
 )
 {
     auto& opaqueMaterial = *dynamic_cast<OpaqueMaterial*> ( material.get () );

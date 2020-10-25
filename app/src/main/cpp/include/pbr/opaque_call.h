@@ -33,10 +33,10 @@ class OpaqueCall final
             size_t &maxUnique,
             MeshRef &mesh,
             const GXMat4 &local,
-            GXVec4 const &color0,
-            GXVec4 const &color1,
-            GXVec4 const &color2,
-            GXVec4 const &color3
+            android_vulkan::Half4 const &color0,
+            android_vulkan::Half4 const &color1,
+            android_vulkan::Half4 const &color2,
+            android_vulkan::Half4 const &color3
         );
 
         ~OpaqueCall () = default;
@@ -45,10 +45,10 @@ class OpaqueCall final
         // Note maxBatch will be updated only if it's less than current max unique elements of this drawcall.
         // Note maxUnique will be updated only if it's less than current max unique elements of this drawcall.
         void Append ( size_t &maxBatch, size_t &maxUnique, MeshRef &mesh, const GXMat4 &local,
-            GXVec4 const &color0,
-            GXVec4 const &color1,
-            GXVec4 const &color2,
-            GXVec4 const &color3
+            android_vulkan::Half4 const &color0,
+            android_vulkan::Half4 const &color1,
+            android_vulkan::Half4 const &color2,
+            android_vulkan::Half4 const &color3
         );
 
         [[nodiscard]] const BatchList& GetBatchList () const;
@@ -56,17 +56,17 @@ class OpaqueCall final
 
     private:
         void AddBatch ( size_t &maxBatch, MeshRef &mesh, const GXMat4 &local,
-            GXVec4 const &color0,
-            GXVec4 const &color1,
-            GXVec4 const &color2,
-            GXVec4 const &color3
+            android_vulkan::Half4 const &color0,
+            android_vulkan::Half4 const &color1,
+            android_vulkan::Half4 const &color2,
+            android_vulkan::Half4 const &color3
         );
 
         void AddUnique ( size_t &maxUnique, MeshRef &mesh, const GXMat4 &local,
-            GXVec4 const &color0,
-            GXVec4 const &color1,
-            GXVec4 const &color2,
-            GXVec4 const &color3
+            android_vulkan::Half4 const &color0,
+            android_vulkan::Half4 const &color1,
+            android_vulkan::Half4 const &color2,
+            android_vulkan::Half4 const &color3
         );
 };
 

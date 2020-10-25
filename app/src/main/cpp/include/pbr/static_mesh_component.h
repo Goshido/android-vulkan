@@ -13,10 +13,10 @@ namespace pbr {
 class StaticMeshComponent final : public Component
 {
     private:
-        GXColorRGB       _color0;
-        GXColorRGB       _color1;
-        GXColorRGB       _color2;
-        GXColorRGB       _color3;
+        android_vulkan::Half4       _color0;
+        android_vulkan::Half4       _color1;
+        android_vulkan::Half4       _color2;
+        android_vulkan::Half4       _color3;
         GXMat4                      _localMatrix;
         MaterialRef                 _material;
         MeshRef                     _mesh;

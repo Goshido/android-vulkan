@@ -118,4 +118,14 @@ Half4::Half4 ( float component0, float component1, float component2, float compo
     // NOTHING
 }
 
+void Half4::From ( uint8_t component0, uint8_t component1, uint8_t component2, uint8_t component3 )
+{
+    constexpr float const unormToFloat = 1.0F / 255.0F;
+
+    _data[ 0U ] = Half::Convert ( static_cast<float> ( component0 ) * unormToFloat );
+    _data[ 1U ] = Half::Convert ( static_cast<float> ( component1 ) * unormToFloat );
+    _data[ 2U ] = Half::Convert ( static_cast<float> ( component2 ) * unormToFloat );
+    _data[ 3U ] = Half::Convert ( static_cast<float> ( component3 ) * unormToFloat );
+}
+
 } // namespace android_vulkan

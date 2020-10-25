@@ -72,10 +72,10 @@ OutputData VS ( in InputData inputData )
 
     // So pass the color data to the fragment shader :(
     // Disclimer: the color data is visible in the fragment shader already but MALI driver bug... :(
-    result._color0 = (half4)objectData._color0;
-    result._color1 = (half4)objectData._color1;
-    result._color2 = (half4)objectData._color2;
-    result._color3 = (half4)objectData._color3;
+    result._color0 = objectData._color0;
+    result._color1 = objectData._color1;
+    result._color2 = objectData._color2;
+    result._color3 = objectData._color3;
 
     return result;
 }

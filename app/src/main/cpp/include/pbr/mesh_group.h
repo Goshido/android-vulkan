@@ -13,22 +13,23 @@ struct MeshGroup final
     MeshRef                     _mesh;
     std::vector<OpaqueData>     _opaqueData;
 
+    MeshGroup () = delete;
+
+    MeshGroup ( MeshGroup const & ) = delete;
+    MeshGroup& operator = ( MeshGroup const & ) = delete;
+
+    MeshGroup ( MeshGroup && ) = default;
+    MeshGroup& operator = ( MeshGroup && ) = default;
+
     explicit MeshGroup ( MeshRef &mesh,
         GXMat4 const &local,
-        GXVec4 const &color0,
-        GXVec4 const &color1,
-        GXVec4 const &color2,
-        GXVec4 const &color3
+        android_vulkan::Half4 const &color0,
+        android_vulkan::Half4 const &color1,
+        android_vulkan::Half4 const &color2,
+        android_vulkan::Half4 const &color3
     );
 
-    MeshGroup ( MeshGroup &&other ) = default;
     ~MeshGroup () = default;
-
-    MeshGroup () = delete;
-    MeshGroup ( const MeshGroup &other ) = delete;
-    MeshGroup& operator = ( const MeshGroup &other ) = delete;
-
-    MeshGroup& operator = ( MeshGroup &&other ) = default;
 };
 
 } // namespace pbr

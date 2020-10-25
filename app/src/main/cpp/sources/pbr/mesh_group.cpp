@@ -5,10 +5,10 @@ namespace pbr {
 
 MeshGroup::MeshGroup ( MeshRef &mesh,
     const GXMat4 &local,
-    GXVec4 const &color0,
-    GXVec4 const &color1,
-    GXVec4 const &color2,
-    GXVec4 const &color3
+    android_vulkan::Half4 const &color0,
+    android_vulkan::Half4 const &color1,
+    android_vulkan::Half4 const &color2,
+    android_vulkan::Half4 const &color3
 ):
     _mesh ( mesh )
 {

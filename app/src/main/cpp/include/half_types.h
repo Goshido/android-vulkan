@@ -100,6 +100,8 @@ struct Half4 final
         Half4 ( float component0, float component1, float component2, float component3 );
 
         ~Half4 () = default;
+
+        void From ( uint8_t component0, uint8_t component1, uint8_t component2, uint8_t component3 );
 };
 
 } // namespace android_vulkan

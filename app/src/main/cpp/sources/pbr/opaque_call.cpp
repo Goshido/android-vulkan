@@ -7,10 +7,10 @@ OpaqueCall::OpaqueCall ( size_t &maxBatch,
     size_t &maxUnique,
     MeshRef &mesh,
     GXMat4 const &local,
-    GXVec4 const &color0,
-    GXVec4 const &color1,
-    GXVec4 const &color2,
-    GXVec4 const &color3
+    android_vulkan::Half4 const &color0,
+    android_vulkan::Half4 const &color1,
+    android_vulkan::Half4 const &color2,
+    android_vulkan::Half4 const &color3
 )
 {
     Append ( maxBatch, maxUnique, mesh, local, color0, color1, color2, color3 );
@@ -30,10 +30,10 @@ void OpaqueCall::Append ( size_t &maxBatch,
     size_t &maxUnique,
     MeshRef &mesh,
     GXMat4 const &local,
-    GXVec4 const &color0,
-    GXVec4 const &color1,
-    GXVec4 const &color2,
-    GXVec4 const &color3
+    android_vulkan::Half4 const &color0,
+    android_vulkan::Half4 const &color1,
+    android_vulkan::Half4 const &color2,
+    android_vulkan::Half4 const &color3
 )
 {
     if ( mesh->IsUnique () )
@@ -47,10 +47,10 @@ void OpaqueCall::Append ( size_t &maxBatch,
 
 void OpaqueCall::AddBatch ( size_t &maxBatch, MeshRef &mesh,
     GXMat4 const &local,
-    GXVec4 const &color0,
-    GXVec4 const &color1,
-    GXVec4 const &color2,
-    GXVec4 const &color3
+    android_vulkan::Half4 const &color0,
+    android_vulkan::Half4 const &color1,
+    android_vulkan::Half4 const &color2,
+    android_vulkan::Half4 const &color3
 )
 {
     const std::string& name = mesh->GetName ();
@@ -86,10 +86,10 @@ void OpaqueCall::AddBatch ( size_t &maxBatch, MeshRef &mesh,
 void OpaqueCall::AddUnique ( size_t &maxUnique,
     MeshRef &mesh,
     GXMat4 const &local,
-    GXVec4 const &color0,
-    GXVec4 const &color1,
-    GXVec4 const &color2,
-    GXVec4 const &color3
+    android_vulkan::Half4 const &color0,
+    android_vulkan::Half4 const &color1,
+    android_vulkan::Half4 const &color2,
+    android_vulkan::Half4 const &color3
 )
 {
     _unique.emplace_back (

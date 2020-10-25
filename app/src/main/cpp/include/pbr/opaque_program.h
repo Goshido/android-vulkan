@@ -21,10 +21,10 @@ class OpaqueProgram final : public Program
         {
             GXMat4                              _localView;
             GXMat4                              _localViewProjection;
-            GXVec4               _color0;
-            GXVec4               _color1;
-            GXVec4               _color2;
-            GXVec4               _color3;
+            android_vulkan::Half4               _color0;
+            android_vulkan::Half4               _color1;
+            android_vulkan::Half4               _color2;
+            android_vulkan::Half4               _color3;
         };
 
         struct InstanceData final

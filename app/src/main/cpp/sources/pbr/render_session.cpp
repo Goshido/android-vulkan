@@ -1011,10 +1011,12 @@ void RenderSession::DrawOpaque ( VkDescriptorSet const* textureSets, VkDescripto
             }
 
             vkCmdBindVertexBuffers ( _geometryPassRendering, 0U, 1U, &mesh->GetBuffer (), &offset );
+            vkCmdBindIndexBuffer ( _geometryPassRendering, mesh->GetIndexBuffer (), 0U, VK_INDEX_TYPE_UINT32 );
 
-            vkCmdDraw ( _geometryPassRendering,
+            vkCmdDrawIndexed ( _geometryPassRendering,
                 mesh->GetVertexCount (),
                 static_cast<uint32_t> ( batches ),
+                0U,
                 0U,
                 0U
             );

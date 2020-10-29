@@ -55,7 +55,7 @@ MaterialRef MaterialManager::LoadMaterial ( size_t &commandBufferConsumed,
         return texture;
     };
 
-    if ( header->_diffuseOffset != NO_UTF8_OFFSET )
+    if ( header->_diffuseOffset != android_vulkan::NO_UTF8_OFFSET )
     {
         Texture2DRef texture = loadTexture ( header->_diffuseOffset, android_vulkan::eFormat::sRGB );
 
@@ -65,7 +65,7 @@ MaterialRef MaterialManager::LoadMaterial ( size_t &commandBufferConsumed,
         opaqueMaterial->SetAlbedo ( texture );
     }
 
-    if ( header->_emissionOffset != NO_UTF8_OFFSET )
+    if ( header->_emissionOffset != android_vulkan::NO_UTF8_OFFSET )
     {
         Texture2DRef texture = loadTexture ( header->_emissionOffset, android_vulkan::eFormat::Unorm );
 
@@ -75,7 +75,7 @@ MaterialRef MaterialManager::LoadMaterial ( size_t &commandBufferConsumed,
         opaqueMaterial->SetEmission ( texture );
     }
 
-    if ( header->_maskOffset != NO_UTF8_OFFSET )
+    if ( header->_maskOffset != android_vulkan::NO_UTF8_OFFSET )
     {
         Texture2DRef texture = loadTexture ( header->_maskOffset, android_vulkan::eFormat::Unorm );
 
@@ -85,7 +85,7 @@ MaterialRef MaterialManager::LoadMaterial ( size_t &commandBufferConsumed,
         opaqueMaterial->SetMask ( texture );
     }
 
-    if ( header->_normalOffset != NO_UTF8_OFFSET )
+    if ( header->_normalOffset != android_vulkan::NO_UTF8_OFFSET )
     {
         Texture2DRef texture = loadTexture ( header->_normalOffset, android_vulkan::eFormat::Unorm );
 
@@ -95,7 +95,7 @@ MaterialRef MaterialManager::LoadMaterial ( size_t &commandBufferConsumed,
         opaqueMaterial->SetNormal ( texture );
     }
 
-    if ( header->_paramOffset != NO_UTF8_OFFSET )
+    if ( header->_paramOffset != android_vulkan::NO_UTF8_OFFSET )
     {
         Texture2DRef texture = loadTexture ( header->_paramOffset, android_vulkan::eFormat::Unorm );
 

@@ -11,11 +11,11 @@ namespace pbr {
 
 struct SceneDesc final
 {
-    uint32_t    _formatVersion;
-    uint64_t    _componentCount;
-    uint64_t    _textureCount;
-    uint64_t    _meshCount;
-    Mat4x4      _viewerLocal;
+    uint32_t                    _formatVersion;
+    uint64_t                    _componentCount;
+    uint64_t                    _textureCount;
+    uint64_t                    _meshCount;
+    android_vulkan::Mat4x4      _viewerLocal;
 };
 
 #pragma pack ( pop )

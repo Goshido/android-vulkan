@@ -2,7 +2,7 @@
 #define PBR_MATERIAL_INFO_H
 
 
-#include "primitive_types.h"
+#include <primitive_types.h>
 
 
 namespace pbr {
@@ -11,13 +11,13 @@ namespace pbr {
 
 struct MaterialHeader final
 {
-    UTF8Offset      _diffuseOffset;
-    UTF8Offset      _emissionOffset;
-    UTF8Offset      _maskOffset;
-    UTF8Offset      _normalOffset;
-    UTF8Offset      _paramOffset;
+    android_vulkan::UTF8Offset      _diffuseOffset;
+    android_vulkan::UTF8Offset      _emissionOffset;
+    android_vulkan::UTF8Offset      _maskOffset;
+    android_vulkan::UTF8Offset      _normalOffset;
+    android_vulkan::UTF8Offset      _paramOffset;
 
-    float           _roughnessScale;
+    float                           _roughnessScale;
 };
 
 #pragma pack ( pop )

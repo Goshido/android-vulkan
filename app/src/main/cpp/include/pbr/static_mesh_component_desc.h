@@ -12,15 +12,15 @@ namespace pbr {
 
 struct StaticMeshComponentDesc final : public ComponentDesc
 {
-    UTF8Offset      _material;
-    UTF8Offset      _mesh;
+    android_vulkan::UTF8Offset      _material;
+    android_vulkan::UTF8Offset      _mesh;
 
-    ColorUnorm      _color0;
-    ColorUnorm      _color1;
-    ColorUnorm      _color2;
-    ColorUnorm      _color3;
+    android_vulkan::ColorUnorm      _color0;
+    android_vulkan::ColorUnorm      _color1;
+    android_vulkan::ColorUnorm      _color2;
+    android_vulkan::ColorUnorm      _color3;
 
-    Mat4x4          _localMatrix;
+    android_vulkan::Mat4x4          _localMatrix;
 };
 
 #pragma pack ( pop )

@@ -3,40 +3,40 @@
 
 struct ObjectData
 {
-    matrix      _localView;
-    matrix      _localViewProjection;
-    half4       _color0;
-    half4       _color1;
-    half4       _color2;
-    half4       _color3;
+    matrix                      _localView;
+    matrix                      _localViewProjection;
+    half4                       _color0;
+    half4                       _color1;
+    half4                       _color2;
+    half4                       _color3;
 };
 
 [[vk::binding ( 0, 1 )]]
-cbuffer InstanceData:                           register ( b0 )
+cbuffer InstanceData:                               register ( b0 )
 {
     // sizeof ( ObjectData ) = 160 bytes
     // sizeof ( InstanceData ) = 6720 bytes
-    ObjectData              g_instanceData[ PBR_OPAQUE_MAX_INSTANCE_COUNT ];
+    ObjectData                  g_instanceData[ PBR_OPAQUE_MAX_INSTANCE_COUNT ];
 }
 
 struct InputData
 {
     [[vk::location ( 0 )]]
-    float3                  _vertex:            VERTEX;
+    float3                      _vertex:            VERTEX;
 
     [[vk::location ( 1 )]]
-    float2                  _uv:                UV;
+    float2                      _uv:                UV;
 
     [[vk::location ( 2 )]]
-    float3                  _normal:            NORMAL;
+    float3                      _normal:            NORMAL;
 
     [[vk::location ( 3 )]]
-    float3                  _tangent:           TANGENT;
+    float3                      _tangent:           TANGENT;
 
     [[vk::location ( 4 )]]
-    float3                  _bitangent:         BITANGENT;
+    float3                      _bitangent:         BITANGENT;
 
-    uint                    _instanceIndex:     SV_InstanceID;
+    uint                        _instanceIndex:     SV_InstanceID;
 };
 
 struct OutputData
@@ -72,18 +72,17 @@ struct OutputData
 
 OutputData VS ( in InputData inputData )
 {
+    // Note current implementation is suboptimal because of known MALI driver bug.
+    // MALI-G76 optimizes _colorX members and breaks memory layout if no any references to those members in the shader.
+    // https://community.arm.com/developer/tools-software/graphics/f/discussions/47814/mali-g76-mc4-vulkan-driver-bug
+
     OutputData result;
 
     const ObjectData objectData = g_instanceData[ inputData._instanceIndex ];
     result._vertexH = mul ( objectData._localViewProjection, float4 ( inputData._vertex, 1.0F ) );
-
     result._uv = (half2)inputData._uv;
 
     const float3x3 orientation = (float3x3)objectData._localView;
-
-    // Note current implementation is suboptimal because of known MALI driver bug.
-    // MALI-G76 optimizes _colorX members and breaks memory layout if no any references to those members in the shader.
-    // https://community.arm.com/developer/tools-software/graphics/f/discussions/47814/mali-g76-mc4-vulkan-driver-bug
     result._normalView = (half3)mul ( orientation, inputData._normal );
     result._tangentView = (half3)mul ( orientation, inputData._tangent );
     result._bitangentView = (half3)mul ( orientation, inputData._bitangent );

@@ -21,7 +21,28 @@ namespace android_vulkan {
 
 constexpr static size_t const UV_THREADS = 4U;
 
-std::map<VkBufferUsageFlags, BufferSyncItem> const MeshGeometry::_accessMapper =
+struct BufferSyncItem final
+{
+    VkAccessFlags           _dstAccessMask;
+    VkPipelineStageFlags    _dstStage;
+    VkAccessFlags           _srcAccessMask;
+    VkPipelineStageFlags    _srcStage;
+
+    constexpr explicit BufferSyncItem ( VkAccessFlags srcAccessMask,
+        VkPipelineStageFlags srcStage,
+        VkAccessFlags dstAccessMask,
+        VkPipelineStageFlags dstStage
+    ):
+        _dstAccessMask ( dstAccessMask ),
+        _dstStage ( dstStage ),
+        _srcAccessMask ( srcAccessMask ),
+        _srcStage ( srcStage )
+    {
+        // NOTHING
+    }
+};
+
+static std::map<VkBufferUsageFlags, BufferSyncItem> const g_accessMapper =
 {
     {
         VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
@@ -44,10 +65,12 @@ std::map<VkBufferUsageFlags, BufferSyncItem> const MeshGeometry::_accessMapper =
     }
 };
 
+//----------------------------------------------------------------------------------------------------------------------
+
 MeshGeometry::MeshGeometry ():
     _bounds {},
-    _vertexBuffer ( VK_NULL_HANDLE ),
     _indexBuffer ( VK_NULL_HANDLE ),
+    _vertexBuffer ( VK_NULL_HANDLE ),
     _bufferMemory ( VK_NULL_HANDLE ),
     _transferBuffer ( VK_NULL_HANDLE ),
     _transferMemory ( VK_NULL_HANDLE ),
@@ -87,7 +110,7 @@ GXAABB const& MeshGeometry::GetBounds () const
     return _bounds;
 }
 
-VkBuffer const& MeshGeometry::GetBuffer () const
+VkBuffer const& MeshGeometry::GetVertexBuffer () const
 {
     return _vertexBuffer;
 }
@@ -152,7 +175,7 @@ bool MeshGeometry::LoadMesh ( uint8_t const* data,
 )
 {
     FreeResources ( renderer );
-    return LoadMeshInternal ( data, size, vertexCount, usage, renderer, commandBuffer );
+    return UploadSimple ( data, size, vertexCount, usage, renderer, commandBuffer );
 }
 
 void MeshGeometry::FreeResourceInternal ( android_vulkan::Renderer &renderer )
@@ -244,7 +267,7 @@ bool MeshGeometry::LoadFromMesh ( std::string &&fileName,
     for ( auto &item : converters )
         item.join ();
 
-    bool const result = LoadMeshInternal ( reinterpret_cast<uint8_t const*> ( vertices ),
+    bool const result = UploadSimple ( reinterpret_cast<uint8_t const*> ( vertices ),
         header.totalVertices * sizeof ( android_vulkan::VertexInfo ),
         header.totalVertices,
         usage,
@@ -279,15 +302,17 @@ bool MeshGeometry::LoadFromMesh2 ( std::string &&fileName,
     constexpr VkBufferUsageFlags const indexBufferUsageFlags = AV_VK_FLAG ( VK_BUFFER_USAGE_INDEX_BUFFER_BIT ) |
         AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT );
 
-    VkBufferCreateInfo bufferInfo;
-    bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-    bufferInfo.pNext = nullptr;
-    bufferInfo.flags = 0U;
-    bufferInfo.size = static_cast<VkDeviceSize> ( header._indexCount * sizeof ( Mesh2Index ) );
-    bufferInfo.usage = indexBufferUsageFlags;
-    bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    bufferInfo.queueFamilyIndexCount = 0U;
-    bufferInfo.pQueueFamilyIndices = nullptr;
+    VkBufferCreateInfo bufferInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .size = static_cast<VkDeviceSize> ( header._indexCount * sizeof ( Mesh2Index ) ),
+        .usage = indexBufferUsageFlags,
+        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+        .queueFamilyIndexCount = 0U,
+        .pQueueFamilyIndices = nullptr
+    };
 
     VkDevice device = renderer.GetDevice ();
 
@@ -349,7 +374,7 @@ R"__(MeshGeometry::LoadFromMesh2 - Memory usage bits are not same:
     // Estimation from top.
     size_t rest = vertexBufferMemoryRequirements.size + vertexBufferMemoryRequirements.alignment;
 
-    size_t const vertexDataOffset = reinterpret_cast<size_t> (
+    auto const vertexDataOffset = reinterpret_cast<size_t const> (
         std::align (
             static_cast<size_t> ( vertexBufferMemoryRequirements.alignment ),
             static_cast<size_t> ( vertexBufferMemoryRequirements.size ),
@@ -402,11 +427,79 @@ R"__(MeshGeometry::LoadFromMesh2 - Memory usage bits are not same:
         return false;
     }
 
-    bufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-    bufferInfo.size = bufferMemoryRequirements.size;
+    VkBufferCopy const copyInfo[ 2U ] =
+    {
+        {
+            .srcOffset = 0U,
+            .dstOffset = 0U,
+            .size = indexBufferMemoryRequirements.size
+        },
 
-    result = renderer.CheckVkResult ( vkCreateBuffer ( device, &bufferInfo, nullptr, &_transferBuffer ),
-        "MeshGeometry::LoadFromMesh2",
+        {
+            .srcOffset = indexBufferMemoryRequirements.size,
+            .dstOffset = 0U,
+            .size = vertexBufferMemoryRequirements.size
+        }
+    };
+
+    constexpr VkBufferUsageFlags const usages[ std::size ( copyInfo ) ] =
+    {
+        VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT
+    };
+
+    VkBuffer const dstBuffers[ std::size ( copyInfo ) ] = { _indexBuffer, _vertexBuffer };
+
+    result = UploadInternal ( std::size ( usages ),
+        copyInfo,
+        usages,
+        dstBuffers,
+        rawData + static_cast<size_t> ( header._indexDataOffset ),
+        indexBufferMemoryRequirements.size + vertexBufferMemoryRequirements.size,
+        renderer,
+        commandBuffer
+    );
+
+    if ( !result )
+        return false;
+
+    Vec3 const& mins = header._bounds._min;
+    Vec3 const& maxs = header._bounds._max;
+    _bounds.Empty ();
+    _bounds.AddVertex ( mins[ 0U ], mins[ 1U ], mins[ 2U ] );
+    _bounds.AddVertex ( maxs[ 0U ], maxs[ 1U ], maxs[ 2U ] );
+
+    _vertexCount = static_cast<uint32_t> ( header._indexCount );
+    _fileName = std::move ( fileName );
+    return true;
+}
+
+bool MeshGeometry::UploadInternal ( size_t numUploads,
+    VkBufferCopy const* copyJobs,
+    VkBufferUsageFlags const* usages,
+    VkBuffer const* dstBuffers,
+    uint8_t const* data,
+    size_t dataSize,
+    android_vulkan::Renderer &renderer,
+    VkCommandBuffer commandBuffer
+)
+{
+    VkBufferCreateInfo const bufferInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .size = static_cast<VkDeviceSize> ( dataSize ),
+        .usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+        .queueFamilyIndexCount = 0U,
+        .pQueueFamilyIndices = nullptr
+    };
+
+    VkDevice device = renderer.GetDevice ();
+
+    bool result = renderer.CheckVkResult ( vkCreateBuffer ( device, &bufferInfo, nullptr, &_transferBuffer ),
+        "MeshGeometry::UploadInternal",
         "Can't create transfer buffer"
     );
 
@@ -421,10 +514,13 @@ R"__(MeshGeometry::LoadFromMesh2 - Memory usage bits are not same:
     VkMemoryRequirements transferMemoryRequirements;
     vkGetBufferMemoryRequirements ( device, _transferBuffer, &transferMemoryRequirements );
 
+    constexpr VkMemoryPropertyFlags const flags = AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_COHERENT_BIT ) |
+        AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT );
+
     result = renderer.TryAllocateMemory ( _transferMemory,
         transferMemoryRequirements,
-        AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_COHERENT_BIT ) | AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT ),
-        "Can't allocate transfer memory (MeshGeometry::LoadFromMesh2)"
+        flags,
+        "Can't allocate transfer memory (MeshGeometry::UploadInternal)"
     );
 
     if ( !result )
@@ -436,7 +532,7 @@ R"__(MeshGeometry::LoadFromMesh2 - Memory usage bits are not same:
     AV_REGISTER_DEVICE_MEMORY ( "MeshGeometry::_transferMemory" )
 
     result = renderer.CheckVkResult ( vkBindBufferMemory ( device, _transferBuffer, _transferMemory, 0U ),
-        "MeshGeometry::LoadFromMesh2",
+        "MeshGeometry::UploadInternal",
         "Can't bind transfer memory"
     );
 
@@ -450,7 +546,7 @@ R"__(MeshGeometry::LoadFromMesh2 - Memory usage bits are not same:
 
     result = renderer.CheckVkResult (
         vkMapMemory ( device, _transferMemory, 0U, transferMemoryRequirements.size, 0U, &transferData ),
-        "MeshGeometry::LoadFromMesh2",
+        "MeshGeometry::UploadInternal",
         "Can't map data"
     );
 
@@ -460,26 +556,19 @@ R"__(MeshGeometry::LoadFromMesh2 - Memory usage bits are not same:
         return false;
     }
 
-    memcpy ( transferData,
-        rawData + static_cast<size_t> ( header._indexDataOffset ),
-        static_cast<size_t> ( indexBufferMemoryRequirements.size )
-    );
-
-    memcpy ( static_cast<uint8_t*> ( transferData ) + vertexDataOffset,
-        rawData + static_cast<size_t> ( header._vertexDataOffset ),
-        static_cast<size_t> ( vertexBufferMemoryRequirements.size )
-    );
-
+    memcpy ( transferData, data, dataSize );
     vkUnmapMemory ( device, _transferMemory );
 
-    VkCommandBufferBeginInfo commandBufferBeginInfo;
-    commandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    commandBufferBeginInfo.pNext = nullptr;
-    commandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-    commandBufferBeginInfo.pInheritanceInfo = nullptr;
+    VkCommandBufferBeginInfo const commandBufferBeginInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+        .pNext = nullptr,
+        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+        .pInheritanceInfo = nullptr
+    };
 
     result = renderer.CheckVkResult ( vkBeginCommandBuffer ( commandBuffer, &commandBufferBeginInfo ),
-        "MeshGeometry::LoadFromMesh2",
+        "MeshGeometry::UploadInternal",
         "Can't begin command buffer"
     );
 
@@ -489,86 +578,54 @@ R"__(MeshGeometry::LoadFromMesh2 - Memory usage bits are not same:
         return false;
     }
 
-    VkBufferCopy copyInfo[ 2U ];
-    VkBufferCopy& indexCopy = copyInfo[ 0U ];
-    indexCopy.size = indexBufferMemoryRequirements.size;
-    indexCopy.srcOffset = indexCopy.dstOffset = 0U;
-
-    vkCmdCopyBuffer ( commandBuffer,
-        _transferBuffer,
-        _indexBuffer,
-        1U,
-        copyInfo
-    );
-
-    VkBufferCopy& vertexCopy = copyInfo[ 1U ];
-    vertexCopy.size = vertexBufferMemoryRequirements.size;
-    vertexCopy.srcOffset = static_cast<VkDeviceSize> ( vertexDataOffset );
-    vertexCopy.dstOffset = 0U;
-
-    vkCmdCopyBuffer ( commandBuffer,
-        _transferBuffer,
-        _vertexBuffer,
-        1U,
-        copyInfo + 1U
-    );
-
+    // Note most extreme case is 2 upload jobs (vertex buffer and index buffer).
     VkBufferMemoryBarrier barrierInfo[ 2U ];
+    VkPipelineStageFlags srcStages = 0U;
+    VkPipelineStageFlags dstStages = 0U;
 
-    auto const indexFindResult = _accessMapper.find ( VK_BUFFER_USAGE_INDEX_BUFFER_BIT );
-
-    if ( indexFindResult == _accessMapper.cend () )
+    for ( size_t i = 0U; i < numUploads; ++i )
     {
-        android_vulkan::LogError ( "MeshGeometry::LoadFromMesh2 - Unexpected usage 0x%08X", indexFindResult );
-        return false;
+        VkBufferCopy const& copyBuffer = copyJobs[ i ];
+        auto const findResult = g_accessMapper.find ( usages[ i ] );
+
+        if ( findResult == g_accessMapper.cend () )
+        {
+            android_vulkan::LogError ( "MeshGeometry::UploadInternal - Unexpected usage 0x%08X", usages[ i ] );
+            FreeResources ( renderer );
+            return false;
+        }
+
+        BufferSyncItem const& syncItem = findResult->second;
+        srcStages |= syncItem._srcStage;
+        dstStages |= syncItem._dstStage;
+
+        VkBufferMemoryBarrier& barrier = barrierInfo[ i ];
+        barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+        barrier.pNext = nullptr;
+        barrier.buffer = dstBuffers[ i ];
+        barrier.srcAccessMask = syncItem._srcAccessMask;
+        barrier.dstAccessMask = syncItem._dstAccessMask;
+        barrier.size = copyBuffer.size;
+        barrier.offset = 0U;
+        barrier.srcQueueFamilyIndex = barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+
+        vkCmdCopyBuffer ( commandBuffer, _transferBuffer, barrier.buffer, 1U, &copyBuffer );
     }
-
-    BufferSyncItem const& indexSyncItem = indexFindResult->second;
-
-    VkBufferMemoryBarrier& indexBarrier = barrierInfo[ 0U ];
-    indexBarrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
-    indexBarrier.pNext = nullptr;
-    indexBarrier.buffer = _indexBuffer;
-    indexBarrier.srcAccessMask = indexSyncItem._srcAccessMask;
-    indexBarrier.dstAccessMask = indexSyncItem._dstAccessMask;
-    indexBarrier.size = indexBufferMemoryRequirements.size;
-    indexBarrier.offset = 0U;
-    indexBarrier.srcQueueFamilyIndex = indexBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-
-    auto const vertexFindResult = _accessMapper.find ( VK_BUFFER_USAGE_VERTEX_BUFFER_BIT );
-
-    if ( vertexFindResult == _accessMapper.cend () )
-    {
-        android_vulkan::LogError ( "MeshGeometry::LoadFromMesh2 - Unexpected usage 0x%08X", vertexFindResult );
-        return false;
-    }
-
-    BufferSyncItem const& vertexSyncItem = vertexFindResult->second;
-
-    VkBufferMemoryBarrier& vertexBarrier = barrierInfo[ 1U ];
-    vertexBarrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
-    vertexBarrier.pNext = nullptr;
-    vertexBarrier.buffer = _vertexBuffer;
-    vertexBarrier.srcAccessMask = vertexSyncItem._srcAccessMask;
-    vertexBarrier.dstAccessMask = vertexSyncItem._dstAccessMask;
-    vertexBarrier.size = vertexBufferMemoryRequirements.size;
-    vertexBarrier.offset = 0U;
-    vertexBarrier.srcQueueFamilyIndex = vertexBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 
     vkCmdPipelineBarrier ( commandBuffer,
-        indexSyncItem._srcStage | vertexSyncItem._srcStage,
-        indexSyncItem._dstStage | vertexSyncItem._dstStage,
+        srcStages,
+        dstStages,
         0U,
         0U,
         nullptr,
-        static_cast<uint32_t> ( std::size ( barrierInfo ) ),
+        static_cast<uint32_t> ( numUploads ),
         barrierInfo,
         0U,
         nullptr
     );
 
     result = renderer.CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
-        "MeshGeometry::LoadFromMesh2",
+        "MeshGeometry::UploadInternal",
         "Can't end command buffer"
     );
 
@@ -578,40 +635,32 @@ R"__(MeshGeometry::LoadFromMesh2 - Memory usage bits are not same:
         return false;
     }
 
-    VkSubmitInfo submitInfo;
-    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    submitInfo.pNext = nullptr;
-    submitInfo.commandBufferCount = 1U;
-    submitInfo.pCommandBuffers = &commandBuffer;
-    submitInfo.waitSemaphoreCount = 0U;
-    submitInfo.pWaitSemaphores = nullptr;
-    submitInfo.signalSemaphoreCount = 0U;
-    submitInfo.pSignalSemaphores = nullptr;
-    submitInfo.pWaitDstStageMask = nullptr;
+    VkSubmitInfo const submitInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+        .pNext = nullptr,
+        .waitSemaphoreCount = 0U,
+        .pWaitSemaphores = nullptr,
+        .pWaitDstStageMask = nullptr,
+        .commandBufferCount = 1U,
+        .pCommandBuffers = &commandBuffer,
+        .signalSemaphoreCount = 0U,
+        .pSignalSemaphores = nullptr
+    };
 
     result = renderer.CheckVkResult ( vkQueueSubmit ( renderer.GetQueue (), 1U, &submitInfo, VK_NULL_HANDLE ),
         "MeshGeometry::LoadFromMesh2",
         "Can't submit command"
     );
 
-    if ( !result )
-    {
-        FreeResources ( renderer );
-        return false;
-    }
+    if ( result )
+        return true;
 
-    Vec3 const& mins = header._bounds._min;
-    Vec3 const& maxs = header._bounds._max;
-    _bounds.Empty ();
-    _bounds.AddVertex ( mins[ 0U ], mins[ 1U ], mins[ 2U ] );
-    _bounds.AddVertex ( maxs[ 0U ], maxs[ 1U ], maxs[ 2U ] );
-
-    _vertexCount = static_cast<uint32_t> ( header._indexCount );
-    _fileName = std::move ( fileName );
-    return true;
+    FreeResources ( renderer );
+    return false;
 }
 
-bool MeshGeometry::LoadMeshInternal ( uint8_t const* data,
+bool MeshGeometry::UploadSimple ( uint8_t const* data,
     size_t size,
     uint32_t vertexCount,
     VkBufferUsageFlags usage,
@@ -619,20 +668,22 @@ bool MeshGeometry::LoadMeshInternal ( uint8_t const* data,
     VkCommandBuffer commandBuffer
 )
 {
-    VkBufferCreateInfo bufferInfo;
-    bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-    bufferInfo.pNext = nullptr;
-    bufferInfo.flags = 0U;
-    bufferInfo.usage = usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
-    bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    bufferInfo.queueFamilyIndexCount = 0U;
-    bufferInfo.pQueueFamilyIndices = nullptr;
-    bufferInfo.size = size;
+    VkBufferCreateInfo const bufferInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .size = size,
+        .usage = usage | AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT ),
+        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+        .queueFamilyIndexCount = 0U,
+        .pQueueFamilyIndices = nullptr
+    };
 
     VkDevice device = renderer.GetDevice ();
 
     bool result = renderer.CheckVkResult ( vkCreateBuffer ( device, &bufferInfo, nullptr, &_vertexBuffer ),
-        "MeshGeometry::LoadMeshInternal",
+        "MeshGeometry::UploadSimple",
         "Can't create buffer"
     );
 
@@ -659,7 +710,7 @@ bool MeshGeometry::LoadMeshInternal ( uint8_t const* data,
     AV_REGISTER_DEVICE_MEMORY ( "MeshGeometry::_bufferMemory" )
 
     result = renderer.CheckVkResult ( vkBindBufferMemory ( device, _vertexBuffer, _bufferMemory, 0U ),
-        "MeshGeometry::LoadMeshInternal",
+        "MeshGeometry::UploadSimple",
         "Can't bind buffer memory"
     );
 
@@ -669,154 +720,28 @@ bool MeshGeometry::LoadMeshInternal ( uint8_t const* data,
         return false;
     }
 
-    bufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+    VkBufferCopy const copyInfo
+    {
+        .srcOffset = 0U,
+        .dstOffset = 0U,
+        .size = bufferInfo.size
+    };
 
-    result = renderer.CheckVkResult ( vkCreateBuffer ( device, &bufferInfo, nullptr, &_transferBuffer ),
-        "MeshGeometry::LoadMeshInternal",
-        "Can't create transfer buffer"
+    result = UploadInternal ( 1U,
+        &copyInfo,
+        &usage,
+        &_vertexBuffer,
+        data,
+        size,
+        renderer,
+        commandBuffer
     );
 
     if ( !result )
-    {
-        FreeResources ( renderer );
         return false;
-    }
 
-    AV_REGISTER_BUFFER ( "MeshGeometry::_transferBuffer" )
-
-    vkGetBufferMemoryRequirements ( device, _transferBuffer, &memoryRequirements );
-
-    result = renderer.TryAllocateMemory ( _transferMemory,
-        memoryRequirements,
-        VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
-        "Can't allocate transfer memory (MeshGeometry::LoadMeshInternal)"
-    );
-
-    if ( !result )
-    {
-        FreeResources ( renderer );
-        return false;
-    }
-
-    AV_REGISTER_DEVICE_MEMORY ( "MeshGeometry::_transferMemory" )
-
-    result = renderer.CheckVkResult ( vkBindBufferMemory ( device, _transferBuffer, _transferMemory, 0U ),
-        "MeshGeometry::LoadMeshInternal",
-        "Can't bind transfer memory"
-    );
-
-    if ( !result )
-    {
-        FreeResources ( renderer );
-        return false;
-    }
-
-    void* transferData = nullptr;
-
-    result = renderer.CheckVkResult ( vkMapMemory ( device, _transferMemory, 0U, size, 0U, &transferData ),
-        "MeshGeometry::LoadMeshInternal",
-        "Can't map data"
-    );
-
-    if ( !result )
-    {
-        FreeResources ( renderer );
-        return false;
-    }
-
-    memcpy ( transferData, data, size );
-    vkUnmapMemory ( device, _transferMemory );
-
-    VkCommandBufferBeginInfo commandBufferBeginInfo;
-    commandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    commandBufferBeginInfo.pNext = nullptr;
-    commandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-    commandBufferBeginInfo.pInheritanceInfo = nullptr;
-
-    result = renderer.CheckVkResult ( vkBeginCommandBuffer ( commandBuffer, &commandBufferBeginInfo ),
-        "MeshGeometry::LoadMeshInternal",
-        "Can't begin command buffer"
-    );
-
-    if ( !result )
-    {
-        FreeResources ( renderer );
-        return false;
-    }
-
-    VkBufferCopy copyInfo;
-    copyInfo.size = size;
-    copyInfo.srcOffset = copyInfo.dstOffset = 0U;
-
-    vkCmdCopyBuffer ( commandBuffer, _transferBuffer, _vertexBuffer, 1U, &copyInfo );
-
-    auto const findResult = _accessMapper.find ( usage );
-
-    if ( findResult == _accessMapper.cend () )
-    {
-        android_vulkan::LogError ( "MeshGeometry::LoadMeshInternal - Unexpected usage 0x%08X", usage );
-        return false;
-    }
-
-    BufferSyncItem const& syncItem = findResult->second;
-
-    VkBufferMemoryBarrier barrierInfo;
-    barrierInfo.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
-    barrierInfo.pNext = nullptr;
-    barrierInfo.buffer = _vertexBuffer;
-    barrierInfo.srcAccessMask = syncItem._srcAccessMask;
-    barrierInfo.dstAccessMask = syncItem._dstAccessMask;
-    barrierInfo.size = size;
-    barrierInfo.offset = 0U;
-    barrierInfo.srcQueueFamilyIndex = barrierInfo.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-
-    vkCmdPipelineBarrier ( commandBuffer,
-        syncItem._srcStage,
-        syncItem._dstStage,
-        0U,
-        0U,
-        nullptr,
-        1U,
-        &barrierInfo,
-        0U,
-        nullptr
-    );
-
-    result = renderer.CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
-        "MeshGeometry::LoadMeshInternal",
-        "Can't end command buffer"
-    );
-
-    if ( !result )
-    {
-        FreeResources ( renderer );
-        return false;
-    }
-
-    VkSubmitInfo submitInfo;
-    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    submitInfo.pNext = nullptr;
-    submitInfo.commandBufferCount = 1U;
-    submitInfo.pCommandBuffers = &commandBuffer;
-    submitInfo.waitSemaphoreCount = 0U;
-    submitInfo.pWaitSemaphores = nullptr;
-    submitInfo.signalSemaphoreCount = 0U;
-    submitInfo.pSignalSemaphores = nullptr;
-    submitInfo.pWaitDstStageMask = nullptr;
-
-    result = renderer.CheckVkResult ( vkQueueSubmit ( renderer.GetQueue (), 1U, &submitInfo, VK_NULL_HANDLE ),
-        "MeshGeometry::LoadMeshInternal",
-        "Can't submit command"
-    );
-
-    if ( result )
-    {
-        _vertexCount = vertexCount;
-        return true;
-    }
-
-    FreeResources ( renderer );
-    return false;
+    _vertexCount = vertexCount;
+    return true;
 }
 
 } // namespace android_vulkan

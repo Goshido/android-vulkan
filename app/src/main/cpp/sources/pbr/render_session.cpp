@@ -1010,7 +1010,7 @@ void RenderSession::DrawOpaque ( VkDescriptorSet const* textureSets, VkDescripto
                 isUniformBind = true;
             }
 
-            vkCmdBindVertexBuffers ( _geometryPassRendering, 0U, 1U, &mesh->GetBuffer (), &offset );
+            vkCmdBindVertexBuffers ( _geometryPassRendering, 0U, 1U, &mesh->GetVertexBuffer (), &offset );
             vkCmdBindIndexBuffer ( _geometryPassRendering, mesh->GetIndexBuffer (), 0U, VK_INDEX_TYPE_UINT32 );
 
             vkCmdDrawIndexed ( _geometryPassRendering,

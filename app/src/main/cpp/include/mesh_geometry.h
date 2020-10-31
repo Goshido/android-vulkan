@@ -15,43 +15,20 @@ GX_RESTORE_WARNING_STATE
 
 namespace android_vulkan {
 
-struct BufferSyncItem final
-{
-    VkAccessFlags           _dstAccessMask;
-    VkPipelineStageFlags    _dstStage;
-    VkAccessFlags           _srcAccessMask;
-    VkPipelineStageFlags    _srcStage;
-
-    constexpr explicit BufferSyncItem ( VkAccessFlags srcAccessMask,
-        VkPipelineStageFlags srcStage,
-        VkAccessFlags dstAccessMask,
-        VkPipelineStageFlags dstStage
-    ):
-        _dstAccessMask ( dstAccessMask ),
-        _dstStage ( dstStage ),
-        _srcAccessMask ( srcAccessMask ),
-        _srcStage ( srcStage )
-    {
-        // NOTHING
-    }
-};
-
 class MeshGeometry final
 {
     private:
-        [[maybe_unused]] GXAABB                                         _bounds;
+        GXAABB              _bounds;
 
-        VkBuffer                                                        _vertexBuffer;
-        [[maybe_unused]] VkBuffer                                       _indexBuffer;
-        VkDeviceMemory                                                  _bufferMemory;
+        VkBuffer            _indexBuffer;
+        VkBuffer            _vertexBuffer;
+        VkDeviceMemory      _bufferMemory;
 
-        VkBuffer                                                        _transferBuffer;
-        VkDeviceMemory                                                  _transferMemory;
+        VkBuffer            _transferBuffer;
+        VkDeviceMemory      _transferMemory;
 
-        uint32_t                                                        _vertexCount;
-        std::string                                                     _fileName;
-
-        static const std::map<VkBufferUsageFlags, BufferSyncItem>       _accessMapper;
+        uint32_t            _vertexCount;
+        std::string         _fileName;
 
     public:
         MeshGeometry ();
@@ -68,7 +45,7 @@ class MeshGeometry final
         void FreeTransferResources ( android_vulkan::Renderer &renderer );
 
         [[maybe_unused]] [[nodiscard]] GXAABB const& GetBounds () const;
-        [[nodiscard]] VkBuffer const& GetBuffer () const;
+        [[nodiscard]] VkBuffer const& GetVertexBuffer () const;
         [[nodiscard]] VkBuffer const& GetIndexBuffer () const;
         [[nodiscard]] std::string const& GetName () const;
         [[nodiscard]] uint32_t GetVertexCount () const;
@@ -84,7 +61,7 @@ class MeshGeometry final
             VkCommandBuffer commandBuffer
         );
 
-        [[maybe_unused]] bool LoadMesh ( uint8_t const* data,
+        [[maybe_unused]] [[nodiscard]] bool LoadMesh ( uint8_t const* data,
             size_t size,
             uint32_t vertexCount,
             VkBufferUsageFlags usage,
@@ -107,7 +84,17 @@ class MeshGeometry final
             VkCommandBuffer commandBuffer
         );
 
-        [[nodiscard]] bool LoadMeshInternal ( uint8_t const* data,
+        [[nodiscard]] bool UploadInternal ( size_t numUploads,
+            VkBufferCopy const* copyJobs,
+            VkBufferUsageFlags const* usages,
+            VkBuffer const* dstBuffers,
+            uint8_t const* data,
+            size_t dataSize,
+            android_vulkan::Renderer &renderer,
+            VkCommandBuffer commandBuffer
+        );
+
+        [[nodiscard]] bool UploadSimple ( uint8_t const* data,
             size_t size,
             uint32_t vertexCount,
             VkBufferUsageFlags usage,

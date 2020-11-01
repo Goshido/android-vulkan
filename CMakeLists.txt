@@ -78,6 +78,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/pbr/program.cpp
     app/src/main/cpp/sources/pbr/program_resource.cpp
     app/src/main/cpp/sources/pbr/render_session.cpp
+    app/src/main/cpp/sources/pbr/render_session_stats.cpp
     app/src/main/cpp/sources/pbr/sampler.cpp
     app/src/main/cpp/sources/pbr/static_mesh_component.cpp
     app/src/main/cpp/sources/pbr/texture_present_descriptor_set_layout.cpp
@@ -109,9 +110,9 @@ target_compile_options ( android-vulkan PRIVATE
 target_compile_definitions ( android-vulkan
     PRIVATE
     -DANDROID_NATIVE_MODE_PORTRAIT
-    -DANDROID_VULKAN_DEBUG
-    -DANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
-    -DANDROID_VULKAN_STRICT_MODE
+#    -DANDROID_VULKAN_DEBUG
+#    -DANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+#    -DANDROID_VULKAN_STRICT_MODE
 )
 
 # Exporting native app glue entry point.

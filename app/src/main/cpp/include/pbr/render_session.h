@@ -7,6 +7,7 @@
 #include "opaque_program.h"
 #include "opaque_call.h"
 #include "opaque_material.h"
+#include "render_session_stats.h"
 #include "texture_present_program.h"
 #include "uniform_buffer_pool.h"
 
@@ -66,6 +67,8 @@ class RenderSession final
         VkSemaphore                             _presentRenderPassEndSemaphore;
         VkSemaphore                             _presentRenderTargetAcquiredSemaphore;
 
+        RenderSessionStats                      _renderSessionStats;
+
         VkSubmitInfo                            _submitInfoRender;
         VkSubmitInfo                            _submitInfoTransfer;
 
@@ -86,7 +89,7 @@ class RenderSession final
         ~RenderSession () = default;
 
         void Begin ( GXMat4 const &view, GXMat4 const &projection );
-        [[nodiscard]] bool End ( ePresentTarget target, android_vulkan::Renderer &renderer );
+        [[nodiscard]] bool End ( ePresentTarget target, double deltaTime, android_vulkan::Renderer &renderer );
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, VkExtent2D const &resolution );
         void Destroy ( android_vulkan::Renderer &renderer );
@@ -116,7 +119,7 @@ class RenderSession final
         void DestroySyncPrimitives ( android_vulkan::Renderer &renderer );
 
         void DestroyDescriptorPool ( android_vulkan::Renderer &renderer );
-        void DrawOpaque ( VkDescriptorSet const* textureSets, VkDescriptorSet const* instanceSets ) const;
+        void DrawOpaque ( VkDescriptorSet const* textureSets, VkDescriptorSet const* instanceSets );
 
         void InitCommonStructures ();
 

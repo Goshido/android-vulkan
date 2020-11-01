@@ -12,6 +12,7 @@ AV_DX_ALIGNMENT_BEGIN
 
 struct OpaqueData final
 {
+    bool                        _isVisible;
     GXMat4                      _local;
     android_vulkan::Half4       _color0;
     android_vulkan::Half4       _color1;

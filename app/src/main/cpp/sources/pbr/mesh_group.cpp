@@ -14,6 +14,7 @@ MeshGroup::MeshGroup ( MeshRef &mesh,
 {
     _opaqueData.emplace_back (
         OpaqueData {
+            ._isVisible = true,
             ._local = local,
             ._color0 = color0,
             ._color1 = color1,

@@ -10,6 +10,9 @@ namespace pbr {
 class OpaqueTextureDescriptorSetLayout final : public DescriptorSetLayout
 {
     public:
+        constexpr static size_t const TEXTURE_SLOTS = 5U;
+
+    public:
         OpaqueTextureDescriptorSetLayout () = default;
 
         OpaqueTextureDescriptorSetLayout ( OpaqueTextureDescriptorSetLayout const &other ) = delete;

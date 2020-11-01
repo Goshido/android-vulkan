@@ -163,6 +163,7 @@ RenderSession::RenderSession () noexcept:
     _presentRenderPass ( VK_NULL_HANDLE ),
     _presentRenderPassEndSemaphore ( VK_NULL_HANDLE ),
     _presentRenderTargetAcquiredSemaphore ( VK_NULL_HANDLE ),
+    _renderSessionStats {},
     _submitInfoRender {},
     _submitInfoTransfer {},
     _uniformBufferPool {},
@@ -180,7 +181,7 @@ void RenderSession::Begin ( GXMat4 const &view, GXMat4 const &projection )
     _opaqueCalls.clear ();
 }
 
-bool RenderSession::End ( ePresentTarget /*target*/, android_vulkan::Renderer &renderer )
+bool RenderSession::End ( ePresentTarget /*target*/, double deltaTime, android_vulkan::Renderer &renderer )
 {
     CleanupTransferResources ( renderer );
 
@@ -276,7 +277,13 @@ bool RenderSession::End ( ePresentTarget /*target*/, android_vulkan::Renderer &r
     if ( !result )
         return false;
 
-    return renderer.CheckVkResult ( presentResult, "RenderSession::EndFrame", "Present queue has been failed" );
+    result = renderer.CheckVkResult ( presentResult, "RenderSession::EndFrame", "Present queue has been failed" );
+
+    if ( !result )
+        return false;
+
+    _renderSessionStats.PrintStats ( deltaTime );
+    return true;
 }
 
 bool RenderSession::Init ( android_vulkan::Renderer &renderer, VkExtent2D const &resolution )
@@ -581,6 +588,7 @@ void RenderSession::SubmitMesh ( MeshRef &mesh,
 {
     if ( material->GetMaterialType() == eMaterialType::Opaque )
     {
+        _renderSessionStats.SubmitOpaque ( mesh->GetVertexCount () );
         SubmitOpaqueCall ( mesh, material, local, color0, color1, color2, color3 );
     }
 }
@@ -969,7 +977,7 @@ void RenderSession::DestroyDescriptorPool ( android_vulkan::Renderer &renderer )
     AV_UNREGISTER_DESCRIPTOR_POOL ( "RenderSession::_descriptorPool" )
 }
 
-void RenderSession::DrawOpaque ( VkDescriptorSet const* textureSets, VkDescriptorSet const* instanceSets ) const
+void RenderSession::DrawOpaque ( VkDescriptorSet const* textureSets, VkDescriptorSet const* instanceSets )
 {
     size_t textureSetIndex = 0U;
     size_t uniformUsed = 0U;
@@ -1015,33 +1023,43 @@ void RenderSession::DrawOpaque ( VkDescriptorSet const* textureSets, VkDescripto
 
             vkCmdDrawIndexed ( _geometryPassRendering,
                 mesh->GetVertexCount (),
-                static_cast<uint32_t> ( batches ),
+                batches,
                 0U,
                 0U,
                 0U
             );
 
+            _renderSessionStats.RenderOpaque ( mesh->GetVertexCount (), batches );
             ++uniformUsed;
         };
 
-        for ( auto const &item : opaqueCall.GetUniqueList () )
+        for ( auto const &[mesh, opaqueData] : opaqueCall.GetUniqueList () )
         {
-            // TODO take into consideration frustum test
-            instanceDrawer ( item.first, 1U );
+            if ( !opaqueData._isVisible )
+                continue;
+
+            instanceDrawer ( mesh, 1U );
         }
 
         for ( auto const &item : opaqueCall.GetBatchList () )
         {
             MeshGroup const& group = item.second;
             MeshRef const& mesh = group._mesh;
-            size_t const instanceCount = group._opaqueData.size ();
+            size_t instanceCount = 0U;
+
+            for ( auto const& opaqueData : group._opaqueData )
+            {
+                if ( !opaqueData._isVisible )
+                    continue;
+
+                ++instanceCount;
+            }
+
             size_t instanceIndex = 0U;
             size_t batches = 0U;
 
             while ( instanceIndex < instanceCount )
             {
-                // TODO take into consideration frustum test
-
                 batches = std::min ( instanceCount - instanceIndex,
                     static_cast<size_t> ( PBR_OPAQUE_MAX_INSTANCE_COUNT )
                 );
@@ -1058,7 +1076,6 @@ void RenderSession::DrawOpaque ( VkDescriptorSet const* textureSets, VkDescripto
             if ( !batches )
                 continue;
 
-            // TODO take into consideration frustum test
             instanceDrawer ( mesh, static_cast<uint32_t> ( batches ) );
         }
     }
@@ -1191,7 +1208,7 @@ bool RenderSession::UpdateGPUData (  std::vector<VkDescriptorSet> &descriptorSet
     // TODO no any elements have been submitted.
 
     size_t const opaqueCount = _opaqueCalls.size ();
-    size_t const textureCount = opaqueCount * 4U + 1U;
+    size_t const textureCount = opaqueCount * OpaqueTextureDescriptorSetLayout::TEXTURE_SLOTS + 1U;
 
     std::vector<VkDescriptorImageInfo> imageStorage;
     imageStorage.reserve ( textureCount );
@@ -1417,11 +1434,13 @@ bool RenderSession::UpdateGPUData (  std::vector<VkDescriptorSet> &descriptorSet
     size_t const maxUniforms = _uniformBufferPool.GetItemCount ();
     VkDescriptorSet const* instanceDescriptorSet = descriptorSets + opaqueCount + 1U;
 
+    GXProjectionClipPlanes const frustum ( _viewProjection );
+
     for ( auto const &call : _opaqueCalls )
     {
-        OpaqueCall const &opaqueCall = call.second;
+        OpaqueCall const& opaqueCall = call.second;
 
-        for ( auto const &item : opaqueCall.GetUniqueList () )
+        for ( auto const &[mesh, opaqueData] : opaqueCall.GetUniqueList () )
         {
             OpaqueProgram::ObjectData& objectData = instanceData._instanceData[ 0U ];
 
@@ -1434,11 +1453,19 @@ bool RenderSession::UpdateGPUData (  std::vector<VkDescriptorSet> &descriptorSet
                 return false;
             }
 
-            // TODO Frustum test.
-
-            OpaqueData const& opaqueData = item.second;
-
             GXMat4 const& local = opaqueData._local;
+            auto& unlockOpaqueData = const_cast<OpaqueData&> ( opaqueData );
+
+            GXAABB boundWorld;
+            mesh->GetBounds ().Transform ( boundWorld, local );
+
+            if ( !frustum.IsVisible ( boundWorld ) )
+            {
+                unlockOpaqueData._isVisible = false;
+                continue;
+            }
+
+            unlockOpaqueData._isVisible = true;
             objectData._localView.Multiply ( local, _view );
             objectData._localViewProjection.Multiply ( local, _viewProjection );
 
@@ -1492,12 +1519,22 @@ bool RenderSession::UpdateGPUData (  std::vector<VkDescriptorSet> &descriptorSet
                     ++uniformUsed;
                 }
 
+                GXMat4 const& local = opaqueData._local;
+                auto& unlockOpaqueData = const_cast<OpaqueData&> ( opaqueData );
+
+                GXAABB boundWorld;
+                group._mesh->GetBounds ().Transform ( boundWorld, local );
+
+                if ( !frustum.IsVisible ( boundWorld ) )
+                {
+                    unlockOpaqueData._isVisible = false;
+                    continue;
+                }
+
                 OpaqueProgram::ObjectData& objectData = instanceData._instanceData[ instanceIndex ];
                 ++instanceIndex;
+                unlockOpaqueData._isVisible = true;
 
-                // TODO frustum test
-
-                GXMat4 const& local = opaqueData._local;
                 objectData._localView.Multiply ( local, _view );
                 objectData._localViewProjection.Multiply ( local, _viewProjection );
 

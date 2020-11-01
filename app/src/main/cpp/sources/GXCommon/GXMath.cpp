@@ -2728,7 +2728,7 @@ GXVoid GXProjectionClipPlanes::From ( const GXMat4 &src )
     _planes[ 5u ]._d = src._m[ 3u ][ 3u ] - src._m[ 3u ][ 2u ];
 }
 
-GXBool GXProjectionClipPlanes::IsVisible ( const GXAABB &bounds )
+GXBool GXProjectionClipPlanes::IsVisible ( const GXAABB &bounds ) const
 {
     GXInt flags = static_cast<GXInt> ( PlaneTest ( bounds._min._data[ 0u ], bounds._min._data[ 1u ], bounds._min._data[ 2u ] ) );
     flags &= static_cast<GXInt> ( PlaneTest ( bounds._min._data[ 0u ], bounds._max._data[ 1u ], bounds._min._data[ 2u ] ) );
@@ -2749,7 +2749,7 @@ GXProjectionClipPlanes& GXProjectionClipPlanes::operator = ( const GXProjectionC
     return *this;
 }
 
-GXUByte GXProjectionClipPlanes::PlaneTest ( GXFloat x, GXFloat y, GXFloat z )
+GXUByte GXProjectionClipPlanes::PlaneTest ( GXFloat x, GXFloat y, GXFloat z ) const
 {
     GXUByte flags = 0u;
 

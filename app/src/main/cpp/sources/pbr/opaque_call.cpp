@@ -66,6 +66,7 @@ void OpaqueCall::AddBatch ( size_t &maxBatch, MeshRef &mesh,
     {
         findResult->second._opaqueData.emplace_back (
             OpaqueData {
+                ._isVisible = true,
                 ._local = local,
                 ._color0 = color0,
                 ._color1 = color1,
@@ -95,6 +96,7 @@ void OpaqueCall::AddUnique ( size_t &maxUnique,
     _unique.emplace_back (
         std::make_pair ( mesh,
             OpaqueData {
+                ._isVisible = true,
                 ._local = local,
                 ._color0 = color0,
                 ._color1 = color1,

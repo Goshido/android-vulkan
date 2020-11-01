@@ -670,12 +670,12 @@ class GXProjectionClipPlanes final
         GXVoid From ( const GXMat4 &src );
 
         // Trivial invisibility test.
-        GXBool IsVisible ( const GXAABB &bounds );
+        GXBool IsVisible ( const GXAABB &bounds ) const;
 
         GXProjectionClipPlanes& operator = ( const GXProjectionClipPlanes &clipPlanes );
 
     private:
-        GXUByte PlaneTest ( GXFloat x, GXFloat y, GXFloat z );
+        GXUByte PlaneTest ( GXFloat x, GXFloat y, GXFloat z ) const;
 };
 
 //---------------------------------------------------------------------------------------------------------------------

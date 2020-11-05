@@ -109,6 +109,7 @@ target_compile_options ( android-vulkan PRIVATE
 # See docs/preprocessor-macros.md
 target_compile_definitions ( android-vulkan
     PRIVATE
+    -DANDROID_ARM_NEON=ON
     -DANDROID_NATIVE_MODE_PORTRAIT
     -DANDROID_VULKAN_DEBUG
     -DANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS

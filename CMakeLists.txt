@@ -58,7 +58,6 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/trigger.cpp
     app/src/main/cpp/sources/vulkan_utils.cpp
     app/src/main/cpp/sources/GXCommon/GXMath.cpp
-    app/src/main/cpp/sources/GXCommon/Intrinsics/GXMathCPU.cpp
     app/src/main/cpp/sources/GXCommon/Intrinsics/GXMathNeon.cpp
     app/src/main/cpp/sources/GXCommon/Vulkan/GXMathBackend.cpp
     app/src/main/cpp/sources/mandelbrot/mandelbrot_analytic_color.cpp
@@ -90,14 +89,21 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/rotating_mesh/game.cpp
     app/src/main/cpp/sources/rotating_mesh/game_analytic.cpp
     app/src/main/cpp/sources/rotating_mesh/game_lut.cpp
-
     app/src/main/cpp/sources/rotating_mesh/uniform_buffer.cpp
 )
+
+# ARM Neon support: All ARMv8-based devices support Neon. So no any additional compile flags need to specify.
+# See https://developer.android.com/ndk/guides/cpu-arm-neon#cmake_2
 
 target_include_directories ( android-vulkan
     PRIVATE
     ${ANDROID_NDK}/sources/third_party/vulkan/src/common
     app/src/main/cpp/include
+)
+
+# Disable libandroid-vulkan.so symbol publishing
+set_target_properties ( android-vulkan PROPERTIES
+    CXX_VISIBILITY_PRESET hidden
 )
 
 # Treat compile warnings as errors
@@ -111,12 +117,10 @@ target_compile_options ( android-vulkan PRIVATE
 # See docs/preprocessor-macros.md
 target_compile_definitions ( android-vulkan
     PRIVATE
-    -DANDROID_ARM_NEON=ON
     -DANDROID_NATIVE_MODE_PORTRAIT
-    -DANDROID_VULKAN_DEBUG
-    -DANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
-    -DANDROID_VULKAN_STRICT_MODE
-    -DGX_COMMON_USE_INTRINSICS
+#    -DANDROID_VULKAN_DEBUG
+#    -DANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+#    -DANDROID_VULKAN_STRICT_MODE
 )
 
 # Exporting native app glue entry point.

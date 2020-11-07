@@ -1,6 +1,5 @@
 #include <pbr/camera.h>
 #include <gamepad.h>
-//#include <logger.h>
 
 
 namespace pbr {

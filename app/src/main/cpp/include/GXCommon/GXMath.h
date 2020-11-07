@@ -10,16 +10,14 @@
 GX_DISABLE_COMMON_WARNINGS
 
 #include <cmath>
-#include <math.h>
 #include <limits.h>
-#include <float.h>
 
 GX_RESTORE_WARNING_STATE
 
 
-#define GX_MATH_HALF_PI         1.5707963F
-#define GX_MATH_PI              3.1415927F
-#define GX_MATH_DOUBLE_PI       6.2831853F
+[[maybe_unused]] constexpr GXFloat const GX_MATH_HALF_PI = 1.5707963F;
+[[maybe_unused]] constexpr GXFloat const GX_MATH_PI = 3.1415927F;
+[[maybe_unused]] constexpr GXFloat const GX_MATH_DOUBLE_PI = 6.2831853F;
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -376,7 +374,7 @@ struct [[maybe_unused]] GXColorHSV final
     [[maybe_unused]] GXVoid From ( GXColorRGB const &color );
 };
 
-//---------------------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 struct [[maybe_unused]] GXPreciseComplex final
 {
@@ -502,7 +500,7 @@ struct [[maybe_unused]] GXQuat final
     [[maybe_unused]] GXVoid TransformFast ( GXVec3 &out, GXVec3 const &v ) const;
 };
 
-//---------------------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 struct [[maybe_unused]] GXMat3 final
 {
@@ -578,199 +576,256 @@ struct [[maybe_unused]] GXMat3 final
     [[maybe_unused]] GXVoid Multiply ( GXMat3 const &a, GXFloat factor );
 };
 
-//---------------------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
-struct GXMat4 final
+struct [[maybe_unused]] GXMat4 final
 {
     union
     {
-        GXFloat _data[ 16u ];
-        GXFloat _m[ 4u ][ 4u ];
+        GXFloat     _data[ 16u ];
+        GXFloat     _m[ 4u ][ 4u ];
     };
 
-    GXMat4 ();
-    GXMat4 ( const GXMat4 &other );
+    [[maybe_unused]] constexpr GXMat4 ():
+        _data
+        {
+            0.0F, 0.0F, 0.0F, 0.0F,
+            0.0F, 0.0F, 0.0F, 0.0F,
+            0.0F, 0.0F, 0.0F, 0.0F,
+            0.0F, 0.0F, 0.0F, 0.0F
+        }
+    {
+        // NOTHING
+    }
 
-    GXVoid SetRotation ( const GXQuat &quaternion );
+    [[maybe_unused]] GXMat4 ( GXMat4 const &other ) = default;
+    [[maybe_unused]] GXMat4& operator = ( GXMat4 const &other ) = default;
+
+    [[maybe_unused]] GXVoid SetRotation ( GXQuat const &quaternion );
 
     // Result is valid if quaternion is normalized.
-    GXVoid SetRotationFast ( const GXQuat &quaternion );
+    [[maybe_unused]] GXVoid SetRotationFast ( GXQuat const &quaternion );
 
-    GXVoid SetOrigin ( const GXVec3 &origin );
-    GXVoid From ( const GXQuat &quaternion, const GXVec3 &origin );
-    GXVoid From ( const GXMat3 &rotation, const GXVec3 &origin );
-    GXVoid From ( const GXVec3 &zDirection, const GXVec3 &origin );
+    [[maybe_unused]] GXVoid SetOrigin ( GXVec3 const &origin );
+    [[maybe_unused]] GXVoid From ( GXQuat const &quaternion, GXVec3 const &origin );
+    [[maybe_unused]] GXVoid From ( GXMat3 const &rotation, GXVec3 const &origin );
+    [[maybe_unused]] GXVoid From ( GXVec3 const &zDirection, GXVec3 const &origin );
 
     // Result is valid if quaternion is normalized.
-    GXVoid FromFast ( const GXQuat &quaternion, const GXVec3 &origin );
+    [[maybe_unused]] GXVoid FromFast ( GXQuat const &quaternion, GXVec3 const &origin );
 
-    GXVoid SetX ( const GXVec3 &x );
-    GXVoid GetX ( GXVec3 &x ) const;
+    [[maybe_unused]] GXVoid SetX ( GXVec3 const &x );
+    [[maybe_unused]] GXVoid GetX ( GXVec3 &x ) const;
 
-    GXVoid SetY ( const GXVec3 &y );
-    GXVoid GetY ( GXVec3 &y ) const;
+    [[maybe_unused]] GXVoid SetY ( GXVec3 const &y );
+    [[maybe_unused]] GXVoid GetY ( GXVec3 &y ) const;
     
-    GXVoid SetZ ( const GXVec3 &z );
-    GXVoid GetZ ( GXVec3 &z ) const;
+    [[maybe_unused]] GXVoid SetZ ( GXVec3 const &z );
+    [[maybe_unused]] GXVoid GetZ ( GXVec3 &z ) const;
     
-    GXVoid SetW ( const GXVec3 &w );
-    GXVoid GetW ( GXVec3 &w ) const;
+    [[maybe_unused]] GXVoid SetW ( GXVec3 const &w );
+    [[maybe_unused]] GXVoid GetW ( GXVec3 &w ) const;
 
-    GXVoid Identity ();
-    GXVoid Perspective ( GXFloat fieldOfViewYRadiands, GXFloat aspectRatio, GXFloat zNear, GXFloat zFar );
-    GXVoid Ortho ( GXFloat width, GXFloat height, GXFloat zNear, GXFloat zFar );
+    [[maybe_unused]] GXVoid Identity ();
 
-    GXVoid Translation ( GXFloat x, GXFloat y, GXFloat z );
-    GXVoid TranslateTo ( GXFloat x, GXFloat y, GXFloat z );
-    GXVoid TranslateTo ( const GXVec3 &location );
+    [[maybe_unused]] GXVoid Perspective ( GXFloat fieldOfViewYRadiands,
+        GXFloat aspectRatio,
+        GXFloat zNear,
+        GXFloat zFar
+    );
 
-    GXVoid RotationX ( GXFloat angle );
-    GXVoid RotationY ( GXFloat angle );
-    GXVoid RotationZ ( GXFloat angle );
-    GXVoid RotationXY ( GXFloat pitchRadians, GXFloat yawRadians );
-    GXVoid RotationXYZ ( GXFloat pitchRadians, GXFloat yawRadians, GXFloat rollRadians );
-    GXVoid ClearRotation ( const GXMat3 &sourceMatrix );
-    GXVoid ClearRotation ( const GXMat4 &sourceMatrix );
+    [[maybe_unused]] GXVoid Ortho ( GXFloat width, GXFloat height, GXFloat zNear, GXFloat zFar );
 
-    GXVoid Scale ( GXFloat x, GXFloat y, GXFloat z );
-    GXVoid ClearScale ( GXVec3 &scale ) const;
+    [[maybe_unused]] GXVoid Translation ( GXFloat x, GXFloat y, GXFloat z );
+    [[maybe_unused]] GXVoid TranslateTo ( GXFloat x, GXFloat y, GXFloat z );
+    [[maybe_unused]] GXVoid TranslateTo ( GXVec3  const &location );
 
-    GXVoid Inverse ( const GXMat4 &sourceMatrix );
+    [[maybe_unused]] GXVoid RotationX ( GXFloat angle );
+    [[maybe_unused]] GXVoid RotationY ( GXFloat angle );
+    [[maybe_unused]] GXVoid RotationZ ( GXFloat angle );
+    [[maybe_unused]] GXVoid RotationXY ( GXFloat pitchRadians, GXFloat yawRadians );
+    [[maybe_unused]] GXVoid RotationXYZ ( GXFloat pitchRadians, GXFloat yawRadians, GXFloat rollRadians );
+    [[maybe_unused]] GXVoid ClearRotation ( GXMat3 const &sourceMatrix );
+    [[maybe_unused]] GXVoid ClearRotation ( GXMat4 const &sourceMatrix );
 
-    GXVoid Multiply ( const GXMat4 &a, const GXMat4 &b );
+    [[maybe_unused]] GXVoid Scale ( GXFloat x, GXFloat y, GXFloat z );
+    [[maybe_unused]] GXVoid ClearScale ( GXVec3 &scale ) const;
+
+    [[maybe_unused]] GXVoid Inverse ( GXMat4 const &sourceMatrix );
+
+    [[maybe_unused]] GXVoid Multiply ( GXMat4 const &a, GXMat4 const &b );
 
     // Multiply row-vector [1x4] by own matrix [4x4].
-    GXVoid MultiplyVectorMatrix ( GXVec4 &out, const GXVec4 &v ) const;
+    [[maybe_unused]] GXVoid MultiplyVectorMatrix ( GXVec4 &out, GXVec4 const &v ) const;
 
     // Multiply own matrix [4x4] by column-vector [4x1].
-    GXVoid MultiplyMatrixVector ( GXVec4 &out, const GXVec4 &v ) const;
+    [[maybe_unused]] GXVoid MultiplyMatrixVector ( GXVec4 &out, GXVec4 const &v ) const;
 
     // Multiply row-vector [1x3] by own matrix sub matrix [3x3].
-    GXVoid MultiplyAsNormal ( GXVec3 &out, const GXVec3 &v ) const;
+    [[maybe_unused]] GXVoid MultiplyAsNormal ( GXVec3 &out, GXVec3 const &v ) const;
 
     // Multiply row-vector [1x3] by own matrix sub matrix [3x3] and add own w-vector.
-    GXVoid MultiplyAsPoint ( GXVec3 &out, const GXVec3 &v ) const;
+    [[maybe_unused]] GXVoid MultiplyAsPoint ( GXVec3 &out, GXVec3 const &v ) const;
 
     // Result is valid if own matrix is perspective matrix.
-    GXVoid GetPerspectiveParams ( GXFloat &fieldOfViewYRadiands, GXFloat &aspectRatio, GXFloat &zNear, GXFloat &zFar );
+    [[maybe_unused]] GXVoid GetPerspectiveParams ( GXFloat &fieldOfViewYRadiands,
+        GXFloat &aspectRatio,
+        GXFloat &zNear,
+        GXFloat &zFar
+    );
 
     // Result is valid if own matrix is ortho matrix.
-    GXVoid GetOrthoParams ( GXFloat &width, GXFloat &height, GXFloat &zNear, GXFloat &zFar );
+    [[maybe_unused]] GXVoid GetOrthoParams ( GXFloat &width, GXFloat &height, GXFloat &zNear, GXFloat &zFar );
 
     // Result is valid if own matrix is perspective matrix.
-    GXVoid GetRayPerspective ( GXVec3 &rayView, const GXVec2 &mouseCVV ) const;
-
-    GXMat4& operator = ( const GXMat4 &other );
+    [[maybe_unused]] GXVoid GetRayPerspective ( GXVec3 &rayView, GXVec2 const &mouseCVV ) const;
 };
 
-//---------------------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
-struct GXAABB final
+struct [[maybe_unused]] GXAABB final
 {
     GXUByte     _vertices;
 
     GXVec3      _min;
     GXVec3      _max;
 
-    GXAABB ();
-    GXAABB ( const GXAABB &other );
+    [[maybe_unused]] constexpr GXAABB ():
+        _vertices ( 0U ),
+        _min ( FLT_MAX, FLT_MAX, FLT_MAX ),
+        _max ( -FLT_MAX, -FLT_MAX, -FLT_MAX )
+    {
+        // NOTHING
+    }
 
-    GXVoid Empty ();
+    [[maybe_unused]] GXAABB ( GXAABB const &other ) = default;
+    [[maybe_unused]] GXAABB& operator = ( GXAABB const &other ) = default;
 
-    GXVoid Transform ( GXAABB &bounds, const GXMat4 &transform ) const;
-    GXVoid AddVertex ( const GXVec3 &vertex );
-    GXVoid AddVertex ( GXFloat x, GXFloat y, GXFloat z );
+    [[maybe_unused]] GXVoid Empty ();
 
-    GXBool IsOverlaped ( const GXAABB &other ) const;
-    GXBool IsOverlaped ( const GXVec3 &point ) const;
-    GXBool IsOverlaped ( GXFloat x, GXFloat y, GXFloat z ) const;
+    [[maybe_unused]] GXVoid Transform ( GXAABB &bounds, GXMat4 const &transform ) const;
+    [[maybe_unused]] GXVoid AddVertex ( GXVec3 const &vertex );
+    [[maybe_unused]] GXVoid AddVertex ( GXFloat x, GXFloat y, GXFloat z );
 
-    GXVoid GetCenter ( GXVec3 &center ) const;
-    GXFloat GetWidth () const;
-    GXFloat GetHeight () const;
-    GXFloat GetDepth () const;
-    GXFloat GetSphereRadius () const;
+    [[maybe_unused]] [[nodiscard]] GXBool IsOverlaped ( GXAABB const &other ) const;
+    [[maybe_unused]] [[nodiscard]] GXBool IsOverlaped ( GXVec3 const &point ) const;
+    [[maybe_unused]] [[nodiscard]] GXBool IsOverlaped ( GXFloat x, GXFloat y, GXFloat z ) const;
 
-    GXAABB& operator = ( const GXAABB &other );
+    [[maybe_unused]] GXVoid GetCenter ( GXVec3 &center ) const;
+    [[maybe_unused]] [[nodiscard]] GXFloat GetWidth () const;
+    [[maybe_unused]] [[nodiscard]] GXFloat GetHeight () const;
+    [[maybe_unused]] [[nodiscard]] GXFloat GetDepth () const;
+    [[maybe_unused]] [[nodiscard]] GXFloat GetSphereRadius () const;
 };
 
-//---------------------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 enum class eGXPlaneClassifyVertex : GXUByte
 {
-    InFront = 0,
-    On = 1,
-    Behind = 2
+    InFront [[maybe_unused]] = 0U,
+    On [[maybe_unused]] = 1U,
+    Behind [[maybe_unused]] = 2U
 };
 
-struct GXPlane final
+struct [[maybe_unused]] GXPlane final
 {
     GXFloat     _a;
     GXFloat     _b;
     GXFloat     _c;
     GXFloat     _d;
 
-    GXPlane ();
-    GXPlane ( const GXPlane &other );
+    [[maybe_unused]] constexpr GXPlane ():
+        _a ( 0.0F ),
+        _b ( 1.0F ),
+        _c ( 0.0F ),
+        _d ( 0.0F )
+    {
+        // NOTHING
+    }
 
-    GXVoid From ( const GXVec3 &pointA, const GXVec3 &pointB, const GXVec3 &pointC );
-    GXVoid FromLineToPoint ( const GXVec3 &lineStart, const GXVec3 &lineEnd, const GXVec3 &point );
+    [[maybe_unused]] GXPlane ( GXPlane const &other ) = default;
+    [[maybe_unused]] GXPlane& operator = ( GXPlane const &other ) = default;
 
-    GXVoid Normalize ();
-    GXVoid Flip ();
+    [[maybe_unused]] GXVoid From ( GXVec3 const &pointA, GXVec3 const &pointB, GXVec3 const &pointC );
+    [[maybe_unused]] GXVoid FromLineToPoint ( GXVec3 const &lineStart, GXVec3 const &lineEnd, GXVec3 const &point );
 
-    eGXPlaneClassifyVertex ClassifyVertex ( const GXVec3 &vertex ) const;
-    eGXPlaneClassifyVertex ClassifyVertex ( GXFloat x, GXFloat y, GXFloat z ) const;
+    [[maybe_unused]] GXVoid Normalize ();
+    [[maybe_unused]] GXVoid Flip ();
 
-    GXPlane& operator = ( const GXPlane &other );
+    [[maybe_unused]] [[nodiscard]] eGXPlaneClassifyVertex ClassifyVertex ( GXVec3 const &vertex ) const;
+    [[maybe_unused]] [[nodiscard]] eGXPlaneClassifyVertex ClassifyVertex ( GXFloat x, GXFloat y, GXFloat z ) const;
 };
 
-//---------------------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
-class GXProjectionClipPlanes final
+class [[maybe_unused]] GXProjectionClipPlanes final
 {
     private:
-        GXPlane     _planes[ 6u ];
+        GXPlane     _planes[ 6U ];
 
     public:
-        GXProjectionClipPlanes ();
-        explicit GXProjectionClipPlanes ( const GXMat4 &src );
+        [[maybe_unused]] constexpr GXProjectionClipPlanes () = default;
+        [[maybe_unused]] GXProjectionClipPlanes& operator = ( GXProjectionClipPlanes const &other ) = default;
+
+        [[maybe_unused]] explicit GXProjectionClipPlanes ( GXMat4 const &src );
 
         // Normals will be directed inside view volume.
-        GXVoid From ( const GXMat4 &src );
+        [[maybe_unused]] GXVoid From ( GXMat4 const &src );
 
         // Trivial invisibility test.
-        GXBool IsVisible ( const GXAABB &bounds ) const;
-
-        GXProjectionClipPlanes& operator = ( const GXProjectionClipPlanes &clipPlanes );
+        [[maybe_unused]] [[nodiscard]] GXBool IsVisible ( GXAABB const &bounds ) const;
 
     private:
-        GXUByte PlaneTest ( GXFloat x, GXFloat y, GXFloat z ) const;
+        [[nodiscard]] GXUByte PlaneTest ( GXFloat x, GXFloat y, GXFloat z ) const;
 };
 
 //---------------------------------------------------------------------------------------------------------------------
 
-GXFloat GXCALL GXDegToRad ( GXFloat degrees );
-GXFloat GXCALL GXRadToDeg ( GXFloat radians );
+[[maybe_unused]] [[nodiscard]] GXFloat GXCALL GXDegToRad ( GXFloat degrees );
+[[maybe_unused]] [[nodiscard]] GXFloat GXCALL GXRadToDeg ( GXFloat radians );
 
-GXVoid GXCALL GXConvert3DSMaxToGXEngine ( GXVec3 &gx_out, GXFloat max_x, GXFloat max_y, GXFloat max_z );
+[[maybe_unused]] GXVoid GXCALL GXConvert3DSMaxToGXEngine ( GXVec3 &gx_out,
+    GXFloat max_x,
+    GXFloat max_y,
+    GXFloat max_z
+);
 
-GXVoid GXCALL GXRandomize ();
-GXFloat GXCALL GXRandomNormalize ();
-GXFloat GXCALL GXRandomBetween ( GXFloat from, GXFloat to );
-GXVoid GXCALL GXRandomBetween ( GXVec3 &out, const GXVec3 &from, const GXVec3 &to );
+[[maybe_unused]] GXVoid GXCALL GXRandomize ();
+[[maybe_unused]] [[nodiscard]] GXFloat GXCALL GXRandomNormalize ();
+[[maybe_unused]] [[nodiscard]] GXFloat GXCALL GXRandomBetween ( GXFloat from, GXFloat to );
+[[maybe_unused]] GXVoid GXCALL GXRandomBetween ( GXVec3 &out, GXVec3 const &from, GXVec3 const &to );
 
-GXVoid GXCALL GXGetTangentBitangent ( GXVec3 &outTangent, GXVec3 &outBitangent, GXUByte vertexID, const GXUByte* vertices, GXUPointer vertexStride, const GXUByte* uvs, GXUPointer uvStride );
+[[maybe_unused]] GXVoid GXCALL GXGetTangentBitangent ( GXVec3 &outTangent,
+    GXVec3 &outBitangent,
+    GXUByte vertexID,
+    GXUByte const* vertices,
+    GXUPointer vertexStride,
+    GXUByte const* uvs,
+    GXUPointer uvStride
+);
 
-GXFloat GXCALL GXClampf ( GXFloat value, GXFloat minValue, GXFloat maxValue );
-GXInt GXCALL GXClampi ( GXInt value, GXInt minValue, GXInt maxValue );
+[[maybe_unused]] [[nodiscard]] GXFloat GXCALL GXClampf ( GXFloat value, GXFloat minValue, GXFloat maxValue );
+[[maybe_unused]] [[nodiscard]] GXInt GXCALL GXClampi ( GXInt value, GXInt minValue, GXInt maxValue );
 
-GXFloat GXCALL GXMinf ( GXFloat a, GXFloat b );
-GXFloat GXCALL GXMaxf ( GXFloat a, GXFloat b );
+[[maybe_unused]] [[nodiscard]] GXFloat GXCALL GXMinf ( GXFloat a, GXFloat b );
+[[maybe_unused]] [[nodiscard]] GXFloat GXCALL GXMaxf ( GXFloat a, GXFloat b );
 
-GXVoid GXCALL GXGetBarycentricCoords ( GXVec3 &out, const GXVec3 &point, const GXVec3 &a, const GXVec3 &b, const GXVec3 &c );
+[[maybe_unused]] GXVoid GXCALL GXGetBarycentricCoords ( GXVec3 &out,
+    GXVec3 const &point,
+    GXVec3 const &aPivot,
+    GXVec3 const &bPivot,
+    GXVec3 const &cPivot
+);
 
-GXVoid GXCALL GXGetRayFromViewer ( GXVec3 &origin, GXVec3 &direction, GXUShort x, GXUShort y, GXUShort viewportWidth, GXUShort viewportHeight, const GXVec3& viewerLocation, const GXMat4 &viewProjectionMatrix );
+[[maybe_unused]] GXVoid GXCALL GXGetRayFromViewer ( GXVec3 &origin,
+    GXVec3 &direction,
+    GXUShort x,
+    GXUShort y,
+    GXUShort viewportWidth,
+    GXUShort viewportHeight,
+    GXVec3 const &viewerLocation,
+    GXMat4 const &viewProjectionMatrix
+);
 
 
 #endif // GX_MATH

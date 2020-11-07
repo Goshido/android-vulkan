@@ -58,6 +58,8 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/trigger.cpp
     app/src/main/cpp/sources/vulkan_utils.cpp
     app/src/main/cpp/sources/GXCommon/GXMath.cpp
+    app/src/main/cpp/sources/GXCommon/Intrinsics/GXMathCPU.cpp
+    app/src/main/cpp/sources/GXCommon/Intrinsics/GXMathNeon.cpp
     app/src/main/cpp/sources/GXCommon/Vulkan/GXMathBackend.cpp
     app/src/main/cpp/sources/mandelbrot/mandelbrot_analytic_color.cpp
     app/src/main/cpp/sources/mandelbrot/mandelbrot_base.cpp
@@ -114,6 +116,7 @@ target_compile_definitions ( android-vulkan
     -DANDROID_VULKAN_DEBUG
     -DANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
     -DANDROID_VULKAN_STRICT_MODE
+    -DGX_COMMON_USE_INTRINSICS
 )
 
 # Exporting native app glue entry point.

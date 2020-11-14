@@ -5,6 +5,12 @@
 #include <pbr/scene_desc.h>
 #include <pbr/mesh_manager.h>
 
+GX_DISABLE_COMMON_WARNINGS
+
+#include <cassert>
+
+GX_RESTORE_WARNING_STATE
+
 
 namespace pbr {
 

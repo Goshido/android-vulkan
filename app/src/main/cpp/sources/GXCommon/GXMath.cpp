@@ -6,6 +6,7 @@
 GX_DISABLE_COMMON_WARNINGS
 
 #include <array>
+#include <cassert>
 #include <cstdlib>
 #include <ctime>
 

@@ -6,6 +6,7 @@
 
 GX_DISABLE_COMMON_WARNINGS
 
+#include <cassert>
 #include <set>
 #include <shared_mutex>
 

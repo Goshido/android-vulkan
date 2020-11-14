@@ -3,6 +3,7 @@
 
 GX_DISABLE_COMMON_WARNINGS
 
+#include <cassert>
 #include <memory>
 #include <unordered_map>
 #include <GLES3/gl32.h>

@@ -22,11 +22,11 @@ struct ProgramResource final
     ProgramResource () = delete;
     explicit ProgramResource ( VkDescriptorType type, uint32_t count );
 
-    ProgramResource ( const ProgramResource &other ) = delete;
-    ProgramResource& operator = ( const ProgramResource &other ) = delete;
+    ProgramResource ( ProgramResource const & ) = default;
+    ProgramResource& operator = ( ProgramResource const & ) = default;
 
-    ProgramResource ( ProgramResource &&other ) = default;
-    ProgramResource& operator = ( ProgramResource &&other ) = default;
+    ProgramResource ( ProgramResource && ) = default;
+    ProgramResource& operator = ( ProgramResource && ) = default;
 };
 
 using DescriptorSetInfo = std::vector<ProgramResource>;

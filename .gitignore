@@ -1,6 +1,7 @@
 # Android studio
 /.gradle
 /.idea
+/app/release/
 /build/
 
 /android-vulkan.iml

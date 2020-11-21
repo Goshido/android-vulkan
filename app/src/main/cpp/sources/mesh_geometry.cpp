@@ -130,7 +130,7 @@ uint32_t MeshGeometry::GetVertexCount () const
     return _vertexCount;
 }
 
-bool MeshGeometry::IsIndexBufferPresent () const
+[[maybe_unused]] bool MeshGeometry::IsIndexBufferPresent () const
 {
     return _indexBuffer != VK_NULL_HANDLE;
 }
@@ -166,7 +166,7 @@ bool MeshGeometry::LoadMesh ( std::string &&fileName,
     return false;
 }
 
-bool MeshGeometry::LoadMesh ( uint8_t const* data,
+[[maybe_unused]] bool MeshGeometry::LoadMesh ( uint8_t const* data,
     size_t size,
     uint32_t vertexCount,
     VkBufferUsageFlags usage,

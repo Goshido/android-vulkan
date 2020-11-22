@@ -29,7 +29,7 @@ void RenderSessionStats::PrintStats ( double deltaTime )
 R"__(>>> RenderSessionStats::PrintStats:
     Submitted meshes: %zu
     Submitted vertices: %zu
-    Rendered meshed: %zu
+    Rendered meshes: %zu
     Rendered vertices: %zu
     Culling mesh percent: %zu%%
     Culling vertex percent: %zu%%

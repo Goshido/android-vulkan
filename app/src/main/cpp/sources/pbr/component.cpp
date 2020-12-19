@@ -1,4 +1,5 @@
 #include <pbr/component.h>
+#include <pbr/point_light_component_desc.h>
 #include <pbr/static_mesh_component.h>
 
 
@@ -19,6 +20,14 @@ ComponentRef Component::Create ( size_t &commandBufferConsumed,
     {
         dataRead = sizeof ( pbr::StaticMeshComponentDesc );
         return std::make_shared<StaticMeshComponent> ( commandBufferConsumed, desc, data, renderer, commandBuffers );
+    }
+
+    if ( desc._classID == ClassID::PointLight )
+    {
+        commandBufferConsumed = 0U;
+        dataRead = sizeof ( pbr::PointLightComponentDesc );
+        // TODO
+        return {};
     }
 
     return {};

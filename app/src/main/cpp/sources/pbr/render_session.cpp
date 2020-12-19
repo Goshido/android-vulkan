@@ -1201,7 +1201,7 @@ void RenderSession::SubmitOpaqueCall ( MeshRef &mesh,
     );
 }
 
-bool RenderSession::UpdateGPUData (  std::vector<VkDescriptorSet> &descriptorSetStorage,
+bool RenderSession::UpdateGPUData ( std::vector<VkDescriptorSet> &descriptorSetStorage,
     android_vulkan::Renderer &renderer
 )
 {

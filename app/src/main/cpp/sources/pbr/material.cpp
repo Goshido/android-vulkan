@@ -8,7 +8,7 @@ eMaterialType Material::GetMaterialType () const
     return _type;
 }
 
-Material::Material ( eMaterialType type ):
+Material::Material ( eMaterialType type ) noexcept:
     _type ( type )
 {
     // NOTHING

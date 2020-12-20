@@ -56,7 +56,8 @@ void StaticMeshComponent::FreeTransferResources ( android_vulkan::Renderer &rend
     if ( !_material )
         return;
 
-    auto* m = dynamic_cast<OpaqueMaterial*> ( _material.get () );
+    // Note it's safe to cast like that here. "NOLINT" is clang-tidy control comment.
+    auto* m = static_cast<OpaqueMaterial*> ( _material.get () ); // NOLINT
 
     if ( m->GetAlbedo () )
         m->GetAlbedo ()->FreeTransferResources ( renderer );

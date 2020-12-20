@@ -593,6 +593,16 @@ void RenderSession::SubmitMesh ( MeshRef &mesh,
     }
 }
 
+[[maybe_unused]] void RenderSession::SubmitLight ( Light const &light )
+{
+    if ( light.GetType () == eLightType::PointLight )
+    {
+        // Note it's safe cast like that here. "NOLINT" is a clang-tidy control comment.
+        auto const& pointLight = static_cast<PointLight const&> ( light ); // NOLINT
+        SubmitPointLight ( pointLight );
+    }
+}
+
 bool RenderSession::BeginGeometryRenderPass ( android_vulkan::Renderer &renderer )
 {
     VkDevice device = renderer.GetDevice ();
@@ -1185,7 +1195,9 @@ void RenderSession::SubmitOpaqueCall ( MeshRef &mesh,
     android_vulkan::Half4 const &color3
 )
 {
-    auto& opaqueMaterial = *dynamic_cast<OpaqueMaterial*> ( material.get () );
+    // Note it's safe to cast like that here. "NOLINT" is a clang-tidy control comment.
+    auto& opaqueMaterial = *static_cast<OpaqueMaterial*> ( material.get () ); // NOLINT
+
     auto findResult = _opaqueCalls.find ( opaqueMaterial );
 
     if ( findResult != _opaqueCalls.cend () )
@@ -1199,6 +1211,11 @@ void RenderSession::SubmitOpaqueCall ( MeshRef &mesh,
             OpaqueCall ( _maxBatchCount, _maxUniqueCount, mesh, local, color0, color1, color2, color3 )
         )
     );
+}
+
+void RenderSession::SubmitPointLight ( PointLight const &/*light*/ )
+{
+    // TODO
 }
 
 bool RenderSession::UpdateGPUData ( std::vector<VkDescriptorSet> &descriptorSetStorage,

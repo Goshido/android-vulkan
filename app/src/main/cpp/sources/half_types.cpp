@@ -4,7 +4,7 @@
 namespace android_vulkan {
 
 
-Half::Half ( float value ):
+[[maybe_unused]] Half::Half ( float value ):
     _data ( Convert ( value ) )
 {
     // NOTHING
@@ -90,7 +90,7 @@ uint16_t Half::Convert ( float value )
 
 //----------------------------------------------------------------------------------------------------------------------
 
-Half2::Half2 ( float component0, float component1 ):
+[[maybe_unused]] Half2::Half2 ( float component0, float component1 ):
     _data { Half::Convert ( component0 ), Half::Convert ( component1 ) }
 {
     // NOTHING
@@ -98,7 +98,7 @@ Half2::Half2 ( float component0, float component1 ):
 
 //----------------------------------------------------------------------------------------------------------------------
 
-Half3::Half3 ( float component0, float component1, float component2 ):
+[[maybe_unused]] Half3::Half3 ( float component0, float component1, float component2 ):
     _data { Half::Convert ( component0 ), Half::Convert ( component1 ), Half::Convert ( component2 ) }
 {
     // NOTHING

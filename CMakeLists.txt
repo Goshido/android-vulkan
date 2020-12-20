@@ -66,6 +66,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/pbr/camera.cpp
     app/src/main/cpp/sources/pbr/component.cpp
     app/src/main/cpp/sources/pbr/gbuffer.cpp
+    app/src/main/cpp/sources/pbr/light.cpp
     app/src/main/cpp/sources/pbr/material.cpp
     app/src/main/cpp/sources/pbr/material_manager.cpp
     app/src/main/cpp/sources/pbr/mesh_group.cpp
@@ -76,6 +77,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/pbr/opaque_instance_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/opaque_texture_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/pbr_game.cpp
+    app/src/main/cpp/sources/pbr/point_light.cpp
     app/src/main/cpp/sources/pbr/program.cpp
     app/src/main/cpp/sources/pbr/program_resource.cpp
     app/src/main/cpp/sources/pbr/render_session.cpp
@@ -108,6 +110,7 @@ set_target_properties ( android-vulkan PROPERTIES
 
 # Treat compile warnings as errors
 target_compile_options ( android-vulkan PRIVATE
+    -fno-rtti
     -Werror
     -Wall
     -Wextra

@@ -26,14 +26,14 @@ struct Half final
         Half ( Half && ) = default;
         Half& operator = ( Half && ) = default;
 
-        Half ( float value );
+        [[maybe_unused]] Half ( float value );
 
         ~Half () = default;
 
         [[nodiscard]] static uint16_t Convert ( float value );
 };
 
-struct Half2 final
+struct [[maybe_unused]] Half2 final
 {
     public:
         uint16_t    _data[ 2U ];
@@ -51,12 +51,12 @@ struct Half2 final
         Half2 ( Half2 && ) = default;
         Half2& operator = ( Half2 && ) = default;
 
-        Half2 ( float component0, float component1 );
+        [[maybe_unused]] Half2 ( float component0, float component1 );
 
         ~Half2 () = default;
 };
 
-struct Half3 final
+struct [[maybe_unused]] Half3 final
 {
     public:
         uint16_t    _data[ 3U ];
@@ -74,7 +74,7 @@ struct Half3 final
         Half3 ( Half3 && ) = default;
         Half3& operator = ( Half3 && ) = default;
 
-        Half3 ( float component0, float component1, float component2 );
+        [[maybe_unused]] Half3 ( float component0, float component1, float component2 );
 
         ~Half3 () = default;
 };

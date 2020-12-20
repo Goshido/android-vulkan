@@ -25,14 +25,9 @@ MeshRef MeshManager::LoadMesh ( size_t &commandBufferConsumed,
         return findResult->second;
 
     if ( !mesh->LoadMesh ( fileName, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, renderer, commandBuffer ) )
-    {
         mesh = nullptr;
-    }
     else
-    {
         _meshStorage.insert ( std::make_pair ( std::string_view ( mesh->GetName () ), mesh ) );
-        android_vulkan::LogDebug ( "Mesh %s loaded.", fileName );
-    }
 
     commandBufferConsumed = 1U;
     return mesh;

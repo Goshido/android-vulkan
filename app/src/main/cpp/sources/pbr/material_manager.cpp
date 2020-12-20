@@ -30,7 +30,8 @@ MaterialRef MaterialManager::LoadMaterial ( size_t &commandBufferConsumed,
     uint8_t const* data = content.data ();
     auto const* header = reinterpret_cast<MaterialHeader const*> ( data );
 
-    auto* opaqueMaterial = dynamic_cast<OpaqueMaterial*> ( material.get () );
+    // Note it's safe to cast like that here. "NOLINT" is clang-tidy control comment.
+    auto* opaqueMaterial = static_cast<OpaqueMaterial*> ( material.get () ); // NOLINT
 
     auto loadTexture = [ & ] ( uint64_t nameOffset, android_vulkan::eFormat format ) -> Texture2DRef {
         auto const* name = reinterpret_cast<char const*> ( data + nameOffset );
@@ -42,14 +43,9 @@ MaterialRef MaterialManager::LoadMaterial ( size_t &commandBufferConsumed,
         Texture2DRef texture = std::make_shared<android_vulkan::Texture2D> ();
 
         if ( !texture->UploadData ( name, format, true, renderer, commandBuffers[ commandBufferConsumed ] ) )
-        {
             texture = nullptr;
-        }
         else
-        {
             _textureStorage.insert ( std::make_pair ( std::string_view ( texture->GetName () ), texture ) );
-            android_vulkan::LogDebug ( "Texture %s loaded", name );
-        }
 
         ++commandBufferConsumed;
         return texture;

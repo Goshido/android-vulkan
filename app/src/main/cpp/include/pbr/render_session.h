@@ -7,6 +7,7 @@
 #include "opaque_program.h"
 #include "opaque_call.h"
 #include "opaque_material.h"
+#include "point_light.h"
 #include "render_session_stats.h"
 #include "texture_present_program.h"
 #include "uniform_buffer_pool.h"
@@ -103,6 +104,8 @@ class RenderSession final
             android_vulkan::Half4 const &color3
         );
 
+        [[maybe_unused]] void SubmitLight ( Light const &/*light*/ );
+
     private:
         [[nodiscard]] bool BeginGeometryRenderPass ( android_vulkan::Renderer &renderer );
         void CleanupTransferResources ( android_vulkan::Renderer &renderer );
@@ -131,6 +134,8 @@ class RenderSession final
             android_vulkan::Half4 const &color2,
             android_vulkan::Half4 const &color3
         );
+
+        void SubmitPointLight ( PointLight const &light );
 
         [[nodiscard]] bool UpdateGPUData ( std::vector<VkDescriptorSet> &descriptorSetStorage,
             android_vulkan::Renderer &renderer

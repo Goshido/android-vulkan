@@ -15,7 +15,7 @@ struct PointLightComponentDesc final : public ComponentDesc
     android_vulkan::AABB            _bounds;
     android_vulkan::ColorUnorm      _hue;
     float                           _intensity;
-    android_vulkan::Vec3            _position;
+    android_vulkan::Vec3            _location;
 };
 
 #pragma pack ( pop )

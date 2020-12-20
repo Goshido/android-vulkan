@@ -28,16 +28,6 @@ enum class eGame : uint16_t
     RotatingMeshLUT
 };
 
-static std::map<eGame, std::shared_ptr<Game>> const g_Games =
-{
-    { eGame::MandelbrotAnalyticColor, std::make_shared<mandelbrot::MandelbrotAnalyticColor> () },
-    { eGame::MandelbrotLutColor, std::make_shared<mandelbrot::MandelbrotLUTColor> () },
-    { eGame::PBR, std::make_shared<pbr::PBRGame> () },
-    { eGame::Rainbow, std::make_shared<rainbow::Rainbow> () },
-    { eGame::RotatingMeshAnalytic, std::make_shared<rotating_mesh::GameAnalytic> () },
-    { eGame::RotatingMeshLUT, std::make_shared<rotating_mesh::GameLUT> () }
-};
-
 } // namespace android_vulkan
 
 void android_main ( android_app* app )
@@ -49,9 +39,17 @@ void android_main ( android_app* app )
 
 #endif // ANDROID_VULKAN_DEBUG
 
-    android_vulkan::Core core ( *app,
-        *( android_vulkan::g_Games.find ( android_vulkan::eGame::PBR )->second )
-    );
+    std::map<android_vulkan::eGame, std::shared_ptr<android_vulkan::Game>> const games =
+    {
+        { android_vulkan::eGame::MandelbrotAnalyticColor, std::make_shared<mandelbrot::MandelbrotAnalyticColor> () },
+        { android_vulkan::eGame::MandelbrotLutColor, std::make_shared<mandelbrot::MandelbrotLUTColor> () },
+        { android_vulkan::eGame::PBR, std::make_shared<pbr::PBRGame> () },
+        { android_vulkan::eGame::Rainbow, std::make_shared<rainbow::Rainbow> () },
+        { android_vulkan::eGame::RotatingMeshAnalytic, std::make_shared<rotating_mesh::GameAnalytic> () },
+        { android_vulkan::eGame::RotatingMeshLUT, std::make_shared<rotating_mesh::GameLUT> () }
+    };
+
+    android_vulkan::Core core ( *app, *( games.find ( android_vulkan::eGame::PBR )->second ) );
 
     for ( ; ; )
     {

@@ -29,11 +29,11 @@ class Material
         [[nodiscard]] eMaterialType GetMaterialType () const;
 
     protected:
-        explicit Material ( eMaterialType type );
+        explicit Material ( eMaterialType type ) noexcept;
         virtual ~Material () = default;
 
-        Material ( const Material &other ) = default;
-        Material& operator = ( const Material &other ) = default;
+        Material ( const Material & ) = default;
+        Material& operator = ( const Material & ) = default;
 };
 
 } // namespace pbr

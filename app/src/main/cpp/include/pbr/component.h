@@ -32,7 +32,7 @@ class Component
         );
 
     protected:
-        Component () = default;
+        Component () noexcept = default;
 };
 
 } // namespace pbr

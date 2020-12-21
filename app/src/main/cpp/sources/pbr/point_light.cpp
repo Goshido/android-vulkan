@@ -49,18 +49,16 @@ constexpr static float const DEFAULT_SIZE = 1.0F;
     _bounds.AddVertex ( maximum );
 }
 
-[[maybe_unused]] PointLight::PointLight ( android_vulkan::Half3 const &hue,
+void PointLight::Init ( android_vulkan::Half3 const &hue,
     android_vulkan::Half intensity,
     GXVec3 const &location,
     GXAABB const &bounds
-) noexcept:
-    Light ( eLightType::PointLight ),
-    _bounds ( bounds ),
-    _hue ( hue ),
-    _intensity ( intensity ),
-    _location ( location )
+)
 {
-    // NOTHING
+    _bounds = bounds;
+    _hue = hue;
+    _intensity = intensity;
+    _location = location;
 }
 
 [[maybe_unused]] GXAABB const& PointLight::GetBounds () const

@@ -13,6 +13,15 @@ target_include_directories ( native_app_glue
     ${ANDROID_NDK}/sources/android/native_app_glue
 )
 
+target_compile_options ( native_app_glue PRIVATE
+    -fno-exceptions
+    -fno-rtti
+)
+
+set_target_properties ( native_app_glue PROPERTIES
+    CXX_VISIBILITY_PRESET hidden
+)
+
 # Android NDK Vulkan wrapper
 
 add_library ( vulkan-wrapper
@@ -32,6 +41,15 @@ target_include_directories ( vulkan-wrapper
 target_compile_definitions( vulkan-wrapper
     PUBLIC
     VK_USE_PLATFORM_ANDROID_KHR
+)
+
+target_compile_options ( vulkan-wrapper PRIVATE
+    -fno-exceptions
+    -fno-rtti
+)
+
+set_target_properties ( vulkan-wrapper PROPERTIES
+    CXX_VISIBILITY_PRESET hidden
 )
 
 # log support
@@ -78,6 +96,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/pbr/opaque_texture_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/pbr_game.cpp
     app/src/main/cpp/sources/pbr/point_light.cpp
+    app/src/main/cpp/sources/pbr/point_light_component.cpp
     app/src/main/cpp/sources/pbr/program.cpp
     app/src/main/cpp/sources/pbr/program_resource.cpp
     app/src/main/cpp/sources/pbr/render_session.cpp
@@ -110,6 +129,7 @@ set_target_properties ( android-vulkan PROPERTIES
 
 # Treat compile warnings as errors
 target_compile_options ( android-vulkan PRIVATE
+    -fno-exceptions
     -fno-rtti
     -Werror
     -Wall

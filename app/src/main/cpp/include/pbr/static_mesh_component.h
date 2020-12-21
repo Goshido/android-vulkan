@@ -5,7 +5,6 @@
 #include "component.h"
 #include "static_mesh_component_desc.h"
 #include "types.h"
-#include <GXCommon/GXMath.h>
 
 
 namespace pbr {
@@ -32,11 +31,11 @@ class StaticMeshComponent final : public Component
 
         // "commandBuffer" array MUST contain at least 5 free command buffers.
         explicit StaticMeshComponent ( size_t &commandBufferConsumed,
-            ComponentDesc const &desc,
+            StaticMeshComponentDesc const &desc,
             uint8_t const *data,
             android_vulkan::Renderer &renderer,
             VkCommandBuffer const* commandBuffers
-        );
+        ) noexcept;
 
         ~StaticMeshComponent () override = default;
 

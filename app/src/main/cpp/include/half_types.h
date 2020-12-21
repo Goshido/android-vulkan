@@ -101,6 +101,7 @@ struct Half4 final
 
         ~Half4 () = default;
 
+        // UNORM converter.
         void From ( uint8_t component0, uint8_t component1, uint8_t component2, uint8_t component3 );
 };
 

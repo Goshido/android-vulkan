@@ -2858,7 +2858,7 @@ void Renderer::PrintVkVersion ( char const* indent, char const* name, uint32_t v
     // Note vulkan_core.h is a little bit dirty from clang-tidy point of view.
     // So suppress this third-party mess via "NOLINT" control comment.
     uint32_t const major = VK_VERSION_MAJOR ( version ); // NOLINT
-    uint32_t const minor = VK_VERSION_MAJOR ( version ); // NOLINT
+    uint32_t const minor = VK_VERSION_MINOR ( version ); // NOLINT
     uint32_t const patch = VK_VERSION_PATCH ( version ); // NOLINT
 
     LogInfo ( "%s%s: %u.%u.%u", indent, name, major, minor, patch );

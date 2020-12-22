@@ -41,8 +41,8 @@ class MeshGeometry final
 
         ~MeshGeometry () = default;
 
-        void FreeResources ( android_vulkan::Renderer &renderer );
-        void FreeTransferResources ( android_vulkan::Renderer &renderer );
+        void FreeResources ( Renderer &renderer );
+        void FreeTransferResources ( Renderer &renderer );
 
         [[maybe_unused]] [[nodiscard]] GXAABB const& GetBounds () const;
         [[nodiscard]] VkBuffer const& GetVertexBuffer () const;
@@ -57,7 +57,7 @@ class MeshGeometry final
 
         [[nodiscard]] bool LoadMesh ( std::string &&fileName,
             VkBufferUsageFlags usage,
-            android_vulkan::Renderer &renderer,
+            Renderer &renderer,
             VkCommandBuffer commandBuffer
         );
 
@@ -65,22 +65,22 @@ class MeshGeometry final
             size_t size,
             uint32_t vertexCount,
             VkBufferUsageFlags usage,
-            android_vulkan::Renderer &renderer,
+            Renderer &renderer,
             VkCommandBuffer commandBuffer
         );
 
     private:
-        void FreeResourceInternal ( android_vulkan::Renderer &renderer );
+        void FreeResourceInternal ( Renderer &renderer );
 
         [[nodiscard]] bool LoadFromMesh ( std::string &&fileName,
             VkBufferUsageFlags usage,
-            android_vulkan::Renderer &renderer,
+            Renderer &renderer,
             VkCommandBuffer commandBuffer
         );
 
         [[nodiscard]] bool LoadFromMesh2 ( std::string &&fileName,
             VkBufferUsageFlags usage,
-            android_vulkan::Renderer &renderer,
+            Renderer &renderer,
             VkCommandBuffer commandBuffer
         );
 
@@ -90,7 +90,7 @@ class MeshGeometry final
             VkBuffer const* dstBuffers,
             uint8_t const* data,
             size_t dataSize,
-            android_vulkan::Renderer &renderer,
+            Renderer &renderer,
             VkCommandBuffer commandBuffer
         );
 
@@ -98,7 +98,7 @@ class MeshGeometry final
             size_t size,
             uint32_t vertexCount,
             VkBufferUsageFlags usage,
-            android_vulkan::Renderer &renderer,
+            Renderer &renderer,
             VkCommandBuffer commandBuffer
         );
 };

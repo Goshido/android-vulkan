@@ -187,7 +187,7 @@ bool RenderSession::End ( ePresentTarget /*target*/, double deltaTime, android_v
 
     uint32_t framebufferIndex = UINT32_MAX;
 
-    bool result = renderer.CheckVkResult (
+    bool result = android_vulkan::Renderer::CheckVkResult (
         vkAcquireNextImageKHR ( renderer.GetDevice (),
             renderer.GetSwapchain (),
             UINT64_MAX,
@@ -247,7 +247,7 @@ bool RenderSession::End ( ePresentTarget /*target*/, double deltaTime, android_v
     vkCmdDraw ( _geometryPassRendering, 4U, 1U, 0U, 0U );
     vkCmdEndRenderPass ( _geometryPassRendering );
 
-    result = renderer.CheckVkResult ( vkEndCommandBuffer ( _geometryPassRendering ),
+    result = android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( _geometryPassRendering ),
         "RenderSession::End",
         "Can't end command buffer"
     );
@@ -255,7 +255,8 @@ bool RenderSession::End ( ePresentTarget /*target*/, double deltaTime, android_v
     if ( !result )
         return false;
 
-    result = renderer.CheckVkResult ( vkQueueSubmit ( renderer.GetQueue (), 1U, &_submitInfoRender, _geometryPassFence ),
+    result = android_vulkan::Renderer::CheckVkResult (
+        vkQueueSubmit ( renderer.GetQueue (), 1U, &_submitInfoRender, _geometryPassFence ),
         "RenderSession::End",
         "Can't submit geometry render command buffer"
     );
@@ -269,7 +270,7 @@ bool RenderSession::End ( ePresentTarget /*target*/, double deltaTime, android_v
     _presentInfo.pSwapchains = &renderer.GetSwapchain ();
     _presentInfo.pImageIndices = &framebufferIndex;
 
-    result = renderer.CheckVkResult ( vkQueuePresentKHR ( renderer.GetQueue (), &_presentInfo ),
+    result = android_vulkan::Renderer::CheckVkResult ( vkQueuePresentKHR ( renderer.GetQueue (), &_presentInfo ),
         "RenderSession::EndFrame",
         "Can't present frame"
     );
@@ -277,7 +278,10 @@ bool RenderSession::End ( ePresentTarget /*target*/, double deltaTime, android_v
     if ( !result )
         return false;
 
-    result = renderer.CheckVkResult ( presentResult, "RenderSession::EndFrame", "Present queue has been failed" );
+    result = android_vulkan::Renderer::CheckVkResult ( presentResult,
+        "RenderSession::EndFrame",
+        "Present queue has been failed"
+    );
 
     if ( !result )
         return false;
@@ -328,7 +332,8 @@ bool RenderSession::Init ( android_vulkan::Renderer &renderer, VkExtent2D const 
 
     VkDevice device = renderer.GetDevice ();
 
-    bool result = renderer.CheckVkResult ( vkCreateFence ( device, &fenceInfo, nullptr, &_geometryPassFence ),
+    bool result = android_vulkan::Renderer::CheckVkResult (
+        vkCreateFence ( device, &fenceInfo, nullptr, &_geometryPassFence ),
         "RenderSession::Init",
         "Can't create GBuffer fence"
     );
@@ -365,7 +370,7 @@ bool RenderSession::Init ( android_vulkan::Renderer &renderer, VkExtent2D const 
     info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
     info.queueFamilyIndex = renderer.GetQueueFamilyIndex ();
 
-    result = renderer.CheckVkResult ( vkCreateCommandPool ( device, &info, nullptr, &_commandPool ),
+    result = android_vulkan::Renderer::CheckVkResult ( vkCreateCommandPool ( device, &info, nullptr, &_commandPool ),
         "RenderSession::Init",
         "Can't create command pool"
     );
@@ -386,7 +391,8 @@ bool RenderSession::Init ( android_vulkan::Renderer &renderer, VkExtent2D const 
     allocateInfo.commandBufferCount = static_cast<uint32_t> ( std::size ( commandBuffers ) );
     allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 
-    result = renderer.CheckVkResult ( vkAllocateCommandBuffers ( device, &allocateInfo, commandBuffers ),
+    result = android_vulkan::Renderer::CheckVkResult (
+        vkAllocateCommandBuffers ( device, &allocateInfo, commandBuffers ),
         "RenderSession::Init",
         "Can't allocate command buffers"
     );
@@ -607,7 +613,7 @@ bool RenderSession::BeginGeometryRenderPass ( android_vulkan::Renderer &renderer
 {
     VkDevice device = renderer.GetDevice ();
 
-    bool result = renderer.CheckVkResult (
+    bool result = android_vulkan::Renderer::CheckVkResult (
         vkWaitForFences ( device, 1U, &_geometryPassFence, VK_TRUE, UINT64_MAX ),
         "RenderSession::BeginGeometryRenderPass",
         "Can't wait for geometry pass fence"
@@ -616,7 +622,7 @@ bool RenderSession::BeginGeometryRenderPass ( android_vulkan::Renderer &renderer
     if ( !result )
         return false;
 
-    result = renderer.CheckVkResult ( vkResetFences ( device, 1U, &_geometryPassFence ),
+    result = android_vulkan::Renderer::CheckVkResult ( vkResetFences ( device, 1U, &_geometryPassFence ),
         "RenderSession::BeginGeometryRenderPass",
         "Can't reset geometry pass fence"
     );
@@ -630,7 +636,7 @@ bool RenderSession::BeginGeometryRenderPass ( android_vulkan::Renderer &renderer
     beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
     beginInfo.pInheritanceInfo = nullptr;
 
-    result = renderer.CheckVkResult ( vkBeginCommandBuffer ( _geometryPassRendering, &beginInfo ),
+    result = android_vulkan::Renderer::CheckVkResult ( vkBeginCommandBuffer ( _geometryPassRendering, &beginInfo ),
         "RenderSession::End",
         "Can't begin geometry pass rendering command buffer"
     );
@@ -689,7 +695,7 @@ bool RenderSession::CreateGBufferFramebuffer ( android_vulkan::Renderer &rendere
     framebufferInfo.layers = 1U;
     framebufferInfo.renderPass = _gBufferRenderPass;
 
-    const bool result = renderer.CheckVkResult (
+    const bool result = android_vulkan::Renderer::CheckVkResult (
         vkCreateFramebuffer ( renderer.GetDevice (), &framebufferInfo, nullptr, &_gBufferFramebuffer ),
         "RenderSession::CreateGBufferFramebuffer",
         "Can't create GBuffer framebuffer"
@@ -806,7 +812,7 @@ bool RenderSession::CreateGBufferRenderPass ( android_vulkan::Renderer &renderer
     renderPassInfo.attachmentCount = static_cast<uint32_t> ( std::size ( attachments ) );
     renderPassInfo.pAttachments = attachments;
 
-    bool const result = renderer.CheckVkResult (
+    bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateRenderPass ( renderer.GetDevice (), &renderPassInfo, nullptr, &_gBufferRenderPass ),
         "RenderSession::CreateGBufferRenderPass",
         "Can't create GBuffer render pass"
@@ -843,7 +849,7 @@ bool RenderSession::CreatePresentFramebuffers ( android_vulkan::Renderer &render
     {
         framebufferInfo.pAttachments = &renderer.GetPresentImageView ( i );
 
-        bool const result = renderer.CheckVkResult (
+        bool const result = android_vulkan::Renderer::CheckVkResult (
             vkCreateFramebuffer ( device, &framebufferInfo, nullptr, &framebuffer ),
             "RenderSession::CreatePresentFramebuffers",
             "Can't create a framebuffer"
@@ -912,7 +918,7 @@ bool RenderSession::CreatePresentRenderPass ( android_vulkan::Renderer &renderer
     info.dependencyCount = 0U;
     info.pDependencies = nullptr;
 
-    bool const result = renderer.CheckVkResult (
+    bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateRenderPass ( renderer.GetDevice (), &info, nullptr, &_presentRenderPass ),
         "RenderSession::CreatePresentRenderPass",
         "Can't create render pass"
@@ -934,7 +940,7 @@ bool RenderSession::CreateSyncPrimitives ( android_vulkan::Renderer &renderer )
 
     VkDevice device = renderer.GetDevice ();
 
-    bool result = renderer.CheckVkResult (
+    bool result = android_vulkan::Renderer::CheckVkResult (
         vkCreateSemaphore ( device, &semaphoreInfo, nullptr, &_presentRenderPassEndSemaphore ),
         "RenderSession::CreateSyncPrimitives",
         "Can't create render pass end semaphore"
@@ -945,7 +951,7 @@ bool RenderSession::CreateSyncPrimitives ( android_vulkan::Renderer &renderer )
 
     AV_REGISTER_SEMAPHORE ( "RenderSession::_presentRenderPassEndSemaphore" )
 
-    result = renderer.CheckVkResult (
+    result = android_vulkan::Renderer::CheckVkResult (
         vkCreateSemaphore ( device, &semaphoreInfo, nullptr, &_presentRenderTargetAcquiredSemaphore ),
         "RenderSession::CreateSyncPrimitives",
         "Can't create render target acquired semaphore"
@@ -1246,7 +1252,7 @@ bool RenderSession::UpdateGPUData ( std::vector<VkDescriptorSet> &descriptorSetS
     beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
     beginInfo.pInheritanceInfo = nullptr;
 
-    bool result = renderer.CheckVkResult ( vkBeginCommandBuffer ( _geometryPassTransfer, &beginInfo ),
+    bool result = android_vulkan::Renderer::CheckVkResult ( vkBeginCommandBuffer ( _geometryPassTransfer, &beginInfo ),
         "RenderSession::UpdateGPUData",
         "Can't begin geometry pass transfer command buffer"
     );
@@ -1291,7 +1297,7 @@ bool RenderSession::UpdateGPUData ( std::vector<VkDescriptorSet> &descriptorSetS
     DestroyDescriptorPool ( renderer );
     VkDevice device = renderer.GetDevice ();
 
-    result = renderer.CheckVkResult (
+    result = android_vulkan::Renderer::CheckVkResult (
         vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_descriptorPool ),
         "RenderSession::UpdateGPUData",
         "Can't create descriptor pool"
@@ -1330,7 +1336,8 @@ bool RenderSession::UpdateGPUData ( std::vector<VkDescriptorSet> &descriptorSetS
     descriptorSetStorage.resize ( static_cast<size_t> ( poolInfo.maxSets ) );
     VkDescriptorSet* descriptorSets = descriptorSetStorage.data ();
 
-    result = renderer.CheckVkResult ( vkAllocateDescriptorSets ( device, &allocateInfo, descriptorSets ),
+    result = android_vulkan::Renderer::CheckVkResult (
+        vkAllocateDescriptorSets ( device, &allocateInfo, descriptorSets ),
         "RenderSession::UpdateGPUData",
         "Can't allocate descriptor sets"
     );
@@ -1585,7 +1592,7 @@ bool RenderSession::UpdateGPUData ( std::vector<VkDescriptorSet> &descriptorSetS
         nullptr
     );
 
-    result = renderer.CheckVkResult ( vkEndCommandBuffer ( _geometryPassTransfer ),
+    result = android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( _geometryPassTransfer ),
         "RenderSession::UpdateGPUData",
         "Can't end transfer command buffer"
     );
@@ -1593,7 +1600,8 @@ bool RenderSession::UpdateGPUData ( std::vector<VkDescriptorSet> &descriptorSetS
     if ( !result )
         return false;
 
-    return renderer.CheckVkResult ( vkQueueSubmit ( renderer.GetQueue (), 1U, &_submitInfoTransfer, VK_NULL_HANDLE ),
+    return android_vulkan::Renderer::CheckVkResult (
+        vkQueueSubmit ( renderer.GetQueue (), 1U, &_submitInfoTransfer, VK_NULL_HANDLE ),
         "RenderSession::UpdateGPUData",
         "Can't submit geometry transfer command buffer"
     );

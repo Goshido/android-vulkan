@@ -74,7 +74,7 @@ bool MandelbrotBase::OnFrame ( android_vulkan::Renderer &renderer, double /*delt
     submitInfo.signalSemaphoreCount = 1U;
     submitInfo.pSignalSemaphores = &_renderPassEndedSemaphore;
 
-    const bool result = renderer.CheckVkResult (
+    const bool result = android_vulkan::Renderer::CheckVkResult (
         vkQueueSubmit ( renderer.GetQueue (), 1U, &submitInfo, VK_NULL_HANDLE ),
         "MandelbrotBase::OnFrame",
         "Can't submit command buffer"
@@ -115,7 +115,7 @@ MandelbrotBase::MandelbrotBase ( const char* fragmentShaderSpirV ):
 
 bool MandelbrotBase::BeginFrame ( uint32_t &presentationImageIndex, android_vulkan::Renderer &renderer )
 {
-    return renderer.CheckVkResult (
+    return android_vulkan::Renderer::CheckVkResult (
         vkAcquireNextImageKHR ( renderer.GetDevice (),
             renderer.GetSwapchain (),
             UINT64_MAX,
@@ -143,7 +143,8 @@ bool MandelbrotBase::EndFrame ( uint32_t presentationImageIndex, android_vulkan:
     presentInfoKHR.pImageIndices = &presentationImageIndex;
     presentInfoKHR.pResults = &presentResult;
 
-    const bool result = renderer.CheckVkResult ( vkQueuePresentKHR ( renderer.GetQueue (), &presentInfoKHR ),
+    const bool result = android_vulkan::Renderer::CheckVkResult (
+        vkQueuePresentKHR ( renderer.GetQueue (), &presentInfoKHR ),
         "MandelbrotBase::EndFrame",
         "Can't present frame"
     );
@@ -151,7 +152,10 @@ bool MandelbrotBase::EndFrame ( uint32_t presentationImageIndex, android_vulkan:
     if ( !result )
         return false;
 
-    return renderer.CheckVkResult ( presentResult, "MandelbrotBase::EndFrame", "Present queue has been failed" );
+    return android_vulkan::Renderer::CheckVkResult ( presentResult,
+        "MandelbrotBase::EndFrame",
+        "Present queue has been failed"
+    );
 }
 
 bool MandelbrotBase::CreateCommandPool ( android_vulkan::Renderer &renderer )
@@ -164,7 +168,7 @@ bool MandelbrotBase::CreateCommandPool ( android_vulkan::Renderer &renderer )
 
     VkDevice device = renderer.GetDevice ();
 
-    bool result = renderer.CheckVkResult (
+    bool result = android_vulkan::Renderer::CheckVkResult (
         vkCreateCommandPool ( device, &commandPoolInfo, nullptr, &_commandPool ),
         "MandelbrotBase::CreateCommandBuffer",
         "Can't create command pool"
@@ -214,7 +218,8 @@ bool MandelbrotBase::CreateFramebuffers ( android_vulkan::Renderer &renderer )
     {
         createInfo.pAttachments = &renderer.GetPresentImageView ( i );
 
-        bool result = renderer.CheckVkResult ( vkCreateFramebuffer ( device, &createInfo, nullptr, &framebuffer ),
+        bool result = android_vulkan::Renderer::CheckVkResult (
+            vkCreateFramebuffer ( device, &createInfo, nullptr, &framebuffer ),
             "MandelbrotBase::CreateFramebuffers",
             "Can't create framebuffer"
         );
@@ -255,7 +260,7 @@ bool MandelbrotBase::CreatePresentationSyncPrimitive ( android_vulkan::Renderer 
     semaphoreCreateInfo.pNext = nullptr;
     semaphoreCreateInfo.flags = 0U;
 
-    bool result = renderer.CheckVkResult (
+    bool result = android_vulkan::Renderer::CheckVkResult (
         vkCreateSemaphore ( device, &semaphoreCreateInfo, nullptr, &_renderTargetAcquiredSemaphore ),
         "MandelbrotBase::CreatePresentationSyncPrimitive",
         "Can't create render target acquired semaphore"
@@ -269,7 +274,7 @@ bool MandelbrotBase::CreatePresentationSyncPrimitive ( android_vulkan::Renderer 
 
     AV_REGISTER_SEMAPHORE ( "MandelbrotBase::_renderTargetAcquiredSemaphore" )
 
-    result = renderer.CheckVkResult (
+    result = android_vulkan::Renderer::CheckVkResult (
         vkCreateSemaphore ( device, &semaphoreCreateInfo, nullptr, &_renderPassEndedSemaphore ),
         "MandelbrotBase::CreatePresentationSyncPrimitive",
         "Can't create render pass ended semaphore"
@@ -468,7 +473,7 @@ bool MandelbrotBase::CreatePipeline ( android_vulkan::Renderer &renderer )
     pipelineInfo.pDynamicState = nullptr;
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 
-    result = renderer.CheckVkResult (
+    result = android_vulkan::Renderer::CheckVkResult (
         vkCreateGraphicsPipelines ( renderer.GetDevice (), VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
         "MandelbrotBase::CreatePipeline",
         "Can't create pipeline"
@@ -552,7 +557,7 @@ bool MandelbrotBase::CreateRenderPass ( android_vulkan::Renderer &renderer )
     renderPassCreateInfo.dependencyCount = 0U;
     renderPassCreateInfo.pDependencies = nullptr;
 
-    const bool result = renderer.CheckVkResult (
+    const bool result = android_vulkan::Renderer::CheckVkResult (
         vkCreateRenderPass ( renderer.GetDevice (), &renderPassCreateInfo, nullptr, &_renderPass ),
         "MandelbrotBase::CreateRenderPass",
         "Can't create render pass"

@@ -98,7 +98,7 @@ bool UniformBuffer::Init ( android_vulkan::Renderer &renderer,
     allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     allocateInfo.commandPool = commandPool;
 
-    return renderer.CheckVkResult (
+    return android_vulkan::Renderer::CheckVkResult (
         vkAllocateCommandBuffers ( renderer.GetDevice (), &allocateInfo, &_commandBuffer ),
         "UniformBuffer::Init",
         "Can't allocate command buffer"
@@ -118,7 +118,7 @@ bool UniformBuffer::Update ( const uint8_t* data, size_t size )
     VkDevice device = _renderer->GetDevice ();
     void* dst = nullptr;
 
-    bool result = _renderer->CheckVkResult ( vkMapMemory ( device, _transferMemory, 0U, size, 0U, &dst ),
+    bool result = android_vulkan::Renderer::CheckVkResult ( vkMapMemory ( device, _transferMemory, 0U, size, 0U, &dst ),
         "UniformBuffer::Update",
         "Can't map transfer memory"
     );
@@ -140,7 +140,8 @@ bool UniformBuffer::Update ( const uint8_t* data, size_t size )
     submitInfo.signalSemaphoreCount = 0U;
     submitInfo.pSignalSemaphores = nullptr;
 
-    return _renderer->CheckVkResult ( vkQueueSubmit ( _renderer->GetQueue (), 1U, &submitInfo, VK_NULL_HANDLE ),
+    return android_vulkan::Renderer::CheckVkResult (
+        vkQueueSubmit ( _renderer->GetQueue (), 1U, &submitInfo, VK_NULL_HANDLE ),
         "UniformBuffer::Update",
         "Can't submit upload command"
     );
@@ -160,7 +161,7 @@ bool UniformBuffer::InitResources ( size_t size )
     bufferInfo.queueFamilyIndexCount = 0U;
     bufferInfo.pQueueFamilyIndices = nullptr;
 
-    bool result = _renderer->CheckVkResult ( vkCreateBuffer ( device, &bufferInfo, nullptr, &_buffer ),
+    bool result = android_vulkan::Renderer::CheckVkResult ( vkCreateBuffer ( device, &bufferInfo, nullptr, &_buffer ),
         "UniformBuffer::InitResources",
         "Can't create buffer"
     );
@@ -187,7 +188,7 @@ bool UniformBuffer::InitResources ( size_t size )
 
     AV_REGISTER_DEVICE_MEMORY ( "UniformBuffer::_bufferMemory" )
 
-    result = _renderer->CheckVkResult ( vkBindBufferMemory ( device, _buffer, _bufferMemory, 0U ),
+    result = android_vulkan::Renderer::CheckVkResult ( vkBindBufferMemory ( device, _buffer, _bufferMemory, 0U ),
         "UniformBuffer::InitResources",
         "Can't bind buffer memory"
     );
@@ -200,7 +201,7 @@ bool UniformBuffer::InitResources ( size_t size )
 
     bufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 
-    result = _renderer->CheckVkResult ( vkCreateBuffer ( device, &bufferInfo, nullptr, &_transfer ),
+    result = android_vulkan::Renderer::CheckVkResult ( vkCreateBuffer ( device, &bufferInfo, nullptr, &_transfer ),
         "UniformBuffer::InitResources",
         "Can't create transfer buffer"
     );
@@ -225,7 +226,7 @@ bool UniformBuffer::InitResources ( size_t size )
 
     AV_REGISTER_DEVICE_MEMORY ( "UniformBuffer::_transferMemory" )
 
-    result = _renderer->CheckVkResult ( vkBindBufferMemory ( device, _transfer, _transferMemory, 0U ),
+    result = android_vulkan::Renderer::CheckVkResult ( vkBindBufferMemory ( device, _transfer, _transferMemory, 0U ),
         "UniformBuffer::InitResources",
         "Can't bind transfer memory"
     );
@@ -242,7 +243,7 @@ bool UniformBuffer::InitResources ( size_t size )
     beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
     beginInfo.pInheritanceInfo = nullptr;
 
-    result = _renderer->CheckVkResult ( vkBeginCommandBuffer ( _commandBuffer, &beginInfo ),
+    result = android_vulkan::Renderer::CheckVkResult ( vkBeginCommandBuffer ( _commandBuffer, &beginInfo ),
         "UniformBuffer::InitResources",
         "Can't begin command buffer"
     );
@@ -296,7 +297,7 @@ bool UniformBuffer::InitResources ( size_t size )
         nullptr
     );
 
-    result = _renderer->CheckVkResult ( vkEndCommandBuffer ( _commandBuffer ),
+    result = android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( _commandBuffer ),
         "UniformBuffer::InitResources",
         "Can't end command buffer"
     );

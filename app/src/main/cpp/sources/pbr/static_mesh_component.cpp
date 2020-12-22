@@ -12,7 +12,7 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-constexpr static uint32_t const STATIC_MESH_COMPONENT_DESC_FORMAT_VERSION = 1U;
+[[maybe_unused]] constexpr static uint32_t const STATIC_MESH_COMPONENT_DESC_FORMAT_VERSION = 1U;
 
 StaticMeshComponent::StaticMeshComponent ( size_t &commandBufferConsumed,
     StaticMeshComponentDesc const &desc,

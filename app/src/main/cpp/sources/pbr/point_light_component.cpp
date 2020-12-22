@@ -10,7 +10,7 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-constexpr static uint32_t const POINT_LIGHT_COMPONENT_DESC_FORMAT_VERSION = 1U;
+[[maybe_unused]] constexpr static uint32_t const POINT_LIGHT_COMPONENT_DESC_FORMAT_VERSION = 1U;
 
 PointLightComponent::PointLightComponent ( PointLightComponentDesc const &desc ) noexcept:
     _pointLight {}

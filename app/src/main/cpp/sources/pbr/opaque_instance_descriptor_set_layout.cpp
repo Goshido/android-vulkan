@@ -80,7 +80,7 @@ bool OpaqueInstanceDescriptorSetLayoutImpl::Init ( android_vulkan::Renderer &ren
 
     VkDevice device = renderer.GetDevice ();
 
-    bool result = renderer.CheckVkResult (
+    bool result = android_vulkan::Renderer::CheckVkResult (
         vkCreateDescriptorSetLayout ( device, &descriptorSetLayoutInfo, nullptr, &_descriptorSetLayout ),
         "OpaqueInstanceDescriptorSetLayoutImpl::Init",
         "Can't create descriptor set layout"

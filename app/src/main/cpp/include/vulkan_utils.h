@@ -214,7 +214,7 @@ void UnregisterSwapchain ( std::string &&where );
 
 } // namespace android_vulkan
 
-#endif
+#endif // ANDROID_VULKAN_DEBUG
 
 
 #endif // VULKAN_UTILS_H

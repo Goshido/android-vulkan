@@ -39,7 +39,7 @@ class Texture2D final
         std::string         _fileName;
 
     public:
-        Texture2D ();
+        Texture2D () noexcept;
 
         Texture2D ( Texture2D const & ) = delete;
         Texture2D& operator = ( Texture2D const & ) = delete;
@@ -52,28 +52,29 @@ class Texture2D final
         [[nodiscard]] bool CreateRenderTarget ( VkExtent2D const &resolution,
             VkFormat format,
             VkImageUsageFlags usage,
-            android_vulkan::Renderer &renderer
+            Renderer &renderer
         );
 
-        void FreeResources ( android_vulkan::Renderer &renderer );
+        void FreeResources ( Renderer &renderer );
 
         // optimization: _transfer and _transferDeviceMemory are needed only for uploading pixel data to the Vulkan
         // texture object. Uploading itself is done via command submit: vkCmdCopyBufferToImage. So you can make a
         // bunch of vkCmdCopyBufferToImage call for different textures and after completion you can free
         // _transfer and _transferDeviceMemory for Texture2D objects.
-        void FreeTransferResources ( android_vulkan::Renderer &renderer );
+        void FreeTransferResources ( Renderer &renderer );
 
         [[nodiscard]] VkFormat GetFormat () const;
         [[nodiscard]] VkImage GetImage () const;
         [[nodiscard]] VkImageView GetImageView () const;
         [[nodiscard]] uint8_t GetMipLevelCount () const;
         [[nodiscard]] std::string const& GetName () const;
+        [[maybe_unused]] [[nodiscard]] VkExtent2D const& GetResolution () const;
 
         // Supported formats: PNG.
         [[nodiscard]] [[maybe_unused]] bool UploadData ( std::string const &fileName,
             eFormat format,
             bool isGenerateMipmaps,
-            android_vulkan::Renderer &renderer,
+            Renderer &renderer,
             VkCommandBuffer commandBuffer
         );
 
@@ -83,7 +84,7 @@ class Texture2D final
         [[nodiscard]] bool UploadData ( std::string &&fileName,
             eFormat format,
             bool isGenerateMipmaps,
-            android_vulkan::Renderer &renderer,
+            Renderer &renderer,
             VkCommandBuffer commandBuffer
         );
 
@@ -93,7 +94,7 @@ class Texture2D final
         [[nodiscard]] bool UploadData ( std::string_view const &fileName,
             eFormat format,
             bool isGenerateMipmaps,
-            android_vulkan::Renderer &renderer,
+            Renderer &renderer,
             VkCommandBuffer commandBuffer
         );
 
@@ -103,7 +104,7 @@ class Texture2D final
         [[nodiscard]] bool UploadData ( char const* fileName,
             eFormat format,
             bool isGenerateMipmaps,
-            android_vulkan::Renderer &renderer,
+            Renderer &renderer,
             VkCommandBuffer commandBuffer
         );
 
@@ -112,7 +113,7 @@ class Texture2D final
             VkExtent2D const &resolution,
             VkFormat format,
             bool isGenerateMipmaps,
-            android_vulkan::Renderer &renderer,
+            Renderer &renderer,
             VkCommandBuffer commandBuffer
         );
 
@@ -122,21 +123,18 @@ class Texture2D final
             VkFormat format,
             VkImageUsageFlags usage,
             uint8_t mips,
-            android_vulkan::Renderer &renderer
+            Renderer &renderer
         );
 
         // The method returns true if success. Otherwise the method returns false.
         // Note the method maps "_transferDeviceMemory" to the "mappedBuffer". So user code MUST invoke vkUnmapMemory.
-        [[nodiscard]] bool CreateTransferResources ( uint8_t* &mappedBuffer,
-            VkDeviceSize size,
-            android_vulkan::Renderer &renderer
-        );
+        [[nodiscard]] bool CreateTransferResources ( uint8_t* &mappedBuffer, VkDeviceSize size, Renderer &renderer );
 
-        void FreeResourceInternal ( android_vulkan::Renderer &renderer );
+        void FreeResourceInternal ( Renderer &renderer );
 
         [[nodiscard]] bool UploadCompressed ( std::string const &fileName,
             eFormat format,
-            android_vulkan::Renderer &renderer,
+            Renderer &renderer,
             VkCommandBuffer commandBuffer
         );
 
@@ -144,7 +142,7 @@ class Texture2D final
             size_t size,
             bool isGenerateMipmaps,
             VkImageCreateInfo const &imageInfo,
-            android_vulkan::Renderer &renderer,
+            Renderer &renderer,
             VkCommandBuffer commandBuffer
         );
 
@@ -159,11 +157,7 @@ class Texture2D final
 
         [[nodiscard]] static uint32_t CountMipLevels ( VkExtent2D const &resolution );
         [[nodiscard]] static VkFormat PickupFormat ( int channels );
-
-        [[nodiscard]] static VkFormat ResolveFormat ( VkFormat baseFormat,
-            eFormat format,
-            android_vulkan::Renderer &renderer
-        );
+        [[nodiscard]] static VkFormat ResolveFormat ( VkFormat baseFormat, eFormat format );
 };
 
 } // namespace android_vulkan

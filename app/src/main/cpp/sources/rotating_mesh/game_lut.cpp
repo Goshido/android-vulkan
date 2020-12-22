@@ -52,7 +52,8 @@ bool GameLUT::CreateDescriptorSet ( android_vulkan::Renderer &renderer )
     poolInfo.poolSizeCount = static_cast<uint32_t> ( std::size ( features ) );
     poolInfo.pPoolSizes = features;
 
-    bool result = renderer.CheckVkResult ( vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_descriptorPool ),
+    bool result = android_vulkan::Renderer::CheckVkResult (
+        vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_descriptorPool ),
         "GameLUT::CreateDescriptorSet",
         "Can't create descriptor pool"
     );
@@ -75,7 +76,7 @@ bool GameLUT::CreateDescriptorSet ( android_vulkan::Renderer &renderer )
     setAllocateInfo.pSetLayouts = layouts;
     setAllocateInfo.descriptorSetCount = poolInfo.maxSets;
 
-    result = renderer.CheckVkResult ( vkAllocateDescriptorSets ( device, &setAllocateInfo, sets ),
+    result = android_vulkan::Renderer::CheckVkResult ( vkAllocateDescriptorSets ( device, &setAllocateInfo, sets ),
         "GameLUT::CreateDescriptorSet",
         "Can't allocate descriptor set"
     );
@@ -234,7 +235,7 @@ bool GameLUT::CreatePipelineLayout ( android_vulkan::Renderer &renderer )
 
     VkDevice device = renderer.GetDevice ();
 
-    bool result = renderer.CheckVkResult (
+    bool result = android_vulkan::Renderer::CheckVkResult (
         vkCreateDescriptorSetLayout ( device, &descriptorSetInfo, nullptr, &_descriptorSetLayout ),
         "Game::CreatePipelineLayout",
         "Can't create descriptor set layout"
@@ -254,7 +255,8 @@ bool GameLUT::CreatePipelineLayout ( android_vulkan::Renderer &renderer )
     pipelineLayoutInfo.setLayoutCount = 1U;
     pipelineLayoutInfo.pSetLayouts = &_descriptorSetLayout;
 
-    result = renderer.CheckVkResult ( vkCreatePipelineLayout ( device, &pipelineLayoutInfo, nullptr, &_pipelineLayout ),
+    result = android_vulkan::Renderer::CheckVkResult (
+        vkCreatePipelineLayout ( device, &pipelineLayoutInfo, nullptr, &_pipelineLayout ),
         "Game::CreatePipelineLayout",
         "Can't create pipeline layout"
     );
@@ -280,7 +282,7 @@ bool GameLUT::LoadGPUContent ( android_vulkan::Renderer &renderer )
 
     VkDevice device = renderer.GetDevice ();
 
-    bool result = renderer.CheckVkResult (
+    bool result = android_vulkan::Renderer::CheckVkResult (
         vkAllocateCommandBuffers ( renderer.GetDevice (), &allocateInfo, commandBuffers ),
         "GameLUT::LoadGPUContent",
         "Can't allocate command buffers"
@@ -298,7 +300,7 @@ bool GameLUT::LoadGPUContent ( android_vulkan::Renderer &renderer )
     if ( !CreateMeshes ( renderer, commandBuffers + TEXTURE_COMMAND_BUFFERS ) )
         return false;
 
-    result = renderer.CheckVkResult ( vkQueueWaitIdle ( renderer.GetQueue () ),
+    result = android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( renderer.GetQueue () ),
         "GameLUT::LoadGPUContent",
         "Can't run upload commands"
     );
@@ -346,7 +348,7 @@ bool GameLUT::CreateSamplers ( android_vulkan::Renderer &renderer )
     samplerInfo.compareEnable = VK_FALSE;
     samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
 
-    result = renderer.CheckVkResult (
+    result = android_vulkan::Renderer::CheckVkResult (
         vkCreateSampler ( renderer.GetDevice (), &samplerInfo, nullptr, &_specularLUTSampler ),
         "GameLUT::CreateSamplers",
         "Can't create specular LUT sampler"

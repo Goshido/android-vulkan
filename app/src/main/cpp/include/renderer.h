@@ -21,26 +21,27 @@ namespace android_vulkan {
 
 struct VulkanPhysicalDeviceInfo final
 {
-    std::vector<char>                               _extensionStorage;
+        std::vector<char>                               _extensionStorage;
 
-    std::vector<char const*>                        _extensions;
-    VkPhysicalDeviceFeatures                        _features;
+        std::vector<char const*>                        _extensions;
+        VkPhysicalDeviceFeatures                        _features;
 
-    std::vector<std::pair<VkFlags, uint32_t>>       _queueFamilyInfo;
-    VkSurfaceCapabilitiesKHR                        _surfaceCapabilities;
+        std::vector<std::pair<VkFlags, uint32_t>>       _queueFamilyInfo;
+        VkSurfaceCapabilitiesKHR                        _surfaceCapabilities;
 
-    VulkanPhysicalDeviceInfo ();
-    ~VulkanPhysicalDeviceInfo () = default;
+        VulkanPhysicalDeviceInfo () noexcept;
 
-    VulkanPhysicalDeviceInfo ( const VulkanPhysicalDeviceInfo &other ) = delete;
-    VulkanPhysicalDeviceInfo& operator = ( const VulkanPhysicalDeviceInfo &other ) = delete;
+        VulkanPhysicalDeviceInfo ( VulkanPhysicalDeviceInfo const & ) = delete;
+        VulkanPhysicalDeviceInfo& operator = ( VulkanPhysicalDeviceInfo const & ) = delete;
+
+        ~VulkanPhysicalDeviceInfo () = default;
 };
 
 //----------------------------------------------------------------------------------------------------------------------
 
 class Renderer final
 {
-    using LogType = void (*) ( char const* format, ... );
+        using LogType = void (*) ( char const* format, ... );
 
     private:
         VkFormat                                                            _depthStencilImageFormat;
@@ -74,7 +75,7 @@ class Renderer final
         std::map<VkDebugReportFlagsEXT, std::pair<LogType, char const*>>    _loggerMapper;
         static std::map<VkDebugReportObjectTypeEXT, char const*> const      _vulkanObjectTypeMap;
 
-#endif
+#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
         VkExtent2D                                                          _viewportResolution;
 
@@ -89,31 +90,28 @@ class Renderer final
 
         GXMat4                                                              _presentationEngineTransform;
 
-        static const std::map<VkColorSpaceKHR, char const*>                 _vulkanColorSpaceMap;
-        static const std::map<VkCompositeAlphaFlagBitsKHR, char const*>     _vulkanCompositeAlphaMap;
-        static const std::map<VkFormat, char const*>                        _vulkanFormatMap;
-        static const std::map<VkPhysicalDeviceType, char const*>            _vulkanPhysicalDeviceTypeMap;
-        static const std::map<VkPresentModeKHR, char const*>                _vulkanPresentModeMap;
-        static const std::map<VkResult, char const*>                        _vulkanResultMap;
-        static const std::map<VkSurfaceTransformFlagsKHR, char const*>      _vulkanSurfaceTransformMap;
+        static std::map<VkColorSpaceKHR, char const*> const                 _vulkanColorSpaceMap;
+        static std::map<VkCompositeAlphaFlagBitsKHR, char const*> const     _vulkanCompositeAlphaMap;
+        static std::map<VkFormat, char const*> const                        _vulkanFormatMap;
+        static std::map<VkPhysicalDeviceType, char const*> const            _vulkanPhysicalDeviceTypeMap;
+        static std::map<VkPresentModeKHR, char const*> const                _vulkanPresentModeMap;
+        static std::map<VkResult, char const*> const                        _vulkanResultMap;
+        static std::map<VkSurfaceTransformFlagsKHR, char const*> const      _vulkanSurfaceTransformMap;
 
     public:
-        Renderer ();
+        Renderer () noexcept;
 
-        Renderer ( Renderer const &other ) = delete;
-        Renderer& operator = ( Renderer const &other ) = delete;
+        Renderer ( Renderer const & ) = delete;
+        Renderer& operator = ( Renderer const & ) = delete;
 
-        Renderer ( Renderer &&other ) = delete;
-        Renderer& operator = ( Renderer &&other ) = delete;
+        Renderer ( Renderer && ) = delete;
+        Renderer& operator = ( Renderer && ) = delete;
 
         ~Renderer () = default;
 
         // Method returns true if swapchain does not change. User code can safely render frames.
         // Otherwise method returns false.
         bool CheckSwapchainStatus ();
-
-        // Method returns true is "result" equals VK_SUCCESS. Otherwise method returns false.
-        bool CheckVkResult ( VkResult result, char const* from, char const* message ) const;
 
         bool CreateShader ( VkShaderModule &shader,
             std::string &&shaderFile,
@@ -149,8 +147,6 @@ class Renderer final
         [[nodiscard]] bool OnInit ( ANativeWindow &nativeWindow, bool vSync );
         void OnDestroy ();
 
-        [[nodiscard]] char const* ResolveVkFormat ( VkFormat format ) const;
-
         // Note method will invoke AV_REGISTER_DEVICE_MEMORY internally if success.
         [[nodiscard]] bool TryAllocateMemory ( VkDeviceMemory &memory,
             size_t size,
@@ -165,6 +161,12 @@ class Renderer final
             char const* errorMessage
         ) const;
 
+        // Method returns true is "result" equals VK_SUCCESS. Otherwise method returns false.
+        [[nodiscard]] static bool CheckVkResult ( VkResult result, char const* from, char const* message );
+
+        [[nodiscard]] static VkImageAspectFlags ResolveImageViewAspect ( VkFormat format );
+        [[nodiscard]] static char const* ResolveVkFormat ( VkFormat format );
+
     private:
         [[nodiscard]] bool CheckRequiredDeviceExtensions ( const std::vector<char const*> &deviceExtensions,
             char const* const* requiredExtensions,
@@ -178,7 +180,7 @@ class Renderer final
         [[nodiscard]] bool DeployDebugFeatures ();
         void DestroyDebugFeatures ();
 
-#endif
+#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
         [[nodiscard]] bool DeployDevice ();
         void DestroyDevice ();
@@ -192,67 +194,15 @@ class Renderer final
         [[nodiscard]] bool DeploySwapchain ( bool vSync );
         void DestroySwapchain ();
 
-        [[nodiscard]] bool PrintCoreExtensions () const;
-        void PrintFloatProp ( char const* indent, char const* name, float value ) const;
-        void PrintFloatVec2Prop ( char const* indent, char const* name, const float value[] ) const;
-        void PrintINT32Prop ( char const* indent, char const* name, int32_t value ) const;
-
-        [[nodiscard]] bool PrintInstanceLayerInfo () const;
-
-        void PrintPhysicalDeviceCommonProps ( VkPhysicalDeviceProperties const &props ) const;
         [[nodiscard]] bool PrintPhysicalDeviceExtensionInfo ( VkPhysicalDevice physicalDevice );
         [[nodiscard]] bool PrintPhysicalDeviceFeatureInfo ( VkPhysicalDevice physicalDevice );
-        void PrintPhysicalDeviceGroupInfo ( uint32_t groupIndex, VkPhysicalDeviceGroupProperties const &props ) const;
-        [[nodiscard]] bool PrintPhysicalDeviceLayerInfo ( VkPhysicalDevice physicalDevice ) const;
+
         void PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits );
         void PrintPhysicalDeviceMemoryProperties ( VkPhysicalDevice physicalDevice );
         [[nodiscard]] bool PrintPhysicalDeviceInfo ( uint32_t deviceIndex, VkPhysicalDevice physicalDevice );
 
-        void PrintPhysicalDeviceQueueFamilyInfo ( uint32_t queueFamilyIndex,
-            const VkQueueFamilyProperties &props
-        ) const;
-
-        void PrintPhysicalDeviceSparse ( VkPhysicalDeviceSparseProperties const &sparse ) const;
-        void PrintVkBool32Prop ( char const* indent, char const* name, VkBool32 value ) const;
-
-        void PrintVkExtent2DProp ( char const* indent, char const* name, const VkExtent2D &value ) const;
-        void PrintVkExtent3DProp ( char const* indent, char const* name, const VkExtent3D &value ) const;
-
-        void PrintVkExtensionProp ( uint32_t extensionIndex,
-            char const* category,
-            VkExtensionProperties const &extension
-        ) const;
-
-        void PrintVkFlagsProp ( char const* indent,
-            char const* name,
-            VkFlags flags,
-            size_t flagSetCount,
-            std::pair<uint32_t, char const*> const flagSet[]
-        ) const;
-
-        void PrintVkHandler ( char const* indent, char const* name, void* handler ) const;
-
-        void PrintVkLayerProperties ( uint32_t layerIndex, const VkLayerProperties &layer ) const;
-        void PrintVkPresentModeProp ( uint32_t modeIndex, VkPresentModeKHR mode ) const;
-        void PrintVkSurfaceCapabilities ( VkSurfaceCapabilitiesKHR const &caps );
-        void PrintVkSurfaceFormatKHRProp ( uint32_t formatIndex, VkSurfaceFormatKHR const &format ) const;
-        void PrintVkVersion ( char const* indent, char const* name, uint32_t version ) const;
-        void PrintSizeProp ( char const* indent, char const* name, size_t value ) const;
-        void PrintUINT32Prop ( char const* indent, char const* name, uint32_t value ) const;
-        void PrintUINT32Vec2Prop ( char const* indent, char const* name, const uint32_t value[] ) const;
-        void PrintUINT32Vec3Prop ( char const* indent, char const* name, const uint32_t value[] ) const;
-        void PrintUTF8Prop ( char const* indent, char const* name, char const* value ) const;
-
-        [[nodiscard]] char const* ResolvePhysicalDeviceType ( VkPhysicalDeviceType type ) const;
-        [[nodiscard]] char const* ResolveVkDebugReportObjectType ( VkDebugReportObjectTypeEXT type ) const;
-        [[nodiscard]] char const* ResolveVkColorSpaceKHR ( VkColorSpaceKHR colorSpace ) const;
-        [[nodiscard]] char const* ResolveVkCompositeAlpha ( VkCompositeAlphaFlagBitsKHR compositeAlpha ) const;
-        [[nodiscard]] char const* ResolveVkPresentModeKHR ( VkPresentModeKHR mode ) const;
-        [[nodiscard]] char const* ResolveVkResult ( VkResult result ) const;
-        [[nodiscard]] char const* ResolveVkSurfaceTransform ( VkSurfaceTransformFlagsKHR transform ) const;
-
         [[nodiscard]] bool SelectTargetCompositeAlpha ( VkCompositeAlphaFlagBitsKHR &targetCompositeAlpha ) const;
-        
+
         [[nodiscard]] bool SelectTargetHardware ( VkPhysicalDevice &targetPhysicalDevice,
             uint32_t &targetQueueFamilyIndex
         ) const;
@@ -285,8 +235,63 @@ class Renderer final
             void* pUserData
         );
 
-#endif
+#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
+        [[nodiscard]] static bool PrintCoreExtensions ();
+        static void PrintFloatProp ( char const* indent, char const* name, float value );
+        static void PrintFloatVec2Prop ( char const* indent, char const* name, const float value[] );
+        static void PrintINT32Prop ( char const* indent, char const* name, int32_t value );
+        [[nodiscard]] static bool PrintInstanceLayerInfo ();
+        static void PrintPhysicalDeviceCommonProps ( VkPhysicalDeviceProperties const &props );
+        static void PrintPhysicalDeviceGroupInfo ( uint32_t groupIndex, VkPhysicalDeviceGroupProperties const &props );
+        [[nodiscard]] static bool PrintPhysicalDeviceLayerInfo ( VkPhysicalDevice physicalDevice );
+
+        static void PrintPhysicalDeviceQueueFamilyInfo ( uint32_t queueFamilyIndex,
+            VkQueueFamilyProperties const &props
+        );
+
+        static void PrintPhysicalDeviceSparse ( VkPhysicalDeviceSparseProperties const &sparse );
+        static void PrintSizeProp ( char const* indent, char const* name, size_t value );
+        static void PrintUINT32Prop ( char const* indent, char const* name, uint32_t value );
+        static void PrintUINT32Vec2Prop ( char const* indent, char const* name, const uint32_t value[] );
+        static void PrintUINT32Vec3Prop ( char const* indent, char const* name, const uint32_t value[] );
+        static void PrintUTF8Prop ( char const* indent, char const* name, char const* value );
+        static void PrintVkBool32Prop ( char const* indent, char const* name, VkBool32 value );
+        static void PrintVkExtent2DProp ( char const* indent, char const* name, const VkExtent2D &value );
+        static void PrintVkExtent3DProp ( char const* indent, char const* name, const VkExtent3D &value );
+
+        static void PrintVkExtensionProp ( uint32_t extensionIndex,
+            char const* category,
+            VkExtensionProperties const &extension
+        );
+
+        static void PrintVkFlagsProp ( char const* indent,
+            char const* name,
+            VkFlags flags,
+            size_t flagSetCount,
+            std::pair<uint32_t, char const*> const flagSet[]
+        );
+
+        static void PrintVkHandler ( char const* indent, char const* name, void* handler );
+        static void PrintVkLayerProperties ( uint32_t layerIndex, VkLayerProperties const &layer );
+        static void PrintVkPresentModeProp ( uint32_t modeIndex, VkPresentModeKHR mode );
+        static void PrintVkSurfaceCapabilities ( VkSurfaceCapabilitiesKHR const &caps );
+        static void PrintVkSurfaceFormatKHRProp ( uint32_t formatIndex, VkSurfaceFormatKHR const &format );
+        static void PrintVkVersion ( char const* indent, char const* name, uint32_t version );
+
+        [[nodiscard]] static char const* ResolvePhysicalDeviceType ( VkPhysicalDeviceType type );
+
+#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+
+        [[nodiscard]] static char const* ResolveVkDebugReportObjectType ( VkDebugReportObjectTypeEXT type );
+
+#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+
+        [[nodiscard]] static char const* ResolveVkColorSpaceKHR ( VkColorSpaceKHR colorSpace );
+        [[nodiscard]] static char const* ResolveVkCompositeAlpha ( VkCompositeAlphaFlagBitsKHR compositeAlpha );
+        [[nodiscard]] static char const* ResolveVkPresentModeKHR ( VkPresentModeKHR mode );
+        [[nodiscard]] static char const* ResolveVkResult ( VkResult result );
+        [[nodiscard]] static char const* ResolveVkSurfaceTransform ( VkSurfaceTransformFlagsKHR transform );
 };
 
 } // namespace android_vulkan

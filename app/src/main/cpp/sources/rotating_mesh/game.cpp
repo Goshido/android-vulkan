@@ -87,7 +87,7 @@ bool Game::CreateSamplers ( android_vulkan::Renderer &renderer )
 
     VkDevice device = renderer.GetDevice ();
 
-    bool result = renderer.CheckVkResult (
+    bool result = android_vulkan::Renderer::CheckVkResult (
         vkCreateSampler ( device, &samplerInfo, nullptr, &_sampler09Mips ),
         "Game::CreateSamplers",
         "Can't create sampler with 9 mips"
@@ -100,7 +100,7 @@ bool Game::CreateSamplers ( android_vulkan::Renderer &renderer )
 
     samplerInfo.maxLod = 9.0F;
 
-    result = renderer.CheckVkResult (
+    result = android_vulkan::Renderer::CheckVkResult (
         vkCreateSampler ( device, &samplerInfo, nullptr, &_sampler10Mips ),
         "Game::CreateSamplers",
         "Can't create sampler with 10 mips"
@@ -113,7 +113,7 @@ bool Game::CreateSamplers ( android_vulkan::Renderer &renderer )
 
     samplerInfo.maxLod = 10.0F;
 
-    result = renderer.CheckVkResult (
+    result = android_vulkan::Renderer::CheckVkResult (
         vkCreateSampler ( device, &samplerInfo, nullptr, &_sampler11Mips ),
         "Game::CreateSamplers",
         "Can't create sampler with 11 mips"
@@ -129,7 +129,7 @@ bool Game::CreateSamplers ( android_vulkan::Renderer &renderer )
     samplerInfo.magFilter = VK_FILTER_NEAREST;
     samplerInfo.minFilter = VK_FILTER_NEAREST;
 
-    result = renderer.CheckVkResult (
+    result = android_vulkan::Renderer::CheckVkResult (
         vkCreateSampler ( device, &samplerInfo, nullptr, &_sampler01Mips ),
         "Game::CreateSamplers",
         "Can't create sampler with 1 mip"
@@ -175,10 +175,13 @@ void Game::DestroySamplers ( android_vulkan::Renderer &renderer )
 
 void Game::DestroyTextures ( android_vulkan::Renderer &renderer )
 {
-    renderer.CheckVkResult ( vkQueueWaitIdle ( renderer.GetQueue () ),
+    bool const result = android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( renderer.GetQueue () ),
         "Game::DestroyTextures",
         "Can't wait queue idle"
     );
+
+    if ( !result )
+        android_vulkan::LogWarning ( "Game::DestroyTextures - Can't wait queue idle." );
 
     for ( auto& item : _drawcalls )
     {
@@ -205,7 +208,7 @@ bool Game::CreateCommonTextures ( android_vulkan::Renderer &renderer, VkCommandB
         if ( mips == 11U )
             return _sampler11Mips;
 
-        assert ( !"Game::CreateCommonTextures::selector - Can't select sampler" );
+        android_vulkan::LogError ( "Game::CreateCommonTextures::selector - Can't select sampler" );
         return VK_NULL_HANDLE;
     };
 
@@ -476,7 +479,7 @@ bool Game::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime )
     submitInfo.signalSemaphoreCount = 1U;
     submitInfo.pSignalSemaphores = &_renderPassEndSemaphore;
 
-    const bool result = renderer.CheckVkResult (
+    const bool result = android_vulkan::Renderer::CheckVkResult (
         vkQueueSubmit ( renderer.GetQueue (), 1U, &submitInfo, commandContext.second ),
         "Game::OnFrame",
         "Can't submit command buffer"
@@ -490,7 +493,7 @@ bool Game::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime )
 
 bool Game::OnDestroy ( android_vulkan::Renderer &renderer )
 {
-    const bool result = renderer.CheckVkResult ( vkQueueWaitIdle ( renderer.GetQueue () ),
+    const bool result = android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( renderer.GetQueue () ),
         "Game::OnDestroy",
         "Can't wait queue idle"
     );
@@ -519,7 +522,7 @@ bool Game::BeginFrame ( size_t &imageIndex, android_vulkan::Renderer &renderer )
     VkDevice device = renderer.GetDevice ();
     uint32_t i = UINT32_MAX;
 
-    bool result = renderer.CheckVkResult (
+    bool result = android_vulkan::Renderer::CheckVkResult (
         vkAcquireNextImageKHR ( device,
             renderer.GetSwapchain (),
             UINT64_MAX,
@@ -538,7 +541,8 @@ bool Game::BeginFrame ( size_t &imageIndex, android_vulkan::Renderer &renderer )
     imageIndex = static_cast<size_t> ( i );
     const CommandContext& commandContext = _commandBuffers[ imageIndex ];
 
-    result = renderer.CheckVkResult ( vkWaitForFences ( device, 1U, &commandContext.second, VK_TRUE, UINT64_MAX ),
+    result = android_vulkan::Renderer::CheckVkResult (
+        vkWaitForFences ( device, 1U, &commandContext.second, VK_TRUE, UINT64_MAX ),
         "Game::BeginFrame",
         "Can't wait fence"
     );
@@ -546,7 +550,7 @@ bool Game::BeginFrame ( size_t &imageIndex, android_vulkan::Renderer &renderer )
     if ( !result )
         return false;
 
-    return renderer.CheckVkResult ( vkResetFences ( device, 1U, &commandContext.second ),
+    return android_vulkan::Renderer::CheckVkResult ( vkResetFences ( device, 1U, &commandContext.second ),
         "Game::BeginFrame",
         "Can't reset fence"
     );
@@ -566,7 +570,8 @@ bool Game::EndFrame ( uint32_t presentationImageIndex, android_vulkan::Renderer 
     presentInfo.pSwapchains = &renderer.GetSwapchain ();
     presentInfo.pImageIndices = &presentationImageIndex;
 
-    const bool result = renderer.CheckVkResult ( vkQueuePresentKHR ( renderer.GetQueue (), &presentInfo ),
+    const bool result = android_vulkan::Renderer::CheckVkResult (
+        vkQueuePresentKHR ( renderer.GetQueue (), &presentInfo ),
         "Game::EndFrame",
         "Can't present frame"
     );
@@ -574,7 +579,7 @@ bool Game::EndFrame ( uint32_t presentationImageIndex, android_vulkan::Renderer 
     if ( !result )
         return false;
 
-    return renderer.CheckVkResult ( presentResult, "Game::EndFrame", "Present queue has been failed" );
+    return android_vulkan::Renderer::CheckVkResult ( presentResult, "Game::EndFrame", "Present queue has been failed" );
 }
 
 bool Game::CreateCommandPool ( android_vulkan::Renderer &renderer )
@@ -585,7 +590,7 @@ bool Game::CreateCommandPool ( android_vulkan::Renderer &renderer )
     poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
     poolInfo.queueFamilyIndex = renderer.GetQueueFamilyIndex ();
 
-    const bool result = renderer.CheckVkResult (
+    const bool result = android_vulkan::Renderer::CheckVkResult (
         vkCreateCommandPool ( renderer.GetDevice (), &poolInfo, nullptr, &_commandPool ),
         "Game::CreateCommandPool",
         "Can't create command pool"
@@ -675,7 +680,8 @@ bool Game::CreateFramebuffers ( android_vulkan::Renderer &renderer )
     {
         attachments[ 0U ] = renderer.GetPresentImageView ( i );
 
-        result = renderer.CheckVkResult ( vkCreateFramebuffer ( device, &framebufferInfo, nullptr, &framebuffer ),
+        result = android_vulkan::Renderer::CheckVkResult (
+            vkCreateFramebuffer ( device, &framebufferInfo, nullptr, &framebuffer ),
             "Game::CreateFramebuffers",
             "Can't create a framebuffer"
         );
@@ -897,7 +903,7 @@ bool Game::CreatePipeline ( android_vulkan::Renderer &renderer )
     pipelineInfo.pColorBlendState = &blendInfo;
     pipelineInfo.pMultisampleState = &multisampleInfo;
 
-    const bool result = renderer.CheckVkResult (
+    const bool result = android_vulkan::Renderer::CheckVkResult (
         vkCreateGraphicsPipelines ( renderer.GetDevice (), VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
         "Game::CreatePipeline",
         "Can't create pipeline"
@@ -995,7 +1001,7 @@ bool Game::CreateRenderPass ( android_vulkan::Renderer &renderer )
     renderPassInfo.subpassCount = 1U;
     renderPassInfo.pSubpasses = &subpassInfo;
 
-    const bool result = renderer.CheckVkResult (
+    const bool result = android_vulkan::Renderer::CheckVkResult (
         vkCreateRenderPass ( renderer.GetDevice (), &renderPassInfo, nullptr, &_renderPass ),
         "Game::CreateRenderPass",
         "Can't create render pass"
@@ -1070,7 +1076,8 @@ bool Game::CreateSyncPrimitives ( android_vulkan::Renderer &renderer )
     semaphoreInfo.pNext = nullptr;
     semaphoreInfo.flags = 0U;
 
-    bool result = renderer.CheckVkResult ( vkCreateSemaphore ( device, &semaphoreInfo, nullptr, &_renderPassEndSemaphore ),
+    bool result = android_vulkan::Renderer::CheckVkResult (
+        vkCreateSemaphore ( device, &semaphoreInfo, nullptr, &_renderPassEndSemaphore ),
         "Game::CreateSyncPrimitives",
         "Can't create render pass end semaphore"
     );
@@ -1080,7 +1087,7 @@ bool Game::CreateSyncPrimitives ( android_vulkan::Renderer &renderer )
 
     AV_REGISTER_SEMAPHORE ( "Game::_renderPassEndSemaphore" )
 
-    result = renderer.CheckVkResult (
+    result = android_vulkan::Renderer::CheckVkResult (
         vkCreateSemaphore ( device, &semaphoreInfo, nullptr, &_renderTargetAcquiredSemaphore ),
         "Game::CreateSyncPrimitives",
         "Can't create render target acquired semaphore"
@@ -1140,7 +1147,8 @@ bool Game::InitCommandBuffers ( android_vulkan::Renderer &renderer )
     VkDevice device = renderer.GetDevice ();
     std::vector<VkCommandBuffer> commandBuffers ( framebufferCount );
 
-    bool result = renderer.CheckVkResult ( vkAllocateCommandBuffers ( device, &allocateInfo, commandBuffers.data () ),
+    bool result = android_vulkan::Renderer::CheckVkResult (
+        vkAllocateCommandBuffers ( device, &allocateInfo, commandBuffers.data () ),
         "Game::InitCommandBuffers",
         "Can't allocate command buffers"
     );
@@ -1182,7 +1190,7 @@ bool Game::InitCommandBuffers ( android_vulkan::Renderer &renderer )
 
     for ( size_t i = 0U; i < framebufferCount; ++i )
     {
-        result = renderer.CheckVkResult ( vkCreateFence ( device, &fenceInfo, nullptr, &fence ),
+        result = android_vulkan::Renderer::CheckVkResult ( vkCreateFence ( device, &fenceInfo, nullptr, &fence ),
             "Game::InitCommandBuffers",
             "Can't create fence"
         );
@@ -1194,7 +1202,7 @@ bool Game::InitCommandBuffers ( android_vulkan::Renderer &renderer )
 
         VkCommandBuffer commandBuffer = commandBuffers[ i ];
 
-        result = renderer.CheckVkResult ( vkBeginCommandBuffer ( commandBuffer, &bufferBeginInfo ),
+        result = android_vulkan::Renderer::CheckVkResult ( vkBeginCommandBuffer ( commandBuffer, &bufferBeginInfo ),
             "Game::InitCommandBuffers",
             "Can't begin command buffer"
         );
@@ -1222,7 +1230,7 @@ bool Game::InitCommandBuffers ( android_vulkan::Renderer &renderer )
 
         vkCmdEndRenderPass ( commandBuffer );
 
-        result = renderer.CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
+        result = android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
             "Game::InitCommandBuffers",
             "Can't end command buffer"
         );

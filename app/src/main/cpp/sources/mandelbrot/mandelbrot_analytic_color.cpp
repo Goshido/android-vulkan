@@ -26,7 +26,7 @@ bool MandelbrotAnalyticColor::OnInit ( android_vulkan::Renderer &renderer )
 
 bool MandelbrotAnalyticColor::OnDestroy ( android_vulkan::Renderer &renderer )
 {
-    const bool result = renderer.CheckVkResult ( vkQueueWaitIdle ( renderer.GetQueue () ),
+    const bool result = android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( renderer.GetQueue () ),
         "MandelbrotAnalyticColor::OnDestroy",
         "Can't wait queue idle"
     );
@@ -51,7 +51,7 @@ bool MandelbrotAnalyticColor::CreatePipelineLayout ( android_vulkan::Renderer &r
 
     VkDevice device = renderer.GetDevice ();
 
-    bool result = renderer.CheckVkResult (
+    bool result = android_vulkan::Renderer::CheckVkResult (
         vkCreatePipelineLayout ( device, &pipelineLayoutInfo, nullptr, &_pipelineLayout ),
         "MandelbrotAnalyticColor::CreatePipeline",
         "Can't create pipeline layout"
@@ -86,7 +86,7 @@ bool MandelbrotAnalyticColor::CreateCommandBuffer ( android_vulkan::Renderer &re
     commandBufferInfo.commandPool = _commandPool;
     commandBufferInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 
-    bool result = renderer.CheckVkResult (
+    bool result = android_vulkan::Renderer::CheckVkResult (
         vkAllocateCommandBuffers ( renderer.GetDevice (), &commandBufferInfo, _commandBuffer.data () ),
         "MandelbrotAnalyticColor::CreateCommandBuffer",
         "Can't allocate command buffer"
@@ -125,7 +125,8 @@ bool MandelbrotAnalyticColor::CreateCommandBuffer ( android_vulkan::Renderer &re
     {
         VkCommandBuffer commandBuffer = _commandBuffer[ i ];
 
-        result = renderer.CheckVkResult ( vkBeginCommandBuffer ( commandBuffer, &commandBufferBeginInfo ),
+        result = android_vulkan::Renderer::CheckVkResult (
+            vkBeginCommandBuffer ( commandBuffer, &commandBufferBeginInfo ),
             "MandelbrotAnalyticColor::CreateCommandBuffer",
             "Can't begin command buffer"
         );
@@ -143,7 +144,7 @@ bool MandelbrotAnalyticColor::CreateCommandBuffer ( android_vulkan::Renderer &re
         vkCmdDraw ( commandBuffer, 4U, 1U, 0U, 0U );
         vkCmdEndRenderPass ( commandBuffer );
 
-        result = renderer.CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
+        result = android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
             "MandelbrotAnalyticColor::CreateCommandBuffer",
             "Can't end command buffer"
         );

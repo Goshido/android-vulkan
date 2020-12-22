@@ -36,24 +36,6 @@ constexpr static VkImageUsageFlags const IMMUTABLE_TEXTURE_USAGE = AV_VK_FLAG ( 
     AV_VK_FLAG ( VK_IMAGE_USAGE_TRANSFER_DST_BIT ) |
     AV_VK_FLAG ( VK_IMAGE_USAGE_TRANSFER_SRC_BIT );
 
-static std::unordered_map<VkFormat, VkImageAspectFlags> const g_DepthStencilAspectMapper =
-{
-    { VK_FORMAT_D16_UNORM, VK_IMAGE_ASPECT_DEPTH_BIT },
-
-    {
-        VK_FORMAT_D16_UNORM_S8_UINT,
-        AV_VK_FLAG ( VK_IMAGE_ASPECT_DEPTH_BIT ) | AV_VK_FLAG ( VK_IMAGE_ASPECT_STENCIL_BIT )
-    },
-
-    {
-        VK_FORMAT_D24_UNORM_S8_UINT,
-        AV_VK_FLAG ( VK_IMAGE_ASPECT_DEPTH_BIT ) | AV_VK_FLAG ( VK_IMAGE_ASPECT_STENCIL_BIT )
-    },
-
-    { VK_FORMAT_S8_UINT, VK_IMAGE_ASPECT_STENCIL_BIT },
-    { VK_FORMAT_X8_D24_UNORM_PACK32, VK_IMAGE_ASPECT_DEPTH_BIT }
-};
-
 static std::unordered_map<VkFormat, VkFormat> const g_FormatMapper =
 {
     { VK_FORMAT_R8G8B8A8_UNORM, VK_FORMAT_R8G8B8A8_SRGB },
@@ -62,7 +44,7 @@ static std::unordered_map<VkFormat, VkFormat> const g_FormatMapper =
 
 //----------------------------------------------------------------------------------------------------------------------
 
-Texture2D::Texture2D ():
+Texture2D::Texture2D () noexcept:
     _format ( VK_FORMAT_UNDEFINED ),
     _image ( VK_NULL_HANDLE ),
     _imageDeviceMemory ( VK_NULL_HANDLE ),
@@ -75,7 +57,7 @@ Texture2D::Texture2D ():
     // NOTHING
 }
 
-void Texture2D::FreeResources ( android_vulkan::Renderer &renderer )
+void Texture2D::FreeResources ( Renderer &renderer )
 {
     FreeTransferResources ( renderer );
     FreeResourceInternal ( renderer );
@@ -88,7 +70,7 @@ void Texture2D::FreeResources ( android_vulkan::Renderer &renderer )
 bool Texture2D::CreateRenderTarget ( VkExtent2D const &resolution,
     VkFormat format,
     VkImageUsageFlags usage,
-    android_vulkan::Renderer &renderer
+    Renderer &renderer
 )
 {
     FreeResources ( renderer );
@@ -102,7 +84,7 @@ bool Texture2D::CreateRenderTarget ( VkExtent2D const &resolution,
     return true;
 }
 
-void Texture2D::FreeTransferResources ( android_vulkan::Renderer &renderer )
+void Texture2D::FreeTransferResources ( Renderer &renderer )
 {
     VkDevice device = renderer.GetDevice ();
 
@@ -147,16 +129,21 @@ std::string const& Texture2D::GetName () const
     return _fileName;
 }
 
-bool Texture2D::UploadData ( std::string const &fileName,
+[[maybe_unused]] VkExtent2D const& Texture2D::GetResolution () const
+{
+    return _resolution;
+}
+
+[[maybe_unused]] bool Texture2D::UploadData ( std::string const &fileName,
     eFormat format,
     bool isGenerateMipmaps,
-    android_vulkan::Renderer &renderer,
+    Renderer &renderer,
     VkCommandBuffer commandBuffer
 )
 {
     if ( fileName.empty () )
     {
-        android_vulkan::LogError ( "Texture2D::UploadData - Can't upload data. Filename is empty." );
+        LogError ( "Texture2D::UploadData - Can't upload data. Filename is empty." );
         return false;
     }
 
@@ -181,7 +168,7 @@ bool Texture2D::UploadData ( std::string const &fileName,
 
     bool result = CreateCommonResources ( imageInfo,
         resolution,
-        ResolveFormat ( actualFormat, format, renderer ),
+        ResolveFormat ( actualFormat, format ),
         IMMUTABLE_TEXTURE_USAGE,
         isGenerateMipmaps ? CountMipLevels ( resolution ) : 1U,
         renderer
@@ -208,13 +195,13 @@ bool Texture2D::UploadData ( std::string const &fileName,
 bool Texture2D::UploadData ( std::string &&fileName,
     eFormat format,
     bool isGenerateMipmaps,
-    android_vulkan::Renderer &renderer,
+    Renderer &renderer,
     VkCommandBuffer commandBuffer
 )
 {
     if ( fileName.empty () )
     {
-        android_vulkan::LogError ( "Texture2D::UploadData - Can't upload data. Filename is empty." );
+        LogError ( "Texture2D::UploadData - Can't upload data. Filename is empty." );
         return false;
     }
 
@@ -249,7 +236,7 @@ bool Texture2D::UploadData ( std::string &&fileName,
 
     bool result = CreateCommonResources ( imageInfo,
         resolution,
-        ResolveFormat ( actualFormat, format, renderer ),
+        ResolveFormat ( actualFormat, format ),
         IMMUTABLE_TEXTURE_USAGE,
         isGenerateMipmaps ? CountMipLevels ( resolution ) : 1U,
         renderer
@@ -276,7 +263,7 @@ bool Texture2D::UploadData ( std::string &&fileName,
 bool Texture2D::UploadData ( std::string_view const &fileName,
     eFormat format,
     bool isGenerateMipmaps,
-    android_vulkan::Renderer &renderer,
+    Renderer &renderer,
     VkCommandBuffer commandBuffer
 )
 {
@@ -286,7 +273,7 @@ bool Texture2D::UploadData ( std::string_view const &fileName,
 bool Texture2D::UploadData ( char const *fileName,
     eFormat format,
     bool isGenerateMipmaps,
-    android_vulkan::Renderer &renderer,
+    Renderer &renderer,
     VkCommandBuffer commandBuffer
 )
 {
@@ -298,7 +285,7 @@ bool Texture2D::UploadData ( const uint8_t* data,
     VkExtent2D const &resolution,
     VkFormat format,
     bool isGenerateMipmaps,
-    android_vulkan::Renderer &renderer,
+    Renderer &renderer,
     VkCommandBuffer commandBuffer
 )
 {
@@ -324,7 +311,7 @@ bool Texture2D::CreateCommonResources ( VkImageCreateInfo &imageInfo,
     VkFormat format,
     VkImageUsageFlags usage,
     uint8_t mips,
-    android_vulkan::Renderer &renderer
+    Renderer &renderer
 )
 {
     _format = format;
@@ -350,7 +337,7 @@ bool Texture2D::CreateCommonResources ( VkImageCreateInfo &imageInfo,
 
     VkDevice device = renderer.GetDevice ();
 
-    bool result = renderer.CheckVkResult ( vkCreateImage ( device, &imageInfo, nullptr, &_image ),
+    bool result = Renderer::CheckVkResult ( vkCreateImage ( device, &imageInfo, nullptr, &_image ),
         "Texture2D::CreateCommonResources",
         "Can't create image"
     );
@@ -377,7 +364,7 @@ bool Texture2D::CreateCommonResources ( VkImageCreateInfo &imageInfo,
 
     AV_REGISTER_DEVICE_MEMORY ( "Texture2D::_imageDeviceMemory" )
 
-    result = renderer.CheckVkResult ( vkBindImageMemory ( device, _image, _imageDeviceMemory, 0U ),
+    result = Renderer::CheckVkResult ( vkBindImageMemory ( device, _image, _imageDeviceMemory, 0U ),
         "Texture2D::CreateCommonResources",
         "Can't bind image memory"
     );
@@ -388,8 +375,6 @@ bool Texture2D::CreateCommonResources ( VkImageCreateInfo &imageInfo,
         return false;
     }
 
-    auto const depthStencilAspectTest = g_DepthStencilAspectMapper.find ( _format );
-
     VkImageViewCreateInfo viewInfo;
     viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
     viewInfo.pNext = nullptr;
@@ -397,20 +382,20 @@ bool Texture2D::CreateCommonResources ( VkImageCreateInfo &imageInfo,
     viewInfo.image = _image;
     viewInfo.format = _format;
     viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-    viewInfo.subresourceRange.baseMipLevel = viewInfo.subresourceRange.baseArrayLayer = 0U;
-    viewInfo.subresourceRange.layerCount = 1U;
-    viewInfo.subresourceRange.levelCount = imageInfo.mipLevels;
 
-    viewInfo.subresourceRange.aspectMask = depthStencilAspectTest == g_DepthStencilAspectMapper.cend () ?
-        VK_IMAGE_ASPECT_COLOR_BIT :
-        depthStencilAspectTest->second;
+    VkImageSubresourceRange& sub = viewInfo.subresourceRange;
+    sub.baseMipLevel = viewInfo.subresourceRange.baseArrayLayer = 0U;
+    sub.layerCount = 1U;
+    sub.levelCount = imageInfo.mipLevels;
+    sub.aspectMask = Renderer::ResolveImageViewAspect ( _format );
 
-    viewInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-    viewInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-    viewInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-    viewInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+    VkComponentMapping& mapping = viewInfo.components;
+    mapping.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+    mapping.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+    mapping.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+    mapping.a = VK_COMPONENT_SWIZZLE_IDENTITY;
 
-    result = renderer.CheckVkResult ( vkCreateImageView ( device, &viewInfo, nullptr, &_imageView ),
+    result = Renderer::CheckVkResult ( vkCreateImageView ( device, &viewInfo, nullptr, &_imageView ),
         "Texture2D::CreateCommonResources",
         "Can't create image view"
     );
@@ -425,7 +410,7 @@ bool Texture2D::CreateCommonResources ( VkImageCreateInfo &imageInfo,
     return true;
 }
 
-bool Texture2D::CreateTransferResources ( uint8_t* &mappedBuffer, VkDeviceSize size, android_vulkan::Renderer &renderer )
+bool Texture2D::CreateTransferResources ( uint8_t* &mappedBuffer, VkDeviceSize size, Renderer &renderer )
 {
     VkBufferCreateInfo bufferInfo;
     bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -439,7 +424,7 @@ bool Texture2D::CreateTransferResources ( uint8_t* &mappedBuffer, VkDeviceSize s
 
     VkDevice device = renderer.GetDevice ();
 
-    bool result = renderer.CheckVkResult ( vkCreateBuffer ( device, &bufferInfo, nullptr, &_transfer ),
+    bool result = Renderer::CheckVkResult ( vkCreateBuffer ( device, &bufferInfo, nullptr, &_transfer ),
         "Texture2D::CreateTransferResources",
         "Can't create transfer buffer"
     );
@@ -469,7 +454,8 @@ bool Texture2D::CreateTransferResources ( uint8_t* &mappedBuffer, VkDeviceSize s
 
     AV_REGISTER_DEVICE_MEMORY ( "Texture2D::_transferDeviceMemory" )
 
-    result = renderer.CheckVkResult ( vkBindBufferMemory ( device, _transfer, _transferDeviceMemory, 0U ),
+    result = Renderer::CheckVkResult (
+        vkBindBufferMemory ( device, _transfer, _transferDeviceMemory, 0U ),
         "Texture2D::CreateTransferResources",
         "Can't bind transfer memory"
     );
@@ -482,7 +468,7 @@ bool Texture2D::CreateTransferResources ( uint8_t* &mappedBuffer, VkDeviceSize s
 
     void* destination = nullptr;
 
-    result = renderer.CheckVkResult (
+    result = Renderer::CheckVkResult (
         vkMapMemory ( device, _transferDeviceMemory, 0U, bufferInfo.size, 0U, &destination ),
         "Texture2D::CreateTransferResources",
         "Can't map transfer memory"
@@ -498,7 +484,7 @@ bool Texture2D::CreateTransferResources ( uint8_t* &mappedBuffer, VkDeviceSize s
     return true;
 }
 
-void Texture2D::FreeResourceInternal ( android_vulkan::Renderer &renderer )
+void Texture2D::FreeResourceInternal ( Renderer &renderer )
 {
     _mipLevels = 0U;
     VkDevice device = renderer.GetDevice ();
@@ -527,7 +513,7 @@ void Texture2D::FreeResourceInternal ( android_vulkan::Renderer &renderer )
 
 bool Texture2D::UploadCompressed ( std::string const &fileName,
     eFormat format,
-    android_vulkan::Renderer &renderer,
+    Renderer &renderer,
     VkCommandBuffer commandBuffer
 )
 {
@@ -540,7 +526,7 @@ bool Texture2D::UploadCompressed ( std::string const &fileName,
 
     bool result = CreateCommonResources ( imageInfo,
         ktx.GetMip ( 0U )._resolution,
-        ResolveFormat ( ktx.GetFormat (), format, renderer ),
+        ResolveFormat ( ktx.GetFormat (), format ),
         IMMUTABLE_TEXTURE_USAGE,
         ktx.GetMipCount (),
         renderer
@@ -572,7 +558,7 @@ bool Texture2D::UploadCompressed ( std::string const &fileName,
     beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
     beginInfo.pInheritanceInfo = nullptr;
 
-    result = renderer.CheckVkResult ( vkBeginCommandBuffer ( commandBuffer, &beginInfo ),
+    result = Renderer::CheckVkResult ( vkBeginCommandBuffer ( commandBuffer, &beginInfo ),
         "Texture2D::UploadCompressed",
         "Can't begin command buffer"
     );
@@ -661,7 +647,7 @@ bool Texture2D::UploadCompressed ( std::string const &fileName,
         &barrierInfo
     );
 
-    result = renderer.CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
+    result = Renderer::CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
         "Texture2D::UploadCompressed",
         "Can't end command buffer"
     );
@@ -683,7 +669,7 @@ bool Texture2D::UploadCompressed ( std::string const &fileName,
     submitInfo.pSignalSemaphores = nullptr;
     submitInfo.pWaitDstStageMask = nullptr;
 
-    result = renderer.CheckVkResult ( vkQueueSubmit ( renderer.GetQueue (), 1U, &submitInfo, VK_NULL_HANDLE ),
+    result = Renderer::CheckVkResult ( vkQueueSubmit ( renderer.GetQueue (), 1U, &submitInfo, VK_NULL_HANDLE ),
         "Texture2D::UploadCompressed",
         "Can't submit command"
     );
@@ -702,7 +688,7 @@ bool Texture2D::UploadDataInternal ( uint8_t const* data,
     size_t size,
     bool isGenerateMipmaps,
     VkImageCreateInfo const &imageInfo,
-    android_vulkan::Renderer &renderer,
+    Renderer &renderer,
     VkCommandBuffer commandBuffer
 )
 {
@@ -720,7 +706,7 @@ bool Texture2D::UploadDataInternal ( uint8_t const* data,
     beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
     beginInfo.pInheritanceInfo = nullptr;
 
-    bool result = renderer.CheckVkResult ( vkBeginCommandBuffer ( commandBuffer, &beginInfo ),
+    bool result = Renderer::CheckVkResult ( vkBeginCommandBuffer ( commandBuffer, &beginInfo ),
         "Texture2D::UploadDataInternal",
         "Can't begin command buffer"
     );
@@ -793,7 +779,7 @@ bool Texture2D::UploadDataInternal ( uint8_t const* data,
             &barrierInfo
         );
 
-        result = renderer.CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
+        result = Renderer::CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
             "Texture2D::UploadDataInternal",
             "Can't end command buffer"
         );
@@ -815,7 +801,8 @@ bool Texture2D::UploadDataInternal ( uint8_t const* data,
         submitInfo.pSignalSemaphores = nullptr;
         submitInfo.pWaitDstStageMask = nullptr;
 
-        result = renderer.CheckVkResult ( vkQueueSubmit ( renderer.GetQueue (), 1U, &submitInfo, VK_NULL_HANDLE ),
+        result = Renderer::CheckVkResult (
+            vkQueueSubmit ( renderer.GetQueue (), 1U, &submitInfo, VK_NULL_HANDLE ),
             "Texture2D::UploadDataInternal",
             "Can't submit command"
         );
@@ -942,7 +929,7 @@ bool Texture2D::UploadDataInternal ( uint8_t const* data,
         &barrierInfo
     );
 
-    result = renderer.CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
+    result = Renderer::CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
         "Texture2D::UploadDataInternal",
         "Can't end command buffer"
     );
@@ -964,7 +951,8 @@ bool Texture2D::UploadDataInternal ( uint8_t const* data,
     submitInfo.pSignalSemaphores = nullptr;
     submitInfo.pWaitDstStageMask = nullptr;
 
-    result = renderer.CheckVkResult ( vkQueueSubmit ( renderer.GetQueue (), 1U, &submitInfo, VK_NULL_HANDLE ),
+    result = Renderer::CheckVkResult (
+        vkQueueSubmit ( renderer.GetQueue (), 1U, &submitInfo, VK_NULL_HANDLE ),
         "Texture2D::UploadDataInternal",
         "Can't submit command"
     );
@@ -993,7 +981,7 @@ bool Texture2D::LoadImage ( std::vector<uint8_t> &pixelData,
     int &channels
 )
 {
-    android_vulkan::File file ( const_cast<std::string&> ( fileName ) );
+    File file ( const_cast<std::string&> ( fileName ) );
 
     if ( !file.LoadContent () )
         return false;
@@ -1106,21 +1094,21 @@ VkFormat Texture2D::PickupFormat ( int channels )
         return VK_FORMAT_R8G8_UNORM;
 
         case 3:
-            android_vulkan::LogError ( "Texture2D::PickupFormat - Three channel formats are not supported!" );
+            LogError ( "Texture2D::PickupFormat - Three channel formats are not supported!" );
         return VK_FORMAT_UNDEFINED;
 
         case 4:
             return VK_FORMAT_R8G8B8A8_UNORM;
 
         default:
-            android_vulkan::LogError (
+            LogError (
                 "Texture2D::PickupFormat - Unexpected channel count: %i! Supported channel count: 1, 2 or 4."
             );
         return VK_FORMAT_UNDEFINED;
     }
 }
 
-VkFormat Texture2D::ResolveFormat ( VkFormat baseFormat, eFormat format, android_vulkan::Renderer &renderer )
+VkFormat Texture2D::ResolveFormat ( VkFormat baseFormat, eFormat format )
 {
     if ( format == eFormat::Unorm )
         return baseFormat;
@@ -1132,7 +1120,7 @@ VkFormat Texture2D::ResolveFormat ( VkFormat baseFormat, eFormat format, android
         return findResult->second;
 
     LogError ( "Texture2D::ResolveFormat - Can't find sRGB pair for %s format.",
-        renderer.ResolveVkFormat ( baseFormat )
+        Renderer::ResolveVkFormat ( baseFormat )
     );
 
     return VK_FORMAT_UNDEFINED;

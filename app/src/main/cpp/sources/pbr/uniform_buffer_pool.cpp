@@ -142,7 +142,7 @@ bool UniformBufferPool::AllocateItem ( android_vulkan::Renderer &renderer )
     VkDevice device = renderer.GetDevice ();
     VkBuffer buffer = VK_NULL_HANDLE;
 
-    bool result = renderer.CheckVkResult ( vkCreateBuffer ( device, &bufferInfo, nullptr, &buffer ),
+    bool result = android_vulkan::Renderer::CheckVkResult ( vkCreateBuffer ( device, &bufferInfo, nullptr, &buffer ),
         "UniformBufferPool::AllocateItem",
         "Can't create uniform buffer"
     );
@@ -157,7 +157,7 @@ bool UniformBufferPool::AllocateItem ( android_vulkan::Renderer &renderer )
 
     assert ( ( _pool.size () + 1U ) * requirements.size <= VRAM_PER_POOL_BYTES );
 
-    result = renderer.CheckVkResult (
+    result = android_vulkan::Renderer::CheckVkResult (
         vkBindBufferMemory ( device,
             buffer,
             _gpuMemory,

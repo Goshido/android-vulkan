@@ -65,7 +65,7 @@ bool TexturePresentProgram::Init ( android_vulkan::Renderer &renderer,
         return false;
     }
 
-    const bool result = renderer.CheckVkResult (
+    const bool result = android_vulkan::Renderer::CheckVkResult (
         vkCreateGraphicsPipelines ( renderer.GetDevice (), VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
         "TexturePresentProgram::Init",
         "Can't create pipeline"
@@ -241,7 +241,7 @@ bool TexturePresentProgram::InitLayout ( VkPipelineLayout &layout, android_vulka
     layoutInfo.setLayoutCount = static_cast<uint32_t> ( std::size ( layouts ) );
     layoutInfo.pSetLayouts = layouts;
 
-    const bool result = renderer.CheckVkResult (
+    const bool result = android_vulkan::Renderer::CheckVkResult (
         vkCreatePipelineLayout ( renderer.GetDevice (), &layoutInfo, nullptr, &_pipelineLayout ),
         "TexturePresentProgram::InitLayout",
         "Can't create pipeline layout"

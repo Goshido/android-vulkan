@@ -77,7 +77,7 @@ bool OpaqueProgram::Init ( android_vulkan::Renderer &renderer,
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
     pipelineInfo.basePipelineIndex = 0;
 
-    bool const result = renderer.CheckVkResult (
+    bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateGraphicsPipelines ( renderer.GetDevice (), VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
         "OpaqueProgram::Init",
         "Can't create pipeline"
@@ -266,7 +266,7 @@ bool OpaqueProgram::InitLayout ( VkPipelineLayout &layout, android_vulkan::Rende
     layoutInfo.pushConstantRangeCount = 0U;
     layoutInfo.pPushConstantRanges = nullptr;
 
-    const bool result = renderer.CheckVkResult (
+    const bool result = android_vulkan::Renderer::CheckVkResult (
         vkCreatePipelineLayout ( renderer.GetDevice (), &layoutInfo, nullptr, &_pipelineLayout ),
         "OpaqueProgram::InitLayout",
         "Can't create pipeline layout"

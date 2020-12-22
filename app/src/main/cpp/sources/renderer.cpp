@@ -7,11 +7,12 @@ GX_DISABLE_COMMON_WARNINGS
 #include <cmath>
 #include <set>
 #include <string>
+#include <unordered_map>
 
 GX_RESTORE_WARNING_STATE
 
-#include <vulkan_utils.h>
-#include <file.h>
+#include "file.h"
+#include "vulkan_utils.h"
 
 
 namespace android_vulkan {
@@ -22,7 +23,11 @@ constexpr static char const* INDENT_1 = "    ";
 constexpr static char const* INDENT_2 = "        ";
 constexpr static char const* INDENT_3 = "            ";
 constexpr static size_t const INITIAL_EXTENSION_STORAGE_SIZE = 64U;
-constexpr static uint32_t const TARGET_VULKAN_VERSION = VK_MAKE_VERSION ( 1U, 1U, 108U );
+
+// Note vulkan_core.h is a little bit dirty from clang-tidy point of view.
+// So suppress this third-party mess via "NOLINT" control comment.
+constexpr static uint32_t const TARGET_VULKAN_VERSION = VK_MAKE_VERSION ( 1U, 1U, 108U ); // NOLINT
+
 constexpr static char const* UNKNOWN_RESULT = "UNKNOWN";
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -351,7 +356,7 @@ constexpr static std::pair<size_t, char const*> const g_vkFeatureMap[] =
 
 //----------------------------------------------------------------------------------------------------------------------
 
-VulkanPhysicalDeviceInfo::VulkanPhysicalDeviceInfo ():
+VulkanPhysicalDeviceInfo::VulkanPhysicalDeviceInfo () noexcept:
     _extensionStorage ( INITIAL_EXTENSION_STORAGE_SIZE ),
     _extensions {},
     _features {},
@@ -770,12 +775,13 @@ std::map<VkSurfaceTransformFlagsKHR, char const*> const Renderer::_vulkanSurface
 
 //----------------------------------------------------------------------------------------------------------------------
 
-Renderer::Renderer ():
+Renderer::Renderer () noexcept:
     _depthStencilImageFormat ( VK_FORMAT_UNDEFINED ),
     _device ( VK_NULL_HANDLE ),
     _instance ( VK_NULL_HANDLE ),
     _isDeviceExtensionChecked ( false ),
     _isDeviceExtensionSupported ( false ),
+    _maxUniformBufferRange {},
     _physicalDevice ( VK_NULL_HANDLE ),
     _queue ( VK_NULL_HANDLE ),
     _queueFamilyIndex ( VK_QUEUE_FAMILY_IGNORED ),
@@ -827,16 +833,6 @@ bool Renderer::CheckSwapchainStatus ()
         tmp = false;
 
     return tmp;
-}
-
-bool Renderer::CheckVkResult ( VkResult result, char const* from, char const* message ) const
-{
-    if ( result == VK_SUCCESS )
-        return true;
-
-    LogError ( "%s - %s. Error: %s.", from, message, ResolveVkResult ( result ) );
-    assert ( false );
-    return false;
 }
 
 bool Renderer::CreateShader ( VkShaderModule &shader,
@@ -1137,12 +1133,6 @@ void Renderer::OnDestroy ()
     DestroyInstance ();
 }
 
-const char* Renderer::ResolveVkFormat ( VkFormat format ) const
-{
-    auto const findResult = _vulkanFormatMap.find ( format );
-    return findResult == _vulkanFormatMap.cend () ? UNKNOWN_RESULT : findResult->second;
-}
-
 bool Renderer::TryAllocateMemory ( VkDeviceMemory &memory,
     size_t size,
     VkMemoryPropertyFlags memoryProperties,
@@ -1188,6 +1178,46 @@ bool Renderer::TryAllocateMemory ( VkDeviceMemory &memory,
         "Renderer::TryAllocateMemory",
         errorMessage
     );
+}
+
+bool Renderer::CheckVkResult ( VkResult result, char const* from, char const* message )
+{
+    if ( result == VK_SUCCESS )
+        return true;
+
+    LogError ( "%s - %s. Error: %s.", from, message, ResolveVkResult ( result ) );
+    assert ( false );
+    return false;
+}
+
+VkImageAspectFlags Renderer::ResolveImageViewAspect ( VkFormat format )
+{
+    static std::unordered_map<VkFormat, VkImageAspectFlags> const mapper =
+    {
+        { VK_FORMAT_D16_UNORM, VK_IMAGE_ASPECT_DEPTH_BIT },
+
+        {
+            VK_FORMAT_D16_UNORM_S8_UINT,
+            AV_VK_FLAG ( VK_IMAGE_ASPECT_DEPTH_BIT ) | AV_VK_FLAG ( VK_IMAGE_ASPECT_STENCIL_BIT )
+        },
+
+        {
+            VK_FORMAT_D24_UNORM_S8_UINT,
+            AV_VK_FLAG ( VK_IMAGE_ASPECT_DEPTH_BIT ) | AV_VK_FLAG ( VK_IMAGE_ASPECT_STENCIL_BIT )
+        },
+
+        { VK_FORMAT_S8_UINT, VK_IMAGE_ASPECT_STENCIL_BIT },
+        { VK_FORMAT_X8_D24_UNORM_PACK32, VK_IMAGE_ASPECT_DEPTH_BIT }
+    };
+
+    auto const findResult = mapper.find ( format );
+    return findResult == mapper.cend () ? VK_IMAGE_ASPECT_COLOR_BIT : findResult->second;
+}
+
+char const* Renderer::ResolveVkFormat ( VkFormat format )
+{
+    auto const findResult = _vulkanFormatMap.find ( format );
+    return findResult == _vulkanFormatMap.cend () ? UNKNOWN_RESULT : findResult->second;
 }
 
 bool Renderer::CheckRequiredDeviceExtensions ( std::vector<char const*> const &deviceExtensions,
@@ -1788,116 +1818,6 @@ void Renderer::DestroySwapchain ()
     AV_UNREGISTER_SWAPCHAIN ( "Renderer::_swapchain" )
 }
 
-bool Renderer::PrintCoreExtensions () const
-{
-    uint32_t extensionCount = 0U;
-    vkEnumerateInstanceExtensionProperties ( nullptr, &extensionCount, nullptr );
-
-    if ( !extensionCount )
-    {
-        LogError ( "Renderer::PrintCoreExtensions - There is no any core extensions!" );
-        assert ( !"Renderer::PrintCoreExtensions - There is no any core extensions!" );
-
-        return false;
-    }
-
-    LogInfo ( "Renderer::PrintCoreExtensions - Instance core extensions detected: %u.", extensionCount );
-
-    std::vector<VkExtensionProperties> extensions ( static_cast<size_t> ( extensionCount ) );
-    VkExtensionProperties* extensionList = extensions.data ();
-
-    bool const result = CheckVkResult (
-        vkEnumerateInstanceExtensionProperties ( nullptr, &extensionCount, extensionList ),
-        "Renderer::PrintCoreExtensions",
-        "Can't get instance core extensions"
-    );
-
-    if ( !result )
-        return false;
-
-    for ( uint32_t i = 0U; i < extensionCount; ++i )
-        PrintVkExtensionProp ( i, "Instance core", extensionList[ i ] );
-
-    return true;
-}
-
-void Renderer::PrintFloatProp ( char const* indent, char const* name, float value ) const
-{
-    LogInfo ( "%s%s: %g", indent, name, value );
-}
-
-void Renderer::PrintFloatVec2Prop ( char const* indent, char const* name, float const value[] ) const
-{
-    LogInfo ( "%s%s: %g, %g", indent, name, value[ 0U ], value[ 1U ] );
-}
-
-void Renderer::PrintINT32Prop ( char const* indent, char const* name, int32_t value ) const
-{
-    LogInfo ( "%s%s: %i", indent, name, value );
-}
-
-bool Renderer::PrintInstanceLayerInfo () const
-{
-    uint32_t layerCount = 0U;
-    vkEnumerateInstanceLayerProperties ( &layerCount, nullptr );
-
-    if ( !layerCount )
-    {
-        LogInfo ( "Renderer::PrintInstanceLayerInfo - Instance does not contain any layers." );
-        return PrintCoreExtensions ();
-    }
-
-    LogInfo ( ">>> Instance layers detected: %u.", layerCount );
-
-    std::vector<VkLayerProperties> layers ( static_cast<size_t> ( layerCount ) );
-    VkLayerProperties* layerList = layers.data ();
-
-    bool const result = CheckVkResult ( vkEnumerateInstanceLayerProperties ( &layerCount, layerList ),
-        "Renderer::PrintCoreExtensions",
-        "Can't get instance core extensions"
-    );
-
-    if ( !result )
-        return false;
-
-    for ( uint32_t i = 0U; i < layerCount; ++i )
-        PrintVkLayerProperties ( i, layerList[ i ] );
-
-    return PrintCoreExtensions ();
-}
-
-void Renderer::PrintPhysicalDeviceCommonProps ( VkPhysicalDeviceProperties const &props ) const
-{
-    LogInfo ( ">>> Common properties:" );
-
-    PrintVkVersion ( INDENT_1, "apiVersion", props.apiVersion );
-    PrintUINT32Prop ( INDENT_1, "driverVersion", props.driverVersion );
-    PrintUINT32Prop ( INDENT_1, "vendorID", props.vendorID );
-    PrintUINT32Prop ( INDENT_1, "deviceID", props.deviceID );
-    PrintUTF8Prop ( INDENT_1, "deviceType", ResolvePhysicalDeviceType ( props.deviceType ) );
-    PrintUTF8Prop ( INDENT_1, "deviceName", props.deviceName );
-
-    LogInfo ( "%spipelineCacheUUID: {%x%x%x%x-%x%x-%x%x-%x%x-%x%x%x%x%x%x}",
-        INDENT_1,
-        props.pipelineCacheUUID[ 0U ],
-        props.pipelineCacheUUID[ 1U ],
-        props.pipelineCacheUUID[ 2U ],
-        props.pipelineCacheUUID[ 3U ],
-        props.pipelineCacheUUID[ 4U ],
-        props.pipelineCacheUUID[ 5U ],
-        props.pipelineCacheUUID[ 6U ],
-        props.pipelineCacheUUID[ 7U ],
-        props.pipelineCacheUUID[ 8U ],
-        props.pipelineCacheUUID[ 9U ],
-        props.pipelineCacheUUID[ 10U ],
-        props.pipelineCacheUUID[ 11U ],
-        props.pipelineCacheUUID[ 12U ],
-        props.pipelineCacheUUID[ 13U ],
-        props.pipelineCacheUUID[ 14U ],
-        props.pipelineCacheUUID[ 15U ]
-    );
-}
-
 bool Renderer::PrintPhysicalDeviceExtensionInfo ( VkPhysicalDevice physicalDevice )
 {
     uint32_t extensionCount = 0U;
@@ -1998,47 +1918,6 @@ bool Renderer::PrintPhysicalDeviceFeatureInfo ( VkPhysicalDevice physicalDevice 
 
     for ( auto &item : unsupportedFeatures )
         LogInfo ( "%s%s", INDENT_3, item.c_str () );
-
-    return true;
-}
-
-void Renderer::PrintPhysicalDeviceGroupInfo ( uint32_t groupIndex,
-    VkPhysicalDeviceGroupProperties const &props
-) const
-{
-    LogInfo ( "Renderer::PrintPhysicalDeviceGroupInfo - Vulkan physical device group #%u", groupIndex );
-
-    PrintUINT32Prop ( INDENT_1, "physicalDeviceCount", props.physicalDeviceCount );
-
-    for ( uint32_t i = 0U; i < props.physicalDeviceCount; ++i )
-        PrintVkHandler ( INDENT_2, "Device handler", props.physicalDevices[ i ] );
-
-    PrintVkBool32Prop ( INDENT_1, "subsetAllocation", props.subsetAllocation );
-}
-
-bool Renderer::PrintPhysicalDeviceLayerInfo ( VkPhysicalDevice physicalDevice ) const
-{
-    uint32_t layerCount = 0U;
-    vkEnumerateDeviceLayerProperties ( physicalDevice, &layerCount, nullptr );
-
-    LogInfo ( ">>> Physical device layers detected: %u.", layerCount );
-
-    if ( !layerCount )
-        return true;
-
-    std::vector<VkLayerProperties> layers ( static_cast<size_t> ( layerCount ) );
-    VkLayerProperties* layerList = layers.data ();
-
-    bool const result = CheckVkResult ( vkEnumerateDeviceLayerProperties ( physicalDevice, &layerCount, layerList ),
-        "Renderer::PrintPhysicalDeviceLayerInfo",
-        "Can't get physical device layers"
-    );
-
-    if ( !result )
-        return false;
-
-    for ( uint32_t i = 0U; i < layerCount; ++i )
-        PrintVkLayerProperties ( i, layerList[ i ] );
 
     return true;
 }
@@ -2357,250 +2236,6 @@ bool Renderer::PrintPhysicalDeviceInfo ( uint32_t deviceIndex, VkPhysicalDevice 
     return true;
 }
 
-void Renderer::PrintPhysicalDeviceQueueFamilyInfo ( uint32_t queueFamilyIndex,
-    VkQueueFamilyProperties const &props
-) const
-{
-    LogInfo ( "%sQueue family: #%u", INDENT_1, queueFamilyIndex );
-
-    PrintVkFlagsProp ( INDENT_2, "queueFlags", props.queueFlags, g_vkQueueFlagMapperItems, g_vkQueueFlagMapper );
-    PrintUINT32Prop ( INDENT_2, "queueCount", props.queueCount );
-    PrintUINT32Prop ( INDENT_2, "timestampValidBits", props.timestampValidBits );
-    PrintVkExtent3DProp ( INDENT_2, "minImageTransferGranularity", props.minImageTransferGranularity );
-}
-
-void Renderer::PrintPhysicalDeviceSparse ( VkPhysicalDeviceSparseProperties const &sparse ) const
-{
-    LogInfo ( ">>> Sparse:" );
-
-    PrintVkBool32Prop ( INDENT_1, "residencyStandard2DBlockShape", sparse.residencyStandard2DBlockShape );
-
-    PrintVkBool32Prop ( INDENT_1,
-        "residencyStandard2DMultisampleBlockShape",
-        sparse.residencyStandard2DMultisampleBlockShape
-    );
-
-    PrintVkBool32Prop ( INDENT_1, "residencyStandard3DBlockShape", sparse.residencyStandard3DBlockShape );
-    PrintVkBool32Prop ( INDENT_1, "residencyAlignedMipSize", sparse.residencyAlignedMipSize );
-    PrintVkBool32Prop ( INDENT_1, "residencyNonResidentStrict", sparse.residencyNonResidentStrict );
-}
-
-void Renderer::PrintVkBool32Prop ( char const* indent, char const* name, VkBool32 value ) const
-{
-    LogInfo ( "%s%s: %s", indent, name, value ? "VK_TRUE" : "VK_FALSE" );
-}
-
-void Renderer::PrintVkExtent2DProp ( char const* indent, char const* name, VkExtent2D const &value ) const
-{
-    LogInfo ( "%s%s:", indent, name );
-    LogInfo ( "%s%swidth: %u", indent, INDENT_1, value.width );
-    LogInfo ( "%s%sheight: %u", indent, INDENT_1, value.height );
-}
-
-void Renderer::PrintVkExtent3DProp ( char const* indent, char const* name, VkExtent3D const &value ) const
-{
-    LogInfo ( "%s%s:", indent, name );
-    LogInfo ( "%s%swidth: %u", indent, INDENT_1, value.width );
-    LogInfo ( "%s%sheight: %u", indent, INDENT_1, value.height );
-    LogInfo ( "%s%sdepth: %u", indent, INDENT_1, value.depth );
-}
-
-void Renderer::PrintVkExtensionProp ( uint32_t extensionIndex, char const* category,
-    VkExtensionProperties const &extension
-) const
-{
-    LogInfo ( "%s%s extension: #%u", INDENT_1, category, extensionIndex );
-
-    PrintUTF8Prop ( INDENT_2, "extensionName", extension.extensionName );
-    PrintUINT32Prop ( INDENT_2, "specVersion", extension.specVersion );
-}
-
-void Renderer::PrintVkFlagsProp ( char const* indent,
-    char const* name,
-    VkFlags flags,
-    size_t flagSetCount,
-    std::pair<uint32_t, char const*> const flagSet[]
-) const
-{
-    if ( !flags )
-    {
-        LogInfo ( "%s%s: not set", indent, name );
-        return;
-    }
-
-    std::string result;
-    auto const bitmask = static_cast<uint32_t const> ( flags );
-
-    for ( size_t i = 0U; i < flagSetCount; ++i )
-    {
-        auto const& item = flagSet[ i ];
-
-        if ( !( item.first & bitmask ) )
-            continue;
-
-        result += " ";
-        result += item.second;
-    }
-
-    LogInfo ( "%s%s:%s", indent, name, result.c_str () );
-}
-
-void Renderer::PrintVkHandler ( char const* indent, char const* name, void* handler ) const
-{
-    LogInfo ( "%s%s: %p", indent, name, handler );
-}
-
-void Renderer::PrintVkLayerProperties ( uint32_t layerIndex, const VkLayerProperties &layer ) const
-{
-    LogInfo ( "%sLayer: #%u", INDENT_1, layerIndex );
-
-    PrintUTF8Prop ( INDENT_2, "layerName", layer.layerName );
-    PrintVkVersion ( INDENT_2, "specVersion", layer.specVersion );
-    PrintUINT32Prop ( INDENT_2, "implementationVersion", layer.implementationVersion );
-    PrintUTF8Prop ( INDENT_2, "description", layer.description );
-}
-
-void Renderer::PrintVkPresentModeProp ( uint32_t modeIndex, VkPresentModeKHR mode ) const
-{
-    LogInfo ( "%sMode: #%u", INDENT_1, modeIndex );
-    PrintUTF8Prop ( INDENT_2, "type", ResolveVkPresentModeKHR ( mode ) );
-}
-
-void Renderer::PrintVkSurfaceCapabilities ( VkSurfaceCapabilitiesKHR const &caps )
-{
-    LogInfo ( ">>> Surface:" );
-
-    PrintUINT32Prop ( INDENT_1, "minImageCount", caps.minImageCount );
-    PrintUINT32Prop ( INDENT_1, "maxImageCount", caps.maxImageCount );
-    PrintVkExtent2DProp ( INDENT_1, "currentExtent", caps.currentExtent );
-    PrintVkExtent2DProp ( INDENT_1, "minImageExtent", caps.minImageExtent );
-    PrintVkExtent2DProp ( INDENT_1, "maxImageExtent", caps.maxImageExtent );
-    PrintUINT32Prop ( INDENT_1, "maxImageArrayLayers", caps.maxImageArrayLayers );
-
-    PrintVkFlagsProp ( INDENT_1,
-        "supportedTransforms",
-        caps.supportedTransforms,
-        g_vkSurfaceTransformFlagBitsKHRMapperItems,
-        g_vkSurfaceTransformFlagBitsKHRMapper
-    );
-
-    LogInfo ( "%scurrentTransform: %s", INDENT_1, ResolveVkSurfaceTransform ( caps.currentTransform ) );
-
-    PrintVkFlagsProp ( INDENT_1,
-        "supportedCompositeAlpha",
-        caps.supportedCompositeAlpha,
-        g_vkCompositeAlphaFlagBitsKHRMapperItems,
-        g_vkCompositeAlphaFlagBitsKHRMapper
-    );
-
-    PrintVkFlagsProp ( INDENT_1,
-        "supportedUsageFlags",
-        caps.supportedUsageFlags,
-        g_vkImageUsageFlagBitsMapperItems,
-        g_vkImageUsageFlagBitsMapper
-    );
-}
-
-void Renderer::PrintVkSurfaceFormatKHRProp ( uint32_t formatIndex, VkSurfaceFormatKHR const &format ) const
-{
-    LogInfo ( "%sSurface format: #%u", INDENT_1, formatIndex );
-
-    PrintUTF8Prop ( INDENT_2, "format", ResolveVkFormat ( format.format ) );
-    PrintUTF8Prop ( INDENT_2, "colorSpace ", ResolveVkColorSpaceKHR ( format.colorSpace ) );
-}
-
-void Renderer::PrintVkVersion ( char const* indent, char const* name, uint32_t version ) const
-{
-    LogInfo ( "%s%s: %u.%u.%u",
-        indent,
-        name,
-        VK_VERSION_MAJOR ( version ),
-        VK_VERSION_MINOR ( version ),
-        VK_VERSION_PATCH ( version )
-    );
-}
-
-void Renderer::PrintSizeProp ( char const* indent, char const* name, size_t value ) const
-{
-    LogInfo ( "%s%s: %zu", indent, name, value );
-}
-
-void Renderer::PrintUINT32Prop ( char const* indent, char const* name, uint32_t value ) const
-{
-    LogInfo ( "%s%s: %u", indent, name, value );
-}
-
-void Renderer::PrintUINT32Vec2Prop ( char const* indent, char const* name, uint32_t const value[] ) const
-{
-    LogInfo ( "%s%s: %u, %u", indent, name, value[ 0U ], value[ 1U ] );
-}
-
-void Renderer::PrintUINT32Vec3Prop ( char const* indent, char const* name, uint32_t const value[] ) const
-{
-    LogInfo ( "%s%s: %u, %u, %u", indent, name, value[ 0U ], value[ 1U ], value[ 2U ] );
-}
-
-void Renderer::PrintUTF8Prop ( char const* indent, char const* name, char const* value ) const
-{
-    LogInfo ( "%s%s: %s", indent, name, value );
-}
-
-char const* Renderer::ResolvePhysicalDeviceType ( VkPhysicalDeviceType type ) const
-{
-    auto const findResult = _vulkanPhysicalDeviceTypeMap.find ( type );
-    return findResult == _vulkanPhysicalDeviceTypeMap.cend () ? UNKNOWN_RESULT : findResult->second;
-}
-
-#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
-
-char const* Renderer::ResolveVkDebugReportObjectType ( VkDebugReportObjectTypeEXT type ) const
-{
-    auto const findResult = _vulkanObjectTypeMap.find ( type );
-    return findResult == _vulkanObjectTypeMap.cend () ? UNKNOWN_RESULT : findResult->second;
-}
-
-#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
-
-char const* Renderer::ResolveVkColorSpaceKHR ( VkColorSpaceKHR colorSpace ) const
-{
-    auto const findResult = _vulkanColorSpaceMap.find ( colorSpace );
-    return findResult == _vulkanColorSpaceMap.cend () ? UNKNOWN_RESULT : findResult->second;
-}
-
-char const* Renderer::ResolveVkCompositeAlpha ( VkCompositeAlphaFlagBitsKHR compositeAlpha ) const
-{
-    auto const findResult = _vulkanCompositeAlphaMap.find ( compositeAlpha );
-    return findResult == _vulkanCompositeAlphaMap.cend () ? UNKNOWN_RESULT : findResult->second;
-}
-
-char const* Renderer::ResolveVkPresentModeKHR ( VkPresentModeKHR mode ) const
-{
-    auto const findResult = _vulkanPresentModeMap.find ( mode );
-    return findResult == _vulkanPresentModeMap.cend () ? UNKNOWN_RESULT : findResult->second;
-}
-
-char const* Renderer::ResolveVkResult ( VkResult result ) const
-{
-    auto const findResult = _vulkanResultMap.find ( result );
-
-    if ( findResult != _vulkanResultMap.cend () )
-        return findResult->second;
-
-    constexpr static char const* unknownResult = "UNKNOWN";
-    return unknownResult;
-}
-
-char const* Renderer::ResolveVkSurfaceTransform ( VkSurfaceTransformFlagsKHR transform ) const
-{
-    auto const findResult = _vulkanSurfaceTransformMap.find ( transform );
-
-    if ( findResult != _vulkanSurfaceTransformMap.cend () )
-        return findResult->second;
-
-    constexpr static char const* unknownResult = "UNKNOWN";
-    return unknownResult;
-}
-
 bool Renderer::SelectTargetCompositeAlpha ( VkCompositeAlphaFlagBitsKHR &targetCompositeAlpha ) const
 {
     // Priority mode: VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR.
@@ -2873,7 +2508,7 @@ message: %s
 
     logger ( format,
         category,
-        renderer.ResolveVkDebugReportObjectType ( objectType ),
+        Renderer::ResolveVkDebugReportObjectType ( objectType ),
         object,
         location,
         messageCode,
@@ -2885,11 +2520,404 @@ message: %s
 
     assert ( !"Renderer::OnVulkanDebugReport - Triggered!" );
 
-#endif
+#endif // ANDROID_VULKAN_STRICT_MODE
 
     return VK_FALSE;
 }
 
-#endif
+#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+
+bool Renderer::PrintCoreExtensions ()
+{
+    uint32_t extensionCount = 0U;
+    vkEnumerateInstanceExtensionProperties ( nullptr, &extensionCount, nullptr );
+
+    if ( !extensionCount )
+    {
+        LogError ( "Renderer::PrintCoreExtensions - There is no any core extensions!" );
+        assert ( !"Renderer::PrintCoreExtensions - There is no any core extensions!" );
+
+        return false;
+    }
+
+    LogInfo ( "Renderer::PrintCoreExtensions - Instance core extensions detected: %u.", extensionCount );
+
+    std::vector<VkExtensionProperties> extensions ( static_cast<size_t> ( extensionCount ) );
+    VkExtensionProperties* extensionList = extensions.data ();
+
+    bool const result = CheckVkResult (
+        vkEnumerateInstanceExtensionProperties ( nullptr, &extensionCount, extensionList ),
+        "Renderer::PrintCoreExtensions",
+        "Can't get instance core extensions"
+    );
+
+    if ( !result )
+        return false;
+
+    for ( uint32_t i = 0U; i < extensionCount; ++i )
+        PrintVkExtensionProp ( i, "Instance core", extensionList[ i ] );
+
+    return true;
+}
+
+void Renderer::PrintFloatProp ( char const* indent, char const* name, float value )
+{
+    LogInfo ( "%s%s: %g", indent, name, value );
+}
+
+void Renderer::PrintFloatVec2Prop ( char const* indent, char const* name, float const value[] )
+{
+    LogInfo ( "%s%s: %g, %g", indent, name, value[ 0U ], value[ 1U ] );
+}
+
+void Renderer::PrintINT32Prop ( char const* indent, char const* name, int32_t value )
+{
+    LogInfo ( "%s%s: %i", indent, name, value );
+}
+
+bool Renderer::PrintInstanceLayerInfo ()
+{
+    uint32_t layerCount = 0U;
+    vkEnumerateInstanceLayerProperties ( &layerCount, nullptr );
+
+    if ( !layerCount )
+    {
+        LogInfo ( "Renderer::PrintInstanceLayerInfo - Instance does not contain any layers." );
+        return PrintCoreExtensions ();
+    }
+
+    LogInfo ( ">>> Instance layers detected: %u.", layerCount );
+
+    std::vector<VkLayerProperties> layers ( static_cast<size_t> ( layerCount ) );
+    VkLayerProperties* layerList = layers.data ();
+
+    bool const result = CheckVkResult ( vkEnumerateInstanceLayerProperties ( &layerCount, layerList ),
+        "Renderer::PrintCoreExtensions",
+        "Can't get instance core extensions"
+    );
+
+    if ( !result )
+        return false;
+
+    for ( uint32_t i = 0U; i < layerCount; ++i )
+        PrintVkLayerProperties ( i, layerList[ i ] );
+
+    return PrintCoreExtensions ();
+}
+
+void Renderer::PrintPhysicalDeviceCommonProps ( VkPhysicalDeviceProperties const &props )
+{
+    LogInfo ( ">>> Common properties:" );
+
+    PrintVkVersion ( INDENT_1, "apiVersion", props.apiVersion );
+    PrintUINT32Prop ( INDENT_1, "driverVersion", props.driverVersion );
+    PrintUINT32Prop ( INDENT_1, "vendorID", props.vendorID );
+    PrintUINT32Prop ( INDENT_1, "deviceID", props.deviceID );
+    PrintUTF8Prop ( INDENT_1, "deviceType", ResolvePhysicalDeviceType ( props.deviceType ) );
+    PrintUTF8Prop ( INDENT_1, "deviceName", props.deviceName );
+
+    LogInfo ( "%spipelineCacheUUID: {%x%x%x%x-%x%x-%x%x-%x%x-%x%x%x%x%x%x}",
+        INDENT_1,
+        props.pipelineCacheUUID[ 0U ],
+        props.pipelineCacheUUID[ 1U ],
+        props.pipelineCacheUUID[ 2U ],
+        props.pipelineCacheUUID[ 3U ],
+        props.pipelineCacheUUID[ 4U ],
+        props.pipelineCacheUUID[ 5U ],
+        props.pipelineCacheUUID[ 6U ],
+        props.pipelineCacheUUID[ 7U ],
+        props.pipelineCacheUUID[ 8U ],
+        props.pipelineCacheUUID[ 9U ],
+        props.pipelineCacheUUID[ 10U ],
+        props.pipelineCacheUUID[ 11U ],
+        props.pipelineCacheUUID[ 12U ],
+        props.pipelineCacheUUID[ 13U ],
+        props.pipelineCacheUUID[ 14U ],
+        props.pipelineCacheUUID[ 15U ]
+    );
+}
+
+void Renderer::PrintPhysicalDeviceGroupInfo ( uint32_t groupIndex, VkPhysicalDeviceGroupProperties const &props )
+{
+    LogInfo ( "Renderer::PrintPhysicalDeviceGroupInfo - Vulkan physical device group #%u", groupIndex );
+
+    PrintUINT32Prop ( INDENT_1, "physicalDeviceCount", props.physicalDeviceCount );
+
+    for ( uint32_t i = 0U; i < props.physicalDeviceCount; ++i )
+        PrintVkHandler ( INDENT_2, "Device handler", props.physicalDevices[ i ] );
+
+    PrintVkBool32Prop ( INDENT_1, "subsetAllocation", props.subsetAllocation );
+}
+
+bool Renderer::PrintPhysicalDeviceLayerInfo ( VkPhysicalDevice physicalDevice )
+{
+    uint32_t layerCount = 0U;
+    vkEnumerateDeviceLayerProperties ( physicalDevice, &layerCount, nullptr );
+
+    LogInfo ( ">>> Physical device layers detected: %u.", layerCount );
+
+    if ( !layerCount )
+        return true;
+
+    std::vector<VkLayerProperties> layers ( static_cast<size_t> ( layerCount ) );
+    VkLayerProperties* layerList = layers.data ();
+
+    bool const result = CheckVkResult ( vkEnumerateDeviceLayerProperties ( physicalDevice, &layerCount, layerList ),
+        "Renderer::PrintPhysicalDeviceLayerInfo",
+        "Can't get physical device layers"
+    );
+
+    if ( !result )
+        return false;
+
+    for ( uint32_t i = 0U; i < layerCount; ++i )
+        PrintVkLayerProperties ( i, layerList[ i ] );
+
+    return true;
+}
+
+void Renderer::PrintPhysicalDeviceQueueFamilyInfo ( uint32_t queueFamilyIndex,
+    VkQueueFamilyProperties const &props
+)
+{
+    LogInfo ( "%sQueue family: #%u", INDENT_1, queueFamilyIndex );
+
+    PrintVkFlagsProp ( INDENT_2, "queueFlags", props.queueFlags, g_vkQueueFlagMapperItems, g_vkQueueFlagMapper );
+    PrintUINT32Prop ( INDENT_2, "queueCount", props.queueCount );
+    PrintUINT32Prop ( INDENT_2, "timestampValidBits", props.timestampValidBits );
+    PrintVkExtent3DProp ( INDENT_2, "minImageTransferGranularity", props.minImageTransferGranularity );
+}
+
+void Renderer::PrintUINT32Prop ( char const* indent, char const* name, uint32_t value )
+{
+    LogInfo ( "%s%s: %u", indent, name, value );
+}
+
+void Renderer::PrintUINT32Vec2Prop ( char const* indent, char const* name, uint32_t const value[] )
+{
+    LogInfo ( "%s%s: %u, %u", indent, name, value[ 0U ], value[ 1U ] );
+}
+
+void Renderer::PrintUINT32Vec3Prop ( char const* indent, char const* name, uint32_t const value[] )
+{
+    LogInfo ( "%s%s: %u, %u, %u", indent, name, value[ 0U ], value[ 1U ], value[ 2U ] );
+}
+
+void Renderer::PrintUTF8Prop ( char const* indent, char const* name, char const* value )
+{
+    LogInfo ( "%s%s: %s", indent, name, value );
+}
+
+void Renderer::PrintVkBool32Prop ( char const* indent, char const* name, VkBool32 value )
+{
+    LogInfo ( "%s%s: %s", indent, name, value ? "VK_TRUE" : "VK_FALSE" );
+}
+
+void Renderer::PrintVkExtent2DProp ( char const* indent, char const* name, VkExtent2D const &value )
+{
+    LogInfo ( "%s%s:", indent, name );
+    LogInfo ( "%s%swidth: %u", indent, INDENT_1, value.width );
+    LogInfo ( "%s%sheight: %u", indent, INDENT_1, value.height );
+}
+
+void Renderer::PrintVkExtent3DProp ( char const* indent, char const* name, VkExtent3D const &value )
+{
+    LogInfo ( "%s%s:", indent, name );
+    LogInfo ( "%s%swidth: %u", indent, INDENT_1, value.width );
+    LogInfo ( "%s%sheight: %u", indent, INDENT_1, value.height );
+    LogInfo ( "%s%sdepth: %u", indent, INDENT_1, value.depth );
+}
+
+void Renderer::PrintPhysicalDeviceSparse ( VkPhysicalDeviceSparseProperties const &sparse )
+{
+    LogInfo ( ">>> Sparse:" );
+
+    PrintVkBool32Prop ( INDENT_1, "residencyStandard2DBlockShape", sparse.residencyStandard2DBlockShape );
+
+    PrintVkBool32Prop ( INDENT_1,
+        "residencyStandard2DMultisampleBlockShape",
+        sparse.residencyStandard2DMultisampleBlockShape
+    );
+
+    PrintVkBool32Prop ( INDENT_1, "residencyStandard3DBlockShape", sparse.residencyStandard3DBlockShape );
+    PrintVkBool32Prop ( INDENT_1, "residencyAlignedMipSize", sparse.residencyAlignedMipSize );
+    PrintVkBool32Prop ( INDENT_1, "residencyNonResidentStrict", sparse.residencyNonResidentStrict );
+}
+
+void Renderer::PrintSizeProp ( char const* indent, char const* name, size_t value )
+{
+    LogInfo ( "%s%s: %zu", indent, name, value );
+}
+
+void Renderer::PrintVkExtensionProp ( uint32_t extensionIndex, char const* category,
+    VkExtensionProperties const &extension
+)
+{
+    LogInfo ( "%s%s extension: #%u", INDENT_1, category, extensionIndex );
+
+    PrintUTF8Prop ( INDENT_2, "extensionName", extension.extensionName );
+    PrintUINT32Prop ( INDENT_2, "specVersion", extension.specVersion );
+}
+
+void Renderer::PrintVkFlagsProp ( char const* indent,
+    char const* name,
+    VkFlags flags,
+    size_t flagSetCount,
+    std::pair<uint32_t, char const*> const flagSet[]
+)
+{
+    if ( !flags )
+    {
+        LogInfo ( "%s%s: not set", indent, name );
+        return;
+    }
+
+    std::string result;
+    auto const bitmask = static_cast<uint32_t const> ( flags );
+
+    for ( size_t i = 0U; i < flagSetCount; ++i )
+    {
+        auto const& item = flagSet[ i ];
+
+        if ( !( item.first & bitmask ) )
+            continue;
+
+        result += " ";
+        result += item.second;
+    }
+
+    LogInfo ( "%s%s:%s", indent, name, result.c_str () );
+}
+
+void Renderer::PrintVkHandler ( char const* indent, char const* name, void* handler )
+{
+    LogInfo ( "%s%s: %p", indent, name, handler );
+}
+
+void Renderer::PrintVkLayerProperties ( uint32_t layerIndex, VkLayerProperties const &layer )
+{
+    LogInfo ( "%sLayer: #%u", INDENT_1, layerIndex );
+
+    PrintUTF8Prop ( INDENT_2, "layerName", layer.layerName );
+    PrintVkVersion ( INDENT_2, "specVersion", layer.specVersion );
+    PrintUINT32Prop ( INDENT_2, "implementationVersion", layer.implementationVersion );
+    PrintUTF8Prop ( INDENT_2, "description", layer.description );
+}
+
+void Renderer::PrintVkPresentModeProp ( uint32_t modeIndex, VkPresentModeKHR mode )
+{
+    LogInfo ( "%sMode: #%u", INDENT_1, modeIndex );
+    PrintUTF8Prop ( INDENT_2, "type", ResolveVkPresentModeKHR ( mode ) );
+}
+
+void Renderer::PrintVkSurfaceCapabilities ( VkSurfaceCapabilitiesKHR const &caps )
+{
+    LogInfo ( ">>> Surface:" );
+
+    PrintUINT32Prop ( INDENT_1, "minImageCount", caps.minImageCount );
+    PrintUINT32Prop ( INDENT_1, "maxImageCount", caps.maxImageCount );
+    PrintVkExtent2DProp ( INDENT_1, "currentExtent", caps.currentExtent );
+    PrintVkExtent2DProp ( INDENT_1, "minImageExtent", caps.minImageExtent );
+    PrintVkExtent2DProp ( INDENT_1, "maxImageExtent", caps.maxImageExtent );
+    PrintUINT32Prop ( INDENT_1, "maxImageArrayLayers", caps.maxImageArrayLayers );
+
+    PrintVkFlagsProp ( INDENT_1,
+        "supportedTransforms",
+        caps.supportedTransforms,
+        g_vkSurfaceTransformFlagBitsKHRMapperItems,
+        g_vkSurfaceTransformFlagBitsKHRMapper
+    );
+
+    LogInfo ( "%scurrentTransform: %s", INDENT_1, ResolveVkSurfaceTransform ( caps.currentTransform ) );
+
+    PrintVkFlagsProp ( INDENT_1,
+        "supportedCompositeAlpha",
+        caps.supportedCompositeAlpha,
+        g_vkCompositeAlphaFlagBitsKHRMapperItems,
+        g_vkCompositeAlphaFlagBitsKHRMapper
+    );
+
+    PrintVkFlagsProp ( INDENT_1,
+        "supportedUsageFlags",
+        caps.supportedUsageFlags,
+        g_vkImageUsageFlagBitsMapperItems,
+        g_vkImageUsageFlagBitsMapper
+    );
+}
+
+void Renderer::PrintVkSurfaceFormatKHRProp ( uint32_t formatIndex, VkSurfaceFormatKHR const &format )
+{
+    LogInfo ( "%sSurface format: #%u", INDENT_1, formatIndex );
+
+    PrintUTF8Prop ( INDENT_2, "format", ResolveVkFormat ( format.format ) );
+    PrintUTF8Prop ( INDENT_2, "colorSpace ", ResolveVkColorSpaceKHR ( format.colorSpace ) );
+}
+
+void Renderer::PrintVkVersion ( char const* indent, char const* name, uint32_t version )
+{
+    // Note vulkan_core.h is a little bit dirty from clang-tidy point of view.
+    // So suppress this third-party mess via "NOLINT" control comment.
+    uint32_t const major = VK_VERSION_MAJOR ( version ); // NOLINT
+    uint32_t const minor = VK_VERSION_MAJOR ( version ); // NOLINT
+    uint32_t const patch = VK_VERSION_PATCH ( version ); // NOLINT
+
+    LogInfo ( "%s%s: %u.%u.%u", indent, name, major, minor, patch );
+}
+
+char const* Renderer::ResolvePhysicalDeviceType ( VkPhysicalDeviceType type )
+{
+    auto const findResult = _vulkanPhysicalDeviceTypeMap.find ( type );
+    return findResult == _vulkanPhysicalDeviceTypeMap.cend () ? UNKNOWN_RESULT : findResult->second;
+}
+
+#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+
+char const* Renderer::ResolveVkDebugReportObjectType ( VkDebugReportObjectTypeEXT type )
+{
+    auto const findResult = _vulkanObjectTypeMap.find ( type );
+    return findResult == _vulkanObjectTypeMap.cend () ? UNKNOWN_RESULT : findResult->second;
+}
+
+#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+
+char const* Renderer::ResolveVkColorSpaceKHR ( VkColorSpaceKHR colorSpace )
+{
+    auto const findResult = _vulkanColorSpaceMap.find ( colorSpace );
+    return findResult == _vulkanColorSpaceMap.cend () ? UNKNOWN_RESULT : findResult->second;
+}
+
+char const* Renderer::ResolveVkCompositeAlpha ( VkCompositeAlphaFlagBitsKHR compositeAlpha )
+{
+    auto const findResult = _vulkanCompositeAlphaMap.find ( compositeAlpha );
+    return findResult == _vulkanCompositeAlphaMap.cend () ? UNKNOWN_RESULT : findResult->second;
+}
+
+char const* Renderer::ResolveVkPresentModeKHR ( VkPresentModeKHR mode )
+{
+    auto const findResult = _vulkanPresentModeMap.find ( mode );
+    return findResult == _vulkanPresentModeMap.cend () ? UNKNOWN_RESULT : findResult->second;
+}
+
+char const* Renderer::ResolveVkResult ( VkResult result )
+{
+    auto const findResult = _vulkanResultMap.find ( result );
+
+    if ( findResult != _vulkanResultMap.cend () )
+        return findResult->second;
+
+    constexpr static char const* unknownResult = "UNKNOWN";
+    return unknownResult;
+}
+
+char const* Renderer::ResolveVkSurfaceTransform ( VkSurfaceTransformFlagsKHR transform )
+{
+    auto const findResult = _vulkanSurfaceTransformMap.find ( transform );
+
+    if ( findResult != _vulkanSurfaceTransformMap.cend () )
+        return findResult->second;
+
+    constexpr static char const* unknownResult = "UNKNOWN";
+    return unknownResult;
+}
 
 } // namespace android_vulkan

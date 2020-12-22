@@ -79,14 +79,14 @@ MeshGeometry::MeshGeometry ():
     // NOTHING
 }
 
-void MeshGeometry::FreeResources ( android_vulkan::Renderer &renderer )
+void MeshGeometry::FreeResources ( Renderer &renderer )
 {
     FreeTransferResources ( renderer );
     FreeResourceInternal ( renderer );
     _fileName.clear ();
 }
 
-void MeshGeometry::FreeTransferResources ( android_vulkan::Renderer &renderer )
+void MeshGeometry::FreeTransferResources ( Renderer &renderer )
 {
     VkDevice device = renderer.GetDevice ();
 
@@ -142,13 +142,13 @@ bool MeshGeometry::IsUnique () const
 
 bool MeshGeometry::LoadMesh ( std::string &&fileName,
     VkBufferUsageFlags usage,
-    android_vulkan::Renderer &renderer,
+    Renderer &renderer,
     VkCommandBuffer commandBuffer
 )
 {
     if ( fileName.empty () )
     {
-        android_vulkan::LogError ( "MeshGeometry::LoadMesh - Can't upload data. Filename is empty." );
+        LogError ( "MeshGeometry::LoadMesh - Can't upload data. Filename is empty." );
         return false;
     }
 
@@ -170,7 +170,7 @@ bool MeshGeometry::LoadMesh ( std::string &&fileName,
     size_t size,
     uint32_t vertexCount,
     VkBufferUsageFlags usage,
-    android_vulkan::Renderer &renderer,
+    Renderer &renderer,
     VkCommandBuffer commandBuffer
 )
 {
@@ -178,7 +178,7 @@ bool MeshGeometry::LoadMesh ( std::string &&fileName,
     return UploadSimple ( data, size, vertexCount, usage, renderer, commandBuffer );
 }
 
-void MeshGeometry::FreeResourceInternal ( android_vulkan::Renderer &renderer )
+void MeshGeometry::FreeResourceInternal ( Renderer &renderer )
 {
     _vertexCount = 0U;
     VkDevice device = renderer.GetDevice ();
@@ -207,13 +207,13 @@ void MeshGeometry::FreeResourceInternal ( android_vulkan::Renderer &renderer )
 
 bool MeshGeometry::LoadFromMesh ( std::string &&fileName,
     VkBufferUsageFlags usage,
-    android_vulkan::Renderer &renderer,
+    Renderer &renderer,
     VkCommandBuffer commandBuffer
 )
 {
     FreeResourceInternal ( renderer );
 
-    android_vulkan::File file ( fileName );
+    File file ( fileName );
 
     if ( !file.LoadContent () )
         return false;
@@ -229,9 +229,9 @@ bool MeshGeometry::LoadFromMesh ( std::string &&fileName,
 
     size_t const toNextBatch = verticesPerBatch * skipFactor;
     auto const lastIndex = static_cast<size_t const> ( header.totalVertices - 1U );
-    auto* vertices = reinterpret_cast<android_vulkan::VertexInfo*> ( content.data () + header.vboOffset );
+    auto* vertices = reinterpret_cast<VertexInfo*> ( content.data () + header.vboOffset );
 
-    auto converter = [ & ] ( android_vulkan::VertexInfo* vertices,
+    auto converter = [ & ] ( VertexInfo* vertices,
         size_t currentIndex,
         size_t lastIndex,
         size_t toNextBatch,
@@ -268,7 +268,7 @@ bool MeshGeometry::LoadFromMesh ( std::string &&fileName,
         item.join ();
 
     bool const result = UploadSimple ( reinterpret_cast<uint8_t const*> ( vertices ),
-        header.totalVertices * sizeof ( android_vulkan::VertexInfo ),
+        header.totalVertices * sizeof ( VertexInfo ),
         header.totalVertices,
         usage,
         renderer,
@@ -284,13 +284,13 @@ bool MeshGeometry::LoadFromMesh ( std::string &&fileName,
 
 bool MeshGeometry::LoadFromMesh2 ( std::string &&fileName,
     VkBufferUsageFlags /*usage*/,
-    android_vulkan::Renderer &renderer,
+    Renderer &renderer,
     VkCommandBuffer commandBuffer
 )
 {
     FreeResourceInternal ( renderer );
 
-    android_vulkan::File file ( fileName );
+    File file ( fileName );
 
     if ( !file.LoadContent () )
         return false;
@@ -316,7 +316,8 @@ bool MeshGeometry::LoadFromMesh2 ( std::string &&fileName,
 
     VkDevice device = renderer.GetDevice ();
 
-    bool result = renderer.CheckVkResult ( vkCreateBuffer ( device, &bufferInfo, nullptr, &_indexBuffer ),
+    bool result = Renderer::CheckVkResult (
+        vkCreateBuffer ( device, &bufferInfo, nullptr, &_indexBuffer ),
         "MeshGeometry::LoadFromMesh2",
         "Can't create index buffer"
     );
@@ -335,7 +336,7 @@ bool MeshGeometry::LoadFromMesh2 ( std::string &&fileName,
     bufferInfo.size = static_cast<VkDeviceSize> ( header._vertexCount * sizeof ( Mesh2Vertex ) );
     bufferInfo.usage = vertexBufferUsageFlags;
 
-    result = renderer.CheckVkResult ( vkCreateBuffer ( device, &bufferInfo, nullptr, &_vertexBuffer ),
+    result = Renderer::CheckVkResult ( vkCreateBuffer ( device, &bufferInfo, nullptr, &_vertexBuffer ),
         "MeshGeometry::LoadFromMesh2",
         "Can't create vertex buffer"
     );
@@ -358,7 +359,7 @@ R"__(MeshGeometry::LoadFromMesh2 - Memory usage bits are not same:
     index buffer memory bits: 0x%08X
     vertex buffer memory bits: 0x%08X)__";
 
-        android_vulkan::LogError ( format,
+        LogError ( format,
             indexBufferMemoryRequirements.memoryTypeBits,
             vertexBufferMemoryRequirements.memoryTypeBits
         );
@@ -404,7 +405,7 @@ R"__(MeshGeometry::LoadFromMesh2 - Memory usage bits are not same:
 
     AV_REGISTER_DEVICE_MEMORY ( "MeshGeometry::_bufferMemory" )
 
-    result = renderer.CheckVkResult ( vkBindBufferMemory ( device, _indexBuffer, _bufferMemory, 0U ),
+    result = Renderer::CheckVkResult ( vkBindBufferMemory ( device, _indexBuffer, _bufferMemory, 0U ),
         "MeshGeometry::LoadFromMesh2",
         "Can't bind index buffer memory"
     );
@@ -415,7 +416,7 @@ R"__(MeshGeometry::LoadFromMesh2 - Memory usage bits are not same:
         return false;
     }
 
-    result = renderer.CheckVkResult (
+    result = Renderer::CheckVkResult (
         vkBindBufferMemory ( device, _vertexBuffer, _bufferMemory, static_cast<VkDeviceSize> ( vertexDataOffset ) ),
         "MeshGeometry::LoadFromMesh2",
         "Can't bind vertex buffer memory"
@@ -480,7 +481,7 @@ bool MeshGeometry::UploadInternal ( size_t numUploads,
     VkBuffer const* dstBuffers,
     uint8_t const* data,
     size_t dataSize,
-    android_vulkan::Renderer &renderer,
+    Renderer &renderer,
     VkCommandBuffer commandBuffer
 )
 {
@@ -498,7 +499,8 @@ bool MeshGeometry::UploadInternal ( size_t numUploads,
 
     VkDevice device = renderer.GetDevice ();
 
-    bool result = renderer.CheckVkResult ( vkCreateBuffer ( device, &bufferInfo, nullptr, &_transferBuffer ),
+    bool result = Renderer::CheckVkResult (
+        vkCreateBuffer ( device, &bufferInfo, nullptr, &_transferBuffer ),
         "MeshGeometry::UploadInternal",
         "Can't create transfer buffer"
     );
@@ -531,7 +533,8 @@ bool MeshGeometry::UploadInternal ( size_t numUploads,
 
     AV_REGISTER_DEVICE_MEMORY ( "MeshGeometry::_transferMemory" )
 
-    result = renderer.CheckVkResult ( vkBindBufferMemory ( device, _transferBuffer, _transferMemory, 0U ),
+    result = Renderer::CheckVkResult (
+        vkBindBufferMemory ( device, _transferBuffer, _transferMemory, 0U ),
         "MeshGeometry::UploadInternal",
         "Can't bind transfer memory"
     );
@@ -544,7 +547,7 @@ bool MeshGeometry::UploadInternal ( size_t numUploads,
 
     void* transferData = nullptr;
 
-    result = renderer.CheckVkResult (
+    result = Renderer::CheckVkResult (
         vkMapMemory ( device, _transferMemory, 0U, transferMemoryRequirements.size, 0U, &transferData ),
         "MeshGeometry::UploadInternal",
         "Can't map data"
@@ -567,7 +570,7 @@ bool MeshGeometry::UploadInternal ( size_t numUploads,
         .pInheritanceInfo = nullptr
     };
 
-    result = renderer.CheckVkResult ( vkBeginCommandBuffer ( commandBuffer, &commandBufferBeginInfo ),
+    result = Renderer::CheckVkResult ( vkBeginCommandBuffer ( commandBuffer, &commandBufferBeginInfo ),
         "MeshGeometry::UploadInternal",
         "Can't begin command buffer"
     );
@@ -590,7 +593,7 @@ bool MeshGeometry::UploadInternal ( size_t numUploads,
 
         if ( findResult == g_accessMapper.cend () )
         {
-            android_vulkan::LogError ( "MeshGeometry::UploadInternal - Unexpected usage 0x%08X", usages[ i ] );
+            LogError ( "MeshGeometry::UploadInternal - Unexpected usage 0x%08X", usages[ i ] );
             FreeResources ( renderer );
             return false;
         }
@@ -624,7 +627,7 @@ bool MeshGeometry::UploadInternal ( size_t numUploads,
         nullptr
     );
 
-    result = renderer.CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
+    result = Renderer::CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
         "MeshGeometry::UploadInternal",
         "Can't end command buffer"
     );
@@ -648,7 +651,8 @@ bool MeshGeometry::UploadInternal ( size_t numUploads,
         .pSignalSemaphores = nullptr
     };
 
-    result = renderer.CheckVkResult ( vkQueueSubmit ( renderer.GetQueue (), 1U, &submitInfo, VK_NULL_HANDLE ),
+    result = Renderer::CheckVkResult (
+        vkQueueSubmit ( renderer.GetQueue (), 1U, &submitInfo, VK_NULL_HANDLE ),
         "MeshGeometry::LoadFromMesh2",
         "Can't submit command"
     );
@@ -664,7 +668,7 @@ bool MeshGeometry::UploadSimple ( uint8_t const* data,
     size_t size,
     uint32_t vertexCount,
     VkBufferUsageFlags usage,
-    android_vulkan::Renderer &renderer,
+    Renderer &renderer,
     VkCommandBuffer commandBuffer
 )
 {
@@ -682,7 +686,8 @@ bool MeshGeometry::UploadSimple ( uint8_t const* data,
 
     VkDevice device = renderer.GetDevice ();
 
-    bool result = renderer.CheckVkResult ( vkCreateBuffer ( device, &bufferInfo, nullptr, &_vertexBuffer ),
+    bool result = Renderer::CheckVkResult (
+        vkCreateBuffer ( device, &bufferInfo, nullptr, &_vertexBuffer ),
         "MeshGeometry::UploadSimple",
         "Can't create buffer"
     );
@@ -709,7 +714,7 @@ bool MeshGeometry::UploadSimple ( uint8_t const* data,
 
     AV_REGISTER_DEVICE_MEMORY ( "MeshGeometry::_bufferMemory" )
 
-    result = renderer.CheckVkResult ( vkBindBufferMemory ( device, _vertexBuffer, _bufferMemory, 0U ),
+    result = Renderer::CheckVkResult ( vkBindBufferMemory ( device, _vertexBuffer, _bufferMemory, 0U ),
         "MeshGeometry::UploadSimple",
         "Can't bind buffer memory"
     );

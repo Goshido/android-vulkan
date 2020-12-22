@@ -59,7 +59,7 @@ bool MandelbrotLUTColor::OnInit ( android_vulkan::Renderer &renderer )
 
 bool MandelbrotLUTColor::OnDestroy ( android_vulkan::Renderer &renderer )
 {
-    const bool result = renderer.CheckVkResult ( vkQueueWaitIdle ( renderer.GetQueue () ),
+    const bool result = android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( renderer.GetQueue () ),
         "MandelbrotLUTColor::OnDestroy",
         "Can't wait queue idle"
     );
@@ -91,7 +91,7 @@ bool MandelbrotLUTColor::CreatePipelineLayout ( android_vulkan::Renderer &render
 
     VkDevice device = renderer.GetDevice ();
 
-    bool result = renderer.CheckVkResult (
+    bool result = android_vulkan::Renderer::CheckVkResult (
         vkCreateDescriptorSetLayout ( renderer.GetDevice (), &descriptorSetInfo, nullptr, &_descriptorSetLayout ),
         "MandelbrotLUTColor::CreatePipelineLayout",
         "Can't create descriptor set layout"
@@ -111,7 +111,7 @@ bool MandelbrotLUTColor::CreatePipelineLayout ( android_vulkan::Renderer &render
     pipelineLayoutInfo.setLayoutCount = 1U;
     pipelineLayoutInfo.pSetLayouts = &_descriptorSetLayout;
 
-    result = renderer.CheckVkResult (
+    result = android_vulkan::Renderer::CheckVkResult (
         vkCreatePipelineLayout ( device, &pipelineLayoutInfo, nullptr, &_pipelineLayout ),
         "MandelbrotLUTColor::CreatePipelineLayout",
         "Can't create pipeline layout"
@@ -155,7 +155,7 @@ bool MandelbrotLUTColor::CreateCommandBuffer ( android_vulkan::Renderer &rendere
     commandBufferInfo.commandPool = _commandPool;
     commandBufferInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 
-    bool result = renderer.CheckVkResult (
+    bool result = android_vulkan::Renderer::CheckVkResult (
         vkAllocateCommandBuffers ( renderer.GetDevice (), &commandBufferInfo, _commandBuffer.data () ),
         "MandelbrotLUTColor::CreateCommandBuffer",
         "Can't allocate command buffer"
@@ -193,7 +193,8 @@ bool MandelbrotLUTColor::CreateCommandBuffer ( android_vulkan::Renderer &rendere
     {
         VkCommandBuffer commandBuffer = _commandBuffer[ i ];
 
-        result = renderer.CheckVkResult ( vkBeginCommandBuffer ( commandBuffer, &commandBufferBeginInfo ),
+        result = android_vulkan::Renderer::CheckVkResult (
+            vkBeginCommandBuffer ( commandBuffer, &commandBufferBeginInfo ),
             "MandelbrotLUTColor::CreateCommandBuffer",
             "Can't begin command buffer"
         );
@@ -222,7 +223,7 @@ bool MandelbrotLUTColor::CreateCommandBuffer ( android_vulkan::Renderer &rendere
         vkCmdDraw ( commandBuffer, 4U, 1U, 0U, 0U );
         vkCmdEndRenderPass ( commandBuffer );
 
-        result = renderer.CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
+        result = android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
             "MandelbrotLUTColor::CreateCommandBuffer",
             "Can't end command buffer"
         );
@@ -256,7 +257,8 @@ bool MandelbrotLUTColor::CreateDescriptorSet (  android_vulkan::Renderer &render
 
     VkDevice device = renderer.GetDevice ();
 
-    bool result = renderer.CheckVkResult ( vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_descriptorPool ),
+    bool result = android_vulkan::Renderer::CheckVkResult (
+        vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_descriptorPool ),
         "MandelbrotLUTColor::CreateDescriptorSet",
         "Can't create descriptor pool"
     );
@@ -273,7 +275,8 @@ bool MandelbrotLUTColor::CreateDescriptorSet (  android_vulkan::Renderer &render
     allocateInfo.descriptorPool = _descriptorPool;
     allocateInfo.pSetLayouts = &_descriptorSetLayout;
 
-    result = renderer.CheckVkResult ( vkAllocateDescriptorSets ( device, &allocateInfo, &_descriptorSet ),
+    result = android_vulkan::Renderer::CheckVkResult (
+        vkAllocateDescriptorSets ( device, &allocateInfo, &_descriptorSet ),
         "MandelbrotLUTColor::CreateDescriptorSet",
         "Can't create descriptor set"
     );
@@ -338,7 +341,7 @@ bool MandelbrotLUTColor::CreateLUT ( android_vulkan::Renderer &renderer )
 
     VkDevice device = renderer.GetDevice ();
 
-    bool result = renderer.CheckVkResult ( vkCreateImage ( device, &imageInfo, nullptr, &_lut ),
+    bool result = android_vulkan::Renderer::CheckVkResult ( vkCreateImage ( device, &imageInfo, nullptr, &_lut ),
         "MandelbrotLUTColor::CreateLUT",
         "Can't create image"
     );
@@ -365,7 +368,7 @@ bool MandelbrotLUTColor::CreateLUT ( android_vulkan::Renderer &renderer )
 
     AV_REGISTER_DEVICE_MEMORY ( "MandelbrotLUTColor::_lutDeviceMemory" )
 
-    result = renderer.CheckVkResult ( vkBindImageMemory ( device, _lut, _lutDeviceMemory, 0U ),
+    result = android_vulkan::Renderer::CheckVkResult ( vkBindImageMemory ( device, _lut, _lutDeviceMemory, 0U ),
         "MandelbrotLUTColor::_lutDeviceMemory",
         "Can't bind LUT memory to the image"
     );
@@ -391,7 +394,7 @@ bool MandelbrotLUTColor::CreateLUT ( android_vulkan::Renderer &renderer )
     imageViewInfo.subresourceRange.baseArrayLayer = imageViewInfo.subresourceRange.baseMipLevel = 0U;
     imageViewInfo.subresourceRange.layerCount = imageViewInfo.subresourceRange.levelCount = 1U;
 
-    result = renderer.CheckVkResult ( vkCreateImageView ( device, &imageViewInfo, nullptr, &_lutView ),
+    result = android_vulkan::Renderer::CheckVkResult ( vkCreateImageView ( device, &imageViewInfo, nullptr, &_lutView ),
         "MandelbrotLUTColor::CreateLUT",
         "Can't create image view"
     );
@@ -422,7 +425,7 @@ bool MandelbrotLUTColor::CreateLUT ( android_vulkan::Renderer &renderer )
     samplerInfo.mipLodBias = 0.0F;
     samplerInfo.unnormalizedCoordinates = VK_FALSE;
 
-    result = renderer.CheckVkResult ( vkCreateSampler ( device, &samplerInfo, nullptr, &_sampler ),
+    result = android_vulkan::Renderer::CheckVkResult ( vkCreateSampler ( device, &samplerInfo, nullptr, &_sampler ),
         "MandelbrotLUTColor::CreateLUT",
         "Can't create sampler"
     );
@@ -533,7 +536,7 @@ bool MandelbrotLUTColor::UploadLUTSamples ( android_vulkan::Renderer &renderer )
 
     VkBuffer transfer = VK_NULL_HANDLE;
 
-    bool result = renderer.CheckVkResult ( vkCreateBuffer ( device, &bufferInfo, nullptr, &transfer ),
+    bool result = android_vulkan::Renderer::CheckVkResult ( vkCreateBuffer ( device, &bufferInfo, nullptr, &transfer ),
         "MandelbrotLUTColor::CreateLUT",
         "Can't create buffer"
     );
@@ -573,7 +576,8 @@ bool MandelbrotLUTColor::UploadLUTSamples ( android_vulkan::Renderer &renderer )
 
     AV_REGISTER_DEVICE_MEMORY ( "MandelbrotLUTColor::UploadLUTSamples::transferDeviceMemory" )
 
-    result = renderer.CheckVkResult ( vkBindBufferMemory ( device, transfer, transferDeviceMemory, 0U ),
+    result = android_vulkan::Renderer::CheckVkResult (
+        vkBindBufferMemory ( device, transfer, transferDeviceMemory, 0U ),
         "MandelbrotLUTColor::CreateLUT",
         "Can't bind memory to the transfer buffer"
     );
@@ -586,7 +590,8 @@ bool MandelbrotLUTColor::UploadLUTSamples ( android_vulkan::Renderer &renderer )
 
     void* data = nullptr;
 
-    result = renderer.CheckVkResult ( vkMapMemory ( device, transferDeviceMemory, 0U, LUT_SIZE, 0U, &data ),
+    result = android_vulkan::Renderer::CheckVkResult (
+        vkMapMemory ( device, transferDeviceMemory, 0U, LUT_SIZE, 0U, &data ),
         "MandelbrotLUTColor::CreateLUT",
         "Can't map transfer memory"
     );
@@ -609,7 +614,7 @@ bool MandelbrotLUTColor::UploadLUTSamples ( android_vulkan::Renderer &renderer )
     allocateInfoInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     allocateInfoInfo.commandPool = _commandPool;
 
-    result = renderer.CheckVkResult (
+    result = android_vulkan::Renderer::CheckVkResult (
         vkAllocateCommandBuffers ( renderer.GetDevice (), &allocateInfoInfo, &uploadJob ),
         "MandelbrotLUTColor::UploadLUTSamples",
         "Can't create common buffer"
@@ -627,7 +632,7 @@ bool MandelbrotLUTColor::UploadLUTSamples ( android_vulkan::Renderer &renderer )
     beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
     beginInfo.pInheritanceInfo = nullptr;
 
-    result = renderer.CheckVkResult ( vkBeginCommandBuffer ( uploadJob, &beginInfo ),
+    result = android_vulkan::Renderer::CheckVkResult ( vkBeginCommandBuffer ( uploadJob, &beginInfo ),
         "MandelbrotLUTColor::UploadLUTSamples",
         "Can't begin command buffer"
     );
@@ -704,7 +709,7 @@ bool MandelbrotLUTColor::UploadLUTSamples ( android_vulkan::Renderer &renderer )
         &barrier
     );
 
-    result = renderer.CheckVkResult ( vkEndCommandBuffer ( uploadJob ),
+    result = android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( uploadJob ),
         "MandelbrotLUTColor::UploadLUTSamples",
         "Can't finish command buffer"
     );
@@ -728,7 +733,7 @@ bool MandelbrotLUTColor::UploadLUTSamples ( android_vulkan::Renderer &renderer )
 
     VkQueue queue = renderer.GetQueue ();
 
-    result = renderer.CheckVkResult (
+    result = android_vulkan::Renderer::CheckVkResult (
         vkQueueSubmit ( queue, 1U, &submitInfo, VK_NULL_HANDLE ),
         "MandelbrotLUTColor::UploadLUTSamples",
         "Can't submit command buffer"
@@ -740,7 +745,7 @@ bool MandelbrotLUTColor::UploadLUTSamples ( android_vulkan::Renderer &renderer )
         return false;
     }
 
-    result = renderer.CheckVkResult ( vkQueueWaitIdle ( queue ),
+    result = android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( queue ),
         "MandelbrotLUTColor::UploadLUTSamples",
         "Can't commit transfer command"
     );

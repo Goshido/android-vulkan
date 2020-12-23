@@ -12,6 +12,7 @@ GX_DISABLE_COMMON_WARNINGS
 GX_RESTORE_WARNING_STATE
 
 #include "game.h"
+#include "gamepad.h"
 
 
 namespace android_vulkan {
@@ -22,19 +23,24 @@ class Core final
 
     private:
         Game&           _game;
+        Gamepad&        _gamepad;
 
         Renderer        _renderer;
         timestamp       _fpsTimestamp;
         timestamp       _frameTimestamp;
 
     public:
-        explicit Core ( android_app &app, Game &game );
+        explicit Core ( android_app &app, Game &game ) noexcept;
+
+        Core ( Core const & ) = delete;
+        Core& operator = ( Core const & ) = delete;
+
+        Core ( Core && ) = delete;
+        Core& operator = ( Core && ) = delete;
+
         ~Core () = default;
 
-        Core ( const Core &other ) = delete;
-        Core& operator = ( const Core &other ) = delete;
-
-        bool IsSuspend () const;
+        [[nodiscard]] bool IsSuspend () const;
         void OnFrame ();
 
     private:
@@ -42,6 +48,7 @@ class Core final
 
         static void ActivateFullScreen ( android_app &app );
         static void OnOSCommand ( android_app* app, int32_t cmd );
+        [[nodiscard]] static int32_t OnOSInputEvent ( android_app* app, AInputEvent *event );
 };
 
 } // namespace android_vulkan

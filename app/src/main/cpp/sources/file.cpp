@@ -14,14 +14,20 @@ namespace android_vulkan {
 
 extern AAssetManager* g_AssetManager;
 
-File::File ( std::string &filePath ):
+File::File ( std::string &&filePath ):
+    _filePath ( std::move ( filePath ) )
+{
+    // NOTHING
+}
+
+File::File ( std::string_view const &filePath ):
     _filePath ( filePath )
 {
     // NOTHING
 }
 
-File::File ( std::string &&filePath ):
-    _filePath ( std::move ( filePath ) )
+File::File ( char const* filePath ):
+    _filePath ( filePath )
 {
     // NOTHING
 }
@@ -31,7 +37,7 @@ std::vector<uint8_t>& File::GetContent ()
     return _content;
 }
 
-const std::vector<uint8_t>& File::GetContent () const
+std::vector<uint8_t> const& File::GetContent () const
 {
     return _content;
 }

@@ -10,6 +10,7 @@ GX_RESTORE_WARNING_STATE
 #include <logger.h>
 #include <mandelbrot/mandelbrot_analytic_color.h>
 #include <mandelbrot/mandelbrot_lut_color.h>
+#include <pbr/pbr_game.h>
 #include <rainbow/rainbow.h>
 #include <rotating_mesh/game_analytic.h>
 #include <rotating_mesh/game_lut.h>
@@ -21,18 +22,10 @@ enum class eGame : uint16_t
 {
     MandelbrotAnalyticColor,
     MandelbrotLutColor,
+    PBR,
     Rainbow,
     RotatingMeshAnalytic,
     RotatingMeshLUT
-};
-
-static const std::map<eGame, std::shared_ptr<Game>> g_Games =
-{
-    { eGame::MandelbrotAnalyticColor, std::make_shared<mandelbrot::MandelbrotAnalyticColor> () },
-    { eGame::MandelbrotLutColor, std::make_shared<mandelbrot::MandelbrotLUTColor> () },
-    { eGame::Rainbow, std::make_shared<rainbow::Rainbow> () },
-    { eGame::RotatingMeshAnalytic, std::make_shared<rotating_mesh::GameAnalytic> () },
-    { eGame::RotatingMeshLUT, std::make_shared<rotating_mesh::GameLUT> () }
 };
 
 } // namespace android_vulkan
@@ -46,9 +39,17 @@ void android_main ( android_app* app )
 
 #endif // ANDROID_VULKAN_DEBUG
 
-    android_vulkan::Core core ( *app,
-        *( android_vulkan::g_Games.find ( android_vulkan::eGame::RotatingMeshLUT )->second )
-    );
+    std::map<android_vulkan::eGame, std::shared_ptr<android_vulkan::Game>> const games =
+    {
+        { android_vulkan::eGame::MandelbrotAnalyticColor, std::make_shared<mandelbrot::MandelbrotAnalyticColor> () },
+        { android_vulkan::eGame::MandelbrotLutColor, std::make_shared<mandelbrot::MandelbrotLUTColor> () },
+        { android_vulkan::eGame::PBR, std::make_shared<pbr::PBRGame> () },
+        { android_vulkan::eGame::Rainbow, std::make_shared<rainbow::Rainbow> () },
+        { android_vulkan::eGame::RotatingMeshAnalytic, std::make_shared<rotating_mesh::GameAnalytic> () },
+        { android_vulkan::eGame::RotatingMeshLUT, std::make_shared<rotating_mesh::GameLUT> () }
+    };
+
+    android_vulkan::Core core ( *app, *( games.find ( android_vulkan::eGame::PBR )->second ) );
 
     for ( ; ; )
     {
@@ -57,7 +58,7 @@ void android_main ( android_app* app )
             int events;
             android_poll_source* source;
 
-            const int pollResult = ALooper_pollAll ( core.IsSuspend () ? -1 : 0,
+            int const pollResult = ALooper_pollAll ( core.IsSuspend () ? -1 : 0,
                 nullptr,
                 &events,
                 reinterpret_cast<void**> ( &source )

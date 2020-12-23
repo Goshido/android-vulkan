@@ -1,10 +1,12 @@
+#include <vulkan_utils.h>
+
 #ifdef ANDROID_VULKAN_DEBUG
 
-
-#include <vulkan_utils.h>
+#include <GXCommon/GXWarning.h>
 
 GX_DISABLE_COMMON_WARNINGS
 
+#include <cassert>
 #include <set>
 #include <shared_mutex>
 
@@ -16,102 +18,6 @@ GX_RESTORE_WARNING_STATE
 namespace android_vulkan {
 
 constexpr static const char* INDENT = "    ";
-
-//----------------------------------------------------------------------------------------------------------------------
-
-Half::Half ():
-    data ( 0U )
-{
-    // NOTHING
-}
-
-Half::Half ( float value )
-{
-    // see https://en.wikipedia.org/wiki/Single-precision_floating-point_format
-    // see https://en.wikipedia.org/wiki/Half-precision_floating-point_format
-    // see https://en.wikipedia.org/wiki/NaN
-    // see https://en.wikipedia.org/wiki/IEEE_754-1985#Positive_and_negative_infinity
-
-    const uint32_t from = *reinterpret_cast<uint32_t*> ( &value );
-
-    const uint32_t mantissa = from & 0x007FFFFFU;
-    const uint32_t sign = from & 0x80000000U;
-    const uint32_t exponent = from & 0x7F800000U;
-
-    // checking special cases: zeros, NaNs and INFs
-
-    if ( mantissa == 0 && exponent == 0 )
-    {
-        // positive|negative zero branch
-        data = static_cast<uint16_t> ( sign >> 16U );
-        return;
-    }
-
-    if ( exponent == 0xFF )
-    {
-        if ( mantissa == 0 )
-        {
-            // INF branch
-            data = static_cast<uint16_t> ( ( sign >> 16U ) | 0x00007C00U );
-            return;
-        }
-
-        // NaN branches
-
-        if ( mantissa & 0x400000U )
-        {
-            // singnaling NaN
-            data = static_cast<uint16_t> ( ( sign >> 16U ) | 0x00007C00U );
-            return;
-        }
-
-        // quet NaN
-        data = static_cast<uint16_t> ( ( sign >> 16U ) | 0x00007E00U );
-        return;
-    }
-
-    const auto exponentRaw = static_cast<uint8_t> ( exponent >> 23U );
-
-    // removing exponent bias (substract 127)
-    // see https://en.wikipedia.org/wiki/Single-precision_floating-point_format
-    auto restoredExponent = static_cast<int16_t> ( exponentRaw - 0x7F );
-
-    if ( restoredExponent >= 0 )
-    {
-        // positive exponent
-
-        if ( restoredExponent > 0x000F )
-        {
-            // exponent is bigger than float16 can represent -> INF
-            data = static_cast<uint16_t> ( ( sign >> 16U ) | 0x0000FC00U );
-            return;
-        }
-    }
-    else
-    {
-        // negative exponent
-
-        if ( restoredExponent < -0x000E )
-        {
-            // exponent is less than float16 can represent -> zero
-            data = static_cast<uint16_t> ( sign >> 16U );
-            return;
-        }
-    }
-
-    // biasing exponent (add 15).
-    // see https://en.wikipedia.org/wiki/Half-precision_floating-point_format
-    restoredExponent += 0x000F;
-
-    // input number is normalized by design. reassemble it
-    data = static_cast<uint16_t> (
-        ( sign >> 16U ) |
-        ( static_cast<uint32_t> ( restoredExponent ) << 10U ) |
-        ( mantissa >> 13U )
-    );
-}
-
-//----------------------------------------------------------------------------------------------------------------------
 
 class VulkanItem final
 {

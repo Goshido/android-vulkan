@@ -1,4 +1,4 @@
-[[ vk::binding ( 0 ) ]]
+[[vk::binding ( 0 )]]
 cbuffer Transform:                          register ( b0 )
 {
     matrix              _transform;
@@ -7,19 +7,19 @@ cbuffer Transform:                          register ( b0 )
 
 struct InputData
 {
-    [[ vk::location ( 0 ) ]]
+    [[vk::location ( 0 )]]
     float3              _vertex:            VERTEX;
 
-    [[ vk::location ( 1 ) ]]
+    [[vk::location ( 1 )]]
     float2              _uv:                UV;
 
-    [[ vk::location ( 2 ) ]]
+    [[vk::location ( 2 )]]
     float3              _normal:            NORMAL;
 
-    [[ vk::location ( 3 ) ]]
+    [[vk::location ( 3 )]]
     float3              _tangent:           TANGENT;
 
-    [[ vk::location ( 4 ) ]]
+    [[vk::location ( 4 )]]
     float3              _bitangent:         BITANGENT;
 };
 
@@ -27,19 +27,19 @@ struct OutputData
 {
     linear float4       _vertexH:           SV_Position;
 
-    [[ vk::location ( 0 ) ]]
+    [[vk::location ( 0 )]]
     linear float3       _fragmentView:      FRAGMENT;
 
-    [[ vk::location ( 1 ) ]]
+    [[vk::location ( 1 )]]
     linear half2        _uv:                UV;
 
-    [[ vk::location ( 2 ) ]]
+    [[vk::location ( 2 )]]
     linear half3        _normalView:        NORMAL;
 
-    [[ vk::location ( 3 ) ]]
+    [[vk::location ( 3 )]]
     linear half3        _tangentView:       TANGENT;
 
-    [[ vk::location ( 4 ) ]]
+    [[vk::location ( 4 )]]
     linear half3        _bitangentView:     BITANGENT;
 };
 

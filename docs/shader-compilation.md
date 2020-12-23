@@ -27,7 +27,7 @@ The _android-vulkan_ project is using _HLSL_ shader language as high level progr
 ## Compile and deploy vertex shader module
 
 ```txt
-dxc.exe -spirv -WX -O3 -fvk-use-dx-layout -enable-16bit-types -T vs_6_6 -E VS -I <android-vulkan directory>\app\src\main\hlsl -Fo <android-vulkan directory>\app\src\main\assets\shaders\<file name>-vs.spv <file name>.vs
+dxc.exe -spirv -WX -O3 -fvk-use-dx-layout -enable-16bit-types -T vs_6_6 -E VS -I <android-vulkan directory>\app\src\main\hlsl -I <android-vulkan directory>\app\src\main\cpp\include\pbr -Fo <android-vulkan directory>\app\src\main\assets\shaders\<file name>-vs.spv <file name>.vs
 ```
 
 ## Compile and deploy fragment shader module

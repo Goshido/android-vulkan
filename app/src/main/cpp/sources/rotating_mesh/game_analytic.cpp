@@ -17,9 +17,10 @@ GameAnalytic::GameAnalytic ():
 bool GameAnalytic::CreateDescriptorSet ( android_vulkan::Renderer &renderer )
 {
     VkDevice device = renderer.GetDevice ();
+    constexpr const size_t uniqueFeatureCount = 3U;
     constexpr const size_t featureCount = 5U;
 
-    VkDescriptorPoolSize features[ featureCount ];
+    VkDescriptorPoolSize features[ uniqueFeatureCount ];
     InitDescriptorPoolSizeCommon ( features );
 
     VkDescriptorPoolCreateInfo poolInfo;
@@ -30,7 +31,8 @@ bool GameAnalytic::CreateDescriptorSet ( android_vulkan::Renderer &renderer )
     poolInfo.poolSizeCount = static_cast<uint32_t> ( std::size ( features ) );
     poolInfo.pPoolSizes = features;
 
-    bool result = renderer.CheckVkResult ( vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_descriptorPool ),
+    bool result = android_vulkan::Renderer::CheckVkResult (
+        vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_descriptorPool ),
         "GameAnalytic::CreateDescriptorSet",
         "Can't create descriptor pool"
     );
@@ -53,7 +55,7 @@ bool GameAnalytic::CreateDescriptorSet ( android_vulkan::Renderer &renderer )
     setAllocateInfo.pSetLayouts = layouts;
     setAllocateInfo.descriptorSetCount = poolInfo.maxSets;
 
-    result = renderer.CheckVkResult ( vkAllocateDescriptorSets ( device, &setAllocateInfo, sets ),
+    result = android_vulkan::Renderer::CheckVkResult ( vkAllocateDescriptorSets ( device, &setAllocateInfo, sets ),
         "GameAnalytic::CreateDescriptorSet",
         "Can't allocate descriptor set"
     );
@@ -167,7 +169,7 @@ bool GameAnalytic::CreatePipelineLayout ( android_vulkan::Renderer &renderer )
 
     VkDevice device = renderer.GetDevice ();
 
-    bool result = renderer.CheckVkResult (
+    bool result = android_vulkan::Renderer::CheckVkResult (
         vkCreateDescriptorSetLayout ( device, &descriptorSetInfo, nullptr, &_descriptorSetLayout ),
         "GameAnalytic::CreatePipelineLayout",
         "Can't create descriptor set layout"
@@ -187,7 +189,7 @@ bool GameAnalytic::CreatePipelineLayout ( android_vulkan::Renderer &renderer )
     pipelineLayoutInfo.setLayoutCount = 1U;
     pipelineLayoutInfo.pSetLayouts = &_descriptorSetLayout;
 
-    result = renderer.CheckVkResult ( vkCreatePipelineLayout ( device, &pipelineLayoutInfo, nullptr, &_pipelineLayout ),
+    result = android_vulkan::Renderer::CheckVkResult ( vkCreatePipelineLayout ( device, &pipelineLayoutInfo, nullptr, &_pipelineLayout ),
         "GameAnalytic::CreatePipelineLayout",
         "Can't create pipeline layout"
     );
@@ -213,7 +215,7 @@ bool GameAnalytic::LoadGPUContent ( android_vulkan::Renderer &renderer )
 
     VkDevice device = renderer.GetDevice ();
 
-    bool result = renderer.CheckVkResult (
+    bool result = android_vulkan::Renderer::CheckVkResult (
         vkAllocateCommandBuffers ( renderer.GetDevice (), &allocateInfo, commandBuffers ),
         "GameLUT::LoadGPUContent",
         "Can't allocate command buffers"
@@ -228,7 +230,7 @@ bool GameAnalytic::LoadGPUContent ( android_vulkan::Renderer &renderer )
     if ( !CreateMeshes ( renderer, commandBuffers + TEXTURE_COMMAND_BUFFERS ) )
         return false;
 
-    result = renderer.CheckVkResult ( vkQueueWaitIdle ( renderer.GetQueue () ),
+    result = android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( renderer.GetQueue () ),
         "GameLUT::LoadGPUContent",
         "Can't run upload commands"
     );

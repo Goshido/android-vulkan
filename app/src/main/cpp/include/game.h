@@ -14,11 +14,11 @@ class Game
         Game& operator = ( const Game &other ) = delete;
         virtual ~Game () = default;
 
-        virtual bool IsReady () = 0;
+        [[nodiscard]] virtual bool IsReady () = 0;
 
-        virtual bool OnInit ( Renderer &renderer ) = 0;
-        virtual bool OnFrame ( Renderer &renderer, double deltaTime ) = 0;
-        virtual bool OnDestroy ( Renderer &renderer ) = 0;
+        [[nodiscard]] virtual bool OnInit ( Renderer &renderer ) = 0;
+        [[nodiscard]] virtual bool OnFrame ( Renderer &renderer, double deltaTime ) = 0;
+        [[nodiscard]] virtual bool OnDestroy ( Renderer &renderer ) = 0;
 
     protected:
         Game () = default;

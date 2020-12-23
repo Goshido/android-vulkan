@@ -18,7 +18,7 @@ struct OutputData
 {
     linear float4      _vertexH:        SV_Position;
 
-    [[ vk::location ( 0 ) ]]
+    [[vk::location ( 0 )]]
     linear float2      _coordinate:     COORDINATE;
 };
 

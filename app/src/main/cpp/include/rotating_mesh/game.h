@@ -4,10 +4,9 @@
 
 #include <game.h>
 #include <vulkan_utils.h>
+#include <mesh_geometry.h>
 #include <GXCommon/GXMath.h>
 #include "drawcall.h"
-#include "mesh_geometry.h"
-#include "texture2D.h"
 #include "uniform_buffer.h"
 
 
@@ -24,8 +23,8 @@ class Game : public android_vulkan::Game
 
         struct Transform
         {
-            GXMat4      _transform;
-            GXMat4      _normalTransform;
+            GXMat4                      _transform;
+            GXMat4                      _normalTransform;
         };
 
         AV_DX_ALIGNMENT_END
@@ -42,19 +41,13 @@ class Game : public android_vulkan::Game
 
     private:
         float                           _angle;
-
-        VkImage                         _depthStencil;
-        VkImageView                     _depthStencilView;
-        VkDeviceMemory                  _depthStencilMemory;
+        android_vulkan::Texture2D       _depthStencilRenderTarget;
 
         const char*                     _fragmentShader;
         std::vector<VkFramebuffer>      _framebuffers;
 
         VkPipeline                      _pipeline;
-
-
         VkRenderPass                    _renderPass;
-
         VkSemaphore                     _renderPassEndSemaphore;
         VkSemaphore                     _renderTargetAcquiredSemaphore;
 
@@ -77,16 +70,16 @@ class Game : public android_vulkan::Game
         Game ( const Game &other ) = delete;
         Game& operator = ( const Game &other ) = delete;
 
-        virtual bool CreateDescriptorSet ( android_vulkan::Renderer &renderer ) = 0;
-        virtual bool CreatePipelineLayout ( android_vulkan::Renderer &renderer ) = 0;
-        virtual bool LoadGPUContent ( android_vulkan::Renderer &renderer ) = 0;
+        [[nodiscard]] virtual bool CreateDescriptorSet ( android_vulkan::Renderer &renderer ) = 0;
+        [[nodiscard]] virtual bool CreatePipelineLayout ( android_vulkan::Renderer &renderer ) = 0;
+        [[nodiscard]] virtual bool LoadGPUContent ( android_vulkan::Renderer &renderer ) = 0;
 
-        virtual bool CreateSamplers ( android_vulkan::Renderer &renderer );
+        [[nodiscard]] virtual bool CreateSamplers ( android_vulkan::Renderer &renderer );
         virtual void DestroySamplers ( android_vulkan::Renderer &renderer );
         virtual void DestroyTextures ( android_vulkan::Renderer &renderer );
 
-        bool CreateCommonTextures ( android_vulkan::Renderer &renderer, VkCommandBuffer* commandBuffers );
-        bool CreateMeshes ( android_vulkan::Renderer &renderer, VkCommandBuffer* commandBuffers );
+        [[nodiscard]] bool CreateCommonTextures ( android_vulkan::Renderer &renderer, VkCommandBuffer* commandBuffers );
+        [[nodiscard]] bool CreateMeshes ( android_vulkan::Renderer &renderer, VkCommandBuffer* commandBuffers );
 
         static void InitDescriptorPoolSizeCommon ( VkDescriptorPoolSize* features );
         static void InitDescriptorSetLayoutBindingCommon ( VkDescriptorSetLayoutBinding* bindings );
@@ -98,37 +91,37 @@ class Game : public android_vulkan::Game
         bool OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) override;
         bool OnDestroy ( android_vulkan::Renderer &renderer ) override;
 
-        bool BeginFrame ( size_t &imageIndex, android_vulkan::Renderer &renderer );
-        bool EndFrame ( uint32_t imageIndex, android_vulkan::Renderer &renderer );
+        [[nodiscard]] bool BeginFrame ( size_t &imageIndex, android_vulkan::Renderer &renderer );
+        [[nodiscard]] bool EndFrame ( uint32_t imageIndex, android_vulkan::Renderer &renderer );
 
-        bool CreateCommandPool ( android_vulkan::Renderer &renderer );
+        [[nodiscard]] bool CreateCommandPool ( android_vulkan::Renderer &renderer );
         void DestroyCommandPool ( android_vulkan::Renderer &renderer );
 
         void DestroyDescriptorSet ( android_vulkan::Renderer &renderer );
         void DestroyMeshes ( android_vulkan::Renderer &renderer );
 
-        bool CreateFramebuffers ( android_vulkan::Renderer &renderer );
+        [[nodiscard]] bool CreateFramebuffers ( android_vulkan::Renderer &renderer );
         void DestroyFramebuffers ( android_vulkan::Renderer &renderer );
 
-        bool CreatePipeline ( android_vulkan::Renderer &renderer );
+        [[nodiscard]] bool CreatePipeline ( android_vulkan::Renderer &renderer );
         void DestroyPipeline ( android_vulkan::Renderer &renderer );
 
         void DestroyPipelineLayout ( android_vulkan::Renderer &renderer );
 
-        bool CreateRenderPass ( android_vulkan::Renderer &renderer );
+        [[nodiscard]] bool CreateRenderPass ( android_vulkan::Renderer &renderer );
         void DestroyRenderPass ( android_vulkan::Renderer &renderer );
 
-        bool CreateShaderModules ( android_vulkan::Renderer &renderer );
+        [[nodiscard]] bool CreateShaderModules ( android_vulkan::Renderer &renderer );
         void DestroyShaderModules ( android_vulkan::Renderer &renderer );
 
-        bool CreateSyncPrimitives ( android_vulkan::Renderer &renderer );
+        [[nodiscard]] bool CreateSyncPrimitives ( android_vulkan::Renderer &renderer );
         void DestroySyncPrimitives ( android_vulkan::Renderer &renderer );
 
-        bool CreateUniformBuffer ( android_vulkan::Renderer &renderer );
+        [[nodiscard]] bool CreateUniformBuffer ( android_vulkan::Renderer &renderer );
         void DestroyUniformBuffer ();
 
-        bool InitCommandBuffers ( android_vulkan::Renderer &renderer );
-        bool UpdateUniformBuffer ( android_vulkan::Renderer &renderer, double deltaTime );
+        [[nodiscard]] bool InitCommandBuffers ( android_vulkan::Renderer &renderer );
+        [[nodiscard]] bool UpdateUniformBuffer ( android_vulkan::Renderer &renderer, double deltaTime );
 };
 
 } // namespace rotating_mesh

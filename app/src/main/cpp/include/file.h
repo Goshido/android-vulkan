@@ -23,20 +23,20 @@ class File final
     public:
         File () = default;
 
-        // note "const std::string &" version is not implemented to distinguish rvalue|lvalue reference.
-        explicit File ( std::string &filePath );
         [[maybe_unused]] explicit File ( std::string &&filePath );
+        explicit File ( std::string_view const &filePath );
+        explicit File ( char const* filePath );
 
         File ( File &other ) = delete;
         File& operator = ( const File &other ) = delete;
 
         ~File () = default;
 
-        std::vector<uint8_t>& GetContent ();
-        [[maybe_unused]] const std::vector<uint8_t>& GetContent () const;
+        [[nodiscard]] std::vector<uint8_t>& GetContent ();
+        [[maybe_unused]] [[nodiscard]] std::vector<uint8_t> const& GetContent () const;
 
-        bool IsContentLoaded () const;
-        bool LoadContent ();
+        [[nodiscard]] bool IsContentLoaded () const;
+        [[nodiscard]] bool LoadContent ();
 };
 
 } // namespace android_vulkan

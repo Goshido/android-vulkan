@@ -9,7 +9,7 @@
 
 namespace pbr {
 
-class [[maybe_unused]] PointLight final : public Light
+class PointLight final : public Light
 {
     private:
         GXAABB                      _bounds;
@@ -26,15 +26,15 @@ class [[maybe_unused]] PointLight final : public Light
         PointLight ( PointLight && ) = delete;
         PointLight& operator = ( PointLight && ) = delete;
 
-        ~PointLight () override = default;
-
-        void Init ( android_vulkan::Half3 const &hue,
+        explicit PointLight ( android_vulkan::Half3 const &hue,
             android_vulkan::Half intensity,
             GXVec3 const &location,
             GXAABB const &bounds
-        );
+        ) noexcept;
 
-        [[maybe_unused]] [[nodiscard]] GXAABB const& GetBounds () const;
+        ~PointLight () override = default;
+
+        [[nodiscard]] GXAABB const& GetBounds () const;
         [[maybe_unused]] [[nodiscard]] android_vulkan::Half3 const& GetHue () const;
         [[maybe_unused]] [[nodiscard]] android_vulkan::Half GetIntensity () const;
         [[maybe_unused]] [[nodiscard]] GXVec3 const& GetLocation () const;

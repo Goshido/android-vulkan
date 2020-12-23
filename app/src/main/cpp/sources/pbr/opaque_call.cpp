@@ -45,7 +45,8 @@ void OpaqueCall::Append ( size_t &maxBatch,
     AddBatch ( maxBatch, mesh, local, color0, color1, color2, color3 );
 }
 
-void OpaqueCall::AddBatch ( size_t &maxBatch, MeshRef &mesh,
+void OpaqueCall::AddBatch ( size_t &maxBatch,
+    MeshRef &mesh,
     GXMat4 const &local,
     android_vulkan::Half4 const &color0,
     android_vulkan::Half4 const &color1,

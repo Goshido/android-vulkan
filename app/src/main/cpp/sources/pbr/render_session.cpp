@@ -141,6 +141,7 @@ RenderSession::RenderSession () noexcept:
     _paramDefault {},
     _commandPool ( VK_NULL_HANDLE ),
     _descriptorPool ( VK_NULL_HANDLE ),
+    _frustum {},
     _gBuffer {},
     _gBufferFramebuffer ( VK_NULL_HANDLE ),
     _gBufferImageBarrier {},
@@ -154,6 +155,7 @@ RenderSession::RenderSession () noexcept:
     _maxBatchCount ( 0U ),
     _maxUniqueCount ( 0U ),
     _opaqueCalls {},
+    _pointLightCalls {},
     _opaqueBatchProgram {},
     _texturePresentProgram {},
     _presentInfo {},
@@ -178,7 +180,9 @@ void RenderSession::Begin ( GXMat4 const &view, GXMat4 const &projection )
     _maxBatchCount = 0U;
     _view = view;
     _viewProjection.Multiply ( view, projection );
+    _frustum.From ( _viewProjection );
     _opaqueCalls.clear ();
+    _pointLightCalls.clear ();
 }
 
 bool RenderSession::End ( ePresentTarget /*target*/, double deltaTime, android_vulkan::Renderer &renderer )
@@ -584,7 +588,7 @@ void RenderSession::Destroy ( android_vulkan::Renderer &renderer )
 }
 
 void RenderSession::SubmitMesh ( MeshRef &mesh,
-    MaterialRef &material,
+    MaterialRef const &material,
     GXMat4 const &local,
     android_vulkan::Half4 const &color0,
     android_vulkan::Half4 const &color1,
@@ -599,13 +603,11 @@ void RenderSession::SubmitMesh ( MeshRef &mesh,
     }
 }
 
-[[maybe_unused]] void RenderSession::SubmitLight ( Light const &light )
+void RenderSession::SubmitLight ( LightRef const &light )
 {
-    if ( light.GetType () == eLightType::PointLight )
+    if ( light->GetType () == eLightType::PointLight )
     {
-        // Note it's safe cast like that here. "NOLINT" is a clang-tidy control comment.
-        auto const& pointLight = static_cast<PointLight const&> ( light ); // NOLINT
-        SubmitPointLight ( pointLight );
+        SubmitPointLight ( light );
     }
 }
 
@@ -1193,7 +1195,7 @@ void RenderSession::InitCommonStructures ()
 }
 
 void RenderSession::SubmitOpaqueCall ( MeshRef &mesh,
-    MaterialRef &material,
+    MaterialRef const &material,
     GXMat4 const &local,
     android_vulkan::Half4 const &color0,
     android_vulkan::Half4 const &color1,
@@ -1219,9 +1221,17 @@ void RenderSession::SubmitOpaqueCall ( MeshRef &mesh,
     );
 }
 
-void RenderSession::SubmitPointLight ( PointLight const &/*light*/ )
+void RenderSession::SubmitPointLight ( LightRef const &light )
 {
-    // TODO
+    _renderSessionStats.SubmitPointLight ();
+
+    // Note it's safe cast like that here. "NOLINT" is a clang-tidy control comment.
+    auto const& pointLight = static_cast<PointLight const&> ( *light.get () ); // NOLINT
+
+    if ( _frustum.IsVisible ( pointLight.GetBounds () ) )
+    {
+        _pointLightCalls.emplace_back ( std::make_pair ( light, ShadowCasters () ) );
+    }
 }
 
 bool RenderSession::UpdateGPUData ( std::vector<VkDescriptorSet> &descriptorSetStorage,
@@ -1458,8 +1468,6 @@ bool RenderSession::UpdateGPUData ( std::vector<VkDescriptorSet> &descriptorSetS
     size_t const maxUniforms = _uniformBufferPool.GetItemCount ();
     VkDescriptorSet const* instanceDescriptorSet = descriptorSets + opaqueCount + 1U;
 
-    GXProjectionClipPlanes const frustum ( _viewProjection );
-
     for ( auto const &call : _opaqueCalls )
     {
         OpaqueCall const& opaqueCall = call.second;
@@ -1483,7 +1491,7 @@ bool RenderSession::UpdateGPUData ( std::vector<VkDescriptorSet> &descriptorSetS
             GXAABB boundWorld;
             mesh->GetBounds ().Transform ( boundWorld, local );
 
-            if ( !frustum.IsVisible ( boundWorld ) )
+            if ( !_frustum.IsVisible ( boundWorld ) )
             {
                 unlockOpaqueData._isVisible = false;
                 continue;
@@ -1549,7 +1557,7 @@ bool RenderSession::UpdateGPUData ( std::vector<VkDescriptorSet> &descriptorSetS
                 GXAABB boundWorld;
                 group._mesh->GetBounds ().Transform ( boundWorld, local );
 
-                if ( !frustum.IsVisible ( boundWorld ) )
+                if ( !_frustum.IsVisible ( boundWorld ) )
                 {
                     unlockOpaqueData._isVisible = false;
                     continue;

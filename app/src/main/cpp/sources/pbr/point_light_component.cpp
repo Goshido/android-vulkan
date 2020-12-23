@@ -34,10 +34,13 @@ PointLightComponent::PointLightComponent ( PointLightComponentDesc const &desc )
     android_vulkan::Vec3 const &up = desc._bounds._max;
     bounds.AddVertex ( up[ 0U ], up[ 1U ], up[ 2U ] );
 
-    _pointLight.Init ( android_vulkan::Half3 ( unorm._data[ 0U ], unorm._data[ 1U ], unorm._data[ 2U ] ),
-        android_vulkan::Half ( desc._intensity ),
-        reinterpret_cast<GXVec3 const &> ( desc._location ),
-        bounds
+    _pointLight = std::static_pointer_cast<Light> (
+        std::make_shared<PointLight> (
+            android_vulkan::Half3 ( unorm._data[ 0U ], unorm._data[ 1U ], unorm._data[ 2U ] ),
+            android_vulkan::Half ( desc._intensity ),
+            reinterpret_cast<GXVec3 const &> ( desc._location ),
+            bounds
+        )
     );
 }
 

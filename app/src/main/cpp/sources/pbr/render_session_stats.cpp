@@ -6,11 +6,13 @@ namespace pbr {
 
 constexpr static double const TIMEOUT = 3.0;
 
-RenderSessionStats::RenderSessionStats ():
+RenderSessionStats::RenderSessionStats () noexcept:
     _frameCount ( 0U ),
     _renderMeshes ( 0U ),
+    _renderPointLights ( 0U ),
     _renderVertices ( 0U ),
     _submitMeshes ( 0U ),
+    _submitPointLights ( 0U ),
     _submitVertices ( 0U ),
     _timeout ( TIMEOUT )
 {
@@ -29,10 +31,13 @@ void RenderSessionStats::PrintStats ( double deltaTime )
 R"__(>>> RenderSessionStats::PrintStats:
     Submitted meshes: %zu
     Submitted vertices: %zu
+    Submitted point lights: %zu
     Rendered meshes: %zu
     Rendered vertices: %zu
+    Rendered point lights: %zu
     Culling mesh percent: %zu%%
     Culling vertex percent: %zu%%
+    Culling point light percent: %zu%%
 )__";
 
     auto avgCounter = [ & ] ( size_t counter ) -> size_t {
@@ -46,10 +51,13 @@ R"__(>>> RenderSessionStats::PrintStats:
     android_vulkan::LogInfo ( format,
         avgCounter ( _submitMeshes ),
         avgCounter ( _submitVertices ),
+        avgCounter ( _submitPointLights ),
         avgCounter ( _renderMeshes ),
         avgCounter ( _renderVertices ),
+        avgCounter ( _renderPointLights ),
         avgPercent ( _renderMeshes, _submitMeshes ),
-        avgPercent ( _renderVertices, _submitVertices )
+        avgPercent ( _renderVertices, _submitVertices ),
+        avgPercent ( _renderPointLights, _submitPointLights )
     );
 
     Reset ();
@@ -67,12 +75,24 @@ void RenderSessionStats::SubmitOpaque ( uint32_t vertexCount )
     _submitVertices += static_cast<size_t> ( vertexCount );
 }
 
+[[maybe_unused]] void RenderSessionStats::RenderPointLight ()
+{
+    ++_renderPointLights;
+}
+
+void RenderSessionStats::SubmitPointLight ()
+{
+    ++_submitPointLights;
+}
+
 void RenderSessionStats::Reset ()
 {
     _frameCount = 0U;
     _renderMeshes = 0U;
+    _renderPointLights = 0U;
     _renderVertices = 0U;
     _submitMeshes = 0U;
+    _submitPointLights = 0U;
     _submitVertices = 0U;
     _timeout = TIMEOUT;
 }

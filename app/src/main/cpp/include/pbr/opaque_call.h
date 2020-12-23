@@ -55,14 +55,18 @@ class OpaqueCall final
         [[nodiscard]] const UniqueList& GetUniqueList () const;
 
     private:
-        void AddBatch ( size_t &maxBatch, MeshRef &mesh, const GXMat4 &local,
+        void AddBatch ( size_t &maxBatch,
+            MeshRef &mesh,
+            GXMat4 const &local,
             android_vulkan::Half4 const &color0,
             android_vulkan::Half4 const &color1,
             android_vulkan::Half4 const &color2,
             android_vulkan::Half4 const &color3
         );
 
-        void AddUnique ( size_t &maxUnique, MeshRef &mesh, const GXMat4 &local,
+        void AddUnique ( size_t &maxUnique,
+            MeshRef &mesh,
+            GXMat4 const &local,
             android_vulkan::Half4 const &color0,
             android_vulkan::Half4 const &color1,
             android_vulkan::Half4 const &color2,

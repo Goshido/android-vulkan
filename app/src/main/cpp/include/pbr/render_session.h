@@ -9,6 +9,7 @@
 #include "opaque_material.h"
 #include "point_light.h"
 #include "render_session_stats.h"
+#include "shadow_casters.h"
 #include "texture_present_program.h"
 #include "uniform_buffer_pool.h"
 
@@ -29,6 +30,9 @@ enum class ePresentTarget : uint8_t
 class RenderSession final
 {
     private:
+        using LightInteract = std::pair<LightRef, ShadowCasters>;
+
+    private:
         Texture2DRef                            _albedoDefault;
         Texture2DRef                            _emissionDefault;
         Texture2DRef                            _maskDefault;
@@ -37,6 +41,8 @@ class RenderSession final
 
         VkCommandPool                           _commandPool;
         VkDescriptorPool                        _descriptorPool;
+
+        GXProjectionClipPlanes                  _frustum;
 
         GBuffer                                 _gBuffer;
         VkFramebuffer                           _gBufferFramebuffer;
@@ -56,6 +62,7 @@ class RenderSession final
         size_t                                  _maxUniqueCount;
 
         std::map<OpaqueMaterial, OpaqueCall>    _opaqueCalls;
+        std::vector<LightInteract>              _pointLightCalls;
 
         OpaqueProgram                           _opaqueBatchProgram;
         TexturePresentProgram                   _texturePresentProgram;
@@ -96,7 +103,7 @@ class RenderSession final
         void Destroy ( android_vulkan::Renderer &renderer );
 
         void SubmitMesh ( MeshRef &mesh,
-            MaterialRef &material,
+            MaterialRef const &material,
             GXMat4 const &local,
             android_vulkan::Half4 const &color0,
             android_vulkan::Half4 const &color1,
@@ -104,7 +111,7 @@ class RenderSession final
             android_vulkan::Half4 const &color3
         );
 
-        [[maybe_unused]] void SubmitLight ( Light const &/*light*/ );
+        void SubmitLight ( LightRef const &light );
 
     private:
         [[nodiscard]] bool BeginGeometryRenderPass ( android_vulkan::Renderer &renderer );
@@ -127,7 +134,7 @@ class RenderSession final
         void InitCommonStructures ();
 
         void SubmitOpaqueCall ( MeshRef &mesh,
-            MaterialRef &material,
+            MaterialRef const &material,
             GXMat4 const &local,
             android_vulkan::Half4 const &color0,
             android_vulkan::Half4 const &color1,
@@ -135,7 +142,7 @@ class RenderSession final
             android_vulkan::Half4 const &color3
         );
 
-        void SubmitPointLight ( PointLight const &light );
+        void SubmitPointLight ( LightRef const &light );
 
         [[nodiscard]] bool UpdateGPUData ( std::vector<VkDescriptorSet> &descriptorSetStorage,
             android_vulkan::Renderer &renderer

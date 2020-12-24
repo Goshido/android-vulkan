@@ -168,9 +168,15 @@ class Renderer final
         [[nodiscard]] static char const* ResolveVkFormat ( VkFormat format );
 
     private:
-        [[nodiscard]] bool CheckRequiredDeviceExtensions ( const std::vector<char const*> &deviceExtensions,
+        [[nodiscard]] bool CheckRequiredDeviceExtensions ( std::vector<char const*> const &deviceExtensions,
             char const* const* requiredExtensions,
             size_t requiredExtensionCount
+        );
+
+        // "features" is an array of offsets inside VkPhysicalDeviceFeatures structure.
+        [[nodiscard]] bool CheckRequiredFeatures ( VkPhysicalDevice physicalDevice,
+            size_t const* features,
+            size_t count
         );
 
         [[nodiscard]] bool CheckRequiredFormats ();

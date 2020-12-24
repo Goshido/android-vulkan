@@ -263,7 +263,7 @@ constexpr static size_t const g_vkSurfaceTransformFlagBitsKHRMapperItems = std::
 );
 
 // Kung-Fu: used in Renderer::PrintPhysicalDeviceGroupInfo to print physical device features.
-constexpr static std::pair<size_t, char const*> const g_vkFeatureMap[] =
+static std::unordered_map<size_t, char const*> const g_vkFeatureMap =
 {
     { offsetof ( VkPhysicalDeviceFeatures, alphaToOne ), "alphaToOne" },
     { offsetof ( VkPhysicalDeviceFeatures, depthBiasClamp ), "depthBiasClamp" },
@@ -1254,6 +1254,44 @@ bool Renderer::CheckRequiredDeviceExtensions ( std::vector<char const*> const &d
     return _isDeviceExtensionSupported;
 }
 
+bool Renderer::CheckRequiredFeatures ( VkPhysicalDevice physicalDevice, size_t const* features, size_t count )
+{
+    auto const& featureInfo = _physicalDeviceInfo[ physicalDevice ];
+
+    LogInfo ( "Renderer::CheckRequiredFeatures - Checking required features..." );
+
+    // std::set is for alphabetical ordering.
+    std::set<std::string_view> supportedFeatures;
+    std::set<std::string_view> unsupportedFeatures;
+
+    for ( size_t i = 0U; i < count; ++i )
+    {
+        size_t const offset = features[ i ];
+
+        auto const enable = *reinterpret_cast<VkBool32 const*> (
+            reinterpret_cast<uint8_t const*> ( &featureInfo._features ) + offset
+        );
+
+        auto const& featureName = g_vkFeatureMap.find ( offset )->second;
+
+        if ( enable )
+        {
+            supportedFeatures.emplace ( featureName );
+            continue;
+        }
+
+        unsupportedFeatures.emplace ( featureName );
+    }
+
+    for ( auto const& feature : supportedFeatures )
+        LogInfo ( "%sOK: %s", INDENT_1, feature.data () );
+
+    for ( auto const& feature : unsupportedFeatures )
+        LogError ( "%sFAIL: %s", INDENT_1, feature.data () );
+
+    return unsupportedFeatures.empty ();
+}
+
 bool Renderer::CheckRequiredFormats ()
 {
     LogInfo ( "Renderer::CheckRequiredFormats - Checking required formats..." );
@@ -1311,7 +1349,7 @@ bool Renderer::CheckRequiredFormats ()
         return true;
 
     for ( char const* format : unsupportedFormats )
-        android_vulkan::LogError ( "%sFAIL: %s", INDENT_1, format );
+        LogError ( "%sFAIL: %s", INDENT_1, format );
 
     return false;
 }
@@ -1411,6 +1449,14 @@ bool Renderer::DeployDevice ()
     constexpr size_t const extensionCount = std::size ( extensions );
 
     if ( !CheckRequiredDeviceExtensions ( caps._extensions, extensions, extensionCount ) )
+        return false;
+
+    constexpr size_t const features[] =
+    {
+        offsetof ( VkPhysicalDeviceFeatures, geometryShader )
+    };
+
+    if ( !CheckRequiredFeatures ( _physicalDevice, features, std::size ( features ) ) )
         return false;
 
     if ( !CheckRequiredFormats () )
@@ -1891,8 +1937,8 @@ bool Renderer::PrintPhysicalDeviceFeatureInfo ( VkPhysicalDevice physicalDevice 
     vkGetPhysicalDeviceFeatures ( physicalDevice, &features._features );
 
     // Note std::set will sort strings too.
-    std::set<std::string> supportedFeatures;
-    std::set<std::string> unsupportedFeatures;
+    std::set<std::string_view> supportedFeatures;
+    std::set<std::string_view> unsupportedFeatures;
 
     for ( auto const& probe : g_vkFeatureMap )
     {
@@ -1912,12 +1958,12 @@ bool Renderer::PrintPhysicalDeviceFeatureInfo ( VkPhysicalDevice physicalDevice 
     LogInfo ( "%sSupported:", INDENT_2 );
 
     for ( auto &item : supportedFeatures )
-        LogInfo ( "%s%s", INDENT_3, item.c_str () );
+        LogInfo ( "%s%s", INDENT_3, item.data () );
 
     LogInfo ( "%sUnsupported:", INDENT_2 );
 
     for ( auto &item : unsupportedFeatures )
-        LogInfo ( "%s%s", INDENT_3, item.c_str () );
+        LogInfo ( "%s%s", INDENT_3, item.data () );
 
     return true;
 }

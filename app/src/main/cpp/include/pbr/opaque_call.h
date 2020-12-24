@@ -51,8 +51,8 @@ class OpaqueCall final
             android_vulkan::Half4 const &color3
         );
 
-        [[nodiscard]] const BatchList& GetBatchList () const;
-        [[nodiscard]] const UniqueList& GetUniqueList () const;
+        [[nodiscard]] BatchList const& GetBatchList () const;
+        [[nodiscard]] UniqueList const& GetUniqueList () const;
 
     private:
         void AddBatch ( size_t &maxBatch,

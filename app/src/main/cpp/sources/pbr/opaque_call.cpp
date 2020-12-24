@@ -16,12 +16,12 @@ OpaqueCall::OpaqueCall ( size_t &maxBatch,
     Append ( maxBatch, maxUnique, mesh, local, color0, color1, color2, color3 );
 }
 
-const OpaqueCall::BatchList& OpaqueCall::GetBatchList () const
+OpaqueCall::BatchList const& OpaqueCall::GetBatchList () const
 {
     return _batch;
 }
 
-const OpaqueCall::UniqueList& OpaqueCall::GetUniqueList () const
+OpaqueCall::UniqueList const& OpaqueCall::GetUniqueList () const
 {
     return _unique;
 }

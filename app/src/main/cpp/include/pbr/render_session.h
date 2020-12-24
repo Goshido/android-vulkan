@@ -62,7 +62,9 @@ class RenderSession final
         size_t                                  _maxUniqueCount;
 
         std::map<OpaqueMaterial, OpaqueCall>    _opaqueCalls;
+
         std::vector<LightInteract>              _pointLightCalls;
+        std::vector<TextureCubeRef>             _pointLightShadowMaps;
 
         OpaqueProgram                           _opaqueBatchProgram;
         TexturePresentProgram                   _texturePresentProgram;
@@ -147,6 +149,8 @@ class RenderSession final
         [[nodiscard]] bool UpdateGPUData ( std::vector<VkDescriptorSet> &descriptorSetStorage,
             android_vulkan::Renderer &renderer
         );
+
+        void UpdatePointLightShadowMaps ();
 };
 
 } // namespace pbr

@@ -156,6 +156,7 @@ RenderSession::RenderSession () noexcept:
     _maxUniqueCount ( 0U ),
     _opaqueCalls {},
     _pointLightCalls {},
+    _pointLightShadowMaps {},
     _opaqueBatchProgram {},
     _texturePresentProgram {},
     _presentInfo {},
@@ -206,6 +207,8 @@ bool RenderSession::End ( ePresentTarget /*target*/, double deltaTime, android_v
 
     if ( !result )
         return false;
+
+    UpdatePointLightShadowMaps ();
 
     if ( !BeginGeometryRenderPass ( renderer ) )
         return false;
@@ -1613,6 +1616,35 @@ bool RenderSession::UpdateGPUData ( std::vector<VkDescriptorSet> &descriptorSetS
         "RenderSession::UpdateGPUData",
         "Can't submit geometry transfer command buffer"
     );
+}
+
+void RenderSession::UpdatePointLightShadowMaps ()
+{
+    for ( auto &pointLightCall : _pointLightCalls )
+    {
+        for ( auto const& opaqueCall : _opaqueCalls )
+        {
+            OpaqueCall const& opaque = opaqueCall.second;
+
+            for ( auto const &[name, meshGroup] : opaque.GetBatchList () )
+            {
+                for ( auto const& opaqueData : meshGroup._opaqueData )
+                {
+                    // TODO
+                    android_vulkan::LogDebug ( "%p", &opaqueData );
+                }
+            }
+
+            for ( auto const &[mesh, opaqueData] : opaque.GetUniqueList () )
+            {
+                // TODO
+                android_vulkan::LogDebug ( "%p", &opaqueData );
+            }
+        }
+
+        // TODO
+        android_vulkan::LogDebug ( "%p", &pointLightCall );
+    }
 }
 
 } // namespace pbr

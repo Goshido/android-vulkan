@@ -15,7 +15,8 @@ struct ObjectData
 cbuffer InstanceData:                               register ( b0 )
 {
     // sizeof ( ObjectData ) = 160 bytes
-    // sizeof ( InstanceData ) = 6720 bytes
+    // sizeof ( InstanceData ) = 6720 bytes, less than minimum "Supported Limit"
+    // see https://vulkan.lunarg.com/doc/view/1.1.108.0/mac/chunked_spec/chap36.html#limits-minmax
     ObjectData                  g_instanceData[ PBR_OPAQUE_MAX_INSTANCE_COUNT ];
 }
 

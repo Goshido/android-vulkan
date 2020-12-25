@@ -52,7 +52,7 @@ class Program
         void Bind ( VkCommandBuffer commandBuffer ) const;
 
     protected:
-        explicit Program ( std::string &&name );
+        explicit Program ( std::string &&name ) noexcept;
         virtual ~Program () = default;
 
         [[nodiscard]] virtual VkPipelineColorBlendStateCreateInfo const* InitColorBlendInfo (

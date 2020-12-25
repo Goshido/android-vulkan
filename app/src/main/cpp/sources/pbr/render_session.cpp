@@ -18,6 +18,8 @@ constexpr static const size_t DEFAULT_TEXTURE_COUNT = 5U;
 // 1 2 4 8 16 32 64 128 256 512 1024 2048 4096
 constexpr static size_t MAX_SUPPORTED_MIP_COUNT = 13U;
 
+constexpr static uint32_t POINT_LIGHT_SHADOWMAP_RESOLUTION = 512U;
+
 //----------------------------------------------------------------------------------------------------------------------
 
 class SamplerStorage final
@@ -141,6 +143,7 @@ RenderSession::RenderSession () noexcept:
     _paramDefault {},
     _commandPool ( VK_NULL_HANDLE ),
     _descriptorPool ( VK_NULL_HANDLE ),
+    _frustum {},
     _gBuffer {},
     _gBufferFramebuffer ( VK_NULL_HANDLE ),
     _gBufferImageBarrier {},
@@ -155,7 +158,11 @@ RenderSession::RenderSession () noexcept:
     _maxUniqueCount ( 0U ),
     _opaqueCalls {},
     _opaqueBatchProgram {},
+    _pointLightShadowmapGeneratorProgram {},
     _texturePresentProgram {},
+    _pointLightCalls {},
+    _pointLightShadowmaps {},
+    _pointLightShadowmapRenderPass ( VK_NULL_HANDLE),
     _presentInfo {},
     _presentBeginInfo {},
     _presentClearValue {},
@@ -178,7 +185,9 @@ void RenderSession::Begin ( GXMat4 const &view, GXMat4 const &projection )
     _maxBatchCount = 0U;
     _view = view;
     _viewProjection.Multiply ( view, projection );
+    _frustum.From ( _viewProjection );
     _opaqueCalls.clear ();
+    _pointLightCalls.clear ();
 }
 
 bool RenderSession::End ( ePresentTarget /*target*/, double deltaTime, android_vulkan::Renderer &renderer )
@@ -202,6 +211,8 @@ bool RenderSession::End ( ePresentTarget /*target*/, double deltaTime, android_v
 
     if ( !result )
         return false;
+
+    UpdatePointLightShadowMaps ();
 
     if ( !BeginGeometryRenderPass ( renderer ) )
         return false;
@@ -313,6 +324,12 @@ bool RenderSession::Init ( android_vulkan::Renderer &renderer, VkExtent2D const 
         return false;
     }
 
+    if ( !CreatePointLightShadowmapRenderPass ( renderer ) )
+    {
+        Destroy ( renderer );
+        return false;
+    }
+
     if ( !CreatePresentRenderPass ( renderer ) )
     {
         Destroy ( renderer );
@@ -347,6 +364,22 @@ bool RenderSession::Init ( android_vulkan::Renderer &renderer, VkExtent2D const 
     AV_REGISTER_FENCE ( "RenderSession::_geometryPassFence" )
 
     if ( !_opaqueBatchProgram.Init ( renderer, _gBufferRenderPass, resolution ) )
+    {
+        Destroy ( renderer );
+        return false;
+    }
+
+    result = _pointLightShadowmapGeneratorProgram.Init ( renderer,
+        _pointLightShadowmapRenderPass,
+
+        VkExtent2D
+        {
+            .width = POINT_LIGHT_SHADOWMAP_RESOLUTION,
+            .height = POINT_LIGHT_SHADOWMAP_RESOLUTION
+        }
+    );
+
+    if ( !result )
     {
         Destroy ( renderer );
         return false;
@@ -547,6 +580,7 @@ void RenderSession::Destroy ( android_vulkan::Renderer &renderer )
 
     _uniformBufferPool.Destroy ( renderer );
     _texturePresentProgram.Destroy ( renderer );
+    _pointLightShadowmapGeneratorProgram.Destroy ( renderer );
     _opaqueBatchProgram.Destroy ( renderer );
 
     if ( _geometryPassFence != VK_NULL_HANDLE )
@@ -563,6 +597,13 @@ void RenderSession::Destroy ( android_vulkan::Renderer &renderer )
         vkDestroyRenderPass ( device, _presentRenderPass, nullptr );
         _presentRenderPass = VK_NULL_HANDLE;
         AV_UNREGISTER_RENDER_PASS ( "RenderSession::_presentRenderPass" )
+    }
+
+    if ( _pointLightShadowmapRenderPass != VK_NULL_HANDLE )
+    {
+        vkDestroyRenderPass ( device, _pointLightShadowmapRenderPass, nullptr );
+        _pointLightShadowmapRenderPass = VK_NULL_HANDLE;
+        AV_UNREGISTER_RENDER_PASS ( "RenderSession::_pointLightShadowmapRenderPass" )
     }
 
     if ( _gBufferFramebuffer != VK_NULL_HANDLE )
@@ -584,8 +625,9 @@ void RenderSession::Destroy ( android_vulkan::Renderer &renderer )
 }
 
 void RenderSession::SubmitMesh ( MeshRef &mesh,
-    MaterialRef &material,
+    MaterialRef const &material,
     GXMat4 const &local,
+    GXAABB const &worldBounds,
     android_vulkan::Half4 const &color0,
     android_vulkan::Half4 const &color1,
     android_vulkan::Half4 const &color2,
@@ -595,17 +637,15 @@ void RenderSession::SubmitMesh ( MeshRef &mesh,
     if ( material->GetMaterialType() == eMaterialType::Opaque )
     {
         _renderSessionStats.SubmitOpaque ( mesh->GetVertexCount () );
-        SubmitOpaqueCall ( mesh, material, local, color0, color1, color2, color3 );
+        SubmitOpaqueCall ( mesh, material, local, worldBounds, color0, color1, color2, color3 );
     }
 }
 
-[[maybe_unused]] void RenderSession::SubmitLight ( Light const &light )
+void RenderSession::SubmitLight ( LightRef const &light )
 {
-    if ( light.GetType () == eLightType::PointLight )
+    if ( light->GetType () == eLightType::PointLight )
     {
-        // Note it's safe cast like that here. "NOLINT" is a clang-tidy control comment.
-        auto const& pointLight = static_cast<PointLight const&> ( light ); // NOLINT
-        SubmitPointLight ( pointLight );
+        SubmitPointLight ( light );
     }
 }
 
@@ -822,6 +862,59 @@ bool RenderSession::CreateGBufferRenderPass ( android_vulkan::Renderer &renderer
         return false;
 
     AV_REGISTER_RENDER_PASS ( "RenderSession::_gBufferRenderPass" )
+    return true;
+}
+
+bool RenderSession::CreatePointLightShadowmapRenderPass ( android_vulkan::Renderer &renderer )
+{
+    VkAttachmentDescription depthAttachment;
+    depthAttachment.flags = 0U;
+    depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+    depthAttachment.format = renderer.GetDefaultDepthStencilFormat ();
+    depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+    depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+
+    VkAttachmentReference depthAttachmentReference;
+    depthAttachmentReference.attachment = 0U;
+    depthAttachmentReference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+    VkSubpassDescription subpass;
+    subpass.flags = 0U;
+    subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+    subpass.colorAttachmentCount = 0U;
+    subpass.pColorAttachments = nullptr;
+    subpass.inputAttachmentCount = 0U;
+    subpass.pInputAttachments = nullptr;
+    subpass.pDepthStencilAttachment = &depthAttachmentReference;
+    subpass.pResolveAttachments = nullptr;
+    subpass.preserveAttachmentCount = 0U;
+    subpass.pPreserveAttachments = nullptr;
+
+    VkRenderPassCreateInfo renderPassInfo;
+    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+    renderPassInfo.pNext = nullptr;
+    renderPassInfo.flags = 0U;
+    renderPassInfo.subpassCount = 1U;
+    renderPassInfo.pSubpasses = &subpass;
+    renderPassInfo.dependencyCount = 0U;
+    renderPassInfo.pDependencies = nullptr;
+    renderPassInfo.attachmentCount = 1U;
+    renderPassInfo.pAttachments = &depthAttachment;
+
+    bool const result = android_vulkan::Renderer::CheckVkResult (
+        vkCreateRenderPass ( renderer.GetDevice (), &renderPassInfo, nullptr, &_pointLightShadowmapRenderPass ),
+        "RenderSession::CreatePointLightShadowmapRenderPass",
+        "Can't create GBuffer render pass"
+    );
+
+    if ( !result )
+        return false;
+
+    AV_REGISTER_RENDER_PASS ( "RenderSession::_pointLightShadowmapRenderPass" )
     return true;
 }
 
@@ -1193,8 +1286,9 @@ void RenderSession::InitCommonStructures ()
 }
 
 void RenderSession::SubmitOpaqueCall ( MeshRef &mesh,
-    MaterialRef &material,
+    MaterialRef const &material,
     GXMat4 const &local,
+    GXAABB const &worldBounds,
     android_vulkan::Half4 const &color0,
     android_vulkan::Half4 const &color1,
     android_vulkan::Half4 const &color2,
@@ -1203,25 +1297,42 @@ void RenderSession::SubmitOpaqueCall ( MeshRef &mesh,
 {
     // Note it's safe to cast like that here. "NOLINT" is a clang-tidy control comment.
     auto& opaqueMaterial = *static_cast<OpaqueMaterial*> ( material.get () ); // NOLINT
-
     auto findResult = _opaqueCalls.find ( opaqueMaterial );
 
     if ( findResult != _opaqueCalls.cend () )
     {
-        findResult->second.Append ( _maxBatchCount, _maxUniqueCount, mesh, local, color0, color1, color2, color3 );
+        findResult->second.Append ( _maxBatchCount,
+            _maxUniqueCount,
+            mesh,
+            local,
+            worldBounds,
+            color0,
+            color1,
+            color2,
+            color3
+        );
+
         return;
     }
 
     _opaqueCalls.insert (
         std::make_pair ( opaqueMaterial,
-            OpaqueCall ( _maxBatchCount, _maxUniqueCount, mesh, local, color0, color1, color2, color3 )
+            OpaqueCall ( _maxBatchCount, _maxUniqueCount, mesh, local, worldBounds, color0, color1, color2, color3 )
         )
     );
 }
 
-void RenderSession::SubmitPointLight ( PointLight const &/*light*/ )
+void RenderSession::SubmitPointLight ( LightRef const &light )
 {
-    // TODO
+    _renderSessionStats.SubmitPointLight ();
+
+    // Note it's safe cast like that here. "NOLINT" is a clang-tidy control comment.
+    auto const& pointLight = static_cast<PointLight const&> ( *light.get () ); // NOLINT
+
+    if ( _frustum.IsVisible ( pointLight.GetBounds () ) )
+    {
+        _pointLightCalls.emplace_back ( std::make_pair ( light, ShadowCasters () ) );
+    }
 }
 
 bool RenderSession::UpdateGPUData ( std::vector<VkDescriptorSet> &descriptorSetStorage,
@@ -1458,8 +1569,6 @@ bool RenderSession::UpdateGPUData ( std::vector<VkDescriptorSet> &descriptorSetS
     size_t const maxUniforms = _uniformBufferPool.GetItemCount ();
     VkDescriptorSet const* instanceDescriptorSet = descriptorSets + opaqueCount + 1U;
 
-    GXProjectionClipPlanes const frustum ( _viewProjection );
-
     for ( auto const &call : _opaqueCalls )
     {
         OpaqueCall const& opaqueCall = call.second;
@@ -1478,18 +1587,15 @@ bool RenderSession::UpdateGPUData ( std::vector<VkDescriptorSet> &descriptorSetS
             }
 
             GXMat4 const& local = opaqueData._local;
-            auto& unlockOpaqueData = const_cast<OpaqueData&> ( opaqueData );
+            auto& uniqueOpaqueData = const_cast<OpaqueData&> ( opaqueData );
 
-            GXAABB boundWorld;
-            mesh->GetBounds ().Transform ( boundWorld, local );
-
-            if ( !frustum.IsVisible ( boundWorld ) )
+            if ( !_frustum.IsVisible ( uniqueOpaqueData._worldBounds ) )
             {
-                unlockOpaqueData._isVisible = false;
+                uniqueOpaqueData._isVisible = false;
                 continue;
             }
 
-            unlockOpaqueData._isVisible = true;
+            uniqueOpaqueData._isVisible = true;
             objectData._localView.Multiply ( local, _view );
             objectData._localViewProjection.Multiply ( local, _viewProjection );
 
@@ -1544,20 +1650,17 @@ bool RenderSession::UpdateGPUData ( std::vector<VkDescriptorSet> &descriptorSetS
                 }
 
                 GXMat4 const& local = opaqueData._local;
-                auto& unlockOpaqueData = const_cast<OpaqueData&> ( opaqueData );
+                auto& batchOpaqueData = const_cast<OpaqueData&> ( opaqueData );
 
-                GXAABB boundWorld;
-                group._mesh->GetBounds ().Transform ( boundWorld, local );
-
-                if ( !frustum.IsVisible ( boundWorld ) )
+                if ( !_frustum.IsVisible ( batchOpaqueData._worldBounds ) )
                 {
-                    unlockOpaqueData._isVisible = false;
+                    batchOpaqueData._isVisible = false;
                     continue;
                 }
 
                 OpaqueProgram::ObjectData& objectData = instanceData._instanceData[ instanceIndex ];
                 ++instanceIndex;
-                unlockOpaqueData._isVisible = true;
+                batchOpaqueData._isVisible = true;
 
                 objectData._localView.Multiply ( local, _view );
                 objectData._localViewProjection.Multiply ( local, _viewProjection );
@@ -1605,6 +1708,35 @@ bool RenderSession::UpdateGPUData ( std::vector<VkDescriptorSet> &descriptorSetS
         "RenderSession::UpdateGPUData",
         "Can't submit geometry transfer command buffer"
     );
+}
+
+void RenderSession::UpdatePointLightShadowMaps ()
+{
+    //for ( auto &pointLightCall : _pointLightCalls )
+    //{
+    //    for ( auto const& opaqueCall : _opaqueCalls )
+    //    {
+    //        OpaqueCall const& opaque = opaqueCall.second;
+//
+    //        for ( auto const &[name, meshGroup] : opaque.GetBatchList () )
+    //        {
+    //            for ( auto const& opaqueData : meshGroup._opaqueData )
+    //            {
+    //                // TODO
+    //                android_vulkan::LogDebug ( "%p", &opaqueData );
+    //            }
+    //        }
+//
+    //        for ( auto const &[mesh, opaqueData] : opaque.GetUniqueList () )
+    //        {
+    //            // TODO
+    //            android_vulkan::LogDebug ( "%p", &opaqueData );
+    //        }
+    //    }
+//
+    //    // TODO
+    //    android_vulkan::LogDebug ( "%p", &pointLightCall );
+    //}
 }
 
 } // namespace pbr

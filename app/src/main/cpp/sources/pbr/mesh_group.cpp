@@ -5,6 +5,7 @@ namespace pbr {
 
 MeshGroup::MeshGroup ( MeshRef &mesh,
     const GXMat4 &local,
+    GXAABB const &worldBounds,
     android_vulkan::Half4 const &color0,
     android_vulkan::Half4 const &color1,
     android_vulkan::Half4 const &color2,
@@ -16,6 +17,7 @@ MeshGroup::MeshGroup ( MeshRef &mesh,
         OpaqueData {
             ._isVisible = true,
             ._local = local,
+            ._worldBounds = worldBounds,
             ._color0 = color0,
             ._color1 = color1,
             ._color2 = color2,

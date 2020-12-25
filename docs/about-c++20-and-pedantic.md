@@ -18,5 +18,5 @@ Even `[[maybe_unused]]` will stop working because they appeared in _C++ 17_.
 If you specify [`CMAKE_CXX_STANDARD`](https://cmake.org/cmake/help/v3.10/variable/CMAKE_CXX_STANDARD.html) 17, and throw the [`CMAKE_CXX_FLAGS`](https://cmake.org/cmake/help/v3.10/envvar/CXXFLAGS.html) flags for _C++ 20_ support then the build system will break because the resulting compilation command will contain both flags of the standards (20 and 17). At the same time standard 17 will win. As a consequence `-Wpedantic` will fall off on [`designated initializers`](https://en.cppreference.com/w/cpp/language/aggregate_initialization) extension, for example.
 
 ```bash
-clang ... -std = c ++ 20 ... -std = gnu ++ 1z -o <*.o> <*.cpp>
+clang ... -std=c++20 ... -std=gnu++1z -o <*.o> <*.cpp>
 ```

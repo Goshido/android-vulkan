@@ -17,17 +17,17 @@ namespace pbr {
 class RenderSessionStats final
 {
     private:
-        using Counter = std::atomic<size_t>;
-
-        size_t      _frameCount;
-        Counter     _renderMeshes;
-        Counter     _renderVertices;
-        Counter     _submitMeshes;
-        Counter     _submitVertices;
-        double      _timeout;
+        size_t                  _frameCount;
+        std::atomic_size_t      _renderMeshes;
+        std::atomic_size_t      _renderPointLights;
+        std::atomic_size_t      _renderVertices;
+        std::atomic_size_t      _submitMeshes;
+        std::atomic_size_t      _submitPointLights;
+        std::atomic_size_t      _submitVertices;
+        double                  _timeout;
 
     public:
-        RenderSessionStats ();
+        RenderSessionStats () noexcept;
 
         RenderSessionStats ( RenderSessionStats const & ) = delete;
         RenderSessionStats& operator = ( RenderSessionStats const & ) = delete;
@@ -41,6 +41,9 @@ class RenderSessionStats final
 
         void RenderOpaque ( uint32_t vertexCount, uint32_t instanceCount );
         void SubmitOpaque ( uint32_t vertexCount );
+
+        [[maybe_unused]] void RenderPointLight ();
+        void SubmitPointLight ();
 
         void Reset ();
 };

@@ -5,6 +5,7 @@
 #include "component.h"
 #include "point_light.h"
 #include "point_light_component_desc.h"
+#include "types.h"
 
 
 namespace pbr {
@@ -12,7 +13,7 @@ namespace pbr {
 class PointLightComponent final : public Component
 {
     private:
-        PointLight      _pointLight;
+        LightRef    _pointLight;
 
     public:
         PointLightComponent () = delete;

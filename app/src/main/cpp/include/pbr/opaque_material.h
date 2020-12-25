@@ -19,11 +19,11 @@ class OpaqueMaterial final : public Material
     public:
         OpaqueMaterial ();
 
-        OpaqueMaterial ( const OpaqueMaterial &other ) = default;
-        OpaqueMaterial& operator = ( OpaqueMaterial const &other ) = default;
+        OpaqueMaterial ( OpaqueMaterial const & ) = default;
+        OpaqueMaterial& operator = ( OpaqueMaterial const & ) = default;
 
-        OpaqueMaterial ( OpaqueMaterial &&other ) = default;
-        OpaqueMaterial& operator = ( OpaqueMaterial &&other ) = default;
+        OpaqueMaterial ( OpaqueMaterial && ) = default;
+        OpaqueMaterial& operator = ( OpaqueMaterial && ) = default;
 
         ~OpaqueMaterial () override = default;
 

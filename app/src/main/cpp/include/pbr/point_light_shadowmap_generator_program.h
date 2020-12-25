@@ -1,52 +1,45 @@
-#ifndef PBR_OPAQUE_PROGRAM_H
-#define PBR_OPAQUE_PROGRAM_H
+#ifndef PBR_POINT_LIGHT_SHADOWMAP_GENERATOR_PROGRAM_H
+#define PBR_POINT_LIGHT_SHADOWMAP_GENERATOR_PROGRAM_H
 
 
 #include "program.h"
 #include <vulkan_utils.h>
-#include <half_types.h>
 #include "gpgpu_limits.inc"
 #include "opaque_instance_descriptor_set_layout.h"
-#include "opaque_texture_descriptor_set_layout.h"
 
 
 namespace pbr {
 
-class OpaqueProgram final : public Program
+class PointLightShadowmapGeneratorProgram final : Program
 {
     public:
         AV_DX_ALIGNMENT_BEGIN
 
         struct ObjectData final
         {
-            GXMat4                                      _localView;
-            GXMat4                                      _localViewProjection;
-            [[maybe_unused]] android_vulkan::Half4      _color0;
-            [[maybe_unused]] android_vulkan::Half4      _color1;
-            [[maybe_unused]] android_vulkan::Half4      _color2;
-            [[maybe_unused]] android_vulkan::Half4      _color3;
+            [[maybe_unused]] GXMat4             _transform[ PBR_POINT_LIGHT_SHADOW_CASTER_PROJECTION_COUNT ];
         };
 
-        struct InstanceData final
+        struct [[maybe_unused]] InstanceData final
         {
-            ObjectData                                  _instanceData[ PBR_OPAQUE_MAX_INSTANCE_COUNT ];
+            [[maybe_unused]] ObjectData         _instanceData[ PBR_POINT_LIGHT_MAX_SHADOW_CASTER_INSTANCE_COUNT ];
         };
 
         AV_DX_ALIGNMENT_END
 
     private:
-        OpaqueInstanceDescriptorSetLayout               _instanceLayout;
-        OpaqueTextureDescriptorSetLayout                _textureLayout;
+        OpaqueInstanceDescriptorSetLayout       _instanceLayout;
 
     public:
-        OpaqueProgram () noexcept;
-        OpaqueProgram ( OpaqueProgram const & ) = delete;
-        OpaqueProgram& operator = ( OpaqueProgram const & ) = delete;
+        PointLightShadowmapGeneratorProgram () noexcept;
 
-        OpaqueProgram ( OpaqueProgram && ) = delete;
-        OpaqueProgram& operator = ( OpaqueProgram && ) = delete;
+        PointLightShadowmapGeneratorProgram ( PointLightShadowmapGeneratorProgram const & ) = delete;
+        PointLightShadowmapGeneratorProgram& operator = ( PointLightShadowmapGeneratorProgram const & ) = delete;
 
-        ~OpaqueProgram () override = default;
+        PointLightShadowmapGeneratorProgram ( PointLightShadowmapGeneratorProgram && ) = delete;
+        PointLightShadowmapGeneratorProgram& operator = ( PointLightShadowmapGeneratorProgram && ) = delete;
+
+        ~PointLightShadowmapGeneratorProgram () override = default;
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
             VkRenderPass renderPass,
@@ -55,12 +48,6 @@ class OpaqueProgram final : public Program
 
         void Destroy ( android_vulkan::Renderer &renderer ) override;
         [[nodiscard]] std::vector<DescriptorSetInfo> const& GetResourceInfo () const override;
-
-        void SetDescriptorSet ( VkCommandBuffer commandBuffer,
-            VkDescriptorSet const* sets,
-            uint32_t startIndex,
-            uint32_t count
-        ) const;
 
     private:
         [[nodiscard]] VkPipelineColorBlendStateCreateInfo const* InitColorBlendInfo (
@@ -110,4 +97,4 @@ class OpaqueProgram final : public Program
 } // namespace pbr
 
 
-#endif // PBR_OPAQUE_PROGRAM_H
+#endif // PBR_POINT_LIGHT_SHADOWMAP_GENERATOR_PROGRAM_H

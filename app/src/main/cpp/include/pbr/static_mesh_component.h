@@ -19,6 +19,7 @@ class StaticMeshComponent final : public Component
         GXMat4                      _localMatrix;
         MaterialRef                 _material;
         MeshRef                     _mesh;
+        GXAABB                      _worldBounds;
 
     public:
         StaticMeshComponent () = delete;

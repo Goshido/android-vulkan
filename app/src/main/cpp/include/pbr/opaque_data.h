@@ -14,6 +14,7 @@ struct OpaqueData final
 {
     bool                        _isVisible;
     GXMat4                      _local;
+    GXAABB                      _worldBounds;
     android_vulkan::Half4       _color0;
     android_vulkan::Half4       _color1;
     android_vulkan::Half4       _color2;

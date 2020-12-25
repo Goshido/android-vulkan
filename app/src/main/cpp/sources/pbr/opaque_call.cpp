@@ -7,13 +7,14 @@ OpaqueCall::OpaqueCall ( size_t &maxBatch,
     size_t &maxUnique,
     MeshRef &mesh,
     GXMat4 const &local,
+    GXAABB const &worldBounds,
     android_vulkan::Half4 const &color0,
     android_vulkan::Half4 const &color1,
     android_vulkan::Half4 const &color2,
     android_vulkan::Half4 const &color3
 )
 {
-    Append ( maxBatch, maxUnique, mesh, local, color0, color1, color2, color3 );
+    Append ( maxBatch, maxUnique, mesh, local, worldBounds, color0, color1, color2, color3 );
 }
 
 OpaqueCall::BatchList const& OpaqueCall::GetBatchList () const
@@ -30,6 +31,7 @@ void OpaqueCall::Append ( size_t &maxBatch,
     size_t &maxUnique,
     MeshRef &mesh,
     GXMat4 const &local,
+    GXAABB const &worldBounds,
     android_vulkan::Half4 const &color0,
     android_vulkan::Half4 const &color1,
     android_vulkan::Half4 const &color2,
@@ -38,16 +40,17 @@ void OpaqueCall::Append ( size_t &maxBatch,
 {
     if ( mesh->IsUnique () )
     {
-        AddUnique ( maxUnique, mesh, local, color0, color1, color2, color3 );
+        AddUnique ( maxUnique, mesh, local, worldBounds, color0, color1, color2, color3 );
         return;
     }
 
-    AddBatch ( maxBatch, mesh, local, color0, color1, color2, color3 );
+    AddBatch ( maxBatch, mesh, local, worldBounds, color0, color1, color2, color3 );
 }
 
 void OpaqueCall::AddBatch ( size_t &maxBatch,
     MeshRef &mesh,
     GXMat4 const &local,
+    GXAABB const &worldBounds,
     android_vulkan::Half4 const &color0,
     android_vulkan::Half4 const &color1,
     android_vulkan::Half4 const &color2,
@@ -60,7 +63,9 @@ void OpaqueCall::AddBatch ( size_t &maxBatch,
     if ( findResult == _batch.cend () )
     {
         _batch.insert (
-            std::make_pair ( std::string_view ( name ), MeshGroup ( mesh, local, color0, color1, color2, color3 ) )
+            std::make_pair (
+                std::string_view ( name ), MeshGroup ( mesh, local, worldBounds, color0, color1, color2, color3 )
+            )
         );
     }
     else
@@ -69,6 +74,7 @@ void OpaqueCall::AddBatch ( size_t &maxBatch,
             OpaqueData {
                 ._isVisible = true,
                 ._local = local,
+                ._worldBounds = worldBounds,
                 ._color0 = color0,
                 ._color1 = color1,
                 ._color2 = color2,
@@ -88,6 +94,7 @@ void OpaqueCall::AddBatch ( size_t &maxBatch,
 void OpaqueCall::AddUnique ( size_t &maxUnique,
     MeshRef &mesh,
     GXMat4 const &local,
+    GXAABB const &worldBounds,
     android_vulkan::Half4 const &color0,
     android_vulkan::Half4 const &color1,
     android_vulkan::Half4 const &color2,
@@ -99,6 +106,7 @@ void OpaqueCall::AddUnique ( size_t &maxUnique,
             OpaqueData {
                 ._isVisible = true,
                 ._local = local,
+                ._worldBounds = worldBounds,
                 ._color0 = color0,
                 ._color1 = color1,
                 ._color2 = color2,

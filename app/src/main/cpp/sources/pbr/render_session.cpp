@@ -593,6 +593,7 @@ void RenderSession::Destroy ( android_vulkan::Renderer &renderer )
 void RenderSession::SubmitMesh ( MeshRef &mesh,
     MaterialRef const &material,
     GXMat4 const &local,
+    GXAABB const &worldBounds,
     android_vulkan::Half4 const &color0,
     android_vulkan::Half4 const &color1,
     android_vulkan::Half4 const &color2,
@@ -602,7 +603,7 @@ void RenderSession::SubmitMesh ( MeshRef &mesh,
     if ( material->GetMaterialType() == eMaterialType::Opaque )
     {
         _renderSessionStats.SubmitOpaque ( mesh->GetVertexCount () );
-        SubmitOpaqueCall ( mesh, material, local, color0, color1, color2, color3 );
+        SubmitOpaqueCall ( mesh, material, local, worldBounds, color0, color1, color2, color3 );
     }
 }
 
@@ -1200,6 +1201,7 @@ void RenderSession::InitCommonStructures ()
 void RenderSession::SubmitOpaqueCall ( MeshRef &mesh,
     MaterialRef const &material,
     GXMat4 const &local,
+    GXAABB const &worldBounds,
     android_vulkan::Half4 const &color0,
     android_vulkan::Half4 const &color1,
     android_vulkan::Half4 const &color2,
@@ -1208,18 +1210,27 @@ void RenderSession::SubmitOpaqueCall ( MeshRef &mesh,
 {
     // Note it's safe to cast like that here. "NOLINT" is a clang-tidy control comment.
     auto& opaqueMaterial = *static_cast<OpaqueMaterial*> ( material.get () ); // NOLINT
-
     auto findResult = _opaqueCalls.find ( opaqueMaterial );
 
     if ( findResult != _opaqueCalls.cend () )
     {
-        findResult->second.Append ( _maxBatchCount, _maxUniqueCount, mesh, local, color0, color1, color2, color3 );
+        findResult->second.Append ( _maxBatchCount,
+            _maxUniqueCount,
+            mesh,
+            local,
+            worldBounds,
+            color0,
+            color1,
+            color2,
+            color3
+        );
+
         return;
     }
 
     _opaqueCalls.insert (
         std::make_pair ( opaqueMaterial,
-            OpaqueCall ( _maxBatchCount, _maxUniqueCount, mesh, local, color0, color1, color2, color3 )
+            OpaqueCall ( _maxBatchCount, _maxUniqueCount, mesh, local, worldBounds, color0, color1, color2, color3 )
         )
     );
 }
@@ -1489,18 +1500,15 @@ bool RenderSession::UpdateGPUData ( std::vector<VkDescriptorSet> &descriptorSetS
             }
 
             GXMat4 const& local = opaqueData._local;
-            auto& unlockOpaqueData = const_cast<OpaqueData&> ( opaqueData );
+            auto& uniqueOpaqueData = const_cast<OpaqueData&> ( opaqueData );
 
-            GXAABB boundWorld;
-            mesh->GetBounds ().Transform ( boundWorld, local );
-
-            if ( !_frustum.IsVisible ( boundWorld ) )
+            if ( !_frustum.IsVisible ( uniqueOpaqueData._worldBounds ) )
             {
-                unlockOpaqueData._isVisible = false;
+                uniqueOpaqueData._isVisible = false;
                 continue;
             }
 
-            unlockOpaqueData._isVisible = true;
+            uniqueOpaqueData._isVisible = true;
             objectData._localView.Multiply ( local, _view );
             objectData._localViewProjection.Multiply ( local, _viewProjection );
 
@@ -1555,20 +1563,17 @@ bool RenderSession::UpdateGPUData ( std::vector<VkDescriptorSet> &descriptorSetS
                 }
 
                 GXMat4 const& local = opaqueData._local;
-                auto& unlockOpaqueData = const_cast<OpaqueData&> ( opaqueData );
+                auto& batchOpaqueData = const_cast<OpaqueData&> ( opaqueData );
 
-                GXAABB boundWorld;
-                group._mesh->GetBounds ().Transform ( boundWorld, local );
-
-                if ( !_frustum.IsVisible ( boundWorld ) )
+                if ( !_frustum.IsVisible ( batchOpaqueData._worldBounds ) )
                 {
-                    unlockOpaqueData._isVisible = false;
+                    batchOpaqueData._isVisible = false;
                     continue;
                 }
 
                 OpaqueProgram::ObjectData& objectData = instanceData._instanceData[ instanceIndex ];
                 ++instanceIndex;
-                unlockOpaqueData._isVisible = true;
+                batchOpaqueData._isVisible = true;
 
                 objectData._localView.Multiply ( local, _view );
                 objectData._localViewProjection.Multiply ( local, _viewProjection );
@@ -1620,31 +1625,31 @@ bool RenderSession::UpdateGPUData ( std::vector<VkDescriptorSet> &descriptorSetS
 
 void RenderSession::UpdatePointLightShadowMaps ()
 {
-    for ( auto &pointLightCall : _pointLightCalls )
-    {
-        for ( auto const& opaqueCall : _opaqueCalls )
-        {
-            OpaqueCall const& opaque = opaqueCall.second;
-
-            for ( auto const &[name, meshGroup] : opaque.GetBatchList () )
-            {
-                for ( auto const& opaqueData : meshGroup._opaqueData )
-                {
-                    // TODO
-                    android_vulkan::LogDebug ( "%p", &opaqueData );
-                }
-            }
-
-            for ( auto const &[mesh, opaqueData] : opaque.GetUniqueList () )
-            {
-                // TODO
-                android_vulkan::LogDebug ( "%p", &opaqueData );
-            }
-        }
-
-        // TODO
-        android_vulkan::LogDebug ( "%p", &pointLightCall );
-    }
+    //for ( auto &pointLightCall : _pointLightCalls )
+    //{
+    //    for ( auto const& opaqueCall : _opaqueCalls )
+    //    {
+    //        OpaqueCall const& opaque = opaqueCall.second;
+//
+    //        for ( auto const &[name, meshGroup] : opaque.GetBatchList () )
+    //        {
+    //            for ( auto const& opaqueData : meshGroup._opaqueData )
+    //            {
+    //                // TODO
+    //                android_vulkan::LogDebug ( "%p", &opaqueData );
+    //            }
+    //        }
+//
+    //        for ( auto const &[mesh, opaqueData] : opaque.GetUniqueList () )
+    //        {
+    //            // TODO
+    //            android_vulkan::LogDebug ( "%p", &opaqueData );
+    //        }
+    //    }
+//
+    //    // TODO
+    //    android_vulkan::LogDebug ( "%p", &pointLightCall );
+    //}
 }
 
 } // namespace pbr

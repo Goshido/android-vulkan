@@ -33,6 +33,7 @@ class OpaqueCall final
             size_t &maxUnique,
             MeshRef &mesh,
             const GXMat4 &local,
+            GXAABB const &worldBounds,
             android_vulkan::Half4 const &color0,
             android_vulkan::Half4 const &color1,
             android_vulkan::Half4 const &color2,
@@ -44,7 +45,11 @@ class OpaqueCall final
         // The method returns the maximum batch item count.
         // Note maxBatch will be updated only if it's less than current max unique elements of this drawcall.
         // Note maxUnique will be updated only if it's less than current max unique elements of this drawcall.
-        void Append ( size_t &maxBatch, size_t &maxUnique, MeshRef &mesh, const GXMat4 &local,
+        void Append ( size_t &maxBatch,
+            size_t &maxUnique,
+            MeshRef &mesh,
+            const GXMat4 &local,
+            GXAABB const &worldBounds,
             android_vulkan::Half4 const &color0,
             android_vulkan::Half4 const &color1,
             android_vulkan::Half4 const &color2,
@@ -58,6 +63,7 @@ class OpaqueCall final
         void AddBatch ( size_t &maxBatch,
             MeshRef &mesh,
             GXMat4 const &local,
+            GXAABB const &worldBounds,
             android_vulkan::Half4 const &color0,
             android_vulkan::Half4 const &color1,
             android_vulkan::Half4 const &color2,
@@ -67,6 +73,7 @@ class OpaqueCall final
         void AddUnique ( size_t &maxUnique,
             MeshRef &mesh,
             GXMat4 const &local,
+            GXAABB const &worldBounds,
             android_vulkan::Half4 const &color0,
             android_vulkan::Half4 const &color1,
             android_vulkan::Half4 const &color2,

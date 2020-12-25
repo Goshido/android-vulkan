@@ -1442,6 +1442,7 @@ bool Renderer::DeployDevice ()
 
     constexpr char const* extensions[] =
     {
+        VK_KHR_MULTIVIEW_EXTENSION_NAME,
         VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME,
         VK_KHR_SWAPCHAIN_EXTENSION_NAME
     };
@@ -1453,7 +1454,7 @@ bool Renderer::DeployDevice ()
 
     constexpr size_t const features[] =
     {
-        offsetof ( VkPhysicalDeviceFeatures, geometryShader )
+        offsetof ( VkPhysicalDeviceFeatures, textureCompressionASTC_LDR )
     };
 
     if ( !CheckRequiredFeatures ( _physicalDevice, features, std::size ( features ) ) )

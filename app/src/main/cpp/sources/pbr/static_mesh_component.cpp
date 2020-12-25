@@ -46,6 +46,7 @@ StaticMeshComponent::StaticMeshComponent ( size_t &commandBufferConsumed,
         commandBuffers[ commandBufferConsumed ]
     );
 
+    _mesh->GetBounds ().Transform ( _worldBounds, _localMatrix );
     commandBufferConsumed += consumed;
 }
 
@@ -75,7 +76,7 @@ void StaticMeshComponent::FreeTransferResources ( android_vulkan::Renderer &rend
 
 void StaticMeshComponent::Submit ( RenderSession &renderSession )
 {
-    renderSession.SubmitMesh ( _mesh, _material, _localMatrix, _color0, _color1, _color2, _color3 );
+    renderSession.SubmitMesh ( _mesh, _material, _localMatrix, _worldBounds, _color0, _color1, _color2, _color3 );
 }
 
 } // namespace pbr

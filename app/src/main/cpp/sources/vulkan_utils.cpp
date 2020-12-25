@@ -101,10 +101,10 @@ static std::set<VulkanItem>         g_ShaderModules;
 static std::set<VulkanItem>         g_Surfaces;
 static std::set<VulkanItem>         g_Swapchains;
 
-static void CheckNonDispatchableObjectLeaks ( const char* objectType, std::set<VulkanItem> &storage )
+static bool CheckNonDispatchableObjectLeaks ( const char* objectType, std::set<VulkanItem> &storage )
 {
     if ( storage.empty () )
-        return;
+        return true;
 
     LogError ( "AV_CHECK_VULKAN_LEAKS - %s objects were leaked: %zu", objectType, storage.size () );
     LogError ( ">>>" );
@@ -117,13 +117,7 @@ static void CheckNonDispatchableObjectLeaks ( const char* objectType, std::set<V
     }
 
     LogError ( "<<<" );
-
-#ifdef ANDROID_VULKAN_STRICT_MODE
-
-    assert ( !"CheckNonDispatchableObjectLeaks triggered!" );
-
-#endif
-
+    return false;
 }
 
 static void RegisterNonDispatchableObject ( std::string &&where, std::set<VulkanItem> &storage )
@@ -178,24 +172,32 @@ void CheckVulkanLeaks ()
 {
     std::shared_lock<std::shared_timed_mutex> lock ( g_Lock );
 
-    CheckNonDispatchableObjectLeaks ( "Buffer", g_Buffers );
-    CheckNonDispatchableObjectLeaks ( "Command pool", g_CommandPools );
-    CheckNonDispatchableObjectLeaks ( "Descriptor pool", g_DescriptorPools );
-    CheckNonDispatchableObjectLeaks ( "Descriptor set layout", g_DescriptorSetLayouts );
-    CheckNonDispatchableObjectLeaks ( "Device", g_Devices );
-    CheckNonDispatchableObjectLeaks ( "Device memory", g_DeviceMemory );
-    CheckNonDispatchableObjectLeaks ( "Fence", g_Fences );
-    CheckNonDispatchableObjectLeaks ( "Framebuffer", g_Framebuffers );
-    CheckNonDispatchableObjectLeaks ( "Image", g_Images );
-    CheckNonDispatchableObjectLeaks ( "Image view", g_ImageViews );
-    CheckNonDispatchableObjectLeaks ( "Pipeline", g_Pipelines );
-    CheckNonDispatchableObjectLeaks ( "Pipeline layout", g_PipelineLayouts );
-    CheckNonDispatchableObjectLeaks ( "Render pass", g_RenderPasses );
-    CheckNonDispatchableObjectLeaks ( "Sampler", g_Samplers );
-    CheckNonDispatchableObjectLeaks ( "Semaphore", g_Semaphores );
-    CheckNonDispatchableObjectLeaks ( "Shader module", g_ShaderModules );
-    CheckNonDispatchableObjectLeaks ( "Surface", g_Surfaces );
-    CheckNonDispatchableObjectLeaks ( "Swapchain", g_Swapchains );
+    bool result = CheckNonDispatchableObjectLeaks ( "Buffer", g_Buffers );
+    result &= CheckNonDispatchableObjectLeaks ( "Command pool", g_CommandPools );
+    result &= CheckNonDispatchableObjectLeaks ( "Descriptor pool", g_DescriptorPools );
+    result &= CheckNonDispatchableObjectLeaks ( "Descriptor set layout", g_DescriptorSetLayouts );
+    result &= CheckNonDispatchableObjectLeaks ( "Device", g_Devices );
+    result &= CheckNonDispatchableObjectLeaks ( "Device memory", g_DeviceMemory );
+    result &= CheckNonDispatchableObjectLeaks ( "Fence", g_Fences );
+    result &= CheckNonDispatchableObjectLeaks ( "Framebuffer", g_Framebuffers );
+    result &= CheckNonDispatchableObjectLeaks ( "Image", g_Images );
+    result &= CheckNonDispatchableObjectLeaks ( "Image view", g_ImageViews );
+    result &= CheckNonDispatchableObjectLeaks ( "Pipeline", g_Pipelines );
+    result &= CheckNonDispatchableObjectLeaks ( "Pipeline layout", g_PipelineLayouts );
+    result &= CheckNonDispatchableObjectLeaks ( "Render pass", g_RenderPasses );
+    result &= CheckNonDispatchableObjectLeaks ( "Sampler", g_Samplers );
+    result &= CheckNonDispatchableObjectLeaks ( "Semaphore", g_Semaphores );
+    result &= CheckNonDispatchableObjectLeaks ( "Shader module", g_ShaderModules );
+    result &= CheckNonDispatchableObjectLeaks ( "Surface", g_Surfaces );
+    result &= CheckNonDispatchableObjectLeaks ( "Swapchain", g_Swapchains );
+
+#ifdef ANDROID_VULKAN_STRICT_MODE
+
+    if ( !result )
+        assert ( !"CheckVulkanLeaks triggered!" );
+
+#endif // ANDROID_VULKAN_STRICT_MODE
+
 }
 
 void RegisterBuffer ( std::string &&where )

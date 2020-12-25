@@ -8,6 +8,7 @@
 #include "opaque_call.h"
 #include "opaque_material.h"
 #include "point_light.h"
+#include "point_light_shadowmap_generator_program.h"
 #include "render_session_stats.h"
 #include "shadow_casters.h"
 #include "texture_present_program.h"
@@ -63,11 +64,13 @@ class RenderSession final
 
         std::map<OpaqueMaterial, OpaqueCall>    _opaqueCalls;
 
-        std::vector<LightInteract>              _pointLightCalls;
-        std::vector<TextureCubeRef>             _pointLightShadowMaps;
-
         OpaqueProgram                           _opaqueBatchProgram;
+        PointLightShadowmapGeneratorProgram     _pointLightShadowmapGeneratorProgram;
         TexturePresentProgram                   _texturePresentProgram;
+
+        std::vector<LightInteract>              _pointLightCalls;
+        std::vector<TextureCubeRef>             _pointLightShadowmaps;
+        VkRenderPass                            _pointLightShadowmapRenderPass;
 
         VkPresentInfoKHR                        _presentInfo;
         VkRenderPassBeginInfo                   _presentBeginInfo;
@@ -122,6 +125,7 @@ class RenderSession final
 
         [[nodiscard]] bool CreateGBufferFramebuffer ( android_vulkan::Renderer &renderer );
         [[nodiscard]] bool CreateGBufferRenderPass ( android_vulkan::Renderer &renderer );
+        [[nodiscard]] bool CreatePointLightShadowmapRenderPass ( android_vulkan::Renderer &renderer );
 
         [[nodiscard]] bool CreatePresentFramebuffers ( android_vulkan::Renderer &renderer );
         void DestroyPresentFramebuffers ( android_vulkan::Renderer &renderer );

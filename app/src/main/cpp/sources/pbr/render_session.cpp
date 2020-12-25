@@ -18,6 +18,8 @@ constexpr static const size_t DEFAULT_TEXTURE_COUNT = 5U;
 // 1 2 4 8 16 32 64 128 256 512 1024 2048 4096
 constexpr static size_t MAX_SUPPORTED_MIP_COUNT = 13U;
 
+constexpr static uint32_t POINT_LIGHT_SHADOWMAP_RESOLUTION = 512U;
+
 //----------------------------------------------------------------------------------------------------------------------
 
 class SamplerStorage final
@@ -155,10 +157,12 @@ RenderSession::RenderSession () noexcept:
     _maxBatchCount ( 0U ),
     _maxUniqueCount ( 0U ),
     _opaqueCalls {},
-    _pointLightCalls {},
-    _pointLightShadowMaps {},
     _opaqueBatchProgram {},
+    _pointLightShadowmapGeneratorProgram {},
     _texturePresentProgram {},
+    _pointLightCalls {},
+    _pointLightShadowmaps {},
+    _pointLightShadowmapRenderPass ( VK_NULL_HANDLE),
     _presentInfo {},
     _presentBeginInfo {},
     _presentClearValue {},
@@ -320,6 +324,12 @@ bool RenderSession::Init ( android_vulkan::Renderer &renderer, VkExtent2D const 
         return false;
     }
 
+    if ( !CreatePointLightShadowmapRenderPass ( renderer ) )
+    {
+        Destroy ( renderer );
+        return false;
+    }
+
     if ( !CreatePresentRenderPass ( renderer ) )
     {
         Destroy ( renderer );
@@ -354,6 +364,22 @@ bool RenderSession::Init ( android_vulkan::Renderer &renderer, VkExtent2D const 
     AV_REGISTER_FENCE ( "RenderSession::_geometryPassFence" )
 
     if ( !_opaqueBatchProgram.Init ( renderer, _gBufferRenderPass, resolution ) )
+    {
+        Destroy ( renderer );
+        return false;
+    }
+
+    result = _pointLightShadowmapGeneratorProgram.Init ( renderer,
+        _pointLightShadowmapRenderPass,
+
+        VkExtent2D
+        {
+            .width = POINT_LIGHT_SHADOWMAP_RESOLUTION,
+            .height = POINT_LIGHT_SHADOWMAP_RESOLUTION
+        }
+    );
+
+    if ( !result )
     {
         Destroy ( renderer );
         return false;
@@ -554,6 +580,7 @@ void RenderSession::Destroy ( android_vulkan::Renderer &renderer )
 
     _uniformBufferPool.Destroy ( renderer );
     _texturePresentProgram.Destroy ( renderer );
+    _pointLightShadowmapGeneratorProgram.Destroy ( renderer );
     _opaqueBatchProgram.Destroy ( renderer );
 
     if ( _geometryPassFence != VK_NULL_HANDLE )
@@ -570,6 +597,13 @@ void RenderSession::Destroy ( android_vulkan::Renderer &renderer )
         vkDestroyRenderPass ( device, _presentRenderPass, nullptr );
         _presentRenderPass = VK_NULL_HANDLE;
         AV_UNREGISTER_RENDER_PASS ( "RenderSession::_presentRenderPass" )
+    }
+
+    if ( _pointLightShadowmapRenderPass != VK_NULL_HANDLE )
+    {
+        vkDestroyRenderPass ( device, _pointLightShadowmapRenderPass, nullptr );
+        _pointLightShadowmapRenderPass = VK_NULL_HANDLE;
+        AV_UNREGISTER_RENDER_PASS ( "RenderSession::_pointLightShadowmapRenderPass" )
     }
 
     if ( _gBufferFramebuffer != VK_NULL_HANDLE )
@@ -828,6 +862,59 @@ bool RenderSession::CreateGBufferRenderPass ( android_vulkan::Renderer &renderer
         return false;
 
     AV_REGISTER_RENDER_PASS ( "RenderSession::_gBufferRenderPass" )
+    return true;
+}
+
+bool RenderSession::CreatePointLightShadowmapRenderPass ( android_vulkan::Renderer &renderer )
+{
+    VkAttachmentDescription depthAttachment;
+    depthAttachment.flags = 0U;
+    depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+    depthAttachment.format = renderer.GetDefaultDepthStencilFormat ();
+    depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+    depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+
+    VkAttachmentReference depthAttachmentReference;
+    depthAttachmentReference.attachment = 0U;
+    depthAttachmentReference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+    VkSubpassDescription subpass;
+    subpass.flags = 0U;
+    subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+    subpass.colorAttachmentCount = 0U;
+    subpass.pColorAttachments = nullptr;
+    subpass.inputAttachmentCount = 0U;
+    subpass.pInputAttachments = nullptr;
+    subpass.pDepthStencilAttachment = &depthAttachmentReference;
+    subpass.pResolveAttachments = nullptr;
+    subpass.preserveAttachmentCount = 0U;
+    subpass.pPreserveAttachments = nullptr;
+
+    VkRenderPassCreateInfo renderPassInfo;
+    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+    renderPassInfo.pNext = nullptr;
+    renderPassInfo.flags = 0U;
+    renderPassInfo.subpassCount = 1U;
+    renderPassInfo.pSubpasses = &subpass;
+    renderPassInfo.dependencyCount = 0U;
+    renderPassInfo.pDependencies = nullptr;
+    renderPassInfo.attachmentCount = 1U;
+    renderPassInfo.pAttachments = &depthAttachment;
+
+    bool const result = android_vulkan::Renderer::CheckVkResult (
+        vkCreateRenderPass ( renderer.GetDevice (), &renderPassInfo, nullptr, &_pointLightShadowmapRenderPass ),
+        "RenderSession::CreatePointLightShadowmapRenderPass",
+        "Can't create GBuffer render pass"
+    );
+
+    if ( !result )
+        return false;
+
+    AV_REGISTER_RENDER_PASS ( "RenderSession::_pointLightShadowmapRenderPass" )
     return true;
 }
 

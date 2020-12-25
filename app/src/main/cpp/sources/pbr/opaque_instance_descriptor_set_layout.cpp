@@ -22,11 +22,11 @@ class OpaqueInstanceDescriptorSetLayoutImpl final
     public:
         OpaqueInstanceDescriptorSetLayoutImpl () noexcept;
 
-        OpaqueInstanceDescriptorSetLayoutImpl ( OpaqueInstanceDescriptorSetLayoutImpl const &other ) = delete;
-        OpaqueInstanceDescriptorSetLayoutImpl& operator = ( OpaqueInstanceDescriptorSetLayoutImpl const &other ) = delete;
+        OpaqueInstanceDescriptorSetLayoutImpl ( OpaqueInstanceDescriptorSetLayoutImpl const & ) = delete;
+        OpaqueInstanceDescriptorSetLayoutImpl& operator = ( OpaqueInstanceDescriptorSetLayoutImpl const & ) = delete;
 
-        OpaqueInstanceDescriptorSetLayoutImpl ( OpaqueInstanceDescriptorSetLayoutImpl &&other ) = delete;
-        OpaqueInstanceDescriptorSetLayoutImpl& operator = ( OpaqueInstanceDescriptorSetLayoutImpl &&other ) = delete;
+        OpaqueInstanceDescriptorSetLayoutImpl ( OpaqueInstanceDescriptorSetLayoutImpl && ) = delete;
+        OpaqueInstanceDescriptorSetLayoutImpl& operator = ( OpaqueInstanceDescriptorSetLayoutImpl && ) = delete;
 
         ~OpaqueInstanceDescriptorSetLayoutImpl () = default;
 

@@ -1,13 +1,5 @@
 #include <core.h>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <map>
-
-GX_RESTORE_WARNING_STATE
-
-#include "logger.h"
-#include "vulkan_utils.h"
+#include <logger.h>
 
 
 namespace android_vulkan {
@@ -129,7 +121,6 @@ void Core::OnOSCommand ( android_app* app, int32_t cmd )
 
             core._gamepad.Stop ();
             core._renderer.OnDestroy ();
-            AV_CHECK_VULKAN_LEAKS ()
         break;
 
         case APP_CMD_DESTROY:

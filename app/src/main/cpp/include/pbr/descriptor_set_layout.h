@@ -10,13 +10,13 @@ namespace pbr {
 class DescriptorSetLayout
 {
     public:
-        DescriptorSetLayout () = default;
+        DescriptorSetLayout () noexcept = default;
 
-        DescriptorSetLayout ( DescriptorSetLayout const &other ) = delete;
-        DescriptorSetLayout& operator = ( DescriptorSetLayout const &other ) = delete;
+        DescriptorSetLayout ( DescriptorSetLayout const & ) = delete;
+        DescriptorSetLayout& operator = ( DescriptorSetLayout const & ) = delete;
 
-        DescriptorSetLayout ( DescriptorSetLayout &&other ) = delete;
-        DescriptorSetLayout& operator = ( DescriptorSetLayout &&other ) = delete;
+        DescriptorSetLayout ( DescriptorSetLayout && ) = delete;
+        DescriptorSetLayout& operator = ( DescriptorSetLayout && ) = delete;
 
         virtual ~DescriptorSetLayout () = default;
 

@@ -1497,12 +1497,17 @@ bool Renderer::DeployDevice ()
 void Renderer::DestroyDevice ()
 {
     if ( !_device )
+    {
+        AV_CHECK_VULKAN_LEAKS ()
         return;
+    }
+
+    // Note it's intentional to unregister device BEFORE destruction for correct memory leak check stuff.
+    AV_UNREGISTER_DEVICE ( "Renderer::_device" )
+    AV_CHECK_VULKAN_LEAKS ()
 
     vkDestroyDevice ( _device, nullptr );
     _device = VK_NULL_HANDLE;
-    AV_UNREGISTER_DEVICE ( "Renderer::_device" )
-
     _queue = VK_NULL_HANDLE;
 }
 

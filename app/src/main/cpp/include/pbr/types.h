@@ -4,7 +4,7 @@
 
 #include <mesh_geometry.h>
 #include <texture2D.h>
-#include <textureCube.h>
+#include <texture_cube.h>
 #include "material.h"
 #include "sampler.h"
 #include "light.h"

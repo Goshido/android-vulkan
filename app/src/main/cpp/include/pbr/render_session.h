@@ -41,8 +41,6 @@ class RenderSession final
         Texture2DRef                            _paramDefault;
 
         VkCommandPool                           _commandPool;
-        VkDescriptorPool                        _descriptorPool;
-
         GXProjectionClipPlanes                  _frustum;
 
         GBuffer                                 _gBuffer;
@@ -52,9 +50,11 @@ class RenderSession final
 
         VkRenderPassBeginInfo                   _geometryPassBeginInfo;
         VkClearValue                            _geometryPassClearValue[ GBUFFER_ATTACHMENT_COUNT ];
+        VkDescriptorPool                        _geometryPassDescriptorPool;
         VkFence                                 _geometryPassFence;
         VkCommandBuffer                         _geometryPassRendering;
         VkCommandBuffer                         _geometryPassTransfer;
+        UniformBufferPool                       _geometryPassUniformBufferPool;
 
         bool                                    _isFreeTransferResources;
 
@@ -69,8 +69,11 @@ class RenderSession final
         TexturePresentProgram                   _texturePresentProgram;
 
         std::vector<LightInteract>              _pointLightCalls;
+        VkDescriptorPool                        _pointLightShadowmapDescriptorPool;
         std::vector<TextureCubeRef>             _pointLightShadowmaps;
+        UniformBufferPool                       _pointLightShadowmapPassUniformBufferPool;
         VkRenderPass                            _pointLightShadowmapRenderPass;
+        VkCommandBuffer                         _pointLightShadowmapTransfer;
 
         VkPresentInfoKHR                        _presentInfo;
         VkRenderPassBeginInfo                   _presentBeginInfo;
@@ -83,9 +86,8 @@ class RenderSession final
         RenderSessionStats                      _renderSessionStats;
 
         VkSubmitInfo                            _submitInfoRender;
-        VkSubmitInfo                            _submitInfoTransfer;
-
-        UniformBufferPool                       _uniformBufferPool;
+        VkSubmitInfo                            _submitInfoTransferGeometryPass;
+        VkSubmitInfo                            _submitInfoTransferPointLightShadowmap;
 
         GXMat4                                  _view;
         GXMat4                                  _viewProjection;
@@ -135,7 +137,8 @@ class RenderSession final
         [[nodiscard]] bool CreateSyncPrimitives ( android_vulkan::Renderer &renderer );
         void DestroySyncPrimitives ( android_vulkan::Renderer &renderer );
 
-        void DestroyDescriptorPool ( android_vulkan::Renderer &renderer );
+        void DestroyGeometryPassDescriptorPool ( android_vulkan::Renderer &renderer );
+        void DestroyPointLightShadowmapDescriptorPool ( android_vulkan::Renderer &renderer );
         void DrawOpaque ( VkDescriptorSet const* textureSets, VkDescriptorSet const* instanceSets );
 
         void InitCommonStructures ();
@@ -152,11 +155,11 @@ class RenderSession final
 
         void SubmitPointLight ( LightRef const &light );
 
-        [[nodiscard]] bool UpdateGPUData ( std::vector<VkDescriptorSet> &descriptorSetStorage,
+        [[nodiscard]] bool UpdateGeometryPassGPUData ( std::vector<VkDescriptorSet> &descriptorSetStorage,
             android_vulkan::Renderer &renderer
         );
 
-        void UpdatePointLightShadowMaps ();
+        [[nodiscard]] bool UpdatePointLightShadowmapGPUData ( android_vulkan::Renderer &renderer );
 };
 
 } // namespace pbr

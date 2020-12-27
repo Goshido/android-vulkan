@@ -72,7 +72,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/mesh_geometry.cpp
     app/src/main/cpp/sources/renderer.cpp
     app/src/main/cpp/sources/stick.cpp
-    app/src/main/cpp/sources/textureCube.cpp
+    app/src/main/cpp/sources/texture_cube.cpp
     app/src/main/cpp/sources/texture2D.cpp
     app/src/main/cpp/sources/trigger.cpp
     app/src/main/cpp/sources/vulkan_utils.cpp

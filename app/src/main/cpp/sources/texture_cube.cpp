@@ -1,4 +1,4 @@
-#include <textureCube.h>
+#include <texture_cube.h>
 #include <vulkan_utils.h>
 
 GX_DISABLE_COMMON_WARNINGS

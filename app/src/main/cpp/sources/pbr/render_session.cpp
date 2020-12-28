@@ -177,6 +177,7 @@ RenderSession::RenderSession () noexcept:
     _renderSessionStats {},
     _submitInfoRender {},
     _submitInfoTransferGeometryPass {},
+    _submitInfoTransferPointLightShadowmap {},
     _view {},
     _viewProjection {}
 {
@@ -212,7 +213,7 @@ bool RenderSession::End ( ePresentTarget /*target*/, double deltaTime, android_v
         "Can't get presentation image index"
     );
 
-    if ( !result || /*!UpdatePointLightShadowmapGPUData ( renderer ) ||*/ !BeginGeometryRenderPass ( renderer ) )
+    if ( !result || !UpdatePointLightShadowmapGPUData ( renderer ) || !BeginGeometryRenderPass ( renderer ) )
         return false;
 
     std::vector<VkDescriptorSet> descriptorSetStorage;
@@ -689,7 +690,7 @@ bool RenderSession::BeginGeometryRenderPass ( android_vulkan::Renderer &renderer
     beginInfo.pInheritanceInfo = nullptr;
 
     result = android_vulkan::Renderer::CheckVkResult ( vkBeginCommandBuffer ( _geometryPassRendering, &beginInfo ),
-        "RenderSession::End",
+        "RenderSession::BeginGeometryRenderPass",
         "Can't begin geometry pass rendering command buffer"
     );
 
@@ -1399,7 +1400,7 @@ bool RenderSession::UpdateGeometryPassGPUData ( std::vector<VkDescriptorSet> &de
 
     bool result = android_vulkan::Renderer::CheckVkResult ( vkBeginCommandBuffer ( _geometryPassTransfer, &beginInfo ),
         "RenderSession::UpdateGeometryPassGPUData",
-        "Can't begin geometry pass transfer command buffer"
+        "Can't begin transfer command buffer"
     );
 
     if ( !result )
@@ -1744,12 +1745,29 @@ bool RenderSession::UpdateGeometryPassGPUData ( std::vector<VkDescriptorSet> &de
     return android_vulkan::Renderer::CheckVkResult (
         vkQueueSubmit ( renderer.GetQueue (), 1U, &_submitInfoTransferGeometryPass, VK_NULL_HANDLE ),
         "RenderSession::UpdateGeometryPassGPUData",
-        "Can't submit geometry transfer command buffer"
+        "Can't submit transfer command buffer"
     );
 }
 
 bool RenderSession::UpdatePointLightShadowmapGPUData ( android_vulkan::Renderer &renderer )
 {
+    VkCommandBufferBeginInfo const beginInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+        .pNext = nullptr,
+        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+        .pInheritanceInfo = nullptr
+    };
+
+    bool result = android_vulkan::Renderer::CheckVkResult (
+        vkBeginCommandBuffer ( _pointLightShadowmapTransfer, &beginInfo ),
+        "RenderSession::UpdatePointLightShadowmapGPUData",
+        "Can't begin transfer command buffer"
+    );
+
+    if ( !result )
+        return false;
+
     // Estimating from the top of the maximum required uniform buffers to be uploaded.
     size_t const maxUniformBuffers =
         _pointLightCalls.size () * _opaqueCalls.size () * ( _maxBatchCount + _maxUniqueCount );
@@ -1775,7 +1793,7 @@ bool RenderSession::UpdatePointLightShadowmapGPUData ( android_vulkan::Renderer 
     DestroyPointLightShadowmapDescriptorPool ( renderer );
     VkDevice device = renderer.GetDevice ();
 
-    bool result = android_vulkan::Renderer::CheckVkResult (
+    result = android_vulkan::Renderer::CheckVkResult (
         vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_pointLightShadowmapDescriptorPool ),
         "RenderSession::UpdatePointLightShadowmapGPUData",
         "Can't create descriptor pool"
@@ -1829,9 +1847,10 @@ bool RenderSession::UpdatePointLightShadowmapGPUData ( android_vulkan::Renderer 
     writeInfo.pImageInfo = nullptr;
     writeInfo.pTexelBufferView = nullptr;
 
-    size_t usedDescriptorSets = 0U;
-    std::vector<std::pair<VkDescriptorBufferInfo, VkWriteDescriptorSet>> uploads;
-    uploads.reserve ( maxUniformBuffers );
+    std::vector<VkWriteDescriptorSet> writeStorage;
+    std::vector<VkDescriptorBufferInfo> uniformStorage;
+    writeStorage.reserve ( maxUniformBuffers );
+    uniformStorage.reserve ( maxUniformBuffers );
 
     PointLightShadowmapGeneratorProgram::InstanceData instanceData;
     _pointLightShadowmapPassUniformBufferPool.Reset ();
@@ -1852,11 +1871,11 @@ bool RenderSession::UpdatePointLightShadowmapGPUData ( android_vulkan::Renderer 
             renderer
         );
 
-        writeInfo.dstSet = descriptorSetStorage[ usedDescriptorSets ];
-        ++usedDescriptorSets;
+        uniformStorage.push_back ( bufferInfo );
 
-        auto& [buffer, write] = uploads.emplace_back ( std::make_pair ( bufferInfo, writeInfo ) );
-        write.pBufferInfo = &buffer;
+        writeInfo.pBufferInfo = &uniformStorage.back ();
+        writeInfo.dstSet = descriptorSetStorage[ writeStorage.size () ];
+        writeStorage.push_back ( writeInfo );
     };
 
     for ( auto &[light, casters] : _pointLightCalls )
@@ -1868,19 +1887,7 @@ bool RenderSession::UpdatePointLightShadowmapGPUData ( android_vulkan::Renderer 
 
         for ( auto const &[material, opaque] : _opaqueCalls )
         {
-            for ( auto const &[name, meshGroup] : opaque.GetBatchList () )
-            {
-                for ( auto const& opaqueData : meshGroup._opaqueData )
-                {
-                    if ( !lightBounds.IsOverlaped ( opaqueData._worldBounds ) )
-                        continue;
-
-                    // TODO
-                    android_vulkan::LogDebug ( "%p", &opaqueData );
-                }
-            }
-
-            std::vector<UniqueShadowCaster>* uniques = nullptr;
+            std::vector<MeshRef>* uniques = nullptr;
 
             for ( auto const &[mesh, opaqueData] : opaque.GetUniqueList () )
             {
@@ -1897,14 +1904,82 @@ bool RenderSession::UpdatePointLightShadowmapGPUData ( android_vulkan::Renderer 
 
                 append ( matrices, 0U, opaqueData._local );
                 commit ();
+                uniques->push_back ( mesh );
+            }
+
+            // Note: the original mesh submit layout is stored by material groups. So there is a probability
+            // that there are exact same meshes with different materials. Shadow casters do not care about
+            // material only geometry matters. So to make shadowmap calls most efficiently it's need to collect
+            // all instances first and only then fill uniform buffers.
+
+            for ( auto const &[name, meshGroup] : opaque.GetBatchList () )
+            {
+                for ( auto const& opaqueData : meshGroup._opaqueData )
+                {
+                    if ( !lightBounds.IsOverlaped ( opaqueData._worldBounds ) )
+                        continue;
+
+                    auto &[mesh, locals] = casters._batches[ name ];
+
+                    if ( !mesh )
+                    {
+                        mesh = meshGroup._mesh;
+
+                        // Heap relocation optimization.
+                        locals.reserve ( PBR_POINT_LIGHT_MAX_SHADOW_CASTER_INSTANCE_COUNT );
+                    }
+
+                    locals.push_back ( opaqueData._local );
+                }
             }
         }
 
-        // TODO
-        android_vulkan::LogDebug ( "%p", &pointLight );
+        // Commit uniform buffers for batch meshes.
+        for ( auto const &[name, caster] : casters._batches )
+        {
+            std::vector<GXMat4> const& locals = caster.second;
+            size_t remain = locals.size ();
+            size_t instance = 0U;
+
+            do
+            {
+                size_t const batches = std::min ( remain,
+                    static_cast<size_t> ( PBR_POINT_LIGHT_MAX_SHADOW_CASTER_INSTANCE_COUNT )
+                );
+
+                for ( size_t i = 0U; i < batches; ++i )
+                {
+                    append ( matrices, i, locals[ instance ] );
+                    ++instance;
+                }
+
+                commit ();
+                remain -= batches;
+            }
+            while ( remain );
+        }
     }
 
-    return true;
+    vkUpdateDescriptorSets ( device,
+        static_cast<uint32_t> ( writeStorage.size () ),
+        writeStorage.data (),
+        0U,
+        nullptr
+    );
+
+    result = android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( _pointLightShadowmapTransfer ),
+        "RenderSession::UpdatePointLightShadowmapGPUData",
+        "Can't end transfer command buffer"
+    );
+
+    if ( !result )
+        return false;
+
+    return android_vulkan::Renderer::CheckVkResult (
+        vkQueueSubmit ( renderer.GetQueue (), 1U, &_submitInfoTransferPointLightShadowmap, VK_NULL_HANDLE ),
+        "RenderSession::UpdatePointLightShadowmapGPUData",
+        "Can't submit transfer command buffer"
+    );
 }
 
 } // namespace pbr

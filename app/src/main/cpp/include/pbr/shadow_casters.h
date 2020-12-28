@@ -10,16 +10,15 @@ GX_DISABLE_COMMON_WARNINGS
 
 GX_RESTORE_WARNING_STATE
 
-#include "batch_shadow_caster.h"
-#include "unique_shadow_caster.h"
-
 
 namespace pbr {
 
+using BatchShadowCaster = std::pair<MeshRef, std::vector<GXMat4>>;
+
 struct ShadowCasters final
 {
-    [[maybe_unused]] std::unordered_map<std::string_view, BatchShadowCaster>    _batches;
-    [[maybe_unused]] std::vector<UniqueShadowCaster>                            _uniques;
+    std::unordered_map<std::string_view, BatchShadowCaster>     _batches;
+    std::vector<MeshRef>                                        _uniques;
 };
 
 } // namespace pbr

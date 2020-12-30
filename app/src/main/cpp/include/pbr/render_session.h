@@ -32,6 +32,7 @@ class RenderSession final
 {
     private:
         using LightInteract = std::pair<LightRef, ShadowCasters>;
+        using PointLightShadowmapInfo = std::pair<TextureCubeRef, VkFramebuffer>;
 
     private:
         Texture2DRef                            _albedoDefault;
@@ -62,18 +63,21 @@ class RenderSession final
         size_t                                  _maxBatchCount;
         size_t                                  _maxUniqueCount;
 
-        std::map<OpaqueMaterial, OpaqueCall>    _opaqueCalls;
-
         OpaqueProgram                           _opaqueBatchProgram;
-        PointLightShadowmapGeneratorProgram     _pointLightShadowmapGeneratorProgram;
+        std::map<OpaqueMaterial, OpaqueCall>    _opaqueCalls;
+        size_t                                  _opaqueMeshCount;
         TexturePresentProgram                   _texturePresentProgram;
 
         std::vector<LightInteract>              _pointLightCalls;
         VkDescriptorPool                        _pointLightShadowmapDescriptorPool;
-        std::vector<TextureCubeRef>             _pointLightShadowmaps;
+        VkFence                                 _pointLightShadowmapFence;
+        PointLightShadowmapGeneratorProgram     _pointLightShadowmapGeneratorProgram;
         UniformBufferPool                       _pointLightShadowmapPassUniformBufferPool;
         VkRenderPass                            _pointLightShadowmapRenderPass;
+        VkCommandBuffer                         _pointLightShadowmapRendering;
         VkCommandBuffer                         _pointLightShadowmapTransfer;
+        std::vector<PointLightShadowmapInfo>    _pointLightShadowmaps;
+        size_t                                  _usedPointLightShadowmaps;
 
         VkPresentInfoKHR                        _presentInfo;
         VkRenderPassBeginInfo                   _presentBeginInfo;
@@ -85,7 +89,8 @@ class RenderSession final
 
         RenderSessionStats                      _renderSessionStats;
 
-        VkSubmitInfo                            _submitInfoRender;
+        VkSubmitInfo                            _submitInfoRenderGeometryPass;
+        VkSubmitInfo                            _submitInfoRenderPointLightShadowmap;
         VkSubmitInfo                            _submitInfoTransferGeometryPass;
         VkSubmitInfo                            _submitInfoTransferPointLightShadowmap;
 
@@ -122,6 +127,9 @@ class RenderSession final
         void SubmitLight ( LightRef const &light );
 
     private:
+        // The method returns nullptr if it fails. Otherwise the method returns a valid pointer.
+        [[nodiscard]] PointLightShadowmapInfo* AcquirePointLightShadowmap ( android_vulkan::Renderer &renderer );
+
         [[nodiscard]] bool BeginGeometryRenderPass ( android_vulkan::Renderer &renderer );
         void CleanupTransferResources ( android_vulkan::Renderer &renderer );
 
@@ -141,6 +149,10 @@ class RenderSession final
         void DestroyPointLightShadowmapDescriptorPool ( android_vulkan::Renderer &renderer );
         void DrawOpaque ( VkDescriptorSet const* textureSets, VkDescriptorSet const* instanceSets );
 
+        [[nodiscard]] bool GeneratePointLightShadowmaps ( VkDescriptorSet const* descriptorSets,
+            android_vulkan::Renderer &renderer
+        );
+
         void InitCommonStructures ();
 
         void SubmitOpaqueCall ( MeshRef &mesh,
@@ -159,7 +171,9 @@ class RenderSession final
             android_vulkan::Renderer &renderer
         );
 
-        [[nodiscard]] bool UpdatePointLightShadowmapGPUData ( android_vulkan::Renderer &renderer );
+        [[nodiscard]] bool UpdatePointLightShadowmapGPUData ( std::vector<VkDescriptorSet> &descriptorSetStorage,
+            android_vulkan::Renderer &renderer
+        );
 };
 
 } // namespace pbr

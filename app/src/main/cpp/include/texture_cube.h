@@ -7,7 +7,7 @@
 
 namespace android_vulkan {
 
-class [[maybe_unused]] TextureCube final
+class TextureCube final
 {
     private:
         VkFormat            _format;
@@ -30,17 +30,17 @@ class [[maybe_unused]] TextureCube final
 
         ~TextureCube () = default;
 
-        [[maybe_unused]] [[nodiscard]] bool CreateRenderTarget ( VkExtent2D const &resolution,
+        [[nodiscard]] bool CreateRenderTarget ( VkExtent2D const &resolution,
             VkFormat format,
             VkImageUsageFlags usage,
             Renderer &renderer
         );
 
-        [[maybe_unused]] void FreeResources ( Renderer &renderer );
+        void FreeResources ( Renderer &renderer );
 
         [[maybe_unused]] [[nodiscard]] VkFormat GetFormat () const;
         [[maybe_unused]] [[nodiscard]] VkImage GetImage () const;
-        [[maybe_unused]] [[nodiscard]] VkImageView GetImageView () const;
+        [[nodiscard]] VkImageView GetImageView () const;
         [[maybe_unused]] [[nodiscard]] uint8_t GetMipLevelCount () const;
         [[maybe_unused]] [[nodiscard]] VkExtent2D const& GetResolution () const;
 };

@@ -10,7 +10,7 @@
 
 namespace pbr {
 
-class PointLightShadowmapGeneratorProgram final : Program
+class PointLightShadowmapGeneratorProgram final : public Program
 {
     public:
         AV_DX_ALIGNMENT_BEGIN
@@ -48,6 +48,8 @@ class PointLightShadowmapGeneratorProgram final : Program
 
         void Destroy ( android_vulkan::Renderer &renderer ) override;
         [[nodiscard]] std::vector<DescriptorSetInfo> const& GetResourceInfo () const override;
+
+        void SetDescriptorSet ( VkCommandBuffer commandBuffer, VkDescriptorSet sets ) const;
 
     private:
         [[nodiscard]] VkPipelineColorBlendStateCreateInfo const* InitColorBlendInfo (

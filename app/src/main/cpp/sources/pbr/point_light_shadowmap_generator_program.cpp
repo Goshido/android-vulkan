@@ -128,6 +128,21 @@ std::vector<DescriptorSetInfo> const& PointLightShadowmapGeneratorProgram::GetRe
     return info;
 }
 
+void PointLightShadowmapGeneratorProgram::SetDescriptorSet ( VkCommandBuffer commandBuffer,
+    VkDescriptorSet sets
+) const
+{
+    vkCmdBindDescriptorSets ( commandBuffer,
+        VK_PIPELINE_BIND_POINT_GRAPHICS,
+        _pipelineLayout,
+        0U,
+        1U,
+        &sets,
+        0U,
+        nullptr
+    );
+}
+
 VkPipelineColorBlendStateCreateInfo const* PointLightShadowmapGeneratorProgram::InitColorBlendInfo (
     VkPipelineColorBlendStateCreateInfo &info,
     VkPipelineColorBlendAttachmentState* attachments
@@ -243,7 +258,7 @@ VkPipelineRasterizationStateCreateInfo const* PointLightShadowmapGeneratorProgra
     info.depthClampEnable = VK_FALSE;
     info.rasterizerDiscardEnable = VK_FALSE;
     info.polygonMode = VK_POLYGON_MODE_FILL;
-    info.cullMode = VK_CULL_MODE_FRONT_BIT;
+    info.cullMode = VK_CULL_MODE_BACK_BIT;
     info.frontFace = VK_FRONT_FACE_CLOCKWISE;
     info.depthBiasEnable = VK_FALSE;
     info.depthBiasConstantFactor = 0.0F;

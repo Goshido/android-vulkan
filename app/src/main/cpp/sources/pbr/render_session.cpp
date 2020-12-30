@@ -157,16 +157,20 @@ RenderSession::RenderSession () noexcept:
     _isFreeTransferResources ( false ),
     _maxBatchCount ( 0U ),
     _maxUniqueCount ( 0U ),
-    _opaqueCalls {},
     _opaqueBatchProgram {},
-    _pointLightShadowmapGeneratorProgram {},
+    _opaqueCalls {},
+    _opaqueMeshCount ( 0U ),
     _texturePresentProgram {},
     _pointLightCalls {},
     _pointLightShadowmapDescriptorPool ( VK_NULL_HANDLE ),
-    _pointLightShadowmaps {},
+    _pointLightShadowmapFence ( VK_NULL_HANDLE ),
+    _pointLightShadowmapGeneratorProgram {},
     _pointLightShadowmapPassUniformBufferPool {},
     _pointLightShadowmapRenderPass ( VK_NULL_HANDLE ),
+    _pointLightShadowmapRendering ( VK_NULL_HANDLE ),
     _pointLightShadowmapTransfer ( VK_NULL_HANDLE ),
+    _pointLightShadowmaps {},
+    _usedPointLightShadowmaps ( 0U ),
     _presentInfo {},
     _presentBeginInfo {},
     _presentClearValue {},
@@ -175,7 +179,8 @@ RenderSession::RenderSession () noexcept:
     _presentRenderPassEndSemaphore ( VK_NULL_HANDLE ),
     _presentRenderTargetAcquiredSemaphore ( VK_NULL_HANDLE ),
     _renderSessionStats {},
-    _submitInfoRender {},
+    _submitInfoRenderGeometryPass {},
+    _submitInfoRenderPointLightShadowmap {},
     _submitInfoTransferGeometryPass {},
     _submitInfoTransferPointLightShadowmap {},
     _view {},
@@ -187,11 +192,14 @@ RenderSession::RenderSession () noexcept:
 void RenderSession::Begin ( GXMat4 const &view, GXMat4 const &projection )
 {
     _maxBatchCount = 0U;
+    _maxUniqueCount = 0U;
+    _opaqueMeshCount = 0U;
     _view = view;
     _viewProjection.Multiply ( view, projection );
     _frustum.From ( _viewProjection );
     _opaqueCalls.clear ();
     _pointLightCalls.clear ();
+    _usedPointLightShadowmaps = 0U;
 }
 
 bool RenderSession::End ( ePresentTarget /*target*/, double deltaTime, android_vulkan::Renderer &renderer )
@@ -213,15 +221,26 @@ bool RenderSession::End ( ePresentTarget /*target*/, double deltaTime, android_v
         "Can't get presentation image index"
     );
 
-    if ( !result || !UpdatePointLightShadowmapGPUData ( renderer ) || !BeginGeometryRenderPass ( renderer ) )
+    if ( !result )
         return false;
 
-    std::vector<VkDescriptorSet> descriptorSetStorage;
+    std::vector<VkDescriptorSet> pointLightShadowmapDescriptorSets;
 
-    if ( !UpdateGeometryPassGPUData ( descriptorSetStorage, renderer ) )
+    if ( !UpdatePointLightShadowmapGPUData ( pointLightShadowmapDescriptorSets, renderer ) )
         return false;
 
-    VkDescriptorSet const* textureSets = descriptorSetStorage.data ();
+    if ( !GeneratePointLightShadowmaps ( pointLightShadowmapDescriptorSets.data (), renderer ) )
+        return false;
+
+    if ( !BeginGeometryRenderPass ( renderer ) )
+        return false;
+
+    std::vector<VkDescriptorSet> geometryPassDescriptorSets;
+
+    if ( !UpdateGeometryPassGPUData ( geometryPassDescriptorSets, renderer ) )
+        return false;
+
+    VkDescriptorSet const* textureSets = geometryPassDescriptorSets.data ();
     DrawOpaque ( textureSets, textureSets + ( _opaqueCalls.size () + 1U ) );
 
     vkCmdEndRenderPass ( _geometryPassRendering );
@@ -250,7 +269,7 @@ bool RenderSession::End ( ePresentTarget /*target*/, double deltaTime, android_v
     _texturePresentProgram.Bind ( _geometryPassRendering );
 
     _texturePresentProgram.SetData ( _geometryPassRendering,
-        descriptorSetStorage[ _opaqueCalls.size () ],
+        geometryPassDescriptorSets[ _opaqueCalls.size () ],
         renderer.GetPresentationEngineTransform ()
     );
 
@@ -266,7 +285,7 @@ bool RenderSession::End ( ePresentTarget /*target*/, double deltaTime, android_v
         return false;
 
     result = android_vulkan::Renderer::CheckVkResult (
-        vkQueueSubmit ( renderer.GetQueue (), 1U, &_submitInfoRender, _geometryPassFence ),
+        vkQueueSubmit ( renderer.GetQueue (), 1U, &_submitInfoRenderGeometryPass, _geometryPassFence ),
         "RenderSession::End",
         "Can't submit geometry render command buffer"
     );
@@ -341,10 +360,12 @@ bool RenderSession::Init ( android_vulkan::Renderer &renderer, VkExtent2D const 
         return false;
     }
 
-    VkFenceCreateInfo fenceInfo;
-    fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-    fenceInfo.pNext = nullptr;
-    fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+    constexpr VkFenceCreateInfo const fenceInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = VK_FENCE_CREATE_SIGNALED_BIT
+    };
 
     VkDevice device = renderer.GetDevice ();
 
@@ -383,6 +404,20 @@ bool RenderSession::Init ( android_vulkan::Renderer &renderer, VkExtent2D const 
         Destroy ( renderer );
         return false;
     }
+
+    result = android_vulkan::Renderer::CheckVkResult (
+        vkCreateFence ( device, &fenceInfo, nullptr, &_pointLightShadowmapFence ),
+        "RenderSession::Init",
+        "Can't create shadowmap fence"
+    );
+
+    if ( !result )
+    {
+        Destroy ( renderer );
+        return false;
+    }
+
+    AV_REGISTER_FENCE ( "RenderSession::_pointLightShadowmapFence" )
 
     if ( !_texturePresentProgram.Init ( renderer, _presentRenderPass, renderer.GetSurfaceSize () ) )
     {
@@ -426,7 +461,7 @@ bool RenderSession::Init ( android_vulkan::Renderer &renderer, VkExtent2D const 
 
     AV_REGISTER_COMMAND_POOL ( "RenderSession::_commandPool" )
 
-    VkCommandBuffer commandBuffers[ DEFAULT_TEXTURE_COUNT + 3U ];
+    VkCommandBuffer commandBuffers[ DEFAULT_TEXTURE_COUNT + 4U ];
     VkCommandBufferAllocateInfo allocateInfo;
     allocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     allocateInfo.pNext = nullptr;
@@ -449,6 +484,7 @@ bool RenderSession::Init ( android_vulkan::Renderer &renderer, VkExtent2D const 
     _geometryPassTransfer = commandBuffers[ DEFAULT_TEXTURE_COUNT ];
     _geometryPassRendering = commandBuffers[ DEFAULT_TEXTURE_COUNT + 1U ];
     _pointLightShadowmapTransfer = commandBuffers[ DEFAULT_TEXTURE_COUNT + 2U ];
+    _pointLightShadowmapRendering = commandBuffers[ DEFAULT_TEXTURE_COUNT + 3U ];
 
     auto textureLoader = [ &renderer ] ( Texture2DRef &texture,
         const uint8_t* data,
@@ -603,6 +639,13 @@ void RenderSession::Destroy ( android_vulkan::Renderer &renderer )
         AV_UNREGISTER_FENCE ( "RenderSession::_geometryPassFence" )
     }
 
+    if ( _pointLightShadowmapFence != VK_NULL_HANDLE )
+    {
+        vkDestroyFence ( device, _pointLightShadowmapFence, nullptr );
+        _pointLightShadowmapFence = VK_NULL_HANDLE;
+        AV_UNREGISTER_FENCE ( "RenderSession::_pointLightShadowmapFence" )
+    }
+
     DestroyPresentFramebuffers ( renderer );
 
     if ( _presentRenderPass != VK_NULL_HANDLE )
@@ -633,6 +676,17 @@ void RenderSession::Destroy ( android_vulkan::Renderer &renderer )
         AV_UNREGISTER_RENDER_PASS ( "RenderSession::_gBufferRenderPass" )
     }
 
+    for ( auto &[image, framebuffer] : _pointLightShadowmaps )
+    {
+        if ( framebuffer == VK_NULL_HANDLE )
+            continue;
+
+        image->FreeResources ( renderer );
+
+        vkDestroyFramebuffer ( device, framebuffer, nullptr );
+        AV_UNREGISTER_FRAMEBUFFER ( "RenderSession::_pointLightShadowmaps" )
+    }
+
     DestroySyncPrimitives ( renderer );
     _gBuffer.Destroy ( renderer );
 }
@@ -647,6 +701,8 @@ void RenderSession::SubmitMesh ( MeshRef &mesh,
     android_vulkan::Half4 const &color3
 )
 {
+    ++_opaqueMeshCount;
+
     if ( material->GetMaterialType() == eMaterialType::Opaque )
     {
         _renderSessionStats.SubmitOpaque ( mesh->GetVertexCount () );
@@ -660,6 +716,60 @@ void RenderSession::SubmitLight ( LightRef const &light )
     {
         SubmitPointLight ( light );
     }
+}
+
+RenderSession::PointLightShadowmapInfo* RenderSession::AcquirePointLightShadowmap ( android_vulkan::Renderer &renderer )
+{
+    if ( !_pointLightShadowmaps.empty () && _usedPointLightShadowmaps <= _pointLightShadowmaps.size () )
+        return &_pointLightShadowmaps[ _usedPointLightShadowmaps++ ];
+
+    PointLightShadowmapInfo info;
+    auto &[shadowmap, framebuffer] = info;
+    shadowmap = std::make_shared<android_vulkan::TextureCube> ();
+
+    constexpr VkExtent2D const resolution
+    {
+        .width = POINT_LIGHT_SHADOWMAP_RESOLUTION,
+        .height = POINT_LIGHT_SHADOWMAP_RESOLUTION
+    };
+
+    constexpr VkImageUsageFlags const flags = AV_VK_FLAG ( VK_IMAGE_USAGE_SAMPLED_BIT ) |
+        AV_VK_FLAG ( VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT );
+
+    if ( !shadowmap->CreateRenderTarget ( resolution, renderer.GetDefaultDepthStencilFormat (), flags, renderer ) )
+        return nullptr;
+
+    VkImageView const attachments[] = { shadowmap->GetImageView () };
+
+    VkFramebufferCreateInfo const framebufferInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .renderPass = _pointLightShadowmapRenderPass,
+        .attachmentCount = static_cast<uint32_t> ( std::size ( attachments ) ),
+        .pAttachments = attachments,
+        .width = resolution.width,
+        .height = resolution.height,
+        .layers = PBR_POINT_LIGHT_SHADOW_CASTER_PROJECTION_COUNT
+    };
+
+    bool const result = android_vulkan::Renderer::CheckVkResult (
+        vkCreateFramebuffer ( renderer.GetDevice (), &framebufferInfo, nullptr, &framebuffer ),
+        "RenderSession::AcquirePointLightShadowmap",
+        "Can't create framebuffer"
+    );
+
+    if ( !result )
+    {
+        shadowmap->FreeResources ( renderer );
+        return nullptr;
+    }
+
+    AV_REGISTER_FRAMEBUFFER ( "RenderSession::_pointLightShadowmaps" )
+
+    ++_usedPointLightShadowmaps;
+    return &_pointLightShadowmaps.emplace_back ( std::move ( info ) );
 }
 
 bool RenderSession::BeginGeometryRenderPass ( android_vulkan::Renderer &renderer )
@@ -880,48 +990,84 @@ bool RenderSession::CreateGBufferRenderPass ( android_vulkan::Renderer &renderer
 
 bool RenderSession::CreatePointLightShadowmapRenderPass ( android_vulkan::Renderer &renderer )
 {
-    VkAttachmentDescription depthAttachment;
-    depthAttachment.flags = 0U;
-    depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-    depthAttachment.format = renderer.GetDefaultDepthStencilFormat ();
-    depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-    depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    VkAttachmentDescription const depthAttachment[] =
+    {
+        {
+            .flags = 0U,
+            .format = renderer.GetDefaultDepthStencilFormat (),
+            .samples = VK_SAMPLE_COUNT_1_BIT,
+            .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+            .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+            .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+            .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+            .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+            .finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
+        }
+    };
 
-    VkAttachmentReference depthAttachmentReference;
-    depthAttachmentReference.attachment = 0U;
-    depthAttachmentReference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+    constexpr static VkAttachmentReference const depthAttachmentReference
+    {
+        .attachment = 0U,
+        .layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
+    };
 
-    VkSubpassDescription subpass;
-    subpass.flags = 0U;
-    subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-    subpass.colorAttachmentCount = 0U;
-    subpass.pColorAttachments = nullptr;
-    subpass.inputAttachmentCount = 0U;
-    subpass.pInputAttachments = nullptr;
-    subpass.pDepthStencilAttachment = &depthAttachmentReference;
-    subpass.pResolveAttachments = nullptr;
-    subpass.preserveAttachmentCount = 0U;
-    subpass.pPreserveAttachments = nullptr;
+    constexpr static VkSubpassDescription const subpasses[]
+    {
+        {
+            .flags = 0U,
+            .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
+            .inputAttachmentCount = 0U,
+            .pInputAttachments = nullptr,
+            .colorAttachmentCount = 0U,
+            .pColorAttachments = nullptr,
+            .pResolveAttachments = nullptr,
+            .pDepthStencilAttachment = &depthAttachmentReference,
+            .preserveAttachmentCount = 0U,
+            .pPreserveAttachments = nullptr
+        }
+    };
 
-    VkRenderPassCreateInfo renderPassInfo;
-    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-    renderPassInfo.pNext = nullptr;
-    renderPassInfo.flags = 0U;
-    renderPassInfo.subpassCount = 1U;
-    renderPassInfo.pSubpasses = &subpass;
-    renderPassInfo.dependencyCount = 0U;
-    renderPassInfo.pDependencies = nullptr;
-    renderPassInfo.attachmentCount = 1U;
-    renderPassInfo.pAttachments = &depthAttachment;
+    constexpr size_t const subpassCount = std::size ( subpasses );
+
+    constexpr static uint32_t const viewMasks[ subpassCount ] =
+    {
+        0b00000000'00000000'00000000'00111111U
+    };
+
+    constexpr static uint32_t const correlationMasks[ subpassCount ] =
+    {
+        0b00000000'00000000'00000000'00111111U
+    };
+
+    constexpr static VkRenderPassMultiviewCreateInfo const multiviewInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_MULTIVIEW_CREATE_INFO,
+        .pNext = nullptr,
+        .subpassCount = static_cast<size_t> ( subpassCount ),
+        .pViewMasks = viewMasks,
+        .dependencyCount = 0U,
+        .pViewOffsets = nullptr,
+        .correlationMaskCount = static_cast<size_t> ( std::size ( correlationMasks ) ),
+        .pCorrelationMasks = correlationMasks
+    };
+
+    VkRenderPassCreateInfo const renderPassInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
+        .pNext = &multiviewInfo,
+        .flags = 0U,
+        .attachmentCount = static_cast<uint32_t> ( std::size ( depthAttachment ) ),
+        .pAttachments = depthAttachment,
+        .subpassCount = subpassCount,
+        .pSubpasses = subpasses,
+        .dependencyCount = 0U,
+        .pDependencies = nullptr
+    };
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateRenderPass ( renderer.GetDevice (), &renderPassInfo, nullptr, &_pointLightShadowmapRenderPass ),
         "RenderSession::CreatePointLightShadowmapRenderPass",
-        "Can't create GBuffer render pass"
+        "Can't create render pass"
     );
 
     if ( !result )
@@ -1213,6 +1359,164 @@ void RenderSession::DrawOpaque ( VkDescriptorSet const* textureSets, VkDescripto
     }
 }
 
+bool RenderSession::GeneratePointLightShadowmaps ( VkDescriptorSet const* descriptorSets,
+    android_vulkan::Renderer &renderer
+)
+{
+    //VkDevice device = renderer.GetDevice ();
+
+    /*bool result = android_vulkan::Renderer::CheckVkResult (
+        vkWaitForFences ( device, 1U, &_pointLightShadowmapFence, VK_TRUE, UINT64_MAX ),
+        "RenderSession::GeneratePointLightShadowmaps",
+        "Can't wait for point light shadowmap fence"
+    );
+
+    if ( !result )
+        return false;
+
+    result = android_vulkan::Renderer::CheckVkResult ( vkResetFences ( device, 1U, &_pointLightShadowmapFence ),
+        "RenderSession::GeneratePointLightShadowmaps",
+        "Can't reset point light shadowmap fence"
+    );
+
+    if ( !result )
+        return false;*/
+
+    constexpr VkCommandBufferBeginInfo const beginInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+        .pNext = nullptr,
+        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+        .pInheritanceInfo = nullptr
+    };
+
+    vkBeginCommandBuffer ( _pointLightShadowmapRendering, &beginInfo );
+
+    constexpr VkClearValue const clearValues[] =
+    {
+        {
+            .depthStencil
+            {
+                .depth = 1.0F,
+                .stencil = 0U
+            }
+        }
+    };
+
+    constexpr VkRect2D const renderArea
+    {
+        .offset
+        {
+            .x = 0,
+            .y = 0
+        },
+
+        .extent
+        {
+            .width = POINT_LIGHT_SHADOWMAP_RESOLUTION,
+            .height = POINT_LIGHT_SHADOWMAP_RESOLUTION
+        }
+    };
+
+    VkRenderPassBeginInfo renderPassInfo;
+    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    renderPassInfo.pNext = nullptr;
+    renderPassInfo.renderPass = _pointLightShadowmapRenderPass;
+    renderPassInfo.renderArea = renderArea;
+    renderPassInfo.clearValueCount = std::size ( clearValues );
+    renderPassInfo.pClearValues = clearValues;
+
+    size_t setIndex = 0U;
+    constexpr VkDeviceSize const offset = 0U;
+
+    _pointLightShadowmapGeneratorProgram.Bind ( _pointLightShadowmapRendering );
+
+    for ( auto const &[light, casters] : _pointLightCalls )
+    {
+        PointLightShadowmapInfo* const shadowmapInfo = AcquirePointLightShadowmap ( renderer );
+
+        if ( !shadowmapInfo )
+            return false;
+
+        renderPassInfo.framebuffer = shadowmapInfo->second;
+        vkCmdBeginRenderPass ( _pointLightShadowmapRendering, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE );
+
+        for ( auto const &unique : casters._uniques )
+        {
+            vkCmdBindVertexBuffers ( _pointLightShadowmapRendering, 0U, 1U, &unique->GetVertexBuffer (), &offset );
+
+            vkCmdBindIndexBuffer ( _pointLightShadowmapRendering,
+                unique->GetIndexBuffer (),
+                offset,
+                VK_INDEX_TYPE_UINT32
+            );
+
+            _pointLightShadowmapGeneratorProgram.SetDescriptorSet ( _pointLightShadowmapRendering,
+                descriptorSets[ setIndex ]
+            );
+
+            ++setIndex;
+
+            vkCmdDrawIndexed ( _pointLightShadowmapRendering, unique->GetVertexCount (), 1U, 0U, 0, 0U );
+        }
+
+        for ( auto const &[name, caster] : casters._batches )
+        {
+            auto const &[mesh, transforms] = caster;
+            vkCmdBindVertexBuffers ( _pointLightShadowmapRendering, 0U, 1U, &mesh->GetVertexBuffer (), &offset );
+
+            vkCmdBindIndexBuffer ( _pointLightShadowmapRendering,
+                mesh->GetIndexBuffer (),
+                offset,
+                VK_INDEX_TYPE_UINT32
+            );
+
+            size_t remain = transforms.size ();
+            uint32_t const vertexCount = mesh->GetVertexCount ();
+
+            do
+            {
+                size_t const instances = std::min ( remain,
+                    static_cast<size_t> ( PBR_POINT_LIGHT_MAX_SHADOW_CASTER_INSTANCE_COUNT )
+                );
+
+                _pointLightShadowmapGeneratorProgram.SetDescriptorSet ( _pointLightShadowmapRendering,
+                    descriptorSets[ setIndex ]
+                );
+
+                ++setIndex;
+
+                vkCmdDrawIndexed ( _pointLightShadowmapRendering,
+                    vertexCount,
+                    static_cast<uint32_t> ( instances ),
+                    0U,
+                    0,
+                    0U
+                );
+
+                remain -= instances;
+            }
+            while ( remain );
+        }
+
+        vkCmdEndRenderPass ( _pointLightShadowmapRendering );
+    }
+
+    bool const result = android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( _pointLightShadowmapRendering ),
+        "RenderSession::GeneratePointLightShadowmaps",
+        "Can't end command buffer"
+    );
+
+    if ( !result )
+        return false;
+
+    return android_vulkan::Renderer::CheckVkResult (
+        vkQueueSubmit ( renderer.GetQueue (), 1U, &_submitInfoRenderPointLightShadowmap, _pointLightShadowmapFence ),
+        "RenderSession::GeneratePointLightShadowmaps",
+        "Can't submit command buffer"
+    );
+}
+
 void RenderSession::InitCommonStructures ()
 {
     VkClearValue& albedoClear = _geometryPassClearValue[ 0U ];
@@ -1281,15 +1585,25 @@ void RenderSession::InitCommonStructures ()
 
     constexpr static VkPipelineStageFlags const waitStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 
-    _submitInfoRender.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    _submitInfoRender.pNext = nullptr;
-    _submitInfoRender.waitSemaphoreCount = 1U;
-    _submitInfoRender.pWaitSemaphores = &_presentRenderTargetAcquiredSemaphore;
-    _submitInfoRender.pWaitDstStageMask = &waitStage;
-    _submitInfoRender.commandBufferCount = 1U;
-    _submitInfoRender.pCommandBuffers = &_geometryPassRendering;
-    _submitInfoRender.signalSemaphoreCount = 1U;
-    _submitInfoRender.pSignalSemaphores = &_presentRenderPassEndSemaphore;
+    _submitInfoRenderGeometryPass.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    _submitInfoRenderGeometryPass.pNext = nullptr;
+    _submitInfoRenderGeometryPass.waitSemaphoreCount = 1U;
+    _submitInfoRenderGeometryPass.pWaitSemaphores = &_presentRenderTargetAcquiredSemaphore;
+    _submitInfoRenderGeometryPass.pWaitDstStageMask = &waitStage;
+    _submitInfoRenderGeometryPass.commandBufferCount = 1U;
+    _submitInfoRenderGeometryPass.pCommandBuffers = &_geometryPassRendering;
+    _submitInfoRenderGeometryPass.signalSemaphoreCount = 1U;
+    _submitInfoRenderGeometryPass.pSignalSemaphores = &_presentRenderPassEndSemaphore;
+
+    _submitInfoRenderPointLightShadowmap.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    _submitInfoRenderPointLightShadowmap.pNext = nullptr;
+    _submitInfoRenderPointLightShadowmap.waitSemaphoreCount = 0U;
+    _submitInfoRenderPointLightShadowmap.pWaitSemaphores = nullptr;
+    _submitInfoRenderPointLightShadowmap.pWaitDstStageMask = &waitStage;
+    _submitInfoRenderPointLightShadowmap.commandBufferCount = 1U;
+    _submitInfoRenderPointLightShadowmap.pCommandBuffers = &_pointLightShadowmapRendering;
+    _submitInfoRenderPointLightShadowmap.signalSemaphoreCount = 0U;
+    _submitInfoRenderPointLightShadowmap.pSignalSemaphores = nullptr;
 
     _presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
     _presentInfo.pNext = nullptr;
@@ -1390,7 +1704,7 @@ bool RenderSession::UpdateGeometryPassGPUData ( std::vector<VkDescriptorSet> &de
     std::vector<VkDescriptorBufferInfo> uniformStorage;
     std::vector<VkWriteDescriptorSet> writeStorage1;
 
-    VkCommandBufferBeginInfo const beginInfo
+    constexpr VkCommandBufferBeginInfo const beginInfo
     {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
         .pNext = nullptr,
@@ -1749,9 +2063,30 @@ bool RenderSession::UpdateGeometryPassGPUData ( std::vector<VkDescriptorSet> &de
     );
 }
 
-bool RenderSession::UpdatePointLightShadowmapGPUData ( android_vulkan::Renderer &renderer )
+bool RenderSession::UpdatePointLightShadowmapGPUData ( std::vector<VkDescriptorSet> &descriptorSetStorage,
+    android_vulkan::Renderer &renderer
+)
 {
-    VkCommandBufferBeginInfo const beginInfo
+    VkDevice device = renderer.GetDevice ();
+
+    bool result = android_vulkan::Renderer::CheckVkResult (
+        vkWaitForFences ( device, 1U, &_pointLightShadowmapFence, VK_TRUE, UINT64_MAX ),
+        "RenderSession::UpdatePointLightShadowmapGPUData",
+        "Can't wait for point light shadowmap fence 2"
+    );
+
+    if ( !result )
+        return false;
+
+    result = android_vulkan::Renderer::CheckVkResult ( vkResetFences ( device, 1U, &_pointLightShadowmapFence ),
+        "RenderSession::UpdatePointLightShadowmapGPUData",
+        "Can't reset point light shadowmap fence 2"
+    );
+
+    if ( !result )
+        return false;
+
+    constexpr VkCommandBufferBeginInfo const beginInfo
     {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
         .pNext = nullptr,
@@ -1759,7 +2094,7 @@ bool RenderSession::UpdatePointLightShadowmapGPUData ( android_vulkan::Renderer 
         .pInheritanceInfo = nullptr
     };
 
-    bool result = android_vulkan::Renderer::CheckVkResult (
+    result = android_vulkan::Renderer::CheckVkResult (
         vkBeginCommandBuffer ( _pointLightShadowmapTransfer, &beginInfo ),
         "RenderSession::UpdatePointLightShadowmapGPUData",
         "Can't begin transfer command buffer"
@@ -1769,8 +2104,7 @@ bool RenderSession::UpdatePointLightShadowmapGPUData ( android_vulkan::Renderer 
         return false;
 
     // Estimating from the top of the maximum required uniform buffers to be uploaded.
-    size_t const maxUniformBuffers =
-        _pointLightCalls.size () * _opaqueCalls.size () * ( _maxBatchCount + _maxUniqueCount );
+    size_t const maxUniformBuffers = _pointLightCalls.size () * _opaqueMeshCount;
 
     VkDescriptorPoolSize const poolSize[] =
     {
@@ -1791,7 +2125,6 @@ bool RenderSession::UpdatePointLightShadowmapGPUData ( android_vulkan::Renderer 
     };
 
     DestroyPointLightShadowmapDescriptorPool ( renderer );
-    VkDevice device = renderer.GetDevice ();
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_pointLightShadowmapDescriptorPool ),
@@ -1802,7 +2135,7 @@ bool RenderSession::UpdatePointLightShadowmapGPUData ( android_vulkan::Renderer 
     if ( !result )
         return false;
 
-    AV_REGISTER_COMMAND_POOL ( "RenderSession::_pointLightShadowmapDescriptorPool" )
+    AV_REGISTER_DESCRIPTOR_POOL ( "RenderSession::_pointLightShadowmapDescriptorPool" )
 
     std::vector<VkDescriptorSetLayout> layouts;
     layouts.reserve ( maxUniformBuffers );
@@ -1822,7 +2155,7 @@ bool RenderSession::UpdatePointLightShadowmapGPUData ( android_vulkan::Renderer 
         .pSetLayouts = layouts.data ()
     };
 
-    std::vector<VkDescriptorSet> descriptorSetStorage ( maxUniformBuffers );
+    descriptorSetStorage.reserve ( maxUniformBuffers );
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkAllocateDescriptorSets ( device, &allocateInfo, descriptorSetStorage.data () ),

@@ -23,7 +23,7 @@ TextureCube::TextureCube () noexcept:
     // NOTHING
 }
 
-[[maybe_unused]] bool TextureCube::CreateRenderTarget ( VkExtent2D const &resolution,
+bool TextureCube::CreateRenderTarget ( VkExtent2D const &resolution,
     VkFormat format,
     VkImageUsageFlags usage,
     Renderer &renderer
@@ -117,7 +117,7 @@ TextureCube::TextureCube () noexcept:
         "Can't create image view"
     );
 
-    if ( result )
+    if ( !result )
     {
         FreeResources ( renderer );
         return false;
@@ -132,7 +132,7 @@ TextureCube::TextureCube () noexcept:
     return true;
 }
 
-[[maybe_unused]] void TextureCube::FreeResources ( Renderer &renderer )
+void TextureCube::FreeResources ( Renderer &renderer )
 {
     _format = VK_FORMAT_UNDEFINED;
     _mipLevels = 0U;
@@ -173,7 +173,7 @@ TextureCube::TextureCube () noexcept:
     return _image;
 }
 
-[[maybe_unused]] VkImageView TextureCube::GetImageView () const
+VkImageView TextureCube::GetImageView () const
 {
     return _imageView;
 }

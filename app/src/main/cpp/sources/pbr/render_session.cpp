@@ -13,152 +13,20 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-constexpr static const size_t DEFAULT_TEXTURE_COUNT = 5U;
-
-// 1 2 4 8 16 32 64 128 256 512 1024 2048 4096
-constexpr static size_t MAX_SUPPORTED_MIP_COUNT = 13U;
-
 constexpr static uint32_t POINT_LIGHT_SHADOWMAP_RESOLUTION = 512U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-class SamplerStorage final
-{
-    private:
-        SamplerRef      _pointSampler;
-        SamplerRef      _storage[ MAX_SUPPORTED_MIP_COUNT ];
-
-    public:
-        SamplerStorage () noexcept = default;
-
-        SamplerStorage ( SamplerStorage const & ) = delete;
-        SamplerStorage& operator = ( SamplerStorage const & ) = delete;
-
-        SamplerStorage ( SamplerStorage && ) = delete;
-        SamplerStorage& operator = ( SamplerStorage && ) = delete;
-
-        ~SamplerStorage () = default;
-
-        void FreeResources ( android_vulkan::Renderer &renderer );
-
-        [[nodiscard]] SamplerRef GetPointSampler ( android_vulkan::Renderer &renderer );
-        [[nodiscard]] SamplerRef GetSampler ( uint8_t mips, android_vulkan::Renderer &renderer );
-};
-
-void SamplerStorage::FreeResources ( android_vulkan::Renderer &renderer )
-{
-    if ( _pointSampler )
-    {
-        _pointSampler->Destroy ( renderer );
-        _pointSampler = nullptr;
-    }
-
-    for ( auto &sampler : _storage )
-    {
-        if ( !sampler )
-            continue;
-
-        sampler->Destroy ( renderer );
-        sampler = nullptr;
-    }
-}
-
-SamplerRef SamplerStorage::GetPointSampler ( android_vulkan::Renderer &renderer )
-{
-    if ( _pointSampler )
-        return _pointSampler;
-
-    _pointSampler = std::make_shared<Sampler> ();
-
-    VkSamplerCreateInfo info;
-    info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-    info.pNext = nullptr;
-    info.flags = 0U;
-    info.unnormalizedCoordinates = VK_FALSE;
-    info.compareEnable = VK_FALSE;
-    info.compareOp = VK_COMPARE_OP_ALWAYS;
-    info.borderColor = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
-    info.anisotropyEnable = VK_FALSE;
-    info.maxAnisotropy = 1.0F;
-    info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
-    info.minFilter = VK_FILTER_NEAREST;
-    info.magFilter = VK_FILTER_NEAREST;
-    info.minLod = 0.0F;
-    info.maxLod = 0.0F;
-    info.mipLodBias = 0.0F;
-    info.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-    info.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-    info.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-
-    if ( !_pointSampler->Init ( info, renderer ) )
-        _pointSampler = nullptr;
-
-    return _pointSampler;
-}
-
-SamplerRef SamplerStorage::GetSampler ( uint8_t mips, android_vulkan::Renderer &renderer )
-{
-    SamplerRef& target = _storage[ static_cast<size_t> ( mips ) ];
-
-    if ( target )
-        return target;
-
-    target = std::make_shared<Sampler> ();
-
-    VkSamplerCreateInfo info;
-    info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-    info.pNext = nullptr;
-    info.flags = 0U;
-    info.unnormalizedCoordinates = VK_FALSE;
-    info.compareEnable = VK_FALSE;
-    info.compareOp = VK_COMPARE_OP_ALWAYS;
-    info.borderColor = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
-    info.anisotropyEnable = VK_FALSE;
-    info.maxAnisotropy = 1.0F;
-    info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-    info.minFilter = VK_FILTER_LINEAR;
-    info.magFilter = VK_FILTER_LINEAR;
-    info.minLod = 0.0F;
-    info.maxLod = static_cast<float> ( mips - 1U );
-    info.mipLodBias = 0.0F;
-    info.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    info.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    info.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-
-    if ( !target->Init ( info, renderer ) )
-        target = nullptr;
-
-    return target;
-}
-
-static SamplerStorage g_SamplerStorage;
-
-//----------------------------------------------------------------------------------------------------------------------
-
 RenderSession::RenderSession () noexcept:
-    _albedoDefault {},
-    _emissionDefault {},
-    _maskDefault {},
-    _normalDefault {},
-    _paramDefault {},
     _commandPool ( VK_NULL_HANDLE ),
     _frustum {},
     _gBuffer {},
+    _gBufferDescriptorPool ( VK_NULL_HANDLE ),
     _gBufferFramebuffer ( VK_NULL_HANDLE ),
     _gBufferImageBarrier {},
     _gBufferRenderPass ( VK_NULL_HANDLE ),
-    _geometryPassBeginInfo {},
-    _geometryPassClearValue {},
-    _geometryPassDescriptorPool ( VK_NULL_HANDLE ),
-    _geometryPassFence ( VK_NULL_HANDLE ),
-    _geometryPassRendering ( VK_NULL_HANDLE ),
-    _geometryPassTransfer ( VK_NULL_HANDLE ),
-    _geometryPassUniformBufferPool {},
-    _isFreeTransferResources ( false ),
-    _maxBatchCount ( 0U ),
-    _maxUniqueCount ( 0U ),
-    _opaqueBatchProgram {},
-    _opaqueCalls {},
+    _gBufferSlotMapper {},
+    _geometryPass {},
     _opaqueMeshCount ( 0U ),
     _texturePresentProgram {},
     _pointLightCalls {},
@@ -179,9 +47,9 @@ RenderSession::RenderSession () noexcept:
     _presentRenderPassEndSemaphore ( VK_NULL_HANDLE ),
     _presentRenderTargetAcquiredSemaphore ( VK_NULL_HANDLE ),
     _renderSessionStats {},
-    _submitInfoRenderGeometryPass {},
+    _samplerManager {},
+    _submitInfoMain {},
     _submitInfoRenderPointLightShadowmap {},
-    _submitInfoTransferGeometryPass {},
     _submitInfoTransferPointLightShadowmap {},
     _view {},
     _viewProjection {}
@@ -191,21 +59,17 @@ RenderSession::RenderSession () noexcept:
 
 void RenderSession::Begin ( GXMat4 const &view, GXMat4 const &projection )
 {
-    _maxBatchCount = 0U;
-    _maxUniqueCount = 0U;
     _opaqueMeshCount = 0U;
     _view = view;
     _viewProjection.Multiply ( view, projection );
     _frustum.From ( _viewProjection );
-    _opaqueCalls.clear ();
     _pointLightCalls.clear ();
     _usedPointLightShadowmaps = 0U;
+    _geometryPass.Reset ();
 }
 
-bool RenderSession::End ( ePresentTarget /*target*/, double deltaTime, android_vulkan::Renderer &renderer )
+bool RenderSession::End ( ePresentTarget target, double deltaTime, android_vulkan::Renderer &renderer )
 {
-    CleanupTransferResources ( renderer );
-
     uint32_t framebufferIndex = UINT32_MAX;
 
     bool result = android_vulkan::Renderer::CheckVkResult (
@@ -232,25 +96,32 @@ bool RenderSession::End ( ePresentTarget /*target*/, double deltaTime, android_v
     if ( !GeneratePointLightShadowmaps ( pointLightShadowmapDescriptorSets.data (), renderer ) )
         return false;
 
-    if ( !BeginGeometryRenderPass ( renderer ) )
+    VkCommandBuffer commandBuffer = _geometryPass.Execute ( _frustum,
+        _view,
+        _viewProjection,
+        _samplerManager,
+        _renderSessionStats,
+        renderer
+    );
+
+    if ( commandBuffer == VK_NULL_HANDLE )
         return false;
 
-    std::vector<VkDescriptorSet> geometryPassDescriptorSets;
+    android_vulkan::Texture2D* targetTexture = nullptr;
 
-    if ( !UpdateGeometryPassGPUData ( geometryPassDescriptorSets, renderer ) )
-        return false;
+    if ( target == ePresentTarget::Albedo )
+        targetTexture = &_gBuffer.GetAlbedo ();
+    else if ( target == ePresentTarget::Normal )
+        targetTexture = &_gBuffer.GetNormal ();
+    else if ( target == ePresentTarget::Param )
+        targetTexture = &_gBuffer.GetParams ();
+    else if ( target == ePresentTarget::Emission )
+        targetTexture = &_gBuffer.GetEmission ();
 
-    VkDescriptorSet const* textureSets = geometryPassDescriptorSets.data ();
-    DrawOpaque ( textureSets, textureSets + ( _opaqueCalls.size () + 1U ) );
+    _gBufferImageBarrier.image = targetTexture->GetImage ();
+    _gBufferImageBarrier.subresourceRange.levelCount = static_cast<uint32_t> ( targetTexture->GetMipLevelCount () );
 
-    vkCmdEndRenderPass ( _geometryPassRendering );
-
-    android_vulkan::Texture2D& targetTexture = _gBuffer.GetAlbedo ();
-
-    _gBufferImageBarrier.image = targetTexture.GetImage ();
-    _gBufferImageBarrier.subresourceRange.levelCount = static_cast<uint32_t> ( targetTexture.GetMipLevelCount () );
-
-    vkCmdPipelineBarrier ( _geometryPassRendering,
+    vkCmdPipelineBarrier ( commandBuffer,
         VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
         VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
         0U,
@@ -265,18 +136,18 @@ bool RenderSession::End ( ePresentTarget /*target*/, double deltaTime, android_v
     _presentBeginInfo.framebuffer = _presentFramebuffers[ framebufferIndex ];
     _presentBeginInfo.renderArea.extent = renderer.GetSurfaceSize ();
 
-    vkCmdBeginRenderPass ( _geometryPassRendering, &_presentBeginInfo, VK_SUBPASS_CONTENTS_INLINE );
-    _texturePresentProgram.Bind ( _geometryPassRendering );
+    vkCmdBeginRenderPass ( commandBuffer, &_presentBeginInfo, VK_SUBPASS_CONTENTS_INLINE );
+    _texturePresentProgram.Bind ( commandBuffer );
 
-    _texturePresentProgram.SetData ( _geometryPassRendering,
-        geometryPassDescriptorSets[ _opaqueCalls.size () ],
+    _texturePresentProgram.SetData ( commandBuffer,
+        _gBufferSlotMapper[ static_cast<size_t> ( target ) ],
         renderer.GetPresentationEngineTransform ()
     );
 
-    vkCmdDraw ( _geometryPassRendering, 4U, 1U, 0U, 0U );
-    vkCmdEndRenderPass ( _geometryPassRendering );
+    vkCmdDraw ( commandBuffer, 4U, 1U, 0U, 0U );
+    vkCmdEndRenderPass ( commandBuffer );
 
-    result = android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( _geometryPassRendering ),
+    result = android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
         "RenderSession::End",
         "Can't end command buffer"
     );
@@ -284,8 +155,10 @@ bool RenderSession::End ( ePresentTarget /*target*/, double deltaTime, android_v
     if ( !result )
         return false;
 
+    _submitInfoMain.pCommandBuffers = &commandBuffer;
+
     result = android_vulkan::Renderer::CheckVkResult (
-        vkQueueSubmit ( renderer.GetQueue (), 1U, &_submitInfoRenderGeometryPass, _geometryPassFence ),
+        vkQueueSubmit ( renderer.GetQueue (), 1U, &_submitInfoMain, _geometryPass.GetFence () ),
         "RenderSession::End",
         "Can't submit geometry render command buffer"
     );
@@ -342,6 +215,12 @@ bool RenderSession::Init ( android_vulkan::Renderer &renderer, VkExtent2D const 
         return false;
     }
 
+    if ( !_geometryPass.Init ( _gBuffer.GetResolution (), _gBufferRenderPass, _gBufferFramebuffer, renderer ) )
+    {
+        Destroy ( renderer );
+        return false;
+    }
+
     if ( !CreatePointLightShadowmapRenderPass ( renderer ) )
     {
         Destroy ( renderer );
@@ -367,29 +246,7 @@ bool RenderSession::Init ( android_vulkan::Renderer &renderer, VkExtent2D const 
         .flags = VK_FENCE_CREATE_SIGNALED_BIT
     };
 
-    VkDevice device = renderer.GetDevice ();
-
-    bool result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateFence ( device, &fenceInfo, nullptr, &_geometryPassFence ),
-        "RenderSession::Init",
-        "Can't create GBuffer fence"
-    );
-
-    if ( !result )
-    {
-        Destroy ( renderer );
-        return false;
-    }
-
-    AV_REGISTER_FENCE ( "RenderSession::_geometryPassFence" )
-
-    if ( !_opaqueBatchProgram.Init ( renderer, _gBufferRenderPass, resolution ) )
-    {
-        Destroy ( renderer );
-        return false;
-    }
-
-    result = _pointLightShadowmapGeneratorProgram.Init ( renderer,
+    bool result = _pointLightShadowmapGeneratorProgram.Init ( renderer,
         _pointLightShadowmapRenderPass,
 
         VkExtent2D
@@ -404,6 +261,8 @@ bool RenderSession::Init ( android_vulkan::Renderer &renderer, VkExtent2D const 
         Destroy ( renderer );
         return false;
     }
+
+    VkDevice device = renderer.GetDevice ();
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkCreateFence ( device, &fenceInfo, nullptr, &_pointLightShadowmapFence ),
@@ -425,7 +284,7 @@ bool RenderSession::Init ( android_vulkan::Renderer &renderer, VkExtent2D const 
         return false;
     }
 
-    if ( !_geometryPassUniformBufferPool.Init ( sizeof ( OpaqueProgram::InstanceData ), renderer ) )
+    if ( !CreateGBufferSlotMapper ( renderer ) )
     {
         Destroy ( renderer );
         return false;
@@ -461,13 +320,16 @@ bool RenderSession::Init ( android_vulkan::Renderer &renderer, VkExtent2D const 
 
     AV_REGISTER_COMMAND_POOL ( "RenderSession::_commandPool" )
 
-    VkCommandBuffer commandBuffers[ DEFAULT_TEXTURE_COUNT + 4U ];
-    VkCommandBufferAllocateInfo allocateInfo;
-    allocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    allocateInfo.pNext = nullptr;
-    allocateInfo.commandPool = _commandPool;
-    allocateInfo.commandBufferCount = static_cast<uint32_t> ( std::size ( commandBuffers ) );
-    allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    VkCommandBuffer commandBuffers[ 2U ];
+
+    VkCommandBufferAllocateInfo const allocateInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+        .pNext = nullptr,
+        .commandPool = _commandPool,
+        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+        .commandBufferCount = static_cast<uint32_t> ( std::size ( commandBuffers ) )
+    };
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkAllocateCommandBuffers ( device, &allocateInfo, commandBuffers ),
@@ -481,140 +343,16 @@ bool RenderSession::Init ( android_vulkan::Renderer &renderer, VkExtent2D const 
         return false;
     }
 
-    _geometryPassTransfer = commandBuffers[ DEFAULT_TEXTURE_COUNT ];
-    _geometryPassRendering = commandBuffers[ DEFAULT_TEXTURE_COUNT + 1U ];
-    _pointLightShadowmapTransfer = commandBuffers[ DEFAULT_TEXTURE_COUNT + 2U ];
-    _pointLightShadowmapRendering = commandBuffers[ DEFAULT_TEXTURE_COUNT + 3U ];
+    _pointLightShadowmapTransfer = commandBuffers[ 0U ];
+    _pointLightShadowmapRendering = commandBuffers[ 1U ];
 
-    auto textureLoader = [ &renderer ] ( Texture2DRef &texture,
-        const uint8_t* data,
-        size_t size,
-        VkFormat format,
-        VkCommandBuffer commandBuffer
-    ) -> bool {
-        texture = std::make_shared<android_vulkan::Texture2D> ();
-        constexpr const VkExtent2D resolution { .width = 1U, .height = 1U };
-
-        const bool result = texture->UploadData ( data,
-            size,
-            resolution,
-            format,
-            false,
-            renderer,
-            commandBuffer
-        );
-
-        if ( result )
-            return true;
-
-        texture = nullptr;
-        return false;
-    };
-
-    constexpr const uint8_t albedo[ 4U ] = { 255U, 255U, 255U, 255U };
-
-    result = textureLoader ( _albedoDefault,
-        albedo,
-        sizeof ( albedo ),
-        VK_FORMAT_R8G8B8A8_SRGB,
-        commandBuffers[ 0U ]
-    );
-
-    if ( !result )
-    {
-        Destroy ( renderer );
-        return false;
-    }
-
-    _isFreeTransferResources = true;
-
-    android_vulkan::Half4 const emission ( 0.0F, 0.0F, 0.0F, 0.0F );
-
-    result = textureLoader ( _emissionDefault,
-        reinterpret_cast<const uint8_t*> ( emission._data ),
-        sizeof ( emission ),
-        VK_FORMAT_R16G16B16A16_SFLOAT,
-        commandBuffers[ 1U ]
-    );
-
-    if ( !result )
-    {
-        Destroy ( renderer );
-        return false;
-    }
-
-    constexpr const uint8_t mask[ 4U ] = { 255U, 0U, 0U, 0U };
-
-    result = textureLoader ( _maskDefault,
-        mask,
-        sizeof ( mask ),
-        VK_FORMAT_R8G8B8A8_UNORM,
-        commandBuffers[ 2U ]
-    );
-
-    if ( !result )
-    {
-        Destroy ( renderer );
-        return false;
-    }
-
-    // See Table 53. Bit mappings for packed 32-bit formats of Vulkan 1.1.108 spec.
-    // https://vulkan.lunarg.com/doc/view/1.1.108.0/mac/chunked_spec/chap37.html#formats-packed
-    //                                        A         R              G              B
-    //                                       0.0F      0.5F           0.5F           1.0F
-    //                                         ><>-------------<>-------------<>-------------<
-    constexpr const uint8_t normal[ 4U ] = { 0b00100000U, 0b00001000U, 0b00000011U, 0b11111111U };
-
-    result = textureLoader ( _normalDefault,
-        normal,
-        sizeof ( normal ),
-        VK_FORMAT_A2R10G10B10_UNORM_PACK32,
-        commandBuffers[ 3U ]
-    );
-
-    if ( !result )
-    {
-        Destroy ( renderer );
-        return false;
-    }
-
-    constexpr const uint8_t param[ 4U ] = { 128U, 128U, 128U, 128U };
-
-    result = textureLoader ( _paramDefault,
-        param,
-        sizeof ( param ),
-        VK_FORMAT_R8G8B8A8_UNORM,
-        commandBuffers[ 4U ]
-    );
-
-    if ( result )
-    {
-        InitCommonStructures ();
-        return true;
-    }
-
-    Destroy ( renderer );
-    return false;
+    InitCommonStructures ();
+    return true;
 }
 
 void RenderSession::Destroy ( android_vulkan::Renderer &renderer )
 {
-    auto freeTexture = [ &renderer ] ( Texture2DRef &texture ) {
-        if ( !texture )
-            return;
-
-        texture->FreeResources ( renderer );
-        texture = nullptr;
-    };
-
-    freeTexture ( _paramDefault );
-    freeTexture ( _normalDefault );
-    freeTexture ( _maskDefault );
-    freeTexture ( _emissionDefault );
-    freeTexture ( _albedoDefault );
-
-    g_SamplerStorage.FreeResources ( renderer );
-    DestroyGeometryPassDescriptorPool ( renderer );
+    _samplerManager.FreeResources ( renderer );
     DestroyPointLightShadowmapDescriptorPool ( renderer );
 
     VkDevice device = renderer.GetDevice ();
@@ -626,18 +364,17 @@ void RenderSession::Destroy ( android_vulkan::Renderer &renderer )
         AV_UNREGISTER_COMMAND_POOL ( "RenderSession::_commandPool" )
     }
 
-    _geometryPassUniformBufferPool.Destroy ( renderer );
     _pointLightShadowmapPassUniformBufferPool.Destroy ( renderer );
     _texturePresentProgram.Destroy ( renderer );
-    _pointLightShadowmapGeneratorProgram.Destroy ( renderer );
-    _opaqueBatchProgram.Destroy ( renderer );
 
-    if ( _geometryPassFence != VK_NULL_HANDLE )
+    if ( _gBufferDescriptorPool != VK_NULL_HANDLE )
     {
-        vkDestroyFence ( device, _geometryPassFence, nullptr );
-        _geometryPassFence = VK_NULL_HANDLE;
-        AV_UNREGISTER_FENCE ( "RenderSession::_geometryPassFence" )
+        vkDestroyDescriptorPool ( device, _gBufferDescriptorPool, nullptr );
+        _gBufferDescriptorPool = VK_NULL_HANDLE;
+        AV_UNREGISTER_DESCRIPTOR_POOL ( "RenderSession::_gBufferDescriptorPool" )
     }
+
+    _pointLightShadowmapGeneratorProgram.Destroy ( renderer );
 
     if ( _pointLightShadowmapFence != VK_NULL_HANDLE )
     {
@@ -662,6 +399,8 @@ void RenderSession::Destroy ( android_vulkan::Renderer &renderer )
         AV_UNREGISTER_RENDER_PASS ( "RenderSession::_pointLightShadowmapRenderPass" )
     }
 
+    _geometryPass.Destroy ( renderer );
+
     if ( _gBufferFramebuffer != VK_NULL_HANDLE )
     {
         vkDestroyFramebuffer ( device, _gBufferFramebuffer, nullptr );
@@ -676,15 +415,20 @@ void RenderSession::Destroy ( android_vulkan::Renderer &renderer )
         AV_UNREGISTER_RENDER_PASS ( "RenderSession::_gBufferRenderPass" )
     }
 
-    for ( auto &[image, framebuffer] : _pointLightShadowmaps )
+    if ( !_pointLightShadowmaps.empty () )
     {
-        if ( framebuffer == VK_NULL_HANDLE )
-            continue;
+        for ( auto &[image, framebuffer] : _pointLightShadowmaps )
+        {
+            if ( framebuffer == VK_NULL_HANDLE )
+                continue;
 
-        image->FreeResources ( renderer );
+            image->FreeResources ( renderer );
 
-        vkDestroyFramebuffer ( device, framebuffer, nullptr );
-        AV_UNREGISTER_FRAMEBUFFER ( "RenderSession::_pointLightShadowmaps" )
+            vkDestroyFramebuffer ( device, framebuffer, nullptr );
+            AV_UNREGISTER_FRAMEBUFFER ( "RenderSession::_pointLightShadowmaps" )
+        }
+
+        _pointLightShadowmaps.clear ();
     }
 
     DestroySyncPrimitives ( renderer );
@@ -705,7 +449,6 @@ void RenderSession::SubmitMesh ( MeshRef &mesh,
 
     if ( material->GetMaterialType() == eMaterialType::Opaque )
     {
-        _renderSessionStats.SubmitOpaque ( mesh->GetVertexCount () );
         SubmitOpaqueCall ( mesh, material, local, worldBounds, color0, color1, color2, color3 );
     }
 }
@@ -772,73 +515,11 @@ RenderSession::PointLightShadowmapInfo* RenderSession::AcquirePointLightShadowma
     return &_pointLightShadowmaps.emplace_back ( std::move ( info ) );
 }
 
-bool RenderSession::BeginGeometryRenderPass ( android_vulkan::Renderer &renderer )
-{
-    VkDevice device = renderer.GetDevice ();
-
-    bool result = android_vulkan::Renderer::CheckVkResult (
-        vkWaitForFences ( device, 1U, &_geometryPassFence, VK_TRUE, UINT64_MAX ),
-        "RenderSession::BeginGeometryRenderPass",
-        "Can't wait for geometry pass fence"
-    );
-
-    if ( !result )
-        return false;
-
-    result = android_vulkan::Renderer::CheckVkResult ( vkResetFences ( device, 1U, &_geometryPassFence ),
-        "RenderSession::BeginGeometryRenderPass",
-        "Can't reset geometry pass fence"
-    );
-
-    if ( !result )
-        return false;
-
-    VkCommandBufferBeginInfo beginInfo;
-    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    beginInfo.pNext = nullptr;
-    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-    beginInfo.pInheritanceInfo = nullptr;
-
-    result = android_vulkan::Renderer::CheckVkResult ( vkBeginCommandBuffer ( _geometryPassRendering, &beginInfo ),
-        "RenderSession::BeginGeometryRenderPass",
-        "Can't begin geometry pass rendering command buffer"
-    );
-
-    if ( !result )
-        return false;
-
-    vkCmdBeginRenderPass ( _geometryPassRendering, &_geometryPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE );
-    return true;
-}
-
-void RenderSession::CleanupTransferResources ( android_vulkan::Renderer &renderer )
-{
-    if ( !_isFreeTransferResources )
-        return;
-
-    if ( _albedoDefault )
-        _albedoDefault->FreeTransferResources ( renderer );
-
-    if ( _emissionDefault )
-        _emissionDefault->FreeTransferResources ( renderer );
-
-    if ( _maskDefault )
-        _maskDefault->FreeTransferResources ( renderer );
-
-    if ( _normalDefault )
-        _normalDefault->FreeTransferResources ( renderer );
-
-    if ( _paramDefault )
-        _paramDefault->FreeTransferResources ( renderer );
-
-    _isFreeTransferResources = false;
-}
-
 bool RenderSession::CreateGBufferFramebuffer ( android_vulkan::Renderer &renderer )
 {
-    const VkExtent2D& resolution = _gBuffer.GetResolution ();
+    VkExtent2D const& resolution = _gBuffer.GetResolution ();
 
-    VkImageView attachments[ GBUFFER_ATTACHMENT_COUNT ] =
+    VkImageView const attachments[] =
     {
         _gBuffer.GetAlbedo ().GetImageView (),
         _gBuffer.GetEmission ().GetImageView (),
@@ -847,16 +528,18 @@ bool RenderSession::CreateGBufferFramebuffer ( android_vulkan::Renderer &rendere
         _gBuffer.GetDepthStencil ().GetImageView ()
     };
 
-    VkFramebufferCreateInfo framebufferInfo;
-    framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-    framebufferInfo.pNext = nullptr;
-    framebufferInfo.flags = 0U;
-    framebufferInfo.attachmentCount = std::size ( attachments );
-    framebufferInfo.pAttachments = attachments;
-    framebufferInfo.width = resolution.width;
-    framebufferInfo.height = resolution.height;
-    framebufferInfo.layers = 1U;
-    framebufferInfo.renderPass = _gBufferRenderPass;
+    VkFramebufferCreateInfo const framebufferInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .renderPass = _gBufferRenderPass,
+        .attachmentCount = std::size ( attachments ),
+        .pAttachments = attachments,
+        .width = resolution.width,
+        .height = resolution.height,
+        .layers = 1U
+    };
 
     const bool result = android_vulkan::Renderer::CheckVkResult (
         vkCreateFramebuffer ( renderer.GetDevice (), &framebufferInfo, nullptr, &_gBufferFramebuffer ),
@@ -873,118 +556,341 @@ bool RenderSession::CreateGBufferFramebuffer ( android_vulkan::Renderer &rendere
 
 bool RenderSession::CreateGBufferRenderPass ( android_vulkan::Renderer &renderer )
 {
-    constexpr size_t const colorAttachmentCount = GBUFFER_ATTACHMENT_COUNT - 1U;
+    constexpr static VkAttachmentReference const colorReferences[] =
+    {
+        // albedo
+        {
+            .attachment = 0U,
+            .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+        },
 
-    VkAttachmentReference colorAttachmentReferences[ colorAttachmentCount ];
-    VkAttachmentReference& albedoRef = colorAttachmentReferences[ 0U ];
-    albedoRef.attachment = 0U;
-    albedoRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        // emission
+        {
+            .attachment = 1U,
+            .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+        },
 
-    VkAttachmentReference& emissionRef = colorAttachmentReferences[ 1U ];
-    emissionRef.attachment = 1U;
-    emissionRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        // normal
+        {
+            .attachment = 2U,
+            .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+        },
 
-    VkAttachmentReference& normalRef = colorAttachmentReferences[ 2U ];
-    normalRef.attachment = 2U;
-    normalRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        // params
+        {
+            .attachment = 3U,
+            .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+        }
+    };
 
-    VkAttachmentReference& paramsRef = colorAttachmentReferences[ 3U ];
-    paramsRef.attachment = 3U;
-    paramsRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    // depth|stencil
+    constexpr static VkAttachmentReference const depthStencilReference
+    {
+        .attachment = 4U,
+        .layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
+    };
 
-    VkAttachmentReference depthAttachmentReference;
-    depthAttachmentReference.attachment = 4U;
-    depthAttachmentReference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+    constexpr static VkSubpassDescription const subpasses[] =
+    {
+        {
+            .flags = 0U,
+            .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
+            .inputAttachmentCount = 0U,
+            .pInputAttachments = nullptr,
+            .colorAttachmentCount = static_cast<uint32_t> ( std::size ( colorReferences ) ),
+            .pColorAttachments = colorReferences,
+            .pResolveAttachments = nullptr,
+            .pDepthStencilAttachment = &depthStencilReference,
+            .preserveAttachmentCount = 0U,
+            .pPreserveAttachments = nullptr
+        }
+    };
 
-    VkSubpassDescription subpass;
-    subpass.flags = 0U;
-    subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-    subpass.colorAttachmentCount = static_cast<uint32_t> ( colorAttachmentCount );
-    subpass.pColorAttachments = colorAttachmentReferences;
-    subpass.inputAttachmentCount = 0U;
-    subpass.pInputAttachments = nullptr;
-    subpass.pDepthStencilAttachment = &depthAttachmentReference;
-    subpass.pResolveAttachments = nullptr;
-    subpass.preserveAttachmentCount = 0U;
-    subpass.pPreserveAttachments = nullptr;
+    VkAttachmentDescription const attachments[]
+    {
+        // albedo
+        {
+            .flags = 0U,
+            .format = _gBuffer.GetAlbedo ().GetFormat (),
+            .samples = VK_SAMPLE_COUNT_1_BIT,
+            .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+            .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+            .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+            .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+            .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+            .finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+        },
 
-    VkAttachmentDescription attachments[ GBUFFER_ATTACHMENT_COUNT ];
-    VkAttachmentDescription& albedoAttachment = attachments[ 0U ];
-    albedoAttachment.flags = 0U;
-    albedoAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    albedoAttachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-    albedoAttachment.format = _gBuffer.GetAlbedo ().GetFormat ();
-    albedoAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-    albedoAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    albedoAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    albedoAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    albedoAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        // emission
+        {
+            .flags = 0U,
+            .format = _gBuffer.GetEmission ().GetFormat (),
+            .samples = VK_SAMPLE_COUNT_1_BIT,
+            .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+            .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+            .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+            .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+            .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+            .finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+        },
 
-    VkAttachmentDescription& emissionAttachment = attachments[ 1U ];
-    emissionAttachment.flags = 0U;
-    emissionAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    emissionAttachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-    emissionAttachment.format = _gBuffer.GetEmission ().GetFormat ();
-    emissionAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-    emissionAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    emissionAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    emissionAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    emissionAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        // normal
+        {
+            .flags = 0U,
+            .format = _gBuffer.GetNormal ().GetFormat (),
+            .samples = VK_SAMPLE_COUNT_1_BIT,
+            .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+            .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+            .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+            .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+            .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+            .finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+        },
 
-    VkAttachmentDescription& normalAttachment = attachments[ 2U ];
-    normalAttachment.flags = 0U;
-    normalAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    normalAttachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-    normalAttachment.format = _gBuffer.GetNormal ().GetFormat ();
-    normalAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-    normalAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    normalAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    normalAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    normalAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        // params
+        {
+            .flags = 0U,
+            .format = _gBuffer.GetParams ().GetFormat (),
+            .samples = VK_SAMPLE_COUNT_1_BIT,
+            .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+            .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+            .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+            .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+            .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+            .finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+        },
 
-    VkAttachmentDescription& paramsAttachment = attachments[ 3U ];
-    paramsAttachment.flags = 0U;
-    paramsAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    paramsAttachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-    paramsAttachment.format = _gBuffer.GetParams ().GetFormat ();
-    paramsAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-    paramsAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    paramsAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    paramsAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    paramsAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        // depth|stencil
+        {
+            .flags = 0U,
+            .format = _gBuffer.GetDepthStencil ().GetFormat (),
+            .samples = VK_SAMPLE_COUNT_1_BIT,
+            .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+            .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+            .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+            .stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE,
+            .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+            .finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
+        }
+    };
 
-    VkAttachmentDescription& depthAttachment = attachments[ 4U ];
-    depthAttachment.flags = 0U;
-    depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-    depthAttachment.format = _gBuffer.GetDepthStencil ().GetFormat ();
-    depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-    depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
-
-    VkRenderPassCreateInfo renderPassInfo;
-    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-    renderPassInfo.pNext = nullptr;
-    renderPassInfo.flags = 0U;
-    renderPassInfo.subpassCount = 1U;
-    renderPassInfo.pSubpasses = &subpass;
-    renderPassInfo.dependencyCount = 0U;
-    renderPassInfo.pDependencies = nullptr;
-    renderPassInfo.attachmentCount = static_cast<uint32_t> ( std::size ( attachments ) );
-    renderPassInfo.pAttachments = attachments;
+    VkRenderPassCreateInfo const renderPassInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .attachmentCount = static_cast<uint32_t> ( std::size ( attachments ) ),
+        .pAttachments = attachments,
+        .subpassCount = static_cast<uint32_t> ( std::size ( subpasses ) ),
+        .pSubpasses = subpasses,
+        .dependencyCount = 0U,
+        .pDependencies = nullptr
+    };
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateRenderPass ( renderer.GetDevice (), &renderPassInfo, nullptr, &_gBufferRenderPass ),
         "RenderSession::CreateGBufferRenderPass",
-        "Can't create GBuffer render pass"
+        "Can't create render pass"
     );
 
     if ( !result )
         return false;
 
     AV_REGISTER_RENDER_PASS ( "RenderSession::_gBufferRenderPass" )
+    return true;
+}
+
+bool RenderSession::CreateGBufferSlotMapper ( android_vulkan::Renderer &renderer )
+{
+    constexpr static VkDescriptorPoolSize const poolSizes[] =
+    {
+        {
+            .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+            .descriptorCount = static_cast<uint32_t> ( ePresentTarget::TargetCount )
+        },
+        {
+            .type = VK_DESCRIPTOR_TYPE_SAMPLER,
+            .descriptorCount = static_cast<uint32_t> ( ePresentTarget::TargetCount )
+        }
+    };
+
+    constexpr static VkDescriptorPoolCreateInfo const poolInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .maxSets = static_cast<uint32_t> ( ePresentTarget::TargetCount ),
+        .poolSizeCount = static_cast<uint32_t> ( std::size ( poolSizes ) ),
+        .pPoolSizes = poolSizes
+    };
+
+    VkDevice device = renderer.GetDevice ();
+
+    bool result = android_vulkan::Renderer::CheckVkResult (
+        vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_gBufferDescriptorPool ),
+        "RenderSession::CreateGBufferSlotMapper",
+        "Can't create descriptor pool"
+    );
+
+    if ( !result )
+        return false;
+
+    AV_REGISTER_DESCRIPTOR_POOL ( "RenderSession::_gBufferDescriptorPool" )
+
+    TexturePresentDescriptorSetLayout const layout;
+    VkDescriptorSetLayout nativeLayout = layout.GetLayout ();
+
+    VkDescriptorSetLayout const layouts[ static_cast<size_t> ( ePresentTarget::TargetCount ) ] =
+    {
+        nativeLayout,
+        nativeLayout,
+        nativeLayout,
+        nativeLayout
+    };
+
+    VkDescriptorSetAllocateInfo const allocateInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+        .pNext = nullptr,
+        .descriptorPool = _gBufferDescriptorPool,
+        .descriptorSetCount = static_cast<uint32_t> ( std::size ( layouts ) ),
+        .pSetLayouts = layouts
+    };
+
+    result = android_vulkan::Renderer::CheckVkResult (
+        vkAllocateDescriptorSets ( device, &allocateInfo, _gBufferSlotMapper ),
+        "RenderSession::CreateGBufferSlotMapper",
+        "Can't allocate descriptor sets"
+    );
+
+    if ( !result )
+        return false;
+
+    SamplerRef pointSampler = _samplerManager.GetPointSampler ( renderer );
+    VkSampler nativeSampler = pointSampler->GetSampler ();
+
+    VkDescriptorImageInfo imageInfo[ static_cast<size_t> ( ePresentTarget::TargetCount ) ];
+    VkDescriptorImageInfo& albedo = imageInfo[ static_cast<size_t> ( ePresentTarget::Albedo ) ];
+    albedo.sampler = nativeSampler;
+    albedo.imageView = _gBuffer.GetAlbedo ().GetImageView ();
+    albedo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+    VkDescriptorImageInfo& emission = imageInfo[ static_cast<size_t> ( ePresentTarget::Emission ) ];
+    emission.sampler = nativeSampler;
+    emission.imageView = _gBuffer.GetEmission ().GetImageView ();
+    emission.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+    VkDescriptorImageInfo& normal = imageInfo[ static_cast<size_t> ( ePresentTarget::Normal ) ];
+    normal.sampler = nativeSampler;
+    normal.imageView = _gBuffer.GetNormal ().GetImageView ();
+    normal.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+    VkDescriptorImageInfo& param = imageInfo[ static_cast<size_t> ( ePresentTarget::Param ) ];
+    param.sampler = nativeSampler;
+    param.imageView = _gBuffer.GetParams ().GetImageView ();
+    param.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+    VkWriteDescriptorSet const writeSets[] =
+    {
+        {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .pNext = nullptr,
+            .dstSet = _gBufferSlotMapper[ static_cast<size_t> ( ePresentTarget::Albedo ) ],
+            .dstBinding = 0U,
+            .dstArrayElement = 0U,
+            .descriptorCount = 1U,
+            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+            .pImageInfo = &albedo,
+            .pBufferInfo = nullptr,
+            .pTexelBufferView = nullptr
+        },
+        {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .pNext = nullptr,
+            .dstSet = _gBufferSlotMapper[ static_cast<size_t> ( ePresentTarget::Albedo ) ],
+            .dstBinding = 1U,
+            .dstArrayElement = 0U,
+            .descriptorCount = 1U,
+            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
+            .pImageInfo = &albedo,
+            .pBufferInfo = nullptr,
+            .pTexelBufferView = nullptr
+        },
+        {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .pNext = nullptr,
+            .dstSet = _gBufferSlotMapper[ static_cast<size_t> ( ePresentTarget::Emission ) ],
+            .dstBinding = 0U,
+            .dstArrayElement = 0U,
+            .descriptorCount = 1U,
+            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+            .pImageInfo = &emission,
+            .pBufferInfo = nullptr,
+            .pTexelBufferView = nullptr
+        },
+        {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .pNext = nullptr,
+            .dstSet = _gBufferSlotMapper[ static_cast<size_t> ( ePresentTarget::Emission ) ],
+            .dstBinding = 1U,
+            .dstArrayElement = 0U,
+            .descriptorCount = 1U,
+            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
+            .pImageInfo = &emission,
+            .pBufferInfo = nullptr,
+            .pTexelBufferView = nullptr
+        },
+        {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .pNext = nullptr,
+            .dstSet = _gBufferSlotMapper[ static_cast<size_t> ( ePresentTarget::Normal ) ],
+            .dstBinding = 0U,
+            .dstArrayElement = 0U,
+            .descriptorCount = 1U,
+            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+            .pImageInfo = &normal,
+            .pBufferInfo = nullptr,
+            .pTexelBufferView = nullptr
+        },
+        {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .pNext = nullptr,
+            .dstSet = _gBufferSlotMapper[ static_cast<size_t> ( ePresentTarget::Normal ) ],
+            .dstBinding = 1U,
+            .dstArrayElement = 0U,
+            .descriptorCount = 1U,
+            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
+            .pImageInfo = &normal,
+            .pBufferInfo = nullptr,
+            .pTexelBufferView = nullptr
+        },
+        {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .pNext = nullptr,
+            .dstSet = _gBufferSlotMapper[ static_cast<size_t> ( ePresentTarget::Param ) ],
+            .dstBinding = 0U,
+            .dstArrayElement = 0U,
+            .descriptorCount = 1U,
+            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+            .pImageInfo = &param,
+            .pBufferInfo = nullptr,
+            .pTexelBufferView = nullptr
+        },
+        {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .pNext = nullptr,
+            .dstSet = _gBufferSlotMapper[ static_cast<size_t> ( ePresentTarget::Param ) ],
+            .dstBinding = 1U,
+            .dstArrayElement = 0U,
+            .descriptorCount = 1U,
+            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
+            .pImageInfo = &param,
+            .pBufferInfo = nullptr,
+            .pTexelBufferView = nullptr
+        }
+    };
+
+    vkUpdateDescriptorSets ( device, static_cast<uint32_t> ( std::size ( writeSets ) ), writeSets, 0U, nullptr );
     return true;
 }
 
@@ -1090,10 +996,10 @@ bool RenderSession::CreatePresentFramebuffers ( android_vulkan::Renderer &render
     framebufferInfo.pNext = nullptr;
     framebufferInfo.flags = 0U;
     framebufferInfo.renderPass = _presentRenderPass;
-    framebufferInfo.layers = 1U;
+    framebufferInfo.attachmentCount = 1U;
     framebufferInfo.width = resolution.width;
     framebufferInfo.height = resolution.height;
-    framebufferInfo.attachmentCount = 1U;
+    framebufferInfo.layers = 1U;
 
     VkDevice device = renderer.GetDevice ();
 
@@ -1132,43 +1038,57 @@ void RenderSession::DestroyPresentFramebuffers ( android_vulkan::Renderer &rende
 
 bool RenderSession::CreatePresentRenderPass ( android_vulkan::Renderer &renderer )
 {
-    VkAttachmentDescription attachment;
-    attachment.flags = 0U;
-    attachment.format = renderer.GetSurfaceFormat ();
-    attachment.samples = VK_SAMPLE_COUNT_1_BIT;
-    attachment.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+    VkAttachmentDescription const attachment[] =
+    {
+        {
+            .flags = 0U,
+            .format = renderer.GetSurfaceFormat (),
+            .samples = VK_SAMPLE_COUNT_1_BIT,
+            .loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+            .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+            .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+            .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+            .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+            .finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
+        }
+    };
 
-    VkAttachmentReference reference;
-    reference.attachment = 0U;
-    reference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    constexpr static VkAttachmentReference const references[] =
+    {
+        {
+            .attachment = 0U,
+            .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+        }
+    };
 
-    VkSubpassDescription subpass;
-    subpass.flags = 0U;
-    subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-    subpass.inputAttachmentCount = 0U;
-    subpass.pInputAttachments = nullptr;
-    subpass.colorAttachmentCount = 1U;
-    subpass.pColorAttachments = &reference;
-    subpass.pResolveAttachments = nullptr;
-    subpass.pDepthStencilAttachment = nullptr;
-    subpass.preserveAttachmentCount = 0U;
-    subpass.pPreserveAttachments = nullptr;
+    constexpr static VkSubpassDescription const subpasses[] =
+    {
+        {
+            .flags = 0U,
+            .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
+            .inputAttachmentCount = 0U,
+            .pInputAttachments = nullptr,
+            .colorAttachmentCount = static_cast<uint32_t> ( std::size ( references ) ),
+            .pColorAttachments = references,
+            .pResolveAttachments = nullptr,
+            .pDepthStencilAttachment = nullptr,
+            .preserveAttachmentCount = 0U,
+            .pPreserveAttachments = nullptr,
+        }
+    };
 
-    VkRenderPassCreateInfo info;
-    info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-    info.pNext = nullptr;
-    info.flags = 0U;
-    info.attachmentCount = 1U;
-    info.pAttachments = &attachment;
-    info.subpassCount = 1U;
-    info.pSubpasses = &subpass;
-    info.dependencyCount = 0U;
-    info.pDependencies = nullptr;
+    VkRenderPassCreateInfo const info
+    {
+        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .attachmentCount = static_cast<uint32_t> ( std::size ( attachment ) ),
+        .pAttachments = attachment,
+        .subpassCount = static_cast<uint32_t> ( std::size ( subpasses ) ),
+        .pSubpasses = subpasses,
+        .dependencyCount = 0U,
+        .pDependencies = nullptr
+    };
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateRenderPass ( renderer.GetDevice (), &info, nullptr, &_presentRenderPass ),
@@ -1185,10 +1105,12 @@ bool RenderSession::CreatePresentRenderPass ( android_vulkan::Renderer &renderer
 
 bool RenderSession::CreateSyncPrimitives ( android_vulkan::Renderer &renderer )
 {
-    VkSemaphoreCreateInfo semaphoreInfo;
-    semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-    semaphoreInfo.pNext = nullptr;
-    semaphoreInfo.flags = 0U;
+    constexpr VkSemaphoreCreateInfo const semaphoreInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U
+    };
 
     VkDevice device = renderer.GetDevice ();
 
@@ -1235,16 +1157,6 @@ void RenderSession::DestroySyncPrimitives ( android_vulkan::Renderer &renderer )
     AV_UNREGISTER_SEMAPHORE ( "RenderSession::_presentRenderPassEndSemaphore" )
 }
 
-void RenderSession::DestroyGeometryPassDescriptorPool ( android_vulkan::Renderer &renderer )
-{
-    if ( _geometryPassDescriptorPool == VK_NULL_HANDLE )
-        return;
-
-    vkDestroyDescriptorPool ( renderer.GetDevice (), _geometryPassDescriptorPool, nullptr );
-    _geometryPassDescriptorPool = VK_NULL_HANDLE;
-    AV_UNREGISTER_DESCRIPTOR_POOL ( "RenderSession::_geometryPassDescriptorPool" )
-}
-
 void RenderSession::DestroyPointLightShadowmapDescriptorPool ( android_vulkan::Renderer &renderer )
 {
     if ( _pointLightShadowmapDescriptorPool == VK_NULL_HANDLE )
@@ -1255,133 +1167,10 @@ void RenderSession::DestroyPointLightShadowmapDescriptorPool ( android_vulkan::R
     AV_UNREGISTER_DESCRIPTOR_POOL ( "RenderSession::_pointLightShadowmapDescriptorPool" )
 }
 
-void RenderSession::DrawOpaque ( VkDescriptorSet const* textureSets, VkDescriptorSet const* instanceSets )
-{
-    size_t textureSetIndex = 0U;
-    size_t uniformUsed = 0U;
-    bool isProgramBind = false;
-
-    constexpr VkDeviceSize const offset = 0U;
-
-    for ( auto const &call : _opaqueCalls )
-    {
-        OpaqueCall const &opaqueCall = call.second;
-
-        VkDescriptorSet textureSet = textureSets[ textureSetIndex ];
-        ++textureSetIndex;
-
-        if ( !isProgramBind )
-        {
-            _opaqueBatchProgram.Bind ( _geometryPassRendering );
-            isProgramBind = true;
-        }
-
-        bool isUniformBind = false;
-
-        auto instanceDrawer = [ & ] ( MeshRef const &mesh, uint32_t batches ) {
-            if ( isUniformBind )
-            {
-                _opaqueBatchProgram.SetDescriptorSet ( _geometryPassRendering, instanceSets + uniformUsed, 1U, 1U );
-            }
-            else
-            {
-                VkDescriptorSet sets[] = { textureSet, instanceSets[ uniformUsed ] };
-
-                _opaqueBatchProgram.SetDescriptorSet ( _geometryPassRendering,
-                    sets,
-                    0U,
-                    static_cast<uint32_t> ( std::size ( sets ) )
-                );
-
-                isUniformBind = true;
-            }
-
-            vkCmdBindVertexBuffers ( _geometryPassRendering, 0U, 1U, &mesh->GetVertexBuffer (), &offset );
-            vkCmdBindIndexBuffer ( _geometryPassRendering, mesh->GetIndexBuffer (), 0U, VK_INDEX_TYPE_UINT32 );
-
-            vkCmdDrawIndexed ( _geometryPassRendering,
-                mesh->GetVertexCount (),
-                batches,
-                0U,
-                0U,
-                0U
-            );
-
-            _renderSessionStats.RenderOpaque ( mesh->GetVertexCount (), batches );
-            ++uniformUsed;
-        };
-
-        for ( auto const &[mesh, opaqueData] : opaqueCall.GetUniqueList () )
-        {
-            if ( !opaqueData._isVisible )
-                continue;
-
-            instanceDrawer ( mesh, 1U );
-        }
-
-        for ( auto const &item : opaqueCall.GetBatchList () )
-        {
-            MeshGroup const& group = item.second;
-            MeshRef const& mesh = group._mesh;
-            size_t instanceCount = 0U;
-
-            for ( auto const& opaqueData : group._opaqueData )
-            {
-                if ( !opaqueData._isVisible )
-                    continue;
-
-                ++instanceCount;
-            }
-
-            size_t instanceIndex = 0U;
-            size_t batches = 0U;
-
-            while ( instanceIndex < instanceCount )
-            {
-                batches = std::min ( instanceCount - instanceIndex,
-                    static_cast<size_t> ( PBR_OPAQUE_MAX_INSTANCE_COUNT )
-                );
-
-                instanceIndex += batches;
-
-                if ( batches < PBR_OPAQUE_MAX_INSTANCE_COUNT )
-                    continue;
-
-                instanceDrawer ( mesh, static_cast<uint32_t> ( batches ) );
-                batches = 0U;
-            }
-
-            if ( !batches )
-                continue;
-
-            instanceDrawer ( mesh, static_cast<uint32_t> ( batches ) );
-        }
-    }
-}
-
 bool RenderSession::GeneratePointLightShadowmaps ( VkDescriptorSet const* descriptorSets,
     android_vulkan::Renderer &renderer
 )
 {
-    //VkDevice device = renderer.GetDevice ();
-
-    /*bool result = android_vulkan::Renderer::CheckVkResult (
-        vkWaitForFences ( device, 1U, &_pointLightShadowmapFence, VK_TRUE, UINT64_MAX ),
-        "RenderSession::GeneratePointLightShadowmaps",
-        "Can't wait for point light shadowmap fence"
-    );
-
-    if ( !result )
-        return false;
-
-    result = android_vulkan::Renderer::CheckVkResult ( vkResetFences ( device, 1U, &_pointLightShadowmapFence ),
-        "RenderSession::GeneratePointLightShadowmaps",
-        "Can't reset point light shadowmap fence"
-    );
-
-    if ( !result )
-        return false;*/
-
     constexpr VkCommandBufferBeginInfo const beginInfo
     {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
@@ -1519,44 +1308,6 @@ bool RenderSession::GeneratePointLightShadowmaps ( VkDescriptorSet const* descri
 
 void RenderSession::InitCommonStructures ()
 {
-    VkClearValue& albedoClear = _geometryPassClearValue[ 0U ];
-    albedoClear.color.float32[ 0U ] = 0.0F;
-    albedoClear.color.float32[ 1U ] = 0.0F;
-    albedoClear.color.float32[ 2U ] = 0.0F;
-    albedoClear.color.float32[ 3U ] = 0.0F;
-
-    VkClearValue& emissionClear = _geometryPassClearValue[ 1U ];
-    emissionClear.color.float32[ 1U ] = 0.0F;
-    emissionClear.color.float32[ 2U ] = 0.0F;
-    emissionClear.color.float32[ 3U ] = 0.0F;
-    emissionClear.color.float32[ 0U ] = 0.0F;
-
-    VkClearValue& normalClear = _geometryPassClearValue[ 2U ];
-    normalClear.color.float32[ 1U ] = 0.5F;
-    normalClear.color.float32[ 2U ] = 0.5F;
-    normalClear.color.float32[ 3U ] = 0.5F;
-    normalClear.color.float32[ 0U ] = 0.0F;
-
-    VkClearValue& paramClear = _geometryPassClearValue[ 3U ];
-    paramClear.color.float32[ 1U ] = 0.5F;
-    paramClear.color.float32[ 2U ] = 0.5F;
-    paramClear.color.float32[ 3U ] = 0.5F;
-    paramClear.color.float32[ 0U ] = 0.0F;
-
-    VkClearValue& depthStencilClear = _geometryPassClearValue[ 4U ];
-    depthStencilClear.depthStencil.depth = 1.0F;
-    depthStencilClear.depthStencil.stencil = 0U;
-
-    _geometryPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    _geometryPassBeginInfo.pNext = nullptr;
-    _geometryPassBeginInfo.renderPass = _gBufferRenderPass;
-    _geometryPassBeginInfo.framebuffer = _gBufferFramebuffer;
-    _geometryPassBeginInfo.clearValueCount = static_cast<uint32_t> ( std::size ( _geometryPassClearValue ) );
-    _geometryPassBeginInfo.pClearValues = _geometryPassClearValue;
-    _geometryPassBeginInfo.renderArea.offset.x = 0;
-    _geometryPassBeginInfo.renderArea.offset.y = 0;
-    _geometryPassBeginInfo.renderArea.extent = _gBuffer.GetResolution ();
-
     _gBufferImageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
     _gBufferImageBarrier.pNext = nullptr;
     _gBufferImageBarrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
@@ -1585,15 +1336,14 @@ void RenderSession::InitCommonStructures ()
 
     constexpr static VkPipelineStageFlags const waitStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 
-    _submitInfoRenderGeometryPass.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    _submitInfoRenderGeometryPass.pNext = nullptr;
-    _submitInfoRenderGeometryPass.waitSemaphoreCount = 1U;
-    _submitInfoRenderGeometryPass.pWaitSemaphores = &_presentRenderTargetAcquiredSemaphore;
-    _submitInfoRenderGeometryPass.pWaitDstStageMask = &waitStage;
-    _submitInfoRenderGeometryPass.commandBufferCount = 1U;
-    _submitInfoRenderGeometryPass.pCommandBuffers = &_geometryPassRendering;
-    _submitInfoRenderGeometryPass.signalSemaphoreCount = 1U;
-    _submitInfoRenderGeometryPass.pSignalSemaphores = &_presentRenderPassEndSemaphore;
+    _submitInfoMain.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    _submitInfoMain.pNext = nullptr;
+    _submitInfoMain.waitSemaphoreCount = 1U;
+    _submitInfoMain.pWaitSemaphores = &_presentRenderTargetAcquiredSemaphore;
+    _submitInfoMain.pWaitDstStageMask = &waitStage;
+    _submitInfoMain.commandBufferCount = 1U;
+    _submitInfoMain.signalSemaphoreCount = 1U;
+    _submitInfoMain.pSignalSemaphores = &_presentRenderPassEndSemaphore;
 
     _submitInfoRenderPointLightShadowmap.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     _submitInfoRenderPointLightShadowmap.pNext = nullptr;
@@ -1610,16 +1360,6 @@ void RenderSession::InitCommonStructures ()
     _presentInfo.waitSemaphoreCount = 1U;
     _presentInfo.pWaitSemaphores = &_presentRenderPassEndSemaphore;
     _presentInfo.swapchainCount = 1U;
-
-    _submitInfoTransferGeometryPass.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    _submitInfoTransferGeometryPass.pNext = nullptr;
-    _submitInfoTransferGeometryPass.waitSemaphoreCount = 0U;
-    _submitInfoTransferGeometryPass.pWaitSemaphores = nullptr;
-    _submitInfoTransferGeometryPass.pWaitDstStageMask = nullptr;
-    _submitInfoTransferGeometryPass.commandBufferCount = 1U;
-    _submitInfoTransferGeometryPass.pCommandBuffers = &_geometryPassTransfer;
-    _submitInfoTransferGeometryPass.signalSemaphoreCount = 0U;
-    _submitInfoTransferGeometryPass.pSignalSemaphores = nullptr;
 
     _submitInfoTransferPointLightShadowmap.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     _submitInfoTransferPointLightShadowmap.pNext = nullptr;
@@ -1642,31 +1382,8 @@ void RenderSession::SubmitOpaqueCall ( MeshRef &mesh,
     android_vulkan::Half4 const &color3
 )
 {
-    // Note it's safe to cast like that here. "NOLINT" is a clang-tidy control comment.
-    auto& opaqueMaterial = *static_cast<OpaqueMaterial*> ( material.get () ); // NOLINT
-    auto findResult = _opaqueCalls.find ( opaqueMaterial );
-
-    if ( findResult != _opaqueCalls.cend () )
-    {
-        findResult->second.Append ( _maxBatchCount,
-            _maxUniqueCount,
-            mesh,
-            local,
-            worldBounds,
-            color0,
-            color1,
-            color2,
-            color3
-        );
-
-        return;
-    }
-
-    _opaqueCalls.insert (
-        std::make_pair ( opaqueMaterial,
-            OpaqueCall ( _maxBatchCount, _maxUniqueCount, mesh, local, worldBounds, color0, color1, color2, color3 )
-        )
-    );
+    _renderSessionStats.SubmitOpaque ( mesh->GetVertexCount () );
+    _geometryPass.Submit ( mesh, material, local, worldBounds, color0, color1, color2, color3 );
 }
 
 void RenderSession::SubmitPointLight ( LightRef const &light )
@@ -1680,387 +1397,6 @@ void RenderSession::SubmitPointLight ( LightRef const &light )
     {
         _pointLightCalls.emplace_back ( std::make_pair ( light, ShadowCasters () ) );
     }
-}
-
-bool RenderSession::UpdateGeometryPassGPUData ( std::vector<VkDescriptorSet> &descriptorSetStorage,
-    android_vulkan::Renderer &renderer
-)
-{
-    // TODO no any elements have been submitted.
-
-    size_t const opaqueCount = _opaqueCalls.size ();
-    size_t const textureCount = opaqueCount * OpaqueTextureDescriptorSetLayout::TEXTURE_SLOTS + 1U;
-
-    std::vector<VkDescriptorImageInfo> imageStorage;
-    imageStorage.reserve ( textureCount );
-
-    std::vector<VkWriteDescriptorSet> writeStorage0;
-    writeStorage0.reserve ( textureCount * 2U );
-
-    std::vector<DescriptorSetInfo> const& descriptorSetInfo = _opaqueBatchProgram.GetResourceInfo ();
-    DescriptorSetInfo const& descriptorSet0 = descriptorSetInfo[ 0U ];
-    size_t uniqueFeatures = descriptorSet0.size ();
-
-    std::vector<VkDescriptorBufferInfo> uniformStorage;
-    std::vector<VkWriteDescriptorSet> writeStorage1;
-
-    constexpr VkCommandBufferBeginInfo const beginInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-        .pNext = nullptr,
-        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
-        .pInheritanceInfo = nullptr
-    };
-
-    bool result = android_vulkan::Renderer::CheckVkResult ( vkBeginCommandBuffer ( _geometryPassTransfer, &beginInfo ),
-        "RenderSession::UpdateGeometryPassGPUData",
-        "Can't begin transfer command buffer"
-    );
-
-    if ( !result )
-        return false;
-
-    // Note reserve size is a estimation from top.
-    size_t const estimationUniformCount = ( _maxBatchCount + _maxUniqueCount ) * opaqueCount;
-    uniformStorage.reserve ( estimationUniformCount );
-    writeStorage1.reserve ( estimationUniformCount );
-    ++uniqueFeatures;
-
-    std::vector<VkDescriptorPoolSize> poolSizeStorage;
-    poolSizeStorage.reserve ( uniqueFeatures );
-
-    for ( auto const &item : descriptorSet0 )
-    {
-        poolSizeStorage.emplace_back (
-            VkDescriptorPoolSize {
-                .type = item._type,
-                .descriptorCount = static_cast<uint32_t> ( item._count * opaqueCount + 1U )
-            }
-        );
-    }
-
-    poolSizeStorage.emplace_back (
-        VkDescriptorPoolSize {
-            .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            .descriptorCount = static_cast<uint32_t> ( estimationUniformCount )
-        }
-    );
-
-    VkDescriptorPoolCreateInfo const poolInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0U,
-        .maxSets = static_cast<uint32_t> ( opaqueCount + 1U + estimationUniformCount ),
-        .poolSizeCount = static_cast<uint32_t> ( poolSizeStorage.size () ),
-        .pPoolSizes = poolSizeStorage.data ()
-    };
-
-    DestroyGeometryPassDescriptorPool ( renderer );
-    VkDevice device = renderer.GetDevice ();
-
-    result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_geometryPassDescriptorPool ),
-        "RenderSession::UpdateGeometryPassGPUData",
-        "Can't create descriptor pool"
-    );
-
-    if ( !result )
-        return false;
-
-    AV_REGISTER_DESCRIPTOR_POOL ( "RenderSession::_geometryPassDescriptorPool" )
-
-    OpaqueTextureDescriptorSetLayout const opaqueTextureLayout;
-    VkDescriptorSetLayout opaqueTextureLayoutNative = opaqueTextureLayout.GetLayout ();
-
-    std::vector<VkDescriptorSetLayout> layouts;
-    layouts.reserve ( static_cast<size_t> ( poolInfo.maxSets ) );
-
-    for ( uint32_t i = 0U; i < opaqueCount; ++i )
-        layouts.push_back ( opaqueTextureLayoutNative );
-
-    TexturePresentDescriptorSetLayout const texturePresentLayout;
-    layouts.emplace_back ( texturePresentLayout.GetLayout () );
-
-    OpaqueInstanceDescriptorSetLayout const instanceLayout;
-    VkDescriptorSetLayout instanceLayoutNative = instanceLayout.GetLayout ();
-
-    for ( uint32_t i = opaqueCount + 1U; i < poolInfo.maxSets; ++i )
-        layouts.push_back ( instanceLayoutNative );
-
-    VkDescriptorSetAllocateInfo const allocateInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-        .pNext = nullptr,
-        .descriptorPool = _geometryPassDescriptorPool,
-        .descriptorSetCount = poolInfo.maxSets,
-        .pSetLayouts = layouts.data ()
-    };
-
-    descriptorSetStorage.resize ( static_cast<size_t> ( poolInfo.maxSets ) );
-    VkDescriptorSet* descriptorSets = descriptorSetStorage.data ();
-
-    result = android_vulkan::Renderer::CheckVkResult (
-        vkAllocateDescriptorSets ( device, &allocateInfo, descriptorSets ),
-        "RenderSession::UpdateGeometryPassGPUData",
-        "Can't allocate descriptor sets"
-    );
-
-    if ( !result )
-        return false;
-
-    VkWriteDescriptorSet writeInfo0;
-    writeInfo0.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    writeInfo0.pNext = nullptr;
-    writeInfo0.descriptorCount = 1U;
-    writeInfo0.dstArrayElement = 0U;
-    writeInfo0.pBufferInfo = nullptr;
-    writeInfo0.pTexelBufferView = nullptr;
-
-    auto textureBinder = [ & ] ( Texture2DRef &texture,
-        Texture2DRef &defaultTexture,
-        uint32_t imageBindSlot,
-        uint32_t samplerBindSlot
-    ) {
-        Texture2DRef& t = texture ? texture : defaultTexture;
-        SamplerRef sampler = g_SamplerStorage.GetSampler ( t->GetMipLevelCount (), renderer );
-
-        writeInfo0.pImageInfo = &imageStorage.emplace_back (
-            VkDescriptorImageInfo {
-                .sampler = sampler->GetSampler (),
-                .imageView = t->GetImageView (),
-                .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-            }
-        );
-
-        writeInfo0.dstBinding = imageBindSlot;
-        writeInfo0.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-        writeStorage0.push_back ( writeInfo0 );
-
-        writeInfo0.dstBinding = samplerBindSlot;
-        writeInfo0.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
-        writeStorage0.push_back ( writeInfo0 );
-    };
-
-    VkWriteDescriptorSet writeInfo1;
-    writeInfo1.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    writeInfo1.pNext = nullptr;
-    writeInfo1.dstBinding = 0U;
-    writeInfo1.dstArrayElement = 0U;
-    writeInfo1.descriptorCount = 1U;
-    writeInfo1.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    writeInfo1.pImageInfo = nullptr;
-    writeInfo1.pTexelBufferView = nullptr;
-
-    constexpr VkPipelineStageFlags const syncFlags = AV_VK_FLAG ( VK_PIPELINE_STAGE_VERTEX_SHADER_BIT ) |
-        AV_VK_FLAG ( VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT );
-
-    auto uniformBinder = [ & ] ( VkBuffer uniformBuffer, VkDescriptorSet descriptorSet ) {
-        writeInfo1.pBufferInfo = &uniformStorage.emplace_back (
-            VkDescriptorBufferInfo {
-                .buffer = uniformBuffer,
-                .offset = 0U,
-                .range = static_cast<VkDeviceSize> ( sizeof ( OpaqueProgram::InstanceData ) )
-            }
-        );
-
-        writeInfo1.dstSet = descriptorSet;
-        writeInfo1.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        writeStorage1.push_back ( writeInfo1 );
-    };
-
-    size_t i = 0U;
-
-    for ( auto const &[material, call] : _opaqueCalls )
-    {
-        writeInfo0.dstSet = descriptorSets[ i ];
-        ++i;
-
-        // Warning less casting.
-        auto& m = const_cast<OpaqueMaterial&> (
-            *static_cast<OpaqueMaterial const*> ( reinterpret_cast<void const*> ( &material ) )
-        );
-
-        textureBinder ( m.GetAlbedo (), _albedoDefault, 0U, 1U );
-        textureBinder ( m.GetEmission (), _emissionDefault, 2U, 3U );
-        textureBinder ( m.GetMask (), _maskDefault, 4U, 5U );
-        textureBinder ( m.GetNormal (), _normalDefault, 6U, 7U );
-        textureBinder ( m.GetParam (), _paramDefault, 8U, 9U );
-    }
-
-    android_vulkan::Texture2D& albedo = _gBuffer.GetAlbedo ();
-    SamplerRef sampler = g_SamplerStorage.GetPointSampler ( renderer );
-
-    writeInfo0.pImageInfo = &imageStorage.emplace_back (
-        VkDescriptorImageInfo {
-            .sampler = sampler->GetSampler (),
-            .imageView = albedo.GetImageView (),
-            .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-        }
-    );
-
-    writeInfo0.dstSet = descriptorSets[ opaqueCount ];
-    writeInfo0.dstBinding = 0U;
-    writeInfo0.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-    writeStorage0.push_back ( writeInfo0 );
-
-    writeInfo0.dstBinding = 1U;
-    writeInfo0.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
-    writeStorage0.push_back ( writeInfo0 );
-
-    vkUpdateDescriptorSets ( device,
-        static_cast<uint32_t> ( writeStorage0.size () ),
-        writeStorage0.data (),
-        0U,
-        nullptr
-    );
-
-    OpaqueProgram::InstanceData instanceData {};
-    _geometryPassUniformBufferPool.Reset ();
-
-    size_t uniformUsed = 0U;
-    size_t const maxUniforms = _geometryPassUniformBufferPool.GetItemCount ();
-    VkDescriptorSet const* instanceDescriptorSet = descriptorSets + opaqueCount + 1U;
-
-    for ( auto const &call : _opaqueCalls )
-    {
-        OpaqueCall const& opaqueCall = call.second;
-
-        for ( auto const &[mesh, opaqueData] : opaqueCall.GetUniqueList () )
-        {
-            OpaqueProgram::ObjectData& objectData = instanceData._instanceData[ 0U ];
-
-            if ( uniformUsed >= maxUniforms )
-            {
-                android_vulkan::LogError (
-                    "RenderSession::UpdateGeometryPassGPUData - Uniform pool overflow has been detected (branch 1)!"
-                );
-
-                return false;
-            }
-
-            GXMat4 const& local = opaqueData._local;
-            auto& uniqueOpaqueData = const_cast<OpaqueData&> ( opaqueData );
-
-            if ( !_frustum.IsVisible ( uniqueOpaqueData._worldBounds ) )
-            {
-                uniqueOpaqueData._isVisible = false;
-                continue;
-            }
-
-            uniqueOpaqueData._isVisible = true;
-            objectData._localView.Multiply ( local, _view );
-            objectData._localViewProjection.Multiply ( local, _viewProjection );
-
-            objectData._color0 = opaqueData._color0;
-            objectData._color1 = opaqueData._color1;
-            objectData._color2 = opaqueData._color2;
-            objectData._color3 = opaqueData._color3;
-
-            uniformBinder (
-                _geometryPassUniformBufferPool.Acquire ( _geometryPassTransfer,
-                    instanceData._instanceData,
-                    syncFlags,
-                    renderer
-                ),
-
-                instanceDescriptorSet[ uniformUsed ]
-            );
-
-            ++uniformUsed;
-        }
-
-        for ( auto const &item : opaqueCall.GetBatchList () )
-        {
-            MeshGroup const& group = item.second;
-            size_t instanceIndex = 0U;
-
-            for ( auto const &opaqueData : group._opaqueData )
-            {
-                if ( uniformUsed >= maxUniforms )
-                {
-                    android_vulkan::LogError (
-                        "RenderSession::UpdateGeometryPassGPUData - Uniform pool overflow has been detected (branch 0)!"
-                    );
-
-                    return false;
-                }
-
-                if ( instanceIndex >= PBR_OPAQUE_MAX_INSTANCE_COUNT )
-                {
-                    uniformBinder (
-                        _geometryPassUniformBufferPool.Acquire ( _geometryPassTransfer,
-                            instanceData._instanceData,
-                            syncFlags,
-                            renderer
-                        ),
-
-                        instanceDescriptorSet[ uniformUsed ]
-                    );
-
-                    instanceIndex = 0U;
-                    ++uniformUsed;
-                }
-
-                GXMat4 const& local = opaqueData._local;
-                auto& batchOpaqueData = const_cast<OpaqueData&> ( opaqueData );
-
-                if ( !_frustum.IsVisible ( batchOpaqueData._worldBounds ) )
-                {
-                    batchOpaqueData._isVisible = false;
-                    continue;
-                }
-
-                OpaqueProgram::ObjectData& objectData = instanceData._instanceData[ instanceIndex ];
-                ++instanceIndex;
-                batchOpaqueData._isVisible = true;
-
-                objectData._localView.Multiply ( local, _view );
-                objectData._localViewProjection.Multiply ( local, _viewProjection );
-
-                objectData._color0 = opaqueData._color0;
-                objectData._color1 = opaqueData._color1;
-                objectData._color2 = opaqueData._color2;
-                objectData._color3 = opaqueData._color3;
-            }
-
-            if ( !instanceIndex )
-                continue;
-
-            uniformBinder (
-                _geometryPassUniformBufferPool.Acquire ( _geometryPassTransfer,
-                    instanceData._instanceData,
-                    syncFlags,
-                    renderer
-                ),
-
-                instanceDescriptorSet[ uniformUsed ]
-            );
-
-            ++uniformUsed;
-        }
-    }
-
-    vkUpdateDescriptorSets ( device,
-        static_cast<uint32_t> ( writeStorage1.size () ),
-        writeStorage1.data (),
-        0U,
-        nullptr
-    );
-
-    result = android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( _geometryPassTransfer ),
-        "RenderSession::UpdateGeometryPassGPUData",
-        "Can't end transfer command buffer"
-    );
-
-    if ( !result )
-        return false;
-
-    return android_vulkan::Renderer::CheckVkResult (
-        vkQueueSubmit ( renderer.GetQueue (), 1U, &_submitInfoTransferGeometryPass, VK_NULL_HANDLE ),
-        "RenderSession::UpdateGeometryPassGPUData",
-        "Can't submit transfer command buffer"
-    );
 }
 
 bool RenderSession::UpdatePointLightShadowmapGPUData ( std::vector<VkDescriptorSet> &descriptorSetStorage,
@@ -2211,6 +1547,9 @@ bool RenderSession::UpdatePointLightShadowmapGPUData ( std::vector<VkDescriptorS
         writeStorage.push_back ( writeInfo );
     };
 
+    GeometryPass::SceneData const& sceneData = _geometryPass.GetSceneData ();
+    size_t const maxUniqueCount = _geometryPass.GetMaxUniqueCount ();
+
     for ( auto &[light, casters] : _pointLightCalls )
     {
         // Note it's safe cast like that here. "NOLINT" is a clang-tidy control comment.
@@ -2218,7 +1557,7 @@ bool RenderSession::UpdatePointLightShadowmapGPUData ( std::vector<VkDescriptorS
         GXAABB const& lightBounds = pointLight.GetBounds ();
         PointLight::Matrices const& matrices = pointLight.GetMatrices ();
 
-        for ( auto const &[material, opaque] : _opaqueCalls )
+        for ( auto const &[material, opaque] : sceneData )
         {
             std::vector<MeshRef>* uniques = nullptr;
 
@@ -2232,7 +1571,7 @@ bool RenderSession::UpdatePointLightShadowmapGPUData ( std::vector<VkDescriptorS
                     uniques = &casters._uniques;
 
                     // Estimating from top. Worst case: all unique meshes are interacting with point light.
-                    uniques->reserve ( _maxUniqueCount );
+                    uniques->reserve ( maxUniqueCount );
                 }
 
                 append ( matrices, 0U, opaqueData._local );

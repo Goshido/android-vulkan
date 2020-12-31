@@ -4,27 +4,22 @@
 
 #include <GXCommon/GXMath.h>
 #include "gbuffer.h"
-#include "opaque_program.h"
-#include "opaque_call.h"
-#include "opaque_material.h"
+#include "geometry_pass.h"
 #include "point_light.h"
 #include "point_light_shadowmap_generator_program.h"
-#include "render_session_stats.h"
 #include "shadow_casters.h"
 #include "texture_present_program.h"
-#include "uniform_buffer_pool.h"
 
 
 namespace pbr {
 
-constexpr static size_t const GBUFFER_ATTACHMENT_COUNT = 5U;
-
 enum class ePresentTarget : uint8_t
 {
-    Albedo [[maybe_unused]],
-    Emission [[maybe_unused]],
-    Normal [[maybe_unused]],
-    Param [[maybe_unused]]
+    Albedo = 0U,
+    Emission = 1U,
+    Normal = 2U,
+    Param = 3U,
+    TargetCount = 4U
 };
 
 // Single threaded class
@@ -35,36 +30,18 @@ class RenderSession final
         using PointLightShadowmapInfo = std::pair<TextureCubeRef, VkFramebuffer>;
 
     private:
-        Texture2DRef                            _albedoDefault;
-        Texture2DRef                            _emissionDefault;
-        Texture2DRef                            _maskDefault;
-        Texture2DRef                            _normalDefault;
-        Texture2DRef                            _paramDefault;
-
         VkCommandPool                           _commandPool;
         GXProjectionClipPlanes                  _frustum;
 
         GBuffer                                 _gBuffer;
+        VkDescriptorPool                        _gBufferDescriptorPool;
         VkFramebuffer                           _gBufferFramebuffer;
         VkImageMemoryBarrier                    _gBufferImageBarrier;
         VkRenderPass                            _gBufferRenderPass;
+        VkDescriptorSet                         _gBufferSlotMapper[ static_cast<size_t> ( ePresentTarget::TargetCount ) ];
 
-        VkRenderPassBeginInfo                   _geometryPassBeginInfo;
-        VkClearValue                            _geometryPassClearValue[ GBUFFER_ATTACHMENT_COUNT ];
-        VkDescriptorPool                        _geometryPassDescriptorPool;
-        VkFence                                 _geometryPassFence;
-        VkCommandBuffer                         _geometryPassRendering;
-        VkCommandBuffer                         _geometryPassTransfer;
-        UniformBufferPool                       _geometryPassUniformBufferPool;
+        GeometryPass                            _geometryPass;
 
-        bool                                    _isFreeTransferResources;
-
-        // The variable is needed for theoretical maximum uniform buffer elements estimation.
-        size_t                                  _maxBatchCount;
-        size_t                                  _maxUniqueCount;
-
-        OpaqueProgram                           _opaqueBatchProgram;
-        std::map<OpaqueMaterial, OpaqueCall>    _opaqueCalls;
         size_t                                  _opaqueMeshCount;
         TexturePresentProgram                   _texturePresentProgram;
 
@@ -88,10 +65,10 @@ class RenderSession final
         VkSemaphore                             _presentRenderTargetAcquiredSemaphore;
 
         RenderSessionStats                      _renderSessionStats;
+        SamplerManager                          _samplerManager;
 
-        VkSubmitInfo                            _submitInfoRenderGeometryPass;
+        VkSubmitInfo                            _submitInfoMain;
         VkSubmitInfo                            _submitInfoRenderPointLightShadowmap;
-        VkSubmitInfo                            _submitInfoTransferGeometryPass;
         VkSubmitInfo                            _submitInfoTransferPointLightShadowmap;
 
         GXMat4                                  _view;
@@ -130,11 +107,9 @@ class RenderSession final
         // The method returns nullptr if it fails. Otherwise the method returns a valid pointer.
         [[nodiscard]] PointLightShadowmapInfo* AcquirePointLightShadowmap ( android_vulkan::Renderer &renderer );
 
-        [[nodiscard]] bool BeginGeometryRenderPass ( android_vulkan::Renderer &renderer );
-        void CleanupTransferResources ( android_vulkan::Renderer &renderer );
-
         [[nodiscard]] bool CreateGBufferFramebuffer ( android_vulkan::Renderer &renderer );
         [[nodiscard]] bool CreateGBufferRenderPass ( android_vulkan::Renderer &renderer );
+        [[nodiscard]] bool CreateGBufferSlotMapper ( android_vulkan::Renderer &renderer );
         [[nodiscard]] bool CreatePointLightShadowmapRenderPass ( android_vulkan::Renderer &renderer );
 
         [[nodiscard]] bool CreatePresentFramebuffers ( android_vulkan::Renderer &renderer );
@@ -144,10 +119,7 @@ class RenderSession final
 
         [[nodiscard]] bool CreateSyncPrimitives ( android_vulkan::Renderer &renderer );
         void DestroySyncPrimitives ( android_vulkan::Renderer &renderer );
-
-        void DestroyGeometryPassDescriptorPool ( android_vulkan::Renderer &renderer );
         void DestroyPointLightShadowmapDescriptorPool ( android_vulkan::Renderer &renderer );
-        void DrawOpaque ( VkDescriptorSet const* textureSets, VkDescriptorSet const* instanceSets );
 
         [[nodiscard]] bool GeneratePointLightShadowmaps ( VkDescriptorSet const* descriptorSets,
             android_vulkan::Renderer &renderer
@@ -166,10 +138,6 @@ class RenderSession final
         );
 
         void SubmitPointLight ( LightRef const &light );
-
-        [[nodiscard]] bool UpdateGeometryPassGPUData ( std::vector<VkDescriptorSet> &descriptorSetStorage,
-            android_vulkan::Renderer &renderer
-        );
 
         [[nodiscard]] bool UpdatePointLightShadowmapGPUData ( std::vector<VkDescriptorSet> &descriptorSetStorage,
             android_vulkan::Renderer &renderer

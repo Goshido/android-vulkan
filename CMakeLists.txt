@@ -85,6 +85,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/pbr/camera.cpp
     app/src/main/cpp/sources/pbr/component.cpp
     app/src/main/cpp/sources/pbr/gbuffer.cpp
+    app/src/main/cpp/sources/pbr/geometry_pass.cpp
     app/src/main/cpp/sources/pbr/light.cpp
     app/src/main/cpp/sources/pbr/material.cpp
     app/src/main/cpp/sources/pbr/material_manager.cpp
@@ -104,6 +105,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/pbr/render_session.cpp
     app/src/main/cpp/sources/pbr/render_session_stats.cpp
     app/src/main/cpp/sources/pbr/sampler.cpp
+    app/src/main/cpp/sources/pbr/sampler_manager.cpp
     app/src/main/cpp/sources/pbr/static_mesh_component.cpp
     app/src/main/cpp/sources/pbr/texture_present_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/texture_present_program.cpp

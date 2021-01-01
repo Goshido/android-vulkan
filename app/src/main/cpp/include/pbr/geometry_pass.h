@@ -3,11 +3,10 @@
 
 
 #include "gbuffer.h"
-#include "opaque_call.h"
-#include "opaque_material.h"
 #include "opaque_program.h"
 #include "render_session_stats.h"
 #include "sampler_manager.h"
+#include "scene_data.h"
 #include "uniform_buffer_pool.h"
 
 
@@ -15,9 +14,6 @@ namespace pbr {
 
 class GeometryPass final
 {
-    public:
-        using SceneData = std::map<OpaqueMaterial, OpaqueCall>;
-
     private:
         Texture2DRef                _albedoDefault;
         Texture2DRef                _emissionDefault;

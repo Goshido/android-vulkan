@@ -5,8 +5,7 @@
 #include <GXCommon/GXMath.h>
 #include "gbuffer.h"
 #include "geometry_pass.h"
-#include "point_light.h"
-#include "point_light_shadowmap_generator_program.h"
+#include "point_light_pass.h"
 #include "shadow_casters.h"
 #include "texture_present_program.h"
 
@@ -30,7 +29,6 @@ class RenderSession final
         using PointLightShadowmapInfo = std::pair<TextureCubeRef, VkFramebuffer>;
 
     private:
-        VkCommandPool                           _commandPool;
         GXProjectionClipPlanes                  _frustum;
 
         GBuffer                                 _gBuffer;
@@ -45,16 +43,7 @@ class RenderSession final
         size_t                                  _opaqueMeshCount;
         TexturePresentProgram                   _texturePresentProgram;
 
-        std::vector<LightInteract>              _pointLightCalls;
-        VkDescriptorPool                        _pointLightShadowmapDescriptorPool;
-        VkFence                                 _pointLightShadowmapFence;
-        PointLightShadowmapGeneratorProgram     _pointLightShadowmapGeneratorProgram;
-        UniformBufferPool                       _pointLightShadowmapPassUniformBufferPool;
-        VkRenderPass                            _pointLightShadowmapRenderPass;
-        VkCommandBuffer                         _pointLightShadowmapRendering;
-        VkCommandBuffer                         _pointLightShadowmapTransfer;
-        std::vector<PointLightShadowmapInfo>    _pointLightShadowmaps;
-        size_t                                  _usedPointLightShadowmaps;
+        PointLightPass                          _pointLightPass;
 
         VkPresentInfoKHR                        _presentInfo;
         VkRenderPassBeginInfo                   _presentBeginInfo;
@@ -68,8 +57,6 @@ class RenderSession final
         SamplerManager                          _samplerManager;
 
         VkSubmitInfo                            _submitInfoMain;
-        VkSubmitInfo                            _submitInfoRenderPointLightShadowmap;
-        VkSubmitInfo                            _submitInfoTransferPointLightShadowmap;
 
         GXMat4                                  _view;
         GXMat4                                  _viewProjection;
@@ -104,27 +91,16 @@ class RenderSession final
         void SubmitLight ( LightRef const &light );
 
     private:
-        // The method returns nullptr if it fails. Otherwise the method returns a valid pointer.
-        [[nodiscard]] PointLightShadowmapInfo* AcquirePointLightShadowmap ( android_vulkan::Renderer &renderer );
-
         [[nodiscard]] bool CreateGBufferFramebuffer ( android_vulkan::Renderer &renderer );
         [[nodiscard]] bool CreateGBufferRenderPass ( android_vulkan::Renderer &renderer );
         [[nodiscard]] bool CreateGBufferSlotMapper ( android_vulkan::Renderer &renderer );
-        [[nodiscard]] bool CreatePointLightShadowmapRenderPass ( android_vulkan::Renderer &renderer );
 
         [[nodiscard]] bool CreatePresentFramebuffers ( android_vulkan::Renderer &renderer );
         void DestroyPresentFramebuffers ( android_vulkan::Renderer &renderer );
 
         [[nodiscard]] bool CreatePresentRenderPass ( android_vulkan::Renderer &renderer );
-
         [[nodiscard]] bool CreateSyncPrimitives ( android_vulkan::Renderer &renderer );
         void DestroySyncPrimitives ( android_vulkan::Renderer &renderer );
-        void DestroyPointLightShadowmapDescriptorPool ( android_vulkan::Renderer &renderer );
-
-        [[nodiscard]] bool GeneratePointLightShadowmaps ( VkDescriptorSet const* descriptorSets,
-            android_vulkan::Renderer &renderer
-        );
-
         void InitCommonStructures ();
 
         void SubmitOpaqueCall ( MeshRef &mesh,
@@ -138,10 +114,6 @@ class RenderSession final
         );
 
         void SubmitPointLight ( LightRef const &light );
-
-        [[nodiscard]] bool UpdatePointLightShadowmapGPUData ( std::vector<VkDescriptorSet> &descriptorSetStorage,
-            android_vulkan::Renderer &renderer
-        );
 };
 
 } // namespace pbr

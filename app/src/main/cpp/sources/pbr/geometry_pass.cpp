@@ -30,7 +30,7 @@ GeometryPass::GeometryPass () noexcept:
     // NOTHING
 }
 
-GeometryPass::SceneData& GeometryPass::GetSceneData ()
+SceneData& GeometryPass::GetSceneData ()
 {
     return _sceneData;
 }

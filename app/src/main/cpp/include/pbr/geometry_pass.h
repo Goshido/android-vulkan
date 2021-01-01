@@ -69,7 +69,6 @@ class GeometryPass final
         );
 
         [[nodiscard]] VkFence GetFence () const;
-        [[nodiscard]] size_t GetMaxUniqueCount () const;
         void Reset ();
 
         void Submit ( MeshRef &mesh,

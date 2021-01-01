@@ -189,11 +189,6 @@ VkFence GeometryPass::GetFence () const
     return _fence;
 }
 
-size_t GeometryPass::GetMaxUniqueCount () const
-{
-    return _maxUniqueCount;
-}
-
 void GeometryPass::Reset ()
 {
     _maxBatchCount = 0U;

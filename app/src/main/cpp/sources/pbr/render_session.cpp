@@ -25,6 +25,7 @@ RenderSession::RenderSession () noexcept:
     _geometryPass {},
     _opaqueMeshCount ( 0U ),
     _texturePresentProgram {},
+    _pointLightPass {},
     _presentInfo {},
     _presentBeginInfo {},
     _presentClearValue {},

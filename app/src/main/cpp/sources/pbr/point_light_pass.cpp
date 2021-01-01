@@ -135,7 +135,7 @@ bool PointLightPass::Init ( android_vulkan::Renderer &renderer )
     _renderCommandBuffer = commandBuffers[ 0U ];
     _transferCommandBuffer = commandBuffers[ 1U ];
 
-    constexpr static VkPipelineStageFlags const waitStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+    constexpr static VkPipelineStageFlags const waitStage = VK_PIPELINE_STAGE_VERTEX_SHADER_BIT;
 
     _submitInfoRender.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     _submitInfoRender.pNext = nullptr;
@@ -548,7 +548,7 @@ bool PointLightPass::UpdateGPUData ( std::vector<VkDescriptorSet> &descriptorSet
         return false;
 
     // Estimating from the top of the maximum required uniform buffers to be uploaded.
-    size_t const maxUniformBuffers = sceneData.size () * opaqueMeshCount;
+    size_t const maxUniformBuffers = _interacts.size () * opaqueMeshCount;
 
     VkDescriptorPoolSize const poolSize[] =
     {
@@ -599,7 +599,7 @@ bool PointLightPass::UpdateGPUData ( std::vector<VkDescriptorSet> &descriptorSet
         .pSetLayouts = layouts.data ()
     };
 
-    descriptorSetStorage.reserve ( maxUniformBuffers );
+    descriptorSetStorage.resize ( maxUniformBuffers );
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkAllocateDescriptorSets ( device, &allocateInfo, descriptorSetStorage.data () ),

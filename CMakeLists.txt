@@ -101,6 +101,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/pbr/point_light_component.cpp
     app/src/main/cpp/sources/pbr/point_light_pass.cpp
     app/src/main/cpp/sources/pbr/point_light_shadowmap_generator_program.cpp
+    app/src/main/cpp/sources/pbr/present_pass.cpp
     app/src/main/cpp/sources/pbr/program.cpp
     app/src/main/cpp/sources/pbr/program_resource.cpp
     app/src/main/cpp/sources/pbr/render_session.cpp

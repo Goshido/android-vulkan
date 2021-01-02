@@ -26,16 +26,9 @@ RenderSession::RenderSession () noexcept:
     _opaqueMeshCount ( 0U ),
     _texturePresentProgram {},
     _pointLightPass {},
-    _presentInfo {},
-    _presentBeginInfo {},
-    _presentClearValue {},
-    _presentFramebuffers {},
-    _presentRenderPass ( VK_NULL_HANDLE ),
-    _presentRenderPassEndSemaphore ( VK_NULL_HANDLE ),
-    _presentRenderTargetAcquiredSemaphore ( VK_NULL_HANDLE ),
+    _presentPass {},
     _renderSessionStats {},
     _samplerManager {},
-    _submitInfoMain {},
     _view {},
     _viewProjection {}
 {
@@ -54,22 +47,10 @@ void RenderSession::Begin ( GXMat4 const &view, GXMat4 const &projection )
 
 bool RenderSession::End ( ePresentTarget target, double deltaTime, android_vulkan::Renderer &renderer )
 {
-    uint32_t framebufferIndex = UINT32_MAX;
+    if ( !_presentPass.AcquirePresentTarget ( renderer ) )
+        return false;
 
-    bool result = android_vulkan::Renderer::CheckVkResult (
-        vkAcquireNextImageKHR ( renderer.GetDevice (),
-            renderer.GetSwapchain (),
-            UINT64_MAX,
-            _presentRenderTargetAcquiredSemaphore,
-            VK_NULL_HANDLE,
-            &framebufferIndex
-        ),
-
-        "RenderSession::End",
-        "Can't get presentation image index"
-    );
-
-    if ( !result || !_pointLightPass.Execute ( _geometryPass.GetSceneData (), _opaqueMeshCount, renderer ) )
+    if ( !_pointLightPass.Execute ( _geometryPass.GetSceneData (), _opaqueMeshCount, renderer ) )
         return false;
 
     VkCommandBuffer commandBuffer = _geometryPass.Execute ( _frustum,
@@ -125,56 +106,10 @@ bool RenderSession::End ( ePresentTarget target, double deltaTime, android_vulka
         &_gBufferImageBarrier
     );
 
-    _presentBeginInfo.framebuffer = _presentFramebuffers[ framebufferIndex ];
-    _presentBeginInfo.renderArea.extent = renderer.GetSurfaceSize ();
-
-    vkCmdBeginRenderPass ( commandBuffer, &_presentBeginInfo, VK_SUBPASS_CONTENTS_INLINE );
-    _texturePresentProgram.Bind ( commandBuffer );
-
-    _texturePresentProgram.SetData ( commandBuffer,
+    bool const result = _presentPass.Execute ( commandBuffer,
         _gBufferSlotMapper[ static_cast<size_t> ( target ) ],
-        renderer.GetPresentationEngineTransform ()
-    );
-
-    vkCmdDraw ( commandBuffer, 4U, 1U, 0U, 0U );
-    vkCmdEndRenderPass ( commandBuffer );
-
-    result = android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
-        "RenderSession::End",
-        "Can't end command buffer"
-    );
-
-    if ( !result )
-        return false;
-
-    _submitInfoMain.pCommandBuffers = &commandBuffer;
-
-    result = android_vulkan::Renderer::CheckVkResult (
-        vkQueueSubmit ( renderer.GetQueue (), 1U, &_submitInfoMain, _geometryPass.GetFence () ),
-        "RenderSession::End",
-        "Can't submit geometry render command buffer"
-    );
-
-    if ( !result )
-        return false;
-
-    VkResult presentResult = VK_ERROR_DEVICE_LOST;
-
-    _presentInfo.pResults = &presentResult;
-    _presentInfo.pSwapchains = &renderer.GetSwapchain ();
-    _presentInfo.pImageIndices = &framebufferIndex;
-
-    result = android_vulkan::Renderer::CheckVkResult ( vkQueuePresentKHR ( renderer.GetQueue (), &_presentInfo ),
-        "RenderSession::EndFrame",
-        "Can't present frame"
-    );
-
-    if ( !result )
-        return false;
-
-    result = android_vulkan::Renderer::CheckVkResult ( presentResult,
-        "RenderSession::EndFrame",
-        "Present queue has been failed"
+        _geometryPass.GetFence (),
+        renderer
     );
 
     if ( !result )
@@ -188,12 +123,6 @@ bool RenderSession::Init ( android_vulkan::Renderer &renderer, VkExtent2D const 
 {
     if ( !_gBuffer.Init ( resolution, renderer ) )
         return false;
-
-    if ( !CreateSyncPrimitives ( renderer ) )
-    {
-        Destroy ( renderer );
-        return false;
-    }
 
     if ( !CreateGBufferRenderPass ( renderer ) )
     {
@@ -219,19 +148,7 @@ bool RenderSession::Init ( android_vulkan::Renderer &renderer, VkExtent2D const 
         return false;
     }
 
-    if ( !CreatePresentRenderPass ( renderer ) )
-    {
-        Destroy ( renderer );
-        return false;
-    }
-
-    if ( !CreatePresentFramebuffers ( renderer ) )
-    {
-        Destroy ( renderer );
-        return false;
-    }
-
-    if ( !_texturePresentProgram.Init ( renderer, _presentRenderPass, renderer.GetSurfaceSize () ) )
+    if ( !_presentPass.Init ( renderer ) )
     {
         Destroy ( renderer );
         return false;
@@ -243,13 +160,26 @@ bool RenderSession::Init ( android_vulkan::Renderer &renderer, VkExtent2D const 
         return false;
     }
 
-    InitCommonStructures ();
+    _gBufferImageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    _gBufferImageBarrier.pNext = nullptr;
+    _gBufferImageBarrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+    _gBufferImageBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+    _gBufferImageBarrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    _gBufferImageBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    _gBufferImageBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    _gBufferImageBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    _gBufferImageBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    _gBufferImageBarrier.subresourceRange.baseMipLevel = 0U;
+    _gBufferImageBarrier.subresourceRange.baseArrayLayer = 0U;
+    _gBufferImageBarrier.subresourceRange.layerCount = 1U;
+
     return true;
 }
 
 void RenderSession::Destroy ( android_vulkan::Renderer &renderer )
 {
     _samplerManager.FreeResources ( renderer );
+    _presentPass.Destroy ( renderer );
     _pointLightPass.Destroy ( renderer );
 
     _texturePresentProgram.Destroy ( renderer );
@@ -260,15 +190,6 @@ void RenderSession::Destroy ( android_vulkan::Renderer &renderer )
         vkDestroyDescriptorPool ( device, _gBufferDescriptorPool, nullptr );
         _gBufferDescriptorPool = VK_NULL_HANDLE;
         AV_UNREGISTER_DESCRIPTOR_POOL ( "RenderSession::_gBufferDescriptorPool" )
-    }
-
-    DestroyPresentFramebuffers ( renderer );
-
-    if ( _presentRenderPass != VK_NULL_HANDLE )
-    {
-        vkDestroyRenderPass ( device, _presentRenderPass, nullptr );
-        _presentRenderPass = VK_NULL_HANDLE;
-        AV_UNREGISTER_RENDER_PASS ( "RenderSession::_presentRenderPass" )
     }
 
     _geometryPass.Destroy ( renderer );
@@ -287,7 +208,6 @@ void RenderSession::Destroy ( android_vulkan::Renderer &renderer )
         AV_UNREGISTER_RENDER_PASS ( "RenderSession::_gBufferRenderPass" )
     }
 
-    DestroySyncPrimitives ( renderer );
     _gBuffer.Destroy ( renderer );
 }
 
@@ -694,226 +614,6 @@ bool RenderSession::CreateGBufferSlotMapper ( android_vulkan::Renderer &renderer
 
     vkUpdateDescriptorSets ( device, static_cast<uint32_t> ( std::size ( writeSets ) ), writeSets, 0U, nullptr );
     return true;
-}
-
-bool RenderSession::CreatePresentFramebuffers ( android_vulkan::Renderer &renderer )
-{
-    size_t const framebufferCount = renderer.GetPresentImageCount ();
-    _presentFramebuffers.reserve ( framebufferCount );
-    VkFramebuffer framebuffer = VK_NULL_HANDLE;
-
-    VkExtent2D const& resolution = renderer.GetSurfaceSize ();
-
-    VkFramebufferCreateInfo framebufferInfo;
-    framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-    framebufferInfo.pNext = nullptr;
-    framebufferInfo.flags = 0U;
-    framebufferInfo.renderPass = _presentRenderPass;
-    framebufferInfo.attachmentCount = 1U;
-    framebufferInfo.width = resolution.width;
-    framebufferInfo.height = resolution.height;
-    framebufferInfo.layers = 1U;
-
-    VkDevice device = renderer.GetDevice ();
-
-    for ( size_t i = 0U; i < framebufferCount; ++i )
-    {
-        framebufferInfo.pAttachments = &renderer.GetPresentImageView ( i );
-
-        bool const result = android_vulkan::Renderer::CheckVkResult (
-            vkCreateFramebuffer ( device, &framebufferInfo, nullptr, &framebuffer ),
-            "RenderSession::CreatePresentFramebuffers",
-            "Can't create a framebuffer"
-        );
-
-        if ( !result )
-            return false;
-
-        _presentFramebuffers.push_back ( framebuffer );
-        AV_REGISTER_FRAMEBUFFER ( "RenderSession::_presentFramebuffers" )
-    }
-
-    return true;
-}
-
-void RenderSession::DestroyPresentFramebuffers ( android_vulkan::Renderer &renderer )
-{
-    VkDevice device = renderer.GetDevice ();
-
-    for ( auto framebuffer : _presentFramebuffers )
-    {
-        vkDestroyFramebuffer ( device, framebuffer, nullptr );
-        AV_UNREGISTER_FRAMEBUFFER ( "RenderSession::_presentFramebuffers" )
-    }
-
-    _presentFramebuffers.clear ();
-}
-
-bool RenderSession::CreatePresentRenderPass ( android_vulkan::Renderer &renderer )
-{
-    VkAttachmentDescription const attachment[] =
-    {
-        {
-            .flags = 0U,
-            .format = renderer.GetSurfaceFormat (),
-            .samples = VK_SAMPLE_COUNT_1_BIT,
-            .loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
-            .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-            .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
-            .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-            .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-            .finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
-        }
-    };
-
-    constexpr static VkAttachmentReference const references[] =
-    {
-        {
-            .attachment = 0U,
-            .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
-        }
-    };
-
-    constexpr static VkSubpassDescription const subpasses[] =
-    {
-        {
-            .flags = 0U,
-            .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
-            .inputAttachmentCount = 0U,
-            .pInputAttachments = nullptr,
-            .colorAttachmentCount = static_cast<uint32_t> ( std::size ( references ) ),
-            .pColorAttachments = references,
-            .pResolveAttachments = nullptr,
-            .pDepthStencilAttachment = nullptr,
-            .preserveAttachmentCount = 0U,
-            .pPreserveAttachments = nullptr,
-        }
-    };
-
-    VkRenderPassCreateInfo const info
-    {
-        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0U,
-        .attachmentCount = static_cast<uint32_t> ( std::size ( attachment ) ),
-        .pAttachments = attachment,
-        .subpassCount = static_cast<uint32_t> ( std::size ( subpasses ) ),
-        .pSubpasses = subpasses,
-        .dependencyCount = 0U,
-        .pDependencies = nullptr
-    };
-
-    bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateRenderPass ( renderer.GetDevice (), &info, nullptr, &_presentRenderPass ),
-        "RenderSession::CreatePresentRenderPass",
-        "Can't create render pass"
-    );
-
-    if ( !result )
-        return false;
-
-    AV_REGISTER_RENDER_PASS ( "RenderSession::_presentRenderPass" )
-    return true;
-}
-
-bool RenderSession::CreateSyncPrimitives ( android_vulkan::Renderer &renderer )
-{
-    constexpr VkSemaphoreCreateInfo const semaphoreInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0U
-    };
-
-    VkDevice device = renderer.GetDevice ();
-
-    bool result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateSemaphore ( device, &semaphoreInfo, nullptr, &_presentRenderPassEndSemaphore ),
-        "RenderSession::CreateSyncPrimitives",
-        "Can't create render pass end semaphore"
-    );
-
-    if ( !result )
-        return false;
-
-    AV_REGISTER_SEMAPHORE ( "RenderSession::_presentRenderPassEndSemaphore" )
-
-    result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateSemaphore ( device, &semaphoreInfo, nullptr, &_presentRenderTargetAcquiredSemaphore ),
-        "RenderSession::CreateSyncPrimitives",
-        "Can't create render target acquired semaphore"
-    );
-
-    if ( !result )
-        return false;
-
-    AV_REGISTER_SEMAPHORE ( "RenderSession::_presentRenderTargetAcquiredSemaphore" )
-    return true;
-}
-
-void RenderSession::DestroySyncPrimitives ( android_vulkan::Renderer &renderer )
-{
-    VkDevice device = renderer.GetDevice ();
-
-    if ( _presentRenderTargetAcquiredSemaphore != VK_NULL_HANDLE )
-    {
-        vkDestroySemaphore ( device, _presentRenderTargetAcquiredSemaphore, nullptr );
-        _presentRenderTargetAcquiredSemaphore = VK_NULL_HANDLE;
-        AV_UNREGISTER_SEMAPHORE ( "RenderSession::_presentRenderTargetAcquiredSemaphore" )
-    }
-
-    if ( _presentRenderPassEndSemaphore == VK_NULL_HANDLE )
-        return;
-
-    vkDestroySemaphore ( device, _presentRenderPassEndSemaphore, nullptr );
-    _presentRenderPassEndSemaphore = VK_NULL_HANDLE;
-    AV_UNREGISTER_SEMAPHORE ( "RenderSession::_presentRenderPassEndSemaphore" )
-}
-
-void RenderSession::InitCommonStructures ()
-{
-    _gBufferImageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-    _gBufferImageBarrier.pNext = nullptr;
-    _gBufferImageBarrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-    _gBufferImageBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-    _gBufferImageBarrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-    _gBufferImageBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-    _gBufferImageBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    _gBufferImageBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    _gBufferImageBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    _gBufferImageBarrier.subresourceRange.baseMipLevel = 0U;
-    _gBufferImageBarrier.subresourceRange.baseArrayLayer = 0U;
-    _gBufferImageBarrier.subresourceRange.layerCount = 1U;
-
-    _presentClearValue.color.float32[ 0U ] = 0.0F;
-    _presentClearValue.color.float32[ 1U ] = 0.0F;
-    _presentClearValue.color.float32[ 2U ] = 0.0F;
-    _presentClearValue.color.float32[ 3U ] = 0.0F;
-
-    _presentBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    _presentBeginInfo.pNext = nullptr;
-    _presentBeginInfo.renderPass = _presentRenderPass;
-    _presentBeginInfo.clearValueCount = 1U;
-    _presentBeginInfo.pClearValues = &_presentClearValue;
-    _presentBeginInfo.renderArea.offset.x = 0;
-    _presentBeginInfo.renderArea.offset.y = 0;
-
-    constexpr static VkPipelineStageFlags const waitStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-
-    _submitInfoMain.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    _submitInfoMain.pNext = nullptr;
-    _submitInfoMain.waitSemaphoreCount = 1U;
-    _submitInfoMain.pWaitSemaphores = &_presentRenderTargetAcquiredSemaphore;
-    _submitInfoMain.pWaitDstStageMask = &waitStage;
-    _submitInfoMain.commandBufferCount = 1U;
-    _submitInfoMain.signalSemaphoreCount = 1U;
-    _submitInfoMain.pSignalSemaphores = &_presentRenderPassEndSemaphore;
-
-    _presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-    _presentInfo.pNext = nullptr;
-    _presentInfo.waitSemaphoreCount = 1U;
-    _presentInfo.pWaitSemaphores = &_presentRenderPassEndSemaphore;
-    _presentInfo.swapchainCount = 1U;
 }
 
 void RenderSession::SubmitOpaqueCall ( MeshRef &mesh,

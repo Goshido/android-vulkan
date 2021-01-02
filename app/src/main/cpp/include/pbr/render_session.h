@@ -6,8 +6,8 @@
 #include "gbuffer.h"
 #include "geometry_pass.h"
 #include "point_light_pass.h"
+#include "present_pass.h"
 #include "shadow_casters.h"
-#include "texture_present_program.h"
 
 
 namespace pbr {
@@ -25,10 +25,6 @@ enum class ePresentTarget : uint8_t
 class RenderSession final
 {
     private:
-        using LightInteract = std::pair<LightRef, ShadowCasters>;
-        using PointLightShadowmapInfo = std::pair<TextureCubeRef, VkFramebuffer>;
-
-    private:
         GXProjectionClipPlanes                  _frustum;
 
         GBuffer                                 _gBuffer;
@@ -39,24 +35,13 @@ class RenderSession final
         VkDescriptorSet                         _gBufferSlotMapper[ static_cast<size_t> ( ePresentTarget::TargetCount ) ];
 
         GeometryPass                            _geometryPass;
-
         size_t                                  _opaqueMeshCount;
+
         TexturePresentProgram                   _texturePresentProgram;
-
         PointLightPass                          _pointLightPass;
-
-        VkPresentInfoKHR                        _presentInfo;
-        VkRenderPassBeginInfo                   _presentBeginInfo;
-        VkClearValue                            _presentClearValue;
-        std::vector<VkFramebuffer>              _presentFramebuffers;
-        VkRenderPass                            _presentRenderPass;
-        VkSemaphore                             _presentRenderPassEndSemaphore;
-        VkSemaphore                             _presentRenderTargetAcquiredSemaphore;
-
+        PresentPass                             _presentPass;
         RenderSessionStats                      _renderSessionStats;
         SamplerManager                          _samplerManager;
-
-        VkSubmitInfo                            _submitInfoMain;
 
         GXMat4                                  _view;
         GXMat4                                  _viewProjection;
@@ -94,14 +79,6 @@ class RenderSession final
         [[nodiscard]] bool CreateGBufferFramebuffer ( android_vulkan::Renderer &renderer );
         [[nodiscard]] bool CreateGBufferRenderPass ( android_vulkan::Renderer &renderer );
         [[nodiscard]] bool CreateGBufferSlotMapper ( android_vulkan::Renderer &renderer );
-
-        [[nodiscard]] bool CreatePresentFramebuffers ( android_vulkan::Renderer &renderer );
-        void DestroyPresentFramebuffers ( android_vulkan::Renderer &renderer );
-
-        [[nodiscard]] bool CreatePresentRenderPass ( android_vulkan::Renderer &renderer );
-        [[nodiscard]] bool CreateSyncPrimitives ( android_vulkan::Renderer &renderer );
-        void DestroySyncPrimitives ( android_vulkan::Renderer &renderer );
-        void InitCommonStructures ();
 
         void SubmitOpaqueCall ( MeshRef &mesh,
             MaterialRef const &material,

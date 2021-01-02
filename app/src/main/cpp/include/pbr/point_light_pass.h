@@ -60,7 +60,7 @@ class PointLightPass final
         [[nodiscard]] bool CreateRenderPass ( android_vulkan::Renderer &renderer );
         void DestroyDescriptorPool ( android_vulkan::Renderer &renderer );
 
-        [[maybe_unused]] [[nodiscard]] bool GenerateShadowmaps ( VkDescriptorSet const* descriptorSets,
+        [[nodiscard]] bool GenerateShadowmaps ( VkDescriptorSet const* descriptorSets,
             android_vulkan::Renderer &renderer
         );
 

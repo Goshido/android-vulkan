@@ -47,7 +47,7 @@ bool PBRGame::OnInit ( android_vulkan::Renderer &renderer )
     resolution.width = resolution.width * RESOLUTION_SCALE_WIDTH / 100U;
     resolution.height = resolution.height * RESOLUTION_SCALE_HEIGHT / 100U;
 
-    if ( !_renderSession.Init ( renderer, resolution ) )
+    if ( !_renderSession.Init ( resolution, renderer ) )
     {
         OnDestroy ( renderer );
         return false;

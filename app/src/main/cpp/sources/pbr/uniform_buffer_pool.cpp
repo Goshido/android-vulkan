@@ -10,19 +10,19 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-constexpr static size_t const VRAM_PER_POOL_MEGABYTES = 64U;
-constexpr static size_t const VRAM_PER_POOL_BYTES = VRAM_PER_POOL_MEGABYTES * 1024U * 1024U;
+constexpr static size_t const MEGABYTES_TO_BYTES = 1024U * 1024U;
 
 // see https://vulkan.lunarg.com/doc/view/1.1.108.0/mac/chunked_spec/chap18.html#vkCmdUpdateBuffer
 [[maybe_unused]] constexpr static size_t const UPDATE_BUFFER_MAX_SIZE = 65536U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-UniformBufferPool::UniformBufferPool ():
+UniformBufferPool::UniformBufferPool ( eUniformPoolSize size ) noexcept:
     _gpuMemory ( VK_NULL_HANDLE ),
     _index ( 0U ),
     _itemSize ( 0U ),
-    _pool {}
+    _pool {},
+    _size ( MEGABYTES_TO_BYTES * static_cast<size_t> ( size ) )
 {
     // NOTHING
 }
@@ -84,7 +84,7 @@ bool UniformBufferPool::Init ( size_t itemSize, android_vulkan::Renderer &render
     assert ( itemSize <= UPDATE_BUFFER_MAX_SIZE );
 
     _itemSize = static_cast<uint32_t> ( itemSize );
-    size_t const itemCount = VRAM_PER_POOL_BYTES / itemSize;
+    size_t const itemCount = _size / itemSize;
     _pool.reserve ( itemCount );
 
     bool const result = renderer.TryAllocateMemory ( _gpuMemory,
@@ -155,7 +155,7 @@ bool UniformBufferPool::AllocateItem ( android_vulkan::Renderer &renderer )
     VkMemoryRequirements requirements;
     vkGetBufferMemoryRequirements ( device, buffer, &requirements );
 
-    assert ( ( _pool.size () + 1U ) * requirements.size <= VRAM_PER_POOL_BYTES );
+    assert ( ( _pool.size () + 1U ) * requirements.size <= _size );
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkBindBufferMemory ( device,

@@ -13,13 +13,14 @@ PointLightPass::PointLightPass () noexcept:
     _descriptorPool ( VK_NULL_HANDLE ),
     _fence ( VK_NULL_HANDLE ),
     _interacts {},
+    _lightup {},
     _program {},
     _renderCommandBuffer ( VK_NULL_HANDLE ),
     _renderPass ( VK_NULL_HANDLE ),
     _submitInfoRender {},
     _submitInfoTransfer {},
     _transferCommandBuffer ( VK_NULL_HANDLE ),
-    _uniformPool {},
+    _uniformPool ( eUniformPoolSize::Huge_64M ),
     _usedShadowmaps ( 0U )
 {
     // NOTHING
@@ -38,7 +39,10 @@ bool PointLightPass::Execute ( SceneData const &sceneData,
     return GenerateShadowmaps ( descriptorSetStorage.data (), renderer );
 }
 
-bool PointLightPass::Init ( android_vulkan::Renderer &renderer )
+bool PointLightPass::Init ( LightVolume const &lightVolume,
+    VkExtent2D const &resolution,
+    android_vulkan::Renderer &renderer
+)
 {
     if ( !CreateRenderPass ( renderer ) )
     {
@@ -46,13 +50,13 @@ bool PointLightPass::Init ( android_vulkan::Renderer &renderer )
         return false;
     }
 
-    constexpr VkExtent2D const resolution
+    constexpr VkExtent2D const shadowmapResolution
     {
         .width = SHADOWMAP_RESOLUTION,
         .height = SHADOWMAP_RESOLUTION
     };
 
-    if ( !_program.Init ( renderer, _renderPass, 0U, resolution ) )
+    if ( !_program.Init ( renderer, _renderPass, 0U, shadowmapResolution ) )
     {
         Destroy ( renderer );
         return false;
@@ -135,6 +139,19 @@ bool PointLightPass::Init ( android_vulkan::Renderer &renderer )
     _renderCommandBuffer = commandBuffers[ 0U ];
     _transferCommandBuffer = commandBuffers[ 1U ];
 
+    result = _lightup.Init ( _transferCommandBuffer,
+        lightVolume.GetRenderPass (),
+        LightVolume::GetLightupSubpass (),
+        resolution,
+        renderer
+    );
+
+    if ( !result )
+    {
+        Destroy ( renderer );
+        return false;
+    }
+
     constexpr static VkPipelineStageFlags const waitStage = VK_PIPELINE_STAGE_VERTEX_SHADER_BIT;
 
     _submitInfoRender.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -162,6 +179,7 @@ bool PointLightPass::Init ( android_vulkan::Renderer &renderer )
 
 void PointLightPass::Destroy ( android_vulkan::Renderer &renderer )
 {
+    _lightup.Destroy ( renderer );
     VkDevice device = renderer.GetDevice ();
 
     if ( !_shadowmaps.empty () )

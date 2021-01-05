@@ -120,24 +120,21 @@ bool RenderSession::End ( ePresentTarget target, double deltaTime, android_vulka
     return true;
 }
 
-bool RenderSession::Init ( android_vulkan::Renderer &renderer, VkExtent2D const &resolution )
+bool RenderSession::Init ( VkExtent2D const &resolution, android_vulkan::Renderer &renderer )
 {
     if ( !_gBuffer.Init ( resolution, renderer ) )
-        return false;
-
-    if ( !_lightVolume.Init ( _gBuffer, renderer ) )
     {
         Destroy ( renderer );
         return false;
     }
 
-    if ( !CreateGBufferRenderPass ( renderer ) )
+    if ( !CreateGBufferRenderPass ( renderer ) || !CreateGBufferFramebuffer ( renderer ) )
     {
         Destroy ( renderer );
         return false;
     }
 
-    if ( !CreateGBufferFramebuffer ( renderer ) )
+    if ( !_lightVolume.Init ( _gBuffer, _gBufferFramebuffer, renderer ) )
     {
         Destroy ( renderer );
         return false;
@@ -149,13 +146,7 @@ bool RenderSession::Init ( android_vulkan::Renderer &renderer, VkExtent2D const 
         return false;
     }
 
-    if ( !_pointLightPass.Init ( renderer ) )
-    {
-        Destroy ( renderer );
-        return false;
-    }
-
-    if ( !_presentPass.Init ( renderer ) )
+    if ( !_pointLightPass.Init ( _lightVolume, resolution, renderer ) || !_presentPass.Init ( renderer ) )
     {
         Destroy ( renderer );
         return false;
@@ -200,6 +191,7 @@ void RenderSession::Destroy ( android_vulkan::Renderer &renderer )
     }
 
     _geometryPass.Destroy ( renderer );
+    _lightVolume.Destroy ( renderer );
 
     if ( _gBufferFramebuffer != VK_NULL_HANDLE )
     {
@@ -215,7 +207,6 @@ void RenderSession::Destroy ( android_vulkan::Renderer &renderer )
         AV_UNREGISTER_RENDER_PASS ( "RenderSession::_gBufferRenderPass" )
     }
 
-    _lightVolume.Destroy ( renderer );
     _gBuffer.Destroy ( renderer );
 }
 

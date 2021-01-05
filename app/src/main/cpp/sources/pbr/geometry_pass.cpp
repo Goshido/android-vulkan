@@ -25,7 +25,7 @@ GeometryPass::GeometryPass () noexcept:
     _sceneData {},
     _submitInfoTransfer {},
     _transferCommandBuffer ( VK_NULL_HANDLE ),
-    _uniformPool {}
+    _uniformPool ( eUniformPoolSize::Huge_64M )
 {
     // NOTHING
 }

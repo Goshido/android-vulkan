@@ -5,7 +5,6 @@
 #include <GXCommon/GXMath.h>
 #include "gbuffer.h"
 #include "geometry_pass.h"
-#include "light_volume.h"
 #include "point_light_pass.h"
 #include "present_pass.h"
 #include "shadow_casters.h"
@@ -62,7 +61,7 @@ class RenderSession final
         void Begin ( GXMat4 const &view, GXMat4 const &projection );
         [[nodiscard]] bool End ( ePresentTarget target, double deltaTime, android_vulkan::Renderer &renderer );
 
-        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, VkExtent2D const &resolution );
+        [[nodiscard]] bool Init ( VkExtent2D const &resolution, android_vulkan::Renderer &renderer );
         void Destroy ( android_vulkan::Renderer &renderer );
 
         void SubmitMesh ( MeshRef &mesh,

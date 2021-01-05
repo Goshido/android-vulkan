@@ -12,8 +12,9 @@ namespace pbr {
 class LightVolume final
 {
     private:
-        LightVolumeProgram      _program;
-        VkRenderPass            _renderPass;
+        LightVolumeProgram          _program;
+        VkRenderPass                _renderPass;
+        VkRenderPassBeginInfo       _renderPassInfo;
 
     public:
         LightVolume () noexcept;
@@ -32,11 +33,17 @@ class LightVolume final
             android_vulkan::Renderer &renderer
         );
 
-        [[nodiscard]] bool Init ( GBuffer &gBuffer, android_vulkan::Renderer &renderer );
+        [[nodiscard]] bool Init ( GBuffer &gBuffer, VkFramebuffer framebuffer, android_vulkan::Renderer &renderer );
         void Destroy ( android_vulkan::Renderer &renderer );
 
+        [[nodiscard]] VkRenderPass GetRenderPass () const;
+        [[nodiscard]] static uint32_t GetLightupSubpass ();
+
     private:
-        [[nodiscard]] bool CreateRenderPass ( GBuffer &gBuffer, android_vulkan::Renderer &renderer );
+        [[nodiscard]] bool CreateRenderPass ( GBuffer &gBuffer,
+            VkFramebuffer framebuffer,
+            android_vulkan::Renderer &renderer
+        );
 };
 
 } // namespace pbr

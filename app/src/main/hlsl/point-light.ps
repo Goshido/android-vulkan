@@ -1,0 +1,191 @@
+#define EPSILON         1.0e-3H
+#define MAXIMUM_IOR     5.0H
+#define PI              3.141592H
+#define INVERSE_PI      0.31830H
+
+[[vk::binding ( 0, 0 )]]
+[[vk::input_attachment_index (0)]]
+SubpassInput<float4>        g_albedo;
+
+[[vk::binding ( 1, 0 )]]
+[[vk::input_attachment_index (2)]]
+SubpassInput<float4>        g_normal;
+
+[[vk::binding ( 2, 0 )]]
+[[vk::input_attachment_index (3)]]
+SubpassInput<float4>        g_params;
+
+[[vk::binding ( 3, 0 )]]
+[[vk::input_attachment_index (4)]]
+SubpassInput<float>         g_depth;
+
+[[vk::binding ( 4, 0 )]]
+cbuffer ViewData:                           register ( b0 )
+{
+    matrix                  _toView;
+
+    // Optimiztion:
+    // must be equal: 2.0F / resolution.
+    float2                  _invResolutionFactor;
+    float2                  _padding0_0;
+};
+
+[[vk::binding ( 0, 1 )]]
+TextureCube<float>          g_shadowmap:    register ( t0 );
+
+[[vk::binding ( 1, 1 )]]
+SamplerComparisonState      g_sampler:      register ( s0 );
+
+[[vk::binding ( 2, 1 )]]
+cbuffer LightData:                          register ( b1 )
+{
+    matrix                  _projection;
+    matrix                  _shadowmapTransform;
+
+    float3                  _lightLocationView;
+    float                   _padding1_0;
+
+    half3                   _hue;
+    half                    _intensity;
+
+    half3                   _toLightDirectionView;
+    half                    _padding1_1;
+};
+
+struct InputData
+{
+    linear float4           _pixel:     SV_Position;
+};
+
+struct OutputData
+{
+    [[vk::location (1)]]
+    float4                  _color:     SV_Target1;
+};
+
+//----------------------------------------------------------------------------------------------------------------------
+
+float3 RestoreLocationView ( in float4 cvv )
+{
+    const float4 v = mul ( _toView, cvv );
+    return v.xyz * ( 1.0F / v.z );
+}
+
+half3 RestoreNormalView ()
+{
+    return (half3)( g_normal.SubpassLoad ().xyz * 2.0F - 1.0F );
+}
+
+half GGX ( in half value )
+{
+    return value > 0.0H ? 1.0H : 0.0H;
+}
+
+half GGXSchlick ( in half3 vectorA, in half3 vectorB, in half roughness )
+{
+    const half alpha = max ( 0.0H, dot ( vectorA, vectorB ) );
+    return alpha / ( alpha / ( 1.0H - roughness ) + roughness );
+}
+
+half3 GetAlbedo ()
+{
+    return (half3)g_albedo.SubpassLoad ().xyz;
+}
+
+float GetDepth ()
+{
+    return g_depth.SubpassLoad ().x;
+}
+
+half GetDistribution ( in half3 normalView, in half3 halfVectorView, in half roughness )
+{
+    const half alpha = max ( 0.0H, dot ( normalView, halfVectorView ) );
+    const half betta = roughness * roughness;
+    const half gamma = alpha * alpha;
+    const half zeta = alpha * betta + 1.0H - alpha;
+
+    return ( betta * GGX ( alpha ) ) / ( PI * zeta * zeta );
+}
+
+half GetFresnel ( in half ior, in half3 normalView, in half3 viewDirectionView )
+{
+    const half alpha = ( 1.0H - ior ) / ( 1.0H + ior );
+    const half betta = alpha * alpha;
+    const half gamma = pow ( 1.0H - max ( 0.0H, dot ( normalView, viewDirectionView ) ), 5.0H );
+
+    return betta + ( 1.0H - betta ) * gamma;
+}
+
+half GetGeometryAttenuation ( in half3 viewDirectionView,
+    in half3 normalView,
+    in half3 lightDirectionView,
+    in half roughness
+)
+{
+    return GGXSchlick ( normalView, viewDirectionView, roughness ) +
+        GGXSchlick ( normalView, lightDirectionView, roughness );
+}
+
+void GetParams ( out half roughness, out half ior, out half specularIntencity, out half metallic )
+{
+    const half4 paramSample = (half4)g_params.SubpassLoad ();
+
+    roughness = paramSample.x + EPSILON;
+    ior = paramSample.y * MAXIMUM_IOR + EPSILON;
+    specularIntencity = paramSample.z + EPSILON;
+    metallic = paramSample.w;
+}
+
+half GetShadowFactor ( in float3 toLightView )
+{
+    const float3 selector = abs ( toLightView );
+    const float z = max ( selector.x, max ( selector.y, selector.z ) );
+    const float4 cvv = mul ( _projection, float4 ( 0.0F, 0.0F, z, 1.0F ) );
+
+    return (half)g_shadowmap.SampleCmpLevelZero ( g_sampler, toLightView, cvv.z / cvv.w );
+}
+
+half3 GetSpecularColor ( in half matallic, in half3 albedo )
+{
+    return lerp ( _hue, albedo, (half3)matallic );
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+OutputData PS ( in InputData inputData )
+{
+    const float4 locationCVV = float4 ( inputData._pixel.xy * _invResolutionFactor - 1.0F, GetDepth (), 1.0F );
+    const float3 locationView = RestoreLocationView ( locationCVV );
+
+    const float3 toLightView = _lightLocationView - locationView;
+    const half shadowFactor = GetShadowFactor ( toLightView );
+
+    const half3 viewDirectionView = -normalize ( (half3)locationView );
+    const half3 halfVectorView = normalize ( _toLightDirectionView + viewDirectionView );
+    const half3 normalView = RestoreNormalView ();
+
+    half roughness;
+    half ior;
+    half specularIntensity;
+    half metallic;
+    GetParams ( roughness, ior, specularIntensity, metallic );
+
+    const half d = GetDistribution ( normalView, halfVectorView, roughness );
+    const half f = GetFresnel ( ior, normalView, viewDirectionView );
+    const half ga = GetGeometryAttenuation ( viewDirectionView, normalView, _toLightDirectionView, roughness );
+
+    const half3 albedo = GetAlbedo ();
+    const half3 specularColor = GetSpecularColor ( metallic, albedo );
+    const half3 hrdColor = _hue * _intensity;
+
+    const half alpha = dot ( normalView, _toLightDirectionView );
+    const half betta = dot ( normalView, viewDirectionView );
+
+    const half3 diffuse = albedo * hrdColor * INVERSE_PI * ( 1.0H - specularIntensity ) * max ( 0.0H, alpha );
+    const half3 specular = specularColor * _intensity * specularIntensity * ( d * f * ga ) / ( 4.0H * alpha * alpha );
+
+    OutputData result;
+    result._color = float4 ( (float3)( ( diffuse + specular ) * shadowFactor ), 1.0F );
+
+    return result;
+}

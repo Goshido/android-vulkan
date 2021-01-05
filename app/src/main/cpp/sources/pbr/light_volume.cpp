@@ -5,7 +5,8 @@ namespace pbr {
 
 LightVolume::LightVolume () noexcept:
     _program {},
-    _renderPass ( VK_NULL_HANDLE )
+    _renderPass ( VK_NULL_HANDLE ),
+    _renderPassInfo {}
 {
     // NOTHING
 }
@@ -20,12 +21,19 @@ LightVolume::LightVolume () noexcept:
     return false;
 }
 
-bool LightVolume::Init ( GBuffer &gBuffer, android_vulkan::Renderer &renderer )
+bool LightVolume::Init ( GBuffer &gBuffer, VkFramebuffer framebuffer, android_vulkan::Renderer &renderer )
 {
-    if ( !CreateRenderPass ( gBuffer, renderer ) )
+    if ( !CreateRenderPass ( gBuffer, framebuffer, renderer ) )
+    {
+        Destroy ( renderer );
         return false;
+    }
 
-    return _program.Init ( renderer, _renderPass, 0U, gBuffer.GetResolution () );
+    if ( _program.Init ( renderer, _renderPass, 0U, gBuffer.GetResolution () ) )
+        return true;
+
+    Destroy ( renderer );
+    return false;
 }
 
 void LightVolume::Destroy ( android_vulkan::Renderer &renderer )
@@ -40,7 +48,17 @@ void LightVolume::Destroy ( android_vulkan::Renderer &renderer )
     AV_UNREGISTER_RENDER_PASS ( "LightVolume::_renderPass" )
 }
 
-bool LightVolume::CreateRenderPass ( GBuffer &gBuffer, android_vulkan::Renderer &renderer )
+VkRenderPass LightVolume::GetRenderPass () const
+{
+    return _renderPass;
+}
+
+uint32_t LightVolume::GetLightupSubpass ()
+{
+    return 1U;
+}
+
+bool LightVolume::CreateRenderPass ( GBuffer &gBuffer, VkFramebuffer framebuffer, android_vulkan::Renderer &renderer )
 {
     VkAttachmentDescription const attachments[]
     {
@@ -118,9 +136,27 @@ bool LightVolume::CreateRenderPass ( GBuffer &gBuffer, android_vulkan::Renderer 
 
     constexpr static VkAttachmentReference const colorReferences[] =
     {
+        // #0: albedo
+        {
+            .attachment = 0U,
+            .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+        },
+
         // #1: HDR accumulator
         {
             .attachment = 1U,
+            .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+        },
+
+        // #2: normal
+        {
+            .attachment = 2U,
+            .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+        },
+
+        // #3: params
+        {
+            .attachment = 3U,
             .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
         }
     };
@@ -217,6 +253,70 @@ bool LightVolume::CreateRenderPass ( GBuffer &gBuffer, android_vulkan::Renderer 
         return false;
 
     AV_REGISTER_RENDER_PASS ( "LightVolume::_renderPass" )
+
+    constexpr static VkClearValue const clearValues[] =
+    {
+        // albedo - not used actually
+        {
+            .color
+            {
+                .float32 = { 0.0F, 0.0F, 0.0F, 0.0F }
+            }
+        },
+
+        // emission - not used actually
+        {
+            .color
+            {
+                .float32 = { 0.0F, 0.0F, 0.0F, 0.0F }
+            }
+        },
+
+        // normal - not used actually
+        {
+            .color
+            {
+                .float32 = { 0.5F, 0.5F, 0.5F, 0.0F }
+            }
+        },
+
+        // param - not used actually
+        {
+            .color
+            {
+                .float32 = { 0.5F, 0.5F, 0.5F, 0.0F }
+            }
+        },
+
+        // depth|stencil - but this will be used, obviously
+        {
+            .depthStencil
+            {
+                .depth = 1.0F,
+                .stencil = LightVolumeProgram::GetStencilInitialValue ()
+            }
+        }
+    };
+
+    _renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    _renderPassInfo.pNext = nullptr;
+    _renderPassInfo.renderPass = _renderPass;
+    _renderPassInfo.framebuffer = framebuffer;
+
+    _renderPassInfo.renderArea =
+    {
+        .offset
+        {
+            .x = 0,
+            .y = 0
+        },
+
+        .extent = gBuffer.GetResolution ()
+    };
+
+    _renderPassInfo.clearValueCount = static_cast<uint32_t> ( std::size ( clearValues ) );
+    _renderPassInfo.pClearValues = clearValues;
+
     return true;
 }
 

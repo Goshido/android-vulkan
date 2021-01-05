@@ -2,6 +2,8 @@
 #define PBR_POINT_LIGHT_PASS_H
 
 
+#include "light_volume.h"
+#include "point_light_lightup.h"
 #include "point_light_shadowmap_generator_program.h"
 #include "scene_data.h"
 #include "shadow_casters.h"
@@ -21,6 +23,7 @@ class PointLightPass final
         VkDescriptorPool                        _descriptorPool;
         VkFence                                 _fence;
         std::vector<Interact>                   _interacts;
+        PointLightLightup                       _lightup;
         PointLightShadowmapGeneratorProgram     _program;
         VkCommandBuffer                         _renderCommandBuffer;
         VkRenderPass                            _renderPass;
@@ -47,7 +50,11 @@ class PointLightPass final
             android_vulkan::Renderer &renderer
         );
 
-        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer );
+        [[nodiscard]] bool Init ( LightVolume const &lightVolume,
+            VkExtent2D const &resolution,
+            android_vulkan::Renderer &renderer
+        );
+
         void Destroy ( android_vulkan::Renderer &renderer );
 
         void Reset ();

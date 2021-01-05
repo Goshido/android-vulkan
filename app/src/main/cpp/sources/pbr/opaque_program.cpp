@@ -252,22 +252,24 @@ bool OpaqueProgram::InitLayout ( VkPipelineLayout &layout, android_vulkan::Rende
     if ( !_textureLayout.Init ( renderer ) )
         return false;
 
-    VkDescriptorSetLayout layouts[] =
+    VkDescriptorSetLayout const layouts[] =
     {
         _textureLayout.GetLayout (),
         _instanceLayout.GetLayout ()
     };
 
-    VkPipelineLayoutCreateInfo layoutInfo;
-    layoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    layoutInfo.pNext = nullptr;
-    layoutInfo.flags = 0U;
-    layoutInfo.setLayoutCount = static_cast<uint32_t> ( std::size ( layouts ) );
-    layoutInfo.pSetLayouts = layouts;
-    layoutInfo.pushConstantRangeCount = 0U;
-    layoutInfo.pPushConstantRanges = nullptr;
+    VkPipelineLayoutCreateInfo const layoutInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .setLayoutCount = static_cast<uint32_t> ( std::size ( layouts ) ),
+        .pSetLayouts = layouts,
+        .pushConstantRangeCount = 0U,
+        .pPushConstantRanges = nullptr
+    };
 
-    const bool result = android_vulkan::Renderer::CheckVkResult (
+    bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreatePipelineLayout ( renderer.GetDevice (), &layoutInfo, nullptr, &_pipelineLayout ),
         "OpaqueProgram::InitLayout",
         "Can't create pipeline layout"

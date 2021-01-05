@@ -16,8 +16,8 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-constexpr static const char* VERTEX_SHADER_ENTRY_POINT = "VS";
-constexpr static const char* FRAGMENT_SHADER_ENTRY_POINT = "PS";
+constexpr static char const* VERTEX_SHADER_ENTRY_POINT = "VS";
+constexpr static char const* FRAGMENT_SHADER_ENTRY_POINT = "PS";
 
 //----------------------------------------------------------------------------------------------------------------------
 

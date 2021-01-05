@@ -7,6 +7,15 @@
 
 namespace pbr {
 
+enum class eUniformPoolSize : size_t
+{
+    Tiny_4M [[maybe_unused]] = 4U,
+    Small_8M [[maybe_unused]] = 8U,
+    Medium_16M [[maybe_unused]] = 16U,
+    Big_32M [[maybe_unused]] = 32U,
+    Huge_64M = 64U
+};
+
 // Note the method is NOT thread safe.
 class UniformBufferPool final
 {
@@ -15,15 +24,19 @@ class UniformBufferPool final
         size_t                      _index;
         VkDeviceSize                _itemSize;
         std::vector<VkBuffer>       _pool;
+        size_t                      _size;
 
     public:
-        UniformBufferPool ();
+        UniformBufferPool () = delete;
 
-        UniformBufferPool ( UniformBufferPool const &other ) = delete;
-        UniformBufferPool& operator = ( UniformBufferPool const &other ) = delete;
+        UniformBufferPool ( UniformBufferPool const & ) = delete;
+        UniformBufferPool& operator = ( UniformBufferPool const & ) = delete;
 
-        UniformBufferPool ( UniformBufferPool &&other ) = delete;
-        UniformBufferPool& operator = ( UniformBufferPool &&other ) = delete;
+        UniformBufferPool ( UniformBufferPool && ) = delete;
+        UniformBufferPool& operator = ( UniformBufferPool && ) = delete;
+
+        explicit UniformBufferPool ( eUniformPoolSize size ) noexcept;
+        ~UniformBufferPool () = default;
 
         // The method acquires one uniform buffer from the pool, inits it with data and returns the buffer to the user.
         [[nodiscard]] VkBuffer Acquire ( VkCommandBuffer commandBuffer,

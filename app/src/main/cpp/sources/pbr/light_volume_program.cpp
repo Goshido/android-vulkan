@@ -1,5 +1,4 @@
 #include <pbr/light_volume_program.h>
-#include <vertex_info.h>
 
 
 namespace pbr {
@@ -328,13 +327,13 @@ VkPipelineVertexInputStateCreateInfo const* LightVolumeProgram::InitVertexInputI
 ) const
 {
     binds->binding = 0U;
-    binds->stride = static_cast<uint32_t> ( sizeof ( android_vulkan::VertexInfo ) );
+    binds->stride = static_cast<uint32_t> ( sizeof ( GXVec3 ) );
     binds->inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
     attributes->location = 0U;
     attributes->binding = 0U;
     attributes->format = VK_FORMAT_R32G32B32_SFLOAT;
-    attributes->offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _vertex ) );
+    attributes->offset = 0U;
 
     info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
     info.pNext = nullptr;

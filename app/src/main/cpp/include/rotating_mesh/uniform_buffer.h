@@ -4,6 +4,7 @@
 
 #include <renderer.h>
 
+
 namespace rotating_mesh {
 
 // This class wraps Vulkan creation and update routines of a uniform buffer.

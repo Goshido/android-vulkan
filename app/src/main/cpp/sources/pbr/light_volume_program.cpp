@@ -1,34 +1,29 @@
-#include <pbr/opaque_program.h>
+#include <pbr/light_volume_program.h>
 #include <vertex_info.h>
 
 
 namespace pbr {
 
-constexpr static const char* VERTEX_SHADER = "shaders/common-opaque-vs.spv";
-constexpr static const char* FRAGMENT_SHADER = "shaders/opaque-ps.spv";
-
-constexpr static const size_t COLOR_RENDER_TARGET_COUNT = 4U;
-constexpr static const size_t STAGE_COUNT = 2U;
-constexpr static const size_t VERTEX_ATTRIBUTE_COUNT = 5U;
+constexpr static const uint32_t COLOR_RENDER_TARGET_COUNT = 0U;
+constexpr static const size_t STAGE_COUNT = 1U;
+constexpr static const size_t VERTEX_ATTRIBUTE_COUNT = 1U;
+constexpr static const char* VERTEX_SHADER = "shaders/light-volume-vs.spv";
 
 //----------------------------------------------------------------------------------------------------------------------
 
-OpaqueProgram::OpaqueProgram () noexcept:
-    Program ( "OpaqueProgram" ),
-    _instanceLayout {},
-    _textureLayout {}
+LightVolumeProgram::LightVolumeProgram () noexcept:
+    Program ( "pbr::LightVolumeProgram" )
 {
     // NOTHING
 }
 
-bool OpaqueProgram::Init ( android_vulkan::Renderer &renderer,
+bool LightVolumeProgram::Init ( android_vulkan::Renderer &renderer,
     VkRenderPass renderPass,
     uint32_t subpass,
     VkExtent2D const &viewport
 )
 {
     VkPipelineInputAssemblyStateCreateInfo assemblyInfo;
-    VkPipelineColorBlendAttachmentState attachmentInfo[ COLOR_RENDER_TARGET_COUNT ];
     VkVertexInputAttributeDescription attributeDescriptions[ VERTEX_ATTRIBUTE_COUNT ];
     VkVertexInputBindingDescription bindingDescription;
     VkPipelineColorBlendStateCreateInfo blendInfo;
@@ -45,7 +40,7 @@ bool OpaqueProgram::Init ( android_vulkan::Renderer &renderer,
     pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
     pipelineInfo.pNext = nullptr;
     pipelineInfo.flags = 0U;
-    pipelineInfo.stageCount = static_cast<uint32_t> ( std::size ( stageInfo ) );
+    pipelineInfo.stageCount = std::size ( stageInfo );
 
     if ( !InitShaderInfo ( pipelineInfo.pStages, stageInfo, renderer ) )
     {
@@ -64,7 +59,7 @@ bool OpaqueProgram::Init ( android_vulkan::Renderer &renderer,
     pipelineInfo.pRasterizationState = InitRasterizationInfo ( rasterizationInfo );
     pipelineInfo.pMultisampleState = InitMultisampleInfo ( multisampleInfo );
     pipelineInfo.pDepthStencilState = InitDepthStencilInfo ( depthStencilInfo );
-    pipelineInfo.pColorBlendState = InitColorBlendInfo ( blendInfo, attachmentInfo );
+    pipelineInfo.pColorBlendState = InitColorBlendInfo ( blendInfo, nullptr );
     pipelineInfo.pDynamicState = nullptr;
 
     if ( !InitLayout ( pipelineInfo.layout, renderer ) )
@@ -80,7 +75,7 @@ bool OpaqueProgram::Init ( android_vulkan::Renderer &renderer,
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateGraphicsPipelines ( renderer.GetDevice (), VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
-        "OpaqueProgram::Init",
+        "LightVolumeProgram::Init",
         "Can't create pipeline"
     );
 
@@ -90,36 +85,26 @@ bool OpaqueProgram::Init ( android_vulkan::Renderer &renderer,
         return false;
     }
 
-    AV_REGISTER_PIPELINE ( "OpaqueProgram::_pipeline" )
+    AV_REGISTER_PIPELINE ( "LightVolumeProgram::_pipeline" )
     return true;
 }
 
-void OpaqueProgram::Destroy ( android_vulkan::Renderer &renderer )
+void LightVolumeProgram::Destroy ( android_vulkan::Renderer &renderer )
 {
     VkDevice device = renderer.GetDevice ();
-
-    if ( _pipelineLayout != VK_NULL_HANDLE )
-    {
-        vkDestroyPipelineLayout ( device, _pipelineLayout, nullptr );
-        _pipelineLayout = VK_NULL_HANDLE;
-        AV_UNREGISTER_PIPELINE_LAYOUT ( "OpaqueProgram::_pipelineLayout" )
-    }
-
-    _textureLayout.Destroy ( renderer );
-    _instanceLayout.Destroy ( renderer );
 
     if ( _pipeline != VK_NULL_HANDLE )
     {
         vkDestroyPipeline ( device, _pipeline, nullptr );
         _pipeline = VK_NULL_HANDLE;
-        AV_UNREGISTER_PIPELINE ( "OpaqueProgram::_pipeline" )
+        AV_UNREGISTER_PIPELINE ( "LightVolumeProgram::_pipeline" )
     }
 
-    if ( _fragmentShader != VK_NULL_HANDLE )
+    if ( _pipelineLayout != VK_NULL_HANDLE )
     {
-        vkDestroyShaderModule ( device, _fragmentShader, nullptr );
-        _fragmentShader = VK_NULL_HANDLE;
-        AV_UNREGISTER_SHADER_MODULE ( "OpaqueProgram::_fragmentShader" )
+        vkDestroyPipelineLayout ( device, _pipelineLayout, nullptr );
+        _pipelineLayout = VK_NULL_HANDLE;
+        AV_UNREGISTER_PIPELINE_LAYOUT ( "LightVolumeProgram::_pipelineLayout" )
     }
 
     if ( _vertexShader == VK_NULL_HANDLE )
@@ -127,83 +112,33 @@ void OpaqueProgram::Destroy ( android_vulkan::Renderer &renderer )
 
     vkDestroyShaderModule ( device, _vertexShader, nullptr );
     _vertexShader = VK_NULL_HANDLE;
-    AV_UNREGISTER_SHADER_MODULE ( "OpaqueProgram::_vertexShader" )
+    AV_UNREGISTER_SHADER_MODULE ( "LightVolumeProgram::_vertexShader" )
 }
 
-std::vector<DescriptorSetInfo> const& OpaqueProgram::GetResourceInfo () const
+std::vector<DescriptorSetInfo> const& LightVolumeProgram::GetResourceInfo () const
 {
-    static std::vector<DescriptorSetInfo> const info
-    {
-        DescriptorSetInfo
-        {
-            ProgramResource ( VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 5U ),
-            ProgramResource ( VK_DESCRIPTOR_TYPE_SAMPLER, 5U )
-        },
-
-        DescriptorSetInfo
-        {
-            ProgramResource ( VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1U )
-        }
-    };
-
-    return info;
+    static std::vector<DescriptorSetInfo> const null;
+    return null;
 }
 
-void OpaqueProgram::SetDescriptorSet ( VkCommandBuffer commandBuffer,
-    VkDescriptorSet const* sets,
-    uint32_t startIndex,
-    uint32_t count
-) const
-{
-    vkCmdBindDescriptorSets ( commandBuffer,
-        VK_PIPELINE_BIND_POINT_GRAPHICS,
-        _pipelineLayout,
-        startIndex,
-        count,
-        sets,
-        0U,
-        nullptr
-    );
-}
-
-VkPipelineColorBlendStateCreateInfo const* OpaqueProgram::InitColorBlendInfo (
+VkPipelineColorBlendStateCreateInfo const* LightVolumeProgram::InitColorBlendInfo (
     VkPipelineColorBlendStateCreateInfo &info,
     VkPipelineColorBlendAttachmentState* attachments
 ) const
 {
-    VkPipelineColorBlendAttachmentState& albedo = attachments[ 0U ];
-    albedo.blendEnable = VK_FALSE;
-    albedo.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
-    albedo.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
-    albedo.colorBlendOp = VK_BLEND_OP_ADD;
-    albedo.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-    albedo.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-    albedo.alphaBlendOp = VK_BLEND_OP_ADD;
-
-    albedo.colorWriteMask =
-        AV_VK_FLAG ( VK_COLOR_COMPONENT_R_BIT ) |
-        AV_VK_FLAG ( VK_COLOR_COMPONENT_G_BIT ) |
-        AV_VK_FLAG ( VK_COLOR_COMPONENT_B_BIT ) |
-        AV_VK_FLAG ( VK_COLOR_COMPONENT_A_BIT );
-
-    constexpr auto const limit = static_cast<ptrdiff_t const> ( COLOR_RENDER_TARGET_COUNT );
-
-    for ( ptrdiff_t i = 1; i < limit; ++i )
-        memcpy ( attachments + i, &albedo, sizeof ( albedo ) );
-
     info.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
     info.pNext = nullptr;
     info.flags = 0U;
     info.logicOpEnable = VK_FALSE;
     info.logicOp = VK_LOGIC_OP_NO_OP;
-    info.attachmentCount = static_cast<uint32_t> ( COLOR_RENDER_TARGET_COUNT );
+    info.attachmentCount = COLOR_RENDER_TARGET_COUNT;
     info.pAttachments = attachments;
     memset ( info.blendConstants, 0, sizeof ( info.blendConstants ) );
 
     return &info;
 }
 
-VkPipelineDepthStencilStateCreateInfo const* OpaqueProgram::InitDepthStencilInfo (
+VkPipelineDepthStencilStateCreateInfo const* LightVolumeProgram::InitDepthStencilInfo (
     VkPipelineDepthStencilStateCreateInfo &info
 ) const
 {
@@ -211,19 +146,32 @@ VkPipelineDepthStencilStateCreateInfo const* OpaqueProgram::InitDepthStencilInfo
     info.pNext = nullptr;
     info.flags = 0U;
     info.depthTestEnable = VK_TRUE;
-    info.depthWriteEnable = VK_TRUE;
-    info.depthCompareOp = VK_COMPARE_OP_LESS;
+    info.depthWriteEnable = VK_FALSE;
+    info.depthCompareOp = VK_COMPARE_OP_GREATER;
     info.depthBoundsTestEnable = VK_FALSE;
-    info.stencilTestEnable = VK_FALSE;
+    info.stencilTestEnable = VK_TRUE;
 
-    info.front.failOp = VK_STENCIL_OP_KEEP;
-    info.front.passOp = VK_STENCIL_OP_KEEP;
-    info.front.depthFailOp = VK_STENCIL_OP_KEEP;
-    info.front.compareOp = VK_COMPARE_OP_ALWAYS;
-    info.front.compareMask = UINT32_MAX;
-    info.front.writeMask = 0x00U;
-    info.front.reference = UINT32_MAX;
-    memcpy ( &info.back, &info.front, sizeof ( info.back ) );
+    info.front =
+    {
+        .failOp = VK_STENCIL_OP_KEEP,
+        .passOp = VK_STENCIL_OP_INCREMENT_AND_WRAP,
+        .depthFailOp = VK_STENCIL_OP_KEEP,
+        .compareOp = VK_COMPARE_OP_ALWAYS,
+        .compareMask = UINT32_MAX,
+        .writeMask = UINT32_MAX,
+        .reference = 0U
+    };
+
+    info.back =
+    {
+        .failOp = VK_STENCIL_OP_KEEP,
+        .passOp = VK_STENCIL_OP_DECREMENT_AND_WRAP,
+        .depthFailOp = VK_STENCIL_OP_KEEP,
+        .compareOp = VK_COMPARE_OP_ALWAYS,
+        .compareMask = UINT32_MAX,
+        .writeMask = UINT32_MAX,
+        .reference = 0U
+    };
 
     info.minDepthBounds = 0.0F;
     info.maxDepthBounds = 1.0F;
@@ -231,7 +179,7 @@ VkPipelineDepthStencilStateCreateInfo const* OpaqueProgram::InitDepthStencilInfo
     return &info;
 }
 
-VkPipelineInputAssemblyStateCreateInfo const* OpaqueProgram::InitInputAssemblyInfo (
+VkPipelineInputAssemblyStateCreateInfo const* LightVolumeProgram::InitInputAssemblyInfo (
     VkPipelineInputAssemblyStateCreateInfo &info
 ) const
 {
@@ -244,44 +192,41 @@ VkPipelineInputAssemblyStateCreateInfo const* OpaqueProgram::InitInputAssemblyIn
     return &info;
 }
 
-bool OpaqueProgram::InitLayout ( VkPipelineLayout &layout, android_vulkan::Renderer &renderer )
+bool LightVolumeProgram::InitLayout ( VkPipelineLayout &layout, android_vulkan::Renderer &renderer )
 {
-    if ( !_instanceLayout.Init ( renderer ) )
-        return false;
-
-    if ( !_textureLayout.Init ( renderer ) )
-        return false;
-
-    VkDescriptorSetLayout layouts[] =
+    constexpr static VkPushConstantRange const pushConstantRanges[]
     {
-        _textureLayout.GetLayout (),
-        _instanceLayout.GetLayout ()
+        {
+            .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
+            .offset = 0U,
+            .size = static_cast<uint32_t> ( sizeof ( PushConstants ) )
+        }
     };
 
     VkPipelineLayoutCreateInfo layoutInfo;
     layoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     layoutInfo.pNext = nullptr;
     layoutInfo.flags = 0U;
-    layoutInfo.setLayoutCount = static_cast<uint32_t> ( std::size ( layouts ) );
-    layoutInfo.pSetLayouts = layouts;
-    layoutInfo.pushConstantRangeCount = 0U;
-    layoutInfo.pPushConstantRanges = nullptr;
+    layoutInfo.setLayoutCount = 0U;
+    layoutInfo.pSetLayouts = nullptr;
+    layoutInfo.pushConstantRangeCount = static_cast<uint32_t> ( std::size ( pushConstantRanges ) );
+    layoutInfo.pPushConstantRanges = pushConstantRanges;
 
-    const bool result = android_vulkan::Renderer::CheckVkResult (
+    bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreatePipelineLayout ( renderer.GetDevice (), &layoutInfo, nullptr, &_pipelineLayout ),
-        "OpaqueProgram::InitLayout",
+        "LightVolumeProgram::InitLayout",
         "Can't create pipeline layout"
     );
 
     if ( !result )
         return false;
 
-    AV_REGISTER_PIPELINE_LAYOUT ( "OpaqueProgram::_pipelineLayout" )
+    AV_REGISTER_PIPELINE_LAYOUT ( "LightVolumeProgram::_pipelineLayout" )
     layout = _pipelineLayout;
     return true;
 }
 
-VkPipelineMultisampleStateCreateInfo const* OpaqueProgram::InitMultisampleInfo (
+VkPipelineMultisampleStateCreateInfo const* LightVolumeProgram::InitMultisampleInfo (
     VkPipelineMultisampleStateCreateInfo &info
 ) const
 {
@@ -298,7 +243,7 @@ VkPipelineMultisampleStateCreateInfo const* OpaqueProgram::InitMultisampleInfo (
     return &info;
 }
 
-VkPipelineRasterizationStateCreateInfo const* OpaqueProgram::InitRasterizationInfo (
+VkPipelineRasterizationStateCreateInfo const* LightVolumeProgram::InitRasterizationInfo (
     VkPipelineRasterizationStateCreateInfo &info
 ) const
 {
@@ -308,7 +253,7 @@ VkPipelineRasterizationStateCreateInfo const* OpaqueProgram::InitRasterizationIn
     info.depthClampEnable = VK_FALSE;
     info.rasterizerDiscardEnable = VK_FALSE;
     info.polygonMode = VK_POLYGON_MODE_FILL;
-    info.cullMode = VK_CULL_MODE_BACK_BIT;
+    info.cullMode = VK_CULL_MODE_NONE;
     info.frontFace = VK_FRONT_FACE_CLOCKWISE;
     info.depthBiasEnable = VK_FALSE;
     info.depthBiasConstantFactor = 0.0F;
@@ -319,30 +264,20 @@ VkPipelineRasterizationStateCreateInfo const* OpaqueProgram::InitRasterizationIn
     return &info;
 }
 
-bool OpaqueProgram::InitShaderInfo ( VkPipelineShaderStageCreateInfo const* &targetInfo,
+bool LightVolumeProgram::InitShaderInfo ( VkPipelineShaderStageCreateInfo const* &targetInfo,
     VkPipelineShaderStageCreateInfo* sourceInfo,
     android_vulkan::Renderer &renderer
 )
 {
     bool result = renderer.CreateShader ( _vertexShader,
         VERTEX_SHADER,
-        "Can't create vertex shader (pbr::OpaqueProgram)"
+        "Can't create vertex shader (pbr::LightVolumeProgram)"
     );
 
     if ( !result )
         return false;
 
-    AV_REGISTER_SHADER_MODULE ( "OpaqueProgram::_vertexShader" )
-
-    result = renderer.CreateShader ( _fragmentShader,
-        FRAGMENT_SHADER,
-        "Can't create fragment shader (pbr::OpaqueProgram)"
-    );
-
-    if ( !result )
-        return false;
-
-    AV_REGISTER_SHADER_MODULE ( "OpaqueProgram::_fragmentShader" )
+    AV_REGISTER_SHADER_MODULE ( "LightVolumeProgram::_vertexShader" )
 
     VkPipelineShaderStageCreateInfo& vertexStage = sourceInfo[ 0U ];
     vertexStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -353,20 +288,11 @@ bool OpaqueProgram::InitShaderInfo ( VkPipelineShaderStageCreateInfo const* &tar
     vertexStage.pName = VERTEX_SHADER_ENTRY_POINT;
     vertexStage.pSpecializationInfo = nullptr;
 
-    VkPipelineShaderStageCreateInfo& fragmentStage = sourceInfo[ 1U ];
-    fragmentStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    fragmentStage.pNext = nullptr;
-    fragmentStage.flags = 0U;
-    fragmentStage.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-    fragmentStage.module = _fragmentShader;
-    fragmentStage.pName = FRAGMENT_SHADER_ENTRY_POINT;
-    fragmentStage.pSpecializationInfo = nullptr;
-
     targetInfo = sourceInfo;
     return true;
 }
 
-VkPipelineViewportStateCreateInfo const* OpaqueProgram::InitViewportInfo (
+VkPipelineViewportStateCreateInfo const* LightVolumeProgram::InitViewportInfo (
     VkPipelineViewportStateCreateInfo &info,
     VkRect2D &scissorInfo,
     VkViewport &viewportInfo,
@@ -395,7 +321,7 @@ VkPipelineViewportStateCreateInfo const* OpaqueProgram::InitViewportInfo (
     return &info;
 }
 
-VkPipelineVertexInputStateCreateInfo const* OpaqueProgram::InitVertexInputInfo (
+VkPipelineVertexInputStateCreateInfo const* LightVolumeProgram::InitVertexInputInfo (
     VkPipelineVertexInputStateCreateInfo &info,
     VkVertexInputAttributeDescription* attributes,
     VkVertexInputBindingDescription* binds
@@ -405,35 +331,10 @@ VkPipelineVertexInputStateCreateInfo const* OpaqueProgram::InitVertexInputInfo (
     binds->stride = static_cast<uint32_t> ( sizeof ( android_vulkan::VertexInfo ) );
     binds->inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
-    VkVertexInputAttributeDescription& vertex = attributes[ 0U ];
-    vertex.location = 0U;
-    vertex.binding = 0U;
-    vertex.format = VK_FORMAT_R32G32B32_SFLOAT;
-    vertex.offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _vertex ) );
-
-    VkVertexInputAttributeDescription& uv = attributes[ 1U ];
-    uv.location = 1U;
-    uv.binding = 0U;
-    uv.format = VK_FORMAT_R32G32_SFLOAT;
-    uv.offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _uv ) );
-
-    VkVertexInputAttributeDescription& normal = attributes[ 2U ];
-    normal.location = 2U;
-    normal.binding = 0U;
-    normal.format = VK_FORMAT_R32G32B32_SFLOAT;
-    normal.offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _normal ) );
-
-    VkVertexInputAttributeDescription& tangent = attributes[ 3U ];
-    tangent.location = 3U;
-    tangent.binding = 0U;
-    tangent.format = VK_FORMAT_R32G32B32_SFLOAT;
-    tangent.offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _tangent ) );
-
-    VkVertexInputAttributeDescription& bitangent = attributes[ 4U ];
-    bitangent.location = 4U;
-    bitangent.binding = 0U;
-    bitangent.format = VK_FORMAT_R32G32B32_SFLOAT;
-    bitangent.offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _bitangent ) );
+    attributes->location = 0U;
+    attributes->binding = 0U;
+    attributes->format = VK_FORMAT_R32G32B32_SFLOAT;
+    attributes->offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _vertex ) );
 
     info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
     info.pNext = nullptr;

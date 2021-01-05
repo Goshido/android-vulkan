@@ -1,5 +1,5 @@
-#ifndef GBUFFER_H
-#define GBUFFER_H
+#ifndef PBR_GBUFFER_H
+#define PBR_GBUFFER_H
 
 
 #include <texture2D.h>
@@ -11,28 +11,27 @@ class GBuffer final
 {
     private:
         android_vulkan::Texture2D       _albedo;
-        android_vulkan::Texture2D       _emission;
+        android_vulkan::Texture2D       _depthStencil;
         android_vulkan::Texture2D       _hdrAccumulator;
         android_vulkan::Texture2D       _normal;
         android_vulkan::Texture2D       _params;
 
-        android_vulkan::Texture2D       _depthStencil;
-
-        VkExtent2D                      _resolution;
-
     public:
         GBuffer ();
+
+        GBuffer ( GBuffer const & ) = delete;
+        GBuffer& operator = ( GBuffer const & ) = delete;
+
+        GBuffer ( GBuffer && ) = delete;
+        GBuffer& operator = ( GBuffer && ) = delete;
+
         ~GBuffer () = default;
 
-        GBuffer ( const GBuffer &other ) = delete;
-        GBuffer& operator = ( const GBuffer &other ) = delete;
-
-        [[nodiscard]] android_vulkan::Texture2D& GetAlbedo ();
-        [[nodiscard]] android_vulkan::Texture2D& GetEmission ();
-        [[maybe_unused]] [[nodiscard]] android_vulkan::Texture2D& GetHDRAccumulator ();
+        [[nodiscard]] android_vulkan::Texture2D& GetAlbedo () ;
+        [[nodiscard]] android_vulkan::Texture2D& GetDepthStencil ();
+        [[nodiscard]] android_vulkan::Texture2D& GetHDRAccumulator ();
         [[nodiscard]] android_vulkan::Texture2D& GetNormal ();
         [[nodiscard]] android_vulkan::Texture2D& GetParams ();
-        [[nodiscard]] android_vulkan::Texture2D& GetDepthStencil ();
 
         [[nodiscard]] VkExtent2D const& GetResolution () const;
 
@@ -43,4 +42,4 @@ class GBuffer final
 } // namespace pbr
 
 
-#endif // GBUFFER_H
+#endif // PBR_GBUFFER_H

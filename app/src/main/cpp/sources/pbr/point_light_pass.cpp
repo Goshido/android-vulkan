@@ -52,7 +52,7 @@ bool PointLightPass::Init ( android_vulkan::Renderer &renderer )
         .height = SHADOWMAP_RESOLUTION
     };
 
-    if ( !_program.Init ( renderer, _renderPass, resolution ) )
+    if ( !_program.Init ( renderer, _renderPass, 0U, resolution ) )
     {
         Destroy ( renderer );
         return false;

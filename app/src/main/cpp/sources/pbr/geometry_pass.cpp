@@ -64,7 +64,7 @@ bool GeometryPass::Init ( VkExtent2D const &resolution,
 
     AV_REGISTER_FENCE ( "GeometryPass::_fence" )
 
-    if ( !_program.Init ( renderer, renderPass, resolution ) )
+    if ( !_program.Init ( renderer, renderPass, 0U, resolution ) )
     {
         Destroy ( renderer );
         return false;
@@ -233,6 +233,57 @@ void GeometryPass::Submit ( MeshRef &mesh,
     );
 }
 
+[[maybe_unused]] VkSubpassDescription GeometryPass::GetSubpassDescription ()
+{
+    constexpr static VkAttachmentReference const colorReferences[] =
+    {
+        // #0: albedo
+        {
+            .attachment = 0U,
+            .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+        },
+
+        // #1: emission
+        {
+            .attachment = 1U,
+            .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+        },
+
+        // #2: normal
+        {
+            .attachment = 2U,
+            .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+        },
+
+        // #3: params
+        {
+            .attachment = 3U,
+            .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+        }
+    };
+
+    // depth|stencil
+    constexpr static VkAttachmentReference const depthStencilReference
+    {
+        .attachment = 4U,
+        .layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
+    };
+
+    return
+    {
+        .flags = 0U,
+        .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
+        .inputAttachmentCount = 0U,
+        .pInputAttachments = nullptr,
+        .colorAttachmentCount = static_cast<uint32_t> ( std::size ( colorReferences ) ),
+        .pColorAttachments = colorReferences,
+        .pResolveAttachments = nullptr,
+        .pDepthStencilAttachment = &depthStencilReference,
+        .preserveAttachmentCount = 0U,
+        .pPreserveAttachments = nullptr
+    };
+}
+
 void GeometryPass::AppendDrawcalls ( VkDescriptorSet const* textureSets,
     VkDescriptorSet const* instanceSets,
     RenderSessionStats &renderSessionStats
@@ -362,12 +413,12 @@ bool GeometryPass::BeginRenderPass ( android_vulkan::Renderer &renderer )
         return false;
 
     constexpr VkCommandBufferBeginInfo const beginInfo
-        {
-            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-            .pNext = nullptr,
-            .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
-            .pInheritanceInfo = nullptr
-        };
+    {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+        .pNext = nullptr,
+        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+        .pInheritanceInfo = nullptr
+    };
 
     result = android_vulkan::Renderer::CheckVkResult ( vkBeginCommandBuffer ( _renderCommandBuffer, &beginInfo ),
         "GeometryPass::BeginRenderPass",

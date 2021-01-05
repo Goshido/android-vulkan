@@ -51,7 +51,7 @@ bool PresentPass::Init ( android_vulkan::Renderer &renderer )
 
     VkExtent2D const& resolution = renderer.GetSurfaceSize ();
 
-    if ( !_program.Init ( renderer, _renderPass, resolution ) )
+    if ( !_program.Init ( renderer, _renderPass, 0U, resolution ) )
     {
         Destroy ( renderer );
         return false;

@@ -81,6 +81,9 @@ class GeometryPass final
             android_vulkan::Half4 const &color3
         );
 
+        // Return value optimization friendly method.
+        [[nodiscard]] static VkSubpassDescription GetSubpassDescription ();
+
     private:
         void AppendDrawcalls ( VkDescriptorSet const* textureSets,
             VkDescriptorSet const* instanceSets,

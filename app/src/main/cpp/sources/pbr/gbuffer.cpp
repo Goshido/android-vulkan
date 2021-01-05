@@ -6,11 +6,10 @@ namespace pbr {
 
 GBuffer::GBuffer ():
     _albedo {},
-    _emission {},
-    _normal {},
-    _params {},
     _depthStencil {},
-    _resolution { .width = 0U, .height = 0U }
+    _hdrAccumulator {},
+    _normal {},
+    _params {}
 {
     // NOTHING
 }
@@ -20,12 +19,12 @@ android_vulkan::Texture2D& GBuffer::GetAlbedo ()
     return _albedo;
 }
 
-android_vulkan::Texture2D& GBuffer::GetEmission ()
+android_vulkan::Texture2D& GBuffer::GetDepthStencil ()
 {
-    return _emission;
+    return _depthStencil;
 }
 
-[[maybe_unused]] android_vulkan::Texture2D& GBuffer::GetHDRAccumulator ()
+android_vulkan::Texture2D& GBuffer::GetHDRAccumulator ()
 {
     return _hdrAccumulator;
 }
@@ -40,14 +39,9 @@ android_vulkan::Texture2D& GBuffer::GetParams ()
     return _params;
 }
 
-android_vulkan::Texture2D& GBuffer::GetDepthStencil ()
-{
-    return _depthStencil;
-}
-
 const VkExtent2D& GBuffer::GetResolution () const
 {
-    return _resolution;
+    return _hdrAccumulator.GetResolution ();
 }
 
 bool GBuffer::Init ( VkExtent2D const &resolution, android_vulkan::Renderer &renderer )
@@ -58,10 +52,7 @@ bool GBuffer::Init ( VkExtent2D const &resolution, android_vulkan::Renderer &ren
     if ( !_albedo.CreateRenderTarget ( resolution, VK_FORMAT_R8G8B8A8_SRGB, usageColor, renderer ) )
         return false;
 
-    if ( !_emission.CreateRenderTarget ( resolution, VK_FORMAT_R16G16B16A16_SFLOAT, usageColor, renderer ) )
-        return false;
-
-    if ( !_hdrAccumulator.CreateRenderTarget ( resolution, VK_FORMAT_A2R10G10B10_UNORM_PACK32, usageColor, renderer ) )
+    if ( !_hdrAccumulator.CreateRenderTarget ( resolution, VK_FORMAT_R16G16B16A16_SFLOAT, usageColor, renderer ) )
         return false;
 
     if ( !_normal.CreateRenderTarget ( resolution, VK_FORMAT_A2R10G10B10_UNORM_PACK32, usageColor, renderer ) )
@@ -70,20 +61,14 @@ bool GBuffer::Init ( VkExtent2D const &resolution, android_vulkan::Renderer &ren
     if ( !_params.CreateRenderTarget ( resolution, VK_FORMAT_R8G8B8A8_UNORM, usageColor, renderer ) )
         return false;
 
-    constexpr const VkImageUsageFlags usageDepthStencil = AV_VK_FLAG ( VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT ) |
+    constexpr VkImageUsageFlags const usageDepthStencil = AV_VK_FLAG ( VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT ) |
         AV_VK_FLAG ( VK_IMAGE_USAGE_SAMPLED_BIT );
 
-    const bool result = _depthStencil.CreateRenderTarget ( resolution,
+    return _depthStencil.CreateRenderTarget ( resolution,
         renderer.GetDefaultDepthStencilFormat (),
         usageDepthStencil,
         renderer
     );
-
-    if ( !result )
-        return false;
-
-    _resolution = resolution;
-    return true;
 }
 
 void GBuffer::Destroy ( android_vulkan::Renderer &renderer )
@@ -92,7 +77,6 @@ void GBuffer::Destroy ( android_vulkan::Renderer &renderer )
     _params.FreeResources ( renderer );
     _normal.FreeResources ( renderer );
     _hdrAccumulator.FreeResources ( renderer );
-    _emission.FreeResources ( renderer );
     _albedo.FreeResources ( renderer );
 }
 

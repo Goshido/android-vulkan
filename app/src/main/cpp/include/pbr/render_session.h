@@ -5,6 +5,7 @@
 #include <GXCommon/GXMath.h>
 #include "gbuffer.h"
 #include "geometry_pass.h"
+#include "light_volume.h"
 #include "point_light_pass.h"
 #include "present_pass.h"
 #include "shadow_casters.h"
@@ -25,26 +26,27 @@ enum class ePresentTarget : uint8_t
 class RenderSession final
 {
     private:
-        GXProjectionClipPlanes                  _frustum;
+        GXProjectionClipPlanes      _frustum;
 
-        GBuffer                                 _gBuffer;
-        VkDescriptorPool                        _gBufferDescriptorPool;
-        VkFramebuffer                           _gBufferFramebuffer;
-        VkImageMemoryBarrier                    _gBufferImageBarrier;
-        VkRenderPass                            _gBufferRenderPass;
-        VkDescriptorSet                         _gBufferSlotMapper[ static_cast<size_t> ( ePresentTarget::TargetCount ) ];
+        GBuffer                     _gBuffer;
+        VkDescriptorPool            _gBufferDescriptorPool;
+        VkFramebuffer               _gBufferFramebuffer;
+        VkImageMemoryBarrier        _gBufferImageBarrier;
+        VkRenderPass                _gBufferRenderPass;
+        VkDescriptorSet             _gBufferSlotMapper[ static_cast<size_t> ( ePresentTarget::TargetCount ) ];
 
-        GeometryPass                            _geometryPass;
-        size_t                                  _opaqueMeshCount;
+        GeometryPass                _geometryPass;
+        LightVolume                 _lightVolume;
+        size_t                      _opaqueMeshCount;
 
-        TexturePresentProgram                   _texturePresentProgram;
-        PointLightPass                          _pointLightPass;
-        PresentPass                             _presentPass;
-        RenderSessionStats                      _renderSessionStats;
-        SamplerManager                          _samplerManager;
+        TexturePresentProgram       _texturePresentProgram;
+        PointLightPass              _pointLightPass;
+        PresentPass                 _presentPass;
+        RenderSessionStats          _renderSessionStats;
+        SamplerManager              _samplerManager;
 
-        GXMat4                                  _view;
-        GXMat4                                  _viewProjection;
+        GXMat4                      _view;
+        GXMat4                      _viewProjection;
 
     public:
         RenderSession () noexcept;

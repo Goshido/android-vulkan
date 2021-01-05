@@ -11,7 +11,7 @@ constexpr static const size_t STAGE_COUNT = 2U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-TexturePresentProgram::TexturePresentProgram ():
+TexturePresentProgram::TexturePresentProgram () noexcept:
     Program ( "pbr::TexturePresentProgram" )
 {
     // NOTHING
@@ -19,6 +19,7 @@ TexturePresentProgram::TexturePresentProgram ():
 
 bool TexturePresentProgram::Init ( android_vulkan::Renderer &renderer,
     VkRenderPass renderPass,
+    uint32_t subpass,
     VkExtent2D const &viewport
 )
 {
@@ -38,20 +39,7 @@ bool TexturePresentProgram::Init ( android_vulkan::Renderer &renderer,
     pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
     pipelineInfo.pNext = nullptr;
     pipelineInfo.flags = 0U;
-    pipelineInfo.subpass = 0U;
     pipelineInfo.stageCount = std::size ( stageInfo );
-    pipelineInfo.renderPass = renderPass;
-    pipelineInfo.pDynamicState = nullptr;
-    pipelineInfo.basePipelineIndex = 0;
-    pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
-    pipelineInfo.pInputAssemblyState = InitInputAssemblyInfo ( assemblyInfo );
-    pipelineInfo.pVertexInputState = InitVertexInputInfo ( vertexInputInfo, nullptr, nullptr );
-    pipelineInfo.pTessellationState = nullptr;
-    pipelineInfo.pDepthStencilState = InitDepthStencilInfo ( depthStencilInfo );
-    pipelineInfo.pRasterizationState = InitRasterizationInfo ( rasterizationInfo );
-    pipelineInfo.pViewportState = InitViewportInfo ( viewportInfo, scissorDescription, viewportDescription, viewport );
-    pipelineInfo.pColorBlendState = InitColorBlendInfo ( blendInfo, attachmentInfo );
-    pipelineInfo.pMultisampleState = InitMultisampleInfo ( multisampleInfo );
 
     if ( !InitShaderInfo ( pipelineInfo.pStages, stageInfo, renderer ) )
     {
@@ -59,13 +47,28 @@ bool TexturePresentProgram::Init ( android_vulkan::Renderer &renderer,
         return false;
     }
 
+    pipelineInfo.pVertexInputState = InitVertexInputInfo ( vertexInputInfo, nullptr, nullptr );
+    pipelineInfo.pInputAssemblyState = InitInputAssemblyInfo ( assemblyInfo );
+    pipelineInfo.pTessellationState = nullptr;
+    pipelineInfo.pViewportState = InitViewportInfo ( viewportInfo, scissorDescription, viewportDescription, viewport );
+    pipelineInfo.pRasterizationState = InitRasterizationInfo ( rasterizationInfo );
+    pipelineInfo.pMultisampleState = InitMultisampleInfo ( multisampleInfo );
+    pipelineInfo.pDepthStencilState = InitDepthStencilInfo ( depthStencilInfo );
+    pipelineInfo.pColorBlendState = InitColorBlendInfo ( blendInfo, attachmentInfo );
+    pipelineInfo.pDynamicState = nullptr;
+
     if ( !InitLayout ( pipelineInfo.layout, renderer ) )
     {
         Destroy ( renderer );
         return false;
     }
 
-    const bool result = android_vulkan::Renderer::CheckVkResult (
+    pipelineInfo.renderPass = renderPass;
+    pipelineInfo.subpass = subpass;
+    pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
+    pipelineInfo.basePipelineIndex = 0;
+
+    bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateGraphicsPipelines ( renderer.GetDevice (), VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
         "TexturePresentProgram::Init",
         "Can't create pipeline"
@@ -118,8 +121,8 @@ void TexturePresentProgram::Destroy ( android_vulkan::Renderer &renderer )
 
 std::vector<DescriptorSetInfo> const& TexturePresentProgram::GetResourceInfo () const
 {
-    static const std::vector<DescriptorSetInfo> info {};
-    return info;
+    static std::vector<DescriptorSetInfo> const null;
+    return null;
 }
 
 void TexturePresentProgram::SetData ( VkCommandBuffer commandBuffer,
@@ -227,21 +230,25 @@ bool TexturePresentProgram::InitLayout ( VkPipelineLayout &layout, android_vulka
         _descriptorSetLayout.GetLayout ()
     };
 
-    VkPushConstantRange pushConstantRange;
-    pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-    pushConstantRange.offset = 0U;
-    pushConstantRange.size = static_cast<uint32_t> ( sizeof ( PushConstants ) );
+    constexpr static VkPushConstantRange const pushConstantRanges[]
+    {
+        {
+            .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
+            .offset = 0U,
+            .size = static_cast<uint32_t> ( sizeof ( PushConstants ) )
+        }
+    };
 
     VkPipelineLayoutCreateInfo layoutInfo;
     layoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     layoutInfo.pNext = nullptr;
     layoutInfo.flags = 0U;
-    layoutInfo.pushConstantRangeCount = 1U;
-    layoutInfo.pPushConstantRanges = &pushConstantRange;
     layoutInfo.setLayoutCount = static_cast<uint32_t> ( std::size ( layouts ) );
     layoutInfo.pSetLayouts = layouts;
+    layoutInfo.pushConstantRangeCount = static_cast<uint32_t> ( std::size ( pushConstantRanges ) );
+    layoutInfo.pPushConstantRanges = pushConstantRanges;
 
-    const bool result = android_vulkan::Renderer::CheckVkResult (
+    bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreatePipelineLayout ( renderer.GetDevice (), &layoutInfo, nullptr, &_pipelineLayout ),
         "TexturePresentProgram::InitLayout",
         "Can't create pipeline layout"

@@ -6,7 +6,7 @@ namespace pbr {
 
 constexpr static const char* VERTEX_SHADER = "shaders/point-light-shadowmap-generator-vs.spv";
 
-constexpr static const size_t COLOR_RENDER_TARGET_COUNT = 0U;
+constexpr static const uint32_t COLOR_RENDER_TARGET_COUNT = 0U;
 constexpr static const size_t STAGE_COUNT = 1U;
 constexpr static const size_t VERTEX_ATTRIBUTE_COUNT = 1U;
 
@@ -18,6 +18,7 @@ PointLightShadowmapGeneratorProgram::PointLightShadowmapGeneratorProgram () noex
 
 bool PointLightShadowmapGeneratorProgram::Init ( android_vulkan::Renderer &renderer,
     VkRenderPass renderPass,
+    uint32_t subpass,
     VkExtent2D const &viewport
 )
 {
@@ -67,7 +68,7 @@ bool PointLightShadowmapGeneratorProgram::Init ( android_vulkan::Renderer &rende
     }
 
     pipelineInfo.renderPass = renderPass;
-    pipelineInfo.subpass = 0U;
+    pipelineInfo.subpass = subpass;
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
     pipelineInfo.basePipelineIndex = 0;
 
@@ -153,7 +154,7 @@ VkPipelineColorBlendStateCreateInfo const* PointLightShadowmapGeneratorProgram::
     info.flags = 0U;
     info.logicOpEnable = VK_FALSE;
     info.logicOp = VK_LOGIC_OP_NO_OP;
-    info.attachmentCount = static_cast<uint32_t> ( COLOR_RENDER_TARGET_COUNT );
+    info.attachmentCount = COLOR_RENDER_TARGET_COUNT;
     info.pAttachments = attachments;
     memset ( info.blendConstants, 0, sizeof ( info.blendConstants ) );
 

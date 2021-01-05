@@ -23,6 +23,7 @@ RenderSession::RenderSession () noexcept:
     _gBufferRenderPass ( VK_NULL_HANDLE ),
     _gBufferSlotMapper {},
     _geometryPass {},
+    _lightVolume {},
     _opaqueMeshCount ( 0U ),
     _texturePresentProgram {},
     _pointLightPass {},
@@ -80,7 +81,7 @@ bool RenderSession::End ( ePresentTarget target, double deltaTime, android_vulka
     }
     else if ( target == ePresentTarget::Emission )
     {
-        targetTexture = &_gBuffer.GetEmission ();
+        targetTexture = &_gBuffer.GetHDRAccumulator ();
     }
     else
     {
@@ -123,6 +124,12 @@ bool RenderSession::Init ( android_vulkan::Renderer &renderer, VkExtent2D const 
 {
     if ( !_gBuffer.Init ( resolution, renderer ) )
         return false;
+
+    if ( !_lightVolume.Init ( _gBuffer, renderer ) )
+    {
+        Destroy ( renderer );
+        return false;
+    }
 
     if ( !CreateGBufferRenderPass ( renderer ) )
     {
@@ -208,6 +215,7 @@ void RenderSession::Destroy ( android_vulkan::Renderer &renderer )
         AV_UNREGISTER_RENDER_PASS ( "RenderSession::_gBufferRenderPass" )
     }
 
+    _lightVolume.Destroy ( renderer );
     _gBuffer.Destroy ( renderer );
 }
 
@@ -244,7 +252,7 @@ bool RenderSession::CreateGBufferFramebuffer ( android_vulkan::Renderer &rendere
     VkImageView const attachments[] =
     {
         _gBuffer.GetAlbedo ().GetImageView (),
-        _gBuffer.GetEmission ().GetImageView (),
+        _gBuffer.GetHDRAccumulator ().GetImageView (),
         _gBuffer.GetNormal ().GetImageView (),
         _gBuffer.GetParams ().GetImageView (),
         _gBuffer.GetDepthStencil ().GetImageView ()
@@ -278,59 +286,9 @@ bool RenderSession::CreateGBufferFramebuffer ( android_vulkan::Renderer &rendere
 
 bool RenderSession::CreateGBufferRenderPass ( android_vulkan::Renderer &renderer )
 {
-    constexpr static VkAttachmentReference const colorReferences[] =
-    {
-        // albedo
-        {
-            .attachment = 0U,
-            .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
-        },
-
-        // emission
-        {
-            .attachment = 1U,
-            .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
-        },
-
-        // normal
-        {
-            .attachment = 2U,
-            .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
-        },
-
-        // params
-        {
-            .attachment = 3U,
-            .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
-        }
-    };
-
-    // depth|stencil
-    constexpr static VkAttachmentReference const depthStencilReference
-    {
-        .attachment = 4U,
-        .layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
-    };
-
-    constexpr static VkSubpassDescription const subpasses[] =
-    {
-        {
-            .flags = 0U,
-            .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
-            .inputAttachmentCount = 0U,
-            .pInputAttachments = nullptr,
-            .colorAttachmentCount = static_cast<uint32_t> ( std::size ( colorReferences ) ),
-            .pColorAttachments = colorReferences,
-            .pResolveAttachments = nullptr,
-            .pDepthStencilAttachment = &depthStencilReference,
-            .preserveAttachmentCount = 0U,
-            .pPreserveAttachments = nullptr
-        }
-    };
-
     VkAttachmentDescription const attachments[]
     {
-        // albedo
+        // #0: albedo
         {
             .flags = 0U,
             .format = _gBuffer.GetAlbedo ().GetFormat (),
@@ -343,10 +301,10 @@ bool RenderSession::CreateGBufferRenderPass ( android_vulkan::Renderer &renderer
             .finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
         },
 
-        // emission
+        // #1: emission
         {
             .flags = 0U,
-            .format = _gBuffer.GetEmission ().GetFormat (),
+            .format = _gBuffer.GetHDRAccumulator ().GetFormat (),
             .samples = VK_SAMPLE_COUNT_1_BIT,
             .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
             .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
@@ -356,7 +314,7 @@ bool RenderSession::CreateGBufferRenderPass ( android_vulkan::Renderer &renderer
             .finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
         },
 
-        // normal
+        // #2: normal
         {
             .flags = 0U,
             .format = _gBuffer.GetNormal ().GetFormat (),
@@ -369,7 +327,7 @@ bool RenderSession::CreateGBufferRenderPass ( android_vulkan::Renderer &renderer
             .finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
         },
 
-        // params
+        // #3: params
         {
             .flags = 0U,
             .format = _gBuffer.GetParams ().GetFormat (),
@@ -382,7 +340,7 @@ bool RenderSession::CreateGBufferRenderPass ( android_vulkan::Renderer &renderer
             .finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
         },
 
-        // depth|stencil
+        // #4: depth|stencil
         {
             .flags = 0U,
             .format = _gBuffer.GetDepthStencil ().GetFormat (),
@@ -394,6 +352,11 @@ bool RenderSession::CreateGBufferRenderPass ( android_vulkan::Renderer &renderer
             .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
             .finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
         }
+    };
+
+    static VkSubpassDescription const subpasses[] =
+    {
+        GeometryPass::GetSubpassDescription ()
     };
 
     VkRenderPassCreateInfo const renderPassInfo
@@ -499,7 +462,7 @@ bool RenderSession::CreateGBufferSlotMapper ( android_vulkan::Renderer &renderer
 
     VkDescriptorImageInfo& emission = imageInfo[ static_cast<size_t> ( ePresentTarget::Emission ) ];
     emission.sampler = nativeSampler;
-    emission.imageView = _gBuffer.GetEmission ().GetImageView ();
+    emission.imageView = _gBuffer.GetHDRAccumulator ().GetImageView ();
     emission.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
     VkDescriptorImageInfo& normal = imageInfo[ static_cast<size_t> ( ePresentTarget::Normal ) ];

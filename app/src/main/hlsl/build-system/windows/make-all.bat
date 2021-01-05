@@ -2,6 +2,7 @@
 
 :: vertex shaders
 call make-vs.bat common-opaque
+call make-vs.bat light-volume
 call make-vs.bat mandelbrot
 call make-vs.bat point-light-shadowmap-generator
 call make-vs.bat screen-quad

@@ -1,40 +1,38 @@
-#ifndef TEXTURE_PRESENT_PROGRAM_H
-#define TEXTURE_PRESENT_PROGRAM_H
+#ifndef PBR_LIGHT_VOLUME_PROGRAM_H
+#define PBR_LIGHT_VOLUME_PROGRAM_H
 
 
-#include <texture2D.h>
 #include <vulkan_utils.h>
 #include "program.h"
-#include "texture_present_descriptor_set_layout.h"
 
 
 namespace pbr {
 
-class TexturePresentProgram final : public Program
+class LightVolumeProgram final : public Program
 {
+    private:
+        constexpr static uint32_t const STENCIL_INITIAL_VALUE = 255U;
+
     public:
         AV_DX_ALIGNMENT_BEGIN
 
-        struct PushConstants final
+        struct [[maybe_unused]] PushConstants final
         {
-            GXMat4                              _transform;
+            [[maybe_unused]] GXMat4     _transform;
         };
 
         AV_DX_ALIGNMENT_END
 
-    private:
-        TexturePresentDescriptorSetLayout       _descriptorSetLayout;
-
     public:
-        TexturePresentProgram () noexcept;
+        LightVolumeProgram () noexcept;
 
-        TexturePresentProgram ( TexturePresentProgram const & ) = delete;
-        TexturePresentProgram& operator = ( TexturePresentProgram const & ) = delete;
+        LightVolumeProgram ( LightVolumeProgram const & ) = delete;
+        LightVolumeProgram& operator = ( LightVolumeProgram const & ) = delete;
 
-        TexturePresentProgram ( TexturePresentProgram && ) = delete;
-        TexturePresentProgram& operator = ( TexturePresentProgram && ) = delete;
+        LightVolumeProgram ( LightVolumeProgram && ) = delete;
+        LightVolumeProgram& operator = ( LightVolumeProgram && ) = delete;
 
-        ~TexturePresentProgram () override = default;
+        ~LightVolumeProgram () override = default;
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
             VkRenderPass renderPass,
@@ -43,11 +41,20 @@ class TexturePresentProgram final : public Program
         ) override;
 
         void Destroy ( android_vulkan::Renderer &renderer ) override;
-        [[nodiscard]] std::vector<DescriptorSetInfo> const& GetResourceInfo () const override;
 
-        void SetData ( VkCommandBuffer commandBuffer, VkDescriptorSet set, GXMat4 const &transform ) const;
+        [[maybe_unused]] [[nodiscard]] constexpr static uint32_t GetLightVolumeStencilValue ()
+        {
+            return STENCIL_INITIAL_VALUE - 1U;
+        }
+
+        [[maybe_unused]] [[nodiscard]] constexpr static uint32_t GetStencilInitialValue ()
+        {
+            return STENCIL_INITIAL_VALUE;
+        }
 
     private:
+        [[nodiscard]] std::vector<DescriptorSetInfo> const& GetResourceInfo () const override;
+
         [[nodiscard]] VkPipelineColorBlendStateCreateInfo const* InitColorBlendInfo (
             VkPipelineColorBlendStateCreateInfo &info,
             VkPipelineColorBlendAttachmentState* attachments
@@ -93,4 +100,4 @@ class TexturePresentProgram final : public Program
 } // namespace pbr
 
 
-#endif // TEXTURE_PRESENT_PROGRAM_H
+#endif // PBR_LIGHT_VOLUME_PROGRAM_H

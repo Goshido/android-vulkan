@@ -508,7 +508,7 @@ bool Game::OnDestroy ( android_vulkan::Renderer &renderer )
     DestroySamplers ( renderer );
     DestroyMeshes ( renderer );
     DestroyTextures ( renderer );
-    DestroyUniformBuffer ();
+    DestroyUniformBuffer ( renderer );
     DestroyCommandPool ( renderer );
     DestroySyncPrimitives ( renderer );
     DestroyFramebuffers ( renderer );
@@ -1125,12 +1125,16 @@ bool Game::CreateUniformBuffer ( android_vulkan::Renderer& renderer )
         return false;
 
     _transform._transform = renderer.GetPresentationEngineTransform ();
-    return _transformBuffer.Update ( reinterpret_cast<const uint8_t*> ( &_transform ), sizeof ( _transform ) );
+
+    return _transformBuffer.Update ( renderer,
+        reinterpret_cast<const uint8_t*> ( &_transform ),
+        sizeof ( _transform )
+    );
 }
 
-void Game::DestroyUniformBuffer ()
+void Game::DestroyUniformBuffer ( android_vulkan::Renderer &renderer )
 {
-    _transformBuffer.FreeResources ();
+    _transformBuffer.FreeResources ( renderer );
 }
 
 bool Game::InitCommandBuffers ( android_vulkan::Renderer &renderer )
@@ -1251,11 +1255,14 @@ bool Game::UpdateUniformBuffer ( android_vulkan::Renderer &renderer, double delt
     _transform._normalTransform.RotationY ( _angle );
     _transform._normalTransform.SetOrigin ( GXVec3 ( 0.0F, -1.0F, 3.0F ) );
 
-    GXMat4 tmp1;
-    tmp1.Multiply ( _transform._normalTransform, _projectionMatrix );
-    _transform._transform.Multiply ( tmp1, renderer.GetPresentationEngineTransform () );
+    GXMat4 tmp;
+    tmp.Multiply ( _transform._normalTransform, _projectionMatrix );
+    _transform._transform.Multiply ( tmp, renderer.GetPresentationEngineTransform () );
 
-    return _transformBuffer.Update ( reinterpret_cast<const uint8_t*> ( &_transform ), sizeof ( _transform ) );
+    return _transformBuffer.Update ( renderer,
+        reinterpret_cast<const uint8_t*> ( &_transform ),
+        sizeof ( _transform )
+    );
 }
 
 } // namespace rotating_mesh

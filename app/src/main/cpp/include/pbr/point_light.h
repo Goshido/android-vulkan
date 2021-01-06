@@ -43,6 +43,7 @@ class PointLight final : public Light
         bool                        _isNeedUpdateMatrices;
         GXVec3                      _location;
         Matrices                    _matrices;
+        GXMat4                      _projection;
 
     public:
         PointLight () noexcept;
@@ -66,6 +67,7 @@ class PointLight final : public Light
         [[maybe_unused]] [[nodiscard]] android_vulkan::Half GetIntensity () const;
         [[maybe_unused]] [[nodiscard]] GXVec3 const& GetLocation () const;
         [[nodiscard]] Matrices const& GetMatrices ();
+        [[nodiscard]] GXMat4 const& GetProjection ();
 
     private:
         void UpdateMatrices ();

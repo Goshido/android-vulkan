@@ -1,18 +1,44 @@
 #include <pbr/point_light_lightup.h>
 
+GX_DISABLE_COMMON_WARNINGS
+
+#include <cassert>
+
+GX_RESTORE_WARNING_STATE
+
+#include <pbr/point_light_descriptor_set_layout.h>
+#include <pbr/point_light_pass.h>
+
 
 namespace pbr {
 
 PointLightLightup::PointLightLightup () noexcept:
-    _volumeMesh {}
+    _transferCommandBuffer ( VK_NULL_HANDLE ),
+    _commandPool ( VK_NULL_HANDLE ),
+    _descriptorPool ( VK_NULL_HANDLE ),
+    _descriptorSets {},
+    _imageInfo {},
+    _program {},
+    _sampler {},
+    _submitInfoTransfer {},
+    _uniformInfo {},
+    _uniformPool ( eUniformPoolSize::Tiny_4M ),
+    _volumeMesh {},
+    _writeSets {}
 {
     // NOTHING
 }
 
-[[maybe_unused]] bool PointLightLightup::Execute ( LightVolume &/*lightVolume*/,
-    android_vulkan::Renderer &/*renderer*/
+[[maybe_unused]] bool PointLightLightup::Execute ( PointLightPass const &pointLightPass,
+    LightVolume &/*lightVolume*/,
+    GXMat4 const &viewerLocal,
+    GXMat4 const &view,
+    android_vulkan::Renderer &renderer
 )
 {
+    if ( !UpdateGPUData ( pointLightPass, viewerLocal, view, renderer ) )
+        return false;
+
     // TODO
     return false;
 }
@@ -24,7 +50,93 @@ bool PointLightLightup::Init ( VkCommandBuffer commandBuffer,
     android_vulkan::Renderer &renderer
 )
 {
+    VkCommandPoolCreateInfo const poolInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+        .queueFamilyIndex = renderer.GetQueueFamilyIndex ()
+    };
+
+    VkDevice device = renderer.GetDevice ();
+
+    bool result = android_vulkan::Renderer::CheckVkResult (
+        vkCreateCommandPool ( device, &poolInfo, nullptr, &_commandPool ),
+        "PointLightLightup::Init",
+        "Can't create command pool"
+    );
+
+    if ( !result )
+        return false;
+
+    AV_REGISTER_COMMAND_POOL ( "PointLightLightup::_commandPool" )
+
+    VkCommandBufferAllocateInfo const allocateInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+        .pNext = nullptr,
+        .commandPool = _commandPool,
+        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+        .commandBufferCount = 1U
+    };
+
+    result = android_vulkan::Renderer::CheckVkResult (
+        vkAllocateCommandBuffers ( device, &allocateInfo, &_transferCommandBuffer ),
+        "PointLightLightup::Init",
+        "Can't allocate command buffer"
+    );
+
+    if ( !result )
+    {
+        Destroy ( renderer );
+        return false;
+    }
+
+    _submitInfoTransfer.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    _submitInfoTransfer.pNext = nullptr;
+    _submitInfoTransfer.waitSemaphoreCount = 0U;
+    _submitInfoTransfer.pWaitSemaphores = nullptr;
+    _submitInfoTransfer.pWaitDstStageMask = nullptr;
+    _submitInfoTransfer.commandBufferCount = 1U;
+    _submitInfoTransfer.pCommandBuffers = &_transferCommandBuffer;
+    _submitInfoTransfer.signalSemaphoreCount = 0U;
+    _submitInfoTransfer.pSignalSemaphores = nullptr;
+
     if ( !_program.Init ( renderer, renderPass, subpass, resolution ) )
+    {
+        Destroy ( renderer );
+        return false;
+    }
+
+    constexpr VkSamplerCreateInfo const samplerInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .magFilter = VK_FILTER_NEAREST,
+        .minFilter = VK_FILTER_NEAREST,
+        .mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST,
+        .addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+        .addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+        .addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+        .mipLodBias = 0.0F,
+        .anisotropyEnable = VK_FALSE,
+        .maxAnisotropy = 1.0F,
+        .compareEnable = VK_TRUE,
+        .compareOp = VK_COMPARE_OP_LESS,
+        .minLod = 0.0F,
+        .maxLod = 0.0F,
+        .borderColor = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK,
+        .unnormalizedCoordinates = VK_FALSE
+    };
+
+    if ( !_sampler.Init ( samplerInfo, renderer ) )
+    {
+        Destroy ( renderer );
+        return false;
+    }
+
+    if ( !_uniformPool.Init ( sizeof ( PointLightLightupProgram::ViewData ), renderer ) )
     {
         Destroy ( renderer );
         return false;
@@ -74,8 +186,247 @@ bool PointLightLightup::Init ( VkCommandBuffer commandBuffer,
 
 void PointLightLightup::Destroy ( android_vulkan::Renderer &renderer )
 {
+    DestroyDescriptorPool ( renderer );
+
     _volumeMesh.FreeResources ( renderer );
+    _uniformPool.Destroy ( renderer );
+    _sampler.Destroy ( renderer );
     _program.Destroy ( renderer );
+
+    if ( _commandPool == VK_NULL_HANDLE )
+        return;
+
+    vkDestroyCommandPool ( renderer.GetDevice (), _commandPool, nullptr );
+    _commandPool = VK_NULL_HANDLE;
+    AV_UNREGISTER_COMMAND_POOL ( "PointLightLightup::_commandPool" )
+}
+
+bool PointLightLightup::AllocateNativeDescriptorSets ( size_t neededSets, android_vulkan::Renderer &renderer )
+{
+    assert ( neededSets );
+
+    if ( _descriptorSets.size () >= neededSets )
+        return true;
+
+    DestroyDescriptorPool ( renderer );
+    auto const size = static_cast<uint32_t> ( neededSets );
+
+    VkDescriptorPoolSize const poolSizes[] =
+    {
+        {
+            .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+            .descriptorCount = size
+        },
+        {
+            .type = VK_DESCRIPTOR_TYPE_SAMPLER,
+            .descriptorCount = size
+        },
+        {
+            .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            .descriptorCount = size
+        }
+    };
+
+    VkDescriptorPoolCreateInfo const poolInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .maxSets = size,
+        .poolSizeCount = static_cast<uint32_t> ( std::size ( poolSizes ) ),
+        .pPoolSizes = poolSizes
+    };
+
+    VkDevice device = renderer.GetDevice ();
+
+    bool const result = android_vulkan::Renderer::CheckVkResult (
+        vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_descriptorPool ),
+        "PointLightLightup::AllocateNativeDescriptorSets",
+        "Can't create descriptor pool"
+    );
+
+    if ( !result )
+        return false;
+
+    AV_REGISTER_DESCRIPTOR_POOL ( "PointLightLightup::_descriptorPool" )
+
+    VkDescriptorImageInfo const image
+    {
+        .sampler = _sampler.GetSampler (),
+        .imageView = VK_NULL_HANDLE,
+        .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+    };
+
+    _imageInfo.resize ( neededSets, image );
+
+    VkDescriptorBufferInfo const uniform
+    {
+        .buffer = VK_NULL_HANDLE,
+        .offset = 0U,
+        .range = static_cast<VkDeviceSize> ( sizeof ( PointLightLightupProgram::LightData ) )
+    };
+
+    _uniformInfo.resize ( neededSets, uniform );
+
+    constexpr VkWriteDescriptorSet const writeSet
+    {
+        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        .pNext = nullptr,
+        .dstSet = VK_NULL_HANDLE,
+        .dstBinding = UINT32_MAX,
+        .dstArrayElement = 0U,
+        .descriptorCount = 1U,
+        .descriptorType = VK_DESCRIPTOR_TYPE_MAX_ENUM,
+        .pImageInfo = nullptr,
+        .pBufferInfo = nullptr,
+        .pTexelBufferView = nullptr
+    };
+
+    _writeSets.resize ( 3U * neededSets, writeSet );
+    _descriptorSets.resize ( neededSets, VK_NULL_HANDLE );
+
+    PointLightDescriptorSetLayout const layout;
+    std::vector<VkDescriptorSetLayout> layouts ( neededSets, layout.GetLayout () );
+
+    VkDescriptorSetAllocateInfo const allocateInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+        .pNext = nullptr,
+        .descriptorPool = _descriptorPool,
+        .descriptorSetCount = poolInfo.maxSets,
+        .pSetLayouts = layouts.data ()
+    };
+
+    return android_vulkan::Renderer::CheckVkResult (
+        vkAllocateDescriptorSets ( device, &allocateInfo, _descriptorSets.data () ),
+        "PointLightLightup::AllocateNativeDescriptorSets",
+        "Can't allocate descriptor sets"
+    );
+}
+
+void PointLightLightup::DestroyDescriptorPool ( android_vulkan::Renderer &renderer )
+{
+    if ( _descriptorPool == VK_NULL_HANDLE )
+        return;
+
+    vkDestroyDescriptorPool ( renderer.GetDevice (), _descriptorPool, nullptr );
+    _descriptorPool = VK_NULL_HANDLE;
+    AV_UNREGISTER_DESCRIPTOR_POOL ( "PointLightLightup::_descriptorPool" )
+}
+
+bool PointLightLightup::UpdateGPUData ( PointLightPass const &pointLightPass,
+    GXMat4 const &viewerLocal,
+    GXMat4 const &view,
+    android_vulkan::Renderer &renderer
+)
+{
+    size_t const lightCount = pointLightPass.GetPointLightCount ();
+
+    if ( !AllocateNativeDescriptorSets ( lightCount, renderer ) )
+        return false;
+
+    constexpr VkCommandBufferBeginInfo const beginInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+        .pNext = nullptr,
+        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+        .pInheritanceInfo = nullptr
+    };
+
+    bool result = android_vulkan::Renderer::CheckVkResult ( vkBeginCommandBuffer ( _transferCommandBuffer, &beginInfo ),
+        "PointLightLightup::UpdateGPUData",
+        "Can't begin command buffer"
+    );
+
+    if ( !result )
+        return false;
+
+    PointLightLightupProgram::LightData lightData;
+    size_t writeIndex = 0U;
+    GXVec3 alpha;
+    GXVec3 betta;
+
+    for ( size_t i = 0U; i < lightCount; ++i )
+    {
+        auto const [light, shadowmap] = pointLightPass.GetPointLightInfo ( i );
+        VkDescriptorSet set = _descriptorSets[ i ];
+
+        VkDescriptorImageInfo& image = _imageInfo[ i ];
+        image.imageView = shadowmap->GetImageView ();
+
+        VkWriteDescriptorSet &write0 = _writeSets[ writeIndex++ ];
+        write0.dstBinding = 0U;
+        write0.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+
+        VkWriteDescriptorSet &write1 = _writeSets[ writeIndex++ ];
+        write1.dstBinding = 1U;
+        write1.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
+
+        write0.dstSet = write1.dstSet = set;
+        write0.pImageInfo = write1.pImageInfo = &image;
+        write0.pBufferInfo = write1.pBufferInfo = nullptr;
+
+        lightData._lightProjection = light->GetProjection ();
+
+        // Matrix optimization:
+        // Point light has identity orientation by design. Point light changes its location only. Because of that
+        // point light view matrix is negative "w" component. Additionally this method receives viewer local matrix
+        // which is an inverse transform from view matrix. So "view to point light" transform simplifies to
+        // one subtraction operation of point light location vector from "w" component of the viewer local matrix.
+
+        GXMat4& viewToPointLight = lightData._viewToLight;
+        viewToPointLight = viewerLocal;
+
+        viewToPointLight.GetW ( alpha );
+        GXVec3 const& location = light->GetLocation ();
+        betta.Substract ( alpha, location );
+        viewToPointLight.SetW ( betta );
+
+        lightData._hue = light->GetHue ();
+        lightData._intensity = light->GetIntensity ();
+
+        view.MultiplyAsNormal ( alpha, location );
+        lightData._lightLocationView = alpha;
+
+        alpha.Normalize ();
+        lightData._toLightDirectionView = alpha;
+
+        VkDescriptorBufferInfo& buffer = _uniformInfo[ i ];
+
+        buffer.buffer = _uniformPool.Acquire ( _transferCommandBuffer,
+            &lightData,
+            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+            renderer
+        );
+
+        VkWriteDescriptorSet &write2 = _writeSets[ writeIndex++ ];
+        write2.dstSet = set;
+        write2.dstBinding = 2U;
+        write2.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        write2.pImageInfo = nullptr;
+        write2.pBufferInfo = &buffer;
+    }
+
+    vkUpdateDescriptorSets ( renderer.GetDevice (),
+        static_cast<uint32_t> ( _writeSets.size () ),
+        _writeSets.data (),
+        0U,
+        nullptr
+    );
+
+    result = android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( _transferCommandBuffer ),
+        "PointLightLightup::UpdateGPUData",
+        "Can't end command buffer"
+    );
+
+    if ( !result )
+        return false;
+
+    return android_vulkan::Renderer::CheckVkResult (
+        vkQueueSubmit ( renderer.GetQueue (), 1U, &_submitInfoTransfer, VK_NULL_HANDLE ),
+        "PointLightLightup::UpdateGPUData",
+        "Can't submit command buffer"
+    );
 }
 
 } // namespace pbr

@@ -9,7 +9,7 @@ namespace pbr {
 
 enum class eUniformPoolSize : size_t
 {
-    Tiny_4M [[maybe_unused]] = 4U,
+    Tiny_4M = 4U,
     Small_8M [[maybe_unused]] = 8U,
     Medium_16M [[maybe_unused]] = 16U,
     Big_32M [[maybe_unused]] = 32U,

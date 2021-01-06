@@ -3,6 +3,7 @@
 
 
 #include "light_volume.h"
+#include "point_light.h"
 #include "point_light_lightup.h"
 #include "point_light_shadowmap_generator_program.h"
 #include "scene_data.h"
@@ -14,6 +15,9 @@ namespace pbr {
 
 class PointLightPass final
 {
+    public:
+        using PointLightInfo = std::pair<PointLight*, android_vulkan::TextureCube const*>;
+
     private:
         using Interact = std::pair<LightRef, ShadowCasters>;
         using PointLightShadowmapInfo = std::pair<TextureCubeRef, VkFramebuffer>;
@@ -56,6 +60,9 @@ class PointLightPass final
         );
 
         void Destroy ( android_vulkan::Renderer &renderer );
+
+        [[nodiscard]] size_t GetPointLightCount () const;
+        [[nodiscard]] PointLightInfo GetPointLightInfo ( size_t lightIndex ) const;
 
         void Reset ();
         void Submit ( LightRef const &light );

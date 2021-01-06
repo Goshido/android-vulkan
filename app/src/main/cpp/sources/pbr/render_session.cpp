@@ -31,16 +31,18 @@ RenderSession::RenderSession () noexcept:
     _renderSessionStats {},
     _samplerManager {},
     _view {},
-    _viewProjection {}
+    _viewProjection {},
+    _viewerLocal {}
 {
     // NOTHING
 }
 
-void RenderSession::Begin ( GXMat4 const &view, GXMat4 const &projection )
+void RenderSession::Begin ( GXMat4 const &viewerLocal, GXMat4 const &projection )
 {
     _opaqueMeshCount = 0U;
-    _view = view;
-    _viewProjection.Multiply ( view, projection );
+    _viewerLocal = viewerLocal;
+    _view.Inverse ( _viewerLocal );
+    _viewProjection.Multiply ( _view, projection );
     _frustum.From ( _viewProjection );
     _pointLightPass.Reset ();
     _geometryPass.Reset ();

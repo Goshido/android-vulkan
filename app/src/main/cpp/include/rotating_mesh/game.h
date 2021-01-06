@@ -5,9 +5,9 @@
 #include <game.h>
 #include <vulkan_utils.h>
 #include <mesh_geometry.h>
+#include <uniform_buffer.h>
 #include <GXCommon/GXMath.h>
 #include "drawcall.h"
-#include "uniform_buffer.h"
 
 
 namespace rotating_mesh {
@@ -23,46 +23,46 @@ class Game : public android_vulkan::Game
 
         struct Transform
         {
-            GXMat4                      _transform;
-            GXMat4                      _normalTransform;
+            GXMat4                          _transform;
+            GXMat4                          _normalTransform;
         };
 
         AV_DX_ALIGNMENT_END
 
     protected:
-        VkCommandPool                   _commandPool;
+        VkCommandPool                       _commandPool;
 
-        VkDescriptorPool                _descriptorPool;
-        VkDescriptorSetLayout           _descriptorSetLayout;
+        VkDescriptorPool                    _descriptorPool;
+        VkDescriptorSetLayout               _descriptorSetLayout;
 
-        Drawcall                        _drawcalls[ MATERIAL_COUNT ];
-        VkPipelineLayout                _pipelineLayout;
-        UniformBuffer                   _transformBuffer;
+        Drawcall                            _drawcalls[ MATERIAL_COUNT ];
+        VkPipelineLayout                    _pipelineLayout;
+        android_vulkan::UniformBuffer       _transformBuffer;
 
     private:
-        float                           _angle;
-        android_vulkan::Texture2D       _depthStencilRenderTarget;
+        float                               _angle;
+        android_vulkan::Texture2D           _depthStencilRenderTarget;
 
-        const char*                     _fragmentShader;
-        std::vector<VkFramebuffer>      _framebuffers;
+        const char*                         _fragmentShader;
+        std::vector<VkFramebuffer>          _framebuffers;
 
-        VkPipeline                      _pipeline;
-        VkRenderPass                    _renderPass;
-        VkSemaphore                     _renderPassEndSemaphore;
-        VkSemaphore                     _renderTargetAcquiredSemaphore;
+        VkPipeline                          _pipeline;
+        VkRenderPass                        _renderPass;
+        VkSemaphore                         _renderPassEndSemaphore;
+        VkSemaphore                         _renderTargetAcquiredSemaphore;
 
-        VkSampler                       _sampler01Mips;
-        VkSampler                       _sampler09Mips;
-        VkSampler                       _sampler10Mips;
-        VkSampler                       _sampler11Mips;
+        VkSampler                           _sampler01Mips;
+        VkSampler                           _sampler09Mips;
+        VkSampler                           _sampler10Mips;
+        VkSampler                           _sampler11Mips;
 
-        VkShaderModule                  _vertexShaderModule;
-        VkShaderModule                  _fragmentShaderModule;
+        VkShaderModule                      _vertexShaderModule;
+        VkShaderModule                      _fragmentShaderModule;
 
-        std::vector<CommandContext>     _commandBuffers;
+        std::vector<CommandContext>         _commandBuffers;
 
-        GXMat4                          _projectionMatrix;
-        Transform                       _transform;
+        GXMat4                              _projectionMatrix;
+        Transform                           _transform;
 
     protected:
         explicit Game ( const char* fragmentShader );
@@ -118,7 +118,7 @@ class Game : public android_vulkan::Game
         void DestroySyncPrimitives ( android_vulkan::Renderer &renderer );
 
         [[nodiscard]] bool CreateUniformBuffer ( android_vulkan::Renderer &renderer );
-        void DestroyUniformBuffer ();
+        void DestroyUniformBuffer ( android_vulkan::Renderer &renderer );
 
         [[nodiscard]] bool InitCommandBuffers ( android_vulkan::Renderer &renderer );
         [[nodiscard]] bool UpdateUniformBuffer ( android_vulkan::Renderer &renderer, double deltaTime );

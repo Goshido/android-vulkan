@@ -28,10 +28,10 @@ class PointLightLightupProgram final : Program
             [[maybe_unused]] GXVec2                     _padding0_0;
         };
 
-        struct [[maybe_unused]] LightData final
+        struct LightData final
         {
-            [[maybe_unused]] GXMat4                     _projection;
-            [[maybe_unused]] GXMat4                     _shadowmapTransform;
+            [[maybe_unused]] GXMat4                     _lightProjection;
+            [[maybe_unused]] GXMat4                     _viewToLight;
 
             [[maybe_unused]] GXVec3                     _lightLocationView;
             [[maybe_unused]] float                      _padding1_0;

@@ -46,6 +46,7 @@ class RenderSession final
 
         GXMat4                      _view;
         GXMat4                      _viewProjection;
+        GXMat4                      _viewerLocal;
 
     public:
         RenderSession () noexcept;
@@ -58,7 +59,7 @@ class RenderSession final
 
         ~RenderSession () = default;
 
-        void Begin ( GXMat4 const &view, GXMat4 const &projection );
+        void Begin ( GXMat4 const &viewerLocal, GXMat4 const &projection );
         [[nodiscard]] bool End ( ePresentTarget target, double deltaTime, android_vulkan::Renderer &renderer );
 
         [[nodiscard]] bool Init ( VkExtent2D const &resolution, android_vulkan::Renderer &renderer );

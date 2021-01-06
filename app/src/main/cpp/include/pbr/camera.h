@@ -10,7 +10,6 @@ namespace pbr {
 class Camera final
 {
     private:
-        GXVec3      _location;
         float       _moveBoost;
         float       _pitch;
         float       _yaw;
@@ -25,8 +24,8 @@ class Camera final
         // y is pitch
         GXVec2      _angularSpeed;
 
-        GXMat4      _projectionMatrix;
-        GXMat4      _viewMatrix;
+        GXMat4      _local;
+        GXMat4      _projection;
 
     public:
         Camera ();
@@ -45,8 +44,8 @@ class Camera final
 
         void Update ( float deltaTime );
 
+        [[nodiscard]] GXMat4 const& GetLocalMatrix () const;
         [[nodiscard]] GXMat4 const& GetProjectionMatrix () const;
-        [[nodiscard]] GXMat4 const& GetViewMatrix () const;
 
         void CaptureInput ();
         static void ReleaseInput ();

@@ -35,7 +35,8 @@ constexpr static float const Z_NEAR = 0.05F;
     _intensity ( android_vulkan::Half::Convert ( DEFAULT_INTENSITY ) ),
     _isNeedUpdateMatrices ( true ),
     _location ( DEFAULT_LOCATION_X, DEFAULT_LOCATION_Y, DEFAULT_LOCATION_Z ),
-    _matrices {}
+    _matrices {},
+    _projection {}
 {
     constexpr float const halfSize = 0.5F * DEFAULT_SIZE;
 
@@ -64,7 +65,8 @@ PointLight::PointLight ( android_vulkan::Half3 const &hue,
     _intensity ( intensity ),
     _isNeedUpdateMatrices ( true ),
     _location ( location ),
-    _matrices {}
+    _matrices {},
+    _projection {}
 {
     // NOTHING
 }
@@ -97,11 +99,17 @@ PointLight::Matrices const& PointLight::GetMatrices ()
     return _matrices;
 }
 
+GXMat4 const& PointLight::GetProjection ()
+{
+    if ( _isNeedUpdateMatrices )
+        UpdateMatrices ();
+
+    return _projection;
+}
+
 void PointLight::UpdateMatrices ()
 {
-    GXMat4 projection;
-
-    projection.Perspective ( GX_MATH_HALF_PI,
+    _projection.Perspective ( GX_MATH_HALF_PI,
         1.0F,
         Z_NEAR,
         std::max ( _bounds.GetWidth (), std::max ( _bounds.GetHeight (), _bounds.GetDepth () ) )
@@ -122,7 +130,7 @@ void PointLight::UpdateMatrices ()
         GXMat4 &local = locals[ i ];
         local.SetW ( _location );
         view.Inverse ( local );
-        _matrices[ i ].Multiply ( view, projection );
+        _matrices[ i ].Multiply ( view, _projection );
     }
 
     _isNeedUpdateMatrices = false;

@@ -75,6 +75,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/texture_cube.cpp
     app/src/main/cpp/sources/texture2D.cpp
     app/src/main/cpp/sources/trigger.cpp
+    app/src/main/cpp/sources/uniform_buffer.cpp
     app/src/main/cpp/sources/vulkan_utils.cpp
     app/src/main/cpp/sources/GXCommon/GXMath.cpp
     app/src/main/cpp/sources/GXCommon/Intrinsics/GXMathNeon.cpp
@@ -122,7 +123,6 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/rotating_mesh/game.cpp
     app/src/main/cpp/sources/rotating_mesh/game_analytic.cpp
     app/src/main/cpp/sources/rotating_mesh/game_lut.cpp
-    app/src/main/cpp/sources/rotating_mesh/uniform_buffer.cpp
 )
 
 # ARM Neon support: All ARMv8-based devices support Neon. So no any additional compile flags need to specify.

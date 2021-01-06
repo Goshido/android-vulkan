@@ -2,6 +2,13 @@
 #include <pbr/point_light.h>
 
 
+GX_DISABLE_COMMON_WARNINGS
+
+#include <cassert>
+
+GX_RESTORE_WARNING_STATE
+
+
 namespace pbr {
 
 constexpr static uint32_t SHADOWMAP_RESOLUTION = 512U;
@@ -224,6 +231,21 @@ void PointLightPass::Destroy ( android_vulkan::Renderer &renderer )
     vkDestroyRenderPass ( device, _renderPass, nullptr );
     _renderPass = VK_NULL_HANDLE;
     AV_UNREGISTER_RENDER_PASS ( "PointLightPass::_renderPass" )
+}
+
+size_t PointLightPass::GetPointLightCount () const
+{
+    return _interacts.size ();
+}
+
+PointLightPass::PointLightInfo PointLightPass::GetPointLightInfo ( size_t lightIndex ) const
+{
+    assert ( lightIndex < _interacts.size () );
+
+    // Note it's safe cast like that here. "NOLINT" is a clang-tidy control comment.
+    auto* pointLight = static_cast<PointLight*> ( _interacts[ lightIndex ].first.get () ); // NOLINT
+
+    return std::make_pair ( pointLight, _shadowmaps[ lightIndex ].first.get () );
 }
 
 void PointLightPass::Reset ()

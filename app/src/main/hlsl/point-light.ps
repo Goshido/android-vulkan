@@ -39,8 +39,8 @@ SamplerComparisonState      g_sampler:      register ( s0 );
 [[vk::binding ( 2, 1 )]]
 cbuffer LightData:                          register ( b1 )
 {
-    matrix                  _projection;
-    matrix                  _shadowmapTransform;
+    matrix                  _lightProjection;
+    matrix                  _viewToLight;
 
     float3                  _lightLocationView;
     float                   _padding1_0;
@@ -54,7 +54,7 @@ cbuffer LightData:                          register ( b1 )
 
 struct InputData
 {
-    linear float4           _pixel:     SV_Position;
+    linear float4           _pixel:         SV_Position;
 };
 
 struct OutputData
@@ -136,13 +136,14 @@ void GetParams ( out half roughness, out half ior, out half specularIntencity, o
     metallic = paramSample.w;
 }
 
-half GetShadowFactor ( in float3 toLightView )
+half GetShadowFactor ( in float3 locationView )
 {
-    const float3 selector = abs ( toLightView );
-    const float z = max ( selector.x, max ( selector.y, selector.z ) );
-    const float4 cvv = mul ( _projection, float4 ( 0.0F, 0.0F, z, 1.0F ) );
+    const float3 dir = mul ( _viewToLight, float4 ( locationView, 1.0F ) ).xyz;
+    const float3 faceSelector = abs ( dir );
+    const float z = max ( faceSelector.x, max ( faceSelector.y, faceSelector.z ) );
+    const float4 cvv = mul ( _lightProjection, float4 ( 0.0F, 0.0F, z, 1.0F ) );
 
-    return (half)g_shadowmap.SampleCmpLevelZero ( g_sampler, toLightView, cvv.z / cvv.w );
+    return (half)g_shadowmap.SampleCmpLevelZero ( g_sampler, dir, cvv.z / cvv.w );
 }
 
 half3 GetSpecularColor ( in half matallic, in half3 albedo )
@@ -156,9 +157,6 @@ OutputData PS ( in InputData inputData )
 {
     const float4 locationCVV = float4 ( inputData._pixel.xy * _invResolutionFactor - 1.0F, GetDepth (), 1.0F );
     const float3 locationView = RestoreLocationView ( locationCVV );
-
-    const float3 toLightView = _lightLocationView - locationView;
-    const half shadowFactor = GetShadowFactor ( toLightView );
 
     const half3 viewDirectionView = -normalize ( (half3)locationView );
     const half3 halfVectorView = normalize ( _toLightDirectionView + viewDirectionView );
@@ -182,7 +180,8 @@ OutputData PS ( in InputData inputData )
     const half betta = dot ( normalView, viewDirectionView );
 
     const half3 diffuse = albedo * hrdColor * INVERSE_PI * ( 1.0H - specularIntensity ) * max ( 0.0H, alpha );
-    const half3 specular = specularColor * _intensity * specularIntensity * ( d * f * ga ) / ( 4.0H * alpha * alpha );
+    const half3 specular = specularColor * _intensity * specularIntensity * ( d * f * ga ) / ( 4.0H * alpha * betta );
+    const half shadowFactor = GetShadowFactor ( locationView );
 
     OutputData result;
     result._color = float4 ( (float3)( ( diffuse + specular ) * shadowFactor ), 1.0F );

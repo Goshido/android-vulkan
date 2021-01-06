@@ -74,7 +74,7 @@ bool PBRGame::OnInit ( android_vulkan::Renderer &renderer )
 bool PBRGame::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime )
 {
     _camera.Update ( static_cast<float> ( deltaTime ) );
-    _renderSession.Begin ( _camera.GetViewMatrix (), _camera.GetProjectionMatrix () );
+    _renderSession.Begin ( _camera.GetLocalMatrix (), _camera.GetProjectionMatrix () );
 
     for ( auto &component : _components )
         component->Submit ( _renderSession );

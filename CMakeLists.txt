@@ -87,10 +87,11 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/pbr/component.cpp
     app/src/main/cpp/sources/pbr/gbuffer.cpp
     app/src/main/cpp/sources/pbr/geometry_pass.cpp
+    app/src/main/cpp/sources/pbr/lightup_common_descriptror_set_layout.cpp
     app/src/main/cpp/sources/pbr/light.cpp
+    app/src/main/cpp/sources/pbr/light_lightup_base_program.cpp
     app/src/main/cpp/sources/pbr/light_volume.cpp
     app/src/main/cpp/sources/pbr/light_volume_program.cpp
-    app/src/main/cpp/sources/pbr/lightup_common_descriptror_set_layout.cpp
     app/src/main/cpp/sources/pbr/material.cpp
     app/src/main/cpp/sources/pbr/material_manager.cpp
     app/src/main/cpp/sources/pbr/mesh_group.cpp

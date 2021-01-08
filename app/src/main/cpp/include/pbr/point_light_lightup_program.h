@@ -3,15 +3,14 @@
 
 
 #include <half_types.h>
-#include <vulkan_utils.h>
 #include "lightup_common_descriptror_set_layout.h"
+#include "light_lightup_base_program.h"
 #include "point_light_descriptor_set_layout.h"
-#include "program.h"
 
 
 namespace pbr {
 
-class PointLightLightupProgram final : Program
+class PointLightLightupProgram final : public LightLightupBaseProgram
 {
     public:
         AV_DX_ALIGNMENT_BEGIN
@@ -19,13 +18,6 @@ class PointLightLightupProgram final : Program
         struct [[maybe_unused]] PushConstants final
         {
             [[maybe_unused]] GXMat4                     _transform;
-        };
-
-        struct [[maybe_unused]] ViewData final
-        {
-            [[maybe_unused]] GXMat4                     _toView;
-            [[maybe_unused]] GXVec2                     _invResolutionFactor;
-            [[maybe_unused]] GXVec2                     _padding0_0;
         };
 
         struct LightData final

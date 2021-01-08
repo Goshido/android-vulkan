@@ -136,7 +136,7 @@ bool PointLightLightup::Init ( VkCommandBuffer commandBuffer,
         return false;
     }
 
-    if ( !_uniformPool.Init ( sizeof ( PointLightLightupProgram::ViewData ), renderer ) )
+    if ( !_uniformPool.Init ( sizeof ( LightLightupBaseProgram::ViewData ), renderer ) )
     {
         Destroy ( renderer );
         return false;

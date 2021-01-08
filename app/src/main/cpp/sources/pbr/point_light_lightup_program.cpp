@@ -14,7 +14,7 @@ constexpr static const char* VERTEX_SHADER = "shaders/light-volume-vs.spv";
 //----------------------------------------------------------------------------------------------------------------------
 
 PointLightLightupProgram::PointLightLightupProgram () noexcept:
-    Program ( "PointLightLightupProgram" ),
+    LightLightupBaseProgram ( "PointLightLightupProgram" ),
     _commonLayout {}
 {
     // NOTHING

@@ -1,35 +1,53 @@
 #include <pbr/light_volume.h>
+#include <pbr/light_lightup_base_program.h>
 
 
 namespace pbr {
 
 LightVolume::LightVolume () noexcept:
+    _commandPool ( VK_NULL_HANDLE ),
+    _descriptorPool {},
+    _descriptorSet ( VK_NULL_HANDLE ),
+    _lightupLayout {},
     _program {},
     _renderPass ( VK_NULL_HANDLE ),
-    _renderPassInfo {}
+    _renderPassInfo {},
+    _uniform {}
 {
     // NOTHING
 }
 
-[[maybe_unused]] bool LightVolume::Execute ( MeshRef const &/*mesh*/,
+[[maybe_unused]] bool LightVolume::Execute ( android_vulkan::Renderer &/*renderer*/,
+    MeshRef const &/*mesh*/,
     GXMat4 const &/*transform*/,
-    VkCommandBuffer /*commandBuffer*/,
-    android_vulkan::Renderer &/*renderer*/
+    VkCommandBuffer /*commandBuffer*/
 )
 {
     // TODO
     return false;
 }
 
-bool LightVolume::Init ( GBuffer &gBuffer, VkFramebuffer framebuffer, android_vulkan::Renderer &renderer )
+bool LightVolume::Init ( android_vulkan::Renderer &renderer,
+    GBuffer &gBuffer,
+    VkFramebuffer framebuffer,
+    GXMat4 const &cvvToView
+)
 {
-    if ( !CreateRenderPass ( gBuffer, framebuffer, renderer ) )
+    VkDevice device = renderer.GetDevice ();
+
+    if ( !CreateRenderPass ( device, gBuffer, framebuffer ) )
     {
         Destroy ( renderer );
         return false;
     }
 
-    if ( _program.Init ( renderer, _renderPass, 0U, gBuffer.GetResolution () ) )
+    if ( !_program.Init ( renderer, _renderPass, 0U, gBuffer.GetResolution () ) )
+    {
+        Destroy ( renderer );
+        return false;
+    }
+
+    if ( CreateDescriptorSet ( renderer, gBuffer, cvvToView ) )
         return true;
 
     Destroy ( renderer );
@@ -38,12 +56,31 @@ bool LightVolume::Init ( GBuffer &gBuffer, VkFramebuffer framebuffer, android_vu
 
 void LightVolume::Destroy ( android_vulkan::Renderer &renderer )
 {
+    _uniform.FreeResources ( renderer );
+    VkDevice device = renderer.GetDevice ();
+
+    if ( _commandPool != VK_NULL_HANDLE )
+    {
+        vkDestroyCommandPool ( device, _commandPool, nullptr );
+        _commandPool = VK_NULL_HANDLE;
+        AV_UNREGISTER_COMMAND_POOL ( "LightVolume::_commandPool" )
+    }
+
+    _lightupLayout.Destroy ( renderer );
+
+    if ( _descriptorPool != VK_NULL_HANDLE )
+    {
+        vkDestroyDescriptorPool ( device, _descriptorPool, nullptr );
+        _descriptorPool = VK_NULL_HANDLE;
+        AV_UNREGISTER_DESCRIPTOR_POOL ( "LightVolume::_descriptorPool" )
+    }
+
     _program.Destroy ( renderer );
 
     if ( _renderPass == VK_NULL_HANDLE )
         return;
 
-    vkDestroyRenderPass ( renderer.GetDevice (), _renderPass, nullptr );
+    vkDestroyRenderPass ( device, _renderPass, nullptr );
     _renderPass = VK_NULL_HANDLE;
     AV_UNREGISTER_RENDER_PASS ( "LightVolume::_renderPass" )
 }
@@ -53,12 +90,210 @@ VkRenderPass LightVolume::GetRenderPass () const
     return _renderPass;
 }
 
+[[maybe_unused]] VkDescriptorSet LightVolume::GetLighupCommonDescriptorSet () const
+{
+    return _descriptorSet;
+}
+
 uint32_t LightVolume::GetLightupSubpass ()
 {
     return 1U;
 }
 
-bool LightVolume::CreateRenderPass ( GBuffer &gBuffer, VkFramebuffer framebuffer, android_vulkan::Renderer &renderer )
+bool LightVolume::CreateDescriptorSet ( android_vulkan::Renderer &renderer, GBuffer &gBuffer, GXMat4 const &cvvToView )
+{
+    constexpr static VkDescriptorPoolSize const poolSizes[]
+    {
+        {
+            .type = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
+            .descriptorCount = 4U
+        },
+        {
+            .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            .descriptorCount = 1U
+        }
+    };
+
+    constexpr static VkDescriptorPoolCreateInfo const descriptorPoolInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .maxSets = 1U,
+        .poolSizeCount = static_cast<uint32_t> ( std::size ( poolSizes ) ),
+        .pPoolSizes = poolSizes
+    };
+
+    VkDevice device = renderer.GetDevice ();
+
+    bool result = android_vulkan::Renderer::CheckVkResult (
+        vkCreateDescriptorPool ( device, &descriptorPoolInfo, nullptr, &_descriptorPool ),
+        "LightVolume::CreateDescriptorSet",
+        "Can't create descriptor pool"
+    );
+
+    if ( !result )
+        return false;
+
+    AV_REGISTER_DESCRIPTOR_POOL ( "LightVolume::_descriptorPool" )
+
+    if ( !_lightupLayout.Init ( renderer ) )
+        return false;
+
+    VkDescriptorSetLayout const layouts[] = { _lightupLayout.GetLayout () };
+
+    VkDescriptorSetAllocateInfo const allocateInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+        .pNext = nullptr,
+        .descriptorPool = _descriptorPool,
+        .descriptorSetCount = static_cast<uint32_t> ( std::size ( layouts ) ),
+        .pSetLayouts = layouts
+    };
+
+    result = android_vulkan::Renderer::CheckVkResult (
+        vkAllocateDescriptorSets ( device, &allocateInfo, &_descriptorSet ),
+        "LightVolume::CreateDescriptorSet",
+        "Can't allocate descriptor set"
+    );
+
+    if ( !result )
+        return false;
+
+    VkCommandPoolCreateInfo const commandPoolInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+        .queueFamilyIndex = renderer.GetQueueFamilyIndex ()
+    };
+
+    result = android_vulkan::Renderer::CheckVkResult (
+        vkCreateCommandPool ( device, &commandPoolInfo, nullptr, &_commandPool ),
+        "LightVolume::CreateDescriptorSet",
+        "Can't create command pool"
+    );
+
+    if ( !result )
+        return false;
+
+    AV_REGISTER_COMMAND_POOL ( "LightVolume::_commandPool" )
+
+    if ( !_uniform.Init ( renderer, _commandPool, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT ) )
+        return false;
+
+    VkExtent2D const& resolution = gBuffer.GetResolution ();
+
+    LightLightupBaseProgram::ViewData viewData;
+    auto &factor = viewData._invResolutionFactor._data;
+    factor[ 0U ] = 2.0F / static_cast<float> ( resolution.width );
+    factor[ 1U ] = 2.0F / static_cast<float> ( resolution.height );
+
+    viewData._toView = cvvToView;
+
+    if ( !_uniform.Update ( renderer, reinterpret_cast<uint8_t const*> ( &viewData ), sizeof ( viewData ) ) )
+        return false;
+
+    VkDescriptorBufferInfo const buffer
+    {
+        .buffer = _uniform.GetBuffer (),
+        .offset = 0U,
+        .range = static_cast<VkDeviceSize> ( sizeof ( LightLightupBaseProgram::ViewData ) )
+    };
+
+    VkDescriptorImageInfo const images[] =
+    {
+        {
+            .sampler = VK_NULL_HANDLE,
+            .imageView = gBuffer.GetAlbedo ().GetImageView (),
+            .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+        },
+        {
+            .sampler = VK_NULL_HANDLE,
+            .imageView = gBuffer.GetNormal ().GetImageView (),
+            .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+        },
+        {
+            .sampler = VK_NULL_HANDLE,
+            .imageView = gBuffer.GetParams ().GetImageView (),
+            .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+        },
+        {
+            .sampler = VK_NULL_HANDLE,
+            .imageView = gBuffer.GetReadOnlyDepthImageView (),
+            .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+        }
+    };
+
+    VkWriteDescriptorSet const writeInfo[]
+    {
+        {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .pNext = nullptr,
+            .dstSet = _descriptorSet,
+            .dstBinding = 0U,
+            .dstArrayElement = 0U,
+            .descriptorCount = 1U,
+            .descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
+            .pImageInfo = images,
+            .pBufferInfo = nullptr,
+            .pTexelBufferView = nullptr
+        },
+        {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .pNext = nullptr,
+            .dstSet = _descriptorSet,
+            .dstBinding = 1U,
+            .dstArrayElement = 0U,
+            .descriptorCount = 1U,
+            .descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
+            .pImageInfo = images + 1U,
+            .pBufferInfo = nullptr,
+            .pTexelBufferView = nullptr
+        },
+        {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .pNext = nullptr,
+            .dstSet = _descriptorSet,
+            .dstBinding = 2U,
+            .dstArrayElement = 0U,
+            .descriptorCount = 1U,
+            .descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
+            .pImageInfo = images + 2U,
+            .pBufferInfo = nullptr,
+            .pTexelBufferView = nullptr
+        },
+        {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .pNext = nullptr,
+            .dstSet = _descriptorSet,
+            .dstBinding = 3U,
+            .dstArrayElement = 0U,
+            .descriptorCount = 1U,
+            .descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
+            .pImageInfo = images + 3U,
+            .pBufferInfo = nullptr,
+            .pTexelBufferView = nullptr
+        },
+        {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .pNext = nullptr,
+            .dstSet = _descriptorSet,
+            .dstBinding = 4U,
+            .dstArrayElement = 0U,
+            .descriptorCount = 1U,
+            .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            .pImageInfo = nullptr,
+            .pBufferInfo = &buffer,
+            .pTexelBufferView = nullptr
+        }
+    };
+
+    vkUpdateDescriptorSets ( device, static_cast<uint32_t> ( std::size ( writeInfo ) ), writeInfo, 0U, nullptr );
+    return true;
+}
+
+bool LightVolume::CreateRenderPass ( VkDevice device, GBuffer &gBuffer, VkFramebuffer framebuffer )
 {
     VkAttachmentDescription const attachments[]
     {
@@ -244,7 +479,7 @@ bool LightVolume::CreateRenderPass ( GBuffer &gBuffer, VkFramebuffer framebuffer
     };
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateRenderPass ( renderer.GetDevice (), &renderPassInfo, nullptr, &_renderPass ),
+        vkCreateRenderPass (device, &renderPassInfo, nullptr, &_renderPass ),
         "LightVolume::CreateRenderPass",
         "Can't create render pass"
     );

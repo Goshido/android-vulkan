@@ -44,6 +44,7 @@ class RenderSession final
         RenderSessionStats          _renderSessionStats;
         SamplerManager              _samplerManager;
 
+        GXMat4                      _cvvToView;
         GXMat4                      _view;
         GXMat4                      _viewProjection;
         GXMat4                      _viewerLocal;

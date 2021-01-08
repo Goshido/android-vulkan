@@ -40,6 +40,7 @@ RenderSession::RenderSession () noexcept:
 void RenderSession::Begin ( GXMat4 const &viewerLocal, GXMat4 const &projection )
 {
     _opaqueMeshCount = 0U;
+    _cvvToView.Inverse ( projection );
     _viewerLocal = viewerLocal;
     _view.Inverse ( _viewerLocal );
     _viewProjection.Multiply ( _view, projection );
@@ -124,7 +125,7 @@ bool RenderSession::End ( ePresentTarget target, double deltaTime, android_vulka
 
 bool RenderSession::Init ( VkExtent2D const &resolution, android_vulkan::Renderer &renderer )
 {
-    if ( !_gBuffer.Init ( resolution, renderer ) )
+    if ( !_gBuffer.Init ( renderer, resolution ) )
     {
         Destroy ( renderer );
         return false;
@@ -136,7 +137,7 @@ bool RenderSession::Init ( VkExtent2D const &resolution, android_vulkan::Rendere
         return false;
     }
 
-    if ( !_lightVolume.Init ( _gBuffer, _gBufferFramebuffer, renderer ) )
+    if ( !_lightVolume.Init ( renderer, _gBuffer, _gBufferFramebuffer, _viewerLocal ) )
     {
         Destroy ( renderer );
         return false;

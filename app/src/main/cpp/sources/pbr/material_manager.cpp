@@ -129,8 +129,10 @@ void MaterialManager::Destroy ( android_vulkan::Renderer &renderer )
 
 void MaterialManager::DestroyInternal ( android_vulkan::Renderer &renderer )
 {
+    VkDevice device = renderer.GetDevice ();
+
     for ( auto &texture : _textureStorage )
-        texture.second->FreeResources ( renderer );
+        texture.second->FreeResources ( device );
 
     _textureStorage.clear ();
 }

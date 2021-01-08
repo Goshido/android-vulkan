@@ -57,10 +57,10 @@ Texture2D::Texture2D () noexcept:
     // NOTHING
 }
 
-void Texture2D::FreeResources ( Renderer &renderer )
+void Texture2D::FreeResources ( VkDevice device )
 {
-    FreeTransferResources ( renderer );
-    FreeResourceInternal ( renderer );
+    FreeTransferResources ( device );
+    FreeResourceInternal ( device );
 
     _format = VK_FORMAT_UNDEFINED;
     memset ( &_resolution, 0, sizeof ( _resolution ) );
@@ -73,21 +73,18 @@ bool Texture2D::CreateRenderTarget ( VkExtent2D const &resolution,
     Renderer &renderer
 )
 {
-    FreeResources ( renderer );
+    FreeResources ( renderer.GetDevice () );
     VkImageCreateInfo imageInfo;
-    const bool result = CreateCommonResources ( imageInfo, resolution, format, usage, 1U, renderer);
 
-    if ( !result )
+    if ( !CreateCommonResources ( imageInfo, resolution, format, usage, 1U, renderer ) )
         return false;
 
     _mipLevels = 1U;
     return true;
 }
 
-void Texture2D::FreeTransferResources ( Renderer &renderer )
+void Texture2D::FreeTransferResources ( VkDevice device )
 {
-    VkDevice device = renderer.GetDevice ();
-
     if ( _transferDeviceMemory != VK_NULL_HANDLE )
     {
         vkFreeMemory ( device, _transferDeviceMemory, nullptr );
@@ -147,7 +144,7 @@ std::string const& Texture2D::GetName () const
         return false;
     }
 
-    FreeResourceInternal ( renderer );
+    FreeResourceInternal ( renderer.GetDevice () );
     std::vector<uint8_t> pixelData;
 
     int width = 0;
@@ -205,7 +202,7 @@ bool Texture2D::UploadData ( std::string &&fileName,
         return false;
     }
 
-    FreeResourceInternal ( renderer );
+    FreeResourceInternal ( renderer.GetDevice () );
 
     if ( IsCompressed ( fileName ) )
     {
@@ -289,7 +286,7 @@ bool Texture2D::UploadData ( const uint8_t* data,
     VkCommandBuffer commandBuffer
 )
 {
-    FreeResources ( renderer );
+    FreeResources ( renderer.GetDevice () );
     VkImageCreateInfo imageInfo;
 
     bool const result = CreateCommonResources ( imageInfo,
@@ -358,7 +355,7 @@ bool Texture2D::CreateCommonResources ( VkImageCreateInfo &imageInfo,
 
     if ( !result )
     {
-        FreeResources ( renderer );
+        FreeResources ( device );
         return false;
     }
 
@@ -371,7 +368,7 @@ bool Texture2D::CreateCommonResources ( VkImageCreateInfo &imageInfo,
 
     if ( !result )
     {
-        FreeResources ( renderer );
+        FreeResources ( device );
         return false;
     }
 
@@ -402,7 +399,7 @@ bool Texture2D::CreateCommonResources ( VkImageCreateInfo &imageInfo,
 
     if ( !result )
     {
-        FreeResources ( renderer );
+        FreeResources ( device );
         return false;
     }
 
@@ -431,7 +428,7 @@ bool Texture2D::CreateTransferResources ( uint8_t* &mappedBuffer, VkDeviceSize s
 
     if ( !result )
     {
-        FreeResources ( renderer );
+        FreeResources ( device );
         return false;
     }
 
@@ -448,7 +445,7 @@ bool Texture2D::CreateTransferResources ( uint8_t* &mappedBuffer, VkDeviceSize s
 
     if ( !result )
     {
-        FreeResources ( renderer );
+        FreeResources ( device );
         return false;
     }
 
@@ -462,7 +459,7 @@ bool Texture2D::CreateTransferResources ( uint8_t* &mappedBuffer, VkDeviceSize s
 
     if ( !result )
     {
-        FreeResources ( renderer );
+        FreeResources ( device );
         return false;
     }
 
@@ -476,7 +473,7 @@ bool Texture2D::CreateTransferResources ( uint8_t* &mappedBuffer, VkDeviceSize s
 
     if ( !result )
     {
-        FreeResources ( renderer );
+        FreeResources ( device );
         return false;
     }
 
@@ -484,10 +481,9 @@ bool Texture2D::CreateTransferResources ( uint8_t* &mappedBuffer, VkDeviceSize s
     return true;
 }
 
-void Texture2D::FreeResourceInternal ( Renderer &renderer )
+void Texture2D::FreeResourceInternal ( VkDevice device )
 {
     _mipLevels = 0U;
-    VkDevice device = renderer.GetDevice ();
 
     if ( _imageView != VK_NULL_HANDLE )
     {
@@ -550,7 +546,8 @@ bool Texture2D::UploadCompressed ( std::string const &fileName,
         offset += static_cast<size_t> ( mip._size );
     }
 
-    vkUnmapMemory ( renderer.GetDevice (), _transferDeviceMemory );
+    VkDevice device = renderer.GetDevice ();
+    vkUnmapMemory ( device, _transferDeviceMemory );
 
     VkCommandBufferBeginInfo beginInfo;
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -565,7 +562,7 @@ bool Texture2D::UploadCompressed ( std::string const &fileName,
 
     if ( !result )
     {
-        FreeResources ( renderer );
+        FreeResources ( device );
         return false;
     }
 
@@ -654,7 +651,7 @@ bool Texture2D::UploadCompressed ( std::string const &fileName,
 
     if ( !result )
     {
-        FreeResources ( renderer );
+        FreeResources ( device );
         return false;
     }
 
@@ -676,7 +673,7 @@ bool Texture2D::UploadCompressed ( std::string const &fileName,
 
     if ( !result )
     {
-        FreeResources ( renderer );
+        FreeResources ( device );
         return false;
     }
 
@@ -698,7 +695,8 @@ bool Texture2D::UploadDataInternal ( uint8_t const* data,
         return false;
 
     memcpy ( mappedBuffer, data, size );
-    vkUnmapMemory ( renderer.GetDevice (), _transferDeviceMemory );
+    VkDevice device = renderer.GetDevice ();
+    vkUnmapMemory ( device, _transferDeviceMemory );
 
     VkCommandBufferBeginInfo beginInfo;
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -713,7 +711,7 @@ bool Texture2D::UploadDataInternal ( uint8_t const* data,
 
     if ( !result )
     {
-        FreeResources ( renderer );
+        FreeResources ( device );
         return false;
     }
 
@@ -786,7 +784,7 @@ bool Texture2D::UploadDataInternal ( uint8_t const* data,
 
         if ( !result )
         {
-            FreeResources ( renderer );
+            FreeResources ( device );
             return false;
         }
 
@@ -809,7 +807,7 @@ bool Texture2D::UploadDataInternal ( uint8_t const* data,
 
         if ( !result )
         {
-            FreeResources ( renderer );
+            FreeResources ( device );
             return false;
         }
 
@@ -936,7 +934,7 @@ bool Texture2D::UploadDataInternal ( uint8_t const* data,
 
     if ( !result )
     {
-        FreeResources ( renderer );
+        FreeResources ( device );
         return false;
     }
 
@@ -959,7 +957,7 @@ bool Texture2D::UploadDataInternal ( uint8_t const* data,
 
     if ( !result )
     {
-        FreeResources ( renderer );
+        FreeResources ( device );
         return false;
     }
 

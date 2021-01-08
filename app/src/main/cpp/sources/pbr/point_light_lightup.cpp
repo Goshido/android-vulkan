@@ -191,12 +191,14 @@ void PointLightLightup::Destroy ( android_vulkan::Renderer &renderer )
     _volumeMesh.FreeResources ( renderer );
     _uniformPool.Destroy ( renderer );
     _sampler.Destroy ( renderer );
-    _program.Destroy ( renderer );
+
+    VkDevice device = renderer.GetDevice ();
+    _program.Destroy ( device );
 
     if ( _commandPool == VK_NULL_HANDLE )
         return;
 
-    vkDestroyCommandPool ( renderer.GetDevice (), _commandPool, nullptr );
+    vkDestroyCommandPool ( device, _commandPool, nullptr );
     _commandPool = VK_NULL_HANDLE;
     AV_UNREGISTER_COMMAND_POOL ( "PointLightLightup::_commandPool" )
 }

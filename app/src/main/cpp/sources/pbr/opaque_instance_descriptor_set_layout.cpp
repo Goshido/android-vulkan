@@ -30,7 +30,7 @@ class OpaqueInstanceDescriptorSetLayoutImpl final
 
         ~OpaqueInstanceDescriptorSetLayoutImpl () = default;
 
-        void Destroy ( android_vulkan::Renderer &renderer );
+        void Destroy ( VkDevice device );
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer );
 };
 
@@ -41,7 +41,7 @@ OpaqueInstanceDescriptorSetLayoutImpl::OpaqueInstanceDescriptorSetLayoutImpl () 
     // NOTHING
 }
 
-void OpaqueInstanceDescriptorSetLayoutImpl::Destroy ( android_vulkan::Renderer &renderer )
+void OpaqueInstanceDescriptorSetLayoutImpl::Destroy ( VkDevice device )
 {
     if ( !_references )
         return;
@@ -51,7 +51,7 @@ void OpaqueInstanceDescriptorSetLayoutImpl::Destroy ( android_vulkan::Renderer &
     if ( _references )
         return;
 
-    vkDestroyDescriptorSetLayout ( renderer.GetDevice (), _descriptorSetLayout, nullptr );
+    vkDestroyDescriptorSetLayout ( device, _descriptorSetLayout, nullptr );
     _descriptorSetLayout = VK_NULL_HANDLE;
     AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "OpaqueInstanceDescriptorSetLayoutImpl::_descriptorSetLayout" )
 }
@@ -103,9 +103,9 @@ static OpaqueInstanceDescriptorSetLayoutImpl g_opaqueInstanceDescriptorSetLayout
 
 //----------------------------------------------------------------------------------------------------------------------
 
-void OpaqueInstanceDescriptorSetLayout::Destroy ( android_vulkan::Renderer &renderer )
+void OpaqueInstanceDescriptorSetLayout::Destroy ( VkDevice device )
 {
-    g_opaqueInstanceDescriptorSetLayout.Destroy ( renderer );
+    g_opaqueInstanceDescriptorSetLayout.Destroy ( device );
 }
 
 bool OpaqueInstanceDescriptorSetLayout::Init ( android_vulkan::Renderer &renderer )

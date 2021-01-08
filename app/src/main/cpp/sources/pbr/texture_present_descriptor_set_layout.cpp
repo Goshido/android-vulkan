@@ -33,7 +33,7 @@ class TexturePresentDescriptorSetLayoutImpl final
 
         ~TexturePresentDescriptorSetLayoutImpl () = default;
 
-        void Destroy ( android_vulkan::Renderer &renderer );
+        void Destroy ( VkDevice device );
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer );
 };
 
@@ -44,7 +44,7 @@ TexturePresentDescriptorSetLayoutImpl::TexturePresentDescriptorSetLayoutImpl ():
     // NOTHING
 }
 
-void TexturePresentDescriptorSetLayoutImpl::Destroy ( android_vulkan::Renderer &renderer )
+void TexturePresentDescriptorSetLayoutImpl::Destroy ( VkDevice device )
 {
     if ( !_references )
         return;
@@ -54,7 +54,7 @@ void TexturePresentDescriptorSetLayoutImpl::Destroy ( android_vulkan::Renderer &
     if ( _references )
         return;
 
-    vkDestroyDescriptorSetLayout ( renderer.GetDevice (), _descriptorSetLayout, nullptr );
+    vkDestroyDescriptorSetLayout ( device, _descriptorSetLayout, nullptr );
     _descriptorSetLayout = VK_NULL_HANDLE;
     AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "TexturePresentDescriptorSetLayoutImpl::_descriptorSetLayout" )
 }
@@ -111,9 +111,9 @@ static TexturePresentDescriptorSetLayoutImpl g_texturePresentDescriptorSetLayout
 
 //----------------------------------------------------------------------------------------------------------------------
 
-void TexturePresentDescriptorSetLayout::Destroy ( android_vulkan::Renderer &renderer )
+void TexturePresentDescriptorSetLayout::Destroy ( VkDevice device )
 {
-    g_texturePresentDescriptorSetLayout.Destroy ( renderer );
+    g_texturePresentDescriptorSetLayout.Destroy ( device );
 }
 
 bool TexturePresentDescriptorSetLayout::Init ( android_vulkan::Renderer &renderer )

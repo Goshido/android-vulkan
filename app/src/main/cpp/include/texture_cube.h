@@ -36,7 +36,7 @@ class TextureCube final
             Renderer &renderer
         );
 
-        void FreeResources ( Renderer &renderer );
+        void FreeResources ( VkDevice device );
 
         [[maybe_unused]] [[nodiscard]] VkFormat GetFormat () const;
         [[maybe_unused]] [[nodiscard]] VkImage GetImage () const;

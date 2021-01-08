@@ -109,7 +109,7 @@ void PresentPass::Destroy ( android_vulkan::Renderer &renderer )
         AV_UNREGISTER_SEMAPHORE ( "PresentPass::_renderEndSemaphore" )
     }
 
-    _program.Destroy ( renderer );
+    _program.Destroy ( device );
     DestroyFramebuffers ( device );
 
     if ( _renderPass != VK_NULL_HANDLE )

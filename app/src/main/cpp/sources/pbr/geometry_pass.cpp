@@ -149,7 +149,7 @@ void GeometryPass::Destroy ( android_vulkan::Renderer &renderer )
     }
 
     _uniformPool.Destroy ( renderer );
-    _program.Destroy ( renderer );
+    _program.Destroy ( device );
 
     if ( _fence != VK_NULL_HANDLE )
     {
@@ -437,20 +437,22 @@ void GeometryPass::CleanupTransferResources ( android_vulkan::Renderer &renderer
     if ( !_isFreeTransferResources )
         return;
 
+    VkDevice device = renderer.GetDevice ();
+
     if ( _albedoDefault )
-        _albedoDefault->FreeTransferResources ( renderer );
+        _albedoDefault->FreeTransferResources ( device );
 
     if ( _emissionDefault )
-        _emissionDefault->FreeTransferResources ( renderer );
+        _emissionDefault->FreeTransferResources ( device );
 
     if ( _maskDefault )
-        _maskDefault->FreeTransferResources ( renderer );
+        _maskDefault->FreeTransferResources ( device );
 
     if ( _normalDefault )
-        _normalDefault->FreeTransferResources ( renderer );
+        _normalDefault->FreeTransferResources ( device );
 
     if ( _paramDefault )
-        _paramDefault->FreeTransferResources ( renderer );
+        _paramDefault->FreeTransferResources ( device );
 
     _isFreeTransferResources = false;
 }
@@ -619,11 +621,13 @@ bool GeometryPass::InitDefaultTextures ( VkCommandBuffer const* commandBuffers, 
 
 void GeometryPass::DestroyDefaultTextures ( android_vulkan::Renderer &renderer )
 {
-    auto freeTexture = [ &renderer ] ( Texture2DRef &texture ) {
+    VkDevice device = renderer.GetDevice ();
+
+    auto freeTexture = [ device ] ( Texture2DRef &texture ) {
         if ( !texture )
             return;
 
-        texture->FreeResources ( renderer );
+        texture->FreeResources ( device );
         texture = nullptr;
     };
 

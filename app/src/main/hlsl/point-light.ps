@@ -22,7 +22,7 @@ SubpassInput<float>         g_depth;
 [[vk::binding ( 4, 0 )]]
 cbuffer ViewData:                           register ( b0 )
 {
-    matrix                  _toView;
+    matrix                  _cvvToView;
 
     // Optimiztion:
     // must be equal: 2.0F / resolution.
@@ -64,17 +64,6 @@ struct OutputData
 };
 
 //----------------------------------------------------------------------------------------------------------------------
-
-float3 RestoreLocationView ( in float4 cvv )
-{
-    const float4 v = mul ( _toView, cvv );
-    return v.xyz * ( 1.0F / v.z );
-}
-
-half3 RestoreNormalView ()
-{
-    return (half3)( g_normal.SubpassLoad ().xyz * 2.0F - 1.0F );
-}
 
 half GGX ( in half value )
 {
@@ -151,13 +140,22 @@ half3 GetSpecularColor ( in half matallic, in half3 albedo )
     return lerp ( _hue, albedo, (half3)matallic );
 }
 
+float3 RestoreLocationView ( in float2 locationImage )
+{
+    const float4 v = mul ( _cvvToView, float4 ( locationImage * _invResolutionFactor - 1.0F, GetDepth (), 1.0F ) );
+    return v.xyz * ( 1.0F / v.z );
+}
+
+half3 RestoreNormalView ()
+{
+    return (half3)( g_normal.SubpassLoad ().xyz * 2.0F - 1.0F );
+}
+
 //----------------------------------------------------------------------------------------------------------------------
 
 OutputData PS ( in InputData inputData )
 {
-    const float4 locationCVV = float4 ( inputData._pixel.xy * _invResolutionFactor - 1.0F, GetDepth (), 1.0F );
-    const float3 locationView = RestoreLocationView ( locationCVV );
-
+    const float3 locationView = RestoreLocationView ( inputData._pixel.xy );
     const half3 viewDirectionView = -normalize ( (half3)locationView );
     const half3 halfVectorView = normalize ( _toLightDirectionView + viewDirectionView );
     const half3 normalView = RestoreNormalView ();

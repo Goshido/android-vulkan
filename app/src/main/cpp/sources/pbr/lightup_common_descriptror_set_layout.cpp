@@ -30,7 +30,7 @@ class LightupCommonDescriptorSetLayoutImpl final
 
         ~LightupCommonDescriptorSetLayoutImpl () = default;
 
-        void Destroy ( android_vulkan::Renderer &renderer );
+        void Destroy ( VkDevice device );
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer );
 };
 
@@ -41,7 +41,7 @@ LightupCommonDescriptorSetLayoutImpl::LightupCommonDescriptorSetLayoutImpl () no
     // NOTHING
 }
 
-void LightupCommonDescriptorSetLayoutImpl::Destroy ( android_vulkan::Renderer &renderer )
+void LightupCommonDescriptorSetLayoutImpl::Destroy ( VkDevice device )
 {
     if ( !_references )
         return;
@@ -51,7 +51,7 @@ void LightupCommonDescriptorSetLayoutImpl::Destroy ( android_vulkan::Renderer &r
     if ( _references )
         return;
 
-    vkDestroyDescriptorSetLayout ( renderer.GetDevice (), _descriptorSetLayout, nullptr );
+    vkDestroyDescriptorSetLayout ( device, _descriptorSetLayout, nullptr );
     _descriptorSetLayout = VK_NULL_HANDLE;
     AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "LightupCommonDescriptorSetLayoutImpl::_descriptorSetLayout" )
 }
@@ -131,9 +131,9 @@ static LightupCommonDescriptorSetLayoutImpl g_lightupCommonDescriptorSetLayout;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-void LightupCommonDescriptorSetLayout::Destroy ( android_vulkan::Renderer &renderer )
+void LightupCommonDescriptorSetLayout::Destroy ( VkDevice device )
 {
-    g_lightupCommonDescriptorSetLayout.Destroy ( renderer );
+    g_lightupCommonDescriptorSetLayout.Destroy ( device );
 }
 
 bool LightupCommonDescriptorSetLayout::Init ( android_vulkan::Renderer &renderer )

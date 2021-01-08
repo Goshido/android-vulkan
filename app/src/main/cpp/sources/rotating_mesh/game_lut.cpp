@@ -311,11 +311,11 @@ bool GameLUT::LoadGPUContent ( android_vulkan::Renderer &renderer )
     for ( auto& item : _drawcalls )
     {
         item._mesh.FreeTransferResources ( renderer );
-        item._diffuse.FreeTransferResources ( renderer );
-        item._normal.FreeTransferResources ( renderer );
+        item._diffuse.FreeTransferResources ( device );
+        item._normal.FreeTransferResources ( device );
     }
 
-    _specularLUTTexture.FreeTransferResources ( renderer );
+    _specularLUTTexture.FreeTransferResources ( device );
 
     vkFreeCommandBuffers ( device, _commandPool, allocateInfo.commandBufferCount, commandBuffers );
     return true;
@@ -426,7 +426,7 @@ bool GameLUT::CreateSpecularLUTTexture ( android_vulkan::Renderer &renderer, VkC
 
 void GameLUT::DestroySpecularLUTTexture ( android_vulkan::Renderer &renderer )
 {
-    _specularLUTTexture.FreeResources ( renderer );
+    _specularLUTTexture.FreeResources ( renderer.GetDevice () );
 }
 
 } // namespace rotating_mesh

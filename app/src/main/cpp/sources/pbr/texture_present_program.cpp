@@ -43,7 +43,7 @@ bool TexturePresentProgram::Init ( android_vulkan::Renderer &renderer,
 
     if ( !InitShaderInfo ( pipelineInfo.pStages, stageInfo, renderer ) )
     {
-        Destroy ( renderer );
+        Destroy ( renderer.GetDevice () );
         return false;
     }
 
@@ -59,7 +59,7 @@ bool TexturePresentProgram::Init ( android_vulkan::Renderer &renderer,
 
     if ( !InitLayout ( pipelineInfo.layout, renderer ) )
     {
-        Destroy ( renderer );
+        Destroy ( renderer.GetDevice () );
         return false;
     }
 
@@ -76,7 +76,7 @@ bool TexturePresentProgram::Init ( android_vulkan::Renderer &renderer,
 
     if ( !result )
     {
-        Destroy ( renderer );
+        Destroy ( renderer.GetDevice () );
         return false;
     }
 
@@ -84,10 +84,8 @@ bool TexturePresentProgram::Init ( android_vulkan::Renderer &renderer,
     return true;
 }
 
-void TexturePresentProgram::Destroy ( android_vulkan::Renderer &renderer )
+void TexturePresentProgram::Destroy ( VkDevice device )
 {
-    VkDevice device = renderer.GetDevice ();
-
     if ( _pipeline != VK_NULL_HANDLE )
     {
         vkDestroyPipeline ( device, _pipeline, nullptr );
@@ -102,7 +100,7 @@ void TexturePresentProgram::Destroy ( android_vulkan::Renderer &renderer )
         AV_UNREGISTER_PIPELINE_LAYOUT ( "TexturePresentProgram::_pipelineLayout" )
     }
 
-    _descriptorSetLayout.Destroy ( renderer );
+    _descriptorSetLayout.Destroy ( device );
 
     if ( _fragmentShader != VK_NULL_HANDLE )
     {

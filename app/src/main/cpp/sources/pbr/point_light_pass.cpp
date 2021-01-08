@@ -196,7 +196,7 @@ void PointLightPass::Destroy ( android_vulkan::Renderer &renderer )
             if ( framebuffer == VK_NULL_HANDLE )
                 continue;
 
-            image->FreeResources ( renderer );
+            image->FreeResources ( device );
 
             vkDestroyFramebuffer ( device, framebuffer, nullptr );
             AV_UNREGISTER_FRAMEBUFFER ( "PointLightPass::_shadowmaps" )
@@ -223,7 +223,7 @@ void PointLightPass::Destroy ( android_vulkan::Renderer &renderer )
         AV_UNREGISTER_FENCE ( "PointLightPass::_fence" )
     }
 
-    _program.Destroy ( renderer );
+    _program.Destroy ( device );
 
     if ( _renderPass == VK_NULL_HANDLE )
         return;
@@ -297,15 +297,17 @@ PointLightPass::PointLightShadowmapInfo* PointLightPass::AcquirePointLightShadow
         .layers = PBR_POINT_LIGHT_SHADOW_CASTER_PROJECTION_COUNT
     };
 
+    VkDevice device = renderer.GetDevice ();
+
     bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateFramebuffer ( renderer.GetDevice (), &framebufferInfo, nullptr, &framebuffer ),
+        vkCreateFramebuffer ( device, &framebufferInfo, nullptr, &framebuffer ),
         "RenderSession::AcquirePointLightShadowmap",
         "Can't create framebuffer"
     );
 
     if ( !result )
     {
-        shadowmap->FreeResources ( renderer );
+        shadowmap->FreeResources ( device );
         return nullptr;
     }
 

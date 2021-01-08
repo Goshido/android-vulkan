@@ -66,7 +66,7 @@ void LightVolume::Destroy ( android_vulkan::Renderer &renderer )
         AV_UNREGISTER_COMMAND_POOL ( "LightVolume::_commandPool" )
     }
 
-    _lightupLayout.Destroy ( renderer );
+    _lightupLayout.Destroy ( device );
 
     if ( _descriptorPool != VK_NULL_HANDLE )
     {
@@ -75,7 +75,7 @@ void LightVolume::Destroy ( android_vulkan::Renderer &renderer )
         AV_UNREGISTER_DESCRIPTOR_POOL ( "LightVolume::_descriptorPool" )
     }
 
-    _program.Destroy ( renderer );
+    _program.Destroy ( device );
 
     if ( _renderPass == VK_NULL_HANDLE )
         return;

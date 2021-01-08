@@ -139,18 +139,20 @@ bool GBuffer::Init ( android_vulkan::Renderer &renderer, VkExtent2D const &resol
 
 void GBuffer::Destroy ( android_vulkan::Renderer &renderer )
 {
+    VkDevice device = renderer.GetDevice ();
+
     if ( _readOnlyDepthImageView != VK_NULL_HANDLE )
     {
-        vkDestroyImageView ( renderer.GetDevice (), _readOnlyDepthImageView, nullptr );
+        vkDestroyImageView ( device, _readOnlyDepthImageView, nullptr );
         _readOnlyDepthImageView = VK_NULL_HANDLE;
         AV_UNREGISTER_IMAGE_VIEW ( "GBuffer::_readOnlyDepthImageView" )
     }
 
-    _depthStencil.FreeResources ( renderer );
-    _params.FreeResources ( renderer );
-    _normal.FreeResources ( renderer );
-    _hdrAccumulator.FreeResources ( renderer );
-    _albedo.FreeResources ( renderer );
+    _depthStencil.FreeResources ( device );
+    _params.FreeResources ( device );
+    _normal.FreeResources ( device );
+    _hdrAccumulator.FreeResources ( device );
+    _albedo.FreeResources ( device );
 }
 
 } // namespace pbr

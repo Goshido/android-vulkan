@@ -49,7 +49,7 @@ bool OpaqueProgram::Init ( android_vulkan::Renderer &renderer,
 
     if ( !InitShaderInfo ( pipelineInfo.pStages, stageInfo, renderer ) )
     {
-        Destroy ( renderer );
+        Destroy ( renderer.GetDevice () );
         return false;
     }
 
@@ -69,7 +69,7 @@ bool OpaqueProgram::Init ( android_vulkan::Renderer &renderer,
 
     if ( !InitLayout ( pipelineInfo.layout, renderer ) )
     {
-        Destroy ( renderer );
+        Destroy ( renderer.GetDevice () );
         return false;
     }
 
@@ -86,7 +86,7 @@ bool OpaqueProgram::Init ( android_vulkan::Renderer &renderer,
 
     if ( !result )
     {
-        Destroy ( renderer );
+        Destroy ( renderer.GetDevice () );
         return false;
     }
 
@@ -94,10 +94,8 @@ bool OpaqueProgram::Init ( android_vulkan::Renderer &renderer,
     return true;
 }
 
-void OpaqueProgram::Destroy ( android_vulkan::Renderer &renderer )
+void OpaqueProgram::Destroy ( VkDevice device )
 {
-    VkDevice device = renderer.GetDevice ();
-
     if ( _pipelineLayout != VK_NULL_HANDLE )
     {
         vkDestroyPipelineLayout ( device, _pipelineLayout, nullptr );
@@ -105,8 +103,8 @@ void OpaqueProgram::Destroy ( android_vulkan::Renderer &renderer )
         AV_UNREGISTER_PIPELINE_LAYOUT ( "OpaqueProgram::_pipelineLayout" )
     }
 
-    _textureLayout.Destroy ( renderer );
-    _instanceLayout.Destroy ( renderer );
+    _textureLayout.Destroy ( device );
+    _instanceLayout.Destroy ( device );
 
     if ( _pipeline != VK_NULL_HANDLE )
     {

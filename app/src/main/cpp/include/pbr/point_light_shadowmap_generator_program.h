@@ -47,7 +47,7 @@ class PointLightShadowmapGeneratorProgram final : public Program
             VkExtent2D const &viewport
         ) override;
 
-        void Destroy ( android_vulkan::Renderer &renderer ) override;
+        void Destroy ( VkDevice device ) override;
         [[nodiscard]] std::vector<DescriptorSetInfo> const& GetResourceInfo () const override;
 
         void SetDescriptorSet ( VkCommandBuffer commandBuffer, VkDescriptorSet sets ) const;

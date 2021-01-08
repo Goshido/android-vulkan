@@ -48,7 +48,7 @@ bool PointLightLightupProgram::Init ( android_vulkan::Renderer &renderer,
 
     if ( !InitShaderInfo ( pipelineInfo.pStages, stageInfo, renderer ) )
     {
-        Destroy ( renderer );
+        Destroy ( renderer.GetDevice () );
         return false;
     }
 
@@ -68,7 +68,7 @@ bool PointLightLightupProgram::Init ( android_vulkan::Renderer &renderer,
 
     if ( !InitLayout ( pipelineInfo.layout, renderer ) )
     {
-        Destroy ( renderer );
+        Destroy ( renderer.GetDevice () );
         return false;
     }
 
@@ -85,7 +85,7 @@ bool PointLightLightupProgram::Init ( android_vulkan::Renderer &renderer,
 
     if ( !result )
     {
-        Destroy ( renderer );
+        Destroy ( renderer.GetDevice () );
         return false;
     }
 
@@ -93,10 +93,8 @@ bool PointLightLightupProgram::Init ( android_vulkan::Renderer &renderer,
     return true;
 }
 
-void PointLightLightupProgram::Destroy ( android_vulkan::Renderer &renderer )
+void PointLightLightupProgram::Destroy ( VkDevice device )
 {
-    VkDevice device = renderer.GetDevice ();
-
     if ( _pipeline != VK_NULL_HANDLE )
     {
         vkDestroyPipeline ( device, _pipeline, nullptr );
@@ -104,8 +102,8 @@ void PointLightLightupProgram::Destroy ( android_vulkan::Renderer &renderer )
         AV_UNREGISTER_PIPELINE ( "PointLightLightupProgram::_pipeline" )
     }
 
-    _pointLightLayout.Destroy ( renderer );
-    _commonLayout.Destroy ( renderer );
+    _pointLightLayout.Destroy ( device );
+    _commonLayout.Destroy ( device );
 
     if ( _pipelineLayout != VK_NULL_HANDLE )
     {

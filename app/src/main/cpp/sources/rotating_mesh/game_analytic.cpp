@@ -241,8 +241,8 @@ bool GameAnalytic::LoadGPUContent ( android_vulkan::Renderer &renderer )
     for ( auto& item : _drawcalls )
     {
         item._mesh.FreeTransferResources ( renderer );
-        item._diffuse.FreeTransferResources ( renderer );
-        item._normal.FreeTransferResources ( renderer );
+        item._diffuse.FreeTransferResources ( device );
+        item._normal.FreeTransferResources ( device );
     }
 
     vkFreeCommandBuffers ( device, _commandPool, allocateInfo.commandBufferCount, commandBuffers );

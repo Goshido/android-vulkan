@@ -30,7 +30,7 @@ class PointLightDescriptorSetLayoutImpl final
 
         ~PointLightDescriptorSetLayoutImpl () = default;
 
-        void Destroy ( android_vulkan::Renderer &renderer );
+        void Destroy ( VkDevice device );
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer );
 };
 
@@ -41,7 +41,7 @@ PointLightDescriptorSetLayoutImpl::PointLightDescriptorSetLayoutImpl () noexcept
     // NOTHING
 }
 
-void PointLightDescriptorSetLayoutImpl::Destroy ( android_vulkan::Renderer &renderer )
+void PointLightDescriptorSetLayoutImpl::Destroy ( VkDevice device )
 {
     if ( !_references )
         return;
@@ -51,7 +51,7 @@ void PointLightDescriptorSetLayoutImpl::Destroy ( android_vulkan::Renderer &rend
     if ( _references )
         return;
 
-    vkDestroyDescriptorSetLayout ( renderer.GetDevice (), _descriptorSetLayout, nullptr );
+    vkDestroyDescriptorSetLayout ( device, _descriptorSetLayout, nullptr );
     _descriptorSetLayout = VK_NULL_HANDLE;
     AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "PointLightDescriptorSetLayoutImpl::_descriptorSetLayout" )
 }
@@ -117,9 +117,9 @@ static PointLightDescriptorSetLayoutImpl g_pointLightDescriptorSetLayout;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-void PointLightDescriptorSetLayout::Destroy ( android_vulkan::Renderer &renderer )
+void PointLightDescriptorSetLayout::Destroy ( VkDevice device )
 {
-    g_pointLightDescriptorSetLayout.Destroy ( renderer );
+    g_pointLightDescriptorSetLayout.Destroy ( device );
 }
 
 bool PointLightDescriptorSetLayout::Init ( android_vulkan::Renderer &renderer )

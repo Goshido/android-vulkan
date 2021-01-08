@@ -183,10 +183,12 @@ void Game::DestroyTextures ( android_vulkan::Renderer &renderer )
     if ( !result )
         android_vulkan::LogWarning ( "Game::DestroyTextures - Can't wait queue idle." );
 
+    VkDevice device = renderer.GetDevice ();
+
     for ( auto& item : _drawcalls )
     {
-        item._diffuse.FreeResources ( renderer );
-        item._normal.FreeResources ( renderer );
+        item._diffuse.FreeResources ( device );
+        item._normal.FreeResources ( device );
         item._diffuseSampler = item._normalSampler = VK_NULL_HANDLE;
     }
 }
@@ -711,7 +713,7 @@ void Game::DestroyFramebuffers ( android_vulkan::Renderer &renderer )
         _framebuffers.clear ();
     }
 
-    _depthStencilRenderTarget.FreeResources ( renderer );
+    _depthStencilRenderTarget.FreeResources ( device );
 }
 
 bool Game::CreatePipeline ( android_vulkan::Renderer &renderer )

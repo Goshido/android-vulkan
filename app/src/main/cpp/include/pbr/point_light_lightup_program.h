@@ -60,7 +60,7 @@ class PointLightLightupProgram final : public LightLightupBaseProgram
             VkExtent2D const &viewport
         ) override;
 
-        void Destroy ( android_vulkan::Renderer &renderer ) override;
+        void Destroy ( VkDevice device ) override;
 
     private:
         [[nodiscard]] std::vector<DescriptorSetInfo> const& GetResourceInfo () const override;

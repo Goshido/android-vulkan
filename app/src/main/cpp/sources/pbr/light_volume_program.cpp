@@ -43,7 +43,7 @@ bool LightVolumeProgram::Init ( android_vulkan::Renderer &renderer,
 
     if ( !InitShaderInfo ( pipelineInfo.pStages, stageInfo, renderer ) )
     {
-        Destroy ( renderer );
+        Destroy ( renderer.GetDevice () );
         return false;
     }
 
@@ -63,7 +63,7 @@ bool LightVolumeProgram::Init ( android_vulkan::Renderer &renderer,
 
     if ( !InitLayout ( pipelineInfo.layout, renderer ) )
     {
-        Destroy ( renderer );
+        Destroy ( renderer.GetDevice () );
         return false;
     }
 
@@ -80,7 +80,7 @@ bool LightVolumeProgram::Init ( android_vulkan::Renderer &renderer,
 
     if ( !result )
     {
-        Destroy ( renderer );
+        Destroy ( renderer.GetDevice () );
         return false;
     }
 
@@ -88,10 +88,8 @@ bool LightVolumeProgram::Init ( android_vulkan::Renderer &renderer,
     return true;
 }
 
-void LightVolumeProgram::Destroy ( android_vulkan::Renderer &renderer )
+void LightVolumeProgram::Destroy ( VkDevice device )
 {
-    VkDevice device = renderer.GetDevice ();
-
     if ( _pipeline != VK_NULL_HANDLE )
     {
         vkDestroyPipeline ( device, _pipeline, nullptr );

@@ -58,19 +58,21 @@ void StaticMeshComponent::FreeTransferResources ( android_vulkan::Renderer &rend
     // Note it's safe to cast like that here. "NOLINT" is clang-tidy control comment.
     auto* m = static_cast<OpaqueMaterial*> ( _material.get () ); // NOLINT
 
+    VkDevice device = renderer.GetDevice ();
+
     if ( m->GetAlbedo () )
-        m->GetAlbedo ()->FreeTransferResources ( renderer );
+        m->GetAlbedo ()->FreeTransferResources ( device );
 
     if ( m->GetEmission () )
-        m->GetEmission ()->FreeTransferResources ( renderer );
+        m->GetEmission ()->FreeTransferResources ( device );
 
     if ( m->GetNormal () )
-        m->GetNormal ()->FreeTransferResources ( renderer );
+        m->GetNormal ()->FreeTransferResources ( device );
 
     if ( !m->GetParam () )
         return;
 
-    m->GetParam ()->FreeTransferResources ( renderer );
+    m->GetParam ()->FreeTransferResources ( device );
     _mesh->FreeTransferResources ( renderer );
 }
 

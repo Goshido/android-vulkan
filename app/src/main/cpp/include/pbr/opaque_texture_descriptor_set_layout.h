@@ -23,7 +23,7 @@ class OpaqueTextureDescriptorSetLayout final : public DescriptorSetLayout
 
         ~OpaqueTextureDescriptorSetLayout () override = default;
 
-        void Destroy ( android_vulkan::Renderer &renderer ) override;
+        void Destroy ( VkDevice device ) override;
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer ) override;
 
         [[nodiscard]] VkDescriptorSetLayout GetLayout () const override;

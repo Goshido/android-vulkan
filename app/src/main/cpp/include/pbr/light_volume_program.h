@@ -40,7 +40,7 @@ class LightVolumeProgram final : public Program
             VkExtent2D const &viewport
         ) override;
 
-        void Destroy ( android_vulkan::Renderer &renderer ) override;
+        void Destroy ( VkDevice device ) override;
 
         [[maybe_unused]] [[nodiscard]] constexpr static uint32_t GetLightVolumeStencilValue ()
         {

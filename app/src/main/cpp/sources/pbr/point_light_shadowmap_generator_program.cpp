@@ -43,7 +43,7 @@ bool PointLightShadowmapGeneratorProgram::Init ( android_vulkan::Renderer &rende
 
     if ( !InitShaderInfo ( pipelineInfo.pStages, &stageInfo, renderer ) )
     {
-        Destroy ( renderer );
+        Destroy ( renderer.GetDevice () );
         return false;
     }
 
@@ -63,7 +63,7 @@ bool PointLightShadowmapGeneratorProgram::Init ( android_vulkan::Renderer &rende
 
     if ( !InitLayout ( pipelineInfo.layout, renderer ) )
     {
-        Destroy ( renderer );
+        Destroy ( renderer.GetDevice () );
         return false;
     }
 
@@ -80,7 +80,7 @@ bool PointLightShadowmapGeneratorProgram::Init ( android_vulkan::Renderer &rende
 
     if ( !result )
     {
-        Destroy ( renderer );
+        Destroy ( renderer.GetDevice () );
         return false;
     }
 
@@ -88,10 +88,8 @@ bool PointLightShadowmapGeneratorProgram::Init ( android_vulkan::Renderer &rende
     return true;
 }
 
-void PointLightShadowmapGeneratorProgram::Destroy ( android_vulkan::Renderer &renderer )
+void PointLightShadowmapGeneratorProgram::Destroy ( VkDevice device )
 {
-    VkDevice device = renderer.GetDevice ();
-
     if ( _pipelineLayout != VK_NULL_HANDLE )
     {
         vkDestroyPipelineLayout ( device, _pipelineLayout, nullptr );
@@ -99,7 +97,7 @@ void PointLightShadowmapGeneratorProgram::Destroy ( android_vulkan::Renderer &re
         AV_UNREGISTER_PIPELINE_LAYOUT ( "PointLightShadowmapGeneratorProgram::_pipelineLayout" )
     }
 
-    _instanceLayout.Destroy ( renderer );
+    _instanceLayout.Destroy ( device );
 
     if ( _pipeline != VK_NULL_HANDLE )
     {

@@ -183,8 +183,8 @@ void RenderSession::Destroy ( android_vulkan::Renderer &renderer )
     _presentPass.Destroy ( renderer );
     _pointLightPass.Destroy ( renderer );
 
-    _texturePresentProgram.Destroy ( renderer );
     VkDevice device = renderer.GetDevice ();
+    _texturePresentProgram.Destroy ( device );
 
     if ( _gBufferDescriptorPool != VK_NULL_HANDLE )
     {

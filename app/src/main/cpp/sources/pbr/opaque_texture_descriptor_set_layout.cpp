@@ -30,7 +30,7 @@ class OpaqueTextureDescriptorSetLayoutImpl final
 
         ~OpaqueTextureDescriptorSetLayoutImpl () = default;
 
-        void Destroy ( android_vulkan::Renderer &renderer );
+        void Destroy ( VkDevice device );
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer );
 };
 
@@ -41,7 +41,7 @@ OpaqueTextureDescriptorSetLayoutImpl::OpaqueTextureDescriptorSetLayoutImpl ():
     // NOTHING
 }
 
-void OpaqueTextureDescriptorSetLayoutImpl::Destroy ( android_vulkan::Renderer &renderer )
+void OpaqueTextureDescriptorSetLayoutImpl::Destroy ( VkDevice device )
 {
     if ( !_references )
         return;
@@ -51,7 +51,7 @@ void OpaqueTextureDescriptorSetLayoutImpl::Destroy ( android_vulkan::Renderer &r
     if ( _references )
         return;
 
-    vkDestroyDescriptorSetLayout ( renderer.GetDevice (), _descriptorSetLayout, nullptr );
+    vkDestroyDescriptorSetLayout ( device, _descriptorSetLayout, nullptr );
     _descriptorSetLayout = VK_NULL_HANDLE;
     AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "OpaqueTextureDescriptorSetLayoutImpl::_descriptorSetLayout" )
 }
@@ -163,9 +163,9 @@ static OpaqueTextureDescriptorSetLayoutImpl g_opaqueTextureDescriptorSetLayout;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-void OpaqueTextureDescriptorSetLayout::Destroy ( android_vulkan::Renderer &renderer )
+void OpaqueTextureDescriptorSetLayout::Destroy ( VkDevice device )
 {
-    g_opaqueTextureDescriptorSetLayout.Destroy ( renderer );
+    g_opaqueTextureDescriptorSetLayout.Destroy ( device );
 }
 
 bool OpaqueTextureDescriptorSetLayout::Init ( android_vulkan::Renderer &renderer )

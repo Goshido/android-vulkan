@@ -6,7 +6,7 @@ namespace pbr {
 
 constexpr static const char* VERTEX_SHADER = "shaders/point-light-shadowmap-generator-vs.spv";
 
-constexpr static const size_t COLOR_RENDER_TARGET_COUNT = 0U;
+constexpr static const uint32_t COLOR_RENDER_TARGET_COUNT = 0U;
 constexpr static const size_t STAGE_COUNT = 1U;
 constexpr static const size_t VERTEX_ATTRIBUTE_COUNT = 1U;
 
@@ -18,6 +18,7 @@ PointLightShadowmapGeneratorProgram::PointLightShadowmapGeneratorProgram () noex
 
 bool PointLightShadowmapGeneratorProgram::Init ( android_vulkan::Renderer &renderer,
     VkRenderPass renderPass,
+    uint32_t subpass,
     VkExtent2D const &viewport
 )
 {
@@ -40,9 +41,11 @@ bool PointLightShadowmapGeneratorProgram::Init ( android_vulkan::Renderer &rende
     pipelineInfo.flags = 0U;
     pipelineInfo.stageCount = static_cast<uint32_t> ( STAGE_COUNT );
 
-    if ( !InitShaderInfo ( pipelineInfo.pStages, &stageInfo, renderer ) )
+    VkDevice device = renderer.GetDevice ();
+
+    if ( !InitShaderInfo ( renderer, pipelineInfo.pStages, &stageInfo ) )
     {
-        Destroy ( renderer );
+        Destroy ( device );
         return false;
     }
 
@@ -60,26 +63,26 @@ bool PointLightShadowmapGeneratorProgram::Init ( android_vulkan::Renderer &rende
     pipelineInfo.pColorBlendState = InitColorBlendInfo ( blendInfo, nullptr );
     pipelineInfo.pDynamicState = nullptr;
 
-    if ( !InitLayout ( pipelineInfo.layout, renderer ) )
+    if ( !InitLayout ( renderer, pipelineInfo.layout ) )
     {
-        Destroy ( renderer );
+        Destroy ( device );
         return false;
     }
 
     pipelineInfo.renderPass = renderPass;
-    pipelineInfo.subpass = 0U;
+    pipelineInfo.subpass = subpass;
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
     pipelineInfo.basePipelineIndex = 0;
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateGraphicsPipelines ( renderer.GetDevice (), VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
+        vkCreateGraphicsPipelines ( device, VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
         "PointLightShadowmapGeneratorProgram::Init",
         "Can't create pipeline"
     );
 
     if ( !result )
     {
-        Destroy ( renderer );
+        Destroy ( device );
         return false;
     }
 
@@ -87,10 +90,8 @@ bool PointLightShadowmapGeneratorProgram::Init ( android_vulkan::Renderer &rende
     return true;
 }
 
-void PointLightShadowmapGeneratorProgram::Destroy ( android_vulkan::Renderer &renderer )
+void PointLightShadowmapGeneratorProgram::Destroy ( VkDevice device )
 {
-    VkDevice device = renderer.GetDevice ();
-
     if ( _pipelineLayout != VK_NULL_HANDLE )
     {
         vkDestroyPipelineLayout ( device, _pipelineLayout, nullptr );
@@ -98,7 +99,7 @@ void PointLightShadowmapGeneratorProgram::Destroy ( android_vulkan::Renderer &re
         AV_UNREGISTER_PIPELINE_LAYOUT ( "PointLightShadowmapGeneratorProgram::_pipelineLayout" )
     }
 
-    _instanceLayout.Destroy ( renderer );
+    _instanceLayout.Destroy ( device );
 
     if ( _pipeline != VK_NULL_HANDLE )
     {
@@ -128,6 +129,21 @@ std::vector<DescriptorSetInfo> const& PointLightShadowmapGeneratorProgram::GetRe
     return info;
 }
 
+void PointLightShadowmapGeneratorProgram::SetDescriptorSet ( VkCommandBuffer commandBuffer,
+    VkDescriptorSet sets
+) const
+{
+    vkCmdBindDescriptorSets ( commandBuffer,
+        VK_PIPELINE_BIND_POINT_GRAPHICS,
+        _pipelineLayout,
+        0U,
+        1U,
+        &sets,
+        0U,
+        nullptr
+    );
+}
+
 VkPipelineColorBlendStateCreateInfo const* PointLightShadowmapGeneratorProgram::InitColorBlendInfo (
     VkPipelineColorBlendStateCreateInfo &info,
     VkPipelineColorBlendAttachmentState* attachments
@@ -138,7 +154,7 @@ VkPipelineColorBlendStateCreateInfo const* PointLightShadowmapGeneratorProgram::
     info.flags = 0U;
     info.logicOpEnable = VK_FALSE;
     info.logicOp = VK_LOGIC_OP_NO_OP;
-    info.attachmentCount = static_cast<uint32_t> ( COLOR_RENDER_TARGET_COUNT );
+    info.attachmentCount = COLOR_RENDER_TARGET_COUNT;
     info.pAttachments = attachments;
     memset ( info.blendConstants, 0, sizeof ( info.blendConstants ) );
 
@@ -186,7 +202,7 @@ VkPipelineInputAssemblyStateCreateInfo const* PointLightShadowmapGeneratorProgra
     return &info;
 }
 
-bool PointLightShadowmapGeneratorProgram::InitLayout ( VkPipelineLayout &layout, android_vulkan::Renderer &renderer )
+bool PointLightShadowmapGeneratorProgram::InitLayout ( android_vulkan::Renderer &renderer, VkPipelineLayout &layout )
 {
     if ( !_instanceLayout.Init ( renderer ) )
         return false;
@@ -243,7 +259,7 @@ VkPipelineRasterizationStateCreateInfo const* PointLightShadowmapGeneratorProgra
     info.depthClampEnable = VK_FALSE;
     info.rasterizerDiscardEnable = VK_FALSE;
     info.polygonMode = VK_POLYGON_MODE_FILL;
-    info.cullMode = VK_CULL_MODE_FRONT_BIT;
+    info.cullMode = VK_CULL_MODE_BACK_BIT;
     info.frontFace = VK_FRONT_FACE_CLOCKWISE;
     info.depthBiasEnable = VK_FALSE;
     info.depthBiasConstantFactor = 0.0F;
@@ -254,9 +270,9 @@ VkPipelineRasterizationStateCreateInfo const* PointLightShadowmapGeneratorProgra
     return &info;
 }
 
-bool PointLightShadowmapGeneratorProgram::InitShaderInfo ( VkPipelineShaderStageCreateInfo const* &targetInfo,
-    VkPipelineShaderStageCreateInfo* sourceInfo,
-    android_vulkan::Renderer &renderer
+bool PointLightShadowmapGeneratorProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
+    VkPipelineShaderStageCreateInfo const* &targetInfo,
+    VkPipelineShaderStageCreateInfo* sourceInfo
 )
 {
     bool result = renderer.CreateShader ( _vertexShader,

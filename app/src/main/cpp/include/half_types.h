@@ -56,7 +56,7 @@ struct [[maybe_unused]] Half2 final
         ~Half2 () = default;
 };
 
-struct [[maybe_unused]] Half3 final
+struct Half3 final
 {
     public:
         uint16_t    _data[ 3U ];
@@ -77,6 +77,8 @@ struct [[maybe_unused]] Half3 final
         [[maybe_unused]] Half3 ( float component0, float component1, float component2 );
 
         ~Half3 () = default;
+
+        Half3& operator = ( GXVec3 const &other );
 };
 
 struct Half4 final

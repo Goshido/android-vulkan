@@ -4,91 +4,50 @@
 
 #include <GXCommon/GXMath.h>
 #include "gbuffer.h"
-#include "opaque_program.h"
-#include "opaque_call.h"
-#include "opaque_material.h"
-#include "point_light.h"
-#include "point_light_shadowmap_generator_program.h"
-#include "render_session_stats.h"
+#include "geometry_pass.h"
+#include "point_light_pass.h"
+#include "present_pass.h"
 #include "shadow_casters.h"
-#include "texture_present_program.h"
-#include "uniform_buffer_pool.h"
 
 
 namespace pbr {
 
-constexpr static size_t const GBUFFER_ATTACHMENT_COUNT = 5U;
-
 enum class ePresentTarget : uint8_t
 {
-    Albedo [[maybe_unused]],
-    Emission [[maybe_unused]],
-    Normal [[maybe_unused]],
-    Param [[maybe_unused]]
+    Albedo = 0U,
+    Emission = 1U,
+    Normal = 2U,
+    Param = 3U,
+    TargetCount = 4U
 };
 
 // Single threaded class
 class RenderSession final
 {
     private:
-        using LightInteract = std::pair<LightRef, ShadowCasters>;
+        GXProjectionClipPlanes      _frustum;
 
-    private:
-        Texture2DRef                            _albedoDefault;
-        Texture2DRef                            _emissionDefault;
-        Texture2DRef                            _maskDefault;
-        Texture2DRef                            _normalDefault;
-        Texture2DRef                            _paramDefault;
+        GBuffer                     _gBuffer;
+        VkDescriptorPool            _gBufferDescriptorPool;
+        VkFramebuffer               _gBufferFramebuffer;
+        VkImageMemoryBarrier        _gBufferImageBarrier;
+        VkRenderPass                _gBufferRenderPass;
+        VkDescriptorSet             _gBufferSlotMapper[ static_cast<size_t> ( ePresentTarget::TargetCount ) ];
 
-        VkCommandPool                           _commandPool;
-        VkDescriptorPool                        _descriptorPool;
+        GeometryPass                _geometryPass;
+        LightVolume                 _lightVolume;
+        size_t                      _opaqueMeshCount;
 
-        GXProjectionClipPlanes                  _frustum;
+        TexturePresentProgram       _texturePresentProgram;
+        PointLightPass              _pointLightPass;
+        PresentPass                 _presentPass;
+        RenderSessionStats          _renderSessionStats;
+        SamplerManager              _samplerManager;
 
-        GBuffer                                 _gBuffer;
-        VkFramebuffer                           _gBufferFramebuffer;
-        VkImageMemoryBarrier                    _gBufferImageBarrier;
-        VkRenderPass                            _gBufferRenderPass;
-
-        VkRenderPassBeginInfo                   _geometryPassBeginInfo;
-        VkClearValue                            _geometryPassClearValue[ GBUFFER_ATTACHMENT_COUNT ];
-        VkFence                                 _geometryPassFence;
-        VkCommandBuffer                         _geometryPassRendering;
-        VkCommandBuffer                         _geometryPassTransfer;
-
-        bool                                    _isFreeTransferResources;
-
-        // The variable is needed for theoretical maximum uniform buffer elements estimation.
-        size_t                                  _maxBatchCount;
-        size_t                                  _maxUniqueCount;
-
-        std::map<OpaqueMaterial, OpaqueCall>    _opaqueCalls;
-
-        OpaqueProgram                           _opaqueBatchProgram;
-        PointLightShadowmapGeneratorProgram     _pointLightShadowmapGeneratorProgram;
-        TexturePresentProgram                   _texturePresentProgram;
-
-        std::vector<LightInteract>              _pointLightCalls;
-        std::vector<TextureCubeRef>             _pointLightShadowmaps;
-        VkRenderPass                            _pointLightShadowmapRenderPass;
-
-        VkPresentInfoKHR                        _presentInfo;
-        VkRenderPassBeginInfo                   _presentBeginInfo;
-        VkClearValue                            _presentClearValue;
-        std::vector<VkFramebuffer>              _presentFramebuffers;
-        VkRenderPass                            _presentRenderPass;
-        VkSemaphore                             _presentRenderPassEndSemaphore;
-        VkSemaphore                             _presentRenderTargetAcquiredSemaphore;
-
-        RenderSessionStats                      _renderSessionStats;
-
-        VkSubmitInfo                            _submitInfoRender;
-        VkSubmitInfo                            _submitInfoTransfer;
-
-        UniformBufferPool                       _uniformBufferPool;
-
-        GXMat4                                  _view;
-        GXMat4                                  _viewProjection;
+        GXMat4                      _cvvToView;
+        GXMat4                      _view;
+        GXMat4                      _viewProjection;
+        GXMat4                      _viewerLocal;
 
     public:
         RenderSession () noexcept;
@@ -101,11 +60,11 @@ class RenderSession final
 
         ~RenderSession () = default;
 
-        void Begin ( GXMat4 const &view, GXMat4 const &projection );
-        [[nodiscard]] bool End ( ePresentTarget target, double deltaTime, android_vulkan::Renderer &renderer );
+        void Begin ( GXMat4 const &viewerLocal, GXMat4 const &projection );
+        [[nodiscard]] bool End ( android_vulkan::Renderer &renderer, ePresentTarget target, double deltaTime );
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, VkExtent2D const &resolution );
-        void Destroy ( android_vulkan::Renderer &renderer );
+        void Destroy ( VkDevice device );
 
         void SubmitMesh ( MeshRef &mesh,
             MaterialRef const &material,
@@ -120,25 +79,9 @@ class RenderSession final
         void SubmitLight ( LightRef const &light );
 
     private:
-        [[nodiscard]] bool BeginGeometryRenderPass ( android_vulkan::Renderer &renderer );
-        void CleanupTransferResources ( android_vulkan::Renderer &renderer );
-
         [[nodiscard]] bool CreateGBufferFramebuffer ( android_vulkan::Renderer &renderer );
         [[nodiscard]] bool CreateGBufferRenderPass ( android_vulkan::Renderer &renderer );
-        [[nodiscard]] bool CreatePointLightShadowmapRenderPass ( android_vulkan::Renderer &renderer );
-
-        [[nodiscard]] bool CreatePresentFramebuffers ( android_vulkan::Renderer &renderer );
-        void DestroyPresentFramebuffers ( android_vulkan::Renderer &renderer );
-
-        [[nodiscard]] bool CreatePresentRenderPass ( android_vulkan::Renderer &renderer );
-
-        [[nodiscard]] bool CreateSyncPrimitives ( android_vulkan::Renderer &renderer );
-        void DestroySyncPrimitives ( android_vulkan::Renderer &renderer );
-
-        void DestroyDescriptorPool ( android_vulkan::Renderer &renderer );
-        void DrawOpaque ( VkDescriptorSet const* textureSets, VkDescriptorSet const* instanceSets );
-
-        void InitCommonStructures ();
+        [[nodiscard]] bool CreateGBufferSlotMapper ( android_vulkan::Renderer &renderer );
 
         void SubmitOpaqueCall ( MeshRef &mesh,
             MaterialRef const &material,
@@ -151,12 +94,6 @@ class RenderSession final
         );
 
         void SubmitPointLight ( LightRef const &light );
-
-        [[nodiscard]] bool UpdateGPUData ( std::vector<VkDescriptorSet> &descriptorSetStorage,
-            android_vulkan::Renderer &renderer
-        );
-
-        void UpdatePointLightShadowMaps ();
 };
 
 } // namespace pbr

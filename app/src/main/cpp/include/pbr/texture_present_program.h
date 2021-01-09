@@ -26,22 +26,23 @@ class TexturePresentProgram final : public Program
         TexturePresentDescriptorSetLayout       _descriptorSetLayout;
 
     public:
-        TexturePresentProgram ();
+        TexturePresentProgram () noexcept;
 
-        TexturePresentProgram ( TexturePresentProgram const &other ) = delete;
-        TexturePresentProgram& operator = ( TexturePresentProgram const  &other ) = delete;
+        TexturePresentProgram ( TexturePresentProgram const & ) = delete;
+        TexturePresentProgram& operator = ( TexturePresentProgram const & ) = delete;
 
-        TexturePresentProgram ( TexturePresentProgram &&other ) = delete;
-        TexturePresentProgram& operator = ( TexturePresentProgram &&other ) = delete;
+        TexturePresentProgram ( TexturePresentProgram && ) = delete;
+        TexturePresentProgram& operator = ( TexturePresentProgram && ) = delete;
 
         ~TexturePresentProgram () override = default;
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
             VkRenderPass renderPass,
+            uint32_t subpass,
             VkExtent2D const &viewport
         ) override;
 
-        void Destroy ( android_vulkan::Renderer &renderer ) override;
+        void Destroy ( VkDevice device ) override;
         [[nodiscard]] std::vector<DescriptorSetInfo> const& GetResourceInfo () const override;
 
         void SetData ( VkCommandBuffer commandBuffer, VkDescriptorSet set, GXMat4 const &transform ) const;
@@ -60,7 +61,7 @@ class TexturePresentProgram final : public Program
             VkPipelineInputAssemblyStateCreateInfo &info
         ) const override;
 
-        [[nodiscard]] bool InitLayout ( VkPipelineLayout &layout, android_vulkan::Renderer &renderer ) override;
+        [[nodiscard]] bool InitLayout ( android_vulkan::Renderer &renderer, VkPipelineLayout &layout ) override;
 
         [[nodiscard]] VkPipelineMultisampleStateCreateInfo const* InitMultisampleInfo (
             VkPipelineMultisampleStateCreateInfo &info
@@ -70,9 +71,9 @@ class TexturePresentProgram final : public Program
             VkPipelineRasterizationStateCreateInfo &info
         ) const override;
 
-        [[nodiscard]] bool InitShaderInfo ( VkPipelineShaderStageCreateInfo const* &targetInfo,
-            VkPipelineShaderStageCreateInfo* sourceInfo,
-            android_vulkan::Renderer &renderer
+        [[nodiscard]] bool InitShaderInfo ( android_vulkan::Renderer &renderer,
+            VkPipelineShaderStageCreateInfo const* &targetInfo,
+            VkPipelineShaderStageCreateInfo* sourceInfo
         ) override;
 
         [[nodiscard]] VkPipelineViewportStateCreateInfo const* InitViewportInfo (

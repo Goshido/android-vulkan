@@ -6,11 +6,11 @@
 
 namespace pbr {
 
-ComponentRef Component::Create ( size_t &commandBufferConsumed,
+ComponentRef Component::Create ( android_vulkan::Renderer &renderer,
+    size_t &commandBufferConsumed,
     size_t &dataRead,
     ComponentDesc const &desc,
     uint8_t const* data,
-    android_vulkan::Renderer &renderer,
     VkCommandBuffer const* commandBuffers
 )
 {
@@ -35,7 +35,7 @@ ComponentRef Component::Create ( size_t &commandBufferConsumed,
         // Note it's safe cast like that here. "NOLINT" is a clang-tidy control comment.
         auto const& d = static_cast<StaticMeshComponentDesc const&> ( desc ); // NOLINT
 
-        return std::make_shared<StaticMeshComponent> ( commandBufferConsumed, d, data, renderer, commandBuffers );
+        return std::make_shared<StaticMeshComponent> ( renderer, commandBufferConsumed, d, data, commandBuffers );
     }
 
     return {};

@@ -17,7 +17,7 @@ class OpaqueInstanceDescriptorSetLayoutImpl final
         VkDescriptorSetLayout       _descriptorSetLayout;
 
     private:
-        std::atomic<size_t>         _references;
+        std::atomic_size_t          _references;
 
     public:
         OpaqueInstanceDescriptorSetLayoutImpl () noexcept;
@@ -30,7 +30,7 @@ class OpaqueInstanceDescriptorSetLayoutImpl final
 
         ~OpaqueInstanceDescriptorSetLayoutImpl () = default;
 
-        void Destroy ( android_vulkan::Renderer &renderer );
+        void Destroy ( VkDevice device );
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer );
 };
 
@@ -41,7 +41,7 @@ OpaqueInstanceDescriptorSetLayoutImpl::OpaqueInstanceDescriptorSetLayoutImpl () 
     // NOTHING
 }
 
-void OpaqueInstanceDescriptorSetLayoutImpl::Destroy ( android_vulkan::Renderer &renderer )
+void OpaqueInstanceDescriptorSetLayoutImpl::Destroy ( VkDevice device )
 {
     if ( !_references )
         return;
@@ -51,7 +51,7 @@ void OpaqueInstanceDescriptorSetLayoutImpl::Destroy ( android_vulkan::Renderer &
     if ( _references )
         return;
 
-    vkDestroyDescriptorSetLayout ( renderer.GetDevice (), _descriptorSetLayout, nullptr );
+    vkDestroyDescriptorSetLayout ( device, _descriptorSetLayout, nullptr );
     _descriptorSetLayout = VK_NULL_HANDLE;
     AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "OpaqueInstanceDescriptorSetLayoutImpl::_descriptorSetLayout" )
 }
@@ -64,24 +64,28 @@ bool OpaqueInstanceDescriptorSetLayoutImpl::Init ( android_vulkan::Renderer &ren
         return true;
     }
 
-    VkDescriptorSetLayoutBinding uniformBuffer;
-    uniformBuffer.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-    uniformBuffer.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    uniformBuffer.descriptorCount = 1U;
-    uniformBuffer.binding = 0U;
-    uniformBuffer.pImmutableSamplers = nullptr;
+    constexpr static VkDescriptorSetLayoutBinding const bindings[] =
+    {
+        {
+            .binding = 0U,
+            .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            .descriptorCount = 1U,
+            .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
+            .pImmutableSamplers = nullptr
+        }
+    };
 
-    VkDescriptorSetLayoutCreateInfo descriptorSetLayoutInfo;
-    descriptorSetLayoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    descriptorSetLayoutInfo.pNext = nullptr;
-    descriptorSetLayoutInfo.flags = 0U;
-    descriptorSetLayoutInfo.bindingCount = 1U;
-    descriptorSetLayoutInfo.pBindings = &uniformBuffer;
+    constexpr VkDescriptorSetLayoutCreateInfo const descriptorSetLayoutInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .bindingCount = static_cast<uint32_t> ( std::size ( bindings ) ),
+        .pBindings = bindings
+    };
 
-    VkDevice device = renderer.GetDevice ();
-
-    bool result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateDescriptorSetLayout ( device, &descriptorSetLayoutInfo, nullptr, &_descriptorSetLayout ),
+    bool const result = android_vulkan::Renderer::CheckVkResult (
+        vkCreateDescriptorSetLayout ( renderer.GetDevice (), &descriptorSetLayoutInfo, nullptr, &_descriptorSetLayout ),
         "OpaqueInstanceDescriptorSetLayoutImpl::Init",
         "Can't create descriptor set layout"
     );
@@ -99,9 +103,9 @@ static OpaqueInstanceDescriptorSetLayoutImpl g_opaqueInstanceDescriptorSetLayout
 
 //----------------------------------------------------------------------------------------------------------------------
 
-void OpaqueInstanceDescriptorSetLayout::Destroy ( android_vulkan::Renderer &renderer )
+void OpaqueInstanceDescriptorSetLayout::Destroy ( VkDevice device )
 {
-    g_opaqueInstanceDescriptorSetLayout.Destroy ( renderer );
+    g_opaqueInstanceDescriptorSetLayout.Destroy ( device );
 }
 
 bool OpaqueInstanceDescriptorSetLayout::Init ( android_vulkan::Renderer &renderer )

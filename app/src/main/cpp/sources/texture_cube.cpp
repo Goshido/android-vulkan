@@ -1,4 +1,4 @@
-#include <textureCube.h>
+#include <texture_cube.h>
 #include <vulkan_utils.h>
 
 GX_DISABLE_COMMON_WARNINGS
@@ -23,33 +23,37 @@ TextureCube::TextureCube () noexcept:
     // NOTHING
 }
 
-[[maybe_unused]] bool TextureCube::CreateRenderTarget ( VkExtent2D const &resolution,
+bool TextureCube::CreateRenderTarget ( VkExtent2D const &resolution,
     VkFormat format,
     VkImageUsageFlags usage,
     Renderer &renderer
 )
 {
-    VkImageCreateInfo imageInfo;
-    imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    imageInfo.pNext = nullptr;
-    imageInfo.flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
-    imageInfo.imageType = VK_IMAGE_TYPE_2D;
-    imageInfo.format = format;
+    VkImageCreateInfo const imageInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT,
+        .imageType = VK_IMAGE_TYPE_2D,
+        .format = format,
 
-    VkExtent3D& ext = imageInfo.extent;
-    ext.width = resolution.width;
-    ext.height = resolution.height;
-    ext.depth = 1U;
+        .extent
+        {
+            .width = resolution.width,
+            .height = resolution.height,
+            .depth = 1U
+        },
 
-    imageInfo.mipLevels = 1U;
-    imageInfo.arrayLayers = VULKAN_TEXTURE_CUBE_LAYERS;
-    imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-    imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-    imageInfo.usage = usage;
-    imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    imageInfo.queueFamilyIndexCount = 0U;
-    imageInfo.pQueueFamilyIndices = nullptr;
-    imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        .mipLevels = 1U,
+        .arrayLayers = VULKAN_TEXTURE_CUBE_LAYERS,
+        .samples = VK_SAMPLE_COUNT_1_BIT,
+        .tiling = VK_IMAGE_TILING_OPTIMAL,
+        .usage = usage,
+        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+        .queueFamilyIndexCount = 0U,
+        .pQueueFamilyIndices = nullptr,
+        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED
+    };
 
     VkDevice device = renderer.GetDevice ();
 
@@ -74,7 +78,7 @@ TextureCube::TextureCube () noexcept:
 
     if ( !result )
     {
-        FreeResources ( renderer );
+        FreeResources ( device );
         return false;
     }
 
@@ -87,39 +91,45 @@ TextureCube::TextureCube () noexcept:
 
     if ( !result )
     {
-        FreeResources ( renderer );
+        FreeResources ( device );
         return false;
     }
 
-    VkImageViewCreateInfo  viewInfo;
-    viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-    viewInfo.pNext = nullptr;
-    viewInfo.flags = 0U;
-    viewInfo.image = _image;
-    viewInfo.viewType = VK_IMAGE_VIEW_TYPE_CUBE;
-    viewInfo.format = format;
+    VkImageViewCreateInfo const viewInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .image = _image,
+        .viewType = VK_IMAGE_VIEW_TYPE_CUBE,
+        .format = format,
 
-    VkComponentMapping& mapping = viewInfo.components;
-    mapping.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-    mapping.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-    mapping.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-    mapping.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+        .components
+        {
+            .r = VK_COMPONENT_SWIZZLE_IDENTITY,
+            .g = VK_COMPONENT_SWIZZLE_IDENTITY,
+            .b = VK_COMPONENT_SWIZZLE_IDENTITY,
+            .a = VK_COMPONENT_SWIZZLE_IDENTITY
+        },
 
-    VkImageSubresourceRange& sub = viewInfo.subresourceRange;
-    sub.aspectMask = Renderer::ResolveImageViewAspect ( format );
-    sub.baseMipLevel = 0U;
-    sub.levelCount = 1U;
-    sub.baseArrayLayer = 0U;
-    sub.layerCount = VULKAN_TEXTURE_CUBE_LAYERS;
+        .subresourceRange
+        {
+            .aspectMask = Renderer::ResolveImageViewAspect ( format ),
+            .baseMipLevel = 0U,
+            .levelCount = 1U,
+            .baseArrayLayer = 0U,
+            .layerCount = VULKAN_TEXTURE_CUBE_LAYERS
+        }
+    };
 
     result = Renderer::CheckVkResult ( vkCreateImageView ( device, &viewInfo, nullptr, &_imageView ),
         "TextureCube::CreateRenderTarget",
         "Can't create image view"
     );
 
-    if ( result )
+    if ( !result )
     {
-        FreeResources ( renderer );
+        FreeResources ( device );
         return false;
     }
 
@@ -132,13 +142,11 @@ TextureCube::TextureCube () noexcept:
     return true;
 }
 
-[[maybe_unused]] void TextureCube::FreeResources ( Renderer &renderer )
+void TextureCube::FreeResources ( VkDevice device )
 {
     _format = VK_FORMAT_UNDEFINED;
     _mipLevels = 0U;
     memset ( &_resolution, 0, sizeof ( _resolution ) );
-
-    VkDevice device = renderer.GetDevice ();
 
     if ( _imageView != VK_NULL_HANDLE )
     {
@@ -173,7 +181,7 @@ TextureCube::TextureCube () noexcept:
     return _image;
 }
 
-[[maybe_unused]] VkImageView TextureCube::GetImageView () const
+VkImageView TextureCube::GetImageView () const
 {
     return _imageView;
 }

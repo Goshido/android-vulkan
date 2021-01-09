@@ -53,7 +53,6 @@ static std::map<VkBufferUsageFlags, BufferSyncItem> const g_accessMapper =
             VK_PIPELINE_STAGE_VERTEX_INPUT_BIT
         )
     },
-
     {
         VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
 
@@ -79,17 +78,15 @@ MeshGeometry::MeshGeometry ():
     // NOTHING
 }
 
-void MeshGeometry::FreeResources ( Renderer &renderer )
+void MeshGeometry::FreeResources ( VkDevice device )
 {
-    FreeTransferResources ( renderer );
-    FreeResourceInternal ( renderer );
+    FreeTransferResources ( device );
+    FreeResourceInternal ( device );
     _fileName.clear ();
 }
 
-void MeshGeometry::FreeTransferResources ( Renderer &renderer )
+void MeshGeometry::FreeTransferResources ( VkDevice device )
 {
-    VkDevice device = renderer.GetDevice ();
-
     if ( _transferMemory != VK_NULL_HANDLE )
     {
         vkFreeMemory ( device, _transferMemory, nullptr );
@@ -156,7 +153,7 @@ bool MeshGeometry::LoadMesh ( std::string &&fileName,
     std::smatch match;
 
     if ( std::regex_match ( fileName, match, isMesh2 ) )
-        return LoadFromMesh2 ( std::move ( fileName ), usage, renderer, commandBuffer );
+        return LoadFromMesh2 ( std::move ( fileName ), renderer, commandBuffer );
 
     static std::regex const isMesh ( R"__(^.+?\.mesh$)__" );
 
@@ -174,14 +171,43 @@ bool MeshGeometry::LoadMesh ( std::string &&fileName,
     VkCommandBuffer commandBuffer
 )
 {
-    FreeResources ( renderer );
+    FreeResources ( renderer.GetDevice () );
     return UploadSimple ( data, size, vertexCount, usage, renderer, commandBuffer );
 }
 
-void MeshGeometry::FreeResourceInternal ( Renderer &renderer )
+[[maybe_unused]] bool MeshGeometry::LoadMesh ( uint8_t const* vertexData,
+    size_t vertexDataSize,
+    uint32_t const* indices,
+    uint32_t indexCount,
+    GXAABB const &bounds,
+    Renderer &renderer,
+    VkCommandBuffer commandBuffer
+)
+{
+    FreeResources ( renderer.GetDevice () );
+
+    size_t const vertexOffset = sizeof ( uint32_t ) * indexCount;
+    std::vector<uint8_t> storage ( vertexOffset + vertexDataSize );
+    uint8_t* data = storage.data ();
+    memcpy ( data, indices, vertexOffset );
+    memcpy ( data + vertexOffset, vertexData, vertexDataSize );
+
+    bool const result = UploadComplex ( data,
+        vertexDataSize,
+        indexCount,
+        renderer,
+        commandBuffer
+    );
+
+    if ( result )
+        _bounds = bounds;
+
+    return result;
+}
+
+void MeshGeometry::FreeResourceInternal ( VkDevice device )
 {
     _vertexCount = 0U;
-    VkDevice device = renderer.GetDevice ();
 
     if ( _bufferMemory != VK_NULL_HANDLE )
     {
@@ -211,7 +237,7 @@ bool MeshGeometry::LoadFromMesh ( std::string &&fileName,
     VkCommandBuffer commandBuffer
 )
 {
-    FreeResourceInternal ( renderer );
+    FreeResourceInternal ( renderer.GetDevice () );
 
     File file ( fileName );
 
@@ -283,13 +309,11 @@ bool MeshGeometry::LoadFromMesh ( std::string &&fileName,
 }
 
 bool MeshGeometry::LoadFromMesh2 ( std::string &&fileName,
-    VkBufferUsageFlags /*usage*/,
     Renderer &renderer,
     VkCommandBuffer commandBuffer
 )
 {
-    FreeResourceInternal ( renderer );
-
+    FreeResourceInternal ( renderer.GetDevice () );
     File file ( fileName );
 
     if ( !file.LoadContent () )
@@ -299,6 +323,33 @@ bool MeshGeometry::LoadFromMesh2 ( std::string &&fileName,
     uint8_t const* rawData = content.data ();
     auto const& header = *reinterpret_cast<Mesh2Header const*> ( rawData );
 
+    bool const result = UploadComplex ( rawData + static_cast<size_t> ( header._indexDataOffset ),
+        static_cast<size_t> ( header._vertexCount ) * sizeof ( Mesh2Vertex ),
+        static_cast<uint32_t> ( header._indexCount ),
+        renderer,
+        commandBuffer
+    );
+
+    if ( !result )
+        return false;
+
+    Vec3 const& mins = header._bounds._min;
+    Vec3 const& maxs = header._bounds._max;
+    _bounds.Empty ();
+    _bounds.AddVertex ( mins[ 0U ], mins[ 1U ], mins[ 2U ] );
+    _bounds.AddVertex ( maxs[ 0U ], maxs[ 1U ], maxs[ 2U ] );
+
+    _fileName = std::move ( fileName );
+    return true;
+}
+
+bool MeshGeometry::UploadComplex ( uint8_t const* data,
+    size_t vertexDataSize,
+    uint32_t indexCount,
+    Renderer &renderer,
+    VkCommandBuffer commandBuffer
+)
+{
     constexpr VkBufferUsageFlags const indexBufferUsageFlags = AV_VK_FLAG ( VK_BUFFER_USAGE_INDEX_BUFFER_BIT ) |
         AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT );
 
@@ -307,7 +358,7 @@ bool MeshGeometry::LoadFromMesh2 ( std::string &&fileName,
         .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0U,
-        .size = static_cast<VkDeviceSize> ( header._indexCount * sizeof ( Mesh2Index ) ),
+        .size = static_cast<VkDeviceSize> ( indexCount * sizeof ( uint32_t ) ),
         .usage = indexBufferUsageFlags,
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
         .queueFamilyIndexCount = 0U,
@@ -318,7 +369,7 @@ bool MeshGeometry::LoadFromMesh2 ( std::string &&fileName,
 
     bool result = Renderer::CheckVkResult (
         vkCreateBuffer ( device, &bufferInfo, nullptr, &_indexBuffer ),
-        "MeshGeometry::LoadFromMesh2",
+        "MeshGeometry::UploadComplex",
         "Can't create index buffer"
     );
 
@@ -333,17 +384,17 @@ bool MeshGeometry::LoadFromMesh2 ( std::string &&fileName,
     constexpr VkBufferUsageFlags const vertexBufferUsageFlags = AV_VK_FLAG ( VK_BUFFER_USAGE_VERTEX_BUFFER_BIT ) |
         AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT );
 
-    bufferInfo.size = static_cast<VkDeviceSize> ( header._vertexCount * sizeof ( Mesh2Vertex ) );
+    bufferInfo.size = static_cast<VkDeviceSize> ( vertexDataSize );
     bufferInfo.usage = vertexBufferUsageFlags;
 
     result = Renderer::CheckVkResult ( vkCreateBuffer ( device, &bufferInfo, nullptr, &_vertexBuffer ),
-        "MeshGeometry::LoadFromMesh2",
+        "MeshGeometry::UploadComplex",
         "Can't create vertex buffer"
     );
 
     if ( !result )
     {
-        FreeResources ( renderer );
+        FreeResources ( device );
         return false;
     }
 
@@ -355,7 +406,7 @@ bool MeshGeometry::LoadFromMesh2 ( std::string &&fileName,
     if ( indexBufferMemoryRequirements.memoryTypeBits != vertexBufferMemoryRequirements.memoryTypeBits )
     {
         constexpr char const format[] =
-R"__(MeshGeometry::LoadFromMesh2 - Memory usage bits are not same:
+R"__(MeshGeometry::UploadComplex - Memory usage bits are not same:
     index buffer memory bits: 0x%08X
     vertex buffer memory bits: 0x%08X)__";
 
@@ -365,7 +416,7 @@ R"__(MeshGeometry::LoadFromMesh2 - Memory usage bits are not same:
         );
 
         assert ( indexBufferMemoryRequirements.memoryTypeBits == vertexBufferMemoryRequirements.memoryTypeBits );
-        FreeResources ( renderer );
+        FreeResources ( device );
         return false;
     }
 
@@ -394,48 +445,47 @@ R"__(MeshGeometry::LoadFromMesh2 - Memory usage bits are not same:
     result = renderer.TryAllocateMemory ( _bufferMemory,
         bufferMemoryRequirements,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-        "Can't allocate buffer memory (MeshGeometry::LoadFromMesh2)"
+        "Can't allocate buffer memory (MeshGeometry::UploadComplex)"
     );
 
     if ( !result )
     {
-        FreeResources ( renderer );
+        FreeResources ( device );
         return false;
     }
 
     AV_REGISTER_DEVICE_MEMORY ( "MeshGeometry::_bufferMemory" )
 
     result = Renderer::CheckVkResult ( vkBindBufferMemory ( device, _indexBuffer, _bufferMemory, 0U ),
-        "MeshGeometry::LoadFromMesh2",
+        "MeshGeometry::UploadComplex",
         "Can't bind index buffer memory"
     );
 
     if ( !result )
     {
-        FreeResources ( renderer );
+        FreeResources ( device );
         return false;
     }
 
     result = Renderer::CheckVkResult (
         vkBindBufferMemory ( device, _vertexBuffer, _bufferMemory, static_cast<VkDeviceSize> ( vertexDataOffset ) ),
-        "MeshGeometry::LoadFromMesh2",
+        "MeshGeometry::UploadComplex",
         "Can't bind vertex buffer memory"
     );
 
     if ( !result )
     {
-        FreeResources ( renderer );
+        FreeResources ( device );
         return false;
     }
 
-    VkBufferCopy const copyInfo[ 2U ] =
+    VkBufferCopy const copyInfo[] =
     {
         {
             .srcOffset = 0U,
             .dstOffset = 0U,
             .size = indexBufferMemoryRequirements.size
         },
-
         {
             .srcOffset = indexBufferMemoryRequirements.size,
             .dstOffset = 0U,
@@ -455,24 +505,16 @@ R"__(MeshGeometry::LoadFromMesh2 - Memory usage bits are not same:
         copyInfo,
         usages,
         dstBuffers,
-        rawData + static_cast<size_t> ( header._indexDataOffset ),
+        data,
         indexBufferMemoryRequirements.size + vertexBufferMemoryRequirements.size,
         renderer,
         commandBuffer
     );
 
-    if ( !result )
-        return false;
+    if ( result )
+        _vertexCount = indexCount;
 
-    Vec3 const& mins = header._bounds._min;
-    Vec3 const& maxs = header._bounds._max;
-    _bounds.Empty ();
-    _bounds.AddVertex ( mins[ 0U ], mins[ 1U ], mins[ 2U ] );
-    _bounds.AddVertex ( maxs[ 0U ], maxs[ 1U ], maxs[ 2U ] );
-
-    _vertexCount = static_cast<uint32_t> ( header._indexCount );
-    _fileName = std::move ( fileName );
-    return true;
+    return result;
 }
 
 bool MeshGeometry::UploadInternal ( size_t numUploads,
@@ -507,7 +549,7 @@ bool MeshGeometry::UploadInternal ( size_t numUploads,
 
     if ( !result )
     {
-        FreeResources ( renderer );
+        FreeResources ( device );
         return false;
     }
 
@@ -527,7 +569,7 @@ bool MeshGeometry::UploadInternal ( size_t numUploads,
 
     if ( !result )
     {
-        FreeResources ( renderer );
+        FreeResources ( device );
         return false;
     }
 
@@ -541,7 +583,7 @@ bool MeshGeometry::UploadInternal ( size_t numUploads,
 
     if ( !result )
     {
-        FreeResources ( renderer );
+        FreeResources ( device );
         return false;
     }
 
@@ -555,7 +597,7 @@ bool MeshGeometry::UploadInternal ( size_t numUploads,
 
     if ( !result )
     {
-        FreeResources ( renderer );
+        FreeResources ( device );
         return false;
     }
 
@@ -577,7 +619,7 @@ bool MeshGeometry::UploadInternal ( size_t numUploads,
 
     if ( !result )
     {
-        FreeResources ( renderer );
+        FreeResources ( device );
         return false;
     }
 
@@ -594,7 +636,7 @@ bool MeshGeometry::UploadInternal ( size_t numUploads,
         if ( findResult == g_accessMapper.cend () )
         {
             LogError ( "MeshGeometry::UploadInternal - Unexpected usage 0x%08X", usages[ i ] );
-            FreeResources ( renderer );
+            FreeResources ( device );
             return false;
         }
 
@@ -634,7 +676,7 @@ bool MeshGeometry::UploadInternal ( size_t numUploads,
 
     if ( !result )
     {
-        FreeResources ( renderer );
+        FreeResources ( device );
         return false;
     }
 
@@ -660,7 +702,7 @@ bool MeshGeometry::UploadInternal ( size_t numUploads,
     if ( result )
         return true;
 
-    FreeResources ( renderer );
+    FreeResources ( device );
     return false;
 }
 
@@ -708,7 +750,7 @@ bool MeshGeometry::UploadSimple ( uint8_t const* data,
 
     if ( !result )
     {
-        FreeResources ( renderer );
+        FreeResources ( device );
         return false;
     }
 
@@ -721,7 +763,7 @@ bool MeshGeometry::UploadSimple ( uint8_t const* data,
 
     if ( !result )
     {
-        FreeResources ( renderer );
+        FreeResources ( device );
         return false;
     }
 

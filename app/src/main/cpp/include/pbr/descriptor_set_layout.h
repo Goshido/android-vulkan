@@ -20,7 +20,7 @@ class DescriptorSetLayout
 
         virtual ~DescriptorSetLayout () = default;
 
-        virtual void Destroy ( android_vulkan::Renderer &render ) = 0;
+        virtual void Destroy ( VkDevice device ) = 0;
         [[nodiscard]] virtual bool Init ( android_vulkan::Renderer &render ) = 0;
 
         [[nodiscard]] virtual VkDescriptorSetLayout GetLayout () const = 0;

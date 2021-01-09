@@ -14,10 +14,10 @@ namespace pbr {
 
 [[maybe_unused]] constexpr static uint32_t const STATIC_MESH_COMPONENT_DESC_FORMAT_VERSION = 1U;
 
-StaticMeshComponent::StaticMeshComponent ( size_t &commandBufferConsumed,
+StaticMeshComponent::StaticMeshComponent ( android_vulkan::Renderer &renderer,
+    size_t &commandBufferConsumed,
     StaticMeshComponentDesc const &desc,
     uint8_t const *data,
-    android_vulkan::Renderer &renderer,
     VkCommandBuffer const* commandBuffers
 ) noexcept
 {
@@ -32,17 +32,17 @@ StaticMeshComponent::StaticMeshComponent ( size_t &commandBufferConsumed,
 
     memcpy ( _localMatrix._data, &desc._localMatrix, sizeof ( _localMatrix ) );
 
-    _material = MaterialManager::GetInstance ().LoadMaterial ( commandBufferConsumed,
+    _material = MaterialManager::GetInstance ().LoadMaterial ( renderer,
+        commandBufferConsumed,
         reinterpret_cast<char const*> ( data + desc._material ),
-        renderer,
         commandBuffers
     );
 
     size_t consumed = 0U;
 
-    _mesh = MeshManager::GetInstance ().LoadMesh ( consumed,
+    _mesh = MeshManager::GetInstance ().LoadMesh ( renderer,
+        consumed,
         reinterpret_cast<char const*> ( data + desc._mesh ),
-        renderer,
         commandBuffers[ commandBufferConsumed ]
     );
 
@@ -58,20 +58,22 @@ void StaticMeshComponent::FreeTransferResources ( android_vulkan::Renderer &rend
     // Note it's safe to cast like that here. "NOLINT" is clang-tidy control comment.
     auto* m = static_cast<OpaqueMaterial*> ( _material.get () ); // NOLINT
 
+    VkDevice device = renderer.GetDevice ();
+
     if ( m->GetAlbedo () )
-        m->GetAlbedo ()->FreeTransferResources ( renderer );
+        m->GetAlbedo ()->FreeTransferResources ( device );
 
     if ( m->GetEmission () )
-        m->GetEmission ()->FreeTransferResources ( renderer );
+        m->GetEmission ()->FreeTransferResources ( device );
 
     if ( m->GetNormal () )
-        m->GetNormal ()->FreeTransferResources ( renderer );
+        m->GetNormal ()->FreeTransferResources ( device );
 
     if ( !m->GetParam () )
         return;
 
-    m->GetParam ()->FreeTransferResources ( renderer );
-    _mesh->FreeTransferResources ( renderer );
+    m->GetParam ()->FreeTransferResources ( device );
+    _mesh->FreeTransferResources ( device );
 }
 
 void StaticMeshComponent::Submit ( RenderSession &renderSession )

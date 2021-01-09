@@ -20,11 +20,15 @@ class Rainbow final : public android_vulkan::Game
         VkSemaphore                     _renderTargetAcquiredSemaphore;
 
     public:
-        Rainbow ();
-        ~Rainbow () override = default;
+        Rainbow () noexcept;
 
-        Rainbow ( const Rainbow &other ) = delete;
-        Rainbow& operator = ( const Rainbow &other ) = delete;
+        Rainbow ( Rainbow const & ) = delete;
+        Rainbow& operator = ( Rainbow const & ) = delete;
+
+        Rainbow ( Rainbow && ) = delete;
+        Rainbow& operator = ( Rainbow && ) = delete;
+
+        ~Rainbow () override = default;
 
         bool IsReady () override;
 
@@ -33,8 +37,8 @@ class Rainbow final : public android_vulkan::Game
         bool OnDestroy ( android_vulkan::Renderer &renderer ) override;
 
     private:
-        bool BeginFrame ( uint32_t &presentationFramebufferIndex, android_vulkan::Renderer &renderer );
-        bool EndFrame ( uint32_t presentationFramebufferIndex, android_vulkan::Renderer &renderer );
+        bool BeginFrame ( android_vulkan::Renderer &renderer, uint32_t &presentationFramebufferIndex );
+        bool EndFrame ( android_vulkan::Renderer &renderer, uint32_t presentationFramebufferIndex );
 
         bool CreateCommandBuffer ( android_vulkan::Renderer &renderer );
         void DestroyCommandBuffer ( android_vulkan::Renderer &renderer );

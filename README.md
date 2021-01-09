@@ -23,7 +23,7 @@ Requirements:
 * _Android SDK Tools 26.1.1_
 * _Android SDK Platform-Tools 30.0.5_
 * _CMake 3.10.2.4988404_
-* _DirectX Shader Compiler 1.6.2012.10013_
+* _DirectX Shader Compiler 1.6.2012.10021_
 * _Gradle 6.7.1_
 * _Google USB Driver 13_
 * _LLDB 3.1.4508709_

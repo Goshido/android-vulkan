@@ -183,10 +183,12 @@ void Game::DestroyTextures ( android_vulkan::Renderer &renderer )
     if ( !result )
         android_vulkan::LogWarning ( "Game::DestroyTextures - Can't wait queue idle." );
 
+    VkDevice device = renderer.GetDevice ();
+
     for ( auto& item : _drawcalls )
     {
-        item._diffuse.FreeResources ( renderer );
-        item._normal.FreeResources ( renderer );
+        item._diffuse.FreeResources ( device );
+        item._normal.FreeResources ( device );
         item._diffuseSampler = item._normalSampler = VK_NULL_HANDLE;
     }
 }
@@ -458,7 +460,7 @@ bool Game::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime )
 
     size_t imageIndex = SIZE_MAX;
 
-    if ( !BeginFrame ( imageIndex, renderer ) )
+    if ( !BeginFrame ( renderer, imageIndex ) )
         return false;
 
     const CommandContext& commandContext = _commandBuffers[ imageIndex ];
@@ -488,7 +490,7 @@ bool Game::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime )
     if ( !result )
         return false;
 
-    return EndFrame ( static_cast<size_t> ( imageIndex ), renderer );
+    return EndFrame ( renderer, static_cast<size_t> ( imageIndex ) );
 }
 
 bool Game::OnDestroy ( android_vulkan::Renderer &renderer )
@@ -508,7 +510,7 @@ bool Game::OnDestroy ( android_vulkan::Renderer &renderer )
     DestroySamplers ( renderer );
     DestroyMeshes ( renderer );
     DestroyTextures ( renderer );
-    DestroyUniformBuffer ();
+    DestroyUniformBuffer ( renderer );
     DestroyCommandPool ( renderer );
     DestroySyncPrimitives ( renderer );
     DestroyFramebuffers ( renderer );
@@ -517,7 +519,7 @@ bool Game::OnDestroy ( android_vulkan::Renderer &renderer )
     return true;
 }
 
-bool Game::BeginFrame ( size_t &imageIndex, android_vulkan::Renderer &renderer )
+bool Game::BeginFrame ( android_vulkan::Renderer &renderer, size_t &imageIndex )
 {
     VkDevice device = renderer.GetDevice ();
     uint32_t i = UINT32_MAX;
@@ -556,7 +558,7 @@ bool Game::BeginFrame ( size_t &imageIndex, android_vulkan::Renderer &renderer )
     );
 }
 
-bool Game::EndFrame ( uint32_t presentationImageIndex, android_vulkan::Renderer &renderer )
+bool Game::EndFrame ( android_vulkan::Renderer &renderer, uint32_t presentationImageIndex )
 {
     VkResult presentResult = VK_ERROR_DEVICE_LOST;
 
@@ -638,9 +640,11 @@ void Game::DestroyDescriptorSet ( android_vulkan::Renderer &renderer )
 
 void Game::DestroyMeshes ( android_vulkan::Renderer &renderer )
 {
+    VkDevice device = renderer.GetDevice ();
+
     for ( auto& item : _drawcalls )
     {
-        item._mesh.FreeResources ( renderer );
+        item._mesh.FreeResources ( device );
     }
 }
 
@@ -711,7 +715,7 @@ void Game::DestroyFramebuffers ( android_vulkan::Renderer &renderer )
         _framebuffers.clear ();
     }
 
-    _depthStencilRenderTarget.FreeResources ( renderer );
+    _depthStencilRenderTarget.FreeResources ( device );
 }
 
 bool Game::CreatePipeline ( android_vulkan::Renderer &renderer )
@@ -1125,12 +1129,16 @@ bool Game::CreateUniformBuffer ( android_vulkan::Renderer& renderer )
         return false;
 
     _transform._transform = renderer.GetPresentationEngineTransform ();
-    return _transformBuffer.Update ( reinterpret_cast<const uint8_t*> ( &_transform ), sizeof ( _transform ) );
+
+    return _transformBuffer.Update ( renderer,
+        reinterpret_cast<const uint8_t*> ( &_transform ),
+        sizeof ( _transform )
+    );
 }
 
-void Game::DestroyUniformBuffer ()
+void Game::DestroyUniformBuffer ( android_vulkan::Renderer &renderer )
 {
-    _transformBuffer.FreeResources ();
+    _transformBuffer.FreeResources ( renderer.GetDevice () );
 }
 
 bool Game::InitCommandBuffers ( android_vulkan::Renderer &renderer )
@@ -1251,11 +1259,14 @@ bool Game::UpdateUniformBuffer ( android_vulkan::Renderer &renderer, double delt
     _transform._normalTransform.RotationY ( _angle );
     _transform._normalTransform.SetOrigin ( GXVec3 ( 0.0F, -1.0F, 3.0F ) );
 
-    GXMat4 tmp1;
-    tmp1.Multiply ( _transform._normalTransform, _projectionMatrix );
-    _transform._transform.Multiply ( tmp1, renderer.GetPresentationEngineTransform () );
+    GXMat4 tmp;
+    tmp.Multiply ( _transform._normalTransform, _projectionMatrix );
+    _transform._transform.Multiply ( tmp, renderer.GetPresentationEngineTransform () );
 
-    return _transformBuffer.Update ( reinterpret_cast<const uint8_t*> ( &_transform ), sizeof ( _transform ) );
+    return _transformBuffer.Update ( renderer,
+        reinterpret_cast<const uint8_t*> ( &_transform ),
+        sizeof ( _transform )
+    );
 }
 
 } // namespace rotating_mesh

@@ -72,9 +72,10 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/mesh_geometry.cpp
     app/src/main/cpp/sources/renderer.cpp
     app/src/main/cpp/sources/stick.cpp
-    app/src/main/cpp/sources/textureCube.cpp
+    app/src/main/cpp/sources/texture_cube.cpp
     app/src/main/cpp/sources/texture2D.cpp
     app/src/main/cpp/sources/trigger.cpp
+    app/src/main/cpp/sources/uniform_buffer.cpp
     app/src/main/cpp/sources/vulkan_utils.cpp
     app/src/main/cpp/sources/GXCommon/GXMath.cpp
     app/src/main/cpp/sources/GXCommon/Intrinsics/GXMathNeon.cpp
@@ -85,7 +86,12 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/pbr/camera.cpp
     app/src/main/cpp/sources/pbr/component.cpp
     app/src/main/cpp/sources/pbr/gbuffer.cpp
+    app/src/main/cpp/sources/pbr/geometry_pass.cpp
+    app/src/main/cpp/sources/pbr/lightup_common_descriptror_set_layout.cpp
     app/src/main/cpp/sources/pbr/light.cpp
+    app/src/main/cpp/sources/pbr/light_lightup_base_program.cpp
+    app/src/main/cpp/sources/pbr/light_volume.cpp
+    app/src/main/cpp/sources/pbr/light_volume_program.cpp
     app/src/main/cpp/sources/pbr/material.cpp
     app/src/main/cpp/sources/pbr/material_manager.cpp
     app/src/main/cpp/sources/pbr/mesh_group.cpp
@@ -98,12 +104,18 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/pbr/pbr_game.cpp
     app/src/main/cpp/sources/pbr/point_light.cpp
     app/src/main/cpp/sources/pbr/point_light_component.cpp
+    app/src/main/cpp/sources/pbr/point_light_descriptor_set_layout.cpp
+    app/src/main/cpp/sources/pbr/point_light_lightup.cpp
+    app/src/main/cpp/sources/pbr/point_light_lightup_program.cpp
+    app/src/main/cpp/sources/pbr/point_light_pass.cpp
     app/src/main/cpp/sources/pbr/point_light_shadowmap_generator_program.cpp
+    app/src/main/cpp/sources/pbr/present_pass.cpp
     app/src/main/cpp/sources/pbr/program.cpp
     app/src/main/cpp/sources/pbr/program_resource.cpp
     app/src/main/cpp/sources/pbr/render_session.cpp
     app/src/main/cpp/sources/pbr/render_session_stats.cpp
     app/src/main/cpp/sources/pbr/sampler.cpp
+    app/src/main/cpp/sources/pbr/sampler_manager.cpp
     app/src/main/cpp/sources/pbr/static_mesh_component.cpp
     app/src/main/cpp/sources/pbr/texture_present_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/texture_present_program.cpp
@@ -112,7 +124,6 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/rotating_mesh/game.cpp
     app/src/main/cpp/sources/rotating_mesh/game_analytic.cpp
     app/src/main/cpp/sources/rotating_mesh/game_lut.cpp
-    app/src/main/cpp/sources/rotating_mesh/uniform_buffer.cpp
 )
 
 # ARM Neon support: All ARMv8-based devices support Neon. So no any additional compile flags need to specify.

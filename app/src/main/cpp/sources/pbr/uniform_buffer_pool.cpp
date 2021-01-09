@@ -10,27 +10,27 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-constexpr static size_t const VRAM_PER_POOL_MEGABYTES = 64U;
-constexpr static size_t const VRAM_PER_POOL_BYTES = VRAM_PER_POOL_MEGABYTES * 1024U * 1024U;
+constexpr static size_t const MEGABYTES_TO_BYTES = 1024U * 1024U;
 
 // see https://vulkan.lunarg.com/doc/view/1.1.108.0/mac/chunked_spec/chap18.html#vkCmdUpdateBuffer
 [[maybe_unused]] constexpr static size_t const UPDATE_BUFFER_MAX_SIZE = 65536U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-UniformBufferPool::UniformBufferPool ():
+UniformBufferPool::UniformBufferPool ( eUniformPoolSize size ) noexcept:
     _gpuMemory ( VK_NULL_HANDLE ),
     _index ( 0U ),
     _itemSize ( 0U ),
-    _pool {}
+    _pool {},
+    _size ( MEGABYTES_TO_BYTES * static_cast<size_t> ( size ) )
 {
     // NOTHING
 }
 
-VkBuffer UniformBufferPool::Acquire ( VkCommandBuffer commandBuffer,
+VkBuffer UniformBufferPool::Acquire ( android_vulkan::Renderer &renderer,
+    VkCommandBuffer commandBuffer,
     void const* data,
-    VkPipelineStageFlags targetStages,
-    android_vulkan::Renderer &renderer
+    VkPipelineStageFlags targetStages
 )
 {
     assert ( _index < _pool.capacity () );
@@ -78,13 +78,13 @@ size_t UniformBufferPool::GetItemCount () const
     return _pool.capacity ();
 }
 
-bool UniformBufferPool::Init ( size_t itemSize, android_vulkan::Renderer &renderer )
+bool UniformBufferPool::Init ( android_vulkan::Renderer &renderer, size_t itemSize )
 {
     assert ( itemSize <= renderer.GetMaxUniformBufferRange () );
     assert ( itemSize <= UPDATE_BUFFER_MAX_SIZE );
 
     _itemSize = static_cast<uint32_t> ( itemSize );
-    size_t const itemCount = VRAM_PER_POOL_BYTES / itemSize;
+    size_t const itemCount = _size / itemSize;
     _pool.reserve ( itemCount );
 
     bool const result = renderer.TryAllocateMemory ( _gpuMemory,
@@ -99,14 +99,12 @@ bool UniformBufferPool::Init ( size_t itemSize, android_vulkan::Renderer &render
         return true;
     }
 
-    Destroy ( renderer );
+    Destroy ( renderer.GetDevice () );
     return false;
 }
 
-void UniformBufferPool::Destroy ( android_vulkan::Renderer &renderer )
+void UniformBufferPool::Destroy ( VkDevice device )
 {
-    VkDevice device = renderer.GetDevice ();
-
     for ( auto item : _pool )
     {
         vkDestroyBuffer ( device, item, nullptr );
@@ -155,7 +153,7 @@ bool UniformBufferPool::AllocateItem ( android_vulkan::Renderer &renderer )
     VkMemoryRequirements requirements;
     vkGetBufferMemoryRequirements ( device, buffer, &requirements );
 
-    assert ( ( _pool.size () + 1U ) * requirements.size <= VRAM_PER_POOL_BYTES );
+    assert ( ( _pool.size () + 1U ) * requirements.size <= _size );
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkBindBufferMemory ( device,

@@ -1,5 +1,5 @@
-#ifndef GAME_H
-#define GAME_H
+#ifndef ANDROID_VULKAN_GAME_H
+#define ANDROID_VULKAN_GAME_H
 
 
 #include "renderer.h"
@@ -10,8 +10,12 @@ namespace android_vulkan {
 class Game
 {
     public:
-        Game ( const Game &other ) = delete;
-        Game& operator = ( const Game &other ) = delete;
+        Game ( Game const & ) = delete;
+        Game& operator = ( Game const & ) = delete;
+
+        Game ( Game && ) = delete;
+        Game& operator = ( Game && ) = delete;
+
         virtual ~Game () = default;
 
         [[nodiscard]] virtual bool IsReady () = 0;
@@ -21,10 +25,10 @@ class Game
         [[nodiscard]] virtual bool OnDestroy ( Renderer &renderer ) = 0;
 
     protected:
-        Game () = default;
+        Game () noexcept = default;
 };
 
 } // namespace android_vulkan
 
 
-#endif // GAME_H
+#endif // ANDROID_VULKAN_GAME_H

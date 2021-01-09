@@ -16,8 +16,8 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-constexpr static const char* VERTEX_SHADER_ENTRY_POINT = "VS";
-constexpr static const char* FRAGMENT_SHADER_ENTRY_POINT = "PS";
+constexpr static char const* VERTEX_SHADER_ENTRY_POINT = "VS";
+constexpr static char const* FRAGMENT_SHADER_ENTRY_POINT = "PS";
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -33,19 +33,22 @@ class Program
 
     public:
         Program () = delete;
-        Program ( Program const &other ) = delete;
-        Program& operator = ( Program const &other ) = delete;
-        Program ( Program &&other ) = delete;
-        Program& operator = ( Program &&other ) = delete;
+
+        Program ( Program const & ) = delete;
+        Program& operator = ( Program const & ) = delete;
+
+        Program ( Program && ) = delete;
+        Program& operator = ( Program && ) = delete;
 
         // Method return true is success. Otherwise method returns false.
         // The method MUST invoke vkCreateGraphicsPipelines at the end.
         [[nodiscard]] virtual bool Init ( android_vulkan::Renderer &renderer,
             VkRenderPass renderPass,
+            uint32_t subpass,
             VkExtent2D const &viewport
         ) = 0;
 
-        virtual void Destroy ( android_vulkan::Renderer &renderer ) = 0;
+        virtual void Destroy ( VkDevice device ) = 0;
         [[nodiscard]] virtual std::vector<DescriptorSetInfo> const& GetResourceInfo () const = 0;
 
         // The method assigns VkPipeline as active pipeline.
@@ -68,9 +71,7 @@ class Program
             VkPipelineInputAssemblyStateCreateInfo &info
         ) const = 0;
 
-        [[nodiscard]] virtual bool InitLayout ( VkPipelineLayout &layout,
-            android_vulkan::Renderer &renderer
-        ) = 0;
+        [[nodiscard]] virtual bool InitLayout ( android_vulkan::Renderer &renderer, VkPipelineLayout &layout ) = 0;
 
         [[nodiscard]] virtual VkPipelineMultisampleStateCreateInfo const* InitMultisampleInfo (
             VkPipelineMultisampleStateCreateInfo &info
@@ -80,9 +81,9 @@ class Program
             VkPipelineRasterizationStateCreateInfo &info
         ) const = 0;
 
-        [[nodiscard]] virtual bool InitShaderInfo ( VkPipelineShaderStageCreateInfo const* &targetInfo,
-            VkPipelineShaderStageCreateInfo* sourceInfo,
-            android_vulkan::Renderer &renderer
+        [[nodiscard]] virtual bool InitShaderInfo ( android_vulkan::Renderer &renderer,
+            VkPipelineShaderStageCreateInfo const* &targetInfo,
+            VkPipelineShaderStageCreateInfo* sourceInfo
         ) = 0;
 
         [[nodiscard]] virtual VkPipelineViewportStateCreateInfo const* InitViewportInfo (

@@ -8,9 +8,9 @@ namespace pbr {
 MaterialManager* MaterialManager::_instance = nullptr;
 std::shared_timed_mutex MaterialManager::_mutex;
 
-MaterialRef MaterialManager::LoadMaterial ( size_t &commandBufferConsumed,
+MaterialRef MaterialManager::LoadMaterial ( android_vulkan::Renderer &renderer,
+    size_t &commandBufferConsumed,
     char const* fileName,
-    android_vulkan::Renderer &renderer,
     VkCommandBuffer const* commandBuffers
 )
 {
@@ -114,23 +114,23 @@ MaterialManager& MaterialManager::GetInstance ()
     return *_instance;
 }
 
-void MaterialManager::Destroy ( android_vulkan::Renderer &renderer )
+void MaterialManager::Destroy ( VkDevice device )
 {
     std::unique_lock<std::shared_timed_mutex> const lock ( _mutex );
 
     if ( !_instance )
         return;
 
-    _instance->DestroyInternal ( renderer );
+    _instance->DestroyInternal ( device );
 
     delete _instance;
     _instance = nullptr;
 }
 
-void MaterialManager::DestroyInternal ( android_vulkan::Renderer &renderer )
+void MaterialManager::DestroyInternal ( VkDevice device )
 {
     for ( auto &texture : _textureStorage )
-        texture.second->FreeResources ( renderer );
+        texture.second->FreeResources ( device );
 
     _textureStorage.clear ();
 }

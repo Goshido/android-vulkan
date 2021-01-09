@@ -33,20 +33,20 @@ class MaterialManager final
         MaterialManager& operator = ( MaterialManager &&other ) = delete;
 
         // Note commandBuffers must point to at least 4 free command buffers.
-        [[nodiscard]] MaterialRef LoadMaterial ( size_t &commandBufferConsumed,
+        [[nodiscard]] MaterialRef LoadMaterial ( android_vulkan::Renderer &renderer,
+            size_t &commandBufferConsumed,
             char const* fileName,
-            android_vulkan::Renderer &renderer,
             VkCommandBuffer const* commandBuffers
         );
 
         [[nodiscard]] static MaterialManager& GetInstance ();
-        static void Destroy ( android_vulkan::Renderer &renderer );
+        static void Destroy ( VkDevice device );
 
     private:
         MaterialManager() = default;
         ~MaterialManager () = default;
 
-        void DestroyInternal ( android_vulkan::Renderer &renderer );
+        void DestroyInternal ( VkDevice device );
 };
 
 } // namespace pbr

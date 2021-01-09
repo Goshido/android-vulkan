@@ -10,24 +10,24 @@ namespace pbr {
 class Sampler final
 {
     private:
-        VkSamplerCreateInfo     _info;
-        VkSampler               _sampler;
+        VkSampler       _sampler;
 
     public:
-        Sampler ();
+        Sampler () noexcept;
+
+        Sampler ( Sampler const & ) = delete;
+        Sampler& operator = ( Sampler const & ) = delete;
+
+        Sampler ( Sampler && ) = delete;
+        Sampler& operator = ( Sampler && ) = delete;
+
         ~Sampler () = default;
 
-        Sampler ( const Sampler &other ) = delete;
-        Sampler& operator = ( const Sampler &other ) = delete;
+        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, const VkSamplerCreateInfo &info );
+        void Destroy ( VkDevice device );
 
-        [[nodiscard]] bool Init ( const VkSamplerCreateInfo &info,
-            android_vulkan::Renderer &renderer
-        );
-
-        void Destroy ( android_vulkan::Renderer &renderer );
         [[nodiscard]] VkSampler GetSampler () const;
 };
-
 
 } // namespace pbr
 

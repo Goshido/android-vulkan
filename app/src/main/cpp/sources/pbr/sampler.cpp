@@ -10,14 +10,13 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-Sampler::Sampler ():
-    _info {},
+Sampler::Sampler () noexcept:
     _sampler ( VK_NULL_HANDLE )
 {
     // NOTHING
 }
 
-bool Sampler::Init ( const VkSamplerCreateInfo &info, android_vulkan::Renderer &renderer )
+bool Sampler::Init ( android_vulkan::Renderer &renderer, const VkSamplerCreateInfo &info )
 {
     assert ( _sampler == VK_NULL_HANDLE );
 
@@ -31,15 +30,15 @@ bool Sampler::Init ( const VkSamplerCreateInfo &info, android_vulkan::Renderer &
         return false;
 
     AV_REGISTER_SAMPLER ( "Sampler::_sampler" )
-    memcpy ( &_info, &info, sizeof ( _info ) );
     return true;
 }
 
-void Sampler::Destroy ( android_vulkan::Renderer &renderer )
+void Sampler::Destroy ( VkDevice device )
 {
-    assert ( _sampler != VK_NULL_HANDLE );
+    if ( _sampler == VK_NULL_HANDLE )
+        return;
 
-    vkDestroySampler ( renderer.GetDevice (), _sampler, nullptr );
+    vkDestroySampler ( device, _sampler, nullptr );
     _sampler = VK_NULL_HANDLE;
     AV_UNREGISTER_SAMPLER ( "Sampler::_sampler" )
 }

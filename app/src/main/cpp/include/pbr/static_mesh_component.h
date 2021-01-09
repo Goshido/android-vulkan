@@ -31,10 +31,10 @@ class StaticMeshComponent final : public Component
         StaticMeshComponent& operator = ( StaticMeshComponent && ) = delete;
 
         // "commandBuffer" array MUST contain at least 5 free command buffers.
-        explicit StaticMeshComponent ( size_t &commandBufferConsumed,
+        explicit StaticMeshComponent ( android_vulkan::Renderer &renderer,
+            size_t &commandBufferConsumed,
             StaticMeshComponentDesc const &desc,
             uint8_t const *data,
-            android_vulkan::Renderer &renderer,
             VkCommandBuffer const* commandBuffers
         ) noexcept;
 

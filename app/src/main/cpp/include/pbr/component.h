@@ -23,11 +23,11 @@ class Component
         virtual void Submit ( RenderSession &renderSession ) = 0;
         virtual void FreeTransferResources ( android_vulkan::Renderer &renderer ) = 0;
 
-        [[nodiscard]] static ComponentRef Create ( size_t &commandBufferConsumed,
+        [[nodiscard]] static ComponentRef Create ( android_vulkan::Renderer &renderer,
+            size_t &commandBufferConsumed,
             size_t &dataRead,
             ComponentDesc const &desc,
             uint8_t const* data,
-            android_vulkan::Renderer &renderer,
             VkCommandBuffer const* commandBuffers
         );
 

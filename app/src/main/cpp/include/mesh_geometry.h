@@ -41,10 +41,10 @@ class MeshGeometry final
 
         ~MeshGeometry () = default;
 
-        void FreeResources ( Renderer &renderer );
-        void FreeTransferResources ( Renderer &renderer );
+        void FreeResources ( VkDevice device );
+        void FreeTransferResources ( VkDevice device );
 
-        [[maybe_unused]] [[nodiscard]] GXAABB const& GetBounds () const;
+        [[nodiscard]] GXAABB const& GetBounds () const;
         [[nodiscard]] VkBuffer const& GetVertexBuffer () const;
         [[nodiscard]] VkBuffer const& GetIndexBuffer () const;
         [[nodiscard]] std::string const& GetName () const;
@@ -69,8 +69,17 @@ class MeshGeometry final
             VkCommandBuffer commandBuffer
         );
 
+        [[maybe_unused]] [[nodiscard]] bool LoadMesh ( uint8_t const* vertexData,
+            size_t vertexDataSize,
+            uint32_t const* indices,
+            uint32_t indexCount,
+            GXAABB const &bounds,
+            Renderer &renderer,
+            VkCommandBuffer commandBuffer
+        );
+
     private:
-        void FreeResourceInternal ( Renderer &renderer );
+        void FreeResourceInternal ( VkDevice device );
 
         [[nodiscard]] bool LoadFromMesh ( std::string &&fileName,
             VkBufferUsageFlags usage,
@@ -79,7 +88,13 @@ class MeshGeometry final
         );
 
         [[nodiscard]] bool LoadFromMesh2 ( std::string &&fileName,
-            VkBufferUsageFlags usage,
+            Renderer &renderer,
+            VkCommandBuffer commandBuffer
+        );
+
+        [[nodiscard]] bool UploadComplex ( uint8_t const* data,
+            size_t vertexDataSize,
+            uint32_t indexCount,
             Renderer &renderer,
             VkCommandBuffer commandBuffer
         );

@@ -45,6 +45,7 @@ class RenderSessionStats final
         [[maybe_unused]] void RenderPointLight ();
         void SubmitPointLight ();
 
+    private:
         void Reset ();
 };
 

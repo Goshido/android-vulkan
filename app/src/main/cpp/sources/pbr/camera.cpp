@@ -13,34 +13,36 @@ constexpr static float const MOVE_BOOST = 10.0F;
 //----------------------------------------------------------------------------------------------------------------------
 
 Camera::Camera ():
-    _location ( 0.0F, 0.0F, 0.0F ),
     _moveBoost ( 0.0F ),
     _pitch ( GX_MATH_HALF_PI ),
     _yaw ( 0.0F ),
     _moveSpeed ( 0.0F, 0.0F, 0.0F ),
     _angularSpeed ( 0.0F, 0.0F ),
-    _projectionMatrix {},
-    _viewMatrix {}
+    _local {},
+    _projection {}
 {
-    _projectionMatrix.Identity ();
-    _viewMatrix.Identity ();
+    _local.Identity ();
+    _projection.Identity ();
 }
 
 void Camera::SetProjection ( float fieldOfViewRadians, float aspectRatio, float zNear, float zFar )
 {
-    _projectionMatrix.Perspective ( fieldOfViewRadians, aspectRatio, zNear, zFar );
+    _projection.Perspective ( fieldOfViewRadians, aspectRatio, zNear, zFar );
 }
 
 void Camera::SetLocation ( float x, float y, float z )
 {
-    _location._data[ 0U ] = x;
-    _location._data[ 1U ] = y;
-    _location._data[ 2U ] = z;
+    _local._m[ 3U ][ 0U ] = x;
+    _local._m[ 3U ][ 1U ] = y;
+    _local._m[ 3U ][ 2U ] = z;
 }
 
 void Camera::SetLocation ( GXVec3 const &location )
 {
-    _location = location;
+    _local._m[ 3U ][ 0U ] = location._data[ 0U ];
+    _local._m[ 3U ][ 1U ] = location._data[ 1U ];
+    _local._m[ 3U ][ 2U ] = location._data[ 2U ];
+    _local.SetW ( location );
 }
 
 void Camera::CaptureInput ()
@@ -108,10 +110,9 @@ void Camera::Update ( float deltaTime )
     GXVec3 forward;
     forward.CrossProduct ( right, up );
 
-    GXMat4 local;
-    local.SetX ( right );
-    local.SetY ( up );
-    local.SetZ ( forward );
+    _local.SetX ( right );
+    _local.SetY ( up );
+    _local.SetZ ( forward );
 
     constexpr float const scale = 1.0F / ( 1.0F - TRIGGER_DEAD_ZONE );
     constexpr float const boostFactor = MOVE_BOOST * LINEAR_SPEED;
@@ -120,25 +121,23 @@ void Camera::Update ( float deltaTime )
         deltaTime * boostFactor * scale * ( boost - TRIGGER_DEAD_ZONE ):
         deltaTime * LINEAR_SPEED;
 
-    _location.Sum ( _location, deltaLinear * move._data[ 0U ], forward );
-    _location.Sum ( _location, deltaLinear * move._data[ 1U ], right );
-    _location.Sum ( _location, deltaLinear * move._data[ 2U ], up );
-    local.SetW ( _location );
+    GXVec3 location;
+    _local.GetW ( location );
 
-    local._data[ 3U ] = local._data[ 7U ] = local._data[ 11U ] = 0.0F;
-    local._data[ 15U ] = 1.0F;
+    location.Sum ( location, deltaLinear * move._data[ 0U ], forward );
+    location.Sum ( location, deltaLinear * move._data[ 1U ], right );
+    location.Sum ( location, deltaLinear * move._data[ 2U ], up );
+    _local.SetW ( location );
+}
 
-    _viewMatrix.Inverse ( local );
+GXMat4 const& Camera::GetLocalMatrix() const
+{
+    return _local;
 }
 
 GXMat4 const& Camera::GetProjectionMatrix () const
 {
-    return _projectionMatrix;
-}
-
-GXMat4 const& Camera::GetViewMatrix () const
-{
-    return _viewMatrix;
+    return _projection;
 }
 
 void Camera::OnADown ( void* context )

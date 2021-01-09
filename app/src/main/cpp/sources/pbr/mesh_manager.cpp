@@ -6,9 +6,9 @@ namespace pbr {
 MeshManager* MeshManager::_instance = nullptr;
 std::shared_timed_mutex MeshManager::_mutex;
 
-MeshRef MeshManager::LoadMesh ( size_t &commandBufferConsumed,
+MeshRef MeshManager::LoadMesh ( android_vulkan::Renderer &renderer,
+    size_t &commandBufferConsumed,
     char const* fileName,
-    android_vulkan::Renderer &renderer,
     VkCommandBuffer commandBuffer
 )
 {
@@ -43,23 +43,23 @@ MeshManager& MeshManager::GetInstance ()
     return *_instance;
 }
 
-void MeshManager::Destroy ( android_vulkan::Renderer &renderer )
+void MeshManager::Destroy ( VkDevice device )
 {
     std::unique_lock<std::shared_timed_mutex> const lock ( _mutex );
 
     if ( !_instance )
         return;
 
-    _instance->DestroyInternal ( renderer );
+    _instance->DestroyInternal ( device );
 
     delete _instance;
     _instance = nullptr;
 }
 
-void MeshManager::DestroyInternal ( android_vulkan::Renderer &renderer )
+void MeshManager::DestroyInternal ( VkDevice device )
 {
     for ( auto &mesh : _meshStorage )
-        mesh.second->FreeResources ( renderer );
+        mesh.second->FreeResources ( device );
 
     _meshStorage.clear ();
 }

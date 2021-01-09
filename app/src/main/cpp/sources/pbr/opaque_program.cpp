@@ -23,6 +23,7 @@ OpaqueProgram::OpaqueProgram () noexcept:
 
 bool OpaqueProgram::Init ( android_vulkan::Renderer &renderer,
     VkRenderPass renderPass,
+    uint32_t subpass,
     VkExtent2D const &viewport
 )
 {
@@ -46,9 +47,11 @@ bool OpaqueProgram::Init ( android_vulkan::Renderer &renderer,
     pipelineInfo.flags = 0U;
     pipelineInfo.stageCount = static_cast<uint32_t> ( std::size ( stageInfo ) );
 
-    if ( !InitShaderInfo ( pipelineInfo.pStages, stageInfo, renderer ) )
+    VkDevice device = renderer.GetDevice ();
+
+    if ( !InitShaderInfo ( renderer, pipelineInfo.pStages, stageInfo ) )
     {
-        Destroy ( renderer );
+        Destroy ( device );
         return false;
     }
 
@@ -66,26 +69,26 @@ bool OpaqueProgram::Init ( android_vulkan::Renderer &renderer,
     pipelineInfo.pColorBlendState = InitColorBlendInfo ( blendInfo, attachmentInfo );
     pipelineInfo.pDynamicState = nullptr;
 
-    if ( !InitLayout ( pipelineInfo.layout, renderer ) )
+    if ( !InitLayout ( renderer, pipelineInfo.layout ) )
     {
-        Destroy ( renderer );
+        Destroy ( device );
         return false;
     }
 
     pipelineInfo.renderPass = renderPass;
-    pipelineInfo.subpass = 0U;
+    pipelineInfo.subpass = subpass;
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
     pipelineInfo.basePipelineIndex = 0;
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateGraphicsPipelines ( renderer.GetDevice (), VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
+        vkCreateGraphicsPipelines ( device, VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
         "OpaqueProgram::Init",
         "Can't create pipeline"
     );
 
     if ( !result )
     {
-        Destroy ( renderer );
+        Destroy ( device );
         return false;
     }
 
@@ -93,10 +96,8 @@ bool OpaqueProgram::Init ( android_vulkan::Renderer &renderer,
     return true;
 }
 
-void OpaqueProgram::Destroy ( android_vulkan::Renderer &renderer )
+void OpaqueProgram::Destroy ( VkDevice device )
 {
-    VkDevice device = renderer.GetDevice ();
-
     if ( _pipelineLayout != VK_NULL_HANDLE )
     {
         vkDestroyPipelineLayout ( device, _pipelineLayout, nullptr );
@@ -104,8 +105,8 @@ void OpaqueProgram::Destroy ( android_vulkan::Renderer &renderer )
         AV_UNREGISTER_PIPELINE_LAYOUT ( "OpaqueProgram::_pipelineLayout" )
     }
 
-    _textureLayout.Destroy ( renderer );
-    _instanceLayout.Destroy ( renderer );
+    _textureLayout.Destroy ( device );
+    _instanceLayout.Destroy ( device );
 
     if ( _pipeline != VK_NULL_HANDLE )
     {
@@ -243,7 +244,7 @@ VkPipelineInputAssemblyStateCreateInfo const* OpaqueProgram::InitInputAssemblyIn
     return &info;
 }
 
-bool OpaqueProgram::InitLayout ( VkPipelineLayout &layout, android_vulkan::Renderer &renderer )
+bool OpaqueProgram::InitLayout ( android_vulkan::Renderer &renderer, VkPipelineLayout &layout )
 {
     if ( !_instanceLayout.Init ( renderer ) )
         return false;
@@ -251,22 +252,24 @@ bool OpaqueProgram::InitLayout ( VkPipelineLayout &layout, android_vulkan::Rende
     if ( !_textureLayout.Init ( renderer ) )
         return false;
 
-    VkDescriptorSetLayout layouts[] =
+    VkDescriptorSetLayout const layouts[] =
     {
         _textureLayout.GetLayout (),
         _instanceLayout.GetLayout ()
     };
 
-    VkPipelineLayoutCreateInfo layoutInfo;
-    layoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    layoutInfo.pNext = nullptr;
-    layoutInfo.flags = 0U;
-    layoutInfo.setLayoutCount = static_cast<uint32_t> ( std::size ( layouts ) );
-    layoutInfo.pSetLayouts = layouts;
-    layoutInfo.pushConstantRangeCount = 0U;
-    layoutInfo.pPushConstantRanges = nullptr;
+    VkPipelineLayoutCreateInfo const layoutInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .setLayoutCount = static_cast<uint32_t> ( std::size ( layouts ) ),
+        .pSetLayouts = layouts,
+        .pushConstantRangeCount = 0U,
+        .pPushConstantRanges = nullptr
+    };
 
-    const bool result = android_vulkan::Renderer::CheckVkResult (
+    bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreatePipelineLayout ( renderer.GetDevice (), &layoutInfo, nullptr, &_pipelineLayout ),
         "OpaqueProgram::InitLayout",
         "Can't create pipeline layout"
@@ -318,9 +321,9 @@ VkPipelineRasterizationStateCreateInfo const* OpaqueProgram::InitRasterizationIn
     return &info;
 }
 
-bool OpaqueProgram::InitShaderInfo ( VkPipelineShaderStageCreateInfo const* &targetInfo,
-    VkPipelineShaderStageCreateInfo* sourceInfo,
-    android_vulkan::Renderer &renderer
+bool OpaqueProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
+    VkPipelineShaderStageCreateInfo const* &targetInfo,
+    VkPipelineShaderStageCreateInfo* sourceInfo
 )
 {
     bool result = renderer.CreateShader ( _vertexShader,

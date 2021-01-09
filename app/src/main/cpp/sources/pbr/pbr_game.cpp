@@ -74,17 +74,19 @@ bool PBRGame::OnInit ( android_vulkan::Renderer &renderer )
 bool PBRGame::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime )
 {
     _camera.Update ( static_cast<float> ( deltaTime ) );
-    _renderSession.Begin ( _camera.GetViewMatrix (), _camera.GetProjectionMatrix () );
+    _renderSession.Begin ( _camera.GetLocalMatrix (), _camera.GetProjectionMatrix () );
 
     for ( auto &component : _components )
         component->Submit ( _renderSession );
 
-    return _renderSession.End ( ePresentTarget::Normal, deltaTime, renderer );
+    return _renderSession.End ( renderer, ePresentTarget::Albedo, deltaTime );
 }
 
 bool PBRGame::OnDestroy ( android_vulkan::Renderer &renderer )
 {
-    const bool result = android_vulkan::Renderer::CheckVkResult ( vkDeviceWaitIdle ( renderer.GetDevice () ),
+    VkDevice device = renderer.GetDevice ();
+
+    bool const result = android_vulkan::Renderer::CheckVkResult ( vkDeviceWaitIdle ( device ),
         "PBRGame::OnDestroy",
         "Can't wait device idle"
     );
@@ -93,13 +95,13 @@ bool PBRGame::OnDestroy ( android_vulkan::Renderer &renderer )
         return false;
 
     Camera::ReleaseInput ();
-    DestroyCommandPool ( renderer );
+    DestroyCommandPool ( device );
 
     _components.clear ();
-    _renderSession.Destroy( renderer );
+    _renderSession.Destroy ( device );
 
-    MeshManager::Destroy ( renderer );
-    MaterialManager::Destroy ( renderer );
+    MeshManager::Destroy ( device );
+    MaterialManager::Destroy ( device );
 
     return true;
 }
@@ -147,12 +149,12 @@ bool PBRGame::CreateCommandPool ( android_vulkan::Renderer &renderer, size_t com
     return false;
 }
 
-void PBRGame::DestroyCommandPool ( android_vulkan::Renderer &renderer )
+void PBRGame::DestroyCommandPool ( VkDevice device )
 {
     if ( _commandPool == VK_NULL_HANDLE )
         return;
 
-    vkDestroyCommandPool ( renderer.GetDevice (), _commandPool, nullptr );
+    vkDestroyCommandPool ( device, _commandPool, nullptr );
     _commandPool = VK_NULL_HANDLE;
     AV_UNREGISTER_COMMAND_POOL ( "PBRGame::_commandPool" )
 }
@@ -189,11 +191,11 @@ bool PBRGame::UploadGPUContent ( android_vulkan::Renderer& renderer )
 
     for ( size_t i = 0U; i < limit; ++i )
     {
-        ComponentRef component = Component::Create ( consumed,
+        ComponentRef component = Component::Create ( renderer,
+            consumed,
             read,
             *reinterpret_cast<ComponentDesc const*> ( readPointer ),
             data,
-            renderer,
             commandBuffers
         );
 

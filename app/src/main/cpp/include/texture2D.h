@@ -55,13 +55,13 @@ class Texture2D final
             Renderer &renderer
         );
 
-        void FreeResources ( Renderer &renderer );
+        void FreeResources ( VkDevice device );
 
         // optimization: _transfer and _transferDeviceMemory are needed only for uploading pixel data to the Vulkan
         // texture object. Uploading itself is done via command submit: vkCmdCopyBufferToImage. So you can make a
         // bunch of vkCmdCopyBufferToImage call for different textures and after completion you can free
         // _transfer and _transferDeviceMemory for Texture2D objects.
-        void FreeTransferResources ( Renderer &renderer );
+        void FreeTransferResources ( VkDevice device );
 
         [[nodiscard]] VkFormat GetFormat () const;
         [[nodiscard]] VkImage GetImage () const;
@@ -130,7 +130,7 @@ class Texture2D final
         // Note the method maps "_transferDeviceMemory" to the "mappedBuffer". So user code MUST invoke vkUnmapMemory.
         [[nodiscard]] bool CreateTransferResources ( uint8_t* &mappedBuffer, VkDeviceSize size, Renderer &renderer );
 
-        void FreeResourceInternal ( Renderer &renderer );
+        void FreeResourceInternal ( VkDevice device );
 
         [[nodiscard]] bool UploadCompressed ( std::string const &fileName,
             eFormat format,

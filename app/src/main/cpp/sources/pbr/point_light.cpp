@@ -16,6 +16,8 @@ constexpr static float const DEFAULT_LOCATION_Z = 0.0F;
 
 constexpr static float const DEFAULT_SIZE = 1.0F;
 
+constexpr static float const Z_NEAR = 0.05F;
+
 //----------------------------------------------------------------------------------------------------------------------
 
 [[nodiscard]] constexpr static float ToUnorm ( uint8_t channel )
@@ -31,7 +33,10 @@ constexpr static float const DEFAULT_SIZE = 1.0F;
     _bounds {},
     _hue ( ToUnorm ( DEFAULT_HUE_RED ), ToUnorm ( DEFAULT_HUE_GREEN ), ToUnorm ( DEFAULT_HUE_BLUE ) ),
     _intensity ( android_vulkan::Half::Convert ( DEFAULT_INTENSITY ) ),
-    _location ( DEFAULT_LOCATION_X, DEFAULT_LOCATION_Y, DEFAULT_LOCATION_Z )
+    _isNeedUpdateMatrices ( true ),
+    _location ( DEFAULT_LOCATION_X, DEFAULT_LOCATION_Y, DEFAULT_LOCATION_Z ),
+    _matrices {},
+    _projection {}
 {
     constexpr float const halfSize = 0.5F * DEFAULT_SIZE;
 
@@ -58,7 +63,10 @@ PointLight::PointLight ( android_vulkan::Half3 const &hue,
     _bounds ( bounds ),
     _hue ( hue ),
     _intensity ( intensity ),
-    _location ( location )
+    _isNeedUpdateMatrices ( true ),
+    _location ( location ),
+    _matrices {},
+    _projection {}
 {
     // NOTHING
 }
@@ -81,6 +89,51 @@ GXAABB const& PointLight::GetBounds () const
 [[maybe_unused]] GXVec3 const& PointLight::GetLocation () const
 {
     return _location;
+}
+
+PointLight::Matrices const& PointLight::GetMatrices ()
+{
+    if ( _isNeedUpdateMatrices )
+        UpdateMatrices ();
+
+    return _matrices;
+}
+
+GXMat4 const& PointLight::GetProjection ()
+{
+    if ( _isNeedUpdateMatrices )
+        UpdateMatrices ();
+
+    return _projection;
+}
+
+void PointLight::UpdateMatrices ()
+{
+    _projection.Perspective ( GX_MATH_HALF_PI,
+        1.0F,
+        Z_NEAR,
+        std::max ( _bounds.GetWidth (), std::max ( _bounds.GetHeight (), _bounds.GetDepth () ) )
+    );
+
+    GXMat4 locals[ PBR_POINT_LIGHT_SHADOW_CASTER_PROJECTION_COUNT ];
+    locals[ static_cast<size_t> ( eFaceIndex::PositiveX ) ].RotationY ( GX_MATH_HALF_PI );
+    locals[ static_cast<size_t> ( eFaceIndex::NegativeX ) ].RotationY ( -GX_MATH_HALF_PI );
+    locals[ static_cast<size_t> ( eFaceIndex::PositiveY ) ].RotationX ( -GX_MATH_HALF_PI );
+    locals[ static_cast<size_t> ( eFaceIndex::NegativeY ) ].RotationX ( GX_MATH_HALF_PI );
+    locals[ static_cast<size_t> ( eFaceIndex::PositiveZ ) ].Identity ();
+    locals[ static_cast<size_t> ( eFaceIndex::NegativeZ ) ].RotationY ( GX_MATH_PI );
+
+    GXMat4 view;
+
+    for ( size_t i = 0U; i < PBR_POINT_LIGHT_SHADOW_CASTER_PROJECTION_COUNT; ++i )
+    {
+        GXMat4 &local = locals[ i ];
+        local.SetW ( _location );
+        view.Inverse ( local );
+        _matrices[ i ].Multiply ( view, _projection );
+    }
+
+    _isNeedUpdateMatrices = false;
 }
 
 } // namespace pbr

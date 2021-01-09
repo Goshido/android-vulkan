@@ -56,7 +56,7 @@ bool MandelbrotBase::OnFrame ( android_vulkan::Renderer &renderer, double /*delt
 {
     uint32_t presentationImageIndex = UINT32_MAX;
 
-    if ( !BeginFrame ( presentationImageIndex, renderer ) )
+    if ( !BeginFrame ( renderer, presentationImageIndex ) )
         return true;
 
     VkCommandBuffer commandBuffer = _commandBuffer[ static_cast<size_t> ( presentationImageIndex ) ];
@@ -83,7 +83,7 @@ bool MandelbrotBase::OnFrame ( android_vulkan::Renderer &renderer, double /*delt
     if ( !result )
         return true;
 
-    return EndFrame ( presentationImageIndex, renderer );
+    return EndFrame ( renderer, presentationImageIndex );
 }
 
 bool MandelbrotBase::OnDestroy ( android_vulkan::Renderer &renderer )
@@ -113,7 +113,7 @@ MandelbrotBase::MandelbrotBase ( const char* fragmentShaderSpirV ):
     // NOTHING
 }
 
-bool MandelbrotBase::BeginFrame ( uint32_t &presentationImageIndex, android_vulkan::Renderer &renderer )
+bool MandelbrotBase::BeginFrame ( android_vulkan::Renderer &renderer, uint32_t &presentationImageIndex )
 {
     return android_vulkan::Renderer::CheckVkResult (
         vkAcquireNextImageKHR ( renderer.GetDevice (),
@@ -129,7 +129,7 @@ bool MandelbrotBase::BeginFrame ( uint32_t &presentationImageIndex, android_vulk
     );
 }
 
-bool MandelbrotBase::EndFrame ( uint32_t presentationImageIndex, android_vulkan::Renderer &renderer )
+bool MandelbrotBase::EndFrame ( android_vulkan::Renderer &renderer, uint32_t presentationImageIndex )
 {
     VkResult presentResult = VK_ERROR_DEVICE_LOST;
 

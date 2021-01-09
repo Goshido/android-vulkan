@@ -29,25 +29,25 @@ PointLightLightup::PointLightLightup () noexcept:
     // NOTHING
 }
 
-[[maybe_unused]] bool PointLightLightup::Execute ( PointLightPass const &pointLightPass,
+[[maybe_unused]] bool PointLightLightup::Execute ( android_vulkan::Renderer &renderer,
+    PointLightPass const &pointLightPass,
     LightVolume &/*lightVolume*/,
     GXMat4 const &viewerLocal,
-    GXMat4 const &view,
-    android_vulkan::Renderer &renderer
+    GXMat4 const &view
 )
 {
-    if ( !UpdateGPUData ( pointLightPass, viewerLocal, view, renderer ) )
+    if ( !UpdateGPUData ( renderer, pointLightPass, viewerLocal, view ) )
         return false;
 
     // TODO
     return false;
 }
 
-bool PointLightLightup::Init ( VkCommandBuffer commandBuffer,
+bool PointLightLightup::Init ( android_vulkan::Renderer &renderer,
+    VkCommandBuffer commandBuffer,
     VkRenderPass renderPass,
     uint32_t subpass,
-    VkExtent2D const &resolution,
-    android_vulkan::Renderer &renderer
+    VkExtent2D const &resolution
 )
 {
     VkCommandPoolCreateInfo const poolInfo
@@ -88,7 +88,7 @@ bool PointLightLightup::Init ( VkCommandBuffer commandBuffer,
 
     if ( !result )
     {
-        Destroy ( renderer );
+        Destroy ( device );
         return false;
     }
 
@@ -104,7 +104,7 @@ bool PointLightLightup::Init ( VkCommandBuffer commandBuffer,
 
     if ( !_program.Init ( renderer, renderPass, subpass, resolution ) )
     {
-        Destroy ( renderer );
+        Destroy ( device );
         return false;
     }
 
@@ -130,15 +130,15 @@ bool PointLightLightup::Init ( VkCommandBuffer commandBuffer,
         .unnormalizedCoordinates = VK_FALSE
     };
 
-    if ( !_sampler.Init ( samplerInfo, renderer ) )
+    if ( !_sampler.Init ( renderer, samplerInfo ) )
     {
-        Destroy ( renderer );
+        Destroy ( device );
         return false;
     }
 
-    if ( !_uniformPool.Init ( sizeof ( LightLightupBaseProgram::ViewData ), renderer ) )
+    if ( !_uniformPool.Init ( renderer, sizeof ( LightLightupBaseProgram::ViewData ) ) )
     {
-        Destroy ( renderer );
+        Destroy ( device );
         return false;
     }
 
@@ -184,15 +184,13 @@ bool PointLightLightup::Init ( VkCommandBuffer commandBuffer,
     );
 }
 
-void PointLightLightup::Destroy ( android_vulkan::Renderer &renderer )
+void PointLightLightup::Destroy ( VkDevice device )
 {
-    DestroyDescriptorPool ( renderer );
+    DestroyDescriptorPool ( device );
 
-    _volumeMesh.FreeResources ( renderer );
-    _uniformPool.Destroy ( renderer );
-    _sampler.Destroy ( renderer );
-
-    VkDevice device = renderer.GetDevice ();
+    _volumeMesh.FreeResources ( device );
+    _uniformPool.Destroy ( device );
+    _sampler.Destroy ( device );
     _program.Destroy ( device );
 
     if ( _commandPool == VK_NULL_HANDLE )
@@ -203,14 +201,15 @@ void PointLightLightup::Destroy ( android_vulkan::Renderer &renderer )
     AV_UNREGISTER_COMMAND_POOL ( "PointLightLightup::_commandPool" )
 }
 
-bool PointLightLightup::AllocateNativeDescriptorSets ( size_t neededSets, android_vulkan::Renderer &renderer )
+bool PointLightLightup::AllocateNativeDescriptorSets ( android_vulkan::Renderer &renderer, size_t neededSets )
 {
     assert ( neededSets );
 
     if ( _descriptorSets.size () >= neededSets )
         return true;
 
-    DestroyDescriptorPool ( renderer );
+    VkDevice device = renderer.GetDevice ();
+    DestroyDescriptorPool ( device );
     auto const size = static_cast<uint32_t> ( neededSets );
 
     VkDescriptorPoolSize const poolSizes[] =
@@ -238,8 +237,6 @@ bool PointLightLightup::AllocateNativeDescriptorSets ( size_t neededSets, androi
         .poolSizeCount = static_cast<uint32_t> ( std::size ( poolSizes ) ),
         .pPoolSizes = poolSizes
     };
-
-    VkDevice device = renderer.GetDevice ();
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_descriptorPool ),
@@ -306,25 +303,25 @@ bool PointLightLightup::AllocateNativeDescriptorSets ( size_t neededSets, androi
     );
 }
 
-void PointLightLightup::DestroyDescriptorPool ( android_vulkan::Renderer &renderer )
+void PointLightLightup::DestroyDescriptorPool ( VkDevice device )
 {
     if ( _descriptorPool == VK_NULL_HANDLE )
         return;
 
-    vkDestroyDescriptorPool ( renderer.GetDevice (), _descriptorPool, nullptr );
+    vkDestroyDescriptorPool ( device, _descriptorPool, nullptr );
     _descriptorPool = VK_NULL_HANDLE;
     AV_UNREGISTER_DESCRIPTOR_POOL ( "PointLightLightup::_descriptorPool" )
 }
 
-bool PointLightLightup::UpdateGPUData ( PointLightPass const &pointLightPass,
+bool PointLightLightup::UpdateGPUData ( android_vulkan::Renderer &renderer,
+    PointLightPass const &pointLightPass,
     GXMat4 const &viewerLocal,
-    GXMat4 const &view,
-    android_vulkan::Renderer &renderer
+    GXMat4 const &view
 )
 {
     size_t const lightCount = pointLightPass.GetPointLightCount ();
 
-    if ( !AllocateNativeDescriptorSets ( lightCount, renderer ) )
+    if ( !AllocateNativeDescriptorSets ( renderer, lightCount ) )
         return false;
 
     constexpr VkCommandBufferBeginInfo const beginInfo
@@ -395,10 +392,10 @@ bool PointLightLightup::UpdateGPUData ( PointLightPass const &pointLightPass,
 
         VkDescriptorBufferInfo& buffer = _uniformInfo[ i ];
 
-        buffer.buffer = _uniformPool.Acquire ( _transferCommandBuffer,
+        buffer.buffer = _uniformPool.Acquire ( renderer,
+            _transferCommandBuffer,
             &lightData,
-            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-            renderer
+            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT
         );
 
         VkWriteDescriptorSet &write2 = _writeSets[ writeIndex++ ];

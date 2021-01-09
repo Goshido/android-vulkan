@@ -61,10 +61,10 @@ class RenderSession final
         ~RenderSession () = default;
 
         void Begin ( GXMat4 const &viewerLocal, GXMat4 const &projection );
-        [[nodiscard]] bool End ( ePresentTarget target, double deltaTime, android_vulkan::Renderer &renderer );
+        [[nodiscard]] bool End ( android_vulkan::Renderer &renderer, ePresentTarget target, double deltaTime );
 
-        [[nodiscard]] bool Init ( VkExtent2D const &resolution, android_vulkan::Renderer &renderer );
-        void Destroy ( android_vulkan::Renderer &renderer );
+        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, VkExtent2D const &resolution );
+        void Destroy ( VkDevice device );
 
         void SubmitMesh ( MeshRef &mesh,
             MaterialRef const &material,

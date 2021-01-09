@@ -91,8 +91,8 @@ class Game : public android_vulkan::Game
         bool OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) override;
         bool OnDestroy ( android_vulkan::Renderer &renderer ) override;
 
-        [[nodiscard]] bool BeginFrame ( size_t &imageIndex, android_vulkan::Renderer &renderer );
-        [[nodiscard]] bool EndFrame ( uint32_t imageIndex, android_vulkan::Renderer &renderer );
+        [[nodiscard]] bool BeginFrame ( android_vulkan::Renderer &renderer, size_t &imageIndex );
+        [[nodiscard]] bool EndFrame ( android_vulkan::Renderer &renderer, uint32_t imageIndex );
 
         [[nodiscard]] bool CreateCommandPool ( android_vulkan::Renderer &renderer );
         void DestroyCommandPool ( android_vulkan::Renderer &renderer );

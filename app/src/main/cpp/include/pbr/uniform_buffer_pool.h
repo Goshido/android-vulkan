@@ -39,10 +39,10 @@ class UniformBufferPool final
         ~UniformBufferPool () = default;
 
         // The method acquires one uniform buffer from the pool, inits it with data and returns the buffer to the user.
-        [[nodiscard]] VkBuffer Acquire ( VkCommandBuffer commandBuffer,
+        [[nodiscard]] VkBuffer Acquire ( android_vulkan::Renderer &renderer,
+            VkCommandBuffer commandBuffer,
             void const* data,
-            VkPipelineStageFlags targetStages,
-            android_vulkan::Renderer &renderer
+            VkPipelineStageFlags targetStages
         );
 
         [[nodiscard]] size_t GetItemCount () const;
@@ -50,8 +50,8 @@ class UniformBufferPool final
         // The method return all items to the pool.
         void Reset ();
 
-        [[nodiscard]] bool Init ( size_t itemSize, android_vulkan::Renderer &renderer );
-        void Destroy ( android_vulkan::Renderer &renderer );
+        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, size_t itemSize );
+        void Destroy ( VkDevice device );
 
     private:
         [[nodiscard]] bool AllocateItem ( android_vulkan::Renderer &renderer );

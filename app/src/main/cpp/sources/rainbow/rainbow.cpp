@@ -11,7 +11,7 @@ GX_RESTORE_WARNING_STATE
 
 namespace rainbow {
 
-Rainbow::Rainbow ():
+Rainbow::Rainbow () noexcept:
     _commandBuffers {},
     _commandPool ( VK_NULL_HANDLE ),
     _framebuffers {},
@@ -56,10 +56,10 @@ bool Rainbow::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime )
 {
     uint32_t framebufferIndex = UINT32_MAX;
 
-    if ( !BeginFrame ( framebufferIndex, renderer ) )
+    if ( !BeginFrame ( renderer, framebufferIndex ) )
         return true;
 
-    const CommandContext& commandContext = _commandBuffers[ static_cast<size_t> ( framebufferIndex ) ];
+    CommandContext const& commandContext = _commandBuffers[ static_cast<size_t> ( framebufferIndex ) ];
     VkDevice device = renderer.GetDevice ();
 
     bool result = android_vulkan::Renderer::CheckVkResult (
@@ -95,11 +95,11 @@ bool Rainbow::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime )
     if ( !result )
         return true;
 
-    constexpr const float PI = 3.14159F;
-    constexpr const float TWO_PI = 2.0F * PI;
-    constexpr const float CIRCLE_THIRD = TWO_PI / 3.0F;
-    constexpr const float CIRCLE_TWO_THIRD = 2.0F * CIRCLE_THIRD;
-    constexpr const float RECOLOR_SPEED = 0.777F;
+    constexpr float const PI = 3.14159F;
+    constexpr float const TWO_PI = 2.0F * PI;
+    constexpr float const CIRCLE_THIRD = TWO_PI / 3.0F;
+    constexpr float const CIRCLE_TWO_THIRD = 2.0F * CIRCLE_THIRD;
+    constexpr float const RECOLOR_SPEED = 0.777F;
 
     static float colorFactor = 0.0F;
     colorFactor += RECOLOR_SPEED * static_cast<float> ( deltaTime );
@@ -114,16 +114,27 @@ bool Rainbow::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime )
     colorClearValue.color.float32[ 2U ] = colorSolver ( CIRCLE_TWO_THIRD );
     colorClearValue.color.float32[ 3U ] = 1.0F;
 
-    VkRenderPassBeginInfo renderPassBeginInfo;
-    renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    renderPassBeginInfo.pNext = nullptr;
-    renderPassBeginInfo.renderPass = _renderPass;
-    renderPassBeginInfo.framebuffer = _framebuffers[ framebufferIndex ];
-    renderPassBeginInfo.renderArea.offset.x = 0;
-    renderPassBeginInfo.renderArea.offset.y = 0;
-    renderPassBeginInfo.renderArea.extent = renderer.GetSurfaceSize ();
-    renderPassBeginInfo.clearValueCount = 1U;
-    renderPassBeginInfo.pClearValues = &colorClearValue;
+    VkRenderPassBeginInfo const renderPassBeginInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+        .pNext = nullptr,
+        .renderPass = _renderPass,
+        .framebuffer = _framebuffers[ framebufferIndex ],
+
+        .renderArea
+        {
+            .offset
+            {
+                .x = 0,
+                .y = 0
+            },
+
+            .extent = renderer.GetSurfaceSize ()
+        },
+
+        .clearValueCount = 1U,
+        .pClearValues = &colorClearValue
+    };
 
     vkCmdBeginRenderPass ( commandContext.first, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE );
     vkCmdEndRenderPass ( commandContext.first );
@@ -136,7 +147,7 @@ bool Rainbow::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime )
     if ( !result )
         return true;
 
-    constexpr const VkPipelineStageFlags waitFlags = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    constexpr VkPipelineStageFlags const waitFlags = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 
     VkSubmitInfo submitInfo;
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -158,7 +169,7 @@ bool Rainbow::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime )
     if ( !result )
         return true;
 
-    return EndFrame ( framebufferIndex, renderer );
+    return EndFrame ( renderer, framebufferIndex );
 }
 
 bool Rainbow::OnDestroy ( android_vulkan::Renderer &renderer )
@@ -179,7 +190,7 @@ bool Rainbow::OnDestroy ( android_vulkan::Renderer &renderer )
     return true;
 }
 
-bool Rainbow::BeginFrame ( uint32_t &presentationFramebufferIndex, android_vulkan::Renderer &renderer )
+bool Rainbow::BeginFrame ( android_vulkan::Renderer &renderer, uint32_t &presentationFramebufferIndex )
 {
     return android_vulkan::Renderer::CheckVkResult (
         vkAcquireNextImageKHR ( renderer.GetDevice (),
@@ -195,7 +206,7 @@ bool Rainbow::BeginFrame ( uint32_t &presentationFramebufferIndex, android_vulka
     );
 }
 
-bool Rainbow::EndFrame ( uint32_t presentationFramebufferIndex, android_vulkan::Renderer &renderer )
+bool Rainbow::EndFrame ( android_vulkan::Renderer &renderer, uint32_t presentationFramebufferIndex )
 {
     VkResult presentResult = VK_ERROR_DEVICE_LOST;
 

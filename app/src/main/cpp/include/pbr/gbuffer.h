@@ -39,7 +39,7 @@ class GBuffer final
         [[nodiscard]] VkExtent2D const& GetResolution () const;
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, VkExtent2D const &resolution );
-        void Destroy ( android_vulkan::Renderer &renderer );
+        void Destroy ( VkDevice device );
 };
 
 } // namespace pbr

@@ -35,10 +35,10 @@ SceneData& GeometryPass::GetSceneData ()
     return _sceneData;
 }
 
-bool GeometryPass::Init ( VkExtent2D const &resolution,
+bool GeometryPass::Init ( android_vulkan::Renderer &renderer,
+    VkExtent2D const &resolution,
     VkRenderPass renderPass,
-    VkFramebuffer framebuffer,
-    android_vulkan::Renderer &renderer
+    VkFramebuffer framebuffer
 )
 {
     VkDevice device = renderer.GetDevice ();
@@ -58,7 +58,7 @@ bool GeometryPass::Init ( VkExtent2D const &resolution,
 
     if ( !result )
     {
-        Destroy ( renderer );
+        Destroy ( device );
         return false;
     }
 
@@ -66,13 +66,13 @@ bool GeometryPass::Init ( VkExtent2D const &resolution,
 
     if ( !_program.Init ( renderer, renderPass, 0U, resolution ) )
     {
-        Destroy ( renderer );
+        Destroy ( device );
         return false;
     }
 
-    if ( !_uniformPool.Init ( sizeof ( OpaqueProgram::InstanceData ), renderer ) )
+    if ( !_uniformPool.Init ( renderer, sizeof ( OpaqueProgram::InstanceData ) ) )
     {
-        Destroy ( renderer );
+        Destroy ( device );
         return false;
     }
 
@@ -92,7 +92,7 @@ bool GeometryPass::Init ( VkExtent2D const &resolution,
 
     if ( !result )
     {
-        Destroy ( renderer );
+        Destroy ( device );
         return false;
     }
 
@@ -117,16 +117,16 @@ bool GeometryPass::Init ( VkExtent2D const &resolution,
 
     if ( !result )
     {
-        Destroy ( renderer );
+        Destroy ( device );
         return false;
     }
 
     _renderCommandBuffer = commandBuffers[ DEFAULT_TEXTURE_COUNT ];
     _transferCommandBuffer = commandBuffers[ DEFAULT_TEXTURE_COUNT + 1U ];
 
-    if ( !InitDefaultTextures ( commandBuffers, renderer ) )
+    if ( !InitDefaultTextures ( renderer, commandBuffers ) )
     {
-        Destroy ( renderer );
+        Destroy ( device );
         return false;
     }
 
@@ -134,12 +134,10 @@ bool GeometryPass::Init ( VkExtent2D const &resolution,
     return true;
 }
 
-void GeometryPass::Destroy ( android_vulkan::Renderer &renderer )
+void GeometryPass::Destroy ( VkDevice device )
 {
-    DestroyDescriptorPool ( renderer );
-    DestroyDefaultTextures ( renderer );
-
-    VkDevice device = renderer.GetDevice ();
+    DestroyDescriptorPool ( device );
+    DestroyDefaultTextures ( device );
 
     if ( _commandPool != VK_NULL_HANDLE )
     {
@@ -148,7 +146,7 @@ void GeometryPass::Destroy ( android_vulkan::Renderer &renderer )
         AV_UNREGISTER_COMMAND_POOL ( "GeometryPass::_commandPool" )
     }
 
-    _uniformPool.Destroy ( renderer );
+    _uniformPool.Destroy ( device );
     _program.Destroy ( device );
 
     if ( _fence != VK_NULL_HANDLE )
@@ -159,12 +157,12 @@ void GeometryPass::Destroy ( android_vulkan::Renderer &renderer )
     }
 }
 
-VkCommandBuffer GeometryPass::Execute ( GXProjectionClipPlanes const &frustum,
+VkCommandBuffer GeometryPass::Execute ( android_vulkan::Renderer &renderer,
+    GXProjectionClipPlanes const &frustum,
     GXMat4 const &view,
     GXMat4 const &viewProjection,
     SamplerManager &samplerManager,
-    RenderSessionStats &renderSessionStats,
-    android_vulkan::Renderer &renderer
+    RenderSessionStats &renderSessionStats
 )
 {
     CleanupTransferResources ( renderer );
@@ -174,7 +172,7 @@ VkCommandBuffer GeometryPass::Execute ( GXProjectionClipPlanes const &frustum,
 
     std::vector<VkDescriptorSet> descriptorSetStorage;
 
-    if ( !UpdateGPUData ( frustum, view, viewProjection, descriptorSetStorage, samplerManager, renderer ) )
+    if ( !UpdateGPUData ( renderer, frustum, view, viewProjection, descriptorSetStorage, samplerManager ) )
         return VK_NULL_HANDLE;
 
     VkDescriptorSet const* textureSets = descriptorSetStorage.data ();
@@ -527,7 +525,9 @@ void GeometryPass::InitCommonStructures ( VkRenderPass renderPass,
     _submitInfoTransfer.pSignalSemaphores = nullptr;
 }
 
-bool GeometryPass::InitDefaultTextures ( VkCommandBuffer const* commandBuffers, android_vulkan::Renderer &renderer )
+bool GeometryPass::InitDefaultTextures ( android_vulkan::Renderer &renderer,
+    VkCommandBuffer const* commandBuffers
+)
 {
     auto textureLoader = [ &renderer ] ( Texture2DRef &texture,
         const uint8_t* data,
@@ -619,10 +619,8 @@ bool GeometryPass::InitDefaultTextures ( VkCommandBuffer const* commandBuffers, 
     );
 }
 
-void GeometryPass::DestroyDefaultTextures ( android_vulkan::Renderer &renderer )
+void GeometryPass::DestroyDefaultTextures ( VkDevice device )
 {
-    VkDevice device = renderer.GetDevice ();
-
     auto freeTexture = [ device ] ( Texture2DRef &texture ) {
         if ( !texture )
             return;
@@ -638,22 +636,22 @@ void GeometryPass::DestroyDefaultTextures ( android_vulkan::Renderer &renderer )
     freeTexture ( _albedoDefault );
 }
 
-void GeometryPass::DestroyDescriptorPool ( android_vulkan::Renderer &renderer )
+void GeometryPass::DestroyDescriptorPool ( VkDevice device )
 {
     if ( _descriptorPool == VK_NULL_HANDLE )
         return;
 
-    vkDestroyDescriptorPool ( renderer.GetDevice (), _descriptorPool, nullptr );
+    vkDestroyDescriptorPool ( device, _descriptorPool, nullptr );
     _descriptorPool = VK_NULL_HANDLE;
     AV_UNREGISTER_DESCRIPTOR_POOL ( "GeometryPass::_descriptorPool" )
 }
 
-bool GeometryPass::UpdateGPUData ( GXProjectionClipPlanes const &frustum,
+bool GeometryPass::UpdateGPUData ( android_vulkan::Renderer &renderer,
+    GXProjectionClipPlanes const &frustum,
     GXMat4 const &view,
     GXMat4 const &viewProjection,
     std::vector<VkDescriptorSet> &descriptorSetStorage,
-    SamplerManager &samplerManager,
-    android_vulkan::Renderer &renderer
+    SamplerManager &samplerManager
 )
 {
     // TODO no any elements have been submitted.
@@ -718,8 +716,8 @@ bool GeometryPass::UpdateGPUData ( GXProjectionClipPlanes const &frustum,
         }
     );
 
-    DestroyDescriptorPool ( renderer );
     VkDevice device = renderer.GetDevice ();
+    DestroyDescriptorPool ( device );
 
     VkDescriptorPoolCreateInfo const poolInfo
     {
@@ -792,7 +790,7 @@ bool GeometryPass::UpdateGPUData ( GXProjectionClipPlanes const &frustum,
         uint32_t samplerBindSlot
     ) {
         Texture2DRef& t = texture ? texture : defaultTexture;
-        SamplerRef sampler = samplerManager.GetSampler ( t->GetMipLevelCount (), renderer );
+        SamplerRef sampler = samplerManager.GetSampler ( renderer, t->GetMipLevelCount () );
 
         writeInfo0.pImageInfo = &imageStorage.emplace_back (
             VkDescriptorImageInfo
@@ -909,10 +907,10 @@ bool GeometryPass::UpdateGPUData ( GXProjectionClipPlanes const &frustum,
             objectData._color3 = opaqueData._color3;
 
             uniformBinder (
-                _uniformPool.Acquire ( _transferCommandBuffer,
+                _uniformPool.Acquire ( renderer,
+                    _transferCommandBuffer,
                     instanceData._instanceData,
-                    syncFlags,
-                    renderer
+                    syncFlags
                 ),
 
                 instanceDescriptorSet[ uniformUsed ]
@@ -940,10 +938,10 @@ bool GeometryPass::UpdateGPUData ( GXProjectionClipPlanes const &frustum,
                 if ( instanceIndex >= PBR_OPAQUE_MAX_INSTANCE_COUNT )
                 {
                     uniformBinder (
-                        _uniformPool.Acquire ( _transferCommandBuffer,
+                        _uniformPool.Acquire ( renderer,
+                            _transferCommandBuffer,
                             instanceData._instanceData,
-                            syncFlags,
-                            renderer
+                            syncFlags
                         ),
 
                         instanceDescriptorSet[ uniformUsed ]
@@ -979,10 +977,10 @@ bool GeometryPass::UpdateGPUData ( GXProjectionClipPlanes const &frustum,
                 continue;
 
             uniformBinder (
-                _uniformPool.Acquire ( _transferCommandBuffer,
+                _uniformPool.Acquire ( renderer,
+                    _transferCommandBuffer,
                     instanceData._instanceData,
-                    syncFlags,
-                    renderer
+                    syncFlags
                 ),
 
                 instanceDescriptorSet[ uniformUsed ]

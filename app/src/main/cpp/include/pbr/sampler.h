@@ -23,8 +23,8 @@ class Sampler final
 
         ~Sampler () = default;
 
-        [[nodiscard]] bool Init ( const VkSamplerCreateInfo &info, android_vulkan::Renderer &renderer );
-        void Destroy ( android_vulkan::Renderer &renderer );
+        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, const VkSamplerCreateInfo &info );
+        void Destroy ( VkDevice device );
 
         [[nodiscard]] VkSampler GetSampler () const;
 };

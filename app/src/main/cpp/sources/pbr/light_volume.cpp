@@ -37,27 +37,26 @@ bool LightVolume::Init ( android_vulkan::Renderer &renderer,
 
     if ( !CreateRenderPass ( device, gBuffer, framebuffer ) )
     {
-        Destroy ( renderer );
+        Destroy ( device );
         return false;
     }
 
     if ( !_program.Init ( renderer, _renderPass, 0U, gBuffer.GetResolution () ) )
     {
-        Destroy ( renderer );
+        Destroy ( device );
         return false;
     }
 
     if ( CreateDescriptorSet ( renderer, gBuffer, cvvToView ) )
         return true;
 
-    Destroy ( renderer );
+    Destroy ( device );
     return false;
 }
 
-void LightVolume::Destroy ( android_vulkan::Renderer &renderer )
+void LightVolume::Destroy ( VkDevice device )
 {
-    _uniform.FreeResources ( renderer );
-    VkDevice device = renderer.GetDevice ();
+    _uniform.FreeResources ( device );
 
     if ( _commandPool != VK_NULL_HANDLE )
     {

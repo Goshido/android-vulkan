@@ -24,10 +24,8 @@ UniformBuffer::UniformBuffer () noexcept:
     // NOTHING
 }
 
-void UniformBuffer::FreeResources ( android_vulkan::Renderer &renderer )
+void UniformBuffer::FreeResources ( VkDevice device )
 {
-    VkDevice device = renderer.GetDevice ();
-
     if ( _transferMemory != VK_NULL_HANDLE )
     {
         vkFreeMemory ( device, _transferMemory, nullptr );
@@ -181,7 +179,7 @@ bool UniformBuffer::InitResources ( android_vulkan::Renderer &renderer, size_t s
 
     if ( !result )
     {
-        FreeResources ( renderer );
+        FreeResources ( device );
         return false;
     }
 
@@ -194,7 +192,7 @@ bool UniformBuffer::InitResources ( android_vulkan::Renderer &renderer, size_t s
 
     if ( !result )
     {
-        FreeResources ( renderer );
+        FreeResources ( device );
         return false;
     }
 
@@ -219,7 +217,7 @@ bool UniformBuffer::InitResources ( android_vulkan::Renderer &renderer, size_t s
 
     if ( !result )
     {
-        FreeResources ( renderer );
+        FreeResources ( device );
         return false;
     }
 
@@ -232,7 +230,7 @@ bool UniformBuffer::InitResources ( android_vulkan::Renderer &renderer, size_t s
 
     if ( !result )
     {
-        FreeResources ( renderer );
+        FreeResources ( device );
         return false;
     }
 
@@ -249,7 +247,7 @@ bool UniformBuffer::InitResources ( android_vulkan::Renderer &renderer, size_t s
 
     if ( !result )
     {
-        FreeResources ( renderer );
+        FreeResources ( device );
         return false;
     }
 
@@ -307,7 +305,7 @@ bool UniformBuffer::InitResources ( android_vulkan::Renderer &renderer, size_t s
         return true;
     }
 
-    FreeResources ( renderer );
+    FreeResources ( device );
     return false;
 }
 

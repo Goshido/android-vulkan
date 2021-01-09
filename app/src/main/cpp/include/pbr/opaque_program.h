@@ -78,9 +78,7 @@ class OpaqueProgram final : public Program
             VkPipelineInputAssemblyStateCreateInfo &info
         ) const override;
 
-        [[nodiscard]] bool InitLayout ( VkPipelineLayout &layout,
-            android_vulkan::Renderer &renderer
-        ) override;
+        [[nodiscard]] bool InitLayout ( android_vulkan::Renderer &renderer, VkPipelineLayout &layout ) override;
 
         [[nodiscard]] VkPipelineMultisampleStateCreateInfo const* InitMultisampleInfo (
             VkPipelineMultisampleStateCreateInfo &info
@@ -90,9 +88,9 @@ class OpaqueProgram final : public Program
             VkPipelineRasterizationStateCreateInfo &info
         ) const override;
 
-        [[nodiscard]] bool InitShaderInfo ( VkPipelineShaderStageCreateInfo const* &targetInfo,
-            VkPipelineShaderStageCreateInfo* sourceInfo,
-            android_vulkan::Renderer &renderer
+        [[nodiscard]] bool InitShaderInfo ( android_vulkan::Renderer &renderer,
+            VkPipelineShaderStageCreateInfo const* &targetInfo,
+            VkPipelineShaderStageCreateInfo* sourceInfo
         ) override;
 
         [[nodiscard]] VkPipelineViewportStateCreateInfo const* InitViewportInfo (

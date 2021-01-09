@@ -41,7 +41,7 @@ bool TexturePresentProgram::Init ( android_vulkan::Renderer &renderer,
     pipelineInfo.flags = 0U;
     pipelineInfo.stageCount = std::size ( stageInfo );
 
-    if ( !InitShaderInfo ( pipelineInfo.pStages, stageInfo, renderer ) )
+    if ( !InitShaderInfo ( renderer, pipelineInfo.pStages, stageInfo ) )
     {
         Destroy ( renderer.GetDevice () );
         return false;
@@ -57,7 +57,7 @@ bool TexturePresentProgram::Init ( android_vulkan::Renderer &renderer,
     pipelineInfo.pColorBlendState = InitColorBlendInfo ( blendInfo, attachmentInfo );
     pipelineInfo.pDynamicState = nullptr;
 
-    if ( !InitLayout ( pipelineInfo.layout, renderer ) )
+    if ( !InitLayout ( renderer, pipelineInfo.layout ) )
     {
         Destroy ( renderer.GetDevice () );
         return false;
@@ -218,7 +218,7 @@ VkPipelineInputAssemblyStateCreateInfo const* TexturePresentProgram::InitInputAs
     return &info;
 }
 
-bool TexturePresentProgram::InitLayout ( VkPipelineLayout &layout, android_vulkan::Renderer &renderer )
+bool TexturePresentProgram::InitLayout ( android_vulkan::Renderer &renderer, VkPipelineLayout &layout )
 {
     if ( !_descriptorSetLayout.Init ( renderer ) )
         return false;
@@ -298,9 +298,9 @@ VkPipelineRasterizationStateCreateInfo const* TexturePresentProgram::InitRasteri
     return &info;
 }
 
-bool TexturePresentProgram::InitShaderInfo ( VkPipelineShaderStageCreateInfo const* &targetInfo,
-    VkPipelineShaderStageCreateInfo* sourceInfo,
-    android_vulkan::Renderer &renderer
+bool TexturePresentProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
+    VkPipelineShaderStageCreateInfo const* &targetInfo,
+    VkPipelineShaderStageCreateInfo* sourceInfo
 )
 {
     bool result = renderer.CreateShader ( _vertexShader,

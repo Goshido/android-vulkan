@@ -41,8 +41,8 @@ class MeshGeometry final
 
         ~MeshGeometry () = default;
 
-        void FreeResources ( Renderer &renderer );
-        void FreeTransferResources ( Renderer &renderer );
+        void FreeResources ( VkDevice device );
+        void FreeTransferResources ( VkDevice device );
 
         [[nodiscard]] GXAABB const& GetBounds () const;
         [[nodiscard]] VkBuffer const& GetVertexBuffer () const;
@@ -79,7 +79,7 @@ class MeshGeometry final
         );
 
     private:
-        void FreeResourceInternal ( Renderer &renderer );
+        void FreeResourceInternal ( VkDevice device );
 
         [[nodiscard]] bool LoadFromMesh ( std::string &&fileName,
             VkBufferUsageFlags usage,

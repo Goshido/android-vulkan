@@ -27,10 +27,10 @@ UniformBufferPool::UniformBufferPool ( eUniformPoolSize size ) noexcept:
     // NOTHING
 }
 
-VkBuffer UniformBufferPool::Acquire ( VkCommandBuffer commandBuffer,
+VkBuffer UniformBufferPool::Acquire ( android_vulkan::Renderer &renderer,
+    VkCommandBuffer commandBuffer,
     void const* data,
-    VkPipelineStageFlags targetStages,
-    android_vulkan::Renderer &renderer
+    VkPipelineStageFlags targetStages
 )
 {
     assert ( _index < _pool.capacity () );
@@ -78,7 +78,7 @@ size_t UniformBufferPool::GetItemCount () const
     return _pool.capacity ();
 }
 
-bool UniformBufferPool::Init ( size_t itemSize, android_vulkan::Renderer &renderer )
+bool UniformBufferPool::Init ( android_vulkan::Renderer &renderer, size_t itemSize )
 {
     assert ( itemSize <= renderer.GetMaxUniformBufferRange () );
     assert ( itemSize <= UPDATE_BUFFER_MAX_SIZE );
@@ -99,14 +99,12 @@ bool UniformBufferPool::Init ( size_t itemSize, android_vulkan::Renderer &render
         return true;
     }
 
-    Destroy ( renderer );
+    Destroy ( renderer.GetDevice () );
     return false;
 }
 
-void UniformBufferPool::Destroy ( android_vulkan::Renderer &renderer )
+void UniformBufferPool::Destroy ( VkDevice device )
 {
-    VkDevice device = renderer.GetDevice ();
-
     for ( auto item : _pool )
     {
         vkDestroyBuffer ( device, item, nullptr );

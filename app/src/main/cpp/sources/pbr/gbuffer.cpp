@@ -58,15 +58,17 @@ bool GBuffer::Init ( android_vulkan::Renderer &renderer, VkExtent2D const &resol
     if ( !_albedo.CreateRenderTarget ( resolution, VK_FORMAT_R8G8B8A8_SRGB, usageColor, renderer ) )
         return false;
 
+    VkDevice device = renderer.GetDevice ();
+
     if ( !_normal.CreateRenderTarget ( resolution, VK_FORMAT_A2R10G10B10_UNORM_PACK32, usageColor, renderer ) )
     {
-        Destroy ( renderer );
+        Destroy ( device );
         return false;
     }
 
     if ( !_params.CreateRenderTarget ( resolution, VK_FORMAT_R8G8B8A8_UNORM, usageColor, renderer ) )
     {
-        Destroy ( renderer );
+        Destroy ( device );
         return false;
     }
 
@@ -75,7 +77,7 @@ bool GBuffer::Init ( android_vulkan::Renderer &renderer, VkExtent2D const &resol
 
     if ( !_hdrAccumulator.CreateRenderTarget ( resolution, VK_FORMAT_R16G16B16A16_SFLOAT, usageAccumulator, renderer ) )
     {
-        Destroy ( renderer );
+        Destroy ( device );
         return false;
     }
 
@@ -90,7 +92,7 @@ bool GBuffer::Init ( android_vulkan::Renderer &renderer, VkExtent2D const &resol
 
     if ( !result )
     {
-        Destroy ( renderer );
+        Destroy ( device );
         return false;
     }
 
@@ -122,14 +124,14 @@ bool GBuffer::Init ( android_vulkan::Renderer &renderer, VkExtent2D const &resol
     };
 
     result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateImageView ( renderer.GetDevice (), &imageInfo, nullptr, &_readOnlyDepthImageView ),
+        vkCreateImageView ( device, &imageInfo, nullptr, &_readOnlyDepthImageView ),
         "GBuffer::Init",
         "Can't create read only depth image view"
     );
 
     if ( !result )
     {
-        Destroy ( renderer );
+        Destroy ( device );
         return false;
     }
 
@@ -137,10 +139,8 @@ bool GBuffer::Init ( android_vulkan::Renderer &renderer, VkExtent2D const &resol
     return true;
 }
 
-void GBuffer::Destroy ( android_vulkan::Renderer &renderer )
+void GBuffer::Destroy ( VkDevice device )
 {
-    VkDevice device = renderer.GetDevice ();
-
     if ( _readOnlyDepthImageView != VK_NULL_HANDLE )
     {
         vkDestroyImageView ( device, _readOnlyDepthImageView, nullptr );

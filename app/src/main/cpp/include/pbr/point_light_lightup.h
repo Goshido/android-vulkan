@@ -39,30 +39,30 @@ class PointLightLightup final
 
         ~PointLightLightup () = default;
 
-        [[maybe_unused]] [[nodiscard]] bool Execute ( PointLightPass const &pointLightPass,
+        [[maybe_unused]] [[nodiscard]] bool Execute ( android_vulkan::Renderer &renderer,
+            PointLightPass const &pointLightPass,
             LightVolume &lightVolume,
             GXMat4 const &viewerLocal,
-            GXMat4 const &view,
-            android_vulkan::Renderer &renderer
+            GXMat4 const &view
         );
 
-        [[nodiscard]] bool Init ( VkCommandBuffer commandBuffer,
+        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
+            VkCommandBuffer commandBuffer,
             VkRenderPass renderPass,
             uint32_t subpass,
-            VkExtent2D const &resolution,
-            android_vulkan::Renderer &renderer
+            VkExtent2D const &resolution
         );
 
-        void Destroy ( android_vulkan::Renderer &renderer );
+        void Destroy ( VkDevice device );
 
     private:
-        [[nodiscard]] bool AllocateNativeDescriptorSets ( size_t neededSets, android_vulkan::Renderer &renderer );
-        void DestroyDescriptorPool ( android_vulkan::Renderer &renderer );
+        [[nodiscard]] bool AllocateNativeDescriptorSets ( android_vulkan::Renderer &renderer, size_t neededSets );
+        void DestroyDescriptorPool ( VkDevice device );
 
-        [[nodiscard]] bool UpdateGPUData ( PointLightPass const &pointLightPass,
+        [[nodiscard]] bool UpdateGPUData ( android_vulkan::Renderer &renderer,
+            PointLightPass const &pointLightPass,
             GXMat4 const &viewerLocal,
-            GXMat4 const &view,
-            android_vulkan::Renderer &renderer
+            GXMat4 const &view
         );
 };
 

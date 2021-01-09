@@ -34,7 +34,7 @@ class PresentPass final
         [[nodiscard]] bool AcquirePresentTarget ( android_vulkan::Renderer &renderer );
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer );
-        void Destroy ( android_vulkan::Renderer &renderer );
+        void Destroy ( VkDevice device );
 
         [[nodiscard]] bool Execute ( VkCommandBuffer commandBuffer,
             VkDescriptorSet presentTarget,

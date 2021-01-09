@@ -16,7 +16,7 @@ Sampler::Sampler () noexcept:
     // NOTHING
 }
 
-bool Sampler::Init ( const VkSamplerCreateInfo &info, android_vulkan::Renderer &renderer )
+bool Sampler::Init ( android_vulkan::Renderer &renderer, const VkSamplerCreateInfo &info )
 {
     assert ( _sampler == VK_NULL_HANDLE );
 
@@ -33,12 +33,12 @@ bool Sampler::Init ( const VkSamplerCreateInfo &info, android_vulkan::Renderer &
     return true;
 }
 
-void Sampler::Destroy ( android_vulkan::Renderer &renderer )
+void Sampler::Destroy ( VkDevice device )
 {
     if ( _sampler == VK_NULL_HANDLE )
         return;
 
-    vkDestroySampler ( renderer.GetDevice (), _sampler, nullptr );
+    vkDestroySampler ( device, _sampler, nullptr );
     _sampler = VK_NULL_HANDLE;
     AV_UNREGISTER_SAMPLER ( "Sampler::_sampler" )
 }

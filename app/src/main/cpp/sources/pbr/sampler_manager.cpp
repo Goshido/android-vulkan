@@ -3,11 +3,11 @@
 
 namespace pbr {
 
-void SamplerManager::FreeResources ( android_vulkan::Renderer &renderer )
+void SamplerManager::FreeResources ( VkDevice device )
 {
     if ( _pointSampler )
     {
-        _pointSampler->Destroy ( renderer );
+        _pointSampler->Destroy ( device );
         _pointSampler = nullptr;
     }
 
@@ -16,7 +16,7 @@ void SamplerManager::FreeResources ( android_vulkan::Renderer &renderer )
         if ( !sampler )
             continue;
 
-        sampler->Destroy ( renderer );
+        sampler->Destroy ( device );
         sampler = nullptr;
     }
 }
@@ -50,13 +50,13 @@ SamplerRef SamplerManager::GetPointSampler ( android_vulkan::Renderer &renderer 
         .unnormalizedCoordinates = VK_FALSE
     };
 
-    if ( !_pointSampler->Init ( info, renderer ) )
+    if ( !_pointSampler->Init ( renderer, info ) )
         _pointSampler = nullptr;
 
     return _pointSampler;
 }
 
-SamplerRef SamplerManager::GetSampler ( uint8_t mips, android_vulkan::Renderer &renderer )
+SamplerRef SamplerManager::GetSampler ( android_vulkan::Renderer &renderer, uint8_t mips )
 {
     SamplerRef& target = _storage[ static_cast<size_t> ( mips ) ];
 
@@ -87,7 +87,7 @@ SamplerRef SamplerManager::GetSampler ( uint8_t mips, android_vulkan::Renderer &
         .unnormalizedCoordinates = VK_FALSE
     };
 
-    if ( !target->Init ( info, renderer ) )
+    if ( !target->Init ( renderer, info ) )
         target = nullptr;
 
     return target;

@@ -51,9 +51,11 @@ bool PointLightPass::Init ( LightVolume const &lightVolume,
     android_vulkan::Renderer &renderer
 )
 {
+    VkDevice device = renderer.GetDevice ();
+
     if ( !CreateRenderPass ( renderer ) )
     {
-        Destroy ( renderer );
+        Destroy ( device );
         return false;
     }
 
@@ -65,7 +67,7 @@ bool PointLightPass::Init ( LightVolume const &lightVolume,
 
     if ( !_program.Init ( renderer, _renderPass, 0U, shadowmapResolution ) )
     {
-        Destroy ( renderer );
+        Destroy ( device );
         return false;
     }
 
@@ -76,8 +78,6 @@ bool PointLightPass::Init ( LightVolume const &lightVolume,
         .flags = VK_FENCE_CREATE_SIGNALED_BIT
     };
 
-    VkDevice device = renderer.GetDevice ();
-
     bool result = android_vulkan::Renderer::CheckVkResult (
         vkCreateFence ( device, &fenceInfo, nullptr, &_fence ),
         "PointLightPass::Init",
@@ -86,15 +86,15 @@ bool PointLightPass::Init ( LightVolume const &lightVolume,
 
     if ( !result )
     {
-        Destroy ( renderer );
+        Destroy ( device );
         return false;
     }
 
     AV_REGISTER_FENCE ( "PointLightPass::_fence" )
 
-    if ( !_uniformPool.Init ( sizeof ( PointLightShadowmapGeneratorProgram::InstanceData ), renderer ) )
+    if ( !_uniformPool.Init ( renderer, sizeof ( PointLightShadowmapGeneratorProgram::InstanceData ) ) )
     {
-        Destroy ( renderer );
+        Destroy ( device );
         return false;
     }
 
@@ -114,7 +114,7 @@ bool PointLightPass::Init ( LightVolume const &lightVolume,
 
     if ( !result )
     {
-        Destroy ( renderer );
+        Destroy ( device );
         return false;
     }
 
@@ -139,23 +139,23 @@ bool PointLightPass::Init ( LightVolume const &lightVolume,
 
     if ( !result )
     {
-        Destroy ( renderer );
+        Destroy ( device );
         return false;
     }
 
     _renderCommandBuffer = commandBuffers[ 0U ];
     _transferCommandBuffer = commandBuffers[ 1U ];
 
-    result = _lightup.Init ( _transferCommandBuffer,
+    result = _lightup.Init ( renderer,
+        _transferCommandBuffer,
         lightVolume.GetRenderPass (),
         LightVolume::GetLightupSubpass (),
-        resolution,
-        renderer
+        resolution
     );
 
     if ( !result )
     {
-        Destroy ( renderer );
+        Destroy ( device );
         return false;
     }
 
@@ -184,10 +184,9 @@ bool PointLightPass::Init ( LightVolume const &lightVolume,
     return true;
 }
 
-void PointLightPass::Destroy ( android_vulkan::Renderer &renderer )
+void PointLightPass::Destroy ( VkDevice device )
 {
-    _lightup.Destroy ( renderer );
-    VkDevice device = renderer.GetDevice ();
+    _lightup.Destroy ( device );
 
     if ( !_shadowmaps.empty () )
     {
@@ -205,7 +204,7 @@ void PointLightPass::Destroy ( android_vulkan::Renderer &renderer )
         _shadowmaps.clear ();
     }
 
-    DestroyDescriptorPool ( renderer );
+    DestroyDescriptorPool ( device );
 
     if ( _commandPool != VK_NULL_HANDLE )
     {
@@ -214,7 +213,7 @@ void PointLightPass::Destroy ( android_vulkan::Renderer &renderer )
         AV_UNREGISTER_COMMAND_POOL ( "PointLightPass::_commandPool" )
     }
 
-    _uniformPool.Destroy ( renderer );
+    _uniformPool.Destroy ( device );
 
     if ( _fence != VK_NULL_HANDLE )
     {
@@ -406,12 +405,12 @@ bool PointLightPass::CreateRenderPass ( android_vulkan::Renderer &renderer )
     return true;
 }
 
-void PointLightPass::DestroyDescriptorPool ( android_vulkan::Renderer &renderer )
+void PointLightPass::DestroyDescriptorPool ( VkDevice device )
 {
     if ( _descriptorPool == VK_NULL_HANDLE )
         return;
 
-    vkDestroyDescriptorPool ( renderer.GetDevice (), _descriptorPool, nullptr );
+    vkDestroyDescriptorPool ( device, _descriptorPool, nullptr );
     _descriptorPool = VK_NULL_HANDLE;
     AV_UNREGISTER_DESCRIPTOR_POOL ( "PointLightPass::_descriptorPool" )
 }
@@ -610,7 +609,7 @@ bool PointLightPass::UpdateGPUData ( std::vector<VkDescriptorSet> &descriptorSet
         .pPoolSizes = poolSize
     };
 
-    DestroyDescriptorPool ( renderer );
+    DestroyDescriptorPool ( device );
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_descriptorPool ),
@@ -684,10 +683,10 @@ bool PointLightPass::UpdateGPUData ( std::vector<VkDescriptorSet> &descriptorSet
     };
 
     auto commit = [ & ] () {
-        bufferInfo.buffer = _uniformPool.Acquire ( _transferCommandBuffer,
+        bufferInfo.buffer = _uniformPool.Acquire ( renderer,
+            _transferCommandBuffer,
             &instanceData,
-            VK_PIPELINE_STAGE_VERTEX_SHADER_BIT,
-            renderer
+            VK_PIPELINE_STAGE_VERTEX_SHADER_BIT
         );
 
         uniformStorage.push_back ( bufferInfo );

@@ -41,9 +41,11 @@ bool LightVolumeProgram::Init ( android_vulkan::Renderer &renderer,
     pipelineInfo.flags = 0U;
     pipelineInfo.stageCount = std::size ( stageInfo );
 
-    if ( !InitShaderInfo ( pipelineInfo.pStages, stageInfo, renderer ) )
+    VkDevice device = renderer.GetDevice ();
+
+    if ( !InitShaderInfo ( renderer, pipelineInfo.pStages, stageInfo ) )
     {
-        Destroy ( renderer.GetDevice () );
+        Destroy ( device );
         return false;
     }
 
@@ -61,9 +63,9 @@ bool LightVolumeProgram::Init ( android_vulkan::Renderer &renderer,
     pipelineInfo.pColorBlendState = InitColorBlendInfo ( blendInfo, nullptr );
     pipelineInfo.pDynamicState = nullptr;
 
-    if ( !InitLayout ( pipelineInfo.layout, renderer ) )
+    if ( !InitLayout ( renderer, pipelineInfo.layout ) )
     {
-        Destroy ( renderer.GetDevice () );
+        Destroy ( device );
         return false;
     }
 
@@ -73,14 +75,14 @@ bool LightVolumeProgram::Init ( android_vulkan::Renderer &renderer,
     pipelineInfo.basePipelineIndex = 0;
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateGraphicsPipelines ( renderer.GetDevice (), VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
+        vkCreateGraphicsPipelines ( device, VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
         "LightVolumeProgram::Init",
         "Can't create pipeline"
     );
 
     if ( !result )
     {
-        Destroy ( renderer.GetDevice () );
+        Destroy ( device );
         return false;
     }
 
@@ -189,7 +191,7 @@ VkPipelineInputAssemblyStateCreateInfo const* LightVolumeProgram::InitInputAssem
     return &info;
 }
 
-bool LightVolumeProgram::InitLayout ( VkPipelineLayout &layout, android_vulkan::Renderer &renderer )
+bool LightVolumeProgram::InitLayout ( android_vulkan::Renderer &renderer, VkPipelineLayout &layout )
 {
     constexpr static VkPushConstantRange const pushConstantRanges[]
     {
@@ -200,14 +202,16 @@ bool LightVolumeProgram::InitLayout ( VkPipelineLayout &layout, android_vulkan::
         }
     };
 
-    VkPipelineLayoutCreateInfo layoutInfo;
-    layoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    layoutInfo.pNext = nullptr;
-    layoutInfo.flags = 0U;
-    layoutInfo.setLayoutCount = 0U;
-    layoutInfo.pSetLayouts = nullptr;
-    layoutInfo.pushConstantRangeCount = static_cast<uint32_t> ( std::size ( pushConstantRanges ) );
-    layoutInfo.pPushConstantRanges = pushConstantRanges;
+    VkPipelineLayoutCreateInfo const layoutInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .setLayoutCount = 0U,
+        .pSetLayouts = nullptr,
+        .pushConstantRangeCount = static_cast<uint32_t> ( std::size ( pushConstantRanges ) ),
+        .pPushConstantRanges = pushConstantRanges
+    };
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreatePipelineLayout ( renderer.GetDevice (), &layoutInfo, nullptr, &_pipelineLayout ),
@@ -261,9 +265,9 @@ VkPipelineRasterizationStateCreateInfo const* LightVolumeProgram::InitRasterizat
     return &info;
 }
 
-bool LightVolumeProgram::InitShaderInfo ( VkPipelineShaderStageCreateInfo const* &targetInfo,
-    VkPipelineShaderStageCreateInfo* sourceInfo,
-    android_vulkan::Renderer &renderer
+bool LightVolumeProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
+    VkPipelineShaderStageCreateInfo const* &targetInfo,
+    VkPipelineShaderStageCreateInfo* sourceInfo
 )
 {
     bool result = renderer.CreateShader ( _vertexShader,

@@ -71,7 +71,7 @@ class Program
             VkPipelineInputAssemblyStateCreateInfo &info
         ) const = 0;
 
-        [[nodiscard]] virtual bool InitLayout ( VkPipelineLayout &layout, android_vulkan::Renderer &renderer ) = 0;
+        [[nodiscard]] virtual bool InitLayout ( android_vulkan::Renderer &renderer, VkPipelineLayout &layout ) = 0;
 
         [[nodiscard]] virtual VkPipelineMultisampleStateCreateInfo const* InitMultisampleInfo (
             VkPipelineMultisampleStateCreateInfo &info
@@ -81,9 +81,9 @@ class Program
             VkPipelineRasterizationStateCreateInfo &info
         ) const = 0;
 
-        [[nodiscard]] virtual bool InitShaderInfo ( VkPipelineShaderStageCreateInfo const* &targetInfo,
-            VkPipelineShaderStageCreateInfo* sourceInfo,
-            android_vulkan::Renderer &renderer
+        [[nodiscard]] virtual bool InitShaderInfo ( android_vulkan::Renderer &renderer,
+            VkPipelineShaderStageCreateInfo const* &targetInfo,
+            VkPipelineShaderStageCreateInfo* sourceInfo
         ) = 0;
 
         [[nodiscard]] virtual VkPipelineViewportStateCreateInfo const* InitViewportInfo (

@@ -51,21 +51,21 @@ class GeometryPass final
 
         [[nodiscard]] SceneData& GetSceneData ();
 
-        [[nodiscard]] bool Init ( VkExtent2D const &resolution,
+        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
+            VkExtent2D const &resolution,
             VkRenderPass renderPass,
-            VkFramebuffer framebuffer,
-            android_vulkan::Renderer &renderer
+            VkFramebuffer framebuffer
         );
 
-        void Destroy ( android_vulkan::Renderer &renderer );
+        void Destroy ( VkDevice device );
 
         // The method returns command buffer in recording state if success. Otherwise the method returns VK_NULL_HANDLE.
-        [[nodiscard]] VkCommandBuffer Execute ( GXProjectionClipPlanes const &frustum,
+        [[nodiscard]] VkCommandBuffer Execute ( android_vulkan::Renderer &renderer,
+            GXProjectionClipPlanes const &frustum,
             GXMat4 const &view,
             GXMat4 const &viewProjection,
             SamplerManager &samplerManager,
-            RenderSessionStats &renderSessionStats,
-            android_vulkan::Renderer &renderer
+            RenderSessionStats &renderSessionStats
         );
 
         [[nodiscard]] VkFence GetFence () const;
@@ -95,19 +95,19 @@ class GeometryPass final
         void CleanupTransferResources ( android_vulkan::Renderer &renderer );
         void InitCommonStructures ( VkRenderPass renderPass, VkFramebuffer framebuffer, VkExtent2D const &resolution );
 
-        [[nodiscard]] bool InitDefaultTextures ( VkCommandBuffer const* commandBuffers,
-            android_vulkan::Renderer &renderer
+        [[nodiscard]] bool InitDefaultTextures ( android_vulkan::Renderer &renderer,
+            VkCommandBuffer const* commandBuffers
         );
 
-        void DestroyDefaultTextures ( android_vulkan::Renderer &renderer );
-        void DestroyDescriptorPool ( android_vulkan::Renderer &renderer );
+        void DestroyDefaultTextures ( VkDevice device );
+        void DestroyDescriptorPool ( VkDevice device );
 
-        [[nodiscard]] bool UpdateGPUData ( GXProjectionClipPlanes const &frustum,
+        [[nodiscard]] bool UpdateGPUData ( android_vulkan::Renderer &renderer,
+            GXProjectionClipPlanes const &frustum,
             GXMat4 const &view,
             GXMat4 const &viewProjection,
             std::vector<VkDescriptorSet> &descriptorSetStorage,
-            SamplerManager &samplerManager,
-            android_vulkan::Renderer &renderer
+            SamplerManager &samplerManager
         );
 };
 

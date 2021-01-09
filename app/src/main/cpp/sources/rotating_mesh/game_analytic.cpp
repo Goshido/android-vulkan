@@ -240,7 +240,7 @@ bool GameAnalytic::LoadGPUContent ( android_vulkan::Renderer &renderer )
 
     for ( auto& item : _drawcalls )
     {
-        item._mesh.FreeTransferResources ( renderer );
+        item._mesh.FreeTransferResources ( device );
         item._diffuse.FreeTransferResources ( device );
         item._normal.FreeTransferResources ( device );
     }

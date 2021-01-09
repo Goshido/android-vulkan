@@ -78,17 +78,15 @@ MeshGeometry::MeshGeometry ():
     // NOTHING
 }
 
-void MeshGeometry::FreeResources ( Renderer &renderer )
+void MeshGeometry::FreeResources ( VkDevice device )
 {
-    FreeTransferResources ( renderer );
-    FreeResourceInternal ( renderer );
+    FreeTransferResources ( device );
+    FreeResourceInternal ( device );
     _fileName.clear ();
 }
 
-void MeshGeometry::FreeTransferResources ( Renderer &renderer )
+void MeshGeometry::FreeTransferResources ( VkDevice device )
 {
-    VkDevice device = renderer.GetDevice ();
-
     if ( _transferMemory != VK_NULL_HANDLE )
     {
         vkFreeMemory ( device, _transferMemory, nullptr );
@@ -173,7 +171,7 @@ bool MeshGeometry::LoadMesh ( std::string &&fileName,
     VkCommandBuffer commandBuffer
 )
 {
-    FreeResources ( renderer );
+    FreeResources ( renderer.GetDevice () );
     return UploadSimple ( data, size, vertexCount, usage, renderer, commandBuffer );
 }
 
@@ -186,7 +184,7 @@ bool MeshGeometry::LoadMesh ( std::string &&fileName,
     VkCommandBuffer commandBuffer
 )
 {
-    FreeResources ( renderer );
+    FreeResources ( renderer.GetDevice () );
 
     size_t const vertexOffset = sizeof ( uint32_t ) * indexCount;
     std::vector<uint8_t> storage ( vertexOffset + vertexDataSize );
@@ -207,10 +205,9 @@ bool MeshGeometry::LoadMesh ( std::string &&fileName,
     return result;
 }
 
-void MeshGeometry::FreeResourceInternal ( Renderer &renderer )
+void MeshGeometry::FreeResourceInternal ( VkDevice device )
 {
     _vertexCount = 0U;
-    VkDevice device = renderer.GetDevice ();
 
     if ( _bufferMemory != VK_NULL_HANDLE )
     {
@@ -240,7 +237,7 @@ bool MeshGeometry::LoadFromMesh ( std::string &&fileName,
     VkCommandBuffer commandBuffer
 )
 {
-    FreeResourceInternal ( renderer );
+    FreeResourceInternal ( renderer.GetDevice () );
 
     File file ( fileName );
 
@@ -316,7 +313,7 @@ bool MeshGeometry::LoadFromMesh2 ( std::string &&fileName,
     VkCommandBuffer commandBuffer
 )
 {
-    FreeResourceInternal ( renderer );
+    FreeResourceInternal ( renderer.GetDevice () );
     File file ( fileName );
 
     if ( !file.LoadContent () )
@@ -397,7 +394,7 @@ bool MeshGeometry::UploadComplex ( uint8_t const* data,
 
     if ( !result )
     {
-        FreeResources ( renderer );
+        FreeResources ( device );
         return false;
     }
 
@@ -419,7 +416,7 @@ R"__(MeshGeometry::UploadComplex - Memory usage bits are not same:
         );
 
         assert ( indexBufferMemoryRequirements.memoryTypeBits == vertexBufferMemoryRequirements.memoryTypeBits );
-        FreeResources ( renderer );
+        FreeResources ( device );
         return false;
     }
 
@@ -453,7 +450,7 @@ R"__(MeshGeometry::UploadComplex - Memory usage bits are not same:
 
     if ( !result )
     {
-        FreeResources ( renderer );
+        FreeResources ( device );
         return false;
     }
 
@@ -466,7 +463,7 @@ R"__(MeshGeometry::UploadComplex - Memory usage bits are not same:
 
     if ( !result )
     {
-        FreeResources ( renderer );
+        FreeResources ( device );
         return false;
     }
 
@@ -478,7 +475,7 @@ R"__(MeshGeometry::UploadComplex - Memory usage bits are not same:
 
     if ( !result )
     {
-        FreeResources ( renderer );
+        FreeResources ( device );
         return false;
     }
 
@@ -552,7 +549,7 @@ bool MeshGeometry::UploadInternal ( size_t numUploads,
 
     if ( !result )
     {
-        FreeResources ( renderer );
+        FreeResources ( device );
         return false;
     }
 
@@ -572,7 +569,7 @@ bool MeshGeometry::UploadInternal ( size_t numUploads,
 
     if ( !result )
     {
-        FreeResources ( renderer );
+        FreeResources ( device );
         return false;
     }
 
@@ -586,7 +583,7 @@ bool MeshGeometry::UploadInternal ( size_t numUploads,
 
     if ( !result )
     {
-        FreeResources ( renderer );
+        FreeResources ( device );
         return false;
     }
 
@@ -600,7 +597,7 @@ bool MeshGeometry::UploadInternal ( size_t numUploads,
 
     if ( !result )
     {
-        FreeResources ( renderer );
+        FreeResources ( device );
         return false;
     }
 
@@ -622,7 +619,7 @@ bool MeshGeometry::UploadInternal ( size_t numUploads,
 
     if ( !result )
     {
-        FreeResources ( renderer );
+        FreeResources ( device );
         return false;
     }
 
@@ -639,7 +636,7 @@ bool MeshGeometry::UploadInternal ( size_t numUploads,
         if ( findResult == g_accessMapper.cend () )
         {
             LogError ( "MeshGeometry::UploadInternal - Unexpected usage 0x%08X", usages[ i ] );
-            FreeResources ( renderer );
+            FreeResources ( device );
             return false;
         }
 
@@ -679,7 +676,7 @@ bool MeshGeometry::UploadInternal ( size_t numUploads,
 
     if ( !result )
     {
-        FreeResources ( renderer );
+        FreeResources ( device );
         return false;
     }
 
@@ -705,7 +702,7 @@ bool MeshGeometry::UploadInternal ( size_t numUploads,
     if ( result )
         return true;
 
-    FreeResources ( renderer );
+    FreeResources ( device );
     return false;
 }
 
@@ -753,7 +750,7 @@ bool MeshGeometry::UploadSimple ( uint8_t const* data,
 
     if ( !result )
     {
-        FreeResources ( renderer );
+        FreeResources ( device );
         return false;
     }
 
@@ -766,7 +763,7 @@ bool MeshGeometry::UploadSimple ( uint8_t const* data,
 
     if ( !result )
     {
-        FreeResources ( renderer );
+        FreeResources ( device );
         return false;
     }
 

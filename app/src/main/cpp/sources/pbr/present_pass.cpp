@@ -37,15 +37,17 @@ bool PresentPass::AcquirePresentTarget ( android_vulkan::Renderer &renderer )
 
 bool PresentPass::Init ( android_vulkan::Renderer &renderer )
 {
+    VkDevice device = renderer.GetDevice ();
+
     if ( !CreateRenderPass ( renderer ) )
     {
-        Destroy ( renderer );
+        Destroy ( device );
         return false;
     }
 
     if ( !CreateFramebuffers ( renderer ) )
     {
-        Destroy ( renderer );
+        Destroy ( device );
         return false;
     }
 
@@ -53,7 +55,7 @@ bool PresentPass::Init ( android_vulkan::Renderer &renderer )
 
     if ( !_program.Init ( renderer, _renderPass, 0U, resolution ) )
     {
-        Destroy ( renderer );
+        Destroy ( device );
         return false;
     }
 
@@ -63,8 +65,6 @@ bool PresentPass::Init ( android_vulkan::Renderer &renderer )
         .pNext = nullptr,
         .flags = 0U
     };
-
-    VkDevice device = renderer.GetDevice ();
 
     bool result = android_vulkan::Renderer::CheckVkResult (
         vkCreateSemaphore ( device, &semaphoreInfo, nullptr, &_renderEndSemaphore ),
@@ -91,10 +91,8 @@ bool PresentPass::Init ( android_vulkan::Renderer &renderer )
     return true;
 }
 
-void PresentPass::Destroy ( android_vulkan::Renderer &renderer )
+void PresentPass::Destroy ( VkDevice device )
 {
-    VkDevice device = renderer.GetDevice ();
-
     if ( _targetAcquiredSemaphore != VK_NULL_HANDLE )
     {
         vkDestroySemaphore ( device, _targetAcquiredSemaphore, nullptr );

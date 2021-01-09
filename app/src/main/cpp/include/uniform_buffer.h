@@ -36,7 +36,7 @@ class UniformBuffer final
 
         ~UniformBuffer () = default;
 
-        void FreeResources ( android_vulkan::Renderer &renderer );
+        void FreeResources ( VkDevice device );
         [[nodiscard]] VkBuffer GetBuffer () const;
         [[nodiscard]] size_t GetSize () const;
 

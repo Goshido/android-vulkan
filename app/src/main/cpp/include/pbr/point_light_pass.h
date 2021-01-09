@@ -59,7 +59,7 @@ class PointLightPass final
             android_vulkan::Renderer &renderer
         );
 
-        void Destroy ( android_vulkan::Renderer &renderer );
+        void Destroy ( VkDevice device );
 
         [[nodiscard]] size_t GetPointLightCount () const;
         [[nodiscard]] PointLightInfo GetPointLightInfo ( size_t lightIndex ) const;
@@ -72,7 +72,7 @@ class PointLightPass final
         [[nodiscard]] PointLightShadowmapInfo* AcquirePointLightShadowmap ( android_vulkan::Renderer &renderer );
 
         [[nodiscard]] bool CreateRenderPass ( android_vulkan::Renderer &renderer );
-        void DestroyDescriptorPool ( android_vulkan::Renderer &renderer );
+        void DestroyDescriptorPool ( VkDevice device );
 
         [[nodiscard]] bool GenerateShadowmaps ( VkDescriptorSet const* descriptorSets,
             android_vulkan::Renderer &renderer

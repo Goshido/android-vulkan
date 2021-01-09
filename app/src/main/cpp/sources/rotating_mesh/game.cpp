@@ -460,7 +460,7 @@ bool Game::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime )
 
     size_t imageIndex = SIZE_MAX;
 
-    if ( !BeginFrame ( imageIndex, renderer ) )
+    if ( !BeginFrame ( renderer, imageIndex ) )
         return false;
 
     const CommandContext& commandContext = _commandBuffers[ imageIndex ];
@@ -490,7 +490,7 @@ bool Game::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime )
     if ( !result )
         return false;
 
-    return EndFrame ( static_cast<size_t> ( imageIndex ), renderer );
+    return EndFrame ( renderer, static_cast<size_t> ( imageIndex ) );
 }
 
 bool Game::OnDestroy ( android_vulkan::Renderer &renderer )
@@ -519,7 +519,7 @@ bool Game::OnDestroy ( android_vulkan::Renderer &renderer )
     return true;
 }
 
-bool Game::BeginFrame ( size_t &imageIndex, android_vulkan::Renderer &renderer )
+bool Game::BeginFrame ( android_vulkan::Renderer &renderer, size_t &imageIndex )
 {
     VkDevice device = renderer.GetDevice ();
     uint32_t i = UINT32_MAX;
@@ -558,7 +558,7 @@ bool Game::BeginFrame ( size_t &imageIndex, android_vulkan::Renderer &renderer )
     );
 }
 
-bool Game::EndFrame ( uint32_t presentationImageIndex, android_vulkan::Renderer &renderer )
+bool Game::EndFrame ( android_vulkan::Renderer &renderer, uint32_t presentationImageIndex )
 {
     VkResult presentResult = VK_ERROR_DEVICE_LOST;
 
@@ -640,9 +640,11 @@ void Game::DestroyDescriptorSet ( android_vulkan::Renderer &renderer )
 
 void Game::DestroyMeshes ( android_vulkan::Renderer &renderer )
 {
+    VkDevice device = renderer.GetDevice ();
+
     for ( auto& item : _drawcalls )
     {
-        item._mesh.FreeResources ( renderer );
+        item._mesh.FreeResources ( device );
     }
 }
 
@@ -1136,7 +1138,7 @@ bool Game::CreateUniformBuffer ( android_vulkan::Renderer& renderer )
 
 void Game::DestroyUniformBuffer ( android_vulkan::Renderer &renderer )
 {
-    _transformBuffer.FreeResources ( renderer );
+    _transformBuffer.FreeResources ( renderer.GetDevice () );
 }
 
 bool Game::InitCommandBuffers ( android_vulkan::Renderer &renderer )

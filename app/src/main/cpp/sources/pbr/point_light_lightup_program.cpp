@@ -46,9 +46,11 @@ bool PointLightLightupProgram::Init ( android_vulkan::Renderer &renderer,
     pipelineInfo.flags = 0U;
     pipelineInfo.stageCount = std::size ( stageInfo );
 
-    if ( !InitShaderInfo ( pipelineInfo.pStages, stageInfo, renderer ) )
+    VkDevice device = renderer.GetDevice ();
+
+    if ( !InitShaderInfo ( renderer, pipelineInfo.pStages, stageInfo ) )
     {
-        Destroy ( renderer.GetDevice () );
+        Destroy ( device );
         return false;
     }
 
@@ -66,9 +68,9 @@ bool PointLightLightupProgram::Init ( android_vulkan::Renderer &renderer,
     pipelineInfo.pColorBlendState = InitColorBlendInfo ( blendInfo, attachmentInfo );
     pipelineInfo.pDynamicState = nullptr;
 
-    if ( !InitLayout ( pipelineInfo.layout, renderer ) )
+    if ( !InitLayout ( renderer, pipelineInfo.layout ) )
     {
-        Destroy ( renderer.GetDevice () );
+        Destroy ( device );
         return false;
     }
 
@@ -78,14 +80,14 @@ bool PointLightLightupProgram::Init ( android_vulkan::Renderer &renderer,
     pipelineInfo.basePipelineIndex = 0;
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateGraphicsPipelines ( renderer.GetDevice (), VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
+        vkCreateGraphicsPipelines ( device, VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
         "PointLightLightupProgram::Init",
         "Can't create pipeline"
     );
 
     if ( !result )
     {
-        Destroy ( renderer.GetDevice () );
+        Destroy ( device );
         return false;
     }
 
@@ -248,7 +250,7 @@ VkPipelineInputAssemblyStateCreateInfo const* PointLightLightupProgram::InitInpu
     return &info;
 }
 
-bool PointLightLightupProgram::InitLayout ( VkPipelineLayout &layout, android_vulkan::Renderer &renderer )
+bool PointLightLightupProgram::InitLayout ( android_vulkan::Renderer &renderer, VkPipelineLayout &layout )
 {
     if ( !_commonLayout.Init ( renderer ) )
         return false;
@@ -334,9 +336,9 @@ VkPipelineRasterizationStateCreateInfo const* PointLightLightupProgram::InitRast
     return &info;
 }
 
-bool PointLightLightupProgram::InitShaderInfo ( VkPipelineShaderStageCreateInfo const* &targetInfo,
-    VkPipelineShaderStageCreateInfo* sourceInfo,
-    android_vulkan::Renderer &renderer
+bool PointLightLightupProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
+    VkPipelineShaderStageCreateInfo const* &targetInfo,
+    VkPipelineShaderStageCreateInfo* sourceInfo
 )
 {
     bool result = renderer.CreateShader ( _vertexShader,

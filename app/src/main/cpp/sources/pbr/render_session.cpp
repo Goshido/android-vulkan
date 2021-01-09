@@ -49,7 +49,7 @@ void RenderSession::Begin ( GXMat4 const &viewerLocal, GXMat4 const &projection 
     _geometryPass.Reset ();
 }
 
-bool RenderSession::End ( ePresentTarget target, double deltaTime, android_vulkan::Renderer &renderer )
+bool RenderSession::End ( android_vulkan::Renderer &renderer, ePresentTarget target, double deltaTime )
 {
     if ( !_presentPass.AcquirePresentTarget ( renderer ) )
         return false;
@@ -57,12 +57,12 @@ bool RenderSession::End ( ePresentTarget target, double deltaTime, android_vulka
     if ( !_pointLightPass.Execute ( _geometryPass.GetSceneData (), _opaqueMeshCount, renderer ) )
         return false;
 
-    VkCommandBuffer commandBuffer = _geometryPass.Execute ( _frustum,
+    VkCommandBuffer commandBuffer = _geometryPass.Execute ( renderer,
+        _frustum,
         _view,
         _viewProjection,
         _samplerManager,
-        _renderSessionStats,
-        renderer
+        _renderSessionStats
     );
 
     if ( commandBuffer == VK_NULL_HANDLE )
@@ -123,41 +123,41 @@ bool RenderSession::End ( ePresentTarget target, double deltaTime, android_vulka
     return true;
 }
 
-bool RenderSession::Init ( VkExtent2D const &resolution, android_vulkan::Renderer &renderer )
+bool RenderSession::Init ( android_vulkan::Renderer &renderer, VkExtent2D const &resolution )
 {
     if ( !_gBuffer.Init ( renderer, resolution ) )
     {
-        Destroy ( renderer );
+        Destroy ( renderer.GetDevice () );
         return false;
     }
 
     if ( !CreateGBufferRenderPass ( renderer ) || !CreateGBufferFramebuffer ( renderer ) )
     {
-        Destroy ( renderer );
+        Destroy ( renderer.GetDevice () );
         return false;
     }
 
     if ( !_lightVolume.Init ( renderer, _gBuffer, _gBufferFramebuffer, _viewerLocal ) )
     {
-        Destroy ( renderer );
+        Destroy ( renderer.GetDevice () );
         return false;
     }
 
-    if ( !_geometryPass.Init ( _gBuffer.GetResolution (), _gBufferRenderPass, _gBufferFramebuffer, renderer ) )
+    if ( !_geometryPass.Init ( renderer, _gBuffer.GetResolution (), _gBufferRenderPass, _gBufferFramebuffer ) )
     {
-        Destroy ( renderer );
+        Destroy ( renderer.GetDevice () );
         return false;
     }
 
     if ( !_pointLightPass.Init ( _lightVolume, resolution, renderer ) || !_presentPass.Init ( renderer ) )
     {
-        Destroy ( renderer );
+        Destroy ( renderer.GetDevice () );
         return false;
     }
 
     if ( !CreateGBufferSlotMapper ( renderer ) )
     {
-        Destroy ( renderer );
+        Destroy ( renderer.GetDevice () );
         return false;
     }
 
@@ -177,13 +177,11 @@ bool RenderSession::Init ( VkExtent2D const &resolution, android_vulkan::Rendere
     return true;
 }
 
-void RenderSession::Destroy ( android_vulkan::Renderer &renderer )
+void RenderSession::Destroy ( VkDevice device )
 {
-    _samplerManager.FreeResources ( renderer );
-    _presentPass.Destroy ( renderer );
-    _pointLightPass.Destroy ( renderer );
-
-    VkDevice device = renderer.GetDevice ();
+    _samplerManager.FreeResources ( device );
+    _presentPass.Destroy ( device );
+    _pointLightPass.Destroy ( device );
     _texturePresentProgram.Destroy ( device );
 
     if ( _gBufferDescriptorPool != VK_NULL_HANDLE )
@@ -193,8 +191,8 @@ void RenderSession::Destroy ( android_vulkan::Renderer &renderer )
         AV_UNREGISTER_DESCRIPTOR_POOL ( "RenderSession::_gBufferDescriptorPool" )
     }
 
-    _geometryPass.Destroy ( renderer );
-    _lightVolume.Destroy ( renderer );
+    _geometryPass.Destroy ( device );
+    _lightVolume.Destroy ( device );
 
     if ( _gBufferFramebuffer != VK_NULL_HANDLE )
     {
@@ -205,12 +203,12 @@ void RenderSession::Destroy ( android_vulkan::Renderer &renderer )
 
     if ( _gBufferRenderPass != VK_NULL_HANDLE )
     {
-        vkDestroyRenderPass ( renderer.GetDevice (), _gBufferRenderPass, nullptr );
+        vkDestroyRenderPass ( device, _gBufferRenderPass, nullptr );
         _gBufferRenderPass = VK_NULL_HANDLE;
         AV_UNREGISTER_RENDER_PASS ( "RenderSession::_gBufferRenderPass" )
     }
 
-    _gBuffer.Destroy ( renderer );
+    _gBuffer.Destroy ( device );
 }
 
 void RenderSession::SubmitMesh ( MeshRef &mesh,

@@ -32,20 +32,20 @@ class MeshManager final
         MeshManager ( MeshManager &&other ) = delete;
         MeshManager& operator = ( MeshManager &&other ) = delete;
 
-        [[nodiscard]] MeshRef LoadMesh ( size_t &commandBufferConsumed,
+        [[nodiscard]] MeshRef LoadMesh ( android_vulkan::Renderer &renderer,
+            size_t &commandBufferConsumed,
             char const* fileName,
-            android_vulkan::Renderer &renderer,
             VkCommandBuffer commandBuffer
         );
 
         [[nodiscard]] static MeshManager& GetInstance ();
-        static void Destroy ( android_vulkan::Renderer &renderer );
+        static void Destroy ( VkDevice device );
 
     protected:
         MeshManager () = default;
         ~MeshManager () = default;
 
-        void DestroyInternal ( android_vulkan::Renderer &renderer );
+        void DestroyInternal ( VkDevice device );
 };
 
 } // namespace pbr

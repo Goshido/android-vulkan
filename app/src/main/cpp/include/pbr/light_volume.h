@@ -46,7 +46,7 @@ class LightVolume final
             GXMat4 const &cvvToView
         );
 
-        void Destroy ( android_vulkan::Renderer &renderer );
+        void Destroy ( VkDevice device );
 
         [[nodiscard]] VkRenderPass GetRenderPass () const;
         [[maybe_unused]] [[nodiscard]] VkDescriptorSet GetLighupCommonDescriptorSet () const;

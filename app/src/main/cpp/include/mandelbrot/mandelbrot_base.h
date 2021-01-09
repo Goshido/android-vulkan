@@ -44,8 +44,8 @@ class MandelbrotBase : public android_vulkan::Game
         virtual void DestroyPipelineLayout ( android_vulkan::Renderer &renderer ) = 0;
 
     private:
-        bool BeginFrame ( uint32_t &presentationImageIndex, android_vulkan::Renderer &renderer );
-        bool EndFrame ( uint32_t presentationImageIndex, android_vulkan::Renderer &renderer );
+        bool BeginFrame ( android_vulkan::Renderer &renderer, uint32_t &presentationImageIndex );
+        bool EndFrame ( android_vulkan::Renderer &renderer, uint32_t presentationImageIndex );
 
         bool CreateCommandPool ( android_vulkan::Renderer &renderer );
         bool DestroyCommandPool ( android_vulkan::Renderer &renderer );

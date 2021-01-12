@@ -116,13 +116,15 @@ void PointLightShadowmapGeneratorProgram::Destroy ( VkDevice device )
     AV_UNREGISTER_SHADER_MODULE ( "PointLightShadowmapGeneratorProgram::_vertexShader" )
 }
 
-std::vector<DescriptorSetInfo> const& PointLightShadowmapGeneratorProgram::GetResourceInfo () const
+Program::DescriptorSetInfo const& PointLightShadowmapGeneratorProgram::GetResourceInfo () const
 {
-    static std::vector<DescriptorSetInfo> const info
+    static DescriptorSetInfo const info
     {
-        DescriptorSetInfo
         {
-            ProgramResource ( VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1U )
+            {
+                .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                .descriptorCount = 1U
+            }
         }
     };
 

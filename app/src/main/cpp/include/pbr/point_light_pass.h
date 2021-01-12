@@ -3,7 +3,6 @@
 
 
 #include "light_volume.h"
-#include "point_light.h"
 #include "point_light_lightup.h"
 #include "point_light_shadowmap_generator_program.h"
 #include "scene_data.h"

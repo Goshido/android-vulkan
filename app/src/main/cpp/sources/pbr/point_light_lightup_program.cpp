@@ -129,21 +129,57 @@ void PointLightLightupProgram::Destroy ( VkDevice device )
     AV_UNREGISTER_SHADER_MODULE ( "PointLightLightupProgram::_vertexShader" )
 }
 
-std::vector<DescriptorSetInfo> const& PointLightLightupProgram::GetResourceInfo () const
+void PointLightLightupProgram::SetDescriptorSet ( VkCommandBuffer commandBuffer, VkDescriptorSet set ) const
 {
-    static std::vector<DescriptorSetInfo> const info
-    {
-        DescriptorSetInfo
-        {
-            ProgramResource ( VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 4U ),
-            ProgramResource ( VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1U )
-        },
+    vkCmdBindDescriptorSets ( commandBuffer,
+        VK_PIPELINE_BIND_POINT_GRAPHICS,
+        _pipelineLayout,
+        1U,
+        1U,
+        &set,
+        0U,
+        nullptr
+    );
+}
 
-        DescriptorSetInfo
+void PointLightLightupProgram::SetTransform (  VkCommandBuffer commandBuffer, GXMat4 const &transform ) const
+{
+    vkCmdPushConstants ( commandBuffer,
+        _pipelineLayout,
+        VK_SHADER_STAGE_VERTEX_BIT,
+        0U,
+        sizeof ( PushConstants ),
+        &transform
+    );
+}
+
+Program::DescriptorSetInfo const& PointLightLightupProgram::GetResourceInfo () const
+{
+    static DescriptorSetInfo const info
+    {
         {
-            ProgramResource ( VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1U ),
-            ProgramResource ( VK_DESCRIPTOR_TYPE_SAMPLER, 1U ),
-            ProgramResource ( VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1U )
+            {
+                .type = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
+                .descriptorCount = 4U
+            },
+            {
+                .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                .descriptorCount = 1U
+            }
+        },
+        {
+            {
+                .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+                .descriptorCount = 1U
+            },
+            {
+                .type = VK_DESCRIPTOR_TYPE_SAMPLER,
+                .descriptorCount = 1U
+            },
+            {
+                .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                .descriptorCount = 1U
+            }
         }
     };
 

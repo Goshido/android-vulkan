@@ -4,6 +4,7 @@
 
 #include "mesh_geometry.h"
 #include "light_volume.h"
+#include "point_light.h"
 #include "point_light_lightup_program.h"
 #include "sampler.h"
 #include "uniform_buffer_pool.h"
@@ -39,9 +40,8 @@ class PointLightLightup final
 
         ~PointLightLightup () = default;
 
-        [[maybe_unused]] [[nodiscard]] bool Execute ( android_vulkan::Renderer &renderer,
+        [[maybe_unused]] [[nodiscard]] bool UpdateGPUData ( android_vulkan::Renderer &renderer,
             PointLightPass const &pointLightPass,
-            LightVolume &lightVolume,
             GXMat4 const &viewerLocal,
             GXMat4 const &view
         );
@@ -55,15 +55,14 @@ class PointLightLightup final
 
         void Destroy ( VkDevice device );
 
+        [[maybe_unused]] void Lightup ( VkCommandBuffer commandBuffer,
+            size_t lightIndex,
+            GXMat4 const &transform
+        );
+
     private:
         [[nodiscard]] bool AllocateNativeDescriptorSets ( android_vulkan::Renderer &renderer, size_t neededSets );
         void DestroyDescriptorPool ( VkDevice device );
-
-        [[nodiscard]] bool UpdateGPUData ( android_vulkan::Renderer &renderer,
-            PointLightPass const &pointLightPass,
-            GXMat4 const &viewerLocal,
-            GXMat4 const &view
-        );
 };
 
 } // namespace pbr

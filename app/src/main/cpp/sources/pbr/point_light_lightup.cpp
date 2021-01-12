@@ -29,20 +29,6 @@ PointLightLightup::PointLightLightup () noexcept:
     // NOTHING
 }
 
-[[maybe_unused]] bool PointLightLightup::Execute ( android_vulkan::Renderer &renderer,
-    PointLightPass const &pointLightPass,
-    LightVolume &/*lightVolume*/,
-    GXMat4 const &viewerLocal,
-    GXMat4 const &view
-)
-{
-    if ( !UpdateGPUData ( renderer, pointLightPass, viewerLocal, view ) )
-        return false;
-
-    // TODO
-    return false;
-}
-
 bool PointLightLightup::Init ( android_vulkan::Renderer &renderer,
     VkCommandBuffer commandBuffer,
     VkRenderPass renderPass,
@@ -201,6 +187,132 @@ void PointLightLightup::Destroy ( VkDevice device )
     AV_UNREGISTER_COMMAND_POOL ( "PointLightLightup::_commandPool" )
 }
 
+[[maybe_unused]] void PointLightLightup::Lightup ( VkCommandBuffer commandBuffer,
+    size_t lightIndex,
+    GXMat4 const &transform
+)
+{
+    _program.Bind ( commandBuffer );
+    _program.SetTransform ( commandBuffer, transform );
+    _program.SetDescriptorSet ( commandBuffer, _descriptorSets[ lightIndex ] );
+    vkCmdDrawIndexed ( commandBuffer, _volumeMesh.GetVertexCount (), 1U, 0U, 0, 0U );
+}
+
+[[maybe_unused]] bool PointLightLightup::UpdateGPUData ( android_vulkan::Renderer &renderer,
+    PointLightPass const &pointLightPass,
+    GXMat4 const &viewerLocal,
+    GXMat4 const &view
+)
+{
+    size_t const lightCount = pointLightPass.GetPointLightCount ();
+
+    if ( !AllocateNativeDescriptorSets ( renderer, lightCount ) )
+        return false;
+
+    constexpr VkCommandBufferBeginInfo const beginInfo
+        {
+            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+            .pNext = nullptr,
+            .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+            .pInheritanceInfo = nullptr
+        };
+
+    bool result = android_vulkan::Renderer::CheckVkResult ( vkBeginCommandBuffer ( _transferCommandBuffer, &beginInfo ),
+        "PointLightLightup::UpdateGPUData",
+        "Can't begin command buffer"
+    );
+
+    if ( !result )
+        return false;
+
+    PointLightLightupProgram::LightData lightData;
+    size_t writeIndex = 0U;
+    GXVec3 alpha;
+    GXVec3 betta;
+
+    for ( size_t i = 0U; i < lightCount; ++i )
+    {
+        auto const [light, shadowmap] = pointLightPass.GetPointLightInfo ( i );
+        VkDescriptorSet set = _descriptorSets[ i ];
+
+        VkDescriptorImageInfo& image = _imageInfo[ i ];
+        image.imageView = shadowmap->GetImageView ();
+
+        VkWriteDescriptorSet &write0 = _writeSets[ writeIndex++ ];
+        write0.dstBinding = 0U;
+        write0.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+
+        VkWriteDescriptorSet &write1 = _writeSets[ writeIndex++ ];
+        write1.dstBinding = 1U;
+        write1.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
+
+        write0.dstSet = write1.dstSet = set;
+        write0.pImageInfo = write1.pImageInfo = &image;
+        write0.pBufferInfo = write1.pBufferInfo = nullptr;
+
+        lightData._lightProjection = light->GetProjection ();
+
+        // Matrix optimization:
+        // Point light has identity orientation by design. Point light changes its location only. Because of that
+        // point light view matrix is negative "w" component. Additionally this method receives viewer local matrix
+        // which is an inverse transform from view matrix. So "view to point light" transform simplifies to
+        // one subtraction operation of point light location vector from "w" component of the viewer local matrix.
+
+        GXMat4& viewToPointLight = lightData._viewToLight;
+        viewToPointLight = viewerLocal;
+
+        viewToPointLight.GetW ( alpha );
+        GXVec3 const& location = light->GetLocation ();
+        betta.Substract ( alpha, location );
+        viewToPointLight.SetW ( betta );
+
+        lightData._hue = light->GetHue ();
+        lightData._intensity = light->GetIntensity ();
+
+        view.MultiplyAsNormal ( alpha, location );
+        lightData._lightLocationView = alpha;
+
+        alpha.Normalize ();
+        lightData._toLightDirectionView = alpha;
+
+        VkDescriptorBufferInfo& buffer = _uniformInfo[ i ];
+
+        buffer.buffer = _uniformPool.Acquire ( renderer,
+            _transferCommandBuffer,
+            &lightData,
+            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT
+        );
+
+        VkWriteDescriptorSet &write2 = _writeSets[ writeIndex++ ];
+        write2.dstSet = set;
+        write2.dstBinding = 2U;
+        write2.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        write2.pImageInfo = nullptr;
+        write2.pBufferInfo = &buffer;
+    }
+
+    vkUpdateDescriptorSets ( renderer.GetDevice (),
+        static_cast<uint32_t> ( _writeSets.size () ),
+        _writeSets.data (),
+        0U,
+        nullptr
+    );
+
+    result = android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( _transferCommandBuffer ),
+        "PointLightLightup::UpdateGPUData",
+        "Can't end command buffer"
+    );
+
+    if ( !result )
+        return false;
+
+    return android_vulkan::Renderer::CheckVkResult (
+        vkQueueSubmit ( renderer.GetQueue (), 1U, &_submitInfoTransfer, VK_NULL_HANDLE ),
+        "PointLightLightup::UpdateGPUData",
+        "Can't submit command buffer"
+    );
+}
+
 bool PointLightLightup::AllocateNativeDescriptorSets ( android_vulkan::Renderer &renderer, size_t neededSets )
 {
     assert ( neededSets );
@@ -311,121 +423,6 @@ void PointLightLightup::DestroyDescriptorPool ( VkDevice device )
     vkDestroyDescriptorPool ( device, _descriptorPool, nullptr );
     _descriptorPool = VK_NULL_HANDLE;
     AV_UNREGISTER_DESCRIPTOR_POOL ( "PointLightLightup::_descriptorPool" )
-}
-
-bool PointLightLightup::UpdateGPUData ( android_vulkan::Renderer &renderer,
-    PointLightPass const &pointLightPass,
-    GXMat4 const &viewerLocal,
-    GXMat4 const &view
-)
-{
-    size_t const lightCount = pointLightPass.GetPointLightCount ();
-
-    if ( !AllocateNativeDescriptorSets ( renderer, lightCount ) )
-        return false;
-
-    constexpr VkCommandBufferBeginInfo const beginInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-        .pNext = nullptr,
-        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
-        .pInheritanceInfo = nullptr
-    };
-
-    bool result = android_vulkan::Renderer::CheckVkResult ( vkBeginCommandBuffer ( _transferCommandBuffer, &beginInfo ),
-        "PointLightLightup::UpdateGPUData",
-        "Can't begin command buffer"
-    );
-
-    if ( !result )
-        return false;
-
-    PointLightLightupProgram::LightData lightData;
-    size_t writeIndex = 0U;
-    GXVec3 alpha;
-    GXVec3 betta;
-
-    for ( size_t i = 0U; i < lightCount; ++i )
-    {
-        auto const [light, shadowmap] = pointLightPass.GetPointLightInfo ( i );
-        VkDescriptorSet set = _descriptorSets[ i ];
-
-        VkDescriptorImageInfo& image = _imageInfo[ i ];
-        image.imageView = shadowmap->GetImageView ();
-
-        VkWriteDescriptorSet &write0 = _writeSets[ writeIndex++ ];
-        write0.dstBinding = 0U;
-        write0.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-
-        VkWriteDescriptorSet &write1 = _writeSets[ writeIndex++ ];
-        write1.dstBinding = 1U;
-        write1.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
-
-        write0.dstSet = write1.dstSet = set;
-        write0.pImageInfo = write1.pImageInfo = &image;
-        write0.pBufferInfo = write1.pBufferInfo = nullptr;
-
-        lightData._lightProjection = light->GetProjection ();
-
-        // Matrix optimization:
-        // Point light has identity orientation by design. Point light changes its location only. Because of that
-        // point light view matrix is negative "w" component. Additionally this method receives viewer local matrix
-        // which is an inverse transform from view matrix. So "view to point light" transform simplifies to
-        // one subtraction operation of point light location vector from "w" component of the viewer local matrix.
-
-        GXMat4& viewToPointLight = lightData._viewToLight;
-        viewToPointLight = viewerLocal;
-
-        viewToPointLight.GetW ( alpha );
-        GXVec3 const& location = light->GetLocation ();
-        betta.Substract ( alpha, location );
-        viewToPointLight.SetW ( betta );
-
-        lightData._hue = light->GetHue ();
-        lightData._intensity = light->GetIntensity ();
-
-        view.MultiplyAsNormal ( alpha, location );
-        lightData._lightLocationView = alpha;
-
-        alpha.Normalize ();
-        lightData._toLightDirectionView = alpha;
-
-        VkDescriptorBufferInfo& buffer = _uniformInfo[ i ];
-
-        buffer.buffer = _uniformPool.Acquire ( renderer,
-            _transferCommandBuffer,
-            &lightData,
-            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT
-        );
-
-        VkWriteDescriptorSet &write2 = _writeSets[ writeIndex++ ];
-        write2.dstSet = set;
-        write2.dstBinding = 2U;
-        write2.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        write2.pImageInfo = nullptr;
-        write2.pBufferInfo = &buffer;
-    }
-
-    vkUpdateDescriptorSets ( renderer.GetDevice (),
-        static_cast<uint32_t> ( _writeSets.size () ),
-        _writeSets.data (),
-        0U,
-        nullptr
-    );
-
-    result = android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( _transferCommandBuffer ),
-        "PointLightLightup::UpdateGPUData",
-        "Can't end command buffer"
-    );
-
-    if ( !result )
-        return false;
-
-    return android_vulkan::Renderer::CheckVkResult (
-        vkQueueSubmit ( renderer.GetQueue (), 1U, &_submitInfoTransfer, VK_NULL_HANDLE ),
-        "PointLightLightup::UpdateGPUData",
-        "Can't submit command buffer"
-    );
 }
 
 } // namespace pbr

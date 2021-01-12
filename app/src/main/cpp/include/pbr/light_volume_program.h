@@ -53,7 +53,7 @@ class LightVolumeProgram final : public Program
         }
 
     private:
-        [[nodiscard]] std::vector<DescriptorSetInfo> const& GetResourceInfo () const override;
+        [[nodiscard]] DescriptorSetInfo const& GetResourceInfo () const override;
 
         [[nodiscard]] VkPipelineColorBlendStateCreateInfo const* InitColorBlendInfo (
             VkPipelineColorBlendStateCreateInfo &info,

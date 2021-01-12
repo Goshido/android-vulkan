@@ -665,8 +665,8 @@ bool GeometryPass::UpdateGPUData ( android_vulkan::Renderer &renderer,
     std::vector<VkWriteDescriptorSet> writeStorage0;
     writeStorage0.reserve ( textureCount * 2U );
 
-    std::vector<DescriptorSetInfo> const& descriptorSetInfo = _program.GetResourceInfo ();
-    DescriptorSetInfo const& descriptorSet0 = descriptorSetInfo[ 0U ];
+    Program::DescriptorSetInfo const& descriptorSetInfo = _program.GetResourceInfo ();
+    Program::SetItem const& descriptorSet0 = descriptorSetInfo[ 0U ];
     size_t uniqueFeatures = descriptorSet0.size ();
 
     std::vector<VkDescriptorBufferInfo> uniformStorage;
@@ -702,8 +702,8 @@ bool GeometryPass::UpdateGPUData ( android_vulkan::Renderer &renderer,
         poolSizeStorage.emplace_back (
             VkDescriptorPoolSize
             {
-                .type = item._type,
-                .descriptorCount = static_cast<uint32_t> ( item._count * opaqueCount + 1U )
+                .type = item.type,
+                .descriptorCount = static_cast<uint32_t> ( item.descriptorCount * opaqueCount + 1U )
             }
         );
     }

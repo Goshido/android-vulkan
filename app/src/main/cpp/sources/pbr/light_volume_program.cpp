@@ -114,9 +114,9 @@ void LightVolumeProgram::Destroy ( VkDevice device )
     AV_UNREGISTER_SHADER_MODULE ( "LightVolumeProgram::_vertexShader" )
 }
 
-std::vector<DescriptorSetInfo> const& LightVolumeProgram::GetResourceInfo () const
+Program::DescriptorSetInfo const& LightVolumeProgram::GetResourceInfo () const
 {
-    static std::vector<DescriptorSetInfo> const null;
+    static DescriptorSetInfo const null;
     return null;
 }
 

@@ -62,8 +62,11 @@ class PointLightLightupProgram final : public LightLightupBaseProgram
 
         void Destroy ( VkDevice device ) override;
 
+        void SetDescriptorSet ( VkCommandBuffer commandBuffer, VkDescriptorSet set ) const;
+        void SetTransform ( VkCommandBuffer commandBuffer, GXMat4 const &transform ) const;
+
     private:
-        [[nodiscard]] std::vector<DescriptorSetInfo> const& GetResourceInfo () const override;
+        [[nodiscard]] DescriptorSetInfo const& GetResourceInfo () const override;
 
         [[nodiscard]] VkPipelineColorBlendStateCreateInfo const* InitColorBlendInfo (
             VkPipelineColorBlendStateCreateInfo &info,

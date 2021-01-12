@@ -117,9 +117,9 @@ void TexturePresentProgram::Destroy ( VkDevice device )
     AV_UNREGISTER_SHADER_MODULE ( "TexturePresentProgram::_vertexShader" )
 }
 
-std::vector<DescriptorSetInfo> const& TexturePresentProgram::GetResourceInfo () const
+Program::DescriptorSetInfo const& TexturePresentProgram::GetResourceInfo () const
 {
-    static std::vector<DescriptorSetInfo> const null;
+    static DescriptorSetInfo const null;
     return null;
 }
 

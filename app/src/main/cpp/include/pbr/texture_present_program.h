@@ -43,7 +43,7 @@ class TexturePresentProgram final : public Program
         ) override;
 
         void Destroy ( VkDevice device ) override;
-        [[nodiscard]] std::vector<DescriptorSetInfo> const& GetResourceInfo () const override;
+        [[nodiscard]] DescriptorSetInfo const& GetResourceInfo () const override;
 
         void SetData ( VkCommandBuffer commandBuffer, VkDescriptorSet set, GXMat4 const &transform ) const;
 

@@ -4,7 +4,7 @@
 
 #include <uniform_buffer.h>
 #include "gbuffer.h"
-#include "lightup_common_descriptror_set_layout.h"
+#include "lightup_common_descriptor_set_layout.h"
 #include "light_volume_program.h"
 #include "types.h"
 
@@ -34,8 +34,7 @@ class LightVolume final
 
         ~LightVolume () = default;
 
-        [[nodiscard]] bool Execute ( android_vulkan::Renderer &renderer,
-            MeshRef const &mesh,
+        void Execute ( android_vulkan::MeshGeometry const &mesh,
             GXMat4 const &transform,
             VkCommandBuffer commandBuffer
         );

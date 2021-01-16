@@ -17,14 +17,18 @@ LightVolume::LightVolume () noexcept:
     // NOTHING
 }
 
-bool LightVolume::Execute ( android_vulkan::Renderer &/*renderer*/,
-    MeshRef const &/*mesh*/,
-    GXMat4 const &/*transform*/,
-    VkCommandBuffer /*commandBuffer*/
+void LightVolume::Execute ( android_vulkan::MeshGeometry const &mesh,
+    GXMat4 const &transform,
+    VkCommandBuffer commandBuffer
 )
 {
-    // TODO
-    return false;
+    vkCmdBeginRenderPass ( commandBuffer, &_renderPassInfo, VK_SUBPASS_CONTENTS_INLINE );
+
+    _program.Bind ( commandBuffer );
+    _program.SetTransform ( commandBuffer, transform );
+
+    vkCmdDrawIndexed ( commandBuffer, mesh.GetVertexCount (), 1U, 0U, 0, 0U );
+    vkCmdNextSubpass ( commandBuffer, VK_SUBPASS_CONTENTS_INLINE );
 }
 
 bool LightVolume::Init ( android_vulkan::Renderer &renderer,

@@ -33,9 +33,49 @@ PointLightPass::PointLightPass () noexcept:
     // NOTHING
 }
 
-bool PointLightPass::Execute ( SceneData const &sceneData,
-    size_t opaqueMeshCount,
-    android_vulkan::Renderer &renderer
+[[maybe_unused]] bool PointLightPass::ExecuteLightupPhase ( android_vulkan::Renderer &renderer,
+    LightVolume &lightVolume,
+    VkCommandBuffer commandBuffer,
+    GXMat4 const &viewerLocal,
+    GXMat4 const &view,
+    GXMat4 const &viewProjection
+)
+{
+    if ( !_lightup.UpdateGPUData ( renderer, *this, viewerLocal, view ) )
+        return false;
+
+    GXMat4 local;
+    local.Identity ();
+
+    GXMat4 transform;
+    GXVec3 alpha;
+    size_t lightIndex = 0U;
+
+    for ( auto const &[light, casters] : _interacts )
+    {
+        // Note it's safe cast like that here. "NOLINT" is a clang-tidy control comment.
+        auto& pointLight = *static_cast<PointLight*> ( light.get () ); // NOLINT
+
+        GXAABB const& bounds = pointLight.GetBounds ();
+        local._m[ 0U ][ 0U ] = bounds.GetWidth ();
+        local._m[ 1U ][ 1U ] = bounds.GetHeight ();
+        local._m[ 2U ][ 2U ] = bounds.GetDepth ();
+        bounds.GetCenter ( alpha );
+        local.SetW ( alpha );
+
+        transform.Multiply ( local, viewProjection );
+
+        lightVolume.Execute ( _lightup.GetLightVolume (), transform, commandBuffer );
+        _lightup.Lightup ( commandBuffer, lightIndex, transform );
+        ++lightIndex;
+    }
+
+    return true;
+}
+
+bool PointLightPass::ExecuteShadowPhase ( android_vulkan::Renderer &renderer,
+    SceneData const &sceneData,
+    size_t opaqueMeshCount
 )
 {
     std::vector<VkDescriptorSet> descriptorSetStorage;

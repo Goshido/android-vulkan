@@ -3,7 +3,7 @@
 
 
 #include <half_types.h>
-#include "lightup_common_descriptror_set_layout.h"
+#include "lightup_common_descriptor_set_layout.h"
 #include "light_lightup_base_program.h"
 #include "point_light_descriptor_set_layout.h"
 

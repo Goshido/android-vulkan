@@ -187,6 +187,11 @@ void PointLightLightup::Destroy ( VkDevice device )
     AV_UNREGISTER_COMMAND_POOL ( "PointLightLightup::_commandPool" )
 }
 
+android_vulkan::MeshGeometry const& PointLightLightup::GetLightVolume () const
+{
+    return _volumeMesh;
+}
+
 [[maybe_unused]] void PointLightLightup::Lightup ( VkCommandBuffer commandBuffer,
     size_t lightIndex,
     GXMat4 const &transform
@@ -210,12 +215,12 @@ void PointLightLightup::Destroy ( VkDevice device )
         return false;
 
     constexpr VkCommandBufferBeginInfo const beginInfo
-        {
-            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-            .pNext = nullptr,
-            .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
-            .pInheritanceInfo = nullptr
-        };
+    {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+        .pNext = nullptr,
+        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+        .pInheritanceInfo = nullptr
+    };
 
     bool result = android_vulkan::Renderer::CheckVkResult ( vkBeginCommandBuffer ( _transferCommandBuffer, &beginInfo ),
         "PointLightLightup::UpdateGPUData",
@@ -230,6 +235,28 @@ void PointLightLightup::Destroy ( VkDevice device )
     GXVec3 alpha;
     GXVec3 betta;
 
+    VkImageMemoryBarrier barrier
+    {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+        .pNext = nullptr,
+        .srcAccessMask = 0U,
+        .dstAccessMask = VK_ACCESS_SHADER_READ_BIT,
+        .oldLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+        .newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .image = VK_NULL_HANDLE,
+
+        .subresourceRange
+        {
+            .aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT,
+            .baseMipLevel = 0U,
+            .levelCount = 1U,
+            .baseArrayLayer = 0U,
+            .layerCount = 1U
+        }
+    };
+
     for ( size_t i = 0U; i < lightCount; ++i )
     {
         auto const [light, shadowmap] = pointLightPass.GetPointLightInfo ( i );
@@ -237,6 +264,19 @@ void PointLightLightup::Destroy ( VkDevice device )
 
         VkDescriptorImageInfo& image = _imageInfo[ i ];
         image.imageView = shadowmap->GetImageView ();
+        barrier.image = shadowmap->GetImage ();
+
+        vkCmdPipelineBarrier ( _transferCommandBuffer,
+            VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+            0U,
+            0U,
+            nullptr,
+            0U,
+            nullptr,
+            1U,
+            &barrier
+        );
 
         VkWriteDescriptorSet &write0 = _writeSets[ writeIndex++ ];
         write0.dstBinding = 0U;
@@ -291,13 +331,6 @@ void PointLightLightup::Destroy ( VkDevice device )
         write2.pBufferInfo = &buffer;
     }
 
-    vkUpdateDescriptorSets ( renderer.GetDevice (),
-        static_cast<uint32_t> ( _writeSets.size () ),
-        _writeSets.data (),
-        0U,
-        nullptr
-    );
-
     result = android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( _transferCommandBuffer ),
         "PointLightLightup::UpdateGPUData",
         "Can't end command buffer"
@@ -306,11 +339,23 @@ void PointLightLightup::Destroy ( VkDevice device )
     if ( !result )
         return false;
 
-    return android_vulkan::Renderer::CheckVkResult (
+    result = android_vulkan::Renderer::CheckVkResult (
         vkQueueSubmit ( renderer.GetQueue (), 1U, &_submitInfoTransfer, VK_NULL_HANDLE ),
         "PointLightLightup::UpdateGPUData",
         "Can't submit command buffer"
     );
+
+    if ( !result )
+        return false;
+
+    vkUpdateDescriptorSets ( renderer.GetDevice (),
+        static_cast<uint32_t> ( _writeSets.size () ),
+        _writeSets.data (),
+        0U,
+        nullptr
+    );
+
+    return true;
 }
 
 bool PointLightLightup::AllocateNativeDescriptorSets ( android_vulkan::Renderer &renderer, size_t neededSets )

@@ -40,12 +40,6 @@ class PointLightLightup final
 
         ~PointLightLightup () = default;
 
-        [[maybe_unused, nodiscard]] bool UpdateGPUData ( android_vulkan::Renderer &renderer,
-            PointLightPass const &pointLightPass,
-            GXMat4 const &viewerLocal,
-            GXMat4 const &view
-        );
-
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
             VkCommandBuffer commandBuffer,
             VkRenderPass renderPass,
@@ -55,9 +49,17 @@ class PointLightLightup final
 
         void Destroy ( VkDevice device );
 
+        [[nodiscard]] android_vulkan::MeshGeometry const& GetLightVolume () const;
+
         [[maybe_unused]] void Lightup ( VkCommandBuffer commandBuffer,
             size_t lightIndex,
             GXMat4 const &transform
+        );
+
+        [[maybe_unused, nodiscard]] bool UpdateGPUData ( android_vulkan::Renderer &renderer,
+            PointLightPass const &pointLightPass,
+            GXMat4 const &viewerLocal,
+            GXMat4 const &view
         );
 
     private:

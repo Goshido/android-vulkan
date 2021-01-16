@@ -24,6 +24,7 @@ RenderSession::RenderSession () noexcept:
     _gBufferSlotMapper {},
     _geometryPass {},
     _lightVolume {},
+    _lightupCommonDescriptorSet {},
     _opaqueMeshCount ( 0U ),
     _texturePresentProgram {},
     _pointLightPass {},
@@ -54,7 +55,10 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, ePresentTarget tar
     if ( !_presentPass.AcquirePresentTarget ( renderer ) )
         return false;
 
-    if ( !_pointLightPass.Execute ( _geometryPass.GetSceneData (), _opaqueMeshCount, renderer ) )
+    if ( !_lightupCommonDescriptorSet.Update ( renderer, _gBuffer.GetResolution (), _cvvToView ) )
+        return false;
+
+    if ( !_pointLightPass.ExecuteShadowPhase ( renderer, _geometryPass.GetSceneData (), _opaqueMeshCount ) )
         return false;
 
     VkCommandBuffer commandBuffer = _geometryPass.Execute ( renderer,
@@ -143,6 +147,12 @@ bool RenderSession::Init ( android_vulkan::Renderer &renderer, VkExtent2D const 
         return false;
     }
 
+    if ( !_lightupCommonDescriptorSet.Init ( renderer ) )
+    {
+        Destroy ( renderer.GetDevice () );
+        return false;
+    }
+
     if ( !_geometryPass.Init ( renderer, _gBuffer.GetResolution (), _gBufferRenderPass, _gBufferFramebuffer ) )
     {
         Destroy ( renderer.GetDevice () );
@@ -192,6 +202,7 @@ void RenderSession::Destroy ( VkDevice device )
     }
 
     _geometryPass.Destroy ( device );
+    _lightupCommonDescriptorSet.Destroy ( device );
     _lightVolume.Destroy ( device );
 
     if ( _gBufferFramebuffer != VK_NULL_HANDLE )

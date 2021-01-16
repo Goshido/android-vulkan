@@ -52,6 +52,8 @@ class LightVolumeProgram final : public Program
             return STENCIL_INITIAL_VALUE;
         }
 
+        void SetTransform ( VkCommandBuffer commandBuffer, GXMat4 const &transform );
+
     private:
         [[nodiscard]] DescriptorSetInfo const& GetResourceInfo () const override;
 

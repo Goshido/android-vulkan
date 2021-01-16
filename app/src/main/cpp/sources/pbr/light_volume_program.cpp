@@ -114,6 +114,17 @@ void LightVolumeProgram::Destroy ( VkDevice device )
     AV_UNREGISTER_SHADER_MODULE ( "LightVolumeProgram::_vertexShader" )
 }
 
+void LightVolumeProgram::SetTransform ( VkCommandBuffer commandBuffer, const GXMat4 &transform )
+{
+    vkCmdPushConstants ( commandBuffer,
+        _pipelineLayout,
+        VK_SHADER_STAGE_VERTEX_BIT,
+        0U,
+        sizeof ( PushConstants ),
+        &transform
+    );
+}
+
 Program::DescriptorSetInfo const& LightVolumeProgram::GetResourceInfo () const
 {
     static DescriptorSetInfo const null;

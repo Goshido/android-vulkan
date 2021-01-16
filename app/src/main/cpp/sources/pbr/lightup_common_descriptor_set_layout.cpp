@@ -1,4 +1,4 @@
-#include <pbr/lightup_common_descriptror_set_layout.h>
+#include <pbr/lightup_common_descriptor_set_layout.h>
 
 GX_DISABLE_COMMON_WARNINGS
 

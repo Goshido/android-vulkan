@@ -48,9 +48,17 @@ class PointLightPass final
 
         ~PointLightPass () = default;
 
-        [[nodiscard]] bool Execute ( SceneData const &sceneData,
-            size_t opaqueMeshCount,
-            android_vulkan::Renderer &renderer
+        [[nodiscard, maybe_unused]] bool ExecuteLightupPhase ( android_vulkan::Renderer &renderer,
+            LightVolume &lightVolume,
+            VkCommandBuffer commandBuffer,
+            GXMat4 const &viewerLocal,
+            GXMat4 const &view,
+            GXMat4 const &viewProjection
+        );
+
+        [[nodiscard]] bool ExecuteShadowPhase ( android_vulkan::Renderer &renderer,
+            SceneData const &sceneData,
+            size_t opaqueMeshCount
         );
 
         [[nodiscard]] bool Init ( LightVolume const &lightVolume,

@@ -42,12 +42,12 @@ class LightVolumeProgram final : public Program
 
         void Destroy ( VkDevice device ) override;
 
-        [[maybe_unused]] [[nodiscard]] constexpr static uint32_t GetLightVolumeStencilValue ()
+        [[nodiscard]] constexpr static uint32_t GetLightVolumeStencilValue ()
         {
             return STENCIL_INITIAL_VALUE - 1U;
         }
 
-        [[maybe_unused]] [[nodiscard]] constexpr static uint32_t GetStencilInitialValue ()
+        [[nodiscard]] constexpr static uint32_t GetStencilInitialValue ()
         {
             return STENCIL_INITIAL_VALUE;
         }

@@ -68,10 +68,10 @@ class Texture2D final
         [[nodiscard]] VkImageView GetImageView () const;
         [[nodiscard]] uint8_t GetMipLevelCount () const;
         [[nodiscard]] std::string const& GetName () const;
-        [[maybe_unused]] [[nodiscard]] VkExtent2D const& GetResolution () const;
+        [[nodiscard]] VkExtent2D const& GetResolution () const;
 
         // Supported formats: PNG.
-        [[nodiscard]] [[maybe_unused]] bool UploadData ( std::string const &fileName,
+        [[nodiscard]] bool UploadData ( std::string const &fileName,
             eFormat format,
             bool isGenerateMipmaps,
             Renderer &renderer,

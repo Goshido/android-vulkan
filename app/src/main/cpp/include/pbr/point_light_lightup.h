@@ -40,7 +40,7 @@ class PointLightLightup final
 
         ~PointLightLightup () = default;
 
-        [[maybe_unused]] [[nodiscard]] bool UpdateGPUData ( android_vulkan::Renderer &renderer,
+        [[maybe_unused, nodiscard]] bool UpdateGPUData ( android_vulkan::Renderer &renderer,
             PointLightPass const &pointLightPass,
             GXMat4 const &viewerLocal,
             GXMat4 const &view

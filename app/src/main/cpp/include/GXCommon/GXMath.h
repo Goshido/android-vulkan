@@ -1,4 +1,4 @@
-// version 1.57
+// version 1.58
 
 #ifndef GX_MATH
 #define GX_MATH
@@ -64,11 +64,11 @@ struct [[maybe_unused]] GXVec2 final
     [[maybe_unused]] GXVoid Multiply ( GXVec2 const &a, GXVec2 const &b );
     [[maybe_unused]] GXVoid Multiply ( GXVec2 const &v, GXFloat scale );
 
-    [[maybe_unused]] [[nodiscard]] GXFloat DotProduct ( GXVec2 const &other ) const;
-    [[maybe_unused]] [[nodiscard]] GXFloat Length () const;
-    [[maybe_unused]] [[nodiscard]] GXFloat SquaredLength () const;
+    [[maybe_unused, nodiscard]] GXFloat DotProduct ( GXVec2 const &other ) const;
+    [[maybe_unused, nodiscard]] GXFloat Length () const;
+    [[maybe_unused, nodiscard]] GXFloat SquaredLength () const;
 
-    [[maybe_unused]] [[nodiscard]] GXBool IsEqual ( GXVec2 const &other ) const;
+    [[maybe_unused, nodiscard]] GXBool IsEqual ( GXVec2 const &other ) const;
 };
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -113,13 +113,13 @@ struct [[maybe_unused]] GXVec3 final
     }
 
     [[maybe_unused]] GXVoid SetX ( GXFloat x );
-    [[maybe_unused]] [[nodiscard]] GXFloat GetX () const;
+    [[maybe_unused, nodiscard]] GXFloat GetX () const;
 
     [[maybe_unused]] GXVoid SetY ( GXFloat y );
-    [[maybe_unused]] [[nodiscard]] GXFloat GetY () const;
+    [[maybe_unused, nodiscard]] GXFloat GetY () const;
 
     [[maybe_unused]] GXVoid SetZ ( GXFloat z );
-    [[maybe_unused]] [[nodiscard]] GXFloat GetZ () const;
+    [[maybe_unused, nodiscard]] GXFloat GetZ () const;
 
     [[maybe_unused]] GXVoid Init ( GXFloat x, GXFloat y, GXFloat z );
     [[maybe_unused]] GXVoid Normalize ();
@@ -131,13 +131,13 @@ struct [[maybe_unused]] GXVec3 final
     [[maybe_unused]] GXVoid Multiply ( GXVec3 const &a, GXFloat scale );
     [[maybe_unused]] GXVoid Multiply ( GXVec3 const &a, GXVec3 const &b );
 
-    [[maybe_unused]] [[nodiscard]] GXFloat DotProduct ( GXVec3 const &other ) const;
+    [[maybe_unused, nodiscard]] GXFloat DotProduct ( GXVec3 const &other ) const;
     [[maybe_unused]] GXVoid CrossProduct ( GXVec3 const &a, GXVec3 const &b );
 
-    [[maybe_unused]] [[nodiscard]] GXFloat Length () const;
-    [[maybe_unused]] [[nodiscard]] GXFloat SquaredLength () const;
-    [[maybe_unused]] [[nodiscard]] GXFloat Distance ( GXVec3 const &other ) const;
-    [[maybe_unused]] [[nodiscard]] GXFloat SquaredDistance ( GXVec3 const &other ) const;
+    [[maybe_unused, nodiscard]] GXFloat Length () const;
+    [[maybe_unused, nodiscard]] GXFloat SquaredLength () const;
+    [[maybe_unused, nodiscard]] GXFloat Distance ( GXVec3 const &other ) const;
+    [[maybe_unused, nodiscard]] GXFloat SquaredDistance ( GXVec3 const &other ) const;
 
     [[maybe_unused]] GXVoid LinearInterpolation ( GXVec3 const &start,
         GXVec3 const &finish,
@@ -145,11 +145,11 @@ struct [[maybe_unused]] GXVec3 final
     );
 
     [[maybe_unused]] GXVoid Project ( GXVec3 const &vector, GXVec3 const &axis );
-    [[maybe_unused]] [[nodiscard]] GXBool IsEqual ( GXVec3 const &other );
+    [[maybe_unused, nodiscard]] GXBool IsEqual ( GXVec3 const &other );
 
-    [[maybe_unused]] [[nodiscard]] static GXVec3 const& GetAbsoluteX ();
-    [[maybe_unused]] [[nodiscard]] static GXVec3 const& GetAbsoluteY ();
-    [[maybe_unused]] [[nodiscard]] static GXVec3 const& GetAbsoluteZ ();
+    [[maybe_unused, nodiscard]] static GXVec3 const& GetAbsoluteX ();
+    [[maybe_unused, nodiscard]] static GXVec3 const& GetAbsoluteY ();
+    [[maybe_unused, nodiscard]] static GXVec3 const& GetAbsoluteZ ();
 
     //baseX - correct direction, adjustedY - desirable, adjustedZ - calculated.
     [[maybe_unused]] static GXVoid GXCALL MakeOrthonormalBasis ( GXVec3 &baseX, GXVec3 &adjustedY, GXVec3 &adjustedZ );
@@ -222,25 +222,25 @@ struct [[maybe_unused]] GXVec4 final
     [[maybe_unused]] GXVoid Init ( GXFloat x, GXFloat y, GXFloat z, GXFloat w );
 
     [[maybe_unused]] GXVoid SetX ( GXFloat x );
-    [[maybe_unused]] [[nodiscard]] GXFloat GetX () const;
+    [[maybe_unused, nodiscard]] GXFloat GetX () const;
 
     [[maybe_unused]] GXVoid SetY ( GXFloat y );
-    [[maybe_unused]] [[nodiscard]] GXFloat GetY () const;
+    [[maybe_unused, nodiscard]] GXFloat GetY () const;
 
     [[maybe_unused]] GXVoid SetZ ( GXFloat z );
-    [[maybe_unused]] [[nodiscard]] GXFloat GetZ () const;
+    [[maybe_unused, nodiscard]] GXFloat GetZ () const;
 
     [[maybe_unused]] GXVoid SetW ( GXFloat w );
-    [[maybe_unused]] [[nodiscard]] GXFloat GetW () const;
+    [[maybe_unused, nodiscard]] GXFloat GetW () const;
 
     [[maybe_unused]] GXVoid Sum ( GXVec4 const &a, GXVec4 const &b );
     [[maybe_unused]] GXVoid Sum ( GXVec4 const &a, GXFloat bScale, GXVec4 const &b );
     [[maybe_unused]] GXVoid Substract ( GXVec4 const &a, GXVec4 const &b );
 
-    [[maybe_unused]] [[nodiscard]] GXFloat DotProduct ( GXVec4 const &other ) const;
+    [[maybe_unused, nodiscard]] GXFloat DotProduct ( GXVec4 const &other ) const;
 
-    [[maybe_unused]] [[nodiscard]] GXFloat Length () const;
-    [[maybe_unused]] [[nodiscard]] GXFloat SquaredLength () const;
+    [[maybe_unused, nodiscard]] GXFloat Length () const;
+    [[maybe_unused, nodiscard]] GXFloat SquaredLength () const;
 };
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -271,7 +271,7 @@ struct [[maybe_unused]] GXVec6 final
     [[maybe_unused]] GXVoid Init ( GXFloat a1, GXFloat a2, GXFloat a3, GXFloat a4, GXFloat a5, GXFloat a6 );
     [[maybe_unused]] GXVoid From ( const GXVec3 &v1, const GXVec3 &v2 );
 
-    [[maybe_unused]] [[nodiscard]] GXFloat DotProduct ( const GXVec6 &other ) const;
+    [[maybe_unused, nodiscard]] GXFloat DotProduct ( const GXVec6 &other ) const;
     [[maybe_unused]] GXVoid Sum ( const GXVec6 &a, const GXVec6 &b );
     [[maybe_unused]] GXVoid Sum ( const GXVec6 &a, GXFloat bScale, const GXVec6 &b );
     [[maybe_unused]] GXVoid Multiply ( const GXVec6 &a, GXFloat factor );
@@ -309,19 +309,19 @@ struct [[maybe_unused]] GXColorRGB final
 
     // [0.0F +inf)
     [[maybe_unused]] GXVoid SetRed ( GXFloat red );
-    [[maybe_unused]] [[nodiscard]] GXFloat GetRed () const;
+    [[maybe_unused, nodiscard]] GXFloat GetRed () const;
 
     // [0.0F +inf)
     [[maybe_unused]] GXVoid SetGreen ( GXFloat green );
-    [[maybe_unused]] [[nodiscard]] GXFloat GetGreen () const;
+    [[maybe_unused, nodiscard]] GXFloat GetGreen () const;
 
     // [0.0F +inf)
     [[maybe_unused]] GXVoid SetBlue ( GXFloat blue );
-    [[maybe_unused]] [[nodiscard]] GXFloat GetBlue () const;
+    [[maybe_unused, nodiscard]] GXFloat GetBlue () const;
 
     // [0.0f 1.0F]
     [[maybe_unused]] GXVoid SetAlpha ( GXFloat alpha );
-    [[maybe_unused]] [[nodiscard]] GXFloat GetAlpha () const;
+    [[maybe_unused, nodiscard]] GXFloat GetAlpha () const;
 
     [[maybe_unused]] GXVoid From ( GXUByte red, GXUByte green, GXUByte blue, GXFloat alpha );
     [[maybe_unused]] GXVoid From ( GXColorHSV const &color );
@@ -357,19 +357,19 @@ struct [[maybe_unused]] GXColorHSV final
 
     // [0.0F 360.0F]
     [[maybe_unused]] GXVoid SetHue ( GXFloat hue );
-    [[maybe_unused]] [[nodiscard]] GXFloat GetHue () const;
+    [[maybe_unused, nodiscard]] GXFloat GetHue () const;
 
     // [0.0F 100.0F]
     [[maybe_unused]] GXVoid SetSaturation ( GXFloat saturation );
-    [[maybe_unused]] [[nodiscard]] GXFloat GetSaturation () const;
+    [[maybe_unused, nodiscard]] GXFloat GetSaturation () const;
 
     // [0.0F 100.0F]
     [[maybe_unused]] GXVoid SetValue ( GXFloat value );
-    [[maybe_unused]] [[nodiscard]] GXFloat GetValue () const;
+    [[maybe_unused, nodiscard]] GXFloat GetValue () const;
 
     // [0.0F 100.0F]
     [[maybe_unused]] GXVoid SetAlpha ( GXFloat alpha );
-    [[maybe_unused]] [[nodiscard]] GXFloat GetAlpha () const;
+    [[maybe_unused, nodiscard]] GXFloat GetAlpha () const;
 
     [[maybe_unused]] GXVoid From ( GXColorRGB const &color );
 };
@@ -403,8 +403,8 @@ struct [[maybe_unused]] GXPreciseComplex final
 
     [[maybe_unused]] GXVoid Init ( GXDouble real, GXDouble imaginary );
 
-    [[maybe_unused]] [[nodiscard]] GXDouble Length () const;
-    [[maybe_unused]] [[nodiscard]] GXDouble SquaredLength () const;
+    [[maybe_unused, nodiscard]] GXDouble Length () const;
+    [[maybe_unused, nodiscard]] GXDouble SquaredLength () const;
 
     // Method returns GX_FALSE if ( 0.0 + 0.0i ) ^ 0 will happen.
     [[maybe_unused]] GXBool Power ( GXUInt power );
@@ -454,16 +454,16 @@ struct [[maybe_unused]] GXQuat final
     [[maybe_unused]] GXVoid Init ( GXFloat r, GXFloat a, GXFloat b, GXFloat c );
 
     [[maybe_unused]] GXVoid SetR ( GXFloat r );
-    [[maybe_unused]] [[nodiscard]] GXFloat GetR () const;
+    [[maybe_unused, nodiscard]] GXFloat GetR () const;
 
     [[maybe_unused]] GXVoid SetA ( GXFloat a );
-    [[maybe_unused]] [[nodiscard]] GXFloat GetA () const;
+    [[maybe_unused, nodiscard]] GXFloat GetA () const;
 
     [[maybe_unused]] GXVoid SetB ( GXFloat b );
-    [[maybe_unused]] [[nodiscard]] GXFloat GetB () const;
+    [[maybe_unused, nodiscard]] GXFloat GetB () const;
 
     [[maybe_unused]] GXVoid SetC ( GXFloat c );
-    [[maybe_unused]] [[nodiscard]] GXFloat GetC () const;
+    [[maybe_unused, nodiscard]] GXFloat GetC () const;
 
     [[maybe_unused]] GXVoid Identity ();
     [[maybe_unused]] GXVoid Normalize ();
@@ -707,15 +707,15 @@ struct [[maybe_unused]] GXAABB final
     [[maybe_unused]] GXVoid AddVertex ( GXVec3 const &vertex );
     [[maybe_unused]] GXVoid AddVertex ( GXFloat x, GXFloat y, GXFloat z );
 
-    [[maybe_unused]] [[nodiscard]] GXBool IsOverlaped ( GXAABB const &other ) const;
-    [[maybe_unused]] [[nodiscard]] GXBool IsOverlaped ( GXVec3 const &point ) const;
-    [[maybe_unused]] [[nodiscard]] GXBool IsOverlaped ( GXFloat x, GXFloat y, GXFloat z ) const;
+    [[maybe_unused, nodiscard]] GXBool IsOverlaped ( GXAABB const &other ) const;
+    [[maybe_unused, nodiscard]] GXBool IsOverlaped ( GXVec3 const &point ) const;
+    [[maybe_unused, nodiscard]] GXBool IsOverlaped ( GXFloat x, GXFloat y, GXFloat z ) const;
 
     [[maybe_unused]] GXVoid GetCenter ( GXVec3 &center ) const;
-    [[maybe_unused]] [[nodiscard]] GXFloat GetWidth () const;
-    [[maybe_unused]] [[nodiscard]] GXFloat GetHeight () const;
-    [[maybe_unused]] [[nodiscard]] GXFloat GetDepth () const;
-    [[maybe_unused]] [[nodiscard]] GXFloat GetSphereRadius () const;
+    [[maybe_unused, nodiscard]] GXFloat GetWidth () const;
+    [[maybe_unused, nodiscard]] GXFloat GetHeight () const;
+    [[maybe_unused, nodiscard]] GXFloat GetDepth () const;
+    [[maybe_unused, nodiscard]] GXFloat GetSphereRadius () const;
 };
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -752,8 +752,8 @@ struct [[maybe_unused]] GXPlane final
     [[maybe_unused]] GXVoid Normalize ();
     [[maybe_unused]] GXVoid Flip ();
 
-    [[maybe_unused]] [[nodiscard]] eGXPlaneClassifyVertex ClassifyVertex ( GXVec3 const &vertex ) const;
-    [[maybe_unused]] [[nodiscard]] eGXPlaneClassifyVertex ClassifyVertex ( GXFloat x, GXFloat y, GXFloat z ) const;
+    [[maybe_unused, nodiscard]] eGXPlaneClassifyVertex ClassifyVertex ( GXVec3 const &vertex ) const;
+    [[maybe_unused, nodiscard]] eGXPlaneClassifyVertex ClassifyVertex ( GXFloat x, GXFloat y, GXFloat z ) const;
 };
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -773,7 +773,7 @@ class [[maybe_unused]] GXProjectionClipPlanes final
         [[maybe_unused]] GXVoid From ( GXMat4 const &src );
 
         // Trivial invisibility test.
-        [[maybe_unused]] [[nodiscard]] GXBool IsVisible ( GXAABB const &bounds ) const;
+        [[maybe_unused, nodiscard]] GXBool IsVisible ( GXAABB const &bounds ) const;
 
     private:
         [[nodiscard]] GXUByte PlaneTest ( GXFloat x, GXFloat y, GXFloat z ) const;
@@ -781,8 +781,8 @@ class [[maybe_unused]] GXProjectionClipPlanes final
 
 //---------------------------------------------------------------------------------------------------------------------
 
-[[maybe_unused]] [[nodiscard]] GXFloat GXCALL GXDegToRad ( GXFloat degrees );
-[[maybe_unused]] [[nodiscard]] GXFloat GXCALL GXRadToDeg ( GXFloat radians );
+[[maybe_unused, nodiscard]] GXFloat GXCALL GXDegToRad ( GXFloat degrees );
+[[maybe_unused, nodiscard]] GXFloat GXCALL GXRadToDeg ( GXFloat radians );
 
 [[maybe_unused]] GXVoid GXCALL GXConvert3DSMaxToGXEngine ( GXVec3 &gx_out,
     GXFloat max_x,
@@ -791,8 +791,8 @@ class [[maybe_unused]] GXProjectionClipPlanes final
 );
 
 [[maybe_unused]] GXVoid GXCALL GXRandomize ();
-[[maybe_unused]] [[nodiscard]] GXFloat GXCALL GXRandomNormalize ();
-[[maybe_unused]] [[nodiscard]] GXFloat GXCALL GXRandomBetween ( GXFloat from, GXFloat to );
+[[maybe_unused, nodiscard]] GXFloat GXCALL GXRandomNormalize ();
+[[maybe_unused, nodiscard]] GXFloat GXCALL GXRandomBetween ( GXFloat from, GXFloat to );
 [[maybe_unused]] GXVoid GXCALL GXRandomBetween ( GXVec3 &out, GXVec3 const &from, GXVec3 const &to );
 
 [[maybe_unused]] GXVoid GXCALL GXGetTangentBitangent ( GXVec3 &outTangent,
@@ -804,11 +804,11 @@ class [[maybe_unused]] GXProjectionClipPlanes final
     GXUPointer uvStride
 );
 
-[[maybe_unused]] [[nodiscard]] GXFloat GXCALL GXClampf ( GXFloat value, GXFloat minValue, GXFloat maxValue );
-[[maybe_unused]] [[nodiscard]] GXInt GXCALL GXClampi ( GXInt value, GXInt minValue, GXInt maxValue );
+[[maybe_unused, nodiscard]] GXFloat GXCALL GXClampf ( GXFloat value, GXFloat minValue, GXFloat maxValue );
+[[maybe_unused, nodiscard]] GXInt GXCALL GXClampi ( GXInt value, GXInt minValue, GXInt maxValue );
 
-[[maybe_unused]] [[nodiscard]] GXFloat GXCALL GXMinf ( GXFloat a, GXFloat b );
-[[maybe_unused]] [[nodiscard]] GXFloat GXCALL GXMaxf ( GXFloat a, GXFloat b );
+[[maybe_unused, nodiscard]] GXFloat GXCALL GXMinf ( GXFloat a, GXFloat b );
+[[maybe_unused, nodiscard]] GXFloat GXCALL GXMaxf ( GXFloat a, GXFloat b );
 
 [[maybe_unused]] GXVoid GXCALL GXGetBarycentricCoords ( GXVec3 &out,
     GXVec3 const &point,

@@ -17,7 +17,7 @@ LightVolume::LightVolume () noexcept:
     // NOTHING
 }
 
-[[maybe_unused]] bool LightVolume::Execute ( android_vulkan::Renderer &/*renderer*/,
+bool LightVolume::Execute ( android_vulkan::Renderer &/*renderer*/,
     MeshRef const &/*mesh*/,
     GXMat4 const &/*transform*/,
     VkCommandBuffer /*commandBuffer*/

@@ -49,7 +49,7 @@ class MeshGeometry final
         [[nodiscard]] VkBuffer const& GetIndexBuffer () const;
         [[nodiscard]] std::string const& GetName () const;
         [[nodiscard]] uint32_t GetVertexCount () const;
-        [[maybe_unused]] [[nodiscard]] bool IsIndexBufferPresent () const;
+        [[maybe_unused, nodiscard]] bool IsIndexBufferPresent () const;
 
         // Mesh geometry is not unique if it was loaded from .mesh file.
         // Mesh geometry is unique if it was created from raw data.
@@ -61,7 +61,7 @@ class MeshGeometry final
             VkCommandBuffer commandBuffer
         );
 
-        [[maybe_unused]] [[nodiscard]] bool LoadMesh ( uint8_t const* data,
+        [[maybe_unused, nodiscard]] bool LoadMesh ( uint8_t const* data,
             size_t size,
             uint32_t vertexCount,
             VkBufferUsageFlags usage,
@@ -69,7 +69,7 @@ class MeshGeometry final
             VkCommandBuffer commandBuffer
         );
 
-        [[maybe_unused]] [[nodiscard]] bool LoadMesh ( uint8_t const* vertexData,
+        [[nodiscard]] bool LoadMesh ( uint8_t const* vertexData,
             size_t vertexDataSize,
             uint32_t const* indices,
             uint32_t indexCount,

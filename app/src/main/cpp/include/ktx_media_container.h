@@ -37,13 +37,13 @@ class KTXMediaContainer final
 
         ~KTXMediaContainer () = default;
 
-        [[nodiscard]] [[maybe_unused]] VkFormat GetFormat () const;
-        [[nodiscard]] [[maybe_unused]] uint8_t GetMipCount () const;
+        [[nodiscard]] VkFormat GetFormat () const;
+        [[nodiscard]] uint8_t GetMipCount () const;
 
         // Note the "mip" with index zero has the maximum resolution.
-        [[nodiscard]] [[maybe_unused]] MipInfo const& GetMip ( uint8_t mip ) const;
+        [[nodiscard]]  MipInfo const& GetMip ( uint8_t mip ) const;
 
-        [[nodiscard]] [[maybe_unused]] VkDeviceSize GetTotalSize () const;
+        [[nodiscard]] VkDeviceSize GetTotalSize () const;
 
         // The method family returns true if success, otherwise the method family returns false.
         [[nodiscard]] bool Init ( char const* fileName );

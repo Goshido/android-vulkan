@@ -126,12 +126,12 @@ std::string const& Texture2D::GetName () const
     return _fileName;
 }
 
-[[maybe_unused]] VkExtent2D const& Texture2D::GetResolution () const
+VkExtent2D const& Texture2D::GetResolution () const
 {
     return _resolution;
 }
 
-[[maybe_unused]] bool Texture2D::UploadData ( std::string const &fileName,
+bool Texture2D::UploadData ( std::string const &fileName,
     eFormat format,
     bool isGenerateMipmaps,
     Renderer &renderer,

@@ -32,7 +32,7 @@ class Light
         Light ( Light && ) = delete;
         Light& operator = ( Light && ) = delete;
 
-        [[maybe_unused]] [[nodiscard]] eLightType GetType () const;
+        [[nodiscard]] eLightType GetType () const;
 
     protected:
         explicit Light ( eLightType type ) noexcept;

@@ -28,7 +28,7 @@ constexpr static float const Z_NEAR = 0.05F;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-[[maybe_unused]] PointLight::PointLight () noexcept:
+PointLight::PointLight () noexcept:
     Light ( eLightType::PointLight ),
     _bounds {},
     _hue ( ToUnorm ( DEFAULT_HUE_RED ), ToUnorm ( DEFAULT_HUE_GREEN ), ToUnorm ( DEFAULT_HUE_BLUE ) ),
@@ -76,17 +76,17 @@ GXAABB const& PointLight::GetBounds () const
     return _bounds;
 }
 
-[[maybe_unused]] android_vulkan::Half3 const& PointLight::GetHue () const
+android_vulkan::Half3 const& PointLight::GetHue () const
 {
     return _hue;
 }
 
-[[maybe_unused]] android_vulkan::Half PointLight::GetIntensity () const
+android_vulkan::Half PointLight::GetIntensity () const
 {
     return _intensity;
 }
 
-[[maybe_unused]] GXVec3 const& PointLight::GetLocation () const
+GXVec3 const& PointLight::GetLocation () const
 {
     return _location;
 }

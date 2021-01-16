@@ -1,4 +1,4 @@
-﻿// version 1.57
+﻿// version 1.58
 
 #include <GXCommon/GXMath.h>
 #include <GXCommon/GXWarning.h>

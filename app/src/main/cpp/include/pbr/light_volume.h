@@ -34,7 +34,7 @@ class LightVolume final
 
         ~LightVolume () = default;
 
-        [[maybe_unused]] [[nodiscard]] bool Execute ( android_vulkan::Renderer &renderer,
+        [[nodiscard]] bool Execute ( android_vulkan::Renderer &renderer,
             MeshRef const &mesh,
             GXMat4 const &transform,
             VkCommandBuffer commandBuffer
@@ -49,7 +49,7 @@ class LightVolume final
         void Destroy ( VkDevice device );
 
         [[nodiscard]] VkRenderPass GetRenderPass () const;
-        [[maybe_unused]] [[nodiscard]] VkDescriptorSet GetLighupCommonDescriptorSet () const;
+        [[maybe_unused, nodiscard]] VkDescriptorSet GetLighupCommonDescriptorSet () const;
         [[nodiscard]] static uint32_t GetLightupSubpass ();
 
     private:

@@ -38,11 +38,11 @@ class TextureCube final
 
         void FreeResources ( VkDevice device );
 
-        [[maybe_unused]] [[nodiscard]] VkFormat GetFormat () const;
-        [[maybe_unused]] [[nodiscard]] VkImage GetImage () const;
+        [[maybe_unused, nodiscard]] VkFormat GetFormat () const;
+        [[maybe_unused, nodiscard]] VkImage GetImage () const;
         [[nodiscard]] VkImageView GetImageView () const;
-        [[maybe_unused]] [[nodiscard]] uint8_t GetMipLevelCount () const;
-        [[maybe_unused]] [[nodiscard]] VkExtent2D const& GetResolution () const;
+        [[maybe_unused, nodiscard]] uint8_t GetMipLevelCount () const;
+        [[maybe_unused, nodiscard]] VkExtent2D const& GetResolution () const;
 };
 
 } // namespace android_vulkan

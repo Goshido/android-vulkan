@@ -63,9 +63,9 @@ class PointLight final : public Light
         ~PointLight () override = default;
 
         [[nodiscard]] GXAABB const& GetBounds () const;
-        [[maybe_unused]] [[nodiscard]] android_vulkan::Half3 const& GetHue () const;
-        [[maybe_unused]] [[nodiscard]] android_vulkan::Half GetIntensity () const;
-        [[maybe_unused]] [[nodiscard]] GXVec3 const& GetLocation () const;
+        [[nodiscard]] android_vulkan::Half3 const& GetHue () const;
+        [[nodiscard]] android_vulkan::Half GetIntensity () const;
+        [[nodiscard]] GXVec3 const& GetLocation () const;
         [[nodiscard]] Matrices const& GetMatrices ();
         [[nodiscard]] GXMat4 const& GetProjection ();
 

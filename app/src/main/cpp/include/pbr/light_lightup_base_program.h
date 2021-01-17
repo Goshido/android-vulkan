@@ -31,7 +31,7 @@ class LightLightupBaseProgram : public Program
         LightLightupBaseProgram ( LightLightupBaseProgram && ) = delete;
         LightLightupBaseProgram& operator = ( LightLightupBaseProgram && ) = delete;
 
-        [[maybe_unused]] void SetViewData ( VkCommandBuffer commandBuffer, VkDescriptorSet set );
+        void SetCommonDescriptorSet ( VkCommandBuffer commandBuffer, VkDescriptorSet set );
 
     protected:
         explicit LightLightupBaseProgram ( std::string &&name ) noexcept;

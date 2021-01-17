@@ -20,10 +20,13 @@ PointLightPass::PointLightPass () noexcept:
     _descriptorPool ( VK_NULL_HANDLE ),
     _fence ( VK_NULL_HANDLE ),
     _interacts {},
+    _lightVolume {},
     _lightup {},
+    _lightupCommonDescriptorSet {},
+    _lightupRenderPassInfo {},
     _program {},
     _renderCommandBuffer ( VK_NULL_HANDLE ),
-    _renderPass ( VK_NULL_HANDLE ),
+    _shadowmapRenderPass ( VK_NULL_HANDLE ),
     _submitInfoRender {},
     _submitInfoTransfer {},
     _transferCommandBuffer ( VK_NULL_HANDLE ),
@@ -33,14 +36,17 @@ PointLightPass::PointLightPass () noexcept:
     // NOTHING
 }
 
-[[maybe_unused]] bool PointLightPass::ExecuteLightupPhase ( android_vulkan::Renderer &renderer,
-    LightVolume &lightVolume,
+bool PointLightPass::ExecuteLightupPhase ( android_vulkan::Renderer &renderer,
+    bool &isCommonSetBind,
     VkCommandBuffer commandBuffer,
     GXMat4 const &viewerLocal,
     GXMat4 const &view,
     GXMat4 const &viewProjection
 )
 {
+    if ( _interacts.empty () )
+        return true;
+
     if ( !_lightup.UpdateGPUData ( renderer, *this, viewerLocal, view ) )
         return false;
 
@@ -64,9 +70,20 @@ PointLightPass::PointLightPass () noexcept:
         local.SetW ( alpha );
 
         transform.Multiply ( local, viewProjection );
+        vkCmdBeginRenderPass ( commandBuffer, &_lightupRenderPassInfo, VK_SUBPASS_CONTENTS_INLINE );
 
-        lightVolume.Execute ( _lightup.GetLightVolume (), transform, commandBuffer );
+        _lightVolume.Execute ( _lightup.GetLightVolume (), transform, commandBuffer );
+        vkCmdNextSubpass ( commandBuffer, VK_SUBPASS_CONTENTS_INLINE );
+
+        if ( !isCommonSetBind )
+        {
+            _lightup.SetCommonDescriptorSet ( commandBuffer, _lightupCommonDescriptorSet.GetSet () );
+            isCommonSetBind = true;
+        }
+
         _lightup.Lightup ( commandBuffer, lightIndex, transform );
+        vkCmdEndRenderPass ( commandBuffer );
+
         ++lightIndex;
     }
 
@@ -86,16 +103,40 @@ bool PointLightPass::ExecuteShadowPhase ( android_vulkan::Renderer &renderer,
     return GenerateShadowmaps ( descriptorSetStorage.data (), renderer );
 }
 
-bool PointLightPass::Init ( LightVolume const &lightVolume,
-    VkExtent2D const &resolution,
-    android_vulkan::Renderer &renderer
-)
+bool PointLightPass::Init ( android_vulkan::Renderer &renderer, GBuffer &gBuffer )
 {
+    _lightupRenderPassInfo.framebuffer = VK_NULL_HANDLE;
+    _lightupRenderPassInfo.renderPass = VK_NULL_HANDLE;
+
     VkDevice device = renderer.GetDevice ();
 
-    if ( !CreateRenderPass ( renderer ) )
+    if ( !CreateShadowmapRenderPass ( device ) )
     {
         Destroy ( device );
+        return false;
+    }
+
+    if ( !CreateLightupRenderPass ( device, gBuffer ) )
+    {
+        Destroy ( device );
+        return false;
+    }
+
+    if ( !CreateLightupFramebuffer ( device, gBuffer ) )
+    {
+        Destroy ( device );
+        return false;
+    }
+
+    if ( !_lightVolume.Init ( renderer, gBuffer, _lightupRenderPassInfo.renderPass ) )
+    {
+        Destroy ( renderer.GetDevice () );
+        return false;
+    }
+
+    if ( !_lightupCommonDescriptorSet.Init ( renderer, gBuffer ) )
+    {
+        Destroy ( renderer.GetDevice () );
         return false;
     }
 
@@ -105,7 +146,7 @@ bool PointLightPass::Init ( LightVolume const &lightVolume,
         .height = SHADOWMAP_RESOLUTION
     };
 
-    if ( !_program.Init ( renderer, _renderPass, 0U, shadowmapResolution ) )
+    if ( !_program.Init ( renderer, _shadowmapRenderPass, 0U, shadowmapResolution ) )
     {
         Destroy ( device );
         return false;
@@ -188,9 +229,9 @@ bool PointLightPass::Init ( LightVolume const &lightVolume,
 
     result = _lightup.Init ( renderer,
         _transferCommandBuffer,
-        lightVolume.GetRenderPass (),
+        _lightupRenderPassInfo.renderPass,
         LightVolume::GetLightupSubpass (),
-        resolution
+        gBuffer.GetResolution ()
     );
 
     if ( !result )
@@ -263,13 +304,29 @@ void PointLightPass::Destroy ( VkDevice device )
     }
 
     _program.Destroy ( device );
+    _lightupCommonDescriptorSet.Destroy ( device );
+    _lightVolume.Destroy ( device );
 
-    if ( _renderPass == VK_NULL_HANDLE )
+    if ( _lightupRenderPassInfo.framebuffer != VK_NULL_HANDLE )
+    {
+        vkDestroyFramebuffer ( device, _lightupRenderPassInfo.framebuffer, nullptr );
+        _lightupRenderPassInfo.framebuffer = VK_NULL_HANDLE;
+        AV_UNREGISTER_FRAMEBUFFER ( "PointLightPass::_lightupFramebuffer" )
+    }
+
+    if ( _lightupRenderPassInfo.renderPass != VK_NULL_HANDLE )
+    {
+        vkDestroyRenderPass ( device, _lightupRenderPassInfo.renderPass, nullptr );
+        _lightupRenderPassInfo.renderPass = VK_NULL_HANDLE;
+        AV_UNREGISTER_RENDER_PASS ( "PointLightPass::_lightupRenderPass" )
+    }
+
+    if ( _shadowmapRenderPass == VK_NULL_HANDLE )
         return;
 
-    vkDestroyRenderPass ( device, _renderPass, nullptr );
-    _renderPass = VK_NULL_HANDLE;
-    AV_UNREGISTER_RENDER_PASS ( "PointLightPass::_renderPass" )
+    vkDestroyRenderPass ( device, _shadowmapRenderPass, nullptr );
+    _shadowmapRenderPass = VK_NULL_HANDLE;
+    AV_UNREGISTER_RENDER_PASS ( "PointLightPass::_shadowmapRenderPass" )
 }
 
 size_t PointLightPass::GetPointLightCount () const
@@ -298,6 +355,14 @@ void PointLightPass::Submit ( LightRef const &light )
     _interacts.emplace_back ( std::make_pair ( light, ShadowCasters () ) );
 }
 
+bool PointLightPass::Update ( android_vulkan::Renderer &renderer,
+    VkExtent2D const &resolution,
+    GXMat4 const &cvvToView
+)
+{
+    return _lightupCommonDescriptorSet.Update ( renderer, resolution, cvvToView );
+}
+
 PointLightPass::PointLightShadowmapInfo* PointLightPass::AcquirePointLightShadowmap (
     android_vulkan::Renderer &renderer
 )
@@ -318,7 +383,7 @@ PointLightPass::PointLightShadowmapInfo* PointLightPass::AcquirePointLightShadow
     constexpr VkImageUsageFlags const flags = AV_VK_FLAG ( VK_IMAGE_USAGE_SAMPLED_BIT ) |
         AV_VK_FLAG ( VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT );
 
-    if ( !shadowmap->CreateRenderTarget ( resolution, renderer.GetDefaultDepthStencilFormat (), flags, renderer ) )
+    if ( !shadowmap->CreateRenderTarget ( resolution, VK_FORMAT_D32_SFLOAT, flags, renderer ) )
         return nullptr;
 
     VkImageView const attachments[] = { shadowmap->GetImageView () };
@@ -328,7 +393,7 @@ PointLightPass::PointLightShadowmapInfo* PointLightPass::AcquirePointLightShadow
         .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0U,
-        .renderPass = _renderPass,
+        .renderPass = _shadowmapRenderPass,
         .attachmentCount = static_cast<uint32_t> ( std::size ( attachments ) ),
         .pAttachments = attachments,
         .width = resolution.width,
@@ -356,13 +421,300 @@ PointLightPass::PointLightShadowmapInfo* PointLightPass::AcquirePointLightShadow
     return &_shadowmaps.emplace_back ( std::move ( info ) );
 }
 
-bool PointLightPass::CreateRenderPass ( android_vulkan::Renderer &renderer )
+bool PointLightPass::CreateLightupFramebuffer ( VkDevice device, GBuffer &gBuffer )
+{
+    VkImageView const attachments[] =
+    {
+        gBuffer.GetAlbedo ().GetImageView (),
+        gBuffer.GetHDRAccumulator ().GetImageView (),
+        gBuffer.GetNormal ().GetImageView (),
+        gBuffer.GetParams ().GetImageView (),
+        gBuffer.GetDepthStencil ().GetImageView ()
+    };
+
+    VkExtent2D const& resolution = gBuffer.GetResolution ();
+
+    VkFramebufferCreateInfo const info
+    {
+        .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .renderPass = _lightupRenderPassInfo.renderPass,
+        .attachmentCount = static_cast<uint32_t> ( std::size ( attachments ) ),
+        .pAttachments = attachments,
+        .width = resolution.width,
+        .height = resolution.height,
+        .layers = 1U
+    };
+
+    bool result = android_vulkan::Renderer::CheckVkResult (
+        vkCreateFramebuffer ( device, &info, nullptr, &_lightupRenderPassInfo.framebuffer ),
+        "PointLightPass::CreateLightupFramebuffer",
+        "Can't create framebuffer"
+    );
+
+    if ( !result )
+        return false;
+
+    AV_REGISTER_FRAMEBUFFER ( "PointLightPass::_lightupFramebuffer" )
+    return true;
+}
+
+bool PointLightPass::CreateLightupRenderPass ( VkDevice device, GBuffer &gBuffer )
+{
+    VkAttachmentDescription const attachments[]
+    {
+        // #0: albedo
+        {
+            .flags = 0U,
+            .format = gBuffer.GetAlbedo ().GetFormat (),
+            .samples = VK_SAMPLE_COUNT_1_BIT,
+            .loadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
+            .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+            .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+            .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+            .initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+            .finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+        },
+
+        // #1: HDR accumulator
+        {
+            .flags = 0U,
+            .format = gBuffer.GetHDRAccumulator ().GetFormat (),
+            .samples = VK_SAMPLE_COUNT_1_BIT,
+            .loadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
+            .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+            .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+            .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+            .initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+            .finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+        },
+
+        // #2: normal
+        {
+            .flags = 0U,
+            .format = gBuffer.GetNormal ().GetFormat (),
+            .samples = VK_SAMPLE_COUNT_1_BIT,
+            .loadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
+            .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+            .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+            .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+            .initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+            .finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+        },
+
+        // #3: params
+        {
+            .flags = 0U,
+            .format = gBuffer.GetParams ().GetFormat (),
+            .samples = VK_SAMPLE_COUNT_1_BIT,
+            .loadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
+            .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+            .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+            .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+            .initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+            .finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+        },
+
+        // #4: depth|stencil
+        {
+            .flags = 0U,
+            .format = gBuffer.GetDepthStencil ().GetFormat (),
+            .samples = VK_SAMPLE_COUNT_1_BIT,
+            .loadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
+            .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+            .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+            .stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE,
+            .initialLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+            .finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
+        }
+    };
+
+    constexpr static VkAttachmentReference const depthStencilReference =
+    {
+        .attachment = 4U,
+        .layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
+    };
+
+    constexpr static VkAttachmentReference const colorReferences[] =
+    {
+        // #1: HDR accumulator
+        {
+            .attachment = 1U,
+            .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+        }
+    };
+
+    constexpr static VkAttachmentReference const readOnlyDepth
+    {
+        .attachment = 4U,
+        .layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL
+    };
+
+    constexpr static VkAttachmentReference const inputAttachments[] =
+    {
+        {
+            .attachment = 0U,
+            .layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+        },
+        {
+            .attachment = 2U,
+            .layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+        },
+        {
+            .attachment = 3U,
+            .layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+        },
+        {
+            .attachment = 4U,
+            .layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+        }
+    };
+
+    constexpr static VkSubpassDescription subpasses[] =
+    {
+        {
+            .flags = 0U,
+            .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
+            .inputAttachmentCount = 0U,
+            .pInputAttachments = nullptr,
+            .colorAttachmentCount = 0U,
+            .pColorAttachments = nullptr,
+            .pResolveAttachments = nullptr,
+            .pDepthStencilAttachment = &depthStencilReference,
+            .preserveAttachmentCount = 0U,
+            .pPreserveAttachments = nullptr
+        },
+        {
+            .flags = 0U,
+            .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
+            .inputAttachmentCount = static_cast<uint32_t> ( std::size ( inputAttachments ) ),
+            .pInputAttachments = inputAttachments,
+            .colorAttachmentCount = static_cast<uint32_t> ( std::size ( colorReferences ) ),
+            .pColorAttachments = colorReferences,
+            .pResolveAttachments = nullptr,
+            .pDepthStencilAttachment = &readOnlyDepth,
+            .preserveAttachmentCount = 0U,
+            .pPreserveAttachments = nullptr
+        }
+    };
+
+    constexpr static VkSubpassDependency const dependencies[] =
+    {
+        {
+            .srcSubpass = 0U,
+            .dstSubpass = 1U,
+            .srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+            .dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+            .srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+            .dstAccessMask = VK_ACCESS_SHADER_READ_BIT,
+            .dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
+        },
+        {
+            .srcSubpass = 0U,
+            .dstSubpass = 1U,
+            .srcStageMask = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+            .dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+            .srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+            .dstAccessMask = VK_ACCESS_SHADER_READ_BIT,
+            .dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
+        }
+    };
+
+    VkRenderPassCreateInfo const renderPassInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .attachmentCount = static_cast<uint32_t> ( std::size ( attachments ) ),
+        .pAttachments = attachments,
+        .subpassCount = static_cast<uint32_t> ( std::size ( subpasses ) ),
+        .pSubpasses = subpasses,
+        .dependencyCount = static_cast<uint32_t> ( std::size ( dependencies ) ),
+        .pDependencies = dependencies
+    };
+
+    bool const result = android_vulkan::Renderer::CheckVkResult (
+        vkCreateRenderPass ( device, &renderPassInfo, nullptr, &_lightupRenderPassInfo.renderPass ),
+        "PointLightPass::CreateLightupRenderPass",
+        "Can't create light-up render pass"
+    );
+
+    if ( !result )
+        return false;
+
+    AV_REGISTER_RENDER_PASS ( "PointLightPass::_lightupRenderPass" )
+
+    constexpr static VkClearValue const clearValues[] =
+    {
+        // albedo - not used actually
+        {
+            .color
+            {
+                .float32 = { 0.0F, 0.0F, 0.0F, 0.0F }
+            }
+        },
+
+        // emission - not used actually
+        {
+            .color
+            {
+                .float32 = { 0.0F, 0.0F, 0.0F, 0.0F }
+            }
+        },
+
+        // normal - not used actually
+        {
+            .color
+            {
+                .float32 = { 0.5F, 0.5F, 0.5F, 0.0F }
+            }
+        },
+
+        // param - not used actually
+        {
+            .color
+            {
+                .float32 = { 0.5F, 0.5F, 0.5F, 0.0F }
+            }
+        },
+
+        // depth|stencil - but this will be used, obviously
+        {
+            .depthStencil
+            {
+                .depth = 1.0F,
+                .stencil = LightVolumeProgram::GetStencilInitialValue ()
+            }
+        }
+    };
+
+    _lightupRenderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    _lightupRenderPassInfo.pNext = nullptr;
+
+    _lightupRenderPassInfo.renderArea =
+    {
+        .offset
+        {
+            .x = 0,
+            .y = 0
+        },
+
+        .extent = gBuffer.GetResolution ()
+    };
+
+    _lightupRenderPassInfo.clearValueCount = static_cast<uint32_t> ( std::size ( clearValues ) );
+    _lightupRenderPassInfo.pClearValues = clearValues;
+    return true;
+}
+
+bool PointLightPass::CreateShadowmapRenderPass ( VkDevice device )
 {
     VkAttachmentDescription const depthAttachment[] =
     {
         {
             .flags = 0U,
-            .format = renderer.GetDefaultDepthStencilFormat (),
+            .format = VK_FORMAT_D32_SFLOAT,
             .samples = VK_SAMPLE_COUNT_1_BIT,
             .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
             .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
@@ -433,15 +785,15 @@ bool PointLightPass::CreateRenderPass ( android_vulkan::Renderer &renderer )
     };
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateRenderPass ( renderer.GetDevice (), &renderPassInfo, nullptr, &_renderPass ),
-        "PointLightPass::CreateRenderPass",
+        vkCreateRenderPass ( device, &renderPassInfo, nullptr, &_shadowmapRenderPass ),
+        "PointLightPass::CreateShadowmapRenderPass",
         "Can't create render pass"
     );
 
     if ( !result )
         return false;
 
-    AV_REGISTER_RENDER_PASS ( "PointLightPass::_renderPass" )
+    AV_REGISTER_RENDER_PASS ( "PointLightPass::_shadowmapRenderPass" )
     return true;
 }
 
@@ -496,7 +848,7 @@ bool PointLightPass::GenerateShadowmaps ( VkDescriptorSet const* descriptorSets,
     VkRenderPassBeginInfo renderPassInfo;
     renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     renderPassInfo.pNext = nullptr;
-    renderPassInfo.renderPass = _renderPass;
+    renderPassInfo.renderPass = _shadowmapRenderPass;
     renderPassInfo.renderArea = renderArea;
     renderPassInfo.clearValueCount = std::size ( clearValues );
     renderPassInfo.pClearValues = clearValues;

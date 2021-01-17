@@ -3,7 +3,8 @@
 
 
 #include <uniform_buffer.h>
-#include <pbr/lightup_common_descriptor_set_layout.h>
+#include "gbuffer.h"
+#include "lightup_common_descriptor_set_layout.h"
 
 
 namespace pbr {
@@ -28,9 +29,9 @@ class LightupCommonDescriptorSet final
 
         ~LightupCommonDescriptorSet () = default;
 
-        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer );
+        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, GBuffer &gBuffer );
         void Destroy ( VkDevice device );
-        [[maybe_unused, nodiscard]] VkDescriptorSet GetSet () const;
+        [[nodiscard]] VkDescriptorSet GetSet () const;
 
         [[nodiscard]] bool Update ( android_vulkan::Renderer &renderer,
             VkExtent2D const &resolution,

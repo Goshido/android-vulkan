@@ -4,7 +4,7 @@
 
 namespace pbr {
 
-constexpr static const uint32_t COLOR_RENDER_TARGET_COUNT = 4U;
+constexpr static const uint32_t COLOR_RENDER_TARGET_COUNT = 1U;
 constexpr static const size_t STAGE_COUNT = 2U;
 constexpr static const size_t VERTEX_ATTRIBUTE_COUNT = 1U;
 
@@ -191,22 +191,7 @@ VkPipelineColorBlendStateCreateInfo const* PointLightLightupProgram::InitColorBl
     VkPipelineColorBlendAttachmentState* attachments
 ) const
 {
-    VkPipelineColorBlendAttachmentState& albedo = attachments[ 0U ];
-    albedo.blendEnable = VK_FALSE;
-    albedo.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
-    albedo.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
-    albedo.colorBlendOp = VK_BLEND_OP_ADD;
-    albedo.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-    albedo.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-    albedo.alphaBlendOp = VK_BLEND_OP_ADD;
-    albedo.colorWriteMask = 0U;
-
-    constexpr auto const limit = static_cast<ptrdiff_t const> ( COLOR_RENDER_TARGET_COUNT );
-
-    for ( ptrdiff_t i = 2; i < limit; ++i )
-        memcpy ( attachments + i, &albedo, sizeof ( albedo ) );
-
-    VkPipelineColorBlendAttachmentState& hdrAccumulator = attachments[ 1U ];
+    VkPipelineColorBlendAttachmentState& hdrAccumulator = attachments[ 0U ];
     hdrAccumulator.blendEnable = VK_TRUE;
     hdrAccumulator.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
     hdrAccumulator.dstColorBlendFactor = VK_BLEND_FACTOR_ONE;

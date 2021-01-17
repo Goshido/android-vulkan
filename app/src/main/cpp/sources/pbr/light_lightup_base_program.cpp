@@ -3,7 +3,7 @@
 
 namespace pbr {
 
-[[maybe_unused]] void LightLightupBaseProgram::SetViewData ( VkCommandBuffer commandBuffer, VkDescriptorSet set )
+void LightLightupBaseProgram::SetCommonDescriptorSet ( VkCommandBuffer commandBuffer, VkDescriptorSet set )
 {
     vkCmdBindDescriptorSets ( commandBuffer,
         VK_PIPELINE_BIND_POINT_GRAPHICS,

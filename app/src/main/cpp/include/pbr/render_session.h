@@ -3,9 +3,7 @@
 
 
 #include <GXCommon/GXMath.h>
-#include "gbuffer.h"
 #include "geometry_pass.h"
-#include "lightup_common_descriptor_set.h"
 #include "point_light_pass.h"
 #include "present_pass.h"
 #include "shadow_casters.h"
@@ -36,8 +34,6 @@ class RenderSession final
         VkDescriptorSet                 _gBufferSlotMapper[ static_cast<size_t> ( ePresentTarget::TargetCount ) ];
 
         GeometryPass                    _geometryPass;
-        LightVolume                     _lightVolume;
-        LightupCommonDescriptorSet      _lightupCommonDescriptorSet;
         size_t                          _opaqueMeshCount;
 
         TexturePresentProgram           _texturePresentProgram;

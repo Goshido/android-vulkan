@@ -2,6 +2,8 @@
 #define PBR_POINT_LIGHT_PASS_H
 
 
+#include "gbuffer.h"
+#include "lightup_common_descriptor_set.h"
 #include "light_volume.h"
 #include "point_light_lightup.h"
 #include "point_light_shadowmap_generator_program.h"
@@ -26,10 +28,13 @@ class PointLightPass final
         VkDescriptorPool                        _descriptorPool;
         VkFence                                 _fence;
         std::vector<Interact>                   _interacts;
+        LightVolume                             _lightVolume;
         PointLightLightup                       _lightup;
+        LightupCommonDescriptorSet              _lightupCommonDescriptorSet;
+        VkRenderPassBeginInfo                   _lightupRenderPassInfo;
         PointLightShadowmapGeneratorProgram     _program;
         VkCommandBuffer                         _renderCommandBuffer;
-        VkRenderPass                            _renderPass;
+        VkRenderPass                            _shadowmapRenderPass;
         std::vector<PointLightShadowmapInfo>    _shadowmaps;
         VkSubmitInfo                            _submitInfoRender;
         VkSubmitInfo                            _submitInfoTransfer;
@@ -48,8 +53,8 @@ class PointLightPass final
 
         ~PointLightPass () = default;
 
-        [[nodiscard, maybe_unused]] bool ExecuteLightupPhase ( android_vulkan::Renderer &renderer,
-            LightVolume &lightVolume,
+        [[nodiscard]] bool ExecuteLightupPhase ( android_vulkan::Renderer &renderer,
+            bool &isCommonSetBind,
             VkCommandBuffer commandBuffer,
             GXMat4 const &viewerLocal,
             GXMat4 const &view,
@@ -61,11 +66,7 @@ class PointLightPass final
             size_t opaqueMeshCount
         );
 
-        [[nodiscard]] bool Init ( LightVolume const &lightVolume,
-            VkExtent2D const &resolution,
-            android_vulkan::Renderer &renderer
-        );
-
+        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, GBuffer &gBuffer );
         void Destroy ( VkDevice device );
 
         [[nodiscard]] size_t GetPointLightCount () const;
@@ -74,11 +75,18 @@ class PointLightPass final
         void Reset ();
         void Submit ( LightRef const &light );
 
+        [[nodiscard]] bool Update ( android_vulkan::Renderer &renderer,
+            VkExtent2D const &resolution,
+            GXMat4 const &cvvToView
+        );
+
     private:
         // The method returns nullptr if it fails. Otherwise the method returns a valid pointer.
         [[nodiscard]] PointLightShadowmapInfo* AcquirePointLightShadowmap ( android_vulkan::Renderer &renderer );
 
-        [[nodiscard]] bool CreateRenderPass ( android_vulkan::Renderer &renderer );
+        [[nodiscard]] bool CreateLightupFramebuffer ( VkDevice device, GBuffer &gBuffer );
+        [[nodiscard]] bool CreateLightupRenderPass ( VkDevice device, GBuffer &gBuffer );
+        [[nodiscard]] bool CreateShadowmapRenderPass ( VkDevice device );
         void DestroyDescriptorPool ( VkDevice device );
 
         [[nodiscard]] bool GenerateShadowmaps ( VkDescriptorSet const* descriptorSets,

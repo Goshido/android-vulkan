@@ -122,7 +122,7 @@ bool PointLightLightup::Init ( android_vulkan::Renderer &renderer,
         return false;
     }
 
-    if ( !_uniformPool.Init ( renderer, sizeof ( LightLightupBaseProgram::ViewData ) ) )
+    if ( !_uniformPool.Init ( renderer, sizeof ( PointLightLightupProgram::LightData ) ) )
     {
         Destroy ( device );
         return false;
@@ -192,7 +192,7 @@ android_vulkan::MeshGeometry const& PointLightLightup::GetLightVolume () const
     return _volumeMesh;
 }
 
-[[maybe_unused]] void PointLightLightup::Lightup ( VkCommandBuffer commandBuffer,
+void PointLightLightup::Lightup ( VkCommandBuffer commandBuffer,
     size_t lightIndex,
     GXMat4 const &transform
 )
@@ -203,7 +203,12 @@ android_vulkan::MeshGeometry const& PointLightLightup::GetLightVolume () const
     vkCmdDrawIndexed ( commandBuffer, _volumeMesh.GetVertexCount (), 1U, 0U, 0, 0U );
 }
 
-[[maybe_unused]] bool PointLightLightup::UpdateGPUData ( android_vulkan::Renderer &renderer,
+void PointLightLightup::SetCommonDescriptorSet ( VkCommandBuffer commandBuffer, VkDescriptorSet set )
+{
+    _program.SetCommonDescriptorSet ( commandBuffer, set );
+}
+
+bool PointLightLightup::UpdateGPUData ( android_vulkan::Renderer &renderer,
     PointLightPass const &pointLightPass,
     GXMat4 const &viewerLocal,
     GXMat4 const &view
@@ -235,11 +240,14 @@ android_vulkan::MeshGeometry const& PointLightLightup::GetLightVolume () const
     GXVec3 alpha;
     GXVec3 betta;
 
+    // Note all shadowmap formats are same so grab first shadowmap and resolve.
+    auto const [probeLight, probeShadowmap] = pointLightPass.GetPointLightInfo ( 0U );
+
     VkImageMemoryBarrier barrier
     {
         .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
         .pNext = nullptr,
-        .srcAccessMask = 0U,
+        .srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
         .dstAccessMask = VK_ACCESS_SHADER_READ_BIT,
         .oldLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
         .newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
@@ -249,11 +257,11 @@ android_vulkan::MeshGeometry const& PointLightLightup::GetLightVolume () const
 
         .subresourceRange
         {
-            .aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT,
+            .aspectMask = android_vulkan::Renderer::ResolveImageViewAspect ( probeShadowmap->GetFormat () ),
             .baseMipLevel = 0U,
             .levelCount = 1U,
             .baseArrayLayer = 0U,
-            .layerCount = 1U
+            .layerCount = 6U
         }
     };
 

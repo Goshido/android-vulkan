@@ -23,8 +23,6 @@ RenderSession::RenderSession () noexcept:
     _gBufferRenderPass ( VK_NULL_HANDLE ),
     _gBufferSlotMapper {},
     _geometryPass {},
-    _lightVolume {},
-    _lightupCommonDescriptorSet {},
     _opaqueMeshCount ( 0U ),
     _texturePresentProgram {},
     _pointLightPass {},
@@ -55,7 +53,7 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, ePresentTarget tar
     if ( !_presentPass.AcquirePresentTarget ( renderer ) )
         return false;
 
-    if ( !_lightupCommonDescriptorSet.Update ( renderer, _gBuffer.GetResolution (), _cvvToView ) )
+    if ( !_pointLightPass.Update ( renderer, _gBuffer.GetResolution (), _cvvToView ) )
         return false;
 
     if ( !_pointLightPass.ExecuteShadowPhase ( renderer, _geometryPass.GetSceneData (), _opaqueMeshCount ) )
@@ -71,6 +69,22 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, ePresentTarget tar
 
     if ( commandBuffer == VK_NULL_HANDLE )
         return false;
+
+    // RESTORE IT!
+    /*
+    bool isCommonSetBind = false;
+
+    bool result = _pointLightPass.ExecuteLightupPhase ( renderer,
+        isCommonSetBind,
+        commandBuffer,
+        _viewerLocal,
+        _view,
+        _viewProjection
+    );
+
+    if ( !result )
+        return false;
+    */
 
     android_vulkan::Texture2D* targetTexture;
 
@@ -141,25 +155,22 @@ bool RenderSession::Init ( android_vulkan::Renderer &renderer, VkExtent2D const 
         return false;
     }
 
-    if ( !_lightVolume.Init ( renderer, _gBuffer, _gBufferFramebuffer, _viewerLocal ) )
-    {
-        Destroy ( renderer.GetDevice () );
-        return false;
-    }
-
-    if ( !_lightupCommonDescriptorSet.Init ( renderer ) )
-    {
-        Destroy ( renderer.GetDevice () );
-        return false;
-    }
-
     if ( !_geometryPass.Init ( renderer, _gBuffer.GetResolution (), _gBufferRenderPass, _gBufferFramebuffer ) )
     {
         Destroy ( renderer.GetDevice () );
         return false;
     }
 
-    if ( !_pointLightPass.Init ( _lightVolume, resolution, renderer ) || !_presentPass.Init ( renderer ) )
+    // TODO
+    GXMat4 todo;
+
+    todo.Perspective ( GXDegToRad ( 60.0F ),
+        static_cast<float> ( resolution.width ) / static_cast<float> ( resolution.height ),
+        0.1F,
+        1.0e+3F
+    );
+
+    if ( !_pointLightPass.Init ( renderer, _gBuffer ) || !_presentPass.Init ( renderer ) )
     {
         Destroy ( renderer.GetDevice () );
         return false;
@@ -202,8 +213,6 @@ void RenderSession::Destroy ( VkDevice device )
     }
 
     _geometryPass.Destroy ( device );
-    _lightupCommonDescriptorSet.Destroy ( device );
-    _lightVolume.Destroy ( device );
 
     if ( _gBufferFramebuffer != VK_NULL_HANDLE )
     {

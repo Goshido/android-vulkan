@@ -71,7 +71,7 @@ class Texture2D final
         [[nodiscard]] VkExtent2D const& GetResolution () const;
 
         // Supported formats: PNG.
-        [[nodiscard]] bool UploadData ( std::string const &fileName,
+        [[maybe_unused, nodiscard]] bool UploadData ( std::string const &fileName,
             eFormat format,
             bool isGenerateMipmaps,
             Renderer &renderer,

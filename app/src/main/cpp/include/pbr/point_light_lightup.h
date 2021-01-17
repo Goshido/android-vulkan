@@ -51,12 +51,14 @@ class PointLightLightup final
 
         [[nodiscard]] android_vulkan::MeshGeometry const& GetLightVolume () const;
 
-        [[maybe_unused]] void Lightup ( VkCommandBuffer commandBuffer,
+        void Lightup ( VkCommandBuffer commandBuffer,
             size_t lightIndex,
             GXMat4 const &transform
         );
 
-        [[maybe_unused, nodiscard]] bool UpdateGPUData ( android_vulkan::Renderer &renderer,
+        void SetCommonDescriptorSet ( VkCommandBuffer commandBuffer, VkDescriptorSet set );
+
+        [[nodiscard]] bool UpdateGPUData ( android_vulkan::Renderer &renderer,
             PointLightPass const &pointLightPass,
             GXMat4 const &viewerLocal,
             GXMat4 const &view

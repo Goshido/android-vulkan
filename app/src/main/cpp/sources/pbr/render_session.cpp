@@ -70,8 +70,6 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, ePresentTarget tar
     if ( commandBuffer == VK_NULL_HANDLE )
         return false;
 
-    // RESTORE IT!
-    /*
     bool isCommonSetBind = false;
 
     bool result = _pointLightPass.ExecuteLightupPhase ( renderer,
@@ -84,7 +82,6 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, ePresentTarget tar
 
     if ( !result )
         return false;
-    */
 
     android_vulkan::Texture2D* targetTexture;
 
@@ -128,7 +125,7 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, ePresentTarget tar
         &_gBufferImageBarrier
     );
 
-    bool const result = _presentPass.Execute ( commandBuffer,
+    result = _presentPass.Execute ( commandBuffer,
         _gBufferSlotMapper[ static_cast<size_t> ( target ) ],
         _geometryPass.GetFence (),
         renderer

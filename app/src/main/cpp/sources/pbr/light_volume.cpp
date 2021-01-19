@@ -17,6 +17,10 @@ void LightVolume::Execute ( android_vulkan::MeshGeometry const &mesh,
 {
     _program.Bind ( commandBuffer );
     _program.SetTransform ( commandBuffer, transform );
+
+    constexpr VkDeviceSize const offset = 0U;
+    vkCmdBindVertexBuffers ( commandBuffer, 0U, 1U, &mesh.GetVertexBuffer (), &offset );
+    vkCmdBindIndexBuffer ( commandBuffer, mesh.GetIndexBuffer (), 0U, VK_INDEX_TYPE_UINT32 );
     vkCmdDrawIndexed ( commandBuffer, mesh.GetVertexCount (), 1U, 0U, 0, 0U );
 }
 

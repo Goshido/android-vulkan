@@ -200,6 +200,10 @@ void PointLightLightup::Lightup ( VkCommandBuffer commandBuffer,
     _program.Bind ( commandBuffer );
     _program.SetTransform ( commandBuffer, transform );
     _program.SetDescriptorSet ( commandBuffer, _descriptorSets[ lightIndex ] );
+
+    constexpr VkDeviceSize const offset = 0U;
+    vkCmdBindVertexBuffers ( commandBuffer, 0U, 1U, &_volumeMesh.GetVertexBuffer (), &offset );
+    vkCmdBindIndexBuffer ( commandBuffer, _volumeMesh.GetIndexBuffer (), 0U, VK_INDEX_TYPE_UINT32 );
     vkCmdDrawIndexed ( commandBuffer, _volumeMesh.GetVertexCount (), 1U, 0U, 0, 0U );
 }
 
@@ -214,6 +218,7 @@ bool PointLightLightup::UpdateGPUData ( android_vulkan::Renderer &renderer,
     GXMat4 const &view
 )
 {
+    _uniformPool.Reset();
     size_t const lightCount = pointLightPass.GetPointLightCount ();
 
     if ( !AllocateNativeDescriptorSets ( renderer, lightCount ) )

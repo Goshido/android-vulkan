@@ -79,7 +79,7 @@ bool PBRGame::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime )
     for ( auto &component : _components )
         component->Submit ( _renderSession );
 
-    return _renderSession.End ( renderer, ePresentTarget::Albedo, deltaTime );
+    return _renderSession.End ( renderer, ePresentTarget::Emission, deltaTime );
 }
 
 bool PBRGame::OnDestroy ( android_vulkan::Renderer &renderer )

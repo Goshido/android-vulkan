@@ -75,9 +75,9 @@ void RenderSessionStats::SubmitOpaque ( uint32_t vertexCount )
     _submitVertices += static_cast<size_t> ( vertexCount );
 }
 
-[[maybe_unused]] void RenderSessionStats::RenderPointLight ()
+void RenderSessionStats::RenderPointLights ( size_t count )
 {
-    ++_renderPointLights;
+    _renderPointLights += count;
 }
 
 void RenderSessionStats::SubmitPointLight ()

@@ -134,10 +134,10 @@ bool PointLightLightup::Init ( android_vulkan::Renderer &renderer,
         GXVec3 ( 0.5F, -0.5F, -0.5F ),
         GXVec3 ( -0.5F, 0.5F, -0.5F ),
         GXVec3 ( 0.5F, 0.5F, -0.5F ),
-        GXVec3 ( -0.5F, -0.5F, 0.5F ),
         GXVec3 ( 0.5F, -0.5F, 0.5F ),
-        GXVec3 ( -0.5F, 0.5F, 0.5F ),
+        GXVec3 ( -0.5F, -0.5F, 0.5F ),
         GXVec3 ( 0.5F, 0.5F, 0.5F ),
+        GXVec3 ( -0.5F, 0.5F, 0.5F ),
     };
 
     constexpr uint32_t const indices[] =
@@ -201,9 +201,6 @@ void PointLightLightup::Lightup ( VkCommandBuffer commandBuffer,
     _program.SetTransform ( commandBuffer, transform );
     _program.SetDescriptorSet ( commandBuffer, _descriptorSets[ lightIndex ] );
 
-    constexpr VkDeviceSize const offset = 0U;
-    vkCmdBindVertexBuffers ( commandBuffer, 0U, 1U, &_volumeMesh.GetVertexBuffer (), &offset );
-    vkCmdBindIndexBuffer ( commandBuffer, _volumeMesh.GetIndexBuffer (), 0U, VK_INDEX_TYPE_UINT32 );
     vkCmdDrawIndexed ( commandBuffer, _volumeMesh.GetVertexCount (), 1U, 0U, 0, 0U );
 }
 

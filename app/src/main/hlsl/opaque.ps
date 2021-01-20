@@ -67,15 +67,15 @@ struct OutputData
 
 half3 GetFinalNormalView ( in half3 tangentView, in half3 bitangentView, in half3 normalView, in float2 uv )
 {
-    const half3 normalData = (half3)g_normalTexture.Sample ( g_normalSampler, uv ).xyz * 2.0h - 1.0h;
+    const half2 normalData = (half2)g_normalTexture.Sample ( g_normalSampler, uv ).xw * 2.0H - 1.0H;
     const half3x3 tbnView = half3x3 ( tangentView, bitangentView, normalView );
-    return normalize ( mul ( normalData, tbnView ) );
+    return normalize ( mul ( half3 ( normalData.x, normalData.y, 1.0H ), tbnView ) );
 }
 
 float4 PackUnitVector ( in half3 v )
 {
     float4 result;
-    result.xyz = (float3)( v * 0.5h + 0.5h );
+    result.xyz = (float3)( v * 0.5H + 0.5H );
     result.w = 0.5f;
     return result;
 }

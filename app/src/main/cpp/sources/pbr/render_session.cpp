@@ -83,6 +83,7 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, ePresentTarget tar
     if ( !result )
         return false;
 
+    _renderSessionStats.RenderPointLights ( _pointLightPass.GetPointLightCount () );
     android_vulkan::Texture2D* targetTexture;
 
     if ( target == ePresentTarget::Albedo )

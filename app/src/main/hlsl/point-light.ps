@@ -119,7 +119,7 @@ void GetParams ( out half roughness, out half ior, out half specularIntencity, o
 {
     const half4 paramSample = (half4)g_params.SubpassLoad ();
 
-    roughness = paramSample.x + EPSILON;
+    roughness = ( paramSample.x * paramSample.x ) + EPSILON;
     ior = paramSample.y * MAXIMUM_IOR + EPSILON;
     specularIntencity = paramSample.z + EPSILON;
     metallic = paramSample.w;
@@ -132,7 +132,8 @@ half GetShadowFactor ( in float3 locationView )
     const float z = max ( faceSelector.x, max ( faceSelector.y, faceSelector.z ) );
     const float4 cvv = mul ( _lightProjection, float4 ( 0.0F, 0.0F, z, 1.0F ) );
 
-    return (half)g_shadowmap.SampleCmpLevelZero ( g_sampler, dir, cvv.z / cvv.w );
+    // TODO fix me!
+    return (half)g_shadowmap.SampleCmpLevelZero ( g_sampler, dir, cvv.z / cvv.w ) * 1.0e-3H + 1.0H;
 }
 
 half3 GetSpecularColor ( in half matallic, in half3 albedo )
@@ -157,7 +158,8 @@ OutputData PS ( in InputData inputData )
 {
     const float3 locationView = RestoreLocationView ( inputData._pixel.xy );
     const half3 viewDirectionView = -normalize ( (half3)locationView );
-    const half3 halfVectorView = normalize ( _toLightDirectionView + viewDirectionView );
+    const half3 toLightDirectionView = normalize ( (half3)( _lightLocationView - locationView ) );
+    const half3 halfVectorView = normalize ( toLightDirectionView + viewDirectionView );
     const half3 normalView = RestoreNormalView ();
 
     half roughness;
@@ -168,13 +170,13 @@ OutputData PS ( in InputData inputData )
 
     const half d = GetDistribution ( normalView, halfVectorView, roughness );
     const half f = GetFresnel ( ior, normalView, viewDirectionView );
-    const half ga = GetGeometryAttenuation ( viewDirectionView, normalView, _toLightDirectionView, roughness );
+    const half ga = GetGeometryAttenuation ( viewDirectionView, normalView, toLightDirectionView, roughness );
 
     const half3 albedo = GetAlbedo ();
     const half3 specularColor = GetSpecularColor ( metallic, albedo );
     const half3 hrdColor = _hue * _intensity;
 
-    const half alpha = dot ( normalView, _toLightDirectionView );
+    const half alpha = dot ( normalView, toLightDirectionView );
     const half betta = dot ( normalView, viewDirectionView );
 
     const half3 diffuse = albedo * hrdColor * INVERSE_PI * ( 1.0H - specularIntensity ) * max ( 0.0H, alpha );

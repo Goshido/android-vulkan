@@ -57,6 +57,13 @@ bool PointLightPass::ExecuteLightupPhase ( android_vulkan::Renderer &renderer,
     GXVec3 alpha;
     size_t lightIndex = 0U;
 
+    constexpr VkDeviceSize const offset = 0U;
+
+    android_vulkan::MeshGeometry const& mesh = _lightup.GetLightVolume ();
+    uint32_t const vertexCount = mesh.GetVertexCount ();
+    vkCmdBindVertexBuffers ( commandBuffer, 0U, 1U, &mesh.GetVertexBuffer (), &offset );
+    vkCmdBindIndexBuffer ( commandBuffer, mesh.GetIndexBuffer (), 0U, VK_INDEX_TYPE_UINT32 );
+
     for ( auto const &[light, casters] : _interacts )
     {
         // Note it's safe cast like that here. "NOLINT" is a clang-tidy control comment.
@@ -72,7 +79,7 @@ bool PointLightPass::ExecuteLightupPhase ( android_vulkan::Renderer &renderer,
         transform.Multiply ( local, viewProjection );
         vkCmdBeginRenderPass ( commandBuffer, &_lightupRenderPassInfo, VK_SUBPASS_CONTENTS_INLINE );
 
-        _lightVolume.Execute ( _lightup.GetLightVolume (), transform, commandBuffer );
+        _lightVolume.Execute ( vertexCount, transform, commandBuffer );
         vkCmdNextSubpass ( commandBuffer, VK_SUBPASS_CONTENTS_INLINE );
 
         if ( !isCommonSetBind )

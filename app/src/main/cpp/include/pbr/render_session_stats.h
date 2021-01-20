@@ -42,7 +42,7 @@ class RenderSessionStats final
         void RenderOpaque ( uint32_t vertexCount, uint32_t instanceCount );
         void SubmitOpaque ( uint32_t vertexCount );
 
-        [[maybe_unused]] void RenderPointLight ();
+        void RenderPointLights ( size_t count );
         void SubmitPointLight ();
 
     private:

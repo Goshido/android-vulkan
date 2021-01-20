@@ -5,7 +5,6 @@
 #include <uniform_buffer.h>
 #include "gbuffer.h"
 #include "light_volume_program.h"
-#include "types.h"
 
 
 namespace pbr {
@@ -26,10 +25,7 @@ class LightVolume final
 
         ~LightVolume () = default;
 
-        void Execute ( android_vulkan::MeshGeometry const &mesh,
-            GXMat4 const &transform,
-            VkCommandBuffer commandBuffer
-        );
+        void Execute ( uint32_t vertexCount, GXMat4 const &transform, VkCommandBuffer commandBuffer );
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
             GBuffer &gBuffer,

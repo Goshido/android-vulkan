@@ -12,6 +12,8 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
+constexpr static float const UNITS_PER_METER = 32.0F;
+
 PointLightLightup::PointLightLightup () noexcept:
     _transferCommandBuffer ( VK_NULL_HANDLE ),
     _commandPool ( VK_NULL_HANDLE ),
@@ -237,10 +239,13 @@ bool PointLightLightup::UpdateGPUData ( android_vulkan::Renderer &renderer,
     if ( !result )
         return false;
 
-    PointLightLightupProgram::LightData lightData;
     size_t writeIndex = 0U;
     GXVec3 alpha;
     GXVec3 betta;
+
+    constexpr float const gamma = 1.0F / UNITS_PER_METER;
+    PointLightLightupProgram::LightData lightData;
+    lightData._sceneScaleFactor = gamma;
 
     // Note all shadowmap formats are same so grab first shadowmap and resolve.
     auto const [probeLight, probeShadowmap] = pointLightPass.GetPointLightInfo ( 0U );

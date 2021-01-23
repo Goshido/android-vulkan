@@ -1,5 +1,9 @@
+// The implementation is based on ideas from LearnOpenGL resourse
+// see https://learnopengl.com/PBR/Theory
+// see https://learnopengl.com/PBR/Lighting
+
 #define EPSILON         1.0e-3H
-#define MAXIMUM_IOR     5.0H
+#define MINIMUM_F0      4.0e-2H
 #define PI              3.141592H
 #define INVERSE_PI      0.31830H
 
@@ -43,13 +47,15 @@ cbuffer LightData:                          register ( b1 )
     matrix                  _viewToLight;
 
     float3                  _lightLocationView;
-    float                   _padding1_0;
+
+    // Must be equal: 1.0F / units-per-meter
+    float                   _sceneScaleFactor;
 
     half3                   _hue;
     half                    _intensity;
 
     half3                   _toLightDirectionView;
-    half                    _padding1_1;
+    half                    _padding1_0;
 };
 
 struct InputData
@@ -65,15 +71,20 @@ struct OutputData
 
 //----------------------------------------------------------------------------------------------------------------------
 
-half GGX ( in half value )
+half3 GetDiffuseK ( in half3 fesnelFactor, in half metallic )
 {
-    return value > 0.0H ? 1.0H : 0.0H;
+    return ( 1.0H - fesnelFactor ) * ( 1.0H - metallic );
 }
 
-half GGXSchlick ( in half3 vectorA, in half3 vectorB, in half roughness )
+half GetDirectK ( in half roughness )
 {
-    const half alpha = max ( 0.0H, dot ( vectorA, vectorB ) );
-    return alpha / ( alpha / ( 1.0H - roughness ) + roughness );
+    const half alpha = roughness + 1.0H;
+    return alpha * alpha * 0.125H;
+}
+
+half GGXSchlick ( in half dotFactor, in half k )
+{
+    return dotFactor / ( k + dotFactor * ( 1.0H - k ) );
 }
 
 half3 GetAlbedo ()
@@ -81,48 +92,43 @@ half3 GetAlbedo ()
     return (half3)g_albedo.SubpassLoad ().xyz;
 }
 
+half GetAttenuation ( in float3 fragToLight )
+{
+    return _intensity / (half)( _sceneScaleFactor * length ( fragToLight ) );
+}
+
 float GetDepth ()
 {
     return g_depth.SubpassLoad ().x;
 }
 
-half GetDistribution ( in half3 normalView, in half3 halfVectorView, in half roughness )
+half GetDistribution ( in half nH, in half roughness )
 {
-    const half alpha = max ( 0.0H, dot ( normalView, halfVectorView ) );
-    const half betta = roughness * roughness;
-    const half gamma = alpha * alpha;
-    const half zeta = alpha * betta + 1.0H - alpha;
+    const half alpha = roughness * roughness;
+    const half beta = alpha * alpha;
+    const half gamma = nH * nH;
+    const half zeta = 1.0H + gamma * ( beta - 1.0H );
 
-    return ( betta * GGX ( alpha ) ) / ( PI * zeta * zeta );
+    return beta / ( PI * zeta * zeta );
 }
 
-half GetFresnel ( in half ior, in half3 normalView, in half3 viewDirectionView )
+half3 GetFresnel ( in half nH, in half metallic, in half3 albedo )
 {
-    const half alpha = ( 1.0H - ior ) / ( 1.0H + ior );
-    const half betta = alpha * alpha;
-    const half gamma = pow ( 1.0H - max ( 0.0H, dot ( normalView, viewDirectionView ) ), 5.0H );
-
-    return betta + ( 1.0H - betta ) * gamma;
+    const half3 f0 = lerp ( (half3)MINIMUM_F0, albedo, (half3)metallic );
+    return f0 + ( 1.0H - f0 ) * pow ( max ( 0.0H, 1.0H - nH ), 5.0H );
 }
 
-half GetGeometryAttenuation ( in half3 viewDirectionView,
-    in half3 normalView,
-    in half3 lightDirectionView,
-    in half roughness
-)
+half GetGeometryAttenuation ( in half nL, in half nV, in half roughness )
 {
-    return GGXSchlick ( normalView, viewDirectionView, roughness ) +
-        GGXSchlick ( normalView, lightDirectionView, roughness );
+    const half k = GetDirectK ( roughness );
+    return GGXSchlick ( nL, k ) * GGXSchlick ( nV, k );
 }
 
-void GetParams ( out half roughness, out half ior, out half specularIntencity, out half metallic )
+void GetParams ( out half roughness, out half metallic )
 {
     const half4 paramSample = (half4)g_params.SubpassLoad ();
-
-    roughness = ( paramSample.x * paramSample.x ) + EPSILON;
-    ior = paramSample.y * MAXIMUM_IOR + EPSILON;
-    specularIntencity = paramSample.z + EPSILON;
-    metallic = paramSample.w;
+    roughness = paramSample.x;
+    metallic = paramSample.z;
 }
 
 half GetShadowFactor ( in float3 locationView )
@@ -136,15 +142,10 @@ half GetShadowFactor ( in float3 locationView )
     return (half)g_shadowmap.SampleCmpLevelZero ( g_sampler, dir, cvv.z / cvv.w ) * 1.0e-3H + 1.0H;
 }
 
-half3 GetSpecularColor ( in half matallic, in half3 albedo )
-{
-    return lerp ( _hue, albedo, (half3)matallic );
-}
-
 float3 RestoreLocationView ( in float2 locationImage )
 {
     const float4 v = mul ( _cvvToView, float4 ( locationImage * _invResolutionFactor - 1.0F, GetDepth (), 1.0F ) );
-    return v.xyz * ( 1.0F / v.z );
+    return v.xyz * ( 1.0F / v.w );
 }
 
 half3 RestoreNormalView ()
@@ -157,34 +158,35 @@ half3 RestoreNormalView ()
 OutputData PS ( in InputData inputData )
 {
     const float3 locationView = RestoreLocationView ( inputData._pixel.xy );
-    const half3 viewDirectionView = -normalize ( (half3)locationView );
-    const half3 toLightDirectionView = normalize ( (half3)( _lightLocationView - locationView ) );
-    const half3 halfVectorView = normalize ( toLightDirectionView + viewDirectionView );
+    const float3 fragToLight = _lightLocationView - locationView;
+
+    const half attenuation = GetAttenuation ( fragToLight );
+    const half3 toViewerView = -normalize ( (half3)locationView );
+    const half3 toLightView = normalize ( (half3)fragToLight );
+    const half3 halfVectorView = normalize ( toLightView + toViewerView );
     const half3 normalView = RestoreNormalView ();
 
     half roughness;
-    half ior;
-    half specularIntensity;
     half metallic;
-    GetParams ( roughness, ior, specularIntensity, metallic );
-
-    const half d = GetDistribution ( normalView, halfVectorView, roughness );
-    const half f = GetFresnel ( ior, normalView, viewDirectionView );
-    const half ga = GetGeometryAttenuation ( viewDirectionView, normalView, toLightDirectionView, roughness );
+    GetParams ( roughness, metallic );
 
     const half3 albedo = GetAlbedo ();
-    const half3 specularColor = GetSpecularColor ( metallic, albedo );
-    const half3 hrdColor = _hue * _intensity;
 
-    const half alpha = dot ( normalView, toLightDirectionView );
-    const half betta = dot ( normalView, viewDirectionView );
+    const half nL = max ( 0.0H, dot ( normalView, toLightView ) );
+    const half nH = max ( 0.0H, dot ( normalView, halfVectorView ) );
+    const half nV = max ( 0.0H, dot ( normalView, toViewerView ) );
 
-    const half3 diffuse = albedo * hrdColor * INVERSE_PI * ( 1.0H - specularIntensity ) * max ( 0.0H, alpha );
-    const half3 specular = specularColor * _intensity * specularIntensity * ( d * f * ga ) / ( 4.0H * alpha * betta );
-    const half shadowFactor = GetShadowFactor ( locationView );
+    const half d = GetDistribution ( nH, roughness );
+    const half3 f = GetFresnel ( nH, metallic, albedo );
+    const half ga = GetGeometryAttenuation ( nL, nV, roughness );
+    const half shadow = GetShadowFactor ( locationView );
+    const half3 kD = GetDiffuseK ( f, metallic );
+
+    const half3 specular = f * d * ga / ( max ( EPSILON, 4.0H * nL * nV ) );
+    const half3 color = shadow * nL * attenuation * _hue * ( specular + kD * albedo * INVERSE_PI );
 
     OutputData result;
-    result._color = float4 ( (float3)( ( diffuse + specular ) * shadowFactor ), 1.0F );
+    result._color = float4 ( (float3)color, 1.0F );
 
     return result;
 }

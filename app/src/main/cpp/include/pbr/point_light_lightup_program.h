@@ -26,13 +26,13 @@ class PointLightLightupProgram final : public LightLightupBaseProgram
             [[maybe_unused]] GXMat4                     _viewToLight;
 
             [[maybe_unused]] GXVec3                     _lightLocationView;
-            [[maybe_unused]] float                      _padding1_0;
+            [[maybe_unused]] float                      _sceneScaleFactor;
 
             [[maybe_unused]] android_vulkan::Half3      _hue;
             [[maybe_unused]] android_vulkan::Half       _intensity;
 
             [[maybe_unused]] android_vulkan::Half3      _toLightDirectionView;
-            [[maybe_unused]] android_vulkan::Half       _padding1_1;
+            [[maybe_unused]] android_vulkan::Half       _padding1_0;
         };
 
         AV_DX_ALIGNMENT_END

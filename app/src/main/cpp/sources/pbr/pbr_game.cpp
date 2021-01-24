@@ -79,7 +79,7 @@ bool PBRGame::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime )
     _lightPhase += static_cast<float> ( deltaTime );
 
     GXVec3 offset ( std::sinf ( _lightPhase ), 0.0F, std::cosf ( _lightPhase ) );
-    offset.Multiply ( offset, 16.0F );
+    offset.Multiply ( offset, 32.0F );
 
     GXVec3 target;
     target.Sum ( _lightOrigin, offset );
@@ -91,7 +91,7 @@ bool PBRGame::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime )
     for ( auto &component : _components )
         component->Submit ( _renderSession );
 
-    return _renderSession.End ( renderer, ePresentTarget::Emission, deltaTime );
+    return _renderSession.End ( renderer, deltaTime );
 }
 
 bool PBRGame::OnDestroy ( android_vulkan::Renderer &renderer )

@@ -17,7 +17,7 @@ class TexturePresentProgram final : public Program
 
         struct PushConstants final
         {
-            GXMat4                              _transform;
+            [[maybe_unused]] GXMat4             _transform;
         };
 
         AV_DX_ALIGNMENT_END

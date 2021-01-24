@@ -11,15 +11,6 @@
 
 namespace pbr {
 
-enum class ePresentTarget : uint8_t
-{
-    Albedo = 0U,
-    Emission = 1U,
-    Normal = 2U,
-    Param = 3U,
-    TargetCount = 4U
-};
-
 // Single threaded class
 class RenderSession final
 {
@@ -31,7 +22,7 @@ class RenderSession final
         VkFramebuffer                   _gBufferFramebuffer;
         VkImageMemoryBarrier            _gBufferImageBarrier;
         VkRenderPass                    _gBufferRenderPass;
-        VkDescriptorSet                 _gBufferSlotMapper[ static_cast<size_t> ( ePresentTarget::TargetCount ) ];
+        VkDescriptorSet                 _gBufferSlotMapper;
 
         GeometryPass                    _geometryPass;
         size_t                          _opaqueMeshCount;
@@ -59,7 +50,7 @@ class RenderSession final
         ~RenderSession () = default;
 
         void Begin ( GXMat4 const &viewerLocal, GXMat4 const &projection );
-        [[nodiscard]] bool End ( android_vulkan::Renderer &renderer, ePresentTarget target, double deltaTime );
+        [[nodiscard]] bool End ( android_vulkan::Renderer &renderer, double deltaTime );
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, VkExtent2D const &resolution );
         void Destroy ( VkDevice device );

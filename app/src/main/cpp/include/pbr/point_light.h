@@ -38,9 +38,10 @@ class PointLight final : public Light
 
     private:
         GXAABB                      _bounds;
+        GXVec3                      _dimensions;
         android_vulkan::Half3       _hue;
         android_vulkan::Half        _intensity;
-        bool                        _isNeedUpdateMatrices;
+        bool                        _isNeedUpdate;
         GXVec3                      _location;
         Matrices                    _matrices;
         GXMat4                      _projection;

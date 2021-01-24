@@ -592,17 +592,12 @@ bool GeometryPass::InitDefaultTextures ( android_vulkan::Renderer &renderer,
     if ( !result )
         return false;
 
-    // See Table 53. Bit mappings for packed 32-bit formats of Vulkan 1.1.108 spec.
-    // https://vulkan.lunarg.com/doc/view/1.1.108.0/mac/chunked_spec/chap37.html#formats-packed
-    //                                        A         R              G              B
-    //                                       0.5F      0.5F           0.5F           0.5F
-    //                                         ><>-------------<>-------------<>-------------<
-    constexpr const uint8_t normal[ 4U ] = { 0b10100000U, 0b00001000U, 0b00000010U, 0b00000000U };
+    constexpr const uint8_t normal[ 4U ] = { 128U, 0U, 0U, 128U };
 
     result = textureLoader ( _normalDefault,
         normal,
         sizeof ( normal ),
-        VK_FORMAT_A2R10G10B10_UNORM_PACK32,
+        VK_FORMAT_R8G8B8A8_UNORM,
         commandBuffers[ 3U ]
     );
 

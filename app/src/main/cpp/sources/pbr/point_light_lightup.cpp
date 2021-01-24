@@ -324,12 +324,7 @@ bool PointLightLightup::UpdateGPUData ( android_vulkan::Renderer &renderer,
         lightData._hue = light->GetHue ();
         lightData._intensity = light->GetIntensity ();
 
-        view.MultiplyAsNormal ( alpha, location );
-        lightData._lightLocationView = alpha;
-
-        alpha.Normalize ();
-        lightData._toLightDirectionView = alpha;
-
+        view.MultiplyAsPoint ( lightData._lightLocationView, location );
         VkDescriptorBufferInfo& buffer = _uniformInfo[ i ];
 
         buffer.buffer = _uniformPool.Acquire ( renderer,

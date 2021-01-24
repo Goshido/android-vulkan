@@ -69,6 +69,8 @@ class PointLight final : public Light
         [[nodiscard]] Matrices const& GetMatrices ();
         [[nodiscard]] GXMat4 const& GetProjection ();
 
+        void SetLocation ( GXVec3 const location );
+
     private:
         void UpdateMatrices ();
 };

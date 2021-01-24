@@ -432,8 +432,8 @@ bool PointLightPass::CreateLightupFramebuffer ( VkDevice device, GBuffer &gBuffe
 {
     VkImageView const attachments[] =
     {
-        gBuffer.GetAlbedo ().GetImageView (),
         gBuffer.GetHDRAccumulator ().GetImageView (),
+        gBuffer.GetAlbedo ().GetImageView (),
         gBuffer.GetNormal ().GetImageView (),
         gBuffer.GetParams ().GetImageView (),
         gBuffer.GetDepthStencil ().GetImageView ()
@@ -471,10 +471,10 @@ bool PointLightPass::CreateLightupRenderPass ( VkDevice device, GBuffer &gBuffer
 {
     VkAttachmentDescription const attachments[]
     {
-        // #0: albedo
+        // #0: HDR accumulator
         {
             .flags = 0U,
-            .format = gBuffer.GetAlbedo ().GetFormat (),
+            .format = gBuffer.GetHDRAccumulator ().GetFormat (),
             .samples = VK_SAMPLE_COUNT_1_BIT,
             .loadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
             .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
@@ -484,10 +484,10 @@ bool PointLightPass::CreateLightupRenderPass ( VkDevice device, GBuffer &gBuffer
             .finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
         },
 
-        // #1: HDR accumulator
+        // #1: albedo
         {
             .flags = 0U,
-            .format = gBuffer.GetHDRAccumulator ().GetFormat (),
+            .format = gBuffer.GetAlbedo ().GetFormat (),
             .samples = VK_SAMPLE_COUNT_1_BIT,
             .loadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
             .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
@@ -545,9 +545,9 @@ bool PointLightPass::CreateLightupRenderPass ( VkDevice device, GBuffer &gBuffer
 
     constexpr static VkAttachmentReference const colorReferences[] =
     {
-        // #1: HDR accumulator
+        // #0: HDR accumulator
         {
-            .attachment = 1U,
+            .attachment = 0U,
             .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
         }
     };
@@ -561,7 +561,7 @@ bool PointLightPass::CreateLightupRenderPass ( VkDevice device, GBuffer &gBuffer
     constexpr static VkAttachmentReference const inputAttachments[] =
     {
         {
-            .attachment = 0U,
+            .attachment = 1U,
             .layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
         },
         {

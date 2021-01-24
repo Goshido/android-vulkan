@@ -17,7 +17,7 @@ Requirements:
 * _Windows Vista_+
 * _Android Studio 4.1.2_
 * _Android Studio Gradle Plugin 4.1.2_
-* _Android NDK 22.0.6917172 (side by side)_
+* _Android NDK 22.0.7026061 (side by side)_
 * _Android SDK 10.0 (API level 29)_
 * _Android SDK Build-Tools 30.0.3_
 * _Android SDK Tools 26.1.1_

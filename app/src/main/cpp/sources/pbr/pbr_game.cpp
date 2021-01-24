@@ -26,12 +26,15 @@ constexpr static uint32_t const RESOLUTION_SCALE_HEIGHT = 100U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-PBRGame::PBRGame ():
+PBRGame::PBRGame () noexcept:
     _camera {},
     _commandPool ( VK_NULL_HANDLE ),
     _commandBuffers {},
     _renderSession {},
-    _components {}
+    _components {},
+    _pointLight ( nullptr ),
+    _lightPhase ( 0.0F ),
+    _lightOrigin {}
 {
     // NOTHING
 }
@@ -73,6 +76,15 @@ bool PBRGame::OnInit ( android_vulkan::Renderer &renderer )
 
 bool PBRGame::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime )
 {
+    _lightPhase += static_cast<float> ( deltaTime );
+
+    GXVec3 offset ( std::sinf ( _lightPhase ), 0.0F, std::cosf ( _lightPhase ) );
+    offset.Multiply ( offset, 16.0F );
+
+    GXVec3 target;
+    target.Sum ( _lightOrigin, offset );
+    _pointLight->SetLocation ( target );
+
     _camera.Update ( static_cast<float> ( deltaTime ) );
     _renderSession.Begin ( _camera.GetLocalMatrix (), _camera.GetProjectionMatrix () );
 
@@ -201,6 +213,14 @@ bool PBRGame::UploadGPUContent ( android_vulkan::Renderer& renderer )
 
         if ( component )
             _components.push_back ( component );
+
+        if ( component->GetClassID () == ClassID::PointLight )
+        {
+            // Note it's safe to cast like that here. "NOLINT" is a clang-tidy control comment.
+            auto const* raw = static_cast<PointLightComponent*> ( component.get () ); // NOLINT
+            _pointLight = static_cast<PointLight*> ( raw->GetLight ().get () ); // NOLINT
+            _lightOrigin = _pointLight->GetLocation ();
+        }
 
         commandBuffers += consumed;
         readPointer += read;

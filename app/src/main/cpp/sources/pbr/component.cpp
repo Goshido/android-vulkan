@@ -6,6 +6,11 @@
 
 namespace pbr {
 
+ClassID Component::GetClassID () const
+{
+    return _classID;
+}
+
 ComponentRef Component::Create ( android_vulkan::Renderer &renderer,
     size_t &commandBufferConsumed,
     size_t &dataRead,
@@ -39,6 +44,12 @@ ComponentRef Component::Create ( android_vulkan::Renderer &renderer,
     }
 
     return {};
+}
+
+Component::Component ( ClassID classID ) noexcept:
+    _classID ( classID )
+{
+    // NOTHING
 }
 
 } // namespace pbr

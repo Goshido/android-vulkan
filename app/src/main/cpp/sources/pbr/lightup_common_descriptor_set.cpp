@@ -144,7 +144,7 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer, GBuf
             .sampler = VK_NULL_HANDLE,
             .imageView = gBuffer.GetReadOnlyDepthImageView (),
             .imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL
-        }
+        },
     };
 
     VkWriteDescriptorSet const writeInfo[]

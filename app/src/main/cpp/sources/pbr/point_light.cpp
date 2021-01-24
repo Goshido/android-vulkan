@@ -107,6 +107,13 @@ GXMat4 const& PointLight::GetProjection ()
     return _projection;
 }
 
+void PointLight::SetLocation ( GXVec3 const location )
+{
+    // TODO update bounds
+    _location = location;
+    _isNeedUpdateMatrices = true;
+}
+
 void PointLight::UpdateMatrices ()
 {
     _projection.Perspective ( GX_MATH_HALF_PI,

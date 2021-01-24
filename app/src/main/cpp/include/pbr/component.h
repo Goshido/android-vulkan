@@ -11,17 +11,24 @@ namespace pbr {
 
 class Component
 {
-    public:
-        Component ( Component const &other ) = delete;
-        Component& operator = ( Component const &other ) = delete;
+    private:
+        ClassID     _classID;
 
-        Component ( Component &&other ) = delete;
-        Component& operator = ( Component &&other ) = delete;
+    public:
+        Component () = delete;
+
+        Component ( Component const & ) = delete;
+        Component& operator = ( Component const & ) = delete;
+
+        Component ( Component && ) = delete;
+        Component& operator = ( Component && ) = delete;
 
         virtual ~Component () = default;
 
         virtual void Submit ( RenderSession &renderSession ) = 0;
         virtual void FreeTransferResources ( android_vulkan::Renderer &renderer ) = 0;
+
+        [[nodiscard]] ClassID GetClassID () const;
 
         [[nodiscard]] static ComponentRef Create ( android_vulkan::Renderer &renderer,
             size_t &commandBufferConsumed,
@@ -32,7 +39,7 @@ class Component
         );
 
     protected:
-        Component () noexcept = default;
+        explicit Component ( ClassID classID ) noexcept;
 };
 
 } // namespace pbr

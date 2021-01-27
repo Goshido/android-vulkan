@@ -53,7 +53,7 @@ MaterialRef MaterialManager::LoadMaterial ( android_vulkan::Renderer &renderer,
 
     if ( header->_diffuseOffset != android_vulkan::NO_UTF8_OFFSET )
     {
-        Texture2DRef texture = loadTexture ( header->_diffuseOffset, android_vulkan::eFormat::sRGB );
+        Texture2DRef texture = loadTexture ( header->_diffuseOffset, android_vulkan::eFormat::Unorm );
 
         if ( !texture )
             return material;

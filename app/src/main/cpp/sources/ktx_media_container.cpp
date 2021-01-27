@@ -36,7 +36,8 @@ constexpr static uint32_t const TARGET_PIXEL_DEPTH = 0U;
 
 static std::unordered_map<uint32_t, VkFormat> const g_FormatMapper =
 {
-    { GL_COMPRESSED_RGBA_ASTC_6x6_KHR, VK_FORMAT_ASTC_6x6_UNORM_BLOCK }
+    { GL_COMPRESSED_RGBA_ASTC_6x6_KHR, VK_FORMAT_ASTC_6x6_UNORM_BLOCK },
+    { GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x6_KHR, VK_FORMAT_ASTC_6x6_SRGB_BLOCK }
 };
 
 //----------------------------------------------------------------------------------------------------------------------

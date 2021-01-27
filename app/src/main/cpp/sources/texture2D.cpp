@@ -38,8 +38,9 @@ constexpr static VkImageUsageFlags const IMMUTABLE_TEXTURE_USAGE = AV_VK_FLAG ( 
 
 static std::unordered_map<VkFormat, VkFormat> const g_FormatMapper =
 {
-    { VK_FORMAT_R8G8B8A8_UNORM, VK_FORMAT_R8G8B8A8_SRGB },
-    { VK_FORMAT_ASTC_6x6_UNORM_BLOCK, VK_FORMAT_ASTC_6x6_SRGB_BLOCK }
+    { VK_FORMAT_ASTC_6x6_UNORM_BLOCK, VK_FORMAT_ASTC_6x6_UNORM_BLOCK },
+    { VK_FORMAT_ASTC_6x6_SRGB_BLOCK, VK_FORMAT_ASTC_6x6_SRGB_BLOCK },
+    { VK_FORMAT_R8G8B8A8_UNORM, VK_FORMAT_R8G8B8A8_SRGB }
 };
 
 //----------------------------------------------------------------------------------------------------------------------

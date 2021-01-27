@@ -40,7 +40,7 @@ PointLightComponent::PointLightComponent ( PointLightComponentDesc const &desc )
             android_vulkan::Half3 ( unorm._data[ 0U ], unorm._data[ 1U ], unorm._data[ 2U ] ),
 
             // TODO remove this multiplier in the future.
-            android_vulkan::Half ( desc._intensity * 7.77F ),
+            android_vulkan::Half ( desc._intensity * 14.1414F ),
 
             reinterpret_cast<GXVec3 const &> ( desc._location ),
             bounds

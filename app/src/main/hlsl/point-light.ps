@@ -87,7 +87,7 @@ half GetDirectK ( in half roughness )
 
 half GGXSchlick ( in half dotFactor, in half k )
 {
-    return dotFactor / ( k + dotFactor * ( 1.0H - k ) );
+    return dotFactor / mad ( dotFactor, 1.0H - k, k );
 }
 
 half3 GetAlbedo ()
@@ -97,7 +97,8 @@ half3 GetAlbedo ()
 
 half GetAttenuation ( in float3 fragToLight )
 {
-    return ( _intensity / (half)( _sceneScaleFactor * length ( fragToLight ) ) ) * 1.0e-3H + 1.0H;
+    const half beta = (half)max ( 1.0F, _sceneScaleFactor * length ( fragToLight ) );
+    return _intensity / ( beta * beta );
 }
 
 float GetDepth ()
@@ -110,7 +111,7 @@ half GetDistribution ( in half nH, in half roughness )
     const half alpha = roughness * roughness;
     const half beta = alpha * alpha;
     const half gamma = nH * nH;
-    const half zeta = 1.0H + gamma * ( beta - 1.0H );
+    const half zeta = mad ( gamma, beta - 1.0H, 1.0H );
 
     return beta / ( PI * zeta * zeta );
 }
@@ -118,7 +119,7 @@ half GetDistribution ( in half nH, in half roughness )
 half3 GetFresnel ( in half nH, in half metallic, in half3 albedo )
 {
     const half3 f0 = lerp ( (half3)MINIMUM_F0, albedo, (half3)metallic );
-    return f0 + ( 1.0H - f0 ) * pow ( max ( 0.0H, 1.0H - nH ), 5.0H );
+    return mad ( 1.0H - f0, pow ( max ( 0.0H, 1.0H - nH ), 5.0H ), f0 );
 }
 
 half GetGeometryAttenuation ( in half nL, in half nV, in half roughness )
@@ -146,13 +147,15 @@ half GetShadowFactor ( in float3 locationView )
 
 float3 RestoreLocationView ( in float2 locationImage )
 {
-    const float4 v = mul ( _cvvToView, float4 ( locationImage * _invResolutionFactor - 1.0F, GetDepth (), 1.0F ) );
+    const float2 alpha = mad ( locationImage, _invResolutionFactor, (float2)( -1.0F ) );
+    const float4 v = mul ( _cvvToView, float4 ( alpha, GetDepth (), 1.0F ) );
     return v.xyz * ( 1.0F / v.w );
 }
 
 half3 RestoreNormalView ()
 {
-    return (half3)( g_normal.SubpassLoad ().xyz * 2.0F - 1.0F );
+    const half3 alpha = (half3)g_normal.SubpassLoad ().xyz;
+    return mad ( alpha, (half3)2.0H, (half3)( -1.0H ) );
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -185,7 +188,7 @@ OutputData PS ( in InputData inputData )
     const half3 kD = GetDiffuseK ( f, metallic );
 
     const half3 specular = f * d * ga / ( max ( EPSILON, 4.0H * nL * nV ) );
-    const half3 color = shadow * nL * attenuation * _hue * ( specular + kD * albedo * INVERSE_PI );
+    const half3 color = shadow * nL * attenuation * _hue * mad ( kD * albedo, INVERSE_PI, specular );
 
     OutputData result;
     result._color = float4 ( (float3)color, 1.0F );

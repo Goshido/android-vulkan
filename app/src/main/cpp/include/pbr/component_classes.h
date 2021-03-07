@@ -17,7 +17,8 @@ enum class ClassID : uint64_t
 {
     Unknown = 0U,
     StaticMesh = 1U,
-    PointLight = 2U
+    PointLight = 2U,
+    Reflection = 3U
 };
 
 } // namespace pbr

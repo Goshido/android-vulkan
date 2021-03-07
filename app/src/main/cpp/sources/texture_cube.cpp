@@ -1,4 +1,5 @@
 #include <texture_cube.h>
+#include <ktx_media_container.h>
 #include <vulkan_utils.h>
 
 GX_DISABLE_COMMON_WARNINGS
@@ -18,7 +19,9 @@ TextureCube::TextureCube () noexcept:
     _imageDeviceMemory ( VK_NULL_HANDLE ),
     _imageView ( VK_NULL_HANDLE ),
     _mipLevels ( 0U ),
-    _resolution { .width = 0U, .height = 0U }
+    _resolution { .width = 0U, .height = 0U },
+    _transfer ( VK_NULL_HANDLE ),
+    _transferDeviceMemory ( VK_NULL_HANDLE )
 {
     // NOTHING
 }
@@ -140,6 +143,54 @@ bool TextureCube::CreateRenderTarget ( VkExtent2D const &resolution,
     _resolution = resolution;
 
     return true;
+}
+
+bool TextureCube::UploadData ( TextureCubeData const &data )
+{
+    constexpr auto const sideCount = static_cast<size_t> ( VULKAN_TEXTURE_CUBE_LAYERS );
+
+    KTXMediaContainer sides[ sideCount ];
+    KTXMediaContainer& sideXPlus = sides[ 0U ];
+
+    char const* files[ sideCount ] =
+    {
+        data._xPlusFile,
+        data._xMinusFile,
+        data._yPlusFile,
+        data._yMinusFile,
+        data._zPlusFile,
+        data._zMinusFile
+    };
+
+    if ( !sideXPlus.Init ( files[ 0U ] ) )
+        return false;
+
+    VkDeviceSize mappedSize = sideXPlus.GetTotalSize();
+
+    uint8_t const mips = sideXPlus.GetMipCount ();
+    VkFormat const format = sideXPlus.GetFormat ();
+    VkExtent2D const& resolution = sideXPlus.GetMip ( 0U )._resolution;
+
+    for ( size_t i = 1U; i < sideCount; ++i )
+    {
+        KTXMediaContainer& container = sides[ i ];
+
+        if ( !container.Init ( files[ i ] ) )
+            return false;
+
+        if ( mips != container.GetMipCount () || format != container.GetFormat () )
+            return false;
+
+        VkExtent2D const& res = container.GetMip ( 0U )._resolution;
+
+        if ( resolution.width != res.width || resolution.height != res.height )
+            return false;
+
+        mappedSize += container.GetTotalSize ();
+    }
+
+    // TODO
+    return false;
 }
 
 void TextureCube::FreeResources ( VkDevice device )

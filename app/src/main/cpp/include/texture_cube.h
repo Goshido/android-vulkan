@@ -7,17 +7,32 @@
 
 namespace android_vulkan {
 
+struct TextureCubeData final
+{
+    char const*     _xPlusFile;
+    char const*     _xMinusFile;
+
+    char const*     _yPlusFile;
+    char const*     _yMinusFile;
+
+    char const*     _zPlusFile;
+    char const*     _zMinusFile;
+};
+
 class TextureCube final
 {
     private:
-        VkFormat            _format;
+        VkFormat                            _format;
 
-        VkImage             _image;
-        VkDeviceMemory      _imageDeviceMemory;
-        VkImageView         _imageView;
+        VkImage                             _image;
+        VkDeviceMemory                      _imageDeviceMemory;
+        VkImageView                         _imageView;
 
-        uint8_t             _mipLevels;
-        VkExtent2D          _resolution;
+        uint8_t                             _mipLevels;
+        VkExtent2D                          _resolution;
+
+        [[maybe_unused]] VkBuffer           _transfer;
+        [[maybe_unused]] VkDeviceMemory     _transferDeviceMemory;
 
     public:
         TextureCube () noexcept;
@@ -35,6 +50,9 @@ class TextureCube final
             VkImageUsageFlags usage,
             Renderer &renderer
         );
+
+        // Supported formats: KTX(ASTC) with mipmaps.
+        [[nodiscard]] bool UploadData ( TextureCubeData const &data );
 
         void FreeResources ( VkDevice device );
 

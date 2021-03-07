@@ -331,8 +331,7 @@ void Gamepad::InitActionPool ()
 
 void Gamepad::ResolveDPad ()
 {
-    auto resolve = [ & ] ( bool current, bool old, eGamepadKey key )
-    {
+    auto resolve = [ & ] ( bool current, bool old, eGamepadKey key ) {
         if ( current == old )
             return;
 

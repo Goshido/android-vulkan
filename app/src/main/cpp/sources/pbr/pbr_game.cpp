@@ -17,7 +17,7 @@ namespace pbr {
 constexpr static char const* SCENE = "pbr/N7_ADM_Reception/scene.scene";
 [[maybe_unused]] constexpr static uint32_t const SCENE_DESC_FORMAT_VERSION = 1U;
 
-constexpr static float const FIELD_OF_VIEW = 60.0F;
+constexpr static float const FIELD_OF_VIEW = 75.0F;
 constexpr static float const Z_NEAR = 0.1F;
 constexpr static float const Z_FAR = 1.0e+3F;
 
@@ -212,14 +212,16 @@ bool PBRGame::UploadGPUContent ( android_vulkan::Renderer& renderer )
         );
 
         if ( component )
+        {
             _components.push_back ( component );
 
-        if ( component->GetClassID () == ClassID::PointLight )
-        {
-            // Note it's safe to cast like that here. "NOLINT" is a clang-tidy control comment.
-            auto const* raw = static_cast<PointLightComponent*> ( component.get () ); // NOLINT
-            _pointLight = static_cast<PointLight*> ( raw->GetLight ().get () ); // NOLINT
-            _lightOrigin = _pointLight->GetLocation ();
+            if ( component->GetClassID () == ClassID::PointLight )
+            {
+                // Note it's safe to cast like that here. "NOLINT" is a clang-tidy control comment.
+                auto const* raw = static_cast<PointLightComponent*> ( component.get () ); // NOLINT
+                _pointLight = static_cast<PointLight*> ( raw->GetLight ().get () ); // NOLINT
+                _lightOrigin = _pointLight->GetLocation ();
+            }
         }
 
         commandBuffers += consumed;

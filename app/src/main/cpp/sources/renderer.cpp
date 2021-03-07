@@ -808,7 +808,6 @@ Renderer::Renderer () noexcept:
     _swapchainImages {},
     _swapchainImageViews {},
     _presentationEngineTransform {}
-
 {
     // NOTHING
 }

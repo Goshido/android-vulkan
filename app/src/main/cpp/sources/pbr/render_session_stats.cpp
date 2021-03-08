@@ -8,9 +8,9 @@ constexpr static double const TIMEOUT = 3.0;
 
 RenderSessionStats::RenderSessionStats () noexcept:
     _frameCount ( 0U ),
-    _renderGlobalReflections ( 0U ),
     _renderMeshes ( 0U ),
     _renderPointLights ( 0U ),
+    _renderReflectionsGlobal ( 0U ),
     _renderVertices ( 0U ),
     _submitMeshes ( 0U ),
     _submitPointLights ( 0U ),
@@ -55,7 +55,7 @@ R"__(>>> RenderSessionStats::PrintStats:
         avgCounter ( _submitMeshes ),
         avgCounter ( _submitVertices ),
         avgCounter ( _submitPointLights ),
-        avgCounter ( _renderGlobalReflections ),
+        avgCounter ( _renderReflectionsGlobal ),
         avgCounter ( _renderMeshes ),
         avgCounter ( _renderVertices ),
         avgCounter ( _renderPointLights ),
@@ -89,15 +89,15 @@ void RenderSessionStats::SubmitPointLight ()
     ++_submitPointLights;
 }
 
-void RenderSessionStats::RenderGlobalReflection ()
+void RenderSessionStats::RenderReflectionGlobal ()
 {
-    ++_renderGlobalReflections;
+    ++_renderReflectionsGlobal;
 }
 
 void RenderSessionStats::Reset ()
 {
     _frameCount = 0U;
-    _renderGlobalReflections = 0U;
+    _renderReflectionsGlobal = 0U;
     _renderMeshes = 0U;
     _renderPointLights = 0U;
     _renderVertices = 0U;

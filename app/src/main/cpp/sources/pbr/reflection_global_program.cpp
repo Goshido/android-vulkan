@@ -1,27 +1,22 @@
-#include <pbr/point_light_lightup_program.h>
-#include <pbr/light_volume_program.h>
+#include <pbr/reflection_global_program.h>
 
 
 namespace pbr {
 
-constexpr static const uint32_t COLOR_RENDER_TARGET_COUNT = 1U;
+constexpr static const char* VERTEX_SHADER = "shaders/reflection-global-vs.spv";
+constexpr static const char* FRAGMENT_SHADER = "shaders/reflection-global-ps.spv";
+
+constexpr static const size_t COLOR_RENDER_TARGET_COUNT = 1U;
 constexpr static const size_t STAGE_COUNT = 2U;
-constexpr static const size_t VERTEX_ATTRIBUTE_COUNT = 1U;
 
-constexpr static const char* FRAGMENT_SHADER = "shaders/point-light-ps.spv";
-constexpr static const char* VERTEX_SHADER = "shaders/light-volume-vs.spv";
-
-//----------------------------------------------------------------------------------------------------------------------
-
-PointLightLightupProgram::PointLightLightupProgram () noexcept:
-    LightLightupBaseProgram ( "PointLightLightupProgram" ),
-    _commonLayout {},
-    _pointLightLayout {}
+ReflectionGlobalProgram::ReflectionGlobalProgram ():
+    LightLightupBaseProgram ( "ReflectionGlobalProgram" ),
+    _commonLayout {}
 {
     // NOTHING
 }
 
-bool PointLightLightupProgram::Init ( android_vulkan::Renderer &renderer,
+bool ReflectionGlobalProgram::Init ( android_vulkan::Renderer &renderer,
     VkRenderPass renderPass,
     uint32_t subpass,
     VkExtent2D const &viewport
@@ -29,8 +24,6 @@ bool PointLightLightupProgram::Init ( android_vulkan::Renderer &renderer,
 {
     VkPipelineInputAssemblyStateCreateInfo assemblyInfo;
     VkPipelineColorBlendAttachmentState attachmentInfo[ COLOR_RENDER_TARGET_COUNT ];
-    VkVertexInputAttributeDescription attributeDescriptions[ VERTEX_ATTRIBUTE_COUNT ];
-    VkVertexInputBindingDescription bindingDescription;
     VkPipelineColorBlendStateCreateInfo blendInfo;
     VkPipelineDepthStencilStateCreateInfo depthStencilInfo;
     VkPipelineMultisampleStateCreateInfo multisampleInfo;
@@ -47,19 +40,13 @@ bool PointLightLightupProgram::Init ( android_vulkan::Renderer &renderer,
     pipelineInfo.flags = 0U;
     pipelineInfo.stageCount = std::size ( stageInfo );
 
-    VkDevice device = renderer.GetDevice ();
-
     if ( !InitShaderInfo ( renderer, pipelineInfo.pStages, stageInfo ) )
     {
-        Destroy ( device );
+        Destroy ( renderer.GetDevice () );
         return false;
     }
 
-    pipelineInfo.pVertexInputState = InitVertexInputInfo ( vertexInputInfo,
-        attributeDescriptions,
-        &bindingDescription
-    );
-
+    pipelineInfo.pVertexInputState = InitVertexInputInfo ( vertexInputInfo, nullptr, nullptr );
     pipelineInfo.pInputAssemblyState = InitInputAssemblyInfo ( assemblyInfo );
     pipelineInfo.pTessellationState = nullptr;
     pipelineInfo.pViewportState = InitViewportInfo ( viewportInfo, scissorDescription, viewportDescription, viewport );
@@ -71,7 +58,7 @@ bool PointLightLightupProgram::Init ( android_vulkan::Renderer &renderer,
 
     if ( !InitLayout ( renderer, pipelineInfo.layout ) )
     {
-        Destroy ( device );
+        Destroy ( renderer.GetDevice () );
         return false;
     }
 
@@ -81,45 +68,44 @@ bool PointLightLightupProgram::Init ( android_vulkan::Renderer &renderer,
     pipelineInfo.basePipelineIndex = 0;
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateGraphicsPipelines ( device, VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
-        "PointLightLightupProgram::Init",
+        vkCreateGraphicsPipelines ( renderer.GetDevice (), VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
+        "TexturePresentProgram::Init",
         "Can't create pipeline"
     );
 
     if ( !result )
     {
-        Destroy ( device );
+        Destroy ( renderer.GetDevice () );
         return false;
     }
 
-    AV_REGISTER_PIPELINE ( "PointLightLightupProgram::_pipeline" )
+    AV_REGISTER_PIPELINE ( "TexturePresentProgram::_pipeline" )
     return true;
 }
 
-void PointLightLightupProgram::Destroy ( VkDevice device )
+void ReflectionGlobalProgram::Destroy ( VkDevice device )
 {
     if ( _pipeline != VK_NULL_HANDLE )
     {
         vkDestroyPipeline ( device, _pipeline, nullptr );
         _pipeline = VK_NULL_HANDLE;
-        AV_UNREGISTER_PIPELINE ( "PointLightLightupProgram::_pipeline" )
+        AV_UNREGISTER_PIPELINE ( "ReflectionGlobalProgram::_pipeline" )
     }
-
-    _pointLightLayout.Destroy ( device );
-    _commonLayout.Destroy ( device );
 
     if ( _pipelineLayout != VK_NULL_HANDLE )
     {
         vkDestroyPipelineLayout ( device, _pipelineLayout, nullptr );
         _pipelineLayout = VK_NULL_HANDLE;
-        AV_UNREGISTER_PIPELINE_LAYOUT ( "PointLightLightupProgram::_pipelineLayout" )
+        AV_UNREGISTER_PIPELINE_LAYOUT ( "ReflectionGlobalProgram::_pipelineLayout" )
     }
+
+    _commonLayout.Destroy ( device );
 
     if ( _fragmentShader != VK_NULL_HANDLE )
     {
         vkDestroyShaderModule ( device, _fragmentShader, nullptr );
         _fragmentShader = VK_NULL_HANDLE;
-        AV_UNREGISTER_SHADER_MODULE ( "PointLightLightupProgram::_fragmentShader" )
+        AV_UNREGISTER_SHADER_MODULE ( "ReflectionGlobalProgram::_fragmentShader" )
     }
 
     if ( _vertexShader == VK_NULL_HANDLE )
@@ -127,41 +113,17 @@ void PointLightLightupProgram::Destroy ( VkDevice device )
 
     vkDestroyShaderModule ( device, _vertexShader, nullptr );
     _vertexShader = VK_NULL_HANDLE;
-    AV_UNREGISTER_SHADER_MODULE ( "PointLightLightupProgram::_vertexShader" )
+    AV_UNREGISTER_SHADER_MODULE ( "ReflectionGlobalProgram::_vertexShader" )
 }
 
-void PointLightLightupProgram::SetDescriptorSet ( VkCommandBuffer commandBuffer, VkDescriptorSet set ) const
-{
-    vkCmdBindDescriptorSets ( commandBuffer,
-        VK_PIPELINE_BIND_POINT_GRAPHICS,
-        _pipelineLayout,
-        1U,
-        1U,
-        &set,
-        0U,
-        nullptr
-    );
-}
-
-void PointLightLightupProgram::SetTransform (  VkCommandBuffer commandBuffer, GXMat4 const &transform ) const
-{
-    vkCmdPushConstants ( commandBuffer,
-        _pipelineLayout,
-        VK_SHADER_STAGE_VERTEX_BIT,
-        0U,
-        sizeof ( PushConstants ),
-        &transform
-    );
-}
-
-Program::DescriptorSetInfo const& PointLightLightupProgram::GetResourceInfo () const
+Program::DescriptorSetInfo const& ReflectionGlobalProgram::GetResourceInfo () const
 {
     static DescriptorSetInfo const info
     {
         {
             {
                 .type = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
-                .descriptorCount = 4U
+                .descriptorCount = 3U
             },
             {
                 .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
@@ -187,7 +149,7 @@ Program::DescriptorSetInfo const& PointLightLightupProgram::GetResourceInfo () c
     return info;
 }
 
-VkPipelineColorBlendStateCreateInfo const* PointLightLightupProgram::InitColorBlendInfo (
+VkPipelineColorBlendStateCreateInfo const* ReflectionGlobalProgram::InitColorBlendInfo (
     VkPipelineColorBlendStateCreateInfo &info,
     VkPipelineColorBlendAttachmentState* attachments
 ) const
@@ -217,16 +179,16 @@ VkPipelineColorBlendStateCreateInfo const* PointLightLightupProgram::InitColorBl
     return &info;
 }
 
-VkPipelineDepthStencilStateCreateInfo const* PointLightLightupProgram::InitDepthStencilInfo (
+VkPipelineDepthStencilStateCreateInfo const* ReflectionGlobalProgram::InitDepthStencilInfo (
     VkPipelineDepthStencilStateCreateInfo &info
 ) const
 {
     info.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
     info.pNext = nullptr;
     info.flags = 0U;
-    info.depthTestEnable = VK_TRUE;
+    info.depthTestEnable = VK_FALSE;
     info.depthWriteEnable = VK_FALSE;
-    info.depthCompareOp = VK_COMPARE_OP_GREATER;
+    info.depthCompareOp = VK_COMPARE_OP_ALWAYS;
     info.depthBoundsTestEnable = VK_FALSE;
     info.stencilTestEnable = VK_TRUE;
 
@@ -246,10 +208,10 @@ VkPipelineDepthStencilStateCreateInfo const* PointLightLightupProgram::InitDepth
         .failOp = VK_STENCIL_OP_KEEP,
         .passOp = VK_STENCIL_OP_KEEP,
         .depthFailOp = VK_STENCIL_OP_KEEP,
-        .compareOp = VK_COMPARE_OP_EQUAL,
+        .compareOp = VK_COMPARE_OP_ALWAYS,
         .compareMask = UINT32_MAX,
         .writeMask = 0U,
-        .reference = LightVolumeProgram::GetLightVolumeStencilValue ()
+        .reference = 0U
     };
 
     info.minDepthBounds = 0.0F;
@@ -258,68 +220,29 @@ VkPipelineDepthStencilStateCreateInfo const* PointLightLightupProgram::InitDepth
     return &info;
 }
 
-VkPipelineInputAssemblyStateCreateInfo const* PointLightLightupProgram::InitInputAssemblyInfo (
+VkPipelineInputAssemblyStateCreateInfo const* ReflectionGlobalProgram::InitInputAssemblyInfo (
     VkPipelineInputAssemblyStateCreateInfo &info
 ) const
 {
     info.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
     info.pNext = nullptr;
     info.flags = 0U;
-    info.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    info.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
     info.primitiveRestartEnable = VK_FALSE;
 
     return &info;
 }
 
-bool PointLightLightupProgram::InitLayout ( android_vulkan::Renderer &renderer, VkPipelineLayout &layout )
+bool ReflectionGlobalProgram::InitLayout ( android_vulkan::Renderer &renderer, VkPipelineLayout &/*layout*/ )
 {
     if ( !_commonLayout.Init ( renderer ) )
         return false;
 
-    if ( !_pointLightLayout.Init ( renderer ) )
-        return false;
-
-    VkDescriptorSetLayout const layouts[] =
-    {
-        _commonLayout.GetLayout (),
-        _pointLightLayout.GetLayout ()
-    };
-
-    constexpr static VkPushConstantRange const pushConstantRanges[]
-    {
-        {
-            .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
-            .offset = 0U,
-            .size = static_cast<uint32_t> ( sizeof ( PushConstants ) )
-        }
-    };
-
-    VkPipelineLayoutCreateInfo const layoutInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0U,
-        .setLayoutCount = static_cast<uint32_t> ( std::size ( layouts ) ),
-        .pSetLayouts = layouts,
-        .pushConstantRangeCount = static_cast<uint32_t> ( std::size ( pushConstantRanges ) ),
-        .pPushConstantRanges = pushConstantRanges
-    };
-
-    bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreatePipelineLayout ( renderer.GetDevice (), &layoutInfo, nullptr, &_pipelineLayout ),
-        "PointLightLightupProgram::InitLayout",
-        "Can't create pipeline layout"
-    );
-
-    if ( !result )
-        return false;
-
-    AV_REGISTER_PIPELINE_LAYOUT ( "PointLightLightupProgram::_pipelineLayout" )
-    layout = _pipelineLayout;
-    return true;
+    // TODO
+    return false;
 }
 
-VkPipelineMultisampleStateCreateInfo const* PointLightLightupProgram::InitMultisampleInfo (
+VkPipelineMultisampleStateCreateInfo const* ReflectionGlobalProgram::InitMultisampleInfo (
     VkPipelineMultisampleStateCreateInfo &info
 ) const
 {
@@ -336,7 +259,7 @@ VkPipelineMultisampleStateCreateInfo const* PointLightLightupProgram::InitMultis
     return &info;
 }
 
-VkPipelineRasterizationStateCreateInfo const* PointLightLightupProgram::InitRasterizationInfo (
+VkPipelineRasterizationStateCreateInfo const* ReflectionGlobalProgram::InitRasterizationInfo (
     VkPipelineRasterizationStateCreateInfo &info
 ) const
 {
@@ -346,7 +269,7 @@ VkPipelineRasterizationStateCreateInfo const* PointLightLightupProgram::InitRast
     info.depthClampEnable = VK_FALSE;
     info.rasterizerDiscardEnable = VK_FALSE;
     info.polygonMode = VK_POLYGON_MODE_FILL;
-    info.cullMode = VK_CULL_MODE_FRONT_BIT;
+    info.cullMode = VK_CULL_MODE_NONE;
     info.frontFace = VK_FRONT_FACE_CLOCKWISE;
     info.depthBiasEnable = VK_FALSE;
     info.depthBiasConstantFactor = 0.0F;
@@ -357,30 +280,30 @@ VkPipelineRasterizationStateCreateInfo const* PointLightLightupProgram::InitRast
     return &info;
 }
 
-bool PointLightLightupProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
+bool ReflectionGlobalProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
     VkPipelineShaderStageCreateInfo const* &targetInfo,
     VkPipelineShaderStageCreateInfo* sourceInfo
 )
 {
     bool result = renderer.CreateShader ( _vertexShader,
         VERTEX_SHADER,
-        "Can't create vertex shader (pbr::PointLightLightupProgram)"
+        "Can't create vertex shader (pbr::ReflectionGlobalProgram)"
     );
 
     if ( !result )
         return false;
 
-    AV_REGISTER_SHADER_MODULE ( "PointLightLightupProgram::_vertexShader" )
+    AV_REGISTER_SHADER_MODULE ( "ReflectionGlobalProgram::_vertexShader" )
 
     result = renderer.CreateShader ( _fragmentShader,
         FRAGMENT_SHADER,
-        "Can't create fragment shader (pbr::PointLightLightupProgram)"
+        "Can't create fragment shader (pbr::ReflectionGlobalProgram)"
     );
 
     if ( !result )
         return false;
 
-    AV_REGISTER_SHADER_MODULE ( "PointLightLightupProgram::_fragmentShader" )
+    AV_REGISTER_SHADER_MODULE ( "ReflectionGlobalProgram::_fragmentShader" )
 
     VkPipelineShaderStageCreateInfo& vertexStage = sourceInfo[ 0U ];
     vertexStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -404,7 +327,7 @@ bool PointLightLightupProgram::InitShaderInfo ( android_vulkan::Renderer &render
     return true;
 }
 
-VkPipelineViewportStateCreateInfo const* PointLightLightupProgram::InitViewportInfo (
+VkPipelineViewportStateCreateInfo const* ReflectionGlobalProgram::InitViewportInfo (
     VkPipelineViewportStateCreateInfo &info,
     VkRect2D &scissorInfo,
     VkViewport &viewportInfo,
@@ -433,27 +356,18 @@ VkPipelineViewportStateCreateInfo const* PointLightLightupProgram::InitViewportI
     return &info;
 }
 
-VkPipelineVertexInputStateCreateInfo const* PointLightLightupProgram::InitVertexInputInfo (
+VkPipelineVertexInputStateCreateInfo const* ReflectionGlobalProgram::InitVertexInputInfo (
     VkPipelineVertexInputStateCreateInfo &info,
     VkVertexInputAttributeDescription* attributes,
     VkVertexInputBindingDescription* binds
 ) const
 {
-    binds->binding = 0U;
-    binds->stride = static_cast<uint32_t> ( sizeof ( GXVec3 ) );
-    binds->inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-
-    attributes->location = 0U;
-    attributes->binding = 0U;
-    attributes->format = VK_FORMAT_R32G32B32_SFLOAT;
-    attributes->offset = 0U;
-
     info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
     info.pNext = nullptr;
     info.flags = 0U;
-    info.vertexBindingDescriptionCount = 1U;
+    info.vertexBindingDescriptionCount = 0U;
     info.pVertexBindingDescriptions = binds;
-    info.vertexAttributeDescriptionCount = static_cast<uint32_t> ( VERTEX_ATTRIBUTE_COUNT );
+    info.vertexAttributeDescriptionCount = 0U;
     info.pVertexAttributeDescriptions = attributes;
 
     return &info;

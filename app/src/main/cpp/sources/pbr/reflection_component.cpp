@@ -60,11 +60,11 @@ void ReflectionComponent::Submit ( RenderSession &renderSession )
 {
     if ( _isGlobal )
     {
-        renderSession.SubmitGlobalReflection ( _prefilter );
+        renderSession.SubmitReflectionGlobal ( _prefilter );
         return;
     }
 
-    renderSession.SubmitLocalReflection ( _prefilter, _location, _size );
+    renderSession.SubmitReflectionLocal ( _prefilter, _location, _size );
 }
 
 } // namespace pbr

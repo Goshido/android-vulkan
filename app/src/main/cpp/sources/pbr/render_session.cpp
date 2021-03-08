@@ -23,8 +23,8 @@ RenderSession::RenderSession () noexcept:
     _gBufferRenderPass ( VK_NULL_HANDLE ),
     _gBufferSlotMapper ( VK_NULL_HANDLE ),
     _geometryPass {},
-    _globalReflectionPass {},
     _opaqueMeshCount ( 0U ),
+    _reflectionGlobalPass {},
     _texturePresentProgram {},
     _pointLightPass {},
     _presentPass {},
@@ -47,7 +47,7 @@ void RenderSession::Begin ( GXMat4 const &viewerLocal, GXMat4 const &projection 
     _frustum.From ( _viewProjection );
     _pointLightPass.Reset ();
     _geometryPass.Reset ();
-    _globalReflectionPass.Reset ();
+    _reflectionGlobalPass.Reset ();
 }
 
 bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
@@ -209,23 +209,23 @@ void RenderSession::SubmitMesh ( MeshRef &mesh,
     }
 }
 
-void RenderSession::SubmitGlobalReflection ( TextureCubeRef &prefilter )
-{
-    _globalReflectionPass.Append ( prefilter );
-    _renderSessionStats.RenderGlobalReflection ();
-}
-
-void RenderSession::SubmitLocalReflection ( TextureCubeRef &/*prefilter*/, GXVec3 const &/*location*/, float /*size*/ )
-{
-    // TODO
-}
-
 void RenderSession::SubmitLight ( LightRef const &light )
 {
     if ( light->GetType () == eLightType::PointLight )
     {
         SubmitPointLight ( light );
     }
+}
+
+void RenderSession::SubmitReflectionGlobal ( TextureCubeRef &prefilter )
+{
+    _reflectionGlobalPass.Append ( prefilter );
+    _renderSessionStats.RenderReflectionGlobal ();
+}
+
+void RenderSession::SubmitReflectionLocal ( TextureCubeRef &/*prefilter*/, GXVec3 const& /*location*/, float /*size*/ )
+{
+    // TODO
 }
 
 bool RenderSession::CreateGBufferFramebuffer ( android_vulkan::Renderer &renderer )

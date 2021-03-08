@@ -93,6 +93,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/pbr/component.cpp
     app/src/main/cpp/sources/pbr/gbuffer.cpp
     app/src/main/cpp/sources/pbr/geometry_pass.cpp
+    app/src/main/cpp/sources/pbr/global_reflection_pass.cpp
     app/src/main/cpp/sources/pbr/light.cpp
     app/src/main/cpp/sources/pbr/lightup_common_descriptor_set.cpp
     app/src/main/cpp/sources/pbr/lightup_common_descriptor_set_layout.cpp

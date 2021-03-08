@@ -390,7 +390,7 @@ PointLightPass::PointLightShadowmapInfo* PointLightPass::AcquirePointLightShadow
     constexpr VkImageUsageFlags const flags = AV_VK_FLAG ( VK_IMAGE_USAGE_SAMPLED_BIT ) |
         AV_VK_FLAG ( VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT );
 
-    if ( !shadowmap->CreateRenderTarget ( resolution, VK_FORMAT_D32_SFLOAT, flags, renderer ) )
+    if ( !shadowmap->CreateRenderTarget ( renderer, resolution, VK_FORMAT_D32_SFLOAT, flags ) )
         return nullptr;
 
     VkImageView const attachments[] = { shadowmap->GetImageView () };

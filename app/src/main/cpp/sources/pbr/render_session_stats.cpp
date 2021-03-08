@@ -8,6 +8,7 @@ constexpr static double const TIMEOUT = 3.0;
 
 RenderSessionStats::RenderSessionStats () noexcept:
     _frameCount ( 0U ),
+    _renderGlobalReflections ( 0U ),
     _renderMeshes ( 0U ),
     _renderPointLights ( 0U ),
     _renderVertices ( 0U ),
@@ -32,6 +33,7 @@ R"__(>>> RenderSessionStats::PrintStats:
     Submitted meshes: %zu
     Submitted vertices: %zu
     Submitted point lights: %zu
+    Rendered global reflections: %zu
     Rendered meshes: %zu
     Rendered vertices: %zu
     Rendered point lights: %zu
@@ -50,8 +52,10 @@ R"__(>>> RenderSessionStats::PrintStats:
 
     android_vulkan::LogInfo ( format,
         avgCounter ( _submitMeshes ),
+        avgCounter ( _submitMeshes ),
         avgCounter ( _submitVertices ),
         avgCounter ( _submitPointLights ),
+        avgCounter ( _renderGlobalReflections ),
         avgCounter ( _renderMeshes ),
         avgCounter ( _renderVertices ),
         avgCounter ( _renderPointLights ),
@@ -85,9 +89,15 @@ void RenderSessionStats::SubmitPointLight ()
     ++_submitPointLights;
 }
 
+void RenderSessionStats::RenderGlobalReflection ()
+{
+    ++_renderGlobalReflections;
+}
+
 void RenderSessionStats::Reset ()
 {
     _frameCount = 0U;
+    _renderGlobalReflections = 0U;
     _renderMeshes = 0U;
     _renderPointLights = 0U;
     _renderVertices = 0U;

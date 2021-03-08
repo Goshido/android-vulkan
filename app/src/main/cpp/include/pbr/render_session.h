@@ -4,6 +4,7 @@
 
 #include <GXCommon/GXMath.h>
 #include "geometry_pass.h"
+#include "global_reflection_pass.h"
 #include "point_light_pass.h"
 #include "present_pass.h"
 #include "shadow_casters.h"
@@ -25,6 +26,7 @@ class RenderSession final
         VkDescriptorSet                 _gBufferSlotMapper;
 
         GeometryPass                    _geometryPass;
+        GlobalReflectionPass            _globalReflectionPass;
         size_t                          _opaqueMeshCount;
 
         TexturePresentProgram           _texturePresentProgram;
@@ -65,6 +67,8 @@ class RenderSession final
             android_vulkan::Half4 const &color3
         );
 
+        void SubmitGlobalReflection ( TextureCubeRef &prefilter );
+        [[maybe_unused]] void SubmitLocalReflection ( TextureCubeRef &prefilter, GXVec3 const &location, float size );
         void SubmitLight ( LightRef const &light );
 
     private:

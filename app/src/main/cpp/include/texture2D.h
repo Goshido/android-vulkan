@@ -71,49 +71,49 @@ class Texture2D final
         [[nodiscard]] VkExtent2D const& GetResolution () const;
 
         // Supported formats: PNG.
-        [[maybe_unused, nodiscard]] bool UploadData ( std::string const &fileName,
+        [[maybe_unused, nodiscard]] bool UploadData ( Renderer &renderer,
+            std::string const &fileName,
             eFormat format,
             bool isGenerateMipmaps,
-            Renderer &renderer,
             VkCommandBuffer commandBuffer
         );
 
         // Supported media containers:
         // - PNG
         // - KTXv1 (ASTC with mipmaps)
-        [[nodiscard]] bool UploadData ( std::string &&fileName,
+        [[nodiscard]] bool UploadData ( Renderer &renderer,
+            std::string &&fileName,
             eFormat format,
             bool isGenerateMipmaps,
-            Renderer &renderer,
             VkCommandBuffer commandBuffer
         );
 
         // Supported media containers:
         // - PNG
         // - KTXv1 (ASTC with mipmaps)
-        [[nodiscard]] bool UploadData ( std::string_view const &fileName,
+        [[nodiscard]] bool UploadData ( Renderer &renderer,
+            std::string_view const &fileName,
             eFormat format,
             bool isGenerateMipmaps,
-            Renderer &renderer,
             VkCommandBuffer commandBuffer
         );
 
         // Supported media containers:
         // - PNG
         // - KTXv1 (ASTC with mipmaps)
-        [[nodiscard]] bool UploadData ( char const* fileName,
+        [[nodiscard]] bool UploadData ( Renderer &renderer,
+            char const* fileName,
             eFormat format,
             bool isGenerateMipmaps,
-            Renderer &renderer,
             VkCommandBuffer commandBuffer
         );
 
-        [[nodiscard]] bool UploadData ( uint8_t const* data,
+        [[nodiscard]] bool UploadData ( Renderer &renderer,
+            uint8_t const* data,
             size_t size,
             VkExtent2D const &resolution,
             VkFormat format,
             bool isGenerateMipmaps,
-            Renderer &renderer,
             VkCommandBuffer commandBuffer
         );
 
@@ -132,17 +132,17 @@ class Texture2D final
 
         void FreeResourceInternal ( VkDevice device );
 
-        [[nodiscard]] bool UploadCompressed ( std::string const &fileName,
+        [[nodiscard]] bool UploadCompressed ( Renderer &renderer,
+            std::string const &fileName,
             eFormat format,
-            Renderer &renderer,
             VkCommandBuffer commandBuffer
         );
 
-        [[nodiscard]] bool UploadDataInternal ( uint8_t const* data,
+        [[nodiscard]] bool UploadDataInternal ( Renderer &renderer,
+            uint8_t const* data,
             size_t size,
             bool isGenerateMipmaps,
             VkImageCreateInfo const &imageInfo,
-            Renderer &renderer,
             VkCommandBuffer commandBuffer
         );
 

@@ -50,13 +50,12 @@ ComponentRef Component::Create ( android_vulkan::Renderer &renderer,
 
     if ( desc._classID == ClassID::Reflection )
     {
-        commandBufferConsumed = 0U;
         dataRead = sizeof ( ReflectionComponentDesc );
 
         // Note it's safe cast like that here. "NOLINT" is a clang-tidy control comment.
         auto const& d = static_cast<ReflectionComponentDesc const&> ( desc ); // NOLINT
 
-        return std::make_shared<ReflectionComponent> ( d, data );
+        return std::make_shared<ReflectionComponent> ( renderer, commandBufferConsumed, d, data, commandBuffers );
     }
 
     commandBufferConsumed = 0U;

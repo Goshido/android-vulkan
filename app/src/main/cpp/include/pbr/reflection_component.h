@@ -26,7 +26,12 @@ class ReflectionComponent final : public Component
         ReflectionComponent ( ReflectionComponent && ) = delete;
         ReflectionComponent& operator = ( ReflectionComponent && ) = delete;
 
-        explicit ReflectionComponent ( ReflectionComponentDesc const &desc, uint8_t const *data ) noexcept;
+        explicit ReflectionComponent ( android_vulkan::Renderer &renderer,
+            size_t &commandBufferConsumed,
+            ReflectionComponentDesc const &desc,
+            uint8_t const *data,
+            VkCommandBuffer const* commandBuffers
+        ) noexcept;
 
         ~ReflectionComponent () override = default;
 

@@ -10,7 +10,12 @@ namespace pbr {
 
 [[maybe_unused]] constexpr static uint32_t const REFLECTION_COMPONENT_DESC_FORMAT_VERSION = 1U;
 
-ReflectionComponent::ReflectionComponent ( ReflectionComponentDesc const &desc, uint8_t const *data ) noexcept:
+ReflectionComponent::ReflectionComponent ( android_vulkan::Renderer &renderer,
+    size_t &commandBufferConsumed,
+    ReflectionComponentDesc const &desc,
+    uint8_t const *data,
+    VkCommandBuffer const* commandBuffers
+) noexcept:
     Component ( ClassID::Reflection ),
     _isGlobal ( desc._size == FLT_MAX ),
     _size ( desc._size )
@@ -32,7 +37,9 @@ ReflectionComponent::ReflectionComponent ( ReflectionComponentDesc const &desc, 
         ._zMinusFile = reinterpret_cast<char const*> ( data + desc._sideZMinus )
     };
 
-    if ( _prefilter->UploadData ( cubeData ) )
+    commandBufferConsumed = 1U;
+
+    if ( _prefilter->UploadData ( renderer, cubeData, *commandBuffers ) )
     {
         android_vulkan::LogDebug ( "ReflectionComponent::ReflectionComponent - Prefilter loaded from file." );
         return;
@@ -41,14 +48,23 @@ ReflectionComponent::ReflectionComponent ( ReflectionComponentDesc const &desc, 
     android_vulkan::LogError ( "ReflectionComponent::ReflectionComponent - Prefilter does not load properly." );
 }
 
-void ReflectionComponent::FreeTransferResources ( android_vulkan::Renderer &/*renderer*/ )
+void ReflectionComponent::FreeTransferResources ( android_vulkan::Renderer &renderer )
 {
-    // TODO
+    if ( _prefilter )
+    {
+        _prefilter->FreeTransferResources ( renderer.GetDevice() );
+    }
 }
 
-void ReflectionComponent::Submit ( RenderSession &/*renderSession*/ )
+void ReflectionComponent::Submit ( RenderSession &renderSession )
 {
-    // TODO
+    if ( _isGlobal )
+    {
+        renderSession.SubmitGlobalReflection ( _prefilter );
+        return;
+    }
+
+    renderSession.SubmitLocalReflection ( _prefilter, _location, _size );
 }
 
 } // namespace pbr

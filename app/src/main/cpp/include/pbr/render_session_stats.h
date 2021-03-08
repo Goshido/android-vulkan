@@ -18,6 +18,7 @@ class RenderSessionStats final
 {
     private:
         size_t                  _frameCount;
+        std::atomic_size_t      _renderGlobalReflections;
         std::atomic_size_t      _renderMeshes;
         std::atomic_size_t      _renderPointLights;
         std::atomic_size_t      _renderVertices;
@@ -44,6 +45,8 @@ class RenderSessionStats final
 
         void RenderPointLights ( size_t count );
         void SubmitPointLight ();
+
+        void RenderGlobalReflection ();
 
     private:
         void Reset ();

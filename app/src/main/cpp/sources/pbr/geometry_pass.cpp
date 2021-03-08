@@ -538,12 +538,12 @@ bool GeometryPass::InitDefaultTextures ( android_vulkan::Renderer &renderer,
         texture = std::make_shared<android_vulkan::Texture2D> ();
         constexpr VkExtent2D const resolution { .width = 1U, .height = 1U };
 
-        bool const result = texture->UploadData ( data,
+        bool const result = texture->UploadData ( renderer,
+            data,
             size,
             resolution,
             format,
             false,
-            renderer,
             commandBuffer
         );
 

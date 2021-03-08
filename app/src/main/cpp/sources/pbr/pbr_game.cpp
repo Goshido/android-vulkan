@@ -191,7 +191,11 @@ bool PBRGame::UploadGPUContent ( android_vulkan::Renderer& renderer )
     viewerLocal->GetW ( location );
     _camera.SetLocation ( location );
 
-    if ( !CreateCommandPool ( renderer, static_cast<size_t> ( sceneDesc->_textureCount + sceneDesc->_meshCount ) ) )
+    // TODO place this info to the scene descriptor info.
+    constexpr uint64_t const envMaps = 1U;
+    auto const comBuffs = static_cast<size_t> ( sceneDesc->_textureCount + sceneDesc->_meshCount + envMaps );
+
+    if ( !CreateCommandPool ( renderer, comBuffs ) )
         return false;
 
     VkCommandBuffer const* commandBuffers = _commandBuffers.data ();

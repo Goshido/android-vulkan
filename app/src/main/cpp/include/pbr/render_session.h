@@ -4,8 +4,8 @@
 
 #include <GXCommon/GXMath.h>
 #include "geometry_pass.h"
+#include "light_pass.h"
 #include "reflection_global_pass.h"
-#include "point_light_pass.h"
 #include "present_pass.h"
 #include "shadow_casters.h"
 
@@ -26,11 +26,11 @@ class RenderSession final
         VkDescriptorSet                 _gBufferSlotMapper;
 
         GeometryPass                    _geometryPass;
+        LightPass                       _lightPass;
         size_t                          _opaqueMeshCount;
         ReflectionGlobalPass            _reflectionGlobalPass;
 
         TexturePresentProgram           _texturePresentProgram;
-        PointLightPass                  _pointLightPass;
         PresentPass                     _presentPass;
         RenderSessionStats              _renderSessionStats;
         SamplerManager                  _samplerManager;

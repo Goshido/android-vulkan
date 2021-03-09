@@ -23,10 +23,10 @@ RenderSession::RenderSession () noexcept:
     _gBufferRenderPass ( VK_NULL_HANDLE ),
     _gBufferSlotMapper ( VK_NULL_HANDLE ),
     _geometryPass {},
+    _lightPass {},
     _opaqueMeshCount ( 0U ),
     _reflectionGlobalPass {},
     _texturePresentProgram {},
-    _pointLightPass {},
     _presentPass {},
     _renderSessionStats {},
     _samplerManager {},
@@ -45,7 +45,7 @@ void RenderSession::Begin ( GXMat4 const &viewerLocal, GXMat4 const &projection 
     _view.Inverse ( _viewerLocal );
     _viewProjection.Multiply ( _view, projection );
     _frustum.From ( _viewProjection );
-    _pointLightPass.Reset ();
+    _lightPass.Reset ();
     _geometryPass.Reset ();
     _reflectionGlobalPass.Reset ();
 }
@@ -55,10 +55,14 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
     if ( !_presentPass.AcquirePresentTarget ( renderer ) )
         return false;
 
-    if ( !_pointLightPass.Update ( renderer, _gBuffer.GetResolution (), _cvvToView ) )
-        return false;
+    bool result = _lightPass.OnPreGeometryPass ( renderer,
+        _gBuffer.GetResolution(),
+        _geometryPass.GetSceneData(),
+        _opaqueMeshCount,
+        _cvvToView
+    );
 
-    if ( !_pointLightPass.ExecuteShadowPhase ( renderer, _geometryPass.GetSceneData (), _opaqueMeshCount ) )
+    if ( !result )
         return false;
 
     VkCommandBuffer commandBuffer = _geometryPass.Execute ( renderer,
@@ -74,7 +78,7 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
 
     bool isCommonSetBind = false;
 
-    bool const result = _pointLightPass.ExecuteLightupPhase ( renderer,
+    result = _lightPass.OnPostGeometryPass ( renderer,
         isCommonSetBind,
         commandBuffer,
         _viewerLocal,
@@ -85,7 +89,7 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
     if ( !result )
         return false;
 
-    _renderSessionStats.RenderPointLights ( _pointLightPass.GetPointLightCount () );
+    _renderSessionStats.RenderPointLights ( _lightPass.GetPointLightCount () );
 
     vkCmdPipelineBarrier ( commandBuffer,
         VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
@@ -126,7 +130,7 @@ bool RenderSession::Init ( android_vulkan::Renderer &renderer, VkExtent2D const 
         return false;
     }
 
-    if ( !_pointLightPass.Init ( renderer, _gBuffer ) || !_presentPass.Init ( renderer ) )
+    if ( !_lightPass.Init ( renderer, _gBuffer ) || !_presentPass.Init ( renderer ) )
     {
         Destroy ( renderer.GetDevice () );
         return false;
@@ -162,7 +166,7 @@ void RenderSession::Destroy ( VkDevice device )
 {
     _samplerManager.FreeResources ( device );
     _presentPass.Destroy ( device );
-    _pointLightPass.Destroy ( device );
+    _lightPass.Destroy ( device );
     _texturePresentProgram.Destroy ( device );
 
     if ( _gBufferDescriptorPool != VK_NULL_HANDLE )
@@ -493,7 +497,7 @@ void RenderSession::SubmitPointLight ( LightRef const &light )
 
     if ( _frustum.IsVisible ( pointLight.GetBounds () ) )
     {
-        _pointLightPass.Submit ( light );
+        _lightPass.Submit ( light );
     }
 }
 

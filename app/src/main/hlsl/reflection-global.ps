@@ -1,6 +1,11 @@
 
 #define PREFILTER_MAX_MIP_LEVEL     8.0F
 
+// Not used actually.
+[[vk::binding ( 0, 0 )]]
+[[vk::input_attachment_index (0)]]
+SubpassInput<float4>        g_albedo;
+
 [[vk::binding ( 1, 0 )]]
 [[vk::input_attachment_index (1)]]
 SubpassInput<float4>        g_normal;
@@ -12,6 +17,14 @@ SubpassInput<float4>        g_params;
 [[vk::binding ( 3, 0 )]]
 [[vk::input_attachment_index (3)]]
 SubpassInput<float>         g_depth;
+
+struct LightData
+{
+    matrix                  _viewToWorld;
+};
+
+[[vk::push_constant]]
+const LightData             g_lightData;
 
 [[vk::binding ( 4, 0 )]]
 cbuffer ViewData:                           register ( b0 )
@@ -29,12 +42,6 @@ TextureCube<float4>         g_prefilter:    register ( t0 );
 
 [[vk::binding ( 1, 1 )]]
 SamplerState                g_sampler:      register ( s0 );
-
-[[vk::binding ( 2, 1 )]]
-cbuffer LightData:                          register ( b1 )
-{
-    matrix                  _viewToWorld;
-};
 
 struct InputData
 {
@@ -93,7 +100,7 @@ OutputData PS ( in InputData inputData )
 
     const float3 directionView = RestoreDirectionView ( inputData._pixel.xy, depth );
     const float3 normalView = RestoreNormalView ();
-    const float3 refl = -mul ( (float3x3)_viewToWorld, reflect ( directionView, normalView ) );
+    const float3 refl = -mul ( (float3x3)g_lightData._viewToWorld, reflect ( directionView, normalView ) );
 
     result._color = float4 ( g_prefilter.SampleLevel ( g_sampler, refl, Roughness2Mip () ).xyz, 0.0F );
     return result;

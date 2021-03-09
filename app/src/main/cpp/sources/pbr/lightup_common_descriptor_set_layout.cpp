@@ -14,7 +14,7 @@ namespace pbr {
 class LightupCommonDescriptorSetLayoutImpl final
 {
     public:
-        VkDescriptorSetLayout       _descriptorSetLayout;
+        VkDescriptorSetLayout       _layout;
 
     private:
         std::atomic_size_t          _references;
@@ -35,7 +35,7 @@ class LightupCommonDescriptorSetLayoutImpl final
 };
 
 LightupCommonDescriptorSetLayoutImpl::LightupCommonDescriptorSetLayoutImpl () noexcept:
-    _descriptorSetLayout ( VK_NULL_HANDLE ),
+    _layout ( VK_NULL_HANDLE ),
     _references ( 0U )
 {
     // NOTHING
@@ -51,9 +51,9 @@ void LightupCommonDescriptorSetLayoutImpl::Destroy ( VkDevice device )
     if ( _references )
         return;
 
-    vkDestroyDescriptorSetLayout ( device, _descriptorSetLayout, nullptr );
-    _descriptorSetLayout = VK_NULL_HANDLE;
-    AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "LightupCommonDescriptorSetLayoutImpl::_descriptorSetLayout" )
+    vkDestroyDescriptorSetLayout ( device, _layout, nullptr );
+    _layout = VK_NULL_HANDLE;
+    AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "LightupCommonDescriptorSetLayoutImpl::_layout" )
 }
 
 bool LightupCommonDescriptorSetLayoutImpl::Init ( android_vulkan::Renderer &renderer )
@@ -113,7 +113,7 @@ bool LightupCommonDescriptorSetLayoutImpl::Init ( android_vulkan::Renderer &rend
     };
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateDescriptorSetLayout ( renderer.GetDevice (), &descriptorSetLayoutInfo, nullptr, &_descriptorSetLayout ),
+        vkCreateDescriptorSetLayout ( renderer.GetDevice (), &descriptorSetLayoutInfo, nullptr, &_layout ),
         "LightupCommonDescriptorSetLayoutImpl::Init",
         "Can't create descriptor set layout"
     );
@@ -121,7 +121,7 @@ bool LightupCommonDescriptorSetLayoutImpl::Init ( android_vulkan::Renderer &rend
     if ( !result )
         return false;
 
-    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "LightupCommonDescriptorSetLayoutImpl::_descriptorSetLayout" )
+    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "LightupCommonDescriptorSetLayoutImpl::_layout" )
 
     ++_references;
     return true;
@@ -143,7 +143,7 @@ bool LightupCommonDescriptorSetLayout::Init ( android_vulkan::Renderer &renderer
 
 VkDescriptorSetLayout LightupCommonDescriptorSetLayout::GetLayout () const
 {
-    return g_lightupCommonDescriptorSetLayout._descriptorSetLayout;
+    return g_lightupCommonDescriptorSetLayout._layout;
 }
 
 } // namespace pbr

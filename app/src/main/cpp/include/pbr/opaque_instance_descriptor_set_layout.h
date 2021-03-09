@@ -10,7 +10,7 @@ namespace pbr {
 class OpaqueInstanceDescriptorSetLayout final : public DescriptorSetLayout
 {
     public:
-        OpaqueInstanceDescriptorSetLayout () noexcept = default;
+        OpaqueInstanceDescriptorSetLayout () = default;
 
         OpaqueInstanceDescriptorSetLayout ( OpaqueInstanceDescriptorSetLayout const & ) = delete;
         OpaqueInstanceDescriptorSetLayout& operator = ( OpaqueInstanceDescriptorSetLayout const & ) = delete;

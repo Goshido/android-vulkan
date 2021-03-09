@@ -7,10 +7,12 @@
 
 namespace pbr {
 
+// The class successors must create singleton instance of target the VkDescriptorSetLayout object and
+// maintain it's presence.
 class DescriptorSetLayout
 {
     public:
-        DescriptorSetLayout () noexcept = default;
+        DescriptorSetLayout () = default;
 
         DescriptorSetLayout ( DescriptorSetLayout const & ) = delete;
         DescriptorSetLayout& operator = ( DescriptorSetLayout const & ) = delete;

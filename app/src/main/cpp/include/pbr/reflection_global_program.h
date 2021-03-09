@@ -4,6 +4,7 @@
 
 #include "light_lightup_base_program.h"
 #include "lightup_common_descriptor_set_layout.h"
+#include "reflection_global_descriptor_set_layout.h"
 #include <vulkan_utils.h>
 
 
@@ -11,8 +12,19 @@ namespace pbr {
 
 class [[maybe_unused]] ReflectionGlobalProgram final : public LightLightupBaseProgram
 {
+    public:
+        AV_DX_ALIGNMENT_BEGIN
+
+        struct PushConstants final
+        {
+            [[maybe_unused]] GXMat4             _viewToWorld;
+        };
+
+        AV_DX_ALIGNMENT_END
+
     private:
-        LightupCommonDescriptorSetLayout    _commonLayout;
+        LightupCommonDescriptorSetLayout        _commonLayout;
+        ReflectionGlobalDescriptorSetLayout     _reflectionLayout;
 
     public:
         ReflectionGlobalProgram ();

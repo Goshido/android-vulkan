@@ -10,7 +10,7 @@ LightVolume::LightVolume () noexcept:
     // NOTHING
 }
 
-void LightVolume::Execute ( uint32_t vertexCount, GXMat4 const &transform, VkCommandBuffer commandBuffer )
+void LightVolume::Execute ( uint32_t vertexCount, VkDescriptorSet transform, VkCommandBuffer commandBuffer )
 {
     _program.Bind ( commandBuffer );
     _program.SetTransform ( commandBuffer, transform );

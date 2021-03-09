@@ -28,7 +28,6 @@ class RenderSession final
         GeometryPass                    _geometryPass;
         LightPass                       _lightPass;
         size_t                          _opaqueMeshCount;
-        ReflectionGlobalPass            _reflectionGlobalPass;
 
         TexturePresentProgram           _texturePresentProgram;
         PresentPass                     _presentPass;

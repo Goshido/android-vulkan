@@ -25,7 +25,6 @@ RenderSession::RenderSession () noexcept:
     _geometryPass {},
     _lightPass {},
     _opaqueMeshCount ( 0U ),
-    _reflectionGlobalPass {},
     _texturePresentProgram {},
     _presentPass {},
     _renderSessionStats {},
@@ -47,7 +46,6 @@ void RenderSession::Begin ( GXMat4 const &viewerLocal, GXMat4 const &projection 
     _frustum.From ( _viewProjection );
     _lightPass.Reset ();
     _geometryPass.Reset ();
-    _reflectionGlobalPass.Reset ();
 }
 
 bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
@@ -76,10 +74,7 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
     if ( commandBuffer == VK_NULL_HANDLE )
         return false;
 
-    bool isCommonSetBind = false;
-
     result = _lightPass.OnPostGeometryPass ( renderer,
-        isCommonSetBind,
         commandBuffer,
         _viewerLocal,
         _view,
@@ -223,7 +218,7 @@ void RenderSession::SubmitLight ( LightRef const &light )
 
 void RenderSession::SubmitReflectionGlobal ( TextureCubeRef &prefilter )
 {
-    _reflectionGlobalPass.Append ( prefilter );
+    _lightPass.SubmitReflectionGlobal ( prefilter );
     _renderSessionStats.RenderReflectionGlobal ();
 }
 
@@ -497,7 +492,7 @@ void RenderSession::SubmitPointLight ( LightRef const &light )
 
     if ( _frustum.IsVisible ( pointLight.GetBounds () ) )
     {
-        _lightPass.Submit ( light );
+        _lightPass.SubmitPointLight ( light );
     }
 }
 

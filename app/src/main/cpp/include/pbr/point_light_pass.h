@@ -26,6 +26,8 @@ class PointLightPass final
     private:
         VkCommandPool                           _commandPool;
         VkDescriptorPool                        _descriptorPool;
+        VkDescriptorPool                        _descriptorPool2;
+        std::vector<VkDescriptorSet>            _descriptorSets2;
         VkFence                                 _fence;
         std::vector<Interact>                   _interacts;
         PointLightLightup                       _lightup;
@@ -35,9 +37,14 @@ class PointLightPass final
         std::vector<PointLightShadowmapInfo>    _shadowmaps;
         VkSubmitInfo                            _submitInfoRender;
         VkSubmitInfo                            _submitInfoTransfer;
+        VkSubmitInfo                            _submitInfoTransfer2;
         VkCommandBuffer                         _transferCommandBuffer;
-        UniformBufferPool                       _uniformPool;
+        VkCommandBuffer                         _transferCommandBuffer2;
+        UniformBufferPool                       _uniformPoolInstanceData;
+        UniformBufferPool                       _uniformPoolVolumeData;
+        std::vector<VkDescriptorBufferInfo>     _uniformInfoVolumeData;
         size_t                                  _usedShadowmaps;
+        std::vector<VkWriteDescriptorSet>       _writeSets;
 
     public:
         PointLightPass () noexcept;
@@ -80,11 +87,14 @@ class PointLightPass final
         void Submit ( LightRef const &light );
 
     private:
+        [[nodiscard]] bool AllocateDescriptorSets ( android_vulkan::Renderer &renderer, size_t neededSets );
+
         // The method returns nullptr if it fails. Otherwise the method returns a valid pointer.
         [[nodiscard]] PointLightShadowmapInfo* AcquirePointLightShadowmap ( android_vulkan::Renderer &renderer );
 
         [[nodiscard]] bool CreateShadowmapRenderPass ( VkDevice device );
         void DestroyDescriptorPool ( VkDevice device );
+        void DestroyDescriptorPool2 ( VkDevice device );
 
         [[nodiscard]] bool GenerateShadowmaps ( VkDescriptorSet const* descriptorSets,
             android_vulkan::Renderer &renderer
@@ -95,6 +105,8 @@ class PointLightPass final
             size_t opaqueMeshCount,
             android_vulkan::Renderer &renderer
         );
+
+        [[nodiscard]] bool UpdateGPUData2 ( android_vulkan::Renderer &renderer, GXMat4 const &viewProjection );
 };
 
 } // namespace pbr

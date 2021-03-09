@@ -5,6 +5,7 @@
 #include <half_types.h>
 #include "lightup_common_descriptor_set_layout.h"
 #include "light_lightup_base_program.h"
+#include "light_volume_descriptor_set_layout.h"
 #include "point_light_descriptor_set_layout.h"
 
 
@@ -15,7 +16,7 @@ class PointLightLightupProgram final : public LightLightupBaseProgram
     public:
         AV_DX_ALIGNMENT_BEGIN
 
-        struct [[maybe_unused]] PushConstants final
+        struct [[maybe_unused]] VolumeData final
         {
             [[maybe_unused]] GXMat4                     _transform;
         };
@@ -38,6 +39,7 @@ class PointLightLightupProgram final : public LightLightupBaseProgram
 
     private:
         LightupCommonDescriptorSetLayout                _commonLayout;
+        LightVolumeDescriptorSetLayout                  _lightVolumeLayout;
         PointLightDescriptorSetLayout                   _pointLightLayout;
 
     public:
@@ -61,8 +63,10 @@ class PointLightLightupProgram final : public LightLightupBaseProgram
 
         void Destroy ( VkDevice device ) override;
 
-        void SetDescriptorSet ( VkCommandBuffer commandBuffer, VkDescriptorSet set ) const;
-        void SetTransform ( VkCommandBuffer commandBuffer, GXMat4 const &transform ) const;
+        void SetDescriptorSets ( VkCommandBuffer commandBuffer,
+            VkDescriptorSet lightData,
+            VkDescriptorSet volumeData
+        ) const;
 
     private:
         [[nodiscard]] DescriptorSetInfo const& GetResourceInfo () const override;

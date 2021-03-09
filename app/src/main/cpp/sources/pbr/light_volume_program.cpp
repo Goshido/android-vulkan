@@ -11,7 +11,8 @@ constexpr static const char* VERTEX_SHADER = "shaders/light-volume-vs.spv";
 //----------------------------------------------------------------------------------------------------------------------
 
 LightVolumeProgram::LightVolumeProgram () noexcept:
-    Program ( "pbr::LightVolumeProgram" )
+    Program ( "pbr::LightVolumeProgram" ),
+    _layout {}
 {
     // NOTHING
 }
@@ -114,14 +115,16 @@ void LightVolumeProgram::Destroy ( VkDevice device )
     AV_UNREGISTER_SHADER_MODULE ( "LightVolumeProgram::_vertexShader" )
 }
 
-void LightVolumeProgram::SetTransform ( VkCommandBuffer commandBuffer, const GXMat4 &transform )
+void LightVolumeProgram::SetTransform ( VkCommandBuffer commandBuffer, VkDescriptorSet transform )
 {
-    vkCmdPushConstants ( commandBuffer,
+    vkCmdBindDescriptorSets ( commandBuffer,
+        VK_PIPELINE_BIND_POINT_GRAPHICS,
         _pipelineLayout,
-        VK_SHADER_STAGE_VERTEX_BIT,
+        2U,
+        1U,
+        &transform,
         0U,
-        sizeof ( PushConstants ),
-        &transform
+        nullptr
     );
 }
 
@@ -204,13 +207,18 @@ VkPipelineInputAssemblyStateCreateInfo const* LightVolumeProgram::InitInputAssem
 
 bool LightVolumeProgram::InitLayout ( android_vulkan::Renderer &renderer, VkPipelineLayout &layout )
 {
-    constexpr static VkPushConstantRange const pushConstantRanges[]
+    if ( !_layout.Init ( renderer ) )
+        return false;
+
+    VkDescriptorSetLayout nativeLayout = _layout.GetLayout ();
+
+    // WORKAROUND: Vulkan states that all layouts must be valid objects. But same time this pipeline is using only
+    // descriptor set from #2 slot. First two slots are not important so just repeat same layout for missing slots.
+    VkDescriptorSetLayout const layouts[] =
     {
-        {
-            .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
-            .offset = 0U,
-            .size = static_cast<uint32_t> ( sizeof ( PushConstants ) )
-        }
+        nativeLayout,
+        nativeLayout,
+        nativeLayout
     };
 
     VkPipelineLayoutCreateInfo const layoutInfo
@@ -218,10 +226,10 @@ bool LightVolumeProgram::InitLayout ( android_vulkan::Renderer &renderer, VkPipe
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0U,
-        .setLayoutCount = 0U,
-        .pSetLayouts = nullptr,
-        .pushConstantRangeCount = static_cast<uint32_t> ( std::size ( pushConstantRanges ) ),
-        .pPushConstantRanges = pushConstantRanges
+        .setLayoutCount = static_cast<uint32_t> ( std::size ( layouts ) ),
+        .pSetLayouts = layouts,
+        .pushConstantRangeCount = 0U,
+        .pPushConstantRanges = nullptr
     };
 
     bool const result = android_vulkan::Renderer::CheckVkResult (

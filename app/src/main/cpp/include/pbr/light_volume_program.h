@@ -3,6 +3,7 @@
 
 
 #include <vulkan_utils.h>
+#include "light_volume_descriptor_set_layout.h"
 #include "program.h"
 
 
@@ -16,12 +17,15 @@ class LightVolumeProgram final : public Program
     public:
         AV_DX_ALIGNMENT_BEGIN
 
-        struct [[maybe_unused]] PushConstants final
+        struct VolumeData final
         {
             [[maybe_unused]] GXMat4     _transform;
         };
 
         AV_DX_ALIGNMENT_END
+
+    private:
+        LightVolumeDescriptorSetLayout      _layout;
 
     public:
         LightVolumeProgram () noexcept;
@@ -52,7 +56,7 @@ class LightVolumeProgram final : public Program
             return STENCIL_INITIAL_VALUE;
         }
 
-        void SetTransform ( VkCommandBuffer commandBuffer, GXMat4 const &transform );
+        void SetTransform ( VkCommandBuffer commandBuffer, VkDescriptorSet transform );
 
     private:
         [[nodiscard]] DescriptorSetInfo const& GetResourceInfo () const override;

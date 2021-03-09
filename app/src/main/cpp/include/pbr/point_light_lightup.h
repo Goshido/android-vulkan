@@ -24,8 +24,8 @@ class PointLightLightup final
         PointLightLightupProgram                _program;
         Sampler                                 _sampler;
         VkSubmitInfo                            _submitInfoTransfer;
-        std::vector<VkDescriptorBufferInfo>     _uniformInfo;
-        UniformBufferPool                       _uniformPool;
+        std::vector<VkDescriptorBufferInfo>     _uniformInfoLightData;
+        UniformBufferPool                       _uniformPoolLightData;
         android_vulkan::MeshGeometry            _volumeMesh;
         std::vector<VkWriteDescriptorSet>       _writeSets;
 
@@ -53,7 +53,7 @@ class PointLightLightup final
 
         void Lightup ( VkCommandBuffer commandBuffer,
             size_t lightIndex,
-            GXMat4 const &transform
+            VkDescriptorSet volumeData
         );
 
         void SetCommonDescriptorSet ( VkCommandBuffer commandBuffer, VkDescriptorSet set );

@@ -23,8 +23,8 @@ PointLightLightup::PointLightLightup () noexcept:
     _program {},
     _sampler {},
     _submitInfoTransfer {},
-    _uniformInfo {},
-    _uniformPool ( eUniformPoolSize::Tiny_4M ),
+    _uniformInfoLightData {},
+    _uniformPoolLightData ( eUniformPoolSize::Tiny_4M ),
     _volumeMesh {},
     _writeSets {}
 {
@@ -124,7 +124,7 @@ bool PointLightLightup::Init ( android_vulkan::Renderer &renderer,
         return false;
     }
 
-    if ( !_uniformPool.Init ( renderer, sizeof ( PointLightLightupProgram::LightData ) ) )
+    if ( !_uniformPoolLightData.Init ( renderer, sizeof ( PointLightLightupProgram::LightData ) ) )
     {
         Destroy ( device );
         return false;
@@ -177,7 +177,7 @@ void PointLightLightup::Destroy ( VkDevice device )
     DestroyDescriptorPool ( device );
 
     _volumeMesh.FreeResources ( device );
-    _uniformPool.Destroy ( device );
+    _uniformPoolLightData.Destroy ( device );
     _sampler.Destroy ( device );
     _program.Destroy ( device );
 
@@ -186,6 +186,7 @@ void PointLightLightup::Destroy ( VkDevice device )
 
     vkDestroyCommandPool ( device, _commandPool, nullptr );
     _commandPool = VK_NULL_HANDLE;
+    _transferCommandBuffer = VK_NULL_HANDLE;
     AV_UNREGISTER_COMMAND_POOL ( "PointLightLightup::_commandPool" )
 }
 
@@ -196,12 +197,11 @@ android_vulkan::MeshGeometry const& PointLightLightup::GetLightVolume () const
 
 void PointLightLightup::Lightup ( VkCommandBuffer commandBuffer,
     size_t lightIndex,
-    GXMat4 const &transform
+    VkDescriptorSet volumeData
 )
 {
     _program.Bind ( commandBuffer );
-    _program.SetTransform ( commandBuffer, transform );
-    _program.SetDescriptorSet ( commandBuffer, _descriptorSets[ lightIndex ] );
+    _program.SetDescriptorSets ( commandBuffer, _descriptorSets[ lightIndex ], volumeData );
 
     vkCmdDrawIndexed ( commandBuffer, _volumeMesh.GetVertexCount (), 1U, 0U, 0, 0U );
 }
@@ -217,7 +217,7 @@ bool PointLightLightup::UpdateGPUData ( android_vulkan::Renderer &renderer,
     GXMat4 const &view
 )
 {
-    _uniformPool.Reset();
+    _uniformPoolLightData.Reset();
     size_t const lightCount = pointLightPass.GetPointLightCount ();
 
     if ( !AllocateNativeDescriptorSets ( renderer, lightCount ) )
@@ -325,9 +325,9 @@ bool PointLightLightup::UpdateGPUData ( android_vulkan::Renderer &renderer,
         lightData._intensity = light->GetIntensity ();
 
         view.MultiplyAsPoint ( lightData._lightLocationView, location );
-        VkDescriptorBufferInfo& buffer = _uniformInfo[ i ];
+        VkDescriptorBufferInfo& buffer = _uniformInfoLightData[ i ];
 
-        buffer.buffer = _uniformPool.Acquire ( renderer,
+        buffer.buffer = _uniformPoolLightData.Acquire ( renderer,
             _transferCommandBuffer,
             &lightData,
             VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT
@@ -425,14 +425,14 @@ bool PointLightLightup::AllocateNativeDescriptorSets ( android_vulkan::Renderer 
 
     _imageInfo.resize ( neededSets, image );
 
-    VkDescriptorBufferInfo const uniform
+    constexpr VkDescriptorBufferInfo const uniform
     {
         .buffer = VK_NULL_HANDLE,
         .offset = 0U,
         .range = static_cast<VkDeviceSize> ( sizeof ( PointLightLightupProgram::LightData ) )
     };
 
-    _uniformInfo.resize ( neededSets, uniform );
+    _uniformInfoLightData.resize ( neededSets, uniform );
 
     constexpr VkWriteDescriptorSet const writeSet
     {

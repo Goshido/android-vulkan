@@ -52,7 +52,6 @@ R"__(>>> RenderSessionStats::PrintStats:
 
     android_vulkan::LogInfo ( format,
         avgCounter ( _submitMeshes ),
-        avgCounter ( _submitMeshes ),
         avgCounter ( _submitVertices ),
         avgCounter ( _submitPointLights ),
         avgCounter ( _renderReflectionsGlobal ),

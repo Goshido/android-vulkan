@@ -102,6 +102,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/pbr/lightup_common_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/light_lightup_base_program.cpp
     app/src/main/cpp/sources/pbr/light_volume.cpp
+    app/src/main/cpp/sources/pbr/light_volume_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/light_volume_program.cpp
     app/src/main/cpp/sources/pbr/material.cpp
     app/src/main/cpp/sources/pbr/material_manager.cpp

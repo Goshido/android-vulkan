@@ -1,6 +1,12 @@
 #include <pbr/light_pass.h>
 #include <vulkan_utils.h>
 
+GX_DISABLE_COMMON_WARNINGS
+
+#include <cassert>
+
+GX_RESTORE_WARNING_STATE
+
 
 namespace pbr {
 
@@ -8,12 +14,13 @@ LightPass::LightPass () noexcept:
     _lightupRenderPassInfo {},
     _lightVolume {},
     _lightupCommonDescriptorSet {},
-    _pointLightPass {}
+    _pointLightPass {},
+    _reflectionGlobalPass {}
 {
     // NOTHING
 }
 
-[[maybe_unused]] bool LightPass::Init ( android_vulkan::Renderer &renderer, GBuffer &gBuffer )
+bool LightPass::Init ( android_vulkan::Renderer &renderer, GBuffer &gBuffer )
 {
     _lightupRenderPassInfo.framebuffer = VK_NULL_HANDLE;
     _lightupRenderPassInfo.renderPass = VK_NULL_HANDLE;
@@ -44,7 +51,15 @@ LightPass::LightPass () noexcept:
         return false;
     }
 
-    if ( !_pointLightPass.Init ( renderer, gBuffer.GetResolution (), _lightupRenderPassInfo.renderPass ) )
+    VkExtent2D const& resolution = gBuffer.GetResolution ();
+
+    if ( !_pointLightPass.Init ( renderer, resolution, _lightupRenderPassInfo.renderPass ) )
+    {
+        Destroy ( renderer.GetDevice () );
+        return false;
+    }
+
+    if ( !_reflectionGlobalPass.Init ( renderer,_lightupRenderPassInfo.renderPass, 1U, resolution ) )
     {
         Destroy ( renderer.GetDevice () );
         return false;
@@ -55,6 +70,7 @@ LightPass::LightPass () noexcept:
 
 void LightPass::Destroy ( VkDevice device )
 {
+    _reflectionGlobalPass.Destroy ( device );
     _pointLightPass.Destroy ( device );
     _lightupCommonDescriptorSet.Destroy ( device );
     _lightVolume.Destroy ( device );
@@ -79,7 +95,7 @@ size_t LightPass::GetPointLightCount () const
     return _pointLightPass.GetPointLightCount ();
 }
 
-[[maybe_unused]] bool LightPass::OnPreGeometryPass ( android_vulkan::Renderer &renderer,
+bool LightPass::OnPreGeometryPass ( android_vulkan::Renderer &renderer,
     VkExtent2D const &resolution,
     SceneData const &sceneData,
     size_t opaqueMeshCount,
@@ -92,15 +108,16 @@ size_t LightPass::GetPointLightCount () const
     return _pointLightPass.ExecuteShadowPhase ( renderer, sceneData, opaqueMeshCount );
 }
 
-[[maybe_unused]] bool LightPass::OnPostGeometryPass ( android_vulkan::Renderer &renderer,
-    bool &isCommonSetBind,
+bool LightPass::OnPostGeometryPass ( android_vulkan::Renderer &renderer,
     VkCommandBuffer commandBuffer,
     GXMat4 const &viewerLocal,
     GXMat4 const &view,
     GXMat4 const &viewProjection
 )
 {
-    return _pointLightPass.ExecuteLightupPhase ( renderer,
+    bool isCommonSetBind = false;
+
+    bool result = _pointLightPass.ExecuteLightupPhase ( renderer,
         isCommonSetBind,
         _lightVolume,
         _lightupCommonDescriptorSet,
@@ -110,16 +127,50 @@ size_t LightPass::GetPointLightCount () const
         view,
         viewProjection
     );
+
+    if ( !result )
+        return false;
+
+    vkCmdBeginRenderPass ( commandBuffer, &_lightupRenderPassInfo, VK_SUBPASS_CONTENTS_INLINE );
+    vkCmdNextSubpass ( commandBuffer, VK_SUBPASS_CONTENTS_INLINE );
+
+    GXMat4 dummy;
+    dummy.Identity ();
+
+    result = _reflectionGlobalPass.Execute ( renderer,
+        isCommonSetBind,
+        _lightupCommonDescriptorSet,
+        commandBuffer,
+        dummy
+    );
+
+    vkCmdEndRenderPass ( commandBuffer );
+    return result;
 }
 
 void LightPass::Reset ()
 {
     _pointLightPass.Reset ();
+    _reflectionGlobalPass.Reset ();
 }
 
-void LightPass::Submit ( LightRef const &light )
+void LightPass::SubmitPointLight ( LightRef const &light )
 {
     _pointLightPass.Submit ( light );
+}
+
+void LightPass::SubmitReflectionGlobal ( TextureCubeRef &prefilter )
+{
+    _reflectionGlobalPass.Append ( prefilter );
+}
+
+[[maybe_unused]] void LightPass::SubmitReflectionLocal ( TextureCubeRef &/*prefilter*/,
+    GXVec3 const &/*location*/,
+    float /*size*/
+)
+{
+    // TODO
+    assert ( false );
 }
 
 bool LightPass::CreateLightupFramebuffer ( VkDevice device, GBuffer &gBuffer )

@@ -12,7 +12,7 @@ namespace pbr {
 class LightVolume final
 {
     private:
-        LightVolumeProgram                  _program;
+        LightVolumeProgram      _program;
 
     public:
         LightVolume () noexcept;
@@ -25,7 +25,7 @@ class LightVolume final
 
         ~LightVolume () = default;
 
-        void Execute ( uint32_t vertexCount, GXMat4 const &transform, VkCommandBuffer commandBuffer );
+        void Execute ( uint32_t vertexCount, VkDescriptorSet transform, VkCommandBuffer commandBuffer );
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
             GBuffer &gBuffer,

@@ -15,7 +15,7 @@ class [[maybe_unused]] ReflectionGlobalProgram final : public LightLightupBasePr
     public:
         AV_DX_ALIGNMENT_BEGIN
 
-        struct PushConstants final
+        struct Transform final
         {
             [[maybe_unused]] GXMat4             _viewToWorld;
         };
@@ -47,6 +47,8 @@ class [[maybe_unused]] ReflectionGlobalProgram final : public LightLightupBasePr
 
         void Destroy ( VkDevice device ) override;
         [[nodiscard]] DescriptorSetInfo const& GetResourceInfo () const override;
+
+        void SetDescriptorSet ( VkCommandBuffer commandBuffer, VkDescriptorSet set ) const;
 
     private:
         [[nodiscard]] VkPipelineColorBlendStateCreateInfo const* InitColorBlendInfo (

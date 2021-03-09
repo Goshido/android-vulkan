@@ -11,7 +11,8 @@ constexpr static const size_t STAGE_COUNT = 2U;
 
 ReflectionGlobalProgram::ReflectionGlobalProgram ():
     LightLightupBaseProgram ( "ReflectionGlobalProgram" ),
-    _commonLayout {}
+    _commonLayout {},
+    _reflectionLayout {}
 {
     // NOTHING
 }
@@ -69,7 +70,7 @@ bool ReflectionGlobalProgram::Init ( android_vulkan::Renderer &renderer,
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateGraphicsPipelines ( renderer.GetDevice (), VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
-        "TexturePresentProgram::Init",
+        "ReflectionGlobalProgram::Init",
         "Can't create pipeline"
     );
 
@@ -79,7 +80,7 @@ bool ReflectionGlobalProgram::Init ( android_vulkan::Renderer &renderer,
         return false;
     }
 
-    AV_REGISTER_PIPELINE ( "TexturePresentProgram::_pipeline" )
+    AV_REGISTER_PIPELINE ( "ReflectionGlobalProgram::_pipeline" )
     return true;
 }
 
@@ -150,6 +151,19 @@ Program::DescriptorSetInfo const& ReflectionGlobalProgram::GetResourceInfo () co
     return info;
 }
 
+void ReflectionGlobalProgram::SetDescriptorSet ( VkCommandBuffer commandBuffer, VkDescriptorSet set ) const
+{
+    vkCmdBindDescriptorSets ( commandBuffer,
+        VK_PIPELINE_BIND_POINT_GRAPHICS,
+        _pipelineLayout,
+        1U,
+        1U,
+        &set,
+        0U,
+        nullptr
+    );
+}
+
 VkPipelineColorBlendStateCreateInfo const* ReflectionGlobalProgram::InitColorBlendInfo (
     VkPipelineColorBlendStateCreateInfo &info,
     VkPipelineColorBlendAttachmentState* attachments
@@ -191,7 +205,7 @@ VkPipelineDepthStencilStateCreateInfo const* ReflectionGlobalProgram::InitDepthS
     info.depthWriteEnable = VK_FALSE;
     info.depthCompareOp = VK_COMPARE_OP_ALWAYS;
     info.depthBoundsTestEnable = VK_FALSE;
-    info.stencilTestEnable = VK_TRUE;
+    info.stencilTestEnable = VK_FALSE;
 
     info.front =
     {
@@ -248,15 +262,6 @@ bool ReflectionGlobalProgram::InitLayout ( android_vulkan::Renderer &renderer, V
         _reflectionLayout.GetLayout ()
     };
 
-    constexpr static VkPushConstantRange const pushConstantRanges[]
-    {
-        {
-            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
-            .offset = 0U,
-            .size = static_cast<uint32_t> ( sizeof ( PushConstants ) )
-        }
-    };
-
     VkPipelineLayoutCreateInfo const layoutInfo
     {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
@@ -264,8 +269,8 @@ bool ReflectionGlobalProgram::InitLayout ( android_vulkan::Renderer &renderer, V
         .flags = 0U,
         .setLayoutCount = static_cast<uint32_t> ( std::size ( layouts ) ),
         .pSetLayouts = layouts,
-        .pushConstantRangeCount = static_cast<uint32_t> ( std::size ( pushConstantRanges ) ),
-        .pPushConstantRanges = pushConstantRanges
+        .pushConstantRangeCount = 0U,
+        .pPushConstantRanges = nullptr
     };
 
     bool const result = android_vulkan::Renderer::CheckVkResult (

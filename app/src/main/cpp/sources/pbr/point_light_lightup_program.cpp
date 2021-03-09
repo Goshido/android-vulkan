@@ -130,27 +130,25 @@ void PointLightLightupProgram::Destroy ( VkDevice device )
     AV_UNREGISTER_SHADER_MODULE ( "PointLightLightupProgram::_vertexShader" )
 }
 
-void PointLightLightupProgram::SetDescriptorSet ( VkCommandBuffer commandBuffer, VkDescriptorSet set ) const
+void PointLightLightupProgram::SetDescriptorSets ( VkCommandBuffer commandBuffer,
+    VkDescriptorSet lightData,
+    VkDescriptorSet volumeData
+) const
 {
+    VkDescriptorSet const sets[]
+    {
+        lightData,
+        volumeData
+    };
+
     vkCmdBindDescriptorSets ( commandBuffer,
         VK_PIPELINE_BIND_POINT_GRAPHICS,
         _pipelineLayout,
         1U,
-        1U,
-        &set,
+        static_cast<uint32_t> ( std::size ( sets ) ),
+        sets,
         0U,
         nullptr
-    );
-}
-
-void PointLightLightupProgram::SetTransform (  VkCommandBuffer commandBuffer, GXMat4 const &transform ) const
-{
-    vkCmdPushConstants ( commandBuffer,
-        _pipelineLayout,
-        VK_SHADER_STAGE_VERTEX_BIT,
-        0U,
-        sizeof ( PushConstants ),
-        &transform
     );
 }
 
@@ -177,6 +175,12 @@ Program::DescriptorSetInfo const& PointLightLightupProgram::GetResourceInfo () c
                 .type = VK_DESCRIPTOR_TYPE_SAMPLER,
                 .descriptorCount = 1U
             },
+            {
+                .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                .descriptorCount = 1U
+            }
+        },
+        {
             {
                 .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
                 .descriptorCount = 1U
@@ -279,19 +283,14 @@ bool PointLightLightupProgram::InitLayout ( android_vulkan::Renderer &renderer, 
     if ( !_pointLightLayout.Init ( renderer ) )
         return false;
 
+    if ( !_lightVolumeLayout.Init ( renderer ) )
+        return false;
+
     VkDescriptorSetLayout const layouts[] =
     {
         _commonLayout.GetLayout (),
-        _pointLightLayout.GetLayout ()
-    };
-
-    constexpr static VkPushConstantRange const pushConstantRanges[]
-    {
-        {
-            .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
-            .offset = 0U,
-            .size = static_cast<uint32_t> ( sizeof ( PushConstants ) )
-        }
+        _pointLightLayout.GetLayout (),
+        _lightVolumeLayout.GetLayout ()
     };
 
     VkPipelineLayoutCreateInfo const layoutInfo
@@ -301,8 +300,8 @@ bool PointLightLightupProgram::InitLayout ( android_vulkan::Renderer &renderer, 
         .flags = 0U,
         .setLayoutCount = static_cast<uint32_t> ( std::size ( layouts ) ),
         .pSetLayouts = layouts,
-        .pushConstantRangeCount = static_cast<uint32_t> ( std::size ( pushConstantRanges ) ),
-        .pPushConstantRanges = pushConstantRanges
+        .pushConstantRangeCount = 0U,
+        .pPushConstantRanges = nullptr
     };
 
     bool const result = android_vulkan::Renderer::CheckVkResult (

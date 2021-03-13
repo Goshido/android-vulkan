@@ -17,26 +17,30 @@ constexpr static uint32_t SHADOWMAP_RESOLUTION = 512U;
 
 PointLightPass::PointLightPass () noexcept:
     _commandPool ( VK_NULL_HANDLE ),
-    _descriptorPool ( VK_NULL_HANDLE ),
-    _descriptorPool2 ( VK_NULL_HANDLE ),
-    _descriptorSets2 {},
     _fence ( VK_NULL_HANDLE ),
     _interacts {},
+    _lightDescriptorPool ( VK_NULL_HANDLE ),
+    _lightDescriptorSets {},
+    _lightSubmitInfoTransfer {},
+    _lightTransferCommandBuffer ( VK_NULL_HANDLE ),
+    _lightUniformInfo {},
+    _lightUniformPool ( eUniformPoolSize::Tiny_4M ),
+    _lightWriteSets {},
     _lightup {},
-    _program {},
-    _renderCommandBuffer ( VK_NULL_HANDLE ),
+    _shadowmapDescriptorPool ( VK_NULL_HANDLE ),
+    _shadowmapDescriptorSets {},
+    _shadowmapProgram {},
+    _shadowmapRenderCommandBuffer ( VK_NULL_HANDLE ),
     _shadowmapRenderPass ( VK_NULL_HANDLE ),
+    _shadowmapRenderPassInfo {},
+    _shadowmapSubmitInfoRender {},
+    _shadowmapSubmitInfoTransfer {},
+    _shadowmapTransferCommandBuffer ( VK_NULL_HANDLE ),
+    _shadowmapUniformInfo {},
+    _shadowmapUniformPool ( eUniformPoolSize::Huge_64M ),
+    _shadowmapWriteSets {},
     _shadowmaps {},
-    _submitInfoRender {},
-    _submitInfoTransfer {},
-    _submitInfoTransfer2 {},
-    _transferCommandBuffer ( VK_NULL_HANDLE ),
-    _transferCommandBuffer2 ( VK_NULL_HANDLE ),
-    _uniformPoolInstanceData ( eUniformPoolSize::Huge_64M ),
-    _uniformPoolVolumeData ( eUniformPoolSize::Tiny_4M ),
-    _uniformInfoVolumeData {},
-    _usedShadowmaps ( 0U ),
-    _writeSets {}
+    _usedShadowmaps ( 0U )
 {
     // NOTHING
 }
@@ -58,7 +62,7 @@ bool PointLightPass::ExecuteLightupPhase ( android_vulkan::Renderer &renderer,
     if ( !_lightup.UpdateGPUData ( renderer, *this, viewerLocal, view ) )
         return false;
 
-    if ( !UpdateGPUData2 ( renderer, viewProjection ) )
+    if ( !UpdateLightGPUData ( renderer, viewProjection ) )
         return false;
 
     constexpr VkDeviceSize const offset = 0U;
@@ -74,7 +78,7 @@ bool PointLightPass::ExecuteLightupPhase ( android_vulkan::Renderer &renderer,
     {
         vkCmdBeginRenderPass ( commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE );
 
-        VkDescriptorSet transform = _descriptorSets2[ i ];
+        VkDescriptorSet transform = _lightDescriptorSets[ i ];
 
         lightVolume.Execute ( vertexCount, transform, commandBuffer );
         vkCmdNextSubpass ( commandBuffer, VK_SUBPASS_CONTENTS_INLINE );
@@ -97,12 +101,10 @@ bool PointLightPass::ExecuteShadowPhase ( android_vulkan::Renderer &renderer,
     size_t opaqueMeshCount
 )
 {
-    std::vector<VkDescriptorSet> descriptorSetStorage;
-
-    if ( !UpdateGPUData ( descriptorSetStorage, sceneData, opaqueMeshCount, renderer ) )
+    if ( !UpdateShadowmapGPUData ( renderer, sceneData, opaqueMeshCount ) )
         return false;
 
-    return GenerateShadowmaps ( descriptorSetStorage.data (), renderer );
+    return GenerateShadowmaps ( renderer );
 }
 
 bool PointLightPass::Init ( android_vulkan::Renderer &renderer,
@@ -124,7 +126,7 @@ bool PointLightPass::Init ( android_vulkan::Renderer &renderer,
         .height = SHADOWMAP_RESOLUTION
     };
 
-    if ( !_program.Init ( renderer, _shadowmapRenderPass, 0U, shadowmapResolution ) )
+    if ( !_shadowmapProgram.Init ( renderer, _shadowmapRenderPass, 0U, shadowmapResolution ) )
     {
         Destroy ( device );
         return false;
@@ -151,13 +153,13 @@ bool PointLightPass::Init ( android_vulkan::Renderer &renderer,
 
     AV_REGISTER_FENCE ( "PointLightPass::_fence" )
 
-    if ( !_uniformPoolInstanceData.Init ( renderer, sizeof ( PointLightShadowmapGeneratorProgram::InstanceData ) ) )
+    if ( !_shadowmapUniformPool.Init ( renderer, sizeof ( PointLightShadowmapGeneratorProgram::InstanceData ) ) )
     {
         Destroy ( device );
         return false;
     }
 
-    if ( !_uniformPoolVolumeData.Init ( renderer, sizeof ( PointLightLightupProgram::VolumeData ) ) )
+    if ( !_lightUniformPool.Init ( renderer, sizeof ( PointLightLightupProgram::VolumeData ) ) )
     {
         Destroy ( device );
         return false;
@@ -208,22 +210,22 @@ bool PointLightPass::Init ( android_vulkan::Renderer &renderer,
         return false;
     }
 
-    _renderCommandBuffer = commandBuffers[ 0U ];
-    _transferCommandBuffer = commandBuffers[ 1U ];
-    _transferCommandBuffer2 = commandBuffers[ 2U ];
+    _shadowmapRenderCommandBuffer = commandBuffers[ 0U ];
+    _shadowmapTransferCommandBuffer = commandBuffers[ 1U ];
+    _lightTransferCommandBuffer = commandBuffers[ 2U ];
 
-    _submitInfoTransfer2.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    _submitInfoTransfer2.pNext = nullptr;
-    _submitInfoTransfer2.waitSemaphoreCount = 0U;
-    _submitInfoTransfer2.pWaitSemaphores = nullptr;
-    _submitInfoTransfer2.pWaitDstStageMask = nullptr;
-    _submitInfoTransfer2.commandBufferCount = 1U;
-    _submitInfoTransfer2.pCommandBuffers = &_transferCommandBuffer2;
-    _submitInfoTransfer2.signalSemaphoreCount = 0U;
-    _submitInfoTransfer2.pSignalSemaphores = nullptr;
+    _lightSubmitInfoTransfer.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    _lightSubmitInfoTransfer.pNext = nullptr;
+    _lightSubmitInfoTransfer.waitSemaphoreCount = 0U;
+    _lightSubmitInfoTransfer.pWaitSemaphores = nullptr;
+    _lightSubmitInfoTransfer.pWaitDstStageMask = nullptr;
+    _lightSubmitInfoTransfer.commandBufferCount = 1U;
+    _lightSubmitInfoTransfer.pCommandBuffers = &_lightTransferCommandBuffer;
+    _lightSubmitInfoTransfer.signalSemaphoreCount = 0U;
+    _lightSubmitInfoTransfer.pSignalSemaphores = nullptr;
 
     result = _lightup.Init ( renderer,
-        _transferCommandBuffer,
+        _shadowmapTransferCommandBuffer,
         lightupRenderPass,
         LightVolume::GetLightupSubpass (),
         resolution
@@ -237,25 +239,25 @@ bool PointLightPass::Init ( android_vulkan::Renderer &renderer,
 
     constexpr static VkPipelineStageFlags const waitStage = VK_PIPELINE_STAGE_VERTEX_SHADER_BIT;
 
-    _submitInfoRender.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    _submitInfoRender.pNext = nullptr;
-    _submitInfoRender.waitSemaphoreCount = 0U;
-    _submitInfoRender.pWaitSemaphores = nullptr;
-    _submitInfoRender.pWaitDstStageMask = &waitStage;
-    _submitInfoRender.commandBufferCount = 1U;
-    _submitInfoRender.pCommandBuffers = &_renderCommandBuffer;
-    _submitInfoRender.signalSemaphoreCount = 0U;
-    _submitInfoRender.pSignalSemaphores = nullptr;
+    _shadowmapSubmitInfoRender.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    _shadowmapSubmitInfoRender.pNext = nullptr;
+    _shadowmapSubmitInfoRender.waitSemaphoreCount = 0U;
+    _shadowmapSubmitInfoRender.pWaitSemaphores = nullptr;
+    _shadowmapSubmitInfoRender.pWaitDstStageMask = &waitStage;
+    _shadowmapSubmitInfoRender.commandBufferCount = 1U;
+    _shadowmapSubmitInfoRender.pCommandBuffers = &_shadowmapRenderCommandBuffer;
+    _shadowmapSubmitInfoRender.signalSemaphoreCount = 0U;
+    _shadowmapSubmitInfoRender.pSignalSemaphores = nullptr;
 
-    _submitInfoTransfer.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    _submitInfoTransfer.pNext = nullptr;
-    _submitInfoTransfer.waitSemaphoreCount = 0U;
-    _submitInfoTransfer.pWaitSemaphores = nullptr;
-    _submitInfoTransfer.pWaitDstStageMask = nullptr;
-    _submitInfoTransfer.commandBufferCount = 1U;
-    _submitInfoTransfer.pCommandBuffers = &_transferCommandBuffer;
-    _submitInfoTransfer.signalSemaphoreCount = 0U;
-    _submitInfoTransfer.pSignalSemaphores = nullptr;
+    _shadowmapSubmitInfoTransfer.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    _shadowmapSubmitInfoTransfer.pNext = nullptr;
+    _shadowmapSubmitInfoTransfer.waitSemaphoreCount = 0U;
+    _shadowmapSubmitInfoTransfer.pWaitSemaphores = nullptr;
+    _shadowmapSubmitInfoTransfer.pWaitDstStageMask = nullptr;
+    _shadowmapSubmitInfoTransfer.commandBufferCount = 1U;
+    _shadowmapSubmitInfoTransfer.pCommandBuffers = &_shadowmapTransferCommandBuffer;
+    _shadowmapSubmitInfoTransfer.signalSemaphoreCount = 0U;
+    _shadowmapSubmitInfoTransfer.pSignalSemaphores = nullptr;
 
     return true;
 }
@@ -280,12 +282,15 @@ void PointLightPass::Destroy ( VkDevice device )
         _shadowmaps.clear ();
     }
 
-    DestroyDescriptorPool2 ( device );
-    _descriptorSets2.clear ();
-    _uniformInfoVolumeData.clear ();
-    _writeSets.clear ();
+    DestroyLightDescriptorPool ( device );
+    _lightDescriptorSets.clear ();
+    _lightUniformInfo.clear ();
+    _lightWriteSets.clear ();
 
-    DestroyDescriptorPool ( device );
+    DestroyShadowmapDescriptorPool ( device );
+    _shadowmapDescriptorSets.clear ();
+    _shadowmapUniformInfo.clear ();
+    _shadowmapWriteSets.clear ();
 
     if ( _commandPool != VK_NULL_HANDLE )
     {
@@ -294,8 +299,8 @@ void PointLightPass::Destroy ( VkDevice device )
         AV_UNREGISTER_COMMAND_POOL ( "PointLightPass::_commandPool" )
     }
 
-    _uniformPoolVolumeData.Destroy ( device );
-    _uniformPoolInstanceData.Destroy ( device );
+    _lightUniformPool.Destroy ( device );
+    _shadowmapUniformPool.Destroy ( device );
 
     if ( _fence != VK_NULL_HANDLE )
     {
@@ -304,7 +309,7 @@ void PointLightPass::Destroy ( VkDevice device )
         AV_UNREGISTER_FENCE ( "PointLightPass::_fence" )
     }
 
-    _program.Destroy ( device );
+    _shadowmapProgram.Destroy ( device );
 
     if ( _shadowmapRenderPass == VK_NULL_HANDLE )
         return;
@@ -340,15 +345,15 @@ void PointLightPass::Submit ( LightRef const &light )
     _interacts.emplace_back ( std::make_pair ( light, ShadowCasters () ) );
 }
 
-bool PointLightPass::AllocateDescriptorSets ( android_vulkan::Renderer &renderer, size_t neededSets )
+bool PointLightPass::AllocateLightDescriptorSets ( android_vulkan::Renderer &renderer, size_t neededSets )
 {
     assert ( neededSets );
 
-    if ( _descriptorSets2.size () >= neededSets )
+    if ( _lightDescriptorSets.size () >= neededSets )
         return true;
 
     VkDevice device = renderer.GetDevice ();
-    DestroyDescriptorPool2 ( device );
+    DestroyLightDescriptorPool ( device );
     auto const size = static_cast<uint32_t> ( neededSets );
 
     VkDescriptorPoolSize const poolSizes[] =
@@ -369,16 +374,16 @@ bool PointLightPass::AllocateDescriptorSets ( android_vulkan::Renderer &renderer
         .pPoolSizes = poolSizes
     };
 
-    bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_descriptorPool2 ),
-        "PointLightPass::AllocateDescriptorSets",
+    bool result = android_vulkan::Renderer::CheckVkResult (
+        vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_lightDescriptorPool ),
+        "PointLightPass::AllocateLightDescriptorSets",
         "Can't create descriptor pool"
     );
 
     if ( !result )
         return false;
 
-    AV_REGISTER_DESCRIPTOR_POOL ( "PointLightPass::_descriptorPool2" )
+    AV_REGISTER_DESCRIPTOR_POOL ( "PointLightPass::_lightDescriptorPool" )
 
     constexpr VkDescriptorBufferInfo const uniform
     {
@@ -387,14 +392,14 @@ bool PointLightPass::AllocateDescriptorSets ( android_vulkan::Renderer &renderer
         .range = static_cast<VkDeviceSize> ( sizeof ( PointLightLightupProgram::VolumeData ) )
     };
 
-    _uniformInfoVolumeData.resize ( neededSets, uniform );
+    _lightUniformInfo.resize ( neededSets, uniform );
 
     constexpr VkWriteDescriptorSet const writeSet
     {
         .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
         .pNext = nullptr,
         .dstSet = VK_NULL_HANDLE,
-        .dstBinding = 0,
+        .dstBinding = 0U,
         .dstArrayElement = 0U,
         .descriptorCount = 1U,
         .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
@@ -403,8 +408,8 @@ bool PointLightPass::AllocateDescriptorSets ( android_vulkan::Renderer &renderer
         .pTexelBufferView = nullptr
     };
 
-    _writeSets.resize ( neededSets, writeSet );
-    _descriptorSets2.resize ( neededSets, VK_NULL_HANDLE );
+    _lightWriteSets.resize ( neededSets, writeSet );
+    _lightDescriptorSets.resize ( neededSets, VK_NULL_HANDLE );
 
     LightVolumeDescriptorSetLayout const layout;
     std::vector<VkDescriptorSetLayout> layouts ( neededSets, layout.GetLayout () );
@@ -413,16 +418,132 @@ bool PointLightPass::AllocateDescriptorSets ( android_vulkan::Renderer &renderer
     {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
         .pNext = nullptr,
-        .descriptorPool = _descriptorPool2,
+        .descriptorPool = _lightDescriptorPool,
         .descriptorSetCount = poolInfo.maxSets,
         .pSetLayouts = layouts.data ()
     };
 
-    return android_vulkan::Renderer::CheckVkResult (
-        vkAllocateDescriptorSets ( device, &allocateInfo, _descriptorSets2.data () ),
-        "PointLightPass::AllocateDescriptorSets",
+    result = android_vulkan::Renderer::CheckVkResult (
+        vkAllocateDescriptorSets ( device, &allocateInfo, _lightDescriptorSets.data () ),
+        "PointLightPass::AllocateLightDescriptorSets",
         "Can't allocate descriptor sets"
     );
+
+    if ( !result )
+        return false;
+
+    // Initialize all immutable constant fields.
+
+    for ( size_t i = 0U; i < neededSets; ++i )
+    {
+        VkWriteDescriptorSet& write = _lightWriteSets[ i ];
+        write.dstSet = _lightDescriptorSets[ i ];
+        write.pBufferInfo = &_lightUniformInfo[ i ];
+    }
+
+    // Now all what is needed to do is to init "_lightUniformInfo::buffer". Then to invoke vkUpdateDescriptorSets.
+    return true;
+}
+
+bool PointLightPass::AllocateShadowmapDescriptorSets ( android_vulkan::Renderer &renderer, size_t neededSets )
+{
+    assert ( neededSets );
+
+    if ( _shadowmapDescriptorSets.size () >= neededSets )
+        return true;
+
+    VkDevice device = renderer.GetDevice ();
+    DestroyShadowmapDescriptorPool ( device );
+    auto const size = static_cast<uint32_t> ( neededSets );
+
+    VkDescriptorPoolSize const poolSizes[] =
+    {
+        {
+            .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            .descriptorCount = size
+        }
+    };
+
+    VkDescriptorPoolCreateInfo const poolInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .maxSets = size,
+        .poolSizeCount = static_cast<uint32_t> ( std::size ( poolSizes ) ),
+        .pPoolSizes = poolSizes
+    };
+
+    bool result = android_vulkan::Renderer::CheckVkResult (
+        vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_shadowmapDescriptorPool ),
+        "PointLightPass::AllocateShadowmapDescriptorSets",
+        "Can't create descriptor pool"
+    );
+
+    if ( !result )
+        return false;
+
+    AV_REGISTER_DESCRIPTOR_POOL ( "PointLightPass::_shadowmapDescriptorPool" )
+
+    _shadowmapDescriptorSets.resize ( neededSets, VK_NULL_HANDLE );
+
+    OpaqueInstanceDescriptorSetLayout const layout;
+    std::vector<VkDescriptorSetLayout> const layouts ( neededSets, layout.GetLayout () );
+
+    VkDescriptorSetAllocateInfo const allocateInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+        .pNext = nullptr,
+        .descriptorPool = _shadowmapDescriptorPool,
+        .descriptorSetCount = poolInfo.maxSets,
+        .pSetLayouts = layouts.data ()
+    };
+
+    result = android_vulkan::Renderer::CheckVkResult (
+        vkAllocateDescriptorSets ( device, &allocateInfo, _shadowmapDescriptorSets.data () ),
+        "PointLightPass::AllocateShadowmapDescriptorSets",
+        "Can't allocate descriptor sets"
+    );
+
+    if ( !result )
+        return false;
+
+    // Initialize all immutable constant fields.
+
+    constexpr VkDescriptorBufferInfo const uniform
+    {
+        .buffer = VK_NULL_HANDLE,
+        .offset = 0U,
+        .range = static_cast<VkDeviceSize> ( sizeof ( PointLightShadowmapGeneratorProgram::InstanceData ) )
+    };
+
+    _shadowmapUniformInfo.resize ( neededSets, uniform );
+
+    constexpr VkWriteDescriptorSet const writeSet
+    {
+        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        .pNext = nullptr,
+        .dstSet = VK_NULL_HANDLE,
+        .dstBinding = 0U,
+        .dstArrayElement = 0U,
+        .descriptorCount = 1U,
+        .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        .pImageInfo = nullptr,
+        .pBufferInfo = nullptr,
+        .pTexelBufferView = nullptr
+    };
+
+    _shadowmapWriteSets.resize ( neededSets, writeSet );
+
+    for ( size_t i = 0U; i < neededSets; ++i )
+    {
+        VkWriteDescriptorSet& uniformWriteSet = _shadowmapWriteSets[ i ];
+        uniformWriteSet.dstSet = _shadowmapDescriptorSets[ i ];
+        uniformWriteSet.pBufferInfo = &_shadowmapUniformInfo[ i ];
+    }
+
+    // Now all what is needed to do is to init "_shadowmapUniformInfo::buffer". Then to invoke vkUpdateDescriptorSets.
+    return true;
 }
 
 PointLightPass::PointLightShadowmapInfo* PointLightPass::AcquirePointLightShadowmap (
@@ -569,40 +690,6 @@ bool PointLightPass::CreateShadowmapRenderPass ( VkDevice device )
         return false;
 
     AV_REGISTER_RENDER_PASS ( "PointLightPass::_shadowmapRenderPass" )
-    return true;
-}
-
-void PointLightPass::DestroyDescriptorPool ( VkDevice device )
-{
-    if ( _descriptorPool == VK_NULL_HANDLE )
-        return;
-
-    vkDestroyDescriptorPool ( device, _descriptorPool, nullptr );
-    _descriptorPool = VK_NULL_HANDLE;
-    AV_UNREGISTER_DESCRIPTOR_POOL ( "PointLightPass::_descriptorPool" )
-}
-
-void PointLightPass::DestroyDescriptorPool2 ( VkDevice device )
-{
-    if ( _descriptorPool2 == VK_NULL_HANDLE )
-        return;
-
-    vkDestroyDescriptorPool ( device, _descriptorPool2, nullptr );
-    _descriptorPool2 = VK_NULL_HANDLE;
-    AV_UNREGISTER_DESCRIPTOR_POOL ( "PointLightPass::_descriptorPool2" )
-}
-
-bool PointLightPass::GenerateShadowmaps ( VkDescriptorSet const* descriptorSets, android_vulkan::Renderer &renderer )
-{
-    constexpr VkCommandBufferBeginInfo const beginInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-        .pNext = nullptr,
-        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
-        .pInheritanceInfo = nullptr
-    };
-
-    vkBeginCommandBuffer ( _renderCommandBuffer, &beginInfo );
 
     constexpr static VkClearValue const clearValues[] =
     {
@@ -615,7 +702,7 @@ bool PointLightPass::GenerateShadowmaps ( VkDescriptorSet const* descriptorSets,
         }
     };
 
-    constexpr VkRect2D const renderArea
+    constexpr static VkRect2D const renderArea
     {
         .offset
         {
@@ -630,18 +717,52 @@ bool PointLightPass::GenerateShadowmaps ( VkDescriptorSet const* descriptorSets,
         }
     };
 
-    VkRenderPassBeginInfo renderPassInfo;
-    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    renderPassInfo.pNext = nullptr;
-    renderPassInfo.renderPass = _shadowmapRenderPass;
-    renderPassInfo.renderArea = renderArea;
-    renderPassInfo.clearValueCount = std::size ( clearValues );
-    renderPassInfo.pClearValues = clearValues;
+    _shadowmapRenderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    _shadowmapRenderPassInfo.pNext = nullptr;
+    _shadowmapRenderPassInfo.renderPass = _shadowmapRenderPass;
+    _shadowmapRenderPassInfo.renderArea = renderArea;
+    _shadowmapRenderPassInfo.clearValueCount = std::size ( clearValues );
+    _shadowmapRenderPassInfo.pClearValues = clearValues;
+
+    return true;
+}
+
+void PointLightPass::DestroyLightDescriptorPool ( VkDevice device )
+{
+    if ( _lightDescriptorPool == VK_NULL_HANDLE )
+        return;
+
+    vkDestroyDescriptorPool ( device, _lightDescriptorPool, nullptr );
+    _lightDescriptorPool = VK_NULL_HANDLE;
+    AV_UNREGISTER_DESCRIPTOR_POOL ( "PointLightPass::_lightDescriptorPool" )
+}
+
+void PointLightPass::DestroyShadowmapDescriptorPool ( VkDevice device )
+{
+    if ( _shadowmapDescriptorPool == VK_NULL_HANDLE )
+        return;
+
+    vkDestroyDescriptorPool ( device, _shadowmapDescriptorPool, nullptr );
+    _shadowmapDescriptorPool = VK_NULL_HANDLE;
+    AV_UNREGISTER_DESCRIPTOR_POOL ( "PointLightPass::_shadowmapDescriptorPool" )
+}
+
+bool PointLightPass::GenerateShadowmaps ( android_vulkan::Renderer &renderer )
+{
+    constexpr VkCommandBufferBeginInfo const beginInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+        .pNext = nullptr,
+        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+        .pInheritanceInfo = nullptr
+    };
+
+    vkBeginCommandBuffer ( _shadowmapRenderCommandBuffer, &beginInfo );
 
     size_t setIndex = 0U;
     constexpr VkDeviceSize const offset = 0U;
 
-    _program.Bind ( _renderCommandBuffer );
+    _shadowmapProgram.Bind ( _shadowmapRenderCommandBuffer );
 
     for ( auto const &[light, casters] : _interacts )
     {
@@ -650,31 +771,29 @@ bool PointLightPass::GenerateShadowmaps ( VkDescriptorSet const* descriptorSets,
         if ( !shadowmapInfo )
             return false;
 
-        renderPassInfo.framebuffer = shadowmapInfo->second;
-        vkCmdBeginRenderPass ( _renderCommandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE );
+        _shadowmapRenderPassInfo.framebuffer = shadowmapInfo->second;
+        vkCmdBeginRenderPass ( _shadowmapRenderCommandBuffer, &_shadowmapRenderPassInfo, VK_SUBPASS_CONTENTS_INLINE );
 
         for ( auto const &unique : casters._uniques )
         {
-            vkCmdBindVertexBuffers ( _renderCommandBuffer, 0U, 1U, &unique->GetVertexBuffer (), &offset );
+            vkCmdBindVertexBuffers ( _shadowmapRenderCommandBuffer, 0U, 1U, &unique->GetVertexBuffer (), &offset );
 
-            vkCmdBindIndexBuffer ( _renderCommandBuffer,
+            vkCmdBindIndexBuffer ( _shadowmapRenderCommandBuffer,
                 unique->GetIndexBuffer (),
                 offset,
                 VK_INDEX_TYPE_UINT32
             );
 
-            _program.SetDescriptorSet ( _renderCommandBuffer, descriptorSets[ setIndex ] );
-            ++setIndex;
-
-            vkCmdDrawIndexed ( _renderCommandBuffer, unique->GetVertexCount (), 1U, 0U, 0, 0U );
+            _shadowmapProgram.SetDescriptorSet ( _shadowmapRenderCommandBuffer, _shadowmapDescriptorSets[ setIndex++ ] );
+            vkCmdDrawIndexed ( _shadowmapRenderCommandBuffer, unique->GetVertexCount (), 1U, 0U, 0, 0U );
         }
 
         for ( auto const &[name, caster] : casters._batches )
         {
             auto const &[mesh, transforms] = caster;
-            vkCmdBindVertexBuffers ( _renderCommandBuffer, 0U, 1U, &mesh->GetVertexBuffer (), &offset );
+            vkCmdBindVertexBuffers ( _shadowmapRenderCommandBuffer, 0U, 1U, &mesh->GetVertexBuffer (), &offset );
 
-            vkCmdBindIndexBuffer ( _renderCommandBuffer,
+            vkCmdBindIndexBuffer ( _shadowmapRenderCommandBuffer,
                 mesh->GetIndexBuffer (),
                 offset,
                 VK_INDEX_TYPE_UINT32
@@ -689,10 +808,9 @@ bool PointLightPass::GenerateShadowmaps ( VkDescriptorSet const* descriptorSets,
                     static_cast<size_t> ( PBR_POINT_LIGHT_MAX_SHADOW_CASTER_INSTANCE_COUNT )
                 );
 
-                _program.SetDescriptorSet ( _renderCommandBuffer, descriptorSets[ setIndex ] );
-                ++setIndex;
+                _shadowmapProgram.SetDescriptorSet ( _shadowmapRenderCommandBuffer, _shadowmapDescriptorSets[ setIndex++ ] );
 
-                vkCmdDrawIndexed ( _renderCommandBuffer,
+                vkCmdDrawIndexed ( _shadowmapRenderCommandBuffer,
                     vertexCount,
                     static_cast<uint32_t> ( instances ),
                     0U,
@@ -705,10 +823,10 @@ bool PointLightPass::GenerateShadowmaps ( VkDescriptorSet const* descriptorSets,
             while ( remain );
         }
 
-        vkCmdEndRenderPass ( _renderCommandBuffer );
+        vkCmdEndRenderPass ( _shadowmapRenderCommandBuffer );
     }
 
-    bool const result = android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( _renderCommandBuffer ),
+    bool const result = android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( _shadowmapRenderCommandBuffer ),
         "PointLightPass::GenerateShadowmaps",
         "Can't end command buffer"
     );
@@ -717,23 +835,23 @@ bool PointLightPass::GenerateShadowmaps ( VkDescriptorSet const* descriptorSets,
         return false;
 
     return android_vulkan::Renderer::CheckVkResult (
-        vkQueueSubmit ( renderer.GetQueue (), 1U, &_submitInfoRender, _fence ),
+        vkQueueSubmit ( renderer.GetQueue (), 1U, &_shadowmapSubmitInfoRender, _fence ),
         "PointLightPass::GenerateShadowmaps",
         "Can't submit command buffer"
     );
 }
 
-bool PointLightPass::UpdateGPUData ( std::vector<VkDescriptorSet> &descriptorSetStorage,
+bool PointLightPass::UpdateShadowmapGPUData ( android_vulkan::Renderer &renderer,
     SceneData const &sceneData,
-    size_t opaqueMeshCount,
-    android_vulkan::Renderer &renderer
+    size_t opaqueMeshCount
 )
 {
+    _shadowmapUniformPool.Reset ();
     VkDevice device = renderer.GetDevice ();
 
     bool result = android_vulkan::Renderer::CheckVkResult (
         vkWaitForFences ( device, 1U, &_fence, VK_TRUE, UINT64_MAX ),
-        "PointLightPass::UpdateGPUData",
+        "PointLightPass::UpdateShadowmapGPUData",
         "Can't wait for fence"
     );
 
@@ -741,7 +859,7 @@ bool PointLightPass::UpdateGPUData ( std::vector<VkDescriptorSet> &descriptorSet
         return false;
 
     result = android_vulkan::Renderer::CheckVkResult ( vkResetFences ( device, 1U, &_fence ),
-        "PointLightPass::UpdateGPUData",
+        "PointLightPass::UpdateShadowmapGPUData",
         "Can't reset fence"
     );
 
@@ -757,8 +875,8 @@ bool PointLightPass::UpdateGPUData ( std::vector<VkDescriptorSet> &descriptorSet
     };
 
     result = android_vulkan::Renderer::CheckVkResult (
-        vkBeginCommandBuffer ( _transferCommandBuffer, &beginInfo ),
-        "PointLightPass::UpdateGPUData",
+        vkBeginCommandBuffer ( _shadowmapTransferCommandBuffer, &beginInfo ),
+        "PointLightPass::UpdateShadowmapGPUData",
         "Can't begin command buffer"
     );
 
@@ -768,90 +886,10 @@ bool PointLightPass::UpdateGPUData ( std::vector<VkDescriptorSet> &descriptorSet
     // Estimating from the top of the maximum required uniform buffers to be uploaded.
     size_t const maxUniformBuffers = _interacts.size () * opaqueMeshCount;
 
-    VkDescriptorPoolSize const poolSize[] =
-    {
-        {
-            .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            .descriptorCount = static_cast<uint32_t> ( maxUniformBuffers )
-        }
-    };
-
-    VkDescriptorPoolCreateInfo const poolInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0,
-        .maxSets = static_cast<uint32_t> ( maxUniformBuffers ),
-        .poolSizeCount = std::size ( poolSize ),
-        .pPoolSizes = poolSize
-    };
-
-    DestroyDescriptorPool ( device );
-
-    result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_descriptorPool ),
-        "PointLightPass::UpdateGPUData",
-        "Can't create descriptor pool"
-    );
-
-    if ( !result )
+    if ( !AllocateShadowmapDescriptorSets ( renderer, maxUniformBuffers ) )
         return false;
-
-    AV_REGISTER_DESCRIPTOR_POOL ( "PointLightPass::_descriptorPool" )
-
-    std::vector<VkDescriptorSetLayout> layouts;
-    layouts.reserve ( maxUniformBuffers );
-
-    OpaqueInstanceDescriptorSetLayout const instanceLayout;
-    VkDescriptorSetLayout nativeLayout = instanceLayout.GetLayout ();
-
-    for ( size_t i = 0U; i < maxUniformBuffers; ++i )
-        layouts.push_back ( nativeLayout );
-
-    VkDescriptorSetAllocateInfo const allocateInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-        .pNext = nullptr,
-        .descriptorPool = _descriptorPool,
-        .descriptorSetCount = poolInfo.maxSets,
-        .pSetLayouts = layouts.data ()
-    };
-
-    descriptorSetStorage.resize ( maxUniformBuffers );
-
-    result = android_vulkan::Renderer::CheckVkResult (
-        vkAllocateDescriptorSets ( device, &allocateInfo, descriptorSetStorage.data () ),
-        "PointLightPass::UpdateGPUData",
-        "Can't allocate descriptor sets"
-    );
-
-    if ( !result )
-        return false;
-
-    VkDescriptorBufferInfo bufferInfo;
-    bufferInfo.offset = 0U;
-    bufferInfo.range = static_cast<VkDeviceSize> ( sizeof ( PointLightShadowmapGeneratorProgram::InstanceData ) );
-
-    VkWriteDescriptorSet writeInfo;
-    writeInfo.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    writeInfo.pNext = nullptr;
-    writeInfo.dstBinding = 0U;
-    writeInfo.dstArrayElement = 0U;
-    writeInfo.descriptorCount = 1U;
-    writeInfo.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    writeInfo.pImageInfo = nullptr;
-    writeInfo.pTexelBufferView = nullptr;
-
-    std::vector<VkWriteDescriptorSet> writeStorage;
-    std::vector<VkDescriptorBufferInfo> uniformStorage;
-    writeStorage.reserve ( maxUniformBuffers );
-    uniformStorage.reserve ( maxUniformBuffers );
-
-    PointLightLightupProgram::VolumeData volumeData;
-    _uniformPoolVolumeData.Reset ();
 
     PointLightShadowmapGeneratorProgram::InstanceData instanceData;
-    _uniformPoolInstanceData.Reset ();
 
     auto append = [ & ] ( PointLight::Matrices const &matrices, size_t instance, GXMat4 const &local ) {
         PointLightShadowmapGeneratorProgram::ObjectData& objectData = instanceData._instanceData[ instance ];
@@ -862,18 +900,14 @@ bool PointLightPass::UpdateGPUData ( std::vector<VkDescriptorSet> &descriptorSet
         }
     };
 
+    size_t bufferIndex = 0U;
+
     auto commit = [ & ] () {
-        bufferInfo.buffer = _uniformPoolInstanceData.Acquire ( renderer,
-            _transferCommandBuffer,
+        _shadowmapUniformInfo[ bufferIndex++ ].buffer = _shadowmapUniformPool.Acquire ( renderer,
+            _shadowmapTransferCommandBuffer,
             &instanceData,
             VK_PIPELINE_STAGE_VERTEX_SHADER_BIT
         );
-
-        uniformStorage.push_back ( bufferInfo );
-
-        writeInfo.pBufferInfo = &uniformStorage.back ();
-        writeInfo.dstSet = descriptorSetStorage[ writeStorage.size () ];
-        writeStorage.push_back ( writeInfo );
     };
 
     for ( auto &[light, casters] : _interacts )
@@ -959,14 +993,14 @@ bool PointLightPass::UpdateGPUData ( std::vector<VkDescriptorSet> &descriptorSet
     }
 
     vkUpdateDescriptorSets ( device,
-        static_cast<uint32_t> ( writeStorage.size () ),
-        writeStorage.data (),
+        static_cast<uint32_t> ( bufferIndex ),
+        _shadowmapWriteSets.data (),
         0U,
         nullptr
     );
 
-    result = android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( _transferCommandBuffer ),
-        "PointLightPass::UpdateGPUData",
+    result = android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( _shadowmapTransferCommandBuffer ),
+        "PointLightPass::UpdateShadowmapGPUData",
         "Can't end command buffer"
     );
 
@@ -974,18 +1008,18 @@ bool PointLightPass::UpdateGPUData ( std::vector<VkDescriptorSet> &descriptorSet
         return false;
 
     return android_vulkan::Renderer::CheckVkResult (
-        vkQueueSubmit ( renderer.GetQueue (), 1U, &_submitInfoTransfer, VK_NULL_HANDLE ),
-        "PointLightPass::UpdateGPUData",
+        vkQueueSubmit ( renderer.GetQueue (), 1U, &_shadowmapSubmitInfoTransfer, VK_NULL_HANDLE ),
+        "PointLightPass::UpdateShadowmapGPUData",
         "Can't submit command buffer"
     );
 }
 
-bool PointLightPass::UpdateGPUData2 ( android_vulkan::Renderer &renderer, GXMat4 const &viewProjection )
+bool PointLightPass::UpdateLightGPUData ( android_vulkan::Renderer &renderer, GXMat4 const &viewProjection )
 {
-    _uniformPoolVolumeData.Reset();
+    _lightUniformPool.Reset ();
     size_t const lightCount = _interacts.size ();
 
-    if ( !AllocateDescriptorSets ( renderer, lightCount ) )
+    if ( !AllocateLightDescriptorSets ( renderer, lightCount ) )
         return false;
 
     constexpr VkCommandBufferBeginInfo const beginInfo
@@ -997,15 +1031,13 @@ bool PointLightPass::UpdateGPUData2 ( android_vulkan::Renderer &renderer, GXMat4
     };
 
     bool result = android_vulkan::Renderer::CheckVkResult (
-        vkBeginCommandBuffer ( _transferCommandBuffer2, &beginInfo ),
-        "PointLightPass::UpdateGPUData2",
+        vkBeginCommandBuffer ( _lightTransferCommandBuffer, &beginInfo ),
+        "PointLightPass::UpdateLightGPUData",
         "Can't begin command buffer"
     );
 
     if ( !result )
         return false;
-
-    size_t writeIndex = 0U;
 
     PointLightLightupProgram::VolumeData volumeData;
     GXMat4& transform = volumeData._transform;
@@ -1015,7 +1047,6 @@ bool PointLightPass::UpdateGPUData2 ( android_vulkan::Renderer &renderer, GXMat4
     for ( size_t i = 0U; i < lightCount; ++i )
     {
         auto const& [light, casters] = _interacts[ i ];
-        VkDescriptorSet set = _descriptorSets2[ i ];
 
         // Note it's safe cast like that here. "NOLINT" is a clang-tidy control comment.
         auto& pointLight = static_cast<PointLight &> ( *light.get () ); // NOLINT
@@ -1026,24 +1057,15 @@ bool PointLightPass::UpdateGPUData2 ( android_vulkan::Renderer &renderer, GXMat4
         local.SetW ( alpha );
         transform.Multiply ( local, viewProjection );
 
-        VkDescriptorBufferInfo& buffer = _uniformInfoVolumeData[ i ];
-
-        buffer.buffer = _uniformPoolVolumeData.Acquire ( renderer,
-            _transferCommandBuffer2,
+        _lightUniformInfo[ i ].buffer = _lightUniformPool.Acquire ( renderer,
+            _lightTransferCommandBuffer,
             &volumeData,
             VK_PIPELINE_STAGE_VERTEX_SHADER_BIT
         );
-
-        VkWriteDescriptorSet &write = _writeSets[ writeIndex++ ];
-        write.dstSet = set;
-        write.dstBinding = 0U;
-        write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        write.pImageInfo = nullptr;
-        write.pBufferInfo = &buffer;
     }
 
-    result = android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( _transferCommandBuffer2 ),
-        "PointLightPass::UpdateGPUData2",
+    result = android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( _lightTransferCommandBuffer ),
+        "PointLightPass::UpdateLightGPUData",
         "Can't end command buffer"
     );
 
@@ -1051,8 +1073,8 @@ bool PointLightPass::UpdateGPUData2 ( android_vulkan::Renderer &renderer, GXMat4
         return false;
 
     result = android_vulkan::Renderer::CheckVkResult (
-        vkQueueSubmit ( renderer.GetQueue (), 1U, &_submitInfoTransfer2, VK_NULL_HANDLE ),
-        "PointLightPass::UpdateGPUData2",
+        vkQueueSubmit ( renderer.GetQueue (), 1U, &_lightSubmitInfoTransfer, VK_NULL_HANDLE ),
+        "PointLightPass::UpdateLightGPUData",
         "Can't submit command buffer"
     );
 
@@ -1060,8 +1082,8 @@ bool PointLightPass::UpdateGPUData2 ( android_vulkan::Renderer &renderer, GXMat4
         return false;
 
     vkUpdateDescriptorSets ( renderer.GetDevice (),
-        static_cast<uint32_t> ( _writeSets.size () ),
-        _writeSets.data (),
+        static_cast<uint32_t> ( _lightWriteSets.size () ),
+        _lightWriteSets.data (),
         0U,
         nullptr
     );

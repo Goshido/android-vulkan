@@ -309,8 +309,7 @@ bool ReflectionGlobalPass::AllocateDescriptorSets ( android_vulkan::Renderer &re
         VkWriteDescriptorSet& samplerWriteSet = _writeSets[ base + 1U ];
         VkWriteDescriptorSet& uniformWriteSet = _writeSets[ base + 2U ];
 
-        VkDescriptorSet descriptorSet = _descriptorSets[ i ];
-        imageWriteSet.dstSet = samplerWriteSet.dstSet = uniformWriteSet.dstSet = descriptorSet;
+        imageWriteSet.dstSet = samplerWriteSet.dstSet = uniformWriteSet.dstSet = _descriptorSets[ i ];
 
         imageWriteSet.dstBinding = 0U;
         samplerWriteSet.dstBinding = 1U;

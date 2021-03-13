@@ -43,14 +43,6 @@ ReflectionComponent::ReflectionComponent ( android_vulkan::Renderer &renderer,
         cubeData,
         *commandBuffers
     );
-
-    if ( _prefilter )
-    {
-        android_vulkan::LogDebug ( "ReflectionComponent::ReflectionComponent - Prefilter loaded from file." );
-        return;
-    }
-
-    android_vulkan::LogError ( "ReflectionComponent::ReflectionComponent - Prefilter does not load properly." );
 }
 
 void ReflectionComponent::FreeTransferResources ( android_vulkan::Renderer &renderer )

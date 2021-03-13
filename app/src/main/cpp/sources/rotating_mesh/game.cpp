@@ -490,7 +490,7 @@ bool Game::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime )
     if ( !result )
         return false;
 
-    return EndFrame ( renderer, static_cast<size_t> ( imageIndex ) );
+    return EndFrame ( renderer, static_cast<uint32_t> ( imageIndex ) );
 }
 
 bool Game::OnDestroy ( android_vulkan::Renderer &renderer )

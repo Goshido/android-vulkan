@@ -168,7 +168,7 @@ VkExtent2D const& Texture2D::GetResolution () const
         resolution,
         ResolveFormat ( actualFormat, format ),
         IMMUTABLE_TEXTURE_USAGE,
-        isGenerateMipmaps ? CountMipLevels ( resolution ) : 1U,
+        static_cast<uint8_t> ( isGenerateMipmaps ? CountMipLevels ( resolution ) : 1U ),
         renderer
     );
 
@@ -236,7 +236,7 @@ bool Texture2D::UploadData ( Renderer &renderer,
         resolution,
         ResolveFormat ( actualFormat, format ),
         IMMUTABLE_TEXTURE_USAGE,
-        isGenerateMipmaps ? CountMipLevels ( resolution ) : 1U,
+        static_cast<uint8_t> ( isGenerateMipmaps ? CountMipLevels ( resolution ) : 1U ),
         renderer
     );
 
@@ -294,7 +294,7 @@ bool Texture2D::UploadData ( Renderer &renderer,
         resolution,
         format,
         IMMUTABLE_TEXTURE_USAGE,
-        isGenerateMipmaps ? CountMipLevels ( resolution ) : 1U,
+        static_cast<uint8_t> ( isGenerateMipmaps ? CountMipLevels ( resolution ) : 1U ),
         renderer
     );
 
@@ -1006,7 +1006,7 @@ bool Texture2D::LoadImage ( std::vector<uint8_t> &pixelData,
 
     if ( channels != 3 )
     {
-        size_t const size = width * height * channels;
+        auto const size = static_cast<size_t> ( width * height * channels );
         pixelData.resize ( size );
         memcpy ( pixelData.data (), imagePixels, size );
         free ( imagePixels );

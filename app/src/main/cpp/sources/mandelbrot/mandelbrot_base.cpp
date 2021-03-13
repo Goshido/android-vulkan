@@ -61,7 +61,7 @@ bool MandelbrotBase::OnFrame ( android_vulkan::Renderer &renderer, double /*delt
 
     VkCommandBuffer commandBuffer = _commandBuffer[ static_cast<size_t> ( presentationImageIndex ) ];
 
-    constexpr const VkPipelineStageFlags waitFlags = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    constexpr static const VkPipelineStageFlags waitFlags = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 
     VkSubmitInfo submitInfo;
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;

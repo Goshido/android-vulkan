@@ -75,7 +75,7 @@ TextureCubeRef CubeMapManager::LoadCubeMap ( android_vulkan::Renderer &renderer,
         ._yPlusFile = GetStringView ( data._yPlusFile ),
         ._yMinusFile = GetStringView ( data._yMinusFile ),
         ._zPlusFile = GetStringView ( data._zPlusFile ),
-        ._zMinusFile = GetStringView ( data._zMinusFile ),
+        ._zMinusFile = GetStringView ( data._zMinusFile )
     };
 
     auto findResult = _cubeMaps.find ( id );
@@ -117,8 +117,8 @@ void CubeMapManager::Destroy ( VkDevice device )
 
 void CubeMapManager::DestroyInternal ( VkDevice device )
 {
-    for ( auto &[id, cubeMap] : _cubeMaps )
-        cubeMap->FreeResources ( device );
+    for ( auto &cubeMap : _cubeMaps )
+        cubeMap.second->FreeResources ( device );
 
     _cubeMaps.clear ();
     _knownFiles.clear ();

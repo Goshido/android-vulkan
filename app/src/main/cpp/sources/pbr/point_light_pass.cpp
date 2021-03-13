@@ -524,12 +524,12 @@ bool PointLightPass::CreateShadowmapRenderPass ( VkDevice device )
 
     constexpr size_t const subpassCount = std::size ( subpasses );
 
-    constexpr static uint32_t const viewMasks[ subpassCount ] =
+    constexpr static uint32_t const viewMasks[] =
     {
         0b00000000'00000000'00000000'00111111U
     };
 
-    constexpr static uint32_t const correlationMasks[ subpassCount ] =
+    constexpr static uint32_t const correlationMasks[] =
     {
         0b00000000'00000000'00000000'00111111U
     };
@@ -538,7 +538,7 @@ bool PointLightPass::CreateShadowmapRenderPass ( VkDevice device )
     {
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_MULTIVIEW_CREATE_INFO,
         .pNext = nullptr,
-        .subpassCount = static_cast<size_t> ( subpassCount ),
+        .subpassCount = static_cast<uint32_t> ( subpassCount ),
         .pViewMasks = viewMasks,
         .dependencyCount = 0U,
         .pViewOffsets = nullptr,
@@ -553,7 +553,7 @@ bool PointLightPass::CreateShadowmapRenderPass ( VkDevice device )
         .flags = 0U,
         .attachmentCount = static_cast<uint32_t> ( std::size ( depthAttachment ) ),
         .pAttachments = depthAttachment,
-        .subpassCount = subpassCount,
+        .subpassCount = static_cast<uint32_t> ( subpassCount ),
         .pSubpasses = subpasses,
         .dependencyCount = 0U,
         .pDependencies = nullptr
@@ -604,7 +604,7 @@ bool PointLightPass::GenerateShadowmaps ( VkDescriptorSet const* descriptorSets,
 
     vkBeginCommandBuffer ( _renderCommandBuffer, &beginInfo );
 
-    constexpr VkClearValue const clearValues[] =
+    constexpr static VkClearValue const clearValues[] =
     {
         {
             .depthStencil

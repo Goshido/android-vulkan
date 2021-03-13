@@ -747,7 +747,7 @@ bool GeometryPass::UpdateGPUData ( android_vulkan::Renderer &renderer,
     OpaqueInstanceDescriptorSetLayout const instanceLayout;
     VkDescriptorSetLayout instanceLayoutNative = instanceLayout.GetLayout ();
 
-    for ( uint32_t i = opaqueCount; i < poolInfo.maxSets; ++i )
+    for ( uint32_t i = static_cast<uint32_t> ( opaqueCount ); i < poolInfo.maxSets; ++i )
         layouts.push_back ( instanceLayoutNative );
 
     VkDescriptorSetAllocateInfo const allocateInfo

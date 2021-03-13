@@ -60,7 +60,6 @@ bool File::LoadContent ()
     if ( !asset )
     {
         LogError ( "File::LoadContent - Can't open file %s.", _filePath.c_str () );
-        assert ( !"File::LoadContent - Can't open file." );
         return false;
     }
 
@@ -82,7 +81,6 @@ bool File::LoadContent ()
         return true;
 
     LogError ( "File::LoadContent - Can't load whole file content %s.", _filePath.c_str () );
-    assert ( !"File::LoadContent - Can't load whole file content." );
     return false;
 }
 

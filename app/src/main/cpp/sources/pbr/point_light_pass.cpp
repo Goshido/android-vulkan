@@ -281,6 +281,10 @@ void PointLightPass::Destroy ( VkDevice device )
     }
 
     DestroyDescriptorPool2 ( device );
+    _descriptorSets2.clear ();
+    _uniformInfoVolumeData.clear ();
+    _writeSets.clear ();
+
     DestroyDescriptorPool ( device );
 
     if ( _commandPool != VK_NULL_HANDLE )

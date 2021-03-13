@@ -1,6 +1,7 @@
 #include <pbr/pbr_game.h>
 #include <vulkan_utils.h>
 #include <pbr/component.h>
+#include <pbr/cube_map_manager.h>
 #include <pbr/material_manager.h>
 #include <pbr/scene_desc.h>
 #include <pbr/mesh_manager.h>
@@ -114,6 +115,7 @@ bool PBRGame::OnDestroy ( android_vulkan::Renderer &renderer )
 
     MeshManager::Destroy ( device );
     MaterialManager::Destroy ( device );
+    CubeMapManager::Destroy ( device );
 
     return true;
 }

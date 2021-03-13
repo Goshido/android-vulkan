@@ -176,6 +176,11 @@ void PointLightLightup::Destroy ( VkDevice device )
 {
     DestroyDescriptorPool ( device );
 
+    _imageInfo.clear ();
+    _uniformInfoLightData.clear ();
+    _descriptorSets.clear ();
+    _writeSets.clear ();
+
     _volumeMesh.FreeResources ( device );
     _uniformPoolLightData.Destroy ( device );
     _sampler.Destroy ( device );

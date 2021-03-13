@@ -91,6 +91,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/mandelbrot/mandelbrot_lut_color.cpp
     app/src/main/cpp/sources/pbr/camera.cpp
     app/src/main/cpp/sources/pbr/component.cpp
+    app/src/main/cpp/sources/pbr/cube_map_manager.cpp
     app/src/main/cpp/sources/pbr/gbuffer.cpp
     app/src/main/cpp/sources/pbr/geometry_pass.cpp
     app/src/main/cpp/sources/pbr/reflection_global_descriptor_set_layout.cpp
@@ -129,6 +130,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/pbr/sampler.cpp
     app/src/main/cpp/sources/pbr/sampler_manager.cpp
     app/src/main/cpp/sources/pbr/static_mesh_component.cpp
+    app/src/main/cpp/sources/pbr/stub_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/texture_present_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/texture_present_program.cpp
     app/src/main/cpp/sources/pbr/uniform_buffer_pool.cpp

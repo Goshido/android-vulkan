@@ -172,6 +172,11 @@ void ReflectionGlobalPass::Destroy ( VkDevice device )
 {
     DestroyDescriptorPool ( device );
 
+    _descriptorSets.clear ();
+    _imageInfo.clear ();
+    _uniformInfo.clear ();
+    _writeSets.clear ();
+
     _uniformPool.Destroy ( device );
     _sampler.Destroy ( device );
     _program.Destroy ( device );

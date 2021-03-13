@@ -1,4 +1,5 @@
 #include <pbr/reflection_component.h>
+#include <pbr/cube_map_manager.h>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -37,9 +38,13 @@ ReflectionComponent::ReflectionComponent ( android_vulkan::Renderer &renderer,
         ._zMinusFile = reinterpret_cast<char const*> ( data + desc._sideZMinus )
     };
 
-    commandBufferConsumed = 1U;
+    _prefilter = CubeMapManager::GetInstance().LoadCubeMap ( renderer,
+        commandBufferConsumed,
+        cubeData,
+        *commandBuffers
+    );
 
-    if ( _prefilter->UploadData ( renderer, cubeData, *commandBuffers ) )
+    if ( _prefilter )
     {
         android_vulkan::LogDebug ( "ReflectionComponent::ReflectionComponent - Prefilter loaded from file." );
         return;

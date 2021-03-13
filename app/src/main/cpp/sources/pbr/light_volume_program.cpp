@@ -12,7 +12,8 @@ constexpr static const char* VERTEX_SHADER = "shaders/light-volume-vs.spv";
 
 LightVolumeProgram::LightVolumeProgram () noexcept:
     Program ( "pbr::LightVolumeProgram" ),
-    _layout {}
+    _lightVolumeLayout {},
+    _stubLayout {}
 {
     // NOTHING
 }
@@ -106,6 +107,9 @@ void LightVolumeProgram::Destroy ( VkDevice device )
         _pipelineLayout = VK_NULL_HANDLE;
         AV_UNREGISTER_PIPELINE_LAYOUT ( "LightVolumeProgram::_pipelineLayout" )
     }
+
+    _stubLayout.Destroy ( device );
+    _lightVolumeLayout.Destroy ( device );
 
     if ( _vertexShader == VK_NULL_HANDLE )
         return;
@@ -207,18 +211,21 @@ VkPipelineInputAssemblyStateCreateInfo const* LightVolumeProgram::InitInputAssem
 
 bool LightVolumeProgram::InitLayout ( android_vulkan::Renderer &renderer, VkPipelineLayout &layout )
 {
-    if ( !_layout.Init ( renderer ) )
+    if ( !_lightVolumeLayout.Init ( renderer ) )
         return false;
 
-    VkDescriptorSetLayout nativeLayout = _layout.GetLayout ();
+    if ( !_stubLayout.Init ( renderer ) )
+        return false;
+
+    VkDescriptorSetLayout stubLayout = _stubLayout.GetLayout ();
 
     // WORKAROUND: Vulkan states that all layouts must be valid objects. But same time this pipeline is using only
     // descriptor set from #2 slot. First two slots are not important so just repeat same layout for missing slots.
     VkDescriptorSetLayout const layouts[] =
     {
-        nativeLayout,
-        nativeLayout,
-        nativeLayout
+        stubLayout,
+        stubLayout,
+        _lightVolumeLayout.GetLayout ()
     };
 
     VkPipelineLayoutCreateInfo const layoutInfo

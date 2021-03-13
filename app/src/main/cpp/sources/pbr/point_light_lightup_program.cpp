@@ -106,6 +106,7 @@ void PointLightLightupProgram::Destroy ( VkDevice device )
     }
 
     _pointLightLayout.Destroy ( device );
+    _lightVolumeLayout.Destroy ( device );
     _commonLayout.Destroy ( device );
 
     if ( _pipelineLayout != VK_NULL_HANDLE )

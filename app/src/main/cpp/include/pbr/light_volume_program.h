@@ -5,6 +5,7 @@
 #include <vulkan_utils.h>
 #include "light_volume_descriptor_set_layout.h"
 #include "program.h"
+#include "stub_descriptor_set_layout.h"
 
 
 namespace pbr {
@@ -17,7 +18,7 @@ class LightVolumeProgram final : public Program
     public:
         AV_DX_ALIGNMENT_BEGIN
 
-        struct VolumeData final
+        struct [[maybe_unused]] VolumeData final
         {
             [[maybe_unused]] GXMat4     _transform;
         };
@@ -25,7 +26,8 @@ class LightVolumeProgram final : public Program
         AV_DX_ALIGNMENT_END
 
     private:
-        LightVolumeDescriptorSetLayout      _layout;
+        LightVolumeDescriptorSetLayout      _lightVolumeLayout;
+        StubDescriptorSetLayout             _stubLayout;
 
     public:
         LightVolumeProgram () noexcept;

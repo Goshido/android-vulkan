@@ -386,7 +386,7 @@ bool LightPass::CreateLightupRenderPass ( VkDevice device, GBuffer &gBuffer )
     if ( !result )
         return false;
 
-    AV_REGISTER_RENDER_PASS ( "PointLightPass::_lightupRenderPass" )
+    AV_REGISTER_RENDER_PASS ( "LightPass::_lightupRenderPass" )
 
     constexpr static VkClearValue const clearValues[] =
     {

@@ -1,7 +1,7 @@
 #include "lightup-common-descriptor-set.ps"
 
 #define PREFILTER_MAX_MIP_LEVEL     8.0F
-#define MINIMUM_F0                  4.0e-2F
+#define MINIMUM_F0                  4.0e-2H
 #define VOID_SPACE_DEPTH            1.0F
 
 [[vk::binding ( 0, 1 )]]
@@ -35,9 +35,9 @@ struct OutputData
 
 //----------------------------------------------------------------------------------------------------------------------
 
-float3 GetAlbedo ()
+half3 GetAlbedo ()
 {
-    return g_albedo.SubpassLoad ().xyz;
+    return (half3)g_albedo.SubpassLoad ().xyz;
 }
 
 float GetDepth ()
@@ -45,37 +45,35 @@ float GetDepth ()
     return g_depth.SubpassLoad ();
 }
 
-float3 GetFresnel ( in float nH, in float metallic, in float3 albedo )
+half3 GetFresnel ( in half nH, in half metallic, in half3 albedo )
 {
-    const float3 f0 = lerp ( (float3)MINIMUM_F0, albedo, (float3)metallic );
-    return mad ( 1.0F - f0, pow ( max ( 0.0F, 1.0F - nH ), 5.0F ), f0 );
+    const half3 f0 = lerp ( (half3)MINIMUM_F0, albedo, (half3)metallic );
+    return mad ( 1.0H - f0, pow ( max ( 0.0H, 1.0H - nH ), 5.0H ), f0 );
 }
 
-void GetParams ( out float roughness, out float metallic )
+void GetParams ( out float roughness, out half metallic )
 {
     const float4 paramSample = g_params.SubpassLoad ();
     roughness = paramSample.x;
-    metallic = paramSample.z;
+    metallic = (half)paramSample.z;
 }
 
-float3 RestoreDirectionView ( in float2 locationImage, in float depth )
+half3 RestoreDirectionView ( in float2 locationImage, in float depth )
 {
     const float2 alpha = mad ( locationImage, _invResolutionFactor, (float2)( -1.0F ) );
     const float4 v = mul ( _cvvToView, float4 ( alpha, depth, 1.0F ) );
-    return normalize ( v.xyz );
+    return normalize ( (half3)v.xyz );
 }
 
-float3 RestoreNormalView ()
+half3 RestoreNormalView ()
 {
-    const float3 alpha = g_normal.SubpassLoad ().xyz;
-    return mad ( alpha, (float3)2.0F, (float3)( -1.0F ) );
+    const half3 alpha = (half3)g_normal.SubpassLoad ().xyz;
+    return mad ( alpha, (half3)2.0H, (half3)( -1.0H ) );
 }
 
 float Roughness2Mip ( in float roughness )
 {
     // It's emperical ease function. Please plot the graph to see what happens.
-    // note abs is needed to mitigate X3571 error.
-
     const float mip = 8.42F + ( 0.01F - 8.42F ) / ( 1.0F + pow ( roughness / 0.2584F, 2.164F ) );
     return clamp ( mip, 0.0F, PREFILTER_MAX_MIP_LEVEL );
 }
@@ -93,20 +91,20 @@ OutputData PS ( in InputData inputData )
     }
 
     float roughness;
-    float metallic;
+    half metallic;
     GetParams ( roughness, metallic );
 
-    const float3 directionView = -RestoreDirectionView ( inputData._pixel.xy, depth );
-    const float3 normalView = RestoreNormalView ();
-    const float dN = max ( 0.0F, dot ( directionView, normalView ) );
-    const float3 freshnel = GetFresnel ( dN, metallic, GetAlbedo () );
+    const half3 directionView = -RestoreDirectionView ( inputData._pixel.xy, depth );
+    const half3 normalView = RestoreNormalView ();
+    const half dN = max ( 0.0H, dot ( directionView, normalView ) );
+    const half3 freshnel = GetFresnel ( dN, metallic, GetAlbedo () );
 
-    const float3 refl = -mul ( (float3x3)_viewToWorld, reflect ( directionView, normalView ) );
+    const float3 refl = -mul ( (float3x3)_viewToWorld, (float3)( reflect ( directionView, normalView ) ) );
     const float mip = Roughness2Mip ( roughness );
 
-    const float3 prefilterColor = g_prefilter.SampleLevel ( g_prefilterSampler, refl, mip ).xyz;
-    const float2 brdf = g_brdf.Sample ( g_brdfSampler, float2 ( dN, 1.0F - roughness ) ).xy;
+    const half3 prefilterColor = (half3)g_prefilter.SampleLevel ( g_prefilterSampler, refl, mip ).xyz;
+    const half2 brdf = (half2)g_brdf.Sample ( g_brdfSampler, float2 ( (float)dN, 1.0F - roughness ) ).xy;
 
-    result._color = float4 ( prefilterColor * mad ( freshnel, (float3)brdf.x, (float3)brdf.y ), 0.0F );
+    result._color = float4 ( (float3)( prefilterColor * mad ( freshnel, (half3)brdf.x, (half3)brdf.y ) ), 0.0F );
     return result;
 }

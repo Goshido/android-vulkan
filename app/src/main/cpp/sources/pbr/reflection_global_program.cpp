@@ -135,11 +135,11 @@ Program::DescriptorSetInfo const& ReflectionGlobalProgram::GetResourceInfo () co
         {
             {
                 .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-                .descriptorCount = 1U
+                .descriptorCount = 2U
             },
             {
                 .type = VK_DESCRIPTOR_TYPE_SAMPLER,
-                .descriptorCount = 1U
+                .descriptorCount = 2U
             },
             {
                 .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,

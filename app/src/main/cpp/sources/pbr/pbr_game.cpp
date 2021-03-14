@@ -63,6 +63,7 @@ bool PBRGame::OnInit ( android_vulkan::Renderer &renderer )
         return false;
     }
 
+    _renderSession.FreeTransferResources ( renderer.GetDevice () );
     VkExtent2D const& surfaceResolution = renderer.GetViewportResolution ();
 
     _camera.SetProjection ( GXDegToRad ( FIELD_OF_VIEW ),

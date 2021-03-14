@@ -190,6 +190,11 @@ void RenderSession::Destroy ( VkDevice device )
     _gBuffer.Destroy ( device );
 }
 
+void RenderSession::FreeTransferResources ( VkDevice device )
+{
+    _lightPass.OnFreeTransferResources ( device );
+}
+
 void RenderSession::SubmitMesh ( MeshRef &mesh,
     MaterialRef const &material,
     GXMat4 const &local,

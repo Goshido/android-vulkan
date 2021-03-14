@@ -14,6 +14,8 @@ namespace pbr {
 constexpr static float const MAX_PREFILTER_LOD = 8.0F;
 
 ReflectionGlobalPass::ReflectionGlobalPass () noexcept:
+    _brdfImageView ( VK_NULL_HANDLE ),
+    _brdfSampler ( VK_NULL_HANDLE ),
     _commandPool ( VK_NULL_HANDLE ),
     _descriptorPool ( VK_NULL_HANDLE ),
     _descriptorSets {},
@@ -35,7 +37,7 @@ void ReflectionGlobalPass::Append ( TextureCubeRef &prefilter )
     _prefilters.push_back ( prefilter );
 }
 
-[[maybe_unused]] bool ReflectionGlobalPass::Execute ( android_vulkan::Renderer &renderer,
+bool ReflectionGlobalPass::Execute ( android_vulkan::Renderer &renderer,
     bool &isCommonSetBind,
     LightupCommonDescriptorSet &lightupCommonDescriptorSet,
     VkCommandBuffer commandBuffer,
@@ -47,7 +49,7 @@ void ReflectionGlobalPass::Append ( TextureCubeRef &prefilter )
     if ( !count )
         return true;
 
-    if ( !UpdateGPUData(renderer, count, viewToWorld ) )
+    if ( !UpdateGPUData ( renderer, count, viewToWorld ) )
         return false;
 
     if ( !isCommonSetBind )
@@ -69,10 +71,15 @@ void ReflectionGlobalPass::Append ( TextureCubeRef &prefilter )
 
 bool ReflectionGlobalPass::Init ( android_vulkan::Renderer &renderer,
     VkRenderPass renderPass,
+    VkSampler brdfSampler,
+    VkImageView brdfImageView,
     uint32_t subpass,
     VkExtent2D const &viewport
 )
 {
+    _brdfSampler = brdfSampler;
+    _brdfImageView = brdfImageView;
+
     VkCommandPoolCreateInfo const poolInfo
     {
         .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
@@ -181,6 +188,9 @@ void ReflectionGlobalPass::Destroy ( VkDevice device )
     _sampler.Destroy ( device );
     _program.Destroy ( device );
 
+    _brdfSampler = VK_NULL_HANDLE;
+    _brdfImageView = VK_NULL_HANDLE;
+
     if ( _commandPool == VK_NULL_HANDLE )
         return;
 
@@ -210,11 +220,11 @@ bool ReflectionGlobalPass::AllocateDescriptorSets ( android_vulkan::Renderer &re
     {
         {
             .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-            .descriptorCount = size
+            .descriptorCount = 2U * size
         },
         {
             .type = VK_DESCRIPTOR_TYPE_SAMPLER,
-            .descriptorCount = size
+            .descriptorCount = 2U * size
         },
         {
             .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
@@ -275,7 +285,7 @@ bool ReflectionGlobalPass::AllocateDescriptorSets ( android_vulkan::Renderer &re
         .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
     };
 
-    _imageInfo.resize ( neededSets, image );
+    _imageInfo.resize ( 2U * neededSets, image );
 
     constexpr VkDescriptorBufferInfo const uniform
     {
@@ -300,26 +310,47 @@ bool ReflectionGlobalPass::AllocateDescriptorSets ( android_vulkan::Renderer &re
         .pTexelBufferView = nullptr
     };
 
-    _writeSets.resize ( static_cast<size_t> ( poolInfo.poolSizeCount ), writeSet );
+    _writeSets.resize ( 5U * neededSets, writeSet );
 
     for ( size_t i = 0U; i < neededSets; ++i )
     {
-        size_t const base = i * static_cast<size_t> ( poolInfo.poolSizeCount );
-        VkWriteDescriptorSet& imageWriteSet = _writeSets[ base ];
-        VkWriteDescriptorSet& samplerWriteSet = _writeSets[ base + 1U ];
-        VkWriteDescriptorSet& uniformWriteSet = _writeSets[ base + 2U ];
+        size_t const baseWrite = 5U * i;
+        VkWriteDescriptorSet& prefilterImageWriteSet = _writeSets[ baseWrite ];
+        VkWriteDescriptorSet& prefileterSamplerWriteSet = _writeSets[ baseWrite + 1U ];
+        VkWriteDescriptorSet& brdfImageWriteSet = _writeSets[ baseWrite + 2U ];
+        VkWriteDescriptorSet& brdfSamplerWriteSet = _writeSets[ baseWrite + 3U ];
+        VkWriteDescriptorSet& uniformWriteSet = _writeSets[ baseWrite + 4U ];
 
-        imageWriteSet.dstSet = samplerWriteSet.dstSet = uniformWriteSet.dstSet = _descriptorSets[ i ];
+        VkDescriptorSet set = _descriptorSets[ i ];
+        prefilterImageWriteSet.dstSet = set;
+        prefileterSamplerWriteSet.dstSet = set;
+        brdfImageWriteSet.dstSet = set;
+        brdfSamplerWriteSet.dstSet = set;
+        uniformWriteSet.dstSet = set;
 
-        imageWriteSet.dstBinding = 0U;
-        samplerWriteSet.dstBinding = 1U;
-        uniformWriteSet.dstBinding = 2U;
+        prefilterImageWriteSet.dstBinding = 0U;
+        prefileterSamplerWriteSet.dstBinding = 1U;
+        brdfImageWriteSet.dstBinding = 2U;
+        brdfSamplerWriteSet.dstBinding = 3U;
+        uniformWriteSet.dstBinding = 4U;
 
-        imageWriteSet.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-        samplerWriteSet.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
+        prefilterImageWriteSet.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+        prefileterSamplerWriteSet.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
+        brdfImageWriteSet.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+        brdfSamplerWriteSet.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
         uniformWriteSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 
-        imageWriteSet.pImageInfo = samplerWriteSet.pImageInfo = &_imageInfo[ i ];
+        size_t const baseImage = 2U * i;
+        VkDescriptorImageInfo const* prefilterImageInfo = &_imageInfo[ baseImage ];
+        prefilterImageWriteSet.pImageInfo = prefilterImageInfo;
+        prefileterSamplerWriteSet.pImageInfo = prefilterImageInfo;
+
+        VkDescriptorImageInfo* brdfImageInfo = &_imageInfo[ baseImage + 1U ];
+        brdfImageInfo->sampler = _brdfSampler;
+        brdfImageInfo->imageView = _brdfImageView;
+        brdfImageWriteSet.pImageInfo = brdfImageInfo;
+        brdfSamplerWriteSet.pImageInfo = brdfImageInfo;
+
         uniformWriteSet.pBufferInfo = &_uniformInfo[ i ];
     }
 
@@ -368,12 +399,9 @@ bool ReflectionGlobalPass::UpdateGPUData ( android_vulkan::Renderer &renderer, s
 
     for ( size_t i = 0U; i < count; ++i )
     {
-        VkDescriptorImageInfo& info = _imageInfo[ i ];
-        info.imageView = _prefilters[ i ]->GetImageView ();
+        _imageInfo[ 2U * i ].imageView = _prefilters[ i ]->GetImageView ();
 
-        VkDescriptorBufferInfo& buffer = _uniformInfo[ i ];
-
-        buffer.buffer = _uniformPool.Acquire ( renderer,
+        _uniformInfo[ i ].buffer = _uniformPool.Acquire ( renderer,
             _transferCommandBuffer,
             &transform,
             VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT

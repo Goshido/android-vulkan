@@ -14,11 +14,15 @@ namespace pbr {
 class LightPass final
 {
     private:
-        VkRenderPassBeginInfo                   _lightupRenderPassInfo;
-        LightVolume                             _lightVolume;
-        LightupCommonDescriptorSet              _lightupCommonDescriptorSet;
-        PointLightPass                          _pointLightPass;
-        ReflectionGlobalPass                    _reflectionGlobalPass;
+        android_vulkan::Texture2D       _brdfLUT;
+        Sampler                         _brdfLUTSampler;
+        VkCommandBuffer                 _commandBuffer;
+        VkCommandPool                   _commandPool;
+        VkRenderPassBeginInfo           _lightupRenderPassInfo;
+        LightVolume                     _lightVolume;
+        LightupCommonDescriptorSet      _lightupCommonDescriptorSet;
+        PointLightPass                  _pointLightPass;
+        ReflectionGlobalPass            _reflectionGlobalPass;
 
     public:
         LightPass () noexcept;
@@ -35,6 +39,7 @@ class LightPass final
         void Destroy ( VkDevice device );
 
         [[nodiscard]] size_t GetPointLightCount () const;
+        void OnFreeTransferResources ( VkDevice device );
 
         [[nodiscard]] bool OnPreGeometryPass ( android_vulkan::Renderer &renderer,
             VkExtent2D const &resolution,
@@ -63,6 +68,7 @@ class LightPass final
     private:
         [[nodiscard]] bool CreateLightupFramebuffer ( VkDevice device, GBuffer &gBuffer );
         [[nodiscard]] bool CreateLightupRenderPass ( VkDevice device, GBuffer &gBuffer );
+        void DestroyCommandPool ( VkDevice device );
 };
 
 } // namespace pbr

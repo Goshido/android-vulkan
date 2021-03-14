@@ -55,6 +55,7 @@ class RenderSession final
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, VkExtent2D const &resolution );
         void Destroy ( VkDevice device );
+        void FreeTransferResources ( VkDevice device );
 
         void SubmitMesh ( MeshRef &mesh,
             MaterialRef const &material,

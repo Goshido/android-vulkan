@@ -10,7 +10,13 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
+constexpr static char const BRDF_LUT[] = "pbr/system/brdf-lut.png";
+
 LightPass::LightPass () noexcept:
+    _brdfLUT {},
+    _brdfLUTSampler {},
+    _commandBuffer ( VK_NULL_HANDLE ),
+    _commandPool ( VK_NULL_HANDLE ),
     _lightupRenderPassInfo {},
     _lightVolume {},
     _lightupCommonDescriptorSet {},
@@ -25,7 +31,81 @@ bool LightPass::Init ( android_vulkan::Renderer &renderer, GBuffer &gBuffer )
     _lightupRenderPassInfo.framebuffer = VK_NULL_HANDLE;
     _lightupRenderPassInfo.renderPass = VK_NULL_HANDLE;
 
+    VkCommandPoolCreateInfo const poolInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+        .queueFamilyIndex = renderer.GetQueueFamilyIndex ()
+    };
+
     VkDevice device = renderer.GetDevice ();
+
+    bool result = android_vulkan::Renderer::CheckVkResult (
+        vkCreateCommandPool ( device, &poolInfo, nullptr, &_commandPool ),
+        "LightPass::Init",
+        "Can't create command pool"
+    );
+
+    if ( !result )
+        return false;
+
+    AV_REGISTER_COMMAND_POOL ( "LightPass::_commandPool" )
+
+    VkCommandBufferAllocateInfo const allocateInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+        .pNext = nullptr,
+        .commandPool = _commandPool,
+        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+        .commandBufferCount = 1U
+    };
+
+    result = android_vulkan::Renderer::CheckVkResult (
+        vkAllocateCommandBuffers ( device, &allocateInfo, &_commandBuffer ),
+        "LightPass::Init",
+        "Can't allocate command buffer"
+    );
+
+    if ( !result )
+    {
+        Destroy ( device );
+        return false;
+    }
+
+    if ( !_brdfLUT.UploadData ( renderer, BRDF_LUT, android_vulkan::eFormat::Unorm, false, _commandBuffer ) )
+    {
+        Destroy ( device );
+        return false;
+    }
+
+    constexpr VkSamplerCreateInfo const samplerInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .magFilter = VK_FILTER_LINEAR,
+        .minFilter = VK_FILTER_LINEAR,
+        .mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST,
+        .addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+        .addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+        .addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+        .mipLodBias = 0.0F,
+        .anisotropyEnable = VK_FALSE,
+        .maxAnisotropy = 1.0F,
+        .compareEnable = VK_FALSE,
+        .compareOp = VK_COMPARE_OP_ALWAYS,
+        .minLod = 0.0F,
+        .maxLod = 0.0F,
+        .borderColor = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK,
+        .unnormalizedCoordinates = VK_FALSE
+    };
+
+    if ( !_brdfLUTSampler.Init ( renderer, samplerInfo ) )
+    {
+        Destroy ( device );
+        return false;
+    }
 
     if ( !CreateLightupRenderPass ( device, gBuffer ) )
     {
@@ -59,7 +139,15 @@ bool LightPass::Init ( android_vulkan::Renderer &renderer, GBuffer &gBuffer )
         return false;
     }
 
-    if ( !_reflectionGlobalPass.Init ( renderer,_lightupRenderPassInfo.renderPass, 1U, resolution ) )
+    result = _reflectionGlobalPass.Init ( renderer,
+        _lightupRenderPassInfo.renderPass,
+        _brdfLUTSampler.GetSampler (),
+        _brdfLUT.GetImageView (),
+        1U,
+        resolution
+    );
+
+    if ( !result )
     {
         Destroy ( renderer.GetDevice () );
         return false;
@@ -82,17 +170,27 @@ void LightPass::Destroy ( VkDevice device )
         AV_UNREGISTER_FRAMEBUFFER ( "LightPass::_lightupFramebuffer" )
     }
 
-    if ( _lightupRenderPassInfo.renderPass == VK_NULL_HANDLE )
-        return;
+    if ( _lightupRenderPassInfo.renderPass != VK_NULL_HANDLE )
+    {
+        vkDestroyRenderPass ( device, _lightupRenderPassInfo.renderPass, nullptr );
+        _lightupRenderPassInfo.renderPass = VK_NULL_HANDLE;
+        AV_UNREGISTER_RENDER_PASS ( "LightPass::_lightupRenderPass" )
+    }
 
-    vkDestroyRenderPass ( device, _lightupRenderPassInfo.renderPass, nullptr );
-    _lightupRenderPassInfo.renderPass = VK_NULL_HANDLE;
-    AV_UNREGISTER_RENDER_PASS ( "LightPass::_lightupRenderPass" )
+    _brdfLUTSampler.Destroy ( device );
+    _brdfLUT.FreeResources ( device );
+    DestroyCommandPool ( device );
 }
 
 size_t LightPass::GetPointLightCount () const
 {
     return _pointLightPass.GetPointLightCount ();
+}
+
+void LightPass::OnFreeTransferResources ( VkDevice device )
+{
+    _brdfLUT.FreeTransferResources ( device );
+    DestroyCommandPool ( device );
 }
 
 bool LightPass::OnPreGeometryPass ( android_vulkan::Renderer &renderer,
@@ -449,6 +547,17 @@ bool LightPass::CreateLightupRenderPass ( VkDevice device, GBuffer &gBuffer )
     _lightupRenderPassInfo.clearValueCount = static_cast<uint32_t> ( std::size ( clearValues ) );
     _lightupRenderPassInfo.pClearValues = clearValues;
     return true;
+}
+
+void LightPass::DestroyCommandPool ( VkDevice device )
+{
+    if ( _commandPool == VK_NULL_HANDLE )
+        return;
+
+    vkDestroyCommandPool ( device, _commandPool, nullptr );
+    _commandPool = VK_NULL_HANDLE;
+    _commandBuffer = VK_NULL_HANDLE;
+    AV_UNREGISTER_COMMAND_POOL ( "LightPass::_commandPool" )
 }
 
 } // namespace pbr

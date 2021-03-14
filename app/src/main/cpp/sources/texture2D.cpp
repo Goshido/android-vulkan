@@ -373,25 +373,32 @@ bool Texture2D::CreateCommonResources ( VkImageCreateInfo &imageInfo,
         return false;
     }
 
-    VkImageViewCreateInfo viewInfo;
-    viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-    viewInfo.pNext = nullptr;
-    viewInfo.flags = 0U;
-    viewInfo.image = _image;
-    viewInfo.format = _format;
-    viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    VkImageViewCreateInfo const viewInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .image = _image,
+        .viewType = VK_IMAGE_VIEW_TYPE_2D,
+        .format = _format,
 
-    VkImageSubresourceRange& sub = viewInfo.subresourceRange;
-    sub.baseMipLevel = viewInfo.subresourceRange.baseArrayLayer = 0U;
-    sub.layerCount = 1U;
-    sub.levelCount = imageInfo.mipLevels;
-    sub.aspectMask = Renderer::ResolveImageViewAspect ( _format );
+        .components
+        {
+            .r = VK_COMPONENT_SWIZZLE_IDENTITY,
+            .g = VK_COMPONENT_SWIZZLE_IDENTITY,
+            .b = VK_COMPONENT_SWIZZLE_IDENTITY,
+            .a = VK_COMPONENT_SWIZZLE_IDENTITY
+        },
 
-    VkComponentMapping& mapping = viewInfo.components;
-    mapping.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-    mapping.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-    mapping.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-    mapping.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+        .subresourceRange
+        {
+            .aspectMask = Renderer::ResolveImageViewAspect ( _format ),
+            .baseMipLevel = 0U,
+            .levelCount = imageInfo.mipLevels,
+            .baseArrayLayer = 0U,
+            .layerCount = 1U
+        }
+    };
 
     result = Renderer::CheckVkResult ( vkCreateImageView ( device, &viewInfo, nullptr, &_imageView ),
         "Texture2D::CreateCommonResources",
@@ -552,7 +559,7 @@ bool Texture2D::UploadCompressed ( Renderer &renderer,
     VkDevice device = renderer.GetDevice ();
     vkUnmapMemory ( device, _transferDeviceMemory );
 
-    VkCommandBufferBeginInfo const beginInfo
+    constexpr VkCommandBufferBeginInfo const beginInfo
     {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
         .pNext = nullptr,
@@ -712,11 +719,13 @@ bool Texture2D::UploadDataInternal ( Renderer &renderer,
     VkDevice device = renderer.GetDevice ();
     vkUnmapMemory ( device, _transferDeviceMemory );
 
-    VkCommandBufferBeginInfo beginInfo;
-    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    beginInfo.pNext = nullptr;
-    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-    beginInfo.pInheritanceInfo = nullptr;
+    constexpr VkCommandBufferBeginInfo const beginInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+        .pNext = nullptr,
+        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+        .pInheritanceInfo = nullptr
+    };
 
     bool result = Renderer::CheckVkResult ( vkBeginCommandBuffer ( commandBuffer, &beginInfo ),
         "Texture2D::UploadDataInternal",
@@ -756,18 +765,29 @@ bool Texture2D::UploadDataInternal ( Renderer &renderer,
         &barrierInfo
     );
 
-    VkBufferImageCopy copyRegion;
-    copyRegion.imageOffset.x = 0;
-    copyRegion.imageOffset.y = 0;
-    copyRegion.imageOffset.z = 0;
-    copyRegion.imageExtent = imageInfo.extent;
-    copyRegion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    copyRegion.imageSubresource.layerCount = 1U;
-    copyRegion.imageSubresource.baseArrayLayer = 0U;
-    copyRegion.imageSubresource.mipLevel = 0U;
-    copyRegion.bufferRowLength = imageInfo.extent.width;
-    copyRegion.bufferImageHeight = imageInfo.extent.height;
-    copyRegion.bufferOffset = 0U;
+    VkBufferImageCopy const copyRegion
+    {
+        .bufferOffset = 0U,
+        .bufferRowLength = imageInfo.extent.width,
+        .bufferImageHeight = imageInfo.extent.height,
+
+        .imageSubresource
+        {
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .mipLevel = 0U,
+            .baseArrayLayer = 0U,
+            .layerCount = 1U
+        },
+
+        .imageOffset
+        {
+            .x = 0,
+            .y = 0,
+            .z = 0
+        },
+
+        .imageExtent = imageInfo.extent,
+    };
 
     vkCmdCopyBufferToImage ( commandBuffer, _transfer, _image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1U, &copyRegion );
 
@@ -802,16 +822,18 @@ bool Texture2D::UploadDataInternal ( Renderer &renderer,
             return false;
         }
 
-        VkSubmitInfo submitInfo;
-        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-        submitInfo.pNext = nullptr;
-        submitInfo.commandBufferCount = 1U;
-        submitInfo.pCommandBuffers = &commandBuffer;
-        submitInfo.waitSemaphoreCount = 0U;
-        submitInfo.pWaitSemaphores = nullptr;
-        submitInfo.signalSemaphoreCount = 0U;
-        submitInfo.pSignalSemaphores = nullptr;
-        submitInfo.pWaitDstStageMask = nullptr;
+        VkSubmitInfo const submitInfo
+        {
+            .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+            .pNext = nullptr,
+            .waitSemaphoreCount = 0U,
+            .pWaitSemaphores = nullptr,
+            .pWaitDstStageMask = nullptr,
+            .commandBufferCount = 1U,
+            .pCommandBuffers = &commandBuffer,
+            .signalSemaphoreCount = 0U,
+            .pSignalSemaphores = nullptr
+        };
 
         result = Renderer::CheckVkResult (
             vkQueueSubmit ( renderer.GetQueue (), 1U, &submitInfo, VK_NULL_HANDLE ),
@@ -952,16 +974,18 @@ bool Texture2D::UploadDataInternal ( Renderer &renderer,
         return false;
     }
 
-    VkSubmitInfo submitInfo;
-    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    submitInfo.pNext = nullptr;
-    submitInfo.commandBufferCount = 1U;
-    submitInfo.pCommandBuffers = &commandBuffer;
-    submitInfo.waitSemaphoreCount = 0U;
-    submitInfo.pWaitSemaphores = nullptr;
-    submitInfo.signalSemaphoreCount = 0U;
-    submitInfo.pSignalSemaphores = nullptr;
-    submitInfo.pWaitDstStageMask = nullptr;
+    VkSubmitInfo const submitInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+        .pNext = nullptr,
+        .waitSemaphoreCount = 0U,
+        .pWaitSemaphores = nullptr,
+        .pWaitDstStageMask = nullptr,
+        .commandBufferCount = 1U,
+        .pCommandBuffers = &commandBuffer,
+        .signalSemaphoreCount = 0U,
+        .pSignalSemaphores = nullptr
+    };
 
     result = Renderer::CheckVkResult (
         vkQueueSubmit ( renderer.GetQueue (), 1U, &submitInfo, VK_NULL_HANDLE ),
@@ -1006,7 +1030,9 @@ bool Texture2D::LoadImage ( std::vector<uint8_t> &pixelData,
 
     if ( channels != 3 )
     {
-        auto const size = static_cast<size_t> ( width * height * channels );
+        auto const size =
+            static_cast<size_t> ( width ) * static_cast<size_t> ( height ) * static_cast<size_t> ( channels );
+
         pixelData.resize ( size );
         memcpy ( pixelData.data (), imagePixels, size );
         free ( imagePixels );

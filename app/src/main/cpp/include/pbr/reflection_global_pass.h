@@ -14,6 +14,8 @@ namespace pbr {
 class ReflectionGlobalPass final
 {
     private:
+        VkImageView                             _brdfImageView;
+        VkSampler                               _brdfSampler;
         VkCommandPool                           _commandPool;
         VkDescriptorPool                        _descriptorPool;
         std::vector<VkDescriptorSet>            _descriptorSets;
@@ -40,7 +42,7 @@ class ReflectionGlobalPass final
 
         void Append ( TextureCubeRef &prefilter );
 
-        [[maybe_unused]] bool Execute ( android_vulkan::Renderer &renderer,
+        [[nodiscard]] bool Execute ( android_vulkan::Renderer &renderer,
             bool &isCommonSetBind,
             LightupCommonDescriptorSet &lightupCommonDescriptorSet,
             VkCommandBuffer commandBuffer,
@@ -49,6 +51,8 @@ class ReflectionGlobalPass final
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
             VkRenderPass renderPass,
+            VkSampler brdfSampler,
+            VkImageView brdfImageView,
             uint32_t subpass,
             VkExtent2D const &viewport
         );
@@ -58,6 +62,7 @@ class ReflectionGlobalPass final
 
     private:
         [[nodiscard]] bool AllocateDescriptorSets ( android_vulkan::Renderer &renderer, size_t neededSets );
+
         void DestroyDescriptorPool ( VkDevice device );
 
         [[nodiscard]] bool UpdateGPUData ( android_vulkan::Renderer &renderer,

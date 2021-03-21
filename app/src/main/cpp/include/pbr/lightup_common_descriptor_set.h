@@ -15,6 +15,7 @@ class LightupCommonDescriptorSet final
         VkCommandPool                       _commandPool;
         VkDescriptorPool                    _descriptorPool;
         LightupCommonDescriptorSetLayout    _layout;
+        VkPipelineLayout                    _pipelineLayout;
         VkDescriptorSet                     _set;
         android_vulkan::UniformBuffer       _uniformBuffer;
 
@@ -29,9 +30,10 @@ class LightupCommonDescriptorSet final
 
         ~LightupCommonDescriptorSet () = default;
 
+        void Bind ( VkCommandBuffer commandBuffer );
+
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, GBuffer &gBuffer );
         void Destroy ( VkDevice device );
-        [[nodiscard]] VkDescriptorSet GetSet () const;
 
         [[nodiscard]] bool Update ( android_vulkan::Renderer &renderer,
             VkExtent2D const &resolution,

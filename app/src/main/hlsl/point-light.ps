@@ -1,11 +1,11 @@
-#include "lightup-common-descriptor-set.ps"
+#include "lightup-common.ps"
 
 // The implementation is based on ideas from LearnOpenGL resourse
 // see https://learnopengl.com/PBR/Theory
 // see https://learnopengl.com/PBR/Lighting
 
 #define EPSILON             1.0e-3H
-#define MINIMUM_F0          4.0e-2H
+
 #define PI                  3.141592H
 #define INVERSE_PI          0.31830H
 
@@ -35,11 +35,6 @@ cbuffer LightData:                          register ( b1 )
     float2                  _padding1_0;
 };
 
-struct InputData
-{
-    linear float4           _pixel:         SV_Position;
-};
-
 struct OutputData
 {
     [[vk::location (0)]]
@@ -64,20 +59,10 @@ half GGXSchlick ( in half dotFactor, in half k )
     return dotFactor / mad ( dotFactor, 1.0H - k, k );
 }
 
-half3 GetAlbedo ()
-{
-    return (half3)g_albedo.SubpassLoad ().xyz;
-}
-
 half GetAttenuation ( in float3 fragToLight )
 {
     const half beta = (half)max ( 1.0F, _sceneScaleFactor * length ( fragToLight ) );
     return _intensity / ( beta * beta );
-}
-
-float GetDepth ()
-{
-    return g_depth.SubpassLoad ();
 }
 
 half GetDistribution ( in half nH, in half roughness )
@@ -90,23 +75,10 @@ half GetDistribution ( in half nH, in half roughness )
     return beta / ( PI * zeta * zeta );
 }
 
-half3 GetFresnel ( in half nH, in half metallic, in half3 albedo )
-{
-    const half3 f0 = lerp ( (half3)MINIMUM_F0, albedo, (half3)metallic );
-    return mad ( 1.0H - f0, pow ( max ( 0.0H, 1.0H - nH ), 5.0H ), f0 );
-}
-
 half GetGeometryAttenuation ( in half nL, in half nV, in half roughness )
 {
     const half k = GetDirectK ( roughness );
     return GGXSchlick ( nL, k ) * GGXSchlick ( nV, k );
-}
-
-void GetParams ( out half roughness, out half metallic )
-{
-    const half4 paramSample = (half4)g_params.SubpassLoad ();
-    roughness = paramSample.x;
-    metallic = paramSample.z;
 }
 
 half GetShadowFactor ( in float3 locationView )
@@ -126,17 +98,11 @@ float3 RestoreLocationView ( in float2 locationImage )
     return v.xyz * ( 1.0F / v.w );
 }
 
-half3 RestoreNormalView ()
-{
-    const half3 alpha = (half3)g_normal.SubpassLoad ().xyz;
-    return mad ( alpha, (half3)2.0H, (half3)( -1.0H ) );
-}
-
 //----------------------------------------------------------------------------------------------------------------------
 
-OutputData PS ( in InputData inputData )
+OutputData PS ( in linear float4 pixel: SV_Position )
 {
-    const float3 locationView = RestoreLocationView ( inputData._pixel.xy );
+    const float3 locationView = RestoreLocationView ( pixel.xy );
     const float3 fragToLight = _lightLocationView - locationView;
 
     const half attenuation = GetAttenuation ( fragToLight );

@@ -38,8 +38,6 @@ void ReflectionGlobalPass::Append ( TextureCubeRef &prefilter )
 }
 
 bool ReflectionGlobalPass::Execute ( android_vulkan::Renderer &renderer,
-    bool &isCommonSetBind,
-    LightupCommonDescriptorSet &lightupCommonDescriptorSet,
     VkCommandBuffer commandBuffer,
     GXMat4 const &viewToWorld
 )
@@ -51,12 +49,6 @@ bool ReflectionGlobalPass::Execute ( android_vulkan::Renderer &renderer,
 
     if ( !UpdateGPUData ( renderer, count, viewToWorld ) )
         return false;
-
-    if ( !isCommonSetBind )
-    {
-        _program.SetCommonDescriptorSet ( commandBuffer, lightupCommonDescriptorSet.GetSet () );
-        isCommonSetBind = true;
-    }
 
     _program.Bind ( commandBuffer );
 
@@ -198,6 +190,11 @@ void ReflectionGlobalPass::Destroy ( VkDevice device )
     _commandPool = VK_NULL_HANDLE;
     _transferCommandBuffer = VK_NULL_HANDLE;
     AV_UNREGISTER_COMMAND_POOL ( "ReflectionGlobalPass::_commandPool" )
+}
+
+size_t ReflectionGlobalPass::GetReflectionCount () const
+{
+    return _prefilters.size ();
 }
 
 void ReflectionGlobalPass::Reset ()

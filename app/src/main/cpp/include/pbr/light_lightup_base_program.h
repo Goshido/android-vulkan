@@ -31,8 +31,6 @@ class LightLightupBaseProgram : public Program
         LightLightupBaseProgram ( LightLightupBaseProgram && ) = delete;
         LightLightupBaseProgram& operator = ( LightLightupBaseProgram && ) = delete;
 
-        void SetCommonDescriptorSet ( VkCommandBuffer commandBuffer, VkDescriptorSet set );
-
     protected:
         explicit LightLightupBaseProgram ( std::string &&name ) noexcept;
         ~LightLightupBaseProgram () override = default;

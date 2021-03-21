@@ -1,7 +1,6 @@
-#include "lightup-common-descriptor-set.ps"
+#include "lightup-common.ps"
 
-#define PREFILTER_MAX_MIP_LEVEL     8.0F
-#define MINIMUM_F0                  4.0e-2H
+#define PREFILTER_MAX_MIP_LEVEL     8.0H
 #define VOID_SPACE_DEPTH            1.0F
 
 [[vk::binding ( 0, 1 )]]
@@ -35,29 +34,6 @@ struct OutputData
 
 //----------------------------------------------------------------------------------------------------------------------
 
-half3 GetAlbedo ()
-{
-    return (half3)g_albedo.SubpassLoad ().xyz;
-}
-
-float GetDepth ()
-{
-    return g_depth.SubpassLoad ();
-}
-
-half3 GetFresnel ( in half nH, in half metallic, in half3 albedo )
-{
-    const half3 f0 = lerp ( (half3)MINIMUM_F0, albedo, (half3)metallic );
-    return mad ( 1.0H - f0, pow ( max ( 0.0H, 1.0H - nH ), 5.0H ), f0 );
-}
-
-void GetParams ( out float roughness, out half metallic )
-{
-    const float4 paramSample = g_params.SubpassLoad ();
-    roughness = paramSample.x;
-    metallic = (half)paramSample.z;
-}
-
 half3 RestoreDirectionView ( in float2 locationImage, in float depth )
 {
     const float2 alpha = mad ( locationImage, _invResolutionFactor, (float2)( -1.0F ) );
@@ -65,20 +41,14 @@ half3 RestoreDirectionView ( in float2 locationImage, in float depth )
     return normalize ( (half3)v.xyz );
 }
 
-half3 RestoreNormalView ()
-{
-    const half3 alpha = (half3)g_normal.SubpassLoad ().xyz;
-    return mad ( alpha, (half3)2.0H, (half3)( -1.0H ) );
-}
-
-float Roughness2Mip ( in float roughness )
+float Roughness2Mip ( in half roughness )
 {
     // It's emperical ease function. Please plot the graph to see what happens.
-    const float mip = 8.42F + ( 0.01F - 8.42F ) / ( 1.0F + pow ( roughness / 0.2584F, 2.164F ) );
-    return clamp ( mip, 0.0F, PREFILTER_MAX_MIP_LEVEL );
+    const half mip = 8.42H + ( 0.01H - 8.42H ) / ( 1.0H + pow ( roughness / 0.2584H, 2.164H ) );
+    return (float)clamp ( mip, 0.0H, PREFILTER_MAX_MIP_LEVEL );
 }
 
-OutputData PS ( in InputData inputData )
+OutputData PS ( in linear float4 pixel: SV_Position )
 {
     const float depth = GetDepth ();
     OutputData result;
@@ -90,11 +60,11 @@ OutputData PS ( in InputData inputData )
         return result;
     }
 
-    float roughness;
+    half roughness;
     half metallic;
     GetParams ( roughness, metallic );
 
-    const half3 directionView = -RestoreDirectionView ( inputData._pixel.xy, depth );
+    const half3 directionView = -RestoreDirectionView ( pixel.xy, depth );
     const half3 normalView = RestoreNormalView ();
     const half dN = max ( 0.0H, dot ( directionView, normalView ) );
     const half3 freshnel = GetFresnel ( dN, metallic, GetAlbedo () );

@@ -9,10 +9,24 @@ LightupCommonDescriptorSet::LightupCommonDescriptorSet () noexcept:
     _commandPool ( VK_NULL_HANDLE ),
     _descriptorPool ( VK_NULL_HANDLE ),
     _layout {},
+    _pipelineLayout ( VK_NULL_HANDLE ),
     _set ( VK_NULL_HANDLE ),
     _uniformBuffer {}
 {
     // NOTHING
+}
+
+void LightupCommonDescriptorSet::Bind ( VkCommandBuffer commandBuffer )
+{
+    vkCmdBindDescriptorSets ( commandBuffer,
+        VK_PIPELINE_BIND_POINT_GRAPHICS,
+        _pipelineLayout,
+        0U,
+        1U,
+        &_set,
+        0U,
+        nullptr
+    );
 }
 
 bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer, GBuffer &gBuffer )
@@ -59,6 +73,36 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer, GBuf
     }
 
     VkDescriptorSetLayout nativeLayout = _layout.GetLayout ();
+
+    VkDescriptorSetLayout const layouts[] =
+    {
+        nativeLayout
+    };
+
+    VkPipelineLayoutCreateInfo const layoutInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .setLayoutCount = static_cast<uint32_t> ( std::size ( layouts ) ),
+        .pSetLayouts = layouts,
+        .pushConstantRangeCount = 0U,
+        .pPushConstantRanges = nullptr
+    };
+
+    result = android_vulkan::Renderer::CheckVkResult (
+        vkCreatePipelineLayout ( renderer.GetDevice (), &layoutInfo, nullptr, &_pipelineLayout ),
+        "LightupCommonDescriptorSet::Init",
+        "Can't create pipeline layout"
+    );
+
+    if ( !result )
+    {
+        Destroy ( device );
+        return false;
+    }
+
+    AV_REGISTER_PIPELINE_LAYOUT ( "LightupCommonDescriptorSet::_pipelineLayout" )
 
     VkDescriptorSetAllocateInfo const allocateInfo
     {
@@ -217,6 +261,13 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer, GBuf
 
 void LightupCommonDescriptorSet::Destroy ( VkDevice device )
 {
+    if ( _pipelineLayout != VK_NULL_HANDLE )
+    {
+        vkDestroyPipelineLayout ( device, _pipelineLayout, nullptr );
+        _pipelineLayout = VK_NULL_HANDLE;
+        AV_UNREGISTER_PIPELINE_LAYOUT ( "LightupCommonDescriptorSet::_pipelineLayout" )
+    }
+
     _uniformBuffer.FreeResources ( device );
 
     if ( _commandPool != VK_NULL_HANDLE )
@@ -234,11 +285,6 @@ void LightupCommonDescriptorSet::Destroy ( VkDevice device )
     vkDestroyDescriptorPool ( device, _descriptorPool, nullptr );
     _descriptorPool = VK_NULL_HANDLE;
     AV_UNREGISTER_DESCRIPTOR_POOL ( "LightupCommonDescriptorSet::_descriptorPool" )
-}
-
-VkDescriptorSet LightupCommonDescriptorSet::GetSet () const
-{
-    return _set;
 }
 
 bool LightupCommonDescriptorSet::Update ( android_vulkan::Renderer &renderer,

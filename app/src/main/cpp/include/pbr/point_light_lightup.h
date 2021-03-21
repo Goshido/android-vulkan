@@ -56,8 +56,6 @@ class PointLightLightup final
             VkDescriptorSet volumeData
         );
 
-        void SetCommonDescriptorSet ( VkCommandBuffer commandBuffer, VkDescriptorSet set );
-
         [[nodiscard]] bool UpdateGPUData ( android_vulkan::Renderer &renderer,
             PointLightPass const &pointLightPass,
             GXMat4 const &viewerLocal,

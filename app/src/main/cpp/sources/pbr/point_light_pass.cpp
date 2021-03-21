@@ -26,6 +26,7 @@ PointLightPass::PointLightPass () noexcept:
     _lightUniformInfo {},
     _lightUniformPool ( eUniformPoolSize::Tiny_4M ),
     _lightWriteSets {},
+    _lightPassNotifier ( nullptr ),
     _lightup {},
     _shadowmapDescriptorPool ( VK_NULL_HANDLE ),
     _shadowmapDescriptorSets {},
@@ -46,19 +47,13 @@ PointLightPass::PointLightPass () noexcept:
 }
 
 bool PointLightPass::ExecuteLightupPhase ( android_vulkan::Renderer &renderer,
-    bool &isCommonSetBind,
     LightVolume &lightVolume,
-    LightupCommonDescriptorSet &lightupCommonDescriptorSet,
-    VkRenderPassBeginInfo const &renderPassBeginInfo,
     VkCommandBuffer commandBuffer,
     GXMat4 const &viewerLocal,
     GXMat4 const &view,
     GXMat4 const &viewProjection
 )
 {
-    if ( _interacts.empty () )
-        return true;
-
     if ( !_lightup.UpdateGPUData ( renderer, *this, viewerLocal, view ) )
         return false;
 
@@ -76,21 +71,14 @@ bool PointLightPass::ExecuteLightupPhase ( android_vulkan::Renderer &renderer,
 
     for ( size_t i = 0U; i < limit; ++i )
     {
-        vkCmdBeginRenderPass ( commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE );
-
+        _lightPassNotifier->OnBeginLightWithVolume ( commandBuffer );
         VkDescriptorSet transform = _lightDescriptorSets[ i ];
 
         lightVolume.Execute ( vertexCount, transform, commandBuffer );
         vkCmdNextSubpass ( commandBuffer, VK_SUBPASS_CONTENTS_INLINE );
 
-        if ( !isCommonSetBind )
-        {
-            _lightup.SetCommonDescriptorSet ( commandBuffer, lightupCommonDescriptorSet.GetSet () );
-            isCommonSetBind = true;
-        }
-
         _lightup.Lightup ( commandBuffer, i, transform );
-        vkCmdEndRenderPass ( commandBuffer );
+        _lightPassNotifier->OnEndLightWithVolume ( commandBuffer );
     }
 
     return true;
@@ -108,10 +96,12 @@ bool PointLightPass::ExecuteShadowPhase ( android_vulkan::Renderer &renderer,
 }
 
 bool PointLightPass::Init ( android_vulkan::Renderer &renderer,
+    LightPassNotifier &notifier,
     VkExtent2D const &resolution,
     VkRenderPass lightupRenderPass
 )
 {
+    _lightPassNotifier = &notifier;
     VkDevice device = renderer.GetDevice ();
 
     if ( !CreateShadowmapRenderPass ( device ) )
@@ -310,6 +300,7 @@ void PointLightPass::Destroy ( VkDevice device )
     }
 
     _shadowmapProgram.Destroy ( device );
+    _lightPassNotifier = nullptr;
 
     if ( _shadowmapRenderPass == VK_NULL_HANDLE )
         return;

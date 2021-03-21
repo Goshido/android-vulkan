@@ -211,11 +211,6 @@ void PointLightLightup::Lightup ( VkCommandBuffer commandBuffer,
     vkCmdDrawIndexed ( commandBuffer, _volumeMesh.GetVertexCount (), 1U, 0U, 0, 0U );
 }
 
-void PointLightLightup::SetCommonDescriptorSet ( VkCommandBuffer commandBuffer, VkDescriptorSet set )
-{
-    _program.SetCommonDescriptorSet ( commandBuffer, set );
-}
-
 bool PointLightLightup::UpdateGPUData ( android_vulkan::Renderer &renderer,
     PointLightPass const &pointLightPass,
     GXMat4 const &viewerLocal,

@@ -3,6 +3,7 @@
 
 
 #include <vulkan_utils.h>
+#include "lightup_common_descriptor_set_layout.h"
 #include "light_volume_descriptor_set_layout.h"
 #include "program.h"
 #include "stub_descriptor_set_layout.h"
@@ -26,6 +27,7 @@ class LightVolumeProgram final : public Program
         AV_DX_ALIGNMENT_END
 
     private:
+        LightupCommonDescriptorSetLayout    _commonLayout;
         LightVolumeDescriptorSetLayout      _lightVolumeLayout;
         StubDescriptorSetLayout             _stubLayout;
 

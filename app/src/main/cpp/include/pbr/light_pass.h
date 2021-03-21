@@ -4,6 +4,7 @@
 
 #include "gbuffer.h"
 #include "lightup_common_descriptor_set.h"
+#include "light_pass_notifier.h"
 #include "light_volume.h"
 #include "point_light_pass.h"
 #include "reflection_global_pass.h"
@@ -11,7 +12,7 @@
 
 namespace pbr {
 
-class LightPass final
+class LightPass final : public LightPassNotifier
 {
     private:
         android_vulkan::Texture2D       _brdfLUT;
@@ -21,6 +22,7 @@ class LightPass final
         VkRenderPassBeginInfo           _lightupRenderPassInfo;
         LightVolume                     _lightVolume;
         LightupCommonDescriptorSet      _lightupCommonDescriptorSet;
+        size_t                          _lightupRenderPassCounter;
         PointLightPass                  _pointLightPass;
         ReflectionGlobalPass            _reflectionGlobalPass;
 
@@ -66,6 +68,9 @@ class LightPass final
         );
 
     private:
+        void OnBeginLightWithVolume ( VkCommandBuffer commandBuffer ) override;
+        void OnEndLightWithVolume ( VkCommandBuffer commandBuffer ) override;
+
         [[nodiscard]] bool CreateLightupFramebuffer ( VkDevice device, GBuffer &gBuffer );
         [[nodiscard]] bool CreateLightupRenderPass ( VkDevice device, GBuffer &gBuffer );
         void DestroyCommandPool ( VkDevice device );

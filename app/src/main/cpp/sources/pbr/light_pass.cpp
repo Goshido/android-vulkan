@@ -20,6 +20,7 @@ LightPass::LightPass () noexcept:
     _lightupRenderPassInfo {},
     _lightVolume {},
     _lightupCommonDescriptorSet {},
+    _lightupRenderPassCounter ( 0U ),
     _pointLightPass {},
     _reflectionGlobalPass {}
 {
@@ -133,7 +134,7 @@ bool LightPass::Init ( android_vulkan::Renderer &renderer, GBuffer &gBuffer )
 
     VkExtent2D const& resolution = gBuffer.GetResolution ();
 
-    if ( !_pointLightPass.Init ( renderer, resolution, _lightupRenderPassInfo.renderPass ) )
+    if ( !_pointLightPass.Init ( renderer, *this, resolution, _lightupRenderPassInfo.renderPass ) )
     {
         Destroy ( renderer.GetDevice () );
         return false;
@@ -213,34 +214,35 @@ bool LightPass::OnPostGeometryPass ( android_vulkan::Renderer &renderer,
     GXMat4 const &viewProjection
 )
 {
-    bool isCommonSetBind = false;
+    size_t const pointLights = _pointLightPass.GetPointLightCount ();
+    size_t const reflections = _reflectionGlobalPass.GetReflectionCount ();
 
-    bool result = _pointLightPass.ExecuteLightupPhase ( renderer,
-        isCommonSetBind,
-        _lightVolume,
-        _lightupCommonDescriptorSet,
-        _lightupRenderPassInfo,
-        commandBuffer,
-        viewerLocal,
-        view,
-        viewProjection
-    );
+    if ( pointLights + reflections == 0U )
+        return true;
 
-    if ( !result )
-        return false;
+    _lightupCommonDescriptorSet.Bind ( commandBuffer );
 
-    vkCmdBeginRenderPass ( commandBuffer, &_lightupRenderPassInfo, VK_SUBPASS_CONTENTS_INLINE );
-    vkCmdNextSubpass ( commandBuffer, VK_SUBPASS_CONTENTS_INLINE );
+    if ( pointLights )
+    {
+        _lightupRenderPassCounter = pointLights - 1U;
 
-    GXMat4 dummy;
-    dummy.Identity ();
+        bool const result = _pointLightPass.ExecuteLightupPhase ( renderer, _lightVolume, commandBuffer, viewerLocal, view,
+            viewProjection
+        );
 
-    result = _reflectionGlobalPass.Execute ( renderer,
-        isCommonSetBind,
-        _lightupCommonDescriptorSet,
-        commandBuffer,
-        dummy
-    );
+        if ( !result )
+            return false;
+    }
+    else
+    {
+        vkCmdBeginRenderPass ( commandBuffer, &_lightupRenderPassInfo, VK_SUBPASS_CONTENTS_INLINE );
+        vkCmdNextSubpass ( commandBuffer, VK_SUBPASS_CONTENTS_INLINE );
+    }
+
+    if ( !reflections )
+        return true;
+
+    bool const result = _reflectionGlobalPass.Execute ( renderer, commandBuffer, viewerLocal );
 
     vkCmdEndRenderPass ( commandBuffer );
     return result;
@@ -248,6 +250,7 @@ bool LightPass::OnPostGeometryPass ( android_vulkan::Renderer &renderer,
 
 void LightPass::Reset ()
 {
+    _lightupRenderPassCounter = 0U;
     _pointLightPass.Reset ();
     _reflectionGlobalPass.Reset ();
 }
@@ -269,6 +272,20 @@ void LightPass::SubmitReflectionGlobal ( TextureCubeRef &prefilter )
 {
     // TODO
     assert ( false );
+}
+
+void LightPass::OnBeginLightWithVolume ( VkCommandBuffer commandBuffer )
+{
+    vkCmdBeginRenderPass ( commandBuffer, &_lightupRenderPassInfo, VK_SUBPASS_CONTENTS_INLINE );
+}
+
+void LightPass::OnEndLightWithVolume ( VkCommandBuffer commandBuffer )
+{
+    if ( _lightupRenderPassCounter == 0U )
+        return;
+
+    vkCmdEndRenderPass ( commandBuffer );
+    --_lightupRenderPassCounter;
 }
 
 bool LightPass::CreateLightupFramebuffer ( VkDevice device, GBuffer &gBuffer )

@@ -4,6 +4,7 @@
 
 #include "gbuffer.h"
 #include "lightup_common_descriptor_set.h"
+#include "light_pass_notifier.h"
 #include "light_volume.h"
 #include "point_light_lightup.h"
 #include "point_light_shadowmap_generator_program.h"
@@ -36,6 +37,7 @@ class PointLightPass final
         UniformBufferPool                       _lightUniformPool;
         std::vector<VkWriteDescriptorSet>       _lightWriteSets;
 
+        LightPassNotifier*                      _lightPassNotifier;
         PointLightLightup                       _lightup;
 
         VkDescriptorPool                        _shadowmapDescriptorPool;
@@ -66,10 +68,7 @@ class PointLightPass final
         ~PointLightPass () = default;
 
         [[nodiscard]] bool ExecuteLightupPhase ( android_vulkan::Renderer &renderer,
-            bool &isCommonSetBind,
             LightVolume &lightVolume,
-            LightupCommonDescriptorSet &lightupCommonDescriptorSet,
-            VkRenderPassBeginInfo const &renderPassBeginInfo,
             VkCommandBuffer commandBuffer,
             GXMat4 const &viewerLocal,
             GXMat4 const &view,
@@ -82,6 +81,7 @@ class PointLightPass final
         );
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
+            LightPassNotifier &notifier,
             VkExtent2D const &resolution,
             VkRenderPass lightupRenderPass
         );

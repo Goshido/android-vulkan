@@ -43,8 +43,6 @@ class ReflectionGlobalPass final
         void Append ( TextureCubeRef &prefilter );
 
         [[nodiscard]] bool Execute ( android_vulkan::Renderer &renderer,
-            bool &isCommonSetBind,
-            LightupCommonDescriptorSet &lightupCommonDescriptorSet,
             VkCommandBuffer commandBuffer,
             GXMat4 const &viewToWorld
         );
@@ -58,6 +56,8 @@ class ReflectionGlobalPass final
         );
 
         void Destroy ( VkDevice device );
+
+        [[nodiscard]] size_t GetReflectionCount () const;
         void Reset ();
 
     private:

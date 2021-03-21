@@ -28,6 +28,8 @@ class PointLightComponent final : public Component
 
         ~PointLightComponent () override = default;
 
+        [[nodiscard]] LightRef GetLight () const;
+
     private:
         void Submit ( RenderSession &renderSession ) override;
         void FreeTransferResources ( android_vulkan::Renderer &renderer ) override;

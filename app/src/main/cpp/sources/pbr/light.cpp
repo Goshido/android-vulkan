@@ -3,12 +3,12 @@
 
 namespace pbr {
 
-[[maybe_unused]] eLightType Light::GetType () const
+eLightType Light::GetType () const
 {
     return _type;
 }
 
-[[maybe_unused]] Light::Light ( eLightType type ) noexcept:
+Light::Light ( eLightType type ) noexcept:
     _type ( type )
 {
     // NOTHING

@@ -538,12 +538,12 @@ bool GeometryPass::InitDefaultTextures ( android_vulkan::Renderer &renderer,
         texture = std::make_shared<android_vulkan::Texture2D> ();
         constexpr VkExtent2D const resolution { .width = 1U, .height = 1U };
 
-        bool const result = texture->UploadData ( data,
+        bool const result = texture->UploadData ( renderer,
+            data,
             size,
             resolution,
             format,
             false,
-            renderer,
             commandBuffer
         );
 
@@ -592,17 +592,12 @@ bool GeometryPass::InitDefaultTextures ( android_vulkan::Renderer &renderer,
     if ( !result )
         return false;
 
-    // See Table 53. Bit mappings for packed 32-bit formats of Vulkan 1.1.108 spec.
-    // https://vulkan.lunarg.com/doc/view/1.1.108.0/mac/chunked_spec/chap37.html#formats-packed
-    //                                        A         R              G              B
-    //                                       0.0F      0.5F           0.5F           1.0F
-    //                                         ><>-------------<>-------------<>-------------<
-    constexpr const uint8_t normal[ 4U ] = { 0b00100000U, 0b00001000U, 0b00000011U, 0b11111111U };
+    constexpr const uint8_t normal[ 4U ] = { 128U, 0U, 0U, 128U };
 
     result = textureLoader ( _normalDefault,
         normal,
         sizeof ( normal ),
-        VK_FORMAT_A2R10G10B10_UNORM_PACK32,
+        VK_FORMAT_R8G8B8A8_UNORM,
         commandBuffers[ 3U ]
     );
 
@@ -665,8 +660,8 @@ bool GeometryPass::UpdateGPUData ( android_vulkan::Renderer &renderer,
     std::vector<VkWriteDescriptorSet> writeStorage0;
     writeStorage0.reserve ( textureCount * 2U );
 
-    std::vector<DescriptorSetInfo> const& descriptorSetInfo = _program.GetResourceInfo ();
-    DescriptorSetInfo const& descriptorSet0 = descriptorSetInfo[ 0U ];
+    Program::DescriptorSetInfo const& descriptorSetInfo = _program.GetResourceInfo ();
+    Program::SetItem const& descriptorSet0 = descriptorSetInfo[ 0U ];
     size_t uniqueFeatures = descriptorSet0.size ();
 
     std::vector<VkDescriptorBufferInfo> uniformStorage;
@@ -702,8 +697,8 @@ bool GeometryPass::UpdateGPUData ( android_vulkan::Renderer &renderer,
         poolSizeStorage.emplace_back (
             VkDescriptorPoolSize
             {
-                .type = item._type,
-                .descriptorCount = static_cast<uint32_t> ( item._count * opaqueCount + 1U )
+                .type = item.type,
+                .descriptorCount = static_cast<uint32_t> ( item.descriptorCount * opaqueCount + 1U )
             }
         );
     }
@@ -752,7 +747,7 @@ bool GeometryPass::UpdateGPUData ( android_vulkan::Renderer &renderer,
     OpaqueInstanceDescriptorSetLayout const instanceLayout;
     VkDescriptorSetLayout instanceLayoutNative = instanceLayout.GetLayout ();
 
-    for ( uint32_t i = opaqueCount; i < poolInfo.maxSets; ++i )
+    for ( uint32_t i = static_cast<uint32_t> ( opaqueCount ); i < poolInfo.maxSets; ++i )
         layouts.push_back ( instanceLayoutNative );
 
     VkDescriptorSetAllocateInfo const allocateInfo

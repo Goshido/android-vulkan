@@ -1,6 +1,7 @@
 #include <pbr/pbr_game.h>
 #include <vulkan_utils.h>
 #include <pbr/component.h>
+#include <pbr/cube_map_manager.h>
 #include <pbr/material_manager.h>
 #include <pbr/scene_desc.h>
 #include <pbr/mesh_manager.h>
@@ -17,7 +18,7 @@ namespace pbr {
 constexpr static char const* SCENE = "pbr/N7_ADM_Reception/scene.scene";
 [[maybe_unused]] constexpr static uint32_t const SCENE_DESC_FORMAT_VERSION = 1U;
 
-constexpr static float const FIELD_OF_VIEW = 60.0F;
+constexpr static float const FIELD_OF_VIEW = 75.0F;
 constexpr static float const Z_NEAR = 0.1F;
 constexpr static float const Z_FAR = 1.0e+3F;
 
@@ -26,12 +27,15 @@ constexpr static uint32_t const RESOLUTION_SCALE_HEIGHT = 100U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-PBRGame::PBRGame ():
+PBRGame::PBRGame () noexcept:
     _camera {},
     _commandPool ( VK_NULL_HANDLE ),
     _commandBuffers {},
     _renderSession {},
-    _components {}
+    _components {},
+    _pointLight ( nullptr ),
+    _lightPhase ( 0.0F ),
+    _lightOrigin {}
 {
     // NOTHING
 }
@@ -59,6 +63,7 @@ bool PBRGame::OnInit ( android_vulkan::Renderer &renderer )
         return false;
     }
 
+    _renderSession.FreeTransferResources ( renderer.GetDevice () );
     VkExtent2D const& surfaceResolution = renderer.GetViewportResolution ();
 
     _camera.SetProjection ( GXDegToRad ( FIELD_OF_VIEW ),
@@ -73,13 +78,22 @@ bool PBRGame::OnInit ( android_vulkan::Renderer &renderer )
 
 bool PBRGame::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime )
 {
+    _lightPhase += static_cast<float> ( deltaTime );
+
+    GXVec3 offset ( std::sinf ( _lightPhase ), 0.0F, std::cosf ( _lightPhase ) );
+    offset.Multiply ( offset, 32.0F );
+
+    GXVec3 target;
+    target.Sum ( _lightOrigin, offset );
+    _pointLight->SetLocation ( target );
+
     _camera.Update ( static_cast<float> ( deltaTime ) );
     _renderSession.Begin ( _camera.GetLocalMatrix (), _camera.GetProjectionMatrix () );
 
     for ( auto &component : _components )
         component->Submit ( _renderSession );
 
-    return _renderSession.End ( renderer, ePresentTarget::Albedo, deltaTime );
+    return _renderSession.End ( renderer, deltaTime );
 }
 
 bool PBRGame::OnDestroy ( android_vulkan::Renderer &renderer )
@@ -102,6 +116,7 @@ bool PBRGame::OnDestroy ( android_vulkan::Renderer &renderer )
 
     MeshManager::Destroy ( device );
     MaterialManager::Destroy ( device );
+    CubeMapManager::Destroy ( device );
 
     return true;
 }
@@ -179,7 +194,11 @@ bool PBRGame::UploadGPUContent ( android_vulkan::Renderer& renderer )
     viewerLocal->GetW ( location );
     _camera.SetLocation ( location );
 
-    if ( !CreateCommandPool ( renderer, static_cast<size_t> ( sceneDesc->_textureCount + sceneDesc->_meshCount ) ) )
+    // TODO place this info to the scene descriptor info.
+    constexpr uint64_t const envMaps = 1U;
+    auto const comBuffs = static_cast<size_t> ( sceneDesc->_textureCount + sceneDesc->_meshCount + envMaps );
+
+    if ( !CreateCommandPool ( renderer, comBuffs ) )
         return false;
 
     VkCommandBuffer const* commandBuffers = _commandBuffers.data ();
@@ -200,7 +219,17 @@ bool PBRGame::UploadGPUContent ( android_vulkan::Renderer& renderer )
         );
 
         if ( component )
+        {
             _components.push_back ( component );
+
+            if ( component->GetClassID () == ClassID::PointLight )
+            {
+                // Note it's safe to cast like that here. "NOLINT" is a clang-tidy control comment.
+                auto const* raw = static_cast<PointLightComponent*> ( component.get () ); // NOLINT
+                _pointLight = static_cast<PointLight*> ( raw->GetLight ().get () ); // NOLINT
+                _lightOrigin = _pointLight->GetLocation ();
+            }
+        }
 
         commandBuffers += consumed;
         readPointer += read;

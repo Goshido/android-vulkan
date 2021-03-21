@@ -8,5 +8,8 @@ SamplerState            g_Sampler;
 
 float4 PS ( [[vk::location ( 0 )]] in noperspective half2 uv: COORDINATE ): SV_Target0
 {
-    return g_Texture.SampleLevel ( g_Sampler, (float2)uv, 0.0f );
+    // TODO We are doing gamma correction here. It's not right in common case. Please move this logic in
+    // appropriate place when mode modules will be ready.
+    const float3 sampleColor = g_Texture.SampleLevel ( g_Sampler, (float2)uv, 0.0F ).xyz;
+    return float4 ( pow ( sampleColor, 2.2F ), 1.0F );
 }

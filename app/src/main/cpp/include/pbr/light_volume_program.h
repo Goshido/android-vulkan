@@ -3,7 +3,10 @@
 
 
 #include <vulkan_utils.h>
+#include "lightup_common_descriptor_set_layout.h"
+#include "light_volume_descriptor_set_layout.h"
 #include "program.h"
+#include "stub_descriptor_set_layout.h"
 
 
 namespace pbr {
@@ -16,12 +19,17 @@ class LightVolumeProgram final : public Program
     public:
         AV_DX_ALIGNMENT_BEGIN
 
-        struct [[maybe_unused]] PushConstants final
+        struct [[maybe_unused]] VolumeData final
         {
             [[maybe_unused]] GXMat4     _transform;
         };
 
         AV_DX_ALIGNMENT_END
+
+    private:
+        LightupCommonDescriptorSetLayout    _commonLayout;
+        LightVolumeDescriptorSetLayout      _lightVolumeLayout;
+        StubDescriptorSetLayout             _stubLayout;
 
     public:
         LightVolumeProgram () noexcept;
@@ -42,18 +50,20 @@ class LightVolumeProgram final : public Program
 
         void Destroy ( VkDevice device ) override;
 
-        [[maybe_unused]] [[nodiscard]] constexpr static uint32_t GetLightVolumeStencilValue ()
+        [[nodiscard]] constexpr static uint32_t GetLightVolumeStencilValue ()
         {
             return STENCIL_INITIAL_VALUE - 1U;
         }
 
-        [[maybe_unused]] [[nodiscard]] constexpr static uint32_t GetStencilInitialValue ()
+        [[nodiscard]] constexpr static uint32_t GetStencilInitialValue ()
         {
             return STENCIL_INITIAL_VALUE;
         }
 
+        void SetTransform ( VkCommandBuffer commandBuffer, VkDescriptorSet transform );
+
     private:
-        [[nodiscard]] std::vector<DescriptorSetInfo> const& GetResourceInfo () const override;
+        [[nodiscard]] DescriptorSetInfo const& GetResourceInfo () const override;
 
         [[nodiscard]] VkPipelineColorBlendStateCreateInfo const* InitColorBlendInfo (
             VkPipelineColorBlendStateCreateInfo &info,

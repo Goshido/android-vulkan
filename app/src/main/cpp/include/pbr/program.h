@@ -11,7 +11,6 @@ GX_DISABLE_COMMON_WARNINGS
 GX_RESTORE_WARNING_STATE
 
 #include <renderer.h>
-#include "program_resource.h"
 
 
 namespace pbr {
@@ -23,6 +22,10 @@ constexpr static char const* FRAGMENT_SHADER_ENTRY_POINT = "PS";
 
 class Program
 {
+    public:
+        using SetItem = std::vector<VkDescriptorPoolSize>;
+        using DescriptorSetInfo = std::vector<SetItem>;
+
     protected:
         VkShaderModule          _fragmentShader;
         VkShaderModule          _vertexShader;
@@ -49,7 +52,7 @@ class Program
         ) = 0;
 
         virtual void Destroy ( VkDevice device ) = 0;
-        [[nodiscard]] virtual std::vector<DescriptorSetInfo> const& GetResourceInfo () const = 0;
+        [[nodiscard]] virtual DescriptorSetInfo const& GetResourceInfo () const = 0;
 
         // The method assigns VkPipeline as active pipeline.
         void Bind ( VkCommandBuffer commandBuffer ) const;

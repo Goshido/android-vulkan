@@ -56,7 +56,7 @@ class OpaqueProgram final : public Program
         ) override;
 
         void Destroy ( VkDevice device ) override;
-        [[nodiscard]] std::vector<DescriptorSetInfo> const& GetResourceInfo () const override;
+        [[nodiscard]] DescriptorSetInfo const& GetResourceInfo () const override;
 
         void SetDescriptorSet ( VkCommandBuffer commandBuffer,
             VkDescriptorSet const* sets,

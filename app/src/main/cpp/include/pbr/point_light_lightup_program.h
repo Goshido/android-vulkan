@@ -3,8 +3,9 @@
 
 
 #include <half_types.h>
-#include "lightup_common_descriptror_set_layout.h"
+#include "lightup_common_descriptor_set_layout.h"
 #include "light_lightup_base_program.h"
+#include "light_volume_descriptor_set_layout.h"
 #include "point_light_descriptor_set_layout.h"
 
 
@@ -15,7 +16,7 @@ class PointLightLightupProgram final : public LightLightupBaseProgram
     public:
         AV_DX_ALIGNMENT_BEGIN
 
-        struct [[maybe_unused]] PushConstants final
+        struct [[maybe_unused]] VolumeData final
         {
             [[maybe_unused]] GXMat4                     _transform;
         };
@@ -26,19 +27,19 @@ class PointLightLightupProgram final : public LightLightupBaseProgram
             [[maybe_unused]] GXMat4                     _viewToLight;
 
             [[maybe_unused]] GXVec3                     _lightLocationView;
-            [[maybe_unused]] float                      _padding1_0;
+            [[maybe_unused]] float                      _sceneScaleFactor;
 
             [[maybe_unused]] android_vulkan::Half3      _hue;
             [[maybe_unused]] android_vulkan::Half       _intensity;
 
-            [[maybe_unused]] android_vulkan::Half3      _toLightDirectionView;
-            [[maybe_unused]] android_vulkan::Half       _padding1_1;
+            [[maybe_unused]] GXVec2                     _padding1_0;
         };
 
         AV_DX_ALIGNMENT_END
 
     private:
         LightupCommonDescriptorSetLayout                _commonLayout;
+        LightVolumeDescriptorSetLayout                  _lightVolumeLayout;
         PointLightDescriptorSetLayout                   _pointLightLayout;
 
     public:
@@ -62,8 +63,13 @@ class PointLightLightupProgram final : public LightLightupBaseProgram
 
         void Destroy ( VkDevice device ) override;
 
+        void SetDescriptorSets ( VkCommandBuffer commandBuffer,
+            VkDescriptorSet lightData,
+            VkDescriptorSet volumeData
+        ) const;
+
     private:
-        [[nodiscard]] std::vector<DescriptorSetInfo> const& GetResourceInfo () const override;
+        [[nodiscard]] DescriptorSetInfo const& GetResourceInfo () const override;
 
         [[nodiscard]] VkPipelineColorBlendStateCreateInfo const* InitColorBlendInfo (
             VkPipelineColorBlendStateCreateInfo &info,

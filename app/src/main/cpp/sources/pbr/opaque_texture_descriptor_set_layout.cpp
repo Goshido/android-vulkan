@@ -14,7 +14,7 @@ namespace pbr {
 class OpaqueTextureDescriptorSetLayoutImpl final
 {
     public:
-        VkDescriptorSetLayout       _descriptorSetLayout;
+        VkDescriptorSetLayout       _layout;
 
     private:
         std::atomic<size_t>         _references;
@@ -35,7 +35,7 @@ class OpaqueTextureDescriptorSetLayoutImpl final
 };
 
 OpaqueTextureDescriptorSetLayoutImpl::OpaqueTextureDescriptorSetLayoutImpl ():
-    _descriptorSetLayout ( VK_NULL_HANDLE ),
+    _layout ( VK_NULL_HANDLE ),
     _references ( 0U )
 {
     // NOTHING
@@ -51,9 +51,9 @@ void OpaqueTextureDescriptorSetLayoutImpl::Destroy ( VkDevice device )
     if ( _references )
         return;
 
-    vkDestroyDescriptorSetLayout ( device, _descriptorSetLayout, nullptr );
-    _descriptorSetLayout = VK_NULL_HANDLE;
-    AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "OpaqueTextureDescriptorSetLayoutImpl::_descriptorSetLayout" )
+    vkDestroyDescriptorSetLayout ( device, _layout, nullptr );
+    _layout = VK_NULL_HANDLE;
+    AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "OpaqueTextureDescriptorSetLayoutImpl::_layout" )
 }
 
 bool OpaqueTextureDescriptorSetLayoutImpl::Init ( android_vulkan::Renderer &renderer )
@@ -64,88 +64,91 @@ bool OpaqueTextureDescriptorSetLayoutImpl::Init ( android_vulkan::Renderer &rend
         return true;
     }
 
-    VkDescriptorSetLayoutBinding bindingInfo[ 10U ];
-    VkDescriptorSetLayoutBinding& albedoTexture = bindingInfo[ 0U ];
-    albedoTexture.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-    albedoTexture.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-    albedoTexture.descriptorCount = 1U;
-    albedoTexture.binding = 0U;
-    albedoTexture.pImmutableSamplers = nullptr;
+    constexpr static VkDescriptorSetLayoutBinding const bindingInfo[] =
+    {
+        {
+            .binding = 0U,
+            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+            .descriptorCount = 1U,
+            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+            .pImmutableSamplers = nullptr
+        },
+        {
+            .binding = 1U,
+            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
+            .descriptorCount = 1U,
+            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+            .pImmutableSamplers = nullptr
+        },
+        {
+            .binding = 2U,
+            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+            .descriptorCount = 1U,
+            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+            .pImmutableSamplers = nullptr
+        },
+        {
+            .binding = 3U,
+            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
+            .descriptorCount = 1U,
+            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+            .pImmutableSamplers = nullptr
+        },
+        {
+            .binding = 4U,
+            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+            .descriptorCount = 1U,
+            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+            .pImmutableSamplers = nullptr
+        },
+        {
+            .binding = 5U,
+            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
+            .descriptorCount = 1U,
+            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+            .pImmutableSamplers = nullptr
+        },
+        {
+            .binding = 6U,
+            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+            .descriptorCount = 1U,
+            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+            .pImmutableSamplers = nullptr
+        },
+        {
+            .binding = 7U,
+            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
+            .descriptorCount = 1U,
+            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+            .pImmutableSamplers = nullptr
+        },
+        {
+            .binding = 8U,
+            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+            .descriptorCount = 1U,
+            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+            .pImmutableSamplers = nullptr
+        },
+        {
+            .binding = 9U,
+            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
+            .descriptorCount = 1U,
+            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+            .pImmutableSamplers = nullptr
+        }
+    };
 
-    VkDescriptorSetLayoutBinding& albedoSampler = bindingInfo[ 1U ];
-    albedoSampler.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-    albedoSampler.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
-    albedoSampler.descriptorCount = 1U;
-    albedoSampler.binding = 1U;
-    albedoSampler.pImmutableSamplers = nullptr;
+    constexpr VkDescriptorSetLayoutCreateInfo const descriptorSetLayoutInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .bindingCount = static_cast<uint32_t> ( std::size ( bindingInfo ) ),
+        .pBindings = bindingInfo
+    };
 
-    VkDescriptorSetLayoutBinding& emissionTexture = bindingInfo[ 2U ];
-    emissionTexture.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-    emissionTexture.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-    emissionTexture.descriptorCount = 1U;
-    emissionTexture.binding = 2U;
-    emissionTexture.pImmutableSamplers = nullptr;
-
-    VkDescriptorSetLayoutBinding& emissionSampler = bindingInfo[ 3U ];
-    emissionSampler.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-    emissionSampler.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
-    emissionSampler.descriptorCount = 1U;
-    emissionSampler.binding = 3U;
-    emissionSampler.pImmutableSamplers = nullptr;
-
-    VkDescriptorSetLayoutBinding& maskTexture = bindingInfo[ 4U ];
-    maskTexture.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-    maskTexture.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-    maskTexture.descriptorCount = 1U;
-    maskTexture.binding = 4U;
-    maskTexture.pImmutableSamplers = nullptr;
-
-    VkDescriptorSetLayoutBinding& maskSampler = bindingInfo[ 5U ];
-    maskSampler.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-    maskSampler.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
-    maskSampler.descriptorCount = 1U;
-    maskSampler.binding = 5U;
-    maskSampler.pImmutableSamplers = nullptr;
-
-    VkDescriptorSetLayoutBinding& normalTexture = bindingInfo[ 6U ];
-    normalTexture.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-    normalTexture.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-    normalTexture.descriptorCount = 1U;
-    normalTexture.binding = 6U;
-    normalTexture.pImmutableSamplers = nullptr;
-
-    VkDescriptorSetLayoutBinding& normalSampler = bindingInfo[ 7U ];
-    normalSampler.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-    normalSampler.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
-    normalSampler.descriptorCount = 1U;
-    normalSampler.binding = 7U;
-    normalSampler.pImmutableSamplers = nullptr;
-
-    VkDescriptorSetLayoutBinding& paramTexture = bindingInfo[ 8U ];
-    paramTexture.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-    paramTexture.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-    paramTexture.descriptorCount = 1U;
-    paramTexture.binding = 8U;
-    paramTexture.pImmutableSamplers = nullptr;
-
-    VkDescriptorSetLayoutBinding& paramSampler = bindingInfo[ 9U ];
-    paramSampler.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-    paramSampler.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
-    paramSampler.descriptorCount = 1U;
-    paramSampler.binding = 9U;
-    paramSampler.pImmutableSamplers = nullptr;
-
-    VkDescriptorSetLayoutCreateInfo descriptorSetLayoutInfo;
-    descriptorSetLayoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    descriptorSetLayoutInfo.pNext = nullptr;
-    descriptorSetLayoutInfo.flags = 0U;
-    descriptorSetLayoutInfo.bindingCount = static_cast<uint32_t> ( std::size ( bindingInfo ) );
-    descriptorSetLayoutInfo.pBindings = bindingInfo;
-
-    VkDevice device = renderer.GetDevice ();
-
-    bool result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateDescriptorSetLayout ( device, &descriptorSetLayoutInfo, nullptr, &_descriptorSetLayout ),
+    bool const result = android_vulkan::Renderer::CheckVkResult (
+        vkCreateDescriptorSetLayout ( renderer.GetDevice (), &descriptorSetLayoutInfo, nullptr, &_layout ),
         "OpaqueTextureDescriptorSetLayoutImpl::Init",
         "Can't create descriptor set layout"
     );
@@ -153,7 +156,7 @@ bool OpaqueTextureDescriptorSetLayoutImpl::Init ( android_vulkan::Renderer &rend
     if ( !result )
         return false;
 
-    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "OpaqueTextureDescriptorSetLayoutImpl::_descriptorSetLayout" )
+    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "OpaqueTextureDescriptorSetLayoutImpl::_layout" )
 
     ++_references;
     return true;
@@ -175,7 +178,7 @@ bool OpaqueTextureDescriptorSetLayout::Init ( android_vulkan::Renderer &renderer
 
 VkDescriptorSetLayout OpaqueTextureDescriptorSetLayout::GetLayout () const
 {
-    return g_opaqueTextureDescriptorSetLayout._descriptorSetLayout;
+    return g_opaqueTextureDescriptorSetLayout._layout;
 }
 
 } // namespace pbr

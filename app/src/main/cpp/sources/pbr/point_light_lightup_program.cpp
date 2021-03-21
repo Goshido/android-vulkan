@@ -4,7 +4,7 @@
 
 namespace pbr {
 
-constexpr static const uint32_t COLOR_RENDER_TARGET_COUNT = 4U;
+constexpr static const uint32_t COLOR_RENDER_TARGET_COUNT = 1U;
 constexpr static const size_t STAGE_COUNT = 2U;
 constexpr static const size_t VERTEX_ATTRIBUTE_COUNT = 1U;
 
@@ -15,7 +15,8 @@ constexpr static const char* VERTEX_SHADER = "shaders/light-volume-vs.spv";
 
 PointLightLightupProgram::PointLightLightupProgram () noexcept:
     LightLightupBaseProgram ( "PointLightLightupProgram" ),
-    _commonLayout {}
+    _commonLayout {},
+    _pointLightLayout {}
 {
     // NOTHING
 }
@@ -105,6 +106,7 @@ void PointLightLightupProgram::Destroy ( VkDevice device )
     }
 
     _pointLightLayout.Destroy ( device );
+    _lightVolumeLayout.Destroy ( device );
     _commonLayout.Destroy ( device );
 
     if ( _pipelineLayout != VK_NULL_HANDLE )
@@ -129,21 +131,61 @@ void PointLightLightupProgram::Destroy ( VkDevice device )
     AV_UNREGISTER_SHADER_MODULE ( "PointLightLightupProgram::_vertexShader" )
 }
 
-std::vector<DescriptorSetInfo> const& PointLightLightupProgram::GetResourceInfo () const
+void PointLightLightupProgram::SetDescriptorSets ( VkCommandBuffer commandBuffer,
+    VkDescriptorSet lightData,
+    VkDescriptorSet volumeData
+) const
 {
-    static std::vector<DescriptorSetInfo> const info
+    VkDescriptorSet const sets[]
     {
-        DescriptorSetInfo
-        {
-            ProgramResource ( VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 4U ),
-            ProgramResource ( VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1U )
-        },
+        lightData,
+        volumeData
+    };
 
-        DescriptorSetInfo
+    vkCmdBindDescriptorSets ( commandBuffer,
+        VK_PIPELINE_BIND_POINT_GRAPHICS,
+        _pipelineLayout,
+        1U,
+        static_cast<uint32_t> ( std::size ( sets ) ),
+        sets,
+        0U,
+        nullptr
+    );
+}
+
+Program::DescriptorSetInfo const& PointLightLightupProgram::GetResourceInfo () const
+{
+    static DescriptorSetInfo const info
+    {
         {
-            ProgramResource ( VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1U ),
-            ProgramResource ( VK_DESCRIPTOR_TYPE_SAMPLER, 1U ),
-            ProgramResource ( VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1U )
+            {
+                .type = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
+                .descriptorCount = 4U
+            },
+            {
+                .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                .descriptorCount = 1U
+            }
+        },
+        {
+            {
+                .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+                .descriptorCount = 1U
+            },
+            {
+                .type = VK_DESCRIPTOR_TYPE_SAMPLER,
+                .descriptorCount = 1U
+            },
+            {
+                .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                .descriptorCount = 1U
+            }
+        },
+        {
+            {
+                .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                .descriptorCount = 1U
+            }
         }
     };
 
@@ -155,22 +197,7 @@ VkPipelineColorBlendStateCreateInfo const* PointLightLightupProgram::InitColorBl
     VkPipelineColorBlendAttachmentState* attachments
 ) const
 {
-    VkPipelineColorBlendAttachmentState& albedo = attachments[ 0U ];
-    albedo.blendEnable = VK_FALSE;
-    albedo.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
-    albedo.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
-    albedo.colorBlendOp = VK_BLEND_OP_ADD;
-    albedo.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-    albedo.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-    albedo.alphaBlendOp = VK_BLEND_OP_ADD;
-    albedo.colorWriteMask = 0U;
-
-    constexpr auto const limit = static_cast<ptrdiff_t const> ( COLOR_RENDER_TARGET_COUNT );
-
-    for ( ptrdiff_t i = 2; i < limit; ++i )
-        memcpy ( attachments + i, &albedo, sizeof ( albedo ) );
-
-    VkPipelineColorBlendAttachmentState& hdrAccumulator = attachments[ 1U ];
+    VkPipelineColorBlendAttachmentState& hdrAccumulator = attachments[ 0U ];
     hdrAccumulator.blendEnable = VK_TRUE;
     hdrAccumulator.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
     hdrAccumulator.dstColorBlendFactor = VK_BLEND_FACTOR_ONE;
@@ -181,8 +208,7 @@ VkPipelineColorBlendStateCreateInfo const* PointLightLightupProgram::InitColorBl
 
     hdrAccumulator.colorWriteMask = AV_VK_FLAG ( VK_COLOR_COMPONENT_R_BIT ) |
         AV_VK_FLAG ( VK_COLOR_COMPONENT_G_BIT ) |
-        AV_VK_FLAG ( VK_COLOR_COMPONENT_B_BIT ) |
-        AV_VK_FLAG ( VK_COLOR_COMPONENT_A_BIT );
+        AV_VK_FLAG ( VK_COLOR_COMPONENT_B_BIT );
 
     info.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
     info.pNext = nullptr;
@@ -258,19 +284,14 @@ bool PointLightLightupProgram::InitLayout ( android_vulkan::Renderer &renderer, 
     if ( !_pointLightLayout.Init ( renderer ) )
         return false;
 
+    if ( !_lightVolumeLayout.Init ( renderer ) )
+        return false;
+
     VkDescriptorSetLayout const layouts[] =
     {
         _commonLayout.GetLayout (),
-        _pointLightLayout.GetLayout ()
-    };
-
-    constexpr static VkPushConstantRange const pushConstantRanges[]
-    {
-        {
-            .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
-            .offset = 0U,
-            .size = static_cast<uint32_t> ( sizeof ( PushConstants ) )
-        }
+        _pointLightLayout.GetLayout (),
+        _lightVolumeLayout.GetLayout ()
     };
 
     VkPipelineLayoutCreateInfo const layoutInfo
@@ -280,8 +301,8 @@ bool PointLightLightupProgram::InitLayout ( android_vulkan::Renderer &renderer, 
         .flags = 0U,
         .setLayoutCount = static_cast<uint32_t> ( std::size ( layouts ) ),
         .pSetLayouts = layouts,
-        .pushConstantRangeCount = static_cast<uint32_t> ( std::size ( pushConstantRanges ) ),
-        .pPushConstantRanges = pushConstantRanges
+        .pushConstantRangeCount = 0U,
+        .pPushConstantRanges = nullptr
     };
 
     bool const result = android_vulkan::Renderer::CheckVkResult (

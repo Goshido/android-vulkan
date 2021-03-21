@@ -10,6 +10,7 @@ RenderSessionStats::RenderSessionStats () noexcept:
     _frameCount ( 0U ),
     _renderMeshes ( 0U ),
     _renderPointLights ( 0U ),
+    _renderReflectionsGlobal ( 0U ),
     _renderVertices ( 0U ),
     _submitMeshes ( 0U ),
     _submitPointLights ( 0U ),
@@ -32,6 +33,7 @@ R"__(>>> RenderSessionStats::PrintStats:
     Submitted meshes: %zu
     Submitted vertices: %zu
     Submitted point lights: %zu
+    Rendered global reflections: %zu
     Rendered meshes: %zu
     Rendered vertices: %zu
     Rendered point lights: %zu
@@ -52,6 +54,7 @@ R"__(>>> RenderSessionStats::PrintStats:
         avgCounter ( _submitMeshes ),
         avgCounter ( _submitVertices ),
         avgCounter ( _submitPointLights ),
+        avgCounter ( _renderReflectionsGlobal ),
         avgCounter ( _renderMeshes ),
         avgCounter ( _renderVertices ),
         avgCounter ( _renderPointLights ),
@@ -75,9 +78,9 @@ void RenderSessionStats::SubmitOpaque ( uint32_t vertexCount )
     _submitVertices += static_cast<size_t> ( vertexCount );
 }
 
-[[maybe_unused]] void RenderSessionStats::RenderPointLight ()
+void RenderSessionStats::RenderPointLights ( size_t count )
 {
-    ++_renderPointLights;
+    _renderPointLights += count;
 }
 
 void RenderSessionStats::SubmitPointLight ()
@@ -85,9 +88,15 @@ void RenderSessionStats::SubmitPointLight ()
     ++_submitPointLights;
 }
 
+void RenderSessionStats::RenderReflectionGlobal ()
+{
+    ++_renderReflectionsGlobal;
+}
+
 void RenderSessionStats::Reset ()
 {
     _frameCount = 0U;
+    _renderReflectionsGlobal = 0U;
     _renderMeshes = 0U;
     _renderPointLights = 0U;
     _renderVertices = 0U;

@@ -19,7 +19,8 @@ StaticMeshComponent::StaticMeshComponent ( android_vulkan::Renderer &renderer,
     StaticMeshComponentDesc const &desc,
     uint8_t const *data,
     VkCommandBuffer const* commandBuffers
-) noexcept
+) noexcept:
+    Component ( ClassID::StaticMesh )
 {
     // Sanity checks.
     static_assert ( sizeof ( StaticMeshComponent::_localMatrix ) == sizeof ( desc._localMatrix ) );

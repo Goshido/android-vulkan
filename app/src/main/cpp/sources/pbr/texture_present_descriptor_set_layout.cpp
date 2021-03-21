@@ -15,10 +15,10 @@ class TexturePresentDescriptorSetLayoutImpl final
 {
     public:
         VkDescriptorSetLayout       _descriptorSetLayout;
-        
+
     private:
         std::atomic<size_t>         _references;
-        
+
     public:
         TexturePresentDescriptorSetLayoutImpl ();
 

@@ -4,7 +4,7 @@
 
 namespace pbr {
 
-OpaqueMaterial::OpaqueMaterial ():
+OpaqueMaterial::OpaqueMaterial () noexcept:
     Material ( eMaterialType::Opaque )
 {
     // NOTHING
@@ -20,7 +20,7 @@ void OpaqueMaterial::SetAlbedo ( Texture2DRef &texture )
     _albedo = texture;
 }
 
-void OpaqueMaterial::SetAlbedoDefault ()
+[[maybe_unused]] void OpaqueMaterial::SetAlbedoDefault ()
 {
     _albedo = nullptr;
 }
@@ -35,7 +35,7 @@ void OpaqueMaterial::SetEmission ( Texture2DRef &texture )
     _emission = texture;
 }
 
-void OpaqueMaterial::SetEmissionDefault ()
+[[maybe_unused]] void OpaqueMaterial::SetEmissionDefault ()
 {
     _emission = nullptr;
 }
@@ -50,7 +50,7 @@ void OpaqueMaterial::SetMask ( Texture2DRef &texture )
     _mask = texture;
 }
 
-void OpaqueMaterial::SetMaskDefault ()
+[[maybe_unused]] void OpaqueMaterial::SetMaskDefault ()
 {
     _mask = nullptr;
 }
@@ -65,7 +65,7 @@ void OpaqueMaterial::SetNormal ( Texture2DRef &texture )
     _normal = texture;
 }
 
-void OpaqueMaterial::SetNormalDefault ()
+[[maybe_unused]] void OpaqueMaterial::SetNormalDefault ()
 {
     _normal = nullptr;
 }
@@ -80,23 +80,23 @@ void OpaqueMaterial::SetParam ( Texture2DRef &texture )
     _param = texture;
 }
 
-void OpaqueMaterial::SetParamDefault ()
+[[maybe_unused]] void OpaqueMaterial::SetParamDefault ()
 {
     _param = nullptr;
 }
 
-bool OpaqueMaterial::operator < ( const OpaqueMaterial &other ) const
+bool OpaqueMaterial::operator < ( OpaqueMaterial const &other ) const
 {
-    constexpr const int8_t less = -1;
-    constexpr const int8_t equal = 0;
-    constexpr const int8_t greater = 1;
+    constexpr int8_t const less = -1;
+    constexpr int8_t const equal = 0;
 
-    auto compare = [] ( const Texture2DRef &a, const Texture2DRef &b ) -> int8_t {
-        constexpr const int8_t stringCompare = INT8_MAX;
-        constexpr const int8_t lookupTable[ 4U ] = { stringCompare, less, greater, equal };
+    auto compare = [] ( Texture2DRef const &a, Texture2DRef const &b ) -> int8_t {
+        constexpr int8_t const stringCompare = INT8_MAX;
+        constexpr int8_t const greater = 1;
+        constexpr int8_t const lookupTable[ 4U ] = { stringCompare, less, greater, equal };
 
-        const size_t selector = ( static_cast<size_t> ( !b ) << 1U ) | static_cast<size_t> ( !a );
-        const int8_t result = lookupTable[ selector ];
+        size_t const selector = ( static_cast<size_t> ( !b ) << 1U ) | static_cast<size_t> ( !a );
+        int8_t const result = lookupTable[ selector ];
 
         return result != stringCompare ? result : static_cast<int8_t> ( a->GetName ().compare ( b->GetName () ) );
     };

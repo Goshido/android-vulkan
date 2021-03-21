@@ -42,7 +42,7 @@ MaterialRef MaterialManager::LoadMaterial ( android_vulkan::Renderer &renderer,
 
         Texture2DRef texture = std::make_shared<android_vulkan::Texture2D> ();
 
-        if ( !texture->UploadData ( name, format, true, renderer, commandBuffers[ commandBufferConsumed ] ) )
+        if ( !texture->UploadData ( renderer, name, format, true, commandBuffers[ commandBufferConsumed ] ) )
             texture = nullptr;
         else
             _textureStorage.insert ( std::make_pair ( std::string_view ( texture->GetName () ), texture ) );
@@ -53,7 +53,7 @@ MaterialRef MaterialManager::LoadMaterial ( android_vulkan::Renderer &renderer,
 
     if ( header->_diffuseOffset != android_vulkan::NO_UTF8_OFFSET )
     {
-        Texture2DRef texture = loadTexture ( header->_diffuseOffset, android_vulkan::eFormat::sRGB );
+        Texture2DRef texture = loadTexture ( header->_diffuseOffset, android_vulkan::eFormat::Unorm );
 
         if ( !texture )
             return material;

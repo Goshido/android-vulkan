@@ -130,19 +130,25 @@ void OpaqueProgram::Destroy ( VkDevice device )
     AV_UNREGISTER_SHADER_MODULE ( "OpaqueProgram::_vertexShader" )
 }
 
-std::vector<DescriptorSetInfo> const& OpaqueProgram::GetResourceInfo () const
+Program::DescriptorSetInfo const& OpaqueProgram::GetResourceInfo () const
 {
-    static std::vector<DescriptorSetInfo> const info
+    static DescriptorSetInfo const info =
     {
-        DescriptorSetInfo
         {
-            ProgramResource ( VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 5U ),
-            ProgramResource ( VK_DESCRIPTOR_TYPE_SAMPLER, 5U )
+            {
+                .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+                .descriptorCount = 5U
+            },
+            {
+                .type = VK_DESCRIPTOR_TYPE_SAMPLER,
+                .descriptorCount = 5U
+            }
         },
-
-        DescriptorSetInfo
         {
-            ProgramResource ( VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1U )
+            {
+                .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                .descriptorCount = 1U
+            }
         }
     };
 

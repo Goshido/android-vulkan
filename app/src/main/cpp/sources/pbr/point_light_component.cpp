@@ -13,6 +13,7 @@ namespace pbr {
 [[maybe_unused]] constexpr static uint32_t const POINT_LIGHT_COMPONENT_DESC_FORMAT_VERSION = 1U;
 
 PointLightComponent::PointLightComponent ( PointLightComponentDesc const &desc ) noexcept:
+    Component ( ClassID::PointLight ),
     _pointLight {}
 {
     // Sanity checks.
@@ -37,11 +38,19 @@ PointLightComponent::PointLightComponent ( PointLightComponentDesc const &desc )
     _pointLight = std::static_pointer_cast<Light> (
         std::make_shared<PointLight> (
             android_vulkan::Half3 ( unorm._data[ 0U ], unorm._data[ 1U ], unorm._data[ 2U ] ),
-            android_vulkan::Half ( desc._intensity ),
+
+            // TODO remove this multiplier in the future.
+            android_vulkan::Half ( desc._intensity * 14.1414F ),
+
             reinterpret_cast<GXVec3 const &> ( desc._location ),
             bounds
         )
     );
+}
+
+LightRef PointLightComponent::GetLight () const
+{
+    return _pointLight;
 }
 
 void PointLightComponent::Submit ( RenderSession &renderSession )

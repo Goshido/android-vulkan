@@ -409,7 +409,8 @@ bool GameLUT::CreateSpecularLUTTexture ( android_vulkan::Renderer &renderer, VkC
     for ( size_t i = 0U; i < SPECULAR_GENERATOR_THREADS; ++i )
         jobPool[ i ].join ();
 
-    return _specularLUTTexture.UploadData ( lutData.data (),
+    return _specularLUTTexture.UploadData ( renderer,
+        lutData.data (),
         lutData.size (),
 
         VkExtent2D {
@@ -419,7 +420,6 @@ bool GameLUT::CreateSpecularLUTTexture ( android_vulkan::Renderer &renderer, VkC
 
         VK_FORMAT_R16_SFLOAT,
         false,
-        renderer,
         commandBuffer
     );
 }

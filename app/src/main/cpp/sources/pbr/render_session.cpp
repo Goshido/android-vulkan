@@ -21,12 +21,11 @@ RenderSession::RenderSession () noexcept:
     _gBufferFramebuffer ( VK_NULL_HANDLE ),
     _gBufferImageBarrier {},
     _gBufferRenderPass ( VK_NULL_HANDLE ),
-    _gBufferSlotMapper {},
+    _gBufferSlotMapper ( VK_NULL_HANDLE ),
     _geometryPass {},
-    _lightVolume {},
+    _lightPass {},
     _opaqueMeshCount ( 0U ),
     _texturePresentProgram {},
-    _pointLightPass {},
     _presentPass {},
     _renderSessionStats {},
     _samplerManager {},
@@ -45,16 +44,23 @@ void RenderSession::Begin ( GXMat4 const &viewerLocal, GXMat4 const &projection 
     _view.Inverse ( _viewerLocal );
     _viewProjection.Multiply ( _view, projection );
     _frustum.From ( _viewProjection );
-    _pointLightPass.Reset ();
+    _lightPass.Reset ();
     _geometryPass.Reset ();
 }
 
-bool RenderSession::End ( android_vulkan::Renderer &renderer, ePresentTarget target, double deltaTime )
+bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
 {
     if ( !_presentPass.AcquirePresentTarget ( renderer ) )
         return false;
 
-    if ( !_pointLightPass.Execute ( _geometryPass.GetSceneData (), _opaqueMeshCount, renderer ) )
+    bool result = _lightPass.OnPreGeometryPass ( renderer,
+        _gBuffer.GetResolution(),
+        _geometryPass.GetSceneData(),
+        _opaqueMeshCount,
+        _cvvToView
+    );
+
+    if ( !result )
         return false;
 
     VkCommandBuffer commandBuffer = _geometryPass.Execute ( renderer,
@@ -68,35 +74,17 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, ePresentTarget tar
     if ( commandBuffer == VK_NULL_HANDLE )
         return false;
 
-    android_vulkan::Texture2D* targetTexture;
+    result = _lightPass.OnPostGeometryPass ( renderer,
+        commandBuffer,
+        _viewerLocal,
+        _view,
+        _viewProjection
+    );
 
-    if ( target == ePresentTarget::Albedo )
-    {
-        targetTexture = &_gBuffer.GetAlbedo ();
-    }
-    else if ( target == ePresentTarget::Normal )
-    {
-        targetTexture = &_gBuffer.GetNormal ();
-    }
-    else if ( target == ePresentTarget::Param )
-    {
-        targetTexture = &_gBuffer.GetParams ();
-    }
-    else if ( target == ePresentTarget::Emission )
-    {
-        targetTexture = &_gBuffer.GetHDRAccumulator ();
-    }
-    else
-    {
-        android_vulkan::LogWarning ( "RenderSession::End - Unknown target [%zu]. Defaulting to albedo target.",
-            static_cast<int> ( target )
-        );
+    if ( !result )
+        return false;
 
-        targetTexture = &_gBuffer.GetAlbedo ();
-    }
-
-    _gBufferImageBarrier.image = targetTexture->GetImage ();
-    _gBufferImageBarrier.subresourceRange.levelCount = static_cast<uint32_t> ( targetTexture->GetMipLevelCount () );
+    _renderSessionStats.RenderPointLights ( _lightPass.GetPointLightCount () );
 
     vkCmdPipelineBarrier ( commandBuffer,
         VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
@@ -110,13 +98,7 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, ePresentTarget tar
         &_gBufferImageBarrier
     );
 
-    bool const result = _presentPass.Execute ( commandBuffer,
-        _gBufferSlotMapper[ static_cast<size_t> ( target ) ],
-        _geometryPass.GetFence (),
-        renderer
-    );
-
-    if ( !result )
+    if ( !_presentPass.Execute ( commandBuffer, _gBufferSlotMapper, _geometryPass.GetFence (), renderer ) )
         return false;
 
     _renderSessionStats.PrintStats ( deltaTime );
@@ -137,19 +119,13 @@ bool RenderSession::Init ( android_vulkan::Renderer &renderer, VkExtent2D const 
         return false;
     }
 
-    if ( !_lightVolume.Init ( renderer, _gBuffer, _gBufferFramebuffer, _viewerLocal ) )
-    {
-        Destroy ( renderer.GetDevice () );
-        return false;
-    }
-
     if ( !_geometryPass.Init ( renderer, _gBuffer.GetResolution (), _gBufferRenderPass, _gBufferFramebuffer ) )
     {
         Destroy ( renderer.GetDevice () );
         return false;
     }
 
-    if ( !_pointLightPass.Init ( _lightVolume, resolution, renderer ) || !_presentPass.Init ( renderer ) )
+    if ( !_lightPass.Init ( renderer, _gBuffer ) || !_presentPass.Init ( renderer ) )
     {
         Destroy ( renderer.GetDevice () );
         return false;
@@ -161,6 +137,8 @@ bool RenderSession::Init ( android_vulkan::Renderer &renderer, VkExtent2D const 
         return false;
     }
 
+    android_vulkan::Texture2D const& texture = _gBuffer.GetHDRAccumulator();
+
     _gBufferImageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
     _gBufferImageBarrier.pNext = nullptr;
     _gBufferImageBarrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
@@ -169,10 +147,12 @@ bool RenderSession::Init ( android_vulkan::Renderer &renderer, VkExtent2D const 
     _gBufferImageBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
     _gBufferImageBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     _gBufferImageBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    _gBufferImageBarrier.image = texture.GetImage ();
     _gBufferImageBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     _gBufferImageBarrier.subresourceRange.baseMipLevel = 0U;
     _gBufferImageBarrier.subresourceRange.baseArrayLayer = 0U;
     _gBufferImageBarrier.subresourceRange.layerCount = 1U;
+    _gBufferImageBarrier.subresourceRange.levelCount = static_cast<uint32_t> ( texture.GetMipLevelCount () );
 
     return true;
 }
@@ -181,7 +161,7 @@ void RenderSession::Destroy ( VkDevice device )
 {
     _samplerManager.FreeResources ( device );
     _presentPass.Destroy ( device );
-    _pointLightPass.Destroy ( device );
+    _lightPass.Destroy ( device );
     _texturePresentProgram.Destroy ( device );
 
     if ( _gBufferDescriptorPool != VK_NULL_HANDLE )
@@ -192,7 +172,6 @@ void RenderSession::Destroy ( VkDevice device )
     }
 
     _geometryPass.Destroy ( device );
-    _lightVolume.Destroy ( device );
 
     if ( _gBufferFramebuffer != VK_NULL_HANDLE )
     {
@@ -209,6 +188,11 @@ void RenderSession::Destroy ( VkDevice device )
     }
 
     _gBuffer.Destroy ( device );
+}
+
+void RenderSession::FreeTransferResources ( VkDevice device )
+{
+    _lightPass.OnFreeTransferResources ( device );
 }
 
 void RenderSession::SubmitMesh ( MeshRef &mesh,
@@ -235,6 +219,17 @@ void RenderSession::SubmitLight ( LightRef const &light )
     {
         SubmitPointLight ( light );
     }
+}
+
+void RenderSession::SubmitReflectionGlobal ( TextureCubeRef &prefilter )
+{
+    _lightPass.SubmitReflectionGlobal ( prefilter );
+    _renderSessionStats.RenderReflectionGlobal ();
+}
+
+void RenderSession::SubmitReflectionLocal ( TextureCubeRef &/*prefilter*/, GXVec3 const& /*location*/, float /*size*/ )
+{
+    // TODO
 }
 
 bool RenderSession::CreateGBufferFramebuffer ( android_vulkan::Renderer &renderer )
@@ -383,11 +378,11 @@ bool RenderSession::CreateGBufferSlotMapper ( android_vulkan::Renderer &renderer
     {
         {
             .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-            .descriptorCount = static_cast<uint32_t> ( ePresentTarget::TargetCount )
+            .descriptorCount = 1U
         },
         {
             .type = VK_DESCRIPTOR_TYPE_SAMPLER,
-            .descriptorCount = static_cast<uint32_t> ( ePresentTarget::TargetCount )
+            .descriptorCount = 1U
         }
     };
 
@@ -396,7 +391,7 @@ bool RenderSession::CreateGBufferSlotMapper ( android_vulkan::Renderer &renderer
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0U,
-        .maxSets = static_cast<uint32_t> ( ePresentTarget::TargetCount ),
+        .maxSets = 1U,
         .poolSizeCount = static_cast<uint32_t> ( std::size ( poolSizes ) ),
         .pPoolSizes = poolSizes
     };
@@ -417,25 +412,17 @@ bool RenderSession::CreateGBufferSlotMapper ( android_vulkan::Renderer &renderer
     TexturePresentDescriptorSetLayout const layout;
     VkDescriptorSetLayout nativeLayout = layout.GetLayout ();
 
-    VkDescriptorSetLayout const layouts[ static_cast<size_t> ( ePresentTarget::TargetCount ) ] =
-    {
-        nativeLayout,
-        nativeLayout,
-        nativeLayout,
-        nativeLayout
-    };
-
     VkDescriptorSetAllocateInfo const allocateInfo
     {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
         .pNext = nullptr,
         .descriptorPool = _gBufferDescriptorPool,
-        .descriptorSetCount = static_cast<uint32_t> ( std::size ( layouts ) ),
-        .pSetLayouts = layouts
+        .descriptorSetCount = 1U,
+        .pSetLayouts = &nativeLayout
     };
 
     result = android_vulkan::Renderer::CheckVkResult (
-        vkAllocateDescriptorSets ( device, &allocateInfo, _gBufferSlotMapper ),
+        vkAllocateDescriptorSets ( device, &allocateInfo, &_gBufferSlotMapper ),
         "RenderSession::CreateGBufferSlotMapper",
         "Can't allocate descriptor sets"
     );
@@ -446,122 +433,38 @@ bool RenderSession::CreateGBufferSlotMapper ( android_vulkan::Renderer &renderer
     SamplerRef pointSampler = _samplerManager.GetPointSampler ( renderer );
     VkSampler nativeSampler = pointSampler->GetSampler ();
 
-    VkDescriptorImageInfo imageInfo[ static_cast<size_t> ( ePresentTarget::TargetCount ) ];
-    VkDescriptorImageInfo& albedo = imageInfo[ static_cast<size_t> ( ePresentTarget::Albedo ) ];
-    albedo.sampler = nativeSampler;
-    albedo.imageView = _gBuffer.GetAlbedo ().GetImageView ();
-    albedo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-    VkDescriptorImageInfo& emission = imageInfo[ static_cast<size_t> ( ePresentTarget::Emission ) ];
-    emission.sampler = nativeSampler;
-    emission.imageView = _gBuffer.GetHDRAccumulator ().GetImageView ();
-    emission.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-    VkDescriptorImageInfo& normal = imageInfo[ static_cast<size_t> ( ePresentTarget::Normal ) ];
-    normal.sampler = nativeSampler;
-    normal.imageView = _gBuffer.GetNormal ().GetImageView ();
-    normal.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-    VkDescriptorImageInfo& param = imageInfo[ static_cast<size_t> ( ePresentTarget::Param ) ];
-    param.sampler = nativeSampler;
-    param.imageView = _gBuffer.GetParams ().GetImageView ();
-    param.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    VkDescriptorImageInfo const imageInfo[] =
+    {
+        {
+            .sampler = nativeSampler,
+            .imageView = _gBuffer.GetHDRAccumulator ().GetImageView (),
+            .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+        }
+    };
 
     VkWriteDescriptorSet const writeSets[] =
     {
         {
             .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             .pNext = nullptr,
-            .dstSet = _gBufferSlotMapper[ static_cast<size_t> ( ePresentTarget::Albedo ) ],
+            .dstSet = _gBufferSlotMapper,
             .dstBinding = 0U,
             .dstArrayElement = 0U,
             .descriptorCount = 1U,
             .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-            .pImageInfo = &albedo,
+            .pImageInfo = imageInfo,
             .pBufferInfo = nullptr,
             .pTexelBufferView = nullptr
         },
         {
             .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             .pNext = nullptr,
-            .dstSet = _gBufferSlotMapper[ static_cast<size_t> ( ePresentTarget::Albedo ) ],
+            .dstSet = _gBufferSlotMapper,
             .dstBinding = 1U,
             .dstArrayElement = 0U,
             .descriptorCount = 1U,
             .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
-            .pImageInfo = &albedo,
-            .pBufferInfo = nullptr,
-            .pTexelBufferView = nullptr
-        },
-        {
-            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-            .pNext = nullptr,
-            .dstSet = _gBufferSlotMapper[ static_cast<size_t> ( ePresentTarget::Emission ) ],
-            .dstBinding = 0U,
-            .dstArrayElement = 0U,
-            .descriptorCount = 1U,
-            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-            .pImageInfo = &emission,
-            .pBufferInfo = nullptr,
-            .pTexelBufferView = nullptr
-        },
-        {
-            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-            .pNext = nullptr,
-            .dstSet = _gBufferSlotMapper[ static_cast<size_t> ( ePresentTarget::Emission ) ],
-            .dstBinding = 1U,
-            .dstArrayElement = 0U,
-            .descriptorCount = 1U,
-            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
-            .pImageInfo = &emission,
-            .pBufferInfo = nullptr,
-            .pTexelBufferView = nullptr
-        },
-        {
-            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-            .pNext = nullptr,
-            .dstSet = _gBufferSlotMapper[ static_cast<size_t> ( ePresentTarget::Normal ) ],
-            .dstBinding = 0U,
-            .dstArrayElement = 0U,
-            .descriptorCount = 1U,
-            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-            .pImageInfo = &normal,
-            .pBufferInfo = nullptr,
-            .pTexelBufferView = nullptr
-        },
-        {
-            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-            .pNext = nullptr,
-            .dstSet = _gBufferSlotMapper[ static_cast<size_t> ( ePresentTarget::Normal ) ],
-            .dstBinding = 1U,
-            .dstArrayElement = 0U,
-            .descriptorCount = 1U,
-            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
-            .pImageInfo = &normal,
-            .pBufferInfo = nullptr,
-            .pTexelBufferView = nullptr
-        },
-        {
-            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-            .pNext = nullptr,
-            .dstSet = _gBufferSlotMapper[ static_cast<size_t> ( ePresentTarget::Param ) ],
-            .dstBinding = 0U,
-            .dstArrayElement = 0U,
-            .descriptorCount = 1U,
-            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-            .pImageInfo = &param,
-            .pBufferInfo = nullptr,
-            .pTexelBufferView = nullptr
-        },
-        {
-            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-            .pNext = nullptr,
-            .dstSet = _gBufferSlotMapper[ static_cast<size_t> ( ePresentTarget::Param ) ],
-            .dstBinding = 1U,
-            .dstArrayElement = 0U,
-            .descriptorCount = 1U,
-            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
-            .pImageInfo = &param,
+            .pImageInfo = imageInfo,
             .pBufferInfo = nullptr,
             .pTexelBufferView = nullptr
         }
@@ -594,7 +497,7 @@ void RenderSession::SubmitPointLight ( LightRef const &light )
 
     if ( _frustum.IsVisible ( pointLight.GetBounds () ) )
     {
-        _pointLightPass.Submit ( light );
+        _lightPass.SubmitPointLight ( light );
     }
 }
 

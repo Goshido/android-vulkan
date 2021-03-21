@@ -225,10 +225,10 @@ bool Game::CreateCommonTextures ( android_vulkan::Renderer &renderer, VkCommandB
     {
         auto& drawcall = _drawcalls[ i ];
 
-        bool result = drawcall._diffuse.UploadData ( textureFiles[ i ],
+        bool result = drawcall._diffuse.UploadData ( renderer,
+            textureFiles[ i ],
             android_vulkan::eFormat::sRGB,
             true,
-            renderer,
             commandBuffers[ i ]
         );
 
@@ -240,10 +240,10 @@ bool Game::CreateCommonTextures ( android_vulkan::Renderer &renderer, VkCommandB
 
     Drawcall& secondMaterial = _drawcalls[ 1U ];
 
-    bool result = secondMaterial._normal.UploadData ( MATERIAL_2_NORMAL,
+    bool result = secondMaterial._normal.UploadData ( renderer,
+        MATERIAL_2_NORMAL,
         android_vulkan::eFormat::Unorm,
         true,
-        renderer,
         commandBuffers[ 3U ]
     );
 
@@ -254,10 +254,10 @@ bool Game::CreateCommonTextures ( android_vulkan::Renderer &renderer, VkCommandB
 
     Drawcall& thirdMaterial = _drawcalls[ 2U ];
 
-    result = thirdMaterial._normal.UploadData ( MATERIAL_3_NORMAL,
+    result = thirdMaterial._normal.UploadData ( renderer,
+        MATERIAL_3_NORMAL,
         android_vulkan::eFormat::Unorm,
         true,
-        renderer,
         commandBuffers[ 4U ]
     );
 
@@ -269,12 +269,12 @@ bool Game::CreateCommonTextures ( android_vulkan::Renderer &renderer, VkCommandB
     Drawcall& firstMaterial = _drawcalls[ 0U ];
     constexpr const uint8_t defaultNormal[] = { 128U, 128U, 255U, 128U };
 
-    result = firstMaterial._normal.UploadData ( defaultNormal,
+    result = firstMaterial._normal.UploadData ( renderer,
+        defaultNormal,
         std::size ( defaultNormal ),
         VkExtent2D { .width = 1U, .height = 1U },
         VK_FORMAT_R8G8B8A8_UNORM,
         false,
-        renderer,
         commandBuffers[ 5U ]
     );
 
@@ -490,7 +490,7 @@ bool Game::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime )
     if ( !result )
         return false;
 
-    return EndFrame ( renderer, static_cast<size_t> ( imageIndex ) );
+    return EndFrame ( renderer, static_cast<uint32_t> ( imageIndex ) );
 }
 
 bool Game::OnDestroy ( android_vulkan::Renderer &renderer )

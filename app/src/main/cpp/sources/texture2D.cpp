@@ -38,8 +38,9 @@ constexpr static VkImageUsageFlags const IMMUTABLE_TEXTURE_USAGE = AV_VK_FLAG ( 
 
 static std::unordered_map<VkFormat, VkFormat> const g_FormatMapper =
 {
-    { VK_FORMAT_R8G8B8A8_UNORM, VK_FORMAT_R8G8B8A8_SRGB },
-    { VK_FORMAT_ASTC_6x6_UNORM_BLOCK, VK_FORMAT_ASTC_6x6_SRGB_BLOCK }
+    { VK_FORMAT_ASTC_6x6_UNORM_BLOCK, VK_FORMAT_ASTC_6x6_UNORM_BLOCK },
+    { VK_FORMAT_ASTC_6x6_SRGB_BLOCK, VK_FORMAT_ASTC_6x6_SRGB_BLOCK },
+    { VK_FORMAT_R8G8B8A8_UNORM, VK_FORMAT_R8G8B8A8_SRGB }
 };
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -57,16 +58,6 @@ Texture2D::Texture2D () noexcept:
     // NOTHING
 }
 
-void Texture2D::FreeResources ( VkDevice device )
-{
-    FreeTransferResources ( device );
-    FreeResourceInternal ( device );
-
-    _format = VK_FORMAT_UNDEFINED;
-    memset ( &_resolution, 0, sizeof ( _resolution ) );
-    _fileName.clear ();
-}
-
 bool Texture2D::CreateRenderTarget ( VkExtent2D const &resolution,
     VkFormat format,
     VkImageUsageFlags usage,
@@ -81,6 +72,16 @@ bool Texture2D::CreateRenderTarget ( VkExtent2D const &resolution,
 
     _mipLevels = 1U;
     return true;
+}
+
+void Texture2D::FreeResources ( VkDevice device )
+{
+    FreeTransferResources ( device );
+    FreeResourceInternal ( device );
+
+    _format = VK_FORMAT_UNDEFINED;
+    memset ( &_resolution, 0, sizeof ( _resolution ) );
+    _fileName.clear ();
 }
 
 void Texture2D::FreeTransferResources ( VkDevice device )
@@ -126,15 +127,15 @@ std::string const& Texture2D::GetName () const
     return _fileName;
 }
 
-[[maybe_unused]] VkExtent2D const& Texture2D::GetResolution () const
+VkExtent2D const& Texture2D::GetResolution () const
 {
     return _resolution;
 }
 
-[[maybe_unused]] bool Texture2D::UploadData ( std::string const &fileName,
+[[maybe_unused]] bool Texture2D::UploadData ( Renderer &renderer,
+    std::string const &fileName,
     eFormat format,
     bool isGenerateMipmaps,
-    Renderer &renderer,
     VkCommandBuffer commandBuffer
 )
 {
@@ -167,18 +168,18 @@ std::string const& Texture2D::GetName () const
         resolution,
         ResolveFormat ( actualFormat, format ),
         IMMUTABLE_TEXTURE_USAGE,
-        isGenerateMipmaps ? CountMipLevels ( resolution ) : 1U,
+        static_cast<uint8_t> ( isGenerateMipmaps ? CountMipLevels ( resolution ) : 1U ),
         renderer
     );
 
     if ( !result )
         return false;
 
-    result = UploadDataInternal ( pixelData.data (),
+    result = UploadDataInternal ( renderer,
+        pixelData.data (),
         pixelData.size (),
         isGenerateMipmaps,
         imageInfo,
-        renderer,
         commandBuffer
     );
 
@@ -189,10 +190,10 @@ std::string const& Texture2D::GetName () const
     return true;
 }
 
-bool Texture2D::UploadData ( std::string &&fileName,
+bool Texture2D::UploadData ( Renderer &renderer,
+    std::string &&fileName,
     eFormat format,
     bool isGenerateMipmaps,
-    Renderer &renderer,
     VkCommandBuffer commandBuffer
 )
 {
@@ -206,7 +207,7 @@ bool Texture2D::UploadData ( std::string &&fileName,
 
     if ( IsCompressed ( fileName ) )
     {
-        if ( !UploadCompressed ( fileName, format, renderer, commandBuffer ) )
+        if ( !UploadCompressed ( renderer, fileName, format, commandBuffer ) )
             return false;
 
         _fileName = std::move ( fileName );
@@ -235,18 +236,18 @@ bool Texture2D::UploadData ( std::string &&fileName,
         resolution,
         ResolveFormat ( actualFormat, format ),
         IMMUTABLE_TEXTURE_USAGE,
-        isGenerateMipmaps ? CountMipLevels ( resolution ) : 1U,
+        static_cast<uint8_t> ( isGenerateMipmaps ? CountMipLevels ( resolution ) : 1U ),
         renderer
     );
 
     if ( !result )
         return false;
 
-    result = UploadDataInternal ( pixelData.data (),
+    result = UploadDataInternal ( renderer,
+        pixelData.data (),
         pixelData.size (),
         isGenerateMipmaps,
         imageInfo,
-        renderer,
         commandBuffer
     );
 
@@ -257,32 +258,32 @@ bool Texture2D::UploadData ( std::string &&fileName,
     return true;
 }
 
-bool Texture2D::UploadData ( std::string_view const &fileName,
+bool Texture2D::UploadData ( Renderer &renderer,
+    std::string_view const &fileName,
     eFormat format,
     bool isGenerateMipmaps,
-    Renderer &renderer,
     VkCommandBuffer commandBuffer
 )
 {
-    return UploadData ( std::string ( fileName ), format, isGenerateMipmaps, renderer, commandBuffer );
+    return UploadData ( renderer, std::string ( fileName ), format, isGenerateMipmaps, commandBuffer );
 }
 
-bool Texture2D::UploadData ( char const *fileName,
+bool Texture2D::UploadData ( Renderer &renderer,
+    char const *fileName,
     eFormat format,
     bool isGenerateMipmaps,
-    Renderer &renderer,
     VkCommandBuffer commandBuffer
 )
 {
-    return UploadData ( std::string ( fileName ), format, isGenerateMipmaps, renderer, commandBuffer );
+    return UploadData ( renderer, std::string ( fileName ), format, isGenerateMipmaps, commandBuffer );
 }
 
-bool Texture2D::UploadData ( const uint8_t* data,
+bool Texture2D::UploadData ( Renderer &renderer,
+    const uint8_t* data,
     size_t size,
     VkExtent2D const &resolution,
     VkFormat format,
     bool isGenerateMipmaps,
-    Renderer &renderer,
     VkCommandBuffer commandBuffer
 )
 {
@@ -293,14 +294,14 @@ bool Texture2D::UploadData ( const uint8_t* data,
         resolution,
         format,
         IMMUTABLE_TEXTURE_USAGE,
-        isGenerateMipmaps ? CountMipLevels ( resolution ) : 1U,
+        static_cast<uint8_t> ( isGenerateMipmaps ? CountMipLevels ( resolution ) : 1U ),
         renderer
     );
 
     if ( !result )
         return false;
 
-    return UploadDataInternal ( data, size, isGenerateMipmaps, imageInfo, renderer, commandBuffer );
+    return UploadDataInternal ( renderer, data, size, isGenerateMipmaps, imageInfo, commandBuffer );
 }
 
 bool Texture2D::CreateCommonResources ( VkImageCreateInfo &imageInfo,
@@ -372,25 +373,32 @@ bool Texture2D::CreateCommonResources ( VkImageCreateInfo &imageInfo,
         return false;
     }
 
-    VkImageViewCreateInfo viewInfo;
-    viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-    viewInfo.pNext = nullptr;
-    viewInfo.flags = 0U;
-    viewInfo.image = _image;
-    viewInfo.format = _format;
-    viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    VkImageViewCreateInfo const viewInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .image = _image,
+        .viewType = VK_IMAGE_VIEW_TYPE_2D,
+        .format = _format,
 
-    VkImageSubresourceRange& sub = viewInfo.subresourceRange;
-    sub.baseMipLevel = viewInfo.subresourceRange.baseArrayLayer = 0U;
-    sub.layerCount = 1U;
-    sub.levelCount = imageInfo.mipLevels;
-    sub.aspectMask = Renderer::ResolveImageViewAspect ( _format );
+        .components
+        {
+            .r = VK_COMPONENT_SWIZZLE_IDENTITY,
+            .g = VK_COMPONENT_SWIZZLE_IDENTITY,
+            .b = VK_COMPONENT_SWIZZLE_IDENTITY,
+            .a = VK_COMPONENT_SWIZZLE_IDENTITY
+        },
 
-    VkComponentMapping& mapping = viewInfo.components;
-    mapping.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-    mapping.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-    mapping.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-    mapping.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+        .subresourceRange
+        {
+            .aspectMask = Renderer::ResolveImageViewAspect ( _format ),
+            .baseMipLevel = 0U,
+            .levelCount = imageInfo.mipLevels,
+            .baseArrayLayer = 0U,
+            .layerCount = 1U
+        }
+    };
 
     result = Renderer::CheckVkResult ( vkCreateImageView ( device, &viewInfo, nullptr, &_imageView ),
         "Texture2D::CreateCommonResources",
@@ -409,15 +417,17 @@ bool Texture2D::CreateCommonResources ( VkImageCreateInfo &imageInfo,
 
 bool Texture2D::CreateTransferResources ( uint8_t* &mappedBuffer, VkDeviceSize size, Renderer &renderer )
 {
-    VkBufferCreateInfo bufferInfo;
-    bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-    bufferInfo.pNext = nullptr;
-    bufferInfo.flags = 0U;
-    bufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-    bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    bufferInfo.queueFamilyIndexCount = 0U;
-    bufferInfo.pQueueFamilyIndices = nullptr;
-    bufferInfo.size = size;
+    VkBufferCreateInfo const bufferInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .size = size,
+        .usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+        .queueFamilyIndexCount = 0U,
+        .pQueueFamilyIndices = nullptr
+    };
 
     VkDevice device = renderer.GetDevice ();
 
@@ -507,9 +517,9 @@ void Texture2D::FreeResourceInternal ( VkDevice device )
     AV_UNREGISTER_IMAGE ( "Texture2D::_image" )
 }
 
-bool Texture2D::UploadCompressed ( std::string const &fileName,
+bool Texture2D::UploadCompressed ( Renderer &renderer,
+    std::string const &fileName,
     eFormat format,
-    Renderer &renderer,
     VkCommandBuffer commandBuffer
 )
 {
@@ -549,11 +559,13 @@ bool Texture2D::UploadCompressed ( std::string const &fileName,
     VkDevice device = renderer.GetDevice ();
     vkUnmapMemory ( device, _transferDeviceMemory );
 
-    VkCommandBufferBeginInfo beginInfo;
-    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    beginInfo.pNext = nullptr;
-    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-    beginInfo.pInheritanceInfo = nullptr;
+    constexpr VkCommandBufferBeginInfo const beginInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+        .pNext = nullptr,
+        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+        .pInheritanceInfo = nullptr
+    };
 
     result = Renderer::CheckVkResult ( vkBeginCommandBuffer ( commandBuffer, &beginInfo ),
         "Texture2D::UploadCompressed",
@@ -566,20 +578,27 @@ bool Texture2D::UploadCompressed ( std::string const &fileName,
         return false;
     }
 
-    VkImageMemoryBarrier barrierInfo;
-    barrierInfo.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-    barrierInfo.pNext = nullptr;
-    barrierInfo.image = _image;
-    barrierInfo.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    barrierInfo.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-    barrierInfo.srcAccessMask = 0U;
-    barrierInfo.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-    barrierInfo.srcQueueFamilyIndex = barrierInfo.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    barrierInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    barrierInfo.subresourceRange.layerCount = 1U;
-    barrierInfo.subresourceRange.levelCount = static_cast<uint32_t> ( mips );
-    barrierInfo.subresourceRange.baseArrayLayer = 0U;
-    barrierInfo.subresourceRange.baseMipLevel = 0U;
+    VkImageMemoryBarrier barrierInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+        .pNext = nullptr,
+        .srcAccessMask = 0U,
+        .dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
+        .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+        .newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .image = _image,
+
+        .subresourceRange
+        {
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .baseMipLevel = 0U,
+            .levelCount = static_cast<uint32_t> ( mips ),
+            .baseArrayLayer = 0U,
+            .layerCount = 1U
+        }
+    };
 
     vkCmdPipelineBarrier ( commandBuffer,
         VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
@@ -593,7 +612,7 @@ bool Texture2D::UploadCompressed ( std::string const &fileName,
         &barrierInfo
     );
 
-    VkBufferImageCopy copyRegion;
+    VkBufferImageCopy copyRegion {};
     copyRegion.imageOffset.x = 0;
     copyRegion.imageOffset.y = 0;
     copyRegion.imageOffset.z = 0;
@@ -655,16 +674,18 @@ bool Texture2D::UploadCompressed ( std::string const &fileName,
         return false;
     }
 
-    VkSubmitInfo submitInfo;
-    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    submitInfo.pNext = nullptr;
-    submitInfo.commandBufferCount = 1U;
-    submitInfo.pCommandBuffers = &commandBuffer;
-    submitInfo.waitSemaphoreCount = 0U;
-    submitInfo.pWaitSemaphores = nullptr;
-    submitInfo.signalSemaphoreCount = 0U;
-    submitInfo.pSignalSemaphores = nullptr;
-    submitInfo.pWaitDstStageMask = nullptr;
+    VkSubmitInfo const submitInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+        .pNext = nullptr,
+        .waitSemaphoreCount = 0U,
+        .pWaitSemaphores = nullptr,
+        .pWaitDstStageMask = nullptr,
+        .commandBufferCount = 1U,
+        .pCommandBuffers = &commandBuffer,
+        .signalSemaphoreCount = 0U,
+        .pSignalSemaphores = nullptr
+    };
 
     result = Renderer::CheckVkResult ( vkQueueSubmit ( renderer.GetQueue (), 1U, &submitInfo, VK_NULL_HANDLE ),
         "Texture2D::UploadCompressed",
@@ -681,11 +702,11 @@ bool Texture2D::UploadCompressed ( std::string const &fileName,
     return true;
 }
 
-bool Texture2D::UploadDataInternal ( uint8_t const* data,
+bool Texture2D::UploadDataInternal ( Renderer &renderer,
+    uint8_t const* data,
     size_t size,
     bool isGenerateMipmaps,
     VkImageCreateInfo const &imageInfo,
-    Renderer &renderer,
     VkCommandBuffer commandBuffer
 )
 {
@@ -698,11 +719,13 @@ bool Texture2D::UploadDataInternal ( uint8_t const* data,
     VkDevice device = renderer.GetDevice ();
     vkUnmapMemory ( device, _transferDeviceMemory );
 
-    VkCommandBufferBeginInfo beginInfo;
-    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    beginInfo.pNext = nullptr;
-    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-    beginInfo.pInheritanceInfo = nullptr;
+    constexpr VkCommandBufferBeginInfo const beginInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+        .pNext = nullptr,
+        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+        .pInheritanceInfo = nullptr
+    };
 
     bool result = Renderer::CheckVkResult ( vkBeginCommandBuffer ( commandBuffer, &beginInfo ),
         "Texture2D::UploadDataInternal",
@@ -742,18 +765,29 @@ bool Texture2D::UploadDataInternal ( uint8_t const* data,
         &barrierInfo
     );
 
-    VkBufferImageCopy copyRegion;
-    copyRegion.imageOffset.x = 0;
-    copyRegion.imageOffset.y = 0;
-    copyRegion.imageOffset.z = 0;
-    copyRegion.imageExtent = imageInfo.extent;
-    copyRegion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    copyRegion.imageSubresource.layerCount = 1U;
-    copyRegion.imageSubresource.baseArrayLayer = 0U;
-    copyRegion.imageSubresource.mipLevel = 0U;
-    copyRegion.bufferRowLength = imageInfo.extent.width;
-    copyRegion.bufferImageHeight = imageInfo.extent.height;
-    copyRegion.bufferOffset = 0U;
+    VkBufferImageCopy const copyRegion
+    {
+        .bufferOffset = 0U,
+        .bufferRowLength = imageInfo.extent.width,
+        .bufferImageHeight = imageInfo.extent.height,
+
+        .imageSubresource
+        {
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .mipLevel = 0U,
+            .baseArrayLayer = 0U,
+            .layerCount = 1U
+        },
+
+        .imageOffset
+        {
+            .x = 0,
+            .y = 0,
+            .z = 0
+        },
+
+        .imageExtent = imageInfo.extent,
+    };
 
     vkCmdCopyBufferToImage ( commandBuffer, _transfer, _image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1U, &copyRegion );
 
@@ -788,16 +822,18 @@ bool Texture2D::UploadDataInternal ( uint8_t const* data,
             return false;
         }
 
-        VkSubmitInfo submitInfo;
-        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-        submitInfo.pNext = nullptr;
-        submitInfo.commandBufferCount = 1U;
-        submitInfo.pCommandBuffers = &commandBuffer;
-        submitInfo.waitSemaphoreCount = 0U;
-        submitInfo.pWaitSemaphores = nullptr;
-        submitInfo.signalSemaphoreCount = 0U;
-        submitInfo.pSignalSemaphores = nullptr;
-        submitInfo.pWaitDstStageMask = nullptr;
+        VkSubmitInfo const submitInfo
+        {
+            .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+            .pNext = nullptr,
+            .waitSemaphoreCount = 0U,
+            .pWaitSemaphores = nullptr,
+            .pWaitDstStageMask = nullptr,
+            .commandBufferCount = 1U,
+            .pCommandBuffers = &commandBuffer,
+            .signalSemaphoreCount = 0U,
+            .pSignalSemaphores = nullptr
+        };
 
         result = Renderer::CheckVkResult (
             vkQueueSubmit ( renderer.GetQueue (), 1U, &submitInfo, VK_NULL_HANDLE ),
@@ -938,16 +974,18 @@ bool Texture2D::UploadDataInternal ( uint8_t const* data,
         return false;
     }
 
-    VkSubmitInfo submitInfo;
-    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    submitInfo.pNext = nullptr;
-    submitInfo.commandBufferCount = 1U;
-    submitInfo.pCommandBuffers = &commandBuffer;
-    submitInfo.waitSemaphoreCount = 0U;
-    submitInfo.pWaitSemaphores = nullptr;
-    submitInfo.signalSemaphoreCount = 0U;
-    submitInfo.pSignalSemaphores = nullptr;
-    submitInfo.pWaitDstStageMask = nullptr;
+    VkSubmitInfo const submitInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+        .pNext = nullptr,
+        .waitSemaphoreCount = 0U,
+        .pWaitSemaphores = nullptr,
+        .pWaitDstStageMask = nullptr,
+        .commandBufferCount = 1U,
+        .pCommandBuffers = &commandBuffer,
+        .signalSemaphoreCount = 0U,
+        .pSignalSemaphores = nullptr
+    };
 
     result = Renderer::CheckVkResult (
         vkQueueSubmit ( renderer.GetQueue (), 1U, &submitInfo, VK_NULL_HANDLE ),
@@ -992,7 +1030,9 @@ bool Texture2D::LoadImage ( std::vector<uint8_t> &pixelData,
 
     if ( channels != 3 )
     {
-        size_t const size = width * height * channels;
+        auto const size =
+            static_cast<size_t> ( width ) * static_cast<size_t> ( height ) * static_cast<size_t> ( channels );
+
         pixelData.resize ( size );
         memcpy ( pixelData.data (), imagePixels, size );
         free ( imagePixels );

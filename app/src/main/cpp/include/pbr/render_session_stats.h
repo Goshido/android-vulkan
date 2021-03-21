@@ -20,6 +20,7 @@ class RenderSessionStats final
         size_t                  _frameCount;
         std::atomic_size_t      _renderMeshes;
         std::atomic_size_t      _renderPointLights;
+        std::atomic_size_t      _renderReflectionsGlobal;
         std::atomic_size_t      _renderVertices;
         std::atomic_size_t      _submitMeshes;
         std::atomic_size_t      _submitPointLights;
@@ -42,8 +43,10 @@ class RenderSessionStats final
         void RenderOpaque ( uint32_t vertexCount, uint32_t instanceCount );
         void SubmitOpaque ( uint32_t vertexCount );
 
-        [[maybe_unused]] void RenderPointLight ();
+        void RenderPointLights ( size_t count );
         void SubmitPointLight ();
+
+        void RenderReflectionGlobal ();
 
     private:
         void Reset ();

@@ -17,7 +17,7 @@ class OpaqueMaterial final : public Material
         Texture2DRef    _param;
 
     public:
-        OpaqueMaterial ();
+        OpaqueMaterial () noexcept;
 
         OpaqueMaterial ( OpaqueMaterial const & ) = default;
         OpaqueMaterial& operator = ( OpaqueMaterial const & ) = default;
@@ -47,8 +47,7 @@ class OpaqueMaterial final : public Material
         void SetParam ( Texture2DRef &texture );
         [[maybe_unused]] void SetParamDefault ();
 
-        [[nodiscard]] bool operator < ( const OpaqueMaterial &other ) const;
-
+        [[nodiscard]] bool operator < ( OpaqueMaterial const &other ) const;
 };
 
 } // namespace pbr

@@ -11,7 +11,6 @@ GX_DISABLE_COMMON_WARNINGS
 
 GX_RESTORE_WARNING_STATE
 
-#include <renderer.h>
 #include "types.h"
 
 
@@ -26,11 +25,11 @@ class MeshManager final
         static std::shared_timed_mutex                      _mutex;
 
     public:
-        MeshManager ( MeshManager const &other ) = delete;
-        MeshManager& operator = ( MeshManager const &other ) = delete;
+        MeshManager ( MeshManager const & ) = delete;
+        MeshManager& operator = ( MeshManager const & ) = delete;
 
-        MeshManager ( MeshManager &&other ) = delete;
-        MeshManager& operator = ( MeshManager &&other ) = delete;
+        MeshManager ( MeshManager && ) = delete;
+        MeshManager& operator = ( MeshManager && ) = delete;
 
         [[nodiscard]] MeshRef LoadMesh ( android_vulkan::Renderer &renderer,
             size_t &commandBufferConsumed,

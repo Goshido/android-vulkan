@@ -13,7 +13,7 @@ MeshRef MeshManager::LoadMesh ( android_vulkan::Renderer &renderer,
 )
 {
     commandBufferConsumed = 0U;
-    auto mesh = std::make_shared<android_vulkan::MeshGeometry> ();
+    MeshRef mesh = std::make_shared<android_vulkan::MeshGeometry> ();
 
     if ( !fileName )
         return mesh;

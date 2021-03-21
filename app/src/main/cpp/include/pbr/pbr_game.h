@@ -13,6 +13,7 @@ GX_RESTORE_WARNING_STATE
 #include <game.h>
 #include "render_session.h"
 #include "camera.h"
+#include "point_light_component.h"
 
 
 namespace pbr {
@@ -27,8 +28,13 @@ class PBRGame final : public android_vulkan::Game
         RenderSession                   _renderSession;
         std::list<ComponentRef>         _components;
 
+        // Just for fun - point light trajectory animation implementation.
+        PointLight*                     _pointLight;
+        float                           _lightPhase;
+        GXVec3                          _lightOrigin;
+
     public:
-        PBRGame ();
+        PBRGame () noexcept;
 
         PBRGame ( PBRGame const & ) = delete;
         PBRGame& operator = ( PBRGame const & ) = delete;

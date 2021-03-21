@@ -1,5 +1,11 @@
-cmake_minimum_required ( VERSION 3.10.2 )
+cmake_minimum_required ( VERSION 3.18.1 )
 set ( CMAKE_CXX_STANDARD 17 )
+project ( android-vulkan )
+
+# Enable link time optimization for release build via native flag.
+# Note there is CMAKE_INTERPROCEDURAL_OPTIMZATION_RELEASE built-in variable but it works not reliably with
+# NDK 22.0.7026061 at link time (linking errors on Linux).
+string(APPEND CMAKE_CXX_FLAGS_RELEASE " -flto=thin")
 
 # Android native activity glue
 
@@ -85,12 +91,19 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/mandelbrot/mandelbrot_lut_color.cpp
     app/src/main/cpp/sources/pbr/camera.cpp
     app/src/main/cpp/sources/pbr/component.cpp
+    app/src/main/cpp/sources/pbr/cube_map_manager.cpp
     app/src/main/cpp/sources/pbr/gbuffer.cpp
     app/src/main/cpp/sources/pbr/geometry_pass.cpp
-    app/src/main/cpp/sources/pbr/lightup_common_descriptror_set_layout.cpp
+    app/src/main/cpp/sources/pbr/reflection_global_descriptor_set_layout.cpp
+    app/src/main/cpp/sources/pbr/reflection_global_pass.cpp
+    app/src/main/cpp/sources/pbr/reflection_global_program.cpp
     app/src/main/cpp/sources/pbr/light.cpp
+    app/src/main/cpp/sources/pbr/light_pass.cpp
+    app/src/main/cpp/sources/pbr/lightup_common_descriptor_set.cpp
+    app/src/main/cpp/sources/pbr/lightup_common_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/light_lightup_base_program.cpp
     app/src/main/cpp/sources/pbr/light_volume.cpp
+    app/src/main/cpp/sources/pbr/light_volume_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/light_volume_program.cpp
     app/src/main/cpp/sources/pbr/material.cpp
     app/src/main/cpp/sources/pbr/material_manager.cpp
@@ -111,12 +124,13 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/pbr/point_light_shadowmap_generator_program.cpp
     app/src/main/cpp/sources/pbr/present_pass.cpp
     app/src/main/cpp/sources/pbr/program.cpp
-    app/src/main/cpp/sources/pbr/program_resource.cpp
+    app/src/main/cpp/sources/pbr/reflection_component.cpp
     app/src/main/cpp/sources/pbr/render_session.cpp
     app/src/main/cpp/sources/pbr/render_session_stats.cpp
     app/src/main/cpp/sources/pbr/sampler.cpp
     app/src/main/cpp/sources/pbr/sampler_manager.cpp
     app/src/main/cpp/sources/pbr/static_mesh_component.cpp
+    app/src/main/cpp/sources/pbr/stub_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/texture_present_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/texture_present_program.cpp
     app/src/main/cpp/sources/pbr/uniform_buffer_pool.cpp

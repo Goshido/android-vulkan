@@ -3,51 +3,41 @@
 
 
 #include <GXCommon/GXMath.h>
-#include "gbuffer.h"
 #include "geometry_pass.h"
-#include "point_light_pass.h"
+#include "light_pass.h"
+#include "reflection_global_pass.h"
 #include "present_pass.h"
 #include "shadow_casters.h"
 
 
 namespace pbr {
 
-enum class ePresentTarget : uint8_t
-{
-    Albedo = 0U,
-    Emission = 1U,
-    Normal = 2U,
-    Param = 3U,
-    TargetCount = 4U
-};
-
 // Single threaded class
 class RenderSession final
 {
     private:
-        GXProjectionClipPlanes      _frustum;
+        GXProjectionClipPlanes          _frustum;
 
-        GBuffer                     _gBuffer;
-        VkDescriptorPool            _gBufferDescriptorPool;
-        VkFramebuffer               _gBufferFramebuffer;
-        VkImageMemoryBarrier        _gBufferImageBarrier;
-        VkRenderPass                _gBufferRenderPass;
-        VkDescriptorSet             _gBufferSlotMapper[ static_cast<size_t> ( ePresentTarget::TargetCount ) ];
+        GBuffer                         _gBuffer;
+        VkDescriptorPool                _gBufferDescriptorPool;
+        VkFramebuffer                   _gBufferFramebuffer;
+        VkImageMemoryBarrier            _gBufferImageBarrier;
+        VkRenderPass                    _gBufferRenderPass;
+        VkDescriptorSet                 _gBufferSlotMapper;
 
-        GeometryPass                _geometryPass;
-        LightVolume                 _lightVolume;
-        size_t                      _opaqueMeshCount;
+        GeometryPass                    _geometryPass;
+        LightPass                       _lightPass;
+        size_t                          _opaqueMeshCount;
 
-        TexturePresentProgram       _texturePresentProgram;
-        PointLightPass              _pointLightPass;
-        PresentPass                 _presentPass;
-        RenderSessionStats          _renderSessionStats;
-        SamplerManager              _samplerManager;
+        TexturePresentProgram           _texturePresentProgram;
+        PresentPass                     _presentPass;
+        RenderSessionStats              _renderSessionStats;
+        SamplerManager                  _samplerManager;
 
-        GXMat4                      _cvvToView;
-        GXMat4                      _view;
-        GXMat4                      _viewProjection;
-        GXMat4                      _viewerLocal;
+        GXMat4                          _cvvToView;
+        GXMat4                          _view;
+        GXMat4                          _viewProjection;
+        GXMat4                          _viewerLocal;
 
     public:
         RenderSession () noexcept;
@@ -61,10 +51,11 @@ class RenderSession final
         ~RenderSession () = default;
 
         void Begin ( GXMat4 const &viewerLocal, GXMat4 const &projection );
-        [[nodiscard]] bool End ( android_vulkan::Renderer &renderer, ePresentTarget target, double deltaTime );
+        [[nodiscard]] bool End ( android_vulkan::Renderer &renderer, double deltaTime );
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, VkExtent2D const &resolution );
         void Destroy ( VkDevice device );
+        void FreeTransferResources ( VkDevice device );
 
         void SubmitMesh ( MeshRef &mesh,
             MaterialRef const &material,
@@ -77,6 +68,8 @@ class RenderSession final
         );
 
         void SubmitLight ( LightRef const &light );
+        void SubmitReflectionGlobal ( TextureCubeRef &prefilter );
+        [[maybe_unused]] void SubmitReflectionLocal ( TextureCubeRef &prefilter, GXVec3 const &location, float size );
 
     private:
         [[nodiscard]] bool CreateGBufferFramebuffer ( android_vulkan::Renderer &renderer );

@@ -15,9 +15,9 @@ class LightLightupBaseProgram : public Program
 
         struct [[maybe_unused]] ViewData final
         {
-            [[maybe_unused]] GXMat4                     _toView;
-            [[maybe_unused]] GXVec2                     _invResolutionFactor;
-            [[maybe_unused]] GXVec2                     _padding0_0;
+            [[maybe_unused]] GXMat4     _toView;
+            [[maybe_unused]] GXVec2     _invResolutionFactor;
+            [[maybe_unused]] GXVec2     _padding0_0;
         };
 
         AV_DX_ALIGNMENT_END

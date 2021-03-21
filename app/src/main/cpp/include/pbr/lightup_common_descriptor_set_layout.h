@@ -10,7 +10,7 @@ namespace pbr {
 class LightupCommonDescriptorSetLayout final : public DescriptorSetLayout
 {
     public:
-        LightupCommonDescriptorSetLayout () noexcept = default;
+        LightupCommonDescriptorSetLayout () = default;
 
         LightupCommonDescriptorSetLayout ( LightupCommonDescriptorSetLayout const & ) = delete;
         LightupCommonDescriptorSetLayout& operator = ( LightupCommonDescriptorSetLayout const & ) = delete;

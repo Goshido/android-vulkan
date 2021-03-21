@@ -808,7 +808,6 @@ Renderer::Renderer () noexcept:
     _swapchainImages {},
     _swapchainImageViews {},
     _presentationEngineTransform {}
-
 {
     // NOTHING
 }
@@ -1195,6 +1194,7 @@ VkImageAspectFlags Renderer::ResolveImageViewAspect ( VkFormat format )
     static std::unordered_map<VkFormat, VkImageAspectFlags> const mapper =
     {
         { VK_FORMAT_D16_UNORM, VK_IMAGE_ASPECT_DEPTH_BIT },
+        { VK_FORMAT_D32_SFLOAT, VK_IMAGE_ASPECT_DEPTH_BIT },
 
         {
             VK_FORMAT_D16_UNORM_S8_UINT,

@@ -175,7 +175,7 @@ bool MeshGeometry::LoadMesh ( std::string &&fileName,
     return UploadSimple ( data, size, vertexCount, usage, renderer, commandBuffer );
 }
 
-[[maybe_unused]] bool MeshGeometry::LoadMesh ( uint8_t const* vertexData,
+bool MeshGeometry::LoadMesh ( uint8_t const* vertexData,
     size_t vertexDataSize,
     uint32_t const* indices,
     uint32_t indexCount,

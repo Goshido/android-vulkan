@@ -10,7 +10,7 @@ namespace pbr {
 class PointLightDescriptorSetLayout final : public DescriptorSetLayout
 {
     public:
-        PointLightDescriptorSetLayout () noexcept = default;
+        PointLightDescriptorSetLayout () = default;
 
         PointLightDescriptorSetLayout ( PointLightDescriptorSetLayout const & ) = delete;
         PointLightDescriptorSetLayout& operator = ( PointLightDescriptorSetLayout const & ) = delete;

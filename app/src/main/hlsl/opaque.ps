@@ -67,16 +67,25 @@ struct OutputData
 
 half3 GetFinalNormalView ( in half3 tangentView, in half3 bitangentView, in half3 normalView, in float2 uv )
 {
-    const half3 normalData = (half3)g_normalTexture.Sample ( g_normalSampler, uv ).xyz * 2.0h - 1.0h;
+    const half2 normalData = mad ( (half2)g_normalTexture.Sample ( g_normalSampler, uv ).xw,
+        (half2)2.0H,
+        (half2)( -1.0H )
+    );
+
     const half3x3 tbnView = half3x3 ( tangentView, bitangentView, normalView );
-    return normalize ( mul ( normalData, tbnView ) );
+
+    // DISCLAMER: You might guess it's a good idea for optimization to not perform normalize operation here.
+    // In reality it's bad idea. In fact you will see noticable artifacts with specular on the light-up pass.
+    // And you will NOT see any performance benefits in terms of FPS on real game scenes.
+    // Trust me. I tried (2021-01-27)...
+    return normalize ( mul ( half3 ( normalData.x, normalData.y, 1.0H ), tbnView ) );
 }
 
 float4 PackUnitVector ( in half3 v )
 {
     float4 result;
-    result.xyz = (float3)( v * 0.5h + 0.5h );
-    result.w = 0.5f;
+    result.xyz = (float3)mad ( v, 0.5H, 0.5H );
+    result.w = 0.5F;
     return result;
 }
 
@@ -91,9 +100,9 @@ OutputData PS ( in InputData inputData )
         maskSample *= 1.0F / maskSum;
 
     float3 albedoOverlay = (float3)max ( 1.0F - maskSum, 0.0F );
-    albedoOverlay += inputData._color0.xyz * maskSample.x;
-    albedoOverlay += inputData._color1.xyz * maskSample.y;
-    albedoOverlay += inputData._color2.xyz * maskSample.z;
+    albedoOverlay = mad ( inputData._color0.xyz, maskSample.x, albedoOverlay );
+    albedoOverlay = mad ( inputData._color1.xyz, maskSample.y, albedoOverlay );
+    albedoOverlay = mad ( inputData._color2.xyz, maskSample.z, albedoOverlay );
 
     OutputData result;
 

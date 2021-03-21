@@ -4,6 +4,7 @@
 
 #include "mesh_geometry.h"
 #include "light_volume.h"
+#include "point_light.h"
 #include "point_light_lightup_program.h"
 #include "sampler.h"
 #include "uniform_buffer_pool.h"
@@ -23,8 +24,8 @@ class PointLightLightup final
         PointLightLightupProgram                _program;
         Sampler                                 _sampler;
         VkSubmitInfo                            _submitInfoTransfer;
-        std::vector<VkDescriptorBufferInfo>     _uniformInfo;
-        UniformBufferPool                       _uniformPool;
+        std::vector<VkDescriptorBufferInfo>     _uniformInfoLightData;
+        UniformBufferPool                       _uniformPoolLightData;
         android_vulkan::MeshGeometry            _volumeMesh;
         std::vector<VkWriteDescriptorSet>       _writeSets;
 
@@ -39,13 +40,6 @@ class PointLightLightup final
 
         ~PointLightLightup () = default;
 
-        [[maybe_unused]] [[nodiscard]] bool Execute ( android_vulkan::Renderer &renderer,
-            PointLightPass const &pointLightPass,
-            LightVolume &lightVolume,
-            GXMat4 const &viewerLocal,
-            GXMat4 const &view
-        );
-
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
             VkCommandBuffer commandBuffer,
             VkRenderPass renderPass,
@@ -55,15 +49,22 @@ class PointLightLightup final
 
         void Destroy ( VkDevice device );
 
-    private:
-        [[nodiscard]] bool AllocateNativeDescriptorSets ( android_vulkan::Renderer &renderer, size_t neededSets );
-        void DestroyDescriptorPool ( VkDevice device );
+        [[nodiscard]] android_vulkan::MeshGeometry const& GetLightVolume () const;
+
+        void Lightup ( VkCommandBuffer commandBuffer,
+            size_t lightIndex,
+            VkDescriptorSet volumeData
+        );
 
         [[nodiscard]] bool UpdateGPUData ( android_vulkan::Renderer &renderer,
             PointLightPass const &pointLightPass,
             GXMat4 const &viewerLocal,
             GXMat4 const &view
         );
+
+    private:
+        [[nodiscard]] bool AllocateNativeDescriptorSets ( android_vulkan::Renderer &renderer, size_t neededSets );
+        void DestroyDescriptorPool ( VkDevice device );
 };
 
 } // namespace pbr

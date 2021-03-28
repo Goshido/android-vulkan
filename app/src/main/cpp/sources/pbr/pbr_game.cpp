@@ -15,8 +15,8 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-constexpr static char const* SCENE = "pbr/N7_ADM_Reception/scene.scene";
-[[maybe_unused]] constexpr static uint32_t const SCENE_DESC_FORMAT_VERSION = 1U;
+constexpr static char const* SCENE = "pbr/assets/N7_ADM_Reception.scene";
+[[maybe_unused]] constexpr static uint32_t const SCENE_DESC_FORMAT_VERSION = 2U;
 
 constexpr static float const FIELD_OF_VIEW = 75.0F;
 constexpr static float const Z_NEAR = 0.1F;
@@ -186,17 +186,14 @@ bool PBRGame::UploadGPUContent ( android_vulkan::Renderer& renderer )
     auto const* sceneDesc = reinterpret_cast<pbr::SceneDesc const*> ( data );
 
     // Sanity checks.
-    static_assert ( sizeof ( GXMat4 ) == sizeof ( sceneDesc->_viewerLocal ) );
+    static_assert ( sizeof ( GXVec3 ) == sizeof ( sceneDesc->_viewerLocation ) );
     assert ( sceneDesc->_formatVersion == SCENE_DESC_FORMAT_VERSION );
 
-    auto const* viewerLocal = reinterpret_cast<GXMat4 const*> ( &sceneDesc->_viewerLocal );
-    GXVec3 location;
-    viewerLocal->GetW ( location );
-    _camera.SetLocation ( location );
+    _camera.SetLocation ( *reinterpret_cast<GXVec3 const*> ( &sceneDesc->_viewerLocation ) );
+    _camera.SetRotation ( sceneDesc->_viewerPitch, sceneDesc->_viewerYaw );
 
-    // TODO place this info to the scene descriptor info.
-    constexpr uint64_t const envMaps = 1U;
-    auto const comBuffs = static_cast<size_t> ( sceneDesc->_textureCount + sceneDesc->_meshCount + envMaps );
+    auto const comBuffs =
+        static_cast<size_t> ( sceneDesc->_textureCount + sceneDesc->_meshCount + sceneDesc->_envMapCount );
 
     if ( !CreateCommandPool ( renderer, comBuffs ) )
         return false;

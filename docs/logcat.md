@@ -10,5 +10,5 @@ _android-vulkan_ project is using `android_vulkan::C++` tag for logging. But it'
 So recommended _Logcat_'s regex filter is:
 
 ```txt
-^(?:android_vulkan\:\:C\+\+|libc|gralloc|ion|Gralloc3)$
+^(^(?:android_vulkan\:\:C\+\+|libc|DEBUG|gralloc|ion|Gralloc3)$)$
 ```

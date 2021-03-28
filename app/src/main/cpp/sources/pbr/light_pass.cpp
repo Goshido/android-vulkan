@@ -222,21 +222,27 @@ bool LightPass::OnPostGeometryPass ( android_vulkan::Renderer &renderer,
 
     _lightupCommonDescriptorSet.Bind ( commandBuffer );
 
-    if ( pointLights )
+    if ( !pointLights )
     {
-        _lightupRenderPassCounter = pointLights - 1U;
+        vkCmdBeginRenderPass ( commandBuffer, &_lightupRenderPassInfo, VK_SUBPASS_CONTENTS_INLINE );
+        vkCmdNextSubpass ( commandBuffer, VK_SUBPASS_CONTENTS_INLINE );
+    }
+    else
+    {
+        _lightupRenderPassCounter = reflections ? pointLights - 1U : pointLights;
 
-        bool const result = _pointLightPass.ExecuteLightupPhase ( renderer, _lightVolume, commandBuffer, viewerLocal, view,
+        bool const result = _pointLightPass.ExecuteLightupPhase ( renderer,
+            _lightVolume,
+            commandBuffer,
+            viewerLocal,
+            view,
             viewProjection
         );
 
         if ( !result )
+        {
             return false;
-    }
-    else
-    {
-        vkCmdBeginRenderPass ( commandBuffer, &_lightupRenderPassInfo, VK_SUBPASS_CONTENTS_INLINE );
-        vkCmdNextSubpass ( commandBuffer, VK_SUBPASS_CONTENTS_INLINE );
+        }
     }
 
     if ( !reflections )

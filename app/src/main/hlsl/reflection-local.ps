@@ -1,0 +1,30 @@
+#include "reflection-common.ps"
+
+[[vk::binding ( 1, 1 )]]
+cbuffer LightData:          register ( b1 )
+{
+    float3      _locationView;
+    float       _invSize;
+};
+
+//----------------------------------------------------------------------------------------------------------------------
+
+half GetAttenuation ( in float3 fragmentView )
+{
+    const half alpha = (half)min ( 1.0F, _invSize * distance ( _locationView, fragmentView ) );
+    return mad ( alpha, -alpha, 1.0H );
+}
+
+OutputData PS ( in linear float4 pixel: SV_Position )
+{
+    OutputData result;
+
+    const float4 alpha = RestoreLocationViewUnnormalized ( pixel.xy, GetDepth () );
+    const float3 fragmentView = alpha.xyz * ( 1.0F / alpha.w );
+
+    const half3 reflection = GetReflection ( (half3)normalize ( fragmentView ) );
+    const half attenuation = GetAttenuation ( fragmentView );
+
+    result._color = float4 ( (float3)( reflection * attenuation ), 0.0F );
+    return result;
+}

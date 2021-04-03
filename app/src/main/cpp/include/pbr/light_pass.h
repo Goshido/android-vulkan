@@ -8,6 +8,7 @@
 #include "light_volume.h"
 #include "point_light_pass.h"
 #include "reflection_global_pass.h"
+#include "reflection_local_pass.h"
 
 
 namespace pbr {
@@ -23,6 +24,7 @@ class LightPass final : public LightPassNotifier
         size_t                          _lightupRenderPassCounter;
         PointLightPass                  _pointLightPass;
         ReflectionGlobalPass            _reflectionGlobalPass;
+        ReflectionLocalPass             _reflectionLocalPass;
 
     public:
         LightPass () noexcept;
@@ -39,6 +41,7 @@ class LightPass final : public LightPassNotifier
         void Destroy ( VkDevice device );
 
         [[nodiscard]] size_t GetPointLightCount () const;
+        [[nodiscard]] size_t GetReflectionLocalCount () const;
         void OnFreeTransferResources ( VkDevice device );
 
         [[nodiscard]] bool OnPreGeometryPass ( android_vulkan::Renderer &renderer,
@@ -60,11 +63,7 @@ class LightPass final : public LightPassNotifier
 
         void SubmitPointLight ( LightRef const &light );
         void SubmitReflectionGlobal ( TextureCubeRef &prefilter );
-
-        [[maybe_unused]] static void SubmitReflectionLocal ( TextureCubeRef &prefilter,\
-            GXVec3 const &location,
-            float size
-        );
+        void SubmitReflectionLocal ( TextureCubeRef &prefilter, GXVec3 const &location, float size );
 
     private:
         void OnBeginLightWithVolume ( VkCommandBuffer commandBuffer ) override;

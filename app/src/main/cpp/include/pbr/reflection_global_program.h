@@ -4,6 +4,7 @@
 
 #include "light_lightup_base_program.h"
 #include "lightup_common_descriptor_set_layout.h"
+
 #include "reflection_global_descriptor_set_layout.h"
 #include <vulkan_utils.h>
 
@@ -14,6 +15,7 @@ class ReflectionGlobalProgram final : public LightLightupBaseProgram
 {
     private:
         LightupCommonDescriptorSetLayout        _commonLayout;
+
         ReflectionGlobalDescriptorSetLayout     _reflectionLayout;
 
     public:

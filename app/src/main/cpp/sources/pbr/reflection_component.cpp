@@ -18,6 +18,7 @@ ReflectionComponent::ReflectionComponent ( android_vulkan::Renderer &renderer,
     VkCommandBuffer const* commandBuffers
 ) noexcept:
     Component ( ClassID::Reflection ),
+    _bounds {},
     _isGlobal ( desc._size == FLT_MAX ),
     _size ( desc._size )
 {
@@ -27,6 +28,19 @@ ReflectionComponent::ReflectionComponent ( android_vulkan::Renderer &renderer,
 
     memcpy ( &_location, &desc._location, sizeof ( _location ) );
     _prefilter = std::make_shared<android_vulkan::TextureCube> ();
+
+    if ( !_isGlobal )
+    {
+        float const alpha = _size * 0.5F;
+        GXVec3 const beta ( alpha, alpha, alpha );
+
+        GXVec3 gamma;
+        gamma.Substract ( _location, beta );
+        _bounds.AddVertex ( gamma );
+
+        gamma.Sum ( _location, beta );
+        _bounds.AddVertex ( gamma );
+    }
 
     android_vulkan::TextureCubeData const cubeData
     {
@@ -61,7 +75,7 @@ void ReflectionComponent::Submit ( RenderSession &renderSession )
         return;
     }
 
-    renderSession.SubmitReflectionLocal ( _prefilter, _location, _size );
+    renderSession.SubmitReflectionLocal ( _prefilter, _location, _size, _bounds );
 }
 
 } // namespace pbr

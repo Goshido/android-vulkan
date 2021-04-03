@@ -49,7 +49,6 @@ class ReflectionGlobalPass final
 
     private:
         [[nodiscard]] bool AllocateDescriptorSets ( android_vulkan::Renderer &renderer, size_t neededSets );
-
         void DestroyDescriptorPool ( VkDevice device );
 
         [[nodiscard]] bool UpdateGPUData ( android_vulkan::Renderer &renderer,

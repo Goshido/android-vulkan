@@ -94,9 +94,6 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/pbr/cube_map_manager.cpp
     app/src/main/cpp/sources/pbr/gbuffer.cpp
     app/src/main/cpp/sources/pbr/geometry_pass.cpp
-    app/src/main/cpp/sources/pbr/reflection_global_descriptor_set_layout.cpp
-    app/src/main/cpp/sources/pbr/reflection_global_pass.cpp
-    app/src/main/cpp/sources/pbr/reflection_global_program.cpp
     app/src/main/cpp/sources/pbr/light.cpp
     app/src/main/cpp/sources/pbr/light_pass.cpp
     app/src/main/cpp/sources/pbr/lightup_common_descriptor_set.cpp
@@ -125,6 +122,12 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/pbr/present_pass.cpp
     app/src/main/cpp/sources/pbr/program.cpp
     app/src/main/cpp/sources/pbr/reflection_component.cpp
+    app/src/main/cpp/sources/pbr/reflection_global_descriptor_set_layout.cpp
+    app/src/main/cpp/sources/pbr/reflection_global_pass.cpp
+    app/src/main/cpp/sources/pbr/reflection_global_program.cpp
+    app/src/main/cpp/sources/pbr/reflection_local_descriptor_set_layout.cpp
+    app/src/main/cpp/sources/pbr/reflection_local_pass.cpp
+    app/src/main/cpp/sources/pbr/reflection_local_program.cpp
     app/src/main/cpp/sources/pbr/render_session.cpp
     app/src/main/cpp/sources/pbr/render_session_stats.cpp
     app/src/main/cpp/sources/pbr/sampler.cpp

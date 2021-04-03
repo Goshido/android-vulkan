@@ -1,57 +1,49 @@
-#ifndef PBR_POINT_LIGHT_LIGHTUP_PROGRAM_H
-#define PBR_POINT_LIGHT_LIGHTUP_PROGRAM_H
+#ifndef PBR_REFLECTION_LOCAL_PROGRAM_H
+#define PBR_REFLECTION_LOCAL_PROGRAM_H
 
 
-#include <half_types.h>
-#include "lightup_common_descriptor_set_layout.h"
 #include "light_lightup_base_program.h"
+#include "lightup_common_descriptor_set_layout.h"
 #include "light_volume_descriptor_set_layout.h"
-#include "point_light_descriptor_set_layout.h"
+#include "reflection_local_descriptor_set_layout.h"
+#include <vulkan_utils.h>
 
 
 namespace pbr {
 
-class PointLightLightupProgram final : public LightLightupBaseProgram
+class ReflectionLocalProgram final : public LightLightupBaseProgram
 {
     public:
         AV_DX_ALIGNMENT_BEGIN
 
-        struct VolumeData final
+        struct [[maybe_unused]] VolumeData final
         {
-            [[maybe_unused]] GXMat4                     _transform;
+            [[maybe_unused]] GXMat4             _transform;
         };
 
-        struct LightData final
+        struct [[maybe_unused]] LightData final
         {
-            [[maybe_unused]] GXMat4                     _lightProjection;
-            [[maybe_unused]] GXMat4                     _viewToLight;
-
-            [[maybe_unused]] GXVec3                     _lightLocationView;
-            [[maybe_unused]] float                      _sceneScaleFactor;
-
-            [[maybe_unused]] android_vulkan::Half3      _hue;
-            [[maybe_unused]] android_vulkan::Half       _intensity;
-
-            [[maybe_unused]] GXVec2                     _padding1_0;
+            [[maybe_unused]] GXVec3             _locationView;
+            [[maybe_unused]] float              _invSize;
         };
 
         AV_DX_ALIGNMENT_END
 
     private:
-        LightupCommonDescriptorSetLayout                _commonLayout;
-        LightVolumeDescriptorSetLayout                  _lightVolumeLayout;
-        PointLightDescriptorSetLayout                   _pointLightLayout;
+        LightupCommonDescriptorSetLayout        _commonLayout;
+        LightVolumeDescriptorSetLayout          _lightVolumeLayout;
+        ReflectionLocalDescriptorSetLayout      _reflectionLayout;
 
     public:
-        PointLightLightupProgram () noexcept;
+        ReflectionLocalProgram ();
 
-        PointLightLightupProgram ( PointLightLightupProgram const & ) = delete;
-        PointLightLightupProgram& operator = ( PointLightLightupProgram const & ) = delete;
+        ReflectionLocalProgram ( ReflectionLocalProgram const & ) = delete;
+        ReflectionLocalProgram& operator = ( ReflectionLocalProgram const & ) = delete;
 
-        PointLightLightupProgram ( PointLightLightupProgram && ) = delete;
-        PointLightLightupProgram& operator = ( PointLightLightupProgram && ) = delete;
+        ReflectionLocalProgram ( ReflectionLocalProgram && ) = delete;
+        ReflectionLocalProgram& operator = ( ReflectionLocalProgram && ) = delete;
 
-        ~PointLightLightupProgram () = default;
+        ~ReflectionLocalProgram () override = default;
 
         // Method return true is success. Otherwise method returns false.
         // The method MUST invoke vkCreateGraphicsPipelines at the end.
@@ -62,15 +54,14 @@ class PointLightLightupProgram final : public LightLightupBaseProgram
         ) override;
 
         void Destroy ( VkDevice device ) override;
+        [[nodiscard]] DescriptorSetInfo const& GetResourceInfo () const override;
 
-        void SetDescriptorSets ( VkCommandBuffer commandBuffer,
-            VkDescriptorSet lightData,
+        [[maybe_unused]] void SetDescriptorSets ( VkCommandBuffer commandBuffer,
+            VkDescriptorSet reflectionData,
             VkDescriptorSet volumeData
         ) const;
 
     private:
-        [[nodiscard]] DescriptorSetInfo const& GetResourceInfo () const override;
-
         [[nodiscard]] VkPipelineColorBlendStateCreateInfo const* InitColorBlendInfo (
             VkPipelineColorBlendStateCreateInfo &info,
             VkPipelineColorBlendAttachmentState* attachments
@@ -116,4 +107,4 @@ class PointLightLightupProgram final : public LightLightupBaseProgram
 } // namespace pbr
 
 
-#endif // PBR_POINT_LIGHT_LIGHTUP_PROGRAM_H
+#endif // PBR_REFLECTION_LOCAL_PROGRAM_H

@@ -19,11 +19,10 @@ struct OutputData
 
 //----------------------------------------------------------------------------------------------------------------------
 
-half3 RestoreDirectionView ( in float2 locationImage, in float depth )
+float4 RestoreLocationViewUnnormalized ( in float2 locationImage, in float depth )
 {
     const float2 alpha = mad ( locationImage, _invResolutionFactor, (float2)( -1.0F ) );
-    const float4 v = mul ( _cvvToView, float4 ( alpha, depth, 1.0F ) );
-    return normalize ( (half3)v.xyz );
+    return mul ( _cvvToView, float4 ( alpha, depth, 1.0F ) );
 }
 
 float Roughness2Mip ( in half roughness )
@@ -33,13 +32,13 @@ float Roughness2Mip ( in half roughness )
     return (float)clamp ( mip, 0.0H, PREFILTER_MAX_MIP_LEVEL );
 }
 
-half3 GetReflection ( in float2 pixel, in float depth )
+half3 GetReflection ( in half3 toFragmentView )
 {
     half roughness;
     half metallic;
     GetParams ( roughness, metallic );
 
-    const half3 directionView = -RestoreDirectionView ( pixel.xy, depth );
+    const half3 directionView = -toFragmentView;
     const half3 normalView = RestoreNormalView ();
     const half dN = max ( 0.0H, dot ( directionView, normalView ) );
     const half3 freshnel = GetFresnel ( dN, metallic, GetAlbedo () );

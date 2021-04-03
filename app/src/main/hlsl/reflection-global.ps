@@ -16,6 +16,7 @@ OutputData PS ( in linear float4 pixel: SV_Position )
         return result;
     }
 
-    result._color = float4 ( (float3)GetReflection ( pixel.xy, depth ), 0.0F );
+    const float4 alpha = RestoreLocationViewUnnormalized ( pixel.xy, depth );
+    result._color = float4 ( (float3)GetReflection ( (half3)normalize ( alpha.xyz ) ), 0.0F );
     return result;
 }

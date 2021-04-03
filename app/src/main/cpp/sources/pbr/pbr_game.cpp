@@ -15,7 +15,7 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-constexpr static char const* SCENE = "pbr/assets/N7_ADM_Reception.scene";
+constexpr static char const* SCENE = "pbr/assets/N7_ENG_Injection.scene";
 [[maybe_unused]] constexpr static uint32_t const SCENE_DESC_FORMAT_VERSION = 2U;
 
 constexpr static float const FIELD_OF_VIEW = 75.0F;

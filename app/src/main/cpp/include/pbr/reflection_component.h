@@ -11,11 +11,12 @@ namespace pbr {
 class ReflectionComponent final : public Component
 {
     private:
-        [[maybe_unused]] bool               _isGlobal;
-        [[maybe_unused]] float              _size;
+        GXAABB              _bounds;
+        bool                _isGlobal;
+        float               _size;
 
-        [[maybe_unused]] GXVec3             _location;
-        [[maybe_unused]] TextureCubeRef     _prefilter;
+        GXVec3              _location;
+        TextureCubeRef      _prefilter;
 
     public:
         ReflectionComponent () = delete;

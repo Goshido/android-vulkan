@@ -18,7 +18,8 @@ LightPass::LightPass () noexcept:
     _lightupCommonDescriptorSet {},
     _lightupRenderPassCounter ( 0U ),
     _pointLightPass {},
-    _reflectionGlobalPass {}
+    _reflectionGlobalPass {},
+    _reflectionLocalPass {}
 {
     // NOTHING
 }
@@ -68,11 +69,18 @@ bool LightPass::Init ( android_vulkan::Renderer &renderer, GBuffer &gBuffer )
         return false;
     }
 
+    if ( !_reflectionLocalPass.Init ( renderer, _lightupRenderPassInfo.renderPass, 1U, resolution ) )
+    {
+        Destroy ( renderer.GetDevice () );
+        return false;
+    }
+
     return true;
 }
 
 void LightPass::Destroy ( VkDevice device )
 {
+    _reflectionLocalPass.Destroy ( device );
     _reflectionGlobalPass.Destroy ( device );
     _pointLightPass.Destroy ( device );
     _lightupCommonDescriptorSet.Destroy ( device );
@@ -98,6 +106,11 @@ void LightPass::Destroy ( VkDevice device )
 size_t LightPass::GetPointLightCount () const
 {
     return _pointLightPass.GetPointLightCount ();
+}
+
+size_t LightPass::GetReflectionLocalCount () const
+{
+    return _reflectionLocalPass.GetReflectionLocalCount ();
 }
 
 void LightPass::OnFreeTransferResources ( VkDevice device )
@@ -172,6 +185,7 @@ void LightPass::Reset ()
     _lightupRenderPassCounter = 0U;
     _pointLightPass.Reset ();
     _reflectionGlobalPass.Reset ();
+    _reflectionLocalPass.Reset ();
 }
 
 void LightPass::SubmitPointLight ( LightRef const &light )
@@ -184,13 +198,9 @@ void LightPass::SubmitReflectionGlobal ( TextureCubeRef &prefilter )
     _reflectionGlobalPass.Append ( prefilter );
 }
 
-[[maybe_unused]] void LightPass::SubmitReflectionLocal ( TextureCubeRef &/*prefilter*/,
-    GXVec3 const &/*location*/,
-    float /*size*/
-)
+void LightPass::SubmitReflectionLocal ( TextureCubeRef &prefilter, GXVec3 const &location, float size )
 {
-    // TODO
-    assert ( false );
+    _reflectionLocalPass.Append ( prefilter, location, size );
 }
 
 void LightPass::OnBeginLightWithVolume ( VkCommandBuffer commandBuffer )

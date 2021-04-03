@@ -86,6 +86,7 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
         return false;
 
     _renderSessionStats.RenderPointLights ( _lightPass.GetPointLightCount () );
+    _renderSessionStats.RenderReflectionLocal ( _lightPass.GetReflectionLocalCount () );
 
     vkCmdPipelineBarrier ( commandBuffer,
         VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
@@ -228,9 +229,18 @@ void RenderSession::SubmitReflectionGlobal ( TextureCubeRef &prefilter )
     _renderSessionStats.RenderReflectionGlobal ();
 }
 
-void RenderSession::SubmitReflectionLocal ( TextureCubeRef &/*prefilter*/, GXVec3 const& /*location*/, float /*size*/ )
+void RenderSession::SubmitReflectionLocal ( TextureCubeRef &prefilter,
+    GXVec3 const &location,
+    float size,
+    GXAABB const &bounds
+)
 {
-    // TODO
+    _renderSessionStats.SubmitReflectionLocal ();
+
+    if ( !_frustum.IsVisible ( bounds ) )
+        return;
+
+    _lightPass.SubmitReflectionLocal ( prefilter, location, size );
 }
 
 bool RenderSession::CreateGBufferFramebuffer ( android_vulkan::Renderer &renderer )

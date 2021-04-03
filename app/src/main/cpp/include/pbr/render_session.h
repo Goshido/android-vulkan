@@ -69,7 +69,12 @@ class RenderSession final
 
         void SubmitLight ( LightRef const &light );
         void SubmitReflectionGlobal ( TextureCubeRef &prefilter );
-        [[maybe_unused]] void SubmitReflectionLocal ( TextureCubeRef &prefilter, GXVec3 const &location, float size );
+
+        void SubmitReflectionLocal ( TextureCubeRef &prefilter,
+            GXVec3 const &location,
+            float size,
+            GXAABB const &bounds
+        );
 
     private:
         [[nodiscard]] bool CreateGBufferFramebuffer ( android_vulkan::Renderer &renderer );

@@ -128,14 +128,8 @@ Program::DescriptorSetInfo const& ReflectionGlobalProgram::GetResourceInfo () co
                 .descriptorCount = 4U
             },
             {
-                .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                .descriptorCount = 1U
-            }
-        },
-        {
-            {
                 .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-                .descriptorCount = 2U
+                .descriptorCount = 1U
             },
             {
                 .type = VK_DESCRIPTOR_TYPE_SAMPLER,
@@ -143,6 +137,12 @@ Program::DescriptorSetInfo const& ReflectionGlobalProgram::GetResourceInfo () co
             },
             {
                 .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                .descriptorCount = 1U
+            }
+        },
+        {
+            {
+                .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
                 .descriptorCount = 1U
             }
         }

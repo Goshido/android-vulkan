@@ -5,11 +5,21 @@
 
 namespace pbr {
 
+constexpr static char const BRDF_LUT[] = "pbr/system/brdf-lut.png";
+
+// 256 128 64 32 16 8 4 2 1
+// counting from 0.0F
+constexpr static float const MAX_PREFILTER_LOD = 8.0F;
+
 LightupCommonDescriptorSet::LightupCommonDescriptorSet () noexcept:
+    _brdfLUT {},
+    _brdfLUTSampler {},
+    _brdfTransfer ( VK_NULL_HANDLE ),
     _commandPool ( VK_NULL_HANDLE ),
     _descriptorPool ( VK_NULL_HANDLE ),
     _layout {},
     _pipelineLayout ( VK_NULL_HANDLE ),
+    _prefilterSampler {},
     _set ( VK_NULL_HANDLE ),
     _uniformBuffer {}
 {
@@ -36,6 +46,14 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer, GBuf
         {
             .type = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
             .descriptorCount = 4U
+        },
+        {
+            .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+            .descriptorCount = 1U
+        },
+        {
+            .type = VK_DESCRIPTOR_TYPE_SAMPLER,
+            .descriptorCount = 2U
         },
         {
             .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
@@ -104,7 +122,7 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer, GBuf
 
     AV_REGISTER_PIPELINE_LAYOUT ( "LightupCommonDescriptorSet::_pipelineLayout" )
 
-    VkDescriptorSetAllocateInfo const allocateInfo
+    VkDescriptorSetAllocateInfo const descriptorSetAllocateInfo
     {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
         .pNext = nullptr,
@@ -113,7 +131,8 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer, GBuf
         .pSetLayouts = &nativeLayout
     };
 
-    result = android_vulkan::Renderer::CheckVkResult ( vkAllocateDescriptorSets ( device, &allocateInfo, &_set ),
+    result = android_vulkan::Renderer::CheckVkResult (
+        vkAllocateDescriptorSets ( device, &descriptorSetAllocateInfo, &_set ),
         "LightupCommonDescriptorSet::Init",
         "Can't allocate descriptor set"
     );
@@ -160,6 +179,89 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer, GBuf
         return false;
     }
 
+    VkCommandBufferAllocateInfo const commandBufferAllocateInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+        .pNext = nullptr,
+        .commandPool = _commandPool,
+        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+        .commandBufferCount = 1U
+    };
+
+    result = android_vulkan::Renderer::CheckVkResult (
+        vkAllocateCommandBuffers ( device, &commandBufferAllocateInfo, &_brdfTransfer ),
+        "LightupCommonDescriptorSet::Init",
+        "Can't allocate command buffer"
+    );
+
+    if ( !result )
+    {
+        Destroy ( device );
+        return false;
+    }
+
+    if ( !_brdfLUT.UploadData ( renderer, BRDF_LUT, android_vulkan::eFormat::Unorm, false, _brdfTransfer ) )
+    {
+        Destroy ( device );
+        return false;
+    }
+
+    constexpr VkSamplerCreateInfo const brdfSamplerInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .magFilter = VK_FILTER_LINEAR,
+        .minFilter = VK_FILTER_LINEAR,
+        .mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST,
+        .addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+        .addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+        .addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+        .mipLodBias = 0.0F,
+        .anisotropyEnable = VK_FALSE,
+        .maxAnisotropy = 1.0F,
+        .compareEnable = VK_FALSE,
+        .compareOp = VK_COMPARE_OP_ALWAYS,
+        .minLod = 0.0F,
+        .maxLod = 0.0F,
+        .borderColor = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK,
+        .unnormalizedCoordinates = VK_FALSE
+    };
+
+    if ( !_brdfLUTSampler.Init ( renderer, brdfSamplerInfo ) )
+    {
+        Destroy ( device );
+        return false;
+    }
+
+    constexpr VkSamplerCreateInfo const prefilterSamplerInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .magFilter = VK_FILTER_LINEAR,
+        .minFilter = VK_FILTER_LINEAR,
+        .mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR,
+        .addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+        .addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+        .addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+        .mipLodBias = 0.0F,
+        .anisotropyEnable = VK_FALSE,
+        .maxAnisotropy = 1.0F,
+        .compareEnable = VK_FALSE,
+        .compareOp = VK_COMPARE_OP_ALWAYS,
+        .minLod = 0.0F,
+        .maxLod = MAX_PREFILTER_LOD,
+        .borderColor = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK,
+        .unnormalizedCoordinates = VK_FALSE
+    };
+
+    if ( !_prefilterSampler.Init ( renderer, prefilterSamplerInfo ) )
+    {
+        Destroy ( device );
+        return false;
+    }
+
     VkDescriptorBufferInfo const buffer
     {
         .buffer = _uniformBuffer.GetBuffer (),
@@ -188,6 +290,16 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer, GBuf
             .sampler = VK_NULL_HANDLE,
             .imageView = gBuffer.GetReadOnlyDepthImageView (),
             .imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL
+        },
+        {
+            .sampler = _brdfLUTSampler.GetSampler (),
+            .imageView = _brdfLUT.GetImageView (),
+            .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+        },
+        {
+            .sampler = _prefilterSampler.GetSampler (),
+            .imageView = VK_NULL_HANDLE,
+            .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
         },
     };
 
@@ -248,6 +360,42 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer, GBuf
             .dstBinding = 4U,
             .dstArrayElement = 0U,
             .descriptorCount = 1U,
+            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+            .pImageInfo = images + 4U,
+            .pBufferInfo = nullptr,
+            .pTexelBufferView = nullptr
+        },
+        {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .pNext = nullptr,
+            .dstSet = _set,
+            .dstBinding = 5U,
+            .dstArrayElement = 0U,
+            .descriptorCount = 1U,
+            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
+            .pImageInfo = images + 4U,
+            .pBufferInfo = nullptr,
+            .pTexelBufferView = nullptr
+        },
+        {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .pNext = nullptr,
+            .dstSet = _set,
+            .dstBinding = 6U,
+            .dstArrayElement = 0U,
+            .descriptorCount = 1U,
+            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
+            .pImageInfo = images + 5U,
+            .pBufferInfo = nullptr,
+            .pTexelBufferView = nullptr
+        },
+        {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .pNext = nullptr,
+            .dstSet = _set,
+            .dstBinding = 7U,
+            .dstArrayElement = 0U,
+            .descriptorCount = 1U,
             .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
             .pImageInfo = nullptr,
             .pBufferInfo = &buffer,
@@ -261,20 +409,25 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer, GBuf
 
 void LightupCommonDescriptorSet::Destroy ( VkDevice device )
 {
-    if ( _pipelineLayout != VK_NULL_HANDLE )
-    {
-        vkDestroyPipelineLayout ( device, _pipelineLayout, nullptr );
-        _pipelineLayout = VK_NULL_HANDLE;
-        AV_UNREGISTER_PIPELINE_LAYOUT ( "LightupCommonDescriptorSet::_pipelineLayout" )
-    }
+    _prefilterSampler.Destroy ( device );
+    _brdfLUTSampler.Destroy ( device );
+    _brdfLUT.FreeResources ( device );
 
     _uniformBuffer.FreeResources ( device );
 
     if ( _commandPool != VK_NULL_HANDLE )
     {
         vkDestroyCommandPool ( device, _commandPool, nullptr );
+        _brdfTransfer = VK_NULL_HANDLE;
         _commandPool = VK_NULL_HANDLE;
         AV_UNREGISTER_COMMAND_POOL ( "LightupCommonDescriptorSet::_commandPool" )
+    }
+
+    if ( _pipelineLayout != VK_NULL_HANDLE )
+    {
+        vkDestroyPipelineLayout ( device, _pipelineLayout, nullptr );
+        _pipelineLayout = VK_NULL_HANDLE;
+        AV_UNREGISTER_PIPELINE_LAYOUT ( "LightupCommonDescriptorSet::_pipelineLayout" )
     }
 
     _layout.Destroy ( device );
@@ -287,14 +440,27 @@ void LightupCommonDescriptorSet::Destroy ( VkDevice device )
     AV_UNREGISTER_DESCRIPTOR_POOL ( "LightupCommonDescriptorSet::_descriptorPool" )
 }
 
+void LightupCommonDescriptorSet::OnFreeTransferResources ( VkDevice device )
+{
+    _brdfLUT.FreeTransferResources ( device );
+
+    if ( _brdfTransfer == VK_NULL_HANDLE )
+        return;
+
+    vkFreeCommandBuffers ( device, _commandPool, 1U, &_brdfTransfer );
+    _brdfTransfer = VK_NULL_HANDLE;
+}
+
 bool LightupCommonDescriptorSet::Update ( android_vulkan::Renderer &renderer,
     VkExtent2D const &resolution,
+    GXMat4 const &viewerLocal,
     GXMat4 const &cvvToView
 )
 {
     LightLightupBaseProgram::ViewData const viewData
     {
-        ._toView = cvvToView,
+        ._cvvToView = cvvToView,
+        ._viewToWorld = viewerLocal,
 
         ._invResolutionFactor
         {

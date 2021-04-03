@@ -65,10 +65,10 @@ class Game : public android_vulkan::Game
         Transform                           _transform;
 
     protected:
-        explicit Game ( const char* fragmentShader );
+        explicit Game ( char const* fragmentShader );
 
-        Game ( const Game &other ) = delete;
-        Game& operator = ( const Game &other ) = delete;
+        Game ( Game const & ) = delete;
+        Game& operator = ( Game const & ) = delete;
 
         [[nodiscard]] virtual bool CreateDescriptorSet ( android_vulkan::Renderer &renderer ) = 0;
         [[nodiscard]] virtual bool CreatePipelineLayout ( android_vulkan::Renderer &renderer ) = 0;

@@ -38,7 +38,7 @@ constexpr static const float Z_FAR = 1.0e+3F;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-Game::Game ( const char* fragmentShader ):
+Game::Game ( char const* fragmentShader ):
     _commandPool ( VK_NULL_HANDLE ),
     _descriptorPool ( VK_NULL_HANDLE ),
     _descriptorSetLayout ( VK_NULL_HANDLE ),

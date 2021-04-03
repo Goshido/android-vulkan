@@ -72,34 +72,6 @@ bool ReflectionGlobalDescriptorSetLayoutImpl::Init ( android_vulkan::Renderer &r
             .descriptorCount = 1U,
             .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
             .pImmutableSamplers = nullptr
-        },
-        {
-            .binding = 1U,
-            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
-            .descriptorCount = 1U,
-            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
-            .pImmutableSamplers = nullptr
-        },
-        {
-            .binding = 2U,
-            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-            .descriptorCount = 1U,
-            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
-            .pImmutableSamplers = nullptr
-        },
-        {
-            .binding = 3U,
-            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
-            .descriptorCount = 1U,
-            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
-            .pImmutableSamplers = nullptr
-        },
-        {
-            .binding = 4U,
-            .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            .descriptorCount = 1U,
-            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
-            .pImmutableSamplers = nullptr
         }
     };
 

@@ -1,52 +1,8 @@
-#include "lightup-common.ps"
+#include "reflection-common.ps"
 
-#define PREFILTER_MAX_MIP_LEVEL     8.0H
-#define VOID_SPACE_DEPTH            1.0F
-
-[[vk::binding ( 0, 1 )]]
-TextureCube<float4>         g_prefilter:            register ( t0 );
-
-[[vk::binding ( 1, 1 )]]
-SamplerState                g_prefilterSampler:     register ( s0 );
-
-[[vk::binding ( 2, 1 )]]
-Texture2D<float4>           g_brdf:                 register ( t1 );
-
-[[vk::binding ( 3, 1 )]]
-SamplerState                g_brdfSampler:          register ( s1 );
-
-[[vk::binding ( 4, 1 )]]
-cbuffer Transform:                                  register ( b1 )
-{
-    matrix                  _viewToWorld;
-};
-
-struct InputData
-{
-    linear float4           _pixel:         SV_Position;
-};
-
-struct OutputData
-{
-    [[vk::location (0)]]
-    float4                  _color:         SV_Target0;
-};
+#define VOID_SPACE_DEPTH    1.0F
 
 //----------------------------------------------------------------------------------------------------------------------
-
-half3 RestoreDirectionView ( in float2 locationImage, in float depth )
-{
-    const float2 alpha = mad ( locationImage, _invResolutionFactor, (float2)( -1.0F ) );
-    const float4 v = mul ( _cvvToView, float4 ( alpha, depth, 1.0F ) );
-    return normalize ( (half3)v.xyz );
-}
-
-float Roughness2Mip ( in half roughness )
-{
-    // It's emperical ease function. Please plot the graph to see what happens.
-    const half mip = 8.42H + ( 0.01H - 8.42H ) / ( 1.0H + pow ( roughness / 0.2584H, 2.164H ) );
-    return (float)clamp ( mip, 0.0H, PREFILTER_MAX_MIP_LEVEL );
-}
 
 OutputData PS ( in linear float4 pixel: SV_Position )
 {
@@ -60,21 +16,6 @@ OutputData PS ( in linear float4 pixel: SV_Position )
         return result;
     }
 
-    half roughness;
-    half metallic;
-    GetParams ( roughness, metallic );
-
-    const half3 directionView = -RestoreDirectionView ( pixel.xy, depth );
-    const half3 normalView = RestoreNormalView ();
-    const half dN = max ( 0.0H, dot ( directionView, normalView ) );
-    const half3 freshnel = GetFresnel ( dN, metallic, GetAlbedo () );
-
-    const float3 refl = -mul ( (float3x3)_viewToWorld, (float3)( reflect ( directionView, normalView ) ) );
-    const float mip = Roughness2Mip ( roughness );
-
-    const half3 prefilterColor = (half3)g_prefilter.SampleLevel ( g_prefilterSampler, refl, mip ).xyz;
-    const half2 brdf = (half2)g_brdf.Sample ( g_brdfSampler, float2 ( (float)dN, 1.0F - roughness ) ).xy;
-
-    result._color = float4 ( (float3)( prefilterColor * mad ( freshnel, (half3)brdf.x, (half3)brdf.y ) ), 0.0F );
+    result._color = float4 ( (float3)GetReflection ( pixel.xy, depth ), 0.0F );
     return result;
 }

@@ -57,6 +57,7 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
         _gBuffer.GetResolution(),
         _geometryPass.GetSceneData(),
         _opaqueMeshCount,
+        _viewerLocal,
         _cvvToView
     );
 

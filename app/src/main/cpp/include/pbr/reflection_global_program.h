@@ -10,18 +10,8 @@
 
 namespace pbr {
 
-class [[maybe_unused]] ReflectionGlobalProgram final : public LightLightupBaseProgram
+class ReflectionGlobalProgram final : public LightLightupBaseProgram
 {
-    public:
-        AV_DX_ALIGNMENT_BEGIN
-
-        struct Transform final
-        {
-            [[maybe_unused]] GXMat4             _viewToWorld;
-        };
-
-        AV_DX_ALIGNMENT_END
-
     private:
         LightupCommonDescriptorSetLayout        _commonLayout;
         ReflectionGlobalDescriptorSetLayout     _reflectionLayout;

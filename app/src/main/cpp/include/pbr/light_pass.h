@@ -15,8 +15,6 @@ namespace pbr {
 class LightPass final : public LightPassNotifier
 {
     private:
-        android_vulkan::Texture2D       _brdfLUT;
-        Sampler                         _brdfLUTSampler;
         VkCommandBuffer                 _commandBuffer;
         VkCommandPool                   _commandPool;
         VkRenderPassBeginInfo           _lightupRenderPassInfo;
@@ -47,6 +45,7 @@ class LightPass final : public LightPassNotifier
             VkExtent2D const &resolution,
             SceneData const &sceneData,
             size_t opaqueMeshCount,
+            GXMat4 const &viewerLocal,
             GXMat4 const &cvvToView
         );
 

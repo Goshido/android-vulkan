@@ -16,7 +16,6 @@ namespace pbr {
 class LightPass final : public LightPassNotifier
 {
     private:
-        VkCommandBuffer                 _commandBuffer;
         VkCommandPool                   _commandPool;
         VkRenderPassBeginInfo           _lightupRenderPassInfo;
         LightVolume                     _lightVolume;
@@ -25,6 +24,8 @@ class LightPass final : public LightPassNotifier
         PointLightPass                  _pointLightPass;
         ReflectionGlobalPass            _reflectionGlobalPass;
         ReflectionLocalPass             _reflectionLocalPass;
+        VkCommandBuffer                 _transfer;
+        android_vulkan::MeshGeometry    _unitCube;
 
     public:
         LightPass () noexcept;
@@ -37,7 +38,7 @@ class LightPass final : public LightPassNotifier
 
         ~LightPass () = default;
 
-        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, GBuffer &gBuffer );
+        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, VkCommandPool commandPool, GBuffer &gBuffer );
         void Destroy ( VkDevice device );
 
         [[nodiscard]] size_t GetPointLightCount () const;
@@ -49,6 +50,8 @@ class LightPass final : public LightPassNotifier
             SceneData const &sceneData,
             size_t opaqueMeshCount,
             GXMat4 const &viewerLocal,
+            GXMat4 const &view,
+            GXMat4 const &viewProjection,
             GXMat4 const &cvvToView
         );
 
@@ -71,7 +74,6 @@ class LightPass final : public LightPassNotifier
 
         [[nodiscard]] bool CreateLightupFramebuffer ( VkDevice device, GBuffer &gBuffer );
         [[nodiscard]] bool CreateLightupRenderPass ( VkDevice device, GBuffer &gBuffer );
-        void DestroyCommandPool ( VkDevice device );
 };
 
 } // namespace pbr

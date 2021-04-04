@@ -109,8 +109,8 @@ void ReflectionLocalProgram::Destroy ( VkDevice device )
         AV_UNREGISTER_PIPELINE_LAYOUT ( "ReflectionLocalProgram::_pipelineLayout" )
     }
 
-    _lightVolumeLayout.Destroy ( device );
     _reflectionLayout.Destroy ( device );
+    _lightVolumeLayout.Destroy ( device );
     _commonLayout.Destroy ( device );
 
     if ( _fragmentShader != VK_NULL_HANDLE )
@@ -152,6 +152,12 @@ Program::DescriptorSetInfo const& ReflectionLocalProgram::GetResourceInfo () con
         },
         {
             {
+                .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                .descriptorCount = 1U
+            }
+        },
+        {
+            {
                 .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
                 .descriptorCount = 1U
             },
@@ -165,23 +171,14 @@ Program::DescriptorSetInfo const& ReflectionLocalProgram::GetResourceInfo () con
     return info;
 }
 
-void ReflectionLocalProgram::SetDescriptorSets ( VkCommandBuffer commandBuffer,
-    VkDescriptorSet lightData,
-    VkDescriptorSet volumeData
-) const
+void ReflectionLocalProgram::SetLightData ( VkCommandBuffer commandBuffer, VkDescriptorSet lightData ) const
 {
-    VkDescriptorSet const sets[]
-    {
-        lightData,
-        volumeData
-    };
-
     vkCmdBindDescriptorSets ( commandBuffer,
         VK_PIPELINE_BIND_POINT_GRAPHICS,
         _pipelineLayout,
+        2U,
         1U,
-        static_cast<uint32_t> ( std::size ( sets ) ),
-        sets,
+        &lightData,
         0U,
         nullptr
     );
@@ -276,17 +273,17 @@ bool ReflectionLocalProgram::InitLayout ( android_vulkan::Renderer &renderer, Vk
     if ( !_commonLayout.Init ( renderer ) )
         return false;
 
-    if ( !_reflectionLayout.Init ( renderer ) )
+    if ( !_lightVolumeLayout.Init ( renderer ) )
         return false;
 
-    if ( !_lightVolumeLayout.Init ( renderer ) )
+    if ( !_reflectionLayout.Init ( renderer ) )
         return false;
 
     VkDescriptorSetLayout const layouts[] =
     {
         _commonLayout.GetLayout (),
-        _reflectionLayout.GetLayout (),
-        _lightVolumeLayout.GetLayout ()
+        _lightVolumeLayout.GetLayout (),
+        _reflectionLayout.GetLayout ()
     };
 
     VkPipelineLayoutCreateInfo const layoutInfo

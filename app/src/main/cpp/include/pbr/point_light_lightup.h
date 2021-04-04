@@ -26,7 +26,6 @@ class PointLightLightup final
         VkSubmitInfo                            _submitInfoTransfer;
         std::vector<VkDescriptorBufferInfo>     _uniformInfoLightData;
         UniformBufferPool                       _uniformPoolLightData;
-        android_vulkan::MeshGeometry            _volumeMesh;
         std::vector<VkWriteDescriptorSet>       _writeSets;
 
     public:
@@ -41,7 +40,6 @@ class PointLightLightup final
         ~PointLightLightup () = default;
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
-            VkCommandBuffer commandBuffer,
             VkRenderPass renderPass,
             uint32_t subpass,
             VkExtent2D const &resolution
@@ -49,12 +47,7 @@ class PointLightLightup final
 
         void Destroy ( VkDevice device );
 
-        [[nodiscard]] android_vulkan::MeshGeometry const& GetLightVolume () const;
-
-        void Lightup ( VkCommandBuffer commandBuffer,
-            size_t lightIndex,
-            VkDescriptorSet volumeData
-        );
+        void Lightup ( VkCommandBuffer commandBuffer, android_vulkan::MeshGeometry &unitCube, size_t lightIndex );
 
         [[nodiscard]] bool UpdateGPUData ( android_vulkan::Renderer &renderer,
             PointLightPass const &pointLightPass,

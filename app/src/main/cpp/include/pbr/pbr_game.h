@@ -51,9 +51,7 @@ class PBRGame final : public android_vulkan::Game
         bool OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) override;
         bool OnDestroy ( android_vulkan::Renderer &renderer ) override;
 
-        [[nodiscard]] bool CreateCommandPool ( android_vulkan::Renderer &renderer, size_t commandBufferCount );
         void DestroyCommandPool ( VkDevice device );
-
         [[nodiscard]] bool UploadGPUContent ( android_vulkan::Renderer &renderer );
 };
 

@@ -58,6 +58,8 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
         _geometryPass.GetSceneData(),
         _opaqueMeshCount,
         _viewerLocal,
+        _view,
+        _viewProjection,
         _cvvToView
     );
 
@@ -107,7 +109,7 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
     return true;
 }
 
-bool RenderSession::Init ( android_vulkan::Renderer &renderer, VkExtent2D const &resolution )
+bool RenderSession::Init ( android_vulkan::Renderer &renderer, VkCommandPool commandPool, VkExtent2D const &resolution )
 {
     if ( !_gBuffer.Init ( renderer, resolution ) )
     {
@@ -127,7 +129,7 @@ bool RenderSession::Init ( android_vulkan::Renderer &renderer, VkExtent2D const 
         return false;
     }
 
-    if ( !_lightPass.Init ( renderer, _gBuffer ) || !_presentPass.Init ( renderer ) )
+    if ( !_lightPass.Init ( renderer, commandPool, _gBuffer ) || !_presentPass.Init ( renderer ) )
     {
         Destroy ( renderer.GetDevice () );
         return false;

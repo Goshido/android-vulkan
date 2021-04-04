@@ -51,7 +51,28 @@ bool PBRGame::OnInit ( android_vulkan::Renderer &renderer )
     resolution.width = resolution.width * RESOLUTION_SCALE_WIDTH / 100U;
     resolution.height = resolution.height * RESOLUTION_SCALE_HEIGHT / 100U;
 
-    if ( !_renderSession.Init ( renderer, resolution ) )
+    VkCommandPoolCreateInfo const createInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+        .queueFamilyIndex = renderer.GetQueueFamilyIndex ()
+    };
+
+    VkDevice device = renderer.GetDevice ();
+
+    bool result = android_vulkan::Renderer::CheckVkResult (
+        vkCreateCommandPool ( device, &createInfo, nullptr, &_commandPool ),
+        "PBRGame::OnInit",
+        "Can't create command pool"
+    );
+
+    if ( !result )
+        return false;
+
+    AV_REGISTER_COMMAND_POOL ( "PBRGame::_commandPool" )
+
+    if ( !_renderSession.Init ( renderer, _commandPool, resolution ) )
     {
         OnDestroy ( renderer );
         return false;
@@ -109,59 +130,16 @@ bool PBRGame::OnDestroy ( android_vulkan::Renderer &renderer )
         return false;
 
     Camera::ReleaseInput ();
-    DestroyCommandPool ( device );
 
     _components.clear ();
     _renderSession.Destroy ( device );
+    DestroyCommandPool ( device );
 
     MeshManager::Destroy ( device );
     MaterialManager::Destroy ( device );
     CubeMapManager::Destroy ( device );
 
     return true;
-}
-
-bool PBRGame::CreateCommandPool ( android_vulkan::Renderer &renderer, size_t commandBufferCount )
-{
-    VkCommandPoolCreateInfo createInfo;
-    createInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-    createInfo.pNext = nullptr;
-    createInfo.flags = 0U;
-    createInfo.queueFamilyIndex = renderer.GetQueueFamilyIndex ();
-
-    VkDevice device = renderer.GetDevice ();
-
-    bool result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateCommandPool ( device, &createInfo, nullptr, &_commandPool ),
-        "PBRGame::CreateCommandPool",
-        "Can't create command pool"
-    );
-
-    if ( !result )
-        return false;
-
-    AV_REGISTER_COMMAND_POOL ( "PBRGame::_commandPool" )
-
-    _commandBuffers.resize ( commandBufferCount );
-
-    VkCommandBufferAllocateInfo allocateInfo;
-    allocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    allocateInfo.pNext = nullptr;
-    allocateInfo.commandBufferCount = static_cast<uint32_t> ( commandBufferCount );
-    allocateInfo.commandPool = _commandPool;
-    allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-
-    result = android_vulkan::Renderer::CheckVkResult (
-        vkAllocateCommandBuffers ( device, &allocateInfo, _commandBuffers.data () ),
-        "PBRGame::CreateCommandPool",
-        "Can't allocate command buffers"
-    );
-
-    if ( result )
-        return true;
-
-    _commandBuffers.clear ();
-    return false;
 }
 
 void PBRGame::DestroyCommandPool ( VkDevice device )
@@ -195,7 +173,24 @@ bool PBRGame::UploadGPUContent ( android_vulkan::Renderer& renderer )
     auto const comBuffs =
         static_cast<size_t> ( sceneDesc->_textureCount + sceneDesc->_meshCount + sceneDesc->_envMapCount );
 
-    if ( !CreateCommandPool ( renderer, comBuffs ) )
+    VkCommandBufferAllocateInfo const allocateInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+        .pNext = nullptr,
+        .commandPool = _commandPool,
+        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+        .commandBufferCount = static_cast<uint32_t> ( comBuffs )
+    };
+
+    _commandBuffers.resize ( comBuffs );
+
+    bool result = android_vulkan::Renderer::CheckVkResult (
+        vkAllocateCommandBuffers ( renderer.GetDevice (), &allocateInfo, _commandBuffers.data () ),
+        "PBRGame::UploadGPUContent",
+        "Can't allocate command buffers"
+    );
+
+    if ( !result )
         return false;
 
     VkCommandBuffer const* commandBuffers = _commandBuffers.data ();
@@ -232,7 +227,7 @@ bool PBRGame::UploadGPUContent ( android_vulkan::Renderer& renderer )
         readPointer += read;
     }
 
-    bool const result = android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( renderer.GetQueue () ),
+    result = android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( renderer.GetQueue () ),
         "PBRGame::UploadGPUContent",
         "Can't run upload commands"
     );

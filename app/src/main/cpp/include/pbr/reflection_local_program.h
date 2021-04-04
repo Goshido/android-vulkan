@@ -16,12 +16,12 @@ class ReflectionLocalProgram final : public LightLightupBaseProgram
     public:
         AV_DX_ALIGNMENT_BEGIN
 
-        struct [[maybe_unused]] VolumeData final
+        struct VolumeData final
         {
             [[maybe_unused]] GXMat4             _transform;
         };
 
-        struct [[maybe_unused]] LightData final
+        struct LightData final
         {
             [[maybe_unused]] GXVec3             _locationView;
             [[maybe_unused]] float              _invSize;
@@ -56,10 +56,7 @@ class ReflectionLocalProgram final : public LightLightupBaseProgram
         void Destroy ( VkDevice device ) override;
         [[nodiscard]] DescriptorSetInfo const& GetResourceInfo () const override;
 
-        [[maybe_unused]] void SetDescriptorSets ( VkCommandBuffer commandBuffer,
-            VkDescriptorSet reflectionData,
-            VkDescriptorSet volumeData
-        ) const;
+        void SetLightData ( VkCommandBuffer commandBuffer, VkDescriptorSet lightData ) const;
 
     private:
         [[nodiscard]] VkPipelineColorBlendStateCreateInfo const* InitColorBlendInfo (

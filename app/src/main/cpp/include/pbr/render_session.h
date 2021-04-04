@@ -53,7 +53,11 @@ class RenderSession final
         void Begin ( GXMat4 const &viewerLocal, GXMat4 const &projection );
         [[nodiscard]] bool End ( android_vulkan::Renderer &renderer, double deltaTime );
 
-        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, VkExtent2D const &resolution );
+        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
+            VkCommandPool commandPool,
+            VkExtent2D const &resolution
+        );
+
         void Destroy ( VkDevice device );
         void FreeTransferResources ( VkDevice device );
 

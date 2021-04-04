@@ -69,6 +69,7 @@ class PointLightPass final
 
         [[nodiscard]] bool ExecuteLightupPhase ( android_vulkan::Renderer &renderer,
             LightVolume &lightVolume,
+            android_vulkan::MeshGeometry &unitCube,
             VkCommandBuffer commandBuffer,
             GXMat4 const &viewerLocal,
             GXMat4 const &view,

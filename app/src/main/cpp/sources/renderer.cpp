@@ -1963,12 +1963,12 @@ bool Renderer::PrintPhysicalDeviceFeatureInfo ( VkPhysicalDevice physicalDevice 
 
     LogInfo ( "%sSupported:", INDENT_2 );
 
-    for ( auto &item : supportedFeatures )
+    for ( auto& item : supportedFeatures )
         LogInfo ( "%s%s", INDENT_3, item.data () );
 
     LogInfo ( "%sUnsupported:", INDENT_2 );
 
-    for ( auto &item : unsupportedFeatures )
+    for ( auto& item : unsupportedFeatures )
         LogInfo ( "%s%s", INDENT_3, item.data () );
 
     return true;

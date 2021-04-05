@@ -96,6 +96,7 @@ bool PointLightPass::ExecuteShadowPhase ( android_vulkan::Renderer &renderer,
 
 bool PointLightPass::Init ( android_vulkan::Renderer &renderer,
     LightPassNotifier &notifier,
+    VkCommandPool commandPool,
     VkExtent2D const &resolution,
     VkRenderPass lightupRenderPass
 )
@@ -154,28 +155,7 @@ bool PointLightPass::Init ( android_vulkan::Renderer &renderer,
         return false;
     }
 
-    VkCommandPoolCreateInfo const commandPoolInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
-        .queueFamilyIndex = renderer.GetQueueFamilyIndex ()
-    };
-
-    result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateCommandPool ( device, &commandPoolInfo, nullptr, &_commandPool ),
-        "PointLightPass::Init",
-        "Can't create command pool"
-    );
-
-    if ( !result )
-    {
-        Destroy ( device );
-        return false;
-    }
-
-    AV_REGISTER_COMMAND_POOL ( "PointLightPass::_commandPool" )
-
+    _commandPool = commandPool;
     VkCommandBuffer commandBuffers[ 3U ];
 
     VkCommandBufferAllocateInfo const allocateInfo
@@ -214,6 +194,7 @@ bool PointLightPass::Init ( android_vulkan::Renderer &renderer,
     _lightSubmitInfoTransfer.pSignalSemaphores = nullptr;
 
     result = _lightup.Init ( renderer,
+        commandPool,
         lightupRenderPass,
         LightVolume::GetLightupSubpass (),
         resolution
@@ -256,7 +237,7 @@ void PointLightPass::Destroy ( VkDevice device )
 
     if ( !_shadowmaps.empty () )
     {
-        for ( auto &[image, framebuffer] : _shadowmaps )
+        for ( auto& [image, framebuffer] : _shadowmaps )
         {
             if ( framebuffer == VK_NULL_HANDLE )
                 continue;
@@ -272,19 +253,43 @@ void PointLightPass::Destroy ( VkDevice device )
 
     DestroyLightDescriptorPool ( device );
     _lightDescriptorSets.clear ();
+    _lightDescriptorSets.shrink_to_fit ();
+
     _lightUniformInfo.clear ();
+    _lightUniformInfo.shrink_to_fit ();
+
     _lightWriteSets.clear ();
+    _lightWriteSets.shrink_to_fit ();
 
     DestroyShadowmapDescriptorPool ( device );
     _shadowmapDescriptorSets.clear ();
+    _shadowmapDescriptorSets.shrink_to_fit ();
+
     _shadowmapUniformInfo.clear ();
+    _shadowmapUniformInfo.shrink_to_fit ();
+
     _shadowmapWriteSets.clear ();
+    _shadowmapWriteSets.shrink_to_fit ();
 
     if ( _commandPool != VK_NULL_HANDLE )
     {
-        vkDestroyCommandPool ( device, _commandPool, nullptr );
+        VkCommandBuffer const commandBuffers[] =
+        {
+            _shadowmapRenderCommandBuffer,
+            _shadowmapTransferCommandBuffer,
+            _lightTransferCommandBuffer
+        };
+
+        vkFreeCommandBuffers ( device,
+            _commandPool,
+            static_cast<uint32_t> ( std::size ( commandBuffers ) ),
+            commandBuffers
+        );
+
+        _shadowmapRenderCommandBuffer = VK_NULL_HANDLE;
+        _shadowmapTransferCommandBuffer = VK_NULL_HANDLE;
+        _lightTransferCommandBuffer = VK_NULL_HANDLE;
         _commandPool = VK_NULL_HANDLE;
-        AV_UNREGISTER_COMMAND_POOL ( "PointLightPass::_commandPool" )
     }
 
     _lightUniformPool.Destroy ( device );
@@ -753,7 +758,7 @@ bool PointLightPass::GenerateShadowmaps ( android_vulkan::Renderer &renderer )
 
     _shadowmapProgram.Bind ( _shadowmapRenderCommandBuffer );
 
-    for ( auto const &[light, casters] : _interacts )
+    for ( auto const& [light, casters] : _interacts )
     {
         PointLightShadowmapInfo const* shadowmapInfo = AcquirePointLightShadowmap ( renderer );
 
@@ -763,7 +768,7 @@ bool PointLightPass::GenerateShadowmaps ( android_vulkan::Renderer &renderer )
         _shadowmapRenderPassInfo.framebuffer = shadowmapInfo->second;
         vkCmdBeginRenderPass ( _shadowmapRenderCommandBuffer, &_shadowmapRenderPassInfo, VK_SUBPASS_CONTENTS_INLINE );
 
-        for ( auto const &unique : casters._uniques )
+        for ( auto const& unique : casters._uniques )
         {
             vkCmdBindVertexBuffers ( _shadowmapRenderCommandBuffer, 0U, 1U, &unique->GetVertexBuffer (), &offset );
 
@@ -777,7 +782,7 @@ bool PointLightPass::GenerateShadowmaps ( android_vulkan::Renderer &renderer )
             vkCmdDrawIndexed ( _shadowmapRenderCommandBuffer, unique->GetVertexCount (), 1U, 0U, 0, 0U );
         }
 
-        for ( auto const &[name, caster] : casters._batches )
+        for ( auto const& [name, caster] : casters._batches )
         {
             auto const &[mesh, transforms] = caster;
             vkCmdBindVertexBuffers ( _shadowmapRenderCommandBuffer, 0U, 1U, &mesh->GetVertexBuffer (), &offset );
@@ -900,18 +905,18 @@ bool PointLightPass::UpdateShadowmapGPUData ( android_vulkan::Renderer &renderer
         );
     };
 
-    for ( auto &[light, casters] : _interacts )
+    for ( auto& [light, casters] : _interacts )
     {
         // Note it's safe cast like that here. "NOLINT" is a clang-tidy control comment.
         auto& pointLight = static_cast<PointLight &> ( *light.get () ); // NOLINT
         GXAABB const& lightBounds = pointLight.GetBounds ();
         PointLight::Matrices const& matrices = pointLight.GetMatrices ();
 
-        for ( auto const &[material, opaque] : sceneData )
+        for ( auto const& [material, opaque] : sceneData )
         {
             std::vector<MeshRef>* uniques = nullptr;
 
-            for ( auto const &[mesh, opaqueData] : opaque.GetUniqueList () )
+            for ( auto const& [mesh, opaqueData] : opaque.GetUniqueList () )
             {
                 if ( !lightBounds.IsOverlaped ( opaqueData._worldBounds ) )
                     continue;
@@ -934,7 +939,7 @@ bool PointLightPass::UpdateShadowmapGPUData ( android_vulkan::Renderer &renderer
             // material only geometry matters. So to make shadowmap calls most efficiently it's need to collect
             // all instances first and only then fill uniform buffers.
 
-            for ( auto const &[name, meshGroup] : opaque.GetBatchList () )
+            for ( auto const& [name, meshGroup] : opaque.GetBatchList () )
             {
                 for ( auto const& opaqueData : meshGroup._opaqueData )
                 {
@@ -957,7 +962,7 @@ bool PointLightPass::UpdateShadowmapGPUData ( android_vulkan::Renderer &renderer
         }
 
         // Commit uniform buffers for batch meshes.
-        for ( auto const &[name, caster] : casters._batches )
+        for ( auto const& [name, caster] : casters._batches )
         {
             std::vector<GXMat4> const& locals = caster.second;
             size_t remain = locals.size ();

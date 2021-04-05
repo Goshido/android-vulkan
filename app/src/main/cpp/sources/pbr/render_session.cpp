@@ -123,7 +123,14 @@ bool RenderSession::Init ( android_vulkan::Renderer &renderer, VkCommandPool com
         return false;
     }
 
-    if ( !_geometryPass.Init ( renderer, _gBuffer.GetResolution (), _gBufferRenderPass, _gBufferFramebuffer ) )
+    bool const result = _geometryPass.Init ( renderer,
+        commandPool,
+        _gBuffer.GetResolution (),
+        _gBufferRenderPass,
+        _gBufferFramebuffer
+    );
+
+    if ( !result )
     {
         Destroy ( renderer.GetDevice () );
         return false;

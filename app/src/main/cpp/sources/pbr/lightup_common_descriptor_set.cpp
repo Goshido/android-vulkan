@@ -39,7 +39,10 @@ void LightupCommonDescriptorSet::Bind ( VkCommandBuffer commandBuffer )
     );
 }
 
-bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer, GBuffer &gBuffer )
+bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
+    VkCommandPool commandPool,
+    GBuffer &gBuffer
+)
 {
     constexpr static VkDescriptorPoolSize const poolSizes[] =
     {
@@ -143,27 +146,7 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer, GBuf
         return false;
     }
 
-    VkCommandPoolCreateInfo const commandPoolInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
-        .queueFamilyIndex = renderer.GetQueueFamilyIndex ()
-    };
-
-    result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateCommandPool ( device, &commandPoolInfo, nullptr, &_commandPool ),
-        "LightupCommonDescriptorSet::Init",
-        "Can't create command pool"
-    );
-
-    if ( !result )
-    {
-        Destroy ( device );
-        return false;
-    }
-
-    AV_REGISTER_COMMAND_POOL ( "LightupCommonDescriptorSet::_commandPool" )
+    _commandPool = commandPool;
 
     if ( !_uniformBuffer.Init ( renderer, _commandPool, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT ) )
     {
@@ -417,10 +400,9 @@ void LightupCommonDescriptorSet::Destroy ( VkDevice device )
 
     if ( _commandPool != VK_NULL_HANDLE )
     {
-        vkDestroyCommandPool ( device, _commandPool, nullptr );
+        vkFreeCommandBuffers ( device, _commandPool, 1U, &_brdfTransfer );
         _brdfTransfer = VK_NULL_HANDLE;
         _commandPool = VK_NULL_HANDLE;
-        AV_UNREGISTER_COMMAND_POOL ( "LightupCommonDescriptorSet::_commandPool" )
     }
 
     if ( _pipelineLayout != VK_NULL_HANDLE )
@@ -449,6 +431,7 @@ void LightupCommonDescriptorSet::OnFreeTransferResources ( VkDevice device )
 
     vkFreeCommandBuffers ( device, _commandPool, 1U, &_brdfTransfer );
     _brdfTransfer = VK_NULL_HANDLE;
+    _commandPool = VK_NULL_HANDLE;
 }
 
 bool LightupCommonDescriptorSet::Update ( android_vulkan::Renderer &renderer,

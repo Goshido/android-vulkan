@@ -58,7 +58,7 @@ void MeshManager::Destroy ( VkDevice device )
 
 void MeshManager::DestroyInternal ( VkDevice device )
 {
-    for ( auto &mesh : _meshStorage )
+    for ( auto& mesh : _meshStorage )
         mesh.second->FreeResources ( device );
 
     _meshStorage.clear ();

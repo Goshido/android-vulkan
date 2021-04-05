@@ -37,7 +37,7 @@ class LightupCommonDescriptorSet final
 
         void Bind ( VkCommandBuffer commandBuffer );
 
-        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, GBuffer &gBuffer );
+        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, VkCommandPool commandPool, GBuffer &gBuffer );
         void Destroy ( VkDevice device );
         void OnFreeTransferResources ( VkDevice device );
 

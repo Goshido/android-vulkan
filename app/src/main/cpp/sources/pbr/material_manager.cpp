@@ -129,7 +129,7 @@ void MaterialManager::Destroy ( VkDevice device )
 
 void MaterialManager::DestroyInternal ( VkDevice device )
 {
-    for ( auto &texture : _textureStorage )
+    for ( auto& texture : _textureStorage )
         texture.second->FreeResources ( device );
 
     _textureStorage.clear ();

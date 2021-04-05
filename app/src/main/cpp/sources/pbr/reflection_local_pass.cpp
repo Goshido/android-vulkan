@@ -278,7 +278,7 @@ bool ReflectionLocalPass::UploadGPUData ( android_vulkan::Renderer &renderer,
     size_t bufferIndex = 0U;
     size_t imageIndex = 0U;
 
-    for ( auto const &call : _calls )
+    for ( auto const& call : _calls )
     {
         alpha._data[ 0U ] = call._size;
         alpha._data[ 5U ] = call._size;

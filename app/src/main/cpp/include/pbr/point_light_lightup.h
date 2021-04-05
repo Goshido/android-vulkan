@@ -40,6 +40,7 @@ class PointLightLightup final
         ~PointLightLightup () = default;
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
+            VkCommandPool commandPool,
             VkRenderPass renderPass,
             uint32_t subpass,
             VkExtent2D const &resolution

@@ -50,7 +50,7 @@ bool LightPass::Init ( android_vulkan::Renderer &renderer, VkCommandPool command
         return false;
     }
 
-    if ( !_lightupCommonDescriptorSet.Init ( renderer, gBuffer ) )
+    if ( !_lightupCommonDescriptorSet.Init ( renderer, commandPool, gBuffer ) )
     {
         Destroy ( renderer.GetDevice () );
         return false;
@@ -58,7 +58,7 @@ bool LightPass::Init ( android_vulkan::Renderer &renderer, VkCommandPool command
 
     VkExtent2D const& resolution = gBuffer.GetResolution ();
 
-    if ( !_pointLightPass.Init ( renderer, *this, resolution, _lightupRenderPassInfo.renderPass ) )
+    if ( !_pointLightPass.Init ( renderer, *this, commandPool, resolution, _lightupRenderPassInfo.renderPass ) )
     {
         Destroy ( renderer.GetDevice () );
         return false;

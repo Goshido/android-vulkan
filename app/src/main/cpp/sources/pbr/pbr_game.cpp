@@ -111,7 +111,7 @@ bool PBRGame::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime )
     _camera.Update ( static_cast<float> ( deltaTime ) );
     _renderSession.Begin ( _camera.GetLocalMatrix (), _camera.GetProjectionMatrix () );
 
-    for ( auto &component : _components )
+    for ( auto& component : _components )
         component->Submit ( _renderSession );
 
     return _renderSession.End ( renderer, deltaTime );
@@ -235,7 +235,7 @@ bool PBRGame::UploadGPUContent ( android_vulkan::Renderer& renderer )
     if ( !result )
         return false;
 
-    for ( auto &component : _components )
+    for ( auto& component : _components )
         component->FreeTransferResources ( renderer );
 
     return true;

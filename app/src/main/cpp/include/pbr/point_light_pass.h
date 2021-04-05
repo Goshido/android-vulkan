@@ -83,6 +83,7 @@ class PointLightPass final
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
             LightPassNotifier &notifier,
+            VkCommandPool commandPool,
             VkExtent2D const &resolution,
             VkRenderPass lightupRenderPass
         );

@@ -31,31 +31,13 @@ PointLightLightup::PointLightLightup () noexcept:
 }
 
 bool PointLightLightup::Init ( android_vulkan::Renderer &renderer,
+    VkCommandPool commandPool,
     VkRenderPass renderPass,
     uint32_t subpass,
     VkExtent2D const &resolution
 )
 {
-    VkCommandPoolCreateInfo const poolInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
-        .queueFamilyIndex = renderer.GetQueueFamilyIndex ()
-    };
-
-    VkDevice device = renderer.GetDevice ();
-
-    bool result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateCommandPool ( device, &poolInfo, nullptr, &_commandPool ),
-        "PointLightLightup::Init",
-        "Can't create command pool"
-    );
-
-    if ( !result )
-        return false;
-
-    AV_REGISTER_COMMAND_POOL ( "PointLightLightup::_commandPool" )
+    _commandPool = commandPool;
 
     VkCommandBufferAllocateInfo const allocateInfo
     {
@@ -66,7 +48,9 @@ bool PointLightLightup::Init ( android_vulkan::Renderer &renderer,
         .commandBufferCount = 1U
     };
 
-    result = android_vulkan::Renderer::CheckVkResult (
+    VkDevice device = renderer.GetDevice ();
+
+    bool result = android_vulkan::Renderer::CheckVkResult (
         vkAllocateCommandBuffers ( device, &allocateInfo, &_transferCommandBuffer ),
         "PointLightLightup::Init",
         "Can't allocate command buffer"
@@ -147,10 +131,9 @@ void PointLightLightup::Destroy ( VkDevice device )
     if ( _commandPool == VK_NULL_HANDLE )
         return;
 
-    vkDestroyCommandPool ( device, _commandPool, nullptr );
-    _commandPool = VK_NULL_HANDLE;
+    vkFreeCommandBuffers ( device, _commandPool, 1U, &_transferCommandBuffer );
     _transferCommandBuffer = VK_NULL_HANDLE;
-    AV_UNREGISTER_COMMAND_POOL ( "PointLightLightup::_commandPool" )
+    _commandPool = VK_NULL_HANDLE;
 }
 
 void PointLightLightup::Lightup ( VkCommandBuffer commandBuffer,

@@ -12,6 +12,7 @@ namespace pbr {
 
 LightPass::LightPass () noexcept:
     _commandPool ( VK_NULL_HANDLE ),
+    _imageBarriers {},
     _lightupRenderPassInfo {},
     _lightVolume {},
     _lightupCommonDescriptorSet {},
@@ -44,6 +45,8 @@ bool LightPass::Init ( android_vulkan::Renderer &renderer, VkCommandPool command
         return false;
     }
 
+    CreateImageBarriers ( gBuffer );
+
     if ( !_lightVolume.Init ( renderer, gBuffer, _lightupRenderPassInfo.renderPass ) )
     {
         Destroy ( renderer.GetDevice () );
@@ -70,7 +73,7 @@ bool LightPass::Init ( android_vulkan::Renderer &renderer, VkCommandPool command
         return false;
     }
 
-    bool result = _reflectionLocalPass.Init ( renderer,
+    bool const result = _reflectionLocalPass.Init ( renderer,
         *this,
         commandPool,
         _lightupRenderPassInfo.renderPass,
@@ -84,69 +87,13 @@ bool LightPass::Init ( android_vulkan::Renderer &renderer, VkCommandPool command
         return false;
     }
 
-    _commandPool = commandPool;
-
-    VkCommandBufferAllocateInfo const allocateInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-        .pNext = nullptr,
-        .commandPool = _commandPool,
-        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-        .commandBufferCount = 1U
-    };
-
-    result = android_vulkan::Renderer::CheckVkResult (
-        vkAllocateCommandBuffers ( device, &allocateInfo, &_transfer ),
-        "LightPass::Init",
-        "Can't allocate command buffer"
-    );
-
-    if ( !result )
+    if ( !CreateUnitCube ( renderer, commandPool ) )
     {
         Destroy ( renderer.GetDevice () );
         return false;
     }
 
-    constexpr GXVec3 const vertices[] =
-    {
-        GXVec3 ( -0.5F, -0.5F, -0.5F ),
-        GXVec3 ( 0.5F, -0.5F, -0.5F ),
-        GXVec3 ( -0.5F, 0.5F, -0.5F ),
-        GXVec3 ( 0.5F, 0.5F, -0.5F ),
-        GXVec3 ( 0.5F, -0.5F, 0.5F ),
-        GXVec3 ( -0.5F, -0.5F, 0.5F ),
-        GXVec3 ( 0.5F, 0.5F, 0.5F ),
-        GXVec3 ( -0.5F, 0.5F, 0.5F ),
-    };
-
-    constexpr uint32_t const indices[] =
-    {
-        0U, 2U, 1U,
-        1U, 2U, 3U,
-        1U, 3U, 4U,
-        4U, 3U, 6U,
-        4U, 6U, 5U,
-        5U, 6U, 7U,
-        5U, 7U, 0U,
-        0U, 7U, 2U,
-        2U, 7U, 3U,
-        3U, 7U, 6U,
-        5U, 0U, 4U,
-        4U, 0U, 1U
-    };
-
-    GXAABB bounds;
-    bounds.AddVertex ( vertices[ 0U ] );
-    bounds.AddVertex ( vertices[ 7U ] );
-
-    return _unitCube.LoadMesh ( reinterpret_cast<uint8_t const*> ( vertices ),
-        sizeof ( vertices ),
-        indices,
-        static_cast<uint32_t> ( std::size ( indices ) ),
-        bounds,
-        renderer,
-        _transfer
-    );
+    return true;
 }
 
 void LightPass::Destroy ( VkDevice device )
@@ -238,6 +185,18 @@ bool LightPass::OnPostGeometryPass ( android_vulkan::Renderer &renderer,
     if ( lightVolumes + globalReflections == 0U )
         return true;
 
+    vkCmdPipelineBarrier ( commandBuffer,
+        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+        0U,
+        0U,
+        nullptr,
+        0U,
+        nullptr,
+        static_cast<uint32_t> ( INPUT_ATTACHMENTS ),
+        _imageBarriers
+    );
+
     _lightupCommonDescriptorSet.Bind ( commandBuffer );
 
     if ( lightVolumes )
@@ -321,6 +280,39 @@ void LightPass::OnEndLightWithVolume ( VkCommandBuffer commandBuffer )
     --_lightupRenderPassCounter;
 }
 
+void LightPass::CreateImageBarriers ( GBuffer &gBuffer )
+{
+    VkImageMemoryBarrier barrier
+    {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+        .pNext = nullptr,
+        .srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+        .dstAccessMask = VK_ACCESS_INPUT_ATTACHMENT_READ_BIT,
+        .oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+        .newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .image = gBuffer.GetAlbedo ().GetImage (),
+
+        .subresourceRange
+        {
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .baseMipLevel = 0U,
+            .levelCount = 1U,
+            .baseArrayLayer = 0U,
+            .layerCount = 1U
+        }
+    };
+
+    _imageBarriers[ 0U ] = barrier;
+
+    barrier.image = gBuffer.GetNormal ().GetImage ();
+    _imageBarriers[ 1U ] = barrier;
+
+    barrier.image = gBuffer.GetParams ().GetImage ();
+    _imageBarriers[ 2U ] = barrier;
+}
+
 bool LightPass::CreateLightupFramebuffer ( VkDevice device, GBuffer &gBuffer )
 {
     VkImageView const attachments[] =
@@ -386,8 +378,8 @@ bool LightPass::CreateLightupRenderPass ( VkDevice device, GBuffer &gBuffer )
             .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
             .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
             .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-            .initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-            .finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+            .initialLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+            .finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
         },
 
         // #2: normal
@@ -399,8 +391,8 @@ bool LightPass::CreateLightupRenderPass ( VkDevice device, GBuffer &gBuffer )
             .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
             .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
             .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-            .initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-            .finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+            .initialLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+            .finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
         },
 
         // #3: params
@@ -412,8 +404,8 @@ bool LightPass::CreateLightupRenderPass ( VkDevice device, GBuffer &gBuffer )
             .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
             .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
             .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-            .initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-            .finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+            .initialLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+            .finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
         },
 
         // #4: depth|stencil
@@ -597,6 +589,73 @@ bool LightPass::CreateLightupRenderPass ( VkDevice device, GBuffer &gBuffer )
     _lightupRenderPassInfo.clearValueCount = static_cast<uint32_t> ( std::size ( clearValues ) );
     _lightupRenderPassInfo.pClearValues = clearValues;
     return true;
+}
+
+bool LightPass::CreateUnitCube ( android_vulkan::Renderer &renderer, VkCommandPool commandPool )
+{
+    _commandPool = commandPool;
+
+    VkCommandBufferAllocateInfo const allocateInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+        .pNext = nullptr,
+        .commandPool = _commandPool,
+        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+        .commandBufferCount = 1U
+    };
+
+    bool result = android_vulkan::Renderer::CheckVkResult (
+        vkAllocateCommandBuffers ( renderer.GetDevice (), &allocateInfo, &_transfer ),
+        "LightPass::CreateUnitCube",
+        "Can't allocate command buffer"
+    );
+
+    if ( !result )
+    {
+        Destroy ( renderer.GetDevice () );
+        return false;
+    }
+
+    constexpr GXVec3 const vertices[] =
+    {
+        GXVec3 ( -0.5F, -0.5F, -0.5F ),
+        GXVec3 ( 0.5F, -0.5F, -0.5F ),
+        GXVec3 ( -0.5F, 0.5F, -0.5F ),
+        GXVec3 ( 0.5F, 0.5F, -0.5F ),
+        GXVec3 ( 0.5F, -0.5F, 0.5F ),
+        GXVec3 ( -0.5F, -0.5F, 0.5F ),
+        GXVec3 ( 0.5F, 0.5F, 0.5F ),
+        GXVec3 ( -0.5F, 0.5F, 0.5F )
+    };
+
+    constexpr uint32_t const indices[] =
+    {
+        0U, 2U, 1U,
+        1U, 2U, 3U,
+        1U, 3U, 4U,
+        4U, 3U, 6U,
+        4U, 6U, 5U,
+        5U, 6U, 7U,
+        5U, 7U, 0U,
+        0U, 7U, 2U,
+        2U, 7U, 3U,
+        3U, 7U, 6U,
+        5U, 0U, 4U,
+        4U, 0U, 1U
+    };
+
+    GXAABB bounds;
+    bounds.AddVertex ( vertices[ 0U ] );
+    bounds.AddVertex ( vertices[ 7U ] );
+
+    return _unitCube.LoadMesh ( reinterpret_cast<uint8_t const*> ( vertices ),
+        sizeof ( vertices ),
+        indices,
+        static_cast<uint32_t> ( std::size ( indices ) ),
+        bounds,
+        renderer,
+        _transfer
+    );
 }
 
 } // namespace pbr

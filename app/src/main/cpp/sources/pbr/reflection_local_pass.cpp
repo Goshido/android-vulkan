@@ -297,7 +297,7 @@ bool ReflectionLocalPass::UploadGPUData ( android_vulkan::Renderer &renderer,
 
         _imageInfo[ imageIndex++ ].imageView = call._prefilter->GetImageView ();
 
-        lightData._invSize = 1.0F / call._size;
+        lightData._invSize = 2.0F / call._size;
         view.MultiplyAsPoint ( lightData._locationView, call._location );
 
         VkDescriptorBufferInfo& lightDataBuffer = _bufferInfo[ bufferIndex++ ];

@@ -16,7 +16,10 @@ namespace pbr {
 class LightPass final : public LightPassNotifier
 {
     private:
+        constexpr static size_t const INPUT_ATTACHMENTS = 3U;
+
         VkCommandPool                   _commandPool;
+        VkImageMemoryBarrier            _imageBarriers[ INPUT_ATTACHMENTS ];
         VkRenderPassBeginInfo           _lightupRenderPassInfo;
         LightVolume                     _lightVolume;
         LightupCommonDescriptorSet      _lightupCommonDescriptorSet;
@@ -72,8 +75,10 @@ class LightPass final : public LightPassNotifier
         void OnBeginLightWithVolume ( VkCommandBuffer commandBuffer ) override;
         void OnEndLightWithVolume ( VkCommandBuffer commandBuffer ) override;
 
+        void CreateImageBarriers ( GBuffer &gBuffer );
         [[nodiscard]] bool CreateLightupFramebuffer ( VkDevice device, GBuffer &gBuffer );
         [[nodiscard]] bool CreateLightupRenderPass ( VkDevice device, GBuffer &gBuffer );
+        [[nodiscard]] bool CreateUnitCube ( android_vulkan::Renderer &renderer, VkCommandPool commandPool );
 };
 
 } // namespace pbr

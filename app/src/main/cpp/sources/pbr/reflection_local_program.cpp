@@ -221,11 +221,11 @@ VkPipelineDepthStencilStateCreateInfo const* ReflectionLocalProgram::InitDepthSt
     info.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
     info.pNext = nullptr;
     info.flags = 0U;
-    info.depthTestEnable = VK_FALSE;
+    info.depthTestEnable = VK_TRUE;
     info.depthWriteEnable = VK_FALSE;
-    info.depthCompareOp = VK_COMPARE_OP_ALWAYS;
+    info.depthCompareOp = VK_COMPARE_OP_GREATER;
     info.depthBoundsTestEnable = VK_FALSE;
-    info.stencilTestEnable = VK_FALSE;
+    info.stencilTestEnable = VK_TRUE;
 
     info.front =
     {
@@ -262,7 +262,7 @@ VkPipelineInputAssemblyStateCreateInfo const* ReflectionLocalProgram::InitInputA
     info.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
     info.pNext = nullptr;
     info.flags = 0U;
-    info.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
+    info.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
     info.primitiveRestartEnable = VK_FALSE;
 
     return &info;

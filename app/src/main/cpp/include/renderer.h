@@ -144,8 +144,11 @@ class Renderer final
 
         [[nodiscard]] bool IsReady () const;
 
-        [[nodiscard]] bool OnInit ( ANativeWindow &nativeWindow, bool vSync );
-        void OnDestroy ();
+        [[nodiscard]] bool OnCreateSwapchain ( ANativeWindow &nativeWindow, bool vSync );
+        void OnDestroySwapchain ();
+
+        [[nodiscard]] bool OnCreateDevice ();
+        void OnDestroyDevice ();
 
         // Note method will invoke AV_REGISTER_DEVICE_MEMORY internally if success.
         [[nodiscard]] bool TryAllocateMemory ( VkDeviceMemory &memory,

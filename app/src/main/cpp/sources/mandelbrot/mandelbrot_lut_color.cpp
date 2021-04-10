@@ -489,8 +489,8 @@ void MandelbrotLUTColor::InitLUTSamples ( uint8_t* samples ) const
         constexpr const float sampleToAngle = twoPi / static_cast<float> ( LUT_SAMPLE_COUNT );
 
         auto evaluator = [] ( float angle ) -> uint8_t {
-            const float n = std::sinf ( angle ) * 0.5F + 0.5F;
-            return static_cast<uint8_t> ( std::lroundf ( n * 255.0F ) );
+            const float n = std::sin ( angle ) * 0.5F + 0.5F;
+            return static_cast<uint8_t> ( std::lround ( n * 255.0F ) );
         };
 
         const size_t limit = startIndex + samplePerThread;

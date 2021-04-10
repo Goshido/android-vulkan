@@ -109,7 +109,7 @@ bool PBRGame::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime )
 {
     _lightPhase += static_cast<float> ( deltaTime );
 
-    GXVec3 offset ( std::sinf ( _lightPhase ), 0.0F, std::cosf ( _lightPhase ) );
+    GXVec3 offset ( std::sin ( _lightPhase ), 0.0F, std::cos ( _lightPhase ) );
     offset.Multiply ( offset, 32.0F );
 
     GXVec3 target;

@@ -1,4 +1,4 @@
-// version 1.1
+// version 1.2
 
 #include <GXCommon/GXMath.h>
 
@@ -12,7 +12,7 @@ GX_RESTORE_WARNING_STATE
 GXVoid GXMat4::Perspective ( GXFloat fieldOfViewYRadiands, GXFloat aspectRatio, GXFloat zNear, GXFloat zFar )
 {
     const GXFloat halfFovy = fieldOfViewYRadiands * 0.5f;
-    const GXFloat ctan = std::cosf ( halfFovy ) / std::sinf ( halfFovy );
+    const GXFloat ctan = std::cos ( halfFovy ) / std::sin ( halfFovy );
     const GXFloat invRange = 1.0f / ( zFar - zNear );
 
     _m[ 0u ][ 0u ] = ctan / aspectRatio;

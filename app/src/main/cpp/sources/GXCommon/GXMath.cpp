@@ -1,4 +1,4 @@
-﻿// version 1.58
+﻿// version 1.59
 
 #include <GXCommon/GXMath.h>
 #include <GXCommon/GXWarning.h>
@@ -984,7 +984,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
         _data[ 2U ] * _data[ 2U ] +
         _data[ 3U ] * _data[ 3U ];
 
-    if ( std::fabsf ( squaredLength ) < FLOAT_EPSILON )
+    if ( std::abs ( squaredLength ) < FLOAT_EPSILON )
     {
         assert ( !"GXQuat::Normalize - Error." );
         return;
@@ -1000,7 +1000,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
         q._data[ 2U ] * q._data[ 2U ] +
         q._data[ 3U ] * q._data[ 3U ];
 
-    if ( std::fabsf ( squaredLength ) <= FLOAT_EPSILON )
+    if ( std::abs ( squaredLength ) <= FLOAT_EPSILON )
     {
         assert ( !"GXQuat::Inverse - Error." );
         Identity ();
@@ -1018,9 +1018,9 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 [[maybe_unused]] GXVoid GXQuat::FromAxisAngle ( GXFloat x, GXFloat y, GXFloat z, GXFloat angle )
 {
     GXFloat const halfAngle = 0.5F * angle;
-    GXFloat const sinom = std::sinf ( halfAngle );
+    GXFloat const sinom = std::sin ( halfAngle );
 
-    _data[ 0U ] = std::cosf ( halfAngle );
+    _data[ 0U ] = std::cos ( halfAngle );
     _data[ 1U ] = x * sinom;
     _data[ 2U ] = y * sinom;
     _data[ 3U ] = z * sinom;
@@ -1104,7 +1104,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     {
         case SOLUTION_ALPHA:
         {
-            GXFloat const phi = 0.5F * std::sqrtf ( solutionFactorAlpha );
+            GXFloat const phi = 0.5F * std::sqrt ( solutionFactorAlpha );
             GXFloat const omega = 1.0F / ( 4.0F * phi );
 
             _data[ 0U ] = phi;
@@ -1116,7 +1116,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 
         case SOLUTION_BETTA:
         {
-            GXFloat const phi = 0.5F * std::sqrtf ( solutionFactorBetta );
+            GXFloat const phi = 0.5F * std::sqrt ( solutionFactorBetta );
             GXFloat const omega = 1.0F / ( 4.0F * phi );
 
             _data[ 0U ] = omega * ( pureRotationMatrix._m[ 1U ][ 2U ] - pureRotationMatrix._m[ 2U ][ 1U ] );
@@ -1128,7 +1128,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 
         case SOLUTION_GAMMA:
         {
-            GXFloat const phi = 0.5F * std::sqrtf ( solutionFactorGamma );
+            GXFloat const phi = 0.5F * std::sqrt ( solutionFactorGamma );
             GXFloat const omega = 1.0F / ( 4.0F * phi );
 
             _data[ 0U ] = omega * ( pureRotationMatrix._m[ 2U ][ 0U ] - pureRotationMatrix._m[ 0U ][ 2U ] );
@@ -1140,7 +1140,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 
         case SOLUTION_YOTTA:
         {
-            GXFloat const phi = 0.5F * std::sqrtf ( solutionFactorYotta );
+            GXFloat const phi = 0.5F * std::sqrt ( solutionFactorYotta );
             GXFloat const omega = 1.0F / ( 4.0F * phi );
 
             _data[ 0U ] = omega * ( pureRotationMatrix._m[ 0U ][ 1U ] - pureRotationMatrix._m[ 1U ][ 0U ] );
@@ -1215,7 +1215,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     {
         case SOLUTION_ALPHA:
         {
-            GXFloat const phi = 0.5F * sqrtf ( solutionFactorAlpha );
+            GXFloat const phi = 0.5F * std::sqrt ( solutionFactorAlpha );
             GXFloat const omega = 1.0F / ( 4.0F * phi );
 
             _data[ 0U ] = phi;
@@ -1227,7 +1227,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 
         case SOLUTION_BETTA:
         {
-            GXFloat const phi = 0.5F * sqrtf ( solutionFactorBetta );
+            GXFloat const phi = 0.5F * std::sqrt ( solutionFactorBetta );
             GXFloat const omega = 1.0F / ( 4.0F * phi );
 
             _data[ 0U ] = omega * ( pureRotationMatrix._m[ 1U ][ 2U ] - pureRotationMatrix._m[ 2U ][ 1U ] );
@@ -1239,7 +1239,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 
         case SOLUTION_GAMMA:
         {
-            GXFloat const phi = 0.5F * sqrtf ( solutionFactorGamma );
+            GXFloat const phi = 0.5F * std::sqrt ( solutionFactorGamma );
             GXFloat const omega = 1.0F / ( 4.0F * phi );
 
             _data[ 0U ] = omega * ( pureRotationMatrix._m[ 2U ][ 0U ] - pureRotationMatrix._m[ 0U ][ 2U ] );
@@ -1251,7 +1251,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 
         case SOLUTION_YOTTA:
         {
-            GXFloat const phi = 0.5F * sqrtf ( solutionFactorYotta );
+            GXFloat const phi = 0.5F * std::sqrt ( solutionFactorYotta );
             GXFloat const omega = 1.0F / ( 4.0F * phi );
 
             _data[ 0U ] = omega * ( pureRotationMatrix._m[ 0U ][ 1U ] - pureRotationMatrix._m[ 1U ][ 0U ] );
@@ -1355,10 +1355,10 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 
     if ( ( 1.0F - cosom ) > FLOAT_EPSILON )
     {
-        GXFloat const omega = std::acosf ( cosom );
-        GXFloat const sinom = 1.0F / std::sinf ( omega );
-        scale0 = std::sinf ( ( 1.0F - interpolationFactor ) * omega ) * sinom;
-        scale1 = std::sinf ( interpolationFactor * omega ) * sinom;
+        GXFloat const omega = std::acos ( cosom );
+        GXFloat const sinom = 1.0F / std::sin ( omega );
+        scale0 = std::sin ( ( 1.0F - interpolationFactor ) * omega ) * sinom;
+        scale1 = std::sin ( interpolationFactor * omega ) * sinom;
     }
     else
     {
@@ -1376,16 +1376,16 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 {
     GXQuat q ( *this );
 
-    if ( std::fabsf ( q._data[ 0U ] ) > 1.0F )
+    if ( std::abs ( q._data[ 0U ] ) > 1.0F )
         q.Normalize ();
 
-    angle = 2.0F * std::acosf ( q._data[ 0U ] );
+    angle = 2.0F * std::acos ( q._data[ 0U ] );
 
     axis._data[ 0U ] = q._data[ 1U ];
     axis._data[ 1U ] = q._data[ 2U ];
     axis._data[ 2U ] = q._data[ 3U ];
 
-    GXFloat const s = std::sqrtf ( 1.0F - q._data[ 0U ] * q._data[ 0U ] );
+    GXFloat const s = std::sqrt ( 1.0F - q._data[ 0U ] * q._data[ 0U ] );
 
     if ( s < FLOAT_EPSILON )
         return;
@@ -2006,8 +2006,8 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     _m[ 1U ][ 0U ] = 0.0F;
     _m[ 2U ][ 0U ] = 0.0F;
 
-    GXFloat const c = std::cosf ( angle );
-    GXFloat const s = std::sinf ( angle );
+    GXFloat const c = std::cos ( angle );
+    GXFloat const s = std::sin ( angle );
 
     _m[ 1U ][ 1U ] = c;      _m[ 1U ][ 2U ] = s;
     _m[ 2U ][ 1U ] = -s;     _m[ 2U ][ 2U ] = c;
@@ -2024,8 +2024,8 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     _m[ 1U ][ 0U ] = _m[ 1U ][ 2U ] = 0.0F;
     _m[ 2U ][ 1U ] = 0.0F;
 
-    GXFloat const c = std::cosf ( angle );
-    GXFloat const s = std::sinf ( angle );
+    GXFloat const c = std::cos ( angle );
+    GXFloat const s = std::sin ( angle );
 
     _m[ 0U ][ 0U ] = c;      _m[ 0U ][ 2U ] = -s;
     _m[ 2U ][ 0U ] = s;      _m[ 2U ][ 2U ] = c;
@@ -2042,8 +2042,8 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     _m[ 1U ][ 2U ] = 0.0F;
     _m[ 2U ][ 0U ] = _m[ 2U ][ 1U ] = 0.0F;
 
-    GXFloat const c = std::cosf ( angle );
-    GXFloat const s = std::sinf ( angle );
+    GXFloat const c = std::cos ( angle );
+    GXFloat const s = std::sin ( angle );
 
     _m[ 0U ][ 0U ] = c;      _m[ 0U ][ 1U ] = s;
     _m[ 1U ][ 0U ] = -s;     _m[ 1U ][ 1U ] = c;

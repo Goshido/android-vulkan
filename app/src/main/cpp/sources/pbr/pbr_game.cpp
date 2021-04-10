@@ -15,7 +15,15 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-constexpr static char const* SCENE = "pbr/assets/N7_ENG_Injection.scene";
+constexpr static char const* SCENES[] =
+{
+    "pbr/assets/N7_ADM_Reception.scene",
+    "pbr/assets/N7_ENG_Injection.scene"
+};
+
+constexpr static size_t ACTIVE_SCENE = 1U;
+static_assert ( std::size ( SCENES ) > ACTIVE_SCENE );
+
 [[maybe_unused]] constexpr static uint32_t const SCENE_DESC_FORMAT_VERSION = 2U;
 
 constexpr static float const FIELD_OF_VIEW = 75.0F;
@@ -154,7 +162,7 @@ void PBRGame::DestroyCommandPool ( VkDevice device )
 
 bool PBRGame::UploadGPUContent ( android_vulkan::Renderer& renderer )
 {
-    android_vulkan::File file ( SCENE );
+    android_vulkan::File file ( SCENES[ ACTIVE_SCENE ] );
 
     if ( !file.LoadContent () )
         return false;
@@ -183,9 +191,10 @@ bool PBRGame::UploadGPUContent ( android_vulkan::Renderer& renderer )
     };
 
     _commandBuffers.resize ( comBuffs );
+    VkDevice device = renderer.GetDevice ();
 
     bool result = android_vulkan::Renderer::CheckVkResult (
-        vkAllocateCommandBuffers ( renderer.GetDevice (), &allocateInfo, _commandBuffers.data () ),
+        vkAllocateCommandBuffers ( device, &allocateInfo, _commandBuffers.data () ),
         "PBRGame::UploadGPUContent",
         "Can't allocate command buffers"
     );
@@ -236,7 +245,7 @@ bool PBRGame::UploadGPUContent ( android_vulkan::Renderer& renderer )
         return false;
 
     for ( auto& component : _components )
-        component->FreeTransferResources ( renderer );
+        component->FreeTransferResources ( device );
 
     return true;
 }

@@ -1,5 +1,7 @@
 #include <pbr/reflection_component.h>
 #include <pbr/cube_map_manager.h>
+#include <pbr/reflection_probe_global.h>
+#include <pbr/reflection_probe_local.h>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -17,30 +19,9 @@ ReflectionComponent::ReflectionComponent ( android_vulkan::Renderer &renderer,
     uint8_t const *data,
     VkCommandBuffer const* commandBuffers
 ) noexcept:
-    Component ( ClassID::Reflection ),
-    _bounds {},
-    _isGlobal ( desc._size == FLT_MAX ),
-    _size ( desc._size )
+    Component ( ClassID::Reflection )
 {
-    // Sanity checks.
-    static_assert ( sizeof ( ReflectionComponent::_location ) == sizeof ( desc._location ) );
     assert ( desc._formatVersion == REFLECTION_COMPONENT_DESC_FORMAT_VERSION );
-
-    memcpy ( &_location, &desc._location, sizeof ( _location ) );
-    _prefilter = std::make_shared<android_vulkan::TextureCube> ();
-
-    if ( !_isGlobal )
-    {
-        float const alpha = _size * 0.5F;
-        GXVec3 const beta ( alpha, alpha, alpha );
-
-        GXVec3 gamma;
-        gamma.Substract ( _location, beta );
-        _bounds.AddVertex ( gamma );
-
-        gamma.Sum ( _location, beta );
-        _bounds.AddVertex ( gamma );
-    }
 
     android_vulkan::TextureCubeData const cubeData
     {
@@ -52,30 +33,42 @@ ReflectionComponent::ReflectionComponent ( android_vulkan::Renderer &renderer,
         ._zMinusFile = reinterpret_cast<char const*> ( data + desc._sideZMinus )
     };
 
-    _prefilter = CubeMapManager::GetInstance().LoadCubeMap ( renderer,
+    TextureCubeRef prefilter = CubeMapManager::GetInstance().LoadCubeMap ( renderer,
         commandBufferConsumed,
         cubeData,
         *commandBuffers
     );
+
+    if ( desc._size == FLT_MAX )
+    {
+        _probe = std::make_shared<ReflectionProbeGlobal> ( prefilter );
+        return;
+    }
+
+    GXVec3 location;
+    // Sanity checks.
+    static_assert ( sizeof ( location ) == sizeof ( desc._location ) );
+    memcpy ( &location, &desc._location, sizeof ( location ) );
+
+    _probe = std::make_shared<ReflectionProbeLocal> ( prefilter, location, desc._size );
 }
 
-void ReflectionComponent::FreeTransferResources ( android_vulkan::Renderer &renderer )
+void ReflectionComponent::FreeTransferResources ( VkDevice device )
 {
-    if ( _prefilter )
-    {
-        _prefilter->FreeTransferResources ( renderer.GetDevice() );
-    }
+    if ( !_probe )
+        return;
+
+    // Note it's safe cast like that here. "NOLINT" is a clang-tidy control comment.
+    auto& probe = static_cast<ReflectionProbe&> ( *_probe.get () ); // NOLINT
+    probe.FreeTransferResources ( device );
 }
 
 void ReflectionComponent::Submit ( RenderSession &renderSession )
 {
-    if ( _isGlobal )
+    if ( _probe )
     {
-        renderSession.SubmitReflectionGlobal ( _prefilter );
-        return;
+        renderSession.SubmitLight ( _probe );
     }
-
-    renderSession.SubmitReflectionLocal ( _prefilter, _location, _size, _bounds );
 }
 
 } // namespace pbr

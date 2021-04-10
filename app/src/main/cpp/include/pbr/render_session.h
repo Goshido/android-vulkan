@@ -16,28 +16,32 @@ namespace pbr {
 class RenderSession final
 {
     private:
-        GXProjectionClipPlanes          _frustum;
+        using LightHandler = void ( RenderSession::* ) ( LightRef &light );
 
-        GBuffer                         _gBuffer;
-        VkDescriptorPool                _gBufferDescriptorPool;
-        VkFramebuffer                   _gBufferFramebuffer;
-        VkImageMemoryBarrier            _gBufferImageBarrier;
-        VkRenderPass                    _gBufferRenderPass;
-        VkDescriptorSet                 _gBufferSlotMapper;
+    private:
+        GXProjectionClipPlanes                          _frustum;
 
-        GeometryPass                    _geometryPass;
-        LightPass                       _lightPass;
-        size_t                          _opaqueMeshCount;
+        GBuffer                                         _gBuffer;
+        VkDescriptorPool                                _gBufferDescriptorPool;
+        VkFramebuffer                                   _gBufferFramebuffer;
+        VkImageMemoryBarrier                            _gBufferImageBarrier;
+        VkRenderPass                                    _gBufferRenderPass;
+        VkDescriptorSet                                 _gBufferSlotMapper;
 
-        TexturePresentProgram           _texturePresentProgram;
-        PresentPass                     _presentPass;
-        RenderSessionStats              _renderSessionStats;
-        SamplerManager                  _samplerManager;
+        GeometryPass                                    _geometryPass;
+        std::unordered_map<eLightType, LightHandler>    _lightHandlers;
+        LightPass                                       _lightPass;
+        size_t                                          _opaqueMeshCount;
 
-        GXMat4                          _cvvToView;
-        GXMat4                          _view;
-        GXMat4                          _viewProjection;
-        GXMat4                          _viewerLocal;
+        TexturePresentProgram                           _texturePresentProgram;
+        PresentPass                                     _presentPass;
+        RenderSessionStats                              _renderSessionStats;
+        SamplerManager                                  _samplerManager;
+
+        GXMat4                                          _cvvToView;
+        GXMat4                                          _view;
+        GXMat4                                          _viewProjection;
+        GXMat4                                          _viewerLocal;
 
     public:
         RenderSession () noexcept;
@@ -61,6 +65,8 @@ class RenderSession final
         void Destroy ( VkDevice device );
         void FreeTransferResources ( VkDevice device );
 
+        void SubmitLight ( LightRef &light );
+
         void SubmitMesh ( MeshRef &mesh,
             MaterialRef const &material,
             GXMat4 const &local,
@@ -69,15 +75,6 @@ class RenderSession final
             android_vulkan::Half4 const &color1,
             android_vulkan::Half4 const &color2,
             android_vulkan::Half4 const &color3
-        );
-
-        void SubmitLight ( LightRef const &light );
-        void SubmitReflectionGlobal ( TextureCubeRef &prefilter );
-
-        void SubmitReflectionLocal ( TextureCubeRef &prefilter,
-            GXVec3 const &location,
-            float size,
-            GXAABB const &bounds
         );
 
     private:
@@ -95,7 +92,9 @@ class RenderSession final
             android_vulkan::Half4 const &color3
         );
 
-        void SubmitPointLight ( LightRef const &light );
+        void SubmitPointLight ( LightRef &light );
+        void SubmitReflectionGlobal ( LightRef &light );
+        void SubmitReflectionLocal ( LightRef &light );
 };
 
 } // namespace pbr

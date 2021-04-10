@@ -58,7 +58,7 @@ void PointLightComponent::Submit ( RenderSession &renderSession )
     renderSession.SubmitLight ( _pointLight );
 }
 
-void PointLightComponent::FreeTransferResources ( android_vulkan::Renderer &/*renderer*/ )
+void PointLightComponent::FreeTransferResources ( VkDevice /*device*/ )
 {
     // NOTHING
 }

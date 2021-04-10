@@ -128,6 +128,9 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/pbr/reflection_local_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/reflection_local_pass.cpp
     app/src/main/cpp/sources/pbr/reflection_local_program.cpp
+    app/src/main/cpp/sources/pbr/reflection_probe.cpp
+    app/src/main/cpp/sources/pbr/reflection_probe_global.cpp
+    app/src/main/cpp/sources/pbr/reflection_probe_local.cpp
     app/src/main/cpp/sources/pbr/render_session.cpp
     app/src/main/cpp/sources/pbr/render_session_stats.cpp
     app/src/main/cpp/sources/pbr/sampler.cpp

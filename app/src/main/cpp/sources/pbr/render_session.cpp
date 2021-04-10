@@ -10,6 +10,8 @@ GX_RESTORE_WARNING_STATE
 #include <half_types.h>
 #include <vulkan_utils.h>
 #include <pbr/point_light.h>
+#include <pbr/reflection_probe_global.h>
+#include <pbr/reflection_probe_local.h>
 
 
 namespace pbr {
@@ -23,6 +25,7 @@ RenderSession::RenderSession () noexcept:
     _gBufferRenderPass ( VK_NULL_HANDLE ),
     _gBufferSlotMapper ( VK_NULL_HANDLE ),
     _geometryPass {},
+    _lightHandlers {},
     _lightPass {},
     _opaqueMeshCount ( 0U ),
     _texturePresentProgram {},
@@ -111,6 +114,13 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
 
 bool RenderSession::Init ( android_vulkan::Renderer &renderer, VkCommandPool commandPool, VkExtent2D const &resolution )
 {
+    _lightHandlers =
+    {
+        { eLightType::PointLight, &RenderSession::SubmitPointLight },
+        { eLightType::ReflectionGlobal, &RenderSession::SubmitReflectionGlobal },
+        { eLightType::ReflectionLocal, &RenderSession::SubmitReflectionLocal }
+    };
+
     if ( !_gBuffer.Init ( renderer, resolution ) )
     {
         Destroy ( renderer.GetDevice () );
@@ -150,20 +160,27 @@ bool RenderSession::Init ( android_vulkan::Renderer &renderer, VkCommandPool com
 
     android_vulkan::Texture2D const& texture = _gBuffer.GetHDRAccumulator();
 
-    _gBufferImageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-    _gBufferImageBarrier.pNext = nullptr;
-    _gBufferImageBarrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-    _gBufferImageBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-    _gBufferImageBarrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-    _gBufferImageBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-    _gBufferImageBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    _gBufferImageBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    _gBufferImageBarrier.image = texture.GetImage ();
-    _gBufferImageBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    _gBufferImageBarrier.subresourceRange.baseMipLevel = 0U;
-    _gBufferImageBarrier.subresourceRange.baseArrayLayer = 0U;
-    _gBufferImageBarrier.subresourceRange.layerCount = 1U;
-    _gBufferImageBarrier.subresourceRange.levelCount = static_cast<uint32_t> ( texture.GetMipLevelCount () );
+    _gBufferImageBarrier =
+    {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+        .pNext = nullptr,
+        .srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+        .dstAccessMask = VK_ACCESS_SHADER_READ_BIT,
+        .oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+        .newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .image = texture.GetImage (),
+
+        .subresourceRange =
+        {
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .baseMipLevel = 0U,
+            .levelCount = static_cast<uint32_t> ( texture.GetMipLevelCount () ),
+            .baseArrayLayer = 0U,
+            .layerCount = 1U
+        }
+    };
 
     return true;
 }
@@ -199,11 +216,31 @@ void RenderSession::Destroy ( VkDevice device )
     }
 
     _gBuffer.Destroy ( device );
+    _lightHandlers.clear ();
 }
 
 void RenderSession::FreeTransferResources ( VkDevice device )
 {
     _lightPass.OnFreeTransferResources ( device );
+}
+
+void RenderSession::SubmitLight ( LightRef &light )
+{
+    auto const findResult = _lightHandlers.find ( light->GetType () );
+
+    if ( findResult == _lightHandlers.cend () )
+    {
+        android_vulkan::LogWarning ( "RenderSession::SubmitLight - Unexpected light type [%hhu]",
+            static_cast<uint8_t> ( light->GetType () )
+        );
+
+        return;
+    }
+
+    LightHandler handler = findResult->second;
+
+    // C++ calling method by pointer syntax.
+    ( this->*handler ) ( light );
 }
 
 void RenderSession::SubmitMesh ( MeshRef &mesh,
@@ -222,34 +259,6 @@ void RenderSession::SubmitMesh ( MeshRef &mesh,
     {
         SubmitOpaqueCall ( mesh, material, local, worldBounds, color0, color1, color2, color3 );
     }
-}
-
-void RenderSession::SubmitLight ( LightRef const &light )
-{
-    if ( light->GetType () == eLightType::PointLight )
-    {
-        SubmitPointLight ( light );
-    }
-}
-
-void RenderSession::SubmitReflectionGlobal ( TextureCubeRef &prefilter )
-{
-    _lightPass.SubmitReflectionGlobal ( prefilter );
-    _renderSessionStats.RenderReflectionGlobal ();
-}
-
-void RenderSession::SubmitReflectionLocal ( TextureCubeRef &prefilter,
-    GXVec3 const &location,
-    float size,
-    GXAABB const &bounds
-)
-{
-    _renderSessionStats.SubmitReflectionLocal ();
-
-    if ( !_frustum.IsVisible ( bounds ) )
-        return;
-
-    _lightPass.SubmitReflectionLocal ( prefilter, location, size );
 }
 
 bool RenderSession::CreateGBufferFramebuffer ( android_vulkan::Renderer &renderer )
@@ -508,7 +517,7 @@ void RenderSession::SubmitOpaqueCall ( MeshRef &mesh,
     _geometryPass.Submit ( mesh, material, local, worldBounds, color0, color1, color2, color3 );
 }
 
-void RenderSession::SubmitPointLight ( LightRef const &light )
+void RenderSession::SubmitPointLight ( LightRef &light )
 {
     _renderSessionStats.SubmitPointLight ();
 
@@ -518,6 +527,29 @@ void RenderSession::SubmitPointLight ( LightRef const &light )
     if ( _frustum.IsVisible ( pointLight.GetBounds () ) )
     {
         _lightPass.SubmitPointLight ( light );
+    }
+}
+
+void RenderSession::SubmitReflectionGlobal ( LightRef &light )
+{
+    _renderSessionStats.RenderReflectionGlobal ();
+
+    // Note it's safe cast like that here. "NOLINT" is a clang-tidy control comment.
+    auto& probe = static_cast<ReflectionProbeGlobal&> ( *light.get () ); // NOLINT
+
+    _lightPass.SubmitReflectionGlobal ( probe.GetPrefilter () );
+}
+
+void RenderSession::SubmitReflectionLocal ( LightRef &light )
+{
+    _renderSessionStats.SubmitReflectionLocal ();
+
+    // Note it's safe cast like that here. "NOLINT" is a clang-tidy control comment.
+    auto& probe = static_cast<ReflectionProbeLocal&> ( *light.get () ); // NOLINT
+
+    if ( _frustum.IsVisible ( probe.GetBounds () ) )
+    {
+        _lightPass.SubmitReflectionLocal ( probe.GetPrefilter (), probe.GetLocation (), probe.GetSize () );
     }
 }
 

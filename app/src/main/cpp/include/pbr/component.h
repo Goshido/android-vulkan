@@ -26,7 +26,7 @@ class Component
         virtual ~Component () = default;
 
         virtual void Submit ( RenderSession &renderSession ) = 0;
-        virtual void FreeTransferResources ( android_vulkan::Renderer &renderer ) = 0;
+        virtual void FreeTransferResources ( VkDevice device ) = 0;
 
         [[nodiscard]] ClassID GetClassID () const;
 

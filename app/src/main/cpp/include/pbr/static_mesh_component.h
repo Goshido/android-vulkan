@@ -41,7 +41,7 @@ class StaticMeshComponent final : public Component
         ~StaticMeshComponent () override = default;
 
     private:
-        void FreeTransferResources ( android_vulkan::Renderer &renderer ) override;
+        void FreeTransferResources ( VkDevice device ) override;
         void Submit ( RenderSession &renderSession ) override;
 };
 

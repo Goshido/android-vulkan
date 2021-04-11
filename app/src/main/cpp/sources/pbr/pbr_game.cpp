@@ -53,12 +53,28 @@ bool PBRGame::IsReady ()
     return !_components.empty ();
 }
 
-bool PBRGame::OnInit ( android_vulkan::Renderer &renderer )
+bool PBRGame::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime )
 {
-    VkExtent2D resolution = renderer.GetViewportResolution ();
-    resolution.width = resolution.width * RESOLUTION_SCALE_WIDTH / 100U;
-    resolution.height = resolution.height * RESOLUTION_SCALE_HEIGHT / 100U;
+    _lightPhase += static_cast<float> ( deltaTime );
 
+    GXVec3 offset ( std::sin ( _lightPhase ), 0.0F, std::cos ( _lightPhase ) );
+    offset.Multiply ( offset, 32.0F );
+
+    GXVec3 target;
+    target.Sum ( _lightOrigin, offset );
+    _pointLight->SetLocation ( target );
+
+    _camera.Update ( static_cast<float> ( deltaTime ) );
+    _renderSession.Begin ( _camera.GetLocalMatrix (), _camera.GetProjectionMatrix () );
+
+    for ( auto& component : _components )
+        component->Submit ( _renderSession );
+
+    return _renderSession.End ( renderer, deltaTime );
+}
+
+bool PBRGame::OnInitDevice ( android_vulkan::Renderer &renderer )
+{
     VkCommandPoolCreateInfo const createInfo
     {
         .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
@@ -80,19 +96,34 @@ bool PBRGame::OnInit ( android_vulkan::Renderer &renderer )
 
     AV_REGISTER_COMMAND_POOL ( "PBRGame::_commandPool" )
 
-    if ( !_renderSession.Init ( renderer, _commandPool, resolution ) )
-    {
-        OnDestroy ( renderer );
-        return false;
-    }
+   _renderSession.OnInitDevice ();
 
     if ( !UploadGPUContent ( renderer ) )
     {
-        OnDestroy ( renderer );
+        OnDestroyDevice ( device );
         return false;
     }
 
-    _renderSession.FreeTransferResources ( renderer.GetDevice () );
+    return true;
+}
+
+void PBRGame::OnDestroyDevice ( VkDevice device )
+{
+    _components.clear ();
+    _renderSession.OnDestroyDevice ();
+    DestroyCommandPool ( device );
+
+    MeshManager::Destroy ( device );
+    MaterialManager::Destroy ( device );
+    CubeMapManager::Destroy ( device );
+}
+
+bool PBRGame::OnSwapchainCreated ( android_vulkan::Renderer &renderer )
+{
+    VkExtent2D resolution = renderer.GetViewportResolution ();
+    resolution.width = resolution.width * RESOLUTION_SCALE_WIDTH / 100U;
+    resolution.height = resolution.height * RESOLUTION_SCALE_HEIGHT / 100U;
+
     VkExtent2D const& surfaceResolution = renderer.GetViewportResolution ();
 
     _camera.SetProjection ( GXDegToRad ( FIELD_OF_VIEW ),
@@ -101,53 +132,17 @@ bool PBRGame::OnInit ( android_vulkan::Renderer &renderer )
         Z_FAR
     );
 
+    if ( !_renderSession.OnSwapchainCreated ( renderer, resolution, _commandPool ) )
+        return false;
+
     _camera.CaptureInput ();
     return true;
 }
 
-bool PBRGame::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime )
+void PBRGame::OnSwapchainDestroyed ( VkDevice device )
 {
-    _lightPhase += static_cast<float> ( deltaTime );
-
-    GXVec3 offset ( std::sin ( _lightPhase ), 0.0F, std::cos ( _lightPhase ) );
-    offset.Multiply ( offset, 32.0F );
-
-    GXVec3 target;
-    target.Sum ( _lightOrigin, offset );
-    _pointLight->SetLocation ( target );
-
-    _camera.Update ( static_cast<float> ( deltaTime ) );
-    _renderSession.Begin ( _camera.GetLocalMatrix (), _camera.GetProjectionMatrix () );
-
-    for ( auto& component : _components )
-        component->Submit ( _renderSession );
-
-    return _renderSession.End ( renderer, deltaTime );
-}
-
-bool PBRGame::OnDestroy ( android_vulkan::Renderer &renderer )
-{
-    VkDevice device = renderer.GetDevice ();
-
-    bool const result = android_vulkan::Renderer::CheckVkResult ( vkDeviceWaitIdle ( device ),
-        "PBRGame::OnDestroy",
-        "Can't wait device idle"
-    );
-
-    if ( !result )
-        return false;
-
     Camera::ReleaseInput ();
-
-    _components.clear ();
-    _renderSession.Destroy ( device );
-    DestroyCommandPool ( device );
-
-    MeshManager::Destroy ( device );
-    MaterialManager::Destroy ( device );
-    CubeMapManager::Destroy ( device );
-
-    return true;
+    _renderSession.OnSwapchainDestroyed ( device );
 }
 
 void PBRGame::DestroyCommandPool ( VkDevice device )

@@ -45,11 +45,14 @@ class PBRGame final : public android_vulkan::Game
         ~PBRGame () override = default;
 
     private:
-        bool IsReady () override;
+        [[nodiscard]] bool IsReady () override;
+        [[nodiscard]] bool OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) override;
 
-        bool OnInit ( android_vulkan::Renderer &renderer ) override;
-        bool OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) override;
-        bool OnDestroy ( android_vulkan::Renderer &renderer ) override;
+        [[nodiscard]] bool OnInitDevice ( android_vulkan::Renderer &renderer ) override;
+        void OnDestroyDevice ( VkDevice device ) override;
+
+        [[nodiscard]] bool OnSwapchainCreated ( android_vulkan::Renderer &renderer ) override;
+        void OnSwapchainDestroyed ( VkDevice device ) override;
 
         void DestroyCommandPool ( VkDevice device );
         [[nodiscard]] bool UploadGPUContent ( android_vulkan::Renderer &renderer );

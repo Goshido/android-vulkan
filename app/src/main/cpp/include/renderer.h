@@ -21,20 +21,20 @@ namespace android_vulkan {
 
 struct VulkanPhysicalDeviceInfo final
 {
-        std::vector<char>                               _extensionStorage;
+    std::vector<char>                               _extensionStorage;
 
-        std::vector<char const*>                        _extensions;
-        VkPhysicalDeviceFeatures                        _features;
+    std::vector<char const*>                        _extensions;
+    VkPhysicalDeviceFeatures                        _features;
 
-        std::vector<std::pair<VkFlags, uint32_t>>       _queueFamilyInfo;
-        VkSurfaceCapabilitiesKHR                        _surfaceCapabilities;
+    std::vector<std::pair<VkFlags, uint32_t>>       _queueFamilyInfo;
+    VkSurfaceCapabilitiesKHR                        _surfaceCapabilities;
 
-        VulkanPhysicalDeviceInfo () noexcept;
+    VulkanPhysicalDeviceInfo () noexcept;
 
-        VulkanPhysicalDeviceInfo ( VulkanPhysicalDeviceInfo const & ) = delete;
-        VulkanPhysicalDeviceInfo& operator = ( VulkanPhysicalDeviceInfo const & ) = delete;
+    VulkanPhysicalDeviceInfo ( VulkanPhysicalDeviceInfo const & ) = delete;
+    VulkanPhysicalDeviceInfo& operator = ( VulkanPhysicalDeviceInfo const & ) = delete;
 
-        ~VulkanPhysicalDeviceInfo () = default;
+    ~VulkanPhysicalDeviceInfo () = default;
 };
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -111,12 +111,14 @@ class Renderer final
 
         // Method returns true if swapchain does not change. User code can safely render frames.
         // Otherwise method returns false.
-        bool CheckSwapchainStatus ();
+        [[nodiscard]] bool CheckSwapchainStatus ();
 
-        bool CreateShader ( VkShaderModule &shader,
+        [[nodiscard]] bool CreateShader ( VkShaderModule &shader,
             std::string &&shaderFile,
             char const* errorMessage
         ) const;
+
+        [[nodiscard]] bool FinishAllJobs ();
 
         [[nodiscard]] VkFormat GetDefaultDepthStencilFormat () const;
         [[nodiscard]] VkDevice GetDevice () const;
@@ -142,7 +144,8 @@ class Renderer final
         // by Renderer::GetSurfaceSize API.
         [[nodiscard]] VkExtent2D const& GetViewportResolution () const;
 
-        [[nodiscard]] bool IsReady () const;
+        [[nodiscard]] bool IsDeviceCreated () const;
+        [[nodiscard]] bool IsSwapchainCreated () const;
 
         [[nodiscard]] bool OnCreateSwapchain ( ANativeWindow &nativeWindow, bool vSync );
         void OnDestroySwapchain ();

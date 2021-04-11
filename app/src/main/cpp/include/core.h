@@ -42,6 +42,7 @@ class Core final
 
         [[nodiscard]] bool IsSuspend () const;
         void OnFrame ();
+        void OnQuit ();
 
     private:
         void OnInitWindow ( ANativeWindow &window );

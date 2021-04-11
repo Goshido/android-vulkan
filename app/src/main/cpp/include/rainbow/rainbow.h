@@ -30,27 +30,30 @@ class Rainbow final : public android_vulkan::Game
 
         ~Rainbow () override = default;
 
-        bool IsReady () override;
-
-        bool OnInit ( android_vulkan::Renderer &renderer ) override;
-        bool OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) override;
-        bool OnDestroy ( android_vulkan::Renderer &renderer ) override;
-
     private:
-        bool BeginFrame ( android_vulkan::Renderer &renderer, uint32_t &presentationFramebufferIndex );
-        bool EndFrame ( android_vulkan::Renderer &renderer, uint32_t presentationFramebufferIndex );
+        [[nodiscard]] bool IsReady () override;
+        [[nodiscard]] bool OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) override;
 
-        bool CreateCommandBuffer ( android_vulkan::Renderer &renderer );
-        void DestroyCommandBuffer ( android_vulkan::Renderer &renderer );
+        [[nodiscard]] bool OnInitDevice ( android_vulkan::Renderer &renderer ) override;
+        void OnDestroyDevice ( VkDevice device ) override;
 
-        bool CreateFramebuffers ( android_vulkan::Renderer &renderer );
-        void DestroyFramebuffers ( android_vulkan::Renderer &renderer );
+        [[nodiscard]] bool OnSwapchainCreated ( android_vulkan::Renderer &renderer ) override;
+        void OnSwapchainDestroyed ( VkDevice device ) override;
 
-        bool CreatePresentationSyncPrimitive ( android_vulkan::Renderer &renderer );
-        void DestroyPresentationSyncPrimitive ( android_vulkan::Renderer &renderer );
+        [[nodiscard]] bool BeginFrame ( android_vulkan::Renderer &renderer, uint32_t &presentationFramebufferIndex );
+        [[nodiscard]] bool EndFrame ( android_vulkan::Renderer &renderer, uint32_t presentationFramebufferIndex );
 
-        bool CreateRenderPass ( android_vulkan::Renderer &renderer );
-        void DestroyRenderPass ( android_vulkan::Renderer &renderer );
+        [[nodiscard]] bool CreateCommandBuffer ( android_vulkan::Renderer &renderer );
+        void DestroyCommandBuffer ( VkDevice device );
+
+        [[nodiscard]] bool CreateFramebuffers ( android_vulkan::Renderer &renderer );
+        void DestroyFramebuffers ( VkDevice device );
+
+        [[nodiscard]] bool CreatePresentationSyncPrimitive ( android_vulkan::Renderer &renderer );
+        void DestroyPresentationSyncPrimitive ( VkDevice device );
+
+        [[nodiscard]] bool CreateRenderPass ( android_vulkan::Renderer &renderer );
+        void DestroyRenderPass ( VkDevice device );
 };
 
 } // namespace rainbow

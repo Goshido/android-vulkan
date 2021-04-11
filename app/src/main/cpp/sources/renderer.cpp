@@ -846,16 +846,26 @@ bool Renderer::CreateShader ( VkShaderModule &shader,
 
     std::vector<uint8_t> const& spirV = vertexShader.GetContent ();
 
-    VkShaderModuleCreateInfo shaderModuleCreateInfo;
-    shaderModuleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-    shaderModuleCreateInfo.pNext = nullptr;
-    shaderModuleCreateInfo.flags = 0U;
-    shaderModuleCreateInfo.codeSize = spirV.size ();
-    shaderModuleCreateInfo.pCode = reinterpret_cast<uint32_t const*> ( spirV.data () );
+    VkShaderModuleCreateInfo const shaderModuleCreateInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .codeSize = spirV.size (),
+        .pCode = reinterpret_cast<uint32_t const*> ( spirV.data () )
+    };
 
     return CheckVkResult ( vkCreateShaderModule ( _device, &shaderModuleCreateInfo, nullptr, &shader ),
         "Renderer::CreateShader",
         errorMessage
+    );
+}
+
+bool Renderer::FinishAllJobs ()
+{
+    return android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( _queue ),
+        "Renderer::FinishAllJobs",
+        "Can't wait queue idle"
     );
 }
 
@@ -919,7 +929,12 @@ VkExtent2D const& Renderer::GetViewportResolution () const
     return _viewportResolution;
 }
 
-bool Renderer::IsReady () const
+bool Renderer::IsDeviceCreated () const
+{
+    return _device != VK_NULL_HANDLE;
+}
+
+bool Renderer::IsSwapchainCreated () const
 {
     return _swapchain != VK_NULL_HANDLE;
 }
@@ -1088,9 +1103,6 @@ bool Renderer::OnCreateDevice ()
 
 void Renderer::OnDestroyDevice ()
 {
-    if ( !IsReady () )
-        return;
-
     if ( !CheckVkResult ( vkDeviceWaitIdle ( _device ), "Renderer::OnDestroyDevice", "Can't wait device idle" ) )
         return;
 

@@ -24,43 +24,50 @@ class MandelbrotBase : public android_vulkan::Game
         VkShaderModule                  _vertexShader;
 
         VkShaderModule                  _fragmentShader;
-        const char*                     _fragmentShaderSpirV;
+        char const*                     _fragmentShaderSpirV;
 
     public:
-        MandelbrotBase ( const MandelbrotBase &other ) = delete;
-        MandelbrotBase& operator = ( const MandelbrotBase &other ) = delete;
+        MandelbrotBase ( MandelbrotBase const & ) = delete;
+        MandelbrotBase& operator = ( MandelbrotBase const & ) = delete;
 
-        bool IsReady () override;
-
-        bool OnInit ( android_vulkan::Renderer &renderer ) override;
-        bool OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) override;
-        bool OnDestroy ( android_vulkan::Renderer &renderer ) override;
+        MandelbrotBase ( MandelbrotBase && ) = delete;
+        MandelbrotBase& operator = ( MandelbrotBase && ) = delete;
 
     protected:
-        MandelbrotBase ( const char* fragmentShaderFile );
+        explicit MandelbrotBase ( const char* fragmentShaderFile ) noexcept;
         ~MandelbrotBase () override = default;
 
-        virtual bool CreatePipelineLayout ( android_vulkan::Renderer &renderer ) = 0;
-        virtual void DestroyPipelineLayout ( android_vulkan::Renderer &renderer ) = 0;
+        [[nodiscard]] bool OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) override;
+
+        [[nodiscard]] bool OnInitDevice ( android_vulkan::Renderer &renderer ) override;
+        void OnDestroyDevice ( VkDevice device ) override;
+
+        [[nodiscard]] bool OnSwapchainCreated ( android_vulkan::Renderer &renderer ) override;
+        void OnSwapchainDestroyed ( VkDevice device ) override;
+
+        [[nodiscard]] virtual bool CreatePipelineLayout ( android_vulkan::Renderer &renderer ) = 0;
+        virtual void DestroyPipelineLayout ( VkDevice device ) = 0;
 
     private:
-        bool BeginFrame ( android_vulkan::Renderer &renderer, uint32_t &presentationImageIndex );
-        bool EndFrame ( android_vulkan::Renderer &renderer, uint32_t presentationImageIndex );
+        [[nodiscard]] bool IsReady () override;
 
-        bool CreateCommandPool ( android_vulkan::Renderer &renderer );
-        bool DestroyCommandPool ( android_vulkan::Renderer &renderer );
+        [[nodiscard]] bool BeginFrame ( android_vulkan::Renderer &renderer, uint32_t &presentationImageIndex );
+        [[nodiscard]] bool EndFrame ( android_vulkan::Renderer &renderer, uint32_t presentationImageIndex );
 
-        bool CreateFramebuffers ( android_vulkan::Renderer &renderer );
-        bool DestroyFramebuffers ( android_vulkan::Renderer &renderer );
+        [[nodiscard]] bool CreateCommandPool ( android_vulkan::Renderer &renderer );
+        void DestroyCommandPool ( VkDevice device );
 
-        bool CreatePresentationSyncPrimitive ( android_vulkan::Renderer &renderer );
-        void DestroyPresentationSyncPrimitive ( android_vulkan::Renderer &renderer );
+        [[nodiscard]] bool CreateFramebuffers ( android_vulkan::Renderer &renderer );
+        void DestroyFramebuffers ( VkDevice device );
 
-        bool CreatePipeline ( android_vulkan::Renderer &renderer );
-        void DestroyPipeline ( android_vulkan::Renderer &renderer );
+        [[nodiscard]] bool CreatePresentationSyncPrimitive ( android_vulkan::Renderer &renderer );
+        void DestroyPresentationSyncPrimitive ( VkDevice device );
 
-        bool CreateRenderPass ( android_vulkan::Renderer &renderer );
-        void DestroyRenderPass ( android_vulkan::Renderer &renderer );
+        [[nodiscard]] bool CreatePipeline ( android_vulkan::Renderer &renderer );
+        void DestroyPipeline ( VkDevice device );
+
+        [[nodiscard]] bool CreateRenderPass ( android_vulkan::Renderer &renderer );
+        void DestroyRenderPass ( VkDevice device );
 };
 
 } // namespace mandelbrot

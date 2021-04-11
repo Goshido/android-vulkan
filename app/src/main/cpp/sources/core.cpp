@@ -26,7 +26,7 @@ Core::Core ( android_app &app, Game &game ) noexcept:
 
 bool Core::IsSuspend () const
 {
-    return !_renderer.IsReady ();
+    return !_renderer.IsSwapchainCreated ();
 }
 
 void Core::OnFrame ()
@@ -44,22 +44,38 @@ void Core::OnFrame ()
     UpdateFPS ( now );
 }
 
+void Core::OnQuit ()
+{
+    _game.OnDestroyDevice ( _renderer.GetDevice () );
+    _renderer.OnDestroyDevice ();
+}
+
 void Core::OnInitWindow ( ANativeWindow &window )
 {
-    if ( !_renderer.OnCreateDevice () )
-        return;
+    if ( !_renderer.IsDeviceCreated () )
+    {
+        if ( !_renderer.OnCreateDevice () )
+            return;
+
+        if ( !_game.OnInitDevice ( _renderer ) )
+        {
+            _renderer.OnDestroyDevice ();
+            return;
+        }
+    }
 
     if ( !_renderer.OnCreateSwapchain ( window, false ) )
     {
+        _game.OnDestroyDevice ( _renderer.GetDevice () );
         _renderer.OnDestroyDevice ();
         return;
     }
 
-    if ( !_game.OnInit ( _renderer ) )
+    if ( !_game.OnSwapchainCreated ( _renderer ) )
     {
         _renderer.OnDestroySwapchain ();
+        _game.OnDestroyDevice ( _renderer.GetDevice () );
         _renderer.OnDestroyDevice ();
-        return;
     }
 
     _fpsTimestamp = std::chrono::system_clock::now ();
@@ -76,12 +92,15 @@ void Core::OnLowMemory ()
 
 void Core::OnTerminateWindow ()
 {
-    if ( !_game.OnDestroy ( _renderer ) )
-        LogError ( "Core::OnTerminateWindow - Game destroy failed." );
+    if ( !_renderer.IsSwapchainCreated () )
+        return;
+
+    if ( !_renderer.FinishAllJobs () )
+        LogError ( "Core::OnTerminateWindow - Can't finish all GPU jobs" );
 
     _gamepad.Stop ();
+    _game.OnSwapchainDestroyed ( _renderer.GetDevice () );
     _renderer.OnDestroySwapchain ();
-    _renderer.OnDestroyDevice ();
 }
 
 void Core::UpdateFPS ( timestamp now )

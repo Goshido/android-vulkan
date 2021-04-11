@@ -112,7 +112,7 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
     return true;
 }
 
-bool RenderSession::Init ( android_vulkan::Renderer &renderer, VkCommandPool commandPool, VkExtent2D const &resolution )
+void RenderSession::OnInitDevice ()
 {
     _lightHandlers =
     {
@@ -120,20 +120,33 @@ bool RenderSession::Init ( android_vulkan::Renderer &renderer, VkCommandPool com
         { eLightType::ReflectionGlobal, &RenderSession::SubmitReflectionGlobal },
         { eLightType::ReflectionLocal, &RenderSession::SubmitReflectionLocal }
     };
+}
+
+void RenderSession::OnDestroyDevice ()
+{
+    _lightHandlers.clear ();
+}
+
+bool RenderSession::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
+    VkExtent2D const &resolution,
+    VkCommandPool commandPool
+)
+{
+    VkDevice device = renderer.GetDevice ();
 
     if ( !_gBuffer.Init ( renderer, resolution ) )
     {
-        Destroy ( renderer.GetDevice () );
+        OnSwapchainDestroyed ( device );
         return false;
     }
 
     if ( !CreateGBufferRenderPass ( renderer ) || !CreateGBufferFramebuffer ( renderer ) )
     {
-        Destroy ( renderer.GetDevice () );
+        OnSwapchainDestroyed ( device );
         return false;
     }
 
-    bool const result = _geometryPass.Init ( renderer,
+    bool result = _geometryPass.Init ( renderer,
         commandPool,
         _gBuffer.GetResolution (),
         _gBufferRenderPass,
@@ -142,19 +155,19 @@ bool RenderSession::Init ( android_vulkan::Renderer &renderer, VkCommandPool com
 
     if ( !result )
     {
-        Destroy ( renderer.GetDevice () );
+        OnSwapchainDestroyed ( device );
         return false;
     }
 
     if ( !_lightPass.Init ( renderer, commandPool, _gBuffer ) || !_presentPass.Init ( renderer ) )
     {
-        Destroy ( renderer.GetDevice () );
+        OnSwapchainDestroyed ( device );
         return false;
     }
 
     if ( !CreateGBufferSlotMapper ( renderer ) )
     {
-        Destroy ( renderer.GetDevice () );
+        OnSwapchainDestroyed ( device );
         return false;
     }
 
@@ -182,11 +195,37 @@ bool RenderSession::Init ( android_vulkan::Renderer &renderer, VkCommandPool com
         }
     };
 
+    result = android_vulkan::Renderer::CheckVkResult ( vkDeviceWaitIdle ( device ),
+        "RenderSession::OnSwapchainDestroyed",
+        "Can't wait device idle"
+    );
+
+    if ( !result )
+    {
+        OnSwapchainDestroyed ( device );
+        return false;
+    }
+
+    FreeTransferResources ( renderer.GetDevice () );
     return true;
 }
 
-void RenderSession::Destroy ( VkDevice device )
+void RenderSession::OnSwapchainDestroyed ( VkDevice device )
 {
+    if ( _gBufferFramebuffer != VK_NULL_HANDLE )
+    {
+        vkDestroyFramebuffer ( device, _gBufferFramebuffer, nullptr );
+        _gBufferFramebuffer = VK_NULL_HANDLE;
+        AV_UNREGISTER_FRAMEBUFFER ( "RenderSession::_gBufferFramebuffer" )
+    }
+
+    if ( _gBufferRenderPass != VK_NULL_HANDLE )
+    {
+        vkDestroyRenderPass ( device, _gBufferRenderPass, nullptr );
+        _gBufferRenderPass = VK_NULL_HANDLE;
+        AV_UNREGISTER_RENDER_PASS ( "RenderSession::_gBufferRenderPass" )
+    }
+
     _samplerManager.FreeResources ( device );
     _presentPass.Destroy ( device );
     _lightPass.Destroy ( device );
@@ -216,12 +255,6 @@ void RenderSession::Destroy ( VkDevice device )
     }
 
     _gBuffer.Destroy ( device );
-    _lightHandlers.clear ();
-}
-
-void RenderSession::FreeTransferResources ( VkDevice device )
-{
-    _lightPass.OnFreeTransferResources ( device );
 }
 
 void RenderSession::SubmitLight ( LightRef &light )
@@ -501,6 +534,11 @@ bool RenderSession::CreateGBufferSlotMapper ( android_vulkan::Renderer &renderer
 
     vkUpdateDescriptorSets ( device, static_cast<uint32_t> ( std::size ( writeSets ) ), writeSets, 0U, nullptr );
     return true;
+}
+
+void RenderSession::FreeTransferResources ( VkDevice device )
+{
+    _lightPass.OnFreeTransferResources ( device );
 }
 
 void RenderSession::SubmitOpaqueCall ( MeshRef &mesh,

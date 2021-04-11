@@ -57,13 +57,15 @@ class RenderSession final
         void Begin ( GXMat4 const &viewerLocal, GXMat4 const &projection );
         [[nodiscard]] bool End ( android_vulkan::Renderer &renderer, double deltaTime );
 
-        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
-            VkCommandPool commandPool,
-            VkExtent2D const &resolution
+        void OnInitDevice ();
+        void OnDestroyDevice ();
+
+        [[nodiscard]] bool OnSwapchainCreated ( android_vulkan::Renderer &renderer,
+            VkExtent2D const &resolution,
+            VkCommandPool commandPool
         );
 
-        void Destroy ( VkDevice device );
-        void FreeTransferResources ( VkDevice device );
+        void OnSwapchainDestroyed ( VkDevice device );
 
         void SubmitLight ( LightRef &light );
 
@@ -81,6 +83,8 @@ class RenderSession final
         [[nodiscard]] bool CreateGBufferFramebuffer ( android_vulkan::Renderer &renderer );
         [[nodiscard]] bool CreateGBufferRenderPass ( android_vulkan::Renderer &renderer );
         [[nodiscard]] bool CreateGBufferSlotMapper ( android_vulkan::Renderer &renderer );
+
+        void FreeTransferResources ( VkDevice device );
 
         void SubmitOpaqueCall ( MeshRef &mesh,
             MaterialRef const &material,

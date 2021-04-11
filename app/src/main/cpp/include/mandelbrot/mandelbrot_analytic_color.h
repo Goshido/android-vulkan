@@ -17,14 +17,14 @@ class MandelbrotAnalyticColor final : public MandelbrotBase
         MandelbrotAnalyticColor& operator = ( const MandelbrotAnalyticColor &other ) = delete;
 
     private:
-        bool OnInit ( android_vulkan::Renderer &renderer ) override;
-        bool OnDestroy ( android_vulkan::Renderer &renderer ) override;
+        [[nodiscard]] bool OnSwapchainCreated ( android_vulkan::Renderer &renderer ) override;
+        void OnSwapchainDestroyed ( VkDevice device ) override;
 
-        bool CreatePipelineLayout ( android_vulkan::Renderer &renderer ) override;
-        void DestroyPipelineLayout ( android_vulkan::Renderer &renderer ) override;
+        [[nodiscard]] bool CreatePipelineLayout ( android_vulkan::Renderer &renderer ) override;
+        void DestroyPipelineLayout ( VkDevice device ) override;
 
-        bool CreateCommandBuffer ( android_vulkan::Renderer &renderer );
-        void DestroyCommandBuffer ( android_vulkan::Renderer &renderer );
+        [[nodiscard]] bool CreateCommandBuffer ( android_vulkan::Renderer &renderer );
+        void DestroyCommandBuffer ( VkDevice device );
 };
 
 } // namespace mandelbrot

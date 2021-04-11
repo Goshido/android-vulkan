@@ -71,16 +71,19 @@ void android_main ( android_app* app )
         }
         while ( !app->destroyRequested );
 
-        if ( app->destroyRequested )
-            break;
-
-        core.OnFrame ();
-    }
+        if ( !app->destroyRequested )
+        {
+            core.OnFrame ();
+            continue;
+        }
 
 #ifdef ANDROID_VULKAN_DEBUG
 
-    android_vulkan::LogDebug ( "android_main - Application was finished." );
+        android_vulkan::LogDebug ( "android_main - Application was finished." );
 
 #endif // ANDROID_VULKAN_DEBUG
 
+        core.OnQuit ();
+        break;
+    }
 }

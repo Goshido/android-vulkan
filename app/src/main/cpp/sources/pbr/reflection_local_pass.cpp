@@ -202,10 +202,13 @@ void ReflectionLocalPass::Destroy ( VkDevice device )
         AV_UNREGISTER_FENCE ( "ReflectionLocalPass::_transferFence" )
     }
 
-    vkFreeCommandBuffers ( device, _commandPool, 1U, &_transfer );
-    _transfer = VK_NULL_HANDLE;
-    _transferSubmit = {};
+    if ( _transfer != VK_NULL_HANDLE )
+    {
+        vkFreeCommandBuffers ( device, _commandPool, 1U, &_transfer );
+        _transfer = VK_NULL_HANDLE;
+    }
 
+    _transferSubmit = {};
     _commandPool = VK_NULL_HANDLE;
 
     _reflectionUniforms.Destroy ( device );

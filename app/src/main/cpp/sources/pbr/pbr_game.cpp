@@ -96,7 +96,11 @@ bool PBRGame::OnInitDevice ( android_vulkan::Renderer &renderer )
 
     AV_REGISTER_COMMAND_POOL ( "PBRGame::_commandPool" )
 
-   _renderSession.OnInitDevice ();
+   if ( !_renderSession.OnInitDevice ( renderer ) )
+   {
+       OnDestroyDevice ( device );
+       return false;
+   }
 
     if ( !UploadGPUContent ( renderer ) )
     {
@@ -110,7 +114,7 @@ bool PBRGame::OnInitDevice ( android_vulkan::Renderer &renderer )
 void PBRGame::OnDestroyDevice ( VkDevice device )
 {
     _components.clear ();
-    _renderSession.OnDestroyDevice ();
+    _renderSession.OnDestroyDevice ( device );
     DestroyCommandPool ( device );
 
     MeshManager::Destroy ( device );

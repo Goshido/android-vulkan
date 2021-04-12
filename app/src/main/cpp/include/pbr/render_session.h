@@ -33,10 +33,10 @@ class RenderSession final
         LightPass                                       _lightPass;
         size_t                                          _opaqueMeshCount;
 
-        TexturePresentProgram                           _texturePresentProgram;
         PresentPass                                     _presentPass;
         RenderSessionStats                              _renderSessionStats;
         SamplerManager                                  _samplerManager;
+        TexturePresentDescriptorSetLayout               _texturePresentDescriptorSetLayout;
 
         GXMat4                                          _cvvToView;
         GXMat4                                          _view;
@@ -57,8 +57,8 @@ class RenderSession final
         void Begin ( GXMat4 const &viewerLocal, GXMat4 const &projection );
         [[nodiscard]] bool End ( android_vulkan::Renderer &renderer, double deltaTime );
 
-        void OnInitDevice ();
-        void OnDestroyDevice ();
+        [[nodiscard]] bool OnInitDevice ( android_vulkan::Renderer &renderer );
+        void OnDestroyDevice ( VkDevice device );
 
         [[nodiscard]] bool OnSwapchainCreated ( android_vulkan::Renderer &renderer,
             VkExtent2D const &resolution,
@@ -82,8 +82,15 @@ class RenderSession final
     private:
         [[nodiscard]] bool CreateGBufferFramebuffer ( android_vulkan::Renderer &renderer );
         [[nodiscard]] bool CreateGBufferRenderPass ( android_vulkan::Renderer &renderer );
+
+        [[nodiscard]] bool CreateGBufferResources ( android_vulkan::Renderer &renderer,
+            VkExtent2D const &resolution,
+            VkCommandPool commandPool
+        );
+
         [[nodiscard]] bool CreateGBufferSlotMapper ( android_vulkan::Renderer &renderer );
 
+        void DestroyGBufferResources ( VkDevice device );
         void FreeTransferResources ( VkDevice device );
 
         void SubmitOpaqueCall ( MeshRef &mesh,

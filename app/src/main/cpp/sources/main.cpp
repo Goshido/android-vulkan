@@ -32,13 +32,6 @@ enum class eGame : uint16_t
 
 void android_main ( android_app* app )
 {
-
-#ifdef ANDROID_VULKAN_DEBUG
-
-    android_vulkan::LogDebug ( "android_main - Application was started." );
-
-#endif // ANDROID_VULKAN_DEBUG
-
     std::map<android_vulkan::eGame, std::shared_ptr<android_vulkan::Game>> const games =
     {
         { android_vulkan::eGame::MandelbrotAnalyticColor, std::make_shared<mandelbrot::MandelbrotAnalyticColor> () },
@@ -71,19 +64,9 @@ void android_main ( android_app* app )
         }
         while ( !app->destroyRequested );
 
-        if ( !app->destroyRequested )
-        {
-            core.OnFrame ();
-            continue;
-        }
+        if ( app->destroyRequested )
+            break;
 
-#ifdef ANDROID_VULKAN_DEBUG
-
-        android_vulkan::LogDebug ( "android_main - Application was finished." );
-
-#endif // ANDROID_VULKAN_DEBUG
-
-        core.OnQuit ();
-        break;
+        core.OnFrame ();
     }
 }

@@ -28,10 +28,10 @@ RenderSession::RenderSession () noexcept:
     _lightHandlers {},
     _lightPass {},
     _opaqueMeshCount ( 0U ),
-    _texturePresentProgram {},
     _presentPass {},
     _renderSessionStats {},
     _samplerManager {},
+    _texturePresentDescriptorSetLayout {},
     _view {},
     _viewProjection {},
     _viewerLocal {}
@@ -112,7 +112,7 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
     return true;
 }
 
-void RenderSession::OnInitDevice ()
+bool RenderSession::OnInitDevice ( android_vulkan::Renderer &renderer )
 {
     _lightHandlers =
     {
@@ -120,10 +120,15 @@ void RenderSession::OnInitDevice ()
         { eLightType::ReflectionGlobal, &RenderSession::SubmitReflectionGlobal },
         { eLightType::ReflectionLocal, &RenderSession::SubmitReflectionLocal }
     };
+
+    return _texturePresentDescriptorSetLayout.Init ( renderer );
 }
 
-void RenderSession::OnDestroyDevice ()
+void RenderSession::OnDestroyDevice ( VkDevice device )
 {
+    _texturePresentDescriptorSetLayout.Destroy ( device );
+    _samplerManager.FreeResources ( device );
+    DestroyGBufferResources ( device );
     _lightHandlers.clear ();
 }
 
@@ -132,129 +137,32 @@ bool RenderSession::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
     VkCommandPool commandPool
 )
 {
-    VkDevice device = renderer.GetDevice ();
+    VkExtent2D const& currentResolution = _gBuffer.GetResolution ();
 
-    if ( !_gBuffer.Init ( renderer, resolution ) )
+    if ( currentResolution.width != resolution.width || currentResolution.height != resolution.height )
     {
-        OnSwapchainDestroyed ( device );
-        return false;
-    }
+        DestroyGBufferResources ( renderer.GetDevice () );
 
-    if ( !CreateGBufferRenderPass ( renderer ) || !CreateGBufferFramebuffer ( renderer ) )
-    {
-        OnSwapchainDestroyed ( device );
-        return false;
-    }
-
-    bool result = _geometryPass.Init ( renderer,
-        commandPool,
-        _gBuffer.GetResolution (),
-        _gBufferRenderPass,
-        _gBufferFramebuffer
-    );
-
-    if ( !result )
-    {
-        OnSwapchainDestroyed ( device );
-        return false;
-    }
-
-    if ( !_lightPass.Init ( renderer, commandPool, _gBuffer ) || !_presentPass.Init ( renderer ) )
-    {
-        OnSwapchainDestroyed ( device );
-        return false;
-    }
-
-    if ( !CreateGBufferSlotMapper ( renderer ) )
-    {
-        OnSwapchainDestroyed ( device );
-        return false;
-    }
-
-    android_vulkan::Texture2D const& texture = _gBuffer.GetHDRAccumulator();
-
-    _gBufferImageBarrier =
-    {
-        .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-        .pNext = nullptr,
-        .srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-        .dstAccessMask = VK_ACCESS_SHADER_READ_BIT,
-        .oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-        .newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .image = texture.GetImage (),
-
-        .subresourceRange =
+        if ( !CreateGBufferResources ( renderer, resolution, commandPool ) )
         {
-            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-            .baseMipLevel = 0U,
-            .levelCount = static_cast<uint32_t> ( texture.GetMipLevelCount () ),
-            .baseArrayLayer = 0U,
-            .layerCount = 1U
+            OnSwapchainDestroyed ( renderer.GetDevice () );
+            return false;
         }
-    };
-
-    result = android_vulkan::Renderer::CheckVkResult ( vkDeviceWaitIdle ( device ),
-        "RenderSession::OnSwapchainDestroyed",
-        "Can't wait device idle"
-    );
-
-    if ( !result )
-    {
-        OnSwapchainDestroyed ( device );
-        return false;
     }
 
-    FreeTransferResources ( renderer.GetDevice () );
-    return true;
+    if ( _presentPass.Init ( renderer ) )
+        return true;
+
+    VkDevice device = renderer.GetDevice ();
+    DestroyGBufferResources ( device );
+    OnSwapchainDestroyed ( device );
+
+    return false;
 }
 
 void RenderSession::OnSwapchainDestroyed ( VkDevice device )
 {
-    if ( _gBufferFramebuffer != VK_NULL_HANDLE )
-    {
-        vkDestroyFramebuffer ( device, _gBufferFramebuffer, nullptr );
-        _gBufferFramebuffer = VK_NULL_HANDLE;
-        AV_UNREGISTER_FRAMEBUFFER ( "RenderSession::_gBufferFramebuffer" )
-    }
-
-    if ( _gBufferRenderPass != VK_NULL_HANDLE )
-    {
-        vkDestroyRenderPass ( device, _gBufferRenderPass, nullptr );
-        _gBufferRenderPass = VK_NULL_HANDLE;
-        AV_UNREGISTER_RENDER_PASS ( "RenderSession::_gBufferRenderPass" )
-    }
-
-    _samplerManager.FreeResources ( device );
     _presentPass.Destroy ( device );
-    _lightPass.Destroy ( device );
-    _texturePresentProgram.Destroy ( device );
-
-    if ( _gBufferDescriptorPool != VK_NULL_HANDLE )
-    {
-        vkDestroyDescriptorPool ( device, _gBufferDescriptorPool, nullptr );
-        _gBufferDescriptorPool = VK_NULL_HANDLE;
-        AV_UNREGISTER_DESCRIPTOR_POOL ( "RenderSession::_gBufferDescriptorPool" )
-    }
-
-    _geometryPass.Destroy ( device );
-
-    if ( _gBufferFramebuffer != VK_NULL_HANDLE )
-    {
-        vkDestroyFramebuffer ( device, _gBufferFramebuffer, nullptr );
-        _gBufferFramebuffer = VK_NULL_HANDLE;
-        AV_UNREGISTER_FRAMEBUFFER ( "RenderSession::_gBufferFramebuffer" )
-    }
-
-    if ( _gBufferRenderPass != VK_NULL_HANDLE )
-    {
-        vkDestroyRenderPass ( device, _gBufferRenderPass, nullptr );
-        _gBufferRenderPass = VK_NULL_HANDLE;
-        AV_UNREGISTER_RENDER_PASS ( "RenderSession::_gBufferRenderPass" )
-    }
-
-    _gBuffer.Destroy ( device );
 }
 
 void RenderSession::SubmitLight ( LightRef &light )
@@ -434,6 +342,89 @@ bool RenderSession::CreateGBufferRenderPass ( android_vulkan::Renderer &renderer
     return true;
 }
 
+bool RenderSession::CreateGBufferResources ( android_vulkan::Renderer &renderer,
+    VkExtent2D const &resolution,
+    VkCommandPool commandPool
+)
+{
+    VkDevice device = renderer.GetDevice ();
+
+    if ( !_gBuffer.Init ( renderer, resolution ) )
+    {
+        DestroyGBufferResources ( device );
+        return false;
+    }
+
+    if ( !CreateGBufferRenderPass ( renderer ) || !CreateGBufferFramebuffer ( renderer ) )
+    {
+        DestroyGBufferResources ( device );
+        return false;
+    }
+
+    bool result = _geometryPass.Init ( renderer,
+        commandPool,
+        _gBuffer.GetResolution (),
+        _gBufferRenderPass,
+        _gBufferFramebuffer
+    );
+
+    if ( !result )
+    {
+        DestroyGBufferResources ( device );
+        return false;
+    }
+
+    if ( !_lightPass.Init ( renderer, commandPool, _gBuffer ) )
+    {
+        DestroyGBufferResources ( device );
+        return false;
+    }
+
+    if ( !CreateGBufferSlotMapper ( renderer ) )
+    {
+        DestroyGBufferResources ( device );
+        return false;
+    }
+
+    android_vulkan::Texture2D const& texture = _gBuffer.GetHDRAccumulator();
+
+    _gBufferImageBarrier =
+    {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+        .pNext = nullptr,
+        .srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+        .dstAccessMask = VK_ACCESS_SHADER_READ_BIT,
+        .oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+        .newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .image = texture.GetImage (),
+
+        .subresourceRange =
+        {
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .baseMipLevel = 0U,
+            .levelCount = static_cast<uint32_t> ( texture.GetMipLevelCount () ),
+            .baseArrayLayer = 0U,
+            .layerCount = 1U
+        }
+    };
+
+    result = android_vulkan::Renderer::CheckVkResult ( vkDeviceWaitIdle ( device ),
+        "RenderSession::CreateGBufferResources",
+        "Can't wait device idle"
+    );
+
+    if ( !result )
+    {
+        DestroyGBufferResources ( device );
+        return false;
+    }
+
+    FreeTransferResources ( renderer.GetDevice () );
+    return true;
+}
+
 bool RenderSession::CreateGBufferSlotMapper ( android_vulkan::Renderer &renderer )
 {
     constexpr static VkDescriptorPoolSize const poolSizes[] =
@@ -534,6 +525,50 @@ bool RenderSession::CreateGBufferSlotMapper ( android_vulkan::Renderer &renderer
 
     vkUpdateDescriptorSets ( device, static_cast<uint32_t> ( std::size ( writeSets ) ), writeSets, 0U, nullptr );
     return true;
+}
+
+void RenderSession::DestroyGBufferResources ( VkDevice device )
+{
+    if ( _gBufferFramebuffer != VK_NULL_HANDLE )
+    {
+        vkDestroyFramebuffer ( device, _gBufferFramebuffer, nullptr );
+        _gBufferFramebuffer = VK_NULL_HANDLE;
+        AV_UNREGISTER_FRAMEBUFFER ( "RenderSession::_gBufferFramebuffer" )
+    }
+
+    if ( _gBufferRenderPass != VK_NULL_HANDLE )
+    {
+        vkDestroyRenderPass ( device, _gBufferRenderPass, nullptr );
+        _gBufferRenderPass = VK_NULL_HANDLE;
+        AV_UNREGISTER_RENDER_PASS ( "RenderSession::_gBufferRenderPass" )
+    }
+
+    _lightPass.Destroy ( device );
+
+    if ( _gBufferDescriptorPool != VK_NULL_HANDLE )
+    {
+        vkDestroyDescriptorPool ( device, _gBufferDescriptorPool, nullptr );
+        _gBufferDescriptorPool = VK_NULL_HANDLE;
+        AV_UNREGISTER_DESCRIPTOR_POOL ( "RenderSession::_gBufferDescriptorPool" )
+    }
+
+    _geometryPass.Destroy ( device );
+
+    if ( _gBufferFramebuffer != VK_NULL_HANDLE )
+    {
+        vkDestroyFramebuffer ( device, _gBufferFramebuffer, nullptr );
+        _gBufferFramebuffer = VK_NULL_HANDLE;
+        AV_UNREGISTER_FRAMEBUFFER ( "RenderSession::_gBufferFramebuffer" )
+    }
+
+    if ( _gBufferRenderPass != VK_NULL_HANDLE )
+    {
+        vkDestroyRenderPass ( device, _gBufferRenderPass, nullptr );
+        _gBufferRenderPass = VK_NULL_HANDLE;
+        AV_UNREGISTER_RENDER_PASS ( "RenderSession::_gBufferRenderPass" )
+    }
+
+    _gBuffer.Destroy ( device );
 }
 
 void RenderSession::FreeTransferResources ( VkDevice device )

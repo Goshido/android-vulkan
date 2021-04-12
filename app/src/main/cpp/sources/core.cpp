@@ -14,6 +14,13 @@ Core::Core ( android_app &app, Game &game ) noexcept:
     _fpsTimestamp {},
     _frameTimestamp {}
 {
+
+#ifdef ANDROID_VULKAN_DEBUG
+
+    android_vulkan::LogInfo ( "Core::Core - Application was started." );
+
+#endif // ANDROID_VULKAN_DEBUG
+
     // grab asset manager
     g_AssetManager = app.activity->assetManager;
 
@@ -48,6 +55,13 @@ void Core::OnQuit ()
 {
     _game.OnDestroyDevice ( _renderer.GetDevice () );
     _renderer.OnDestroyDevice ();
+
+#ifdef ANDROID_VULKAN_DEBUG
+
+    android_vulkan::LogInfo ( "Core::OnQuit - Application was finished." );
+
+#endif // ANDROID_VULKAN_DEBUG
+
 }
 
 void Core::OnInitWindow ( ANativeWindow &window )
@@ -172,6 +186,7 @@ void Core::OnOSCommand ( android_app* app, int32_t cmd )
         break;
 
         case APP_CMD_DESTROY:
+            core.OnQuit ();
             app->onAppCmd = nullptr;
             app->userData = nullptr;
         break;

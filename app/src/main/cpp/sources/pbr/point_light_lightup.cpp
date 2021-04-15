@@ -254,7 +254,7 @@ bool PointLightLightup::UpdateGPUData ( android_vulkan::Renderer &renderer,
 
         viewToPointLight.GetW ( alpha );
         GXVec3 const& location = light->GetLocation ();
-        betta.Substract ( alpha, location );
+        betta.Subtract ( alpha, location );
         viewToPointLight.SetW ( betta );
 
         lightData._hue = light->GetHue ();

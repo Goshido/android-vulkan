@@ -12,7 +12,7 @@ ReflectionProbeLocal::ReflectionProbeLocal ( TextureCubeRef prefilter, GXVec3 lo
     GXVec3 const beta ( alpha, alpha, alpha );
 
     GXVec3 gamma;
-    gamma.Substract ( _location, beta );
+    gamma.Subtract ( _location, beta );
     _bounds.AddVertex ( gamma );
 
     gamma.Sum ( _location, beta );

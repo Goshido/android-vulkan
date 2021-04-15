@@ -1,4 +1,4 @@
-// version 1.59
+// version 1.60
 
 #ifndef GX_MATH
 #define GX_MATH
@@ -60,7 +60,7 @@ struct [[maybe_unused]] GXVec2 final
 
     [[maybe_unused]] GXVoid Sum ( GXVec2 const &a, GXVec2 const &b );
     [[maybe_unused]] GXVoid Sum ( GXVec2 const &a, GXFloat bScale, GXVec2 const &b );
-    [[maybe_unused]] GXVoid Substract ( GXVec2 const &a, GXVec2 const &b );
+    [[maybe_unused]] GXVoid Subtract ( GXVec2 const &a, GXVec2 const &b );
     [[maybe_unused]] GXVoid Multiply ( GXVec2 const &a, GXVec2 const &b );
     [[maybe_unused]] GXVoid Multiply ( GXVec2 const &v, GXFloat scale );
 
@@ -127,7 +127,7 @@ struct [[maybe_unused]] GXVec3 final
 
     [[maybe_unused]] GXVoid Sum ( GXVec3 const &a, GXVec3 const &b );
     [[maybe_unused]] GXVoid Sum ( GXVec3 const &a, GXFloat bScale, GXVec3 const &b );
-    [[maybe_unused]] GXVoid Substract ( GXVec3 const &a, GXVec3 const &b );
+    [[maybe_unused]] GXVoid Subtract ( GXVec3 const &a, GXVec3 const &b );
     [[maybe_unused]] GXVoid Multiply ( GXVec3 const &a, GXFloat scale );
     [[maybe_unused]] GXVoid Multiply ( GXVec3 const &a, GXVec3 const &b );
 
@@ -235,7 +235,7 @@ struct [[maybe_unused]] GXVec4 final
 
     [[maybe_unused]] GXVoid Sum ( GXVec4 const &a, GXVec4 const &b );
     [[maybe_unused]] GXVoid Sum ( GXVec4 const &a, GXFloat bScale, GXVec4 const &b );
-    [[maybe_unused]] GXVoid Substract ( GXVec4 const &a, GXVec4 const &b );
+    [[maybe_unused]] GXVoid Subtract ( GXVec4 const &a, GXVec4 const &b );
 
     [[maybe_unused, nodiscard]] GXFloat DotProduct ( GXVec4 const &other ) const;
 
@@ -548,7 +548,7 @@ struct [[maybe_unused]] GXMat3 final
     [[maybe_unused]] GXVoid Zeros ();
 
     [[maybe_unused]] GXVoid Inverse ( GXMat3 const &sourceMatrix );
-    [[maybe_unused]] GXVoid Transponse ( GXMat3 const &sourceMatrix );
+    [[maybe_unused]] GXVoid Transpose ( GXMat3 const &sourceMatrix );
     [[maybe_unused]] GXVoid ClearRotation ( GXMat3 const &sourceMatrix );
     [[maybe_unused]] GXVoid ClearRotation ( GXMat4 const &sourceMatrix );
 
@@ -567,7 +567,7 @@ struct [[maybe_unused]] GXMat3 final
     [[maybe_unused]] GXVoid SkewSymmetric ( GXVec3 const &base );
 
     [[maybe_unused]] GXVoid Sum ( GXMat3 const &a, GXMat3 const &b );
-    [[maybe_unused]] GXVoid Substract ( GXMat3 const &a, GXMat3 const &b );
+    [[maybe_unused]] GXVoid Subtract ( GXMat3 const &a, GXMat3 const &b );
     [[maybe_unused]] GXVoid Multiply ( GXMat3 const &a, GXMat3 const &b );
 
     [[maybe_unused]] GXVoid MultiplyVectorMatrix ( GXVec3 &out, GXVec3 const &v ) const;

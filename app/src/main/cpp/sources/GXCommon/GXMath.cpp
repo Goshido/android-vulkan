@@ -1,4 +1,4 @@
-﻿// version 1.59
+﻿// version 1.60
 
 #include <GXCommon/GXMath.h>
 #include <GXCommon/GXWarning.h>
@@ -64,56 +64,15 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     Multiply ( *this, 1.0F / Length () );
 }
 
-[[maybe_unused]] GXVoid GXVec2::CalculateNormalFast ( GXVec2 const &a, GXVec2 const &b )
-{
-    _data[ 0U ] = a._data[ 1U ] - b._data[ 1U ];
-    _data[ 1U ] = b._data[ 0U ] - a._data[ 0U ];
-}
-
 [[maybe_unused]] GXVoid GXVec2::CalculateNormal ( GXVec2 const &a, GXVec2 const &b )
 {
     CalculateNormalFast ( a, b );
     Normalize ();
 }
 
-[[maybe_unused]] GXVoid GXVec2::Sum ( GXVec2 const &a, GXVec2 const &b )
-{
-    _data[ 0U ] = a._data[ 0U ] + b._data[ 0U ];
-    _data[ 1U ] = a._data[ 1U ] + b._data[ 1U ];
-}
-
-[[maybe_unused]] GXVoid GXVec2::Sum ( GXVec2 const &a, GXFloat bScale, GXVec2 const &b )
-{
-    _data[ 0U ] = a._data[ 0U ] + bScale * b._data[ 0U ];
-    _data[ 1U ] = a._data[ 1U ] + bScale * b._data[ 1U ];
-}
-
-[[maybe_unused]] GXVoid GXVec2::Substract ( GXVec2 const &a, GXVec2 const &b )
-{
-    _data[ 0U ] = a._data[ 0U ] - b._data[ 0U ];
-    _data[ 1U ] = a._data[ 1U ] - b._data[ 1U ];
-}
-
-[[maybe_unused]] GXVoid GXVec2::Multiply ( GXVec2 const &a, GXVec2 const &b )
-{
-    _data[ 0U ] = a._data[ 0U ] * b._data[ 0U ];
-    _data[ 1U ] = a._data[ 1U ] * b._data[ 1U ];
-}
-
-[[maybe_unused]] GXVoid GXVec2::Multiply ( GXVec2 const &v, GXFloat scale )
-{
-    _data[ 0U ] = v._data[ 0U ] * scale;
-    _data[ 1U ] = v._data[ 1U ] * scale;
-}
-
-[[maybe_unused]] GXFloat GXVec2::DotProduct ( GXVec2 const &other ) const
-{
-    return _data[ 0U ] * other._data[ 0U ] + _data[ 1U ] * other._data[ 1U ];
-}
-
 [[maybe_unused]] GXFloat GXVec2::Length () const
 {
-    return sqrtf ( SquaredLength () );
+    return std::sqrt ( SquaredLength () );
 }
 
 [[maybe_unused]] GXFloat GXVec2::SquaredLength () const
@@ -139,10 +98,10 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 )
 {
     GXVec2 alpha;
-    alpha.Substract ( a1, a0 );
+    alpha.Subtract ( a1, a0 );
 
     GXVec2 betta;
-    betta.Substract ( b1, b0 );
+    betta.Subtract ( b1, b0 );
 
     GXVec2 const yotta ( -alpha.GetY (), alpha.GetX () );
     GXFloat const omega = yotta.DotProduct ( betta );
@@ -152,7 +111,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
         GXVec2 const gamma ( a0.IsEqual ( b0 ) ? b1 : b0 );
 
         GXVec2 zetta;
-        zetta.Substract ( gamma, a0 );
+        zetta.Subtract ( gamma, a0 );
         zetta.Normalize ();
 
         alpha.Normalize ();
@@ -170,7 +129,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     }
 
     GXVec2 phi;
-    phi.Substract ( b0, a0 );
+    phi.Subtract ( b0, a0 );
 
     intersectionPoint.Sum ( b0, -phi.DotProduct ( yotta ) / omega, betta );
     return eGXLineRelationship::Intersection;
@@ -220,20 +179,6 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     Multiply ( *this, 1.0F / Length () );
 }
 
-[[maybe_unused]] GXVoid GXVec3::Reverse ()
-{
-    _data[ 0U ] = -_data[ 0U ];
-    _data[ 1U ] = -_data[ 1U ];
-    _data[ 2U ] = -_data[ 2U ];
-}
-
-[[maybe_unused]] GXVoid GXVec3::Sum ( GXVec3 const &a, GXVec3 const &b )
-{
-    _data[ 0U ] = a._data[ 0U ] + b._data[ 0U ];
-    _data[ 1U ] = a._data[ 1U ] + b._data[ 1U ];
-    _data[ 2U ] = a._data[ 2U ] + b._data[ 2U ];
-}
-
 [[maybe_unused]] GXVoid GXVec3::Sum ( GXVec3 const &a, GXFloat bScale, GXVec3 const &b )
 {
     _data[ 0U ] = a._data[ 0U ] + bScale * b._data[ 0U ];
@@ -241,7 +186,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     _data[ 2U ] = a._data[ 2U ] + bScale * b._data[ 2U ];
 }
 
-[[maybe_unused]] GXVoid GXVec3::Substract ( GXVec3 const &a, GXVec3 const &b )
+[[maybe_unused]] GXVoid GXVec3::Subtract ( GXVec3 const &a, GXVec3 const &b )
 {
     _data[ 0U ] = a._data[ 0U ] - b._data[ 0U ];
     _data[ 1U ] = a._data[ 1U ] - b._data[ 1U ];
@@ -287,14 +232,14 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 [[maybe_unused]] GXFloat GXVec3::Distance ( GXVec3 const &other ) const
 {
     GXVec3 difference;
-    difference.Substract ( *this, other );
+    difference.Subtract ( *this, other );
     return difference.Length ();
 }
 
 [[maybe_unused]] GXFloat GXVec3::SquaredDistance ( GXVec3 const &other ) const
 {
     GXVec3 difference;
-    difference.Substract ( *this, other );
+    difference.Subtract ( *this, other );
     return difference.SquaredLength ();
 }
 
@@ -304,7 +249,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 )
 {
     GXVec3 difference;
-    difference.Substract ( finish, start );
+    difference.Subtract ( finish, start );
     Sum ( start, interpolationFactor, difference );
 }
 
@@ -524,7 +469,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     _data[ 3U ] = a._data[ 3U ] + bScale * b._data[ 3U ];
 }
 
-[[maybe_unused]] GXVoid GXVec4::Substract ( GXVec4 const &a, GXVec4 const &b )
+[[maybe_unused]] GXVoid GXVec4::Subtract ( GXVec4 const &a, GXVec4 const &b )
 {
     _data[ 0U ] = a._data[ 0U ] - b._data[ 0U ];
     _data[ 1U ] = a._data[ 1U ] - b._data[ 1U ];
@@ -1624,7 +1569,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     _m[ 2U ][ 2U ] = invDeterminant * ( m._m[ 0U ][ 0U ] * m._m[ 1U ][ 1U ] - m._m[ 1U ][ 0U ] * m._m[ 0U ][ 1U ] );
 }
 
-[[maybe_unused]] GXVoid GXMat3::Transponse ( GXMat3 const &sourceMatrix )
+[[maybe_unused]] GXVoid GXMat3::Transpose ( GXMat3 const &sourceMatrix )
 {
     _m[ 0U ][ 0U ] = sourceMatrix._m[ 0U ][ 0U ];
     _m[ 0U ][ 1U ] = sourceMatrix._m[ 1U ][ 0U ];
@@ -1710,7 +1655,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     _m[ 2U ][ 2U ] = a._m[ 2U ][ 2U ] + b._m[ 2U ][ 2U ];
 }
 
-[[maybe_unused]] GXVoid GXMat3::Substract ( GXMat3 const &a, GXMat3 const &b )
+[[maybe_unused]] GXVoid GXMat3::Subtract ( GXMat3 const &a, GXMat3 const &b )
 {
     _m[ 0U ][ 0U ] = a._m[ 0U ][ 0U ] - b._m[ 0U ][ 0U ];
     _m[ 0U ][ 1U ] = a._m[ 0U ][ 1U ] - b._m[ 0U ][ 1U ];
@@ -2495,10 +2440,10 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 [[maybe_unused]] GXVoid GXPlane::From ( GXVec3 const &pointA, GXVec3 const &pointB, GXVec3 const &pointC )
 {
     GXVec3 ab;
-    ab.Substract ( pointB, pointA );
+    ab.Subtract ( pointB, pointA );
 
     GXVec3 ac;
-    ac.Substract ( pointC, pointA );
+    ac.Subtract ( pointC, pointA );
 
     GXVec3 normal;
     normal.CrossProduct ( ab, ac );
@@ -2513,10 +2458,10 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 [[maybe_unused]] GXVoid GXPlane::FromLineToPoint ( GXVec3 const &lineStart, GXVec3 const &lineEnd, GXVec3 const &point )
 {
     GXVec3 startToPoint;
-    startToPoint.Substract ( point, lineStart );
+    startToPoint.Subtract ( point, lineStart );
 
     GXVec3 startToEnd;
-    startToEnd.Substract ( lineEnd, lineStart );
+    startToEnd.Subtract ( lineEnd, lineStart );
 
     GXVec3 tempCross;
     tempCross.CrossProduct ( startToEnd, startToPoint );
@@ -2755,13 +2700,13 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 
     GXVec3 a;
     GXVec3 b;
-    a.Substract ( *v1, *v0 );
-    b.Substract ( *v2, *v0 );
+    a.Subtract ( *v1, *v0 );
+    b.Subtract ( *v2, *v0 );
 
     GXVec2 dUVa;
     GXVec2 dUVb;
-    dUVa.Substract ( *uv1, *uv0 );
-    dUVb.Substract ( *uv2, *uv0 );
+    dUVa.Subtract ( *uv1, *uv0 );
+    dUVb.Subtract ( *uv2, *uv0 );
 
     GXFloat const factor = 1.0F / ( dUVa._data[ 0U ] * dUVb._data[ 1U ] - dUVb._data[ 0U ] * dUVa._data[ 1U ] );
 
@@ -2807,9 +2752,9 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     GXVec3 v1;
     GXVec3 v2;
 
-    v0.Substract ( bPivot, aPivot );
-    v1.Substract ( cPivot, aPivot );
-    v2.Substract ( point, aPivot );
+    v0.Subtract ( bPivot, aPivot );
+    v1.Subtract ( cPivot, aPivot );
+    v2.Subtract ( point, aPivot );
 
     GXFloat d00 = v0.DotProduct ( v0 );
     GXFloat d01 = v0.DotProduct ( v1 );
@@ -2856,7 +2801,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     pointWorld._data[ 1U ] *= alpha;
     pointWorld._data[ 2U ] *= alpha;
 
-    direction.Substract ( GXVec3 ( pointWorld._data[ 0U ], pointWorld._data[ 1U ], pointWorld._data[ 2U ] ),
+    direction.Subtract ( GXVec3 ( pointWorld._data[ 0U ], pointWorld._data[ 1U ], pointWorld._data[ 2U ] ),
         viewerLocation
     );
 

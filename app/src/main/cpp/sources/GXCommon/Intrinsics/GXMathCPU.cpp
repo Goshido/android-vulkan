@@ -3,6 +3,65 @@
 #include <GXCommon/GXMath.h>
 
 
+[[maybe_unused]] GXVoid GXVec2::CalculateNormalFast ( GXVec2 const &a, GXVec2 const &b )
+{
+    _data[ 0U ] = a._data[ 1U ] - b._data[ 1U ];
+    _data[ 1U ] = b._data[ 0U ] - a._data[ 0U ];
+}
+
+[[maybe_unused]] GXFloat GXVec2::DotProduct ( GXVec2 const &other ) const
+{
+    return _data[ 0U ] * other._data[ 0U ] + _data[ 1U ] * other._data[ 1U ];
+}
+
+[[maybe_unused]] GXVoid GXVec2::Sum ( GXVec2 const &a, GXVec2 const &b )
+{
+    _data[ 0U ] = a._data[ 0U ] + b._data[ 0U ];
+    _data[ 1U ] = a._data[ 1U ] + b._data[ 1U ];
+}
+
+[[maybe_unused]] GXVoid GXVec2::Sum ( GXVec2 const &a, GXFloat bScale, GXVec2 const &b )
+{
+    _data[ 0U ] = a._data[ 0U ] + bScale * b._data[ 0U ];
+    _data[ 1U ] = a._data[ 1U ] + bScale * b._data[ 1U ];
+}
+
+[[maybe_unused]] GXVoid GXVec2::Subtract ( GXVec2 const &a, GXVec2 const &b )
+{
+    _data[ 0U ] = a._data[ 0U ] - b._data[ 0U ];
+    _data[ 1U ] = a._data[ 1U ] - b._data[ 1U ];
+}
+
+[[maybe_unused]] GXVoid GXVec2::Multiply ( GXVec2 const &a, GXVec2 const &b )
+{
+    _data[ 0U ] = a._data[ 0U ] * b._data[ 0U ];
+    _data[ 1U ] = a._data[ 1U ] * b._data[ 1U ];
+}
+
+[[maybe_unused]] GXVoid GXVec2::Multiply ( GXVec2 const &v, GXFloat scale )
+{
+    _data[ 0U ] = v._data[ 0U ] * scale;
+    _data[ 1U ] = v._data[ 1U ] * scale;
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+[[maybe_unused]] GXVoid GXVec3::Reverse ()
+{
+    _data[ 0U ] = -_data[ 0U ];
+    _data[ 1U ] = -_data[ 1U ];
+    _data[ 2U ] = -_data[ 2U ];
+}
+
+[[maybe_unused]] GXVoid GXVec3::Sum ( GXVec3 const &a, GXVec3 const &b )
+{
+    _data[ 0U ] = a._data[ 0U ] + b._data[ 0U ];
+    _data[ 1U ] = a._data[ 1U ] + b._data[ 1U ];
+    _data[ 2U ] = a._data[ 2U ] + b._data[ 2U ];
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
 [[maybe_unused]] GXVoid GXMat4::Multiply ( GXMat4 const &a, GXMat4 const &b )
 {
     _m[ 0U ][ 0U ] = a._m[ 0U ][ 0U ] * b._m[ 0U ][ 0U ] +

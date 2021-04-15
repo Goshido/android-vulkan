@@ -1,13 +1,77 @@
-// version 1.0
+// version 1.1
 
 #include <GXCommon/GXMath.h>
 
 GX_DISABLE_COMMON_WARNINGS
 
+#include <cstring>
 #include <arm_neon.h>
 
 GX_RESTORE_WARNING_STATE
 
+
+[[maybe_unused]] GXVoid GXVec2::CalculateNormalFast ( GXVec2 const &a, GXVec2 const &b )
+{
+    float32_t const alpha[ 2U ] = { a._data[ 1U ], b._data[ 0U ] };
+    float32_t const beta[ 2U ] = { b._data[ 1U ], a._data[ 0U ] };
+    vst1_f32 ( _data, vsub_f32 ( vld1_f32 ( alpha ), vld1_f32 ( beta ) ) );
+}
+
+[[maybe_unused]] GXFloat GXVec2::DotProduct ( GXVec2 const &other ) const
+{
+    return vaddv_f32 ( vmul_f32 ( vld1_f32 ( _data ), vld1_f32 ( other._data ) ) );
+}
+
+[[maybe_unused]] GXVoid GXVec2::Sum ( GXVec2 const &a, GXVec2 const &b )
+{
+    vst1_f32 ( _data, vadd_f32 ( vld1_f32 ( a._data ), vld1_f32 ( b._data ) ) );
+}
+
+[[maybe_unused]] GXVoid GXVec2::Sum ( GXVec2 const &a, GXFloat bScale, GXVec2 const &b )
+{
+    vst1_f32 ( _data, vmla_n_f32 ( vld1_f32 ( a._data ), vld1_f32 ( b._data ), bScale ) );
+}
+
+[[maybe_unused]] GXVoid GXVec2::Subtract ( GXVec2 const &a, GXVec2 const &b )
+{
+    vst1_f32 ( _data, vsub_f32 ( vld1_f32 ( a._data ), vld1_f32 ( b._data ) ) );
+}
+
+[[maybe_unused]] GXVoid GXVec2::Multiply ( GXVec2 const &a, GXVec2 const &b )
+{
+    vst1_f32 ( _data, vmul_f32 ( vld1_f32 ( a._data ), vld1_f32 ( b._data ) ) );
+}
+
+[[maybe_unused]] GXVoid GXVec2::Multiply ( GXVec2 const &v, GXFloat scale )
+{
+    vst1_f32 ( _data, vmul_n_f32 ( vld1_f32 ( v._data ), scale ) );
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+[[maybe_unused]] GXVoid GXVec3::Reverse ()
+{
+    float32_t tmp[ 4U ];
+
+    // Note vld1q_f32 expects float32_t[ 4U ] array as input. So the 4-th component is garbage but it's not used in
+    // computation anyway.
+    vst1q_f32 ( tmp, vnegq_f32 ( vld1q_f32 ( _data ) ) );
+
+    memcpy ( _data, tmp, sizeof ( _data ) );
+}
+
+[[maybe_unused]] GXVoid GXVec3::Sum ( GXVec3 const &a, GXVec3 const &b )
+{
+    float32_t tmp[ 4U ];
+
+    // Note vld1q_f32 expects float32_t[ 4U ] array as input. So the 4-th component is garbage but it's not used in
+    // computation anyway.
+    vst1q_f32 ( tmp, vaddq_f32 ( vld1q_f32 ( a._data ), vld1q_f32 ( b._data ) ) );
+
+    memcpy ( _data, tmp, sizeof ( _data ) );
+}
+
+//----------------------------------------------------------------------------------------------------------------------
 
 [[maybe_unused]] GXVoid GXMat4::Multiply ( GXMat4 const &a, GXMat4 const &b )
 {

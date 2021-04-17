@@ -1,4 +1,4 @@
-// version 1.0
+// version 1.1
 
 #include <GXCommon/GXMath.h>
 
@@ -58,6 +58,46 @@
     _data[ 0U ] = a._data[ 0U ] + b._data[ 0U ];
     _data[ 1U ] = a._data[ 1U ] + b._data[ 1U ];
     _data[ 2U ] = a._data[ 2U ] + b._data[ 2U ];
+}
+
+[[maybe_unused]] GXVoid GXVec3::Sum ( GXVec3 const &a, GXFloat bScale, GXVec3 const &b )
+{
+    _data[ 0U ] = a._data[ 0U ] + bScale * b._data[ 0U ];
+    _data[ 1U ] = a._data[ 1U ] + bScale * b._data[ 1U ];
+    _data[ 2U ] = a._data[ 2U ] + bScale * b._data[ 2U ];
+}
+
+[[maybe_unused]] GXVoid GXVec3::Subtract ( GXVec3 const &a, GXVec3 const &b )
+{
+    _data[ 0U ] = a._data[ 0U ] - b._data[ 0U ];
+    _data[ 1U ] = a._data[ 1U ] - b._data[ 1U ];
+    _data[ 2U ] = a._data[ 2U ] - b._data[ 2U ];
+}
+
+[[maybe_unused]] GXVoid GXVec3::Multiply ( GXVec3 const &a, GXFloat scale )
+{
+    _data[ 0U ] = a._data[ 0U ] * scale;
+    _data[ 1U ] = a._data[ 1U ] * scale;
+    _data[ 2U ] = a._data[ 2U ] * scale;
+}
+
+[[maybe_unused]] GXVoid GXVec3::Multiply ( GXVec3 const &a, GXVec3 const &b )
+{
+    _data[ 0U ] = a._data[ 0U ] * b._data[ 0U ];
+    _data[ 1U ] = a._data[ 1U ] * b._data[ 1U ];
+    _data[ 2U ] = a._data[ 2U ] * b._data[ 2U ];
+}
+
+[[maybe_unused]] GXFloat GXVec3::DotProduct ( GXVec3 const &other ) const
+{
+    return _data[ 0U ] * other._data[ 0U ] + _data[ 1U ] * other._data[ 1U ] + _data[ 2U ] * other._data[ 2U ];
+}
+
+[[maybe_unused]] GXVoid GXVec3::CrossProduct ( GXVec3 const &a, GXVec3 const &b )
+{
+    _data[ 0U ] = a._data[ 1U ] * b._data[ 2U ] - a._data[ 2U ] * b._data[ 1U ];
+    _data[ 1U ] = a._data[ 2U ] * b._data[ 0U ] - a._data[ 0U ] * b._data[ 2U ];
+    _data[ 2U ] = a._data[ 0U ] * b._data[ 1U ] - a._data[ 1U ] * b._data[ 0U ];
 }
 
 //----------------------------------------------------------------------------------------------------------------------

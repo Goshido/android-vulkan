@@ -21,12 +21,11 @@ Requirements:
 * _Android SDK 10.0 (API level 29)_
 * _Android SDK Build-Tools 30.0.3_
 * _Android SDK Tools 26.1.1_
-* _Android SDK Platform-Tools 30.0.5_
+* _Android SDK Platform-Tools 31.0.2_
 * _CMake 3.18.1_
-* _DirectX Shader Compiler 1.6.2104.10074_
+* _DirectX Shader Compiler 1.6.2104.10081_
 * _Gradle 6.8.3_
 * _Google USB Driver 13_
-* _LLDB 3.1.4508709_
 * Real _Android 10_ device with _Vulkan 1.1.108_ support
 * [_ARM Neon_ _A64_](https://developer.arm.com/architectures/instruction-sets/simd-isas/neon/neon-programmers-guide-for-armv8-a/introducing-neon-for-armv8-a) native support
 

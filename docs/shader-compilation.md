@@ -27,13 +27,13 @@ The _android-vulkan_ project is using _HLSL_ shader language as high level progr
 ## Compile and deploy vertex shader module
 
 ```txt
-dxc.exe -spirv -WX -O3 -fvk-use-dx-layout -enable-16bit-types -T vs_6_6 -E VS -I <android-vulkan directory>\app\src\main\hlsl -I <android-vulkan directory>\app\src\main\cpp\include\pbr -Fo <android-vulkan directory>\app\src\main\assets\shaders\<file name>-vs.spv <file name>.vs
+dxc.exe -spirv -WX -O3 -fvk-use-dx-layout -enable-16bit-types -T vs_6_7 -E VS -I <android-vulkan directory>\app\src\main\hlsl -I <android-vulkan directory>\app\src\main\cpp\include\pbr -Fo <android-vulkan directory>\app\src\main\assets\shaders\<file name>-vs.spv <file name>.vs
 ```
 
 ## Compile and deploy fragment shader module
 
 ```txt
-dxc.exe -spirv -WX -O3 -fvk-use-dx-layout -enable-16bit-types -T ps_6_6 -E PS -I <android-vulkan directory>\app\src\main\hlsl -Fo <android-vulkan directory>\app\src\main\assets\shaders\<file name>-ps.spv <file name>.ps
+dxc.exe -spirv -WX -O3 -fvk-use-dx-layout -enable-16bit-types -T ps_6_7 -E PS -I <android-vulkan directory>\app\src\main\hlsl -Fo <android-vulkan directory>\app\src\main\assets\shaders\<file name>-ps.spv <file name>.ps
 ```
 
 ## _SPIR-V_ disassembler via _DXC_
@@ -58,4 +58,4 @@ For example:
 
 Variable name | Value
 --- | ---
-`ANDROID_VULKAN_DXC_ROOT` | `D:\Development\DXC-builds\Release-2020-05-23\bin`
+`ANDROID_VULKAN_DXC_ROOT` | `D:\Development\DXC-builds\Release-2021-04-17\bin`

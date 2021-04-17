@@ -1,4 +1,4 @@
-﻿// version 1.60
+﻿// version 1.61
 
 #include <GXCommon/GXMath.h>
 #include <GXCommon/GXWarning.h>
@@ -179,46 +179,6 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     Multiply ( *this, 1.0F / Length () );
 }
 
-[[maybe_unused]] GXVoid GXVec3::Sum ( GXVec3 const &a, GXFloat bScale, GXVec3 const &b )
-{
-    _data[ 0U ] = a._data[ 0U ] + bScale * b._data[ 0U ];
-    _data[ 1U ] = a._data[ 1U ] + bScale * b._data[ 1U ];
-    _data[ 2U ] = a._data[ 2U ] + bScale * b._data[ 2U ];
-}
-
-[[maybe_unused]] GXVoid GXVec3::Subtract ( GXVec3 const &a, GXVec3 const &b )
-{
-    _data[ 0U ] = a._data[ 0U ] - b._data[ 0U ];
-    _data[ 1U ] = a._data[ 1U ] - b._data[ 1U ];
-    _data[ 2U ] = a._data[ 2U ] - b._data[ 2U ];
-}
-
-[[maybe_unused]] GXVoid GXVec3::Multiply ( GXVec3 const &a, GXFloat scale )
-{
-    _data[ 0U ] = a._data[ 0U ] * scale;
-    _data[ 1U ] = a._data[ 1U ] * scale;
-    _data[ 2U ] = a._data[ 2U ] * scale;
-}
-
-[[maybe_unused]] GXVoid GXVec3::Multiply ( GXVec3 const &a, GXVec3 const &b )
-{
-    _data[ 0U ] = a._data[ 0U ] * b._data[ 0U ];
-    _data[ 1U ] = a._data[ 1U ] * b._data[ 1U ];
-    _data[ 2U ] = a._data[ 2U ] * b._data[ 2U ];
-}
-
-[[maybe_unused]] GXFloat GXVec3::DotProduct ( GXVec3 const &other ) const
-{
-    return _data[ 0U ] * other._data[ 0U ] + _data[ 1U ] * other._data[ 1U ] + _data[ 2U ] * other._data[ 2U ];
-}
-
-[[maybe_unused]] GXVoid GXVec3::CrossProduct ( GXVec3 const &a, GXVec3 const &b )
-{
-    _data[ 0U ] = a._data[ 1U ] * b._data[ 2U ] - a._data[ 2U ] * b._data[ 1U ];
-    _data[ 1U ] = a._data[ 2U ] * b._data[ 0U ] - a._data[ 0U ] * b._data[ 2U ];
-    _data[ 2U ] = a._data[ 0U ] * b._data[ 1U ] - a._data[ 1U ] * b._data[ 0U ];
-}
-
 [[maybe_unused]] GXFloat GXVec3::Length () const
 {
     return sqrtf ( DotProduct ( *this ) );
@@ -339,9 +299,9 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 
     GXUByte selector = 0U;
 
-    GXFloat gamma = fabsf ( plane._a );
-    GXFloat const omega = fabsf ( plane._b );
-    GXFloat const yotta = fabsf ( plane._c );
+    GXFloat gamma = std::abs ( plane._a );
+    GXFloat const omega = std::abs ( plane._b );
+    GXFloat const yotta = std::abs ( plane._c );
 
     if ( gamma > omega )
         selector = gamma > yotta ? 0U : 2U;

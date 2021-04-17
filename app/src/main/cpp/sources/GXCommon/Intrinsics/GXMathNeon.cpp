@@ -1,4 +1,4 @@
-// version 1.2
+// version 1.3
 
 #include <GXCommon/GXMath.h>
 
@@ -9,6 +9,11 @@ GX_DISABLE_COMMON_WARNINGS
 
 GX_RESTORE_WARNING_STATE
 
+
+// 1.0F / 255.0F
+constexpr static GXFloat const COLOR_TO_FLOAT_FACTOR = 3.92157e-3F;
+
+//----------------------------------------------------------------------------------------------------------------------
 
 [[maybe_unused]] GXVoid GXVec2::CalculateNormalFast ( GXVec2 const &a, GXVec2 const &b )
 {
@@ -149,6 +154,77 @@ GX_RESTORE_WARNING_STATE
 
     vst1_f32 ( _data, vget_low_f32 ( result ) );
     vst1_lane_f32 ( _data + 2U, vget_high_f32 ( result ), 0 );
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+[[maybe_unused]] GXVoid GXVec4::Sum ( GXVec4 const &a, GXVec4 const &b )
+{
+    vst1q_f32 ( _data, vaddq_f32 ( vld1q_f32 ( a._data ), vld1q_f32 ( b._data ) ) );
+}
+
+[[maybe_unused]] GXVoid GXVec4::Sum ( GXVec4 const &a, GXFloat bScale, GXVec4 const &b )
+{
+    vst1q_f32 ( _data, vmlaq_n_f32 ( vld1q_f32 ( a._data ), vld1q_f32 ( b._data ), bScale ) );
+}
+
+[[maybe_unused]] GXVoid GXVec4::Subtract ( GXVec4 const &a, GXVec4 const &b )
+{
+    vst1q_f32 ( _data, vsubq_f32 ( vld1q_f32 ( a._data ), vld1q_f32 ( b._data ) ) );
+}
+
+[[maybe_unused]] GXFloat GXVec4::DotProduct ( GXVec4 const &other ) const
+{
+    return vaddvq_f32 ( vmulq_f32 ( vld1q_f32 ( _data ), vld1q_f32 ( other._data ) ) );
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+[[maybe_unused]] GXFloat GXVec6::DotProduct ( GXVec6 const &other ) const
+{
+    float32x4_t const part1 = vmulq_f32 ( vld1q_f32 ( _data ), vld1q_f32 ( other._data ) );
+
+    // Note vld1q_f32 expects float32_t[ 4U ] array as input. So the 3-rd and 4-th components are garbage
+    // but they are not used in computation anyway because of masking later.
+    float32x4_t const part2Dirty = vmulq_f32 ( vld1q_f32 ( _data + 4U ), vld1q_f32 ( other._data + 4U ) );
+
+    constexpr uint32_t const mask[ 4U ] = { UINT32_MAX, UINT32_MAX, 0U, 0U };
+    uint32x4_t const part2 = vandq_u32 ( vld1q_u32 ( mask ), vreinterpretq_f32_u32 ( part2Dirty ) );
+
+    return vaddvq_f32 ( vaddq_f32 ( part1, vreinterpretq_u32_f32 ( part2 ) ) );
+}
+
+[[maybe_unused]] GXVoid GXVec6::Sum ( GXVec6 const &a, GXVec6 const &b )
+{
+    vst1q_f32 ( _data, vaddq_f32 ( vld1q_f32 ( a._data ), vld1q_f32 ( b._data ) ) );
+    vst1_f32 ( _data + 4U, vadd_f32 ( vld1_f32 ( a._data + 4U ), vld1_f32 ( b._data + 4U ) ) );
+}
+
+[[maybe_unused]] GXVoid GXVec6::Sum ( GXVec6 const &a, GXFloat bScale, GXVec6 const &b )
+{
+    vst1q_f32 ( _data, vmlaq_n_f32 ( vld1q_f32 ( a._data ), vld1q_f32 ( b._data ), bScale ) );
+    vst1_f32 ( _data + 4U, vmla_n_f32 ( vld1_f32 ( a._data + 4U ), vld1_f32 ( b._data + 4U ), bScale ) );
+}
+
+[[maybe_unused]] GXVoid GXVec6::Multiply ( GXVec6 const &a, GXFloat factor )
+{
+    vst1q_f32 ( _data, vmulq_n_f32 ( vld1q_f32 ( a._data ), factor ) );
+    vst1_f32 ( _data + 4U, vmul_n_f32 ( vld1_f32 ( a._data + 4U ), factor ) );
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+[[maybe_unused]] GXVoid GXColorRGB::From ( GXUByte red, GXUByte green, GXUByte blue, GXFloat alpha )
+{
+    float32_t const tmp[ 4U ] =
+    {
+        static_cast<float32_t> ( red ),
+        static_cast<float32_t> ( green ),
+        static_cast<float32_t> ( blue ),
+        alpha
+    };
+
+    vst1q_f32 ( _data, vmulq_n_f32 ( vld1q_f32 ( tmp ), COLOR_TO_FLOAT_FACTOR ) );
 }
 
 //----------------------------------------------------------------------------------------------------------------------

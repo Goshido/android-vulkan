@@ -1,4 +1,4 @@
-﻿// version 1.61
+﻿// version 1.62
 
 #include <GXCommon/GXMath.h>
 #include <GXCommon/GXWarning.h>
@@ -12,8 +12,6 @@ GX_DISABLE_COMMON_WARNINGS
 
 GX_RESTORE_WARNING_STATE
 
-
-constexpr static GXFloat const COLOR_TO_FLOAT_FACTOR = 0.00392157F;
 
 constexpr static GXFloat const HSVA_FACTOR = 0.016666F;
 constexpr static GXFloat const HSVA_TO_RGBA_FLOAT = 0.01F;
@@ -413,41 +411,9 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     return _data[ 3U ];
 }
 
-[[maybe_unused]] GXVoid GXVec4::Sum ( GXVec4 const &a, GXVec4 const &b )
-{
-    _data[ 0U ] = a._data[ 0U ] + b._data[ 0U ];
-    _data[ 1U ] = a._data[ 1U ] + b._data[ 1U ];
-    _data[ 2U ] = a._data[ 2U ] + b._data[ 2U ];
-    _data[ 3U ] = a._data[ 3U ] + b._data[ 3U ];
-}
-
-[[maybe_unused]] GXVoid GXVec4::Sum ( GXVec4 const &a, GXFloat bScale, GXVec4 const &b )
-{
-    _data[ 0U ] = a._data[ 0U ] + bScale * b._data[ 0U ];
-    _data[ 1U ] = a._data[ 1U ] + bScale * b._data[ 1U ];
-    _data[ 2U ] = a._data[ 2U ] + bScale * b._data[ 2U ];
-    _data[ 3U ] = a._data[ 3U ] + bScale * b._data[ 3U ];
-}
-
-[[maybe_unused]] GXVoid GXVec4::Subtract ( GXVec4 const &a, GXVec4 const &b )
-{
-    _data[ 0U ] = a._data[ 0U ] - b._data[ 0U ];
-    _data[ 1U ] = a._data[ 1U ] - b._data[ 1U ];
-    _data[ 2U ] = a._data[ 2U ] - b._data[ 2U ];
-    _data[ 3U ] = a._data[ 3U ] - b._data[ 3U ];
-}
-
-[[maybe_unused]] GXFloat GXVec4::DotProduct ( GXVec4 const &other ) const
-{
-    return _data[ 0U ] * other._data[ 0U ] +
-        _data[ 1U ] * other._data[ 1U ] +
-        _data[ 2U ] * other._data[ 2U ] +
-        _data[ 3U ] * other._data[ 3U ];
-}
-
 [[maybe_unused]] GXFloat GXVec4::Length () const
 {
-    return sqrtf ( DotProduct ( *this ) );
+    return std::sqrt ( DotProduct ( *this ) );
 }
 
 [[maybe_unused]] GXFloat GXVec4::SquaredLength () const
@@ -471,46 +437,6 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 {
     memcpy ( _data, &v1, sizeof ( GXVec3 ) );
     memcpy ( _data + 3U, &v2, sizeof ( GXVec3 ) );
-}
-
-[[maybe_unused]] GXFloat GXVec6::DotProduct ( GXVec6 const &other ) const
-{
-    return _data[ 0U ] * other._data[ 0U ] +
-        _data[ 1U ] * other._data[ 1U ] +
-        _data[ 2U ] * other._data[ 2U ] +
-        _data[ 3U ] * other._data[ 3U ] +
-        _data[ 4U ] * other._data[ 4U ] +
-        _data[ 5U ] * other._data[ 5U ];
-}
-
-[[maybe_unused]] GXVoid GXVec6::Sum ( GXVec6 const &a, GXVec6 const &b )
-{
-    _data[ 0U ] = a._data[ 0U ] + b._data[ 0U ];
-    _data[ 1U ] = a._data[ 1U ] + b._data[ 1U ];
-    _data[ 2U ] = a._data[ 2U ] + b._data[ 2U ];
-    _data[ 3U ] = a._data[ 3U ] + b._data[ 3U ];
-    _data[ 4U ] = a._data[ 4U ] + b._data[ 4U ];
-    _data[ 5U ] = a._data[ 5U ] + b._data[ 5U ];
-}
-
-[[maybe_unused]] GXVoid GXVec6::Sum ( GXVec6 const &a, GXFloat bScale, GXVec6 const &b )
-{
-    _data[ 0U ] = a._data[ 0U ] + bScale * b._data[ 0U ];
-    _data[ 1U ] = a._data[ 1U ] + bScale * b._data[ 1U ];
-    _data[ 2U ] = a._data[ 2U ] + bScale * b._data[ 2U ];
-    _data[ 3U ] = a._data[ 3U ] + bScale * b._data[ 3U ];
-    _data[ 4U ] = a._data[ 4U ] + bScale * b._data[ 4U ];
-    _data[ 5U ] = a._data[ 5U ] + bScale * b._data[ 5U ];
-}
-
-[[maybe_unused]] GXVoid GXVec6::Multiply ( GXVec6 const &a, GXFloat factor )
-{
-    _data[ 0U ] = a._data[ 0U ] * factor;
-    _data[ 1U ] = a._data[ 1U ] * factor;
-    _data[ 2U ] = a._data[ 2U ] * factor;
-    _data[ 3U ] = a._data[ 3U ] * factor;
-    _data[ 4U ] = a._data[ 4U ] * factor;
-    _data[ 5U ] = a._data[ 5U ] * factor;
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -571,14 +497,6 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 [[maybe_unused]] GXFloat GXColorRGB::GetAlpha () const
 {
     return _data[ 3U ];
-}
-
-[[maybe_unused]] GXVoid GXColorRGB::From ( GXUByte red, GXUByte green, GXUByte blue, GXFloat alpha )
-{
-    _data[ 0U ] = static_cast<GXFloat> ( red ) * COLOR_TO_FLOAT_FACTOR;
-    _data[ 1U ] = static_cast<GXFloat> ( green ) * COLOR_TO_FLOAT_FACTOR;
-    _data[ 2U ] = static_cast<GXFloat> ( blue ) * COLOR_TO_FLOAT_FACTOR;
-    _data[ 3U ] = alpha * COLOR_TO_FLOAT_FACTOR;
 }
 
 [[maybe_unused]] GXVoid GXColorRGB::From ( const GXColorHSV &color )

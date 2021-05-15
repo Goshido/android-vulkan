@@ -290,7 +290,7 @@ bool MeshGeometry::LoadFromMesh ( std::string &&fileName,
         );
     }
 
-    for ( auto &item : converters )
+    for ( auto& item : converters )
         item.join ();
 
     bool const result = UploadSimple ( reinterpret_cast<uint8_t const*> ( vertices ),

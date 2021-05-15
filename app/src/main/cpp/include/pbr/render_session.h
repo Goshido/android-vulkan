@@ -16,28 +16,32 @@ namespace pbr {
 class RenderSession final
 {
     private:
-        GXProjectionClipPlanes          _frustum;
+        using LightHandler = void ( RenderSession::* ) ( LightRef &light );
 
-        GBuffer                         _gBuffer;
-        VkDescriptorPool                _gBufferDescriptorPool;
-        VkFramebuffer                   _gBufferFramebuffer;
-        VkImageMemoryBarrier            _gBufferImageBarrier;
-        VkRenderPass                    _gBufferRenderPass;
-        VkDescriptorSet                 _gBufferSlotMapper;
+    private:
+        GXProjectionClipPlanes                          _frustum;
 
-        GeometryPass                    _geometryPass;
-        LightPass                       _lightPass;
-        size_t                          _opaqueMeshCount;
+        GBuffer                                         _gBuffer;
+        VkDescriptorPool                                _gBufferDescriptorPool;
+        VkFramebuffer                                   _gBufferFramebuffer;
+        VkImageMemoryBarrier                            _gBufferImageBarrier;
+        VkRenderPass                                    _gBufferRenderPass;
+        VkDescriptorSet                                 _gBufferSlotMapper;
 
-        TexturePresentProgram           _texturePresentProgram;
-        PresentPass                     _presentPass;
-        RenderSessionStats              _renderSessionStats;
-        SamplerManager                  _samplerManager;
+        GeometryPass                                    _geometryPass;
+        std::unordered_map<eLightType, LightHandler>    _lightHandlers;
+        LightPass                                       _lightPass;
+        size_t                                          _opaqueMeshCount;
 
-        GXMat4                          _cvvToView;
-        GXMat4                          _view;
-        GXMat4                          _viewProjection;
-        GXMat4                          _viewerLocal;
+        PresentPass                                     _presentPass;
+        RenderSessionStats                              _renderSessionStats;
+        SamplerManager                                  _samplerManager;
+        TexturePresentDescriptorSetLayout               _texturePresentDescriptorSetLayout;
+
+        GXMat4                                          _cvvToView;
+        GXMat4                                          _view;
+        GXMat4                                          _viewProjection;
+        GXMat4                                          _viewerLocal;
 
     public:
         RenderSession () noexcept;
@@ -53,9 +57,17 @@ class RenderSession final
         void Begin ( GXMat4 const &viewerLocal, GXMat4 const &projection );
         [[nodiscard]] bool End ( android_vulkan::Renderer &renderer, double deltaTime );
 
-        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, VkExtent2D const &resolution );
-        void Destroy ( VkDevice device );
-        void FreeTransferResources ( VkDevice device );
+        [[nodiscard]] bool OnInitDevice ( android_vulkan::Renderer &renderer );
+        void OnDestroyDevice ( VkDevice device );
+
+        [[nodiscard]] bool OnSwapchainCreated ( android_vulkan::Renderer &renderer,
+            VkExtent2D const &resolution,
+            VkCommandPool commandPool
+        );
+
+        void OnSwapchainDestroyed ( VkDevice device );
+
+        void SubmitLight ( LightRef &light );
 
         void SubmitMesh ( MeshRef &mesh,
             MaterialRef const &material,
@@ -67,14 +79,19 @@ class RenderSession final
             android_vulkan::Half4 const &color3
         );
 
-        void SubmitLight ( LightRef const &light );
-        void SubmitReflectionGlobal ( TextureCubeRef &prefilter );
-        [[maybe_unused]] void SubmitReflectionLocal ( TextureCubeRef &prefilter, GXVec3 const &location, float size );
-
     private:
         [[nodiscard]] bool CreateGBufferFramebuffer ( android_vulkan::Renderer &renderer );
         [[nodiscard]] bool CreateGBufferRenderPass ( android_vulkan::Renderer &renderer );
+
+        [[nodiscard]] bool CreateGBufferResources ( android_vulkan::Renderer &renderer,
+            VkExtent2D const &resolution,
+            VkCommandPool commandPool
+        );
+
         [[nodiscard]] bool CreateGBufferSlotMapper ( android_vulkan::Renderer &renderer );
+
+        void DestroyGBufferResources ( VkDevice device );
+        void FreeTransferResources ( VkDevice device );
 
         void SubmitOpaqueCall ( MeshRef &mesh,
             MaterialRef const &material,
@@ -86,7 +103,9 @@ class RenderSession final
             android_vulkan::Half4 const &color3
         );
 
-        void SubmitPointLight ( LightRef const &light );
+        void SubmitPointLight ( LightRef &light );
+        void SubmitReflectionGlobal ( LightRef &light );
+        void SubmitReflectionLocal ( LightRef &light );
 };
 
 } // namespace pbr

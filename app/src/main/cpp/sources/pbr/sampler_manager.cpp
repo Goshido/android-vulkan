@@ -11,7 +11,7 @@ void SamplerManager::FreeResources ( VkDevice device )
         _pointSampler = nullptr;
     }
 
-    for ( auto &sampler : _storage )
+    for ( auto& sampler : _storage )
     {
         if ( !sampler )
             continue;

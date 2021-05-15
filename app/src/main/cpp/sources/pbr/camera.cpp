@@ -30,19 +30,18 @@ void Camera::SetProjection ( float fieldOfViewRadians, float aspectRatio, float 
     _projection.Perspective ( fieldOfViewRadians, aspectRatio, zNear, zFar );
 }
 
-void Camera::SetLocation ( float x, float y, float z )
-{
-    _local._m[ 3U ][ 0U ] = x;
-    _local._m[ 3U ][ 1U ] = y;
-    _local._m[ 3U ][ 2U ] = z;
-}
-
 void Camera::SetLocation ( GXVec3 const &location )
 {
     _local._m[ 3U ][ 0U ] = location._data[ 0U ];
     _local._m[ 3U ][ 1U ] = location._data[ 1U ];
     _local._m[ 3U ][ 2U ] = location._data[ 2U ];
     _local.SetW ( location );
+}
+
+void Camera::SetRotation ( float pitch, float yaw )
+{
+    _pitch = pitch;
+    _yaw = yaw;
 }
 
 void Camera::CaptureInput ()
@@ -97,21 +96,28 @@ void Camera::Update ( float deltaTime )
     float const deltaAngular = ANGULAR_SPEED * deltaTime;
 
     _yaw += deltaAngular * angular._data[ 0U ];
-    _pitch = GXClampf ( _pitch + deltaAngular * angular._data[ 1U ], 0.0F, GX_MATH_PI );
 
-    GXVec3 const right ( std::cosf ( _yaw ), 0.0F, std::sinf ( _yaw ) );
+    while ( _yaw < -GX_MATH_PI )
+        _yaw += GX_MATH_DOUBLE_PI;
 
-    GXQuat orientation;
-    orientation.FromAxisAngle ( right, _pitch - GX_MATH_HALF_PI );
+    while ( _yaw > GX_MATH_PI )
+        _yaw -= GX_MATH_DOUBLE_PI;
+
+    _pitch = GXClampf ( _pitch + deltaAngular * angular._data[ 1U ], -GX_MATH_HALF_PI, GX_MATH_HALF_PI );
+
+    GXMat4 rot;
+    rot.RotationXY ( _pitch, _yaw );
+
+    GXVec3 right;
+    rot.GetX ( right );
+    _local.SetX ( right );
 
     GXVec3 up;
-    orientation.Transform ( up, GXVec3::GetAbsoluteY () );
+    rot.GetY ( up );
+    _local.SetY ( up );
 
     GXVec3 forward;
-    forward.CrossProduct ( right, up );
-
-    _local.SetX ( right );
-    _local.SetY ( up );
+    rot.GetZ ( forward );
     _local.SetZ ( forward );
 
     constexpr float const scale = 1.0F / ( 1.0F - TRIGGER_DEAD_ZONE );
@@ -174,7 +180,7 @@ void Camera::OnLeftStick ( void* context, float horizontal, float vertical )
 void Camera::OnRightStick ( void* context, float horizontal, float vertical )
 {
     auto& camera = *static_cast<Camera*> ( context );
-    camera._angularSpeed._data[ 0U ] = -horizontal;
+    camera._angularSpeed._data[ 0U ] = horizontal;
     camera._angularSpeed._data[ 1U ] = -vertical;
 }
 

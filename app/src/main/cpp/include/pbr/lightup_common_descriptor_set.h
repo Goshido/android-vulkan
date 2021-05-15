@@ -5,6 +5,7 @@
 #include <uniform_buffer.h>
 #include "gbuffer.h"
 #include "lightup_common_descriptor_set_layout.h"
+#include "sampler.h"
 
 
 namespace pbr {
@@ -12,10 +13,14 @@ namespace pbr {
 class LightupCommonDescriptorSet final
 {
     private:
+        android_vulkan::Texture2D           _brdfLUT;
+        Sampler                             _brdfLUTSampler;
+        VkCommandBuffer                     _brdfTransfer;
         VkCommandPool                       _commandPool;
         VkDescriptorPool                    _descriptorPool;
         LightupCommonDescriptorSetLayout    _layout;
         VkPipelineLayout                    _pipelineLayout;
+        Sampler                             _prefilterSampler;
         VkDescriptorSet                     _set;
         android_vulkan::UniformBuffer       _uniformBuffer;
 
@@ -32,11 +37,13 @@ class LightupCommonDescriptorSet final
 
         void Bind ( VkCommandBuffer commandBuffer );
 
-        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, GBuffer &gBuffer );
+        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, VkCommandPool commandPool, GBuffer &gBuffer );
         void Destroy ( VkDevice device );
+        void OnFreeTransferResources ( VkDevice device );
 
         [[nodiscard]] bool Update ( android_vulkan::Renderer &renderer,
             VkExtent2D const &resolution,
+            GXMat4 const &viewerLocal,
             GXMat4 const &cvvToView
         );
 };

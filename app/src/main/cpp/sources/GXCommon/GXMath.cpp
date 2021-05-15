@@ -1,4 +1,4 @@
-﻿// version 1.58
+﻿// version 1.62
 
 #include <GXCommon/GXMath.h>
 #include <GXCommon/GXWarning.h>
@@ -12,8 +12,6 @@ GX_DISABLE_COMMON_WARNINGS
 
 GX_RESTORE_WARNING_STATE
 
-
-constexpr static GXFloat const COLOR_TO_FLOAT_FACTOR = 0.00392157F;
 
 constexpr static GXFloat const HSVA_FACTOR = 0.016666F;
 constexpr static GXFloat const HSVA_TO_RGBA_FLOAT = 0.01F;
@@ -64,56 +62,15 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     Multiply ( *this, 1.0F / Length () );
 }
 
-[[maybe_unused]] GXVoid GXVec2::CalculateNormalFast ( GXVec2 const &a, GXVec2 const &b )
-{
-    _data[ 0U ] = a._data[ 1U ] - b._data[ 1U ];
-    _data[ 1U ] = b._data[ 0U ] - a._data[ 0U ];
-}
-
 [[maybe_unused]] GXVoid GXVec2::CalculateNormal ( GXVec2 const &a, GXVec2 const &b )
 {
     CalculateNormalFast ( a, b );
     Normalize ();
 }
 
-[[maybe_unused]] GXVoid GXVec2::Sum ( GXVec2 const &a, GXVec2 const &b )
-{
-    _data[ 0U ] = a._data[ 0U ] + b._data[ 0U ];
-    _data[ 1U ] = a._data[ 1U ] + b._data[ 1U ];
-}
-
-[[maybe_unused]] GXVoid GXVec2::Sum ( GXVec2 const &a, GXFloat bScale, GXVec2 const &b )
-{
-    _data[ 0U ] = a._data[ 0U ] + bScale * b._data[ 0U ];
-    _data[ 1U ] = a._data[ 1U ] + bScale * b._data[ 1U ];
-}
-
-[[maybe_unused]] GXVoid GXVec2::Substract ( GXVec2 const &a, GXVec2 const &b )
-{
-    _data[ 0U ] = a._data[ 0U ] - b._data[ 0U ];
-    _data[ 1U ] = a._data[ 1U ] - b._data[ 1U ];
-}
-
-[[maybe_unused]] GXVoid GXVec2::Multiply ( GXVec2 const &a, GXVec2 const &b )
-{
-    _data[ 0U ] = a._data[ 0U ] * b._data[ 0U ];
-    _data[ 1U ] = a._data[ 1U ] * b._data[ 1U ];
-}
-
-[[maybe_unused]] GXVoid GXVec2::Multiply ( GXVec2 const &v, GXFloat scale )
-{
-    _data[ 0U ] = v._data[ 0U ] * scale;
-    _data[ 1U ] = v._data[ 1U ] * scale;
-}
-
-[[maybe_unused]] GXFloat GXVec2::DotProduct ( GXVec2 const &other ) const
-{
-    return _data[ 0U ] * other._data[ 0U ] + _data[ 1U ] * other._data[ 1U ];
-}
-
 [[maybe_unused]] GXFloat GXVec2::Length () const
 {
-    return sqrtf ( SquaredLength () );
+    return std::sqrt ( SquaredLength () );
 }
 
 [[maybe_unused]] GXFloat GXVec2::SquaredLength () const
@@ -139,10 +96,10 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 )
 {
     GXVec2 alpha;
-    alpha.Substract ( a1, a0 );
+    alpha.Subtract ( a1, a0 );
 
     GXVec2 betta;
-    betta.Substract ( b1, b0 );
+    betta.Subtract ( b1, b0 );
 
     GXVec2 const yotta ( -alpha.GetY (), alpha.GetX () );
     GXFloat const omega = yotta.DotProduct ( betta );
@@ -152,7 +109,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
         GXVec2 const gamma ( a0.IsEqual ( b0 ) ? b1 : b0 );
 
         GXVec2 zetta;
-        zetta.Substract ( gamma, a0 );
+        zetta.Subtract ( gamma, a0 );
         zetta.Normalize ();
 
         alpha.Normalize ();
@@ -170,7 +127,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     }
 
     GXVec2 phi;
-    phi.Substract ( b0, a0 );
+    phi.Subtract ( b0, a0 );
 
     intersectionPoint.Sum ( b0, -phi.DotProduct ( yotta ) / omega, betta );
     return eGXLineRelationship::Intersection;
@@ -220,60 +177,6 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     Multiply ( *this, 1.0F / Length () );
 }
 
-[[maybe_unused]] GXVoid GXVec3::Reverse ()
-{
-    _data[ 0U ] = -_data[ 0U ];
-    _data[ 1U ] = -_data[ 1U ];
-    _data[ 2U ] = -_data[ 2U ];
-}
-
-[[maybe_unused]] GXVoid GXVec3::Sum ( GXVec3 const &a, GXVec3 const &b )
-{
-    _data[ 0U ] = a._data[ 0U ] + b._data[ 0U ];
-    _data[ 1U ] = a._data[ 1U ] + b._data[ 1U ];
-    _data[ 2U ] = a._data[ 2U ] + b._data[ 2U ];
-}
-
-[[maybe_unused]] GXVoid GXVec3::Sum ( GXVec3 const &a, GXFloat bScale, GXVec3 const &b )
-{
-    _data[ 0U ] = a._data[ 0U ] + bScale * b._data[ 0U ];
-    _data[ 1U ] = a._data[ 1U ] + bScale * b._data[ 1U ];
-    _data[ 2U ] = a._data[ 2U ] + bScale * b._data[ 2U ];
-}
-
-[[maybe_unused]] GXVoid GXVec3::Substract ( GXVec3 const &a, GXVec3 const &b )
-{
-    _data[ 0U ] = a._data[ 0U ] - b._data[ 0U ];
-    _data[ 1U ] = a._data[ 1U ] - b._data[ 1U ];
-    _data[ 2U ] = a._data[ 2U ] - b._data[ 2U ];
-}
-
-[[maybe_unused]] GXVoid GXVec3::Multiply ( GXVec3 const &a, GXFloat scale )
-{
-    _data[ 0U ] = a._data[ 0U ] * scale;
-    _data[ 1U ] = a._data[ 1U ] * scale;
-    _data[ 2U ] = a._data[ 2U ] * scale;
-}
-
-[[maybe_unused]] GXVoid GXVec3::Multiply ( GXVec3 const &a, GXVec3 const &b )
-{
-    _data[ 0U ] = a._data[ 0U ] * b._data[ 0U ];
-    _data[ 1U ] = a._data[ 1U ] * b._data[ 1U ];
-    _data[ 2U ] = a._data[ 2U ] * b._data[ 2U ];
-}
-
-[[maybe_unused]] GXFloat GXVec3::DotProduct ( GXVec3 const &other ) const
-{
-    return _data[ 0U ] * other._data[ 0U ] + _data[ 1U ] * other._data[ 1U ] + _data[ 2U ] * other._data[ 2U ];
-}
-
-[[maybe_unused]] GXVoid GXVec3::CrossProduct ( GXVec3 const &a, GXVec3 const &b )
-{
-    _data[ 0U ] = a._data[ 1U ] * b._data[ 2U ] - a._data[ 2U ] * b._data[ 1U ];
-    _data[ 1U ] = a._data[ 2U ] * b._data[ 0U ] - a._data[ 0U ] * b._data[ 2U ];
-    _data[ 2U ] = a._data[ 0U ] * b._data[ 1U ] - a._data[ 1U ] * b._data[ 0U ];
-}
-
 [[maybe_unused]] GXFloat GXVec3::Length () const
 {
     return sqrtf ( DotProduct ( *this ) );
@@ -287,14 +190,14 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 [[maybe_unused]] GXFloat GXVec3::Distance ( GXVec3 const &other ) const
 {
     GXVec3 difference;
-    difference.Substract ( *this, other );
+    difference.Subtract ( *this, other );
     return difference.Length ();
 }
 
 [[maybe_unused]] GXFloat GXVec3::SquaredDistance ( GXVec3 const &other ) const
 {
     GXVec3 difference;
-    difference.Substract ( *this, other );
+    difference.Subtract ( *this, other );
     return difference.SquaredLength ();
 }
 
@@ -304,7 +207,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 )
 {
     GXVec3 difference;
-    difference.Substract ( finish, start );
+    difference.Subtract ( finish, start );
     Sum ( start, interpolationFactor, difference );
 }
 
@@ -394,9 +297,9 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 
     GXUByte selector = 0U;
 
-    GXFloat gamma = fabsf ( plane._a );
-    GXFloat const omega = fabsf ( plane._b );
-    GXFloat const yotta = fabsf ( plane._c );
+    GXFloat gamma = std::abs ( plane._a );
+    GXFloat const omega = std::abs ( plane._b );
+    GXFloat const yotta = std::abs ( plane._c );
 
     if ( gamma > omega )
         selector = gamma > yotta ? 0U : 2U;
@@ -508,41 +411,9 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     return _data[ 3U ];
 }
 
-[[maybe_unused]] GXVoid GXVec4::Sum ( GXVec4 const &a, GXVec4 const &b )
-{
-    _data[ 0U ] = a._data[ 0U ] + b._data[ 0U ];
-    _data[ 1U ] = a._data[ 1U ] + b._data[ 1U ];
-    _data[ 2U ] = a._data[ 2U ] + b._data[ 2U ];
-    _data[ 3U ] = a._data[ 3U ] + b._data[ 3U ];
-}
-
-[[maybe_unused]] GXVoid GXVec4::Sum ( GXVec4 const &a, GXFloat bScale, GXVec4 const &b )
-{
-    _data[ 0U ] = a._data[ 0U ] + bScale * b._data[ 0U ];
-    _data[ 1U ] = a._data[ 1U ] + bScale * b._data[ 1U ];
-    _data[ 2U ] = a._data[ 2U ] + bScale * b._data[ 2U ];
-    _data[ 3U ] = a._data[ 3U ] + bScale * b._data[ 3U ];
-}
-
-[[maybe_unused]] GXVoid GXVec4::Substract ( GXVec4 const &a, GXVec4 const &b )
-{
-    _data[ 0U ] = a._data[ 0U ] - b._data[ 0U ];
-    _data[ 1U ] = a._data[ 1U ] - b._data[ 1U ];
-    _data[ 2U ] = a._data[ 2U ] - b._data[ 2U ];
-    _data[ 3U ] = a._data[ 3U ] - b._data[ 3U ];
-}
-
-[[maybe_unused]] GXFloat GXVec4::DotProduct ( GXVec4 const &other ) const
-{
-    return _data[ 0U ] * other._data[ 0U ] +
-        _data[ 1U ] * other._data[ 1U ] +
-        _data[ 2U ] * other._data[ 2U ] +
-        _data[ 3U ] * other._data[ 3U ];
-}
-
 [[maybe_unused]] GXFloat GXVec4::Length () const
 {
-    return sqrtf ( DotProduct ( *this ) );
+    return std::sqrt ( DotProduct ( *this ) );
 }
 
 [[maybe_unused]] GXFloat GXVec4::SquaredLength () const
@@ -566,46 +437,6 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 {
     memcpy ( _data, &v1, sizeof ( GXVec3 ) );
     memcpy ( _data + 3U, &v2, sizeof ( GXVec3 ) );
-}
-
-[[maybe_unused]] GXFloat GXVec6::DotProduct ( GXVec6 const &other ) const
-{
-    return _data[ 0U ] * other._data[ 0U ] +
-        _data[ 1U ] * other._data[ 1U ] +
-        _data[ 2U ] * other._data[ 2U ] +
-        _data[ 3U ] * other._data[ 3U ] +
-        _data[ 4U ] * other._data[ 4U ] +
-        _data[ 5U ] * other._data[ 5U ];
-}
-
-[[maybe_unused]] GXVoid GXVec6::Sum ( GXVec6 const &a, GXVec6 const &b )
-{
-    _data[ 0U ] = a._data[ 0U ] + b._data[ 0U ];
-    _data[ 1U ] = a._data[ 1U ] + b._data[ 1U ];
-    _data[ 2U ] = a._data[ 2U ] + b._data[ 2U ];
-    _data[ 3U ] = a._data[ 3U ] + b._data[ 3U ];
-    _data[ 4U ] = a._data[ 4U ] + b._data[ 4U ];
-    _data[ 5U ] = a._data[ 5U ] + b._data[ 5U ];
-}
-
-[[maybe_unused]] GXVoid GXVec6::Sum ( GXVec6 const &a, GXFloat bScale, GXVec6 const &b )
-{
-    _data[ 0U ] = a._data[ 0U ] + bScale * b._data[ 0U ];
-    _data[ 1U ] = a._data[ 1U ] + bScale * b._data[ 1U ];
-    _data[ 2U ] = a._data[ 2U ] + bScale * b._data[ 2U ];
-    _data[ 3U ] = a._data[ 3U ] + bScale * b._data[ 3U ];
-    _data[ 4U ] = a._data[ 4U ] + bScale * b._data[ 4U ];
-    _data[ 5U ] = a._data[ 5U ] + bScale * b._data[ 5U ];
-}
-
-[[maybe_unused]] GXVoid GXVec6::Multiply ( GXVec6 const &a, GXFloat factor )
-{
-    _data[ 0U ] = a._data[ 0U ] * factor;
-    _data[ 1U ] = a._data[ 1U ] * factor;
-    _data[ 2U ] = a._data[ 2U ] * factor;
-    _data[ 3U ] = a._data[ 3U ] * factor;
-    _data[ 4U ] = a._data[ 4U ] * factor;
-    _data[ 5U ] = a._data[ 5U ] * factor;
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -666,14 +497,6 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 [[maybe_unused]] GXFloat GXColorRGB::GetAlpha () const
 {
     return _data[ 3U ];
-}
-
-[[maybe_unused]] GXVoid GXColorRGB::From ( GXUByte red, GXUByte green, GXUByte blue, GXFloat alpha )
-{
-    _data[ 0U ] = static_cast<GXFloat> ( red ) * COLOR_TO_FLOAT_FACTOR;
-    _data[ 1U ] = static_cast<GXFloat> ( green ) * COLOR_TO_FLOAT_FACTOR;
-    _data[ 2U ] = static_cast<GXFloat> ( blue ) * COLOR_TO_FLOAT_FACTOR;
-    _data[ 3U ] = alpha * COLOR_TO_FLOAT_FACTOR;
 }
 
 [[maybe_unused]] GXVoid GXColorRGB::From ( const GXColorHSV &color )
@@ -984,7 +807,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
         _data[ 2U ] * _data[ 2U ] +
         _data[ 3U ] * _data[ 3U ];
 
-    if ( std::fabsf ( squaredLength ) < FLOAT_EPSILON )
+    if ( std::abs ( squaredLength ) < FLOAT_EPSILON )
     {
         assert ( !"GXQuat::Normalize - Error." );
         return;
@@ -1000,7 +823,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
         q._data[ 2U ] * q._data[ 2U ] +
         q._data[ 3U ] * q._data[ 3U ];
 
-    if ( std::fabsf ( squaredLength ) <= FLOAT_EPSILON )
+    if ( std::abs ( squaredLength ) <= FLOAT_EPSILON )
     {
         assert ( !"GXQuat::Inverse - Error." );
         Identity ();
@@ -1018,9 +841,9 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 [[maybe_unused]] GXVoid GXQuat::FromAxisAngle ( GXFloat x, GXFloat y, GXFloat z, GXFloat angle )
 {
     GXFloat const halfAngle = 0.5F * angle;
-    GXFloat const sinom = std::sinf ( halfAngle );
+    GXFloat const sinom = std::sin ( halfAngle );
 
-    _data[ 0U ] = std::cosf ( halfAngle );
+    _data[ 0U ] = std::cos ( halfAngle );
     _data[ 1U ] = x * sinom;
     _data[ 2U ] = y * sinom;
     _data[ 3U ] = z * sinom;
@@ -1104,7 +927,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     {
         case SOLUTION_ALPHA:
         {
-            GXFloat const phi = 0.5F * std::sqrtf ( solutionFactorAlpha );
+            GXFloat const phi = 0.5F * std::sqrt ( solutionFactorAlpha );
             GXFloat const omega = 1.0F / ( 4.0F * phi );
 
             _data[ 0U ] = phi;
@@ -1116,7 +939,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 
         case SOLUTION_BETTA:
         {
-            GXFloat const phi = 0.5F * std::sqrtf ( solutionFactorBetta );
+            GXFloat const phi = 0.5F * std::sqrt ( solutionFactorBetta );
             GXFloat const omega = 1.0F / ( 4.0F * phi );
 
             _data[ 0U ] = omega * ( pureRotationMatrix._m[ 1U ][ 2U ] - pureRotationMatrix._m[ 2U ][ 1U ] );
@@ -1128,7 +951,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 
         case SOLUTION_GAMMA:
         {
-            GXFloat const phi = 0.5F * std::sqrtf ( solutionFactorGamma );
+            GXFloat const phi = 0.5F * std::sqrt ( solutionFactorGamma );
             GXFloat const omega = 1.0F / ( 4.0F * phi );
 
             _data[ 0U ] = omega * ( pureRotationMatrix._m[ 2U ][ 0U ] - pureRotationMatrix._m[ 0U ][ 2U ] );
@@ -1140,7 +963,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 
         case SOLUTION_YOTTA:
         {
-            GXFloat const phi = 0.5F * std::sqrtf ( solutionFactorYotta );
+            GXFloat const phi = 0.5F * std::sqrt ( solutionFactorYotta );
             GXFloat const omega = 1.0F / ( 4.0F * phi );
 
             _data[ 0U ] = omega * ( pureRotationMatrix._m[ 0U ][ 1U ] - pureRotationMatrix._m[ 1U ][ 0U ] );
@@ -1215,7 +1038,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     {
         case SOLUTION_ALPHA:
         {
-            GXFloat const phi = 0.5F * sqrtf ( solutionFactorAlpha );
+            GXFloat const phi = 0.5F * std::sqrt ( solutionFactorAlpha );
             GXFloat const omega = 1.0F / ( 4.0F * phi );
 
             _data[ 0U ] = phi;
@@ -1227,7 +1050,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 
         case SOLUTION_BETTA:
         {
-            GXFloat const phi = 0.5F * sqrtf ( solutionFactorBetta );
+            GXFloat const phi = 0.5F * std::sqrt ( solutionFactorBetta );
             GXFloat const omega = 1.0F / ( 4.0F * phi );
 
             _data[ 0U ] = omega * ( pureRotationMatrix._m[ 1U ][ 2U ] - pureRotationMatrix._m[ 2U ][ 1U ] );
@@ -1239,7 +1062,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 
         case SOLUTION_GAMMA:
         {
-            GXFloat const phi = 0.5F * sqrtf ( solutionFactorGamma );
+            GXFloat const phi = 0.5F * std::sqrt ( solutionFactorGamma );
             GXFloat const omega = 1.0F / ( 4.0F * phi );
 
             _data[ 0U ] = omega * ( pureRotationMatrix._m[ 2U ][ 0U ] - pureRotationMatrix._m[ 0U ][ 2U ] );
@@ -1251,7 +1074,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 
         case SOLUTION_YOTTA:
         {
-            GXFloat const phi = 0.5F * sqrtf ( solutionFactorYotta );
+            GXFloat const phi = 0.5F * std::sqrt ( solutionFactorYotta );
             GXFloat const omega = 1.0F / ( 4.0F * phi );
 
             _data[ 0U ] = omega * ( pureRotationMatrix._m[ 0U ][ 1U ] - pureRotationMatrix._m[ 1U ][ 0U ] );
@@ -1355,10 +1178,10 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 
     if ( ( 1.0F - cosom ) > FLOAT_EPSILON )
     {
-        GXFloat const omega = std::acosf ( cosom );
-        GXFloat const sinom = 1.0F / std::sinf ( omega );
-        scale0 = std::sinf ( ( 1.0F - interpolationFactor ) * omega ) * sinom;
-        scale1 = std::sinf ( interpolationFactor * omega ) * sinom;
+        GXFloat const omega = std::acos ( cosom );
+        GXFloat const sinom = 1.0F / std::sin ( omega );
+        scale0 = std::sin ( ( 1.0F - interpolationFactor ) * omega ) * sinom;
+        scale1 = std::sin ( interpolationFactor * omega ) * sinom;
     }
     else
     {
@@ -1376,16 +1199,16 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 {
     GXQuat q ( *this );
 
-    if ( std::fabsf ( q._data[ 0U ] ) > 1.0F )
+    if ( std::abs ( q._data[ 0U ] ) > 1.0F )
         q.Normalize ();
 
-    angle = 2.0F * std::acosf ( q._data[ 0U ] );
+    angle = 2.0F * std::acos ( q._data[ 0U ] );
 
     axis._data[ 0U ] = q._data[ 1U ];
     axis._data[ 1U ] = q._data[ 2U ];
     axis._data[ 2U ] = q._data[ 3U ];
 
-    GXFloat const s = std::sqrtf ( 1.0F - q._data[ 0U ] * q._data[ 0U ] );
+    GXFloat const s = std::sqrt ( 1.0F - q._data[ 0U ] * q._data[ 0U ] );
 
     if ( s < FLOAT_EPSILON )
         return;
@@ -1624,7 +1447,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     _m[ 2U ][ 2U ] = invDeterminant * ( m._m[ 0U ][ 0U ] * m._m[ 1U ][ 1U ] - m._m[ 1U ][ 0U ] * m._m[ 0U ][ 1U ] );
 }
 
-[[maybe_unused]] GXVoid GXMat3::Transponse ( GXMat3 const &sourceMatrix )
+[[maybe_unused]] GXVoid GXMat3::Transpose ( GXMat3 const &sourceMatrix )
 {
     _m[ 0U ][ 0U ] = sourceMatrix._m[ 0U ][ 0U ];
     _m[ 0U ][ 1U ] = sourceMatrix._m[ 1U ][ 0U ];
@@ -1710,7 +1533,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     _m[ 2U ][ 2U ] = a._m[ 2U ][ 2U ] + b._m[ 2U ][ 2U ];
 }
 
-[[maybe_unused]] GXVoid GXMat3::Substract ( GXMat3 const &a, GXMat3 const &b )
+[[maybe_unused]] GXVoid GXMat3::Subtract ( GXMat3 const &a, GXMat3 const &b )
 {
     _m[ 0U ][ 0U ] = a._m[ 0U ][ 0U ] - b._m[ 0U ][ 0U ];
     _m[ 0U ][ 1U ] = a._m[ 0U ][ 1U ] - b._m[ 0U ][ 1U ];
@@ -2006,8 +1829,8 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     _m[ 1U ][ 0U ] = 0.0F;
     _m[ 2U ][ 0U ] = 0.0F;
 
-    GXFloat const c = std::cosf ( angle );
-    GXFloat const s = std::sinf ( angle );
+    GXFloat const c = std::cos ( angle );
+    GXFloat const s = std::sin ( angle );
 
     _m[ 1U ][ 1U ] = c;      _m[ 1U ][ 2U ] = s;
     _m[ 2U ][ 1U ] = -s;     _m[ 2U ][ 2U ] = c;
@@ -2024,8 +1847,8 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     _m[ 1U ][ 0U ] = _m[ 1U ][ 2U ] = 0.0F;
     _m[ 2U ][ 1U ] = 0.0F;
 
-    GXFloat const c = std::cosf ( angle );
-    GXFloat const s = std::sinf ( angle );
+    GXFloat const c = std::cos ( angle );
+    GXFloat const s = std::sin ( angle );
 
     _m[ 0U ][ 0U ] = c;      _m[ 0U ][ 2U ] = -s;
     _m[ 2U ][ 0U ] = s;      _m[ 2U ][ 2U ] = c;
@@ -2042,8 +1865,8 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     _m[ 1U ][ 2U ] = 0.0F;
     _m[ 2U ][ 0U ] = _m[ 2U ][ 1U ] = 0.0F;
 
-    GXFloat const c = std::cosf ( angle );
-    GXFloat const s = std::sinf ( angle );
+    GXFloat const c = std::cos ( angle );
+    GXFloat const s = std::sin ( angle );
 
     _m[ 0U ][ 0U ] = c;      _m[ 0U ][ 1U ] = s;
     _m[ 1U ][ 0U ] = -s;     _m[ 1U ][ 1U ] = c;
@@ -2495,10 +2318,10 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 [[maybe_unused]] GXVoid GXPlane::From ( GXVec3 const &pointA, GXVec3 const &pointB, GXVec3 const &pointC )
 {
     GXVec3 ab;
-    ab.Substract ( pointB, pointA );
+    ab.Subtract ( pointB, pointA );
 
     GXVec3 ac;
-    ac.Substract ( pointC, pointA );
+    ac.Subtract ( pointC, pointA );
 
     GXVec3 normal;
     normal.CrossProduct ( ab, ac );
@@ -2513,10 +2336,10 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 [[maybe_unused]] GXVoid GXPlane::FromLineToPoint ( GXVec3 const &lineStart, GXVec3 const &lineEnd, GXVec3 const &point )
 {
     GXVec3 startToPoint;
-    startToPoint.Substract ( point, lineStart );
+    startToPoint.Subtract ( point, lineStart );
 
     GXVec3 startToEnd;
-    startToEnd.Substract ( lineEnd, lineStart );
+    startToEnd.Subtract ( lineEnd, lineStart );
 
     GXVec3 tempCross;
     tempCross.CrossProduct ( startToEnd, startToPoint );
@@ -2755,13 +2578,13 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 
     GXVec3 a;
     GXVec3 b;
-    a.Substract ( *v1, *v0 );
-    b.Substract ( *v2, *v0 );
+    a.Subtract ( *v1, *v0 );
+    b.Subtract ( *v2, *v0 );
 
     GXVec2 dUVa;
     GXVec2 dUVb;
-    dUVa.Substract ( *uv1, *uv0 );
-    dUVb.Substract ( *uv2, *uv0 );
+    dUVa.Subtract ( *uv1, *uv0 );
+    dUVb.Subtract ( *uv2, *uv0 );
 
     GXFloat const factor = 1.0F / ( dUVa._data[ 0U ] * dUVb._data[ 1U ] - dUVb._data[ 0U ] * dUVa._data[ 1U ] );
 
@@ -2807,9 +2630,9 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     GXVec3 v1;
     GXVec3 v2;
 
-    v0.Substract ( bPivot, aPivot );
-    v1.Substract ( cPivot, aPivot );
-    v2.Substract ( point, aPivot );
+    v0.Subtract ( bPivot, aPivot );
+    v1.Subtract ( cPivot, aPivot );
+    v2.Subtract ( point, aPivot );
 
     GXFloat d00 = v0.DotProduct ( v0 );
     GXFloat d01 = v0.DotProduct ( v1 );
@@ -2856,7 +2679,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     pointWorld._data[ 1U ] *= alpha;
     pointWorld._data[ 2U ] *= alpha;
 
-    direction.Substract ( GXVec3 ( pointWorld._data[ 0U ], pointWorld._data[ 1U ], pointWorld._data[ 2U ] ),
+    direction.Subtract ( GXVec3 ( pointWorld._data[ 0U ], pointWorld._data[ 1U ], pointWorld._data[ 2U ] ),
         viewerLocation
     );
 

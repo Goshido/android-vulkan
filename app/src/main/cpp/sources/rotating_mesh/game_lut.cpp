@@ -24,7 +24,7 @@ constexpr static const size_t TEXTURE_COMMAND_BUFFERS = 7U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-GameLUT::GameLUT ():
+GameLUT::GameLUT () noexcept:
     Game ( FRAGMENT_SHADER ),
     _specularLUTSampler ( VK_NULL_HANDLE ),
     _specularLUTTexture {}
@@ -361,22 +361,22 @@ bool GameLUT::CreateSamplers ( android_vulkan::Renderer &renderer )
     return true;
 }
 
-void GameLUT::DestroySamplers ( android_vulkan::Renderer &renderer )
+void GameLUT::DestroySamplers ( VkDevice device )
 {
-    Game::DestroySamplers ( renderer );
+    Game::DestroySamplers ( device );
 
     if ( _specularLUTSampler == VK_NULL_HANDLE )
         return;
 
-    vkDestroySampler ( renderer.GetDevice (), _specularLUTSampler, nullptr );
+    vkDestroySampler ( device, _specularLUTSampler, nullptr );
     _specularLUTSampler = VK_NULL_HANDLE;
     AV_UNREGISTER_SAMPLER ( "GameLUT::_specularLUTSampler" )
 }
 
-void GameLUT::DestroyTextures ( android_vulkan::Renderer &renderer )
+void GameLUT::DestroyTextures ( VkDevice device )
 {
-    DestroySpecularLUTTexture ( renderer );
-    Game::DestroyTextures ( renderer );
+    DestroySpecularLUTTexture ( device );
+    Game::DestroyTextures ( device );
 }
 
 bool GameLUT::CreateSpecularLUTTexture ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer )
@@ -424,9 +424,9 @@ bool GameLUT::CreateSpecularLUTTexture ( android_vulkan::Renderer &renderer, VkC
     );
 }
 
-void GameLUT::DestroySpecularLUTTexture ( android_vulkan::Renderer &renderer )
+void GameLUT::DestroySpecularLUTTexture ( VkDevice device )
 {
-    _specularLUTTexture.FreeResources ( renderer.GetDevice () );
+    _specularLUTTexture.FreeResources ( device );
 }
 
 } // namespace rotating_mesh

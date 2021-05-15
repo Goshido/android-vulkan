@@ -6,7 +6,6 @@
 #include "lightup_common_descriptor_set_layout.h"
 #include "light_volume_descriptor_set_layout.h"
 #include "program.h"
-#include "stub_descriptor_set_layout.h"
 
 
 namespace pbr {
@@ -29,7 +28,6 @@ class LightVolumeProgram final : public Program
     private:
         LightupCommonDescriptorSetLayout    _commonLayout;
         LightVolumeDescriptorSetLayout      _lightVolumeLayout;
-        StubDescriptorSetLayout             _stubLayout;
 
     public:
         LightVolumeProgram () noexcept;

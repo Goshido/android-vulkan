@@ -13,8 +13,7 @@ constexpr static const char* VERTEX_SHADER = "shaders/light-volume-vs.spv";
 LightVolumeProgram::LightVolumeProgram () noexcept:
     Program ( "pbr::LightVolumeProgram" ),
     _commonLayout {},
-    _lightVolumeLayout {},
-    _stubLayout {}
+    _lightVolumeLayout {}
 {
     // NOTHING
 }
@@ -110,7 +109,6 @@ void LightVolumeProgram::Destroy ( VkDevice device )
     }
 
     _commonLayout.Destroy ( device );
-    _stubLayout.Destroy ( device );
     _lightVolumeLayout.Destroy ( device );
 
     if ( _vertexShader == VK_NULL_HANDLE )
@@ -126,7 +124,7 @@ void LightVolumeProgram::SetTransform ( VkCommandBuffer commandBuffer, VkDescrip
     vkCmdBindDescriptorSets ( commandBuffer,
         VK_PIPELINE_BIND_POINT_GRAPHICS,
         _pipelineLayout,
-        2U,
+        1U,
         1U,
         &transform,
         0U,
@@ -219,16 +217,9 @@ bool LightVolumeProgram::InitLayout ( android_vulkan::Renderer &renderer, VkPipe
     if ( !_lightVolumeLayout.Init ( renderer ) )
         return false;
 
-    if ( !_stubLayout.Init ( renderer ) )
-        return false;
-
-    // WORKAROUND: Vulkan states that all layouts must be valid objects. But same time this pipeline is using only
-    // descriptor set from #2 slot. Same time there is a requirement that #0 slot must contain the descriptor set with
-    // common light data.
     VkDescriptorSetLayout const layouts[] =
     {
         _commonLayout.GetLayout (),
-        _stubLayout.GetLayout (),
         _lightVolumeLayout.GetLayout ()
     };
 

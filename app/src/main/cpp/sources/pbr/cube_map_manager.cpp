@@ -117,7 +117,7 @@ void CubeMapManager::Destroy ( VkDevice device )
 
 void CubeMapManager::DestroyInternal ( VkDevice device )
 {
-    for ( auto &cubeMap : _cubeMaps )
+    for ( auto& cubeMap : _cubeMaps )
         cubeMap.second->FreeResources ( device );
 
     _cubeMaps.clear ();

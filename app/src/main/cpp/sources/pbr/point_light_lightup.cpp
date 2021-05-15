@@ -25,39 +25,19 @@ PointLightLightup::PointLightLightup () noexcept:
     _submitInfoTransfer {},
     _uniformInfoLightData {},
     _uniformPoolLightData ( eUniformPoolSize::Tiny_4M ),
-    _volumeMesh {},
     _writeSets {}
 {
     // NOTHING
 }
 
 bool PointLightLightup::Init ( android_vulkan::Renderer &renderer,
-    VkCommandBuffer commandBuffer,
+    VkCommandPool commandPool,
     VkRenderPass renderPass,
     uint32_t subpass,
     VkExtent2D const &resolution
 )
 {
-    VkCommandPoolCreateInfo const poolInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
-        .queueFamilyIndex = renderer.GetQueueFamilyIndex ()
-    };
-
-    VkDevice device = renderer.GetDevice ();
-
-    bool result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateCommandPool ( device, &poolInfo, nullptr, &_commandPool ),
-        "PointLightLightup::Init",
-        "Can't create command pool"
-    );
-
-    if ( !result )
-        return false;
-
-    AV_REGISTER_COMMAND_POOL ( "PointLightLightup::_commandPool" )
+    _commandPool = commandPool;
 
     VkCommandBufferAllocateInfo const allocateInfo
     {
@@ -68,7 +48,9 @@ bool PointLightLightup::Init ( android_vulkan::Renderer &renderer,
         .commandBufferCount = 1U
     };
 
-    result = android_vulkan::Renderer::CheckVkResult (
+    VkDevice device = renderer.GetDevice ();
+
+    bool result = android_vulkan::Renderer::CheckVkResult (
         vkAllocateCommandBuffers ( device, &allocateInfo, &_transferCommandBuffer ),
         "PointLightLightup::Init",
         "Can't allocate command buffer"
@@ -130,46 +112,7 @@ bool PointLightLightup::Init ( android_vulkan::Renderer &renderer,
         return false;
     }
 
-    constexpr GXVec3 const vertices[] =
-    {
-        GXVec3 ( -0.5F, -0.5F, -0.5F ),
-        GXVec3 ( 0.5F, -0.5F, -0.5F ),
-        GXVec3 ( -0.5F, 0.5F, -0.5F ),
-        GXVec3 ( 0.5F, 0.5F, -0.5F ),
-        GXVec3 ( 0.5F, -0.5F, 0.5F ),
-        GXVec3 ( -0.5F, -0.5F, 0.5F ),
-        GXVec3 ( 0.5F, 0.5F, 0.5F ),
-        GXVec3 ( -0.5F, 0.5F, 0.5F ),
-    };
-
-    constexpr uint32_t const indices[] =
-    {
-        0U, 2U, 1U,
-        1U, 2U, 3U,
-        1U, 3U, 4U,
-        4U, 3U, 6U,
-        4U, 6U, 5U,
-        5U, 6U, 7U,
-        5U, 7U, 0U,
-        0U, 7U, 2U,
-        2U, 7U, 3U,
-        3U, 7U, 6U,
-        5U, 0U, 4U,
-        4U, 0U, 1U
-    };
-
-    GXAABB bounds;
-    bounds.AddVertex ( vertices[ 0U ] );
-    bounds.AddVertex ( vertices[ 7U ] );
-
-    return _volumeMesh.LoadMesh ( reinterpret_cast<uint8_t const*> ( vertices ),
-        sizeof ( vertices ),
-        indices,
-        static_cast<uint32_t> ( std::size ( indices ) ),
-        bounds,
-        renderer,
-        commandBuffer
-    );
+    return true;
 }
 
 void PointLightLightup::Destroy ( VkDevice device )
@@ -181,7 +124,6 @@ void PointLightLightup::Destroy ( VkDevice device )
     _descriptorSets.clear ();
     _writeSets.clear ();
 
-    _volumeMesh.FreeResources ( device );
     _uniformPoolLightData.Destroy ( device );
     _sampler.Destroy ( device );
     _program.Destroy ( device );
@@ -189,26 +131,20 @@ void PointLightLightup::Destroy ( VkDevice device )
     if ( _commandPool == VK_NULL_HANDLE )
         return;
 
-    vkDestroyCommandPool ( device, _commandPool, nullptr );
-    _commandPool = VK_NULL_HANDLE;
+    vkFreeCommandBuffers ( device, _commandPool, 1U, &_transferCommandBuffer );
     _transferCommandBuffer = VK_NULL_HANDLE;
-    AV_UNREGISTER_COMMAND_POOL ( "PointLightLightup::_commandPool" )
-}
-
-android_vulkan::MeshGeometry const& PointLightLightup::GetLightVolume () const
-{
-    return _volumeMesh;
+    _commandPool = VK_NULL_HANDLE;
 }
 
 void PointLightLightup::Lightup ( VkCommandBuffer commandBuffer,
-    size_t lightIndex,
-    VkDescriptorSet volumeData
+    android_vulkan::MeshGeometry &unitCube,
+    size_t lightIndex
 )
 {
     _program.Bind ( commandBuffer );
-    _program.SetDescriptorSets ( commandBuffer, _descriptorSets[ lightIndex ], volumeData );
+    _program.SetLightData ( commandBuffer, _descriptorSets[ lightIndex ] );
 
-    vkCmdDrawIndexed ( commandBuffer, _volumeMesh.GetVertexCount (), 1U, 0U, 0, 0U );
+    vkCmdDrawIndexed ( commandBuffer, unitCube.GetVertexCount (), 1U, 0U, 0, 0U );
 }
 
 bool PointLightLightup::UpdateGPUData ( android_vulkan::Renderer &renderer,
@@ -318,7 +254,7 @@ bool PointLightLightup::UpdateGPUData ( android_vulkan::Renderer &renderer,
 
         viewToPointLight.GetW ( alpha );
         GXVec3 const& location = light->GetLocation ();
-        betta.Substract ( alpha, location );
+        betta.Subtract ( alpha, location );
         viewToPointLight.SetW ( betta );
 
         lightData._hue = light->GetHue ();

@@ -130,7 +130,7 @@ void PointLight::UpdateMatrices ()
     alpha.Sum ( _location, _dimensions );
     _bounds.AddVertex ( alpha );
 
-    alpha.Substract ( _location, _dimensions );
+    alpha.Subtract ( _location, _dimensions );
     _bounds.AddVertex ( alpha );
 
     GXMat4 locals[ PBR_POINT_LIGHT_SHADOW_CASTER_PROJECTION_COUNT ];

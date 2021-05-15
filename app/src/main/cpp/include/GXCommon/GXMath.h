@@ -1,4 +1,4 @@
-// version 1.58
+// version 1.62
 
 #ifndef GX_MATH
 #define GX_MATH
@@ -33,8 +33,8 @@ struct [[maybe_unused]] GXVec2 final
         // NOTHING
     }
 
-    [[maybe_unused]] GXVec2 ( GXVec2 const &other ) = default;
-    [[maybe_unused]] GXVec2& operator = ( GXVec2 const &vector ) = default;
+    [[maybe_unused]] GXVec2 ( GXVec2 const & ) = default;
+    [[maybe_unused]] GXVec2& operator = ( GXVec2 const & ) = default;
 
     // constexpr constructor is implicitly inline
     // see https://timsong-cpp.github.io/cppwp/n4140/dcl.constexpr
@@ -60,7 +60,7 @@ struct [[maybe_unused]] GXVec2 final
 
     [[maybe_unused]] GXVoid Sum ( GXVec2 const &a, GXVec2 const &b );
     [[maybe_unused]] GXVoid Sum ( GXVec2 const &a, GXFloat bScale, GXVec2 const &b );
-    [[maybe_unused]] GXVoid Substract ( GXVec2 const &a, GXVec2 const &b );
+    [[maybe_unused]] GXVoid Subtract ( GXVec2 const &a, GXVec2 const &b );
     [[maybe_unused]] GXVoid Multiply ( GXVec2 const &a, GXVec2 const &b );
     [[maybe_unused]] GXVoid Multiply ( GXVec2 const &v, GXFloat scale );
 
@@ -101,8 +101,8 @@ struct [[maybe_unused]] GXVec3 final
         // NOTHING
     }
 
-    [[maybe_unused]] GXVec3 ( GXVec3 const &other ) = default;
-    [[maybe_unused]] GXVec3& operator = ( GXVec3 const &vector ) = default;
+    [[maybe_unused]] GXVec3 ( GXVec3 const & ) = default;
+    [[maybe_unused]] GXVec3& operator = ( GXVec3 const & ) = default;
 
     // constexpr constructor is implicitly inline
     // see https://timsong-cpp.github.io/cppwp/n4140/dcl.constexpr
@@ -127,7 +127,7 @@ struct [[maybe_unused]] GXVec3 final
 
     [[maybe_unused]] GXVoid Sum ( GXVec3 const &a, GXVec3 const &b );
     [[maybe_unused]] GXVoid Sum ( GXVec3 const &a, GXFloat bScale, GXVec3 const &b );
-    [[maybe_unused]] GXVoid Substract ( GXVec3 const &a, GXVec3 const &b );
+    [[maybe_unused]] GXVoid Subtract ( GXVec3 const &a, GXVec3 const &b );
     [[maybe_unused]] GXVoid Multiply ( GXVec3 const &a, GXFloat scale );
     [[maybe_unused]] GXVoid Multiply ( GXVec3 const &a, GXVec3 const &b );
 
@@ -182,8 +182,8 @@ struct [[maybe_unused]] GXEuler final
         // NOTHING
     }
 
-    [[maybe_unused]] GXEuler ( GXEuler const &other ) = default;
-    [[maybe_unused]] GXEuler& operator = ( GXEuler const &other ) = default;
+    [[maybe_unused]] GXEuler ( GXEuler const & ) = default;
+    [[maybe_unused]] GXEuler& operator = ( GXEuler const & ) = default;
 
     // constexpr constructor is implicitly inline
     // see https://timsong-cpp.github.io/cppwp/n4140/dcl.constexpr
@@ -204,10 +204,14 @@ struct [[maybe_unused]] GXVec4 final
     // Stores vector components in x, y, z, w order.
     GXFloat     _data[ 4U ];
 
-    [[maybe_unused]] GXVec4 () = default;
+    [[maybe_unused]] constexpr GXVec4 ():
+        _data { 0.0F, 0.0F, 0.0F, 0.0F }
+    {
+        // NOTHING
+    }
 
-    [[maybe_unused]] GXVec4 ( GXVec4 const &other ) = default;
-    [[maybe_unused]] GXVec4& operator = ( GXVec4 const &other ) = default;
+    [[maybe_unused]] GXVec4 ( GXVec4 const & ) = default;
+    [[maybe_unused]] GXVec4& operator = ( GXVec4 const & ) = default;
 
     [[maybe_unused]] explicit GXVec4 ( GXVec3 const &vector, GXFloat w );
 
@@ -235,7 +239,7 @@ struct [[maybe_unused]] GXVec4 final
 
     [[maybe_unused]] GXVoid Sum ( GXVec4 const &a, GXVec4 const &b );
     [[maybe_unused]] GXVoid Sum ( GXVec4 const &a, GXFloat bScale, GXVec4 const &b );
-    [[maybe_unused]] GXVoid Substract ( GXVec4 const &a, GXVec4 const &b );
+    [[maybe_unused]] GXVoid Subtract ( GXVec4 const &a, GXVec4 const &b );
 
     [[maybe_unused, nodiscard]] GXFloat DotProduct ( GXVec4 const &other ) const;
 
@@ -251,8 +255,8 @@ struct [[maybe_unused]] GXVec6 final
 
     [[maybe_unused]] GXVec6 () = default;
 
-    [[maybe_unused]] GXVec6 ( const GXVec6 &other ) = default;
-    [[maybe_unused]] GXVec6& operator = ( const GXVec6 &other ) = default;
+    [[maybe_unused]] GXVec6 ( GXVec6 const & ) = default;
+    [[maybe_unused]] GXVec6& operator = ( GXVec6 const & ) = default;
 
     // constexpr constructor is implicitly inline
     // see https://timsong-cpp.github.io/cppwp/n4140/dcl.constexpr
@@ -269,12 +273,12 @@ struct [[maybe_unused]] GXVec6 final
     }
 
     [[maybe_unused]] GXVoid Init ( GXFloat a1, GXFloat a2, GXFloat a3, GXFloat a4, GXFloat a5, GXFloat a6 );
-    [[maybe_unused]] GXVoid From ( const GXVec3 &v1, const GXVec3 &v2 );
+    [[maybe_unused]] GXVoid From ( GXVec3 const &v1, GXVec3 const &v2 );
 
-    [[maybe_unused, nodiscard]] GXFloat DotProduct ( const GXVec6 &other ) const;
-    [[maybe_unused]] GXVoid Sum ( const GXVec6 &a, const GXVec6 &b );
-    [[maybe_unused]] GXVoid Sum ( const GXVec6 &a, GXFloat bScale, const GXVec6 &b );
-    [[maybe_unused]] GXVoid Multiply ( const GXVec6 &a, GXFloat factor );
+    [[maybe_unused, nodiscard]] GXFloat DotProduct ( GXVec6 const &other ) const;
+    [[maybe_unused]] GXVoid Sum ( GXVec6 const &a, GXVec6 const &b );
+    [[maybe_unused]] GXVoid Sum ( GXVec6 const &a, GXFloat bScale, GXVec6 const &b );
+    [[maybe_unused]] GXVoid Multiply ( GXVec6 const &a, GXFloat factor );
 };
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -291,8 +295,8 @@ struct [[maybe_unused]] GXColorRGB final
         // NOTHING
     }
 
-    [[maybe_unused]] GXColorRGB ( GXColorRGB const &other ) = default;
-    [[maybe_unused]] GXColorRGB& operator = ( GXColorRGB const &other ) = default;
+    [[maybe_unused]] GXColorRGB ( GXColorRGB const & ) = default;
+    [[maybe_unused]] GXColorRGB& operator = ( GXColorRGB const & ) = default;
 
     // constexpr constructor is implicitly inline
     // see https://timsong-cpp.github.io/cppwp/n4140/dcl.constexpr
@@ -342,8 +346,8 @@ struct [[maybe_unused]] GXColorHSV final
         // NOTHING
     }
 
-    [[maybe_unused]] GXColorHSV ( GXColorHSV const &other ) = default;
-    [[maybe_unused]] GXColorHSV& operator = ( GXColorHSV const &other ) = default;
+    [[maybe_unused]] GXColorHSV ( GXColorHSV const & ) = default;
+    [[maybe_unused]] GXColorHSV& operator = ( GXColorHSV const & ) = default;
 
     // constexpr constructor is implicitly inline
     // see https://timsong-cpp.github.io/cppwp/n4140/dcl.constexpr
@@ -353,7 +357,7 @@ struct [[maybe_unused]] GXColorHSV final
         // NOTHING
     }
 
-    [[maybe_unused]] explicit GXColorHSV ( const GXColorRGB &color );
+    [[maybe_unused]] explicit GXColorHSV ( GXColorRGB const &color );
 
     // [0.0F 360.0F]
     [[maybe_unused]] GXVoid SetHue ( GXFloat hue );
@@ -434,8 +438,8 @@ struct [[maybe_unused]] GXQuat final
         // NOTHING
     }
 
-    [[maybe_unused]] GXQuat (GXQuat const &other ) = default;
-    [[maybe_unused]] GXQuat& operator = ( GXQuat const &other ) = default;
+    [[maybe_unused]] GXQuat (GXQuat const & ) = default;
+    [[maybe_unused]] GXQuat& operator = ( GXQuat const & ) = default;
 
     // constexpr constructor is implicitly inline
     // see https://timsong-cpp.github.io/cppwp/n4140/dcl.constexpr
@@ -521,8 +525,8 @@ struct [[maybe_unused]] GXMat3 final
         // NOTHING
     }
 
-    [[maybe_unused]] GXMat3 ( GXMat3 const &other ) = default;
-    [[maybe_unused]] GXMat3& operator = ( GXMat3 const &matrix ) = default;
+    [[maybe_unused]] GXMat3 ( GXMat3 const & ) = default;
+    [[maybe_unused]] GXMat3& operator = ( GXMat3 const & ) = default;
 
     [[maybe_unused]] explicit GXMat3 ( GXMat4 const &matrix );
 
@@ -548,7 +552,7 @@ struct [[maybe_unused]] GXMat3 final
     [[maybe_unused]] GXVoid Zeros ();
 
     [[maybe_unused]] GXVoid Inverse ( GXMat3 const &sourceMatrix );
-    [[maybe_unused]] GXVoid Transponse ( GXMat3 const &sourceMatrix );
+    [[maybe_unused]] GXVoid Transpose ( GXMat3 const &sourceMatrix );
     [[maybe_unused]] GXVoid ClearRotation ( GXMat3 const &sourceMatrix );
     [[maybe_unused]] GXVoid ClearRotation ( GXMat4 const &sourceMatrix );
 
@@ -567,7 +571,7 @@ struct [[maybe_unused]] GXMat3 final
     [[maybe_unused]] GXVoid SkewSymmetric ( GXVec3 const &base );
 
     [[maybe_unused]] GXVoid Sum ( GXMat3 const &a, GXMat3 const &b );
-    [[maybe_unused]] GXVoid Substract ( GXMat3 const &a, GXMat3 const &b );
+    [[maybe_unused]] GXVoid Subtract ( GXMat3 const &a, GXMat3 const &b );
     [[maybe_unused]] GXVoid Multiply ( GXMat3 const &a, GXMat3 const &b );
 
     [[maybe_unused]] GXVoid MultiplyVectorMatrix ( GXVec3 &out, GXVec3 const &v ) const;
@@ -598,8 +602,8 @@ struct [[maybe_unused]] GXMat4 final
         // NOTHING
     }
 
-    [[maybe_unused]] GXMat4 ( GXMat4 const &other ) = default;
-    [[maybe_unused]] GXMat4& operator = ( GXMat4 const &other ) = default;
+    [[maybe_unused]] GXMat4 ( GXMat4 const & ) = default;
+    [[maybe_unused]] GXMat4& operator = ( GXMat4 const & ) = default;
 
     [[maybe_unused]] GXVoid SetRotation ( GXQuat const &quaternion );
 
@@ -698,8 +702,8 @@ struct [[maybe_unused]] GXAABB final
         // NOTHING
     }
 
-    [[maybe_unused]] GXAABB ( GXAABB const &other ) = default;
-    [[maybe_unused]] GXAABB& operator = ( GXAABB const &other ) = default;
+    [[maybe_unused]] GXAABB ( GXAABB const & ) = default;
+    [[maybe_unused]] GXAABB& operator = ( GXAABB const & ) = default;
 
     [[maybe_unused]] GXVoid Empty ();
 
@@ -743,8 +747,8 @@ struct [[maybe_unused]] GXPlane final
         // NOTHING
     }
 
-    [[maybe_unused]] GXPlane ( GXPlane const &other ) = default;
-    [[maybe_unused]] GXPlane& operator = ( GXPlane const &other ) = default;
+    [[maybe_unused]] GXPlane ( GXPlane const & ) = default;
+    [[maybe_unused]] GXPlane& operator = ( GXPlane const & ) = default;
 
     [[maybe_unused]] GXVoid From ( GXVec3 const &pointA, GXVec3 const &pointB, GXVec3 const &pointC );
     [[maybe_unused]] GXVoid FromLineToPoint ( GXVec3 const &lineStart, GXVec3 const &lineEnd, GXVec3 const &point );
@@ -765,7 +769,7 @@ class [[maybe_unused]] GXProjectionClipPlanes final
 
     public:
         [[maybe_unused]] constexpr GXProjectionClipPlanes () = default;
-        [[maybe_unused]] GXProjectionClipPlanes& operator = ( GXProjectionClipPlanes const &other ) = default;
+        [[maybe_unused]] GXProjectionClipPlanes& operator = ( GXProjectionClipPlanes const & ) = default;
 
         [[maybe_unused]] explicit GXProjectionClipPlanes ( GXMat4 const &src );
 

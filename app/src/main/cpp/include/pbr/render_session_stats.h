@@ -21,9 +21,11 @@ class RenderSessionStats final
         std::atomic_size_t      _renderMeshes;
         std::atomic_size_t      _renderPointLights;
         std::atomic_size_t      _renderReflectionsGlobal;
+        std::atomic_size_t      _renderReflectionsLocal;
         std::atomic_size_t      _renderVertices;
         std::atomic_size_t      _submitMeshes;
         std::atomic_size_t      _submitPointLights;
+        std::atomic_size_t      _submitReflectionsLocal;
         std::atomic_size_t      _submitVertices;
         double                  _timeout;
 
@@ -47,6 +49,9 @@ class RenderSessionStats final
         void SubmitPointLight ();
 
         void RenderReflectionGlobal ();
+
+        void RenderReflectionLocal ( size_t count );
+        void SubmitReflectionLocal ();
 
     private:
         void Reset ();

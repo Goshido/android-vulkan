@@ -1,5 +1,5 @@
-[[vk::binding ( 0, 2 )]]
-cbuffer VolumeData:         register ( b2 )
+[[vk::binding ( 0, 1 )]]
+cbuffer VolumeData:         register ( b1 )
 {
     matrix      _transform;
 };

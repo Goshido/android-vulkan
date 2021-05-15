@@ -42,8 +42,12 @@ class Core final
 
         [[nodiscard]] bool IsSuspend () const;
         void OnFrame ();
+        void OnQuit ();
 
     private:
+        void OnInitWindow ( ANativeWindow &window );
+        void OnLowMemory ();
+        void OnTerminateWindow ();
         void UpdateFPS ( timestamp now );
 
         static void ActivateFullScreen ( android_app &app );

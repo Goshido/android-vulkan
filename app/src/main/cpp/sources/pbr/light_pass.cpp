@@ -10,103 +10,28 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-constexpr static char const BRDF_LUT[] = "pbr/system/brdf-lut.png";
-
 LightPass::LightPass () noexcept:
-    _brdfLUT {},
-    _brdfLUTSampler {},
-    _commandBuffer ( VK_NULL_HANDLE ),
     _commandPool ( VK_NULL_HANDLE ),
+    _imageBarriers {},
     _lightupRenderPassInfo {},
     _lightVolume {},
     _lightupCommonDescriptorSet {},
     _lightupRenderPassCounter ( 0U ),
     _pointLightPass {},
-    _reflectionGlobalPass {}
+    _reflectionGlobalPass {},
+    _reflectionLocalPass {},
+    _transfer ( VK_NULL_HANDLE ),
+    _unitCube {}
 {
     // NOTHING
 }
 
-bool LightPass::Init ( android_vulkan::Renderer &renderer, GBuffer &gBuffer )
+bool LightPass::Init ( android_vulkan::Renderer &renderer, VkCommandPool commandPool, GBuffer &gBuffer )
 {
     _lightupRenderPassInfo.framebuffer = VK_NULL_HANDLE;
     _lightupRenderPassInfo.renderPass = VK_NULL_HANDLE;
 
-    VkCommandPoolCreateInfo const poolInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
-        .queueFamilyIndex = renderer.GetQueueFamilyIndex ()
-    };
-
     VkDevice device = renderer.GetDevice ();
-
-    bool result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateCommandPool ( device, &poolInfo, nullptr, &_commandPool ),
-        "LightPass::Init",
-        "Can't create command pool"
-    );
-
-    if ( !result )
-        return false;
-
-    AV_REGISTER_COMMAND_POOL ( "LightPass::_commandPool" )
-
-    VkCommandBufferAllocateInfo const allocateInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-        .pNext = nullptr,
-        .commandPool = _commandPool,
-        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-        .commandBufferCount = 1U
-    };
-
-    result = android_vulkan::Renderer::CheckVkResult (
-        vkAllocateCommandBuffers ( device, &allocateInfo, &_commandBuffer ),
-        "LightPass::Init",
-        "Can't allocate command buffer"
-    );
-
-    if ( !result )
-    {
-        Destroy ( device );
-        return false;
-    }
-
-    if ( !_brdfLUT.UploadData ( renderer, BRDF_LUT, android_vulkan::eFormat::Unorm, false, _commandBuffer ) )
-    {
-        Destroy ( device );
-        return false;
-    }
-
-    constexpr VkSamplerCreateInfo const samplerInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0U,
-        .magFilter = VK_FILTER_LINEAR,
-        .minFilter = VK_FILTER_LINEAR,
-        .mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST,
-        .addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
-        .addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
-        .addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
-        .mipLodBias = 0.0F,
-        .anisotropyEnable = VK_FALSE,
-        .maxAnisotropy = 1.0F,
-        .compareEnable = VK_FALSE,
-        .compareOp = VK_COMPARE_OP_ALWAYS,
-        .minLod = 0.0F,
-        .maxLod = 0.0F,
-        .borderColor = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK,
-        .unnormalizedCoordinates = VK_FALSE
-    };
-
-    if ( !_brdfLUTSampler.Init ( renderer, samplerInfo ) )
-    {
-        Destroy ( device );
-        return false;
-    }
 
     if ( !CreateLightupRenderPass ( device, gBuffer ) )
     {
@@ -120,13 +45,15 @@ bool LightPass::Init ( android_vulkan::Renderer &renderer, GBuffer &gBuffer )
         return false;
     }
 
+    CreateImageBarriers ( gBuffer );
+
     if ( !_lightVolume.Init ( renderer, gBuffer, _lightupRenderPassInfo.renderPass ) )
     {
         Destroy ( renderer.GetDevice () );
         return false;
     }
 
-    if ( !_lightupCommonDescriptorSet.Init ( renderer, gBuffer ) )
+    if ( !_lightupCommonDescriptorSet.Init ( renderer, commandPool, gBuffer ) )
     {
         Destroy ( renderer.GetDevice () );
         return false;
@@ -134,16 +61,22 @@ bool LightPass::Init ( android_vulkan::Renderer &renderer, GBuffer &gBuffer )
 
     VkExtent2D const& resolution = gBuffer.GetResolution ();
 
-    if ( !_pointLightPass.Init ( renderer, *this, resolution, _lightupRenderPassInfo.renderPass ) )
+    if ( !_pointLightPass.Init ( renderer, *this, commandPool, resolution, _lightupRenderPassInfo.renderPass ) )
     {
         Destroy ( renderer.GetDevice () );
         return false;
     }
 
-    result = _reflectionGlobalPass.Init ( renderer,
+    if ( !_reflectionGlobalPass.Init ( renderer, _lightupRenderPassInfo.renderPass, 1U, resolution ) )
+    {
+        Destroy ( renderer.GetDevice () );
+        return false;
+    }
+
+    bool const result = _reflectionLocalPass.Init ( renderer,
+        *this,
+        commandPool,
         _lightupRenderPassInfo.renderPass,
-        _brdfLUTSampler.GetSampler (),
-        _brdfLUT.GetImageView (),
         1U,
         resolution
     );
@@ -154,11 +87,20 @@ bool LightPass::Init ( android_vulkan::Renderer &renderer, GBuffer &gBuffer )
         return false;
     }
 
+    if ( !CreateUnitCube ( renderer, commandPool ) )
+    {
+        Destroy ( renderer.GetDevice () );
+        return false;
+    }
+
     return true;
 }
 
 void LightPass::Destroy ( VkDevice device )
 {
+    _unitCube.FreeResources ( device );
+
+    _reflectionLocalPass.Destroy ( device );
     _reflectionGlobalPass.Destroy ( device );
     _pointLightPass.Destroy ( device );
     _lightupCommonDescriptorSet.Destroy ( device );
@@ -178,9 +120,12 @@ void LightPass::Destroy ( VkDevice device )
         AV_UNREGISTER_RENDER_PASS ( "LightPass::_lightupRenderPass" )
     }
 
-    _brdfLUTSampler.Destroy ( device );
-    _brdfLUT.FreeResources ( device );
-    DestroyCommandPool ( device );
+    if ( _transfer == VK_NULL_HANDLE )
+        return;
+
+    vkFreeCommandBuffers ( device, _commandPool, 1U, &_transfer );
+    _transfer = VK_NULL_HANDLE;
+    _commandPool = VK_NULL_HANDLE;
 }
 
 size_t LightPass::GetPointLightCount () const
@@ -188,23 +133,41 @@ size_t LightPass::GetPointLightCount () const
     return _pointLightPass.GetPointLightCount ();
 }
 
+size_t LightPass::GetReflectionLocalCount () const
+{
+    return _reflectionLocalPass.GetReflectionLocalCount ();
+}
+
 void LightPass::OnFreeTransferResources ( VkDevice device )
 {
-    _brdfLUT.FreeTransferResources ( device );
-    DestroyCommandPool ( device );
+    _unitCube.FreeTransferResources ( device );
+    _lightupCommonDescriptorSet.OnFreeTransferResources ( device );
+
+    if ( _transfer == VK_NULL_HANDLE )
+        return;
+
+    vkFreeCommandBuffers ( device, _commandPool, 1U, &_transfer );
+    _transfer = VK_NULL_HANDLE;
+    _commandPool = VK_NULL_HANDLE;
 }
 
 bool LightPass::OnPreGeometryPass ( android_vulkan::Renderer &renderer,
     VkExtent2D const &resolution,
     SceneData const &sceneData,
     size_t opaqueMeshCount,
+    GXMat4 const &viewerLocal,
+    GXMat4 const &view,
+    GXMat4 const &viewProjection,
     GXMat4 const &cvvToView
 )
 {
-    if ( !_lightupCommonDescriptorSet.Update ( renderer, resolution, cvvToView ) )
+    if ( !_lightupCommonDescriptorSet.Update ( renderer, resolution, viewerLocal, cvvToView ) )
         return false;
 
-    return _pointLightPass.ExecuteShadowPhase ( renderer, sceneData, opaqueMeshCount );
+    if ( !_pointLightPass.ExecuteShadowPhase ( renderer, sceneData, opaqueMeshCount ) )
+        return false;
+
+    return _reflectionLocalPass.UploadGPUData ( renderer, view, viewProjection );
 }
 
 bool LightPass::OnPostGeometryPass ( android_vulkan::Renderer &renderer,
@@ -215,23 +178,30 @@ bool LightPass::OnPostGeometryPass ( android_vulkan::Renderer &renderer,
 )
 {
     size_t const pointLights = _pointLightPass.GetPointLightCount ();
-    size_t const reflections = _reflectionGlobalPass.GetReflectionCount ();
+    size_t const localReflections = _reflectionLocalPass.GetReflectionLocalCount ();
+    size_t const globalReflections = _reflectionGlobalPass.GetReflectionCount ();
+    size_t const lightVolumes = pointLights + localReflections;
 
-    if ( pointLights + reflections == 0U )
+    if ( lightVolumes + globalReflections == 0U )
         return true;
+
+    vkCmdPipelineBarrier ( commandBuffer,
+        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+        0U,
+        0U,
+        nullptr,
+        0U,
+        nullptr,
+        static_cast<uint32_t> ( INPUT_ATTACHMENTS ),
+        _imageBarriers
+    );
 
     _lightupCommonDescriptorSet.Bind ( commandBuffer );
 
-    if ( pointLights )
+    if ( lightVolumes )
     {
-        _lightupRenderPassCounter = pointLights - 1U;
-
-        bool const result = _pointLightPass.ExecuteLightupPhase ( renderer, _lightVolume, commandBuffer, viewerLocal, view,
-            viewProjection
-        );
-
-        if ( !result )
-            return false;
+        _lightupRenderPassCounter = globalReflections ? lightVolumes - 1U : lightVolumes;
     }
     else
     {
@@ -239,7 +209,32 @@ bool LightPass::OnPostGeometryPass ( android_vulkan::Renderer &renderer,
         vkCmdNextSubpass ( commandBuffer, VK_SUBPASS_CONTENTS_INLINE );
     }
 
-    if ( !reflections )
+    if ( pointLights )
+    {
+        bool const result = _pointLightPass.ExecuteLightupPhase ( renderer,
+            _lightVolume,
+            _unitCube,
+            commandBuffer,
+            viewerLocal,
+            view,
+            viewProjection
+        );
+
+        if ( !result )
+        {
+            return false;
+        }
+    }
+
+    if ( localReflections )
+    {
+        if ( !_reflectionLocalPass.Execute ( renderer, _lightVolume, _unitCube, commandBuffer ) )
+        {
+            return false;
+        }
+    }
+
+    if ( !globalReflections )
         return true;
 
     bool const result = _reflectionGlobalPass.Execute ( renderer, commandBuffer, viewerLocal );
@@ -253,6 +248,7 @@ void LightPass::Reset ()
     _lightupRenderPassCounter = 0U;
     _pointLightPass.Reset ();
     _reflectionGlobalPass.Reset ();
+    _reflectionLocalPass.Reset ();
 }
 
 void LightPass::SubmitPointLight ( LightRef const &light )
@@ -265,13 +261,9 @@ void LightPass::SubmitReflectionGlobal ( TextureCubeRef &prefilter )
     _reflectionGlobalPass.Append ( prefilter );
 }
 
-[[maybe_unused]] void LightPass::SubmitReflectionLocal ( TextureCubeRef &/*prefilter*/,
-    GXVec3 const &/*location*/,
-    float /*size*/
-)
+void LightPass::SubmitReflectionLocal ( TextureCubeRef &prefilter, GXVec3 const &location, float size )
 {
-    // TODO
-    assert ( false );
+    _reflectionLocalPass.Append ( prefilter, location, size );
 }
 
 void LightPass::OnBeginLightWithVolume ( VkCommandBuffer commandBuffer )
@@ -286,6 +278,39 @@ void LightPass::OnEndLightWithVolume ( VkCommandBuffer commandBuffer )
 
     vkCmdEndRenderPass ( commandBuffer );
     --_lightupRenderPassCounter;
+}
+
+void LightPass::CreateImageBarriers ( GBuffer &gBuffer )
+{
+    VkImageMemoryBarrier barrier
+    {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+        .pNext = nullptr,
+        .srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+        .dstAccessMask = VK_ACCESS_INPUT_ATTACHMENT_READ_BIT,
+        .oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+        .newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .image = gBuffer.GetAlbedo ().GetImage (),
+
+        .subresourceRange
+        {
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .baseMipLevel = 0U,
+            .levelCount = 1U,
+            .baseArrayLayer = 0U,
+            .layerCount = 1U
+        }
+    };
+
+    _imageBarriers[ 0U ] = barrier;
+
+    barrier.image = gBuffer.GetNormal ().GetImage ();
+    _imageBarriers[ 1U ] = barrier;
+
+    barrier.image = gBuffer.GetParams ().GetImage ();
+    _imageBarriers[ 2U ] = barrier;
 }
 
 bool LightPass::CreateLightupFramebuffer ( VkDevice device, GBuffer &gBuffer )
@@ -353,8 +378,8 @@ bool LightPass::CreateLightupRenderPass ( VkDevice device, GBuffer &gBuffer )
             .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
             .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
             .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-            .initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-            .finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+            .initialLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+            .finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
         },
 
         // #2: normal
@@ -366,8 +391,8 @@ bool LightPass::CreateLightupRenderPass ( VkDevice device, GBuffer &gBuffer )
             .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
             .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
             .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-            .initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-            .finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+            .initialLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+            .finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
         },
 
         // #3: params
@@ -379,8 +404,8 @@ bool LightPass::CreateLightupRenderPass ( VkDevice device, GBuffer &gBuffer )
             .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
             .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
             .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-            .initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-            .finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+            .initialLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+            .finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
         },
 
         // #4: depth|stencil
@@ -389,9 +414,9 @@ bool LightPass::CreateLightupRenderPass ( VkDevice device, GBuffer &gBuffer )
             .format = gBuffer.GetDepthStencil ().GetFormat (),
             .samples = VK_SAMPLE_COUNT_1_BIT,
             .loadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
-            .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+            .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
             .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-            .stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE,
+            .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
             .initialLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
             .finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
         }
@@ -566,15 +591,71 @@ bool LightPass::CreateLightupRenderPass ( VkDevice device, GBuffer &gBuffer )
     return true;
 }
 
-void LightPass::DestroyCommandPool ( VkDevice device )
+bool LightPass::CreateUnitCube ( android_vulkan::Renderer &renderer, VkCommandPool commandPool )
 {
-    if ( _commandPool == VK_NULL_HANDLE )
-        return;
+    _commandPool = commandPool;
 
-    vkDestroyCommandPool ( device, _commandPool, nullptr );
-    _commandPool = VK_NULL_HANDLE;
-    _commandBuffer = VK_NULL_HANDLE;
-    AV_UNREGISTER_COMMAND_POOL ( "LightPass::_commandPool" )
+    VkCommandBufferAllocateInfo const allocateInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+        .pNext = nullptr,
+        .commandPool = _commandPool,
+        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+        .commandBufferCount = 1U
+    };
+
+    bool result = android_vulkan::Renderer::CheckVkResult (
+        vkAllocateCommandBuffers ( renderer.GetDevice (), &allocateInfo, &_transfer ),
+        "LightPass::CreateUnitCube",
+        "Can't allocate command buffer"
+    );
+
+    if ( !result )
+    {
+        Destroy ( renderer.GetDevice () );
+        return false;
+    }
+
+    constexpr GXVec3 const vertices[] =
+    {
+        GXVec3 ( -0.5F, -0.5F, -0.5F ),
+        GXVec3 ( 0.5F, -0.5F, -0.5F ),
+        GXVec3 ( -0.5F, 0.5F, -0.5F ),
+        GXVec3 ( 0.5F, 0.5F, -0.5F ),
+        GXVec3 ( 0.5F, -0.5F, 0.5F ),
+        GXVec3 ( -0.5F, -0.5F, 0.5F ),
+        GXVec3 ( 0.5F, 0.5F, 0.5F ),
+        GXVec3 ( -0.5F, 0.5F, 0.5F )
+    };
+
+    constexpr uint32_t const indices[] =
+    {
+        0U, 2U, 1U,
+        1U, 2U, 3U,
+        1U, 3U, 4U,
+        4U, 3U, 6U,
+        4U, 6U, 5U,
+        5U, 6U, 7U,
+        5U, 7U, 0U,
+        0U, 7U, 2U,
+        2U, 7U, 3U,
+        3U, 7U, 6U,
+        5U, 0U, 4U,
+        4U, 0U, 1U
+    };
+
+    GXAABB bounds;
+    bounds.AddVertex ( vertices[ 0U ] );
+    bounds.AddVertex ( vertices[ 7U ] );
+
+    return _unitCube.LoadMesh ( reinterpret_cast<uint8_t const*> ( vertices ),
+        sizeof ( vertices ),
+        indices,
+        static_cast<uint32_t> ( std::size ( indices ) ),
+        bounds,
+        renderer,
+        _transfer
+    );
 }
 
 } // namespace pbr

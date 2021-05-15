@@ -15,7 +15,9 @@ namespace pbr {
 
 enum class eLightType : uint8_t
 {
-    PointLight [[maybe_unused]]
+    PointLight,
+    ReflectionGlobal,
+    ReflectionLocal
 };
 
 class Light

@@ -51,15 +51,13 @@ StaticMeshComponent::StaticMeshComponent ( android_vulkan::Renderer &renderer,
     commandBufferConsumed += consumed;
 }
 
-void StaticMeshComponent::FreeTransferResources ( android_vulkan::Renderer &renderer )
+void StaticMeshComponent::FreeTransferResources ( VkDevice device )
 {
     if ( !_material )
         return;
 
     // Note it's safe to cast like that here. "NOLINT" is clang-tidy control comment.
     auto* m = static_cast<OpaqueMaterial*> ( _material.get () ); // NOLINT
-
-    VkDevice device = renderer.GetDevice ();
 
     if ( m->GetAlbedo () )
         m->GetAlbedo ()->FreeTransferResources ( device );

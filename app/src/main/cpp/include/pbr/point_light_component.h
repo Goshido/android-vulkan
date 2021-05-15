@@ -32,7 +32,7 @@ class PointLightComponent final : public Component
 
     private:
         void Submit ( RenderSession &renderSession ) override;
-        void FreeTransferResources ( android_vulkan::Renderer &renderer ) override;
+        void FreeTransferResources ( VkDevice device ) override;
 };
 
 } // namespace pbr

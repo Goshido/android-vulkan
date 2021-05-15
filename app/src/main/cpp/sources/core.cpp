@@ -5,7 +5,7 @@
 namespace android_vulkan {
 
 AAssetManager* g_AssetManager = nullptr;
-constexpr static const double FPS_PERIOD = 3.0;
+constexpr static double const FPS_PERIOD = 3.0;
 
 Core::Core ( android_app &app, Game &game ) noexcept:
     _game ( game ),
@@ -14,6 +14,13 @@ Core::Core ( android_app &app, Game &game ) noexcept:
     _fpsTimestamp {},
     _frameTimestamp {}
 {
+
+#ifdef ANDROID_VULKAN_DEBUG
+
+    android_vulkan::LogInfo ( "Core::Core - Application was started." );
+
+#endif // ANDROID_VULKAN_DEBUG
+
     // grab asset manager
     g_AssetManager = app.activity->assetManager;
 
@@ -26,7 +33,7 @@ Core::Core ( android_app &app, Game &game ) noexcept:
 
 bool Core::IsSuspend () const
 {
-    return !_renderer.IsReady ();
+    return !_renderer.IsSwapchainCreated ();
 }
 
 void Core::OnFrame ()
@@ -34,14 +41,80 @@ void Core::OnFrame ()
     if ( !_game.IsReady () )
         return;
 
-    const timestamp now = std::chrono::system_clock::now ();
-    const std::chrono::duration<double> delta = now - _frameTimestamp;
+    timestamp const now = std::chrono::system_clock::now ();
+    std::chrono::duration<double> const delta = now - _frameTimestamp;
 
     if ( _renderer.CheckSwapchainStatus () && !_game.OnFrame ( _renderer, delta.count () ) )
         LogError ( "Core::OnFrame - Frame rendering failed." );
 
     _frameTimestamp = now;
     UpdateFPS ( now );
+}
+
+void Core::OnQuit ()
+{
+    _game.OnDestroyDevice ( _renderer.GetDevice () );
+    _renderer.OnDestroyDevice ();
+
+#ifdef ANDROID_VULKAN_DEBUG
+
+    android_vulkan::LogInfo ( "Core::OnQuit - Application was finished." );
+
+#endif // ANDROID_VULKAN_DEBUG
+
+}
+
+void Core::OnInitWindow ( ANativeWindow &window )
+{
+    if ( !_renderer.IsDeviceCreated () )
+    {
+        if ( !_renderer.OnCreateDevice () )
+            return;
+
+        if ( !_game.OnInitDevice ( _renderer ) )
+        {
+            _renderer.OnDestroyDevice ();
+            return;
+        }
+    }
+
+    if ( !_renderer.OnCreateSwapchain ( window, false ) )
+    {
+        _game.OnDestroyDevice ( _renderer.GetDevice () );
+        _renderer.OnDestroyDevice ();
+        return;
+    }
+
+    if ( !_game.OnSwapchainCreated ( _renderer ) )
+    {
+        _renderer.OnDestroySwapchain ();
+        _game.OnDestroyDevice ( _renderer.GetDevice () );
+        _renderer.OnDestroyDevice ();
+    }
+
+    _fpsTimestamp = std::chrono::system_clock::now ();
+    _frameTimestamp = _fpsTimestamp;
+
+    _gamepad.Start ();
+}
+
+void Core::OnLowMemory ()
+{
+    // TODO
+    LogWarning ( "Core::OnLowMemory - APP_CMD_LOW_MEMORY has been received [app %p].", this );
+}
+
+void Core::OnTerminateWindow ()
+{
+    if ( !_renderer.IsSwapchainCreated () )
+        return;
+
+    if ( !_renderer.FinishAllJobs () )
+        LogError ( "Core::OnTerminateWindow - Can't finish all GPU jobs" );
+
+    _gamepad.Stop ();
+    _game.OnSwapchainDestroyed ( _renderer.GetDevice () );
+    _renderer.OnDestroySwapchain ();
 }
 
 void Core::UpdateFPS ( timestamp now )
@@ -95,7 +168,6 @@ void Core::ActivateFullScreen ( android_app &app )
     );
 
     env->CallVoidMethod ( decorView, setSystemUiVisibility, flag );
-
     app.activity->vm->DetachCurrentThread ();
 }
 
@@ -106,26 +178,21 @@ void Core::OnOSCommand ( android_app* app, int32_t cmd )
     switch ( cmd )
     {
         case APP_CMD_INIT_WINDOW:
-            if ( core._renderer.OnInit ( *app->window, false ) && !core._game.OnInit ( core._renderer ) )
-                LogError ( "Core::OnOSCommand - Init failed." );
-
-            core._fpsTimestamp = std::chrono::system_clock::now ();
-            core._frameTimestamp = core._fpsTimestamp;
-
-            core._gamepad.Start ();
+            core.OnInitWindow ( *app->window );
         break;
 
         case APP_CMD_TERM_WINDOW:
-            if ( !core._game.OnDestroy ( core._renderer ) )
-                LogError ( "Core::OnOSCommand - Game destroy failed." );
-
-            core._gamepad.Stop ();
-            core._renderer.OnDestroy ();
+            core.OnTerminateWindow ();
         break;
 
         case APP_CMD_DESTROY:
+            core.OnQuit ();
             app->onAppCmd = nullptr;
             app->userData = nullptr;
+        break;
+
+        case APP_CMD_LOW_MEMORY:
+            core.OnLowMemory ();
         break;
 
         default:

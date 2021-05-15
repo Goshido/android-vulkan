@@ -20,7 +20,10 @@ enum class eUniformPoolSize : size_t
 class UniformBufferPool final
 {
     private:
+        VkBufferMemoryBarrier       _barrier;
+        VkBufferCreateInfo          _bufferInfo;
         VkDeviceMemory              _gpuMemory;
+        VkDeviceSize                _gpuSpecificItemOffset;
         size_t                      _index;
         VkDeviceSize                _itemSize;
         std::vector<VkBuffer>       _pool;
@@ -55,6 +58,11 @@ class UniformBufferPool final
 
     private:
         [[nodiscard]] bool AllocateItem ( android_vulkan::Renderer &renderer );
+
+        [[nodiscard]] static bool ResolveAlignment ( android_vulkan::Renderer &renderer,
+            size_t &alignment,
+            size_t itemSize
+        );
 };
 
 } // namespace pbr

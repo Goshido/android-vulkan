@@ -11,7 +11,11 @@ class Camera final
 {
     private:
         float       _moveBoost;
+
+        // range [-pi / 2, pi / 2]
         float       _pitch;
+
+        // range [-pi, pi]
         float       _yaw;
 
         // move space is perpendicular to the UP viewer direction.
@@ -39,8 +43,10 @@ class Camera final
         ~Camera () = default;
 
         void SetProjection ( float fieldOfViewRadians, float aspectRatio, float zNear, float zFar );
-        [[maybe_unused]] void SetLocation ( float x, float y, float z );
         void SetLocation ( GXVec3 const &location );
+
+        // Note "pitch" and "yaw" must be in radians.
+        void SetRotation ( float pitch, float yaw );
 
         void Update ( float deltaTime );
 

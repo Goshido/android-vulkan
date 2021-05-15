@@ -131,23 +131,14 @@ void PointLightLightupProgram::Destroy ( VkDevice device )
     AV_UNREGISTER_SHADER_MODULE ( "PointLightLightupProgram::_vertexShader" )
 }
 
-void PointLightLightupProgram::SetDescriptorSets ( VkCommandBuffer commandBuffer,
-    VkDescriptorSet lightData,
-    VkDescriptorSet volumeData
-) const
+void PointLightLightupProgram::SetLightData ( VkCommandBuffer commandBuffer, VkDescriptorSet lightData ) const
 {
-    VkDescriptorSet const sets[]
-    {
-        lightData,
-        volumeData
-    };
-
     vkCmdBindDescriptorSets ( commandBuffer,
         VK_PIPELINE_BIND_POINT_GRAPHICS,
         _pipelineLayout,
+        2U,
         1U,
-        static_cast<uint32_t> ( std::size ( sets ) ),
-        sets,
+        &lightData,
         0U,
         nullptr
     );
@@ -169,6 +160,12 @@ Program::DescriptorSetInfo const& PointLightLightupProgram::GetResourceInfo () c
         },
         {
             {
+                .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                .descriptorCount = 1U
+            }
+        },
+        {
+            {
                 .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
                 .descriptorCount = 1U
             },
@@ -176,12 +173,6 @@ Program::DescriptorSetInfo const& PointLightLightupProgram::GetResourceInfo () c
                 .type = VK_DESCRIPTOR_TYPE_SAMPLER,
                 .descriptorCount = 1U
             },
-            {
-                .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                .descriptorCount = 1U
-            }
-        },
-        {
             {
                 .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
                 .descriptorCount = 1U
@@ -281,17 +272,17 @@ bool PointLightLightupProgram::InitLayout ( android_vulkan::Renderer &renderer, 
     if ( !_commonLayout.Init ( renderer ) )
         return false;
 
-    if ( !_pointLightLayout.Init ( renderer ) )
+    if ( !_lightVolumeLayout.Init ( renderer ) )
         return false;
 
-    if ( !_lightVolumeLayout.Init ( renderer ) )
+    if ( !_pointLightLayout.Init ( renderer ) )
         return false;
 
     VkDescriptorSetLayout const layouts[] =
     {
         _commonLayout.GetLayout (),
-        _pointLightLayout.GetLayout (),
-        _lightVolumeLayout.GetLayout ()
+        _lightVolumeLayout.GetLayout (),
+        _pointLightLayout.GetLayout ()
     };
 
     VkPipelineLayoutCreateInfo const layoutInfo

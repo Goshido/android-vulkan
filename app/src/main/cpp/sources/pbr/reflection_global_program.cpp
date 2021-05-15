@@ -12,6 +12,7 @@ constexpr static const size_t STAGE_COUNT = 2U;
 ReflectionGlobalProgram::ReflectionGlobalProgram ():
     LightLightupBaseProgram ( "ReflectionGlobalProgram" ),
     _commonLayout {},
+    _stubLayout {},
     _reflectionLayout {}
 {
     // NOTHING
@@ -101,6 +102,7 @@ void ReflectionGlobalProgram::Destroy ( VkDevice device )
     }
 
     _reflectionLayout.Destroy ( device );
+    _stubLayout.Destroy ( device );
     _commonLayout.Destroy ( device );
 
     if ( _fragmentShader != VK_NULL_HANDLE )
@@ -128,14 +130,8 @@ Program::DescriptorSetInfo const& ReflectionGlobalProgram::GetResourceInfo () co
                 .descriptorCount = 4U
             },
             {
-                .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                .descriptorCount = 1U
-            }
-        },
-        {
-            {
                 .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-                .descriptorCount = 2U
+                .descriptorCount = 1U
             },
             {
                 .type = VK_DESCRIPTOR_TYPE_SAMPLER,
@@ -143,6 +139,15 @@ Program::DescriptorSetInfo const& ReflectionGlobalProgram::GetResourceInfo () co
             },
             {
                 .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                .descriptorCount = 1U
+            }
+        },
+        {
+            // NOTHING
+        },
+        {
+            {
+                .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
                 .descriptorCount = 1U
             }
         }
@@ -156,7 +161,7 @@ void ReflectionGlobalProgram::SetDescriptorSet ( VkCommandBuffer commandBuffer, 
     vkCmdBindDescriptorSets ( commandBuffer,
         VK_PIPELINE_BIND_POINT_GRAPHICS,
         _pipelineLayout,
-        1U,
+        2U,
         1U,
         &set,
         0U,
@@ -253,12 +258,16 @@ bool ReflectionGlobalProgram::InitLayout ( android_vulkan::Renderer &renderer, V
     if ( !_commonLayout.Init ( renderer ) )
         return false;
 
+    if ( !_stubLayout.Init ( renderer ) )
+        return false;
+
     if ( !_reflectionLayout.Init ( renderer ) )
         return false;
 
     VkDescriptorSetLayout const layouts[] =
     {
         _commonLayout.GetLayout (),
+        _stubLayout.GetLayout (),
         _reflectionLayout.GetLayout ()
     };
 

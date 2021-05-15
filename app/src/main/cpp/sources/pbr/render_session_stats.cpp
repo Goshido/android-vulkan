@@ -11,9 +11,11 @@ RenderSessionStats::RenderSessionStats () noexcept:
     _renderMeshes ( 0U ),
     _renderPointLights ( 0U ),
     _renderReflectionsGlobal ( 0U ),
+    _renderReflectionsLocal ( 0U ),
     _renderVertices ( 0U ),
     _submitMeshes ( 0U ),
     _submitPointLights ( 0U ),
+    _submitReflectionsLocal ( 0U ),
     _submitVertices ( 0U ),
     _timeout ( TIMEOUT )
 {
@@ -33,13 +35,16 @@ R"__(>>> RenderSessionStats::PrintStats:
     Submitted meshes: %zu
     Submitted vertices: %zu
     Submitted point lights: %zu
+    Submitted local reflections: %zu
     Rendered global reflections: %zu
     Rendered meshes: %zu
     Rendered vertices: %zu
     Rendered point lights: %zu
+    Rendered local reflections: %zu
     Culling mesh percent: %zu%%
     Culling vertex percent: %zu%%
     Culling point light percent: %zu%%
+    Culling local reflection percent: %zu%%
 )__";
 
     auto avgCounter = [ & ] ( size_t counter ) -> size_t {
@@ -54,13 +59,16 @@ R"__(>>> RenderSessionStats::PrintStats:
         avgCounter ( _submitMeshes ),
         avgCounter ( _submitVertices ),
         avgCounter ( _submitPointLights ),
+        avgCounter ( _submitReflectionsLocal ),
         avgCounter ( _renderReflectionsGlobal ),
         avgCounter ( _renderMeshes ),
         avgCounter ( _renderVertices ),
         avgCounter ( _renderPointLights ),
+        avgCounter ( _renderReflectionsLocal ),
         avgPercent ( _renderMeshes, _submitMeshes ),
         avgPercent ( _renderVertices, _submitVertices ),
-        avgPercent ( _renderPointLights, _submitPointLights )
+        avgPercent ( _renderPointLights, _submitPointLights ),
+        avgPercent ( _renderReflectionsLocal, _submitReflectionsLocal )
     );
 
     Reset ();
@@ -93,15 +101,27 @@ void RenderSessionStats::RenderReflectionGlobal ()
     ++_renderReflectionsGlobal;
 }
 
+void RenderSessionStats::RenderReflectionLocal ( size_t count )
+{
+    _renderReflectionsLocal += count;
+}
+
+void RenderSessionStats::SubmitReflectionLocal ()
+{
+    ++_submitReflectionsLocal;
+}
+
 void RenderSessionStats::Reset ()
 {
     _frameCount = 0U;
     _renderReflectionsGlobal = 0U;
     _renderMeshes = 0U;
     _renderPointLights = 0U;
+    _renderReflectionsLocal = 0U;
     _renderVertices = 0U;
     _submitMeshes = 0U;
     _submitPointLights = 0U;
+    _submitReflectionsLocal = 0U;
     _submitVertices = 0U;
     _timeout = TIMEOUT;
 }

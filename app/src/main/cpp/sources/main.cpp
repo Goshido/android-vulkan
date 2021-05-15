@@ -30,15 +30,10 @@ enum class eGame : uint16_t
 
 } // namespace android_vulkan
 
-void android_main ( android_app* app )
+// Note maybe_unused attribute is needed because IDE could not understand that this function is actually visible for
+// NativeActivity implementation.
+[[maybe_unused]] void android_main ( android_app* app )
 {
-
-#ifdef ANDROID_VULKAN_DEBUG
-
-    android_vulkan::LogDebug ( "android_main - Application was started." );
-
-#endif // ANDROID_VULKAN_DEBUG
-
     std::map<android_vulkan::eGame, std::shared_ptr<android_vulkan::Game>> const games =
     {
         { android_vulkan::eGame::MandelbrotAnalyticColor, std::make_shared<mandelbrot::MandelbrotAnalyticColor> () },
@@ -76,11 +71,4 @@ void android_main ( android_app* app )
 
         core.OnFrame ();
     }
-
-#ifdef ANDROID_VULKAN_DEBUG
-
-    android_vulkan::LogDebug ( "android_main - Application was finished." );
-
-#endif // ANDROID_VULKAN_DEBUG
-
 }

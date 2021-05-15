@@ -846,16 +846,26 @@ bool Renderer::CreateShader ( VkShaderModule &shader,
 
     std::vector<uint8_t> const& spirV = vertexShader.GetContent ();
 
-    VkShaderModuleCreateInfo shaderModuleCreateInfo;
-    shaderModuleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-    shaderModuleCreateInfo.pNext = nullptr;
-    shaderModuleCreateInfo.flags = 0U;
-    shaderModuleCreateInfo.codeSize = spirV.size ();
-    shaderModuleCreateInfo.pCode = reinterpret_cast<uint32_t const*> ( spirV.data () );
+    VkShaderModuleCreateInfo const shaderModuleCreateInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .codeSize = spirV.size (),
+        .pCode = reinterpret_cast<uint32_t const*> ( spirV.data () )
+    };
 
     return CheckVkResult ( vkCreateShaderModule ( _device, &shaderModuleCreateInfo, nullptr, &shader ),
         "Renderer::CreateShader",
         errorMessage
+    );
+}
+
+bool Renderer::FinishAllJobs ()
+{
+    return android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( _queue ),
+        "Renderer::FinishAllJobs",
+        "Can't wait queue idle"
     );
 }
 
@@ -919,17 +929,39 @@ VkExtent2D const& Renderer::GetViewportResolution () const
     return _viewportResolution;
 }
 
-bool Renderer::IsReady () const
+bool Renderer::IsDeviceCreated () const
+{
+    return _device != VK_NULL_HANDLE;
+}
+
+bool Renderer::IsSwapchainCreated () const
 {
     return _swapchain != VK_NULL_HANDLE;
 }
 
-bool Renderer::OnInit ( ANativeWindow &nativeWindow, bool vSync )
+bool Renderer::OnCreateSwapchain ( ANativeWindow &nativeWindow, bool vSync )
+{
+    if ( !DeploySurface ( nativeWindow ) )
+        return false;
+
+    if ( DeploySwapchain ( vSync ) )
+        return true;
+
+    DestroySurface ();
+    return false;
+}
+
+void Renderer::OnDestroySwapchain ()
+{
+    DestroySwapchain ();
+    DestroySurface ();
+}
+
+bool Renderer::OnCreateDevice ()
 {
     if ( !InitVulkan () )
     {
-        LogError ( "Renderer::OnInit - Can't init Vulkan backend." );
-        assert ( !"Renderer::OnInit - Can't init Vulkan backend." );
+        LogError ( "Renderer::OnCreateDevice - Can't init Vulkan backend." );
         return false;
     }
 
@@ -960,9 +992,7 @@ bool Renderer::OnInit ( ANativeWindow &nativeWindow, bool vSync )
 
         DestroyInstance ();
 
-        LogError ( "Renderer::OnInit - There is no any Vulkan physical device." );
-        assert ( !"Renderer::OnInit - There is no any Vulkan physical device." );
-
+        LogError ( "Renderer::OnCreateDevice - There is no any Vulkan physical device." );
         return false;
     }
 
@@ -972,7 +1002,7 @@ bool Renderer::OnInit ( ANativeWindow &nativeWindow, bool vSync )
     VkPhysicalDevice* deviceList = physicalDevices.data ();
 
     bool result = CheckVkResult ( vkEnumeratePhysicalDevices ( _instance, &physicalDeviceCount, deviceList ),
-        "Renderer::OnInit",
+        "Renderer::OnCreateDevice",
         "Can't get Vulkan physical devices"
     );
 
@@ -1020,9 +1050,7 @@ bool Renderer::OnInit ( ANativeWindow &nativeWindow, bool vSync )
 
         DestroyInstance ();
 
-        LogError ( "Renderer::OnInit - There is no any Vulkan physical device groups." );
-        assert ( !"Renderer::OnInit - There is no any Vulkan physical device groups." );
-
+        LogError ( "Renderer::OnCreateDevice - There is no any Vulkan physical device groups." );
         return false;
     }
 
@@ -1035,7 +1063,7 @@ bool Renderer::OnInit ( ANativeWindow &nativeWindow, bool vSync )
         item.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GROUP_PROPERTIES;
 
     result = CheckVkResult ( vkEnumeratePhysicalDeviceGroups ( _instance, &physicalDeviceGroupCount, groupProps ),
-        "Renderer::OnInit",
+        "Renderer::OnCreateDevice",
         "Can't get Vulkan physical device groups"
     );
 
@@ -1057,46 +1085,11 @@ bool Renderer::OnInit ( ANativeWindow &nativeWindow, bool vSync )
     for ( uint32_t i = 0U; i < physicalDeviceGroupCount; ++i )
         PrintPhysicalDeviceGroupInfo ( i, groupProps[ i ] );
 
-    if ( !DeployDevice () )
-    {
-        _physicalDeviceGroups.clear ();
-        _physicalDeviceInfo.clear ();
-
-#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
-
-        DestroyDebugFeatures ();
-
-#endif
-
-        DestroyInstance ();
-        return false;
-    }
-
-    if ( !DeploySurface ( nativeWindow ) )
-    {
-        _physicalDeviceGroups.clear ();
-        _physicalDeviceInfo.clear ();
-
-        DestroyDevice ();
-
-#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
-
-        DestroyDebugFeatures ();
-
-#endif
-
-        DestroyInstance ();
-        return false;
-    }
-
-    if ( DeploySwapchain ( vSync ) )
+    if ( DeployDevice () )
         return true;
 
     _physicalDeviceGroups.clear ();
     _physicalDeviceInfo.clear ();
-
-    DestroySurface ();
-    DestroyDevice ();
 
 #ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
@@ -1108,19 +1101,14 @@ bool Renderer::OnInit ( ANativeWindow &nativeWindow, bool vSync )
     return false;
 }
 
-void Renderer::OnDestroy ()
+void Renderer::OnDestroyDevice ()
 {
-    if ( !IsReady () )
-        return;
-
-    if ( !CheckVkResult ( vkDeviceWaitIdle ( _device ), "Renderer::OnDestroy", "Can't wait device idle" ) )
+    if ( !CheckVkResult ( vkDeviceWaitIdle ( _device ), "Renderer::OnDestroyDevice", "Can't wait device idle" ) )
         return;
 
     _physicalDeviceGroups.clear ();
     _physicalDeviceInfo.clear ();
 
-    DestroySwapchain ();
-    DestroySurface ();
     DestroyDevice ();
 
 #ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
@@ -1463,23 +1451,27 @@ bool Renderer::DeployDevice ()
     if ( !CheckRequiredFormats () )
         return false;
 
-    VkPhysicalDeviceFloat16Int8FeaturesKHR float16Int8Feature;
-    float16Int8Feature.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT16_INT8_FEATURES_KHR;
-    float16Int8Feature.pNext = nullptr;
-    float16Int8Feature.shaderFloat16 = VK_TRUE;
-    float16Int8Feature.shaderInt8 = VK_FALSE;
+    constexpr VkPhysicalDeviceFloat16Int8FeaturesKHR const float16Int8Feature
+    {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT16_INT8_FEATURES_KHR,
+        .pNext = nullptr,
+        .shaderFloat16 = VK_TRUE,
+        .shaderInt8 = VK_FALSE
+    };
 
-    VkDeviceCreateInfo deviceCreateInfo;
-    deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-    deviceCreateInfo.pNext = &float16Int8Feature;
-    deviceCreateInfo.flags = 0U;
-    deviceCreateInfo.queueCreateInfoCount = 1U;
-    deviceCreateInfo.pQueueCreateInfos = &deviceQueueCreateInfo;
-    deviceCreateInfo.enabledLayerCount = 0U;
-    deviceCreateInfo.ppEnabledLayerNames = nullptr;
-    deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t> ( extensionCount );
-    deviceCreateInfo.ppEnabledExtensionNames = extensions;
-    deviceCreateInfo.pEnabledFeatures = &caps._features;
+    VkDeviceCreateInfo const deviceCreateInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+        .pNext = &float16Int8Feature,
+        .flags = 0U,
+        .queueCreateInfoCount = 1U,
+        .pQueueCreateInfos = &deviceQueueCreateInfo,
+        .enabledLayerCount = 0U,
+        .ppEnabledLayerNames = nullptr,
+        .enabledExtensionCount = static_cast<uint32_t> ( extensionCount ),
+        .ppEnabledExtensionNames = extensions,
+        .pEnabledFeatures = &caps._features
+    };
 
     bool const result = CheckVkResult ( vkCreateDevice ( _physicalDevice, &deviceCreateInfo, nullptr, &_device ),
         "Renderer::DeployDevice",
@@ -1513,14 +1505,16 @@ void Renderer::DestroyDevice ()
 
 bool Renderer::DeployInstance ()
 {
-    VkApplicationInfo applicationInfo;
-    applicationInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-    applicationInfo.pNext = nullptr;
-    applicationInfo.apiVersion = TARGET_VULKAN_VERSION;
-    applicationInfo.pApplicationName = APPLICATION_NAME;
-    applicationInfo.applicationVersion = 1U;
-    applicationInfo.pEngineName = ENGINE_NAME;
-    applicationInfo.engineVersion = 1U;
+    constexpr VkApplicationInfo const applicationInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
+        .pNext = nullptr,
+        .pApplicationName = APPLICATION_NAME,
+        .applicationVersion = 1U,
+        .pEngineName = ENGINE_NAME,
+        .engineVersion = 1U,
+        .apiVersion = TARGET_VULKAN_VERSION
+    };
 
     VkInstanceCreateInfo instanceCreateInfo;
     instanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -1589,11 +1583,13 @@ void Renderer::DestroyInstance ()
 
 bool Renderer::DeploySurface ( ANativeWindow &nativeWindow )
 {
-    VkAndroidSurfaceCreateInfoKHR androidSurfaceCreateInfoKHR;
-    androidSurfaceCreateInfoKHR.sType = VK_STRUCTURE_TYPE_ANDROID_SURFACE_CREATE_INFO_KHR;
-    androidSurfaceCreateInfoKHR.pNext = nullptr;
-    androidSurfaceCreateInfoKHR.flags = 0U;
-    androidSurfaceCreateInfoKHR.window = &nativeWindow;
+    VkAndroidSurfaceCreateInfoKHR const androidSurfaceCreateInfoKHR
+    {
+        .sType = VK_STRUCTURE_TYPE_ANDROID_SURFACE_CREATE_INFO_KHR,
+        .pNext = nullptr,
+        .flags = 0U,
+        .window = &nativeWindow
+    };
 
     bool result = CheckVkResult (
         vkCreateAndroidSurfaceKHR ( _instance, &androidSurfaceCreateInfoKHR, nullptr, &_surface ),
@@ -1963,12 +1959,12 @@ bool Renderer::PrintPhysicalDeviceFeatureInfo ( VkPhysicalDevice physicalDevice 
 
     LogInfo ( "%sSupported:", INDENT_2 );
 
-    for ( auto &item : supportedFeatures )
+    for ( auto& item : supportedFeatures )
         LogInfo ( "%s%s", INDENT_3, item.data () );
 
     LogInfo ( "%sUnsupported:", INDENT_2 );
 
-    for ( auto &item : unsupportedFeatures )
+    for ( auto& item : unsupportedFeatures )
         LogInfo ( "%s%s", INDENT_3, item.data () );
 
     return true;

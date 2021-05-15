@@ -19,13 +19,16 @@ class Game
         virtual ~Game () = default;
 
         [[nodiscard]] virtual bool IsReady () = 0;
-
-        [[nodiscard]] virtual bool OnInit ( Renderer &renderer ) = 0;
         [[nodiscard]] virtual bool OnFrame ( Renderer &renderer, double deltaTime ) = 0;
-        [[nodiscard]] virtual bool OnDestroy ( Renderer &renderer ) = 0;
+
+        [[nodiscard]] virtual bool OnInitDevice ( Renderer &renderer ) = 0;
+        virtual void OnDestroyDevice ( VkDevice device ) = 0;
+
+        [[nodiscard]] virtual bool OnSwapchainCreated ( Renderer &renderer ) = 0;
+        virtual void OnSwapchainDestroyed ( VkDevice device ) = 0;
 
     protected:
-        Game () noexcept = default;
+        Game () = default;
 };
 
 } // namespace android_vulkan

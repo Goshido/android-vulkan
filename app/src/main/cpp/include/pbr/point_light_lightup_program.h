@@ -16,7 +16,7 @@ class PointLightLightupProgram final : public LightLightupBaseProgram
     public:
         AV_DX_ALIGNMENT_BEGIN
 
-        struct [[maybe_unused]] VolumeData final
+        struct VolumeData final
         {
             [[maybe_unused]] GXMat4                     _transform;
         };
@@ -63,10 +63,7 @@ class PointLightLightupProgram final : public LightLightupBaseProgram
 
         void Destroy ( VkDevice device ) override;
 
-        void SetDescriptorSets ( VkCommandBuffer commandBuffer,
-            VkDescriptorSet lightData,
-            VkDescriptorSet volumeData
-        ) const;
+        void SetLightData ( VkCommandBuffer commandBuffer, VkDescriptorSet lightData ) const;
 
     private:
         [[nodiscard]] DescriptorSetInfo const& GetResourceInfo () const override;

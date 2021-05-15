@@ -17,4 +17,5 @@ call make-ps.bat mandelbrot-lut-color
 call make-ps.bat opaque
 call make-ps.bat point-light
 call make-ps.bat reflection-global
+call make-ps.bat reflection-local
 call make-ps.bat texture-present

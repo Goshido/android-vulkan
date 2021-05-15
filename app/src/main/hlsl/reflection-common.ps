@@ -1,0 +1,53 @@
+#include "lightup-common.ps"
+
+
+#define PREFILTER_MAX_MIP_LEVEL     8.0H
+
+[[vk::binding ( 0, 2 )]]
+TextureCube<float4>     g_prefilter:    register ( t1 );
+
+struct InputData
+{
+    linear float4       _pixel:         SV_Position;
+};
+
+struct OutputData
+{
+    [[vk::location (0)]]
+    float4              _color:         SV_Target0;
+};
+
+//----------------------------------------------------------------------------------------------------------------------
+
+float4 RestoreLocationViewUnnormalized ( in float2 locationImage, in float depth )
+{
+    const float2 alpha = mad ( locationImage, _invResolutionFactor, (float2)( -1.0F ) );
+    return mul ( _cvvToView, float4 ( alpha, depth, 1.0F ) );
+}
+
+float Roughness2Mip ( in half roughness )
+{
+    // It's emperical ease function. Please plot the graph to see what happens.
+    const half mip = 8.42H - 8.41H / ( 1.0H + pow ( roughness / 0.2584H, 2.164H ) );
+    return (float)clamp ( mip, 0.0H, PREFILTER_MAX_MIP_LEVEL );
+}
+
+half3 GetReflection ( in half3 toFragmentView )
+{
+    half roughness;
+    half metallic;
+    GetParams ( roughness, metallic );
+
+    const half3 directionView = -toFragmentView;
+    const half3 normalView = RestoreNormalView ();
+    const half dN = max ( 0.0H, dot ( directionView, normalView ) );
+    const half3 freshnel = GetFresnel ( dN, metallic, GetAlbedo () );
+
+    const float3 refl = -mul ( (float3x3)_viewToWorld, (float3)( reflect ( directionView, normalView ) ) );
+    const float mip = Roughness2Mip ( roughness );
+
+    const half3 prefilterColor = (half3)g_prefilter.SampleLevel ( g_prefilterSampler, refl, mip ).xyz;
+    const half2 brdf = (half2)g_brdf.Sample ( g_brdfSampler, float2 ( (float)dN, 1.0F - roughness ) ).xy;
+
+    return prefilterColor * mad ( freshnel, (half3)brdf.x, (half3)brdf.y );
+}

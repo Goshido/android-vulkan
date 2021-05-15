@@ -11,11 +11,7 @@ namespace pbr {
 class ReflectionComponent final : public Component
 {
     private:
-        [[maybe_unused]] bool               _isGlobal;
-        [[maybe_unused]] float              _size;
-
-        [[maybe_unused]] GXVec3             _location;
-        [[maybe_unused]] TextureCubeRef     _prefilter;
+        LightRef    _probe;
 
     public:
         ReflectionComponent () = delete;
@@ -36,7 +32,7 @@ class ReflectionComponent final : public Component
         ~ReflectionComponent () override = default;
 
     private:
-        void FreeTransferResources ( android_vulkan::Renderer &renderer ) override;
+        void FreeTransferResources ( VkDevice device ) override;
         void Submit ( RenderSession &renderSession ) override;
 };
 

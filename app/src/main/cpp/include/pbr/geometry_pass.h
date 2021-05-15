@@ -14,6 +14,9 @@ namespace pbr {
 
 class GeometryPass final
 {
+    public:
+        constexpr static const size_t DEFAULT_TEXTURE_COUNT = 5U;
+
     private:
         Texture2DRef                _albedoDefault;
         Texture2DRef                _emissionDefault;
@@ -35,6 +38,7 @@ class GeometryPass final
         VkRenderPassBeginInfo       _renderPassInfo;
         SceneData                   _sceneData;
         VkSubmitInfo                _submitInfoTransfer;
+        VkCommandBuffer             _textureCommandBuffers[ DEFAULT_TEXTURE_COUNT ];
         VkCommandBuffer             _transferCommandBuffer;
         UniformBufferPool           _uniformPool;
 
@@ -52,6 +56,7 @@ class GeometryPass final
         [[nodiscard]] SceneData& GetSceneData ();
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
+            VkCommandPool commandPool,
             VkExtent2D const &resolution,
             VkRenderPass renderPass,
             VkFramebuffer framebuffer
@@ -94,10 +99,7 @@ class GeometryPass final
 
         void CleanupTransferResources ( android_vulkan::Renderer &renderer );
         void InitCommonStructures ( VkRenderPass renderPass, VkFramebuffer framebuffer, VkExtent2D const &resolution );
-
-        [[nodiscard]] bool InitDefaultTextures ( android_vulkan::Renderer &renderer,
-            VkCommandBuffer const* commandBuffers
-        );
+        [[nodiscard]] bool InitDefaultTextures ( android_vulkan::Renderer &renderer );
 
         void DestroyDefaultTextures ( VkDevice device );
         void DestroyDescriptorPool ( VkDevice device );

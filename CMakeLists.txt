@@ -77,6 +77,9 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/main.cpp
     app/src/main/cpp/sources/mesh_geometry.cpp
     app/src/main/cpp/sources/renderer.cpp
+    app/src/main/cpp/sources/rigid_body.cpp
+    app/src/main/cpp/sources/shape.cpp
+    app/src/main/cpp/sources/shape_box.cpp
     app/src/main/cpp/sources/stick.cpp
     app/src/main/cpp/sources/texture_cube.cpp
     app/src/main/cpp/sources/texture2D.cpp

@@ -14,6 +14,8 @@ GX_RESTORE_WARNING_STATE
 #include <rainbow/rainbow.h>
 #include <rotating_mesh/game_analytic.h>
 #include <rotating_mesh/game_lut.h>
+#include <rigid_body.h>
+#include <shape_box.h>
 
 
 namespace android_vulkan {
@@ -34,6 +36,19 @@ enum class eGame : uint16_t
 // NativeActivity implementation.
 [[maybe_unused]] void android_main ( android_app* app )
 {
+    android_vulkan::RigidBody rigidBody {};
+    rigidBody.SetMass ( 77.7F );
+
+    android_vulkan::ShapeRef boxShape = std::make_shared<android_vulkan::ShapeBox> ( 0.2F, 0.2F, 0.2F );
+    rigidBody.SetShape ( boxShape );
+
+    rigidBody.SetLocation ( 0.0F, 0.0F, 0.0F );
+
+    GXVec3 const point ( 85.3253F, 0.0664F, 40.6206F );
+    GXVec3 const impulse ( -96.4106F, 83.0577F, 32.931F );
+
+    rigidBody.AddImpulse ( impulse, point );
+
     std::map<android_vulkan::eGame, std::shared_ptr<android_vulkan::Game>> const games =
     {
         { android_vulkan::eGame::MandelbrotAnalyticColor, std::make_shared<mandelbrot::MandelbrotAnalyticColor> () },
@@ -44,7 +59,7 @@ enum class eGame : uint16_t
         { android_vulkan::eGame::RotatingMeshLUT, std::make_shared<rotating_mesh::GameLUT> () }
     };
 
-    android_vulkan::Core core ( *app, *( games.find ( android_vulkan::eGame::PBR )->second ) );
+    android_vulkan::Core core ( *app, *( games.find ( android_vulkan::eGame::Rainbow )->second ) );
 
     for ( ; ; )
     {

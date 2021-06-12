@@ -21,7 +21,7 @@ constexpr static char const* SCENES[] =
     "pbr/assets/N7_ENG_Injection.scene"
 };
 
-constexpr static size_t ACTIVE_SCENE = 1U;
+constexpr static size_t const ACTIVE_SCENE = 0U;
 static_assert ( std::size ( SCENES ) > ACTIVE_SCENE );
 
 [[maybe_unused]] constexpr static uint32_t const SCENE_DESC_FORMAT_VERSION = 2U;

@@ -438,7 +438,7 @@ struct [[maybe_unused]] GXQuat final
         // NOTHING
     }
 
-    [[maybe_unused]] GXQuat (GXQuat const & ) = default;
+    [[maybe_unused]] GXQuat ( GXQuat const & ) = default;
     [[maybe_unused]] GXQuat& operator = ( GXQuat const & ) = default;
 
     // constexpr constructor is implicitly inline
@@ -642,7 +642,7 @@ struct [[maybe_unused]] GXMat4 final
 
     [[maybe_unused]] GXVoid Translation ( GXFloat x, GXFloat y, GXFloat z );
     [[maybe_unused]] GXVoid TranslateTo ( GXFloat x, GXFloat y, GXFloat z );
-    [[maybe_unused]] GXVoid TranslateTo ( GXVec3  const &location );
+    [[maybe_unused]] GXVoid TranslateTo ( GXVec3 const &location );
 
     [[maybe_unused]] GXVoid RotationX ( GXFloat angle );
     [[maybe_unused]] GXVoid RotationY ( GXFloat angle );

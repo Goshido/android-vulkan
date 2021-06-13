@@ -544,7 +544,7 @@ PointLightPass::PointLightShadowmapInfo* PointLightPass::AcquirePointLightShadow
     android_vulkan::Renderer &renderer
 )
 {
-    if ( !_shadowmaps.empty () && _usedShadowmaps <= _shadowmaps.size () )
+    if ( !_shadowmaps.empty () && _usedShadowmaps < _shadowmaps.size () )
         return &_shadowmaps[ _usedShadowmaps++ ];
 
     PointLightShadowmapInfo info;

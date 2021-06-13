@@ -74,27 +74,32 @@ PointLight::PointLight ( android_vulkan::Half3 const &hue,
     // NOTHING
 }
 
-GXAABB const& PointLight::GetBounds () const
+GXAABB const& PointLight::GetBounds () const noexcept
 {
     return _bounds;
 }
 
-android_vulkan::Half3 const& PointLight::GetHue () const
+android_vulkan::Half3 const& PointLight::GetHue () const noexcept
 {
     return _hue;
 }
 
-android_vulkan::Half PointLight::GetIntensity () const
+android_vulkan::Half PointLight::GetIntensity () const noexcept
 {
     return _intensity;
 }
 
-GXVec3 const& PointLight::GetLocation () const
+void PointLight::SetIntensity ( float intensity ) noexcept
+{
+    _intensity = intensity;
+}
+
+GXVec3 const& PointLight::GetLocation () const noexcept
 {
     return _location;
 }
 
-PointLight::Matrices const& PointLight::GetMatrices ()
+PointLight::Matrices const& PointLight::GetMatrices () noexcept
 {
     if ( _isNeedUpdate )
         UpdateMatrices ();
@@ -102,7 +107,7 @@ PointLight::Matrices const& PointLight::GetMatrices ()
     return _matrices;
 }
 
-GXMat4 const& PointLight::GetProjection ()
+GXMat4 const& PointLight::GetProjection () noexcept
 {
     if ( _isNeedUpdate )
         UpdateMatrices ();
@@ -110,13 +115,13 @@ GXMat4 const& PointLight::GetProjection ()
     return _projection;
 }
 
-void PointLight::SetLocation ( GXVec3 const location )
+void PointLight::SetLocation ( GXVec3 const location ) noexcept
 {
     _location = location;
     _isNeedUpdate = true;
 }
 
-void PointLight::UpdateMatrices ()
+void PointLight::UpdateMatrices () noexcept
 {
     _projection.Perspective ( GX_MATH_HALF_PI,
         1.0F,

@@ -2,13 +2,12 @@
 #define ANDROID_VULKAN_RIGID_BODY_H
 
 
-#include <GXCommon/GXMath.h>
 #include "shape.h"
 
 
 namespace android_vulkan {
 
-class [[maybe_unused]] RigidBody final
+class RigidBody final
 {
     private:
         float       _dampingAngular;
@@ -79,6 +78,7 @@ class [[maybe_unused]] RigidBody final
         [[maybe_unused, nodiscard]] GXMat3 const& GetInertialTensorInverse () const noexcept;
 
         [[maybe_unused, nodiscard]] GXVec3 const& GetLocation () const noexcept;
+        [[maybe_unused]] void SetLocation ( GXVec3 const &location ) noexcept;
         [[maybe_unused]] void SetLocation ( float x, float y, float z ) noexcept;
 
         [[maybe_unused, nodiscard]] float GetMass () const noexcept;
@@ -96,8 +96,9 @@ class [[maybe_unused]] RigidBody final
 
         [[maybe_unused, nodiscard]] GXMat4 const& GetTransform () const noexcept;
 
-        [[maybe_unused]] void Integrate ( float deltaTime ) noexcept;
+        void Integrate ( float deltaTime ) noexcept;
         [[maybe_unused, nodiscard]] bool IsAwake () const noexcept;
+        void ResetAccumulators ();
 
     private:
         void IntegrateAsDynamic ( float deltaTime ) noexcept;
@@ -109,6 +110,8 @@ class [[maybe_unused]] RigidBody final
         void SetSleep () noexcept;
         void UpdateCacheData () noexcept;
 };
+
+using RigidBodyRef = std::shared_ptr<RigidBody>;
 
 } // namespace android_vulkan
 

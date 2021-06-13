@@ -2,29 +2,26 @@
 
 namespace android_vulkan {
 
+ShapeBox::ShapeBox ( GXVec3 const &size ) noexcept:
+    Shape ( eShapeType::Box ),
+    _size ( size )
+{
+    Init ();
+}
+
 ShapeBox::ShapeBox ( float width, float height, float depth ) noexcept:
     Shape ( eShapeType::Box ),
-    _width ( width ),
-    _height ( height ),
-    _depth ( depth )
+    _size ( width, height, depth )
 {
-    GXVec3 half ( width, height, depth );
-    half.Multiply ( half, 0.5F );
-
-    _bouldsLocal.AddVertex ( half );
-
-    half.Reverse ();
-    _bouldsLocal.AddVertex ( half );
-
-    _boundsWorld = _bouldsLocal;
+    Init ();
 }
 
 [[maybe_unused]] void ShapeBox::CalculateInertiaTensor ( float mass ) noexcept
 {
     // https://en.wikipedia.org/wiki/List_of_moments_of_inertia
 
-    GXVec3 square ( _width, _height, _depth );
-    square.Multiply ( square, square );
+    GXVec3 square {};
+    square.Multiply ( _size, _size );
 
     GXVec3 diagonal ( square._data[ 1U ], square._data[ 0U ], square._data[ 0U ] );
     diagonal.Sum ( diagonal, GXVec3 ( square._data[ 2U ], square._data[ 2U ], square._data[ 1U ] ) );
@@ -50,17 +47,30 @@ ShapeBox::ShapeBox ( float width, float height, float depth ) noexcept:
 
 [[maybe_unused]] float ShapeBox::GetWidth () const noexcept
 {
-    return _width;
+    return _size._data[ 0U ];
 }
 
 [[maybe_unused]] float ShapeBox::GetHeight () const noexcept
 {
-    return _height;
+    return _size._data[ 1U ];
 }
 
 [[maybe_unused]] float ShapeBox::GetDepth () const noexcept
 {
-    return _depth;
+    return _size._data[ 2U ];
+}
+
+void ShapeBox::Init () noexcept
+{
+    GXVec3 half {};
+    half.Multiply ( _size, 0.5F );
+
+    _bouldsLocal.AddVertex ( half );
+
+    half.Reverse ();
+    _bouldsLocal.AddVertex ( half );
+
+    _boundsWorld = _bouldsLocal;
 }
 
 void ShapeBox::UpdateBounds () noexcept

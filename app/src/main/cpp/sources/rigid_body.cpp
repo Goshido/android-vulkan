@@ -23,6 +23,8 @@ constexpr static float const LOCATION_SLEEP_THRESHOLD = 2.0e-5F;
 constexpr static float const ROTATION_SLEEP_THRESHOLD = 1.5e-5F;
 constexpr static float const SLEEP_TIMEOUT = 0.2F;
 
+constexpr static GXVec3 const ZERO ( 0.0F, 0.0F, 0.0F );
+
 RigidBody::RigidBody () noexcept:
     _dampingAngular ( DEFAULT_DAMPING_ANGULAR ),
     _dampingLinear ( DEFAULT_DAMPING_LINEAR ),
@@ -195,6 +197,17 @@ RigidBody::RigidBody () noexcept:
     return _location;
 }
 
+[[maybe_unused]] void RigidBody::SetLocation ( GXVec3 const &location ) noexcept
+{
+    _location = location;
+    _transform.SetW ( _location );
+
+    if ( !_shape )
+        return;
+
+    UpdateCacheData ();
+}
+
 [[maybe_unused]] void RigidBody::SetLocation ( float x, float y, float z ) noexcept
 {
     _location._data[ 0U ] = x;
@@ -281,7 +294,7 @@ RigidBody::RigidBody () noexcept:
     return _transform;
 }
 
-[[maybe_unused]] void RigidBody::Integrate ( float deltaTime ) noexcept
+void RigidBody::Integrate ( float deltaTime ) noexcept
 {
     if ( _isKinematic )
     {
@@ -295,6 +308,12 @@ RigidBody::RigidBody () noexcept:
 [[maybe_unused]] bool RigidBody::IsAwake () const noexcept
 {
     return _isAwake;
+}
+
+void RigidBody::ResetAccumulators ()
+{
+    _totalForce = ZERO;
+    _totalTorque = ZERO;
 }
 
 void RigidBody::RunSleepLogic ( float deltaTime ) noexcept
@@ -343,10 +362,8 @@ void RigidBody::SetAwake () noexcept
 void RigidBody::SetSleep () noexcept
 {
     _isAwake = false;
-
-    constexpr GXVec3 const zero ( 0.0F, 0.0F, 0.0F );
-    _velocityAngular = zero;
-    _velocityLinear = zero;
+    _velocityAngular = ZERO;
+    _velocityLinear = ZERO;
 }
 
 void RigidBody::UpdateCacheData () noexcept

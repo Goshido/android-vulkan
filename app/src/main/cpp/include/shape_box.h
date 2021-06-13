@@ -8,9 +8,7 @@ namespace android_vulkan {
 class [[maybe_unused]] ShapeBox final : public Shape
 {
     private:
-        float       _width;
-        float       _height;
-        float       _depth;
+        GXVec3 const    _size;
 
     public:
         ShapeBox () = delete;
@@ -21,7 +19,9 @@ class [[maybe_unused]] ShapeBox final : public Shape
         ShapeBox ( ShapeBox && ) = delete;
         ShapeBox& operator = ( ShapeBox && ) = delete;
 
+        explicit ShapeBox ( GXVec3 const &size ) noexcept;
         explicit ShapeBox ( float width, float height, float depth ) noexcept;
+
         ~ShapeBox () override = default;
 
         [[maybe_unused]] void CalculateInertiaTensor ( float mass ) noexcept override;
@@ -32,6 +32,7 @@ class [[maybe_unused]] ShapeBox final : public Shape
         [[maybe_unused, nodiscard]] float GetDepth () const noexcept;
 
     private:
+        void Init () noexcept;
         void UpdateBounds () noexcept override;
 };
 

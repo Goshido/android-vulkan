@@ -30,4 +30,10 @@ ContactManager::ContactManager () noexcept:
     return _contactManifolds.emplace_back ();
 }
 
+void ContactManager::Reset () noexcept
+{
+    _contactManifolds.clear ();
+    _contacts.clear ();
+}
+
 } // namespace android_vulkan

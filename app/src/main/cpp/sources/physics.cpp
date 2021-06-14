@@ -1,4 +1,5 @@
 #include <physics.h>
+#include <contact_detector.h>
 #include <logger.h>
 
 
@@ -41,6 +42,12 @@ Physics::Physics () noexcept:
 
 [[maybe_unused]] bool Physics::AddRigidBody ( RigidBodyRef const &rigidBody ) noexcept
 {
+    if ( !rigidBody->HasShape() )
+    {
+        LogError ( "Physics::AddRigidBody - Can't insert rigid body. The rigid body does not have a shape." );
+        return false;
+    }
+
     auto const result = _rigidBodies.insert ( rigidBody );
 
     if ( result.second )
@@ -85,23 +92,48 @@ void Physics::Simulate ( float deltaTime ) noexcept
 
     while ( _accumulator >= FIXED_TIME_STEP )
     {
-        for ( auto& rigidBody : _rigidBodies )
-        {
-            for ( auto const& globalForce : _globalForces )
-                globalForce->Apply ( const_cast<RigidBodyRef&> ( rigidBody ) );
-
-            rigidBody->Integrate ( FIXED_TIME_STEP );
-        }
+        Integrate ();
+        CollectContacts ();
 
         // TODO collision response
 
-        for ( auto& rigidBody : _rigidBodies )
-            rigidBody->ResetAccumulators ();
-
+        Prepare ();
         _accumulator -= FIXED_TIME_STEP;
     }
 
     // TODO
+}
+
+void Physics::CollectContacts () noexcept
+{
+    auto end = _rigidBodies.end ();
+
+    for ( auto i = _rigidBodies.begin (); i != end; ++i )
+    {
+        for ( auto j = i; ++j != end; )
+        {
+            ContactDetector::Check ( *i, *j, _contactManager );
+        }
+    }
+}
+
+void Physics::Integrate () noexcept
+{
+    for ( auto& rigidBody : _rigidBodies )
+    {
+        for ( auto const& globalForce : _globalForces )
+            globalForce->Apply ( rigidBody );
+
+        rigidBody->Integrate ( FIXED_TIME_STEP );
+    }
+}
+
+void Physics::Prepare () noexcept
+{
+    for ( auto& rigidBody : _rigidBodies )
+        rigidBody->ResetAccumulators ();
+
+    _contactManager.Reset ();
 }
 
 } // namespace android_vulkan

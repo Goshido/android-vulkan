@@ -19,17 +19,17 @@ namespace android_vulkan {
 enum class eShapeType : uint8_t
 {
     Sphere [[maybe_unused]] = 0U,
-    Box [[maybe_unused]] = 1U,
+    Box = 1U,
     Rectangle [[maybe_unused]] = 2U
 };
 
-class [[maybe_unused]] Shape
+class Shape
 {
     private:
         eShapeType      _type;
 
     protected:
-        GXAABB          _bouldsLocal;
+        GXAABB          _boundsLocal;
         GXAABB          _boundsWorld;
 
         float           _frictionDynamic;
@@ -74,7 +74,7 @@ class [[maybe_unused]] Shape
         [[maybe_unused, nodiscard]] GXMat4 const& GetTransformWorld () const noexcept;
         [[maybe_unused, nodiscard]] eShapeType GetType () const noexcept;
 
-        [[maybe_unused]] void UpdateCacheData ( GXMat4 const &transform ) noexcept;
+        void UpdateCacheData ( GXMat4 const &transform ) noexcept;
 
     protected:
         explicit Shape ( eShapeType shapeType ) noexcept;

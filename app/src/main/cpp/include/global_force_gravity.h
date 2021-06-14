@@ -25,7 +25,7 @@ class [[maybe_unused]] GlobalForceGravity final : public GlobalForce
 
         ~GlobalForceGravity () override = default;
 
-        void Apply ( RigidBodyRef &rigidBody ) const noexcept override;
+        void Apply ( RigidBodyRef const &rigidBody ) const noexcept override;
 };
 
 } // namespace android_vulkan

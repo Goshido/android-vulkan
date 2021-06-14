@@ -9,7 +9,7 @@ GlobalForceGravity::GlobalForceGravity ( GXVec3 const &freeFallAcceleration ) no
     // NOTHING
 }
 
-void GlobalForceGravity::Apply ( RigidBodyRef &rigidBody ) const noexcept
+void GlobalForceGravity::Apply ( RigidBodyRef const &rigidBody ) const noexcept
 {
     auto& body = *rigidBody;
 

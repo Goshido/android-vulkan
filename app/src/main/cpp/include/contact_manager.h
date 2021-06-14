@@ -79,6 +79,7 @@ class [[maybe_unused]] ContactManager final
 
         [[maybe_unused, nodiscard]] Contact& AllocateContact ( ContactManifold &contactManifold ) noexcept;
         [[maybe_unused, nodiscard]] ContactManifold& AllocateContactManifold () noexcept;
+        void Reset () noexcept;
 };
 
 } // namespace android_vulkan

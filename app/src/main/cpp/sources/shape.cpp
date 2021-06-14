@@ -12,8 +12,6 @@ constexpr static float const DEFAULT_HALF_SIZE = 0.5F * DEFAULT_SIZE;
 constexpr static GXVec3 const DEFAULT_BOUNDS_MIN ( -DEFAULT_HALF_SIZE, -DEFAULT_HALF_SIZE, -DEFAULT_HALF_SIZE );
 constexpr static GXVec3 const DEFAULT_BOUNDS_MAX ( DEFAULT_HALF_SIZE, DEFAULT_HALF_SIZE, DEFAULT_HALF_SIZE );
 
-constexpr static GXVec3 const DEFAULT_ORIGIN_WORLD ( 0.0F, -777.777F, 0.0F );
-
 GXMat3 const& Shape::GetInertiaTensor () const noexcept
 {
     return _inertiaTensor;
@@ -21,7 +19,7 @@ GXMat3 const& Shape::GetInertiaTensor () const noexcept
 
 [[maybe_unused]] GXAABB const& Shape::GetBoundsLocal () const noexcept
 {
-    return _bouldsLocal;
+    return _boundsLocal;
 }
 
 [[maybe_unused]] GXAABB const& Shape::GetBoundsWorld () const noexcept
@@ -69,7 +67,7 @@ GXMat3 const& Shape::GetInertiaTensor () const noexcept
     return _type;
 }
 
-[[maybe_unused]] void Shape::UpdateCacheData ( GXMat4 const &transform ) noexcept
+void Shape::UpdateCacheData ( GXMat4 const &transform ) noexcept
 {
     _transformWorld.Multiply ( _transformRigidBody, transform );
     UpdateBounds ();
@@ -77,7 +75,7 @@ GXMat3 const& Shape::GetInertiaTensor () const noexcept
 
 Shape::Shape ( eShapeType shapeType ) noexcept:
     _type ( shapeType ),
-    _bouldsLocal {},
+    _boundsLocal {},
     _boundsWorld {},
     _frictionDynamic ( DEFAULT_FRICTION_DYNAMIC ),
     _frictionStatic ( DEFAULT_FRICTION_STATIC ),
@@ -86,15 +84,12 @@ Shape::Shape ( eShapeType shapeType ) noexcept:
     _transformRigidBody {},
     _transformWorld {}
 {
-    _bouldsLocal.AddVertex ( DEFAULT_BOUNDS_MIN );
-    _bouldsLocal.AddVertex ( DEFAULT_BOUNDS_MAX );
+    _boundsLocal.AddVertex ( DEFAULT_BOUNDS_MIN );
+    _boundsLocal.AddVertex ( DEFAULT_BOUNDS_MAX );
 
-    _transformRigidBody.Translation ( DEFAULT_ORIGIN_WORLD._data[ 0U ], DEFAULT_ORIGIN_WORLD._data[ 1U ],
-        DEFAULT_ORIGIN_WORLD._data[ 2U ]
-    );
-
+    _transformRigidBody.Identity ();
     _transformWorld = _transformRigidBody;
-    _bouldsLocal.Transform ( _boundsWorld, _transformWorld );
+    _boundsLocal.Transform ( _boundsWorld, _transformWorld );
 
     _inertiaTensor.Identity ();
 }

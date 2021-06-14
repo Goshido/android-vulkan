@@ -45,6 +45,11 @@ class Physics final
         void Pause () noexcept;
         void Resume () noexcept;
         void Simulate ( float deltaTime ) noexcept;
+
+    private:
+        void CollectContacts () noexcept;
+        void Integrate () noexcept;
+        void Prepare () noexcept;
 };
 
 } // namespace android_vulkan

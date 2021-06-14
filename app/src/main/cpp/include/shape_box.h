@@ -8,6 +8,7 @@ namespace android_vulkan {
 class [[maybe_unused]] ShapeBox final : public Shape
 {
     private:
+        GXVec3          _localGeometry[ 8U ];
         GXVec3 const    _size;
 
     public:

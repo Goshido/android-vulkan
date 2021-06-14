@@ -18,7 +18,7 @@ class GlobalForce
 
         virtual ~GlobalForce () = default;
 
-        virtual void Apply ( RigidBodyRef &rigidBody ) const noexcept = 0;
+        virtual void Apply ( RigidBodyRef const &rigidBody ) const noexcept = 0;
 
     protected:
         GlobalForce () = default;

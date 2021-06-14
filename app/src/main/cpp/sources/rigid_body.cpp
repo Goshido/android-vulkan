@@ -268,6 +268,11 @@ RigidBody::RigidBody () noexcept:
     return *_shape;
 }
 
+[[nodiscard]] bool RigidBody::HasShape () const noexcept
+{
+    return static_cast<bool> ( _shape );
+}
+
 [[maybe_unused]] void RigidBody::SetShape ( ShapeRef &shape ) noexcept
 {
     _shape = shape;

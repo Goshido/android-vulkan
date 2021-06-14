@@ -89,6 +89,7 @@ class RigidBody final
         [[maybe_unused]] void SetRotation ( GXQuat const &rotation ) noexcept;
 
         [[maybe_unused, nodiscard]] Shape& GetShape () noexcept;
+        [[nodiscard]] bool HasShape () const noexcept;
         [[maybe_unused]] void SetShape ( ShapeRef &shape ) noexcept;
 
         [[maybe_unused, nodiscard]] GXVec3 const& GetTotalForce () const noexcept;

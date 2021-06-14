@@ -67,10 +67,12 @@ find_library ( log-lib
 
 add_library ( android-vulkan
     SHARED
+    app/src/main/cpp/sources/contact_detector.cpp
     app/src/main/cpp/sources/contact_manager.cpp
     app/src/main/cpp/sources/core.cpp
     app/src/main/cpp/sources/file.cpp
     app/src/main/cpp/sources/gamepad.cpp
+    app/src/main/cpp/sources/gjk.cpp
     app/src/main/cpp/sources/global_force_gravity.cpp
     app/src/main/cpp/sources/half_types.cpp
     app/src/main/cpp/sources/key_bind.cpp
@@ -83,6 +85,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/rigid_body.cpp
     app/src/main/cpp/sources/shape.cpp
     app/src/main/cpp/sources/shape_box.cpp
+    app/src/main/cpp/sources/simplex.cpp
     app/src/main/cpp/sources/stick.cpp
     app/src/main/cpp/sources/texture_cube.cpp
     app/src/main/cpp/sources/texture2D.cpp

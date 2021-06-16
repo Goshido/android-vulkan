@@ -33,13 +33,17 @@ class GJK final
 
         ~GJK () = default;
 
+        [[nodiscard]] Simplex const& GetSimplex () const noexcept;
         [[nodiscard, maybe_unused]] uint16_t GetSteps () const noexcept;
+
         [[nodiscard, maybe_unused]] uint16_t GetTestLines () const noexcept;
         [[nodiscard, maybe_unused]] uint16_t GetTestTetrahedrons () const noexcept;
         [[nodiscard, maybe_unused]] uint16_t GetTestTriangles () const noexcept;
 
+        void Reset () noexcept;
+
         // The method returns true if two shapes have intersection. Otherwise the method returns false.
-        [[nodiscard]] bool Run ( Shape &shapeA, Shape &shapeB ) noexcept;
+        [[nodiscard]] bool Run ( Shape const &shapeA, Shape const &shapeB ) noexcept;
 
     private:
         void LineTest () noexcept;

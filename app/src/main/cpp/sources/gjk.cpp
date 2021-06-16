@@ -18,6 +18,11 @@ GJK::GJK () noexcept:
     // NOTHING
 }
 
+Simplex const& GJK::GetSimplex () const noexcept
+{
+    return _simplex;
+}
+
 [[maybe_unused]] uint16_t GJK::GetSteps () const noexcept
 {
     return _steps;
@@ -38,7 +43,17 @@ GJK::GJK () noexcept:
     return _testTriangle;
 }
 
-bool GJK::Run ( Shape &shapeA, Shape &shapeB ) noexcept
+void GJK::Reset () noexcept
+{
+    _direction = INITIAL_DIRECTION;
+    _simplex._pointCount = 0U,
+    _steps = 0U;
+    _testLine = 0U;
+    _testTetrahedron = 0U;
+    _testTriangle = 0U;
+}
+
+bool GJK::Run ( Shape const &shapeA, Shape const &shapeB ) noexcept
 {
     GXVec3 supportPoint = Simplex::FindSupportPoint ( _direction, shapeA, shapeB );
     _simplex.PushPoint ( supportPoint );

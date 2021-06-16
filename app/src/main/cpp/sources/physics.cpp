@@ -10,6 +10,7 @@ constexpr static float const FIXED_TIME_STEP = 1.0F / static_cast<float> ( STEPS
 
 Physics::Physics () noexcept:
     _accumulator ( 0.0F ),
+    _contactDetector {},
     _contactManager {},
     _globalForces {},
     _isPause ( true ),
@@ -112,7 +113,7 @@ void Physics::CollectContacts () noexcept
     {
         for ( auto j = i; ++j != end; )
         {
-            ContactDetector::Check ( *i, *j, _contactManager );
+            _contactDetector.Check ( *i, *j, _contactManager );
         }
     }
 }

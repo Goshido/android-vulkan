@@ -3,14 +3,20 @@
 
 
 #include "contact_manager.h"
+#include "epa.h"
+#include "gjk.h"
 
 
 namespace android_vulkan {
 
 class ContactDetector final
 {
+    private:
+        EPA     _epa;
+        GJK     _gjk;
+
     public:
-        ContactDetector () = default;
+        ContactDetector () noexcept;
 
         ContactDetector ( ContactDetector const & ) = delete;
         ContactDetector& operator = ( ContactDetector const & ) = delete;
@@ -20,7 +26,7 @@ class ContactDetector final
 
         ~ContactDetector () = default;
 
-        static void Check ( RigidBodyRef const &a, RigidBodyRef const &b, ContactManager &contactManager ) noexcept;
+        void Check ( RigidBodyRef const &a, RigidBodyRef const &b, ContactManager &contactManager ) noexcept;
 };
 
 } // namespace android_vulkan

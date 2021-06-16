@@ -2,15 +2,15 @@
 #define ANDROID_VULKAN_PHYSICS_H
 
 
+#include "contact_detector.h"
 #include "contact_manager.h"
+#include "global_force.h"
 
 GX_DISABLE_COMMON_WARNINGS
 
 #include <unordered_set>
 
 GX_RESTORE_WARNING_STATE
-
-#include "global_force.h"
 
 
 namespace android_vulkan {
@@ -19,6 +19,7 @@ class Physics final
 {
     private:
         float                                   _accumulator;
+        ContactDetector                         _contactDetector;
         ContactManager                          _contactManager;
         std::unordered_set<GlobalForceRef>      _globalForces;
         bool                                    _isPause;

@@ -70,6 +70,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/contact_detector.cpp
     app/src/main/cpp/sources/contact_manager.cpp
     app/src/main/cpp/sources/core.cpp
+    app/src/main/cpp/sources/epa.cpp
     app/src/main/cpp/sources/file.cpp
     app/src/main/cpp/sources/gamepad.cpp
     app/src/main/cpp/sources/gjk.cpp

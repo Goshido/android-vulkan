@@ -25,11 +25,6 @@ class Simplex final
         ~Simplex () = default;
 
         void PushPoint ( GXVec3 const &supportPoint ) noexcept;
-
-        [[nodiscard]] static GXVec3 FindSupportPoint ( GXVec3 const &direction,
-            Shape const &shapeA,
-            Shape const &shapeB
-        ) noexcept;
 };
 
 } // namespace android_vulkan

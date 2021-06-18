@@ -23,15 +23,4 @@ Simplex::Simplex () noexcept:
     ++_pointCount;
 }
 
-GXVec3 Simplex::FindSupportPoint ( GXVec3 const &direction, Shape const &shapeA, Shape const &shapeB ) noexcept
-{
-    GXVec3 opposite ( direction );
-    opposite.Reverse ();
-
-    GXVec3 result {};
-    result.Subtract ( shapeA.GetExtremePointWorld ( direction ), shapeB.GetExtremePointWorld ( opposite ) );
-
-    return result;
-}
-
 } // namespace android_vulkan

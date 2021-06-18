@@ -73,6 +73,17 @@ void Shape::UpdateCacheData ( GXMat4 const &transform ) noexcept
     UpdateBounds ();
 }
 
+GXVec3 Shape::FindSupportPoint ( GXVec3 const &direction, Shape const &shapeA, Shape const &shapeB ) noexcept
+{
+    GXVec3 opposite ( direction );
+    opposite.Reverse ();
+
+    GXVec3 result {};
+    result.Subtract ( shapeA.GetExtremePointWorld ( direction ), shapeB.GetExtremePointWorld ( opposite ) );
+
+    return result;
+}
+
 Shape::Shape ( eShapeType shapeType ) noexcept:
     _type ( shapeType ),
     _boundsLocal {},

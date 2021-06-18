@@ -76,6 +76,11 @@ class Shape
 
         void UpdateCacheData ( GXMat4 const &transform ) noexcept;
 
+        [[nodiscard]] static GXVec3 FindSupportPoint ( GXVec3 const &direction,
+            Shape const &shapeA,
+            Shape const &shapeB
+        ) noexcept;
+
     protected:
         explicit Shape ( eShapeType shapeType ) noexcept;
         virtual ~Shape () = default;

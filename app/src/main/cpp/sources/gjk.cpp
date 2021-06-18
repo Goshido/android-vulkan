@@ -55,7 +55,7 @@ void GJK::Reset () noexcept
 
 bool GJK::Run ( Shape const &shapeA, Shape const &shapeB ) noexcept
 {
-    GXVec3 supportPoint = Simplex::FindSupportPoint ( _direction, shapeA, shapeB );
+    GXVec3 supportPoint = Shape::FindSupportPoint ( _direction, shapeA, shapeB );
     _simplex.PushPoint ( supportPoint );
 
     _direction = supportPoint;
@@ -63,7 +63,7 @@ bool GJK::Run ( Shape const &shapeA, Shape const &shapeB ) noexcept
 
     for ( _steps = 1U; _steps < MAXIMUM_STEPS; ++_steps )
     {
-        supportPoint = Simplex::FindSupportPoint ( _direction, shapeA, shapeB );
+        supportPoint = Shape::FindSupportPoint ( _direction, shapeA, shapeB );
 
         if ( supportPoint.DotProduct ( _direction ) < 0.0F )
             return false;

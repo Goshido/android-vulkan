@@ -8,15 +8,14 @@
 
 namespace android_vulkan {
 
-using Edge = std::pair<size_t, size_t>;
 using Vertices = std::vector<GXVec3>;
 
 struct Face final
 {
-    [[maybe_unused]] size_t     _a;
-    [[maybe_unused]] size_t     _b;
-    [[maybe_unused]] size_t     _c;
-    [[maybe_unused]] GXVec3     _normal;
+    size_t      _a;
+    size_t      _b;
+    size_t      _c;
+    GXVec3      _normal;
 
     Face () noexcept;
 
@@ -26,7 +25,7 @@ struct Face final
     Face ( Face && ) = default;
     Face& operator = ( Face && ) = default;
 
-    [[maybe_unused]] explicit Face ( size_t a, size_t b, size_t c, Vertices const &vertices ) noexcept;
+    explicit Face ( size_t a, size_t b, size_t c, Vertices const &vertices ) noexcept;
 
     ~Face () = default;
 
@@ -39,11 +38,18 @@ struct Face final
 class EPA final
 {
     private:
+        using Edge = std::pair<size_t, size_t>;
+        using FindResult = std::pair<size_t, float>;
+
+    private:
         float                   _depth;
         GXVec3                  _normal;
 
+        std::vector<Edge>       _edges;
         std::vector<Face>       _faces;
         Vertices                _vertices;
+
+        uint16_t                _steps;
 
     public:
         EPA () noexcept;
@@ -59,11 +65,18 @@ class EPA final
         [[maybe_unused, nodiscard]] float GetDepth () const noexcept;
         [[maybe_unused, nodiscard]] GXVec3 const& GetNormal () const noexcept;
 
+        [[maybe_unused, nodiscard]] uint16_t GetSteps () const noexcept;
+        [[maybe_unused, nodiscard]] uint16_t GetEdgeCount () const noexcept;
+        [[maybe_unused, nodiscard]] uint16_t GetFaceCount () const noexcept;
+        [[maybe_unused, nodiscard]] uint16_t GetVertexCount () const noexcept;
+
         void Reset () noexcept;
         [[nodiscard]] bool Run ( Simplex const &simplex, Shape const &shapeA, Shape const &shapeB ) noexcept;
 
     private:
         void CreatePolytope ( Simplex const &simplex ) noexcept;
+        [[nodiscard]] FindResult FindClosestFace () noexcept;
+        void SolveEdge ( size_t a, size_t b ) noexcept;
 };
 
 } // namespace android_vulkan

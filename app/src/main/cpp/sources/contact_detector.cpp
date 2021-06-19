@@ -52,11 +52,25 @@ void ContactDetector::Check ( RigidBodyRef const &a,
 
     if ( !_epa.Run ( _gjk.GetSimplex (), shapeA, shapeB ) )
     {
-        LogWarning ( "ContactDetector::Check - Can't find penetration depth and separation normal." );
+        LogWarning ( "ContactDetector::Check - Can't find penetration depth and separation normal."
+            "EPA steps: %hhu, vertices: %hhu, edges: %hhu, faces: %hhu",
+            _epa.GetSteps (),
+            _epa.GetVertexCount (),
+            _epa.GetEdgeCount (),
+            _epa.GetFaceCount ()
+        );
+
         return;
     }
 
-    LogDebug ( "ContactDetector::Check - Penetration depth and separation normal have been found" );
+    LogDebug ( "ContactDetector::Check - Penetration depth and separation normal have been found. "
+        "EPA steps: %hhu, vertices: %hhu, edges: %hhu, faces: %hhu",
+        _epa.GetSteps (),
+        _epa.GetVertexCount (),
+        _epa.GetEdgeCount (),
+        _epa.GetFaceCount ()
+    );
+
     // TODO
 }
 

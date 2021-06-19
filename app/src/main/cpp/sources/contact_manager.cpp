@@ -14,7 +14,7 @@ ContactManager::ContactManager () noexcept:
     _contactManifolds.reserve ( INITIAL_CONTACT_MANIFOLDS );
 }
 
-[[maybe_unused]] Contact& ContactManager::AllocateContact ( ContactManifold &contactManifold ) noexcept
+Contact& ContactManager::AllocateContact ( ContactManifold &contactManifold ) noexcept
 {
     Contact& contact = _contacts.emplace_back ();
 
@@ -25,7 +25,7 @@ ContactManager::ContactManager () noexcept:
     return contact;
 }
 
-[[maybe_unused]] ContactManifold& ContactManager::AllocateContactManifold () noexcept
+ContactManifold& ContactManager::AllocateContactManifold () noexcept
 {
     return _contactManifolds.emplace_back ();
 }

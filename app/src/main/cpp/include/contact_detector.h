@@ -12,8 +12,11 @@ namespace android_vulkan {
 class ContactDetector final
 {
     private:
-        EPA     _epa;
-        GJK     _gjk;
+        EPA         _epa;
+        GJK         _gjk;
+        Vertices    _rays;
+        Vertices    _shapeAPoints;
+        Vertices    _shapeBPoints;
 
     public:
         ContactDetector () noexcept;
@@ -27,6 +30,39 @@ class ContactDetector final
         ~ContactDetector () = default;
 
         void Check ( RigidBodyRef const &a, RigidBodyRef const &b, ContactManager &contactManager ) noexcept;
+
+    private:
+        void CollectExtremePoints ( Vertices &vertices, Shape const &shape, GXMat3 const &tbn ) noexcept;
+        void GenerateRays () noexcept;
+
+        void ManifoldEdgeEdge ( ContactManager &contactManager,
+            RigidBodyRef const &a,
+            RigidBodyRef const &b,
+            GXMat3 const &tbn
+        ) noexcept;
+
+        [[maybe_unused]] void ManifoldEdgeFace ( ContactManager &contactManager,
+            RigidBodyRef const &a,
+            RigidBodyRef const &b,
+            GXMat3 const &tbn,
+            Vertices &aVertices,
+            Vertices &bVertices
+        ) noexcept;
+
+        [[maybe_unused]] void ManifoldFaceFace ( ContactManager &contactManager,
+            RigidBodyRef const &a,
+            RigidBodyRef const &b,
+            GXMat3 const &tbn
+        ) noexcept;
+
+        void ManifoldPoint ( ContactManager &contactManager,
+            RigidBodyRef const &a,
+            RigidBodyRef const &b,
+            GXMat3 const &tbn,
+            GXVec3 const &vertex
+        ) noexcept;
+
+        void NotifyEPAFail () noexcept;
 };
 
 } // namespace android_vulkan

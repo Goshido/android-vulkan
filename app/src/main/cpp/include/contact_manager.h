@@ -15,13 +15,13 @@ namespace android_vulkan {
 
 struct Contact final
 {
-    [[maybe_unused]] GXVec3     _point {};
+    GXVec3      _point {};
 
-    [[maybe_unused]] GXVec3     _tangent {};
-    [[maybe_unused]] GXVec3     _birangent {};
-    [[maybe_unused]] GXVec3     _normal {};
+    GXVec3      _tangent {};
+    GXVec3      _bitangent {};
+    GXVec3      _normal {};
 
-    [[maybe_unused]] float      _penetration = 0.0F;
+    float       _penetration = 0.0F;
 
     Contact () = default;
 
@@ -36,18 +36,14 @@ struct Contact final
 
 struct ContactManifold final
 {
-    [[maybe_unused]] RigidBodyRef       _bodyA {};
-    [[maybe_unused]] RigidBodyRef       _bodyB {};
+    RigidBodyRef    _bodyA {};
+    RigidBodyRef    _bodyB {};
 
-    size_t                              _contactCount = 0U;
-    Contact*                            _contacts = nullptr;
+    size_t          _contactCount = 0U;
+    Contact*        _contacts = nullptr;
 
-    [[maybe_unused]] uint16_t           _gjkSteps = 0U;
-    [[maybe_unused]] uint16_t           _epsSteps = 0U;
-
-    [[maybe_unused]] uint16_t           _edges = 0U;
-    [[maybe_unused]] uint16_t           _faces = 0U;
-    [[maybe_unused]] uint16_t           _supportPoints = 0U;
+    uint16_t        _epaSteps = 0U;
+    uint16_t        _gjkSteps = 0U;
 
     ContactManifold () = default;
 
@@ -60,7 +56,7 @@ struct ContactManifold final
     ~ContactManifold () = default;
 };
 
-class [[maybe_unused]] ContactManager final
+class ContactManager final
 {
     private:
         std::vector<Contact>            _contacts;
@@ -77,8 +73,8 @@ class [[maybe_unused]] ContactManager final
 
         ~ContactManager () = default;
 
-        [[maybe_unused, nodiscard]] Contact& AllocateContact ( ContactManifold &contactManifold ) noexcept;
-        [[maybe_unused, nodiscard]] ContactManifold& AllocateContactManifold () noexcept;
+        [[nodiscard]] Contact& AllocateContact ( ContactManifold &contactManifold ) noexcept;
+        [[nodiscard]] ContactManifold& AllocateContactManifold () noexcept;
         void Reset () noexcept;
 };
 

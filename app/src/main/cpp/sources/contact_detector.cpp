@@ -7,6 +7,8 @@ namespace android_vulkan {
 constexpr static size_t const INITIAL_SHAPE_POINTS = 16U;
 constexpr static uint16_t const RAY_COUNT = 5U;
 constexpr static float const RAY_DEVIATION_DEGREES = 6.0F;
+constexpr static float const COLLINEAR_TOLERANCE = 1.0e-2F;
+constexpr static float const COLLINEAR_SAME_POINT_TOLERANCE = 1.0e-3F;
 
 ContactDetector::ContactDetector () noexcept:
     _epa {},
@@ -79,6 +81,8 @@ void ContactDetector::Check ( RigidBodyRef const &a, RigidBodyRef const &b, Cont
 
 void ContactDetector::CollectExtremePoints ( Vertices &vertices, Shape const &shape, GXMat3 const &tbn ) noexcept
 {
+    // TODO sphere case is trivial.
+
     vertices.clear ();
     GXVec3 d {};
 
@@ -135,10 +139,70 @@ void ContactDetector::ManifoldEdgeEdge ( ContactManager &contactManager,
     manifold._gjkSteps = _gjk.GetSteps ();
 
     Contact& contact = contactManager.AllocateContact ( manifold );
-    contact._penetration = _epa.GetDepth ();
     tbn.GetX ( contact._tangent );
     tbn.GetY ( contact._bitangent );
     tbn.GetZ ( contact._normal );
+    contact._penetration = _epa.GetDepth ();
+
+    GXVec3 alpha {};
+    alpha.Subtract ( _shapeAPoints[ 1U ], _shapeAPoints[ 0U ] );
+    float const lenA = alpha.Length ();
+    float const invLenA = 1.0F / lenA;
+
+    GXVec3 aDir {};
+    aDir.Multiply ( alpha, invLenA );
+
+    GXVec3 beta {};
+    beta.Subtract ( _shapeBPoints[ 1U ], _shapeBPoints[ 0U ] );
+
+    GXVec3 bDir { beta };
+    bDir.Normalize ();
+
+    if ( 1.0F - std::abs ( aDir.DotProduct ( bDir ) ) < COLLINEAR_TOLERANCE )
+    {
+        // The edges lie on each other, i.e. they're collinear vectors. Can be one or two intersection points.
+        // Project second segment on first segment. Then clip points.
+
+        GXVec3 ab0 {};
+        ab0.Subtract ( _shapeBPoints[ 0U ], _shapeAPoints[ 0U ] );
+
+        GXVec3 ab1 {};
+        ab1.Subtract ( _shapeBPoints[ 1U ], _shapeAPoints[ 0U ] );
+
+        // Note dot product is: ||a|| ||b|| cos ( angle ). Need to remove ||a|| component and clamp result
+        // in range [0.0F, lenA]. This will allow us to restore end points of overlap section in term
+        // of vector "aDir".
+
+        GXVec2 proj ( alpha.DotProduct ( ab0 ), alpha.DotProduct ( ab1 ) );
+        proj.Multiply ( proj, invLenA );
+        proj._data[ 0U ] = std::clamp ( proj._data[ 0U ], 0.0F, lenA );
+        proj._data[ 1U ] = std::clamp ( proj._data[ 1U ], 0.0F, lenA );
+
+        contact._point.Sum ( _shapeAPoints[ 0U ], proj._data[ 0U ], aDir );
+
+        if ( std::abs ( proj._data[ 0U ] - proj._data[ 1U ] ) < COLLINEAR_SAME_POINT_TOLERANCE )
+        {
+            // The end points of intersection segment is very close to each other. So consider this case
+            // as one point intersection.
+            return;
+        }
+
+        Contact& anotherContact = contactManager.AllocateContact ( manifold );
+        anotherContact._tangent = contact._tangent;
+        anotherContact._bitangent = contact._bitangent;
+        anotherContact._normal = contact._normal;
+        anotherContact._penetration = contact._penetration;
+        anotherContact._point.Sum ( _shapeAPoints[ 0U ], proj._data[ 1U ], aDir );
+        return;
+    }
+
+    // Edges don't lie on each other. Also by design edges must have common intersection point. So we can use
+    // plane of edges as projection plane to solve intersection point for 2D case.
+
+    GXVec3 tmp {};
+    tmp.CrossProduct ( aDir, bDir );
+    GXVec3 anotherAxis {};
+    anotherAxis.CrossProduct ( tmp, aDir );
 
     auto project = [ & ] ( GXVec2* dst, Vertices const &src, GXVec3 const &xAxis, GXVec3 const &yAxis ) noexcept {
         GXVec3 const& s0 = src[ 0U ];
@@ -154,38 +218,22 @@ void ContactDetector::ManifoldEdgeEdge ( ContactManager &contactManager,
     };
 
     GXVec2 projA[ 2U ] {};
-    project ( projA, _shapeAPoints, contact._tangent, contact._bitangent );
+    project ( projA, _shapeAPoints, aDir, anotherAxis );
 
     GXVec2 projB[ 2U ] {};
-    project ( projB, _shapeBPoints, contact._tangent, contact._bitangent );
-
-    GXVec2 alpha {};
-    alpha.Subtract ( projA[ 1U ], projA[ 0U ] );
-
-    GXVec2 beta {};
-    beta.Subtract ( projB[ 1U ], projB[ 0U ] );
-
-    GXVec2 const n ( -alpha._data[ 1U ], alpha._data[ 0U ] );
-    float const gamma = n.DotProduct ( beta );
-
-    if ( gamma == 0.0F )
-    {
-        // The edges either lie on each other or we need to change projection plane to find one point intersection.
-        // TODO
-        return;
-    }
-
-    // The edges have one point intersection.
+    project ( projB, _shapeBPoints, aDir, anotherAxis );
 
     GXVec2 ba {};
     ba.Subtract ( projA[ 0U ], projB[ 0U ] );
 
-    GXVec3 const& bStart = _shapeBPoints[ 0U ];
+    GXVec2 alphaProj {};
+    alphaProj.Subtract ( projA[ 1U ], projA[ 0U ] );
+    GXVec2 n ( -alphaProj._data[ 1U ], alphaProj._data[ 0U ] );
 
-    GXVec3 v {};
-    v.Subtract ( _shapeBPoints[ 1U ], bStart );
+    GXVec2 betaProj {};
+    betaProj.Subtract ( projB[ 1U ], projB[ 0U ] );
 
-    contact._point.Sum ( bStart, ba.DotProduct ( n ) / gamma, v );
+    contact._point.Sum ( _shapeBPoints[ 0U ], ba.DotProduct ( n ) / n.DotProduct ( betaProj ), beta );
 }
 
 [[maybe_unused]] void ContactDetector::ManifoldEdgeFace ( ContactManager &/*contactManager*/,

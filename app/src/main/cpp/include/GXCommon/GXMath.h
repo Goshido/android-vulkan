@@ -1,4 +1,4 @@
-// version 1.64
+// version 1.65
 
 #ifndef GX_MATH
 #define GX_MATH

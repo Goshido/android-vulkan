@@ -1,4 +1,4 @@
-﻿// version 1.64
+﻿// version 1.65
 
 #include <GXCommon/GXMath.h>
 #include <GXCommon/GXWarning.h>
@@ -179,7 +179,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 
 [[maybe_unused]] GXFloat GXVec3::Length () const
 {
-    return sqrtf ( DotProduct ( *this ) );
+    return std::sqrt ( DotProduct ( *this ) );
 }
 
 [[maybe_unused]] GXFloat GXVec3::SquaredLength () const

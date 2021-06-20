@@ -12,6 +12,9 @@ namespace android_vulkan {
 class ContactDetector final
 {
     private:
+        using FirstContactData = std::pair<ContactManifold*, Contact*>;
+
+    private:
         EPA         _epa;
         GJK         _gjk;
         Vertices    _rays;
@@ -29,9 +32,15 @@ class ContactDetector final
 
         ~ContactDetector () = default;
 
-        void Check ( RigidBodyRef const &a, RigidBodyRef const &b, ContactManager &contactManager ) noexcept;
+        void Check ( ContactManager &contactManager, RigidBodyRef const &a, RigidBodyRef const &b ) noexcept;
 
     private:
+        [[nodiscard]] FirstContactData AllocateFirstContact ( ContactManager &contactManager,
+            RigidBodyRef const &a,
+            RigidBodyRef const &b,
+            GXMat3 const &tbn
+        ) const noexcept;
+
         void CollectExtremePoints ( Vertices &vertices, Shape const &shape, GXMat3 const &tbn ) noexcept;
         void GenerateRays () noexcept;
 
@@ -44,9 +53,7 @@ class ContactDetector final
         [[maybe_unused]] void ManifoldEdgeFace ( ContactManager &contactManager,
             RigidBodyRef const &a,
             RigidBodyRef const &b,
-            GXMat3 const &tbn,
-            Vertices &aVertices,
-            Vertices &bVertices
+            GXMat3 const &tbn
         ) noexcept;
 
         [[maybe_unused]] void ManifoldFaceFace ( ContactManager &contactManager,

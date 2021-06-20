@@ -9,6 +9,7 @@ constexpr static uint16_t const RAY_COUNT = 5U;
 constexpr static float const RAY_DEVIATION_DEGREES = 6.0F;
 constexpr static float const COLLINEAR_TOLERANCE = 1.0e-2F;
 constexpr static float const COLLINEAR_SAME_POINT_TOLERANCE = 1.0e-3F;
+constexpr static float const FACE_PERPENDICULAR_TOLERANCE = 1.0e-3F;
 
 ContactDetector::ContactDetector () noexcept:
     _epa {},
@@ -23,7 +24,7 @@ ContactDetector::ContactDetector () noexcept:
     GenerateRays ();
 }
 
-void ContactDetector::Check ( RigidBodyRef const &a, RigidBodyRef const &b, ContactManager &contactManager ) noexcept
+void ContactDetector::Check ( ContactManager &contactManager, RigidBodyRef const &a, RigidBodyRef const &b ) noexcept
 {
     RigidBody& bodyA = *a;
     RigidBody& bodyB = *b;
@@ -48,8 +49,8 @@ void ContactDetector::Check ( RigidBodyRef const &a, RigidBodyRef const &b, Cont
     }
 
     GXMat3 tbn {};
-    GXVec3 direction ( _epa.GetNormal () );
-    tbn.From ( direction );
+    GXVec3 const n ( _epa.GetNormal () );
+    tbn.From ( n );
     CollectExtremePoints ( _shapeAPoints, shapeA, tbn );
     size_t const aCount = _shapeAPoints.size ();
 
@@ -59,24 +60,58 @@ void ContactDetector::Check ( RigidBodyRef const &a, RigidBodyRef const &b, Cont
         return;
     }
 
-    direction.Reverse ();
-    tbn.SetZ ( direction );
+    GXVec3 reverse ( n );
+    reverse.Reverse ();
+    tbn.SetZ ( reverse );
     CollectExtremePoints ( _shapeBPoints, shapeB, tbn );
     size_t const bCount = _shapeBPoints.size ();
 
     if ( bCount == 1U )
     {
+        tbn.GetX ( reverse );
+        reverse.Reverse ();
+        tbn.SetX ( reverse );
         ManifoldPoint ( contactManager, b, a, tbn, _shapeBPoints.front () );
         return;
     }
 
-    if ( aCount == 2U && bCount == 2U )
+    // Restoring original TBN matrix.
+    tbn.SetZ ( n );
+
+    if ( aCount == 2U || bCount == 2U )
     {
-        ManifoldEdgeEdge ( contactManager, a, b, tbn );
+        if ( aCount == 2U && bCount == 2U )
+        {
+            ManifoldEdgeEdge ( contactManager, a, b, tbn );
+            return;
+        }
+
+        ManifoldEdgeFace ( contactManager, a, b, tbn );
         return;
     }
 
-    // TODO
+    ManifoldFaceFace ( contactManager, a, b, tbn );
+}
+
+ContactDetector::FirstContactData ContactDetector::AllocateFirstContact ( ContactManager &contactManager,
+    RigidBodyRef const &a,
+    RigidBodyRef const &b,
+    GXMat3 const &tbn
+) const noexcept
+{
+    ContactManifold& manifold = contactManager.AllocateContactManifold ();
+    manifold._bodyA = a;
+    manifold._bodyB = b;
+    manifold._epaSteps = _epa.GetSteps ();
+    manifold._gjkSteps = _gjk.GetSteps ();
+
+    Contact& contact = contactManager.AllocateContact ( manifold );
+    tbn.GetX ( contact._tangent );
+    tbn.GetY ( contact._bitangent );
+    tbn.GetZ ( contact._normal );
+    contact._penetration = _epa.GetDepth ();
+
+    return std::make_pair ( &manifold, &contact );
 }
 
 void ContactDetector::CollectExtremePoints ( Vertices &vertices, Shape const &shape, GXMat3 const &tbn ) noexcept
@@ -132,17 +167,7 @@ void ContactDetector::ManifoldEdgeEdge ( ContactManager &contactManager,
     GXMat3 const &tbn
 ) noexcept
 {
-    ContactManifold& manifold = contactManager.AllocateContactManifold ();
-    manifold._bodyA = a;
-    manifold._bodyB = b;
-    manifold._epaSteps = _epa.GetSteps ();
-    manifold._gjkSteps = _gjk.GetSteps ();
-
-    Contact& contact = contactManager.AllocateContact ( manifold );
-    tbn.GetX ( contact._tangent );
-    tbn.GetY ( contact._bitangent );
-    tbn.GetZ ( contact._normal );
-    contact._penetration = _epa.GetDepth ();
+    auto [manifold, contact] = AllocateFirstContact ( contactManager, a, b, tbn );
 
     GXVec3 alpha {};
     alpha.Subtract ( _shapeAPoints[ 1U ], _shapeAPoints[ 0U ] );
@@ -178,7 +203,7 @@ void ContactDetector::ManifoldEdgeEdge ( ContactManager &contactManager,
         proj._data[ 0U ] = std::clamp ( proj._data[ 0U ], 0.0F, lenA );
         proj._data[ 1U ] = std::clamp ( proj._data[ 1U ], 0.0F, lenA );
 
-        contact._point.Sum ( _shapeAPoints[ 0U ], proj._data[ 0U ], aDir );
+        contact->_point.Sum ( _shapeAPoints[ 0U ], proj._data[ 0U ], aDir );
 
         if ( std::abs ( proj._data[ 0U ] - proj._data[ 1U ] ) < COLLINEAR_SAME_POINT_TOLERANCE )
         {
@@ -187,11 +212,11 @@ void ContactDetector::ManifoldEdgeEdge ( ContactManager &contactManager,
             return;
         }
 
-        Contact& anotherContact = contactManager.AllocateContact ( manifold );
-        anotherContact._tangent = contact._tangent;
-        anotherContact._bitangent = contact._bitangent;
-        anotherContact._normal = contact._normal;
-        anotherContact._penetration = contact._penetration;
+        Contact& anotherContact = contactManager.AllocateContact ( *manifold );
+        anotherContact._tangent = contact->_tangent;
+        anotherContact._bitangent = contact->_bitangent;
+        anotherContact._normal = contact->_normal;
+        anotherContact._penetration = contact->_penetration;
         anotherContact._point.Sum ( _shapeAPoints[ 0U ], proj._data[ 1U ], aDir );
         return;
     }
@@ -233,19 +258,61 @@ void ContactDetector::ManifoldEdgeEdge ( ContactManager &contactManager,
     GXVec2 betaProj {};
     betaProj.Subtract ( projB[ 1U ], projB[ 0U ] );
 
-    contact._point.Sum ( _shapeBPoints[ 0U ], ba.DotProduct ( n ) / n.DotProduct ( betaProj ), beta );
+    contact->_point.Sum ( _shapeBPoints[ 0U ], ba.DotProduct ( n ) / n.DotProduct ( betaProj ), beta );
 }
 
-[[maybe_unused]] void ContactDetector::ManifoldEdgeFace ( ContactManager &/*contactManager*/,
-    RigidBodyRef const &/*a*/,
-    RigidBodyRef const &/*b*/,
-    GXMat3 const &/*tbn*/,
-    Vertices &/*aVertices*/,
-    Vertices &/*bVertices*/
+[[maybe_unused]] void ContactDetector::ManifoldEdgeFace ( ContactManager &contactManager,
+    RigidBodyRef const &a,
+    RigidBodyRef const &b,
+    GXMat3 const &tbn
 ) noexcept
 {
+    auto [manifold, contact] = AllocateFirstContact ( contactManager, a, b, tbn );
+
+    Vertices const* e;
+    Vertices const* f;
+
+    if ( _shapeAPoints.size () == 2U )
+    {
+        e = &_shapeAPoints;
+        f = &_shapeBPoints;
+    }
+    else
+    {
+        e = &_shapeBPoints;
+        f = &_shapeAPoints;
+    }
+
+    Vertices const& edge = *e;
+    Vertices const& face = *f;
+
+    GXVec3 edgeDir {};
+    edgeDir.Subtract ( edge[ 1U ], edge[ 0U ] );
+
+    GXVec3 ab {};
+    ab.Subtract ( face[ 0U ], face[ 1U ] );
+
+    GXVec3 ac {};
+    ac.Subtract ( face[ 2U ], face[ 1U ] );
+
+    GXVec3 faceNormal;
+    faceNormal.CrossProduct ( ab, ac );
+
+    if ( std::abs ( faceNormal.DotProduct ( edgeDir ) ) >= FACE_PERPENDICULAR_TOLERANCE )
+    {
+        // The edge pierces the face. There is only one contact point.
+        // So we need to find ray vs plane intersection point.
+        // https://www.cs.princeton.edu/courses/archive/fall00/cs426/lectures/raycast/sld017.htm
+
+        float const d = faceNormal.DotProduct ( face[ 1U ] );
+        float const t = ( d - edge[ 0U ].DotProduct ( faceNormal ) ) / edgeDir.DotProduct ( faceNormal );
+        contact->_point.Sum ( edge[ 0U ], t, edgeDir );
+
+        return;
+    }
+
+    // The edge lies in the face plane.
     // TODO
-    LogDebug ( "ContactDetector::ManifoldEdgeFace - From %p", this );
 }
 
 [[maybe_unused]] void ContactDetector::ManifoldFaceFace ( ContactManager &/*contactManager*/,
@@ -265,20 +332,8 @@ void ContactDetector::ManifoldPoint ( ContactManager &contactManager,
     GXVec3 const &vertex
 ) noexcept
 {
-    // TODO swap if needed.
-
-    ContactManifold& manifold = contactManager.AllocateContactManifold ();
-    manifold._bodyA = a;
-    manifold._bodyB = b;
-    manifold._epaSteps = _epa.GetSteps ();
-    manifold._gjkSteps = _gjk.GetSteps ();
-
-    Contact& contact = contactManager.AllocateContact ( manifold );
-    contact._point = vertex;
-    contact._penetration = _epa.GetDepth ();
-    tbn.GetX ( contact._tangent );
-    tbn.GetY ( contact._bitangent );
-    tbn.GetZ ( contact._normal );
+    FirstContactData data = AllocateFirstContact ( contactManager, a, b, tbn );
+    data.second->_point = vertex;
 }
 
 void ContactDetector::NotifyEPAFail () noexcept

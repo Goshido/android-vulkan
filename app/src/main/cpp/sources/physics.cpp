@@ -113,7 +113,7 @@ void Physics::CollectContacts () noexcept
     {
         for ( auto j = i; ++j != end; )
         {
-            _contactDetector.Check ( *i, *j, _contactManager );
+            _contactDetector.Check ( _contactManager, *i, *j );
         }
     }
 }

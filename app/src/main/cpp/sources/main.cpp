@@ -30,10 +30,65 @@ enum class eGame : uint16_t
 
 } // namespace android_vulkan
 
+static void Test () noexcept
+{
+    constexpr static float const FACE_PERPENDICULAR_TOLERANCE = 1.0e-3F;
+
+    constexpr GXVec3 const edge[] =
+    {
+        GXVec3 ( 384.894F, 6073.819F, 60.32F ),
+        GXVec3 ( 382.701F, 6093.949F, -4.151F )
+    };
+
+    constexpr GXVec3 const face[] =
+    {
+        GXVec3 ( 365.055F, 6081.716F, 46.038F ),
+        GXVec3 ( 384.961F, 6053.014F, 19.846F ),
+        GXVec3 ( 417.912F, 6089.035F, 5.414F ),
+        GXVec3 ( 398.006F, 6117.737F, 31.606F )
+    };
+
+    struct Ct
+    {
+        GXVec3      _point;
+    };
+
+    Ct c;
+    Ct* contact = &c;
+
+    //------------------------------------------------------------------------------------------------------------------
+
+    GXVec3 edgeDir {};
+    edgeDir.Subtract ( edge[ 1U ], edge[ 0U ] );
+
+    GXVec3 ab {};
+    ab.Subtract ( face[ 0U ], face[ 1U ] );
+
+    GXVec3 ac {};
+    ac.Subtract ( face[ 2U ], face[ 1U ] );
+
+    GXVec3 faceNormal;
+    faceNormal.CrossProduct ( ab, ac );
+
+    if ( std::abs ( faceNormal.DotProduct ( edgeDir ) ) >= FACE_PERPENDICULAR_TOLERANCE )
+    {
+        // The edge pierces the face. There is only one contact point.
+        // So we need to find ray vs plane intersection point.
+        // https://www.cs.princeton.edu/courses/archive/fall00/cs426/lectures/raycast/sld017.htm
+
+        float const d = faceNormal.DotProduct ( face[ 1U ] );
+        float const t = ( d - edge[ 0U ].DotProduct ( faceNormal ) ) / edgeDir.DotProduct ( faceNormal );
+        contact->_point.Sum ( edge[ 0U ], t, edgeDir );
+        GXVec3 stop {};
+    }
+}
+
 // Note maybe_unused attribute is needed because IDE could not understand that this function is actually visible for
 // NativeActivity implementation.
 [[maybe_unused]] void android_main ( android_app* app )
 {
+    Test ();
+
     std::map<android_vulkan::eGame, std::shared_ptr<android_vulkan::Game>> const games =
     {
         { android_vulkan::eGame::MandelbrotAnalyticColor, std::make_shared<mandelbrot::MandelbrotAnalyticColor> () },

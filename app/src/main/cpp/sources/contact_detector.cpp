@@ -6,18 +6,24 @@ namespace android_vulkan {
 
 constexpr static float const COLLINEAR_TOLERANCE = 1.0e-2F;
 constexpr static float const FACE_PERPENDICULAR_TOLERANCE = 1.0e-3F;
+constexpr static size_t const INITIAL_CLIP_POINTS = 8U;
 constexpr static size_t const INITIAL_SHAPE_POINTS = 16U;
 constexpr static uint16_t const RAY_COUNT = 5U;
 constexpr static float const RAY_DEVIATION_DEGREES = 6.0F;
 constexpr static float const SAME_POINT_TOLERANCE = 1.0e-3F;
 
 ContactDetector::ContactDetector () noexcept:
+    _clipPoints {},
     _epa {},
     _gjk {},
     _rays {},
     _shapeAPoints {},
-    _shapeBPoints {}
+    _shapeBPoints {},
+    _workingPoints {}
 {
+    _clipPoints.reserve ( INITIAL_CLIP_POINTS );
+    _workingPoints.reserve ( INITIAL_CLIP_POINTS );
+
     _shapeAPoints.reserve ( INITIAL_SHAPE_POINTS );
     _shapeAPoints.reserve ( INITIAL_SHAPE_POINTS );
 
@@ -288,13 +294,14 @@ void ContactDetector::ManifoldEdgeFace ( ContactManager &contactManager,
     edgeDir.Subtract ( edge[ 1U ], edge[ 0U ] );
 
     GXVec3 ab {};
-    ab.Subtract ( face[ 0U ], face[ 1U ] );
+    ab.Subtract ( face[ 1U ], face[ 0U ] );
 
     GXVec3 ac {};
-    ac.Subtract ( face[ 2U ], face[ 1U ] );
+    ac.Subtract ( face[ 2U ], face[ 0U ] );
 
     GXVec3 faceNormal;
     faceNormal.CrossProduct ( ab, ac );
+    faceNormal.Normalize ();
 
     if ( std::abs ( faceNormal.DotProduct ( edgeDir ) ) >= FACE_PERPENDICULAR_TOLERANCE )
     {
@@ -309,12 +316,15 @@ void ContactDetector::ManifoldEdgeFace ( ContactManager &contactManager,
         return;
     }
 
+    // Cyrus-Beck algorithm. The implementation is based on ideas from
+    // https://www.geeksforgeeks.org/line-clipping-set-2-cyrus-beck-algorithm/
+
     size_t const facePoints = std::size ( face );
     GXVec3 const& edgeOrigin = edge[ 0U ];
     GXVec3 edgeUnitVector ( edgeDir );
     edgeUnitVector.Normalize ();
 
-    GXVec3 ortho {};
+    GXVec3 ortho ( faceNormal );
     GXVec3 alpha {};
 
     float start = 0.0F;
@@ -323,10 +333,7 @@ void ContactDetector::ManifoldEdgeFace ( ContactManager &contactManager,
     for ( size_t i = 0U; i < facePoints; ++i )
     {
         GXVec3 const& aPoint = face[ i ];
-
         ab.Subtract ( face[ ( i + 1U ) % facePoints ], aPoint );
-        ac.Subtract ( face[ ( i + 2U ) % facePoints ], aPoint );
-        ortho.CrossProduct ( ab, ac );
 
         // The normal should point away from the face inner area. So changing cross product order.
         faceNormal.CrossProduct ( ab, ortho );
@@ -342,10 +349,10 @@ void ContactDetector::ManifoldEdgeFace ( ContactManager &contactManager,
             continue;
         }
 
-        // Optimization: The operands have been swapped to eliminate minus in dominator later.
+        // Optimization: The operands have been swapped to eliminate minus in denominator later.
         alpha.Subtract ( aPoint, edgeOrigin );
         float const gamma = faceNormal.DotProduct ( edgeDir );
-        float const p = faceNormal.DotProduct ( alpha ) / faceNormal.DotProduct ( edgeDir );
+        float const p = faceNormal.DotProduct ( alpha ) / gamma;
 
         // Note the "p" is an intersection point of two parametric lines. Not the line segments of face and edge!
         // So the "p" itself can be in range [-inf, +inf]. From other hand by design "p" must be clamped
@@ -376,14 +383,109 @@ void ContactDetector::ManifoldEdgeFace ( ContactManager &contactManager,
     anotherContact._point.Sum ( edgeOrigin, end, edgeDir );
 }
 
-void ContactDetector::ManifoldFaceFace ( ContactManager &/*contactManager*/,
-    RigidBodyRef const &/*a*/,
-    RigidBodyRef const &/*b*/,
-    GXMat3 const &/*tbn*/
+void ContactDetector::ManifoldFaceFace ( ContactManager &contactManager,
+    RigidBodyRef const &a,
+    RigidBodyRef const &b,
+    GXMat3 const &tbn
 ) noexcept
 {
-    // TODO
-    LogDebug ( "ContactDetector::ManifoldFaceFace - From %p", this );
+    FirstContactData firstContactData = AllocateFirstContact ( contactManager, a, b, tbn );
+    Contact& firstContact = *firstContactData.second;
+
+    GXVec3 ab {};
+    ab.Subtract ( _shapeAPoints[ 1U ], _shapeAPoints[ 0U ] );
+
+    GXVec3 ac {};
+    ab.Subtract ( _shapeAPoints[ 2U ], _shapeAPoints[ 0U ] );
+
+    GXVec3 aNormal {};
+    aNormal.CrossProduct ( ab, ac );
+
+    ab.Subtract ( _shapeBPoints[ 1U ], _shapeBPoints[ 0U ] );
+
+    if ( std::abs ( aNormal.DotProduct ( ab ) ) > COLLINEAR_TOLERANCE )
+    {
+        // Shapes don't lay in same plane.
+        // TODO
+        return;
+    }
+
+    // Both shapes lay in same plane.
+
+    // Sutherland–Hodgman algorithm. The implementation is based on ideas from
+    // https://en.wikipedia.org/wiki/Sutherland%E2%80%93Hodgman_algorithm
+
+    size_t const aPoints = _shapeAPoints.size ();
+    size_t const bPoints = _shapeBPoints.size ();
+
+    _clipPoints.clear ();
+    _clipPoints.reserve ( bPoints );
+
+    _workingPoints.clear ();
+    _clipPoints.reserve ( bPoints );
+
+    _clipPoints.assign ( _shapeBPoints.cbegin (), _shapeBPoints.cend () );
+    GXVec3 clipEdge {};
+
+    GXVec3 edge {};
+    GXVec3 clipNormal {};
+    GXVec3 alpha {};
+
+    for ( size_t i = 0U; i < aPoints; ++i )
+    {
+        _workingPoints.swap ( _clipPoints );
+        _clipPoints.clear ();
+
+        GXVec3 const& clipEdgeOrigin = _shapeAPoints[ i ];
+        clipEdge.Subtract ( _shapeAPoints[ ( i + 1 ) % aPoints ], clipEdgeOrigin );
+
+        size_t const vertexCount = _workingPoints.size ();
+        clipNormal.CrossProduct ( aNormal, clipEdge );
+
+        for ( size_t j = 0U; j < vertexCount; ++j )
+        {
+            GXVec3 const& current = _workingPoints[ j ];
+            GXVec3 const& next = _workingPoints[ ( j + 1U ) % vertexCount ];
+
+            // Optimization: The operands have been swapped to eliminate minus in denominator later.
+            ab.Subtract ( clipEdgeOrigin, current );
+            ac.Subtract ( next, clipEdgeOrigin );
+
+            float const baTest = clipNormal.DotProduct ( ab );
+            float const acTest = clipNormal.DotProduct ( ac );
+
+            auto addIntersection = [ & ] () noexcept {
+                edge.Subtract ( next, current );
+
+                // Note we swapped "ab" direction before. So no need to take negative value in denominator.
+                alpha.Sum ( current, baTest / clipNormal.DotProduct ( edge ), edge );
+                _clipPoints.push_back ( alpha );
+            };
+
+            if ( acTest > 0.0F )
+            {
+                if ( baTest > 0.0F )
+                    addIntersection ();
+
+                _clipPoints.push_back ( next );
+                continue;
+            }
+
+            if ( baTest > 0.0F )
+                continue;
+
+            addIntersection ();
+        }
+    }
+
+    size_t const contactCount = _clipPoints.size ();
+    firstContact._point = _clipPoints[ 0U ];
+
+    for ( size_t i = 1U; i < contactCount; ++i )
+    {
+        Contact& anotherContact = AllocateAnotherContact ( contactManager, firstContactData );
+        anotherContact._point = _clipPoints[ i ];
+    }
 }
 
 void ContactDetector::ManifoldPoint ( ContactManager &contactManager,

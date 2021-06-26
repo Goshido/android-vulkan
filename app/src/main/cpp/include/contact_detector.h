@@ -15,11 +15,13 @@ class ContactDetector final
         using FirstContactData = std::pair<ContactManifold*, Contact*>;
 
     private:
+        Vertices    _clipPoints;
         EPA         _epa;
         GJK         _gjk;
         Vertices    _rays;
         Vertices    _shapeAPoints;
         Vertices    _shapeBPoints;
+        Vertices    _workingPoints;
 
     public:
         ContactDetector () noexcept;

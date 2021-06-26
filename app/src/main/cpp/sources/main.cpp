@@ -30,18 +30,10 @@ enum class eGame : uint16_t
 
 } // namespace android_vulkan
 
-
-static void Test () noexcept
-{
-    // TODO
-}
-
 // Note maybe_unused attribute is needed because IDE could not understand that this function is actually visible for
 // NativeActivity implementation.
 [[maybe_unused]] void android_main ( android_app* app )
 {
-    Test ();
-
     std::map<android_vulkan::eGame, std::shared_ptr<android_vulkan::Game>> const games =
     {
         { android_vulkan::eGame::MandelbrotAnalyticColor, std::make_shared<mandelbrot::MandelbrotAnalyticColor> () },

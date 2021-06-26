@@ -50,13 +50,13 @@ class ContactDetector final
             GXMat3 const &tbn
         ) noexcept;
 
-        [[maybe_unused]] void ManifoldEdgeFace ( ContactManager &contactManager,
+        void ManifoldEdgeFace ( ContactManager &contactManager,
             RigidBodyRef const &a,
             RigidBodyRef const &b,
             GXMat3 const &tbn
         ) noexcept;
 
-        [[maybe_unused]] void ManifoldFaceFace ( ContactManager &contactManager,
+        void ManifoldFaceFace ( ContactManager &contactManager,
             RigidBodyRef const &a,
             RigidBodyRef const &b,
             GXMat3 const &tbn
@@ -70,6 +70,10 @@ class ContactDetector final
         ) noexcept;
 
         void NotifyEPAFail () noexcept;
+
+        [[nodiscard]] static Contact& AllocateAnotherContact ( ContactManager &contactManager,
+            FirstContactData &firstContactData
+        ) noexcept;
 };
 
 } // namespace android_vulkan

@@ -4,12 +4,12 @@
 
 namespace android_vulkan {
 
+constexpr static float const COLLINEAR_TOLERANCE = 1.0e-2F;
+constexpr static float const FACE_PERPENDICULAR_TOLERANCE = 1.0e-3F;
 constexpr static size_t const INITIAL_SHAPE_POINTS = 16U;
 constexpr static uint16_t const RAY_COUNT = 5U;
 constexpr static float const RAY_DEVIATION_DEGREES = 6.0F;
-constexpr static float const COLLINEAR_TOLERANCE = 1.0e-2F;
-constexpr static float const COLLINEAR_SAME_POINT_TOLERANCE = 1.0e-3F;
-constexpr static float const FACE_PERPENDICULAR_TOLERANCE = 1.0e-3F;
+constexpr static float const SAME_POINT_TOLERANCE = 1.0e-3F;
 
 ContactDetector::ContactDetector () noexcept:
     _epa {},
@@ -167,7 +167,8 @@ void ContactDetector::ManifoldEdgeEdge ( ContactManager &contactManager,
     GXMat3 const &tbn
 ) noexcept
 {
-    auto [manifold, contact] = AllocateFirstContact ( contactManager, a, b, tbn );
+    FirstContactData firstContactData = AllocateFirstContact ( contactManager, a, b, tbn );
+    Contact& firstContact = *firstContactData.second;
 
     GXVec3 alpha {};
     alpha.Subtract ( _shapeAPoints[ 1U ], _shapeAPoints[ 0U ] );
@@ -203,20 +204,16 @@ void ContactDetector::ManifoldEdgeEdge ( ContactManager &contactManager,
         proj._data[ 0U ] = std::clamp ( proj._data[ 0U ], 0.0F, lenA );
         proj._data[ 1U ] = std::clamp ( proj._data[ 1U ], 0.0F, lenA );
 
-        contact->_point.Sum ( _shapeAPoints[ 0U ], proj._data[ 0U ], aDir );
+        firstContact._point.Sum ( _shapeAPoints[ 0U ], proj._data[ 0U ], aDir );
 
-        if ( std::abs ( proj._data[ 0U ] - proj._data[ 1U ] ) < COLLINEAR_SAME_POINT_TOLERANCE )
+        if ( std::abs ( proj._data[ 0U ] - proj._data[ 1U ] ) < SAME_POINT_TOLERANCE )
         {
             // The end points of intersection segment is very close to each other. So consider this case
             // as one point intersection.
             return;
         }
 
-        Contact& anotherContact = contactManager.AllocateContact ( *manifold );
-        anotherContact._tangent = contact->_tangent;
-        anotherContact._bitangent = contact->_bitangent;
-        anotherContact._normal = contact->_normal;
-        anotherContact._penetration = contact->_penetration;
+        Contact& anotherContact = AllocateAnotherContact ( contactManager, firstContactData );
         anotherContact._point.Sum ( _shapeAPoints[ 0U ], proj._data[ 1U ], aDir );
         return;
     }
@@ -258,16 +255,17 @@ void ContactDetector::ManifoldEdgeEdge ( ContactManager &contactManager,
     GXVec2 betaProj {};
     betaProj.Subtract ( projB[ 1U ], projB[ 0U ] );
 
-    contact->_point.Sum ( _shapeBPoints[ 0U ], ba.DotProduct ( n ) / n.DotProduct ( betaProj ), beta );
+    firstContact._point.Sum ( _shapeBPoints[ 0U ], ba.DotProduct ( n ) / n.DotProduct ( betaProj ), beta );
 }
 
-[[maybe_unused]] void ContactDetector::ManifoldEdgeFace ( ContactManager &contactManager,
+void ContactDetector::ManifoldEdgeFace ( ContactManager &contactManager,
     RigidBodyRef const &a,
     RigidBodyRef const &b,
     GXMat3 const &tbn
 ) noexcept
 {
-    auto [manifold, contact] = AllocateFirstContact ( contactManager, a, b, tbn );
+    FirstContactData firstContactData = AllocateFirstContact ( contactManager, a, b, tbn );
+    Contact& firstContact = *firstContactData.second;
 
     Vertices const* e;
     Vertices const* f;
@@ -306,16 +304,79 @@ void ContactDetector::ManifoldEdgeEdge ( ContactManager &contactManager,
 
         float const d = faceNormal.DotProduct ( face[ 1U ] );
         float const t = ( d - edge[ 0U ].DotProduct ( faceNormal ) ) / edgeDir.DotProduct ( faceNormal );
-        contact->_point.Sum ( edge[ 0U ], t, edgeDir );
+        firstContact._point.Sum ( edge[ 0U ], t, edgeDir );
 
         return;
     }
 
-    // The edge lies in the face plane.
-    // TODO
+    size_t const facePoints = std::size ( face );
+    GXVec3 const& edgeOrigin = edge[ 0U ];
+    GXVec3 edgeUnitVector ( edgeDir );
+    edgeUnitVector.Normalize ();
+
+    GXVec3 ortho {};
+    GXVec3 alpha {};
+
+    float start = 0.0F;
+    float end = 1.0F;
+
+    for ( size_t i = 0U; i < facePoints; ++i )
+    {
+        GXVec3 const& aPoint = face[ i ];
+
+        ab.Subtract ( face[ ( i + 1U ) % facePoints ], aPoint );
+        ac.Subtract ( face[ ( i + 2U ) % facePoints ], aPoint );
+        ortho.CrossProduct ( ab, ac );
+
+        // The normal should point away from the face inner area. So changing cross product order.
+        faceNormal.CrossProduct ( ab, ortho );
+        faceNormal.Normalize ();
+
+        float const beta = faceNormal.DotProduct ( edgeUnitVector );
+
+        if ( std::abs ( beta ) < COLLINEAR_TOLERANCE )
+        {
+            // Edge is parallel to face normal. We could safely ignore it because there must be another edge face
+            // combinations which will produce start and end points. It's working because we already know that there is
+            // at least one intersection point so far.
+            continue;
+        }
+
+        // Optimization: The operands have been swapped to eliminate minus in dominator later.
+        alpha.Subtract ( aPoint, edgeOrigin );
+        float const gamma = faceNormal.DotProduct ( edgeDir );
+        float const p = faceNormal.DotProduct ( alpha ) / faceNormal.DotProduct ( edgeDir );
+
+        // Note the "p" is an intersection point of two parametric lines. Not the line segments of face and edge!
+        // So the "p" itself can be in range [-inf, +inf]. From other hand by design "p" must be clamped
+        // to [0.0, 1.0] range. The question is which point to clamp? Start point or end point? Fortunately
+        // the "gamma" parameter has handy property which solves selection problem. The rules are:
+        //      "gamma" < 0.0: Need to work with the start point and take maximum in range [0.0, p]
+        //      "gamma" >= 0.0: Need to work with the end point and take minimum in range [p, 1.0]
+
+        if ( gamma < 0.0F )
+        {
+            start = std::max ( start, p );
+            continue;
+        }
+
+        end = std::min ( end, p );
+    }
+
+    firstContact._point.Sum ( edgeOrigin, start, edgeDir );
+
+    if ( end - start < SAME_POINT_TOLERANCE )
+    {
+        // The end points of intersection segment is very close to each other. So consider this case
+        // as one point intersection.
+        return;
+    }
+
+    Contact& anotherContact = AllocateAnotherContact ( contactManager, firstContactData );
+    anotherContact._point.Sum ( edgeOrigin, end, edgeDir );
 }
 
-[[maybe_unused]] void ContactDetector::ManifoldFaceFace ( ContactManager &/*contactManager*/,
+void ContactDetector::ManifoldFaceFace ( ContactManager &/*contactManager*/,
     RigidBodyRef const &/*a*/,
     RigidBodyRef const &/*b*/,
     GXMat3 const &/*tbn*/
@@ -333,7 +394,8 @@ void ContactDetector::ManifoldPoint ( ContactManager &contactManager,
 ) noexcept
 {
     FirstContactData data = AllocateFirstContact ( contactManager, a, b, tbn );
-    data.second->_point = vertex;
+    Contact& contact = *data.second;
+    contact._point = vertex;
 }
 
 void ContactDetector::NotifyEPAFail () noexcept
@@ -361,6 +423,21 @@ R"__(ContactDetector::NotifyEPAFail - Can't find penetration depth and separatio
         _gjk.GetTestTriangles (),
         _gjk.GetTestTetrahedrons ()
     );
+}
+
+Contact& ContactDetector::AllocateAnotherContact ( ContactManager &contactManager,
+    FirstContactData &firstContactData
+) noexcept
+{
+    auto& [manifold, contact] = firstContactData;
+
+    Contact& result = contactManager.AllocateContact ( *manifold );
+    result._tangent = contact->_tangent;
+    result._bitangent = contact->_bitangent;
+    result._normal = contact->_normal;
+    result._penetration = contact->_penetration;
+
+    return result;
 }
 
 } // namespace android_vulkan

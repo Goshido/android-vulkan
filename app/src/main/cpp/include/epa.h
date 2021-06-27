@@ -3,12 +3,10 @@
 
 
 #include "simplex.h"
-#include <vector>
+#include "vertices.h"
 
 
 namespace android_vulkan {
-
-using Vertices = std::vector<GXVec3>;
 
 struct Face final
 {
@@ -62,13 +60,13 @@ class EPA final
 
         ~EPA () = default;
 
-        [[maybe_unused, nodiscard]] float GetDepth () const noexcept;
-        [[maybe_unused, nodiscard]] GXVec3 const& GetNormal () const noexcept;
+        [[nodiscard]] float GetDepth () const noexcept;
+        [[nodiscard]] GXVec3 const& GetNormal () const noexcept;
 
-        [[maybe_unused, nodiscard]] uint16_t GetSteps () const noexcept;
-        [[maybe_unused, nodiscard]] uint16_t GetEdgeCount () const noexcept;
-        [[maybe_unused, nodiscard]] uint16_t GetFaceCount () const noexcept;
-        [[maybe_unused, nodiscard]] uint16_t GetVertexCount () const noexcept;
+        [[nodiscard]] uint16_t GetSteps () const noexcept;
+        [[nodiscard]] uint16_t GetEdgeCount () const noexcept;
+        [[nodiscard]] uint16_t GetFaceCount () const noexcept;
+        [[nodiscard]] uint16_t GetVertexCount () const noexcept;
 
         void Reset () noexcept;
         [[nodiscard]] bool Run ( Simplex const &simplex, Shape const &shapeA, Shape const &shapeB ) noexcept;

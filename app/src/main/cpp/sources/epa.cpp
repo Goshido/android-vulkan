@@ -61,32 +61,32 @@ EPA::EPA () noexcept:
     _vertices.reserve ( INITIAL_VERTICES );
 }
 
-[[maybe_unused]] float EPA::GetDepth () const noexcept
+float EPA::GetDepth () const noexcept
 {
     return _depth;
 }
 
-[[maybe_unused]] GXVec3 const& EPA::GetNormal () const noexcept
+GXVec3 const& EPA::GetNormal () const noexcept
 {
     return _normal;
 }
 
-[[maybe_unused]] uint16_t EPA::GetSteps () const noexcept
+uint16_t EPA::GetSteps () const noexcept
 {
     return _steps;
 }
 
-[[maybe_unused]] uint16_t EPA::GetEdgeCount () const noexcept
+uint16_t EPA::GetEdgeCount () const noexcept
 {
     return _edges.size ();
 }
 
-[[maybe_unused]] uint16_t EPA::GetFaceCount () const noexcept
+uint16_t EPA::GetFaceCount () const noexcept
 {
     return _faces.size ();
 }
 
-[[maybe_unused]] uint16_t EPA::GetVertexCount () const noexcept
+uint16_t EPA::GetVertexCount () const noexcept
 {
     return _vertices.size ();
 }

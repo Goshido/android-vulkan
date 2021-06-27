@@ -14,6 +14,7 @@ constexpr static float const SAME_POINT_TOLERANCE = 1.0e-3F;
 
 ContactDetector::ContactDetector () noexcept:
     _clipPoints {},
+    _cyrusBeck {},
     _epa {},
     _gjk {},
     _rays {},
@@ -316,71 +317,14 @@ void ContactDetector::ManifoldEdgeFace ( ContactManager &contactManager,
         return;
     }
 
-    // Cyrus-Beck algorithm. The implementation is based on ideas from
-    // https://www.geeksforgeeks.org/line-clipping-set-2-cyrus-beck-algorithm/
+    Vertices const& vertices = _cyrusBeck.Run ( face, faceNormal, edge, edgeDir );
+    firstContact._point = vertices[ 0U ];
 
-    size_t const facePoints = std::size ( face );
-    GXVec3 const& edgeOrigin = edge[ 0U ];
-    GXVec3 edgeUnitVector ( edgeDir );
-    edgeUnitVector.Normalize ();
-
-    GXVec3 ortho ( faceNormal );
-    GXVec3 alpha {};
-
-    float start = 0.0F;
-    float end = 1.0F;
-
-    for ( size_t i = 0U; i < facePoints; ++i )
-    {
-        GXVec3 const& aPoint = face[ i ];
-        ab.Subtract ( face[ ( i + 1U ) % facePoints ], aPoint );
-
-        // The normal should point away from the face inner area. So changing cross product order.
-        faceNormal.CrossProduct ( ab, ortho );
-        faceNormal.Normalize ();
-
-        float const beta = faceNormal.DotProduct ( edgeUnitVector );
-
-        if ( std::abs ( beta ) < COLLINEAR_TOLERANCE )
-        {
-            // Edge is parallel to face normal. We could safely ignore it because there must be another edge face
-            // combinations which will produce start and end points. It's working because we already know that there is
-            // at least one intersection point so far.
-            continue;
-        }
-
-        // Optimization: The operands have been swapped to eliminate minus in denominator later.
-        alpha.Subtract ( aPoint, edgeOrigin );
-        float const gamma = faceNormal.DotProduct ( edgeDir );
-        float const p = faceNormal.DotProduct ( alpha ) / gamma;
-
-        // Note the "p" is an intersection point of two parametric lines. Not the line segments of face and edge!
-        // So the "p" itself can be in range [-inf, +inf]. From other hand by design "p" must be clamped
-        // to [0.0, 1.0] range. The question is which point to clamp? Start point or end point? Fortunately
-        // the "gamma" parameter has handy property which solves selection problem. The rules are:
-        //      "gamma" < 0.0: Need to work with the start point and take maximum in range [0.0, p]
-        //      "gamma" >= 0.0: Need to work with the end point and take minimum in range [p, 1.0]
-
-        if ( gamma < 0.0F )
-        {
-            start = std::max ( start, p );
-            continue;
-        }
-
-        end = std::min ( end, p );
-    }
-
-    firstContact._point.Sum ( edgeOrigin, start, edgeDir );
-
-    if ( end - start < SAME_POINT_TOLERANCE )
-    {
-        // The end points of intersection segment is very close to each other. So consider this case
-        // as one point intersection.
+    if ( vertices.size () < 2U )
         return;
-    }
 
     Contact& anotherContact = AllocateAnotherContact ( contactManager, firstContactData );
-    anotherContact._point.Sum ( edgeOrigin, end, edgeDir );
+    anotherContact._point = vertices[ 1U ];
 }
 
 void ContactDetector::ManifoldFaceFace ( ContactManager &contactManager,
@@ -396,7 +340,7 @@ void ContactDetector::ManifoldFaceFace ( ContactManager &contactManager,
     ab.Subtract ( _shapeAPoints[ 1U ], _shapeAPoints[ 0U ] );
 
     GXVec3 ac {};
-    ab.Subtract ( _shapeAPoints[ 2U ], _shapeAPoints[ 0U ] );
+    ac.Subtract ( _shapeAPoints[ 2U ], _shapeAPoints[ 0U ] );
 
     GXVec3 aNormal {};
     aNormal.CrossProduct ( ab, ac );
@@ -406,7 +350,86 @@ void ContactDetector::ManifoldFaceFace ( ContactManager &contactManager,
     if ( std::abs ( aNormal.DotProduct ( ab ) ) > COLLINEAR_TOLERANCE )
     {
         // Shapes don't lay in same plane.
-        // TODO
+        size_t const bPoints = _shapeBPoints.size ();
+
+        // Precompute "d" parameter for ray vs plane intersection.
+        float const d = aNormal.DotProduct ( _shapeAPoints[ 0U ] );
+
+        GXVec3 featurePoints[2U] {};
+        size_t featurePointCount = 0U;
+        GXVec3 alpha {};
+
+        for ( size_t i = 0U; i < bPoints; ++i )
+        {
+            GXVec3 const& current = _shapeBPoints[ i ];
+            GXVec3 const& next = _shapeBPoints[ ( i + 1U ) % bPoints ];
+
+            ab.Subtract ( next, current );
+            float const beta = ab.DotProduct ( aNormal );
+
+            if ( beta == 0.0F )
+            {
+                // Edge is parallel to a-shape. Ignore it because there are at least tho edges which must intersect the
+                // A face plane.
+                continue;
+            }
+
+            // The edge line pierces the face plane.
+            // So we need to find ray vs plane intersection point.
+            // https://www.cs.princeton.edu/courses/archive/fall00/cs426/lectures/raycast/sld017.htm
+            float const t = ( d - current.DotProduct ( aNormal ) ) / beta;
+
+            if ( t < 0.0F || t > 1.0F )
+                continue;
+
+            alpha.Sum ( current, t, ab );
+
+            if ( featurePointCount == 0U )
+            {
+                featurePoints[ featurePointCount++ ] = alpha;
+                continue;
+            }
+
+            constexpr float const limit = SAME_POINT_TOLERANCE * SAME_POINT_TOLERANCE;
+
+            if ( alpha.SquaredDistance ( featurePoints[ 0U ] ) < limit )
+            {
+                // Edge vertex lies exactly on face plane. Ignore such case.
+                continue;
+            }
+
+            featurePoints[ featurePointCount++ ] = alpha;
+
+            if ( featurePointCount != 2U )
+                continue;
+
+            break;
+        }
+
+        if ( featurePointCount == 1U )
+        {
+            // It's the case when face B touches face A vis only one vertex.
+            firstContact._point = featurePoints[ 0U ];
+            return;
+        }
+
+        // Two feature points create feature line segment. So at this point we able to reclassify the original
+        // face vs face task to edge vs face task.
+
+        _shapeBPoints.clear ();
+        _shapeBPoints.push_back ( featurePoints[ 0U ] );
+        _shapeBPoints.push_back ( featurePoints[ 1U ] );
+
+        ab.Subtract ( featurePoints[ 1U ], featurePoints[ 0U ] );
+
+        Vertices const& vertices = _cyrusBeck.Run ( _shapeAPoints, aNormal, _shapeBPoints, ab );
+        firstContact._point = vertices[ 0U ];
+
+        if ( vertices.size () < 2U )
+            return;
+
+        Contact& anotherContact = AllocateAnotherContact ( contactManager, firstContactData );
+        anotherContact._point = vertices[ 1U ];
         return;
     }
 

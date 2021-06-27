@@ -3,6 +3,7 @@
 
 
 #include "contact_manager.h"
+#include "cyrus_beck.h"
 #include "epa.h"
 #include "gjk.h"
 
@@ -15,13 +16,14 @@ class ContactDetector final
         using FirstContactData = std::pair<ContactManifold*, Contact*>;
 
     private:
-        Vertices    _clipPoints;
-        EPA         _epa;
-        GJK         _gjk;
-        Vertices    _rays;
-        Vertices    _shapeAPoints;
-        Vertices    _shapeBPoints;
-        Vertices    _workingPoints;
+        Vertices        _clipPoints;
+        CyrusBeck       _cyrusBeck;
+        EPA             _epa;
+        GJK             _gjk;
+        Vertices        _rays;
+        Vertices        _shapeAPoints;
+        Vertices        _shapeBPoints;
+        Vertices        _workingPoints;
 
     public:
         ContactDetector () noexcept;

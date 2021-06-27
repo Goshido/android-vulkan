@@ -7,14 +7,17 @@ namespace android_vulkan {
 
 constexpr static uint16_t const STEPS_PER_SECOND = 120U;
 constexpr static float const FIXED_TIME_STEP = 1.0F / static_cast<float> ( STEPS_PER_SECOND );
+constexpr static float const DEFAULT_TIME_SPEED = 1.0F;
 
 Physics::Physics () noexcept:
     _accumulator ( 0.0F ),
     _contactDetector {},
     _contactManager {},
+    _fixedTimeStep ( DEFAULT_TIME_SPEED * FIXED_TIME_STEP ),
     _globalForces {},
     _isPause ( true ),
-    _rigidBodies {}
+    _rigidBodies {},
+    _timeSpeed ( DEFAULT_TIME_SPEED )
 {
     // NOTHING
 }
@@ -69,6 +72,22 @@ Physics::Physics () noexcept:
     return false;
 }
 
+std::vector<ContactManifold> const& Physics::GetContactManifolds () const noexcept
+{
+    return _contactManager.GetContactManifolds ();
+}
+
+[[maybe_unused]] float Physics::GetTimeSpeed () const noexcept
+{
+    return _timeSpeed;
+}
+
+[[maybe_unused]] void Physics::SetTimeSpeed ( float speed ) noexcept
+{
+    _timeSpeed = speed;
+    _fixedTimeStep = FIXED_TIME_STEP * speed;
+}
+
 bool Physics::IsPaused () const noexcept
 {
     return _isPause;
@@ -81,6 +100,10 @@ void Physics::Pause () noexcept
 
 void Physics::Resume () noexcept
 {
+    if ( !_isPause )
+        return;
+
+    _accumulator = 0.0F;
     _isPause = false;
 }
 
@@ -89,9 +112,9 @@ void Physics::Simulate ( float deltaTime ) noexcept
     if ( _isPause )
         return;
 
-    _accumulator += deltaTime;
+    _accumulator += deltaTime * _timeSpeed;
 
-    while ( _accumulator >= FIXED_TIME_STEP )
+    while ( _accumulator >= _fixedTimeStep )
     {
         Integrate ();
         CollectContacts ();
@@ -99,7 +122,7 @@ void Physics::Simulate ( float deltaTime ) noexcept
         // TODO collision response
 
         Prepare ();
-        _accumulator -= FIXED_TIME_STEP;
+        _accumulator -= _fixedTimeStep;
     }
 
     // TODO
@@ -107,6 +130,7 @@ void Physics::Simulate ( float deltaTime ) noexcept
 
 void Physics::CollectContacts () noexcept
 {
+    _contactManager.Reset ();
     auto end = _rigidBodies.end ();
 
     for ( auto i = _rigidBodies.begin (); i != end; ++i )
@@ -116,6 +140,13 @@ void Physics::CollectContacts () noexcept
             _contactDetector.Check ( _contactManager, *i, *j );
         }
     }
+
+    std::vector<ContactManifold> const& manifolds = _contactManager.GetContactManifolds ();
+
+    if ( manifolds.empty() )
+        return;
+
+    Pause ();
 }
 
 void Physics::Integrate () noexcept
@@ -125,16 +156,16 @@ void Physics::Integrate () noexcept
         for ( auto const& globalForce : _globalForces )
             globalForce->Apply ( rigidBody );
 
-        rigidBody->Integrate ( FIXED_TIME_STEP );
+        rigidBody->Integrate ( _fixedTimeStep );
     }
 }
 
 void Physics::Prepare () noexcept
 {
     for ( auto& rigidBody : _rigidBodies )
+    {
         rigidBody->ResetAccumulators ();
-
-    _contactManager.Reset ();
+    }
 }
 
 } // namespace android_vulkan

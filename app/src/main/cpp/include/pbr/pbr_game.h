@@ -26,21 +26,22 @@ class PBRGame final : public android_vulkan::Game
         VkCommandPool                       _commandPool;
         std::vector<VkCommandBuffer>        _commandBuffers;
 
+        ComponentRef                        _cameraLight;
         ComponentRef                        _cube;
         android_vulkan::RigidBodyRef        _cubeBody;
         ComponentRef                        _floor;
         android_vulkan::RigidBodyRef        _floorBody;
         float                               _floorPhase;
         GXVec3                              _floorRenderOffset;
+
+        MeshRef                             _sphereMesh;
+        MaterialRef                         _sphereMaterial;
+        android_vulkan::Half4               _sphereColor;
+        android_vulkan::Half4               _defaultColor;
         android_vulkan::Physics             _physics;
 
         RenderSession                       _renderSession;
         std::list<ComponentRef>             _components;
-
-        // Just for fun - point light trajectory animation implementation.
-        PointLight*                         _pointLight;
-        float                               _lightPhase;
-        GXVec3                              _lightOrigin;
 
     public:
         PBRGame () noexcept;
@@ -69,6 +70,10 @@ class PBRGame final : public android_vulkan::Game
         void CreatePhysics () noexcept;
         void DestroyPhysics () noexcept;
         void UpdatePhysicsActors ( float deltaTime ) noexcept;
+
+        void InitSphereResources ( android_vulkan::Renderer &renderer, VkCommandBuffer const* commandBuffers ) noexcept;
+
+        static void OnPhysicsContinue ( void* context );
 };
 
 } // namespace pbr

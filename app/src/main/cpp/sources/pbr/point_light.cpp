@@ -79,9 +79,26 @@ GXAABB const& PointLight::GetBounds () const noexcept
     return _bounds;
 }
 
+[[maybe_unused]] void PointLight::SetBoundDimensions ( float width, float height, float depth ) noexcept
+{
+    _dimensions._data[ 0U ] = width;
+    _dimensions._data[ 1U ] = height;
+    _dimensions._data[ 2U ] = depth;
+    _dimensions.Multiply ( _dimensions, 0.5F );
+    _isNeedUpdate = true;
+}
+
 android_vulkan::Half3 const& PointLight::GetHue () const noexcept
 {
     return _hue;
+}
+
+[[maybe_unused]] void PointLight::SetHue ( GXColorRGB const &hue ) noexcept
+{
+    float const* rgb = hue._data;
+    _hue._data[ 0U ] = android_vulkan::Half::Convert ( rgb[ 0U ] );
+    _hue._data[ 1U ] = android_vulkan::Half::Convert ( rgb[ 1U ] );
+    _hue._data[ 2U ] = android_vulkan::Half::Convert ( rgb[ 2U ] );
 }
 
 android_vulkan::Half PointLight::GetIntensity () const noexcept
@@ -89,7 +106,7 @@ android_vulkan::Half PointLight::GetIntensity () const noexcept
     return _intensity;
 }
 
-void PointLight::SetIntensity ( float intensity ) noexcept
+[[maybe_unused]] void PointLight::SetIntensity ( float intensity ) noexcept
 {
     _intensity = intensity;
 }
@@ -97,6 +114,12 @@ void PointLight::SetIntensity ( float intensity ) noexcept
 GXVec3 const& PointLight::GetLocation () const noexcept
 {
     return _location;
+}
+
+void PointLight::SetLocation ( GXVec3 const &location ) noexcept
+{
+    _location = location;
+    _isNeedUpdate = true;
 }
 
 PointLight::Matrices const& PointLight::GetMatrices () noexcept
@@ -113,12 +136,6 @@ GXMat4 const& PointLight::GetProjection () noexcept
         UpdateMatrices ();
 
     return _projection;
-}
-
-void PointLight::SetLocation ( GXVec3 const location ) noexcept
-{
-    _location = location;
-    _isNeedUpdate = true;
 }
 
 void PointLight::UpdateMatrices () noexcept

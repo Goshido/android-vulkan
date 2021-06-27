@@ -75,6 +75,8 @@ class ContactManager final
 
         [[nodiscard]] Contact& AllocateContact ( ContactManifold &contactManifold ) noexcept;
         [[nodiscard]] ContactManifold& AllocateContactManifold () noexcept;
+
+        [[nodiscard]] std::vector<ContactManifold> const& GetContactManifolds () const noexcept;
         void Reset () noexcept;
 };
 

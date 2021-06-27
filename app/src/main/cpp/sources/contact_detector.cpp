@@ -8,7 +8,7 @@ constexpr static float const COLLINEAR_TOLERANCE = 1.0e-2F;
 constexpr static float const FACE_PERPENDICULAR_TOLERANCE = 1.0e-3F;
 constexpr static size_t const INITIAL_CLIP_POINTS = 8U;
 constexpr static size_t const INITIAL_SHAPE_POINTS = 16U;
-constexpr static uint16_t const RAY_COUNT = 5U;
+constexpr static uint16_t const RAY_COUNT = 8U;
 constexpr static float const RAY_DEVIATION_DEGREES = 6.0F;
 constexpr static float const SAME_POINT_TOLERANCE = 1.0e-3F;
 

@@ -21,9 +21,11 @@ class Physics final
         float                                   _accumulator;
         ContactDetector                         _contactDetector;
         ContactManager                          _contactManager;
+        float                                   _fixedTimeStep;
         std::unordered_set<GlobalForceRef>      _globalForces;
         bool                                    _isPause;
         std::unordered_set<RigidBodyRef>        _rigidBodies;
+        float                                   _timeSpeed;
 
     public:
         Physics () noexcept;
@@ -41,6 +43,11 @@ class Physics final
 
         [[maybe_unused, nodiscard]] bool AddRigidBody ( RigidBodyRef const &rigidBody ) noexcept;
         [[maybe_unused, nodiscard]] bool RemoveRigidBody ( RigidBodyRef const &rigidBody ) noexcept;
+
+        [[nodiscard]] std::vector<ContactManifold> const& GetContactManifolds () const noexcept;
+
+        [[maybe_unused, nodiscard]] float GetTimeSpeed () const noexcept;
+        [[maybe_unused]] void SetTimeSpeed ( float speed ) noexcept;
 
         [[nodiscard]] bool IsPaused () const noexcept;
         void Pause () noexcept;

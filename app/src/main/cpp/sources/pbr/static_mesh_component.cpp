@@ -90,6 +90,46 @@ StaticMeshComponent::StaticMeshComponent ( android_vulkan::Renderer &renderer,
     return _worldBounds;
 }
 
+[[maybe_unused]] android_vulkan::Half4 const& StaticMeshComponent::GetColor0 () const noexcept
+{
+    return _color0;
+}
+
+[[maybe_unused]] void StaticMeshComponent::SetColor0 ( GXColorRGB const &color ) noexcept
+{
+    _color0 = android_vulkan::Half4 ( color._data[ 0U ], color._data[ 1U ], color._data[ 2U ], color._data[ 3U ] );
+}
+
+[[maybe_unused]] android_vulkan::Half4 const& StaticMeshComponent::GetColor1 () const noexcept
+{
+    return _color1;
+}
+
+[[maybe_unused]] void StaticMeshComponent::SetColor1 ( GXColorRGB const &color ) noexcept
+{
+    _color1 = android_vulkan::Half4 ( color._data[ 0U ], color._data[ 1U ], color._data[ 2U ], color._data[ 3U ] );
+}
+
+[[maybe_unused]] android_vulkan::Half4 const& StaticMeshComponent::GetColor2 () const noexcept
+{
+    return _color2;
+}
+
+[[maybe_unused]] void StaticMeshComponent::SetColor2 ( GXColorRGB const &color ) noexcept
+{
+    _color2 = android_vulkan::Half4 ( color._data[ 0U ], color._data[ 1U ], color._data[ 2U ], color._data[ 3U ] );
+}
+
+[[maybe_unused]] android_vulkan::Half4 const& StaticMeshComponent::GetColor3 () const noexcept
+{
+    return _color3;
+}
+
+[[maybe_unused]] void StaticMeshComponent::SetColor3 ( GXColorRGB const &color ) noexcept
+{
+    _color3 = android_vulkan::Half4 ( color._data[ 0U ], color._data[ 1U ], color._data[ 2U ], color._data[ 3U ] );
+}
+
 [[maybe_unused]] GXMat4 const& StaticMeshComponent::GetTransform () const noexcept
 {
     return _localMatrix;

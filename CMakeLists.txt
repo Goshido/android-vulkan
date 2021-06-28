@@ -79,6 +79,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/half_types.cpp
     app/src/main/cpp/sources/key_bind.cpp
     app/src/main/cpp/sources/ktx_media_container.cpp
+    app/src/main/cpp/sources/location_solver.cpp
     app/src/main/cpp/sources/logger.cpp
     app/src/main/cpp/sources/main.cpp
     app/src/main/cpp/sources/mesh_geometry.cpp
@@ -89,6 +90,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/shape_box.cpp
     app/src/main/cpp/sources/simplex.cpp
     app/src/main/cpp/sources/stick.cpp
+    app/src/main/cpp/sources/sutherland_hodgman.cpp
     app/src/main/cpp/sources/texture_cube.cpp
     app/src/main/cpp/sources/texture2D.cpp
     app/src/main/cpp/sources/trigger.cpp

@@ -30,6 +30,11 @@ ContactManifold& ContactManager::AllocateContactManifold () noexcept
     return _contactManifolds.emplace_back ();
 }
 
+std::vector<ContactManifold>& ContactManager::GetContactManifolds () noexcept
+{
+    return _contactManifolds;
+}
+
 std::vector<ContactManifold> const& ContactManager::GetContactManifolds () const noexcept
 {
     return _contactManifolds;

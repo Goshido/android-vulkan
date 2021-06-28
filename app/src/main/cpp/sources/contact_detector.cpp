@@ -6,25 +6,20 @@ namespace android_vulkan {
 
 constexpr static float const COLLINEAR_TOLERANCE = 1.0e-2F;
 constexpr static float const FACE_PERPENDICULAR_TOLERANCE = 1.0e-3F;
-constexpr static size_t const INITIAL_CLIP_POINTS = 8U;
 constexpr static size_t const INITIAL_SHAPE_POINTS = 16U;
 constexpr static uint16_t const RAY_COUNT = 8U;
 constexpr static float const RAY_DEVIATION_DEGREES = 6.0F;
 constexpr static float const SAME_POINT_TOLERANCE = 1.0e-3F;
 
 ContactDetector::ContactDetector () noexcept:
-    _clipPoints {},
     _cyrusBeck {},
     _epa {},
     _gjk {},
     _rays {},
     _shapeAPoints {},
     _shapeBPoints {},
-    _workingPoints {}
+    _sutherlandHodgman {}
 {
-    _clipPoints.reserve ( INITIAL_CLIP_POINTS );
-    _workingPoints.reserve ( INITIAL_CLIP_POINTS );
-
     _shapeAPoints.reserve ( INITIAL_SHAPE_POINTS );
     _shapeAPoints.reserve ( INITIAL_SHAPE_POINTS );
 
@@ -57,6 +52,7 @@ void ContactDetector::Check ( ContactManager &contactManager, RigidBodyRef const
 
     GXMat3 tbn {};
     GXVec3 const n ( _epa.GetNormal () );
+
     tbn.From ( n );
     CollectExtremePoints ( _shapeAPoints, shapeA, tbn );
     size_t const aCount = _shapeAPoints.size ();
@@ -312,7 +308,10 @@ void ContactDetector::ManifoldEdgeFace ( ContactManager &contactManager,
 
         float const d = faceNormal.DotProduct ( face[ 1U ] );
         float const t = ( d - edge[ 0U ].DotProduct ( faceNormal ) ) / edgeDir.DotProduct ( faceNormal );
-        firstContact._point.Sum ( edge[ 0U ], t, edgeDir );
+
+        // Note: It's needed to clamp "t" because in 3D there is a case when edge is completely in one side
+        // relative to the face.
+        firstContact._point.Sum ( edge[ 0U ], std::clamp ( t, 0.0F, 1.0F ), edgeDir );
 
         return;
     }
@@ -344,171 +343,113 @@ void ContactDetector::ManifoldFaceFace ( ContactManager &contactManager,
 
     GXVec3 aNormal {};
     aNormal.CrossProduct ( ab, ac );
+    aNormal.Normalize ();
 
     ab.Subtract ( _shapeBPoints[ 1U ], _shapeBPoints[ 0U ] );
+    ab.Normalize ();
 
-    if ( std::abs ( aNormal.DotProduct ( ab ) ) > COLLINEAR_TOLERANCE )
+    if ( std::abs ( aNormal.DotProduct ( ab ) ) <= COLLINEAR_TOLERANCE )
     {
-        // Shapes don't lay in same plane.
-        size_t const bPoints = _shapeBPoints.size ();
+        // Both shapes lay in same plane.
+        Vertices const& result = _sutherlandHodgman.Run ( _shapeAPoints,
+            aNormal,
+            _shapeBPoints,
+            -firstContact._penetration
+        );
 
-        // Precompute "d" parameter for ray vs plane intersection.
-        float const d = aNormal.DotProduct ( _shapeAPoints[ 0U ] );
+        firstContact._point = result[ 0U ];
+        size_t const count = result.size ();
 
-        GXVec3 featurePoints[2U] {};
-        size_t featurePointCount = 0U;
-        GXVec3 alpha {};
-
-        for ( size_t i = 0U; i < bPoints; ++i )
+        for ( size_t i = 1U; i < count; ++i )
         {
-            GXVec3 const& current = _shapeBPoints[ i ];
-            GXVec3 const& next = _shapeBPoints[ ( i + 1U ) % bPoints ];
-
-            ab.Subtract ( next, current );
-            float const beta = ab.DotProduct ( aNormal );
-
-            if ( beta == 0.0F )
-            {
-                // Edge is parallel to a-shape. Ignore it because there are at least tho edges which must intersect the
-                // A face plane.
-                continue;
-            }
-
-            // The edge line pierces the face plane.
-            // So we need to find ray vs plane intersection point.
-            // https://www.cs.princeton.edu/courses/archive/fall00/cs426/lectures/raycast/sld017.htm
-            float const t = ( d - current.DotProduct ( aNormal ) ) / beta;
-
-            if ( t < 0.0F || t > 1.0F )
-                continue;
-
-            alpha.Sum ( current, t, ab );
-
-            if ( featurePointCount == 0U )
-            {
-                featurePoints[ featurePointCount++ ] = alpha;
-                continue;
-            }
-
-            constexpr float const limit = SAME_POINT_TOLERANCE * SAME_POINT_TOLERANCE;
-
-            if ( alpha.SquaredDistance ( featurePoints[ 0U ] ) < limit )
-            {
-                // Edge vertex lies exactly on face plane. Ignore such case.
-                continue;
-            }
-
-            featurePoints[ featurePointCount++ ] = alpha;
-
-            if ( featurePointCount != 2U )
-                continue;
-
-            break;
+            Contact& anotherContact = AllocateAnotherContact ( contactManager, firstContactData );
+            anotherContact._point = result[ i ];
         }
 
-        if ( featurePointCount == 1U )
-        {
-            // It's the case when face B touches face A vis only one vertex.
-            firstContact._point = featurePoints[ 0U ];
-            return;
-        }
-
-        // Two feature points create feature line segment. So at this point we able to reclassify the original
-        // face vs face task to edge vs face task.
-
-        _shapeBPoints.clear ();
-        _shapeBPoints.push_back ( featurePoints[ 0U ] );
-        _shapeBPoints.push_back ( featurePoints[ 1U ] );
-
-        ab.Subtract ( featurePoints[ 1U ], featurePoints[ 0U ] );
-
-        Vertices const& vertices = _cyrusBeck.Run ( _shapeAPoints, aNormal, _shapeBPoints, ab );
-        firstContact._point = vertices[ 0U ];
-
-        if ( vertices.size () < 2U )
-            return;
-
-        Contact& anotherContact = AllocateAnotherContact ( contactManager, firstContactData );
-        anotherContact._point = vertices[ 1U ];
         return;
     }
 
-    // Both shapes lay in same plane.
-
-    // Sutherland–Hodgman algorithm. The implementation is based on ideas from
-    // https://en.wikipedia.org/wiki/Sutherland%E2%80%93Hodgman_algorithm
-
-    size_t const aPoints = _shapeAPoints.size ();
+    // Shapes don't lay in same plane.
     size_t const bPoints = _shapeBPoints.size ();
 
-    _clipPoints.clear ();
-    _clipPoints.reserve ( bPoints );
+    // Precompute "d" parameter for ray vs plane intersection.
+    float const d = aNormal.DotProduct ( _shapeAPoints[ 0U ] );
 
-    _workingPoints.clear ();
-    _clipPoints.reserve ( bPoints );
-
-    _clipPoints.assign ( _shapeBPoints.cbegin (), _shapeBPoints.cend () );
-    GXVec3 clipEdge {};
-
-    GXVec3 edge {};
-    GXVec3 clipNormal {};
+    GXVec3 featurePoints[2U] {};
+    size_t featurePointCount = 0U;
     GXVec3 alpha {};
 
-    for ( size_t i = 0U; i < aPoints; ++i )
+    for ( size_t i = 0U; i < bPoints; ++i )
     {
-        _workingPoints.swap ( _clipPoints );
-        _clipPoints.clear ();
+        GXVec3 const& current = _shapeBPoints[ i ];
+        GXVec3 const& next = _shapeBPoints[ ( i + 1U ) % bPoints ];
 
-        GXVec3 const& clipEdgeOrigin = _shapeAPoints[ i ];
-        clipEdge.Subtract ( _shapeAPoints[ ( i + 1 ) % aPoints ], clipEdgeOrigin );
+        ab.Subtract ( next, current );
+        float const beta = ab.DotProduct ( aNormal );
 
-        size_t const vertexCount = _workingPoints.size ();
-        clipNormal.CrossProduct ( aNormal, clipEdge );
-
-        for ( size_t j = 0U; j < vertexCount; ++j )
+        if ( beta == 0.0F )
         {
-            GXVec3 const& current = _workingPoints[ j ];
-            GXVec3 const& next = _workingPoints[ ( j + 1U ) % vertexCount ];
-
-            // Optimization: The operands have been swapped to eliminate minus in denominator later.
-            ab.Subtract ( clipEdgeOrigin, current );
-            ac.Subtract ( next, clipEdgeOrigin );
-
-            float const baTest = clipNormal.DotProduct ( ab );
-            float const acTest = clipNormal.DotProduct ( ac );
-
-            auto addIntersection = [ & ] () noexcept {
-                edge.Subtract ( next, current );
-
-                // Note we swapped "ab" direction before. So no need to take negative value in denominator.
-                alpha.Sum ( current, baTest / clipNormal.DotProduct ( edge ), edge );
-                _clipPoints.push_back ( alpha );
-            };
-
-            if ( acTest > 0.0F )
-            {
-                if ( baTest > 0.0F )
-                    addIntersection ();
-
-                _clipPoints.push_back ( next );
-                continue;
-            }
-
-            if ( baTest > 0.0F )
-                continue;
-
-            addIntersection ();
+            // Edge is parallel to a-shape. Ignore it because there are at least tho edges which must intersect the
+            // A face plane.
+            continue;
         }
+
+        // The edge line pierces the face plane.
+        // So we need to find ray vs plane intersection point.
+        // https://www.cs.princeton.edu/courses/archive/fall00/cs426/lectures/raycast/sld017.htm
+        float const t = ( d - current.DotProduct ( aNormal ) ) / beta;
+
+        if ( t < 0.0F || t > 1.0F )
+            continue;
+
+        alpha.Sum ( current, t, ab );
+
+        if ( featurePointCount == 0U )
+        {
+            featurePoints[ featurePointCount++ ] = alpha;
+            continue;
+        }
+
+        constexpr float const limit = SAME_POINT_TOLERANCE * SAME_POINT_TOLERANCE;
+
+        if ( alpha.SquaredDistance ( featurePoints[ 0U ] ) < limit )
+        {
+            // Edge vertex lies exactly on face plane. Ignore such case.
+            continue;
+        }
+
+        featurePoints[ featurePointCount++ ] = alpha;
+
+        if ( featurePointCount != 2U )
+            continue;
+
+        break;
     }
 
-    size_t const contactCount = _clipPoints.size ();
-    firstContact._point = _clipPoints[ 0U ];
-
-    for ( size_t i = 1U; i < contactCount; ++i )
+    if ( featurePointCount == 1U )
     {
-        Contact& anotherContact = AllocateAnotherContact ( contactManager, firstContactData );
-        anotherContact._point = _clipPoints[ i ];
+        // It's the case when face B touches face A vis only one vertex.
+        firstContact._point = featurePoints[ 0U ];
+        return;
     }
+
+    // Two feature points create feature line segment. So at this point we able to reclassify the original
+    // face vs face task to edge vs face task.
+
+    _shapeBPoints.clear ();
+    _shapeBPoints.push_back ( featurePoints[ 0U ] );
+    _shapeBPoints.push_back ( featurePoints[ 1U ] );
+
+    ab.Subtract ( featurePoints[ 1U ], featurePoints[ 0U ] );
+
+    Vertices const& vertices = _cyrusBeck.Run ( _shapeAPoints, aNormal, _shapeBPoints, ab );
+    firstContact._point = vertices[ 0U ];
+
+    if ( vertices.size () < 2U )
+        return;
+
+    Contact& anotherContact = AllocateAnotherContact ( contactManager, firstContactData );
+    anotherContact._point = vertices[ 1U ];
 }
 
 void ContactDetector::ManifoldPoint ( ContactManager &contactManager,

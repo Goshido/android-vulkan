@@ -6,6 +6,7 @@
 #include "cyrus_beck.h"
 #include "epa.h"
 #include "gjk.h"
+#include "sutherland_hodgman.h"
 
 
 namespace android_vulkan {
@@ -16,14 +17,13 @@ class ContactDetector final
         using FirstContactData = std::pair<ContactManifold*, Contact*>;
 
     private:
-        Vertices        _clipPoints;
-        CyrusBeck       _cyrusBeck;
-        EPA             _epa;
-        GJK             _gjk;
-        Vertices        _rays;
-        Vertices        _shapeAPoints;
-        Vertices        _shapeBPoints;
-        Vertices        _workingPoints;
+        CyrusBeck               _cyrusBeck;
+        EPA                     _epa;
+        GJK                     _gjk;
+        Vertices                _rays;
+        Vertices                _shapeAPoints;
+        Vertices                _shapeBPoints;
+        SutherlandHodgman       _sutherlandHodgman;
 
     public:
         ContactDetector () noexcept;

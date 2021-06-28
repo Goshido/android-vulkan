@@ -1,5 +1,6 @@
 #include <physics.h>
 #include <contact_detector.h>
+#include <location_solver.h>
 #include <logger.h>
 
 
@@ -121,11 +122,10 @@ void Physics::Simulate ( float deltaTime ) noexcept
 
         // TODO collision response
 
+        LocationSolver::Solve ( _contactManager );
         Prepare ();
         _accumulator -= _fixedTimeStep;
     }
-
-    // TODO
 }
 
 void Physics::CollectContacts () noexcept
@@ -140,13 +140,6 @@ void Physics::CollectContacts () noexcept
             _contactDetector.Check ( _contactManager, *i, *j );
         }
     }
-
-    std::vector<ContactManifold> const& manifolds = _contactManager.GetContactManifolds ();
-
-    if ( manifolds.empty() )
-        return;
-
-    Pause ();
 }
 
 void Physics::Integrate () noexcept

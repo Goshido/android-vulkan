@@ -17,6 +17,9 @@ struct Contact final
 {
     GXVec3      _point {};
 
+    // Debug feature.
+    GXVec3      _pointAfterResolve {};
+
     GXVec3      _tangent {};
     GXVec3      _bitangent {};
     GXVec3      _normal {};
@@ -76,7 +79,9 @@ class ContactManager final
         [[nodiscard]] Contact& AllocateContact ( ContactManifold &contactManifold ) noexcept;
         [[nodiscard]] ContactManifold& AllocateContactManifold () noexcept;
 
+        [[nodiscard]] std::vector<ContactManifold>& GetContactManifolds () noexcept;
         [[nodiscard]] std::vector<ContactManifold> const& GetContactManifolds () const noexcept;
+
         void Reset () noexcept;
 };
 

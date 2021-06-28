@@ -32,7 +32,6 @@ class PBRGame final : public android_vulkan::Game
         ComponentRef                        _floor;
         android_vulkan::RigidBodyRef        _floorBody;
         float                               _floorPhase;
-        GXVec3                              _floorRenderOffset;
 
         MeshRef                             _sphereMesh;
         MaterialRef                         _sphereMaterial;
@@ -65,15 +64,11 @@ class PBRGame final : public android_vulkan::Game
         void OnSwapchainDestroyed ( VkDevice device ) override;
 
         void DestroyCommandPool ( VkDevice device ) noexcept;
-        [[nodiscard]] bool UploadGPUContent ( android_vulkan::Renderer &renderer ) noexcept;
+        [[maybe_unused, nodiscard]] bool UploadGPUContent ( android_vulkan::Renderer &renderer ) noexcept;
 
-        void CreatePhysics () noexcept;
+        [[nodiscard]] bool CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept;
         void DestroyPhysics () noexcept;
         void UpdatePhysicsActors ( float deltaTime ) noexcept;
-
-        void InitSphereResources ( android_vulkan::Renderer &renderer, VkCommandBuffer const* commandBuffers ) noexcept;
-
-        static void OnPhysicsContinue ( void* context );
 };
 
 } // namespace pbr

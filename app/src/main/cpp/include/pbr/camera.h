@@ -32,7 +32,7 @@ class Camera final
         GXMat4      _projection;
 
     public:
-        Camera ();
+        Camera () noexcept;
 
         Camera ( Camera const &other ) = delete;
         Camera& operator = ( Camera const &other ) = delete;
@@ -42,28 +42,28 @@ class Camera final
 
         ~Camera () = default;
 
-        void SetProjection ( float fieldOfViewRadians, float aspectRatio, float zNear, float zFar );
-        void SetLocation ( GXVec3 const &location );
+        void SetProjection ( float fieldOfViewRadians, float aspectRatio, float zNear, float zFar ) noexcept;
+        void SetLocation ( GXVec3 const &location ) noexcept;
 
         // Note "pitch" and "yaw" must be in radians.
-        void SetRotation ( float pitch, float yaw );
+        void SetRotation ( float pitch, float yaw ) noexcept;
 
-        void Update ( float deltaTime );
+        void Update ( float deltaTime ) noexcept;
 
-        [[nodiscard]] GXMat4 const& GetLocalMatrix () const;
-        [[nodiscard]] GXMat4 const& GetProjectionMatrix () const;
+        [[nodiscard]] GXMat4 const& GetLocalMatrix () const noexcept;
+        [[nodiscard]] GXMat4 const& GetProjectionMatrix () const noexcept;
 
-        void CaptureInput ();
-        static void ReleaseInput ();
+        void CaptureInput () noexcept;
+        static void ReleaseInput () noexcept;
 
     private:
-        static void OnADown ( void* context );
-        static void OnAUp ( void* context );
-        static void OnXDown ( void* context );
-        static void OnXUp ( void* context );
-        static void OnLeftStick ( void* context, float horizontal, float vertical );
-        static void OnRightStick ( void* context, float horizontal, float vertical );
-        static void OnRightTrigger ( void* context, float push );
+        static void OnADown ( void* context ) noexcept;
+        static void OnAUp ( void* context ) noexcept;
+        static void OnXDown ( void* context ) noexcept;
+        static void OnXUp ( void* context ) noexcept;
+        static void OnLeftStick ( void* context, float horizontal, float vertical ) noexcept;
+        static void OnRightStick ( void* context, float horizontal, float vertical ) noexcept;
+        static void OnRightTrigger ( void* context, float push ) noexcept;
 };
 
 } // namespace pbr

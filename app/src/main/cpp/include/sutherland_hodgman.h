@@ -35,8 +35,7 @@ class SutherlandHodgman final
 
          [[nodiscard]] Vertices const& Run ( Vertices const &shapeAPoints,
              GXVec3 const &shapeANormal,
-             Vertices const &shapeBPoints,
-             float penetration
+             Vertices const &shapeBPoints
          ) noexcept;
 
     private:

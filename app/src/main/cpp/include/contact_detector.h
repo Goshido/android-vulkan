@@ -74,10 +74,6 @@ class ContactDetector final
         ) noexcept;
 
         void NotifyEPAFail () noexcept;
-
-        [[nodiscard]] static Contact& AllocateAnotherContact ( ContactManager &contactManager,
-            FirstContactData &firstContactData
-        ) noexcept;
 };
 
 } // namespace android_vulkan

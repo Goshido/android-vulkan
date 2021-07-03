@@ -76,7 +76,7 @@ class Gamepad final
         std::thread                 _thread;
 
     public:
-        static Gamepad& GetInstance ();
+        static Gamepad& GetInstance () noexcept;
 
         Gamepad ( Gamepad const &other ) = delete;
         Gamepad& operator = ( Gamepad const &other ) = delete;
@@ -84,46 +84,46 @@ class Gamepad final
         Gamepad ( Gamepad &&other ) = delete;
         Gamepad& operator = ( Gamepad &&other ) = delete;
 
-        void BindKey ( void* context, KeyHandler handler, eGamepadKey key, eButtonState state );
-        void UnbindKey ( eGamepadKey key, eButtonState state );
+        void BindKey ( void* context, KeyHandler handler, eGamepadKey key, eButtonState state ) noexcept;
+        void UnbindKey ( eGamepadKey key, eButtonState state ) noexcept;
 
-        void BindLeftStick ( void* context, StickHandler handler );
-        void UnbindLeftStick ();
+        void BindLeftStick ( void* context, StickHandler handler ) noexcept;
+        void UnbindLeftStick () noexcept;
 
-        void BindRightStick ( void* context, StickHandler handler );
-        void UnbindRightStick ();
+        void BindRightStick ( void* context, StickHandler handler ) noexcept;
+        void UnbindRightStick () noexcept;
 
-        [[maybe_unused]] void BindLeftTrigger ( void* context, TriggerHandler handler );
-        [[maybe_unused]] void UnbindLeftTrigger ();
+        [[maybe_unused]] void BindLeftTrigger ( void* context, TriggerHandler handler ) noexcept;
+        [[maybe_unused]] void UnbindLeftTrigger () noexcept;
 
-        void BindRightTrigger ( void* context, TriggerHandler handler );
-        void UnbindRightTrigger ();
+        void BindRightTrigger ( void* context, TriggerHandler handler ) noexcept;
+        void UnbindRightTrigger () noexcept;
 
-        [[nodiscard]] int32_t OnOSInputEvent ( AInputEvent* event );
+        [[nodiscard]] int32_t OnOSInputEvent ( AInputEvent* event ) noexcept;
 
-        void Start ();
-        void Stop ();
+        void Start () noexcept;
+        void Stop () noexcept;
 
     private:
-        Gamepad ();
+        Gamepad () noexcept;
         ~Gamepad () = default;
 
-        void AddAction ( KeyBind const &bind );
+        void AddAction ( KeyBind const &bind ) noexcept;
 
-        void ExecuteKeyEvents ();
-        void ExecuteStickEvents ();
-        void ExecuteTriggerEvents ();
+        void ExecuteKeyEvents () noexcept;
+        void ExecuteStickEvents () noexcept;
+        void ExecuteTriggerEvents () noexcept;
 
-        void HandleDPad ( AInputEvent* event );
+        void HandleDPad ( AInputEvent* event ) noexcept;
 
-        [[nodiscard]] int32_t HandleKey ( AInputEvent* event );
-        [[nodiscard]] int32_t HandleMotion ( AInputEvent* event );
+        [[nodiscard]] int32_t HandleKey ( AInputEvent* event ) noexcept;
+        [[nodiscard]] int32_t HandleMotion ( AInputEvent* event ) noexcept;
 
-        void HandleSticks ( AInputEvent* event );
-        void HandleTriggers ( AInputEvent* event );
+        void HandleSticks ( AInputEvent* event ) noexcept;
+        void HandleTriggers ( AInputEvent* event ) noexcept;
 
-        void InitActionPool ();
-        void ResolveDPad ();
+        void InitActionPool () noexcept;
+        void ResolveDPad () noexcept;
 };
 
 } // namespace android_vulkan

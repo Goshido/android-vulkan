@@ -9,7 +9,7 @@ GX_RESTORE_WARNING_STATE
 
 namespace android_vulkan {
 
-Stick::Stick ():
+Stick::Stick () noexcept:
     _context ( nullptr ),
     _handler ( nullptr ),
     _stateCurrent ( 0.0F, 0.0F ),
@@ -18,7 +18,7 @@ Stick::Stick ():
     // NOTHING
 }
 
-void Stick::Bind ( void* context, StickHandler handler )
+void Stick::Bind ( void* context, StickHandler handler ) noexcept
 {
     _stateCurrent = GXVec2 ( 0.0F, 0.0F );
     _stateOld = GXVec2 ( 0.0F, 0.0F );
@@ -26,14 +26,14 @@ void Stick::Bind ( void* context, StickHandler handler )
     _handler = handler;
 }
 
-void Stick::Unbind ()
+void Stick::Unbind () noexcept
 {
     _stateOld = _stateCurrent;
     _context = nullptr;
     _handler = nullptr;
 }
 
-void Stick::Execute ()
+void Stick::Execute () noexcept
 {
     if ( !_handler || memcmp ( &_stateCurrent, &_stateOld, sizeof ( _stateCurrent ) ) == 0 )
         return;
@@ -42,7 +42,7 @@ void Stick::Execute ()
     _stateOld = _stateCurrent;
 }
 
-void Stick::Update ( AInputEvent* event, int32_t horizontalAxis, int32_t verticalAxis )
+void Stick::Update ( AInputEvent* event, int32_t horizontalAxis, int32_t verticalAxis ) noexcept
 {
     _stateCurrent._data[ 0U ] = AMotionEvent_getAxisValue ( event, horizontalAxis, 0U );
     _stateCurrent._data[ 1U ] = -AMotionEvent_getAxisValue ( event, verticalAxis, 0U );

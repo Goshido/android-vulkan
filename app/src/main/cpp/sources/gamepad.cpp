@@ -17,13 +17,13 @@ constexpr static int32_t const EVENT_IGNORED = 0;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-Gamepad& Gamepad::GetInstance ()
+Gamepad& Gamepad::GetInstance () noexcept
 {
     static Gamepad gamepad;
     return gamepad;
 }
 
-void Gamepad::BindKey ( void* context, KeyHandler handler, eGamepadKey key, eButtonState state )
+void Gamepad::BindKey ( void* context, KeyHandler handler, eGamepadKey key, eButtonState state ) noexcept
 {
     std::unique_lock<std::shared_timed_mutex> lock ( _mutex );
 
@@ -39,7 +39,7 @@ void Gamepad::BindKey ( void* context, KeyHandler handler, eGamepadKey key, eBut
     }
 }
 
-void Gamepad::UnbindKey ( eGamepadKey key, eButtonState state )
+void Gamepad::UnbindKey ( eGamepadKey key, eButtonState state ) noexcept
 {
     std::unique_lock<std::shared_timed_mutex> lock ( _mutex );
 
@@ -55,55 +55,55 @@ void Gamepad::UnbindKey ( eGamepadKey key, eButtonState state )
     }
 }
 
-void Gamepad::BindLeftStick ( void* context, StickHandler handler )
+void Gamepad::BindLeftStick ( void* context, StickHandler handler ) noexcept
 {
     std::unique_lock<std::shared_timed_mutex> lock ( _mutex );
     _leftStick.Bind ( context, handler );
 }
 
-void Gamepad::UnbindLeftStick ()
+void Gamepad::UnbindLeftStick () noexcept
 {
     std::unique_lock<std::shared_timed_mutex> lock ( _mutex );
     _leftStick.Unbind ();
 }
 
-void Gamepad::BindRightStick ( void* context, StickHandler handler )
+void Gamepad::BindRightStick ( void* context, StickHandler handler ) noexcept
 {
     std::unique_lock<std::shared_timed_mutex> lock ( _mutex );
     _rightStick.Bind ( context, handler );
 }
 
-void Gamepad::UnbindRightStick ()
+void Gamepad::UnbindRightStick () noexcept
 {
     std::unique_lock<std::shared_timed_mutex> lock ( _mutex );
     _rightStick.Unbind ();
 }
 
-void Gamepad::BindLeftTrigger ( void* context, TriggerHandler handler )
+[[maybe_unused]] void Gamepad::BindLeftTrigger ( void* context, TriggerHandler handler ) noexcept
 {
     std::unique_lock<std::shared_timed_mutex> lock ( _mutex );
     _leftTrigger.Bind ( context, handler );
 }
 
-void Gamepad::UnbindLeftTrigger ()
+[[maybe_unused]] void Gamepad::UnbindLeftTrigger () noexcept
 {
     std::unique_lock<std::shared_timed_mutex> lock ( _mutex );
     _leftTrigger.Unbind ();
 }
 
-void Gamepad::BindRightTrigger ( void* context, TriggerHandler handler )
+void Gamepad::BindRightTrigger ( void* context, TriggerHandler handler ) noexcept
 {
     std::unique_lock<std::shared_timed_mutex> lock ( _mutex );
     _rightTrigger.Bind ( context, handler );
 }
 
-void Gamepad::UnbindRightTrigger ()
+void Gamepad::UnbindRightTrigger () noexcept
 {
     std::unique_lock<std::shared_timed_mutex> lock ( _mutex );
     _rightTrigger.Unbind ();
 }
 
-int32_t Gamepad::OnOSInputEvent ( AInputEvent* event )
+int32_t Gamepad::OnOSInputEvent ( AInputEvent* event ) noexcept
 {
     if ( !_loop )
         return EVENT_IGNORED;
@@ -119,7 +119,7 @@ int32_t Gamepad::OnOSInputEvent ( AInputEvent* event )
     return EVENT_IGNORED;
 }
 
-void Gamepad::Start ()
+void Gamepad::Start () noexcept
 {
     auto job = [ & ] () {
         while ( _loop )
@@ -140,13 +140,13 @@ void Gamepad::Start ()
     _thread = std::thread ( job );
 }
 
-void Gamepad::Stop ()
+void Gamepad::Stop () noexcept
 {
     _loop = false;
     _thread.join ();
 }
 
-Gamepad::Gamepad ():
+Gamepad::Gamepad () noexcept:
     _downKeyBinds {},
     _upKeyBinds {},
     _dPadCurrent {},
@@ -165,7 +165,7 @@ Gamepad::Gamepad ():
     InitActionPool ();
 }
 
-void Gamepad::AddAction ( KeyBind const &bind )
+void Gamepad::AddAction ( KeyBind const &bind ) noexcept
 {
     // Note actions will be placed in reverse order.
     // It is assumed that order does not matter.
@@ -178,7 +178,7 @@ void Gamepad::AddAction ( KeyBind const &bind )
     _readyKeyActions = newAction;
 }
 
-void Gamepad::ExecuteKeyEvents ()
+void Gamepad::ExecuteKeyEvents () noexcept
 {
     KeyAction* tail = nullptr;
 
@@ -200,19 +200,19 @@ void Gamepad::ExecuteKeyEvents ()
     _freeKeyActions = tail;
 }
 
-void Gamepad::ExecuteStickEvents ()
+void Gamepad::ExecuteStickEvents () noexcept
 {
     _leftStick.Execute ();
     _rightStick.Execute ();
 }
 
-void Gamepad::ExecuteTriggerEvents ()
+void Gamepad::ExecuteTriggerEvents () noexcept
 {
     _leftTrigger.Execute ();
     _rightTrigger.Execute ();
 }
 
-void Gamepad::HandleDPad ( AInputEvent* event )
+void Gamepad::HandleDPad ( AInputEvent* event ) noexcept
 {
     GXVec2 const raw ( AMotionEvent_getAxisValue ( event, AMOTION_EVENT_AXIS_HAT_X, 0U ),
         AMotionEvent_getAxisValue ( event, AMOTION_EVENT_AXIS_HAT_Y, 0U )
@@ -240,7 +240,7 @@ void Gamepad::HandleDPad ( AInputEvent* event )
     _dPadCurrent._down = raw._data[ 1U ] > 0.0F;
 }
 
-int32_t Gamepad::HandleKey ( AInputEvent* event )
+int32_t Gamepad::HandleKey ( AInputEvent* event ) noexcept
 {
     if ( AKeyEvent_getRepeatCount ( event ) > 0 )
     {
@@ -297,7 +297,7 @@ int32_t Gamepad::HandleKey ( AInputEvent* event )
     return EVENT_HANDLED;
 }
 
-int32_t Gamepad::HandleMotion ( AInputEvent* event )
+int32_t Gamepad::HandleMotion ( AInputEvent* event ) noexcept
 {
     HandleDPad ( event );
     HandleSticks ( event );
@@ -306,19 +306,19 @@ int32_t Gamepad::HandleMotion ( AInputEvent* event )
     return EVENT_HANDLED;
 }
 
-void Gamepad::HandleSticks ( AInputEvent* event )
+void Gamepad::HandleSticks ( AInputEvent* event ) noexcept
 {
     _leftStick.Update ( event, AMOTION_EVENT_AXIS_X, AMOTION_EVENT_AXIS_Y );
     _rightStick.Update ( event, AMOTION_EVENT_AXIS_Z, AMOTION_EVENT_AXIS_RZ );
 }
 
-void Gamepad::HandleTriggers ( AInputEvent* event )
+void Gamepad::HandleTriggers ( AInputEvent* event ) noexcept
 {
     _leftTrigger.Update ( event, AMOTION_EVENT_AXIS_LTRIGGER );
     _rightTrigger.Update ( event, AMOTION_EVENT_AXIS_RTRIGGER );
 }
 
-void Gamepad::InitActionPool ()
+void Gamepad::InitActionPool () noexcept
 {
     constexpr size_t const lastKey = ACTION_POOL_ELEMENT_COUNT - 1U;
 
@@ -329,7 +329,7 @@ void Gamepad::InitActionPool ()
     _freeKeyActions = _keyActionPool;
 }
 
-void Gamepad::ResolveDPad ()
+void Gamepad::ResolveDPad () noexcept
 {
     auto resolve = [ & ] ( bool current, bool old, eGamepadKey key ) {
         if ( current == old )

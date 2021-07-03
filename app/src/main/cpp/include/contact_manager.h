@@ -15,16 +15,11 @@ namespace android_vulkan {
 
 struct Contact final
 {
-    GXVec3      _point {};
+    GXVec3                      _pointA {};
+    GXVec3                      _pointB {};
 
     // Debug feature.
-    GXVec3      _pointAfterResolve {};
-
-    GXVec3      _tangent {};
-    GXVec3      _bitangent {};
-    GXVec3      _normal {};
-
-    float       _penetration = 0.0F;
+    [[maybe_unused]] GXVec3     _pointAfterResolve {};
 
     Contact () = default;
 
@@ -44,6 +39,13 @@ struct ContactManifold final
 
     size_t          _contactCount = 0U;
     Contact*        _contacts = nullptr;
+
+    // The normal points the direction which body B must be moved to eliminate collision.
+    GXVec3          _tangent {};
+    GXVec3          _bitangent {};
+    GXVec3          _normal {};
+
+    float           _penetration = 0.0F;
 
     uint16_t        _epaSteps = 0U;
     uint16_t        _gjkSteps = 0U;

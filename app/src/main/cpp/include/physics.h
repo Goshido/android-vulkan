@@ -27,6 +27,9 @@ class Physics final
         std::unordered_set<RigidBodyRef>        _rigidBodies;
         float                                   _timeSpeed;
 
+        bool                                    _debugContactDetect;
+        bool                                    _debugOneStep;
+
     public:
         Physics () noexcept;
 
@@ -53,6 +56,9 @@ class Physics final
         void Pause () noexcept;
         void Resume () noexcept;
         void Simulate ( float deltaTime ) noexcept;
+
+        void OnOneContactDetect () noexcept;
+        void OnOneStep () noexcept;
 
     private:
         void CollectContacts () noexcept;

@@ -61,6 +61,8 @@ class EPA final
         ~EPA () = default;
 
         [[nodiscard]] float GetDepth () const noexcept;
+
+        // The direction the shape B must be pushed to eliminate collision.
         [[nodiscard]] GXVec3 const& GetNormal () const noexcept;
 
         [[nodiscard]] uint16_t GetSteps () const noexcept;

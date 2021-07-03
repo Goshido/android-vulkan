@@ -18,7 +18,9 @@ Physics::Physics () noexcept:
     _globalForces {},
     _isPause ( true ),
     _rigidBodies {},
-    _timeSpeed ( DEFAULT_TIME_SPEED )
+    _timeSpeed ( DEFAULT_TIME_SPEED ),
+    _debugContactDetect ( false ),
+    _debugOneStep ( false )
 {
     // NOTHING
 }
@@ -108,8 +110,33 @@ void Physics::Resume () noexcept
     _isPause = false;
 }
 
+void Physics::OnOneContactDetect () noexcept
+{
+    _debugContactDetect = true;
+}
+
+void Physics::OnOneStep () noexcept
+{
+    _debugOneStep = true;
+}
+
 void Physics::Simulate ( float deltaTime ) noexcept
 {
+    if ( _debugContactDetect )
+    {
+        CollectContacts ();
+        _debugContactDetect = false;
+        return;
+    }
+
+    if ( _debugOneStep )
+    {
+        Integrate ();
+        CollectContacts ();
+        _debugOneStep = false;
+        return;
+    }
+
     if ( _isPause )
         return;
 
@@ -122,7 +149,7 @@ void Physics::Simulate ( float deltaTime ) noexcept
 
         // TODO collision response
 
-        LocationSolver::Solve ( _contactManager );
+        //LocationSolver::Solve ( _contactManager );
         Prepare ();
         _accumulator -= _fixedTimeStep;
     }
@@ -140,6 +167,13 @@ void Physics::CollectContacts () noexcept
             _contactDetector.Check ( _contactManager, *i, *j );
         }
     }
+
+    std::vector<ContactManifold> const& manifolds = _contactManager.GetContactManifolds ();
+
+    if ( manifolds.empty () )
+        return;
+
+    Pause ();
 }
 
 void Physics::Integrate () noexcept

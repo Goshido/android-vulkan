@@ -51,6 +51,11 @@ PBRGame::PBRGame () noexcept:
     _floor {},
     _floorBody {},
     _floorPhase ( 0.0F ),
+    _sphereMesh {},
+    _sphereMaterial {},
+    _sphereColorA {},
+    _sphereColorB {},
+    _defaultColor {},
     _physics {},
     _renderSession {},
     _components {}
@@ -90,33 +95,39 @@ bool PBRGame::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime )
     constexpr GXVec3 const sphereDims ( sphereSize * 0.5F, sphereSize * 0.5F, sphereSize * 0.5F );
     transform.Scale ( sphereSize, sphereSize, sphereSize );
 
+    auto submit = [ & ] ( GXVec3 const &loc, android_vulkan::Half4 const &color ) noexcept {
+        GXVec3 location {};
+        location.Multiply ( loc, rendererScale );
+        transform.SetW ( location );
+
+        GXAABB bounds{};
+        GXVec3 v {};
+        v.Sum ( location, sphereDims );
+        bounds.AddVertex ( v );
+
+        v.Subtract ( location, sphereDims );
+        bounds.AddVertex ( v );
+
+        _renderSession.SubmitMesh ( _sphereMesh,
+            _sphereMaterial,
+            transform,
+            bounds,
+            color,
+            _defaultColor,
+            _defaultColor,
+            _defaultColor
+        );
+    };
+
     for ( auto const& manifold : _physics.GetContactManifolds () )
     {
         android_vulkan::Contact* contact =  manifold._contacts;
 
         for ( size_t i = 0U; i < manifold._contactCount; ++i )
         {
-            GXVec3 location {};
-            location.Multiply ( contact[ i ]._pointAfterResolve, rendererScale );
-            transform.SetW ( location );
-
-            GXAABB bounds{};
-            GXVec3 v {};
-            v.Sum ( location, sphereDims );
-            bounds.AddVertex ( v );
-
-            v.Subtract ( location, sphereDims );
-            bounds.AddVertex ( v );
-
-            _renderSession.SubmitMesh ( _sphereMesh,
-                _sphereMaterial,
-                transform,
-                bounds,
-                _sphereColor,
-                _defaultColor,
-                _defaultColor,
-                _defaultColor
-            );
+            android_vulkan::Contact const& c = contact[ i ];
+            submit ( c._pointA, _sphereColorA );
+            submit ( c._pointB, _sphereColorB );
         }
     }
 
@@ -195,6 +206,20 @@ bool PBRGame::OnSwapchainCreated ( android_vulkan::Renderer &renderer )
     _camera.CaptureInput ();
     _physics.Resume ();
 
+    android_vulkan::Gamepad& gamepad = android_vulkan::Gamepad::GetInstance ();
+
+    gamepad.BindKey ( this,
+        &PBRGame::OnOneContactDetect,
+        android_vulkan::eGamepadKey::LeftBumper,
+        android_vulkan::eButtonState::Up
+    );
+
+    gamepad.BindKey ( this,
+        &PBRGame::OnOneStep,
+        android_vulkan::eGamepadKey::RightBumper,
+        android_vulkan::eButtonState::Up
+    );
+
     return true;
 }
 
@@ -203,8 +228,8 @@ void PBRGame::OnSwapchainDestroyed ( VkDevice device )
     _physics.Pause ();
 
     android_vulkan::Gamepad& gamepad = android_vulkan::Gamepad::GetInstance ();
-    gamepad.UnbindKey ( android_vulkan::eGamepadKey::RightBumper, android_vulkan::eButtonState::Up );
     gamepad.UnbindKey ( android_vulkan::eGamepadKey::LeftBumper, android_vulkan::eButtonState::Up );
+    gamepad.UnbindKey ( android_vulkan::eGamepadKey::RightBumper, android_vulkan::eButtonState::Up );
 
     Camera::ReleaseInput ();
     _renderSession.OnSwapchainDestroyed ( device );
@@ -373,18 +398,18 @@ bool PBRGame::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
 //    GXQuat rotation {};
 //    rotation.FromAxisAngle ( 1.0F, 0.0F, 0.0F, GX_MATH_HALF_PI * 0.5F );
 //    _cubeBody->SetRotation ( rotation );
-//
+
 //    GXVec3 const angularVelocity ( 0.0F, 20.0F, 0.0F );
 //    _cubeBody->SetVelocityAngular ( angularVelocity );
 
     android_vulkan::ShapeRef cubeShape = std::make_shared<android_vulkan::ShapeBox> ( 0.2F, 0.2F, 0.2F );
     _cubeBody->SetShape ( cubeShape );
 
-    GXVec3 point ( 0.1F, 0.0F, 0.05F );
-    point.Sum ( point, cubeSpawn );
-
-    GXVec3 const impulse ( -16.4106F, 34.0577F, 8.931F );
-    _cubeBody->AddImpulse ( impulse, point );
+//    GXVec3 point ( 0.1F, 0.0F, 0.05F );
+//    point.Sum ( point, cubeSpawn );
+//
+//    GXVec3 const impulse ( -16.4106F, 34.0577F, 8.931F );
+//    _cubeBody->AddImpulse ( impulse, point );
 
     if ( !_physics.AddRigidBody ( _cubeBody ) )
     {
@@ -436,7 +461,8 @@ bool PBRGame::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
         commandBuffers
     );
 
-    _sphereColor = android_vulkan::Half4 ( 115.0F / 255.0F, 185.0F / 255.0F, 0.0F, 1.0F );
+    _sphereColorA = android_vulkan::Half4 ( 115.0F / 255.0F, 185.0F / 255.0F, 0.0F, 1.0F );
+    _sphereColorB = android_vulkan::Half4 ( 185.0F / 255.0F, 27.0F / 230.0F, 0.0F, 1.0F );
     _defaultColor = android_vulkan::Half4 ( 1.0F, 1.0F, 1.0F, 1.0F );
 
     _cameraLight = std::make_shared<PointLightComponent> ();
@@ -505,6 +531,18 @@ void PBRGame::UpdatePhysicsActors ( float deltaTime ) noexcept
 
     _floorPhase += deltaTime;
     _floorBody->SetVelocityLinear ( GXVec3 ( 4.0e-1F * std::sin ( _floorPhase ), 0.0F, 0.0F ) );
+}
+
+void PBRGame::OnOneContactDetect ( void* context ) noexcept
+{
+    auto &game = *static_cast<PBRGame*> ( context );
+    game._physics.OnOneContactDetect ();
+}
+
+void PBRGame::OnOneStep ( void* context ) noexcept
+{
+    auto &game = *static_cast<PBRGame*> ( context );
+    game._physics.OnOneStep ();
 }
 
 } // namespace pbr

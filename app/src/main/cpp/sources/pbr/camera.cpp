@@ -12,7 +12,7 @@ constexpr static float const MOVE_BOOST = 10.0F;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-Camera::Camera ():
+Camera::Camera () noexcept:
     _moveBoost ( 0.0F ),
     _pitch ( 0.0F ),
     _yaw ( 0.0F ),
@@ -25,12 +25,12 @@ Camera::Camera ():
     _projection.Identity ();
 }
 
-void Camera::SetProjection ( float fieldOfViewRadians, float aspectRatio, float zNear, float zFar )
+void Camera::SetProjection ( float fieldOfViewRadians, float aspectRatio, float zNear, float zFar ) noexcept
 {
     _projection.Perspective ( fieldOfViewRadians, aspectRatio, zNear, zFar );
 }
 
-void Camera::SetLocation ( GXVec3 const &location )
+void Camera::SetLocation ( GXVec3 const &location ) noexcept
 {
     _local._m[ 3U ][ 0U ] = location._data[ 0U ];
     _local._m[ 3U ][ 1U ] = location._data[ 1U ];
@@ -38,13 +38,13 @@ void Camera::SetLocation ( GXVec3 const &location )
     _local.SetW ( location );
 }
 
-void Camera::SetRotation ( float pitch, float yaw )
+void Camera::SetRotation ( float pitch, float yaw ) noexcept
 {
     _pitch = pitch;
     _yaw = yaw;
 }
 
-void Camera::CaptureInput ()
+void Camera::CaptureInput () noexcept
 {
     android_vulkan::Gamepad& gamepad = android_vulkan::Gamepad::GetInstance ();
 
@@ -58,7 +58,7 @@ void Camera::CaptureInput ()
     gamepad.BindRightTrigger ( this, &Camera::OnRightTrigger );
 }
 
-void Camera::ReleaseInput ()
+void Camera::ReleaseInput () noexcept
 {
     android_vulkan::Gamepad& gamepad = android_vulkan::Gamepad::GetInstance ();
 
@@ -72,7 +72,7 @@ void Camera::ReleaseInput ()
     gamepad.UnbindKey ( android_vulkan::eGamepadKey::A, android_vulkan::eButtonState::Down );
 }
 
-void Camera::Update ( float deltaTime )
+void Camera::Update ( float deltaTime ) noexcept
 {
     float const boost = _moveBoost;
 
@@ -136,55 +136,55 @@ void Camera::Update ( float deltaTime )
     _local.SetW ( location );
 }
 
-GXMat4 const& Camera::GetLocalMatrix() const
+GXMat4 const& Camera::GetLocalMatrix() const noexcept
 {
     return _local;
 }
 
-GXMat4 const& Camera::GetProjectionMatrix () const
+GXMat4 const& Camera::GetProjectionMatrix () const noexcept
 {
     return _projection;
 }
 
-void Camera::OnADown ( void* context )
+void Camera::OnADown ( void* context ) noexcept
 {
     auto& camera = *static_cast<Camera*> ( context );
     camera._moveSpeed._data[ 2U ] -= 1.0F;
 }
 
-void Camera::OnAUp ( void* context )
+void Camera::OnAUp ( void* context ) noexcept
 {
     auto& camera = *static_cast<Camera*> ( context );
     camera._moveSpeed._data[ 2U ] += 1.0F;
 }
 
-void Camera::OnXDown ( void* context )
+void Camera::OnXDown ( void* context ) noexcept
 {
     auto& camera = *static_cast<Camera*> ( context );
     camera._moveSpeed._data[ 2U ] += 1.0F;
 }
 
-void Camera::OnXUp ( void* context )
+void Camera::OnXUp ( void* context ) noexcept
 {
     auto& camera = *static_cast<Camera*> ( context );
     camera._moveSpeed._data[ 2U ] -= 1.0F;
 }
 
-void Camera::OnLeftStick ( void* context, float horizontal, float vertical )
+void Camera::OnLeftStick ( void* context, float horizontal, float vertical ) noexcept
 {
     auto& camera = *static_cast<Camera*> ( context );
     camera._moveSpeed._data[ 0U ] = vertical;
     camera._moveSpeed._data[ 1U ] = horizontal;
 }
 
-void Camera::OnRightStick ( void* context, float horizontal, float vertical )
+void Camera::OnRightStick ( void* context, float horizontal, float vertical ) noexcept
 {
     auto& camera = *static_cast<Camera*> ( context );
     camera._angularSpeed._data[ 0U ] = horizontal;
     camera._angularSpeed._data[ 1U ] = -vertical;
 }
 
-void Camera::OnRightTrigger ( void* context, float push )
+void Camera::OnRightTrigger ( void* context, float push ) noexcept
 {
     auto& camera = *static_cast<Camera*> ( context );
     camera._moveBoost = push;

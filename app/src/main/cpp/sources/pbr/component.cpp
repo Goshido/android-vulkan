@@ -18,7 +18,7 @@ ComponentRef Component::Create ( android_vulkan::Renderer &renderer,
     ComponentDesc const &desc,
     uint8_t const* data,
     VkCommandBuffer const* commandBuffers
-)
+) noexcept
 {
     if ( desc._classID == ClassID::Unknown )
     {

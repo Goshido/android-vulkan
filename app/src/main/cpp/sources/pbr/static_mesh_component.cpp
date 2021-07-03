@@ -13,6 +13,7 @@ GX_RESTORE_WARNING_STATE
 namespace pbr {
 
 [[maybe_unused]] constexpr static uint32_t const STATIC_MESH_COMPONENT_DESC_FORMAT_VERSION = 1U;
+constexpr static uint8_t const DEFAULT_COLOR = 255U;
 
 StaticMeshComponent::StaticMeshComponent ( android_vulkan::Renderer &renderer,
     size_t &commandBufferConsumed,
@@ -49,6 +50,95 @@ StaticMeshComponent::StaticMeshComponent ( android_vulkan::Renderer &renderer,
 
     _mesh->GetBounds ().Transform ( _worldBounds, _localMatrix );
     commandBufferConsumed += consumed;
+}
+
+StaticMeshComponent::StaticMeshComponent ( android_vulkan::Renderer &renderer,
+    size_t &commandBufferConsumed,
+    char const* mesh,
+    char const* material,
+    VkCommandBuffer const* commandBuffers
+) noexcept:
+    Component ( ClassID::StaticMesh )
+{
+    _color0.From ( DEFAULT_COLOR, DEFAULT_COLOR, DEFAULT_COLOR, DEFAULT_COLOR );
+    _color1 = _color0;
+    _color2 = _color0;
+    _color3 = _color0;
+
+    _localMatrix.Identity ();
+
+    _material = MaterialManager::GetInstance ().LoadMaterial ( renderer,
+        commandBufferConsumed,
+        material,
+        commandBuffers
+    );
+
+    size_t consumed = 0U;
+
+    _mesh = MeshManager::GetInstance ().LoadMesh ( renderer,
+        consumed,
+        mesh,
+        commandBuffers[ commandBufferConsumed ]
+    );
+
+    _mesh->GetBounds ().Transform ( _worldBounds, _localMatrix );
+    commandBufferConsumed += consumed;
+}
+
+[[maybe_unused]] GXAABB const& StaticMeshComponent::GetBoundsWorld () const noexcept
+{
+    return _worldBounds;
+}
+
+[[maybe_unused]] android_vulkan::Half4 const& StaticMeshComponent::GetColor0 () const noexcept
+{
+    return _color0;
+}
+
+[[maybe_unused]] void StaticMeshComponent::SetColor0 ( GXColorRGB const &color ) noexcept
+{
+    _color0 = android_vulkan::Half4 ( color._data[ 0U ], color._data[ 1U ], color._data[ 2U ], color._data[ 3U ] );
+}
+
+[[maybe_unused]] android_vulkan::Half4 const& StaticMeshComponent::GetColor1 () const noexcept
+{
+    return _color1;
+}
+
+[[maybe_unused]] void StaticMeshComponent::SetColor1 ( GXColorRGB const &color ) noexcept
+{
+    _color1 = android_vulkan::Half4 ( color._data[ 0U ], color._data[ 1U ], color._data[ 2U ], color._data[ 3U ] );
+}
+
+[[maybe_unused]] android_vulkan::Half4 const& StaticMeshComponent::GetColor2 () const noexcept
+{
+    return _color2;
+}
+
+[[maybe_unused]] void StaticMeshComponent::SetColor2 ( GXColorRGB const &color ) noexcept
+{
+    _color2 = android_vulkan::Half4 ( color._data[ 0U ], color._data[ 1U ], color._data[ 2U ], color._data[ 3U ] );
+}
+
+[[maybe_unused]] android_vulkan::Half4 const& StaticMeshComponent::GetColor3 () const noexcept
+{
+    return _color3;
+}
+
+[[maybe_unused]] void StaticMeshComponent::SetColor3 ( GXColorRGB const &color ) noexcept
+{
+    _color3 = android_vulkan::Half4 ( color._data[ 0U ], color._data[ 1U ], color._data[ 2U ], color._data[ 3U ] );
+}
+
+[[maybe_unused]] GXMat4 const& StaticMeshComponent::GetTransform () const noexcept
+{
+    return _localMatrix;
+}
+
+[[maybe_unused]] void StaticMeshComponent::SetTransform ( GXMat4 const &transform ) noexcept
+{
+    _localMatrix = transform;
+    _mesh->GetBounds ().Transform ( _worldBounds, transform );
 }
 
 void StaticMeshComponent::FreeTransferResources ( VkDevice device )

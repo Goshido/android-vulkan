@@ -63,17 +63,23 @@ class PointLight final : public Light
 
         ~PointLight () override = default;
 
-        [[nodiscard]] GXAABB const& GetBounds () const;
-        [[nodiscard]] android_vulkan::Half3 const& GetHue () const;
-        [[nodiscard]] android_vulkan::Half GetIntensity () const;
-        [[nodiscard]] GXVec3 const& GetLocation () const;
-        [[nodiscard]] Matrices const& GetMatrices ();
-        [[nodiscard]] GXMat4 const& GetProjection ();
+        [[nodiscard]] GXAABB const& GetBounds () const noexcept;
+        [[maybe_unused]] void SetBoundDimensions ( float width, float height, float depth ) noexcept;
 
-        void SetLocation ( GXVec3 const location );
+        [[nodiscard]] android_vulkan::Half3 const& GetHue () const noexcept;
+        [[maybe_unused]] void SetHue ( GXColorRGB const &hue ) noexcept;
+
+        [[nodiscard]] android_vulkan::Half GetIntensity () const noexcept;
+        [[maybe_unused]] void SetIntensity ( float intensity ) noexcept;
+
+        [[nodiscard]] GXVec3 const& GetLocation () const noexcept;
+        [[maybe_unused]] void SetLocation ( GXVec3 const &location ) noexcept;
+
+        [[nodiscard]] Matrices const& GetMatrices () noexcept;
+        [[nodiscard]] GXMat4 const& GetProjection () noexcept;
 
     private:
-        void UpdateMatrices ();
+        void UpdateMatrices () noexcept;
 };
 
 } // namespace pbr

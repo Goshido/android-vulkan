@@ -544,11 +544,11 @@ PointLightPass::PointLightShadowmapInfo* PointLightPass::AcquirePointLightShadow
     android_vulkan::Renderer &renderer
 )
 {
-    if ( !_shadowmaps.empty () && _usedShadowmaps <= _shadowmaps.size () )
+    if ( !_shadowmaps.empty () && _usedShadowmaps < _shadowmaps.size () )
         return &_shadowmaps[ _usedShadowmaps++ ];
 
     PointLightShadowmapInfo info;
-    auto &[shadowmap, framebuffer] = info;
+    auto& [shadowmap, framebuffer] = info;
     shadowmap = std::make_shared<android_vulkan::TextureCube> ();
 
     constexpr VkExtent2D const resolution
@@ -946,7 +946,7 @@ bool PointLightPass::UpdateShadowmapGPUData ( android_vulkan::Renderer &renderer
                     if ( !lightBounds.IsOverlaped ( opaqueData._worldBounds ) )
                         continue;
 
-                    auto &[mesh, locals] = casters._batches[ name ];
+                    auto& [mesh, locals] = casters._batches[ name ];
 
                     if ( !mesh )
                     {

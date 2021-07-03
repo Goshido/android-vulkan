@@ -38,7 +38,32 @@ class StaticMeshComponent final : public Component
             VkCommandBuffer const* commandBuffers
         ) noexcept;
 
+        // "commandBuffer" array MUST contain at least 5 free command buffers.
+        explicit StaticMeshComponent ( android_vulkan::Renderer &renderer,
+            size_t &commandBufferConsumed,
+            char const* mesh,
+            char const* material,
+            VkCommandBuffer const* commandBuffers
+        ) noexcept;
+
         ~StaticMeshComponent () override = default;
+
+        [[maybe_unused, nodiscard]] GXAABB const& GetBoundsWorld () const noexcept;
+
+        [[maybe_unused, nodiscard]] android_vulkan::Half4 const& GetColor0 () const noexcept;
+        [[maybe_unused]] void SetColor0 ( GXColorRGB const &color ) noexcept;
+
+        [[maybe_unused, nodiscard]] android_vulkan::Half4 const& GetColor1 () const noexcept;
+        [[maybe_unused]] void SetColor1 ( GXColorRGB const &color ) noexcept;
+
+        [[maybe_unused, nodiscard]] android_vulkan::Half4 const& GetColor2 () const noexcept;
+        [[maybe_unused]] void SetColor2 ( GXColorRGB const &color ) noexcept;
+
+        [[maybe_unused, nodiscard]] android_vulkan::Half4 const& GetColor3 () const noexcept;
+        [[maybe_unused]] void SetColor3 ( GXColorRGB const &color ) noexcept;
+
+        [[maybe_unused, nodiscard]] GXMat4 const& GetTransform () const noexcept;
+        [[maybe_unused]] void SetTransform ( GXMat4 const &transform ) noexcept;
 
     private:
         void FreeTransferResources ( VkDevice device ) override;

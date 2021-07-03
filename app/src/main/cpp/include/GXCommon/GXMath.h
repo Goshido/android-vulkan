@@ -1,4 +1,4 @@
-// version 1.62
+// version 1.65
 
 #ifndef GX_MATH
 #define GX_MATH
@@ -35,6 +35,9 @@ struct [[maybe_unused]] GXVec2 final
 
     [[maybe_unused]] GXVec2 ( GXVec2 const & ) = default;
     [[maybe_unused]] GXVec2& operator = ( GXVec2 const & ) = default;
+
+    [[maybe_unused]] GXVec2 ( GXVec2 && ) = default;
+    [[maybe_unused]] GXVec2& operator = ( GXVec2 && ) = default;
 
     // constexpr constructor is implicitly inline
     // see https://timsong-cpp.github.io/cppwp/n4140/dcl.constexpr
@@ -103,6 +106,9 @@ struct [[maybe_unused]] GXVec3 final
 
     [[maybe_unused]] GXVec3 ( GXVec3 const & ) = default;
     [[maybe_unused]] GXVec3& operator = ( GXVec3 const & ) = default;
+
+    [[maybe_unused]] GXVec3 ( GXVec3 && ) = default;
+    [[maybe_unused]] GXVec3& operator = ( GXVec3 && ) = default;
 
     // constexpr constructor is implicitly inline
     // see https://timsong-cpp.github.io/cppwp/n4140/dcl.constexpr
@@ -212,6 +218,9 @@ struct [[maybe_unused]] GXVec4 final
 
     [[maybe_unused]] GXVec4 ( GXVec4 const & ) = default;
     [[maybe_unused]] GXVec4& operator = ( GXVec4 const & ) = default;
+
+    [[maybe_unused]] GXVec4 ( GXVec4 && ) = default;
+    [[maybe_unused]] GXVec4& operator = ( GXVec4 && ) = default;
 
     [[maybe_unused]] explicit GXVec4 ( GXVec3 const &vector, GXFloat w );
 
@@ -438,8 +447,11 @@ struct [[maybe_unused]] GXQuat final
         // NOTHING
     }
 
-    [[maybe_unused]] GXQuat (GXQuat const & ) = default;
+    [[maybe_unused]] GXQuat ( GXQuat const & ) = default;
     [[maybe_unused]] GXQuat& operator = ( GXQuat const & ) = default;
+
+    [[maybe_unused]] GXQuat ( GXQuat && ) = default;
+    [[maybe_unused]] GXQuat& operator = ( GXQuat && ) = default;
 
     // constexpr constructor is implicitly inline
     // see https://timsong-cpp.github.io/cppwp/n4140/dcl.constexpr
@@ -528,6 +540,9 @@ struct [[maybe_unused]] GXMat3 final
     [[maybe_unused]] GXMat3 ( GXMat3 const & ) = default;
     [[maybe_unused]] GXMat3& operator = ( GXMat3 const & ) = default;
 
+    [[maybe_unused]] GXMat3 ( GXMat3 && ) = default;
+    [[maybe_unused]] GXMat3& operator = ( GXMat3 && ) = default;
+
     [[maybe_unused]] explicit GXMat3 ( GXMat4 const &matrix );
 
     [[maybe_unused]] GXVoid From ( GXQuat const &quaternion );
@@ -605,6 +620,9 @@ struct [[maybe_unused]] GXMat4 final
     [[maybe_unused]] GXMat4 ( GXMat4 const & ) = default;
     [[maybe_unused]] GXMat4& operator = ( GXMat4 const & ) = default;
 
+    [[maybe_unused]] GXMat4 ( GXMat4 && ) = default;
+    [[maybe_unused]] GXMat4& operator = ( GXMat4 && ) = default;
+
     [[maybe_unused]] GXVoid SetRotation ( GXQuat const &quaternion );
 
     // Result is valid if quaternion is normalized.
@@ -642,7 +660,7 @@ struct [[maybe_unused]] GXMat4 final
 
     [[maybe_unused]] GXVoid Translation ( GXFloat x, GXFloat y, GXFloat z );
     [[maybe_unused]] GXVoid TranslateTo ( GXFloat x, GXFloat y, GXFloat z );
-    [[maybe_unused]] GXVoid TranslateTo ( GXVec3  const &location );
+    [[maybe_unused]] GXVoid TranslateTo ( GXVec3 const &location );
 
     [[maybe_unused]] GXVoid RotationX ( GXFloat angle );
     [[maybe_unused]] GXVoid RotationY ( GXFloat angle );
@@ -705,6 +723,9 @@ struct [[maybe_unused]] GXAABB final
     [[maybe_unused]] GXAABB ( GXAABB const & ) = default;
     [[maybe_unused]] GXAABB& operator = ( GXAABB const & ) = default;
 
+    [[maybe_unused]] GXAABB ( GXAABB && ) = default;
+    [[maybe_unused]] GXAABB& operator = ( GXAABB && ) = default;
+
     [[maybe_unused]] GXVoid Empty ();
 
     [[maybe_unused]] GXVoid Transform ( GXAABB &bounds, GXMat4 const &transform ) const;
@@ -749,6 +770,9 @@ struct [[maybe_unused]] GXPlane final
 
     [[maybe_unused]] GXPlane ( GXPlane const & ) = default;
     [[maybe_unused]] GXPlane& operator = ( GXPlane const & ) = default;
+
+    [[maybe_unused]] GXPlane ( GXPlane && ) = default;
+    [[maybe_unused]] GXPlane& operator = ( GXPlane && ) = default;
 
     [[maybe_unused]] GXVoid From ( GXVec3 const &pointA, GXVec3 const &pointB, GXVec3 const &pointC );
     [[maybe_unused]] GXVoid FromLineToPoint ( GXVec3 const &lineStart, GXVec3 const &lineEnd, GXVec3 const &point );

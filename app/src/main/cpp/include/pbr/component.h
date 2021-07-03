@@ -36,7 +36,7 @@ class Component
             ComponentDesc const &desc,
             uint8_t const* data,
             VkCommandBuffer const* commandBuffers
-        );
+        ) noexcept;
 
     protected:
         explicit Component ( ClassID classID ) noexcept;

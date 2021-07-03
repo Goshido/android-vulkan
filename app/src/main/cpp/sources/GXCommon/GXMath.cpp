@@ -1,4 +1,4 @@
-﻿// version 1.62
+﻿// version 1.65
 
 #include <GXCommon/GXMath.h>
 #include <GXCommon/GXWarning.h>
@@ -95,10 +95,10 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     const GXVec2 &b1
 )
 {
-    GXVec2 alpha;
+    GXVec2 alpha {};
     alpha.Subtract ( a1, a0 );
 
-    GXVec2 betta;
+    GXVec2 betta {};
     betta.Subtract ( b1, b0 );
 
     GXVec2 const yotta ( -alpha.GetY (), alpha.GetX () );
@@ -108,7 +108,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     {
         GXVec2 const gamma ( a0.IsEqual ( b0 ) ? b1 : b0 );
 
-        GXVec2 zetta;
+        GXVec2 zetta {};
         zetta.Subtract ( gamma, a0 );
         zetta.Normalize ();
 
@@ -126,10 +126,10 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
         return eGXLineRelationship::NoIntersection;
     }
 
-    GXVec2 phi;
-    phi.Subtract ( b0, a0 );
+    GXVec2 phi {};
+    phi.Subtract ( a0, b0 );
 
-    intersectionPoint.Sum ( b0, -phi.DotProduct ( yotta ) / omega, betta );
+    intersectionPoint.Sum ( b0, phi.DotProduct ( yotta ) / omega, betta );
     return eGXLineRelationship::Intersection;
 }
 
@@ -179,7 +179,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 
 [[maybe_unused]] GXFloat GXVec3::Length () const
 {
-    return sqrtf ( DotProduct ( *this ) );
+    return std::sqrt ( DotProduct ( *this ) );
 }
 
 [[maybe_unused]] GXFloat GXVec3::SquaredLength () const
@@ -1322,12 +1322,12 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 
 [[maybe_unused]] GXVoid GXMat3::From ( const GXVec3 &zDirection )
 {
-    GXVec3 xAxis;
-    GXVec3 yAxis;
+    GXVec3 xAxis {};
+    GXVec3 yAxis {};
 
     if ( zDirection.DotProduct ( GXVec3::GetAbsoluteX () ) < 0.5F )
     {
-        GXVec3 tmp;
+        GXVec3 tmp {};
         tmp.CrossProduct ( zDirection, GXVec3::GetAbsoluteX () );
         xAxis.CrossProduct ( tmp, zDirection );
         xAxis.Normalize ();
@@ -1335,7 +1335,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     }
     else
     {
-        GXVec3 tmp;
+        GXVec3 tmp {};
         tmp.CrossProduct ( zDirection, GXVec3::GetAbsoluteY () );
         yAxis.CrossProduct ( zDirection, tmp );
         yAxis.Normalize ();

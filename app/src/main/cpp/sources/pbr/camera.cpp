@@ -14,7 +14,7 @@ constexpr static float const MOVE_BOOST = 10.0F;
 
 Camera::Camera ():
     _moveBoost ( 0.0F ),
-    _pitch ( GX_MATH_HALF_PI ),
+    _pitch ( 0.0F ),
     _yaw ( 0.0F ),
     _moveSpeed ( 0.0F, 0.0F, 0.0F ),
     _angularSpeed ( 0.0F, 0.0F ),

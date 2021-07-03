@@ -16,7 +16,7 @@ class PointLightComponent final : public Component
         LightRef    _pointLight;
 
     public:
-        PointLightComponent () = delete;
+        PointLightComponent () noexcept;
 
         PointLightComponent ( PointLightComponent const & ) = delete;
         PointLightComponent& operator = ( PointLightComponent const & ) = delete;
@@ -28,7 +28,10 @@ class PointLightComponent final : public Component
 
         ~PointLightComponent () override = default;
 
-        [[nodiscard]] LightRef GetLight () const;
+        [[maybe_unused]] void SetBoundDimensions ( float width, float height, float depth ) noexcept;
+        [[maybe_unused]] void SetHue ( GXColorRGB const &hue ) noexcept;
+        [[maybe_unused]] void SetIntensity ( float intensity ) noexcept;
+        [[maybe_unused]] void SetLocation ( GXVec3 const &location ) noexcept;
 
     private:
         void Submit ( RenderSession &renderSession ) override;

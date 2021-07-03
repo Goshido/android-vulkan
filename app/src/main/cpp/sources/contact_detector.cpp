@@ -260,8 +260,8 @@ void ContactDetector::ManifoldEdgeEdge ( ContactManager &contactManager,
     GXVec2 betaProj {};
     betaProj.Subtract ( projB[ 1U ], projB[ 0U ] );
 
-    firstContact->_pointA.Sum ( _shapeBPoints[ 0U ], ba.DotProduct ( n ) / n.DotProduct ( betaProj ), beta );
-    firstContact->_pointB.Sum ( firstContact->_pointA, manifold->_penetration, manifold->_normal );
+    firstContact->_pointB.Sum ( _shapeBPoints[ 0U ], ba.DotProduct ( n ) / n.DotProduct ( betaProj ), beta );
+    firstContact->_pointA.Sum ( firstContact->_pointB, manifold->_penetration, manifold->_normal );
 }
 
 void ContactDetector::ManifoldEdgeFace ( ContactManager &contactManager,
@@ -275,16 +275,16 @@ void ContactDetector::ManifoldEdgeFace ( ContactManager &contactManager,
     Vertices const* e;
     Vertices const* f;
 
-    if ( _shapeBPoints.size () == 2U )
+    if ( _shapeAPoints.size () == 2U )
     {
-        e = &_shapeBPoints;
-        f = &_shapeAPoints;
+        e = &_shapeAPoints;
+        f = &_shapeBPoints;
         firstContactData = AllocateFirstContact ( contactManager, a, b, tbn );
     }
     else
     {
-        e = &_shapeAPoints;
-        f = &_shapeBPoints;
+        e = &_shapeBPoints;
+        f = &_shapeAPoints;
 
         GXMat3 adjustedTBN {};
 
@@ -304,6 +304,7 @@ void ContactDetector::ManifoldEdgeFace ( ContactManager &contactManager,
     }
 
     auto& [manifold, firstContact] = firstContactData;
+    float const p = -manifold->_penetration;
 
     Vertices const& edge = *e;
     Vertices const& face = *f;
@@ -333,21 +334,22 @@ void ContactDetector::ManifoldEdgeFace ( ContactManager &contactManager,
         // Note: It's needed to clamp "t" because in 3D there is a case when edge is completely in one side
         // relative to the face.
         firstContact->_pointA.Sum ( edge[ 0U ], std::clamp ( t, 0.0F, 1.0F ), edgeDir );
-        firstContact->_pointB.Sum ( firstContact->_pointA, manifold->_penetration, manifold->_normal );
+        firstContact->_pointB.Sum ( firstContact->_pointA, p, manifold->_normal );
 
         return;
     }
 
     Vertices const& vertices = _cyrusBeck.Run ( face, faceNormal, edge, edgeDir );
+
     firstContact->_pointA = vertices[ 0U ];
-    firstContact->_pointB.Sum ( firstContact->_pointA, manifold->_penetration, manifold->_normal );
+    firstContact->_pointB.Sum ( firstContact->_pointA, p, manifold->_normal );
 
     if ( vertices.size () < 2U )
         return;
 
     Contact& anotherContact = contactManager.AllocateContact ( *firstContactData.first );
     anotherContact._pointA = vertices[ 1U ];
-    anotherContact._pointB.Sum ( anotherContact._pointA, manifold->_penetration, manifold->_normal );
+    anotherContact._pointB.Sum ( anotherContact._pointA, p, manifold->_normal );
 }
 
 void ContactDetector::ManifoldFaceFace ( ContactManager &contactManager,
@@ -487,7 +489,7 @@ void ContactDetector::ManifoldPoint ( ContactManager &contactManager,
 {
     auto [manifold, contact] = AllocateFirstContact ( contactManager, a, b, tbn );
     contact->_pointA = vertex;
-    contact->_pointB.Sum ( contact->_pointA, manifold->_penetration, manifold->_normal );
+    contact->_pointB.Sum ( contact->_pointA, -manifold->_penetration, manifold->_normal );
 }
 
 void ContactDetector::NotifyEPAFail () noexcept

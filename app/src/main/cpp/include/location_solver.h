@@ -24,12 +24,7 @@ class LocationSolver final
 
     private:
         static void SolvePair ( RigidBody &bodyA, RigidBody &bodyB, ContactManifold const &manifold ) noexcept;
-
-        static void SolveSingle ( RigidBody &body,
-            ContactManifold &manifold,
-            float penetration,
-            GXVec3 const &normal
-        ) noexcept;
+        static void SolveSingle ( RigidBody &body, ContactManifold &manifold, float penetration ) noexcept;
 };
 
 } // namespace android_vulkan

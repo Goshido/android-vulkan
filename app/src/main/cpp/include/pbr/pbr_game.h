@@ -37,6 +37,7 @@ class PBRGame final : public android_vulkan::Game
         MaterialRef                         _sphereMaterial;
         android_vulkan::Half4               _sphereColorA;
         android_vulkan::Half4               _sphereColorB;
+        android_vulkan::Half4               _sphereColorC;
         android_vulkan::Half4               _defaultColor;
         android_vulkan::Physics             _physics;
 
@@ -70,9 +71,6 @@ class PBRGame final : public android_vulkan::Game
         [[nodiscard]] bool CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept;
         void DestroyPhysics () noexcept;
         void UpdatePhysicsActors ( float deltaTime ) noexcept;
-
-        static void OnOneContactDetect ( void* context ) noexcept;
-        static void OnOneStep ( void* context ) noexcept;
 };
 
 } // namespace pbr

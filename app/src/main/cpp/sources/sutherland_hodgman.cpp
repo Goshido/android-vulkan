@@ -1,4 +1,5 @@
 #include <sutherland_hodgman.h>
+#include <logger.h>
 
 
 namespace android_vulkan {
@@ -74,7 +75,7 @@ Vertices const& SutherlandHodgman::Run ( Vertices const &shapeAPoints,
                 _clipPoints.push_back ( alpha );
             };
 
-            if ( acTest > 0.0F )
+            if ( acTest >= 0.0F )
             {
                 if ( baTest > 0.0F )
                     addIntersection ();

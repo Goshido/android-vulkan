@@ -14,13 +14,13 @@ void LocationSolver::Solve ( ContactManager &contactManager ) noexcept
 
         if ( bodyA.IsKinematic () )
         {
-            SolveSingle ( bodyB, manifold, manifold._penetration, manifold._normal );
+            SolveSingle ( bodyB, manifold, manifold._penetration );
             continue;
         }
 
         if ( bodyB.IsKinematic () )
         {
-            SolveSingle ( bodyA, manifold, -manifold._penetration, manifold._normal );
+            SolveSingle ( bodyA, manifold, -manifold._penetration );
             continue;
         }
 
@@ -36,23 +36,30 @@ void LocationSolver::SolvePair ( RigidBody &/*bodyA*/,
     assert ( false );
 }
 
-void LocationSolver::SolveSingle ( RigidBody &body,
-    ContactManifold &manifold,
-    float penetration,
-    GXVec3 const &normal
-) noexcept
+void LocationSolver::SolveSingle ( RigidBody &body, ContactManifold &manifold, float penetration ) noexcept
 {
     GXVec3 offset {};
-    offset.Multiply ( normal, penetration );
+    offset.Multiply ( manifold._normal, penetration );
 
     GXVec3 location {};
-    location.Sum ( body.GetLocation (), offset);
+    location.Sum ( body.GetLocation (), offset );
     body.SetLocation ( location );
+
+    if ( &body == manifold._bodyA.get () )
+    {
+        for ( size_t i = 0U; i < manifold._contactCount; ++i )
+        {
+            Contact& c = manifold._contacts[ i ];
+            c._pointAfterResolve.Sum ( c._pointA, offset );
+        }
+
+        return;
+    }
 
     for ( size_t i = 0U; i < manifold._contactCount; ++i )
     {
         Contact& c = manifold._contacts[ i ];
-        c._pointAfterResolve.Sum ( c._pointA, offset );
+        c._pointAfterResolve.Sum ( c._pointB, offset );
     }
 }
 

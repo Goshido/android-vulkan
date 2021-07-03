@@ -1,4 +1,4 @@
-﻿// version 1.65
+﻿// version 1.66
 
 #include <GXCommon/GXMath.h>
 #include <GXCommon/GXWarning.h>
@@ -1325,7 +1325,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     GXVec3 xAxis {};
     GXVec3 yAxis {};
 
-    if ( zDirection.DotProduct ( GXVec3::GetAbsoluteX () ) < 0.5F )
+    if ( std::abs ( zDirection.DotProduct ( GXVec3::GetAbsoluteX () ) ) < 0.5F )
     {
         GXVec3 tmp {};
         tmp.CrossProduct ( zDirection, GXVec3::GetAbsoluteX () );

@@ -12,12 +12,14 @@ namespace android_vulkan {
 constexpr static float const DEFAULT_DAMPING_ANGULAR = 0.8F;
 constexpr static float const DEFAULT_DAMPING_LINEAR = 0.8F;
 
+constexpr static float const DEFAULT_FRICTION = 0.4F;
+
 constexpr static GXVec3 const DEFAULT_LOCATION ( 0.0F, -777.777F, 0.0F );
 
 constexpr static float const DEFAULT_MASS = 1.0F;
 constexpr static float const DEFAULT_MASS_INVERSE = 1.0F / DEFAULT_MASS;
 
-constexpr static float const DEFAULT_RESTITUTION = 0.9F;
+constexpr static float const DEFAULT_RESTITUTION = 0.85F;
 
 constexpr static GXVec3 const DEFAULT_ROTATION_AXIS ( 0.0F, 0.0F, 1.0F );
 
@@ -30,6 +32,7 @@ constexpr static GXVec3 const ZERO ( 0.0F, 0.0F, 0.0F );
 RigidBody::RigidBody () noexcept:
     _dampingAngular ( DEFAULT_DAMPING_ANGULAR ),
     _dampingLinear ( DEFAULT_DAMPING_LINEAR ),
+    _friction ( DEFAULT_FRICTION ),
     _inertiaTensorInverse {},
     _isAwake ( true ),
     _isCanSleep ( true ),
@@ -69,7 +72,7 @@ RigidBody::RigidBody () noexcept:
     _velocityAngular = velocity;
 }
 
-[[maybe_unused]] void RigidBody::SetVelocityAngular ( float wx, float wy, float wz ) noexcept
+void RigidBody::SetVelocityAngular ( float wx, float wy, float wz ) noexcept
 {
     _velocityAngular._data[ 0U ] = wx;
     _velocityAngular._data[ 1U ] = wy;
@@ -91,7 +94,7 @@ RigidBody::RigidBody () noexcept:
     _velocityLinear = velocity;
 }
 
-[[maybe_unused]] void RigidBody::SetVelocityLinear ( float x, float y, float z ) noexcept
+void RigidBody::SetVelocityLinear ( float x, float y, float z ) noexcept
 {
     _velocityLinear._data[ 0U ] = x;
     _velocityLinear._data[ 1U ] = y;
@@ -204,6 +207,16 @@ RigidBody::RigidBody () noexcept:
     _dampingLinear = damping;
 }
 
+float RigidBody::GetFriction () const noexcept
+{
+    return _friction;
+}
+
+[[maybe_unused]] void RigidBody::SetFriction ( float friction ) noexcept
+{
+    _friction = friction;
+}
+
 [[maybe_unused]] GXMat3 const& RigidBody::GetInertiaTensorInverse () const noexcept
 {
     return _inertiaTensorInverse;
@@ -245,7 +258,7 @@ RigidBody::RigidBody () noexcept:
     return _mass;
 }
 
-[[maybe_unused]] float RigidBody::GetMassInverse () const noexcept
+float RigidBody::GetMassInverse () const noexcept
 {
     return _massInverse;
 }
@@ -262,7 +275,7 @@ RigidBody::RigidBody () noexcept:
     UpdateCacheData ();
 }
 
-[[maybe_unused]] float RigidBody::GetRestitution () const noexcept
+float RigidBody::GetRestitution () const noexcept
 {
     return _restitution;
 }
@@ -456,12 +469,20 @@ void RigidBody::IntegrateAsKinematic ( float deltaTime ) noexcept
 {
     _location.Sum ( _location, deltaTime, _velocityLinear );
 
+    // omega: angular velocity (direction is axis, magnitude is angle)
+    // https://fgiesen.wordpress.com/2012/08/24/quaternion-differentiation/
+    // https://www.ashwinnarayan.com/post/how-to-integrate-quaternions/
+    // https://gafferongames.com/post/physics_in_3d/
     GXQuat alpha ( 0.0F, _velocityAngular._data[ 0U ], _velocityAngular._data[ 1U ], _velocityAngular._data[ 2U ] );
     alpha.Multiply ( alpha, 0.5F * deltaTime );
+    alpha._data[ 0U ] = 1.0F;
 
-    GXQuat betta;
-    betta.Multiply ( alpha, _rotation );
-    _rotation.Sum ( _rotation, betta );
+    GXQuat beta {};
+    beta.Multiply ( alpha, _rotation );
+    beta.Normalize ();
+
+    _rotationBefore = _rotation;
+    _rotation = beta;
 
     UpdateCacheData ();
 }

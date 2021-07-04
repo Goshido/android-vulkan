@@ -13,6 +13,9 @@ class RigidBody final
         float       _dampingAngular;
         float       _dampingLinear;
 
+        // TODO move this to the shape properties.
+        float       _friction;
+
         GXMat3      _inertiaTensorInverse;
 
         bool        _isAwake;
@@ -55,12 +58,12 @@ class RigidBody final
         [[maybe_unused]] void AddVelocityAngular ( GXVec3 const &velocity ) noexcept;
         [[maybe_unused, nodiscard]] GXVec3 const& GetVelocityAngular () const noexcept;
         [[maybe_unused]] void SetVelocityAngular ( GXVec3 const &velocity ) noexcept;
-        [[maybe_unused]] void SetVelocityAngular ( float wx, float wy, float wz ) noexcept;
+        void SetVelocityAngular ( float wx, float wy, float wz ) noexcept;
 
         [[maybe_unused]] void AddVelocityLinear ( GXVec3 const &velocity ) noexcept;
         [[maybe_unused, nodiscard]] GXVec3 const& GetVelocityLinear () const noexcept;
         [[maybe_unused]] void SetVelocityLinear ( GXVec3 const &velocity ) noexcept;
-        [[maybe_unused]] void SetVelocityLinear ( float x, float y, float z ) noexcept;
+        void SetVelocityLinear ( float x, float y, float z ) noexcept;
 
         [[maybe_unused]] void AddForce ( GXVec3 const &force, GXVec3 const &point ) noexcept;
         [[maybe_unused]] void AddImpulse ( GXVec3 const &impulse, GXVec3 const &point ) noexcept;
@@ -79,23 +82,26 @@ class RigidBody final
         [[maybe_unused, nodiscard]] float GetDampingLinear () const noexcept;
         [[maybe_unused]] void SetDampingLinear ( float damping ) noexcept;
 
+        [[nodiscard]] float GetFriction () const noexcept;
+        [[maybe_unused]] void SetFriction ( float friction ) noexcept;
+
         [[maybe_unused, nodiscard]] GXMat3 const& GetInertiaTensorInverse () const noexcept;
 
-        [[maybe_unused, nodiscard]] GXVec3 const& GetLocation () const noexcept;
+        [[nodiscard]] GXVec3 const& GetLocation () const noexcept;
         [[maybe_unused]] void SetLocation ( GXVec3 const &location ) noexcept;
         [[maybe_unused]] void SetLocation ( float x, float y, float z ) noexcept;
 
         [[maybe_unused, nodiscard]] float GetMass () const noexcept;
-        [[maybe_unused, nodiscard]] float GetMassInverse () const noexcept;
+        [[nodiscard]] float GetMassInverse () const noexcept;
         [[maybe_unused]] void SetMass ( float mass ) noexcept;
 
-        [[maybe_unused, nodiscard]] float GetRestitution () const noexcept;
+        [[nodiscard]] float GetRestitution () const noexcept;
         [[maybe_unused]] void SetRestitution ( float restitution ) noexcept;
 
         [[maybe_unused, nodiscard]] GXQuat const& GetRotation () const noexcept;
         [[maybe_unused]] void SetRotation ( GXQuat const &rotation ) noexcept;
 
-        [[maybe_unused, nodiscard]] Shape& GetShape () noexcept;
+        [[nodiscard]] Shape& GetShape () noexcept;
         [[nodiscard]] bool HasShape () const noexcept;
         [[maybe_unused]] void SetShape ( ShapeRef &shape ) noexcept;
 

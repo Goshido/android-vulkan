@@ -394,7 +394,7 @@ bool PBRGame::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
     _cubeBody = std::make_shared<android_vulkan::RigidBody> ();
     _cubeBody->SetMass ( 0.777F );
     _cubeBody->DisableKinematic ();
-    _cubeBody->DisableSleep ();
+    _cubeBody->EnableSleep ();
 
     constexpr GXVec3 const cubeSpawn ( 0.0F, 0.5F, 0.8F );
     _cubeBody->SetLocation ( cubeSpawn );
@@ -419,6 +419,7 @@ bool PBRGame::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
         consumed,
         "pbr/system/unit-cube.mesh2",
         "pbr/assets/System/Default.mtl",
+        //"pbr/assets/Props/SaleTerminal/SaleWumie.mtl",
         commandBuffers
     );
 
@@ -527,7 +528,7 @@ void PBRGame::UpdatePhysicsActors ( float deltaTime ) noexcept
         return;
 
     _floorPhase += deltaTime;
-    _floorBody->SetVelocityLinear ( GXVec3 ( 4.0e-1F * std::sin ( _floorPhase ), 0.0F, 0.0F ) );
+    _floorBody->SetVelocityLinear ( GXVec3 ( 1.6F * std::sin ( _floorPhase ), 0.0F, 0.0F ) );
 }
 
 } // namespace pbr

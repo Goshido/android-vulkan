@@ -2,6 +2,7 @@
 #include <contact_detector.h>
 #include <location_solver.h>
 #include <logger.h>
+#include <velocity_solver.h>
 
 
 namespace android_vulkan {
@@ -120,9 +121,9 @@ void Physics::Simulate ( float deltaTime ) noexcept
         Integrate ();
         CollectContacts ();
 
-        // TODO collision response
+        VelocitySolver::Run ( _contactManager, _fixedTimeStep );
+        LocationSolver::Run ( _contactManager );
 
-        LocationSolver::Solve ( _contactManager );
         Prepare ();
         _accumulator -= _fixedTimeStep;
     }

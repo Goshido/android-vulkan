@@ -13,13 +13,38 @@ GX_RESTORE_WARNING_STATE
 
 namespace android_vulkan {
 
+struct VelocitySolverData final
+{
+    float       _effectiveMass = 0.0F;
+    GXVec6      _j {};
+    float       _lambda = 0.0F;
+    GXVec6      _mj {};
+
+    VelocitySolverData () = default;
+
+    VelocitySolverData ( VelocitySolverData const & ) = default;
+    VelocitySolverData& operator = ( VelocitySolverData const & ) = default;
+
+    VelocitySolverData ( VelocitySolverData && ) = default;
+    VelocitySolverData& operator = ( VelocitySolverData && ) = default;
+
+    ~VelocitySolverData () = default;
+};
+
 struct Contact final
 {
-    GXVec3                      _pointA {};
-    GXVec3                      _pointB {};
+    GXVec3                                  _pointA {};
+    GXVec3                                  _pointB {};
+
+    // Velocity solver entities
+    [[maybe_unused]] VelocitySolverData     _dataT;
+    [[maybe_unused]] VelocitySolverData     _dataB;
+    VelocitySolverData                      _dataN;
+
+    float                                   _b = 0.0F;
 
     // Debug feature.
-    [[maybe_unused]] GXVec3     _pointAfterResolve {};
+    [[maybe_unused]] GXVec3                 _pointAfterResolve {};
 
     Contact () = default;
 

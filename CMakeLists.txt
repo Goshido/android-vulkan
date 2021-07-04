@@ -95,6 +95,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/texture2D.cpp
     app/src/main/cpp/sources/trigger.cpp
     app/src/main/cpp/sources/uniform_buffer.cpp
+    app/src/main/cpp/sources/velocity_solver.cpp
     app/src/main/cpp/sources/vulkan_utils.cpp
     app/src/main/cpp/sources/GXCommon/GXMath.cpp
     app/src/main/cpp/sources/GXCommon/Intrinsics/GXMathNeon.cpp

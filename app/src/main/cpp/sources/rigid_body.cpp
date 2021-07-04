@@ -17,6 +17,8 @@ constexpr static GXVec3 const DEFAULT_LOCATION ( 0.0F, -777.777F, 0.0F );
 constexpr static float const DEFAULT_MASS = 1.0F;
 constexpr static float const DEFAULT_MASS_INVERSE = 1.0F / DEFAULT_MASS;
 
+constexpr static float const DEFAULT_RESTITUTION = 0.9F;
+
 constexpr static GXVec3 const DEFAULT_ROTATION_AXIS ( 0.0F, 0.0F, 1.0F );
 
 constexpr static float const LOCATION_SLEEP_THRESHOLD = 2.0e-5F;
@@ -36,6 +38,7 @@ RigidBody::RigidBody () noexcept:
     _locationBefore ( DEFAULT_LOCATION ),
     _mass ( DEFAULT_MASS ),
     _massInverse ( DEFAULT_MASS_INVERSE ),
+    _restitution ( DEFAULT_RESTITUTION ),
     _rotation {},
     _rotationBefore {},
     _shape {},
@@ -66,6 +69,13 @@ RigidBody::RigidBody () noexcept:
     _velocityAngular = velocity;
 }
 
+[[maybe_unused]] void RigidBody::SetVelocityAngular ( float wx, float wy, float wz ) noexcept
+{
+    _velocityAngular._data[ 0U ] = wx;
+    _velocityAngular._data[ 1U ] = wy;
+    _velocityAngular._data[ 2U ] = wz;
+}
+
 [[maybe_unused]] void RigidBody::AddVelocityLinear ( GXVec3 const &velocity ) noexcept
 {
     _velocityLinear.Sum ( _velocityLinear, velocity );
@@ -79,6 +89,13 @@ RigidBody::RigidBody () noexcept:
 [[maybe_unused]] void RigidBody::SetVelocityLinear ( GXVec3 const &velocity ) noexcept
 {
     _velocityLinear = velocity;
+}
+
+[[maybe_unused]] void RigidBody::SetVelocityLinear ( float x, float y, float z ) noexcept
+{
+    _velocityLinear._data[ 0U ] = x;
+    _velocityLinear._data[ 1U ] = y;
+    _velocityLinear._data[ 2U ] = z;
 }
 
 [[maybe_unused]] void RigidBody::AddForce ( GXVec3 const &force, GXVec3 const &point ) noexcept
@@ -187,7 +204,7 @@ RigidBody::RigidBody () noexcept:
     _dampingLinear = damping;
 }
 
-[[maybe_unused]] GXMat3 const& RigidBody::GetInertialTensorInverse () const noexcept
+[[maybe_unused]] GXMat3 const& RigidBody::GetInertiaTensorInverse () const noexcept
 {
     return _inertiaTensorInverse;
 }
@@ -243,6 +260,16 @@ RigidBody::RigidBody () noexcept:
 
     _shape->CalculateInertiaTensor ( mass );
     UpdateCacheData ();
+}
+
+[[maybe_unused]] float RigidBody::GetRestitution () const noexcept
+{
+    return _restitution;
+}
+
+[[maybe_unused]] void RigidBody::SetRestitution ( float restitution ) noexcept
+{
+    _restitution = restitution;
 }
 
 [[maybe_unused]] GXQuat const& RigidBody::GetRotation () const noexcept

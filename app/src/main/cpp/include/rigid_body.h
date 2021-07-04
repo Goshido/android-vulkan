@@ -25,6 +25,8 @@ class RigidBody final
         float       _mass;
         float       _massInverse;
 
+        float       _restitution;
+
         GXQuat      _rotation;
         GXQuat      _rotationBefore;
 
@@ -53,10 +55,12 @@ class RigidBody final
         [[maybe_unused]] void AddVelocityAngular ( GXVec3 const &velocity ) noexcept;
         [[maybe_unused, nodiscard]] GXVec3 const& GetVelocityAngular () const noexcept;
         [[maybe_unused]] void SetVelocityAngular ( GXVec3 const &velocity ) noexcept;
+        [[maybe_unused]] void SetVelocityAngular ( float wx, float wy, float wz ) noexcept;
 
         [[maybe_unused]] void AddVelocityLinear ( GXVec3 const &velocity ) noexcept;
         [[maybe_unused, nodiscard]] GXVec3 const& GetVelocityLinear () const noexcept;
         [[maybe_unused]] void SetVelocityLinear ( GXVec3 const &velocity ) noexcept;
+        [[maybe_unused]] void SetVelocityLinear ( float x, float y, float z ) noexcept;
 
         [[maybe_unused]] void AddForce ( GXVec3 const &force, GXVec3 const &point ) noexcept;
         [[maybe_unused]] void AddImpulse ( GXVec3 const &impulse, GXVec3 const &point ) noexcept;
@@ -75,7 +79,7 @@ class RigidBody final
         [[maybe_unused, nodiscard]] float GetDampingLinear () const noexcept;
         [[maybe_unused]] void SetDampingLinear ( float damping ) noexcept;
 
-        [[maybe_unused, nodiscard]] GXMat3 const& GetInertialTensorInverse () const noexcept;
+        [[maybe_unused, nodiscard]] GXMat3 const& GetInertiaTensorInverse () const noexcept;
 
         [[maybe_unused, nodiscard]] GXVec3 const& GetLocation () const noexcept;
         [[maybe_unused]] void SetLocation ( GXVec3 const &location ) noexcept;
@@ -84,6 +88,9 @@ class RigidBody final
         [[maybe_unused, nodiscard]] float GetMass () const noexcept;
         [[maybe_unused, nodiscard]] float GetMassInverse () const noexcept;
         [[maybe_unused]] void SetMass ( float mass ) noexcept;
+
+        [[maybe_unused, nodiscard]] float GetRestitution () const noexcept;
+        [[maybe_unused]] void SetRestitution ( float restitution ) noexcept;
 
         [[maybe_unused, nodiscard]] GXQuat const& GetRotation () const noexcept;
         [[maybe_unused]] void SetRotation ( GXQuat const &rotation ) noexcept;

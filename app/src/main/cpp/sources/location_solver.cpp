@@ -5,7 +5,7 @@
 
 namespace android_vulkan {
 
-void LocationSolver::Solve ( ContactManager &contactManager ) noexcept
+void LocationSolver::Run ( ContactManager &contactManager ) noexcept
 {
     for ( auto& manifold : contactManager.GetContactManifolds () )
     {

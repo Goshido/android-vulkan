@@ -281,6 +281,22 @@ struct [[maybe_unused]] GXVec6 final
         // NOTHING
     }
 
+    // constexpr constructor is implicitly inline
+    // see https://timsong-cpp.github.io/cppwp/n4140/dcl.constexpr
+    [[maybe_unused]] constexpr explicit GXVec6 ( GXVec3 const &part1, GXVec3 const &part2 ):
+        _data
+        {
+            part1._data[ 0U ],
+            part1._data[ 1U ],
+            part1._data[ 2U ],
+            part2._data[ 0U ],
+            part2._data[ 1U ],
+            part2._data[ 2U ]
+        }
+    {
+        // NOTHING
+    }
+
     [[maybe_unused]] GXVoid Init ( GXFloat a1, GXFloat a2, GXFloat a3, GXFloat a4, GXFloat a5, GXFloat a6 );
     [[maybe_unused]] GXVoid From ( GXVec3 const &v1, GXVec3 const &v2 );
 

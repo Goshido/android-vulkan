@@ -20,7 +20,7 @@ class LocationSolver final
 
         ~LocationSolver () = delete;
 
-        static void Solve ( ContactManager &contactManager ) noexcept;
+        static void Run ( ContactManager &contactManager ) noexcept;
 
     private:
         static void SolvePair ( RigidBody &bodyA, RigidBody &bodyB, ContactManifold const &manifold ) noexcept;

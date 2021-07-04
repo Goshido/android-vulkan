@@ -12,9 +12,9 @@ constexpr static float const DEFAULT_HALF_SIZE = 0.5F * DEFAULT_SIZE;
 constexpr static GXVec3 const DEFAULT_BOUNDS_MIN ( -DEFAULT_HALF_SIZE, -DEFAULT_HALF_SIZE, -DEFAULT_HALF_SIZE );
 constexpr static GXVec3 const DEFAULT_BOUNDS_MAX ( DEFAULT_HALF_SIZE, DEFAULT_HALF_SIZE, DEFAULT_HALF_SIZE );
 
-GXMat3 const& Shape::GetInertiaTensor () const noexcept
+GXMat3 const& Shape::GetInertiaTensorInverse () const noexcept
 {
-    return _inertiaTensor;
+    return _inertiaTensorInverse;
 }
 
 [[maybe_unused]] GXAABB const& Shape::GetBoundsLocal () const noexcept
@@ -90,7 +90,7 @@ Shape::Shape ( eShapeType shapeType ) noexcept:
     _boundsWorld {},
     _frictionDynamic ( DEFAULT_FRICTION_DYNAMIC ),
     _frictionStatic ( DEFAULT_FRICTION_STATIC ),
-    _inertiaTensor {},
+    _inertiaTensorInverse {},
     _restitution ( DEFAULT_RESTITUTION ),
     _transformRigidBody {},
     _transformWorld {}
@@ -102,7 +102,7 @@ Shape::Shape ( eShapeType shapeType ) noexcept:
     _transformWorld = _transformRigidBody;
     _boundsLocal.Transform ( _boundsWorld, _transformWorld );
 
-    _inertiaTensor.Identity ();
+    _inertiaTensorInverse.Identity ();
 }
 
 } // namespace android_vulkan

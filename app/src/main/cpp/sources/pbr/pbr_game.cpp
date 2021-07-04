@@ -330,7 +330,7 @@ void PBRGame::DestroyCommandPool ( VkDevice device ) noexcept
 
 bool PBRGame::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
 {
-    _physics.SetTimeSpeed ( 0.5F );
+    _physics.SetTimeSpeed ( 1.0F );
 
     if ( !_physics.AddGlobalForce ( std::make_shared<android_vulkan::GlobalForceGravity> ( FREE_FALL_ACCELERATION ) ) )
     {
@@ -403,17 +403,17 @@ bool PBRGame::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
 //    rotation.FromAxisAngle ( 1.0F, 0.0F, 0.0F, GX_MATH_HALF_PI * 0.5F );
 //    _cubeBody->SetRotation ( rotation );
 
-    GXVec3 const angularVelocity ( 0.0F, 20.0F, 0.0F );
-    _cubeBody->SetVelocityAngular ( angularVelocity );
+//    GXVec3 const angularVelocity ( 0.0F, 20.0F, 0.0F );
+//    _cubeBody->SetVelocityAngular ( angularVelocity );
 
     android_vulkan::ShapeRef cubeShape = std::make_shared<android_vulkan::ShapeBox> ( 0.2F, 0.2F, 0.2F );
     _cubeBody->SetShape ( cubeShape );
 
-//    GXVec3 point ( 0.1F, 0.0F, 0.05F );
-//    point.Sum ( point, cubeSpawn );
-//
-//    GXVec3 const impulse ( -80.4106F, 170.0577F, 40.931F );
-//    _cubeBody->AddImpulse ( impulse, point );
+    GXVec3 point ( 0.1F, 0.0F, 0.05F );
+    point.Sum ( point, cubeSpawn );
+
+    GXVec3 const impulse ( -0.44106F, 0.80577F, 0.2931F );
+    _cubeBody->AddImpulse ( impulse, point );
 
     _floor = std::make_shared<StaticMeshComponent> ( renderer,
         consumed,

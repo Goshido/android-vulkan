@@ -35,7 +35,7 @@ class Shape
         float           _frictionDynamic;
         float           _frictionStatic;
 
-        GXMat3          _inertiaTensor;
+        GXMat3          _inertiaTensorInverse;
 
         float           _restitution;
 
@@ -57,7 +57,7 @@ class Shape
             GXVec3 const &directionWorld
         ) const noexcept = 0;
 
-        [[nodiscard]] GXMat3 const& GetInertiaTensor () const noexcept;
+        [[nodiscard]] GXMat3 const& GetInertiaTensorInverse () const noexcept;
 
         [[maybe_unused, nodiscard]] GXAABB const& GetBoundsLocal () const noexcept;
         [[maybe_unused, nodiscard]] GXAABB const& GetBoundsWorld () const noexcept;

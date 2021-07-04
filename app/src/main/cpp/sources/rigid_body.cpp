@@ -404,15 +404,12 @@ void RigidBody::UpdateCacheData () noexcept
     _transform.FromFast ( _rotation, _location );
 
     GXMat3 const alpha ( _transform );
-    GXMat3 betta {};
-    betta.Transpose ( alpha );
+    GXMat3 beta {};
+    beta.Transpose ( alpha );
 
     GXMat3 gamma {};
-    gamma.Multiply ( betta, _shape->GetInertiaTensor () );
-
-    GXMat3 inertiaTensorWorld {};
-    inertiaTensorWorld.Multiply ( gamma, betta );
-    _inertiaTensorInverse.Inverse ( inertiaTensorWorld );
+    gamma.Multiply ( beta, _shape->GetInertiaTensorInverse () );
+    _inertiaTensorInverse.Multiply ( gamma, alpha );
 
     _shape->UpdateCacheData ( _transform );
 }
@@ -436,14 +433,20 @@ void RigidBody::IntegrateAsDynamic ( float deltaTime ) noexcept
     _locationBefore = _location;
     _location.Sum ( _location, deltaTime, _velocityLinear );
 
-    GXQuat alpha ( 0.0F, _velocityAngular._data[ 0U ], _velocityAngular._data[ 1U ],  _velocityAngular._data[ 2U ] );
+    // omega: angular velocity (direction is axis, magnitude is angle)
+    // https://fgiesen.wordpress.com/2012/08/24/quaternion-differentiation/
+    // https://www.ashwinnarayan.com/post/how-to-integrate-quaternions/
+    // https://gafferongames.com/post/physics_in_3d/
+    GXQuat alpha ( 0.0F, _velocityAngular._data[ 0U ], _velocityAngular._data[ 1U ], _velocityAngular._data[ 2U ] );
     alpha.Multiply ( alpha, 0.5F * deltaTime );
+    alpha._data[ 0U ] = 1.0F;
 
-    GXQuat betta {};
-    betta.Multiply ( alpha, _rotation );
+    GXQuat beta {};
+    beta.Multiply ( alpha, _rotation );
+    beta.Normalize ();
 
     _rotationBefore = _rotation;
-    _rotation.Sum ( _rotation, betta );
+    _rotation = beta;
 
     UpdateCacheData ();
     RunSleepLogic ( deltaTime );

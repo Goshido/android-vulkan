@@ -9,8 +9,8 @@ GX_RESTORE_WARNING_STATE
 
 namespace android_vulkan {
 
-constexpr static uint16_t const ITERATIONS = 10U;
-constexpr static float const STABILIZATION_FACTOR = 0.5F;
+constexpr static uint16_t const ITERATIONS = 8U;
+constexpr static float const STABILIZATION_FACTOR = 0.1F;
 
 static_assert ( STABILIZATION_FACTOR >= 0.0F && STABILIZATION_FACTOR <= 1.0F,
     "The stabilization factor must be in range [0.0F, 1.0F]" );
@@ -84,7 +84,6 @@ void VelocitySolver::SolveSingle ( ContactManifold &manifold, float fixedTimeSte
         cross.CrossProduct ( manifold._normal, rDyn );
         data._j.From ( minusN, cross );
 
-        // Vector matrix or matrix vector?
         invInertiaTensor.MultiplyMatrixVector ( beta, cross );
         alpha.Multiply ( minusN, invMass );
         data._mj.From ( alpha, beta );

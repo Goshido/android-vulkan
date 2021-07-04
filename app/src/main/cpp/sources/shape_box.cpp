@@ -29,16 +29,16 @@ ShapeBox::ShapeBox ( float width, float height, float depth ) noexcept:
     diagonal.Sum ( diagonal, GXVec3 ( square._data[ 2U ], square._data[ 2U ], square._data[ 1U ] ) );
     diagonal.Multiply ( diagonal, 8.3333e-2F * mass );
 
-    _inertiaTensor._m[ 0U ][ 0U ] = diagonal._data[ 0U ];
-    _inertiaTensor._m[ 1U ][ 1U ] = diagonal._data[ 1U ];
-    _inertiaTensor._m[ 2U ][ 2U ] = diagonal._data[ 2U ];
+    _inertiaTensorInverse._m[ 0U ][ 0U ] = 1.0F / diagonal._data[ 0U ];
+    _inertiaTensorInverse._m[ 1U ][ 1U ] = 1.0F / diagonal._data[ 1U ];
+    _inertiaTensorInverse._m[ 2U ][ 2U ] = 1.0F / diagonal._data[ 2U ];
 
-    _inertiaTensor._m[ 0U ][ 1U ] = 0.0F;
-    _inertiaTensor._m[ 0U ][ 2U ] = 0.0F;
-    _inertiaTensor._m[ 1U ][ 0U ] = 0.0F;
-    _inertiaTensor._m[ 1U ][ 2U ] = 0.0F;
-    _inertiaTensor._m[ 2U ][ 0U ] = 0.0F;
-    _inertiaTensor._m[ 2U ][ 1U ] = 0.0F;
+    _inertiaTensorInverse._m[ 0U ][ 1U ] = 0.0F;
+    _inertiaTensorInverse._m[ 0U ][ 2U ] = 0.0F;
+    _inertiaTensorInverse._m[ 1U ][ 0U ] = 0.0F;
+    _inertiaTensorInverse._m[ 1U ][ 2U ] = 0.0F;
+    _inertiaTensorInverse._m[ 2U ][ 0U ] = 0.0F;
+    _inertiaTensorInverse._m[ 2U ][ 1U ] = 0.0F;
 }
 
 [[maybe_unused]] GXVec3 ShapeBox::GetExtremePointWorld ( GXVec3 const &direction ) const noexcept

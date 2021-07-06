@@ -1,4 +1,5 @@
 #include <rigid_body.h>
+#include <logger.h>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -12,7 +13,7 @@ namespace android_vulkan {
 constexpr static float const DEFAULT_DAMPING_ANGULAR = 0.8F;
 constexpr static float const DEFAULT_DAMPING_LINEAR = 0.8F;
 
-constexpr static float const DEFAULT_FRICTION = 0.4F;
+constexpr static float const DEFAULT_FRICTION = 0.2F;
 
 constexpr static GXVec3 const DEFAULT_LOCATION ( 0.0F, -777.777F, 0.0F );
 
@@ -154,6 +155,8 @@ void RigidBody::SetVelocityLinear ( float x, float y, float z ) noexcept
 
 [[maybe_unused]] void RigidBody::DisableKinematic () noexcept
 {
+    _locationBefore = _location;
+    _rotationBefore = _rotation;
     _isKinematic = false;
 }
 
@@ -343,7 +346,7 @@ void RigidBody::Integrate ( float deltaTime ) noexcept
 {
     if ( _isKinematic )
     {
-        IntegrateAsKinematic ( deltaTime );
+        UpdatePositionAndRotation ( deltaTime );
         return;
     }
 
@@ -376,7 +379,7 @@ void RigidBody::RunSleepLogic ( float deltaTime ) noexcept
     }
 
     GXQuat rotationDiff {};
-    rotationDiff.Substract ( _rotation, _rotationBefore );
+    rotationDiff.Subtract ( _rotation, _rotationBefore );
 
     GXVec4 const alpha ( rotationDiff._data[ 0U ],
         rotationDiff._data[ 1U ],
@@ -444,28 +447,13 @@ void RigidBody::IntegrateAsDynamic ( float deltaTime ) noexcept
     _velocityAngular.Multiply ( _velocityAngular, std::pow ( _dampingAngular, deltaTime ) );
 
     _locationBefore = _location;
-    _location.Sum ( _location, deltaTime, _velocityLinear );
-
-    // omega: angular velocity (direction is axis, magnitude is angle)
-    // https://fgiesen.wordpress.com/2012/08/24/quaternion-differentiation/
-    // https://www.ashwinnarayan.com/post/how-to-integrate-quaternions/
-    // https://gafferongames.com/post/physics_in_3d/
-    GXQuat alpha ( 0.0F, _velocityAngular._data[ 0U ], _velocityAngular._data[ 1U ], _velocityAngular._data[ 2U ] );
-    alpha.Multiply ( alpha, 0.5F * deltaTime );
-    alpha._data[ 0U ] = 1.0F;
-
-    GXQuat beta {};
-    beta.Multiply ( alpha, _rotation );
-    beta.Normalize ();
-
     _rotationBefore = _rotation;
-    _rotation = beta;
 
-    UpdateCacheData ();
+    UpdatePositionAndRotation ( deltaTime );
     RunSleepLogic ( deltaTime );
 }
 
-void RigidBody::IntegrateAsKinematic ( float deltaTime ) noexcept
+void RigidBody::UpdatePositionAndRotation ( float deltaTime ) noexcept
 {
     _location.Sum ( _location, deltaTime, _velocityLinear );
 
@@ -479,9 +467,6 @@ void RigidBody::IntegrateAsKinematic ( float deltaTime ) noexcept
 
     GXQuat beta {};
     beta.Multiply ( alpha, _rotation );
-    beta.Normalize ();
-
-    _rotationBefore = _rotation;
     _rotation = beta;
 
     UpdateCacheData ();

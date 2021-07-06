@@ -7,7 +7,7 @@
 
 namespace android_vulkan {
 
-class LocationSolver final
+class [[maybe_unused]] LocationSolver final
 {
     public:
         LocationSolver () = delete;

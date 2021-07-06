@@ -33,6 +33,7 @@ void LocationSolver::SolvePair ( RigidBody &/*bodyA*/,
     ContactManifold const &/*manifold*/
 ) noexcept
 {
+    // TODO
     assert ( false );
 }
 
@@ -40,10 +41,6 @@ void LocationSolver::SolveSingle ( RigidBody &body, ContactManifold &manifold, f
 {
     GXVec3 offset {};
     offset.Multiply ( manifold._normal, penetration );
-
-    GXVec3 location {};
-    location.Sum ( body.GetLocation (), offset );
-    body.SetLocation ( location );
 
     if ( &body == manifold._bodyA.get () )
     {

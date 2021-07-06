@@ -33,13 +33,12 @@ class PBRGame final : public android_vulkan::Game
         android_vulkan::RigidBodyRef        _floorBody;
         float                               _floorPhase;
 
-        MeshRef                             _sphereMesh;
-        MaterialRef                         _sphereMaterial;
-        android_vulkan::Half4               _sphereColorA;
-        android_vulkan::Half4               _sphereColorB;
-        android_vulkan::Half4               _sphereColorC;
+        android_vulkan::Half4               _colorA;
+        android_vulkan::Half4               _colorB;
         android_vulkan::Half4               _defaultColor;
         android_vulkan::Physics             _physics;
+        MeshRef                             _sphereMesh;
+        MaterialRef                         _sphereMaterial;
 
         RenderSession                       _renderSession;
         std::list<ComponentRef>             _components;

@@ -116,13 +116,13 @@ class RigidBody final
 
     private:
         void IntegrateAsDynamic ( float deltaTime ) noexcept;
-        void IntegrateAsKinematic ( float deltaTime ) noexcept;
-
         void RunSleepLogic ( float deltaTime ) noexcept;
 
         void SetAwake () noexcept;
         void SetSleep () noexcept;
+
         void UpdateCacheData () noexcept;
+        void UpdatePositionAndRotation ( float deltaTime ) noexcept;
 };
 
 using RigidBodyRef = std::shared_ptr<RigidBody>;

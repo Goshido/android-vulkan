@@ -1,9 +1,10 @@
-// version 1.3
+// version 1.4
 
 #include <GXCommon/GXMath.h>
 
 GX_DISABLE_COMMON_WARNINGS
 
+#include <cassert>
 #include <cstring>
 #include <arm_neon.h>
 
@@ -12,6 +13,7 @@ GX_RESTORE_WARNING_STATE
 
 // 1.0F / 255.0F
 constexpr static GXFloat const COLOR_TO_FLOAT_FACTOR = 3.92157e-3F;
+constexpr static GXFloat const FLOAT_EPSILON = 1.0e-4F;
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -225,6 +227,56 @@ constexpr static GXFloat const COLOR_TO_FLOAT_FACTOR = 3.92157e-3F;
     };
 
     vst1q_f32 ( _data, vmulq_n_f32 ( vld1q_f32 ( tmp ), COLOR_TO_FLOAT_FACTOR ) );
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+[[maybe_unused]] GXVoid GXQuat::Normalize ()
+{
+    float32x4_t const alpha = vld1q_f32 ( _data );
+    float32_t squaredLength = vaddvq_f32 ( vmulq_f32 ( alpha, alpha ) );
+
+    assert ( squaredLength > FLOAT_EPSILON );
+
+    float32_t const length = std::sqrt ( squaredLength );
+    vst1q_f32 ( _data, vdivq_f32 ( alpha, vld1q_dup_f32 ( &length ) ) );
+}
+
+[[maybe_unused]] GXVoid GXQuat::Inverse ( GXQuat const &q )
+{
+    float32x4_t const alpha = vld1q_f32 ( q._data );
+    float32_t squaredLength = vaddvq_f32 ( vmulq_f32 ( alpha, alpha ) );
+
+    assert ( squaredLength > FLOAT_EPSILON );
+
+    squaredLength = -squaredLength;
+    vst1q_f32 ( _data, vdivq_f32 ( alpha, vld1q_dup_f32 ( &squaredLength ) ) );
+    _data[ 0U ] = -_data[ 0U ];
+}
+
+[[maybe_unused]] GXVoid GXQuat::FromAxisAngle ( GXFloat x, GXFloat y, GXFloat z, GXFloat angle )
+{
+    float const halfAngle = 0.5F * angle;
+
+    float32_t const alpha[ 4U ] = { 0.0F, x, y, z };
+    vst1q_f32 ( _data, vmulq_n_f32 ( vld1q_f32 ( alpha ), std::sin ( halfAngle ) ) );
+
+    _data[ 0U ] = std::cos ( halfAngle );
+}
+
+[[maybe_unused]] GXVoid GXQuat::Multiply ( GXQuat const &q, GXFloat scale )
+{
+    vst1q_f32 ( _data, vmulq_n_f32 ( vld1q_f32 ( q._data ), scale ) );
+}
+
+[[maybe_unused]] GXVoid GXQuat::Sum ( GXQuat const &a, GXQuat const &b )
+{
+    vst1q_f32 ( _data, vaddq_f32 ( vld1q_f32 ( a._data ), vld1q_f32 ( b._data ) ) );
+}
+
+[[maybe_unused]] GXVoid GXQuat::Subtract ( GXQuat const &a, GXQuat const &b )
+{
+    vst1q_f32 ( _data, vsubq_f32 ( vld1q_f32 ( a._data ), vld1q_f32 ( b._data ) ) );
 }
 
 //----------------------------------------------------------------------------------------------------------------------

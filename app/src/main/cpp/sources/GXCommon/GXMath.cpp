@@ -1,7 +1,6 @@
-﻿// version 1.66
+﻿// version 1.67
 
 #include <GXCommon/GXMath.h>
-#include <GXCommon/GXWarning.h>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -189,14 +188,14 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 
 [[maybe_unused]] GXFloat GXVec3::Distance ( GXVec3 const &other ) const
 {
-    GXVec3 difference;
+    GXVec3 difference {};
     difference.Subtract ( *this, other );
     return difference.Length ();
 }
 
 [[maybe_unused]] GXFloat GXVec3::SquaredDistance ( GXVec3 const &other ) const
 {
-    GXVec3 difference;
+    GXVec3 difference {};
     difference.Subtract ( *this, other );
     return difference.SquaredLength ();
 }
@@ -206,7 +205,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     GXFloat interpolationFactor
 )
 {
-    GXVec3 difference;
+    GXVec3 difference {};
     difference.Subtract ( finish, start );
     Sum ( start, interpolationFactor, difference );
 }
@@ -278,7 +277,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 {
     // Implementation https://graphics.stanford.edu/courses/cs348b-98/gg/intersect.html
 
-    GXPlane plane;
+    GXPlane plane {};
     plane.From ( a, b, c );
     GXVec3 const normal ( plane._a, plane._b, plane._c );
 
@@ -292,7 +291,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 
     GXVec3 const triangle[ 3U ] = { a, b, c };
 
-    GXVec3 point;
+    GXVec3 point {};
     point.Sum ( origin, t, direction );
 
     GXUByte selector = 0U;
@@ -800,55 +799,6 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     _data[ 1U ] = _data[ 2U ] = _data[ 3U ] = 0.0F;
 }
 
-[[maybe_unused]] GXVoid GXQuat::Normalize ()
-{
-    GXFloat const squaredLength = _data[ 0U ] * _data[ 0U ] +
-        _data[ 1U ] * _data[ 1U ] +
-        _data[ 2U ] * _data[ 2U ] +
-        _data[ 3U ] * _data[ 3U ];
-
-    if ( std::abs ( squaredLength ) < FLOAT_EPSILON )
-    {
-        assert ( !"GXQuat::Normalize - Error." );
-        return;
-    }
-
-    Multiply ( *this, 1.0F / sqrtf ( squaredLength ) );
-}
-
-[[maybe_unused]] GXVoid GXQuat::Inverse ( GXQuat const &q )
-{
-    GXFloat const squaredLength = q._data[ 0U ] * q._data[ 0U ] +
-        q._data[ 1U ] * q._data[ 1U ] +
-        q._data[ 2U ] * q._data[ 2U ] +
-        q._data[ 3U ] * q._data[ 3U ];
-
-    if ( std::abs ( squaredLength ) <= FLOAT_EPSILON )
-    {
-        assert ( !"GXQuat::Inverse - Error." );
-        Identity ();
-        return;
-    }
-
-    GXFloat const inverseSquaredLength = 1.0F / squaredLength;
-
-    _data[ 0U ] = q._data[ 0U ] * inverseSquaredLength;
-    _data[ 1U ] = -q._data[ 1U ] * inverseSquaredLength;
-    _data[ 2U ] = -q._data[ 2U ] * inverseSquaredLength;
-    _data[ 3U ] = -q._data[ 3U ] * inverseSquaredLength;
-}
-
-[[maybe_unused]] GXVoid GXQuat::FromAxisAngle ( GXFloat x, GXFloat y, GXFloat z, GXFloat angle )
-{
-    GXFloat const halfAngle = 0.5F * angle;
-    GXFloat const sinom = std::sin ( halfAngle );
-
-    _data[ 0U ] = std::cos ( halfAngle );
-    _data[ 1U ] = x * sinom;
-    _data[ 2U ] = y * sinom;
-    _data[ 3U ] = z * sinom;
-}
-
 [[maybe_unused]] GXVoid GXQuat::FromAxisAngle ( const GXVec3 &axis, GXFloat angle )
 {
     FromAxisAngle ( axis._data[ 0U ], axis._data[ 1U ], axis._data[ 2U ], angle );
@@ -856,14 +806,14 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 
 [[maybe_unused]] GXVoid GXQuat::From ( GXMat3 const &rotationMatrix )
 {
-    GXMat3 pureRotationMatrix;
+    GXMat3 pureRotationMatrix {};
     pureRotationMatrix.ClearRotation ( rotationMatrix );
     FromFast ( pureRotationMatrix );
 }
 
 [[maybe_unused]] GXVoid GXQuat::From ( GXMat4 const &rotationMatrix )
 {
-    GXMat4 pureRotationMatrix;
+    GXMat4 pureRotationMatrix {};
     pureRotationMatrix.ClearRotation ( rotationMatrix );
     FromFast ( pureRotationMatrix );
 }
@@ -1113,30 +1063,6 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
         a._data[ 3U ] * b._data[ 0U ];
 }
 
-[[maybe_unused]] GXVoid GXQuat::Multiply ( GXQuat const &q, GXFloat scale )
-{
-    _data[ 0U ] = q._data[ 0U ] * scale;
-    _data[ 1U ] = q._data[ 1U ] * scale;
-    _data[ 2U ] = q._data[ 2U ] * scale;
-    _data[ 3U ] = q._data[ 3U ] * scale;
-}
-
-[[maybe_unused]] GXVoid GXQuat::Sum ( GXQuat const &a, GXQuat const &b )
-{
-    _data[ 0U ] = a._data[ 0U ] + b._data[ 0U ];
-    _data[ 1U ] = a._data[ 1U ] + b._data[ 1U ];
-    _data[ 2U ] = a._data[ 2U ] + b._data[ 2U ];
-    _data[ 3U ] = a._data[ 3U ] + b._data[ 3U ];
-}
-
-[[maybe_unused]] GXVoid GXQuat::Substract ( GXQuat const &a, GXQuat const &b )
-{
-    _data[ 0U ] = a._data[ 0U ] - b._data[ 0U ];
-    _data[ 1U ] = a._data[ 1U ] - b._data[ 1U ];
-    _data[ 2U ] = a._data[ 2U ] - b._data[ 2U ];
-    _data[ 3U ] = a._data[ 3U ] - b._data[ 3U ];
-}
-
 [[maybe_unused]] GXVoid GXQuat::SphericalLinearInterpolation ( GXQuat const &start,
     GXQuat const &finish,
     GXFloat interpolationFactor )
@@ -1158,7 +1084,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
         start._data[ 2U ] * finish._data[ 2U ] +
         start._data[ 3U ] * finish._data[ 3U ];
 
-    GXQuat temp;
+    GXQuat temp {};
 
     if ( cosom < 0.0f )
     {
@@ -1464,15 +1390,15 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 
 [[maybe_unused]] GXVoid GXMat3::ClearRotation ( GXMat3 const &sourceMatrix )
 {
-    GXVec3 modelX;
-    GXVec3 modelY;
-    GXVec3 modelZ;
+    GXVec3 modelX {};
+    GXVec3 modelY {};
+    GXVec3 modelZ {};
 
     sourceMatrix.GetX ( modelX );
     sourceMatrix.GetY ( modelY );
     sourceMatrix.GetZ ( modelZ );
 
-    GXVec3 tmp;
+    GXVec3 tmp {};
     tmp.Multiply ( modelX, 1.0F / modelX.Length () );
     SetX ( tmp );
 
@@ -1485,15 +1411,15 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 
 [[maybe_unused]] GXVoid GXMat3::ClearRotation ( GXMat4 const &sourceMatrix )
 {
-    GXVec3 modelX;
-    GXVec3 modelY;
-    GXVec3 modelZ;
+    GXVec3 modelX {};
+    GXVec3 modelY {};
+    GXVec3 modelZ {};
 
     sourceMatrix.GetX ( modelX );
     sourceMatrix.GetY ( modelY );
     sourceMatrix.GetZ ( modelZ );
 
-    GXVec3 tmp;
+    GXVec3 tmp {};
     tmp.Multiply ( modelX, 1.0F / modelX.Length () );
     SetX ( tmp );
 
@@ -1694,7 +1620,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 
 [[maybe_unused]] GXVoid GXMat4::From ( GXMat3 const &rotation, GXVec3 const &origin )
 {
-    GXVec3 tmp;
+    GXVec3 tmp {};
     rotation.GetX ( tmp );
     SetX ( tmp );
 
@@ -1712,12 +1638,12 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 
 [[maybe_unused]] GXVoid GXMat4::From ( GXVec3 const &zDirection, GXVec3 const &origin )
 {
-    GXVec3 xAxis;
-    GXVec3 yAxis;
+    GXVec3 xAxis {};
+    GXVec3 yAxis {};
 
     if ( zDirection.DotProduct ( GXVec3::GetAbsoluteX () ) < 0.5F )
     {
-        GXVec3 tmp;
+        GXVec3 tmp {};
         tmp.CrossProduct ( zDirection, GXVec3::GetAbsoluteX () );
         xAxis.CrossProduct ( tmp, zDirection );
         xAxis.Normalize ();
@@ -1725,7 +1651,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     }
     else
     {
-        GXVec3 tmp;
+        GXVec3 tmp {};
         tmp.CrossProduct ( zDirection, GXVec3::GetAbsoluteY () );
         yAxis.CrossProduct ( zDirection, tmp );
         yAxis.Normalize ();
@@ -1879,10 +1805,10 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 
 [[maybe_unused]] GXVoid GXMat4::RotationXY ( GXFloat pitchRadians, GXFloat yawRadians )
 {
-    GXMat4 x;
+    GXMat4 x {};
     x.RotationX ( pitchRadians );
 
-    GXMat4 y;
+    GXMat4 y {};
     y.RotationY ( yawRadians );
 
     Multiply ( x, y );
@@ -1890,16 +1816,16 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 
 [[maybe_unused]] GXVoid GXMat4::RotationXYZ ( GXFloat pitchRadians, GXFloat yawRadians, GXFloat rollRadians )
 {
-    GXMat4 x;
+    GXMat4 x {};
     x.RotationX ( pitchRadians );
 
-    GXMat4 y;
+    GXMat4 y {};
     y.RotationY ( yawRadians );
 
-    GXMat4 z;
+    GXMat4 z {};
     z.RotationZ ( rollRadians );
 
-    GXMat4 temp;
+    GXMat4 temp {};
     temp.Multiply ( x, y );
 
     Multiply ( temp, z );
@@ -1907,15 +1833,15 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 
 [[maybe_unused]] GXVoid GXMat4::ClearRotation ( GXMat3 const &sourceMatrix )
 {
-    GXVec3 modelX;
-    GXVec3 modelY;
-    GXVec3 modelZ;
+    GXVec3 modelX {};
+    GXVec3 modelY {};
+    GXVec3 modelZ {};
 
     sourceMatrix.GetX ( modelX );
     sourceMatrix.GetY ( modelY );
     sourceMatrix.GetZ ( modelZ );
 
-    GXVec3 tmp;
+    GXVec3 tmp {};
     tmp.Multiply ( modelX, 1.0F / modelX.Length () );
     SetX ( tmp );
 
@@ -1933,15 +1859,15 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 
 [[maybe_unused]] GXVoid GXMat4::ClearRotation ( GXMat4 const &sourceMatrix )
 {
-    GXVec3 modelX;
-    GXVec3 modelY;
-    GXVec3 modelZ;
+    GXVec3 modelX {};
+    GXVec3 modelY {};
+    GXVec3 modelZ {};
 
     sourceMatrix.GetX ( modelX );
     sourceMatrix.GetY ( modelY );
     sourceMatrix.GetZ ( modelZ );
 
-    GXVec3 tmp;
+    GXVec3 tmp {};
     tmp.Multiply ( modelX, 1.0F / modelX.Length () );
     SetX ( tmp );
 
@@ -1973,7 +1899,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 
 [[maybe_unused]] GXVoid GXMat4::ClearScale ( GXVec3 &scale ) const
 {
-    GXVec3 alpha;
+    GXVec3 alpha {};
 
     GetX ( alpha );
     scale._data[ 0U ] = alpha.Length ();
@@ -2156,7 +2082,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 
     for ( auto const& v : verticesLocal )
     {
-        GXVec3 vertex;
+        GXVec3 vertex {};
         transform.MultiplyAsPoint ( vertex, v );
         bounds.AddVertex ( vertex );
     }
@@ -2308,7 +2234,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 
 [[maybe_unused]] GXFloat GXAABB::GetSphereRadius () const
 {
-    GXVec3 center;
+    GXVec3 center {};
     GetCenter ( center );
     return center.Distance ( _min );
 }
@@ -2317,13 +2243,13 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 
 [[maybe_unused]] GXVoid GXPlane::From ( GXVec3 const &pointA, GXVec3 const &pointB, GXVec3 const &pointC )
 {
-    GXVec3 ab;
+    GXVec3 ab {};
     ab.Subtract ( pointB, pointA );
 
-    GXVec3 ac;
+    GXVec3 ac {};
     ac.Subtract ( pointC, pointA );
 
-    GXVec3 normal;
+    GXVec3 normal {};
     normal.CrossProduct ( ab, ac );
     normal.Normalize ();
 
@@ -2335,16 +2261,16 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 
 [[maybe_unused]] GXVoid GXPlane::FromLineToPoint ( GXVec3 const &lineStart, GXVec3 const &lineEnd, GXVec3 const &point )
 {
-    GXVec3 startToPoint;
+    GXVec3 startToPoint {};
     startToPoint.Subtract ( point, lineStart );
 
-    GXVec3 startToEnd;
+    GXVec3 startToEnd {};
     startToEnd.Subtract ( lineEnd, lineStart );
 
-    GXVec3 tempCross;
+    GXVec3 tempCross {};
     tempCross.CrossProduct ( startToEnd, startToPoint );
 
-    GXVec3 normal;
+    GXVec3 normal {};
     normal.CrossProduct ( tempCross, startToEnd );
 
     _a = normal._data[ 0U ];
@@ -2576,13 +2502,13 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
         break;
     }
 
-    GXVec3 a;
-    GXVec3 b;
+    GXVec3 a {};
+    GXVec3 b {};
     a.Subtract ( *v1, *v0 );
     b.Subtract ( *v2, *v0 );
 
-    GXVec2 dUVa;
-    GXVec2 dUVb;
+    GXVec2 dUVa {};
+    GXVec2 dUVb {};
     dUVa.Subtract ( *uv1, *uv0 );
     dUVb.Subtract ( *uv2, *uv0 );
 
@@ -2626,19 +2552,19 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     GXVec3 const &cPivot
 )
 {
-    GXVec3 v0;
-    GXVec3 v1;
-    GXVec3 v2;
+    GXVec3 v0 {};
+    GXVec3 v1 {};
+    GXVec3 v2 {};
 
     v0.Subtract ( bPivot, aPivot );
     v1.Subtract ( cPivot, aPivot );
     v2.Subtract ( point, aPivot );
 
-    GXFloat d00 = v0.DotProduct ( v0 );
-    GXFloat d01 = v0.DotProduct ( v1 );
-    GXFloat d11 = v1.DotProduct ( v1 );
-    GXFloat d20 = v2.DotProduct ( v0 );
-    GXFloat d21 = v2.DotProduct ( v1 );
+    GXFloat const d00 = v0.DotProduct ( v0 );
+    GXFloat const d01 = v0.DotProduct ( v1 );
+    GXFloat const d11 = v1.DotProduct ( v1 );
+    GXFloat const d20 = v2.DotProduct ( v0 );
+    GXFloat const d21 = v2.DotProduct ( v1 );
 
     GXFloat const denom = 1.0F / ( d00 * d11 - d01 * d01 );
 
@@ -2653,8 +2579,8 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     GXUShort y,
     GXUShort viewportWidth,
     GXUShort viewportHeight,
-    const GXVec3& viewerLocation,
-    const GXMat4 &viewProjectionMatrix
+    GXVec3 const &viewerLocation,
+    GXMat4 const &viewProjectionMatrix
 )
 {
     GXFloat const halfWidth = static_cast<GXFloat> ( viewportWidth ) * 0.5F;
@@ -2668,7 +2594,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
         1.0F
     };
 
-    GXMat4 inverseViewProjectionMatrix;
+    GXMat4 inverseViewProjectionMatrix {};
     inverseViewProjectionMatrix.Inverse ( viewProjectionMatrix );
 
     GXVec4 pointWorld {};

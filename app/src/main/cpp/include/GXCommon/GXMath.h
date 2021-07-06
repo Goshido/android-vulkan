@@ -1,4 +1,4 @@
-// version 1.66
+// version 1.67
 
 #ifndef GX_MATH
 #define GX_MATH
@@ -27,11 +27,7 @@ struct [[maybe_unused]] GXVec2 final
     // Stores vector components in x, y order.
     GXFloat     _data[ 2U ];
 
-    [[maybe_unused]] constexpr GXVec2 ():
-        _data { 0.0F, 0.0F }
-    {
-        // NOTHING
-    }
+    [[maybe_unused]] GXVec2 () = default;
 
     [[maybe_unused]] GXVec2 ( GXVec2 const & ) = default;
     [[maybe_unused]] GXVec2& operator = ( GXVec2 const & ) = default;
@@ -46,6 +42,8 @@ struct [[maybe_unused]] GXVec2 final
     {
         // NOTHING
     }
+
+    [[maybe_unused]] ~GXVec2 () = default;
 
     [[maybe_unused]] GXVoid SetX ( GXFloat x );
     [[maybe_unused]] GXFloat GetX () const;
@@ -98,11 +96,7 @@ struct [[maybe_unused]] GXVec3 final
     // Stores vector components in x, y, z order.
     GXFloat     _data[ 3U ];
 
-    [[maybe_unused]] constexpr GXVec3 ():
-        _data { 0.0F, 0.0F, 0.0F }
-    {
-        // NOTHING
-    }
+    [[maybe_unused]] GXVec3 () = default;
 
     [[maybe_unused]] GXVec3 ( GXVec3 const & ) = default;
     [[maybe_unused]] GXVec3& operator = ( GXVec3 const & ) = default;
@@ -117,6 +111,8 @@ struct [[maybe_unused]] GXVec3 final
     {
         // NOTHING
     }
+
+    [[maybe_unused]] ~GXVec3 () = default;
 
     [[maybe_unused]] GXVoid SetX ( GXFloat x );
     [[maybe_unused, nodiscard]] GXFloat GetX () const;
@@ -200,6 +196,8 @@ struct [[maybe_unused]] GXEuler final
     {
         // NOTHING
     }
+
+    [[maybe_unused]] ~GXEuler () = default;
 };
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -210,11 +208,7 @@ struct [[maybe_unused]] GXVec4 final
     // Stores vector components in x, y, z, w order.
     GXFloat     _data[ 4U ];
 
-    [[maybe_unused]] constexpr GXVec4 ():
-        _data { 0.0F, 0.0F, 0.0F, 0.0F }
-    {
-        // NOTHING
-    }
+    [[maybe_unused]] GXVec4 () = default;
 
     [[maybe_unused]] GXVec4 ( GXVec4 const & ) = default;
     [[maybe_unused]] GXVec4& operator = ( GXVec4 const & ) = default;
@@ -231,6 +225,8 @@ struct [[maybe_unused]] GXVec4 final
     {
         // NOTHING
     }
+
+    [[maybe_unused]] ~GXVec4 () = default;
 
     [[maybe_unused]] GXVoid Init ( GXFloat x, GXFloat y, GXFloat z, GXFloat w );
 
@@ -297,6 +293,8 @@ struct [[maybe_unused]] GXVec6 final
         // NOTHING
     }
 
+    [[maybe_unused]] ~GXVec6 () = default;
+
     [[maybe_unused]] GXVoid Init ( GXFloat a1, GXFloat a2, GXFloat a3, GXFloat a4, GXFloat a5, GXFloat a6 );
     [[maybe_unused]] GXVoid From ( GXVec3 const &v1, GXVec3 const &v2 );
 
@@ -314,11 +312,7 @@ struct [[maybe_unused]] GXColorRGB final
     // Stores components in red, green, blue, alpha order.
     GXFloat     _data[ 4U ];
 
-    [[maybe_unused]] constexpr GXColorRGB ():
-        _data { 0.0F, 0.0F, 0.0F, 0.0F }
-    {
-        // NOTHING
-    }
+    [[maybe_unused]] GXColorRGB () = default;
 
     [[maybe_unused]] GXColorRGB ( GXColorRGB const & ) = default;
     [[maybe_unused]] GXColorRGB& operator = ( GXColorRGB const & ) = default;
@@ -333,6 +327,8 @@ struct [[maybe_unused]] GXColorRGB final
 
     [[maybe_unused]] explicit GXColorRGB ( GXUByte red, GXUByte green, GXUByte blue, GXFloat alpha );
     [[maybe_unused]] explicit GXColorRGB ( GXColorHSV const &color );
+
+    [[maybe_unused]] ~GXColorRGB () = default;
 
     [[maybe_unused]] GXVoid Init ( GXFloat red, GXFloat green, GXFloat blue, GXFloat alpha );
 
@@ -363,13 +359,9 @@ struct [[maybe_unused]] GXColorRGB final
 struct [[maybe_unused]] GXColorHSV final
 {
     // Stores components in hue, saturation, value, alpha order.
-    GXFloat     _data[ 4u ];
+    GXFloat     _data[ 4U ];
 
-    [[maybe_unused]] constexpr GXColorHSV ():
-        _data { 0.0F, 0.0F, 0.0F, 0.0F }
-    {
-        // NOTHING
-    }
+    [[maybe_unused]] GXColorHSV () = default;
 
     [[maybe_unused]] GXColorHSV ( GXColorHSV const & ) = default;
     [[maybe_unused]] GXColorHSV& operator = ( GXColorHSV const & ) = default;
@@ -383,6 +375,8 @@ struct [[maybe_unused]] GXColorHSV final
     }
 
     [[maybe_unused]] explicit GXColorHSV ( GXColorRGB const &color );
+
+    [[maybe_unused]] ~GXColorHSV () = default;
 
     // [0.0F 360.0F]
     [[maybe_unused]] GXVoid SetHue ( GXFloat hue );
@@ -430,6 +424,8 @@ struct [[maybe_unused]] GXPreciseComplex final
         // NOTHING
     }
 
+    [[maybe_unused]] ~GXPreciseComplex () = default;
+
     [[maybe_unused]] GXVoid Init ( GXDouble real, GXDouble imaginary );
 
     [[maybe_unused, nodiscard]] GXDouble Length () const;
@@ -455,13 +451,9 @@ struct GXMat4;
 struct [[maybe_unused]] GXQuat final
 {
     // Stores quaternion components in r, a, b, c order.
-    GXFloat     _data[ 4u ];
+    GXFloat     _data[ 4U ];
 
-    [[maybe_unused]] constexpr GXQuat ():
-        _data { 0.0F, 0.0F, 0.0F, 0.0F }
-    {
-        // NOTHING
-    }
+    [[maybe_unused]] GXQuat () = default;
 
     [[maybe_unused]] GXQuat ( GXQuat const & ) = default;
     [[maybe_unused]] GXQuat& operator = ( GXQuat const & ) = default;
@@ -482,6 +474,8 @@ struct [[maybe_unused]] GXQuat final
 
     // Result is valid if rotationMatrix is rotation matrix. Any scale will be ignored.
     [[maybe_unused]] explicit GXQuat ( GXMat4 const &rotationMatrix );
+
+    [[maybe_unused]] ~GXQuat () = default;
 
     [[maybe_unused]] GXVoid Init ( GXFloat r, GXFloat a, GXFloat b, GXFloat c );
 
@@ -518,7 +512,7 @@ struct [[maybe_unused]] GXQuat final
     [[maybe_unused]] GXVoid Multiply ( GXQuat const &a, GXQuat const &b );
     [[maybe_unused]] GXVoid Multiply ( GXQuat const &q, GXFloat scale );
     [[maybe_unused]] GXVoid Sum ( GXQuat const &a, GXQuat const &b );
-    [[maybe_unused]] GXVoid Substract ( GXQuat const &a, GXQuat const &b );
+    [[maybe_unused]] GXVoid Subtract ( GXQuat const &a, GXQuat const &b );
 
     [[maybe_unused]] GXVoid SphericalLinearInterpolation ( GXQuat const &start,
         GXQuat const &finish,
@@ -538,20 +532,11 @@ struct [[maybe_unused]] GXMat3 final
 {
     union
     {
-        GXFloat     _data[ 9u ];
-        GXFloat     _m[ 3u ][ 3u ];
+        GXFloat     _data[ 9U ];
+        GXFloat     _m[ 3U ][ 3U ];
     };
 
-    [[maybe_unused]] constexpr GXMat3 ():
-        _data
-        {
-            0.0F, 0.0F, 0.0F,
-            0.0F, 0.0F, 0.0F,
-            0.0F, 0.0F, 0.0F
-        }
-    {
-        // NOTHING
-    }
+    [[maybe_unused]] GXMat3 () = default;
 
     [[maybe_unused]] GXMat3 ( GXMat3 const & ) = default;
     [[maybe_unused]] GXMat3& operator = ( GXMat3 const & ) = default;
@@ -560,6 +545,8 @@ struct [[maybe_unused]] GXMat3 final
     [[maybe_unused]] GXMat3& operator = ( GXMat3 && ) = default;
 
     [[maybe_unused]] explicit GXMat3 ( GXMat4 const &matrix );
+
+    [[maybe_unused]] ~GXMat3 () = default;
 
     [[maybe_unused]] GXVoid From ( GXQuat const &quaternion );
     [[maybe_unused]] GXVoid From ( GXMat4 const &matrix );
@@ -621,23 +608,15 @@ struct [[maybe_unused]] GXMat4 final
         GXFloat     _m[ 4u ][ 4u ];
     };
 
-    [[maybe_unused]] constexpr GXMat4 ():
-        _data
-        {
-            0.0F, 0.0F, 0.0F, 0.0F,
-            0.0F, 0.0F, 0.0F, 0.0F,
-            0.0F, 0.0F, 0.0F, 0.0F,
-            0.0F, 0.0F, 0.0F, 0.0F
-        }
-    {
-        // NOTHING
-    }
+    [[maybe_unused]] GXMat4 () = default;
 
     [[maybe_unused]] GXMat4 ( GXMat4 const & ) = default;
     [[maybe_unused]] GXMat4& operator = ( GXMat4 const & ) = default;
 
     [[maybe_unused]] GXMat4 ( GXMat4 && ) = default;
     [[maybe_unused]] GXMat4& operator = ( GXMat4 && ) = default;
+
+    [[maybe_unused]] ~GXMat4 () = default;
 
     [[maybe_unused]] GXVoid SetRotation ( GXQuat const &quaternion );
 
@@ -742,6 +721,8 @@ struct [[maybe_unused]] GXAABB final
     [[maybe_unused]] GXAABB ( GXAABB && ) = default;
     [[maybe_unused]] GXAABB& operator = ( GXAABB && ) = default;
 
+    [[maybe_unused]] ~GXAABB () = default;
+
     [[maybe_unused]] GXVoid Empty ();
 
     [[maybe_unused]] GXVoid Transform ( GXAABB &bounds, GXMat4 const &transform ) const;
@@ -775,20 +756,15 @@ struct [[maybe_unused]] GXPlane final
     GXFloat     _c;
     GXFloat     _d;
 
-    [[maybe_unused]] constexpr GXPlane ():
-        _a ( 0.0F ),
-        _b ( 1.0F ),
-        _c ( 0.0F ),
-        _d ( 0.0F )
-    {
-        // NOTHING
-    }
+    [[maybe_unused]] GXPlane () = default;
 
     [[maybe_unused]] GXPlane ( GXPlane const & ) = default;
     [[maybe_unused]] GXPlane& operator = ( GXPlane const & ) = default;
 
     [[maybe_unused]] GXPlane ( GXPlane && ) = default;
     [[maybe_unused]] GXPlane& operator = ( GXPlane && ) = default;
+
+    [[maybe_unused]] ~GXPlane () = default;
 
     [[maybe_unused]] GXVoid From ( GXVec3 const &pointA, GXVec3 const &pointB, GXVec3 const &pointC );
     [[maybe_unused]] GXVoid FromLineToPoint ( GXVec3 const &lineStart, GXVec3 const &lineEnd, GXVec3 const &point );
@@ -808,10 +784,17 @@ class [[maybe_unused]] GXProjectionClipPlanes final
         GXPlane     _planes[ 6U ];
 
     public:
-        [[maybe_unused]] constexpr GXProjectionClipPlanes () = default;
+        [[maybe_unused]] GXProjectionClipPlanes () = default;
+
+        [[maybe_unused]] GXProjectionClipPlanes ( GXProjectionClipPlanes const & ) = default;
         [[maybe_unused]] GXProjectionClipPlanes& operator = ( GXProjectionClipPlanes const & ) = default;
 
+        [[maybe_unused]] GXProjectionClipPlanes ( GXProjectionClipPlanes && ) = default;
+        [[maybe_unused]] GXProjectionClipPlanes& operator = ( GXProjectionClipPlanes && ) = default;
+
         [[maybe_unused]] explicit GXProjectionClipPlanes ( GXMat4 const &src );
+
+        [[maybe_unused]] ~GXProjectionClipPlanes () = default;
 
         // Normals will be directed inside view volume.
         [[maybe_unused]] GXVoid From ( GXMat4 const &src );

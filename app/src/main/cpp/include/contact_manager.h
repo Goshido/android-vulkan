@@ -23,7 +23,7 @@ struct VelocitySolverData final
     void*                   _clipContext = nullptr;
 
     float                   _effectiveMass = 0.0F;
-    GXVec6                  _j {};
+    GXVec6                  _j[ 2U ] {};
     GXVec6                  _mj {};
     float                   _lambda = 0.0F;
 

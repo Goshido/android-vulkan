@@ -51,13 +51,12 @@ PBRGame::PBRGame () noexcept:
     _floor {},
     _floorBody {},
     _floorPhase ( 0.0F ),
-    _sphereMesh {},
-    _sphereMaterial {},
-    _sphereColorA {},
-    _sphereColorB {},
-    _sphereColorC {},
+    _colorA {},
+    _colorB {},
     _defaultColor {},
     _physics {},
+    _sphereMesh {},
+    _sphereMaterial {},
     _renderSession {},
     _components {}
 {
@@ -121,31 +120,10 @@ bool PBRGame::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime )
     {
         android_vulkan::Contact* contact =  manifold._contacts;
 
-        if ( manifold._bodyA == _cubeBody )
-        {
-            // NOLINTNEXTLINE
-            auto& c = *static_cast<StaticMeshComponent*> ( _cube.get () );
-            c.SetColor0 ( _sphereColorA );
-
-            // NOLINTNEXTLINE
-            auto& f = *static_cast<StaticMeshComponent*> ( _floor.get () );
-            f.SetColor0 ( _sphereColorB );
-        }
-        else
-        {
-            // NOLINTNEXTLINE
-            auto& c = *static_cast<StaticMeshComponent*> ( _cube.get () );
-            c.SetColor0 ( _sphereColorB );
-
-            // NOLINTNEXTLINE
-            auto& f = *static_cast<StaticMeshComponent*> ( _floor.get () );
-            f.SetColor0 ( _sphereColorA );
-        }
-
         for ( size_t i = 0U; i < manifold._contactCount; ++i )
         {
             android_vulkan::Contact const& c = contact[ i ];
-            submit ( c._pointAfterResolve, _sphereColorC );
+            submit ( c._pointAfterResolve, _colorB );
         }
     }
 
@@ -330,6 +308,9 @@ void PBRGame::DestroyCommandPool ( VkDevice device ) noexcept
 
 bool PBRGame::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
 {
+    _camera.SetLocation ( GXVec3 ( 0.0F, 0.0F, -14.0F ) );
+    _camera.Update ( 0.0F );
+
     _physics.SetTimeSpeed ( 1.0F );
 
     if ( !_physics.AddGlobalForce ( std::make_shared<android_vulkan::GlobalForceGravity> ( FREE_FALL_ACCELERATION ) ) )
@@ -341,11 +322,13 @@ bool PBRGame::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
     constexpr size_t const CUBE_COMMAND_BUFFERS = 1U;
     constexpr size_t const DEFAULT_MATERIAL_COMMAND_BUFFERS = 5U;
     constexpr size_t const SPHERE_COMMAND_BUFFERS = 1U;
+    constexpr size_t const UNLIT_MATERIAL_COMMAND_BUFFERS = 5U;
 
     auto const comBuffs = static_cast<size_t> (
         CUBE_COMMAND_BUFFERS +
         DEFAULT_MATERIAL_COMMAND_BUFFERS +
-        SPHERE_COMMAND_BUFFERS
+        SPHERE_COMMAND_BUFFERS +
+        UNLIT_MATERIAL_COMMAND_BUFFERS
     );
 
     VkCommandBufferAllocateInfo const allocateInfo
@@ -375,28 +358,27 @@ bool PBRGame::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
     _cube = std::make_shared<StaticMeshComponent> ( renderer,
         consumed,
         "pbr/system/unit-cube.mesh2",
-        "pbr/assets/System/Default.mtl",
+        "pbr/assets/Props/PBR/Unlit.mtl",
         commandBuffers
     );
 
     commandBuffers += consumed;
 
-    _sphereColorA = android_vulkan::Half4 ( 115.0F / 255.0F, 185.0F / 255.0F, 0.0F, 1.0F );
-    _sphereColorB = android_vulkan::Half4 ( 185.0F / 255.0F, 27.0F / 230.0F, 0.0F, 1.0F );
-    _sphereColorC = android_vulkan::Half4 ( 42.0F / 255.0F, 127.0F / 230.0F, 203.0F, 1.0F );
+    _colorA = android_vulkan::Half4 ( 115.0F / 255.0F, 185.0F / 255.0F, 0.0F, 1.0F );
+    _colorB = android_vulkan::Half4 ( 42.0F / 255.0F, 127.0F / 230.0F, 203.0F, 1.0F );
     _defaultColor = android_vulkan::Half4 ( 1.0F, 1.0F, 1.0F, 1.0F );
 
     // NOLINTNEXTLINE
     auto& cubeComp = *static_cast<StaticMeshComponent*> ( _cube.get () );
-    cubeComp.SetColor0 ( _sphereColorA );
+    cubeComp.SetColor0 ( _colorA );
     _components.push_back ( _cube );
 
     _cubeBody = std::make_shared<android_vulkan::RigidBody> ();
     _cubeBody->SetMass ( 0.777F );
     _cubeBody->DisableKinematic ();
-    _cubeBody->EnableSleep ();
+    _cubeBody->DisableSleep ();
 
-    constexpr GXVec3 const cubeSpawn ( 0.0F, 0.5F, 0.8F );
+    constexpr GXVec3 const cubeSpawn ( 0.0F, 1.0F, 0.8F );
     _cubeBody->SetLocation ( cubeSpawn );
 
 //    GXQuat rotation {};
@@ -406,20 +388,19 @@ bool PBRGame::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
 //    GXVec3 const angularVelocity ( 0.0F, 20.0F, 0.0F );
 //    _cubeBody->SetVelocityAngular ( angularVelocity );
 
-    android_vulkan::ShapeRef cubeShape = std::make_shared<android_vulkan::ShapeBox> ( 0.2F, 0.2F, 0.2F );
+    android_vulkan::ShapeRef cubeShape = std::make_shared<android_vulkan::ShapeBox> ( 0.9F, 0.5F, 0.4F );
     _cubeBody->SetShape ( cubeShape );
 
-    GXVec3 point ( 0.1F, 0.0F, 0.05F );
+    GXVec3 point ( 0.4F, -0.1F, 0.05F );
     point.Sum ( point, cubeSpawn );
 
-    GXVec3 const impulse ( -0.44106F, 0.80577F, 0.2931F );
+    GXVec3 const impulse ( -1.4106F, 2.0577F, 1.931F );
     _cubeBody->AddImpulse ( impulse, point );
 
     _floor = std::make_shared<StaticMeshComponent> ( renderer,
         consumed,
         "pbr/system/unit-cube.mesh2",
-        "pbr/assets/System/Default.mtl",
-        //"pbr/assets/Props/SaleTerminal/SaleWumie.mtl",
+        "pbr/assets/Props/PBR/DefaultCSGEmissive.mtl",
         commandBuffers
     );
 
@@ -427,7 +408,7 @@ bool PBRGame::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
 
     // NOLINTNEXTLINE
     auto& floorComp = *static_cast<StaticMeshComponent*> ( _floor.get () );
-    floorComp.SetColor0 ( _sphereColorB );
+    floorComp.SetColor0 ( _defaultColor );
     _components.push_back ( _floor );
 
     _floorBody = std::make_shared<android_vulkan::RigidBody> ();
@@ -437,15 +418,15 @@ bool PBRGame::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
     android_vulkan::ShapeRef floorShape = std::make_shared<android_vulkan::ShapeBox> ( 32.0F, 0.5F, 32.0F );
     _floorBody->SetShape ( floorShape );
 
-    if ( !_physics.AddRigidBody ( _cubeBody ) )
-    {
-        android_vulkan::LogError ( "PBR::PBRGame::CreateSceneManual - Can't add rigid body (cube)." );
-        return false;
-    }
-
     if ( !_physics.AddRigidBody ( _floorBody ) )
     {
         android_vulkan::LogError ( "PBR::PBRGame::CreateSceneManual - Can't add rigid body (floor)." );
+        return false;
+    }
+
+    if ( !_physics.AddRigidBody ( _cubeBody ) )
+    {
+        android_vulkan::LogError ( "PBR::PBRGame::CreateSceneManual - Can't add rigid body (cube)." );
         return false;
     }
 

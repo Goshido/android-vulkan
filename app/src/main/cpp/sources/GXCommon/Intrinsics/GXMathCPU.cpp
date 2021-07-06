@@ -1,10 +1,18 @@
-// version 1.2
+// version 1.3
 
 #include <GXCommon/GXMath.h>
+#include <GXCommon/GXWarning.h>
+
+GX_DISABLE_COMMON_WARNINGS
+
+#include <cassert>
+
+GX_RESTORE_WARNING_STATE
 
 
 // 1.0F / 255.0F
 constexpr static GXFloat const COLOR_TO_FLOAT_FACTOR = 3.92157e-3F;
+constexpr static GXFloat const FLOAT_EPSILON = 1.0e-4F;
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -189,6 +197,72 @@ constexpr static GXFloat const COLOR_TO_FLOAT_FACTOR = 3.92157e-3F;
     _data[ 1U ] = static_cast<GXFloat> ( green ) * COLOR_TO_FLOAT_FACTOR;
     _data[ 2U ] = static_cast<GXFloat> ( blue ) * COLOR_TO_FLOAT_FACTOR;
     _data[ 3U ] = alpha * COLOR_TO_FLOAT_FACTOR;
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+[[maybe_unused]] GXVoid GXQuat::Normalize ()
+{
+    GXFloat const squaredLength = _data[ 0U ] * _data[ 0U ] +
+        _data[ 1U ] * _data[ 1U ] +
+        _data[ 2U ] * _data[ 2U ] +
+        _data[ 3U ] * _data[ 3U ];
+
+    assert ( squaredLength > FLOAT_EPSILON );
+
+    Multiply ( *this, 1.0F / std::sqrt ( squaredLength ) );
+}
+
+[[maybe_unused]] GXVoid GXQuat::Inverse ( GXQuat const &q )
+{
+    GXFloat const squaredLength = q._data[ 0U ] * q._data[ 0U ] +
+        q._data[ 1U ] * q._data[ 1U ] +
+        q._data[ 2U ] * q._data[ 2U ] +
+        q._data[ 3U ] * q._data[ 3U ];
+
+    assert ( squaredLength > FLOAT_EPSILON );
+
+    GXFloat const inverseSquaredLength = 1.0F / squaredLength;
+
+    _data[ 0U ] = q._data[ 0U ] * inverseSquaredLength;
+    _data[ 1U ] = -q._data[ 1U ] * inverseSquaredLength;
+    _data[ 2U ] = -q._data[ 2U ] * inverseSquaredLength;
+    _data[ 3U ] = -q._data[ 3U ] * inverseSquaredLength;
+}
+
+[[maybe_unused]] GXVoid GXQuat::FromAxisAngle ( GXFloat x, GXFloat y, GXFloat z, GXFloat angle )
+{
+    GXFloat const halfAngle = 0.5F * angle;
+    GXFloat const sinom = std::sin ( halfAngle );
+
+    _data[ 0U ] = std::cos ( halfAngle );
+    _data[ 1U ] = x * sinom;
+    _data[ 2U ] = y * sinom;
+    _data[ 3U ] = z * sinom;
+}
+
+[[maybe_unused]] GXVoid GXQuat::Multiply ( GXQuat const &q, GXFloat scale )
+{
+    _data[ 0U ] = q._data[ 0U ] * scale;
+    _data[ 1U ] = q._data[ 1U ] * scale;
+    _data[ 2U ] = q._data[ 2U ] * scale;
+    _data[ 3U ] = q._data[ 3U ] * scale;
+}
+
+[[maybe_unused]] GXVoid GXQuat::Sum ( GXQuat const &a, GXQuat const &b )
+{
+    _data[ 0U ] = a._data[ 0U ] + b._data[ 0U ];
+    _data[ 1U ] = a._data[ 1U ] + b._data[ 1U ];
+    _data[ 2U ] = a._data[ 2U ] + b._data[ 2U ];
+    _data[ 3U ] = a._data[ 3U ] + b._data[ 3U ];
+}
+
+[[maybe_unused]] GXVoid GXQuat::Subtract ( GXQuat const &a, GXQuat const &b )
+{
+    _data[ 0U ] = a._data[ 0U ] - b._data[ 0U ];
+    _data[ 1U ] = a._data[ 1U ] - b._data[ 1U ];
+    _data[ 2U ] = a._data[ 2U ] - b._data[ 2U ];
+    _data[ 3U ] = a._data[ 3U ] - b._data[ 3U ];
 }
 
 //----------------------------------------------------------------------------------------------------------------------

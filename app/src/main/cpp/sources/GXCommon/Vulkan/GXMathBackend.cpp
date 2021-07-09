@@ -1,4 +1,4 @@
-// version 1.2
+// version 1.3
 
 #include <GXCommon/GXMath.h>
 
@@ -9,55 +9,66 @@ GX_DISABLE_COMMON_WARNINGS
 GX_RESTORE_WARNING_STATE
 
 
-GXVoid GXMat4::Perspective ( GXFloat fieldOfViewYRadiands, GXFloat aspectRatio, GXFloat zNear, GXFloat zFar )
+[[maybe_unused]] GXVoid GXMat4::Perspective ( GXFloat fieldOfViewYRadiands,
+    GXFloat aspectRatio,
+    GXFloat zNear,
+    GXFloat zFar
+) noexcept
 {
-    const GXFloat halfFovy = fieldOfViewYRadiands * 0.5f;
-    const GXFloat ctan = std::cos ( halfFovy ) / std::sin ( halfFovy );
-    const GXFloat invRange = 1.0f / ( zFar - zNear );
+    GXFloat const halfFovy = fieldOfViewYRadiands * 0.5F;
+    GXFloat const ctan = std::cos ( halfFovy ) / std::sin ( halfFovy );
+    GXFloat const invRange = 1.0F / ( zFar - zNear );
 
-    _m[ 0u ][ 0u ] = ctan / aspectRatio;
-    _m[ 1u ][ 1u ] = -ctan;
-    _m[ 2u ][ 2u ] = invRange * zFar;
-    _m[ 2u ][ 3u ] = 1.0f;
-    _m[ 3u ][ 2u ] = -invRange * zNear * zFar;
+    _m[ 0U ][ 0U ] = ctan / aspectRatio;
+    _m[ 1U ][ 1U ] = -ctan;
+    _m[ 2U ][ 2U ] = invRange * zFar;
+    _m[ 2U ][ 3U ] = 1.0F;
+    _m[ 3U ][ 2U ] = -invRange * zNear * zFar;
 
-    _m[ 0u ][ 1u ] = _m[ 0u ][ 2u ] = _m[ 0u ][ 3u ] = 0.0f;
-    _m[ 1u ][ 0u ] = _m[ 1u ][ 2u ] = _m[ 1u ][ 3u ] = 0.0f;
-    _m[ 2u ][ 0u ] = _m[ 2u ][ 1u ] = 0.0f;
-    _m[ 3u ][ 0u ] = _m[ 3u ][ 1u ] = _m[ 3u ][ 3u ] = 0.0f;
+    _m[ 0U ][ 1U ] = _m[ 0U ][ 2U ] = _m[ 0U ][ 3U ] = 0.0F;
+    _m[ 1U ][ 0U ] = _m[ 1U ][ 2U ] = _m[ 1U ][ 3U ] = 0.0F;
+    _m[ 2U ][ 0U ] = _m[ 2U ][ 1U ] = 0.0F;
+    _m[ 3U ][ 0U ] = _m[ 3U ][ 1U ] = _m[ 3U ][ 3U ] = 0.0F;
 }
 
-GXVoid GXMat4::Ortho ( GXFloat width, GXFloat height, GXFloat zNear, GXFloat zFar )
+[[maybe_unused]] GXVoid GXMat4::Ortho ( GXFloat width, GXFloat height, GXFloat zNear, GXFloat zFar ) noexcept
 {
-    const GXFloat invRange = 1.0f / ( zFar - zNear );
+    GXFloat const invRange = 1.0f / ( zFar - zNear );
 
-    _m[ 0u ][ 0u ] = 2.0f / width;
-    _m[ 1u ][ 1u ] = -2.0f / height;
-    _m[ 2u ][ 2u ] = invRange;
-    _m[ 3u ][ 2u ] = -invRange * zNear;
+    _m[ 0U ][ 0U ] = 2.0F / width;
+    _m[ 1U ][ 1U ] = -2.0F / height;
+    _m[ 2U ][ 2U ] = invRange;
+    _m[ 3U ][ 2U ] = -invRange * zNear;
 
-    _m[ 0u ][ 1u ] = _m[ 0u ][ 2u ] = _m[ 0u ][ 3u ] = 0.0f;
-    _m[ 1u ][ 0u ] = _m[ 1u ][ 2u ] = _m[ 1u ][ 3u ] = 0.0f;
-    _m[ 2u ][ 0u ] = _m[ 2u ][ 1u ] = _m[ 2u ][ 3u ] = 0.0f;
-    _m[ 3u ][ 0u ] = _m[ 3u ][ 1u ] = 0.0f;
-    _m[ 3u ][ 3u ] = 1.0f;
+    _m[ 0U ][ 1U ] = _m[ 0U ][ 2U ] = _m[ 0U ][ 3U ] = 0.0F;
+    _m[ 1U ][ 0U ] = _m[ 1U ][ 2U ] = _m[ 1U ][ 3U ] = 0.0F;
+    _m[ 2U ][ 0U ] = _m[ 2U ][ 1U ] = _m[ 2U ][ 3U ] = 0.0F;
+    _m[ 3U ][ 0U ] = _m[ 3U ][ 1U ] = 0.0F;
+    _m[ 3U ][ 3U ] = 1.0F;
 }
 
-GXVoid GXMat4::GetPerspectiveParams ( GXFloat& /*fieldOfViewYRadiands*/,
+// NOLINTNEXTLINE
+[[maybe_unused]] GXVoid GXMat4::GetPerspectiveParams ( GXFloat& /*fieldOfViewYRadiands*/,
     GXFloat& /*aspectRatio*/,
     GXFloat& /*zNear*/,
     GXFloat& /*zFar*/
-)
+) noexcept
 {
     assert ( !"GXMat4::GetPerspectiveParams - Implement me!" );
 }
 
-GXVoid GXMat4::GetOrthoParams ( GXFloat& /*width*/, GXFloat& /*height*/, GXFloat& /*zNear*/, GXFloat& /*zFar*/ )
+// NOLINTNEXTLINE
+[[maybe_unused]] GXVoid GXMat4::GetOrthoParams ( GXFloat& /*width*/,
+    GXFloat& /*height*/,
+    GXFloat& /*zNear*/,
+    GXFloat& /*zFar*/
+) noexcept
 {
     assert ( !"GXMat4::GetOrthoParams - Implement me!" );
 }
 
-GXVoid GXMat4::GetRayPerspective ( GXVec3& /*rayView*/, const GXVec2& /*mouseCVV*/ ) const
+// NOLINTNEXTLINE
+[[maybe_unused]] GXVoid GXMat4::GetRayPerspective ( GXVec3& /*rayView*/, const GXVec2& /*mouseCVV*/ ) const noexcept
 {
     assert ( !"GXMat4::GetRayPerspective - Implement me!" );
 }

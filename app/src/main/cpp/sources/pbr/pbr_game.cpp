@@ -26,7 +26,7 @@ constexpr static char const* SCENES[] =
     "pbr/assets/physics-sandbox.scene"
 };
 
-constexpr static size_t const ACTIVE_SCENE = 2U;
+constexpr static size_t const ACTIVE_SCENE = 0U;
 static_assert ( std::size ( SCENES ) > ACTIVE_SCENE );
 
 [[maybe_unused]] constexpr static uint32_t const SCENE_DESC_FORMAT_VERSION = 2U;
@@ -168,6 +168,12 @@ bool PBRGame::OnInitDevice ( android_vulkan::Renderer &renderer )
         return false;
     }
 
+//    if ( !UploadGPUContent( renderer ) )
+//    {
+//        OnDestroyDevice ( device );
+//        return false;
+//    }
+
     return true;
 }
 
@@ -287,6 +293,9 @@ void PBRGame::DestroyCommandPool ( VkDevice device ) noexcept
             data,
             commandBuffers
         );
+
+        if ( component )
+            _components.push_back ( component );
 
         commandBuffers += consumed;
         readPointer += read;

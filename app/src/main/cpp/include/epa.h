@@ -10,12 +10,10 @@ namespace android_vulkan {
 
 struct Face final
 {
-    size_t      _a;
-    size_t      _b;
-    size_t      _c;
-    GXVec3      _normal;
-
-    Face () noexcept;
+    size_t      _a = 0U;
+    size_t      _b = 0U;
+    size_t      _c = 0U;
+    GXVec3      _normal = GXVec3 ( 0.0F, 0.0F, 0.0F );
 
     Face ( Face const & ) = default;
     Face& operator = ( Face const & ) = default;
@@ -26,8 +24,6 @@ struct Face final
     explicit Face ( size_t a, size_t b, size_t c, Vertices const &vertices ) noexcept;
 
     ~Face () = default;
-
-    [[maybe_unused]] void Flip () noexcept;
 };
 
 // The implementation is based on ideas from

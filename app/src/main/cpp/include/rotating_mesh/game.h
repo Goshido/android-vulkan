@@ -88,14 +88,14 @@ class Game : public android_vulkan::Game
         static void InitDescriptorSetLayoutBindingCommon ( VkDescriptorSetLayoutBinding* bindings );
 
     private:
-        [[nodiscard]] bool IsReady () override;
-        [[nodiscard]] bool OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) override;
+        [[nodiscard]] bool IsReady () noexcept override;
+        [[nodiscard]] bool OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) noexcept override;
 
-        [[nodiscard]] bool OnInitDevice ( android_vulkan::Renderer &renderer ) override;
-        void OnDestroyDevice ( VkDevice device ) override;
+        [[nodiscard]] bool OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept override;
+        void OnDestroyDevice ( VkDevice device ) noexcept override;
 
-        [[nodiscard]] bool OnSwapchainCreated ( android_vulkan::Renderer &renderer ) override;
-        void OnSwapchainDestroyed ( VkDevice device ) override;
+        [[nodiscard]] bool OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept override;
+        void OnSwapchainDestroyed ( VkDevice device ) noexcept override;
 
         [[nodiscard]] bool BeginFrame ( android_vulkan::Renderer &renderer, size_t &imageIndex );
         [[nodiscard]] bool EndFrame ( android_vulkan::Renderer &renderer, uint32_t imageIndex );

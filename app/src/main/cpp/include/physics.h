@@ -8,6 +8,7 @@
 
 GX_DISABLE_COMMON_WARNINGS
 
+#include <mutex>
 #include <unordered_set>
 
 GX_RESTORE_WARNING_STATE
@@ -21,10 +22,13 @@ class Physics final
         float                                   _accumulator;
         ContactDetector                         _contactDetector;
         ContactManager                          _contactManager;
+        std::unordered_set<RigidBodyRef>        _dynamics;
         float                                   _fixedTimeStep;
+        float                                   _fixedTimeStepInverse;
         std::unordered_set<GlobalForceRef>      _globalForces;
         bool                                    _isPause;
-        std::unordered_set<RigidBodyRef>        _rigidBodies;
+        std::unordered_set<RigidBodyRef>        _kinematics;
+        std::mutex                              _mutex;
         float                                   _timeSpeed;
 
     public:
@@ -50,6 +54,7 @@ class Physics final
         [[maybe_unused]] void SetTimeSpeed ( float speed ) noexcept;
 
         [[nodiscard]] bool IsPaused () const noexcept;
+        void OnIntegrationTypeChanged ( RigidBody &rigidBody ) noexcept;
         void Pause () noexcept;
         void Resume () noexcept;
         void Simulate ( float deltaTime ) noexcept;
@@ -58,6 +63,7 @@ class Physics final
         void CollectContacts () noexcept;
         void Integrate () noexcept;
         void Prepare () noexcept;
+        void ResolveIntegrationType ( RigidBody &rigidBody ) noexcept;
 };
 
 } // namespace android_vulkan

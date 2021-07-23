@@ -1,23 +1,22 @@
 #include <epa.h>
 #include <logger.h>
 
+GX_DISABLE_COMMON_WARNINGS
+
+#include <map>
+
+GX_RESTORE_WARNING_STATE
+
 
 namespace android_vulkan {
 
 constexpr static size_t const INITIAL_VERTICES = 1024U;
 constexpr static size_t const INITIAL_EDGES = INITIAL_VERTICES * 4U;
 constexpr static size_t const INITIAL_FACES = INITIAL_VERTICES * 4U;
-constexpr static uint16_t const MAXIMUM_STEPS = 32U;
+constexpr static uint16_t const MAXIMUM_STEPS = 16U;
 constexpr static float const TOLERANCE = 1.0e-3F;
 
-Face::Face () noexcept:
-    _a ( 0U ),
-    _b ( 0U ),
-    _c ( 0U ),
-    _normal ( 0.0F, 0.0F, 0.0F )
-{
-    // NOTHING
-}
+//----------------------------------------------------------------------------------------------------------------------
 
 Face::Face ( size_t a, size_t b, size_t c, Vertices const &vertices ) noexcept:
     _a ( a ),
@@ -35,15 +34,6 @@ Face::Face ( size_t a, size_t b, size_t c, Vertices const &vertices ) noexcept:
 
     _normal.CrossProduct ( ab, ac );
     _normal.Normalize ();
-}
-
-[[maybe_unused]] void Face::Flip () noexcept
-{
-    _normal.Reverse ();
-
-    size_t const tmp = _b;
-    _b = _c;
-    _c = tmp;
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -103,10 +93,52 @@ bool EPA::Run ( Simplex const &simplex, Shape const &shapeA, Shape const &shapeB
     CreatePolytope ( simplex );
     auto [closestFace, distance] = FindClosestFace ();
 
+    // TODO find the solution of this corner case.
+    // Example 2021-07-20: There was a case when box shape collided with sphere shape.
+    // The initial distance was 3.90107743e-7F. At second iteration the polytope became a concave shape.
+    // Similar issue
+    // https://stackoverflow.com/a/49329454
+
+    constexpr size_t const maxVertices = static_cast<size_t> ( MAXIMUM_STEPS ) + 4U;
+    std::vector<GXVec3> fN {};
+
     for ( ; _steps < MAXIMUM_STEPS; ++_steps )
     {
+        size_t hitMap[ maxVertices ] = {};
+
+        for ( auto const& face : _faces )
+        {
+            ++( hitMap[ face._a ] );
+            ++( hitMap[ face._b ] );
+            ++( hitMap[ face._c ] );
+        }
+
+        std::map<size_t, GXVec3> usedVertices {};
+
+        for ( size_t i = 0U; i < maxVertices; ++i )
+        {
+            if ( hitMap[ i ] )
+            {
+                GXVec3 tmp {};
+                tmp.Multiply ( _vertices[ i ], 1.0e+3F );
+                usedVertices.emplace ( i, std::move ( tmp ) );
+            }
+        }
+
+        fN.clear ();
+
+        for ( auto const& f : _faces )
+        {
+            GXVec3 tmp {};
+            tmp.Multiply ( f._normal, 1.0e+2F );
+            fN.emplace_back ( tmp );
+        }
+
         Face const& face = _faces[ closestFace ];
         GXVec3 const supportPoint = Shape::FindSupportPoint ( face._normal, shapeA, shapeB );
+
+        GXVec3 sp {};
+        sp.Multiply ( supportPoint, 1.0e+3F );
 
         if ( std::abs ( face._normal.DotProduct ( supportPoint ) - distance ) < TOLERANCE )
         {
@@ -126,12 +158,18 @@ bool EPA::Run ( Simplex const &simplex, Shape const &shapeA, Shape const &shapeB
         // of new faces. And then to compare this face with the closest back facing one.
 
         distance = FLT_MAX;
+        GXVec3 const removeNormal = face._normal;
 
         for ( size_t i = 0U; i < _faces.size (); )
         {
             Face& f = _faces[ i ];
 
-            if ( supportPoint.DotProduct ( f._normal ) > 0.0F )
+            GXVec3 probe {};
+            probe.Subtract ( supportPoint, _vertices[ f._a ] );
+
+            //if ( supportPoint.DotProduct ( f._normal ) > 0.0F )
+            if ( probe.DotProduct ( f._normal ) > 0.0F )
+            //if ( removeNormal.DotProduct ( f._normal ) > 0.0F )
             {
                 // Front facing face.
 
@@ -188,7 +226,7 @@ bool EPA::Run ( Simplex const &simplex, Shape const &shapeA, Shape const &shapeB
 
     constexpr char const format[] =
 R"__(EPA::Run - Algorithm exceeded maximum steps. Counters:
-    _steps: %hhu
+    _steps: %hu
     vertices: %zu
     faces: %zu
     edges: %zu)__";

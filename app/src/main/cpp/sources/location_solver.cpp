@@ -1,6 +1,5 @@
 #include <location_solver.h>
 #include <logger.h>
-#include <cassert>
 
 
 namespace android_vulkan {
@@ -12,29 +11,14 @@ void LocationSolver::Run ( ContactManager &contactManager ) noexcept
         RigidBody& bodyA = *manifold._bodyA;
         RigidBody& bodyB = *manifold._bodyB;
 
-        if ( bodyA.IsKinematic () )
-        {
-            SolveSingle ( bodyB, manifold, manifold._penetration );
-            continue;
-        }
-
         if ( bodyB.IsKinematic () )
         {
             SolveSingle ( bodyA, manifold, -manifold._penetration );
             continue;
         }
 
-        SolvePair ( bodyA, bodyB, manifold );
+        SolveSingle ( bodyB, manifold, manifold._penetration );
     }
-}
-
-void LocationSolver::SolvePair ( RigidBody &/*bodyA*/,
-    RigidBody &/*bodyB*/,
-    ContactManifold const &/*manifold*/
-) noexcept
-{
-    // TODO
-    assert ( false );
 }
 
 void LocationSolver::SolveSingle ( RigidBody &body, ContactManifold &manifold, float penetration ) noexcept

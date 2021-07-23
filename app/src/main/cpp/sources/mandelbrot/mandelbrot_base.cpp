@@ -33,7 +33,7 @@ MandelbrotBase::MandelbrotBase ( const char* fragmentShaderSpirV ) noexcept:
     // NOTHING
 }
 
-bool MandelbrotBase::OnFrame ( android_vulkan::Renderer &renderer, double /*deltaTime*/ )
+bool MandelbrotBase::OnFrame ( android_vulkan::Renderer &renderer, double /*deltaTime*/ ) noexcept
 {
     uint32_t presentationImageIndex = UINT32_MAX;
 
@@ -68,7 +68,7 @@ bool MandelbrotBase::OnFrame ( android_vulkan::Renderer &renderer, double /*delt
     return EndFrame ( renderer, presentationImageIndex );
 }
 
-bool MandelbrotBase::OnInitDevice ( android_vulkan::Renderer &renderer )
+bool MandelbrotBase::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 {
     if ( !CreatePresentationSyncPrimitive ( renderer ) )
     {
@@ -91,14 +91,14 @@ bool MandelbrotBase::OnInitDevice ( android_vulkan::Renderer &renderer )
     return true;
 }
 
-void MandelbrotBase::OnDestroyDevice ( VkDevice device )
+void MandelbrotBase::OnDestroyDevice ( VkDevice device ) noexcept
 {
     DestroyPipelineLayout ( device );
     DestroyCommandPool ( device );
     DestroyPresentationSyncPrimitive ( device );
 }
 
-bool MandelbrotBase::OnSwapchainCreated ( android_vulkan::Renderer &renderer )
+bool MandelbrotBase::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept
 {
     if ( !CreateRenderPass ( renderer ) )
         return false;
@@ -118,7 +118,7 @@ bool MandelbrotBase::OnSwapchainCreated ( android_vulkan::Renderer &renderer )
     return true;
 }
 
-void MandelbrotBase::OnSwapchainDestroyed ( VkDevice device )
+void MandelbrotBase::OnSwapchainDestroyed ( VkDevice device ) noexcept
 {
     DestroyPipeline ( device );
     DestroyFramebuffers ( device );

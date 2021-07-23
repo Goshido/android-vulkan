@@ -24,7 +24,7 @@ struct VelocitySolverData final
 
     float                   _effectiveMass = 0.0F;
     GXVec6                  _j[ 2U ] {};
-    GXVec6                  _mj {};
+    GXVec6                  _mj[ 2U ] {};
     float                   _lambda = 0.0F;
 
     VelocitySolverData () = default;
@@ -48,6 +48,7 @@ struct Contact final
     VelocitySolverData          _dataB {};
     VelocitySolverData          _dataN {};
     float                       _friction = 0.5F;
+    float                       _restitution = 0.5F;
 
     // Debug feature.
     [[maybe_unused]] GXVec3     _pointAfterResolve {};

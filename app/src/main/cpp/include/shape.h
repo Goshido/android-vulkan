@@ -2,7 +2,7 @@
 #define ANDROID_VULKAN_SHAPE_H
 
 
-#include <GXCommon/GXWarning.h>
+#include <GXCommon/GXMath.h>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -11,33 +11,28 @@ GX_DISABLE_COMMON_WARNINGS
 
 GX_RESTORE_WARNING_STATE
 
-#include <GXCommon/GXMath.h>
-
 
 namespace android_vulkan {
 
 enum class eShapeType : uint8_t
 {
-    Sphere [[maybe_unused]] = 0U,
-    Box = 1U,
-    Rectangle [[maybe_unused]] = 2U
+    Sphere = 0U,
+    Box = 1U
 };
 
 class Shape
 {
     private:
+        uint32_t        _collisionGroups;
+        float           _friction;
+        float           _restitution;
         eShapeType      _type;
 
     protected:
         GXAABB          _boundsLocal;
         GXAABB          _boundsWorld;
 
-        float           _frictionDynamic;
-        float           _frictionStatic;
-
         GXMat3          _inertiaTensorInverse;
-
-        float           _restitution;
 
         GXMat4          _transformRigidBody;
         GXMat4          _transformWorld;
@@ -51,24 +46,21 @@ class Shape
         Shape ( Shape && ) = delete;
         Shape& operator = ( Shape && ) = delete;
 
-        [[maybe_unused]] virtual void CalculateInertiaTensor ( float mass ) noexcept = 0;
-
-        [[maybe_unused, nodiscard]] virtual GXVec3 GetExtremePointWorld (
-            GXVec3 const &directionWorld
-        ) const noexcept = 0;
+        virtual void CalculateInertiaTensor ( float mass ) noexcept = 0;
+        [[nodiscard]] virtual GXVec3 GetExtremePointWorld ( GXVec3 const &directionWorld ) const noexcept = 0;
 
         [[nodiscard]] GXMat3 const& GetInertiaTensorInverse () const noexcept;
 
         [[maybe_unused, nodiscard]] GXAABB const& GetBoundsLocal () const noexcept;
-        [[maybe_unused, nodiscard]] GXAABB const& GetBoundsWorld () const noexcept;
+        [[nodiscard]] GXAABB const& GetBoundsWorld () const noexcept;
 
-        [[maybe_unused, nodiscard]] float GetFrictionDynamic () const noexcept;
-        [[maybe_unused]] void SetFrictionDynamic ( float friction ) noexcept;
+        [[nodiscard]] uint32_t GetCollisionGroups () const noexcept;
+        [[maybe_unused]] void SetCollisionGroups ( uint32_t groups ) noexcept;
 
-        [[maybe_unused, nodiscard]] float GetFrictionStatic () const noexcept;
-        [[maybe_unused]] void SetFrictionStatic ( float friction ) noexcept;
+        [[nodiscard]] float GetFriction () const noexcept;
+        [[maybe_unused]] void SetFriction ( float friction ) noexcept;
 
-        [[maybe_unused, nodiscard]] float GetRestitution () const noexcept;
+        [[nodiscard]] float GetRestitution () const noexcept;
         [[maybe_unused]] void SetRestitution ( float restitution ) noexcept;
 
         [[maybe_unused, nodiscard]] GXMat4 const& GetTransformWorld () const noexcept;

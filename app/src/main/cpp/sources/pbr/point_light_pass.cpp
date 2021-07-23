@@ -55,6 +55,9 @@ bool PointLightPass::ExecuteLightupPhase ( android_vulkan::Renderer &renderer,
     GXMat4 const &viewProjection
 )
 {
+    if ( _interacts.empty () )
+        return true;
+
     if ( !_lightup.UpdateGPUData ( renderer, *this, viewerLocal, view ) )
         return false;
 
@@ -88,6 +91,9 @@ bool PointLightPass::ExecuteShadowPhase ( android_vulkan::Renderer &renderer,
     size_t opaqueMeshCount
 )
 {
+    if ( _interacts.empty () )
+        return true;
+
     if ( !UpdateShadowmapGPUData ( renderer, sceneData, opaqueMeshCount ) )
         return false;
 
@@ -884,7 +890,7 @@ bool PointLightPass::UpdateShadowmapGPUData ( android_vulkan::Renderer &renderer
     if ( !AllocateShadowmapDescriptorSets ( renderer, maxUniformBuffers ) )
         return false;
 
-    PointLightShadowmapGeneratorProgram::InstanceData instanceData;
+    PointLightShadowmapGeneratorProgram::InstanceData instanceData {};
 
     auto append = [ & ] ( PointLight::Matrices const &matrices, size_t instance, GXMat4 const &local ) {
         PointLightShadowmapGeneratorProgram::ObjectData& objectData = instanceData._instanceData[ instance ];
@@ -897,12 +903,14 @@ bool PointLightPass::UpdateShadowmapGPUData ( android_vulkan::Renderer &renderer
 
     size_t bufferIndex = 0U;
 
-    auto commit = [ & ] () {
+    auto commit = [ & ] () noexcept {
         _shadowmapUniformInfo[ bufferIndex++ ].buffer = _shadowmapUniformPool.Acquire ( renderer,
             _shadowmapTransferCommandBuffer,
             &instanceData,
             VK_PIPELINE_STAGE_VERTEX_SHADER_BIT
         );
+
+        return true;
     };
 
     for ( auto& [light, casters] : _interacts )
@@ -1034,10 +1042,10 @@ bool PointLightPass::UpdateLightGPUData ( android_vulkan::Renderer &renderer, GX
     if ( !result )
         return false;
 
-    PointLightLightupProgram::VolumeData volumeData;
+    PointLightLightupProgram::VolumeData volumeData {};
     GXMat4& transform = volumeData._transform;
-    GXMat4 local;
-    GXVec3 alpha;
+    GXMat4 local {};
+    GXVec3 alpha {};
 
     for ( size_t i = 0U; i < lightCount; ++i )
     {

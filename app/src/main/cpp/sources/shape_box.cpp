@@ -1,8 +1,9 @@
 #include <shape_box.h>
 
+
 namespace android_vulkan {
 
-ShapeBox::ShapeBox ( GXVec3 const &size ) noexcept:
+[[maybe_unused]] ShapeBox::ShapeBox ( GXVec3 const &size ) noexcept:
     Shape ( eShapeType::Box ),
     _localGeometry {},
     _size ( size )
@@ -10,7 +11,7 @@ ShapeBox::ShapeBox ( GXVec3 const &size ) noexcept:
     Init ();
 }
 
-ShapeBox::ShapeBox ( float width, float height, float depth ) noexcept:
+[[maybe_unused]] ShapeBox::ShapeBox ( float width, float height, float depth ) noexcept:
     Shape ( eShapeType::Box ),
     _localGeometry {},
     _size ( width, height, depth )
@@ -18,7 +19,22 @@ ShapeBox::ShapeBox ( float width, float height, float depth ) noexcept:
     Init ();
 }
 
-[[maybe_unused]] void ShapeBox::CalculateInertiaTensor ( float mass ) noexcept
+[[maybe_unused]] float ShapeBox::GetWidth () const noexcept
+{
+    return _size._data[ 0U ];
+}
+
+[[maybe_unused]] float ShapeBox::GetHeight () const noexcept
+{
+    return _size._data[ 1U ];
+}
+
+[[maybe_unused]] float ShapeBox::GetDepth () const noexcept
+{
+    return _size._data[ 2U ];
+}
+
+void ShapeBox::CalculateInertiaTensor ( float mass ) noexcept
 {
     // https://en.wikipedia.org/wiki/List_of_moments_of_inertia
 
@@ -41,7 +57,7 @@ ShapeBox::ShapeBox ( float width, float height, float depth ) noexcept:
     _inertiaTensorInverse._m[ 2U ][ 1U ] = 0.0F;
 }
 
-[[maybe_unused]] GXVec3 ShapeBox::GetExtremePointWorld ( GXVec3 const &direction ) const noexcept
+GXVec3 ShapeBox::GetExtremePointWorld ( GXVec3 const &direction ) const noexcept
 {
     float projection = -FLT_MAX;
     GXVec3 alpha {};
@@ -62,19 +78,9 @@ ShapeBox::ShapeBox ( float width, float height, float depth ) noexcept:
     return result;
 }
 
-[[maybe_unused]] float ShapeBox::GetWidth () const noexcept
+void ShapeBox::UpdateBounds () noexcept
 {
-    return _size._data[ 0U ];
-}
-
-[[maybe_unused]] float ShapeBox::GetHeight () const noexcept
-{
-    return _size._data[ 1U ];
-}
-
-[[maybe_unused]] float ShapeBox::GetDepth () const noexcept
-{
-    return _size._data[ 2U ];
+    _boundsLocal.Transform ( _boundsWorld, _transformWorld );
 }
 
 void ShapeBox::Init () noexcept
@@ -99,11 +105,6 @@ void ShapeBox::Init () noexcept
     _localGeometry[ 5U ] = GXVec3 ( half._data[ 0U ], negHalf._data[ 1U ], half._data[ 2U ] );
     _localGeometry[ 6U ] = half;
     _localGeometry[ 7U ] = GXVec3 ( negHalf._data[ 0U ], half._data[ 1U ], half._data[ 2U ] );
-}
-
-void ShapeBox::UpdateBounds () noexcept
-{
-    _boundsWorld.Transform ( _boundsLocal, _transformWorld );
 }
 
 } // namespace android_vulkan

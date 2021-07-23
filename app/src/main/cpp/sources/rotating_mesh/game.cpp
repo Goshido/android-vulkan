@@ -355,12 +355,12 @@ void Game::InitDescriptorSetLayoutBindingCommon ( VkDescriptorSetLayoutBinding* 
     normalSamplerInfo.pImmutableSamplers = nullptr;
 }
 
-bool Game::IsReady ()
+bool Game::IsReady () noexcept
 {
     return _pipeline != VK_NULL_HANDLE;
 }
 
-bool Game::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime )
+bool Game::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) noexcept
 {
     if ( !UpdateUniformBuffer ( renderer, deltaTime ) )
         return false;
@@ -402,7 +402,7 @@ bool Game::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime )
     return EndFrame ( renderer, static_cast<uint32_t> ( imageIndex ) );
 }
 
-bool Game::OnInitDevice ( android_vulkan::Renderer &renderer )
+bool Game::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 {
     if ( !CreateSyncPrimitives ( renderer ) )
     {
@@ -455,7 +455,7 @@ bool Game::OnInitDevice ( android_vulkan::Renderer &renderer )
     return true;
 }
 
-void Game::OnDestroyDevice ( VkDevice device )
+void Game::OnDestroyDevice ( VkDevice device ) noexcept
 {
     DestroyDescriptorSet ( device );
     DestroyPipelineLayout ( device );
@@ -468,7 +468,7 @@ void Game::OnDestroyDevice ( VkDevice device )
     DestroySyncPrimitives ( device );
 }
 
-bool Game::OnSwapchainCreated ( android_vulkan::Renderer &renderer )
+bool Game::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept
 {
     VkExtent2D const& resolution = renderer.GetViewportResolution ();
 
@@ -505,7 +505,7 @@ bool Game::OnSwapchainCreated ( android_vulkan::Renderer &renderer )
     return true;
 }
 
-void Game::OnSwapchainDestroyed ( VkDevice device )
+void Game::OnSwapchainDestroyed ( VkDevice device ) noexcept
 {
     DestroyCommandBuffers ( device );
     DestroyPipeline ( device );

@@ -22,12 +22,12 @@ Rainbow::Rainbow () noexcept:
     // NOTHING
 }
 
-bool Rainbow::IsReady ()
+bool Rainbow::IsReady () noexcept
 {
     return _renderPassEndedSemaphore != VK_NULL_HANDLE;
 }
 
-bool Rainbow::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime )
+bool Rainbow::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) noexcept
 {
     uint32_t framebufferIndex = UINT32_MAX;
 
@@ -151,7 +151,7 @@ bool Rainbow::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime )
     return EndFrame ( renderer, framebufferIndex );
 }
 
-bool Rainbow::OnInitDevice ( android_vulkan::Renderer &renderer )
+bool Rainbow::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 {
     if ( CreatePresentationSyncPrimitive ( renderer ) )
         return true;
@@ -160,12 +160,12 @@ bool Rainbow::OnInitDevice ( android_vulkan::Renderer &renderer )
     return false;
 }
 
-void Rainbow::OnDestroyDevice ( VkDevice device )
+void Rainbow::OnDestroyDevice ( VkDevice device ) noexcept
 {
     DestroyPresentationSyncPrimitive ( device );
 }
 
-bool Rainbow::OnSwapchainCreated ( android_vulkan::Renderer &renderer )
+bool Rainbow::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept
 {
     if ( !CreateRenderPass ( renderer ) )
         return false;
@@ -185,7 +185,7 @@ bool Rainbow::OnSwapchainCreated ( android_vulkan::Renderer &renderer )
     return true;
 }
 
-void Rainbow::OnSwapchainDestroyed ( VkDevice device )
+void Rainbow::OnSwapchainDestroyed ( VkDevice device ) noexcept
 {
     DestroyCommandBuffer ( device );
     DestroyFramebuffers ( device );

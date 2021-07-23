@@ -42,7 +42,9 @@ class ContactDetector final
         [[nodiscard]] FirstContactData AllocateFirstContact ( ContactManager &contactManager,
             RigidBodyRef const &a,
             RigidBodyRef const &b,
-            GXMat3 const &tbn
+            GXMat3 const &tbn,
+            float friction,
+            float restitution
         ) const noexcept;
 
         void CollectExtremePoints ( Vertices &vertices, Shape const &shape, GXMat3 const &tbn ) noexcept;
@@ -51,25 +53,33 @@ class ContactDetector final
         void ManifoldEdgeEdge ( ContactManager &contactManager,
             RigidBodyRef const &a,
             RigidBodyRef const &b,
-            GXMat3 const &tbn
+            GXMat3 const &tbn,
+            float friction,
+            float restitution
         ) noexcept;
 
         void ManifoldEdgeFace ( ContactManager &contactManager,
             RigidBodyRef const &a,
             RigidBodyRef const &b,
-            GXMat3 const &tbn
+            GXMat3 const &tbn,
+            float friction,
+            float restitution
         ) noexcept;
 
         void ManifoldFaceFace ( ContactManager &contactManager,
             RigidBodyRef const &a,
             RigidBodyRef const &b,
-            GXMat3 const &tbn
+            GXMat3 const &tbn,
+            float friction,
+            float restitution
         ) noexcept;
 
         void ManifoldPoint ( ContactManager &contactManager,
             RigidBodyRef const &a,
             RigidBodyRef const &b,
             GXMat3 const &tbn,
+            float friction,
+            float restitution,
             GXVec3 const &vertex
         ) noexcept;
 

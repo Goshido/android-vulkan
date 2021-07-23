@@ -25,18 +25,18 @@ class VelocitySolver final
 
         ~VelocitySolver () = delete;
 
-        static void Run ( ContactManager &contactManager, float fixedTimeStep ) noexcept;
+        static void Run ( ContactManager &contactManager, float fixedTimeStepInverse ) noexcept;
 
     private:
         [[nodiscard]] static float LambdaClipNormalForce ( float lambda, void* context ) noexcept;
         [[nodiscard]] static float LambdaClipFriction ( float lambda, void* context ) noexcept;
 
         // Basically it's a solver for dynamic vs dynamic body.
-        static void SolvePair ( ContactManifold &manifold, float fixedTimeStep ) noexcept;
+        static void SolvePair ( ContactManifold &manifold, float fixedTimeStepInverse ) noexcept;
 
         // Basically it's a solver for dynamic vs kinematic body.
         // Note the body A in the manifold data structure is dynamic while body B is kinematic.
-        static void SolveSingle ( ContactManifold &manifold, float fixedTimeStep ) noexcept;
+        static void SolveSingle ( ContactManifold &manifold, float fixedTimeStepInverse ) noexcept;
 
         static void SwapBodies ( ContactManifold &manifold ) noexcept;
 };

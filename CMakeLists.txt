@@ -88,6 +88,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/rigid_body.cpp
     app/src/main/cpp/sources/shape.cpp
     app/src/main/cpp/sources/shape_box.cpp
+    app/src/main/cpp/sources/shape_sphere.cpp
     app/src/main/cpp/sources/simplex.cpp
     app/src/main/cpp/sources/stick.cpp
     app/src/main/cpp/sources/sutherland_hodgman.cpp
@@ -154,6 +155,15 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/pbr/texture_present_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/texture_present_program.cpp
     app/src/main/cpp/sources/pbr/uniform_buffer_pool.cpp
+    app/src/main/cpp/sources/pbr/mario/brick.cpp
+    app/src/main/cpp/sources/pbr/mario/camera.cpp
+    app/src/main/cpp/sources/pbr/mario/mario.cpp
+    app/src/main/cpp/sources/pbr/mario/pipe_base.cpp
+    app/src/main/cpp/sources/pbr/mario/pipe_x1.cpp
+    app/src/main/cpp/sources/pbr/mario/pipe_x2.cpp
+    app/src/main/cpp/sources/pbr/mario/riddle.cpp
+    app/src/main/cpp/sources/pbr/mario/world1x1.cpp
+    app/src/main/cpp/sources/pbr/physics/sandbox.cpp
     app/src/main/cpp/sources/rainbow/rainbow.cpp
     app/src/main/cpp/sources/rotating_mesh/game.cpp
     app/src/main/cpp/sources/rotating_mesh/game_analytic.cpp

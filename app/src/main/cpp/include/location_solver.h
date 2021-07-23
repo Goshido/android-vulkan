@@ -23,7 +23,6 @@ class [[maybe_unused]] LocationSolver final
         static void Run ( ContactManager &contactManager ) noexcept;
 
     private:
-        static void SolvePair ( RigidBody &bodyA, RigidBody &bodyB, ContactManifold const &manifold ) noexcept;
         static void SolveSingle ( RigidBody &body, ContactManifold &manifold, float penetration ) noexcept;
 };
 

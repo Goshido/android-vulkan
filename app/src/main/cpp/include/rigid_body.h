@@ -4,45 +4,52 @@
 
 #include "shape.h"
 
+GX_DISABLE_COMMON_WARNINGS
+
+#include <mutex>
+
+GX_RESTORE_WARNING_STATE
+
 
 namespace android_vulkan {
+
+class Physics;
 
 class RigidBody final
 {
     private:
-        float       _dampingAngular;
-        float       _dampingLinear;
+        float                   _dampingAngular;
+        float                   _dampingLinear;
 
-        // TODO move this to the shape properties.
-        float       _friction;
+        GXMat3                  _inertiaTensorInverse;
 
-        GXMat3      _inertiaTensorInverse;
+        bool                    _isAwake;
+        bool                    _isCanSleep;
+        bool                    _isKinematic;
 
-        bool        _isAwake;
-        bool        _isCanSleep;
-        bool        _isKinematic;
+        GXVec3                  _location;
+        GXVec3                  _locationBefore;
 
-        GXVec3      _location;
-        GXVec3      _locationBefore;
+        float                   _mass;
+        float                   _massInverse;
 
-        float       _mass;
-        float       _massInverse;
+        Physics*                _physics;
 
-        float       _restitution;
+        GXQuat                  _rotation;
+        GXQuat                  _rotationBefore;
 
-        GXQuat      _rotation;
-        GXQuat      _rotationBefore;
+        ShapeRef                _shape;
+        float                   _sleepTimeout;
 
-        ShapeRef    _shape;
-        float       _sleepTimeout;
+        GXVec3                  _totalForce;
+        GXVec3                  _totalTorque;
 
-        GXVec3      _totalForce;
-        GXVec3      _totalTorque;
+        GXMat4                  _transform;
 
-        GXMat4      _transform;
+        GXVec3                  _velocityAngular;
+        GXVec3                  _velocityLinear;
 
-        GXVec3      _velocityAngular;
-        GXVec3      _velocityLinear;
+        static std::mutex       _mutex;
 
     public:
         RigidBody () noexcept;
@@ -56,12 +63,12 @@ class RigidBody final
         ~RigidBody () = default;
 
         [[maybe_unused]] void AddVelocityAngular ( GXVec3 const &velocity ) noexcept;
-        [[maybe_unused, nodiscard]] GXVec3 const& GetVelocityAngular () const noexcept;
+        [[nodiscard]] GXVec3 const& GetVelocityAngular () const noexcept;
         [[maybe_unused]] void SetVelocityAngular ( GXVec3 const &velocity ) noexcept;
         void SetVelocityAngular ( float wx, float wy, float wz ) noexcept;
 
         [[maybe_unused]] void AddVelocityLinear ( GXVec3 const &velocity ) noexcept;
-        [[maybe_unused, nodiscard]] GXVec3 const& GetVelocityLinear () const noexcept;
+        [[nodiscard]] GXVec3 const& GetVelocityLinear () const noexcept;
         [[maybe_unused]] void SetVelocityLinear ( GXVec3 const &velocity ) noexcept;
         void SetVelocityLinear ( float x, float y, float z ) noexcept;
 
@@ -82,10 +89,7 @@ class RigidBody final
         [[maybe_unused, nodiscard]] float GetDampingLinear () const noexcept;
         [[maybe_unused]] void SetDampingLinear ( float damping ) noexcept;
 
-        [[nodiscard]] float GetFriction () const noexcept;
-        [[maybe_unused]] void SetFriction ( float friction ) noexcept;
-
-        [[maybe_unused, nodiscard]] GXMat3 const& GetInertiaTensorInverse () const noexcept;
+        [[nodiscard]] GXMat3 const& GetInertiaTensorInverse () const noexcept;
 
         [[nodiscard]] GXVec3 const& GetLocation () const noexcept;
         [[maybe_unused]] void SetLocation ( GXVec3 const &location ) noexcept;
@@ -94,9 +98,6 @@ class RigidBody final
         [[maybe_unused, nodiscard]] float GetMass () const noexcept;
         [[nodiscard]] float GetMassInverse () const noexcept;
         [[maybe_unused]] void SetMass ( float mass ) noexcept;
-
-        [[nodiscard]] float GetRestitution () const noexcept;
-        [[maybe_unused]] void SetRestitution ( float restitution ) noexcept;
 
         [[maybe_unused, nodiscard]] GXQuat const& GetRotation () const noexcept;
         [[maybe_unused]] void SetRotation ( GXQuat const &rotation ) noexcept;
@@ -112,17 +113,20 @@ class RigidBody final
 
         void Integrate ( float deltaTime ) noexcept;
         [[maybe_unused, nodiscard]] bool IsAwake () const noexcept;
-        void ResetAccumulators ();
+
+        void OnRegister ( Physics &physics ) noexcept;
+        void OnUnregister () noexcept;
+
+        void ResetAccumulators () noexcept;
+        void UpdatePositionAndRotation ( float deltaTime ) noexcept;
 
     private:
-        void IntegrateAsDynamic ( float deltaTime ) noexcept;
         void RunSleepLogic ( float deltaTime ) noexcept;
 
         void SetAwake () noexcept;
         void SetSleep () noexcept;
 
         void UpdateCacheData () noexcept;
-        void UpdatePositionAndRotation ( float deltaTime ) noexcept;
 };
 
 using RigidBodyRef = std::shared_ptr<RigidBody>;

@@ -15,6 +15,8 @@ struct Face final
     size_t      _c = 0U;
     GXVec3      _normal = GXVec3 ( 0.0F, 0.0F, 0.0F );
 
+    Face () = default;
+
     Face ( Face const & ) = default;
     Face& operator = ( Face const & ) = default;
 

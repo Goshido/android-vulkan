@@ -93,47 +93,8 @@ bool EPA::Run ( Simplex const &simplex, Shape const &shapeA, Shape const &shapeB
     CreatePolytope ( simplex );
     auto [closestFace, distance] = FindClosestFace ();
 
-    // TODO find the solution of this corner case.
-    // Example 2021-07-20: There was a case when box shape collided with sphere shape.
-    // The initial distance was 3.90107743e-7F. At second iteration the polytope became a concave shape.
-    // Similar issue
-    // https://stackoverflow.com/a/49329454
-
-    constexpr size_t const maxVertices = static_cast<size_t> ( MAXIMUM_STEPS ) + 4U;
-    std::vector<GXVec3> fN {};
-
     for ( ; _steps < MAXIMUM_STEPS; ++_steps )
     {
-        size_t hitMap[ maxVertices ] = {};
-
-        for ( auto const& face : _faces )
-        {
-            ++( hitMap[ face._a ] );
-            ++( hitMap[ face._b ] );
-            ++( hitMap[ face._c ] );
-        }
-
-        std::map<size_t, GXVec3> usedVertices {};
-
-        for ( size_t i = 0U; i < maxVertices; ++i )
-        {
-            if ( hitMap[ i ] )
-            {
-                GXVec3 tmp {};
-                tmp.Multiply ( _vertices[ i ], 1.0e+3F );
-                usedVertices.emplace ( i, std::move ( tmp ) );
-            }
-        }
-
-        fN.clear ();
-
-        for ( auto const& f : _faces )
-        {
-            GXVec3 tmp {};
-            tmp.Multiply ( f._normal, 1.0e+2F );
-            fN.emplace_back ( tmp );
-        }
-
         Face const& face = _faces[ closestFace ];
         GXVec3 const supportPoint = Shape::FindSupportPoint ( face._normal, shapeA, shapeB );
 
@@ -167,9 +128,7 @@ bool EPA::Run ( Simplex const &simplex, Shape const &shapeA, Shape const &shapeB
             GXVec3 probe {};
             probe.Subtract ( supportPoint, _vertices[ f._a ] );
 
-            //if ( supportPoint.DotProduct ( f._normal ) > 0.0F )
             if ( probe.DotProduct ( f._normal ) > 0.0F )
-            //if ( removeNormal.DotProduct ( f._normal ) > 0.0F )
             {
                 // Front facing face.
 

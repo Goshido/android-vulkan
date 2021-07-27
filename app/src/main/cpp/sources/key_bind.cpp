@@ -3,20 +3,20 @@
 
 namespace android_vulkan {
 
-KeyBind::KeyBind ():
+KeyBind::KeyBind () noexcept:
     _context ( nullptr ),
     _handler ( nullptr )
 {
     // NOTHING
 }
 
-void KeyBind::Init ( void* context, KeyHandler handler )
+void KeyBind::Init ( void* context, KeyHandler handler ) noexcept
 {
     _context = context;
     _handler = handler;
 }
 
-void KeyBind::Reset ()
+void KeyBind::Reset () noexcept
 {
     _context = nullptr;
     _handler = nullptr;

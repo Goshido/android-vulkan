@@ -2,22 +2,35 @@
 #include <contact_detector.h>
 #include <location_solver.h>
 #include <logger.h>
+#include <velocity_solver.h>
+
+GX_DISABLE_COMMON_WARNINGS
+
+#include <cassert>
+
+GX_RESTORE_WARNING_STATE
 
 
 namespace android_vulkan {
 
 constexpr static uint16_t const STEPS_PER_SECOND = 120U;
-constexpr static float const FIXED_TIME_STEP = 1.0F / static_cast<float> ( STEPS_PER_SECOND );
 constexpr static float const DEFAULT_TIME_SPEED = 1.0F;
+constexpr static float const FIXED_TIME_STEP = DEFAULT_TIME_SPEED / static_cast<float> ( STEPS_PER_SECOND );
+constexpr static float const FIXED_TIME_STEP_INVERSE = 1.0F / FIXED_TIME_STEP;
+
+//----------------------------------------------------------------------------------------------------------------------
 
 Physics::Physics () noexcept:
     _accumulator ( 0.0F ),
     _contactDetector {},
     _contactManager {},
-    _fixedTimeStep ( DEFAULT_TIME_SPEED * FIXED_TIME_STEP ),
+    _dynamics {},
+    _fixedTimeStep ( FIXED_TIME_STEP ),
+    _fixedTimeStepInverse ( FIXED_TIME_STEP_INVERSE ),
     _globalForces {},
     _isPause ( true ),
-    _rigidBodies {},
+    _kinematics {},
+    _mutex {},
     _timeSpeed ( DEFAULT_TIME_SPEED )
 {
     // NOTHING
@@ -25,6 +38,7 @@ Physics::Physics () noexcept:
 
 [[maybe_unused]] bool Physics::AddGlobalForce ( GlobalForceRef const &globalForce ) noexcept
 {
+    std::unique_lock<std::mutex> const lock ( _mutex );
     auto const result = _globalForces.insert ( globalForce );
 
     if ( result.second )
@@ -36,6 +50,7 @@ Physics::Physics () noexcept:
 
 [[maybe_unused]] bool Physics::RemoveGlobalForce ( GlobalForceRef const &globalForce ) noexcept
 {
+    std::unique_lock<std::mutex> const lock ( _mutex );
     auto const result = _globalForces.erase ( globalForce );
 
     if ( result > 0U )
@@ -47,27 +62,40 @@ Physics::Physics () noexcept:
 
 [[maybe_unused]] bool Physics::AddRigidBody ( RigidBodyRef const &rigidBody ) noexcept
 {
-    if ( !rigidBody->HasShape() )
+    std::unique_lock<std::mutex> const lock ( _mutex );
+    RigidBody& body = *rigidBody.get ();
+
+    if ( !body.HasShape() )
     {
         LogError ( "Physics::AddRigidBody - Can't insert rigid body. The rigid body does not have a shape." );
         return false;
     }
 
-    auto const result = _rigidBodies.insert ( rigidBody );
+    auto const result = body.IsKinematic () ? _kinematics.insert ( rigidBody ) : _dynamics.insert ( rigidBody );
 
-    if ( result.second )
-        return true;
+    if ( !result.second )
+    {
+        LogError ( "Physics::AddRigidBody - Can't insert rigid body. Same one presents already." );
+        return false;
+    }
 
-    LogError ( "Physics::AddRigidBody - Can't insert rigid body. Same one presents already." );
-    return false;
+    body.OnRegister ( *this );
+    ResolveIntegrationType ( body );
+    return true;
 }
 
 [[maybe_unused]] bool Physics::RemoveRigidBody ( RigidBodyRef const &rigidBody ) noexcept
 {
-    auto const result = _rigidBodies.erase ( rigidBody );
+    std::unique_lock<std::mutex> const lock ( _mutex );
+
+    RigidBody& body = *rigidBody.get ();
+    auto const result = body.IsKinematic () ? _kinematics.erase ( rigidBody ) : _dynamics.erase ( rigidBody );
 
     if ( result > 0U )
+    {
+        body.OnUnregister ();
         return true;
+    }
 
     LogError ( "Physics::RemoveRigidBody - Can't find the rigid body." );
     return false;
@@ -85,13 +113,21 @@ std::vector<ContactManifold> const& Physics::GetContactManifolds () const noexce
 
 [[maybe_unused]] void Physics::SetTimeSpeed ( float speed ) noexcept
 {
+    assert ( speed != 0.0F );
     _timeSpeed = speed;
     _fixedTimeStep = FIXED_TIME_STEP * speed;
+    _fixedTimeStepInverse = 1.0F / _fixedTimeStep;
 }
 
 bool Physics::IsPaused () const noexcept
 {
     return _isPause;
+}
+
+void Physics::OnIntegrationTypeChanged ( RigidBody &rigidBody ) noexcept
+{
+    std::unique_lock<std::mutex> const lock ( _mutex );
+    ResolveIntegrationType ( rigidBody );
 }
 
 void Physics::Pause () noexcept
@@ -113,6 +149,7 @@ void Physics::Simulate ( float deltaTime ) noexcept
     if ( _isPause )
         return;
 
+    std::unique_lock<std::mutex> const lock ( _mutex );
     _accumulator += deltaTime * _timeSpeed;
 
     while ( _accumulator >= _fixedTimeStep )
@@ -120,9 +157,9 @@ void Physics::Simulate ( float deltaTime ) noexcept
         Integrate ();
         CollectContacts ();
 
-        // TODO collision response
+        VelocitySolver::Run ( _contactManager, _fixedTimeStepInverse );
+        LocationSolver::Run ( _contactManager );
 
-        LocationSolver::Solve ( _contactManager );
         Prepare ();
         _accumulator -= _fixedTimeStep;
     }
@@ -131,10 +168,13 @@ void Physics::Simulate ( float deltaTime ) noexcept
 void Physics::CollectContacts () noexcept
 {
     _contactManager.Reset ();
-    auto end = _rigidBodies.end ();
+    auto end = _dynamics.end ();
 
-    for ( auto i = _rigidBodies.begin (); i != end; ++i )
+    for ( auto i = _dynamics.begin (); i != end; ++i )
     {
+        for ( auto& kinematic : _kinematics )
+            _contactDetector.Check ( _contactManager, *i, kinematic );
+
         for ( auto j = i; ++j != end; )
         {
             _contactDetector.Check ( _contactManager, *i, *j );
@@ -144,21 +184,52 @@ void Physics::CollectContacts () noexcept
 
 void Physics::Integrate () noexcept
 {
-    for ( auto& rigidBody : _rigidBodies )
+    for ( auto& kinematic : _kinematics )
+        kinematic->UpdatePositionAndRotation ( _fixedTimeStep );
+
+    for ( auto& dynamic : _dynamics )
     {
         for ( auto const& globalForce : _globalForces )
-            globalForce->Apply ( rigidBody );
+            globalForce->Apply ( dynamic );
 
-        rigidBody->Integrate ( _fixedTimeStep );
+        dynamic->Integrate ( _fixedTimeStep );
     }
 }
 
 void Physics::Prepare () noexcept
 {
-    for ( auto& rigidBody : _rigidBodies )
+    for ( auto& dynamic : _dynamics )
     {
-        rigidBody->ResetAccumulators ();
+        dynamic->ResetAccumulators ();
     }
+}
+
+void Physics::ResolveIntegrationType ( RigidBody &rigidBody ) noexcept
+{
+    auto resolve = [ & ] ( auto &targetSet, auto &otherSet ) noexcept {
+        auto end = otherSet.end ();
+
+        auto findResult = std::find_if ( otherSet.begin (),
+            end,
+            [ & ] ( RigidBodyRef const &body ) noexcept -> bool {
+                return body.get () == &rigidBody;
+            }
+        );
+
+        if ( findResult == end )
+            return;
+
+        targetSet.insert ( *findResult );
+        otherSet.erase ( findResult );
+    };
+
+    if ( rigidBody.IsKinematic () )
+    {
+        resolve ( _kinematics, _dynamics );
+        return;
+    }
+
+    resolve ( _dynamics, _kinematics );
 }
 
 } // namespace android_vulkan

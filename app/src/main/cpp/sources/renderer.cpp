@@ -26,7 +26,7 @@ constexpr static size_t const INITIAL_EXTENSION_STORAGE_SIZE = 64U;
 
 // Note vulkan_core.h is a little bit dirty from clang-tidy point of view.
 // So suppress this third-party mess via "NOLINT" control comment.
-constexpr static uint32_t const TARGET_VULKAN_VERSION = VK_MAKE_VERSION ( 1U, 1U, 108U ); // NOLINT
+constexpr static uint32_t const TARGET_VULKAN_VERSION = VK_MAKE_VERSION ( 1U, 1U, 131U ); // NOLINT
 
 constexpr static char const* UNKNOWN_RESULT = "UNKNOWN";
 
@@ -1191,6 +1191,11 @@ VkImageAspectFlags Renderer::ResolveImageViewAspect ( VkFormat format )
 
         {
             VK_FORMAT_D24_UNORM_S8_UINT,
+            AV_VK_FLAG ( VK_IMAGE_ASPECT_DEPTH_BIT ) | AV_VK_FLAG ( VK_IMAGE_ASPECT_STENCIL_BIT )
+        },
+
+        {
+            VK_FORMAT_D32_SFLOAT_S8_UINT,
             AV_VK_FLAG ( VK_IMAGE_ASPECT_DEPTH_BIT ) | AV_VK_FLAG ( VK_IMAGE_ASPECT_STENCIL_BIT )
         },
 
@@ -2474,8 +2479,8 @@ bool Renderer::SelectTargetSurfaceFormat ( VkFormat &targetColorFormat,
 
     constexpr VkFormat const depthStencilOptions[]
     {
-        VK_FORMAT_D32_SFLOAT_S8_UINT,
         VK_FORMAT_D24_UNORM_S8_UINT,
+        VK_FORMAT_D32_SFLOAT_S8_UINT,
         VK_FORMAT_D16_UNORM_S8_UINT
     };
 

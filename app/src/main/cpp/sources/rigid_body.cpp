@@ -1,4 +1,6 @@
 #include <rigid_body.h>
+#include <logger.h>
+#include <physics.h>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -25,6 +27,10 @@ constexpr static float const SLEEP_TIMEOUT = 0.2F;
 
 constexpr static GXVec3 const ZERO ( 0.0F, 0.0F, 0.0F );
 
+//----------------------------------------------------------------------------------------------------------------------
+
+std::mutex RigidBody::_mutex {};
+
 RigidBody::RigidBody () noexcept:
     _dampingAngular ( DEFAULT_DAMPING_ANGULAR ),
     _dampingLinear ( DEFAULT_DAMPING_LINEAR ),
@@ -36,6 +42,7 @@ RigidBody::RigidBody () noexcept:
     _locationBefore ( DEFAULT_LOCATION ),
     _mass ( DEFAULT_MASS ),
     _massInverse ( DEFAULT_MASS_INVERSE ),
+    _physics ( nullptr ),
     _rotation {},
     _rotationBefore {},
     _shape {},
@@ -56,7 +63,7 @@ RigidBody::RigidBody () noexcept:
     _velocityAngular.Sum ( _velocityAngular, velocity );
 }
 
-[[maybe_unused]] GXVec3 const& RigidBody::GetVelocityAngular () const noexcept
+GXVec3 const& RigidBody::GetVelocityAngular () const noexcept
 {
     return _velocityAngular;
 }
@@ -66,12 +73,19 @@ RigidBody::RigidBody () noexcept:
     _velocityAngular = velocity;
 }
 
+void RigidBody::SetVelocityAngular ( float wx, float wy, float wz ) noexcept
+{
+    _velocityAngular._data[ 0U ] = wx;
+    _velocityAngular._data[ 1U ] = wy;
+    _velocityAngular._data[ 2U ] = wz;
+}
+
 [[maybe_unused]] void RigidBody::AddVelocityLinear ( GXVec3 const &velocity ) noexcept
 {
     _velocityLinear.Sum ( _velocityLinear, velocity );
 }
 
-[[maybe_unused]] GXVec3 const& RigidBody::GetVelocityLinear () const noexcept
+GXVec3 const& RigidBody::GetVelocityLinear () const noexcept
 {
     return _velocityLinear;
 }
@@ -79,6 +93,13 @@ RigidBody::RigidBody () noexcept:
 [[maybe_unused]] void RigidBody::SetVelocityLinear ( GXVec3 const &velocity ) noexcept
 {
     _velocityLinear = velocity;
+}
+
+void RigidBody::SetVelocityLinear ( float x, float y, float z ) noexcept
+{
+    _velocityLinear._data[ 0U ] = x;
+    _velocityLinear._data[ 1U ] = y;
+    _velocityLinear._data[ 2U ] = z;
 }
 
 [[maybe_unused]] void RigidBody::AddForce ( GXVec3 const &force, GXVec3 const &point ) noexcept
@@ -134,12 +155,27 @@ RigidBody::RigidBody () noexcept:
 
 [[maybe_unused]] void RigidBody::DisableKinematic () noexcept
 {
+    std::unique_lock<std::mutex> const lock ( _mutex );
+
+    _locationBefore = _location;
+    _rotationBefore = _rotation;
     _isKinematic = false;
+
+    if ( _physics )
+    {
+        _physics->OnIntegrationTypeChanged ( *this );
+    }
 }
 
 [[maybe_unused]] void RigidBody::EnableKinematic () noexcept
 {
+    std::unique_lock<std::mutex> const lock ( _mutex );
     _isKinematic = true;
+
+    if ( _physics )
+    {
+        _physics->OnIntegrationTypeChanged ( *this );
+    }
 }
 
 [[maybe_unused]] bool RigidBody::IsKinematic () const noexcept
@@ -187,7 +223,7 @@ RigidBody::RigidBody () noexcept:
     _dampingLinear = damping;
 }
 
-[[maybe_unused]] GXMat3 const& RigidBody::GetInertialTensorInverse () const noexcept
+GXMat3 const& RigidBody::GetInertiaTensorInverse () const noexcept
 {
     return _inertiaTensorInverse;
 }
@@ -228,7 +264,7 @@ RigidBody::RigidBody () noexcept:
     return _mass;
 }
 
-[[maybe_unused]] float RigidBody::GetMassInverse () const noexcept
+float RigidBody::GetMassInverse () const noexcept
 {
     return _massInverse;
 }
@@ -262,7 +298,7 @@ RigidBody::RigidBody () noexcept:
     UpdateCacheData ();
 }
 
-[[maybe_unused]] Shape& RigidBody::GetShape () noexcept
+Shape& RigidBody::GetShape () noexcept
 {
     assert ( _shape );
     return *_shape;
@@ -301,13 +337,25 @@ RigidBody::RigidBody () noexcept:
 
 void RigidBody::Integrate ( float deltaTime ) noexcept
 {
-    if ( _isKinematic )
-    {
-        IntegrateAsKinematic ( deltaTime );
+    if ( !_isAwake || !_shape )
         return;
-    }
 
-    IntegrateAsDynamic ( deltaTime );
+    GXVec3 accelerationLinear {};
+    accelerationLinear.Multiply ( _totalForce, _massInverse );
+    _velocityLinear.Sum ( _velocityLinear, deltaTime, accelerationLinear );
+
+    GXVec3 accelerationAngular {};
+    _inertiaTensorInverse.MultiplyMatrixVector ( accelerationAngular, _totalTorque );
+    _velocityAngular.Sum ( _velocityAngular, deltaTime, accelerationAngular );
+
+    _velocityLinear.Multiply ( _velocityLinear, std::pow ( _dampingLinear, deltaTime ) );
+    _velocityAngular.Multiply ( _velocityAngular, std::pow ( _dampingAngular, deltaTime ) );
+
+    _locationBefore = _location;
+    _rotationBefore = _rotation;
+
+    UpdatePositionAndRotation ( deltaTime );
+    RunSleepLogic ( deltaTime );
 }
 
 [[maybe_unused]] bool RigidBody::IsAwake () const noexcept
@@ -315,7 +363,19 @@ void RigidBody::Integrate ( float deltaTime ) noexcept
     return _isAwake;
 }
 
-void RigidBody::ResetAccumulators ()
+void RigidBody::OnRegister ( Physics &physics ) noexcept
+{
+    std::unique_lock<std::mutex> const lock ( _mutex );
+    _physics = &physics;
+}
+
+void RigidBody::OnUnregister () noexcept
+{
+    std::unique_lock<std::mutex> const lock ( _mutex );
+    _physics = nullptr;
+}
+
+void RigidBody::ResetAccumulators () noexcept
 {
     _totalForce = ZERO;
     _totalTorque = ZERO;
@@ -336,7 +396,7 @@ void RigidBody::RunSleepLogic ( float deltaTime ) noexcept
     }
 
     GXQuat rotationDiff {};
-    rotationDiff.Substract ( _rotation, _rotationBefore );
+    rotationDiff.Subtract ( _rotation, _rotationBefore );
 
     GXVec4 const alpha ( rotationDiff._data[ 0U ],
         rotationDiff._data[ 1U ],
@@ -377,61 +437,31 @@ void RigidBody::UpdateCacheData () noexcept
     _transform.FromFast ( _rotation, _location );
 
     GXMat3 const alpha ( _transform );
-    GXMat3 betta {};
-    betta.Transpose ( alpha );
+    GXMat3 beta {};
+    beta.Transpose ( alpha );
 
     GXMat3 gamma {};
-    gamma.Multiply ( betta, _shape->GetInertiaTensor () );
-
-    GXMat3 inertiaTensorWorld {};
-    inertiaTensorWorld.Multiply ( gamma, betta );
-    _inertiaTensorInverse.Inverse ( inertiaTensorWorld );
+    gamma.Multiply ( beta, _shape->GetInertiaTensorInverse () );
+    _inertiaTensorInverse.Multiply ( gamma, alpha );
 
     _shape->UpdateCacheData ( _transform );
 }
 
-void RigidBody::IntegrateAsDynamic ( float deltaTime ) noexcept
-{
-    if ( !_isAwake || !_shape )
-        return;
-
-    GXVec3 accelerationLinear {};
-    accelerationLinear.Multiply ( _totalForce, _massInverse );
-    _velocityLinear.Sum ( _velocityLinear, deltaTime, accelerationLinear );
-
-    GXVec3 accelerationAngular {};
-    _inertiaTensorInverse.MultiplyMatrixVector ( accelerationAngular, _totalTorque );
-    _velocityAngular.Sum ( _velocityAngular, deltaTime, accelerationAngular );
-
-    _velocityLinear.Multiply ( _velocityLinear, std::pow ( _dampingLinear, deltaTime ) );
-    _velocityAngular.Multiply ( _velocityAngular, std::pow ( _dampingAngular, deltaTime ) );
-
-    _locationBefore = _location;
-    _location.Sum ( _location, deltaTime, _velocityLinear );
-
-    GXQuat alpha ( 0.0F, _velocityAngular._data[ 0U ], _velocityAngular._data[ 1U ],  _velocityAngular._data[ 2U ] );
-    alpha.Multiply ( alpha, 0.5F * deltaTime );
-
-    GXQuat betta {};
-    betta.Multiply ( alpha, _rotation );
-
-    _rotationBefore = _rotation;
-    _rotation.Sum ( _rotation, betta );
-
-    UpdateCacheData ();
-    RunSleepLogic ( deltaTime );
-}
-
-void RigidBody::IntegrateAsKinematic ( float deltaTime ) noexcept
+void RigidBody::UpdatePositionAndRotation ( float deltaTime ) noexcept
 {
     _location.Sum ( _location, deltaTime, _velocityLinear );
 
+    // omega: angular velocity (direction is axis, magnitude is angle)
+    // https://fgiesen.wordpress.com/2012/08/24/quaternion-differentiation/
+    // https://www.ashwinnarayan.com/post/how-to-integrate-quaternions/
+    // https://gafferongames.com/post/physics_in_3d/
     GXQuat alpha ( 0.0F, _velocityAngular._data[ 0U ], _velocityAngular._data[ 1U ], _velocityAngular._data[ 2U ] );
     alpha.Multiply ( alpha, 0.5F * deltaTime );
+    alpha._data[ 0U ] = 1.0F;
 
-    GXQuat betta;
-    betta.Multiply ( alpha, _rotation );
-    _rotation.Sum ( _rotation, betta );
+    GXQuat beta {};
+    beta.Multiply ( alpha, _rotation );
+    _rotation = beta;
 
     UpdateCacheData ();
 }

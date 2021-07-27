@@ -99,12 +99,16 @@ bool GJK::Run ( Shape const &shapeA, Shape const &shapeB ) noexcept
         }
     }
 
+    // Example 2021-07-20: Box shape vs sphere shape could easily exceed number of iterations. Slight penetration
+    // could exceed over 1024 iterations. So it's normal for GJK to not detect small penetration contacts
+    // for some shape combinations.
+
     constexpr char const format[] =
 R"__(GJK::Run - Algorithm exceeded maximum steps. Counters:
-    _steps: %hhu
-    _testLine: %hhu
-    _testTriangle: %hhu
-    _testTetrahedron: %hhu)__";
+    _steps: %hu
+    _testLine: %hu
+    _testTriangle: %hu
+    _testTetrahedron: %hu)__";
 
     LogWarning ( format, _steps, _testLine, _testTriangle, _testTetrahedron );
     return false;

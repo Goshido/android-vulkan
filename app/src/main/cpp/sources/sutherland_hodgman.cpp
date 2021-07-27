@@ -1,4 +1,5 @@
 #include <sutherland_hodgman.h>
+#include <logger.h>
 
 
 namespace android_vulkan {
@@ -19,8 +20,7 @@ SutherlandHodgman::SutherlandHodgman () noexcept:
 
 Vertices const& SutherlandHodgman::Run ( Vertices const &shapeAPoints,
     GXVec3 const &shapeANormal,
-    Vertices const &shapeBPoints,
-    float penetration
+    Vertices const &shapeBPoints
 ) noexcept
 {
     GXVec3 xAxis {};
@@ -75,7 +75,7 @@ Vertices const& SutherlandHodgman::Run ( Vertices const &shapeAPoints,
                 _clipPoints.push_back ( alpha );
             };
 
-            if ( acTest > 0.0F )
+            if ( acTest >= 0.0F )
             {
                 if ( baTest > 0.0F )
                     addIntersection ();
@@ -98,8 +98,6 @@ Vertices const& SutherlandHodgman::Run ( Vertices const &shapeAPoints,
 
     GXVec3 originOffset {};
     originOffset.Multiply ( shapeANormal, shapeANormal.DotProduct ( shapeAPoints[ 0U ] ) );
-    originOffset.Sum ( originOffset, penetration, shapeANormal );
-
     GXVec3 beta {};
 
     for ( auto const& v : _clipPoints )

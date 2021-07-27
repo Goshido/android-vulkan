@@ -14,7 +14,7 @@ GX_RESTORE_WARNING_STATE
 
 namespace android_vulkan {
 
-typedef void ( *StickHandler ) ( void* context, float horizontal, float vertical );
+typedef void ( *StickHandler ) ( void* context, float horizontal, float vertical ) noexcept;
 
 class Stick final
 {
@@ -25,7 +25,7 @@ class Stick final
         GXVec2          _stateOld;
 
     public:
-        Stick ();
+        Stick () noexcept;
 
         Stick ( Stick const &other ) = delete;
         Stick& operator = ( Stick const &other ) = delete;
@@ -35,11 +35,11 @@ class Stick final
 
         ~Stick () = default;
 
-        void Bind ( void* context, StickHandler handler );
-        void Unbind ();
+        void Bind ( void* context, StickHandler handler ) noexcept;
+        void Unbind () noexcept;
 
-        void Execute ();
-        void Update ( AInputEvent* event, int32_t horizontalAxis, int32_t verticalAxis );
+        void Execute () noexcept;
+        void Update ( AInputEvent* event, int32_t horizontalAxis, int32_t verticalAxis ) noexcept;
     };
 
 } // namespace android_vulkan

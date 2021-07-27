@@ -13,7 +13,7 @@ GX_RESTORE_WARNING_STATE
 
 namespace android_vulkan {
 
-typedef void ( *TriggerHandler ) ( void* context, float push );
+typedef void ( *TriggerHandler ) ( void* context, float push ) noexcept;
 
 class Trigger final
 {
@@ -24,7 +24,7 @@ class Trigger final
         float                   _pushOld;
 
     public:
-        Trigger ();
+        Trigger () noexcept;
 
         Trigger ( Trigger const &other ) = delete;
         Trigger& operator = ( Trigger const &other ) = delete;
@@ -34,11 +34,11 @@ class Trigger final
 
         ~Trigger () = default;
 
-        void Bind ( void* context, TriggerHandler handler );
-        void Unbind ();
+        void Bind ( void* context, TriggerHandler handler ) noexcept;
+        void Unbind () noexcept;
 
-        void Execute ();
-        void Update ( AInputEvent* event, int32_t axis );
+        void Execute () noexcept;
+        void Update ( AInputEvent* event, int32_t axis ) noexcept;
 };
 
 } // namespace android_vulkan

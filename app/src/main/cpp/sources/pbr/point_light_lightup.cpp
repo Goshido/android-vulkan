@@ -176,8 +176,8 @@ bool PointLightLightup::UpdateGPUData ( android_vulkan::Renderer &renderer,
         return false;
 
     size_t writeIndex = 0U;
-    GXVec3 alpha;
-    GXVec3 betta;
+    GXVec3 alpha {};
+    GXVec3 betta {};
 
     constexpr float const gamma = 1.0F / UNITS_PER_METER;
     PointLightLightupProgram::LightData lightData;

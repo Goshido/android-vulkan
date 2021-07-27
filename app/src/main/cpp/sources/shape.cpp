@@ -3,18 +3,15 @@
 
 namespace android_vulkan {
 
-constexpr static float const DEFAULT_FRICTION_DYNAMIC = 1.0F;
-constexpr static float const DEFAULT_FRICTION_STATIC = 1.0F;
+constexpr static uint32_t const DEFAULT_COLLISION_GROUPS = 0b11111111'11111111'11111111'11111111U;
+constexpr static float const DEFAULT_FRICTION = 0.8F;
 constexpr static float const DEFAULT_RESTITUTION = 0.25F;
 
-constexpr static float const DEFAULT_SIZE = 1.0F;
-constexpr static float const DEFAULT_HALF_SIZE = 0.5F * DEFAULT_SIZE;
-constexpr static GXVec3 const DEFAULT_BOUNDS_MIN ( -DEFAULT_HALF_SIZE, -DEFAULT_HALF_SIZE, -DEFAULT_HALF_SIZE );
-constexpr static GXVec3 const DEFAULT_BOUNDS_MAX ( DEFAULT_HALF_SIZE, DEFAULT_HALF_SIZE, DEFAULT_HALF_SIZE );
+//----------------------------------------------------------------------------------------------------------------------
 
-GXMat3 const& Shape::GetInertiaTensor () const noexcept
+GXMat3 const& Shape::GetInertiaTensorInverse () const noexcept
 {
-    return _inertiaTensor;
+    return _inertiaTensorInverse;
 }
 
 [[maybe_unused]] GXAABB const& Shape::GetBoundsLocal () const noexcept
@@ -22,32 +19,32 @@ GXMat3 const& Shape::GetInertiaTensor () const noexcept
     return _boundsLocal;
 }
 
-[[maybe_unused]] GXAABB const& Shape::GetBoundsWorld () const noexcept
+GXAABB const& Shape::GetBoundsWorld () const noexcept
 {
     return _boundsWorld;
 }
 
-[[maybe_unused]] float Shape::GetFrictionDynamic () const noexcept
+uint32_t Shape::GetCollisionGroups () const noexcept
 {
-    return _frictionDynamic;
+    return _collisionGroups;
 }
 
-[[maybe_unused]] void Shape::SetFrictionDynamic ( float friction ) noexcept
+[[maybe_unused]] void Shape::SetCollisionGroups ( uint32_t groups ) noexcept
 {
-    _frictionDynamic = friction;
+    _collisionGroups = groups;
 }
 
-[[maybe_unused]] float Shape::GetFrictionStatic () const noexcept
+float Shape::GetFriction () const noexcept
 {
-    return _frictionStatic;
+    return _friction;
 }
 
-[[maybe_unused]] void Shape::SetFrictionStatic ( float friction ) noexcept
+[[maybe_unused]] void Shape::SetFriction ( float friction ) noexcept
 {
-    _frictionStatic = friction;
+    _friction = friction;
 }
 
-[[maybe_unused]] float Shape::GetRestitution () const noexcept
+float Shape::GetRestitution () const noexcept
 {
     return _restitution;
 }
@@ -85,24 +82,19 @@ GXVec3 Shape::FindSupportPoint ( GXVec3 const &direction, Shape const &shapeA, S
 }
 
 Shape::Shape ( eShapeType shapeType ) noexcept:
+    _collisionGroups ( DEFAULT_COLLISION_GROUPS ),
+    _friction ( DEFAULT_FRICTION ),
+    _restitution ( DEFAULT_RESTITUTION ),
     _type ( shapeType ),
     _boundsLocal {},
     _boundsWorld {},
-    _frictionDynamic ( DEFAULT_FRICTION_DYNAMIC ),
-    _frictionStatic ( DEFAULT_FRICTION_STATIC ),
-    _inertiaTensor {},
-    _restitution ( DEFAULT_RESTITUTION ),
+    _inertiaTensorInverse {},
     _transformRigidBody {},
     _transformWorld {}
 {
-    _boundsLocal.AddVertex ( DEFAULT_BOUNDS_MIN );
-    _boundsLocal.AddVertex ( DEFAULT_BOUNDS_MAX );
-
     _transformRigidBody.Identity ();
     _transformWorld = _transformRigidBody;
-    _boundsLocal.Transform ( _boundsWorld, _transformWorld );
-
-    _inertiaTensor.Identity ();
+    _inertiaTensorInverse.Identity ();
 }
 
 } // namespace android_vulkan

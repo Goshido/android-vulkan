@@ -25,7 +25,7 @@ class CyrusBeck final
 
         ~CyrusBeck () = default;
 
-        // The method returns result points. It could be one or two points.
+        // The method returns result points on the edge. It could be one or two points.
         [[nodiscard]] Vertices const& Run ( Vertices const &face,
             GXVec3 const &faceNormal,
             Vertices const &edge,

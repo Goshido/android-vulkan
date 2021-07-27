@@ -1,7 +1,9 @@
 #ifndef ANDROID_VULKAN_SHAPE_BOX_H
 #define ANDROID_VULKAN_SHAPE_BOX_H
 
+
 #include "shape.h"
+
 
 namespace android_vulkan {
 
@@ -20,21 +22,21 @@ class [[maybe_unused]] ShapeBox final : public Shape
         ShapeBox ( ShapeBox && ) = delete;
         ShapeBox& operator = ( ShapeBox && ) = delete;
 
-        explicit ShapeBox ( GXVec3 const &size ) noexcept;
-        explicit ShapeBox ( float width, float height, float depth ) noexcept;
+        [[maybe_unused]] explicit ShapeBox ( GXVec3 const &size ) noexcept;
+        [[maybe_unused]] explicit ShapeBox ( float width, float height, float depth ) noexcept;
 
         ~ShapeBox () override = default;
-
-        [[maybe_unused]] void CalculateInertiaTensor ( float mass ) noexcept override;
-        [[maybe_unused, nodiscard]] GXVec3 GetExtremePointWorld ( GXVec3 const &direction ) const noexcept override;
 
         [[maybe_unused, nodiscard]] float GetWidth () const noexcept;
         [[maybe_unused, nodiscard]] float GetHeight () const noexcept;
         [[maybe_unused, nodiscard]] float GetDepth () const noexcept;
 
     private:
-        void Init () noexcept;
+        void CalculateInertiaTensor ( float mass ) noexcept override;
+        [[nodiscard]] GXVec3 GetExtremePointWorld ( GXVec3 const &direction ) const noexcept override;
         void UpdateBounds () noexcept override;
+
+        void Init () noexcept;
 };
 
 } // namespace android_vulkan

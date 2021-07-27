@@ -37,13 +37,13 @@ class MandelbrotBase : public android_vulkan::Game
         explicit MandelbrotBase ( const char* fragmentShaderFile ) noexcept;
         ~MandelbrotBase () override = default;
 
-        [[nodiscard]] bool OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) override;
+        [[nodiscard]] bool OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) noexcept override;
 
-        [[nodiscard]] bool OnInitDevice ( android_vulkan::Renderer &renderer ) override;
-        void OnDestroyDevice ( VkDevice device ) override;
+        [[nodiscard]] bool OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept override;
+        void OnDestroyDevice ( VkDevice device ) noexcept override;
 
-        [[nodiscard]] bool OnSwapchainCreated ( android_vulkan::Renderer &renderer ) override;
-        void OnSwapchainDestroyed ( VkDevice device ) override;
+        [[nodiscard]] bool OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept override;
+        void OnSwapchainDestroyed ( VkDevice device ) noexcept override;
 
         [[nodiscard]] virtual bool CreatePipelineLayout ( android_vulkan::Renderer &renderer ) = 0;
         virtual void DestroyPipelineLayout ( VkDevice device ) = 0;

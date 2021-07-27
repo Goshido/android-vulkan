@@ -13,18 +13,45 @@ GX_RESTORE_WARNING_STATE
 
 namespace android_vulkan {
 
+using LambdaClipHandler = float ( * ) ( float lambda, void* context ) noexcept;
+
+struct VelocitySolverData final
+{
+    float                   _b = 0.0F;
+
+    LambdaClipHandler       _clipHandler = nullptr;
+    void*                   _clipContext = nullptr;
+
+    float                   _effectiveMass = 0.0F;
+    GXVec6                  _j[ 2U ] {};
+    GXVec6                  _mj[ 2U ] {};
+    float                   _lambda = 0.0F;
+
+    VelocitySolverData () = default;
+
+    VelocitySolverData ( VelocitySolverData const & ) = default;
+    VelocitySolverData& operator = ( VelocitySolverData const & ) = default;
+
+    VelocitySolverData ( VelocitySolverData && ) = default;
+    VelocitySolverData& operator = ( VelocitySolverData && ) = default;
+
+    ~VelocitySolverData () = default;
+};
+
 struct Contact final
 {
-    GXVec3      _point {};
+    GXVec3                      _pointA {};
+    GXVec3                      _pointB {};
+
+    // Velocity solver entities
+    VelocitySolverData          _dataT {};
+    VelocitySolverData          _dataB {};
+    VelocitySolverData          _dataN {};
+    float                       _friction = 0.5F;
+    float                       _restitution = 0.5F;
 
     // Debug feature.
-    GXVec3      _pointAfterResolve {};
-
-    GXVec3      _tangent {};
-    GXVec3      _bitangent {};
-    GXVec3      _normal {};
-
-    float       _penetration = 0.0F;
+    [[maybe_unused]] GXVec3     _pointAfterResolve {};
 
     Contact () = default;
 
@@ -44,6 +71,13 @@ struct ContactManifold final
 
     size_t          _contactCount = 0U;
     Contact*        _contacts = nullptr;
+
+    // The normal points the direction which body B must be moved to eliminate collision.
+    GXVec3          _tangent {};
+    GXVec3          _bitangent {};
+    GXVec3          _normal {};
+
+    float           _penetration = 0.0F;
 
     uint16_t        _epaSteps = 0U;
     uint16_t        _gjkSteps = 0U;

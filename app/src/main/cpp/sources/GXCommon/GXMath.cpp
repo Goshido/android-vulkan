@@ -1,7 +1,6 @@
-﻿// version 1.65
+﻿// version 1.68
 
 #include <GXCommon/GXMath.h>
-#include <GXCommon/GXWarning.h>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -20,7 +19,6 @@ constexpr static GXFloat const RGBA_TO_UBYTE_FACTOR = 255.0F;
 constexpr static GXFloat const DEGREES_TO_RADIANS_FACTOR = 0.0174533F;
 constexpr static GXFloat const RADIANS_TO_DEGREES_FACTOR = 57.295779F;
 
-constexpr static GXFloat const FLOAT_EPSILON = 1.0e-4F;
 constexpr static GXFloat const INVERSE_RAND_MAX = 3.05185e-5F;
 
 constexpr static GXUByte const SOLUTION_ALPHA = 0U;
@@ -31,54 +29,54 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-[[maybe_unused]] GXVoid GXVec2::SetX ( GXFloat x )
+[[maybe_unused]] GXVoid GXVec2::SetX ( GXFloat x ) noexcept
 {
     _data[ 0U ] = x;
 }
 
-[[maybe_unused]] GXFloat GXVec2::GetX () const
+[[maybe_unused]] GXFloat GXVec2::GetX () const noexcept
 {
     return _data[ 0U ];
 }
 
-[[maybe_unused]] GXVoid GXVec2::SetY ( GXFloat y )
+[[maybe_unused]] GXVoid GXVec2::SetY ( GXFloat y ) noexcept
 {
     _data[ 1U ] = y;
 }
 
-[[maybe_unused]] GXFloat GXVec2::GetY () const
+[[maybe_unused]] GXFloat GXVec2::GetY () const noexcept
 {
     return _data[ 1U ];
 }
 
-[[maybe_unused]] GXVoid GXVec2::Init ( GXFloat x, GXFloat y )
+[[maybe_unused]] GXVoid GXVec2::Init ( GXFloat x, GXFloat y ) noexcept
 {
     _data[ 0U ] = x;
     _data[ 1U ] = y;
 }
 
-[[maybe_unused]] GXVoid GXVec2::Normalize ()
+[[maybe_unused]] GXVoid GXVec2::Normalize () noexcept
 {
     Multiply ( *this, 1.0F / Length () );
 }
 
-[[maybe_unused]] GXVoid GXVec2::CalculateNormal ( GXVec2 const &a, GXVec2 const &b )
+[[maybe_unused]] GXVoid GXVec2::CalculateNormal ( GXVec2 const &a, GXVec2 const &b ) noexcept
 {
     CalculateNormalFast ( a, b );
     Normalize ();
 }
 
-[[maybe_unused]] GXFloat GXVec2::Length () const
+[[maybe_unused]] GXFloat GXVec2::Length () const noexcept
 {
     return std::sqrt ( SquaredLength () );
 }
 
-[[maybe_unused]] GXFloat GXVec2::SquaredLength () const
+[[maybe_unused]] GXFloat GXVec2::SquaredLength () const noexcept
 {
     return DotProduct ( *this );
 }
 
-[[maybe_unused]] GXBool GXVec2::IsEqual ( GXVec2 const &other ) const
+[[maybe_unused]] GXBool GXVec2::IsEqual ( GXVec2 const &other ) const noexcept
 {
     if ( _data[ 0U ] != other._data[ 0U ] )
         return GX_FALSE;
@@ -93,7 +91,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     const GXVec2 &a1,
     const GXVec2 &b0,
     const GXVec2 &b1
-)
+) noexcept
 {
     GXVec2 alpha {};
     alpha.Subtract ( a1, a0 );
@@ -135,68 +133,68 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-[[maybe_unused]] GXVoid GXVec3::SetX ( GXFloat x )
+[[maybe_unused]] GXVoid GXVec3::SetX ( GXFloat x ) noexcept
 {
     _data[ 0U ] = x;
 }
 
-[[maybe_unused]] GXFloat GXVec3::GetX () const
+[[maybe_unused]] GXFloat GXVec3::GetX () const noexcept
 {
     return _data[ 0U ];
 }
 
-[[maybe_unused]] GXVoid GXVec3::SetY ( GXFloat y )
+[[maybe_unused]] GXVoid GXVec3::SetY ( GXFloat y ) noexcept
 {
     _data[ 1U ] = y;
 }
 
-[[maybe_unused]] GXFloat GXVec3::GetY () const
+[[maybe_unused]] GXFloat GXVec3::GetY () const noexcept
 {
     return _data[ 1U ];
 }
 
-[[maybe_unused]] GXVoid GXVec3::SetZ ( GXFloat z )
+[[maybe_unused]] GXVoid GXVec3::SetZ ( GXFloat z ) noexcept
 {
     _data[ 2U ] = z;
 }
 
-[[maybe_unused]] GXFloat GXVec3::GetZ () const
+[[maybe_unused]] GXFloat GXVec3::GetZ () const noexcept
 {
     return _data[ 2U ];
 }
 
-[[maybe_unused]] GXVoid GXVec3::Init ( GXFloat x, GXFloat y, GXFloat z )
+[[maybe_unused]] GXVoid GXVec3::Init ( GXFloat x, GXFloat y, GXFloat z ) noexcept
 {
     _data[ 0U ] = x;
     _data[ 1U ] = y;
     _data[ 2U ] = z;
 }
 
-[[maybe_unused]] GXVoid GXVec3::Normalize ()
+[[maybe_unused]] GXVoid GXVec3::Normalize () noexcept
 {
     Multiply ( *this, 1.0F / Length () );
 }
 
-[[maybe_unused]] GXFloat GXVec3::Length () const
+[[maybe_unused]] GXFloat GXVec3::Length () const noexcept
 {
     return std::sqrt ( DotProduct ( *this ) );
 }
 
-[[maybe_unused]] GXFloat GXVec3::SquaredLength () const
+[[maybe_unused]] GXFloat GXVec3::SquaredLength () const noexcept
 {
     return DotProduct ( *this );
 }
 
-[[maybe_unused]] GXFloat GXVec3::Distance ( GXVec3 const &other ) const
+[[maybe_unused]] GXFloat GXVec3::Distance ( GXVec3 const &other ) const noexcept
 {
-    GXVec3 difference;
+    GXVec3 difference {};
     difference.Subtract ( *this, other );
     return difference.Length ();
 }
 
-[[maybe_unused]] GXFloat GXVec3::SquaredDistance ( GXVec3 const &other ) const
+[[maybe_unused]] GXFloat GXVec3::SquaredDistance ( GXVec3 const &other ) const noexcept
 {
-    GXVec3 difference;
+    GXVec3 difference {};
     difference.Subtract ( *this, other );
     return difference.SquaredLength ();
 }
@@ -204,14 +202,14 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 [[maybe_unused]] GXVoid GXVec3::LinearInterpolation ( GXVec3 const &start,
     GXVec3 const &finish,
     GXFloat interpolationFactor
-)
+) noexcept
 {
-    GXVec3 difference;
+    GXVec3 difference {};
     difference.Subtract ( finish, start );
     Sum ( start, interpolationFactor, difference );
 }
 
-[[maybe_unused]] GXVoid GXVec3::Project ( GXVec3 const &vector, GXVec3 const &axis )
+[[maybe_unused]] GXVoid GXVec3::Project ( GXVec3 const &vector, GXVec3 const &axis ) noexcept
 {
     GXVec3 normalVector ( vector );
     normalVector.Normalize ();
@@ -219,7 +217,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     Multiply ( axis, factor );
 }
 
-[[maybe_unused]] GXBool GXVec3::IsEqual ( GXVec3 const &other )
+[[maybe_unused]] GXBool GXVec3::IsEqual ( GXVec3 const &other ) noexcept
 {
     if ( _data[ 0U ] != other._data[ 0U ] )
         return GX_FALSE;
@@ -230,25 +228,28 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     return _data[ 2U ] == other._data[ 2U ];
 }
 
-[[maybe_unused]] GXVec3 const& GXVec3::GetAbsoluteX ()
+[[maybe_unused]] GXVec3 const& GXVec3::GetAbsoluteX () noexcept
 {
     constexpr static GXVec3 const absoluteX ( 1.0F, 0.0F, 0.0F );
     return absoluteX;
 }
 
-[[maybe_unused]] GXVec3 const& GXVec3::GetAbsoluteY ()
+[[maybe_unused]] GXVec3 const& GXVec3::GetAbsoluteY () noexcept
 {
     constexpr static GXVec3 const absoluteY ( 0.0F, 1.0F, 0.0F );
     return absoluteY;
 }
 
-[[maybe_unused]] GXVec3 const& GXVec3::GetAbsoluteZ ()
+[[maybe_unused]] GXVec3 const& GXVec3::GetAbsoluteZ () noexcept
 {
     constexpr static GXVec3 const absoluteZ ( 0.0F, 0.0F, 1.0F );
     return absoluteZ;
 }
 
-[[maybe_unused]] GXVoid GXCALL GXVec3::MakeOrthonormalBasis ( GXVec3 &baseX, GXVec3 &adjustedY, GXVec3 &adjustedZ )
+[[maybe_unused]] GXVoid GXCALL GXVec3::MakeOrthonormalBasis ( GXVec3 &baseX,
+    GXVec3 &adjustedY,
+    GXVec3 &adjustedZ
+) noexcept
 {
     adjustedZ.CrossProduct ( baseX, adjustedY );
 
@@ -274,11 +275,11 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     GXVec3 const &a,
     GXVec3 const &b,
     GXVec3 const &c
-)
+) noexcept
 {
     // Implementation https://graphics.stanford.edu/courses/cs348b-98/gg/intersect.html
 
-    GXPlane plane;
+    GXPlane plane {};
     plane.From ( a, b, c );
     GXVec3 const normal ( plane._a, plane._b, plane._c );
 
@@ -292,7 +293,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 
     GXVec3 const triangle[ 3U ] = { a, b, c };
 
-    GXVec3 point;
+    GXVec3 point {};
     point.Sum ( origin, t, direction );
 
     GXUByte selector = 0U;
@@ -357,13 +358,13 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-[[maybe_unused]] GXVec4::GXVec4 ( GXVec3 const &vector, GXFloat w ):
+[[maybe_unused]] GXVec4::GXVec4 ( GXVec3 const &vector, GXFloat w ) noexcept:
     _data { vector._data[ 0U ], vector._data[ 1U ], vector._data[ 2U ], w }
 {
     // NOTHING
 }
 
-[[maybe_unused]] GXVoid GXVec4::Init ( GXFloat x, GXFloat y, GXFloat z, GXFloat w )
+[[maybe_unused]] GXVoid GXVec4::Init ( GXFloat x, GXFloat y, GXFloat z, GXFloat w ) noexcept
 {
     _data[ 0U ] = x;
     _data[ 1U ] = y;
@@ -371,59 +372,59 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     _data[ 3U ] = w;
 }
 
-[[maybe_unused]] GXVoid GXVec4::SetX ( GXFloat x )
+[[maybe_unused]] GXVoid GXVec4::SetX ( GXFloat x ) noexcept
 {
     _data[ 0U ] = x;
 }
 
-[[maybe_unused]] GXFloat GXVec4::GetX () const
+[[maybe_unused]] GXFloat GXVec4::GetX () const noexcept
 {
     return _data[ 0U ];
 }
 
-[[maybe_unused]] GXVoid GXVec4::SetY ( GXFloat y )
+[[maybe_unused]] GXVoid GXVec4::SetY ( GXFloat y ) noexcept
 {
     _data[ 1U ] = y;
 }
 
-[[maybe_unused]] GXFloat GXVec4::GetY () const
+[[maybe_unused]] GXFloat GXVec4::GetY () const noexcept
 {
     return _data[ 1U ];
 }
 
-[[maybe_unused]] GXVoid GXVec4::SetZ ( GXFloat z )
+[[maybe_unused]] GXVoid GXVec4::SetZ ( GXFloat z ) noexcept
 {
     _data[ 2U ] = z;
 }
 
-[[maybe_unused]] GXFloat GXVec4::GetZ () const
+[[maybe_unused]] GXFloat GXVec4::GetZ () const noexcept
 {
     return _data[ 2U ];
 }
 
-[[maybe_unused]] GXVoid GXVec4::SetW ( GXFloat w )
+[[maybe_unused]] GXVoid GXVec4::SetW ( GXFloat w ) noexcept
 {
     _data[ 3U ] = w;
 }
 
-[[maybe_unused]] GXFloat GXVec4::GetW () const
+[[maybe_unused]] GXFloat GXVec4::GetW () const noexcept
 {
     return _data[ 3U ];
 }
 
-[[maybe_unused]] GXFloat GXVec4::Length () const
+[[maybe_unused]] GXFloat GXVec4::Length () const noexcept
 {
     return std::sqrt ( DotProduct ( *this ) );
 }
 
-[[maybe_unused]] GXFloat GXVec4::SquaredLength () const
+[[maybe_unused]] GXFloat GXVec4::SquaredLength () const noexcept
 {
     return DotProduct ( *this );
 }
 
 //----------------------------------------------------------------------------------------------------------------------
 
-[[maybe_unused]] GXVoid GXVec6::Init ( GXFloat a1, GXFloat a2, GXFloat a3, GXFloat a4, GXFloat a5, GXFloat a6 )
+[[maybe_unused]] GXVoid GXVec6::Init ( GXFloat a1, GXFloat a2, GXFloat a3, GXFloat a4, GXFloat a5, GXFloat a6 ) noexcept
 {
     _data[ 0U ] = a1;
     _data[ 1U ] = a2;
@@ -433,7 +434,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     _data[ 5U ] = a6;
 }
 
-[[maybe_unused]] GXVoid GXVec6::From ( GXVec3 const &v1, GXVec3 const &v2 )
+[[maybe_unused]] GXVoid GXVec6::From ( GXVec3 const &v1, GXVec3 const &v2 ) noexcept
 {
     memcpy ( _data, &v1, sizeof ( GXVec3 ) );
     memcpy ( _data + 3U, &v2, sizeof ( GXVec3 ) );
@@ -441,17 +442,19 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-[[maybe_unused]] GXColorRGB::GXColorRGB ( GXUByte red, GXUByte green, GXUByte blue, GXFloat alpha )
+// NOLINTNEXTLINE
+[[maybe_unused]] GXColorRGB::GXColorRGB ( GXUByte red, GXUByte green, GXUByte blue, GXFloat alpha ) noexcept
 {
     From ( red, green, blue, alpha );
 }
 
-[[maybe_unused]] GXColorRGB::GXColorRGB ( const GXColorHSV &color )
+// NOLINTNEXTLINE
+[[maybe_unused]] GXColorRGB::GXColorRGB ( const GXColorHSV &color ) noexcept
 {
     From ( color );
 }
 
-[[maybe_unused]] GXVoid GXColorRGB::Init ( GXFloat red, GXFloat green, GXFloat blue, GXFloat alpha )
+[[maybe_unused]] GXVoid GXColorRGB::Init ( GXFloat red, GXFloat green, GXFloat blue, GXFloat alpha ) noexcept
 {
     _data[ 0U ] = red;
     _data[ 1U ] = green;
@@ -459,47 +462,47 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     _data[ 3U ] = alpha;
 }
 
-[[maybe_unused]] GXVoid GXColorRGB::SetRed ( GXFloat red )
+[[maybe_unused]] GXVoid GXColorRGB::SetRed ( GXFloat red ) noexcept
 {
     _data[ 0U ] = red;
 }
 
-[[maybe_unused]] GXFloat GXColorRGB::GetRed () const
+[[maybe_unused]] GXFloat GXColorRGB::GetRed () const noexcept
 {
     return _data[ 0U ];
 }
 
-[[maybe_unused]] GXVoid GXColorRGB::SetGreen ( GXFloat green )
+[[maybe_unused]] GXVoid GXColorRGB::SetGreen ( GXFloat green ) noexcept
 {
     _data[ 1U ] = green;
 }
 
-[[maybe_unused]] GXFloat GXColorRGB::GetGreen () const
+[[maybe_unused]] GXFloat GXColorRGB::GetGreen () const noexcept
 {
     return _data[ 1U ];
 }
 
-[[maybe_unused]] GXVoid GXColorRGB::SetBlue ( GXFloat blue )
+[[maybe_unused]] GXVoid GXColorRGB::SetBlue ( GXFloat blue ) noexcept
 {
     _data[ 2U ] = blue;
 }
 
-[[maybe_unused]] GXFloat GXColorRGB::GetBlue () const
+[[maybe_unused]] GXFloat GXColorRGB::GetBlue () const noexcept
 {
     return _data[ 2U ];
 }
 
-[[maybe_unused]] GXVoid GXColorRGB::SetAlpha ( GXFloat alpha )
+[[maybe_unused]] GXVoid GXColorRGB::SetAlpha ( GXFloat alpha ) noexcept
 {
     _data[ 3U ] = alpha;
 }
 
-[[maybe_unused]] GXFloat GXColorRGB::GetAlpha () const
+[[maybe_unused]] GXFloat GXColorRGB::GetAlpha () const noexcept
 {
     return _data[ 3U ];
 }
 
-[[maybe_unused]] GXVoid GXColorRGB::From ( const GXColorHSV &color )
+[[maybe_unused]] GXVoid GXColorRGB::From ( GXColorHSV const &color ) noexcept
 {
     GXFloat correctedHue = color.GetHue ();
 
@@ -561,12 +564,16 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
         break;
 
         default:
-            assert ( !"GXColorRGB::From - Something wrong!" );
+            // IMPOSSIBLE
         break;
     }
 }
 
-[[maybe_unused]] GXVoid GXColorRGB::ConvertToUByte ( GXUByte &red, GXUByte &green, GXUByte &blue, GXUByte &alpha ) const
+[[maybe_unused]] GXVoid GXColorRGB::ConvertToUByte ( GXUByte &red,
+    GXUByte &green,
+    GXUByte &blue,
+    GXUByte &alpha
+) const noexcept
 {
     red = static_cast<GXUByte> ( std::lround ( _data[ 0U ] * RGBA_TO_UBYTE_FACTOR ) );
     green = static_cast<GXUByte> ( std::lround ( _data[ 1U ] * RGBA_TO_UBYTE_FACTOR ) );
@@ -576,52 +583,53 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-[[maybe_unused]] GXColorHSV::GXColorHSV ( GXColorRGB const &color )
+// NOLINTNEXTLINE
+[[maybe_unused]] GXColorHSV::GXColorHSV ( GXColorRGB const &color ) noexcept
 {
     From ( color );
 }
 
-[[maybe_unused]] GXVoid GXColorHSV::SetHue ( GXFloat hue )
+[[maybe_unused]] GXVoid GXColorHSV::SetHue ( GXFloat hue ) noexcept
 {
     _data[ 0U ] = hue;
 }
 
-[[maybe_unused]] GXFloat GXColorHSV::GetHue () const
+[[maybe_unused]] GXFloat GXColorHSV::GetHue () const noexcept
 {
     return _data[ 0U ];
 }
 
-[[maybe_unused]] GXVoid GXColorHSV::SetSaturation ( GXFloat saturation )
+[[maybe_unused]] GXVoid GXColorHSV::SetSaturation ( GXFloat saturation ) noexcept
 {
     _data[ 1U ] = saturation;
 }
 
-[[maybe_unused]] GXFloat GXColorHSV::GetSaturation () const
+[[maybe_unused]] GXFloat GXColorHSV::GetSaturation () const noexcept
 {
     return _data[ 1U ];
 }
 
-[[maybe_unused]] GXVoid GXColorHSV::SetValue ( GXFloat value )
+[[maybe_unused]] GXVoid GXColorHSV::SetValue ( GXFloat value ) noexcept
 {
     _data[ 2U ] = value;
 }
 
-[[maybe_unused]] GXFloat GXColorHSV::GetValue () const
+[[maybe_unused]] GXFloat GXColorHSV::GetValue () const noexcept
 {
     return _data[ 2U ];
 }
 
-[[maybe_unused]] GXVoid GXColorHSV::SetAlpha ( GXFloat alpha )
+[[maybe_unused]] GXVoid GXColorHSV::SetAlpha ( GXFloat alpha ) noexcept
 {
     _data[ 3U ] = alpha;
 }
 
-[[maybe_unused]] GXFloat GXColorHSV::GetAlpha () const
+[[maybe_unused]] GXFloat GXColorHSV::GetAlpha () const noexcept
 {
     return _data[ 3U ];
 }
 
-[[maybe_unused]] GXVoid GXColorHSV::From ( GXColorRGB const &color )
+[[maybe_unused]] GXVoid GXColorHSV::From ( GXColorRGB const &color ) noexcept
 {
     GXFloat const maxValue = GXMaxf ( GXMaxf ( color.GetRed (), color.GetGreen () ), color.GetBlue () );
     GXFloat const minValue = GXMinf ( GXMinf ( color.GetRed (), color.GetGreen () ), color.GetBlue () );
@@ -662,23 +670,23 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-[[maybe_unused]] GXVoid GXPreciseComplex::Init ( GXDouble real, GXDouble imaginary )
+[[maybe_unused]] GXVoid GXPreciseComplex::Init ( GXDouble real, GXDouble imaginary ) noexcept
 {
     _r = real;
     _i = imaginary;
 }
 
-[[maybe_unused]] GXDouble GXPreciseComplex::Length () const
+[[maybe_unused]] GXDouble GXPreciseComplex::Length () const noexcept
 {
     return sqrt ( SquaredLength () );
 }
 
-[[maybe_unused]] GXDouble GXPreciseComplex::SquaredLength () const
+[[maybe_unused]] GXDouble GXPreciseComplex::SquaredLength () const noexcept
 {
     return _r * _r + _i * _i;
 }
 
-[[maybe_unused]] GXBool GXPreciseComplex::Power ( GXUInt power )
+[[maybe_unused]] GXBool GXPreciseComplex::Power ( GXUInt power ) noexcept
 {
     if ( power == 1U )
         return GX_TRUE;
@@ -708,27 +716,27 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     return GX_FALSE;
 }
 
-[[maybe_unused]] GXPreciseComplex GXPreciseComplex::operator + ( GXPreciseComplex const &other ) const
+[[maybe_unused]] GXPreciseComplex GXPreciseComplex::operator + ( GXPreciseComplex const &other ) const noexcept
 {
     return GXPreciseComplex ( _r + other._r, _i + other._i );
 }
 
-[[maybe_unused]] GXPreciseComplex GXPreciseComplex::operator - ( GXPreciseComplex const &other ) const
+[[maybe_unused]] GXPreciseComplex GXPreciseComplex::operator - ( GXPreciseComplex const &other ) const noexcept
 {
     return GXPreciseComplex ( _r - other._r, _i - other._i );
 }
 
-[[maybe_unused]] GXPreciseComplex GXPreciseComplex::operator * ( GXPreciseComplex const &other ) const
+[[maybe_unused]] GXPreciseComplex GXPreciseComplex::operator * ( GXPreciseComplex const &other ) const noexcept
 {
     return GXPreciseComplex ( _r * other._r - _i * other._i, _r * other._i + _i * other._r );
 }
 
-[[maybe_unused]] GXPreciseComplex GXPreciseComplex::operator * ( GXDouble a ) const
+[[maybe_unused]] GXPreciseComplex GXPreciseComplex::operator * ( GXDouble a ) const noexcept
 {
     return GXPreciseComplex ( _r * a, _i * a );
 }
 
-[[maybe_unused]] GXPreciseComplex GXPreciseComplex::operator / ( GXDouble a ) const
+[[maybe_unused]] GXPreciseComplex GXPreciseComplex::operator / ( GXDouble a ) const noexcept
 {
     GXDouble const invA = 1.0 / a;
     return GXPreciseComplex ( _r * invA, _i * invA );
@@ -736,17 +744,19 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-[[maybe_unused]] GXQuat::GXQuat ( GXMat3 const &rotationMatrix )
+// NOLINTNEXTLINE
+[[maybe_unused]] GXQuat::GXQuat ( GXMat3 const &rotationMatrix ) noexcept
 {
     From ( rotationMatrix );
 }
 
-[[maybe_unused]] GXQuat::GXQuat ( GXMat4 const &rotationMatrix )
+// NOLINTNEXTLINE
+[[maybe_unused]] GXQuat::GXQuat ( GXMat4 const &rotationMatrix ) noexcept
 {
     From ( rotationMatrix );
 }
 
-[[maybe_unused]] GXVoid GXQuat::Init ( GXFloat r, GXFloat a, GXFloat b, GXFloat c )
+[[maybe_unused]] GXVoid GXQuat::Init ( GXFloat r, GXFloat a, GXFloat b, GXFloat c ) noexcept
 {
     _data[ 0U ] = r;
     _data[ 1U ] = a;
@@ -754,121 +764,72 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     _data[ 3U ] = c;
 }
 
-[[maybe_unused]] GXVoid GXQuat::SetR ( GXFloat r )
+[[maybe_unused]] GXVoid GXQuat::SetR ( GXFloat r ) noexcept
 {
     _data[ 0U ] = r;
 }
 
-[[maybe_unused]] GXFloat GXQuat::GetR () const
+[[maybe_unused]] GXFloat GXQuat::GetR () const noexcept
 {
     return _data[ 0U ];
 }
 
-[[maybe_unused]] GXVoid GXQuat::SetA ( GXFloat a )
+[[maybe_unused]] GXVoid GXQuat::SetA ( GXFloat a ) noexcept
 {
     _data[ 1U ] = a;
 }
 
-[[maybe_unused]] GXFloat GXQuat::GetA () const
+[[maybe_unused]] GXFloat GXQuat::GetA () const noexcept
 {
     return _data[ 1U ];
 }
 
-[[maybe_unused]] GXVoid GXQuat::SetB ( GXFloat b )
+[[maybe_unused]] GXVoid GXQuat::SetB ( GXFloat b ) noexcept
 {
     _data[ 2U ] = b;
 }
 
-[[maybe_unused]] GXFloat GXQuat::GetB () const
+[[maybe_unused]] GXFloat GXQuat::GetB () const noexcept
 {
     return _data[ 2U ];
 }
 
-[[maybe_unused]] GXVoid GXQuat::SetC ( GXFloat c )
+[[maybe_unused]] GXVoid GXQuat::SetC ( GXFloat c ) noexcept
 {
     _data[ 3U ] = c;
 }
 
-[[maybe_unused]] GXFloat GXQuat::GetC () const
+[[maybe_unused]] GXFloat GXQuat::GetC () const noexcept
 {
     return _data[ 3U ];
 }
 
-[[maybe_unused]] GXVoid GXQuat::Identity ()
+[[maybe_unused]] GXVoid GXQuat::Identity () noexcept
 {
     _data[ 0U ] = 1.0F;
     _data[ 1U ] = _data[ 2U ] = _data[ 3U ] = 0.0F;
 }
 
-[[maybe_unused]] GXVoid GXQuat::Normalize ()
-{
-    GXFloat const squaredLength = _data[ 0U ] * _data[ 0U ] +
-        _data[ 1U ] * _data[ 1U ] +
-        _data[ 2U ] * _data[ 2U ] +
-        _data[ 3U ] * _data[ 3U ];
-
-    if ( std::abs ( squaredLength ) < FLOAT_EPSILON )
-    {
-        assert ( !"GXQuat::Normalize - Error." );
-        return;
-    }
-
-    Multiply ( *this, 1.0F / sqrtf ( squaredLength ) );
-}
-
-[[maybe_unused]] GXVoid GXQuat::Inverse ( GXQuat const &q )
-{
-    GXFloat const squaredLength = q._data[ 0U ] * q._data[ 0U ] +
-        q._data[ 1U ] * q._data[ 1U ] +
-        q._data[ 2U ] * q._data[ 2U ] +
-        q._data[ 3U ] * q._data[ 3U ];
-
-    if ( std::abs ( squaredLength ) <= FLOAT_EPSILON )
-    {
-        assert ( !"GXQuat::Inverse - Error." );
-        Identity ();
-        return;
-    }
-
-    GXFloat const inverseSquaredLength = 1.0F / squaredLength;
-
-    _data[ 0U ] = q._data[ 0U ] * inverseSquaredLength;
-    _data[ 1U ] = -q._data[ 1U ] * inverseSquaredLength;
-    _data[ 2U ] = -q._data[ 2U ] * inverseSquaredLength;
-    _data[ 3U ] = -q._data[ 3U ] * inverseSquaredLength;
-}
-
-[[maybe_unused]] GXVoid GXQuat::FromAxisAngle ( GXFloat x, GXFloat y, GXFloat z, GXFloat angle )
-{
-    GXFloat const halfAngle = 0.5F * angle;
-    GXFloat const sinom = std::sin ( halfAngle );
-
-    _data[ 0U ] = std::cos ( halfAngle );
-    _data[ 1U ] = x * sinom;
-    _data[ 2U ] = y * sinom;
-    _data[ 3U ] = z * sinom;
-}
-
-[[maybe_unused]] GXVoid GXQuat::FromAxisAngle ( const GXVec3 &axis, GXFloat angle )
+[[maybe_unused]] GXVoid GXQuat::FromAxisAngle ( const GXVec3 &axis, GXFloat angle ) noexcept
 {
     FromAxisAngle ( axis._data[ 0U ], axis._data[ 1U ], axis._data[ 2U ], angle );
 }
 
-[[maybe_unused]] GXVoid GXQuat::From ( GXMat3 const &rotationMatrix )
+[[maybe_unused]] GXVoid GXQuat::From ( GXMat3 const &rotationMatrix ) noexcept
 {
-    GXMat3 pureRotationMatrix;
+    GXMat3 pureRotationMatrix {};
     pureRotationMatrix.ClearRotation ( rotationMatrix );
     FromFast ( pureRotationMatrix );
 }
 
-[[maybe_unused]] GXVoid GXQuat::From ( GXMat4 const &rotationMatrix )
+[[maybe_unused]] GXVoid GXQuat::From ( GXMat4 const &rotationMatrix ) noexcept
 {
-    GXMat4 pureRotationMatrix;
+    GXMat4 pureRotationMatrix {};
     pureRotationMatrix.ClearRotation ( rotationMatrix );
     FromFast ( pureRotationMatrix );
 }
 
-[[maybe_unused]] GXVoid GXQuat::FromFast ( GXMat3 const &pureRotationMatrix )
+[[maybe_unused]] GXVoid GXQuat::FromFast ( GXMat3 const &pureRotationMatrix ) noexcept
 {
     // In ideal mathematics world all solutions are right.
     // But in practice more precise solution is the biggest "solutionFactorXXX" because of square root operation.
@@ -979,7 +940,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     }
 }
 
-[[maybe_unused]] GXVoid GXQuat::FromFast ( GXMat4 const &pureRotationMatrix )
+[[maybe_unused]] GXVoid GXQuat::FromFast ( GXMat4 const &pureRotationMatrix ) noexcept
 {
     // In ideal mathematics world all solutions are right.
     // But in practice more precise solution is the biggest "solutionFactorXXX" because of square root operation.
@@ -1090,7 +1051,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     }
 }
 
-[[maybe_unused]] GXVoid GXQuat::Multiply ( GXQuat const &a, GXQuat const &b )
+[[maybe_unused]] GXVoid GXQuat::Multiply ( GXQuat const &a, GXQuat const &b ) noexcept
 {
     _data[ 0U ] = a._data[ 0U ] * b._data[ 0U ] -
         a._data[ 1U ] * b._data[ 1U ] -
@@ -1113,33 +1074,10 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
         a._data[ 3U ] * b._data[ 0U ];
 }
 
-[[maybe_unused]] GXVoid GXQuat::Multiply ( GXQuat const &q, GXFloat scale )
-{
-    _data[ 0U ] = q._data[ 0U ] * scale;
-    _data[ 1U ] = q._data[ 1U ] * scale;
-    _data[ 2U ] = q._data[ 2U ] * scale;
-    _data[ 3U ] = q._data[ 3U ] * scale;
-}
-
-[[maybe_unused]] GXVoid GXQuat::Sum ( GXQuat const &a, GXQuat const &b )
-{
-    _data[ 0U ] = a._data[ 0U ] + b._data[ 0U ];
-    _data[ 1U ] = a._data[ 1U ] + b._data[ 1U ];
-    _data[ 2U ] = a._data[ 2U ] + b._data[ 2U ];
-    _data[ 3U ] = a._data[ 3U ] + b._data[ 3U ];
-}
-
-[[maybe_unused]] GXVoid GXQuat::Substract ( GXQuat const &a, GXQuat const &b )
-{
-    _data[ 0U ] = a._data[ 0U ] - b._data[ 0U ];
-    _data[ 1U ] = a._data[ 1U ] - b._data[ 1U ];
-    _data[ 2U ] = a._data[ 2U ] - b._data[ 2U ];
-    _data[ 3U ] = a._data[ 3U ] - b._data[ 3U ];
-}
-
 [[maybe_unused]] GXVoid GXQuat::SphericalLinearInterpolation ( GXQuat const &start,
     GXQuat const &finish,
-    GXFloat interpolationFactor )
+    GXFloat interpolationFactor
+) noexcept
 {
     if ( interpolationFactor <= 0.0F )
     {
@@ -1158,7 +1096,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
         start._data[ 2U ] * finish._data[ 2U ] +
         start._data[ 3U ] * finish._data[ 3U ];
 
-    GXQuat temp;
+    GXQuat temp {};
 
     if ( cosom < 0.0f )
     {
@@ -1176,7 +1114,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     GXFloat scale0;
     GXFloat scale1;
 
-    if ( ( 1.0F - cosom ) > FLOAT_EPSILON )
+    if ( ( 1.0F - cosom ) > GX_MATH_FLOAT_EPSILON )
     {
         GXFloat const omega = std::acos ( cosom );
         GXFloat const sinom = 1.0F / std::sin ( omega );
@@ -1195,7 +1133,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     _data[ 3U ] = start._data[ 3U ] * scale0 + temp._data[ 3U ] * scale1;
 }
 
-[[maybe_unused]] GXVoid GXQuat::GetAxisAngle ( GXVec3 &axis, GXFloat &angle ) const
+[[maybe_unused]] GXVoid GXQuat::GetAxisAngle ( GXVec3 &axis, GXFloat &angle ) const noexcept
 {
     GXQuat q ( *this );
 
@@ -1210,13 +1148,13 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 
     GXFloat const s = std::sqrt ( 1.0F - q._data[ 0U ] * q._data[ 0U ] );
 
-    if ( s < FLOAT_EPSILON )
+    if ( s < GX_MATH_FLOAT_EPSILON )
         return;
 
     axis.Multiply ( axis, 1.0F / s );
 }
 
-[[maybe_unused]] GXVoid GXQuat::Transform ( GXVec3 &out, GXVec3 const &v ) const
+[[maybe_unused]] GXVoid GXQuat::Transform ( GXVec3 &out, GXVec3 const &v ) const noexcept
 {
     GXFloat const rr = _data[ 0U ] * _data[ 0U ];
     GXFloat const ra2 = _data[ 0U ] * _data[ 1U ] * 2.0F;
@@ -1244,7 +1182,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
         ( v._data[ 0U ] * ( ac2 - rb2 ) + v._data[ 1U ] * ( ra2 + bc2 ) + v._data[ 2U ] * ( rr - aa - bb + cc ) );
 }
 
-[[maybe_unused]] GXVoid GXQuat::TransformFast ( GXVec3 &out, GXVec3 const &v ) const
+[[maybe_unused]] GXVoid GXQuat::TransformFast ( GXVec3 &out, GXVec3 const &v ) const noexcept
 {
     GXFloat const rr = _data[ 0U ] * _data[ 0U ];
     GXFloat const ra2 = _data[ 0U ] * _data[ 1U ] * 2.0F;
@@ -1275,12 +1213,13 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-[[maybe_unused]] GXMat3::GXMat3 ( GXMat4 const &matrix )
+// NOLINTNEXTLINE
+[[maybe_unused]] GXMat3::GXMat3 ( GXMat4 const &matrix ) noexcept
 {
     From ( matrix );
 }
 
-[[maybe_unused]] GXVoid GXMat3::From ( GXQuat const &quaternion )
+[[maybe_unused]] GXVoid GXMat3::From ( GXQuat const &quaternion ) noexcept
 {
     GXFloat const rr = quaternion._data[ 0U ] * quaternion._data[ 0U ];
     GXFloat const ra2 = quaternion._data[ 0U ] * quaternion._data[ 1U ] * 2.0F;
@@ -1311,7 +1250,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     _m[ 2U ][ 2U ] = inverseSquaredLength * ( rr - aa - bb + cc );
 }
 
-[[maybe_unused]] GXVoid GXMat3::From ( GXMat4 const &matrix )
+[[maybe_unused]] GXVoid GXMat3::From ( GXMat4 const &matrix ) noexcept
 {
     constexpr GXUPointer const lineSize = 3U * sizeof ( GXFloat );
 
@@ -1320,12 +1259,12 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     memcpy ( _data + 6U, matrix._data + 8U, lineSize );
 }
 
-[[maybe_unused]] GXVoid GXMat3::From ( const GXVec3 &zDirection )
+[[maybe_unused]] GXVoid GXMat3::From ( const GXVec3 &zDirection ) noexcept
 {
     GXVec3 xAxis {};
     GXVec3 yAxis {};
 
-    if ( zDirection.DotProduct ( GXVec3::GetAbsoluteX () ) < 0.5F )
+    if ( std::abs ( zDirection.DotProduct ( GXVec3::GetAbsoluteX () ) ) < 0.5F )
     {
         GXVec3 tmp {};
         tmp.CrossProduct ( zDirection, GXVec3::GetAbsoluteX () );
@@ -1347,7 +1286,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     SetZ ( zDirection );
 }
 
-[[maybe_unused]] GXVoid GXMat3::FromFast ( GXQuat const &quaternion )
+[[maybe_unused]] GXVoid GXMat3::FromFast ( GXQuat const &quaternion ) noexcept
 {
     GXFloat const rr = quaternion._data[ 0U ] * quaternion._data[ 0U ];
     GXFloat const ra2 = quaternion._data[ 0U ] * quaternion._data[ 1U ] * 2.0F;
@@ -1376,37 +1315,37 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     _m[ 2U ][ 2U ] = rr - aa - bb + cc;
 }
 
-[[maybe_unused]] GXVoid GXMat3::SetX ( GXVec3 const &x )
+[[maybe_unused]] GXVoid GXMat3::SetX ( GXVec3 const &x ) noexcept
 {
     memcpy ( _data, &x, sizeof ( GXVec3 ) );
 }
 
-[[maybe_unused]] GXVoid GXMat3::GetX ( GXVec3 &x ) const
+[[maybe_unused]] GXVoid GXMat3::GetX ( GXVec3 &x ) const noexcept
 {
     memcpy ( &x, _data, sizeof ( GXVec3 ) );
 }
 
-[[maybe_unused]] GXVoid GXMat3::SetY ( GXVec3 const &y )
+[[maybe_unused]] GXVoid GXMat3::SetY ( GXVec3 const &y ) noexcept
 {
     memcpy ( _data + 3U, &y, sizeof ( GXVec3 ) );
 }
 
-[[maybe_unused]] GXVoid GXMat3::GetY ( GXVec3 &y ) const
+[[maybe_unused]] GXVoid GXMat3::GetY ( GXVec3 &y ) const noexcept
 {
     memcpy ( &y, _data + 3U, sizeof ( GXVec3 ) );
 }
 
-[[maybe_unused]] GXVoid GXMat3::SetZ ( GXVec3 const &z )
+[[maybe_unused]] GXVoid GXMat3::SetZ ( GXVec3 const &z ) noexcept
 {
     memcpy ( _data + 6U, &z, sizeof ( GXVec3 ) );
 }
 
-[[maybe_unused]] GXVoid GXMat3::GetZ ( GXVec3 &z ) const
+[[maybe_unused]] GXVoid GXMat3::GetZ ( GXVec3 &z ) const noexcept
 {
     memcpy ( &z, _data + 6U, sizeof ( GXVec3 ) );
 }
 
-[[maybe_unused]] GXVoid GXMat3::Identity ()
+[[maybe_unused]] GXVoid GXMat3::Identity () noexcept
 {
     _m[ 0U ][ 0U ] = _m[ 1U ][ 1U ] = _m[ 2U ][ 2U ] = 1.0F;
     _m[ 0U ][ 1U ] = _m[ 0U ][ 2U ] = 0.0F;
@@ -1414,12 +1353,12 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     _m[ 2U ][ 0U ] = _m[ 2U ][ 1U ] = 0.0F;
 }
 
-[[maybe_unused]] GXVoid GXMat3::Zeros ()
+[[maybe_unused]] GXVoid GXMat3::Zeros () noexcept
 {
     memset ( _data, 0, sizeof ( _data ) );
 }
 
-[[maybe_unused]] GXVoid GXMat3::Inverse ( GXMat3 const &sourceMatrix )
+[[maybe_unused]] GXVoid GXMat3::Inverse ( GXMat3 const &sourceMatrix ) noexcept
 {
     GXMat3 const& m = sourceMatrix;
 
@@ -1447,7 +1386,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     _m[ 2U ][ 2U ] = invDeterminant * ( m._m[ 0U ][ 0U ] * m._m[ 1U ][ 1U ] - m._m[ 1U ][ 0U ] * m._m[ 0U ][ 1U ] );
 }
 
-[[maybe_unused]] GXVoid GXMat3::Transpose ( GXMat3 const &sourceMatrix )
+[[maybe_unused]] GXVoid GXMat3::Transpose ( GXMat3 const &sourceMatrix ) noexcept
 {
     _m[ 0U ][ 0U ] = sourceMatrix._m[ 0U ][ 0U ];
     _m[ 0U ][ 1U ] = sourceMatrix._m[ 1U ][ 0U ];
@@ -1462,17 +1401,17 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     _m[ 2U ][ 2U ] = sourceMatrix._m[ 2U ][ 2U ];
 }
 
-[[maybe_unused]] GXVoid GXMat3::ClearRotation ( GXMat3 const &sourceMatrix )
+[[maybe_unused]] GXVoid GXMat3::ClearRotation ( GXMat3 const &sourceMatrix ) noexcept
 {
-    GXVec3 modelX;
-    GXVec3 modelY;
-    GXVec3 modelZ;
+    GXVec3 modelX {};
+    GXVec3 modelY {};
+    GXVec3 modelZ {};
 
     sourceMatrix.GetX ( modelX );
     sourceMatrix.GetY ( modelY );
     sourceMatrix.GetZ ( modelZ );
 
-    GXVec3 tmp;
+    GXVec3 tmp {};
     tmp.Multiply ( modelX, 1.0F / modelX.Length () );
     SetX ( tmp );
 
@@ -1483,17 +1422,17 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     SetZ ( tmp );
 }
 
-[[maybe_unused]] GXVoid GXMat3::ClearRotation ( GXMat4 const &sourceMatrix )
+[[maybe_unused]] GXVoid GXMat3::ClearRotation ( GXMat4 const &sourceMatrix ) noexcept
 {
-    GXVec3 modelX;
-    GXVec3 modelY;
-    GXVec3 modelZ;
+    GXVec3 modelX {};
+    GXVec3 modelY {};
+    GXVec3 modelZ {};
 
     sourceMatrix.GetX ( modelX );
     sourceMatrix.GetY ( modelY );
     sourceMatrix.GetZ ( modelZ );
 
-    GXVec3 tmp;
+    GXVec3 tmp {};
     tmp.Multiply ( modelX, 1.0F / modelX.Length () );
     SetX ( tmp );
 
@@ -1504,7 +1443,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     SetZ ( tmp );
 }
 
-[[maybe_unused]] GXVoid GXMat3::SkewSymmetric ( GXVec3 const &base )
+[[maybe_unused]] GXVoid GXMat3::SkewSymmetric ( GXVec3 const &base ) noexcept
 {
     _m[ 0U ][ 0U ] = _m[ 1U ][ 1U ] = _m[ 2U ][ 2U ] = 0.0F;
 
@@ -1518,7 +1457,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     _m[ 2U ][ 1U ] = base._data[ 0U ];
 }
 
-[[maybe_unused]] GXVoid GXMat3::Sum ( GXMat3 const &a, GXMat3 const &b )
+[[maybe_unused]] GXVoid GXMat3::Sum ( GXMat3 const &a, GXMat3 const &b ) noexcept
 {
     _m[ 0U ][ 0U ] = a._m[ 0U ][ 0U ] + b._m[ 0U ][ 0U ];
     _m[ 0U ][ 1U ] = a._m[ 0U ][ 1U ] + b._m[ 0U ][ 1U ];
@@ -1533,7 +1472,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     _m[ 2U ][ 2U ] = a._m[ 2U ][ 2U ] + b._m[ 2U ][ 2U ];
 }
 
-[[maybe_unused]] GXVoid GXMat3::Subtract ( GXMat3 const &a, GXMat3 const &b )
+[[maybe_unused]] GXVoid GXMat3::Subtract ( GXMat3 const &a, GXMat3 const &b ) noexcept
 {
     _m[ 0U ][ 0U ] = a._m[ 0U ][ 0U ] - b._m[ 0U ][ 0U ];
     _m[ 0U ][ 1U ] = a._m[ 0U ][ 1U ] - b._m[ 0U ][ 1U ];
@@ -1548,60 +1487,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     _m[ 2U ][ 2U ] = a._m[ 2U ][ 2U ] - b._m[ 2U ][ 2U ];
 }
 
-[[maybe_unused]] GXVoid GXMat3::Multiply ( GXMat3 const &a, GXMat3 const &b )
-{
-    _m[ 0U ][ 0U ] = a._m[ 0U ][ 0U ] * b._m[ 0U ][ 0U ] +
-        a._m[ 0U ][ 1U ] * b._m[ 1U ][ 0U ] +
-        a._m[ 0U ][ 2U ] * b._m[ 2U ][ 0U ];
-
-    _m[ 0U ][ 1U ] = a._m[ 0U ][ 0U ] * b._m[ 0U ][ 1U ] +
-        a._m[ 0U ][ 1U ] * b._m[ 1U ][ 1U ] +
-        a._m[ 0U ][ 2U ] * b._m[ 2U ][ 1U ];
-
-    _m[ 0U ][ 2U ] = a._m[ 0U ][ 0U ] * b._m[ 0U ][ 2U ] +
-        a._m[ 0U ][ 1U ] * b._m[ 1U ][ 2U ] +
-        a._m[ 0U ][ 2U ] * b._m[ 2U ][ 2U ];
-
-    _m[ 1U ][ 0U ] = a._m[ 1U ][ 0U ] * b._m[ 0U ][ 0U ] +
-        a._m[ 1U ][ 1U ] * b._m[ 1U ][ 0U ] +
-        a._m[ 1U ][ 2U ] * b._m[ 2U ][ 0U ];
-
-    _m[ 1U ][ 1U ] = a._m[ 1U ][ 0U ] * b._m[ 0U ][ 1U ] +
-        a._m[ 1U ][ 1U ] * b._m[ 1U ][ 1U ] +
-        a._m[ 1U ][ 2U ] * b._m[ 2U ][ 1U ];
-
-    _m[ 1U ][ 2U ] = a._m[ 1U ][ 0U ] * b._m[ 0U ][ 2U ] +
-        a._m[ 1U ][ 1U ] * b._m[ 1U ][ 2U ] +
-        a._m[ 1U ][ 2U ] * b._m[ 2U ][ 2U ];
-
-    _m[ 2U ][ 0U ] = a._m[ 2U ][ 0U ] * b._m[ 0U ][ 0U ] +
-        a._m[ 2U ][ 1U ] * b._m[ 1U ][ 0U ] +
-        a._m[ 2U ][ 2U ] * b._m[ 2U ][ 0U ];
-
-    _m[ 2U ][ 1U ] = a._m[ 2U ][ 0U ] * b._m[ 0U ][ 1U ] +
-        a._m[ 2U ][ 1U ] * b._m[ 1U ][ 1U ] +
-        a._m[ 2U ][ 2U ] * b._m[ 2U ][ 1U ];
-
-    _m[ 2U ][ 2U ] = a._m[ 2U ][ 0U ] * b._m[ 0U ][ 2U ] +
-        a._m[ 2U ][ 1U ] * b._m[ 1U ][ 2U ] +
-        a._m[ 2U ][ 2U ] * b._m[ 2U ][ 2U ];
-}
-
-[[maybe_unused]] GXVoid GXMat3::MultiplyVectorMatrix ( GXVec3 &out, GXVec3 const &v ) const
-{
-    out._data[ 0U ] = v._data[ 0U ] * _m[ 0U ][ 0U ] + v._data[ 1U ] * _m[ 1U ][ 0U ] + v._data[ 2U ] * _m[ 2U ][ 0U ];
-    out._data[ 1U ] = v._data[ 0U ] * _m[ 0U ][ 1U ] + v._data[ 1U ] * _m[ 1U ][ 1U ] + v._data[ 2U ] * _m[ 2U ][ 1U ];
-    out._data[ 2U ] = v._data[ 0U ] * _m[ 0U ][ 2U ] + v._data[ 1U ] * _m[ 1U ][ 2U ] + v._data[ 2U ] * _m[ 2U ][ 2U ];
-}
-
-[[maybe_unused]] GXVoid GXMat3::MultiplyMatrixVector ( GXVec3 &out, GXVec3 const &v ) const
-{
-    out._data[ 0U ] = _m[ 0U ][ 0U ] * v._data[ 0U ] + _m[ 0U ][ 1U ] * v._data[ 1U ] + _m[ 0U ][ 2U ] * v._data[ 2U ];
-    out._data[ 1U ] = _m[ 1U ][ 0U ] * v._data[ 0U ] + _m[ 1U ][ 1U ] * v._data[ 1U ] + _m[ 1U ][ 2U ] * v._data[ 2U ];
-    out._data[ 2U ] = _m[ 2U ][ 0U ] * v._data[ 0U ] + _m[ 2U ][ 1U ] * v._data[ 1U ] + _m[ 2U ][ 2U ] * v._data[ 2U ];
-}
-
-[[maybe_unused]] GXVoid GXMat3::Multiply ( GXMat3 const &a, GXFloat factor )
+[[maybe_unused]] GXVoid GXMat3::Multiply ( GXMat3 const &a, GXFloat factor ) noexcept
 {
     _m[ 0U ][ 0U ] = a._m[ 0U ][ 0U ] * factor;
     _m[ 0U ][ 1U ] = a._m[ 0U ][ 1U ] * factor;
@@ -1618,7 +1504,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-[[maybe_unused]] GXVoid GXMat4::SetRotation ( GXQuat const &quaternion )
+[[maybe_unused]] GXVoid GXMat4::SetRotation ( GXQuat const &quaternion ) noexcept
 {
     GXFloat const rr = quaternion._data[ 0U ] * quaternion._data[ 0U ];
     GXFloat const ra2 = quaternion._data[ 0U ] * quaternion._data[ 1U ] * 2.0F;
@@ -1649,7 +1535,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     _m[ 2U ][ 2U ] = inverseSquaredLength * ( rr - aa - bb + cc );
 }
 
-[[maybe_unused]] GXVoid GXMat4::SetRotationFast ( GXQuat const &quaternion )
+[[maybe_unused]] GXVoid GXMat4::SetRotationFast ( GXQuat const &quaternion ) noexcept
 {
     GXFloat const rr = quaternion._data[ 0U ] * quaternion._data[ 0U ];
     GXFloat const ra2 = quaternion._data[ 0U ] * quaternion._data[ 1U ] * 2.0F;
@@ -1678,12 +1564,12 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     _m[ 2U ][ 2U ] = rr - aa - bb + cc;
 }
 
-[[maybe_unused]] GXVoid GXMat4::SetOrigin ( GXVec3 const &origin )
+[[maybe_unused]] GXVoid GXMat4::SetOrigin ( GXVec3 const &origin ) noexcept
 { 
     SetW ( origin );
 }
 
-[[maybe_unused]] GXVoid GXMat4::From ( GXQuat const &quaternion, GXVec3 const &origin )
+[[maybe_unused]] GXVoid GXMat4::From ( GXQuat const &quaternion, GXVec3 const &origin ) noexcept
 {
     SetRotation ( quaternion );
     SetOrigin ( origin );
@@ -1692,9 +1578,9 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     _m[ 3U ][ 3U ] = 1.0F;
 }
 
-[[maybe_unused]] GXVoid GXMat4::From ( GXMat3 const &rotation, GXVec3 const &origin )
+[[maybe_unused]] GXVoid GXMat4::From ( GXMat3 const &rotation, GXVec3 const &origin ) noexcept
 {
-    GXVec3 tmp;
+    GXVec3 tmp {};
     rotation.GetX ( tmp );
     SetX ( tmp );
 
@@ -1710,14 +1596,14 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     _m[ 3U ][ 3U ] = 1.0F;
 }
 
-[[maybe_unused]] GXVoid GXMat4::From ( GXVec3 const &zDirection, GXVec3 const &origin )
+[[maybe_unused]] GXVoid GXMat4::From ( GXVec3 const &zDirection, GXVec3 const &origin ) noexcept
 {
-    GXVec3 xAxis;
-    GXVec3 yAxis;
+    GXVec3 xAxis {};
+    GXVec3 yAxis {};
 
-    if ( zDirection.DotProduct ( GXVec3::GetAbsoluteX () ) < 0.5F )
+    if ( std::abs ( zDirection.DotProduct ( GXVec3::GetAbsoluteX () ) ) < 0.5F )
     {
-        GXVec3 tmp;
+        GXVec3 tmp {};
         tmp.CrossProduct ( zDirection, GXVec3::GetAbsoluteX () );
         xAxis.CrossProduct ( tmp, zDirection );
         xAxis.Normalize ();
@@ -1725,7 +1611,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     }
     else
     {
-        GXVec3 tmp;
+        GXVec3 tmp {};
         tmp.CrossProduct ( zDirection, GXVec3::GetAbsoluteY () );
         yAxis.CrossProduct ( zDirection, tmp );
         yAxis.Normalize ();
@@ -1737,10 +1623,13 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     SetZ ( zDirection );
     SetW ( origin );
 
+    _m[ 0U ][ 3U ] = 0.0F;
+    _m[ 1U ][ 3U ] = 0.0F;
+    _m[ 2U ][ 3U ] = 0.0F;
     _m[ 3U ][ 3U ] = 1.0F;
 }
 
-[[maybe_unused]] GXVoid GXMat4::FromFast ( GXQuat const &quaternion, GXVec3 const &origin )
+[[maybe_unused]] GXVoid GXMat4::FromFast ( GXQuat const &quaternion, GXVec3 const &origin ) noexcept
 {
     SetRotationFast ( quaternion );
     SetOrigin ( origin );
@@ -1749,47 +1638,47 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     _m[ 3U ][ 3U ] = 1.0F;
 }
 
-[[maybe_unused]] GXVoid GXMat4::SetX ( GXVec3 const &x )
+[[maybe_unused]] GXVoid GXMat4::SetX ( GXVec3 const &x ) noexcept
 {
     memcpy ( _data, &x, sizeof ( GXVec3 ) );
 }
 
-[[maybe_unused]] GXVoid GXMat4::GetX ( GXVec3 &x ) const
+[[maybe_unused]] GXVoid GXMat4::GetX ( GXVec3 &x ) const noexcept
 {
     memcpy ( &x, _data, sizeof ( GXVec3 ) );
 }
 
-[[maybe_unused]] GXVoid GXMat4::SetY ( GXVec3 const &y )
+[[maybe_unused]] GXVoid GXMat4::SetY ( GXVec3 const &y ) noexcept
 {
     memcpy ( _data + 4U, &y, sizeof ( GXVec3 ) );
 }
 
-[[maybe_unused]] GXVoid GXMat4::GetY ( GXVec3 &y ) const
+[[maybe_unused]] GXVoid GXMat4::GetY ( GXVec3 &y ) const noexcept
 {
     memcpy ( &y, _data + 4U, sizeof ( GXVec3 ) );
 }
 
-[[maybe_unused]] GXVoid GXMat4::SetZ ( GXVec3 const &z )
+[[maybe_unused]] GXVoid GXMat4::SetZ ( GXVec3 const &z ) noexcept
 {
     memcpy ( _data + 8U, &z, sizeof ( GXVec3 ) );
 }
 
-[[maybe_unused]] GXVoid GXMat4::GetZ ( GXVec3 &z ) const
+[[maybe_unused]] GXVoid GXMat4::GetZ ( GXVec3 &z ) const noexcept
 {
     memcpy ( &z, _data + 8U, sizeof ( GXVec3 ) );
 }
 
-[[maybe_unused]] GXVoid GXMat4::SetW ( GXVec3 const &w )
+[[maybe_unused]] GXVoid GXMat4::SetW ( GXVec3 const &w ) noexcept
 {
     memcpy ( _data + 12U, &w, sizeof ( GXVec3 ) );
 }
 
-[[maybe_unused]] GXVoid GXMat4::GetW ( GXVec3 &w ) const
+[[maybe_unused]] GXVoid GXMat4::GetW ( GXVec3 &w ) const noexcept
 {
     memcpy ( &w, _data + 12U, sizeof ( GXVec3 ) );
 }
 
-[[maybe_unused]] GXVoid GXMat4::Identity ()
+[[maybe_unused]] GXVoid GXMat4::Identity () noexcept
 {
     _m[ 0U ][ 1U ] = _m[ 0U ][ 2U ] = _m[ 0U ][ 3U ] = 0.0F;
     _m[ 1U ][ 0U ] = _m[ 1U ][ 2U ] = _m[ 1U ][ 3U ] = 0.0F;
@@ -1799,7 +1688,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     _m[ 0U ][ 0U ] = _m[ 1U ][ 1U ] = _m[ 2U ][ 2U ] = _m[ 3U ][ 3U ] = 1.0F;
 }
 
-[[maybe_unused]] GXVoid GXMat4::Translation ( GXFloat x, GXFloat y, GXFloat z )
+[[maybe_unused]] GXVoid GXMat4::Translation ( GXFloat x, GXFloat y, GXFloat z ) noexcept
 {
     _m[ 0U ][ 1U ] = _m[ 0U ][ 2U ] = _m[ 0U ][ 3U ] = 0.0F;
     _m[ 1U ][ 0U ] = _m[ 1U ][ 2U ] = _m[ 1U ][ 3U ] = 0.0F;
@@ -1812,18 +1701,18 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     _m[ 3U ][ 2U ] = z;
 }
 
-[[maybe_unused]] GXVoid GXMat4::TranslateTo ( GXFloat x, GXFloat y, GXFloat z )
+[[maybe_unused]] GXVoid GXMat4::TranslateTo ( GXFloat x, GXFloat y, GXFloat z ) noexcept
 {
     GXVec3 origin ( x, y, z );
     SetW ( origin );
 }
 
-[[maybe_unused]] GXVoid GXMat4::TranslateTo ( GXVec3 const &location )
+[[maybe_unused]] GXVoid GXMat4::TranslateTo ( GXVec3 const &location ) noexcept
 {
     SetW ( location );
 }
 
-[[maybe_unused]] GXVoid GXMat4::RotationX ( GXFloat angle )
+[[maybe_unused]] GXVoid GXMat4::RotationX ( GXFloat angle ) noexcept
 {
     _m[ 0U ][ 1U ] = _m[ 0U ][ 2U ] = 0.0F;
     _m[ 1U ][ 0U ] = 0.0F;
@@ -1841,7 +1730,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     _m[ 3U ][ 0U ] = _m[ 3U ][ 1U ] = _m[ 3U ][ 2U ] = _m[ 0U ][ 3U ] = _m[ 1U ][ 3U ] = _m[ 2U ][ 3U ] = 0.0F;
 }
 
-[[maybe_unused]] GXVoid GXMat4::RotationY ( GXFloat angle )
+[[maybe_unused]] GXVoid GXMat4::RotationY ( GXFloat angle ) noexcept
 {
     _m[ 0U ][ 1U ] = 0.0F;
     _m[ 1U ][ 0U ] = _m[ 1U ][ 2U ] = 0.0F;
@@ -1859,7 +1748,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     _m[ 3U ][ 0U ] = _m[ 3U ][ 1U ] = _m[ 3U ][ 2U ] = _m[ 0U ][ 3U ] = _m[ 1U ][ 3U ] = _m[ 2U ][ 3U ] = 0.0F;
 }
 
-[[maybe_unused]] GXVoid GXMat4::RotationZ ( GXFloat angle )
+[[maybe_unused]] GXVoid GXMat4::RotationZ ( GXFloat angle ) noexcept
 {
     _m[ 0U ][ 2U ] = 0.0F;
     _m[ 1U ][ 2U ] = 0.0F;
@@ -1877,45 +1766,45 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     _m[ 3U ][ 0U ] = _m[ 3U ][ 1U ] = _m[ 3U ][ 2U ] = _m[ 0U ][ 3U ] = _m[ 1U ][ 3U ] = _m[ 2U ][ 3U ] = 0.0F;
 }
 
-[[maybe_unused]] GXVoid GXMat4::RotationXY ( GXFloat pitchRadians, GXFloat yawRadians )
+[[maybe_unused]] GXVoid GXMat4::RotationXY ( GXFloat pitchRadians, GXFloat yawRadians ) noexcept
 {
-    GXMat4 x;
+    GXMat4 x {};
     x.RotationX ( pitchRadians );
 
-    GXMat4 y;
+    GXMat4 y {};
     y.RotationY ( yawRadians );
 
     Multiply ( x, y );
 }
 
-[[maybe_unused]] GXVoid GXMat4::RotationXYZ ( GXFloat pitchRadians, GXFloat yawRadians, GXFloat rollRadians )
+[[maybe_unused]] GXVoid GXMat4::RotationXYZ ( GXFloat pitchRadians, GXFloat yawRadians, GXFloat rollRadians ) noexcept
 {
-    GXMat4 x;
+    GXMat4 x {};
     x.RotationX ( pitchRadians );
 
-    GXMat4 y;
+    GXMat4 y {};
     y.RotationY ( yawRadians );
 
-    GXMat4 z;
+    GXMat4 z {};
     z.RotationZ ( rollRadians );
 
-    GXMat4 temp;
+    GXMat4 temp {};
     temp.Multiply ( x, y );
 
     Multiply ( temp, z );
 }
 
-[[maybe_unused]] GXVoid GXMat4::ClearRotation ( GXMat3 const &sourceMatrix )
+[[maybe_unused]] GXVoid GXMat4::ClearRotation ( GXMat3 const &sourceMatrix ) noexcept
 {
-    GXVec3 modelX;
-    GXVec3 modelY;
-    GXVec3 modelZ;
+    GXVec3 modelX {};
+    GXVec3 modelY {};
+    GXVec3 modelZ {};
 
     sourceMatrix.GetX ( modelX );
     sourceMatrix.GetY ( modelY );
     sourceMatrix.GetZ ( modelZ );
 
-    GXVec3 tmp;
+    GXVec3 tmp {};
     tmp.Multiply ( modelX, 1.0F / modelX.Length () );
     SetX ( tmp );
 
@@ -1931,17 +1820,17 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     _m[ 3U ][ 3U ] = 1.0F;
 }
 
-[[maybe_unused]] GXVoid GXMat4::ClearRotation ( GXMat4 const &sourceMatrix )
+[[maybe_unused]] GXVoid GXMat4::ClearRotation ( GXMat4 const &sourceMatrix ) noexcept
 {
-    GXVec3 modelX;
-    GXVec3 modelY;
-    GXVec3 modelZ;
+    GXVec3 modelX {};
+    GXVec3 modelY {};
+    GXVec3 modelZ {};
 
     sourceMatrix.GetX ( modelX );
     sourceMatrix.GetY ( modelY );
     sourceMatrix.GetZ ( modelZ );
 
-    GXVec3 tmp;
+    GXVec3 tmp {};
     tmp.Multiply ( modelX, 1.0F / modelX.Length () );
     SetX ( tmp );
 
@@ -1957,7 +1846,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     _m[ 3U ][ 3U ] = 1.0F;
 }
 
-[[maybe_unused]] GXVoid GXMat4::Scale ( GXFloat x, GXFloat y, GXFloat z )
+[[maybe_unused]] GXVoid GXMat4::Scale ( GXFloat x, GXFloat y, GXFloat z ) noexcept
 {
     _m[ 0U ][ 1U ] = _m[ 0U ][ 2U ] = 0.0F;
     _m[ 1U ][ 0U ] = _m[ 1U ][ 2U ] = 0.0F;
@@ -1971,9 +1860,9 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     _m[ 3U ][ 0U ] = _m[ 3U ][ 1U ] = _m[ 3U ][ 2U ] = _m[ 0U ][ 3U ] = _m[ 1U ][ 3U ] = _m[ 2U ][ 3U ] = 0.0F;
 }
 
-[[maybe_unused]] GXVoid GXMat4::ClearScale ( GXVec3 &scale ) const
+[[maybe_unused]] GXVoid GXMat4::ClearScale ( GXVec3 &scale ) const noexcept
 {
-    GXVec3 alpha;
+    GXVec3 alpha {};
 
     GetX ( alpha );
     scale._data[ 0U ] = alpha.Length ();
@@ -1985,7 +1874,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     scale._data[ 2U ] = alpha.Length ();
 }
 
-[[maybe_unused]] GXVoid GXMat4::Inverse ( GXMat4 const &sourceMatrix )
+[[maybe_unused]] GXVoid GXMat4::Inverse ( GXMat4 const &sourceMatrix ) noexcept
 {
     GXMat4 const& m = sourceMatrix;
 
@@ -2057,80 +1946,9 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     _m[ 3U ][ 3U ] = +det3_201_012 * inverseDeterminant;
 }
 
-[[maybe_unused]] GXVoid GXMat4::MultiplyVectorMatrix ( GXVec4 &out, GXVec4 const &v ) const
-{
-    out._data[ 0U ] = v._data[ 0U ] * _m[ 0U ][ 0U ] +
-        v._data[ 1U ] * _m[ 1U ][ 0U ] +
-        v._data[ 2U ] * _m[ 2U ][ 0U ] +
-        v._data[ 3U ] * _m[ 3U ][ 0U ];
-
-    out._data[ 1U ] = v._data[ 0U ] * _m[ 0U ][ 1U ] +
-        v._data[ 1U ] * _m[ 1U ][ 1U ] +
-        v._data[ 2U ] * _m[ 2U ][ 1U ] +
-        v._data[ 3U ] * _m[ 3U ][ 1U ];
-
-    out._data[ 2U ] = v._data[ 0U ] * _m[ 0U ][ 2U ] +
-        v._data[ 1U ] * _m[ 1U ][ 2U ] +
-        v._data[ 2U ] * _m[ 2U ][ 2U ] +
-        v._data[ 3U ] * _m[ 3U ][ 2U ];
-
-    out._data[ 3U ] = v._data[ 0U ] * _m[ 0U ][ 3U ] +
-        v._data[ 1U ] * _m[ 1U ][ 3U ] +
-        v._data[ 2U ] * _m[ 2U ][ 3U ] +
-        v._data[ 3U ] * _m[ 3U ][ 3U ];
-}
-
-[[maybe_unused]] GXVoid GXMat4::MultiplyMatrixVector ( GXVec4 &out, GXVec4 const &v ) const
-{
-    out._data[ 0U ] = _m[ 0U ][ 0U ] * v._data[ 0U ] +
-        _m[ 0U ][ 1U ] * v._data[ 1U ] +
-        _m[ 0U ][ 2U ] * v._data[ 2U ] +
-        _m[ 0U ][ 3U ] * v._data[ 3U ];
-
-    out._data[ 1U ] = _m[ 1U ][ 0U ] * v._data[ 0U ] +
-        _m[ 1U ][ 1U ] * v._data[ 1U ] +
-        _m[ 1U ][ 2U ] * v._data[ 2U ] +
-        _m[ 1U ][ 3U ] * v._data[ 3U ];
-
-    out._data[ 2U ] = _m[ 2U ][ 0U ] * v._data[ 0U ] +
-        _m[ 2U ][ 1U ] * v._data[ 1U ] +
-        _m[ 2U ][ 2U ] * v._data[ 2U ] +
-        _m[ 2U ][ 3U ] * v._data[ 3U ];
-
-    out._data[ 3U ] = _m[ 3U ][ 0U ] * v._data[ 0U ] +
-        _m[ 3U ][ 1U ] * v._data[ 1U ] +
-        _m[ 3U ][ 2U ] * v._data[ 2U ] +
-        _m[ 3U ][ 3U ] * v._data[ 3U ];
-}
-
-[[maybe_unused]] GXVoid GXMat4::MultiplyAsNormal ( GXVec3 &out, GXVec3 const &v ) const
-{
-    out._data[ 0U ] = v._data[ 0U ] * _m[ 0U ][ 0U ] + v._data[ 1U ] * _m[ 1U ][ 0U ] + v._data[ 2U ] * _m[ 2U ][ 0U ];
-    out._data[ 1U ] = v._data[ 0U ] * _m[ 0U ][ 1U ] + v._data[ 1U ] * _m[ 1U ][ 1U ] + v._data[ 2U ] * _m[ 2U ][ 1U ];
-    out._data[ 2U ] = v._data[ 0U ] * _m[ 0U ][ 2U ] + v._data[ 1U ] * _m[ 1U ][ 2U ] + v._data[ 2U ] * _m[ 2U ][ 2U ];
-}
-
-[[maybe_unused]] GXVoid GXMat4::MultiplyAsPoint ( GXVec3 &out, GXVec3 const &v ) const
-{
-    out._data[ 0U ] = v._data[ 0U ] * _m[ 0U ][ 0U ] +
-        v._data[ 1U ] * _m[ 1U ][ 0U ] +
-        v._data[ 2U ] * _m[ 2U ][ 0U ] +
-        _m[ 3U ][ 0U ];
-
-    out._data[ 1U ] = v._data[ 0U ] * _m[ 0U ][ 1U ] +
-        v._data[ 1U ] * _m[ 1U ][ 1U ] +
-        v._data[ 2U ] * _m[ 2U ][ 1U ] +
-        _m[ 3U ][ 1U ];
-
-    out._data[ 2U ] = v._data[ 0U ] * _m[ 0U ][ 2U ] +
-        v._data[ 1U ] * _m[ 1U ][ 2U ] +
-        v._data[ 2U ] * _m[ 2U ][ 2U ] +
-        _m[ 3U ][ 2U ];
-}
-
 //----------------------------------------------------------------------------------------------------------------------
 
-[[maybe_unused]] GXVoid GXAABB::Empty ()
+[[maybe_unused]] GXVoid GXAABB::Empty () noexcept
 {
     _vertices = 0u;
 
@@ -2138,7 +1956,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     _max = GXVec3 ( -FLT_MAX, -FLT_MAX, -FLT_MAX );
 }
 
-[[maybe_unused]] GXVoid GXAABB::Transform ( GXAABB &bounds, GXMat4 const &transform ) const
+[[maybe_unused]] GXVoid GXAABB::Transform ( GXAABB &bounds, GXMat4 const &transform ) const noexcept
 {
     GXVec3 const verticesLocal[ 8U ] =
     {
@@ -2156,18 +1974,18 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 
     for ( auto const& v : verticesLocal )
     {
-        GXVec3 vertex;
+        GXVec3 vertex {};
         transform.MultiplyAsPoint ( vertex, v );
         bounds.AddVertex ( vertex );
     }
 }
 
-[[maybe_unused]] GXVoid GXAABB::AddVertex ( GXVec3 const &vertex )
+[[maybe_unused]] GXVoid GXAABB::AddVertex ( GXVec3 const &vertex ) noexcept
 {
     AddVertex ( vertex._data[ 0U ], vertex._data[ 1U ], vertex._data[ 2U ] );
 }
 
-[[maybe_unused]] GXVoid GXAABB::AddVertex ( GXFloat x, GXFloat y, GXFloat z )
+[[maybe_unused]] GXVoid GXAABB::AddVertex ( GXFloat x, GXFloat y, GXFloat z ) noexcept
 {
     if ( _vertices > 1U )
     {
@@ -2230,7 +2048,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     }
 }
 
-[[maybe_unused]] GXBool GXAABB::IsOverlaped ( GXAABB const &other ) const
+[[maybe_unused]] GXBool GXAABB::IsOverlaped ( GXAABB const &other ) const noexcept
 {
     if ( _min._data[ 0U ] > other._max._data[ 0U ] )
         return GX_FALSE;
@@ -2250,12 +2068,12 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     return other._min._data[ 2U ] <= _max._data[ 2U ];
 }
 
-[[maybe_unused]] GXBool GXAABB::IsOverlaped ( GXVec3 const &point ) const
+[[maybe_unused]] GXBool GXAABB::IsOverlaped ( GXVec3 const &point ) const noexcept
 {
     return IsOverlaped ( point._data[ 0U ], point._data[ 1U ], point._data[ 2U ] );
 }
 
-[[maybe_unused]] GXBool GXAABB::IsOverlaped ( GXFloat x, GXFloat y, GXFloat z ) const
+[[maybe_unused]] GXBool GXAABB::IsOverlaped ( GXFloat x, GXFloat y, GXFloat z ) const noexcept
 {
     if ( _min._data[ 0U ] > x )
         return GX_FALSE;
@@ -2275,14 +2093,14 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     return _max._data[ 2U ] >= z;
 }
 
-[[maybe_unused]] GXVoid GXAABB::GetCenter ( GXVec3 &center ) const
+[[maybe_unused]] GXVoid GXAABB::GetCenter ( GXVec3 &center ) const noexcept
 {
     center._data[ 0U ] = 0.5F * ( _min._data[ 0U ] + _max._data[ 0U ] );
     center._data[ 1U ] = 0.5F * ( _min._data[ 1U ] + _max._data[ 1U ] );
     center._data[ 2U ] = 0.5F * ( _min._data[ 2U ] + _max._data[ 2U ] );
 }
 
-[[maybe_unused]] GXFloat GXAABB::GetWidth () const
+[[maybe_unused]] GXFloat GXAABB::GetWidth () const noexcept
 {
     if ( _vertices < 2U )
         return -1.0F;
@@ -2290,7 +2108,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     return _max._data[ 0U ] - _min._data[ 0U ];
 }
 
-[[maybe_unused]] GXFloat GXAABB::GetHeight () const
+[[maybe_unused]] GXFloat GXAABB::GetHeight () const noexcept
 {
     if ( _vertices < 2U )
         return -1.0F;
@@ -2298,7 +2116,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     return _max._data[ 1U ] - _min._data[ 1U ];
 }
 
-[[maybe_unused]] GXFloat GXAABB::GetDepth () const
+[[maybe_unused]] GXFloat GXAABB::GetDepth () const noexcept
 {
     if ( _vertices < 2U )
         return -1.0F;
@@ -2306,24 +2124,24 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     return _max._data[ 2U ] - _min._data[ 2U ];
 }
 
-[[maybe_unused]] GXFloat GXAABB::GetSphereRadius () const
+[[maybe_unused]] GXFloat GXAABB::GetSphereRadius () const noexcept
 {
-    GXVec3 center;
+    GXVec3 center {};
     GetCenter ( center );
     return center.Distance ( _min );
 }
 
 //----------------------------------------------------------------------------------------------------------------------
 
-[[maybe_unused]] GXVoid GXPlane::From ( GXVec3 const &pointA, GXVec3 const &pointB, GXVec3 const &pointC )
+[[maybe_unused]] GXVoid GXPlane::From ( GXVec3 const &pointA, GXVec3 const &pointB, GXVec3 const &pointC ) noexcept
 {
-    GXVec3 ab;
+    GXVec3 ab {};
     ab.Subtract ( pointB, pointA );
 
-    GXVec3 ac;
+    GXVec3 ac {};
     ac.Subtract ( pointC, pointA );
 
-    GXVec3 normal;
+    GXVec3 normal {};
     normal.CrossProduct ( ab, ac );
     normal.Normalize ();
 
@@ -2333,18 +2151,21 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     _d = -normal.DotProduct ( pointA );
 }
 
-[[maybe_unused]] GXVoid GXPlane::FromLineToPoint ( GXVec3 const &lineStart, GXVec3 const &lineEnd, GXVec3 const &point )
+[[maybe_unused]] GXVoid GXPlane::FromLineToPoint ( GXVec3 const &lineStart,
+    GXVec3 const &lineEnd,
+    GXVec3 const &point
+) noexcept
 {
-    GXVec3 startToPoint;
+    GXVec3 startToPoint {};
     startToPoint.Subtract ( point, lineStart );
 
-    GXVec3 startToEnd;
+    GXVec3 startToEnd {};
     startToEnd.Subtract ( lineEnd, lineStart );
 
-    GXVec3 tempCross;
+    GXVec3 tempCross {};
     tempCross.CrossProduct ( startToEnd, startToPoint );
 
-    GXVec3 normal;
+    GXVec3 normal {};
     normal.CrossProduct ( tempCross, startToEnd );
 
     _a = normal._data[ 0U ];
@@ -2358,7 +2179,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     Flip ();
 }
 
-[[maybe_unused]] GXVoid GXPlane::Normalize ()
+[[maybe_unused]] GXVoid GXPlane::Normalize () noexcept
 {
     GXFloat const inverseLength = 1.0F / sqrtf ( _a * _a + _b * _b + _c * _c );
 
@@ -2368,7 +2189,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     _d *= inverseLength;
 }
 
-[[maybe_unused]] GXVoid GXPlane::Flip ()
+[[maybe_unused]] GXVoid GXPlane::Flip () noexcept
 {
     _a = -_a;
     _b = -_b;
@@ -2376,12 +2197,12 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     _d = -_d;
 }
 
-[[maybe_unused]] eGXPlaneClassifyVertex GXPlane::ClassifyVertex ( GXVec3 const &vertex ) const
+[[maybe_unused]] eGXPlaneClassifyVertex GXPlane::ClassifyVertex ( GXVec3 const &vertex ) const noexcept
 {
     return ClassifyVertex ( vertex._data[ 0U ], vertex._data[ 1U ], vertex._data[ 2U ] );
 }
 
-[[maybe_unused]] eGXPlaneClassifyVertex GXPlane::ClassifyVertex ( GXFloat x, GXFloat y, GXFloat z ) const
+[[maybe_unused]] eGXPlaneClassifyVertex GXPlane::ClassifyVertex ( GXFloat x, GXFloat y, GXFloat z ) const noexcept
 {
     GXFloat const test = _a * x + _b * y + _c * z + _d;
 
@@ -2393,12 +2214,13 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-[[maybe_unused]] GXProjectionClipPlanes::GXProjectionClipPlanes ( GXMat4 const &src )
+// NOLINTNEXTLINE
+[[maybe_unused]] GXProjectionClipPlanes::GXProjectionClipPlanes ( GXMat4 const &src ) noexcept
 {
     From ( src );
 }
 
-[[maybe_unused]] GXVoid GXProjectionClipPlanes::From ( GXMat4 const &src )
+[[maybe_unused]] GXVoid GXProjectionClipPlanes::From ( GXMat4 const &src ) noexcept
 {
     // Left clipping plane
     _planes[ 0U ]._a = src._m[ 0U ][ 3U ] + src._m[ 0U ][ 0U ];
@@ -2437,7 +2259,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     _planes[ 5U ]._d = src._m[ 3U ][ 3U ] - src._m[ 3U ][ 2U ];
 }
 
-[[maybe_unused]] GXBool GXProjectionClipPlanes::IsVisible ( GXAABB const &bounds ) const
+[[maybe_unused]] GXBool GXProjectionClipPlanes::IsVisible ( GXAABB const &bounds ) const noexcept
 {
     GXUByte flags = PlaneTest ( bounds._min._data[ 0U ], bounds._min._data[ 1U ], bounds._min._data[ 2U ] );
     flags &= PlaneTest ( bounds._min._data[ 0U ], bounds._max._data[ 1U ], bounds._min._data[ 2U ] );
@@ -2452,7 +2274,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     return flags == 0;
 }
 
-[[maybe_unused]] GXUByte GXProjectionClipPlanes::PlaneTest ( GXFloat x, GXFloat y, GXFloat z ) const
+[[maybe_unused]] GXUByte GXProjectionClipPlanes::PlaneTest ( GXFloat x, GXFloat y, GXFloat z ) const noexcept
 {
     constexpr GXUByte const masks[] =
     {
@@ -2479,40 +2301,44 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-[[maybe_unused]] GXFloat GXCALL GXDegToRad ( GXFloat degrees )
+[[maybe_unused]] GXFloat GXCALL GXDegToRad ( GXFloat degrees ) noexcept
 {
     return degrees * DEGREES_TO_RADIANS_FACTOR;
 }
 
-[[maybe_unused]] GXFloat GXCALL GXRadToDeg ( GXFloat radians )
+[[maybe_unused]] GXFloat GXCALL GXRadToDeg ( GXFloat radians ) noexcept
 {
     return radians * RADIANS_TO_DEGREES_FACTOR;
 }
 
-[[maybe_unused]] GXVoid GXCALL GXConvert3DSMaxToGXEngine ( GXVec3 &gx_out, GXFloat max_x, GXFloat max_y, GXFloat max_z )
+[[maybe_unused]] GXVoid GXCALL GXConvert3DSMaxToGXEngine ( GXVec3 &gx_out,
+    GXFloat max_x,
+    GXFloat max_y,
+    GXFloat max_z
+) noexcept
 {
     gx_out._data[ 0U ] = -max_x;
     gx_out._data[ 1U ] = max_z;
     gx_out._data[ 2U ] = -max_y;
 }
 
-[[maybe_unused]] GXVoid GXCALL GXRandomize ()
+[[maybe_unused]] GXVoid GXCALL GXRandomize () noexcept
 {
     std::srand ( static_cast<GXUInt> ( time ( nullptr ) ) );
 }
 
-[[maybe_unused]] GXFloat GXCALL GXRandomNormalize ()
+[[maybe_unused]] GXFloat GXCALL GXRandomNormalize () noexcept
 {
     return static_cast<GXFloat> ( std::rand () ) * INVERSE_RAND_MAX;
 }
 
-[[maybe_unused]] GXFloat GXCALL GXRandomBetween ( GXFloat from, GXFloat to )
+[[maybe_unused]] GXFloat GXCALL GXRandomBetween ( GXFloat from, GXFloat to ) noexcept
 {
     GXFloat const delta = to - from;
     return from + delta * GXRandomNormalize ();
 }
 
-[[maybe_unused]] GXVoid GXCALL GXRandomBetween ( GXVec3 &out, const GXVec3 &from, const GXVec3 &to )
+[[maybe_unused]] GXVoid GXCALL GXRandomBetween ( GXVec3 &out, const GXVec3 &from, const GXVec3 &to ) noexcept
 {
     out._data[ 0U ] = GXRandomBetween ( from._data[ 0U ], to._data[ 0U ] );
     out._data[ 1U ] = GXRandomBetween ( from._data[ 1U ], to._data[ 1U ] );
@@ -2526,7 +2352,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     GXUPointer vertexStride,
     GXUByte const* uvs,
     GXUPointer uvStride
-)
+) noexcept
 {
     GXVec3 const* v0;
     GXVec3 const* v1;
@@ -2576,13 +2402,13 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
         break;
     }
 
-    GXVec3 a;
-    GXVec3 b;
+    GXVec3 a {};
+    GXVec3 b {};
     a.Subtract ( *v1, *v0 );
     b.Subtract ( *v2, *v0 );
 
-    GXVec2 dUVa;
-    GXVec2 dUVb;
+    GXVec2 dUVa {};
+    GXVec2 dUVb {};
     dUVa.Subtract ( *uv1, *uv0 );
     dUVb.Subtract ( *uv2, *uv0 );
 
@@ -2599,22 +2425,22 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     outBitangent.Normalize ();
 }
 
-[[maybe_unused]] GXFloat GXCALL GXClampf ( GXFloat value, GXFloat minValue, GXFloat maxValue )
+[[maybe_unused]] GXFloat GXCALL GXClampf ( GXFloat value, GXFloat minValue, GXFloat maxValue ) noexcept
 {
     return ( value < minValue ) ? minValue : ( value > maxValue ) ? maxValue : value;
 }
 
-[[maybe_unused]] GXInt GXCALL GXClampi ( GXInt value, GXInt minValue, GXInt maxValue )
+[[maybe_unused]] GXInt GXCALL GXClampi ( GXInt value, GXInt minValue, GXInt maxValue ) noexcept
 {
     return ( value < minValue ) ? minValue : ( value > maxValue ) ? maxValue : value;
 }
 
-[[maybe_unused]] GXFloat GXCALL GXMinf ( GXFloat a, GXFloat b )
+[[maybe_unused]] GXFloat GXCALL GXMinf ( GXFloat a, GXFloat b ) noexcept
 {
     return a < b ? a : b;
 }
 
-[[maybe_unused]] GXFloat GXCALL GXMaxf ( GXFloat a, GXFloat b )
+[[maybe_unused]] GXFloat GXCALL GXMaxf ( GXFloat a, GXFloat b ) noexcept
 {
     return a > b ? a : b;
 }
@@ -2624,21 +2450,21 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     GXVec3 const &aPivot,
     GXVec3 const &bPivot,
     GXVec3 const &cPivot
-)
+) noexcept
 {
-    GXVec3 v0;
-    GXVec3 v1;
-    GXVec3 v2;
+    GXVec3 v0 {};
+    GXVec3 v1 {};
+    GXVec3 v2 {};
 
     v0.Subtract ( bPivot, aPivot );
     v1.Subtract ( cPivot, aPivot );
     v2.Subtract ( point, aPivot );
 
-    GXFloat d00 = v0.DotProduct ( v0 );
-    GXFloat d01 = v0.DotProduct ( v1 );
-    GXFloat d11 = v1.DotProduct ( v1 );
-    GXFloat d20 = v2.DotProduct ( v0 );
-    GXFloat d21 = v2.DotProduct ( v1 );
+    GXFloat const d00 = v0.DotProduct ( v0 );
+    GXFloat const d01 = v0.DotProduct ( v1 );
+    GXFloat const d11 = v1.DotProduct ( v1 );
+    GXFloat const d20 = v2.DotProduct ( v0 );
+    GXFloat const d21 = v2.DotProduct ( v1 );
 
     GXFloat const denom = 1.0F / ( d00 * d11 - d01 * d01 );
 
@@ -2653,9 +2479,9 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     GXUShort y,
     GXUShort viewportWidth,
     GXUShort viewportHeight,
-    const GXVec3& viewerLocation,
-    const GXMat4 &viewProjectionMatrix
-)
+    GXVec3 const &viewerLocation,
+    GXMat4 const &viewProjectionMatrix
+) noexcept
 {
     GXFloat const halfWidth = static_cast<GXFloat> ( viewportWidth ) * 0.5F;
     GXFloat const halfHeight = static_cast<GXFloat> ( viewportHeight ) * 0.5F;
@@ -2668,7 +2494,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
         1.0F
     };
 
-    GXMat4 inverseViewProjectionMatrix;
+    GXMat4 inverseViewProjectionMatrix {};
     inverseViewProjectionMatrix.Inverse ( viewProjectionMatrix );
 
     GXVec4 pointWorld {};

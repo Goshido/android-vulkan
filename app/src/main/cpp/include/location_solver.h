@@ -7,7 +7,7 @@
 
 namespace android_vulkan {
 
-class LocationSolver final
+class [[maybe_unused]] LocationSolver final
 {
     public:
         LocationSolver () = delete;
@@ -20,16 +20,10 @@ class LocationSolver final
 
         ~LocationSolver () = delete;
 
-        static void Solve ( ContactManager &contactManager ) noexcept;
+        static void Run ( ContactManager &contactManager ) noexcept;
 
     private:
-        static void SolvePair ( RigidBody &bodyA, RigidBody &bodyB, ContactManifold const &manifold ) noexcept;
-
-        static void SolveSingle ( RigidBody &body,
-            ContactManifold &manifold,
-            float penetration,
-            GXVec3 const &normal
-        ) noexcept;
+        static void SolveSingle ( RigidBody &body, ContactManifold &manifold, float penetration ) noexcept;
 };
 
 } // namespace android_vulkan

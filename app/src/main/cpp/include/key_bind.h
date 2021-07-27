@@ -4,7 +4,7 @@
 
 namespace android_vulkan {
 
-typedef void ( *KeyHandler ) ( void* context );
+typedef void ( *KeyHandler ) ( void* context ) noexcept;
 
 class KeyBind final
 {
@@ -13,7 +13,7 @@ class KeyBind final
         KeyHandler      _handler;
 
     public:
-        KeyBind ();
+        KeyBind () noexcept;
 
         KeyBind ( KeyBind const &other ) = default;
         KeyBind& operator = ( KeyBind const &other ) = default;
@@ -23,8 +23,8 @@ class KeyBind final
 
         ~KeyBind () = default;
 
-        void Init ( void* context, KeyHandler handler );
-        void Reset ();
+        void Init ( void* context, KeyHandler handler ) noexcept;
+        void Reset () noexcept;
 };
 
 } // namespace android_vulkan

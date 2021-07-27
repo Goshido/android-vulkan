@@ -1,14 +1,14 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 29
+    compileSdkVersion 30
     buildToolsVersion "30.0.3"
     ndkVersion "22.1.7171670"
 
     defaultConfig {
         applicationId "com.goshido.android_vulkan"
-        minSdkVersion 29
-        targetSdkVersion 29
+        minSdkVersion 30
+        targetSdkVersion 30
         versionCode 1
         versionName "1.0"
     }

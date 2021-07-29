@@ -15,13 +15,13 @@ Usefull documentation is located [here](docs/documentation.md).
 Requirements:
 
 * _Windows Vista_+ or _Monjaro KDE_
-* _Android Studio 4.2.2_
-* _Android Studio Gradle Plugin 4.2.2_
+* _Android Studio Arctic Fox | 2020.3.1_
+* _Android Studio Gradle Plugin 7.0.0_
 * _Android NDK 22.1.7171670 (side by side)_
 * _Android SDK 11.0 (API level 30)_
 * _Android SDK Build-Tools 30.0.3_
 * _Android SDK Tools 26.1.1_
-* _Android SDK Platform-Tools 31.0.2_
+* _Android SDK Platform-Tools 31.0.3_
 * _CMake 3.18.1_
 * _DirectX Shader Compiler 1.6.2104.10141_
 * _Gradle 7.1.1_

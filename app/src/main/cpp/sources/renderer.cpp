@@ -1021,7 +1021,8 @@ bool Renderer::OnCreateDevice ()
 
     for ( uint32_t i = 0U; i < physicalDeviceCount; ++i )
     {
-        if ( PrintPhysicalDeviceInfo ( i, deviceList[ i ] ) ) continue;
+        if ( PrintPhysicalDeviceInfo ( i, deviceList[ i ] ) )
+            continue;
 
         _physicalDeviceInfo.clear ();
 
@@ -2489,7 +2490,8 @@ bool Renderer::SelectTargetSurfaceFormat ( VkFormat &targetColorFormat,
         VkFormatProperties props;
         vkGetPhysicalDeviceFormatProperties ( _physicalDevice, probe, &props );
 
-        if ( !( props.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT ) ) continue;
+        if ( !( props.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT ) )
+            continue;
 
         targetDepthStencilFormat = probe;
 

@@ -4,7 +4,7 @@
 
 namespace android_vulkan {
 
-constexpr static float const COLLINEAR_TOLERANCE = 1.0e-2F;
+constexpr static float const COLLINEAR_TOLERANCE = 5.0e-4F;
 constexpr static float const FACE_PERPENDICULAR_TOLERANCE = 1.0e-3F;
 constexpr static size_t const INITIAL_SHAPE_POINTS = 16U;
 constexpr static uint16_t const RAY_COUNT = 8U;
@@ -81,7 +81,7 @@ void ContactDetector::Check ( ContactManager &contactManager, RigidBodyRef const
         return;
     }
 
-    CollectExtremePoints ( _shapeAPoints, shapeA, tbn );
+    CollectForwardExtremePoints ( _shapeAPoints, shapeA, tbn );
     size_t const aCount = _shapeAPoints.size ();
 
     if ( aCount == 1U )
@@ -93,7 +93,7 @@ void ContactDetector::Check ( ContactManager &contactManager, RigidBodyRef const
     GXVec3 reverse ( n );
     reverse.Reverse ();
     tbn.SetZ ( reverse );
-    CollectExtremePoints ( _shapeBPoints, shapeB, tbn );
+    CollectBackwardExtremePoints ( _shapeBPoints, shapeB, tbn );
     size_t const bCount = _shapeBPoints.size ();
 
     if ( bCount == 1U )
@@ -150,29 +150,27 @@ ContactDetector::FirstContactData ContactDetector::AllocateFirstContact ( Contac
     return std::make_pair ( &manifold, &contact );
 }
 
-void ContactDetector::CollectExtremePoints ( Vertices &vertices, Shape const &shape, GXMat3 const &tbn ) noexcept
+void ContactDetector::CollectBackwardExtremePoints ( Vertices &vertices,
+    Shape const &shape,
+    GXMat3 const &tbn
+) noexcept
 {
     vertices.clear ();
-    GXVec3 d {};
+    auto const end = _rays.crend ();
+
+    for ( auto i = _rays.crbegin (); i != end; ++i )
+    {
+        AppendExtremePoint ( vertices, shape, tbn, *i );
+    }
+}
+
+void ContactDetector::CollectForwardExtremePoints ( Vertices &vertices, Shape const &shape, GXMat3 const &tbn ) noexcept
+{
+    vertices.clear ();
 
     for ( auto const& ray : _rays )
     {
-        tbn.MultiplyVectorMatrix ( d, ray );
-        GXVec3 const p = shape.GetExtremePointWorld ( d );
-        auto const end = vertices.cend ();
-
-        auto findResult = std::find_if ( vertices.cbegin (),
-            end,
-            [ & ] ( GXVec3 const &v ) noexcept -> bool {
-                return std::memcmp ( &p, &v, sizeof ( p ) ) == 0;
-            }
-        );
-
-        if ( findResult != end )
-            continue;
-
-        // Unique vertex was found.
-        vertices.push_back ( p );
+        AppendExtremePoint ( vertices, shape, tbn, ray );
     }
 }
 
@@ -355,28 +353,45 @@ void ContactDetector::ManifoldEdgeFace ( ContactManager &contactManager,
     GXVec3 ac {};
     ac.Subtract ( face[ 2U ], face[ 0U ] );
 
-    GXVec3 faceNormal;
+    GXVec3 faceNormal {};
     faceNormal.CrossProduct ( ab, ac );
     faceNormal.Normalize ();
+
+    Vertices const& vertices = _cyrusBeck.Run ( face, faceNormal, edge, edgeDir );
 
     if ( std::abs ( faceNormal.DotProduct ( edgeDir ) ) >= FACE_PERPENDICULAR_TOLERANCE )
     {
         // The edge pierces the face. There is only one contact point.
-        // So we need to find ray vs plane intersection point.
-        // https://www.cs.princeton.edu/courses/archive/fall00/cs426/lectures/raycast/sld017.htm
+        GXVec3 const& v0 = vertices[ 0U ];
 
-        float const d = faceNormal.DotProduct ( face[ 1U ] );
-        float const t = ( d - edge[ 0U ].DotProduct ( faceNormal ) ) / edgeDir.DotProduct ( faceNormal );
+        if ( vertices.size () == 1U )
+        {
+            firstContact->_pointA = v0;
+        }
+        else
+        {
+            GXVec3 const& f0 = face[ 0U ];
+            constexpr float const tolerance = SAME_POINT_TOLERANCE * SAME_POINT_TOLERANCE;
 
-        // Note: It's needed to clamp "t" because in 3D there is a case when edge is completely in one side
-        // relative to the face.
-        firstContact->_pointA.Sum ( edge[ 0U ], std::clamp ( t, 0.0F, 1.0F ), edgeDir );
+            if ( v0.SquaredDistance ( f0 ) > tolerance )
+            {
+                GXVec3 probe {};
+                probe.Subtract ( v0, f0 );
+                firstContact->_pointA = probe.DotProduct ( faceNormal ) < 0.0F ? v0 : vertices[ 1U ];
+            }
+            else
+            {
+                GXVec3 const& v1 = vertices[ 1U ];
+
+                GXVec3 probe {};
+                probe.Subtract ( v1, f0 );
+                firstContact->_pointA = probe.DotProduct ( faceNormal ) < 0.0F ? v1 : v0;
+            }
+        }
+
         firstContact->_pointB.Sum ( firstContact->_pointA, p, manifold->_normal );
-
         return;
     }
-
-    Vertices const& vertices = _cyrusBeck.Run ( face, faceNormal, edge, edgeDir );
 
     firstContact->_pointA = vertices[ 0U ];
     firstContact->_pointB.Sum ( firstContact->_pointA, p, manifold->_normal );
@@ -388,7 +403,7 @@ void ContactDetector::ManifoldEdgeFace ( ContactManager &contactManager,
     anotherContact._friction = friction;
     anotherContact._restitution = restitution;
     anotherContact._pointA = vertices[ 1U ];
-    anotherContact._pointB.Sum ( anotherContact._pointA, p, manifold->_normal );
+    anotherContact._pointB.Sum ( vertices[ 1U ], p, manifold->_normal );
 }
 
 void ContactDetector::ManifoldFaceFace ( ContactManager &contactManager,
@@ -412,14 +427,18 @@ void ContactDetector::ManifoldFaceFace ( ContactManager &contactManager,
     aNormal.Normalize ();
 
     ab.Subtract ( _shapeBPoints[ 1U ], _shapeBPoints[ 0U ] );
+    ac.Subtract ( _shapeBPoints[ 2U ], _shapeBPoints[ 0U ] );
+    GXVec3 bNormal {};
+    bNormal.CrossProduct ( ab, ac );
+
     ab.Normalize ();
+
+    // Both shapes lay in same plane.
+    Vertices const& result = _sutherlandHodgman.Run ( _shapeAPoints, aNormal, _shapeBPoints );
+    float const p = -manifold->_penetration;
 
     if ( std::abs ( aNormal.DotProduct ( ab ) ) <= COLLINEAR_TOLERANCE )
     {
-        // Both shapes lay in same plane.
-        Vertices const& result = _sutherlandHodgman.Run ( _shapeAPoints, aNormal, _shapeBPoints );
-        float const p = -manifold->_penetration;
-
         firstContact->_pointA = result[ 0U ];
         firstContact->_pointB.Sum ( firstContact->_pointA, p, manifold->_normal );
 
@@ -431,98 +450,42 @@ void ContactDetector::ManifoldFaceFace ( ContactManager &contactManager,
             anotherContact._friction = friction;
             anotherContact._restitution = restitution;
             anotherContact._pointA = result[ i ];
-            anotherContact._pointB.Sum ( anotherContact._pointA, p, manifold->_normal );
+            anotherContact._pointB.Sum ( result[ i ], p, manifold->_normal );
         }
 
         return;
     }
 
     // Shapes don't lay in same plane.
-    size_t const bPoints = _shapeBPoints.size ();
+    bool isFirst = true;
+    constexpr float const tolerance = SAME_POINT_TOLERANCE * SAME_POINT_TOLERANCE;
+    GXVec3 const& a0 = _shapeAPoints[ 0U ];
 
-    // Precompute "d" parameter for ray vs plane intersection.
-    float const d = aNormal.DotProduct ( _shapeAPoints[ 0U ] );
-
-    GXVec3 featurePoints[2U] {};
-    size_t featurePointCount = 0U;
-    GXVec3 alpha {};
-
-    for ( size_t i = 0U; i < bPoints; ++i )
+    for ( auto const& v : result )
     {
-        GXVec3 const& current = _shapeBPoints[ i ];
-        GXVec3 const& next = _shapeBPoints[ ( i + 1U ) % bPoints ];
+        GXVec3 probe {};
+        probe.Subtract ( v, v.SquaredDistance ( a0 ) > tolerance ? a0 : _shapeAPoints[ 1U ] );
 
-        ab.Subtract ( next, current );
-        float const beta = ab.DotProduct ( aNormal );
-
-        if ( beta == 0.0F )
+        if ( probe.DotProduct ( bNormal ) > 0.0F )
         {
-            // Edge is parallel to a-shape. Ignore it because there are at least tho edges which must intersect the
-            // A face plane.
+            // This point is above b-shape.
             continue;
         }
 
-        // The edge line pierces the face plane.
-        // So we need to find ray vs plane intersection point.
-        // https://www.cs.princeton.edu/courses/archive/fall00/cs426/lectures/raycast/sld017.htm
-        float const t = ( d - current.DotProduct ( aNormal ) ) / beta;
-
-        if ( t < 0.0F || t > 1.0F )
-            continue;
-
-        alpha.Sum ( current, t, ab );
-
-        if ( featurePointCount == 0U )
+        if ( isFirst )
         {
-            featurePoints[ featurePointCount++ ] = alpha;
+            firstContact->_pointA = v;
+            firstContact->_pointB.Sum ( v, p, manifold->_normal );
+            isFirst = false;
             continue;
         }
 
-        constexpr float const limit = SAME_POINT_TOLERANCE * SAME_POINT_TOLERANCE;
-
-        if ( alpha.SquaredDistance ( featurePoints[ 0U ] ) < limit )
-        {
-            // Edge vertex lies exactly on face plane. Ignore such case.
-            continue;
-        }
-
-        featurePoints[ featurePointCount++ ] = alpha;
-
-        if ( featurePointCount != 2U )
-            continue;
-
-        break;
+        Contact& anotherContact = contactManager.AllocateContact ( *manifold );
+        anotherContact._friction = friction;
+        anotherContact._restitution = restitution;
+        anotherContact._pointA = v;
+        anotherContact._pointB.Sum ( v, p, manifold->_normal );
     }
-
-    if ( featurePointCount == 1U )
-    {
-        // It's the case when face B touches face A vis only one vertex.
-        firstContact->_pointA = featurePoints[ 0U ];
-        firstContact->_pointB.Sum ( firstContact->_pointA, manifold->_penetration, manifold->_normal );
-        return;
-    }
-
-    // Two feature points create feature line segment. So at this point we able to reclassify the original
-    // face vs face task to edge vs face task.
-
-    _shapeBPoints.clear ();
-    _shapeBPoints.push_back ( featurePoints[ 0U ] );
-    _shapeBPoints.push_back ( featurePoints[ 1U ] );
-
-    ab.Subtract ( featurePoints[ 1U ], featurePoints[ 0U ] );
-
-    Vertices const& vertices = _cyrusBeck.Run ( _shapeAPoints, aNormal, _shapeBPoints, ab );
-    firstContact->_pointA = vertices[ 0U ];
-    firstContact->_pointB.Sum ( firstContact->_pointA, manifold->_penetration, manifold->_normal );
-
-    if ( vertices.size () < 2U )
-        return;
-
-    Contact& anotherContact = contactManager.AllocateContact ( *manifold );
-    anotherContact._friction = friction;
-    anotherContact._restitution = restitution;
-    anotherContact._pointA = vertices[ 1U ];
-    anotherContact._pointB.Sum ( anotherContact._pointA, manifold->_penetration, manifold->_normal );
 }
 
 void ContactDetector::ManifoldPoint ( ContactManager &contactManager,
@@ -564,6 +527,31 @@ R"__(ContactDetector::NotifyEPAFail - Can't find penetration depth and separatio
         _gjk.GetTestTriangles (),
         _gjk.GetTestTetrahedrons ()
     );
+}
+
+void ContactDetector::AppendExtremePoint ( Vertices &vertices,
+    Shape const &shape,
+    GXMat3 const &tbn,
+    GXVec3 const &ray
+) noexcept
+{
+    GXVec3 d {};
+    tbn.MultiplyVectorMatrix ( d, ray );
+    GXVec3 const p = shape.GetExtremePointWorld ( d );
+    auto const end = vertices.crend ();
+
+    auto findResult = std::find_if ( vertices.crbegin(),
+        end,
+        [ & ] ( GXVec3 const &v ) noexcept -> bool {
+            return std::memcmp ( &p, &v, sizeof ( p ) ) == 0;
+        }
+    );
+
+    if ( findResult == end )
+    {
+        // Unique vertex was found.
+        vertices.push_back ( p );
+    }
 }
 
 } // namespace android_vulkan

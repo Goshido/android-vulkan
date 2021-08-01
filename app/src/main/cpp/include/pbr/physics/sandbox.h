@@ -24,16 +24,9 @@ class Sandbox final : public android_vulkan::Game
         VkCommandPool                       _commandPool = VK_NULL_HANDLE;
         std::vector<VkCommandBuffer>        _commandBuffers {};
 
-        ComponentRef                        _anotherCube {};
-        android_vulkan::RigidBodyRef        _anotherCubeBody {};
         ComponentRef                        _cameraLight {};
         ComponentRef                        _cube {};
         android_vulkan::RigidBodyRef        _cubeBody {};
-        ComponentRef                        _floor {};
-        android_vulkan::RigidBodyRef        _floorBody {};
-        float                               _floorPhase = 0.0F;
-        ComponentRef                        _sphere {};
-        android_vulkan::RigidBodyRef        _sphereBody {};
 
         android_vulkan::Half4               _colorA {};
         android_vulkan::Half4               _colorB {};
@@ -66,11 +59,29 @@ class Sandbox final : public android_vulkan::Game
         [[nodiscard]] bool OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept override;
         void OnSwapchainDestroyed ( VkDevice device ) noexcept override;
 
+        [[nodiscard]] bool AppendCuboid ( android_vulkan::Renderer &renderer,
+            VkCommandBuffer const* commandBuffers,
+            size_t &commandBufferConsumed,
+            ComponentRef &visual,
+            char const* material,
+            android_vulkan::Half4 const &color,
+            android_vulkan::RigidBodyRef &physical,
+            float x,
+            float y,
+            float z,
+            float w,
+            float h,
+            float d
+        ) noexcept;
+
         void DestroyCommandPool ( VkDevice device ) noexcept;
 
         [[nodiscard]] bool CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept;
+
         void DestroyPhysics () noexcept;
-        void UpdatePhysicsActors ( float deltaTime ) noexcept;
+        void UpdatePhysicsActors () noexcept;
+
+        static void UpdateCuboid ( ComponentRef &cuboid, android_vulkan::RigidBodyRef &body ) noexcept;
 };
 
 } // namespace pbr::physics

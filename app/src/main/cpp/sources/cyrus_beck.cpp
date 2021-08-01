@@ -3,7 +3,7 @@
 
 namespace android_vulkan {
 
-constexpr static float const COLLINEAR_TOLERANCE = 1.0e-2F;
+constexpr static float const COLLINEAR_TOLERANCE = 5.0e-4F;
 constexpr static float const SAME_POINT_TOLERANCE = 1.0e-3F;
 
 CyrusBeck::CyrusBeck () noexcept:

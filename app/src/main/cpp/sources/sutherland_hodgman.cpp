@@ -98,10 +98,10 @@ Vertices const& SutherlandHodgman::Run ( Vertices const &shapeAPoints,
 
     GXVec3 originOffset {};
     originOffset.Multiply ( shapeANormal, shapeANormal.DotProduct ( shapeAPoints[ 0U ] ) );
-    GXVec3 beta {};
 
     for ( auto const& v : _clipPoints )
     {
+        GXVec3 beta {};
         beta.Sum ( originOffset, v._data[ 0U ], xAxis );
         beta.Sum ( beta, v._data[ 1U ], yAxis );
         _result.push_back ( beta );

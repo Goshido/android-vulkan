@@ -41,7 +41,7 @@ bool Sandbox::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) n
     auto const dt = static_cast<float> ( deltaTime );
 
     _physics.Simulate ( dt );
-    UpdatePhysicsActors ( dt );
+    UpdatePhysicsActors ();
 
     _camera.Update ( dt );
     GXMat4 const& cameraLocal = _camera.GetLocalMatrix ();
@@ -91,7 +91,8 @@ bool Sandbox::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) n
         for ( size_t i = 0U; i < manifold._contactCount; ++i )
         {
             android_vulkan::Contact const& c = contact[ i ];
-            submit ( c._pointAfterResolve, _colorB );
+            submit ( c._pointA, _colorA );
+            submit ( c._pointB, _colorB );
         }
     }
 
@@ -142,7 +143,6 @@ bool Sandbox::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 void Sandbox::OnDestroyDevice ( VkDevice device ) noexcept
 {
     DestroyPhysics ();
-    _floor = nullptr;
     _cube = nullptr;
     _components.clear ();
     _renderSession.OnDestroyDevice ( device );
@@ -181,6 +181,55 @@ void Sandbox::OnSwapchainDestroyed ( VkDevice device ) noexcept
     _physics.Pause ();
     Camera::ReleaseInput ();
     _renderSession.OnSwapchainDestroyed ( device );
+}
+
+bool Sandbox::AppendCuboid ( android_vulkan::Renderer &renderer,
+    VkCommandBuffer const* commandBuffers,
+    size_t &commandBufferConsumed,
+    ComponentRef &visual,
+    char const* material,
+    android_vulkan::Half4 const &color,
+    android_vulkan::RigidBodyRef &physical,
+    float x,
+    float y,
+    float z,
+    float w,
+    float h,
+    float d
+) noexcept
+{
+    visual = std::make_shared<StaticMeshComponent> ( renderer,
+        commandBufferConsumed,
+        "pbr/system/unit-cube.mesh2",
+        material,
+        commandBuffers
+    );
+
+    if ( !visual )
+        return false;
+
+    // NOLINTNEXTLINE
+    auto& v = *static_cast<StaticMeshComponent*> ( visual.get () );
+    v.SetColor0 ( color );
+
+    _components.push_back ( visual );
+
+    physical = std::make_shared<android_vulkan::RigidBody> ();
+    android_vulkan::RigidBody& ph = *physical.get ();
+    ph.SetLocation ( x, y, z );
+    ph.EnableKinematic ();
+
+    android_vulkan::ShapeRef shape = std::make_shared<android_vulkan::ShapeBox> ( w, h, d );
+    ph.SetShape ( shape );
+
+    if ( _physics.AddRigidBody ( physical ) )
+    {
+        UpdateCuboid ( visual, physical );
+        return true;
+    }
+
+    android_vulkan::LogError ( "Sandbox::AppendCuboid - Can't add rigid body." );
+    return false;
 }
 
 void Sandbox::DestroyCommandPool ( VkDevice device ) noexcept
@@ -242,144 +291,56 @@ bool Sandbox::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
     VkCommandBuffer* commandBuffers = _commandBuffers.data ();
     size_t consumed = 0U;
 
-    _cube = std::make_shared<StaticMeshComponent> ( renderer,
-        consumed,
-        "pbr/system/unit-cube.mesh2",
-        "pbr/assets/Props/PBR/Unlit.mtl",
-        commandBuffers
-    );
-
-    commandBuffers += consumed;
-
     _colorA = android_vulkan::Half4 ( 115.0F / 255.0F, 185.0F / 255.0F, 0.0F, 1.0F );
     _colorB = android_vulkan::Half4 ( 42.0F / 255.0F, 127.0F / 230.0F, 203.0F, 1.0F );
     _defaultColor = android_vulkan::Half4 ( 1.0F, 1.0F, 1.0F, 1.0F );
 
-    // NOLINTNEXTLINE
-    auto& cubeComp = *static_cast<StaticMeshComponent*> ( _cube.get () );
-    cubeComp.SetColor0 ( _colorA );
-    _components.push_back ( _cube );
+    ComponentRef cuboid {};
+    android_vulkan::RigidBodyRef body {};
 
-    _cubeBody = std::make_shared<android_vulkan::RigidBody> ();
-    _cubeBody->SetMass ( 7.77F );
-    _cubeBody->DisableKinematic ();
-    _cubeBody->DisableSleep ();
-
-    constexpr GXVec3 const cubeSpawn ( 0.0F, 4.0F, 0.8F );
-    _cubeBody->SetLocation ( cubeSpawn );
-
-    //    GXQuat rotation {};
-    //    rotation.FromAxisAngle ( 1.0F, 0.0F, 0.0F, GX_MATH_HALF_PI * 0.5F );
-    //    _cubeBody->SetRotation ( rotation );
-
-    //    GXVec3 const angularVelocity ( 0.0F, 20.0F, 0.0F );
-    //    _cubeBody->SetVelocityAngular ( angularVelocity );
-
-    android_vulkan::ShapeRef cubeShape = std::make_shared<android_vulkan::ShapeBox> ( 0.9F, 0.5F, 0.4F );
-    _cubeBody->SetShape ( cubeShape );
-
-    //    GXVec3 point ( 0.4F, -0.1F, 0.05F );
-    //    point.Sum ( point, cubeSpawn );
-    //
-    //    GXVec3 const impulse ( -1.4106F, 2.0577F, 1.931F );
-    //    _cubeBody->AddImpulse ( impulse, point );
-
-    _anotherCube = std::make_shared<StaticMeshComponent> ( renderer,
+    result = AppendCuboid ( renderer,
+        commandBuffers,
         consumed,
-        "pbr/system/unit-cube.mesh2",
-        "pbr/assets/Props/PBR/Unlit.mtl",
-        commandBuffers
-    );
-
-    commandBuffers += consumed;
-
-    // NOLINTNEXTLINE
-    auto& anotherCubeComp = *static_cast<StaticMeshComponent*> ( _anotherCube.get () );
-    anotherCubeComp.SetColor0 ( _colorA );
-    _components.push_back ( _anotherCube );
-
-    _anotherCubeBody = std::make_shared<android_vulkan::RigidBody> ();
-    _anotherCubeBody->SetMass ( 3.2F );
-    _anotherCubeBody->DisableKinematic ();
-    _anotherCubeBody->DisableSleep ();
-
-    constexpr GXVec3 const anotherCubeSpawn ( 0.0F, 2.0F, 0.8F );
-    _anotherCubeBody->SetLocation ( anotherCubeSpawn );
-
-    android_vulkan::ShapeRef anotherCubeShape = std::make_shared<android_vulkan::ShapeBox> ( 0.3F, 0.3F, 0.3F );
-    anotherCubeShape->SetFriction ( 0.15F );
-    _anotherCubeBody->SetShape ( anotherCubeShape );
-
-    _floor = std::make_shared<StaticMeshComponent> ( renderer,
-        consumed,
-        "pbr/system/unit-cube.mesh2",
+        cuboid,
         "pbr/assets/Props/PBR/DefaultCSGEmissive.mtl",
-        commandBuffers
+        _defaultColor,
+        body,
+        0.0F,
+        -0.5F,
+        0.0F,
+        1.0F,
+        0.5F,
+        1.0F
     );
+
+    if ( !result )
+        return false;
 
     commandBuffers += consumed;
 
-    _sphere = std::make_shared<StaticMeshComponent> ( renderer,
+    result = AppendCuboid ( renderer,
+        commandBuffers,
         consumed,
-        "pbr/system/unit-sphere.mesh2",
-        "pbr/assets/Props/PBR/Unlit.mtl",
-        commandBuffers
+        _cube,
+        "pbr/assets/System/Default.mtl",
+        _colorA,
+        _cubeBody,
+        0.0F,
+        1.0F,
+        0.0F,
+        0.2F,
+        0.3F,
+        0.4F
     );
 
+    if ( !result )
+        return false;
+
     commandBuffers += consumed;
-
-    // NOLINTNEXTLINE
-    auto& sphereComp = *static_cast<StaticMeshComponent*> ( _sphere.get () );
-    sphereComp.SetColor0 ( _colorA );
-    _components.push_back ( _sphere );
-
-    _sphereBody = std::make_shared<android_vulkan::RigidBody> ();
-    _sphereBody->SetMass ( 3.2F );
-    _sphereBody->DisableKinematic ();
-    _sphereBody->DisableSleep ();
-
-    constexpr GXVec3 const sphereSpawn ( 0.0F, 0.5F, 0.8F );
-    _sphereBody->SetLocation ( sphereSpawn );
-
-    android_vulkan::ShapeRef sphereShape = std::make_shared<android_vulkan::ShapeSphere> ( 0.4F );
-    sphereShape->SetFriction ( 0.35F );
-    _sphereBody->SetShape ( sphereShape );
-
-    // NOLINTNEXTLINE
-    auto& floorComp = *static_cast<StaticMeshComponent*> ( _floor.get () );
-    floorComp.SetColor0 ( _defaultColor );
-    _components.push_back ( _floor );
-
-    _floorBody = std::make_shared<android_vulkan::RigidBody> ();
-    _floorBody->EnableKinematic ();
-    _floorBody->SetLocation ( 0.0F, -0.5F, 0.0F );
-
-    android_vulkan::ShapeRef floorShape = std::make_shared<android_vulkan::ShapeBox> ( 32.0F, 0.5F, 32.0F );
-    _floorBody->SetShape ( floorShape );
-
-    if ( !_physics.AddRigidBody ( _floorBody ) )
-    {
-        android_vulkan::LogError ( "Sandbox::CreateSceneManual - Can't add rigid body (floor)." );
-        return false;
-    }
-
-    if ( !_physics.AddRigidBody ( _cubeBody ) )
-    {
-        android_vulkan::LogError ( "Sandbox::CreateSceneManual - Can't add rigid body (cube)." );
-        return false;
-    }
-
-    if ( !_physics.AddRigidBody ( _anotherCubeBody ) )
-    {
-        android_vulkan::LogError ( "Sandbox::CreateSceneManual - Can't add rigid body (another cube)." );
-        return false;
-    }
-
-    if ( !_physics.AddRigidBody ( _sphereBody ) )
-    {
-        android_vulkan::LogError ( "Sandbox::CreateSceneManual - Can't add rigid body (sphere)." );
-        return false;
-    }
+    android_vulkan::RigidBody& b = *_cubeBody.get ();
+    b.DisableKinematic ();
+    b.SetMass ( 7.77F );
+    b.DisableSleep ();
 
     _sphereMesh = MeshManager::GetInstance ().LoadMesh ( renderer,
         consumed,
@@ -420,56 +381,30 @@ bool Sandbox::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
 
 void Sandbox::DestroyPhysics () noexcept
 {
-    _sphereBody = nullptr;
-    _floorBody = nullptr;
-    _anotherCube = nullptr;
     _cubeBody = nullptr;
 }
 
-void Sandbox::UpdatePhysicsActors ( float deltaTime ) noexcept
+void Sandbox::UpdatePhysicsActors () noexcept
+{
+    UpdateCuboid ( _cube, _cubeBody );
+}
+
+void Sandbox::UpdateCuboid ( ComponentRef &cuboid, android_vulkan::RigidBodyRef &body ) noexcept
 {
     constexpr float const physicsToRender = 32.0F;
 
-    auto update = [] ( ComponentRef &component, android_vulkan::RigidBodyRef &body ) {
-        // NOLINTNEXTLINE
-        auto& c = *static_cast<StaticMeshComponent*> ( component.get () );
-
-        // NOLINTNEXTLINE
-        auto& s = static_cast<android_vulkan::ShapeBox&> ( body->GetShape () );
-        GXMat4 transform = body->GetTransform ();
-
-        GXVec3 dims ( s.GetWidth (), s.GetHeight (), s.GetDepth () );
-        dims.Multiply ( dims, physicsToRender );
-
-        GXMat4 scale {};
-        scale.Scale ( dims._data[ 0U ], dims._data[ 1U ], dims._data[ 2U ] );
-
-        GXVec3 location {};
-        transform.GetW ( location );
-        location.Multiply ( location, physicsToRender );
-        transform.SetW ( location );
-
-        GXMat4 resultTransform {};
-        resultTransform.Multiply ( scale, transform );
-
-        c.SetTransform ( resultTransform );
-    };
-
-    update ( _cube, _cubeBody );
-    update ( _anotherCube, _anotherCubeBody );
-    update ( _floor, _floorBody );
+    // NOLINTNEXTLINE
+    auto& c = *static_cast<StaticMeshComponent*> ( cuboid.get () );
 
     // NOLINTNEXTLINE
-    auto& c = *static_cast<StaticMeshComponent*> ( _sphere.get () );
+    auto& s = static_cast<android_vulkan::ShapeBox&> ( body->GetShape () );
+    GXMat4 transform = body->GetTransform ();
 
-    // NOLINTNEXTLINE
-    auto& s = static_cast<android_vulkan::ShapeSphere&> ( _sphereBody->GetShape () );
-
-    GXMat4 transform = _sphereBody->GetTransform ();
-    float const r = 2.0F * s.GetRadius () * physicsToRender;
+    GXVec3 dims ( s.GetWidth (), s.GetHeight (), s.GetDepth () );
+    dims.Multiply ( dims, physicsToRender );
 
     GXMat4 scale {};
-    scale.Scale ( r, r, r );
+    scale.Scale ( dims._data[ 0U ], dims._data[ 1U ], dims._data[ 2U ] );
 
     GXVec3 location {};
     transform.GetW ( location );
@@ -480,12 +415,6 @@ void Sandbox::UpdatePhysicsActors ( float deltaTime ) noexcept
     resultTransform.Multiply ( scale, transform );
 
     c.SetTransform ( resultTransform );
-
-    if ( _physics.IsPaused () )
-        return;
-
-    _floorPhase += deltaTime * TIME_SPEED;
-    _floorBody->SetVelocityLinear ( GXVec3 ( 1.6F * std::sin ( _floorPhase ), 0.0F, 0.0F ) );
 }
 
 } // namespace pbr::physics

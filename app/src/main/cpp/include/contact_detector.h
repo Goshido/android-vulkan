@@ -47,7 +47,8 @@ class ContactDetector final
             float restitution
         ) const noexcept;
 
-        void CollectExtremePoints ( Vertices &vertices, Shape const &shape, GXMat3 const &tbn ) noexcept;
+        void CollectBackwardExtremePoints ( Vertices &vertices, Shape const &shape, GXMat3 const &tbn ) noexcept;
+        void CollectForwardExtremePoints ( Vertices &vertices, Shape const &shape, GXMat3 const &tbn ) noexcept;
         void GenerateRays () noexcept;
 
         void ManifoldEdgeEdge ( ContactManager &contactManager,
@@ -84,6 +85,12 @@ class ContactDetector final
         ) noexcept;
 
         void NotifyEPAFail () noexcept;
+
+        static void AppendExtremePoint ( Vertices &vertices,
+            Shape const &shape,
+            GXMat3 const &tbn,
+            GXVec3 const &ray
+        ) noexcept;
 };
 
 } // namespace android_vulkan

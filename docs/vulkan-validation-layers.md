@@ -102,6 +102,10 @@ Variable name | Meaning | Example
 
 Next what you should to do is to double click `x-build.bat` file.
 
+The artifact will be here:
+
+`<repo>/build-android/build/arm64-v8a/Release/stripped/libVkLayer_khronos_validation.so`
+
 **Note:** At this moment there is no overwriting support for _CMake_/_Ninja_ files. So you have to manually delete `VK_LAYER_DIR/build` directory.
 
 That's all!

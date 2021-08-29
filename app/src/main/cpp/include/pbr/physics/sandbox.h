@@ -20,23 +20,23 @@ namespace pbr::physics {
 class Sandbox final : public android_vulkan::Game
 {
     private:
-        Camera                              _camera {};
-        VkCommandPool                       _commandPool = VK_NULL_HANDLE;
-        std::vector<VkCommandBuffer>        _commandBuffers {};
+        Camera                                          _camera {};
+        VkCommandPool                                   _commandPool = VK_NULL_HANDLE;
+        std::vector<VkCommandBuffer>                    _commandBuffers {};
 
-        ComponentRef                        _cameraLight {};
-        ComponentRef                        _cube {};
-        android_vulkan::RigidBodyRef        _cubeBody {};
+        ComponentRef                                    _cameraLight {};
+        std::vector<ComponentRef>                       _cubes {};
+        std::vector<android_vulkan::RigidBodyRef>       _cubeBodies {};
 
-        android_vulkan::Half4               _colorA {};
-        android_vulkan::Half4               _colorB {};
-        android_vulkan::Half4               _defaultColor {};
-        android_vulkan::Physics             _physics {};
-        MeshRef                             _sphereMesh {};
-        MaterialRef                         _sphereMaterial {};
+        std::array<android_vulkan::Half4, 7U>           _colors {};
 
-        RenderSession                       _renderSession {};
-        std::list<ComponentRef>             _components {};
+        android_vulkan::Half4                           _defaultColor {};
+        android_vulkan::Physics                         _physics {};
+        MeshRef                                         _sphereMesh {};
+        MaterialRef                                     _sphereMaterial {};
+
+        RenderSession                                   _renderSession {};
+        std::list<ComponentRef>                         _components {};
 
     public:
         Sandbox () = default;
@@ -62,6 +62,7 @@ class Sandbox final : public android_vulkan::Game
         [[nodiscard]] bool AppendCuboid ( android_vulkan::Renderer &renderer,
             VkCommandBuffer const* commandBuffers,
             size_t &commandBufferConsumed,
+            std::string &&tag,
             ComponentRef &visual,
             char const* material,
             android_vulkan::Half4 const &color,
@@ -80,6 +81,11 @@ class Sandbox final : public android_vulkan::Game
 
         void DestroyPhysics () noexcept;
         void UpdatePhysicsActors () noexcept;
+
+        void InitColors () noexcept;
+
+        static void OnLeftBumper ( void* context ) noexcept;
+        static void OnRightBumper ( void* context ) noexcept;
 
         static void UpdateCuboid ( ComponentRef &cuboid, android_vulkan::RigidBodyRef &body ) noexcept;
 };

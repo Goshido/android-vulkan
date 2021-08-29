@@ -29,6 +29,8 @@ constexpr static uint32_t const RESOLUTION_SCALE_HEIGHT = 70U;
 constexpr static GXVec3 const FREE_FALL_ACCELERATION ( 0.0F, -9.81F, 0.0F );
 constexpr static float const TIME_SPEED = 1.0F;
 
+constexpr static size_t const CUBES = 3U;
+
 //----------------------------------------------------------------------------------------------------------------------
 
 bool Sandbox::IsReady () noexcept
@@ -91,8 +93,8 @@ bool Sandbox::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) n
         for ( size_t i = 0U; i < manifold._contactCount; ++i )
         {
             android_vulkan::Contact const& c = contact[ i ];
-            submit ( c._pointA, _colorA );
-            submit ( c._pointB, _colorB );
+            submit ( c._pointA, _colors[ 0U ] );
+            submit ( c._pointB, _colors[ 2U ] );
         }
     }
 
@@ -131,6 +133,8 @@ bool Sandbox::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
         return false;
     }
 
+    InitColors ();
+
     if ( !CreateSceneManual ( renderer ) )
     {
         OnDestroyDevice ( device );
@@ -143,7 +147,7 @@ bool Sandbox::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 void Sandbox::OnDestroyDevice ( VkDevice device ) noexcept
 {
     DestroyPhysics ();
-    _cube = nullptr;
+    _cubes.clear ();
     _components.clear ();
     _renderSession.OnDestroyDevice ( device );
     DestroyCommandPool ( device );
@@ -171,6 +175,21 @@ bool Sandbox::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept
         return false;
 
     _camera.CaptureInput ();
+
+    android_vulkan::Gamepad& gamepad = android_vulkan::Gamepad::GetInstance ();
+
+    gamepad.BindKey ( this,
+        &Sandbox::OnLeftBumper,
+        android_vulkan::eGamepadKey::LeftBumper,
+        android_vulkan::eButtonState::Down
+    );
+
+    gamepad.BindKey ( this,
+        &Sandbox::OnRightBumper,
+        android_vulkan::eGamepadKey::RightBumper,
+        android_vulkan::eButtonState::Down
+    );
+
     _physics.Resume ();
 
     return true;
@@ -178,7 +197,12 @@ bool Sandbox::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept
 
 void Sandbox::OnSwapchainDestroyed ( VkDevice device ) noexcept
 {
+    android_vulkan::Gamepad& gamepad = android_vulkan::Gamepad::GetInstance ();
+    gamepad.UnbindKey ( android_vulkan::eGamepadKey::LeftBumper, android_vulkan::eButtonState::Down );
+    gamepad.UnbindKey ( android_vulkan::eGamepadKey::RightBumper, android_vulkan::eButtonState::Down );
+
     _physics.Pause ();
+
     Camera::ReleaseInput ();
     _renderSession.OnSwapchainDestroyed ( device );
 }
@@ -186,6 +210,7 @@ void Sandbox::OnSwapchainDestroyed ( VkDevice device ) noexcept
 bool Sandbox::AppendCuboid ( android_vulkan::Renderer &renderer,
     VkCommandBuffer const* commandBuffers,
     size_t &commandBufferConsumed,
+    std::string &&tag,
     ComponentRef &visual,
     char const* material,
     android_vulkan::Half4 const &color,
@@ -218,6 +243,7 @@ bool Sandbox::AppendCuboid ( android_vulkan::Renderer &renderer,
     android_vulkan::RigidBody& ph = *physical.get ();
     ph.SetLocation ( x, y, z );
     ph.EnableKinematic ();
+    ph.SetTag ( std::move ( tag ) );
 
     android_vulkan::ShapeRef shape = std::make_shared<android_vulkan::ShapeBox> ( w, h, d );
     ph.SetShape ( shape );
@@ -291,8 +317,6 @@ bool Sandbox::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
     VkCommandBuffer* commandBuffers = _commandBuffers.data ();
     size_t consumed = 0U;
 
-    _colorA = android_vulkan::Half4 ( 115.0F / 255.0F, 185.0F / 255.0F, 0.0F, 1.0F );
-    _colorB = android_vulkan::Half4 ( 42.0F / 255.0F, 127.0F / 230.0F, 203.0F, 1.0F );
     _defaultColor = android_vulkan::Half4 ( 1.0F, 1.0F, 1.0F, 1.0F );
 
     ComponentRef cuboid {};
@@ -301,16 +325,17 @@ bool Sandbox::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
     result = AppendCuboid ( renderer,
         commandBuffers,
         consumed,
+        "Floor",
         cuboid,
         "pbr/assets/Props/PBR/DefaultCSGEmissive.mtl",
         _defaultColor,
         body,
         0.0F,
-        -0.5F,
+        -0.25F,
         0.0F,
-        1.0F,
+        32.0F,
         0.5F,
-        1.0F
+        32.0F
     );
 
     if ( !result )
@@ -318,29 +343,39 @@ bool Sandbox::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
 
     commandBuffers += consumed;
 
-    result = AppendCuboid ( renderer,
-        commandBuffers,
-        consumed,
-        _cube,
-        "pbr/assets/System/Default.mtl",
-        _colorA,
-        _cubeBody,
-        0.0F,
-        1.0F,
-        0.0F,
-        0.2F,
-        0.3F,
-        0.4F
-    );
+    _cubes.resize ( CUBES );
+    _cubeBodies.resize ( CUBES );
 
-    if ( !result )
-        return false;
+    for ( size_t i = 0U; i < CUBES; ++i )
+    {
+        result = AppendCuboid ( renderer,
+            commandBuffers,
+            consumed,
+            "Cube #" + std::to_string ( i ),
+            _cubes[ i ],
+            "pbr/assets/System/Default.mtl",
+            _colors[ i % CUBES ],
+            _cubeBodies[ i ],
+            0.0F,
+            0.15F + 0.3F * static_cast<float> ( i ),
+            0.0F,
+            0.6F,
+            0.3F,
+            0.7F
+        );
 
-    commandBuffers += consumed;
-    android_vulkan::RigidBody& b = *_cubeBody.get ();
-    b.DisableKinematic ();
-    b.SetMass ( 7.77F );
-    b.DisableSleep ();
+        if ( !result )
+        {
+            return false;
+        }
+
+        commandBuffers += consumed;
+
+        android_vulkan::RigidBody& b = *_cubeBodies[ i ].get ();
+        b.DisableKinematic ();
+        b.SetMass ( 7.77F );
+        b.DisableSleep ();
+    }
 
     _sphereMesh = MeshManager::GetInstance ().LoadMesh ( renderer,
         consumed,
@@ -381,12 +416,87 @@ bool Sandbox::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
 
 void Sandbox::DestroyPhysics () noexcept
 {
-    _cubeBody = nullptr;
+    _cubeBodies.clear ();
 }
 
 void Sandbox::UpdatePhysicsActors () noexcept
 {
-    UpdateCuboid ( _cube, _cubeBody );
+    for ( size_t i = 0U; i < CUBES; ++i )
+    {
+        UpdateCuboid ( _cubes[ i ], _cubeBodies[ i ] );
+    }
+}
+
+void Sandbox::InitColors () noexcept
+{
+    // NVIDIA green
+    _colors[ 0U ] = android_vulkan::Half4 ( 115.0F * GX_MATH_UNORM_FACTOR,
+        185.0F * GX_MATH_UNORM_FACTOR,
+        0.0F,
+        1.0F
+    );
+
+    // Yellow
+    _colors[ 1U ] = android_vulkan::Half4 ( 222.6F * GX_MATH_UNORM_FACTOR,
+        201.5F * GX_MATH_UNORM_FACTOR,
+        79.2F * GX_MATH_UNORM_FACTOR,
+        1.0F
+    );
+
+    // Red
+    _colors[ 2U ] = android_vulkan::Half4 ( 222.6F * GX_MATH_UNORM_FACTOR,
+        79.2F * GX_MATH_UNORM_FACTOR,
+        87.9F * GX_MATH_UNORM_FACTOR,
+        1.0F
+    );
+
+    // Purple
+    _colors[ 3U ] = android_vulkan::Half4 ( 222.6F * GX_MATH_UNORM_FACTOR,
+        79.2F * GX_MATH_UNORM_FACTOR,
+        210.3F * GX_MATH_UNORM_FACTOR,
+        1.0F
+    );
+
+    // Blue
+    _colors[ 4U ] = android_vulkan::Half4 ( 99.6F * GX_MATH_UNORM_FACTOR,
+        79.2F * GX_MATH_UNORM_FACTOR,
+        222.6F * GX_MATH_UNORM_FACTOR,
+        1.0F
+    );
+
+    // Cyan
+    _colors[ 5U ] = android_vulkan::Half4 ( 79.2F * GX_MATH_UNORM_FACTOR,
+        211.7F * GX_MATH_UNORM_FACTOR,
+        222.6F * GX_MATH_UNORM_FACTOR,
+        1.0F
+    );
+
+    // Green
+    _colors[ 6U ] = android_vulkan::Half4 ( 79.2F * GX_MATH_UNORM_FACTOR,
+        222.6F * GX_MATH_UNORM_FACTOR,
+        106.9F * GX_MATH_UNORM_FACTOR,
+        1.0F
+    );
+}
+
+void Sandbox::OnLeftBumper ( void* context ) noexcept
+{
+    auto& sandbox = *static_cast<Sandbox*> ( context );
+    android_vulkan::Physics& p = sandbox._physics;
+
+    if ( p.IsPaused () )
+    {
+        p.Resume ();
+        return;
+    }
+
+    p.Pause ();
+}
+
+void Sandbox::OnRightBumper ( void* context ) noexcept
+{
+    auto& sandbox = *static_cast<Sandbox*> ( context );
+    sandbox._physics.OnDebugRun ();
 }
 
 void Sandbox::UpdateCuboid ( ComponentRef &cuboid, android_vulkan::RigidBodyRef &body ) noexcept

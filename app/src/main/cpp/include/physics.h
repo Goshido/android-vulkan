@@ -31,6 +31,8 @@ class Physics final
         std::mutex                              _mutex;
         float                                   _timeSpeed;
 
+        bool                                    _debugRun;
+
     public:
         Physics () noexcept;
 
@@ -58,6 +60,8 @@ class Physics final
         void Pause () noexcept;
         void Resume () noexcept;
         void Simulate ( float deltaTime ) noexcept;
+
+        void OnDebugRun () noexcept;
 
     private:
         void CollectContacts () noexcept;

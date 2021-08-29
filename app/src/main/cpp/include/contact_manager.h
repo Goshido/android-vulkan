@@ -6,7 +6,9 @@
 
 GX_DISABLE_COMMON_WARNINGS
 
+#include <array>
 #include <vector>
+#include <unordered_map>
 
 GX_RESTORE_WARNING_STATE
 
@@ -66,21 +68,23 @@ struct Contact final
 
 struct ContactManifold final
 {
-    RigidBodyRef    _bodyA {};
-    RigidBodyRef    _bodyB {};
+    RigidBodyRef                    _bodyA {};
+    RigidBodyRef                    _bodyB {};
 
-    size_t          _contactCount = 0U;
-    Contact*        _contacts = nullptr;
+    size_t                          _contactCount = 0U;
+    Contact*                        _contacts = nullptr;
 
     // The normal points the direction which body B must be moved to eliminate collision.
-    GXVec3          _tangent {};
-    GXVec3          _bitangent {};
-    GXVec3          _normal {};
+    GXVec3                          _tangent {};
+    GXVec3                          _bitangent {};
+    GXVec3                          _normal {};
 
-    float           _penetration = 0.0F;
+    float                           _penetration = 0.0F;
 
-    uint16_t        _epaSteps = 0U;
-    uint16_t        _gjkSteps = 0U;
+    uint64_t                        _timeStamp = 0U;
+
+    [[maybe_unused]] uint16_t       _epaSteps = 0U;
+    [[maybe_unused]] uint16_t       _gjkSteps = 0U;
 
     ContactManifold () = default;
 
@@ -96,8 +100,35 @@ struct ContactManifold final
 class ContactManager final
 {
     private:
-        std::vector<Contact>            _contacts;
-        std::vector<ContactManifold>    _contactManifolds;
+        using Key = std::pair<RigidBody*, RigidBody*>;
+
+        class Hasher final
+        {
+            public:
+                Hasher () = default;
+
+                Hasher ( Hasher const & ) = default;
+                Hasher &operator = ( Hasher const & ) = default;
+
+                Hasher ( Hasher && ) = default;
+                Hasher &operator = ( Hasher && ) = default;
+
+                ~Hasher() = default;
+
+                // hash function. std::unordered_map requirement.
+                [[nodiscard]] size_t operator () ( Key const &me ) const noexcept;
+
+            private:
+                std::hash<void const*>    _hashServer {};
+        };
+
+        using Set = std::pair<std::vector<ContactManifold>, std::vector<Contact>>;
+        using Mapper = std::unordered_map<Key, ContactManifold const*, Hasher>;
+
+    private:
+        std::array<Set, 2U>     _sets;
+        Mapper                  _warmStartMapper;
+        std::vector<size_t>     _indices;
 
     public:
         ContactManager () noexcept;
@@ -117,6 +148,11 @@ class ContactManager final
         [[nodiscard]] std::vector<ContactManifold> const& GetContactManifolds () const noexcept;
 
         void Reset () noexcept;
+
+    private:
+        void ResetFrontSet () noexcept;
+        void SwapSets () noexcept;
+        void UpdateWarmCache () noexcept;
 };
 
 } // namespace android_vulkan

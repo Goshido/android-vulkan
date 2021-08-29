@@ -7,3 +7,4 @@
 3) [Preprocessor macros](preprocessor-macros.md)
 4) [Release build](release-build.md)
 5) [Shader compilation](shader-compilation.md)
+6) [Building _Vulkan_ validation layers for _Android OS_](vulkan-validateion-layers.md)

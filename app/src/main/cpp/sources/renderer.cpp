@@ -1174,7 +1174,6 @@ bool Renderer::CheckVkResult ( VkResult result, char const* from, char const* me
         return true;
 
     LogError ( "%s - %s. Error: %s.", from, message, ResolveVkResult ( result ) );
-    assert ( false );
     return false;
 }
 
@@ -1436,6 +1435,7 @@ bool Renderer::DeployDevice ()
 
     constexpr char const* extensions[] =
     {
+        VK_KHR_16BIT_STORAGE_EXTENSION_NAME,
         VK_KHR_MULTIVIEW_EXTENSION_NAME,
         VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME,
         VK_KHR_SWAPCHAIN_EXTENSION_NAME
@@ -1457,10 +1457,29 @@ bool Renderer::DeployDevice ()
     if ( !CheckRequiredFormats () )
         return false;
 
-    constexpr VkPhysicalDeviceFloat16Int8FeaturesKHR const float16Int8Feature
+    constexpr static VkPhysicalDevice16BitStorageFeatures const ext16BitStorageFeatures
+    {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES,
+        .pNext = nullptr,
+        .storageBuffer16BitAccess = VK_FALSE,
+        .uniformAndStorageBuffer16BitAccess = VK_TRUE,
+        .storagePushConstant16 = VK_FALSE,
+        .storageInputOutput16 = VK_TRUE
+    };
+
+    constexpr static VkPhysicalDeviceMultiviewFeatures const multiviewFeatures
+    {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_FEATURES,
+        .pNext = const_cast<VkPhysicalDevice16BitStorageFeatures*> ( &ext16BitStorageFeatures ),
+        .multiview = VK_TRUE,
+        .multiviewGeometryShader = VK_FALSE,
+        .multiviewTessellationShader = VK_FALSE
+    };
+
+    constexpr static VkPhysicalDeviceFloat16Int8FeaturesKHR const float16Int8Features
     {
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT16_INT8_FEATURES_KHR,
-        .pNext = nullptr,
+        .pNext = const_cast<VkPhysicalDeviceMultiviewFeatures*> ( &multiviewFeatures ),
         .shaderFloat16 = VK_TRUE,
         .shaderInt8 = VK_FALSE
     };
@@ -1468,7 +1487,7 @@ bool Renderer::DeployDevice ()
     VkDeviceCreateInfo const deviceCreateInfo
     {
         .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-        .pNext = &float16Int8Feature,
+        .pNext = &float16Int8Features,
         .flags = 0U,
         .queueCreateInfoCount = 1U,
         .pQueueCreateInfos = &deviceQueueCreateInfo,
@@ -1672,8 +1691,6 @@ bool Renderer::DeploySurface ( ANativeWindow &nativeWindow )
         DestroySurface ();
 
         LogError ( "Renderer::DeploySurface - Physical device does not support by Vulkan surface. Error: %s." );
-        assert ( !"Renderer::DeploySurface - Physical device does not support by Vulkan surface." );
-
         return false;
     }
 
@@ -1685,8 +1702,6 @@ bool Renderer::DeploySurface ( ANativeWindow &nativeWindow )
         DestroySurface ();
 
         LogError ( "Renderer::DeploySurface - There is not any Vulkan surface formats." );
-        assert ( !"Renderer::DeploySurface - There is not any Vulkan surface formats." );
-
         return false;
     }
 
@@ -1747,14 +1762,12 @@ bool Renderer::DeploySwapchain ( bool vSync )
     if ( !SelectTargetPresentMode ( swapchainCreateInfoKHR.presentMode, vSync ) )
     {
         LogError ( "Renderer::DeploySwapchain - Can't select present mode." );
-        assert ( !"Renderer::DeploySwapchain - Can't select present mode." );
         return false;
     }
 
     if ( !SelectTargetCompositeAlpha ( swapchainCreateInfoKHR.compositeAlpha ) )
     {
         LogError ( "Renderer::DeploySwapchain - Can't select composite alpha mode." );
-        assert ( !"Renderer::DeploySwapchain - Can't select composite alpha mode." );
         return false;
     }
 
@@ -1766,7 +1779,6 @@ bool Renderer::DeploySwapchain ( bool vSync )
     if ( !result )
     {
         LogError ( "Renderer::DeploySwapchain - Can't select image format and color space." );
-        assert ( !"Renderer::DeploySwapchain - Can't select image format and color space." );
         return false;
     }
 
@@ -1790,8 +1802,6 @@ bool Renderer::DeploySwapchain ( bool vSync )
         DestroySwapchain ();
 
         LogError ( "Renderer::DeploySwapchain - There is no any swapchain images." );
-        assert ( !"Renderer::DeploySwapchain - There is no any swapchain images." );
-
         return false;
     }
 
@@ -1880,8 +1890,6 @@ bool Renderer::PrintPhysicalDeviceExtensionInfo ( VkPhysicalDevice physicalDevic
     if ( !extensionCount )
     {
         LogError ( "Renderer::PrintPhysicalDeviceExtensionInfo - There is no any physical device extensions." );
-        assert ( !"Renderer::PrintPhysicalDeviceExtensionInfo - There is no any physical device extensions." );
-
         return false;
     }
 
@@ -2265,8 +2273,6 @@ bool Renderer::PrintPhysicalDeviceInfo ( uint32_t deviceIndex, VkPhysicalDevice 
     if ( !queueFamilyCount )
     {
         LogError ( "Renderer::PrintPhysicalDeviceInfo - There is no any Vulkan physical device queue families." );
-        assert ( !"Renderer::PrintPhysicalDeviceInfo - There is no any Vulkan physical device queue families." );
-
         return false;
     }
 
@@ -2352,7 +2358,6 @@ bool Renderer::SelectTargetHardware ( VkPhysicalDevice &targetPhysicalDevice, ui
     }
 
     LogError ( "Renderer::SelectTargetHardware - Can't find target hardware!" );
-    assert ( !"Renderer::SelectTargetHardware - Can't find target hardware!" );
     return false;
 }
 
@@ -2514,8 +2519,6 @@ bool Renderer::SelectTargetSurfaceFormat ( VkFormat &targetColorFormat,
     }
 
     LogError ( "Renderer::SelectTargetSurfaceFormat - Can't select depth|stencil format." );
-    assert ( !"Renderer::SelectTargetSurfaceFormat - Can't select depth|stencil format." );
-
     return false;
 }
 
@@ -2534,8 +2537,8 @@ VkBool32 VKAPI_PTR Renderer::OnVulkanDebugReport ( VkDebugReportFlagsEXT flags,
     Renderer& renderer = *static_cast<Renderer*> ( pUserData );
     auto const findResult = renderer._loggerMapper.find ( flags );
 
-    char const* category = nullptr;
-    LogType logger = nullptr;
+    char const* category;
+    LogType logger;
 
     if ( findResult != renderer._loggerMapper.cend () )
     {
@@ -2573,7 +2576,12 @@ message: %s
 
 #ifdef ANDROID_VULKAN_STRICT_MODE
 
-    assert ( !"Renderer::OnVulkanDebugReport - Triggered!" );
+    // Note lambda syntax is used here only for preventing unreachable code warning from static analyzer.
+    // Not so proud of this code. Maybe there is a more elegant compiler agnostic solution for this...
+
+    [] () noexcept {
+        assert ( !"Renderer::OnVulkanDebugReport - Triggered!" );
+    } ();
 
 #endif // ANDROID_VULKAN_STRICT_MODE
 
@@ -2590,8 +2598,6 @@ bool Renderer::PrintCoreExtensions ()
     if ( !extensionCount )
     {
         LogError ( "Renderer::PrintCoreExtensions - There is no any core extensions!" );
-        assert ( !"Renderer::PrintCoreExtensions - There is no any core extensions!" );
-
         return false;
     }
 

@@ -15,9 +15,9 @@ Usefull documentation is located [here](docs/documentation.md).
 Requirements:
 
 * _Windows Vista_+ or _Monjaro KDE_
-* _Android Studio Arctic Fox | 2020.3.1 Patch 1_
-* _Android Studio Gradle Plugin 7.0.1_
-* _Android NDK 22.1.7171670 (side by side)_
+* _Android Studio Arctic Fox | 2020.3.1 Patch 2_
+* _Android Studio Gradle Plugin 7.0.2_
+* _Android NDK 23.0.7599858 (side by side)_
 * _Android SDK 11.0 (API level 30)_
 * _Android SDK Build-Tools 30.0.3_
 * _Android SDK Tools 26.1.1_

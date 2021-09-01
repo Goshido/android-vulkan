@@ -8,6 +8,14 @@ Starting from _Android NDK_ `23.0.7599858` the _Vulkan_ validation layers have b
 
 The manual is based on `a9124f2166792f77fd2aea6aeb723b98bcafef9c` commit of the [_Vulkan-ValidationLayers_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) repo. The manual is primary aimed for _Windows OS_ users.
 
+## Requirements
+
+- _Windows 10_
+- _Android NDK 23.0.7599858_
+- _CMake 3.18.1_
+- _Ninja 1.8.2_
+- _Python 3.9.6_
+
 ## Building
 
 First of all clone the [_Vulkan-ValidationLayers_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) repo. Next step is to switch to the `master` branch.

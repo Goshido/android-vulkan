@@ -389,7 +389,6 @@ std::map<VkDebugReportObjectTypeEXT, char const*> const Renderer::_vulkanObjectT
     { VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT" },
     { VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT" },
     { VK_DEBUG_REPORT_OBJECT_TYPE_INSTANCE_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_INSTANCE_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_OBJECT_TABLE_NVX_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_OBJECT_TABLE_NVX_EXT" },
     { VK_DEBUG_REPORT_OBJECT_TYPE_PHYSICAL_DEVICE_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_PHYSICAL_DEVICE_EXT" },
     { VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_CACHE_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_CACHE_EXT" },
     { VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_EXT" },
@@ -418,11 +417,6 @@ std::map<VkDebugReportObjectTypeEXT, char const*> const Renderer::_vulkanObjectT
     {
         VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_UPDATE_TEMPLATE_EXT,
         "VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_UPDATE_TEMPLATE_EXT"
-    },
-
-    {
-        VK_DEBUG_REPORT_OBJECT_TYPE_INDIRECT_COMMANDS_LAYOUT_NVX_EXT,
-        "VK_DEBUG_REPORT_OBJECT_TYPE_INDIRECT_COMMANDS_LAYOUT_NVX_EXT"
     },
 
     {
@@ -807,7 +801,8 @@ Renderer::Renderer () noexcept:
     _surfaceFormats {},
     _swapchainImages {},
     _swapchainImageViews {},
-    _presentationEngineTransform {}
+    _presentationEngineTransform {},
+    _vulkanLoader {}
 {
     // NOTHING
 }
@@ -959,11 +954,8 @@ void Renderer::OnDestroySwapchain ()
 
 bool Renderer::OnCreateDevice ()
 {
-    if ( !InitVulkan () )
-    {
-        LogError ( "Renderer::OnCreateDevice - Can't init Vulkan backend." );
+    if ( !_vulkanLoader.AcquireBootstrapFunctions () )
         return false;
-    }
 
     if ( !PrintInstanceLayerInfo () )
         return false;
@@ -1119,6 +1111,11 @@ void Renderer::OnDestroyDevice ()
 #endif
 
     DestroyInstance ();
+
+    if ( !_vulkanLoader.Unload () )
+    {
+        LogError ( "Renderer::OnDestroyDevice - Can't unload Vulkan functions." );
+    }
 }
 
 bool Renderer::TryAllocateMemory ( VkDeviceMemory &memory,
@@ -1507,6 +1504,10 @@ bool Renderer::DeployDevice ()
         return false;
 
     AV_REGISTER_DEVICE ( "Renderer::_device" )
+
+    if ( !_vulkanLoader.AcquireDeviceFunctions ( _device ) )
+        return false;
+
     vkGetDeviceQueue ( _device, _queueFamilyIndex, 0U, &_queue );
     return true;
 }
@@ -1591,10 +1592,15 @@ bool Renderer::DeployInstance ()
     instanceCreateInfo.enabledExtensionCount = static_cast<uint32_t const> ( std::size ( extensions ) );
     instanceCreateInfo.ppEnabledExtensionNames = extensions;
 
-    return CheckVkResult ( vkCreateInstance ( &instanceCreateInfo, nullptr, &_instance ),
+    bool const result = CheckVkResult ( vkCreateInstance ( &instanceCreateInfo, nullptr, &_instance ),
         "Renderer::DeployInstance",
         "Can't create Vulkan instance"
     );
+
+    if ( !result )
+        return false;
+
+    return _vulkanLoader.AcquireInstanceFunctions ( _instance );
 }
 
 void Renderer::DestroyInstance ()
@@ -2737,9 +2743,7 @@ bool Renderer::PrintPhysicalDeviceLayerInfo ( VkPhysicalDevice physicalDevice )
     return true;
 }
 
-void Renderer::PrintPhysicalDeviceQueueFamilyInfo ( uint32_t queueFamilyIndex,
-    VkQueueFamilyProperties const &props
-)
+void Renderer::PrintPhysicalDeviceQueueFamilyInfo ( uint32_t queueFamilyIndex, VkQueueFamilyProperties const &props )
 {
     LogInfo ( "%sQueue family: #%u", INDENT_1, queueFamilyIndex );
 

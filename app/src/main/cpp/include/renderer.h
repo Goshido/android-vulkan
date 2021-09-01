@@ -8,13 +8,14 @@ GX_DISABLE_COMMON_WARNINGS
 
 #include <map>
 #include <vector>
-#include <vulkan_wrapper.h>
 #include <android/native_window.h>
 
 GX_RESTORE_WARNING_STATE
 
 #include <GXCommon/GXMath.h>
 #include "logger.h"
+#include "vulkan_api.h"
+#include "vulkan_loader.h"
 
 
 namespace android_vulkan {
@@ -89,6 +90,7 @@ class Renderer final
         std::vector<VkImageView>                                            _swapchainImageViews;
 
         GXMat4                                                              _presentationEngineTransform;
+        VulkanLoader                                                        _vulkanLoader;
 
         static std::map<VkColorSpaceKHR, char const*> const                 _vulkanColorSpaceMap;
         static std::map<VkCompositeAlphaFlagBitsKHR, char const*> const     _vulkanCompositeAlphaMap;

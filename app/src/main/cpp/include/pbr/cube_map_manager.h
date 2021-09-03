@@ -49,14 +49,7 @@ struct CubeMapID final
             [[nodiscard]] size_t operator () ( CubeMapID const &me ) const noexcept;
     };
 
-    CubeMapID () = default;
-
-    CubeMapID ( CubeMapID const & ) = default;
-    CubeMapID& operator = ( CubeMapID const & ) = default;
-
-    CubeMapID ( CubeMapID && ) = default;
-    CubeMapID& operator = ( CubeMapID && ) = default;
-
+    // Explicitly specifying all 5 constructors are prohibited to conformance with syntax of designated initializers.
     ~CubeMapID () = default;
 
     // std::unordered_map requirement.

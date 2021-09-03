@@ -1696,7 +1696,7 @@ bool Renderer::DeploySurface ( ANativeWindow &nativeWindow )
     {
         DestroySurface ();
 
-        LogError ( "Renderer::DeploySurface - Physical device does not support by Vulkan surface. Error: %s." );
+        LogError ( "Renderer::DeploySurface - Physical device does not support by Vulkan surface." );
         return false;
     }
 

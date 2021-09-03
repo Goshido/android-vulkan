@@ -6,7 +6,7 @@ Starting from _Android NDK_ `23.0.7599858` the _Vulkan_ validation layers have b
 
 ## Compatible version
 
-The manual is based on `a9124f2166792f77fd2aea6aeb723b98bcafef9c` commit of the [_Vulkan-ValidationLayers_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) repo. The manual is primary aimed for _Windows OS_ users.
+The manual is based on `124a97d684f8c451ea252e27728a5e84ae0bac3d` commit of the [_Vulkan-ValidationLayers_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) repo. The manual is primary aimed for _Windows OS_ users.
 
 ## Requirements
 
@@ -99,7 +99,7 @@ At this point we able to build _Vulkan_ validation layers for _Android_. Unfortu
 
 Good news is the legacy `Android.mk` could be written to _CMakeLists_ + _Ninja_ systems.
 
-So the last building process for _Windows OS_ is automated via script `<repo>/third-party/Vulkan-validation-layers/windows-host/x-build.bat`
+So the last building process for _Windows OS_ is automated via script `<repo>/third-party/vulkan-validation-layers/windows-host/x-build.bat`
 
 In order to use it you have to specify two enviroment variables:
 
@@ -117,3 +117,9 @@ The artifact will be here:
 **Note:** At this moment there is no overwriting support for _CMake_/_Ninja_ files. So you have to manually delete `VK_LAYER_DIR/build` directory.
 
 That's all!
+
+### Reported issues
+
+Name | Link | Status
+--- | --- | ---
+Incorrect validation of the `vkGetPhysicalDeviceSurfaceFormatsKHR` | [#3251](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/3251) | `Submitted`

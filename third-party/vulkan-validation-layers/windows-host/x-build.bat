@@ -10,13 +10,14 @@
 :: Copying CMakeLists.txt to Android build directory
 xcopy /s/y "..\CMakeLists.txt" "%VK_LAYER_DIR%"
 
+set INITIAL_DIR=%cd%
 pushd %cd%
 
 :: Creating Ninja files for Android 11|arm64-v8a platform...
 cmake -H%VK_LAYER_DIR% -B%VK_LAYER_DIR%/build/arm64-v8a -DANDROID_ABI=arm64-v8a -DANDROID_PLATFORM=android-30 -DANDROID_NDK=%NDK_DIR% -DANDROID_STL=c++_static -DCMAKE_TOOLCHAIN_FILE=%NDK_DIR%/build/cmake/android.toolchain.cmake -G "Ninja Multi-Config"
 
 :: Building release version of the libVkLayer_khronos_validation.so
-cd %VK_LAYER_DIR%/build/arm64-v8a
+cd /D %VK_LAYER_DIR%/build/arm64-v8a
 ninja -f build-Release.ninja
 
 :: Stripping the dynamic library
@@ -25,6 +26,15 @@ mkdir "Release/stripped" 2> nul
 
 echo Stripped libVkLayer_khronos_validation.so is located in %VK_LAYER_DIR%/build/arm64-v8a/Release/stripped
 echo(
+echo(
+
+:: Copying final library to the repo
+xcopy /s/y "Release\stripped\libVkLayer_khronos_validation.so" "%INITIAL_DIR%\..\jniLibs\arm64-v8a"
+echo(
+echo Stripped libVkLayer_khronos_validation.so was copied to %INITIAL_DIR%\..\jniLibs\arm64-v8a
+echo(
+
+echo Done.
 
 :: Restoring current directory
 popd

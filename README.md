@@ -24,7 +24,7 @@ Requirements:
 * _Android SDK Platform-Tools 31.0.3_
 * _CMake 3.18.1_
 * _DirectX Shader Compiler 1.6.2106.10037_
-* _Vulkan Validation Layers_ `124a97d684f8c451ea252e27728a5e84ae0bac3d`
+* _Vulkan Validation Layers_ `71f14bfd442af35123905c5be5ce0d7699b7a506`
 * _Gradle 7.2_
 * _Google USB Driver 13_
 * Real _Android 11_ device with _Vulkan 1.1.131_ support
@@ -32,7 +32,7 @@ Requirements:
 
 To begin, clone this repository onto your local drive.
 
-Compile project shaders to _SPIR-V_ representation via _DirectX Shader Compiler_. See manual [here](docs/shader-compilation.md).
+_Optional_: Recompile project shaders to _SPIR-V_ representation via _DirectX Shader Compiler_. See manual [here](docs/shader-compilation.md).
 
 Create and setup _Android_ certificate. See manual [here](docs/release-build.md).
 

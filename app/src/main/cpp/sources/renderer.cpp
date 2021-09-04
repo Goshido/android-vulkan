@@ -24,9 +24,13 @@ constexpr static char const* INDENT_2 = "        ";
 constexpr static char const* INDENT_3 = "            ";
 constexpr static size_t const INITIAL_EXTENSION_STORAGE_SIZE = 64U;
 
+constexpr static uint32_t const MAJOR = 1U;
+constexpr static uint32_t const MINOR = 1U;
+constexpr static uint32_t const PATCH = 131U;
+
 // Note vulkan_core.h is a little bit dirty from clang-tidy point of view.
 // So suppress this third-party mess via "NOLINT" control comment.
-constexpr static uint32_t const TARGET_VULKAN_VERSION = VK_MAKE_VERSION ( 1U, 1U, 131U ); // NOLINT
+constexpr static uint32_t const TARGET_VULKAN_VERSION = VK_MAKE_VERSION ( MAJOR, MINOR, PATCH ); // NOLINT
 
 constexpr static char const* UNKNOWN_RESULT = "UNKNOWN";
 
@@ -809,7 +813,7 @@ Renderer::Renderer () noexcept:
 
 bool Renderer::CheckSwapchainStatus ()
 {
-    VkSurfaceCapabilitiesKHR caps;
+    VkSurfaceCapabilitiesKHR caps {};
 
     bool tmp = CheckVkResult (
         vkGetPhysicalDeviceSurfaceCapabilitiesKHR ( _physicalDevice, _surface, &caps ),
@@ -1124,7 +1128,7 @@ bool Renderer::TryAllocateMemory ( VkDeviceMemory &memory,
     char const* errorMessage
 ) const
 {
-    VkMemoryAllocateInfo allocateInfo;
+    VkMemoryAllocateInfo allocateInfo {};
     allocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     allocateInfo.pNext = nullptr;
     allocateInfo.allocationSize = static_cast<uint32_t> ( size );
@@ -1146,7 +1150,7 @@ bool Renderer::TryAllocateMemory ( VkDeviceMemory &memory,
     char const* errorMessage
 ) const
 {
-    VkMemoryAllocateInfo allocateInfo;
+    VkMemoryAllocateInfo allocateInfo {};
     allocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     allocateInfo.pNext = nullptr;
     allocateInfo.allocationSize = requirements.size;
@@ -1531,6 +1535,33 @@ void Renderer::DestroyDevice ()
 
 bool Renderer::DeployInstance ()
 {
+    uint32_t supportedVersion = 0U;
+
+    bool result = CheckVkResult ( vkEnumerateInstanceVersion ( &supportedVersion ),
+        "Renderer::DeployInstance",
+        "Can't query instance version"
+    );
+
+    if ( !result )
+        return false;
+
+    //                                                                            major      minor      patch
+    constexpr uint32_t const targetVersion = TARGET_VULKAN_VERSION & UINT32_C ( 0b1111111111'1111111111'000000000000 );
+
+    if ( targetVersion > supportedVersion )
+    {
+        LogError ( "Renderer::DeployInstance - Requested Vulkan version %u.%u.%u is not supported by hardware "
+            "which is capable of only %u.%u.xxx.",
+            MAJOR,
+            MINOR,
+            PATCH,
+            ( supportedVersion & UINT32_C ( 0b1111111111'0000000000'000000000000 ) ) >> 22U,
+            ( supportedVersion & UINT32_C ( 0b0000000000'1111111111'000000000000 ) ) >> 12U
+        );
+
+        return false;
+    }
+
     constexpr VkApplicationInfo const applicationInfo
     {
         .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
@@ -1542,7 +1573,7 @@ bool Renderer::DeployInstance ()
         .apiVersion = TARGET_VULKAN_VERSION
     };
 
-    VkInstanceCreateInfo instanceCreateInfo;
+    VkInstanceCreateInfo instanceCreateInfo {};
     instanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     instanceCreateInfo.flags = 0U;
     instanceCreateInfo.pApplicationInfo = &applicationInfo;
@@ -1592,7 +1623,7 @@ bool Renderer::DeployInstance ()
     instanceCreateInfo.enabledExtensionCount = static_cast<uint32_t const> ( std::size ( extensions ) );
     instanceCreateInfo.ppEnabledExtensionNames = extensions;
 
-    bool const result = CheckVkResult ( vkCreateInstance ( &instanceCreateInfo, nullptr, &_instance ),
+    result = CheckVkResult ( vkCreateInstance ( &instanceCreateInfo, nullptr, &_instance ),
         "Renderer::DeployInstance",
         "Can't create Vulkan instance"
     );

@@ -320,6 +320,16 @@ Shape& RigidBody::GetShape () noexcept
     UpdateCacheData ();
 }
 
+[[maybe_unused]] std::string const& RigidBody::GetTag () const noexcept
+{
+    return _tag;
+}
+
+[[maybe_unused]] void RigidBody::SetTag ( std::string &&tag ) noexcept
+{
+    _tag = std::move ( tag );
+}
+
 [[maybe_unused]] GXVec3 const& RigidBody::GetTotalForce () const noexcept
 {
     return _totalForce;

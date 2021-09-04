@@ -846,7 +846,6 @@ bool GeometryPass::UpdateGPUData ( android_vulkan::Renderer &renderer,
         );
 
         writeInfo1.dstSet = descriptorSet;
-        writeInfo1.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
         writeStorage1.push_back ( writeInfo1 );
     };
 

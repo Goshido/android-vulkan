@@ -581,7 +581,7 @@ PointLightPass::PointLightShadowmapInfo* PointLightPass::AcquirePointLightShadow
         .pAttachments = attachments,
         .width = resolution.width,
         .height = resolution.height,
-        .layers = PBR_POINT_LIGHT_SHADOW_CASTER_PROJECTION_COUNT
+        .layers = 1U
     };
 
     VkDevice device = renderer.GetDevice ();

@@ -6,7 +6,7 @@
 
 GX_DISABLE_COMMON_WARNINGS
 
-#include <vulkan_wrapper.h>
+#include <vulkan/vulkan.h>
 
 GX_RESTORE_WARNING_STATE
 

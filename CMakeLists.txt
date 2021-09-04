@@ -1,11 +1,11 @@
 cmake_minimum_required ( VERSION 3.18.1 )
-set ( CMAKE_CXX_STANDARD 17 )
+set ( CMAKE_CXX_STANDARD 20 )
 project ( android-vulkan )
 
 # Enable link time optimization for release build via native flag.
 # Note there is CMAKE_INTERPROCEDURAL_OPTIMZATION_RELEASE built-in variable but it works not reliably with
 # NDK 22.0.7026061 at link time (linking errors on Linux).
-string(APPEND CMAKE_CXX_FLAGS_RELEASE " -flto=thin")
+string ( APPEND CMAKE_CXX_FLAGS_RELEASE " -flto=thin" )
 
 # Android native activity glue
 
@@ -28,37 +28,8 @@ set_target_properties ( native_app_glue PROPERTIES
     CXX_VISIBILITY_PRESET hidden
 )
 
-# Android NDK Vulkan wrapper
-
-add_library ( vulkan-wrapper
-    STATIC
-    ${ANDROID_NDK}/sources/third_party/vulkan/src/common/vulkan_wrapper.cpp
-)
-
-target_include_directories ( vulkan-wrapper
-    PUBLIC
-    ${ANDROID_NDK}/sources/third_party/vulkan/src/include
-)
-
-# Control macro for ability to create Vulkan surface for Android.
-# See vulkan_wrapper.h
-# See Vulkan spec - 32.2.1. Android Platform
-# https://vulkan.lunarg.com/doc/view/1.1.108.0/mac/vkspec.html
-target_compile_definitions( vulkan-wrapper
-    PUBLIC
-    VK_USE_PLATFORM_ANDROID_KHR
-)
-
-target_compile_options ( vulkan-wrapper PRIVATE
-    -fno-exceptions
-    -fno-rtti
-)
-
-set_target_properties ( vulkan-wrapper PROPERTIES
-    CXX_VISIBILITY_PRESET hidden
-)
-
 # log support
+
 find_library ( log-lib
     log
 )
@@ -97,6 +68,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/trigger.cpp
     app/src/main/cpp/sources/uniform_buffer.cpp
     app/src/main/cpp/sources/velocity_solver.cpp
+    app/src/main/cpp/sources/vulkan_loader.cpp
     app/src/main/cpp/sources/vulkan_utils.cpp
     app/src/main/cpp/sources/GXCommon/GXMath.cpp
     app/src/main/cpp/sources/GXCommon/Intrinsics/GXMathNeon.cpp
@@ -175,7 +147,6 @@ add_library ( android-vulkan
 
 target_include_directories ( android-vulkan
     PRIVATE
-    ${ANDROID_NDK}/sources/third_party/vulkan/src/common
     app/src/main/cpp/include
 )
 
@@ -191,6 +162,7 @@ target_compile_options ( android-vulkan PRIVATE
     -Werror
     -Wall
     -Wextra
+    -Wpedantic
     -Wshadow
 )
 
@@ -201,6 +173,8 @@ target_compile_definitions ( android-vulkan
     -DANDROID_VULKAN_DEBUG
     -DANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
     -DANDROID_VULKAN_STRICT_MODE
+    -DVK_NO_PROTOTYPES
+    -DVK_USE_PLATFORM_ANDROID_KHR
 )
 
 # Exporting native app glue entry point.
@@ -213,5 +187,4 @@ target_link_libraries ( android-vulkan
     android
     ${log-lib}
     native_app_glue
-    vulkan-wrapper
 )

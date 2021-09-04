@@ -24,9 +24,13 @@ constexpr static char const* INDENT_2 = "        ";
 constexpr static char const* INDENT_3 = "            ";
 constexpr static size_t const INITIAL_EXTENSION_STORAGE_SIZE = 64U;
 
+constexpr static uint32_t const MAJOR = 1U;
+constexpr static uint32_t const MINOR = 1U;
+constexpr static uint32_t const PATCH = 131U;
+
 // Note vulkan_core.h is a little bit dirty from clang-tidy point of view.
 // So suppress this third-party mess via "NOLINT" control comment.
-constexpr static uint32_t const TARGET_VULKAN_VERSION = VK_MAKE_VERSION ( 1U, 1U, 131U ); // NOLINT
+constexpr static uint32_t const TARGET_VULKAN_VERSION = VK_MAKE_VERSION ( MAJOR, MINOR, PATCH ); // NOLINT
 
 constexpr static char const* UNKNOWN_RESULT = "UNKNOWN";
 
@@ -389,7 +393,6 @@ std::map<VkDebugReportObjectTypeEXT, char const*> const Renderer::_vulkanObjectT
     { VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT" },
     { VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT" },
     { VK_DEBUG_REPORT_OBJECT_TYPE_INSTANCE_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_INSTANCE_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_OBJECT_TABLE_NVX_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_OBJECT_TABLE_NVX_EXT" },
     { VK_DEBUG_REPORT_OBJECT_TYPE_PHYSICAL_DEVICE_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_PHYSICAL_DEVICE_EXT" },
     { VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_CACHE_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_CACHE_EXT" },
     { VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_EXT" },
@@ -418,11 +421,6 @@ std::map<VkDebugReportObjectTypeEXT, char const*> const Renderer::_vulkanObjectT
     {
         VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_UPDATE_TEMPLATE_EXT,
         "VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_UPDATE_TEMPLATE_EXT"
-    },
-
-    {
-        VK_DEBUG_REPORT_OBJECT_TYPE_INDIRECT_COMMANDS_LAYOUT_NVX_EXT,
-        "VK_DEBUG_REPORT_OBJECT_TYPE_INDIRECT_COMMANDS_LAYOUT_NVX_EXT"
     },
 
     {
@@ -807,14 +805,15 @@ Renderer::Renderer () noexcept:
     _surfaceFormats {},
     _swapchainImages {},
     _swapchainImageViews {},
-    _presentationEngineTransform {}
+    _presentationEngineTransform {},
+    _vulkanLoader {}
 {
     // NOTHING
 }
 
 bool Renderer::CheckSwapchainStatus ()
 {
-    VkSurfaceCapabilitiesKHR caps;
+    VkSurfaceCapabilitiesKHR caps {};
 
     bool tmp = CheckVkResult (
         vkGetPhysicalDeviceSurfaceCapabilitiesKHR ( _physicalDevice, _surface, &caps ),
@@ -959,11 +958,8 @@ void Renderer::OnDestroySwapchain ()
 
 bool Renderer::OnCreateDevice ()
 {
-    if ( !InitVulkan () )
-    {
-        LogError ( "Renderer::OnCreateDevice - Can't init Vulkan backend." );
+    if ( !_vulkanLoader.AcquireBootstrapFunctions () )
         return false;
-    }
 
     if ( !PrintInstanceLayerInfo () )
         return false;
@@ -1119,6 +1115,11 @@ void Renderer::OnDestroyDevice ()
 #endif
 
     DestroyInstance ();
+
+    if ( !_vulkanLoader.Unload () )
+    {
+        LogError ( "Renderer::OnDestroyDevice - Can't unload Vulkan functions." );
+    }
 }
 
 bool Renderer::TryAllocateMemory ( VkDeviceMemory &memory,
@@ -1127,7 +1128,7 @@ bool Renderer::TryAllocateMemory ( VkDeviceMemory &memory,
     char const* errorMessage
 ) const
 {
-    VkMemoryAllocateInfo allocateInfo;
+    VkMemoryAllocateInfo allocateInfo {};
     allocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     allocateInfo.pNext = nullptr;
     allocateInfo.allocationSize = static_cast<uint32_t> ( size );
@@ -1149,7 +1150,7 @@ bool Renderer::TryAllocateMemory ( VkDeviceMemory &memory,
     char const* errorMessage
 ) const
 {
-    VkMemoryAllocateInfo allocateInfo;
+    VkMemoryAllocateInfo allocateInfo {};
     allocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     allocateInfo.pNext = nullptr;
     allocateInfo.allocationSize = requirements.size;
@@ -1174,7 +1175,6 @@ bool Renderer::CheckVkResult ( VkResult result, char const* from, char const* me
         return true;
 
     LogError ( "%s - %s. Error: %s.", from, message, ResolveVkResult ( result ) );
-    assert ( false );
     return false;
 }
 
@@ -1436,6 +1436,7 @@ bool Renderer::DeployDevice ()
 
     constexpr char const* extensions[] =
     {
+        VK_KHR_16BIT_STORAGE_EXTENSION_NAME,
         VK_KHR_MULTIVIEW_EXTENSION_NAME,
         VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME,
         VK_KHR_SWAPCHAIN_EXTENSION_NAME
@@ -1457,10 +1458,29 @@ bool Renderer::DeployDevice ()
     if ( !CheckRequiredFormats () )
         return false;
 
-    constexpr VkPhysicalDeviceFloat16Int8FeaturesKHR const float16Int8Feature
+    constexpr static VkPhysicalDevice16BitStorageFeatures const ext16BitStorageFeatures
+    {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES,
+        .pNext = nullptr,
+        .storageBuffer16BitAccess = VK_FALSE,
+        .uniformAndStorageBuffer16BitAccess = VK_TRUE,
+        .storagePushConstant16 = VK_FALSE,
+        .storageInputOutput16 = VK_TRUE
+    };
+
+    constexpr static VkPhysicalDeviceMultiviewFeatures const multiviewFeatures
+    {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_FEATURES,
+        .pNext = const_cast<VkPhysicalDevice16BitStorageFeatures*> ( &ext16BitStorageFeatures ),
+        .multiview = VK_TRUE,
+        .multiviewGeometryShader = VK_FALSE,
+        .multiviewTessellationShader = VK_FALSE
+    };
+
+    constexpr static VkPhysicalDeviceFloat16Int8FeaturesKHR const float16Int8Features
     {
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT16_INT8_FEATURES_KHR,
-        .pNext = nullptr,
+        .pNext = const_cast<VkPhysicalDeviceMultiviewFeatures*> ( &multiviewFeatures ),
         .shaderFloat16 = VK_TRUE,
         .shaderInt8 = VK_FALSE
     };
@@ -1468,7 +1488,7 @@ bool Renderer::DeployDevice ()
     VkDeviceCreateInfo const deviceCreateInfo
     {
         .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-        .pNext = &float16Int8Feature,
+        .pNext = &float16Int8Features,
         .flags = 0U,
         .queueCreateInfoCount = 1U,
         .pQueueCreateInfos = &deviceQueueCreateInfo,
@@ -1488,6 +1508,10 @@ bool Renderer::DeployDevice ()
         return false;
 
     AV_REGISTER_DEVICE ( "Renderer::_device" )
+
+    if ( !_vulkanLoader.AcquireDeviceFunctions ( _device ) )
+        return false;
+
     vkGetDeviceQueue ( _device, _queueFamilyIndex, 0U, &_queue );
     return true;
 }
@@ -1511,6 +1535,33 @@ void Renderer::DestroyDevice ()
 
 bool Renderer::DeployInstance ()
 {
+    uint32_t supportedVersion = 0U;
+
+    bool result = CheckVkResult ( vkEnumerateInstanceVersion ( &supportedVersion ),
+        "Renderer::DeployInstance",
+        "Can't query instance version"
+    );
+
+    if ( !result )
+        return false;
+
+    //                                                                            major      minor      patch
+    constexpr uint32_t const targetVersion = TARGET_VULKAN_VERSION & UINT32_C ( 0b1111111111'1111111111'000000000000 );
+
+    if ( targetVersion > supportedVersion )
+    {
+        LogError ( "Renderer::DeployInstance - Requested Vulkan version %u.%u.%u is not supported by hardware "
+            "which is capable of only %u.%u.xxx.",
+            MAJOR,
+            MINOR,
+            PATCH,
+            ( supportedVersion & UINT32_C ( 0b1111111111'0000000000'000000000000 ) ) >> 22U,
+            ( supportedVersion & UINT32_C ( 0b0000000000'1111111111'000000000000 ) ) >> 12U
+        );
+
+        return false;
+    }
+
     constexpr VkApplicationInfo const applicationInfo
     {
         .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
@@ -1522,7 +1573,7 @@ bool Renderer::DeployInstance ()
         .apiVersion = TARGET_VULKAN_VERSION
     };
 
-    VkInstanceCreateInfo instanceCreateInfo;
+    VkInstanceCreateInfo instanceCreateInfo {};
     instanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     instanceCreateInfo.flags = 0U;
     instanceCreateInfo.pApplicationInfo = &applicationInfo;
@@ -1572,10 +1623,15 @@ bool Renderer::DeployInstance ()
     instanceCreateInfo.enabledExtensionCount = static_cast<uint32_t const> ( std::size ( extensions ) );
     instanceCreateInfo.ppEnabledExtensionNames = extensions;
 
-    return CheckVkResult ( vkCreateInstance ( &instanceCreateInfo, nullptr, &_instance ),
+    result = CheckVkResult ( vkCreateInstance ( &instanceCreateInfo, nullptr, &_instance ),
         "Renderer::DeployInstance",
         "Can't create Vulkan instance"
     );
+
+    if ( !result )
+        return false;
+
+    return _vulkanLoader.AcquireInstanceFunctions ( _instance );
 }
 
 void Renderer::DestroyInstance ()
@@ -1671,9 +1727,7 @@ bool Renderer::DeploySurface ( ANativeWindow &nativeWindow )
     {
         DestroySurface ();
 
-        LogError ( "Renderer::DeploySurface - Physical device does not support by Vulkan surface. Error: %s." );
-        assert ( !"Renderer::DeploySurface - Physical device does not support by Vulkan surface." );
-
+        LogError ( "Renderer::DeploySurface - Physical device does not support by Vulkan surface." );
         return false;
     }
 
@@ -1685,8 +1739,6 @@ bool Renderer::DeploySurface ( ANativeWindow &nativeWindow )
         DestroySurface ();
 
         LogError ( "Renderer::DeploySurface - There is not any Vulkan surface formats." );
-        assert ( !"Renderer::DeploySurface - There is not any Vulkan surface formats." );
-
         return false;
     }
 
@@ -1747,14 +1799,12 @@ bool Renderer::DeploySwapchain ( bool vSync )
     if ( !SelectTargetPresentMode ( swapchainCreateInfoKHR.presentMode, vSync ) )
     {
         LogError ( "Renderer::DeploySwapchain - Can't select present mode." );
-        assert ( !"Renderer::DeploySwapchain - Can't select present mode." );
         return false;
     }
 
     if ( !SelectTargetCompositeAlpha ( swapchainCreateInfoKHR.compositeAlpha ) )
     {
         LogError ( "Renderer::DeploySwapchain - Can't select composite alpha mode." );
-        assert ( !"Renderer::DeploySwapchain - Can't select composite alpha mode." );
         return false;
     }
 
@@ -1766,7 +1816,6 @@ bool Renderer::DeploySwapchain ( bool vSync )
     if ( !result )
     {
         LogError ( "Renderer::DeploySwapchain - Can't select image format and color space." );
-        assert ( !"Renderer::DeploySwapchain - Can't select image format and color space." );
         return false;
     }
 
@@ -1790,8 +1839,6 @@ bool Renderer::DeploySwapchain ( bool vSync )
         DestroySwapchain ();
 
         LogError ( "Renderer::DeploySwapchain - There is no any swapchain images." );
-        assert ( !"Renderer::DeploySwapchain - There is no any swapchain images." );
-
         return false;
     }
 
@@ -1880,8 +1927,6 @@ bool Renderer::PrintPhysicalDeviceExtensionInfo ( VkPhysicalDevice physicalDevic
     if ( !extensionCount )
     {
         LogError ( "Renderer::PrintPhysicalDeviceExtensionInfo - There is no any physical device extensions." );
-        assert ( !"Renderer::PrintPhysicalDeviceExtensionInfo - There is no any physical device extensions." );
-
         return false;
     }
 
@@ -2265,8 +2310,6 @@ bool Renderer::PrintPhysicalDeviceInfo ( uint32_t deviceIndex, VkPhysicalDevice 
     if ( !queueFamilyCount )
     {
         LogError ( "Renderer::PrintPhysicalDeviceInfo - There is no any Vulkan physical device queue families." );
-        assert ( !"Renderer::PrintPhysicalDeviceInfo - There is no any Vulkan physical device queue families." );
-
         return false;
     }
 
@@ -2352,7 +2395,6 @@ bool Renderer::SelectTargetHardware ( VkPhysicalDevice &targetPhysicalDevice, ui
     }
 
     LogError ( "Renderer::SelectTargetHardware - Can't find target hardware!" );
-    assert ( !"Renderer::SelectTargetHardware - Can't find target hardware!" );
     return false;
 }
 
@@ -2514,8 +2556,6 @@ bool Renderer::SelectTargetSurfaceFormat ( VkFormat &targetColorFormat,
     }
 
     LogError ( "Renderer::SelectTargetSurfaceFormat - Can't select depth|stencil format." );
-    assert ( !"Renderer::SelectTargetSurfaceFormat - Can't select depth|stencil format." );
-
     return false;
 }
 
@@ -2534,8 +2574,8 @@ VkBool32 VKAPI_PTR Renderer::OnVulkanDebugReport ( VkDebugReportFlagsEXT flags,
     Renderer& renderer = *static_cast<Renderer*> ( pUserData );
     auto const findResult = renderer._loggerMapper.find ( flags );
 
-    char const* category = nullptr;
-    LogType logger = nullptr;
+    char const* category;
+    LogType logger;
 
     if ( findResult != renderer._loggerMapper.cend () )
     {
@@ -2573,7 +2613,12 @@ message: %s
 
 #ifdef ANDROID_VULKAN_STRICT_MODE
 
-    assert ( !"Renderer::OnVulkanDebugReport - Triggered!" );
+    // Note lambda syntax is used here only for preventing unreachable code warning from static analyzer.
+    // Not so proud of this code. Maybe there is a more elegant compiler agnostic solution for this...
+
+    [] () noexcept {
+        assert ( !"Renderer::OnVulkanDebugReport - Triggered!" );
+    } ();
 
 #endif // ANDROID_VULKAN_STRICT_MODE
 
@@ -2590,8 +2635,6 @@ bool Renderer::PrintCoreExtensions ()
     if ( !extensionCount )
     {
         LogError ( "Renderer::PrintCoreExtensions - There is no any core extensions!" );
-        assert ( !"Renderer::PrintCoreExtensions - There is no any core extensions!" );
-
         return false;
     }
 
@@ -2731,9 +2774,7 @@ bool Renderer::PrintPhysicalDeviceLayerInfo ( VkPhysicalDevice physicalDevice )
     return true;
 }
 
-void Renderer::PrintPhysicalDeviceQueueFamilyInfo ( uint32_t queueFamilyIndex,
-    VkQueueFamilyProperties const &props
-)
+void Renderer::PrintPhysicalDeviceQueueFamilyInfo ( uint32_t queueFamilyIndex, VkQueueFamilyProperties const &props )
 {
     LogInfo ( "%sQueue family: #%u", INDENT_1, queueFamilyIndex );
 

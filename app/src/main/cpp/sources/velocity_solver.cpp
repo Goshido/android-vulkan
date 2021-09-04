@@ -11,7 +11,7 @@ GX_RESTORE_WARNING_STATE
 namespace android_vulkan {
 
 constexpr static uint16_t const ITERATIONS = 4U;
-constexpr static float const STABILIZATION_FACTOR = 0.25F;
+constexpr static float const STABILIZATION_FACTOR = 0.2F;
 
 static_assert ( STABILIZATION_FACTOR >= 0.0F && STABILIZATION_FACTOR <= 1.0F,
     "The stabilization factor must be in range [0.0F, 1.0F]" );
@@ -169,6 +169,55 @@ void VelocitySolver::SolvePair ( ContactManifold &manifold, float fixedTimeStepI
         setup ( contact._dataN, manifold._normal, rA, rB, b, &VelocitySolver::LambdaClipNormalForce, nullptr );
     }
 
+    // Apply warm start impulses.
+
+    auto update = [ & ] ( VelocitySolverData const &data,
+        GXVec6 const &vw1A,
+        GXVec6 const &vw1B,
+        float lambda
+    ) noexcept {
+        GXVec6 vwADelta {};
+        vwADelta.Multiply ( data._mj[ 0U ], lambda );
+
+        GXVec6 vwBDelta {};
+        vwBDelta.Multiply ( data._mj[ 1U ], lambda );
+
+        GXVec6 vw2A {};
+        vw2A.Sum ( vw1A, vwADelta );
+
+        GXVec6 vw2B {};
+        vw2B.Sum ( vw1B, vwBDelta );
+
+        bodyA.SetVelocityLinear ( vw2A._data[ 0U ], vw2A._data[ 1U ], vw2A._data[ 2U ] );
+        bodyB.SetVelocityLinear ( vw2B._data[ 0U ], vw2B._data[ 1U ], vw2B._data[ 2U ] );
+
+        bodyA.SetVelocityAngular ( vw2A._data[ 3U ], vw2A._data[ 4U ], vw2A._data[ 5U ] );
+        bodyB.SetVelocityAngular ( vw2B._data[ 3U ], vw2B._data[ 4U ], vw2B._data[ 5U ] );
+    };
+
+    for ( size_t i = 0U; i < manifold._contactCount; ++i )
+    {
+        Contact& contact = manifold._contacts[ i ];
+
+        update ( contact._dataN,
+            GXVec6 ( bodyA.GetVelocityLinear (), bodyA.GetVelocityAngular () ),
+            GXVec6 ( bodyB.GetVelocityLinear (), bodyB.GetVelocityAngular () ),
+            contact._dataN._lambda
+        );
+
+        update ( contact._dataT,
+            GXVec6 ( bodyA.GetVelocityLinear (), bodyA.GetVelocityAngular () ),
+            GXVec6 ( bodyB.GetVelocityLinear (), bodyB.GetVelocityAngular () ),
+            contact._dataT._lambda
+        );
+
+        update ( contact._dataB,
+            GXVec6 ( bodyA.GetVelocityLinear (), bodyA.GetVelocityAngular () ),
+            GXVec6 ( bodyB.GetVelocityLinear (), bodyB.GetVelocityAngular () ),
+            contact._dataB._lambda
+        );
+    }
+
     // Sequential impulse algorithm.
 
     auto solve = [ & ] ( VelocitySolverData &data ) noexcept {
@@ -184,23 +233,11 @@ void VelocitySolver::SolvePair ( ContactManifold &manifold, float fixedTimeStepI
         data._lambda = data._clipHandler ( data._lambda + l, data._clipContext );
         l = data._lambda - oldLambda;
 
-        GXVec6 vwADelta {};
-        vwADelta.Multiply ( data._mj[ 0U ], l );
-
-        GXVec6 vwBDelta {};
-        vwBDelta.Multiply ( data._mj[ 1U ], l );
-
-        GXVec6 vw2A {};
-        vw2A.Sum ( vw1A, vwADelta );
-
-        GXVec6 vw2B {};
-        vw2B.Sum ( vw1B, vwBDelta );
-
-        bodyA.SetVelocityLinear ( vw2A._data[ 0U ], vw2A._data[ 1U ], vw2A._data[ 2U ] );
-        bodyB.SetVelocityLinear ( vw2B._data[ 0U ], vw2B._data[ 1U ], vw2B._data[ 2U ] );
-
-        bodyA.SetVelocityAngular ( vw2A._data[ 3U ], vw2A._data[ 4U ], vw2A._data[ 5U ] );
-        bodyB.SetVelocityAngular ( vw2B._data[ 3U ], vw2B._data[ 4U ], vw2B._data[ 5U ] );
+        update ( data,
+            GXVec6 ( bodyA.GetVelocityLinear (), bodyA.GetVelocityAngular () ),
+            GXVec6 ( bodyB.GetVelocityLinear (), bodyB.GetVelocityAngular () ),
+            l
+        );
     };
 
     for ( uint16_t iteration = 0U; iteration < ITERATIONS; ++iteration )
@@ -314,6 +351,44 @@ void VelocitySolver::SolveSingle ( ContactManifold &manifold, float fixedTimeSte
         setup ( contact._dataN, manifold._normal, rA, rB, b, &VelocitySolver::LambdaClipNormalForce, nullptr );
     }
 
+    // Apply warm start impulses.
+
+    auto update = [ & ] ( VelocitySolverData const &data, GXVec6 const &vw1A, float lambda ) noexcept {
+        GXVec6 vwDelta {};
+        vwDelta.Multiply ( data._mj[ 0U ], lambda );
+
+        GXVec6 vw2Dynamic {};
+        vw2Dynamic.Sum ( vw1A, vwDelta );
+
+        bodyDynamic.SetVelocityLinear ( vw2Dynamic._data[ 0U ], vw2Dynamic._data[ 1U ], vw2Dynamic._data[ 2U ] );
+        bodyDynamic.SetVelocityAngular ( vw2Dynamic._data[ 3U ], vw2Dynamic._data[ 4U ], vw2Dynamic._data[ 5U ] );
+    };
+
+    for ( size_t i = 0U; i < manifold._contactCount; ++i )
+    {
+        Contact& contact = manifold._contacts[ i ];
+
+        update ( contact._dataN,
+            GXVec6 ( bodyDynamic.GetVelocityLinear (), bodyDynamic.GetVelocityAngular () ),
+            contact._dataN._lambda
+        );
+
+        update ( contact._dataT,
+            GXVec6 ( bodyDynamic.GetVelocityLinear (), bodyDynamic.GetVelocityAngular () ),
+            contact._dataT._lambda
+        );
+
+        update ( contact._dataB,
+            GXVec6 ( bodyDynamic.GetVelocityLinear (), bodyDynamic.GetVelocityAngular () ),
+            contact._dataB._lambda
+        );
+
+        update ( contact._dataT,
+            GXVec6 ( bodyDynamic.GetVelocityLinear (), bodyDynamic.GetVelocityAngular () ),
+            contact._dataT._lambda
+        );
+    }
+
     // Sequential impulse algorithm.
 
     auto solve = [ & ] ( VelocitySolverData &data ) noexcept {
@@ -326,14 +401,7 @@ void VelocitySolver::SolveSingle ( ContactManifold &manifold, float fixedTimeSte
         data._lambda = data._clipHandler ( data._lambda + l, data._clipContext );
         l = data._lambda - oldLambda;
 
-        GXVec6 vwDelta {};
-        vwDelta.Multiply ( data._mj[ 0U ], l );
-
-        GXVec6 vw2Dynamic {};
-        vw2Dynamic.Sum ( vw1Dynamic, vwDelta );
-
-        bodyDynamic.SetVelocityLinear ( vw2Dynamic._data[ 0U ], vw2Dynamic._data[ 1U ], vw2Dynamic._data[ 2U ] );
-        bodyDynamic.SetVelocityAngular ( vw2Dynamic._data[ 3U ], vw2Dynamic._data[ 4U ], vw2Dynamic._data[ 5U ] );
+        update ( data, vw1Dynamic, l );
     };
 
     for ( uint16_t iteration = 0U; iteration < ITERATIONS; ++iteration )

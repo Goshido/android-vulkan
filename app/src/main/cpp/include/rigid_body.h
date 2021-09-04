@@ -44,6 +44,9 @@ class RigidBody final
         GXVec3                  _totalForce;
         GXVec3                  _totalTorque;
 
+        // This feature is primary for debugging purposes.
+        std::string             _tag;
+
         GXMat4                  _transform;
 
         GXVec3                  _velocityAngular;
@@ -105,6 +108,10 @@ class RigidBody final
         [[nodiscard]] Shape& GetShape () noexcept;
         [[nodiscard]] bool HasShape () const noexcept;
         [[maybe_unused]] void SetShape ( ShapeRef &shape ) noexcept;
+
+        // This feature is primary for debugging purposes.
+        [[maybe_unused, nodiscard]] std::string const& GetTag () const noexcept;
+        [[maybe_unused]] void SetTag ( std::string &&tag ) noexcept;
 
         [[maybe_unused, nodiscard]] GXVec3 const& GetTotalForce () const noexcept;
         [[maybe_unused, nodiscard]] GXVec3 const& GetTotalTorque () const noexcept;

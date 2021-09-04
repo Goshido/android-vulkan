@@ -13,7 +13,7 @@ GX_RESTORE_WARNING_STATE
 
 namespace android_vulkan {
 
-constexpr static uint16_t const STEPS_PER_SECOND = 120U;
+constexpr static uint16_t const STEPS_PER_SECOND = 60U;
 constexpr static float const DEFAULT_TIME_SPEED = 1.0F;
 constexpr static float const FIXED_TIME_STEP = DEFAULT_TIME_SPEED / static_cast<float> ( STEPS_PER_SECOND );
 constexpr static float const FIXED_TIME_STEP_INVERSE = 1.0F / FIXED_TIME_STEP;
@@ -31,7 +31,8 @@ Physics::Physics () noexcept:
     _isPause ( true ),
     _kinematics {},
     _mutex {},
-    _timeSpeed ( DEFAULT_TIME_SPEED )
+    _timeSpeed ( DEFAULT_TIME_SPEED ),
+    _debugRun ( false )
 {
     // NOTHING
 }
@@ -147,7 +148,15 @@ void Physics::Resume () noexcept
 void Physics::Simulate ( float deltaTime ) noexcept
 {
     if ( _isPause )
+    {
+        if ( _debugRun )
+        {
+
+            _debugRun = false;
+        }
+
         return;
+    }
 
     std::unique_lock<std::mutex> const lock ( _mutex );
     _accumulator += deltaTime * _timeSpeed;
@@ -163,6 +172,11 @@ void Physics::Simulate ( float deltaTime ) noexcept
         Prepare ();
         _accumulator -= _fixedTimeStep;
     }
+}
+
+void Physics::OnDebugRun () noexcept
+{
+    _debugRun = true;
 }
 
 void Physics::CollectContacts () noexcept

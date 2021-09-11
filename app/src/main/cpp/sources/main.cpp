@@ -1,4 +1,5 @@
 #include <core.h>
+#include <shape_box.h>
 #include <mandelbrot/mandelbrot_analytic_color.h>
 #include <mandelbrot/mandelbrot_lut_color.h>
 #include <pbr/pbr_game.h>

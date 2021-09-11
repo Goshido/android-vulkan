@@ -151,7 +151,7 @@ void Physics::Simulate ( float deltaTime ) noexcept
     {
         if ( _debugRun )
         {
-
+            CollectContacts ();
             _debugRun = false;
         }
 

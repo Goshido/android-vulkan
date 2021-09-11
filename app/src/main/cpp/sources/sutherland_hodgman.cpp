@@ -6,11 +6,7 @@ namespace android_vulkan {
 
 constexpr static size_t const DEFAULT_CAPACITY = 16U;
 
-SutherlandHodgman::SutherlandHodgman () noexcept:
-    _clipPoints {},
-    _result {},
-    _windowPoints {},
-    _workingPoints {}
+SutherlandHodgman::SutherlandHodgman () noexcept
 {
     _clipPoints.reserve ( DEFAULT_CAPACITY );
     _result.reserve ( DEFAULT_CAPACITY );
@@ -18,9 +14,10 @@ SutherlandHodgman::SutherlandHodgman () noexcept:
     _workingPoints.reserve ( DEFAULT_CAPACITY );
 }
 
-Vertices const& SutherlandHodgman::Run ( Vertices const &shapeAPoints,
+SutherlandHodgmanResult const& SutherlandHodgman::Run ( Vertices const &shapeAPoints,
     GXVec3 const &shapeANormal,
-    Vertices const &shapeBPoints
+    Vertices const &shapeBPoints,
+    GXVec3 const &shapeBNormal
 ) noexcept
 {
     GXVec3 xAxis {};
@@ -33,13 +30,6 @@ Vertices const& SutherlandHodgman::Run ( Vertices const &shapeAPoints,
     Project ( _windowPoints, shapeAPoints, xAxis, yAxis );
     Project ( _clipPoints, shapeBPoints, xAxis, yAxis );
 
-    GXVec2 edge {};
-    GXVec2 clipEdge {};
-    GXVec2 clipNormal {};
-    GXVec2 alpha {};
-    GXVec2 ab {};
-    GXVec2 ac {};
-
     size_t const windowPoints = _windowPoints.size ();
 
     for ( size_t i = 0U; i < windowPoints; ++i )
@@ -48,10 +38,12 @@ Vertices const& SutherlandHodgman::Run ( Vertices const &shapeAPoints,
         _clipPoints.clear ();
 
         GXVec2 const& clipEdgeOrigin = _windowPoints[ i ];
+        GXVec2 clipEdge {};
         clipEdge.Subtract ( _windowPoints[ ( i + 1 ) % windowPoints ], clipEdgeOrigin );
 
         size_t const vertexCount = _workingPoints.size ();
 
+        GXVec2 clipNormal {};
         clipNormal._data[ 0U ] = -clipEdge._data[ 1U ];
         clipNormal._data[ 1U ] = clipEdge._data[ 0U ];
 
@@ -61,16 +53,21 @@ Vertices const& SutherlandHodgman::Run ( Vertices const &shapeAPoints,
             GXVec2 const& next = _workingPoints[ ( j + 1U ) % vertexCount ];
 
             // Optimization: The operands have been swapped to eliminate minus in denominator later.
+            GXVec2 ab {};
             ab.Subtract ( clipEdgeOrigin, current );
+
+            GXVec2 ac {};
             ac.Subtract ( next, clipEdgeOrigin );
 
             float const baTest = clipNormal.DotProduct ( ab );
             float const acTest = clipNormal.DotProduct ( ac );
 
             auto addIntersection = [ & ] () noexcept {
+                GXVec2 edge {};
                 edge.Subtract ( next, current );
 
                 // Note we swapped "ab" direction before. So no need to take negative value in denominator.
+                GXVec2 alpha {};
                 alpha.Sum ( current, baTest / clipNormal.DotProduct ( edge ), edge );
                 _clipPoints.push_back ( alpha );
             };
@@ -94,17 +91,36 @@ Vertices const& SutherlandHodgman::Run ( Vertices const &shapeAPoints,
     _result.clear ();
     _result.reserve ( _clipPoints.size () );
 
-    // Restoring 3D coordinates.
+    // Restoring 3D points.
 
-    GXVec3 originOffset {};
-    originOffset.Multiply ( shapeANormal, shapeANormal.DotProduct ( shapeAPoints[ 0U ] ) );
+    GXVec3 originAOffset {};
+    originAOffset.Multiply ( shapeANormal, shapeANormal.DotProduct ( shapeAPoints[ 0U ] ) );
+
+    GXVec3 const& b0 = shapeBPoints[ 0U ];
 
     for ( auto const& v : _clipPoints )
     {
+        // Restoring 3D point on shape A...
+        GXVec3 alpha {};
+        alpha.Sum ( originAOffset, v._data[ 0U ], xAxis );
+        alpha.Sum ( alpha, v._data[ 1U ], yAxis );
+
+        // Restoring 3D point on shape B...
         GXVec3 beta {};
-        beta.Sum ( originOffset, v._data[ 0U ], xAxis );
-        beta.Sum ( beta, v._data[ 1U ], yAxis );
-        _result.push_back ( beta );
+        beta.Subtract ( b0, alpha );
+
+        float const dot = shapeBNormal.DotProduct ( beta );
+
+        if ( dot <= 0.0F )
+        {
+            // Point from shape A is in front of shape B. Skipping...
+            continue;
+        }
+
+        GXVec3 gamma {};
+        gamma.Sum ( alpha, dot, shapeBNormal );
+
+        _result.emplace_back ( alpha, gamma );
     }
 
     return _result;

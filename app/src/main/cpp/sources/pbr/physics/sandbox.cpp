@@ -270,7 +270,7 @@ void Sandbox::DestroyCommandPool ( VkDevice device ) noexcept
 
 bool Sandbox::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
 {
-    _camera.SetLocation ( GXVec3 ( 0.0F, 0.0F, -14.0F ) );
+    _camera.SetLocation ( GXVec3 ( 0.77F, 35.8F, -55.4F ) );
     _camera.Update ( 0.0F );
 
     _physics.SetTimeSpeed ( TIME_SPEED );

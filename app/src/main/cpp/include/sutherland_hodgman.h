@@ -9,6 +9,9 @@
 
 namespace android_vulkan {
 
+//                                                    a       b
+using SutherlandHodgmanResult = std::vector<std::pair<GXVec3, GXVec3>>;
+
 // Sutherland–Hodgman algorithm. The implementation is based on ideas from
 // https://en.wikipedia.org/wiki/Sutherland%E2%80%93Hodgman_algorithm
 class SutherlandHodgman final
@@ -17,10 +20,10 @@ class SutherlandHodgman final
         using Projection = std::vector<GXVec2>;
 
     private:
-        Projection      _clipPoints;
-        Vertices        _result;
-        Projection      _windowPoints;
-        Projection      _workingPoints;
+        Projection                  _clipPoints {};
+        SutherlandHodgmanResult     _result {};
+        Projection                  _windowPoints {};
+        Projection                  _workingPoints {};
 
     public:
         SutherlandHodgman () noexcept;
@@ -33,9 +36,13 @@ class SutherlandHodgman final
 
         ~SutherlandHodgman () = default;
 
-         [[nodiscard]] Vertices const& Run ( Vertices const &shapeAPoints,
+        // Method returns pairs of points.
+        // Shape A is considered as clipping window in clipping operation.
+        // Note the method will reject any shape A points which will be in front of shape B.
+         [[nodiscard]] SutherlandHodgmanResult const& Run ( Vertices const &shapeAPoints,
              GXVec3 const &shapeANormal,
-             Vertices const &shapeBPoints
+             Vertices const &shapeBPoints,
+             GXVec3 const &shapeBNormal
          ) noexcept;
 
     private:

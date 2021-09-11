@@ -23,7 +23,7 @@ class [[maybe_unused]] LocationSolver final
         static void Run ( ContactManager &contactManager ) noexcept;
 
     private:
-        static void SolveSingle ( RigidBody &body, ContactManifold &manifold, float penetration ) noexcept;
+        static void SolveSingle ( RigidBody &body, ContactManifold &manifold, bool negatePenetration ) noexcept;
 };
 
 } // namespace android_vulkan

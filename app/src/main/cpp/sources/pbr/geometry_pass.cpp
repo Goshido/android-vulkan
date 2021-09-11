@@ -12,8 +12,6 @@ GeometryPass::GeometryPass () noexcept:
     _normalDefault {},
     _paramDefault {},
     _isFreeTransferResources ( false ),
-    _maxBatchCount ( 0U ),
-    _maxUniqueCount ( 0U ),
     _commandPool ( VK_NULL_HANDLE ),
     _descriptorPool ( VK_NULL_HANDLE ),
     _fence ( VK_NULL_HANDLE ),
@@ -197,8 +195,6 @@ VkFence GeometryPass::GetFence () const
 
 void GeometryPass::Reset ()
 {
-    _maxBatchCount = 0U;
-    _maxUniqueCount = 0U;
     _sceneData.clear ();
 }
 
@@ -218,24 +214,12 @@ void GeometryPass::Submit ( MeshRef &mesh,
 
     if ( findResult != _sceneData.cend () )
     {
-        findResult->second.Append ( _maxBatchCount,
-            _maxUniqueCount,
-            mesh,
-            local,
-            worldBounds,
-            color0,
-            color1,
-            color2,
-            color3
-        );
-
+        findResult->second.Append ( mesh, local, worldBounds, color0, color1, color2, color3 );
         return;
     }
 
     _sceneData.insert (
-        std::make_pair ( opaqueMaterial,
-            OpaqueCall ( _maxBatchCount, _maxUniqueCount, mesh, local, worldBounds, color0, color1, color2, color3 )
-        )
+        std::make_pair ( opaqueMaterial, OpaqueCall ( mesh, local, worldBounds, color0, color1, color2, color3 ) )
     );
 }
 
@@ -288,6 +272,25 @@ VkSubpassDescription GeometryPass::GetSubpassDescription ()
         .preserveAttachmentCount = 0U,
         .pPreserveAttachments = nullptr
     };
+}
+
+size_t GeometryPass::AggregateUniformCount () const noexcept
+{
+    size_t count = 0U;
+    constexpr size_t const roundUpFactor = PBR_OPAQUE_MAX_INSTANCE_COUNT - 1U;
+
+    for ( auto const& [material, call] : _sceneData )
+    {
+        count += call.GetUniqueList().size ();
+
+        for ( auto const& [mesh, group] : call.GetBatchList () )
+        {
+            size_t const batchSize = group._opaqueData.size ();
+            count += ( batchSize + roundUpFactor ) / PBR_OPAQUE_MAX_INSTANCE_COUNT;
+        }
+    }
+
+    return count;
 }
 
 void GeometryPass::AppendDrawcalls ( VkDescriptorSet const* textureSets,
@@ -671,18 +674,18 @@ bool GeometryPass::UpdateGPUData ( android_vulkan::Renderer &renderer,
     size_t const opaqueCount = _sceneData.size ();
     size_t const textureCount = opaqueCount * OpaqueTextureDescriptorSetLayout::TEXTURE_SLOTS;
 
-    std::vector<VkDescriptorImageInfo> imageStorage;
+    std::vector<VkDescriptorImageInfo> imageStorage {};
     imageStorage.reserve ( textureCount );
 
-    std::vector<VkWriteDescriptorSet> writeStorage0;
+    std::vector<VkWriteDescriptorSet> writeStorage0 {};
     writeStorage0.reserve ( textureCount * 2U );
 
     Program::DescriptorSetInfo const& descriptorSetInfo = _program.GetResourceInfo ();
     Program::SetItem const& descriptorSet0 = descriptorSetInfo[ 0U ];
     size_t uniqueFeatures = descriptorSet0.size ();
 
-    std::vector<VkDescriptorBufferInfo> uniformStorage;
-    std::vector<VkWriteDescriptorSet> writeStorage1;
+    std::vector<VkDescriptorBufferInfo> uniformStorage {};
+    std::vector<VkWriteDescriptorSet> writeStorage1 {};
 
     constexpr VkCommandBufferBeginInfo const beginInfo
     {
@@ -700,13 +703,13 @@ bool GeometryPass::UpdateGPUData ( android_vulkan::Renderer &renderer,
     if ( !result )
         return false;
 
-    // Note reserve size is a estimation from top.
-    size_t const estimationUniformCount = ( _maxBatchCount + _maxUniqueCount ) * opaqueCount;
-    uniformStorage.reserve ( estimationUniformCount );
-    writeStorage1.reserve ( estimationUniformCount );
+    // Note reserve size is an estimation from the top.
+    size_t const uniformCount = AggregateUniformCount ();
+    uniformStorage.reserve ( uniformCount );
+    writeStorage1.reserve ( uniformCount );
     ++uniqueFeatures;
 
-    std::vector<VkDescriptorPoolSize> poolSizeStorage;
+    std::vector<VkDescriptorPoolSize> poolSizeStorage {};
     poolSizeStorage.reserve ( uniqueFeatures );
 
     for ( auto const& item : descriptorSet0 )
@@ -724,7 +727,7 @@ bool GeometryPass::UpdateGPUData ( android_vulkan::Renderer &renderer,
         VkDescriptorPoolSize
         {
             .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            .descriptorCount = static_cast<uint32_t> ( estimationUniformCount )
+            .descriptorCount = static_cast<uint32_t> ( uniformCount )
         }
     );
 
@@ -736,7 +739,7 @@ bool GeometryPass::UpdateGPUData ( android_vulkan::Renderer &renderer,
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0U,
-        .maxSets = static_cast<uint32_t> ( opaqueCount + estimationUniformCount ),
+        .maxSets = static_cast<uint32_t> ( opaqueCount + uniformCount ),
         .poolSizeCount = static_cast<uint32_t> ( poolSizeStorage.size () ),
         .pPoolSizes = poolSizeStorage.data ()
     };
@@ -752,7 +755,7 @@ bool GeometryPass::UpdateGPUData ( android_vulkan::Renderer &renderer,
 
     AV_REGISTER_DESCRIPTOR_POOL ( "GeometryPass::_descriptorPool" )
 
-    OpaqueTextureDescriptorSetLayout const opaqueTextureLayout;
+    OpaqueTextureDescriptorSetLayout const opaqueTextureLayout {};
     VkDescriptorSetLayout opaqueTextureLayoutNative = opaqueTextureLayout.GetLayout ();
 
     std::vector<VkDescriptorSetLayout> layouts;
@@ -788,7 +791,7 @@ bool GeometryPass::UpdateGPUData ( android_vulkan::Renderer &renderer,
     if ( !result )
         return false;
 
-    VkWriteDescriptorSet writeInfo0;
+    VkWriteDescriptorSet writeInfo0 {};
     writeInfo0.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     writeInfo0.pNext = nullptr;
     writeInfo0.descriptorCount = 1U;
@@ -800,7 +803,7 @@ bool GeometryPass::UpdateGPUData ( android_vulkan::Renderer &renderer,
         Texture2DRef &defaultTexture,
         uint32_t imageBindSlot,
         uint32_t samplerBindSlot
-    ) {
+    ) noexcept {
         Texture2DRef& t = texture ? texture : defaultTexture;
         SamplerRef sampler = samplerManager.GetSampler ( renderer, t->GetMipLevelCount () );
 
@@ -822,7 +825,7 @@ bool GeometryPass::UpdateGPUData ( android_vulkan::Renderer &renderer,
         writeStorage0.push_back ( writeInfo0 );
     };
 
-    VkWriteDescriptorSet writeInfo1;
+    VkWriteDescriptorSet writeInfo1 {};
     writeInfo1.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     writeInfo1.pNext = nullptr;
     writeInfo1.dstBinding = 0U;
@@ -835,7 +838,7 @@ bool GeometryPass::UpdateGPUData ( android_vulkan::Renderer &renderer,
     constexpr VkPipelineStageFlags const syncFlags = AV_VK_FLAG ( VK_PIPELINE_STAGE_VERTEX_SHADER_BIT ) |
         AV_VK_FLAG ( VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT );
 
-    auto uniformBinder = [ & ] ( VkBuffer uniformBuffer, VkDescriptorSet descriptorSet ) {
+    auto uniformBinder = [ & ] ( VkBuffer uniformBuffer, VkDescriptorSet descriptorSet ) noexcept {
         writeInfo1.pBufferInfo = &uniformStorage.emplace_back (
             VkDescriptorBufferInfo
             {

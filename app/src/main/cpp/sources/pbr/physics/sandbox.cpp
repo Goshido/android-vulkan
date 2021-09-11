@@ -29,7 +29,7 @@ constexpr static uint32_t const RESOLUTION_SCALE_HEIGHT = 70U;
 constexpr static GXVec3 const FREE_FALL_ACCELERATION ( 0.0F, -9.81F, 0.0F );
 constexpr static float const TIME_SPEED = 1.0F;
 
-constexpr static size_t const CUBES = 3U;
+constexpr static size_t const CUBES = 6U;
 
 //----------------------------------------------------------------------------------------------------------------------
 

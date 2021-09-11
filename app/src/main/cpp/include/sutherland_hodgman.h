@@ -36,9 +36,9 @@ class SutherlandHodgman final
 
         ~SutherlandHodgman () = default;
 
-        // Method returns pairs of points.
-        // Shape A is considered as clipping window in clipping operation.
-        // Note the method will reject any shape A points which will be in front of shape B.
+        // Method returns pairs of points. Shape A is considered as clipping window in clipping operation.
+        // Note the method will reject any shape A points which will be in front of shape B. So only penetration pairs
+        // will be returned.
          [[nodiscard]] SutherlandHodgmanResult const& Run ( Vertices const &shapeAPoints,
              GXVec3 const &shapeANormal,
              Vertices const &shapeBPoints,

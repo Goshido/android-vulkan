@@ -26,10 +26,6 @@ class GeometryPass final
 
         bool                        _isFreeTransferResources;
 
-        // The variable is needed for theoretical maximum uniform buffer elements estimation.
-        size_t                      _maxBatchCount;
-        size_t                      _maxUniqueCount;
-
         VkCommandPool               _commandPool;
         VkDescriptorPool            _descriptorPool;
         VkFence                     _fence;
@@ -90,13 +86,14 @@ class GeometryPass final
         [[nodiscard]] static VkSubpassDescription GetSubpassDescription ();
 
     private:
+        [[nodiscard]] size_t AggregateUniformCount () const noexcept;
+
         void AppendDrawcalls ( VkDescriptorSet const* textureSets,
             VkDescriptorSet const* instanceSets,
             RenderSessionStats &renderSessionStats
         );
 
         [[nodiscard]] bool BeginRenderPass ( android_vulkan::Renderer &renderer );
-
         void CleanupTransferResources ( android_vulkan::Renderer &renderer );
         void InitCommonStructures ( VkRenderPass renderPass, VkFramebuffer framebuffer, VkExtent2D const &resolution );
         [[nodiscard]] bool InitDefaultTextures ( android_vulkan::Renderer &renderer );

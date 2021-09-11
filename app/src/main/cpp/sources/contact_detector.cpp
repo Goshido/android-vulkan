@@ -133,7 +133,6 @@ ContactDetector::FirstContactData ContactDetector::AllocateFirstContact ( Contac
     ContactManifold& manifold = contactManager.AllocateContactManifold ();
     manifold._bodyA = a;
     manifold._bodyB = b;
-    manifold._penetration = _epa.GetDepth ();
 
     manifold._epaSteps = _epa.GetSteps ();
     manifold._gjkSteps = _gjk.GetSteps ();
@@ -215,6 +214,7 @@ void ContactDetector::ManifoldEdgeEdge ( ContactManager &contactManager,
 
     GXVec3 bDir { beta };
     bDir.Normalize ();
+    float const penetration = _epa.GetDepth ();
 
     if ( 1.0F - std::abs ( aDir.DotProduct ( bDir ) ) < COLLINEAR_TOLERANCE )
     {
@@ -237,7 +237,8 @@ void ContactDetector::ManifoldEdgeEdge ( ContactManager &contactManager,
         proj._data[ 1U ] = std::clamp ( proj._data[ 1U ], 0.0F, lenA );
 
         firstContact->_pointA.Sum ( _shapeAPoints[ 0U ], proj._data[ 0U ], aDir );
-        firstContact->_pointB.Sum ( firstContact->_pointA, manifold->_penetration, manifold->_normal );
+        firstContact->_pointB.Sum ( firstContact->_pointA, penetration, manifold->_normal );
+        firstContact->_penetration = penetration;
 
         if ( std::abs ( proj._data[ 0U ] - proj._data[ 1U ] ) < SAME_POINT_TOLERANCE )
         {
@@ -250,7 +251,8 @@ void ContactDetector::ManifoldEdgeEdge ( ContactManager &contactManager,
         anotherContact._friction = friction;
         anotherContact._restitution = restitution;
         anotherContact._pointA.Sum ( _shapeAPoints[ 0U ], proj._data[ 1U ], aDir );
-        anotherContact._pointB.Sum ( anotherContact._pointA, manifold->_penetration, manifold->_normal );
+        anotherContact._pointB.Sum ( anotherContact._pointA, penetration, manifold->_normal );
+        anotherContact._penetration = penetration;
 
         return;
     }
@@ -293,7 +295,8 @@ void ContactDetector::ManifoldEdgeEdge ( ContactManager &contactManager,
     betaProj.Subtract ( projB[ 1U ], projB[ 0U ] );
 
     firstContact->_pointB.Sum ( _shapeBPoints[ 0U ], ba.DotProduct ( n ) / n.DotProduct ( betaProj ), beta );
-    firstContact->_pointA.Sum ( firstContact->_pointB, manifold->_penetration, manifold->_normal );
+    firstContact->_pointA.Sum ( firstContact->_pointB, penetration, manifold->_normal );
+    firstContact->_penetration = penetration;
 }
 
 void ContactDetector::ManifoldEdgeFace ( ContactManager &contactManager,
@@ -366,10 +369,10 @@ void ContactDetector::ManifoldEdgeFace ( ContactManager &contactManager,
     auto write = [ & ] ( Contact &contact, GXVec3 const &v, float penetration ) noexcept {
         contact._pointA = v;
         contact._pointB.Sum ( v, penetration, faceNormal );
+        contact._penetration = penetration;
     };
 
     if ( penetration > 0.0F && alpha.SquaredLength () > SAME_POINT ) {
-        // TODO different penetration depth.
         write ( *firstContact, vertices[ 0U ], penetration );
         firstContactUsed = true;
     }
@@ -380,14 +383,12 @@ void ContactDetector::ManifoldEdgeFace ( ContactManager &contactManager,
     alpha.Subtract ( face[ 0U ], vertices[ 1U ] );
     penetration = faceNormal.DotProduct ( alpha );
 
-    if ( penetration <= 0.0F || alpha.SquaredLength () <= SAME_POINT ) {
+    if ( penetration <= 0.0F || alpha.SquaredLength () <= SAME_POINT )
         return;
-    }
 
     Contact& targetContact = firstContactUsed ?
         contactManager.AllocateContact ( *firstContactData.first ) : *firstContact;
 
-    // TODO different penetration depth.
     targetContact._friction = friction;
     targetContact._restitution = restitution;
     write ( targetContact, vertices[ 1U ], penetration );
@@ -431,6 +432,7 @@ void ContactDetector::ManifoldFaceFace ( ContactManager &contactManager,
         {
             firstContact->_pointA = a;
             firstContact->_pointB = b;
+            firstContact->_penetration = a.Distance ( b );
             isFirst = false;
             continue;
         }
@@ -440,6 +442,7 @@ void ContactDetector::ManifoldFaceFace ( ContactManager &contactManager,
         anotherContact._restitution = restitution;
         anotherContact._pointA = a;
         anotherContact._pointB = b;
+        anotherContact._penetration = a.Distance ( b );
     }
 }
 
@@ -454,7 +457,7 @@ void ContactDetector::ManifoldPoint ( ContactManager &contactManager,
 {
     auto [manifold, contact] = AllocateFirstContact ( contactManager, a, b, tbn, friction, restitution );
     contact->_pointA = vertex;
-    contact->_pointB.Sum ( contact->_pointA, -manifold->_penetration, manifold->_normal );
+    contact->_pointB.Sum ( contact->_pointA, _epa.GetDepth (), manifold->_normal );
 }
 
 void ContactDetector::NotifyEPAFail () noexcept

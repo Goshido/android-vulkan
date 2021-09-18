@@ -4,17 +4,6 @@
 
 namespace pbr {
 
-GBuffer::GBuffer ():
-    _albedo {},
-    _depthStencil {},
-    _hdrAccumulator {},
-    _normal {},
-    _params {},
-    _readOnlyDepthImageView ( VK_NULL_HANDLE )
-{
-    // NOTHING
-}
-
 android_vulkan::Texture2D& GBuffer::GetAlbedo ()
 {
     return _albedo;

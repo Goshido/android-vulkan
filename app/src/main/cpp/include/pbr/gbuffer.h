@@ -10,16 +10,16 @@ namespace pbr {
 class GBuffer final
 {
     private:
-        android_vulkan::Texture2D       _albedo;
-        android_vulkan::Texture2D       _depthStencil;
-        android_vulkan::Texture2D       _hdrAccumulator;
-        android_vulkan::Texture2D       _normal;
-        android_vulkan::Texture2D       _params;
+        android_vulkan::Texture2D       _albedo {};
+        android_vulkan::Texture2D       _depthStencil {};
+        android_vulkan::Texture2D       _hdrAccumulator {};
+        android_vulkan::Texture2D       _normal {};
+        android_vulkan::Texture2D       _params {};
 
-        VkImageView                     _readOnlyDepthImageView;
+        VkImageView                     _readOnlyDepthImageView = VK_NULL_HANDLE;
 
     public:
-        GBuffer ();
+        GBuffer () = default;
 
         GBuffer ( GBuffer const & ) = delete;
         GBuffer& operator = ( GBuffer const & ) = delete;

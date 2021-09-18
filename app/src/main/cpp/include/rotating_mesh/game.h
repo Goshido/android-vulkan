@@ -30,48 +30,52 @@ class Game : public android_vulkan::Game
         AV_DX_ALIGNMENT_END
 
     protected:
-        VkCommandPool                       _commandPool;
+        VkCommandPool                       _commandPool = VK_NULL_HANDLE;
 
-        VkDescriptorPool                    _descriptorPool;
-        VkDescriptorSetLayout               _descriptorSetLayout;
+        VkDescriptorPool                    _descriptorPool = VK_NULL_HANDLE;
+        VkDescriptorSetLayout               _descriptorSetLayout = VK_NULL_HANDLE;
 
-        Drawcall                            _drawcalls[ MATERIAL_COUNT ];
-        VkPipelineLayout                    _pipelineLayout;
-        android_vulkan::UniformBuffer       _transformBuffer;
+        Drawcall                            _drawcalls[ MATERIAL_COUNT ] {};
+        VkPipelineLayout                    _pipelineLayout = VK_NULL_HANDLE;
+        android_vulkan::UniformBuffer       _transformBuffer {};
 
     private:
-        float                               _angle;
-        android_vulkan::Texture2D           _depthStencilRenderTarget;
+        float                               _angle = 0.0F;
+        android_vulkan::Texture2D           _depthStencilRenderTarget {};
 
         const char*                         _fragmentShader;
-        std::vector<VkFramebuffer>          _framebuffers;
+        std::vector<VkFramebuffer>          _framebuffers {};
 
-        VkPipeline                          _pipeline;
-        VkRenderPass                        _renderPass;
-        VkSemaphore                         _renderPassEndSemaphore;
-        VkSemaphore                         _renderTargetAcquiredSemaphore;
+        VkPipeline                          _pipeline = VK_NULL_HANDLE;
+        VkRenderPass                        _renderPass = VK_NULL_HANDLE;
+        VkSemaphore                         _renderPassEndSemaphore = VK_NULL_HANDLE;
+        VkSemaphore                         _renderTargetAcquiredSemaphore = VK_NULL_HANDLE;
 
-        VkSampler                           _sampler01Mips;
-        VkSampler                           _sampler09Mips;
-        VkSampler                           _sampler10Mips;
-        VkSampler                           _sampler11Mips;
+        VkSampler                           _sampler01Mips = VK_NULL_HANDLE;
+        VkSampler                           _sampler09Mips = VK_NULL_HANDLE;
+        VkSampler                           _sampler10Mips = VK_NULL_HANDLE;
+        VkSampler                           _sampler11Mips = VK_NULL_HANDLE;
 
-        VkShaderModule                      _vertexShaderModule;
-        VkShaderModule                      _fragmentShaderModule;
+        VkShaderModule                      _vertexShaderModule = VK_NULL_HANDLE;
+        VkShaderModule                      _fragmentShaderModule = VK_NULL_HANDLE;
 
-        std::vector<CommandContext>         _commandBuffers;
+        std::vector<CommandContext>         _commandBuffers {};
 
-        GXMat4                              _projectionMatrix;
-        Transform                           _transform;
+        GXMat4                              _projectionMatrix {};
+        Transform                           _transform {};
 
-    protected:
-        explicit Game ( const char* fragmentShader ) noexcept;
+    public:
+        Game () = delete;
 
         Game ( Game const & ) = delete;
         Game& operator = ( Game const & ) = delete;
 
         Game ( Game && ) = delete;
         Game& operator = ( Game && ) = delete;
+
+    protected:
+        explicit Game ( const char* fragmentShader ) noexcept;
+        ~Game () override = default;
 
         [[nodiscard]] virtual bool CreateDescriptorSet ( android_vulkan::Renderer &renderer ) = 0;
         [[nodiscard]] virtual bool CreatePipelineLayout ( android_vulkan::Renderer &renderer ) = 0;

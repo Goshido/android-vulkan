@@ -25,9 +25,7 @@ constexpr static const size_t TEXTURE_COMMAND_BUFFERS = 7U;
 //----------------------------------------------------------------------------------------------------------------------
 
 GameLUT::GameLUT () noexcept:
-    Game ( FRAGMENT_SHADER ),
-    _specularLUTSampler ( VK_NULL_HANDLE ),
-    _specularLUTTexture {}
+    Game ( FRAGMENT_SHADER )
 {
     // NOTHING
 }

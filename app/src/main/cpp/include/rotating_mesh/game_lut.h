@@ -10,8 +10,8 @@ namespace rotating_mesh {
 class GameLUT final : public Game
 {
     private:
-        VkSampler                       _specularLUTSampler;
-        android_vulkan::Texture2D       _specularLUTTexture;
+        VkSampler                       _specularLUTSampler = VK_NULL_HANDLE;
+        android_vulkan::Texture2D       _specularLUTTexture {};
 
     public:
         GameLUT () noexcept;

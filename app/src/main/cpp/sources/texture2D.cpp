@@ -9,7 +9,11 @@ GX_DISABLE_COMMON_WARNINGS
 #include <thread>
 #include <unordered_map>
 
+#define STBI_MALLOC(sz) std::malloc(sz)
+#define STBI_REALLOC(p, newsz) std::realloc(p, newsz)
+#define STBI_FREE(p) std::free(p)
 #define STBI_NO_FAILURE_STRINGS
+#define STBI_NEON
 #define STBI_ONLY_JPEG
 #define STBI_ONLY_PNG
 #define STBI_ONLY_BMP
@@ -45,24 +49,11 @@ static std::unordered_map<VkFormat, VkFormat> const g_FormatMapper =
 
 //----------------------------------------------------------------------------------------------------------------------
 
-Texture2D::Texture2D () noexcept:
-    _format ( VK_FORMAT_UNDEFINED ),
-    _image ( VK_NULL_HANDLE ),
-    _imageDeviceMemory ( VK_NULL_HANDLE ),
-    _imageView ( VK_NULL_HANDLE ),
-    _mipLevels ( 0U ),
-    _resolution { .width = 0U, .height = 0U },
-    _transfer ( VK_NULL_HANDLE ),
-    _transferDeviceMemory ( VK_NULL_HANDLE )
-{
-    // NOTHING
-}
-
 bool Texture2D::CreateRenderTarget ( VkExtent2D const &resolution,
     VkFormat format,
     VkImageUsageFlags usage,
     Renderer &renderer
-)
+) noexcept
 {
     FreeResources ( renderer.GetDevice () );
     VkImageCreateInfo imageInfo;
@@ -74,7 +65,7 @@ bool Texture2D::CreateRenderTarget ( VkExtent2D const &resolution,
     return true;
 }
 
-void Texture2D::FreeResources ( VkDevice device )
+void Texture2D::FreeResources ( VkDevice device ) noexcept
 {
     FreeTransferResources ( device );
     FreeResourceInternal ( device );
@@ -84,7 +75,7 @@ void Texture2D::FreeResources ( VkDevice device )
     _fileName.clear ();
 }
 
-void Texture2D::FreeTransferResources ( VkDevice device )
+void Texture2D::FreeTransferResources ( VkDevice device ) noexcept
 {
     if ( _transferDeviceMemory != VK_NULL_HANDLE )
     {
@@ -101,33 +92,33 @@ void Texture2D::FreeTransferResources ( VkDevice device )
     AV_UNREGISTER_BUFFER ( "Texture2D::_transfer" )
 }
 
-VkFormat Texture2D::GetFormat () const
+VkFormat Texture2D::GetFormat () const noexcept
 {
     assert ( _format != VK_FORMAT_UNDEFINED );
     return _format;
 }
 
-VkImage Texture2D::GetImage () const
+VkImage Texture2D::GetImage () const noexcept
 {
     return _image;
 }
 
-VkImageView Texture2D::GetImageView () const
+VkImageView Texture2D::GetImageView () const noexcept
 {
     return _imageView;
 }
 
-uint8_t Texture2D::GetMipLevelCount () const
+uint8_t Texture2D::GetMipLevelCount () const noexcept
 {
     return _mipLevels;
 }
 
-std::string const& Texture2D::GetName () const
+std::string const& Texture2D::GetName () const noexcept
 {
     return _fileName;
 }
 
-VkExtent2D const& Texture2D::GetResolution () const
+VkExtent2D const& Texture2D::GetResolution () const noexcept
 {
     return _resolution;
 }
@@ -137,7 +128,7 @@ VkExtent2D const& Texture2D::GetResolution () const
     eFormat format,
     bool isGenerateMipmaps,
     VkCommandBuffer commandBuffer
-)
+) noexcept
 {
     if ( fileName.empty () )
     {
@@ -195,8 +186,11 @@ bool Texture2D::UploadData ( Renderer &renderer,
     eFormat format,
     bool isGenerateMipmaps,
     VkCommandBuffer commandBuffer
-)
+) noexcept
 {
+    if ( fileName == "textures/1x1-alpha.png" )
+        GXMat3 const stop {};
+
     if ( fileName.empty () )
     {
         LogError ( "Texture2D::UploadData - Can't upload data. Filename is empty." );
@@ -263,7 +257,7 @@ bool Texture2D::UploadData ( Renderer &renderer,
     eFormat format,
     bool isGenerateMipmaps,
     VkCommandBuffer commandBuffer
-)
+) noexcept
 {
     return UploadData ( renderer, std::string ( fileName ), format, isGenerateMipmaps, commandBuffer );
 }
@@ -273,7 +267,7 @@ bool Texture2D::UploadData ( Renderer &renderer,
     eFormat format,
     bool isGenerateMipmaps,
     VkCommandBuffer commandBuffer
-)
+) noexcept
 {
     return UploadData ( renderer, std::string ( fileName ), format, isGenerateMipmaps, commandBuffer );
 }
@@ -285,7 +279,7 @@ bool Texture2D::UploadData ( Renderer &renderer,
     VkFormat format,
     bool isGenerateMipmaps,
     VkCommandBuffer commandBuffer
-)
+) noexcept
 {
     FreeResources ( renderer.GetDevice () );
     VkImageCreateInfo imageInfo;
@@ -310,7 +304,7 @@ bool Texture2D::CreateCommonResources ( VkImageCreateInfo &imageInfo,
     VkImageUsageFlags usage,
     uint8_t mips,
     Renderer &renderer
-)
+) noexcept
 {
     _format = format;
     _resolution = resolution;
@@ -415,7 +409,7 @@ bool Texture2D::CreateCommonResources ( VkImageCreateInfo &imageInfo,
     return true;
 }
 
-bool Texture2D::CreateTransferResources ( uint8_t* &mappedBuffer, VkDeviceSize size, Renderer &renderer )
+bool Texture2D::CreateTransferResources ( uint8_t* &mappedBuffer, VkDeviceSize size, Renderer &renderer ) noexcept
 {
     VkBufferCreateInfo const bufferInfo
     {
@@ -491,7 +485,7 @@ bool Texture2D::CreateTransferResources ( uint8_t* &mappedBuffer, VkDeviceSize s
     return true;
 }
 
-void Texture2D::FreeResourceInternal ( VkDevice device )
+void Texture2D::FreeResourceInternal ( VkDevice device ) noexcept
 {
     _mipLevels = 0U;
 
@@ -521,7 +515,7 @@ bool Texture2D::UploadCompressed ( Renderer &renderer,
     std::string const &fileName,
     eFormat format,
     VkCommandBuffer commandBuffer
-)
+) noexcept
 {
     KTXMediaContainer ktx;
 
@@ -708,14 +702,14 @@ bool Texture2D::UploadDataInternal ( Renderer &renderer,
     bool isGenerateMipmaps,
     VkImageCreateInfo const &imageInfo,
     VkCommandBuffer commandBuffer
-)
+) noexcept
 {
     uint8_t* mappedBuffer = nullptr;
 
     if ( !CreateTransferResources ( mappedBuffer, static_cast<VkDeviceSize> ( size ), renderer ) )
         return false;
 
-    memcpy ( mappedBuffer, data, size );
+    std::memcpy ( mappedBuffer, data, size );
     VkDevice device = renderer.GetDevice ();
     vkUnmapMemory ( device, _transferDeviceMemory );
 
@@ -738,20 +732,27 @@ bool Texture2D::UploadDataInternal ( Renderer &renderer,
         return false;
     }
 
-    VkImageMemoryBarrier barrierInfo;
-    barrierInfo.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-    barrierInfo.pNext = nullptr;
-    barrierInfo.image = _image;
-    barrierInfo.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    barrierInfo.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-    barrierInfo.srcAccessMask = 0U;
-    barrierInfo.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-    barrierInfo.srcQueueFamilyIndex = barrierInfo.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    barrierInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    barrierInfo.subresourceRange.layerCount = 1U;
-    barrierInfo.subresourceRange.levelCount = imageInfo.mipLevels;
-    barrierInfo.subresourceRange.baseArrayLayer = 0U;
-    barrierInfo.subresourceRange.baseMipLevel = 0U;
+    VkImageMemoryBarrier barrierInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+        .pNext = nullptr,
+        .srcAccessMask = 0U,
+        .dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
+        .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+        .newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .image = _image,
+
+        .subresourceRange
+        {
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .baseMipLevel = 0U,
+            .levelCount = imageInfo.mipLevels,
+            .baseArrayLayer = 0U,
+            .layerCount = 1U
+        }
+    };
 
     vkCmdPipelineBarrier ( commandBuffer,
         VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
@@ -786,12 +787,16 @@ bool Texture2D::UploadDataInternal ( Renderer &renderer,
             .z = 0
         },
 
-        .imageExtent = imageInfo.extent,
+        .imageExtent = imageInfo.extent
     };
 
     vkCmdCopyBufferToImage ( commandBuffer, _transfer, _image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1U, &copyRegion );
 
-    if ( !isGenerateMipmaps )
+    auto isMipmapImpossible = [] ( uint32_t width, uint32_t height ) noexcept -> bool {
+        return width + height < 3U;
+    };
+
+    if ( isMipmapImpossible ( imageInfo.extent.width, imageInfo.extent.height ) || !isGenerateMipmaps )
     {
         barrierInfo.subresourceRange.levelCount = 1U;
         barrierInfo.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
@@ -869,16 +874,16 @@ bool Texture2D::UploadDataInternal ( Renderer &renderer,
         &barrierInfo
     );
 
-    VkImageBlit blitInfo;
+    VkImageBlit blitInfo {};
     blitInfo.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     blitInfo.srcSubresource.layerCount = 1U;
     blitInfo.srcSubresource.baseArrayLayer = 0U;
-    memset ( blitInfo.srcOffsets, 0, sizeof ( VkOffset3D ) );
+    std::memset ( blitInfo.srcOffsets, 0, sizeof ( VkOffset3D ) );
     blitInfo.srcOffsets[ 1U ].z = 1;
     blitInfo.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     blitInfo.dstSubresource.layerCount = 1U;
     blitInfo.dstSubresource.baseArrayLayer = 0U;
-    memset ( blitInfo.dstOffsets, 0, sizeof ( VkOffset3D ) );
+    std::memset ( blitInfo.dstOffsets, 0, sizeof ( VkOffset3D ) );
     blitInfo.dstOffsets[ 1U ].z = 1;
 
     for ( uint32_t i = 1U; i < imageInfo.mipLevels; ++i )
@@ -1003,7 +1008,7 @@ bool Texture2D::UploadDataInternal ( Renderer &renderer,
     return true;
 }
 
-bool Texture2D::IsCompressed ( std::string const &fileName )
+bool Texture2D::IsCompressed ( std::string const &fileName ) noexcept
 {
     static std::regex const isKTX ( R"__(^.+\.(?:ktx|KTX)$)__" );
     std::smatch match;
@@ -1015,7 +1020,7 @@ bool Texture2D::LoadImage ( std::vector<uint8_t> &pixelData,
     int &width,
     int &height,
     int &channels
-)
+) noexcept
 {
     File file ( const_cast<std::string&> ( fileName ) );
 
@@ -1107,7 +1112,7 @@ bool Texture2D::LoadImage ( std::vector<uint8_t> &pixelData,
     return true;
 }
 
-uint32_t Texture2D::CountMipLevels ( VkExtent2D const &resolution )
+uint32_t Texture2D::CountMipLevels ( VkExtent2D const &resolution ) noexcept
 {
     uint32_t pivot = std::max ( resolution.width, resolution.height );
     uint32_t mipCount = 1U;
@@ -1121,7 +1126,7 @@ uint32_t Texture2D::CountMipLevels ( VkExtent2D const &resolution )
     return mipCount;
 }
 
-VkFormat Texture2D::PickupFormat ( int channels )
+VkFormat Texture2D::PickupFormat ( int channels ) noexcept
 {
     switch ( channels )
     {
@@ -1146,7 +1151,7 @@ VkFormat Texture2D::PickupFormat ( int channels )
     }
 }
 
-VkFormat Texture2D::ResolveFormat ( VkFormat baseFormat, eFormat format )
+VkFormat Texture2D::ResolveFormat ( VkFormat baseFormat, eFormat format ) noexcept
 {
     if ( format == eFormat::Unorm )
         return baseFormat;

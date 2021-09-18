@@ -13,24 +13,13 @@ namespace android_vulkan {
 
 constexpr static uint32_t const VULKAN_TEXTURE_CUBE_LAYERS = 6U;
 
-TextureCube::TextureCube () noexcept:
-    _format ( VK_FORMAT_UNDEFINED ),
-    _image ( VK_NULL_HANDLE ),
-    _imageDeviceMemory ( VK_NULL_HANDLE ),
-    _imageView ( VK_NULL_HANDLE ),
-    _mipLevels ( 0U ),
-    _resolution { .width = 0U, .height = 0U },
-    _transfer ( VK_NULL_HANDLE ),
-    _transferDeviceMemory ( VK_NULL_HANDLE )
-{
-    // NOTHING
-}
+//----------------------------------------------------------------------------------------------------------------------
 
 bool TextureCube::CreateRenderTarget ( Renderer &renderer,
     VkExtent2D const &resolution,
     VkFormat format,
     VkImageUsageFlags usage
-)
+) noexcept
 {
     if ( !CreateImageResources ( renderer, resolution, format, usage, 1U ) )
         return false;
@@ -45,7 +34,7 @@ bool TextureCube::CreateRenderTarget ( Renderer &renderer,
 bool TextureCube::UploadData ( android_vulkan::Renderer &renderer,
     TextureCubeData const &data,
     VkCommandBuffer commandBuffer
-)
+) noexcept
 {
     constexpr auto const sideCount = static_cast<size_t> ( VULKAN_TEXTURE_CUBE_LAYERS );
 
@@ -350,7 +339,7 @@ bool TextureCube::UploadData ( android_vulkan::Renderer &renderer,
     return true;
 }
 
-void TextureCube::FreeResources ( VkDevice device )
+void TextureCube::FreeResources ( VkDevice device ) noexcept
 {
     _format = VK_FORMAT_UNDEFINED;
     _mipLevels = 0U;
@@ -380,7 +369,7 @@ void TextureCube::FreeResources ( VkDevice device )
     AV_UNREGISTER_IMAGE ( "TextureCube::_image" )
 }
 
-void TextureCube::FreeTransferResources ( VkDevice device )
+void TextureCube::FreeTransferResources ( VkDevice device ) noexcept
 {
     if ( _transferDeviceMemory != VK_NULL_HANDLE )
     {
@@ -397,28 +386,28 @@ void TextureCube::FreeTransferResources ( VkDevice device )
     AV_UNREGISTER_BUFFER ( "TextureCube::_transfer" )
 }
 
-VkFormat TextureCube::GetFormat () const
+VkFormat TextureCube::GetFormat () const noexcept
 {
     assert ( _format != VK_FORMAT_UNDEFINED );
     return _format;
 }
 
-VkImage TextureCube::GetImage () const
+VkImage TextureCube::GetImage () const noexcept
 {
     return _image;
 }
 
-VkImageView TextureCube::GetImageView () const
+VkImageView TextureCube::GetImageView () const noexcept
 {
     return _imageView;
 }
 
-[[maybe_unused]] uint8_t TextureCube::GetMipLevelCount () const
+[[maybe_unused]] uint8_t TextureCube::GetMipLevelCount () const noexcept
 {
     return _mipLevels;
 }
 
-[[maybe_unused]] VkExtent2D const& TextureCube::GetResolution () const
+[[maybe_unused]] VkExtent2D const& TextureCube::GetResolution () const noexcept
 {
     return _resolution;
 }
@@ -428,7 +417,7 @@ VkImageView TextureCube::GetImageView () const
     VkFormat format,
     VkImageUsageFlags usage,
     uint32_t mipLevels
-)
+) noexcept
 {
     VkImageCreateInfo const imageInfo
     {

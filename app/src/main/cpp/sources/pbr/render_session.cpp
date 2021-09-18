@@ -16,29 +16,6 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-RenderSession::RenderSession () noexcept:
-    _frustum {},
-    _gBuffer {},
-    _gBufferDescriptorPool ( VK_NULL_HANDLE ),
-    _gBufferFramebuffer ( VK_NULL_HANDLE ),
-    _gBufferImageBarrier {},
-    _gBufferRenderPass ( VK_NULL_HANDLE ),
-    _gBufferSlotMapper ( VK_NULL_HANDLE ),
-    _geometryPass {},
-    _lightHandlers {},
-    _lightPass {},
-    _opaqueMeshCount ( 0U ),
-    _presentPass {},
-    _renderSessionStats {},
-    _samplerManager {},
-    _texturePresentDescriptorSetLayout {},
-    _view {},
-    _viewProjection {},
-    _viewerLocal {}
-{
-    // NOTHING
-}
-
 void RenderSession::Begin ( GXMat4 const &viewerLocal, GXMat4 const &projection )
 {
     _opaqueMeshCount = 0U;

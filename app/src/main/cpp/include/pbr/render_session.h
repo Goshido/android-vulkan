@@ -19,32 +19,32 @@ class RenderSession final
         using LightHandler = void ( RenderSession::* ) ( LightRef &light );
 
     private:
-        GXProjectionClipPlanes                          _frustum;
+        GXProjectionClipPlanes                          _frustum {};
 
-        GBuffer                                         _gBuffer;
-        VkDescriptorPool                                _gBufferDescriptorPool;
-        VkFramebuffer                                   _gBufferFramebuffer;
-        VkImageMemoryBarrier                            _gBufferImageBarrier;
-        VkRenderPass                                    _gBufferRenderPass;
-        VkDescriptorSet                                 _gBufferSlotMapper;
+        GBuffer                                         _gBuffer {};
+        VkDescriptorPool                                _gBufferDescriptorPool = VK_NULL_HANDLE;
+        VkFramebuffer                                   _gBufferFramebuffer = VK_NULL_HANDLE;
+        VkImageMemoryBarrier                            _gBufferImageBarrier {};
+        VkRenderPass                                    _gBufferRenderPass = VK_NULL_HANDLE;
+        VkDescriptorSet                                 _gBufferSlotMapper = VK_NULL_HANDLE;
 
-        GeometryPass                                    _geometryPass;
-        std::unordered_map<eLightType, LightHandler>    _lightHandlers;
-        LightPass                                       _lightPass;
-        size_t                                          _opaqueMeshCount;
+        GeometryPass                                    _geometryPass {};
+        std::unordered_map<eLightType, LightHandler>    _lightHandlers {};
+        LightPass                                       _lightPass {};
+        size_t                                          _opaqueMeshCount = 0U;
 
-        PresentPass                                     _presentPass;
-        RenderSessionStats                              _renderSessionStats;
-        SamplerManager                                  _samplerManager;
-        TexturePresentDescriptorSetLayout               _texturePresentDescriptorSetLayout;
+        PresentPass                                     _presentPass {};
+        RenderSessionStats                              _renderSessionStats {};
+        SamplerManager                                  _samplerManager {};
+        TexturePresentDescriptorSetLayout               _texturePresentDescriptorSetLayout {};
 
-        GXMat4                                          _cvvToView;
-        GXMat4                                          _view;
-        GXMat4                                          _viewProjection;
-        GXMat4                                          _viewerLocal;
+        GXMat4                                          _cvvToView {};
+        GXMat4                                          _view {};
+        GXMat4                                          _viewProjection {};
+        GXMat4                                          _viewerLocal {};
 
     public:
-        RenderSession () noexcept;
+        RenderSession () = default;
 
         RenderSession ( RenderSession const & ) = delete;
         RenderSession& operator = ( RenderSession const & ) = delete;

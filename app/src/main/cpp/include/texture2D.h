@@ -24,22 +24,22 @@ enum class eFormat : uint8_t
 class Texture2D final
 {
     private:
-        VkFormat            _format;
+        VkFormat            _format = VK_FORMAT_UNDEFINED;
 
-        VkImage             _image;
-        VkDeviceMemory      _imageDeviceMemory;
-        VkImageView         _imageView;
+        VkImage             _image = VK_NULL_HANDLE;
+        VkDeviceMemory      _imageDeviceMemory = VK_NULL_HANDLE;
+        VkImageView         _imageView = VK_NULL_HANDLE;
 
-        uint8_t             _mipLevels;
-        VkExtent2D          _resolution;
+        uint8_t             _mipLevels = 0U;
+        VkExtent2D          _resolution { .width = 0U, .height = 0U };
 
-        VkBuffer            _transfer;
-        VkDeviceMemory      _transferDeviceMemory;
+        VkBuffer            _transfer = VK_NULL_HANDLE;
+        VkDeviceMemory      _transferDeviceMemory = VK_NULL_HANDLE;
 
-        std::string         _fileName;
+        std::string         _fileName {};
 
     public:
-        Texture2D () noexcept;
+        Texture2D () = default;
 
         Texture2D ( Texture2D const & ) = delete;
         Texture2D& operator = ( Texture2D const & ) = delete;
@@ -53,22 +53,22 @@ class Texture2D final
             VkFormat format,
             VkImageUsageFlags usage,
             Renderer &renderer
-        );
+        ) noexcept;
 
-        void FreeResources ( VkDevice device );
+        void FreeResources ( VkDevice device ) noexcept;
 
         // optimization: _transfer and _transferDeviceMemory are needed only for uploading pixel data to the Vulkan
         // texture object. Uploading itself is done via command submit: vkCmdCopyBufferToImage. So you can make a
         // bunch of vkCmdCopyBufferToImage call for different textures and after completion you can free
         // _transfer and _transferDeviceMemory for Texture2D objects.
-        void FreeTransferResources ( VkDevice device );
+        void FreeTransferResources ( VkDevice device ) noexcept;
 
-        [[nodiscard]] VkFormat GetFormat () const;
-        [[nodiscard]] VkImage GetImage () const;
-        [[nodiscard]] VkImageView GetImageView () const;
-        [[nodiscard]] uint8_t GetMipLevelCount () const;
-        [[nodiscard]] std::string const& GetName () const;
-        [[nodiscard]] VkExtent2D const& GetResolution () const;
+        [[nodiscard]] VkFormat GetFormat () const noexcept;
+        [[nodiscard]] VkImage GetImage () const noexcept;
+        [[nodiscard]] VkImageView GetImageView () const noexcept;
+        [[nodiscard]] uint8_t GetMipLevelCount () const noexcept;
+        [[nodiscard]] std::string const& GetName () const noexcept;
+        [[nodiscard]] VkExtent2D const& GetResolution () const noexcept;
 
         // Supported formats: PNG.
         [[maybe_unused, nodiscard]] bool UploadData ( Renderer &renderer,
@@ -76,7 +76,7 @@ class Texture2D final
             eFormat format,
             bool isGenerateMipmaps,
             VkCommandBuffer commandBuffer
-        );
+        ) noexcept;
 
         // Supported media containers:
         // - PNG
@@ -86,7 +86,7 @@ class Texture2D final
             eFormat format,
             bool isGenerateMipmaps,
             VkCommandBuffer commandBuffer
-        );
+        ) noexcept;
 
         // Supported media containers:
         // - PNG
@@ -96,7 +96,7 @@ class Texture2D final
             eFormat format,
             bool isGenerateMipmaps,
             VkCommandBuffer commandBuffer
-        );
+        ) noexcept;
 
         // Supported media containers:
         // - PNG
@@ -106,7 +106,7 @@ class Texture2D final
             eFormat format,
             bool isGenerateMipmaps,
             VkCommandBuffer commandBuffer
-        );
+        ) noexcept;
 
         [[nodiscard]] bool UploadData ( Renderer &renderer,
             uint8_t const* data,
@@ -115,7 +115,7 @@ class Texture2D final
             VkFormat format,
             bool isGenerateMipmaps,
             VkCommandBuffer commandBuffer
-        );
+        ) noexcept;
 
     private:
         [[nodiscard]] bool CreateCommonResources ( VkImageCreateInfo &imageInfo,
@@ -124,19 +124,22 @@ class Texture2D final
             VkImageUsageFlags usage,
             uint8_t mips,
             Renderer &renderer
-        );
+        ) noexcept;
 
         // The method returns true if success. Otherwise the method returns false.
         // Note the method maps "_transferDeviceMemory" to the "mappedBuffer". So user code MUST invoke vkUnmapMemory.
-        [[nodiscard]] bool CreateTransferResources ( uint8_t* &mappedBuffer, VkDeviceSize size, Renderer &renderer );
+        [[nodiscard]] bool CreateTransferResources ( uint8_t* &mappedBuffer,
+            VkDeviceSize size,
+            Renderer &renderer
+        ) noexcept;
 
-        void FreeResourceInternal ( VkDevice device );
+        void FreeResourceInternal ( VkDevice device ) noexcept;
 
         [[nodiscard]] bool UploadCompressed ( Renderer &renderer,
             std::string const &fileName,
             eFormat format,
             VkCommandBuffer commandBuffer
-        );
+        ) noexcept;
 
         [[nodiscard]] bool UploadDataInternal ( Renderer &renderer,
             uint8_t const* data,
@@ -144,20 +147,20 @@ class Texture2D final
             bool isGenerateMipmaps,
             VkImageCreateInfo const &imageInfo,
             VkCommandBuffer commandBuffer
-        );
+        ) noexcept;
 
-        [[nodiscard]] static bool IsCompressed ( std::string const &fileName );
+        [[nodiscard]] static bool IsCompressed ( std::string const &fileName ) noexcept;
 
         [[nodiscard]] static bool LoadImage ( std::vector<uint8_t> &pixelData,
             std::string const &fileName,
             int &width,
             int &height,
             int &channels
-        );
+        ) noexcept;
 
-        [[nodiscard]] static uint32_t CountMipLevels ( VkExtent2D const &resolution );
-        [[nodiscard]] static VkFormat PickupFormat ( int channels );
-        [[nodiscard]] static VkFormat ResolveFormat ( VkFormat baseFormat, eFormat format );
+        [[nodiscard]] static uint32_t CountMipLevels ( VkExtent2D const &resolution ) noexcept;
+        [[nodiscard]] static VkFormat PickupFormat ( int channels ) noexcept;
+        [[nodiscard]] static VkFormat ResolveFormat ( VkFormat baseFormat, eFormat format ) noexcept;
 };
 
 } // namespace android_vulkan

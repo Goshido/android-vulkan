@@ -126,7 +126,7 @@ bool VulkanLoader::AcquireInstanceFunctions ( VkInstance instance ) noexcept
         LogError ( "VulkanLoader::AcquireInstanceFunctions - Can't acquire " #name "." );           \
                                                                                                     \
         if ( !Unload () )                                                                           \
-            LogError ( "VulkanLoader::AcquireInstanceFunctions - Can't unload." );     \
+            LogError ( "VulkanLoader::AcquireInstanceFunctions - Can't unload." );                  \
                                                                                                     \
         return false;                                                                               \
     }

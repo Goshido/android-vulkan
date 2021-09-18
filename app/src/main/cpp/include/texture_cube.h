@@ -22,20 +22,20 @@ struct TextureCubeData final
 class TextureCube final
 {
     private:
-        VkFormat            _format;
+        VkFormat            _format = VK_FORMAT_UNDEFINED;
 
-        VkImage             _image;
-        VkDeviceMemory      _imageDeviceMemory;
-        VkImageView         _imageView;
+        VkImage             _image = VK_NULL_HANDLE;
+        VkDeviceMemory      _imageDeviceMemory = VK_NULL_HANDLE;
+        VkImageView         _imageView = VK_NULL_HANDLE;
 
-        uint8_t             _mipLevels;
-        VkExtent2D          _resolution;
+        uint8_t             _mipLevels = 0U;
+        VkExtent2D          _resolution { .width = 0U, .height = 0U };
 
-        VkBuffer            _transfer;
-        VkDeviceMemory      _transferDeviceMemory;
+        VkBuffer            _transfer = VK_NULL_HANDLE;
+        VkDeviceMemory      _transferDeviceMemory = VK_NULL_HANDLE;
 
     public:
-        TextureCube () noexcept;
+        TextureCube () = default;
 
         TextureCube ( TextureCube const & ) = delete;
         TextureCube& operator = ( TextureCube const & ) = delete;
@@ -49,27 +49,27 @@ class TextureCube final
             VkExtent2D const &resolution,
             VkFormat format,
             VkImageUsageFlags usage
-        );
+        ) noexcept;
 
         // Supported media containers: KTXv1 (ASTC with mipmaps).
         [[nodiscard]] bool UploadData ( Renderer &renderer,
             TextureCubeData const &data,
             VkCommandBuffer commandBuffer
-        );
+        ) noexcept;
 
-        void FreeResources ( VkDevice device );
+        void FreeResources ( VkDevice device ) noexcept;
 
         // optimization: _transfer and _transferDeviceMemory are needed only for uploading pixel data to the Vulkan
         // texture object. Uploading itself is done via command submit: vkCmdCopyBufferToImage. So you can make a
         // bunch of vkCmdCopyBufferToImage call for different textures and after completion you can free
         // _transfer and _transferDeviceMemory for Texture2D objects.
-        void FreeTransferResources ( VkDevice device );
+        void FreeTransferResources ( VkDevice device ) noexcept;
 
-        [[nodiscard]] VkFormat GetFormat () const;
-        [[nodiscard]] VkImage GetImage () const;
-        [[nodiscard]] VkImageView GetImageView () const;
-        [[maybe_unused, nodiscard]] uint8_t GetMipLevelCount () const;
-        [[maybe_unused, nodiscard]] VkExtent2D const& GetResolution () const;
+        [[nodiscard]] VkFormat GetFormat () const noexcept;
+        [[nodiscard]] VkImage GetImage () const noexcept;
+        [[nodiscard]] VkImageView GetImageView () const noexcept;
+        [[maybe_unused, nodiscard]] uint8_t GetMipLevelCount () const noexcept;
+        [[maybe_unused, nodiscard]] VkExtent2D const& GetResolution () const noexcept;
 
     private:
         [[maybe_unused, nodiscard]] bool CreateImageResources ( Renderer &renderer,
@@ -77,7 +77,7 @@ class TextureCube final
             VkFormat format,
             VkImageUsageFlags usage,
             uint32_t mipLevels
-        );
+        ) noexcept;
 };
 
 } // namespace android_vulkan

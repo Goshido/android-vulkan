@@ -39,26 +39,7 @@ constexpr static float const Z_FAR = 1.0e+3F;
 //----------------------------------------------------------------------------------------------------------------------
 
 Game::Game ( char const* fragmentShader ) noexcept:
-    _commandPool ( VK_NULL_HANDLE ),
-    _descriptorPool ( VK_NULL_HANDLE ),
-    _descriptorSetLayout ( VK_NULL_HANDLE ),
-    _drawcalls {},
-    _pipelineLayout ( VK_NULL_HANDLE ),
-    _transformBuffer {},
-    _angle ( 0.0F ),
-    _depthStencilRenderTarget {},
-    _fragmentShader ( fragmentShader ),
-    _framebuffers {},
-    _pipeline ( VK_NULL_HANDLE ),
-    _renderPass ( VK_NULL_HANDLE ),
-    _renderPassEndSemaphore ( VK_NULL_HANDLE ),
-    _renderTargetAcquiredSemaphore ( VK_NULL_HANDLE ),
-    _sampler01Mips ( VK_NULL_HANDLE ),
-    _sampler09Mips ( VK_NULL_HANDLE ),
-    _sampler10Mips ( VK_NULL_HANDLE ),
-    _sampler11Mips ( VK_NULL_HANDLE ),
-    _vertexShaderModule ( VK_NULL_HANDLE ),
-    _fragmentShaderModule ( VK_NULL_HANDLE )
+    _fragmentShader ( fragmentShader )
 {
     // NOTHING
 }
@@ -217,7 +198,10 @@ bool Game::CreateCommonTextures ( android_vulkan::Renderer &renderer, VkCommandB
     {
         auto& drawcall = _drawcalls[ i ];
 
-        bool result = drawcall._diffuse.UploadData ( renderer,
+        if ( i == 0U )
+            GXMat3 const stop {};
+
+        bool const result = drawcall._diffuse.UploadData ( renderer,
             textureFiles[ i ],
             android_vulkan::eFormat::sRGB,
             true,
@@ -941,59 +925,73 @@ void Game::DestroyPipelineLayout ( VkDevice device )
 
 bool Game::CreateRenderPass ( android_vulkan::Renderer &renderer )
 {
-    VkAttachmentDescription attachmentInfo[ 2U ];
-    VkAttachmentDescription& colorAttachment = attachmentInfo[ 0U ];
-    colorAttachment.format = renderer.GetSurfaceFormat ();
-    colorAttachment.flags = 0U;
-    colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-    colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-    colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    VkAttachmentDescription const attachmentInfo[] =
+    {
+        // Color
+        {
+            .flags = 0U,
+            .format = renderer.GetSurfaceFormat (),
+            .samples = VK_SAMPLE_COUNT_1_BIT,
+            .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+            .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+            .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+            .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+            .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+            .finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
+        },
 
-    VkAttachmentDescription& depthStencilAttachment = attachmentInfo[ 1U ];
-    depthStencilAttachment.format = renderer.GetDefaultDepthStencilFormat ();
-    depthStencilAttachment.flags = 0U;
-    depthStencilAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-    depthStencilAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    depthStencilAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-    depthStencilAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    depthStencilAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    depthStencilAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    depthStencilAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        // Depth stencil
+        {
+            .flags = 0U,
+            .format = renderer.GetDefaultDepthStencilFormat (),
+            .samples = VK_SAMPLE_COUNT_1_BIT,
+            .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+            .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+            .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+            .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+            .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+            .finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
+        }
+    };
 
-    VkAttachmentReference colorReference;
-    colorReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-    colorReference.attachment = 0U;
+    constexpr static VkAttachmentReference const colorReference
+    {
+        .attachment = 0U,
+        .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+    };
 
-    VkAttachmentReference depthStencilReference;
-    depthStencilReference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-    depthStencilReference.attachment = 1U;
+    constexpr static VkAttachmentReference const depthStencilReference
+    {
+        .attachment = 1U,
+        .layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
+    };
 
-    VkSubpassDescription subpassInfo;
-    subpassInfo.flags = 0U;
-    subpassInfo.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-    subpassInfo.colorAttachmentCount = 1U;
-    subpassInfo.pColorAttachments = &colorReference;
-    subpassInfo.pDepthStencilAttachment = &depthStencilReference;
-    subpassInfo.preserveAttachmentCount = 0U;
-    subpassInfo.pPreserveAttachments = nullptr;
-    subpassInfo.inputAttachmentCount = 0U;
-    subpassInfo.pInputAttachments = nullptr;
-    subpassInfo.pResolveAttachments = nullptr;
+    constexpr VkSubpassDescription const subpassInfo
+    {
+        .flags = 0U,
+        .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
+        .inputAttachmentCount = 0U,
+        .pInputAttachments = nullptr,
+        .colorAttachmentCount = 1U,
+        .pColorAttachments = &colorReference,
+        .pResolveAttachments = nullptr,
+        .pDepthStencilAttachment = &depthStencilReference,
+        .preserveAttachmentCount = 0U,
+        .pPreserveAttachments = nullptr
+    };
 
-    VkRenderPassCreateInfo renderPassInfo;
-    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-    renderPassInfo.pNext = nullptr;
-    renderPassInfo.flags = 0U;
-    renderPassInfo.attachmentCount = static_cast<uint32_t> ( std::size ( attachmentInfo ) );
-    renderPassInfo.pAttachments = attachmentInfo;
-    renderPassInfo.dependencyCount = 0U;
-    renderPassInfo.pDependencies = nullptr;
-    renderPassInfo.subpassCount = 1U;
-    renderPassInfo.pSubpasses = &subpassInfo;
+    VkRenderPassCreateInfo const renderPassInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .attachmentCount = static_cast<uint32_t> ( std::size ( attachmentInfo ) ),
+        .pAttachments = attachmentInfo,
+        .subpassCount = 1U,
+        .pSubpasses = &subpassInfo,
+        .dependencyCount = 0U,
+        .pDependencies = nullptr
+    };
 
     const bool result = android_vulkan::Renderer::CheckVkResult (
         vkCreateRenderPass ( renderer.GetDevice (), &renderPassInfo, nullptr, &_renderPass ),
@@ -1268,7 +1266,7 @@ bool Game::UpdateUniformBuffer ( android_vulkan::Renderer &renderer, double delt
     _transform._normalTransform.RotationY ( _angle );
     _transform._normalTransform.SetOrigin ( GXVec3 ( 0.0F, -1.0F, 3.0F ) );
 
-    GXMat4 tmp;
+    GXMat4 tmp {};
     tmp.Multiply ( _transform._normalTransform, _projectionMatrix );
     _transform._transform.Multiply ( tmp, renderer.GetPresentationEngineTransform () );
 

@@ -29,56 +29,50 @@ class OpaqueCall final
 
         // Note maxBatch will be updated only if it's less than current max unique elements of this drawcall.
         // Note maxUnique will be updated only if it's less than current max unique elements of this drawcall.
-        explicit OpaqueCall ( size_t &maxBatch,
-            size_t &maxUnique,
-            MeshRef &mesh,
+        explicit OpaqueCall ( MeshRef &mesh,
             const GXMat4 &local,
             GXAABB const &worldBounds,
             android_vulkan::Half4 const &color0,
             android_vulkan::Half4 const &color1,
             android_vulkan::Half4 const &color2,
             android_vulkan::Half4 const &color3
-        );
+        ) noexcept;
 
         ~OpaqueCall () = default;
 
         // The method returns the maximum batch item count.
         // Note maxBatch will be updated only if it's less than current max unique elements of this drawcall.
         // Note maxUnique will be updated only if it's less than current max unique elements of this drawcall.
-        void Append ( size_t &maxBatch,
-            size_t &maxUnique,
-            MeshRef &mesh,
+        void Append ( MeshRef &mesh,
             const GXMat4 &local,
             GXAABB const &worldBounds,
             android_vulkan::Half4 const &color0,
             android_vulkan::Half4 const &color1,
             android_vulkan::Half4 const &color2,
             android_vulkan::Half4 const &color3
-        );
+        ) noexcept;
 
-        [[nodiscard]] BatchList const& GetBatchList () const;
-        [[nodiscard]] UniqueList const& GetUniqueList () const;
+        [[nodiscard]] BatchList const& GetBatchList () const noexcept;
+        [[nodiscard]] UniqueList const& GetUniqueList () const noexcept;
 
     private:
-        void AddBatch ( size_t &maxBatch,
-            MeshRef &mesh,
+        void AddBatch ( MeshRef &mesh,
             GXMat4 const &local,
             GXAABB const &worldBounds,
             android_vulkan::Half4 const &color0,
             android_vulkan::Half4 const &color1,
             android_vulkan::Half4 const &color2,
             android_vulkan::Half4 const &color3
-        );
+        ) noexcept;
 
-        void AddUnique ( size_t &maxUnique,
-            MeshRef &mesh,
+        void AddUnique ( MeshRef &mesh,
             GXMat4 const &local,
             GXAABB const &worldBounds,
             android_vulkan::Half4 const &color0,
             android_vulkan::Half4 const &color1,
             android_vulkan::Half4 const &color2,
             android_vulkan::Half4 const &color3
-        );
+        ) noexcept;
 };
 
 } // namespace pbr

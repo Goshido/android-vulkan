@@ -11,7 +11,7 @@ GX_RESTORE_WARNING_STATE
 namespace android_vulkan {
 
 constexpr static uint16_t const ITERATIONS = 4U;
-constexpr static float const STABILIZATION_FACTOR = 0.2F;
+constexpr static float const STABILIZATION_FACTOR = 0.4F;
 
 static_assert ( STABILIZATION_FACTOR >= 0.0F && STABILIZATION_FACTOR <= 1.0F,
     "The stabilization factor must be in range [0.0F, 1.0F]" );
@@ -71,7 +71,7 @@ void VelocitySolver::SolvePair ( ContactManifold &manifold, float fixedTimeStepI
     float const invMassA = bodyA.GetMassInverse ();
     float const invMassB = bodyB.GetMassInverse ();
 
-    float const gamma = -STABILIZATION_FACTOR * fixedTimeStepInverse * manifold._penetration;
+    float const gamma = -STABILIZATION_FACTOR * fixedTimeStepInverse;
 
     GXVec3 dV {};
     dV.Subtract ( bodyB.GetVelocityLinear (), bodyA.GetVelocityLinear () );
@@ -146,7 +146,7 @@ void VelocitySolver::SolvePair ( ContactManifold &manifold, float fixedTimeStepI
         GXVec3 vClosing {};
         vClosing.Sum ( alpha, dV );
 
-        float const b = gamma + contact._restitution * vClosing.DotProduct ( manifold._normal );
+        float const b = gamma * contact._penetration + contact._restitution * vClosing.DotProduct ( manifold._normal );
 
         setup ( contact._dataT,
             manifold._tangent,
@@ -260,7 +260,8 @@ void VelocitySolver::SolveSingle ( ContactManifold &manifold, float fixedTimeSte
     GXVec3 const& cmDynamic = bodyDynamic.GetLocation ();
     GXMat3 const& invInertiaTensor = bodyDynamic.GetInertiaTensorInverse ();
     float const invMass = bodyDynamic.GetMassInverse ();
-    float const gamma = -STABILIZATION_FACTOR * fixedTimeStepInverse * manifold._penetration;
+
+    float const gamma = -STABILIZATION_FACTOR * fixedTimeStepInverse;
 
     GXVec3 const& cmKinematic = bodyKinematic.GetLocation ();
     GXVec3 const& vKinematic = bodyKinematic.GetVelocityLinear ();
@@ -328,7 +329,7 @@ void VelocitySolver::SolveSingle ( ContactManifold &manifold, float fixedTimeSte
         GXVec3 vClosing {};
         vClosing.Sum ( dV, alpha );
 
-        float const b = gamma + contact._restitution * vClosing.DotProduct ( manifold._normal );
+        float const b = gamma * contact._penetration + contact._restitution * vClosing.DotProduct ( manifold._normal );
 
         setup ( contact._dataT,
             manifold._tangent,

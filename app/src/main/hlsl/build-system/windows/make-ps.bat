@@ -1,5 +1,5 @@
 @echo off
-set COMPILE_FLAGS=-spirv -WX -O3 -fvk-use-dx-layout -enable-16bit-types
+set COMPILE_FLAGS=-spirv -fvk-use-dx-layout -fspv-reduce-load-size -fspv-target-env=vulkan1.1 -enable-16bit-types -WX -O3
 set PIVOT_DIRECTORY=.\..\..\..
 
 @echo on

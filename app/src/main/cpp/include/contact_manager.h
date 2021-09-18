@@ -44,6 +44,7 @@ struct Contact final
 {
     GXVec3                      _pointA {};
     GXVec3                      _pointB {};
+    float                       _penetration = 0.0F;
 
     // Velocity solver entities
     VelocitySolverData          _dataT {};
@@ -78,8 +79,6 @@ struct ContactManifold final
     GXVec3                          _tangent {};
     GXVec3                          _bitangent {};
     GXVec3                          _normal {};
-
-    float                           _penetration = 0.0F;
 
     uint64_t                        _timeStamp = 0U;
 

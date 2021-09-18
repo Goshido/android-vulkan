@@ -10,7 +10,7 @@ MeshGroup::MeshGroup ( MeshRef &mesh,
     android_vulkan::Half4 const &color1,
     android_vulkan::Half4 const &color2,
     android_vulkan::Half4 const &color3
-):
+) noexcept:
     _mesh ( mesh )
 {
     _opaqueData.emplace_back (

@@ -1,4 +1,5 @@
 #include <core.h>
+#include <shape_box.h>
 #include <mandelbrot/mandelbrot_analytic_color.h>
 #include <mandelbrot/mandelbrot_lut_color.h>
 #include <pbr/pbr_game.h>
@@ -47,7 +48,7 @@ enum class eGame : uint16_t
         { android_vulkan::eGame::World1x1, std::make_shared<pbr::mario::World1x1> () }
     };
 
-    android_vulkan::Core core ( *app, *( games.find ( android_vulkan::eGame::PBR )->second ) );
+    android_vulkan::Core core ( *app, *( games.find ( android_vulkan::eGame::PhysicsSandbox )->second ) );
 
     for ( ; ; )
     {

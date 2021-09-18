@@ -28,7 +28,7 @@ struct MeshGroup final
         android_vulkan::Half4 const &color1,
         android_vulkan::Half4 const &color2,
         android_vulkan::Half4 const &color3
-    );
+    ) noexcept;
 
     ~MeshGroup () = default;
 };

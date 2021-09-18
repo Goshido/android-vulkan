@@ -2,7 +2,7 @@
 
 ## Compile tool
 
-Current project is using [_DXC_ compiler](https://github.com/microsoft/DirectXShaderCompiler) to produce _SPIR-V_ binary representations.
+Current project is using [_DXC_ compiler](https://github.com/microsoft/DirectXShaderCompiler) to produce _SPIR-V_ binary representations. The manual is valid against **_DXC v1.6.2109.10005_**.
 
 The _android-vulkan_ project is using _HLSL_ shader language as high level programming language. All shader sources are located in the following directory:
 
@@ -24,16 +24,22 @@ The _android-vulkan_ project is using _HLSL_ shader language as high level progr
 -enable-16bit-types
 ```
 
+**Note:** the project is using `Vulkan 1.1` as target platform. To enable this feature you have to specify the following _DXC_ flag:
+
+```txt
+-fspv-target-env=vulkan1.1
+```
+
 ## Compile and deploy vertex shader module
 
 ```txt
-dxc.exe -spirv -WX -O3 -fvk-use-dx-layout -enable-16bit-types -T vs_6_7 -E VS -I <android-vulkan directory>\app\src\main\hlsl -I <android-vulkan directory>\app\src\main\cpp\include\pbr -Fo <android-vulkan directory>\app\src\main\assets\shaders\<file name>-vs.spv <file name>.vs
+dxc.exe -spirv -fvk-use-dx-layout -fspv-reduce-load-size -fspv-target-env=vulkan1.1 -enable-16bit-types -WX -O3 -T vs_6_7 -E VS -I <android-vulkan directory>\app\src\main\hlsl -I <android-vulkan directory>\app\src\main\cpp\include\pbr -Fo <android-vulkan directory>\app\src\main\assets\shaders\<file name>-vs.spv <file name>.vs
 ```
 
 ## Compile and deploy fragment shader module
 
 ```txt
-dxc.exe -spirv -WX -O3 -fvk-use-dx-layout -enable-16bit-types -T ps_6_7 -E PS -I <android-vulkan directory>\app\src\main\hlsl -Fo <android-vulkan directory>\app\src\main\assets\shaders\<file name>-ps.spv <file name>.ps
+dxc.exe -spirv -fvk-use-dx-layout -fspv-reduce-load-size -fspv-target-env=vulkan1.1 -enable-16bit-types -WX -O3 -T ps_6_7 -E PS -I <android-vulkan directory>\app\src\main\hlsl -Fo <android-vulkan directory>\app\src\main\assets\shaders\<file name>-ps.spv <file name>.ps
 ```
 
 ## _SPIR-V_ disassembler via _DXC_
@@ -58,4 +64,4 @@ For example:
 
 Variable name | Value
 --- | ---
-`ANDROID_VULKAN_DXC_ROOT` | `D:\Development\DXC-builds\Release-2021-04-17\bin`
+`ANDROID_VULKAN_DXC_ROOT` | `D:\Development\DXC-builds\Release-2021-09-11\bin`

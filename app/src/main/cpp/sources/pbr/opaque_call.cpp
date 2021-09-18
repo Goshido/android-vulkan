@@ -3,59 +3,54 @@
 
 namespace pbr {
 
-OpaqueCall::OpaqueCall ( size_t &maxBatch,
-    size_t &maxUnique,
-    MeshRef &mesh,
+OpaqueCall::OpaqueCall ( MeshRef &mesh,
     GXMat4 const &local,
     GXAABB const &worldBounds,
     android_vulkan::Half4 const &color0,
     android_vulkan::Half4 const &color1,
     android_vulkan::Half4 const &color2,
     android_vulkan::Half4 const &color3
-)
+) noexcept
 {
-    Append ( maxBatch, maxUnique, mesh, local, worldBounds, color0, color1, color2, color3 );
+    Append ( mesh, local, worldBounds, color0, color1, color2, color3 );
 }
 
-OpaqueCall::BatchList const& OpaqueCall::GetBatchList () const
+OpaqueCall::BatchList const& OpaqueCall::GetBatchList () const noexcept
 {
     return _batch;
 }
 
-OpaqueCall::UniqueList const& OpaqueCall::GetUniqueList () const
+OpaqueCall::UniqueList const& OpaqueCall::GetUniqueList () const noexcept
 {
     return _unique;
 }
 
-void OpaqueCall::Append ( size_t &maxBatch,
-    size_t &maxUnique,
-    MeshRef &mesh,
+void OpaqueCall::Append ( MeshRef &mesh,
     GXMat4 const &local,
     GXAABB const &worldBounds,
     android_vulkan::Half4 const &color0,
     android_vulkan::Half4 const &color1,
     android_vulkan::Half4 const &color2,
     android_vulkan::Half4 const &color3
-)
+) noexcept
 {
     if ( mesh->IsUnique () )
     {
-        AddUnique ( maxUnique, mesh, local, worldBounds, color0, color1, color2, color3 );
+        AddUnique ( mesh, local, worldBounds, color0, color1, color2, color3 );
         return;
     }
 
-    AddBatch ( maxBatch, mesh, local, worldBounds, color0, color1, color2, color3 );
+    AddBatch ( mesh, local, worldBounds, color0, color1, color2, color3 );
 }
 
-void OpaqueCall::AddBatch ( size_t &maxBatch,
-    MeshRef &mesh,
+void OpaqueCall::AddBatch ( MeshRef &mesh,
     GXMat4 const &local,
     GXAABB const &worldBounds,
     android_vulkan::Half4 const &color0,
     android_vulkan::Half4 const &color1,
     android_vulkan::Half4 const &color2,
     android_vulkan::Half4 const &color3
-)
+) noexcept
 {
     const std::string& name = mesh->GetName ();
     auto findResult = _batch.find ( name );
@@ -67,39 +62,31 @@ void OpaqueCall::AddBatch ( size_t &maxBatch,
                 std::string_view ( name ), MeshGroup ( mesh, local, worldBounds, color0, color1, color2, color3 )
             )
         );
-    }
-    else
-    {
-        findResult->second._opaqueData.emplace_back (
-            OpaqueData {
-                ._isVisible = true,
-                ._local = local,
-                ._worldBounds = worldBounds,
-                ._color0 = color0,
-                ._color1 = color1,
-                ._color2 = color2,
-                ._color3 = color3
-            }
-        );
-    }
 
-    size_t const count = _batch.size ();
-
-    if ( maxBatch >= count )
         return;
+    }
 
-    maxBatch = count;
+    findResult->second._opaqueData.emplace_back (
+        OpaqueData {
+            ._isVisible = true,
+            ._local = local,
+            ._worldBounds = worldBounds,
+            ._color0 = color0,
+            ._color1 = color1,
+            ._color2 = color2,
+            ._color3 = color3
+        }
+    );
 }
 
-void OpaqueCall::AddUnique ( size_t &maxUnique,
-    MeshRef &mesh,
+void OpaqueCall::AddUnique ( MeshRef &mesh,
     GXMat4 const &local,
     GXAABB const &worldBounds,
     android_vulkan::Half4 const &color0,
     android_vulkan::Half4 const &color1,
     android_vulkan::Half4 const &color2,
     android_vulkan::Half4 const &color3
-)
+) noexcept
 {
     _unique.emplace_back (
         std::make_pair ( mesh,
@@ -114,13 +101,6 @@ void OpaqueCall::AddUnique ( size_t &maxUnique,
             }
         )
     );
-
-    size_t const count = _unique.size ();
-
-    if ( maxUnique >= count )
-        return;
-
-    maxUnique = count;
 }
 
 } // namespace pbr

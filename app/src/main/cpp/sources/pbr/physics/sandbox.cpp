@@ -29,7 +29,7 @@ constexpr static uint32_t const RESOLUTION_SCALE_HEIGHT = 70U;
 constexpr static GXVec3 const FREE_FALL_ACCELERATION ( 0.0F, -9.81F, 0.0F );
 constexpr static float const TIME_SPEED = 1.0F;
 
-constexpr static size_t const CUBES = 3U;
+constexpr static size_t const CUBES = 6U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -270,7 +270,7 @@ void Sandbox::DestroyCommandPool ( VkDevice device ) noexcept
 
 bool Sandbox::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
 {
-    _camera.SetLocation ( GXVec3 ( 0.0F, 0.0F, -14.0F ) );
+    _camera.SetLocation ( GXVec3 ( 0.77F, 35.8F, -55.4F ) );
     _camera.Update ( 0.0F );
 
     _physics.SetTimeSpeed ( TIME_SPEED );

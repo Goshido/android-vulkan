@@ -1,10 +1,10 @@
-#ifndef PBR_PHYSICS_SANDBOX_H
-#define PBR_PHYSICS_SANDBOX_H
+#ifndef PBR_BOX_STACK_H
+#define PBR_BOX_STACK_H
 
 
 #include <pbr/camera.h>
-#include <pbr/render_session.h>
 #include <pbr/point_light_component.h>
+#include <pbr/render_session.h>
 #include <game.h>
 #include <physics.h>
 
@@ -15,9 +15,9 @@ GX_DISABLE_COMMON_WARNINGS
 GX_RESTORE_WARNING_STATE
 
 
-namespace pbr::physics {
+namespace pbr::box_stack {
 
-class Sandbox final : public android_vulkan::Game
+class BoxStack final : public android_vulkan::Game
 {
     private:
         Camera                                          _camera {};
@@ -39,15 +39,15 @@ class Sandbox final : public android_vulkan::Game
         std::list<ComponentRef>                         _components {};
 
     public:
-        Sandbox () = default;
+        BoxStack () = default;
 
-        Sandbox ( Sandbox const & ) = delete;
-        Sandbox& operator = ( Sandbox const & ) = delete;
+        BoxStack ( BoxStack const & ) = delete;
+        BoxStack& operator = ( BoxStack const & ) = delete;
 
-        Sandbox ( Sandbox && ) = delete;
-        Sandbox& operator = ( Sandbox && ) = delete;
+        BoxStack ( BoxStack && ) = delete;
+        BoxStack& operator = ( BoxStack && ) = delete;
 
-        ~Sandbox () override = default;
+        ~BoxStack () override = default;
 
     private:
         [[nodiscard]] bool IsReady () noexcept override;
@@ -90,7 +90,7 @@ class Sandbox final : public android_vulkan::Game
         static void UpdateCuboid ( ComponentRef &cuboid, android_vulkan::RigidBodyRef &body ) noexcept;
 };
 
-} // namespace pbr::physics
+} // namespace pbr::box_stack
 
 
-#endif // PBR_PHYSICS_SANDBOX_H
+#endif // PBR_BOX_STACK_H

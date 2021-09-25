@@ -28,43 +28,23 @@ struct VelocitySolverData final
     GXVec6                  _j[ 2U ] {};
     GXVec6                  _mj[ 2U ] {};
     float                   _lambda = 0.0F;
-
-    VelocitySolverData () = default;
-
-    VelocitySolverData ( VelocitySolverData const & ) = default;
-    VelocitySolverData& operator = ( VelocitySolverData const & ) = default;
-
-    VelocitySolverData ( VelocitySolverData && ) = default;
-    VelocitySolverData& operator = ( VelocitySolverData && ) = default;
-
-    ~VelocitySolverData () = default;
 };
 
 struct Contact final
 {
-    GXVec3                      _pointA {};
-    GXVec3                      _pointB {};
-    float                       _penetration = 0.0F;
+    GXVec3                  _pointA {};
+    GXVec3                  _pointB {};
+    float                   _penetration = 0.0F;
 
-    // Velocity solver entities
-    VelocitySolverData          _dataT {};
-    VelocitySolverData          _dataB {};
-    VelocitySolverData          _dataN {};
-    float                       _friction = 0.5F;
-    float                       _restitution = 0.5F;
+    // Velocity solver entities.
+    VelocitySolverData      _dataT {};
+    VelocitySolverData      _dataB {};
+    VelocitySolverData      _dataN {};
+    float                   _friction = 0.5F;
+    float                   _restitution = 0.5F;
 
     // Debug feature.
-    [[maybe_unused]] GXVec3     _pointAfterResolve {};
-
-    Contact () = default;
-
-    Contact ( Contact const & ) = default;
-    Contact& operator = ( Contact const & ) = default;
-
-    Contact ( Contact && ) = default;
-    Contact& operator = ( Contact && ) = default;
-
-    ~Contact () = default;
+    bool                    _warmStarted = false;
 };
 
 struct ContactManifold final
@@ -80,26 +60,17 @@ struct ContactManifold final
     GXVec3                          _bitangent {};
     GXVec3                          _normal {};
 
-    uint64_t                        _timeStamp = 0U;
+    bool                            _warmStartIsUsed = true;
 
     [[maybe_unused]] uint16_t       _epaSteps = 0U;
     [[maybe_unused]] uint16_t       _gjkSteps = 0U;
-
-    ContactManifold () = default;
-
-    ContactManifold ( ContactManifold const & ) = default;
-    ContactManifold& operator = ( ContactManifold const & ) = default;
-
-    ContactManifold ( ContactManifold && ) = default;
-    ContactManifold& operator = ( ContactManifold && ) = default;
-
-    ~ContactManifold () = default;
 };
 
 class ContactManager final
 {
     private:
         using Key = std::pair<RigidBody*, RigidBody*>;
+        using Set = std::pair<std::vector<ContactManifold>, std::vector<Contact>>;
 
         class Hasher final
         {
@@ -118,16 +89,15 @@ class ContactManager final
                 [[nodiscard]] size_t operator () ( Key const &me ) const noexcept;
 
             private:
-                std::hash<void const*>    _hashServer {};
+                std::hash<void const*>      _hashServer {};
         };
 
-        using Set = std::pair<std::vector<ContactManifold>, std::vector<Contact>>;
-        using Mapper = std::unordered_map<Key, ContactManifold const*, Hasher>;
+        using Mapper = std::unordered_map<Key, ContactManifold*, Hasher>;
 
     private:
-        std::array<Set, 2U>     _sets;
-        Mapper                  _warmStartMapper;
-        std::vector<size_t>     _indices;
+        std::array<Set, 2U>                 _sets;
+        Mapper                              _warmStartMapper;
+        std::vector<size_t>                 _indices;
 
     public:
         ContactManager () noexcept;
@@ -147,11 +117,12 @@ class ContactManager final
         [[nodiscard]] std::vector<ContactManifold> const& GetContactManifolds () const noexcept;
 
         void Reset () noexcept;
+        void Warm ( ContactManifold &manifold ) noexcept;
 
     private:
+        void RemoveOutdatedWarmRecords () noexcept;
         void ResetFrontSet () noexcept;
         void SwapSets () noexcept;
-        void UpdateWarmCache () noexcept;
 };
 
 } // namespace android_vulkan

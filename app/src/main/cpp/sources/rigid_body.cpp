@@ -11,8 +11,8 @@ GX_RESTORE_WARNING_STATE
 
 namespace android_vulkan {
 
-constexpr static float const DEFAULT_DAMPING_ANGULAR = 0.8F;
-constexpr static float const DEFAULT_DAMPING_LINEAR = 0.8F;
+constexpr static float const DEFAULT_DAMPING_ANGULAR = 0.9F;
+constexpr static float const DEFAULT_DAMPING_LINEAR = 0.9F;
 
 constexpr static GXVec3 const DEFAULT_LOCATION ( 0.0F, -777.777F, 0.0F );
 
@@ -73,7 +73,7 @@ GXVec3 const& RigidBody::GetVelocityAngular () const noexcept
     _velocityAngular = velocity;
 }
 
-void RigidBody::SetVelocityAngular ( float wx, float wy, float wz ) noexcept
+[[maybe_unused]] void RigidBody::SetVelocityAngular ( float wx, float wy, float wz ) noexcept
 {
     _velocityAngular._data[ 0U ] = wx;
     _velocityAngular._data[ 1U ] = wy;
@@ -95,11 +95,22 @@ GXVec3 const& RigidBody::GetVelocityLinear () const noexcept
     _velocityLinear = velocity;
 }
 
-void RigidBody::SetVelocityLinear ( float x, float y, float z ) noexcept
+[[maybe_unused]] void RigidBody::SetVelocityLinear ( float x, float y, float z ) noexcept
 {
     _velocityLinear._data[ 0U ] = x;
     _velocityLinear._data[ 1U ] = y;
     _velocityLinear._data[ 2U ] = z;
+}
+
+void RigidBody::SetVelocities ( GXVec6 const &velocities ) noexcept
+{
+    std::memcpy ( _velocityLinear._data, velocities._data, sizeof ( _velocityLinear ) );
+    std::memcpy ( _velocityAngular._data, velocities._data + 3U, sizeof ( _velocityAngular ) );
+}
+
+GXVec6 RigidBody::GetVelocities () const noexcept
+{
+    return GXVec6 ( _velocityLinear, _velocityAngular );
 }
 
 [[maybe_unused]] void RigidBody::AddForce ( GXVec3 const &force, GXVec3 const &point ) noexcept

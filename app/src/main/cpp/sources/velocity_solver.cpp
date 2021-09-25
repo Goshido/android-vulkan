@@ -10,8 +10,10 @@ GX_RESTORE_WARNING_STATE
 
 namespace android_vulkan {
 
-constexpr static uint16_t const ITERATIONS = 4U;
-constexpr static float const STABILIZATION_FACTOR = 0.5F;
+constexpr static uint16_t const ITERATIONS = 7U;
+constexpr static float const STABILIZATION_FACTOR = 0.4F;
+constexpr static float const PENETRATION_SLOPE = 5.0e-4F;
+constexpr static float const RESTITUTION_SLOPE = 5.0e-1F;
 
 static_assert ( STABILIZATION_FACTOR >= 0.0F && STABILIZATION_FACTOR <= 1.0F,
     "The stabilization factor must be in range [0.0F, 1.0F]" );
@@ -20,26 +22,76 @@ static_assert ( STABILIZATION_FACTOR >= 0.0F && STABILIZATION_FACTOR <= 1.0F,
 
 void VelocitySolver::Run ( ContactManager &contactManager, float fixedTimeStepInverse ) noexcept
 {
-    for ( auto& manifold : contactManager.GetContactManifolds () )
-    {
-        RigidBody& bodyA = *manifold._bodyA;
-        RigidBody& bodyB = *manifold._bodyB;
+    //DebugWarmStart ( contactManager );
+    auto& manifolds = contactManager.GetContactManifolds ();
 
-        if ( bodyA.IsKinematic () )
+    for ( auto& manifold : manifolds )
+    {
+        if ( manifold._bodyA->IsKinematic () )
         {
             SwapBodies ( manifold );
-            SolveSingle ( manifold, fixedTimeStepInverse );
+            PrepareSingle ( manifold, fixedTimeStepInverse );
             continue;
         }
 
-        if ( bodyB.IsKinematic () )
+        if ( manifold._bodyB->IsKinematic () )
         {
-            SolveSingle ( manifold, fixedTimeStepInverse );
+            PrepareSingle ( manifold, fixedTimeStepInverse );
             continue;
         }
 
-        SolvePair ( manifold, fixedTimeStepInverse );
+        PreparePair ( manifold, fixedTimeStepInverse );
     }
+
+    // Sequential impulse algorithm.
+
+    for ( uint16_t i = 0U; i < ITERATIONS; ++i )
+    {
+        for ( auto& manifold : manifolds )
+        {
+            // Note after preprocessing only B could be kinematic object.
+            if ( manifold._bodyB->IsKinematic () )
+            {
+                SolveSingle ( manifold );
+                continue;
+            }
+
+            SolvePair ( manifold );
+        }
+    }
+}
+
+[[maybe_unused]] void VelocitySolver::DebugWarmStart ( ContactManager const &contactManager ) noexcept
+{
+    size_t totalContacts = 0U;
+    size_t warmStarted = 0U;
+
+    for ( auto& manifold : contactManager.GetContactManifolds () )
+    {
+        totalContacts += manifold._contactCount;
+        Contact const* contacts = manifold._contacts;
+        size_t contactCount = manifold._contactCount;
+
+        for ( size_t i = 0U; i < contactCount; ++i )
+        {
+            if ( contacts[ i ]._warmStarted )
+            {
+                ++warmStarted;
+            }
+        }
+    }
+
+    constexpr char const format[] =
+R"__(Warm starting:
+>>>
+    Total contacts: %zu
+    Warm started: %6.2f%%
+<<<)__";
+
+    android_vulkan::LogDebug ( format,
+        totalContacts,
+        totalContacts ? static_cast<float> ( 100U * warmStarted ) / static_cast<float> ( totalContacts ) : 0.0F
+    );
 }
 
 float VelocitySolver::LambdaClipNormalForce ( float lambda, void* /*context*/ ) noexcept
@@ -54,7 +106,7 @@ float VelocitySolver::LambdaClipFriction ( float lambda, void* context ) noexcep
     return std::clamp ( lambda, -limit, limit );
 }
 
-void VelocitySolver::SolvePair ( ContactManifold &manifold, float fixedTimeStepInverse ) noexcept
+void VelocitySolver::PreparePair ( ContactManifold &manifold, float fixedTimeStepInverse ) noexcept
 {
     RigidBody& bodyA = *manifold._bodyA.get ();
     RigidBody& bodyB = *manifold._bodyB.get ();
@@ -146,7 +198,8 @@ void VelocitySolver::SolvePair ( ContactManifold &manifold, float fixedTimeStepI
         GXVec3 vClosing {};
         vClosing.Sum ( alpha, dV );
 
-        float const b = gamma * contact._penetration + contact._restitution * vClosing.DotProduct ( manifold._normal );
+        float const b = gamma * std::max ( contact._penetration - PENETRATION_SLOPE, 0.0F ) +
+            contact._restitution * std::max ( vClosing.DotProduct ( manifold._normal ) - RESTITUTION_SLOPE, 0.0F );
 
         setup ( contact._dataT,
             manifold._tangent,
@@ -171,88 +224,37 @@ void VelocitySolver::SolvePair ( ContactManifold &manifold, float fixedTimeStepI
 
     // Apply warm start impulses.
 
-    auto update = [ & ] ( VelocitySolverData const &data,
-        GXVec6 const &vw1A,
-        GXVec6 const &vw1B,
-        float lambda
-    ) noexcept {
-        GXVec6 vwADelta {};
-        vwADelta.Multiply ( data._mj[ 0U ], lambda );
-
-        GXVec6 vwBDelta {};
-        vwBDelta.Multiply ( data._mj[ 1U ], lambda );
-
-        GXVec6 vw2A {};
-        vw2A.Sum ( vw1A, vwADelta );
-
-        GXVec6 vw2B {};
-        vw2B.Sum ( vw1B, vwBDelta );
-
-        bodyA.SetVelocityLinear ( vw2A._data[ 0U ], vw2A._data[ 1U ], vw2A._data[ 2U ] );
-        bodyB.SetVelocityLinear ( vw2B._data[ 0U ], vw2B._data[ 1U ], vw2B._data[ 2U ] );
-
-        bodyA.SetVelocityAngular ( vw2A._data[ 3U ], vw2A._data[ 4U ], vw2A._data[ 5U ] );
-        bodyB.SetVelocityAngular ( vw2B._data[ 3U ], vw2B._data[ 4U ], vw2B._data[ 5U ] );
-    };
-
     for ( size_t i = 0U; i < manifold._contactCount; ++i )
     {
         Contact& contact = manifold._contacts[ i ];
 
-        update ( contact._dataN,
-            GXVec6 ( bodyA.GetVelocityLinear (), bodyA.GetVelocityAngular () ),
-            GXVec6 ( bodyB.GetVelocityLinear (), bodyB.GetVelocityAngular () ),
+        UpdateVelocityPair ( bodyA,
+            bodyB,
+            contact._dataN,
+            bodyA.GetVelocities (),
+            bodyB.GetVelocities (),
             contact._dataN._lambda
         );
 
-        update ( contact._dataT,
-            GXVec6 ( bodyA.GetVelocityLinear (), bodyA.GetVelocityAngular () ),
-            GXVec6 ( bodyB.GetVelocityLinear (), bodyB.GetVelocityAngular () ),
+        UpdateVelocityPair ( bodyA,
+            bodyB,
+            contact._dataT,
+            bodyA.GetVelocities (),
+            bodyB.GetVelocities (),
             contact._dataT._lambda
         );
 
-        update ( contact._dataB,
-            GXVec6 ( bodyA.GetVelocityLinear (), bodyA.GetVelocityAngular () ),
-            GXVec6 ( bodyB.GetVelocityLinear (), bodyB.GetVelocityAngular () ),
+        UpdateVelocityPair ( bodyA,
+            bodyB,
+            contact._dataB,
+            bodyA.GetVelocities (),
+            bodyB.GetVelocities (),
             contact._dataB._lambda
         );
     }
-
-    // Sequential impulse algorithm.
-
-    auto solve = [ & ] ( VelocitySolverData &data ) noexcept {
-        GXVec6 const vw1A ( bodyA.GetVelocityLinear (), bodyA.GetVelocityAngular () );
-        GXVec6 const vw1B ( bodyB.GetVelocityLinear (), bodyB.GetVelocityAngular () );
-
-        float const d0 = data._j[ 0U ].DotProduct ( vw1A );
-        float const d1 = data._j[ 1U ].DotProduct ( vw1B );
-
-        float l = data._effectiveMass * ( d0 + d1 + data._b );
-
-        float const oldLambda = data._lambda;
-        data._lambda = data._clipHandler ( data._lambda + l, data._clipContext );
-        l = data._lambda - oldLambda;
-
-        update ( data,
-            GXVec6 ( bodyA.GetVelocityLinear (), bodyA.GetVelocityAngular () ),
-            GXVec6 ( bodyB.GetVelocityLinear (), bodyB.GetVelocityAngular () ),
-            l
-        );
-    };
-
-    for ( uint16_t iteration = 0U; iteration < ITERATIONS; ++iteration )
-    {
-        for ( size_t i = 0U; i < manifold._contactCount; ++i )
-        {
-            Contact& contact = manifold._contacts[ i ];
-            solve ( contact._dataN );
-            solve ( contact._dataT );
-            solve ( contact._dataB );
-        }
-    }
 }
 
-void VelocitySolver::SolveSingle ( ContactManifold &manifold, float fixedTimeStepInverse ) noexcept
+void VelocitySolver::PrepareSingle ( ContactManifold &manifold, float fixedTimeStepInverse ) noexcept
 {
     RigidBody& bodyDynamic = *manifold._bodyA.get ();
     RigidBody const& bodyKinematic = *manifold._bodyB.get ();
@@ -329,7 +331,8 @@ void VelocitySolver::SolveSingle ( ContactManifold &manifold, float fixedTimeSte
         GXVec3 vClosing {};
         vClosing.Sum ( dV, alpha );
 
-        float const b = gamma * contact._penetration + contact._restitution * vClosing.DotProduct ( manifold._normal );
+        float const b = gamma * std::max ( contact._penetration - PENETRATION_SLOPE, 0.0F ) +
+            contact._restitution * std::max ( vClosing.DotProduct ( manifold._normal ) - RESTITUTION_SLOPE, 0.0F );
 
         setup ( contact._dataT,
             manifold._tangent,
@@ -354,46 +357,53 @@ void VelocitySolver::SolveSingle ( ContactManifold &manifold, float fixedTimeSte
 
     // Apply warm start impulses.
 
-    auto update = [ & ] ( VelocitySolverData const &data, GXVec6 const &vw1A, float lambda ) noexcept {
-        GXVec6 vwDelta {};
-        vwDelta.Multiply ( data._mj[ 0U ], lambda );
+    for ( size_t i = 0U; i < manifold._contactCount; ++i )
+    {
+        Contact& contact = manifold._contacts[ i ];
+        UpdateVelocitySingle ( bodyDynamic, contact._dataN, bodyDynamic.GetVelocities (), contact._dataN._lambda );
+        UpdateVelocitySingle ( bodyDynamic, contact._dataT, bodyDynamic.GetVelocities (), contact._dataT._lambda );
+        UpdateVelocitySingle ( bodyDynamic, contact._dataB, bodyDynamic.GetVelocities (), contact._dataB._lambda );
+    }
+}
 
-        GXVec6 vw2Dynamic {};
-        vw2Dynamic.Sum ( vw1A, vwDelta );
+void VelocitySolver::SolvePair ( ContactManifold &manifold ) noexcept
+{
+    RigidBody& bodyA = *manifold._bodyA.get ();
+    RigidBody& bodyB = *manifold._bodyB.get ();
 
-        bodyDynamic.SetVelocityLinear ( vw2Dynamic._data[ 0U ], vw2Dynamic._data[ 1U ], vw2Dynamic._data[ 2U ] );
-        bodyDynamic.SetVelocityAngular ( vw2Dynamic._data[ 3U ], vw2Dynamic._data[ 4U ], vw2Dynamic._data[ 5U ] );
+    auto solve = [ & ] ( VelocitySolverData &data ) noexcept {
+        GXVec6 const vw1A = bodyA.GetVelocities ();
+        GXVec6 const vw1B = bodyB.GetVelocities ();
+
+        float const d0 = data._j[ 0U ].DotProduct ( vw1A );
+        float const d1 = data._j[ 1U ].DotProduct ( vw1B );
+
+        float l = data._effectiveMass * ( d0 + d1 + data._b );
+
+        float const oldLambda = data._lambda;
+        data._lambda = data._clipHandler ( data._lambda + l, data._clipContext );
+        l = data._lambda - oldLambda;
+
+        UpdateVelocityPair ( bodyA, bodyB, data, vw1A, vw1B, l );
     };
 
     for ( size_t i = 0U; i < manifold._contactCount; ++i )
     {
         Contact& contact = manifold._contacts[ i ];
-
-        update ( contact._dataN,
-            GXVec6 ( bodyDynamic.GetVelocityLinear (), bodyDynamic.GetVelocityAngular () ),
-            contact._dataN._lambda
-        );
-
-        update ( contact._dataT,
-            GXVec6 ( bodyDynamic.GetVelocityLinear (), bodyDynamic.GetVelocityAngular () ),
-            contact._dataT._lambda
-        );
-
-        update ( contact._dataB,
-            GXVec6 ( bodyDynamic.GetVelocityLinear (), bodyDynamic.GetVelocityAngular () ),
-            contact._dataB._lambda
-        );
-
-        update ( contact._dataT,
-            GXVec6 ( bodyDynamic.GetVelocityLinear (), bodyDynamic.GetVelocityAngular () ),
-            contact._dataT._lambda
-        );
+        solve ( contact._dataN );
+        solve ( contact._dataT );
+        solve ( contact._dataB );
     }
+}
 
-    // Sequential impulse algorithm.
+void VelocitySolver::SolveSingle ( ContactManifold &manifold ) noexcept
+{
+    RigidBody& bodyDynamic = *manifold._bodyA.get ();
+    RigidBody const& bodyKinematic = *manifold._bodyB.get ();
+    GXVec6 const vwKinematic = bodyKinematic.GetVelocities ();
 
     auto solve = [ & ] ( VelocitySolverData &data ) noexcept {
-        GXVec6 const vw1Dynamic ( bodyDynamic.GetVelocityLinear (), bodyDynamic.GetVelocityAngular () );
+        GXVec6 const vw1Dynamic = bodyDynamic.GetVelocities ();
 
         float l = data._effectiveMass *
             ( data._j[ 0U ].DotProduct ( vw1Dynamic ) + data._j[ 1U ].DotProduct ( vwKinematic ) + data._b );
@@ -402,18 +412,15 @@ void VelocitySolver::SolveSingle ( ContactManifold &manifold, float fixedTimeSte
         data._lambda = data._clipHandler ( data._lambda + l, data._clipContext );
         l = data._lambda - oldLambda;
 
-        update ( data, vw1Dynamic, l );
+        UpdateVelocitySingle ( bodyDynamic, data, vw1Dynamic, l );
     };
 
-    for ( uint16_t iteration = 0U; iteration < ITERATIONS; ++iteration )
+    for ( size_t i = 0U; i < manifold._contactCount; ++i )
     {
-        for ( size_t i = 0U; i < manifold._contactCount; ++i )
-        {
-            Contact& contact = manifold._contacts[ i ];
-            solve ( contact._dataN );
-            solve ( contact._dataT );
-            solve ( contact._dataB );
-        }
+        Contact& contact = manifold._contacts[ i ];
+        solve ( contact._dataN );
+        solve ( contact._dataT );
+        solve ( contact._dataB );
     }
 }
 
@@ -428,6 +435,45 @@ void VelocitySolver::SwapBodies ( ContactManifold &manifold ) noexcept
         Contact& contacts = manifold._contacts[ i ];
         std::swap ( contacts._pointA, contacts._pointB );
     }
+}
+
+void VelocitySolver::UpdateVelocityPair ( RigidBody &bodyA,
+    RigidBody &bodyB,
+    VelocitySolverData const &data,
+    GXVec6 const &vw1A,
+    GXVec6 const &vw1B,
+    float lambda
+) noexcept
+{
+    GXVec6 vwADelta {};
+    vwADelta.Multiply ( data._mj[ 0U ], lambda );
+
+    GXVec6 vwBDelta {};
+    vwBDelta.Multiply ( data._mj[ 1U ], lambda );
+
+    GXVec6 vw2A {};
+    vw2A.Sum ( vw1A, vwADelta );
+
+    GXVec6 vw2B {};
+    vw2B.Sum ( vw1B, vwBDelta );
+
+    bodyA.SetVelocities ( vw2A );
+    bodyB.SetVelocities ( vw2B );
+}
+
+void VelocitySolver::UpdateVelocitySingle ( RigidBody &body,
+    VelocitySolverData const &data,
+    GXVec6 const &vw1,
+    float lambda
+) noexcept
+{
+    GXVec6 vwDelta {};
+    vwDelta.Multiply ( data._mj[ 0U ], lambda );
+
+    GXVec6 vw2 {};
+    vw2.Sum ( vw1, vwDelta );
+
+    body.SetVelocities ( vw2 );
 }
 
 } // namespace android_vulkan

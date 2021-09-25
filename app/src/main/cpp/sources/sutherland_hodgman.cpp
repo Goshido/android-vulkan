@@ -111,7 +111,7 @@ SutherlandHodgmanResult const& SutherlandHodgman::Run ( Vertices const &shapeAPo
 
         float const dot = shapeBNormal.DotProduct ( beta );
 
-        if ( dot <= 0.0F )
+        if ( dot < 0.0F )
         {
             // Point from shape A is in front of shape B. Skipping...
             continue;

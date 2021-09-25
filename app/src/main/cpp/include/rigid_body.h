@@ -68,12 +68,22 @@ class RigidBody final
         [[maybe_unused]] void AddVelocityAngular ( GXVec3 const &velocity ) noexcept;
         [[nodiscard]] GXVec3 const& GetVelocityAngular () const noexcept;
         [[maybe_unused]] void SetVelocityAngular ( GXVec3 const &velocity ) noexcept;
-        void SetVelocityAngular ( float wx, float wy, float wz ) noexcept;
+        [[maybe_unused]] void SetVelocityAngular ( float wx, float wy, float wz ) noexcept;
 
         [[maybe_unused]] void AddVelocityLinear ( GXVec3 const &velocity ) noexcept;
         [[nodiscard]] GXVec3 const& GetVelocityLinear () const noexcept;
         [[maybe_unused]] void SetVelocityLinear ( GXVec3 const &velocity ) noexcept;
-        void SetVelocityLinear ( float x, float y, float z ) noexcept;
+        [[maybe_unused]] void SetVelocityLinear ( float x, float y, float z ) noexcept;
+
+        // Methods operates linear and angular velocities in one transaction. The layout:
+        //      GXVec6::_data[ 0U ] - x component of the linear velocity
+        //      GXVec6::_data[ 1U ] - y component of the linear velocity
+        //      GXVec6::_data[ 2U ] - z component of the linear velocity
+        //      GXVec6::_data[ 3U ] - x component of the angular velocity
+        //      GXVec6::_data[ 4U ] - y component of the angular velocity
+        //      GXVec6::_data[ 5U ] - z component of the angular velocity
+        void SetVelocities ( GXVec6 const &velocities ) noexcept;
+        [[nodiscard]] GXVec6 GetVelocities () const noexcept;
 
         [[maybe_unused]] void AddForce ( GXVec3 const &force, GXVec3 const &point ) noexcept;
         [[maybe_unused]] void AddImpulse ( GXVec3 const &impulse, GXVec3 const &point ) noexcept;

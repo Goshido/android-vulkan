@@ -19,19 +19,19 @@ namespace android_vulkan {
 class Physics final
 {
     private:
-        float                                   _accumulator;
-        ContactDetector                         _contactDetector;
-        ContactManager                          _contactManager;
-        std::unordered_set<RigidBodyRef>        _dynamics;
+        float                                   _accumulator = 0.0F;
+        ContactDetector                         _contactDetector {};
+        ContactManager                          _contactManager {};
+        std::unordered_set<RigidBodyRef>        _dynamics {};
         float                                   _fixedTimeStep;
         float                                   _fixedTimeStepInverse;
-        std::unordered_set<GlobalForceRef>      _globalForces;
-        bool                                    _isPause;
-        std::unordered_set<RigidBodyRef>        _kinematics;
-        std::mutex                              _mutex;
+        std::unordered_set<GlobalForceRef>      _globalForces {};
+        bool                                    _isPause = true;
+        std::unordered_set<RigidBodyRef>        _kinematics {};
+        std::mutex                              _mutex {};
         float                                   _timeSpeed;
 
-        bool                                    _debugRun;
+        bool                                    _debugRun = false;
 
     public:
         Physics () noexcept;

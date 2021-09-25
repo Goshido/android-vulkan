@@ -1,23 +1,15 @@
-#include <pbr/physics/sandbox.h>
+#include <pbr/box_stack/box_stack.h>
 #include <pbr/component.h>
-#include <pbr/cube_map_manager.h>
 #include <pbr/material_manager.h>
 #include <pbr/mesh_manager.h>
-#include <pbr/scene_desc.h>
 #include <pbr/static_mesh_component.h>
 #include <gamepad.h>
 #include <global_force_gravity.h>
 #include <shape_box.h>
 #include <shape_sphere.h>
 
-GX_DISABLE_COMMON_WARNINGS
 
-#include <cassert>
-
-GX_RESTORE_WARNING_STATE
-
-
-namespace pbr::physics {
+namespace pbr::box_stack {
 
 constexpr static float const FIELD_OF_VIEW = 75.0F;
 constexpr static float const Z_NEAR = 0.1F;
@@ -33,12 +25,12 @@ constexpr static size_t const CUBES = 6U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-bool Sandbox::IsReady () noexcept
+bool BoxStack::IsReady () noexcept
 {
     return !_components.empty ();
 }
 
-bool Sandbox::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) noexcept
+bool BoxStack::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) noexcept
 {
     auto const dt = static_cast<float> ( deltaTime );
 
@@ -104,7 +96,7 @@ bool Sandbox::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) n
     return _renderSession.End ( renderer, deltaTime );
 }
 
-bool Sandbox::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
+bool BoxStack::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 {
     VkCommandPoolCreateInfo const createInfo
     {
@@ -118,14 +110,14 @@ bool Sandbox::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 
     bool result = android_vulkan::Renderer::CheckVkResult (
         vkCreateCommandPool ( device, &createInfo, nullptr, &_commandPool ),
-        "Sandbox::OnInit",
+        "BoxStack::OnInit",
         "Can't create command pool"
     );
 
     if ( !result )
         return false;
 
-    AV_REGISTER_COMMAND_POOL ( "Sandbox::_commandPool" )
+    AV_REGISTER_COMMAND_POOL ( "BoxStack::_commandPool" )
 
     if ( !_renderSession.OnInitDevice ( renderer ) )
     {
@@ -144,7 +136,7 @@ bool Sandbox::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
     return true;
 }
 
-void Sandbox::OnDestroyDevice ( VkDevice device ) noexcept
+void BoxStack::OnDestroyDevice ( VkDevice device ) noexcept
 {
     DestroyPhysics ();
     _cubes.clear ();
@@ -154,19 +146,20 @@ void Sandbox::OnDestroyDevice ( VkDevice device ) noexcept
 
     MeshManager::Destroy ( device );
     MaterialManager::Destroy ( device );
-    CubeMapManager::Destroy ( device );
 }
 
-bool Sandbox::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept
+bool BoxStack::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept
 {
-    VkExtent2D resolution = renderer.GetViewportResolution ();
-    resolution.width = resolution.width * RESOLUTION_SCALE_WIDTH / 100U;
-    resolution.height = resolution.height * RESOLUTION_SCALE_HEIGHT / 100U;
-
     VkExtent2D const& surfaceResolution = renderer.GetViewportResolution ();
 
+    VkExtent2D const resolution
+    {
+        .width = surfaceResolution.width * RESOLUTION_SCALE_WIDTH / 100U,
+        .height = surfaceResolution.height * RESOLUTION_SCALE_HEIGHT / 100U
+    };
+
     _camera.SetProjection ( GXDegToRad ( FIELD_OF_VIEW ),
-        surfaceResolution.width / static_cast<float> ( surfaceResolution.height ),
+        static_cast<float> ( surfaceResolution.width ) / static_cast<float> ( surfaceResolution.height ),
         Z_NEAR,
         Z_FAR
     );
@@ -179,13 +172,13 @@ bool Sandbox::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept
     android_vulkan::Gamepad& gamepad = android_vulkan::Gamepad::GetInstance ();
 
     gamepad.BindKey ( this,
-        &Sandbox::OnLeftBumper,
+        &BoxStack::OnLeftBumper,
         android_vulkan::eGamepadKey::LeftBumper,
         android_vulkan::eButtonState::Down
     );
 
     gamepad.BindKey ( this,
-        &Sandbox::OnRightBumper,
+        &BoxStack::OnRightBumper,
         android_vulkan::eGamepadKey::RightBumper,
         android_vulkan::eButtonState::Down
     );
@@ -195,7 +188,7 @@ bool Sandbox::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept
     return true;
 }
 
-void Sandbox::OnSwapchainDestroyed ( VkDevice device ) noexcept
+void BoxStack::OnSwapchainDestroyed ( VkDevice device ) noexcept
 {
     android_vulkan::Gamepad& gamepad = android_vulkan::Gamepad::GetInstance ();
     gamepad.UnbindKey ( android_vulkan::eGamepadKey::LeftBumper, android_vulkan::eButtonState::Down );
@@ -207,7 +200,7 @@ void Sandbox::OnSwapchainDestroyed ( VkDevice device ) noexcept
     _renderSession.OnSwapchainDestroyed ( device );
 }
 
-bool Sandbox::AppendCuboid ( android_vulkan::Renderer &renderer,
+bool BoxStack::AppendCuboid ( android_vulkan::Renderer &renderer,
     VkCommandBuffer const* commandBuffers,
     size_t &commandBufferConsumed,
     std::string &&tag,
@@ -254,21 +247,21 @@ bool Sandbox::AppendCuboid ( android_vulkan::Renderer &renderer,
         return true;
     }
 
-    android_vulkan::LogError ( "Sandbox::AppendCuboid - Can't add rigid body." );
+    android_vulkan::LogError ( "BoxStack::AppendCuboid - Can't add rigid body." );
     return false;
 }
 
-void Sandbox::DestroyCommandPool ( VkDevice device ) noexcept
+void BoxStack::DestroyCommandPool ( VkDevice device ) noexcept
 {
     if ( _commandPool == VK_NULL_HANDLE )
         return;
 
     vkDestroyCommandPool ( device, _commandPool, nullptr );
     _commandPool = VK_NULL_HANDLE;
-    AV_UNREGISTER_COMMAND_POOL ( "Sandbox::_commandPool" )
+    AV_UNREGISTER_COMMAND_POOL ( "BoxStack::_commandPool" )
 }
 
-bool Sandbox::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
+bool BoxStack::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
 {
     _camera.SetLocation ( GXVec3 ( 0.77F, 35.8F, -55.4F ) );
     _camera.Update ( 0.0F );
@@ -277,7 +270,7 @@ bool Sandbox::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
 
     if ( !_physics.AddGlobalForce ( std::make_shared<android_vulkan::GlobalForceGravity> ( FREE_FALL_ACCELERATION ) ) )
     {
-        android_vulkan::LogError ( "Sandbox::CreateSceneManual - Can't add gravity." );
+        android_vulkan::LogError ( "BoxStack::CreateSceneManual - Can't add gravity." );
         return false;
     }
 
@@ -286,12 +279,8 @@ bool Sandbox::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
     constexpr size_t const SPHERE_COMMAND_BUFFERS = 1U;
     constexpr size_t const UNLIT_MATERIAL_COMMAND_BUFFERS = 5U;
 
-    auto const comBuffs = static_cast<size_t> (
-        CUBE_COMMAND_BUFFERS +
-        DEFAULT_MATERIAL_COMMAND_BUFFERS +
-        SPHERE_COMMAND_BUFFERS +
-        UNLIT_MATERIAL_COMMAND_BUFFERS
-    );
+    constexpr size_t const comBuffs = CUBE_COMMAND_BUFFERS + DEFAULT_MATERIAL_COMMAND_BUFFERS + SPHERE_COMMAND_BUFFERS +
+        UNLIT_MATERIAL_COMMAND_BUFFERS;
 
     VkCommandBufferAllocateInfo const allocateInfo
     {
@@ -303,20 +292,19 @@ bool Sandbox::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
     };
 
     _commandBuffers.resize ( comBuffs );
+    VkCommandBuffer* commandBuffers = _commandBuffers.data ();
     VkDevice device = renderer.GetDevice ();
 
     bool result = android_vulkan::Renderer::CheckVkResult (
-        vkAllocateCommandBuffers ( device, &allocateInfo, _commandBuffers.data () ),
-        "Sandbox::CreateSceneManual",
+        vkAllocateCommandBuffers ( device, &allocateInfo, commandBuffers ),
+        "BoxStack::CreateSceneManual",
         "Can't allocate command buffers"
     );
 
     if ( !result )
         return false;
 
-    VkCommandBuffer* commandBuffers = _commandBuffers.data ();
     size_t consumed = 0U;
-
     _defaultColor = android_vulkan::Half4 ( 1.0F, 1.0F, 1.0F, 1.0F );
 
     ComponentRef cuboid {};
@@ -345,6 +333,7 @@ bool Sandbox::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
 
     _cubes.resize ( CUBES );
     _cubeBodies.resize ( CUBES );
+    size_t const paletteSize = _colors.size ();
 
     for ( size_t i = 0U; i < CUBES; ++i )
     {
@@ -354,7 +343,7 @@ bool Sandbox::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
             "Cube #" + std::to_string ( i ),
             _cubes[ i ],
             "pbr/assets/System/Default.mtl",
-            _colors[ i % CUBES ],
+            _colors[ i % paletteSize ],
             _cubeBodies[ i ],
             0.0F,
             0.15F + 0.3F * static_cast<float> ( i ),
@@ -365,9 +354,7 @@ bool Sandbox::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
         );
 
         if ( !result )
-        {
             return false;
-        }
 
         commandBuffers += consumed;
 
@@ -400,7 +387,7 @@ bool Sandbox::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
     _components.push_back ( _cameraLight );
 
     result = android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( renderer.GetQueue () ),
-        "Sandbox::CreateSceneManual",
+        "BoxStack::CreateSceneManual",
         "Can't run upload commands"
     );
 
@@ -414,12 +401,12 @@ bool Sandbox::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
     return true;
 }
 
-void Sandbox::DestroyPhysics () noexcept
+void BoxStack::DestroyPhysics () noexcept
 {
     _cubeBodies.clear ();
 }
 
-void Sandbox::UpdatePhysicsActors () noexcept
+void BoxStack::UpdatePhysicsActors () noexcept
 {
     for ( size_t i = 0U; i < CUBES; ++i )
     {
@@ -427,7 +414,7 @@ void Sandbox::UpdatePhysicsActors () noexcept
     }
 }
 
-void Sandbox::InitColors () noexcept
+void BoxStack::InitColors () noexcept
 {
     // NVIDIA green
     _colors[ 0U ] = android_vulkan::Half4 ( 115.0F * GX_MATH_UNORM_FACTOR,
@@ -479,9 +466,9 @@ void Sandbox::InitColors () noexcept
     );
 }
 
-void Sandbox::OnLeftBumper ( void* context ) noexcept
+void BoxStack::OnLeftBumper ( void* context ) noexcept
 {
-    auto& sandbox = *static_cast<Sandbox*> ( context );
+    auto& sandbox = *static_cast<BoxStack*> ( context );
     android_vulkan::Physics& p = sandbox._physics;
 
     if ( p.IsPaused () )
@@ -493,13 +480,13 @@ void Sandbox::OnLeftBumper ( void* context ) noexcept
     p.Pause ();
 }
 
-void Sandbox::OnRightBumper ( void* context ) noexcept
+void BoxStack::OnRightBumper ( void* context ) noexcept
 {
-    auto& sandbox = *static_cast<Sandbox*> ( context );
+    auto& sandbox = *static_cast<BoxStack*> ( context );
     sandbox._physics.OnDebugRun ();
 }
 
-void Sandbox::UpdateCuboid ( ComponentRef &cuboid, android_vulkan::RigidBodyRef &body ) noexcept
+void BoxStack::UpdateCuboid ( ComponentRef &cuboid, android_vulkan::RigidBodyRef &body ) noexcept
 {
     constexpr float const physicsToRender = 32.0F;
 

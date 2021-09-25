@@ -1,6 +1,5 @@
 #include <physics.h>
 #include <contact_detector.h>
-#include <location_solver.h>
 #include <logger.h>
 #include <velocity_solver.h>
 
@@ -21,18 +20,9 @@ constexpr static float const FIXED_TIME_STEP_INVERSE = 1.0F / FIXED_TIME_STEP;
 //----------------------------------------------------------------------------------------------------------------------
 
 Physics::Physics () noexcept:
-    _accumulator ( 0.0F ),
-    _contactDetector {},
-    _contactManager {},
-    _dynamics {},
     _fixedTimeStep ( FIXED_TIME_STEP ),
     _fixedTimeStepInverse ( FIXED_TIME_STEP_INVERSE ),
-    _globalForces {},
-    _isPause ( true ),
-    _kinematics {},
-    _mutex {},
-    _timeSpeed ( DEFAULT_TIME_SPEED ),
-    _debugRun ( false )
+    _timeSpeed ( DEFAULT_TIME_SPEED )
 {
     // NOTHING
 }
@@ -167,7 +157,6 @@ void Physics::Simulate ( float deltaTime ) noexcept
         CollectContacts ();
 
         VelocitySolver::Run ( _contactManager, _fixedTimeStepInverse );
-        LocationSolver::Run ( _contactManager );
 
         Prepare ();
         _accumulator -= _fixedTimeStep;

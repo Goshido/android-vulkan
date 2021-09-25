@@ -12,6 +12,7 @@ namespace android_vulkan {
 // https://www.youtube.com/watch?v=pmdYzNF9x34
 // http://allenchou.net/2013/12/game-physics-constraints-sequential-impulse/
 // http://allenchou.net/2013/12/game-physics-resolution-contact-constraints/
+// http://allenchou.net/2014/01/game-physics-stability-slops/
 class VelocitySolver final
 {
     public:
@@ -28,17 +29,36 @@ class VelocitySolver final
         static void Run ( ContactManager &contactManager, float fixedTimeStepInverse ) noexcept;
 
     private:
+        [[maybe_unused]] static void DebugWarmStart ( ContactManager const &contactManager ) noexcept;
+
         [[nodiscard]] static float LambdaClipNormalForce ( float lambda, void* context ) noexcept;
         [[nodiscard]] static float LambdaClipFriction ( float lambda, void* context ) noexcept;
 
+        static void PreparePair ( ContactManifold &manifold, float fixedTimeStepInverse ) noexcept;
+        static void PrepareSingle ( ContactManifold &manifold, float fixedTimeStepInverse ) noexcept;
+
         // Basically it's a solver for dynamic vs dynamic body.
-        static void SolvePair ( ContactManifold &manifold, float fixedTimeStepInverse ) noexcept;
+        static void SolvePair ( ContactManifold &manifold ) noexcept;
 
         // Basically it's a solver for dynamic vs kinematic body.
         // Note the body A in the manifold data structure is dynamic while body B is kinematic.
-        static void SolveSingle ( ContactManifold &manifold, float fixedTimeStepInverse ) noexcept;
+        static void SolveSingle ( ContactManifold &manifold ) noexcept;
 
         static void SwapBodies ( ContactManifold &manifold ) noexcept;
+
+        static void UpdateVelocityPair ( RigidBody &bodyA,
+            RigidBody &bodyB,
+            VelocitySolverData const &data,
+            GXVec6 const &vw1A,
+            GXVec6 const &vw1B,
+            float lambda
+        ) noexcept;
+
+        static void UpdateVelocitySingle ( RigidBody &body,
+            VelocitySolverData const &data,
+            GXVec6 const &vw1,
+            float lambda
+        ) noexcept;
 };
 
 } // namespace android_vulkan

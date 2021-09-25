@@ -199,10 +199,10 @@ void VelocitySolver::PreparePair ( ContactManifold &manifold, float fixedTimeSte
         vClosing.Sum ( alpha, dV );
 
         float const b = gamma * std::max ( contact._penetration - PENETRATION_SLOPE, 0.0F ) +
-            contact._restitution * std::max ( vClosing.DotProduct ( manifold._normal ) - RESTITUTION_SLOPE, 0.0F );
+            contact._restitution * std::max ( vClosing.DotProduct ( contact._normal ) - RESTITUTION_SLOPE, 0.0F );
 
         setup ( contact._dataT,
-            manifold._tangent,
+            contact._tangent,
             rA,
             rB,
             0.0F,
@@ -211,7 +211,7 @@ void VelocitySolver::PreparePair ( ContactManifold &manifold, float fixedTimeSte
         );
 
         setup ( contact._dataB,
-            manifold._bitangent,
+            contact._bitangent,
             rA,
             rB,
             0.0F,
@@ -219,7 +219,7 @@ void VelocitySolver::PreparePair ( ContactManifold &manifold, float fixedTimeSte
             &contact
         );
 
-        setup ( contact._dataN, manifold._normal, rA, rB, b, &VelocitySolver::LambdaClipNormalForce, nullptr );
+        setup ( contact._dataN, contact._normal, rA, rB, b, &VelocitySolver::LambdaClipNormalForce, nullptr );
     }
 
     // Apply warm start impulses.
@@ -332,10 +332,10 @@ void VelocitySolver::PrepareSingle ( ContactManifold &manifold, float fixedTimeS
         vClosing.Sum ( dV, alpha );
 
         float const b = gamma * std::max ( contact._penetration - PENETRATION_SLOPE, 0.0F ) +
-            contact._restitution * std::max ( vClosing.DotProduct ( manifold._normal ) - RESTITUTION_SLOPE, 0.0F );
+            contact._restitution * std::max ( vClosing.DotProduct ( contact._normal ) - RESTITUTION_SLOPE, 0.0F );
 
         setup ( contact._dataT,
-            manifold._tangent,
+            contact._tangent,
             rA,
             rB,
             0.0F,
@@ -344,7 +344,7 @@ void VelocitySolver::PrepareSingle ( ContactManifold &manifold, float fixedTimeS
         );
 
         setup ( contact._dataB,
-            manifold._bitangent,
+            contact._bitangent,
             rA,
             rB,
             0.0F,
@@ -352,7 +352,7 @@ void VelocitySolver::PrepareSingle ( ContactManifold &manifold, float fixedTimeS
             &contact
         );
 
-        setup ( contact._dataN, manifold._normal, rA, rB, b, &VelocitySolver::LambdaClipNormalForce, nullptr );
+        setup ( contact._dataN, contact._normal, rA, rB, b, &VelocitySolver::LambdaClipNormalForce, nullptr );
     }
 
     // Apply warm start impulses.
@@ -427,13 +427,13 @@ void VelocitySolver::SolveSingle ( ContactManifold &manifold ) noexcept
 void VelocitySolver::SwapBodies ( ContactManifold &manifold ) noexcept
 {
     std::swap ( manifold._bodyA, manifold._bodyB );
-    manifold._normal.Reverse ();
-    manifold._tangent.Reverse ();
 
     for ( size_t i = 0U; i < manifold._contactCount; ++i )
     {
-        Contact& contacts = manifold._contacts[ i ];
-        std::swap ( contacts._pointA, contacts._pointB );
+        Contact& contact = manifold._contacts[ i ];
+        contact._normal.Reverse ();
+        contact._tangent.Reverse ();
+        std::swap ( contact._pointA, contact._pointB );
     }
 }
 

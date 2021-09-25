@@ -40,8 +40,14 @@ struct Contact final
     VelocitySolverData      _dataT {};
     VelocitySolverData      _dataB {};
     VelocitySolverData      _dataN {};
+
     float                   _friction = 0.5F;
     float                   _restitution = 0.5F;
+
+    // The normal points the direction which body B must be moved to eliminate collision.
+    GXVec3                  _tangent {};
+    GXVec3                  _bitangent {};
+    GXVec3                  _normal {};
 
     // Debug feature.
     bool                    _warmStarted = false;
@@ -54,11 +60,6 @@ struct ContactManifold final
 
     size_t                          _contactCount = 0U;
     Contact*                        _contacts = nullptr;
-
-    // The normal points the direction which body B must be moved to eliminate collision.
-    GXVec3                          _tangent {};
-    GXVec3                          _bitangent {};
-    GXVec3                          _normal {};
 
     bool                            _warmStartIsUsed = true;
 
@@ -95,8 +96,8 @@ class ContactManager final
         using Mapper = std::unordered_map<Key, ContactManifold*, Hasher>;
 
     private:
-        std::array<Set, 2U>                 _sets;
-        Mapper                              _warmStartMapper;
+        std::array<Set, 2U>                 _sets {};
+        Mapper                              _warmStartMapper {};
         std::vector<size_t>                 _indices;
 
     public:

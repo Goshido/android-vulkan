@@ -42,9 +42,7 @@ size_t ContactManager::Hasher::operator () ( Key const &me ) const noexcept
 
 //----------------------------------------------------------------------------------------------------------------------
 
-ContactManager::ContactManager () noexcept:
-    _sets {},
-    _warmStartMapper {}
+ContactManager::ContactManager () noexcept
 {
     for ( auto& [contactManifolds, contacts] : _sets )
     {
@@ -57,7 +55,7 @@ ContactManager::ContactManager () noexcept:
 
 Contact& ContactManager::AllocateContact ( ContactManifold &contactManifold ) noexcept
 {
-    Contact& contact = _sets.front().second.emplace_back ();
+    Contact& contact = _sets.front ().second.emplace_back ();
 
     if ( !contactManifold._contacts )
         contactManifold._contacts = &contact;

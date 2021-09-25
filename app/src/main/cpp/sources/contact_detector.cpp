@@ -115,17 +115,16 @@ void ContactDetector::Check ( ContactManager &contactManager, RigidBodyRef const
             return;
         }
 
-        ManifoldEdgeFace ( contactManager, a, b, tbn, friction, restitution );
+        ManifoldEdgeFace ( contactManager, a, b, friction, restitution );
         return;
     }
 
-    ManifoldFaceFace ( contactManager, a, b, tbn, friction, restitution );
+    ManifoldFaceFace ( contactManager, a, b, friction, restitution );
 }
 
 ContactDetector::FirstContactData ContactDetector::AllocateFirstContact ( ContactManager &contactManager,
     RigidBodyRef const &a,
     RigidBodyRef const &b,
-    GXMat3 const &tbn,
     float friction,
     float restitution
 ) const noexcept
@@ -136,10 +135,6 @@ ContactDetector::FirstContactData ContactDetector::AllocateFirstContact ( Contac
 
     manifold._epaSteps = _epa.GetSteps ();
     manifold._gjkSteps = _gjk.GetSteps ();
-
-    tbn.GetX ( manifold._tangent );
-    tbn.GetY ( manifold._bitangent );
-    tbn.GetZ ( manifold._normal );
 
     Contact& contact = contactManager.AllocateContact ( manifold );
     contact._friction = friction;
@@ -199,7 +194,10 @@ void ContactDetector::ManifoldEdgeEdge ( ContactManager &contactManager,
     float restitution
 ) noexcept
 {
-    auto [manifold, firstContact] = AllocateFirstContact ( contactManager, a, b, tbn, friction, restitution );
+    auto [manifold, firstContact] = AllocateFirstContact ( contactManager, a, b, friction, restitution );
+    tbn.GetX ( firstContact->_tangent );
+    tbn.GetY ( firstContact->_bitangent );
+    tbn.GetZ ( firstContact->_normal );
 
     GXVec3 alpha {};
     alpha.Subtract ( _shapeAPoints[ 1U ], _shapeAPoints[ 0U ] );
@@ -237,7 +235,7 @@ void ContactDetector::ManifoldEdgeEdge ( ContactManager &contactManager,
         proj._data[ 1U ] = std::clamp ( proj._data[ 1U ], 0.0F, lenA );
 
         firstContact->_pointA.Sum ( _shapeAPoints[ 0U ], proj._data[ 0U ], aDir );
-        firstContact->_pointB.Sum ( firstContact->_pointA, penetration, manifold->_normal );
+        firstContact->_pointB.Sum ( firstContact->_pointA, penetration, firstContact->_normal );
         firstContact->_penetration = penetration;
 
         if ( std::abs ( proj._data[ 0U ] - proj._data[ 1U ] ) < SAME_POINT_TOLERANCE )
@@ -251,8 +249,12 @@ void ContactDetector::ManifoldEdgeEdge ( ContactManager &contactManager,
         anotherContact._friction = friction;
         anotherContact._restitution = restitution;
         anotherContact._pointA.Sum ( _shapeAPoints[ 0U ], proj._data[ 1U ], aDir );
-        anotherContact._pointB.Sum ( anotherContact._pointA, penetration, manifold->_normal );
+        anotherContact._pointB.Sum ( anotherContact._pointA, penetration, firstContact->_normal );
         anotherContact._penetration = penetration;
+
+        anotherContact._tangent = firstContact->_tangent;
+        anotherContact._bitangent = firstContact->_bitangent;
+        anotherContact._normal = firstContact->_normal;
 
         contactManager.Warm ( *manifold );
         return;
@@ -296,7 +298,7 @@ void ContactDetector::ManifoldEdgeEdge ( ContactManager &contactManager,
     betaProj.Subtract ( projB[ 1U ], projB[ 0U ] );
 
     firstContact->_pointB.Sum ( _shapeBPoints[ 0U ], ba.DotProduct ( n ) / n.DotProduct ( betaProj ), beta );
-    firstContact->_pointA.Sum ( firstContact->_pointB, penetration, manifold->_normal );
+    firstContact->_pointA.Sum ( firstContact->_pointB, penetration, firstContact->_normal );
     firstContact->_penetration = penetration;
 
     contactManager.Warm ( *manifold );
@@ -305,7 +307,6 @@ void ContactDetector::ManifoldEdgeEdge ( ContactManager &contactManager,
 void ContactDetector::ManifoldEdgeFace ( ContactManager &contactManager,
     RigidBodyRef const &a,
     RigidBodyRef const &b,
-    GXMat3 const &tbn,
     float friction,
     float restitution
 ) noexcept
@@ -319,28 +320,13 @@ void ContactDetector::ManifoldEdgeFace ( ContactManager &contactManager,
     {
         e = &_shapeAPoints;
         f = &_shapeBPoints;
-        firstContactData = AllocateFirstContact ( contactManager, a, b, tbn, friction, restitution );
+        firstContactData = AllocateFirstContact ( contactManager, a, b, friction, restitution );
     }
     else
     {
         e = &_shapeBPoints;
         f = &_shapeAPoints;
-
-        GXMat3 adjustedTBN {};
-
-        GXVec3 tmp {};
-        tbn.GetZ ( tmp );
-        tmp.Reverse ();
-        adjustedTBN.SetZ ( tmp );
-
-        tbn.GetX ( tmp );
-        tmp.Reverse ();
-        adjustedTBN.SetX ( tmp );
-
-        tbn.GetY ( tmp );
-        adjustedTBN.SetY ( tmp );
-
-        firstContactData = AllocateFirstContact ( contactManager, b, a, adjustedTBN, friction, restitution );
+        firstContactData = AllocateFirstContact ( contactManager, b, a, friction, restitution );
     }
 
     auto& [manifold, firstContact] = firstContactData;
@@ -373,6 +359,16 @@ void ContactDetector::ManifoldEdgeFace ( ContactManager &contactManager,
         contact._pointA = v;
         contact._pointB.Sum ( v, penetration, faceNormal );
         contact._penetration = penetration;
+
+        GXVec3& normal = contact._normal;
+        normal = faceNormal;
+        normal.Reverse ();
+
+        GXMat3 basis {};
+        basis.From ( normal );
+
+        basis.GetX ( contact._tangent );
+        basis.GetY ( contact._bitangent );
     };
 
     if ( penetration > 0.0F && alpha.SquaredLength () > SAME_POINT )
@@ -409,13 +405,10 @@ void ContactDetector::ManifoldEdgeFace ( ContactManager &contactManager,
 void ContactDetector::ManifoldFaceFace ( ContactManager &contactManager,
     RigidBodyRef const &a,
     RigidBodyRef const &b,
-    GXMat3 const &tbn,
     float friction,
     float restitution
 ) noexcept
 {
-    auto [manifold, firstContact] = AllocateFirstContact ( contactManager, a, b, tbn, friction, restitution );
-
     GXVec3 ab {};
     ab.Subtract ( _shapeAPoints[ 1U ], _shapeAPoints[ 0U ] );
 
@@ -434,7 +427,26 @@ void ContactDetector::ManifoldFaceFace ( ContactManager &contactManager,
     bNormal.Normalize();
 
     SutherlandHodgmanResult const& result = _sutherlandHodgman.Run ( _shapeAPoints, aNormal, _shapeBPoints, bNormal );
+
+    if ( result.empty () )
+    {
+        // Two bodies just touching, not penetrating.
+        return;
+    }
+
+    auto [manifold, firstContact] = AllocateFirstContact ( contactManager, a, b, friction, restitution );
     bool isFirst = true;
+
+    auto makeBasis = [] ( Contact &contact, GXVec3 const &a, GXVec3 const &b ) noexcept {
+        GXVec3& normal = contact._normal;
+        normal.Subtract ( a, b );
+        normal.Normalize ();
+
+        GXMat3 basis {};
+        basis.From ( normal );
+        basis.GetX ( contact._tangent );
+        basis.GetY ( contact._bitangent );
+    };
 
     for ( auto const& [a, b] : result )
     {
@@ -443,6 +455,7 @@ void ContactDetector::ManifoldFaceFace ( ContactManager &contactManager,
             firstContact->_pointA = a;
             firstContact->_pointB = b;
             firstContact->_penetration = a.Distance ( b );
+            makeBasis ( *firstContact, a, b );
             isFirst = false;
             continue;
         }
@@ -453,6 +466,7 @@ void ContactDetector::ManifoldFaceFace ( ContactManager &contactManager,
         anotherContact._pointA = a;
         anotherContact._pointB = b;
         anotherContact._penetration = a.Distance ( b );
+        makeBasis ( anotherContact, a, b );
     }
 
     contactManager.Warm ( *manifold );
@@ -467,9 +481,15 @@ void ContactDetector::ManifoldPoint ( ContactManager &contactManager,
     GXVec3 const &vertex
 ) noexcept
 {
-    auto [manifold, contact] = AllocateFirstContact ( contactManager, a, b, tbn, friction, restitution );
+    auto [manifold, contact] = AllocateFirstContact ( contactManager, a, b, friction, restitution );
+
+    tbn.GetX ( contact->_tangent );
+    tbn.GetY ( contact->_bitangent );
+    tbn.GetZ ( contact->_normal );
+
+    contact->_penetration = _epa.GetDepth ();
     contact->_pointA = vertex;
-    contact->_pointB.Sum ( contact->_pointA, -_epa.GetDepth (), manifold->_normal );
+    contact->_pointB.Sum ( contact->_pointA, -contact->_penetration, contact->_normal );
     contactManager.Warm ( *manifold );
 }
 

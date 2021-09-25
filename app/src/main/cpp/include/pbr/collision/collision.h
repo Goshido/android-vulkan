@@ -76,7 +76,13 @@ class Collision final : public android_vulkan::Game
         [[nodiscard]] bool OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept override;
         void OnSwapchainDestroyed ( VkDevice device ) noexcept override;
 
-        [[nodiscard]] bool AppendCuboid ( android_vulkan::Renderer &renderer,
+        [[nodiscard]] bool CreateCommandPool ( android_vulkan::Renderer &renderer ) noexcept;
+        void DestroyCommandPool ( VkDevice device ) noexcept;
+
+        [[nodiscard]] bool CreateScene ( android_vulkan::Renderer &renderer ) noexcept;
+        void DestroyScene ( VkDevice device ) noexcept;
+
+        [[nodiscard]] static bool AppendCuboid ( android_vulkan::Renderer &renderer,
             VkCommandBuffer const* commandBuffers,
             size_t &commandBufferConsumed,
             std::string &&tag,
@@ -91,12 +97,6 @@ class Collision final : public android_vulkan::Game
             float h,
             float d
         ) noexcept;
-
-        [[nodiscard]] bool CreateCommandPool ( android_vulkan::Renderer &renderer ) noexcept;
-        void DestroyCommandPool ( VkDevice device ) noexcept;
-
-        [[nodiscard]] bool CreateScene ( android_vulkan::Renderer &renderer ) noexcept;
-        void DestroyScene ( VkDevice device ) noexcept;
 
         static void UpdateCuboid ( CubeInfo &cube ) noexcept;
 };

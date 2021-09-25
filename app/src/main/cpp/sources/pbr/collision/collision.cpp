@@ -155,47 +155,6 @@ void Collision::OnSwapchainDestroyed ( VkDevice device ) noexcept
     _renderSession.OnSwapchainDestroyed ( device );
 }
 
-bool Collision::AppendCuboid ( android_vulkan::Renderer &renderer,
-    VkCommandBuffer const* commandBuffers,
-    size_t &commandBufferConsumed,
-    std::string &&tag,
-    ComponentRef &visual,
-    char const* material,
-    android_vulkan::Half4 const &color,
-    android_vulkan::RigidBodyRef &physical,
-    float x,
-    float y,
-    float z,
-    float w,
-    float h,
-    float d
-) noexcept
-{
-    visual = std::make_shared<StaticMeshComponent> ( renderer,
-        commandBufferConsumed,
-        "pbr/system/unit-cube.mesh2",
-        material,
-        commandBuffers
-    );
-
-    if ( !visual )
-        return false;
-
-    // NOLINTNEXTLINE
-    auto& v = *static_cast<StaticMeshComponent*> ( visual.get () );
-    v.SetColor0 ( color );
-
-    physical = std::make_shared<android_vulkan::RigidBody> ();
-    android_vulkan::RigidBody& ph = *physical.get ();
-    ph.SetLocation ( x, y, z );
-    ph.EnableKinematic ();
-    ph.SetTag ( std::move ( tag ) );
-
-    android_vulkan::ShapeRef shape = std::make_shared<android_vulkan::ShapeBox> ( w, h, d );
-    ph.SetShape ( shape );
-    return true;
-}
-
 bool Collision::CreateCommandPool ( android_vulkan::Renderer &renderer ) noexcept
 {
     VkCommandPoolCreateInfo const poolInfo
@@ -384,6 +343,47 @@ void Collision::DestroyScene ( VkDevice device ) noexcept
 
     MeshManager::Destroy ( device );
     MaterialManager::Destroy ( device );
+}
+
+bool Collision::AppendCuboid ( android_vulkan::Renderer &renderer,
+    VkCommandBuffer const* commandBuffers,
+    size_t &commandBufferConsumed,
+    std::string &&tag,
+    ComponentRef &visual,
+    char const* material,
+    android_vulkan::Half4 const &color,
+    android_vulkan::RigidBodyRef &physical,
+    float x,
+    float y,
+    float z,
+    float w,
+    float h,
+    float d
+) noexcept
+{
+    visual = std::make_shared<StaticMeshComponent> ( renderer,
+        commandBufferConsumed,
+        "pbr/system/unit-cube.mesh2",
+        material,
+        commandBuffers
+    );
+
+    if ( !visual )
+        return false;
+
+    // NOLINTNEXTLINE
+    auto& v = *static_cast<StaticMeshComponent*> ( visual.get () );
+    v.SetColor0 ( color );
+
+    physical = std::make_shared<android_vulkan::RigidBody> ();
+    android_vulkan::RigidBody& ph = *physical.get ();
+    ph.SetLocation ( x, y, z );
+    ph.EnableKinematic ();
+    ph.SetTag ( std::move ( tag ) );
+
+    android_vulkan::ShapeRef shape = std::make_shared<android_vulkan::ShapeBox> ( w, h, d );
+    ph.SetShape ( shape );
+    return true;
 }
 
 void Collision::UpdateCuboid ( CubeInfo &cube ) noexcept

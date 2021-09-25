@@ -42,7 +42,6 @@ class ContactDetector final
         [[nodiscard]] FirstContactData AllocateFirstContact ( ContactManager &contactManager,
             RigidBodyRef const &a,
             RigidBodyRef const &b,
-            GXMat3 const &tbn,
             float friction,
             float restitution
         ) const noexcept;
@@ -62,7 +61,6 @@ class ContactDetector final
         void ManifoldEdgeFace ( ContactManager &contactManager,
             RigidBodyRef const &a,
             RigidBodyRef const &b,
-            GXMat3 const &tbn,
             float friction,
             float restitution
         ) noexcept;
@@ -70,7 +68,6 @@ class ContactDetector final
         void ManifoldFaceFace ( ContactManager &contactManager,
             RigidBodyRef const &a,
             RigidBodyRef const &b,
-            GXMat3 const &tbn,
             float friction,
             float restitution
         ) noexcept;

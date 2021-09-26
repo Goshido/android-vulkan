@@ -23,7 +23,7 @@ static_assert ( STABILIZATION_FACTOR >= 0.0F && STABILIZATION_FACTOR <= 1.0F,
 
 void VelocitySolver::Run ( ContactManager &contactManager, float fixedTimeStepInverse ) noexcept
 {
-    DebugContactInManifold ( contactManager );
+    //DebugContactInManifold ( contactManager );
     //DebugWarmStart ( contactManager );
 
     auto& manifolds = contactManager.GetContactManifolds ();

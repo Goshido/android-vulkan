@@ -42,6 +42,53 @@ size_t ContactManager::Hasher::operator () ( Key const &me ) const noexcept
 
 //----------------------------------------------------------------------------------------------------------------------
 
+class Grabber final
+{
+    public:
+        GXVec3 const    _pointA;
+        GXVec3 const    _pointB;
+        GXVec3 const    _normal;
+
+    private:
+        float const     _penetration;
+        GXVec3 const    _tangent;
+        GXVec3 const    _bitangent;
+
+    public:
+        Grabber () = delete;
+
+        Grabber ( Grabber const & ) = delete;
+        Grabber &operator = ( Grabber const & ) = delete;
+
+        Grabber ( Grabber && ) = delete;
+        Grabber &operator = ( Grabber && ) = delete;
+
+        explicit Grabber ( Contact const &contact ) noexcept:
+            _pointA ( contact._pointA ),
+            _pointB ( contact._pointB ),
+            _normal ( contact._normal ),
+            _penetration ( contact._penetration ),
+            _tangent ( contact._tangent ),
+            _bitangent ( contact._bitangent )
+        {
+            // NOTHING
+        }
+
+        ~Grabber() = default;
+
+        void Apply ( Contact &target ) const noexcept
+        {
+            target._pointA = _pointA;
+            target._pointB = _pointB;
+            target._normal = _normal;
+            target._penetration = _penetration;
+            target._tangent = _tangent;
+            target._bitangent = _bitangent;
+        }
+};
+
+//----------------------------------------------------------------------------------------------------------------------
+
 ContactManager::ContactManager () noexcept
 {
     for ( auto& [contactManifolds, contacts] : _sets )
@@ -107,6 +154,9 @@ void ContactManager::Reset () noexcept
 
 void ContactManager::Warm ( ContactManifold &manifold ) noexcept
 {
+    if ( manifold._contactCount > 4U )
+        SimplifyManifold ( manifold );
+
     Key const key = std::make_pair ( manifold._bodyA.get (), manifold._bodyB.get () );
     auto findResult = _warmStartMapper.find ( key );
     auto const end = _warmStartMapper.end ();
@@ -144,6 +194,7 @@ void ContactManager::Warm ( ContactManifold &manifold ) noexcept
             // Note this is rough approximation. Main assumption that both contact point pairs on previous step and
             // current step are relatively close to each other but relative far away from another pairs in
             // the same manifold. So only one distance estimation is enough.
+
             if ( contact._pointA.SquaredDistance ( cacheContact._pointA ) > WARM_FINDER_FACTOR )
             {
                 ++cacheIndex;
@@ -176,6 +227,142 @@ void ContactManager::ResetFrontSet () noexcept
     auto& [contactManifolds, contacts] = _sets.front ();
     contactManifolds.clear ();
     contacts.clear ();
+}
+
+void ContactManager::SimplifyManifold ( ContactManifold &manifold ) noexcept
+{
+    // Based on ideas from "Contact Point Reduction"
+    // http://media.steampowered.com/apps/valve/2015/DirkGregorius_Contacts.pdf
+
+    // For example box vs box contact manifold could contain up to 8 contacts points. It's too excessive for stable
+    // simulation. Most of the time 4 is enough. Basic idea is to select 4 contact points which will produce
+    // the shape with maximum area possible.
+
+    Contact* contacts = manifold._contacts;
+
+    _indices.clear ();
+    _indices.resize ( manifold._contactCount );
+    std::iota ( _indices.begin (), _indices.end (), 0U );
+
+    // Optimization: Selecting contact point with minimum support point in direction [1.0F, 0.0F, 0.0F].
+    // It's global X axis direction. So it's be enough to make decision only by value of the x coordinate.
+    auto search = _indices.begin ();
+
+    for ( auto i = search + 1U; i != _indices.end (); ++i )
+    {
+        if ( contacts[ *i ]._pointA._data[ 0U ] < contacts[ *search ]._pointA._data[ 0U ] )
+        {
+            search = i;
+        }
+    }
+
+    auto remove = [ & ] ( auto &itt ) noexcept {
+        *itt = _indices.back ();
+        _indices.pop_back ();
+    };
+
+    Grabber const contactA ( contacts[ *search ] );
+    remove ( search );
+
+    // Second point: the line must have maximum distance.
+
+    GXVec3 const& contactAPoint = contactA._pointA;
+    search = _indices.begin ();
+    float distance = contacts[ *search ]._pointA.SquaredDistance ( contactAPoint );
+
+    for ( auto i = search + 1U; i != _indices.end (); ++i )
+    {
+        float const d = contacts[ *search ]._pointA.SquaredDistance ( contactAPoint );
+
+        if ( d <= distance )
+            continue;
+
+        distance = d;
+        search = i;
+    }
+
+    Grabber const contactB ( contacts[ *search ] );
+    remove ( search );
+
+    // Third point: the triangle must have maximum area.
+
+    GXVec3 const& contactBPoint = contactB._pointA;
+
+    // Note you might guess why don't just use normal from the first contact point. But unfortunately we can't do that
+    // reliably. We have to recalculate normal because it's unknown which in winding order contact points are.
+    GXVec3 const& o = contacts[ 0U ]._pointA;
+
+    GXVec3 ab {};
+    ab.Subtract ( contacts[ 1U ]._pointA, o );
+
+    GXVec3 ac {};
+    ac.Subtract ( contacts[ 2U ]._pointA, o );
+
+    GXVec3 normal {};
+    normal.CrossProduct ( ab, ac );
+
+    auto signedAreaFactor = [ & ] ( GXVec3 const &a, GXVec3 const &b, GXVec3 const &c ) noexcept -> float {
+        GXVec3 ca {};
+        ca.Subtract ( a, c );
+
+        GXVec3 cb {};
+        cb.Subtract ( b, c );
+
+        GXVec3 cross {};
+        cross.CrossProduct ( ca, cb );
+
+        return cross.DotProduct ( normal );
+    };
+
+    search = _indices.begin ();
+    float areaFactor = signedAreaFactor ( contactAPoint, contactBPoint, contacts[ *search ]._pointA );
+
+    for ( auto i = search + 1U; i != _indices.end (); ++i )
+    {
+        float const area = signedAreaFactor ( contactAPoint, contactBPoint, contacts[ *i ]._pointA );
+
+        if ( area <= areaFactor )
+            continue;
+
+        areaFactor = area;
+        search = i;
+    }
+
+    Grabber const contactC ( contacts[ *search ] );
+    remove ( search );
+
+    // Forth point: Minimum signed area of remaining points with sides of the ABC triangle.
+
+    GXVec3 const& contactCPoint = contactC._pointA;
+    search = _indices.end ();
+    auto const end = search;
+    areaFactor = std::numeric_limits<float>::max ();
+
+    auto checkSide = [ & ] ( GXVec3 const &a, GXVec3 const &b ) noexcept {
+        for ( auto i = _indices.begin (); i != end; ++i )
+        {
+            float const area = signedAreaFactor ( a, b, contacts[ *i ]._pointA );
+
+            if ( area > 0.0F || area >= areaFactor )
+                continue;
+
+            areaFactor = area;
+            search = i;
+        }
+    };
+
+    checkSide ( contactAPoint, contactBPoint );
+    checkSide ( contactBPoint, contactCPoint );
+    checkSide ( contactCPoint, contactAPoint );
+
+    Grabber const contactD ( contacts[ *search ] );
+
+    contactA.Apply ( contacts[ 0U ] );
+    contactB.Apply ( contacts[ 1U ] );
+    contactC.Apply ( contacts[ 2U ] );
+    contactD.Apply ( contacts[ 3U ] );
+
+    manifold._contactCount = 4U;
 }
 
 void ContactManager::SwapSets () noexcept

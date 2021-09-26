@@ -29,6 +29,7 @@ class VelocitySolver final
         static void Run ( ContactManager &contactManager, float fixedTimeStepInverse ) noexcept;
 
     private:
+        [[maybe_unused]] static void DebugContactInManifold ( ContactManager const &contactManager ) noexcept;
         [[maybe_unused]] static void DebugWarmStart ( ContactManager const &contactManager ) noexcept;
 
         [[nodiscard]] static float LambdaClipNormalForce ( float lambda, void* context ) noexcept;

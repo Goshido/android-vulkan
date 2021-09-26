@@ -4,6 +4,7 @@
 GX_DISABLE_COMMON_WARNINGS
 
 #include <algorithm>
+#include <cassert>
 
 GX_RESTORE_WARNING_STATE
 
@@ -22,7 +23,9 @@ static_assert ( STABILIZATION_FACTOR >= 0.0F && STABILIZATION_FACTOR <= 1.0F,
 
 void VelocitySolver::Run ( ContactManager &contactManager, float fixedTimeStepInverse ) noexcept
 {
+    DebugContactInManifold ( contactManager );
     //DebugWarmStart ( contactManager );
+
     auto& manifolds = contactManager.GetContactManifolds ();
 
     for ( auto& manifold : manifolds )
@@ -59,6 +62,45 @@ void VelocitySolver::Run ( ContactManager &contactManager, float fixedTimeStepIn
             SolvePair ( manifold );
         }
     }
+}
+
+[[maybe_unused]] void VelocitySolver::DebugContactInManifold ( ContactManager const &contactManager ) noexcept
+{
+    static size_t manifolds = 0U;
+    static std::array<size_t, 8U> histogram = { 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U };
+
+    for ( auto& manifold : contactManager.GetContactManifolds () )
+    {
+        assert ( manifold._contactCount > 0U );
+        assert ( manifold._contactCount <= histogram.size () );
+        ++manifolds;
+        ++( histogram[ manifold._contactCount - 1U ] );
+    }
+
+    if ( manifolds == 0U )
+        return;
+
+    constexpr char const format[] =
+R"__(Manifold variety:
+      #1      #2      #3      #4      #5      #6      #7      #8
+%7.01f%%%7.01f%%%7.01f%%%7.01f%%%7.01f%%%7.01f%%%7.01f%%%7.01f%%)__";
+
+    float const a = 1.0F / static_cast<float> ( manifolds );
+
+    auto conv = [ & ] ( size_t v ) noexcept -> float {
+        return a * static_cast<float> ( 100U * v );
+    };
+
+    android_vulkan::LogDebug ( format,
+        conv ( histogram[ 0U ] ),
+        conv ( histogram[ 1U ] ),
+        conv ( histogram[ 2U ] ),
+        conv ( histogram[ 3U ] ),
+        conv ( histogram[ 4U ] ),
+        conv ( histogram[ 5U ] ),
+        conv ( histogram[ 6U ] ),
+        conv ( histogram[ 7U ] )
+    );
 }
 
 [[maybe_unused]] void VelocitySolver::DebugWarmStart ( ContactManager const &contactManager ) noexcept

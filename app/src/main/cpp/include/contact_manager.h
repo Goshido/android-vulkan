@@ -123,6 +123,7 @@ class ContactManager final
     private:
         void RemoveOutdatedWarmRecords () noexcept;
         void ResetFrontSet () noexcept;
+        void SimplifyManifold ( ContactManifold &manifold ) noexcept;
         void SwapSets () noexcept;
 };
 

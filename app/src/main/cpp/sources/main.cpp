@@ -13,6 +13,7 @@
 GX_DISABLE_COMMON_WARNINGS
 
 #include <android_native_app_glue.h>
+#include <arm_neon.h>
 
 GX_RESTORE_WARNING_STATE
 
@@ -32,12 +33,189 @@ enum class eGame : uint16_t
     World1x1
 };
 
+[[maybe_unused]] static void Inverse ( GXMat4 &dst, GXMat4 const &src ) noexcept
+{
+    // The implementation is based on ideas from
+    // https://lxjk.github.io/2017/09/03/Fast-4x4-Matrix-Inverse-with-SSE-SIMD-Explained.html
+
+    // Sub-matrices.
+    float32_t const aExtract[ 4U ] = { src._data[ 0U ], src._data[ 1U ], src._data[ 4U ], src._data[ 5U ] };
+    float32x4_t const a = vld1q_f32 ( aExtract );
+
+    float32_t const bExtract[ 4U ] = { src._data[ 2U ], src._data[ 3U ], src._data[ 6U ], src._data[ 7U ] };
+    float32x4_t const b = vld1q_f32 ( bExtract );
+
+    float32_t const cExtract[ 4U ] = { src._data[ 8U ], src._data[ 9U ], src._data[ 12U ], src._data[ 13U ] };
+    float32x4_t const c = vld1q_f32 ( cExtract );
+
+    float32_t const dExtract[ 4U ] = { src._data[ 10U ], src._data[ 11U ], src._data[ 14U ], src._data[ 15U ] };
+    float32x4_t const d = vld1q_f32 ( dExtract );
+
+    // Determinants: |A|, |B|, |C| and |D|.
+    float32_t const d0[ 4U ] = { src._data[ 0U ], src._data[ 2U ], src._data[ 8U ], src._data[ 10U ] };
+    float32_t const d1[ 4U ] = { src._data[ 5U ], src._data[ 7U ], src._data[ 13U ], src._data[ 15U ] };
+    float32_t const d2[ 4U ] = { src._data[ 4U ], src._data[ 6U ], src._data[ 12U ], src._data[ 14U ] };
+    float32_t const d3[ 4U ] = { src._data[ 1U ], src._data[ 3U ], src._data[ 9U ], src._data[ 11U ] };
+
+    float32x4_t const detComposite = vmlsq_f32 (
+        vmulq_f32 ( vld1q_f32 ( d0 ), vld1q_f32 ( d1 ) ), vld1q_f32 ( d2 ), vld1q_f32 ( d3 )
+    );
+
+    constexpr uint32_t const all = std::numeric_limits<uint32_t>::max ();
+
+    auto multiplyAdjugateMatrix = [] ( float32x4_t const &adj, float32x4_t const &m ) noexcept -> float32x4_t {
+        float32x4_t const adj3012 = vextq_f32 ( adj, adj, 3 );
+        float32x4_t const m2301 = vextq_f32 ( m, m, 2 );
+        float32x4_t const adj3300 = vzip1q_f32 ( adj3012, adj3012 );
+        float32x4_t const adj1122 = vzip2q_f32 ( adj3012, adj3012 );
+
+        return vmlsq_f32 ( vmulq_f32 ( adj3300, m ), adj1122, m2301 );
+    };
+
+    auto multiplyMatrixAdjugate = [ & ] ( float32x4_t const &m, float32x4_t const &adj ) noexcept -> float32x4_t {
+        float32x4_t const adj3012 = vextq_f32 ( adj, adj, 3 );
+        float32x4_t const m1032 = vrev64q_f32 ( m );
+        uint64x2_t const a3012 = vreinterpretq_u64_f32 ( adj3012 );
+        float32x4_t const adj3030 = vreinterpretq_f32_u64 ( vzip1q_u64 ( a3012, a3012 ) );
+        uint64x2_t const adj0321 = vreinterpretq_u64_f32 ( vrev64q_f32 ( adj3012 ) );
+        float32x4_t const adj2121 = vreinterpretq_f32_u64 ( vzip2q_u64 ( adj0321, adj0321 ) );
+
+        return vmlsq_f32 ( vmulq_f32 ( m, adj3030 ), m1032, adj2121 );
+    };
+
+    auto multiplyMatrixMatrix = [] ( float32x4_t const &left, float32x4_t const &right ) noexcept -> float32x4_t {
+        float32x4_t const right1032 = vrev64q_f32 ( right );
+        float32x4_t const left1032 = vrev64q_f32 ( left );
+        float32x4_t const right0321 = vextq_f32 ( right1032, right1032, 1 );
+        uint64x2_t const r0321 = vreinterpretq_u64_f32 ( right0321 );
+        float32x4_t const right0303 = vreinterpretq_f32_u64 ( vzip1q_u64 ( r0321, r0321 ) );
+        float32x4_t const right2121 = vreinterpretq_f32_u64 ( vzip2q_u64 ( r0321, r0321 ) );
+
+        return vmlaq_f32 ( vmulq_f32 ( left, right0303 ), left1032, right2121 );
+    };
+
+    // D# C
+    float32x4_t const dAdjC = multiplyAdjugateMatrix ( d, c );
+    float32x4_t const detA = vdupq_laneq_f32 ( detComposite, 0 );
+
+    // A# B
+    float32x4_t const aAdjB = multiplyAdjugateMatrix ( a, b );
+    float32x4_t const detD = vdupq_laneq_f32 ( detComposite, 3 );
+
+    // X# = |D| A - B ( D# C )
+    float32x4_t const xAdj = vsubq_f32 ( vmulq_f32 ( detD, a ), multiplyMatrixMatrix ( b, dAdjC ) );
+    float32x4_t const detB = vdupq_laneq_f32 ( detComposite, 1 );
+
+    // W# = |A| D - C ( A# B )
+    float32x4_t const wAdj = vsubq_f32 ( vmulq_f32 ( detA, d ), multiplyMatrixMatrix ( c, aAdjB ) );
+    float32x4_t const detC = vdupq_laneq_f32 ( detComposite, 2 );
+
+    // Y# = |B| C - D ( A# B )#
+    float32x4_t const yAdj = vsubq_f32 ( vmulq_f32 ( detB, c ), multiplyMatrixAdjugate ( d, aAdjB ) );
+
+    float32_t ddd[ 4U ];
+    vst1q_f32 ( ddd, detComposite );
+
+    // Z# = |C| B - A ( D# C )#
+    float32x4_t const zAdj = vsubq_f32 ( vmulq_f32 ( detC, b ), multiplyMatrixAdjugate ( a, dAdjC ) );
+
+    // |M| = |A| |D| + |B| |C| - tr ( ( A# B) ( D# C ) )
+    uint32x4_t const dAdjC0123 = vreinterpretq_u32_f32 ( dAdjC );
+    uint32x4_t const dAdjC3012 = vextq_u32 ( dAdjC0123, dAdjC0123, 3 );
+
+    constexpr uint32_t const maskFirstAndLastRaw[ 4U ] = { all, 0U, 0U, all };
+    uint32x4_t const maskFirstAndLast = vld1q_u32 ( maskFirstAndLastRaw );
+
+    uint32x4_t const dAdjC0321 = vrev64q_u32 ( dAdjC3012 );
+
+    constexpr uint32_t const maskMiddleRaw[ 4U ] = { 0U, all, all, 0U };
+    uint32x4_t const maskMiddle = vld1q_u32 ( maskMiddleRaw );
+
+    uint32x4_t const dAdjC3210 = vextq_u32 ( dAdjC0321, dAdjC0321, 1 );
+    float32x2_t const ab = vld1_f32 ( ddd );
+
+    uint32x4_t const dAdjC0XX3 = vandq_u32 ( dAdjC0123, maskFirstAndLast );
+    float32x2_t const cd = vld1_f32 ( ddd + 2U );
+
+    uint32x4_t const dAdjCX21X = vandq_u32 ( dAdjC3210, maskMiddle );
+    float32x2_t const dc = vrev64_f32 ( cd );
+
+    uint32x4_t const dAdjC0213 = vorrq_u32 ( dAdjC0XX3, dAdjCX21X );
+
+    float32_t const invDetM = 1.0F / ( vaddv_f32 ( vmul_f32 ( ab, dc ) ) -
+        vaddvq_f32 ( vmulq_f32 ( aAdjB, vreinterpretq_f32_u32 ( dAdjC0213 ) ) ) );
+
+    float32_t const negInvDetM = -invDetM;
+    float32_t const invDetMFactorData[ 4U ] = { invDetM, negInvDetM, negInvDetM, invDetM };
+    float32x4_t const invDetMFactor = vld1q_f32 ( invDetMFactorData );
+
+    float32x4_t const x = vmulq_f32 ( xAdj, invDetMFactor );
+    float32x4_t const y = vmulq_f32 ( yAdj, invDetMFactor );
+    float32_t xData[ 4U ];
+    vst1q_f32 ( xData, x );
+
+    float32x4_t const z = vmulq_f32 ( zAdj, invDetMFactor );
+    float32_t yData[ 4U ];
+    vst1q_f32 ( yData, y );
+
+    float32x4_t const w = vmulq_f32 ( wAdj, invDetMFactor );
+    float32_t zData[ 4U ];
+    vst1q_f32 ( zData, z );
+
+    dst._data[ 0U ] = xData[ 3U ];
+    dst._data[ 1U ] = xData[ 1U ];
+    dst._data[ 2U ] = yData[ 3U ];
+    dst._data[ 3U ] = yData[ 1U ];
+
+    float32_t wData[ 4U ];
+    vst1q_f32 ( wData, w );
+
+    dst._data[ 4U ] = xData[ 2U ];
+    dst._data[ 5U ] = xData[ 0U ];
+    dst._data[ 6U ] = yData[ 2U ];
+    dst._data[ 7U ] = yData[ 0U ];
+
+    dst._data[ 8U ] = zData[ 3U ];
+    dst._data[ 9U ] = zData[ 1U ];
+    dst._data[ 10U ] = wData[ 3U ];
+    dst._data[ 11U ] = wData[ 1U ];
+
+    dst._data[ 12U ] = zData[ 2U ];
+    dst._data[ 13U ] = zData[ 0U ];
+    dst._data[ 14U ] = wData[ 2U ];
+    dst._data[ 15U ] = wData[ 0U ];
+
+    GXVec3 const stop {};
+}
+
+static void Test () noexcept
+{
+    GXVec3 axis ( 77.0F, -34.0F, 11.777F );
+    axis.Normalize ();
+
+    GXQuat rot {};
+    rot.FromAxisAngle ( axis, GXDegToRad ( 77.0F ) );
+
+    GXMat4 transform {};
+    transform.From ( rot, GXVec3 ( 0.0F, 77.0F, 7.777F ) );
+
+    GXMat4 inverseClassical {};
+    inverseClassical.Inverse ( transform );
+
+    GXMat4 inverseNew {};
+    Inverse ( inverseNew, transform );
+
+    GXVec3 const stop {};
+}
+
 } // namespace android_vulkan
 
 // Note maybe_unused attribute is needed because IDE could not understand that this function is actually visible for
 // NativeActivity implementation.
 [[maybe_unused]] void android_main ( android_app* app )
 {
+    android_vulkan::Test ();
+
     std::map<android_vulkan::eGame, std::shared_ptr<android_vulkan::Game>> const games =
     {
         { android_vulkan::eGame::Collision, std::make_shared<pbr::collision::Collision> () },

@@ -1,4 +1,5 @@
 #include <core.h>
+#include <file.h>
 #include <shape_box.h>
 #include <mandelbrot/mandelbrot_analytic_color.h>
 #include <mandelbrot/mandelbrot_lut_color.h>
@@ -14,6 +15,8 @@ GX_DISABLE_COMMON_WARNINGS
 
 #include <android_native_app_glue.h>
 #include <arm_neon.h>
+#include <chrono>
+#include <random>
 
 GX_RESTORE_WARNING_STATE
 
@@ -125,8 +128,8 @@ enum class eGame : uint16_t
 
     float32x4_t const yAdj = vsubq_f32 ( detBCFactor, dABFactor );
 
-    float32_t ddd[ 4U ];
-    vst1q_f32 ( ddd, detComposite );
+    float32_t dABCD[ 4U ];
+    vst1q_f32 ( dABCD, detComposite );
 
     // Z# = |C| B - A ( D# C )#
     float32x4_t const detCBFactor = vmulq_f32 ( detC, b );
@@ -146,10 +149,10 @@ enum class eGame : uint16_t
 
     uint32x4_t const dAdjCxx0321 = vreinterpretq_u32_u64 ( dAdjC0321 );
     uint32x4_t const dAdjC3210 = vextq_u32 ( dAdjCxx0321, dAdjCxx0321, 1 );
-    float32x2_t const ab = vld1_f32 ( ddd );
+    float32x2_t const ab = vld1_f32 ( dABCD );
 
     uint32x4_t const dAdjC0XX3 = vandq_u32 ( vreinterpretq_u32_f32 ( dAdjC0303 ), maskFirstAndLast );
-    float32x2_t const cd = vld1_f32 ( ddd + 2U );
+    float32x2_t const cd = vld1_f32 ( dABCD + 2U );
 
     uint32x4_t const dAdjCX21X = vandq_u32 ( dAdjC3210, maskMiddle );
     float32x2_t const dc = vrev64_f32 ( cd );
@@ -204,22 +207,125 @@ enum class eGame : uint16_t
     vst1_f32 ( dst._data + 10U, vrev64_f32 ( w13 ) );
 }
 
-static void Test () noexcept
+static void Test ( android_app &app ) noexcept
 {
-    GXVec3 axis ( 77.0F, -34.0F, 11.777F );
-    axis.Normalize ();
+    extern AAssetManager* g_AssetManager;
+    g_AssetManager = app.activity->assetManager;
+    std::vector<char> content {};
 
-    GXQuat rot {};
-    rot.FromAxisAngle ( axis, GXDegToRad ( 77.0F ) );
+    {
+        File dataset ( "math/1" );
 
-    GXMat4 transform {};
-    transform.From ( rot, GXVec3 ( 0.0F, 77.0F, 7.777F ) );
+        if ( !dataset.LoadContent () )
+            return;
 
+        auto const& data = dataset.GetContent ();
+        content.resize ( data.size () + 1U );
+        content[ data.size () ] = '\0';
+
+        std::memcpy ( content.data (), data.data (), data.size () );
+    }
+
+    std::string_view const sv ( content.data (), content.size () );
+    std::string_view i = sv;
+    size_t counter = 0U;
+
+    for ( ; ; )
+    {
+        auto r = i.find ( '\n' );
+
+        if ( r == std::string_view::npos )
+            break;
+
+        ++counter;
+        i = i.substr ( r + 1U );
+    }
+
+    size_t const amount = counter / 4U;
+    i = sv;
+    std::vector<GXMat4> dataset {};
+    dataset.reserve ( amount );
+
+    for ( size_t line = 0U; line < amount; ++line )
+    {
+        GXMat4 get {};
+        std::sscanf ( i.data (), "%f %f %f %f", get._data, get._data + 1U, get._data + 2U, get._data + 3U );
+        i = i.substr ( i.find ( '\n' ) + 1U );
+
+        std::sscanf ( i.data (), "%f %f %f %f", get._data + 4U, get._data + 5U, get._data + 6U, get._data + 7U );
+        i = i.substr ( i.find ( '\n' ) + 1U );
+
+        std::sscanf ( i.data (), "%f %f %f %f", get._data + 8U, get._data + 9U, get._data + 10U, get._data + 11U );
+        i = i.substr ( i.find ( '\n' ) + 1U );
+
+        std::sscanf ( i.data (), "%f %f %f %f", get._data + 12U, get._data + 13U, get._data + 14U, get._data + 15U );
+        i = i.substr ( i.find ( '\n' ) + 1U );
+
+        dataset.push_back ( get );
+    }
+
+    size_t mm;
+
+    {
+        File multiply ( "math/2" );
+
+        if ( !multiply.LoadContent () )
+            return;
+
+        auto& m = multiply.GetContent ();
+        m[ m.size () - 1U ] = 0;
+
+        std::sscanf ( reinterpret_cast<char const*> ( m.data () ), "%zu", &mm );
+    }
+
+    std::vector<GXMat4> resultDataset ( amount * mm );
+    size_t const rawData = sizeof ( GXMat4 ) * amount;
+
+    for ( size_t step = 0U; step < mm; ++step )
+        std::memcpy ( resultDataset.data () + step * amount, dataset.data (), rawData );
+
+    float sur = 1.0F;
     GXMat4 inverseClassical {};
-    inverseClassical.Inverse ( transform );
-
     GXMat4 inverseNew {};
-    Inverse ( inverseNew, transform );
+
+    auto const timePoint1 = std::chrono::high_resolution_clock::now ();
+
+    for ( auto const& matrix : resultDataset )
+    {
+        inverseClassical.Inverse ( matrix );
+        sur *= std::signbit ( inverseClassical._data[ 15U ] ) ? -1.0F : 1.0F;
+    }
+
+    auto const timePoint2 = std::chrono::high_resolution_clock::now ();
+
+    for ( auto const& matrix : resultDataset )
+    {
+        Inverse ( inverseNew, matrix );
+        sur *= std::signbit ( inverseNew._data[ 15U ] ) ? -1.0F : 1.0F;
+    }
+
+    auto const timePoint3 = std::chrono::high_resolution_clock::now ();
+
+    LogDebug ( "Result %f", sur );
+
+    auto classicDuration = timePoint2 - timePoint1;
+    auto neonDuration = timePoint3 - timePoint2;
+
+    constexpr char const format[] =
+R"__(Results:
+>>>
+    Matrices:      %14zu items
+    Matrices data: %14g Gb
+    Classical:     %14zu nanoseconds
+    Neon:          %14zu nanoseconds
+<<<)__";
+
+    LogDebug ( format,
+        resultDataset.size (),
+        ( ( ( static_cast<double> ( resultDataset.size () * sizeof ( GXMat4 ) ) / 1024.0 ) / 1024.0 ) / 1024.0 ),
+        std::chrono::duration_cast<std::chrono::nanoseconds> ( classicDuration ).count (),
+        std::chrono::duration_cast<std::chrono::nanoseconds> ( neonDuration ).count ()
+    );
 
     GXVec3 const stop {};
 }
@@ -230,7 +336,7 @@ static void Test () noexcept
 // NativeActivity implementation.
 [[maybe_unused]] void android_main ( android_app* app )
 {
-    android_vulkan::Test ();
+    android_vulkan::Test ( *app );
 
     std::map<android_vulkan::eGame, std::shared_ptr<android_vulkan::Game>> const games =
     {

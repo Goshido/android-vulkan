@@ -163,43 +163,45 @@ enum class eGame : uint16_t
     float32_t const invDetMFactorData[ 4U ] = { invDetM, negInvDetM, negInvDetM, invDetM };
     float32x4_t const invDetMFactor = vld1q_f32 ( invDetMFactorData );
 
+    // X = [dst11   dst01   dst10   dst00]
     float32x4_t const x = vmulq_f32 ( xAdj, invDetMFactor );
+
+    // Y = [dst13   dst03   dst12   dst02]
     float32x4_t const y = vmulq_f32 ( yAdj, invDetMFactor );
-    float32_t xData[ 4U ];
-    vst1q_f32 ( xData, x );
 
+    float32x2_t const x02 = vreinterpret_f32_u32 ( vmovn_u64 ( vreinterpretq_u32_f32 ( x ) ) );
+    float32x4_t const xShift = vextq_f32 ( x, x, 1 );
+    vst1_f32 ( dst._data + 4U, vrev64_f32 ( x02 ) );
+
+    float32x2_t const x13 = vreinterpret_f32_u32 ( vmovn_u64 ( vreinterpretq_u32_f32 ( xShift ) ) );
+    vst1_f32 ( dst._data, vrev64_f32 ( x13 ) );
+
+    // Z = [dst31   dst21   dst30   dst20]
     float32x4_t const z = vmulq_f32 ( zAdj, invDetMFactor );
-    float32_t yData[ 4U ];
-    vst1q_f32 ( yData, y );
 
+    float32x2_t const y02 = vreinterpret_f32_u32 ( vmovn_u64 ( vreinterpretq_u32_f32 ( y ) ) );
+    float32x4_t const yShift = vextq_f32 ( y, y, 1 );
+    vst1_f32 ( dst._data + 6U, vrev64_f32 ( y02 ) );
+
+    float32x2_t const y13 = vreinterpret_f32_u32 ( vmovn_u64 ( vreinterpretq_u32_f32 ( yShift ) ) );
+    vst1_f32 ( dst._data + 2U, vrev64_f32 ( y13 ) );
+
+    // W = [dst33   dst23   dst32   dst22]
     float32x4_t const w = vmulq_f32 ( wAdj, invDetMFactor );
-    float32_t zData[ 4U ];
-    vst1q_f32 ( zData, z );
 
-    dst._data[ 0U ] = xData[ 3U ];
-    dst._data[ 1U ] = xData[ 1U ];
-    dst._data[ 2U ] = yData[ 3U ];
-    dst._data[ 3U ] = yData[ 1U ];
+    float32x2_t const z02 = vreinterpret_f32_u32 ( vmovn_u64 ( vreinterpretq_u32_f32 ( z ) ) );
+    float32x4_t const zShift = vextq_f32 ( z, z, 1 );
+    vst1_f32 ( dst._data + 12U, vrev64_f32 ( z02 ) );
 
-    float32_t wData[ 4U ];
-    vst1q_f32 ( wData, w );
+    float32x2_t const z13 = vreinterpret_f32_u32 ( vmovn_u64 ( vreinterpretq_u32_f32 ( zShift ) ) );
+    vst1_f32 ( dst._data + 8U, vrev64_f32 ( z13 ) );
 
-    dst._data[ 4U ] = xData[ 2U ];
-    dst._data[ 5U ] = xData[ 0U ];
-    dst._data[ 6U ] = yData[ 2U ];
-    dst._data[ 7U ] = yData[ 0U ];
+    float32x2_t const w02 = vreinterpret_f32_u32 ( vmovn_u64 ( vreinterpretq_u32_f32 ( w ) ) );
+    float32x4_t const wShift = vextq_f32 ( w, w, 1 );
+    vst1_f32 ( dst._data + 14U, vrev64_f32 ( w02 ) );
 
-    dst._data[ 8U ] = zData[ 3U ];
-    dst._data[ 9U ] = zData[ 1U ];
-    dst._data[ 10U ] = wData[ 3U ];
-    dst._data[ 11U ] = wData[ 1U ];
-
-    dst._data[ 12U ] = zData[ 2U ];
-    dst._data[ 13U ] = zData[ 0U ];
-    dst._data[ 14U ] = wData[ 2U ];
-    dst._data[ 15U ] = wData[ 0U ];
-
-    GXVec3 const stop {};
+    float32x2_t const w13 = vreinterpret_f32_u32 ( vmovn_u64 ( vreinterpretq_u32_f32 ( wShift ) ) );
+    vst1_f32 ( dst._data + 10U, vrev64_f32 ( w13 ) );
 }
 
 static void Test () noexcept

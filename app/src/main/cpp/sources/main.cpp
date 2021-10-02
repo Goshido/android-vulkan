@@ -61,80 +61,94 @@ enum class eGame : uint16_t
         vmulq_f32 ( vld1q_f32 ( d0 ), vld1q_f32 ( d1 ) ), vld1q_f32 ( d2 ), vld1q_f32 ( d3 )
     );
 
-    constexpr uint32_t const all = std::numeric_limits<uint32_t>::max ();
+    // Unrolling adjugate by matrix multiplication function for D and C...
+    float32x4_t const d3012 = vextq_f32 ( d, d, 3 );
+    float32x4_t const c2301 = vextq_f32 ( c, c, 2 );
+    float32x4_t const d3300 = vzip1q_f32 ( d3012, d3012 );
+    float32x4_t const d1122 = vzip2q_f32 ( d3012, d3012 );
 
-    auto multiplyAdjugateMatrix = [] ( float32x4_t const &adj, float32x4_t const &m ) noexcept -> float32x4_t {
-        float32x4_t const adj3012 = vextq_f32 ( adj, adj, 3 );
-        float32x4_t const m2301 = vextq_f32 ( m, m, 2 );
-        float32x4_t const adj3300 = vzip1q_f32 ( adj3012, adj3012 );
-        float32x4_t const adj1122 = vzip2q_f32 ( adj3012, adj3012 );
-
-        return vmlsq_f32 ( vmulq_f32 ( adj3300, m ), adj1122, m2301 );
-    };
-
-    auto multiplyMatrixAdjugate = [ & ] ( float32x4_t const &m, float32x4_t const &adj ) noexcept -> float32x4_t {
-        float32x4_t const adj3012 = vextq_f32 ( adj, adj, 3 );
-        float32x4_t const m1032 = vrev64q_f32 ( m );
-        uint64x2_t const a3012 = vreinterpretq_u64_f32 ( adj3012 );
-        float32x4_t const adj3030 = vreinterpretq_f32_u64 ( vzip1q_u64 ( a3012, a3012 ) );
-        uint64x2_t const adj0321 = vreinterpretq_u64_f32 ( vrev64q_f32 ( adj3012 ) );
-        float32x4_t const adj2121 = vreinterpretq_f32_u64 ( vzip2q_u64 ( adj0321, adj0321 ) );
-
-        return vmlsq_f32 ( vmulq_f32 ( m, adj3030 ), m1032, adj2121 );
-    };
-
-    auto multiplyMatrixMatrix = [] ( float32x4_t const &left, float32x4_t const &right ) noexcept -> float32x4_t {
-        float32x4_t const right1032 = vrev64q_f32 ( right );
-        float32x4_t const left1032 = vrev64q_f32 ( left );
-        float32x4_t const right0321 = vextq_f32 ( right1032, right1032, 1 );
-        uint64x2_t const r0321 = vreinterpretq_u64_f32 ( right0321 );
-        float32x4_t const right0303 = vreinterpretq_f32_u64 ( vzip1q_u64 ( r0321, r0321 ) );
-        float32x4_t const right2121 = vreinterpretq_f32_u64 ( vzip2q_u64 ( r0321, r0321 ) );
-
-        return vmlaq_f32 ( vmulq_f32 ( left, right0303 ), left1032, right2121 );
-    };
-
-    // D# C
-    float32x4_t const dAdjC = multiplyAdjugateMatrix ( d, c );
+    float32x4_t const dAdjC = vmlsq_f32 ( vmulq_f32 ( d3300, c ), d1122, c2301 );
     float32x4_t const detA = vdupq_laneq_f32 ( detComposite, 0 );
 
-    // A# B
-    float32x4_t const aAdjB = multiplyAdjugateMatrix ( a, b );
+    // Unrolling adjugate by matrix multiplication function for A and B...
+    float32x4_t const a3012 = vextq_f32 ( a, a, 3 );
+    float32x4_t const b2301 = vextq_f32 ( b, b, 2 );
+    float32x4_t const a3300 = vzip1q_f32 ( a3012, a3012 );
+    float32x4_t const a1122 = vzip2q_f32 ( a3012, a3012 );
+
+    float32x4_t const aAdjB = vmlsq_f32 ( vmulq_f32 ( a3300, b ), a1122, b2301 );
     float32x4_t const detD = vdupq_laneq_f32 ( detComposite, 3 );
 
     // X# = |D| A - B ( D# C )
-    float32x4_t const xAdj = vsubq_f32 ( vmulq_f32 ( detD, a ), multiplyMatrixMatrix ( b, dAdjC ) );
+    float32x4_t const detDAFactor = vmulq_f32 ( detD, a );
+
+    // Unrolling matrix by matrix multiplication function for B and ( D# C )...
+    float32x4_t const dAdjC1032 = vrev64q_f32 ( dAdjC );
+    float32x4_t const b1032 = vrev64q_f32 ( b );
+    float32x4_t const dAdjC0321 = vextq_f32 ( dAdjC1032, dAdjC1032, 1 );
+    uint64x2_t const dAdjCx0321 = vreinterpretq_u64_f32 ( dAdjC0321 );
+    float32x4_t const dAdjC0303 = vreinterpretq_f32_u64 ( vzip1q_u64 ( dAdjCx0321, dAdjCx0321 ) );
+    float32x4_t const dAdjC2121 = vreinterpretq_f32_u64 ( vzip2q_u64 ( dAdjCx0321, dAdjCx0321 ) );
+    float32x4_t const bDCFactor = vmlaq_f32 ( vmulq_f32 ( b, dAdjC0303 ), b1032, dAdjC2121 );
+
+    float32x4_t const xAdj = vsubq_f32 ( detDAFactor, bDCFactor );
     float32x4_t const detB = vdupq_laneq_f32 ( detComposite, 1 );
 
     // W# = |A| D - C ( A# B )
-    float32x4_t const wAdj = vsubq_f32 ( vmulq_f32 ( detA, d ), multiplyMatrixMatrix ( c, aAdjB ) );
+    float32x4_t const detADFactor = vmulq_f32 ( detA, d );
+
+    // Unrolling matrix by matrix multiplication function for C and ( A# B )...
+    float32x4_t const aAdjB1032 = vrev64q_f32 ( aAdjB );
+    float32x4_t const c1032 = vrev64q_f32 ( c );
+    float32x4_t const aAdjB0321 = vextq_f32 ( aAdjB1032, aAdjB1032, 1 );
+    uint64x2_t const aAdjBx0321 = vreinterpretq_u64_f32 ( aAdjB0321 );
+    float32x4_t const aAdjB0303 = vreinterpretq_f32_u64 ( vzip1q_u64 ( aAdjBx0321, aAdjBx0321 ) );
+    float32x4_t const aAdjB2121 = vreinterpretq_f32_u64 ( vzip2q_u64 ( aAdjBx0321, aAdjBx0321 ) );
+    float32x4_t const cABFactor = vmlaq_f32 ( vmulq_f32 ( c, aAdjB0303 ), c1032, aAdjB2121 );
+
+    float32x4_t const wAdj = vsubq_f32 ( detADFactor, cABFactor );
     float32x4_t const detC = vdupq_laneq_f32 ( detComposite, 2 );
 
     // Y# = |B| C - D ( A# B )#
-    float32x4_t const yAdj = vsubq_f32 ( vmulq_f32 ( detB, c ), multiplyMatrixAdjugate ( d, aAdjB ) );
+    float32x4_t const detBCFactor = vmulq_f32 ( detB, c );
+
+    constexpr uint32_t const all = std::numeric_limits<uint32_t>::max ();
+    constexpr uint32_t const maskFirstAndLastRaw[ 4U ] = { all, 0U, 0U, all };
+    uint32x4_t const maskFirstAndLast = vld1q_u32 ( maskFirstAndLastRaw );
+
+    // Unrolling matrix by adjugate multiplication function for D and ( A# B )...
+    float32x4_t const aAdjB3012 = vextq_f32 ( aAdjB, aAdjB, 3 );
+    float32x4_t const d1032 = vrev64q_f32 ( d );
+    uint64x2_t const aAdjBx3012 = vreinterpretq_u64_f32 ( aAdjB3012 );
+    float32x4_t const aAdjB3030 = vreinterpretq_f32_u64 ( vzip1q_u64 ( aAdjBx3012, aAdjBx3012 ) );
+    float32x4_t const dABFactor = vmlsq_f32 ( vmulq_f32 ( d, aAdjB3030 ), d1032, aAdjB2121 );
+
+    float32x4_t const yAdj = vsubq_f32 ( detBCFactor, dABFactor );
 
     float32_t ddd[ 4U ];
     vst1q_f32 ( ddd, detComposite );
 
     // Z# = |C| B - A ( D# C )#
-    float32x4_t const zAdj = vsubq_f32 ( vmulq_f32 ( detC, b ), multiplyMatrixAdjugate ( a, dAdjC ) );
+    float32x4_t const detCBFactor = vmulq_f32 ( detC, b );
+
+    // Unrolling matrix by adjugate multiplication function for A and ( D# C )...
+    float32x4_t const dAdjC3012 = vextq_f32 ( dAdjC, dAdjC, 3 );
+    float32x4_t const a1032 = vrev64q_f32 ( a );
+    uint64x2_t const dAdjCx3012 = vreinterpretq_u64_f32 ( dAdjC3012 );
+    float32x4_t const dAdjC3030 = vreinterpretq_f32_u64 ( vzip1q_u64 ( dAdjCx3012, dAdjCx3012 ) );
+    float32x4_t const dACFactor = vmlsq_f32 ( vmulq_f32 ( a, dAdjC3030 ), a1032, dAdjC2121 );
+
+    float32x4_t const zAdj = vsubq_f32 ( detCBFactor, dACFactor );
 
     // |M| = |A| |D| + |B| |C| - tr ( ( A# B) ( D# C ) )
-    uint32x4_t const dAdjC0123 = vreinterpretq_u32_f32 ( dAdjC );
-    uint32x4_t const dAdjC3012 = vextq_u32 ( dAdjC0123, dAdjC0123, 3 );
-
-    constexpr uint32_t const maskFirstAndLastRaw[ 4U ] = { all, 0U, 0U, all };
-    uint32x4_t const maskFirstAndLast = vld1q_u32 ( maskFirstAndLastRaw );
-
-    uint32x4_t const dAdjC0321 = vrev64q_u32 ( dAdjC3012 );
-
     constexpr uint32_t const maskMiddleRaw[ 4U ] = { 0U, all, all, 0U };
     uint32x4_t const maskMiddle = vld1q_u32 ( maskMiddleRaw );
 
-    uint32x4_t const dAdjC3210 = vextq_u32 ( dAdjC0321, dAdjC0321, 1 );
+    uint32x4_t const dAdjCxx0321 = vreinterpretq_u32_u64 ( dAdjC0321 );
+    uint32x4_t const dAdjC3210 = vextq_u32 ( dAdjCxx0321, dAdjCxx0321, 1 );
     float32x2_t const ab = vld1_f32 ( ddd );
 
-    uint32x4_t const dAdjC0XX3 = vandq_u32 ( dAdjC0123, maskFirstAndLast );
+    uint32x4_t const dAdjC0XX3 = vandq_u32 ( vreinterpretq_u32_f32 ( dAdjC0303 ), maskFirstAndLast );
     float32x2_t const cd = vld1_f32 ( ddd + 2U );
 
     uint32x4_t const dAdjCX21X = vandq_u32 ( dAdjC3210, maskMiddle );

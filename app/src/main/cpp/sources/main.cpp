@@ -60,7 +60,7 @@ enum class eGame : uint16_t
     float32_t const d2[ 4U ] = { src._data[ 4U ], src._data[ 6U ], src._data[ 12U ], src._data[ 14U ] };
     float32_t const d3[ 4U ] = { src._data[ 1U ], src._data[ 3U ], src._data[ 9U ], src._data[ 11U ] };
 
-    float32x4_t const detComposite = vmlsq_f32 (
+    float32x4_t const detComposite = vfmsq_f32 (
         vmulq_f32 ( vld1q_f32 ( d0 ), vld1q_f32 ( d1 ) ), vld1q_f32 ( d2 ), vld1q_f32 ( d3 )
     );
 
@@ -70,7 +70,7 @@ enum class eGame : uint16_t
     float32x4_t const d3300 = vzip1q_f32 ( d3012, d3012 );
     float32x4_t const d1122 = vzip2q_f32 ( d3012, d3012 );
 
-    float32x4_t const dAdjC = vmlsq_f32 ( vmulq_f32 ( d3300, c ), d1122, c2301 );
+    float32x4_t const dAdjC = vfmsq_f32 ( vmulq_f32 ( d3300, c ), d1122, c2301 );
     float32x4_t const detA = vdupq_laneq_f32 ( detComposite, 0 );
 
     // Unrolling adjugate by matrix multiplication function for A and B...
@@ -79,7 +79,7 @@ enum class eGame : uint16_t
     float32x4_t const a3300 = vzip1q_f32 ( a3012, a3012 );
     float32x4_t const a1122 = vzip2q_f32 ( a3012, a3012 );
 
-    float32x4_t const aAdjB = vmlsq_f32 ( vmulq_f32 ( a3300, b ), a1122, b2301 );
+    float32x4_t const aAdjB = vfmsq_f32 ( vmulq_f32 ( a3300, b ), a1122, b2301 );
     float32x4_t const detD = vdupq_laneq_f32 ( detComposite, 3 );
 
     // X# = |D| A - B ( D# C )
@@ -92,7 +92,7 @@ enum class eGame : uint16_t
     uint64x2_t const dAdjCx0321 = vreinterpretq_u64_f32 ( dAdjC0321 );
     float32x4_t const dAdjC0303 = vreinterpretq_f32_u64 ( vzip1q_u64 ( dAdjCx0321, dAdjCx0321 ) );
     float32x4_t const dAdjC2121 = vreinterpretq_f32_u64 ( vzip2q_u64 ( dAdjCx0321, dAdjCx0321 ) );
-    float32x4_t const bDCFactor = vmlaq_f32 ( vmulq_f32 ( b, dAdjC0303 ), b1032, dAdjC2121 );
+    float32x4_t const bDCFactor = vfmaq_f32 ( vmulq_f32 ( b, dAdjC0303 ), b1032, dAdjC2121 );
 
     float32x4_t const xAdj = vsubq_f32 ( detDAFactor, bDCFactor );
     float32x4_t const detB = vdupq_laneq_f32 ( detComposite, 1 );
@@ -107,7 +107,7 @@ enum class eGame : uint16_t
     uint64x2_t const aAdjBx0321 = vreinterpretq_u64_f32 ( aAdjB0321 );
     float32x4_t const aAdjB0303 = vreinterpretq_f32_u64 ( vzip1q_u64 ( aAdjBx0321, aAdjBx0321 ) );
     float32x4_t const aAdjB2121 = vreinterpretq_f32_u64 ( vzip2q_u64 ( aAdjBx0321, aAdjBx0321 ) );
-    float32x4_t const cABFactor = vmlaq_f32 ( vmulq_f32 ( c, aAdjB0303 ), c1032, aAdjB2121 );
+    float32x4_t const cABFactor = vfmaq_f32 ( vmulq_f32 ( c, aAdjB0303 ), c1032, aAdjB2121 );
 
     float32x4_t const wAdj = vsubq_f32 ( detADFactor, cABFactor );
     float32x4_t const detC = vdupq_laneq_f32 ( detComposite, 2 );
@@ -124,7 +124,7 @@ enum class eGame : uint16_t
     float32x4_t const d1032 = vrev64q_f32 ( d );
     uint64x2_t const aAdjBx3012 = vreinterpretq_u64_f32 ( aAdjB3012 );
     float32x4_t const aAdjB3030 = vreinterpretq_f32_u64 ( vzip1q_u64 ( aAdjBx3012, aAdjBx3012 ) );
-    float32x4_t const dABFactor = vmlsq_f32 ( vmulq_f32 ( d, aAdjB3030 ), d1032, aAdjB2121 );
+    float32x4_t const dABFactor = vfmsq_f32 ( vmulq_f32 ( d, aAdjB3030 ), d1032, aAdjB2121 );
 
     float32x4_t const yAdj = vsubq_f32 ( detBCFactor, dABFactor );
 
@@ -139,7 +139,7 @@ enum class eGame : uint16_t
     float32x4_t const a1032 = vrev64q_f32 ( a );
     uint64x2_t const dAdjCx3012 = vreinterpretq_u64_f32 ( dAdjC3012 );
     float32x4_t const dAdjC3030 = vreinterpretq_f32_u64 ( vzip1q_u64 ( dAdjCx3012, dAdjCx3012 ) );
-    float32x4_t const dACFactor = vmlsq_f32 ( vmulq_f32 ( a, dAdjC3030 ), a1032, dAdjC2121 );
+    float32x4_t const dACFactor = vfmsq_f32 ( vmulq_f32 ( a, dAdjC3030 ), a1032, dAdjC2121 );
 
     float32x4_t const zAdj = vsubq_f32 ( detCBFactor, dACFactor );
 
@@ -207,7 +207,7 @@ enum class eGame : uint16_t
     vst1_f32 ( dst._data + 10U, vrev64_f32 ( w13 ) );
 }
 
-static void Test ( android_app &app ) noexcept
+__attribute__((visibility("default"))) void Test ( android_app &app ) noexcept
 {
     extern AAssetManager* g_AssetManager;
     g_AssetManager = app.activity->assetManager;

@@ -23,8 +23,8 @@ Requirements:
 * _Android SDK Tools 26.1.1_
 * _Android SDK Platform-Tools 31.0.3_
 * _CMake 3.18.1_
-* _DirectX Shader Compiler 1.6.2109.10039_
-* _Vulkan Validation Layers_ `52dbd08362270a1f7819a981995916248734df33`
+* _DirectX Shader Compiler 1.6.2109.10048_
+* _Vulkan Validation Layers_ `bdcc9c66af2cdb786cbc0b76d2af4b87f28179a8`
 * _Gradle 7.2_
 * _Google USB Driver 13_
 * Real _Android 11_ device with _Vulkan 1.1.131_ support

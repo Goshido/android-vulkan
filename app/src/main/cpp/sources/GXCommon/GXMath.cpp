@@ -1,4 +1,4 @@
-﻿// version 1.68
+﻿// version 1.69
 
 #include <GXCommon/GXMath.h>
 
@@ -1872,78 +1872,6 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 
     GetZ ( alpha );
     scale._data[ 2U ] = alpha.Length ();
-}
-
-[[maybe_unused]] GXVoid GXMat4::Inverse ( GXMat4 const &sourceMatrix ) noexcept
-{
-    GXMat4 const& m = sourceMatrix;
-
-    // 2x2 sub-determinants required to calculate 4x4 determinant
-    GXFloat const det2_01_01 = m._m[ 0U ][ 0U ] * m._m[ 1U ][ 1U ] - m._m[ 1U ][ 0U ] * m._m[ 0U ][ 1U ];
-    GXFloat const det2_01_02 = m._m[ 0U ][ 0U ] * m._m[ 2U ][ 1U ] - m._m[ 2U ][ 0U ] * m._m[ 0U ][ 1U ];
-    GXFloat const det2_01_03 = m._m[ 0U ][ 0U ] * m._m[ 3U ][ 1U ] - m._m[ 3U ][ 0U ] * m._m[ 0U ][ 1U ];
-    GXFloat const det2_01_12 = m._m[ 1U ][ 0U ] * m._m[ 2U ][ 1U ] - m._m[ 2U ][ 0U ] * m._m[ 1U ][ 1U ];
-    GXFloat const det2_01_13 = m._m[ 1U ][ 0U ] * m._m[ 3U ][ 1U ] - m._m[ 3U ][ 0U ] * m._m[ 1U ][ 1U ];
-    GXFloat const det2_01_23 = m._m[ 2U ][ 0U ] * m._m[ 3U ][ 1U ] - m._m[ 3U ][ 0U ] * m._m[ 2U ][ 1U ];
-
-    // 3x3 sub-determinants required to calculate 4x4 determinant
-    GXFloat const det3_201_012 = m._m[ 0U ][ 2U ] * det2_01_12 - m._m[ 1U ][ 2U ] * det2_01_02 + m._m[ 2U ][ 2U ] * det2_01_01;
-    GXFloat const det3_201_013 = m._m[ 0U ][ 2U ] * det2_01_13 - m._m[ 1U ][ 2U ] * det2_01_03 + m._m[ 3U ][ 2U ] * det2_01_01;
-    GXFloat const det3_201_023 = m._m[ 0U ][ 2U ] * det2_01_23 - m._m[ 2U ][ 2U ] * det2_01_03 + m._m[ 3U ][ 2U ] * det2_01_02;
-    GXFloat const det3_201_123 = m._m[ 1U ][ 2U ] * det2_01_23 - m._m[ 2U ][ 2U ] * det2_01_13 + m._m[ 3U ][ 2U ] * det2_01_12;
-
-    GXFloat const inverseDeterminant = 1.0F / ( -det3_201_123 * m._m[ 0U ][ 3U ] + det3_201_023 * m._m[ 1U ][ 3U ] - det3_201_013 * m._m[ 2U ][ 3U ] + det3_201_012 * m._m[ 3U ][ 3U ] );
-
-    // remaining 2x2 sub-determinants
-    GXFloat const det2_03_01 = m._m[ 0U ][ 0U ] * m._m[ 1U ][ 3U ] - m._m[ 1U ][ 0U ] * m._m[ 0U ][ 3U ];
-    GXFloat const det2_03_02 = m._m[ 0U ][ 0U ] * m._m[ 2U ][ 3U ] - m._m[ 2U ][ 0U ] * m._m[ 0U ][ 3U ];
-    GXFloat const det2_03_03 = m._m[ 0U ][ 0U ] * m._m[ 3U ][ 3U ] - m._m[ 3U ][ 0U ] * m._m[ 0U ][ 3U ];
-    GXFloat const det2_03_12 = m._m[ 1U ][ 0U ] * m._m[ 2U ][ 3U ] - m._m[ 2U ][ 0U ] * m._m[ 1U ][ 3U ];
-    GXFloat const det2_03_13 = m._m[ 1U ][ 0U ] * m._m[ 3U ][ 3U ] - m._m[ 3U ][ 0U ] * m._m[ 1U ][ 3U ];
-    GXFloat const det2_03_23 = m._m[ 2U ][ 0U ] * m._m[ 3U ][ 3U ] - m._m[ 3U ][ 0U ] * m._m[ 2U ][ 3U ];
-
-    GXFloat const det2_13_01 = m._m[ 0U ][ 1U ] * m._m[ 1U ][ 3U ] - m._m[ 1U ][ 1U ] * m._m[ 0U ][ 3U ];
-    GXFloat const det2_13_02 = m._m[ 0U ][ 1U ] * m._m[ 2U ][ 3U ] - m._m[ 2U ][ 1U ] * m._m[ 0U ][ 3U ];
-    GXFloat const det2_13_03 = m._m[ 0U ][ 1U ] * m._m[ 3U ][ 3U ] - m._m[ 3U ][ 1U ] * m._m[ 0U ][ 3U ];
-    GXFloat const det2_13_12 = m._m[ 1U ][ 1U ] * m._m[ 2U ][ 3U ] - m._m[ 2U ][ 1U ] * m._m[ 1U ][ 3U ];
-    GXFloat const det2_13_13 = m._m[ 1U ][ 1U ] * m._m[ 3U ][ 3U ] - m._m[ 3U ][ 1U ] * m._m[ 1U ][ 3U ];
-    GXFloat const det2_13_23 = m._m[ 2U ][ 1U ] * m._m[ 3U ][ 3U ] - m._m[ 3U ][ 1U ] * m._m[ 2U ][ 3U ];
-
-    // remaining 3x3 sub-determinants
-    GXFloat const det3_203_012 = m._m[ 0U ][ 2U ] * det2_03_12 - m._m[ 1U ][ 2U ] * det2_03_02 + m._m[ 2U ][ 2U ] * det2_03_01;
-    GXFloat const det3_203_013 = m._m[ 0U ][ 2U ] * det2_03_13 - m._m[ 1U ][ 2U ] * det2_03_03 + m._m[ 3U ][ 2U ] * det2_03_01;
-    GXFloat const det3_203_023 = m._m[ 0U ][ 2U ] * det2_03_23 - m._m[ 2U ][ 2U ] * det2_03_03 + m._m[ 3U ][ 2U ] * det2_03_02;
-    GXFloat const det3_203_123 = m._m[ 1U ][ 2U ] * det2_03_23 - m._m[ 2U ][ 2U ] * det2_03_13 + m._m[ 3U ][ 2U ] * det2_03_12;
-
-    GXFloat const det3_213_012 = m._m[ 0U ][ 2U ] * det2_13_12 - m._m[ 1U ][ 2U ] * det2_13_02 + m._m[ 2U ][ 2U ] * det2_13_01;
-    GXFloat const det3_213_013 = m._m[ 0U ][ 2U ] * det2_13_13 - m._m[ 1U ][ 2U ] * det2_13_03 + m._m[ 3U ][ 2U ] * det2_13_01;
-    GXFloat const det3_213_023 = m._m[ 0U ][ 2U ] * det2_13_23 - m._m[ 2U ][ 2U ] * det2_13_03 + m._m[ 3U ][ 2U ] * det2_13_02;
-    GXFloat const det3_213_123 = m._m[ 1U ][ 2U ] * det2_13_23 - m._m[ 2U ][ 2U ] * det2_13_13 + m._m[ 3U ][ 2U ] * det2_13_12;
-
-    GXFloat const det3_301_012 = m._m[ 0U ][ 3U ] * det2_01_12 - m._m[ 1U ][ 3U ] * det2_01_02 + m._m[ 2U ][ 3U ] * det2_01_01;
-    GXFloat const det3_301_013 = m._m[ 0U ][ 3U ] * det2_01_13 - m._m[ 1U ][ 3U ] * det2_01_03 + m._m[ 3U ][ 3U ] * det2_01_01;
-    GXFloat const det3_301_023 = m._m[ 0U ][ 3U ] * det2_01_23 - m._m[ 2U ][ 3U ] * det2_01_03 + m._m[ 3U ][ 3U ] * det2_01_02;
-    GXFloat const det3_301_123 = m._m[ 1U ][ 3U ] * det2_01_23 - m._m[ 2U ][ 3U ] * det2_01_13 + m._m[ 3U ][ 3U ] * det2_01_12;
-
-    _m[ 0U ][ 0U ] = -det3_213_123 * inverseDeterminant;
-    _m[ 0U ][ 1U ] = +det3_213_023 * inverseDeterminant;
-    _m[ 0U ][ 2U ] = -det3_213_013 * inverseDeterminant;
-    _m[ 0U ][ 3U ] = +det3_213_012 * inverseDeterminant;
-
-    _m[ 1U ][ 0U ] = +det3_203_123 * inverseDeterminant;
-    _m[ 1U ][ 1U ] = -det3_203_023 * inverseDeterminant;
-    _m[ 1U ][ 2U ] = +det3_203_013 * inverseDeterminant;
-    _m[ 1U ][ 3U ] = -det3_203_012 * inverseDeterminant;
-
-    _m[ 2U ][ 0U ] = +det3_301_123 * inverseDeterminant;
-    _m[ 2U ][ 1U ] = -det3_301_023 * inverseDeterminant;
-    _m[ 2U ][ 2U ] = +det3_301_013 * inverseDeterminant;
-    _m[ 2U ][ 3U ] = -det3_301_012 * inverseDeterminant;
-
-    _m[ 3U ][ 0U ] = -det3_201_123 * inverseDeterminant;
-    _m[ 3U ][ 1U ] = +det3_201_023 * inverseDeterminant;
-    _m[ 3U ][ 2U ] = -det3_201_013 * inverseDeterminant;
-    _m[ 3U ][ 3U ] = +det3_201_012 * inverseDeterminant;
 }
 
 //----------------------------------------------------------------------------------------------------------------------

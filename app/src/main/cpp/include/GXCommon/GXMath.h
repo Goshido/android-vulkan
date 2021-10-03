@@ -1,4 +1,4 @@
-// version 1.68
+// version 1.69
 
 #ifndef GX_MATH
 #define GX_MATH
@@ -180,9 +180,9 @@ struct [[maybe_unused]] GXVec3 final
 
 struct [[maybe_unused]] GXEuler final
 {
-    GXFloat     _pitchRadians;
-    GXFloat     _yawRadians;
-    GXFloat     _rollRadians;
+    [[maybe_unused]] GXFloat    _pitchRadians;
+    [[maybe_unused]] GXFloat    _yawRadians;
+    [[maybe_unused]] GXFloat    _rollRadians;
 
     [[maybe_unused]] GXEuler () = default;
 

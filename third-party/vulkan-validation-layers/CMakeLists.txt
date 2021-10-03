@@ -57,6 +57,7 @@ add_library ( VkLayer_khronos_validation
     SHARED
     ../layers/state_tracker.cpp
     ../layers/device_memory_state.cpp
+    ../layers/buffer_state.cpp
     ../layers/cmd_buffer_state.cpp
     ../layers/image_state.cpp
     ../layers/pipeline_state.cpp

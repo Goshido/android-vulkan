@@ -64,45 +64,6 @@ void VelocitySolver::Run ( ContactManager &contactManager, float fixedTimeStepIn
     }
 }
 
-void VelocitySolver::UpdateVelocityPair ( RigidBody &bodyA,
-    RigidBody &bodyB,
-    VelocitySolverData const &data,
-    GXVec6 const &vw1A,
-    GXVec6 const &vw1B,
-    float lambda
-) noexcept
-{
-    GXVec6 vwADelta {};
-    vwADelta.Multiply ( data._mj[ 0U ], lambda );
-
-    GXVec6 vwBDelta {};
-    vwBDelta.Multiply ( data._mj[ 1U ], lambda );
-
-    GXVec6 vw2A {};
-    vw2A.Sum ( vw1A, vwADelta );
-
-    GXVec6 vw2B {};
-    vw2B.Sum ( vw1B, vwBDelta );
-
-    bodyA.SetVelocities ( vw2A );
-    bodyB.SetVelocities ( vw2B );
-}
-
-void VelocitySolver::UpdateVelocitySingle ( RigidBody &body,
-    VelocitySolverData const &data,
-    GXVec6 const &vw1,
-    float lambda
-) noexcept
-{
-    GXVec6 vwDelta {};
-    vwDelta.Multiply ( data._mj[ 0U ], lambda );
-
-    GXVec6 vw2 {};
-    vw2.Sum ( vw1, vwDelta );
-
-    body.SetVelocities ( vw2 );
-}
-
 [[maybe_unused]] void VelocitySolver::DebugContactInManifold ( ContactManager const &contactManager ) noexcept
 {
     static size_t manifolds = 0U;
@@ -191,6 +152,7 @@ void VelocitySolver::PreparePair ( ContactManifold &manifold, float fixedTimeSte
 {
     RigidBody& bodyA = *manifold._bodyA.get ();
     RigidBody& bodyB = *manifold._bodyB.get ();
+    Contact* contacts = manifold._contacts;
 
     GXVec3 const& cmA = bodyA.GetLocation ();
     GXVec3 const& cmB = bodyB.GetLocation ();
@@ -208,8 +170,6 @@ void VelocitySolver::PreparePair ( ContactManifold &manifold, float fixedTimeSte
 
     GXVec3 dV {};
     dV.Subtract ( bodyB.GetVelocityLinear (), bodyA.GetVelocityLinear () );
-
-    Contact* contacts = manifold._contacts;
 
     auto setup = [ & ] ( VelocitySolverData &data,
         GXVec3 const &axis,
@@ -341,6 +301,7 @@ void VelocitySolver::PrepareSingle ( ContactManifold &manifold, float fixedTimeS
 {
     RigidBody& bodyDynamic = *manifold._bodyA.get ();
     RigidBody const& bodyKinematic = *manifold._bodyB.get ();
+    Contact* contacts = manifold._contacts;
 
     GXVec3 const& cmDynamic = bodyDynamic.GetLocation ();
     GXVec3 const& wDynamic = bodyDynamic.GetVelocityAngular ();
@@ -354,8 +315,6 @@ void VelocitySolver::PrepareSingle ( ContactManifold &manifold, float fixedTimeS
 
     GXVec3 dV {};
     dV.Subtract ( bodyKinematic.GetVelocityLinear (), bodyDynamic.GetVelocityLinear () );
-
-    Contact* contacts = manifold._contacts;
 
     auto setup = [ & ] ( VelocitySolverData &data,
         GXVec3 const &axis,
@@ -519,6 +478,45 @@ void VelocitySolver::SwapBodies ( ContactManifold &manifold ) noexcept
         contact._tangent.Reverse ();
         std::swap ( contact._pointA, contact._pointB );
     }
+}
+
+void VelocitySolver::UpdateVelocityPair ( RigidBody &bodyA,
+    RigidBody &bodyB,
+    VelocitySolverData const &data,
+    GXVec6 const &vw1A,
+    GXVec6 const &vw1B,
+    float lambda
+) noexcept
+{
+    GXVec6 vwADelta {};
+    vwADelta.Multiply ( data._mj[ 0U ], lambda );
+
+    GXVec6 vwBDelta {};
+    vwBDelta.Multiply ( data._mj[ 1U ], lambda );
+
+    GXVec6 vw2A {};
+    vw2A.Sum ( vw1A, vwADelta );
+
+    GXVec6 vw2B {};
+    vw2B.Sum ( vw1B, vwBDelta );
+
+    bodyA.SetVelocities ( vw2A );
+    bodyB.SetVelocities ( vw2B );
+}
+
+void VelocitySolver::UpdateVelocitySingle ( RigidBody &body,
+    VelocitySolverData const &data,
+    GXVec6 const &vw1,
+    float lambda
+) noexcept
+{
+    GXVec6 vwDelta {};
+    vwDelta.Multiply ( data._mj[ 0U ], lambda );
+
+    GXVec6 vw2 {};
+    vw2.Sum ( vw1, vwDelta );
+
+    body.SetVelocities ( vw2 );
 }
 
 } // namespace android_vulkan

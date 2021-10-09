@@ -63,6 +63,10 @@ struct ContactManifold final
 
     bool                            _warmStartIsUsed = true;
 
+    // 4-point manifold computation (for normal axis).
+    GXMat4                          _effectiveMass {};
+    GXVec4                          _b {};
+
     [[maybe_unused]] uint16_t       _epaSteps = 0U;
     [[maybe_unused]] uint16_t       _gjkSteps = 0U;
 };

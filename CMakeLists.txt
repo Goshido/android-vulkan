@@ -52,6 +52,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/ktx_media_container.cpp
     app/src/main/cpp/sources/logger.cpp
     app/src/main/cpp/sources/main.cpp
+    app/src/main/cpp/sources/manifold_solver_x4.cpp
     app/src/main/cpp/sources/mesh_geometry.cpp
     app/src/main/cpp/sources/physics.cpp
     app/src/main/cpp/sources/renderer.cpp

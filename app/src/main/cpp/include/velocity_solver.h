@@ -28,6 +28,20 @@ class VelocitySolver final
 
         static void Run ( ContactManager &contactManager, float fixedTimeStepInverse ) noexcept;
 
+        static void UpdateVelocityPair ( RigidBody &bodyA,
+            RigidBody &bodyB,
+            VelocitySolverData const &data,
+            GXVec6 const &vw1A,
+            GXVec6 const &vw1B,
+            float lambda
+        ) noexcept;
+
+        static void UpdateVelocitySingle ( RigidBody &body,
+            VelocitySolverData const &data,
+            GXVec6 const &vw1,
+            float lambda
+        ) noexcept;
+
     private:
         [[maybe_unused]] static void DebugContactInManifold ( ContactManager const &contactManager ) noexcept;
         [[maybe_unused]] static void DebugWarmStart ( ContactManager const &contactManager ) noexcept;
@@ -46,20 +60,6 @@ class VelocitySolver final
         static void SolveSingle ( ContactManifold &manifold ) noexcept;
 
         static void SwapBodies ( ContactManifold &manifold ) noexcept;
-
-        static void UpdateVelocityPair ( RigidBody &bodyA,
-            RigidBody &bodyB,
-            VelocitySolverData const &data,
-            GXVec6 const &vw1A,
-            GXVec6 const &vw1B,
-            float lambda
-        ) noexcept;
-
-        static void UpdateVelocitySingle ( RigidBody &body,
-            VelocitySolverData const &data,
-            GXVec6 const &vw1,
-            float lambda
-        ) noexcept;
 };
 
 } // namespace android_vulkan

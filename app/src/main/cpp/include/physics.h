@@ -5,6 +5,7 @@
 #include "contact_detector.h"
 #include "contact_manager.h"
 #include "global_force.h"
+#include "velocity_solver.h"
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -30,6 +31,7 @@ class Physics final
         std::unordered_set<RigidBodyRef>        _kinematics {};
         std::mutex                              _mutex {};
         float                                   _timeSpeed;
+        VelocitySolver                          _velocitySolver {};
 
         bool                                    _debugRun = false;
 

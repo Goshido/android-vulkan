@@ -15,8 +15,11 @@ namespace android_vulkan {
 // http://allenchou.net/2014/01/game-physics-stability-slops/
 class VelocitySolver final
 {
+    private:
+        float       _stabilizationFactor = 0.0F;
+
     public:
-        VelocitySolver () = delete;
+        VelocitySolver () = default;
 
         VelocitySolver ( VelocitySolver const & ) = delete;
         VelocitySolver& operator = ( VelocitySolver const & ) = delete;
@@ -24,26 +27,34 @@ class VelocitySolver final
         VelocitySolver ( VelocitySolver && ) = delete;
         VelocitySolver& operator = ( VelocitySolver && ) = delete;
 
-        ~VelocitySolver () = delete;
+        ~VelocitySolver () = default;
 
-        static void Run ( ContactManager &contactManager, float fixedTimeStepInverse ) noexcept;
+        void Run ( ContactManager &contactManager, float fixedTimeStepInverse ) noexcept;
 
     private:
+        [[nodiscard]] float ComputeBaumgarteTerm ( GXVec3 const &wA,
+            GXVec3 const &wB,
+            GXVec3 const &cmA,
+            GXVec3 const &cmB,
+            GXVec3 const &dV,
+            Contact const &contact
+        ) const noexcept;
+
+        // Basically it's a solver for dynamic vs dynamic body.
+        void SolvePair ( ContactManifold &manifold ) noexcept;
+
+        // Basically it's a solver for dynamic vs kinematic body.
+        // Note the body A in the manifold data structure is dynamic while body B is kinematic.
+        void SolveSingle ( ContactManifold &manifold ) noexcept;
+
         [[maybe_unused]] static void DebugContactInManifold ( ContactManager const &contactManager ) noexcept;
         [[maybe_unused]] static void DebugWarmStart ( ContactManager const &contactManager ) noexcept;
 
         [[nodiscard]] static float LambdaClipNormalForce ( float lambda, void* context ) noexcept;
         [[nodiscard]] static float LambdaClipFriction ( float lambda, void* context ) noexcept;
 
-        static void PreparePair ( ContactManifold &manifold, float fixedTimeStepInverse ) noexcept;
-        static void PrepareSingle ( ContactManifold &manifold, float fixedTimeStepInverse ) noexcept;
-
-        // Basically it's a solver for dynamic vs dynamic body.
-        static void SolvePair ( ContactManifold &manifold ) noexcept;
-
-        // Basically it's a solver for dynamic vs kinematic body.
-        // Note the body A in the manifold data structure is dynamic while body B is kinematic.
-        static void SolveSingle ( ContactManifold &manifold ) noexcept;
+        static void PreparePair ( ContactManifold &manifold ) noexcept;
+        static void PrepareSingle ( ContactManifold &manifold ) noexcept;
 
         static void SwapBodies ( ContactManifold &manifold ) noexcept;
 

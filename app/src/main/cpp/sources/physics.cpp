@@ -1,6 +1,7 @@
 #include <physics.h>
 #include <contact_detector.h>
 #include <logger.h>
+#include <velocity_solver.h>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -155,7 +156,7 @@ void Physics::Simulate ( float deltaTime ) noexcept
         Integrate ();
         CollectContacts ();
 
-        _velocitySolver.Run ( _contactManager, _fixedTimeStepInverse );
+        VelocitySolver::Run ( _contactManager, _fixedTimeStepInverse );
 
         Prepare ();
         _accumulator -= _fixedTimeStep;

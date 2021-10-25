@@ -12,7 +12,7 @@ GX_RESTORE_WARNING_STATE
 namespace android_vulkan {
 
 constexpr static uint16_t const ITERATIONS = 7U;
-constexpr static float const STABILIZATION_FACTOR = 0.4F;
+constexpr static float const STABILIZATION_FACTOR = 0.25F;
 constexpr static float const PENETRATION_SLOPE = 5.0e-4F;
 constexpr static float const RESTITUTION_SLOPE = 5.0e-1F;
 
@@ -26,7 +26,7 @@ void VelocitySolver::Run ( ContactManager &contactManager, float fixedTimeStepIn
     //DebugContactInManifold ( contactManager );
     //DebugWarmStart ( contactManager );
 
-    _stabilizationFactor = -STABILIZATION_FACTOR * fixedTimeStepInverse;
+    float const stabilizationFactor = -STABILIZATION_FACTOR * fixedTimeStepInverse;
     auto& manifolds = contactManager.GetContactManifolds ();
 
     for ( auto& manifold : manifolds )
@@ -47,20 +47,37 @@ void VelocitySolver::Run ( ContactManager &contactManager, float fixedTimeStepIn
         PreparePair ( manifold );
     }
 
-    // Sequential impulse algorithm.
+    // Sequential impulse algorithm:
+    // The order is based on idea from Bullet: Solving normal impulses first. Then solving frictional impulses.
 
     for ( uint16_t i = 0U; i < ITERATIONS; ++i )
     {
+        // Solving normal impulses.
+
         for ( auto& manifold : manifolds )
         {
             // Note after preprocessing only B could be kinematic object.
             if ( manifold._bodyB->IsKinematic () )
             {
-                SolveSingle ( manifold );
+                SolveSingleNormal ( manifold, stabilizationFactor );
                 continue;
             }
 
-            SolvePair ( manifold );
+            SolvePairNormal ( manifold, stabilizationFactor );
+        }
+
+        // Solving friction impulses
+
+        for ( auto& manifold : manifolds )
+        {
+            // Note after preprocessing only B could be kinematic object.
+            if ( manifold._bodyB->IsKinematic () )
+            {
+                SolveSingleFriction ( manifold );
+                continue;
+            }
+
+            SolvePairFriction ( manifold );
         }
     }
 }
@@ -70,8 +87,9 @@ float VelocitySolver::ComputeBaumgarteTerm ( GXVec3 const &wA,
     GXVec3 const &cmA,
     GXVec3 const &cmB,
     GXVec3 const &dV,
-    Contact const &contact
-) const noexcept
+    Contact const &contact,
+    float stabilizationFactor
+) noexcept
 {
     GXVec3 rA {};
     rA.Subtract ( contact._pointA, cmA );
@@ -92,91 +110,8 @@ float VelocitySolver::ComputeBaumgarteTerm ( GXVec3 const &wA,
     GXVec3 vClosing {};
     vClosing.Sum ( alpha, dV );
 
-    return _stabilizationFactor * std::max ( contact._penetration - PENETRATION_SLOPE, 0.0F ) +
+    return stabilizationFactor * std::max ( contact._penetration - PENETRATION_SLOPE, 0.0F ) +
         contact._restitution * std::max ( vClosing.DotProduct ( contact._normal ) - RESTITUTION_SLOPE, 0.0F );
-}
-
-void VelocitySolver::SolvePair ( ContactManifold &manifold ) noexcept
-{
-    RigidBody& bodyA = *manifold._bodyA.get ();
-    RigidBody& bodyB = *manifold._bodyB.get ();
-
-    auto solve = [ & ] ( VelocitySolverData &data ) noexcept {
-        GXVec6 const vw1A = bodyA.GetVelocities ();
-        GXVec6 const vw1B = bodyB.GetVelocities ();
-
-        float const d0 = data._j[ 0U ].DotProduct ( vw1A );
-        float const d1 = data._j[ 1U ].DotProduct ( vw1B );
-
-        float l = data._effectiveMass * ( d0 + d1 + data._b );
-
-        float const oldLambda = data._lambda;
-        data._lambda = data._clipHandler ( data._lambda + l, data._clipContext );
-        l = data._lambda - oldLambda;
-
-        UpdateVelocityPair ( bodyA, bodyB, data, vw1A, vw1B, l );
-    };
-
-    GXVec3 const& wA = bodyA.GetVelocityAngular ();
-    GXVec3 const& wB = bodyB.GetVelocityAngular ();
-
-    GXVec3 const& cmA = bodyA.GetLocation ();
-    GXVec3 const& cmB = bodyB.GetLocation ();
-
-    GXVec3 const& deltaVelocityLinear = manifold._deltaVelocityLinear;
-
-    for ( size_t i = 0U; i < manifold._contactCount; ++i )
-    {
-        Contact& contact = manifold._contacts[ i ];
-
-        VelocitySolverData& dataN = contact._dataN;
-        dataN._b = ComputeBaumgarteTerm ( wA, wB, cmA, cmB, deltaVelocityLinear, contact );
-        solve ( dataN );
-
-        solve ( contact._dataT );
-        solve ( contact._dataB );
-    }
-}
-
-void VelocitySolver::SolveSingle ( ContactManifold &manifold ) noexcept
-{
-    RigidBody& bodyDynamic = *manifold._bodyA.get ();
-    RigidBody const& bodyKinematic = *manifold._bodyB.get ();
-
-    GXVec6 const vwKinematic = bodyKinematic.GetVelocities ();
-
-    auto solve = [ & ] ( VelocitySolverData &data ) noexcept {
-        GXVec6 const vw1Dynamic = bodyDynamic.GetVelocities ();
-
-        float l = data._effectiveMass *
-                  ( data._j[ 0U ].DotProduct ( vw1Dynamic ) + data._j[ 1U ].DotProduct ( vwKinematic ) + data._b );
-
-        float const oldLambda = data._lambda;
-        data._lambda = data._clipHandler ( data._lambda + l, data._clipContext );
-        l = data._lambda - oldLambda;
-
-        UpdateVelocitySingle ( bodyDynamic, data, vw1Dynamic, l );
-    };
-
-    GXVec3 const& wDynamic = bodyDynamic.GetVelocityAngular ();
-    GXVec3 const& wKinematic = bodyKinematic.GetVelocityAngular ();
-
-    GXVec3 const& cmDynamic = bodyDynamic.GetLocation ();
-    GXVec3 const& cmKinematic = bodyKinematic.GetLocation ();
-
-    GXVec3 const& deltaVelocityLinear = manifold._deltaVelocityLinear;
-
-    for ( size_t i = 0U; i < manifold._contactCount; ++i )
-    {
-        Contact& contact = manifold._contacts[ i ];
-
-        VelocitySolverData& dataN = contact._dataN;
-        dataN._b = ComputeBaumgarteTerm ( wDynamic, wKinematic, cmDynamic, cmKinematic, deltaVelocityLinear, contact );
-        solve ( dataN );
-
-        solve ( contact._dataT );
-        solve ( contact._dataB );
-    }
 }
 
 [[maybe_unused]] void VelocitySolver::DebugContactInManifold ( ContactManager const &contactManager ) noexcept
@@ -277,8 +212,6 @@ void VelocitySolver::PreparePair ( ContactManifold &manifold ) noexcept
 
     float const invMassA = bodyA.GetMassInverse ();
     float const invMassB = bodyB.GetMassInverse ();
-
-    manifold._deltaVelocityLinear.Subtract ( bodyB.GetVelocityLinear (), bodyA.GetVelocityLinear () );
 
     auto setup = [ & ] ( VelocitySolverData &data,
         GXVec3 const &axis,
@@ -397,7 +330,6 @@ void VelocitySolver::PrepareSingle ( ContactManifold &manifold ) noexcept
     float const invMass = bodyDynamic.GetMassInverse ();
 
     GXVec3 const& cmKinematic = bodyKinematic.GetLocation ();
-    manifold._deltaVelocityLinear.Subtract ( bodyKinematic.GetVelocityLinear (), bodyDynamic.GetVelocityLinear () );
 
     auto setup = [ & ] ( VelocitySolverData &data,
         GXVec3 const &axis,
@@ -468,6 +400,152 @@ void VelocitySolver::PrepareSingle ( ContactManifold &manifold ) noexcept
         UpdateVelocitySingle ( bodyDynamic, contact._dataN, bodyDynamic.GetVelocities (), contact._dataN._lambda );
         UpdateVelocitySingle ( bodyDynamic, contact._dataT, bodyDynamic.GetVelocities (), contact._dataT._lambda );
         UpdateVelocitySingle ( bodyDynamic, contact._dataB, bodyDynamic.GetVelocities (), contact._dataB._lambda );
+    }
+}
+
+void VelocitySolver::SolvePairFriction ( ContactManifold &manifold ) noexcept
+{
+    RigidBody& bodyA = *manifold._bodyA.get ();
+    RigidBody& bodyB = *manifold._bodyB.get ();
+
+    auto solve = [ & ] ( VelocitySolverData &data ) noexcept {
+        GXVec6 const vw1A = bodyA.GetVelocities ();
+        GXVec6 const vw1B = bodyB.GetVelocities ();
+
+        float const d0 = data._j[ 0U ].DotProduct ( vw1A );
+        float const d1 = data._j[ 1U ].DotProduct ( vw1B );
+
+        float l = data._effectiveMass * ( d0 + d1 + data._b );
+
+        float const oldLambda = data._lambda;
+        data._lambda = data._clipHandler ( data._lambda + l, data._clipContext );
+        l = data._lambda - oldLambda;
+
+        UpdateVelocityPair ( bodyA, bodyB, data, vw1A, vw1B, l );
+    };
+
+    for ( size_t i = 0U; i < manifold._contactCount; ++i )
+    {
+        Contact& contact = manifold._contacts[ i ];
+        solve ( contact._dataT );
+        solve ( contact._dataB );
+    }
+}
+
+void VelocitySolver::SolvePairNormal ( ContactManifold &manifold, float stabilizationFactor ) noexcept
+{
+    RigidBody& bodyA = *manifold._bodyA.get ();
+    RigidBody& bodyB = *manifold._bodyB.get ();
+
+    auto solve = [ & ] ( VelocitySolverData &data ) noexcept {
+        GXVec6 const vw1A = bodyA.GetVelocities ();
+        GXVec6 const vw1B = bodyB.GetVelocities ();
+
+        float const d0 = data._j[ 0U ].DotProduct ( vw1A );
+        float const d1 = data._j[ 1U ].DotProduct ( vw1B );
+
+        float l = data._effectiveMass * ( d0 + d1 + data._b );
+
+        float const oldLambda = data._lambda;
+        data._lambda = data._clipHandler ( data._lambda + l, data._clipContext );
+        l = data._lambda - oldLambda;
+
+        UpdateVelocityPair ( bodyA, bodyB, data, vw1A, vw1B, l );
+    };
+
+    GXVec3 const& wA = bodyA.GetVelocityAngular ();
+    GXVec3 const& wB = bodyB.GetVelocityAngular ();
+
+    GXVec3 const& cmA = bodyA.GetLocation ();
+    GXVec3 const& cmB = bodyB.GetLocation ();
+
+    for ( size_t i = 0U; i < manifold._contactCount; ++i )
+    {
+        Contact& contact = manifold._contacts[ i ];
+        VelocitySolverData& dataN = contact._dataN;
+
+        GXVec3 deltaVelocityLinear {};
+        deltaVelocityLinear.Subtract ( bodyB.GetVelocityLinear (), bodyA.GetVelocityLinear () );
+
+        dataN._b = ComputeBaumgarteTerm ( wA, wB, cmA, cmB, deltaVelocityLinear, contact, stabilizationFactor );
+        solve ( dataN );
+    }
+}
+
+void VelocitySolver::SolveSingleFriction ( ContactManifold &manifold ) noexcept
+{
+    RigidBody& bodyDynamic = *manifold._bodyA.get ();
+    RigidBody const& bodyKinematic = *manifold._bodyB.get ();
+
+    GXVec6 const vwKinematic = bodyKinematic.GetVelocities ();
+
+    auto solve = [ & ] ( VelocitySolverData &data ) noexcept {
+        GXVec6 const vw1Dynamic = bodyDynamic.GetVelocities ();
+
+        float l = data._effectiveMass *
+            ( data._j[ 0U ].DotProduct ( vw1Dynamic ) + data._j[ 1U ].DotProduct ( vwKinematic ) + data._b );
+
+        float const oldLambda = data._lambda;
+        data._lambda = data._clipHandler ( data._lambda + l, data._clipContext );
+        l = data._lambda - oldLambda;
+
+        UpdateVelocitySingle ( bodyDynamic, data, vw1Dynamic, l );
+    };
+
+    for ( size_t i = 0U; i < manifold._contactCount; ++i )
+    {
+        Contact& contact = manifold._contacts[ i ];
+        solve ( contact._dataT );
+        solve ( contact._dataB );
+    }
+}
+
+void VelocitySolver::SolveSingleNormal ( ContactManifold &manifold, float stabilizationFactor ) noexcept
+{
+    RigidBody& bodyDynamic = *manifold._bodyA.get ();
+    RigidBody const& bodyKinematic = *manifold._bodyB.get ();
+
+    GXVec6 const vwKinematic = bodyKinematic.GetVelocities ();
+
+    auto solve = [ & ] ( VelocitySolverData &data ) noexcept {
+        GXVec6 const vw1Dynamic = bodyDynamic.GetVelocities ();
+
+        float l = data._effectiveMass *
+            ( data._j[ 0U ].DotProduct ( vw1Dynamic ) + data._j[ 1U ].DotProduct ( vwKinematic ) + data._b );
+
+        float const oldLambda = data._lambda;
+        data._lambda = data._clipHandler ( data._lambda + l, data._clipContext );
+        l = data._lambda - oldLambda;
+
+        UpdateVelocitySingle ( bodyDynamic, data, vw1Dynamic, l );
+    };
+
+    GXVec3 const& wDynamic = bodyDynamic.GetVelocityAngular ();
+    GXVec3 const& wKinematic = bodyKinematic.GetVelocityAngular ();
+
+    GXVec3 const& cmDynamic = bodyDynamic.GetLocation ();
+    GXVec3 const& cmKinematic = bodyKinematic.GetLocation ();
+
+    GXVec3 const& vKinematic = bodyKinematic.GetVelocityLinear ();
+
+    for ( size_t i = 0U; i < manifold._contactCount; ++i )
+    {
+        Contact& contact = manifold._contacts[ i ];
+        VelocitySolverData& dataN = contact._dataN;
+
+        GXVec3 deltaVelocityLinear {};
+        deltaVelocityLinear.Subtract ( vKinematic, bodyDynamic.GetVelocityLinear () );
+
+        dataN._b = ComputeBaumgarteTerm ( wDynamic,
+            wKinematic,
+            cmDynamic,
+            cmKinematic,
+            deltaVelocityLinear,
+            contact,
+            stabilizationFactor
+        );
+
+        solve ( dataN );
     }
 }
 

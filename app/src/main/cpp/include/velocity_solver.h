@@ -13,11 +13,11 @@ namespace android_vulkan {
 // http://allenchou.net/2013/12/game-physics-constraints-sequential-impulse/
 // http://allenchou.net/2013/12/game-physics-resolution-contact-constraints/
 // http://allenchou.net/2014/01/game-physics-stability-slops/
+//
+// Bullet engine ver. 3.20 (commit: 48dc1c45da685c77d3642545c4851b05fb3a1e8b):
+// src/BulletDynamics/ConstraintSolver/btSequentialImpulseConstraintSolver.cpp
 class VelocitySolver final
 {
-    private:
-        float       _stabilizationFactor = 0.0F;
-
     public:
         VelocitySolver () = default;
 
@@ -29,23 +29,17 @@ class VelocitySolver final
 
         ~VelocitySolver () = default;
 
-        void Run ( ContactManager &contactManager, float fixedTimeStepInverse ) noexcept;
+        static void Run ( ContactManager &contactManager, float fixedTimeStepInverse ) noexcept;
 
     private:
-        [[nodiscard]] float ComputeBaumgarteTerm ( GXVec3 const &wA,
+        [[nodiscard]] static float ComputeBaumgarteTerm ( GXVec3 const &wA,
             GXVec3 const &wB,
             GXVec3 const &cmA,
             GXVec3 const &cmB,
             GXVec3 const &dV,
-            Contact const &contact
-        ) const noexcept;
-
-        // Basically it's a solver for dynamic vs dynamic body.
-        void SolvePair ( ContactManifold &manifold ) noexcept;
-
-        // Basically it's a solver for dynamic vs kinematic body.
-        // Note the body A in the manifold data structure is dynamic while body B is kinematic.
-        void SolveSingle ( ContactManifold &manifold ) noexcept;
+            Contact const &contact,
+            float stabilizationFactor
+        ) noexcept;
 
         [[maybe_unused]] static void DebugContactInManifold ( ContactManager const &contactManager ) noexcept;
         [[maybe_unused]] static void DebugWarmStart ( ContactManager const &contactManager ) noexcept;
@@ -55,6 +49,15 @@ class VelocitySolver final
 
         static void PreparePair ( ContactManifold &manifold ) noexcept;
         static void PrepareSingle ( ContactManifold &manifold ) noexcept;
+
+        // Basically it's a solver for dynamic vs dynamic body.
+        static void SolvePairFriction ( ContactManifold &manifold ) noexcept;
+        static void SolvePairNormal ( ContactManifold &manifold, float stabilizationFactor ) noexcept;
+
+        // Basically it's a solver for dynamic vs kinematic body.
+        // Note the body A in the manifold data structure is dynamic while body B is kinematic.
+        static void SolveSingleFriction ( ContactManifold &manifold ) noexcept;
+        static void SolveSingleNormal ( ContactManifold &manifold, float stabilizationFactor ) noexcept;
 
         static void SwapBodies ( ContactManifold &manifold ) noexcept;
 

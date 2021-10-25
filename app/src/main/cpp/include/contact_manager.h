@@ -62,7 +62,6 @@ struct ContactManifold final
     Contact*                        _contacts = nullptr;
 
     bool                            _warmStartIsUsed = true;
-    GXVec3                          _deltaVelocityLinear {};
 
     [[maybe_unused]] uint16_t       _epaSteps = 0U;
     [[maybe_unused]] uint16_t       _gjkSteps = 0U;

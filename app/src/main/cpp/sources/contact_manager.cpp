@@ -16,7 +16,7 @@ constexpr static size_t const INITIAL_INDICES = 32U;
 constexpr static float const WARM_FINDER_TOLERANCE = 4.0e-3F;
 constexpr static float const WARM_FINDER_FACTOR = WARM_FINDER_TOLERANCE * WARM_FINDER_TOLERANCE;
 
-constexpr static float const WARM_TRANSFER_FACTOR = 0.7F;
+constexpr static float const WARM_TRANSFER_FACTOR = 0.85F;
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -201,12 +201,19 @@ void ContactManager::Warm ( ContactManifold &manifold ) noexcept
                 continue;
             }
 
+            GXVec3 const similarity ( std::max ( 0.0F, contact._tangent.DotProduct ( cacheContact._tangent ) ),
+                std::max ( 0.0F, contact._bitangent.DotProduct ( cacheContact._bitangent ) ),
+                std::max ( 0.0F, contact._normal.DotProduct ( cacheContact._normal ) )
+            );
+
             GXVec3 lambda {};
 
             lambda.Multiply (
                 GXVec3 ( cacheContact._dataT._lambda, cacheContact._dataB._lambda, cacheContact._dataN._lambda ),
                 WARM_TRANSFER_FACTOR
             );
+
+            lambda.Multiply ( lambda, similarity );
 
             contact._dataT._lambda = lambda._data[ 0U ];
             contact._dataB._lambda = lambda._data[ 1U ];

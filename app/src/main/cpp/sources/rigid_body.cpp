@@ -11,8 +11,8 @@ GX_RESTORE_WARNING_STATE
 
 namespace android_vulkan {
 
-constexpr static float const DEFAULT_DAMPING_ANGULAR = 0.9F;
-constexpr static float const DEFAULT_DAMPING_LINEAR = 0.9F;
+constexpr static float const DEFAULT_DAMPING_ANGULAR = 0.85F;
+constexpr static float const DEFAULT_DAMPING_LINEAR = 0.85F;
 
 constexpr static GXVec3 const DEFAULT_LOCATION ( 0.0F, -777.777F, 0.0F );
 

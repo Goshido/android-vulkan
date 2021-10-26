@@ -44,9 +44,6 @@ class VelocitySolver final
         [[maybe_unused]] static void DebugContactInManifold ( ContactManager const &contactManager ) noexcept;
         [[maybe_unused]] static void DebugWarmStart ( ContactManager const &contactManager ) noexcept;
 
-        [[nodiscard]] static float LambdaClipNormalForce ( float lambda, void* context ) noexcept;
-        [[nodiscard]] static float LambdaClipFriction ( float lambda, void* context ) noexcept;
-
         static void PreparePair ( ContactManifold &manifold ) noexcept;
         static void PrepareSingle ( ContactManifold &manifold ) noexcept;
 

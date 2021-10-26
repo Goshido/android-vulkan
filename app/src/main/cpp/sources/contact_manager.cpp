@@ -201,10 +201,7 @@ void ContactManager::Warm ( ContactManifold &manifold ) noexcept
                 continue;
             }
 
-            GXVec3 const similarity ( std::max ( 0.0F, contact._tangent.DotProduct ( cacheContact._tangent ) ),
-                std::max ( 0.0F, contact._bitangent.DotProduct ( cacheContact._bitangent ) ),
-                std::max ( 0.0F, contact._normal.DotProduct ( cacheContact._normal ) )
-            );
+            // Note: it seems that the solution is more stable without lambda reprojection to the new basis.
 
             GXVec3 lambda {};
 
@@ -212,8 +209,6 @@ void ContactManager::Warm ( ContactManifold &manifold ) noexcept
                 GXVec3 ( cacheContact._dataT._lambda, cacheContact._dataB._lambda, cacheContact._dataN._lambda ),
                 WARM_TRANSFER_FACTOR
             );
-
-            lambda.Multiply ( lambda, similarity );
 
             contact._dataT._lambda = lambda._data[ 0U ];
             contact._dataB._lambda = lambda._data[ 1U ];

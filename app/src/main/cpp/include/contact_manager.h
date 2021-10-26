@@ -15,19 +15,13 @@ GX_RESTORE_WARNING_STATE
 
 namespace android_vulkan {
 
-using LambdaClipHandler = float ( * ) ( float lambda, void* context ) noexcept;
-
 struct VelocitySolverData final
 {
-    float                   _b = 0.0F;
-
-    LambdaClipHandler       _clipHandler = nullptr;
-    void*                   _clipContext = nullptr;
-
-    float                   _effectiveMass = 0.0F;
-    GXVec6                  _j[ 2U ] {};
-    GXVec6                  _mj[ 2U ] {};
-    float                   _lambda = 0.0F;
+    float       _b = 0.0F;
+    float       _effectiveMass {};
+    GXVec6      _j[ 2U ] {};
+    GXVec6      _mj[ 2U ] {};
+    float       _lambda {};
 };
 
 struct Contact final

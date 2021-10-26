@@ -59,14 +59,14 @@ void Riddle::Init ( android_vulkan::Renderer &renderer,
 
     GXVec3 location {};
     location.Sum ( origin, COLLIDER_OFFSET );
-    body.SetLocation ( location );
+    body.SetLocation ( location, false );
 
     android_vulkan::ShapeRef shape = std::make_shared<android_vulkan::ShapeBox> ( COLLIDER_SIZE._data[ 0U ],
         COLLIDER_SIZE._data[ 1U ],
         COLLIDER_SIZE._data[ 2U ]
     );
 
-    body.SetShape ( shape );
+    body.SetShape ( shape, false );
 }
 
 } // namespace pbr::mario

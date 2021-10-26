@@ -150,11 +150,11 @@ bool World1x1::CreatePhysics () noexcept
     ) noexcept -> bool {
         android_vulkan::RigidBodyRef body = std::make_shared<android_vulkan::RigidBody> ();
         body->EnableKinematic ();
-        body->SetLocation ( x, y, z );
+        body->SetLocation ( x, y, z, false );
 
         android_vulkan::ShapeRef shape = std::make_shared<android_vulkan::ShapeBox> ( w, h, d );
         shape->SetFriction ( friction );
-        body->SetShape ( shape );
+        body->SetShape ( shape, false );
 
         if ( _physics.AddRigidBody ( body ) )
             return true;

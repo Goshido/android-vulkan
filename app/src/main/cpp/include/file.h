@@ -23,20 +23,23 @@ class File final
     public:
         File () = default;
 
-        [[maybe_unused]] explicit File ( std::string &&filePath );
-        explicit File ( std::string_view const &filePath );
-        explicit File ( char const* filePath );
+        File ( File const &other ) = delete;
+        File& operator = ( File const &other ) = delete;
 
-        File ( File &other ) = delete;
-        File& operator = ( const File &other ) = delete;
+        File ( File &&other ) = delete;
+        File& operator = ( File &&other ) = delete;
+
+        explicit File ( std::string &&filePath ) noexcept;
+        explicit File ( std::string_view const &filePath ) noexcept;
+        explicit File ( char const* filePath ) noexcept;
 
         ~File () = default;
 
-        [[nodiscard]] std::vector<uint8_t>& GetContent ();
-        [[maybe_unused]] [[nodiscard]] std::vector<uint8_t> const& GetContent () const;
+        [[nodiscard]] std::vector<uint8_t>& GetContent () noexcept;
+        [[maybe_unused, nodiscard]] std::vector<uint8_t> const& GetContent () const noexcept;
 
-        [[nodiscard]] bool IsContentLoaded () const;
-        [[nodiscard]] bool LoadContent ();
+        [[nodiscard]] bool IsContentLoaded () const noexcept;
+        [[nodiscard]] bool LoadContent () noexcept;
 };
 
 } // namespace android_vulkan

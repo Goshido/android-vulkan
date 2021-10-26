@@ -5,6 +5,7 @@
 namespace android_vulkan {
 
 constexpr static size_t const DEFAULT_CAPACITY = 16U;
+constexpr static float const MINIMUM_PENETRATION = 1.0e-4F;
 
 SutherlandHodgman::SutherlandHodgman () noexcept
 {
@@ -111,15 +112,14 @@ SutherlandHodgmanResult const& SutherlandHodgman::Run ( Vertices const &shapeAPo
 
         float const dot = shapeBNormal.DotProduct ( beta );
 
-        if ( dot <= 0.0F )
+        if ( dot <= MINIMUM_PENETRATION )
         {
-            // Point from shape A is in front of shape B. Skipping...
+            // Point from shape A is in front of shape B or too close for stable simulation on floats. Skipping...
             continue;
         }
 
         GXVec3 gamma {};
         gamma.Sum ( alpha, dot, shapeBNormal );
-
         _result.emplace_back ( alpha, gamma );
     }
 

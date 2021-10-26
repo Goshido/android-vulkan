@@ -14,40 +14,40 @@ namespace android_vulkan {
 
 extern AAssetManager* g_AssetManager;
 
-File::File ( std::string &&filePath ):
+File::File ( std::string &&filePath ) noexcept:
     _filePath ( std::move ( filePath ) )
 {
     // NOTHING
 }
 
-File::File ( std::string_view const &filePath ):
+File::File ( std::string_view const &filePath ) noexcept:
     _filePath ( filePath )
 {
     // NOTHING
 }
 
-File::File ( char const* filePath ):
+File::File ( char const* filePath ) noexcept:
     _filePath ( filePath )
 {
     // NOTHING
 }
 
-std::vector<uint8_t>& File::GetContent ()
+std::vector<uint8_t>& File::GetContent () noexcept
 {
     return _content;
 }
 
-std::vector<uint8_t> const& File::GetContent () const
+[[maybe_unused]] std::vector<uint8_t> const& File::GetContent () const noexcept
 {
     return _content;
 }
 
-bool File::IsContentLoaded () const
+bool File::IsContentLoaded () const noexcept
 {
     return !_content.empty ();
 }
 
-bool File::LoadContent ()
+bool File::LoadContent () noexcept
 {
     if ( IsContentLoaded () )
     {
@@ -63,7 +63,7 @@ bool File::LoadContent ()
         return false;
     }
 
-    const auto size = static_cast<const size_t> ( AAsset_getLength ( asset ) );
+    auto const size = static_cast<size_t> ( AAsset_getLength ( asset ) );
 
     if ( !size )
     {
@@ -74,7 +74,7 @@ bool File::LoadContent ()
     }
 
     _content.resize ( size );
-    const auto readBytes = static_cast<const size_t> ( AAsset_read ( asset, _content.data (), size ) );
+    auto const readBytes = static_cast<size_t> ( AAsset_read ( asset, _content.data (), size ) );
     AAsset_close ( asset );
 
     if ( size == readBytes )

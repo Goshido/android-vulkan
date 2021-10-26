@@ -50,7 +50,6 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/half_types.cpp
     app/src/main/cpp/sources/key_bind.cpp
     app/src/main/cpp/sources/ktx_media_container.cpp
-    app/src/main/cpp/sources/location_solver.cpp
     app/src/main/cpp/sources/logger.cpp
     app/src/main/cpp/sources/main.cpp
     app/src/main/cpp/sources/mesh_geometry.cpp
@@ -127,6 +126,9 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/pbr/texture_present_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/texture_present_program.cpp
     app/src/main/cpp/sources/pbr/uniform_buffer_pool.cpp
+    app/src/main/cpp/sources/pbr/box_stack/box_stack.cpp
+    app/src/main/cpp/sources/pbr/collision/collision.cpp
+    app/src/main/cpp/sources/pbr/collision/manipulator.cpp
     app/src/main/cpp/sources/pbr/mario/brick.cpp
     app/src/main/cpp/sources/pbr/mario/camera.cpp
     app/src/main/cpp/sources/pbr/mario/mario.cpp
@@ -135,7 +137,6 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/pbr/mario/pipe_x2.cpp
     app/src/main/cpp/sources/pbr/mario/riddle.cpp
     app/src/main/cpp/sources/pbr/mario/world1x1.cpp
-    app/src/main/cpp/sources/pbr/physics/sandbox.cpp
     app/src/main/cpp/sources/rainbow/rainbow.cpp
     app/src/main/cpp/sources/rotating_mesh/game.cpp
     app/src/main/cpp/sources/rotating_mesh/game_analytic.cpp

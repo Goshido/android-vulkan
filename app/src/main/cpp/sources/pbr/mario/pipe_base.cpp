@@ -49,7 +49,7 @@ void PipeBase::Init ( android_vulkan::Renderer &renderer,
 
     GXVec3 location {};
     location.Sum ( origin, GetColliderOffset () );
-    body.SetLocation ( location );
+    body.SetLocation ( location, false );
 
     GXVec3 const& size = GetColliderSize ();
 
@@ -58,7 +58,7 @@ void PipeBase::Init ( android_vulkan::Renderer &renderer,
         size._data[ 2U ]
     );
 
-    body.SetShape ( shape );
+    body.SetShape ( shape, false );
 }
 
 PipeBase::PipeBase () noexcept:

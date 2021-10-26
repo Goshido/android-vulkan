@@ -21,6 +21,7 @@ class RigidBody final
         float                   _dampingAngular;
         float                   _dampingLinear;
 
+        bool                    _forceAwake;
         GXMat3                  _inertiaTensorInverse;
 
         bool                    _isAwake;
@@ -28,15 +29,12 @@ class RigidBody final
         bool                    _isKinematic;
 
         GXVec3                  _location;
-        GXVec3                  _locationBefore;
 
         float                   _mass;
         float                   _massInverse;
 
         Physics*                _physics;
-
         GXQuat                  _rotation;
-        GXQuat                  _rotationBefore;
 
         ShapeRef                _shape;
         float                   _sleepTimeout;
@@ -65,20 +63,30 @@ class RigidBody final
 
         ~RigidBody () = default;
 
-        [[maybe_unused]] void AddVelocityAngular ( GXVec3 const &velocity ) noexcept;
+        [[maybe_unused]] void AddVelocityAngular ( GXVec3 const &velocity, bool forceAwake ) noexcept;
         [[nodiscard]] GXVec3 const& GetVelocityAngular () const noexcept;
-        [[maybe_unused]] void SetVelocityAngular ( GXVec3 const &velocity ) noexcept;
-        void SetVelocityAngular ( float wx, float wy, float wz ) noexcept;
+        [[maybe_unused]] void SetVelocityAngular ( GXVec3 const &velocity, bool forceAwake ) noexcept;
+        [[maybe_unused]] void SetVelocityAngular ( float wx, float wy, float wz, bool forceAwake ) noexcept;
 
-        [[maybe_unused]] void AddVelocityLinear ( GXVec3 const &velocity ) noexcept;
+        [[maybe_unused]] void AddVelocityLinear ( GXVec3 const &velocity, bool forceAwake ) noexcept;
         [[nodiscard]] GXVec3 const& GetVelocityLinear () const noexcept;
-        [[maybe_unused]] void SetVelocityLinear ( GXVec3 const &velocity ) noexcept;
-        void SetVelocityLinear ( float x, float y, float z ) noexcept;
+        [[maybe_unused]] void SetVelocityLinear ( GXVec3 const &velocity, bool forceAwake ) noexcept;
+        [[maybe_unused]] void SetVelocityLinear ( float x, float y, float z, bool forceAwake ) noexcept;
 
-        [[maybe_unused]] void AddForce ( GXVec3 const &force, GXVec3 const &point ) noexcept;
-        [[maybe_unused]] void AddImpulse ( GXVec3 const &impulse, GXVec3 const &point ) noexcept;
+        // Methods operates linear and angular velocities in one transaction. The layout:
+        //      GXVec6::_data[ 0U ] - x component of the linear velocity
+        //      GXVec6::_data[ 1U ] - y component of the linear velocity
+        //      GXVec6::_data[ 2U ] - z component of the linear velocity
+        //      GXVec6::_data[ 3U ] - x component of the angular velocity
+        //      GXVec6::_data[ 4U ] - y component of the angular velocity
+        //      GXVec6::_data[ 5U ] - z component of the angular velocity
+        void SetVelocities ( GXVec6 const &velocities ) noexcept;
+        [[nodiscard]] GXVec6 GetVelocities () const noexcept;
 
-        [[maybe_unused]] void DisableKinematic () noexcept;
+        [[maybe_unused]] void AddForce ( GXVec3 const &force, GXVec3 const &point, bool forceAwake ) noexcept;
+        [[maybe_unused]] void AddImpulse ( GXVec3 const &impulse, GXVec3 const &point, bool forceAwake ) noexcept;
+
+        [[maybe_unused]] void DisableKinematic ( bool forceAwake ) noexcept;
         [[maybe_unused]] void EnableKinematic () noexcept;
         [[maybe_unused, nodiscard]] bool IsKinematic () const noexcept;
 
@@ -95,19 +103,19 @@ class RigidBody final
         [[nodiscard]] GXMat3 const& GetInertiaTensorInverse () const noexcept;
 
         [[nodiscard]] GXVec3 const& GetLocation () const noexcept;
-        [[maybe_unused]] void SetLocation ( GXVec3 const &location ) noexcept;
-        [[maybe_unused]] void SetLocation ( float x, float y, float z ) noexcept;
+        [[maybe_unused]] void SetLocation ( GXVec3 const &location, bool forceAwake ) noexcept;
+        [[maybe_unused]] void SetLocation ( float x, float y, float z, bool forceAwake ) noexcept;
 
         [[maybe_unused, nodiscard]] float GetMass () const noexcept;
         [[nodiscard]] float GetMassInverse () const noexcept;
-        [[maybe_unused]] void SetMass ( float mass ) noexcept;
+        [[maybe_unused]] void SetMass ( float mass, bool forceAwake ) noexcept;
 
         [[maybe_unused, nodiscard]] GXQuat const& GetRotation () const noexcept;
-        [[maybe_unused]] void SetRotation ( GXQuat const &rotation ) noexcept;
+        [[maybe_unused]] void SetRotation ( GXQuat const &rotation, bool forceAwake ) noexcept;
 
         [[nodiscard]] Shape& GetShape () noexcept;
         [[nodiscard]] bool HasShape () const noexcept;
-        [[maybe_unused]] void SetShape ( ShapeRef &shape ) noexcept;
+        [[maybe_unused]] void SetShape ( ShapeRef &shape, bool forceAwake ) noexcept;
 
         // This feature is primary for debugging purposes.
         [[maybe_unused, nodiscard]] std::string const& GetTag () const noexcept;
@@ -119,20 +127,18 @@ class RigidBody final
         [[maybe_unused, nodiscard]] GXMat4 const& GetTransform () const noexcept;
 
         void Integrate ( float deltaTime ) noexcept;
+
         [[maybe_unused, nodiscard]] bool IsAwake () const noexcept;
+        void SetAwake () noexcept;
 
         void OnRegister ( Physics &physics ) noexcept;
         void OnUnregister () noexcept;
 
-        void ResetAccumulators () noexcept;
         void UpdatePositionAndRotation ( float deltaTime ) noexcept;
 
     private:
+        void ResetAccumulators () noexcept;
         void RunSleepLogic ( float deltaTime ) noexcept;
-
-        void SetAwake () noexcept;
-        void SetSleep () noexcept;
-
         void UpdateCacheData () noexcept;
 };
 

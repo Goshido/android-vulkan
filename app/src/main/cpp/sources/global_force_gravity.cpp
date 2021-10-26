@@ -16,7 +16,7 @@ void GlobalForceGravity::Apply ( RigidBodyRef const &rigidBody ) const noexcept
     GXVec3 force {};
     force.Multiply ( _freeFallAcceleration, body.GetMass () );
 
-    body.AddForce ( force, body.GetLocation () );
+    body.AddForce ( force, body.GetLocation (), false );
 }
 
 } // namespace android_vulkan

@@ -16,7 +16,6 @@ constexpr static float JUMP_SPEED = 9.0F;
 constexpr static float const MASS = 38.0F;
 constexpr static char const MATERIAL[] = "pbr/assets/Props/experimental/world-1-1/mario/mario.mtl";
 constexpr static char const MESH[] = "pbr/assets/Props/experimental/world-1-1/mario/mario-cube.mesh2";
-//constexpr static char const MESH[] = "pbr/assets/Props/experimental/world-1-1/mario/mario-sphere.mesh2";
 constexpr static GXVec3 const MOVE_FORCE ( 0.0F, 0.0F, 500.0F );
 constexpr static float const MOVE_SPEED = 5.0F;
 constexpr static float const RESTITUTION = 0.0F;
@@ -64,24 +63,22 @@ void Mario::Init ( android_vulkan::Renderer &renderer,
 
     _rigidBody = std::make_shared<android_vulkan::RigidBody> ();
     android_vulkan::RigidBody& body = *_rigidBody.get ();
-    body.DisableKinematic ();
-    body.DisableSleep ();
+    body.DisableKinematic ( true );
+    body.EnableSleep ();
     body.SetDampingAngular ( DAMPING_ANGULAR );
     body.SetDampingLinear ( DAMPING_LINEAR );
-    body.SetMass ( MASS );
-    body.SetLocation ( x, y, z );
+    body.SetMass ( MASS, true );
+    body.SetLocation ( x, y, z, true );
 
     android_vulkan::ShapeRef shape = std::make_shared<android_vulkan::ShapeBox> ( COLLIDER_SIZE._data[ 0U ],
         COLLIDER_SIZE._data[ 1U ],
         COLLIDER_SIZE._data[ 2U ]
     );
 
-//    android_vulkan::ShapeRef shape = std::make_shared<android_vulkan::ShapeSphere> ( 0.4F );
-
     shape->SetFriction ( FRICTION );
     shape->SetRestitution ( RESTITUTION );
 
-    body.SetShape ( shape );
+    body.SetShape ( shape, true );
     OnUpdate ();
 }
 
@@ -106,20 +103,19 @@ void Mario::OnUpdate () noexcept
     if ( _isJump )
     {
         velocityLinear._data[ 1U ] += JUMP_SPEED;
+        body.SetVelocityLinear ( velocityLinear, true );
         _isJump = false;
     }
 
     bool const isMove = ( _move < 0.0F && velocityLinear._data[ 2U ] > -MOVE_SPEED ) ||
         ( _move > 0.0F && velocityLinear._data[ 2U ] < MOVE_SPEED );
 
-    if ( isMove )
-    {
-        GXVec3 force {};
-        force.Multiply ( MOVE_FORCE, _move );
-        body.AddForce ( force, bodyLoc );
-    }
+    if ( !isMove )
+        return;
 
-    body.SetVelocityLinear ( velocityLinear );
+    GXVec3 force {};
+    force.Multiply ( MOVE_FORCE, _move );
+    body.AddForce ( force, bodyLoc, true );
 }
 
 void Mario::ReleaseInput () noexcept

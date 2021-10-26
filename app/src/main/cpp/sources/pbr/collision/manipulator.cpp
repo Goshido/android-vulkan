@@ -134,11 +134,11 @@ void Manipulator::Update ( GXMat4 const &cameraLocal, float deltaTime ) noexcept
     GXQuat finalRotation {};
     android_vulkan::RigidBody& b = *_body.get ();
     finalRotation.Multiply ( r, b.GetRotation () );
-    b.SetRotation ( finalRotation );
+    b.SetRotation ( finalRotation, false );
 
     GXVec3 location = b.GetLocation ();
     location._data[ 1U ] += VELOCITY_LINEAR * deltaTime * static_cast<float> ( _height );
-    b.SetLocation ( location );
+    b.SetLocation ( location, false );
 }
 
 void Manipulator::OnBDown ( void* context ) noexcept

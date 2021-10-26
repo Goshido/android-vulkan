@@ -153,12 +153,10 @@ void Physics::Simulate ( float deltaTime ) noexcept
 
     while ( _accumulator >= _fixedTimeStep )
     {
-        Integrate ();
         CollectContacts ();
-
         VelocitySolver::Run ( _contactManager, _fixedTimeStepInverse );
+        Integrate ();
 
-        Prepare ();
         _accumulator -= _fixedTimeStep;
     }
 }
@@ -196,14 +194,6 @@ void Physics::Integrate () noexcept
             globalForce->Apply ( dynamic );
 
         dynamic->Integrate ( _fixedTimeStep );
-    }
-}
-
-void Physics::Prepare () noexcept
-{
-    for ( auto& dynamic : _dynamics )
-    {
-        dynamic->ResetAccumulators ();
     }
 }
 

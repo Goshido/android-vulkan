@@ -272,10 +272,6 @@ bool Collision::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
 
     commandBuffers += consumed;
 
-    android_vulkan::RigidBody& b = *_cubes[ 1U ]._body.get ();
-    b.DisableKinematic ();
-    b.DisableSleep ();
-
     _contactMesh = MeshManager::GetInstance ().LoadMesh ( renderer,
         consumed,
         "pbr/system/unit-sphere.mesh2",
@@ -377,12 +373,13 @@ bool Collision::AppendCuboid ( android_vulkan::Renderer &renderer,
 
     physical = std::make_shared<android_vulkan::RigidBody> ();
     android_vulkan::RigidBody& ph = *physical.get ();
-    ph.SetLocation ( x, y, z );
+    ph.SetLocation ( x, y, z, false );
     ph.EnableKinematic ();
+    ph.EnableSleep ();
     ph.SetTag ( std::move ( tag ) );
 
     android_vulkan::ShapeRef shape = std::make_shared<android_vulkan::ShapeBox> ( w, h, d );
-    ph.SetShape ( shape );
+    ph.SetShape ( shape, false );
     return true;
 }
 

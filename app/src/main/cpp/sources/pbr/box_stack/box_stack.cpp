@@ -234,12 +234,13 @@ bool BoxStack::AppendCuboid ( android_vulkan::Renderer &renderer,
 
     physical = std::make_shared<android_vulkan::RigidBody> ();
     android_vulkan::RigidBody& ph = *physical.get ();
-    ph.SetLocation ( x, y, z );
-    ph.EnableKinematic ();
+    ph.SetLocation ( x, y, z, true );
+    ph.DisableKinematic ( true );
+    ph.EnableSleep ();
     ph.SetTag ( std::move ( tag ) );
 
     android_vulkan::ShapeRef shape = std::make_shared<android_vulkan::ShapeBox> ( w, h, d );
-    ph.SetShape ( shape );
+    ph.SetShape ( shape, true );
 
     if ( _physics.AddRigidBody ( physical ) )
     {
@@ -329,6 +330,8 @@ bool BoxStack::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
     if ( !result )
         return false;
 
+    body->EnableKinematic ();
+
     commandBuffers += consumed;
 
     _cubes.resize ( CUBES );
@@ -359,9 +362,7 @@ bool BoxStack::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
         commandBuffers += consumed;
 
         android_vulkan::RigidBody& b = *_cubeBodies[ i ].get ();
-        b.DisableKinematic ();
-        b.SetMass ( 7.77F );
-        b.DisableSleep ();
+        b.SetMass ( 7.77F, true );
     }
 
     _sphereMesh = MeshManager::GetInstance ().LoadMesh ( renderer,

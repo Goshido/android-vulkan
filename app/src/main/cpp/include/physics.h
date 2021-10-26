@@ -66,7 +66,6 @@ class Physics final
     private:
         void CollectContacts () noexcept;
         void Integrate () noexcept;
-        void Prepare () noexcept;
         void ResolveIntegrationType ( RigidBody &rigidBody ) noexcept;
 };
 

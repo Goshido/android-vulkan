@@ -1,4 +1,4 @@
-﻿// version 1.69
+﻿// version 1.70
 
 #include <GXCommon/GXMath.h>
 
@@ -312,17 +312,17 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 
     switch ( selector )
     {
-        case 0u:
+        case 0U:
             i1 = 1u;
             i2 = 2u;
         break;
 
-        case 1u:
+        case 1U:
             i1 = 2u;
             i2 = 0u;
         break;
 
-        case 2u:
+        case 2U:
             i1 = 0u;
             i2 = 1u;
         break;
@@ -342,7 +342,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     GXFloat const v2 = triangle[ 2U ]._data[ i2 ] - triangle[ 0U ]._data[ i2 ];
 
     gamma = 1.0F / ( u1 * v2 - v1 * u2 );
-    GXFloat alpha = ( u0 * v2 - v0 * u2 ) * gamma;
+    GXFloat const alpha = ( u0 * v2 - v0 * u2 ) * gamma;
 
     if ( alpha < 0.0F || alpha > 1.0F )
         return GX_FALSE;

@@ -46,6 +46,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/file.cpp
     app/src/main/cpp/sources/gamepad.cpp
     app/src/main/cpp/sources/gjk.cpp
+    app/src/main/cpp/sources/gjk_base.cpp
     app/src/main/cpp/sources/global_force_gravity.cpp
     app/src/main/cpp/sources/half_types.cpp
     app/src/main/cpp/sources/key_bind.cpp
@@ -54,6 +55,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/main.cpp
     app/src/main/cpp/sources/mesh_geometry.cpp
     app/src/main/cpp/sources/physics.cpp
+    app/src/main/cpp/sources/ray_caster.cpp
     app/src/main/cpp/sources/renderer.cpp
     app/src/main/cpp/sources/rigid_body.cpp
     app/src/main/cpp/sources/shape.cpp

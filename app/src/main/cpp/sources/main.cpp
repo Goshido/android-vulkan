@@ -17,6 +17,9 @@ GX_DISABLE_COMMON_WARNINGS
 
 GX_RESTORE_WARNING_STATE
 
+#include <ray_caster.h>
+#include <shape_box.h>
+
 
 namespace android_vulkan {
 
@@ -33,12 +36,43 @@ enum class eGame : uint16_t
     World1x1
 };
 
+static void Test () noexcept
+{
+    ShapeBox shape ( 2.0F, 7.0F, 5.0F );
+
+    GXVec3 axis ( 1.0F, -8.0F, -3.77F );
+    axis.Normalize ();
+
+    GXQuat r {};
+    r.FromAxisAngle ( axis, GXDegToRad ( 29.5F ) );
+
+    GXMat4 transform {};
+    transform.Translation ( 1.15F, 6.77F, -3.0F );
+    transform.SetRotationFast ( r );
+
+    shape.UpdateCacheData ( transform );
+    shape.Test ();
+
+    constexpr GXVec3 const rayFrom ( 17.89F, 8.179F, -7.316F );
+    constexpr GXVec3 const rayTo ( -21.11F, 2.042F, 1.828F );
+
+    RayCaster rayCaster {};
+    RaycastResult result {};
+    bool const isHit = rayCaster.Run ( result, rayFrom, rayTo, shape );
+
+    (void)isHit;
+
+    GXVec3 const stop {};
+}
+
 } // namespace android_vulkan
 
 // Note maybe_unused attribute is needed because IDE could not understand that this function is actually visible for
 // NativeActivity implementation.
 [[maybe_unused]] void android_main ( android_app* app )
 {
+    android_vulkan::Test ();
+
     std::map<android_vulkan::eGame, std::shared_ptr<android_vulkan::Game>> const games =
     {
         { android_vulkan::eGame::Collision, std::make_shared<pbr::collision::Collision> () },
@@ -52,7 +86,7 @@ enum class eGame : uint16_t
         { android_vulkan::eGame::World1x1, std::make_shared<pbr::mario::World1x1> () }
     };
 
-    android_vulkan::Core core ( *app, *( games.find ( android_vulkan::eGame::PBR )->second ) );
+    android_vulkan::Core core ( *app, *( games.find ( android_vulkan::eGame::World1x1 )->second ) );
 
     for ( ; ; )
     {

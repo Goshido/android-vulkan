@@ -10,11 +10,11 @@ namespace android_vulkan {
 class Simplex final
 {
     public:
-        uint8_t     _pointCount;
-        GXVec3      _supportPoints[ 4U ];
+        uint8_t     _pointCount = 0U;
+        GXVec3      _supportPoints[ 4U ] {};
 
     public:
-        Simplex () noexcept;
+        Simplex () = default;
 
         Simplex ( Simplex const & ) = delete;
         Simplex& operator = ( Simplex const & ) = delete;

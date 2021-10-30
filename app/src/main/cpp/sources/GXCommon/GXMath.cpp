@@ -1,4 +1,4 @@
-﻿// version 1.70
+﻿// version 1.71
 
 #include <GXCommon/GXMath.h>
 
@@ -213,8 +213,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 {
     GXVec3 normalVector ( vector );
     normalVector.Normalize ();
-    GXFloat factor = vector.Length () * axis.DotProduct ( normalVector );
-    Multiply ( axis, factor );
+    Multiply ( axis, vector.Length () * axis.DotProduct ( normalVector ) );
 }
 
 [[maybe_unused]] GXBool GXVec3::IsEqual ( GXVec3 const &other ) noexcept

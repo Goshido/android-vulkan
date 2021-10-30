@@ -1,4 +1,4 @@
-// version 1.70
+// version 1.71
 
 #ifndef GX_MATH
 #define GX_MATH
@@ -151,7 +151,9 @@ struct [[maybe_unused]] GXVec3 final
         GXFloat interpolationFactor
     ) noexcept;
 
+    // Note the axis must be a unit vector.
     [[maybe_unused]] GXVoid Project ( GXVec3 const &vector, GXVec3 const &axis ) noexcept;
+
     [[maybe_unused, nodiscard]] GXBool IsEqual ( GXVec3 const &other ) noexcept;
 
     [[maybe_unused, nodiscard]] static GXVec3 const& GetAbsoluteX () noexcept;

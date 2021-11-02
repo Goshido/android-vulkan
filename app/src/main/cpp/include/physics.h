@@ -5,6 +5,7 @@
 #include "contact_detector.h"
 #include "contact_manager.h"
 #include "global_force.h"
+#include "ray_caster.h"
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -58,6 +59,11 @@ class Physics final
         [[nodiscard]] bool IsPaused () const noexcept;
         void OnIntegrationTypeChanged ( RigidBody &rigidBody ) noexcept;
         void Pause () noexcept;
+
+        // The method returns true if ray hits anything. Otherwise the method returns false.
+        // The closest hit point will be returned.
+        [[nodiscard]] bool Raycast ( RaycastResult &result, GXVec3 const &from, GXVec3 const &to ) const noexcept;
+
         void Resume () noexcept;
         void Simulate ( float deltaTime ) noexcept;
 

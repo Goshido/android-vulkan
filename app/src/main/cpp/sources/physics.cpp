@@ -126,6 +126,37 @@ void Physics::Pause () noexcept
     _isPause = true;
 }
 
+bool Physics::Raycast ( RaycastResult &result, GXVec3 const &from, GXVec3 const &to ) const noexcept
+{
+    float dist = std::numeric_limits<float>::max ();
+
+    bool isHit = false;
+    RayCaster rayCaster {};
+    RaycastResult current {};
+
+    auto check = [ & ] ( std::unordered_set<RigidBodyRef> const &set ) noexcept {
+        for ( auto& body : set )
+        {
+            if ( !rayCaster.Run ( current, from, to, body->GetShape () ) )
+                continue;
+
+            float const d = current._point.SquaredDistance ( from );
+
+            if ( d >= dist )
+                continue;
+
+            dist = d;
+            result = current;
+            isHit = true;
+        }
+    };
+
+    check ( _kinematics );
+    check ( _dynamics );
+
+    return isHit;
+}
+
 void Physics::Resume () noexcept
 {
     if ( !_isPause )

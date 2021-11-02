@@ -48,6 +48,8 @@ class StaticMeshComponent final : public Component
 
         ~StaticMeshComponent () override = default;
 
+        void Submit ( RenderSession &renderSession ) override;
+
         [[maybe_unused, nodiscard]] GXAABB const& GetBoundsWorld () const noexcept;
 
         [[maybe_unused, nodiscard]] android_vulkan::Half4 const& GetColor0 () const noexcept;
@@ -71,7 +73,6 @@ class StaticMeshComponent final : public Component
 
     private:
         void FreeTransferResources ( VkDevice device ) override;
-        void Submit ( RenderSession &renderSession ) override;
 };
 
 } // namespace pbr

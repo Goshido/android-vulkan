@@ -11,6 +11,7 @@ class Camera final
 {
     private:
         float       _moveBoost;
+        float       _movingSpeed;
 
         // range [-pi / 2, pi / 2]
         float       _pitch;
@@ -42,18 +43,23 @@ class Camera final
 
         ~Camera () = default;
 
-        void SetProjection ( float fieldOfViewRadians, float aspectRatio, float zNear, float zFar ) noexcept;
+        void CaptureInput () noexcept;
+
+        [[nodiscard]] GXMat4 const& GetLocalMatrix () const noexcept;
+        [[nodiscard]] GXMat4 const& GetProjectionMatrix () const noexcept;
+
         void SetLocation ( GXVec3 const &location ) noexcept;
+
+        // Render units per second.
+        void SetMovingSpeed ( float speed ) noexcept;
+
+        void SetProjection ( float fieldOfViewRadians, float aspectRatio, float zNear, float zFar ) noexcept;
 
         // Note "pitch" and "yaw" must be in radians.
         void SetRotation ( float pitch, float yaw ) noexcept;
 
         void Update ( float deltaTime ) noexcept;
 
-        [[nodiscard]] GXMat4 const& GetLocalMatrix () const noexcept;
-        [[nodiscard]] GXMat4 const& GetProjectionMatrix () const noexcept;
-
-        void CaptureInput () noexcept;
         static void ReleaseInput () noexcept;
 
     private:

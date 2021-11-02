@@ -67,6 +67,9 @@ bool RayCaster::Run ( RaycastResult& result, GXVec3 const &from, GXVec3 const &t
             result._normal = v;
         }
 
+        if ( _simplex._pointCount == 4U )
+            GXVec3 const stop {};
+
         _simplex.PushPoint ( w );
 
         switch ( _simplex._pointCount )
@@ -88,7 +91,7 @@ bool RayCaster::Run ( RaycastResult& result, GXVec3 const &from, GXVec3 const &t
             break;
         }
 
-        assert ( _simplex._pointCount > 0U );
+        assert ( _simplex._pointCount > 0U && _simplex._pointCount < 5U );
 
         ClosestInHullHandler const handler = _handlers[ _simplex._pointCount - 1U ];
         v = handler ( _simplex );

@@ -49,6 +49,9 @@ class Texture2D final
 
         ~Texture2D () = default;
 
+        // The feature is used by rendering system to group draw calls by materials.
+        void AssignName ( std::string &&name ) noexcept;
+
         [[nodiscard]] bool CreateRenderTarget ( VkExtent2D const &resolution,
             VkFormat format,
             VkImageUsageFlags usage,

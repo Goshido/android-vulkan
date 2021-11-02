@@ -1,5 +1,5 @@
-#ifndef OPAQUE_CALL_H
-#define OPAQUE_CALL_H
+#ifndef PBR_OPAQUE_CALL_H
+#define PBR_OPAQUE_CALL_H
 
 
 #include "mesh_group.h"
@@ -78,4 +78,4 @@ class OpaqueCall final
 } // namespace pbr
 
 
-#endif // OPAQUE_CALL_H
+#endif // PBR_OPAQUE_CALL_H

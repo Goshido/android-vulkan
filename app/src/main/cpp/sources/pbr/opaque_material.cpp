@@ -5,7 +5,12 @@
 namespace pbr {
 
 OpaqueMaterial::OpaqueMaterial () noexcept:
-    Material ( eMaterialType::Opaque )
+    Material ( eMaterialType::Opaque ),
+    _albedo {},
+    _emission {},
+    _mask {},
+    _normal {},
+    _param {}
 {
     // NOTHING
 }
@@ -104,24 +109,24 @@ bool OpaqueMaterial::operator < ( OpaqueMaterial const &other ) const
     int8_t result = compare ( _albedo, other._albedo );
 
     if ( result != equal )
-        return result == less;
+        return result <= less;
 
     result = compare ( _param, other._param );
 
     if ( result != equal )
-        return result == less;
+        return result <= less;
 
     result = compare ( _mask, other._mask );
 
     if ( result != equal )
-        return result == less;
+        return result <= less;
 
     result = compare ( _normal, other._normal );
 
     if ( result != equal )
-        return result == less;
+        return result <= less;
 
-    return compare ( _emission, other._emission ) == less;
+    return compare ( _emission, other._emission ) <= less;
 }
 
 } // namespace pbr

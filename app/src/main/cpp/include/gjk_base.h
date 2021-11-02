@@ -5,7 +5,6 @@
 #include "simplex.h"
 
 
-
 namespace android_vulkan {
 
 // The implementation is based on ideas from

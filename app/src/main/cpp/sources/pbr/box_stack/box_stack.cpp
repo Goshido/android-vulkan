@@ -108,7 +108,7 @@ bool BoxStack::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 
     VkDevice device = renderer.GetDevice ();
 
-    bool result = android_vulkan::Renderer::CheckVkResult (
+    bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateCommandPool ( device, &createInfo, nullptr, &_commandPool ),
         "BoxStack::OnInit",
         "Can't create command pool"
@@ -184,7 +184,6 @@ bool BoxStack::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcep
     );
 
     _physics.Resume ();
-
     return true;
 }
 

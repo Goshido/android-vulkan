@@ -2,7 +2,6 @@
 #define PBR_RENDER_SESSION_H
 
 
-#include <GXCommon/GXMath.h>
 #include "geometry_pass.h"
 #include "light_pass.h"
 #include "reflection_global_pass.h"

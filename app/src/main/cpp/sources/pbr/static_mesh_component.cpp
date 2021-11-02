@@ -85,6 +85,11 @@ StaticMeshComponent::StaticMeshComponent ( android_vulkan::Renderer &renderer,
     commandBufferConsumed += consumed;
 }
 
+void StaticMeshComponent::Submit ( RenderSession &renderSession )
+{
+    renderSession.SubmitMesh ( _mesh, _material, _localMatrix, _worldBounds, _color0, _color1, _color2, _color3 );
+}
+
 [[maybe_unused]] GXAABB const& StaticMeshComponent::GetBoundsWorld () const noexcept
 {
     return _worldBounds;
@@ -183,11 +188,6 @@ void StaticMeshComponent::FreeTransferResources ( VkDevice device )
 
     m->GetParam ()->FreeTransferResources ( device );
     _mesh->FreeTransferResources ( device );
-}
-
-void StaticMeshComponent::Submit ( RenderSession &renderSession )
-{
-    renderSession.SubmitMesh ( _mesh, _material, _localMatrix, _worldBounds, _color0, _color1, _color2, _color3 );
 }
 
 } // namespace pbr

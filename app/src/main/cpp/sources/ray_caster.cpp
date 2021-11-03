@@ -37,7 +37,7 @@ bool RayCaster::Run ( RaycastResult& result, GXVec3 const &from, GXVec3 const &t
     r.Subtract ( to, from );
 
     result._point = from;
-    bool hasIntersect = true;
+    bool isIntersect = true;
 
     for ( ; _steps < MAXIMUM_STEPS; ++_steps )
     {
@@ -58,7 +58,7 @@ bool RayCaster::Run ( RaycastResult& result, GXVec3 const &from, GXVec3 const &t
 
             if ( vrDot >= 0.0F )
             {
-                hasIntersect = false;
+                isIntersect = false;
                 break;
             }
 
@@ -72,11 +72,15 @@ bool RayCaster::Run ( RaycastResult& result, GXVec3 const &from, GXVec3 const &t
         switch ( _simplex._pointCount )
         {
             case 2U:
+            {
                 LineTest ();
+            }
             break;
 
             case 3U:
+            {
                 TriangleTest ();
+            }
             break;
 
             case 4U:
@@ -101,11 +105,10 @@ bool RayCaster::Run ( RaycastResult& result, GXVec3 const &from, GXVec3 const &t
         v = handler ( _simplex );
     }
 
-    if ( !hasIntersect )
-        return false;
+    if ( isIntersect )
+        result._normal.Normalize ();
 
-    result._normal.Normalize ();
-    return true;
+    return isIntersect;
 }
 
 GXVec3 RayCaster::GetClosestInHullLine ( Simplex const &simplex ) noexcept

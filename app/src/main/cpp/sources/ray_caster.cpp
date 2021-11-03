@@ -44,8 +44,8 @@ bool RayCaster::Run ( RaycastResult& result, GXVec3 const &from, GXVec3 const &t
         if ( v.SquaredLength () < THRESHOLD )
             break;
 
-        // Note: Ray is modeled as point of current origin.
-        // Because it's a point that extreme point in any direction will be that point.
+        // Note: Ray is modeled as point which is equal to current origin.
+        // Because it's a point the extreme point in any direction will be that point by definition.
 
         GXVec3 w {};
         w.Subtract ( result._point, shape.GetExtremePointWorld ( v ) );
@@ -67,9 +67,6 @@ bool RayCaster::Run ( RaycastResult& result, GXVec3 const &from, GXVec3 const &t
             result._normal = v;
         }
 
-        if ( _simplex._pointCount == 4U )
-            GXVec3 const stop {};
-
         _simplex.PushPoint ( w );
 
         switch ( _simplex._pointCount )
@@ -83,7 +80,14 @@ bool RayCaster::Run ( RaycastResult& result, GXVec3 const &from, GXVec3 const &t
             break;
 
             case 4U:
-                TetrahedronTest ();
+            {
+                if ( TetrahedronTest () )
+                {
+                    // It means that the intersection point is detected. Origin is inside tetrahedron simplex.
+                    result._normal.Normalize ();
+                    return true;
+                }
+            }
             break;
 
             default:
@@ -91,7 +95,7 @@ bool RayCaster::Run ( RaycastResult& result, GXVec3 const &from, GXVec3 const &t
             break;
         }
 
-        assert ( _simplex._pointCount > 0U && _simplex._pointCount < 5U );
+        assert ( _simplex._pointCount >= 1U && _simplex._pointCount <= 4U );
 
         ClosestInHullHandler const handler = _handlers[ _simplex._pointCount - 1U ];
         v = handler ( _simplex );

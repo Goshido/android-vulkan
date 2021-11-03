@@ -34,16 +34,6 @@ namespace android_vulkan {
     return _size._data[ 2U ];
 }
 
-void ShapeBox::Test () noexcept
-{
-    GXVec3 world[ 8U ];
-
-    for ( size_t i = 0U; i < std::size ( world ); ++i )
-        _transformWorld.MultiplyAsPoint ( world[ i ], _localGeometry[ i ] );
-
-    GXVec3 const stop {};
-}
-
 void ShapeBox::CalculateInertiaTensor ( float mass ) noexcept
 {
     // https://en.wikipedia.org/wiki/List_of_moments_of_inertia

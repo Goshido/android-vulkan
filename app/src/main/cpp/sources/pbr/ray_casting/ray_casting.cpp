@@ -13,10 +13,10 @@ constexpr static float const FIELD_OF_VIEW = 75.0F;
 constexpr static float const Z_NEAR = 0.1F;
 constexpr static float const Z_FAR = 1.0e+4F;
 
-constexpr static uint32_t const RESOLUTION_SCALE_WIDTH = 80U;
-constexpr static uint32_t const RESOLUTION_SCALE_HEIGHT = 70U;
+constexpr static uint32_t const RESOLUTION_SCALE_WIDTH = 100U;
+constexpr static uint32_t const RESOLUTION_SCALE_HEIGHT = 100U;
 
-constexpr float const ROTATION_SPEED = 0.125F * GX_MATH_DOUBLE_PI;
+constexpr float const ROTATION_SPEED = 5.0e-2F * GX_MATH_DOUBLE_PI;
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -74,9 +74,13 @@ void RayCasting::OnDestroyDevice ( VkDevice device ) noexcept
     _normalTexture.reset ();
     _normalMaterial.reset ();
 
-    _rayTexture->FreeResources ( device );
-    _rayTexture.reset ();
-    _rayMaterial.reset ();
+    _rayTextureHit->FreeResources ( device );
+    _rayTextureHit.reset ();
+    _rayMaterialHit.reset ();
+
+    _rayTextureNoHit->FreeResources ( device );
+    _rayTextureNoHit.reset ();
+    _rayMaterialNoHit.reset ();
 
     _lineMesh->FreeResources ( device );
     _lineMesh.reset ();
@@ -144,7 +148,17 @@ void RayCasting::Animate ( float deltaTime ) noexcept
 
     // NOLINTNEXTLINE
     auto& c = *static_cast<StaticMeshComponent*> ( _cube.get () );
-    c.SetTransform ( transform );
+
+    // NOLINTNEXTLINE
+    auto const& boxShape = static_cast<android_vulkan::ShapeBox&> ( b.GetShape() );
+
+    GXMat4 local {};
+    local.Scale ( boxShape.GetWidth (), boxShape.GetHeight (), boxShape.GetDepth () );
+
+    GXMat4 t {};
+    t.Multiply ( local, transform );
+
+    c.SetTransform ( t );
     c.Submit ( _renderSession );
 }
 
@@ -183,9 +197,9 @@ void RayCasting::DestroyCommandPool ( VkDevice device ) noexcept
 
 bool RayCasting::LoadResources ( android_vulkan::Renderer &renderer ) noexcept
 {
-    constexpr GXVec3 const cameraLocation ( 2.671F, 1.563F, -2.601F );
+    constexpr GXVec3 const cameraLocation ( 9.42572402F, -0.913246631F, 1.12910795F );
     _camera.SetLocation ( cameraLocation );
-    _camera.SetRotation ( 0.31F, -0.785F );
+    _camera.SetRotation ( -0.0880209357F, -1.59671032F );
     _camera.SetMovingSpeed ( 1.67F );
     _camera.Update ( 0.0F );
 
@@ -196,7 +210,7 @@ bool RayCasting::LoadResources ( android_vulkan::Renderer &renderer ) noexcept
     constexpr size_t const normalMaterialCommandBuffers = 1U;
 
     constexpr size_t const rayMeshCommandBuffers = 1U;
-    constexpr size_t const rayTextureCommandBuffers = 1U;
+    constexpr size_t const rayTextureCommandBuffers = 2U;
     constexpr size_t const rayCommandBuffers = rayMeshCommandBuffers + rayTextureCommandBuffers;
 
     constexpr size_t const comBuffs = cubeCommandBuffers + normalMaterialCommandBuffers + rayCommandBuffers;
@@ -260,7 +274,10 @@ bool RayCasting::LoadResources ( android_vulkan::Renderer &renderer ) noexcept
         return false;
     }
 
-    if ( !CreateMaterial ( renderer, _rayMaterial, _rayTexture, cb, 115U, 185U, 0U, "ray" ) )
+    if ( !CreateMaterial ( renderer, _rayMaterialHit, _rayTextureHit, cb, 115U, 185U, 0U, "rayHit" ) )
+        return false;
+
+    if ( !CreateMaterial ( renderer, _rayMaterialNoHit, _rayTextureNoHit, cb, 70U, 185U, 225U, "rayNoHit" ) )
         return false;
 
     if ( !CreateMaterial ( renderer, _normalMaterial, _normalTexture, cb, 220U, 70U, 225U, "normal" ) )
@@ -367,7 +384,8 @@ bool RayCasting::LoadResources ( android_vulkan::Renderer &renderer ) noexcept
         return false;
 
     _cube->FreeTransferResources ( device );
-    _rayTexture->FreeTransferResources ( device );
+    _rayTextureHit->FreeTransferResources ( device );
+    _rayTextureNoHit->FreeTransferResources ( device );
     _normalTexture->FreeTransferResources ( device );
     lineMesh.FreeTransferResources ( device );
 
@@ -377,7 +395,7 @@ bool RayCasting::LoadResources ( android_vulkan::Renderer &renderer ) noexcept
 void RayCasting::Raycast () noexcept
 {
     constexpr GXVec3 const rayFrom ( 7.577F, -5.211F, -6.411F );
-    constexpr GXVec3 const rayTo ( -4.267F, 2.92F, 3.499F );
+    constexpr GXVec3 const rayTo ( -4.267F, 2.92F, 8.586F );
 
     GXVec3 dir {};
     dir.Subtract ( rayTo, rayFrom );
@@ -394,9 +412,9 @@ void RayCasting::Raycast () noexcept
     GXVec3 y {};
     basis.GetY ( y );
 
-    constexpr float const thickness = 1.0e-2F;
-    x.Multiply ( x, thickness );
-    y.Multiply ( y, thickness );
+    constexpr float const rayThickness = 1.0e-2F;
+    x.Multiply ( x, rayThickness );
+    y.Multiply ( y, rayThickness );
 
     basis.SetX ( x );
     basis.SetY ( y );
@@ -409,27 +427,32 @@ void RayCasting::Raycast () noexcept
     _lineMesh->GetBounds ().Transform ( bounds, transform );
 
     constexpr android_vulkan::Half4 const color {};
-    _renderSession.SubmitMesh ( _lineMesh, _rayMaterial, transform, bounds, color, color, color, color );
-
     android_vulkan::RaycastResult result {};
 
     if ( !_physics.Raycast ( result, rayFrom, rayTo ) )
+    {
+        _renderSession.SubmitMesh ( _lineMesh, _rayMaterialNoHit, transform, bounds, color, color, color, color );
         return;
+    }
+
+    _renderSession.SubmitMesh ( _lineMesh, _rayMaterialHit, transform, bounds, color, color, color, color );
 
     basis.From ( result._normal );
 
     basis.GetX ( x );
     basis.GetY ( y );
-    x.Multiply ( x, thickness );
+
+    constexpr float const normalThickness = 2.0e-2F;
+    x.Multiply ( x, normalThickness );
 
     GXVec3 z {};
     basis.GetZ ( z );
 
-    y.Multiply ( y, thickness );
+    y.Multiply ( y, normalThickness );
     basis.SetX ( x );
     basis.SetY ( y );
 
-    constexpr float const normalLength = 3.777e-1F;
+    constexpr float const normalLength = 7.777e-1F;
     z.Multiply ( z, normalLength );
     basis.SetZ ( z );
 

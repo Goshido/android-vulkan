@@ -29,8 +29,11 @@ class RayCasting final : public android_vulkan::Game
 
         android_vulkan::Physics         _physics {};
 
-        MaterialRef                     _rayMaterial {};
-        Texture2DRef                    _rayTexture {};
+        MaterialRef                     _rayMaterialHit {};
+        Texture2DRef                    _rayTextureHit {};
+
+        MaterialRef                     _rayMaterialNoHit {};
+        Texture2DRef                    _rayTextureNoHit {};
 
         RenderSession                   _renderSession {};
 

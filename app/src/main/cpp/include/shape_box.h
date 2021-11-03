@@ -31,8 +31,6 @@ class [[maybe_unused]] ShapeBox final : public Shape
         [[maybe_unused, nodiscard]] float GetHeight () const noexcept;
         [[maybe_unused, nodiscard]] float GetDepth () const noexcept;
 
-        void Test () noexcept;
-
     private:
         void CalculateInertiaTensor ( float mass ) noexcept override;
         [[nodiscard]] GXVec3 GetExtremePointWorld ( GXVec3 const &direction ) const noexcept override;

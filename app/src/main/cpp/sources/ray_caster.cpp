@@ -1,4 +1,5 @@
 #include <ray_caster.h>
+#include <logger.h>
 #include <simplex.h>
 
 GX_DISABLE_COMMON_WARNINGS
@@ -10,8 +11,9 @@ GX_RESTORE_WARNING_STATE
 
 namespace android_vulkan {
 
-constexpr float const THRESHOLD = 1.0e-3F;
 constexpr uint16_t const MAXIMUM_STEPS = 32U;
+constexpr static float const SAME_POINT_TOLERANCE = 5.0e-4F;
+constexpr float const THRESHOLD = 1.0e-3F;
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -37,7 +39,6 @@ bool RayCaster::Run ( RaycastResult& result, GXVec3 const &from, GXVec3 const &t
     r.Subtract ( to, from );
 
     result._point = from;
-    bool isIntersect = true;
 
     for ( ; _steps < MAXIMUM_STEPS; ++_steps )
     {
@@ -49,7 +50,6 @@ bool RayCaster::Run ( RaycastResult& result, GXVec3 const &from, GXVec3 const &t
 
         GXVec3 w {};
         w.Subtract ( result._point, shape.GetExtremePointWorld ( v ) );
-
         float const vwDot = v.DotProduct ( w );
 
         if ( vwDot > 0.0F )
@@ -57,17 +57,105 @@ bool RayCaster::Run ( RaycastResult& result, GXVec3 const &from, GXVec3 const &t
             float const vrDot = v.DotProduct ( r );
 
             if ( vrDot >= 0.0F )
-            {
-                isIntersect = false;
-                break;
-            }
+                return false;
 
             lambda -= vwDot / vrDot;
+
+            if ( lambda > 1.0F )
+                return false;
+
             result._point.Sum ( from, lambda, r );
             result._normal = v;
         }
 
-        _simplex.PushPoint ( w );
+        bool isPresented = false;
+
+        for ( uint8_t i = 0U; i < _simplex._pointCount; ++i )
+        {
+            constexpr float const samePoint = SAME_POINT_TOLERANCE * SAME_POINT_TOLERANCE;
+
+            if ( w.SquaredDistance ( _simplex._supportPoints[ i ] ) > samePoint )
+                continue;
+
+            isPresented = true;
+            break;
+        }
+
+        if ( !isPresented )
+            _simplex.PushPoint ( w );
+
+        if ( _simplex._pointCount == 4U )
+        {
+            if ( TetrahedronTest () )
+            {
+                Simplex sss {};
+                // ABC
+                sss._supportPoints[ 0U ] = _simplex._supportPoints[ 0U ];
+                sss._supportPoints[ 1U ] = _simplex._supportPoints[ 1U ];
+                sss._supportPoints[ 2U ] = _simplex._supportPoints[ 2U ];
+
+                v = GetClosestInHullTriangle ( sss );
+                float mmm = v.SquaredLength ();
+
+                // ABD
+                Simplex checkSSS {};
+                checkSSS._supportPoints[ 0U ] = _simplex._supportPoints[ 0U ];
+                checkSSS._supportPoints[ 1U ] = _simplex._supportPoints[ 1U ];
+                checkSSS._supportPoints[ 2U ] = _simplex._supportPoints[ 3U ];
+
+                GXVec3 vvv = GetClosestInHullTriangle ( checkSSS );
+                float check = vvv.SquaredLength ();
+
+                if ( check < mmm )
+                {
+                    v = vvv;
+                    mmm = check;
+                    sss._supportPoints[ 0U ] = checkSSS._supportPoints[ 0U ];
+                    sss._supportPoints[ 1U ] = checkSSS._supportPoints[ 1U ];
+                    sss._supportPoints[ 2U ] = checkSSS._supportPoints[ 2U ];
+                }
+
+                // ACD
+                checkSSS._supportPoints[ 0U ] = _simplex._supportPoints[ 0U ];
+                checkSSS._supportPoints[ 1U ] = _simplex._supportPoints[ 2U ];
+                checkSSS._supportPoints[ 2U ] = _simplex._supportPoints[ 3U ];
+
+                vvv = GetClosestInHullTriangle ( checkSSS );
+                check = vvv.SquaredLength ();
+
+                if ( check < mmm )
+                {
+                    v = vvv;
+                    mmm = check;
+                    sss._supportPoints[ 0U ] = checkSSS._supportPoints[ 0U ];
+                    sss._supportPoints[ 1U ] = checkSSS._supportPoints[ 1U ];
+                    sss._supportPoints[ 2U ] = checkSSS._supportPoints[ 2U ];
+                }
+
+                // red
+                checkSSS._supportPoints[ 0U ] = _simplex._supportPoints[ 0U ];
+                checkSSS._supportPoints[ 1U ] = _simplex._supportPoints[ 2U ];
+                checkSSS._supportPoints[ 2U ] = _simplex._supportPoints[ 3U ];
+
+                vvv = GetClosestInHullTriangle ( checkSSS );
+                check = vvv.SquaredLength ();
+
+                if ( check < mmm )
+                {
+                    v = vvv;
+                    sss._supportPoints[ 0U ] = checkSSS._supportPoints[ 0U ];
+                    sss._supportPoints[ 1U ] = checkSSS._supportPoints[ 1U ];
+                    sss._supportPoints[ 2U ] = checkSSS._supportPoints[ 2U ];
+                }
+
+                _simplex._pointCount = 3U;
+                _simplex._supportPoints[ 0U ] = sss._supportPoints[ 0U ];
+                _simplex._supportPoints[ 1U ] = sss._supportPoints[ 1U ];
+                _simplex._supportPoints[ 2U ] = sss._supportPoints[ 2U ];
+
+                continue;
+            }
+        }
 
         switch ( _simplex._pointCount )
         {
@@ -83,17 +171,6 @@ bool RayCaster::Run ( RaycastResult& result, GXVec3 const &from, GXVec3 const &t
             }
             break;
 
-            case 4U:
-            {
-                if ( TetrahedronTest () )
-                {
-                    // It means that the intersection point is detected. Origin is inside tetrahedron simplex.
-                    result._normal.Normalize ();
-                    return true;
-                }
-            }
-            break;
-
             default:
                 // NOTHING
             break;
@@ -105,10 +182,8 @@ bool RayCaster::Run ( RaycastResult& result, GXVec3 const &from, GXVec3 const &t
         v = handler ( _simplex );
     }
 
-    if ( isIntersect )
-        result._normal.Normalize ();
-
-    return isIntersect;
+    result._normal.Normalize ();
+    return true;
 }
 
 GXVec3 RayCaster::GetClosestInHullLine ( Simplex const &simplex ) noexcept

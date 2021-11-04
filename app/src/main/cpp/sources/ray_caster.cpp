@@ -34,7 +34,10 @@ bool RayCaster::Run ( RaycastResult& result, GXVec3 const &from, GXVec3 const &t
 
     for ( ; _steps < MAXIMUM_STEPS; ++_steps )
     {
-        if ( v.SquaredLength () < THRESHOLD )
+        float const distance = v.SquaredLength ();
+        constexpr float const threshold = THRESHOLD * THRESHOLD;
+
+        if ( distance < threshold )
             break;
 
         // Note: Ray is modeled as point which is equal to current origin.
@@ -91,7 +94,7 @@ bool RayCaster::Run ( RaycastResult& result, GXVec3 const &from, GXVec3 const &t
             break;
 
             case 4U:
-                v = TestTetrahedron ( v );
+                v = TestTetrahedron ( v, threshold );
             break;
 
             default:
@@ -143,7 +146,7 @@ GXVec3 RayCaster::TestLine () noexcept
     return a;
 }
 
-GXVec3 RayCaster::TestTetrahedron ( GXVec3 const &bcdClosest ) noexcept
+GXVec3 RayCaster::TestTetrahedron ( GXVec3 const &bcdClosest, float bcdClosestDistance ) noexcept
 {
     // The trick is that 'BCD triangle check' has been done earlier.
 
@@ -268,7 +271,7 @@ GXVec3 RayCaster::TestTetrahedron ( GXVec3 const &bcdClosest ) noexcept
     // BCD checking...
     // Note BCD is exactly previous step. So there is no need to evaluate checkV again.
 
-    if ( bcdClosest.SquaredLength () > dist )
+    if ( bcdClosestDistance > dist )
     {
         // New closest triangle is found.
         _simplex._pointCount = 3U;

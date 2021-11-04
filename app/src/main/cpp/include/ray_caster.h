@@ -42,7 +42,7 @@ class RayCaster final : public GJKBase
 
     private:
         [[nodiscard]] GXVec3 TestLine () noexcept;
-        [[nodiscard]] GXVec3 TestTetrahedron ( GXVec3 const &bcdClosest ) noexcept;
+        [[nodiscard]] GXVec3 TestTetrahedron ( GXVec3 const &bcdClosest, float bcdClosestDistance ) noexcept;
         [[nodiscard]] GXVec3 TestTriangle () noexcept;
 };
 

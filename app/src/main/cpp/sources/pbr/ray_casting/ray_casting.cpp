@@ -76,11 +76,10 @@ void RayCasting::OnDestroyDevice ( VkDevice device ) noexcept
 
     _rayTextureHit->FreeResources ( device );
     _rayTextureHit.reset ();
-    _rayMaterialHit.reset ();
 
     _rayTextureNoHit->FreeResources ( device );
     _rayTextureNoHit.reset ();
-    _rayMaterialNoHit.reset ();
+    _rayMaterial.reset ();
 
     _lineMesh->FreeResources ( device );
     _lineMesh.reset ();
@@ -274,14 +273,19 @@ bool RayCasting::LoadResources ( android_vulkan::Renderer &renderer ) noexcept
         return false;
     }
 
-    if ( !CreateMaterial ( renderer, _rayMaterialHit, _rayTextureHit, cb, 115U, 185U, 0U, "rayHit" ) )
+    if ( !CreateTexture ( renderer, _rayTextureHit, cb, 115U, 185U, 0U, "rayHit" ) )
         return false;
 
-    if ( !CreateMaterial ( renderer, _rayMaterialNoHit, _rayTextureNoHit, cb, 70U, 185U, 225U, "rayNoHit" ) )
+    if ( !CreateTexture ( renderer, _rayTextureNoHit, cb, 70U, 185U, 225U, "rayNoHit" ) )
         return false;
 
-    if ( !CreateMaterial ( renderer, _normalMaterial, _normalTexture, cb, 220U, 70U, 225U, "normal" ) )
+    if ( !CreateTexture ( renderer, _normalTexture, cb, 220U, 70U, 225U, "normal" ) )
         return false;
+
+    _rayMaterial = std::make_shared<OpaqueMaterial> ();
+    _normalMaterial = std::make_shared<OpaqueMaterial> ();
+
+    SwitchEmission ( _normalMaterial, _normalTexture );
 
     constexpr android_vulkan::VertexInfo const vertices[ 6U ]
     {
@@ -431,11 +435,13 @@ void RayCasting::Raycast () noexcept
 
     if ( !_physics.Raycast ( result, rayFrom, rayTo ) )
     {
-        _renderSession.SubmitMesh ( _lineMesh, _rayMaterialNoHit, transform, bounds, color, color, color, color );
+        SwitchEmission ( _rayMaterial, _rayTextureNoHit );
+        _renderSession.SubmitMesh ( _lineMesh, _rayMaterial, transform, bounds, color, color, color, color );
         return;
     }
 
-    _renderSession.SubmitMesh ( _lineMesh, _rayMaterialHit, transform, bounds, color, color, color, color );
+    SwitchEmission ( _rayMaterial, _rayTextureHit );
+    _renderSession.SubmitMesh ( _lineMesh, _rayMaterial, transform, bounds, color, color, color, color );
 
     basis.From ( result._normal );
 
@@ -462,8 +468,7 @@ void RayCasting::Raycast () noexcept
     _renderSession.SubmitMesh ( _lineMesh, _normalMaterial, transform, bounds, color, color, color, color );
 }
 
-bool RayCasting::CreateMaterial ( android_vulkan::Renderer &renderer,
-    MaterialRef &material,
+bool RayCasting::CreateTexture ( android_vulkan::Renderer &renderer,
     Texture2DRef &texture,
     VkCommandBuffer* &commandBuffers,
     uint8_t red,
@@ -495,11 +500,6 @@ bool RayCasting::CreateMaterial ( android_vulkan::Renderer &renderer,
 
     commandBuffers += 1U;
     texture->AssignName ( std::move ( name ) );
-    material = std::make_shared<OpaqueMaterial> ();
-
-    // NOLINTNEXTLINE
-    auto& m = *static_cast<OpaqueMaterial*> ( material.get () );
-    m.SetEmission ( texture );
 
     return true;
 }
@@ -524,6 +524,13 @@ GXVec3 RayCasting::GenerateAngular () noexcept
 
     v.Multiply ( v, ROTATION_SPEED );
     return v;
+}
+
+void RayCasting::SwitchEmission ( MaterialRef &material, Texture2DRef &emission ) noexcept
+{
+    // NOLINTNEXTLINE
+    auto& m = *static_cast<OpaqueMaterial*> ( material.get () );
+    m.SetEmission ( emission );
 }
 
 } // namespace pbr::ray_casting

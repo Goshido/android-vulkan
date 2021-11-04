@@ -29,10 +29,8 @@ class RayCasting final : public android_vulkan::Game
 
         android_vulkan::Physics         _physics {};
 
-        MaterialRef                     _rayMaterialHit {};
+        MaterialRef                     _rayMaterial {};
         Texture2DRef                    _rayTextureHit {};
-
-        MaterialRef                     _rayMaterialNoHit {};
         Texture2DRef                    _rayTextureNoHit {};
 
         RenderSession                   _renderSession {};
@@ -66,8 +64,7 @@ class RayCasting final : public android_vulkan::Game
         [[nodiscard]] bool LoadResources ( android_vulkan::Renderer &renderer ) noexcept;
         void Raycast () noexcept;
 
-        [[nodiscard]] static bool CreateMaterial ( android_vulkan::Renderer &renderer,
-            MaterialRef &material,
+        [[nodiscard]] static bool CreateTexture ( android_vulkan::Renderer &renderer,
             Texture2DRef &texture,
             VkCommandBuffer* &commandBuffers,
             uint8_t red,
@@ -77,6 +74,7 @@ class RayCasting final : public android_vulkan::Game
         ) noexcept;
 
         [[nodiscard]] static GXVec3 GenerateAngular () noexcept;
+        static void SwitchEmission ( MaterialRef &material, Texture2DRef &emission ) noexcept;
 };
 
 } // namespace pbr::ray_casting

@@ -10,8 +10,8 @@ namespace android_vulkan {
 
 struct RaycastResult final
 {
-    [[maybe_unused]] GXVec3     _point {};
-    GXVec3                      _normal {};
+    GXVec3      _point {};
+    GXVec3      _normal {};
 };
 
 // The implementation is based on ideas from
@@ -20,14 +20,8 @@ struct RaycastResult final
 //
 // Bullet v3.20 (SHA-1: ac3c283842fe5ceddc55fcdef5489fdf4458f6f6)
 // <repo>/src/BulletCollision/NarrowPhaseCollision/btSubSimplexConvexCast.cpp
-class [[maybe_unused]] RayCaster final : public GJKBase
+class RayCaster final : public GJKBase
 {
-    private:
-        using ClosestInHullHandler = GXVec3 (*) ( Simplex const &simplex ) noexcept;
-
-    private:
-        static ClosestInHullHandler const       _handlers[ 4U ];
-
     public:
         RayCaster () = default;
 
@@ -40,17 +34,16 @@ class [[maybe_unused]] RayCaster final : public GJKBase
         ~RayCaster () override = default;
 
         // The method returns true if ray hits anything. Otherwise the method returns false.
-        [[nodiscard, maybe_unused]] bool Run ( RaycastResult &result,
+        [[nodiscard]] bool Run ( RaycastResult &result,
             GXVec3 const &from,
             GXVec3 const &to,
             Shape const &shape
         ) noexcept;
 
     private:
-        [[nodiscard]] static GXVec3 GetClosestInHullLine ( Simplex const &simplex ) noexcept;
-        [[nodiscard]] static GXVec3 GetClosestInHullPoint ( Simplex const &simplex ) noexcept;
-        [[nodiscard]] static GXVec3 GetClosestInHullTetrahedron ( Simplex const &simplex ) noexcept;
-        [[nodiscard]] static GXVec3 GetClosestInHullTriangle ( Simplex const &simplex ) noexcept;
+        [[nodiscard]] GXVec3 TestLine () noexcept;
+        [[nodiscard]] GXVec3 TestTetrahedron ( GXVec3 const &bcdClosest ) noexcept;
+        [[nodiscard]] GXVec3 TestTriangle () noexcept;
 };
 
 } // namespace android_vulkan

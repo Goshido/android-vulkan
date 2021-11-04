@@ -12,6 +12,9 @@ namespace android_vulkan {
 // https://www.youtube.com/watch?v=Qupqu1xe7Io
 class GJK final : public GJKBase
 {
+    private:
+        GXVec3      _direction {};
+
     public:
         GJK () = default;
 
@@ -27,6 +30,16 @@ class GJK final : public GJKBase
 
         // The method returns true if two shapes have intersection. Otherwise the method returns false.
         [[nodiscard]] bool Run ( Shape const &shapeA, Shape const &shapeB ) noexcept;
+
+    private:
+        void TestLine () noexcept;
+
+        // The method returns true if simplex contains the origin.
+        // The method returns false if more iterations are needed.
+        bool TestTetrahedron () noexcept;
+
+        void TestTriangle () noexcept;
+
 };
 
 } // namespace android_vulkan

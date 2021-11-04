@@ -17,18 +17,10 @@ constexpr float const THRESHOLD = 1.0e-3F;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-RayCaster::ClosestInHullHandler const RayCaster::_handlers[ 4U ] =
-{
-    &RayCaster::GetClosestInHullPoint,
-    &RayCaster::GetClosestInHullLine,
-    &RayCaster::GetClosestInHullTriangle,
-    &RayCaster::GetClosestInHullTetrahedron
-};
-
 bool RayCaster::Run ( RaycastResult& result, GXVec3 const &from, GXVec3 const &to, Shape const &shape ) noexcept
 {
     constexpr GXVec3 const initialDirection ( 1.0F, 0.0F, 0.0F );
-    ResetInternal ( initialDirection );
+    ResetInternal ();
 
     float lambda = 0.0F;
 
@@ -84,161 +76,83 @@ bool RayCaster::Run ( RaycastResult& result, GXVec3 const &from, GXVec3 const &t
         if ( !isPresented )
             _simplex.PushPoint ( w );
 
-        if ( _simplex._pointCount == 4U )
-        {
-            if ( TetrahedronTest () )
-            {
-                Simplex sss {};
-                // ABC
-                sss._supportPoints[ 0U ] = _simplex._supportPoints[ 0U ];
-                sss._supportPoints[ 1U ] = _simplex._supportPoints[ 1U ];
-                sss._supportPoints[ 2U ] = _simplex._supportPoints[ 2U ];
-
-                v = GetClosestInHullTriangle ( sss );
-                float mmm = v.SquaredLength ();
-
-                // ABD
-                Simplex checkSSS {};
-                checkSSS._supportPoints[ 0U ] = _simplex._supportPoints[ 0U ];
-                checkSSS._supportPoints[ 1U ] = _simplex._supportPoints[ 1U ];
-                checkSSS._supportPoints[ 2U ] = _simplex._supportPoints[ 3U ];
-
-                GXVec3 vvv = GetClosestInHullTriangle ( checkSSS );
-                float check = vvv.SquaredLength ();
-
-                if ( check < mmm )
-                {
-                    v = vvv;
-                    mmm = check;
-                    sss._supportPoints[ 0U ] = checkSSS._supportPoints[ 0U ];
-                    sss._supportPoints[ 1U ] = checkSSS._supportPoints[ 1U ];
-                    sss._supportPoints[ 2U ] = checkSSS._supportPoints[ 2U ];
-                }
-
-                // ACD
-                checkSSS._supportPoints[ 0U ] = _simplex._supportPoints[ 0U ];
-                checkSSS._supportPoints[ 1U ] = _simplex._supportPoints[ 2U ];
-                checkSSS._supportPoints[ 2U ] = _simplex._supportPoints[ 3U ];
-
-                vvv = GetClosestInHullTriangle ( checkSSS );
-                check = vvv.SquaredLength ();
-
-                if ( check < mmm )
-                {
-                    v = vvv;
-                    mmm = check;
-                    sss._supportPoints[ 0U ] = checkSSS._supportPoints[ 0U ];
-                    sss._supportPoints[ 1U ] = checkSSS._supportPoints[ 1U ];
-                    sss._supportPoints[ 2U ] = checkSSS._supportPoints[ 2U ];
-                }
-
-                // red
-                checkSSS._supportPoints[ 0U ] = _simplex._supportPoints[ 0U ];
-                checkSSS._supportPoints[ 1U ] = _simplex._supportPoints[ 2U ];
-                checkSSS._supportPoints[ 2U ] = _simplex._supportPoints[ 3U ];
-
-                vvv = GetClosestInHullTriangle ( checkSSS );
-                check = vvv.SquaredLength ();
-
-                if ( check < mmm )
-                {
-                    v = vvv;
-                    sss._supportPoints[ 0U ] = checkSSS._supportPoints[ 0U ];
-                    sss._supportPoints[ 1U ] = checkSSS._supportPoints[ 1U ];
-                    sss._supportPoints[ 2U ] = checkSSS._supportPoints[ 2U ];
-                }
-
-                _simplex._pointCount = 3U;
-                _simplex._supportPoints[ 0U ] = sss._supportPoints[ 0U ];
-                _simplex._supportPoints[ 1U ] = sss._supportPoints[ 1U ];
-                _simplex._supportPoints[ 2U ] = sss._supportPoints[ 2U ];
-
-                continue;
-            }
-        }
-
         switch ( _simplex._pointCount )
         {
+            case 1U:
+                v = _simplex._supportPoints[ 0U ];
+            break;
+
             case 2U:
-            {
-                LineTest ();
-            }
+                v = TestLine ();
             break;
 
             case 3U:
-            {
-                TriangleTest ();
-            }
+                v = TestTriangle ();
+            break;
+
+            case 4U:
+                v = TestTetrahedron ( v );
             break;
 
             default:
-                // NOTHING
+                // IMPOSSIBLE
             break;
         }
-
-        assert ( _simplex._pointCount >= 1U && _simplex._pointCount <= 4U );
-
-        ClosestInHullHandler const handler = _handlers[ _simplex._pointCount - 1U ];
-        v = handler ( _simplex );
     }
 
     result._normal.Normalize ();
     return true;
 }
 
-GXVec3 RayCaster::GetClosestInHullLine ( Simplex const &simplex ) noexcept
+GXVec3 RayCaster::TestLine () noexcept
 {
     // The idea is to check areas of line segment in the following order:
-    //  1) behind A vertex
-    //  2) behind B vertex
-    //  3) inside AB segment
+    //  1) inside AB segment
+    //  2) behind A vertex
     // Such approach will reduce searching complexity step by step.
+    // Note there was 'behind B vertex check' earlier.
 
-    GXVec3 const& a = simplex._supportPoints[ 0U ];
-    GXVec3 const& b = simplex._supportPoints[ 1U ];
+    ++_testLine;
+
+    GXVec3 const& a = _simplex._supportPoints[ 0U ];
+    GXVec3 const& b = _simplex._supportPoints[ 1U ];
 
     GXVec3 ab {};
     // NOLINTNEXTLINE - false positively operand order.
     ab.Subtract ( b, a );
 
-    // 1: Checking behind A vertex...
+    // "o" means origin.
+    GXVec3 ao ( a );
+    ao.Reverse ();
 
-    if ( ab.DotProduct ( a ) >= 0.0F )
+    // 1: Checking behind AB segment...
+
+    if ( ab.DotProduct ( ao ) > 0.0F )
     {
-        // The A vertex is the closest point.
-        return a;
+        // The projection of AO onto AB is the closest point.
+
+        ab.Normalize ();
+        GXVec3 v {};
+        v.Sum ( a, -ab.DotProduct ( a ), ab );
+        return v;
     }
 
-    // 2: Checking behind B vertex...
-
-    if ( ab.DotProduct ( b ) <= 0.0F )
-    {
-        // The B vertex is the closest point.
-        return b;
-    }
-
-    // 3: Closest point is onto AB segment.
-
-    ab.Normalize ();
-    GXVec3 v {};
-    v.Sum ( a, -ab.DotProduct ( a ), ab );
-
-    return v;
+    // 2: The last added point is the closest to the origin.
+    // Make simplex to contain only last added point.
+    _simplex._pointCount = 1U;
+    return a;
 }
 
-GXVec3 RayCaster::GetClosestInHullPoint ( Simplex const &simplex ) noexcept
+GXVec3 RayCaster::TestTetrahedron ( GXVec3 const &bcdClosest ) noexcept
 {
-    return simplex._supportPoints[ 0U ];
-}
+    // The trick is that 'BCD triangle check' has been done earlier.
 
-GXVec3 RayCaster::GetClosestInHullTetrahedron ( Simplex const &simplex ) noexcept
-{
-    // The main idea is to find closest face and process it via GetClosestInHullTriangle.
+    ++_testTetrahedron;
 
-    GXVec3 const& a = simplex._supportPoints[ 0U ];
-    GXVec3 const& b = simplex._supportPoints[ 1U ];
-    GXVec3 const& c = simplex._supportPoints[ 2U ];
-    GXVec3 const& d = simplex._supportPoints[ 3U ];
+    GXVec3 const& a = _simplex._supportPoints[ 0U ];
+    GXVec3 const& b = _simplex._supportPoints[ 1U ];
+    GXVec3 const& c = _simplex._supportPoints[ 2U ];
+    GXVec3 const& d = _simplex._supportPoints[ 3U ];
 
     // "o" means origin.
     GXVec3 ao ( a );
@@ -266,13 +180,9 @@ GXVec3 RayCaster::GetClosestInHullTetrahedron ( Simplex const &simplex ) noexcep
         // Note: Previous tests already done with BCD triangle. So BD line is already inspected.
         // Because of that the order could be: [A, B, D] or [A, D, B].
         // Selecting [A, B, D].
-
-        Simplex s {};
-        s._supportPoints[ 0U ] = a;
-        s._supportPoints[ 1U ] = b;
-        s._supportPoints[ 2U ] = d;
-
-        return GetClosestInHullTriangle ( s );
+        _simplex._pointCount = 3U;
+        _simplex._supportPoints[ 2U ] = d;
+        return TestTriangle ();
     }
 
     GXVec3 ac {};
@@ -286,158 +196,183 @@ GXVec3 RayCaster::GetClosestInHullTetrahedron ( Simplex const &simplex ) noexcep
         // Note: Previous tests already done with BCD triangle. So BC line is already inspected.
         // Because of that the order could be: [A, B, C] or [A, C, B].
         // Selecting [A, B, C].
-        return GetClosestInHullTriangle ( simplex );
+        _simplex._pointCount = 3U;
+        return TestTriangle ();
     }
 
     GXVec3 adc {};
     adc.CrossProduct ( ad, ac );
 
-    if ( adc.DotProduct ( ao ) >= 0.0F )
+    if ( adc.DotProduct ( ao ) < 0.0F )
     {
-        // The origin inside the simplex. Any triangle can be used.
-        return GetClosestInHullTriangle ( simplex );
+        // Note: Previous tests already done with BCD triangle. So CD line is already inspected.
+        // Because of that the order could be: [A, C, D] or [A, D, C].
+        // Selecting [A, C, D].
+        _simplex._supportPoints[ 1U ] = c;
+        _simplex._supportPoints[ 2U ] = d;
+        _simplex._pointCount = 3U;
+        return TestTriangle ();
     }
 
-    // Note: Previous tests already done with BCD triangle. So CD line is already inspected.
-    // Because of that the order could be: [A, C, D] or [A, D, C].
-    // Selecting [A, C, D].
+    // The origin is inside the simplex. Finding the closest triangle simplex and the closest point on that triangle...
+    _simplex._pointCount = 3U;
 
-    Simplex s {};
-    s._supportPoints[ 0U ] = a;
-    s._supportPoints[ 1U ] = c;
-    s._supportPoints[ 2U ] = d;
+    // ABD checking...
+    Simplex simplex {};
+    simplex._supportPoints[ 0U ] = _simplex._supportPoints[ 0U ];
+    simplex._supportPoints[ 1U ] = _simplex._supportPoints[ 1U ];
+    simplex._supportPoints[ 2U ] = _simplex._supportPoints[ 3U ];
 
-    return GetClosestInHullTriangle ( s );
+    abd.Normalize ();
+
+    GXVec3 v {};
+    // Note OA vector is just A vector.
+    v.Multiply ( abd, abd.DotProduct ( a ) );
+
+    float dist = v.SquaredLength ();
+
+    // ACB checking...
+    acb.Normalize ();
+
+    GXVec3 checkV {};
+    // Note OA vector is just A vector.
+    checkV.Multiply ( acb, acb.DotProduct ( a ) );
+
+    float checkDist = checkV.SquaredLength ();
+
+    if ( dist > checkDist )
+    {
+        dist = checkDist;
+        v = checkV;
+
+        simplex._supportPoints[ 0U ] = _simplex._supportPoints[ 0U ];
+        simplex._supportPoints[ 1U ] = _simplex._supportPoints[ 2U ];
+        simplex._supportPoints[ 2U ] = _simplex._supportPoints[ 1U ];
+    }
+
+    // ADC checking...
+    adc.Normalize ();
+    checkV.Multiply ( adc, adc.DotProduct ( a ) );
+    checkDist = checkV.SquaredLength ();
+
+    if ( dist > checkDist )
+    {
+        v = checkV;
+        dist = checkDist;
+
+        simplex._supportPoints[ 0U ] = _simplex._supportPoints[ 0U ];
+        simplex._supportPoints[ 1U ] = _simplex._supportPoints[ 3U ];
+        simplex._supportPoints[ 2U ] = _simplex._supportPoints[ 2U ];
+    }
+
+    // BCD checking...
+    // Note BCD is exactly previous step. So there is no need to evaluate checkV again.
+
+    if ( bcdClosest.SquaredLength () > dist )
+    {
+        // New closest triangle is found.
+        _simplex._pointCount = 3U;
+        _simplex._supportPoints[ 0U ] = simplex._supportPoints[ 0U ];
+        _simplex._supportPoints[ 1U ] = simplex._supportPoints[ 1U ];
+        _simplex._supportPoints[ 2U ] = simplex._supportPoints[ 2U ];
+
+        return v;
+    }
+
+    // BCD is the closest triangle. Rebuilding the simplex.
+    constexpr size_t const shift = 3U * sizeof ( GXVec3 );
+    std::memmove ( _simplex._supportPoints, _simplex._supportPoints + 1U, shift );
+    return bcdClosest;
 }
 
-GXVec3 RayCaster::GetClosestInHullTriangle ( Simplex const &simplex ) noexcept
+GXVec3 RayCaster::TestTriangle () noexcept
 {
-    // The idea is to check areas of triangle in the following order:
-    //  1) behind A vertex
-    //  2) behind B vertex
-    //  3) behind AB segment
-    //  4) behind C vertex
-    //  5) behind AC segment
-    //  6) behind BC segment
-    //  7) ABC half planes
-    // Such approach will reduce searching complexity step by step.
+    // The trick is that 'BC line segment check' has been done earlier.
 
-    GXVec3 const& a = simplex._supportPoints[ 0U ];
-    GXVec3 const& b = simplex._supportPoints[ 1U ];
+    ++_testTriangle;
+
+    GXVec3 const& a = _simplex._supportPoints[ 0U ];
+    GXVec3& b = _simplex._supportPoints[ 1U ];
+    GXVec3& c = _simplex._supportPoints[ 2U ];
+
+    // "o" means origin.
+    GXVec3 ao ( a );
+    ao.Reverse ();
 
     GXVec3 ab {};
     // NOLINTNEXTLINE - false positively operand order.
     ab.Subtract ( b, a );
 
-    GXVec3 ao ( a );
-    ao.Reverse ();
-
-    GXVec3 const& c = simplex._supportPoints[ 2U ];
-
     GXVec3 ac {};
     ac.Subtract ( c, a );
 
-    float const abaoDot = ab.DotProduct ( ao );
-    float const acaoDot = ac.DotProduct ( ao );
+    GXVec3 abc {};
+    abc.CrossProduct ( ab, ac );
 
-    // 1: Checking behind A vertex...
+    GXVec3 edgeNormal {};
+    edgeNormal.CrossProduct ( abc, ac );
 
-    if ( abaoDot <= 0.0F && acaoDot <= 0.0F )
-    {
-        // The A vertex is the closest point.
-        return a;
-    }
-
-    GXVec3 bo ( b );
-    bo.Reverse ();
-
-    float const abboDot = ab.DotProduct ( bo );
-    float const acboDot = ac.DotProduct ( bo );
-
-    // 2: Checking behind B vertex...
-
-    if ( abboDot >= 0.0F && acboDot <= abboDot )
-    {
-        // The B vertex is the closest point.
-        return b;
-    }
-
-    // 3: Checking behind AB segment...
-
-    if ( abaoDot >= 0.0F && abboDot <= 0.0F )
-    {
-        // Optimization: abTest = abaoDot * acboDot - abboDot * acaoDot;
-        if ( GXVec2 ( abaoDot, -abboDot ).DotProduct ( GXVec2 ( acboDot, acaoDot ) ) <= 0.0F )
+    auto commonCase = [ & ] () noexcept {
+        if ( ab.DotProduct ( ao ) <= 0.0F )
         {
-            // The projection of AO onto AB is the closest point.
-
-            ab.Normalize ();
-            GXVec3 v {};
-            v.Sum ( a, ab.DotProduct ( ao ), ab );
-
-            return v;
+            // A point simplex.
+            _simplex._pointCount = 1U;
+            return a;
         }
-    }
 
-    GXVec3 co ( c );
-    co.Reverse ();
+        // AB line segment is a new simplex.
+        // The projection of AO onto AB is the closest point.
 
-    float const abcoDot = ab.DotProduct ( co );
-    float const accoDot = ac.DotProduct ( co );
+        _simplex._pointCount = 2U;
 
-    // 4: Checking behind C vertex...
+        ab.Normalize ();
+        GXVec3 v {};
+        v.Sum ( a, -ab.DotProduct ( a ), ab );
+        return v;
+    };
 
-    if ( accoDot >= 0.0F && abcoDot <= accoDot )
+    if ( edgeNormal.DotProduct ( ao ) > 0.0F )
     {
-        // The C vertex is the closest point.
-        return c;
+        if ( ac.DotProduct ( ao ) <= 0.0F )
+            return commonCase ();
+
+        // AC line segment is a new simplex.
+        // The projection of AO onto AC is the closest point.
+
+        // AC line simplex.
+        _simplex._pointCount = 2U;
+        _simplex._supportPoints[ 1U ] = c;
+
+        ac.Normalize ();
+        GXVec3 v {};
+        v.Sum ( a, -ac.DotProduct ( a ), ac );
+        return v;
     }
 
-    // 5: Checking behind AC segment...
+    edgeNormal.CrossProduct ( ab, abc );
 
-    if ( acaoDot >= 0.0F && accoDot <= 0.0F )
-    {
-        // Optimization: acTest = abcoDot * abaoDot - acaoDot * accoDot;
-        if ( GXVec2 ( abcoDot, -abaoDot ).DotProduct ( GXVec2 ( acaoDot, accoDot ) ) <= 0.0F )
-        {
-            // The projection of AO onto AC is the closest point.
+    if ( edgeNormal.DotProduct ( ao ) > 0.0F )
+        return commonCase ();
 
-            ac.Normalize ();
-            GXVec3 v {};
-            v.Sum ( a, ac.DotProduct ( ao ), ac );
+    // Triangle simplex case.
 
-            return v;
-        }
-    }
-
-    // 6: Checking behind BC segment...
-
-    if ( acboDot - abboDot >= 0.0F && abcoDot - accoDot >= 0.0F )
-    {
-        // Optimization: bcTest = abboDot * accoDot - abcoDot * acboDot;
-        if ( GXVec2 ( abboDot, -abcoDot ).DotProduct ( GXVec2 ( accoDot, acboDot ) ) <= 0.0F )
-        {
-
-            // The projection of BO onto BC is the closest point.
-            GXVec3 bc {};
-            bc.Subtract ( c, b );
-            bc.Normalize ();
-
-            GXVec3 v {};
-            v.Sum ( b, bc.DotProduct ( bo ), bc );
-
-            return v;
-        }
-    }
-
-    // 7: The closest point is onto ABC triangle.
-    GXVec3 abcNormal {};
-    abcNormal.CrossProduct ( ab, ac );
-    abcNormal.Normalize ();
+    // The closest point is onto ABC triangle.
+    abc.Normalize ();
 
     GXVec3 v {};
     // Note OA vector is just A vector.
-    v.Multiply ( abcNormal, abcNormal.DotProduct ( a ) );
+    v.Multiply ( abc, abc.DotProduct ( a ) );
+
+    if ( abc.DotProduct ( ao ) <= 0.0F )
+    {
+        // The origin is behind of the triangle.
+        // In order to work in tetrahedron test we must rewind the triangle.
+        // Reusing "abc" variable to make swap.
+        abc = b;
+        b = c;
+        c = abc;
+    }
+
     return v;
 }
 

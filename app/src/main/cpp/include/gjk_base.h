@@ -12,7 +12,6 @@ namespace android_vulkan {
 class GJKBase
 {
     protected:
-        GXVec3      _direction {};
         Simplex     _simplex {};
 
         uint16_t    _steps = 0U;
@@ -39,14 +38,7 @@ class GJKBase
         GJKBase () = default;
         virtual ~GJKBase () = default;
 
-        void LineTest () noexcept;
-
-        // The method returns true if simplex contains the origin.
-        // The method returns false if more iterations are needed.
-        bool TetrahedronTest () noexcept;
-
-        void TriangleTest () noexcept;
-        void ResetInternal ( GXVec3 const &initialDirection ) noexcept;
+        void ResetInternal () noexcept;
 };
 
 } // namespace android_vulkan

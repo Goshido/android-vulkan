@@ -14,11 +14,11 @@ set INITIAL_DIR=%cd%
 pushd %cd%
 
 :: Creating Ninja files for Android 11|arm64-v8a platform...
-cmake -H%VK_LAYER_DIR% -B%VK_LAYER_DIR%/build/arm64-v8a -DANDROID_ABI=arm64-v8a -DANDROID_PLATFORM=android-30 -DANDROID_NDK=%NDK_DIR% -DANDROID_STL=c++_static -DCMAKE_TOOLCHAIN_FILE=%NDK_DIR%/build/cmake/android.toolchain.cmake -G "Ninja Multi-Config"
+"%ANDROID_CMAKE_DIR%\cmake" -H%VK_LAYER_DIR% -B%VK_LAYER_DIR%/build/arm64-v8a -DANDROID_ABI=arm64-v8a -DANDROID_PLATFORM=android-30 -DANDROID_NDK=%NDK_DIR% -DANDROID_STL=c++_static -DCMAKE_TOOLCHAIN_FILE=%NDK_DIR%/build/cmake/android.toolchain.cmake -G "Ninja Multi-Config"
 
 :: Building release version of the libVkLayer_khronos_validation.so
 cd /D %VK_LAYER_DIR%/build/arm64-v8a
-ninja -f build-Release.ninja
+"%ANDROID_CMAKE_DIR%\ninja" -f build-Release.ninja
 
 :: Stripping the dynamic library
 mkdir "Release/stripped" 2> nul

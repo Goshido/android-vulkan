@@ -437,9 +437,9 @@ void ContactDetector::ManifoldFaceFace ( ContactManager &contactManager,
     auto [manifold, firstContact] = AllocateFirstContact ( contactManager, a, b, friction, restitution );
     bool isFirst = true;
 
-    auto makeBasis = [] ( Contact &contact, GXVec3 const &a, GXVec3 const &b ) noexcept {
+    auto makeBasis = [] ( Contact &contact, GXVec3 const &aPoint, GXVec3 const &bPoint ) noexcept {
         GXVec3& normal = contact._normal;
-        normal.Subtract ( a, b );
+        normal.Subtract ( aPoint, bPoint );
         normal.Normalize ();
 
         GXMat3 basis {};
@@ -448,14 +448,14 @@ void ContactDetector::ManifoldFaceFace ( ContactManager &contactManager,
         basis.GetY ( contact._bitangent );
     };
 
-    for ( auto const& [a, b] : result )
+    for ( auto const& [aPoint, bPoint] : result )
     {
         if ( isFirst )
         {
-            firstContact->_pointA = a;
-            firstContact->_pointB = b;
-            firstContact->_penetration = a.Distance ( b );
-            makeBasis ( *firstContact, a, b );
+            firstContact->_pointA = aPoint;
+            firstContact->_pointB = bPoint;
+            firstContact->_penetration = aPoint.Distance ( bPoint );
+            makeBasis ( *firstContact, aPoint, bPoint );
             isFirst = false;
             continue;
         }
@@ -463,10 +463,10 @@ void ContactDetector::ManifoldFaceFace ( ContactManager &contactManager,
         Contact& anotherContact = contactManager.AllocateContact ( *manifold );
         anotherContact._friction = friction;
         anotherContact._restitution = restitution;
-        anotherContact._pointA = a;
-        anotherContact._pointB = b;
-        anotherContact._penetration = a.Distance ( b );
-        makeBasis ( anotherContact, a, b );
+        anotherContact._pointA = aPoint;
+        anotherContact._pointB = bPoint;
+        anotherContact._penetration = aPoint.Distance ( bPoint );
+        makeBasis ( anotherContact, aPoint, bPoint );
     }
 
     contactManager.Warm ( *manifold );

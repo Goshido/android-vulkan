@@ -1,4 +1,4 @@
-//version 1.2
+//version 1.3
 
 #ifndef GX_NATIVE_MESH
 #define GX_NATIVE_MESH
@@ -20,16 +20,16 @@ struct GXNativeMeshHeader final
 
 struct GXMeshInfo final
 {
-    GXUInt      totalVertices;
-    GXFloat*    vboData;
+    [[maybe_unused]] GXUInt         totalVertices;
+    [[maybe_unused]] GXFloat*       vboData;
 
-    GXMeshInfo ();
-    GXVoid Cleanup ();
+    [[maybe_unused]] GXMeshInfo ();
+    [[maybe_unused]] GXVoid Cleanup ();
 };
 
 //------------------------------------------------------------------------------------
 
-GXVoid GXCALL GXLoadNativeMesh ( GXMeshInfo &info, const GXWChar* fileName );
+[[maybe_unused]] GXVoid GXCALL GXLoadNativeMesh ( GXMeshInfo &info, const GXWChar* fileName );
 
 
 #endif //GX_NATIVE_MESH

@@ -377,8 +377,6 @@ bool RayCasting::LoadResources ( android_vulkan::Renderer &renderer ) noexcept
 
     cb += 1U;
 
-    // TODO
-
     result = android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( renderer.GetQueue () ),
         "RayCasting::LoadResources",
         "Can't run upload commands"

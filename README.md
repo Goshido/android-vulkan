@@ -23,8 +23,8 @@ Requirements:
 * _Android SDK Tools 26.1.1_
 * _Android SDK Platform-Tools 31.0.3_
 * _CMake 3.18.1_
-* _DirectX Shader Compiler 1.6.2109.10054_
-* _Vulkan Validation Layers_ `a9101d35aafb853c5a96544d8b7b28a3408ea9c5`
+* _DirectX Shader Compiler 1.6.2110.10054_
+* _Vulkan Validation Layers_ `dcd1e40ebb6c38e31f9847c299ea164af81c578b`
 * _Gradle 7.3_
 * Real _Android 11_ device with _Vulkan 1.1.131_ support
 * [_ARM Neon_ _A64_](https://developer.arm.com/architectures/instruction-sets/simd-isas/neon/neon-programmers-guide-for-armv8-a/introducing-neon-for-armv8-a) native support

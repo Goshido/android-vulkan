@@ -1,4 +1,4 @@
-﻿// version 1.71
+﻿// version 1.72
 
 #include <GXCommon/GXMath.h>
 
@@ -25,7 +25,6 @@ constexpr static GXUByte const SOLUTION_ALPHA = 0U;
 constexpr static GXUByte const SOLUTION_BETTA = 1U;
 constexpr static GXUByte const SOLUTION_GAMMA = 2U;
 constexpr static GXUByte const SOLUTION_YOTTA = 3U;
-constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -295,16 +294,16 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     GXVec3 point {};
     point.Sum ( origin, t, direction );
 
-    GXUByte selector = 0U;
+    GXUByte selector;
 
     GXFloat gamma = std::abs ( plane._a );
     GXFloat const omega = std::abs ( plane._b );
     GXFloat const yotta = std::abs ( plane._c );
 
     if ( gamma > omega )
-        selector = gamma > yotta ? 0U : 2U;
+        selector = gamma > yotta ? static_cast<GXUByte> ( 0U ) : static_cast<GXUByte> ( 2U );
     else
-        selector = omega > yotta ? 1U : 2U;
+        selector = omega > yotta ? static_cast<GXUByte> ( 1U ) : static_cast<GXUByte> ( 2U );
 
     GXUByte i1 = 0xFFU;
     GXUByte i2 = 0xFFU;
@@ -849,7 +848,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
         pureRotationMatrix._m[ 1U ][ 1U ] +
         pureRotationMatrix._m[ 2U ][ 2U ] + 1.0F;
 
-    auto solution = static_cast<GXUByte> ( UNKNOWN_SOLUTION );
+    GXUByte solution;
 
     if ( solutionFactorAlpha > solutionFactorBetta )
     {
@@ -960,7 +959,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
         pureRotationMatrix._m[ 1U ][ 1U ] +
         pureRotationMatrix._m[ 2U ][ 2U ] + 1.0F;
 
-    auto solution = static_cast<GXUByte> ( UNKNOWN_SOLUTION );
+    GXUByte solution;
 
     if ( solutionFactorAlpha > solutionFactorBetta )
     {

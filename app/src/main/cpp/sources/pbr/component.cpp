@@ -7,7 +7,7 @@
 
 namespace pbr {
 
-ClassID Component::GetClassID () const
+[[maybe_unused]] ClassID Component::GetClassID () const
 {
     return _classID;
 }

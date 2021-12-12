@@ -28,13 +28,14 @@ class PointLightComponent final : public Component
 
         ~PointLightComponent () override = default;
 
-        [[maybe_unused]] void SetBoundDimensions ( float width, float height, float depth ) noexcept;
+        void Submit ( RenderSession &renderSession ) override;
+
+        void SetBoundDimensions ( float width, float height, float depth ) noexcept;
         [[maybe_unused]] void SetHue ( GXColorRGB const &hue ) noexcept;
-        [[maybe_unused]] void SetIntensity ( float intensity ) noexcept;
-        [[maybe_unused]] void SetLocation ( GXVec3 const &location ) noexcept;
+        void SetIntensity ( float intensity ) noexcept;
+        void SetLocation ( GXVec3 const &location ) noexcept;
 
     private:
-        void Submit ( RenderSession &renderSession ) override;
         void FreeTransferResources ( VkDevice device ) override;
 };
 

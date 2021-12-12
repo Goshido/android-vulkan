@@ -32,7 +32,7 @@ StaticMeshComponent::StaticMeshComponent ( android_vulkan::Renderer &renderer,
     _color2.From ( desc._color2._red, desc._color2._green, desc._color2._blue, desc._color2._alpha );
     _color3.From ( desc._color3._red, desc._color3._green, desc._color3._blue, desc._color3._alpha );
 
-    memcpy ( _localMatrix._data, &desc._localMatrix, sizeof ( _localMatrix ) );
+    std::memcpy ( _localMatrix._data, &desc._localMatrix, sizeof ( _localMatrix ) );
 
     _material = MaterialManager::GetInstance ().LoadMaterial ( renderer,
         commandBufferConsumed,
@@ -105,7 +105,7 @@ void StaticMeshComponent::Submit ( RenderSession &renderSession )
     _color0 = android_vulkan::Half4 ( color._data[ 0U ], color._data[ 1U ], color._data[ 2U ], color._data[ 3U ] );
 }
 
-[[maybe_unused]] void StaticMeshComponent::SetColor0 ( android_vulkan::Half4 const &color ) noexcept
+void StaticMeshComponent::SetColor0 ( android_vulkan::Half4 const &color ) noexcept
 {
     _color0 = color;
 }
@@ -153,6 +153,16 @@ void StaticMeshComponent::Submit ( RenderSession &renderSession )
 [[maybe_unused]] void StaticMeshComponent::SetColor3 ( android_vulkan::Half4 const &color ) noexcept
 {
     _color3 = color;
+}
+
+MaterialRef& StaticMeshComponent::GetMaterial () noexcept
+{
+    return _material;
+}
+
+[[maybe_unused]] MaterialRef const& StaticMeshComponent::GetMaterial () const noexcept
+{
+    return _material;
 }
 
 [[maybe_unused]] GXMat4 const& StaticMeshComponent::GetTransform () const noexcept

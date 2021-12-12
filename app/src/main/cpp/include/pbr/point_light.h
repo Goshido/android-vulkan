@@ -64,16 +64,16 @@ class PointLight final : public Light
         ~PointLight () override = default;
 
         [[nodiscard]] GXAABB const& GetBounds () const noexcept;
-        [[maybe_unused]] void SetBoundDimensions ( float width, float height, float depth ) noexcept;
+        void SetBoundDimensions ( float width, float height, float depth ) noexcept;
 
         [[nodiscard]] android_vulkan::Half3 const& GetHue () const noexcept;
-        [[maybe_unused]] void SetHue ( GXColorRGB const &hue ) noexcept;
+        void SetHue ( GXColorRGB const &hue ) noexcept;
 
         [[nodiscard]] android_vulkan::Half GetIntensity () const noexcept;
-        [[maybe_unused]] void SetIntensity ( float intensity ) noexcept;
+        void SetIntensity ( float intensity ) noexcept;
 
         [[nodiscard]] GXVec3 const& GetLocation () const noexcept;
-        [[maybe_unused]] void SetLocation ( GXVec3 const &location ) noexcept;
+        void SetLocation ( GXVec3 const &location ) noexcept;
 
         [[nodiscard]] Matrices const& GetMatrices () noexcept;
         [[nodiscard]] GXMat4 const& GetProjection () noexcept;

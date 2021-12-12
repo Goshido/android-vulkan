@@ -28,23 +28,23 @@ class OpaqueMaterial final : public Material
         ~OpaqueMaterial () override = default;
 
         [[nodiscard]] Texture2DRef& GetAlbedo ();
-        void SetAlbedo ( Texture2DRef &texture );
+        void SetAlbedo ( Texture2DRef const &texture );
         [[maybe_unused]] void SetAlbedoDefault ();
 
         [[nodiscard]] Texture2DRef& GetEmission ();
-        void SetEmission ( Texture2DRef &texture );
-        [[maybe_unused]] void SetEmissionDefault ();
+        void SetEmission ( Texture2DRef const &texture );
+        void SetEmissionDefault ();
 
         [[nodiscard]] Texture2DRef& GetMask ();
-        void SetMask ( Texture2DRef &texture );
+        void SetMask ( Texture2DRef const &texture );
         [[maybe_unused]] void SetMaskDefault ();
 
         [[nodiscard]] Texture2DRef& GetNormal ();
-        void SetNormal ( Texture2DRef &texture );
+        void SetNormal ( Texture2DRef const &texture );
         [[maybe_unused]] void SetNormalDefault ();
 
         [[nodiscard]] Texture2DRef& GetParam ();
-        void SetParam ( Texture2DRef &texture );
+        void SetParam ( Texture2DRef const &texture );
         [[maybe_unused]] void SetParamDefault ();
 
         [[nodiscard]] bool operator < ( OpaqueMaterial const &other ) const;

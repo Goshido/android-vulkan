@@ -54,7 +54,12 @@ PointLightComponent::PointLightComponent () noexcept:
     _pointLight = std::make_shared<PointLight> ();
 }
 
-[[maybe_unused]] void PointLightComponent::SetBoundDimensions ( float width, float height, float depth ) noexcept
+void PointLightComponent::Submit ( RenderSession &renderSession )
+{
+    renderSession.SubmitLight ( _pointLight );
+}
+
+void PointLightComponent::SetBoundDimensions ( float width, float height, float depth ) noexcept
 {
     // NOLINTNEXTLINE
     auto& light = *static_cast<PointLight*> ( _pointLight.get () );
@@ -68,23 +73,18 @@ PointLightComponent::PointLightComponent () noexcept:
     light.SetHue ( hue );
 }
 
-[[maybe_unused]] void PointLightComponent::SetIntensity ( float intensity ) noexcept
+void PointLightComponent::SetIntensity ( float intensity ) noexcept
 {
     // NOLINTNEXTLINE
     auto& light = *static_cast<PointLight*> ( _pointLight.get () );
     light.SetIntensity ( intensity );
 }
 
-[[maybe_unused]] void PointLightComponent::SetLocation ( GXVec3 const &location ) noexcept
+void PointLightComponent::SetLocation ( GXVec3 const &location ) noexcept
 {
     // NOLINTNEXTLINE
     auto& light = *static_cast<PointLight*> ( _pointLight.get () );
     light.SetLocation ( location );
-}
-
-void PointLightComponent::Submit ( RenderSession &renderSession )
-{
-    renderSession.SubmitLight ( _pointLight );
 }
 
 void PointLightComponent::FreeTransferResources ( VkDevice /*device*/ )

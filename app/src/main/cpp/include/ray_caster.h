@@ -4,14 +4,16 @@
 
 #include "gjk_base.h"
 #include "shape.h"
+#include "contact_detector.h"
 
 
 namespace android_vulkan {
 
 struct RaycastResult final
 {
-    GXVec3      _point {};
-    GXVec3      _normal {};
+    RigidBodyRef    _body {};
+    GXVec3          _point {};
+    GXVec3          _normal {};
 };
 
 // The implementation is based on ideas from

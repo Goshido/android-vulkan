@@ -146,7 +146,9 @@ bool Physics::Raycast ( RaycastResult &result, GXVec3 const &from, GXVec3 const 
                 continue;
 
             dist = d;
-            result = current;
+            result._point = current._point;
+            result._normal = current._normal;
+            result._body = body;
             isHit = true;
         }
     };

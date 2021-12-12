@@ -11,7 +11,7 @@ GX_RESTORE_WARNING_STATE
 
 namespace android_vulkan {
 
-constexpr static uint16_t const ITERATIONS = 4U;
+constexpr static uint16_t const ITERATIONS = 5U;
 constexpr static float const STABILIZATION_FACTOR = 0.21F;
 constexpr static float const PENETRATION_SLOPE = 5.0e-4F;
 constexpr static float const RESTITUTION_SLOPE = 5.0e-1F;

@@ -54,7 +54,7 @@ class StaticMeshComponent final : public Component
 
         [[maybe_unused, nodiscard]] android_vulkan::Half4 const& GetColor0 () const noexcept;
         [[maybe_unused]] void SetColor0 ( GXColorRGB const &color ) noexcept;
-        [[maybe_unused]] void SetColor0 ( android_vulkan::Half4 const &color ) noexcept;
+        void SetColor0 ( android_vulkan::Half4 const &color ) noexcept;
 
         [[maybe_unused, nodiscard]] android_vulkan::Half4 const& GetColor1 () const noexcept;
         [[maybe_unused]] void SetColor1 ( GXColorRGB const &color ) noexcept;
@@ -68,8 +68,11 @@ class StaticMeshComponent final : public Component
         [[maybe_unused]] void SetColor3 ( GXColorRGB const &color ) noexcept;
         [[maybe_unused]] void SetColor3 ( android_vulkan::Half4 const &color ) noexcept;
 
-        [[maybe_unused, nodiscard]] GXMat4 const& GetTransform () const noexcept;
-        [[maybe_unused]] void SetTransform ( GXMat4 const &transform ) noexcept;
+        [[nodiscard]] MaterialRef& GetMaterial () noexcept;
+        [[maybe_unused, nodiscard]] MaterialRef const& GetMaterial () const noexcept;
+
+        [[nodiscard]] GXMat4 const& GetTransform () const noexcept;
+        void SetTransform ( GXMat4 const &transform ) noexcept;
 
     private:
         void FreeTransferResources ( VkDevice device ) override;

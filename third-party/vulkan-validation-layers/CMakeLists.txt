@@ -14,7 +14,7 @@ add_library ( layer_utils
     ../layers/vk_layer_config.cpp
     ../layers/vk_layer_extension_utils.cpp
     ../layers/vk_layer_utils.cpp
-    ../layers/vk_format_utils.cpp
+    ../layers/generated/vk_format_utils.cpp
 )
 
 target_include_directories ( layer_utils

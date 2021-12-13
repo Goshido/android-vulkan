@@ -7,7 +7,6 @@ GX_DISABLE_COMMON_WARNINGS
 
 GX_RESTORE_WARNING_STATE
 
-#include <half_types.h>
 #include <vulkan_utils.h>
 #include <pbr/point_light.h>
 #include <pbr/reflection_probe_global.h>
@@ -165,10 +164,10 @@ void RenderSession::SubmitMesh ( MeshRef &mesh,
     MaterialRef const &material,
     GXMat4 const &local,
     GXAABB const &worldBounds,
-    android_vulkan::Half4 const &color0,
-    android_vulkan::Half4 const &color1,
-    android_vulkan::Half4 const &color2,
-    android_vulkan::Half4 const &color3
+    android_vulkan::ColorUnorm const &color0,
+    android_vulkan::ColorUnorm const &color1,
+    android_vulkan::ColorUnorm const &color2,
+    android_vulkan::ColorUnorm const &color3
 )
 {
     ++_opaqueMeshCount;
@@ -557,10 +556,10 @@ void RenderSession::SubmitOpaqueCall ( MeshRef &mesh,
     MaterialRef const &material,
     GXMat4 const &local,
     GXAABB const &worldBounds,
-    android_vulkan::Half4 const &color0,
-    android_vulkan::Half4 const &color1,
-    android_vulkan::Half4 const &color2,
-    android_vulkan::Half4 const &color3
+    android_vulkan::ColorUnorm const &color0,
+    android_vulkan::ColorUnorm const &color1,
+    android_vulkan::ColorUnorm const &color2,
+    android_vulkan::ColorUnorm const &color3
 )
 {
     _renderSessionStats.SubmitOpaque ( mesh->GetVertexCount () );

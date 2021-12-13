@@ -34,7 +34,7 @@ PointLight::PointLight () noexcept:
     _bounds {},
     _dimensions ( HALF_DEFAULT_SIZE, HALF_DEFAULT_SIZE, HALF_DEFAULT_SIZE ),
     _hue ( ToUnorm ( DEFAULT_HUE_RED ), ToUnorm ( DEFAULT_HUE_GREEN ), ToUnorm ( DEFAULT_HUE_BLUE ) ),
-    _intensity ( android_vulkan::Half::Convert ( DEFAULT_INTENSITY ) ),
+    _intensity ( DEFAULT_INTENSITY ),
     _isNeedUpdate ( true ),
     _location ( DEFAULT_LOCATION_X, DEFAULT_LOCATION_Y, DEFAULT_LOCATION_Z ),
     _matrices {},
@@ -56,8 +56,8 @@ PointLight::PointLight () noexcept:
     _bounds.AddVertex ( maximum );
 }
 
-PointLight::PointLight ( android_vulkan::Half3 const &hue,
-    android_vulkan::Half intensity,
+PointLight::PointLight ( GXVec3 const &hue,
+    float intensity,
     GXVec3 const &location,
     GXAABB const &bounds
 ) noexcept:
@@ -88,20 +88,17 @@ void PointLight::SetBoundDimensions ( float width, float height, float depth ) n
     _isNeedUpdate = true;
 }
 
-android_vulkan::Half3 const& PointLight::GetHue () const noexcept
+GXVec3 const& PointLight::GetHue () const noexcept
 {
     return _hue;
 }
 
 void PointLight::SetHue ( GXColorRGB const &hue ) noexcept
 {
-    float const* rgb = hue._data;
-    _hue._data[ 0U ] = android_vulkan::Half::Convert ( rgb[ 0U ] );
-    _hue._data[ 1U ] = android_vulkan::Half::Convert ( rgb[ 1U ] );
-    _hue._data[ 2U ] = android_vulkan::Half::Convert ( rgb[ 2U ] );
+    _hue = *reinterpret_cast<GXVec3 const*> ( hue._data );
 }
 
-android_vulkan::Half PointLight::GetIntensity () const noexcept
+float PointLight::GetIntensity () const noexcept
 {
     return _intensity;
 }

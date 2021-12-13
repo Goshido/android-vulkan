@@ -6,10 +6,10 @@ namespace pbr {
 OpaqueCall::OpaqueCall ( MeshRef &mesh,
     GXMat4 const &local,
     GXAABB const &worldBounds,
-    android_vulkan::Half4 const &color0,
-    android_vulkan::Half4 const &color1,
-    android_vulkan::Half4 const &color2,
-    android_vulkan::Half4 const &color3
+    android_vulkan::ColorUnorm const &color0,
+    android_vulkan::ColorUnorm const &color1,
+    android_vulkan::ColorUnorm const &color2,
+    android_vulkan::ColorUnorm const &color3
 ) noexcept
 {
     Append ( mesh, local, worldBounds, color0, color1, color2, color3 );
@@ -28,10 +28,10 @@ OpaqueCall::UniqueList const& OpaqueCall::GetUniqueList () const noexcept
 void OpaqueCall::Append ( MeshRef &mesh,
     GXMat4 const &local,
     GXAABB const &worldBounds,
-    android_vulkan::Half4 const &color0,
-    android_vulkan::Half4 const &color1,
-    android_vulkan::Half4 const &color2,
-    android_vulkan::Half4 const &color3
+    android_vulkan::ColorUnorm const &color0,
+    android_vulkan::ColorUnorm const &color1,
+    android_vulkan::ColorUnorm const &color2,
+    android_vulkan::ColorUnorm const &color3
 ) noexcept
 {
     if ( mesh->IsUnique () )
@@ -46,13 +46,13 @@ void OpaqueCall::Append ( MeshRef &mesh,
 void OpaqueCall::AddBatch ( MeshRef &mesh,
     GXMat4 const &local,
     GXAABB const &worldBounds,
-    android_vulkan::Half4 const &color0,
-    android_vulkan::Half4 const &color1,
-    android_vulkan::Half4 const &color2,
-    android_vulkan::Half4 const &color3
+    android_vulkan::ColorUnorm const &color0,
+    android_vulkan::ColorUnorm const &color1,
+    android_vulkan::ColorUnorm const &color2,
+    android_vulkan::ColorUnorm const &color3
 ) noexcept
 {
-    const std::string& name = mesh->GetName ();
+    std::string const& name = mesh->GetName ();
     auto findResult = _batch.find ( name );
 
     if ( findResult == _batch.cend () )
@@ -82,10 +82,10 @@ void OpaqueCall::AddBatch ( MeshRef &mesh,
 void OpaqueCall::AddUnique ( MeshRef &mesh,
     GXMat4 const &local,
     GXAABB const &worldBounds,
-    android_vulkan::Half4 const &color0,
-    android_vulkan::Half4 const &color1,
-    android_vulkan::Half4 const &color2,
-    android_vulkan::Half4 const &color3
+    android_vulkan::ColorUnorm const &color0,
+    android_vulkan::ColorUnorm const &color1,
+    android_vulkan::ColorUnorm const &color2,
+    android_vulkan::ColorUnorm const &color3
 ) noexcept
 {
     _unique.emplace_back (

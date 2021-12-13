@@ -12,14 +12,14 @@ namespace pbr {
 class StaticMeshComponent final : public Component
 {
     private:
-        android_vulkan::Half4       _color0;
-        android_vulkan::Half4       _color1;
-        android_vulkan::Half4       _color2;
-        android_vulkan::Half4       _color3;
-        GXMat4                      _localMatrix;
-        MaterialRef                 _material;
-        MeshRef                     _mesh;
-        GXAABB                      _worldBounds;
+        android_vulkan::ColorUnorm      _color0;
+        android_vulkan::ColorUnorm      _color1;
+        android_vulkan::ColorUnorm      _color2;
+        android_vulkan::ColorUnorm      _color3;
+        GXMat4                          _localMatrix;
+        MaterialRef                     _material;
+        MeshRef                         _mesh;
+        GXAABB                          _worldBounds;
 
     public:
         StaticMeshComponent () = delete;
@@ -34,7 +34,7 @@ class StaticMeshComponent final : public Component
         explicit StaticMeshComponent ( android_vulkan::Renderer &renderer,
             size_t &commandBufferConsumed,
             StaticMeshComponentDesc const &desc,
-            uint8_t const *data,
+            uint8_t const* data,
             VkCommandBuffer const* commandBuffers
         ) noexcept;
 
@@ -52,21 +52,21 @@ class StaticMeshComponent final : public Component
 
         [[maybe_unused, nodiscard]] GXAABB const& GetBoundsWorld () const noexcept;
 
-        [[maybe_unused, nodiscard]] android_vulkan::Half4 const& GetColor0 () const noexcept;
+        [[maybe_unused, nodiscard]] android_vulkan::ColorUnorm const& GetColor0 () const noexcept;
         [[maybe_unused]] void SetColor0 ( GXColorRGB const &color ) noexcept;
-        void SetColor0 ( android_vulkan::Half4 const &color ) noexcept;
+        void SetColor0 ( android_vulkan::ColorUnorm const &color ) noexcept;
 
-        [[maybe_unused, nodiscard]] android_vulkan::Half4 const& GetColor1 () const noexcept;
+        [[maybe_unused, nodiscard]] android_vulkan::ColorUnorm const& GetColor1 () const noexcept;
         [[maybe_unused]] void SetColor1 ( GXColorRGB const &color ) noexcept;
-        [[maybe_unused]] void SetColor1 ( android_vulkan::Half4 const &color ) noexcept;
+        [[maybe_unused]] void SetColor1 ( android_vulkan::ColorUnorm const &color ) noexcept;
 
-        [[maybe_unused, nodiscard]] android_vulkan::Half4 const& GetColor2 () const noexcept;
+        [[maybe_unused, nodiscard]] android_vulkan::ColorUnorm const& GetColor2 () const noexcept;
         [[maybe_unused]] void SetColor2 ( GXColorRGB const &color ) noexcept;
-        [[maybe_unused]] void SetColor2 ( android_vulkan::Half4 const &color ) noexcept;
+        [[maybe_unused]] void SetColor2 ( android_vulkan::ColorUnorm const &color ) noexcept;
 
-        [[maybe_unused, nodiscard]] android_vulkan::Half4 const& GetColor3 () const noexcept;
+        [[maybe_unused, nodiscard]] android_vulkan::ColorUnorm const& GetColor3 () const noexcept;
         [[maybe_unused]] void SetColor3 ( GXColorRGB const &color ) noexcept;
-        [[maybe_unused]] void SetColor3 ( android_vulkan::Half4 const &color ) noexcept;
+        [[maybe_unused]] void SetColor3 ( android_vulkan::ColorUnorm const &color ) noexcept;
 
         [[nodiscard]] MaterialRef& GetMaterial () noexcept;
         [[maybe_unused, nodiscard]] MaterialRef const& GetMaterial () const noexcept;

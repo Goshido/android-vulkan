@@ -2,7 +2,7 @@
 #define PBR_POINT_LIGHT_H
 
 
-#include <GXCommon/GXWarning.h>
+#include <GXCommon/GXMath.h>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -10,7 +10,6 @@ GX_DISABLE_COMMON_WARNINGS
 
 GX_RESTORE_WARNING_STATE
 
-#include <half_types.h>
 #include <vulkan_utils.h>
 #include "gpgpu_limits.inc"
 #include "light.h"
@@ -37,14 +36,14 @@ class PointLight final : public Light
         };
 
     private:
-        GXAABB                      _bounds;
-        GXVec3                      _dimensions;
-        android_vulkan::Half3       _hue;
-        android_vulkan::Half        _intensity;
-        bool                        _isNeedUpdate;
-        GXVec3                      _location;
-        Matrices                    _matrices;
-        GXMat4                      _projection;
+        GXAABB      _bounds;
+        GXVec3      _dimensions;
+        GXVec3      _hue;
+        float       _intensity;
+        bool        _isNeedUpdate;
+        GXVec3      _location;
+        Matrices    _matrices;
+        GXMat4      _projection;
 
     public:
         PointLight () noexcept;
@@ -55,8 +54,8 @@ class PointLight final : public Light
         PointLight ( PointLight && ) = delete;
         PointLight& operator = ( PointLight && ) = delete;
 
-        explicit PointLight ( android_vulkan::Half3 const &hue,
-            android_vulkan::Half intensity,
+        explicit PointLight ( GXVec3 const &hue,
+            float intensity,
             GXVec3 const &location,
             GXAABB const &bounds
         ) noexcept;
@@ -66,10 +65,10 @@ class PointLight final : public Light
         [[nodiscard]] GXAABB const& GetBounds () const noexcept;
         void SetBoundDimensions ( float width, float height, float depth ) noexcept;
 
-        [[nodiscard]] android_vulkan::Half3 const& GetHue () const noexcept;
+        [[nodiscard]] GXVec3 const& GetHue () const noexcept;
         void SetHue ( GXColorRGB const &hue ) noexcept;
 
-        [[nodiscard]] android_vulkan::Half GetIntensity () const noexcept;
+        [[nodiscard]] float GetIntensity () const noexcept;
         void SetIntensity ( float intensity ) noexcept;
 
         [[nodiscard]] GXVec3 const& GetLocation () const noexcept;

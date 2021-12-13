@@ -24,10 +24,10 @@ struct MeshGroup final
     explicit MeshGroup ( MeshRef &mesh,
         GXMat4 const &local,
         GXAABB const &worldBounds,
-        android_vulkan::Half4 const &color0,
-        android_vulkan::Half4 const &color1,
-        android_vulkan::Half4 const &color2,
-        android_vulkan::Half4 const &color3
+        android_vulkan::ColorUnorm const &color0,
+        android_vulkan::ColorUnorm const &color1,
+        android_vulkan::ColorUnorm const &color2,
+        android_vulkan::ColorUnorm const &color3
     ) noexcept;
 
     ~MeshGroup () = default;

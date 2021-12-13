@@ -1,5 +1,5 @@
-#ifndef HALF_TYPES_H
-#define HALF_TYPES_H
+#ifndef ANDROID_VULKAN_HALF_TYPES_H
+#define ANDROID_VULKAN_HALF_TYPES_H
 
 
 #include <GXCommon/GXMath.h>
@@ -56,7 +56,7 @@ struct [[maybe_unused]] Half2 final
         ~Half2 () = default;
 };
 
-struct Half3 final
+struct [[maybe_unused]] Half3 final
 {
     public:
         uint16_t    _data[ 3U ];
@@ -110,4 +110,4 @@ struct Half4 final
 } // namespace android_vulkan
 
 
-#endif // HALF_TYPES_H
+#endif // ANDROID_VULKAN_HALF_TYPES_H

@@ -1238,13 +1238,13 @@ bool Renderer::CheckExtension16bitStorage ( std::set<std::string> const &allExte
 
     vkGetPhysicalDeviceFeatures2 ( _physicalDevice, &probe );
 
-    if ( hardwareSupport.uniformAndStorageBuffer16BitAccess )
+    if ( hardwareSupport.storageInputOutput16 )
     {
-        LogInfo ( "%sOK: uniformAndStorageBuffer16BitAccess", INDENT_2 );
+        LogInfo ( "%sOK: storageInputOutput16", INDENT_2 );
         return true;
     }
 
-    LogError ( "%sFAIL: uniformAndStorageBuffer16BitAccess", INDENT_2 );
+    LogError ( "%sFAIL: storageInputOutput16", INDENT_2 );
     return false;
 }
 
@@ -1302,14 +1302,25 @@ bool Renderer::CheckExtensionShaderFloat16Int8 ( std::set<std::string> const &al
     };
 
     vkGetPhysicalDeviceFeatures2 ( _physicalDevice, &probe );
+    bool result = true;
 
     if ( hardwareSupport.shaderFloat16 )
     {
         LogInfo ( "%sOK: shaderFloat16", INDENT_2 );
-        return true;
+    }
+    else
+    {
+        LogError ( "%sFAIL: shaderFloat16", INDENT_2 );
+        result = false;
     }
 
-    LogError ( "%sFAIL: shaderFloat16", INDENT_2 );
+    if ( hardwareSupport.shaderInt8 )
+    {
+        LogInfo ( "%sOK: shaderInt8", INDENT_2 );
+        return result;
+    }
+
+    LogError ( "%sFAIL: shaderInt8", INDENT_2 );
     return false;
 }
 
@@ -1539,7 +1550,7 @@ bool Renderer::DeployDevice ()
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES,
         .pNext = nullptr,
         .storageBuffer16BitAccess = VK_FALSE,
-        .uniformAndStorageBuffer16BitAccess = VK_TRUE,
+        .uniformAndStorageBuffer16BitAccess = VK_FALSE,
         .storagePushConstant16 = VK_FALSE,
         .storageInputOutput16 = VK_TRUE
     };
@@ -1558,7 +1569,7 @@ bool Renderer::DeployDevice ()
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT16_INT8_FEATURES_KHR,
         .pNext = const_cast<VkPhysicalDeviceMultiviewFeatures*> ( &multiviewFeatures ),
         .shaderFloat16 = VK_TRUE,
-        .shaderInt8 = VK_FALSE
+        .shaderInt8 = VK_TRUE
     };
 
     constexpr char const* extensions[] =

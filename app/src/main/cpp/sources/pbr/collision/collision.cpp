@@ -52,7 +52,7 @@ bool Collision::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime )
     constexpr GXVec3 const sphereDims ( sphereSize * 0.5F, sphereSize * 0.5F, sphereSize * 0.5F );
     transform.Scale ( sphereSize, sphereSize, sphereSize );
 
-    auto submit = [ & ] ( GXVec3 const &loc, android_vulkan::Half4 const &color ) noexcept {
+    auto submit = [ & ] ( GXVec3 const &loc, android_vulkan::ColorUnorm const &color ) noexcept {
         GXVec3 location {};
         location.Multiply ( loc, rendererScale );
         transform.SetW ( location );
@@ -230,7 +230,7 @@ bool Collision::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
         "Floor",
         _cubes[ 0U ]._component,
         "pbr/assets/Props/PBR/DefaultCSGEmissive.mtl",
-        android_vulkan::Half4 ( 1.0F, 1.0F, 1.0F, 1.0F ),
+        _defaultColor,
         _cubes[ 0U ]._body,
         0.0F,
         -0.25F,
@@ -245,19 +245,13 @@ bool Collision::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
 
     commandBuffers += consumed;
 
-    GXColorRGB const c ( static_cast<GXUByte> ( 99U ),
-        static_cast<GXUByte> ( 211U ),
-        static_cast<GXUByte> ( 222U ),
-        static_cast<GXUByte> ( 255U )
-    );
-
     result = AppendCuboid ( renderer,
         commandBuffers,
         consumed,
         "Cube #0",
         _cubes[ 1U ]._component,
         "pbr/assets/System/Default.mtl",
-        android_vulkan::Half4 ( c._data[ 0U ], c._data[ 1U ], c._data[ 2U ], c._data[ 3U ] ),
+        android_vulkan::ColorUnorm { 99U, 211U, 222U, 255U },
         _cubes[ 1U ]._body,
         0.0F,
         0.15F,
@@ -347,7 +341,7 @@ bool Collision::AppendCuboid ( android_vulkan::Renderer &renderer,
     std::string &&tag,
     ComponentRef &visual,
     char const* material,
-    android_vulkan::Half4 const &color,
+    android_vulkan::ColorUnorm const &color,
     android_vulkan::RigidBodyRef &physical,
     float x,
     float y,

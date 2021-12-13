@@ -7,6 +7,7 @@
 #include "reflection_global_pass.h"
 #include "present_pass.h"
 #include "shadow_casters.h"
+#include <primitive_types.h>
 
 
 namespace pbr {
@@ -72,10 +73,10 @@ class RenderSession final
             MaterialRef const &material,
             GXMat4 const &local,
             GXAABB const &worldBounds,
-            android_vulkan::Half4 const &color0,
-            android_vulkan::Half4 const &color1,
-            android_vulkan::Half4 const &color2,
-            android_vulkan::Half4 const &color3
+            android_vulkan::ColorUnorm const &color0,
+            android_vulkan::ColorUnorm const &color1,
+            android_vulkan::ColorUnorm const &color2,
+            android_vulkan::ColorUnorm const &color3
         );
 
     private:
@@ -96,10 +97,10 @@ class RenderSession final
             MaterialRef const &material,
             GXMat4 const &local,
             GXAABB const &worldBounds,
-            android_vulkan::Half4 const &color0,
-            android_vulkan::Half4 const &color1,
-            android_vulkan::Half4 const &color2,
-            android_vulkan::Half4 const &color3
+            android_vulkan::ColorUnorm const &color0,
+            android_vulkan::ColorUnorm const &color1,
+            android_vulkan::ColorUnorm const &color2,
+            android_vulkan::ColorUnorm const &color3
         );
 
         void SubmitPointLight ( LightRef &light );

@@ -37,10 +37,10 @@ PointLightComponent::PointLightComponent ( PointLightComponentDesc const &desc )
 
     _pointLight = std::static_pointer_cast<Light> (
         std::make_shared<PointLight> (
-            android_vulkan::Half3 ( unorm._data[ 0U ], unorm._data[ 1U ], unorm._data[ 2U ] ),
+            *reinterpret_cast<GXVec3 const*> ( unorm._data ),
 
             // TODO remove this multiplier in the future.
-            android_vulkan::Half ( desc._intensity * 14.1414F ),
+            desc._intensity * 14.1414F,
 
             reinterpret_cast<GXVec3 const &> ( desc._location ),
             bounds

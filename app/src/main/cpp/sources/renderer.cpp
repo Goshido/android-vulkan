@@ -5,7 +5,6 @@ GX_DISABLE_COMMON_WARNINGS
 #include <cassert>
 #include <cinttypes>
 #include <cmath>
-#include <set>
 #include <string>
 #include <unordered_map>
 
@@ -727,6 +726,7 @@ std::map<VkResult, char const*> const Renderer::_vulkanResultMap =
 {
     { VK_ERROR_DEVICE_LOST, "VK_ERROR_DEVICE_LOST" },
     { VK_ERROR_EXTENSION_NOT_PRESENT, "VK_ERROR_EXTENSION_NOT_PRESENT" },
+    { VK_ERROR_FEATURE_NOT_PRESENT, "VK_ERROR_FEATURE_NOT_PRESENT" },
     { VK_ERROR_FRAGMENTATION_EXT, "VK_ERROR_FRAGMENTATION_EXT" },
     { VK_ERROR_FULL_SCREEN_EXCLUSIVE_MODE_LOST_EXT, "VK_ERROR_FULL_SCREEN_EXCLUSIVE_MODE_LOST_EXT" },
     { VK_ERROR_INCOMPATIBLE_DRIVER, "VK_ERROR_INCOMPATIBLE_DRIVER" },
@@ -1214,10 +1214,106 @@ char const* Renderer::ResolveVkFormat ( VkFormat format )
     return findResult == _vulkanFormatMap.cend () ? UNKNOWN_RESULT : findResult->second;
 }
 
-bool Renderer::CheckRequiredDeviceExtensions ( std::vector<char const*> const &deviceExtensions,
-    char const* const* requiredExtensions,
-    size_t requiredExtensionCount
-)
+bool Renderer::CheckExtension16bitStorage ( std::set<std::string> const &allExtensions ) noexcept
+{
+    if ( !CheckExtensionCommon ( allExtensions, VK_KHR_16BIT_STORAGE_EXTENSION_NAME ) )
+        return false;
+
+    VkPhysicalDevice16BitStorageFeatures hardwareSupport
+    {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES,
+        .pNext = nullptr,
+        .storageBuffer16BitAccess = VK_FALSE,
+        .uniformAndStorageBuffer16BitAccess = VK_FALSE,
+        .storagePushConstant16 = VK_FALSE,
+        .storageInputOutput16 = VK_FALSE
+    };
+
+    VkPhysicalDeviceFeatures2 probe
+    {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
+        .pNext = &hardwareSupport,
+        .features {}
+    };
+
+    vkGetPhysicalDeviceFeatures2 ( _physicalDevice, &probe );
+
+    if ( hardwareSupport.uniformAndStorageBuffer16BitAccess )
+    {
+        LogInfo ( "%sOK: uniformAndStorageBuffer16BitAccess", INDENT_2 );
+        return true;
+    }
+
+    LogError ( "%sFAIL: uniformAndStorageBuffer16BitAccess", INDENT_2 );
+    return false;
+}
+
+bool Renderer::CheckExtensionMultiview ( std::set<std::string> const &allExtensions ) noexcept
+{
+    if ( !CheckExtensionCommon ( allExtensions, VK_KHR_MULTIVIEW_EXTENSION_NAME ) )
+        return false;
+
+    VkPhysicalDeviceMultiviewFeatures hardwareSupport
+    {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_FEATURES,
+        .pNext = nullptr,
+        .multiview = VK_FALSE,
+        .multiviewGeometryShader = VK_FALSE,
+        .multiviewTessellationShader = VK_FALSE
+    };
+
+    VkPhysicalDeviceFeatures2 probe
+    {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
+        .pNext = &hardwareSupport,
+        .features {}
+    };
+
+    vkGetPhysicalDeviceFeatures2 ( _physicalDevice, &probe );
+
+    if ( hardwareSupport.multiview )
+    {
+        LogInfo ( "%sOK: multiview", INDENT_2 );
+        return true;
+    }
+
+    LogError ( "%sFAIL: multiview", INDENT_2 );
+    return false;
+}
+
+bool Renderer::CheckExtensionShaderFloat16Int8 ( std::set<std::string> const &allExtensions ) noexcept
+{
+    if ( !CheckExtensionCommon ( allExtensions, VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME ) )
+        return false;
+
+    VkPhysicalDeviceFloat16Int8FeaturesKHR hardwareSupport
+    {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT16_INT8_FEATURES_KHR,
+        .pNext = nullptr,
+        .shaderFloat16 = VK_FALSE,
+        .shaderInt8 = VK_FALSE
+    };
+
+    VkPhysicalDeviceFeatures2 probe
+    {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
+        .pNext = &hardwareSupport,
+        .features {}
+    };
+
+    vkGetPhysicalDeviceFeatures2 ( _physicalDevice, &probe );
+
+    if ( hardwareSupport.shaderFloat16 )
+    {
+        LogInfo ( "%sOK: shaderFloat16", INDENT_2 );
+        return true;
+    }
+
+    LogError ( "%sFAIL: shaderFloat16", INDENT_2 );
+    return false;
+}
+
+bool Renderer::CheckRequiredDeviceExtensions ( std::vector<char const*> const &deviceExtensions ) noexcept
 {
     if ( _isDeviceExtensionChecked )
         return _isDeviceExtensionSupported;
@@ -1225,24 +1321,14 @@ bool Renderer::CheckRequiredDeviceExtensions ( std::vector<char const*> const &d
     std::set<std::string> allExtensions;
     allExtensions.insert ( deviceExtensions.cbegin (), deviceExtensions.cend () );
 
-    LogInfo ( "Renderer::CheckRequiredDeviceExtensions - Checking required device extensions..." );
-    _isDeviceExtensionSupported = true;
-    std::string tmp;
+    LogInfo ( ">>> Checking required device extensions..." );
 
-    for ( size_t i = 0U; i < requiredExtensionCount; ++i )
-    {
-        char const* requiredExtension = requiredExtensions[ i ];
-        tmp = requiredExtension;
+    // Note bitwise '&' is intentional. All checks must be done to view whole picture.
 
-        if ( allExtensions.count ( tmp ) > 0U )
-        {
-            LogInfo ( "%sOK: %s", INDENT_1, requiredExtension );
-            continue;
-        }
-
-        LogError ( "%sFAIL: %s", INDENT_1, requiredExtension );
-        _isDeviceExtensionSupported = false;
-    }
+    _isDeviceExtensionSupported = CheckExtension16bitStorage ( allExtensions ) &
+        CheckExtensionMultiview ( allExtensions ) &
+        CheckExtensionShaderFloat16Int8 ( allExtensions ) &
+        CheckExtensionCommon ( allExtensions, VK_KHR_SWAPCHAIN_EXTENSION_NAME );
 
     _isDeviceExtensionChecked = true;
     return _isDeviceExtensionSupported;
@@ -1434,17 +1520,7 @@ bool Renderer::DeployDevice ()
     deviceQueueCreateInfo.queueFamilyIndex = _queueFamilyIndex;
     auto const& caps = _physicalDeviceInfo[ _physicalDevice ];
 
-    constexpr char const* extensions[] =
-    {
-        VK_KHR_16BIT_STORAGE_EXTENSION_NAME,
-        VK_KHR_MULTIVIEW_EXTENSION_NAME,
-        VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME,
-        VK_KHR_SWAPCHAIN_EXTENSION_NAME
-    };
-
-    constexpr size_t const extensionCount = std::size ( extensions );
-
-    if ( !CheckRequiredDeviceExtensions ( caps._extensions, extensions, extensionCount ) )
+    if ( !CheckRequiredDeviceExtensions ( caps._extensions ) )
         return false;
 
     constexpr size_t const features[] =
@@ -1485,6 +1561,14 @@ bool Renderer::DeployDevice ()
         .shaderInt8 = VK_FALSE
     };
 
+    constexpr char const* extensions[] =
+    {
+        VK_KHR_16BIT_STORAGE_EXTENSION_NAME,
+        VK_KHR_MULTIVIEW_EXTENSION_NAME,
+        VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME,
+        VK_KHR_SWAPCHAIN_EXTENSION_NAME
+    };
+
     VkDeviceCreateInfo const deviceCreateInfo
     {
         .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
@@ -1494,7 +1578,7 @@ bool Renderer::DeployDevice ()
         .pQueueCreateInfos = &deviceQueueCreateInfo,
         .enabledLayerCount = 0U,
         .ppEnabledLayerNames = nullptr,
-        .enabledExtensionCount = static_cast<uint32_t> ( extensionCount ),
+        .enabledExtensionCount = static_cast<uint32_t> ( std::size ( extensions ) ),
         .ppEnabledExtensionNames = extensions,
         .pEnabledFeatures = &caps._features
     };
@@ -2557,6 +2641,22 @@ bool Renderer::SelectTargetSurfaceFormat ( VkFormat &targetColorFormat,
 
     LogError ( "Renderer::SelectTargetSurfaceFormat - Can't select depth|stencil format." );
     return false;
+}
+
+bool Renderer::CheckExtensionCommon ( std::set<std::string> const &allExtensions,
+    char const* extension
+) noexcept
+{
+    LogInfo ( "%sChecking %s...", INDENT_1, extension );
+
+    if ( allExtensions.count ( extension ) < 1U )
+    {
+        LogError ( "%sFAIL: unsupported", INDENT_2 );
+        return false;
+    }
+
+    LogInfo ( "%sOK: presented", INDENT_2 );
+    return true;
 }
 
 #ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS

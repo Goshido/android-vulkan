@@ -7,6 +7,7 @@
 GX_DISABLE_COMMON_WARNINGS
 
 #include <map>
+#include <set>
 #include <vector>
 #include <android/native_window.h>
 
@@ -176,10 +177,10 @@ class Renderer final
         [[nodiscard]] static char const* ResolveVkFormat ( VkFormat format );
 
     private:
-        [[nodiscard]] bool CheckRequiredDeviceExtensions ( std::vector<char const*> const &deviceExtensions,
-            char const* const* requiredExtensions,
-            size_t requiredExtensionCount
-        );
+        [[nodiscard]] bool CheckExtension16bitStorage ( std::set<std::string> const &allExtensions ) noexcept;
+        [[nodiscard]] bool CheckExtensionMultiview ( std::set<std::string> const &allExtensions ) noexcept;
+        [[nodiscard]] bool CheckExtensionShaderFloat16Int8 ( std::set<std::string> const &allExtensions ) noexcept;
+        [[nodiscard]] bool CheckRequiredDeviceExtensions ( std::vector<char const*> const &deviceExtensions ) noexcept;
 
         // "features" is an array of offsets inside VkPhysicalDeviceFeatures structure.
         [[nodiscard]] bool CheckRequiredFeatures ( VkPhysicalDevice physicalDevice,
@@ -236,6 +237,10 @@ class Renderer final
             VkColorSpaceKHR &targetColorSpace,
             VkFormat &targetDepthStencilFormat
         ) const;
+
+        [[nodiscard]] static bool CheckExtensionCommon ( std::set<std::string> const &allExtensions,
+            char const* extension
+        ) noexcept;
 
 #ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 

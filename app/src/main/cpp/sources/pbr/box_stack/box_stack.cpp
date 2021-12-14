@@ -54,7 +54,7 @@ bool BoxStack::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) 
     constexpr GXVec3 const sphereDims ( sphereSize * 0.5F, sphereSize * 0.5F, sphereSize * 0.5F );
     transform.Scale ( sphereSize, sphereSize, sphereSize );
 
-    auto submit = [ & ] ( GXVec3 const &loc, android_vulkan::ColorUnorm const &color ) noexcept {
+    auto submit = [ & ] ( GXVec3 const &loc, android_vulkan::Color32 const &color ) noexcept {
         GXVec3 location {};
         location.Multiply ( loc, rendererScale );
         transform.SetW ( location );
@@ -205,7 +205,7 @@ bool BoxStack::AppendCuboid ( android_vulkan::Renderer &renderer,
     std::string &&tag,
     ComponentRef &visual,
     char const* material,
-    android_vulkan::ColorUnorm const &color,
+    android_vulkan::Color32 const &color,
     android_vulkan::RigidBodyRef &physical,
     float x,
     float y,
@@ -305,7 +305,7 @@ bool BoxStack::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
         return false;
 
     size_t consumed = 0U;
-    _defaultColor = android_vulkan::ColorUnorm { 255U, 255U, 255U, 255U };
+    _defaultColor = android_vulkan::Color32 ( 255U, 255U, 255U, 255U );
 
     ComponentRef cuboid {};
     android_vulkan::RigidBodyRef body {};
@@ -417,25 +417,25 @@ void BoxStack::UpdatePhysicsActors () noexcept
 void BoxStack::InitColors () noexcept
 {
     // NVIDIA green
-    _colors[ 0U ] = android_vulkan::ColorUnorm { 115U, 185U, 0U, 255U };
+    _colors[ 0U ] = android_vulkan::Color32 ( 115U, 185U, 0U, 255U );
 
     // Yellow
-    _colors[ 1U ] = android_vulkan::ColorUnorm { 223U, 202U, 79U, 255U };
+    _colors[ 1U ] = android_vulkan::Color32 ( 223U, 202U, 79U, 255U );
 
     // Red
-    _colors[ 2U ] = android_vulkan::ColorUnorm { 223U, 79U, 88U, 255U };
+    _colors[ 2U ] = android_vulkan::Color32 ( 223U, 79U, 88U, 255U );
 
     // Purple
-    _colors[ 3U ] = android_vulkan::ColorUnorm { 223U, 79U, 210U, 255U };
+    _colors[ 3U ] = android_vulkan::Color32 ( 223U, 79U, 210U, 255U );
 
     // Blue
-    _colors[ 4U ] = android_vulkan::ColorUnorm { 100U, 79U, 223U, 255U };
+    _colors[ 4U ] = android_vulkan::Color32 ( 100U, 79U, 223U, 255U );
 
     // Cyan
-    _colors[ 5U ] = android_vulkan::ColorUnorm { 79U, 212U, 223U, 255U };
+    _colors[ 5U ] = android_vulkan::Color32 ( 79U, 212U, 223U, 255U );
 
     // Green
-    _colors[ 6U ] = android_vulkan::ColorUnorm { 79U, 223U, 107U, 255U };
+    _colors[ 6U ] = android_vulkan::Color32 ( 79U, 223U, 107U, 255U );
 }
 
 void BoxStack::OnLeftBumper ( void* context ) noexcept

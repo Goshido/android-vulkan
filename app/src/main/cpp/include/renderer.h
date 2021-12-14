@@ -177,7 +177,6 @@ class Renderer final
         [[nodiscard]] static char const* ResolveVkFormat ( VkFormat format );
 
     private:
-        [[nodiscard]] bool CheckExtension16bitStorage ( std::set<std::string> const &allExtensions ) noexcept;
         [[nodiscard]] bool CheckExtensionMultiview ( std::set<std::string> const &allExtensions ) noexcept;
         [[nodiscard]] bool CheckExtensionShaderFloat16Int8 ( std::set<std::string> const &allExtensions ) noexcept;
         [[nodiscard]] bool CheckRequiredDeviceExtensions ( std::vector<char const*> const &deviceExtensions ) noexcept;

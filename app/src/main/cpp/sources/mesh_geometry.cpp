@@ -353,12 +353,14 @@ bool MeshGeometry::UploadComplex ( uint8_t const* data,
     constexpr VkBufferUsageFlags const indexBufferUsageFlags = AV_VK_FLAG ( VK_BUFFER_USAGE_INDEX_BUFFER_BIT ) |
         AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT );
 
+    auto const indexBufferSize = static_cast<VkDeviceSize> ( indexCount * sizeof ( uint32_t ) );
+
     VkBufferCreateInfo bufferInfo
     {
         .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0U,
-        .size = static_cast<VkDeviceSize> ( indexCount * sizeof ( uint32_t ) ),
+        .size = indexBufferSize,
         .usage = indexBufferUsageFlags,
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
         .queueFamilyIndexCount = 0U,
@@ -484,12 +486,12 @@ R"__(MeshGeometry::UploadComplex - Memory usage bits are not same:
         {
             .srcOffset = 0U,
             .dstOffset = 0U,
-            .size = indexBufferMemoryRequirements.size
+            .size = indexBufferSize
         },
         {
-            .srcOffset = indexBufferMemoryRequirements.size,
+            .srcOffset = indexBufferSize,
             .dstOffset = 0U,
-            .size = vertexBufferMemoryRequirements.size
+            .size = bufferInfo.size
         }
     };
 
@@ -506,7 +508,7 @@ R"__(MeshGeometry::UploadComplex - Memory usage bits are not same:
         usages,
         dstBuffers,
         data,
-        indexBufferMemoryRequirements.size + vertexBufferMemoryRequirements.size,
+        static_cast<size_t> ( indexBufferSize + bufferInfo.size ),
         renderer,
         commandBuffer
     );
@@ -601,7 +603,7 @@ bool MeshGeometry::UploadInternal ( size_t numUploads,
         return false;
     }
 
-    memcpy ( transferData, data, dataSize );
+    std::memcpy ( transferData, data, dataSize );
     vkUnmapMemory ( device, _transferMemory );
 
     VkCommandBufferBeginInfo const commandBufferBeginInfo

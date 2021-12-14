@@ -1,8 +1,8 @@
 #include "gpgpu_limits.inc"
 
 
-// 1.0H / 255.0H
-#define UNORM_FACTOR    3.922e-3H
+// 1.0F / 255.0F
+#define UNORM_FACTOR    3.922e-3F
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -50,31 +50,45 @@ struct OutputData
     linear float32_t4               _vertexH:           SV_Position;
 
     [[vk::location ( 0 )]]
-    linear float16_t2               _uv:                UV;
+    linear float32_t2               _uv:                UV;
 
     [[vk::location ( 1 )]]
-    linear float16_t3               _normalView:        NORMAL;
+    linear float32_t3               _normalView:        NORMAL;
 
     [[vk::location ( 2 )]]
-    linear float16_t3               _tangentView:       TANGENT;
+    linear float32_t3               _tangentView:       TANGENT;
 
     [[vk::location ( 3 )]]
-    linear float16_t3               _bitangentView:     BITANGENT;
+    linear float32_t3               _bitangentView:     BITANGENT;
 
     [[vk::location ( 4 )]]
-    nointerpolation float16_t4      _color0:            COLOR_0;
+    nointerpolation float32_t4      _color0:            COLOR_0;
 
     [[vk::location ( 5 )]]
-    nointerpolation float16_t4      _color1:            COLOR_1;
+    nointerpolation float32_t4      _color1:            COLOR_1;
 
     [[vk::location ( 6 )]]
-    nointerpolation float16_t4      _color2:            COLOR_2;
+    nointerpolation float32_t4      _color2:            COLOR_2;
 
     [[vk::location ( 7 )]]
-    nointerpolation float16_t4      _color3:            COLOR_3;
+    nointerpolation float32_t4      _color3:            COLOR_3;
 };
 
 //----------------------------------------------------------------------------------------------------------------------
+
+uint32_t4 UnpackColor ( in uint32_t color )
+{
+    // HLSL unpack_u8u32 intrinsic (DXC compiler) does not accepted by Adreno Vulkan compiler on pipeline creation stage.
+    // The vkCreateGraphicsPipelines just returns VK_ERROR_UNKNOWN. The workaround is to implement unpack operation
+    // by hand.
+
+    uint32_t4 result;
+    result.x = ( color & 0xFF000000U ) >> 24U;
+    result.y = ( color & 0x00FF0000U ) >> 16U;
+    result.z = ( color & 0x0000FF00U ) >> 8U;
+    result.w = color & 0x000000FFU;
+    return result;
+}
 
 OutputData VS ( in InputData inputData )
 {
@@ -86,31 +100,31 @@ OutputData VS ( in InputData inputData )
 
     const ObjectData objectData = g_instanceData[ inputData._instanceIndex ];
     result._vertexH = mul ( objectData._localViewProjection, float32_t4 ( inputData._vertex, 1.0F ) );
-    result._uv = (float16_t2)inputData._uv;
+    result._uv = inputData._uv;
 
     const float32_t3x3 orientation = (float32_t3x3)objectData._localView;
 
     // So pass the color data to the fragment shader :(
     // Disclimer: the color data is visible in the fragment shader already but MALI driver bug... :(
-    const uint16_t4 c0u = unpack_u8u16 ( objectData._color0 );
+    const uint32_t4 c0u = UnpackColor ( objectData._color0 );
 
-    result._normalView = (float16_t3)mul ( orientation, inputData._normal );
-    const uint16_t4 c1u = unpack_u8u16 ( objectData._color1 );
-    const float16_t4 c0h = (float16_t4)c0u;
+    result._normalView = mul ( orientation, inputData._normal );
+    const uint32_t4 c1u = UnpackColor ( objectData._color1 );
+    const float32_t4 c0h = (float32_t4)c0u;
 
-    const uint16_t4 c2u = unpack_u8u16 ( objectData._color2 );
-    const float16_t4 c1h = (float16_t4)c1u;
+    const uint32_t4 c2u = UnpackColor ( objectData._color2 );
+    const float32_t4 c1h = (float32_t4)c1u;
     result._color0 = c0h * UNORM_FACTOR;
 
-    const uint16_t4 c3u = unpack_u8u16 ( objectData._color3 );
-    const float16_t4 c2h = (float16_t4)c2u;
+    const uint32_t4 c3u = UnpackColor ( objectData._color3 );
+    const float32_t4 c2h = (float32_t4)c2u;
     result._color1 = c1h * UNORM_FACTOR;
 
-    const float16_t4 c3h = (float16_t4)c3u;
-    result._tangentView = (float16_t3)mul ( orientation, inputData._tangent );
+    const float32_t4 c3h = (float32_t4)c3u;
+    result._tangentView = mul ( orientation, inputData._tangent );
     result._color2 = c2h * UNORM_FACTOR;
 
-    result._bitangentView = (float16_t3)mul ( orientation, inputData._bitangent );
+    result._bitangentView = mul ( orientation, inputData._bitangent );
     result._color3 = c3h * UNORM_FACTOR;
 
     return result;

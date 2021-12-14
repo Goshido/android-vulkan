@@ -1214,40 +1214,6 @@ char const* Renderer::ResolveVkFormat ( VkFormat format )
     return findResult == _vulkanFormatMap.cend () ? UNKNOWN_RESULT : findResult->second;
 }
 
-bool Renderer::CheckExtension16bitStorage ( std::set<std::string> const &allExtensions ) noexcept
-{
-    if ( !CheckExtensionCommon ( allExtensions, VK_KHR_16BIT_STORAGE_EXTENSION_NAME ) )
-        return false;
-
-    VkPhysicalDevice16BitStorageFeatures hardwareSupport
-    {
-        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES,
-        .pNext = nullptr,
-        .storageBuffer16BitAccess = VK_FALSE,
-        .uniformAndStorageBuffer16BitAccess = VK_FALSE,
-        .storagePushConstant16 = VK_FALSE,
-        .storageInputOutput16 = VK_FALSE
-    };
-
-    VkPhysicalDeviceFeatures2 probe
-    {
-        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
-        .pNext = &hardwareSupport,
-        .features {}
-    };
-
-    vkGetPhysicalDeviceFeatures2 ( _physicalDevice, &probe );
-
-    if ( hardwareSupport.storageInputOutput16 )
-    {
-        LogInfo ( "%sOK: storageInputOutput16", INDENT_2 );
-        return true;
-    }
-
-    LogError ( "%sFAIL: storageInputOutput16", INDENT_2 );
-    return false;
-}
-
 bool Renderer::CheckExtensionMultiview ( std::set<std::string> const &allExtensions ) noexcept
 {
     if ( !CheckExtensionCommon ( allExtensions, VK_KHR_MULTIVIEW_EXTENSION_NAME ) )
@@ -1336,8 +1302,7 @@ bool Renderer::CheckRequiredDeviceExtensions ( std::vector<char const*> const &d
 
     // Note bitwise '&' is intentional. All checks must be done to view whole picture.
 
-    _isDeviceExtensionSupported = CheckExtension16bitStorage ( allExtensions ) &
-        CheckExtensionMultiview ( allExtensions ) &
+    _isDeviceExtensionSupported = CheckExtensionMultiview ( allExtensions ) &
         CheckExtensionShaderFloat16Int8 ( allExtensions ) &
         CheckExtensionCommon ( allExtensions, VK_KHR_SWAPCHAIN_EXTENSION_NAME );
 
@@ -1545,20 +1510,10 @@ bool Renderer::DeployDevice ()
     if ( !CheckRequiredFormats () )
         return false;
 
-    constexpr static VkPhysicalDevice16BitStorageFeatures const ext16BitStorageFeatures
-    {
-        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES,
-        .pNext = nullptr,
-        .storageBuffer16BitAccess = VK_FALSE,
-        .uniformAndStorageBuffer16BitAccess = VK_FALSE,
-        .storagePushConstant16 = VK_FALSE,
-        .storageInputOutput16 = VK_TRUE
-    };
-
     constexpr static VkPhysicalDeviceMultiviewFeatures const multiviewFeatures
     {
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_FEATURES,
-        .pNext = const_cast<VkPhysicalDevice16BitStorageFeatures*> ( &ext16BitStorageFeatures ),
+        .pNext = nullptr,
         .multiview = VK_TRUE,
         .multiviewGeometryShader = VK_FALSE,
         .multiviewTessellationShader = VK_FALSE
@@ -1574,7 +1529,6 @@ bool Renderer::DeployDevice ()
 
     constexpr char const* extensions[] =
     {
-        VK_KHR_16BIT_STORAGE_EXTENSION_NAME,
         VK_KHR_MULTIVIEW_EXTENSION_NAME,
         VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME,
         VK_KHR_SWAPCHAIN_EXTENSION_NAME

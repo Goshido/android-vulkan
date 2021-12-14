@@ -1,117 +1,118 @@
 [[vk::binding ( 0, 0 )]]
-Texture2D<float4>               g_diffuseTexture:       register ( t0 );
+Texture2D<float32_t4>               g_diffuseTexture:       register ( t0 );
 
 [[vk::binding ( 1, 0 )]]
-SamplerState                    g_diffuseSampler:       register ( s0 );
+SamplerState                        g_diffuseSampler:       register ( s0 );
 
 [[vk::binding ( 2, 0 )]]
-Texture2D<float4>               g_emissionTexture:      register ( t1 );
+Texture2D<float32_t4>               g_emissionTexture:      register ( t1 );
 
 [[vk::binding ( 3, 0 )]]
-SamplerState                    g_emissionSampler:      register ( s1 );
+SamplerState                        g_emissionSampler:      register ( s1 );
 
 [[vk::binding ( 4, 0 )]]
-Texture2D<float4>               g_maskTexture:          register ( t2 );
+Texture2D<float32_t4>               g_maskTexture:          register ( t2 );
 
 [[vk::binding ( 5, 0 )]]
-SamplerState                    g_maskSampler:          register ( s2 );
+SamplerState                        g_maskSampler:          register ( s2 );
 
 [[vk::binding ( 6, 0 )]]
-Texture2D<float4>               g_normalTexture:        register ( t3 );
+Texture2D<float32_t4>               g_normalTexture:        register ( t3 );
 
 [[vk::binding ( 7, 0 )]]
-SamplerState                    g_normalSampler:        register ( s3 );
+SamplerState                        g_normalSampler:        register ( s3 );
 
 [[vk::binding ( 8, 0 )]]
-Texture2D<float4>               g_paramTexture:         register ( t4 );
+Texture2D<float32_t4>               g_paramTexture:         register ( t4 );
 
 [[vk::binding ( 9, 0 )]]
-SamplerState                    g_paramSampler:         register ( s4 );
+SamplerState                        g_paramSampler:         register ( s4 );
 
 struct InputData
 {
     [[vk::location ( 0 )]]
-    linear half2                _uv:                    UV;
+    linear float32_t2               _uv:                    UV;
 
     [[vk::location ( 1 )]]
-    linear half3                _normalView:            NORMAL;
+    linear float32_t3               _normalView:            NORMAL;
 
     [[vk::location ( 2 )]]
-    linear half3                _tangentView:           TANGENT;
+    linear float32_t3               _tangentView:           TANGENT;
 
     [[vk::location ( 3 )]]
-    linear half3                _bitangentView:         BITANGENT;
+    linear float32_t3               _bitangentView:         BITANGENT;
 
     [[vk::location ( 4 )]]
-    nointerpolation half4       _color0:                COLOR_0;
+    nointerpolation float32_t4      _color0:                COLOR_0;
 
     [[vk::location ( 5 )]]
-    nointerpolation half4       _color1:                COLOR_1;
+    nointerpolation float32_t4      _color1:                COLOR_1;
 
     [[vk::location ( 6 )]]
-    nointerpolation half4       _color2:                COLOR_2;
+    nointerpolation float32_t4      _color2:                COLOR_2;
 
     [[vk::location ( 7 )]]
-    nointerpolation half4       _color3:                COLOR_3;
+    nointerpolation float32_t4      _color3:                COLOR_3;
 };
 
 struct OutputData
 {
-    float4                      _albedo:                SV_Target0;
-    float4                      _emission:              SV_Target1;
-    float4                      _normal:                SV_Target2;
-    float4                      _param:                 SV_Target3;
+    float32_t4                      _albedo:                SV_Target0;
+    float32_t4                      _emission:              SV_Target1;
+    float32_t4                      _normal:                SV_Target2;
+    float32_t4                      _param:                 SV_Target3;
 };
 
 //----------------------------------------------------------------------------------------------------------------------
 
-half3 GetFinalNormalView ( in half3 tangentView, in half3 bitangentView, in half3 normalView, in float2 uv )
+float32_t3 GetFinalNormalView ( in float32_t3 tangentView,
+    in float32_t3 bitangentView,
+    in float32_t3 normalView,
+    in float32_t2 uv
+)
 {
-    const half2 normalData = mad ( (half2)g_normalTexture.Sample ( g_normalSampler, uv ).xw,
-        (half2)2.0H,
-        (half2)( -1.0H )
+    const float32_t2 normalData = mad ( g_normalTexture.Sample ( g_normalSampler, uv ).xw,
+        (float32_t2)2.0H,
+        (float32_t2)( -1.0H )
     );
 
-    const half3x3 tbnView = half3x3 ( tangentView, bitangentView, normalView );
+    const float32_t3x3 tbnView = float32_t3x3 ( tangentView, bitangentView, normalView );
 
     // DISCLAMER: You might guess it's a good idea for optimization to not perform normalize operation here.
     // In reality it's bad idea. In fact you will see noticable artifacts with specular on the light-up pass.
     // And you will NOT see any performance benefits in terms of FPS on real game scenes.
     // Trust me. I tried (2021-01-27)...
-    return normalize ( mul ( half3 ( normalData.x, normalData.y, 1.0H ), tbnView ) );
+    return normalize ( mul ( float32_t3 ( normalData.xy, 1.0F ), tbnView ) );
 }
 
-float4 PackUnitVector ( in half3 v )
+float32_t4 PackUnitVector ( in float32_t3 v )
 {
-    float4 result;
-    result.xyz = (float3)mad ( v, 0.5H, 0.5H );
-    result.w = 0.5F;
-    return result;
+    return float32_t4 ( mad ( v, 0.5F, 0.5F ), 0.5F );
 }
 
 OutputData PS ( in InputData inputData )
 {
-    const float2 uv = (float2)inputData._uv;
-
-    float3 maskSample = g_maskTexture.Sample ( g_maskSampler, uv ).xyz;
-    const float maskSum = maskSample.x + maskSample.y + maskSample.z;
+    float32_t3 maskSample = g_maskTexture.Sample ( g_maskSampler, inputData._uv ).xyz;
+    const float32_t maskSum = maskSample.x + maskSample.y + maskSample.z;
 
     if ( maskSum > 1.0F )
         maskSample *= 1.0F / maskSum;
 
-    float3 albedoOverlay = (float3)max ( 1.0F - maskSum, 0.0F );
+    float32_t3 albedoOverlay = (float32_t3)max ( 1.0F - maskSum, 0.0F );
     albedoOverlay = mad ( inputData._color0.xyz, maskSample.x, albedoOverlay );
     albedoOverlay = mad ( inputData._color1.xyz, maskSample.y, albedoOverlay );
     albedoOverlay = mad ( inputData._color2.xyz, maskSample.z, albedoOverlay );
 
     OutputData result;
 
-    result._albedo = float4 ( albedoOverlay * g_diffuseTexture.Sample ( g_diffuseSampler, uv ).xyz, 1.0F );
-    result._emission = g_emissionTexture.Sample ( g_emissionSampler, uv );
-    result._param = g_paramTexture.Sample ( g_paramSampler, uv );
+    result._albedo =
+        float32_t4 ( albedoOverlay * g_diffuseTexture.Sample ( g_diffuseSampler, inputData._uv ).xyz, 1.0F );
+
+    result._emission = g_emissionTexture.Sample ( g_emissionSampler, inputData._uv );
+    result._param = g_paramTexture.Sample ( g_paramSampler, inputData._uv );
 
     result._normal = PackUnitVector (
-        GetFinalNormalView ( inputData._tangentView, inputData._bitangentView, inputData._normalView, uv )
+        GetFinalNormalView ( inputData._tangentView, inputData._bitangentView, inputData._normalView, inputData._uv )
     );
 
     return result;

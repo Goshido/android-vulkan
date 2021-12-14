@@ -61,11 +61,7 @@ StaticMeshComponent::StaticMeshComponent ( android_vulkan::Renderer &renderer,
 ) noexcept:
     Component ( ClassID::StaticMesh )
 {
-    _color0._red = DEFAULT_COLOR;
-    _color0._green = DEFAULT_COLOR;
-    _color0._blue = DEFAULT_COLOR;
-    _color0._alpha = DEFAULT_COLOR;
-
+    _color0 = android_vulkan::Color32 ( DEFAULT_COLOR, DEFAULT_COLOR, DEFAULT_COLOR, DEFAULT_COLOR );
     _color1 = _color0;
     _color2 = _color0;
     _color3 = _color0;
@@ -100,62 +96,62 @@ void StaticMeshComponent::Submit ( RenderSession &renderSession )
     return _worldBounds;
 }
 
-[[maybe_unused]] android_vulkan::ColorUnorm const& StaticMeshComponent::GetColor0 () const noexcept
+[[maybe_unused]] android_vulkan::Color32 const& StaticMeshComponent::GetColor0 () const noexcept
 {
     return _color0;
 }
 
 [[maybe_unused]] void StaticMeshComponent::SetColor0 ( GXColorRGB const &color ) noexcept
 {
-    color.ConvertToUByte ( _color0._red, _color0._green, _color0._blue, _color0._alpha );
+    color.ConvertToUByte ( _color0._data[ 3U ], _color0._data[ 2U ], _color0._data[ 1U ], _color0._data[ 0U ] );
 }
 
-void StaticMeshComponent::SetColor0 ( android_vulkan::ColorUnorm const &color ) noexcept
+void StaticMeshComponent::SetColor0 ( android_vulkan::Color32 const &color ) noexcept
 {
     _color0 = color;
 }
 
-[[maybe_unused]] android_vulkan::ColorUnorm const& StaticMeshComponent::GetColor1 () const noexcept
+[[maybe_unused]] android_vulkan::Color32 const& StaticMeshComponent::GetColor1 () const noexcept
 {
     return _color1;
 }
 
 [[maybe_unused]] void StaticMeshComponent::SetColor1 ( GXColorRGB const &color ) noexcept
 {
-    color.ConvertToUByte ( _color1._red, _color1._green, _color1._blue, _color1._alpha );
+    color.ConvertToUByte ( _color1._data[ 3U ], _color1._data[ 2U ], _color1._data[ 1U ], _color1._data[ 0U ] );
 }
 
-[[maybe_unused]] void StaticMeshComponent::SetColor1 ( android_vulkan::ColorUnorm const &color ) noexcept
+[[maybe_unused]] void StaticMeshComponent::SetColor1 ( android_vulkan::Color32 const &color ) noexcept
 {
     _color1 = color;
 }
 
-[[maybe_unused]] android_vulkan::ColorUnorm const& StaticMeshComponent::GetColor2 () const noexcept
+[[maybe_unused]] android_vulkan::Color32 const& StaticMeshComponent::GetColor2 () const noexcept
 {
     return _color2;
 }
 
 [[maybe_unused]] void StaticMeshComponent::SetColor2 ( GXColorRGB const &color ) noexcept
 {
-    color.ConvertToUByte ( _color2._red, _color2._green, _color2._blue, _color2._alpha );
+    color.ConvertToUByte ( _color2._data[ 3U ], _color2._data[ 2U ], _color2._data[ 1U ], _color2._data[ 0U ] );
 }
 
-[[maybe_unused]] void StaticMeshComponent::SetColor2 ( android_vulkan::ColorUnorm const &color ) noexcept
+[[maybe_unused]] void StaticMeshComponent::SetColor2 ( android_vulkan::Color32 const &color ) noexcept
 {
     _color2 = color;
 }
 
-[[maybe_unused]] android_vulkan::ColorUnorm const& StaticMeshComponent::GetColor3 () const noexcept
+[[maybe_unused]] android_vulkan::Color32 const& StaticMeshComponent::GetColor3 () const noexcept
 {
     return _color3;
 }
 
 [[maybe_unused]] void StaticMeshComponent::SetColor3 ( GXColorRGB const &color ) noexcept
 {
-    color.ConvertToUByte ( _color3._red, _color3._green, _color3._blue, _color3._alpha );
+    color.ConvertToUByte ( _color3._data[ 3U ], _color3._data[ 2U ], _color3._data[ 1U ], _color3._data[ 0U ] );
 }
 
-[[maybe_unused]] void StaticMeshComponent::SetColor3 ( android_vulkan::ColorUnorm const &color ) noexcept
+[[maybe_unused]] void StaticMeshComponent::SetColor3 ( android_vulkan::Color32 const &color ) noexcept
 {
     _color3 = color;
 }

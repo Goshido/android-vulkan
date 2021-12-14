@@ -6,7 +6,7 @@
 #include "opaque_instance_descriptor_set_layout.h"
 #include "opaque_texture_descriptor_set_layout.h"
 #include "program.h"
-#include <primitive_types.h>
+#include <color32.h>
 #include <vulkan_utils.h>
 
 
@@ -19,24 +19,24 @@ class OpaqueProgram final : public Program
 
         struct ObjectData final
         {
-            GXMat4                                          _localView;
-            GXMat4                                          _localViewProjection;
-            [[maybe_unused]] android_vulkan::ColorUnorm     _color0;
-            [[maybe_unused]] android_vulkan::ColorUnorm     _color1;
-            [[maybe_unused]] android_vulkan::ColorUnorm     _color2;
-            [[maybe_unused]] android_vulkan::ColorUnorm     _color3;
+            GXMat4                                      _localView;
+            GXMat4                                      _localViewProjection;
+            [[maybe_unused]] android_vulkan::Color32    _color0;
+            [[maybe_unused]] android_vulkan::Color32    _color1;
+            [[maybe_unused]] android_vulkan::Color32    _color2;
+            [[maybe_unused]] android_vulkan::Color32    _color3;
         };
 
         struct InstanceData final
         {
-            ObjectData                                      _instanceData[ PBR_OPAQUE_MAX_INSTANCE_COUNT ];
+            ObjectData                                  _instanceData[ PBR_OPAQUE_MAX_INSTANCE_COUNT ];
         };
 
         AV_DX_ALIGNMENT_END
 
     private:
-        OpaqueInstanceDescriptorSetLayout                   _instanceLayout;
-        OpaqueTextureDescriptorSetLayout                    _textureLayout;
+        OpaqueInstanceDescriptorSetLayout               _instanceLayout;
+        OpaqueTextureDescriptorSetLayout                _textureLayout;
 
     public:
         OpaqueProgram () noexcept;

@@ -31,10 +31,10 @@ class OpaqueCall final
         explicit OpaqueCall ( MeshRef &mesh,
             const GXMat4 &local,
             GXAABB const &worldBounds,
-            android_vulkan::ColorUnorm const &color0,
-            android_vulkan::ColorUnorm const &color1,
-            android_vulkan::ColorUnorm const &color2,
-            android_vulkan::ColorUnorm const &color3
+            android_vulkan::Color32 const &color0,
+            android_vulkan::Color32 const &color1,
+            android_vulkan::Color32 const &color2,
+            android_vulkan::Color32 const &color3
         ) noexcept;
 
         ~OpaqueCall () = default;
@@ -45,10 +45,10 @@ class OpaqueCall final
         void Append ( MeshRef &mesh,
             const GXMat4 &local,
             GXAABB const &worldBounds,
-            android_vulkan::ColorUnorm const &color0,
-            android_vulkan::ColorUnorm const &color1,
-            android_vulkan::ColorUnorm const &color2,
-            android_vulkan::ColorUnorm const &color3
+            android_vulkan::Color32 const &color0,
+            android_vulkan::Color32 const &color1,
+            android_vulkan::Color32 const &color2,
+            android_vulkan::Color32 const &color3
         ) noexcept;
 
         [[nodiscard]] BatchList const& GetBatchList () const noexcept;
@@ -58,19 +58,19 @@ class OpaqueCall final
         void AddBatch ( MeshRef &mesh,
             GXMat4 const &local,
             GXAABB const &worldBounds,
-            android_vulkan::ColorUnorm const &color0,
-            android_vulkan::ColorUnorm const &color1,
-            android_vulkan::ColorUnorm const &color2,
-            android_vulkan::ColorUnorm const &color3
+            android_vulkan::Color32 const &color0,
+            android_vulkan::Color32 const &color1,
+            android_vulkan::Color32 const &color2,
+            android_vulkan::Color32 const &color3
         ) noexcept;
 
         void AddUnique ( MeshRef &mesh,
             GXMat4 const &local,
             GXAABB const &worldBounds,
-            android_vulkan::ColorUnorm const &color0,
-            android_vulkan::ColorUnorm const &color1,
-            android_vulkan::ColorUnorm const &color2,
-            android_vulkan::ColorUnorm const &color3
+            android_vulkan::Color32 const &color0,
+            android_vulkan::Color32 const &color1,
+            android_vulkan::Color32 const &color2,
+            android_vulkan::Color32 const &color3
         ) noexcept;
 };
 

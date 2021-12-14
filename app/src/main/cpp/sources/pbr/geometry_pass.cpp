@@ -203,10 +203,10 @@ void GeometryPass::Submit ( MeshRef &mesh,
     MaterialRef const &material,
     GXMat4 const &local,
     GXAABB const &worldBounds,
-    android_vulkan::ColorUnorm const &color0,
-    android_vulkan::ColorUnorm const &color1,
-    android_vulkan::ColorUnorm const &color2,
-    android_vulkan::ColorUnorm const &color3
+    android_vulkan::Color32 const &color0,
+    android_vulkan::Color32 const &color1,
+    android_vulkan::Color32 const &color2,
+    android_vulkan::Color32 const &color3
 )
 {
     // Note it's safe to cast like that here. "NOLINT" is a clang-tidy control comment.

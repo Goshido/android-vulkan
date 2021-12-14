@@ -9,12 +9,12 @@
 
 namespace pbr::ray_casting {
 
-constexpr static float const FIELD_OF_VIEW = 75.0F;
-constexpr static float const Z_NEAR = 0.1F;
-constexpr static float const Z_FAR = 1.0e+4F;
+constexpr static float FIELD_OF_VIEW = 75.0F;
+constexpr static float Z_NEAR = 0.1F;
+constexpr static float Z_FAR = 1.0e+4F;
 
-constexpr static uint32_t const RESOLUTION_SCALE_WIDTH = 100U;
-constexpr static uint32_t const RESOLUTION_SCALE_HEIGHT = 100U;
+constexpr static uint32_t RESOLUTION_SCALE_WIDTH = 100U;
+constexpr static uint32_t RESOLUTION_SCALE_HEIGHT = 100U;
 
 constexpr float const ROTATION_SPEED = 5.0e-2F * GX_MATH_DOUBLE_PI;
 
@@ -142,7 +142,7 @@ void RayCasting::Animate ( float deltaTime ) noexcept
     b.SetVelocityAngular ( a, false );
 
     GXMat4 transform {};
-    constexpr GXVec3 const l ( 0.0F, 0.0F, 0.0F );
+    constexpr GXVec3 l ( 0.0F, 0.0F, 0.0F );
     transform.FromFast ( b.GetRotation (), l );
 
     // NOLINTNEXTLINE
@@ -202,17 +202,17 @@ bool RayCasting::LoadResources ( android_vulkan::Renderer &renderer ) noexcept
     _camera.SetMovingSpeed ( 1.67F );
     _camera.Update ( 0.0F );
 
-    constexpr size_t const cubeMeshCommandBuffers = 1U;
-    constexpr size_t const cubeMaterialCommandBuffers = 5U;
-    constexpr size_t const cubeCommandBuffers = cubeMeshCommandBuffers + cubeMaterialCommandBuffers;
+    constexpr size_t cubeMeshCommandBuffers = 1U;
+    constexpr size_t cubeMaterialCommandBuffers = 5U;
+    constexpr size_t cubeCommandBuffers = cubeMeshCommandBuffers + cubeMaterialCommandBuffers;
 
-    constexpr size_t const normalMaterialCommandBuffers = 1U;
+    constexpr size_t normalMaterialCommandBuffers = 1U;
 
-    constexpr size_t const rayMeshCommandBuffers = 1U;
-    constexpr size_t const rayTextureCommandBuffers = 2U;
-    constexpr size_t const rayCommandBuffers = rayMeshCommandBuffers + rayTextureCommandBuffers;
+    constexpr size_t rayMeshCommandBuffers = 1U;
+    constexpr size_t rayTextureCommandBuffers = 2U;
+    constexpr size_t rayCommandBuffers = rayMeshCommandBuffers + rayTextureCommandBuffers;
 
-    constexpr size_t const comBuffs = cubeCommandBuffers + normalMaterialCommandBuffers + rayCommandBuffers;
+    constexpr size_t comBuffs = cubeCommandBuffers + normalMaterialCommandBuffers + rayCommandBuffers;
 
     VkCommandBufferAllocateInfo const allocateInfo
     {
@@ -396,8 +396,8 @@ bool RayCasting::LoadResources ( android_vulkan::Renderer &renderer ) noexcept
 
 void RayCasting::Raycast () noexcept
 {
-    constexpr GXVec3 const rayFrom ( 7.577F, -5.211F, -6.411F );
-    constexpr GXVec3 const rayTo ( -4.267F, 2.92F, 8.586F );
+    constexpr GXVec3 rayFrom ( 7.577F, -5.211F, -6.411F );
+    constexpr GXVec3 rayTo ( -4.267F, 2.92F, 8.586F );
 
     GXVec3 dir {};
     dir.Subtract ( rayTo, rayFrom );
@@ -414,7 +414,7 @@ void RayCasting::Raycast () noexcept
     GXVec3 y {};
     basis.GetY ( y );
 
-    constexpr float const rayThickness = 1.0e-2F;
+    constexpr float rayThickness = 1.0e-2F;
     x.Multiply ( x, rayThickness );
     y.Multiply ( y, rayThickness );
 
@@ -428,7 +428,7 @@ void RayCasting::Raycast () noexcept
     GXAABB bounds {};
     _lineMesh->GetBounds ().Transform ( bounds, transform );
 
-    constexpr android_vulkan::ColorUnorm const color { 0U, 0U, 0U, 0U };
+    constexpr android_vulkan::Color32 color ( 0U, 0U, 0U, 0U );
     android_vulkan::RaycastResult result {};
 
     if ( !_physics.Raycast ( result, rayFrom, rayTo ) )
@@ -446,7 +446,7 @@ void RayCasting::Raycast () noexcept
     basis.GetX ( x );
     basis.GetY ( y );
 
-    constexpr float const normalThickness = 2.0e-2F;
+    constexpr float normalThickness = 2.0e-2F;
     x.Multiply ( x, normalThickness );
 
     GXVec3 z {};
@@ -456,7 +456,7 @@ void RayCasting::Raycast () noexcept
     basis.SetX ( x );
     basis.SetY ( y );
 
-    constexpr float const normalLength = 7.777e-1F;
+    constexpr float normalLength = 7.777e-1F;
     z.Multiply ( z, normalLength );
     basis.SetZ ( z );
 

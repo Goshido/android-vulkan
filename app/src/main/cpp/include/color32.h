@@ -23,13 +23,13 @@ class Color32 final
         Color32 ( Color32 && ) = default;
         Color32& operator = ( Color32 && ) = default;
 
-        constexpr Color32 ( uint8_t red, uint8_t green, uint8_t blue, uint8_t alpha ) noexcept:
+        constexpr explicit Color32 ( uint8_t red, uint8_t green, uint8_t blue, uint8_t alpha ) noexcept:
             _data { alpha, blue, green, red }
         {
             // NOHTING
         }
 
-        constexpr Color32 ( ColorUnorm color ) noexcept:
+        constexpr explicit Color32 ( ColorUnorm color ) noexcept:
             _data { color._alpha, color._blue, color._green, color._red }
         {
             // NOHTING

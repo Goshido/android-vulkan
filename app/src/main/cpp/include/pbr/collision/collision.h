@@ -37,9 +37,29 @@ class Collision final : public android_vulkan::Game
         Manipulator                         _manipulator {};
         RenderSession                       _renderSession {};
 
-        android_vulkan::Color32 const       _aColor { 115U, 185U, 0U, 255U };
-        android_vulkan::Color32 const       _bColor { 223U, 79U, 88U, 255U };
-        android_vulkan::Color32 const       _defaultColor { 255U, 255U, 255U, 255U };
+        GXColorRGB const                    _aColor
+        {
+            static_cast<GXUByte> ( 115U ),
+            static_cast<GXUByte> ( 185U ),
+            static_cast<GXUByte> ( 0U ),
+            static_cast<GXUByte> ( 255U )
+        };
+
+        GXColorRGB const                    _bColor
+        {
+            static_cast<GXUByte> ( 223U ),
+            static_cast<GXUByte> ( 79U ),
+            static_cast<GXUByte> ( 88U ),
+            static_cast<GXUByte> ( 255U )
+        };
+
+        GXColorRGB const                    _defaultColor
+        {
+            static_cast<GXUByte> ( 255U ),
+            static_cast<GXUByte> ( 255U ),
+            static_cast<GXUByte> ( 255U ),
+            static_cast<GXUByte> ( 255U )
+        };
 
     public:
         Collision () = default;
@@ -74,7 +94,7 @@ class Collision final : public android_vulkan::Game
             std::string &&tag,
             ComponentRef &visual,
             char const* material,
-            android_vulkan::Color32 const &color,
+            GXColorRGB const &color,
             android_vulkan::RigidBodyRef &physical,
             float x,
             float y,

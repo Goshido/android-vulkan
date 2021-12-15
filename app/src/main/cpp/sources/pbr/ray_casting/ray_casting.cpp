@@ -428,7 +428,7 @@ void RayCasting::Raycast () noexcept
     GXAABB bounds {};
     _lineMesh->GetBounds ().Transform ( bounds, transform );
 
-    constexpr android_vulkan::Color32 color ( 0U, 0U, 0U, 0U );
+    constexpr GXColorRGB color ( 0.0F, 0.0F, 0.0F, 0.0F );
     android_vulkan::RaycastResult result {};
 
     if ( !_physics.Raycast ( result, rayFrom, rayTo ) )

@@ -1,3 +1,6 @@
+#include "object-data.inc"
+
+
 [[vk::binding ( 0, 0 )]]
 Texture2D<float32_t4>               g_diffuseTexture:       register ( t0 );
 
@@ -43,16 +46,7 @@ struct InputData
     linear float32_t3               _bitangentView:         BITANGENT;
 
     [[vk::location ( 4 )]]
-    nointerpolation float32_t4      _color0:                COLOR_0;
-
-    [[vk::location ( 5 )]]
-    nointerpolation float32_t4      _color1:                COLOR_1;
-
-    [[vk::location ( 6 )]]
-    nointerpolation float32_t4      _color2:                COLOR_2;
-
-    [[vk::location ( 7 )]]
-    nointerpolation float32_t4      _color3:                COLOR_3;
+    nointerpolation uint32_t        _instanceIndex:         INSTANCE_INDEX;
 };
 
 struct OutputData
@@ -92,6 +86,8 @@ float32_t4 PackUnitVector ( in float32_t3 v )
 
 OutputData PS ( in InputData inputData )
 {
+    const ObjectData objectData = g_instanceData[ inputData._instanceIndex ];
+
     float32_t3 maskSample = g_maskTexture.Sample ( g_maskSampler, inputData._uv ).xyz;
     const float32_t maskSum = maskSample.x + maskSample.y + maskSample.z;
 
@@ -99,16 +95,20 @@ OutputData PS ( in InputData inputData )
         maskSample *= 1.0F / maskSum;
 
     float32_t3 albedoOverlay = (float32_t3)max ( 1.0F - maskSum, 0.0F );
-    albedoOverlay = mad ( inputData._color0.xyz, maskSample.x, albedoOverlay );
-    albedoOverlay = mad ( inputData._color1.xyz, maskSample.y, albedoOverlay );
-    albedoOverlay = mad ( inputData._color2.xyz, maskSample.z, albedoOverlay );
+    albedoOverlay = mad ( objectData._color0.xyz, maskSample.x, albedoOverlay );
+    albedoOverlay = mad ( objectData._color1.xyz, maskSample.y, albedoOverlay );
+    albedoOverlay = mad ( objectData._color2.xyz, maskSample.z, albedoOverlay );
 
     OutputData result;
 
     result._albedo =
         float32_t4 ( albedoOverlay * g_diffuseTexture.Sample ( g_diffuseSampler, inputData._uv ).xyz, 1.0F );
 
-    result._emission = g_emissionTexture.Sample ( g_emissionSampler, inputData._uv );
+    result._emission = float32_t4 (
+        g_emissionTexture.Sample ( g_emissionSampler, inputData._uv ).xyz * objectData._color3.xyz,
+        1.0F
+    );
+
     result._param = g_paramTexture.Sample ( g_paramSampler, inputData._uv );
 
     result._normal = PackUnitVector (

@@ -6,10 +6,10 @@ namespace pbr {
 OpaqueCall::OpaqueCall ( MeshRef &mesh,
     GXMat4 const &local,
     GXAABB const &worldBounds,
-    android_vulkan::Color32 const &color0,
-    android_vulkan::Color32 const &color1,
-    android_vulkan::Color32 const &color2,
-    android_vulkan::Color32 const &color3
+    GXColorRGB const &color0,
+    GXColorRGB const &color1,
+    GXColorRGB const &color2,
+    GXColorRGB const &color3
 ) noexcept
 {
     Append ( mesh, local, worldBounds, color0, color1, color2, color3 );
@@ -28,10 +28,10 @@ OpaqueCall::UniqueList const& OpaqueCall::GetUniqueList () const noexcept
 void OpaqueCall::Append ( MeshRef &mesh,
     GXMat4 const &local,
     GXAABB const &worldBounds,
-    android_vulkan::Color32 const &color0,
-    android_vulkan::Color32 const &color1,
-    android_vulkan::Color32 const &color2,
-    android_vulkan::Color32 const &color3
+    GXColorRGB const &color0,
+    GXColorRGB const &color1,
+    GXColorRGB const &color2,
+    GXColorRGB const &color3
 ) noexcept
 {
     if ( mesh->IsUnique () )
@@ -46,10 +46,10 @@ void OpaqueCall::Append ( MeshRef &mesh,
 void OpaqueCall::AddBatch ( MeshRef &mesh,
     GXMat4 const &local,
     GXAABB const &worldBounds,
-    android_vulkan::Color32 const &color0,
-    android_vulkan::Color32 const &color1,
-    android_vulkan::Color32 const &color2,
-    android_vulkan::Color32 const &color3
+    GXColorRGB const &color0,
+    GXColorRGB const &color1,
+    GXColorRGB const &color2,
+    GXColorRGB const &color3
 ) noexcept
 {
     std::string const& name = mesh->GetName ();
@@ -82,10 +82,10 @@ void OpaqueCall::AddBatch ( MeshRef &mesh,
 void OpaqueCall::AddUnique ( MeshRef &mesh,
     GXMat4 const &local,
     GXAABB const &worldBounds,
-    android_vulkan::Color32 const &color0,
-    android_vulkan::Color32 const &color1,
-    android_vulkan::Color32 const &color2,
-    android_vulkan::Color32 const &color3
+    GXColorRGB const &color0,
+    GXColorRGB const &color1,
+    GXColorRGB const &color2,
+    GXColorRGB const &color3
 ) noexcept
 {
     _unique.emplace_back (

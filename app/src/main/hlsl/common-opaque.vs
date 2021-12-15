@@ -1,29 +1,10 @@
-#include "gpgpu_limits.inc"
+#include "object-data.inc"
 
 
 // 1.0F / 255.0F
 #define UNORM_FACTOR    3.922e-3F
 
 //----------------------------------------------------------------------------------------------------------------------
-
-struct ObjectData
-{
-    float32_t4x4                    _localView;
-    float32_t4x4                    _localViewProjection;
-    uint32_t                        _color0;
-    uint32_t                        _color1;
-    uint32_t                        _color2;
-    uint32_t                        _color3;
-};
-
-[[vk::binding ( 0, 1 )]]
-cbuffer InstanceData:                                   register ( b0 )
-{
-    // sizeof ( ObjectData ) = 160 bytes
-    // sizeof ( InstanceData ) = 6720 bytes, less than minimum "Supported Limit"
-    // see https://vulkan.lunarg.com/doc/view/1.1.108.0/mac/chunked_spec/chap36.html#limits-minmax
-    ObjectData                      g_instanceData[ PBR_OPAQUE_MAX_INSTANCE_COUNT ];
-}
 
 struct InputData
 {
@@ -62,39 +43,16 @@ struct OutputData
     linear float32_t3               _bitangentView:     BITANGENT;
 
     [[vk::location ( 4 )]]
-    nointerpolation float32_t4      _color0:            COLOR_0;
-
-    [[vk::location ( 5 )]]
-    nointerpolation float32_t4      _color1:            COLOR_1;
-
-    [[vk::location ( 6 )]]
-    nointerpolation float32_t4      _color2:            COLOR_2;
-
-    [[vk::location ( 7 )]]
-    nointerpolation float32_t4      _color3:            COLOR_3;
+    nointerpolation uint32_t        _instanceIndex:     INSTANCE_INDEX;
 };
 
 //----------------------------------------------------------------------------------------------------------------------
 
-uint32_t4 UnpackColor ( in uint32_t color )
-{
-    // HLSL unpack_u8u32 intrinsic (DXC compiler) does not accepted by Adreno Vulkan compiler on pipeline creation stage.
-    // The vkCreateGraphicsPipelines just returns VK_ERROR_UNKNOWN. The workaround is to implement unpack operation
-    // by hand.
-
-    uint32_t4 result;
-    result.x = ( color & 0xFF000000U ) >> 24U;
-    result.y = ( color & 0x00FF0000U ) >> 16U;
-    result.z = ( color & 0x0000FF00U ) >> 8U;
-    result.w = color & 0x000000FFU;
-    return result;
-}
-
 OutputData VS ( in InputData inputData )
 {
-    // Note current implementation is suboptimal because of known MALI driver bug.
-    // MALI-G76 optimizes _colorX members and breaks memory layout if no any references to those members in the shader.
+    // Note there was a MALI-G76 bug in the driver:
     // https://community.arm.com/developer/tools-software/graphics/f/discussions/47814/mali-g76-mc4-vulkan-driver-bug
+    // It was decided to ignore it after changing float16_t4 to float32_t4 for palette colors in [2021-12-15].
 
     OutputData result;
 
@@ -103,29 +61,11 @@ OutputData VS ( in InputData inputData )
     result._uv = inputData._uv;
 
     const float32_t3x3 orientation = (float32_t3x3)objectData._localView;
-
-    // So pass the color data to the fragment shader :(
-    // Disclimer: the color data is visible in the fragment shader already but MALI driver bug... :(
-    const uint32_t4 c0u = UnpackColor ( objectData._color0 );
-
     result._normalView = mul ( orientation, inputData._normal );
-    const uint32_t4 c1u = UnpackColor ( objectData._color1 );
-    const float32_t4 c0h = (float32_t4)c0u;
-
-    const uint32_t4 c2u = UnpackColor ( objectData._color2 );
-    const float32_t4 c1h = (float32_t4)c1u;
-    result._color0 = c0h * UNORM_FACTOR;
-
-    const uint32_t4 c3u = UnpackColor ( objectData._color3 );
-    const float32_t4 c2h = (float32_t4)c2u;
-    result._color1 = c1h * UNORM_FACTOR;
-
-    const float32_t4 c3h = (float32_t4)c3u;
     result._tangentView = mul ( orientation, inputData._tangent );
-    result._color2 = c2h * UNORM_FACTOR;
-
     result._bitangentView = mul ( orientation, inputData._bitangent );
-    result._color3 = c3h * UNORM_FACTOR;
+
+    result._instanceIndex = inputData._instanceIndex;
 
     return result;
 }

@@ -16,7 +16,7 @@ constexpr static float Z_FAR = 1.0e+4F;
 constexpr static uint32_t RESOLUTION_SCALE_WIDTH = 100U;
 constexpr static uint32_t RESOLUTION_SCALE_HEIGHT = 100U;
 
-constexpr float const ROTATION_SPEED = 5.0e-2F * GX_MATH_DOUBLE_PI;
+constexpr float ROTATION_SPEED = 5.0e-2F * GX_MATH_DOUBLE_PI;
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -238,16 +238,21 @@ bool RayCasting::LoadResources ( android_vulkan::Renderer &renderer ) noexcept
         return false;
 
     size_t consumed;
+    bool success;
 
     _cube = std::make_shared<StaticMeshComponent> ( renderer,
+        success,
         consumed,
         "pbr/system/unit-cube.mesh2",
         "pbr/assets/Props/PBR/DefaultCSGEmissiveBright.mtl",
         cb
     );
 
-    if ( !_cube )
+    if ( !success )
+    {
+        _cube.reset ();
         return false;
+    }
 
     cb += consumed;
 
@@ -428,7 +433,7 @@ void RayCasting::Raycast () noexcept
     GXAABB bounds {};
     _lineMesh->GetBounds ().Transform ( bounds, transform );
 
-    constexpr GXColorRGB color ( 0.0F, 0.0F, 0.0F, 0.0F );
+    constexpr GXColorRGB color ( 1.0F, 1.0F, 1.0F, 1.0F );
     android_vulkan::RaycastResult result {};
 
     if ( !_physics.Raycast ( result, rayFrom, rayTo ) )

@@ -140,7 +140,8 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/pbr/mario/riddle.cpp
     app/src/main/cpp/sources/pbr/mario/world1x1.cpp
     app/src/main/cpp/sources/pbr/ray_casting/ray_casting.cpp
-    app/src/main/cpp/sources/pbr/sweep_testing/actor.cpp
+    app/src/main/cpp/sources/pbr/sweep_testing/actor_body.cpp
+    app/src/main/cpp/sources/pbr/sweep_testing/actor_sweep.cpp
     app/src/main/cpp/sources/pbr/sweep_testing/sweep_testing.cpp
     app/src/main/cpp/sources/rainbow/rainbow.cpp
     app/src/main/cpp/sources/rotating_mesh/game.cpp

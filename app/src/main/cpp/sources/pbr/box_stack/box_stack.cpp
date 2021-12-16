@@ -215,15 +215,21 @@ bool BoxStack::AppendCuboid ( android_vulkan::Renderer &renderer,
     float d
 ) noexcept
 {
+    bool success;
+
     visual = std::make_shared<StaticMeshComponent> ( renderer,
+        success,
         commandBufferConsumed,
         "pbr/system/unit-cube.mesh2",
         material,
         commandBuffers
     );
 
-    if ( !visual )
+    if ( !success )
+    {
+        visual.reset ();
         return false;
+    }
 
     // NOLINTNEXTLINE
     auto& v = *static_cast<StaticMeshComponent*> ( visual.get () );

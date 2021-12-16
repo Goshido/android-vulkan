@@ -105,7 +105,7 @@ OutputData PS ( in InputData inputData )
         float32_t4 ( albedoOverlay * g_diffuseTexture.Sample ( g_diffuseSampler, inputData._uv ).xyz, 1.0F );
 
     result._emission = float32_t4 (
-        g_emissionTexture.Sample ( g_emissionSampler, inputData._uv ).xyz * objectData._color3.xyz,
+        g_emissionTexture.Sample ( g_emissionSampler, inputData._uv ).xyz * objectData._emission.xyz,
         1.0F
     );
 

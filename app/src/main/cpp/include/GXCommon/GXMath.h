@@ -1,4 +1,4 @@
-// version 1.72
+// version 1.73
 
 #ifndef GX_MATH
 #define GX_MATH
@@ -684,6 +684,8 @@ struct [[maybe_unused]] GXMat4 final
     [[maybe_unused]] GXVoid Ortho ( GXFloat width, GXFloat height, GXFloat zNear, GXFloat zFar ) noexcept;
 
     [[maybe_unused]] GXVoid Translation ( GXFloat x, GXFloat y, GXFloat z ) noexcept;
+    [[maybe_unused]] GXVoid Translation ( GXVec3 const &location ) noexcept;
+
     [[maybe_unused]] GXVoid TranslateTo ( GXFloat x, GXFloat y, GXFloat z ) noexcept;
     [[maybe_unused]] GXVoid TranslateTo ( GXVec3 const &location ) noexcept;
 

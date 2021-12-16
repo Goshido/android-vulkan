@@ -22,14 +22,23 @@ bool SweepTesting::IsReady () noexcept
 bool SweepTesting::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) noexcept
 {
     auto const dt = static_cast<float> ( deltaTime );
-    _physics.Simulate ( dt );
-    _camera.Update ( dt );
 
     _renderSession.Begin ( _camera.GetLocalMatrix (), _camera.GetProjectionMatrix () );
     _light.Submit ( _renderSession );
 
-    for ( auto& actor : _actors )
-        actor.Submit ( _renderSession );
+    for ( auto& body : _bodies )
+        body.Update ( dt );
+
+    _physics.Simulate ( dt );
+    _camera.Update ( dt );
+    _sweep.Update ( dt );
+
+    // TODO sweep test logic.
+
+    for ( auto& body : _bodies )
+        body.Submit ( _renderSession );
+
+    _sweep.Submit ( _renderSession );
 
     return _renderSession.End ( renderer, deltaTime );
 }
@@ -60,9 +69,10 @@ bool SweepTesting::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 void SweepTesting::OnDestroyDevice ( VkDevice device ) noexcept
 {
     _renderSession.OnDestroyDevice ( device );
+    _sweep.Destroy ();
 
-    for ( auto& actor : _actors )
-        actor.Destroy ();
+    for ( auto& body : _bodies )
+        body.Destroy ();
 
     if ( _overlay )
     {
@@ -157,8 +167,8 @@ bool SweepTesting::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
     _light.SetBoundDimensions ( lightBounds, lightBounds, lightBounds );
     _light.SetIntensity ( 16.0F );
 
-    constexpr size_t actorMeshCommandBuffers = 1U;
-    constexpr size_t materialCommandBuffers = 1U;
+    constexpr size_t actorMeshCommandBuffers = 2U;
+    constexpr size_t materialCommandBuffers = 2U;
     constexpr size_t overlayTextureCommandBuffers = 1U;
     constexpr size_t comBuffs = actorMeshCommandBuffers + materialCommandBuffers + overlayTextureCommandBuffers;
 
@@ -184,8 +194,34 @@ bool SweepTesting::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
     if ( !result )
         return false;
 
+    _overlay = std::make_shared<android_vulkan::Texture2D> ();
+    android_vulkan::Texture2D& t = *_overlay;
+    constexpr uint8_t const color[ 4U ] = { 255U, 255U, 255U, 255U };
+
+    result = t.UploadData ( renderer,
+        color,
+        sizeof ( color ),
+
+        VkExtent2D
+            {
+                .width = 1U,
+                .height = 1U
+            },
+
+        VK_FORMAT_R8G8B8A8_SRGB,
+        false,
+        *cb
+    );
+
+    if ( !result )
+        return false;
+
+    ++cb;
+
+    t.AssignName ( "Overlay" );
+
     constexpr GXVec3 blockSize ( 0.5F, 0.2F, 0.4F );
-    constexpr float gapSize = 0.2F;
+    constexpr float gapSize = 0.3F;
 
     constexpr GXVec2 blocks ( static_cast<float> ( GRID_X ), static_cast<float> ( GRID_Z ) );
     constexpr GXVec2 gaps ( static_cast<float> ( GRID_X - 1U ), static_cast<float> ( GRID_Z - 1U ) );
@@ -204,6 +240,7 @@ bool SweepTesting::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
     );
 
     GXVec3 location ( 0.0F, 0.0F, 0.0F );
+    size_t consumed;
 
     for ( size_t x = 0U, ind = 0U; x < GRID_X; ++x, ind += GRID_Z )
     {
@@ -212,38 +249,16 @@ bool SweepTesting::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
         for ( size_t z = 0U; z < GRID_Z; ++z )
         {
             location._data[ 2U ] = anchor._data[ 1U ] + static_cast<float> ( z ) * offset._data[ 1U ];
-            size_t consumed;
 
-            if ( !_actors[ ind + z ].Init ( renderer, _physics, consumed, cb, location, blockSize ) )
+            if ( !_bodies[ ind + z ].Init ( renderer, _physics, consumed, cb, location, blockSize ) )
                 return false;
 
             cb += consumed;
         }
     }
 
-    _overlay = std::make_shared<android_vulkan::Texture2D> ();
-    android_vulkan::Texture2D& t = *_overlay;
-    constexpr uint8_t const color[ 4U ] = { 115U, 185U, 0U, 255U };
-
-    result = t.UploadData ( renderer,
-        color,
-        sizeof ( color ),
-
-        VkExtent2D
-        {
-            .width = 1U,
-            .height = 1U
-        },
-
-        VK_FORMAT_R8G8B8A8_SRGB,
-        false,
-        *cb
-    );
-
-    if ( !result )
+    if ( !_sweep.Init ( renderer, consumed, cb, GXVec3 ( 0.0F, 0.5F, 0.0F ), GXVec3 ( 0.6F, 0.2F, 0.7F ) ) )
         return false;
-
-    t.AssignName ( "Overlay" );
 
     result = android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( renderer.GetQueue () ),
         "SweepTesting::CreateScene",
@@ -253,10 +268,22 @@ bool SweepTesting::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
     if ( !result )
         return false;
 
-    t.FreeTransferResources ( device );
+    _sweep.FreeTransferResources ( device );
+    _sweep.SetOverlay ( _overlay );
 
-    for ( auto& actor : _actors )
-        actor.FreeTransferResources ( device );
+    t.FreeTransferResources ( device );
+    size_t striper = 0U;
+
+    for ( auto& body : _bodies )
+    {
+        body.FreeTransferResources ( device );
+        body.SetOverlay ( _overlay );
+
+        if ( striper % 2U )
+            body.EnableOverlay ();
+
+        ++striper;
+    }
 
     return true;
 }

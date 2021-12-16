@@ -15,7 +15,7 @@ class StaticMeshComponent final : public Component
         GXColorRGB      _color0;
         GXColorRGB      _color1;
         GXColorRGB      _color2;
-        GXColorRGB      _color3;
+        GXColorRGB      _emission;
         GXMat4          _localMatrix;
         MaterialRef     _material;
         MeshRef         _mesh;
@@ -32,6 +32,7 @@ class StaticMeshComponent final : public Component
 
         // "commandBuffer" array MUST contain at least 5 free command buffers.
         explicit StaticMeshComponent ( android_vulkan::Renderer &renderer,
+            bool &success,
             size_t &commandBufferConsumed,
             StaticMeshComponentDesc const &desc,
             uint8_t const* data,
@@ -40,6 +41,7 @@ class StaticMeshComponent final : public Component
 
         // "commandBuffer" array MUST contain at least 5 free command buffers.
         explicit StaticMeshComponent ( android_vulkan::Renderer &renderer,
+            bool &success,
             size_t &commandBufferConsumed,
             char const* mesh,
             char const* material,
@@ -49,6 +51,7 @@ class StaticMeshComponent final : public Component
         ~StaticMeshComponent () override = default;
 
         void Submit ( RenderSession &renderSession ) override;
+        void FreeTransferResources ( VkDevice device ) override;
 
         [[maybe_unused, nodiscard]] GXAABB const& GetBoundsWorld () const noexcept;
 
@@ -61,17 +64,14 @@ class StaticMeshComponent final : public Component
         [[maybe_unused, nodiscard]] GXColorRGB const& GetColor2 () const noexcept;
         [[maybe_unused]] void SetColor2 ( GXColorRGB const &color ) noexcept;
 
-        [[maybe_unused, nodiscard]] GXColorRGB const& GetColor3 () const noexcept;
-        [[maybe_unused]] void SetColor3 ( GXColorRGB const &color ) noexcept;
+        [[maybe_unused, nodiscard]] GXColorRGB const& GetEmission () const noexcept;
+        void SetEmission ( GXColorRGB const &emission ) noexcept;
 
         [[nodiscard]] MaterialRef& GetMaterial () noexcept;
         [[maybe_unused, nodiscard]] MaterialRef const& GetMaterial () const noexcept;
 
         [[nodiscard]] GXMat4 const& GetTransform () const noexcept;
         void SetTransform ( GXMat4 const &transform ) noexcept;
-
-    private:
-        void FreeTransferResources ( VkDevice device ) override;
 };
 
 } // namespace pbr

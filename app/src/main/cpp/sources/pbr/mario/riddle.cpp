@@ -35,12 +35,18 @@ void Riddle::Init ( android_vulkan::Renderer &renderer,
     float z
 ) noexcept
 {
+    bool success;
+
     _staticMesh = std::make_shared<StaticMeshComponent> ( renderer,
+        success,
         commandBufferConsumed,
         MESH,
         MATERIAL,
         commandBuffers
     );
+
+    if ( !success )
+        return;
 
     // NOLINTNEXTLINE
     auto& comp = *static_cast<StaticMeshComponent*> ( _staticMesh.get () );

@@ -54,12 +54,18 @@ void Mario::Init ( android_vulkan::Renderer &renderer,
     float z
 ) noexcept
 {
+    bool success;
+
     _staticMesh = std::make_shared<StaticMeshComponent> ( renderer,
+        success,
         commandBufferConsumed,
         MESH,
         MATERIAL,
         commandBuffers
     );
+
+    if ( !success )
+        return;
 
     _rigidBody = std::make_shared<android_vulkan::RigidBody> ();
     android_vulkan::RigidBody& body = *_rigidBody.get ();

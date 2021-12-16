@@ -8,7 +8,7 @@ struct ObjectData
     float32_t4      _color0;
     float32_t4      _color1;
     float32_t4      _color2;
-    float32_t4      _color3;
+    float32_t4      _emission;
 };
 
 [[vk::binding ( 0, 1 )]]

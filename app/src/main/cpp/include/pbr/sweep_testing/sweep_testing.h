@@ -2,8 +2,8 @@
 #define PBR_SWEEP_TESTING_H
 
 
-#include "actor.h"
-#include <pbr/render_session.h>
+#include "actor_body.h"
+#include "actor_sweep.h"
 #include <pbr/camera.h>
 #include <pbr/point_light_component.h>
 #include <game.h>
@@ -14,16 +14,17 @@ namespace pbr::sweep_testing {
 class SweepTesting final : public android_vulkan::Game
 {
     private:
-        constexpr static size_t                 GRID_X = 4U;
-        constexpr static size_t                 GRID_Z = 4U;
+        constexpr static size_t                     GRID_X = 4U;
+        constexpr static size_t                     GRID_Z = 4U;
 
-        std::array<Actor, GRID_X * GRID_Z>      _actors {};
-        Camera                                  _camera {};
-        VkCommandPool                           _commandPool = VK_NULL_HANDLE;
-        PointLightComponent                     _light {};
-        Texture2DRef                            _overlay {};
-        android_vulkan::Physics                 _physics {};
-        RenderSession                           _renderSession {};
+        std::array<ActorBody, GRID_X * GRID_Z>      _bodies {};
+        ActorSweep                                  _sweep {};
+        Camera                                      _camera {};
+        VkCommandPool                               _commandPool = VK_NULL_HANDLE;
+        PointLightComponent                         _light {};
+        Texture2DRef                                _overlay {};
+        android_vulkan::Physics                     _physics {};
+        RenderSession                               _renderSession {};
 
     public:
         SweepTesting () = default;

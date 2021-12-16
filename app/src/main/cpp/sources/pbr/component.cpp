@@ -45,7 +45,17 @@ ComponentRef Component::Create ( android_vulkan::Renderer &renderer,
         // Note it's safe cast like that here. "NOLINT" is a clang-tidy control comment.
         auto const& d = static_cast<StaticMeshComponentDesc const&> ( desc ); // NOLINT
 
-        return std::make_shared<StaticMeshComponent> ( renderer, commandBufferConsumed, d, data, commandBuffers );
+        bool success;
+
+        ComponentRef result = std::make_shared<StaticMeshComponent> ( renderer,
+            success,
+            commandBufferConsumed,
+            d,
+            data,
+            commandBuffers
+        );
+
+        return success ? result : ComponentRef {};
     }
 
     if ( desc._classID == ClassID::Reflection )

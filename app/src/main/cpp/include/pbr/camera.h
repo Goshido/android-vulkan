@@ -44,6 +44,7 @@ class Camera final
         ~Camera () = default;
 
         void CaptureInput () noexcept;
+        void ReleaseInput () noexcept;
 
         [[nodiscard]] GXMat4 const& GetLocalMatrix () const noexcept;
         [[nodiscard]] GXMat4 const& GetProjectionMatrix () const noexcept;
@@ -59,8 +60,6 @@ class Camera final
         void SetRotation ( float pitch, float yaw ) noexcept;
 
         void Update ( float deltaTime ) noexcept;
-
-        static void ReleaseInput () noexcept;
 
     private:
         static void OnADown ( void* context ) noexcept;

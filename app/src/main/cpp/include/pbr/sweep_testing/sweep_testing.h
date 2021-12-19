@@ -14,6 +14,13 @@ namespace pbr::sweep_testing {
 class SweepTesting final : public android_vulkan::Game
 {
     private:
+        enum class eControlType : uint8_t
+        {
+            Camera,
+            SweepObject
+        };
+
+    private:
         constexpr static size_t                     GRID_X = 4U;
         constexpr static size_t                     GRID_Z = 4U;
 
@@ -21,6 +28,7 @@ class SweepTesting final : public android_vulkan::Game
         ActorSweep                                  _sweep {};
         Camera                                      _camera {};
         VkCommandPool                               _commandPool = VK_NULL_HANDLE;
+        eControlType                                _controlType = eControlType::SweepObject;
         PointLightComponent                         _light {};
         Texture2DRef                                _overlay {};
         android_vulkan::Physics                     _physics {};
@@ -47,10 +55,15 @@ class SweepTesting final : public android_vulkan::Game
         [[nodiscard]] bool OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept override;
         void OnSwapchainDestroyed ( VkDevice device ) noexcept override;
 
+        void BindControls () noexcept;
+        void UnbindControls () noexcept;
+
         [[nodiscard]] bool CreateCommandPool ( android_vulkan::Renderer &renderer ) noexcept;
         void DestroyCommandPool ( VkDevice device ) noexcept;
 
         [[nodiscard]] bool CreateScene ( android_vulkan::Renderer &renderer ) noexcept;
+
+        static void OnSwitchControls ( void* context ) noexcept;
 };
 
 } // namespace pbr::sweep_testing

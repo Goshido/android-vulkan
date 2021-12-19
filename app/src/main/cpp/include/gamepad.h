@@ -7,7 +7,7 @@
 GX_DISABLE_COMMON_WARNINGS
 
 #include <cinttypes>
-#include <shared_mutex>
+#include <mutex>
 #include <thread>
 
 GX_RESTORE_WARNING_STATE
@@ -55,25 +55,34 @@ constexpr size_t const ACTION_POOL_ELEMENT_COUNT = TOTAL_GAMEPAD_KEYS * TOTAL_BU
 class Gamepad final
 {
     private:
-        KeyBind                     _downKeyBinds[ TOTAL_GAMEPAD_KEYS ];
-        KeyBind                     _upKeyBinds[ TOTAL_GAMEPAD_KEYS ];
+        struct KeyActionQueue final
+        {
+            KeyAction       _keyActionPool[ ACTION_POOL_ELEMENT_COUNT ] {};
+            KeyAction*      _freeKeyActions = nullptr;
+            KeyAction*      _readyKeyActions = nullptr;
+        };
 
-        DPad                        _dPadCurrent;
-        DPad                        _dPadOld;
-        bool                        _loop;
+    private:
+        KeyBind             _downKeyBinds[ TOTAL_GAMEPAD_KEYS ];
+        KeyBind             _upKeyBinds[ TOTAL_GAMEPAD_KEYS ];
 
-        KeyAction                   _keyActionPool[ ACTION_POOL_ELEMENT_COUNT ];
-        KeyAction*                  _freeKeyActions;
-        KeyAction*                  _readyKeyActions;
+        DPad                _dPadCurrent;
+        DPad                _dPadOld;
+        bool                _loop;
 
-        Stick                       _leftStick;
-        Stick                       _rightStick;
+        KeyActionQueue*     _queueRead;
+        KeyActionQueue*     _queueWrite;
+        KeyActionQueue      _queue0;
+        KeyActionQueue      _queue1;
 
-        Trigger                     _leftTrigger;
-        Trigger                     _rightTrigger;
+        Stick               _leftStick;
+        Stick               _rightStick;
 
-        std::shared_timed_mutex     _mutex;
-        std::thread                 _thread;
+        Trigger             _leftTrigger;
+        Trigger             _rightTrigger;
+
+        std::mutex          _mutex;
+        std::thread         _thread;
 
     public:
         static Gamepad& GetInstance () noexcept;
@@ -123,6 +132,7 @@ class Gamepad final
         void HandleTriggers ( AInputEvent* event ) noexcept;
 
         void InitActionPool () noexcept;
+        void SwapQueues () noexcept;
         void ResolveDPad () noexcept;
 };
 

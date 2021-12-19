@@ -1,16 +1,17 @@
 #include <pbr/sweep_testing/sweep_testing.h>
 #include <pbr/material_manager.h>
 #include <pbr/mesh_manager.h>
+#include <gamepad.h>
 
 
 namespace pbr::sweep_testing {
 
-constexpr static float const FIELD_OF_VIEW = 75.0F;
-constexpr static float const Z_NEAR = 0.1F;
-constexpr static float const Z_FAR = 1.0e+4F;
+constexpr static float FIELD_OF_VIEW = 75.0F;
+constexpr static float Z_NEAR = 0.1F;
+constexpr static float Z_FAR = 1.0e+4F;
 
-constexpr static uint32_t const RESOLUTION_SCALE_WIDTH = 80U;
-constexpr static uint32_t const RESOLUTION_SCALE_HEIGHT = 70U;
+constexpr static uint32_t RESOLUTION_SCALE_WIDTH = 80U;
+constexpr static uint32_t RESOLUTION_SCALE_HEIGHT = 70U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -105,16 +106,49 @@ bool SweepTesting::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noe
     if ( !_renderSession.OnSwapchainCreated ( renderer, resolution, _commandPool ) )
         return false;
 
-    _camera.CaptureInput ();
+    BindControls ();
     _physics.Resume ();
     return true;
 }
 
 void SweepTesting::OnSwapchainDestroyed ( VkDevice device ) noexcept
 {
-    Camera::ReleaseInput ();
+    UnbindControls ();
     _physics.Pause ();
     _renderSession.OnSwapchainDestroyed ( device );
+}
+
+void SweepTesting::BindControls () noexcept
+{
+    android_vulkan::Gamepad& gamepad = android_vulkan::Gamepad::GetInstance ();
+
+    gamepad.BindKey ( this,
+        &SweepTesting::OnSwitchControls,
+        android_vulkan::eGamepadKey::Y,
+        android_vulkan::eButtonState::Down
+    );
+
+    if ( _controlType == eControlType::Camera )
+    {
+        _camera.CaptureInput ();
+        return;
+    }
+
+    _sweep.CaptureInput ( _camera.GetLocalMatrix () );
+}
+
+void SweepTesting::UnbindControls () noexcept
+{
+    android_vulkan::Gamepad& gamepad = android_vulkan::Gamepad::GetInstance ();
+    gamepad.UnbindKey ( android_vulkan::eGamepadKey::Y,android_vulkan::eButtonState::Down );
+
+    if ( _controlType == eControlType::Camera )
+    {
+        _camera.ReleaseInput ();
+        return;
+    }
+
+    _sweep.ReleaseInput ();
 }
 
 bool SweepTesting::CreateCommandPool ( android_vulkan::Renderer &renderer ) noexcept
@@ -272,20 +306,23 @@ bool SweepTesting::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
     _sweep.SetOverlay ( _overlay );
 
     t.FreeTransferResources ( device );
-    size_t striper = 0U;
 
     for ( auto& body : _bodies )
     {
         body.FreeTransferResources ( device );
         body.SetOverlay ( _overlay );
-
-        if ( striper % 2U )
-            body.EnableOverlay ();
-
-        ++striper;
     }
 
     return true;
+}
+
+void SweepTesting::OnSwitchControls ( void* context ) noexcept
+{
+    auto& s = *static_cast<SweepTesting*> ( context );
+
+    s.UnbindControls ();
+    s._controlType = s._controlType == eControlType::Camera ? eControlType::SweepObject : eControlType::Camera;
+    s.BindControls ();
 }
 
 } // namespace pbr::sweep_testing

@@ -4,11 +4,11 @@
 
 namespace pbr {
 
-constexpr static float const ANGULAR_SPEED = 0.87F * GX_MATH_PI;
-constexpr static float const MOVE_BOOST = 10.0F;
-constexpr static float const MOVING_SPEED = 50.0F;
-constexpr static float const STICK_DEAD_ZONE = 0.2F;
-constexpr static float const TRIGGER_DEAD_ZONE = 0.2F;
+constexpr static float ANGULAR_SPEED = 0.87F * GX_MATH_PI;
+constexpr static float MOVE_BOOST = 10.0F;
+constexpr static float MOVING_SPEED = 50.0F;
+constexpr static float STICK_DEAD_ZONE = 0.2F;
+constexpr static float TRIGGER_DEAD_ZONE = 0.2F;
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -38,6 +38,26 @@ void Camera::CaptureInput () noexcept
     gamepad.BindLeftStick ( this, &Camera::OnLeftStick );
     gamepad.BindRightStick ( this, &Camera::OnRightStick );
     gamepad.BindRightTrigger ( this, &Camera::OnRightTrigger );
+}
+
+void Camera::ReleaseInput () noexcept
+{
+    android_vulkan::Gamepad& gamepad = android_vulkan::Gamepad::GetInstance ();
+
+    gamepad.UnbindRightTrigger ();
+    gamepad.UnbindRightStick ();
+    gamepad.UnbindLeftStick ();
+
+    gamepad.UnbindKey ( android_vulkan::eGamepadKey::X, android_vulkan::eButtonState::Up );
+    gamepad.UnbindKey ( android_vulkan::eGamepadKey::X, android_vulkan::eButtonState::Down );
+    gamepad.UnbindKey ( android_vulkan::eGamepadKey::A, android_vulkan::eButtonState::Up );
+    gamepad.UnbindKey ( android_vulkan::eGamepadKey::A, android_vulkan::eButtonState::Down );
+
+    constexpr GXVec3 stopMove ( 0.0F, 0.0F, 0.0F );
+    _moveSpeed = stopMove;
+
+    constexpr GXVec2 stopRotate ( 0.0F, 0.0F );
+    _angularSpeed = stopRotate;
 }
 
 GXMat4 const& Camera::GetLocalMatrix() const noexcept
@@ -85,7 +105,7 @@ void Camera::Update ( float deltaTime ) noexcept
         if ( std::abs ( value ) < STICK_DEAD_ZONE )
             return 0.0F;
 
-        constexpr float const scale = 1.0F / ( 1.0F - STICK_DEAD_ZONE );
+        constexpr float scale = 1.0F / ( 1.0F - STICK_DEAD_ZONE );
         float const threshold = value > 0.0F ? -STICK_DEAD_ZONE : STICK_DEAD_ZONE;
         return scale * ( value + threshold );
     };
@@ -122,7 +142,7 @@ void Camera::Update ( float deltaTime ) noexcept
     rot.GetZ ( forward );
     _local.SetZ ( forward );
 
-    constexpr float const scale = 1.0F / ( 1.0F - TRIGGER_DEAD_ZONE );
+    constexpr float scale = 1.0F / ( 1.0F - TRIGGER_DEAD_ZONE );
     float const boostFactor = MOVE_BOOST * _movingSpeed;
 
     float const deltaLinear = boost > TRIGGER_DEAD_ZONE ?
@@ -136,20 +156,6 @@ void Camera::Update ( float deltaTime ) noexcept
     location.Sum ( location, deltaLinear * move._data[ 1U ], right );
     location.Sum ( location, deltaLinear * move._data[ 2U ], up );
     _local.SetW ( location );
-}
-
-void Camera::ReleaseInput () noexcept
-{
-    android_vulkan::Gamepad& gamepad = android_vulkan::Gamepad::GetInstance ();
-
-    gamepad.UnbindRightTrigger ();
-    gamepad.UnbindRightStick ();
-    gamepad.UnbindLeftStick ();
-
-    gamepad.UnbindKey ( android_vulkan::eGamepadKey::X, android_vulkan::eButtonState::Up );
-    gamepad.UnbindKey ( android_vulkan::eGamepadKey::X, android_vulkan::eButtonState::Down );
-    gamepad.UnbindKey ( android_vulkan::eGamepadKey::A, android_vulkan::eButtonState::Up );
-    gamepad.UnbindKey ( android_vulkan::eGamepadKey::A, android_vulkan::eButtonState::Down );
 }
 
 void Camera::OnADown ( void* context ) noexcept

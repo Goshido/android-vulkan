@@ -151,7 +151,7 @@ bool Collision::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexce
 void Collision::OnSwapchainDestroyed ( VkDevice device ) noexcept
 {
     _manipulator.Free ();
-    Camera::ReleaseInput ();
+    _camera.ReleaseInput ();
     _renderSession.OnSwapchainDestroyed ( device );
 }
 

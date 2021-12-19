@@ -117,7 +117,7 @@ bool RayCasting::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexc
 void RayCasting::OnSwapchainDestroyed ( VkDevice device ) noexcept
 {
     _physics.Pause ();
-    Camera::ReleaseInput ();
+    _camera.ReleaseInput ();
     _renderSession.OnSwapchainDestroyed ( device );
 }
 

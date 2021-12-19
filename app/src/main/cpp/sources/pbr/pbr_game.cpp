@@ -138,7 +138,7 @@ bool PBRGame::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept
 
 void PBRGame::OnSwapchainDestroyed ( VkDevice device ) noexcept
 {
-    Camera::ReleaseInput ();
+    _camera.ReleaseInput ();
     _renderSession.OnSwapchainDestroyed ( device );
 }
 

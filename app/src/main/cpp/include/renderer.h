@@ -114,67 +114,67 @@ class Renderer final
 
         // Method returns true if swapchain does not change. User code can safely render frames.
         // Otherwise method returns false.
-        [[nodiscard]] bool CheckSwapchainStatus ();
+        [[nodiscard]] bool CheckSwapchainStatus () noexcept;
 
         [[nodiscard]] bool CreateShader ( VkShaderModule &shader,
             std::string &&shaderFile,
             char const* errorMessage
-        ) const;
+        ) const noexcept;
 
-        [[nodiscard]] bool FinishAllJobs ();
+        [[nodiscard]] bool FinishAllJobs () noexcept;
 
-        [[nodiscard]] VkFormat GetDefaultDepthStencilFormat () const;
-        [[nodiscard]] VkDevice GetDevice () const;
-        [[nodiscard]] size_t GetMaxUniformBufferRange () const;
+        [[nodiscard]] VkFormat GetDefaultDepthStencilFormat () const noexcept;
+        [[nodiscard]] VkDevice GetDevice () const noexcept;
+        [[nodiscard]] size_t GetMaxUniformBufferRange () const noexcept;
 
-        [[nodiscard]] size_t GetPresentImageCount () const;
-        [[nodiscard]] VkImageView const& GetPresentImageView ( size_t imageIndex ) const;
+        [[nodiscard]] size_t GetPresentImageCount () const noexcept;
+        [[nodiscard]] VkImageView const& GetPresentImageView ( size_t imageIndex ) const noexcept;
 
         // Note this transform MUST be applied after projection transform to compensate screen orientation on the
         // mobile device. For more information please reference by links:
         // https://community.arm.com/developer/tools-software/graphics/b/blog/posts/appropriate-use-of-surface-rotation
         // https://github.com/KhronosGroup/Vulkan-Samples/blob/master/samples/performance/surface_rotation/surface_rotation_tutorial.md
-        [[nodiscard]] GXMat4 const& GetPresentationEngineTransform () const;
+        [[nodiscard]] GXMat4 const& GetPresentationEngineTransform () const noexcept;
 
-        [[nodiscard]] VkQueue GetQueue () const;
-        [[nodiscard]] uint32_t GetQueueFamilyIndex () const;
-        [[nodiscard]] VkFormat GetSurfaceFormat () const;
-        [[nodiscard]] VkExtent2D const& GetSurfaceSize () const;
-        [[nodiscard]] VkSwapchainKHR& GetSwapchain ();
+        [[nodiscard]] VkQueue GetQueue () const noexcept;
+        [[nodiscard]] uint32_t GetQueueFamilyIndex () const noexcept;
+        [[nodiscard]] VkFormat GetSurfaceFormat () const noexcept;
+        [[nodiscard]] VkExtent2D const& GetSurfaceSize () const noexcept;
+        [[nodiscard]] VkSwapchainKHR& GetSwapchain () noexcept;
 
         // This resolution must be used by projection matrices. Resolution takes into consideration
         // current device orientation. The actual presentation image resolution can be acquired
         // by Renderer::GetSurfaceSize API.
-        [[nodiscard]] VkExtent2D const& GetViewportResolution () const;
+        [[nodiscard]] VkExtent2D const& GetViewportResolution () const noexcept;
 
-        [[nodiscard]] bool IsDeviceCreated () const;
-        [[nodiscard]] bool IsSwapchainCreated () const;
+        [[nodiscard]] bool IsDeviceCreated () const noexcept;
+        [[nodiscard]] bool IsSwapchainCreated () const noexcept;
 
-        [[nodiscard]] bool OnCreateSwapchain ( ANativeWindow &nativeWindow, bool vSync );
-        void OnDestroySwapchain ();
+        [[nodiscard]] bool OnCreateSwapchain ( ANativeWindow &nativeWindow, bool vSync ) noexcept;
+        void OnDestroySwapchain () noexcept;
 
-        [[nodiscard]] bool OnCreateDevice ();
-        void OnDestroyDevice ();
+        [[nodiscard]] bool OnCreateDevice () noexcept;
+        void OnDestroyDevice () noexcept;
 
         // Note method will invoke AV_REGISTER_DEVICE_MEMORY internally if success.
         [[nodiscard]] bool TryAllocateMemory ( VkDeviceMemory &memory,
             size_t size,
             VkMemoryPropertyFlags memoryProperties,
             char const* errorMessage
-        ) const;
+        ) const noexcept;
 
         // Note method will invoke AV_REGISTER_DEVICE_MEMORY internally if success.
         [[nodiscard]] bool TryAllocateMemory ( VkDeviceMemory &memory,
             VkMemoryRequirements const &requirements,
             VkMemoryPropertyFlags memoryProperties,
             char const* errorMessage
-        ) const;
+        ) const noexcept;
 
         // Method returns true is "result" equals VK_SUCCESS. Otherwise method returns false.
-        [[nodiscard]] static bool CheckVkResult ( VkResult result, char const* from, char const* message );
+        [[nodiscard]] static bool CheckVkResult ( VkResult result, char const* from, char const* message ) noexcept;
 
-        [[nodiscard]] static VkImageAspectFlags ResolveImageViewAspect ( VkFormat format );
-        [[nodiscard]] static char const* ResolveVkFormat ( VkFormat format );
+        [[nodiscard]] static VkImageAspectFlags ResolveImageViewAspect ( VkFormat format ) noexcept;
+        [[nodiscard]] static char const* ResolveVkFormat ( VkFormat format ) noexcept;
 
     private:
         [[nodiscard]] bool CheckExtensionMultiview ( std::set<std::string> const &allExtensions ) noexcept;
@@ -185,57 +185,59 @@ class Renderer final
         [[nodiscard]] bool CheckRequiredFeatures ( VkPhysicalDevice physicalDevice,
             size_t const* features,
             size_t count
-        );
+        ) noexcept;
 
-        [[nodiscard]] bool CheckRequiredFormats ();
+        [[nodiscard]] bool CheckRequiredFormats () noexcept;
 
 #ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
-        [[nodiscard]] bool DeployDebugFeatures ();
-        void DestroyDebugFeatures ();
+        [[nodiscard]] bool DeployDebugFeatures () noexcept;
+        void DestroyDebugFeatures () noexcept;
 
 #endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
-        [[nodiscard]] bool DeployDevice ();
-        void DestroyDevice ();
+        [[nodiscard]] bool DeployDevice () noexcept;
+        void DestroyDevice () noexcept;
 
-        [[nodiscard]] bool DeployInstance ();
-        void DestroyInstance ();
+        [[nodiscard]] bool DeployInstance () noexcept;
+        void DestroyInstance () noexcept;
 
-        [[nodiscard]] bool DeploySurface ( ANativeWindow &nativeWindow );
-        void DestroySurface ();
+        [[nodiscard]] bool DeploySurface ( ANativeWindow &nativeWindow ) noexcept;
+        void DestroySurface () noexcept;
 
-        [[nodiscard]] bool DeploySwapchain ( bool vSync );
-        void DestroySwapchain ();
+        [[nodiscard]] bool DeploySwapchain ( bool vSync ) noexcept;
+        void DestroySwapchain () noexcept;
 
-        [[nodiscard]] bool PrintPhysicalDeviceExtensionInfo ( VkPhysicalDevice physicalDevice );
-        [[nodiscard]] bool PrintPhysicalDeviceFeatureInfo ( VkPhysicalDevice physicalDevice );
+        [[nodiscard]] bool PrintPhysicalDeviceExtensionInfo ( VkPhysicalDevice physicalDevice ) noexcept;
+        [[nodiscard]] bool PrintPhysicalDeviceFeatureInfo ( VkPhysicalDevice physicalDevice ) noexcept;
 
-        void PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits );
-        void PrintPhysicalDeviceMemoryProperties ( VkPhysicalDevice physicalDevice );
-        [[nodiscard]] bool PrintPhysicalDeviceInfo ( uint32_t deviceIndex, VkPhysicalDevice physicalDevice );
+        void PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits ) noexcept;
+        void PrintPhysicalDeviceMemoryProperties ( VkPhysicalDevice physicalDevice ) noexcept;
+        [[nodiscard]] bool PrintPhysicalDeviceInfo ( uint32_t deviceIndex, VkPhysicalDevice physicalDevice ) noexcept;
 
-        [[nodiscard]] bool SelectTargetCompositeAlpha ( VkCompositeAlphaFlagBitsKHR &targetCompositeAlpha ) const;
+        [[nodiscard]] bool SelectTargetCompositeAlpha (
+                VkCompositeAlphaFlagBitsKHR &targetCompositeAlpha
+        ) const noexcept;
 
         [[nodiscard]] bool SelectTargetHardware ( VkPhysicalDevice &targetPhysicalDevice,
             uint32_t &targetQueueFamilyIndex
-        ) const;
+        ) const noexcept;
 
         [[nodiscard]] bool SelectTargetMemoryTypeIndex ( uint32_t &targetMemoryTypeIndex,
             VkMemoryPropertyFlags memoryProperties
-        ) const;
+        ) const noexcept;
 
         [[nodiscard]] bool SelectTargetMemoryTypeIndex ( uint32_t &targetMemoryTypeIndex,
             VkMemoryRequirements const &memoryRequirements,
             VkMemoryPropertyFlags memoryProperties
-        ) const;
+        ) const noexcept;
 
-        [[nodiscard]] bool SelectTargetPresentMode ( VkPresentModeKHR &targetPresentMode, bool vSync ) const;
+        [[nodiscard]] bool SelectTargetPresentMode ( VkPresentModeKHR &targetPresentMode, bool vSync ) const noexcept;
 
         [[nodiscard]] bool SelectTargetSurfaceFormat ( VkFormat &targetColorFormat,
             VkColorSpaceKHR &targetColorSpace,
             VkFormat &targetDepthStencilFormat
-        ) const;
+        ) const noexcept;
 
         [[nodiscard]] static bool CheckExtensionCommon ( std::set<std::string> const &allExtensions,
             char const* extension
@@ -255,61 +257,69 @@ class Renderer final
 
 #endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
-        [[nodiscard]] static bool PrintCoreExtensions ();
-        static void PrintFloatProp ( char const* indent, char const* name, float value );
-        static void PrintFloatVec2Prop ( char const* indent, char const* name, const float value[] );
-        static void PrintINT32Prop ( char const* indent, char const* name, int32_t value );
-        [[nodiscard]] static bool PrintInstanceLayerInfo ();
-        static void PrintPhysicalDeviceCommonProps ( VkPhysicalDeviceProperties const &props );
-        static void PrintPhysicalDeviceGroupInfo ( uint32_t groupIndex, VkPhysicalDeviceGroupProperties const &props );
-        [[nodiscard]] static bool PrintPhysicalDeviceLayerInfo ( VkPhysicalDevice physicalDevice );
+        [[nodiscard]] static bool PrintCoreExtensions () noexcept;
+        static void PrintFloatProp ( char const* indent, char const* name, float value ) noexcept;
+        static void PrintFloatVec2Prop ( char const* indent, char const* name, const float value[] ) noexcept;
+        static void PrintINT32Prop ( char const* indent, char const* name, int32_t value ) noexcept;
+        [[nodiscard]] static bool PrintInstanceLayerInfo () noexcept;
+        static void PrintPhysicalDeviceCommonProps ( VkPhysicalDeviceProperties const &props ) noexcept;
+
+        static void PrintPhysicalDeviceGroupInfo ( uint32_t groupIndex,
+                VkPhysicalDeviceGroupProperties const &props
+        ) noexcept;
+
+        [[nodiscard]] static bool PrintPhysicalDeviceLayerInfo ( VkPhysicalDevice physicalDevice ) noexcept;
 
         static void PrintPhysicalDeviceQueueFamilyInfo ( uint32_t queueFamilyIndex,
             VkQueueFamilyProperties const &props
-        );
+        ) noexcept;
 
-        static void PrintPhysicalDeviceSparse ( VkPhysicalDeviceSparseProperties const &sparse );
-        static void PrintSizeProp ( char const* indent, char const* name, size_t value );
-        static void PrintUINT32Prop ( char const* indent, char const* name, uint32_t value );
-        static void PrintUINT32Vec2Prop ( char const* indent, char const* name, const uint32_t value[] );
-        static void PrintUINT32Vec3Prop ( char const* indent, char const* name, const uint32_t value[] );
-        static void PrintUTF8Prop ( char const* indent, char const* name, char const* value );
-        static void PrintVkBool32Prop ( char const* indent, char const* name, VkBool32 value );
-        static void PrintVkExtent2DProp ( char const* indent, char const* name, const VkExtent2D &value );
-        static void PrintVkExtent3DProp ( char const* indent, char const* name, const VkExtent3D &value );
+        static void PrintPhysicalDeviceSparse ( VkPhysicalDeviceSparseProperties const &sparse ) noexcept;
+        static void PrintSizeProp ( char const* indent, char const* name, size_t value ) noexcept;
+        static void PrintUINT32Prop ( char const* indent, char const* name, uint32_t value ) noexcept;
+        static void PrintUINT32Vec2Prop ( char const* indent, char const* name, const uint32_t value[] ) noexcept;
+        static void PrintUINT32Vec3Prop ( char const* indent, char const* name, const uint32_t value[] ) noexcept;
+        static void PrintUTF8Prop ( char const* indent, char const* name, char const* value ) noexcept;
+        static void PrintVkBool32Prop ( char const* indent, char const* name, VkBool32 value ) noexcept;
+        static void PrintVkExtent2DProp ( char const* indent, char const* name, const VkExtent2D &value ) noexcept;
+        static void PrintVkExtent3DProp ( char const* indent, char const* name, const VkExtent3D &value ) noexcept;
 
         static void PrintVkExtensionProp ( uint32_t extensionIndex,
             char const* category,
             VkExtensionProperties const &extension
-        );
+        ) noexcept;
 
         static void PrintVkFlagsProp ( char const* indent,
             char const* name,
             VkFlags flags,
             size_t flagSetCount,
             std::pair<uint32_t, char const*> const flagSet[]
-        );
+        ) noexcept;
 
-        static void PrintVkHandler ( char const* indent, char const* name, void* handler );
-        static void PrintVkLayerProperties ( uint32_t layerIndex, VkLayerProperties const &layer );
-        static void PrintVkPresentModeProp ( uint32_t modeIndex, VkPresentModeKHR mode );
-        static void PrintVkSurfaceCapabilities ( VkSurfaceCapabilitiesKHR const &caps );
-        static void PrintVkSurfaceFormatKHRProp ( uint32_t formatIndex, VkSurfaceFormatKHR const &format );
-        static void PrintVkVersion ( char const* indent, char const* name, uint32_t version );
+        static void PrintVkHandler ( char const* indent, char const* name, void* handler ) noexcept;
+        static void PrintVkLayerProperties ( uint32_t layerIndex, VkLayerProperties const &layer ) noexcept;
+        static void PrintVkPresentModeProp ( uint32_t modeIndex, VkPresentModeKHR mode ) noexcept;
+        static void PrintVkSurfaceCapabilities ( VkSurfaceCapabilitiesKHR const &caps ) noexcept;
+        static void PrintVkSurfaceFormatKHRProp ( uint32_t formatIndex, VkSurfaceFormatKHR const &format ) noexcept;
+        static void PrintVkVersion ( char const* indent, char const* name, uint32_t version ) noexcept;
 
-        [[nodiscard]] static char const* ResolvePhysicalDeviceType ( VkPhysicalDeviceType type );
+        [[nodiscard]] static char const* ResolvePhysicalDeviceType ( VkPhysicalDeviceType type ) noexcept;
 
 #ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
-        [[nodiscard]] static char const* ResolveVkDebugReportObjectType ( VkDebugReportObjectTypeEXT type );
+        [[nodiscard]] static char const* ResolveVkDebugReportObjectType ( VkDebugReportObjectTypeEXT type ) noexcept;
 
 #endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
-        [[nodiscard]] static char const* ResolveVkColorSpaceKHR ( VkColorSpaceKHR colorSpace );
-        [[nodiscard]] static char const* ResolveVkCompositeAlpha ( VkCompositeAlphaFlagBitsKHR compositeAlpha );
-        [[nodiscard]] static char const* ResolveVkPresentModeKHR ( VkPresentModeKHR mode );
-        [[nodiscard]] static char const* ResolveVkResult ( VkResult result );
-        [[nodiscard]] static char const* ResolveVkSurfaceTransform ( VkSurfaceTransformFlagsKHR transform );
+        [[nodiscard]] static char const* ResolveVkColorSpaceKHR ( VkColorSpaceKHR colorSpace ) noexcept;
+
+        [[nodiscard]] static char const* ResolveVkCompositeAlpha (
+                VkCompositeAlphaFlagBitsKHR compositeAlpha
+        ) noexcept;
+
+        [[nodiscard]] static char const* ResolveVkPresentModeKHR ( VkPresentModeKHR mode ) noexcept;
+        [[nodiscard]] static char const* ResolveVkResult ( VkResult result ) noexcept;
+        [[nodiscard]] static char const* ResolveVkSurfaceTransform ( VkSurfaceTransformFlagsKHR transform ) noexcept;
 };
 
 } // namespace android_vulkan

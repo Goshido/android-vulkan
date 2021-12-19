@@ -195,7 +195,7 @@ void BoxStack::OnSwapchainDestroyed ( VkDevice device ) noexcept
 
     _physics.Pause ();
 
-    Camera::ReleaseInput ();
+    _camera.ReleaseInput ();
     _renderSession.OnSwapchainDestroyed ( device );
 }
 

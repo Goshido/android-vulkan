@@ -28,7 +28,7 @@ class Component
         virtual void Submit ( RenderSession &renderSession ) = 0;
         virtual void FreeTransferResources ( VkDevice device ) = 0;
 
-        [[nodiscard]] ClassID GetClassID () const;
+        [[nodiscard, maybe_unused]] ClassID GetClassID () const;
 
         [[nodiscard]] static ComponentRef Create ( android_vulkan::Renderer &renderer,
             size_t &commandBufferConsumed,

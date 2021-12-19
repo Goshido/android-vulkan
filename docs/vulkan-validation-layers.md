@@ -6,15 +6,15 @@ Starting from _Android NDK_ `23.0.7599858` the _Vulkan_ validation layers have b
 
 ## Compatible version
 
-The manual is based on `1b3cd52e72171c67c457b89354f26f9bf9ed6236` commit of the [_Vulkan-ValidationLayers_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) repo. The manual is primary aimed for _Windows OS_ users.
+The manual is based on `0965e77eb083b8b4becf01cd8aa39284e56e6338` commit of the [_Vulkan-ValidationLayers_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) repo. The manual is primary aimed for _Windows OS_ users.
 
 ## Requirements
 
-- _Windows 10_
-- _Android NDK 23.0.7599858_
+- _Windows 11_
+- _Android NDK 23.1.7779620_
 - _CMake 3.18.1_
 - _Ninja 1.8.2_
-- _Python 3.9.6_
+- _Python 3.10.0_
 
 ## Building
 
@@ -22,7 +22,7 @@ First of all clone the [_Vulkan-ValidationLayers_](https://github.com/KhronosGro
 
 Then you have to prepare building utils for _Vulkan-ValidationLayers_ project. It is [_Python 3.7+_](https://www.python.org/).
 
-After installing the _Python_ you have to disable _Windows 10_ aliases for python apps.
+After installing the _Python_ you have to disable _Windows 11_ aliases for python apps.
 
 <img src="./images/python-windows-aliases.png" width="629" />
 
@@ -47,9 +47,10 @@ At this point it's time to build dependencies: `glslang`, `SPIRV-Tools` and `SPI
 To build `glslang` go to `build-android/glslang` and run
 
 ```cmake
-set ANDROID_NDK_ROOT=<Path to Android NDK v23.0.7599858>
-cmake . -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=./install -DANDROID_ABI=arm64-v8a -DCMAKE_BUILD_TYPE=Release -DANDROID_STL=c++_static -DANDROID_PLATFORM=android-30 -DCMAKE_SYSTEM_NAME=Android -DANDROID_TOOLCHAIN=clang -DANDROID_ARM_MODE=arm -DCMAKE_MAKE_PROGRAM=%ANDROID_NDK_ROOT%/prebuilt/windows-x86_64/bin/make -DCMAKE_TOOLCHAIN_FILE=%ANDROID_NDK_ROOT%/build/cmake/android.toolchain.cmake
-cmake --build .
+set ANDROID_NDK_ROOT=<Path to Android NDK v23.1.7779620>
+set ANDROID_CMAKE_DIR=<Path to Android's CMake v3.18.1>
+"%ANDROID_CMAKE_DIR%\cmake" . -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=./install -DANDROID_ABI=arm64-v8a -DCMAKE_BUILD_TYPE=Release -DANDROID_STL=c++_static -DANDROID_PLATFORM=android-30 -DCMAKE_SYSTEM_NAME=Android -DANDROID_TOOLCHAIN=clang -DANDROID_ARM_MODE=arm -DCMAKE_MAKE_PROGRAM=%ANDROID_NDK_ROOT%/prebuilt/windows-x86_64/bin/make -DCMAKE_TOOLCHAIN_FILE=%ANDROID_NDK_ROOT%/build/cmake/android.toolchain.cmake
+"%ANDROID_CMAKE_DIR%\cmake" --build .
 ```
 
 The artifact will be here:
@@ -75,7 +76,7 @@ To build `SPIRV-Tools` and `SPIRV-Tools-opt` go to `build-android/SPIRV-Tools` a
 
 ```txt
 python utils/git-sync-deps
-set ANDROID_NDK=<Path to Android NDK v23.0.7599858>
+set ANDROID_NDK=<Path to Android NDK v23.1.7779620>
 
 mkdir build && cd build
 mkdir libs
@@ -105,8 +106,10 @@ In order to use it you have to specify two enviroment variables:
 
 Variable name | Meaning | Example
 --- | --- | ---
-`NDK_DIR` | Directory where Android NDK is installed | `D:\Development\android-sdk\ndk\23.0.7599858`
+`NDK_DIR` | Directory where Android NDK is installed | `D:\Development\android-sdk\ndk\23.1.7779620`
+`ANDROID_CMAKE_DIR` | Directory where Android CMake is installed | `D:\Programs\Android\Sdk\cmake\3.18.1\bin`
 `VK_LAYER_DIR` | directory where Vulkan validation layer source code is located for Android | `D:\Development\Vulkan-ValidationLayers\build-android`
+
 
 Next what you should to do is to double click `x-build.bat` file.
 

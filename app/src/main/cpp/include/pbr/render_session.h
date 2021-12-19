@@ -2,7 +2,6 @@
 #define PBR_RENDER_SESSION_H
 
 
-#include <GXCommon/GXMath.h>
 #include "geometry_pass.h"
 #include "light_pass.h"
 #include "reflection_global_pass.h"
@@ -73,10 +72,10 @@ class RenderSession final
             MaterialRef const &material,
             GXMat4 const &local,
             GXAABB const &worldBounds,
-            android_vulkan::Half4 const &color0,
-            android_vulkan::Half4 const &color1,
-            android_vulkan::Half4 const &color2,
-            android_vulkan::Half4 const &color3
+            GXColorRGB const &color0,
+            GXColorRGB const &color1,
+            GXColorRGB const &color2,
+            GXColorRGB const &color3
         );
 
     private:
@@ -97,10 +96,10 @@ class RenderSession final
             MaterialRef const &material,
             GXMat4 const &local,
             GXAABB const &worldBounds,
-            android_vulkan::Half4 const &color0,
-            android_vulkan::Half4 const &color1,
-            android_vulkan::Half4 const &color2,
-            android_vulkan::Half4 const &color3
+            GXColorRGB const &color0,
+            GXColorRGB const &color1,
+            GXColorRGB const &color2,
+            GXColorRGB const &color3
         );
 
         void SubmitPointLight ( LightRef &light );

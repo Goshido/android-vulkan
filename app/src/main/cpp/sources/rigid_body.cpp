@@ -32,6 +32,7 @@ constexpr static GXVec3 const ZERO ( 0.0F, 0.0F, 0.0F );
 std::mutex RigidBody::_mutex {};
 
 RigidBody::RigidBody () noexcept:
+    _context ( nullptr ),
     _dampingAngular ( DEFAULT_DAMPING_ANGULAR ),
     _dampingLinear ( DEFAULT_DAMPING_LINEAR ),
     _forceAwake ( false ),
@@ -48,6 +49,7 @@ RigidBody::RigidBody () noexcept:
     _sleepTimeout ( 0.0F ),
     _totalForce {},
     _totalTorque {},
+    _tag {},
     _transform {},
     _velocityAngular {},
     _velocityLinear {}
@@ -93,7 +95,7 @@ GXVec3 const& RigidBody::GetVelocityLinear () const noexcept
     return _velocityLinear;
 }
 
-[[maybe_unused]] void RigidBody::SetVelocityLinear ( GXVec3 const &velocity, bool forceAwake ) noexcept
+void RigidBody::SetVelocityLinear ( GXVec3 const &velocity, bool forceAwake ) noexcept
 {
     _velocityLinear = velocity;
     _forceAwake |= forceAwake;
@@ -119,7 +121,7 @@ GXVec6 RigidBody::GetVelocities () const noexcept
     return GXVec6 ( _velocityLinear, _velocityAngular );
 }
 
-[[maybe_unused]] void RigidBody::AddForce ( GXVec3 const &force, GXVec3 const &point, bool forceAwake ) noexcept
+void RigidBody::AddForce ( GXVec3 const &force, GXVec3 const &point, bool forceAwake ) noexcept
 {
     if ( _isKinematic )
         return;
@@ -170,7 +172,7 @@ GXVec6 RigidBody::GetVelocities () const noexcept
     _forceAwake |= forceAwake;
 }
 
-[[maybe_unused]] void RigidBody::DisableKinematic ( bool forceAwake ) noexcept
+void RigidBody::DisableKinematic ( bool forceAwake ) noexcept
 {
     std::unique_lock<std::mutex> const lock ( _mutex );
 
@@ -183,7 +185,7 @@ GXVec6 RigidBody::GetVelocities () const noexcept
     }
 }
 
-[[maybe_unused]] void RigidBody::EnableKinematic () noexcept
+void RigidBody::EnableKinematic () noexcept
 {
     std::unique_lock<std::mutex> const lock ( _mutex );
     _isKinematic = true;
@@ -194,7 +196,7 @@ GXVec6 RigidBody::GetVelocities () const noexcept
     }
 }
 
-[[maybe_unused]] bool RigidBody::IsKinematic () const noexcept
+bool RigidBody::IsKinematic () const noexcept
 {
     return _isKinematic;
 }
@@ -209,7 +211,7 @@ GXVec6 RigidBody::GetVelocities () const noexcept
     SetAwake ();
 }
 
-[[maybe_unused]] void RigidBody::EnableSleep () noexcept
+void RigidBody::EnableSleep () noexcept
 {
     _isCanSleep = true;
 }
@@ -219,12 +221,22 @@ GXVec6 RigidBody::GetVelocities () const noexcept
     return _isCanSleep;
 }
 
+[[nodiscard]] RigidBody::Context RigidBody::GetContext () const noexcept
+{
+    return _context;
+}
+
+void RigidBody::SetContext ( Context context ) noexcept
+{
+    _context = context;
+}
+
 [[maybe_unused]] float RigidBody::GetDampingAngular () const noexcept
 {
     return _dampingAngular;
 }
 
-[[maybe_unused]] void RigidBody::SetDampingAngular ( float damping ) noexcept
+void RigidBody::SetDampingAngular ( float damping ) noexcept
 {
     _dampingAngular = damping;
 }
@@ -234,7 +246,7 @@ GXVec6 RigidBody::GetVelocities () const noexcept
     return _dampingLinear;
 }
 
-[[maybe_unused]] void RigidBody::SetDampingLinear ( float damping ) noexcept
+void RigidBody::SetDampingLinear ( float damping ) noexcept
 {
     _dampingLinear = damping;
 }
@@ -244,12 +256,12 @@ GXMat3 const& RigidBody::GetInertiaTensorInverse () const noexcept
     return _inertiaTensorInverse;
 }
 
-[[maybe_unused]] GXVec3 const& RigidBody::GetLocation () const noexcept
+GXVec3 const& RigidBody::GetLocation () const noexcept
 {
     return _location;
 }
 
-[[maybe_unused]] void RigidBody::SetLocation ( GXVec3 const &location, bool forceAwake ) noexcept
+void RigidBody::SetLocation ( GXVec3 const &location, bool forceAwake ) noexcept
 {
     _location = location;
     _transform.SetW ( _location );
@@ -261,7 +273,7 @@ GXMat3 const& RigidBody::GetInertiaTensorInverse () const noexcept
     UpdateCacheData ();
 }
 
-[[maybe_unused]] void RigidBody::SetLocation ( float x, float y, float z, bool forceAwake ) noexcept
+void RigidBody::SetLocation ( float x, float y, float z, bool forceAwake ) noexcept
 {
     _location._data[ 0U ] = x;
     _location._data[ 1U ] = y;
@@ -276,7 +288,7 @@ GXMat3 const& RigidBody::GetInertiaTensorInverse () const noexcept
     UpdateCacheData ();
 }
 
-[[maybe_unused]] float RigidBody::GetMass () const noexcept
+float RigidBody::GetMass () const noexcept
 {
     return _mass;
 }
@@ -286,7 +298,7 @@ float RigidBody::GetMassInverse () const noexcept
     return _massInverse;
 }
 
-[[maybe_unused]] void RigidBody::SetMass ( float mass, bool forceAwake ) noexcept
+void RigidBody::SetMass ( float mass, bool forceAwake ) noexcept
 {
     _mass = mass;
     _massInverse = 1.0F / mass;
@@ -299,12 +311,12 @@ float RigidBody::GetMassInverse () const noexcept
     UpdateCacheData ();
 }
 
-[[maybe_unused]] GXQuat const& RigidBody::GetRotation () const noexcept
+GXQuat const& RigidBody::GetRotation () const noexcept
 {
     return _rotation;
 }
 
-[[maybe_unused]] void RigidBody::SetRotation ( GXQuat const &rotation, bool forceAwake ) noexcept
+void RigidBody::SetRotation ( GXQuat const &rotation, bool forceAwake ) noexcept
 {
     _rotation = rotation;
     _transform.From ( _rotation, _location );
@@ -322,7 +334,7 @@ Shape& RigidBody::GetShape () noexcept
     return *_shape;
 }
 
-[[nodiscard]] bool RigidBody::HasShape () const noexcept
+bool RigidBody::HasShape () const noexcept
 {
     return static_cast<bool> ( _shape );
 }
@@ -344,7 +356,7 @@ Shape& RigidBody::GetShape () noexcept
     return _tag;
 }
 
-[[maybe_unused]] void RigidBody::SetTag ( std::string &&tag ) noexcept
+void RigidBody::SetTag ( std::string &&tag ) noexcept
 {
     _tag = std::move ( tag );
 }
@@ -359,7 +371,7 @@ Shape& RigidBody::GetShape () noexcept
     return _totalTorque;
 }
 
-[[maybe_unused]] GXMat4 const& RigidBody::GetTransform () const noexcept
+GXMat4 const& RigidBody::GetTransform () const noexcept
 {
     return _transform;
 }

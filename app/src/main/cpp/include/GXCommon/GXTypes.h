@@ -1,4 +1,4 @@
-// version 1.10
+// version 1.11
 
 #ifndef GX_TYPES
 #define GX_TYPES
@@ -17,9 +17,9 @@
 
 enum class eGXCompareResult : GXByte
 {
-    Less = -1,
-    Equal = 0,
-    Greater = 1
+    Less [[maybe_unused]] = -1,
+    Equal [[maybe_unused]] = 0,
+    Greater [[maybe_unused]] = 1
 };
 
 

@@ -22,12 +22,7 @@ PointLightComponent::PointLightComponent ( PointLightComponentDesc const &desc )
 
     android_vulkan::ColorUnorm const& hue = desc._hue;
 
-    GXColorRGB const unorm ( static_cast<GXUByte> ( hue._red ),
-        static_cast<GXUByte> ( hue._green ),
-        static_cast<GXUByte> ( hue._blue ),
-        static_cast<GXUByte> ( 255U )
-    );
-
+    GXColorRGB const unorm ( hue._red, hue._green, hue._blue, 255U );
     GXAABB bounds;
     android_vulkan::Vec3 const &low = desc._bounds._min;
     bounds.AddVertex ( low[ 0U ], low[ 1U ], low[ 2U ] );
@@ -37,10 +32,10 @@ PointLightComponent::PointLightComponent ( PointLightComponentDesc const &desc )
 
     _pointLight = std::static_pointer_cast<Light> (
         std::make_shared<PointLight> (
-            android_vulkan::Half3 ( unorm._data[ 0U ], unorm._data[ 1U ], unorm._data[ 2U ] ),
+            *reinterpret_cast<GXVec3 const*> ( unorm._data ),
 
             // TODO remove this multiplier in the future.
-            android_vulkan::Half ( desc._intensity * 14.1414F ),
+            desc._intensity * 14.1414F,
 
             reinterpret_cast<GXVec3 const &> ( desc._location ),
             bounds
@@ -54,7 +49,12 @@ PointLightComponent::PointLightComponent () noexcept:
     _pointLight = std::make_shared<PointLight> ();
 }
 
-[[maybe_unused]] void PointLightComponent::SetBoundDimensions ( float width, float height, float depth ) noexcept
+void PointLightComponent::Submit ( RenderSession &renderSession )
+{
+    renderSession.SubmitLight ( _pointLight );
+}
+
+void PointLightComponent::SetBoundDimensions ( float width, float height, float depth ) noexcept
 {
     // NOLINTNEXTLINE
     auto& light = *static_cast<PointLight*> ( _pointLight.get () );
@@ -68,23 +68,18 @@ PointLightComponent::PointLightComponent () noexcept:
     light.SetHue ( hue );
 }
 
-[[maybe_unused]] void PointLightComponent::SetIntensity ( float intensity ) noexcept
+void PointLightComponent::SetIntensity ( float intensity ) noexcept
 {
     // NOLINTNEXTLINE
     auto& light = *static_cast<PointLight*> ( _pointLight.get () );
     light.SetIntensity ( intensity );
 }
 
-[[maybe_unused]] void PointLightComponent::SetLocation ( GXVec3 const &location ) noexcept
+void PointLightComponent::SetLocation ( GXVec3 const &location ) noexcept
 {
     // NOLINTNEXTLINE
     auto& light = *static_cast<PointLight*> ( _pointLight.get () );
     light.SetLocation ( location );
-}
-
-void PointLightComponent::Submit ( RenderSession &renderSession )
-{
-    renderSession.SubmitLight ( _pointLight );
 }
 
 void PointLightComponent::FreeTransferResources ( VkDevice /*device*/ )

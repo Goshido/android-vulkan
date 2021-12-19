@@ -1,99 +1,71 @@
-#include "gpgpu_limits.inc"
+#include "object-data.inc"
 
 
-struct ObjectData
-{
-    matrix                      _localView;
-    matrix                      _localViewProjection;
-    half4                       _color0;
-    half4                       _color1;
-    half4                       _color2;
-    half4                       _color3;
-};
+// 1.0F / 255.0F
+#define UNORM_FACTOR    3.922e-3F
 
-[[vk::binding ( 0, 1 )]]
-cbuffer InstanceData:                               register ( b0 )
-{
-    // sizeof ( ObjectData ) = 160 bytes
-    // sizeof ( InstanceData ) = 6720 bytes, less than minimum "Supported Limit"
-    // see https://vulkan.lunarg.com/doc/view/1.1.108.0/mac/chunked_spec/chap36.html#limits-minmax
-    ObjectData                  g_instanceData[ PBR_OPAQUE_MAX_INSTANCE_COUNT ];
-}
+//----------------------------------------------------------------------------------------------------------------------
 
 struct InputData
 {
     [[vk::location ( 0 )]]
-    float3                      _vertex:            VERTEX;
+    float32_t3                      _vertex:            VERTEX;
 
     [[vk::location ( 1 )]]
-    float2                      _uv:                UV;
+    float32_t2                      _uv:                UV;
 
     [[vk::location ( 2 )]]
-    float3                      _normal:            NORMAL;
+    float32_t3                      _normal:            NORMAL;
 
     [[vk::location ( 3 )]]
-    float3                      _tangent:           TANGENT;
+    float32_t3                      _tangent:           TANGENT;
 
     [[vk::location ( 4 )]]
-    float3                      _bitangent:         BITANGENT;
+    float32_t3                      _bitangent:         BITANGENT;
 
-    uint                        _instanceIndex:     SV_InstanceID;
+    uint32_t                        _instanceIndex:     SV_InstanceID;
 };
 
 struct OutputData
 {
-    linear float4               _vertexH:           SV_Position;
+    linear float32_t4               _vertexH:           SV_Position;
 
     [[vk::location ( 0 )]]
-    linear half2                _uv:                UV;
+    linear float32_t2               _uv:                UV;
 
     [[vk::location ( 1 )]]
-    linear half3                _normalView:        NORMAL;
+    linear float32_t3               _normalView:        NORMAL;
 
     [[vk::location ( 2 )]]
-    linear half3                _tangentView:       TANGENT;
+    linear float32_t3               _tangentView:       TANGENT;
 
     [[vk::location ( 3 )]]
-    linear half3                _bitangentView:     BITANGENT;
+    linear float32_t3               _bitangentView:     BITANGENT;
 
     [[vk::location ( 4 )]]
-    nointerpolation half4       _color0:            COLOR_0;
-
-    [[vk::location ( 5 )]]
-    nointerpolation half4       _color1:            COLOR_1;
-
-    [[vk::location ( 6 )]]
-    nointerpolation half4       _color2:            COLOR_2;
-
-    [[vk::location ( 7 )]]
-    nointerpolation half4       _color3:            COLOR_3;
+    nointerpolation uint32_t        _instanceIndex:     INSTANCE_INDEX;
 };
 
 //----------------------------------------------------------------------------------------------------------------------
 
 OutputData VS ( in InputData inputData )
 {
-    // Note current implementation is suboptimal because of known MALI driver bug.
-    // MALI-G76 optimizes _colorX members and breaks memory layout if no any references to those members in the shader.
+    // Note there was a MALI-G76 bug in the driver:
     // https://community.arm.com/developer/tools-software/graphics/f/discussions/47814/mali-g76-mc4-vulkan-driver-bug
+    // It was decided to ignore it after changing float16_t4 to float32_t4 for palette colors in [2021-12-15].
 
     OutputData result;
 
     const ObjectData objectData = g_instanceData[ inputData._instanceIndex ];
-    result._vertexH = mul ( objectData._localViewProjection, float4 ( inputData._vertex, 1.0F ) );
-    result._uv = (half2)inputData._uv;
+    result._vertexH = mul ( objectData._localViewProjection, float32_t4 ( inputData._vertex, 1.0F ) );
+    result._uv = inputData._uv;
 
-    const float3x3 orientation = (float3x3)objectData._localView;
-    result._normalView = (half3)mul ( orientation, inputData._normal );
-    result._tangentView = (half3)mul ( orientation, inputData._tangent );
-    result._bitangentView = (half3)mul ( orientation, inputData._bitangent );
+    const float32_t3x3 orientation = (float32_t3x3)objectData._localView;
+    result._normalView = mul ( orientation, inputData._normal );
+    result._tangentView = mul ( orientation, inputData._tangent );
+    result._bitangentView = mul ( orientation, inputData._bitangent );
 
-    // So pass the color data to the fragment shader :(
-    // Disclimer: the color data is visible in the fragment shader already but MALI driver bug... :(
-    result._color0 = objectData._color0;
-    result._color1 = objectData._color1;
-    result._color2 = objectData._color2;
-    result._color3 = objectData._color3;
+    result._instanceIndex = inputData._instanceIndex;
 
     return result;
 }

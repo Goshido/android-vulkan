@@ -27,12 +27,12 @@ class Program
         using DescriptorSetInfo = std::vector<SetItem>;
 
     protected:
-        VkShaderModule          _fragmentShader;
-        VkShaderModule          _vertexShader;
+        VkShaderModule                          _fragmentShader;
+        VkShaderModule                          _vertexShader;
 
-        const std::string       _name;
-        VkPipeline              _pipeline;
-        VkPipelineLayout        _pipelineLayout;
+        [[maybe_unused]] std::string const      _name;
+        VkPipeline                              _pipeline;
+        VkPipelineLayout                        _pipelineLayout;
 
     public:
         Program () = delete;

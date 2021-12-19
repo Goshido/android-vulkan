@@ -7,50 +7,12 @@ namespace android_vulkan {
 constexpr static uint16_t const MAXIMUM_STEPS = 16U;
 constexpr static GXVec3 const INITIAL_DIRECTION ( 0.0F, 0.0F, 1.0F );
 
-GJK::GJK () noexcept:
-    _direction ( INITIAL_DIRECTION ),
-    _simplex {},
-    _steps ( 0U ),
-    _testLine ( 0U ),
-    _testTetrahedron ( 0U ),
-    _testTriangle ( 0U )
-{
-    // NOTHING
-}
-
-Simplex const& GJK::GetSimplex () const noexcept
-{
-    return _simplex;
-}
-
-[[maybe_unused]] uint16_t GJK::GetSteps () const noexcept
-{
-    return _steps;
-}
-
-[[maybe_unused]] uint16_t GJK::GetTestLines () const noexcept
-{
-    return _testLine;
-}
-
-[[maybe_unused]] uint16_t GJK::GetTestTetrahedrons () const noexcept
-{
-    return _testTetrahedron;
-}
-
-[[maybe_unused]] uint16_t GJK::GetTestTriangles () const noexcept
-{
-    return _testTriangle;
-}
+//----------------------------------------------------------------------------------------------------------------------
 
 void GJK::Reset () noexcept
 {
+    ResetInternal ();
     _direction = INITIAL_DIRECTION;
-    _simplex._pointCount = 0U,
-    _steps = 0U;
-    _testLine = 0U;
-    _testTetrahedron = 0U;
-    _testTriangle = 0U;
 }
 
 bool GJK::Run ( Shape const &shapeA, Shape const &shapeB ) noexcept
@@ -74,19 +36,19 @@ bool GJK::Run ( Shape const &shapeA, Shape const &shapeB ) noexcept
         {
             case 2U:
             {
-                LineTest ();
+                TestLine ();
             }
             break;
 
             case 3U:
             {
-                TriangleTest ();
+                TestTriangle ();
             }
             break;
 
             case 4U:
             {
-                if ( TetrahedronTest () )
+                if ( TestTetrahedron () )
                 {
                     return true;
                 }
@@ -114,7 +76,7 @@ R"__(GJK::Run - Algorithm exceeded maximum steps. Counters:
     return false;
 }
 
-void GJK::LineTest () noexcept
+void GJK::TestLine () noexcept
 {
     ++_testLine;
 
@@ -145,7 +107,7 @@ void GJK::LineTest () noexcept
     _direction = ao;
 }
 
-bool GJK::TetrahedronTest () noexcept
+bool GJK::TestTetrahedron () noexcept
 {
     ++_testTetrahedron;
 
@@ -160,9 +122,9 @@ bool GJK::TetrahedronTest () noexcept
 
     // The idea is to determine which of the 3 triangles is closest to the origin.
     // A little insight: on previous step we already checked BCD triangle. So it's needed to check:
-    //      1) ABD
-    //      2) ACB
-    //      3) ADC
+    //  1) ABD
+    //  2) ACB
+    //  3) ADC
     // The winding order is consistent and carefully managed on triangle test steps.
 
     GXVec3 ab {};
@@ -183,7 +145,7 @@ bool GJK::TetrahedronTest () noexcept
         // Selecting [A, B, D].
         _simplex._pointCount = 3U;
         _simplex._supportPoints[ 2U ] = d;
-        TriangleTest ();
+        TestTriangle ();
         return false;
     }
 
@@ -199,7 +161,7 @@ bool GJK::TetrahedronTest () noexcept
         // Because of that the order could be: [A, B, C] or [A, C, B].
         // Selecting [A, B, C].
         _simplex._pointCount = 3U;
-        TriangleTest ();
+        TestTriangle ();
         return false;
     }
 
@@ -218,11 +180,11 @@ bool GJK::TetrahedronTest () noexcept
     _simplex._supportPoints[ 1U ] = c;
     _simplex._supportPoints[ 2U ] = d;
     _simplex._pointCount = 3U;
-    TriangleTest ();
+    TestTriangle ();
     return false;
 }
 
-void GJK::TriangleTest () noexcept
+void GJK::TestTriangle () noexcept
 {
     ++_testTriangle;
 
@@ -235,8 +197,7 @@ void GJK::TriangleTest () noexcept
     ao.Reverse ();
 
     GXVec3 ab {};
-    // Android Studio treats next instruction as incorrect parameter order mistake.
-    // NOLINTNEXTLINE
+    // NOLINTNEXTLINE - false positively operand order.
     ab.Subtract ( b, a );
 
     GXVec3 ac {};

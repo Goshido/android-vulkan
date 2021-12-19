@@ -17,43 +17,49 @@ class Collision final : public android_vulkan::Game
     private:
         struct CubeInfo final
         {
-            ComponentRef                                _component;
-            android_vulkan::RigidBodyRef                _body;
+            ComponentRef                    _component;
+            android_vulkan::RigidBodyRef    _body;
         };
 
     private:
-        Camera                                          _camera {};
-        VkCommandPool                                   _commandPool = VK_NULL_HANDLE;
-        std::vector<VkCommandBuffer>                    _commandBuffers {};
+        Camera                              _camera {};
+        VkCommandPool                       _commandPool = VK_NULL_HANDLE;
+        std::vector<VkCommandBuffer>        _commandBuffers {};
 
-        ComponentRef                                    _cameraLight {};
-        std::vector<CubeInfo>                           _cubes {};
+        ComponentRef                        _cameraLight {};
+        std::vector<CubeInfo>               _cubes {};
 
-        android_vulkan::ContactDetector                 _contactDetector {};
-        android_vulkan::ContactManager                  _contactManager {};
+        android_vulkan::ContactDetector     _contactDetector {};
+        android_vulkan::ContactManager      _contactManager {};
 
-        MeshRef                                         _contactMesh {};
-        MaterialRef                                     _contactMaterial {};
-        Manipulator                                     _manipulator {};
-        RenderSession                                   _renderSession {};
+        MeshRef                             _contactMesh {};
+        MaterialRef                         _contactMaterial {};
+        Manipulator                         _manipulator {};
+        RenderSession                       _renderSession {};
 
-        android_vulkan::Half4 const                     _aColor
+        GXColorRGB const                    _aColor
         {
-            115.0F * GX_MATH_UNORM_FACTOR,
-            185.0F * GX_MATH_UNORM_FACTOR,
-            0.0F * GX_MATH_UNORM_FACTOR,
-            1.0F
+            static_cast<GXUByte> ( 115U ),
+            static_cast<GXUByte> ( 185U ),
+            static_cast<GXUByte> ( 0U ),
+            static_cast<GXUByte> ( 255U )
         };
 
-        android_vulkan::Half4 const                     _bColor
+        GXColorRGB const                    _bColor
         {
-            222.6F * GX_MATH_UNORM_FACTOR,
-            79.2F * GX_MATH_UNORM_FACTOR,
-            87.9F * GX_MATH_UNORM_FACTOR,
-            1.0F
+            static_cast<GXUByte> ( 223U ),
+            static_cast<GXUByte> ( 79U ),
+            static_cast<GXUByte> ( 88U ),
+            static_cast<GXUByte> ( 255U )
         };
 
-        android_vulkan::Half4 const                     _defaultColor { 1.0F, 1.0F, 1.0F, 1.0F };
+        GXColorRGB const                    _defaultColor
+        {
+            static_cast<GXUByte> ( 255U ),
+            static_cast<GXUByte> ( 255U ),
+            static_cast<GXUByte> ( 255U ),
+            static_cast<GXUByte> ( 255U )
+        };
 
     public:
         Collision () = default;
@@ -88,7 +94,7 @@ class Collision final : public android_vulkan::Game
             std::string &&tag,
             ComponentRef &visual,
             char const* material,
-            android_vulkan::Half4 const &color,
+            GXColorRGB const &color,
             android_vulkan::RigidBodyRef &physical,
             float x,
             float y,

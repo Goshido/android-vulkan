@@ -2,28 +2,21 @@
 #define ANDROID_VULKAN_GJK_H
 
 
-#include <shape.h>
-#include <simplex.h>
+#include "gjk_base.h"
+#include "shape.h"
 
 
 namespace android_vulkan {
 
 // The implementation is based on ideas from
 // https://www.youtube.com/watch?v=Qupqu1xe7Io
-class GJK final
+class GJK final : public GJKBase
 {
     private:
-        GXVec3      _direction;
-        Simplex     _simplex;
-
-        uint16_t    _steps;
-
-        uint16_t    _testLine;
-        uint16_t    _testTetrahedron;
-        uint16_t    _testTriangle;
+        GXVec3      _direction {};
 
     public:
-        GJK () noexcept;
+        GJK () = default;
 
         GJK ( GJK const & ) = delete;
         GJK& operator = ( GJK const & ) = delete;
@@ -31,14 +24,7 @@ class GJK final
         GJK ( GJK && ) = delete;
         GJK& operator = ( GJK && ) = delete;
 
-        ~GJK () = default;
-
-        [[nodiscard]] Simplex const& GetSimplex () const noexcept;
-        [[nodiscard, maybe_unused]] uint16_t GetSteps () const noexcept;
-
-        [[nodiscard, maybe_unused]] uint16_t GetTestLines () const noexcept;
-        [[nodiscard, maybe_unused]] uint16_t GetTestTetrahedrons () const noexcept;
-        [[nodiscard, maybe_unused]] uint16_t GetTestTriangles () const noexcept;
+        ~GJK () override = default;
 
         void Reset () noexcept;
 
@@ -46,12 +32,14 @@ class GJK final
         [[nodiscard]] bool Run ( Shape const &shapeA, Shape const &shapeB ) noexcept;
 
     private:
-        void LineTest () noexcept;
+        void TestLine () noexcept;
 
-        // The method returns true if shapes have intersection. The method returns false if needed more iterations.
-        [[nodiscard]] bool TetrahedronTest () noexcept;
+        // The method returns true if simplex contains the origin.
+        // The method returns false if more iterations are needed.
+        bool TestTetrahedron () noexcept;
 
-        void TriangleTest () noexcept;
+        void TestTriangle () noexcept;
+
 };
 
 } // namespace android_vulkan

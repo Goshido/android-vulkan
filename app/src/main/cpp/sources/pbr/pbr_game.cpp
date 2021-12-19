@@ -118,8 +118,8 @@ void PBRGame::OnDestroyDevice ( VkDevice device ) noexcept
 bool PBRGame::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept
 {
     VkExtent2D resolution = renderer.GetViewportResolution ();
-    resolution.width = resolution.width * RESOLUTION_SCALE_WIDTH / 100U;
-    resolution.height = resolution.height * RESOLUTION_SCALE_HEIGHT / 100U;
+    resolution.width = ( resolution.width * RESOLUTION_SCALE_WIDTH / 100U );
+    resolution.height = ( resolution.height * RESOLUTION_SCALE_HEIGHT / 100U );
 
     VkExtent2D const& surfaceResolution = renderer.GetViewportResolution ();
 
@@ -138,7 +138,7 @@ bool PBRGame::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept
 
 void PBRGame::OnSwapchainDestroyed ( VkDevice device ) noexcept
 {
-    Camera::ReleaseInput ();
+    _camera.ReleaseInput ();
     _renderSession.OnSwapchainDestroyed ( device );
 }
 

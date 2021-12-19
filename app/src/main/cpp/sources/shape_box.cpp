@@ -3,7 +3,7 @@
 
 namespace android_vulkan {
 
-[[maybe_unused]] ShapeBox::ShapeBox ( GXVec3 const &size ) noexcept:
+ShapeBox::ShapeBox ( GXVec3 const &size ) noexcept:
     Shape ( eShapeType::Box ),
     _localGeometry {},
     _size ( size )
@@ -11,7 +11,7 @@ namespace android_vulkan {
     Init ();
 }
 
-[[maybe_unused]] ShapeBox::ShapeBox ( float width, float height, float depth ) noexcept:
+ShapeBox::ShapeBox ( float width, float height, float depth ) noexcept:
     Shape ( eShapeType::Box ),
     _localGeometry {},
     _size ( width, height, depth )
@@ -19,19 +19,24 @@ namespace android_vulkan {
     Init ();
 }
 
-[[maybe_unused]] float ShapeBox::GetWidth () const noexcept
+float ShapeBox::GetWidth () const noexcept
 {
     return _size._data[ 0U ];
 }
 
-[[maybe_unused]] float ShapeBox::GetHeight () const noexcept
+float ShapeBox::GetHeight () const noexcept
 {
     return _size._data[ 1U ];
 }
 
-[[maybe_unused]] float ShapeBox::GetDepth () const noexcept
+float ShapeBox::GetDepth () const noexcept
 {
     return _size._data[ 2U ];
+}
+
+GXVec3 const& ShapeBox::GetSize () const noexcept
+{
+    return _size;
 }
 
 void ShapeBox::CalculateInertiaTensor ( float mass ) noexcept

@@ -34,7 +34,7 @@ PointLight::PointLight () noexcept:
     _bounds {},
     _dimensions ( HALF_DEFAULT_SIZE, HALF_DEFAULT_SIZE, HALF_DEFAULT_SIZE ),
     _hue ( ToUnorm ( DEFAULT_HUE_RED ), ToUnorm ( DEFAULT_HUE_GREEN ), ToUnorm ( DEFAULT_HUE_BLUE ) ),
-    _intensity ( android_vulkan::Half::Convert ( DEFAULT_INTENSITY ) ),
+    _intensity ( DEFAULT_INTENSITY ),
     _isNeedUpdate ( true ),
     _location ( DEFAULT_LOCATION_X, DEFAULT_LOCATION_Y, DEFAULT_LOCATION_Z ),
     _matrices {},
@@ -56,8 +56,8 @@ PointLight::PointLight () noexcept:
     _bounds.AddVertex ( maximum );
 }
 
-PointLight::PointLight ( android_vulkan::Half3 const &hue,
-    android_vulkan::Half intensity,
+PointLight::PointLight ( GXVec3 const &hue,
+    float intensity,
     GXVec3 const &location,
     GXAABB const &bounds
 ) noexcept:
@@ -79,7 +79,7 @@ GXAABB const& PointLight::GetBounds () const noexcept
     return _bounds;
 }
 
-[[maybe_unused]] void PointLight::SetBoundDimensions ( float width, float height, float depth ) noexcept
+void PointLight::SetBoundDimensions ( float width, float height, float depth ) noexcept
 {
     _dimensions._data[ 0U ] = width;
     _dimensions._data[ 1U ] = height;
@@ -88,25 +88,22 @@ GXAABB const& PointLight::GetBounds () const noexcept
     _isNeedUpdate = true;
 }
 
-android_vulkan::Half3 const& PointLight::GetHue () const noexcept
+GXVec3 const& PointLight::GetHue () const noexcept
 {
     return _hue;
 }
 
-[[maybe_unused]] void PointLight::SetHue ( GXColorRGB const &hue ) noexcept
+void PointLight::SetHue ( GXColorRGB const &hue ) noexcept
 {
-    float const* rgb = hue._data;
-    _hue._data[ 0U ] = android_vulkan::Half::Convert ( rgb[ 0U ] );
-    _hue._data[ 1U ] = android_vulkan::Half::Convert ( rgb[ 1U ] );
-    _hue._data[ 2U ] = android_vulkan::Half::Convert ( rgb[ 2U ] );
+    _hue = *reinterpret_cast<GXVec3 const*> ( hue._data );
 }
 
-android_vulkan::Half PointLight::GetIntensity () const noexcept
+float PointLight::GetIntensity () const noexcept
 {
     return _intensity;
 }
 
-[[maybe_unused]] void PointLight::SetIntensity ( float intensity ) noexcept
+void PointLight::SetIntensity ( float intensity ) noexcept
 {
     _intensity = intensity;
 }
@@ -140,20 +137,20 @@ GXMat4 const& PointLight::GetProjection () noexcept
 
 void PointLight::UpdateMatrices () noexcept
 {
-    _projection.Perspective ( GX_MATH_HALF_PI,
-        1.0F,
-        Z_NEAR,
-        std::max ( _bounds.GetWidth (), std::max ( _bounds.GetHeight (), _bounds.GetDepth () ) )
-    );
-
     _bounds.Empty ();
 
-    GXVec3 alpha;
+    GXVec3 alpha {};
     alpha.Sum ( _location, _dimensions );
     _bounds.AddVertex ( alpha );
 
     alpha.Subtract ( _location, _dimensions );
     _bounds.AddVertex ( alpha );
+
+    _projection.Perspective ( GX_MATH_HALF_PI,
+        1.0F,
+        Z_NEAR,
+        std::max ( _bounds.GetWidth (), std::max ( _bounds.GetHeight (), _bounds.GetDepth () ) )
+    );
 
     GXMat4 locals[ PBR_POINT_LIGHT_SHADOW_CASTER_PROJECTION_COUNT ];
     locals[ static_cast<size_t> ( eFaceIndex::PositiveX ) ].RotationY ( GX_MATH_HALF_PI );
@@ -163,7 +160,7 @@ void PointLight::UpdateMatrices () noexcept
     locals[ static_cast<size_t> ( eFaceIndex::PositiveZ ) ].Identity ();
     locals[ static_cast<size_t> ( eFaceIndex::NegativeZ ) ].RotationY ( GX_MATH_PI );
 
-    GXMat4 view;
+    GXMat4 view {};
 
     for ( size_t i = 0U; i < PBR_POINT_LIGHT_SHADOW_CASTER_PROJECTION_COUNT; ++i )
     {

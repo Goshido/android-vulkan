@@ -17,7 +17,7 @@ struct MaterialHeader final
     android_vulkan::UTF8Offset      _normalOffset;
     android_vulkan::UTF8Offset      _paramOffset;
 
-    float                           _roughnessScale;
+    [[maybe_unused]] float          _roughnessScale;
 };
 
 #pragma pack ( pop )

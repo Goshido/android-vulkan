@@ -1,83 +1,94 @@
 // Main reference is Source Engine
 // https://developer.valvesoftware.com/wiki/Phong_materials
-#define MAXIMUM_SHININESS               150.0f
-#define SHININESS_CONVERT               ( 1.0f / MAXIMUM_SHININESS )
+#define MAXIMUM_SHININESS               150.0F
+#define SHININESS_CONVERT               ( 1.0F / MAXIMUM_SHININESS )
 
-#define TARGET_SHININESS                128.0f
-#define TARGET_LIGHT_SOURCE_ORIGIN      float3 ( 0.0f, 0.0f, 0.0f )
+#define TARGET_SHININESS                128.0F
+#define TARGET_LIGHT_SOURCE_ORIGIN      float32_t3 ( 0.0F, 0.0F, 0.0F )
 
 [[vk::binding ( 1 )]]
-Texture2D<float4>       g_diffuseTexture:       register ( t0 );
+Texture2D<float32_t4>       g_diffuseTexture:       register ( t0 );
 
 [[vk::binding ( 2 )]]
-SamplerState            g_textureSampler:       register ( s0 );
+SamplerState                g_textureSampler:       register ( s0 );
 
 [[vk::binding ( 3 )]]
-Texture2D<float4>       g_normalTexture:        register ( t1 );
+Texture2D<float32_t4>       g_normalTexture:        register ( t1 );
 
 [[vk::binding ( 4 )]]
-SamplerState            g_normalSampler:        register ( s1 );
+SamplerState                g_normalSampler:        register ( s1 );
 
 [[vk::binding ( 5 )]]
-Texture2D<float4>       g_specLUTTexture:       register ( t2 );
+Texture2D<float32_t4>       g_specLUTTexture:       register ( t2 );
 
 [[vk::binding ( 6 )]]
-SamplerState            g_specLUTSampler:       register ( s2 );
+SamplerState                g_specLUTSampler:       register ( s2 );
 
 struct InputData
 {
     [[vk::location ( 0 )]]
-    linear float3       _fragmentView:          FRAGMENT;
+    linear float32_t3       _fragmentView:          FRAGMENT;
 
     [[vk::location ( 1 )]]
-    linear half2        _uv:                    UV;
+    linear float32_t2       _uv:                    UV;
 
     [[vk::location ( 2 )]]
-    linear half3        _normalView:            NORMAL;
+    linear float32_t3       _normalView:            NORMAL;
 
     [[vk::location ( 3 )]]
-    linear half3        _tangentView:           TANGENT;
+    linear float32_t3       _tangentView:           TANGENT;
 
     [[vk::location ( 4 )]]
-    linear half3        _bitangentView:         BITANGENT;
+    linear float32_t3       _bitangentView:         BITANGENT;
 };
 
 //----------------------------------------------------------------------------------------------------------------------
 
-half3 GetFinalNormalView ( in half3 tangentView, in half3 bitangentView, in half3 normalView, in float2 uv )
+float32_t3 GetFinalNormalView ( in float32_t3 tangentView,
+    in float32_t3 bitangentView,
+    in float32_t3 normalView,
+    in float32_t2 uv
+)
 {
-    const half3 normalData = (half3)g_normalTexture.Sample ( g_normalSampler, uv ).xyz * 2.0h - 1.0h;
-    const half3x3 tbnView = half3x3 ( tangentView, bitangentView, normalView );
+    const float32_t3 normalData = mad ( g_normalTexture.Sample ( g_normalSampler, uv ).xyz,
+        (float32_t3)2.0F,
+        (float32_t3)( -1.0F )
+    );
+
+    const float32_t3x3 tbnView = float32_t3x3 ( tangentView, bitangentView, normalView );
     return normalize ( mul ( normalData, tbnView ) );
 }
 
-half GetSpecular ( in half3 finalNormalView, in half3 toViewerView, in half3 toLightView, in float shininess )
+float32_t GetSpecular ( in float32_t3 finalNormalView,
+    in float32_t3 toViewerView,
+    in float32_t3 toLightView,
+    in float32_t shininess
+)
 {
     // See https://en.wikipedia.org/wiki/Blinn%E2%80%93Phong_reflection_model
 
-    const half3 halfVector = normalize ( toViewerView + toLightView );
-    const float angleFactor = (float)max ( dot ( halfVector, finalNormalView ), 0.0h );
-    const float2 uv = float2 ( angleFactor, shininess * SHININESS_CONVERT );
+    const float32_t3 halfVector = normalize ( toViewerView + toLightView );
+    const float32_t angleFactor = max ( dot ( halfVector, finalNormalView ), 0.0F );
+    const float32_t2 uv = float32_t2 ( angleFactor, shininess * SHININESS_CONVERT );
 
-    return (half)g_specLUTTexture.SampleLevel ( g_specLUTSampler, uv, 0.0f ).x;
+    return g_specLUTTexture.SampleLevel ( g_specLUTSampler, uv, 0.0F ).x;
 }
 
-float4 PS ( in InputData inputData ): SV_Target0
+float32_t4 PS ( in InputData inputData ): SV_Target0
 {
-    const float2 uv = (float2)inputData._uv;
-    const half4 diffuseData = (half4)g_diffuseTexture.Sample ( g_textureSampler, uv );
+    const float32_t4 diffuseData = g_diffuseTexture.Sample ( g_textureSampler, inputData._uv );
 
-    const half3 normalView = GetFinalNormalView ( inputData._tangentView,
+    const float32_t3 normalView = GetFinalNormalView ( inputData._tangentView,
         inputData._bitangentView,
         inputData._normalView,
-        uv
+        inputData._uv
     );
 
-    const half3 toView = -(half3)normalize ( inputData._fragmentView );
-    const half lambertian = max ( 0.0h, dot ( toView, normalView ) );
+    const float32_t3 toView = -normalize ( inputData._fragmentView );
+    const float32_t lambertian = max ( 0.0F, dot ( toView, normalView ) );
 
-    const half3 toLight = (half3)normalize ( TARGET_LIGHT_SOURCE_ORIGIN - inputData._fragmentView );
-    const half specularFactor = GetSpecular ( normalView, toView, toLight, TARGET_SHININESS );
+    const float32_t3 toLight = normalize ( TARGET_LIGHT_SOURCE_ORIGIN - inputData._fragmentView );
+    const float32_t specularFactor = GetSpecular ( normalView, toView, toLight, TARGET_SHININESS );
 
-    return (float4)( diffuseData * lambertian + specularFactor );
+    return mad ( diffuseData, (float32_t4)lambertian, specularFactor );
 }

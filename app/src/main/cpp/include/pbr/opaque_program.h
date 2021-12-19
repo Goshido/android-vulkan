@@ -2,12 +2,11 @@
 #define PBR_OPAQUE_PROGRAM_H
 
 
-#include "program.h"
-#include <vulkan_utils.h>
-#include <half_types.h>
 #include "gpgpu_limits.inc"
 #include "opaque_instance_descriptor_set_layout.h"
 #include "opaque_texture_descriptor_set_layout.h"
+#include "program.h"
+#include <vulkan_utils.h>
 
 
 namespace pbr {
@@ -19,24 +18,24 @@ class OpaqueProgram final : public Program
 
         struct ObjectData final
         {
-            GXMat4                                      _localView;
-            GXMat4                                      _localViewProjection;
-            [[maybe_unused]] android_vulkan::Half4      _color0;
-            [[maybe_unused]] android_vulkan::Half4      _color1;
-            [[maybe_unused]] android_vulkan::Half4      _color2;
-            [[maybe_unused]] android_vulkan::Half4      _color3;
+            GXMat4                              _localView;
+            GXMat4                              _localViewProjection;
+            [[maybe_unused]] GXColorRGB         _color0;
+            [[maybe_unused]] GXColorRGB         _color1;
+            [[maybe_unused]] GXColorRGB         _color2;
+            [[maybe_unused]] GXColorRGB         _color3;
         };
 
         struct InstanceData final
         {
-            ObjectData                                  _instanceData[ PBR_OPAQUE_MAX_INSTANCE_COUNT ];
+            ObjectData                          _instanceData[ PBR_OPAQUE_MAX_INSTANCE_COUNT ];
         };
 
         AV_DX_ALIGNMENT_END
 
     private:
-        OpaqueInstanceDescriptorSetLayout               _instanceLayout;
-        OpaqueTextureDescriptorSetLayout                _textureLayout;
+        OpaqueInstanceDescriptorSetLayout       _instanceLayout;
+        OpaqueTextureDescriptorSetLayout        _textureLayout;
 
     public:
         OpaqueProgram () noexcept;

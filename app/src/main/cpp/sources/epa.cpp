@@ -68,17 +68,17 @@ uint16_t EPA::GetSteps () const noexcept
 
 uint16_t EPA::GetEdgeCount () const noexcept
 {
-    return _edges.size ();
+    return static_cast<uint16_t> ( _edges.size () );
 }
 
 uint16_t EPA::GetFaceCount () const noexcept
 {
-    return _faces.size ();
+    return static_cast<uint16_t> ( _faces.size () );
 }
 
 uint16_t EPA::GetVertexCount () const noexcept
 {
-    return _vertices.size ();
+    return static_cast<uint16_t> ( _vertices.size () );
 }
 
 void EPA::Reset () noexcept

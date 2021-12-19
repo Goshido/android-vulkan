@@ -1,4 +1,5 @@
 #include <pbr/geometry_pass.h>
+#include <half_types.h>
 
 
 namespace pbr {
@@ -202,10 +203,10 @@ void GeometryPass::Submit ( MeshRef &mesh,
     MaterialRef const &material,
     GXMat4 const &local,
     GXAABB const &worldBounds,
-    android_vulkan::Half4 const &color0,
-    android_vulkan::Half4 const &color1,
-    android_vulkan::Half4 const &color2,
-    android_vulkan::Half4 const &color3
+    GXColorRGB const &color0,
+    GXColorRGB const &color1,
+    GXColorRGB const &color2,
+    GXColorRGB const &color3
 )
 {
     // Note it's safe to cast like that here. "NOLINT" is a clang-tidy control comment.

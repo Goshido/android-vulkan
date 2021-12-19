@@ -35,7 +35,7 @@ void Stick::Unbind () noexcept
 
 void Stick::Execute () noexcept
 {
-    if ( !_handler || memcmp ( &_stateCurrent, &_stateOld, sizeof ( _stateCurrent ) ) == 0 )
+    if ( !_handler || std::memcmp ( &_stateCurrent, &_stateOld, sizeof ( _stateCurrent ) ) == 0 )
         return;
 
     _handler ( _context, _stateCurrent._data[ 0U ], _stateCurrent._data[ 1U ] );

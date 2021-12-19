@@ -17,7 +17,12 @@ class Physics;
 
 class RigidBody final
 {
+    public:
+        using Context = void*;
+
     private:
+        Context                 _context;
+
         float                   _dampingAngular;
         float                   _dampingLinear;
 
@@ -70,7 +75,7 @@ class RigidBody final
 
         [[maybe_unused]] void AddVelocityLinear ( GXVec3 const &velocity, bool forceAwake ) noexcept;
         [[nodiscard]] GXVec3 const& GetVelocityLinear () const noexcept;
-        [[maybe_unused]] void SetVelocityLinear ( GXVec3 const &velocity, bool forceAwake ) noexcept;
+        void SetVelocityLinear ( GXVec3 const &velocity, bool forceAwake ) noexcept;
         [[maybe_unused]] void SetVelocityLinear ( float x, float y, float z, bool forceAwake ) noexcept;
 
         // Methods operates linear and angular velocities in one transaction. The layout:
@@ -83,48 +88,51 @@ class RigidBody final
         void SetVelocities ( GXVec6 const &velocities ) noexcept;
         [[nodiscard]] GXVec6 GetVelocities () const noexcept;
 
-        [[maybe_unused]] void AddForce ( GXVec3 const &force, GXVec3 const &point, bool forceAwake ) noexcept;
+        void AddForce ( GXVec3 const &force, GXVec3 const &point, bool forceAwake ) noexcept;
         [[maybe_unused]] void AddImpulse ( GXVec3 const &impulse, GXVec3 const &point, bool forceAwake ) noexcept;
 
-        [[maybe_unused]] void DisableKinematic ( bool forceAwake ) noexcept;
-        [[maybe_unused]] void EnableKinematic () noexcept;
-        [[maybe_unused, nodiscard]] bool IsKinematic () const noexcept;
+        void DisableKinematic ( bool forceAwake ) noexcept;
+        void EnableKinematic () noexcept;
+        [[nodiscard]] bool IsKinematic () const noexcept;
 
         [[maybe_unused]] void DisableSleep () noexcept;
-        [[maybe_unused]] void EnableSleep () noexcept;
+        void EnableSleep () noexcept;
         [[maybe_unused, nodiscard]] bool IsCanSleep () const noexcept;
 
+        [[nodiscard]] Context GetContext () const noexcept;
+        void SetContext ( Context context ) noexcept;
+
         [[maybe_unused, nodiscard]] float GetDampingAngular () const noexcept;
-        [[maybe_unused]] void SetDampingAngular ( float damping ) noexcept;
+        void SetDampingAngular ( float damping ) noexcept;
 
         [[maybe_unused, nodiscard]] float GetDampingLinear () const noexcept;
-        [[maybe_unused]] void SetDampingLinear ( float damping ) noexcept;
+        void SetDampingLinear ( float damping ) noexcept;
 
         [[nodiscard]] GXMat3 const& GetInertiaTensorInverse () const noexcept;
 
         [[nodiscard]] GXVec3 const& GetLocation () const noexcept;
-        [[maybe_unused]] void SetLocation ( GXVec3 const &location, bool forceAwake ) noexcept;
-        [[maybe_unused]] void SetLocation ( float x, float y, float z, bool forceAwake ) noexcept;
+        void SetLocation ( GXVec3 const &location, bool forceAwake ) noexcept;
+        void SetLocation ( float x, float y, float z, bool forceAwake ) noexcept;
 
-        [[maybe_unused, nodiscard]] float GetMass () const noexcept;
+        [[nodiscard]] float GetMass () const noexcept;
         [[nodiscard]] float GetMassInverse () const noexcept;
-        [[maybe_unused]] void SetMass ( float mass, bool forceAwake ) noexcept;
+        void SetMass ( float mass, bool forceAwake ) noexcept;
 
-        [[maybe_unused, nodiscard]] GXQuat const& GetRotation () const noexcept;
-        [[maybe_unused]] void SetRotation ( GXQuat const &rotation, bool forceAwake ) noexcept;
+        [[nodiscard]] GXQuat const& GetRotation () const noexcept;
+        void SetRotation ( GXQuat const &rotation, bool forceAwake ) noexcept;
 
         [[nodiscard]] Shape& GetShape () noexcept;
         [[nodiscard]] bool HasShape () const noexcept;
-        [[maybe_unused]] void SetShape ( ShapeRef &shape, bool forceAwake ) noexcept;
+        void SetShape ( ShapeRef &shape, bool forceAwake ) noexcept;
 
         // This feature is primary for debugging purposes.
         [[maybe_unused, nodiscard]] std::string const& GetTag () const noexcept;
-        [[maybe_unused]] void SetTag ( std::string &&tag ) noexcept;
+        void SetTag ( std::string &&tag ) noexcept;
 
         [[maybe_unused, nodiscard]] GXVec3 const& GetTotalForce () const noexcept;
         [[maybe_unused, nodiscard]] GXVec3 const& GetTotalTorque () const noexcept;
 
-        [[maybe_unused, nodiscard]] GXMat4 const& GetTransform () const noexcept;
+        [[nodiscard]] GXMat4 const& GetTransform () const noexcept;
 
         void Integrate ( float deltaTime ) noexcept;
 

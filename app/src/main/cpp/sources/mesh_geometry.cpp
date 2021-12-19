@@ -21,6 +21,8 @@ namespace android_vulkan {
 
 constexpr static size_t const UV_THREADS = 4U;
 
+//----------------------------------------------------------------------------------------------------------------------
+
 struct BufferSyncItem final
 {
     VkAccessFlags           _dstAccessMask;
@@ -32,7 +34,7 @@ struct BufferSyncItem final
         VkPipelineStageFlags srcStage,
         VkAccessFlags dstAccessMask,
         VkPipelineStageFlags dstStage
-    ):
+    ) noexcept:
         _dstAccessMask ( dstAccessMask ),
         _dstStage ( dstStage ),
         _srcAccessMask ( srcAccessMask ),
@@ -66,7 +68,7 @@ static std::map<VkBufferUsageFlags, BufferSyncItem> const g_accessMapper =
 
 //----------------------------------------------------------------------------------------------------------------------
 
-MeshGeometry::MeshGeometry ():
+MeshGeometry::MeshGeometry () noexcept:
     _bounds {},
     _indexBuffer ( VK_NULL_HANDLE ),
     _vertexBuffer ( VK_NULL_HANDLE ),
@@ -78,14 +80,14 @@ MeshGeometry::MeshGeometry ():
     // NOTHING
 }
 
-void MeshGeometry::FreeResources ( VkDevice device )
+void MeshGeometry::FreeResources ( VkDevice device ) noexcept
 {
     FreeTransferResources ( device );
     FreeResourceInternal ( device );
     _fileName.clear ();
 }
 
-void MeshGeometry::FreeTransferResources ( VkDevice device )
+void MeshGeometry::FreeTransferResources ( VkDevice device ) noexcept
 {
     if ( _transferMemory != VK_NULL_HANDLE )
     {
@@ -102,37 +104,37 @@ void MeshGeometry::FreeTransferResources ( VkDevice device )
     AV_UNREGISTER_BUFFER ( "MeshGeometry::_transferBuffer" )
 }
 
-GXAABB const& MeshGeometry::GetBounds () const
+GXAABB const& MeshGeometry::GetBounds () const noexcept
 {
     return _bounds;
 }
 
-VkBuffer const& MeshGeometry::GetVertexBuffer () const
+VkBuffer const& MeshGeometry::GetVertexBuffer () const noexcept
 {
     return _vertexBuffer;
 }
 
-VkBuffer const& MeshGeometry::GetIndexBuffer () const
+VkBuffer const& MeshGeometry::GetIndexBuffer () const noexcept
 {
     return _indexBuffer;
 }
 
-std::string const& MeshGeometry::GetName () const
+std::string const& MeshGeometry::GetName () const noexcept
 {
     return _fileName;
 }
 
-uint32_t MeshGeometry::GetVertexCount () const
+uint32_t MeshGeometry::GetVertexCount () const noexcept
 {
     return _vertexCount;
 }
 
-[[maybe_unused]] bool MeshGeometry::IsIndexBufferPresent () const
+[[maybe_unused]] bool MeshGeometry::IsIndexBufferPresent () const noexcept
 {
     return _indexBuffer != VK_NULL_HANDLE;
 }
 
-bool MeshGeometry::IsUnique () const
+bool MeshGeometry::IsUnique () const noexcept
 {
     return _fileName.empty ();
 }
@@ -141,7 +143,7 @@ bool MeshGeometry::LoadMesh ( std::string &&fileName,
     VkBufferUsageFlags usage,
     Renderer &renderer,
     VkCommandBuffer commandBuffer
-)
+) noexcept
 {
     if ( fileName.empty () )
     {
@@ -169,7 +171,7 @@ bool MeshGeometry::LoadMesh ( std::string &&fileName,
     VkBufferUsageFlags usage,
     Renderer &renderer,
     VkCommandBuffer commandBuffer
-)
+) noexcept
 {
     FreeResources ( renderer.GetDevice () );
     return UploadSimple ( data, size, vertexCount, usage, renderer, commandBuffer );
@@ -182,7 +184,7 @@ bool MeshGeometry::LoadMesh ( uint8_t const* vertexData,
     GXAABB const &bounds,
     Renderer &renderer,
     VkCommandBuffer commandBuffer
-)
+) noexcept
 {
     FreeResources ( renderer.GetDevice () );
 
@@ -205,7 +207,7 @@ bool MeshGeometry::LoadMesh ( uint8_t const* vertexData,
     return result;
 }
 
-void MeshGeometry::FreeResourceInternal ( VkDevice device )
+void MeshGeometry::FreeResourceInternal ( VkDevice device ) noexcept
 {
     _vertexCount = 0U;
 
@@ -235,7 +237,7 @@ bool MeshGeometry::LoadFromMesh ( std::string &&fileName,
     VkBufferUsageFlags usage,
     Renderer &renderer,
     VkCommandBuffer commandBuffer
-)
+) noexcept
 {
     FreeResourceInternal ( renderer.GetDevice () );
 
@@ -311,7 +313,7 @@ bool MeshGeometry::LoadFromMesh ( std::string &&fileName,
 bool MeshGeometry::LoadFromMesh2 ( std::string &&fileName,
     Renderer &renderer,
     VkCommandBuffer commandBuffer
-)
+) noexcept
 {
     FreeResourceInternal ( renderer.GetDevice () );
     File file ( fileName );
@@ -348,17 +350,19 @@ bool MeshGeometry::UploadComplex ( uint8_t const* data,
     uint32_t indexCount,
     Renderer &renderer,
     VkCommandBuffer commandBuffer
-)
+) noexcept
 {
     constexpr VkBufferUsageFlags const indexBufferUsageFlags = AV_VK_FLAG ( VK_BUFFER_USAGE_INDEX_BUFFER_BIT ) |
         AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT );
+
+    auto const indexBufferSize = static_cast<VkDeviceSize> ( indexCount * sizeof ( uint32_t ) );
 
     VkBufferCreateInfo bufferInfo
     {
         .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0U,
-        .size = static_cast<VkDeviceSize> ( indexCount * sizeof ( uint32_t ) ),
+        .size = indexBufferSize,
         .usage = indexBufferUsageFlags,
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
         .queueFamilyIndexCount = 0U,
@@ -484,12 +488,12 @@ R"__(MeshGeometry::UploadComplex - Memory usage bits are not same:
         {
             .srcOffset = 0U,
             .dstOffset = 0U,
-            .size = indexBufferMemoryRequirements.size
+            .size = indexBufferSize
         },
         {
-            .srcOffset = indexBufferMemoryRequirements.size,
+            .srcOffset = indexBufferSize,
             .dstOffset = 0U,
-            .size = vertexBufferMemoryRequirements.size
+            .size = bufferInfo.size
         }
     };
 
@@ -506,7 +510,7 @@ R"__(MeshGeometry::UploadComplex - Memory usage bits are not same:
         usages,
         dstBuffers,
         data,
-        indexBufferMemoryRequirements.size + vertexBufferMemoryRequirements.size,
+        static_cast<size_t> ( indexBufferSize + bufferInfo.size ),
         renderer,
         commandBuffer
     );
@@ -525,7 +529,7 @@ bool MeshGeometry::UploadInternal ( size_t numUploads,
     size_t dataSize,
     Renderer &renderer,
     VkCommandBuffer commandBuffer
-)
+) noexcept
 {
     VkBufferCreateInfo const bufferInfo
     {
@@ -601,7 +605,7 @@ bool MeshGeometry::UploadInternal ( size_t numUploads,
         return false;
     }
 
-    memcpy ( transferData, data, dataSize );
+    std::memcpy ( transferData, data, dataSize );
     vkUnmapMemory ( device, _transferMemory );
 
     VkCommandBufferBeginInfo const commandBufferBeginInfo
@@ -712,7 +716,7 @@ bool MeshGeometry::UploadSimple ( uint8_t const* data,
     VkBufferUsageFlags usage,
     Renderer &renderer,
     VkCommandBuffer commandBuffer
-)
+) noexcept
 {
     VkBufferCreateInfo const bufferInfo
     {

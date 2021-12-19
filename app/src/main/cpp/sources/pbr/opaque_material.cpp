@@ -5,7 +5,12 @@
 namespace pbr {
 
 OpaqueMaterial::OpaqueMaterial () noexcept:
-    Material ( eMaterialType::Opaque )
+    Material ( eMaterialType::Opaque ),
+    _albedo {},
+    _emission {},
+    _mask {},
+    _normal {},
+    _param {}
 {
     // NOTHING
 }
@@ -15,14 +20,14 @@ Texture2DRef& OpaqueMaterial::GetAlbedo ()
     return _albedo;
 }
 
-void OpaqueMaterial::SetAlbedo ( Texture2DRef &texture )
+void OpaqueMaterial::SetAlbedo ( Texture2DRef const &texture )
 {
     _albedo = texture;
 }
 
 [[maybe_unused]] void OpaqueMaterial::SetAlbedoDefault ()
 {
-    _albedo = nullptr;
+    _albedo.reset ();
 }
 
 Texture2DRef& OpaqueMaterial::GetEmission ()
@@ -30,14 +35,14 @@ Texture2DRef& OpaqueMaterial::GetEmission ()
     return _emission;
 }
 
-void OpaqueMaterial::SetEmission ( Texture2DRef &texture )
+void OpaqueMaterial::SetEmission ( Texture2DRef const &texture )
 {
     _emission = texture;
 }
 
-[[maybe_unused]] void OpaqueMaterial::SetEmissionDefault ()
+void OpaqueMaterial::SetEmissionDefault ()
 {
-    _emission = nullptr;
+    _emission.reset ();
 }
 
 Texture2DRef& OpaqueMaterial::GetMask ()
@@ -45,14 +50,14 @@ Texture2DRef& OpaqueMaterial::GetMask ()
     return _mask;
 }
 
-void OpaqueMaterial::SetMask ( Texture2DRef &texture )
+void OpaqueMaterial::SetMask ( Texture2DRef const &texture )
 {
     _mask = texture;
 }
 
 [[maybe_unused]] void OpaqueMaterial::SetMaskDefault ()
 {
-    _mask = nullptr;
+    _mask.reset ();
 }
 
 Texture2DRef& OpaqueMaterial::GetNormal ()
@@ -60,14 +65,14 @@ Texture2DRef& OpaqueMaterial::GetNormal ()
     return _normal;
 }
 
-void OpaqueMaterial::SetNormal ( Texture2DRef &texture )
+void OpaqueMaterial::SetNormal ( Texture2DRef const &texture )
 {
     _normal = texture;
 }
 
 [[maybe_unused]] void OpaqueMaterial::SetNormalDefault ()
 {
-    _normal = nullptr;
+    _normal.reset ();
 }
 
 Texture2DRef& OpaqueMaterial::GetParam ()
@@ -75,7 +80,7 @@ Texture2DRef& OpaqueMaterial::GetParam ()
     return _param;
 }
 
-void OpaqueMaterial::SetParam ( Texture2DRef &texture )
+void OpaqueMaterial::SetParam ( Texture2DRef const &texture )
 {
     _param = texture;
 }
@@ -104,24 +109,24 @@ bool OpaqueMaterial::operator < ( OpaqueMaterial const &other ) const
     int8_t result = compare ( _albedo, other._albedo );
 
     if ( result != equal )
-        return result == less;
+        return result <= less;
 
     result = compare ( _param, other._param );
 
     if ( result != equal )
-        return result == less;
+        return result <= less;
 
     result = compare ( _mask, other._mask );
 
     if ( result != equal )
-        return result == less;
+        return result <= less;
 
     result = compare ( _normal, other._normal );
 
     if ( result != equal )
-        return result == less;
+        return result <= less;
 
-    return compare ( _emission, other._emission ) == less;
+    return compare ( _emission, other._emission ) <= less;
 }
 
 } // namespace pbr

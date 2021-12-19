@@ -11,17 +11,17 @@
 
 namespace pbr::box_stack {
 
-constexpr static float const FIELD_OF_VIEW = 75.0F;
-constexpr static float const Z_NEAR = 0.1F;
-constexpr static float const Z_FAR = 1.0e+4F;
+constexpr static float FIELD_OF_VIEW = 75.0F;
+constexpr static float Z_NEAR = 0.1F;
+constexpr static float Z_FAR = 1.0e+4F;
 
-constexpr static uint32_t const RESOLUTION_SCALE_WIDTH = 80U;
-constexpr static uint32_t const RESOLUTION_SCALE_HEIGHT = 70U;
+constexpr static uint32_t RESOLUTION_SCALE_WIDTH = 80U;
+constexpr static uint32_t RESOLUTION_SCALE_HEIGHT = 70U;
 
-constexpr static GXVec3 const FREE_FALL_ACCELERATION ( 0.0F, -9.81F, 0.0F );
-constexpr static float const TIME_SPEED = 1.0F;
+constexpr static GXVec3 FREE_FALL_ACCELERATION ( 0.0F, -9.81F, 0.0F );
+constexpr static float TIME_SPEED = 1.0F;
 
-constexpr static size_t const CUBES = 6U;
+constexpr static size_t CUBES = 6U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -54,7 +54,7 @@ bool BoxStack::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) 
     constexpr GXVec3 const sphereDims ( sphereSize * 0.5F, sphereSize * 0.5F, sphereSize * 0.5F );
     transform.Scale ( sphereSize, sphereSize, sphereSize );
 
-    auto submit = [ & ] ( GXVec3 const &loc, android_vulkan::Half4 const &color ) noexcept {
+    auto submit = [ & ] ( GXVec3 const &loc, GXColorRGB const &color ) noexcept {
         GXVec3 location {};
         location.Multiply ( loc, rendererScale );
         transform.SetW ( location );
@@ -108,7 +108,7 @@ bool BoxStack::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 
     VkDevice device = renderer.GetDevice ();
 
-    bool result = android_vulkan::Renderer::CheckVkResult (
+    bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateCommandPool ( device, &createInfo, nullptr, &_commandPool ),
         "BoxStack::OnInit",
         "Can't create command pool"
@@ -184,7 +184,6 @@ bool BoxStack::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcep
     );
 
     _physics.Resume ();
-
     return true;
 }
 
@@ -196,7 +195,7 @@ void BoxStack::OnSwapchainDestroyed ( VkDevice device ) noexcept
 
     _physics.Pause ();
 
-    Camera::ReleaseInput ();
+    _camera.ReleaseInput ();
     _renderSession.OnSwapchainDestroyed ( device );
 }
 
@@ -206,7 +205,7 @@ bool BoxStack::AppendCuboid ( android_vulkan::Renderer &renderer,
     std::string &&tag,
     ComponentRef &visual,
     char const* material,
-    android_vulkan::Half4 const &color,
+    GXColorRGB const &color,
     android_vulkan::RigidBodyRef &physical,
     float x,
     float y,
@@ -216,15 +215,21 @@ bool BoxStack::AppendCuboid ( android_vulkan::Renderer &renderer,
     float d
 ) noexcept
 {
+    bool success;
+
     visual = std::make_shared<StaticMeshComponent> ( renderer,
+        success,
         commandBufferConsumed,
         "pbr/system/unit-cube.mesh2",
         material,
         commandBuffers
     );
 
-    if ( !visual )
+    if ( !success )
+    {
+        visual.reset ();
         return false;
+    }
 
     // NOLINTNEXTLINE
     auto& v = *static_cast<StaticMeshComponent*> ( visual.get () );
@@ -306,7 +311,7 @@ bool BoxStack::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
         return false;
 
     size_t consumed = 0U;
-    _defaultColor = android_vulkan::Half4 ( 1.0F, 1.0F, 1.0F, 1.0F );
+    _defaultColor.From ( 255U, 255U, 255U, 255U );
 
     ComponentRef cuboid {};
     android_vulkan::RigidBodyRef body {};
@@ -418,53 +423,25 @@ void BoxStack::UpdatePhysicsActors () noexcept
 void BoxStack::InitColors () noexcept
 {
     // NVIDIA green
-    _colors[ 0U ] = android_vulkan::Half4 ( 115.0F * GX_MATH_UNORM_FACTOR,
-        185.0F * GX_MATH_UNORM_FACTOR,
-        0.0F,
-        1.0F
-    );
+    _colors[ 0U ].From ( 115U, 185U, 0U, 255U );
 
     // Yellow
-    _colors[ 1U ] = android_vulkan::Half4 ( 222.6F * GX_MATH_UNORM_FACTOR,
-        201.5F * GX_MATH_UNORM_FACTOR,
-        79.2F * GX_MATH_UNORM_FACTOR,
-        1.0F
-    );
+    _colors[ 1U ].From ( 223U, 202U, 79U, 255U );
 
     // Red
-    _colors[ 2U ] = android_vulkan::Half4 ( 222.6F * GX_MATH_UNORM_FACTOR,
-        79.2F * GX_MATH_UNORM_FACTOR,
-        87.9F * GX_MATH_UNORM_FACTOR,
-        1.0F
-    );
+    _colors[ 2U ].From ( 223U, 79U, 88U, 255U );
 
     // Purple
-    _colors[ 3U ] = android_vulkan::Half4 ( 222.6F * GX_MATH_UNORM_FACTOR,
-        79.2F * GX_MATH_UNORM_FACTOR,
-        210.3F * GX_MATH_UNORM_FACTOR,
-        1.0F
-    );
+    _colors[ 3U ].From ( 223U, 79U, 210U, 255U );
 
     // Blue
-    _colors[ 4U ] = android_vulkan::Half4 ( 99.6F * GX_MATH_UNORM_FACTOR,
-        79.2F * GX_MATH_UNORM_FACTOR,
-        222.6F * GX_MATH_UNORM_FACTOR,
-        1.0F
-    );
+    _colors[ 4U ].From ( 100U, 79U, 223U, 255U );
 
     // Cyan
-    _colors[ 5U ] = android_vulkan::Half4 ( 79.2F * GX_MATH_UNORM_FACTOR,
-        211.7F * GX_MATH_UNORM_FACTOR,
-        222.6F * GX_MATH_UNORM_FACTOR,
-        1.0F
-    );
+    _colors[ 5U ].From ( 79U, 212U, 223U, 255U );
 
     // Green
-    _colors[ 6U ] = android_vulkan::Half4 ( 79.2F * GX_MATH_UNORM_FACTOR,
-        222.6F * GX_MATH_UNORM_FACTOR,
-        106.9F * GX_MATH_UNORM_FACTOR,
-        1.0F
-    );
+    _colors[ 6U ].From ( 79U, 223U, 107U, 255U );
 }
 
 void BoxStack::OnLeftBumper ( void* context ) noexcept

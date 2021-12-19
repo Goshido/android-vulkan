@@ -1,4 +1,4 @@
-﻿// version 1.69
+﻿// version 1.73
 
 #include <GXCommon/GXMath.h>
 
@@ -25,7 +25,6 @@ constexpr static GXUByte const SOLUTION_ALPHA = 0U;
 constexpr static GXUByte const SOLUTION_BETTA = 1U;
 constexpr static GXUByte const SOLUTION_GAMMA = 2U;
 constexpr static GXUByte const SOLUTION_YOTTA = 3U;
-constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -213,8 +212,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 {
     GXVec3 normalVector ( vector );
     normalVector.Normalize ();
-    GXFloat factor = vector.Length () * axis.DotProduct ( normalVector );
-    Multiply ( axis, factor );
+    Multiply ( axis, vector.Length () * axis.DotProduct ( normalVector ) );
 }
 
 [[maybe_unused]] GXBool GXVec3::IsEqual ( GXVec3 const &other ) noexcept
@@ -296,33 +294,33 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     GXVec3 point {};
     point.Sum ( origin, t, direction );
 
-    GXUByte selector = 0U;
+    GXUByte selector;
 
     GXFloat gamma = std::abs ( plane._a );
     GXFloat const omega = std::abs ( plane._b );
     GXFloat const yotta = std::abs ( plane._c );
 
     if ( gamma > omega )
-        selector = gamma > yotta ? 0U : 2U;
+        selector = gamma > yotta ? static_cast<GXUByte> ( 0U ) : static_cast<GXUByte> ( 2U );
     else
-        selector = omega > yotta ? 1U : 2U;
+        selector = omega > yotta ? static_cast<GXUByte> ( 1U ) : static_cast<GXUByte> ( 2U );
 
     GXUByte i1 = 0xFFU;
     GXUByte i2 = 0xFFU;
 
     switch ( selector )
     {
-        case 0u:
+        case 0U:
             i1 = 1u;
             i2 = 2u;
         break;
 
-        case 1u:
+        case 1U:
             i1 = 2u;
             i2 = 0u;
         break;
 
-        case 2u:
+        case 2U:
             i1 = 0u;
             i2 = 1u;
         break;
@@ -342,7 +340,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     GXFloat const v2 = triangle[ 2U ]._data[ i2 ] - triangle[ 0U ]._data[ i2 ];
 
     gamma = 1.0F / ( u1 * v2 - v1 * u2 );
-    GXFloat alpha = ( u0 * v2 - v0 * u2 ) * gamma;
+    GXFloat const alpha = ( u0 * v2 - v0 * u2 ) * gamma;
 
     if ( alpha < 0.0F || alpha > 1.0F )
         return GX_FALSE;
@@ -436,8 +434,8 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 
 [[maybe_unused]] GXVoid GXVec6::From ( GXVec3 const &v1, GXVec3 const &v2 ) noexcept
 {
-    memcpy ( _data, &v1, sizeof ( GXVec3 ) );
-    memcpy ( _data + 3U, &v2, sizeof ( GXVec3 ) );
+    std::memcpy ( _data, &v1, sizeof ( GXVec3 ) );
+    std::memcpy ( _data + 3U, &v2, sizeof ( GXVec3 ) );
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -850,7 +848,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
         pureRotationMatrix._m[ 1U ][ 1U ] +
         pureRotationMatrix._m[ 2U ][ 2U ] + 1.0F;
 
-    auto solution = static_cast<GXUByte> ( UNKNOWN_SOLUTION );
+    GXUByte solution;
 
     if ( solutionFactorAlpha > solutionFactorBetta )
     {
@@ -961,7 +959,7 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
         pureRotationMatrix._m[ 1U ][ 1U ] +
         pureRotationMatrix._m[ 2U ][ 2U ] + 1.0F;
 
-    auto solution = static_cast<GXUByte> ( UNKNOWN_SOLUTION );
+    GXUByte solution;
 
     if ( solutionFactorAlpha > solutionFactorBetta )
     {
@@ -1254,9 +1252,9 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 {
     constexpr GXUPointer const lineSize = 3U * sizeof ( GXFloat );
 
-    memcpy ( _data, matrix._data, lineSize );
-    memcpy ( _data + 3U, matrix._data + 4U, lineSize );
-    memcpy ( _data + 6U, matrix._data + 8U, lineSize );
+    std::memcpy ( _data, matrix._data, lineSize );
+    std::memcpy ( _data + 3U, matrix._data + 4U, lineSize );
+    std::memcpy ( _data + 6U, matrix._data + 8U, lineSize );
 }
 
 [[maybe_unused]] GXVoid GXMat3::From ( const GXVec3 &zDirection ) noexcept
@@ -1317,32 +1315,32 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 
 [[maybe_unused]] GXVoid GXMat3::SetX ( GXVec3 const &x ) noexcept
 {
-    memcpy ( _data, &x, sizeof ( GXVec3 ) );
+    std::memcpy ( _data, &x, sizeof ( GXVec3 ) );
 }
 
 [[maybe_unused]] GXVoid GXMat3::GetX ( GXVec3 &x ) const noexcept
 {
-    memcpy ( &x, _data, sizeof ( GXVec3 ) );
+    std::memcpy ( &x, _data, sizeof ( GXVec3 ) );
 }
 
 [[maybe_unused]] GXVoid GXMat3::SetY ( GXVec3 const &y ) noexcept
 {
-    memcpy ( _data + 3U, &y, sizeof ( GXVec3 ) );
+    std::memcpy ( _data + 3U, &y, sizeof ( GXVec3 ) );
 }
 
 [[maybe_unused]] GXVoid GXMat3::GetY ( GXVec3 &y ) const noexcept
 {
-    memcpy ( &y, _data + 3U, sizeof ( GXVec3 ) );
+    std::memcpy ( &y, _data + 3U, sizeof ( GXVec3 ) );
 }
 
 [[maybe_unused]] GXVoid GXMat3::SetZ ( GXVec3 const &z ) noexcept
 {
-    memcpy ( _data + 6U, &z, sizeof ( GXVec3 ) );
+    std::memcpy ( _data + 6U, &z, sizeof ( GXVec3 ) );
 }
 
 [[maybe_unused]] GXVoid GXMat3::GetZ ( GXVec3 &z ) const noexcept
 {
-    memcpy ( &z, _data + 6U, sizeof ( GXVec3 ) );
+    std::memcpy ( &z, _data + 6U, sizeof ( GXVec3 ) );
 }
 
 [[maybe_unused]] GXVoid GXMat3::Identity () noexcept
@@ -1640,42 +1638,42 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
 
 [[maybe_unused]] GXVoid GXMat4::SetX ( GXVec3 const &x ) noexcept
 {
-    memcpy ( _data, &x, sizeof ( GXVec3 ) );
+    std::memcpy ( _data, &x, sizeof ( GXVec3 ) );
 }
 
 [[maybe_unused]] GXVoid GXMat4::GetX ( GXVec3 &x ) const noexcept
 {
-    memcpy ( &x, _data, sizeof ( GXVec3 ) );
+    std::memcpy ( &x, _data, sizeof ( GXVec3 ) );
 }
 
 [[maybe_unused]] GXVoid GXMat4::SetY ( GXVec3 const &y ) noexcept
 {
-    memcpy ( _data + 4U, &y, sizeof ( GXVec3 ) );
+    std::memcpy ( _data + 4U, &y, sizeof ( GXVec3 ) );
 }
 
 [[maybe_unused]] GXVoid GXMat4::GetY ( GXVec3 &y ) const noexcept
 {
-    memcpy ( &y, _data + 4U, sizeof ( GXVec3 ) );
+    std::memcpy ( &y, _data + 4U, sizeof ( GXVec3 ) );
 }
 
 [[maybe_unused]] GXVoid GXMat4::SetZ ( GXVec3 const &z ) noexcept
 {
-    memcpy ( _data + 8U, &z, sizeof ( GXVec3 ) );
+    std::memcpy ( _data + 8U, &z, sizeof ( GXVec3 ) );
 }
 
 [[maybe_unused]] GXVoid GXMat4::GetZ ( GXVec3 &z ) const noexcept
 {
-    memcpy ( &z, _data + 8U, sizeof ( GXVec3 ) );
+    std::memcpy ( &z, _data + 8U, sizeof ( GXVec3 ) );
 }
 
 [[maybe_unused]] GXVoid GXMat4::SetW ( GXVec3 const &w ) noexcept
 {
-    memcpy ( _data + 12U, &w, sizeof ( GXVec3 ) );
+    std::memcpy ( _data + 12U, &w, sizeof ( GXVec3 ) );
 }
 
 [[maybe_unused]] GXVoid GXMat4::GetW ( GXVec3 &w ) const noexcept
 {
-    memcpy ( &w, _data + 12U, sizeof ( GXVec3 ) );
+    std::memcpy ( &w, _data + 12U, sizeof ( GXVec3 ) );
 }
 
 [[maybe_unused]] GXVoid GXMat4::Identity () noexcept
@@ -1699,6 +1697,16 @@ constexpr static GXUByte const UNKNOWN_SOLUTION = 0xFFU;
     _m[ 3U ][ 0U ] = x;
     _m[ 3U ][ 1U ] = y;
     _m[ 3U ][ 2U ] = z;
+}
+
+[[maybe_unused]] GXVoid GXMat4::Translation ( GXVec3 const &location ) noexcept
+{
+    _m[ 0U ][ 1U ] = _m[ 0U ][ 2U ] = _m[ 0U ][ 3U ] = 0.0F;
+    _m[ 1U ][ 0U ] = _m[ 1U ][ 2U ] = _m[ 1U ][ 3U ] = 0.0F;
+    _m[ 2U ][ 0U ] = _m[ 2U ][ 1U ] = _m[ 2U ][ 3U ] = 0.0F;
+
+    _m[ 0U ][ 0U ] = _m[ 1U ][ 1U ] = _m[ 2U ][ 2U ] = _m[ 3U ][ 3U ] = 1.0F;
+    std::memcpy ( &_m[ 3U ][ 0U ], location._data, sizeof ( location ) );
 }
 
 [[maybe_unused]] GXVoid GXMat4::TranslateTo ( GXFloat x, GXFloat y, GXFloat z ) noexcept

@@ -49,6 +49,11 @@ static std::unordered_map<VkFormat, VkFormat> const g_FormatMapper =
 
 //----------------------------------------------------------------------------------------------------------------------
 
+void Texture2D::AssignName ( std::string &&name ) noexcept
+{
+    _fileName = std::move ( name );
+}
+
 bool Texture2D::CreateRenderTarget ( VkExtent2D const &resolution,
     VkFormat format,
     VkImageUsageFlags usage,

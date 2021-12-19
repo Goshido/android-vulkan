@@ -14,7 +14,7 @@ add_library ( layer_utils
     ../layers/vk_layer_config.cpp
     ../layers/vk_layer_extension_utils.cpp
     ../layers/vk_layer_utils.cpp
-    ../layers/vk_format_utils.cpp
+    ../layers/generated/vk_format_utils.cpp
 )
 
 target_include_directories ( layer_utils
@@ -61,6 +61,7 @@ add_library ( VkLayer_khronos_validation
     ../layers/cmd_buffer_state.cpp
     ../layers/image_state.cpp
     ../layers/pipeline_state.cpp
+    ../layers/queue_state.cpp
     ../layers/render_pass_state.cpp
     ../layers/core_validation.cpp
     ../layers/drawdispatch.cpp
@@ -69,6 +70,7 @@ add_library ( VkLayer_khronos_validation
     ../layers/shader_module.cpp
     ../layers/shader_validation.cpp
     ../layers/generated/spirv_validation_helper.cpp
+    ../layers/generated/spirv_grammar_helper.cpp
     ../layers/generated/command_validation.cpp
     ../layers/gpu_validation.cpp
     ../layers/gpu_utils.cpp

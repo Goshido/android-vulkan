@@ -22,14 +22,16 @@ class [[maybe_unused]] ShapeBox final : public Shape
         ShapeBox ( ShapeBox && ) = delete;
         ShapeBox& operator = ( ShapeBox && ) = delete;
 
-        [[maybe_unused]] explicit ShapeBox ( GXVec3 const &size ) noexcept;
-        [[maybe_unused]] explicit ShapeBox ( float width, float height, float depth ) noexcept;
+        explicit ShapeBox ( GXVec3 const &size ) noexcept;
+        explicit ShapeBox ( float width, float height, float depth ) noexcept;
 
         ~ShapeBox () override = default;
 
-        [[maybe_unused, nodiscard]] float GetWidth () const noexcept;
-        [[maybe_unused, nodiscard]] float GetHeight () const noexcept;
-        [[maybe_unused, nodiscard]] float GetDepth () const noexcept;
+        [[nodiscard]] float GetWidth () const noexcept;
+        [[nodiscard]] float GetHeight () const noexcept;
+        [[nodiscard]] float GetDepth () const noexcept;
+
+        [[nodiscard]] GXVec3 const& GetSize () const noexcept;
 
     private:
         void CalculateInertiaTensor ( float mass ) noexcept override;

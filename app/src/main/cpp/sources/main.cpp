@@ -1,12 +1,12 @@
 #include <core.h>
-#include <file.h>
-#include <shape_box.h>
 #include <mandelbrot/mandelbrot_analytic_color.h>
 #include <mandelbrot/mandelbrot_lut_color.h>
 #include <pbr/pbr_game.h>
 #include <pbr/box_stack/box_stack.h>
 #include <pbr/collision/collision.h>
 #include <pbr/mario/world1x1.h>
+#include <pbr/ray_casting/ray_casting.h>
+#include <pbr/sweep_testing/sweep_testing.h>
 #include <rainbow/rainbow.h>
 #include <rotating_mesh/game_analytic.h>
 #include <rotating_mesh/game_lut.h>
@@ -28,8 +28,10 @@ enum class eGame : uint16_t
     MandelbrotLutColor,
     PBR,
     Rainbow,
+    RayCasting,
     RotatingMeshAnalytic,
     RotatingMeshLUT,
+    SweepTesting,
     World1x1
 };
 
@@ -47,8 +49,10 @@ enum class eGame : uint16_t
         { android_vulkan::eGame::MandelbrotLutColor, std::make_shared<mandelbrot::MandelbrotLUTColor> () },
         { android_vulkan::eGame::PBR, std::make_shared<pbr::PBRGame> () },
         { android_vulkan::eGame::Rainbow, std::make_shared<rainbow::Rainbow> () },
+        { android_vulkan::eGame::RayCasting, std::make_shared<pbr::ray_casting::RayCasting> () },
         { android_vulkan::eGame::RotatingMeshAnalytic, std::make_shared<rotating_mesh::GameAnalytic> () },
         { android_vulkan::eGame::RotatingMeshLUT, std::make_shared<rotating_mesh::GameLUT> () },
+        { android_vulkan::eGame::SweepTesting, std::make_shared<pbr::sweep_testing::SweepTesting> () },
         { android_vulkan::eGame::World1x1, std::make_shared<pbr::mario::World1x1> () }
     };
 

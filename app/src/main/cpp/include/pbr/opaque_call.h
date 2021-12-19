@@ -1,9 +1,8 @@
-#ifndef OPAQUE_CALL_H
-#define OPAQUE_CALL_H
+#ifndef PBR_OPAQUE_CALL_H
+#define PBR_OPAQUE_CALL_H
 
 
 #include "mesh_group.h"
-#include <half_types.h>
 
 
 namespace pbr {
@@ -32,10 +31,10 @@ class OpaqueCall final
         explicit OpaqueCall ( MeshRef &mesh,
             const GXMat4 &local,
             GXAABB const &worldBounds,
-            android_vulkan::Half4 const &color0,
-            android_vulkan::Half4 const &color1,
-            android_vulkan::Half4 const &color2,
-            android_vulkan::Half4 const &color3
+            GXColorRGB const &color0,
+            GXColorRGB const &color1,
+            GXColorRGB const &color2,
+            GXColorRGB const &color3
         ) noexcept;
 
         ~OpaqueCall () = default;
@@ -46,10 +45,10 @@ class OpaqueCall final
         void Append ( MeshRef &mesh,
             const GXMat4 &local,
             GXAABB const &worldBounds,
-            android_vulkan::Half4 const &color0,
-            android_vulkan::Half4 const &color1,
-            android_vulkan::Half4 const &color2,
-            android_vulkan::Half4 const &color3
+            GXColorRGB const &color0,
+            GXColorRGB const &color1,
+            GXColorRGB const &color2,
+            GXColorRGB const &color3
         ) noexcept;
 
         [[nodiscard]] BatchList const& GetBatchList () const noexcept;
@@ -59,23 +58,23 @@ class OpaqueCall final
         void AddBatch ( MeshRef &mesh,
             GXMat4 const &local,
             GXAABB const &worldBounds,
-            android_vulkan::Half4 const &color0,
-            android_vulkan::Half4 const &color1,
-            android_vulkan::Half4 const &color2,
-            android_vulkan::Half4 const &color3
+            GXColorRGB const &color0,
+            GXColorRGB const &color1,
+            GXColorRGB const &color2,
+            GXColorRGB const &color3
         ) noexcept;
 
         void AddUnique ( MeshRef &mesh,
             GXMat4 const &local,
             GXAABB const &worldBounds,
-            android_vulkan::Half4 const &color0,
-            android_vulkan::Half4 const &color1,
-            android_vulkan::Half4 const &color2,
-            android_vulkan::Half4 const &color3
+            GXColorRGB const &color0,
+            GXColorRGB const &color1,
+            GXColorRGB const &color2,
+            GXColorRGB const &color3
         ) noexcept;
 };
 
 } // namespace pbr
 
 
-#endif // OPAQUE_CALL_H
+#endif // PBR_OPAQUE_CALL_H

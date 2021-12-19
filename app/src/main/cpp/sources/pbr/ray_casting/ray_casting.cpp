@@ -435,8 +435,9 @@ void RayCasting::Raycast () noexcept
 
     constexpr GXColorRGB color ( 1.0F, 1.0F, 1.0F, 1.0F );
     android_vulkan::RaycastResult result {};
+    constexpr uint32_t groups = std::numeric_limits<uint32_t>::max ();
 
-    if ( !_physics.Raycast ( result, rayFrom, rayTo ) )
+    if ( !_physics.Raycast ( result, groups, rayFrom, rayTo ) )
     {
         SwitchEmission ( _rayMaterial, _rayTextureNoHit );
         _renderSession.SubmitMesh ( _lineMesh, _rayMaterial, transform, bounds, color, color, color, color );

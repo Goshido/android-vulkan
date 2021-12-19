@@ -35,7 +35,7 @@ class ActorSweep final
         void FreeTransferResources ( VkDevice device ) noexcept;
 
         void Destroy () noexcept;
-        [[nodiscard, maybe_unused]] android_vulkan::ShapeRef const& GetShape () noexcept;
+        [[nodiscard]] android_vulkan::ShapeRef const& GetShape () noexcept;
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
             size_t &commandBufferConsumed,

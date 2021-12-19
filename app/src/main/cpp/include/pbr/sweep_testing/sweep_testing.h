@@ -21,18 +21,19 @@ class SweepTesting final : public android_vulkan::Game
         };
 
     private:
-        constexpr static size_t                     GRID_X = 4U;
-        constexpr static size_t                     GRID_Z = 4U;
+        constexpr static size_t                         GRID_X = 4U;
+        constexpr static size_t                         GRID_Z = 4U;
 
-        std::array<ActorBody, GRID_X * GRID_Z>      _bodies {};
-        ActorSweep                                  _sweep {};
-        Camera                                      _camera {};
-        VkCommandPool                               _commandPool = VK_NULL_HANDLE;
-        eControlType                                _controlType = eControlType::SweepObject;
-        PointLightComponent                         _light {};
-        Texture2DRef                                _overlay {};
-        android_vulkan::Physics                     _physics {};
-        RenderSession                               _renderSession {};
+        std::array<ActorBody, GRID_X * GRID_Z>          _bodies {};
+        Camera                                          _camera {};
+        VkCommandPool                                   _commandPool = VK_NULL_HANDLE;
+        eControlType                                    _controlType = eControlType::SweepObject;
+        PointLightComponent                             _light {};
+        Texture2DRef                                    _overlay {};
+        android_vulkan::Physics                         _physics {};
+        RenderSession                                   _renderSession {};
+        ActorSweep                                      _sweep {};
+        std::vector<android_vulkan::RigidBodyRef>       _sweepResult {};
 
     public:
         SweepTesting () = default;
@@ -62,6 +63,7 @@ class SweepTesting final : public android_vulkan::Game
         void DestroyCommandPool ( VkDevice device ) noexcept;
 
         [[nodiscard]] bool CreateScene ( android_vulkan::Renderer &renderer ) noexcept;
+        void DoSweepTest () noexcept;
 
         static void OnSwitchControls ( void* context ) noexcept;
 };

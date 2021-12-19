@@ -17,7 +17,12 @@ class Physics;
 
 class RigidBody final
 {
+    public:
+        using Context = void*;
+
     private:
+        Context                 _context;
+
         float                   _dampingAngular;
         float                   _dampingLinear;
 
@@ -93,6 +98,9 @@ class RigidBody final
         [[maybe_unused]] void DisableSleep () noexcept;
         void EnableSleep () noexcept;
         [[maybe_unused, nodiscard]] bool IsCanSleep () const noexcept;
+
+        [[nodiscard]] Context GetContext () const noexcept;
+        void SetContext ( Context context ) noexcept;
 
         [[maybe_unused, nodiscard]] float GetDampingAngular () const noexcept;
         void SetDampingAngular ( float damping ) noexcept;

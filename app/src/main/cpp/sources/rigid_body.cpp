@@ -32,6 +32,7 @@ constexpr static GXVec3 const ZERO ( 0.0F, 0.0F, 0.0F );
 std::mutex RigidBody::_mutex {};
 
 RigidBody::RigidBody () noexcept:
+    _context ( nullptr ),
     _dampingAngular ( DEFAULT_DAMPING_ANGULAR ),
     _dampingLinear ( DEFAULT_DAMPING_LINEAR ),
     _forceAwake ( false ),
@@ -218,6 +219,16 @@ void RigidBody::EnableSleep () noexcept
 [[maybe_unused]] bool RigidBody::IsCanSleep () const noexcept
 {
     return _isCanSleep;
+}
+
+[[nodiscard]] RigidBody::Context RigidBody::GetContext () const noexcept
+{
+    return _context;
+}
+
+void RigidBody::SetContext ( Context context ) noexcept
+{
+    _context = context;
 }
 
 [[maybe_unused]] float RigidBody::GetDampingAngular () const noexcept

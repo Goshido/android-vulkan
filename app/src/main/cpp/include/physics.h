@@ -61,11 +61,20 @@ class Physics final
         void Pause () noexcept;
 
         // The method returns true if ray hits anything. Otherwise the method returns false.
+        // "groups" will be used as filter during the ray casting.
         // The closest hit point will be returned.
-        [[nodiscard]] bool Raycast ( RaycastResult &result, GXVec3 const &from, GXVec3 const &to ) const noexcept;
+        [[nodiscard]] bool Raycast ( RaycastResult &result,
+            uint32_t groups,
+            GXVec3 const &from,
+            GXVec3 const &to
+        ) const noexcept;
 
         void Resume () noexcept;
         void Simulate ( float deltaTime ) noexcept;
+
+        // "result" vector will be resized if needed.
+        // "groups" will be used as filter during the test.
+        void SweepTest ( std::vector<RigidBodyRef> &result, ShapeRef const &sweepShape, uint32_t groups ) noexcept;
 
         void OnDebugRun () noexcept;
 

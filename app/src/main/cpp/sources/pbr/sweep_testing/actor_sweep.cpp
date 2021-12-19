@@ -6,9 +6,9 @@
 
 namespace pbr::sweep_testing {
 
-constexpr static float MOVING_SPEED = 1.25e-2F;
+constexpr static float MOVING_SPEED = 1.25F;
 constexpr static float STICK_DEAD_ZONE = 0.2F;
-constexpr static size_t VISIBILITY_MS = 333U;
+constexpr static size_t VISIBILITY_MS = 300U;
 
 void ActorSweep::CaptureInput ( GXMat4 const &cameraLocal )
 {
@@ -40,7 +40,7 @@ void ActorSweep::Destroy () noexcept
     _mesh.reset ();
 }
 
-[[maybe_unused]] android_vulkan::ShapeRef const& ActorSweep::GetShape () noexcept
+android_vulkan::ShapeRef const& ActorSweep::GetShape () noexcept
 {
     return _shape;
 }
@@ -140,7 +140,7 @@ void ActorSweep::Update ( float deltaTime ) noexcept
     UpdateVisibility ( deltaTime );
 }
 
-void ActorSweep::UpdateLocation ( float /*deltaTime*/ ) noexcept
+void ActorSweep::UpdateLocation ( float deltaTime ) noexcept
 {
     GXVec3 move = _moveSpeed;
 
@@ -175,7 +175,7 @@ void ActorSweep::UpdateLocation ( float /*deltaTime*/ ) noexcept
     auto& shape = static_cast<android_vulkan::ShapeBox&> ( *_shape );
     GXMat4 transform = shape.GetTransformWorld ();
     auto& location = *reinterpret_cast<GXVec3*> ( &transform._m[ 3U ][ 0U ] );
-    location.Sum ( location, MOVING_SPEED, offset );
+    location.Sum ( location, MOVING_SPEED * deltaTime, offset );
     shape.UpdateCacheData ( transform );
 }
 

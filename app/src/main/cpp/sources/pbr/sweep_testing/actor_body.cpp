@@ -80,7 +80,12 @@ bool ActorBody::Init ( android_vulkan::Renderer &renderer,
     ph.SetLocation ( location, false );
 
     android_vulkan::ShapeRef shape = std::make_shared<android_vulkan::ShapeBox> ( size );
+
+    constexpr uint32_t groups = 0b00000000'00000000'00000000'00000010U;
+    shape->SetCollisionGroups ( groups );
+
     ph.SetShape ( shape, false );
+    ph.SetContext ( this );
 
     return physics.AddRigidBody ( _body );
 }

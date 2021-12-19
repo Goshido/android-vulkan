@@ -34,7 +34,7 @@ bool SweepTesting::OnFrame ( android_vulkan::Renderer &renderer, double deltaTim
     _camera.Update ( dt );
     _sweep.Update ( dt );
 
-    // TODO sweep test logic.
+    DoSweepTest ();
 
     for ( auto& body : _bodies )
         body.Submit ( _renderSession );
@@ -314,6 +314,21 @@ bool SweepTesting::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
     }
 
     return true;
+}
+
+void SweepTesting::DoSweepTest () noexcept
+{
+    constexpr uint32_t groups = 0b00000000'00000000'00000000'00000110U;
+    _physics.SweepTest ( _sweepResult, _sweep.GetShape (), groups );
+
+    for ( auto& body : _bodies )
+        body.DisableOverlay ();
+
+    for ( auto const& s : _sweepResult )
+    {
+        auto& actorBody = *static_cast<ActorBody*> ( s->GetContext () );
+        actorBody.EnableOverlay ();
+    }
 }
 
 void SweepTesting::OnSwitchControls ( void* context ) noexcept

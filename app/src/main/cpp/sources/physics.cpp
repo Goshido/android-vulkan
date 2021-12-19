@@ -126,7 +126,7 @@ void Physics::Pause () noexcept
     _isPause = true;
 }
 
-bool Physics::Raycast ( RaycastResult &result, GXVec3 const &from, GXVec3 const &to ) const noexcept
+bool Physics::Raycast ( RaycastResult &result, uint32_t groups, GXVec3 const &from, GXVec3 const &to ) const noexcept
 {
     float dist = std::numeric_limits<float>::max ();
 
@@ -137,7 +137,9 @@ bool Physics::Raycast ( RaycastResult &result, GXVec3 const &from, GXVec3 const 
     auto check = [ & ] ( std::unordered_set<RigidBodyRef> const &set ) noexcept {
         for ( auto& body : set )
         {
-            if ( !rayCaster.Run ( current, from, to, body->GetShape () ) )
+            Shape const& shape = body->GetShape ();
+
+            if ( !( shape.GetCollisionGroups () & groups ) || !rayCaster.Run ( current, from, to, shape ) )
                 continue;
 
             float const d = current._point.SquaredDistance ( from );
@@ -192,6 +194,30 @@ void Physics::Simulate ( float deltaTime ) noexcept
 
         _accumulator -= _fixedTimeStep;
     }
+}
+
+void Physics::SweepTest ( std::vector<RigidBodyRef> &result, ShapeRef const &sweepShape, uint32_t groups ) noexcept
+{
+    result.clear ();
+
+    auto check = [ &result, groups ] ( Shape const &sweep, std::unordered_set<RigidBodyRef> const &set ) noexcept {
+        GJK gjk {};
+
+        for ( auto& body : set )
+        {
+            Shape const& bodyShape = body->GetShape ();
+            gjk.Reset ();
+
+            if ( ( bodyShape.GetCollisionGroups () & groups ) && gjk.Run ( sweep, bodyShape ) )
+            {
+                result.emplace_back ( body );
+            }
+        }
+    };
+
+    Shape const& sweep = *sweepShape;
+    check ( sweep, _kinematics );
+    check ( sweep, _dynamics );
 }
 
 void Physics::OnDebugRun () noexcept

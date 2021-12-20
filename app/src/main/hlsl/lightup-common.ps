@@ -2,68 +2,68 @@
 
 [[vk::binding ( 0, 0 )]]
 [[vk::input_attachment_index (0)]]
-SubpassInput<float4>    g_albedo;
+SubpassInput<float32_t4>    g_albedo;
 
 [[vk::binding ( 1, 0 )]]
 [[vk::input_attachment_index (1)]]
-SubpassInput<float4>    g_normal;
+SubpassInput<float32_t4>    g_normal;
 
 [[vk::binding ( 2, 0 )]]
 [[vk::input_attachment_index (2)]]
-SubpassInput<float4>    g_params;
+SubpassInput<float32_t4>    g_params;
 
 [[vk::binding ( 3, 0 )]]
 [[vk::input_attachment_index (3)]]
-SubpassInput<float>     g_depth;
+SubpassInput<float32_t>     g_depth;
 
 [[vk::binding ( 4, 0 )]]
-Texture2D<float4>       g_brdf:                 register ( t0 );
+Texture2D<float32_t4>       g_brdf:                 register ( t0 );
 
 [[vk::binding ( 5, 0 )]]
-SamplerState            g_brdfSampler:          register ( s1 );
+SamplerState                g_brdfSampler:          register ( s1 );
 
 [[vk::binding ( 6, 0 )]]
-SamplerState            g_prefilterSampler:     register ( s2 );
+SamplerState                g_prefilterSampler:     register ( s2 );
 
 [[vk::binding ( 7, 0 )]]
-cbuffer ViewData:                               register ( b0 )
+cbuffer ViewData:                                   register ( b0 )
 {
-    matrix              _cvvToView;
-    matrix              _viewToWorld;
+    float32_t4x4            _cvvToView;
+    float32_t4x4            _viewToWorld;
 
     // Optimization:
     // must be equal: 2.0F / resolution.
-    float2              _invResolutionFactor;
-    float2              _padding0_0;
+    float32_t2              _invResolutionFactor;
+    float32_t2              _padding0_0;
 };
 
 //----------------------------------------------------------------------------------------------------------------------
 
-half3 GetAlbedo ()
+float16_t3 GetAlbedo ()
 {
-    return (half3)g_albedo.SubpassLoad ().xyz;
+    return (float16_t3)g_albedo.SubpassLoad ().xyz;
 }
 
-float GetDepth ()
+float32_t GetDepth ()
 {
     return g_depth.SubpassLoad ();
 }
 
-half3 GetFresnel ( in half dotFactor, in half metallic, in half3 albedo )
+float16_t3 GetFresnel ( in float16_t dotFactor, in float16_t metallic, in float16_t3 albedo )
 {
-    const half3 f0 = lerp ( (half3)MINIMUM_F0, albedo, (half3)metallic );
+    const float16_t3 f0 = lerp ( (float16_t3)MINIMUM_F0, albedo, (float16_t3)metallic );
     return mad ( 1.0H - f0, pow ( max ( 0.0H, 1.0H - dotFactor ), 5.0H ), f0 );
 }
 
-void GetParams ( out half roughness, out half metallic )
+void GetParams ( out float16_t roughness, out float16_t metallic )
 {
-    const float4 paramSample = (float4)g_params.SubpassLoad ();
-    roughness = (half)paramSample.x;
-    metallic = (half)paramSample.z;
+    const float32_t4 paramSample = (float32_t4)g_params.SubpassLoad ();
+    roughness = (float16_t)paramSample.x;
+    metallic = (float16_t)paramSample.z;
 }
 
-half3 RestoreNormalView ()
+float16_t3 RestoreNormalView ()
 {
-    const half3 alpha = (half3)g_normal.SubpassLoad ().xyz;
-    return mad ( alpha, (half3)2.0H, (half3)( -1.0H ) );
+    const float16_t3 alpha = (float16_t3)g_normal.SubpassLoad ().xyz;
+    return mad ( alpha, (float16_t3)2.0H, (float16_t3)( -1.0H ) );
 }

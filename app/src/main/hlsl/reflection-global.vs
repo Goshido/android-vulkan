@@ -1,14 +1,14 @@
-static const float4 g_vertices[ 4u ] =
+static const float32_t4 g_vertices[ 4U ] =
 {
-    float4 ( 1.0f, -1.0f, 0.5f, 1.0f ),
-    float4 ( 1.0f, 1.0f, 0.5f, 1.0f ),
-    float4 ( -1.0f, -1.0f, 0.5f, 1.0f ),
-    float4 ( -1.0f, 1.0f, 0.5f, 1.0f )
+    float32_t4 ( 1.0F, -1.0F, 0.5F, 1.0F ),
+    float32_t4 ( 1.0F, 1.0F, 0.5F, 1.0F ),
+    float32_t4 ( -1.0F, -1.0F, 0.5F, 1.0F ),
+    float32_t4 ( -1.0F, 1.0F, 0.5F, 1.0F )
 };
 
 //----------------------------------------------------------------------------------------------------------------------
 
-linear float4 VS ( in uint vertexID: SV_VertexID ): SV_Position
+linear float32_t4 VS ( in uint32_t vertexID: SV_VertexID ): SV_Position
 {
     return g_vertices[ vertexID ];
 }

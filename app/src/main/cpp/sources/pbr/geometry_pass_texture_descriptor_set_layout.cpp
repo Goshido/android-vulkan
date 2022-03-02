@@ -1,4 +1,4 @@
-#include <pbr/opaque_texture_descriptor_set_layout.h>
+#include <pbr/geometry_pass_texture_descriptor_set_layout.h>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -11,37 +11,36 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-class OpaqueTextureDescriptorSetLayoutImpl final
+class GeometryPassTextureDescriptorSetLayoutImpl final
 {
     public:
-        VkDescriptorSetLayout       _layout;
+        VkDescriptorSetLayout       _layout = VK_NULL_HANDLE;
 
     private:
-        std::atomic<size_t>         _references;
+        std::atomic<size_t>         _references = 0U;
 
     public:
-        OpaqueTextureDescriptorSetLayoutImpl ();
+        GeometryPassTextureDescriptorSetLayoutImpl () = default;
 
-        OpaqueTextureDescriptorSetLayoutImpl ( OpaqueTextureDescriptorSetLayoutImpl const &other ) = delete;
-        OpaqueTextureDescriptorSetLayoutImpl& operator = ( OpaqueTextureDescriptorSetLayoutImpl const &other ) = delete;
+        GeometryPassTextureDescriptorSetLayoutImpl ( GeometryPassTextureDescriptorSetLayoutImpl const & ) = delete;
 
-        OpaqueTextureDescriptorSetLayoutImpl ( OpaqueTextureDescriptorSetLayoutImpl &&other ) = delete;
-        OpaqueTextureDescriptorSetLayoutImpl& operator = ( OpaqueTextureDescriptorSetLayoutImpl &&other ) = delete;
+        GeometryPassTextureDescriptorSetLayoutImpl& operator = (
+            GeometryPassTextureDescriptorSetLayoutImpl const &
+        ) = delete;
 
-        ~OpaqueTextureDescriptorSetLayoutImpl () = default;
+        GeometryPassTextureDescriptorSetLayoutImpl ( GeometryPassTextureDescriptorSetLayoutImpl && ) = delete;
 
-        void Destroy ( VkDevice device );
-        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer );
+        GeometryPassTextureDescriptorSetLayoutImpl& operator = (
+            GeometryPassTextureDescriptorSetLayoutImpl &&
+        ) = delete;
+
+        ~GeometryPassTextureDescriptorSetLayoutImpl () = default;
+
+        void Destroy ( VkDevice device ) noexcept;
+        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer ) noexcept;
 };
 
-OpaqueTextureDescriptorSetLayoutImpl::OpaqueTextureDescriptorSetLayoutImpl ():
-    _layout ( VK_NULL_HANDLE ),
-    _references ( 0U )
-{
-    // NOTHING
-}
-
-void OpaqueTextureDescriptorSetLayoutImpl::Destroy ( VkDevice device )
+void GeometryPassTextureDescriptorSetLayoutImpl::Destroy ( VkDevice device ) noexcept
 {
     if ( !_references )
         return;
@@ -53,10 +52,10 @@ void OpaqueTextureDescriptorSetLayoutImpl::Destroy ( VkDevice device )
 
     vkDestroyDescriptorSetLayout ( device, _layout, nullptr );
     _layout = VK_NULL_HANDLE;
-    AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "OpaqueTextureDescriptorSetLayoutImpl::_layout" )
+    AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "GeometryPassTextureDescriptorSetLayoutImpl::_layout" )
 }
 
-bool OpaqueTextureDescriptorSetLayoutImpl::Init ( android_vulkan::Renderer &renderer )
+bool GeometryPassTextureDescriptorSetLayoutImpl::Init ( android_vulkan::Renderer &renderer ) noexcept
 {
     if ( _references )
     {
@@ -138,7 +137,7 @@ bool OpaqueTextureDescriptorSetLayoutImpl::Init ( android_vulkan::Renderer &rend
         }
     };
 
-    constexpr VkDescriptorSetLayoutCreateInfo const descriptorSetLayoutInfo
+    constexpr VkDescriptorSetLayoutCreateInfo descriptorSetLayoutInfo
     {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
         .pNext = nullptr,
@@ -149,34 +148,34 @@ bool OpaqueTextureDescriptorSetLayoutImpl::Init ( android_vulkan::Renderer &rend
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateDescriptorSetLayout ( renderer.GetDevice (), &descriptorSetLayoutInfo, nullptr, &_layout ),
-        "OpaqueTextureDescriptorSetLayoutImpl::Init",
+        "GeometryPassTextureDescriptorSetLayoutImpl::Init",
         "Can't create descriptor set layout"
     );
 
     if ( !result )
         return false;
 
-    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "OpaqueTextureDescriptorSetLayoutImpl::_layout" )
+    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "GeometryPassTextureDescriptorSetLayoutImpl::_layout" )
 
     ++_references;
     return true;
 }
 
-static OpaqueTextureDescriptorSetLayoutImpl g_opaqueTextureDescriptorSetLayout;
+static GeometryPassTextureDescriptorSetLayoutImpl g_opaqueTextureDescriptorSetLayout {};
 
 //----------------------------------------------------------------------------------------------------------------------
 
-void OpaqueTextureDescriptorSetLayout::Destroy ( VkDevice device )
+void GeometryPassTextureDescriptorSetLayout::Destroy ( VkDevice device ) noexcept
 {
     g_opaqueTextureDescriptorSetLayout.Destroy ( device );
 }
 
-bool OpaqueTextureDescriptorSetLayout::Init ( android_vulkan::Renderer &renderer )
+bool GeometryPassTextureDescriptorSetLayout::Init ( android_vulkan::Renderer &renderer ) noexcept
 {
     return g_opaqueTextureDescriptorSetLayout.Init ( renderer );
 }
 
-VkDescriptorSetLayout OpaqueTextureDescriptorSetLayout::GetLayout () const
+VkDescriptorSetLayout GeometryPassTextureDescriptorSetLayout::GetLayout () const noexcept
 {
     return g_opaqueTextureDescriptorSetLayout._layout;
 }

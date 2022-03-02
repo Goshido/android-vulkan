@@ -1,28 +1,25 @@
 #include <pbr/render_session_stats.h>
 #include <logger.h>
 
+GX_DISABLE_COMMON_WARNINGS
+
+#include <cstdio>
+#include <memory>
+
+GX_RESTORE_WARNING_STATE
+
 
 namespace pbr {
 
-constexpr static double const TIMEOUT = 3.0;
+constexpr static double TIMEOUT = 3.0;
 
 RenderSessionStats::RenderSessionStats () noexcept:
-    _frameCount ( 0U ),
-    _renderMeshes ( 0U ),
-    _renderPointLights ( 0U ),
-    _renderReflectionsGlobal ( 0U ),
-    _renderReflectionsLocal ( 0U ),
-    _renderVertices ( 0U ),
-    _submitMeshes ( 0U ),
-    _submitPointLights ( 0U ),
-    _submitReflectionsLocal ( 0U ),
-    _submitVertices ( 0U ),
     _timeout ( TIMEOUT )
 {
     // NOTHING
 }
 
-void RenderSessionStats::PrintStats ( double deltaTime )
+void RenderSessionStats::PrintStats ( double deltaTime ) noexcept
 {
     ++_frameCount;
     _timeout -= deltaTime;
@@ -32,94 +29,125 @@ void RenderSessionStats::PrintStats ( double deltaTime )
 
     constexpr char const format[] =
 R"__(>>> RenderSessionStats::PrintStats:
-    Submitted meshes: %zu
-    Submitted vertices: %zu
-    Submitted point lights: %zu
-    Submitted local reflections: %zu
-    Rendered global reflections: %zu
-    Rendered meshes: %zu
-    Rendered vertices: %zu
-    Rendered point lights: %zu
-    Rendered local reflections: %zu
-    Culling mesh percent: %zu%%
-    Culling vertex percent: %zu%%
-    Culling point light percent: %zu%%
-    Culling local reflection percent: %zu%%
+                        Submitted     Rendered    Culled
+              Vertices  %9zu    %9zu    %s
+         Opaque meshes  %9zu    %9zu    %s
+        Stipple meshes  %9zu    %9zu    %s
+          Point lights  %9zu    %9zu    %s
+     Local reflections  %9zu    %9zu    %s
+    Global reflections  %9zu    %9zu    %s
 )__";
 
-    auto avgCounter = [ & ] ( size_t counter ) -> size_t {
+    auto avgCounter = [ & ] ( size_t counter ) noexcept -> size_t {
         return counter / _frameCount;
     };
 
-    auto avgPercent = [] ( size_t renderCount, size_t submitCount ) -> size_t {
-        return 100U - ( 100U * renderCount / submitCount );
+    constexpr size_t capacity = 8U;
+    char opaqueCull[ capacity ];
+    char stippleCull[ capacity ];
+    char vertexCull[ capacity ];
+    char pointLightCull[ capacity ];
+    char reflectionLocalCull[ capacity ];
+    char reflectionGlobalCull[ capacity ];
+
+    auto avgPercent = [] ( char* dst, size_t renderCount, size_t submitCount ) noexcept -> char const* {
+        if ( !submitCount )
+        {
+            constexpr char const notApplicable[] = "   N/A";
+            std::memcpy ( dst, notApplicable, std::size ( notApplicable ) );
+            return dst;
+        }
+
+        std::snprintf ( dst, capacity, "%5zu%%", 100U - ( 100U * renderCount / submitCount ) );
+        return dst;
     };
 
+    size_t const g = avgCounter ( _renderReflectionsGlobal );
+
     android_vulkan::LogInfo ( format,
-        avgCounter ( _submitMeshes ),
         avgCounter ( _submitVertices ),
-        avgCounter ( _submitPointLights ),
-        avgCounter ( _submitReflectionsLocal ),
-        avgCounter ( _renderReflectionsGlobal ),
-        avgCounter ( _renderMeshes ),
         avgCounter ( _renderVertices ),
+        avgPercent ( vertexCull, _renderVertices, _submitVertices ),
+        avgCounter ( _submitOpaqueMeshes ),
+        avgCounter ( _renderOpaqueMeshes ),
+        avgPercent ( opaqueCull, _renderOpaqueMeshes, _submitOpaqueMeshes ),
+        avgCounter ( _submitStippleMeshes ),
+        avgCounter ( _renderStippleMeshes ),
+        avgPercent ( stippleCull, _renderStippleMeshes, _submitStippleMeshes ),
+        avgCounter ( _submitPointLights ),
         avgCounter ( _renderPointLights ),
+        avgPercent ( pointLightCull, _renderPointLights, _submitPointLights ),
+        avgCounter ( _submitReflectionsLocal ),
         avgCounter ( _renderReflectionsLocal ),
-        avgPercent ( _renderMeshes, _submitMeshes ),
-        avgPercent ( _renderVertices, _submitVertices ),
-        avgPercent ( _renderPointLights, _submitPointLights ),
-        avgPercent ( _renderReflectionsLocal, _submitReflectionsLocal )
+        avgPercent ( reflectionLocalCull, _renderReflectionsLocal, _submitReflectionsLocal ),
+        g,
+        g,
+        avgPercent ( reflectionGlobalCull, g, g )
     );
 
     Reset ();
 }
 
-void RenderSessionStats::RenderOpaque ( uint32_t vertexCount, uint32_t instanceCount )
+void RenderSessionStats::RenderOpaque ( uint32_t vertexCount, uint32_t instanceCount ) noexcept
 {
-    _renderMeshes += static_cast<size_t> ( instanceCount );
+    _renderOpaqueMeshes += static_cast<size_t> ( instanceCount );
     _renderVertices += static_cast<size_t> ( vertexCount ) * static_cast<size_t> ( instanceCount );
 }
 
-void RenderSessionStats::SubmitOpaque ( uint32_t vertexCount )
+void RenderSessionStats::SubmitOpaque ( uint32_t vertexCount ) noexcept
 {
-    ++_submitMeshes;
+    ++_submitOpaqueMeshes;
     _submitVertices += static_cast<size_t> ( vertexCount );
 }
 
-void RenderSessionStats::RenderPointLights ( size_t count )
+[[maybe_unused]] void RenderSessionStats::RenderStipple ( uint32_t vertexCount, uint32_t instanceCount ) noexcept
+{
+    ++_renderStippleMeshes;
+    _renderVertices += static_cast<size_t> ( vertexCount ) * static_cast<size_t> ( instanceCount );
+}
+
+void RenderSessionStats::SubmitStipple ( uint32_t vertexCount ) noexcept
+{
+    ++_submitStippleMeshes;
+    _submitVertices += static_cast<size_t> ( vertexCount );
+}
+
+void RenderSessionStats::RenderPointLights ( size_t count ) noexcept
 {
     _renderPointLights += count;
 }
 
-void RenderSessionStats::SubmitPointLight ()
+void RenderSessionStats::SubmitPointLight () noexcept
 {
     ++_submitPointLights;
 }
 
-void RenderSessionStats::RenderReflectionGlobal ()
+void RenderSessionStats::RenderReflectionGlobal () noexcept
 {
     ++_renderReflectionsGlobal;
 }
 
-void RenderSessionStats::RenderReflectionLocal ( size_t count )
+void RenderSessionStats::RenderReflectionLocal ( size_t count ) noexcept
 {
     _renderReflectionsLocal += count;
 }
 
-void RenderSessionStats::SubmitReflectionLocal ()
+void RenderSessionStats::SubmitReflectionLocal () noexcept
 {
     ++_submitReflectionsLocal;
 }
 
-void RenderSessionStats::Reset ()
+void RenderSessionStats::Reset () noexcept
 {
     _frameCount = 0U;
-    _renderReflectionsGlobal = 0U;
-    _renderMeshes = 0U;
+    _renderOpaqueMeshes = 0U;
+    _renderStippleMeshes = 0U;
     _renderPointLights = 0U;
+    _renderReflectionsGlobal = 0U;
     _renderReflectionsLocal = 0U;
     _renderVertices = 0U;
-    _submitMeshes = 0U;
+    _submitOpaqueMeshes = 0U;
+    _submitStippleMeshes = 0U;
     _submitPointLights = 0U;
     _submitReflectionsLocal = 0U;
     _submitVertices = 0U;

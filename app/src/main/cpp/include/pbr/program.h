@@ -27,12 +27,12 @@ class Program
         using DescriptorSetInfo = std::vector<SetItem>;
 
     protected:
-        VkShaderModule                          _fragmentShader;
-        VkShaderModule                          _vertexShader;
+        VkShaderModule                              _fragmentShader;
+        VkShaderModule                              _vertexShader;
 
-        [[maybe_unused]] std::string const      _name;
-        VkPipeline                              _pipeline;
-        VkPipelineLayout                        _pipelineLayout;
+        [[maybe_unused]] std::string_view const     _name;
+        VkPipeline                                  _pipeline;
+        VkPipelineLayout                            _pipelineLayout;
 
     public:
         Program () = delete;
@@ -49,58 +49,62 @@ class Program
             VkRenderPass renderPass,
             uint32_t subpass,
             VkExtent2D const &viewport
-        ) = 0;
+        ) noexcept = 0;
 
-        virtual void Destroy ( VkDevice device ) = 0;
-        [[nodiscard]] virtual DescriptorSetInfo const& GetResourceInfo () const = 0;
+        virtual void Destroy ( VkDevice device ) noexcept = 0;
+        [[nodiscard]] virtual DescriptorSetInfo const& GetResourceInfo () const noexcept = 0;
 
         // The method assigns VkPipeline as active pipeline.
-        void Bind ( VkCommandBuffer commandBuffer ) const;
+        void Bind ( VkCommandBuffer commandBuffer ) const noexcept;
 
     protected:
-        explicit Program ( std::string &&name ) noexcept;
+        explicit Program ( std::string_view &&name ) noexcept;
         virtual ~Program () = default;
 
         [[nodiscard]] virtual VkPipelineColorBlendStateCreateInfo const* InitColorBlendInfo (
             VkPipelineColorBlendStateCreateInfo &info,
             VkPipelineColorBlendAttachmentState* attachments
-        ) const = 0;
+        ) const noexcept = 0;
 
         [[nodiscard]] virtual VkPipelineDepthStencilStateCreateInfo const* InitDepthStencilInfo (
             VkPipelineDepthStencilStateCreateInfo &info
-        ) const = 0;
+        ) const noexcept = 0;
 
         [[nodiscard]] virtual VkPipelineInputAssemblyStateCreateInfo const* InitInputAssemblyInfo (
             VkPipelineInputAssemblyStateCreateInfo &info
-        ) const = 0;
+        ) const noexcept = 0;
 
-        [[nodiscard]] virtual bool InitLayout ( android_vulkan::Renderer &renderer, VkPipelineLayout &layout ) = 0;
+        [[nodiscard]] virtual bool InitLayout ( android_vulkan::Renderer &renderer,
+            VkPipelineLayout &layout
+        ) noexcept = 0;
 
         [[nodiscard]] virtual VkPipelineMultisampleStateCreateInfo const* InitMultisampleInfo (
             VkPipelineMultisampleStateCreateInfo &info
-        ) const = 0;
+        ) const noexcept = 0;
 
         [[nodiscard]] virtual VkPipelineRasterizationStateCreateInfo const* InitRasterizationInfo (
             VkPipelineRasterizationStateCreateInfo &info
-        ) const = 0;
+        ) const noexcept = 0;
 
         [[nodiscard]] virtual bool InitShaderInfo ( android_vulkan::Renderer &renderer,
             VkPipelineShaderStageCreateInfo const* &targetInfo,
             VkPipelineShaderStageCreateInfo* sourceInfo
-        ) = 0;
+        ) noexcept = 0;
+
+        virtual void DestroyShaderModules ( VkDevice device ) noexcept = 0;
 
         [[nodiscard]] virtual VkPipelineViewportStateCreateInfo const* InitViewportInfo (
             VkPipelineViewportStateCreateInfo &info,
             VkRect2D &scissorInfo,
             VkViewport &viewportInfo,
             VkExtent2D const &viewport
-        ) const = 0;
+        ) const noexcept = 0;
 
         [[nodiscard]] virtual VkPipelineVertexInputStateCreateInfo const* InitVertexInputInfo (
             VkPipelineVertexInputStateCreateInfo &info,
             VkVertexInputAttributeDescription* attributes,
             VkVertexInputBindingDescription* binds
-        ) const = 0;
+        ) const noexcept = 0;
 };
 
 } // namespace pbr

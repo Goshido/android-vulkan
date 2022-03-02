@@ -31,6 +31,7 @@ class PointLightComponent final : public Component
         void Submit ( RenderSession &renderSession ) override;
 
         void SetBoundDimensions ( float width, float height, float depth ) noexcept;
+        void SetBoundDimensions ( GXVec3 const &dimensions ) noexcept;
         [[maybe_unused]] void SetHue ( GXColorRGB const &hue ) noexcept;
         void SetIntensity ( float intensity ) noexcept;
         void SetLocation ( GXVec3 const &location ) noexcept;

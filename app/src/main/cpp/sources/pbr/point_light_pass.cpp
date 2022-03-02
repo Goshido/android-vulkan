@@ -487,7 +487,7 @@ bool PointLightPass::AllocateShadowmapDescriptorSets ( android_vulkan::Renderer 
 
     _shadowmapDescriptorSets.resize ( neededSets, VK_NULL_HANDLE );
 
-    OpaqueInstanceDescriptorSetLayout const layout;
+    GeometryPassInstanceDescriptorSetLayout const layout;
     std::vector<VkDescriptorSetLayout> const layouts ( neededSets, layout.GetLayout () );
 
     VkDescriptorSetAllocateInfo const allocateInfo
@@ -790,7 +790,8 @@ bool PointLightPass::GenerateShadowmaps ( android_vulkan::Renderer &renderer )
 
         for ( auto const& [name, caster] : casters._batches )
         {
-            auto const &[mesh, transforms] = caster;
+            // NOLINTNEXTLINE - fields bound in possibly wrong order
+            auto const& [mesh, transforms] = caster;
             vkCmdBindVertexBuffers ( _shadowmapRenderCommandBuffer, 0U, 1U, &mesh->GetVertexBuffer (), &offset );
 
             vkCmdBindIndexBuffer ( _shadowmapRenderCommandBuffer,
@@ -949,9 +950,9 @@ bool PointLightPass::UpdateShadowmapGPUData ( android_vulkan::Renderer &renderer
 
             for ( auto const& [name, meshGroup] : opaque.GetBatchList () )
             {
-                for ( auto const& opaqueData : meshGroup._opaqueData )
+                for ( auto const& geometryData : meshGroup._geometryData )
                 {
-                    if ( !lightBounds.IsOverlaped ( opaqueData._worldBounds ) )
+                    if ( !lightBounds.IsOverlaped ( geometryData._worldBounds ) )
                         continue;
 
                     auto& [mesh, locals] = casters._batches[ name ];
@@ -964,7 +965,7 @@ bool PointLightPass::UpdateShadowmapGPUData ( android_vulkan::Renderer &renderer
                         locals.reserve ( PBR_POINT_LIGHT_MAX_SHADOW_CASTER_INSTANCE_COUNT );
                     }
 
-                    locals.push_back ( opaqueData._local );
+                    locals.push_back ( geometryData._local );
                 }
             }
         }

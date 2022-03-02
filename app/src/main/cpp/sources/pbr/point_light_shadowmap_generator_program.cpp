@@ -20,7 +20,7 @@ bool PointLightShadowmapGeneratorProgram::Init ( android_vulkan::Renderer &rende
     VkRenderPass renderPass,
     uint32_t subpass,
     VkExtent2D const &viewport
-)
+) noexcept
 {
     VkPipelineInputAssemblyStateCreateInfo assemblyInfo;
     VkVertexInputAttributeDescription attributeDescriptions;
@@ -87,10 +87,11 @@ bool PointLightShadowmapGeneratorProgram::Init ( android_vulkan::Renderer &rende
     }
 
     AV_REGISTER_PIPELINE ( "PointLightShadowmapGeneratorProgram::_pipeline" )
+    DestroyShaderModules ( device );
     return true;
 }
 
-void PointLightShadowmapGeneratorProgram::Destroy ( VkDevice device )
+void PointLightShadowmapGeneratorProgram::Destroy ( VkDevice device ) noexcept
 {
     if ( _pipelineLayout != VK_NULL_HANDLE )
     {
@@ -108,15 +109,10 @@ void PointLightShadowmapGeneratorProgram::Destroy ( VkDevice device )
         AV_UNREGISTER_PIPELINE ( "PointLightShadowmapGeneratorProgram::_pipeline" )
     }
 
-    if ( _vertexShader == VK_NULL_HANDLE )
-        return;
-
-    vkDestroyShaderModule ( device, _vertexShader, nullptr );
-    _vertexShader = VK_NULL_HANDLE;
-    AV_UNREGISTER_SHADER_MODULE ( "PointLightShadowmapGeneratorProgram::_vertexShader" )
+    DestroyShaderModules ( device );
 }
 
-Program::DescriptorSetInfo const& PointLightShadowmapGeneratorProgram::GetResourceInfo () const
+Program::DescriptorSetInfo const& PointLightShadowmapGeneratorProgram::GetResourceInfo () const noexcept
 {
     static DescriptorSetInfo const info
     {
@@ -133,7 +129,7 @@ Program::DescriptorSetInfo const& PointLightShadowmapGeneratorProgram::GetResour
 
 void PointLightShadowmapGeneratorProgram::SetDescriptorSet ( VkCommandBuffer commandBuffer,
     VkDescriptorSet sets
-) const
+) const noexcept
 {
     vkCmdBindDescriptorSets ( commandBuffer,
         VK_PIPELINE_BIND_POINT_GRAPHICS,
@@ -149,7 +145,7 @@ void PointLightShadowmapGeneratorProgram::SetDescriptorSet ( VkCommandBuffer com
 VkPipelineColorBlendStateCreateInfo const* PointLightShadowmapGeneratorProgram::InitColorBlendInfo (
     VkPipelineColorBlendStateCreateInfo &info,
     VkPipelineColorBlendAttachmentState* attachments
-) const
+) const noexcept
 {
     info.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
     info.pNext = nullptr;
@@ -158,14 +154,14 @@ VkPipelineColorBlendStateCreateInfo const* PointLightShadowmapGeneratorProgram::
     info.logicOp = VK_LOGIC_OP_NO_OP;
     info.attachmentCount = COLOR_RENDER_TARGET_COUNT;
     info.pAttachments = attachments;
-    memset ( info.blendConstants, 0, sizeof ( info.blendConstants ) );
+    std::memset ( info.blendConstants, 0, sizeof ( info.blendConstants ) );
 
     return &info;
 }
 
 VkPipelineDepthStencilStateCreateInfo const* PointLightShadowmapGeneratorProgram::InitDepthStencilInfo (
     VkPipelineDepthStencilStateCreateInfo &info
-) const
+) const noexcept
 {
     info.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
     info.pNext = nullptr;
@@ -183,7 +179,7 @@ VkPipelineDepthStencilStateCreateInfo const* PointLightShadowmapGeneratorProgram
     info.front.compareMask = UINT32_MAX;
     info.front.writeMask = 0x00U;
     info.front.reference = UINT32_MAX;
-    memcpy ( &info.back, &info.front, sizeof ( info.back ) );
+    std::memcpy ( &info.back, &info.front, sizeof ( info.back ) );
 
     info.minDepthBounds = 0.0F;
     info.maxDepthBounds = 1.0F;
@@ -193,7 +189,7 @@ VkPipelineDepthStencilStateCreateInfo const* PointLightShadowmapGeneratorProgram
 
 VkPipelineInputAssemblyStateCreateInfo const* PointLightShadowmapGeneratorProgram::InitInputAssemblyInfo (
     VkPipelineInputAssemblyStateCreateInfo &info
-) const
+) const noexcept
 {
     info.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
     info.pNext = nullptr;
@@ -204,7 +200,9 @@ VkPipelineInputAssemblyStateCreateInfo const* PointLightShadowmapGeneratorProgra
     return &info;
 }
 
-bool PointLightShadowmapGeneratorProgram::InitLayout ( android_vulkan::Renderer &renderer, VkPipelineLayout &layout )
+bool PointLightShadowmapGeneratorProgram::InitLayout ( android_vulkan::Renderer &renderer,
+    VkPipelineLayout &layout
+) noexcept
 {
     if ( !_instanceLayout.Init ( renderer ) )
         return false;
@@ -236,7 +234,7 @@ bool PointLightShadowmapGeneratorProgram::InitLayout ( android_vulkan::Renderer 
 
 VkPipelineMultisampleStateCreateInfo const* PointLightShadowmapGeneratorProgram::InitMultisampleInfo (
     VkPipelineMultisampleStateCreateInfo &info
-) const
+) const noexcept
 {
     info.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
     info.pNext = nullptr;
@@ -253,7 +251,7 @@ VkPipelineMultisampleStateCreateInfo const* PointLightShadowmapGeneratorProgram:
 
 VkPipelineRasterizationStateCreateInfo const* PointLightShadowmapGeneratorProgram::InitRasterizationInfo (
     VkPipelineRasterizationStateCreateInfo &info
-) const
+) const noexcept
 {
     info.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
     info.pNext = nullptr;
@@ -275,7 +273,7 @@ VkPipelineRasterizationStateCreateInfo const* PointLightShadowmapGeneratorProgra
 bool PointLightShadowmapGeneratorProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
     VkPipelineShaderStageCreateInfo const* &targetInfo,
     VkPipelineShaderStageCreateInfo* sourceInfo
-)
+) noexcept
 {
     bool result = renderer.CreateShader ( _vertexShader,
         VERTEX_SHADER,
@@ -299,12 +297,22 @@ bool PointLightShadowmapGeneratorProgram::InitShaderInfo ( android_vulkan::Rende
     return true;
 }
 
+void PointLightShadowmapGeneratorProgram::DestroyShaderModules ( VkDevice device ) noexcept
+{
+    if ( _vertexShader == VK_NULL_HANDLE )
+        return;
+
+    vkDestroyShaderModule ( device, _vertexShader, nullptr );
+    _vertexShader = VK_NULL_HANDLE;
+    AV_UNREGISTER_SHADER_MODULE ( "PointLightShadowmapGeneratorProgram::_vertexShader" )
+}
+
 VkPipelineViewportStateCreateInfo const* PointLightShadowmapGeneratorProgram::InitViewportInfo (
     VkPipelineViewportStateCreateInfo &info,
     VkRect2D &scissorInfo,
     VkViewport &viewportInfo,
     VkExtent2D const &viewport
-) const
+) const noexcept
 {
     viewportInfo.x = 0.0F;
     viewportInfo.y = 0.0F;
@@ -332,7 +340,7 @@ VkPipelineVertexInputStateCreateInfo const* PointLightShadowmapGeneratorProgram:
     VkPipelineVertexInputStateCreateInfo &info,
     VkVertexInputAttributeDescription* attributes,
     VkVertexInputBindingDescription* binds
-) const
+) const noexcept
 {
     binds->binding = 0U;
     binds->stride = static_cast<uint32_t> ( sizeof ( android_vulkan::VertexInfo ) );

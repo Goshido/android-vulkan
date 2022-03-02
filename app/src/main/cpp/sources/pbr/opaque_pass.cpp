@@ -1,57 +1,33 @@
-#include <pbr/geometry_pass.h>
+#include <pbr/opaque_pass.h>
 #include <half_types.h>
 
 
 namespace pbr {
 
-constexpr static size_t const TOTAL_COMMAND_BUFFERS = GeometryPass::DEFAULT_TEXTURE_COUNT + 2U;
 
-GeometryPass::GeometryPass () noexcept:
-    _albedoDefault {},
-    _emissionDefault {},
-    _maskDefault {},
-    _normalDefault {},
-    _paramDefault {},
-    _isFreeTransferResources ( false ),
-    _commandPool ( VK_NULL_HANDLE ),
-    _descriptorPool ( VK_NULL_HANDLE ),
-    _fence ( VK_NULL_HANDLE ),
-    _program {},
-    _renderCommandBuffer ( VK_NULL_HANDLE ),
-    _renderPassInfo {},
-    _sceneData {},
-    _submitInfoTransfer {},
-    _textureCommandBuffers {},
-    _transferCommandBuffer ( VK_NULL_HANDLE ),
-    _uniformPool ( eUniformPoolSize::Huge_64M )
-{
-    // NOTHING
-}
-
-SceneData& GeometryPass::GetSceneData ()
+SceneData& OpaquePass::GetSceneData () noexcept
 {
     return _sceneData;
 }
 
-bool GeometryPass::Init ( android_vulkan::Renderer &renderer,
+bool OpaquePass::Init ( android_vulkan::Renderer &renderer,
     VkCommandPool commandPool,
     VkExtent2D const &resolution,
     VkRenderPass renderPass,
     VkFramebuffer framebuffer
-)
+) noexcept
 {
     VkDevice device = renderer.GetDevice ();
 
-    constexpr VkFenceCreateInfo const fenceInfo
+    constexpr VkFenceCreateInfo fenceInfo
     {
         .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
         .pNext = nullptr,
         .flags = VK_FENCE_CREATE_SIGNALED_BIT
     };
 
-    bool result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateFence ( device, &fenceInfo, nullptr, &_fence ),
-        "GeometryPass::Init",
+    bool result = android_vulkan::Renderer::CheckVkResult ( vkCreateFence ( device, &fenceInfo, nullptr, &_fence ),
+        "OpaquePass::Init",
         "Can't create fence"
     );
 
@@ -61,7 +37,7 @@ bool GeometryPass::Init ( android_vulkan::Renderer &renderer,
         return false;
     }
 
-    AV_REGISTER_FENCE ( "GeometryPass::_fence" )
+    AV_REGISTER_FENCE ( "OpaquePass::_fence" )
 
     if ( !_program.Init ( renderer, renderPass, 0U, resolution ) )
     {
@@ -76,6 +52,8 @@ bool GeometryPass::Init ( android_vulkan::Renderer &renderer,
     }
 
     _commandPool = commandPool;
+
+    constexpr size_t TOTAL_COMMAND_BUFFERS = OpaquePass::DEFAULT_TEXTURE_COUNT + 2U;
     VkCommandBuffer commandBuffers[ TOTAL_COMMAND_BUFFERS ];
 
     VkCommandBufferAllocateInfo const allocateInfo
@@ -89,7 +67,7 @@ bool GeometryPass::Init ( android_vulkan::Renderer &renderer,
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkAllocateCommandBuffers ( device, &allocateInfo, commandBuffers ),
-        "RenderSession::Init",
+        "OpaquePass::Init",
         "Can't allocate command buffers"
     );
 
@@ -115,7 +93,7 @@ bool GeometryPass::Init ( android_vulkan::Renderer &renderer,
     return true;
 }
 
-void GeometryPass::Destroy ( VkDevice device )
+void OpaquePass::Destroy ( VkDevice device ) noexcept
 {
     DestroyDescriptorPool ( device );
     DestroyDefaultTextures ( device );
@@ -161,16 +139,16 @@ void GeometryPass::Destroy ( VkDevice device )
 
     vkDestroyFence ( device, _fence, nullptr );
     _fence = VK_NULL_HANDLE;
-    AV_UNREGISTER_FENCE ( "GeometryPass::_fence" )
+    AV_UNREGISTER_FENCE ( "OpaquePass::_fence" )
 }
 
-VkCommandBuffer GeometryPass::Execute ( android_vulkan::Renderer &renderer,
+VkCommandBuffer OpaquePass::Execute ( android_vulkan::Renderer &renderer,
     GXProjectionClipPlanes const &frustum,
     GXMat4 const &view,
     GXMat4 const &viewProjection,
     SamplerManager &samplerManager,
     RenderSessionStats &renderSessionStats
-)
+) noexcept
 {
     CleanupTransferResources ( renderer );
 
@@ -189,42 +167,42 @@ VkCommandBuffer GeometryPass::Execute ( android_vulkan::Renderer &renderer,
     return _renderCommandBuffer;
 }
 
-VkFence GeometryPass::GetFence () const
+VkFence OpaquePass::GetFence () const noexcept
 {
     return _fence;
 }
 
-void GeometryPass::Reset ()
+void OpaquePass::Reset () noexcept
 {
     _sceneData.clear ();
 }
 
-void GeometryPass::Submit ( MeshRef &mesh,
+void OpaquePass::Submit ( MeshRef &mesh,
     MaterialRef const &material,
     GXMat4 const &local,
     GXAABB const &worldBounds,
     GXColorRGB const &color0,
     GXColorRGB const &color1,
     GXColorRGB const &color2,
-    GXColorRGB const &color3
-)
+    GXColorRGB const &emission
+) noexcept
 {
     // Note it's safe to cast like that here. "NOLINT" is a clang-tidy control comment.
-    auto& opaqueMaterial = *static_cast<OpaqueMaterial*> ( material.get () ); // NOLINT
-    auto findResult = _sceneData.find ( opaqueMaterial );
+    auto& m = static_cast<GeometryPassMaterial&> ( *material ); // NOLINT
+    auto findResult = _sceneData.find ( m );
 
     if ( findResult != _sceneData.cend () )
     {
-        findResult->second.Append ( mesh, local, worldBounds, color0, color1, color2, color3 );
+        findResult->second.Append ( mesh, local, worldBounds, color0, color1, color2, emission );
         return;
     }
 
     _sceneData.insert (
-        std::make_pair ( opaqueMaterial, OpaqueCall ( mesh, local, worldBounds, color0, color1, color2, color3 ) )
+        std::make_pair ( m, GeometryCall ( mesh, local, worldBounds, color0, color1, color2, emission ) )
     );
 }
 
-VkSubpassDescription GeometryPass::GetSubpassDescription ()
+VkSubpassDescription OpaquePass::GetSubpassDescription () noexcept
 {
     constexpr static VkAttachmentReference const colorReferences[] =
     {
@@ -254,7 +232,7 @@ VkSubpassDescription GeometryPass::GetSubpassDescription ()
     };
 
     // depth|stencil
-    constexpr static VkAttachmentReference const depthStencilReference
+    constexpr static VkAttachmentReference depthStencilReference
     {
         .attachment = 4U,
         .layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
@@ -275,10 +253,10 @@ VkSubpassDescription GeometryPass::GetSubpassDescription ()
     };
 }
 
-size_t GeometryPass::AggregateUniformCount () const noexcept
+size_t OpaquePass::AggregateUniformCount () const noexcept
 {
     size_t count = 0U;
-    constexpr size_t const roundUpFactor = PBR_OPAQUE_MAX_INSTANCE_COUNT - 1U;
+    constexpr size_t roundUpFactor = PBR_OPAQUE_MAX_INSTANCE_COUNT - 1U;
 
     for ( auto const& [material, call] : _sceneData )
     {
@@ -286,7 +264,7 @@ size_t GeometryPass::AggregateUniformCount () const noexcept
 
         for ( auto const& [mesh, group] : call.GetBatchList () )
         {
-            size_t const batchSize = group._opaqueData.size ();
+            size_t const batchSize = group._geometryData.size ();
             count += ( batchSize + roundUpFactor ) / PBR_OPAQUE_MAX_INSTANCE_COUNT;
         }
     }
@@ -294,20 +272,20 @@ size_t GeometryPass::AggregateUniformCount () const noexcept
     return count;
 }
 
-void GeometryPass::AppendDrawcalls ( VkDescriptorSet const* textureSets,
+void OpaquePass::AppendDrawcalls ( VkDescriptorSet const* textureSets,
     VkDescriptorSet const* instanceSets,
     RenderSessionStats &renderSessionStats
-)
+) noexcept
 {
     size_t textureSetIndex = 0U;
     size_t uniformUsed = 0U;
     bool isProgramBind = false;
 
-    constexpr VkDeviceSize const offset = 0U;
+    constexpr VkDeviceSize offset = 0U;
 
     for ( auto const& call : _sceneData )
     {
-        OpaqueCall const &opaqueCall = call.second;
+        GeometryCall const& opaqueCall = call.second;
 
         VkDescriptorSet textureSet = textureSets[ textureSetIndex ];
         ++textureSetIndex;
@@ -320,7 +298,7 @@ void GeometryPass::AppendDrawcalls ( VkDescriptorSet const* textureSets,
 
         bool isUniformBind = false;
 
-        auto instanceDrawer = [ & ] ( MeshRef const &mesh, uint32_t batches ) {
+        auto instanceDrawer = [ & ] ( MeshRef const &mesh, uint32_t batches ) noexcept {
             if ( isUniformBind )
             {
                 _program.SetDescriptorSet ( _renderCommandBuffer, instanceSets + uniformUsed, 1U, 1U );
@@ -367,9 +345,9 @@ void GeometryPass::AppendDrawcalls ( VkDescriptorSet const* textureSets,
             MeshRef const& mesh = group._mesh;
             size_t instanceCount = 0U;
 
-            for ( auto const& opaqueData : group._opaqueData )
+            for ( auto const& geometryData : group._geometryData )
             {
-                if ( !opaqueData._isVisible )
+                if ( !geometryData._isVisible )
                     continue;
 
                 ++instanceCount;
@@ -401,13 +379,13 @@ void GeometryPass::AppendDrawcalls ( VkDescriptorSet const* textureSets,
     }
 }
 
-bool GeometryPass::BeginRenderPass ( android_vulkan::Renderer &renderer )
+bool OpaquePass::BeginRenderPass ( android_vulkan::Renderer &renderer ) noexcept
 {
     VkDevice device = renderer.GetDevice ();
 
     bool result = android_vulkan::Renderer::CheckVkResult (
         vkWaitForFences ( device, 1U, &_fence, VK_TRUE, UINT64_MAX ),
-        "GeometryPass::BeginRenderPass",
+        "OpaquePass::BeginRenderPass",
         "Can't wait for fence"
     );
 
@@ -415,14 +393,14 @@ bool GeometryPass::BeginRenderPass ( android_vulkan::Renderer &renderer )
         return false;
 
     result = android_vulkan::Renderer::CheckVkResult ( vkResetFences ( device, 1U, &_fence ),
-        "GeometryPass::BeginRenderPass",
+        "OpaquePass::BeginRenderPass",
         "Can't reset fence"
     );
 
     if ( !result )
         return false;
 
-    constexpr VkCommandBufferBeginInfo const beginInfo
+    constexpr VkCommandBufferBeginInfo beginInfo
     {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
         .pNext = nullptr,
@@ -431,7 +409,7 @@ bool GeometryPass::BeginRenderPass ( android_vulkan::Renderer &renderer )
     };
 
     result = android_vulkan::Renderer::CheckVkResult ( vkBeginCommandBuffer ( _renderCommandBuffer, &beginInfo ),
-        "GeometryPass::BeginRenderPass",
+        "OpaquePass::BeginRenderPass",
         "Can't begin rendering command buffer"
     );
 
@@ -442,7 +420,7 @@ bool GeometryPass::BeginRenderPass ( android_vulkan::Renderer &renderer )
     return true;
 }
 
-void GeometryPass::CleanupTransferResources ( android_vulkan::Renderer &renderer )
+void OpaquePass::CleanupTransferResources ( android_vulkan::Renderer &renderer ) noexcept
 {
     if ( !_isFreeTransferResources )
         return;
@@ -478,10 +456,10 @@ void GeometryPass::CleanupTransferResources ( android_vulkan::Renderer &renderer
     }
 }
 
-void GeometryPass::InitCommonStructures ( VkRenderPass renderPass,
+void OpaquePass::InitCommonStructures ( VkRenderPass renderPass,
     VkFramebuffer framebuffer,
     VkExtent2D const &resolution
-)
+) noexcept
 {
     constexpr static VkClearValue const clearValues[] =
     {
@@ -548,16 +526,16 @@ void GeometryPass::InitCommonStructures ( VkRenderPass renderPass,
     _submitInfoTransfer.pSignalSemaphores = nullptr;
 }
 
-bool GeometryPass::InitDefaultTextures ( android_vulkan::Renderer &renderer )
+bool OpaquePass::InitDefaultTextures ( android_vulkan::Renderer &renderer ) noexcept
 {
     auto textureLoader = [ &renderer ] ( Texture2DRef &texture,
         const uint8_t* data,
         size_t size,
         VkFormat format,
         VkCommandBuffer commandBuffer
-    ) -> bool {
+    ) noexcept -> bool {
         texture = std::make_shared<android_vulkan::Texture2D> ();
-        constexpr VkExtent2D const resolution { .width = 1U, .height = 1U };
+        constexpr VkExtent2D resolution { .width = 1U, .height = 1U };
 
         bool const result = texture->UploadData ( renderer,
             data,
@@ -613,7 +591,7 @@ bool GeometryPass::InitDefaultTextures ( android_vulkan::Renderer &renderer )
     if ( !result )
         return false;
 
-    constexpr const uint8_t normal[ 4U ] = { 128U, 0U, 0U, 128U };
+    constexpr uint8_t const normal[ 4U ] = { 128U, 0U, 0U, 128U };
 
     result = textureLoader ( _normalDefault,
         normal,
@@ -625,7 +603,7 @@ bool GeometryPass::InitDefaultTextures ( android_vulkan::Renderer &renderer )
     if ( !result )
         return false;
 
-    constexpr const uint8_t param[ 4U ] = { 128U, 128U, 128U, 128U };
+    constexpr uint8_t const param[ 4U ] = { 128U, 128U, 128U, 128U };
 
     return textureLoader ( _paramDefault,
         param,
@@ -635,7 +613,7 @@ bool GeometryPass::InitDefaultTextures ( android_vulkan::Renderer &renderer )
     );
 }
 
-void GeometryPass::DestroyDefaultTextures ( VkDevice device )
+void OpaquePass::DestroyDefaultTextures ( VkDevice device ) noexcept
 {
     auto freeTexture = [ device ] ( Texture2DRef &texture ) {
         if ( !texture )
@@ -652,28 +630,28 @@ void GeometryPass::DestroyDefaultTextures ( VkDevice device )
     freeTexture ( _albedoDefault );
 }
 
-void GeometryPass::DestroyDescriptorPool ( VkDevice device )
+void OpaquePass::DestroyDescriptorPool ( VkDevice device ) noexcept
 {
     if ( _descriptorPool == VK_NULL_HANDLE )
         return;
 
     vkDestroyDescriptorPool ( device, _descriptorPool, nullptr );
     _descriptorPool = VK_NULL_HANDLE;
-    AV_UNREGISTER_DESCRIPTOR_POOL ( "GeometryPass::_descriptorPool" )
+    AV_UNREGISTER_DESCRIPTOR_POOL ( "OpaquePass::_descriptorPool" )
 }
 
-bool GeometryPass::UpdateGPUData ( android_vulkan::Renderer &renderer,
+bool OpaquePass::UpdateGPUData ( android_vulkan::Renderer &renderer,
     GXProjectionClipPlanes const &frustum,
     GXMat4 const &view,
     GXMat4 const &viewProjection,
     std::vector<VkDescriptorSet> &descriptorSetStorage,
     SamplerManager &samplerManager
-)
+) noexcept
 {
     // TODO no any elements have been submitted.
 
     size_t const opaqueCount = _sceneData.size ();
-    size_t const textureCount = opaqueCount * OpaqueTextureDescriptorSetLayout::TEXTURE_SLOTS;
+    size_t const textureCount = opaqueCount * GeometryPassTextureDescriptorSetLayout::TEXTURE_SLOTS;
 
     std::vector<VkDescriptorImageInfo> imageStorage {};
     imageStorage.reserve ( textureCount );
@@ -688,7 +666,7 @@ bool GeometryPass::UpdateGPUData ( android_vulkan::Renderer &renderer,
     std::vector<VkDescriptorBufferInfo> uniformStorage {};
     std::vector<VkWriteDescriptorSet> writeStorage1 {};
 
-    constexpr VkCommandBufferBeginInfo const beginInfo
+    constexpr VkCommandBufferBeginInfo beginInfo
     {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
         .pNext = nullptr,
@@ -697,7 +675,7 @@ bool GeometryPass::UpdateGPUData ( android_vulkan::Renderer &renderer,
     };
 
     bool result = android_vulkan::Renderer::CheckVkResult ( vkBeginCommandBuffer ( _transferCommandBuffer, &beginInfo ),
-        "GeometryPass::UpdateGPUData",
+        "OpaquePass::UpdateGPUData",
         "Can't begin command buffer"
     );
 
@@ -747,16 +725,16 @@ bool GeometryPass::UpdateGPUData ( android_vulkan::Renderer &renderer,
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_descriptorPool ),
-        "GeometryPass::UpdateGPUData",
+        "OpaquePass::UpdateGPUData",
         "Can't create descriptor pool"
     );
 
     if ( !result )
         return false;
 
-    AV_REGISTER_DESCRIPTOR_POOL ( "GeometryPass::_descriptorPool" )
+    AV_REGISTER_DESCRIPTOR_POOL ( "OpaquePass::_descriptorPool" )
 
-    OpaqueTextureDescriptorSetLayout const opaqueTextureLayout {};
+    GeometryPassTextureDescriptorSetLayout const opaqueTextureLayout {};
     VkDescriptorSetLayout opaqueTextureLayoutNative = opaqueTextureLayout.GetLayout ();
 
     std::vector<VkDescriptorSetLayout> layouts;
@@ -765,7 +743,7 @@ bool GeometryPass::UpdateGPUData ( android_vulkan::Renderer &renderer,
     for ( size_t i = 0U; i < opaqueCount; ++i )
         layouts.push_back ( opaqueTextureLayoutNative );
 
-    OpaqueInstanceDescriptorSetLayout const instanceLayout;
+    GeometryPassInstanceDescriptorSetLayout const instanceLayout;
     VkDescriptorSetLayout instanceLayoutNative = instanceLayout.GetLayout ();
 
     for ( auto i = static_cast<uint32_t> ( opaqueCount ); i < poolInfo.maxSets; ++i )
@@ -785,7 +763,7 @@ bool GeometryPass::UpdateGPUData ( android_vulkan::Renderer &renderer,
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkAllocateDescriptorSets ( device, &allocateInfo, descriptorSets ),
-        "GeometryPass::UpdateGPUData",
+        "OpaquePass::UpdateGPUData",
         "Can't allocate descriptor sets"
     );
 
@@ -836,7 +814,7 @@ bool GeometryPass::UpdateGPUData ( android_vulkan::Renderer &renderer,
     writeInfo1.pImageInfo = nullptr;
     writeInfo1.pTexelBufferView = nullptr;
 
-    constexpr VkPipelineStageFlags const syncFlags = AV_VK_FLAG ( VK_PIPELINE_STAGE_VERTEX_SHADER_BIT ) |
+    constexpr VkPipelineStageFlags syncFlags = AV_VK_FLAG ( VK_PIPELINE_STAGE_VERTEX_SHADER_BIT ) |
         AV_VK_FLAG ( VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT );
 
     auto uniformBinder = [ & ] ( VkBuffer uniformBuffer, VkDescriptorSet descriptorSet ) noexcept {
@@ -860,10 +838,7 @@ bool GeometryPass::UpdateGPUData ( android_vulkan::Renderer &renderer,
         writeInfo0.dstSet = descriptorSets[ i ];
         ++i;
 
-        // Warning less casting.
-        auto& m = const_cast<OpaqueMaterial&> (
-            *static_cast<OpaqueMaterial const*> ( reinterpret_cast<void const*> ( &material ) )
-        );
+        auto& m = const_cast<GeometryPassMaterial&> ( material );
 
         textureBinder ( m.GetAlbedo (), _albedoDefault, 0U, 1U );
         textureBinder ( m.GetEmission (), _emissionDefault, 2U, 3U );
@@ -879,7 +854,7 @@ bool GeometryPass::UpdateGPUData ( android_vulkan::Renderer &renderer,
         nullptr
     );
 
-    OpaqueProgram::InstanceData instanceData {};
+    GeometryPassProgram::InstanceData instanceData {};
     _uniformPool.Reset ();
 
     size_t uniformUsed = 0U;
@@ -888,38 +863,38 @@ bool GeometryPass::UpdateGPUData ( android_vulkan::Renderer &renderer,
 
     for ( auto const& call : _sceneData )
     {
-        OpaqueCall const& opaqueCall = call.second;
+        GeometryCall const& geometryCall = call.second;
 
-        for ( auto const& [mesh, opaqueData] : opaqueCall.GetUniqueList () )
+        for ( auto const& [mesh, geometryData] : geometryCall.GetUniqueList () )
         {
-            OpaqueProgram::ObjectData& objectData = instanceData._instanceData[ 0U ];
+            GeometryPassProgram::ObjectData& objectData = instanceData._instanceData[ 0U ];
 
             if ( uniformUsed >= maxUniforms )
             {
                 android_vulkan::LogError (
-                    "GeometryPass::UpdateGPUData - Uniform pool overflow has been detected (branch 1)!"
+                    "OpaquePass::UpdateGPUData - Uniform pool overflow has been detected (branch 1)!"
                 );
 
                 return false;
             }
 
-            GXMat4 const& local = opaqueData._local;
-            auto& uniqueOpaqueData = const_cast<OpaqueData&> ( opaqueData );
+            GXMat4 const& local = geometryData._local;
+            auto& uniqueGeometryData = const_cast<GeometryData&> ( geometryData );
 
-            if ( !frustum.IsVisible ( uniqueOpaqueData._worldBounds ) )
+            if ( !frustum.IsVisible ( uniqueGeometryData._worldBounds ) )
             {
-                uniqueOpaqueData._isVisible = false;
+                uniqueGeometryData._isVisible = false;
                 continue;
             }
 
-            uniqueOpaqueData._isVisible = true;
+            uniqueGeometryData._isVisible = true;
             objectData._localView.Multiply ( local, view );
             objectData._localViewProjection.Multiply ( local, viewProjection );
 
-            objectData._color0 = opaqueData._color0;
-            objectData._color1 = opaqueData._color1;
-            objectData._color2 = opaqueData._color2;
-            objectData._color3 = opaqueData._color3;
+            objectData._color0 = geometryData._color0;
+            objectData._color1 = geometryData._color1;
+            objectData._color2 = geometryData._color2;
+            objectData._emission = geometryData._emission;
 
             uniformBinder (
                 _uniformPool.Acquire ( renderer,
@@ -934,17 +909,17 @@ bool GeometryPass::UpdateGPUData ( android_vulkan::Renderer &renderer,
             ++uniformUsed;
         }
 
-        for ( auto const& item : opaqueCall.GetBatchList () )
+        for ( auto const& item : geometryCall.GetBatchList () )
         {
             MeshGroup const& group = item.second;
             size_t instanceIndex = 0U;
 
-            for ( auto const& opaqueData : group._opaqueData )
+            for ( auto const& opaqueData : group._geometryData )
             {
                 if ( uniformUsed >= maxUniforms )
                 {
                     android_vulkan::LogError (
-                        "GeometryPass::UpdateGPUData - Uniform pool overflow has been detected (branch 0)!"
+                        "OpaquePass::UpdateGPUData - Uniform pool overflow has been detected (branch 0)!"
                     );
 
                     return false;
@@ -967,17 +942,17 @@ bool GeometryPass::UpdateGPUData ( android_vulkan::Renderer &renderer,
                 }
 
                 GXMat4 const& local = opaqueData._local;
-                auto& batchOpaqueData = const_cast<OpaqueData&> ( opaqueData );
+                auto& batchGeometryData = const_cast<GeometryData&> ( opaqueData );
 
-                if ( !frustum.IsVisible ( batchOpaqueData._worldBounds ) )
+                if ( !frustum.IsVisible ( batchGeometryData._worldBounds ) )
                 {
-                    batchOpaqueData._isVisible = false;
+                    batchGeometryData._isVisible = false;
                     continue;
                 }
 
-                OpaqueProgram::ObjectData& objectData = instanceData._instanceData[ instanceIndex ];
+                GeometryPassProgram::ObjectData& objectData = instanceData._instanceData[ instanceIndex ];
                 ++instanceIndex;
-                batchOpaqueData._isVisible = true;
+                batchGeometryData._isVisible = true;
 
                 objectData._localView.Multiply ( local, view );
                 objectData._localViewProjection.Multiply ( local, viewProjection );
@@ -985,7 +960,7 @@ bool GeometryPass::UpdateGPUData ( android_vulkan::Renderer &renderer,
                 objectData._color0 = opaqueData._color0;
                 objectData._color1 = opaqueData._color1;
                 objectData._color2 = opaqueData._color2;
-                objectData._color3 = opaqueData._color3;
+                objectData._emission = opaqueData._emission;
             }
 
             if ( !instanceIndex )
@@ -1013,7 +988,7 @@ bool GeometryPass::UpdateGPUData ( android_vulkan::Renderer &renderer,
     );
 
     result = android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( _transferCommandBuffer ),
-        "GeometryPass::UpdateGPUData",
+        "OpaquePass::UpdateGPUData",
         "Can't end transfer command buffer"
     );
 
@@ -1022,7 +997,7 @@ bool GeometryPass::UpdateGPUData ( android_vulkan::Renderer &renderer,
 
     return android_vulkan::Renderer::CheckVkResult (
         vkQueueSubmit ( renderer.GetQueue (), 1U, &_submitInfoTransfer, VK_NULL_HANDLE ),
-        "GeometryPass::UpdateGPUData",
+        "OpaquePass::UpdateGPUData",
         "Can't submit transfer command buffer"
     );
 }

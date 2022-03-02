@@ -7,18 +7,18 @@
 
 namespace pbr::mario {
 
-constexpr static GXVec3 const COLLIDER_SIZE ( 0.8F, 0.8F, 0.8F );
-constexpr static float const DAMPING_ANGULAR = 0.99F;
-constexpr static float const DAMPING_LINEAR = 0.99F;
-constexpr static float const DEAD_ZONE = 0.2F;
-constexpr static float const FRICTION = 0.5F;
+constexpr static GXVec3 COLLIDER_SIZE ( 0.8F, 0.8F, 0.8F );
+constexpr static float DAMPING_ANGULAR = 0.99F;
+constexpr static float DAMPING_LINEAR = 0.99F;
+constexpr static float DEAD_ZONE = 0.2F;
+constexpr static float FRICTION = 0.5F;
 constexpr static float JUMP_SPEED = 9.0F;
-constexpr static float const MASS = 38.0F;
+constexpr static float MASS = 38.0F;
 constexpr static char const MATERIAL[] = "pbr/assets/Props/experimental/world-1-1/mario/mario.mtl";
 constexpr static char const MESH[] = "pbr/assets/Props/experimental/world-1-1/mario/mario-cube.mesh2";
-constexpr static GXVec3 const MOVE_FORCE ( 0.0F, 0.0F, 500.0F );
-constexpr static float const MOVE_SPEED = 5.0F;
-constexpr static float const RESTITUTION = 0.0F;
+constexpr static GXVec3 MOVE_FORCE ( 0.0F, 0.0F, 500.0F );
+constexpr static float MOVE_SPEED = 5.0F;
+constexpr static float RESTITUTION = 0.0F;
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -113,8 +113,8 @@ void Mario::OnUpdate () noexcept
         _isJump = false;
     }
 
-    bool const isMove = ( _move < 0.0F && velocityLinear._data[ 2U ] > -MOVE_SPEED ) ||
-        ( _move > 0.0F && velocityLinear._data[ 2U ] < MOVE_SPEED );
+    bool const isMove = ( ( _move < 0.0F ) & ( velocityLinear._data[ 2U ] > -MOVE_SPEED ) ) |
+        ( ( _move > 0.0F ) & ( velocityLinear._data[ 2U ] < MOVE_SPEED ) );
 
     if ( !isMove )
         return;

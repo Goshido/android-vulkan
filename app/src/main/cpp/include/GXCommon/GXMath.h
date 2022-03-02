@@ -1,4 +1,4 @@
-// version 1.73
+// version 1.74
 
 #ifndef GX_MATH
 #define GX_MATH
@@ -15,14 +15,14 @@ GX_DISABLE_COMMON_WARNINGS
 GX_RESTORE_WARNING_STATE
 
 
-[[maybe_unused]] constexpr GXFloat const GX_MATH_FLOAT_EPSILON = 1.0e-4F;
+[[maybe_unused]] constexpr GXFloat GX_MATH_FLOAT_EPSILON = 1.0e-4F;
 
-[[maybe_unused]] constexpr GXFloat const GX_MATH_HALF_PI = 1.5707963F;
-[[maybe_unused]] constexpr GXFloat const GX_MATH_PI = 3.1415927F;
-[[maybe_unused]] constexpr GXFloat const GX_MATH_DOUBLE_PI = 6.2831853F;
+[[maybe_unused]] constexpr GXFloat GX_MATH_HALF_PI = 1.5707963F;
+[[maybe_unused]] constexpr GXFloat GX_MATH_PI = 3.1415927F;
+[[maybe_unused]] constexpr GXFloat GX_MATH_DOUBLE_PI = 6.2831853F;
 
 // 1.0F / 255.0F
-[[maybe_unused]] constexpr GXFloat const GX_MATH_UNORM_FACTOR = 3.92157e-3F;
+[[maybe_unused]] constexpr GXFloat GX_MATH_UNORM_FACTOR = 3.92157e-3F;
 
 //----------------------------------------------------------------------------------------------------------------------
 

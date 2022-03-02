@@ -61,6 +61,13 @@ void PointLightComponent::SetBoundDimensions ( float width, float height, float 
     light.SetBoundDimensions ( width, height, depth );
 }
 
+void PointLightComponent::SetBoundDimensions ( GXVec3 const &dimensions ) noexcept
+{
+    // NOLINTNEXTLINE
+    auto& light = *static_cast<PointLight*> ( _pointLight.get () );
+    light.SetBoundDimensions ( dimensions );
+}
+
 [[maybe_unused]] void PointLightComponent::SetHue ( GXColorRGB const &hue ) noexcept
 {
     // NOLINTNEXTLINE

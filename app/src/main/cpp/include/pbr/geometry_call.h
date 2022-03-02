@@ -1,5 +1,5 @@
-#ifndef PBR_OPAQUE_CALL_H
-#define PBR_OPAQUE_CALL_H
+#ifndef PBR_GEOMETRY_CALL_H
+#define PBR_GEOMETRY_CALL_H
 
 
 #include "mesh_group.h"
@@ -7,10 +7,10 @@
 
 namespace pbr {
 
-class OpaqueCall final
+class GeometryCall final
 {
     public:
-        using UniqueList = std::vector<std::pair<MeshRef, OpaqueData>>;
+        using UniqueList = std::vector<std::pair<MeshRef, GeometryData>>;
         using BatchList = std::map<std::string_view, MeshGroup>;
 
     private:
@@ -18,26 +18,26 @@ class OpaqueCall final
         UniqueList      _unique;
 
     public:
-        OpaqueCall () = delete;
+        GeometryCall () = delete;
 
-        OpaqueCall ( OpaqueCall const & ) = delete;
-        OpaqueCall& operator = ( OpaqueCall const & ) = delete;
+        GeometryCall ( GeometryCall const & ) = delete;
+        GeometryCall& operator = ( GeometryCall const & ) = delete;
 
-        OpaqueCall ( OpaqueCall && ) = default;
-        OpaqueCall& operator = ( OpaqueCall && ) = default;
+        GeometryCall ( GeometryCall && ) = default;
+        GeometryCall& operator = ( GeometryCall && ) = default;
 
         // Note maxBatch will be updated only if it's less than current max unique elements of this drawcall.
         // Note maxUnique will be updated only if it's less than current max unique elements of this drawcall.
-        explicit OpaqueCall ( MeshRef &mesh,
+        explicit GeometryCall ( MeshRef &mesh,
             const GXMat4 &local,
             GXAABB const &worldBounds,
             GXColorRGB const &color0,
             GXColorRGB const &color1,
             GXColorRGB const &color2,
-            GXColorRGB const &color3
+            GXColorRGB const &emission
         ) noexcept;
 
-        ~OpaqueCall () = default;
+        ~GeometryCall () = default;
 
         // The method returns the maximum batch item count.
         // Note maxBatch will be updated only if it's less than current max unique elements of this drawcall.
@@ -48,7 +48,7 @@ class OpaqueCall final
             GXColorRGB const &color0,
             GXColorRGB const &color1,
             GXColorRGB const &color2,
-            GXColorRGB const &color3
+            GXColorRGB const &emission
         ) noexcept;
 
         [[nodiscard]] BatchList const& GetBatchList () const noexcept;
@@ -61,7 +61,7 @@ class OpaqueCall final
             GXColorRGB const &color0,
             GXColorRGB const &color1,
             GXColorRGB const &color2,
-            GXColorRGB const &color3
+            GXColorRGB const &emission
         ) noexcept;
 
         void AddUnique ( MeshRef &mesh,
@@ -70,11 +70,11 @@ class OpaqueCall final
             GXColorRGB const &color0,
             GXColorRGB const &color1,
             GXColorRGB const &color2,
-            GXColorRGB const &color3
+            GXColorRGB const &emission
         ) noexcept;
 };
 
 } // namespace pbr
 
 
-#endif // PBR_OPAQUE_CALL_H
+#endif // PBR_GEOMETRY_CALL_H

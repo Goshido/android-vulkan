@@ -3,33 +3,35 @@
 
 namespace rotating_mesh {
 
-constexpr static const char* FRAGMENT_SHADER = "shaders/blinn-phong-analytic-ps.spv";
-constexpr static const size_t TEXTURE_COMMAND_BUFFERS = 6U;
+constexpr static char const* FRAGMENT_SHADER = "shaders/blinn-phong-analytic-ps.spv";
+constexpr static size_t TEXTURE_COMMAND_BUFFERS = 6U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-GameAnalytic::GameAnalytic ():
+GameAnalytic::GameAnalytic () noexcept:
     Game ( FRAGMENT_SHADER )
 {
     // NOTHING
 }
 
-bool GameAnalytic::CreateDescriptorSet ( android_vulkan::Renderer &renderer )
+bool GameAnalytic::CreateDescriptorSet ( android_vulkan::Renderer &renderer ) noexcept
 {
     VkDevice device = renderer.GetDevice ();
-    constexpr const size_t uniqueFeatureCount = 3U;
-    constexpr const size_t featureCount = 5U;
+    constexpr size_t uniqueFeatureCount = 3U;
+    constexpr size_t featureCount = 5U;
 
     VkDescriptorPoolSize features[ uniqueFeatureCount ];
     InitDescriptorPoolSizeCommon ( features );
 
-    VkDescriptorPoolCreateInfo poolInfo;
-    poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    poolInfo.pNext = nullptr;
-    poolInfo.flags = 0U;
-    poolInfo.maxSets = static_cast<uint32_t> ( MATERIAL_COUNT );
-    poolInfo.poolSizeCount = static_cast<uint32_t> ( std::size ( features ) );
-    poolInfo.pPoolSizes = features;
+    VkDescriptorPoolCreateInfo const poolInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .maxSets = static_cast<uint32_t> ( MATERIAL_COUNT ),
+        .poolSizeCount = static_cast<uint32_t> ( std::size ( features ) ),
+        .pPoolSizes = features
+    };
 
     bool result = android_vulkan::Renderer::CheckVkResult (
         vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_descriptorPool ),
@@ -48,12 +50,14 @@ bool GameAnalytic::CreateDescriptorSet ( android_vulkan::Renderer &renderer )
     for ( auto& item : layouts )
         item = _descriptorSetLayout;
 
-    VkDescriptorSetAllocateInfo setAllocateInfo;
-    setAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    setAllocateInfo.pNext = nullptr;
-    setAllocateInfo.descriptorPool = _descriptorPool;
-    setAllocateInfo.pSetLayouts = layouts;
-    setAllocateInfo.descriptorSetCount = poolInfo.maxSets;
+    VkDescriptorSetAllocateInfo const setAllocateInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+        .pNext = nullptr,
+        .descriptorPool = _descriptorPool,
+        .descriptorSetCount = poolInfo.maxSets,
+        .pSetLayouts = layouts
+    };
 
     result = android_vulkan::Renderer::CheckVkResult ( vkAllocateDescriptorSets ( device, &setAllocateInfo, sets ),
         "GameAnalytic::CreateDescriptorSet",
@@ -63,7 +67,7 @@ bool GameAnalytic::CreateDescriptorSet ( android_vulkan::Renderer &renderer )
     if ( !result )
         return false;
 
-    constexpr const size_t writeSetCount = featureCount * MATERIAL_COUNT;
+    constexpr size_t writeSetCount = featureCount * MATERIAL_COUNT;
     VkWriteDescriptorSet writeSets[ writeSetCount ];
     VkDescriptorImageInfo diffuseInfo[ MATERIAL_COUNT ];
     VkDescriptorImageInfo normalInfo[ MATERIAL_COUNT ];
@@ -88,7 +92,7 @@ bool GameAnalytic::CreateDescriptorSet ( android_vulkan::Renderer &renderer )
         normalImage.imageView = drawcall._normal.GetImageView ();
         normalImage.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-        const size_t pivotIndex = i * featureCount;
+        size_t const pivotIndex = i * featureCount;
 
         VkWriteDescriptorSet& ubWriteSet = writeSets[ pivotIndex ];
         ubWriteSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -155,17 +159,19 @@ bool GameAnalytic::CreateDescriptorSet ( android_vulkan::Renderer &renderer )
     return true;
 }
 
-bool GameAnalytic::CreatePipelineLayout ( android_vulkan::Renderer &renderer )
+bool GameAnalytic::CreatePipelineLayout ( android_vulkan::Renderer &renderer ) noexcept
 {
     VkDescriptorSetLayoutBinding bindings[ 5U ];
     InitDescriptorSetLayoutBindingCommon ( bindings );
 
-    VkDescriptorSetLayoutCreateInfo descriptorSetInfo;
-    descriptorSetInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    descriptorSetInfo.pNext = nullptr;
-    descriptorSetInfo.flags = 0U;
-    descriptorSetInfo.bindingCount = static_cast<uint32_t> ( std::size ( bindings ) );
-    descriptorSetInfo.pBindings = bindings;
+    VkDescriptorSetLayoutCreateInfo const descriptorSetInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .bindingCount = static_cast<uint32_t> ( std::size ( bindings ) ),
+        .pBindings = bindings
+    };
 
     VkDevice device = renderer.GetDevice ();
 
@@ -180,16 +186,19 @@ bool GameAnalytic::CreatePipelineLayout ( android_vulkan::Renderer &renderer )
 
     AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "Game::_descriptorSetLayout" )
 
-    VkPipelineLayoutCreateInfo pipelineLayoutInfo;
-    pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipelineLayoutInfo.pNext = nullptr;
-    pipelineLayoutInfo.flags = 0U;
-    pipelineLayoutInfo.pushConstantRangeCount = 0U;
-    pipelineLayoutInfo.pPushConstantRanges = nullptr;
-    pipelineLayoutInfo.setLayoutCount = 1U;
-    pipelineLayoutInfo.pSetLayouts = &_descriptorSetLayout;
+    VkPipelineLayoutCreateInfo const pipelineLayoutInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .setLayoutCount = 1U,
+        .pSetLayouts = &_descriptorSetLayout,
+        .pushConstantRangeCount = 0U,
+        .pPushConstantRanges = nullptr
+    };
 
-    result = android_vulkan::Renderer::CheckVkResult ( vkCreatePipelineLayout ( device, &pipelineLayoutInfo, nullptr, &_pipelineLayout ),
+    result = android_vulkan::Renderer::CheckVkResult (
+        vkCreatePipelineLayout ( device, &pipelineLayoutInfo, nullptr, &_pipelineLayout ),
         "GameAnalytic::CreatePipelineLayout",
         "Can't create pipeline layout"
     );
@@ -201,17 +210,19 @@ bool GameAnalytic::CreatePipelineLayout ( android_vulkan::Renderer &renderer )
     return true;
 }
 
-bool GameAnalytic::LoadGPUContent ( android_vulkan::Renderer &renderer )
+bool GameAnalytic::LoadGPUContent ( android_vulkan::Renderer &renderer ) noexcept
 {
-    constexpr const size_t commandBufferCount = TEXTURE_COMMAND_BUFFERS + MATERIAL_COUNT;
+    constexpr size_t commandBufferCount = TEXTURE_COMMAND_BUFFERS + MATERIAL_COUNT;
     VkCommandBuffer commandBuffers[ commandBufferCount ] = { VK_NULL_HANDLE };
 
-    VkCommandBufferAllocateInfo allocateInfo;
-    allocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    allocateInfo.pNext = nullptr;
-    allocateInfo.commandPool = _commandPool;
-    allocateInfo.commandBufferCount = static_cast<uint32_t> ( commandBufferCount );
-    allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    VkCommandBufferAllocateInfo const allocateInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+        .pNext = nullptr,
+        .commandPool = _commandPool,
+        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+        .commandBufferCount = static_cast<uint32_t> ( commandBufferCount )
+    };
 
     VkDevice device = renderer.GetDevice ();
 

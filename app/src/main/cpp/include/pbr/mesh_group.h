@@ -1,17 +1,17 @@
-#ifndef MESH_GROUP_H
-#define MESH_GROUP_H
+#ifndef PBR_MESH_GROUP_H
+#define PBR_MESH_GROUP_H
 
 
 #include "types.h"
-#include "opaque_data.h"
+#include "geometry_data.h"
 
 
 namespace pbr {
 
 struct MeshGroup final
 {
-    MeshRef                     _mesh;
-    std::vector<OpaqueData>     _opaqueData;
+    MeshRef                         _mesh;
+    std::vector<GeometryData>       _geometryData;
 
     MeshGroup () = delete;
 
@@ -27,7 +27,7 @@ struct MeshGroup final
         GXColorRGB const &color0,
         GXColorRGB const &color1,
         GXColorRGB const &color2,
-        GXColorRGB const &color3
+        GXColorRGB const &emission
     ) noexcept;
 
     ~MeshGroup () = default;
@@ -36,4 +36,4 @@ struct MeshGroup final
 } // namespace pbr
 
 
-#endif // MESH_GROUP_H
+#endif // PBR_MESH_GROUP_H

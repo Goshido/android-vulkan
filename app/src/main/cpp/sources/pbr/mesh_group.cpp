@@ -9,19 +9,19 @@ MeshGroup::MeshGroup ( MeshRef &mesh,
     GXColorRGB const &color0,
     GXColorRGB const &color1,
     GXColorRGB const &color2,
-    GXColorRGB const &color3
+    GXColorRGB const &emission
 ) noexcept:
     _mesh ( mesh )
 {
-    _opaqueData.emplace_back (
-        OpaqueData {
+    _geometryData.emplace_back (
+        GeometryData {
             ._isVisible = true,
             ._local = local,
             ._worldBounds = worldBounds,
             ._color0 = color0,
             ._color1 = color1,
             ._color2 = color2,
-            ._color3 = color3
+            ._emission = emission
         }
     );
 }

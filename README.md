@@ -15,19 +15,18 @@ Usefull documentation is located [here](docs/documentation.md).
 Requirements:
 
 * _Windows Vista_+ or _Monjaro KDE_
-* _Android Studio Arctic Fox | 2020.3.1 Patch 4_
-* _Android Studio Gradle Plugin 7.0.4_
+* _Android Studio Bumblebee | 2021.1.1 Patch 2_
+* _Android Studio Gradle Plugin 7.1.2_
 * _Android NDK 23.1.7779620 (side by side)_
 * _Android SDK 11.0 (API level 30)_
-* _Android SDK Build-Tools 31.0.0_
-* _Android SDK Tools 26.1.1_
-* _Android SDK Platform-Tools 31.0.3_
+* _Android SDK Build-Tools 32.0.0_
+* _Android SDK Platform-Tools 33.0.0_
 * _CMake 3.18.1_
-* _DirectX Shader Compiler 1.6.2112.10024_
-* _Vulkan Validation Layers_ `0965e77eb083b8b4becf01cd8aa39284e56e6338`
-* _Gradle 7.3.1-all_
+* _DirectX Shader Compiler 1.6.2112.10119_
+* _Vulkan Validation Layers_ `d57db97427157d73b635a8fcd952ff92304c3f9d`
+* _Gradle 7.4-bin_
 * Real _Android 11_ device with _Vulkan 1.1.131_ support
-* [_ARM Neon_ _A64_](https://developer.arm.com/architectures/instruction-sets/simd-isas/neon/neon-programmers-guide-for-armv8-a/introducing-neon-for-armv8-a) native support
+* [_ARM Neon A64_](https://developer.arm.com/architectures/instruction-sets/simd-isas/neon/neon-programmers-guide-for-armv8-a/introducing-neon-for-armv8-a) native support
 
 To begin, clone this repository onto your local drive.
 

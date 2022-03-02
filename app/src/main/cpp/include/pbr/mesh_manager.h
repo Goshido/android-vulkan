@@ -35,16 +35,16 @@ class MeshManager final
             size_t &commandBufferConsumed,
             char const* fileName,
             VkCommandBuffer commandBuffer
-        );
+        ) noexcept;
 
-        [[nodiscard]] static MeshManager& GetInstance ();
-        static void Destroy ( VkDevice device );
+        [[nodiscard]] static MeshManager& GetInstance () noexcept;
+        static void Destroy ( VkDevice device ) noexcept;
 
     protected:
         MeshManager () = default;
         ~MeshManager () = default;
 
-        void DestroyInternal ( VkDevice device );
+        void DestroyInternal ( VkDevice device ) noexcept;
 };
 
 } // namespace pbr

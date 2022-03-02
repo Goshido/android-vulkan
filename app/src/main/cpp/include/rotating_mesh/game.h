@@ -43,7 +43,7 @@ class Game : public android_vulkan::Game
         float                               _angle = 0.0F;
         android_vulkan::Texture2D           _depthStencilRenderTarget {};
 
-        const char*                         _fragmentShader;
+        char const*                         _fragmentShader;
         std::vector<VkFramebuffer>          _framebuffers {};
 
         VkPipeline                          _pipeline = VK_NULL_HANDLE;
@@ -74,22 +74,27 @@ class Game : public android_vulkan::Game
         Game& operator = ( Game && ) = delete;
 
     protected:
-        explicit Game ( const char* fragmentShader ) noexcept;
+        explicit Game ( char const* fragmentShader ) noexcept;
         ~Game () override = default;
 
-        [[nodiscard]] virtual bool CreateDescriptorSet ( android_vulkan::Renderer &renderer ) = 0;
-        [[nodiscard]] virtual bool CreatePipelineLayout ( android_vulkan::Renderer &renderer ) = 0;
-        [[nodiscard]] virtual bool LoadGPUContent ( android_vulkan::Renderer &renderer ) = 0;
+        [[nodiscard]] virtual bool CreateDescriptorSet ( android_vulkan::Renderer &renderer ) noexcept = 0;
+        [[nodiscard]] virtual bool CreatePipelineLayout ( android_vulkan::Renderer &renderer ) noexcept = 0;
+        [[nodiscard]] virtual bool LoadGPUContent ( android_vulkan::Renderer &renderer ) noexcept = 0;
 
-        [[nodiscard]] virtual bool CreateSamplers ( android_vulkan::Renderer &renderer );
-        virtual void DestroySamplers ( VkDevice device );
-        virtual void DestroyTextures ( VkDevice device );
+        [[nodiscard]] virtual bool CreateSamplers ( android_vulkan::Renderer &renderer ) noexcept;
+        virtual void DestroySamplers ( VkDevice device ) noexcept;
+        virtual void DestroyTextures ( VkDevice device ) noexcept;
 
-        [[nodiscard]] bool CreateCommonTextures ( android_vulkan::Renderer &renderer, VkCommandBuffer* commandBuffers );
-        [[nodiscard]] bool CreateMeshes ( android_vulkan::Renderer &renderer, VkCommandBuffer* commandBuffers );
+        [[nodiscard]] bool CreateCommonTextures ( android_vulkan::Renderer &renderer,
+            VkCommandBuffer* commandBuffers
+        ) noexcept;
 
-        static void InitDescriptorPoolSizeCommon ( VkDescriptorPoolSize* features );
-        static void InitDescriptorSetLayoutBindingCommon ( VkDescriptorSetLayoutBinding* bindings );
+        [[nodiscard]] bool CreateMeshes ( android_vulkan::Renderer &renderer,
+            VkCommandBuffer* commandBuffers
+        ) noexcept;
+
+        static void InitDescriptorPoolSizeCommon ( VkDescriptorPoolSize* features ) noexcept;
+        static void InitDescriptorSetLayoutBindingCommon ( VkDescriptorSetLayoutBinding* bindings ) noexcept;
 
     private:
         [[nodiscard]] bool IsReady () noexcept override;
@@ -101,39 +106,39 @@ class Game : public android_vulkan::Game
         [[nodiscard]] bool OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept override;
         void OnSwapchainDestroyed ( VkDevice device ) noexcept override;
 
-        [[nodiscard]] bool BeginFrame ( android_vulkan::Renderer &renderer, size_t &imageIndex );
-        [[nodiscard]] bool EndFrame ( android_vulkan::Renderer &renderer, uint32_t imageIndex );
+        [[nodiscard]] bool BeginFrame ( android_vulkan::Renderer &renderer, size_t &imageIndex ) noexcept;
+        [[nodiscard]] bool EndFrame ( android_vulkan::Renderer &renderer, uint32_t imageIndex ) noexcept;
 
-        [[nodiscard]] bool CreateCommandPool ( android_vulkan::Renderer &renderer );
-        void DestroyCommandPool ( VkDevice device );
+        [[nodiscard]] bool CreateCommandPool ( android_vulkan::Renderer &renderer ) noexcept;
+        void DestroyCommandPool ( VkDevice device ) noexcept;
 
-        void DestroyDescriptorSet ( VkDevice device );
-        void DestroyMeshes ( VkDevice device );
+        void DestroyDescriptorSet ( VkDevice device ) noexcept;
+        void DestroyMeshes ( VkDevice device ) noexcept;
 
-        [[nodiscard]] bool CreateFramebuffers ( android_vulkan::Renderer &renderer );
-        void DestroyFramebuffers ( VkDevice device );
+        [[nodiscard]] bool CreateFramebuffers ( android_vulkan::Renderer &renderer ) noexcept;
+        void DestroyFramebuffers ( VkDevice device ) noexcept;
 
-        [[nodiscard]] bool CreatePipeline ( android_vulkan::Renderer &renderer );
-        void DestroyPipeline ( VkDevice device );
+        [[nodiscard]] bool CreatePipeline ( android_vulkan::Renderer &renderer ) noexcept;
+        void DestroyPipeline ( VkDevice device ) noexcept;
 
-        void DestroyPipelineLayout ( VkDevice device );
+        void DestroyPipelineLayout ( VkDevice device ) noexcept;
 
-        [[nodiscard]] bool CreateRenderPass ( android_vulkan::Renderer &renderer );
-        void DestroyRenderPass ( VkDevice device );
+        [[nodiscard]] bool CreateRenderPass ( android_vulkan::Renderer &renderer ) noexcept;
+        void DestroyRenderPass ( VkDevice device ) noexcept;
 
-        [[nodiscard]] bool CreateShaderModules ( android_vulkan::Renderer &renderer );
-        void DestroyShaderModules ( VkDevice device );
+        [[nodiscard]] bool CreateShaderModules ( android_vulkan::Renderer &renderer ) noexcept;
+        void DestroyShaderModules ( VkDevice device ) noexcept;
 
-        [[nodiscard]] bool CreateSyncPrimitives ( android_vulkan::Renderer &renderer );
-        void DestroySyncPrimitives ( VkDevice device );
+        [[nodiscard]] bool CreateSyncPrimitives ( android_vulkan::Renderer &renderer ) noexcept;
+        void DestroySyncPrimitives ( VkDevice device ) noexcept;
 
-        [[nodiscard]] bool CreateUniformBuffer ( android_vulkan::Renderer &renderer );
-        void DestroyUniformBuffer ( VkDevice device );
+        [[nodiscard]] bool CreateUniformBuffer ( android_vulkan::Renderer &renderer ) noexcept;
+        void DestroyUniformBuffer ( VkDevice device ) noexcept;
 
-        [[nodiscard]] bool CreateCommandBuffers ( android_vulkan::Renderer &renderer );
-        void DestroyCommandBuffers ( VkDevice device );
+        [[nodiscard]] bool CreateCommandBuffers ( android_vulkan::Renderer &renderer ) noexcept;
+        void DestroyCommandBuffers ( VkDevice device ) noexcept;
 
-        [[nodiscard]] bool UpdateUniformBuffer ( android_vulkan::Renderer &renderer, double deltaTime );
+        [[nodiscard]] bool UpdateUniformBuffer ( android_vulkan::Renderer &renderer, double deltaTime ) noexcept;
 };
 
 } // namespace rotating_mesh

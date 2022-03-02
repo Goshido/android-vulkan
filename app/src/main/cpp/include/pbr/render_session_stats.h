@@ -17,16 +17,18 @@ namespace pbr {
 class RenderSessionStats final
 {
     private:
-        size_t                  _frameCount;
-        std::atomic_size_t      _renderMeshes;
-        std::atomic_size_t      _renderPointLights;
-        std::atomic_size_t      _renderReflectionsGlobal;
-        std::atomic_size_t      _renderReflectionsLocal;
-        std::atomic_size_t      _renderVertices;
-        std::atomic_size_t      _submitMeshes;
-        std::atomic_size_t      _submitPointLights;
-        std::atomic_size_t      _submitReflectionsLocal;
-        std::atomic_size_t      _submitVertices;
+        size_t                  _frameCount = 0U;
+        std::atomic_size_t      _renderOpaqueMeshes = 0U;
+        std::atomic_size_t      _renderStippleMeshes = 0U;
+        std::atomic_size_t      _renderPointLights = 0U;
+        std::atomic_size_t      _renderReflectionsGlobal = 0U;
+        std::atomic_size_t      _renderReflectionsLocal = 0U;
+        std::atomic_size_t      _renderVertices = 0U;
+        std::atomic_size_t      _submitOpaqueMeshes = 0U;
+        std::atomic_size_t      _submitStippleMeshes = 0U;
+        std::atomic_size_t      _submitPointLights = 0U;
+        std::atomic_size_t      _submitReflectionsLocal = 0U;
+        std::atomic_size_t      _submitVertices = 0U;
         double                  _timeout;
 
     public:
@@ -40,21 +42,24 @@ class RenderSessionStats final
 
         ~RenderSessionStats () = default;
 
-        void PrintStats ( double deltaTime );
+        void PrintStats ( double deltaTime ) noexcept;
 
-        void RenderOpaque ( uint32_t vertexCount, uint32_t instanceCount );
-        void SubmitOpaque ( uint32_t vertexCount );
+        void RenderOpaque ( uint32_t vertexCount, uint32_t instanceCount ) noexcept;
+        void SubmitOpaque ( uint32_t vertexCount ) noexcept;
 
-        void RenderPointLights ( size_t count );
-        void SubmitPointLight ();
+        [[maybe_unused]] void RenderStipple ( uint32_t vertexCount, uint32_t instanceCount ) noexcept;
+        void SubmitStipple ( uint32_t vertexCount ) noexcept;
 
-        void RenderReflectionGlobal ();
+        void RenderPointLights ( size_t count ) noexcept;
+        void SubmitPointLight () noexcept;
 
-        void RenderReflectionLocal ( size_t count );
-        void SubmitReflectionLocal ();
+        void RenderReflectionGlobal () noexcept;
+
+        void RenderReflectionLocal ( size_t count ) noexcept;
+        void SubmitReflectionLocal () noexcept;
 
     private:
-        void Reset ();
+        void Reset () noexcept;
 };
 
 } // namespace pbr

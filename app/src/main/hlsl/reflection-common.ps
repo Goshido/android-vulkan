@@ -1,3 +1,7 @@
+#ifndef REFLECTION_COMMON_PS
+#define REFLECTION_COMMON_PS
+
+
 #include "lightup-common.ps"
 
 
@@ -54,3 +58,6 @@ float16_t3 GetReflection ( in float16_t3 toFragmentView )
 
     return prefilterColor * mad ( freshnel, (float16_t3)brdf.x, (float16_t3)brdf.y );
 }
+
+
+#endif // REFLECTION_COMMON_PS

@@ -9,14 +9,14 @@ GX_RESTORE_WARNING_STATE
 
 namespace android_vulkan {
 
-constexpr static size_t const INITIAL_CONTACT_MANIFOLDS = 1024U;
-constexpr static size_t const INITIAL_CONTACTS = INITIAL_CONTACT_MANIFOLDS * 4U;
-constexpr static size_t const INITIAL_INDICES = 32U;
+constexpr static size_t INITIAL_CONTACT_MANIFOLDS = 1024U;
+constexpr static size_t INITIAL_CONTACTS = INITIAL_CONTACT_MANIFOLDS * 4U;
+constexpr static size_t INITIAL_INDICES = 32U;
 
-constexpr static float const WARM_FINDER_TOLERANCE = 4.0e-3F;
-constexpr static float const WARM_FINDER_FACTOR = WARM_FINDER_TOLERANCE * WARM_FINDER_TOLERANCE;
+constexpr static float WARM_FINDER_TOLERANCE = 4.0e-3F;
+constexpr static float WARM_FINDER_FACTOR = WARM_FINDER_TOLERANCE * WARM_FINDER_TOLERANCE;
 
-constexpr static float const WARM_TRANSFER_FACTOR = 0.85F;
+constexpr static float WARM_TRANSFER_FACTOR = 0.85F;
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -58,10 +58,10 @@ class Grabber final
         Grabber () = delete;
 
         Grabber ( Grabber const & ) = delete;
-        Grabber &operator = ( Grabber const & ) = delete;
+        Grabber& operator = ( Grabber const & ) = delete;
 
         Grabber ( Grabber && ) = delete;
-        Grabber &operator = ( Grabber && ) = delete;
+        Grabber& operator = ( Grabber && ) = delete;
 
         explicit Grabber ( Contact const &contact ) noexcept:
             _pointA ( contact._pointA ),

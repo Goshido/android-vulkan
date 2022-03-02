@@ -1,4 +1,4 @@
-﻿// version 1.73
+﻿// version 1.74
 
 #include <GXCommon/GXMath.h>
 
@@ -12,19 +12,19 @@ GX_DISABLE_COMMON_WARNINGS
 GX_RESTORE_WARNING_STATE
 
 
-constexpr static GXFloat const HSVA_FACTOR = 0.016666F;
-constexpr static GXFloat const HSVA_TO_RGBA_FLOAT = 0.01F;
-constexpr static GXFloat const RGBA_TO_UBYTE_FACTOR = 255.0F;
+constexpr static GXFloat HSVA_FACTOR = 0.016666F;
+constexpr static GXFloat HSVA_TO_RGBA_FLOAT = 0.01F;
+constexpr static GXFloat RGBA_TO_UBYTE_FACTOR = 255.0F;
 
-constexpr static GXFloat const DEGREES_TO_RADIANS_FACTOR = 0.0174533F;
-constexpr static GXFloat const RADIANS_TO_DEGREES_FACTOR = 57.295779F;
+constexpr static GXFloat DEGREES_TO_RADIANS_FACTOR = 0.0174533F;
+constexpr static GXFloat RADIANS_TO_DEGREES_FACTOR = 57.295779F;
 
-constexpr static GXFloat const INVERSE_RAND_MAX = 3.05185e-5F;
+constexpr static GXFloat INVERSE_RAND_MAX = 3.05185e-5F;
 
-constexpr static GXUByte const SOLUTION_ALPHA = 0U;
-constexpr static GXUByte const SOLUTION_BETTA = 1U;
-constexpr static GXUByte const SOLUTION_GAMMA = 2U;
-constexpr static GXUByte const SOLUTION_YOTTA = 3U;
+constexpr static GXUByte SOLUTION_ALPHA = 0U;
+constexpr static GXUByte SOLUTION_BETTA = 1U;
+constexpr static GXUByte SOLUTION_GAMMA = 2U;
+constexpr static GXUByte SOLUTION_YOTTA = 3U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -228,19 +228,19 @@ constexpr static GXUByte const SOLUTION_YOTTA = 3U;
 
 [[maybe_unused]] GXVec3 const& GXVec3::GetAbsoluteX () noexcept
 {
-    constexpr static GXVec3 const absoluteX ( 1.0F, 0.0F, 0.0F );
+    constexpr static GXVec3 absoluteX ( 1.0F, 0.0F, 0.0F );
     return absoluteX;
 }
 
 [[maybe_unused]] GXVec3 const& GXVec3::GetAbsoluteY () noexcept
 {
-    constexpr static GXVec3 const absoluteY ( 0.0F, 1.0F, 0.0F );
+    constexpr static GXVec3 absoluteY ( 0.0F, 1.0F, 0.0F );
     return absoluteY;
 }
 
 [[maybe_unused]] GXVec3 const& GXVec3::GetAbsoluteZ () noexcept
 {
-    constexpr static GXVec3 const absoluteZ ( 0.0F, 0.0F, 1.0F );
+    constexpr static GXVec3 absoluteZ ( 0.0F, 0.0F, 1.0F );
     return absoluteZ;
 }
 
@@ -854,32 +854,24 @@ constexpr static GXUByte const SOLUTION_YOTTA = 3U;
     {
         if ( solutionFactorAlpha > solutionFactorGamma )
         {
-            solution = solutionFactorAlpha > solutionFactorYotta ?
-                static_cast<GXUByte> ( SOLUTION_ALPHA ) :
-                solution = static_cast<GXUByte> ( SOLUTION_YOTTA );
-        }
-        else if ( solutionFactorGamma > solutionFactorYotta )
-        {
-            solution = static_cast<GXUByte> ( SOLUTION_GAMMA );
+            constexpr GXUByte const cases[] = { SOLUTION_YOTTA, SOLUTION_ALPHA };
+            solution = cases[ static_cast<size_t> ( solutionFactorAlpha > solutionFactorYotta ) ];
         }
         else
         {
-            solution = static_cast<GXUByte> ( SOLUTION_YOTTA );
+            constexpr GXUByte const cases[] = { SOLUTION_YOTTA, SOLUTION_GAMMA };
+            solution = cases[ static_cast<size_t> ( solutionFactorGamma > solutionFactorYotta ) ];
         }
     }
     else if ( solutionFactorBetta > solutionFactorGamma )
     {
-        solution = solutionFactorBetta > solutionFactorYotta ?
-            static_cast<GXUByte> ( SOLUTION_BETTA ) :
-            static_cast<GXUByte> ( SOLUTION_YOTTA );
-    }
-    else if ( solutionFactorGamma > solutionFactorYotta )
-    {
-        solution = static_cast<GXUByte> ( SOLUTION_GAMMA );
+        constexpr GXUByte const cases[] = { SOLUTION_YOTTA, SOLUTION_BETTA };
+        solution = cases[ static_cast<size_t> ( solutionFactorBetta > solutionFactorYotta ) ];
     }
     else
     {
-        solution = static_cast<GXUByte> ( SOLUTION_YOTTA );
+        constexpr GXUByte const cases[] = { SOLUTION_YOTTA, SOLUTION_GAMMA };
+        solution = cases[ static_cast<size_t> ( solutionFactorGamma > solutionFactorYotta ) ];
     }
 
     switch ( solution )
@@ -965,32 +957,24 @@ constexpr static GXUByte const SOLUTION_YOTTA = 3U;
     {
         if ( solutionFactorAlpha > solutionFactorGamma )
         {
-            solution = solutionFactorAlpha > solutionFactorYotta ?
-                static_cast<GXUByte> ( SOLUTION_ALPHA ) :
-                solution = static_cast<GXUByte> ( SOLUTION_YOTTA );
-        }
-        else if ( solutionFactorGamma > solutionFactorYotta )
-        {
-            solution = static_cast<GXUByte> ( SOLUTION_GAMMA );
+            constexpr GXUByte const cases[] = { SOLUTION_YOTTA, SOLUTION_ALPHA };
+            solution = cases[ static_cast<size_t> ( solutionFactorAlpha > solutionFactorYotta ) ];
         }
         else
         {
-            solution = static_cast<GXUByte> ( SOLUTION_YOTTA );
+            constexpr GXUByte const cases[] = { SOLUTION_YOTTA, SOLUTION_GAMMA };
+            solution = cases[ static_cast<size_t> ( solutionFactorGamma > solutionFactorYotta ) ];
         }
     }
     else if ( solutionFactorBetta > solutionFactorGamma )
     {
-        solution = solutionFactorBetta > solutionFactorYotta ?
-            static_cast<GXUByte> ( SOLUTION_BETTA ) :
-            static_cast<GXUByte> ( SOLUTION_YOTTA );
-    }
-    else if ( solutionFactorGamma > solutionFactorYotta )
-    {
-        solution = static_cast<GXUByte> ( SOLUTION_GAMMA );
+        constexpr GXUByte const cases[] = { SOLUTION_YOTTA, SOLUTION_BETTA };
+        solution = cases[ static_cast<size_t> ( solutionFactorBetta > solutionFactorYotta ) ];
     }
     else
     {
-        solution = static_cast<GXUByte> ( SOLUTION_YOTTA );
+        constexpr GXUByte const cases[] = { SOLUTION_YOTTA, SOLUTION_GAMMA };
+        solution = cases[ static_cast<size_t> ( solutionFactorGamma > solutionFactorYotta ) ];
     }
 
     switch ( solution )
@@ -1250,7 +1234,7 @@ constexpr static GXUByte const SOLUTION_YOTTA = 3U;
 
 [[maybe_unused]] GXVoid GXMat3::From ( GXMat4 const &matrix ) noexcept
 {
-    constexpr GXUPointer const lineSize = 3U * sizeof ( GXFloat );
+    constexpr GXUPointer lineSize = 3U * sizeof ( GXFloat );
 
     std::memcpy ( _data, matrix._data, lineSize );
     std::memcpy ( _data + 3U, matrix._data + 4U, lineSize );

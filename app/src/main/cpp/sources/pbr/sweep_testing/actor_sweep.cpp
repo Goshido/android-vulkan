@@ -91,7 +91,7 @@ void ActorSweep::SetOverlay ( Texture2DRef const &overlay ) noexcept
     );
 
     // NOLINTNEXTLINE
-    auto& material = static_cast<OpaqueMaterial&> ( *mesh.GetMaterial () );
+    auto& material = static_cast<GeometryPassMaterial&> ( *mesh.GetMaterial () );
     material.SetEmission ( overlay );
 }
 

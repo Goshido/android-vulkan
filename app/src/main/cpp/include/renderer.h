@@ -43,6 +43,7 @@ struct VulkanPhysicalDeviceInfo final
 
 class Renderer final
 {
+    private:
         using LogType = void (*) ( char const* format, ... );
 
     private:
@@ -216,7 +217,7 @@ class Renderer final
         [[nodiscard]] bool PrintPhysicalDeviceInfo ( uint32_t deviceIndex, VkPhysicalDevice physicalDevice ) noexcept;
 
         [[nodiscard]] bool SelectTargetCompositeAlpha (
-                VkCompositeAlphaFlagBitsKHR &targetCompositeAlpha
+            VkCompositeAlphaFlagBitsKHR &targetCompositeAlpha
         ) const noexcept;
 
         [[nodiscard]] bool SelectTargetHardware ( VkPhysicalDevice &targetPhysicalDevice,
@@ -277,12 +278,12 @@ class Renderer final
         static void PrintPhysicalDeviceSparse ( VkPhysicalDeviceSparseProperties const &sparse ) noexcept;
         static void PrintSizeProp ( char const* indent, char const* name, size_t value ) noexcept;
         static void PrintUINT32Prop ( char const* indent, char const* name, uint32_t value ) noexcept;
-        static void PrintUINT32Vec2Prop ( char const* indent, char const* name, const uint32_t value[] ) noexcept;
-        static void PrintUINT32Vec3Prop ( char const* indent, char const* name, const uint32_t value[] ) noexcept;
+        static void PrintUINT32Vec2Prop ( char const* indent, char const* name, uint32_t const value[] ) noexcept;
+        static void PrintUINT32Vec3Prop ( char const* indent, char const* name, uint32_t const value[] ) noexcept;
         static void PrintUTF8Prop ( char const* indent, char const* name, char const* value ) noexcept;
         static void PrintVkBool32Prop ( char const* indent, char const* name, VkBool32 value ) noexcept;
-        static void PrintVkExtent2DProp ( char const* indent, char const* name, const VkExtent2D &value ) noexcept;
-        static void PrintVkExtent3DProp ( char const* indent, char const* name, const VkExtent3D &value ) noexcept;
+        static void PrintVkExtent2DProp ( char const* indent, char const* name, VkExtent2D const &value ) noexcept;
+        static void PrintVkExtent3DProp ( char const* indent, char const* name, VkExtent3D const &value ) noexcept;
 
         static void PrintVkExtensionProp ( uint32_t extensionIndex,
             char const* category,
@@ -314,7 +315,7 @@ class Renderer final
         [[nodiscard]] static char const* ResolveVkColorSpaceKHR ( VkColorSpaceKHR colorSpace ) noexcept;
 
         [[nodiscard]] static char const* ResolveVkCompositeAlpha (
-                VkCompositeAlphaFlagBitsKHR compositeAlpha
+            VkCompositeAlphaFlagBitsKHR compositeAlpha
         ) noexcept;
 
         [[nodiscard]] static char const* ResolveVkPresentModeKHR ( VkPresentModeKHR mode ) noexcept;

@@ -1,55 +1,55 @@
-#include <pbr/opaque_call.h>
+#include <pbr/geometry_call.h>
 
 
 namespace pbr {
 
-OpaqueCall::OpaqueCall ( MeshRef &mesh,
+GeometryCall::GeometryCall ( MeshRef &mesh,
     GXMat4 const &local,
     GXAABB const &worldBounds,
     GXColorRGB const &color0,
     GXColorRGB const &color1,
     GXColorRGB const &color2,
-    GXColorRGB const &color3
+    GXColorRGB const &emission
 ) noexcept
 {
-    Append ( mesh, local, worldBounds, color0, color1, color2, color3 );
+    Append ( mesh, local, worldBounds, color0, color1, color2, emission );
 }
 
-OpaqueCall::BatchList const& OpaqueCall::GetBatchList () const noexcept
+GeometryCall::BatchList const& GeometryCall::GetBatchList () const noexcept
 {
     return _batch;
 }
 
-OpaqueCall::UniqueList const& OpaqueCall::GetUniqueList () const noexcept
+GeometryCall::UniqueList const& GeometryCall::GetUniqueList () const noexcept
 {
     return _unique;
 }
 
-void OpaqueCall::Append ( MeshRef &mesh,
+void GeometryCall::Append ( MeshRef &mesh,
     GXMat4 const &local,
     GXAABB const &worldBounds,
     GXColorRGB const &color0,
     GXColorRGB const &color1,
     GXColorRGB const &color2,
-    GXColorRGB const &color3
+    GXColorRGB const &emission
 ) noexcept
 {
     if ( mesh->IsUnique () )
     {
-        AddUnique ( mesh, local, worldBounds, color0, color1, color2, color3 );
+        AddUnique ( mesh, local, worldBounds, color0, color1, color2, emission );
         return;
     }
 
-    AddBatch ( mesh, local, worldBounds, color0, color1, color2, color3 );
+    AddBatch ( mesh, local, worldBounds, color0, color1, color2, emission );
 }
 
-void OpaqueCall::AddBatch ( MeshRef &mesh,
+void GeometryCall::AddBatch ( MeshRef &mesh,
     GXMat4 const &local,
     GXAABB const &worldBounds,
     GXColorRGB const &color0,
     GXColorRGB const &color1,
     GXColorRGB const &color2,
-    GXColorRGB const &color3
+    GXColorRGB const &emission
 ) noexcept
 {
     std::string const& name = mesh->GetName ();
@@ -59,45 +59,45 @@ void OpaqueCall::AddBatch ( MeshRef &mesh,
     {
         _batch.insert (
             std::make_pair (
-                std::string_view ( name ), MeshGroup ( mesh, local, worldBounds, color0, color1, color2, color3 )
+                std::string_view ( name ), MeshGroup ( mesh, local, worldBounds, color0, color1, color2, emission )
             )
         );
 
         return;
     }
 
-    findResult->second._opaqueData.emplace_back (
-        OpaqueData {
+    findResult->second._geometryData.emplace_back (
+        GeometryData {
             ._isVisible = true,
             ._local = local,
             ._worldBounds = worldBounds,
             ._color0 = color0,
             ._color1 = color1,
             ._color2 = color2,
-            ._color3 = color3
+            ._emission = emission
         }
     );
 }
 
-void OpaqueCall::AddUnique ( MeshRef &mesh,
+void GeometryCall::AddUnique ( MeshRef &mesh,
     GXMat4 const &local,
     GXAABB const &worldBounds,
     GXColorRGB const &color0,
     GXColorRGB const &color1,
     GXColorRGB const &color2,
-    GXColorRGB const &color3
+    GXColorRGB const &emission
 ) noexcept
 {
     _unique.emplace_back (
         std::make_pair ( mesh,
-            OpaqueData {
+            GeometryData {
                 ._isVisible = true,
                 ._local = local,
                 ._worldBounds = worldBounds,
                 ._color0 = color0,
                 ._color1 = color1,
                 ._color2 = color2,
-                ._color3 = color3
+                ._emission = emission
             }
         )
     );

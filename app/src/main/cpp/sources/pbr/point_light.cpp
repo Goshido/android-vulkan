@@ -88,6 +88,12 @@ void PointLight::SetBoundDimensions ( float width, float height, float depth ) n
     _isNeedUpdate = true;
 }
 
+void PointLight::SetBoundDimensions ( GXVec3 const &dimensions ) noexcept
+{
+    _dimensions.Multiply ( dimensions, 0.5F );
+    _isNeedUpdate = true;
+}
+
 GXVec3 const& PointLight::GetHue () const noexcept
 {
     return _hue;

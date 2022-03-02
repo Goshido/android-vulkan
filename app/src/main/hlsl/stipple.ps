@@ -1,0 +1,27 @@
+#include "geometry-pass.ps"
+
+
+// The implementation is based on ideas from
+// https://digitalrune.github.io/DigitalRune-Documentation/html/fa431d48-b457-4c70-a590-d44b0840ab1e.htm
+// It is used modified Bayer matrix 4x4 which is used in HLSL::clip and HLSL::mad intrinsics
+// from https://en.wikipedia.org/wiki/Ordered_dithering
+// Basically it was added 1.0F to numerator and denominator and taking negative value.
+static const float32_t4x4 g_bayerMatrix = 
+{
+    -0.05882F, -0.52941F, -0.17647F, -0.64705F,
+    -0.76470F, -0.29411F, -0.88235F, -0.41176F,
+    -0.23529F, -0.70588F, -0.11764F, -0.58823F,
+    -0.94117F, -0.47058F, -0.82352F, -0.35294F
+};
+
+OutputData PS ( in InputData inputData )
+{
+    const ObjectData objectData = g_instanceData[ inputData._instanceIndex ];
+    const float32_t4 diffuseSample = g_diffuseTexture.Sample ( g_diffuseSampler, inputData._uv );
+    const uint16_t2 bayerCoord = (uint16_t2)inputData._vertexH.xy % (uint16_t2)4U;
+
+    // Applying stipple pattern...
+    clip ( mad ( diffuseSample.w, objectData._color0.w, g_bayerMatrix[ bayerCoord.x ][ bayerCoord.y ] ) );
+
+    return FillGBuffer ( inputData, objectData, diffuseSample.xyz );
+}

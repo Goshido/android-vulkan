@@ -25,6 +25,7 @@ void RenderSession::Begin ( GXMat4 const &viewerLocal, GXMat4 const &projection 
     _frustum.From ( _viewProjection );
     _lightPass.Reset ();
     _opaquePass.Reset ();
+    _stipplePass.Reset ();
 }
 
 bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime ) noexcept
@@ -55,6 +56,8 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
 
     if ( commandBuffer == VK_NULL_HANDLE )
         return false;
+
+    _stipplePass.Execute ( _renderSessionStats );
 
     result = _lightPass.OnPostGeometryPass ( renderer,
         commandBuffer,
@@ -568,38 +571,42 @@ void RenderSession::SubmitOpaqueCall ( MeshRef &mesh,
 }
 
 void RenderSession::SubmitStippleCall ( MeshRef &mesh,
-    MaterialRef const &/*material*/,
-    GXMat4 const &/*local*/,
-    GXAABB const &/*worldBounds*/,
-    GXColorRGB const &/*color0*/,
-    GXColorRGB const &/*color1*/,
-    GXColorRGB const &/*color2*/,
-    GXColorRGB const &/*emission*/
+    MaterialRef const &material,
+    GXMat4 const &local,
+    GXAABB const &worldBounds,
+    GXColorRGB const &color0,
+    GXColorRGB const &color1,
+    GXColorRGB const &color2,
+    GXColorRGB const &emission
 ) noexcept
 {
     _renderSessionStats.SubmitStipple ( mesh->GetVertexCount () );
-    // TODO
+
+    if ( !_frustum.IsVisible ( worldBounds ) )
+        return;
+
+    _stipplePass.Submit ( mesh, material, local, worldBounds, color0, color1, color2, emission );
 }
 
 void RenderSession::SubmitPointLight ( LightRef &light ) noexcept
 {
     _renderSessionStats.SubmitPointLight ();
 
-    // Note it's safe cast like that here. "NOLINT" is a clang-tidy control comment.
-    auto const& pointLight = static_cast<PointLight const&> ( *light ); // NOLINT
+    // NOLINTNEXTLINE - downcast
+    auto const& pointLight = static_cast<PointLight const&> ( *light );
 
-    if ( _frustum.IsVisible ( pointLight.GetBounds () ) )
-    {
-        _lightPass.SubmitPointLight ( light );
-    }
+    if ( !_frustum.IsVisible ( pointLight.GetBounds () ) )
+        return;
+
+    _lightPass.SubmitPointLight ( light );
 }
 
 void RenderSession::SubmitReflectionGlobal ( LightRef &light ) noexcept
 {
     _renderSessionStats.RenderReflectionGlobal ();
 
-    // Note it's safe cast like that here. "NOLINT" is a clang-tidy control comment.
-    auto& probe = static_cast<ReflectionProbeGlobal&> ( *light ); // NOLINT
+    // NOLINTNEXTLINE - downcast
+    auto& probe = static_cast<ReflectionProbeGlobal&> ( *light );
 
     _lightPass.SubmitReflectionGlobal ( probe.GetPrefilter () );
 }
@@ -608,13 +615,13 @@ void RenderSession::SubmitReflectionLocal ( LightRef &light ) noexcept
 {
     _renderSessionStats.SubmitReflectionLocal ();
 
-    // Note it's safe cast like that here. "NOLINT" is a clang-tidy control comment.
-    auto& probe = static_cast<ReflectionProbeLocal&> ( *light ); // NOLINT
+    // NOLINTNEXTLINE - downcast
+    auto& probe = static_cast<ReflectionProbeLocal&> ( *light );
 
-    if ( _frustum.IsVisible ( probe.GetBounds () ) )
-    {
-        _lightPass.SubmitReflectionLocal ( probe.GetPrefilter (), probe.GetLocation (), probe.GetSize () );
-    }
+    if ( !_frustum.IsVisible ( probe.GetBounds () ) )
+        return;
+
+    _lightPass.SubmitReflectionLocal ( probe.GetPrefilter (), probe.GetLocation (), probe.GetSize () );
 }
 
 } // namespace pbr

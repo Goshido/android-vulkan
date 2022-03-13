@@ -19,25 +19,27 @@ class OpaquePass final
         constexpr static size_t     DEFAULT_TEXTURE_COUNT = 5U;
 
     private:
-        Texture2DRef                _albedoDefault {};
-        Texture2DRef                _emissionDefault {};
-        Texture2DRef                _maskDefault {};
-        Texture2DRef                _normalDefault {};
-        Texture2DRef                _paramDefault {};
+        Texture2DRef                    _albedoDefault {};
+        Texture2DRef                    _emissionDefault {};
+        Texture2DRef                    _maskDefault {};
+        Texture2DRef                    _normalDefault {};
+        Texture2DRef                    _paramDefault {};
 
-        bool                        _isFreeTransferResources = false;
+        bool                            _isFreeTransferResources = false;
 
-        VkCommandPool               _commandPool = VK_NULL_HANDLE;
-        VkDescriptorPool            _descriptorPool = VK_NULL_HANDLE;
-        VkFence                     _fence = VK_NULL_HANDLE;
-        OpaqueProgram               _program {};
-        VkCommandBuffer             _renderCommandBuffer = VK_NULL_HANDLE;
-        VkRenderPassBeginInfo       _renderPassInfo {};
-        SceneData                   _sceneData {};
-        VkSubmitInfo                _submitInfoTransfer {};
-        VkCommandBuffer             _textureCommandBuffers[ DEFAULT_TEXTURE_COUNT ] {};
-        VkCommandBuffer             _transferCommandBuffer = VK_NULL_HANDLE;
-        UniformBufferPool           _uniformPool { eUniformPoolSize::Huge_64M };
+        VkCommandPool                   _commandPool = VK_NULL_HANDLE;
+        VkDescriptorPool                _descriptorPool = VK_NULL_HANDLE;
+        std::vector<VkDescriptorSet>    _descriptorSetStorage {};
+        VkFence                         _fence = VK_NULL_HANDLE;
+        OpaqueProgram                   _program {};
+        VkCommandBuffer                 _renderCommandBuffer = VK_NULL_HANDLE;
+        VkRenderPassBeginInfo           _renderPassInfo {};
+        SceneData                       _sceneData {};
+        VkSubmitInfo                    _submitInfoTransfer {};
+        VkCommandBuffer                 _textureCommandBuffers[ DEFAULT_TEXTURE_COUNT ] {};
+        VkCommandBuffer                 _transferCommandBuffer = VK_NULL_HANDLE;
+        UniformBufferPool               _uniformPool { eUniformPoolSize::Huge_64M };
+
 
     public:
         OpaquePass () = default;

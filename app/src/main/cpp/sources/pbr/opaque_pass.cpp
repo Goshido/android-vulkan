@@ -95,6 +95,9 @@ bool OpaquePass::Init ( android_vulkan::Renderer &renderer,
 
 void OpaquePass::Destroy ( VkDevice device ) noexcept
 {
+    _descriptorSetStorage.clear ();
+    _descriptorSetStorage.shrink_to_fit ();
+
     DestroyDescriptorPool ( device );
     DestroyDefaultTextures ( device );
 
@@ -155,12 +158,12 @@ VkCommandBuffer OpaquePass::Execute ( android_vulkan::Renderer &renderer,
     if ( !BeginRenderPass ( renderer ) )
         return VK_NULL_HANDLE;
 
-    std::vector<VkDescriptorSet> descriptorSetStorage;
+    _descriptorSetStorage.clear ();
 
-    if ( !UpdateGPUData ( renderer, frustum, view, viewProjection, descriptorSetStorage, samplerManager ) )
+    if ( !UpdateGPUData ( renderer, frustum, view, viewProjection, _descriptorSetStorage, samplerManager ) )
         return VK_NULL_HANDLE;
 
-    VkDescriptorSet const* textureSets = descriptorSetStorage.data ();
+    VkDescriptorSet const* textureSets = _descriptorSetStorage.data ();
     AppendDrawcalls ( textureSets, textureSets + _sceneData.size (), renderSessionStats );
     vkCmdEndRenderPass ( _renderCommandBuffer );
 
@@ -197,7 +200,7 @@ void OpaquePass::Submit ( MeshRef &mesh,
         return;
     }
 
-    _sceneData.insert (
+    _sceneData.emplace (
         std::make_pair ( m, GeometryCall ( mesh, local, worldBounds, color0, color1, color2, emission ) )
     );
 }
@@ -529,7 +532,7 @@ void OpaquePass::InitCommonStructures ( VkRenderPass renderPass,
 bool OpaquePass::InitDefaultTextures ( android_vulkan::Renderer &renderer ) noexcept
 {
     auto textureLoader = [ &renderer ] ( Texture2DRef &texture,
-        const uint8_t* data,
+        uint8_t const* data,
         size_t size,
         VkFormat format,
         VkCommandBuffer commandBuffer

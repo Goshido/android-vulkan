@@ -127,6 +127,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/pbr/sampler_manager.cpp
     app/src/main/cpp/sources/pbr/static_mesh_component.cpp
     app/src/main/cpp/sources/pbr/stipple_material.cpp
+    app/src/main/cpp/sources/pbr/stipple_pass.cpp
     app/src/main/cpp/sources/pbr/stipple_program.cpp
     app/src/main/cpp/sources/pbr/stub_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/texture_present_descriptor_set_layout.cpp

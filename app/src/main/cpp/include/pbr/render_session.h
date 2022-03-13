@@ -7,6 +7,7 @@
 #include "present_pass.h"
 #include "reflection_global_pass.h"
 #include "shadow_casters.h"
+#include "stipple_pass.h"
 
 
 namespace pbr {
@@ -53,6 +54,7 @@ class RenderSession final
         PresentPass                             _presentPass {};
         RenderSessionStats                      _renderSessionStats {};
         SamplerManager                          _samplerManager {};
+        StipplePass                             _stipplePass {};
         TexturePresentDescriptorSetLayout       _texturePresentDescriptorSetLayout {};
 
     public:

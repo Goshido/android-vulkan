@@ -749,7 +749,7 @@ void PointLightPass::DestroyShadowmapDescriptorPool ( VkDevice device )
 
 bool PointLightPass::GenerateShadowmaps ( android_vulkan::Renderer &renderer )
 {
-    constexpr VkCommandBufferBeginInfo const beginInfo
+    constexpr VkCommandBufferBeginInfo beginInfo
     {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
         .pNext = nullptr,
@@ -760,9 +760,7 @@ bool PointLightPass::GenerateShadowmaps ( android_vulkan::Renderer &renderer )
     vkBeginCommandBuffer ( _shadowmapRenderCommandBuffer, &beginInfo );
 
     size_t setIndex = 0U;
-    constexpr VkDeviceSize const offset = 0U;
-
-    _shadowmapProgram.Bind ( _shadowmapRenderCommandBuffer );
+    constexpr VkDeviceSize offset = 0U;
 
     for ( auto const& [light, casters] : _interacts )
     {
@@ -773,6 +771,10 @@ bool PointLightPass::GenerateShadowmaps ( android_vulkan::Renderer &renderer )
 
         _shadowmapRenderPassInfo.framebuffer = shadowmapInfo->second;
         vkCmdBeginRenderPass ( _shadowmapRenderCommandBuffer, &_shadowmapRenderPassInfo, VK_SUBPASS_CONTENTS_INLINE );
+
+        // Note it's required to set graphic pipeline object every time when new render pass or sub pass begin with
+        // multiview style rendering. see VkRenderPassMultiviewCreateInfo remarks in Vulkan spec.
+        _shadowmapProgram.Bind ( _shadowmapRenderCommandBuffer );
 
         for ( auto const& unique : casters._uniques )
         {

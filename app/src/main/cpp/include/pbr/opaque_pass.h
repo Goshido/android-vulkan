@@ -16,7 +16,7 @@ namespace pbr {
 class OpaquePass final
 {
     private:
-        constexpr static size_t     DEFAULT_TEXTURE_COUNT = 5U;
+        constexpr static size_t         DEFAULT_TEXTURE_COUNT = 5U;
 
     private:
         Texture2DRef                    _albedoDefault {};

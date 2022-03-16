@@ -3,7 +3,7 @@
 
 namespace pbr {
 
-void SamplerManager::FreeResources ( VkDevice device )
+void SamplerManager::FreeResources ( VkDevice device ) noexcept
 {
     if ( _pointSampler )
     {
@@ -21,7 +21,7 @@ void SamplerManager::FreeResources ( VkDevice device )
     }
 }
 
-SamplerRef SamplerManager::GetPointSampler ( android_vulkan::Renderer &renderer )
+SamplerRef SamplerManager::GetPointSampler ( android_vulkan::Renderer &renderer ) noexcept
 {
     if ( _pointSampler )
         return _pointSampler;
@@ -56,7 +56,7 @@ SamplerRef SamplerManager::GetPointSampler ( android_vulkan::Renderer &renderer 
     return _pointSampler;
 }
 
-SamplerRef SamplerManager::GetSampler ( android_vulkan::Renderer &renderer, uint8_t mips )
+SamplerRef SamplerManager::GetSampler ( android_vulkan::Renderer &renderer, uint8_t mips ) noexcept
 {
     SamplerRef& target = _storage[ static_cast<size_t> ( mips ) ];
 

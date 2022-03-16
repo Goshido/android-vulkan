@@ -52,9 +52,7 @@ bool OpaquePass::Init ( android_vulkan::Renderer &renderer,
     }
 
     _commandPool = commandPool;
-
-    constexpr size_t TOTAL_COMMAND_BUFFERS = OpaquePass::DEFAULT_TEXTURE_COUNT + 2U;
-    VkCommandBuffer commandBuffers[ TOTAL_COMMAND_BUFFERS ];
+    VkCommandBuffer commandBuffers[ 2U ];
 
     VkCommandBufferAllocateInfo const allocateInfo
     {
@@ -77,17 +75,8 @@ bool OpaquePass::Init ( android_vulkan::Renderer &renderer,
         return false;
     }
 
-    for ( size_t i = 0U; i < DEFAULT_TEXTURE_COUNT; ++i )
-        _textureCommandBuffers[ i ] = commandBuffers[ i ];
-
-    _renderCommandBuffer = commandBuffers[ DEFAULT_TEXTURE_COUNT ];
-    _transferCommandBuffer = commandBuffers[ DEFAULT_TEXTURE_COUNT + 1U ];
-
-    if ( !InitDefaultTextures ( renderer ) )
-    {
-        Destroy ( device );
-        return false;
-    }
+    _renderCommandBuffer = commandBuffers[ 0U ];
+    _transferCommandBuffer = commandBuffers[ 1U ];
 
     InitCommonStructures ( renderPass, framebuffer, resolution );
     return true;
@@ -99,24 +88,9 @@ void OpaquePass::Destroy ( VkDevice device ) noexcept
     _descriptorSetStorage.shrink_to_fit ();
 
     DestroyDescriptorPool ( device );
-    DestroyDefaultTextures ( device );
 
     if ( _commandPool != VK_NULL_HANDLE )
     {
-        if ( !_isFreeTransferResources )
-        {
-            vkFreeCommandBuffers ( device,
-                _commandPool,
-                static_cast<uint32_t> ( DEFAULT_TEXTURE_COUNT ),
-                _textureCommandBuffers
-            );
-
-            for ( VkCommandBuffer& commandBuffer : _textureCommandBuffers )
-            {
-                commandBuffer = VK_NULL_HANDLE;
-            }
-        }
-
         VkCommandBuffer const commandBuffers[] =
         {
             _transferCommandBuffer,
@@ -149,18 +123,26 @@ VkCommandBuffer OpaquePass::Execute ( android_vulkan::Renderer &renderer,
     GXProjectionClipPlanes const &frustum,
     GXMat4 const &view,
     GXMat4 const &viewProjection,
+    DefaultTextureManager const &defaultTextureManager,
     SamplerManager &samplerManager,
     RenderSessionStats &renderSessionStats
 ) noexcept
 {
-    CleanupTransferResources ( renderer );
-
     if ( !BeginRenderPass ( renderer ) )
         return VK_NULL_HANDLE;
 
     _descriptorSetStorage.clear ();
 
-    if ( !UpdateGPUData ( renderer, frustum, view, viewProjection, _descriptorSetStorage, samplerManager ) )
+    bool const result = UpdateGPUData ( renderer,
+        frustum,
+        view,
+        viewProjection,
+        _descriptorSetStorage,
+        defaultTextureManager,
+        samplerManager
+    );
+
+    if ( !result )
         return VK_NULL_HANDLE;
 
     VkDescriptorSet const* textureSets = _descriptorSetStorage.data ();
@@ -423,42 +405,6 @@ bool OpaquePass::BeginRenderPass ( android_vulkan::Renderer &renderer ) noexcept
     return true;
 }
 
-void OpaquePass::CleanupTransferResources ( android_vulkan::Renderer &renderer ) noexcept
-{
-    if ( !_isFreeTransferResources )
-        return;
-
-    VkDevice device = renderer.GetDevice ();
-
-    if ( _albedoDefault )
-        _albedoDefault->FreeTransferResources ( device );
-
-    if ( _emissionDefault )
-        _emissionDefault->FreeTransferResources ( device );
-
-    if ( _maskDefault )
-        _maskDefault->FreeTransferResources ( device );
-
-    if ( _normalDefault )
-        _normalDefault->FreeTransferResources ( device );
-
-    if ( _paramDefault )
-        _paramDefault->FreeTransferResources ( device );
-
-    _isFreeTransferResources = false;
-
-    vkFreeCommandBuffers ( device,
-        _commandPool,
-        static_cast<uint32_t> ( DEFAULT_TEXTURE_COUNT ),
-        _textureCommandBuffers
-    );
-
-    for ( auto& item : _textureCommandBuffers )
-    {
-        item = VK_NULL_HANDLE;
-    }
-}
-
 void OpaquePass::InitCommonStructures ( VkRenderPass renderPass,
     VkFramebuffer framebuffer,
     VkExtent2D const &resolution
@@ -529,110 +475,6 @@ void OpaquePass::InitCommonStructures ( VkRenderPass renderPass,
     _submitInfoTransfer.pSignalSemaphores = nullptr;
 }
 
-bool OpaquePass::InitDefaultTextures ( android_vulkan::Renderer &renderer ) noexcept
-{
-    auto textureLoader = [ &renderer ] ( Texture2DRef &texture,
-        uint8_t const* data,
-        size_t size,
-        VkFormat format,
-        VkCommandBuffer commandBuffer
-    ) noexcept -> bool {
-        texture = std::make_shared<android_vulkan::Texture2D> ();
-        constexpr VkExtent2D resolution { .width = 1U, .height = 1U };
-
-        bool const result = texture->UploadData ( renderer,
-            data,
-            size,
-            resolution,
-            format,
-            false,
-            commandBuffer
-        );
-
-        if ( result )
-            return true;
-
-        texture = nullptr;
-        return false;
-    };
-
-    constexpr uint8_t const albedo[ 4U ] = { 255U, 255U, 255U, 255U };
-
-    bool result = textureLoader ( _albedoDefault,
-        albedo,
-        sizeof ( albedo ),
-        VK_FORMAT_R8G8B8A8_SRGB,
-        _textureCommandBuffers[ 0U ]
-    );
-
-    if ( !result )
-        return false;
-
-    _isFreeTransferResources = true;
-
-    android_vulkan::Half4 const emission ( 0.0F, 0.0F, 0.0F, 0.0F );
-
-    result = textureLoader ( _emissionDefault,
-        reinterpret_cast<const uint8_t*> ( emission._data ),
-        sizeof ( emission ),
-        VK_FORMAT_R16G16B16A16_SFLOAT,
-        _textureCommandBuffers[ 1U ]
-    );
-
-    if ( !result )
-        return false;
-
-    constexpr uint8_t const mask[ 4U ] = { 255U, 0U, 0U, 0U };
-
-    result = textureLoader ( _maskDefault,
-        mask,
-        sizeof ( mask ),
-        VK_FORMAT_R8G8B8A8_UNORM,
-        _textureCommandBuffers[ 2U ]
-    );
-
-    if ( !result )
-        return false;
-
-    constexpr uint8_t const normal[ 4U ] = { 128U, 0U, 0U, 128U };
-
-    result = textureLoader ( _normalDefault,
-        normal,
-        sizeof ( normal ),
-        VK_FORMAT_R8G8B8A8_UNORM,
-        _textureCommandBuffers[ 3U ]
-    );
-
-    if ( !result )
-        return false;
-
-    constexpr uint8_t const param[ 4U ] = { 128U, 128U, 128U, 128U };
-
-    return textureLoader ( _paramDefault,
-        param,
-        sizeof ( param ),
-        VK_FORMAT_R8G8B8A8_UNORM,
-        _textureCommandBuffers[ 4U ]
-    );
-}
-
-void OpaquePass::DestroyDefaultTextures ( VkDevice device ) noexcept
-{
-    auto freeTexture = [ device ] ( Texture2DRef &texture ) {
-        if ( !texture )
-            return;
-
-        texture->FreeResources ( device );
-        texture = nullptr;
-    };
-
-    freeTexture ( _paramDefault );
-    freeTexture ( _normalDefault );
-    freeTexture ( _maskDefault );
-    freeTexture ( _emissionDefault );
-    freeTexture ( _albedoDefault );
-}
-
 void OpaquePass::DestroyDescriptorPool ( VkDevice device ) noexcept
 {
     if ( _descriptorPool == VK_NULL_HANDLE )
@@ -648,6 +490,7 @@ bool OpaquePass::UpdateGPUData ( android_vulkan::Renderer &renderer,
     GXMat4 const &view,
     GXMat4 const &viewProjection,
     std::vector<VkDescriptorSet> &descriptorSetStorage,
+    DefaultTextureManager const &defaultTextureManager,
     SamplerManager &samplerManager
 ) noexcept
 {
@@ -781,12 +624,12 @@ bool OpaquePass::UpdateGPUData ( android_vulkan::Renderer &renderer,
     writeInfo0.pBufferInfo = nullptr;
     writeInfo0.pTexelBufferView = nullptr;
 
-    auto textureBinder = [ & ] ( Texture2DRef &texture,
-        Texture2DRef &defaultTexture,
+    auto textureBinder = [ & ] ( Texture2DRef const &texture,
+        Texture2DRef const &defaultTexture,
         uint32_t imageBindSlot,
         uint32_t samplerBindSlot
     ) noexcept {
-        Texture2DRef& t = texture ? texture : defaultTexture;
+        Texture2DRef const& t = texture ? texture : defaultTexture;
         SamplerRef sampler = samplerManager.GetSampler ( renderer, t->GetMipLevelCount () );
 
         writeInfo0.pImageInfo = &imageStorage.emplace_back (
@@ -843,11 +686,11 @@ bool OpaquePass::UpdateGPUData ( android_vulkan::Renderer &renderer,
 
         auto& m = const_cast<GeometryPassMaterial&> ( material );
 
-        textureBinder ( m.GetAlbedo (), _albedoDefault, 0U, 1U );
-        textureBinder ( m.GetEmission (), _emissionDefault, 2U, 3U );
-        textureBinder ( m.GetMask (), _maskDefault, 4U, 5U );
-        textureBinder ( m.GetNormal (), _normalDefault, 6U, 7U );
-        textureBinder ( m.GetParam (), _paramDefault, 8U, 9U );
+        textureBinder ( m.GetAlbedo (), defaultTextureManager.GetAlbedo (), 0U, 1U );
+        textureBinder ( m.GetEmission (), defaultTextureManager.GetEmission (), 2U, 3U );
+        textureBinder ( m.GetMask (), defaultTextureManager.GetMask (), 4U, 5U );
+        textureBinder ( m.GetNormal (), defaultTextureManager.GetNormal (), 6U, 7U );
+        textureBinder ( m.GetParam (), defaultTextureManager.GetParams (), 8U, 9U );
     }
 
     vkUpdateDescriptorSets ( device,

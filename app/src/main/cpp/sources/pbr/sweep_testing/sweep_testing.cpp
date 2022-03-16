@@ -46,24 +46,27 @@ bool SweepTesting::OnFrame ( android_vulkan::Renderer &renderer, double deltaTim
 
 bool SweepTesting::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 {
+    VkDevice device = renderer.GetDevice ();
+
     if ( !CreateCommandPool ( renderer ) )
     {
-        OnDestroyDevice ( renderer.GetDevice () );
+        OnDestroyDevice ( device );
         return false;
     }
 
-    if ( !_renderSession.OnInitDevice ( renderer ) )
+    if ( !_renderSession.OnInitDevice ( renderer, _commandPool ) )
     {
-        OnDestroyDevice ( renderer.GetDevice () );
+        OnDestroyDevice ( device );
         return false;
     }
 
     if ( !CreateScene ( renderer ) )
     {
-        OnDestroyDevice ( renderer.GetDevice () );
+        OnDestroyDevice ( device );
         return false;
     }
 
+    _renderSession.FreeTransferResources ( device, _commandPool );
     return true;
 }
 

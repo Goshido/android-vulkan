@@ -2,6 +2,7 @@
 #define PBR_RENDER_SESSION_H
 
 
+#include "default_texture_manager.h"
 #include "light_pass.h"
 #include "opaque_pass.h"
 #include "present_pass.h"
@@ -34,6 +35,7 @@ class RenderSession final
         GXMat4                                  _viewProjection {};
         GXMat4                                  _viewerLocal {};
 
+        DefaultTextureManager                   _defaultTextureManager {};
         GXProjectionClipPlanes                  _frustum {};
 
         GBuffer                                 _gBuffer {};
@@ -71,7 +73,9 @@ class RenderSession final
         void Begin ( GXMat4 const &viewerLocal, GXMat4 const &projection ) noexcept;
         [[nodiscard]] bool End ( android_vulkan::Renderer &renderer, double deltaTime ) noexcept;
 
-        [[nodiscard]] bool OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept;
+        void FreeTransferResources ( VkDevice device, VkCommandPool commandPool ) noexcept;
+
+        [[nodiscard]] bool OnInitDevice ( android_vulkan::Renderer &renderer, VkCommandPool commandPool ) noexcept;
         void OnDestroyDevice ( VkDevice device ) noexcept;
 
         [[nodiscard]] bool OnSwapchainCreated ( android_vulkan::Renderer &renderer,
@@ -105,7 +109,6 @@ class RenderSession final
         [[nodiscard]] bool CreateGBufferSlotMapper ( android_vulkan::Renderer &renderer ) noexcept;
 
         void DestroyGBufferResources ( VkDevice device ) noexcept;
-        void FreeTransferResources ( VkDevice device ) noexcept;
 
         void SubmitOpaqueCall ( MeshRef &mesh,
             MaterialRef const &material,

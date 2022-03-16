@@ -73,7 +73,7 @@ bool World1x1::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 
     AV_REGISTER_COMMAND_POOL ( "World1x1::_commandPool" )
 
-    if ( !_renderSession.OnInitDevice ( renderer ) )
+    if ( !_renderSession.OnInitDevice ( renderer, _commandPool ) )
     {
         OnDestroyDevice ( device );
         return false;
@@ -84,6 +84,8 @@ bool World1x1::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
         OnDestroyDevice ( device );
         return false;
     }
+
+    _renderSession.FreeTransferResources ( device, _commandPool );
 
     if ( !CreatePhysics () )
     {

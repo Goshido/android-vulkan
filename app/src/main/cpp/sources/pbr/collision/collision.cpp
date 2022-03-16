@@ -102,7 +102,7 @@ bool Collision::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
         return false;
     }
 
-    if ( !_renderSession.OnInitDevice ( renderer ) )
+    if ( !_renderSession.OnInitDevice ( renderer, _commandPool ) )
     {
         OnDestroyDevice ( device );
         return false;
@@ -114,6 +114,7 @@ bool Collision::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
         return false;
     }
 
+    _renderSession.FreeTransferResources ( device, _commandPool );
     return true;
 }
 

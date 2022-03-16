@@ -28,10 +28,10 @@ class SamplerManager final
 
         ~SamplerManager () = default;
 
-        void FreeResources ( VkDevice device );
+        void FreeResources ( VkDevice device ) noexcept;
 
-        [[nodiscard]] SamplerRef GetPointSampler ( android_vulkan::Renderer &renderer );
-        [[nodiscard]] SamplerRef GetSampler ( android_vulkan::Renderer &renderer, uint8_t mips );
+        [[nodiscard]] SamplerRef GetPointSampler ( android_vulkan::Renderer &renderer ) noexcept;
+        [[nodiscard]] SamplerRef GetSampler ( android_vulkan::Renderer &renderer, uint8_t mips ) noexcept;
 };
 
 } // namespace pbr

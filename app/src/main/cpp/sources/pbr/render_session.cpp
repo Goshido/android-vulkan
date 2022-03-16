@@ -50,6 +50,7 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
         _frustum,
         _view,
         _viewProjection,
+        _defaultTextureManager,
         _samplerManager,
         _renderSessionStats
     );
@@ -91,7 +92,12 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
     return true;
 }
 
-bool RenderSession::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
+void RenderSession::FreeTransferResources ( VkDevice device, VkCommandPool commandPool ) noexcept
+{
+    _defaultTextureManager.FreeTransferResources ( device, commandPool );
+}
+
+bool RenderSession::OnInitDevice ( android_vulkan::Renderer &renderer, VkCommandPool commandPool ) noexcept
 {
     _lightHandlers[ static_cast<size_t> ( eLightType::PointLight ) ] = &RenderSession::SubmitPointLight;
     _lightHandlers[ static_cast<size_t> ( eLightType::ReflectionGlobal ) ] = &RenderSession::SubmitReflectionGlobal;
@@ -100,7 +106,7 @@ bool RenderSession::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
     _meshHandlers[ static_cast<size_t> ( eMaterialType::Opaque ) ] = &RenderSession::SubmitOpaqueCall;
     _meshHandlers[ static_cast<size_t> ( eMaterialType::Stipple ) ] = &RenderSession::SubmitStippleCall;
 
-    return _texturePresentDescriptorSetLayout.Init ( renderer );
+    return _texturePresentDescriptorSetLayout.Init ( renderer ) & _defaultTextureManager.Init ( renderer, commandPool );
 }
 
 void RenderSession::OnDestroyDevice ( VkDevice device ) noexcept
@@ -110,6 +116,7 @@ void RenderSession::OnDestroyDevice ( VkDevice device ) noexcept
 
     _texturePresentDescriptorSetLayout.Destroy ( device );
     _samplerManager.FreeResources ( device );
+    _defaultTextureManager.Destroy ( device );
     DestroyGBufferResources ( device );
 }
 
@@ -400,7 +407,7 @@ bool RenderSession::CreateGBufferResources ( android_vulkan::Renderer &renderer,
         return false;
     }
 
-    FreeTransferResources ( renderer.GetDevice () );
+    _lightPass.OnFreeTransferResources ( device );
     return true;
 }
 
@@ -548,11 +555,6 @@ void RenderSession::DestroyGBufferResources ( VkDevice device ) noexcept
     }
 
     _gBuffer.Destroy ( device );
-}
-
-void RenderSession::FreeTransferResources ( VkDevice device ) noexcept
-{
-    _lightPass.OnFreeTransferResources ( device );
 }
 
 void RenderSession::SubmitOpaqueCall ( MeshRef &mesh,

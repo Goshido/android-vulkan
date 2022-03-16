@@ -2,6 +2,7 @@
 #define PBR_OPAQUE_PASS_H
 
 
+#include "default_texture_manager.h"
 #include "gbuffer.h"
 #include "opaque_program.h"
 #include "render_session_stats.h"
@@ -16,17 +17,6 @@ namespace pbr {
 class OpaquePass final
 {
     private:
-        constexpr static size_t         DEFAULT_TEXTURE_COUNT = 5U;
-
-    private:
-        Texture2DRef                    _albedoDefault {};
-        Texture2DRef                    _emissionDefault {};
-        Texture2DRef                    _maskDefault {};
-        Texture2DRef                    _normalDefault {};
-        Texture2DRef                    _paramDefault {};
-
-        bool                            _isFreeTransferResources = false;
-
         VkCommandPool                   _commandPool = VK_NULL_HANDLE;
         VkDescriptorPool                _descriptorPool = VK_NULL_HANDLE;
         std::vector<VkDescriptorSet>    _descriptorSetStorage {};
@@ -36,10 +26,8 @@ class OpaquePass final
         VkRenderPassBeginInfo           _renderPassInfo {};
         SceneData                       _sceneData {};
         VkSubmitInfo                    _submitInfoTransfer {};
-        VkCommandBuffer                 _textureCommandBuffers[ DEFAULT_TEXTURE_COUNT ] {};
         VkCommandBuffer                 _transferCommandBuffer = VK_NULL_HANDLE;
         UniformBufferPool               _uniformPool { eUniformPoolSize::Huge_64M };
-
 
     public:
         OpaquePass () = default;
@@ -68,6 +56,7 @@ class OpaquePass final
             GXProjectionClipPlanes const &frustum,
             GXMat4 const &view,
             GXMat4 const &viewProjection,
+            DefaultTextureManager const &defaultTextureManager,
             SamplerManager &samplerManager,
             RenderSessionStats &renderSessionStats
         ) noexcept;
@@ -97,16 +86,12 @@ class OpaquePass final
         ) noexcept;
 
         [[nodiscard]] bool BeginRenderPass ( android_vulkan::Renderer &renderer ) noexcept;
-        void CleanupTransferResources ( android_vulkan::Renderer &renderer ) noexcept;
 
         void InitCommonStructures ( VkRenderPass renderPass,
             VkFramebuffer framebuffer,
             VkExtent2D const &resolution
         ) noexcept;
 
-        [[nodiscard]] bool InitDefaultTextures ( android_vulkan::Renderer &renderer ) noexcept;
-
-        void DestroyDefaultTextures ( VkDevice device ) noexcept;
         void DestroyDescriptorPool ( VkDevice device ) noexcept;
 
         [[nodiscard]] bool UpdateGPUData ( android_vulkan::Renderer &renderer,
@@ -114,6 +99,7 @@ class OpaquePass final
             GXMat4 const &view,
             GXMat4 const &viewProjection,
             std::vector<VkDescriptorSet> &descriptorSetStorage,
+            DefaultTextureManager const &defaultTextureManager,
             SamplerManager &samplerManager
         ) noexcept;
 };

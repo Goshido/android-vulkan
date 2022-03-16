@@ -39,18 +39,40 @@ bool StippleTest::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime
 
 bool StippleTest::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 {
-    if ( !_renderSession.OnInitDevice ( renderer ) )
+    VkCommandPoolCreateInfo const poolInfo
     {
-        OnDestroyDevice ( renderer.GetDevice () );
+        .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+        .queueFamilyIndex = renderer.GetQueueFamilyIndex ()
+    };
+
+    VkDevice device = renderer.GetDevice ();
+
+    bool result = android_vulkan::Renderer::CheckVkResult (
+        vkCreateCommandPool ( device, &poolInfo, nullptr, &_commandPool ),
+        "StippleTest::OnInitDevice",
+        "Can't create command buffer"
+    );
+
+    if ( !result )
+        return false;
+
+    AV_REGISTER_COMMAND_POOL ( "StippleTest::_commandPool" )
+
+    if ( !_renderSession.OnInitDevice ( renderer, _commandPool ) )
+    {
+        OnDestroyDevice ( device );
         return false;
     }
 
     if ( !CreateScene ( renderer ) )
     {
-        OnDestroyDevice ( renderer.GetDevice () );
+        OnDestroyDevice ( device );
         return false;
     }
 
+    _renderSession.FreeTransferResources ( device, _commandPool );
     return true;
 }
 
@@ -161,27 +183,6 @@ void StippleTest::Animate ( float deltaTime ) noexcept
 
 bool StippleTest::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
 {
-    VkCommandPoolCreateInfo const poolInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
-        .queueFamilyIndex = renderer.GetQueueFamilyIndex ()
-    };
-
-    VkDevice device = renderer.GetDevice ();
-
-    bool result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateCommandPool ( device, &poolInfo, nullptr, &_commandPool ),
-        "StippleTest::CreateScene",
-        "Can't create command buffer"
-    );
-
-    if ( !result )
-        return false;
-
-    AV_REGISTER_COMMAND_POOL ( "StippleTest::_commandPool" )
-
     constexpr uint32_t meshCommandBuffers = 2U;
     constexpr uint32_t materialCommandBuffers = 2U * MaterialManager::MaxCommandBufferPerMaterial ();
     constexpr uint32_t commandBufferCount = meshCommandBuffers + materialCommandBuffers;
@@ -198,7 +199,9 @@ bool StippleTest::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
         .commandBufferCount = commandBufferCount
     };
 
-    result = android_vulkan::Renderer::CheckVkResult (
+    VkDevice device = renderer.GetDevice ();
+
+    bool result = android_vulkan::Renderer::CheckVkResult (
         vkAllocateCommandBuffers ( device, &allocateInfo, cb ),
         "StippleTest::CreateScene",
         "Can't allocate command buffers"

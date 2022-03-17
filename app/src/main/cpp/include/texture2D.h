@@ -161,7 +161,7 @@ class Texture2D final
             int &channels
         ) noexcept;
 
-        [[nodiscard]] static uint32_t CountMipLevels ( VkExtent2D const &resolution ) noexcept;
+        [[nodiscard]] static uint8_t CountMipLevels ( VkExtent2D const &resolution ) noexcept;
         [[nodiscard]] static VkFormat PickupFormat ( int channels ) noexcept;
         [[nodiscard]] static VkFormat ResolveFormat ( VkFormat baseFormat, eFormat format ) noexcept;
 };

@@ -164,7 +164,7 @@ VkExtent2D const& Texture2D::GetResolution () const noexcept
         resolution,
         ResolveFormat ( actualFormat, format ),
         IMMUTABLE_TEXTURE_USAGE,
-        static_cast<uint8_t> ( isGenerateMipmaps ? CountMipLevels ( resolution ) : 1U ),
+        isGenerateMipmaps ? CountMipLevels ( resolution ) : UINT8_C ( 1U ),
         renderer
     );
 
@@ -235,7 +235,7 @@ bool Texture2D::UploadData ( Renderer &renderer,
         resolution,
         ResolveFormat ( actualFormat, format ),
         IMMUTABLE_TEXTURE_USAGE,
-        static_cast<uint8_t> ( isGenerateMipmaps ? CountMipLevels ( resolution ) : 1U ),
+        isGenerateMipmaps ? CountMipLevels ( resolution ) : UINT8_C ( 1U ),
         renderer
     );
 
@@ -293,7 +293,7 @@ bool Texture2D::UploadData ( Renderer &renderer,
         resolution,
         format,
         IMMUTABLE_TEXTURE_USAGE,
-        static_cast<uint8_t> ( isGenerateMipmaps ? CountMipLevels ( resolution ) : 1U ),
+        isGenerateMipmaps ? CountMipLevels ( resolution ) : UINT8_C ( 1U ),
         renderer
     );
 
@@ -1117,18 +1117,12 @@ bool Texture2D::LoadImage ( std::vector<uint8_t> &pixelData,
     return true;
 }
 
-uint32_t Texture2D::CountMipLevels ( VkExtent2D const &resolution ) noexcept
+uint8_t Texture2D::CountMipLevels ( VkExtent2D const &resolution ) noexcept
 {
-    uint32_t pivot = std::max ( resolution.width, resolution.height );
-    uint32_t mipCount = 1U;
-
-    while ( pivot != 1U )
-    {
-        ++mipCount;
-        pivot >>= 1U;
-    }
-
-    return mipCount;
+    // See https://en.cppreference.com/w/cpp/numeric/bit_width
+    return static_cast<uint8_t> (
+        std::numeric_limits<uint32_t>::digits - std::countl_zero ( std::max ( resolution.width, resolution.height ) )
+    );
 }
 
 VkFormat Texture2D::PickupFormat ( int channels ) noexcept

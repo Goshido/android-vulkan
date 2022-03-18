@@ -3,12 +3,11 @@
 
 
 #include "default_texture_manager.h"
+#include "geometry_pass.h"
 #include "light_pass.h"
-#include "opaque_pass.h"
 #include "present_pass.h"
 #include "reflection_global_pass.h"
 #include "shadow_casters.h"
-#include "stipple_pass.h"
 
 
 namespace pbr {
@@ -45,18 +44,17 @@ class RenderSession final
         VkRenderPass                            _gBufferRenderPass = VK_NULL_HANDLE;
         VkDescriptorSet                         _gBufferSlotMapper = VK_NULL_HANDLE;
 
+        GeometryPass                            _geometryPass {};
+
         LightHandler                            _lightHandlers[ 3U ] {};
         LightPass                               _lightPass {};
 
         MeshHandler                             _meshHandlers[ 2U ] {};
-
         size_t                                  _opaqueMeshCount = 0U;
-        OpaquePass                              _opaquePass {};
 
         PresentPass                             _presentPass {};
         RenderSessionStats                      _renderSessionStats {};
         SamplerManager                          _samplerManager {};
-        StipplePass                             _stipplePass {};
         TexturePresentDescriptorSetLayout       _texturePresentDescriptorSetLayout {};
 
     public:

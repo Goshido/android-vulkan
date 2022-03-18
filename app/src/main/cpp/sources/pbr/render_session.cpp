@@ -24,8 +24,7 @@ void RenderSession::Begin ( GXMat4 const &viewerLocal, GXMat4 const &projection 
     _viewProjection.Multiply ( _view, projection );
     _frustum.From ( _viewProjection );
     _lightPass.Reset ();
-    _opaquePass.Reset ();
-    _stipplePass.Reset ();
+    _geometryPass.Reset ();
 }
 
 bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime ) noexcept
@@ -35,7 +34,7 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
 
     bool result = _lightPass.OnPreGeometryPass ( renderer,
         _gBuffer.GetResolution (),
-        _opaquePass.GetSceneData (),
+        _geometryPass.GetOpaquePass ().GetSceneData (),
         _opaqueMeshCount,
         _viewerLocal,
         _view,
@@ -46,7 +45,7 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
     if ( !result )
         return false;
 
-    VkCommandBuffer commandBuffer = _opaquePass.Execute ( renderer,
+    VkCommandBuffer commandBuffer = _geometryPass.Execute ( renderer,
         _frustum,
         _view,
         _viewProjection,
@@ -57,8 +56,6 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
 
     if ( commandBuffer == VK_NULL_HANDLE )
         return false;
-
-    _stipplePass.Execute ( _renderSessionStats );
 
     result = _lightPass.OnPostGeometryPass ( renderer,
         commandBuffer,
@@ -85,7 +82,7 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
         &_gBufferImageBarrier
     );
 
-    if ( !_presentPass.Execute ( commandBuffer, _gBufferSlotMapper, _opaquePass.GetFence (), renderer ) )
+    if ( !_presentPass.Execute ( commandBuffer, _gBufferSlotMapper, _geometryPass.GetFence (), renderer ) )
         return false;
 
     _renderSessionStats.PrintStats ( deltaTime );
@@ -106,7 +103,13 @@ bool RenderSession::OnInitDevice ( android_vulkan::Renderer &renderer, VkCommand
     _meshHandlers[ static_cast<size_t> ( eMaterialType::Opaque ) ] = &RenderSession::SubmitOpaqueCall;
     _meshHandlers[ static_cast<size_t> ( eMaterialType::Stipple ) ] = &RenderSession::SubmitStippleCall;
 
-    return _texturePresentDescriptorSetLayout.Init ( renderer ) & _defaultTextureManager.Init ( renderer, commandPool );
+    if ( !_texturePresentDescriptorSetLayout.Init ( renderer ) )
+        return false;
+
+    if ( !_defaultTextureManager.Init ( renderer, commandPool ) )
+        return false;
+
+    return _samplerManager.Init ( renderer );
 }
 
 void RenderSession::OnDestroyDevice ( VkDevice device ) noexcept
@@ -115,7 +118,7 @@ void RenderSession::OnDestroyDevice ( VkDevice device ) noexcept
     std::memset ( _meshHandlers, 0, sizeof ( _meshHandlers ) );
 
     _texturePresentDescriptorSetLayout.Destroy ( device );
-    _samplerManager.FreeResources ( device );
+    _samplerManager.Destroy ( device );
     _defaultTextureManager.Destroy ( device );
     DestroyGBufferResources ( device );
 }
@@ -299,7 +302,7 @@ bool RenderSession::CreateGBufferRenderPass ( android_vulkan::Renderer &renderer
 
     static VkSubpassDescription const subpasses[] =
     {
-        OpaquePass::GetSubpassDescription ()
+        GeometryPass::GetSubpassDescription ()
     };
 
     VkRenderPassCreateInfo const renderPassInfo
@@ -347,7 +350,7 @@ bool RenderSession::CreateGBufferResources ( android_vulkan::Renderer &renderer,
         return false;
     }
 
-    bool result = _opaquePass.Init ( renderer,
+    bool result = _geometryPass.Init ( renderer,
         commandPool,
         _gBuffer.GetResolution (),
         _gBufferRenderPass,
@@ -425,7 +428,7 @@ bool RenderSession::CreateGBufferSlotMapper ( android_vulkan::Renderer &renderer
         }
     };
 
-    constexpr static VkDescriptorPoolCreateInfo poolInfo
+    constexpr VkDescriptorPoolCreateInfo poolInfo
     {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
         .pNext = nullptr,
@@ -469,13 +472,10 @@ bool RenderSession::CreateGBufferSlotMapper ( android_vulkan::Renderer &renderer
     if ( !result )
         return false;
 
-    SamplerRef pointSampler = _samplerManager.GetPointSampler ( renderer );
-    VkSampler nativeSampler = pointSampler->GetSampler ();
-
     VkDescriptorImageInfo const imageInfo[] =
     {
         {
-            .sampler = nativeSampler,
+            .sampler = _samplerManager.GetPointSampler ()->GetSampler (),
             .imageView = _gBuffer.GetHDRAccumulator ().GetImageView (),
             .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
         }
@@ -538,7 +538,7 @@ void RenderSession::DestroyGBufferResources ( VkDevice device ) noexcept
         AV_UNREGISTER_DESCRIPTOR_POOL ( "RenderSession::_gBufferDescriptorPool" )
     }
 
-    _opaquePass.Destroy ( device );
+    _geometryPass.Destroy ( device );
 
     if ( _gBufferFramebuffer != VK_NULL_HANDLE )
     {
@@ -569,7 +569,7 @@ void RenderSession::SubmitOpaqueCall ( MeshRef &mesh,
 {
     ++_opaqueMeshCount;
     _renderSessionStats.SubmitOpaque ( mesh->GetVertexCount () );
-    _opaquePass.Submit ( mesh, material, local, worldBounds, color0, color1, color2, emission );
+    _geometryPass.GetOpaquePass ().Submit ( mesh, material, local, worldBounds, color0, color1, color2, emission );
 }
 
 void RenderSession::SubmitStippleCall ( MeshRef &mesh,
@@ -587,7 +587,7 @@ void RenderSession::SubmitStippleCall ( MeshRef &mesh,
     if ( !_frustum.IsVisible ( worldBounds ) )
         return;
 
-    _stipplePass.Submit ( mesh, material, local, worldBounds, color0, color1, color2, emission );
+    _geometryPass.GetStipplePass ().Submit ( mesh, material, local, worldBounds, color0, color1, color2, emission );
 }
 
 void RenderSession::SubmitPointLight ( LightRef &light ) noexcept

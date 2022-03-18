@@ -18,7 +18,7 @@ OutputData PS ( in InputData inputData )
 {
     const ObjectData objectData = g_instanceData[ inputData._instanceIndex ];
     const float32_t4 diffuseSample = g_diffuseTexture.Sample ( g_diffuseSampler, inputData._uv );
-    const uint16_t2 bayerCoord = (uint16_t2)inputData._vertexH.xy % (uint16_t2)4U;
+    const uint32_t2 bayerCoord = (uint32_t2)inputData._vertexH.xy % (uint32_t2)4U;
 
     // Applying stipple pattern...
     clip ( mad ( diffuseSample.w, objectData._color0.w, g_bayerMatrix[ bayerCoord.x ][ bayerCoord.y ] ) );

@@ -3,7 +3,6 @@
 
 
 #include "default_texture_manager.h"
-#include "gbuffer.h"
 #include "opaque_program.h"
 #include "render_session_stats.h"
 #include "sampler_manager.h"
@@ -17,17 +16,19 @@ namespace pbr {
 class OpaquePass final
 {
     private:
-        VkCommandPool                   _commandPool = VK_NULL_HANDLE;
-        VkDescriptorPool                _descriptorPool = VK_NULL_HANDLE;
-        std::vector<VkDescriptorSet>    _descriptorSetStorage {};
-        VkFence                         _fence = VK_NULL_HANDLE;
-        OpaqueProgram                   _program {};
-        VkCommandBuffer                 _renderCommandBuffer = VK_NULL_HANDLE;
-        VkRenderPassBeginInfo           _renderPassInfo {};
-        SceneData                       _sceneData {};
-        VkSubmitInfo                    _submitInfoTransfer {};
-        VkCommandBuffer                 _transferCommandBuffer = VK_NULL_HANDLE;
-        UniformBufferPool               _uniformPool { eUniformPoolSize::Huge_64M };
+        VkDescriptorPool                        _descriptorPool = VK_NULL_HANDLE;
+        std::vector<VkDescriptorSet>            _descriptorSetStorage {};
+        std::vector<VkDescriptorImageInfo>      _imageStorage {};
+        std::vector<VkDescriptorSetLayout>      _layouts {};
+        std::vector<VkDescriptorPoolSize>       _poolSizeStorage {};
+        OpaqueProgram                           _program {};
+        SceneData                               _sceneData {};
+        VkSubmitInfo                            _submitInfoTransfer {};
+        VkCommandBuffer                         _transferCommandBuffer = VK_NULL_HANDLE;
+        UniformBufferPool                       _uniformPool { eUniformPoolSize::Huge_64M };
+        std::vector<VkDescriptorBufferInfo>     _uniformStorage {};
+        std::vector<VkWriteDescriptorSet>       _writeStorage0 {};
+        std::vector<VkWriteDescriptorSet>       _writeStorage1 {};
 
     public:
         OpaquePass () = default;
@@ -45,14 +46,13 @@ class OpaquePass final
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
             VkCommandPool commandPool,
             VkExtent2D const &resolution,
-            VkRenderPass renderPass,
-            VkFramebuffer framebuffer
+            VkRenderPass renderPass
         ) noexcept;
 
         void Destroy ( VkDevice device ) noexcept;
 
-        // The method returns command buffer in recording state if success. Otherwise the method returns VK_NULL_HANDLE.
-        [[nodiscard]] VkCommandBuffer Execute ( android_vulkan::Renderer &renderer,
+        [[nodiscard]] bool Execute ( android_vulkan::Renderer &renderer,
+            VkCommandBuffer commandBuffer,
             GXProjectionClipPlanes const &frustum,
             GXMat4 const &view,
             GXMat4 const &viewProjection,
@@ -61,7 +61,6 @@ class OpaquePass final
             RenderSessionStats &renderSessionStats
         ) noexcept;
 
-        [[nodiscard]] VkFence GetFence () const noexcept;
         void Reset () noexcept;
 
         void Submit ( MeshRef &mesh,
@@ -74,22 +73,13 @@ class OpaquePass final
             GXColorRGB const &emission
         ) noexcept;
 
-        // Return value optimization friendly method.
-        [[nodiscard]] static VkSubpassDescription GetSubpassDescription () noexcept;
-
     private:
         [[nodiscard]] size_t AggregateUniformCount () const noexcept;
 
-        void AppendDrawcalls ( VkDescriptorSet const* textureSets,
+        void AppendDrawcalls ( VkCommandBuffer commandBuffer,
+            VkDescriptorSet const* textureSets,
             VkDescriptorSet const* instanceSets,
             RenderSessionStats &renderSessionStats
-        ) noexcept;
-
-        [[nodiscard]] bool BeginRenderPass ( android_vulkan::Renderer &renderer ) noexcept;
-
-        void InitCommonStructures ( VkRenderPass renderPass,
-            VkFramebuffer framebuffer,
-            VkExtent2D const &resolution
         ) noexcept;
 
         void DestroyDescriptorPool ( VkDevice device ) noexcept;

@@ -88,22 +88,6 @@ void StippleTest::OnDestroyDevice ( VkDevice device ) noexcept
     }
 
     _floor = nullptr;
-
-    auto freeTexture = [ device ] ( Texture2DRef &texture ) noexcept {
-        if ( !texture )
-            return;
-
-        texture->FreeResources ( device );
-    };
-
-    // NOLINTNEXTLINE
-    auto& m = static_cast<GeometryPassMaterial&> ( *_stipple->GetMaterial () );
-    freeTexture ( m.GetAlbedo () );
-    freeTexture ( m.GetEmission () );
-    freeTexture ( m.GetMask () );
-    freeTexture ( m.GetNormal () );
-    freeTexture ( m.GetParam () );
-
     _stipple = nullptr;
 
     MeshManager::Destroy ( device );
@@ -179,12 +163,15 @@ void StippleTest::Animate ( float deltaTime ) noexcept
     z.Multiply ( z, renderScale._data[ 2U ] );
 
     _stipple->SetTransform ( transform );
+
+    _stippleColor._data[ 3U ] = std::abs ( std::sin ( _stippleAnimation ) );
+    _stipple->SetColor0 ( _stippleColor );
 }
 
 bool StippleTest::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
 {
     constexpr uint32_t meshCommandBuffers = 2U;
-    constexpr uint32_t materialCommandBuffers = 2U * MaterialManager::MaxCommandBufferPerMaterial ();
+    constexpr uint32_t materialCommandBuffers = MaterialManager::MaxCommandBufferPerMaterial ();
     constexpr uint32_t commandBufferCount = meshCommandBuffers + materialCommandBuffers;
 
     std::array<VkCommandBuffer, commandBufferCount> commandBuffers {};
@@ -249,52 +236,6 @@ bool StippleTest::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
 
     MaterialRef stippleMaterial = std::make_shared<StippleMaterial> ();
 
-    // NOLINTNEXTLINE
-    auto& sm = static_cast<StippleMaterial&> ( *stippleMaterial );
-
-    Texture2DRef t = std::make_shared<android_vulkan::Texture2D> ();
-
-    result = t->UploadData ( renderer,
-        "pbr/assets/Textures/CSG/Tile/PTile16x16_D.ktx",
-        android_vulkan::eFormat::sRGB,
-        true,
-        *cb
-    );
-
-    if ( !result )
-        return false;
-
-    ++cb;
-    sm.SetAlbedo ( t );
-    t = std::make_shared<android_vulkan::Texture2D> ();
-
-    result = t->UploadData ( renderer,
-        "pbr/assets/Textures/CSG/Tile/PTile16x16_N.ktx",
-        android_vulkan::eFormat::Unorm,
-        true,
-        *cb
-    );
-
-    if ( !result )
-        return false;
-
-    ++cb;
-    sm.SetNormal ( t );
-    t = std::make_shared<android_vulkan::Texture2D> ();
-
-    result = t->UploadData ( renderer,
-        "pbr/assets/Textures/CSG/Tile/PTile16x16_S.ktx",
-        android_vulkan::eFormat::Unorm,
-        true,
-        *cb
-    );
-
-    if ( !result )
-        return false;
-
-    ++cb;
-    sm.SetParam ( t );
-
     _stipple = std::make_unique<StaticMeshComponent> ( renderer,
         success,
         consumed,
@@ -305,6 +246,8 @@ bool StippleTest::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
 
     if ( !success )
         return false;
+
+    _stipple->SetColor0 ( _stippleColor );
 
     result = android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( renderer.GetQueue () ),
         "StippleTest::CreateScene",

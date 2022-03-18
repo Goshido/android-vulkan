@@ -83,6 +83,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/pbr/default_texture_manager.cpp
     app/src/main/cpp/sources/pbr/gbuffer.cpp
     app/src/main/cpp/sources/pbr/geometry_call.cpp
+    app/src/main/cpp/sources/pbr/geometry_pass.cpp
     app/src/main/cpp/sources/pbr/geometry_pass_instance_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/geometry_pass_material.cpp
     app/src/main/cpp/sources/pbr/geometry_pass_program.cpp

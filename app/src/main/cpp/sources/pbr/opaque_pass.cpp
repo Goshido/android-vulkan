@@ -13,113 +13,72 @@ SceneData& OpaquePass::GetSceneData () noexcept
 bool OpaquePass::Init ( android_vulkan::Renderer &renderer,
     VkCommandPool commandPool,
     VkExtent2D const &resolution,
-    VkRenderPass renderPass,
-    VkFramebuffer framebuffer
+    VkRenderPass renderPass
 ) noexcept
 {
     VkDevice device = renderer.GetDevice ();
 
-    constexpr VkFenceCreateInfo fenceInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = VK_FENCE_CREATE_SIGNALED_BIT
-    };
-
-    bool result = android_vulkan::Renderer::CheckVkResult ( vkCreateFence ( device, &fenceInfo, nullptr, &_fence ),
-        "OpaquePass::Init",
-        "Can't create fence"
-    );
-
-    if ( !result )
-    {
-        Destroy ( device );
-        return false;
-    }
-
-    AV_REGISTER_FENCE ( "OpaquePass::_fence" )
-
     if ( !_program.Init ( renderer, renderPass, 0U, resolution ) )
-    {
-        Destroy ( device );
         return false;
-    }
 
     if ( !_uniformPool.Init ( renderer, sizeof ( OpaqueProgram::InstanceData ) ) )
-    {
-        Destroy ( device );
         return false;
-    }
-
-    _commandPool = commandPool;
-    VkCommandBuffer commandBuffers[ 2U ];
 
     VkCommandBufferAllocateInfo const allocateInfo
     {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
         .pNext = nullptr,
-        .commandPool = _commandPool,
+        .commandPool = commandPool,
         .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-        .commandBufferCount = static_cast<uint32_t> ( std::size ( commandBuffers ) )
+        .commandBufferCount = 1U
     };
 
-    result = android_vulkan::Renderer::CheckVkResult (
-        vkAllocateCommandBuffers ( device, &allocateInfo, commandBuffers ),
+    bool const result = android_vulkan::Renderer::CheckVkResult (
+        vkAllocateCommandBuffers ( device, &allocateInfo, &_transferCommandBuffer ),
         "OpaquePass::Init",
-        "Can't allocate command buffers"
+        "Can't allocate transfer command buffer"
     );
 
     if ( !result )
-    {
-        Destroy ( device );
         return false;
-    }
 
-    _renderCommandBuffer = commandBuffers[ 0U ];
-    _transferCommandBuffer = commandBuffers[ 1U ];
+    _submitInfoTransfer.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    _submitInfoTransfer.pNext = nullptr;
+    _submitInfoTransfer.waitSemaphoreCount = 0U;
+    _submitInfoTransfer.pWaitSemaphores = nullptr;
+    _submitInfoTransfer.pWaitDstStageMask = nullptr;
+    _submitInfoTransfer.commandBufferCount = 1U;
+    _submitInfoTransfer.pCommandBuffers = &_transferCommandBuffer;
+    _submitInfoTransfer.signalSemaphoreCount = 0U;
+    _submitInfoTransfer.pSignalSemaphores = nullptr;
 
-    InitCommonStructures ( renderPass, framebuffer, resolution );
     return true;
 }
 
 void OpaquePass::Destroy ( VkDevice device ) noexcept
 {
-    _descriptorSetStorage.clear ();
-    _descriptorSetStorage.shrink_to_fit ();
+    auto freeVector = [] ( auto &v ) noexcept {
+        v.clear ();
+        v.shrink_to_fit ();
+    };
+
+    freeVector ( _descriptorSetStorage );
+    freeVector ( _imageStorage );
+    freeVector ( _layouts );
+    freeVector ( _poolSizeStorage );
+    freeVector ( _uniformStorage );
+    freeVector ( _writeStorage0 );
+    freeVector ( _writeStorage1 );
 
     DestroyDescriptorPool ( device );
 
-    if ( _commandPool != VK_NULL_HANDLE )
-    {
-        VkCommandBuffer const commandBuffers[] =
-        {
-            _transferCommandBuffer,
-            _renderCommandBuffer
-        };
-
-        vkFreeCommandBuffers ( device,
-            _commandPool,
-            static_cast<uint32_t> ( std::size ( commandBuffers ) ),
-            commandBuffers
-        );
-
-        _transferCommandBuffer = VK_NULL_HANDLE;
-        _renderCommandBuffer = VK_NULL_HANDLE;
-        _commandPool = VK_NULL_HANDLE;
-    }
-
+    _transferCommandBuffer = VK_NULL_HANDLE;
     _uniformPool.Destroy ( device );
     _program.Destroy ( device );
-
-    if ( _fence == VK_NULL_HANDLE )
-        return;
-
-    vkDestroyFence ( device, _fence, nullptr );
-    _fence = VK_NULL_HANDLE;
-    AV_UNREGISTER_FENCE ( "OpaquePass::_fence" )
 }
 
-VkCommandBuffer OpaquePass::Execute ( android_vulkan::Renderer &renderer,
+bool OpaquePass::Execute ( android_vulkan::Renderer &renderer,
+    VkCommandBuffer commandBuffer,
     GXProjectionClipPlanes const &frustum,
     GXMat4 const &view,
     GXMat4 const &viewProjection,
@@ -128,9 +87,6 @@ VkCommandBuffer OpaquePass::Execute ( android_vulkan::Renderer &renderer,
     RenderSessionStats &renderSessionStats
 ) noexcept
 {
-    if ( !BeginRenderPass ( renderer ) )
-        return VK_NULL_HANDLE;
-
     _descriptorSetStorage.clear ();
 
     bool const result = UpdateGPUData ( renderer,
@@ -143,18 +99,11 @@ VkCommandBuffer OpaquePass::Execute ( android_vulkan::Renderer &renderer,
     );
 
     if ( !result )
-        return VK_NULL_HANDLE;
+        return false;
 
     VkDescriptorSet const* textureSets = _descriptorSetStorage.data ();
-    AppendDrawcalls ( textureSets, textureSets + _sceneData.size (), renderSessionStats );
-    vkCmdEndRenderPass ( _renderCommandBuffer );
-
-    return _renderCommandBuffer;
-}
-
-VkFence OpaquePass::GetFence () const noexcept
-{
-    return _fence;
+    AppendDrawcalls ( commandBuffer, textureSets, textureSets + _sceneData.size (), renderSessionStats );
+    return true;
 }
 
 void OpaquePass::Reset () noexcept
@@ -187,57 +136,6 @@ void OpaquePass::Submit ( MeshRef &mesh,
     );
 }
 
-VkSubpassDescription OpaquePass::GetSubpassDescription () noexcept
-{
-    constexpr static VkAttachmentReference const colorReferences[] =
-    {
-        // #0: albedo
-        {
-            .attachment = 0U,
-            .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
-        },
-
-        // #1: emission
-        {
-            .attachment = 1U,
-            .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
-        },
-
-        // #2: normal
-        {
-            .attachment = 2U,
-            .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
-        },
-
-        // #3: params
-        {
-            .attachment = 3U,
-            .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
-        }
-    };
-
-    // depth|stencil
-    constexpr static VkAttachmentReference depthStencilReference
-    {
-        .attachment = 4U,
-        .layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
-    };
-
-    return
-    {
-        .flags = 0U,
-        .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
-        .inputAttachmentCount = 0U,
-        .pInputAttachments = nullptr,
-        .colorAttachmentCount = static_cast<uint32_t> ( std::size ( colorReferences ) ),
-        .pColorAttachments = colorReferences,
-        .pResolveAttachments = nullptr,
-        .pDepthStencilAttachment = &depthStencilReference,
-        .preserveAttachmentCount = 0U,
-        .pPreserveAttachments = nullptr
-    };
-}
-
 size_t OpaquePass::AggregateUniformCount () const noexcept
 {
     size_t count = 0U;
@@ -257,7 +155,8 @@ size_t OpaquePass::AggregateUniformCount () const noexcept
     return count;
 }
 
-void OpaquePass::AppendDrawcalls ( VkDescriptorSet const* textureSets,
+void OpaquePass::AppendDrawcalls ( VkCommandBuffer commandBuffer,
+    VkDescriptorSet const* textureSets,
     VkDescriptorSet const* instanceSets,
     RenderSessionStats &renderSessionStats
 ) noexcept
@@ -270,14 +169,14 @@ void OpaquePass::AppendDrawcalls ( VkDescriptorSet const* textureSets,
 
     for ( auto const& call : _sceneData )
     {
-        GeometryCall const& opaqueCall = call.second;
+        GeometryCall const& geometryCall = call.second;
 
         VkDescriptorSet textureSet = textureSets[ textureSetIndex ];
         ++textureSetIndex;
 
         if ( !isProgramBind )
         {
-            _program.Bind ( _renderCommandBuffer );
+            _program.Bind ( commandBuffer );
             isProgramBind = true;
         }
 
@@ -286,13 +185,13 @@ void OpaquePass::AppendDrawcalls ( VkDescriptorSet const* textureSets,
         auto instanceDrawer = [ & ] ( MeshRef const &mesh, uint32_t batches ) noexcept {
             if ( isUniformBind )
             {
-                _program.SetDescriptorSet ( _renderCommandBuffer, instanceSets + uniformUsed, 1U, 1U );
+                _program.SetDescriptorSet ( commandBuffer, instanceSets + uniformUsed, 1U, 1U );
             }
             else
             {
                 VkDescriptorSet sets[] = { textureSet, instanceSets[ uniformUsed ] };
 
-                _program.SetDescriptorSet ( _renderCommandBuffer,
+                _program.SetDescriptorSet ( commandBuffer,
                     sets,
                     0U,
                     static_cast<uint32_t> ( std::size ( sets ) )
@@ -301,10 +200,10 @@ void OpaquePass::AppendDrawcalls ( VkDescriptorSet const* textureSets,
                 isUniformBind = true;
             }
 
-            vkCmdBindVertexBuffers ( _renderCommandBuffer, 0U, 1U, &mesh->GetVertexBuffer (), &offset );
-            vkCmdBindIndexBuffer ( _renderCommandBuffer, mesh->GetIndexBuffer (), 0U, VK_INDEX_TYPE_UINT32 );
+            vkCmdBindVertexBuffers ( commandBuffer, 0U, 1U, &mesh->GetVertexBuffer (), &offset );
+            vkCmdBindIndexBuffer ( commandBuffer, mesh->GetIndexBuffer (), 0U, VK_INDEX_TYPE_UINT32 );
 
-            vkCmdDrawIndexed ( _renderCommandBuffer,
+            vkCmdDrawIndexed ( commandBuffer,
                 mesh->GetVertexCount (),
                 batches,
                 0U,
@@ -316,15 +215,15 @@ void OpaquePass::AppendDrawcalls ( VkDescriptorSet const* textureSets,
             ++uniformUsed;
         };
 
-        for ( auto const& [mesh, opaqueData] : opaqueCall.GetUniqueList () )
+        for ( auto const& [mesh, geometryData] : geometryCall.GetUniqueList () )
         {
-            if ( !opaqueData._isVisible )
+            if ( !geometryData._isVisible )
                 continue;
 
             instanceDrawer ( mesh, 1U );
         }
 
-        for ( auto const& item : opaqueCall.GetBatchList () )
+        for ( auto const& item : geometryCall.GetBatchList () )
         {
             MeshGroup const& group = item.second;
             MeshRef const& mesh = group._mesh;
@@ -364,117 +263,6 @@ void OpaquePass::AppendDrawcalls ( VkDescriptorSet const* textureSets,
     }
 }
 
-bool OpaquePass::BeginRenderPass ( android_vulkan::Renderer &renderer ) noexcept
-{
-    VkDevice device = renderer.GetDevice ();
-
-    bool result = android_vulkan::Renderer::CheckVkResult (
-        vkWaitForFences ( device, 1U, &_fence, VK_TRUE, UINT64_MAX ),
-        "OpaquePass::BeginRenderPass",
-        "Can't wait for fence"
-    );
-
-    if ( !result )
-        return false;
-
-    result = android_vulkan::Renderer::CheckVkResult ( vkResetFences ( device, 1U, &_fence ),
-        "OpaquePass::BeginRenderPass",
-        "Can't reset fence"
-    );
-
-    if ( !result )
-        return false;
-
-    constexpr VkCommandBufferBeginInfo beginInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-        .pNext = nullptr,
-        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
-        .pInheritanceInfo = nullptr
-    };
-
-    result = android_vulkan::Renderer::CheckVkResult ( vkBeginCommandBuffer ( _renderCommandBuffer, &beginInfo ),
-        "OpaquePass::BeginRenderPass",
-        "Can't begin rendering command buffer"
-    );
-
-    if ( !result )
-        return false;
-
-    vkCmdBeginRenderPass ( _renderCommandBuffer, &_renderPassInfo, VK_SUBPASS_CONTENTS_INLINE );
-    return true;
-}
-
-void OpaquePass::InitCommonStructures ( VkRenderPass renderPass,
-    VkFramebuffer framebuffer,
-    VkExtent2D const &resolution
-) noexcept
-{
-    constexpr static VkClearValue const clearValues[] =
-    {
-        // albedo
-        {
-            .color
-            {
-                .float32 = { 0.0F, 0.0F, 0.0F, 0.0F }
-            }
-        },
-
-        // emission
-        {
-            .color
-            {
-                .float32 = { 0.0F, 0.0F, 0.0F, 0.0F }
-            }
-        },
-
-        // normal
-        {
-            .color
-            {
-                .float32 = { 0.5F, 0.5F, 0.5F, 0.0F }
-            }
-        },
-
-        // param
-        {
-            .color
-            {
-                .float32 = { 0.5F, 0.5F, 0.5F, 0.0F }
-            }
-        },
-
-        // depth|stencil
-        {
-            .depthStencil
-            {
-                .depth = 1.0F,
-                .stencil = 0U
-            }
-        }
-    };
-
-    _renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    _renderPassInfo.pNext = nullptr;
-    _renderPassInfo.renderPass = renderPass;
-    _renderPassInfo.framebuffer = framebuffer;
-    _renderPassInfo.clearValueCount = static_cast<uint32_t> ( std::size ( clearValues ) );
-    _renderPassInfo.pClearValues = clearValues;
-    _renderPassInfo.renderArea.offset.x = 0;
-    _renderPassInfo.renderArea.offset.y = 0;
-    _renderPassInfo.renderArea.extent = resolution;
-
-    _submitInfoTransfer.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    _submitInfoTransfer.pNext = nullptr;
-    _submitInfoTransfer.waitSemaphoreCount = 0U;
-    _submitInfoTransfer.pWaitSemaphores = nullptr;
-    _submitInfoTransfer.pWaitDstStageMask = nullptr;
-    _submitInfoTransfer.commandBufferCount = 1U;
-    _submitInfoTransfer.pCommandBuffers = &_transferCommandBuffer;
-    _submitInfoTransfer.signalSemaphoreCount = 0U;
-    _submitInfoTransfer.pSignalSemaphores = nullptr;
-}
-
 void OpaquePass::DestroyDescriptorPool ( VkDevice device ) noexcept
 {
     if ( _descriptorPool == VK_NULL_HANDLE )
@@ -499,18 +287,18 @@ bool OpaquePass::UpdateGPUData ( android_vulkan::Renderer &renderer,
     size_t const opaqueCount = _sceneData.size ();
     size_t const textureCount = opaqueCount * GeometryPassTextureDescriptorSetLayout::TEXTURE_SLOTS;
 
-    std::vector<VkDescriptorImageInfo> imageStorage {};
-    imageStorage.reserve ( textureCount );
+    _imageStorage.clear ();
+    _imageStorage.reserve ( textureCount );
 
-    std::vector<VkWriteDescriptorSet> writeStorage0 {};
-    writeStorage0.reserve ( textureCount * 2U );
+    _writeStorage0.clear ();
+    _writeStorage0.reserve ( textureCount * 2U );
 
     Program::DescriptorSetInfo const& descriptorSetInfo = _program.GetResourceInfo ();
     Program::SetItem const& descriptorSet0 = descriptorSetInfo[ 0U ];
     size_t uniqueFeatures = descriptorSet0.size ();
 
-    std::vector<VkDescriptorBufferInfo> uniformStorage {};
-    std::vector<VkWriteDescriptorSet> writeStorage1 {};
+    _uniformStorage.clear ();
+    _writeStorage1.clear ();
 
     constexpr VkCommandBufferBeginInfo beginInfo
     {
@@ -530,16 +318,16 @@ bool OpaquePass::UpdateGPUData ( android_vulkan::Renderer &renderer,
 
     // Note reserve size is an estimation from the top.
     size_t const uniformCount = AggregateUniformCount ();
-    uniformStorage.reserve ( uniformCount );
-    writeStorage1.reserve ( uniformCount );
+    _uniformStorage.reserve ( uniformCount );
+    _writeStorage1.reserve ( uniformCount );
     ++uniqueFeatures;
 
-    std::vector<VkDescriptorPoolSize> poolSizeStorage {};
-    poolSizeStorage.reserve ( uniqueFeatures );
+    _poolSizeStorage.clear ();
+    _poolSizeStorage.reserve ( uniqueFeatures );
 
     for ( auto const& item : descriptorSet0 )
     {
-        poolSizeStorage.emplace_back (
+        _poolSizeStorage.emplace_back (
             VkDescriptorPoolSize
             {
                 .type = item.type,
@@ -548,7 +336,7 @@ bool OpaquePass::UpdateGPUData ( android_vulkan::Renderer &renderer,
         );
     }
 
-    poolSizeStorage.emplace_back (
+    _poolSizeStorage.emplace_back (
         VkDescriptorPoolSize
         {
             .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
@@ -565,8 +353,8 @@ bool OpaquePass::UpdateGPUData ( android_vulkan::Renderer &renderer,
         .pNext = nullptr,
         .flags = 0U,
         .maxSets = static_cast<uint32_t> ( opaqueCount + uniformCount ),
-        .poolSizeCount = static_cast<uint32_t> ( poolSizeStorage.size () ),
-        .pPoolSizes = poolSizeStorage.data ()
+        .poolSizeCount = static_cast<uint32_t> ( _poolSizeStorage.size () ),
+        .pPoolSizes = _poolSizeStorage.data ()
     };
 
     result = android_vulkan::Renderer::CheckVkResult (
@@ -580,20 +368,20 @@ bool OpaquePass::UpdateGPUData ( android_vulkan::Renderer &renderer,
 
     AV_REGISTER_DESCRIPTOR_POOL ( "OpaquePass::_descriptorPool" )
 
-    GeometryPassTextureDescriptorSetLayout const opaqueTextureLayout {};
-    VkDescriptorSetLayout opaqueTextureLayoutNative = opaqueTextureLayout.GetLayout ();
+    GeometryPassTextureDescriptorSetLayout const materialTextureLayout {};
+    VkDescriptorSetLayout materialTextureLayoutNative = materialTextureLayout.GetLayout ();
 
-    std::vector<VkDescriptorSetLayout> layouts;
-    layouts.reserve ( static_cast<size_t> ( poolInfo.maxSets ) );
+    _layouts.clear ();
+    _layouts.reserve ( static_cast<size_t> ( poolInfo.maxSets ) );
 
     for ( size_t i = 0U; i < opaqueCount; ++i )
-        layouts.push_back ( opaqueTextureLayoutNative );
+        _layouts.push_back ( materialTextureLayoutNative );
 
     GeometryPassInstanceDescriptorSetLayout const instanceLayout;
     VkDescriptorSetLayout instanceLayoutNative = instanceLayout.GetLayout ();
 
     for ( auto i = static_cast<uint32_t> ( opaqueCount ); i < poolInfo.maxSets; ++i )
-        layouts.push_back ( instanceLayoutNative );
+        _layouts.push_back ( instanceLayoutNative );
 
     VkDescriptorSetAllocateInfo const allocateInfo
     {
@@ -601,7 +389,7 @@ bool OpaquePass::UpdateGPUData ( android_vulkan::Renderer &renderer,
         .pNext = nullptr,
         .descriptorPool = _descriptorPool,
         .descriptorSetCount = poolInfo.maxSets,
-        .pSetLayouts = layouts.data ()
+        .pSetLayouts = _layouts.data ()
     };
 
     descriptorSetStorage.resize ( static_cast<size_t> ( poolInfo.maxSets ) );
@@ -624,18 +412,19 @@ bool OpaquePass::UpdateGPUData ( android_vulkan::Renderer &renderer,
     writeInfo0.pBufferInfo = nullptr;
     writeInfo0.pTexelBufferView = nullptr;
 
+    VkSampler materialSampler = samplerManager.GetMaterialSampler ()->GetSampler ();
+
     auto textureBinder = [ & ] ( Texture2DRef const &texture,
         Texture2DRef const &defaultTexture,
         uint32_t imageBindSlot,
         uint32_t samplerBindSlot
     ) noexcept {
         Texture2DRef const& t = texture ? texture : defaultTexture;
-        SamplerRef sampler = samplerManager.GetSampler ( renderer, t->GetMipLevelCount () );
 
-        writeInfo0.pImageInfo = &imageStorage.emplace_back (
+        writeInfo0.pImageInfo = &_imageStorage.emplace_back (
             VkDescriptorImageInfo
             {
-                .sampler = sampler->GetSampler (),
+                .sampler = materialSampler,
                 .imageView = t->GetImageView (),
                 .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
             }
@@ -643,11 +432,11 @@ bool OpaquePass::UpdateGPUData ( android_vulkan::Renderer &renderer,
 
         writeInfo0.dstBinding = imageBindSlot;
         writeInfo0.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-        writeStorage0.push_back ( writeInfo0 );
+        _writeStorage0.push_back ( writeInfo0 );
 
         writeInfo0.dstBinding = samplerBindSlot;
         writeInfo0.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
-        writeStorage0.push_back ( writeInfo0 );
+        _writeStorage0.push_back ( writeInfo0 );
     };
 
     VkWriteDescriptorSet writeInfo1 {};
@@ -664,7 +453,7 @@ bool OpaquePass::UpdateGPUData ( android_vulkan::Renderer &renderer,
         AV_VK_FLAG ( VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT );
 
     auto uniformBinder = [ & ] ( VkBuffer uniformBuffer, VkDescriptorSet descriptorSet ) noexcept {
-        writeInfo1.pBufferInfo = &uniformStorage.emplace_back (
+        writeInfo1.pBufferInfo = &_uniformStorage.emplace_back (
             VkDescriptorBufferInfo
             {
                 .buffer = uniformBuffer,
@@ -674,7 +463,7 @@ bool OpaquePass::UpdateGPUData ( android_vulkan::Renderer &renderer,
         );
 
         writeInfo1.dstSet = descriptorSet;
-        writeStorage1.push_back ( writeInfo1 );
+        _writeStorage1.push_back ( writeInfo1 );
     };
 
     size_t i = 0U;
@@ -694,8 +483,8 @@ bool OpaquePass::UpdateGPUData ( android_vulkan::Renderer &renderer,
     }
 
     vkUpdateDescriptorSets ( device,
-        static_cast<uint32_t> ( writeStorage0.size () ),
-        writeStorage0.data (),
+        static_cast<uint32_t> ( _writeStorage0.size () ),
+        _writeStorage0.data (),
         0U,
         nullptr
     );
@@ -827,8 +616,8 @@ bool OpaquePass::UpdateGPUData ( android_vulkan::Renderer &renderer,
     }
 
     vkUpdateDescriptorSets ( device,
-        static_cast<uint32_t> ( writeStorage1.size () ),
-        writeStorage1.data (),
+        static_cast<uint32_t> ( _writeStorage1.size () ),
+        _writeStorage1.data (),
         0U,
         nullptr
     );

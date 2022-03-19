@@ -113,7 +113,7 @@ static bool CheckNonDispatchableObjectLeaks ( const char* objectType, std::set<V
     for ( auto const& leak : storage )
     {
         leak.GetInfo ( info );
-        LogWarning ( "%s%s", INDENT, info.c_str () );
+        LogError ( "%s%s", INDENT, info.c_str () );
     }
 
     LogError ( "<<<" );

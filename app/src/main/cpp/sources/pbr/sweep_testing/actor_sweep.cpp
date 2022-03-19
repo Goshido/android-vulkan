@@ -1,5 +1,6 @@
 #include <pbr/sweep_testing/actor_sweep.h>
 #include <pbr/static_mesh_component.h>
+#include <pbr/stipple_material.h>
 #include <gamepad.h>
 #include <shape_box.h>
 
@@ -8,9 +9,8 @@ namespace pbr::sweep_testing {
 
 constexpr static float MOVING_SPEED = 1.25F;
 constexpr static float STICK_DEAD_ZONE = 0.2F;
-constexpr static size_t VISIBILITY_MS = 300U;
 
-void ActorSweep::CaptureInput ( GXMat4 const &cameraLocal )
+void ActorSweep::CaptureInput ( GXMat4 const &cameraLocal ) noexcept
 {
     _cameraLeft = *reinterpret_cast<GXVec3 const*> ( &cameraLocal._m[ 0U ][ 0U ] );
 
@@ -19,7 +19,7 @@ void ActorSweep::CaptureInput ( GXMat4 const &cameraLocal )
     gamepad.BindRightStick ( this, &ActorSweep::OnRightStick );
 }
 
-void ActorSweep::ReleaseInput ()
+void ActorSweep::ReleaseInput () noexcept
 {
     android_vulkan::Gamepad& gamepad = android_vulkan::Gamepad::GetInstance ();
     gamepad.UnbindLeftStick ();
@@ -36,8 +36,8 @@ void ActorSweep::FreeTransferResources ( VkDevice device ) noexcept
 
 void ActorSweep::Destroy () noexcept
 {
-    _shape.reset ();
-    _mesh.reset ();
+    _shape = nullptr;
+    _mesh = nullptr;
 }
 
 android_vulkan::ShapeRef const& ActorSweep::GetShape () noexcept
@@ -52,12 +52,13 @@ bool ActorSweep::Init ( android_vulkan::Renderer &renderer,
     GXVec3 const &size
 ) noexcept
 {
-    _visibilityTimeout = 0.0F;
     _shape = std::make_shared<android_vulkan::ShapeBox> ( size );
 
     GXMat4 transform {};
     transform.Translation ( location );
     _shape->UpdateCacheData ( transform );
+
+    MaterialRef material = std::make_shared<StippleMaterial> ();
 
     bool success;
 
@@ -65,15 +66,17 @@ bool ActorSweep::Init ( android_vulkan::Renderer &renderer,
         success,
         commandBufferConsumed,
         "pbr/system/unit-cube.mesh2",
-        "pbr/assets/System/Default.mtl",
+        material,
         commandBuffers
     );
 
-    if ( success )
-        return true;
+    if ( !success )
+        return false;
 
-    _mesh.reset ();
-    return false;
+    // NOLINTNEXTLINE
+    auto& m = static_cast<StaticMeshComponent&> ( *_mesh );
+    m.SetColor0 ( GXColorRGB ( 1.0F, 1.0F, 1.0F, 0.5F ) );
+    return true;
 }
 
 void ActorSweep::SetOverlay ( Texture2DRef const &overlay ) noexcept
@@ -97,7 +100,7 @@ void ActorSweep::SetOverlay ( Texture2DRef const &overlay ) noexcept
 
 void ActorSweep::Submit ( RenderSession &renderSession ) noexcept
 {
-    if ( !_mesh || !_visible )
+    if ( !_mesh )
         return;
 
     // NOLINTNEXTLINE
@@ -137,7 +140,6 @@ void ActorSweep::Update ( float deltaTime ) noexcept
         return;
 
     UpdateLocation ( deltaTime );
-    UpdateVisibility ( deltaTime );
 }
 
 void ActorSweep::UpdateLocation ( float deltaTime ) noexcept
@@ -177,20 +179,6 @@ void ActorSweep::UpdateLocation ( float deltaTime ) noexcept
     auto& location = *reinterpret_cast<GXVec3*> ( &transform._m[ 3U ][ 0U ] );
     location.Sum ( location, MOVING_SPEED * deltaTime, offset );
     shape.UpdateCacheData ( transform );
-}
-
-void ActorSweep::UpdateVisibility ( float deltaTime ) noexcept
-{
-    constexpr float timeout = 1.0e-3F * static_cast<float> ( VISIBILITY_MS );
-    _visibilityTimeout += deltaTime;
-
-    if ( _visibilityTimeout < timeout )
-        return;
-
-    while ( _visibilityTimeout > timeout )
-        _visibilityTimeout -= timeout;
-
-    _visible = !_visible;
 }
 
 void ActorSweep::OnLeftStick ( void* context, float horizontal, float vertical ) noexcept

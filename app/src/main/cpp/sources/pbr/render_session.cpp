@@ -34,7 +34,7 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
 
     bool result = _lightPass.OnPreGeometryPass ( renderer,
         _gBuffer.GetResolution (),
-        _geometryPass.GetOpaquePass ().GetSceneData (),
+        _geometryPass.GetOpaqueSubpass ().GetSceneData (),
         _opaqueMeshCount,
         _viewerLocal,
         _view,
@@ -569,7 +569,7 @@ void RenderSession::SubmitOpaqueCall ( MeshRef &mesh,
 {
     ++_opaqueMeshCount;
     _renderSessionStats.SubmitOpaque ( mesh->GetVertexCount () );
-    _geometryPass.GetOpaquePass ().Submit ( mesh, material, local, worldBounds, color0, color1, color2, emission );
+    _geometryPass.GetOpaqueSubpass ().Submit ( mesh, material, local, worldBounds, color0, color1, color2, emission );
 }
 
 void RenderSession::SubmitStippleCall ( MeshRef &mesh,
@@ -587,7 +587,7 @@ void RenderSession::SubmitStippleCall ( MeshRef &mesh,
     if ( !_frustum.IsVisible ( worldBounds ) )
         return;
 
-    _geometryPass.GetStipplePass ().Submit ( mesh, material, local, worldBounds, color0, color1, color2, emission );
+    _geometryPass.GetStippleSubpass ().Submit ( mesh, material, local, worldBounds, color0, color1, color2, emission );
 }
 
 void RenderSession::SubmitPointLight ( LightRef &light ) noexcept

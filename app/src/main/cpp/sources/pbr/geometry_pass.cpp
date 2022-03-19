@@ -102,16 +102,16 @@ bool GeometryPass::Init ( android_vulkan::Renderer &renderer,
     _renderPassInfo.renderArea.offset.y = 0;
     _renderPassInfo.renderArea.extent = resolution;
 
-    if ( !_opaquePass.Init ( renderer, commandPool, resolution, renderPass ) )
+    if ( !_opaqueSubpass.Init ( renderer, commandPool, resolution, renderPass ) )
         return false;
 
-    return _stipplePass.Init ( renderer, commandPool, resolution, renderPass );
+    return _stippleSubpass.Init ( renderer, commandPool, resolution, renderPass );
 }
 
 void GeometryPass::Destroy ( VkDevice device ) noexcept
 {
-    _stipplePass.Destroy ( device );
-    _opaquePass.Destroy ( device );
+    _stippleSubpass.Destroy ( device );
+    _opaqueSubpass.Destroy ( device );
 
     if ( _fence == VK_NULL_HANDLE )
         return;
@@ -133,7 +133,7 @@ VkCommandBuffer GeometryPass::Execute ( android_vulkan::Renderer &renderer,
     if ( !BeginRenderPass ( renderer ) )
         return VK_NULL_HANDLE;
 
-    bool result = _opaquePass.Execute ( renderer,
+    bool result = _opaqueSubpass.Execute ( renderer,
         _commandBuffer,
         frustum,
         view,
@@ -146,7 +146,7 @@ VkCommandBuffer GeometryPass::Execute ( android_vulkan::Renderer &renderer,
     if ( !result )
         return VK_NULL_HANDLE;
 
-    result = _stipplePass.Execute ( renderer,
+    result = _stippleSubpass.Execute ( renderer,
         _commandBuffer,
         view,
         viewProjection,
@@ -167,20 +167,20 @@ VkFence GeometryPass::GetFence () const noexcept
     return _fence;
 }
 
-OpaquePass& GeometryPass::GetOpaquePass () noexcept
+OpaqueSubpass& GeometryPass::GetOpaqueSubpass () noexcept
 {
-    return _opaquePass;
+    return _opaqueSubpass;
 }
 
-StipplePass& GeometryPass::GetStipplePass () noexcept
+StippleSubpass& GeometryPass::GetStippleSubpass () noexcept
 {
-    return _stipplePass;
+    return _stippleSubpass;
 }
 
 void GeometryPass::Reset () noexcept
 {
-    _opaquePass.Reset ();
-    _stipplePass.Reset ();
+    _opaqueSubpass.Reset ();
+    _stippleSubpass.Reset ();
 }
 
 VkSubpassDescription GeometryPass::GetSubpassDescription () noexcept

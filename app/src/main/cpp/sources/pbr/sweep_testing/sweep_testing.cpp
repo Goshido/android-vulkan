@@ -240,10 +240,10 @@ bool SweepTesting::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
         sizeof ( color ),
 
         VkExtent2D
-            {
-                .width = 1U,
-                .height = 1U
-            },
+        {
+            .width = 1U,
+            .height = 1U
+        },
 
         VK_FORMAT_R8G8B8A8_SRGB,
         false,

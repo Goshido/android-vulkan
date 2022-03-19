@@ -88,6 +88,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/pbr/geometry_pass_material.cpp
     app/src/main/cpp/sources/pbr/geometry_pass_program.cpp
     app/src/main/cpp/sources/pbr/geometry_pass_texture_descriptor_set_layout.cpp
+    app/src/main/cpp/sources/pbr/geometry_subpass_base.cpp
     app/src/main/cpp/sources/pbr/light.cpp
     app/src/main/cpp/sources/pbr/light_pass.cpp
     app/src/main/cpp/sources/pbr/lightup_common_descriptor_set.cpp
@@ -101,8 +102,8 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/pbr/mesh_group.cpp
     app/src/main/cpp/sources/pbr/mesh_manager.cpp
     app/src/main/cpp/sources/pbr/opaque_material.cpp
-    app/src/main/cpp/sources/pbr/opaque_pass.cpp
     app/src/main/cpp/sources/pbr/opaque_program.cpp
+    app/src/main/cpp/sources/pbr/opaque_subpass.cpp
     app/src/main/cpp/sources/pbr/pbr_game.cpp
     app/src/main/cpp/sources/pbr/point_light.cpp
     app/src/main/cpp/sources/pbr/point_light_component.cpp
@@ -129,8 +130,8 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/pbr/sampler_manager.cpp
     app/src/main/cpp/sources/pbr/static_mesh_component.cpp
     app/src/main/cpp/sources/pbr/stipple_material.cpp
-    app/src/main/cpp/sources/pbr/stipple_pass.cpp
     app/src/main/cpp/sources/pbr/stipple_program.cpp
+    app/src/main/cpp/sources/pbr/stipple_subpass.cpp
     app/src/main/cpp/sources/pbr/stub_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/texture_present_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/texture_present_program.cpp

@@ -59,7 +59,7 @@ enum class eGame : uint16_t
         { android_vulkan::eGame::World1x1, std::make_shared<pbr::mario::World1x1> () }
     };
 
-    android_vulkan::Core core ( *app, *( games.find ( android_vulkan::eGame::StippleTest )->second ) );
+    android_vulkan::Core core ( *app, *( games.find ( android_vulkan::eGame::PBR )->second ) );
 
     for ( ; ; )
     {

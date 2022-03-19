@@ -3,8 +3,8 @@
 
 
 #include <renderer.h>
-#include "opaque_pass.h"
-#include "stipple_pass.h"
+#include "opaque_subpass.h"
+#include "stipple_subpass.h"
 
 namespace pbr {
 
@@ -14,8 +14,8 @@ class GeometryPass final
         VkCommandBuffer             _commandBuffer = VK_NULL_HANDLE;
         VkFence                     _fence = VK_NULL_HANDLE;
 
-        OpaquePass                  _opaquePass {};
-        StipplePass                 _stipplePass {};
+        OpaqueSubpass               _opaqueSubpass {};
+        StippleSubpass              _stippleSubpass {};
 
         VkRenderPassBeginInfo       _renderPassInfo {};
 
@@ -50,8 +50,8 @@ class GeometryPass final
         ) noexcept;
 
         [[nodiscard]] VkFence GetFence () const noexcept;
-        [[nodiscard]] OpaquePass& GetOpaquePass () noexcept;
-        [[nodiscard]] StipplePass& GetStipplePass () noexcept;
+        [[nodiscard]] OpaqueSubpass& GetOpaqueSubpass () noexcept;
+        [[nodiscard]] StippleSubpass& GetStippleSubpass () noexcept;
 
         void Reset () noexcept;
 

@@ -33,13 +33,13 @@ The _android-vulkan_ project is using _HLSL_ shader language as high level progr
 ## Compile and deploy vertex shader module
 
 ```txt
-dxc.exe -spirv -fvk-use-dx-layout -fspv-reduce-load-size -fspv-target-env=vulkan1.1 -enable-16bit-types -WX -O3 -T vs_6_7 -E VS -I <android-vulkan directory>\app\src\main\hlsl -I <android-vulkan directory>\app\src\main\cpp\include\pbr -Fo <android-vulkan directory>\app\src\main\assets\shaders\<file name>-vs.spv <file name>.vs
+dxc.exe -HV 2021 -spirv -fvk-use-dx-layout -fspv-reduce-load-size -fspv-target-env=vulkan1.1 -enable-16bit-types -WX -O3 -T vs_6_7 -E VS -I <android-vulkan directory>\app\src\main\hlsl -I <android-vulkan directory>\app\src\main\cpp\include\pbr -Fo <android-vulkan directory>\app\src\main\assets\shaders\<file name>-vs.spv <file name>.vs
 ```
 
 ## Compile and deploy fragment shader module
 
 ```txt
-dxc.exe -spirv -fvk-use-dx-layout -fspv-reduce-load-size -fspv-target-env=vulkan1.1 -enable-16bit-types -WX -O3 -T ps_6_7 -E PS -I <android-vulkan directory>\app\src\main\hlsl -Fo <android-vulkan directory>\app\src\main\assets\shaders\<file name>-ps.spv <file name>.ps
+dxc.exe -HV 2021 -spirv -fvk-use-dx-layout -fspv-reduce-load-size -fspv-target-env=vulkan1.1 -enable-16bit-types -WX -O3 -T ps_6_7 -E PS -I <android-vulkan directory>\app\src\main\hlsl -Fo <android-vulkan directory>\app\src\main\assets\shaders\<file name>-ps.spv <file name>.ps
 ```
 
 ## _SPIR-V_ disassembler via _DXC_

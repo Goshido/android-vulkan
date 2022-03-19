@@ -15,8 +15,6 @@ class ActorSweep final
         ComponentRef                _mesh {};
         GXVec3                      _moveSpeed {};
         android_vulkan::ShapeRef    _shape {};
-        float                       _visibilityTimeout = 0.0F;
-        bool                        _visible = true;
 
     public:
         ActorSweep () = default;
@@ -29,8 +27,8 @@ class ActorSweep final
 
         ~ActorSweep () = default;
 
-        void CaptureInput ( GXMat4 const &cameraLocal );
-        void ReleaseInput ();
+        void CaptureInput ( GXMat4 const &cameraLocal ) noexcept;
+        void ReleaseInput () noexcept;
 
         void FreeTransferResources ( VkDevice device ) noexcept;
 
@@ -50,7 +48,6 @@ class ActorSweep final
 
     private:
         void UpdateLocation ( float deltaTime ) noexcept;
-        void UpdateVisibility ( float deltaTime ) noexcept;
 
         static void OnLeftStick ( void* context, float horizontal, float vertical ) noexcept;
         static void OnRightStick ( void* context, float horizontal, float vertical ) noexcept;

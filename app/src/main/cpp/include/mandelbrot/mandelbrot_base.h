@@ -10,20 +10,20 @@ namespace mandelbrot {
 class MandelbrotBase : public android_vulkan::Game
 {
     protected:
-        std::vector<VkCommandBuffer>    _commandBuffer;
-        VkCommandPool                   _commandPool;
-        std::vector<VkFramebuffer>      _framebuffers;
-        VkPipeline                      _pipeline;
-        VkPipelineLayout                _pipelineLayout;
-        VkRenderPass                    _renderPass;
+        std::vector<VkCommandBuffer>    _commandBuffer {};
+        VkCommandPool                   _commandPool = VK_NULL_HANDLE;
+        std::vector<VkFramebuffer>      _framebuffers {};
+        VkPipeline                      _pipeline = VK_NULL_HANDLE;
+        VkPipelineLayout                _pipelineLayout = VK_NULL_HANDLE;
+        VkRenderPass                    _renderPass = VK_NULL_HANDLE;
 
     private:
-        VkSemaphore                     _renderPassEndedSemaphore;
-        VkSemaphore                     _renderTargetAcquiredSemaphore;
+        VkSemaphore                     _renderPassEndedSemaphore = VK_NULL_HANDLE;
+        VkSemaphore                     _renderTargetAcquiredSemaphore = VK_NULL_HANDLE;
 
-        VkShaderModule                  _vertexShader;
+        VkShaderModule                  _vertexShader = VK_NULL_HANDLE;
 
-        VkShaderModule                  _fragmentShader;
+        VkShaderModule                  _fragmentShader = VK_NULL_HANDLE;
         char const*                     _fragmentShaderSpirV;
 
     public:
@@ -34,7 +34,7 @@ class MandelbrotBase : public android_vulkan::Game
         MandelbrotBase& operator = ( MandelbrotBase && ) = delete;
 
     protected:
-        explicit MandelbrotBase ( const char* fragmentShaderFile ) noexcept;
+        explicit MandelbrotBase ( char const* fragmentShaderFile ) noexcept;
         ~MandelbrotBase () override = default;
 
         [[nodiscard]] bool OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) noexcept override;
@@ -45,29 +45,31 @@ class MandelbrotBase : public android_vulkan::Game
         [[nodiscard]] bool OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept override;
         void OnSwapchainDestroyed ( VkDevice device ) noexcept override;
 
-        [[nodiscard]] virtual bool CreatePipelineLayout ( android_vulkan::Renderer &renderer ) = 0;
-        virtual void DestroyPipelineLayout ( VkDevice device ) = 0;
+        [[nodiscard]] virtual bool CreatePipelineLayout ( android_vulkan::Renderer &renderer ) noexcept = 0;
+        virtual void DestroyPipelineLayout ( VkDevice device ) noexcept = 0;
 
     private:
         [[nodiscard]] bool IsReady () override;
 
-        [[nodiscard]] bool BeginFrame ( android_vulkan::Renderer &renderer, uint32_t &presentationImageIndex );
-        [[nodiscard]] bool EndFrame ( android_vulkan::Renderer &renderer, uint32_t presentationImageIndex );
+        [[nodiscard]] bool BeginFrame ( android_vulkan::Renderer &renderer, uint32_t &presentationImageIndex ) noexcept;
+        [[nodiscard]] bool EndFrame ( android_vulkan::Renderer &renderer, uint32_t presentationImageIndex ) noexcept;
 
-        [[nodiscard]] bool CreateCommandPool ( android_vulkan::Renderer &renderer );
-        void DestroyCommandPool ( VkDevice device );
+        [[nodiscard]] bool CreateCommandPool ( android_vulkan::Renderer &renderer ) noexcept;
+        void DestroyCommandPool ( VkDevice device ) noexcept;
 
-        [[nodiscard]] bool CreateFramebuffers ( android_vulkan::Renderer &renderer );
-        void DestroyFramebuffers ( VkDevice device );
+        [[nodiscard]] bool CreateFramebuffers ( android_vulkan::Renderer &renderer ) noexcept;
+        void DestroyFramebuffers ( VkDevice device ) noexcept;
 
-        [[nodiscard]] bool CreatePresentationSyncPrimitive ( android_vulkan::Renderer &renderer );
-        void DestroyPresentationSyncPrimitive ( VkDevice device );
+        [[nodiscard]] bool CreatePresentationSyncPrimitive ( android_vulkan::Renderer &renderer ) noexcept;
+        void DestroyPresentationSyncPrimitive ( VkDevice device ) noexcept;
 
-        [[nodiscard]] bool CreatePipeline ( android_vulkan::Renderer &renderer );
-        void DestroyPipeline ( VkDevice device );
+        [[nodiscard]] bool CreatePipeline ( android_vulkan::Renderer &renderer ) noexcept;
+        void DestroyPipeline ( VkDevice device ) noexcept;
 
-        [[nodiscard]] bool CreateRenderPass ( android_vulkan::Renderer &renderer );
-        void DestroyRenderPass ( VkDevice device );
+        [[nodiscard]] bool CreateRenderPass ( android_vulkan::Renderer &renderer ) noexcept;
+        void DestroyRenderPass ( VkDevice device ) noexcept;
+
+        void DestroyShaderModules ( VkDevice device ) noexcept;
 };
 
 } // namespace mandelbrot

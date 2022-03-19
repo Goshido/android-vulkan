@@ -14,6 +14,7 @@ namespace pbr {
 
 [[maybe_unused]] constexpr static uint32_t const STATIC_MESH_COMPONENT_DESC_FORMAT_VERSION = 1U;
 constexpr static GXColorRGB DEFAULT_COLOR ( 1.0F, 1.0F, 1.0F, 1.0F );
+constexpr static GXColorRGB DEFAULT_EMISSION ( 1.0F, 1.0F, 1.0F, 1.0F );
 
 // NOLINTNEXTLINE - no initialization for some fields
 StaticMeshComponent::StaticMeshComponent ( android_vulkan::Renderer &renderer,
@@ -76,7 +77,7 @@ StaticMeshComponent::StaticMeshComponent ( android_vulkan::Renderer &renderer,
     _color0 ( DEFAULT_COLOR ),
     _color1 ( DEFAULT_COLOR ),
     _color2 ( DEFAULT_COLOR ),
-    _emission ( DEFAULT_COLOR )
+    _emission ( DEFAULT_EMISSION )
 {
     _localMatrix.Identity ();
     success = true;
@@ -109,6 +110,37 @@ StaticMeshComponent::StaticMeshComponent ( android_vulkan::Renderer &renderer,
     commandBufferConsumed += consumed;
 }
 
+StaticMeshComponent::StaticMeshComponent ( android_vulkan::Renderer &renderer,
+    bool &success,
+    size_t &commandBufferConsumed,
+    char const* mesh,
+    MaterialRef &material,
+    VkCommandBuffer const* commandBuffers
+) noexcept:
+    Component ( ClassID::StaticMesh ),
+    _color0 ( DEFAULT_COLOR ),
+    _color1 ( DEFAULT_COLOR ),
+    _color2 ( DEFAULT_COLOR ),
+    _emission ( DEFAULT_EMISSION ),
+    _material ( material )
+{
+    success = true;
+    _localMatrix.Identity ();
+
+    _mesh = MeshManager::GetInstance ().LoadMesh ( renderer,
+        commandBufferConsumed,
+        mesh,
+        commandBuffers[ commandBufferConsumed ]
+    );
+
+    success = static_cast<bool> ( _mesh );
+
+    if ( success )
+    {
+        _mesh->GetBounds ().Transform ( _worldBounds, _localMatrix );
+    }
+}
+
 void StaticMeshComponent::Submit ( RenderSession &renderSession )
 {
     renderSession.SubmitMesh ( _mesh, _material, _localMatrix, _worldBounds, _color0, _color1, _color2, _emission );
@@ -116,26 +148,27 @@ void StaticMeshComponent::Submit ( RenderSession &renderSession )
 
 void StaticMeshComponent::FreeTransferResources ( VkDevice device )
 {
+    _mesh->FreeTransferResources ( device );
+
     if ( !_material )
         return;
 
     // Note it's safe to cast like that here. "NOLINT" is clang-tidy control comment.
-    auto* m = static_cast<OpaqueMaterial*> ( _material.get () ); // NOLINT
+    auto& m = static_cast<GeometryPassMaterial&> ( *_material ); // NOLINT
 
-    if ( m->GetAlbedo () )
-        m->GetAlbedo ()->FreeTransferResources ( device );
+    if ( m.GetAlbedo () )
+        m.GetAlbedo ()->FreeTransferResources ( device );
 
-    if ( m->GetEmission () )
-        m->GetEmission ()->FreeTransferResources ( device );
+    if ( m.GetEmission () )
+        m.GetEmission ()->FreeTransferResources ( device );
 
-    if ( m->GetNormal () )
-        m->GetNormal ()->FreeTransferResources ( device );
+    if ( m.GetNormal () )
+        m.GetNormal ()->FreeTransferResources ( device );
 
-    if ( !m->GetParam () )
+    if ( !m.GetParam () )
         return;
 
-    m->GetParam ()->FreeTransferResources ( device );
-    _mesh->FreeTransferResources ( device );
+    m.GetParam ()->FreeTransferResources ( device );
 }
 
 [[maybe_unused]] GXAABB const& StaticMeshComponent::GetBoundsWorld () const noexcept

@@ -20,21 +20,21 @@ constexpr static char const* VERTEX_SHADER_ENTRY_POINT = "VS";
 
 constexpr static const char* FRAGMENT_SHADER_ENTRY_POINT = "PS";
 
-constexpr static std::string_view const MATERIAL_1_DIFFUSE = "textures/rotating_mesh/sonic-material-1-diffuse.ktx";
+constexpr static std::string_view MATERIAL_1_DIFFUSE = "textures/rotating_mesh/sonic-material-1-diffuse.ktx";
 constexpr static char const* MATERIAL_1_MESH = "meshes/rotating_mesh/sonic-material-1.mesh";
 
-constexpr static std::string_view const MATERIAL_2_DIFFUSE = "textures/rotating_mesh/sonic-material-2-diffuse.ktx";
+constexpr static std::string_view MATERIAL_2_DIFFUSE = "textures/rotating_mesh/sonic-material-2-diffuse.ktx";
 constexpr static char const* MATERIAL_2_MESH = "meshes/rotating_mesh/sonic-material-2.mesh";
-constexpr static std::string_view const MATERIAL_2_NORMAL = "textures/rotating_mesh/sonic-material-2-normal.png";
+constexpr static std::string_view MATERIAL_2_NORMAL = "textures/rotating_mesh/sonic-material-2-normal.png";
 
-constexpr static std::string_view const MATERIAL_3_DIFFUSE = "textures/rotating_mesh/sonic-material-3-diffuse.ktx";
+constexpr static std::string_view MATERIAL_3_DIFFUSE = "textures/rotating_mesh/sonic-material-3-diffuse.ktx";
 constexpr static char const* MATERIAL_3_MESH = "meshes/rotating_mesh/sonic-material-3.mesh";
-constexpr static std::string_view const MATERIAL_3_NORMAL = "textures/rotating_mesh/sonic-material-3-normal.png";
+constexpr static std::string_view MATERIAL_3_NORMAL = "textures/rotating_mesh/sonic-material-3-normal.png";
 
-constexpr static float const ROTATION_SPEED = GX_MATH_HALF_PI;
-constexpr static float const FIELD_OF_VIEW = 60.0F;
-constexpr static float const Z_NEAR = 0.1F;
-constexpr static float const Z_FAR = 1.0e+3F;
+constexpr static float ROTATION_SPEED = GX_MATH_HALF_PI;
+constexpr static float FIELD_OF_VIEW = 60.0F;
+constexpr static float Z_NEAR = 0.1F;
+constexpr static float Z_FAR = 1.0e+3F;
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -44,7 +44,7 @@ Game::Game ( char const* fragmentShader ) noexcept:
     // NOTHING
 }
 
-bool Game::CreateSamplers ( android_vulkan::Renderer &renderer )
+bool Game::CreateSamplers ( android_vulkan::Renderer &renderer ) noexcept
 {
     VkSamplerCreateInfo samplerInfo
     {
@@ -125,7 +125,7 @@ bool Game::CreateSamplers ( android_vulkan::Renderer &renderer )
     return true;
 }
 
-void Game::DestroySamplers ( VkDevice device )
+void Game::DestroySamplers ( VkDevice device ) noexcept
 {
     if ( _sampler11Mips != VK_NULL_HANDLE )
     {
@@ -156,7 +156,7 @@ void Game::DestroySamplers ( VkDevice device )
     AV_UNREGISTER_SAMPLER ( "Game::_sampler01Mips" )
 }
 
-void Game::DestroyTextures ( VkDevice device )
+void Game::DestroyTextures ( VkDevice device ) noexcept
 {
     for ( auto& item : _drawcalls )
     {
@@ -166,10 +166,10 @@ void Game::DestroyTextures ( VkDevice device )
     }
 }
 
-bool Game::CreateCommonTextures ( android_vulkan::Renderer &renderer, VkCommandBuffer* commandBuffers )
+bool Game::CreateCommonTextures ( android_vulkan::Renderer &renderer, VkCommandBuffer* commandBuffers ) noexcept
 {
-    auto selector = [ this ] ( const android_vulkan::Texture2D &texture ) -> VkSampler {
-        const uint8_t mips = texture.GetMipLevelCount ();
+    auto selector = [ this ] ( android_vulkan::Texture2D const &texture ) -> VkSampler {
+        uint8_t const mips = texture.GetMipLevelCount ();
 
         if ( mips == 1U )
             return _sampler01Mips;
@@ -197,9 +197,6 @@ bool Game::CreateCommonTextures ( android_vulkan::Renderer &renderer, VkCommandB
     for ( size_t i = 0U; i < MATERIAL_COUNT; ++i )
     {
         auto& drawcall = _drawcalls[ i ];
-
-        if ( i == 0U )
-            GXMat3 const stop {};
 
         bool const result = drawcall._diffuse.UploadData ( renderer,
             textureFiles[ i ],
@@ -243,7 +240,7 @@ bool Game::CreateCommonTextures ( android_vulkan::Renderer &renderer, VkCommandB
     thirdMaterial._normalSampler = selector ( thirdMaterial._normal );
 
     Drawcall& firstMaterial = _drawcalls[ 0U ];
-    constexpr const uint8_t defaultNormal[] = { 128U, 128U, 255U, 128U };
+    constexpr uint8_t const defaultNormal[] = { 128U, 128U, 255U, 128U };
 
     result = firstMaterial._normal.UploadData ( renderer,
         defaultNormal,
@@ -261,9 +258,9 @@ bool Game::CreateCommonTextures ( android_vulkan::Renderer &renderer, VkCommandB
     return true;
 }
 
-bool Game::CreateMeshes ( android_vulkan::Renderer &renderer, VkCommandBuffer* commandBuffers )
+bool Game::CreateMeshes ( android_vulkan::Renderer &renderer, VkCommandBuffer* commandBuffers ) noexcept
 {
-    constexpr const char* meshFiles[ MATERIAL_COUNT ] =
+    constexpr char const* meshFiles[ MATERIAL_COUNT ] =
         {
             MATERIAL_1_MESH,
             MATERIAL_2_MESH,
@@ -272,7 +269,7 @@ bool Game::CreateMeshes ( android_vulkan::Renderer &renderer, VkCommandBuffer* c
 
     for ( size_t i = 0U; i < MATERIAL_COUNT; ++i )
     {
-        const bool result = _drawcalls[ i ]._mesh.LoadMesh ( meshFiles[ i ],
+        bool const result = _drawcalls[ i ]._mesh.LoadMesh ( meshFiles[ i ],
             VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
             renderer, commandBuffers[ i ]
         );
@@ -286,7 +283,7 @@ bool Game::CreateMeshes ( android_vulkan::Renderer &renderer, VkCommandBuffer* c
     return true;
 }
 
-void Game::InitDescriptorPoolSizeCommon ( VkDescriptorPoolSize* features )
+void Game::InitDescriptorPoolSizeCommon ( VkDescriptorPoolSize* features ) noexcept
 {
     VkDescriptorPoolSize& ubFeature = features[ 0U ];
     ubFeature.descriptorCount = static_cast<uint32_t> ( MATERIAL_COUNT );
@@ -301,7 +298,7 @@ void Game::InitDescriptorPoolSizeCommon ( VkDescriptorPoolSize* features )
     diffuseSamplerFeature.type = VK_DESCRIPTOR_TYPE_SAMPLER;
 }
 
-void Game::InitDescriptorSetLayoutBindingCommon ( VkDescriptorSetLayoutBinding* bindings )
+void Game::InitDescriptorSetLayoutBindingCommon ( VkDescriptorSetLayoutBinding* bindings ) noexcept
 {
     VkDescriptorSetLayoutBinding& ubInfo = bindings[ 0U ];
     ubInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
@@ -356,7 +353,7 @@ bool Game::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) noex
 
     CommandContext const& commandContext = _commandBuffers[ imageIndex ];
 
-    constexpr VkPipelineStageFlags const waitStage =
+    constexpr VkPipelineStageFlags waitStage =
         AV_VK_FLAG ( VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT ) |
         AV_VK_FLAG ( VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT ) |
         AV_VK_FLAG ( VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT );
@@ -497,7 +494,7 @@ void Game::OnSwapchainDestroyed ( VkDevice device ) noexcept
     DestroyRenderPass ( device );
 }
 
-bool Game::BeginFrame ( android_vulkan::Renderer &renderer, size_t &imageIndex )
+bool Game::BeginFrame ( android_vulkan::Renderer &renderer, size_t &imageIndex ) noexcept
 {
     VkDevice device = renderer.GetDevice ();
     uint32_t i = UINT32_MAX;
@@ -519,7 +516,7 @@ bool Game::BeginFrame ( android_vulkan::Renderer &renderer, size_t &imageIndex )
         return false;
 
     imageIndex = static_cast<size_t> ( i );
-    const CommandContext& commandContext = _commandBuffers[ imageIndex ];
+    CommandContext const& commandContext = _commandBuffers[ imageIndex ];
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkWaitForFences ( device, 1U, &commandContext.second, VK_TRUE, UINT64_MAX ),
@@ -536,7 +533,7 @@ bool Game::BeginFrame ( android_vulkan::Renderer &renderer, size_t &imageIndex )
     );
 }
 
-bool Game::EndFrame ( android_vulkan::Renderer &renderer, uint32_t presentationImageIndex )
+bool Game::EndFrame ( android_vulkan::Renderer &renderer, uint32_t presentationImageIndex ) noexcept
 {
     VkResult presentResult = VK_ERROR_DEVICE_LOST;
 
@@ -552,7 +549,7 @@ bool Game::EndFrame ( android_vulkan::Renderer &renderer, uint32_t presentationI
         .pResults = &presentResult
     };
 
-    const bool result = android_vulkan::Renderer::CheckVkResult (
+    bool const result = android_vulkan::Renderer::CheckVkResult (
         vkQueuePresentKHR ( renderer.GetQueue (), &presentInfo ),
         "Game::EndFrame",
         "Can't present frame"
@@ -564,7 +561,7 @@ bool Game::EndFrame ( android_vulkan::Renderer &renderer, uint32_t presentationI
     return android_vulkan::Renderer::CheckVkResult ( presentResult, "Game::EndFrame", "Present queue has been failed" );
 }
 
-bool Game::CreateCommandPool ( android_vulkan::Renderer &renderer )
+bool Game::CreateCommandPool ( android_vulkan::Renderer &renderer ) noexcept
 {
     VkCommandPoolCreateInfo const poolInfo
     {
@@ -574,7 +571,7 @@ bool Game::CreateCommandPool ( android_vulkan::Renderer &renderer )
         .queueFamilyIndex = renderer.GetQueueFamilyIndex ()
     };
 
-    const bool result = android_vulkan::Renderer::CheckVkResult (
+    bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateCommandPool ( renderer.GetDevice (), &poolInfo, nullptr, &_commandPool ),
         "Game::CreateCommandPool",
         "Can't create command pool"
@@ -587,11 +584,11 @@ bool Game::CreateCommandPool ( android_vulkan::Renderer &renderer )
     return true;
 }
 
-void Game::DestroyCommandPool ( VkDevice device )
+void Game::DestroyCommandPool ( VkDevice device ) noexcept
 {
     if ( !_commandBuffers.empty () )
     {
-        for ( const auto& item : _commandBuffers )
+        for ( auto const& item : _commandBuffers )
         {
             vkDestroyFence ( device, item.second, nullptr );
             AV_UNREGISTER_FENCE ( "Game::_commandBuffers::_fence" )
@@ -608,7 +605,7 @@ void Game::DestroyCommandPool ( VkDevice device )
     AV_UNREGISTER_COMMAND_POOL ( "Game::_commandPool" )
 }
 
-void Game::DestroyDescriptorSet ( VkDevice device )
+void Game::DestroyDescriptorSet ( VkDevice device ) noexcept
 {
     if ( _descriptorPool == VK_NULL_HANDLE )
         return;
@@ -618,7 +615,7 @@ void Game::DestroyDescriptorSet ( VkDevice device )
     AV_UNREGISTER_DESCRIPTOR_POOL ( "Game::_descriptorPool" )
 }
 
-void Game::DestroyMeshes ( VkDevice device )
+void Game::DestroyMeshes ( VkDevice device ) noexcept
 {
     for ( auto& item : _drawcalls )
     {
@@ -626,10 +623,10 @@ void Game::DestroyMeshes ( VkDevice device )
     }
 }
 
-bool Game::CreateFramebuffers ( android_vulkan::Renderer &renderer )
+bool Game::CreateFramebuffers ( android_vulkan::Renderer &renderer ) noexcept
 {
     VkDevice device = renderer.GetDevice ();
-    const VkExtent2D& resolution = renderer.GetSurfaceSize ();
+    VkExtent2D const& resolution = renderer.GetSurfaceSize ();
 
     bool result = _depthStencilRenderTarget.CreateRenderTarget ( resolution,
         renderer.GetDefaultDepthStencilFormat (),
@@ -640,7 +637,7 @@ bool Game::CreateFramebuffers ( android_vulkan::Renderer &renderer )
     if ( !result )
         return false;
 
-    const size_t framebufferCount = renderer.GetPresentImageCount ();
+    size_t const framebufferCount = renderer.GetPresentImageCount ();
     _framebuffers.reserve ( framebufferCount );
     VkFramebuffer framebuffer = VK_NULL_HANDLE;
 
@@ -678,7 +675,7 @@ bool Game::CreateFramebuffers ( android_vulkan::Renderer &renderer )
     return true;
 }
 
-void Game::DestroyFramebuffers ( VkDevice device )
+void Game::DestroyFramebuffers ( VkDevice device ) noexcept
 {
     if ( !_framebuffers.empty () )
     {
@@ -694,7 +691,7 @@ void Game::DestroyFramebuffers ( VkDevice device )
     _depthStencilRenderTarget.FreeResources ( device );
 }
 
-bool Game::CreatePipeline ( android_vulkan::Renderer &renderer )
+bool Game::CreatePipeline ( android_vulkan::Renderer &renderer ) noexcept
 {
     VkPipelineShaderStageCreateInfo stageInfo[ 2U ];
     VkPipelineShaderStageCreateInfo& vertexStage = stageInfo[ 0U ];
@@ -816,7 +813,7 @@ bool Game::CreatePipeline ( android_vulkan::Renderer &renderer )
     blendInfo.attachmentCount = 1U;
     blendInfo.pAttachments = &attachmentInfo;
     blendInfo.logicOpEnable = VK_FALSE;
-    memset ( blendInfo.blendConstants, 0, sizeof ( blendInfo.blendConstants ) );
+    std::memset ( blendInfo.blendConstants, 0, sizeof ( blendInfo.blendConstants ) );
 
     VkPipelineMultisampleStateCreateInfo multisampleInfo;
     multisampleInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
@@ -844,7 +841,7 @@ bool Game::CreatePipeline ( android_vulkan::Renderer &renderer )
 
     VkRect2D scissor;
     scissor.extent = surfaceSize;
-    memset ( &scissor.offset, 0, sizeof ( scissor.offset ) );
+    std::memset ( &scissor.offset, 0, sizeof ( scissor.offset ) );
 
     VkViewport viewport;
     viewport.x = viewport.y = 0.0F;
@@ -883,8 +880,10 @@ bool Game::CreatePipeline ( android_vulkan::Renderer &renderer )
     pipelineInfo.pColorBlendState = &blendInfo;
     pipelineInfo.pMultisampleState = &multisampleInfo;
 
-    const bool result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateGraphicsPipelines ( renderer.GetDevice (), VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
+    VkDevice device = renderer.GetDevice ();
+
+    bool const result = android_vulkan::Renderer::CheckVkResult (
+        vkCreateGraphicsPipelines ( device, VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
         "Game::CreatePipeline",
         "Can't create pipeline"
     );
@@ -896,7 +895,7 @@ bool Game::CreatePipeline ( android_vulkan::Renderer &renderer )
     return true;
 }
 
-void Game::DestroyPipeline ( VkDevice device )
+void Game::DestroyPipeline ( VkDevice device ) noexcept
 {
     if ( _pipeline == VK_NULL_HANDLE )
         return;
@@ -906,7 +905,7 @@ void Game::DestroyPipeline ( VkDevice device )
     AV_UNREGISTER_PIPELINE ( "Game::_pipeline" )
 }
 
-void Game::DestroyPipelineLayout ( VkDevice device )
+void Game::DestroyPipelineLayout ( VkDevice device ) noexcept
 {
     if ( _descriptorSetLayout != VK_NULL_HANDLE )
     {
@@ -923,7 +922,7 @@ void Game::DestroyPipelineLayout ( VkDevice device )
     AV_UNREGISTER_PIPELINE_LAYOUT ( "Game::_pipelineLayout" )
 }
 
-bool Game::CreateRenderPass ( android_vulkan::Renderer &renderer )
+bool Game::CreateRenderPass ( android_vulkan::Renderer &renderer ) noexcept
 {
     VkAttachmentDescription const attachmentInfo[] =
     {
@@ -954,19 +953,19 @@ bool Game::CreateRenderPass ( android_vulkan::Renderer &renderer )
         }
     };
 
-    constexpr static VkAttachmentReference const colorReference
+    constexpr static VkAttachmentReference colorReference
     {
         .attachment = 0U,
         .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
     };
 
-    constexpr static VkAttachmentReference const depthStencilReference
+    constexpr static VkAttachmentReference depthStencilReference
     {
         .attachment = 1U,
         .layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
     };
 
-    constexpr VkSubpassDescription const subpassInfo
+    constexpr VkSubpassDescription subpassInfo
     {
         .flags = 0U,
         .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
@@ -993,7 +992,7 @@ bool Game::CreateRenderPass ( android_vulkan::Renderer &renderer )
         .pDependencies = nullptr
     };
 
-    const bool result = android_vulkan::Renderer::CheckVkResult (
+    bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateRenderPass ( renderer.GetDevice (), &renderPassInfo, nullptr, &_renderPass ),
         "Game::CreateRenderPass",
         "Can't create render pass"
@@ -1006,7 +1005,7 @@ bool Game::CreateRenderPass ( android_vulkan::Renderer &renderer )
     return true;
 }
 
-void Game::DestroyRenderPass ( VkDevice device )
+void Game::DestroyRenderPass ( VkDevice device ) noexcept
 {
     if ( _renderPass == VK_NULL_HANDLE )
         return;
@@ -1016,7 +1015,7 @@ void Game::DestroyRenderPass ( VkDevice device )
     AV_UNREGISTER_RENDER_PASS ( "Game::_renderPass" )
 }
 
-bool Game::CreateShaderModules ( android_vulkan::Renderer &renderer )
+bool Game::CreateShaderModules ( android_vulkan::Renderer &renderer ) noexcept
 {
     bool result = renderer.CreateShader ( _vertexShaderModule,
         VERTEX_SHADER,
@@ -1040,7 +1039,7 @@ bool Game::CreateShaderModules ( android_vulkan::Renderer &renderer )
     return true;
 }
 
-void Game::DestroyShaderModules ( VkDevice device )
+void Game::DestroyShaderModules ( VkDevice device ) noexcept
 {
     if ( _fragmentShaderModule != VK_NULL_HANDLE )
     {
@@ -1057,14 +1056,16 @@ void Game::DestroyShaderModules ( VkDevice device )
     AV_UNREGISTER_SHADER_MODULE ( "Game::_vertexShaderModule" )
 }
 
-bool Game::CreateSyncPrimitives ( android_vulkan::Renderer &renderer )
+bool Game::CreateSyncPrimitives ( android_vulkan::Renderer &renderer ) noexcept
 {
     VkDevice device = renderer.GetDevice ();
 
-    VkSemaphoreCreateInfo semaphoreInfo;
-    semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-    semaphoreInfo.pNext = nullptr;
-    semaphoreInfo.flags = 0U;
+    constexpr VkSemaphoreCreateInfo semaphoreInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U
+    };
 
     bool result = android_vulkan::Renderer::CheckVkResult (
         vkCreateSemaphore ( device, &semaphoreInfo, nullptr, &_renderPassEndSemaphore ),
@@ -1090,7 +1091,7 @@ bool Game::CreateSyncPrimitives ( android_vulkan::Renderer &renderer )
     return true;
 }
 
-void Game::DestroySyncPrimitives ( VkDevice device )
+void Game::DestroySyncPrimitives ( VkDevice device ) noexcept
 {
     if ( _renderTargetAcquiredSemaphore != VK_NULL_HANDLE )
     {
@@ -1107,7 +1108,7 @@ void Game::DestroySyncPrimitives ( VkDevice device )
     AV_UNREGISTER_SEMAPHORE ( "Game::_renderPassEndSemaphore" )
 }
 
-bool Game::CreateUniformBuffer ( android_vulkan::Renderer& renderer )
+bool Game::CreateUniformBuffer ( android_vulkan::Renderer &renderer ) noexcept
 {
     if ( !_transformBuffer.Init ( renderer, _commandPool, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT ) )
         return false;
@@ -1120,12 +1121,12 @@ bool Game::CreateUniformBuffer ( android_vulkan::Renderer& renderer )
     );
 }
 
-void Game::DestroyUniformBuffer ( VkDevice device )
+void Game::DestroyUniformBuffer ( VkDevice device ) noexcept
 {
     _transformBuffer.FreeResources ( device );
 }
 
-bool Game::CreateCommandBuffers ( android_vulkan::Renderer &renderer )
+bool Game::CreateCommandBuffers ( android_vulkan::Renderer &renderer ) noexcept
 {
     const size_t framebufferCount = renderer.GetPresentImageCount ();
 
@@ -1150,7 +1151,7 @@ bool Game::CreateCommandBuffers ( android_vulkan::Renderer &renderer )
     if ( !result )
         return false;
 
-    constexpr VkCommandBufferBeginInfo const bufferBeginInfo
+    constexpr VkCommandBufferBeginInfo bufferBeginInfo
     {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
         .pNext = nullptr,
@@ -1160,7 +1161,7 @@ bool Game::CreateCommandBuffers ( android_vulkan::Renderer &renderer )
 
     VkClearValue clearValues[ 2U ];
     VkClearValue& colorTarget = clearValues[ 0U ];
-    memset ( &colorTarget.color, 0, sizeof ( colorTarget.color ) );
+    std::memset ( &colorTarget.color, 0, sizeof ( colorTarget.color ) );
 
     VkClearValue& depthStencilTarget = clearValues[ 1U ];
     depthStencilTarget.depthStencil.depth = 1.0F;
@@ -1176,7 +1177,7 @@ bool Game::CreateCommandBuffers ( android_vulkan::Renderer &renderer )
     renderPassBeginInfo.clearValueCount = static_cast<uint32_t> ( std::size ( clearValues ) );
     renderPassBeginInfo.pClearValues = clearValues;
 
-    constexpr VkFenceCreateInfo const fenceInfo
+    constexpr VkFenceCreateInfo fenceInfo
     {
         .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
         .pNext = nullptr,
@@ -1212,7 +1213,7 @@ bool Game::CreateCommandBuffers ( android_vulkan::Renderer &renderer )
         vkCmdBeginRenderPass ( commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE );
 
         vkCmdBindPipeline ( commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline );
-        constexpr VkDeviceSize const offset = 0U;
+        constexpr VkDeviceSize offset = 0U;
 
         for ( auto& item : _drawcalls )
         {
@@ -1242,7 +1243,7 @@ bool Game::CreateCommandBuffers ( android_vulkan::Renderer &renderer )
     return true;
 }
 
-void Game::DestroyCommandBuffers ( VkDevice device )
+void Game::DestroyCommandBuffers ( VkDevice device ) noexcept
 {
     if ( _commandBuffers.empty () )
         return;
@@ -1259,7 +1260,7 @@ void Game::DestroyCommandBuffers ( VkDevice device )
     _commandBuffers.shrink_to_fit ();
 }
 
-bool Game::UpdateUniformBuffer ( android_vulkan::Renderer &renderer, double deltaTime )
+bool Game::UpdateUniformBuffer ( android_vulkan::Renderer &renderer, double deltaTime ) noexcept
 {
     _angle += static_cast<float> ( deltaTime ) * ROTATION_SPEED;
 

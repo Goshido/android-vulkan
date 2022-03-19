@@ -1,5 +1,5 @@
-#ifndef PBR_OPAQUE_DATA_H
-#define PBR_OPAQUE_DATA_H
+#ifndef PBR_GEOMETRY_DATA_H
+#define PBR_GEOMETRY_DATA_H
 
 
 #include <vulkan_utils.h>
@@ -10,7 +10,7 @@ namespace pbr {
 
 AV_DX_ALIGNMENT_BEGIN
 
-struct OpaqueData final
+struct GeometryData final
 {
     bool            _isVisible;
     GXMat4          _local;
@@ -18,7 +18,7 @@ struct OpaqueData final
     GXColorRGB      _color0;
     GXColorRGB      _color1;
     GXColorRGB      _color2;
-    GXColorRGB      _color3;
+    GXColorRGB      _emission;
 };
 
 AV_DX_ALIGNMENT_END
@@ -26,4 +26,4 @@ AV_DX_ALIGNMENT_END
 } // namespace pbr
 
 
-#endif // PBR_OPAQUE_DATA_H
+#endif // PBR_GEOMETRY_DATA_H

@@ -1,3 +1,7 @@
+#ifndef MANDELBROT_PS
+#define MANDELBROT_PS
+
+
 #define SQUARE_MODULE_STOP_TRAIT    4.0F
 #define MAX_ITERATIONS              512U
 #define INV_MAX_ITERATIONS          ( 1.0F / (float32_t)MAX_ITERATIONS )
@@ -27,3 +31,6 @@ uint32_t CountIterations ( in float32_t2 coordinate )
 
     return iteration;
 }
+
+
+#endif // MANDELBROT_PS

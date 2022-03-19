@@ -22,7 +22,7 @@ bool LightVolumeProgram::Init ( android_vulkan::Renderer &renderer,
     VkRenderPass renderPass,
     uint32_t subpass,
     VkExtent2D const &viewport
-)
+) noexcept
 {
     VkPipelineInputAssemblyStateCreateInfo assemblyInfo;
     VkVertexInputAttributeDescription attributeDescriptions[ VERTEX_ATTRIBUTE_COUNT ];
@@ -89,10 +89,11 @@ bool LightVolumeProgram::Init ( android_vulkan::Renderer &renderer,
     }
 
     AV_REGISTER_PIPELINE ( "LightVolumeProgram::_pipeline" )
+    DestroyShaderModules ( device );
     return true;
 }
 
-void LightVolumeProgram::Destroy ( VkDevice device )
+void LightVolumeProgram::Destroy ( VkDevice device ) noexcept
 {
     if ( _pipeline != VK_NULL_HANDLE )
     {
@@ -111,15 +112,10 @@ void LightVolumeProgram::Destroy ( VkDevice device )
     _commonLayout.Destroy ( device );
     _lightVolumeLayout.Destroy ( device );
 
-    if ( _vertexShader == VK_NULL_HANDLE )
-        return;
-
-    vkDestroyShaderModule ( device, _vertexShader, nullptr );
-    _vertexShader = VK_NULL_HANDLE;
-    AV_UNREGISTER_SHADER_MODULE ( "LightVolumeProgram::_vertexShader" )
+    DestroyShaderModules ( device );
 }
 
-void LightVolumeProgram::SetTransform ( VkCommandBuffer commandBuffer, VkDescriptorSet transform )
+void LightVolumeProgram::SetTransform ( VkCommandBuffer commandBuffer, VkDescriptorSet transform ) const noexcept
 {
     vkCmdBindDescriptorSets ( commandBuffer,
         VK_PIPELINE_BIND_POINT_GRAPHICS,
@@ -132,16 +128,16 @@ void LightVolumeProgram::SetTransform ( VkCommandBuffer commandBuffer, VkDescrip
     );
 }
 
-Program::DescriptorSetInfo const& LightVolumeProgram::GetResourceInfo () const
+Program::DescriptorSetInfo const& LightVolumeProgram::GetResourceInfo () const noexcept
 {
-    static DescriptorSetInfo const null;
+    static DescriptorSetInfo const null {};
     return null;
 }
 
 VkPipelineColorBlendStateCreateInfo const* LightVolumeProgram::InitColorBlendInfo (
     VkPipelineColorBlendStateCreateInfo &info,
     VkPipelineColorBlendAttachmentState* attachments
-) const
+) const noexcept
 {
     info.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
     info.pNext = nullptr;
@@ -150,14 +146,14 @@ VkPipelineColorBlendStateCreateInfo const* LightVolumeProgram::InitColorBlendInf
     info.logicOp = VK_LOGIC_OP_NO_OP;
     info.attachmentCount = COLOR_RENDER_TARGET_COUNT;
     info.pAttachments = attachments;
-    memset ( info.blendConstants, 0, sizeof ( info.blendConstants ) );
+    std::memset ( info.blendConstants, 0, sizeof ( info.blendConstants ) );
 
     return &info;
 }
 
 VkPipelineDepthStencilStateCreateInfo const* LightVolumeProgram::InitDepthStencilInfo (
     VkPipelineDepthStencilStateCreateInfo &info
-) const
+) const noexcept
 {
     info.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
     info.pNext = nullptr;
@@ -198,7 +194,7 @@ VkPipelineDepthStencilStateCreateInfo const* LightVolumeProgram::InitDepthStenci
 
 VkPipelineInputAssemblyStateCreateInfo const* LightVolumeProgram::InitInputAssemblyInfo (
     VkPipelineInputAssemblyStateCreateInfo &info
-) const
+) const noexcept
 {
     info.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
     info.pNext = nullptr;
@@ -209,7 +205,7 @@ VkPipelineInputAssemblyStateCreateInfo const* LightVolumeProgram::InitInputAssem
     return &info;
 }
 
-bool LightVolumeProgram::InitLayout ( android_vulkan::Renderer &renderer, VkPipelineLayout &layout )
+bool LightVolumeProgram::InitLayout ( android_vulkan::Renderer &renderer, VkPipelineLayout &layout ) noexcept
 {
     if ( !_commonLayout.Init ( renderer ) )
         return false;
@@ -250,7 +246,7 @@ bool LightVolumeProgram::InitLayout ( android_vulkan::Renderer &renderer, VkPipe
 
 VkPipelineMultisampleStateCreateInfo const* LightVolumeProgram::InitMultisampleInfo (
     VkPipelineMultisampleStateCreateInfo &info
-) const
+) const noexcept
 {
     info.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
     info.pNext = nullptr;
@@ -267,7 +263,7 @@ VkPipelineMultisampleStateCreateInfo const* LightVolumeProgram::InitMultisampleI
 
 VkPipelineRasterizationStateCreateInfo const* LightVolumeProgram::InitRasterizationInfo (
     VkPipelineRasterizationStateCreateInfo &info
-) const
+) const noexcept
 {
     info.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
     info.pNext = nullptr;
@@ -289,7 +285,7 @@ VkPipelineRasterizationStateCreateInfo const* LightVolumeProgram::InitRasterizat
 bool LightVolumeProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
     VkPipelineShaderStageCreateInfo const* &targetInfo,
     VkPipelineShaderStageCreateInfo* sourceInfo
-)
+) noexcept
 {
     bool result = renderer.CreateShader ( _vertexShader,
         VERTEX_SHADER,
@@ -314,12 +310,22 @@ bool LightVolumeProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
     return true;
 }
 
+void LightVolumeProgram::DestroyShaderModules ( VkDevice device ) noexcept
+{
+    if ( _vertexShader == VK_NULL_HANDLE )
+        return;
+
+    vkDestroyShaderModule ( device, _vertexShader, nullptr );
+    _vertexShader = VK_NULL_HANDLE;
+    AV_UNREGISTER_SHADER_MODULE ( "LightVolumeProgram::_vertexShader" )
+}
+
 VkPipelineViewportStateCreateInfo const* LightVolumeProgram::InitViewportInfo (
     VkPipelineViewportStateCreateInfo &info,
     VkRect2D &scissorInfo,
     VkViewport &viewportInfo,
     VkExtent2D const &viewport
-) const
+) const noexcept
 {
     viewportInfo.x = 0.0F;
     viewportInfo.y = 0.0F;
@@ -347,7 +353,7 @@ VkPipelineVertexInputStateCreateInfo const* LightVolumeProgram::InitVertexInputI
     VkPipelineVertexInputStateCreateInfo &info,
     VkVertexInputAttributeDescription* attributes,
     VkVertexInputBindingDescription* binds
-) const
+) const noexcept
 {
     binds->binding = 0U;
     binds->stride = static_cast<uint32_t> ( sizeof ( GXVec3 ) );

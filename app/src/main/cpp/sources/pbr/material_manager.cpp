@@ -12,7 +12,7 @@ MaterialRef MaterialManager::LoadMaterial ( android_vulkan::Renderer &renderer,
     size_t &commandBufferConsumed,
     char const* fileName,
     VkCommandBuffer const* commandBuffers
-)
+) noexcept
 {
     commandBufferConsumed = 0U;
 
@@ -104,7 +104,7 @@ MaterialRef MaterialManager::LoadMaterial ( android_vulkan::Renderer &renderer,
     return material;
 }
 
-MaterialManager& MaterialManager::GetInstance ()
+MaterialManager& MaterialManager::GetInstance () noexcept
 {
     std::unique_lock<std::shared_timed_mutex> const lock ( _mutex );
 
@@ -114,7 +114,7 @@ MaterialManager& MaterialManager::GetInstance ()
     return *_instance;
 }
 
-void MaterialManager::Destroy ( VkDevice device )
+void MaterialManager::Destroy ( VkDevice device ) noexcept
 {
     std::unique_lock<std::shared_timed_mutex> const lock ( _mutex );
 
@@ -127,7 +127,7 @@ void MaterialManager::Destroy ( VkDevice device )
     _instance = nullptr;
 }
 
-void MaterialManager::DestroyInternal ( VkDevice device )
+void MaterialManager::DestroyInternal ( VkDevice device ) noexcept
 {
     for ( auto& texture : _textureStorage )
         texture.second->FreeResources ( device );

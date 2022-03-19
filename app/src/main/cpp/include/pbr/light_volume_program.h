@@ -44,65 +44,69 @@ class LightVolumeProgram final : public Program
             VkRenderPass renderPass,
             uint32_t subpass,
             VkExtent2D const &viewport
-        ) override;
+        ) noexcept override;
 
-        void Destroy ( VkDevice device ) override;
+        void Destroy ( VkDevice device ) noexcept override;
 
-        [[nodiscard]] constexpr static uint32_t GetLightVolumeStencilValue ()
+        [[nodiscard]] constexpr static uint32_t GetLightVolumeStencilValue () noexcept
         {
             return STENCIL_INITIAL_VALUE - 1U;
         }
 
-        [[nodiscard]] constexpr static uint32_t GetStencilInitialValue ()
+        [[nodiscard]] constexpr static uint32_t GetStencilInitialValue () noexcept
         {
             return STENCIL_INITIAL_VALUE;
         }
 
-        void SetTransform ( VkCommandBuffer commandBuffer, VkDescriptorSet transform );
+        void SetTransform ( VkCommandBuffer commandBuffer, VkDescriptorSet transform ) const noexcept;
 
     private:
-        [[nodiscard]] DescriptorSetInfo const& GetResourceInfo () const override;
+        [[nodiscard]] DescriptorSetInfo const& GetResourceInfo () const noexcept override;
 
         [[nodiscard]] VkPipelineColorBlendStateCreateInfo const* InitColorBlendInfo (
             VkPipelineColorBlendStateCreateInfo &info,
             VkPipelineColorBlendAttachmentState* attachments
-        ) const override;
+        ) const noexcept override;
 
         [[nodiscard]] VkPipelineDepthStencilStateCreateInfo const* InitDepthStencilInfo (
             VkPipelineDepthStencilStateCreateInfo &info
-        ) const override;
+        ) const noexcept override;
 
         [[nodiscard]] VkPipelineInputAssemblyStateCreateInfo const* InitInputAssemblyInfo (
             VkPipelineInputAssemblyStateCreateInfo &info
-        ) const override;
+        ) const noexcept override;
 
-        [[nodiscard]] bool InitLayout ( android_vulkan::Renderer &renderer, VkPipelineLayout &layout ) override;
+        [[nodiscard]] bool InitLayout ( android_vulkan::Renderer &renderer,
+            VkPipelineLayout &layout
+        ) noexcept override;
 
         [[nodiscard]] VkPipelineMultisampleStateCreateInfo const* InitMultisampleInfo (
             VkPipelineMultisampleStateCreateInfo &info
-        ) const override;
+        ) const noexcept override;
 
         [[nodiscard]] VkPipelineRasterizationStateCreateInfo const* InitRasterizationInfo (
             VkPipelineRasterizationStateCreateInfo &info
-        ) const override;
+        ) const noexcept override;
 
         [[nodiscard]] bool InitShaderInfo ( android_vulkan::Renderer &renderer,
             VkPipelineShaderStageCreateInfo const* &targetInfo,
             VkPipelineShaderStageCreateInfo* sourceInfo
-        ) override;
+        ) noexcept override;
+
+        void DestroyShaderModules ( VkDevice device ) noexcept override;
 
         [[nodiscard]] VkPipelineViewportStateCreateInfo const* InitViewportInfo (
             VkPipelineViewportStateCreateInfo &info,
             VkRect2D &scissorInfo,
             VkViewport &viewportInfo,
             VkExtent2D const &viewport
-        ) const override;
+        ) const noexcept override;
 
         [[nodiscard]] VkPipelineVertexInputStateCreateInfo const* InitVertexInputInfo (
             VkPipelineVertexInputStateCreateInfo &info,
             VkVertexInputAttributeDescription* attributes,
             VkVertexInputBindingDescription* binds
-        ) const override;
+        ) const noexcept override;
 };
 
 } // namespace pbr

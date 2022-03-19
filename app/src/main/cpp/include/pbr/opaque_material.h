@@ -1,21 +1,14 @@
-#ifndef OPAQUE_MATERIAL_H
-#define OPAQUE_MATERIAL_H
+#ifndef PBR_OPAQUE_MATERIAL_H
+#define PBR_OPAQUE_MATERIAL_H
 
 
-#include "types.h"
+#include "geometry_pass_material.h"
 
 
 namespace pbr {
 
-class OpaqueMaterial final : public Material
+class OpaqueMaterial final : public GeometryPassMaterial
 {
-    private:
-        Texture2DRef    _albedo;
-        Texture2DRef    _emission;
-        Texture2DRef    _mask;
-        Texture2DRef    _normal;
-        Texture2DRef    _param;
-
     public:
         OpaqueMaterial () noexcept;
 
@@ -26,31 +19,9 @@ class OpaqueMaterial final : public Material
         OpaqueMaterial& operator = ( OpaqueMaterial && ) = default;
 
         ~OpaqueMaterial () override = default;
-
-        [[nodiscard]] Texture2DRef& GetAlbedo ();
-        void SetAlbedo ( Texture2DRef const &texture );
-        [[maybe_unused]] void SetAlbedoDefault ();
-
-        [[nodiscard]] Texture2DRef& GetEmission ();
-        void SetEmission ( Texture2DRef const &texture );
-        void SetEmissionDefault ();
-
-        [[nodiscard]] Texture2DRef& GetMask ();
-        void SetMask ( Texture2DRef const &texture );
-        [[maybe_unused]] void SetMaskDefault ();
-
-        [[nodiscard]] Texture2DRef& GetNormal ();
-        void SetNormal ( Texture2DRef const &texture );
-        [[maybe_unused]] void SetNormalDefault ();
-
-        [[nodiscard]] Texture2DRef& GetParam ();
-        void SetParam ( Texture2DRef const &texture );
-        [[maybe_unused]] void SetParamDefault ();
-
-        [[nodiscard]] bool operator < ( OpaqueMaterial const &other ) const;
 };
 
 } // namespace pbr
 
 
-#endif // OPAQUE_MATERIAL_H
+#endif // PBR_OPAQUE_MATERIAL_H

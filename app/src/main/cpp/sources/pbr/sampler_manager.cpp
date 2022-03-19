@@ -3,32 +3,11 @@
 
 namespace pbr {
 
-void SamplerManager::FreeResources ( VkDevice device )
+bool SamplerManager::Init ( android_vulkan::Renderer &renderer ) noexcept
 {
-    if ( _pointSampler )
-    {
-        _pointSampler->Destroy ( device );
-        _pointSampler = nullptr;
-    }
-
-    for ( auto& sampler : _storage )
-    {
-        if ( !sampler )
-            continue;
-
-        sampler->Destroy ( device );
-        sampler = nullptr;
-    }
-}
-
-SamplerRef SamplerManager::GetPointSampler ( android_vulkan::Renderer &renderer )
-{
-    if ( _pointSampler )
-        return _pointSampler;
-
     _pointSampler = std::make_shared<Sampler> ();
 
-    constexpr VkSamplerCreateInfo const info
+    constexpr VkSamplerCreateInfo pointSamplerInfo
     {
         .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
         .pNext = nullptr,
@@ -50,22 +29,15 @@ SamplerRef SamplerManager::GetPointSampler ( android_vulkan::Renderer &renderer 
         .unnormalizedCoordinates = VK_FALSE
     };
 
-    if ( !_pointSampler->Init ( renderer, info ) )
+    if ( !_pointSampler->Init ( renderer, pointSamplerInfo ) )
+    {
         _pointSampler = nullptr;
+        return false;
+    }
 
-    return _pointSampler;
-}
+    _materialSampler = std::make_shared<Sampler> ();
 
-SamplerRef SamplerManager::GetSampler ( android_vulkan::Renderer &renderer, uint8_t mips )
-{
-    SamplerRef& target = _storage[ static_cast<size_t> ( mips ) ];
-
-    if ( target )
-        return target;
-
-    target = std::make_shared<Sampler> ();
-
-    VkSamplerCreateInfo const info
+    constexpr VkSamplerCreateInfo materialSamplerInfo
     {
         .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
         .pNext = nullptr,
@@ -82,15 +54,41 @@ SamplerRef SamplerManager::GetSampler ( android_vulkan::Renderer &renderer, uint
         .compareEnable = VK_FALSE,
         .compareOp = VK_COMPARE_OP_ALWAYS,
         .minLod = 0.0F,
-        .maxLod = static_cast<float> ( mips - 1U ),
+        .maxLod = VK_LOD_CLAMP_NONE,
         .borderColor = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK,
         .unnormalizedCoordinates = VK_FALSE
     };
 
-    if ( !target->Init ( renderer, info ) )
-        target = nullptr;
+    if ( _materialSampler->Init ( renderer, materialSamplerInfo ) )
+        return true;
 
-    return target;
+    _materialSampler = nullptr;
+    return false;
+}
+
+void SamplerManager::Destroy ( VkDevice device ) noexcept
+{
+    if ( _materialSampler )
+    {
+        _materialSampler->Destroy ( device );
+        _materialSampler = nullptr;
+    }
+
+    if ( !_pointSampler )
+        return;
+
+    _pointSampler->Destroy ( device );
+    _pointSampler = nullptr;
+}
+
+SamplerRef const& SamplerManager::GetMaterialSampler () const noexcept
+{
+    return _materialSampler;
+}
+
+SamplerRef const& SamplerManager::GetPointSampler () const noexcept
+{
+    return _pointSampler;
 }
 
 } // namespace pbr

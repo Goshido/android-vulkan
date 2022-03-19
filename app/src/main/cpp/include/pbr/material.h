@@ -15,7 +15,8 @@ namespace pbr {
 
 enum class eMaterialType : uint8_t
 {
-    Opaque
+    Opaque = 0U,
+    Stipple = 1U
 };
 
 class Material

@@ -102,7 +102,7 @@ bool Collision::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
         return false;
     }
 
-    if ( !_renderSession.OnInitDevice ( renderer ) )
+    if ( !_renderSession.OnInitDevice ( renderer, _commandPool ) )
     {
         OnDestroyDevice ( device );
         return false;
@@ -114,6 +114,7 @@ bool Collision::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
         return false;
     }
 
+    _renderSession.FreeTransferResources ( device, _commandPool );
     return true;
 }
 
@@ -310,19 +311,19 @@ bool Collision::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
     _contactMesh->FreeTransferResources ( device );
 
     // Note it's safe to cast like that here. "NOLINT" is clang-tidy control comment.
-    auto* m = static_cast<OpaqueMaterial*> ( _contactMaterial.get () ); // NOLINT
+    auto& m = static_cast<GeometryPassMaterial&> ( *_contactMaterial ); // NOLINT
 
-    if ( m->GetAlbedo () )
-        m->GetAlbedo ()->FreeTransferResources ( device );
+    if ( m.GetAlbedo () )
+        m.GetAlbedo ()->FreeTransferResources ( device );
 
-    if ( m->GetEmission () )
-        m->GetEmission ()->FreeTransferResources ( device );
+    if ( m.GetEmission () )
+        m.GetEmission ()->FreeTransferResources ( device );
 
-    if ( m->GetNormal () )
-        m->GetNormal ()->FreeTransferResources ( device );
+    if ( m.GetNormal () )
+        m.GetNormal ()->FreeTransferResources ( device );
 
-    if ( m->GetParam () )
-        m->GetParam ()->FreeTransferResources ( device );
+    if ( m.GetParam () )
+        m.GetParam ()->FreeTransferResources ( device );
 
     return true;
 }

@@ -19,7 +19,8 @@ namespace android_vulkan {
 
 class Core final
 {
-    using timestamp = std::chrono::time_point<std::chrono::system_clock>;
+    private:
+        using timestamp = std::chrono::time_point<std::chrono::system_clock>;
 
     private:
         Game&           _game;
@@ -52,7 +53,7 @@ class Core final
 
         static void ActivateFullScreen ( android_app &app );
         static void OnOSCommand ( android_app* app, int32_t cmd );
-        [[nodiscard]] static int32_t OnOSInputEvent ( android_app* app, AInputEvent *event );
+        [[nodiscard]] static int32_t OnOSInputEvent ( android_app* app, AInputEvent* event );
 };
 
 } // namespace android_vulkan

@@ -37,16 +37,21 @@ class MaterialManager final
             size_t &commandBufferConsumed,
             char const* fileName,
             VkCommandBuffer const* commandBuffers
-        );
+        ) noexcept;
 
-        [[nodiscard]] static MaterialManager& GetInstance ();
-        static void Destroy ( VkDevice device );
+        [[nodiscard]] static MaterialManager& GetInstance () noexcept;
+        static void Destroy ( VkDevice device ) noexcept;
+
+        [[nodiscard]] constexpr static uint32_t MaxCommandBufferPerMaterial () noexcept
+        {
+            return 4U;
+        }
 
     private:
         MaterialManager() = default;
         ~MaterialManager () = default;
 
-        void DestroyInternal ( VkDevice device );
+        void DestroyInternal ( VkDevice device ) noexcept;
 };
 
 } // namespace pbr

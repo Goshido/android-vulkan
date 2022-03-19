@@ -2,13 +2,13 @@
 #define PBR_SCENE_DATA_H
 
 
-#include "opaque_call.h"
-#include "opaque_material.h"
+#include "geometry_call.h"
+#include "geometry_pass_material.h"
 
 
 namespace pbr {
 
-using SceneData = std::map<OpaqueMaterial, OpaqueCall>;
+using SceneData = std::map<GeometryPassMaterial, GeometryCall>;
 
 } // namespace pbr
 

@@ -25,20 +25,20 @@ class GameLUT final : public Game
         ~GameLUT () override = default;
 
     private:
-        bool CreateDescriptorSet ( android_vulkan::Renderer &renderer ) override;
-        bool CreatePipelineLayout ( android_vulkan::Renderer &renderer ) override;
-        bool LoadGPUContent ( android_vulkan::Renderer &renderer ) override;
+        [[nodiscard]] bool CreateDescriptorSet ( android_vulkan::Renderer &renderer ) noexcept override;
+        [[nodiscard]] bool CreatePipelineLayout ( android_vulkan::Renderer &renderer ) noexcept override;
+        [[nodiscard]] bool LoadGPUContent ( android_vulkan::Renderer &renderer ) noexcept override;
 
-        bool CreateSamplers ( android_vulkan::Renderer &renderer ) override;
-        void DestroySamplers ( VkDevice device ) override;
+        [[nodiscard]] bool CreateSamplers ( android_vulkan::Renderer &renderer ) noexcept override;
+        void DestroySamplers ( VkDevice device ) noexcept override;
 
-        void DestroyTextures ( VkDevice device ) override;
+        void DestroyTextures ( VkDevice device ) noexcept override;
 
         [[nodiscard]] bool CreateSpecularLUTTexture ( android_vulkan::Renderer &renderer,
             VkCommandBuffer commandBuffer
-        );
+        )  noexcept;
 
-        void DestroySpecularLUTTexture ( VkDevice device );
+        void DestroySpecularLUTTexture ( VkDevice device ) noexcept;
 };
 
 } // namespace rotating_mesh

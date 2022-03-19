@@ -6,13 +6,13 @@ namespace mandelbrot {
 
 constexpr static char const* FRAGMENT_SHADER = "shaders/mandelbrot-analytic-color-ps.spv";
 
-MandelbrotAnalyticColor::MandelbrotAnalyticColor ():
+MandelbrotAnalyticColor::MandelbrotAnalyticColor () noexcept:
     MandelbrotBase ( FRAGMENT_SHADER )
 {
     // NOTHING
 }
 
-bool MandelbrotAnalyticColor::OnSwapchainCreated ( android_vulkan::Renderer &renderer )
+bool MandelbrotAnalyticColor::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept
 {
     if ( !MandelbrotBase::OnSwapchainCreated ( renderer ) )
         return false;
@@ -24,15 +24,15 @@ bool MandelbrotAnalyticColor::OnSwapchainCreated ( android_vulkan::Renderer &ren
     return false;
 }
 
-void MandelbrotAnalyticColor::OnSwapchainDestroyed ( VkDevice device )
+void MandelbrotAnalyticColor::OnSwapchainDestroyed ( VkDevice device ) noexcept
 {
     DestroyCommandBuffer ( device );
     MandelbrotBase::OnSwapchainDestroyed ( device );
 }
 
-bool MandelbrotAnalyticColor::CreatePipelineLayout ( android_vulkan::Renderer &renderer )
+bool MandelbrotAnalyticColor::CreatePipelineLayout ( android_vulkan::Renderer &renderer ) noexcept
 {
-    constexpr VkPipelineLayoutCreateInfo const pipelineLayoutInfo
+    constexpr VkPipelineLayoutCreateInfo pipelineLayoutInfo
     {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
         .pNext = nullptr,
@@ -56,7 +56,7 @@ bool MandelbrotAnalyticColor::CreatePipelineLayout ( android_vulkan::Renderer &r
     return true;
 }
 
-void MandelbrotAnalyticColor::DestroyPipelineLayout ( VkDevice device )
+void MandelbrotAnalyticColor::DestroyPipelineLayout ( VkDevice device ) noexcept
 {
     if ( _pipelineLayout == VK_NULL_HANDLE )
         return;
@@ -66,7 +66,7 @@ void MandelbrotAnalyticColor::DestroyPipelineLayout ( VkDevice device )
     AV_UNREGISTER_PIPELINE_LAYOUT ( "MandelbrotAnalyticColor::_pipelineLayout" )
 }
 
-bool MandelbrotAnalyticColor::CreateCommandBuffer ( android_vulkan::Renderer &renderer )
+bool MandelbrotAnalyticColor::CreateCommandBuffer ( android_vulkan::Renderer &renderer ) noexcept
 {
     size_t const framebufferCount = _framebuffers.size ();
     _commandBuffer.resize ( framebufferCount );
@@ -94,7 +94,7 @@ bool MandelbrotAnalyticColor::CreateCommandBuffer ( android_vulkan::Renderer &re
         return false;
     }
 
-    constexpr VkCommandBufferBeginInfo const commandBufferBeginInfo
+    constexpr VkCommandBufferBeginInfo commandBufferBeginInfo
     {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
         .pNext = nullptr,
@@ -102,7 +102,7 @@ bool MandelbrotAnalyticColor::CreateCommandBuffer ( android_vulkan::Renderer &re
         .pInheritanceInfo = nullptr
     };
 
-    constexpr VkClearValue const colorClearValue
+    constexpr VkClearValue colorClearValue
     {
         .color
         {
@@ -156,7 +156,7 @@ bool MandelbrotAnalyticColor::CreateCommandBuffer ( android_vulkan::Renderer &re
     return false;
 }
 
-void MandelbrotAnalyticColor::DestroyCommandBuffer ( VkDevice device )
+void MandelbrotAnalyticColor::DestroyCommandBuffer ( VkDevice device ) noexcept
 {
     if ( _commandBuffer.empty () )
         return;

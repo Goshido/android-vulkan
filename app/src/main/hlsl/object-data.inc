@@ -1,3 +1,7 @@
+#ifndef OBJECT_DATA_INC
+#define OBJECT_DATA_INC
+
+
 #include "gpgpu_limits.inc"
 
 
@@ -19,3 +23,6 @@ cbuffer InstanceData:       register ( b0 )
     // see https://vulkan.lunarg.com/doc/view/1.1.108.0/mac/chunked_spec/chap36.html#limits-minmax
     ObjectData      g_instanceData[ PBR_OPAQUE_MAX_INSTANCE_COUNT ];
 }
+
+
+#endif // OBJECT_DATA_INC

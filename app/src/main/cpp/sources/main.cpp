@@ -6,6 +6,7 @@
 #include <pbr/collision/collision.h>
 #include <pbr/mario/world1x1.h>
 #include <pbr/ray_casting/ray_casting.h>
+#include <pbr/stipple_test/stipple_test.h>
 #include <pbr/sweep_testing/sweep_testing.h>
 #include <rainbow/rainbow.h>
 #include <rotating_mesh/game_analytic.h>
@@ -31,6 +32,7 @@ enum class eGame : uint16_t
     RayCasting,
     RotatingMeshAnalytic,
     RotatingMeshLUT,
+    StippleTest,
     SweepTesting,
     World1x1
 };
@@ -52,6 +54,7 @@ enum class eGame : uint16_t
         { android_vulkan::eGame::RayCasting, std::make_shared<pbr::ray_casting::RayCasting> () },
         { android_vulkan::eGame::RotatingMeshAnalytic, std::make_shared<rotating_mesh::GameAnalytic> () },
         { android_vulkan::eGame::RotatingMeshLUT, std::make_shared<rotating_mesh::GameLUT> () },
+        { android_vulkan::eGame::StippleTest, std::make_shared<pbr::stipple_test::StippleTest> () },
         { android_vulkan::eGame::SweepTesting, std::make_shared<pbr::sweep_testing::SweepTesting> () },
         { android_vulkan::eGame::World1x1, std::make_shared<pbr::mario::World1x1> () }
     };
@@ -65,13 +68,15 @@ enum class eGame : uint16_t
             int events;
             android_poll_source* source;
 
-            int const pollResult = ALooper_pollAll ( core.IsSuspend () ? -1 : 0,
+            constexpr int const timeouts[] = { 0, -1 };
+
+            int const pollResult = ALooper_pollAll ( timeouts[ static_cast<size_t> ( core.IsSuspend () ) ],
                 nullptr,
                 &events,
                 reinterpret_cast<void**> ( &source )
             );
 
-            if ( pollResult < 0 || !source )
+            if ( ( pollResult < 0 ) | !source )
                 break;
 
             source->process ( app, source );

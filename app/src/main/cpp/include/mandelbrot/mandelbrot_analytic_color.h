@@ -10,21 +10,25 @@ namespace mandelbrot {
 class MandelbrotAnalyticColor final : public MandelbrotBase
 {
     public:
-        MandelbrotAnalyticColor ();
+        MandelbrotAnalyticColor () noexcept;
+
+        MandelbrotAnalyticColor ( MandelbrotAnalyticColor const & ) = delete;
+        MandelbrotAnalyticColor& operator = ( MandelbrotAnalyticColor const & ) = delete;
+
+        MandelbrotAnalyticColor ( MandelbrotAnalyticColor && ) = delete;
+        MandelbrotAnalyticColor& operator = ( MandelbrotAnalyticColor && ) = delete;
+
         ~MandelbrotAnalyticColor () override = default;
 
-        MandelbrotAnalyticColor ( const MandelbrotAnalyticColor &other ) = delete;
-        MandelbrotAnalyticColor& operator = ( const MandelbrotAnalyticColor &other ) = delete;
-
     private:
-        [[nodiscard]] bool OnSwapchainCreated ( android_vulkan::Renderer &renderer ) override;
-        void OnSwapchainDestroyed ( VkDevice device ) override;
+        [[nodiscard]] bool OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept override;
+        void OnSwapchainDestroyed ( VkDevice device ) noexcept override;
 
-        [[nodiscard]] bool CreatePipelineLayout ( android_vulkan::Renderer &renderer ) override;
-        void DestroyPipelineLayout ( VkDevice device ) override;
+        [[nodiscard]] bool CreatePipelineLayout ( android_vulkan::Renderer &renderer ) noexcept override;
+        void DestroyPipelineLayout ( VkDevice device ) noexcept override;
 
-        [[nodiscard]] bool CreateCommandBuffer ( android_vulkan::Renderer &renderer );
-        void DestroyCommandBuffer ( VkDevice device );
+        [[nodiscard]] bool CreateCommandBuffer ( android_vulkan::Renderer &renderer ) noexcept;
+        void DestroyCommandBuffer ( VkDevice device ) noexcept;
 };
 
 } // namespace mandelbrot

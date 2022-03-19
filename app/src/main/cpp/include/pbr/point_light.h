@@ -64,6 +64,7 @@ class PointLight final : public Light
 
         [[nodiscard]] GXAABB const& GetBounds () const noexcept;
         void SetBoundDimensions ( float width, float height, float depth ) noexcept;
+        void SetBoundDimensions ( GXVec3 const &dimensions ) noexcept;
 
         [[nodiscard]] GXVec3 const& GetHue () const noexcept;
         void SetHue ( GXColorRGB const &hue ) noexcept;

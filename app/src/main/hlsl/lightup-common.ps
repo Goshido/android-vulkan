@@ -1,3 +1,7 @@
+#ifndef LIGHTUP_COMMON_PS
+#define LIGHTUP_COMMON_PS
+
+
 #define MINIMUM_F0          4.0e-2H
 
 [[vk::binding ( 0, 0 )]]
@@ -67,3 +71,6 @@ float16_t3 RestoreNormalView ()
     const float16_t3 alpha = (float16_t3)g_normal.SubpassLoad ().xyz;
     return mad ( alpha, (float16_t3)2.0H, (float16_t3)( -1.0H ) );
 }
+
+
+#endif // LIGHTUP_COMMON_PS

@@ -10,16 +10,16 @@ namespace rotating_mesh {
 class GameAnalytic final : public Game
 {
     public:
-        GameAnalytic ();
+        GameAnalytic () noexcept;
         ~GameAnalytic () override = default;
 
         GameAnalytic ( const GameAnalytic &other ) = delete;
         GameAnalytic& operator = ( const GameAnalytic &other ) = delete;
 
     private:
-        bool CreateDescriptorSet ( android_vulkan::Renderer &renderer ) override;
-        bool CreatePipelineLayout ( android_vulkan::Renderer &renderer ) override;
-        bool LoadGPUContent ( android_vulkan::Renderer &renderer ) override;
+        bool CreateDescriptorSet ( android_vulkan::Renderer &renderer ) noexcept override;
+        bool CreatePipelineLayout ( android_vulkan::Renderer &renderer ) noexcept override;
+        bool LoadGPUContent ( android_vulkan::Renderer &renderer ) noexcept override;
 };
 
 } // namespace rotating_mesh

@@ -22,7 +22,7 @@ bool ReflectionGlobalProgram::Init ( android_vulkan::Renderer &renderer,
     VkRenderPass renderPass,
     uint32_t subpass,
     VkExtent2D const &viewport
-)
+) noexcept
 {
     VkPipelineInputAssemblyStateCreateInfo assemblyInfo;
     VkPipelineColorBlendAttachmentState attachmentInfo[ COLOR_RENDER_TARGET_COUNT ];
@@ -42,9 +42,11 @@ bool ReflectionGlobalProgram::Init ( android_vulkan::Renderer &renderer,
     pipelineInfo.flags = 0U;
     pipelineInfo.stageCount = std::size ( stageInfo );
 
+    VkDevice device = renderer.GetDevice ();
+
     if ( !InitShaderInfo ( renderer, pipelineInfo.pStages, stageInfo ) )
     {
-        Destroy ( renderer.GetDevice () );
+        Destroy ( device );
         return false;
     }
 
@@ -60,7 +62,7 @@ bool ReflectionGlobalProgram::Init ( android_vulkan::Renderer &renderer,
 
     if ( !InitLayout ( renderer, pipelineInfo.layout ) )
     {
-        Destroy ( renderer.GetDevice () );
+        Destroy ( device );
         return false;
     }
 
@@ -70,22 +72,23 @@ bool ReflectionGlobalProgram::Init ( android_vulkan::Renderer &renderer,
     pipelineInfo.basePipelineIndex = 0;
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateGraphicsPipelines ( renderer.GetDevice (), VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
+        vkCreateGraphicsPipelines ( device, VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
         "ReflectionGlobalProgram::Init",
         "Can't create pipeline"
     );
 
     if ( !result )
     {
-        Destroy ( renderer.GetDevice () );
+        Destroy ( device );
         return false;
     }
 
     AV_REGISTER_PIPELINE ( "ReflectionGlobalProgram::_pipeline" )
+    DestroyShaderModules ( device );
     return true;
 }
 
-void ReflectionGlobalProgram::Destroy ( VkDevice device )
+void ReflectionGlobalProgram::Destroy ( VkDevice device ) noexcept
 {
     if ( _pipeline != VK_NULL_HANDLE )
     {
@@ -105,22 +108,10 @@ void ReflectionGlobalProgram::Destroy ( VkDevice device )
     _stubLayout.Destroy ( device );
     _commonLayout.Destroy ( device );
 
-    if ( _fragmentShader != VK_NULL_HANDLE )
-    {
-        vkDestroyShaderModule ( device, _fragmentShader, nullptr );
-        _fragmentShader = VK_NULL_HANDLE;
-        AV_UNREGISTER_SHADER_MODULE ( "ReflectionGlobalProgram::_fragmentShader" )
-    }
-
-    if ( _vertexShader == VK_NULL_HANDLE )
-        return;
-
-    vkDestroyShaderModule ( device, _vertexShader, nullptr );
-    _vertexShader = VK_NULL_HANDLE;
-    AV_UNREGISTER_SHADER_MODULE ( "ReflectionGlobalProgram::_vertexShader" )
+    DestroyShaderModules ( device );
 }
 
-Program::DescriptorSetInfo const& ReflectionGlobalProgram::GetResourceInfo () const
+Program::DescriptorSetInfo const& ReflectionGlobalProgram::GetResourceInfo () const noexcept
 {
     static DescriptorSetInfo const info
     {
@@ -156,7 +147,7 @@ Program::DescriptorSetInfo const& ReflectionGlobalProgram::GetResourceInfo () co
     return info;
 }
 
-void ReflectionGlobalProgram::SetDescriptorSet ( VkCommandBuffer commandBuffer, VkDescriptorSet set ) const
+void ReflectionGlobalProgram::SetDescriptorSet ( VkCommandBuffer commandBuffer, VkDescriptorSet set ) const noexcept
 {
     vkCmdBindDescriptorSets ( commandBuffer,
         VK_PIPELINE_BIND_POINT_GRAPHICS,
@@ -172,7 +163,7 @@ void ReflectionGlobalProgram::SetDescriptorSet ( VkCommandBuffer commandBuffer, 
 VkPipelineColorBlendStateCreateInfo const* ReflectionGlobalProgram::InitColorBlendInfo (
     VkPipelineColorBlendStateCreateInfo &info,
     VkPipelineColorBlendAttachmentState* attachments
-) const
+) const noexcept
 {
     VkPipelineColorBlendAttachmentState& hdrAccumulator = attachments[ 0U ];
     hdrAccumulator.blendEnable = VK_TRUE;
@@ -201,7 +192,7 @@ VkPipelineColorBlendStateCreateInfo const* ReflectionGlobalProgram::InitColorBle
 
 VkPipelineDepthStencilStateCreateInfo const* ReflectionGlobalProgram::InitDepthStencilInfo (
     VkPipelineDepthStencilStateCreateInfo &info
-) const
+) const noexcept
 {
     info.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
     info.pNext = nullptr;
@@ -242,7 +233,7 @@ VkPipelineDepthStencilStateCreateInfo const* ReflectionGlobalProgram::InitDepthS
 
 VkPipelineInputAssemblyStateCreateInfo const* ReflectionGlobalProgram::InitInputAssemblyInfo (
     VkPipelineInputAssemblyStateCreateInfo &info
-) const
+) const noexcept
 {
     info.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
     info.pNext = nullptr;
@@ -253,7 +244,7 @@ VkPipelineInputAssemblyStateCreateInfo const* ReflectionGlobalProgram::InitInput
     return &info;
 }
 
-bool ReflectionGlobalProgram::InitLayout ( android_vulkan::Renderer &renderer, VkPipelineLayout &layout )
+bool ReflectionGlobalProgram::InitLayout ( android_vulkan::Renderer &renderer, VkPipelineLayout &layout ) noexcept
 {
     if ( !_commonLayout.Init ( renderer ) )
         return false;
@@ -298,7 +289,7 @@ bool ReflectionGlobalProgram::InitLayout ( android_vulkan::Renderer &renderer, V
 
 VkPipelineMultisampleStateCreateInfo const* ReflectionGlobalProgram::InitMultisampleInfo (
     VkPipelineMultisampleStateCreateInfo &info
-) const
+) const noexcept
 {
     info.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
     info.pNext = nullptr;
@@ -315,7 +306,7 @@ VkPipelineMultisampleStateCreateInfo const* ReflectionGlobalProgram::InitMultisa
 
 VkPipelineRasterizationStateCreateInfo const* ReflectionGlobalProgram::InitRasterizationInfo (
     VkPipelineRasterizationStateCreateInfo &info
-) const
+) const noexcept
 {
     info.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
     info.pNext = nullptr;
@@ -337,7 +328,7 @@ VkPipelineRasterizationStateCreateInfo const* ReflectionGlobalProgram::InitRaste
 bool ReflectionGlobalProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
     VkPipelineShaderStageCreateInfo const* &targetInfo,
     VkPipelineShaderStageCreateInfo* sourceInfo
-)
+) noexcept
 {
     bool result = renderer.CreateShader ( _vertexShader,
         VERTEX_SHADER,
@@ -381,12 +372,29 @@ bool ReflectionGlobalProgram::InitShaderInfo ( android_vulkan::Renderer &rendere
     return true;
 }
 
+void ReflectionGlobalProgram::DestroyShaderModules ( VkDevice device ) noexcept
+{
+    if ( _fragmentShader != VK_NULL_HANDLE )
+    {
+        vkDestroyShaderModule ( device, _fragmentShader, nullptr );
+        _fragmentShader = VK_NULL_HANDLE;
+        AV_UNREGISTER_SHADER_MODULE ( "ReflectionGlobalProgram::_fragmentShader" )
+    }
+
+    if ( _vertexShader == VK_NULL_HANDLE )
+        return;
+
+    vkDestroyShaderModule ( device, _vertexShader, nullptr );
+    _vertexShader = VK_NULL_HANDLE;
+    AV_UNREGISTER_SHADER_MODULE ( "ReflectionGlobalProgram::_vertexShader" )
+}
+
 VkPipelineViewportStateCreateInfo const* ReflectionGlobalProgram::InitViewportInfo (
     VkPipelineViewportStateCreateInfo &info,
     VkRect2D &scissorInfo,
     VkViewport &viewportInfo,
     VkExtent2D const &viewport
-) const
+) const noexcept
 {
     viewportInfo.x = 0.0F;
     viewportInfo.y = 0.0F;
@@ -414,7 +422,7 @@ VkPipelineVertexInputStateCreateInfo const* ReflectionGlobalProgram::InitVertexI
     VkPipelineVertexInputStateCreateInfo &info,
     VkVertexInputAttributeDescription* attributes,
     VkVertexInputBindingDescription* binds
-) const
+) const noexcept
 {
     info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
     info.pNext = nullptr;

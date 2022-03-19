@@ -18,4 +18,5 @@ call make-ps.bat opaque
 call make-ps.bat point-light
 call make-ps.bat reflection-global
 call make-ps.bat reflection-local
+call make-ps.bat stipple
 call make-ps.bat texture-present

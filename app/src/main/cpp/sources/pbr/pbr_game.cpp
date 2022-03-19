@@ -23,17 +23,17 @@ constexpr static char const* SCENES[] =
     "pbr/assets/world-1-1.scene"
 };
 
-constexpr static size_t const ACTIVE_SCENE = 0U;
+constexpr static size_t ACTIVE_SCENE = 0U;
 static_assert ( std::size ( SCENES ) > ACTIVE_SCENE );
 
-[[maybe_unused]] constexpr static uint32_t const SCENE_DESC_FORMAT_VERSION = 2U;
+[[maybe_unused]] constexpr static uint32_t SCENE_DESC_FORMAT_VERSION = 2U;
 
-constexpr static float const FIELD_OF_VIEW = 75.0F;
-constexpr static float const Z_NEAR = 0.1F;
-constexpr static float const Z_FAR = 1.0e+4F;
+constexpr static float FIELD_OF_VIEW = 75.0F;
+constexpr static float Z_NEAR = 0.1F;
+constexpr static float Z_FAR = 1.0e+4F;
 
-constexpr static uint32_t const RESOLUTION_SCALE_WIDTH = 80U;
-constexpr static uint32_t const RESOLUTION_SCALE_HEIGHT = 70U;
+constexpr static uint32_t RESOLUTION_SCALE_WIDTH = 80U;
+constexpr static uint32_t RESOLUTION_SCALE_HEIGHT = 70U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -89,7 +89,7 @@ bool PBRGame::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 
     AV_REGISTER_COMMAND_POOL ( "PBRGame::_commandPool" )
 
-    if ( !_renderSession.OnInitDevice ( renderer ) )
+    if ( !_renderSession.OnInitDevice ( renderer, _commandPool ) )
     {
        OnDestroyDevice ( device );
        return false;
@@ -101,6 +101,7 @@ bool PBRGame::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
         return false;
     }
 
+    _renderSession.FreeTransferResources ( device, _commandPool );
     return true;
 }
 
@@ -124,7 +125,7 @@ bool PBRGame::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept
     VkExtent2D const& surfaceResolution = renderer.GetViewportResolution ();
 
     _camera.SetProjection ( GXDegToRad ( FIELD_OF_VIEW ),
-        surfaceResolution.width / static_cast<float> ( surfaceResolution.height ),
+        static_cast<float> ( surfaceResolution.width ) / static_cast<float> ( surfaceResolution.height ),
         Z_NEAR,
         Z_FAR
     );

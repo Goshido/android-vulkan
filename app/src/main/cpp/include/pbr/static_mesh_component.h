@@ -48,6 +48,15 @@ class StaticMeshComponent final : public Component
             VkCommandBuffer const* commandBuffers
         ) noexcept;
 
+        // "commandBuffer" array MUST contain at least 1 free command buffers.
+        explicit StaticMeshComponent ( android_vulkan::Renderer &renderer,
+            bool &success,
+            size_t &commandBufferConsumed,
+            char const* mesh,
+            MaterialRef &material,
+            VkCommandBuffer const* commandBuffers
+        ) noexcept;
+
         ~StaticMeshComponent () override = default;
 
         void Submit ( RenderSession &renderSession ) override;

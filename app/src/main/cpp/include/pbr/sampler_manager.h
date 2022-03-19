@@ -10,12 +10,8 @@ namespace pbr {
 class SamplerManager final
 {
     private:
-        // 1 2 4 8 16 32 64 128 256 512 1024 2048 4096
-        constexpr static size_t const MAX_SUPPORTED_MIP_COUNT = 13U;
-
-    private:
-        SamplerRef      _pointSampler;
-        SamplerRef      _storage[ MAX_SUPPORTED_MIP_COUNT ];
+        SamplerRef      _pointSampler {};
+        SamplerRef      _materialSampler {};
 
     public:
         SamplerManager () noexcept = default;
@@ -28,10 +24,11 @@ class SamplerManager final
 
         ~SamplerManager () = default;
 
-        void FreeResources ( VkDevice device );
+        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer ) noexcept;
+        void Destroy ( VkDevice device ) noexcept;
 
-        [[nodiscard]] SamplerRef GetPointSampler ( android_vulkan::Renderer &renderer );
-        [[nodiscard]] SamplerRef GetSampler ( android_vulkan::Renderer &renderer, uint8_t mips );
+        [[nodiscard]] SamplerRef const& GetMaterialSampler () const noexcept;
+        [[nodiscard]] SamplerRef const& GetPointSampler () const noexcept;
 };
 
 } // namespace pbr

@@ -10,7 +10,7 @@ MeshRef MeshManager::LoadMesh ( android_vulkan::Renderer &renderer,
     size_t &commandBufferConsumed,
     char const* fileName,
     VkCommandBuffer commandBuffer
-)
+) noexcept
 {
     commandBufferConsumed = 0U;
     MeshRef mesh = std::make_shared<android_vulkan::MeshGeometry> ();
@@ -33,7 +33,7 @@ MeshRef MeshManager::LoadMesh ( android_vulkan::Renderer &renderer,
     return mesh;
 }
 
-MeshManager& MeshManager::GetInstance ()
+MeshManager& MeshManager::GetInstance () noexcept
 {
     std::unique_lock<std::shared_timed_mutex> const lock ( _mutex );
 
@@ -43,7 +43,7 @@ MeshManager& MeshManager::GetInstance ()
     return *_instance;
 }
 
-void MeshManager::Destroy ( VkDevice device )
+void MeshManager::Destroy ( VkDevice device ) noexcept
 {
     std::unique_lock<std::shared_timed_mutex> const lock ( _mutex );
 
@@ -56,7 +56,7 @@ void MeshManager::Destroy ( VkDevice device )
     _instance = nullptr;
 }
 
-void MeshManager::DestroyInternal ( VkDevice device )
+void MeshManager::DestroyInternal ( VkDevice device ) noexcept
 {
     for ( auto& mesh : _meshStorage )
         mesh.second->FreeResources ( device );

@@ -15,7 +15,7 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-void RenderSession::Begin ( GXMat4 const &viewerLocal, GXMat4 const &projection )
+void RenderSession::Begin ( GXMat4 const &viewerLocal, GXMat4 const &projection ) noexcept
 {
     _opaqueMeshCount = 0U;
     _cvvToView.Inverse ( projection );
@@ -27,14 +27,14 @@ void RenderSession::Begin ( GXMat4 const &viewerLocal, GXMat4 const &projection 
     _geometryPass.Reset ();
 }
 
-bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
+bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime ) noexcept
 {
     if ( !_presentPass.AcquirePresentTarget ( renderer ) )
         return false;
 
     bool result = _lightPass.OnPreGeometryPass ( renderer,
-        _gBuffer.GetResolution(),
-        _geometryPass.GetSceneData(),
+        _gBuffer.GetResolution (),
+        _geometryPass.GetOpaqueSubpass ().GetSceneData (),
         _opaqueMeshCount,
         _viewerLocal,
         _view,
@@ -49,6 +49,7 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
         _frustum,
         _view,
         _viewProjection,
+        _defaultTextureManager,
         _samplerManager,
         _renderSessionStats
     );
@@ -88,34 +89,48 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
     return true;
 }
 
-bool RenderSession::OnInitDevice ( android_vulkan::Renderer &renderer )
+void RenderSession::FreeTransferResources ( VkDevice device, VkCommandPool commandPool ) noexcept
 {
-    _lightHandlers =
-    {
-        { eLightType::PointLight, &RenderSession::SubmitPointLight },
-        { eLightType::ReflectionGlobal, &RenderSession::SubmitReflectionGlobal },
-        { eLightType::ReflectionLocal, &RenderSession::SubmitReflectionLocal }
-    };
-
-    return _texturePresentDescriptorSetLayout.Init ( renderer );
+    _defaultTextureManager.FreeTransferResources ( device, commandPool );
 }
 
-void RenderSession::OnDestroyDevice ( VkDevice device )
+bool RenderSession::OnInitDevice ( android_vulkan::Renderer &renderer, VkCommandPool commandPool ) noexcept
 {
+    _lightHandlers[ static_cast<size_t> ( eLightType::PointLight ) ] = &RenderSession::SubmitPointLight;
+    _lightHandlers[ static_cast<size_t> ( eLightType::ReflectionGlobal ) ] = &RenderSession::SubmitReflectionGlobal;
+    _lightHandlers[ static_cast<size_t> ( eLightType::ReflectionLocal ) ] = &RenderSession::SubmitReflectionLocal;
+
+    _meshHandlers[ static_cast<size_t> ( eMaterialType::Opaque ) ] = &RenderSession::SubmitOpaqueCall;
+    _meshHandlers[ static_cast<size_t> ( eMaterialType::Stipple ) ] = &RenderSession::SubmitStippleCall;
+
+    if ( !_texturePresentDescriptorSetLayout.Init ( renderer ) )
+        return false;
+
+    if ( !_defaultTextureManager.Init ( renderer, commandPool ) )
+        return false;
+
+    return _samplerManager.Init ( renderer );
+}
+
+void RenderSession::OnDestroyDevice ( VkDevice device ) noexcept
+{
+    std::memset ( _lightHandlers, 0, sizeof ( _lightHandlers ) );
+    std::memset ( _meshHandlers, 0, sizeof ( _meshHandlers ) );
+
     _texturePresentDescriptorSetLayout.Destroy ( device );
-    _samplerManager.FreeResources ( device );
+    _samplerManager.Destroy ( device );
+    _defaultTextureManager.Destroy ( device );
     DestroyGBufferResources ( device );
-    _lightHandlers.clear ();
 }
 
 bool RenderSession::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
     VkExtent2D const &resolution,
     VkCommandPool commandPool
-)
+) noexcept
 {
     VkExtent2D const& currentResolution = _gBuffer.GetResolution ();
 
-    if ( currentResolution.width != resolution.width || currentResolution.height != resolution.height )
+    if ( ( currentResolution.width != resolution.width ) | ( currentResolution.height != resolution.height ) )
     {
         DestroyGBufferResources ( renderer.GetDevice () );
 
@@ -124,6 +139,11 @@ bool RenderSession::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
             OnSwapchainDestroyed ( renderer.GetDevice () );
             return false;
         }
+
+        android_vulkan::LogInfo ( "RenderSession::OnSwapchainCreated - G-buffer resolution is %u x %u.",
+            resolution.width,
+            resolution.height
+        );
     }
 
     if ( _presentPass.Init ( renderer ) )
@@ -136,25 +156,17 @@ bool RenderSession::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
     return false;
 }
 
-void RenderSession::OnSwapchainDestroyed ( VkDevice device )
+void RenderSession::OnSwapchainDestroyed ( VkDevice device ) noexcept
 {
     _presentPass.Destroy ( device );
 }
 
-void RenderSession::SubmitLight ( LightRef &light )
+void RenderSession::SubmitLight ( LightRef &light ) noexcept
 {
-    auto const findResult = _lightHandlers.find ( light->GetType () );
+    auto const idx = static_cast<size_t> ( light->GetType () );
+    assert ( idx < std::size ( _lightHandlers ) );
 
-    if ( findResult == _lightHandlers.cend () )
-    {
-        android_vulkan::LogWarning ( "RenderSession::SubmitLight - Unexpected light type [%hhu]",
-            static_cast<uint8_t> ( light->GetType () )
-        );
-
-        return;
-    }
-
-    LightHandler handler = findResult->second;
+    LightHandler handler = _lightHandlers[ idx ];
 
     // C++ calling method by pointer syntax.
     ( this->*handler ) ( light );
@@ -167,18 +179,19 @@ void RenderSession::SubmitMesh ( MeshRef &mesh,
     GXColorRGB const &color0,
     GXColorRGB const &color1,
     GXColorRGB const &color2,
-    GXColorRGB const &color3
-)
+    GXColorRGB const &emission
+) noexcept
 {
-    ++_opaqueMeshCount;
+    auto const idx = static_cast<size_t> ( material->GetMaterialType () );
+    assert ( idx < std::size ( _meshHandlers ) );
 
-    if ( material->GetMaterialType() == eMaterialType::Opaque )
-    {
-        SubmitOpaqueCall ( mesh, material, local, worldBounds, color0, color1, color2, color3 );
-    }
+    MeshHandler handler = _meshHandlers[ idx ];
+
+    // Calling method by pointer C++ syntax.
+    ( this->*handler ) ( mesh, material, local, worldBounds, color0, color1, color2, emission );
 }
 
-bool RenderSession::CreateGBufferFramebuffer ( android_vulkan::Renderer &renderer )
+bool RenderSession::CreateGBufferFramebuffer ( android_vulkan::Renderer &renderer ) noexcept
 {
     VkExtent2D const& resolution = _gBuffer.GetResolution ();
 
@@ -204,7 +217,7 @@ bool RenderSession::CreateGBufferFramebuffer ( android_vulkan::Renderer &rendere
         .layers = 1U
     };
 
-    const bool result = android_vulkan::Renderer::CheckVkResult (
+    bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateFramebuffer ( renderer.GetDevice (), &framebufferInfo, nullptr, &_gBufferFramebuffer ),
         "RenderSession::CreateGBufferFramebuffer",
         "Can't create GBuffer framebuffer"
@@ -217,7 +230,7 @@ bool RenderSession::CreateGBufferFramebuffer ( android_vulkan::Renderer &rendere
     return true;
 }
 
-bool RenderSession::CreateGBufferRenderPass ( android_vulkan::Renderer &renderer )
+bool RenderSession::CreateGBufferRenderPass ( android_vulkan::Renderer &renderer ) noexcept
 {
     VkAttachmentDescription const attachments[]
     {
@@ -321,7 +334,7 @@ bool RenderSession::CreateGBufferRenderPass ( android_vulkan::Renderer &renderer
 bool RenderSession::CreateGBufferResources ( android_vulkan::Renderer &renderer,
     VkExtent2D const &resolution,
     VkCommandPool commandPool
-)
+) noexcept
 {
     VkDevice device = renderer.GetDevice ();
 
@@ -397,11 +410,11 @@ bool RenderSession::CreateGBufferResources ( android_vulkan::Renderer &renderer,
         return false;
     }
 
-    FreeTransferResources ( renderer.GetDevice () );
+    _lightPass.OnFreeTransferResources ( device );
     return true;
 }
 
-bool RenderSession::CreateGBufferSlotMapper ( android_vulkan::Renderer &renderer )
+bool RenderSession::CreateGBufferSlotMapper ( android_vulkan::Renderer &renderer ) noexcept
 {
     constexpr static VkDescriptorPoolSize const poolSizes[] =
     {
@@ -415,7 +428,7 @@ bool RenderSession::CreateGBufferSlotMapper ( android_vulkan::Renderer &renderer
         }
     };
 
-    constexpr static VkDescriptorPoolCreateInfo const poolInfo
+    constexpr VkDescriptorPoolCreateInfo poolInfo
     {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
         .pNext = nullptr,
@@ -459,13 +472,10 @@ bool RenderSession::CreateGBufferSlotMapper ( android_vulkan::Renderer &renderer
     if ( !result )
         return false;
 
-    SamplerRef pointSampler = _samplerManager.GetPointSampler ( renderer );
-    VkSampler nativeSampler = pointSampler->GetSampler ();
-
     VkDescriptorImageInfo const imageInfo[] =
     {
         {
-            .sampler = nativeSampler,
+            .sampler = _samplerManager.GetPointSampler ()->GetSampler (),
             .imageView = _gBuffer.GetHDRAccumulator ().GetImageView (),
             .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
         }
@@ -503,7 +513,7 @@ bool RenderSession::CreateGBufferSlotMapper ( android_vulkan::Renderer &renderer
     return true;
 }
 
-void RenderSession::DestroyGBufferResources ( VkDevice device )
+void RenderSession::DestroyGBufferResources ( VkDevice device ) noexcept
 {
     if ( _gBufferFramebuffer != VK_NULL_HANDLE )
     {
@@ -547,11 +557,6 @@ void RenderSession::DestroyGBufferResources ( VkDevice device )
     _gBuffer.Destroy ( device );
 }
 
-void RenderSession::FreeTransferResources ( VkDevice device )
-{
-    _lightPass.OnFreeTransferResources ( device );
-}
-
 void RenderSession::SubmitOpaqueCall ( MeshRef &mesh,
     MaterialRef const &material,
     GXMat4 const &local,
@@ -559,47 +564,66 @@ void RenderSession::SubmitOpaqueCall ( MeshRef &mesh,
     GXColorRGB const &color0,
     GXColorRGB const &color1,
     GXColorRGB const &color2,
-    GXColorRGB const &color3
-)
+    GXColorRGB const &emission
+) noexcept
 {
+    ++_opaqueMeshCount;
     _renderSessionStats.SubmitOpaque ( mesh->GetVertexCount () );
-    _geometryPass.Submit ( mesh, material, local, worldBounds, color0, color1, color2, color3 );
+    _geometryPass.GetOpaqueSubpass ().Submit ( mesh, material, local, worldBounds, color0, color1, color2, emission );
 }
 
-void RenderSession::SubmitPointLight ( LightRef &light )
+void RenderSession::SubmitStippleCall ( MeshRef &mesh,
+    MaterialRef const &material,
+    GXMat4 const &local,
+    GXAABB const &worldBounds,
+    GXColorRGB const &color0,
+    GXColorRGB const &color1,
+    GXColorRGB const &color2,
+    GXColorRGB const &emission
+) noexcept
+{
+    _renderSessionStats.SubmitStipple ( mesh->GetVertexCount () );
+
+    if ( !_frustum.IsVisible ( worldBounds ) )
+        return;
+
+    _geometryPass.GetStippleSubpass ().Submit ( mesh, material, local, worldBounds, color0, color1, color2, emission );
+}
+
+void RenderSession::SubmitPointLight ( LightRef &light ) noexcept
 {
     _renderSessionStats.SubmitPointLight ();
 
-    // Note it's safe cast like that here. "NOLINT" is a clang-tidy control comment.
-    auto const& pointLight = static_cast<PointLight const&> ( *light.get () ); // NOLINT
+    // NOLINTNEXTLINE - downcast
+    auto const& pointLight = static_cast<PointLight const&> ( *light );
 
-    if ( _frustum.IsVisible ( pointLight.GetBounds () ) )
-    {
-        _lightPass.SubmitPointLight ( light );
-    }
+    if ( !_frustum.IsVisible ( pointLight.GetBounds () ) )
+        return;
+
+    _lightPass.SubmitPointLight ( light );
 }
 
-void RenderSession::SubmitReflectionGlobal ( LightRef &light )
+void RenderSession::SubmitReflectionGlobal ( LightRef &light ) noexcept
 {
     _renderSessionStats.RenderReflectionGlobal ();
 
-    // Note it's safe cast like that here. "NOLINT" is a clang-tidy control comment.
-    auto& probe = static_cast<ReflectionProbeGlobal&> ( *light.get () ); // NOLINT
+    // NOLINTNEXTLINE - downcast
+    auto& probe = static_cast<ReflectionProbeGlobal&> ( *light );
 
     _lightPass.SubmitReflectionGlobal ( probe.GetPrefilter () );
 }
 
-void RenderSession::SubmitReflectionLocal ( LightRef &light )
+void RenderSession::SubmitReflectionLocal ( LightRef &light ) noexcept
 {
     _renderSessionStats.SubmitReflectionLocal ();
 
-    // Note it's safe cast like that here. "NOLINT" is a clang-tidy control comment.
-    auto& probe = static_cast<ReflectionProbeLocal&> ( *light.get () ); // NOLINT
+    // NOLINTNEXTLINE - downcast
+    auto& probe = static_cast<ReflectionProbeLocal&> ( *light );
 
-    if ( _frustum.IsVisible ( probe.GetBounds () ) )
-    {
-        _lightPass.SubmitReflectionLocal ( probe.GetPrefilter (), probe.GetLocation (), probe.GetSize () );
-    }
+    if ( !_frustum.IsVisible ( probe.GetBounds () ) )
+        return;
+
+    _lightPass.SubmitReflectionLocal ( probe.GetPrefilter (), probe.GetLocation (), probe.GetSize () );
 }
 
 } // namespace pbr

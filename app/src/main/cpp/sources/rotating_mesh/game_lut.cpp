@@ -14,13 +14,13 @@ GX_RESTORE_WARNING_STATE
 
 namespace rotating_mesh {
 
-constexpr static const char* FRAGMENT_SHADER = "shaders/blinn-phong-lut-ps.spv";
+constexpr static char const* FRAGMENT_SHADER = "shaders/blinn-phong-lut-ps.spv";
 
-constexpr static const size_t SPECULAR_ANGLE_SAMPLES = 512U;
-constexpr static const size_t SPECULAR_EXPONENT_SAMPLES = 150U;
-constexpr static const size_t SPECULAR_GENERATOR_THREADS = 4U;
+constexpr static size_t SPECULAR_ANGLE_SAMPLES = 512U;
+constexpr static size_t SPECULAR_EXPONENT_SAMPLES = 150U;
+constexpr static size_t SPECULAR_GENERATOR_THREADS = 4U;
 
-constexpr static const size_t TEXTURE_COMMAND_BUFFERS = 7U;
+constexpr static size_t TEXTURE_COMMAND_BUFFERS = 7U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -30,11 +30,11 @@ GameLUT::GameLUT () noexcept:
     // NOTHING
 }
 
-bool GameLUT::CreateDescriptorSet ( android_vulkan::Renderer &renderer )
+bool GameLUT::CreateDescriptorSet ( android_vulkan::Renderer &renderer ) noexcept
 {
     VkDevice device = renderer.GetDevice ();
-    constexpr const size_t uniqueFeatureCount = 3U;
-    constexpr const size_t featureCount = 7U;
+    constexpr size_t uniqueFeatureCount = 3U;
+    constexpr size_t featureCount = 7U;
 
     VkDescriptorPoolSize features[ uniqueFeatureCount ];
     InitDescriptorPoolSizeCommon ( features );
@@ -42,13 +42,15 @@ bool GameLUT::CreateDescriptorSet ( android_vulkan::Renderer &renderer )
     features[ 1U ].descriptorCount = static_cast<uint32_t> ( MATERIAL_COUNT * 3U );
     features[ 2U ].descriptorCount = static_cast<uint32_t> ( MATERIAL_COUNT * 3U );
 
-    VkDescriptorPoolCreateInfo poolInfo;
-    poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    poolInfo.pNext = nullptr;
-    poolInfo.flags = 0U;
-    poolInfo.maxSets = static_cast<uint32_t> ( MATERIAL_COUNT );
-    poolInfo.poolSizeCount = static_cast<uint32_t> ( std::size ( features ) );
-    poolInfo.pPoolSizes = features;
+    VkDescriptorPoolCreateInfo const poolInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .maxSets = static_cast<uint32_t> ( MATERIAL_COUNT ),
+        .poolSizeCount = static_cast<uint32_t> ( std::size ( features ) ),
+        .pPoolSizes = features
+    };
 
     bool result = android_vulkan::Renderer::CheckVkResult (
         vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_descriptorPool ),
@@ -67,12 +69,14 @@ bool GameLUT::CreateDescriptorSet ( android_vulkan::Renderer &renderer )
     for ( auto& item : layouts )
         item = _descriptorSetLayout;
 
-    VkDescriptorSetAllocateInfo setAllocateInfo;
-    setAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    setAllocateInfo.pNext = nullptr;
-    setAllocateInfo.descriptorPool = _descriptorPool;
-    setAllocateInfo.pSetLayouts = layouts;
-    setAllocateInfo.descriptorSetCount = poolInfo.maxSets;
+    VkDescriptorSetAllocateInfo const setAllocateInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+        .pNext = nullptr,
+        .descriptorPool = _descriptorPool,
+        .descriptorSetCount = poolInfo.maxSets,
+        .pSetLayouts = layouts
+    };
 
     result = android_vulkan::Renderer::CheckVkResult ( vkAllocateDescriptorSets ( device, &setAllocateInfo, sets ),
         "GameLUT::CreateDescriptorSet",
@@ -82,7 +86,7 @@ bool GameLUT::CreateDescriptorSet ( android_vulkan::Renderer &renderer )
     if ( !result )
         return false;
 
-    constexpr const size_t writeSetCount = featureCount * MATERIAL_COUNT;
+    constexpr size_t writeSetCount = featureCount * MATERIAL_COUNT;
 
     VkWriteDescriptorSet writeSets[ writeSetCount ];
     VkDescriptorImageInfo diffuseInfo[ MATERIAL_COUNT ];
@@ -114,7 +118,7 @@ bool GameLUT::CreateDescriptorSet ( android_vulkan::Renderer &renderer )
         specImage.imageView = _specularLUTTexture.GetImageView ();
         specImage.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-        const size_t pivotIndex = i * featureCount;
+        size_t const pivotIndex = i * featureCount;
 
         VkWriteDescriptorSet& ubWriteSet = writeSets[ pivotIndex ];
         ubWriteSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -205,7 +209,7 @@ bool GameLUT::CreateDescriptorSet ( android_vulkan::Renderer &renderer )
     return true;
 }
 
-bool GameLUT::CreatePipelineLayout ( android_vulkan::Renderer &renderer )
+bool GameLUT::CreatePipelineLayout ( android_vulkan::Renderer &renderer ) noexcept
 {
     VkDescriptorSetLayoutBinding bindings[ 7U ];
     InitDescriptorSetLayoutBindingCommon ( bindings );
@@ -266,17 +270,19 @@ bool GameLUT::CreatePipelineLayout ( android_vulkan::Renderer &renderer )
     return true;
 }
 
-bool GameLUT::LoadGPUContent ( android_vulkan::Renderer &renderer )
+bool GameLUT::LoadGPUContent ( android_vulkan::Renderer &renderer ) noexcept
 {
-    constexpr const size_t commandBufferCount = TEXTURE_COMMAND_BUFFERS + MATERIAL_COUNT;
+    constexpr size_t commandBufferCount = TEXTURE_COMMAND_BUFFERS + MATERIAL_COUNT;
     VkCommandBuffer commandBuffers[ commandBufferCount ] = { VK_NULL_HANDLE };
 
-    VkCommandBufferAllocateInfo allocateInfo;
-    allocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    allocateInfo.pNext = nullptr;
-    allocateInfo.commandPool = _commandPool;
-    allocateInfo.commandBufferCount = static_cast<uint32_t> ( commandBufferCount );
-    allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    VkCommandBufferAllocateInfo const allocateInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+        .pNext = nullptr,
+        .commandPool = _commandPool,
+        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+        .commandBufferCount = static_cast<uint32_t> ( commandBufferCount )
+    };
 
     VkDevice device = renderer.GetDevice ();
 
@@ -319,32 +325,34 @@ bool GameLUT::LoadGPUContent ( android_vulkan::Renderer &renderer )
     return true;
 }
 
-bool GameLUT::CreateSamplers ( android_vulkan::Renderer &renderer )
+bool GameLUT::CreateSamplers ( android_vulkan::Renderer &renderer ) noexcept
 {
     bool result = Game::CreateSamplers ( renderer );
 
     if ( !result )
         return false;
 
-    VkSamplerCreateInfo samplerInfo;
-    samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-    samplerInfo.pNext = nullptr;
-    samplerInfo.flags = 0U;
-    samplerInfo.unnormalizedCoordinates = VK_FALSE;
-    samplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
-    samplerInfo.mipLodBias = 0.0F;
-    samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
-    samplerInfo.minLod = 0.0F;
-    samplerInfo.maxLod = 1.0F;
-    samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-    samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-    samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-    samplerInfo.magFilter = VK_FILTER_LINEAR;
-    samplerInfo.minFilter = VK_FILTER_LINEAR;
-    samplerInfo.anisotropyEnable = VK_FALSE;
-    samplerInfo.maxAnisotropy = 1.0F;
-    samplerInfo.compareEnable = VK_FALSE;
-    samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+    constexpr VkSamplerCreateInfo samplerInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .magFilter = VK_FILTER_LINEAR,
+        .minFilter = VK_FILTER_LINEAR,
+        .mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST,
+        .addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+        .addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+        .addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+        .mipLodBias = 0.0F,
+        .anisotropyEnable = VK_FALSE,
+        .maxAnisotropy = 1.0F,
+        .compareEnable = VK_FALSE,
+        .compareOp = VK_COMPARE_OP_ALWAYS,
+        .minLod = 0.0F,
+        .maxLod = 1.0F,
+        .borderColor = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK,
+        .unnormalizedCoordinates = VK_FALSE
+    };
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkCreateSampler ( renderer.GetDevice (), &samplerInfo, nullptr, &_specularLUTSampler ),
@@ -359,7 +367,7 @@ bool GameLUT::CreateSamplers ( android_vulkan::Renderer &renderer )
     return true;
 }
 
-void GameLUT::DestroySamplers ( VkDevice device )
+void GameLUT::DestroySamplers ( VkDevice device ) noexcept
 {
     Game::DestroySamplers ( device );
 
@@ -371,13 +379,13 @@ void GameLUT::DestroySamplers ( VkDevice device )
     AV_UNREGISTER_SAMPLER ( "GameLUT::_specularLUTSampler" )
 }
 
-void GameLUT::DestroyTextures ( VkDevice device )
+void GameLUT::DestroyTextures ( VkDevice device ) noexcept
 {
     DestroySpecularLUTTexture ( device );
     Game::DestroyTextures ( device );
 }
 
-bool GameLUT::CreateSpecularLUTTexture ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer )
+bool GameLUT::CreateSpecularLUTTexture ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept
 {
     constexpr const size_t totalSamples = SPECULAR_ANGLE_SAMPLES * SPECULAR_EXPONENT_SAMPLES;
 
@@ -387,8 +395,8 @@ bool GameLUT::CreateSpecularLUTTexture ( android_vulkan::Renderer &renderer, VkC
     auto jobThread = [ samples ] ( size_t startIndex, int shininess ) {
         do
         {
-            constexpr const auto nextOffset = SPECULAR_GENERATOR_THREADS * SPECULAR_ANGLE_SAMPLES;
-            constexpr const auto convert = 1.0F / static_cast<const float> ( SPECULAR_ANGLE_SAMPLES );
+            constexpr auto nextOffset = SPECULAR_GENERATOR_THREADS * SPECULAR_ANGLE_SAMPLES;
+            constexpr auto convert = 1.0F / static_cast<const float> ( SPECULAR_ANGLE_SAMPLES );
 
             for ( size_t i = 0U; i < SPECULAR_ANGLE_SAMPLES; ++i )
                 samples[ startIndex + i ] = std::pow ( static_cast<float> ( i ) * convert, shininess );
@@ -422,7 +430,7 @@ bool GameLUT::CreateSpecularLUTTexture ( android_vulkan::Renderer &renderer, VkC
     );
 }
 
-void GameLUT::DestroySpecularLUTTexture ( VkDevice device )
+void GameLUT::DestroySpecularLUTTexture ( VkDevice device ) noexcept
 {
     _specularLUTTexture.FreeResources ( device );
 }

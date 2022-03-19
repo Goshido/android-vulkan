@@ -32,27 +32,27 @@ class MandelbrotLUTColor final : public MandelbrotBase
         ~MandelbrotLUTColor () override = default;
 
     private:
-        [[nodiscard]] bool OnInitDevice ( android_vulkan::Renderer &renderer ) override;
-        void OnDestroyDevice ( VkDevice device ) override;
+        [[nodiscard]] bool OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept override;
+        void OnDestroyDevice ( VkDevice device ) noexcept override;
 
-        [[nodiscard]] bool OnSwapchainCreated ( android_vulkan::Renderer &renderer ) override;
-        void OnSwapchainDestroyed ( VkDevice device ) override;
+        [[nodiscard]] bool OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept override;
+        void OnSwapchainDestroyed ( VkDevice device ) noexcept override;
 
-        [[nodiscard]] bool CreatePipelineLayout ( android_vulkan::Renderer &renderer ) override;
-        void DestroyPipelineLayout ( VkDevice device ) override;
+        [[nodiscard]] bool CreatePipelineLayout ( android_vulkan::Renderer &renderer ) noexcept override;
+        void DestroyPipelineLayout ( VkDevice device ) noexcept override;
 
-        [[nodiscard]] bool CreateCommandBuffer ( android_vulkan::Renderer &renderer );
-        void DestroyCommandBuffer ( VkDevice device );
+        [[nodiscard]] bool CreateCommandBuffer ( android_vulkan::Renderer &renderer ) noexcept;
+        void DestroyCommandBuffer ( VkDevice device ) noexcept;
 
-        [[nodiscard]] bool CreateDescriptorSet ( android_vulkan::Renderer &renderer );
-        void DestroyDescriptorSet ( VkDevice device );
+        [[nodiscard]] bool CreateDescriptorSet ( android_vulkan::Renderer &renderer ) noexcept;
+        void DestroyDescriptorSet ( VkDevice device ) noexcept;
 
-        [[nodiscard]] bool CreateLUT ( android_vulkan::Renderer &renderer );
-        void DestroyLUT ( VkDevice device );
+        [[nodiscard]] bool CreateLUT ( android_vulkan::Renderer &renderer ) noexcept;
+        void DestroyLUT ( VkDevice device ) noexcept;
 
-        [[nodiscard]] bool UploadLUTSamples ( android_vulkan::Renderer &renderer );
+        [[nodiscard]] bool UploadLUTSamples ( android_vulkan::Renderer &renderer ) noexcept;
 
-        static void InitLUTSamples ( uint8_t* samples );
+        static void InitLUTSamples ( uint8_t* samples ) noexcept;
 };
 
 } // namespace mandelbrot

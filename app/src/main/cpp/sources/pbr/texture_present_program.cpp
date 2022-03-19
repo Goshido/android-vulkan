@@ -21,7 +21,7 @@ bool TexturePresentProgram::Init ( android_vulkan::Renderer &renderer,
     VkRenderPass renderPass,
     uint32_t subpass,
     VkExtent2D const &viewport
-)
+) noexcept
 {
     VkPipelineInputAssemblyStateCreateInfo assemblyInfo;
     VkPipelineColorBlendAttachmentState attachmentInfo[ COLOR_RENDER_TARGET_COUNT ];
@@ -41,9 +41,11 @@ bool TexturePresentProgram::Init ( android_vulkan::Renderer &renderer,
     pipelineInfo.flags = 0U;
     pipelineInfo.stageCount = std::size ( stageInfo );
 
+    VkDevice device = renderer.GetDevice ();
+
     if ( !InitShaderInfo ( renderer, pipelineInfo.pStages, stageInfo ) )
     {
-        Destroy ( renderer.GetDevice () );
+        Destroy ( device );
         return false;
     }
 
@@ -59,7 +61,7 @@ bool TexturePresentProgram::Init ( android_vulkan::Renderer &renderer,
 
     if ( !InitLayout ( renderer, pipelineInfo.layout ) )
     {
-        Destroy ( renderer.GetDevice () );
+        Destroy ( device );
         return false;
     }
 
@@ -69,22 +71,23 @@ bool TexturePresentProgram::Init ( android_vulkan::Renderer &renderer,
     pipelineInfo.basePipelineIndex = 0;
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateGraphicsPipelines ( renderer.GetDevice (), VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
+        vkCreateGraphicsPipelines ( device, VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
         "TexturePresentProgram::Init",
         "Can't create pipeline"
     );
 
     if ( !result )
     {
-        Destroy ( renderer.GetDevice () );
+        Destroy ( device );
         return false;
     }
 
     AV_REGISTER_PIPELINE ( "TexturePresentProgram::_pipeline" )
+    DestroyShaderModules ( device );
     return true;
 }
 
-void TexturePresentProgram::Destroy ( VkDevice device )
+void TexturePresentProgram::Destroy ( VkDevice device ) noexcept
 {
     if ( _pipeline != VK_NULL_HANDLE )
     {
@@ -101,23 +104,10 @@ void TexturePresentProgram::Destroy ( VkDevice device )
     }
 
     _descriptorSetLayout.Destroy ( device );
-
-    if ( _fragmentShader != VK_NULL_HANDLE )
-    {
-        vkDestroyShaderModule ( device, _fragmentShader, nullptr );
-        _fragmentShader = VK_NULL_HANDLE;
-        AV_UNREGISTER_SHADER_MODULE ( "TexturePresentProgram::_fragmentShader" )
-    }
-
-    if ( _vertexShader == VK_NULL_HANDLE )
-        return;
-
-    vkDestroyShaderModule ( device, _vertexShader, nullptr );
-    _vertexShader = VK_NULL_HANDLE;
-    AV_UNREGISTER_SHADER_MODULE ( "TexturePresentProgram::_vertexShader" )
+    DestroyShaderModules ( device );
 }
 
-Program::DescriptorSetInfo const& TexturePresentProgram::GetResourceInfo () const
+Program::DescriptorSetInfo const& TexturePresentProgram::GetResourceInfo () const noexcept
 {
     static DescriptorSetInfo const null;
     return null;
@@ -126,7 +116,7 @@ Program::DescriptorSetInfo const& TexturePresentProgram::GetResourceInfo () cons
 void TexturePresentProgram::SetData ( VkCommandBuffer commandBuffer,
     VkDescriptorSet set,
     GXMat4 const &transform
-) const
+) const noexcept
 {
     vkCmdPushConstants ( commandBuffer,
         _pipelineLayout,
@@ -150,7 +140,7 @@ void TexturePresentProgram::SetData ( VkCommandBuffer commandBuffer,
 VkPipelineColorBlendStateCreateInfo const* TexturePresentProgram::InitColorBlendInfo (
     VkPipelineColorBlendStateCreateInfo &info,
     VkPipelineColorBlendAttachmentState* attachments
-) const
+) const noexcept
 {
     attachments->blendEnable = VK_FALSE;
 
@@ -181,7 +171,7 @@ VkPipelineColorBlendStateCreateInfo const* TexturePresentProgram::InitColorBlend
 
 VkPipelineDepthStencilStateCreateInfo const* TexturePresentProgram::InitDepthStencilInfo (
     VkPipelineDepthStencilStateCreateInfo &info
-) const
+) const noexcept
 {
     info.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
     info.pNext = nullptr;
@@ -207,7 +197,7 @@ VkPipelineDepthStencilStateCreateInfo const* TexturePresentProgram::InitDepthSte
 
 VkPipelineInputAssemblyStateCreateInfo const* TexturePresentProgram::InitInputAssemblyInfo (
     VkPipelineInputAssemblyStateCreateInfo &info
-) const
+) const noexcept
 {
     info.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
     info.pNext = nullptr;
@@ -264,7 +254,7 @@ bool TexturePresentProgram::InitLayout ( android_vulkan::Renderer &renderer, VkP
 
 VkPipelineMultisampleStateCreateInfo const* TexturePresentProgram::InitMultisampleInfo (
     VkPipelineMultisampleStateCreateInfo &info
-) const
+) const noexcept
 {
     info.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
     info.pNext = nullptr;
@@ -281,7 +271,7 @@ VkPipelineMultisampleStateCreateInfo const* TexturePresentProgram::InitMultisamp
 
 VkPipelineRasterizationStateCreateInfo const* TexturePresentProgram::InitRasterizationInfo (
     VkPipelineRasterizationStateCreateInfo &info
-) const
+) const noexcept
 {
     info.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
     info.pNext = nullptr;
@@ -303,7 +293,7 @@ VkPipelineRasterizationStateCreateInfo const* TexturePresentProgram::InitRasteri
 bool TexturePresentProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
     VkPipelineShaderStageCreateInfo const* &targetInfo,
     VkPipelineShaderStageCreateInfo* sourceInfo
-)
+) noexcept
 {
     bool result = renderer.CreateShader ( _vertexShader,
         VERTEX_SHADER,
@@ -347,12 +337,29 @@ bool TexturePresentProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
     return true;
 }
 
+void TexturePresentProgram::DestroyShaderModules ( VkDevice device ) noexcept
+{
+    if ( _fragmentShader != VK_NULL_HANDLE )
+    {
+        vkDestroyShaderModule ( device, _fragmentShader, nullptr );
+        _fragmentShader = VK_NULL_HANDLE;
+        AV_UNREGISTER_SHADER_MODULE ( "TexturePresentProgram::_fragmentShader" )
+    }
+
+    if ( _vertexShader == VK_NULL_HANDLE )
+        return;
+
+    vkDestroyShaderModule ( device, _vertexShader, nullptr );
+    _vertexShader = VK_NULL_HANDLE;
+    AV_UNREGISTER_SHADER_MODULE ( "TexturePresentProgram::_vertexShader" )
+}
+
 VkPipelineViewportStateCreateInfo const* TexturePresentProgram::InitViewportInfo (
     VkPipelineViewportStateCreateInfo &info,
     VkRect2D &scissorInfo,
     VkViewport &viewportInfo,
     VkExtent2D const &viewport
-) const
+) const noexcept
 {
     viewportInfo.x = 0.0F;
     viewportInfo.y = 0.0F;
@@ -380,7 +387,7 @@ VkPipelineVertexInputStateCreateInfo const* TexturePresentProgram::InitVertexInp
     VkPipelineVertexInputStateCreateInfo &info,
     VkVertexInputAttributeDescription* attributes,
     VkVertexInputBindingDescription* binds
-) const
+) const noexcept
 {
     info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
     info.pNext = nullptr;

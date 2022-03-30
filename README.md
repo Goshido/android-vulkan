@@ -17,13 +17,13 @@ Requirements:
 * _Windows Vista_+ or _Monjaro KDE_
 * _Android Studio Bumblebee | 2021.1.1 Patch 2_
 * _Android Studio Gradle Plugin 7.1.2_
-* _Android NDK 23.1.7779620 (side by side)_
+* _Android NDK 24.0.8215888 (side by side)_
 * _Android SDK 11.0 (API level 30)_
 * _Android SDK Build-Tools 32.0.0_
-* _Android SDK Platform-Tools 33.0.0_
+* _Android SDK Platform-Tools 33.0.1_
 * _CMake 3.18.1_
-* _DirectX Shader Compiler 1.6.2112.10137_
-* _Vulkan Validation Layers_ `75fd63f0fbab318aa460dab3232406b235bd300b`
+* _DirectX Shader Compiler 1.6.2112.10147_
+* _Vulkan Validation Layers_ `15e2373828b01e9499eeb3da1f53531ff6c34ae5`
 * _Gradle 7.4-bin_
 * Real _Android 11_ device with _Vulkan 1.1.131_ support
 * [_ARM Neon A64_](https://developer.arm.com/architectures/instruction-sets/simd-isas/neon/neon-programmers-guide-for-armv8-a/introducing-neon-for-armv8-a) native support

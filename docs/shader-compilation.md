@@ -64,4 +64,4 @@ For example:
 
 Variable name | Value
 --- | ---
-`ANDROID_VULKAN_DXC_ROOT` | `D:\Development\DXC-builds\Release-2022-03-13\bin`
+`ANDROID_VULKAN_DXC_ROOT` | `D:\Development\DXC-builds\Release-2022-03-30\bin`

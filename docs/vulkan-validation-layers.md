@@ -6,7 +6,7 @@ Starting from _Android NDK_ `23.0.7599858` the _Vulkan_ validation layers have b
 
 ## Compatible version
 
-The manual is based on `75fd63f0fbab318aa460dab3232406b235bd300b` commit of the [_Vulkan-ValidationLayers_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) repo. The manual is primary aimed for _Windows OS_ users.
+The manual is based on `15e2373828b01e9499eeb3da1f53531ff6c34ae5` commit of the [_Vulkan-ValidationLayers_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) repo. The manual is primary aimed for _Windows OS_ users.
 
 ## Requirements
 

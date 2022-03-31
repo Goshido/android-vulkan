@@ -6,6 +6,8 @@
 #include <pbr/material_manager.h>
 #include <pbr/mesh_manager.h>
 #include <pbr/scene_desc.h>
+#include <pbr/script_component.h>
+#include <pbr/script_engine.h>
 #include <gamepad.h>
 #include <global_force_gravity.h>
 #include <shape_box.h>
@@ -38,6 +40,11 @@ bool World1x1::IsReady () noexcept
 bool World1x1::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) noexcept
 {
     auto const dt = static_cast<float> ( deltaTime );
+
+    ScriptEngine& scriptEngine = ScriptEngine::GetInstance ();
+
+    if ( !scriptEngine.Execute ( deltaTime ) )
+        return false;
 
     _mario.OnUpdate ();
     _physics.Simulate ( dt );
@@ -79,6 +86,22 @@ bool World1x1::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
         return false;
     }
 
+    ScriptEngine& scriptEngine = ScriptEngine::GetInstance ();
+
+    if ( !scriptEngine.Init () )
+    {
+        OnDestroyDevice ( device );
+        return false;
+    }
+
+    ScriptComponent scriptComponent ( "av://assets/Scripts/player.lua", "{ msg = 'hello world', state = 1 }" );
+
+    if ( !scriptComponent.Register () )
+    {
+        OnDestroyDevice ( device );
+        return false;
+    }
+
     if ( !UploadGPUContent ( renderer ) )
     {
         OnDestroyDevice ( device );
@@ -102,6 +125,7 @@ void World1x1::OnDestroyDevice ( VkDevice device ) noexcept
     _renderSession.OnDestroyDevice ( device );
     DestroyCommandPool ( device );
 
+    ScriptEngine::Destroy ();
     MeshManager::Destroy ( device );
     MaterialManager::Destroy ( device );
     CubeMapManager::Destroy ( device );

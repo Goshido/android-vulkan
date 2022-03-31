@@ -51,12 +51,13 @@ android {
 
     sourceSets {
         main {
-            ext.makeVulkanLayerPath = { ->
-                return project.rootDir.toString() + "/third-party/vulkan-validation-layers/jniLibs"
+            ext.makePrebuildLibraryPath = { ->
+                return project.rootDir.toString() + "/third-party/jniLibs"
             }
 
+
             jniLibs {
-                srcDir makeVulkanLayerPath()
+                srcDir makePrebuildLibraryPath()
             }
         }
     }

@@ -28,11 +28,9 @@ set_target_properties ( native_app_glue PROPERTIES
     CXX_VISIBILITY_PRESET hidden
 )
 
-# log support
 
-find_library ( log-lib
-    log
-)
+# log support
+find_library ( log-lib log REQUIRED )
 
 # Main app
 
@@ -128,6 +126,10 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/pbr/render_session_stats.cpp
     app/src/main/cpp/sources/pbr/sampler.cpp
     app/src/main/cpp/sources/pbr/sampler_manager.cpp
+    app/src/main/cpp/sources/pbr/script_component.cpp
+    app/src/main/cpp/sources/pbr/script_engine.cpp
+    app/src/main/cpp/sources/pbr/scriptable_gxmat4.cpp
+    app/src/main/cpp/sources/pbr/scriptable_logger.cpp
     app/src/main/cpp/sources/pbr/static_mesh_component.cpp
     app/src/main/cpp/sources/pbr/stipple_material.cpp
     app/src/main/cpp/sources/pbr/stipple_program.cpp
@@ -203,4 +205,5 @@ target_link_libraries ( android-vulkan
     android
     ${log-lib}
     native_app_glue
+    ${CMAKE_SOURCE_DIR}/third-party/jniLibs/arm64-v8a/libLua.so
 )

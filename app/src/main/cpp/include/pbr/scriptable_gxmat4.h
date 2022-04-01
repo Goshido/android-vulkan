@@ -48,13 +48,18 @@ class ScriptableGXMat4 final
     private:
         static void Insert ( Item* item, Item*& list ) noexcept;
 
-        static int OnCreate ( lua_State* state );
-        static int OnDestroy ( lua_State* state );
-        static int OnIdentity ( lua_State* state );
-        static int OnPerspective ( lua_State* state );
-        static int OnRotationX ( lua_State* state );
-        static int OnScale ( lua_State* state );
-        static int OnToString ( lua_State* state );
+        [[nodiscard]] static int OnCreate ( lua_State* state );
+        [[nodiscard]] static int OnDestroy ( lua_State* state );
+        [[nodiscard]] static int OnIdentity ( lua_State* state );
+        [[nodiscard]] static int OnInverse ( lua_State* state );
+        [[nodiscard]] static int OnMultiply ( lua_State* state );
+        [[nodiscard]] static int OnMultiplyAsNormal ( lua_State* state );
+        [[nodiscard]] static int OnMultiplyAsPoint ( lua_State* state );
+        [[nodiscard]] static int OnPerspective ( lua_State* state );
+        [[nodiscard]] static int OnRotationX ( lua_State* state );
+        [[nodiscard]] static int OnScale ( lua_State* state );
+        [[nodiscard]] static int OnToString ( lua_State* state );
+        [[nodiscard]] static int OnTranslationF ( lua_State* state );
 };
 
 } // namespace pbr

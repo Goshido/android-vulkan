@@ -1,4 +1,5 @@
 ﻿#include <pbr/scriptable_gxmat4.h>
+#include <pbr/scriptable_gxvec3.h>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -47,6 +48,26 @@ void ScriptableGXMat4::Init ( lua_State* vm ) noexcept
         },
 
         {
+            .name = "av_GXMat4Inverse",
+            .func = &ScriptableGXMat4::OnInverse
+        },
+
+        {
+            .name = "av_GXMat4Multiply",
+            .func = &ScriptableGXMat4::OnMultiply
+        },
+
+        {
+            .name = "av_GXMat4MultiplyAsNormal",
+            .func = &ScriptableGXMat4::OnMultiplyAsNormal
+        },
+
+        {
+            .name = "av_GXMat4MultiplyAsPoint",
+            .func = &ScriptableGXMat4::OnMultiplyAsPoint
+        },
+
+        {
             .name = "av_GXMat4Perspective",
             .func = &ScriptableGXMat4::OnPerspective
         },
@@ -64,6 +85,11 @@ void ScriptableGXMat4::Init ( lua_State* vm ) noexcept
         {
             .name = "av_GXMat4ToString",
             .func = &ScriptableGXMat4::OnToString
+        },
+
+        {
+            .name = "av_GXMat4TranslationF",
+            .func = &ScriptableGXMat4::OnTranslationF
         }
     };
 
@@ -151,6 +177,39 @@ int ScriptableGXMat4::OnIdentity ( lua_State* state )
     return 0;
 }
 
+int ScriptableGXMat4::OnInverse ( lua_State* state )
+{
+    auto& self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    auto& sourceMatrix = *static_cast<Item*> ( lua_touserdata ( state, 2 ) );
+    self._matrix.Inverse ( sourceMatrix._matrix );
+
+    return 0;
+}
+
+int ScriptableGXMat4::OnMultiply ( lua_State* state )
+{
+    auto& self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    auto const& b = *static_cast<Item const*> ( lua_touserdata ( state, 3 ) );
+    auto const& a = *static_cast<Item const*> ( lua_touserdata ( state, 2 ) );
+    self._matrix.Multiply ( a._matrix, b._matrix );
+
+    return 0;
+}
+
+int ScriptableGXMat4::OnMultiplyAsNormal ( lua_State* state )
+{
+    auto& self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    self._matrix.MultiplyAsNormal ( ScriptableGXVec3::Extract ( state, 2 ), ScriptableGXVec3::Extract ( state, 3 ) );
+    return 0;
+}
+
+int ScriptableGXMat4::OnMultiplyAsPoint ( lua_State* state )
+{
+    auto& self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    self._matrix.MultiplyAsPoint ( ScriptableGXVec3::Extract ( state, 2 ), ScriptableGXVec3::Extract ( state, 3 ) );
+    return 0;
+}
+
 int ScriptableGXMat4::OnPerspective ( lua_State* state )
 {
     auto& item = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
@@ -219,6 +278,18 @@ R"__(%14g %14g %14g %14g
 
     lua_pushlstring ( state, result, static_cast<size_t> ( len ) );
     return 1;
+}
+
+int ScriptableGXMat4::OnTranslationF ( lua_State* state )
+{
+    auto& item = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+
+    item._matrix.Translation ( static_cast<float> ( lua_tonumber ( state, 2 ) ),
+        static_cast<float> ( lua_tonumber ( state, 3 ) ),
+        static_cast<float> ( lua_tonumber ( state, 4 ) )
+    );
+
+    return 0;
 }
 
 } // namespace pbr

@@ -28,7 +28,7 @@ local function MakeParams ( params, where )
 end
 
 local function FUCK ()
-    -- nothing
+    -- TODO
 end
 
 -- Entry points

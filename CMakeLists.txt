@@ -129,6 +129,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/pbr/script_component.cpp
     app/src/main/cpp/sources/pbr/script_engine.cpp
     app/src/main/cpp/sources/pbr/scriptable_gxmat4.cpp
+    app/src/main/cpp/sources/pbr/scriptable_gxvec3.cpp
     app/src/main/cpp/sources/pbr/scriptable_logger.cpp
     app/src/main/cpp/sources/pbr/static_mesh_component.cpp
     app/src/main/cpp/sources/pbr/stipple_material.cpp

@@ -1,5 +1,6 @@
 #include <pbr/script_engine.h>
 #include <pbr/scriptable_gxmat4.h>
+#include <pbr/scriptable_gxvec3.h>
 #include <pbr/scriptable_logger.h>
 #include <file.h>
 #include <logger.h>
@@ -132,6 +133,7 @@ void ScriptEngine::ExtendFrontend () const noexcept
 {
     lua_State* vm = _vm.get ();
     pbr::ScriptableGXMat4::Init ( vm );
+    pbr::ScriptableGXVec3::Init ( vm );
     pbr::ScriptableLogger::Register ( vm );
 }
 
@@ -168,6 +170,7 @@ bool ScriptEngine::InitInterfaceFunctions () const noexcept
         "OnUpdate"
     };
 
+    // NOLINTNEXTLINE - suggestion to use std::ranges::all_of which is unsupported by NDK 24.0.8215888
     for ( auto const* function : functions )
     {
         if ( int const type = lua_getglobal ( vm, function ); type == LUA_TFUNCTION )

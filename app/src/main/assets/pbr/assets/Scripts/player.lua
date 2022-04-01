@@ -7,19 +7,15 @@ Player = {}
 
 -- engine events
 local function OnPostPhysics ( self, deltaTime )
-    local t = self._transform;
-    t:Perspective ( 1.5, 16.0 / 9.0, 1.0, 7777.77 )
-    AVLogD ( string.format ( "Player:OnPostPhysics - deltaTime %g, transform:\n%s", deltaTime, t ) )
+    -- TODO
 end
 
 local function OnPrePhysics ( self, deltaTime )
-    local t = self._transform;
-    t:Scale ( 77.7, 3.33, 42.0 )
-    AVLogD ( string.format ( "Player:OnPrePhysics - deltaTime %g, transform:\n%s", deltaTime, t ) )
+    -- TODO
 end
 
 local function OnUpdate ( self, deltaTime )
-    AVLogD ( "Player:OnUpdate - deltaTime is " .. deltaTime .. "." )
+    -- TODO
 end
 
 -- metamethods
@@ -33,11 +29,6 @@ local function Constructor ( self, handle, params )
     end
 
     AVLogD ( "<<<" )
-
-    AVLogD ( "It's debug %s", '[debug string]' )
-    AVLogE ( "It's error: %f", math.rad ( 90.0 ) )
-    AVLogI ( "It's info %u", 156 )
-    AVLogW ( "It's warning: %f %s", 1.2, "another" )
 
     -- data
     obj._health = 100

@@ -51,8 +51,19 @@ class ScriptableGXVec3 final
         static void Insert ( Item* item, Item*& list ) noexcept;
 
         [[nodiscard]] static int OnCreate ( lua_State* state );
+        [[nodiscard]] static int OnCrossProduct ( lua_State* state );
         [[nodiscard]] static int OnDestroy ( lua_State* state );
+        [[nodiscard]] static int OnDistance ( lua_State* state );
+        [[nodiscard]] static int OnDotProduct ( lua_State* state );
         [[nodiscard]] static int OnInit ( lua_State* state );
+        [[nodiscard]] static int OnLength ( lua_State* state );
+        [[nodiscard]] static int OnNormalize ( lua_State* state );
+        [[nodiscard]] static int OnReverse ( lua_State* state );
+        [[nodiscard]] static int OnSquaredDistance ( lua_State* state );
+        [[nodiscard]] static int OnSquaredLength ( lua_State* state );
+        [[nodiscard]] static int OnSubtract ( lua_State* state );
+        [[nodiscard]] static int OnSum ( lua_State* state );
+        [[nodiscard]] static int OnSumScaled ( lua_State* state );
         [[nodiscard]] static int OnToString ( lua_State* state );
 };
 

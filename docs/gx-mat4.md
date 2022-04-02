@@ -289,7 +289,7 @@ Method initializes the matrix as rotation transform about _X_-axis.
 
 **Parameters:**
 
-- `angle` _[required, number]_: rotation angle about _X_-axis in radians
+- `angle` [_required, number_]: rotation angle about _X_-axis in radians
 
 **Return values:**
 

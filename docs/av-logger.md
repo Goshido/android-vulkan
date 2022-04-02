@@ -55,8 +55,8 @@ Function prints the message to log with _debug_ tag. The function supports forma
 
 **Parameters:**
 
-- `format` _[required, string]_: message or [formating string](https://en.cppreference.com/w/cpp/io/c/fprintf)
-- `...` _[optional, any]_: optional parameters controlled by `format` string
+- `format` [_required, string_]: message or [formating string](https://en.cppreference.com/w/cpp/io/c/fprintf)
+- `...` [_optional, any_]: optional parameters controlled by `format` string
 
 **Return values:**
 
@@ -80,8 +80,8 @@ Function prints the message to log with _error_ tag. The function supports forma
 
 **Parameters:**
 
-- `format` _[required, string]_: message or [formating string](https://en.cppreference.com/w/cpp/io/c/fprintf)
-- `...` _[optional, any]_: optional parameters controlled by `format` string
+- `format` [_required, string_]: message or [formating string](https://en.cppreference.com/w/cpp/io/c/fprintf)
+- `...` [_optional, any_]: optional parameters controlled by `format` string
 
 **Return values:**
 
@@ -105,8 +105,8 @@ Function prints the message to log with _info_ tag. The function supports format
 
 **Parameters:**
 
-- `format` _[required, string]_: message or [formating string](https://en.cppreference.com/w/cpp/io/c/fprintf)
-- `...` _[optional, any]_: optional parameters controlled by `format` string
+- `format` [_required, string_]: message or [formating string](https://en.cppreference.com/w/cpp/io/c/fprintf)
+- `...` [_optional, any_]: optional parameters controlled by `format` string
 
 **Return values:**
 
@@ -130,8 +130,8 @@ Function prints the message to log with _warning_ tag. The function supports for
 
 **Parameters:**
 
-- `format` _[required, string]_: message or [formating string](https://en.cppreference.com/w/cpp/io/c/fprintf)
-- `...` _[optional, any]_: optional parameters controlled by `format` string
+- `format` [_required, string_]: message or [formating string](https://en.cppreference.com/w/cpp/io/c/fprintf)
+- `...` [_optional, any_]: optional parameters controlled by `format` string
 
 **Return values:**
 

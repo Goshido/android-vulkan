@@ -1,4 +1,5 @@
 #include <pbr/scriptable_gxvec3.h>
+#include <logger.h>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -37,13 +38,68 @@ void ScriptableGXVec3::Init ( lua_State* vm ) noexcept
         },
 
         {
+            .name = "av_GXVec3CrossProduct",
+            .func = &ScriptableGXVec3::OnCrossProduct
+        },
+
+        {
             .name = "av_GXVec3Destroy",
             .func = &ScriptableGXVec3::OnDestroy
         },
 
         {
+            .name = "av_GXVec3Distance",
+            .func = &ScriptableGXVec3::OnDistance
+        },
+
+        {
+            .name = "av_GXVec3DotProduct",
+            .func = &ScriptableGXVec3::OnDotProduct
+        },
+
+        {
             .name = "av_GXVec3Init",
             .func = &ScriptableGXVec3::OnInit
+        },
+
+        {
+            .name = "av_GXVec3Length",
+            .func = &ScriptableGXVec3::OnLength
+        },
+
+        {
+            .name = "av_GXVec3Normalize",
+            .func = &ScriptableGXVec3::OnNormalize
+        },
+
+        {
+            .name = "av_GXVec3Reverse",
+            .func = &ScriptableGXVec3::OnReverse
+        },
+
+        {
+            .name = "av_GXVec3SquaredDistance",
+            .func = &ScriptableGXVec3::OnSquaredDistance
+        },
+
+        {
+            .name = "av_GXVec3SquaredLength",
+            .func = &ScriptableGXVec3::OnSquaredLength
+        },
+
+        {
+            .name = "av_GXVec3Subtract",
+            .func = &ScriptableGXVec3::OnSubtract
+        },
+
+        {
+            .name = "av_GXVec3Sum",
+            .func = &ScriptableGXVec3::OnSum
+        },
+
+        {
+            .name = "av_GXVec3SumScaled",
+            .func = &ScriptableGXVec3::OnSumScaled
         },
 
         {
@@ -114,6 +170,16 @@ int ScriptableGXVec3::OnCreate ( lua_State* state )
     return 1;
 }
 
+int ScriptableGXVec3::OnCrossProduct ( lua_State* state )
+{
+    auto& self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    auto const& a = *static_cast<Item const*> ( lua_touserdata ( state, 2 ) );
+    auto const& b = *static_cast<Item const*> ( lua_touserdata ( state, 3 ) );
+
+    self._vec3.CrossProduct ( a._vec3, b._vec3 );
+    return 0;
+}
+
 int ScriptableGXVec3::OnDestroy ( lua_State* state )
 {
     auto* item = static_cast<Item*> ( lua_touserdata ( state, 1 ) );
@@ -135,6 +201,36 @@ int ScriptableGXVec3::OnDestroy ( lua_State* state )
     return 0;
 }
 
+int ScriptableGXVec3::OnDistance ( lua_State* state )
+{
+    if ( !lua_checkstack ( state, 1 ) )
+    {
+        android_vulkan::LogWarning ( "pbr::ScriptableGXVec3::OnDistance - Stack too small." );
+        return 0;
+    }
+
+    auto& self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    auto const& other = *static_cast<Item const*> ( lua_touserdata ( state, 2 ) );
+    lua_pushnumber ( state, static_cast<lua_Number> ( self._vec3.Distance ( other._vec3 ) ) );
+
+    return 1;
+}
+
+int ScriptableGXVec3::OnDotProduct ( lua_State* state )
+{
+    if ( !lua_checkstack ( state, 1 ) )
+    {
+        android_vulkan::LogWarning ( "pbr::ScriptableGXVec3::OnDotProduct - Stack too small." );
+        return 0;
+    }
+
+    auto& self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    auto const& other = *static_cast<Item const*> ( lua_touserdata ( state, 2 ) );
+    lua_pushnumber ( state, static_cast<lua_Number> ( self._vec3.DotProduct ( other._vec3 ) ) );
+
+    return 1;
+}
+
 int ScriptableGXVec3::OnInit ( lua_State* state )
 {
     auto& item = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
@@ -147,10 +243,94 @@ int ScriptableGXVec3::OnInit ( lua_State* state )
     return 0;
 }
 
+int ScriptableGXVec3::OnLength ( lua_State* state )
+{
+    if ( !lua_checkstack ( state, 1 ) )
+    {
+        android_vulkan::LogWarning ( "pbr::ScriptableGXVec3::OnLength - Stack too small." );
+        return 0;
+    }
+
+    auto& item = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    lua_pushnumber ( state, static_cast<lua_Number> ( item._vec3.Length () ) );
+    return 1;
+}
+
+int ScriptableGXVec3::OnNormalize ( lua_State* state )
+{
+    auto& item = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    item._vec3.Normalize ();
+    return 0;
+}
+
+int ScriptableGXVec3::OnReverse ( lua_State* state )
+{
+    auto& item = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    item._vec3.Reverse ();
+    return 0;
+}
+
+int ScriptableGXVec3::OnSquaredDistance ( lua_State* state )
+{
+    if ( !lua_checkstack ( state, 1 ) )
+    {
+        android_vulkan::LogWarning ( "pbr::ScriptableGXVec3::OnSquaredDistance - Stack too small." );
+        return 0;
+    }
+
+    auto& self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    auto const& other = *static_cast<Item const*> ( lua_touserdata ( state, 2 ) );
+    lua_pushnumber ( state, static_cast<lua_Number> ( self._vec3.SquaredDistance ( other._vec3 ) ) );
+    return 1;
+}
+
+int ScriptableGXVec3::OnSquaredLength ( lua_State* state )
+{
+    if ( !lua_checkstack ( state, 1 ) )
+    {
+        android_vulkan::LogWarning ( "pbr::ScriptableGXVec3::OnSquaredLength - Stack too small." );
+        return 0;
+    }
+
+    auto& item = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    lua_pushnumber ( state, static_cast<lua_Number> ( item._vec3.SquaredLength () ) );
+    return 1;
+}
+
+int ScriptableGXVec3::OnSubtract ( lua_State* state )
+{
+    auto& self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    auto const& a = *static_cast<Item const*> ( lua_touserdata ( state, 2 ) );
+    auto const& b = *static_cast<Item const*> ( lua_touserdata ( state, 3 ) );
+
+    self._vec3.Subtract ( a._vec3, b._vec3 );
+    return 0;
+}
+
+int ScriptableGXVec3::OnSum ( lua_State* state )
+{
+    auto& self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    auto const& a = *static_cast<Item const*> ( lua_touserdata ( state, 2 ) );
+    auto const& b = *static_cast<Item const*> ( lua_touserdata ( state, 3 ) );
+
+    self._vec3.Sum ( a._vec3, b._vec3 );
+    return 0;
+}
+
+int ScriptableGXVec3::OnSumScaled ( lua_State* state )
+{
+    auto& self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    auto const& a = *static_cast<Item const*> ( lua_touserdata ( state, 2 ) );
+    auto const& b = *static_cast<Item const*> ( lua_touserdata ( state, 4 ) );
+
+    self._vec3.Sum ( a._vec3, static_cast<float> ( lua_tonumber ( state, 3 ) ), b._vec3 );
+    return 0;
+}
+
 int ScriptableGXVec3::OnToString ( lua_State* state )
 {
-    auto const* item = static_cast<Item const*> ( lua_touserdata ( state, 1 ) );
-    GXVec3 const& v = item->_vec3;
+    auto const& item = *static_cast<Item const*> ( lua_touserdata ( state, 1 ) );
+    GXVec3 const& v = item._vec3;
 
     char result[ 128U ];
 

@@ -43,6 +43,26 @@ void ScriptableGXMat4::Init ( lua_State* vm ) noexcept
         },
 
         {
+            .name = "av_GXMat4GetX",
+            .func = &ScriptableGXMat4::OnGetX
+        },
+
+        {
+            .name = "av_GXMat4GetY",
+            .func = &ScriptableGXMat4::OnGetY
+        },
+
+        {
+            .name = "av_GXMat4GetZ",
+            .func = &ScriptableGXMat4::OnGetZ
+        },
+
+        {
+            .name = "av_GXMat4GetW",
+            .func = &ScriptableGXMat4::OnGetW
+        },
+
+        {
             .name = "av_GXMat4Identity",
             .func = &ScriptableGXMat4::OnIdentity
         },
@@ -78,8 +98,38 @@ void ScriptableGXMat4::Init ( lua_State* vm ) noexcept
         },
 
         {
+            .name = "av_GXMat4RotationY",
+            .func = &ScriptableGXMat4::OnRotationY
+        },
+
+        {
+            .name = "av_GXMat4RotationZ",
+            .func = &ScriptableGXMat4::OnRotationZ
+        },
+
+        {
             .name = "av_GXMat4Scale",
             .func = &ScriptableGXMat4::OnScale
+        },
+
+        {
+            .name = "av_GXMat4SetX",
+            .func = &ScriptableGXMat4::OnSetX
+        },
+
+        {
+            .name = "av_GXMat4SetY",
+            .func = &ScriptableGXMat4::OnSetY
+        },
+
+        {
+            .name = "av_GXMat4SetZ",
+            .func = &ScriptableGXMat4::OnSetZ
+        },
+
+        {
+            .name = "av_GXMat4SetW",
+            .func = &ScriptableGXMat4::OnSetW
         },
 
         {
@@ -170,6 +220,34 @@ int ScriptableGXMat4::OnDestroy ( lua_State* state )
     return 0;
 }
 
+int ScriptableGXMat4::OnGetX ( lua_State* state )
+{
+    auto const& self = *static_cast<Item const*> ( lua_touserdata ( state, 1 ) );
+    self._matrix.GetX ( ScriptableGXVec3::Extract ( state, 2 ) );
+    return 0;
+}
+
+int ScriptableGXMat4::OnGetY ( lua_State* state )
+{
+    auto const& self = *static_cast<Item const*> ( lua_touserdata ( state, 1 ) );
+    self._matrix.GetY ( ScriptableGXVec3::Extract ( state, 2 ) );
+    return 0;
+}
+
+int ScriptableGXMat4::OnGetZ ( lua_State* state )
+{
+    auto const& self = *static_cast<Item const*> ( lua_touserdata ( state, 1 ) );
+    self._matrix.GetZ ( ScriptableGXVec3::Extract ( state, 2 ) );
+    return 0;
+}
+
+int ScriptableGXMat4::OnGetW ( lua_State* state )
+{
+    auto const& self = *static_cast<Item const*> ( lua_touserdata ( state, 1 ) );
+    self._matrix.GetW ( ScriptableGXVec3::Extract ( state, 2 ) );
+    return 0;
+}
+
 int ScriptableGXMat4::OnIdentity ( lua_State* state )
 {
     auto& item = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
@@ -230,6 +308,20 @@ int ScriptableGXMat4::OnRotationX ( lua_State* state )
     return 0;
 }
 
+int ScriptableGXMat4::OnRotationY ( lua_State* state )
+{
+    auto& item = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    item._matrix.RotationY ( static_cast<float> ( lua_tonumber ( state, 2 ) ) );
+    return 0;
+}
+
+int ScriptableGXMat4::OnRotationZ ( lua_State* state )
+{
+    auto& item = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    item._matrix.RotationZ ( static_cast<float> ( lua_tonumber ( state, 2 ) ) );
+    return 0;
+}
+
 int ScriptableGXMat4::OnScale ( lua_State* state )
 {
     auto& item = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
@@ -239,6 +331,34 @@ int ScriptableGXMat4::OnScale ( lua_State* state )
         static_cast<float> ( lua_tonumber ( state, 4 ) )
     );
 
+    return 0;
+}
+
+int ScriptableGXMat4::OnSetX ( lua_State* state )
+{
+    auto& self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    self._matrix.SetX ( ScriptableGXVec3::Extract ( state, 2 ) );
+    return 0;
+}
+
+int ScriptableGXMat4::OnSetY ( lua_State* state )
+{
+    auto& self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    self._matrix.SetY ( ScriptableGXVec3::Extract ( state, 2 ) );
+    return 0;
+}
+
+int ScriptableGXMat4::OnSetZ ( lua_State* state )
+{
+    auto& self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    self._matrix.SetZ ( ScriptableGXVec3::Extract ( state, 2 ) );
+    return 0;
+}
+
+int ScriptableGXMat4::OnSetW ( lua_State* state )
+{
+    auto& self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    self._matrix.SetW ( ScriptableGXVec3::Extract ( state, 2 ) );
     return 0;
 }
 

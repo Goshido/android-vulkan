@@ -9,6 +9,10 @@ require "av://engine/gx_mat4.lua"
 - [_Brief_](#brief)
 - [_Metamethods_](#metamethods)
 - [`Constructor`](#constructor)
+- [`GetX ( x )`](#method-get-x)
+- [`GetY ( y )`](#method-get-y)
+- [`GetZ ( z )`](#method-get-z)
+- [`GetW ( w )`](#method-get-w)
 - [`Identity ()`](#method-identity)
 - [`Inverse ( sourceMatrix )`](#method-inverse)
 - [`Multiply ( a, b )`](#method-multiply)
@@ -16,7 +20,13 @@ require "av://engine/gx_mat4.lua"
 - [`MultiplyAsPoint ( out, v )`](#method-multiply-as-point)
 - [`Perspective ( fieldOfViewYRadians, aspectRatio, zNear, zFar )`](#method-perspective)
 - [`RotationX ( angle )`](#method-rotation-x)
+- [`RotationY ( angle )`](#method-rotation-y)
+- [`RotationZ ( angle )`](#method-rotation-z)
 - [`Scale ( x, y, z )`](#method-scale)
+- [`SetX ( x )`](#method-set-x)
+- [`SetY ( y )`](#method-set-y)
+- [`SetZ ( z )`](#method-set-z)
+- [`SetW ( w )`](#method-set-w)
 - [`TranslationF ( x, y, z )`](#method-translation-f)
 
 ## <a id="brief">Brief</a>
@@ -36,7 +46,7 @@ require "av://engine/gx_mat4.lua"
 
 
 local m = GXMat4 ()
-m:RotationX ( 1.5 )
+m:RotationX ( math.rad ( 33.3 ) )
 
 local camera = GXMat4 ()
 camera:TranslationF ( 77.0, 0.0, 0.0 )
@@ -44,8 +54,11 @@ camera:TranslationF ( 77.0, 0.0, 0.0 )
 local v = GXMat4 ()
 v:Inverse ( camera )
 
+local fov = 90.0
+local width = 1920.0
+local height = 1080.0
 local p = GXMat4 ()
-p:Perspective ( 0.4, 16.0 / 9.0, 1.0, 77777.0 )
+p:Perspective ( math.rad ( fov ), width / height, 1.0, 77777.77 )
 
 local mv = GXMat4 ()
 mv:Multiply ( m, v )
@@ -106,6 +119,106 @@ require "av://engine/gx_mat4.lua"
 
 
 local m = GXMat4 ()
+```
+
+## <a id="method-get-x">`GetX ( x )`</a>
+
+Method writes first three components of the [_X_ row](#brief) of current matrix to the supplied `x` vector of the [_GXVec3_](./gx-vec3.md) type.
+
+**Parameters:**
+
+- `x` [_required, [_GXVec3_](./gx-vec3.md)_]: target vector
+
+**Return values:**
+
+- none
+
+**Example:**
+
+```lua
+require "av://engine/gx_mat4.lua"
+
+
+local m = GXMat4 ()
+m:RotationX ( math.rad ( 33.3 ) )
+
+local v = GXVec3 ()
+m:GetX ( v )
+```
+
+## <a id="method-get-y">`GetY ( y )`</a>
+
+Method writes first three components of the [_Y_ row](#brief) of current matrix to the supplied `y` vector of the [_GXVec3_](./gx-vec3.md) type.
+
+**Parameters:**
+
+- `y` [_required, [_GXVec3_](./gx-vec3.md)_]: target vector
+
+**Return values:**
+
+- none
+
+**Example:**
+
+```lua
+require "av://engine/gx_mat4.lua"
+
+
+local m = GXMat4 ()
+m:RotationX ( math.rad ( 33.3 ) )
+
+local v = GXVec3 ()
+m:GetY ( v )
+```
+
+## <a id="method-get-z">`GetZ ( z )`</a>
+
+Method writes first three components of the [_Z_ row](#brief) of current matrix to the supplied `z` vector of the [_GXVec3_](./gx-vec3.md) type.
+
+**Parameters:**
+
+- `z` [_required, [_GXVec3_](./gx-vec3.md)_]: target vector
+
+**Return values:**
+
+- none
+
+**Example:**
+
+```lua
+require "av://engine/gx_mat4.lua"
+
+
+local m = GXMat4 ()
+m:RotationX ( math.rad ( 33.3 ) )
+
+local v = GXVec3 ()
+m:GetZ ( v )
+```
+
+## <a id="method-get-w">`GetW ( w )`</a>
+
+Method writes first three components of the [_W_ row](#brief) of current matrix to the supplied `w` vector of the [_GXVec3_](./gx-vec3.md) type.
+
+**Parameters:**
+
+- `w` [_required, [_GXVec3_](./gx-vec3.md)_]: target vector
+
+**Return values:**
+
+- none
+
+**Example:**
+
+```lua
+require "av://engine/gx_mat4.lua"
+
+
+local m = GXMat4 ()
+m:RotationX ( math.rad ( 33.3 ) )
+
+local v = GXVec3 ()
+m:GetW ( v )
 ```
 
 ## <a id="method-identity">`Identity ()`</a>
@@ -239,7 +352,7 @@ local vLocal = GXVec3 ()
 vLocal:Init ( 1.0, 777.0, 33.3 )
 
 local m = GXMat4 ()
-m:RotationX ( 1.5 )
+m:RotationX ( math.rad ( 33.3 ) )
 
 local camera = GXMat4 ()
 camera:TranslationF ( 77.0, -10.0, 3.33 )
@@ -285,7 +398,7 @@ p:Perspective ( math.rad ( fov ), width / height, 1.0, 77777.77 )
 
 ## <a id="method-rotation-x">`RotationX ( angle )`</a>
 
-Method initializes the matrix as rotation transform about _X_-axis.
+Method initializes the current matrix as rotation transform about _X_-axis.
 
 **Parameters:**
 
@@ -302,7 +415,51 @@ require "av://engine/gx_mat4.lua"
 
 
 local r = GXMat4 ()
-r:RotationX ( 1.15 )
+r:RotationX ( math.rad ( 33.3 ) )
+```
+
+## <a id="method-rotation-y">`RotationY ( angle )`</a>
+
+Method initializes the current matrix as rotation transform about _Y_-axis.
+
+**Parameters:**
+
+- `angle` [_required, number_]: rotation angle about _Y_-axis in radians
+
+**Return values:**
+
+- none
+
+**Example:**
+
+```lua
+require "av://engine/gx_mat4.lua"
+
+
+local r = GXMat4 ()
+r:RotationY ( math.rad ( 33.3 ) )
+```
+
+## <a id="method-rotation-z">`RotationZ ( angle )`</a>
+
+Method initializes the current matrix as rotation transform about _Z_-axis.
+
+**Parameters:**
+
+- `angle` [_required, number_]: rotation angle about _Z_-axis in radians
+
+**Return values:**
+
+- none
+
+**Example:**
+
+```lua
+require "av://engine/gx_mat4.lua"
+
+
+local r = GXMat4 ()
+r:RotationZ ( math.rad ( 33.3 ) )
 ```
 
 ## <a id="method-scale">`Scale ( x, y, z )`</a>
@@ -329,9 +486,113 @@ local s = GXMat4 ()
 s:Scale ( 77.7, 3.33, 1.0 )
 ```
 
+## <a id="method-set-x">`SetX ( x )`</a>
+
+Method sets first three components of the [_X_ row](#brief) of current matrix from the supplied `x` vector of the [_GXVec3_](./gx-vec3.md) type.
+
+**Parameters:**
+
+- `x` [_required, [_GXVec3_](./gx-vec3.md)_]: source vector
+
+**Return values:**
+
+- none
+
+**Example:**
+
+```lua
+require "av://engine/gx_mat4.lua"
+
+
+local v = GXVec3 ()
+v:Init ( 1.0, 777.0, 33.3 )
+
+local m = GXMat4 ()
+m:RotationX ( math.rad ( 33.3 ) )
+m:SetX ( v )
+```
+
+## <a id="method-set-y">`SetY ( y )`</a>
+
+Method sets first three components of the [_Y_ row](#brief) of current matrix from the supplied `y` vector of the [_GXVec3_](./gx-vec3.md) type.
+
+**Parameters:**
+
+- `y` [_required, [_GXVec3_](./gx-vec3.md)_]: source vector
+
+**Return values:**
+
+- none
+
+**Example:**
+
+```lua
+require "av://engine/gx_mat4.lua"
+
+
+local v = GXVec3 ()
+v:Init ( 1.0, 777.0, 33.3 )
+
+local m = GXMat4 ()
+m:RotationX ( math.rad ( 33.3 ) )
+m:SetY ( v )
+```
+
+## <a id="method-set-z">`SetZ ( z )`</a>
+
+Method sets first three components of the [_Z_ row](#brief) of current matrix from the supplied `z` vector of the [_GXVec3_](./gx-vec3.md) type.
+
+**Parameters:**
+
+- `z` [_required, [_GXVec3_](./gx-vec3.md)_]: source vector
+
+**Return values:**
+
+- none
+
+**Example:**
+
+```lua
+require "av://engine/gx_mat4.lua"
+
+
+local v = GXVec3 ()
+v:Init ( 1.0, 777.0, 33.3 )
+
+local m = GXMat4 ()
+m:RotationX ( math.rad ( 33.3 ) )
+m:SetZ ( v )
+```
+
+## <a id="method-set-w">`SetW ( w )`</a>
+
+Method sets first three components of the [_W_ row](#brief) of current matrix from the supplied `w` vector of the [_GXVec3_](./gx-vec3.md) type.
+
+**Parameters:**
+
+- `w` [_required, [_GXVec3_](./gx-vec3.md)_]: source vector
+
+**Return values:**
+
+- none
+
+**Example:**
+
+```lua
+require "av://engine/gx_mat4.lua"
+
+
+local v = GXVec3 ()
+v:Init ( 1.0, 777.0, 33.3 )
+
+local m = GXMat4 ()
+m:RotationX ( math.rad ( 33.3 ) )
+m:SetW ( v )
+```
+
 ## <a id="method-translation-f">`TranslationF ( x, y, z )`</a>
 
-Method initializes the matrix with translation transformation.
+Method initializes the current matrix as translation transformation.
 
 **Parameters:**
 

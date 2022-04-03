@@ -50,6 +50,10 @@ class ScriptableGXMat4 final
 
         [[nodiscard]] static int OnCreate ( lua_State* state );
         [[nodiscard]] static int OnDestroy ( lua_State* state );
+        [[nodiscard]] static int OnGetX ( lua_State* state );
+        [[nodiscard]] static int OnGetY ( lua_State* state );
+        [[nodiscard]] static int OnGetZ ( lua_State* state );
+        [[nodiscard]] static int OnGetW ( lua_State* state );
         [[nodiscard]] static int OnIdentity ( lua_State* state );
         [[nodiscard]] static int OnInverse ( lua_State* state );
         [[nodiscard]] static int OnMultiply ( lua_State* state );
@@ -57,7 +61,13 @@ class ScriptableGXMat4 final
         [[nodiscard]] static int OnMultiplyAsPoint ( lua_State* state );
         [[nodiscard]] static int OnPerspective ( lua_State* state );
         [[nodiscard]] static int OnRotationX ( lua_State* state );
+        [[nodiscard]] static int OnRotationY ( lua_State* state );
+        [[nodiscard]] static int OnRotationZ ( lua_State* state );
         [[nodiscard]] static int OnScale ( lua_State* state );
+        [[nodiscard]] static int OnSetX ( lua_State* state );
+        [[nodiscard]] static int OnSetY ( lua_State* state );
+        [[nodiscard]] static int OnSetZ ( lua_State* state );
+        [[nodiscard]] static int OnSetW ( lua_State* state );
         [[nodiscard]] static int OnToString ( lua_State* state );
         [[nodiscard]] static int OnTranslationF ( lua_State* state );
 };

@@ -1,10 +1,45 @@
-require "av://engine/av_object.lua"
 require "av://engine/gx_vec3.lua"
 
 
 GXMat4 = {}
 
 -- methods
+local function GetX ( self, x )
+    assert ( type ( self ) == "table" and self._type == eAVObjectType.GXMat4,
+        [[GXMat4:GetX - Calling not via ":" syntax.]]
+    )
+
+    assert ( type ( x ) == "table" and x._type == eAVObjectType.GXVec3, [[GXMat4:GetX - "x" is not a GXVec3.]] )
+    av_GXMat4GetX ( self._handle, x._handle )
+end
+
+local function GetY ( self, y )
+    assert ( type ( self ) == "table" and self._type == eAVObjectType.GXMat4,
+        [[GXMat4:GetY - Calling not via ":" syntax.]]
+    )
+
+    assert ( type ( y ) == "table" and y._type == eAVObjectType.GXVec3, [[GXMat4:GetY - "y" is not a GXVec3.]] )
+    av_GXMat4GetY ( self._handle, y._handle )
+end
+
+local function GetZ ( self, z )
+    assert ( type ( self ) == "table" and self._type == eAVObjectType.GXMat4,
+        [[GXMat4:GetZ - Calling not via ":" syntax.]]
+    )
+
+    assert ( type ( z ) == "table" and z._type == eAVObjectType.GXVec3, [[GXMat4:GetZ - "z" is not a GXVec3.]] )
+    av_GXMat4GetZ ( self._handle, z._handle )
+end
+
+local function GetW ( self, w )
+    assert ( type ( self ) == "table" and self._type == eAVObjectType.GXMat4,
+        [[GXMat4:GetW - Calling not via ":" syntax.]]
+    )
+
+    assert ( type ( w ) == "table" and w._type == eAVObjectType.GXVec3, [[GXMat4:GetW - "w" is not a GXVec3.]] )
+    av_GXMat4GetW ( self._handle, w._handle )
+end
+
 local function Identity ( self )
     assert ( type ( self ) == "table" and self._type == eAVObjectType.GXMat4,
         [[GXMat4:Identity - Calling not via ":" syntax.]]
@@ -93,6 +128,24 @@ local function RotationX ( self, angle )
     av_GXMat4RotationX ( self._handle, angle )
 end
 
+local function RotationY ( self, angle )
+    assert ( type ( self ) == "table" and self._type == eAVObjectType.GXMat4,
+        [[GXMat4:RotationY - Calling not via ":" syntax.]]
+    )
+
+    assert ( type ( angle ) == "number", [[GXMat4:RotationY - "angle" is not a number.]] )
+    av_GXMat4RotationY ( self._handle, angle )
+end
+
+local function RotationZ ( self, angle )
+    assert ( type ( self ) == "table" and self._type == eAVObjectType.GXMat4,
+        [[GXMat4:RotationZ - Calling not via ":" syntax.]]
+    )
+
+    assert ( type ( angle ) == "number", [[GXMat4:RotationZ - "angle" is not a number.]] )
+    av_GXMat4RotationZ ( self._handle, angle )
+end
+
 local function Scale ( self, x, y, z )
     assert ( type ( self ) == "table" and self._type == eAVObjectType.GXMat4,
         [[GXMat4:Scale - Calling not via ":" syntax]]
@@ -103,6 +156,42 @@ local function Scale ( self, x, y, z )
     assert ( type ( z ) == "number", [[GXMat4:Scale - "z" is not a number.]] )
 
     av_GXMat4Scale ( self._handle, x, y, z )
+end
+
+local function SetX ( self, x )
+    assert ( type ( self ) == "table" and self._type == eAVObjectType.GXMat4,
+        [[GXMat4:SetX - Calling not via ":" syntax.]]
+    )
+
+    assert ( type ( x ) == "table" and x._type == eAVObjectType.GXVec3, [[GXMat4:SetX - "x" is not a GXVec3.]] )
+    av_GXMat4SetX ( self._handle, x._handle )
+end
+
+local function SetY ( self, y )
+    assert ( type ( self ) == "table" and self._type == eAVObjectType.GXMat4,
+        [[GXMat4:SetY - Calling not via ":" syntax.]]
+    )
+
+    assert ( type ( y ) == "table" and y._type == eAVObjectType.GXVec3, [[GXMat4:SetY - "y" is not a GXVec3.]] )
+    av_GXMat4SetY ( self._handle, y._handle )
+end
+
+local function SetZ ( self, z )
+    assert ( type ( self ) == "table" and self._type == eAVObjectType.GXMat4,
+        [[GXMat4:SetZ - Calling not via ":" syntax.]]
+    )
+
+    assert ( type ( z ) == "table" and z._type == eAVObjectType.GXVec3, [[GXMat4:SetZ - "z" is not a GXVec3.]] )
+    av_GXMat4SetZ ( self._handle, z._handle )
+end
+
+local function SetW ( self, w )
+    assert ( type ( self ) == "table" and self._type == eAVObjectType.GXMat4,
+        [[GXMat4:SetW - Calling not via ":" syntax.]]
+    )
+
+    assert ( type ( w ) == "table" and w._type == eAVObjectType.GXVec3, [[GXMat4:SetW - "w" is not a GXVec3.]] )
+    av_GXMat4SetW ( self._handle, w._handle )
 end
 
 local function TranslationF ( self, x, y, z )
@@ -142,6 +231,10 @@ local function Constructor ( self )
     obj.__tostring = OnToString
 
     -- methods
+    obj.GetX = GetX
+    obj.GetY = GetY
+    obj.GetZ = GetZ
+    obj.GetW = GetW
     obj.Identity = Identity
     obj.Inverse = Inverse
     obj.Multiply = Multiply
@@ -149,7 +242,13 @@ local function Constructor ( self )
     obj.MultiplyAsPoint = MultiplyAsPoint
     obj.Perspective = Perspective
     obj.RotationX = RotationX
+    obj.RotationY = RotationY
+    obj.RotationZ = RotationZ
     obj.Scale = Scale
+    obj.SetX = SetX
+    obj.SetY = SetY
+    obj.SetZ = SetZ
+    obj.SetW = SetW
     obj.TranslationF = TranslationF
 
     return setmetatable ( obj, obj )

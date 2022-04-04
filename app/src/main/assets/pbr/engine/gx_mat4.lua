@@ -1,4 +1,5 @@
 require "av://engine/gx_vec3.lua"
+require "av://engine/gx_vec4.lua"
 
 
 GXMat4 = {}
@@ -71,6 +72,22 @@ local function Multiply ( self, a, b )
     av_GXMat4Multiply ( self._handle, a._handle, b._handle )
 end
 
+local function MultiplyMatrixVector ( self, out, v )
+    assert ( type ( self ) == "table" and self._type == eAVObjectType.GXMat4,
+        [[GXMat4:MultiplyMatrixVector - Calling not via ":" syntax.]]
+    )
+
+    assert ( type ( out ) == "table" and out._type == eAVObjectType.GXVec4,
+        [[GXMat4:MultiplyMatrixVector - "out" is not a GXVec4.]]
+    )
+
+    assert ( type ( v ) == "table" and v._type == eAVObjectType.GXVec4,
+        [[GXMat4:MultiplyMatrixVector - "v" is not a GXVec4.]]
+    )
+
+    av_GXMat4MultiplyMatrixVector ( self._handle, out._handle, v._handle )
+end
+
 local function MultiplyAsNormal ( self, out, v )
     assert ( type ( self ) == "table" and self._type == eAVObjectType.GXMat4,
         [[GXMat4:MultiplyAsNormal - Calling not via ":" syntax.]]
@@ -101,6 +118,22 @@ local function MultiplyAsPoint ( self, out, v )
     )
 
     av_GXMat4MultiplyAsPoint ( self._handle, out._handle, v._handle )
+end
+
+local function MultiplyVectorMatrix ( self, out, v )
+    assert ( type ( self ) == "table" and self._type == eAVObjectType.GXMat4,
+        [[GXMat4:MultiplyVectorMatrix - Calling not via ":" syntax.]]
+    )
+
+    assert ( type ( out ) == "table" and out._type == eAVObjectType.GXVec4,
+        [[GXMat4:MultiplyVectorMatrix - "out" is not a GXVec4.]]
+    )
+
+    assert ( type ( v ) == "table" and v._type == eAVObjectType.GXVec4,
+        [[GXMat4:MultiplyVectorMatrix - "v" is not a GXVec4.]]
+    )
+
+    av_GXMat4MultiplyVectorMatrix ( self._handle, out._handle, v._handle )
 end
 
 local function Perspective ( self, fieldOfViewYRadians, aspectRatio, zNear, zFar )
@@ -194,16 +227,16 @@ local function SetW ( self, w )
     av_GXMat4SetW ( self._handle, w._handle )
 end
 
-local function TranslationF ( self, x, y, z )
+local function Translation ( self, x, y, z )
     assert ( type ( self ) == "table" and self._type == eAVObjectType.GXMat4,
-        [[GXMat4:TranslationF - Calling not via ":" syntax]]
+        [[GXMat4:Translation - Calling not via ":" syntax]]
     )
 
-    assert ( type ( x ) == "number", [[GXMat4:TranslationF - "x" is not a number.]] )
-    assert ( type ( y ) == "number", [[GXMat4:TranslationF - "y" is not a number.]] )
-    assert ( type ( z ) == "number", [[GXMat4:TranslationF - "z" is not a number.]] )
+    assert ( type ( x ) == "number", [[GXMat4:Translation - "x" is not a number.]] )
+    assert ( type ( y ) == "number", [[GXMat4:Translation - "y" is not a number.]] )
+    assert ( type ( z ) == "number", [[GXMat4:Translation - "z" is not a number.]] )
 
-    av_GXMat4TranslationF ( self._handle, x, y, z )
+    av_GXMat4Translation ( self._handle, x, y, z )
 end
 
 -- metamethods
@@ -238,8 +271,10 @@ local function Constructor ( self )
     obj.Identity = Identity
     obj.Inverse = Inverse
     obj.Multiply = Multiply
+    obj.MultiplyMatrixVector = MultiplyMatrixVector
     obj.MultiplyAsNormal = MultiplyAsNormal
     obj.MultiplyAsPoint = MultiplyAsPoint
+    obj.MultiplyVectorMatrix = MultiplyVectorMatrix
     obj.Perspective = Perspective
     obj.RotationX = RotationX
     obj.RotationY = RotationY
@@ -249,7 +284,7 @@ local function Constructor ( self )
     obj.SetY = SetY
     obj.SetZ = SetZ
     obj.SetW = SetW
-    obj.TranslationF = TranslationF
+    obj.Translation = Translation
 
     return setmetatable ( obj, obj )
 end

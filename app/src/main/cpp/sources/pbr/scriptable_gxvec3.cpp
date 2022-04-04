@@ -17,8 +17,8 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-// 2 Mb of data at 64bit system
-constexpr static size_t INITIAL_CAPACITY = 65536U;
+// ~2 Mb of data at 64bit system
+constexpr static size_t INITIAL_CAPACITY = 74'898U;
 
 //----------------------------------------------------------------------------------------------------------------------
 

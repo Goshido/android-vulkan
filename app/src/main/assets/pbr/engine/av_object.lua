@@ -9,8 +9,10 @@ local MakeUniqueID = ( function ()
 end ) ()
 
 eAVObjectType = {
+    GXMat3 = MakeUniqueID (),
     GXMat4 = MakeUniqueID (),
     GXVec3 = MakeUniqueID (),
+    GXVec4 = MakeUniqueID (),
     ScriptComponent = MakeUniqueID (),
     Unknown = MakeUniqueID ()
 }

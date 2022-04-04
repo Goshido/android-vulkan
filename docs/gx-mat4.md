@@ -16,8 +16,10 @@ require "av://engine/gx_mat4.lua"
 - [`Identity ()`](#method-identity)
 - [`Inverse ( sourceMatrix )`](#method-inverse)
 - [`Multiply ( a, b )`](#method-multiply)
+- [`MultiplyMatrixVector ( out, v )`](#method-multiply-matrix-vector)
 - [`MultiplyAsNormal ( out, v )`](#method-multiply-as-normal)
 - [`MultiplyAsPoint ( out, v )`](#method-multiply-as-point)
+- [`MultiplyVectorMatrix ( out, v )`](#method-multiply-vector-matrix)
 - [`Perspective ( fieldOfViewYRadians, aspectRatio, zNear, zFar )`](#method-perspective)
 - [`RotationX ( angle )`](#method-rotation-x)
 - [`RotationY ( angle )`](#method-rotation-y)
@@ -27,7 +29,7 @@ require "av://engine/gx_mat4.lua"
 - [`SetY ( y )`](#method-set-y)
 - [`SetZ ( z )`](#method-set-z)
 - [`SetW ( w )`](#method-set-w)
-- [`TranslationF ( x, y, z )`](#method-translation-f)
+- [`Translation ( x, y, z )`](#method-translation)
 
 ## <a id="brief">Brief</a>
 
@@ -49,7 +51,7 @@ local m = GXMat4 ()
 m:RotationX ( math.rad ( 33.3 ) )
 
 local camera = GXMat4 ()
-camera:TranslationF ( 77.0, 0.0, 0.0 )
+camera:Translation ( -77.0, 0.0, 0.0 )
 
 local v = GXMat4 ()
 v:Inverse ( camera )
@@ -66,9 +68,10 @@ mv:Multiply ( m, v )
 local mvp = GXMat4 ()
 mvp:Multiply ( mv, p )
 
-local vertexLocal = GXVec4 ( 7.0, 3.3, 0.0, 1.0 )
-local vertexCVV = GXVec4 ()
+local vertexLocal = GXVec4 ()
+vertexLocal:Init ( 7.0, 3.3, 0.0, 1.0 )
 
+local vertexCVV = GXVec4 ()
 mvp:MultiplyVectorMatrix ( vertexCVV, vertexLocal )
 ```
 
@@ -127,7 +130,7 @@ Method writes first three components of the [_X_ row](#brief) of current matrix 
 
 **Parameters:**
 
-- `x` [_required, [_GXVec3_](./gx-vec3.md)_]: target vector
+- `x` [_required, writeonly, [_GXVec3_](./gx-vec3.md)_]: target vector
 
 **Return values:**
 
@@ -152,7 +155,7 @@ Method writes first three components of the [_Y_ row](#brief) of current matrix 
 
 **Parameters:**
 
-- `y` [_required, [_GXVec3_](./gx-vec3.md)_]: target vector
+- `y` [_required, writeonly, [_GXVec3_](./gx-vec3.md)_]: target vector
 
 **Return values:**
 
@@ -177,7 +180,7 @@ Method writes first three components of the [_Z_ row](#brief) of current matrix 
 
 **Parameters:**
 
-- `z` [_required, [_GXVec3_](./gx-vec3.md)_]: target vector
+- `z` [_required, writeonly, [_GXVec3_](./gx-vec3.md)_]: target vector
 
 **Return values:**
 
@@ -202,7 +205,7 @@ Method writes first three components of the [_W_ row](#brief) of current matrix 
 
 **Parameters:**
 
-- `w` [_required, [_GXVec3_](./gx-vec3.md)_]: target vector
+- `w` [_required, writeonly, [_GXVec3_](./gx-vec3.md)_]: target vector
 
 **Return values:**
 
@@ -249,7 +252,7 @@ Method initializes the matrix as inverse matrix to `sourceMatrix` matrix. `sourc
 
 **Parameters:**
 
-- `sourceMatrix` [_required, [GXMat4](./gx-mat4.md)_]: matrix to inverse
+- `sourceMatrix` [_required, readonly, [GXMat4](./gx-mat4.md)_]: matrix to inverse
 
 **Return values:**
 
@@ -274,8 +277,8 @@ Method initializes the matrix as a product of the matrix multiplication `a` x `b
 
 **Parameters:**
 
-- `a` [_required, [GXMat4](./gx-mat4.md)_]: left matrix
-- `b` [_required, [GXMat4](./gx-mat4.md)_]: right matrix
+- `a` [_required, readonly, [GXMat4](./gx-mat4.md)_]: left matrix
+- `b` [_required, readonly, [GXMat4](./gx-mat4.md)_]: right matrix
 
 **Return values:**
 
@@ -301,14 +304,43 @@ local m = GXMat4 ()
 m:Multiply ( a, b )
 ```
 
+## <a id="method-multiply-matrix-vector">`MultiplyMatrixVector ( out, v )`</a>
+
+Method performs matrix-vector multiplication of current matrix `self` and `v` [column-vector](https://en.wikipedia.org/wiki/Row_and_column_vectors): `self` x `v`. The result is written to the `out` [column-vector](https://en.wikipedia.org/wiki/Row_and_column_vectors).
+
+**Parameters:**
+
+- `out` [_required, writeonly, [GXVec4](./gx-vec4.md)_]: result [column-vector](https://en.wikipedia.org/wiki/Row_and_column_vectors)
+- `v` [_required, readonly, [GXVec4](./gx-vec4.md)_]: source [column-vector](https://en.wikipedia.org/wiki/Row_and_column_vectors)
+
+**Return values:**
+
+- none
+
+**Example:**
+
+```lua
+require "av://engine/gx_mat4.lua"
+
+
+local v0 = GXVec4 ()
+v0:Init ( 1.0, 777.0, 33.3, 1.0 )
+
+local m = GXMat4 ()
+m:RotationX ( math.rad ( 33.3 ) )
+
+local v1 = GXVec4 ()
+m:MultiplyMatrixVector ( v1, v0 )
+```
+
 ## <a id="method-multiply-as-normal">`MultiplyAsNormal ( out, v )`</a>
 
 Method applies rotation and scale transforms of current matrix to vector `v` and writes the result to vector `out`. 
 
 **Parameters:**
 
-- `out` [_required, [GXVec3](./gx-vec3.md)_]: result vector
-- `v` [_required, [GXVec3](./gx-vec3.md)_]: source vector
+- `out` [_required, writeonly, [GXVec3](./gx-vec3.md)_]: result vector
+- `v` [_required, readonly, [GXVec3](./gx-vec3.md)_]: source vector
 
 **Return values:**
 
@@ -329,14 +361,15 @@ r:RotationX ( math.rad ( 77.7 ) )
 local n = GXVec3 ()
 r:MultiplyAsNormal ( n, v )
 ```
+
 ## <a id="method-multiply-as-point">`MultiplyAsPoint ( out, v )`</a>
 
 Method applies rotation, scale and translation transforms of current matrix to vector `v` and writes the result to vector `out`. 
 
 **Parameters:**
 
-- `out` [_required, [GXVec3](./gx-vec3.md)_]: result vector
-- `v` [_required, [GXVec3](./gx-vec3.md)_]: source vector
+- `out` [_required, writeonly, [GXVec3](./gx-vec3.md)_]: result vector
+- `v` [_required, readonly, [GXVec3](./gx-vec3.md)_]: source vector
 
 **Return values:**
 
@@ -355,7 +388,7 @@ local m = GXMat4 ()
 m:RotationX ( math.rad ( 33.3 ) )
 
 local camera = GXMat4 ()
-camera:TranslationF ( 77.0, -10.0, 3.33 )
+camera:Translation ( 77.0, -10.0, 3.33 )
 
 local v = GXMat4 ()
 v:Inverse ( camera )
@@ -367,16 +400,63 @@ local vView = GXVec3 ()
 mv:MultiplyAsPoint ( vView, vLocal )
 ```
 
+## <a id="method-multiply-vector-matrix">`MultiplyVectorMatrix ( out, v )`</a>
+
+Method performs vector-matrix multiplication of `v` [row-vector](https://en.wikipedia.org/wiki/Row_and_column_vectors) and current matrix `self`: `v` x `self`. The result is written to the `out` [row-vector](https://en.wikipedia.org/wiki/Row_and_column_vectors).
+
+**Parameters:**
+
+- `out` [_required, writeonly, [GXVec4](./gx-vec4.md)_]: result [row-vector](https://en.wikipedia.org/wiki/Row_and_column_vectors)
+- `v` [_required, readonly, [GXVec4](./gx-vec4.md)_]: source [row-vector](https://en.wikipedia.org/wiki/Row_and_column_vectors)
+
+**Return values:**
+
+- none
+
+**Example:**
+
+```lua
+require "av://engine/gx_mat4.lua"
+
+
+local m = GXMat4 ()
+m:RotationX ( math.rad ( 33.3 ) )
+
+local camera = GXMat4 ()
+camera:Translation ( -77.0, 0.0, 0.0 )
+
+local v = GXMat4 ()
+v:Inverse ( camera )
+
+local fov = 90.0
+local width = 1920.0
+local height = 1080.0
+local p = GXMat4 ()
+p:Perspective ( math.rad ( fov ), width / height, 1.0, 77777.77 )
+
+local mv = GXMat4 ()
+mv:Multiply ( m, v )
+
+local mvp = GXMat4 ()
+mvp:Multiply ( mv, p )
+
+local vertexLocal = GXVec4 ()
+vertexLocal:Init ( 7.0, 3.3, 0.0, 1.0 )
+
+local vertexCVV = GXVec4 ()
+mvp:MultiplyVectorMatrix ( vertexCVV, vertexLocal )
+```
+
 ## <a id="method-perspective">`Perspective ( fieldOfViewYRadians, aspectRatio, zNear, zFar )`</a>
 
 Method initializes the matrix with _Vulkan CVV_ perspective transformation.
 
 **Parameters:**
 
-- `fieldOfViewYRadians` [_required, number_]: view angle in vertical direction in radians
-- `aspectRatio` [_required, number_]: the aspect ratio of the viewport
-- `zNear` [_required, number_]: the distance to the near cutting plane
-- `zFar` [_required, number_]: the distance to the far cutting plane
+- `fieldOfViewYRadians` [_required, readonly, number_]: view angle in vertical direction in radians
+- `aspectRatio` [_required, readonly, number_]: the aspect ratio of the viewport
+- `zNear` [_required, readonly, number_]: the distance to the near cutting plane
+- `zFar` [_required, readonly, number_]: the distance to the far cutting plane
 
 **Return values:**
 
@@ -402,7 +482,7 @@ Method initializes the current matrix as rotation transform about _X_-axis.
 
 **Parameters:**
 
-- `angle` [_required, number_]: rotation angle about _X_-axis in radians
+- `angle` [_required, readonly, number_]: rotation angle about _X_-axis in radians
 
 **Return values:**
 
@@ -424,7 +504,7 @@ Method initializes the current matrix as rotation transform about _Y_-axis.
 
 **Parameters:**
 
-- `angle` [_required, number_]: rotation angle about _Y_-axis in radians
+- `angle` [_required, readonly, number_]: rotation angle about _Y_-axis in radians
 
 **Return values:**
 
@@ -446,7 +526,7 @@ Method initializes the current matrix as rotation transform about _Z_-axis.
 
 **Parameters:**
 
-- `angle` [_required, number_]: rotation angle about _Z_-axis in radians
+- `angle` [_required, readonly, number_]: rotation angle about _Z_-axis in radians
 
 **Return values:**
 
@@ -468,9 +548,9 @@ Method initializes the matrix with scale transformation.
 
 **Parameters:**
 
-- `x` [_required, number_]: _X_-axis scale value
-- `y` [_required, number_]: _Y_-axis scale value
-- `z` [_required, number_]: _Z_-axis scale value
+- `x` [_required, readonly, number_]: _X_-axis scale value
+- `y` [_required, readonly, number_]: _Y_-axis scale value
+- `z` [_required, readonly, number_]: _Z_-axis scale value
 
 **Return values:**
 
@@ -492,7 +572,7 @@ Method sets first three components of the [_X_ row](#brief) of current matrix fr
 
 **Parameters:**
 
-- `x` [_required, [_GXVec3_](./gx-vec3.md)_]: source vector
+- `x` [_required, readonly, [_GXVec3_](./gx-vec3.md)_]: source vector
 
 **Return values:**
 
@@ -518,7 +598,7 @@ Method sets first three components of the [_Y_ row](#brief) of current matrix fr
 
 **Parameters:**
 
-- `y` [_required, [_GXVec3_](./gx-vec3.md)_]: source vector
+- `y` [_required, readonly, [_GXVec3_](./gx-vec3.md)_]: source vector
 
 **Return values:**
 
@@ -544,7 +624,7 @@ Method sets first three components of the [_Z_ row](#brief) of current matrix fr
 
 **Parameters:**
 
-- `z` [_required, [_GXVec3_](./gx-vec3.md)_]: source vector
+- `z` [_required, readonly, [_GXVec3_](./gx-vec3.md)_]: source vector
 
 **Return values:**
 
@@ -570,7 +650,7 @@ Method sets first three components of the [_W_ row](#brief) of current matrix fr
 
 **Parameters:**
 
-- `w` [_required, [_GXVec3_](./gx-vec3.md)_]: source vector
+- `w` [_required, readonly, [_GXVec3_](./gx-vec3.md)_]: source vector
 
 **Return values:**
 
@@ -590,15 +670,15 @@ m:RotationX ( math.rad ( 33.3 ) )
 m:SetW ( v )
 ```
 
-## <a id="method-translation-f">`TranslationF ( x, y, z )`</a>
+## <a id="method-translation">`Translation ( x, y, z )`</a>
 
 Method initializes the current matrix as translation transformation.
 
 **Parameters:**
 
-- `x` [_required, number_]: _X_-coodinate of the origin
-- `y` [_required, number_]: _Y_-coodinate of the origin
-- `z` [_required, number_]: _Z_-coodinate of the origin
+- `x` [_required, readonly, number_]: _X_-coodinate of the origin
+- `y` [_required, readonly, number_]: _Y_-coodinate of the origin
+- `z` [_required, readonly, number_]: _Z_-coodinate of the origin
 
 **Return values:**
 
@@ -611,5 +691,5 @@ require "av://engine/gx_mat4.lua"
 
 
 local s = GXMat4 ()
-s:TranslationF ( 77.7, 3.33, 1.0 )
+s:Translation ( 77.7, 3.33, 1.0 )
 ```

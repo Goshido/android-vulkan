@@ -102,8 +102,8 @@ Method saves the result of [cross product](https://en.wikipedia.org/wiki/Cross_p
 
 **Parameters:**
 
-- `a` [_required, [GXVec3](./gx-vec3.md)_]: left vector
-- `b` [_required, [GXVec3](./gx-vec3.md)_]: right vector
+- `a` [_required, readonly, [GXVec3](./gx-vec3.md)_]: left vector
+- `b` [_required, readonly, [GXVec3](./gx-vec3.md)_]: right vector
 
 **Return values:**
 
@@ -131,7 +131,7 @@ Method returns distance between current point and `other` point.
 
 **Parameters:**
 
-- `other` [_required, [GXVec3](./gx-vec3.md)_]: coordinate of another point
+- `other` [_required, readonly, [GXVec3](./gx-vec3.md)_]: coordinate of another point
 
 **Return values:**
 
@@ -158,7 +158,7 @@ Method returns the result of [dot product](https://en.wikipedia.org/wiki/Dot_pro
 
 **Parameters:**
 
-- `other` [_required, [GXVec3](./gx-vec3.md)_]: another vector
+- `other` [_required, readonly, [GXVec3](./gx-vec3.md)_]: another vector
 
 **Return values:**
 
@@ -185,9 +185,9 @@ Method initializes the vector with `x`, `y` and `z` values.
 
 **Parameters:**
 
-- `x` [_required, number_]: first component
-- `y` [_required, number_]: second component
-- `z` [_required, number_]: third component
+- `x` [_required, readonly, number_]: first component
+- `y` [_required, readonly, number_]: second component
+- `z` [_required, readonly, number_]: third component
 
 **Return values:**
 
@@ -278,7 +278,7 @@ Method returns squared distance between current point and `other` point. This me
 
 **Parameters:**
 
-- `other` [_required, [GXVec3](./gx-vec3.md)_]: coordinate of another point
+- `other` [_required, readonly, [GXVec3](./gx-vec3.md)_]: coordinate of another point
 
 **Return values:**
 
@@ -330,8 +330,8 @@ Method performs subtract operation: `a` - `b`. The result is written to current 
 
 **Parameters:**
 
-- `a` [_required, [GXVec3](./gx-vec3.md)_]: first vector
-- `b` [_required, [GXVec3](./gx-vec3.md)_]: second vector
+- `a` [_required, *readonly, [GXVec3](./gx-vec3.md)_]: first vector
+- `b` [_required, *readonly, [GXVec3](./gx-vec3.md)_]: second vector
 
 **Return values:**
 
@@ -361,8 +361,8 @@ Method sums `a`, `b` and writes the result in current vector.
 
 **Parameters:**
 
-- `a` [_required, [GXVec3](./gx-vec3.md)_]: first vector
-- `b` [_required, [GXVec3](./gx-vec3.md)_]: second vector
+- `a` [_required, *readonly, [GXVec3](./gx-vec3.md)_]: first vector
+- `b` [_required, *readonly, [GXVec3](./gx-vec3.md)_]: second vector
 
 **Return values:**
 
@@ -392,9 +392,9 @@ Method performs the operation: `a` + `bScale` x `b`. The result is written to cu
 
 **Parameters:**
 
-- `a` [_required, [GXVec3](./gx-vec3.md)_]: first vector
-- `bScale` [_required, number_]: scale factor for second vector
-- `b` [_required, [GXVec3](./gx-vec3.md)_]: second vector
+- `a` [_required, *readonly, [GXVec3](./gx-vec3.md)_]: first vector
+- `bScale` [_required, readonly, number_]: scale factor for second vector
+- `b` [_required, *readonly, [GXVec3](./gx-vec3.md)_]: second vector
 
 **Return values:**
 

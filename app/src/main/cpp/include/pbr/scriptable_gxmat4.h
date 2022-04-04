@@ -57,8 +57,10 @@ class ScriptableGXMat4 final
         [[nodiscard]] static int OnIdentity ( lua_State* state );
         [[nodiscard]] static int OnInverse ( lua_State* state );
         [[nodiscard]] static int OnMultiply ( lua_State* state );
+        [[nodiscard]] static int OnMultiplyMatrixVector ( lua_State* state );
         [[nodiscard]] static int OnMultiplyAsNormal ( lua_State* state );
         [[nodiscard]] static int OnMultiplyAsPoint ( lua_State* state );
+        [[nodiscard]] static int OnMultiplyVectorMatrix ( lua_State* state );
         [[nodiscard]] static int OnPerspective ( lua_State* state );
         [[nodiscard]] static int OnRotationX ( lua_State* state );
         [[nodiscard]] static int OnRotationY ( lua_State* state );
@@ -69,7 +71,7 @@ class ScriptableGXMat4 final
         [[nodiscard]] static int OnSetZ ( lua_State* state );
         [[nodiscard]] static int OnSetW ( lua_State* state );
         [[nodiscard]] static int OnToString ( lua_State* state );
-        [[nodiscard]] static int OnTranslationF ( lua_State* state );
+        [[nodiscard]] static int OnTranslation ( lua_State* state );
 };
 
 } // namespace pbr

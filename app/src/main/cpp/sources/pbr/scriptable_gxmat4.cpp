@@ -1,5 +1,6 @@
 ﻿#include <pbr/scriptable_gxmat4.h>
 #include <pbr/scriptable_gxvec3.h>
+#include <pbr/scriptable_gxvec4.h>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -18,7 +19,7 @@ GX_RESTORE_WARNING_STATE
 namespace pbr {
 
 // ~10 Mb of data at 64bit system
-constexpr static size_t INITIAL_CAPACITY = 131072;
+constexpr static size_t INITIAL_CAPACITY = 131'072U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -78,6 +79,11 @@ void ScriptableGXMat4::Init ( lua_State* vm ) noexcept
         },
 
         {
+            .name = "av_GXMat4MultiplyMatrixVector",
+            .func = &ScriptableGXMat4::OnMultiplyMatrixVector
+        },
+
+        {
             .name = "av_GXMat4MultiplyAsNormal",
             .func = &ScriptableGXMat4::OnMultiplyAsNormal
         },
@@ -85,6 +91,11 @@ void ScriptableGXMat4::Init ( lua_State* vm ) noexcept
         {
             .name = "av_GXMat4MultiplyAsPoint",
             .func = &ScriptableGXMat4::OnMultiplyAsPoint
+        },
+
+        {
+            .name = "av_GXMat4MultiplyVectorMatrix",
+            .func = &ScriptableGXMat4::OnMultiplyVectorMatrix
         },
 
         {
@@ -138,8 +149,8 @@ void ScriptableGXMat4::Init ( lua_State* vm ) noexcept
         },
 
         {
-            .name = "av_GXMat4TranslationF",
-            .func = &ScriptableGXMat4::OnTranslationF
+            .name = "av_GXMat4Translation",
+            .func = &ScriptableGXMat4::OnTranslation
         }
     };
 
@@ -274,6 +285,17 @@ int ScriptableGXMat4::OnMultiply ( lua_State* state )
     return 0;
 }
 
+int ScriptableGXMat4::OnMultiplyMatrixVector ( lua_State* state )
+{
+    auto& self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+
+    self._matrix.MultiplyMatrixVector ( ScriptableGXVec4::Extract ( state, 2 ),
+        ScriptableGXVec4::Extract ( state, 3 )
+    );
+
+    return 0;
+}
+
 int ScriptableGXMat4::OnMultiplyAsNormal ( lua_State* state )
 {
     auto& self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
@@ -285,6 +307,17 @@ int ScriptableGXMat4::OnMultiplyAsPoint ( lua_State* state )
 {
     auto& self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
     self._matrix.MultiplyAsPoint ( ScriptableGXVec3::Extract ( state, 2 ), ScriptableGXVec3::Extract ( state, 3 ) );
+    return 0;
+}
+
+int ScriptableGXMat4::OnMultiplyVectorMatrix ( lua_State* state )
+{
+    auto& self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+
+    self._matrix.MultiplyVectorMatrix ( ScriptableGXVec4::Extract ( state, 2 ),
+        ScriptableGXVec4::Extract ( state, 3 )
+    );
+
     return 0;
 }
 
@@ -400,7 +433,7 @@ R"__(%14g %14g %14g %14g
     return 1;
 }
 
-int ScriptableGXMat4::OnTranslationF ( lua_State* state )
+int ScriptableGXMat4::OnTranslation ( lua_State* state )
 {
     auto& item = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
 

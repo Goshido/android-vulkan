@@ -269,7 +269,7 @@ int ScriptableGXMat4::OnIdentity ( lua_State* state )
 int ScriptableGXMat4::OnInverse ( lua_State* state )
 {
     auto& self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
-    auto& sourceMatrix = *static_cast<Item*> ( lua_touserdata ( state, 2 ) );
+    auto const& sourceMatrix = *static_cast<Item const*> ( lua_touserdata ( state, 2 ) );
     self._matrix.Inverse ( sourceMatrix._matrix );
 
     return 0;
@@ -278,8 +278,8 @@ int ScriptableGXMat4::OnInverse ( lua_State* state )
 int ScriptableGXMat4::OnMultiply ( lua_State* state )
 {
     auto& self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
-    auto const& b = *static_cast<Item const*> ( lua_touserdata ( state, 3 ) );
     auto const& a = *static_cast<Item const*> ( lua_touserdata ( state, 2 ) );
+    auto const& b = *static_cast<Item const*> ( lua_touserdata ( state, 3 ) );
     self._matrix.Multiply ( a._matrix, b._matrix );
 
     return 0;
@@ -397,8 +397,8 @@ int ScriptableGXMat4::OnSetW ( lua_State* state )
 
 int ScriptableGXMat4::OnToString ( lua_State* state )
 {
-    auto const* item = static_cast<Item const*> ( lua_touserdata ( state, 1 ) );
-    GXMat4 const& m = item->_matrix;
+    auto const& item = *static_cast<Item const*> ( lua_touserdata ( state, 1 ) );
+    GXMat4 const& m = item._matrix;
 
     constexpr char const format[] =
 R"__(%14g %14g %14g %14g

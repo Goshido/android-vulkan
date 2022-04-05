@@ -130,6 +130,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/pbr/script_engine.cpp
     app/src/main/cpp/sources/pbr/scriptable_gxmat3.cpp
     app/src/main/cpp/sources/pbr/scriptable_gxmat4.cpp
+    app/src/main/cpp/sources/pbr/scriptable_gxquat.cpp
     app/src/main/cpp/sources/pbr/scriptable_gxvec3.cpp
     app/src/main/cpp/sources/pbr/scriptable_gxvec4.cpp
     app/src/main/cpp/sources/pbr/scriptable_logger.cpp

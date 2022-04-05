@@ -1,6 +1,7 @@
 #include <pbr/script_engine.h>
 #include <pbr/scriptable_gxmat3.h>
 #include <pbr/scriptable_gxmat4.h>
+#include <pbr/scriptable_gxquat.h>
 #include <pbr/scriptable_gxvec3.h>
 #include <pbr/scriptable_gxvec4.h>
 #include <pbr/scriptable_logger.h>
@@ -136,6 +137,7 @@ void ScriptEngine::ExtendFrontend () const noexcept
     lua_State* vm = _vm.get ();
     pbr::ScriptableGXMat3::Init ( vm );
     pbr::ScriptableGXMat4::Init ( vm );
+    pbr::ScriptableGXQuat::Init ( vm );
     pbr::ScriptableGXVec3::Init ( vm );
     pbr::ScriptableGXVec4::Init ( vm );
     pbr::ScriptableLogger::Register ( vm );
@@ -317,6 +319,7 @@ void ScriptEngine::Free ( lua_State* state ) noexcept
 
     pbr::ScriptableGXVec4::Destroy ();
     pbr::ScriptableGXVec3::Destroy ();
+    pbr::ScriptableGXQuat::Destroy ();
     pbr::ScriptableGXMat4::Destroy ();
     pbr::ScriptableGXMat3::Destroy ();
 }

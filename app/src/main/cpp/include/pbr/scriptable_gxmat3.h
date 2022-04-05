@@ -54,7 +54,15 @@ class ScriptableGXMat3 final
         [[nodiscard]] static int OnGetY ( lua_State* state );
         [[nodiscard]] static int OnGetZ ( lua_State* state );
         [[nodiscard]] static int OnIdentity ( lua_State* state );
+        [[nodiscard]] static int OnInverse ( lua_State* state );
+        [[nodiscard]] static int OnMultiply ( lua_State* state );
+        [[nodiscard]] static int OnMultiplyMatrixVector ( lua_State* state );
+        [[nodiscard]] static int OnMultiplyVectorMatrix ( lua_State* state );
+        [[nodiscard]] static int OnSetX ( lua_State* state );
+        [[nodiscard]] static int OnSetY ( lua_State* state );
+        [[nodiscard]] static int OnSetZ ( lua_State* state );
         [[nodiscard]] static int OnToString ( lua_State* state );
+        [[nodiscard]] static int OnTranspose ( lua_State* state );
 };
 
 } // namespace pbr

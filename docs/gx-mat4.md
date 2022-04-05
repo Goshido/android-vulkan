@@ -35,7 +35,7 @@ require "av://engine/gx_mat4.lua"
 
 The class represents 4x4 matrix of `float32_t` values. The matrix layout in memory looks like this:
 
-<img src="./images/gx-mat4-layout.png" width="745px"/>
+<img src="./images/gx-mat4-layout.png"/>
 
 Usually matrix class is used in _3D_ transformations. So by convention the matrix multiplication must be in direct order:
 
@@ -248,7 +248,7 @@ p:Identity ()
 
 ## <a id="method-inverse">`Inverse ( sourceMatrix )`</a>
 
-Method initializes the matrix as inverse matrix to `sourceMatrix` matrix. `sourceMatrix` matrix is not changed during the operation.
+Method initializes the matrix as [inverse matrix](https://en.wikipedia.org/wiki/Invertible_matrix) to `sourceMatrix` matrix. `sourceMatrix` matrix is not changed during the operation.
 
 **Parameters:**
 
@@ -453,7 +453,7 @@ Method initializes the matrix with _Vulkan CVV_ perspective transformation.
 
 **Parameters:**
 
-- `fieldOfViewYRadians` [_required, readonly, number_]: view angle in vertical direction in radians
+- `fieldOfViewYRadians` [_required, readonly, number_]: view angle in vertical direction in [radians](https://en.wikipedia.org/wiki/Radian)
 - `aspectRatio` [_required, readonly, number_]: the aspect ratio of the viewport
 - `zNear` [_required, readonly, number_]: the distance to the near cutting plane
 - `zFar` [_required, readonly, number_]: the distance to the far cutting plane
@@ -482,7 +482,7 @@ Method initializes the current matrix as rotation transform about _X_-axis.
 
 **Parameters:**
 
-- `angle` [_required, readonly, number_]: rotation angle about _X_-axis in radians
+- `angle` [_required, readonly, number_]: rotation angle about _X_-axis in [radians](https://en.wikipedia.org/wiki/Radian)
 
 **Return values:**
 
@@ -504,7 +504,7 @@ Method initializes the current matrix as rotation transform about _Y_-axis.
 
 **Parameters:**
 
-- `angle` [_required, readonly, number_]: rotation angle about _Y_-axis in radians
+- `angle` [_required, readonly, number_]: rotation angle about _Y_-axis in [radians](https://en.wikipedia.org/wiki/Radian)
 
 **Return values:**
 
@@ -526,7 +526,7 @@ Method initializes the current matrix as rotation transform about _Z_-axis.
 
 **Parameters:**
 
-- `angle` [_required, readonly, number_]: rotation angle about _Z_-axis in radians
+- `angle` [_required, readonly, number_]: rotation angle about _Z_-axis in [radians](https://en.wikipedia.org/wiki/Radian)
 
 **Return values:**
 

@@ -18,17 +18,19 @@ local function Init ( self, x, y, z, w )
 end
 
 -- metamethods
-local function OnConcat ( left, right )
-    return string.format ( "%s%s", left, right )
-end
+local mt = {
+    __concat = function ( left, right )
+        return string.format ( "%s%s", left, right )
+    end,
 
-local function OnCG ( self )
-    av_GXVec4Destroy ( self._handle )
-end
+    __gc = function ( self )
+        av_GXVec4Destroy ( self._handle )
+    end,
 
-local function OnToString ( self )
-    return av_GXVec4ToString ( self._handle )
-end
+    __tostring = function ( self )
+        return av_GXVec4ToString ( self._handle )
+    end
+}
 
 local function Constructor ( self )
     local obj = AVObject ( eAVObjectType.GXVec4 )
@@ -36,15 +38,10 @@ local function Constructor ( self )
     -- data
     obj._handle = av_GXVec4Create ()
 
-    -- metamethods
-    obj.__concat = OnConcat
-    obj.__gc = OnCG
-    obj.__tostring = OnToString
-
     -- methods
     obj.Init = Init
 
-    return setmetatable ( obj, obj )
+    return setmetatable ( obj, mt )
 end
 
 setmetatable ( GXVec4, { __call = Constructor } )

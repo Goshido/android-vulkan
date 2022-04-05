@@ -130,28 +130,25 @@ local function SumScaled ( self, a, bScale, b )
 end
 
 -- metamethods
-local function OnConcat ( left, right )
-    return string.format ( "%s%s", left, right )
-end
+local mt = {
+    __concat = function ( left, right )
+        return string.format ( "%s%s", left, right )
+    end,
 
-local function OnCG ( self )
-    av_GXVec3Destroy ( self._handle )
-end
+    __gc = function ( self )
+        av_GXVec3Destroy ( self._handle )
+    end,
 
-local function OnToString ( self )
-    return av_GXVec3ToString ( self._handle )
-end
+    __tostring = function ( self )
+        return av_GXVec3ToString ( self._handle )
+    end
+}
 
 local function Constructor ( self )
     local obj = AVObject ( eAVObjectType.GXVec3 )
 
     -- data
     obj._handle = av_GXVec3Create ()
-
-    -- metamethods
-    obj.__concat = OnConcat
-    obj.__gc = OnCG
-    obj.__tostring = OnToString
 
     -- methods
     obj.CrossProduct = CrossProduct
@@ -167,7 +164,7 @@ local function Constructor ( self )
     obj.Sum = Sum
     obj.SumScaled = SumScaled
 
-    return setmetatable ( obj, obj )
+    return setmetatable ( obj, mt )
 end
 
 setmetatable ( GXVec3, { __call = Constructor } )

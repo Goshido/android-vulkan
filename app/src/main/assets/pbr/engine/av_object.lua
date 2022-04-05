@@ -11,6 +11,7 @@ end ) ()
 eAVObjectType = {
     GXMat3 = MakeUniqueID (),
     GXMat4 = MakeUniqueID (),
+    GXQuat = MakeUniqueID (),
     GXVec3 = MakeUniqueID (),
     GXVec4 = MakeUniqueID (),
     ScriptComponent = MakeUniqueID (),

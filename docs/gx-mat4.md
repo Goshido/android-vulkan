@@ -9,6 +9,7 @@ require "av://engine/gx_mat4.lua"
 - [_Brief_](#brief)
 - [_Metamethods_](#metamethods)
 - [`Constructor`](#constructor)
+- [`FromFast ( unitQuaternion, origin )`](#method-from-fast)
 - [`GetX ( x )`](#method-get-x)
 - [`GetY ( y )`](#method-get-y)
 - [`GetZ ( z )`](#method-get-z)
@@ -122,6 +123,41 @@ require "av://engine/gx_mat4.lua"
 
 
 local m = GXMat4 ()
+```
+
+## <a id="method-from-fast">`FromFast ( unitQuaternion, origin )`</a>
+
+Method initializes the matrix with composite rotation and translation transformation.
+
+**Note:** Result is valid if `unitQuaternion` is [normalized](https://en.wikipedia.org/wiki/Quaternion#Unit_quaternion).
+
+**Parameters:**
+
+- `unitQuaternion` [_required, readonly, [GXQuat](./gx-quat.md)_]: rotation which is represented by [quaternion](https://en.wikipedia.org/wiki/Quaternion)
+- `origin` [_required, readonly, [GXVec3](./gx-vec3.md)_]: the coordinate of the orgin of result transformation
+
+**Return values:**
+
+- none
+
+**Example:**
+
+```lua
+require "av://engine/gx_quat.lua"
+
+
+local axis = GXVec3 ()
+axis:Init ( 7.77, 3.33, 1.0 )
+axis:Normalize ()
+
+local rotation = GXQuat ()
+rotation:FromAxisAngle ( axis, math.rad ( 77.7 ) )
+
+local origin = GXVec3 ()
+origin:Init ( 1.0, 333.0, 0.0 )
+
+local transform = GXMat4 ()
+transform:FromFast ( rotation, origin )
 ```
 
 ## <a id="method-get-x">`GetX ( x )`</a>

@@ -18,6 +18,28 @@ local function FromAxisAngle ( self, axis, angle )
     av_GXQuatFromAxisAngle ( self._handle, axis._handle, angle )
 end
 
+local function Inverse ( self, q )
+    assert ( type ( self ) == "table" and self._type == eAVObjectType.GXQuat,
+        [[GXQuat:Inverse - Calling not via ":" syntax.]]
+    )
+
+    assert ( type ( q ) == "table" and q._type == eAVObjectType.GXQuat, [[GXQuat:Inverse - "q" is not a GXQuat.]] )
+
+    av_GXQuatInverse ( self._handle, q._handle )
+end
+
+local function InverseFast ( self, unitQuaternion )
+    assert ( type ( self ) == "table" and self._type == eAVObjectType.GXQuat,
+        [[GXQuat:InverseFast - Calling not via ":" syntax.]]
+    )
+
+    assert ( type ( unitQuaternion ) == "table" and unitQuaternion._type == eAVObjectType.GXQuat,
+        [[GXQuat:InverseFast - "unitQuaternion" is not a GXQuat.]]
+    )
+
+    av_GXQuatInverseFast ( self._handle, unitQuaternion._handle )
+end
+
 local function Multiply ( self, a, b )
     assert ( type ( self ) == "table" and self._type == eAVObjectType.GXQuat,
         [[GXQuat:Multiply - Calling not via ":" syntax.]]
@@ -35,6 +57,26 @@ local function Normalize ( self )
     )
 
     av_GXQuatNormalize ( self._handle )
+end
+
+local function SphericalLinearInterpolation ( self, start, finish, interpolationFactor )
+    assert ( type ( self ) == "table" and self._type == eAVObjectType.GXQuat,
+        [[GXQuat:SphericalLinearInterpolation - Calling not via ":" syntax.]]
+    )
+
+    assert ( type ( start ) == "table" and start._type == eAVObjectType.GXQuat,
+        [[GXQuat:SphericalLinearInterpolation - "start" is not a GXQuat.]]
+    )
+
+    assert ( type ( finish ) == "table" and finish._type == eAVObjectType.GXQuat,
+        [[GXQuat:SphericalLinearInterpolation - "finish" is not a GXQuat.]]
+    )
+
+    assert ( type ( interpolationFactor ) == "number",
+        [[GXVec3:SphericalLinearInterpolation - "interpolationFactor" is not a number.]]
+    )
+
+    av_GXQuatSphericalLinearInterpolation ( self._handle, start._handle, finish._handle, interpolationFactor );
 end
 
 local function TransformFast ( self, out, v )
@@ -76,8 +118,11 @@ local function Constructor ( self )
 
     -- methods
     obj.FromAxisAngle = FromAxisAngle
+    obj.Inverse = Inverse
+    obj.InverseFast = InverseFast
     obj.Multiply = Multiply
     obj.Normalize = Normalize
+    obj.SphericalLinearInterpolation = SphericalLinearInterpolation
     obj.TransformFast = TransformFast
 
     return setmetatable ( obj, mt )

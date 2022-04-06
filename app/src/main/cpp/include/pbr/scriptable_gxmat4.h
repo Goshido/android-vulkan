@@ -50,6 +50,7 @@ class ScriptableGXMat4 final
 
         [[nodiscard]] static int OnCreate ( lua_State* state );
         [[nodiscard]] static int OnDestroy ( lua_State* state );
+        [[nodiscard]] static int OnFromFast ( lua_State* state );
         [[nodiscard]] static int OnGetX ( lua_State* state );
         [[nodiscard]] static int OnGetY ( lua_State* state );
         [[nodiscard]] static int OnGetZ ( lua_State* state );

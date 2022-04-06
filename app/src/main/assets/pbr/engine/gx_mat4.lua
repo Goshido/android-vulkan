@@ -5,6 +5,22 @@ require "av://engine/gx_vec4.lua"
 GXMat4 = {}
 
 -- methods
+local function FromFast ( self, unitQuaternion, origin )
+    assert ( type ( self ) == "table" and self._type == eAVObjectType.GXMat4,
+        [[GXMat4:FromFast - Calling not via ":" syntax.]]
+    )
+
+    assert ( type ( unitQuaternion ) == "table" and unitQuaternion._type == eAVObjectType.GXQuat,
+        [[GXMat4:FromFast - "unitQuaternion" is not a GXQuat.]]
+    )
+
+    assert ( type ( origin ) == "table" and origin._type == eAVObjectType.GXVec3,
+        [[GXMat4:FromFast - "origin" is not a GXVec3.]]
+    )
+
+    av_GXMat4FromFast ( self._handle, unitQuaternion._handle, origin._handle )
+end
+
 local function GetX ( self, x )
     assert ( type ( self ) == "table" and self._type == eAVObjectType.GXMat4,
         [[GXMat4:GetX - Calling not via ":" syntax.]]
@@ -261,6 +277,7 @@ local function Constructor ( self )
     obj._handle = av_GXMat4Create ()
 
     -- methods
+    obj.FromFast = FromFast
     obj.GetX = GetX
     obj.GetY = GetY
     obj.GetZ = GetZ

@@ -1,4 +1,5 @@
 ﻿#include <pbr/scriptable_gxmat4.h>
+#include <pbr/scriptable_gxquat.h>
 #include <pbr/scriptable_gxvec3.h>
 #include <pbr/scriptable_gxvec4.h>
 
@@ -41,6 +42,11 @@ void ScriptableGXMat4::Init ( lua_State* vm ) noexcept
         {
             .name = "av_GXMat4Destroy",
             .func = &ScriptableGXMat4::OnDestroy
+        },
+
+        {
+            .name = "av_GXMat4FromFast",
+            .func = &ScriptableGXMat4::OnFromFast
         },
 
         {
@@ -228,6 +234,13 @@ int ScriptableGXMat4::OnDestroy ( lua_State* state )
     _used = cases[ static_cast<size_t> ( item == _used ) ];
 
     Insert ( item, _free );
+    return 0;
+}
+
+int ScriptableGXMat4::OnFromFast ( lua_State* state )
+{
+    auto& self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    self._matrix.FromFast ( ScriptableGXQuat::Extract ( state, 2 ), ScriptableGXVec3::Extract ( state, 3 ) );
     return 0;
 }
 

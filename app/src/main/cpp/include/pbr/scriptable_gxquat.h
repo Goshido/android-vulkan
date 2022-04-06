@@ -45,14 +45,19 @@ class ScriptableGXQuat final
         static void Init ( lua_State* vm ) noexcept;
         static void Destroy () noexcept;
 
+        [[nodiscard]] static GXQuat& Extract ( lua_State* state, int idx ) noexcept;
+
     private:
         static void Insert ( Item* item, Item*& list ) noexcept;
 
         [[nodiscard]] static int OnCreate ( lua_State* state );
         [[nodiscard]] static int OnDestroy ( lua_State* state );
         [[nodiscard]] static int OnFromAxisAngle ( lua_State* state );
+        [[nodiscard]] static int OnInverse ( lua_State* state );
+        [[nodiscard]] static int OnInverseFast ( lua_State* state );
         [[nodiscard]] static int OnMultiply ( lua_State* state );
         [[nodiscard]] static int OnNormalize ( lua_State* state );
+        [[nodiscard]] static int OnSphericalLinearInterpolation ( lua_State* state );
         [[nodiscard]] static int OnToString ( lua_State* state );
         [[nodiscard]] static int OnTransformFast ( lua_State* state );
 };

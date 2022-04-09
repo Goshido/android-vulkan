@@ -12,6 +12,9 @@
 
 namespace pbr {
 
+class Actor;
+using ActorRef = std::shared_ptr<Actor>;
+
 class Component;
 using ComponentRef = std::shared_ptr<Component>;
 

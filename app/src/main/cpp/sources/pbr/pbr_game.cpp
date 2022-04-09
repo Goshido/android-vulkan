@@ -37,19 +37,9 @@ constexpr static uint32_t RESOLUTION_SCALE_HEIGHT = 70U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-PBRGame::PBRGame () noexcept:
-    _camera {},
-    _commandPool ( VK_NULL_HANDLE ),
-    _commandBuffers {},
-    _renderSession {},
-    _components {}
-{
-    // NOTHING
-}
-
 bool PBRGame::IsReady () noexcept
 {
-    return !_components.empty ();
+    return !_allComponents.empty ();
 }
 
 bool PBRGame::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) noexcept
@@ -60,8 +50,8 @@ bool PBRGame::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) n
     GXMat4 const& cameraLocal = _camera.GetLocalMatrix ();
     _renderSession.Begin ( cameraLocal, _camera.GetProjectionMatrix () );
 
-    for ( auto& component : _components )
-        component->Submit ( _renderSession );
+    for ( auto& component : _renderableComponents )
+        component.get ()->Submit ( _renderSession );
 
     return _renderSession.End ( renderer, deltaTime );
 }
@@ -107,7 +97,9 @@ bool PBRGame::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 
 void PBRGame::OnDestroyDevice ( VkDevice device ) noexcept
 {
-    _components.clear ();
+    _allComponents.clear ();
+    _renderableComponents.clear ();
+
     _renderSession.OnDestroyDevice ( device );
     DestroyCommandPool ( device );
 
@@ -217,7 +209,14 @@ bool PBRGame::UploadGPUContent ( android_vulkan::Renderer& renderer ) noexcept
         );
 
         if ( component )
-            _components.push_back ( component );
+        {
+            _allComponents.push_back ( component );
+
+            if ( component->IsRenderable () )
+            {
+                _renderableComponents.emplace_back ( std::reference_wrapper<ComponentRef> { _allComponents.back () } );
+            }
+        }
 
         commandBuffers += consumed;
         readPointer += read;
@@ -231,8 +230,8 @@ bool PBRGame::UploadGPUContent ( android_vulkan::Renderer& renderer ) noexcept
     if ( !result )
         return false;
 
-    for ( auto& component : _components )
-        component->FreeTransferResources ( device );
+    for ( auto& component : _renderableComponents )
+        component.get ()->FreeTransferResources ( device );
 
     return true;
 }

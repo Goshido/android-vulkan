@@ -46,6 +46,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/gjk.cpp
     app/src/main/cpp/sources/gjk_base.cpp
     app/src/main/cpp/sources/global_force_gravity.cpp
+    app/src/main/cpp/sources/guid_generator.cpp
     app/src/main/cpp/sources/half_types.cpp
     app/src/main/cpp/sources/key_bind.cpp
     app/src/main/cpp/sources/ktx_media_container.cpp
@@ -75,6 +76,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/mandelbrot/mandelbrot_analytic_color.cpp
     app/src/main/cpp/sources/mandelbrot/mandelbrot_base.cpp
     app/src/main/cpp/sources/mandelbrot/mandelbrot_lut_color.cpp
+    app/src/main/cpp/sources/pbr/actor.cpp
     app/src/main/cpp/sources/pbr/camera.cpp
     app/src/main/cpp/sources/pbr/component.cpp
     app/src/main/cpp/sources/pbr/cube_map_manager.cpp
@@ -126,6 +128,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/pbr/render_session_stats.cpp
     app/src/main/cpp/sources/pbr/sampler.cpp
     app/src/main/cpp/sources/pbr/sampler_manager.cpp
+    app/src/main/cpp/sources/pbr/scene.cpp
     app/src/main/cpp/sources/pbr/script_component.cpp
     app/src/main/cpp/sources/pbr/script_engine.cpp
     app/src/main/cpp/sources/pbr/scriptable_gxmat3.cpp

@@ -45,25 +45,30 @@ ReflectionComponent::ReflectionComponent ( android_vulkan::Renderer &renderer,
         return;
     }
 
-    GXVec3 location;
+    GXVec3 location {};
     // Sanity checks.
     static_assert ( sizeof ( location ) == sizeof ( desc._location ) );
-    memcpy ( &location, &desc._location, sizeof ( location ) );
+    std::memcpy ( &location, &desc._location, sizeof ( location ) );
 
     _probe = std::make_shared<ReflectionProbeLocal> ( prefilter, location, desc._size );
 }
 
-void ReflectionComponent::FreeTransferResources ( VkDevice device )
+void ReflectionComponent::FreeTransferResources ( VkDevice device ) noexcept
 {
     if ( !_probe )
         return;
 
     // Note it's safe cast like that here. "NOLINT" is a clang-tidy control comment.
-    auto& probe = static_cast<ReflectionProbe&> ( *_probe.get () ); // NOLINT
+    auto& probe = static_cast<ReflectionProbe&> ( *_probe ); // NOLINT
     probe.FreeTransferResources ( device );
 }
 
-void ReflectionComponent::Submit ( RenderSession &renderSession )
+bool ReflectionComponent::IsRenderable () const noexcept
+{
+    return true;
+}
+
+void ReflectionComponent::Submit ( RenderSession &renderSession ) noexcept
 {
     if ( _probe )
     {

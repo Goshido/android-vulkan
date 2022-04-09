@@ -18,15 +18,16 @@ namespace pbr {
 class PBRGame final : public android_vulkan::Game
 {
     private:
-        Camera                              _camera;
-        VkCommandPool                       _commandPool;
-        std::vector<VkCommandBuffer>        _commandBuffers;
+        Camera                                              _camera {};
+        VkCommandPool                                       _commandPool = VK_NULL_HANDLE;
+        std::vector<VkCommandBuffer>                        _commandBuffers {};
 
-        RenderSession                       _renderSession;
-        std::list<ComponentRef>             _components;
+        RenderSession                                       _renderSession {};
+        std::list<ComponentRef>                             _allComponents {};
+        std::list<std::reference_wrapper<ComponentRef>>     _renderableComponents {};
 
     public:
-        PBRGame () noexcept;
+        PBRGame () = default;
 
         PBRGame ( PBRGame const & ) = delete;
         PBRGame& operator = ( PBRGame const & ) = delete;

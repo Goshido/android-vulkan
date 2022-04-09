@@ -49,7 +49,7 @@ PointLightComponent::PointLightComponent () noexcept:
     _pointLight = std::make_shared<PointLight> ();
 }
 
-void PointLightComponent::Submit ( RenderSession &renderSession )
+void PointLightComponent::Submit ( RenderSession &renderSession ) noexcept
 {
     renderSession.SubmitLight ( _pointLight );
 }
@@ -89,9 +89,9 @@ void PointLightComponent::SetLocation ( GXVec3 const &location ) noexcept
     light.SetLocation ( location );
 }
 
-void PointLightComponent::FreeTransferResources ( VkDevice /*device*/ )
+bool PointLightComponent::IsRenderable () const noexcept
 {
-    // NOTHING
+    return true;
 }
 
 } // namespace pbr

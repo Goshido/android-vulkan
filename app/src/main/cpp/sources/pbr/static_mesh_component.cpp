@@ -141,12 +141,12 @@ StaticMeshComponent::StaticMeshComponent ( android_vulkan::Renderer &renderer,
     }
 }
 
-void StaticMeshComponent::Submit ( RenderSession &renderSession )
+void StaticMeshComponent::Submit ( RenderSession &renderSession ) noexcept
 {
     renderSession.SubmitMesh ( _mesh, _material, _localMatrix, _worldBounds, _color0, _color1, _color2, _emission );
 }
 
-void StaticMeshComponent::FreeTransferResources ( VkDevice device )
+void StaticMeshComponent::FreeTransferResources ( VkDevice device ) noexcept
 {
     _mesh->FreeTransferResources ( device );
 
@@ -235,6 +235,11 @@ MaterialRef& StaticMeshComponent::GetMaterial () noexcept
 {
     _localMatrix = transform;
     _mesh->GetBounds ().Transform ( _worldBounds, transform );
+}
+
+bool StaticMeshComponent::IsRenderable () const noexcept
+{
+    return true;
 }
 
 } // namespace pbr

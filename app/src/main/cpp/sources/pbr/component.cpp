@@ -1,15 +1,30 @@
 #include <pbr/component.h>
 #include <pbr/point_light_component.h>
-//#include <pbr/point_light_component_desc.h>
 #include <pbr/reflection_component.h>
 #include <pbr/static_mesh_component.h>
+#include <guid_generator.h>
 
 
 namespace pbr {
 
-[[maybe_unused]] ClassID Component::GetClassID () const
+void Component::Submit ( RenderSession &/*renderSession*/ ) noexcept
+{
+    // NOTHING
+}
+
+void Component::FreeTransferResources ( VkDevice /*device*/ ) noexcept
+{
+    // NOTHING
+}
+
+[[maybe_unused]] ClassID Component::GetClassID () const noexcept
 {
     return _classID;
+}
+
+std::string const& Component::GetName () const noexcept
+{
+    return _name;
 }
 
 ComponentRef Component::Create ( android_vulkan::Renderer &renderer,
@@ -74,7 +89,15 @@ ComponentRef Component::Create ( android_vulkan::Renderer &renderer,
 }
 
 Component::Component ( ClassID classID ) noexcept:
-    _classID ( classID )
+    _classID ( classID ),
+    _name ( android_vulkan::GUID::GenerateAsString ( "Component" ) )
+{
+    // NOTHING
+}
+
+Component::Component ( ClassID classID, std::string &&name ) noexcept:
+    _classID ( classID ),
+    _name ( std::move ( name ) )
 {
     // NOTHING
 }

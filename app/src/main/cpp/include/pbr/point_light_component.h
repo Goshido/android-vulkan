@@ -28,7 +28,7 @@ class PointLightComponent final : public Component
 
         ~PointLightComponent () override = default;
 
-        void Submit ( RenderSession &renderSession ) override;
+        void Submit ( RenderSession &renderSession ) noexcept override;
 
         void SetBoundDimensions ( float width, float height, float depth ) noexcept;
         void SetBoundDimensions ( GXVec3 const &dimensions ) noexcept;
@@ -37,7 +37,7 @@ class PointLightComponent final : public Component
         void SetLocation ( GXVec3 const &location ) noexcept;
 
     private:
-        void FreeTransferResources ( VkDevice device ) override;
+        [[nodiscard]] bool IsRenderable () const noexcept override;
 };
 
 } // namespace pbr

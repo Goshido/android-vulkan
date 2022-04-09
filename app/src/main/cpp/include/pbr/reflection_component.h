@@ -32,8 +32,9 @@ class ReflectionComponent final : public Component
         ~ReflectionComponent () override = default;
 
     private:
-        void FreeTransferResources ( VkDevice device ) override;
-        void Submit ( RenderSession &renderSession ) override;
+        void FreeTransferResources ( VkDevice device ) noexcept override;
+        [[nodiscard]] bool IsRenderable () const noexcept override;
+        void Submit ( RenderSession &renderSession ) noexcept override;
 };
 
 } // namespace pbr

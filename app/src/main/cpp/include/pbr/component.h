@@ -12,7 +12,8 @@ namespace pbr {
 class Component
 {
     private:
-        ClassID     _classID;
+        ClassID                 _classID;
+        std::string const       _name;
 
     public:
         Component () = delete;
@@ -25,10 +26,12 @@ class Component
 
         virtual ~Component () = default;
 
-        virtual void Submit ( RenderSession &renderSession ) = 0;
-        virtual void FreeTransferResources ( VkDevice device ) = 0;
+        virtual void Submit ( RenderSession &renderSession ) noexcept;
+        virtual void FreeTransferResources ( VkDevice device ) noexcept;
+        [[nodiscard]] virtual bool IsRenderable () const noexcept = 0;
 
-        [[nodiscard, maybe_unused]] ClassID GetClassID () const;
+        [[nodiscard, maybe_unused]] ClassID GetClassID () const noexcept;
+        [[nodiscard]] std::string const& GetName () const noexcept;
 
         [[nodiscard]] static ComponentRef Create ( android_vulkan::Renderer &renderer,
             size_t &commandBufferConsumed,
@@ -40,6 +43,7 @@ class Component
 
     protected:
         explicit Component ( ClassID classID ) noexcept;
+        explicit Component ( ClassID classID, std::string &&name ) noexcept;
 };
 
 } // namespace pbr

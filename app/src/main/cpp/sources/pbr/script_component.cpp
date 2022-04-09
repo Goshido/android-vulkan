@@ -5,12 +5,14 @@
 namespace pbr {
 
 ScriptComponent::ScriptComponent ( std::string &&script ) noexcept:
+    Component ( ClassID::Script ),
     _script ( std::move ( script ) )
 {
     // NOTHING
 }
 
 ScriptComponent::ScriptComponent ( std::string &&script, std::string &&params ) noexcept:
+    Component ( ClassID::Script ),
     _script ( std::move ( script ) ),
     _params ( std::move ( params ) )
 {
@@ -25,9 +27,8 @@ bool ScriptComponent::Register () noexcept
     return ScriptEngine::GetInstance ().AppendScript ( this, _script, _params );
 }
 
-bool ScriptComponent::Unregister () const noexcept
+bool ScriptComponent::IsRenderable () const noexcept
 {
-    // TODO
     return false;
 }
 

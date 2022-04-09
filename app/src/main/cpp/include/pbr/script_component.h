@@ -2,18 +2,12 @@
 #define PBR_SCRIPT_COMPONENT_H
 
 
-#include <GXCommon/GXWarning.h>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <string>
-
-GX_RESTORE_WARNING_STATE
+#include "component.h"
 
 
 namespace pbr {
 
-class ScriptComponent final
+class ScriptComponent final : public Component
 {
     private:
         std::string const       _script;
@@ -28,13 +22,15 @@ class ScriptComponent final
         ScriptComponent ( ScriptComponent && ) = delete;
         ScriptComponent& operator = ( ScriptComponent && ) = delete;
 
-        explicit ScriptComponent ( std::string &&script ) noexcept;
+        [[maybe_unused]] explicit ScriptComponent ( std::string &&script ) noexcept;
         explicit ScriptComponent ( std::string &&script, std::string &&params ) noexcept;
 
         ~ScriptComponent () = default;
 
         [[nodiscard]] bool Register () noexcept;
-        [[nodiscard]] bool Unregister () const noexcept;
+
+    private:
+        [[nodiscard]] bool IsRenderable () const noexcept override;
 };
 
 } // namespace pbr

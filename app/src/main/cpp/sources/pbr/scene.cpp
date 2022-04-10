@@ -1,11 +1,21 @@
 #include <pbr/scene.h>
+#include <pbr/component.h>
 
 
 namespace pbr {
 
-[[maybe_unused]] void Scene::AppendActor ( ActorRef &actor ) noexcept
+void Scene::OnDestroyDevice () noexcept
 {
-    _actorStorage[ actor->GetName () ].push_back ( actor );
+    _freeTransferResourceList.clear ();
+    _renderableList.clear ();
+    _actorStorage.clear ();
+}
+
+void Scene::AppendActor ( ActorRef &actor ) noexcept
+{
+    Actors& actors = _actorStorage[ actor->GetName () ];
+    actors.push_back ( actor );
+    actors.back ()->RegisterRenderableComponents ( _freeTransferResourceList );
 }
 
 [[maybe_unused]] Scene::FindResult Scene::FindActors ( std::string const &actorName ) noexcept
@@ -15,6 +25,22 @@ namespace pbr {
     return findResult == _actorStorage.end () ?
         std::nullopt :
         std::optional<std::reference_wrapper<Actors>> { findResult->second };
+}
+
+void Scene::FreeTransferResources ( VkDevice device ) noexcept
+{
+    for ( auto& component : _freeTransferResourceList )
+        component.get ()->FreeTransferResources ( device );
+
+    _renderableList.splice ( _renderableList.cend (), _freeTransferResourceList );
+}
+
+void Scene::Submit ( RenderSession &renderSession ) noexcept
+{
+    for ( auto& component : _renderableList )
+    {
+        component.get ()->Submit ( renderSession );
+    }
 }
 
 } // namespace pbr

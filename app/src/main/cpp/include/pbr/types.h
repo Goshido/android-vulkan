@@ -9,6 +9,12 @@
 #include "sampler.h"
 #include "light.h"
 
+GX_DISABLE_COMMON_WARNINGS
+
+#include <list>
+
+GX_RESTORE_WARNING_STATE
+
 
 namespace pbr {
 
@@ -17,6 +23,8 @@ using ActorRef = std::shared_ptr<Actor>;
 
 class Component;
 using ComponentRef = std::shared_ptr<Component>;
+
+using ComponentList = std::list<std::reference_wrapper<ComponentRef>>;
 
 using LightRef = std::shared_ptr<Light>;
 using MaterialRef = std::shared_ptr<Material>;

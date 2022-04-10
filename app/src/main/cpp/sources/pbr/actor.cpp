@@ -36,4 +36,20 @@ std::string const& Actor::GetName () const noexcept
     return _name;
 }
 
+void Actor::RegisterRenderableComponents ( ComponentList &componentList ) noexcept
+{
+    for ( auto& pair : _componentStorage )
+    {
+        Components& components = pair.second;
+
+        for ( auto& component : components )
+        {
+            if ( !component->IsRenderable () )
+                continue;
+
+            componentList.emplace_back ( std::ref ( component ) );
+        }
+    }
+}
+
 } // namespace pbr

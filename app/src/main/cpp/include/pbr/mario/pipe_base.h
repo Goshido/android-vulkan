@@ -2,18 +2,14 @@
 #define PBR_MARIO_PIPE_BASE_H
 
 
-#include <pbr/types.h>
-#include <rigid_body.h>
+#include <pbr/scene.h>
+#include <physics.h>
 
 
 namespace pbr::mario {
 
 class PipeBase
 {
-    private:
-        android_vulkan::RigidBodyRef    _collider;
-        ComponentRef                    _staticMesh;
-
     public:
         PipeBase ( PipeBase const & ) = delete;
         PipeBase& operator = ( PipeBase const & ) = delete;
@@ -23,13 +19,12 @@ class PipeBase
 
         virtual ~PipeBase () = default;
 
-        [[nodiscard]] android_vulkan::RigidBodyRef& GetCollider () noexcept;
-        [[nodiscard]] ComponentRef& GetComponent () noexcept;
-
         // Note "x", "y" and "z" coordinates must be in renderer units.
         void Init ( android_vulkan::Renderer &renderer,
             size_t &commandBufferConsumed,
             VkCommandBuffer const* commandBuffers,
+            Scene &scene,
+            android_vulkan::Physics &physics,
             float x,
             float y,
             float z
@@ -42,7 +37,7 @@ class PipeBase
         }
 
     protected:
-        PipeBase () noexcept;
+        PipeBase () = default;
 
         // Note the offset must be in physics units.
         [[nodiscard]] virtual GXVec3 const& GetColliderOffset () const noexcept = 0;

@@ -205,7 +205,8 @@ bool StippleTest::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
         consumed,
         "pbr/system/unit-cube.mesh2",
         "pbr/assets/System/DefaultCSG.mtl",
-        cb
+        cb,
+        "Floor"
     );
 
     if ( !success )

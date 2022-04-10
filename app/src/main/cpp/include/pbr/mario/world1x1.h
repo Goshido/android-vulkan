@@ -2,21 +2,13 @@
 #define PBR_MARIO_WORLD1x1_H
 
 
-#include "brick.h"
 #include "camera.h"
 #include "mario.h"
-#include "pipe_base.h"
-#include "riddle.h"
 #include <pbr/camera.h>
 #include <pbr/render_session.h>
-#include <physics.h>
+#include <pbr/scene.h>
 #include <game.h>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <list>
-
-GX_RESTORE_WARNING_STATE
+#include <physics.h>
 
 
 namespace pbr::mario {
@@ -24,16 +16,14 @@ namespace pbr::mario {
 class World1x1 final : public android_vulkan::Game
 {
     private:
-        std::array<std::unique_ptr<Brick>, 29U>         _bricks {};
-        pbr::mario::Camera                              _camera {};
-        std::vector<VkCommandBuffer>                    _commandBuffers {};
-        VkCommandPool                                   _commandPool = VK_NULL_HANDLE;
-        std::list<ComponentRef>                         _components {};
-        Mario                                           _mario {};
-        android_vulkan::Physics                         _physics {};
-        RenderSession                                   _renderSession {};
-        std::array<std::unique_ptr<PipeBase>, 6U>       _pipes {};
-        std::array<std::unique_ptr<Riddle>, 13U>        _riddles {};
+        pbr::mario::Camera              _camera {};
+        std::vector<VkCommandBuffer>    _commandBuffers {};
+        VkCommandPool                   _commandPool = VK_NULL_HANDLE;
+        bool                            _isReady = false;
+        Mario                           _mario {};
+        android_vulkan::Physics         _physics {};
+        RenderSession                   _renderSession {};
+        Scene                           _scene {};
 
     public:
         World1x1 () = default;

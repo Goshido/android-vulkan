@@ -4,8 +4,10 @@
 namespace pbr::mario {
 
 constexpr static char const MESH[] = "pbr/assets/Props/experimental/world-1-1/pipe/pipe-x1.mesh2";
-constexpr static GXVec3 const OFFSET ( -0.8F, 1.2F, 0.8F );
-constexpr static GXVec3 const SIZE ( 1.6F, 2.4F, 1.6F );
+constexpr static GXVec3 OFFSET ( -0.8F, 1.2F, 0.8F );
+constexpr static GXVec3 SIZE ( 1.6F, 2.4F, 1.6F );
+
+//----------------------------------------------------------------------------------------------------------------------
 
 GXVec3 const& PipeX1::GetColliderOffset () const noexcept
 {

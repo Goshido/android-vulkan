@@ -1,5 +1,6 @@
 #include <pbr/mario/pipe_base.h>
 #include <pbr/static_mesh_component.h>
+#include <guid_generator.h>
 #include <shape_box.h>
 
 
@@ -7,19 +8,13 @@ namespace pbr::mario {
 
 constexpr static char const MATERIAL[] = "pbr/assets/Props/experimental/world-1-1/pipe/pipe.mtl";
 
-android_vulkan::RigidBodyRef& PipeBase::GetCollider () noexcept
-{
-    return _collider;
-}
-
-ComponentRef& PipeBase::GetComponent () noexcept
-{
-    return _staticMesh;
-}
+//----------------------------------------------------------------------------------------------------------------------
 
 void PipeBase::Init ( android_vulkan::Renderer &renderer,
     size_t &commandBufferConsumed,
     VkCommandBuffer const* commandBuffers,
+    Scene &scene,
+    android_vulkan::Physics &physics,
     float x,
     float y,
     float z
@@ -27,26 +22,27 @@ void PipeBase::Init ( android_vulkan::Renderer &renderer,
 {
     bool success;
 
-    _staticMesh = std::make_shared<StaticMeshComponent> ( renderer,
+    ComponentRef staticMesh = std::make_shared<StaticMeshComponent> ( renderer,
         success,
         commandBufferConsumed,
         GetMesh (),
         MATERIAL,
-        commandBuffers
+        commandBuffers,
+        "Mesh"
     );
 
     if ( !success )
         return;
 
     // NOLINTNEXTLINE
-    auto& comp = *static_cast<StaticMeshComponent*> ( _staticMesh.get () );
+    auto& comp = static_cast<StaticMeshComponent&> ( *staticMesh );
 
     GXMat4 transform {};
     transform.Translation ( x, y, z );
     comp.SetTransform ( transform );
 
-    _collider = std::make_shared<android_vulkan::RigidBody> ();
-    android_vulkan::RigidBody& body = *_collider.get ();
+    android_vulkan::RigidBodyRef collider = std::make_shared<android_vulkan::RigidBody> ();
+    android_vulkan::RigidBody& body = *collider;
     body.EnableKinematic ();
 
     constexpr float const rendererToPhysics = 1.0F / 32.0F;
@@ -65,13 +61,13 @@ void PipeBase::Init ( android_vulkan::Renderer &renderer,
     );
 
     body.SetShape ( shape, false );
-}
 
-PipeBase::PipeBase () noexcept:
-    _collider {},
-    _staticMesh {}
-{
-    // NOTHING
+    if ( !physics.AddRigidBody ( collider ) )
+        return;
+
+    ActorRef actor = std::make_shared<Actor> ( android_vulkan::GUID::GenerateAsString ( "Pipe" ) );
+    actor->AppendComponent ( staticMesh );
+    scene.AppendActor ( actor );
 }
 
 } // namespace pbr::mario

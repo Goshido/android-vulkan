@@ -246,7 +246,8 @@ bool RayCasting::LoadResources ( android_vulkan::Renderer &renderer ) noexcept
         consumed,
         "pbr/system/unit-cube.mesh2",
         "pbr/assets/Props/PBR/DefaultCSGEmissiveBright.mtl",
-        cb
+        cb,
+        "Mesh"
     );
 
     if ( !success )

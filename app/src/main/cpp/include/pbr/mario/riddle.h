@@ -2,20 +2,16 @@
 #define PBR_MARIO_RIDDLE_H
 
 
-#include <pbr/types.h>
-#include <rigid_body.h>
+#include <pbr/scene.h>
+#include <physics.h>
 
 
 namespace pbr::mario {
 
 class Riddle final
 {
-    private:
-        android_vulkan::RigidBodyRef    _collider;
-        ComponentRef                    _staticMesh;
-
     public:
-        Riddle () noexcept;
+        Riddle () = default;
 
         Riddle ( Riddle const & ) = delete;
         Riddle& operator = ( Riddle const & ) = delete;
@@ -25,13 +21,12 @@ class Riddle final
 
         ~Riddle () = default;
 
-        [[nodiscard]] android_vulkan::RigidBodyRef& GetCollider () noexcept;
-        [[nodiscard]] ComponentRef& GetComponent () noexcept;
-
         // Note "x", "y" and "z" coordinates must be in renderer units.
         void Init ( android_vulkan::Renderer &renderer,
             size_t &commandBufferConsumed,
             VkCommandBuffer const* commandBuffers,
+            Scene &scene,
+            android_vulkan::Physics &physics,
             float x,
             float y,
             float z

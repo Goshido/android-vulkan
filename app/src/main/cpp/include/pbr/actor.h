@@ -40,6 +40,7 @@ class Actor final
         [[maybe_unused]] void AppendComponent ( ComponentRef &component ) noexcept;
         [[nodiscard, maybe_unused]] FindResult FindComponents ( std::string const &componentName ) noexcept;
         [[nodiscard]] std::string const& GetName () const noexcept;
+        void RegisterRenderableComponents ( ComponentList &componentList ) noexcept;
 };
 
 } // namespace pbr

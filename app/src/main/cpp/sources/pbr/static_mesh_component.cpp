@@ -71,9 +71,10 @@ StaticMeshComponent::StaticMeshComponent ( android_vulkan::Renderer &renderer,
     size_t &commandBufferConsumed,
     char const* mesh,
     char const* material,
-    VkCommandBuffer const* commandBuffers
+    VkCommandBuffer const* commandBuffers,
+    std::string &&name
 ) noexcept:
-    Component ( ClassID::StaticMesh ),
+    Component ( ClassID::StaticMesh, std::move ( name ) ),
     _color0 ( DEFAULT_COLOR ),
     _color1 ( DEFAULT_COLOR ),
     _color2 ( DEFAULT_COLOR ),

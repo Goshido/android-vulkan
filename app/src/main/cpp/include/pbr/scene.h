@@ -3,11 +3,18 @@
 
 
 #include "actor.h"
+#include "render_session.h"
+
+GX_DISABLE_COMMON_WARNINGS
+
+#include <list>
+
+GX_RESTORE_WARNING_STATE
 
 
 namespace pbr {
 
-class [[maybe_unused]] Scene final
+class Scene final
 {
     public:
         using Actors = std::vector<ActorRef>;
@@ -15,6 +22,8 @@ class [[maybe_unused]] Scene final
 
     private:
         std::unordered_map<std::string, Actors>     _actorStorage {};
+        ComponentList                               _freeTransferResourceList {};
+        ComponentList                               _renderableList {};
 
     public:
         Scene () = default;
@@ -27,8 +36,12 @@ class [[maybe_unused]] Scene final
 
         ~Scene () = default;
 
-        [[maybe_unused]] void AppendActor ( ActorRef &actor ) noexcept;
+        void OnDestroyDevice () noexcept;
+
+        void AppendActor ( ActorRef &actor ) noexcept;
         [[nodiscard, maybe_unused]] FindResult FindActors ( std::string const &actorName ) noexcept;
+        void FreeTransferResources ( VkDevice device ) noexcept;
+        void Submit ( RenderSession &renderSession ) noexcept;
 };
 
 } // namespace pbr

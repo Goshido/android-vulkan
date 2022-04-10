@@ -45,7 +45,8 @@ class StaticMeshComponent final : public Component
             size_t &commandBufferConsumed,
             char const* mesh,
             char const* material,
-            VkCommandBuffer const* commandBuffers
+            VkCommandBuffer const* commandBuffers,
+            std::string &&name
         ) noexcept;
 
         // "commandBuffer" array MUST contain at least 1 free command buffers.

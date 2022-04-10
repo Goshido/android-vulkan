@@ -1,6 +1,8 @@
 #include <pbr/mario/world1x1.h>
+#include <pbr/mario/brick.h>
 #include <pbr/mario/pipe_x1.h>
 #include <pbr/mario/pipe_x2.h>
+#include <pbr/mario/riddle.h>
 #include <pbr/component.h>
 #include <pbr/cube_map_manager.h>
 #include <pbr/material_manager.h>
@@ -23,18 +25,18 @@ namespace pbr::mario {
 
 constexpr static char const SCENE[] = "pbr/assets/world-1-1.scene";
 
-constexpr static GXVec3 const FREE_FALL_ACCELERATION ( 0.0F, -9.81F, 0.0F );
+constexpr static GXVec3 FREE_FALL_ACCELERATION ( 0.0F, -9.81F, 0.0F );
 
-constexpr static uint32_t const RESOLUTION_SCALE_WIDTH = 80U;
-constexpr static uint32_t const RESOLUTION_SCALE_HEIGHT = 70U;
+constexpr static uint32_t RESOLUTION_SCALE_WIDTH = 80U;
+constexpr static uint32_t RESOLUTION_SCALE_HEIGHT = 70U;
 
-[[maybe_unused]] constexpr static uint32_t const SCENE_DESC_FORMAT_VERSION = 2U;
+[[maybe_unused]] constexpr static uint32_t SCENE_DESC_FORMAT_VERSION = 2U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
 bool World1x1::IsReady () noexcept
 {
-    return !_components.empty ();
+    return _isReady;
 }
 
 bool World1x1::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) noexcept
@@ -51,8 +53,8 @@ bool World1x1::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) 
     _camera.OnUpdate ( dt );
     _renderSession.Begin ( _camera.GetLocalMatrix (), _camera.GetProjectionMatrix () );
 
-    for ( auto& component : _components )
-        component->Submit ( _renderSession );
+    _mario.Submit ( _renderSession );
+    _scene.Submit ( _renderSession );
 
     return _renderSession.End ( renderer, deltaTime );
 }
@@ -121,7 +123,7 @@ bool World1x1::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 
 void World1x1::OnDestroyDevice ( VkDevice device ) noexcept
 {
-    _components.clear ();
+    _scene.OnDestroyDevice ();
     _renderSession.OnDestroyDevice ( device );
     DestroyCommandPool ( device );
 
@@ -129,6 +131,8 @@ void World1x1::OnDestroyDevice ( VkDevice device ) noexcept
     MeshManager::Destroy ( device );
     MaterialManager::Destroy ( device );
     CubeMapManager::Destroy ( device );
+
+    _isReady = false;
 }
 
 bool World1x1::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept
@@ -189,8 +193,8 @@ bool World1x1::CreatePhysics () noexcept
         return false;
     };
 
-    constexpr float const boundaryFriction = 0.0F;
-    constexpr float const normalFriction = 0.7F;
+    constexpr float boundaryFriction = 0.0F;
+    constexpr float normalFriction = 0.7F;
 
     if ( !append ( 4.0F, 7.2F, 84.8F, 8.0F, 16.0F, 169.6F, boundaryFriction, "boundary-001" ) )
         return false;
@@ -291,29 +295,6 @@ bool World1x1::CreatePhysics () noexcept
     if ( !append ( -0.8F, 0.8F, 27.6F, 1.6F, 1.6F, 55.2F, normalFriction, "ground-x69-collider-002" ) )
         return false;
 
-    // Note it's generic lambda. Kinda template lambda.
-    auto appendActor = [ & ] ( auto &actors, char const* type ) noexcept -> bool {
-        for ( auto& actor : actors )
-        {
-            if ( _physics.AddRigidBody ( actor->GetCollider () ) )
-                continue;
-
-            android_vulkan::LogError ( "World1x1::CreatePhysics::appendActor - Can't append %s.", type );
-            return false;
-        }
-
-        return true;
-    };
-
-    if ( !appendActor ( _pipes, "pipe" ) )
-        return false;
-
-    if ( !appendActor ( _bricks, "brick" ) )
-        return false;
-
-    if ( !appendActor ( _riddles, "riddle" ) )
-        return false;
-
     if ( _physics.AddRigidBody ( _mario.GetRigidBody () ) )
         return true;
 
@@ -395,73 +376,74 @@ bool World1x1::UploadGPUContent ( android_vulkan::Renderer &renderer ) noexcept
         );
 
         if ( component )
-            _components.push_back ( component );
+        {
+            ActorRef actor = std::make_shared<Actor> ();
+            actor->AppendComponent ( component );
+            _scene.AppendActor ( actor );
+        }
 
         commandBuffers += consumed;
         readPointer += read;
     }
 
     // Note it's generic lambda. Kinda templated lambda.
-    auto appendActor = [ & ] ( auto &storage, auto* actor, float x, float y, float z ) noexcept {
-        actor->Init ( renderer, consumed, commandBuffers, x, y, z );
-        _components.push_back ( actor->GetComponent () );
-        storage.reset ( actor );
+    auto appendActor = [ & ] ( auto* actor, float x, float y, float z ) noexcept {
+        actor->Init ( renderer, consumed, commandBuffers, _scene, _physics, x, y, z );
         commandBuffers += consumed;
     };
 
-    appendActor ( _pipes[ 0U ], new PipeX1 (), 0.0F, 27.2F, 716.8F );
-    appendActor ( _pipes[ 1U ], new PipeX1 (), 0.0F, 52.8F, 972.8F );
-    appendActor ( _pipes[ 2U ], new PipeX1 (), 0.0F, 27.2F, 4172.8F );
-    appendActor ( _pipes[ 3U ], new PipeX1 (), 0.0F, 27.2F, 4582.4F );
-    appendActor ( _pipes[ 4U ], new PipeX2 (), 0.0F, 51.2F, 1177.6F );
-    appendActor ( _pipes[ 5U ], new PipeX2 (), 0.0F, 51.2F, 1459.2F );
+    appendActor ( new PipeX1 (), 0.0F, 27.2F, 716.8F );
+    appendActor ( new PipeX1 (), 0.0F, 52.8F, 972.8F );
+    appendActor ( new PipeX1 (), 0.0F, 27.2F, 4172.8F );
+    appendActor ( new PipeX1 (), 0.0F, 27.2F, 4582.4F );
+    appendActor ( new PipeX2 (), 0.0F, 51.2F, 1177.6F );
+    appendActor ( new PipeX2 (), 0.0F, 51.2F, 1459.2F );
 
-    appendActor ( _bricks[ 0U ], new Brick (), -12.8F, 128.0F, 512.0F );
-    appendActor ( _bricks[ 1U ], new Brick (), -12.8F, 128.0F, 563.2F );
-    appendActor ( _bricks[ 2U ], new Brick (), -12.8F, 128.0F, 614.4F );
-    appendActor ( _bricks[ 3U ], new Brick (), -12.8F, 128.0F, 1971.2F );
-    appendActor ( _bricks[ 4U ], new Brick (), -12.8F, 128.0F, 2022.4F );
-    appendActor ( _bricks[ 5U ], new Brick (), -12.8F, 230.4F, 2048.0F );
-    appendActor ( _bricks[ 6U ], new Brick (), -12.8F, 230.4F, 2073.6F );
-    appendActor ( _bricks[ 7U ], new Brick (), -12.8F, 230.4F, 2099.2F );
-    appendActor ( _bricks[ 8U ], new Brick (), -12.8F, 230.4F, 2124.8F );
-    appendActor ( _bricks[ 9U ], new Brick (), -12.8F, 230.4F, 2150.4F );
-    appendActor ( _bricks[ 10U ], new Brick (), -12.8F, 230.4F, 2176.0F );
-    appendActor ( _bricks[ 11U ], new Brick (), -12.8F, 230.4F, 2201.6F );
-    appendActor ( _bricks[ 12U ], new Brick (), -12.8F, 230.4F, 2227.2F );
-    appendActor ( _bricks[ 13U ], new Brick (), -12.8F, 230.4F, 2329.6F );
-    appendActor ( _bricks[ 14U ], new Brick (), -12.8F, 230.4F, 2355.2F );
-    appendActor ( _bricks[ 15U ], new Brick (), -12.8F, 230.4F, 2380.8F );
-    appendActor ( _bricks[ 16U ], new Brick (), -12.8F, 128.0F, 2406.4F );
-    appendActor ( _bricks[ 17U ], new Brick (), -12.8F, 128.0F, 2560.0F );
-    appendActor ( _bricks[ 18U ], new Brick (), -12.8F, 128.0F, 3020.8F );
-    appendActor ( _bricks[ 19U ], new Brick (), -12.8F, 230.4F, 3097.6F );
-    appendActor ( _bricks[ 20U ], new Brick (), -12.8F, 230.4F, 3123.2F );
-    appendActor ( _bricks[ 21U ], new Brick (), -12.8F, 230.4F, 3148.8F );
-    appendActor ( _bricks[ 22U ], new Brick (), -12.8F, 230.4F, 3276.8F );
-    appendActor ( _bricks[ 23U ], new Brick (), -12.8F, 230.4F, 3353.6F );
-    appendActor ( _bricks[ 24U ], new Brick (), -12.8F, 128.0F, 3302.4F );
-    appendActor ( _bricks[ 25U ], new Brick (), -12.8F, 128.0F, 3328.0F );
-    appendActor ( _bricks[ 26U ], new Brick (), -12.8F, 128.0F, 4300.8F );
-    appendActor ( _bricks[ 27U ], new Brick (), -12.8F, 128.0F, 4326.4F );
-    appendActor ( _bricks[ 28U ], new Brick (), -12.8F, 128.0F, 4377.6F );
+    appendActor ( new Brick (), -12.8F, 128.0F, 512.0F );
+    appendActor ( new Brick (), -12.8F, 128.0F, 563.2F );
+    appendActor ( new Brick (), -12.8F, 128.0F, 614.4F );
+    appendActor ( new Brick (), -12.8F, 128.0F, 1971.2F );
+    appendActor ( new Brick (), -12.8F, 128.0F, 2022.4F );
+    appendActor ( new Brick (), -12.8F, 230.4F, 2048.0F );
+    appendActor ( new Brick (), -12.8F, 230.4F, 2073.6F );
+    appendActor ( new Brick (), -12.8F, 230.4F, 2099.2F );
+    appendActor ( new Brick (), -12.8F, 230.4F, 2124.8F );
+    appendActor ( new Brick (), -12.8F, 230.4F, 2150.4F );
+    appendActor ( new Brick (), -12.8F, 230.4F, 2176.0F );
+    appendActor ( new Brick (), -12.8F, 230.4F, 2201.6F );
+    appendActor ( new Brick (), -12.8F, 230.4F, 2227.2F );
+    appendActor ( new Brick (), -12.8F, 230.4F, 2329.6F );
+    appendActor ( new Brick (), -12.8F, 230.4F, 2355.2F );
+    appendActor ( new Brick (), -12.8F, 230.4F, 2380.8F );
+    appendActor ( new Brick (), -12.8F, 128.0F, 2406.4F );
+    appendActor ( new Brick (), -12.8F, 128.0F, 2560.0F );
+    appendActor ( new Brick (), -12.8F, 128.0F, 3020.8F );
+    appendActor ( new Brick (), -12.8F, 230.4F, 3097.6F );
+    appendActor ( new Brick (), -12.8F, 230.4F, 3123.2F );
+    appendActor ( new Brick (), -12.8F, 230.4F, 3148.8F );
+    appendActor ( new Brick (), -12.8F, 230.4F, 3276.8F );
+    appendActor ( new Brick (), -12.8F, 230.4F, 3353.6F );
+    appendActor ( new Brick (), -12.8F, 128.0F, 3302.4F );
+    appendActor ( new Brick (), -12.8F, 128.0F, 3328.0F );
+    appendActor ( new Brick (), -12.8F, 128.0F, 4300.8F );
+    appendActor ( new Brick (), -12.8F, 128.0F, 4326.4F );
+    appendActor ( new Brick (), -12.8F, 128.0F, 4377.6F );
 
-    appendActor ( _riddles[ 0U ], new Riddle (), -12.8F, 128.0F, 409.6F );
-    appendActor ( _riddles[ 1U ], new Riddle (), -12.8F, 128.0F, 537.6F );
-    appendActor ( _riddles[ 2U ], new Riddle (), -12.8F, 128.0F, 588.8F );
-    appendActor ( _riddles[ 3U ], new Riddle (), -12.8F, 230.4F, 563.2F );
-    appendActor ( _riddles[ 4U ], new Riddle (), -12.8F, 128.0F, 1996.8F );
-    appendActor ( _riddles[ 5U ], new Riddle (), -12.8F, 128.0F, 2713.6F );
-    appendActor ( _riddles[ 6U ], new Riddle (), -12.8F, 128.0F, 2790.4F );
-    appendActor ( _riddles[ 7U ], new Riddle (), -12.8F, 128.0F, 2867.2F );
-    appendActor ( _riddles[ 8U ], new Riddle (), -12.8F, 230.4F, 2406.4F );
-    appendActor ( _riddles[ 9U ], new Riddle (), -12.8F, 230.4F, 2790.4F );
-    appendActor ( _riddles[ 10U ], new Riddle (), -12.8F, 230.4F, 3302.4F );
-    appendActor ( _riddles[ 11U ], new Riddle (), -12.8F, 230.4F, 3328.0F );
-    appendActor ( _riddles[ 12U ], new Riddle (), -12.8F, 128.0F, 4352.0F );
+    appendActor ( new Riddle (), -12.8F, 128.0F, 409.6F );
+    appendActor ( new Riddle (), -12.8F, 128.0F, 537.6F );
+    appendActor ( new Riddle (), -12.8F, 128.0F, 588.8F );
+    appendActor ( new Riddle (), -12.8F, 230.4F, 563.2F );
+    appendActor ( new Riddle (), -12.8F, 128.0F, 1996.8F );
+    appendActor ( new Riddle (), -12.8F, 128.0F, 2713.6F );
+    appendActor ( new Riddle (), -12.8F, 128.0F, 2790.4F );
+    appendActor ( new Riddle (), -12.8F, 128.0F, 2867.2F );
+    appendActor ( new Riddle (), -12.8F, 230.4F, 2406.4F );
+    appendActor ( new Riddle (), -12.8F, 230.4F, 2790.4F );
+    appendActor ( new Riddle (), -12.8F, 230.4F, 3302.4F );
+    appendActor ( new Riddle (), -12.8F, 230.4F, 3328.0F );
+    appendActor ( new Riddle (), -12.8F, 128.0F, 4352.0F );
 
     _mario.Init ( renderer, consumed, commandBuffers, -0.8F, 4.4F, 3.00189F );
-    _components.push_back ( _mario.GetComponent () );
     commandBuffers += consumed;
 
     _camera.SetTarget ( _mario );
@@ -475,9 +457,9 @@ bool World1x1::UploadGPUContent ( android_vulkan::Renderer &renderer ) noexcept
     if ( !result )
         return false;
 
-    for ( auto& component : _components )
-        component->FreeTransferResources ( device );
-
+    _mario.FreeTransferResources ( device );
+    _scene.FreeTransferResources ( device );
+    _isReady = true;
     return true;
 }
 

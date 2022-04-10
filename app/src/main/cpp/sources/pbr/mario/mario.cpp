@@ -2,7 +2,6 @@
 #include <pbr/static_mesh_component.h>
 #include <gamepad.h>
 #include <shape_box.h>
-//#include <shape_sphere.h>
 
 
 namespace pbr::mario {
@@ -36,9 +35,9 @@ void Mario::CaptureInput () noexcept
     gamepad.BindKey ( this, &Mario::OnADown, android_vulkan::eGamepadKey::A, android_vulkan::eButtonState::Down );
 }
 
-ComponentRef& Mario::GetComponent () noexcept
+void Mario::FreeTransferResources ( VkDevice device ) noexcept
 {
-    return _staticMesh;
+    _staticMesh->FreeTransferResources ( device );
 }
 
 android_vulkan::RigidBodyRef& Mario::GetRigidBody () noexcept
@@ -61,7 +60,8 @@ void Mario::Init ( android_vulkan::Renderer &renderer,
         commandBufferConsumed,
         MESH,
         MATERIAL,
-        commandBuffers
+        commandBuffers,
+        "Mesh"
     );
 
     if ( !success )
@@ -122,6 +122,11 @@ void Mario::OnUpdate () noexcept
     GXVec3 force {};
     force.Multiply ( MOVE_FORCE, _move );
     body.AddForce ( force, bodyLoc, true );
+}
+
+void Mario::Submit ( RenderSession &renderSession ) noexcept
+{
+    _staticMesh->Submit ( renderSession );
 }
 
 void Mario::ReleaseInput () noexcept

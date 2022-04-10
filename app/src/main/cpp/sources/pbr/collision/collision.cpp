@@ -365,7 +365,8 @@ bool Collision::AppendCuboid ( android_vulkan::Renderer &renderer,
         commandBufferConsumed,
         "pbr/system/unit-cube.mesh2",
         material,
-        commandBuffers
+        commandBuffers,
+        "Mesh"
     );
 
     if ( !success )

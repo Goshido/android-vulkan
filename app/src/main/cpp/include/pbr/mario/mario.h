@@ -3,6 +3,7 @@
 
 
 #include "target.h"
+#include <pbr/render_session.h>
 #include <pbr/types.h>
 #include <rigid_body.h>
 
@@ -30,10 +31,8 @@ class Mario final : public ITarget
         ~Mario () override = default;
 
         [[nodiscard]] GXMat4 const& GetTransform () const noexcept override;
-
         void CaptureInput () noexcept;
-
-        [[nodiscard]] ComponentRef& GetComponent () noexcept;
+        void FreeTransferResources ( VkDevice device ) noexcept;
         [[nodiscard]] android_vulkan::RigidBodyRef& GetRigidBody () noexcept;
 
         // Note "x", "y" and "z" coordinates must be in physics units.
@@ -46,6 +45,7 @@ class Mario final : public ITarget
         ) noexcept;
 
         void OnUpdate () noexcept;
+        void Submit ( RenderSession &renderSession ) noexcept;
 
         [[nodiscard]] constexpr static size_t CommandBufferCountRequirement () noexcept
         {

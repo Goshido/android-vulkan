@@ -63,11 +63,6 @@ void ReflectionComponent::FreeTransferResources ( VkDevice device ) noexcept
     probe.FreeTransferResources ( device );
 }
 
-bool ReflectionComponent::IsRenderable () const noexcept
-{
-    return true;
-}
-
 void ReflectionComponent::Submit ( RenderSession &renderSession ) noexcept
 {
     if ( _probe )

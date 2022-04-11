@@ -211,8 +211,9 @@ bool PBRGame::UploadGPUContent ( android_vulkan::Renderer& renderer ) noexcept
         if ( component )
         {
             _allComponents.push_back ( component );
+            ClassID const classID = component->GetClassID ();
 
-            if ( component->IsRenderable () )
+            if ( classID == ClassID::PointLight | classID == ClassID::Reflection | classID == ClassID::StaticMesh )
             {
                 _renderableComponents.emplace_back ( std::reference_wrapper<ComponentRef> { _allComponents.back () } );
             }

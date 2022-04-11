@@ -24,6 +24,7 @@ class Scene final
         std::unordered_map<std::string, Actors>     _actorStorage {};
         ComponentList                               _freeTransferResourceList {};
         ComponentList                               _renderableList {};
+        ScriptEngine*                               _scriptEngine = nullptr;
 
     public:
         Scene () = default;
@@ -36,6 +37,7 @@ class Scene final
 
         ~Scene () = default;
 
+        [[nodiscard]] bool OnInitDevice () noexcept;
         void OnDestroyDevice () noexcept;
 
         void AppendActor ( ActorRef &actor ) noexcept;

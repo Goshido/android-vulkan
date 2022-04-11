@@ -89,9 +89,4 @@ void PointLightComponent::SetLocation ( GXVec3 const &location ) noexcept
     light.SetLocation ( location );
 }
 
-bool PointLightComponent::IsRenderable () const noexcept
-{
-    return true;
-}
-
 } // namespace pbr

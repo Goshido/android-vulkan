@@ -4,18 +4,27 @@
 
 namespace pbr {
 
+bool Scene::OnInitDevice () noexcept
+{
+    _scriptEngine = &ScriptEngine::GetInstance ();
+    return _scriptEngine->Init ();
+}
+
 void Scene::OnDestroyDevice () noexcept
 {
     _freeTransferResourceList.clear ();
     _renderableList.clear ();
     _actorStorage.clear ();
+
+    ScriptEngine::Destroy ();
+    _scriptEngine = nullptr;
 }
 
 void Scene::AppendActor ( ActorRef &actor ) noexcept
 {
     Actors& actors = _actorStorage[ actor->GetName () ];
     actors.push_back ( actor );
-    actors.back ()->RegisterRenderableComponents ( _freeTransferResourceList );
+    actors.back ()->RegisterComponents ( _freeTransferResourceList, _renderableList, *_scriptEngine );
 }
 
 [[maybe_unused]] Scene::FindResult Scene::FindActors ( std::string const &actorName ) noexcept

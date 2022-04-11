@@ -88,21 +88,19 @@ bool World1x1::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
         return false;
     }
 
-    ScriptEngine& scriptEngine = ScriptEngine::GetInstance ();
-
-    if ( !scriptEngine.Init () )
+    if ( !_scene.OnInitDevice () )
     {
         OnDestroyDevice ( device );
         return false;
     }
 
-    ScriptComponent scriptComponent ( "av://assets/Scripts/player.lua", "{ msg = 'hello world', state = 1 }" );
+    ComponentRef script = std::make_shared<ScriptComponent> ( "av://assets/Scripts/player.lua",
+        "{ msg = 'hello world', state = 1 }"
+    );
 
-    if ( !scriptComponent.Register () )
-    {
-        OnDestroyDevice ( device );
-        return false;
-    }
+    ActorRef logic = std::make_shared<Actor> ( "Logic" );
+    logic->AppendComponent ( script );
+    _scene.AppendActor ( logic );
 
     if ( !UploadGPUContent ( renderer ) )
     {
@@ -127,7 +125,6 @@ void World1x1::OnDestroyDevice ( VkDevice device ) noexcept
     _renderSession.OnDestroyDevice ( device );
     DestroyCommandPool ( device );
 
-    ScriptEngine::Destroy ();
     MeshManager::Destroy ( device );
     MaterialManager::Destroy ( device );
     CubeMapManager::Destroy ( device );

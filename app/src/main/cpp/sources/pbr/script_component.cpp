@@ -19,17 +19,12 @@ ScriptComponent::ScriptComponent ( std::string &&script, std::string &&params ) 
     // NOTHING
 }
 
-bool ScriptComponent::Register () noexcept
+bool ScriptComponent::RegisterScript ( ScriptEngine &scriptEngine ) noexcept
 {
     if ( _params.empty () )
-        return ScriptEngine::GetInstance ().AppendScript ( this, _script );
+        return scriptEngine.AppendScript ( this, _script );
 
-    return ScriptEngine::GetInstance ().AppendScript ( this, _script, _params );
-}
-
-bool ScriptComponent::IsRenderable () const noexcept
-{
-    return false;
+    return scriptEngine.AppendScript ( this, _script, _params );
 }
 
 } // namespace pbr

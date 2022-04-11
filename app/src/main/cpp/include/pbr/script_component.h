@@ -27,10 +27,7 @@ class ScriptComponent final : public Component
 
         ~ScriptComponent () = default;
 
-        [[nodiscard]] bool Register () noexcept;
-
-    private:
-        [[nodiscard]] bool IsRenderable () const noexcept override;
+        [[nodiscard]] bool RegisterScript ( ScriptEngine &scriptEngine ) noexcept override;
 };
 
 } // namespace pbr

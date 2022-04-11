@@ -2,6 +2,7 @@
 #define PBR_ACTOR_H
 
 
+#include "script_engine.h"
 #include "types.h"
 
 GX_DISABLE_COMMON_WARNINGS
@@ -37,10 +38,14 @@ class Actor final
 
         ~Actor () = default;
 
-        [[maybe_unused]] void AppendComponent ( ComponentRef &component ) noexcept;
+        void AppendComponent ( ComponentRef &component ) noexcept;
         [[nodiscard, maybe_unused]] FindResult FindComponents ( std::string const &componentName ) noexcept;
         [[nodiscard]] std::string const& GetName () const noexcept;
-        void RegisterRenderableComponents ( ComponentList &componentList ) noexcept;
+
+        void RegisterComponents ( ComponentList &freeTransferResource,
+            ComponentList &renderable,
+            ScriptEngine &scriptEngine
+        ) noexcept;
 };
 
 } // namespace pbr

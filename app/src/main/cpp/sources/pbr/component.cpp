@@ -7,17 +7,23 @@
 
 namespace pbr {
 
-void Component::Submit ( RenderSession &/*renderSession*/ ) noexcept
-{
-    // NOTHING
-}
-
 void Component::FreeTransferResources ( VkDevice /*device*/ ) noexcept
 {
     // NOTHING
 }
 
-[[maybe_unused]] ClassID Component::GetClassID () const noexcept
+void Component::Submit ( RenderSession &/*renderSession*/ ) noexcept
+{
+    // NOTHING
+}
+
+[[nodiscard]] bool Component::RegisterScript ( ScriptEngine &/*scriptEngine*/ ) noexcept
+{
+    // NOTHING
+    return false;
+}
+
+ClassID Component::GetClassID () const noexcept
 {
     return _classID;
 }

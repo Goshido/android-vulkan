@@ -33,7 +33,6 @@ class ReflectionComponent final : public Component
 
     private:
         void FreeTransferResources ( VkDevice device ) noexcept override;
-        [[nodiscard]] bool IsRenderable () const noexcept override;
         void Submit ( RenderSession &renderSession ) noexcept override;
 };
 

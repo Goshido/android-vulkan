@@ -60,8 +60,8 @@ class StaticMeshComponent final : public Component
 
         ~StaticMeshComponent () override = default;
 
-        void Submit ( RenderSession &renderSession ) noexcept override;
         void FreeTransferResources ( VkDevice device ) noexcept override;
+        void Submit ( RenderSession &renderSession ) noexcept override;
 
         [[maybe_unused, nodiscard]] GXAABB const& GetBoundsWorld () const noexcept;
 
@@ -82,9 +82,6 @@ class StaticMeshComponent final : public Component
 
         [[nodiscard]] GXMat4 const& GetTransform () const noexcept;
         void SetTransform ( GXMat4 const &transform ) noexcept;
-
-    private:
-        [[nodiscard]] bool IsRenderable () const noexcept override;
 };
 
 } // namespace pbr

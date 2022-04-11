@@ -36,8 +36,8 @@ class ScriptEngine final
         };
 
     private:
-        std::unique_ptr<lua_State, Deleter>         _vm { nullptr, &ScriptEngine::Free };
-        static ScriptEngine*                        _instance;
+        std::unique_ptr<lua_State, Deleter>     _vm { nullptr, &ScriptEngine::Free };
+        static ScriptEngine*                    _instance;
 
     public:
         ScriptEngine ( ScriptEngine const & ) = delete;

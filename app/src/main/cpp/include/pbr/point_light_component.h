@@ -35,9 +35,6 @@ class PointLightComponent final : public Component
         [[maybe_unused]] void SetHue ( GXColorRGB const &hue ) noexcept;
         void SetIntensity ( float intensity ) noexcept;
         void SetLocation ( GXVec3 const &location ) noexcept;
-
-    private:
-        [[nodiscard]] bool IsRenderable () const noexcept override;
 };
 
 } // namespace pbr

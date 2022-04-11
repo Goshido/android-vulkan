@@ -1,6 +1,7 @@
 #include <pbr/actor.h>
 #include <pbr/component.h>
 #include <guid_generator.h>
+#include <logger.h>
 
 
 namespace pbr {
@@ -17,7 +18,7 @@ Actor::Actor ( std::string &&name ) noexcept:
     // NOTHING
 }
 
-[[maybe_unused]] void Actor::AppendComponent ( ComponentRef &component ) noexcept
+void Actor::AppendComponent ( ComponentRef &component ) noexcept
 {
     _componentStorage[ component->GetName () ].push_back ( component );
 }
@@ -36,7 +37,10 @@ std::string const& Actor::GetName () const noexcept
     return _name;
 }
 
-void Actor::RegisterRenderableComponents ( ComponentList &componentList ) noexcept
+void Actor::RegisterComponents ( ComponentList &freeTransferResource,
+    ComponentList &renderable,
+    ScriptEngine &scriptEngine
+) noexcept
 {
     for ( auto& pair : _componentStorage )
     {
@@ -44,10 +48,29 @@ void Actor::RegisterRenderableComponents ( ComponentList &componentList ) noexce
 
         for ( auto& component : components )
         {
-            if ( !component->IsRenderable () )
-                continue;
+            ClassID const classID = component->GetClassID ();
 
-            componentList.emplace_back ( std::ref ( component ) );
+            if ( classID == ClassID::Reflection | classID == ClassID::StaticMesh )
+            {
+                freeTransferResource.emplace_back ( std::ref ( component ) );
+                continue;
+            }
+
+            if ( classID == ClassID::PointLight )
+            {
+                renderable.emplace_back ( std::ref ( component ) );
+                continue;
+            }
+
+            if ( classID == ClassID::Script )
+            {
+                if ( component->RegisterScript ( scriptEngine ) )
+                    continue;
+
+                android_vulkan::LogWarning ( "pbr::Actor::RegisterComponents - Can't register script component %s.",
+                    component->GetName ().c_str ()
+                );
+            }
         }
     }
 }

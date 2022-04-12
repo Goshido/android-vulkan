@@ -73,7 +73,7 @@ bool World1x1::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 
     bool result = android_vulkan::Renderer::CheckVkResult (
         vkCreateCommandPool ( device, &createInfo, nullptr, &_commandPool ),
-        "World1x1::OnInit",
+        "pbr::mario::World1x1::OnInit",
         "Can't create command pool"
     );
 
@@ -162,7 +162,7 @@ bool World1x1::CreatePhysics () noexcept
 
     if ( !_physics.AddGlobalForce ( std::make_shared<android_vulkan::GlobalForceGravity> ( FREE_FALL_ACCELERATION ) ) )
     {
-        android_vulkan::LogError ( "World1x1::CreatePhysics - Can't add gravity." );
+        android_vulkan::LogError ( "pbr::mario::World1x1::CreatePhysics - Can't add gravity." );
         return false;
     }
 
@@ -186,7 +186,7 @@ bool World1x1::CreatePhysics () noexcept
         if ( _physics.AddRigidBody ( body ) )
             return true;
 
-        android_vulkan::LogError ( "World1x1::CreatePhysics::append - Can't append %s", name );
+        android_vulkan::LogError ( "pbr::mario::World1x1::CreatePhysics::append - Can't append %s", name );
         return false;
     };
 
@@ -295,7 +295,7 @@ bool World1x1::CreatePhysics () noexcept
     if ( _physics.AddRigidBody ( _mario.GetRigidBody () ) )
         return true;
 
-    android_vulkan::LogError ( "World1x1::CreatePhysics - Can't append mario." );
+    android_vulkan::LogError ( "pbr::mario::World1x1::CreatePhysics - Can't append mario." );
     return false;
 }
 
@@ -348,7 +348,7 @@ bool World1x1::UploadGPUContent ( android_vulkan::Renderer &renderer ) noexcept
 
     bool result = android_vulkan::Renderer::CheckVkResult (
         vkAllocateCommandBuffers ( device, &allocateInfo, _commandBuffers.data () ),
-        "World1x1::UploadGPUContent",
+        "pbr::mario::World1x1::UploadGPUContent",
         "Can't allocate command buffers"
     );
 
@@ -447,7 +447,7 @@ bool World1x1::UploadGPUContent ( android_vulkan::Renderer &renderer ) noexcept
     _camera.Focus ();
 
     result = android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( renderer.GetQueue () ),
-        "World1x1::UploadGPUContent",
+        "pbr::mario::World1x1::UploadGPUContent",
         "Can't run upload commands"
     );
 

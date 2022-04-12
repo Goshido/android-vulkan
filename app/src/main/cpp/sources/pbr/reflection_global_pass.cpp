@@ -113,7 +113,7 @@ bool ReflectionGlobalPass::AllocateDescriptorSets ( android_vulkan::Renderer &re
 
     bool result = android_vulkan::Renderer::CheckVkResult (
         vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_descriptorPool ),
-        "ReflectionGlobalPass::AllocateDescriptorSets",
+        "pbr::ReflectionGlobalPass::AllocateDescriptorSets",
         "Can't create descriptor pool"
     );
 
@@ -138,7 +138,7 @@ bool ReflectionGlobalPass::AllocateDescriptorSets ( android_vulkan::Renderer &re
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkAllocateDescriptorSets ( device, &allocateInfo, _descriptorSets.data () ),
-        "ReflectionGlobalPass::AllocateDescriptorSets",
+        "pbr::ReflectionGlobalPass::AllocateDescriptorSets",
         "Can't allocate descriptor sets"
     );
 
@@ -156,7 +156,7 @@ bool ReflectionGlobalPass::AllocateDescriptorSets ( android_vulkan::Renderer &re
 
     _imageInfo.resize ( neededSets, image );
 
-    constexpr VkWriteDescriptorSet const writeSet
+    constexpr VkWriteDescriptorSet writeSet
     {
         .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
         .pNext = nullptr,

@@ -137,7 +137,7 @@ bool PointLightPass::Init ( android_vulkan::Renderer &renderer,
 
     bool result = android_vulkan::Renderer::CheckVkResult (
         vkCreateFence ( device, &fenceInfo, nullptr, &_fence ),
-        "PointLightPass::Init",
+        "pbr::PointLightPass::Init",
         "Can't create fence"
     );
 
@@ -175,7 +175,7 @@ bool PointLightPass::Init ( android_vulkan::Renderer &renderer,
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkAllocateCommandBuffers ( device, &allocateInfo, commandBuffers ),
-        "PointLightPass::Init",
+        "pbr::PointLightPass::Init",
         "Can't allocate command buffers"
     );
 
@@ -376,7 +376,7 @@ bool PointLightPass::AllocateLightDescriptorSets ( android_vulkan::Renderer &ren
 
     bool result = android_vulkan::Renderer::CheckVkResult (
         vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_lightDescriptorPool ),
-        "PointLightPass::AllocateLightDescriptorSets",
+        "pbr::PointLightPass::AllocateLightDescriptorSets",
         "Can't create descriptor pool"
     );
 
@@ -425,7 +425,7 @@ bool PointLightPass::AllocateLightDescriptorSets ( android_vulkan::Renderer &ren
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkAllocateDescriptorSets ( device, &allocateInfo, _lightDescriptorSets.data () ),
-        "PointLightPass::AllocateLightDescriptorSets",
+        "pbr::PointLightPass::AllocateLightDescriptorSets",
         "Can't allocate descriptor sets"
     );
 
@@ -476,7 +476,7 @@ bool PointLightPass::AllocateShadowmapDescriptorSets ( android_vulkan::Renderer 
 
     bool result = android_vulkan::Renderer::CheckVkResult (
         vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_shadowmapDescriptorPool ),
-        "PointLightPass::AllocateShadowmapDescriptorSets",
+        "pbr::PointLightPass::AllocateShadowmapDescriptorSets",
         "Can't create descriptor pool"
     );
 
@@ -501,7 +501,7 @@ bool PointLightPass::AllocateShadowmapDescriptorSets ( android_vulkan::Renderer 
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkAllocateDescriptorSets ( device, &allocateInfo, _shadowmapDescriptorSets.data () ),
-        "PointLightPass::AllocateShadowmapDescriptorSets",
+        "pbr::PointLightPass::AllocateShadowmapDescriptorSets",
         "Can't allocate descriptor sets"
     );
 
@@ -588,7 +588,7 @@ PointLightPass::PointLightShadowmapInfo* PointLightPass::AcquirePointLightShadow
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateFramebuffer ( device, &framebufferInfo, nullptr, &framebuffer ),
-        "RenderSession::AcquirePointLightShadowmap",
+        "pbr::RenderSession::AcquirePointLightShadowmap",
         "Can't create framebuffer"
     );
 
@@ -621,7 +621,7 @@ bool PointLightPass::CreateShadowmapRenderPass ( VkDevice device )
         }
     };
 
-    constexpr static VkAttachmentReference const depthAttachmentReference
+    constexpr static VkAttachmentReference depthAttachmentReference
     {
         .attachment = 0U,
         .layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
@@ -655,7 +655,7 @@ bool PointLightPass::CreateShadowmapRenderPass ( VkDevice device )
         0b00000000'00000000'00000000'00111111U
     };
 
-    constexpr static VkRenderPassMultiviewCreateInfo const multiviewInfo
+    constexpr static VkRenderPassMultiviewCreateInfo multiviewInfo
     {
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_MULTIVIEW_CREATE_INFO,
         .pNext = nullptr,
@@ -682,7 +682,7 @@ bool PointLightPass::CreateShadowmapRenderPass ( VkDevice device )
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateRenderPass ( device, &renderPassInfo, nullptr, &_shadowmapRenderPass ),
-        "PointLightPass::CreateShadowmapRenderPass",
+        "pbr::PointLightPass::CreateShadowmapRenderPass",
         "Can't create render pass"
     );
 
@@ -702,7 +702,7 @@ bool PointLightPass::CreateShadowmapRenderPass ( VkDevice device )
         }
     };
 
-    constexpr static VkRect2D const renderArea
+    constexpr static VkRect2D renderArea
     {
         .offset
         {
@@ -831,7 +831,7 @@ bool PointLightPass::GenerateShadowmaps ( android_vulkan::Renderer &renderer )
     }
 
     bool const result = android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( _shadowmapRenderCommandBuffer ),
-        "PointLightPass::GenerateShadowmaps",
+        "pbr::PointLightPass::GenerateShadowmaps",
         "Can't end command buffer"
     );
 
@@ -840,7 +840,7 @@ bool PointLightPass::GenerateShadowmaps ( android_vulkan::Renderer &renderer )
 
     return android_vulkan::Renderer::CheckVkResult (
         vkQueueSubmit ( renderer.GetQueue (), 1U, &_shadowmapSubmitInfoRender, _fence ),
-        "PointLightPass::GenerateShadowmaps",
+        "pbr::PointLightPass::GenerateShadowmaps",
         "Can't submit command buffer"
     );
 }
@@ -855,7 +855,7 @@ bool PointLightPass::UpdateShadowmapGPUData ( android_vulkan::Renderer &renderer
 
     bool result = android_vulkan::Renderer::CheckVkResult (
         vkWaitForFences ( device, 1U, &_fence, VK_TRUE, UINT64_MAX ),
-        "PointLightPass::UpdateShadowmapGPUData",
+        "pbr::PointLightPass::UpdateShadowmapGPUData",
         "Can't wait for fence"
     );
 
@@ -863,7 +863,7 @@ bool PointLightPass::UpdateShadowmapGPUData ( android_vulkan::Renderer &renderer
         return false;
 
     result = android_vulkan::Renderer::CheckVkResult ( vkResetFences ( device, 1U, &_fence ),
-        "PointLightPass::UpdateShadowmapGPUData",
+        "pbr::PointLightPass::UpdateShadowmapGPUData",
         "Can't reset fence"
     );
 
@@ -880,7 +880,7 @@ bool PointLightPass::UpdateShadowmapGPUData ( android_vulkan::Renderer &renderer
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkBeginCommandBuffer ( _shadowmapTransferCommandBuffer, &beginInfo ),
-        "PointLightPass::UpdateShadowmapGPUData",
+        "pbr::PointLightPass::UpdateShadowmapGPUData",
         "Can't begin command buffer"
     );
 
@@ -1006,7 +1006,7 @@ bool PointLightPass::UpdateShadowmapGPUData ( android_vulkan::Renderer &renderer
     );
 
     result = android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( _shadowmapTransferCommandBuffer ),
-        "PointLightPass::UpdateShadowmapGPUData",
+        "pbr::PointLightPass::UpdateShadowmapGPUData",
         "Can't end command buffer"
     );
 
@@ -1015,7 +1015,7 @@ bool PointLightPass::UpdateShadowmapGPUData ( android_vulkan::Renderer &renderer
 
     return android_vulkan::Renderer::CheckVkResult (
         vkQueueSubmit ( renderer.GetQueue (), 1U, &_shadowmapSubmitInfoTransfer, VK_NULL_HANDLE ),
-        "PointLightPass::UpdateShadowmapGPUData",
+        "pbr::PointLightPass::UpdateShadowmapGPUData",
         "Can't submit command buffer"
     );
 }
@@ -1038,7 +1038,7 @@ bool PointLightPass::UpdateLightGPUData ( android_vulkan::Renderer &renderer, GX
 
     bool result = android_vulkan::Renderer::CheckVkResult (
         vkBeginCommandBuffer ( _lightTransferCommandBuffer, &beginInfo ),
-        "PointLightPass::UpdateLightGPUData",
+        "pbr::PointLightPass::UpdateLightGPUData",
         "Can't begin command buffer"
     );
 
@@ -1071,7 +1071,7 @@ bool PointLightPass::UpdateLightGPUData ( android_vulkan::Renderer &renderer, GX
     }
 
     result = android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( _lightTransferCommandBuffer ),
-        "PointLightPass::UpdateLightGPUData",
+        "pbr::PointLightPass::UpdateLightGPUData",
         "Can't end command buffer"
     );
 
@@ -1080,7 +1080,7 @@ bool PointLightPass::UpdateLightGPUData ( android_vulkan::Renderer &renderer, GX
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkQueueSubmit ( renderer.GetQueue (), 1U, &_lightSubmitInfoTransfer, VK_NULL_HANDLE ),
-        "PointLightPass::UpdateLightGPUData",
+        "pbr::PointLightPass::UpdateLightGPUData",
         "Can't submit command buffer"
     );
 

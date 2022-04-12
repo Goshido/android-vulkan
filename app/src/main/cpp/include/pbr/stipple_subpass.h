@@ -44,6 +44,11 @@ class StippleSubpass final : public GeometrySubpassBase
         ) noexcept;
 
     private:
+        void ReportGeometry ( RenderSessionStats &renderSessionStats,
+            uint32_t vertexCount,
+            uint32_t instanceCount
+        ) noexcept override;
+
         [[nodiscard]] bool UpdateGPUData ( android_vulkan::Renderer &renderer,
             GXMat4 const &view,
             GXMat4 const &viewProjection,

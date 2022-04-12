@@ -2,13 +2,13 @@
 #define PBR_REFLECTION_COMPONENT_H
 
 
-#include "component.h"
+#include "renderable_component.h"
 #include "reflection_component_desc.h"
 
 
 namespace pbr {
 
-class ReflectionComponent final : public Component
+class ReflectionComponent final : public RenderableComponent
 {
     private:
         LightRef    _probe;
@@ -25,7 +25,7 @@ class ReflectionComponent final : public Component
         explicit ReflectionComponent ( android_vulkan::Renderer &renderer,
             size_t &commandBufferConsumed,
             ReflectionComponentDesc const &desc,
-            uint8_t const *data,
+            uint8_t const* data,
             VkCommandBuffer const* commandBuffers
         ) noexcept;
 

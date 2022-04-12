@@ -1,8 +1,8 @@
 #include <pbr/pbr_game.h>
-#include <pbr/component.h>
 #include <pbr/cube_map_manager.h>
 #include <pbr/material_manager.h>
 #include <pbr/mesh_manager.h>
+#include <pbr/renderable_component.h>
 #include <pbr/scene_desc.h>
 #include <gamepad.h>
 
@@ -51,7 +51,11 @@ bool PBRGame::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) n
     _renderSession.Begin ( cameraLocal, _camera.GetProjectionMatrix () );
 
     for ( auto& component : _renderableComponents )
-        component.get ()->Submit ( _renderSession );
+    {
+        // NOLINTNEXTLINE - downcast.
+        auto& renderableComponent = static_cast<RenderableComponent&> ( *component.get () );
+        renderableComponent.Submit ( _renderSession );
+    }
 
     return _renderSession.End ( renderer, deltaTime );
 }
@@ -70,7 +74,7 @@ bool PBRGame::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 
     bool result = android_vulkan::Renderer::CheckVkResult (
         vkCreateCommandPool ( device, &createInfo, nullptr, &_commandPool ),
-        "PBRGame::OnInit",
+        "pbr::PBRGame::OnInit",
         "Can't create command pool"
     );
 
@@ -184,7 +188,7 @@ bool PBRGame::UploadGPUContent ( android_vulkan::Renderer& renderer ) noexcept
 
     bool result = android_vulkan::Renderer::CheckVkResult (
         vkAllocateCommandBuffers ( device, &allocateInfo, _commandBuffers.data () ),
-        "PBRGame::UploadGPUContent",
+        "pbr::PBRGame::UploadGPUContent",
         "Can't allocate command buffers"
     );
 
@@ -224,7 +228,7 @@ bool PBRGame::UploadGPUContent ( android_vulkan::Renderer& renderer ) noexcept
     }
 
     result = android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( renderer.GetQueue () ),
-        "PBRGame::UploadGPUContent",
+        "pbr::PBRGame::UploadGPUContent",
         "Can't run upload commands"
     );
 
@@ -232,7 +236,11 @@ bool PBRGame::UploadGPUContent ( android_vulkan::Renderer& renderer ) noexcept
         return false;
 
     for ( auto& component : _renderableComponents )
-        component.get ()->FreeTransferResources ( device );
+    {
+        // NOLINTNEXTLINE - downcast.
+        auto& renderableComponent = static_cast<RenderableComponent&> ( *component.get () );
+        renderableComponent.FreeTransferResources ( device );
+    }
 
     return true;
 }

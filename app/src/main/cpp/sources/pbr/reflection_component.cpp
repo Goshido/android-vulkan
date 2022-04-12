@@ -9,17 +9,20 @@ GX_DISABLE_COMMON_WARNINGS
 
 GX_RESTORE_WARNING_STATE
 
+
 namespace pbr {
 
 [[maybe_unused]] constexpr static uint32_t const REFLECTION_COMPONENT_DESC_FORMAT_VERSION = 1U;
 
+//----------------------------------------------------------------------------------------------------------------------
+
 ReflectionComponent::ReflectionComponent ( android_vulkan::Renderer &renderer,
     size_t &commandBufferConsumed,
     ReflectionComponentDesc const &desc,
-    uint8_t const *data,
+    uint8_t const* data,
     VkCommandBuffer const* commandBuffers
 ) noexcept:
-    Component ( ClassID::Reflection )
+    RenderableComponent ( ClassID::Reflection )
 {
     assert ( desc._formatVersion == REFLECTION_COMPONENT_DESC_FORMAT_VERSION );
 
@@ -33,7 +36,7 @@ ReflectionComponent::ReflectionComponent ( android_vulkan::Renderer &renderer,
         ._zMinusFile = reinterpret_cast<char const*> ( data + desc._sideZMinus )
     };
 
-    TextureCubeRef prefilter = CubeMapManager::GetInstance().LoadCubeMap ( renderer,
+    TextureCubeRef prefilter = CubeMapManager::GetInstance ().LoadCubeMap ( renderer,
         commandBufferConsumed,
         cubeData,
         *commandBuffers
@@ -58,7 +61,7 @@ void ReflectionComponent::FreeTransferResources ( VkDevice device ) noexcept
     if ( !_probe )
         return;
 
-    // Note it's safe cast like that here. "NOLINT" is a clang-tidy control comment.
+    // NOLINTNEXTLINE - downcast.
     auto& probe = static_cast<ReflectionProbe&> ( *_probe ); // NOLINT
     probe.FreeTransferResources ( device );
 }

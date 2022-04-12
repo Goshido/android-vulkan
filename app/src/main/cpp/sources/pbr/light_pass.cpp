@@ -341,7 +341,7 @@ bool LightPass::CreateLightupFramebuffer ( VkDevice device, GBuffer &gBuffer )
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateFramebuffer ( device, &info, nullptr, &_lightupRenderPassInfo.framebuffer ),
-        "LightPass::CreateLightupFramebuffer",
+        "pbr::LightPass::CreateLightupFramebuffer",
         "Can't create framebuffer"
     );
 
@@ -519,7 +519,7 @@ bool LightPass::CreateLightupRenderPass ( VkDevice device, GBuffer &gBuffer )
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateRenderPass ( device, &renderPassInfo, nullptr, &_lightupRenderPassInfo.renderPass ),
-        "PointLightPass::CreateLightupRenderPass",
+        "pbr::PointLightPass::CreateLightupRenderPass",
         "Can't create light-up render pass"
     );
 
@@ -606,7 +606,7 @@ bool LightPass::CreateUnitCube ( android_vulkan::Renderer &renderer, VkCommandPo
 
     bool result = android_vulkan::Renderer::CheckVkResult (
         vkAllocateCommandBuffers ( renderer.GetDevice (), &allocateInfo, &_transfer ),
-        "LightPass::CreateUnitCube",
+        "pbr::LightPass::CreateUnitCube",
         "Can't allocate command buffer"
     );
 

@@ -2,15 +2,14 @@
 #define PBR_POINT_LIGHT_COMPONENT_H
 
 
-#include "component.h"
 #include "point_light.h"
 #include "point_light_component_desc.h"
-#include "types.h"
+#include "renderable_component.h"
 
 
 namespace pbr {
 
-class PointLightComponent final : public Component
+class PointLightComponent final : public RenderableComponent
 {
     private:
         LightRef    _pointLight;

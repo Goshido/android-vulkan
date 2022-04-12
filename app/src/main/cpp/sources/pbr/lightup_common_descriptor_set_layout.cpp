@@ -135,7 +135,7 @@ bool LightupCommonDescriptorSetLayoutImpl::Init ( android_vulkan::Renderer &rend
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateDescriptorSetLayout ( renderer.GetDevice (), &descriptorSetLayoutInfo, nullptr, &_layout ),
-        "LightupCommonDescriptorSetLayoutImpl::Init",
+        "pbr::LightupCommonDescriptorSetLayoutImpl::Init",
         "Can't create descriptor set layout"
     );
 

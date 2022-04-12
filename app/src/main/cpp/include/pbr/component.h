@@ -3,8 +3,6 @@
 
 
 #include "component_desc.h"
-#include "render_session.h"
-#include "script_engine.h"
 #include "types.h"
 
 
@@ -27,12 +25,7 @@ class Component
 
         virtual ~Component () = default;
 
-        virtual void FreeTransferResources ( VkDevice device ) noexcept;
-        virtual void Submit ( RenderSession &renderSession ) noexcept;
-
-        [[nodiscard]] virtual bool RegisterScript ( ScriptEngine &scriptEngine ) noexcept;
-
-        [[nodiscard, maybe_unused]] ClassID GetClassID () const noexcept;
+        [[nodiscard]] ClassID GetClassID () const noexcept;
         [[nodiscard]] std::string const& GetName () const noexcept;
 
         [[nodiscard]] static ComponentRef Create ( android_vulkan::Renderer &renderer,

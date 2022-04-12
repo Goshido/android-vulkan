@@ -6,11 +6,13 @@ namespace pbr {
 constexpr static const char* VERTEX_SHADER = "shaders/reflection-global-vs.spv";
 constexpr static const char* FRAGMENT_SHADER = "shaders/reflection-global-ps.spv";
 
-constexpr static const size_t COLOR_RENDER_TARGET_COUNT = 1U;
-constexpr static const size_t STAGE_COUNT = 2U;
+constexpr static size_t COLOR_RENDER_TARGET_COUNT = 1U;
+constexpr static size_t STAGE_COUNT = 2U;
+
+//----------------------------------------------------------------------------------------------------------------------
 
 ReflectionGlobalProgram::ReflectionGlobalProgram ():
-    LightLightupBaseProgram ( "ReflectionGlobalProgram" ),
+    LightLightupBaseProgram ( "pbr::ReflectionGlobalProgram" ),
     _commonLayout {},
     _stubLayout {},
     _reflectionLayout {}
@@ -73,7 +75,7 @@ bool ReflectionGlobalProgram::Init ( android_vulkan::Renderer &renderer,
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateGraphicsPipelines ( device, VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
-        "ReflectionGlobalProgram::Init",
+        "pbr::ReflectionGlobalProgram::Init",
         "Can't create pipeline"
     );
 
@@ -275,7 +277,7 @@ bool ReflectionGlobalProgram::InitLayout ( android_vulkan::Renderer &renderer, V
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreatePipelineLayout ( renderer.GetDevice (), &layoutInfo, nullptr, &_pipelineLayout ),
-        "ReflectionGlobalProgram::InitLayout",
+        "pbr::ReflectionGlobalProgram::InitLayout",
         "Can't create pipeline layout"
     );
 

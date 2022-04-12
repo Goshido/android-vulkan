@@ -78,7 +78,7 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
 
     bool result = android_vulkan::Renderer::CheckVkResult (
         vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_descriptorPool ),
-        "LightupCommonDescriptorSet::Init",
+        "pbr::LightupCommonDescriptorSet::Init",
         "Can't create descriptor pool"
     );
 
@@ -113,7 +113,7 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkCreatePipelineLayout ( renderer.GetDevice (), &layoutInfo, nullptr, &_pipelineLayout ),
-        "LightupCommonDescriptorSet::Init",
+        "pbr::LightupCommonDescriptorSet::Init",
         "Can't create pipeline layout"
     );
 
@@ -136,7 +136,7 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkAllocateDescriptorSets ( device, &descriptorSetAllocateInfo, &_set ),
-        "LightupCommonDescriptorSet::Init",
+        "pbr::LightupCommonDescriptorSet::Init",
         "Can't allocate descriptor set"
     );
 
@@ -173,7 +173,7 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkAllocateCommandBuffers ( device, &commandBufferAllocateInfo, &_brdfTransfer ),
-        "LightupCommonDescriptorSet::Init",
+        "pbr::LightupCommonDescriptorSet::Init",
         "Can't allocate command buffer"
     );
 

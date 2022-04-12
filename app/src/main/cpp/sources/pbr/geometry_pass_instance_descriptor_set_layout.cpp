@@ -85,7 +85,7 @@ bool GeometryPassInstanceDescriptorSetLayoutImpl::Init ( android_vulkan::Rendere
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateDescriptorSetLayout ( renderer.GetDevice (), &descriptorSetLayoutInfo, nullptr, &_descriptorSetLayout ),
-        "GeometryPassInstanceDescriptorSetLayoutImpl::Init",
+        "pbr::GeometryPassInstanceDescriptorSetLayoutImpl::Init",
         "Can't create descriptor set layout"
     );
 

@@ -49,6 +49,14 @@ bool StippleSubpass::Execute ( android_vulkan::Renderer &renderer,
     return true;
 }
 
+void StippleSubpass::ReportGeometry ( RenderSessionStats &renderSessionStats,
+    uint32_t vertexCount,
+    uint32_t instanceCount
+) noexcept
+{
+    renderSessionStats.RenderStipple ( vertexCount, instanceCount );
+}
+
 bool StippleSubpass::UpdateGPUData ( android_vulkan::Renderer &renderer,
     GXMat4 const &view,
     GXMat4 const &viewProjection,
@@ -82,7 +90,7 @@ bool StippleSubpass::UpdateGPUData ( android_vulkan::Renderer &renderer,
     };
 
     bool result = android_vulkan::Renderer::CheckVkResult ( vkBeginCommandBuffer ( _transferCommandBuffer, &beginInfo ),
-        "StippleSubpass::UpdateGPUData",
+        "pbr::StippleSubpass::UpdateGPUData",
         "Can't begin command buffer"
     );
 
@@ -152,7 +160,7 @@ bool StippleSubpass::UpdateGPUData ( android_vulkan::Renderer &renderer,
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkAllocateDescriptorSets ( device, &allocateInfo, descriptorSets ),
-        "StippleSubpass::UpdateGPUData",
+        "pbr::StippleSubpass::UpdateGPUData",
         "Can't allocate descriptor sets"
     );
 
@@ -262,7 +270,7 @@ bool StippleSubpass::UpdateGPUData ( android_vulkan::Renderer &renderer,
             if ( uniformUsed >= maxUniforms )
             {
                 android_vulkan::LogError (
-                    "StippleSubpass::UpdateGPUData - Uniform pool overflow has been detected (branch 1)!"
+                    "pbr::StippleSubpass::UpdateGPUData - Uniform pool overflow has been detected (branch 1)!"
                 );
 
                 return false;
@@ -301,7 +309,7 @@ bool StippleSubpass::UpdateGPUData ( android_vulkan::Renderer &renderer,
                 if ( uniformUsed >= maxUniforms )
                 {
                     android_vulkan::LogError (
-                        "StippleSubpass::UpdateGPUData - Uniform pool overflow has been detected (branch 0)!"
+                        "pbr::StippleSubpass::UpdateGPUData - Uniform pool overflow has been detected (branch 0)!"
                     );
 
                     return false;
@@ -362,7 +370,7 @@ bool StippleSubpass::UpdateGPUData ( android_vulkan::Renderer &renderer,
     );
 
     result = android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( _transferCommandBuffer ),
-        "StippleSubpass::UpdateGPUData",
+        "pbr::StippleSubpass::UpdateGPUData",
         "Can't end transfer command buffer"
     );
 
@@ -371,7 +379,7 @@ bool StippleSubpass::UpdateGPUData ( android_vulkan::Renderer &renderer,
 
     return android_vulkan::Renderer::CheckVkResult (
         vkQueueSubmit ( renderer.GetQueue (), 1U, &_submitInfoTransfer, VK_NULL_HANDLE ),
-        "StippleSubpass::UpdateGPUData",
+        "pbr::StippleSubpass::UpdateGPUData",
         "Can't submit transfer command buffer"
     );
 }

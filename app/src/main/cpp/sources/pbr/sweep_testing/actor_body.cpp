@@ -20,14 +20,14 @@ GXColorRGB const ActorBody::_overlayColor (
 
 void ActorBody::EnableOverlay () noexcept
 {
-    // NOLINTNEXTLINE
+    // NOLINTNEXTLINE - downcast.
     auto& mesh = static_cast<StaticMeshComponent&> ( *_mesh );
     mesh.SetEmission ( _overlayColor );
 }
 
 void ActorBody::DisableOverlay () noexcept
 {
-    // NOLINTNEXTLINE
+    // NOLINTNEXTLINE - downcast.
     auto& mesh = static_cast<StaticMeshComponent&> ( *_mesh );
 
     constexpr GXColorRGB noOverlay ( 0.0F, 0.0F, 0.0F, 1.0F );
@@ -36,7 +36,9 @@ void ActorBody::DisableOverlay () noexcept
 
 void ActorBody::FreeTransferResources ( VkDevice device ) noexcept
 {
-    _mesh->FreeTransferResources ( device );
+    // NOLINTNEXTLINE - downcast.
+    auto& mesh = static_cast<StaticMeshComponent&> ( *_mesh );
+    mesh.FreeTransferResources ( device );
 }
 
 void ActorBody::Destroy () noexcept
@@ -93,10 +95,10 @@ bool ActorBody::Init ( android_vulkan::Renderer &renderer,
 
 void ActorBody::SetOverlay ( Texture2DRef const &overlay ) noexcept
 {
-    // NOLINTNEXTLINE
+    // NOLINTNEXTLINE - downcast.
     auto& mesh = static_cast<StaticMeshComponent&> ( *_mesh );
 
-    // NOLINTNEXTLINE
+    // NOLINTNEXTLINE - downcast.
     auto& material = static_cast<OpaqueMaterial&> ( *mesh.GetMaterial () );
     material.SetEmission ( overlay );
 
@@ -108,7 +110,7 @@ void ActorBody::Submit ( RenderSession &renderSession ) noexcept
     if ( !_mesh )
         return;
 
-    android_vulkan::RigidBody& ph = *_body.get ();
+    android_vulkan::RigidBody& ph = *_body;
 
     GXMat3 orientation {};
     orientation.FromFast ( ph.GetRotation () );
@@ -137,7 +139,7 @@ void ActorBody::Submit ( RenderSession &renderSession ) noexcept
     transform._m[ 0U ][ 3U ] = transform._m[ 1U ][ 3U ] = transform._m[ 2U ][ 3U ] = 0.0F;
     transform._m[ 3U ][ 3U ] = 1.0F;
 
-    // NOLINTNEXTLINE
+    // NOLINTNEXTLINE - downcast.
     auto& mesh = *static_cast<StaticMeshComponent*> ( _mesh.get () );
     mesh.SetTransform ( transform );
     mesh.Submit ( renderSession );

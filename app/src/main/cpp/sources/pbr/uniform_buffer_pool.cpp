@@ -13,9 +13,9 @@ namespace pbr {
 constexpr static size_t const MEGABYTES_TO_BYTES = 1024U * 1024U;
 
 // see https://vulkan.lunarg.com/doc/view/1.1.108.0/mac/chunked_spec/chap18.html#vkCmdUpdateBuffer
-[[maybe_unused]] constexpr static size_t const UPDATE_BUFFER_MAX_SIZE = 65536U;
+[[maybe_unused]] constexpr static size_t UPDATE_BUFFER_MAX_SIZE = 65536U;
 
-constexpr static VkBufferUsageFlags const USAGE = AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT ) |
+constexpr static VkBufferUsageFlags USAGE = AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT ) |
     AV_VK_FLAG ( VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT );
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -95,7 +95,7 @@ bool UniformBufferPool::Init ( android_vulkan::Renderer &renderer, size_t itemSi
     bool const result = renderer.TryAllocateMemory ( _gpuMemory,
         _size,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-        "Can't allocate GPU memory (UniformBufferPool::Init)"
+        "Can't allocate GPU memory (pbr::UniformBufferPool::Init)"
     );
 
     if ( !result )
@@ -153,7 +153,7 @@ bool UniformBufferPool::AllocateItem ( android_vulkan::Renderer &renderer )
     VkBuffer buffer = VK_NULL_HANDLE;
 
     bool result = android_vulkan::Renderer::CheckVkResult ( vkCreateBuffer ( device, &_bufferInfo, nullptr, &buffer ),
-        "UniformBufferPool::AllocateItem",
+        "pbr::UniformBufferPool::AllocateItem",
         "Can't create uniform buffer"
     );
 
@@ -174,7 +174,7 @@ bool UniformBufferPool::AllocateItem ( android_vulkan::Renderer &renderer )
             static_cast<VkDeviceSize> ( _pool.size () * _gpuSpecificItemOffset )
         ),
 
-        "UniformBufferPool::AllocateItem",
+        "pbr::UniformBufferPool::AllocateItem",
         "Can't bind uniform buffer memory"
     );
 
@@ -206,7 +206,7 @@ bool UniformBufferPool::ResolveAlignment ( android_vulkan::Renderer &renderer,
     VkBuffer buffer = VK_NULL_HANDLE;
 
     bool result = android_vulkan::Renderer::CheckVkResult ( vkCreateBuffer ( device, &bufferInfo, nullptr, &buffer ),
-        "UniformBufferPool::ResolveAlignment",
+        "pbr::UniformBufferPool::ResolveAlignment",
         "Can't create uniform buffer"
     );
 

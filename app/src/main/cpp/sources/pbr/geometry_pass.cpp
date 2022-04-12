@@ -21,7 +21,7 @@ bool GeometryPass::Init ( android_vulkan::Renderer &renderer,
     };
 
     bool result = android_vulkan::Renderer::CheckVkResult ( vkCreateFence ( device, &fenceInfo, nullptr, &_fence ),
-        "GeometryPass::Init",
+        "pbr::GeometryPass::Init",
         "Can't create fence"
     );
 
@@ -41,7 +41,7 @@ bool GeometryPass::Init ( android_vulkan::Renderer &renderer,
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkAllocateCommandBuffers ( device, &allocateInfo, &_commandBuffer ),
-        "GeometryPass::Init",
+        "pbr::GeometryPass::Init",
         "Can't allocate command buffers"
     );
 
@@ -240,7 +240,7 @@ bool GeometryPass::BeginRenderPass ( android_vulkan::Renderer &renderer ) noexce
 
     bool result = android_vulkan::Renderer::CheckVkResult (
         vkWaitForFences ( device, 1U, &_fence, VK_TRUE, UINT64_MAX ),
-        "GeometryPass::BeginRenderPass",
+        "pbr::GeometryPass::BeginRenderPass",
         "Can't wait for fence"
     );
 
@@ -264,7 +264,7 @@ bool GeometryPass::BeginRenderPass ( android_vulkan::Renderer &renderer ) noexce
     };
 
     result = android_vulkan::Renderer::CheckVkResult ( vkBeginCommandBuffer ( _commandBuffer, &beginInfo ),
-        "GeometryPass::BeginRenderPass",
+        "pbr::GeometryPass::BeginRenderPass",
         "Can't begin rendering command buffer"
     );
 

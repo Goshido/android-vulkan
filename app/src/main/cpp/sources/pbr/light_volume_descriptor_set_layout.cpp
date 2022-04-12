@@ -86,7 +86,7 @@ bool LightVolumeDescriptorSetLayoutImpl::Init ( android_vulkan::Renderer &render
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateDescriptorSetLayout ( renderer.GetDevice (), &descriptorSetLayoutInfo, nullptr, &_layout ),
-        "LightVolumeDescriptorSetLayoutImpl::Init",
+        "pbr::LightVolumeDescriptorSetLayoutImpl::Init",
         "Can't create descriptor set layout"
     );
 

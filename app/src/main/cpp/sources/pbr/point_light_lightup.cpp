@@ -52,7 +52,7 @@ bool PointLightLightup::Init ( android_vulkan::Renderer &renderer,
 
     bool result = android_vulkan::Renderer::CheckVkResult (
         vkAllocateCommandBuffers ( device, &allocateInfo, &_transferCommandBuffer ),
-        "PointLightLightup::Init",
+        "pbr::PointLightLightup::Init",
         "Can't allocate command buffer"
     );
 
@@ -168,7 +168,7 @@ bool PointLightLightup::UpdateGPUData ( android_vulkan::Renderer &renderer,
     };
 
     bool result = android_vulkan::Renderer::CheckVkResult ( vkBeginCommandBuffer ( _transferCommandBuffer, &beginInfo ),
-        "PointLightLightup::UpdateGPUData",
+        "pbr::PointLightLightup::UpdateGPUData",
         "Can't begin command buffer"
     );
 
@@ -180,7 +180,7 @@ bool PointLightLightup::UpdateGPUData ( android_vulkan::Renderer &renderer,
     GXVec3 betta {};
 
     constexpr float const gamma = 1.0F / UNITS_PER_METER;
-    PointLightLightupProgram::LightData lightData;
+    PointLightLightupProgram::LightData lightData {};
     lightData._sceneScaleFactor = gamma;
 
     // Note all shadowmap formats are same so grab first shadowmap and resolve.
@@ -278,7 +278,7 @@ bool PointLightLightup::UpdateGPUData ( android_vulkan::Renderer &renderer,
     }
 
     result = android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( _transferCommandBuffer ),
-        "PointLightLightup::UpdateGPUData",
+        "pbr::PointLightLightup::UpdateGPUData",
         "Can't end command buffer"
     );
 
@@ -287,7 +287,7 @@ bool PointLightLightup::UpdateGPUData ( android_vulkan::Renderer &renderer,
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkQueueSubmit ( renderer.GetQueue (), 1U, &_submitInfoTransfer, VK_NULL_HANDLE ),
-        "PointLightLightup::UpdateGPUData",
+        "pbr::PointLightLightup::UpdateGPUData",
         "Can't submit command buffer"
     );
 
@@ -343,7 +343,7 @@ bool PointLightLightup::AllocateNativeDescriptorSets ( android_vulkan::Renderer 
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_descriptorPool ),
-        "PointLightLightup::AllocateNativeDescriptorSets",
+        "pbr::PointLightLightup::AllocateNativeDescriptorSets",
         "Can't create descriptor pool"
     );
 
@@ -401,7 +401,7 @@ bool PointLightLightup::AllocateNativeDescriptorSets ( android_vulkan::Renderer 
 
     return android_vulkan::Renderer::CheckVkResult (
         vkAllocateDescriptorSets ( device, &allocateInfo, _descriptorSets.data () ),
-        "PointLightLightup::AllocateNativeDescriptorSets",
+        "pbr::PointLightLightup::AllocateNativeDescriptorSets",
         "Can't allocate descriptor sets"
     );
 }

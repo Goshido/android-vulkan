@@ -37,7 +37,9 @@ void Mario::CaptureInput () noexcept
 
 void Mario::FreeTransferResources ( VkDevice device ) noexcept
 {
-    _staticMesh->FreeTransferResources ( device );
+    // NOLINTNEXTLINE - downcast.
+    auto& staticMesh = static_cast<StaticMeshComponent&> ( *_staticMesh );
+    staticMesh.FreeTransferResources ( device );
 }
 
 android_vulkan::RigidBodyRef& Mario::GetRigidBody () noexcept
@@ -126,7 +128,9 @@ void Mario::OnUpdate () noexcept
 
 void Mario::Submit ( RenderSession &renderSession ) noexcept
 {
-    _staticMesh->Submit ( renderSession );
+    // NOLINTNEXTLINE - downcast.
+    auto& staticMesh = static_cast<StaticMeshComponent&> ( *_staticMesh );
+    staticMesh.Submit ( renderSession );
 }
 
 void Mario::ReleaseInput () noexcept

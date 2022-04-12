@@ -47,6 +47,11 @@ class OpaqueSubpass final : public GeometrySubpassBase
         ) noexcept;
 
     private:
+        void ReportGeometry ( RenderSessionStats &renderSessionStats,
+            uint32_t vertexCount,
+            uint32_t instanceCount
+        ) noexcept override;
+
         [[nodiscard]] bool UpdateGPUData ( android_vulkan::Renderer &renderer,
             GXProjectionClipPlanes const &frustum,
             GXMat4 const &view,

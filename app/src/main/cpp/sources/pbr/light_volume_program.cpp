@@ -78,7 +78,7 @@ bool LightVolumeProgram::Init ( android_vulkan::Renderer &renderer,
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateGraphicsPipelines ( device, VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
-        "LightVolumeProgram::Init",
+        "pbr::LightVolumeProgram::Init",
         "Can't create pipeline"
     );
 
@@ -232,7 +232,7 @@ bool LightVolumeProgram::InitLayout ( android_vulkan::Renderer &renderer, VkPipe
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreatePipelineLayout ( renderer.GetDevice (), &layoutInfo, nullptr, &_pipelineLayout ),
-        "LightVolumeProgram::InitLayout",
+        "pbr::LightVolumeProgram::InitLayout",
         "Can't create pipeline layout"
     );
 

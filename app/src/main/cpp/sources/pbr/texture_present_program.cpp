@@ -6,8 +6,8 @@ namespace pbr {
 constexpr static const char* VERTEX_SHADER = "shaders/screen-quad-vs.spv";
 constexpr static const char* FRAGMENT_SHADER = "shaders/texture-present-ps.spv";
 
-constexpr static const size_t COLOR_RENDER_TARGET_COUNT = 1U;
-constexpr static const size_t STAGE_COUNT = 2U;
+constexpr static size_t COLOR_RENDER_TARGET_COUNT = 1U;
+constexpr static size_t STAGE_COUNT = 2U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -72,7 +72,7 @@ bool TexturePresentProgram::Init ( android_vulkan::Renderer &renderer,
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateGraphicsPipelines ( device, VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
-        "TexturePresentProgram::Init",
+        "pbr::TexturePresentProgram::Init",
         "Can't create pipeline"
     );
 
@@ -240,7 +240,7 @@ bool TexturePresentProgram::InitLayout ( android_vulkan::Renderer &renderer, VkP
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreatePipelineLayout ( renderer.GetDevice (), &layoutInfo, nullptr, &_pipelineLayout ),
-        "TexturePresentProgram::InitLayout",
+        "pbr::TexturePresentProgram::InitLayout",
         "Can't create pipeline layout"
     );
 

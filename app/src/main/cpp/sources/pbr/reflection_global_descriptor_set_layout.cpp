@@ -86,7 +86,7 @@ bool ReflectionGlobalDescriptorSetLayoutImpl::Init ( android_vulkan::Renderer &r
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateDescriptorSetLayout ( renderer.GetDevice (), &descriptorSetLayoutInfo, nullptr, &_layout ),
-        "ReflectionGlobalDescriptorSetLayoutImpl::Init",
+        "pbr::ReflectionGlobalDescriptorSetLayoutImpl::Init",
         "Can't create descriptor set layout"
     );
 

@@ -28,7 +28,7 @@ void RenderSessionStats::PrintStats ( double deltaTime ) noexcept
         return;
 
     constexpr char const format[] =
-R"__(>>> RenderSessionStats::PrintStats:
+R"__(>>> pbr::RenderSessionStats::PrintStats:
                         Submitted     Rendered    Culled
               Vertices  %9zu    %9zu    %s
          Opaque meshes  %9zu    %9zu    %s
@@ -100,7 +100,7 @@ void RenderSessionStats::SubmitOpaque ( uint32_t vertexCount ) noexcept
     _submitVertices += static_cast<size_t> ( vertexCount );
 }
 
-[[maybe_unused]] void RenderSessionStats::RenderStipple ( uint32_t vertexCount, uint32_t instanceCount ) noexcept
+void RenderSessionStats::RenderStipple ( uint32_t vertexCount, uint32_t instanceCount ) noexcept
 {
     ++_renderStippleMeshes;
     _renderVertices += static_cast<size_t> ( vertexCount ) * static_cast<size_t> ( instanceCount );

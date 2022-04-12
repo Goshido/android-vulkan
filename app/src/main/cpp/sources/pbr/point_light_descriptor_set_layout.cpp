@@ -100,7 +100,7 @@ bool PointLightDescriptorSetLayoutImpl::Init ( android_vulkan::Renderer &rendere
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateDescriptorSetLayout ( renderer.GetDevice (), &descriptorSetLayoutInfo, nullptr, &_descriptorSetLayout ),
-        "PointLightDescriptorSetLayoutImpl::Init",
+        "pbr::PointLightDescriptorSetLayoutImpl::Init",
         "Can't create descriptor set layout"
     );
 

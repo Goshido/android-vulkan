@@ -140,7 +140,7 @@ bool RenderSession::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
             return false;
         }
 
-        android_vulkan::LogInfo ( "RenderSession::OnSwapchainCreated - G-buffer resolution is %u x %u.",
+        android_vulkan::LogInfo ( "pbr::RenderSession::OnSwapchainCreated - G-buffer resolution is %u x %u.",
             resolution.width,
             resolution.height
         );
@@ -219,7 +219,7 @@ bool RenderSession::CreateGBufferFramebuffer ( android_vulkan::Renderer &rendere
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateFramebuffer ( renderer.GetDevice (), &framebufferInfo, nullptr, &_gBufferFramebuffer ),
-        "RenderSession::CreateGBufferFramebuffer",
+        "pbr::RenderSession::CreateGBufferFramebuffer",
         "Can't create GBuffer framebuffer"
     );
 
@@ -320,7 +320,7 @@ bool RenderSession::CreateGBufferRenderPass ( android_vulkan::Renderer &renderer
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateRenderPass ( renderer.GetDevice (), &renderPassInfo, nullptr, &_gBufferRenderPass ),
-        "RenderSession::CreateGBufferRenderPass",
+        "pbr::RenderSession::CreateGBufferRenderPass",
         "Can't create render pass"
     );
 
@@ -400,7 +400,7 @@ bool RenderSession::CreateGBufferResources ( android_vulkan::Renderer &renderer,
     };
 
     result = android_vulkan::Renderer::CheckVkResult ( vkDeviceWaitIdle ( device ),
-        "RenderSession::CreateGBufferResources",
+        "pbr::RenderSession::CreateGBufferResources",
         "Can't wait device idle"
     );
 
@@ -442,7 +442,7 @@ bool RenderSession::CreateGBufferSlotMapper ( android_vulkan::Renderer &renderer
 
     bool result = android_vulkan::Renderer::CheckVkResult (
         vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_gBufferDescriptorPool ),
-        "RenderSession::CreateGBufferSlotMapper",
+        "pbr::RenderSession::CreateGBufferSlotMapper",
         "Can't create descriptor pool"
     );
 
@@ -465,7 +465,7 @@ bool RenderSession::CreateGBufferSlotMapper ( android_vulkan::Renderer &renderer
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkAllocateDescriptorSets ( device, &allocateInfo, &_gBufferSlotMapper ),
-        "RenderSession::CreateGBufferSlotMapper",
+        "pbr::RenderSession::CreateGBufferSlotMapper",
         "Can't allocate descriptor sets"
     );
 

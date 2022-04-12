@@ -19,7 +19,7 @@ ScriptComponent::ScriptComponent ( std::string &&script, std::string &&params ) 
     // NOTHING
 }
 
-bool ScriptComponent::RegisterScript ( ScriptEngine &scriptEngine ) noexcept
+bool ScriptComponent::Register ( ScriptEngine &scriptEngine ) noexcept
 {
     if ( _params.empty () )
         return scriptEngine.AppendScript ( this, _script );

@@ -3,6 +3,7 @@
 
 
 #include "component.h"
+#include "script_engine.h"
 
 
 namespace pbr {
@@ -25,9 +26,9 @@ class ScriptComponent final : public Component
         [[maybe_unused]] explicit ScriptComponent ( std::string &&script ) noexcept;
         explicit ScriptComponent ( std::string &&script, std::string &&params ) noexcept;
 
-        ~ScriptComponent () = default;
+        ~ScriptComponent () override = default;
 
-        [[nodiscard]] bool RegisterScript ( ScriptEngine &scriptEngine ) noexcept override;
+        [[nodiscard]] bool Register ( ScriptEngine &scriptEngine ) noexcept;
 };
 
 } // namespace pbr

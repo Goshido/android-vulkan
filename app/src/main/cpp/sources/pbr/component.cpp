@@ -7,22 +7,6 @@
 
 namespace pbr {
 
-void Component::FreeTransferResources ( VkDevice /*device*/ ) noexcept
-{
-    // NOTHING
-}
-
-void Component::Submit ( RenderSession &/*renderSession*/ ) noexcept
-{
-    // NOTHING
-}
-
-[[nodiscard]] bool Component::RegisterScript ( ScriptEngine &/*scriptEngine*/ ) noexcept
-{
-    // NOTHING
-    return false;
-}
-
 ClassID Component::GetClassID () const noexcept
 {
     return _classID;
@@ -53,8 +37,8 @@ ComponentRef Component::Create ( android_vulkan::Renderer &renderer,
         commandBufferConsumed = 0U;
         dataRead = sizeof ( PointLightComponentDesc );
 
-        // Note it's safe cast like that here. "NOLINT" is a clang-tidy control comment.
-        auto const& d = static_cast<PointLightComponentDesc const&> ( desc ); // NOLINT
+        // NOLINTNEXTLINE - downcast.
+        auto const& d = static_cast<PointLightComponentDesc const&> ( desc );
 
         return std::make_shared<PointLightComponent> ( d );
     }
@@ -63,8 +47,8 @@ ComponentRef Component::Create ( android_vulkan::Renderer &renderer,
     {
         dataRead = sizeof ( StaticMeshComponentDesc );
 
-        // Note it's safe cast like that here. "NOLINT" is a clang-tidy control comment.
-        auto const& d = static_cast<StaticMeshComponentDesc const&> ( desc ); // NOLINT
+        // NOLINTNEXTLINE - downcast.
+        auto const& d = static_cast<StaticMeshComponentDesc const&> ( desc );
 
         bool success;
 
@@ -83,8 +67,8 @@ ComponentRef Component::Create ( android_vulkan::Renderer &renderer,
     {
         dataRead = sizeof ( ReflectionComponentDesc );
 
-        // Note it's safe cast like that here. "NOLINT" is a clang-tidy control comment.
-        auto const& d = static_cast<ReflectionComponentDesc const&> ( desc ); // NOLINT
+        // NOLINTNEXTLINE - downcast.
+        auto const& d = static_cast<ReflectionComponentDesc const&> ( desc );
 
         return std::make_shared<ReflectionComponent> ( renderer, commandBufferConsumed, d, data, commandBuffers );
     }

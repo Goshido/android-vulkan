@@ -4,15 +4,17 @@
 
 namespace pbr {
 
-constexpr static const size_t COLOR_RENDER_TARGET_COUNT = 1U;
-constexpr static const size_t STAGE_COUNT = 2U;
-constexpr static const size_t VERTEX_ATTRIBUTE_COUNT = 1U;
+constexpr static size_t COLOR_RENDER_TARGET_COUNT = 1U;
+constexpr static size_t STAGE_COUNT = 2U;
+constexpr static size_t VERTEX_ATTRIBUTE_COUNT = 1U;
 
 constexpr static const char* VERTEX_SHADER = "shaders/light-volume-vs.spv";
 constexpr static const char* FRAGMENT_SHADER = "shaders/reflection-local-ps.spv";
 
+//----------------------------------------------------------------------------------------------------------------------
+
 ReflectionLocalProgram::ReflectionLocalProgram ():
-    LightLightupBaseProgram ( "ReflectionLocalProgram" ),
+    LightLightupBaseProgram ( "pbr::ReflectionLocalProgram" ),
     _commonLayout {},
     _lightVolumeLayout {},
     _reflectionLayout {}
@@ -81,7 +83,7 @@ bool ReflectionLocalProgram::Init ( android_vulkan::Renderer &renderer,
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateGraphicsPipelines ( device, VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
-        "ReflectionLocalProgram::Init",
+        "pbr::ReflectionLocalProgram::Init",
         "Can't create pipeline"
     );
 
@@ -290,7 +292,7 @@ bool ReflectionLocalProgram::InitLayout ( android_vulkan::Renderer &renderer, Vk
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreatePipelineLayout ( renderer.GetDevice (), &layoutInfo, nullptr, &_pipelineLayout ),
-        "ReflectionLocalProgram::InitLayout",
+        "pbr::ReflectionLocalProgram::InitLayout",
         "Can't create pipeline layout"
     );
 

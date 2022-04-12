@@ -41,17 +41,17 @@ bool BoxStack::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) 
     GXMat4 const& cameraLocal = _camera.GetLocalMatrix ();
     _renderSession.Begin ( cameraLocal, _camera.GetProjectionMatrix () );
 
-    // NOLINTNEXTLINE
-    auto& light = *static_cast<PointLightComponent*> ( _cameraLight.get () );
+    // NOLINTNEXTLINE - downcast.
+    auto& light = static_cast<PointLightComponent&> ( *_cameraLight );
 
     GXVec3 lightLocation {};
     cameraLocal.GetW ( lightLocation );
     light.SetLocation ( lightLocation );
 
     GXMat4 transform {};
-    constexpr float const rendererScale = 32.0F;
-    constexpr float const sphereSize = 0.02F * rendererScale;
-    constexpr GXVec3 const sphereDims ( sphereSize * 0.5F, sphereSize * 0.5F, sphereSize * 0.5F );
+    constexpr float rendererScale = 32.0F;
+    constexpr float sphereSize = 0.02F * rendererScale;
+    constexpr GXVec3 sphereDims ( sphereSize * 0.5F, sphereSize * 0.5F, sphereSize * 0.5F );
     transform.Scale ( sphereSize, sphereSize, sphereSize );
 
     auto submit = [ & ] ( GXVec3 const &loc, GXColorRGB const &color ) noexcept {
@@ -91,7 +91,11 @@ bool BoxStack::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) 
     }
 
     for ( auto& component : _components )
-        component->Submit ( _renderSession );
+    {
+        // NOLINTNEXTLINE - downcast.
+        auto& renderableComponent = static_cast<RenderableComponent&> ( *component );
+        renderableComponent.Submit ( _renderSession );
+    }
 
     return _renderSession.End ( renderer, deltaTime );
 }
@@ -110,7 +114,7 @@ bool BoxStack::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateCommandPool ( device, &createInfo, nullptr, &_commandPool ),
-        "BoxStack::OnInit",
+        "pbr::box_stack::BoxStack::OnInit",
         "Can't create command pool"
     );
 
@@ -255,7 +259,7 @@ bool BoxStack::AppendCuboid ( android_vulkan::Renderer &renderer,
         return true;
     }
 
-    android_vulkan::LogError ( "BoxStack::AppendCuboid - Can't add rigid body." );
+    android_vulkan::LogError ( "pbr::box_stack::BoxStack::AppendCuboid - Can't add rigid body." );
     return false;
 }
 
@@ -305,7 +309,7 @@ bool BoxStack::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
 
     bool result = android_vulkan::Renderer::CheckVkResult (
         vkAllocateCommandBuffers ( device, &allocateInfo, commandBuffers ),
-        "BoxStack::CreateSceneManual",
+        "pbr::box_stack::BoxStack::CreateSceneManual",
         "Can't allocate command buffers"
     );
 
@@ -395,7 +399,7 @@ bool BoxStack::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
     _components.push_back ( _cameraLight );
 
     result = android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( renderer.GetQueue () ),
-        "BoxStack::CreateSceneManual",
+        "pbr::box_stack::BoxStack::CreateSceneManual",
         "Can't run upload commands"
     );
 
@@ -403,7 +407,11 @@ bool BoxStack::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
         return false;
 
     for ( auto& component : _components )
-        component->FreeTransferResources ( device );
+    {
+        // NOLINTNEXTLINE - downcast.
+        auto& renderableComponent = static_cast<RenderableComponent&> ( *component );
+        renderableComponent.FreeTransferResources ( device );
+    }
 
     _sphereMesh->FreeTransferResources ( device );
     return true;

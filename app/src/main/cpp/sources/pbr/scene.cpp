@@ -1,5 +1,5 @@
 #include <pbr/scene.h>
-#include <pbr/component.h>
+#include <pbr/renderable_component.h>
 
 
 namespace pbr {
@@ -39,7 +39,11 @@ void Scene::AppendActor ( ActorRef &actor ) noexcept
 void Scene::FreeTransferResources ( VkDevice device ) noexcept
 {
     for ( auto& component : _freeTransferResourceList )
-        component.get ()->FreeTransferResources ( device );
+    {
+        // NOLINTNEXTLINE - downcast.
+        auto& renderableComponent = static_cast<RenderableComponent&> ( *component.get () );
+        renderableComponent.FreeTransferResources ( device );
+    }
 
     _renderableList.splice ( _renderableList.cend (), _freeTransferResourceList );
 }
@@ -48,7 +52,9 @@ void Scene::Submit ( RenderSession &renderSession ) noexcept
 {
     for ( auto& component : _renderableList )
     {
-        component.get ()->Submit ( renderSession );
+        // NOLINTNEXTLINE - downcast.
+        auto& renderableComponent = static_cast<RenderableComponent&> ( *component.get () );
+        renderableComponent.Submit ( renderSession );
     }
 }
 

@@ -16,6 +16,8 @@ namespace pbr {
 constexpr static GXColorRGB DEFAULT_COLOR ( 1.0F, 1.0F, 1.0F, 1.0F );
 constexpr static GXColorRGB DEFAULT_EMISSION ( 1.0F, 1.0F, 1.0F, 1.0F );
 
+//----------------------------------------------------------------------------------------------------------------------
+
 // NOLINTNEXTLINE - no initialization for some fields
 StaticMeshComponent::StaticMeshComponent ( android_vulkan::Renderer &renderer,
     bool &success,
@@ -24,7 +26,7 @@ StaticMeshComponent::StaticMeshComponent ( android_vulkan::Renderer &renderer,
     uint8_t const* data,
     VkCommandBuffer const* commandBuffers
 ) noexcept:
-    Component ( ClassID::StaticMesh ),
+    RenderableComponent ( ClassID::StaticMesh ),
     _color0 ( desc._color0._red, desc._color0._green, desc._color0._blue, desc._color0._alpha ),
     _color1 ( desc._color1._red, desc._color1._green, desc._color1._blue, desc._color1._alpha ),
     _color2 ( desc._color2._red, desc._color2._green, desc._color2._blue, desc._color2._alpha ),
@@ -74,7 +76,7 @@ StaticMeshComponent::StaticMeshComponent ( android_vulkan::Renderer &renderer,
     VkCommandBuffer const* commandBuffers,
     std::string &&name
 ) noexcept:
-    Component ( ClassID::StaticMesh, std::move ( name ) ),
+    RenderableComponent ( ClassID::StaticMesh, std::move ( name ) ),
     _color0 ( DEFAULT_COLOR ),
     _color1 ( DEFAULT_COLOR ),
     _color2 ( DEFAULT_COLOR ),
@@ -111,6 +113,7 @@ StaticMeshComponent::StaticMeshComponent ( android_vulkan::Renderer &renderer,
     commandBufferConsumed += consumed;
 }
 
+// NOLINTNEXTLINE - no initialization for some fields
 StaticMeshComponent::StaticMeshComponent ( android_vulkan::Renderer &renderer,
     bool &success,
     size_t &commandBufferConsumed,
@@ -118,7 +121,7 @@ StaticMeshComponent::StaticMeshComponent ( android_vulkan::Renderer &renderer,
     MaterialRef &material,
     VkCommandBuffer const* commandBuffers
 ) noexcept:
-    Component ( ClassID::StaticMesh ),
+    RenderableComponent ( ClassID::StaticMesh ),
     _color0 ( DEFAULT_COLOR ),
     _color1 ( DEFAULT_COLOR ),
     _color2 ( DEFAULT_COLOR ),
@@ -227,12 +230,12 @@ MaterialRef& StaticMeshComponent::GetMaterial () noexcept
     return _material;
 }
 
-[[maybe_unused]] GXMat4 const& StaticMeshComponent::GetTransform () const noexcept
+GXMat4 const& StaticMeshComponent::GetTransform () const noexcept
 {
     return _localMatrix;
 }
 
-[[maybe_unused]] void StaticMeshComponent::SetTransform ( GXMat4 const &transform ) noexcept
+void StaticMeshComponent::SetTransform ( GXMat4 const &transform ) noexcept
 {
     _localMatrix = transform;
     _mesh->GetBounds ().Transform ( _worldBounds, transform );

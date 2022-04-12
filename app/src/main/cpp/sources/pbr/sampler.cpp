@@ -20,9 +20,9 @@ bool Sampler::Init ( android_vulkan::Renderer &renderer, const VkSamplerCreateIn
 {
     assert ( _sampler == VK_NULL_HANDLE );
 
-    const bool result = android_vulkan::Renderer::CheckVkResult (
+    bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateSampler ( renderer.GetDevice (), &info, nullptr, &_sampler ),
-        "Sampler::Init",
+        "pbr::Sampler::Init",
         "Can't create sampler"
     );
 

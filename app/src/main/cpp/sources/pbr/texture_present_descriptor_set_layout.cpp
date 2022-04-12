@@ -94,7 +94,7 @@ bool TexturePresentDescriptorSetLayoutImpl::Init ( android_vulkan::Renderer &ren
 
     bool result = android_vulkan::Renderer::CheckVkResult (
         vkCreateDescriptorSetLayout ( device, &descriptorSetLayoutInfo, nullptr, &_descriptorSetLayout ),
-        "TexturePresentDescriptorSetLayoutImpl::Init",
+        "pbr::TexturePresentDescriptorSetLayoutImpl::Init",
         "Can't create descriptor set layout"
     );
 

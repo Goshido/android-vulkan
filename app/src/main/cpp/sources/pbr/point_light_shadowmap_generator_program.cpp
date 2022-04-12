@@ -6,12 +6,14 @@ namespace pbr {
 
 constexpr static const char* VERTEX_SHADER = "shaders/point-light-shadowmap-generator-vs.spv";
 
-constexpr static const uint32_t COLOR_RENDER_TARGET_COUNT = 0U;
-constexpr static const size_t STAGE_COUNT = 1U;
-constexpr static const size_t VERTEX_ATTRIBUTE_COUNT = 1U;
+constexpr static uint32_t COLOR_RENDER_TARGET_COUNT = 0U;
+constexpr static size_t STAGE_COUNT = 1U;
+constexpr static size_t VERTEX_ATTRIBUTE_COUNT = 1U;
+
+//----------------------------------------------------------------------------------------------------------------------
 
 PointLightShadowmapGeneratorProgram::PointLightShadowmapGeneratorProgram () noexcept:
-    Program ( "PointLightShadowmapGeneratorProgram" )
+    Program ( "pbr::PointLightShadowmapGeneratorProgram" )
 {
     // NOTHING
 }
@@ -76,7 +78,7 @@ bool PointLightShadowmapGeneratorProgram::Init ( android_vulkan::Renderer &rende
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateGraphicsPipelines ( device, VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
-        "PointLightShadowmapGeneratorProgram::Init",
+        "pbr::PointLightShadowmapGeneratorProgram::Init",
         "Can't create pipeline"
     );
 
@@ -220,7 +222,7 @@ bool PointLightShadowmapGeneratorProgram::InitLayout ( android_vulkan::Renderer 
 
     const bool result = android_vulkan::Renderer::CheckVkResult (
         vkCreatePipelineLayout ( renderer.GetDevice (), &layoutInfo, nullptr, &_pipelineLayout ),
-        "PointLightShadowmapGeneratorProgram::InitLayout",
+        "pbr::PointLightShadowmapGeneratorProgram::InitLayout",
         "Can't create pipeline layout"
     );
 

@@ -32,24 +32,27 @@ bool Collision::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime )
     _contactManager.Reset ();
     _contactDetector.Check ( _contactManager, _cubes[ 0U ]._body, _cubes[ 1U ]._body );
 
-    // NOLINTNEXTLINE
+    // NOLINTNEXTLINE - downcast.
     auto& light = *static_cast<PointLightComponent*> ( _cameraLight.get () );
 
     GXVec3 lightLocation {};
     cameraLocal.GetW ( lightLocation );
     light.SetLocation ( lightLocation );
-    _cameraLight->Submit ( _renderSession );
+    light.Submit ( _renderSession );
 
     for ( auto& cube : _cubes )
     {
         UpdateCuboid ( cube );
-        cube._component->Submit ( _renderSession );
+
+        // NOLINTNEXTLINE - downcast.
+        auto& renderableComponent = static_cast<RenderableComponent&> ( *cube._component );
+        renderableComponent.Submit ( _renderSession );
     }
 
     GXMat4 transform {};
-    constexpr float const rendererScale = 32.0F;
-    constexpr float const sphereSize = 0.02F * rendererScale;
-    constexpr GXVec3 const sphereDims ( sphereSize * 0.5F, sphereSize * 0.5F, sphereSize * 0.5F );
+    constexpr float rendererScale = 32.0F;
+    constexpr float sphereSize = 0.02F * rendererScale;
+    constexpr GXVec3 sphereDims ( sphereSize * 0.5F, sphereSize * 0.5F, sphereSize * 0.5F );
     transform.Scale ( sphereSize, sphereSize, sphereSize );
 
     auto submit = [ & ] ( GXVec3 const &loc, GXColorRGB const &color ) noexcept {
@@ -306,7 +309,11 @@ bool Collision::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
         return false;
 
     for ( auto& cube : _cubes )
-        cube._component->FreeTransferResources ( device );
+    {
+        // NOLINTNEXTLINE - downcast.
+        auto& renderableComponent = static_cast<RenderableComponent&> ( *cube._component );
+        renderableComponent.FreeTransferResources ( device );
+    }
 
     _contactMesh->FreeTransferResources ( device );
 

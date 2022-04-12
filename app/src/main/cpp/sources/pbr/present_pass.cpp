@@ -30,7 +30,7 @@ bool PresentPass::AcquirePresentTarget ( android_vulkan::Renderer &renderer )
             &_framebufferIndex
         ),
 
-        "PresentPass::AcquirePresentTarget",
+        "pbr::PresentPass::AcquirePresentTarget",
         "Can't get presentation image index"
     );
 }
@@ -68,7 +68,7 @@ bool PresentPass::Init ( android_vulkan::Renderer &renderer )
 
     bool result = android_vulkan::Renderer::CheckVkResult (
         vkCreateSemaphore ( device, &semaphoreInfo, nullptr, &_renderEndSemaphore ),
-        "PresentPass::Init",
+        "pbr::PresentPass::Init",
         "Can't create render pass end semaphore"
     );
 
@@ -79,7 +79,7 @@ bool PresentPass::Init ( android_vulkan::Renderer &renderer )
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkCreateSemaphore ( device, &semaphoreInfo, nullptr, &_targetAcquiredSemaphore ),
-        "PresentPass::Init",
+        "pbr::PresentPass::Init",
         "Can't create render target acquired semaphore"
     );
 
@@ -134,7 +134,7 @@ bool PresentPass::Execute ( VkCommandBuffer commandBuffer,
     vkCmdEndRenderPass ( commandBuffer );
 
     bool result = android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
-        "RenderSession::End",
+        "pbr::RenderSession::End",
         "Can't end command buffer"
     );
 
@@ -145,7 +145,7 @@ bool PresentPass::Execute ( VkCommandBuffer commandBuffer,
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkQueueSubmit ( renderer.GetQueue (), 1U, &_submitInfo, fence ),
-        "RenderSession::End",
+        "pbr::RenderSession::End",
         "Can't submit geometry render command buffer"
     );
 
@@ -159,7 +159,7 @@ bool PresentPass::Execute ( VkCommandBuffer commandBuffer,
     _presentInfo.pImageIndices = &_framebufferIndex;
 
     result = android_vulkan::Renderer::CheckVkResult ( vkQueuePresentKHR ( renderer.GetQueue (), &_presentInfo ),
-        "RenderSession::EndFrame",
+        "pbr::RenderSession::EndFrame",
         "Can't present frame"
     );
 
@@ -167,7 +167,7 @@ bool PresentPass::Execute ( VkCommandBuffer commandBuffer,
         return false;
 
     return android_vulkan::Renderer::CheckVkResult ( presentResult,
-        "RenderSession::EndFrame",
+        "pbr::RenderSession::EndFrame",
         "Present queue has been failed"
     );
 }
@@ -198,7 +198,7 @@ bool PresentPass::CreateFramebuffers ( android_vulkan::Renderer &renderer )
 
         bool const result = android_vulkan::Renderer::CheckVkResult (
             vkCreateFramebuffer ( device, &framebufferInfo, nullptr, &framebuffer ),
-            "PresentPass::CreateFramebuffers",
+            "pbr::PresentPass::CreateFramebuffers",
             "Can't create a framebuffer"
         );
 
@@ -282,7 +282,7 @@ bool PresentPass::CreateRenderPass ( android_vulkan::Renderer &renderer )
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateRenderPass ( renderer.GetDevice (), &info, nullptr, &_renderPass ),
-        "PresentPass::CreateRenderPass",
+        "pbr::PresentPass::CreateRenderPass",
         "Can't create render pass"
     );
 
@@ -329,7 +329,7 @@ void PresentPass::InitCommonStructures ( VkExtent2D const &resolution )
     _presentInfo.pWaitSemaphores = &_renderEndSemaphore;
     _presentInfo.swapchainCount = 1U;
 
-    constexpr static VkPipelineStageFlags const waitStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+    constexpr static VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 
     _submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     _submitInfo.pNext = nullptr;

@@ -4,9 +4,9 @@
 
 namespace pbr {
 
-constexpr static const uint32_t COLOR_RENDER_TARGET_COUNT = 1U;
-constexpr static const size_t STAGE_COUNT = 2U;
-constexpr static const size_t VERTEX_ATTRIBUTE_COUNT = 1U;
+constexpr static uint32_t COLOR_RENDER_TARGET_COUNT = 1U;
+constexpr static size_t STAGE_COUNT = 2U;
+constexpr static size_t VERTEX_ATTRIBUTE_COUNT = 1U;
 
 constexpr static const char* FRAGMENT_SHADER = "shaders/point-light-ps.spv";
 constexpr static const char* VERTEX_SHADER = "shaders/light-volume-vs.spv";
@@ -14,7 +14,7 @@ constexpr static const char* VERTEX_SHADER = "shaders/light-volume-vs.spv";
 //----------------------------------------------------------------------------------------------------------------------
 
 PointLightLightupProgram::PointLightLightupProgram () noexcept:
-    LightLightupBaseProgram ( "PointLightLightupProgram" ),
+    LightLightupBaseProgram ( "pbr::PointLightLightupProgram" ),
     _commonLayout {},
     _pointLightLayout {}
 {
@@ -82,7 +82,7 @@ bool PointLightLightupProgram::Init ( android_vulkan::Renderer &renderer,
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateGraphicsPipelines ( device, VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
-        "PointLightLightupProgram::Init",
+        "pbr::PointLightLightupProgram::Init",
         "Can't create pipeline"
     );
 
@@ -287,7 +287,7 @@ bool PointLightLightupProgram::InitLayout ( android_vulkan::Renderer &renderer, 
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreatePipelineLayout ( renderer.GetDevice (), &layoutInfo, nullptr, &_pipelineLayout ),
-        "PointLightLightupProgram::InitLayout",
+        "pbr::PointLightLightupProgram::InitLayout",
         "Can't create pipeline layout"
     );
 

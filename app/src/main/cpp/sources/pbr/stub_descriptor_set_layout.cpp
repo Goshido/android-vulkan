@@ -75,7 +75,7 @@ bool StubDescriptorSetLayoutImpl::Init ( android_vulkan::Renderer &renderer )
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateDescriptorSetLayout ( renderer.GetDevice (), &descriptorSetLayoutInfo, nullptr, &_layout ),
-        "StubDescriptorSetLayoutImpl::Init",
+        "pbr::StubDescriptorSetLayoutImpl::Init",
         "Can't create descriptor set layout"
     );
 

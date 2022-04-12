@@ -40,7 +40,7 @@ bool DefaultTextureManager::Init ( android_vulkan::Renderer &renderer, VkCommand
 
     bool result = android_vulkan::Renderer::CheckVkResult (
         vkAllocateCommandBuffers ( renderer.GetDevice (), &allocateInfo, _commandBuffers ),
-        "DefaultTextureManager::Init",
+        "pbr::DefaultTextureManager::Init",
         "Can't allocate command buffers"
     );
 

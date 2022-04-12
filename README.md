@@ -25,7 +25,7 @@ Requirements:
 * _DirectX Shader Compiler 1.6.2112.10152_
 * _Vulkan Validation Layers_ `15e2373828b01e9499eeb3da1f53531ff6c34ae5`
 * _Lua_ `8426d9b4d4df1da3c5b2d759e509ae1c50a86667`
-* _Gradle 7.4.1-bin_
+* _Gradle 7.4.2-bin_
 * Real _Android 11_ device with _Vulkan 1.1.131_ support
 * [_ARM Neon A64_](https://developer.arm.com/architectures/instruction-sets/simd-isas/neon/neon-programmers-guide-for-armv8-a/introducing-neon-for-armv8-a) native support
 

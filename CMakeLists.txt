@@ -126,6 +126,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/pbr/reflection_probe_local.cpp
     app/src/main/cpp/sources/pbr/render_session.cpp
     app/src/main/cpp/sources/pbr/render_session_stats.cpp
+    app/src/main/cpp/sources/pbr/renderable_component.cpp
     app/src/main/cpp/sources/pbr/sampler.cpp
     app/src/main/cpp/sources/pbr/sampler_manager.cpp
     app/src/main/cpp/sources/pbr/scene.cpp

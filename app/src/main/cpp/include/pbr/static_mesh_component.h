@@ -2,14 +2,13 @@
 #define PBR_STATIC_MESH_COMPONENT_H
 
 
-#include "component.h"
+#include "renderable_component.h"
 #include "static_mesh_component_desc.h"
-#include "types.h"
 
 
 namespace pbr {
 
-class StaticMeshComponent final : public Component
+class StaticMeshComponent final : public RenderableComponent
 {
     private:
         GXColorRGB      _color0;

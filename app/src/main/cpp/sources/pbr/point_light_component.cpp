@@ -12,9 +12,10 @@ namespace pbr {
 
 [[maybe_unused]] constexpr static uint32_t const POINT_LIGHT_COMPONENT_DESC_FORMAT_VERSION = 1U;
 
+//----------------------------------------------------------------------------------------------------------------------
+
 PointLightComponent::PointLightComponent ( PointLightComponentDesc const &desc ) noexcept:
-    Component ( ClassID::PointLight ),
-    _pointLight {}
+    RenderableComponent ( ClassID::PointLight )
 {
     // Sanity checks.
     static_assert ( sizeof ( desc._location ) == sizeof ( GXVec3 ) );
@@ -44,7 +45,7 @@ PointLightComponent::PointLightComponent ( PointLightComponentDesc const &desc )
 }
 
 PointLightComponent::PointLightComponent () noexcept:
-    Component ( ClassID::PointLight )
+    RenderableComponent ( ClassID::PointLight )
 {
     _pointLight = std::make_shared<PointLight> ();
 }
@@ -56,36 +57,36 @@ void PointLightComponent::Submit ( RenderSession &renderSession ) noexcept
 
 void PointLightComponent::SetBoundDimensions ( float width, float height, float depth ) noexcept
 {
-    // NOLINTNEXTLINE
-    auto& light = *static_cast<PointLight*> ( _pointLight.get () );
+    // NOLINTNEXTLINE - downcast.
+    auto& light = static_cast<PointLight&> ( *_pointLight );
     light.SetBoundDimensions ( width, height, depth );
 }
 
 void PointLightComponent::SetBoundDimensions ( GXVec3 const &dimensions ) noexcept
 {
-    // NOLINTNEXTLINE
-    auto& light = *static_cast<PointLight*> ( _pointLight.get () );
+    // NOLINTNEXTLINE - downcast.
+    auto& light = static_cast<PointLight&> ( *_pointLight );
     light.SetBoundDimensions ( dimensions );
 }
 
 [[maybe_unused]] void PointLightComponent::SetHue ( GXColorRGB const &hue ) noexcept
 {
-    // NOLINTNEXTLINE
-    auto& light = *static_cast<PointLight*> ( _pointLight.get () );
+    // NOLINTNEXTLINE - downcast.
+    auto& light = static_cast<PointLight&> ( *_pointLight );
     light.SetHue ( hue );
 }
 
 void PointLightComponent::SetIntensity ( float intensity ) noexcept
 {
-    // NOLINTNEXTLINE
-    auto& light = *static_cast<PointLight*> ( _pointLight.get () );
+    // NOLINTNEXTLINE - downcast.
+    auto& light = static_cast<PointLight&> ( *_pointLight );
     light.SetIntensity ( intensity );
 }
 
 void PointLightComponent::SetLocation ( GXVec3 const &location ) noexcept
 {
-    // NOLINTNEXTLINE
-    auto& light = *static_cast<PointLight*> ( _pointLight.get () );
+    // NOLINTNEXTLINE - downcast.
+    auto& light = static_cast<PointLight&> ( *_pointLight );
     light.SetLocation ( location );
 }
 

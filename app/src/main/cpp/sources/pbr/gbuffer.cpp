@@ -114,7 +114,7 @@ bool GBuffer::Init ( android_vulkan::Renderer &renderer, VkExtent2D const &resol
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkCreateImageView ( device, &imageInfo, nullptr, &_readOnlyDepthImageView ),
-        "GBuffer::Init",
+        "pbr::GBuffer::Init",
         "Can't create read only depth image view"
     );
 

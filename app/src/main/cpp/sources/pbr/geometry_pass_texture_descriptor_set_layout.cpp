@@ -148,7 +148,7 @@ bool GeometryPassTextureDescriptorSetLayoutImpl::Init ( android_vulkan::Renderer
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateDescriptorSetLayout ( renderer.GetDevice (), &descriptorSetLayoutInfo, nullptr, &_layout ),
-        "GeometryPassTextureDescriptorSetLayoutImpl::Init",
+        "pbr::GeometryPassTextureDescriptorSetLayoutImpl::Init",
         "Can't create descriptor set layout"
     );
 

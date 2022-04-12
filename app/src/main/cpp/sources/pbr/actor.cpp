@@ -1,5 +1,5 @@
 #include <pbr/actor.h>
-#include <pbr/component.h>
+#include <pbr/script_component.h>
 #include <guid_generator.h>
 #include <logger.h>
 
@@ -64,7 +64,10 @@ void Actor::RegisterComponents ( ComponentList &freeTransferResource,
 
             if ( classID == ClassID::Script )
             {
-                if ( component->RegisterScript ( scriptEngine ) )
+                // NOLINTNEXTLINE - downcast.
+                auto& scriptComponent = static_cast<ScriptComponent&> ( *component.get () );
+
+                if ( scriptComponent.Register ( scriptEngine ) )
                     continue;
 
                 android_vulkan::LogWarning ( "pbr::Actor::RegisterComponents - Can't register script component %s.",

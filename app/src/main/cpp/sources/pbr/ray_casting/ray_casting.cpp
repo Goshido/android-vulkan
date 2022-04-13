@@ -181,7 +181,7 @@ bool RayCasting::CreateCommandPool ( android_vulkan::Renderer &renderer ) noexce
     if ( !result )
         return false;
 
-    AV_REGISTER_COMMAND_POOL ( "RayCasting::_commandPool" )
+    AV_REGISTER_COMMAND_POOL ( "pbr::ray_casting::RayCasting::_commandPool" )
     return true;
 }
 
@@ -192,7 +192,7 @@ void RayCasting::DestroyCommandPool ( VkDevice device ) noexcept
 
     vkDestroyCommandPool ( device, _commandPool, nullptr );
     _commandPool = VK_NULL_HANDLE;
-    AV_UNREGISTER_COMMAND_POOL ( "RayCasting::_commandPool" )
+    AV_UNREGISTER_COMMAND_POOL ( "pbr::ray_casting::RayCasting::_commandPool" )
 }
 
 bool RayCasting::LoadResources ( android_vulkan::Renderer &renderer ) noexcept

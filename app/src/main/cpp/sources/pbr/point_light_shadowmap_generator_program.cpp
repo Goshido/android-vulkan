@@ -88,7 +88,7 @@ bool PointLightShadowmapGeneratorProgram::Init ( android_vulkan::Renderer &rende
         return false;
     }
 
-    AV_REGISTER_PIPELINE ( "PointLightShadowmapGeneratorProgram::_pipeline" )
+    AV_REGISTER_PIPELINE ( "pbr::PointLightShadowmapGeneratorProgram::_pipeline" )
     DestroyShaderModules ( device );
     return true;
 }
@@ -99,7 +99,7 @@ void PointLightShadowmapGeneratorProgram::Destroy ( VkDevice device ) noexcept
     {
         vkDestroyPipelineLayout ( device, _pipelineLayout, nullptr );
         _pipelineLayout = VK_NULL_HANDLE;
-        AV_UNREGISTER_PIPELINE_LAYOUT ( "PointLightShadowmapGeneratorProgram::_pipelineLayout" )
+        AV_UNREGISTER_PIPELINE_LAYOUT ( "pbr::PointLightShadowmapGeneratorProgram::_pipelineLayout" )
     }
 
     _instanceLayout.Destroy ( device );
@@ -108,7 +108,7 @@ void PointLightShadowmapGeneratorProgram::Destroy ( VkDevice device ) noexcept
     {
         vkDestroyPipeline ( device, _pipeline, nullptr );
         _pipeline = VK_NULL_HANDLE;
-        AV_UNREGISTER_PIPELINE ( "PointLightShadowmapGeneratorProgram::_pipeline" )
+        AV_UNREGISTER_PIPELINE ( "pbr::PointLightShadowmapGeneratorProgram::_pipeline" )
     }
 
     DestroyShaderModules ( device );
@@ -229,7 +229,7 @@ bool PointLightShadowmapGeneratorProgram::InitLayout ( android_vulkan::Renderer 
     if ( !result )
         return false;
 
-    AV_REGISTER_PIPELINE_LAYOUT ( "PointLightShadowmapGeneratorProgram::_pipelineLayout" )
+    AV_REGISTER_PIPELINE_LAYOUT ( "pbr::PointLightShadowmapGeneratorProgram::_pipelineLayout" )
     layout = _pipelineLayout;
     return true;
 }
@@ -285,7 +285,7 @@ bool PointLightShadowmapGeneratorProgram::InitShaderInfo ( android_vulkan::Rende
     if ( !result )
         return false;
 
-    AV_REGISTER_SHADER_MODULE ( "PointLightShadowmapGeneratorProgram::_vertexShader" )
+    AV_REGISTER_SHADER_MODULE ( "pbr::PointLightShadowmapGeneratorProgram::_vertexShader" )
 
     sourceInfo->sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     sourceInfo->pNext = nullptr;
@@ -306,7 +306,7 @@ void PointLightShadowmapGeneratorProgram::DestroyShaderModules ( VkDevice device
 
     vkDestroyShaderModule ( device, _vertexShader, nullptr );
     _vertexShader = VK_NULL_HANDLE;
-    AV_UNREGISTER_SHADER_MODULE ( "PointLightShadowmapGeneratorProgram::_vertexShader" )
+    AV_UNREGISTER_SHADER_MODULE ( "pbr::PointLightShadowmapGeneratorProgram::_vertexShader" )
 }
 
 VkPipelineViewportStateCreateInfo const* PointLightShadowmapGeneratorProgram::InitViewportInfo (

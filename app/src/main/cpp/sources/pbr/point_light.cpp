@@ -4,24 +4,24 @@
 
 namespace pbr {
 
-constexpr static float const DEFAULT_INTENSITY = 1.0F;
+constexpr static float DEFAULT_INTENSITY = 1.0F;
 
-constexpr static uint8_t const DEFAULT_HUE_RED = 255U;
-constexpr static uint8_t const DEFAULT_HUE_GREEN = 255U;
-constexpr static uint8_t const DEFAULT_HUE_BLUE = 255U;
+constexpr static uint8_t DEFAULT_HUE_RED = 255U;
+constexpr static uint8_t DEFAULT_HUE_GREEN = 255U;
+constexpr static uint8_t DEFAULT_HUE_BLUE = 255U;
 
-constexpr static float const DEFAULT_LOCATION_X = 0.0F;
-constexpr static float const DEFAULT_LOCATION_Y = 0.0F;
-constexpr static float const DEFAULT_LOCATION_Z = 0.0F;
+constexpr static float DEFAULT_LOCATION_X = 0.0F;
+constexpr static float DEFAULT_LOCATION_Y = 0.0F;
+constexpr static float DEFAULT_LOCATION_Z = 0.0F;
 
-constexpr static float const DEFAULT_SIZE = 1.0F;
-constexpr static float const HALF_DEFAULT_SIZE = 0.5F * DEFAULT_SIZE;
+constexpr static float DEFAULT_SIZE = 1.0F;
+constexpr static float HALF_DEFAULT_SIZE = 0.5F * DEFAULT_SIZE;
 
-constexpr static float const Z_NEAR = 0.05F;
+constexpr static float Z_NEAR = 0.05F;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-[[nodiscard]] constexpr static float ToUnorm ( uint8_t channel )
+[[nodiscard]] constexpr static float ToUnorm ( uint8_t channel ) noexcept
 {
     constexpr float const factor = 1.0F / 255.0F;
     return factor * static_cast<float> ( channel );

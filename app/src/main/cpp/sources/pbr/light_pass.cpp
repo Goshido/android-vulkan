@@ -10,23 +10,7 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-LightPass::LightPass () noexcept:
-    _commandPool ( VK_NULL_HANDLE ),
-    _imageBarriers {},
-    _lightupRenderPassInfo {},
-    _lightVolume {},
-    _lightupCommonDescriptorSet {},
-    _lightupRenderPassCounter ( 0U ),
-    _pointLightPass {},
-    _reflectionGlobalPass {},
-    _reflectionLocalPass {},
-    _transfer ( VK_NULL_HANDLE ),
-    _unitCube {}
-{
-    // NOTHING
-}
-
-bool LightPass::Init ( android_vulkan::Renderer &renderer, VkCommandPool commandPool, GBuffer &gBuffer )
+bool LightPass::Init ( android_vulkan::Renderer &renderer, VkCommandPool commandPool, GBuffer &gBuffer ) noexcept
 {
     _lightupRenderPassInfo.framebuffer = VK_NULL_HANDLE;
     _lightupRenderPassInfo.renderPass = VK_NULL_HANDLE;
@@ -96,7 +80,7 @@ bool LightPass::Init ( android_vulkan::Renderer &renderer, VkCommandPool command
     return true;
 }
 
-void LightPass::Destroy ( VkDevice device )
+void LightPass::Destroy ( VkDevice device ) noexcept
 {
     _unitCube.FreeResources ( device );
 
@@ -110,14 +94,14 @@ void LightPass::Destroy ( VkDevice device )
     {
         vkDestroyFramebuffer ( device, _lightupRenderPassInfo.framebuffer, nullptr );
         _lightupRenderPassInfo.framebuffer = VK_NULL_HANDLE;
-        AV_UNREGISTER_FRAMEBUFFER ( "LightPass::_lightupFramebuffer" )
+        AV_UNREGISTER_FRAMEBUFFER ( "pbr::LightPass::_lightupFramebuffer" )
     }
 
     if ( _lightupRenderPassInfo.renderPass != VK_NULL_HANDLE )
     {
         vkDestroyRenderPass ( device, _lightupRenderPassInfo.renderPass, nullptr );
         _lightupRenderPassInfo.renderPass = VK_NULL_HANDLE;
-        AV_UNREGISTER_RENDER_PASS ( "LightPass::_lightupRenderPass" )
+        AV_UNREGISTER_RENDER_PASS ( "pbr::LightPass::_lightupRenderPass" )
     }
 
     if ( _transfer == VK_NULL_HANDLE )
@@ -128,17 +112,17 @@ void LightPass::Destroy ( VkDevice device )
     _commandPool = VK_NULL_HANDLE;
 }
 
-size_t LightPass::GetPointLightCount () const
+size_t LightPass::GetPointLightCount () const noexcept
 {
     return _pointLightPass.GetPointLightCount ();
 }
 
-size_t LightPass::GetReflectionLocalCount () const
+size_t LightPass::GetReflectionLocalCount () const noexcept
 {
     return _reflectionLocalPass.GetReflectionLocalCount ();
 }
 
-void LightPass::OnFreeTransferResources ( VkDevice device )
+void LightPass::OnFreeTransferResources ( VkDevice device ) noexcept
 {
     _unitCube.FreeTransferResources ( device );
     _lightupCommonDescriptorSet.OnFreeTransferResources ( device );
@@ -159,7 +143,7 @@ bool LightPass::OnPreGeometryPass ( android_vulkan::Renderer &renderer,
     GXMat4 const &view,
     GXMat4 const &viewProjection,
     GXMat4 const &cvvToView
-)
+) noexcept
 {
     if ( !_lightupCommonDescriptorSet.Update ( renderer, resolution, viewerLocal, cvvToView ) )
         return false;
@@ -175,7 +159,7 @@ bool LightPass::OnPostGeometryPass ( android_vulkan::Renderer &renderer,
     GXMat4 const &viewerLocal,
     GXMat4 const &view,
     GXMat4 const &viewProjection
-)
+) noexcept
 {
     size_t const pointLights = _pointLightPass.GetPointLightCount ();
     size_t const localReflections = _reflectionLocalPass.GetReflectionLocalCount ();
@@ -243,7 +227,7 @@ bool LightPass::OnPostGeometryPass ( android_vulkan::Renderer &renderer,
     return result;
 }
 
-void LightPass::Reset ()
+void LightPass::Reset () noexcept
 {
     _lightupRenderPassCounter = 0U;
     _pointLightPass.Reset ();
@@ -251,27 +235,27 @@ void LightPass::Reset ()
     _reflectionLocalPass.Reset ();
 }
 
-void LightPass::SubmitPointLight ( LightRef const &light )
+void LightPass::SubmitPointLight ( LightRef const &light ) noexcept
 {
     _pointLightPass.Submit ( light );
 }
 
-void LightPass::SubmitReflectionGlobal ( TextureCubeRef &prefilter )
+void LightPass::SubmitReflectionGlobal ( TextureCubeRef &prefilter ) noexcept
 {
     _reflectionGlobalPass.Append ( prefilter );
 }
 
-void LightPass::SubmitReflectionLocal ( TextureCubeRef &prefilter, GXVec3 const &location, float size )
+void LightPass::SubmitReflectionLocal ( TextureCubeRef &prefilter, GXVec3 const &location, float size ) noexcept
 {
     _reflectionLocalPass.Append ( prefilter, location, size );
 }
 
-void LightPass::OnBeginLightWithVolume ( VkCommandBuffer commandBuffer )
+void LightPass::OnBeginLightWithVolume ( VkCommandBuffer commandBuffer ) noexcept
 {
     vkCmdBeginRenderPass ( commandBuffer, &_lightupRenderPassInfo, VK_SUBPASS_CONTENTS_INLINE );
 }
 
-void LightPass::OnEndLightWithVolume ( VkCommandBuffer commandBuffer )
+void LightPass::OnEndLightWithVolume ( VkCommandBuffer commandBuffer ) noexcept
 {
     if ( _lightupRenderPassCounter == 0U )
         return;
@@ -280,7 +264,7 @@ void LightPass::OnEndLightWithVolume ( VkCommandBuffer commandBuffer )
     --_lightupRenderPassCounter;
 }
 
-void LightPass::CreateImageBarriers ( GBuffer &gBuffer )
+void LightPass::CreateImageBarriers ( GBuffer &gBuffer ) noexcept
 {
     VkImageMemoryBarrier barrier
     {
@@ -313,7 +297,7 @@ void LightPass::CreateImageBarriers ( GBuffer &gBuffer )
     _imageBarriers[ 2U ] = barrier;
 }
 
-bool LightPass::CreateLightupFramebuffer ( VkDevice device, GBuffer &gBuffer )
+bool LightPass::CreateLightupFramebuffer ( VkDevice device, GBuffer &gBuffer ) noexcept
 {
     VkImageView const attachments[] =
     {
@@ -348,11 +332,11 @@ bool LightPass::CreateLightupFramebuffer ( VkDevice device, GBuffer &gBuffer )
     if ( !result )
         return false;
 
-    AV_REGISTER_FRAMEBUFFER ( "LightPass::_lightupFramebuffer" )
+    AV_REGISTER_FRAMEBUFFER ( "pbr::LightPass::_lightupFramebuffer" )
     return true;
 }
 
-bool LightPass::CreateLightupRenderPass ( VkDevice device, GBuffer &gBuffer )
+bool LightPass::CreateLightupRenderPass ( VkDevice device, GBuffer &gBuffer ) noexcept
 {
     VkAttachmentDescription const attachments[]
     {
@@ -422,7 +406,7 @@ bool LightPass::CreateLightupRenderPass ( VkDevice device, GBuffer &gBuffer )
         }
     };
 
-    constexpr static VkAttachmentReference const depthStencilReference =
+    constexpr static VkAttachmentReference depthStencilReference =
     {
         .attachment = 4U,
         .layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
@@ -437,7 +421,7 @@ bool LightPass::CreateLightupRenderPass ( VkDevice device, GBuffer &gBuffer )
         }
     };
 
-    constexpr static VkAttachmentReference const readOnlyDepth
+    constexpr static VkAttachmentReference readOnlyDepth
     {
         .attachment = 4U,
         .layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL
@@ -526,7 +510,7 @@ bool LightPass::CreateLightupRenderPass ( VkDevice device, GBuffer &gBuffer )
     if ( !result )
         return false;
 
-    AV_REGISTER_RENDER_PASS ( "LightPass::_lightupRenderPass" )
+    AV_REGISTER_RENDER_PASS ( "pbr::LightPass::_lightupRenderPass" )
 
     constexpr static VkClearValue const clearValues[] =
     {
@@ -591,7 +575,7 @@ bool LightPass::CreateLightupRenderPass ( VkDevice device, GBuffer &gBuffer )
     return true;
 }
 
-bool LightPass::CreateUnitCube ( android_vulkan::Renderer &renderer, VkCommandPool commandPool )
+bool LightPass::CreateUnitCube ( android_vulkan::Renderer &renderer, VkCommandPool commandPool ) noexcept
 {
     _commandPool = commandPool;
 

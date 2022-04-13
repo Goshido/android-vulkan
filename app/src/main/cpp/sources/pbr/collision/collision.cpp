@@ -178,7 +178,7 @@ bool Collision::CreateCommandPool ( android_vulkan::Renderer &renderer ) noexcep
     if ( !result )
         return false;
 
-    AV_REGISTER_COMMAND_POOL ( "Collision::_commandPool" )
+    AV_REGISTER_COMMAND_POOL ( "pbr::collision::Collision::_commandPool" )
     return true;
 }
 
@@ -189,7 +189,7 @@ void Collision::DestroyCommandPool ( VkDevice device ) noexcept
 
     vkDestroyCommandPool ( device, _commandPool, nullptr );
     _commandPool = VK_NULL_HANDLE;
-    AV_UNREGISTER_COMMAND_POOL ( "Collision::_commandPool" )
+    AV_UNREGISTER_COMMAND_POOL ( "pbr::collision::Collision::_commandPool" )
 }
 
 bool Collision::CreateScene ( android_vulkan::Renderer &renderer ) noexcept

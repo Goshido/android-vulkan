@@ -81,7 +81,7 @@ bool PBRGame::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
     if ( !result )
         return false;
 
-    AV_REGISTER_COMMAND_POOL ( "PBRGame::_commandPool" )
+    AV_REGISTER_COMMAND_POOL ( "pbr::PBRGame::_commandPool" )
 
     if ( !_renderSession.OnInitDevice ( renderer, _commandPool ) )
     {
@@ -146,7 +146,7 @@ void PBRGame::DestroyCommandPool ( VkDevice device ) noexcept
 
     vkDestroyCommandPool ( device, _commandPool, nullptr );
     _commandPool = VK_NULL_HANDLE;
-    AV_UNREGISTER_COMMAND_POOL ( "PBRGame::_commandPool" )
+    AV_UNREGISTER_COMMAND_POOL ( "pbr::PBRGame::_commandPool" )
 }
 
 bool PBRGame::UploadGPUContent ( android_vulkan::Renderer& renderer ) noexcept

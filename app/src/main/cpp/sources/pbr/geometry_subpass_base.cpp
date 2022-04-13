@@ -227,7 +227,7 @@ void GeometrySubpassBase::DestroyDescriptorPool ( VkDevice device ) noexcept
 
     vkDestroyDescriptorPool ( device, _descriptorPool, nullptr );
     _descriptorPool = VK_NULL_HANDLE;
-    AV_UNREGISTER_DESCRIPTOR_POOL ( "GeometrySubpassBase::_descriptorPool" )
+    AV_UNREGISTER_DESCRIPTOR_POOL ( "pbr::GeometrySubpassBase::_descriptorPool" )
 }
 
 bool GeometrySubpassBase::RecreateDescriptorPool ( VkDevice device, size_t maxSets ) noexcept
@@ -253,7 +253,7 @@ bool GeometrySubpassBase::RecreateDescriptorPool ( VkDevice device, size_t maxSe
     if ( !result )
         return false;
 
-    AV_REGISTER_DESCRIPTOR_POOL ( "GeometrySubpassBase::_descriptorPool" )
+    AV_REGISTER_DESCRIPTOR_POOL ( "pbr::GeometrySubpassBase::_descriptorPool" )
     return true;
 }
 

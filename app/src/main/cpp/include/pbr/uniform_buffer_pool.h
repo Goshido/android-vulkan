@@ -46,23 +46,23 @@ class UniformBufferPool final
             VkCommandBuffer commandBuffer,
             void const* data,
             VkPipelineStageFlags targetStages
-        );
+        ) noexcept;
 
-        [[nodiscard]] size_t GetItemCount () const;
+        [[nodiscard]] size_t GetItemCount () const noexcept;
 
         // The method return all items to the pool.
-        void Reset ();
+        void Reset () noexcept;
 
-        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, size_t itemSize );
-        void Destroy ( VkDevice device );
+        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, size_t itemSize ) noexcept;
+        void Destroy ( VkDevice device ) noexcept;
 
     private:
-        [[nodiscard]] bool AllocateItem ( android_vulkan::Renderer &renderer );
+        [[nodiscard]] bool AllocateItem ( android_vulkan::Renderer &renderer ) noexcept;
 
         [[nodiscard]] static bool ResolveAlignment ( android_vulkan::Renderer &renderer,
             size_t &alignment,
             size_t itemSize
-        );
+        ) noexcept;
 };
 
 } // namespace pbr

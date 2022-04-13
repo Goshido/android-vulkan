@@ -2,12 +2,12 @@
 
 namespace pbr {
 
-void ReflectionProbe::FreeTransferResources ( VkDevice device )
+void ReflectionProbe::FreeTransferResources ( VkDevice device ) noexcept
 {
     _prefilter->FreeTransferResources ( device );
 }
 
-TextureCubeRef& ReflectionProbe::GetPrefilter ()
+TextureCubeRef& ReflectionProbe::GetPrefilter () noexcept
 {
     return _prefilter;
 }

@@ -28,29 +28,29 @@ class ReflectionLocalPass final
             Call ( Call && ) = default;
             Call& operator = ( Call && ) = default;
 
-            explicit Call ( GXVec3 const &location, TextureCubeRef &prefilter, float size );
+            explicit Call ( GXVec3 const &location, TextureCubeRef &prefilter, float size ) noexcept;
 
             ~Call () = default;
         };
 
     private:
-        std::vector<VkDescriptorBufferInfo>     _bufferInfo;
-        std::vector<Call>                       _calls;
-        VkCommandPool                           _commandPool;
-        VkDescriptorPool                        _descriptorPool;
-        std::vector<VkDescriptorSet>            _descriptorSets;
-        std::vector<VkDescriptorImageInfo>      _imageInfo;
-        LightPassNotifier*                      _lightPassNotifier;
-        UniformBufferPool                       _lightVolumeUniforms;
-        ReflectionLocalProgram                  _program;
-        UniformBufferPool                       _reflectionUniforms;
-        VkCommandBuffer                         _transfer;
-        VkFence                                 _transferFence;
-        VkSubmitInfo                            _transferSubmit;
-        std::vector<VkWriteDescriptorSet>       _writeSets;
+        std::vector<VkDescriptorBufferInfo>     _bufferInfo {};
+        std::vector<Call>                       _calls {};
+        VkCommandPool                           _commandPool = VK_NULL_HANDLE;
+        VkDescriptorPool                        _descriptorPool = VK_NULL_HANDLE;
+        std::vector<VkDescriptorSet>            _descriptorSets {};
+        std::vector<VkDescriptorImageInfo>      _imageInfo {};
+        LightPassNotifier*                      _lightPassNotifier = nullptr;
+        UniformBufferPool                       _lightVolumeUniforms { eUniformPoolSize::Tiny_4M };
+        ReflectionLocalProgram                  _program {};
+        UniformBufferPool                       _reflectionUniforms { eUniformPoolSize::Tiny_4M };
+        VkCommandBuffer                         _transfer = VK_NULL_HANDLE;
+        VkFence                                 _transferFence = VK_NULL_HANDLE;
+        VkSubmitInfo                            _transferSubmit {};
+        std::vector<VkWriteDescriptorSet>       _writeSets {};
 
     public:
-        ReflectionLocalPass () noexcept;
+        ReflectionLocalPass () = default;
 
         ReflectionLocalPass ( ReflectionLocalPass const & ) = delete;
         ReflectionLocalPass& operator = ( ReflectionLocalPass const & ) = delete;
@@ -60,15 +60,15 @@ class ReflectionLocalPass final
 
         ~ReflectionLocalPass () = default;
 
-        void Append ( TextureCubeRef &prefilter, GXVec3 const &location, float size );
+        void Append ( TextureCubeRef &prefilter, GXVec3 const &location, float size ) noexcept;
 
         bool Execute ( android_vulkan::Renderer &renderer,
             LightVolume &lightVolume,
             android_vulkan::MeshGeometry &unitCube,
             VkCommandBuffer commandBuffer
-        );
+        ) noexcept;
 
-        [[nodiscard]] size_t GetReflectionLocalCount () const;
+        [[nodiscard]] size_t GetReflectionLocalCount () const noexcept;
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
             LightPassNotifier &notifier,
@@ -76,20 +76,20 @@ class ReflectionLocalPass final
             VkRenderPass renderPass,
             uint32_t subpass,
             VkExtent2D const &viewport
-        );
+        ) noexcept;
 
-        void Destroy ( VkDevice device );
+        void Destroy ( VkDevice device ) noexcept;
 
-        void Reset ();
+        void Reset () noexcept;
 
         [[nodiscard]] bool UploadGPUData ( android_vulkan::Renderer &renderer,
             GXMat4 const &view,
             GXMat4 const &viewProjection
-        );
+        ) noexcept;
 
     private:
-        [[nodiscard]] bool AllocateDescriptorSets ( android_vulkan::Renderer &renderer, size_t neededCalls );
-        void DestroyDescriptorPool ( VkDevice device );
+        [[nodiscard]] bool AllocateDescriptorSets ( android_vulkan::Renderer &renderer, size_t neededCalls ) noexcept;
+        void DestroyDescriptorPool ( VkDevice device ) noexcept;
 };
 
 } // namespace pbr

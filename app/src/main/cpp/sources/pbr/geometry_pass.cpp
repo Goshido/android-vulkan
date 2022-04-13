@@ -28,7 +28,7 @@ bool GeometryPass::Init ( android_vulkan::Renderer &renderer,
     if ( !result )
         return false;
 
-    AV_REGISTER_FENCE ( "GeometryPass::_fence" )
+    AV_REGISTER_FENCE ( "pbr::GeometryPass::_fence" )
 
     VkCommandBufferAllocateInfo const allocateInfo
     {
@@ -118,7 +118,7 @@ void GeometryPass::Destroy ( VkDevice device ) noexcept
 
     vkDestroyFence ( device, _fence, nullptr );
     _fence = VK_NULL_HANDLE;
-    AV_UNREGISTER_FENCE ( "GeometryPass::_fence" )
+    AV_UNREGISTER_FENCE ( "pbr::GeometryPass::_fence" )
 }
 
 VkCommandBuffer GeometryPass::Execute ( android_vulkan::Renderer &renderer,

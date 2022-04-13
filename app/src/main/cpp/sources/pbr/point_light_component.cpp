@@ -45,9 +45,10 @@ PointLightComponent::PointLightComponent ( PointLightComponentDesc const &desc )
 }
 
 PointLightComponent::PointLightComponent () noexcept:
-    RenderableComponent ( ClassID::PointLight )
+    RenderableComponent ( ClassID::PointLight ),
+    _pointLight ( std::make_shared<PointLight> () )
 {
-    _pointLight = std::make_shared<PointLight> ();
+    // NOTHING
 }
 
 void PointLightComponent::Submit ( RenderSession &renderSession ) noexcept

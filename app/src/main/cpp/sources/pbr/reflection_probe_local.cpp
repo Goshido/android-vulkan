@@ -19,17 +19,17 @@ ReflectionProbeLocal::ReflectionProbeLocal ( TextureCubeRef prefilter, GXVec3 lo
     _bounds.AddVertex ( gamma );
 }
 
-GXAABB const& ReflectionProbeLocal::GetBounds () const
+GXAABB const& ReflectionProbeLocal::GetBounds () const noexcept
 {
     return _bounds;
 }
 
-GXVec3 const& ReflectionProbeLocal::GetLocation () const
+GXVec3 const& ReflectionProbeLocal::GetLocation () const noexcept
 {
     return _location;
 }
 
-float ReflectionProbeLocal::GetSize () const
+float ReflectionProbeLocal::GetSize () const noexcept
 {
     return _size;
 }

@@ -173,7 +173,7 @@ bool SweepTesting::CreateCommandPool ( android_vulkan::Renderer &renderer ) noex
     if ( !result )
         return false;
 
-    AV_REGISTER_COMMAND_POOL ( "SweepTesting::_commandPool" )
+    AV_REGISTER_COMMAND_POOL ( "pbr::sweep_testing::SweepTesting::_commandPool" )
     return true;
 }
 
@@ -184,7 +184,7 @@ void SweepTesting::DestroyCommandPool ( VkDevice device ) noexcept
 
     vkDestroyCommandPool ( device, _commandPool, nullptr );
     _commandPool = VK_NULL_HANDLE;
-    AV_UNREGISTER_COMMAND_POOL ( "SweepTesting::_commandPool" )
+    AV_UNREGISTER_COMMAND_POOL ( "pbr::sweep_testing::SweepTesting::_commandPool" )
 }
 
 bool SweepTesting::CreateScene ( android_vulkan::Renderer &renderer ) noexcept

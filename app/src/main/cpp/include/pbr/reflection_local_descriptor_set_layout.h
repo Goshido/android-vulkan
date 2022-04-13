@@ -20,10 +20,9 @@ class ReflectionLocalDescriptorSetLayout final : public DescriptorSetLayout
 
         ~ReflectionLocalDescriptorSetLayout () override = default;
 
-        void Destroy ( VkDevice device ) override;
-        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer ) override;
-
-        [[nodiscard]] VkDescriptorSetLayout GetLayout () const override;
+        void Destroy ( VkDevice device ) noexcept override;
+        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer ) noexcept override;
+        [[nodiscard]] VkDescriptorSetLayout GetLayout () const noexcept override;
 };
 
 } // namespace pbr

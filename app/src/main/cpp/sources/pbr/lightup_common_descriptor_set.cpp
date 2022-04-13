@@ -9,24 +9,11 @@ constexpr static char const BRDF_LUT[] = "pbr/system/brdf-lut.png";
 
 // 256 128 64 32 16 8 4 2 1
 // counting from 0.0F
-constexpr static float const MAX_PREFILTER_LOD = 8.0F;
+constexpr static float MAX_PREFILTER_LOD = 8.0F;
 
-LightupCommonDescriptorSet::LightupCommonDescriptorSet () noexcept:
-    _brdfLUT {},
-    _brdfLUTSampler {},
-    _brdfTransfer ( VK_NULL_HANDLE ),
-    _commandPool ( VK_NULL_HANDLE ),
-    _descriptorPool ( VK_NULL_HANDLE ),
-    _layout {},
-    _pipelineLayout ( VK_NULL_HANDLE ),
-    _prefilterSampler {},
-    _set ( VK_NULL_HANDLE ),
-    _uniformBuffer {}
-{
-    // NOTHING
-}
+//----------------------------------------------------------------------------------------------------------------------
 
-void LightupCommonDescriptorSet::Bind ( VkCommandBuffer commandBuffer )
+void LightupCommonDescriptorSet::Bind ( VkCommandBuffer commandBuffer ) noexcept
 {
     vkCmdBindDescriptorSets ( commandBuffer,
         VK_PIPELINE_BIND_POINT_GRAPHICS,
@@ -42,7 +29,7 @@ void LightupCommonDescriptorSet::Bind ( VkCommandBuffer commandBuffer )
 bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
     VkCommandPool commandPool,
     GBuffer &gBuffer
-)
+) noexcept
 {
     constexpr static VkDescriptorPoolSize const poolSizes[] =
     {
@@ -64,7 +51,7 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
         }
     };
 
-    constexpr static VkDescriptorPoolCreateInfo const poolInfo
+    constexpr static VkDescriptorPoolCreateInfo poolInfo
     {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
         .pNext = nullptr,
@@ -85,7 +72,7 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
     if ( !result )
         return false;
 
-    AV_REGISTER_DESCRIPTOR_POOL ( "LightupCommonDescriptorSet::_descriptorPool" )
+    AV_REGISTER_DESCRIPTOR_POOL ( "pbr::LightupCommonDescriptorSet::_descriptorPool" )
 
     if ( !_layout.Init ( renderer ) )
     {
@@ -123,7 +110,7 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
         return false;
     }
 
-    AV_REGISTER_PIPELINE_LAYOUT ( "LightupCommonDescriptorSet::_pipelineLayout" )
+    AV_REGISTER_PIPELINE_LAYOUT ( "pbr::LightupCommonDescriptorSet::_pipelineLayout" )
 
     VkDescriptorSetAllocateInfo const descriptorSetAllocateInfo
     {
@@ -189,7 +176,7 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
         return false;
     }
 
-    constexpr VkSamplerCreateInfo const brdfSamplerInfo
+    constexpr VkSamplerCreateInfo brdfSamplerInfo
     {
         .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
         .pNext = nullptr,
@@ -217,7 +204,7 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
         return false;
     }
 
-    constexpr VkSamplerCreateInfo const prefilterSamplerInfo
+    constexpr VkSamplerCreateInfo prefilterSamplerInfo
     {
         .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
         .pNext = nullptr,
@@ -390,7 +377,7 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
     return true;
 }
 
-void LightupCommonDescriptorSet::Destroy ( VkDevice device )
+void LightupCommonDescriptorSet::Destroy ( VkDevice device ) noexcept
 {
     _prefilterSampler.Destroy ( device );
     _brdfLUTSampler.Destroy ( device );
@@ -409,7 +396,7 @@ void LightupCommonDescriptorSet::Destroy ( VkDevice device )
     {
         vkDestroyPipelineLayout ( device, _pipelineLayout, nullptr );
         _pipelineLayout = VK_NULL_HANDLE;
-        AV_UNREGISTER_PIPELINE_LAYOUT ( "LightupCommonDescriptorSet::_pipelineLayout" )
+        AV_UNREGISTER_PIPELINE_LAYOUT ( "pbr::LightupCommonDescriptorSet::_pipelineLayout" )
     }
 
     _layout.Destroy ( device );
@@ -419,10 +406,10 @@ void LightupCommonDescriptorSet::Destroy ( VkDevice device )
 
     vkDestroyDescriptorPool ( device, _descriptorPool, nullptr );
     _descriptorPool = VK_NULL_HANDLE;
-    AV_UNREGISTER_DESCRIPTOR_POOL ( "LightupCommonDescriptorSet::_descriptorPool" )
+    AV_UNREGISTER_DESCRIPTOR_POOL ( "pbr::LightupCommonDescriptorSet::_descriptorPool" )
 }
 
-void LightupCommonDescriptorSet::OnFreeTransferResources ( VkDevice device )
+void LightupCommonDescriptorSet::OnFreeTransferResources ( VkDevice device ) noexcept
 {
     _brdfLUT.FreeTransferResources ( device );
 
@@ -438,7 +425,7 @@ bool LightupCommonDescriptorSet::Update ( android_vulkan::Renderer &renderer,
     VkExtent2D const &resolution,
     GXMat4 const &viewerLocal,
     GXMat4 const &cvvToView
-)
+) noexcept
 {
     LightLightupBaseProgram::ViewData const viewData
     {

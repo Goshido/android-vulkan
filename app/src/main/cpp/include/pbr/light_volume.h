@@ -12,10 +12,10 @@ namespace pbr {
 class LightVolume final
 {
     private:
-        LightVolumeProgram      _program;
+        LightVolumeProgram      _program {};
 
     public:
-        LightVolume () noexcept;
+        LightVolume () = default;
 
         LightVolume ( LightVolume const & ) = delete;
         LightVolume& operator = ( LightVolume const & ) = delete;
@@ -25,16 +25,16 @@ class LightVolume final
 
         ~LightVolume () = default;
 
-        void Execute ( uint32_t vertexCount, VkDescriptorSet transform, VkCommandBuffer commandBuffer );
+        void Execute ( uint32_t vertexCount, VkDescriptorSet transform, VkCommandBuffer commandBuffer ) noexcept;
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
             GBuffer &gBuffer,
             VkRenderPass renderPass
-        );
+        ) noexcept;
 
-        void Destroy ( VkDevice device );
+        void Destroy ( VkDevice device ) noexcept;
 
-        [[nodiscard]] constexpr static uint32_t GetLightupSubpass ()
+        [[nodiscard]] constexpr static uint32_t GetLightupSubpass () noexcept
         {
             return 1U;
         }

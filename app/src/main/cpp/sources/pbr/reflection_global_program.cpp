@@ -11,7 +11,7 @@ constexpr static size_t STAGE_COUNT = 2U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-ReflectionGlobalProgram::ReflectionGlobalProgram ():
+ReflectionGlobalProgram::ReflectionGlobalProgram () noexcept:
     LightLightupBaseProgram ( "pbr::ReflectionGlobalProgram" ),
     _commonLayout {},
     _stubLayout {},
@@ -85,7 +85,7 @@ bool ReflectionGlobalProgram::Init ( android_vulkan::Renderer &renderer,
         return false;
     }
 
-    AV_REGISTER_PIPELINE ( "ReflectionGlobalProgram::_pipeline" )
+    AV_REGISTER_PIPELINE ( "pbr::ReflectionGlobalProgram::_pipeline" )
     DestroyShaderModules ( device );
     return true;
 }
@@ -96,14 +96,14 @@ void ReflectionGlobalProgram::Destroy ( VkDevice device ) noexcept
     {
         vkDestroyPipeline ( device, _pipeline, nullptr );
         _pipeline = VK_NULL_HANDLE;
-        AV_UNREGISTER_PIPELINE ( "ReflectionGlobalProgram::_pipeline" )
+        AV_UNREGISTER_PIPELINE ( "pbr::ReflectionGlobalProgram::_pipeline" )
     }
 
     if ( _pipelineLayout != VK_NULL_HANDLE )
     {
         vkDestroyPipelineLayout ( device, _pipelineLayout, nullptr );
         _pipelineLayout = VK_NULL_HANDLE;
-        AV_UNREGISTER_PIPELINE_LAYOUT ( "ReflectionGlobalProgram::_pipelineLayout" )
+        AV_UNREGISTER_PIPELINE_LAYOUT ( "pbr::ReflectionGlobalProgram::_pipelineLayout" )
     }
 
     _reflectionLayout.Destroy ( device );
@@ -284,7 +284,7 @@ bool ReflectionGlobalProgram::InitLayout ( android_vulkan::Renderer &renderer, V
     if ( !result )
         return false;
 
-    AV_REGISTER_PIPELINE_LAYOUT ( "ReflectionGlobalProgram::_pipelineLayout" )
+    AV_REGISTER_PIPELINE_LAYOUT ( "pbr::ReflectionGlobalProgram::_pipelineLayout" )
     layout = _pipelineLayout;
     return true;
 }
@@ -340,7 +340,7 @@ bool ReflectionGlobalProgram::InitShaderInfo ( android_vulkan::Renderer &rendere
     if ( !result )
         return false;
 
-    AV_REGISTER_SHADER_MODULE ( "ReflectionGlobalProgram::_vertexShader" )
+    AV_REGISTER_SHADER_MODULE ( "pbr::ReflectionGlobalProgram::_vertexShader" )
 
     result = renderer.CreateShader ( _fragmentShader,
         FRAGMENT_SHADER,
@@ -350,7 +350,7 @@ bool ReflectionGlobalProgram::InitShaderInfo ( android_vulkan::Renderer &rendere
     if ( !result )
         return false;
 
-    AV_REGISTER_SHADER_MODULE ( "ReflectionGlobalProgram::_fragmentShader" )
+    AV_REGISTER_SHADER_MODULE ( "pbr::ReflectionGlobalProgram::_fragmentShader" )
 
     VkPipelineShaderStageCreateInfo& vertexStage = sourceInfo[ 0U ];
     vertexStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -380,7 +380,7 @@ void ReflectionGlobalProgram::DestroyShaderModules ( VkDevice device ) noexcept
     {
         vkDestroyShaderModule ( device, _fragmentShader, nullptr );
         _fragmentShader = VK_NULL_HANDLE;
-        AV_UNREGISTER_SHADER_MODULE ( "ReflectionGlobalProgram::_fragmentShader" )
+        AV_UNREGISTER_SHADER_MODULE ( "pbr::ReflectionGlobalProgram::_fragmentShader" )
     }
 
     if ( _vertexShader == VK_NULL_HANDLE )
@@ -388,7 +388,7 @@ void ReflectionGlobalProgram::DestroyShaderModules ( VkDevice device ) noexcept
 
     vkDestroyShaderModule ( device, _vertexShader, nullptr );
     _vertexShader = VK_NULL_HANDLE;
-    AV_UNREGISTER_SHADER_MODULE ( "ReflectionGlobalProgram::_vertexShader" )
+    AV_UNREGISTER_SHADER_MODULE ( "pbr::ReflectionGlobalProgram::_vertexShader" )
 }
 
 VkPipelineViewportStateCreateInfo const* ReflectionGlobalProgram::InitViewportInfo (

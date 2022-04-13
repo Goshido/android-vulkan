@@ -15,37 +15,6 @@ constexpr static uint32_t SHADOWMAP_RESOLUTION = 512U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-PointLightPass::PointLightPass () noexcept:
-    _commandPool ( VK_NULL_HANDLE ),
-    _fence ( VK_NULL_HANDLE ),
-    _interacts {},
-    _lightDescriptorPool ( VK_NULL_HANDLE ),
-    _lightDescriptorSets {},
-    _lightSubmitInfoTransfer {},
-    _lightTransferCommandBuffer ( VK_NULL_HANDLE ),
-    _lightUniformInfo {},
-    _lightUniformPool ( eUniformPoolSize::Tiny_4M ),
-    _lightWriteSets {},
-    _lightPassNotifier ( nullptr ),
-    _lightup {},
-    _shadowmapDescriptorPool ( VK_NULL_HANDLE ),
-    _shadowmapDescriptorSets {},
-    _shadowmapProgram {},
-    _shadowmapRenderCommandBuffer ( VK_NULL_HANDLE ),
-    _shadowmapRenderPass ( VK_NULL_HANDLE ),
-    _shadowmapRenderPassInfo {},
-    _shadowmapSubmitInfoRender {},
-    _shadowmapSubmitInfoTransfer {},
-    _shadowmapTransferCommandBuffer ( VK_NULL_HANDLE ),
-    _shadowmapUniformInfo {},
-    _shadowmapUniformPool ( eUniformPoolSize::Huge_64M ),
-    _shadowmapWriteSets {},
-    _shadowmaps {},
-    _usedShadowmaps ( 0U )
-{
-    // NOTHING
-}
-
 bool PointLightPass::ExecuteLightupPhase ( android_vulkan::Renderer &renderer,
     LightVolume &lightVolume,
     android_vulkan::MeshGeometry &unitCube,
@@ -53,7 +22,7 @@ bool PointLightPass::ExecuteLightupPhase ( android_vulkan::Renderer &renderer,
     GXMat4 const &viewerLocal,
     GXMat4 const &view,
     GXMat4 const &viewProjection
-)
+) noexcept
 {
     if ( _interacts.empty () )
         return true;
@@ -64,7 +33,7 @@ bool PointLightPass::ExecuteLightupPhase ( android_vulkan::Renderer &renderer,
     if ( !UpdateLightGPUData ( renderer, viewProjection ) )
         return false;
 
-    constexpr VkDeviceSize const offset = 0U;
+    constexpr VkDeviceSize offset = 0U;
 
     uint32_t const vertexCount = unitCube.GetVertexCount ();
     vkCmdBindVertexBuffers ( commandBuffer, 0U, 1U, &unitCube.GetVertexBuffer (), &offset );
@@ -89,7 +58,7 @@ bool PointLightPass::ExecuteLightupPhase ( android_vulkan::Renderer &renderer,
 bool PointLightPass::ExecuteShadowPhase ( android_vulkan::Renderer &renderer,
     SceneData const &sceneData,
     size_t opaqueMeshCount
-)
+) noexcept
 {
     if ( _interacts.empty () )
         return true;
@@ -105,7 +74,7 @@ bool PointLightPass::Init ( android_vulkan::Renderer &renderer,
     VkCommandPool commandPool,
     VkExtent2D const &resolution,
     VkRenderPass lightupRenderPass
-)
+) noexcept
 {
     _lightPassNotifier = &notifier;
     VkDevice device = renderer.GetDevice ();
@@ -116,7 +85,7 @@ bool PointLightPass::Init ( android_vulkan::Renderer &renderer,
         return false;
     }
 
-    constexpr VkExtent2D const shadowmapResolution
+    constexpr VkExtent2D shadowmapResolution
     {
         .width = SHADOWMAP_RESOLUTION,
         .height = SHADOWMAP_RESOLUTION
@@ -128,7 +97,7 @@ bool PointLightPass::Init ( android_vulkan::Renderer &renderer,
         return false;
     }
 
-    constexpr VkFenceCreateInfo const fenceInfo
+    constexpr VkFenceCreateInfo fenceInfo
     {
         .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
         .pNext = nullptr,
@@ -212,7 +181,7 @@ bool PointLightPass::Init ( android_vulkan::Renderer &renderer,
         return false;
     }
 
-    constexpr static VkPipelineStageFlags const waitStage = VK_PIPELINE_STAGE_VERTEX_SHADER_BIT;
+    constexpr static VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_VERTEX_SHADER_BIT;
 
     _shadowmapSubmitInfoRender.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     _shadowmapSubmitInfoRender.pNext = nullptr;
@@ -237,7 +206,7 @@ bool PointLightPass::Init ( android_vulkan::Renderer &renderer,
     return true;
 }
 
-void PointLightPass::Destroy ( VkDevice device )
+void PointLightPass::Destroy ( VkDevice device ) noexcept
 {
     _lightup.Destroy ( device );
 
@@ -319,12 +288,12 @@ void PointLightPass::Destroy ( VkDevice device )
     AV_UNREGISTER_RENDER_PASS ( "PointLightPass::_shadowmapRenderPass" )
 }
 
-size_t PointLightPass::GetPointLightCount () const
+size_t PointLightPass::GetPointLightCount () const noexcept
 {
     return _interacts.size ();
 }
 
-PointLightPass::PointLightInfo PointLightPass::GetPointLightInfo ( size_t lightIndex ) const
+PointLightPass::PointLightInfo PointLightPass::GetPointLightInfo ( size_t lightIndex ) const noexcept
 {
     assert ( lightIndex < _interacts.size () );
 
@@ -334,18 +303,18 @@ PointLightPass::PointLightInfo PointLightPass::GetPointLightInfo ( size_t lightI
     return std::make_pair ( pointLight, _shadowmaps[ lightIndex ].first.get () );
 }
 
-void PointLightPass::Reset ()
+void PointLightPass::Reset () noexcept
 {
     _interacts.clear ();
     _usedShadowmaps = 0U;
 }
 
-void PointLightPass::Submit ( LightRef const &light )
+void PointLightPass::Submit ( LightRef const &light ) noexcept
 {
     _interacts.emplace_back ( std::make_pair ( light, ShadowCasters () ) );
 }
 
-bool PointLightPass::AllocateLightDescriptorSets ( android_vulkan::Renderer &renderer, size_t neededSets )
+bool PointLightPass::AllocateLightDescriptorSets ( android_vulkan::Renderer &renderer, size_t neededSets ) noexcept
 {
     assert ( neededSets );
 
@@ -385,7 +354,7 @@ bool PointLightPass::AllocateLightDescriptorSets ( android_vulkan::Renderer &ren
 
     AV_REGISTER_DESCRIPTOR_POOL ( "PointLightPass::_lightDescriptorPool" )
 
-    constexpr VkDescriptorBufferInfo const uniform
+    constexpr VkDescriptorBufferInfo uniform
     {
         .buffer = VK_NULL_HANDLE,
         .offset = 0U,
@@ -394,7 +363,7 @@ bool PointLightPass::AllocateLightDescriptorSets ( android_vulkan::Renderer &ren
 
     _lightUniformInfo.resize ( neededSets, uniform );
 
-    constexpr VkWriteDescriptorSet const writeSet
+    constexpr VkWriteDescriptorSet writeSet
     {
         .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
         .pNext = nullptr,
@@ -445,7 +414,7 @@ bool PointLightPass::AllocateLightDescriptorSets ( android_vulkan::Renderer &ren
     return true;
 }
 
-bool PointLightPass::AllocateShadowmapDescriptorSets ( android_vulkan::Renderer &renderer, size_t neededSets )
+bool PointLightPass::AllocateShadowmapDescriptorSets ( android_vulkan::Renderer &renderer, size_t neededSets ) noexcept
 {
     assert ( neededSets );
 
@@ -510,7 +479,7 @@ bool PointLightPass::AllocateShadowmapDescriptorSets ( android_vulkan::Renderer 
 
     // Initialize all immutable constant fields.
 
-    constexpr VkDescriptorBufferInfo const uniform
+    constexpr VkDescriptorBufferInfo uniform
     {
         .buffer = VK_NULL_HANDLE,
         .offset = 0U,
@@ -519,7 +488,7 @@ bool PointLightPass::AllocateShadowmapDescriptorSets ( android_vulkan::Renderer 
 
     _shadowmapUniformInfo.resize ( neededSets, uniform );
 
-    constexpr VkWriteDescriptorSet const writeSet
+    constexpr VkWriteDescriptorSet writeSet
     {
         .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
         .pNext = nullptr,
@@ -548,7 +517,7 @@ bool PointLightPass::AllocateShadowmapDescriptorSets ( android_vulkan::Renderer 
 
 PointLightPass::PointLightShadowmapInfo* PointLightPass::AcquirePointLightShadowmap (
     android_vulkan::Renderer &renderer
-)
+) noexcept
 {
     if ( !_shadowmaps.empty () && _usedShadowmaps < _shadowmaps.size () )
         return &_shadowmaps[ _usedShadowmaps++ ];
@@ -557,13 +526,13 @@ PointLightPass::PointLightShadowmapInfo* PointLightPass::AcquirePointLightShadow
     auto& [shadowmap, framebuffer] = info;
     shadowmap = std::make_shared<android_vulkan::TextureCube> ();
 
-    constexpr VkExtent2D const resolution
+    constexpr VkExtent2D resolution
     {
         .width = SHADOWMAP_RESOLUTION,
         .height = SHADOWMAP_RESOLUTION
     };
 
-    constexpr VkImageUsageFlags const flags = AV_VK_FLAG ( VK_IMAGE_USAGE_SAMPLED_BIT ) |
+    constexpr VkImageUsageFlags flags = AV_VK_FLAG ( VK_IMAGE_USAGE_SAMPLED_BIT ) |
         AV_VK_FLAG ( VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT );
 
     if ( !shadowmap->CreateRenderTarget ( renderer, resolution, VK_FORMAT_D32_SFLOAT, flags ) )
@@ -604,7 +573,7 @@ PointLightPass::PointLightShadowmapInfo* PointLightPass::AcquirePointLightShadow
     return &_shadowmaps.emplace_back ( std::move ( info ) );
 }
 
-bool PointLightPass::CreateShadowmapRenderPass ( VkDevice device )
+bool PointLightPass::CreateShadowmapRenderPass ( VkDevice device ) noexcept
 {
     VkAttachmentDescription const depthAttachment[] =
     {
@@ -643,7 +612,7 @@ bool PointLightPass::CreateShadowmapRenderPass ( VkDevice device )
         }
     };
 
-    constexpr size_t const subpassCount = std::size ( subpasses );
+    constexpr size_t subpassCount = std::size ( subpasses );
 
     constexpr static uint32_t const viewMasks[] =
     {
@@ -727,7 +696,7 @@ bool PointLightPass::CreateShadowmapRenderPass ( VkDevice device )
     return true;
 }
 
-void PointLightPass::DestroyLightDescriptorPool ( VkDevice device )
+void PointLightPass::DestroyLightDescriptorPool ( VkDevice device ) noexcept
 {
     if ( _lightDescriptorPool == VK_NULL_HANDLE )
         return;
@@ -737,7 +706,7 @@ void PointLightPass::DestroyLightDescriptorPool ( VkDevice device )
     AV_UNREGISTER_DESCRIPTOR_POOL ( "PointLightPass::_lightDescriptorPool" )
 }
 
-void PointLightPass::DestroyShadowmapDescriptorPool ( VkDevice device )
+void PointLightPass::DestroyShadowmapDescriptorPool ( VkDevice device ) noexcept
 {
     if ( _shadowmapDescriptorPool == VK_NULL_HANDLE )
         return;
@@ -747,7 +716,7 @@ void PointLightPass::DestroyShadowmapDescriptorPool ( VkDevice device )
     AV_UNREGISTER_DESCRIPTOR_POOL ( "PointLightPass::_shadowmapDescriptorPool" )
 }
 
-bool PointLightPass::GenerateShadowmaps ( android_vulkan::Renderer &renderer )
+bool PointLightPass::GenerateShadowmaps ( android_vulkan::Renderer &renderer ) noexcept
 {
     constexpr VkCommandBufferBeginInfo beginInfo
     {
@@ -848,7 +817,7 @@ bool PointLightPass::GenerateShadowmaps ( android_vulkan::Renderer &renderer )
 bool PointLightPass::UpdateShadowmapGPUData ( android_vulkan::Renderer &renderer,
     SceneData const &sceneData,
     size_t opaqueMeshCount
-)
+) noexcept
 {
     _shadowmapUniformPool.Reset ();
     VkDevice device = renderer.GetDevice ();
@@ -870,7 +839,7 @@ bool PointLightPass::UpdateShadowmapGPUData ( android_vulkan::Renderer &renderer
     if ( !result )
         return false;
 
-    constexpr VkCommandBufferBeginInfo const beginInfo
+    constexpr VkCommandBufferBeginInfo beginInfo
     {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
         .pNext = nullptr,
@@ -1020,7 +989,7 @@ bool PointLightPass::UpdateShadowmapGPUData ( android_vulkan::Renderer &renderer
     );
 }
 
-bool PointLightPass::UpdateLightGPUData ( android_vulkan::Renderer &renderer, GXMat4 const &viewProjection )
+bool PointLightPass::UpdateLightGPUData ( android_vulkan::Renderer &renderer, GXMat4 const &viewProjection ) noexcept
 {
     _lightUniformPool.Reset ();
     size_t const lightCount = _interacts.size ();
@@ -1028,7 +997,7 @@ bool PointLightPass::UpdateLightGPUData ( android_vulkan::Renderer &renderer, GX
     if ( !AllocateLightDescriptorSets ( renderer, lightCount ) )
         return false;
 
-    constexpr VkCommandBufferBeginInfo const beginInfo
+    constexpr VkCommandBufferBeginInfo beginInfo
     {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
         .pNext = nullptr,

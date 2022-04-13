@@ -56,7 +56,7 @@ void TexturePresentDescriptorSetLayoutImpl::Destroy ( VkDevice device )
 
     vkDestroyDescriptorSetLayout ( device, _descriptorSetLayout, nullptr );
     _descriptorSetLayout = VK_NULL_HANDLE;
-    AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "TexturePresentDescriptorSetLayoutImpl::_descriptorSetLayout" )
+    AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::TexturePresentDescriptorSetLayoutImpl::_descriptorSetLayout" )
 }
 
 
@@ -101,7 +101,7 @@ bool TexturePresentDescriptorSetLayoutImpl::Init ( android_vulkan::Renderer &ren
     if ( !result )
         return false;
 
-    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "TexturePresentDescriptorSetLayoutImpl::_descriptorSetLayout" )
+    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::TexturePresentDescriptorSetLayoutImpl::_descriptorSetLayout" )
 
     ++_references;
     return true;

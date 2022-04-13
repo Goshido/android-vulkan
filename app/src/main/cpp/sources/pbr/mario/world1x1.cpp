@@ -80,7 +80,7 @@ bool World1x1::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
     if ( !result )
         return false;
 
-    AV_REGISTER_COMMAND_POOL ( "World1x1::_commandPool" )
+    AV_REGISTER_COMMAND_POOL ( "pbr::mario::World1x1::_commandPool" )
 
     if ( !_renderSession.OnInitDevice ( renderer, _commandPool ) )
     {
@@ -306,7 +306,7 @@ void World1x1::DestroyCommandPool ( VkDevice device ) noexcept
 
     vkDestroyCommandPool ( device, _commandPool, nullptr );
     _commandPool = VK_NULL_HANDLE;
-    AV_UNREGISTER_COMMAND_POOL ( "World1x1::_commandPool" )
+    AV_UNREGISTER_COMMAND_POOL ( "pbr::mario::World1x1::_commandPool" )
 }
 
 bool World1x1::UploadGPUContent ( android_vulkan::Renderer &renderer ) noexcept

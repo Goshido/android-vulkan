@@ -7,7 +7,7 @@
 
 namespace pbr {
 
-class [[maybe_unused]] StippleProgram final : public GeometryPassProgram
+class StippleProgram final : public GeometryPassProgram
 {
     public:
         StippleProgram () noexcept;

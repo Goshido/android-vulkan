@@ -19,7 +19,7 @@ class ReflectionGlobalProgram final : public LightLightupBaseProgram
         ReflectionGlobalDescriptorSetLayout     _reflectionLayout;
 
     public:
-        ReflectionGlobalProgram ();
+        ReflectionGlobalProgram () noexcept;
 
         ReflectionGlobalProgram ( ReflectionGlobalProgram const & ) = delete;
         ReflectionGlobalProgram& operator = ( ReflectionGlobalProgram const & ) = delete;

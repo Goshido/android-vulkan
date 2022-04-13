@@ -14,13 +14,13 @@ namespace pbr {
 class LightupCommonDescriptorSetLayoutImpl final
 {
     public:
-        VkDescriptorSetLayout       _layout;
+        VkDescriptorSetLayout       _layout = VK_NULL_HANDLE;
 
     private:
-        std::atomic_size_t          _references;
+        std::atomic_size_t          _references = 0U;
 
     public:
-        LightupCommonDescriptorSetLayoutImpl () noexcept;
+        LightupCommonDescriptorSetLayoutImpl () = default;
 
         LightupCommonDescriptorSetLayoutImpl ( LightupCommonDescriptorSetLayoutImpl const & ) = delete;
         LightupCommonDescriptorSetLayoutImpl& operator = ( LightupCommonDescriptorSetLayoutImpl const & ) = delete;
@@ -30,18 +30,11 @@ class LightupCommonDescriptorSetLayoutImpl final
 
         ~LightupCommonDescriptorSetLayoutImpl () = default;
 
-        void Destroy ( VkDevice device );
-        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer );
+        void Destroy ( VkDevice device ) noexcept;
+        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer ) noexcept;
 };
 
-LightupCommonDescriptorSetLayoutImpl::LightupCommonDescriptorSetLayoutImpl () noexcept:
-    _layout ( VK_NULL_HANDLE ),
-    _references ( 0U )
-{
-    // NOTHING
-}
-
-void LightupCommonDescriptorSetLayoutImpl::Destroy ( VkDevice device )
+void LightupCommonDescriptorSetLayoutImpl::Destroy ( VkDevice device ) noexcept
 {
     if ( !_references )
         return;
@@ -53,10 +46,10 @@ void LightupCommonDescriptorSetLayoutImpl::Destroy ( VkDevice device )
 
     vkDestroyDescriptorSetLayout ( device, _layout, nullptr );
     _layout = VK_NULL_HANDLE;
-    AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "LightupCommonDescriptorSetLayoutImpl::_layout" )
+    AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::LightupCommonDescriptorSetLayoutImpl::_layout" )
 }
 
-bool LightupCommonDescriptorSetLayoutImpl::Init ( android_vulkan::Renderer &renderer )
+bool LightupCommonDescriptorSetLayoutImpl::Init ( android_vulkan::Renderer &renderer ) noexcept
 {
     if ( _references )
     {
@@ -124,7 +117,7 @@ bool LightupCommonDescriptorSetLayoutImpl::Init ( android_vulkan::Renderer &rend
         }
     };
 
-    constexpr VkDescriptorSetLayoutCreateInfo const descriptorSetLayoutInfo
+    constexpr VkDescriptorSetLayoutCreateInfo descriptorSetLayoutInfo
     {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
         .pNext = nullptr,
@@ -142,27 +135,27 @@ bool LightupCommonDescriptorSetLayoutImpl::Init ( android_vulkan::Renderer &rend
     if ( !result )
         return false;
 
-    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "LightupCommonDescriptorSetLayoutImpl::_layout" )
+    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::LightupCommonDescriptorSetLayoutImpl::_layout" )
 
     ++_references;
     return true;
 }
 
-static LightupCommonDescriptorSetLayoutImpl g_lightupCommonDescriptorSetLayout;
+static LightupCommonDescriptorSetLayoutImpl g_lightupCommonDescriptorSetLayout {};
 
 //----------------------------------------------------------------------------------------------------------------------
 
-void LightupCommonDescriptorSetLayout::Destroy ( VkDevice device )
+void LightupCommonDescriptorSetLayout::Destroy ( VkDevice device ) noexcept
 {
     g_lightupCommonDescriptorSetLayout.Destroy ( device );
 }
 
-bool LightupCommonDescriptorSetLayout::Init ( android_vulkan::Renderer &renderer )
+bool LightupCommonDescriptorSetLayout::Init ( android_vulkan::Renderer &renderer ) noexcept
 {
     return g_lightupCommonDescriptorSetLayout.Init ( renderer );
 }
 
-VkDescriptorSetLayout LightupCommonDescriptorSetLayout::GetLayout () const
+VkDescriptorSetLayout LightupCommonDescriptorSetLayout::GetLayout () const noexcept
 {
     return g_lightupCommonDescriptorSetLayout._layout;
 }

@@ -35,7 +35,7 @@ class ReflectionLocalProgram final : public LightLightupBaseProgram
         ReflectionLocalDescriptorSetLayout      _reflectionLayout;
 
     public:
-        ReflectionLocalProgram ();
+        ReflectionLocalProgram () noexcept;
 
         ReflectionLocalProgram ( ReflectionLocalProgram const & ) = delete;
         ReflectionLocalProgram& operator = ( ReflectionLocalProgram const & ) = delete;

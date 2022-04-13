@@ -22,8 +22,8 @@ class ReflectionProbe : public Light
         ReflectionProbe ( ReflectionProbe && ) = delete;
         ReflectionProbe& operator = ( ReflectionProbe && ) = delete;
 
-        void FreeTransferResources ( VkDevice device );
-        [[nodiscard]] TextureCubeRef& GetPrefilter ();
+        void FreeTransferResources ( VkDevice device ) noexcept;
+        [[nodiscard]] TextureCubeRef& GetPrefilter () noexcept;
 
     protected:
         explicit ReflectionProbe ( eLightType type, TextureCubeRef &prefilter ) noexcept;

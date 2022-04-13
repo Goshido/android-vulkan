@@ -53,7 +53,7 @@ void ReflectionGlobalDescriptorSetLayoutImpl::Destroy ( VkDevice device )
 
     vkDestroyDescriptorSetLayout ( device, _layout, nullptr );
     _layout = VK_NULL_HANDLE;
-    AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "ReflectionGlobalDescriptorSetLayoutImpl::_layout" )
+    AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::ReflectionGlobalDescriptorSetLayoutImpl::_layout" )
 }
 
 bool ReflectionGlobalDescriptorSetLayoutImpl::Init ( android_vulkan::Renderer &renderer )
@@ -93,7 +93,7 @@ bool ReflectionGlobalDescriptorSetLayoutImpl::Init ( android_vulkan::Renderer &r
     if ( !result )
         return false;
 
-    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "ReflectionGlobalDescriptorSetLayoutImpl::_layout" )
+    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::ReflectionGlobalDescriptorSetLayoutImpl::_layout" )
 
     ++_references;
     return true;

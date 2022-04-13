@@ -12,30 +12,16 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-constexpr static float const UNITS_PER_METER = 32.0F;
+constexpr static float UNITS_PER_METER = 32.0F;
 
-PointLightLightup::PointLightLightup () noexcept:
-    _transferCommandBuffer ( VK_NULL_HANDLE ),
-    _commandPool ( VK_NULL_HANDLE ),
-    _descriptorPool ( VK_NULL_HANDLE ),
-    _descriptorSets {},
-    _imageInfo {},
-    _program {},
-    _sampler {},
-    _submitInfoTransfer {},
-    _uniformInfoLightData {},
-    _uniformPoolLightData ( eUniformPoolSize::Tiny_4M ),
-    _writeSets {}
-{
-    // NOTHING
-}
+//----------------------------------------------------------------------------------------------------------------------
 
 bool PointLightLightup::Init ( android_vulkan::Renderer &renderer,
     VkCommandPool commandPool,
     VkRenderPass renderPass,
     uint32_t subpass,
     VkExtent2D const &resolution
-)
+) noexcept
 {
     _commandPool = commandPool;
 
@@ -78,7 +64,7 @@ bool PointLightLightup::Init ( android_vulkan::Renderer &renderer,
         return false;
     }
 
-    constexpr VkSamplerCreateInfo const samplerInfo
+    constexpr VkSamplerCreateInfo samplerInfo
     {
         .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
         .pNext = nullptr,
@@ -115,7 +101,7 @@ bool PointLightLightup::Init ( android_vulkan::Renderer &renderer,
     return true;
 }
 
-void PointLightLightup::Destroy ( VkDevice device )
+void PointLightLightup::Destroy ( VkDevice device ) noexcept
 {
     DestroyDescriptorPool ( device );
 
@@ -139,7 +125,7 @@ void PointLightLightup::Destroy ( VkDevice device )
 void PointLightLightup::Lightup ( VkCommandBuffer commandBuffer,
     android_vulkan::MeshGeometry &unitCube,
     size_t lightIndex
-)
+) noexcept
 {
     _program.Bind ( commandBuffer );
     _program.SetLightData ( commandBuffer, _descriptorSets[ lightIndex ] );
@@ -151,7 +137,7 @@ bool PointLightLightup::UpdateGPUData ( android_vulkan::Renderer &renderer,
     PointLightPass const &pointLightPass,
     GXMat4 const &viewerLocal,
     GXMat4 const &view
-)
+) noexcept
 {
     _uniformPoolLightData.Reset();
     size_t const lightCount = pointLightPass.GetPointLightCount ();
@@ -159,7 +145,7 @@ bool PointLightLightup::UpdateGPUData ( android_vulkan::Renderer &renderer,
     if ( !AllocateNativeDescriptorSets ( renderer, lightCount ) )
         return false;
 
-    constexpr VkCommandBufferBeginInfo const beginInfo
+    constexpr VkCommandBufferBeginInfo beginInfo
     {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
         .pNext = nullptr,
@@ -179,7 +165,7 @@ bool PointLightLightup::UpdateGPUData ( android_vulkan::Renderer &renderer,
     GXVec3 alpha {};
     GXVec3 betta {};
 
-    constexpr float const gamma = 1.0F / UNITS_PER_METER;
+    constexpr float gamma = 1.0F / UNITS_PER_METER;
     PointLightLightupProgram::LightData lightData {};
     lightData._sceneScaleFactor = gamma;
 
@@ -304,7 +290,7 @@ bool PointLightLightup::UpdateGPUData ( android_vulkan::Renderer &renderer,
     return true;
 }
 
-bool PointLightLightup::AllocateNativeDescriptorSets ( android_vulkan::Renderer &renderer, size_t neededSets )
+bool PointLightLightup::AllocateNativeDescriptorSets ( android_vulkan::Renderer &renderer, size_t neededSets ) noexcept
 {
     assert ( neededSets );
 
@@ -350,7 +336,7 @@ bool PointLightLightup::AllocateNativeDescriptorSets ( android_vulkan::Renderer 
     if ( !result )
         return false;
 
-    AV_REGISTER_DESCRIPTOR_POOL ( "PointLightLightup::_descriptorPool" )
+    AV_REGISTER_DESCRIPTOR_POOL ( "pbr::PointLightLightup::_descriptorPool" )
 
     VkDescriptorImageInfo const image
     {
@@ -361,7 +347,7 @@ bool PointLightLightup::AllocateNativeDescriptorSets ( android_vulkan::Renderer 
 
     _imageInfo.resize ( neededSets, image );
 
-    constexpr VkDescriptorBufferInfo const uniform
+    constexpr VkDescriptorBufferInfo uniform
     {
         .buffer = VK_NULL_HANDLE,
         .offset = 0U,
@@ -370,7 +356,7 @@ bool PointLightLightup::AllocateNativeDescriptorSets ( android_vulkan::Renderer 
 
     _uniformInfoLightData.resize ( neededSets, uniform );
 
-    constexpr VkWriteDescriptorSet const writeSet
+    constexpr VkWriteDescriptorSet writeSet
     {
         .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
         .pNext = nullptr,
@@ -406,14 +392,14 @@ bool PointLightLightup::AllocateNativeDescriptorSets ( android_vulkan::Renderer 
     );
 }
 
-void PointLightLightup::DestroyDescriptorPool ( VkDevice device )
+void PointLightLightup::DestroyDescriptorPool ( VkDevice device ) noexcept
 {
     if ( _descriptorPool == VK_NULL_HANDLE )
         return;
 
     vkDestroyDescriptorPool ( device, _descriptorPool, nullptr );
     _descriptorPool = VK_NULL_HANDLE;
-    AV_UNREGISTER_DESCRIPTOR_POOL ( "PointLightLightup::_descriptorPool" )
+    AV_UNREGISTER_DESCRIPTOR_POOL ( "pbr::PointLightLightup::_descriptorPool" )
 }
 
 } // namespace pbr

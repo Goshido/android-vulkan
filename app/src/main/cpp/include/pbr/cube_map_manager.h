@@ -32,10 +32,10 @@ struct CubeMapID final
     class Hasher final
     {
         private:
-            std::hash<std::string_view>     _hashServer;
+            std::hash<std::string_view>     _hashServer {};
 
         public:
-            Hasher () noexcept;
+            Hasher () = default;
 
             Hasher ( Hasher const & ) = default;
             Hasher& operator = ( Hasher const & ) = default;
@@ -59,9 +59,9 @@ struct CubeMapID final
 class CubeMapManager final
 {
     private:
-        std::unordered_map<CubeMapID, TextureCubeRef, CubeMapID::Hasher>    _cubeMaps;
-        std::unordered_set<std::string_view>                                _knownFiles;
-        std::list<std::string>                                              _stringStorage;
+        std::unordered_map<CubeMapID, TextureCubeRef, CubeMapID::Hasher>    _cubeMaps {};
+        std::unordered_set<std::string_view>                                _knownFiles {};
+        std::list<std::string>                                              _stringStorage {};
 
         static CubeMapManager*                                              _instance;
         static std::shared_timed_mutex                                      _mutex;
@@ -77,17 +77,17 @@ class CubeMapManager final
             size_t &commandBufferConsumed,
             android_vulkan::TextureCubeData const &data,
             VkCommandBuffer commandBuffer
-        );
+        ) noexcept;
 
-        [[nodiscard]] static CubeMapManager& GetInstance ();
-        static void Destroy ( VkDevice device );
+        [[nodiscard]] static CubeMapManager& GetInstance () noexcept;
+        static void Destroy ( VkDevice device ) noexcept;
 
     private:
         CubeMapManager () = default;
         ~CubeMapManager () = default;
 
-        void DestroyInternal ( VkDevice device );
-        [[nodiscard]] std::string_view GetStringView ( char const* string );
+        void DestroyInternal ( VkDevice device ) noexcept;
+        [[nodiscard]] std::string_view GetStringView ( char const* string ) noexcept;
 };
 
 } // namespace pbr

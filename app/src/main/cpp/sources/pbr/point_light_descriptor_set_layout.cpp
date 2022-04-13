@@ -53,7 +53,7 @@ void PointLightDescriptorSetLayoutImpl::Destroy ( VkDevice device )
 
     vkDestroyDescriptorSetLayout ( device, _descriptorSetLayout, nullptr );
     _descriptorSetLayout = VK_NULL_HANDLE;
-    AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "PointLightDescriptorSetLayoutImpl::_descriptorSetLayout" )
+    AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::PointLightDescriptorSetLayoutImpl::_descriptorSetLayout" )
 }
 
 bool PointLightDescriptorSetLayoutImpl::Init ( android_vulkan::Renderer &renderer )
@@ -107,7 +107,7 @@ bool PointLightDescriptorSetLayoutImpl::Init ( android_vulkan::Renderer &rendere
     if ( !result )
         return false;
 
-    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "PointLightDescriptorSetLayoutImpl::_descriptorSetLayout" )
+    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::PointLightDescriptorSetLayoutImpl::_descriptorSetLayout" )
 
     ++_references;
     return true;

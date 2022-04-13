@@ -226,7 +226,7 @@ bool RenderSession::CreateGBufferFramebuffer ( android_vulkan::Renderer &rendere
     if ( !result )
         return false;
 
-    AV_REGISTER_FRAMEBUFFER ( "RenderSession::_gBufferFramebuffer" )
+    AV_REGISTER_FRAMEBUFFER ( "pbr::RenderSession::_gBufferFramebuffer" )
     return true;
 }
 
@@ -327,7 +327,7 @@ bool RenderSession::CreateGBufferRenderPass ( android_vulkan::Renderer &renderer
     if ( !result )
         return false;
 
-    AV_REGISTER_RENDER_PASS ( "RenderSession::_gBufferRenderPass" )
+    AV_REGISTER_RENDER_PASS ( "pbr::RenderSession::_gBufferRenderPass" )
     return true;
 }
 
@@ -449,7 +449,7 @@ bool RenderSession::CreateGBufferSlotMapper ( android_vulkan::Renderer &renderer
     if ( !result )
         return false;
 
-    AV_REGISTER_DESCRIPTOR_POOL ( "RenderSession::_gBufferDescriptorPool" )
+    AV_REGISTER_DESCRIPTOR_POOL ( "pbr::RenderSession::_gBufferDescriptorPool" )
 
     TexturePresentDescriptorSetLayout const layout;
     VkDescriptorSetLayout nativeLayout = layout.GetLayout ();
@@ -519,14 +519,14 @@ void RenderSession::DestroyGBufferResources ( VkDevice device ) noexcept
     {
         vkDestroyFramebuffer ( device, _gBufferFramebuffer, nullptr );
         _gBufferFramebuffer = VK_NULL_HANDLE;
-        AV_UNREGISTER_FRAMEBUFFER ( "RenderSession::_gBufferFramebuffer" )
+        AV_UNREGISTER_FRAMEBUFFER ( "pbr::RenderSession::_gBufferFramebuffer" )
     }
 
     if ( _gBufferRenderPass != VK_NULL_HANDLE )
     {
         vkDestroyRenderPass ( device, _gBufferRenderPass, nullptr );
         _gBufferRenderPass = VK_NULL_HANDLE;
-        AV_UNREGISTER_RENDER_PASS ( "RenderSession::_gBufferRenderPass" )
+        AV_UNREGISTER_RENDER_PASS ( "pbr::RenderSession::_gBufferRenderPass" )
     }
 
     _lightPass.Destroy ( device );
@@ -535,7 +535,7 @@ void RenderSession::DestroyGBufferResources ( VkDevice device ) noexcept
     {
         vkDestroyDescriptorPool ( device, _gBufferDescriptorPool, nullptr );
         _gBufferDescriptorPool = VK_NULL_HANDLE;
-        AV_UNREGISTER_DESCRIPTOR_POOL ( "RenderSession::_gBufferDescriptorPool" )
+        AV_UNREGISTER_DESCRIPTOR_POOL ( "pbr::RenderSession::_gBufferDescriptorPool" )
     }
 
     _geometryPass.Destroy ( device );
@@ -544,14 +544,14 @@ void RenderSession::DestroyGBufferResources ( VkDevice device ) noexcept
     {
         vkDestroyFramebuffer ( device, _gBufferFramebuffer, nullptr );
         _gBufferFramebuffer = VK_NULL_HANDLE;
-        AV_UNREGISTER_FRAMEBUFFER ( "RenderSession::_gBufferFramebuffer" )
+        AV_UNREGISTER_FRAMEBUFFER ( "pbr::RenderSession::_gBufferFramebuffer" )
     }
 
     if ( _gBufferRenderPass != VK_NULL_HANDLE )
     {
         vkDestroyRenderPass ( device, _gBufferRenderPass, nullptr );
         _gBufferRenderPass = VK_NULL_HANDLE;
-        AV_UNREGISTER_RENDER_PASS ( "RenderSession::_gBufferRenderPass" )
+        AV_UNREGISTER_RENDER_PASS ( "pbr::RenderSession::_gBufferRenderPass" )
     }
 
     _gBuffer.Destroy ( device );

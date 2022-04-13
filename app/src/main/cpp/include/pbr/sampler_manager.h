@@ -14,7 +14,7 @@ class SamplerManager final
         SamplerRef      _materialSampler {};
 
     public:
-        SamplerManager () noexcept = default;
+        SamplerManager () = default;
 
         SamplerManager ( SamplerManager const & ) = delete;
         SamplerManager& operator = ( SamplerManager const & ) = delete;

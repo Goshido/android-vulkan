@@ -9,18 +9,7 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-ReflectionGlobalPass::ReflectionGlobalPass () noexcept:
-    _descriptorPool ( VK_NULL_HANDLE ),
-    _descriptorSets {},
-    _imageInfo {},
-    _prefilters {},
-    _program {},
-    _writeSets {}
-{
-    // NOTHING
-}
-
-void ReflectionGlobalPass::Append ( TextureCubeRef &prefilter )
+void ReflectionGlobalPass::Append ( TextureCubeRef &prefilter ) noexcept
 {
     _prefilters.push_back ( prefilter );
 }
@@ -28,7 +17,7 @@ void ReflectionGlobalPass::Append ( TextureCubeRef &prefilter )
 bool ReflectionGlobalPass::Execute ( android_vulkan::Renderer &renderer,
     VkCommandBuffer commandBuffer,
     GXMat4 const &viewToWorld
-)
+) noexcept
 {
     size_t const count = _prefilters.size ();
 
@@ -53,7 +42,7 @@ bool ReflectionGlobalPass::Init ( android_vulkan::Renderer &renderer,
     VkRenderPass renderPass,
     uint32_t subpass,
     VkExtent2D const &viewport
-)
+) noexcept
 {
     if ( _program.Init ( renderer, renderPass, subpass, viewport ) )
         return true;
@@ -62,7 +51,7 @@ bool ReflectionGlobalPass::Init ( android_vulkan::Renderer &renderer,
     return false;
 }
 
-void ReflectionGlobalPass::Destroy ( VkDevice device )
+void ReflectionGlobalPass::Destroy ( VkDevice device ) noexcept
 {
     DestroyDescriptorPool ( device );
     _descriptorSets.clear ();
@@ -72,17 +61,17 @@ void ReflectionGlobalPass::Destroy ( VkDevice device )
     _program.Destroy ( device );
 }
 
-size_t ReflectionGlobalPass::GetReflectionCount () const
+size_t ReflectionGlobalPass::GetReflectionCount () const noexcept
 {
     return _prefilters.size ();
 }
 
-void ReflectionGlobalPass::Reset ()
+void ReflectionGlobalPass::Reset () noexcept
 {
     _prefilters.clear ();
 }
 
-bool ReflectionGlobalPass::AllocateDescriptorSets ( android_vulkan::Renderer &renderer, size_t neededSets )
+bool ReflectionGlobalPass::AllocateDescriptorSets ( android_vulkan::Renderer &renderer, size_t neededSets ) noexcept
 {
     assert ( neededSets );
 
@@ -184,7 +173,7 @@ bool ReflectionGlobalPass::AllocateDescriptorSets ( android_vulkan::Renderer &re
     return true;
 }
 
-void ReflectionGlobalPass::DestroyDescriptorPool ( VkDevice device )
+void ReflectionGlobalPass::DestroyDescriptorPool ( VkDevice device ) noexcept
 {
     if ( _descriptorPool == VK_NULL_HANDLE )
         return;
@@ -194,7 +183,10 @@ void ReflectionGlobalPass::DestroyDescriptorPool ( VkDevice device )
     AV_UNREGISTER_DESCRIPTOR_POOL ( "ReflectionGlobalPass::_descriptorPool" )
 }
 
-bool ReflectionGlobalPass::UpdateGPUData ( android_vulkan::Renderer &renderer, size_t count, GXMat4 const &/*viewToWorld*/ )
+bool ReflectionGlobalPass::UpdateGPUData ( android_vulkan::Renderer &renderer,
+    size_t count,
+    GXMat4 const &/*viewToWorld*/
+) noexcept
 {
     if ( !AllocateDescriptorSets ( renderer, count ) )
         return false;

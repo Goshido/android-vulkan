@@ -121,7 +121,7 @@ bool BoxStack::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
     if ( !result )
         return false;
 
-    AV_REGISTER_COMMAND_POOL ( "BoxStack::_commandPool" )
+    AV_REGISTER_COMMAND_POOL ( "pbr::box_stack::BoxStack::_commandPool" )
 
     if ( !_renderSession.OnInitDevice ( renderer, _commandPool ) )
     {
@@ -270,7 +270,7 @@ void BoxStack::DestroyCommandPool ( VkDevice device ) noexcept
 
     vkDestroyCommandPool ( device, _commandPool, nullptr );
     _commandPool = VK_NULL_HANDLE;
-    AV_UNREGISTER_COMMAND_POOL ( "BoxStack::_commandPool" )
+    AV_UNREGISTER_COMMAND_POOL ( "pbr::box_stack::BoxStack::_commandPool" )
 }
 
 bool BoxStack::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept

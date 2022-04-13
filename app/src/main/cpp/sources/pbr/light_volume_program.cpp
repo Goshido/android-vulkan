@@ -3,9 +3,9 @@
 
 namespace pbr {
 
-constexpr static const uint32_t COLOR_RENDER_TARGET_COUNT = 0U;
-constexpr static const size_t STAGE_COUNT = 1U;
-constexpr static const size_t VERTEX_ATTRIBUTE_COUNT = 1U;
+constexpr static uint32_t COLOR_RENDER_TARGET_COUNT = 0U;
+constexpr static size_t STAGE_COUNT = 1U;
+constexpr static size_t VERTEX_ATTRIBUTE_COUNT = 1U;
 constexpr static const char* VERTEX_SHADER = "shaders/light-volume-vs.spv";
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -88,7 +88,7 @@ bool LightVolumeProgram::Init ( android_vulkan::Renderer &renderer,
         return false;
     }
 
-    AV_REGISTER_PIPELINE ( "LightVolumeProgram::_pipeline" )
+    AV_REGISTER_PIPELINE ( "pbr::LightVolumeProgram::_pipeline" )
     DestroyShaderModules ( device );
     return true;
 }
@@ -99,14 +99,14 @@ void LightVolumeProgram::Destroy ( VkDevice device ) noexcept
     {
         vkDestroyPipeline ( device, _pipeline, nullptr );
         _pipeline = VK_NULL_HANDLE;
-        AV_UNREGISTER_PIPELINE ( "LightVolumeProgram::_pipeline" )
+        AV_UNREGISTER_PIPELINE ( "pbr::LightVolumeProgram::_pipeline" )
     }
 
     if ( _pipelineLayout != VK_NULL_HANDLE )
     {
         vkDestroyPipelineLayout ( device, _pipelineLayout, nullptr );
         _pipelineLayout = VK_NULL_HANDLE;
-        AV_UNREGISTER_PIPELINE_LAYOUT ( "LightVolumeProgram::_pipelineLayout" )
+        AV_UNREGISTER_PIPELINE_LAYOUT ( "pbr::LightVolumeProgram::_pipelineLayout" )
     }
 
     _commonLayout.Destroy ( device );
@@ -239,7 +239,7 @@ bool LightVolumeProgram::InitLayout ( android_vulkan::Renderer &renderer, VkPipe
     if ( !result )
         return false;
 
-    AV_REGISTER_PIPELINE_LAYOUT ( "LightVolumeProgram::_pipelineLayout" )
+    AV_REGISTER_PIPELINE_LAYOUT ( "pbr::LightVolumeProgram::_pipelineLayout" )
     layout = _pipelineLayout;
     return true;
 }
@@ -295,7 +295,7 @@ bool LightVolumeProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
     if ( !result )
         return false;
 
-    AV_REGISTER_SHADER_MODULE ( "LightVolumeProgram::_vertexShader" )
+    AV_REGISTER_SHADER_MODULE ( "pbr::LightVolumeProgram::_vertexShader" )
 
     VkPipelineShaderStageCreateInfo& vertexStage = sourceInfo[ 0U ];
     vertexStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -317,7 +317,7 @@ void LightVolumeProgram::DestroyShaderModules ( VkDevice device ) noexcept
 
     vkDestroyShaderModule ( device, _vertexShader, nullptr );
     _vertexShader = VK_NULL_HANDLE;
-    AV_UNREGISTER_SHADER_MODULE ( "LightVolumeProgram::_vertexShader" )
+    AV_UNREGISTER_SHADER_MODULE ( "pbr::LightVolumeProgram::_vertexShader" )
 }
 
 VkPipelineViewportStateCreateInfo const* LightVolumeProgram::InitViewportInfo (

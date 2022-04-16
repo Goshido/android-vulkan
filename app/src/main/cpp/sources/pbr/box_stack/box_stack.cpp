@@ -148,6 +148,7 @@ void BoxStack::OnDestroyDevice ( VkDevice device ) noexcept
     _components.clear ();
     _renderSession.OnDestroyDevice ( device );
     DestroyCommandPool ( device );
+    _physics.Reset ();
 
     MeshManager::Destroy ( device );
     MaterialManager::Destroy ( device );

@@ -127,6 +127,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/pbr/render_session.cpp
     app/src/main/cpp/sources/pbr/render_session_stats.cpp
     app/src/main/cpp/sources/pbr/renderable_component.cpp
+    app/src/main/cpp/sources/pbr/rigid_body_component.cpp
     app/src/main/cpp/sources/pbr/sampler.cpp
     app/src/main/cpp/sources/pbr/sampler_manager.cpp
     app/src/main/cpp/sources/pbr/scene.cpp
@@ -152,6 +153,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/pbr/mario/brick.cpp
     app/src/main/cpp/sources/pbr/mario/camera.cpp
     app/src/main/cpp/sources/pbr/mario/mario.cpp
+    app/src/main/cpp/sources/pbr/mario/obstacle.cpp
     app/src/main/cpp/sources/pbr/mario/pipe_base.cpp
     app/src/main/cpp/sources/pbr/mario/pipe_x1.cpp
     app/src/main/cpp/sources/pbr/mario/pipe_x2.cpp

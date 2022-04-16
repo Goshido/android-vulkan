@@ -2,6 +2,7 @@
 #include <pbr/static_mesh_component_desc.h>
 #include <pbr/material_manager.h>
 #include <pbr/mesh_manager.h>
+#include <guid_generator.h>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -26,7 +27,7 @@ StaticMeshComponent::StaticMeshComponent ( android_vulkan::Renderer &renderer,
     uint8_t const* data,
     VkCommandBuffer const* commandBuffers
 ) noexcept:
-    RenderableComponent ( ClassID::StaticMesh ),
+    RenderableComponent ( ClassID::StaticMesh, android_vulkan::GUID::GenerateAsString ( "StaticMesh" ) ),
     _color0 ( desc._color0._red, desc._color0._green, desc._color0._blue, desc._color0._alpha ),
     _color1 ( desc._color1._red, desc._color1._green, desc._color1._blue, desc._color1._alpha ),
     _color2 ( desc._color2._red, desc._color2._green, desc._color2._blue, desc._color2._alpha ),
@@ -121,7 +122,7 @@ StaticMeshComponent::StaticMeshComponent ( android_vulkan::Renderer &renderer,
     MaterialRef &material,
     VkCommandBuffer const* commandBuffers
 ) noexcept:
-    RenderableComponent ( ClassID::StaticMesh ),
+    RenderableComponent ( ClassID::StaticMesh, android_vulkan::GUID::GenerateAsString ( "StaticMesh" ) ),
     _color0 ( DEFAULT_COLOR ),
     _color1 ( DEFAULT_COLOR ),
     _color2 ( DEFAULT_COLOR ),

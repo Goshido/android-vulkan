@@ -9,19 +9,15 @@ constexpr static GXVec3 SIZE ( 1.6F, 3.25F, 1.6F );
 
 //----------------------------------------------------------------------------------------------------------------------
 
-GXVec3 const& PipeX2::GetColliderOffset () const noexcept
+void PipeX2::Spawn ( android_vulkan::Renderer &renderer,
+    VkCommandBuffer const*& commandBuffers,
+    Scene &scene,
+    float x,
+    float y,
+    float z
+) noexcept
 {
-    return OFFSET;
-}
-
-GXVec3 const& PipeX2::GetColliderSize () const noexcept
-{
-    return SIZE;
-}
-
-char const* PipeX2::GetMesh () const noexcept
-{
-    return MESH;
+    PipeBase::SpawnBase ( renderer, commandBuffers, scene, x, y, z, OFFSET, SIZE, MESH );
 }
 
 } // namespace pbr::mario

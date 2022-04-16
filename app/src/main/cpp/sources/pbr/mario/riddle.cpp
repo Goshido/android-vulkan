@@ -1,4 +1,5 @@
 #include <pbr/mario/riddle.h>
+#include <pbr/rigid_body_component.h>
 #include <pbr/static_mesh_component.h>
 #include <guid_generator.h>
 #include <shape_box.h>
@@ -14,39 +15,49 @@ constexpr static char const MESH[] = "pbr/assets/Props/experimental/world-1-1/ri
 //----------------------------------------------------------------------------------------------------------------------
 
 // NOLINTNEXTLINE - method can be made static.
-void Riddle::Init ( android_vulkan::Renderer &renderer,
-    size_t &commandBufferConsumed,
-    VkCommandBuffer const* commandBuffers,
+void Riddle::Spawn ( android_vulkan::Renderer &renderer,
+    VkCommandBuffer const*& commandBuffers,
     Scene &scene,
-    android_vulkan::Physics &physics,
     float x,
     float y,
     float z
 ) noexcept
 {
     bool success;
+    size_t consumed;
 
     ComponentRef staticMesh = std::make_shared<StaticMeshComponent> ( renderer,
         success,
-        commandBufferConsumed,
+        consumed,
         MESH,
         MATERIAL,
         commandBuffers,
         "Mesh"
     );
 
+    commandBuffers += consumed;
+
     if ( !success )
         return;
 
-    // NOLINTNEXTLINE
+    // NOLINTNEXTLINE - downcast.
     auto& comp = static_cast<StaticMeshComponent&> ( *staticMesh );
 
     GXMat4 transform {};
     transform.Translation ( x, y, z );
     comp.SetTransform ( transform );
 
-    android_vulkan::RigidBodyRef collider = std::make_shared<android_vulkan::RigidBody> ();
-    android_vulkan::RigidBody& body = *collider;
+    android_vulkan::ShapeRef shape = std::make_shared<android_vulkan::ShapeBox> ( COLLIDER_SIZE._data[ 0U ],
+        COLLIDER_SIZE._data[ 1U ],
+        COLLIDER_SIZE._data[ 2U ]
+    );
+
+    ComponentRef rigidBody = std::make_shared<RigidBodyComponent> ( shape, "Collider" );
+
+    // NOLINTNEXTLINE - downcast.
+    auto& collider = static_cast<RigidBodyComponent&> ( *rigidBody );
+
+    android_vulkan::RigidBody& body = *collider.GetRigidBody ();
     body.EnableKinematic ();
 
     constexpr float rendererToPhysics = 1.0F / 32.0F;
@@ -57,18 +68,9 @@ void Riddle::Init ( android_vulkan::Renderer &renderer,
     location.Sum ( origin, COLLIDER_OFFSET );
     body.SetLocation ( location, false );
 
-    android_vulkan::ShapeRef shape = std::make_shared<android_vulkan::ShapeBox> ( COLLIDER_SIZE._data[ 0U ],
-        COLLIDER_SIZE._data[ 1U ],
-        COLLIDER_SIZE._data[ 2U ]
-    );
-
-    body.SetShape ( shape, false );
-
-    if ( !physics.AddRigidBody ( collider ) )
-        return;
-
     ActorRef actor = std::make_shared<Actor> ( android_vulkan::GUID::GenerateAsString ( "Riddle" ) );
     actor->AppendComponent ( staticMesh );
+    actor->AppendComponent ( rigidBody );
     scene.AppendActor ( actor );
 }
 

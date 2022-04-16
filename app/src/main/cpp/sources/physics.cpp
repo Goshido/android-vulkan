@@ -161,6 +161,16 @@ bool Physics::Raycast ( RaycastResult &result, uint32_t groups, GXVec3 const &fr
     return isHit;
 }
 
+void Physics::Reset () noexcept
+{
+    std::unique_lock<std::mutex> const lock ( _mutex );
+
+    _contactManager.Reset ();
+    _dynamics.clear ();
+    _globalForces.clear ();
+    _kinematics.clear ();
+}
+
 void Physics::Resume () noexcept
 {
     if ( !_isPause )

@@ -2,6 +2,7 @@
 #include <pbr/cube_map_manager.h>
 #include <pbr/reflection_probe_global.h>
 #include <pbr/reflection_probe_local.h>
+#include <guid_generator.h>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -22,7 +23,7 @@ ReflectionComponent::ReflectionComponent ( android_vulkan::Renderer &renderer,
     uint8_t const* data,
     VkCommandBuffer const* commandBuffers
 ) noexcept:
-    RenderableComponent ( ClassID::Reflection )
+    RenderableComponent ( ClassID::Reflection, android_vulkan::GUID::GenerateAsString ( "Reflection" ) )
 {
     assert ( desc._formatVersion == REFLECTION_COMPONENT_DESC_FORMAT_VERSION );
 

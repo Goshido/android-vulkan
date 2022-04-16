@@ -3,7 +3,6 @@
 
 
 #include <pbr/scene.h>
-#include <physics.h>
 
 
 namespace pbr::mario {
@@ -11,24 +10,15 @@ namespace pbr::mario {
 class PipeBase
 {
     public:
+        PipeBase () = delete;
+
         PipeBase ( PipeBase const & ) = delete;
         PipeBase& operator = ( PipeBase const & ) = delete;
 
         PipeBase ( PipeBase && ) = delete;
         PipeBase& operator = ( PipeBase && ) = delete;
 
-        virtual ~PipeBase () = default;
-
-        // Note "x", "y" and "z" coordinates must be in renderer units.
-        void Init ( android_vulkan::Renderer &renderer,
-            size_t &commandBufferConsumed,
-            VkCommandBuffer const* commandBuffers,
-            Scene &scene,
-            android_vulkan::Physics &physics,
-            float x,
-            float y,
-            float z
-        ) noexcept;
+        ~PipeBase () = delete;
 
         [[nodiscard]] constexpr static size_t CommandBufferCountRequirement () noexcept
         {
@@ -37,15 +27,17 @@ class PipeBase
         }
 
     protected:
-        PipeBase () = default;
-
-        // Note the offset must be in physics units.
-        [[nodiscard]] virtual GXVec3 const& GetColliderOffset () const noexcept = 0;
-
-        // Note the size must be in physics units.
-        [[nodiscard]] virtual GXVec3 const& GetColliderSize () const noexcept = 0;
-
-        [[nodiscard]] virtual char const* GetMesh () const noexcept = 0;
+        // Note "x", "y" and "z" coordinates must be in renderer units.
+        static void SpawnBase ( android_vulkan::Renderer &renderer,
+            VkCommandBuffer const*& commandBuffers,
+            Scene &scene,
+            float x,
+            float y,
+            float z,
+            GXVec3 const &colliderOffset,
+            GXVec3 const &colliderSize,
+            char const* mesh
+        ) noexcept;
 };
 
 } // namespace pbr::mario

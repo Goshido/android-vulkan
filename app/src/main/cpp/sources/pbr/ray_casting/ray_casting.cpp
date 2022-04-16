@@ -86,6 +86,7 @@ void RayCasting::OnDestroyDevice ( VkDevice device ) noexcept
     _lineMesh.reset ();
 
     DestroyCommandPool ( device );
+    _physics.Reset ();
 
     MeshManager::Destroy ( device );
     MaterialManager::Destroy ( device );

@@ -19,7 +19,8 @@ enum class ClassID : uint64_t
     StaticMesh = 1U,
     PointLight = 2U,
     Reflection = 3U,
-    Script = 4U
+    Script = 4U,
+    RigidBody = 5U
 };
 
 } // namespace pbr

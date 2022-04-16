@@ -5,10 +5,8 @@
 #include "camera.h"
 #include "mario.h"
 #include <pbr/camera.h>
-#include <pbr/render_session.h>
 #include <pbr/scene.h>
 #include <game.h>
-#include <physics.h>
 
 
 namespace pbr::mario {

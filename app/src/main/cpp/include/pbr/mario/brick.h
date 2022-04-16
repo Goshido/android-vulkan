@@ -3,7 +3,6 @@
 
 
 #include <pbr/scene.h>
-#include <physics.h>
 
 
 namespace pbr::mario {
@@ -11,7 +10,7 @@ namespace pbr::mario {
 class Brick final
 {
     public:
-        Brick () = default;
+        Brick () = delete;
 
         Brick ( Brick const & ) = delete;
         Brick& operator = ( Brick const & ) = delete;
@@ -19,14 +18,12 @@ class Brick final
         Brick ( Brick && ) = delete;
         Brick& operator = ( Brick && ) = delete;
 
-        ~Brick () = default;
+        ~Brick () = delete;
 
         // Note "x", "y" and "z" coordinates must be in renderer units.
-        void Init ( android_vulkan::Renderer &renderer,
-            size_t &commandBufferConsumed,
-            VkCommandBuffer const* commandBuffers,
+        static void Spawn ( android_vulkan::Renderer &renderer,
+            VkCommandBuffer const*& commandBuffers,
             Scene &scene,
-            android_vulkan::Physics &physics,
             float x,
             float y,
             float z

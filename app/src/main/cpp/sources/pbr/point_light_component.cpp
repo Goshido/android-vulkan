@@ -1,5 +1,6 @@
 #include <pbr/point_light_component.h>
 #include <pbr/point_light_component_desc.h>
+#include <guid_generator.h>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -15,7 +16,7 @@ namespace pbr {
 //----------------------------------------------------------------------------------------------------------------------
 
 PointLightComponent::PointLightComponent ( PointLightComponentDesc const &desc ) noexcept:
-    RenderableComponent ( ClassID::PointLight )
+    RenderableComponent ( ClassID::PointLight, android_vulkan::GUID::GenerateAsString ( "PointLight" ) )
 {
     // Sanity checks.
     static_assert ( sizeof ( desc._location ) == sizeof ( GXVec3 ) );
@@ -45,7 +46,7 @@ PointLightComponent::PointLightComponent ( PointLightComponentDesc const &desc )
 }
 
 PointLightComponent::PointLightComponent () noexcept:
-    RenderableComponent ( ClassID::PointLight ),
+    RenderableComponent ( ClassID::PointLight, android_vulkan::GUID::GenerateAsString ( "PointLight" ) ),
     _pointLight ( std::make_shared<PointLight> () )
 {
     // NOTHING

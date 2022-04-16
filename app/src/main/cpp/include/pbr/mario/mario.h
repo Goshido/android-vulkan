@@ -3,9 +3,7 @@
 
 
 #include "target.h"
-#include <pbr/render_session.h>
-#include <pbr/types.h>
-#include <rigid_body.h>
+#include <pbr/scene.h>
 
 
 namespace pbr::mario {
@@ -13,11 +11,11 @@ namespace pbr::mario {
 class Mario final : public ITarget
 {
     private:
-        bool                            _isJump = false;
-        float                           _move = 0.0F;
+        bool            _isJump = false;
+        float           _move = 0.0F;
 
-        android_vulkan::RigidBodyRef    _rigidBody {};
-        ComponentRef                    _staticMesh {};
+        ComponentRef    _rigidBody {};
+        ComponentRef    _staticMesh {};
 
     public:
         Mario () = default;
@@ -33,19 +31,19 @@ class Mario final : public ITarget
         [[nodiscard]] GXMat4 const& GetTransform () const noexcept override;
         void CaptureInput () noexcept;
         void FreeTransferResources ( VkDevice device ) noexcept;
-        [[nodiscard]] android_vulkan::RigidBodyRef& GetRigidBody () noexcept;
 
         // Note "x", "y" and "z" coordinates must be in physics units.
         void Init ( android_vulkan::Renderer &renderer,
-            size_t &commandBufferConsumed,
-            VkCommandBuffer const* commandBuffers,
+            VkCommandBuffer const*& commandBuffers,
+            Scene &scene,
             float x,
             float y,
             float z
         ) noexcept;
 
+        void Destroy () noexcept;
+
         void OnUpdate () noexcept;
-        void Submit ( RenderSession &renderSession ) noexcept;
 
         [[nodiscard]] constexpr static size_t CommandBufferCountRequirement () noexcept
         {

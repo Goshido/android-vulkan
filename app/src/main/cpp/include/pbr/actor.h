@@ -4,6 +4,7 @@
 
 #include "script_engine.h"
 #include "types.h"
+#include <physics.h>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -44,6 +45,7 @@ class Actor final
 
         void RegisterComponents ( ComponentList &freeTransferResource,
             ComponentList &renderable,
+            android_vulkan::Physics &physics,
             ScriptEngine &scriptEngine
         ) noexcept;
 };

@@ -78,13 +78,6 @@ ComponentRef Component::Create ( android_vulkan::Renderer &renderer,
     return {};
 }
 
-Component::Component ( ClassID classID ) noexcept:
-    _classID ( classID ),
-    _name ( android_vulkan::GUID::GenerateAsString ( "Component" ) )
-{
-    // NOTHING
-}
-
 Component::Component ( ClassID classID, std::string &&name ) noexcept:
     _classID ( classID ),
     _name ( std::move ( name ) )

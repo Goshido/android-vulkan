@@ -22,8 +22,11 @@ class Scene final
 
     private:
         std::unordered_map<std::string, Actors>     _actorStorage {};
+
         ComponentList                               _freeTransferResourceList {};
         ComponentList                               _renderableList {};
+
+        android_vulkan::Physics*                    _physics = nullptr;
         ScriptEngine*                               _scriptEngine = nullptr;
 
     public:
@@ -37,7 +40,7 @@ class Scene final
 
         ~Scene () = default;
 
-        [[nodiscard]] bool OnInitDevice () noexcept;
+        [[nodiscard]] bool OnInitDevice ( android_vulkan::Physics &physics ) noexcept;
         void OnDestroyDevice () noexcept;
 
         void AppendActor ( ActorRef &actor ) noexcept;

@@ -10,7 +10,7 @@ namespace pbr::mario {
 class PipeX1 final : public PipeBase
 {
     public:
-        PipeX1 () = default;
+        PipeX1 () = delete;
 
         PipeX1 ( PipeX1 const & ) = delete;
         PipeX1& operator = ( PipeX1 const & ) = delete;
@@ -18,12 +18,16 @@ class PipeX1 final : public PipeBase
         PipeX1 ( PipeX1 && ) = delete;
         PipeX1& operator = ( PipeX1 && ) = delete;
 
-        ~PipeX1 () override = default;
+        ~PipeX1 () = delete;
 
-    private:
-        [[nodiscard]] GXVec3 const& GetColliderOffset () const noexcept override;
-        [[nodiscard]] GXVec3 const& GetColliderSize () const noexcept override;
-        [[nodiscard]] char const* GetMesh () const noexcept override;
+        // Note "x", "y" and "z" coordinates must be in renderer units.
+        static void Spawn ( android_vulkan::Renderer &renderer,
+            VkCommandBuffer const*& commandBuffers,
+            Scene &scene,
+            float x,
+            float y,
+            float z
+        ) noexcept;
 };
 
 } // namespace pbr::mario

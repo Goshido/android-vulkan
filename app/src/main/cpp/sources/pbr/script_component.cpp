@@ -1,18 +1,19 @@
 #include <pbr/script_component.h>
 #include <pbr/script_engine.h>
+#include <guid_generator.h>
 
 
 namespace pbr {
 
 ScriptComponent::ScriptComponent ( std::string &&script ) noexcept:
-    Component ( ClassID::Script ),
+    Component ( ClassID::Script, android_vulkan::GUID::GenerateAsString ( "Script" ) ),
     _script ( std::move ( script ) )
 {
     // NOTHING
 }
 
 ScriptComponent::ScriptComponent ( std::string &&script, std::string &&params ) noexcept:
-    Component ( ClassID::Script ),
+    Component ( ClassID::Script, android_vulkan::GUID::GenerateAsString ( "Script" ) ),
     _script ( std::move ( script ) ),
     _params ( std::move ( params ) )
 {

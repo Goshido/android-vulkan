@@ -37,7 +37,6 @@ class Component
         ) noexcept;
 
     protected:
-        explicit Component ( ClassID classID ) noexcept;
         explicit Component ( ClassID classID, std::string &&name ) noexcept;
 };
 

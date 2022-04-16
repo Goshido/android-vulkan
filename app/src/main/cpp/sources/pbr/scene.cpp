@@ -4,8 +4,9 @@
 
 namespace pbr {
 
-bool Scene::OnInitDevice () noexcept
+bool Scene::OnInitDevice ( android_vulkan::Physics &physics ) noexcept
 {
+    _physics = &physics;
     _scriptEngine = &ScriptEngine::GetInstance ();
     return _scriptEngine->Init ();
 }
@@ -18,13 +19,14 @@ void Scene::OnDestroyDevice () noexcept
 
     ScriptEngine::Destroy ();
     _scriptEngine = nullptr;
+    _physics = nullptr;
 }
 
 void Scene::AppendActor ( ActorRef &actor ) noexcept
 {
     Actors& actors = _actorStorage[ actor->GetName () ];
     actors.push_back ( actor );
-    actors.back ()->RegisterComponents ( _freeTransferResourceList, _renderableList, *_scriptEngine );
+    actors.back ()->RegisterComponents ( _freeTransferResourceList, _renderableList, *_physics, *_scriptEngine );
 }
 
 [[maybe_unused]] Scene::FindResult Scene::FindActors ( std::string const &actorName ) noexcept

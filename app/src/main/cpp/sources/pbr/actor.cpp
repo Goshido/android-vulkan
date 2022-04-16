@@ -1,5 +1,6 @@
 #include <pbr/actor.h>
 #include <pbr/script_component.h>
+#include <pbr/rigid_body_component.h>
 #include <guid_generator.h>
 #include <logger.h>
 
@@ -39,6 +40,7 @@ std::string const& Actor::GetName () const noexcept
 
 void Actor::RegisterComponents ( ComponentList &freeTransferResource,
     ComponentList &renderable,
+    android_vulkan::Physics &physics,
     ScriptEngine &scriptEngine
 ) noexcept
 {
@@ -56,6 +58,22 @@ void Actor::RegisterComponents ( ComponentList &freeTransferResource,
                 continue;
             }
 
+            if ( classID == ClassID::RigidBody )
+            {
+                // NOLINTNEXTLINE - downcast.
+                auto& rigiBodyComponent = static_cast<RigidBodyComponent&> ( *component );
+
+                if ( !rigiBodyComponent.Register ( physics ) )
+                {
+                    android_vulkan::LogWarning ( "pbr::Actor::RegisterComponents - Can't register rigid body "
+                        "component %s.",
+                        rigiBodyComponent.GetName ().c_str ()
+                    );
+                }
+
+                continue;
+            }
+
             if ( classID == ClassID::PointLight )
             {
                 renderable.emplace_back ( std::ref ( component ) );
@@ -65,13 +83,13 @@ void Actor::RegisterComponents ( ComponentList &freeTransferResource,
             if ( classID == ClassID::Script )
             {
                 // NOLINTNEXTLINE - downcast.
-                auto& scriptComponent = static_cast<ScriptComponent&> ( *component.get () );
+                auto& scriptComponent = static_cast<ScriptComponent&> ( *component );
 
                 if ( scriptComponent.Register ( scriptEngine ) )
                     continue;
 
                 android_vulkan::LogWarning ( "pbr::Actor::RegisterComponents - Can't register script component %s.",
-                    component->GetName ().c_str ()
+                    scriptComponent.GetName ().c_str ()
                 );
             }
         }

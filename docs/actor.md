@@ -93,7 +93,7 @@ actor:AppendComponent ( PointLightComponent ( "Light #1" ) )
 
 ## <a id="method-find-component">`FindComponent ( name )`</a>
 
-Method return first existing component with `name`. Otherwise method returns `nil`.
+Method returns first existing component with `name`. Otherwise method returns `nil`.
 
 **Parameters:**
 

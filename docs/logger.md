@@ -1,17 +1,17 @@
 # Logger
 
 ```lua
-require "av://engine/av_logger.lua"
+require "av://engine/logger.lua"
 ```
 
 ## Table of content
 
 - [_Brief_](#brief)
 - [_Metamethods_](#metamethods)
-- [`AVLogD ( format, ... )`](#function-avlogd)
-- [`AVLogE ( format, ... )`](#function-avloge)
-- [`AVLogI ( format, ... )`](#function-avlogi)
-- [`AVLogW ( format, ... )`](#function-avlogw)
+- [`LogD ( format, ... )`](#function-logd)
+- [`LogE ( format, ... )`](#function-loge)
+- [`LogI ( format, ... )`](#function-logi)
+- [`LogW ( format, ... )`](#function-logw)
 
 ## <a id="brief">Brief</a>
 
@@ -49,7 +49,7 @@ Metamethod | Used
 `__tostring` | ❌
 `__unm` | ❌
 
-## <a id="function-avlogd">`AVLogD ( format, ... )`</a>
+## <a id="function-logd">`LogD ( format, ... )`</a>
 
 Function prints the message to log with _debug_ tag. The function supports formating string [technique](https://en.cppreference.com/w/cpp/io/c/fprintf).
 
@@ -65,16 +65,16 @@ Function prints the message to log with _debug_ tag. The function supports forma
 **Example:**
 
 ```lua
-require "av://engine/av_logger.lua"
+require "av://engine/logger.lua"
 
 
 local s = "Hello world"
 
-AVLogD ( "Message from log." )
-AVLogD ( "The values: %s, %f", s, 77.7 )
+LogD ( "Message from log." )
+LogD ( "The values: %s, %f", s, 77.7 )
 ```
 
-## <a id="function-avloge">`AVLogE ( format, ... )`</a>
+## <a id="function-loge">`LogE ( format, ... )`</a>
 
 Function prints the message to log with _error_ tag. The function supports formating string [technique](https://en.cppreference.com/w/cpp/io/c/fprintf).
 
@@ -90,16 +90,16 @@ Function prints the message to log with _error_ tag. The function supports forma
 **Example:**
 
 ```lua
-require "av://engine/av_logger.lua"
+require "av://engine/logger.lua"
 
 
 local s = "Hello world"
 
-AVLogE ( "Message from log." )
-AVLogE ( "The values: %s, %f", s, 77.7 )
+LogE ( "Message from log." )
+LogE ( "The values: %s, %f", s, 77.7 )
 ```
 
-## <a id="function-avlogi">`AVLogI ( format, ... )`</a>
+## <a id="function-logi">`LogI ( format, ... )`</a>
 
 Function prints the message to log with _info_ tag. The function supports formating string [technique](https://en.cppreference.com/w/cpp/io/c/fprintf).
 
@@ -115,16 +115,16 @@ Function prints the message to log with _info_ tag. The function supports format
 **Example:**
 
 ```lua
-require "av://engine/av_logger.lua"
+require "av://engine/logger.lua"
 
 
 local s = "Hello world"
 
-AVLogI ( "Message from log." )
-AVLogI ( "The values: %s, %f", s, 77.7 )
+LogI ( "Message from log." )
+LogI ( "The values: %s, %f", s, 77.7 )
 ```
 
-## <a id="function-avlogw">`AVLogW ( format, ... )`</a>
+## <a id="function-logw">`LogW ( format, ... )`</a>
 
 Function prints the message to log with _warning_ tag. The function supports formating string [technique](https://en.cppreference.com/w/cpp/io/c/fprintf).
 
@@ -140,11 +140,11 @@ Function prints the message to log with _warning_ tag. The function supports for
 **Example:**
 
 ```lua
-require "av://engine/av_logger.lua"
+require "av://engine/logger.lua"
 
 
 local s = "Hello world"
 
-AVLogW ( "Message from log." )
-AVLogW ( "The values: %s, %f", s, 77.7 )
+LogW ( "Message from log." )
+LogW ( "The values: %s, %f", s, 77.7 )
 ```

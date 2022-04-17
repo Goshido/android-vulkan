@@ -1,4 +1,4 @@
-require "av://engine/av_object.lua"
+require "av://engine/object.lua"
 
 
 local g_scripts = {}

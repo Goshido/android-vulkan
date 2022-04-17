@@ -1,6 +1,6 @@
-require "av://engine/av_script_component.lua"
+require "av://engine/script_component.lua"
 require "av://engine/gx_math.lua"
-require "av://engine/av_logger.lua"
+require "av://engine/logger.lua"
 
 
 Player = {}
@@ -20,15 +20,15 @@ end
 
 -- metamethods
 local function Constructor ( self, handle, params )
-    local obj = AVScriptComponent ( handle )
+    local obj = ScriptComponent ( handle )
 
-    AVLogD ( ">>> Player params:" )
+    LogD ( ">>> Player params:" )
 
     for k, v in pairs ( params ) do
-        AVLogD ( "    " .. k .. ": " .. v )
+        LogD ( "    " .. k .. ": " .. v )
     end
 
-    AVLogD ( "<<<" )
+    LogD ( "<<<" )
 
     -- data
     obj._health = 100

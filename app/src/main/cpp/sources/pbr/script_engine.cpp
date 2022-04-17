@@ -25,7 +25,7 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-constexpr static char const SCRIPT[] = "pbr/engine/av_app.lua";
+constexpr static char const SCRIPT[] = "pbr/engine/app.lua";
 
 //----------------------------------------------------------------------------------------------------------------------
 

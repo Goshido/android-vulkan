@@ -5,11 +5,11 @@ GXQuat = {}
 
 -- methods
 local function FromAxisAngle ( self, axis, angle )
-    assert ( type ( self ) == "table" and self._type == eAVObjectType.GXQuat,
+    assert ( type ( self ) == "table" and self._type == eObjectType.GXQuat,
         [[GXQuat:FromAxisAngle - Calling not via ":" syntax.]]
     )
 
-    assert ( type ( axis ) == "table" and axis._type == eAVObjectType.GXVec3,
+    assert ( type ( axis ) == "table" and axis._type == eObjectType.GXVec3,
         [[GXQuat:FromAxisAngle - "axis" is not a GXVec3.]]
     )
 
@@ -19,21 +19,21 @@ local function FromAxisAngle ( self, axis, angle )
 end
 
 local function Inverse ( self, q )
-    assert ( type ( self ) == "table" and self._type == eAVObjectType.GXQuat,
+    assert ( type ( self ) == "table" and self._type == eObjectType.GXQuat,
         [[GXQuat:Inverse - Calling not via ":" syntax.]]
     )
 
-    assert ( type ( q ) == "table" and q._type == eAVObjectType.GXQuat, [[GXQuat:Inverse - "q" is not a GXQuat.]] )
+    assert ( type ( q ) == "table" and q._type == eObjectType.GXQuat, [[GXQuat:Inverse - "q" is not a GXQuat.]] )
 
     av_GXQuatInverse ( self._handle, q._handle )
 end
 
 local function InverseFast ( self, unitQuaternion )
-    assert ( type ( self ) == "table" and self._type == eAVObjectType.GXQuat,
+    assert ( type ( self ) == "table" and self._type == eObjectType.GXQuat,
         [[GXQuat:InverseFast - Calling not via ":" syntax.]]
     )
 
-    assert ( type ( unitQuaternion ) == "table" and unitQuaternion._type == eAVObjectType.GXQuat,
+    assert ( type ( unitQuaternion ) == "table" and unitQuaternion._type == eObjectType.GXQuat,
         [[GXQuat:InverseFast - "unitQuaternion" is not a GXQuat.]]
     )
 
@@ -41,18 +41,18 @@ local function InverseFast ( self, unitQuaternion )
 end
 
 local function Multiply ( self, a, b )
-    assert ( type ( self ) == "table" and self._type == eAVObjectType.GXQuat,
+    assert ( type ( self ) == "table" and self._type == eObjectType.GXQuat,
         [[GXQuat:Multiply - Calling not via ":" syntax.]]
     )
 
-    assert ( type ( a ) == "table" and a._type == eAVObjectType.GXQuat, [[GXQuat:Multiply - "a" is not a GXQuat.]] )
-    assert ( type ( b ) == "table" and b._type == eAVObjectType.GXQuat, [[GXQuat:Multiply - "b" is not a GXQuat.]] )
+    assert ( type ( a ) == "table" and a._type == eObjectType.GXQuat, [[GXQuat:Multiply - "a" is not a GXQuat.]] )
+    assert ( type ( b ) == "table" and b._type == eObjectType.GXQuat, [[GXQuat:Multiply - "b" is not a GXQuat.]] )
 
     av_GXQuatMultiply ( self._handle, a._handle, b._handle )
 end
 
 local function Normalize ( self )
-    assert ( type ( self ) == "table" and self._type == eAVObjectType.GXQuat,
+    assert ( type ( self ) == "table" and self._type == eObjectType.GXQuat,
         [[GXQuat:Normalize - Calling not via ":" syntax.]]
     )
 
@@ -60,15 +60,15 @@ local function Normalize ( self )
 end
 
 local function SphericalLinearInterpolation ( self, start, finish, interpolationFactor )
-    assert ( type ( self ) == "table" and self._type == eAVObjectType.GXQuat,
+    assert ( type ( self ) == "table" and self._type == eObjectType.GXQuat,
         [[GXQuat:SphericalLinearInterpolation - Calling not via ":" syntax.]]
     )
 
-    assert ( type ( start ) == "table" and start._type == eAVObjectType.GXQuat,
+    assert ( type ( start ) == "table" and start._type == eObjectType.GXQuat,
         [[GXQuat:SphericalLinearInterpolation - "start" is not a GXQuat.]]
     )
 
-    assert ( type ( finish ) == "table" and finish._type == eAVObjectType.GXQuat,
+    assert ( type ( finish ) == "table" and finish._type == eObjectType.GXQuat,
         [[GXQuat:SphericalLinearInterpolation - "finish" is not a GXQuat.]]
     )
 
@@ -80,15 +80,15 @@ local function SphericalLinearInterpolation ( self, start, finish, interpolation
 end
 
 local function TransformFast ( self, out, v )
-    assert ( type ( self ) == "table" and self._type == eAVObjectType.GXQuat,
+    assert ( type ( self ) == "table" and self._type == eObjectType.GXQuat,
         [[GXQuat:TransformFast - Calling not via ":" syntax.]]
     )
 
-    assert ( type ( out ) == "table" and out._type == eAVObjectType.GXVec3,
+    assert ( type ( out ) == "table" and out._type == eObjectType.GXVec3,
         [[GXQuat:TransformFast - "out" is not a GXVec3.]]
     )
 
-    assert ( type ( v ) == "table" and v._type == eAVObjectType.GXVec3,
+    assert ( type ( v ) == "table" and v._type == eObjectType.GXVec3,
         [[GXQuat:TransformFast - "v" is not a GXVec3.]]
     )
 
@@ -111,7 +111,7 @@ local mt = {
 }
 
 local function Constructor ( self )
-    local obj = AVObject ( eAVObjectType.GXQuat )
+    local obj = Object ( eObjectType.GXQuat )
 
     -- data
     obj._handle = av_GXQuatCreate ()

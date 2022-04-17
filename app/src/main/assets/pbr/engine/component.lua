@@ -1,16 +1,16 @@
-require "av://engine/av_object.lua"
+require "av://engine/object.lua"
 
 
-AVComponent = {}
+Component = {}
 
 -- methods
 local function GetName ( self )
-    return av_GetNameAVComponent ( self._handle )
+    return av_ComponentGetName ( self._handle )
 end
 
 -- metamethods
 local function Constructor ( self, objectType, handle )
-    local obj = AVObject ( objectType )
+    local obj = Object ( objectType )
 
     -- data
     obj._handle = handle
@@ -21,7 +21,7 @@ local function Constructor ( self, objectType, handle )
     return obj
 end
 
-setmetatable ( AVComponent, { __call = Constructor } )
+setmetatable ( Component, { __call = Constructor } )
 
 -- module contract
 return nil

@@ -1,20 +1,20 @@
 -- Debug message.
-function AVLogD ( format, ... )
+function LogD ( format, ... )
     av_LogD ( string.format ( format, ... ) )
 end
 
 -- Error message.
-function AVLogE ( format, ... )
+function LogE ( format, ... )
     av_LogE ( string.format ( format, ... ) )
 end
 
 -- Info message.
-function AVLogI ( format, ... )
+function LogI ( format, ... )
     av_LogI ( string.format ( format, ... ) )
 end
 
 -- Warning message.
-function AVLogW ( format, ... )
+function LogW ( format, ... )
     av_LogW ( string.format ( format, ... ) )
 end
 

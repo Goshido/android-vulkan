@@ -6,15 +6,15 @@ GXMat4 = {}
 
 -- methods
 local function FromFast ( self, unitQuaternion, origin )
-    assert ( type ( self ) == "table" and self._type == eAVObjectType.GXMat4,
+    assert ( type ( self ) == "table" and self._type == eObjectType.GXMat4,
         [[GXMat4:FromFast - Calling not via ":" syntax.]]
     )
 
-    assert ( type ( unitQuaternion ) == "table" and unitQuaternion._type == eAVObjectType.GXQuat,
+    assert ( type ( unitQuaternion ) == "table" and unitQuaternion._type == eObjectType.GXQuat,
         [[GXMat4:FromFast - "unitQuaternion" is not a GXQuat.]]
     )
 
-    assert ( type ( origin ) == "table" and origin._type == eAVObjectType.GXVec3,
+    assert ( type ( origin ) == "table" and origin._type == eObjectType.GXVec3,
         [[GXMat4:FromFast - "origin" is not a GXVec3.]]
     )
 
@@ -22,43 +22,43 @@ local function FromFast ( self, unitQuaternion, origin )
 end
 
 local function GetX ( self, x )
-    assert ( type ( self ) == "table" and self._type == eAVObjectType.GXMat4,
+    assert ( type ( self ) == "table" and self._type == eObjectType.GXMat4,
         [[GXMat4:GetX - Calling not via ":" syntax.]]
     )
 
-    assert ( type ( x ) == "table" and x._type == eAVObjectType.GXVec3, [[GXMat4:GetX - "x" is not a GXVec3.]] )
+    assert ( type ( x ) == "table" and x._type == eObjectType.GXVec3, [[GXMat4:GetX - "x" is not a GXVec3.]] )
     av_GXMat4GetX ( self._handle, x._handle )
 end
 
 local function GetY ( self, y )
-    assert ( type ( self ) == "table" and self._type == eAVObjectType.GXMat4,
+    assert ( type ( self ) == "table" and self._type == eObjectType.GXMat4,
         [[GXMat4:GetY - Calling not via ":" syntax.]]
     )
 
-    assert ( type ( y ) == "table" and y._type == eAVObjectType.GXVec3, [[GXMat4:GetY - "y" is not a GXVec3.]] )
+    assert ( type ( y ) == "table" and y._type == eObjectType.GXVec3, [[GXMat4:GetY - "y" is not a GXVec3.]] )
     av_GXMat4GetY ( self._handle, y._handle )
 end
 
 local function GetZ ( self, z )
-    assert ( type ( self ) == "table" and self._type == eAVObjectType.GXMat4,
+    assert ( type ( self ) == "table" and self._type == eObjectType.GXMat4,
         [[GXMat4:GetZ - Calling not via ":" syntax.]]
     )
 
-    assert ( type ( z ) == "table" and z._type == eAVObjectType.GXVec3, [[GXMat4:GetZ - "z" is not a GXVec3.]] )
+    assert ( type ( z ) == "table" and z._type == eObjectType.GXVec3, [[GXMat4:GetZ - "z" is not a GXVec3.]] )
     av_GXMat4GetZ ( self._handle, z._handle )
 end
 
 local function GetW ( self, w )
-    assert ( type ( self ) == "table" and self._type == eAVObjectType.GXMat4,
+    assert ( type ( self ) == "table" and self._type == eObjectType.GXMat4,
         [[GXMat4:GetW - Calling not via ":" syntax.]]
     )
 
-    assert ( type ( w ) == "table" and w._type == eAVObjectType.GXVec3, [[GXMat4:GetW - "w" is not a GXVec3.]] )
+    assert ( type ( w ) == "table" and w._type == eObjectType.GXVec3, [[GXMat4:GetW - "w" is not a GXVec3.]] )
     av_GXMat4GetW ( self._handle, w._handle )
 end
 
 local function Identity ( self )
-    assert ( type ( self ) == "table" and self._type == eAVObjectType.GXMat4,
+    assert ( type ( self ) == "table" and self._type == eObjectType.GXMat4,
         [[GXMat4:Identity - Calling not via ":" syntax.]]
     )
 
@@ -66,11 +66,11 @@ local function Identity ( self )
 end
 
 local function Inverse ( self, sourceMatrix )
-    assert ( type ( self ) == "table" and self._type == eAVObjectType.GXMat4,
+    assert ( type ( self ) == "table" and self._type == eObjectType.GXMat4,
         [[GXMat4:Inverse - Calling not via ":" syntax.]]
     )
 
-    assert ( type ( sourceMatrix ) == "table" and sourceMatrix._type == eAVObjectType.GXMat4,
+    assert ( type ( sourceMatrix ) == "table" and sourceMatrix._type == eObjectType.GXMat4,
         [[GXMat4:Inverse - "sourceMatrix" is not a GXMat4.]]
     )
 
@@ -78,26 +78,26 @@ local function Inverse ( self, sourceMatrix )
 end
 
 local function Multiply ( self, a, b )
-    assert ( type ( self ) == "table" and self._type == eAVObjectType.GXMat4,
+    assert ( type ( self ) == "table" and self._type == eObjectType.GXMat4,
         [[GXMat4:Multiply - Calling not via ":" syntax.]]
     )
 
-    assert ( type ( a ) == "table" and a._type == eAVObjectType.GXMat4, [[GXMat4:Multiply - "a" is not a GXMat4.]] )
-    assert ( type ( b ) == "table" and b._type == eAVObjectType.GXMat4, [[GXMat4:Multiply - "b" is not a GXMat4.]] )
+    assert ( type ( a ) == "table" and a._type == eObjectType.GXMat4, [[GXMat4:Multiply - "a" is not a GXMat4.]] )
+    assert ( type ( b ) == "table" and b._type == eObjectType.GXMat4, [[GXMat4:Multiply - "b" is not a GXMat4.]] )
 
     av_GXMat4Multiply ( self._handle, a._handle, b._handle )
 end
 
 local function MultiplyMatrixVector ( self, out, v )
-    assert ( type ( self ) == "table" and self._type == eAVObjectType.GXMat4,
+    assert ( type ( self ) == "table" and self._type == eObjectType.GXMat4,
         [[GXMat4:MultiplyMatrixVector - Calling not via ":" syntax.]]
     )
 
-    assert ( type ( out ) == "table" and out._type == eAVObjectType.GXVec4,
+    assert ( type ( out ) == "table" and out._type == eObjectType.GXVec4,
         [[GXMat4:MultiplyMatrixVector - "out" is not a GXVec4.]]
     )
 
-    assert ( type ( v ) == "table" and v._type == eAVObjectType.GXVec4,
+    assert ( type ( v ) == "table" and v._type == eObjectType.GXVec4,
         [[GXMat4:MultiplyMatrixVector - "v" is not a GXVec4.]]
     )
 
@@ -105,15 +105,15 @@ local function MultiplyMatrixVector ( self, out, v )
 end
 
 local function MultiplyAsNormal ( self, out, v )
-    assert ( type ( self ) == "table" and self._type == eAVObjectType.GXMat4,
+    assert ( type ( self ) == "table" and self._type == eObjectType.GXMat4,
         [[GXMat4:MultiplyAsNormal - Calling not via ":" syntax.]]
     )
 
-    assert ( type ( out ) == "table" and out._type == eAVObjectType.GXVec3,
+    assert ( type ( out ) == "table" and out._type == eObjectType.GXVec3,
         [[GXMat4:MultiplyAsNormal - "out" is not a GXVec3.]]
     )
 
-    assert ( type ( v ) == "table" and v._type == eAVObjectType.GXVec3,
+    assert ( type ( v ) == "table" and v._type == eObjectType.GXVec3,
         [[GXMat4:MultiplyAsNormal - "v" is not a GXVec3.]]
     )
 
@@ -121,15 +121,15 @@ local function MultiplyAsNormal ( self, out, v )
 end
 
 local function MultiplyAsPoint ( self, out, v )
-    assert ( type ( self ) == "table" and self._type == eAVObjectType.GXMat4,
+    assert ( type ( self ) == "table" and self._type == eObjectType.GXMat4,
         [[GXMat4:MultiplyAsPoint - Calling not via ":" syntax.]]
     )
 
-    assert ( type ( out ) == "table" and out._type == eAVObjectType.GXVec3,
+    assert ( type ( out ) == "table" and out._type == eObjectType.GXVec3,
         [[GXMat4:MultiplyAsPoint - "out" is not a GXVec3.]]
     )
 
-    assert ( type ( v ) == "table" and v._type == eAVObjectType.GXVec3,
+    assert ( type ( v ) == "table" and v._type == eObjectType.GXVec3,
         [[GXMat4:MultiplyAsPoint - "v" is not a GXVec3.]]
     )
 
@@ -137,15 +137,15 @@ local function MultiplyAsPoint ( self, out, v )
 end
 
 local function MultiplyVectorMatrix ( self, out, v )
-    assert ( type ( self ) == "table" and self._type == eAVObjectType.GXMat4,
+    assert ( type ( self ) == "table" and self._type == eObjectType.GXMat4,
         [[GXMat4:MultiplyVectorMatrix - Calling not via ":" syntax.]]
     )
 
-    assert ( type ( out ) == "table" and out._type == eAVObjectType.GXVec4,
+    assert ( type ( out ) == "table" and out._type == eObjectType.GXVec4,
         [[GXMat4:MultiplyVectorMatrix - "out" is not a GXVec4.]]
     )
 
-    assert ( type ( v ) == "table" and v._type == eAVObjectType.GXVec4,
+    assert ( type ( v ) == "table" and v._type == eObjectType.GXVec4,
         [[GXMat4:MultiplyVectorMatrix - "v" is not a GXVec4.]]
     )
 
@@ -153,7 +153,7 @@ local function MultiplyVectorMatrix ( self, out, v )
 end
 
 local function Perspective ( self, fieldOfViewYRadians, aspectRatio, zNear, zFar )
-    assert ( type ( self ) == "table" and self._type == eAVObjectType.GXMat4,
+    assert ( type ( self ) == "table" and self._type == eObjectType.GXMat4,
         [[GXMat4:Perspective - Calling not via ":" syntax.]]
     )
 
@@ -169,7 +169,7 @@ local function Perspective ( self, fieldOfViewYRadians, aspectRatio, zNear, zFar
 end
 
 local function RotationX ( self, angle )
-    assert ( type ( self ) == "table" and self._type == eAVObjectType.GXMat4,
+    assert ( type ( self ) == "table" and self._type == eObjectType.GXMat4,
         [[GXMat4:RotationX - Calling not via ":" syntax.]]
     )
 
@@ -178,7 +178,7 @@ local function RotationX ( self, angle )
 end
 
 local function RotationY ( self, angle )
-    assert ( type ( self ) == "table" and self._type == eAVObjectType.GXMat4,
+    assert ( type ( self ) == "table" and self._type == eObjectType.GXMat4,
         [[GXMat4:RotationY - Calling not via ":" syntax.]]
     )
 
@@ -187,7 +187,7 @@ local function RotationY ( self, angle )
 end
 
 local function RotationZ ( self, angle )
-    assert ( type ( self ) == "table" and self._type == eAVObjectType.GXMat4,
+    assert ( type ( self ) == "table" and self._type == eObjectType.GXMat4,
         [[GXMat4:RotationZ - Calling not via ":" syntax.]]
     )
 
@@ -196,7 +196,7 @@ local function RotationZ ( self, angle )
 end
 
 local function Scale ( self, x, y, z )
-    assert ( type ( self ) == "table" and self._type == eAVObjectType.GXMat4,
+    assert ( type ( self ) == "table" and self._type == eObjectType.GXMat4,
         [[GXMat4:Scale - Calling not via ":" syntax]]
     )
 
@@ -208,43 +208,43 @@ local function Scale ( self, x, y, z )
 end
 
 local function SetX ( self, x )
-    assert ( type ( self ) == "table" and self._type == eAVObjectType.GXMat4,
+    assert ( type ( self ) == "table" and self._type == eObjectType.GXMat4,
         [[GXMat4:SetX - Calling not via ":" syntax.]]
     )
 
-    assert ( type ( x ) == "table" and x._type == eAVObjectType.GXVec3, [[GXMat4:SetX - "x" is not a GXVec3.]] )
+    assert ( type ( x ) == "table" and x._type == eObjectType.GXVec3, [[GXMat4:SetX - "x" is not a GXVec3.]] )
     av_GXMat4SetX ( self._handle, x._handle )
 end
 
 local function SetY ( self, y )
-    assert ( type ( self ) == "table" and self._type == eAVObjectType.GXMat4,
+    assert ( type ( self ) == "table" and self._type == eObjectType.GXMat4,
         [[GXMat4:SetY - Calling not via ":" syntax.]]
     )
 
-    assert ( type ( y ) == "table" and y._type == eAVObjectType.GXVec3, [[GXMat4:SetY - "y" is not a GXVec3.]] )
+    assert ( type ( y ) == "table" and y._type == eObjectType.GXVec3, [[GXMat4:SetY - "y" is not a GXVec3.]] )
     av_GXMat4SetY ( self._handle, y._handle )
 end
 
 local function SetZ ( self, z )
-    assert ( type ( self ) == "table" and self._type == eAVObjectType.GXMat4,
+    assert ( type ( self ) == "table" and self._type == eObjectType.GXMat4,
         [[GXMat4:SetZ - Calling not via ":" syntax.]]
     )
 
-    assert ( type ( z ) == "table" and z._type == eAVObjectType.GXVec3, [[GXMat4:SetZ - "z" is not a GXVec3.]] )
+    assert ( type ( z ) == "table" and z._type == eObjectType.GXVec3, [[GXMat4:SetZ - "z" is not a GXVec3.]] )
     av_GXMat4SetZ ( self._handle, z._handle )
 end
 
 local function SetW ( self, w )
-    assert ( type ( self ) == "table" and self._type == eAVObjectType.GXMat4,
+    assert ( type ( self ) == "table" and self._type == eObjectType.GXMat4,
         [[GXMat4:SetW - Calling not via ":" syntax.]]
     )
 
-    assert ( type ( w ) == "table" and w._type == eAVObjectType.GXVec3, [[GXMat4:SetW - "w" is not a GXVec3.]] )
+    assert ( type ( w ) == "table" and w._type == eObjectType.GXVec3, [[GXMat4:SetW - "w" is not a GXVec3.]] )
     av_GXMat4SetW ( self._handle, w._handle )
 end
 
 local function Translation ( self, x, y, z )
-    assert ( type ( self ) == "table" and self._type == eAVObjectType.GXMat4,
+    assert ( type ( self ) == "table" and self._type == eObjectType.GXMat4,
         [[GXMat4:Translation - Calling not via ":" syntax]]
     )
 
@@ -271,7 +271,7 @@ local mt = {
 }
 
 local function Constructor ( self )
-    local obj = AVObject ( eAVObjectType.GXMat4 )
+    local obj = Object ( eObjectType.GXMat4 )
 
     -- data
     obj._handle = av_GXMat4Create ()

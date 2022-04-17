@@ -1,11 +1,11 @@
-require "av://engine/av_object.lua"
+require "av://engine/object.lua"
 
 
 GXVec4 = {}
 
 -- methods
 local function Init ( self, x, y, z, w )
-    assert ( type ( self ) == "table" and self._type == eAVObjectType.GXVec4,
+    assert ( type ( self ) == "table" and self._type == eObjectType.GXVec4,
         [[GXVec4:Init - Calling not via ":" syntax.]]
     )
 
@@ -33,7 +33,7 @@ local mt = {
 }
 
 local function Constructor ( self )
-    local obj = AVObject ( eAVObjectType.GXVec4 )
+    local obj = Object ( eObjectType.GXVec4 )
 
     -- data
     obj._handle = av_GXVec4Create ()

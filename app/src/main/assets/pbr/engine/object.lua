@@ -8,7 +8,8 @@ local MakeUniqueID = ( function ()
     end
 end ) ()
 
-eAVObjectType = {
+eObjectType = {
+    Actor = MakeUniqueID (),
     GXMat3 = MakeUniqueID (),
     GXMat4 = MakeUniqueID (),
     GXQuat = MakeUniqueID (),
@@ -20,8 +21,8 @@ eAVObjectType = {
 
 ------------------------------------------------------------------------------------------------------------------------
 
-AVObject = {
-    _type = eAVObjectType.Unknown
+Object = {
+    _type = eObjectType.Unknown
 }
 
 -- metamethods
@@ -31,7 +32,7 @@ local function Constructor ( self, objectType )
     }
 end
 
-setmetatable ( AVObject, { __call = Constructor } )
+setmetatable ( Object, { __call = Constructor } )
 
 -- module contract
 return nil

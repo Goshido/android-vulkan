@@ -9,3 +9,4 @@
 - [_GXVec3_](./gx-vec3.md)
 - [_GXVec4_](./gx-vec4.md)
 - [_Logger_](./logger.md)
+- [_Scene_](./scene.md)

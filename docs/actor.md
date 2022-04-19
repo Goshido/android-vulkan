@@ -88,7 +88,7 @@ require "av://engine/point_light_component.lua"
 
 
 local actor = Actor ( "Actor" )
-actor:AppendComponent ( PointLightComponent ( "Light #1" ) )
+actor:AppendComponent ( PointLightComponent ( "Light" ) )
 ```
 
 ## <a id="method-find-component">`FindComponent ( name )`</a>

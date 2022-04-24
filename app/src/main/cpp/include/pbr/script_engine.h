@@ -25,18 +25,9 @@ class ScriptEngine final
     private:
         using Deleter = void ( * ) ( lua_State* state ) noexcept;
 
-        // This functions must lay in Lua stack persistently.
-        enum class InterfaceFunction: int
-        {
-            OnErrorHandler = 1,
-            OnPostPhysics = 2,
-            OnPrePhysics = 3,
-            OnRegisterScript = 4,
-            OnUpdate = 5
-        };
-
     private:
         std::unique_ptr<lua_State, Deleter>     _vm { nullptr, &ScriptEngine::Free };
+        int                                     _registerScriptIndex = std::numeric_limits<int>::max ();
         static ScriptEngine*                    _instance;
 
     public:
@@ -53,11 +44,16 @@ class ScriptEngine final
             std::string const &params
         ) const noexcept;
 
-        [[nodiscard]] bool Execute ( double deltaTime ) const noexcept;
+        [[nodiscard]] lua_State& GetVirtualMachine () noexcept;
         [[nodiscard]] bool Init () noexcept;
 
         [[nodiscard]] static ScriptEngine& GetInstance () noexcept;
         static void Destroy () noexcept;
+
+        [[nodiscard]] constexpr static int GetErrorHandlerIndex () noexcept
+        {
+            return 1;
+        }
 
     private:
         ScriptEngine () = default;
@@ -65,7 +61,7 @@ class ScriptEngine final
 
         void BanFunctions () const noexcept;
         void ExtendFrontend () const noexcept;
-        [[nodiscard]] bool InitInterfaceFunctions () const noexcept;
+        [[nodiscard]] bool InitInterfaceFunctions () noexcept;
         [[nodiscard]] bool InitLua () noexcept;
         void InitLibraries () const noexcept;
         void InitLogFacility () const noexcept;

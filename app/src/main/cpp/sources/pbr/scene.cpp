@@ -8,7 +8,48 @@ bool Scene::OnInitDevice ( android_vulkan::Physics &physics ) noexcept
 {
     _physics = &physics;
     _scriptEngine = &ScriptEngine::GetInstance ();
-    return _scriptEngine->Init ();
+
+    if ( !_scriptEngine->Init () )
+        return false;
+
+    _vm = &_scriptEngine->GetVirtualMachine ();
+
+    if ( !lua_checkstack ( _vm, 4 ) )
+    {
+        android_vulkan::LogError ( "pbr::Scene::OnInitDevice - Stack too small." );
+        return false;
+    }
+
+    if ( int const type = lua_getglobal ( _vm, "CreateScene" ); type != LUA_TFUNCTION )
+        return false;
+
+    lua_pushlightuserdata ( _vm, this );
+
+    if ( lua_pcall ( _vm, 1, 1, ScriptEngine::GetErrorHandlerIndex () ) != LUA_OK )
+        return false;
+
+    _sceneHandle = lua_gettop ( _vm );
+
+    auto bind = [ & ] ( std::string_view const &&method, int &ind ) noexcept -> bool {
+        lua_pushlstring ( _vm, method.data (), method.size () );
+
+        if ( lua_rawget ( _vm, _sceneHandle ) == LUA_TFUNCTION )
+        {
+            ind = lua_gettop ( _vm );
+            return true;
+        }
+
+        android_vulkan::LogError ( "pbr::Scene::OnInitDevice - Can't find %s method.", method );
+        return false;
+    };
+
+    if ( !bind ( "OnPostPhysics", _onPostPhysicsIndex ) )
+        return false;
+
+    if ( !bind ( "OnPrePhysics", _onPrePhysicsIndex ) )
+        return false;
+
+    return bind ( "OnUpdate", _onUpdateIndex );
 }
 
 void Scene::OnDestroyDevice () noexcept
@@ -18,8 +59,62 @@ void Scene::OnDestroyDevice () noexcept
     _actorStorage.clear ();
 
     ScriptEngine::Destroy ();
+
     _scriptEngine = nullptr;
     _physics = nullptr;
+    _vm = nullptr;
+    _onPostPhysicsIndex = std::numeric_limits<int>::max ();
+    _onPrePhysicsIndex = std::numeric_limits<int>::max ();
+    _onUpdateIndex = std::numeric_limits<int>::max ();
+    _sceneHandle = std::numeric_limits<int>::max ();
+}
+
+bool Scene::OnPrePhysics ( double deltaTime ) noexcept
+{
+    if ( !lua_checkstack ( _vm, 3 ) )
+    {
+        android_vulkan::LogError ( "pbr::Scene::OnPrePhysics - Stack too small." );
+        return false;
+    }
+
+    lua_pushvalue ( _vm, _onPrePhysicsIndex );
+    lua_pushvalue ( _vm, _sceneHandle );
+    lua_pushnumber ( _vm, deltaTime );
+    lua_pcall ( _vm, 2, 0, ScriptEngine::GetErrorHandlerIndex () );
+
+    return true;
+}
+
+bool Scene::OnPostPhysics ( double deltaTime ) noexcept
+{
+    if ( !lua_checkstack ( _vm, 3 ) )
+    {
+        android_vulkan::LogError ( "pbr::Scene::OnPostPhysics - Stack too small." );
+        return false;
+    }
+
+    lua_pushvalue ( _vm, _onPostPhysicsIndex );
+    lua_pushvalue ( _vm, _sceneHandle );
+    lua_pushnumber ( _vm, deltaTime );
+    lua_pcall ( _vm, 2, 0, ScriptEngine::GetErrorHandlerIndex () );
+
+    return true;
+}
+
+bool Scene::OnUpdate ( double deltaTime ) noexcept
+{
+    if ( !lua_checkstack ( _vm, 3 ) )
+    {
+        android_vulkan::LogError ( "pbr::Scene::OnUpdate - Stack too small." );
+        return false;
+    }
+
+    lua_pushvalue ( _vm, _onUpdateIndex );
+    lua_pushvalue ( _vm, _sceneHandle );
+    lua_pushnumber ( _vm, deltaTime );
+    lua_pcall ( _vm, 2, 0, ScriptEngine::GetErrorHandlerIndex () );
+
+    return true;
 }
 
 void Scene::AppendActor ( ActorRef &actor ) noexcept
@@ -27,15 +122,6 @@ void Scene::AppendActor ( ActorRef &actor ) noexcept
     Actors& actors = _actorStorage[ actor->GetName () ];
     actors.push_back ( actor );
     actors.back ()->RegisterComponents ( _freeTransferResourceList, _renderableList, *_physics, *_scriptEngine );
-}
-
-[[maybe_unused]] Scene::FindResult Scene::FindActors ( std::string const &actorName ) noexcept
-{
-    auto findResult = _actorStorage.find ( actorName );
-
-    return findResult == _actorStorage.end () ?
-        std::nullopt :
-        std::optional<std::reference_wrapper<Actors>> { findResult->second };
 }
 
 void Scene::FreeTransferResources ( VkDevice device ) noexcept

@@ -7,6 +7,12 @@
 
 GX_DISABLE_COMMON_WARNINGS
 
+extern "C" {
+
+#include <lua/lstate.h>
+
+} // extern "C"
+
 #include <list>
 
 GX_RESTORE_WARNING_STATE
@@ -18,7 +24,6 @@ class Scene final
 {
     public:
         using Actors = std::vector<ActorRef>;
-        using FindResult = std::optional<std::reference_wrapper<Actors>>;
 
     private:
         std::unordered_map<std::string, Actors>     _actorStorage {};
@@ -28,6 +33,14 @@ class Scene final
 
         android_vulkan::Physics*                    _physics = nullptr;
         ScriptEngine*                               _scriptEngine = nullptr;
+
+        int                                         _onPostPhysicsIndex = std::numeric_limits<int>::max ();
+        int                                         _onPrePhysicsIndex = std::numeric_limits<int>::max ();
+        int                                         _onUpdateIndex = std::numeric_limits<int>::max ();
+
+        int                                         _sceneHandle = std::numeric_limits<int>::max ();
+
+        lua_State*                                  _vm = nullptr;
 
     public:
         Scene () = default;
@@ -43,8 +56,11 @@ class Scene final
         [[nodiscard]] bool OnInitDevice ( android_vulkan::Physics &physics ) noexcept;
         void OnDestroyDevice () noexcept;
 
+        [[nodiscard]] bool OnPrePhysics ( double deltaTime ) noexcept;
+        [[nodiscard]] bool OnPostPhysics ( double deltaTime ) noexcept;
+        [[nodiscard]] bool OnUpdate ( double deltaTime ) noexcept;
+
         void AppendActor ( ActorRef &actor ) noexcept;
-        [[nodiscard, maybe_unused]] FindResult FindActors ( std::string const &actorName ) noexcept;
         void FreeTransferResources ( VkDevice device ) noexcept;
         void Submit ( RenderSession &renderSession ) noexcept;
 };

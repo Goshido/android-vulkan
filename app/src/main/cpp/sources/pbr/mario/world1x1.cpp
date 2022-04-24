@@ -43,17 +43,23 @@ bool World1x1::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) 
 {
     auto const dt = static_cast<float> ( deltaTime );
 
-    ScriptEngine& scriptEngine = ScriptEngine::GetInstance ();
-
-    if ( !scriptEngine.Execute ( deltaTime ) )
+    if ( !_scene.OnPrePhysics ( deltaTime ) )
         return false;
 
     _mario.OnUpdate ();
     _physics.Simulate ( dt );
+
+    if ( !_scene.OnPostPhysics ( deltaTime ) )
+        return false;
+
     _camera.OnUpdate ( dt );
 
     _renderSession.Begin ( _camera.GetLocalMatrix (), _camera.GetProjectionMatrix () );
     _scene.Submit ( _renderSession );
+
+    if ( !_scene.OnUpdate ( deltaTime ) )
+        return false;
+
     return _renderSession.End ( renderer, deltaTime );
 }
 

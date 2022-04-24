@@ -32,26 +32,6 @@ local function FUCK ()
 end
 
 -- Entry points
-function OnPostPhysics ( deltaTime )
-    if #g_postPhysicsScripts < 1 then
-        return
-    end
-
-    for idx, script in pairs ( g_postPhysicsScripts ) do
-        script:OnPostPhysics ( deltaTime )
-    end
-end
-
-function OnPrePhysics ( deltaTime )
-    if #g_prePhysicsScripts < 1 then
-        return
-    end
-
-    for idx, script in pairs ( g_prePhysicsScripts ) do
-        script:OnPrePhysics ( deltaTime )
-    end
-end
-
 function OnRegisterScript ( handle, class, params )
     local fabric = require ( class )
     local script = fabric ( handle, MakeParams ( params ) )
@@ -70,14 +50,4 @@ function OnRegisterScript ( handle, class, params )
     end
 
     FUCK ()
-end
-
-function OnUpdate ( deltaTime )
-    if #g_updateScripts < 1 then
-        return
-    end
-
-    for idx, script in pairs ( g_updateScripts ) do
-        script:OnUpdate ( deltaTime )
-    end
 end

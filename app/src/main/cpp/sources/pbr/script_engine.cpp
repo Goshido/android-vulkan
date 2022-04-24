@@ -41,12 +41,12 @@ bool ScriptEngine::AppendScript ( void* handle, std::string const &script ) cons
         return false;
     }
 
-    lua_pushvalue ( vm, static_cast<int> ( InterfaceFunction::OnRegisterScript ) );
+    lua_pushvalue ( vm, _registerScriptIndex );
     lua_pushlightuserdata ( vm, handle );
     lua_pushlstring ( vm, script.c_str (), script.size () );
     lua_pushnil ( vm );
 
-    return lua_pcall ( vm, 3, 0, static_cast<int> ( InterfaceFunction::OnErrorHandler ) ) == LUA_OK;
+    return lua_pcall ( vm, 3, 0, GetErrorHandlerIndex () ) == LUA_OK;
 }
 
 bool ScriptEngine::AppendScript ( void* handle, std::string const &script, std::string const &params ) const noexcept
@@ -59,49 +59,17 @@ bool ScriptEngine::AppendScript ( void* handle, std::string const &script, std::
         return false;
     }
 
-    lua_pushvalue ( vm, static_cast<int> ( InterfaceFunction::OnRegisterScript ) );
+    lua_pushvalue ( vm, _registerScriptIndex );
     lua_pushlightuserdata ( vm, handle );
     lua_pushlstring ( vm, script.c_str (), script.size () );
     lua_pushlstring ( vm, params.c_str (), params.size () );
 
-    return lua_pcall ( vm, 3, 0, static_cast<int> ( InterfaceFunction::OnErrorHandler ) ) == LUA_OK;
+    return lua_pcall ( vm, 3, 0, GetErrorHandlerIndex () ) == LUA_OK;
 }
 
-bool ScriptEngine::Execute ( double deltaTime ) const noexcept
+lua_State& ScriptEngine::GetVirtualMachine () noexcept
 {
-    lua_State* vm = _vm.get ();
-
-    if ( !lua_checkstack ( vm, 2 ) )
-    {
-        android_vulkan::LogWarning ( "pbr::ScriptEngine::Execute - Can't invoke OnPrePhysics. Stack too small." );
-        return false;
-    }
-
-    lua_pushvalue ( vm, static_cast<int> ( InterfaceFunction::OnPrePhysics ) );
-    lua_pushnumber ( vm, deltaTime );
-    lua_pcall ( vm, 1, 0, static_cast<int> ( InterfaceFunction::OnErrorHandler ) );
-
-    if ( !lua_checkstack ( vm, 2 ) )
-    {
-        android_vulkan::LogWarning ( "pbr::ScriptEngine::Execute - Can't invoke OnUpdate. Stack too small." );
-        return false;
-    }
-
-    lua_pushvalue ( vm, static_cast<int> ( InterfaceFunction::OnUpdate ) );
-    lua_pushnumber ( vm, deltaTime );
-    lua_pcall ( vm, 1, 0, static_cast<int> ( InterfaceFunction::OnErrorHandler ) );
-
-    if ( !lua_checkstack ( vm, 2 ) )
-    {
-        android_vulkan::LogWarning ( "pbr::ScriptEngine::Execute - Can't invoke OnPostPhysics. Stack too small." );
-        return false;
-    }
-
-    lua_pushvalue ( vm, static_cast<int> ( InterfaceFunction::OnPostPhysics ) );
-    lua_pushnumber ( vm, deltaTime );
-    lua_pcall ( vm, 1, 0, static_cast<int> ( InterfaceFunction::OnErrorHandler ) );
-
-    return true;
+    return *_vm;
 }
 
 bool ScriptEngine::Init () noexcept
@@ -143,7 +111,7 @@ void ScriptEngine::ExtendFrontend () const noexcept
     pbr::ScriptableLogger::Register ( vm );
 }
 
-bool ScriptEngine::InitInterfaceFunctions () const noexcept
+bool ScriptEngine::InitInterfaceFunctions () noexcept
 {
     lua_State* vm = _vm.get ();
 
@@ -168,28 +136,14 @@ bool ScriptEngine::InitInterfaceFunctions () const noexcept
 
     lua_pushcfunction ( vm, &ScriptEngine::OnErrorHandler );
 
-    constexpr char const* functions[] =
+    if ( int const type = lua_getglobal ( vm, "OnRegisterScript" ); type == LUA_TFUNCTION )
     {
-        "OnPostPhysics",
-        "OnPrePhysics",
-        "OnRegisterScript",
-        "OnUpdate"
-    };
-
-    // NOLINTNEXTLINE - suggestion to use std::ranges::all_of which is unsupported by NDK 24.0.8215888
-    for ( auto const* function : functions )
-    {
-        if ( int const type = lua_getglobal ( vm, function ); type == LUA_TFUNCTION )
-            continue;
-
-        android_vulkan::LogError ( "pbr::ScriptEngine::InitInterfaceFunctions - Can't find interface function: %s",
-            function
-        );
-
-        return false;
+        _registerScriptIndex = lua_gettop ( vm );
+        return true;
     }
 
-    return true;
+    android_vulkan::LogError ( "pbr::ScriptEngine::InitInterfaceFunctions - Can't find OnRegisterScript function." );
+    return false;
 }
 
 bool ScriptEngine::InitLua () noexcept
@@ -450,7 +404,7 @@ int ScriptEngine::OnRequire ( lua_State* state )
 
         if ( LoadScript ( state, std::string_view ( enc.data (), factor ), logicalPath ) )
         {
-            lua_pcall ( state, 0, 1, static_cast<int> ( InterfaceFunction::OnErrorHandler ) );
+            lua_pcall ( state, 0, 1, GetErrorHandlerIndex () );
             return 1;
         }
 

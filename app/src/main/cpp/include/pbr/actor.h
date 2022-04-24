@@ -20,7 +20,6 @@ class Actor final
 {
     public:
         using Components = std::vector<ComponentRef>;
-        using FindResult = std::optional<std::reference_wrapper<Components>>;
 
     private:
         std::unordered_map<std::string, Components>     _componentStorage {};
@@ -40,7 +39,6 @@ class Actor final
         ~Actor () = default;
 
         void AppendComponent ( ComponentRef &component ) noexcept;
-        [[nodiscard, maybe_unused]] FindResult FindComponents ( std::string const &componentName ) noexcept;
         [[nodiscard]] std::string const& GetName () const noexcept;
 
         void RegisterComponents ( ComponentList &freeTransferResource,

@@ -29,13 +29,13 @@ local function FindComponents ( self, name )
 end
 
 -- helper
-local function MakeObject ( handle, name )
+local function MakeActor ( handle, name )
     local obj = Object ( eObjectType.Actor )
 
     -- data
     obj._components = {}
-    obj._handle = handle;
-    obj._name = name
+    obj._handle = handle
+    obj._name = name        -- TODO: replace by native getter method
 
     -- methods
     obj.AppendComponent = AppendComponent
@@ -47,11 +47,11 @@ end
 
 -- metamethods
 local function Constructor ( self, name )
-    return MakeObject ( av_ActorCreate ( name ), name )
+    return MakeActor ( av_ActorCreate ( name ), name )
 end
 
 setmetatable ( Actor, { __call = Constructor } )
 
 -- module contract
-RegisterObject = MakeObject
+RegisterActor = MakeActor
 return nil

@@ -24,15 +24,6 @@ void Actor::AppendComponent ( ComponentRef &component ) noexcept
     _componentStorage[ component->GetName () ].push_back ( component );
 }
 
-[[maybe_unused]] Actor::FindResult Actor::FindComponents ( std::string const &componentName ) noexcept
-{
-    auto findResult = _componentStorage.find ( componentName );
-
-    return findResult == _componentStorage.end () ?
-        std::nullopt :
-        std::optional<std::reference_wrapper<Components>> { findResult->second };
-}
-
 std::string const& Actor::GetName () const noexcept
 {
     return _name;

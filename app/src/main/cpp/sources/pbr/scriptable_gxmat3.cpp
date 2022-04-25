@@ -25,7 +25,7 @@ constexpr static size_t INITIAL_CAPACITY = 40'329U;
 ScriptableGXMat3::Item* ScriptableGXMat3::_free = nullptr;
 ScriptableGXMat3::Item* ScriptableGXMat3::_used = nullptr;
 
-void ScriptableGXMat3::Init ( lua_State* vm ) noexcept
+void ScriptableGXMat3::Init ( lua_State &vm ) noexcept
 {
     for ( size_t i = 0U; i < INITIAL_CAPACITY; ++i )
         Insert ( new Item {}, _free );
@@ -110,7 +110,7 @@ void ScriptableGXMat3::Init ( lua_State* vm ) noexcept
 
     for ( auto const& extension : extentions )
     {
-        lua_register ( vm, extension.name, extension.func );
+        lua_register ( &vm, extension.name, extension.func );
     }
 }
 

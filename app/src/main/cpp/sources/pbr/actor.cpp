@@ -21,7 +21,7 @@ Actor::Actor ( std::string &&name ) noexcept:
 
 void Actor::AppendComponent ( ComponentRef &component ) noexcept
 {
-    _componentStorage[ component->GetName () ].push_back ( component );
+    _components.push_back ( component );
 }
 
 std::string const& Actor::GetName () const noexcept
@@ -35,56 +35,70 @@ void Actor::RegisterComponents ( ComponentList &freeTransferResource,
     ScriptEngine &scriptEngine
 ) noexcept
 {
-    for ( auto& pair : _componentStorage )
+    for ( auto& component : _components )
     {
-        Components& components = pair.second;
+        ClassID const classID = component->GetClassID ();
 
-        for ( auto& component : components )
+        if ( classID == ClassID::Reflection | classID == ClassID::StaticMesh )
         {
-            ClassID const classID = component->GetClassID ();
+            freeTransferResource.emplace_back ( std::ref ( component ) );
+            continue;
+        }
 
-            if ( classID == ClassID::Reflection | classID == ClassID::StaticMesh )
+        if ( classID == ClassID::RigidBody )
+        {
+            // NOLINTNEXTLINE - downcast.
+            auto& rigiBodyComponent = static_cast<RigidBodyComponent&> ( *component );
+
+            if ( !rigiBodyComponent.Register ( physics ) )
             {
-                freeTransferResource.emplace_back ( std::ref ( component ) );
-                continue;
-            }
-
-            if ( classID == ClassID::RigidBody )
-            {
-                // NOLINTNEXTLINE - downcast.
-                auto& rigiBodyComponent = static_cast<RigidBodyComponent&> ( *component );
-
-                if ( !rigiBodyComponent.Register ( physics ) )
-                {
-                    android_vulkan::LogWarning ( "pbr::Actor::RegisterComponents - Can't register rigid body "
-                        "component %s.",
-                        rigiBodyComponent.GetName ().c_str ()
-                    );
-                }
-
-                continue;
-            }
-
-            if ( classID == ClassID::PointLight )
-            {
-                renderable.emplace_back ( std::ref ( component ) );
-                continue;
-            }
-
-            if ( classID == ClassID::Script )
-            {
-                // NOLINTNEXTLINE - downcast.
-                auto& scriptComponent = static_cast<ScriptComponent&> ( *component );
-
-                if ( scriptComponent.Register ( scriptEngine ) )
-                    continue;
-
-                android_vulkan::LogWarning ( "pbr::Actor::RegisterComponents - Can't register script component %s.",
-                    scriptComponent.GetName ().c_str ()
+                android_vulkan::LogWarning ( "pbr::Actor::RegisterComponents - Can't register rigid body "
+                    "component %s.",
+                    rigiBodyComponent.GetName ().c_str ()
                 );
             }
+
+            continue;
+        }
+
+        if ( classID == ClassID::PointLight )
+        {
+            renderable.emplace_back ( std::ref ( component ) );
+            continue;
+        }
+
+        if ( classID == ClassID::Script )
+        {
+            // NOLINTNEXTLINE - downcast.
+            auto& scriptComponent = static_cast<ScriptComponent&> ( *component );
+
+            if ( scriptComponent.Register ( scriptEngine ) )
+                continue;
+
+            android_vulkan::LogWarning ( "pbr::Actor::RegisterComponents - Can't register script component %s.",
+                scriptComponent.GetName ().c_str ()
+            );
         }
     }
+}
+
+void Actor::Register ( lua_State &vm ) noexcept
+{
+    lua_register ( &vm, "av_ActorGetName", &Actor::OnGetName );
+}
+
+int Actor::OnGetName ( lua_State* state )
+{
+    if ( !lua_checkstack ( state, 1 ) )
+    {
+        android_vulkan::LogWarning ( "pbr::Actor::OnGetName - Stack too small." );
+        return 0;
+    }
+
+    auto const& self = *static_cast<Actor const*> ( lua_touserdata ( state, 1 ) );
+    std::string const& n = self._name;
+    lua_pushlstring ( state, n.c_str (), n.size () );
+    return 1;
 }
 
 } // namespace pbr

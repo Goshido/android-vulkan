@@ -78,11 +78,30 @@ ComponentRef Component::Create ( android_vulkan::Renderer &renderer,
     return {};
 }
 
+void Component::Register ( lua_State &vm ) noexcept
+{
+    lua_register ( &vm, "av_ComponentGetName", &Component::OnGetName );
+}
+
 Component::Component ( ClassID classID, std::string &&name ) noexcept:
     _classID ( classID ),
     _name ( std::move ( name ) )
 {
     // NOTHING
+}
+
+int Component::OnGetName ( lua_State* state )
+{
+    if ( !lua_checkstack ( state, 1 ) )
+    {
+        android_vulkan::LogWarning ( "pbr::Component::OnGetName - Stack too small." );
+        return 0;
+    }
+
+    auto const& self = *static_cast<Component const*> ( lua_touserdata ( state, 1 ) );
+    std::string const& n = self._name;
+    lua_pushlstring ( state, n.c_str (), n.size () );
+    return 1;
 }
 
 } // namespace pbr

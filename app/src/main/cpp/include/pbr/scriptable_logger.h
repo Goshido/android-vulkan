@@ -30,7 +30,7 @@ class ScriptableLogger final
 
         ~ScriptableLogger () = delete;
 
-        static void Register ( lua_State* vm ) noexcept;
+        static void Register ( lua_State &vm ) noexcept;
 
     private:
         [[nodiscard]] static int OnLogDebug ( lua_State* vm );

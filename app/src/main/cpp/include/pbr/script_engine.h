@@ -60,7 +60,7 @@ class ScriptEngine final
         ~ScriptEngine () = default;
 
         void BanFunctions () const noexcept;
-        void ExtendFrontend () const noexcept;
+        [[nodiscard]] bool ExtendFrontend () const noexcept;
         [[nodiscard]] bool InitInterfaceFunctions () noexcept;
         [[nodiscard]] bool InitLua () noexcept;
         void InitLibraries () const noexcept;

@@ -5,6 +5,16 @@
 #include "component_desc.h"
 #include "types.h"
 
+GX_DISABLE_COMMON_WARNINGS
+
+extern "C" {
+
+#include <lua/lstate.h>
+
+} // extern "C"
+
+GX_RESTORE_WARNING_STATE
+
 
 namespace pbr {
 
@@ -36,8 +46,13 @@ class Component
             VkCommandBuffer const* commandBuffers
         ) noexcept;
 
+        static void Register ( lua_State &vm ) noexcept;
+
     protected:
         explicit Component ( ClassID classID, std::string &&name ) noexcept;
+
+    private:
+        [[nodiscard]] static int OnGetName ( lua_State* state );
 };
 
 } // namespace pbr

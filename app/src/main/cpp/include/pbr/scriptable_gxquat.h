@@ -42,7 +42,7 @@ class ScriptableGXQuat final
 
         ~ScriptableGXQuat () = delete;
 
-        static void Init ( lua_State* vm ) noexcept;
+        static void Init ( lua_State &vm ) noexcept;
         static void Destroy () noexcept;
 
         [[nodiscard]] static GXQuat& Extract ( lua_State* state, int idx ) noexcept;

@@ -8,8 +8,7 @@
 
 GX_DISABLE_COMMON_WARNINGS
 
-#include <functional>
-#include <unordered_map>
+#include <deque>
 
 GX_RESTORE_WARNING_STATE
 
@@ -18,12 +17,9 @@ namespace pbr {
 
 class Actor final
 {
-    public:
-        using Components = std::vector<ComponentRef>;
-
     private:
-        std::unordered_map<std::string, Components>     _componentStorage {};
-        std::string const                               _name;
+        std::deque<ComponentRef>    _components {};
+        std::string const           _name;
 
     public:
         Actor () noexcept;
@@ -46,6 +42,11 @@ class Actor final
             android_vulkan::Physics &physics,
             ScriptEngine &scriptEngine
         ) noexcept;
+
+        static void Register ( lua_State &vm ) noexcept;
+
+    private:
+        [[nodiscard]] static int OnGetName ( lua_State* state );
 };
 
 } // namespace pbr

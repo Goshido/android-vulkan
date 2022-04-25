@@ -5,6 +5,8 @@
 
 namespace pbr {
 
+[[maybe_unused]] int ScriptComponent::_registerScriptComponentIndex = std::numeric_limits<int>::max ();
+
 ScriptComponent::ScriptComponent ( std::string &&script ) noexcept:
     Component ( ClassID::Script, android_vulkan::GUID::GenerateAsString ( "Script" ) ),
     _script ( std::move ( script ) )
@@ -26,6 +28,18 @@ bool ScriptComponent::Register ( ScriptEngine &scriptEngine ) noexcept
         return scriptEngine.AppendScript ( this, _script );
 
     return scriptEngine.AppendScript ( this, _script, _params );
+}
+
+bool ScriptComponent::Init ( lua_State &/*vm*/ ) noexcept
+{
+    // TODO
+    return true;
+}
+
+int ScriptComponent::OnCreate ( lua_State* /*state*/ )
+{
+    // TODO
+    return 0;
 }
 
 } // namespace pbr

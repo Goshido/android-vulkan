@@ -25,7 +25,7 @@ constexpr static size_t INITIAL_CAPACITY = 74'898U;
 ScriptableGXVec3::Item* ScriptableGXVec3::_free = nullptr;
 ScriptableGXVec3::Item* ScriptableGXVec3::_used = nullptr;
 
-void ScriptableGXVec3::Init ( lua_State* vm ) noexcept
+void ScriptableGXVec3::Init ( lua_State &vm ) noexcept
 {
     for ( size_t i = 0U; i < INITIAL_CAPACITY; ++i )
         Insert ( new Item {}, _free );
@@ -110,7 +110,7 @@ void ScriptableGXVec3::Init ( lua_State* vm ) noexcept
 
     for ( auto const& extension : extentions )
     {
-        lua_register ( vm, extension.name, extension.func );
+        lua_register ( &vm, extension.name, extension.func );
     }
 }
 
@@ -209,7 +209,7 @@ int ScriptableGXVec3::OnDistance ( lua_State* state )
         return 0;
     }
 
-    auto& self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    auto const& self = *static_cast<Item const*> ( lua_touserdata ( state, 1 ) );
     auto const& other = *static_cast<Item const*> ( lua_touserdata ( state, 2 ) );
     lua_pushnumber ( state, static_cast<lua_Number> ( self._vec3.Distance ( other._vec3 ) ) );
 
@@ -224,7 +224,7 @@ int ScriptableGXVec3::OnDotProduct ( lua_State* state )
         return 0;
     }
 
-    auto& self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    auto const& self = *static_cast<Item const*> ( lua_touserdata ( state, 1 ) );
     auto const& other = *static_cast<Item const*> ( lua_touserdata ( state, 2 ) );
     lua_pushnumber ( state, static_cast<lua_Number> ( self._vec3.DotProduct ( other._vec3 ) ) );
 
@@ -251,7 +251,7 @@ int ScriptableGXVec3::OnLength ( lua_State* state )
         return 0;
     }
 
-    auto& item = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    auto const& item = *static_cast<Item const*> ( lua_touserdata ( state, 1 ) );
     lua_pushnumber ( state, static_cast<lua_Number> ( item._vec3.Length () ) );
     return 1;
 }
@@ -278,7 +278,7 @@ int ScriptableGXVec3::OnSquaredDistance ( lua_State* state )
         return 0;
     }
 
-    auto& self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    auto const& self = *static_cast<Item const*> ( lua_touserdata ( state, 1 ) );
     auto const& other = *static_cast<Item const*> ( lua_touserdata ( state, 2 ) );
     lua_pushnumber ( state, static_cast<lua_Number> ( self._vec3.SquaredDistance ( other._vec3 ) ) );
     return 1;
@@ -292,7 +292,7 @@ int ScriptableGXVec3::OnSquaredLength ( lua_State* state )
         return 0;
     }
 
-    auto& item = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    auto const& item = *static_cast<Item const*> ( lua_touserdata ( state, 1 ) );
     lua_pushnumber ( state, static_cast<lua_Number> ( item._vec3.SquaredLength () ) );
     return 1;
 }

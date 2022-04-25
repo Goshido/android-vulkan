@@ -12,6 +12,7 @@ require "av://engine/actor.lua"
 - [`AppendComponent ( component )`](#method-append-component)
 - [`FindComponent ( name )`](#method-find-component)
 - [`FindComponents ( name )`](#method-find-components)
+- [`GetName ()`](#method-get-name)
 
 ## <a id="brief">Brief</a>
 
@@ -143,4 +144,26 @@ actor:AppendComponent ( PointLightComponent ( "Another light" ) )
 
 local lights = actor:FindComponents ( "Light" )
 local secondLight = lights[ 2 ]
+```
+
+## <a id="method-get-name">`GetName ()`</a>
+
+Method returns name of the actor.
+
+**Parameters:**
+
+- none
+
+**Return values:**
+
+- `#1` [_required, string_]: name of the actor
+
+**Example:**
+
+```lua
+require "av://engine/actor.lua"
+
+
+local actor = Actor ( "Sun" )
+local name = actor:GetName ()
 ```

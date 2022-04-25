@@ -11,8 +11,10 @@ namespace pbr {
 class ScriptComponent final : public Component
 {
     private:
-        std::string const       _script;
-        std::string const       _params {};
+        std::string const               _script;
+        std::string const               _params {};
+
+        [[maybe_unused]] static int     _registerScriptComponentIndex;
 
     public:
         ScriptComponent () = delete;
@@ -29,6 +31,11 @@ class ScriptComponent final : public Component
         ~ScriptComponent () override = default;
 
         [[nodiscard]] bool Register ( ScriptEngine &scriptEngine ) noexcept;
+
+        [[nodiscard]] static bool Init ( lua_State &vm ) noexcept;
+
+    private:
+        [[nodiscard]] static int OnCreate ( lua_State* state );
 };
 
 } // namespace pbr

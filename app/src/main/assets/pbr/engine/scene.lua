@@ -1,12 +1,11 @@
-require "av://engine/object.lua"
-require "av://engine/logger.lua"
+require "av://engine/script_component.lua"
 
 
 local Scene = {}
 
 -- methods
 local function AppendActor ( self, actor )
-    local name = actor._name    -- todo: replace by native getter method
+    local name = actor:GetName ()
     local actors = self._actors
     local list = actors[ name ]
 

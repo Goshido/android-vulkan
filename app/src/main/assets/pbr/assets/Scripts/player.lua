@@ -20,7 +20,8 @@ end
 
 -- metamethods
 local function Constructor ( self, handle, params )
-    local obj = ScriptComponent ( handle )
+    -- local obj = ScriptComponent ( handle )
+    local obj = {}
 
     LogD ( ">>> Player params:" )
 

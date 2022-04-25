@@ -28,6 +28,14 @@ local function FindComponents ( self, name )
     return self._components[ name ]
 end
 
+local function GetName ( self )
+    assert ( type ( self ) == "table" and self._type == eObjectType.Actor,
+        [[Actor:GetName - Calling not via ":" syntax.]]
+    )
+
+    return av_ActorGetName ( self._handle )
+end
+
 -- helper
 local function MakeActor ( handle, name )
     local obj = Object ( eObjectType.Actor )
@@ -35,12 +43,12 @@ local function MakeActor ( handle, name )
     -- data
     obj._components = {}
     obj._handle = handle
-    obj._name = name        -- TODO: replace by native getter method
 
     -- methods
     obj.AppendComponent = AppendComponent
     obj.FindComponent = FindComponent
     obj.FindComponents = FindComponents
+    obj.GetName = GetName
 
     return obj
 end

@@ -42,7 +42,7 @@ class ScriptableGXVec4 final
 
         ~ScriptableGXVec4 () = delete;
 
-        static void Init ( lua_State* vm ) noexcept;
+        static void Init ( lua_State &vm ) noexcept;
         static void Destroy () noexcept;
 
         [[nodiscard]] static GXVec4& Extract ( lua_State* state, int idx ) noexcept;

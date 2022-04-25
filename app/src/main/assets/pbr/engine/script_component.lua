@@ -4,17 +4,45 @@ require "av://engine/component.lua"
 ScriptComponent = {}
 
 -- helper
-local function MakeScriptComponent ( handle )
-    return Component ( eObjectType.ScriptComponent, handle )
+local function MakeParams ( params, where )
+    if ( not params ) then
+        return nil
+    end
+
+    local func, errorMessage = load ( "return " .. params, where, "t" )
+
+    if ( type ( func ) ~= "function" ) then
+        error ( "MakeParams - Can't load params: " .. errorMessage )
+    end
+
+    local status, result = pcall ( func )
+
+    if ( not status ) then
+        error ( "MakeParams - Can't compile params: " .. result )
+    end
+
+    return result
+end
+
+local function MakeScriptComponent ( handle, script, params )
+    local fabric = require ( script )
+
+    local obj = Component ( eObjectType.ScriptComponent, handle )
+    obj._script = fabric ( params )
+
+    return obj
 end
 
 -- metamethods
-local function Constructor ( self )
-    return Component ( eObjectType.ScriptComponent, "TODO:INVALID" )
+local function Constructor ( self, name, script, params )
+    return MakeScriptComponent ( av_ScriptComponentCreate ( name ), script, params )
 end
 
 setmetatable ( ScriptComponent, { __call = Constructor } )
 
 -- module contract
-RegisterScriptComponent = MakeScriptComponent
+function RegisterScriptComponent ( handle, script, params )
+    return MakeScriptComponent ( handle, script, MakeParams ( params ) )
+end
+
 return nil

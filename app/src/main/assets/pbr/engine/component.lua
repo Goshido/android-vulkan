@@ -3,8 +3,17 @@ require "av://engine/object.lua"
 
 Component = {}
 
+-- utils
+local function IsComponent ( objectType )
+    return objectType == eObjectType.ScriptComponent
+end
+
 -- methods
 local function GetName ( self )
+    assert ( type ( self ) == "table" and IsComponent ( self._type ),
+        [[Component:GetName - Calling not via ":" syntax.]]
+    )
+
     return av_ComponentGetName ( self._handle )
 end
 

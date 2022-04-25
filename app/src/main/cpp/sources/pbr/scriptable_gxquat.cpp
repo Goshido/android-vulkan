@@ -25,7 +25,7 @@ constexpr static size_t INITIAL_CAPACITY = 32'768U;
 ScriptableGXQuat::Item* ScriptableGXQuat::_free = nullptr;
 ScriptableGXQuat::Item* ScriptableGXQuat::_used = nullptr;
 
-void ScriptableGXQuat::Init ( lua_State* vm ) noexcept
+void ScriptableGXQuat::Init ( lua_State &vm ) noexcept
 {
     for ( size_t i = 0U; i < INITIAL_CAPACITY; ++i )
         Insert ( new Item {}, _free );
@@ -85,7 +85,7 @@ void ScriptableGXQuat::Init ( lua_State* vm ) noexcept
 
     for ( auto const& extension : extentions )
     {
-        lua_register ( vm, extension.name, extension.func );
+        lua_register ( &vm, extension.name, extension.func );
     }
 }
 

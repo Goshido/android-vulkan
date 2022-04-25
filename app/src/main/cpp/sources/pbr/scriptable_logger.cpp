@@ -15,7 +15,7 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-void ScriptableLogger::Register ( lua_State* vm ) noexcept
+void ScriptableLogger::Register ( lua_State &vm ) noexcept
 {
     luaL_Reg const extentions[] =
     {
@@ -42,7 +42,7 @@ void ScriptableLogger::Register ( lua_State* vm ) noexcept
 
     for ( auto const& extension : extentions )
     {
-        lua_register ( vm, extension.name, extension.func );
+        lua_register ( &vm, extension.name, extension.func );
     }
 }
 

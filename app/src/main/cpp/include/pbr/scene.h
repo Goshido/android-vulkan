@@ -13,8 +13,6 @@ extern "C" {
 
 } // extern "C"
 
-#include <list>
-
 GX_RESTORE_WARNING_STATE
 
 
@@ -22,25 +20,22 @@ namespace pbr {
 
 class Scene final
 {
-    public:
-        using Actors = std::vector<ActorRef>;
-
     private:
-        std::unordered_map<std::string, Actors>     _actorStorage {};
+        std::deque<ActorRef>        _actors {};
 
-        ComponentList                               _freeTransferResourceList {};
-        ComponentList                               _renderableList {};
+        ComponentList               _freeTransferResourceList {};
+        ComponentList               _renderableList {};
 
-        android_vulkan::Physics*                    _physics = nullptr;
-        ScriptEngine*                               _scriptEngine = nullptr;
+        android_vulkan::Physics*    _physics = nullptr;
+        ScriptEngine*               _scriptEngine = nullptr;
 
-        int                                         _onPostPhysicsIndex = std::numeric_limits<int>::max ();
-        int                                         _onPrePhysicsIndex = std::numeric_limits<int>::max ();
-        int                                         _onUpdateIndex = std::numeric_limits<int>::max ();
+        int                         _onPostPhysicsIndex = std::numeric_limits<int>::max ();
+        int                         _onPrePhysicsIndex = std::numeric_limits<int>::max ();
+        int                         _onUpdateIndex = std::numeric_limits<int>::max ();
 
-        int                                         _sceneHandle = std::numeric_limits<int>::max ();
+        int                         _sceneHandle = std::numeric_limits<int>::max ();
 
-        lua_State*                                  _vm = nullptr;
+        lua_State*                  _vm = nullptr;
 
     public:
         Scene () = default;

@@ -1,4 +1,7 @@
 #include <pbr/script_engine.h>
+#include <pbr/actor.h>
+#include <pbr/component.h>
+#include <pbr/script_component.h>
 #include <pbr/scriptable_gxmat3.h>
 #include <pbr/scriptable_gxmat4.h>
 #include <pbr/scriptable_gxquat.h>
@@ -100,15 +103,21 @@ void ScriptEngine::Destroy () noexcept
     _instance = nullptr;
 }
 
-void ScriptEngine::ExtendFrontend () const noexcept
+bool ScriptEngine::ExtendFrontend () const noexcept
 {
-    lua_State* vm = _vm.get ();
-    pbr::ScriptableGXMat3::Init ( vm );
-    pbr::ScriptableGXMat4::Init ( vm );
-    pbr::ScriptableGXQuat::Init ( vm );
-    pbr::ScriptableGXVec3::Init ( vm );
-    pbr::ScriptableGXVec4::Init ( vm );
-    pbr::ScriptableLogger::Register ( vm );
+    lua_State& vm = *_vm;
+
+    ScriptableGXMat3::Init ( vm );
+    ScriptableGXMat4::Init ( vm );
+    ScriptableGXQuat::Init ( vm );
+    ScriptableGXVec3::Init ( vm );
+    ScriptableGXVec4::Init ( vm );
+
+    Actor::Register ( vm );
+    Component::Register ( vm );
+    ScriptableLogger::Register ( vm );
+
+    return ScriptComponent::Init ( vm );
 }
 
 bool ScriptEngine::InitInterfaceFunctions () noexcept
@@ -139,7 +148,7 @@ bool ScriptEngine::InitInterfaceFunctions () noexcept
     if ( int const type = lua_getglobal ( vm, "OnRegisterScript" ); type == LUA_TFUNCTION )
     {
         _registerScriptIndex = lua_gettop ( vm );
-        return true;
+        return ExtendFrontend ();
     }
 
     android_vulkan::LogError ( "pbr::ScriptEngine::InitInterfaceFunctions - Can't find OnRegisterScript function." );
@@ -202,7 +211,6 @@ void ScriptEngine::InitLibraries () const noexcept
     lua_pop ( vm, static_cast<int> ( std::size ( libs ) ) );
 
     BanFunctions ();
-    ExtendFrontend ();
 }
 
 void ScriptEngine::InitLogFacility () const noexcept

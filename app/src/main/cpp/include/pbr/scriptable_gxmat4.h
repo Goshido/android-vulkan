@@ -42,7 +42,7 @@ class ScriptableGXMat4 final
 
         ~ScriptableGXMat4 () = delete;
 
-        static void Init ( lua_State* vm ) noexcept;
+        static void Init ( lua_State &vm ) noexcept;
         static void Destroy () noexcept;
 
     private:

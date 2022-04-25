@@ -56,7 +56,7 @@ void Scene::OnDestroyDevice () noexcept
 {
     _freeTransferResourceList.clear ();
     _renderableList.clear ();
-    _actorStorage.clear ();
+    _actors.clear ();
 
     ScriptEngine::Destroy ();
 
@@ -119,9 +119,8 @@ bool Scene::OnUpdate ( double deltaTime ) noexcept
 
 void Scene::AppendActor ( ActorRef &actor ) noexcept
 {
-    Actors& actors = _actorStorage[ actor->GetName () ];
-    actors.push_back ( actor );
-    actors.back ()->RegisterComponents ( _freeTransferResourceList, _renderableList, *_physics, *_scriptEngine );
+    _actors.push_back ( actor );
+    _actors.back ()->RegisterComponents ( _freeTransferResourceList, _renderableList, *_physics, *_scriptEngine );
 }
 
 void Scene::FreeTransferResources ( VkDevice device ) noexcept

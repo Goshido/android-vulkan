@@ -32,7 +32,7 @@ std::string const& Actor::GetName () const noexcept
 void Actor::RegisterComponents ( ComponentList &freeTransferResource,
     ComponentList &renderable,
     android_vulkan::Physics &physics,
-    ScriptEngine &scriptEngine
+    lua_State &vm
 ) noexcept
 {
     for ( auto& component : _components )
@@ -72,12 +72,18 @@ void Actor::RegisterComponents ( ComponentList &freeTransferResource,
             // NOLINTNEXTLINE - downcast.
             auto& scriptComponent = static_cast<ScriptComponent&> ( *component );
 
-            if ( scriptComponent.Register ( scriptEngine ) )
-                continue;
+            if ( !scriptComponent.Register ( vm ) )
+            {
+                android_vulkan::LogWarning ( "pbr::Actor::RegisterComponents - Can't register script component %s.",
+                    scriptComponent.GetName ().c_str ()
+                );
 
-            android_vulkan::LogWarning ( "pbr::Actor::RegisterComponents - Can't register script component %s.",
-                scriptComponent.GetName ().c_str ()
-            );
+                continue;
+            }
+
+            // TODO append component to actor.
+
+            lua_pop ( &vm, 1 );
         }
     }
 }

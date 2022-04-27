@@ -3,7 +3,6 @@
 
 
 #include "component.h"
-#include "script_engine.h"
 
 
 namespace pbr {
@@ -30,7 +29,7 @@ class ScriptComponent final : public Component
 
         ~ScriptComponent () override = default;
 
-        [[nodiscard]] bool Register ( ScriptEngine &scriptEngine ) noexcept;
+        [[nodiscard]] bool Register ( lua_State &vm) noexcept;
 
         [[nodiscard]] static bool Init ( lua_State &vm ) noexcept;
 

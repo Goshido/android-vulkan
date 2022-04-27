@@ -27,7 +27,6 @@ class Scene final
         ComponentList               _renderableList {};
 
         android_vulkan::Physics*    _physics = nullptr;
-        ScriptEngine*               _scriptEngine = nullptr;
 
         int                         _onPostPhysicsIndex = std::numeric_limits<int>::max ();
         int                         _onPrePhysicsIndex = std::numeric_limits<int>::max ();

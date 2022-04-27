@@ -2,11 +2,16 @@
 #define PBR_ACTOR_H
 
 
-#include "script_engine.h"
 #include "types.h"
 #include <physics.h>
 
 GX_DISABLE_COMMON_WARNINGS
+
+extern "C" {
+
+#include <lua/lstate.h>
+
+} // extern "C"
 
 #include <deque>
 
@@ -40,7 +45,7 @@ class Actor final
         void RegisterComponents ( ComponentList &freeTransferResource,
             ComponentList &renderable,
             android_vulkan::Physics &physics,
-            ScriptEngine &scriptEngine
+            lua_State &vm
         ) noexcept;
 
         static void Register ( lua_State &vm ) noexcept;

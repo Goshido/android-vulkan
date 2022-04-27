@@ -27,7 +27,6 @@ class ScriptEngine final
 
     private:
         std::unique_ptr<lua_State, Deleter>     _vm { nullptr, &ScriptEngine::Free };
-        int                                     _registerScriptIndex = std::numeric_limits<int>::max ();
         static ScriptEngine*                    _instance;
 
     public:
@@ -36,13 +35,6 @@ class ScriptEngine final
 
         ScriptEngine ( ScriptEngine && ) = delete;
         ScriptEngine& operator = ( ScriptEngine && ) = delete;
-
-        [[nodiscard]] bool AppendScript ( void* handle, std::string const &script ) const noexcept;
-
-        [[nodiscard]] bool AppendScript ( void* handle,
-            std::string const &script,
-            std::string const &params
-        ) const noexcept;
 
         [[nodiscard]] lua_State& GetVirtualMachine () noexcept;
         [[nodiscard]] bool Init () noexcept;

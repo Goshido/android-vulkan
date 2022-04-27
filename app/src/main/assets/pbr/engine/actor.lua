@@ -37,7 +37,7 @@ local function GetName ( self )
 end
 
 -- helper
-local function MakeActor ( handle, name )
+local function MakeActor ( handle )
     local obj = Object ( eObjectType.Actor )
 
     -- data
@@ -55,7 +55,7 @@ end
 
 -- metamethods
 local function Constructor ( self, name )
-    return MakeActor ( av_ActorCreate ( name ), name )
+    return MakeActor ( av_ActorCreate ( name ) )
 end
 
 setmetatable ( Actor, { __call = Constructor } )

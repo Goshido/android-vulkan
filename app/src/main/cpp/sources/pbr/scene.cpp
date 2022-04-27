@@ -1,5 +1,6 @@
 #include <pbr/scene.h>
 #include <pbr/renderable_component.h>
+#include <pbr/script_engine.h>
 
 
 namespace pbr {
@@ -7,12 +8,12 @@ namespace pbr {
 bool Scene::OnInitDevice ( android_vulkan::Physics &physics ) noexcept
 {
     _physics = &physics;
-    _scriptEngine = &ScriptEngine::GetInstance ();
+    ScriptEngine& scriptEngine = ScriptEngine::GetInstance ();
 
-    if ( !_scriptEngine->Init () )
+    if ( !scriptEngine.Init () )
         return false;
 
-    _vm = &_scriptEngine->GetVirtualMachine ();
+    _vm = &scriptEngine.GetVirtualMachine ();
 
     if ( !lua_checkstack ( _vm, 4 ) )
     {
@@ -60,7 +61,6 @@ void Scene::OnDestroyDevice () noexcept
 
     ScriptEngine::Destroy ();
 
-    _scriptEngine = nullptr;
     _physics = nullptr;
     _vm = nullptr;
     _onPostPhysicsIndex = std::numeric_limits<int>::max ();
@@ -120,7 +120,7 @@ bool Scene::OnUpdate ( double deltaTime ) noexcept
 void Scene::AppendActor ( ActorRef &actor ) noexcept
 {
     _actors.push_back ( actor );
-    _actors.back ()->RegisterComponents ( _freeTransferResourceList, _renderableList, *_physics, *_scriptEngine );
+    _actors.back ()->RegisterComponents ( _freeTransferResourceList, _renderableList, *_physics, *_vm );
 }
 
 void Scene::FreeTransferResources ( VkDevice device ) noexcept

@@ -34,42 +34,6 @@ constexpr static char const SCRIPT[] = "pbr/engine/app.lua";
 
 ScriptEngine* ScriptEngine::_instance = nullptr;
 
-bool ScriptEngine::AppendScript ( void* handle, std::string const &script ) const noexcept
-{
-    lua_State* vm = _vm.get ();
-
-    if ( !lua_checkstack ( vm, 4 ) )
-    {
-        android_vulkan::LogWarning ( "pbr::ScriptEngine::AppendScript - Stack too small [branch #1]." );
-        return false;
-    }
-
-    lua_pushvalue ( vm, _registerScriptIndex );
-    lua_pushlightuserdata ( vm, handle );
-    lua_pushlstring ( vm, script.c_str (), script.size () );
-    lua_pushnil ( vm );
-
-    return lua_pcall ( vm, 3, 0, GetErrorHandlerIndex () ) == LUA_OK;
-}
-
-bool ScriptEngine::AppendScript ( void* handle, std::string const &script, std::string const &params ) const noexcept
-{
-    lua_State* vm = _vm.get ();
-
-    if ( !lua_checkstack ( vm, 4 ) )
-    {
-        android_vulkan::LogWarning ( "pbr::ScriptEngine::AppendScript - Stack too small [branch #2]." );
-        return false;
-    }
-
-    lua_pushvalue ( vm, _registerScriptIndex );
-    lua_pushlightuserdata ( vm, handle );
-    lua_pushlstring ( vm, script.c_str (), script.size () );
-    lua_pushlstring ( vm, params.c_str (), params.size () );
-
-    return lua_pcall ( vm, 3, 0, GetErrorHandlerIndex () ) == LUA_OK;
-}
-
 lua_State& ScriptEngine::GetVirtualMachine () noexcept
 {
     return *_vm;
@@ -144,15 +108,7 @@ bool ScriptEngine::InitInterfaceFunctions () noexcept
     }
 
     lua_pushcfunction ( vm, &ScriptEngine::OnErrorHandler );
-
-    if ( int const type = lua_getglobal ( vm, "OnRegisterScript" ); type == LUA_TFUNCTION )
-    {
-        _registerScriptIndex = lua_gettop ( vm );
-        return ExtendFrontend ();
-    }
-
-    android_vulkan::LogError ( "pbr::ScriptEngine::InitInterfaceFunctions - Can't find OnRegisterScript function." );
-    return false;
+    return ExtendFrontend ();
 }
 
 bool ScriptEngine::InitLua () noexcept

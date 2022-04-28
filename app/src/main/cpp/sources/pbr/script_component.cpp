@@ -24,7 +24,7 @@ ScriptComponent::ScriptComponent ( std::string &&script, std::string &&params ) 
 
 bool ScriptComponent::Register ( lua_State &vm ) noexcept
 {
-    if ( !lua_checkstack ( &vm, 4 ) )
+    if ( !lua_checkstack ( &vm, 5 ) )
     {
         android_vulkan::LogError ( "pbr::ScriptComponent::Register - Stack too small." );
         return false;

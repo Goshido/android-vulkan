@@ -15,7 +15,7 @@ bool Scene::OnInitDevice ( android_vulkan::Physics &physics ) noexcept
 
     _vm = &scriptEngine.GetVirtualMachine ();
 
-    if ( !lua_checkstack ( _vm, 4 ) )
+    if ( !lua_checkstack ( _vm, 5 ) )
     {
         android_vulkan::LogError ( "pbr::Scene::OnInitDevice - Stack too small." );
         return false;
@@ -43,6 +43,9 @@ bool Scene::OnInitDevice ( android_vulkan::Physics &physics ) noexcept
         android_vulkan::LogError ( "pbr::Scene::OnInitDevice - Can't find %s method.", method );
         return false;
     };
+
+    if ( !bind ( "AppendActor", _appendActorIndex ) )
+        return false;
 
     if ( !bind ( "OnPostPhysics", _onPostPhysicsIndex ) )
         return false;
@@ -119,8 +122,13 @@ bool Scene::OnUpdate ( double deltaTime ) noexcept
 
 void Scene::AppendActor ( ActorRef &actor ) noexcept
 {
+    lua_pushvalue ( _vm, _appendActorIndex );
+    lua_pushvalue ( _vm, _sceneHandle );
+
     _actors.push_back ( actor );
     _actors.back ()->RegisterComponents ( _freeTransferResourceList, _renderableList, *_physics, *_vm );
+
+    lua_pcall ( _vm, 2, 0, ScriptEngine::GetErrorHandlerIndex () );
 }
 
 void Scene::FreeTransferResources ( VkDevice device ) noexcept

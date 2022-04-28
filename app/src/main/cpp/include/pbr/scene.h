@@ -28,6 +28,7 @@ class Scene final
 
         android_vulkan::Physics*    _physics = nullptr;
 
+        int                         _appendActorIndex = std::numeric_limits<int>::max ();
         int                         _onPostPhysicsIndex = std::numeric_limits<int>::max ();
         int                         _onPrePhysicsIndex = std::numeric_limits<int>::max ();
         int                         _onUpdateIndex = std::numeric_limits<int>::max ();

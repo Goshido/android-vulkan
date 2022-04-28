@@ -28,7 +28,7 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-constexpr static char const SCRIPT[] = "pbr/engine/app.lua";
+constexpr static char const SCRIPT[] = "pbr/engine/scene.lua";
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -77,11 +77,10 @@ bool ScriptEngine::ExtendFrontend () const noexcept
     ScriptableGXVec3::Init ( vm );
     ScriptableGXVec4::Init ( vm );
 
-    Actor::Register ( vm );
     Component::Register ( vm );
     ScriptableLogger::Register ( vm );
 
-    return ScriptComponent::Init ( vm );
+    return ScriptComponent::Init ( vm ) && Actor::Register ( vm );
 }
 
 bool ScriptEngine::InitInterfaceFunctions () noexcept

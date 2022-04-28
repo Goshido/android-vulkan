@@ -4,12 +4,12 @@ require "av://engine/component.lua"
 ScriptComponent = {}
 
 -- helper
-local function MakeParams ( params, where )
+local function MakeParams ( params )
     if ( not params ) then
         return nil
     end
 
-    local func, errorMessage = load ( "return " .. params, where, "t" )
+    local func, errorMessage = load ( "return " .. params, "av://engine/script_component.lua", "t" )
 
     if ( type ( func ) ~= "function" ) then
         error ( "MakeParams - Can't load params: " .. errorMessage )

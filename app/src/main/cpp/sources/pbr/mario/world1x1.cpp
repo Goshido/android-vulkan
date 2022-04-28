@@ -99,7 +99,7 @@ bool World1x1::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
     }
 
     ComponentRef script = std::make_shared<ScriptComponent> ( "av://assets/Scripts/player.lua",
-        "{ msg = 'hello world', state = 1 }"
+        "{ _msg = 'hello world', _state = 1 }"
     );
 
     ActorRef logic = std::make_shared<Actor> ( "Logic" );

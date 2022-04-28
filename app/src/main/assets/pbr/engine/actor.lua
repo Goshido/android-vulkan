@@ -4,7 +4,8 @@ require "av://engine/object.lua"
 Actor = {}
 
 -- methods
-local function AppendComponent ( self, component )
+-- This function is exported to C++ side.
+function AppendComponent ( self, component )
     local name = component:GetName ()
     local components = self._components
     local list = components[ name ]
@@ -37,7 +38,8 @@ local function GetName ( self )
 end
 
 -- helper
-local function MakeActor ( handle )
+-- This function is exported to C++ side.
+function MakeActor ( handle )
     local obj = Object ( eObjectType.Actor )
 
     -- data
@@ -61,5 +63,4 @@ end
 setmetatable ( Actor, { __call = Constructor } )
 
 -- module contract
-RegisterActor = MakeActor
 return nil

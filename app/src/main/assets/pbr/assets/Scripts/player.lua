@@ -1,4 +1,3 @@
-require "av://engine/script_component.lua"
 require "av://engine/gx_math.lua"
 require "av://engine/logger.lua"
 
@@ -7,7 +6,21 @@ Player = {}
 
 -- engine events
 local function OnPostPhysics ( self, deltaTime )
-    -- TODO
+    if not self._oneShot then
+        return
+    end
+
+    LogD ( "Player:OnPostPhysics >>>" )
+
+    for groupKey, group in pairs ( g_scene._actors ) do
+        for k, v in pairs ( group ) do
+            LogD ( "    %s", v:GetName () )
+        end
+    end
+
+    LogD ( "<<<" )
+
+    self._oneShot = false
 end
 
 local function OnPrePhysics ( self, deltaTime )
@@ -19,8 +32,7 @@ local function OnUpdate ( self, deltaTime )
 end
 
 -- metamethods
-local function Constructor ( self, handle, params )
-    -- local obj = ScriptComponent ( handle )
+local function Constructor ( self, params )
     local obj = {}
 
     LogD ( ">>> Player params:" )
@@ -33,7 +45,9 @@ local function Constructor ( self, handle, params )
 
     -- data
     obj._health = 100
+    obj._params = params
     obj._transform = GXMat4 ()
+    obj._oneShot = true
 
     -- engine events
     obj.OnPostPhysics = OnPostPhysics

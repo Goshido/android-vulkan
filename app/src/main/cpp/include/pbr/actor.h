@@ -26,6 +26,9 @@ class Actor final
         std::deque<ComponentRef>    _components {};
         std::string const           _name;
 
+        static int                  _appendComponentIndex;
+        static int                  _makeActorIndex;
+
     public:
         Actor () noexcept;
 
@@ -48,7 +51,7 @@ class Actor final
             lua_State &vm
         ) noexcept;
 
-        static void Register ( lua_State &vm ) noexcept;
+        static bool Register ( lua_State &vm ) noexcept;
 
     private:
         [[nodiscard]] static int OnGetName ( lua_State* state );

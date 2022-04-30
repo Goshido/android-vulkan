@@ -1,26 +1,25 @@
 require "av://engine/gx_math.lua"
 require "av://engine/logger.lua"
+require "av://engine/script_component.lua"
 
 
-Player = {}
+local Player = {}
 
--- engine events
-local function OnPostPhysics ( self, deltaTime )
-    if not self._oneShot then
-        return
-    end
+-- Engine events
+local function OnActorConstructed ( self, actor )
+    LogD ( "Player:OnActorConstructed >>>" )
 
-    LogD ( "Player:OnPostPhysics >>>" )
-
-    for groupKey, group in pairs ( g_scene._actors ) do
+    for groupKey, group in pairs ( actor._components ) do
         for k, v in pairs ( group ) do
             LogD ( "    %s", v:GetName () )
         end
     end
 
     LogD ( "<<<" )
+end
 
-    self._oneShot = false
+local function OnPostPhysics ( self, deltaTime )
+    -- TODO
 end
 
 local function OnPrePhysics ( self, deltaTime )
@@ -31,9 +30,9 @@ local function OnUpdate ( self, deltaTime )
     -- TODO
 end
 
--- metamethods
-local function Constructor ( self, params )
-    local obj = {}
+-- Metamethods
+local function Constructor ( self, handle, params )
+    local obj = ScriptComponent ( handle )
 
     LogD ( ">>> Player params:" )
 
@@ -43,13 +42,14 @@ local function Constructor ( self, params )
 
     LogD ( "<<<" )
 
-    -- data
+    -- Data
     obj._health = 100
     obj._params = params
     obj._transform = GXMat4 ()
     obj._oneShot = true
 
-    -- engine events
+    -- Engine events
+    obj.OnActorConstructed = OnActorConstructed
     obj.OnPostPhysics = OnPostPhysics
     obj.OnPrePhysics = OnPrePhysics
     obj.OnUpdate = OnUpdate
@@ -59,5 +59,5 @@ end
 
 setmetatable ( Player, { __call = Constructor } )
 
--- module function: fabric callable for Player class.
+-- Module function: fabric callable for Player class.
 return Player

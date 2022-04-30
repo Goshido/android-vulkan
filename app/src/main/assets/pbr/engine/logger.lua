@@ -18,5 +18,5 @@ function LogW ( format, ... )
     av_LogW ( string.format ( format, ... ) )
 end
 
--- module contract
+-- Module contract
 return nil

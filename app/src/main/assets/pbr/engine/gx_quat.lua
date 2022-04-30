@@ -3,7 +3,7 @@ require "av://engine/gx_vec3.lua"
 
 GXQuat = {}
 
--- methods
+-- Methods
 local function FromAxisAngle ( self, axis, angle )
     assert ( type ( self ) == "table" and self._type == eObjectType.GXQuat,
         [[GXQuat:FromAxisAngle - Calling not via ":" syntax.]]
@@ -95,7 +95,7 @@ local function TransformFast ( self, out, v )
     av_GXQuatTransformFast ( self._handle, out._handle, v._handle )
 end
 
--- metamethods
+-- Metamethods
 local mt = {
     __concat = function ( left, right )
         return string.format ( "%s%s", left, right )
@@ -113,10 +113,10 @@ local mt = {
 local function Constructor ( self )
     local obj = Object ( eObjectType.GXQuat )
 
-    -- data
+    -- Data
     obj._handle = av_GXQuatCreate ()
 
-    -- methods
+    -- Methods
     obj.FromAxisAngle = FromAxisAngle
     obj.Inverse = Inverse
     obj.InverseFast = InverseFast
@@ -130,5 +130,5 @@ end
 
 setmetatable ( GXQuat, { __call = Constructor } )
 
--- module contract
+-- Module contract
 return nil

@@ -53,11 +53,13 @@ std::string GUID::GenerateAsString ( std::string_view prefix ) noexcept
 
     std::string result {};
     size_t const prefixSize = prefix.size ();
-    result.resize ( prefixSize + bufferSize );
+    size_t const actualSize = prefixSize + bufferSize;
+    result.resize ( actualSize );
 
     char* dst = result.data ();
     std::memcpy ( dst, prefix.data (), prefixSize );
     std::memcpy ( dst + prefixSize, buf, bufferSize );
+    result.resize ( actualSize - 1U );
 
     return result;
 }

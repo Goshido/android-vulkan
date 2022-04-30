@@ -10,3 +10,4 @@
 - [_GXVec4_](./gx-vec4.md)
 - [_Logger_](./logger.md)
 - [_Scene_](./scene.md)
+- [_ScriptComponent_](./script-component.md)

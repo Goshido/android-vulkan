@@ -3,7 +3,7 @@ require "av://engine/object.lua"
 
 Actor = {}
 
--- methods
+-- Methods
 -- This function is exported to C++ side.
 function AppendComponent ( self, component )
     local name = component:GetName ()
@@ -16,6 +16,16 @@ function AppendComponent ( self, component )
     end
 
     table.insert ( list, component )
+end
+
+local function CommitComponents ( self )
+    for groupKey, group in pairs ( self._components ) do
+        for k, v in pairs ( group ) do
+            if v._type == eObjectType.ScriptComponent and type ( v.OnActorConstructed ) == "function" then
+                v:OnActorConstructed ( self )
+            end
+        end
+    end
 end
 
 local function FindComponent ( self, name )
@@ -37,17 +47,18 @@ local function GetName ( self )
     return av_ActorGetName ( self._handle )
 end
 
--- helper
+-- Helper
 -- This function is exported to C++ side.
 function MakeActor ( handle )
     local obj = Object ( eObjectType.Actor )
 
-    -- data
+    -- Data
     obj._components = {}
     obj._handle = handle
 
-    -- methods
+    -- Methods
     obj.AppendComponent = AppendComponent
+    obj.CommitComponents = CommitComponents
     obj.FindComponent = FindComponent
     obj.FindComponents = FindComponents
     obj.GetName = GetName
@@ -55,12 +66,12 @@ function MakeActor ( handle )
     return obj
 end
 
--- metamethods
+-- Metamethods
 local function Constructor ( self, name )
     return MakeActor ( av_ActorCreate ( name ) )
 end
 
 setmetatable ( Actor, { __call = Constructor } )
 
--- module contract
+-- Module contract
 return nil

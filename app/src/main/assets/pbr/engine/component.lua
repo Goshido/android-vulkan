@@ -3,12 +3,12 @@ require "av://engine/object.lua"
 
 Component = {}
 
--- utils
+-- Utils
 local function IsComponent ( objectType )
     return objectType == eObjectType.ScriptComponent
 end
 
--- methods
+-- Methods
 local function GetName ( self )
     assert ( type ( self ) == "table" and IsComponent ( self._type ),
         [[Component:GetName - Calling not via ":" syntax.]]
@@ -17,14 +17,14 @@ local function GetName ( self )
     return av_ComponentGetName ( self._handle )
 end
 
--- metamethods
+-- Metamethods
 local function Constructor ( self, objectType, handle )
     local obj = Object ( objectType )
 
-    -- data
+    -- Data
     obj._handle = handle
 
-    -- methods
+    -- Methods
     obj.GetName = GetName
 
     return obj
@@ -32,5 +32,5 @@ end
 
 setmetatable ( Component, { __call = Constructor } )
 
--- module contract
+-- Module contract
 return nil

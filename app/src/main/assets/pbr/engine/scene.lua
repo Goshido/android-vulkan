@@ -4,7 +4,7 @@ require "av://engine/script_component.lua"
 
 local Scene = {}
 
--- methods
+-- Methods
 local function AppendActor ( self, actor )
     local name = actor:GetName ()
     local actors = self._actors
@@ -24,22 +24,22 @@ local function AppendActor ( self, actor )
     for groupKey, group in pairs ( actor._components ) do
         for k, v in pairs ( group ) do
             if v._type == eObjectType.ScriptComponent then
-                local script = v._script
-
-                if type ( script.OnPostPhysics ) == "function" then
-                    table.insert ( postPhysicsScripts, script )
+                if type ( v.OnPostPhysics ) == "function" then
+                    table.insert ( postPhysicsScripts, v )
                 end
 
-                if type ( script.OnPrePhysics ) == "function" then
-                    table.insert ( prePhysicsScripts, script )
+                if type ( v.OnPrePhysics ) == "function" then
+                    table.insert ( prePhysicsScripts, v )
                 end
 
-                if type ( script.OnUpdate ) == "function" then
-                    table.insert ( updateScripts, script )
+                if type ( v.OnUpdate ) == "function" then
+                    table.insert ( updateScripts, v )
                 end
             end
         end
     end
+
+    actor:CommitComponents ()
 end
 
 local function FindActor ( self, name )
@@ -71,18 +71,18 @@ local function OnUpdate ( self, deltaTime )
     end
 end
 
--- metamethods
+-- Metamethods
 local function Constructor ( self, handle )
     local obj = Object ( eObjectType.Scene )
 
-    -- data
+    -- Data
     obj._actors = {}
     obj._handle = handle
     obj._postPhysicsScripts = {}
     obj._prePhysicsScripts = {}
     obj._updateScripts = {}
 
-    -- methods
+    -- Methods
     obj.AppendActor = AppendActor
     obj.FindActor = FindActor
     obj.FindActors = FindActors
@@ -95,7 +95,7 @@ end
 
 setmetatable ( Scene, { __call = Constructor } )
 
--- module contract
+-- Module contract
 function CreateScene ( handle )
     g_scene = Scene ( handle )
     return g_scene

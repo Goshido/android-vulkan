@@ -4,7 +4,7 @@ require "av://engine/gx_vec4.lua"
 
 GXMat4 = {}
 
--- methods
+-- Methods
 local function FromFast ( self, unitQuaternion, origin )
     assert ( type ( self ) == "table" and self._type == eObjectType.GXMat4,
         [[GXMat4:FromFast - Calling not via ":" syntax.]]
@@ -255,7 +255,7 @@ local function Translation ( self, x, y, z )
     av_GXMat4Translation ( self._handle, x, y, z )
 end
 
--- metamethods
+-- Metamethods
 local mt = {
     __concat = function ( left, right )
         return string.format ( "%s%s", left, right )
@@ -273,10 +273,10 @@ local mt = {
 local function Constructor ( self )
     local obj = Object ( eObjectType.GXMat4 )
 
-    -- data
+    -- Data
     obj._handle = av_GXMat4Create ()
 
-    -- methods
+    -- Methods
     obj.FromFast = FromFast
     obj.GetX = GetX
     obj.GetY = GetY
@@ -305,5 +305,5 @@ end
 
 setmetatable ( GXMat4, { __call = Constructor } )
 
--- module contract
+-- Module contract
 return nil

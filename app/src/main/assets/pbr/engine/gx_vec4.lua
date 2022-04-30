@@ -3,7 +3,7 @@ require "av://engine/object.lua"
 
 GXVec4 = {}
 
--- methods
+-- Methods
 local function Init ( self, x, y, z, w )
     assert ( type ( self ) == "table" and self._type == eObjectType.GXVec4,
         [[GXVec4:Init - Calling not via ":" syntax.]]
@@ -17,7 +17,7 @@ local function Init ( self, x, y, z, w )
     av_GXVec4Init ( self._handle, x, y, z, w )
 end
 
--- metamethods
+-- Metamethods
 local mt = {
     __concat = function ( left, right )
         return string.format ( "%s%s", left, right )
@@ -35,10 +35,10 @@ local mt = {
 local function Constructor ( self )
     local obj = Object ( eObjectType.GXVec4 )
 
-    -- data
+    -- Data
     obj._handle = av_GXVec4Create ()
 
-    -- methods
+    -- Methods
     obj.Init = Init
 
     return setmetatable ( obj, mt )
@@ -46,5 +46,5 @@ end
 
 setmetatable ( GXVec4, { __call = Constructor } )
 
--- module contract
+-- Module contract
 return nil

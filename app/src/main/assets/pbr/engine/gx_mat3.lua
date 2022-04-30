@@ -3,7 +3,7 @@ require "av://engine/gx_vec3.lua"
 
 GXMat3 = {}
 
--- methods
+-- Methods
 local function GetX ( self, x )
     assert ( type ( self ) == "table" and self._type == eObjectType.GXMat3,
         [[GXMat3:GetX - Calling not via ":" syntax.]]
@@ -133,7 +133,7 @@ local function Transpose ( self, sourceMatrix )
     av_GXMat3Transpose ( self._handle, sourceMatrix._handle )
 end
 
--- metamethods
+-- Metamethods
 local mt = {
     __concat = function ( left, right )
         return string.format ( "%s%s", left, right )
@@ -151,10 +151,10 @@ local mt = {
 local function Constructor ( self )
     local obj = Object ( eObjectType.GXMat3 )
 
-    -- data
+    -- Data
     obj._handle = av_GXMat3Create ()
 
-    -- methods
+    -- Methods
     obj.GetX = GetX
     obj.GetY = GetY
     obj.GetZ = GetZ
@@ -173,5 +173,5 @@ end
 
 setmetatable ( GXMat3, { __call = Constructor } )
 
--- module contract
+-- Module contract
 return nil

@@ -26,15 +26,29 @@ end
 
 local function MakeScriptComponent ( handle, script, params )
     local fabric = require ( script )
-
-    local obj = Component ( eObjectType.ScriptComponent, handle )
-    obj._script = fabric ( params )
-
-    return obj
+    return fabric ( handle, params )
 end
 
 -- metamethods
-local function Constructor ( self, name, script, params )
+local function Constructor ( self, ... )
+    local argv = { ... }
+    local argc = #argv
+
+    if argc == 1 then
+        -- Call origiated from C++ side.
+        local handle = argv[ 1 ]
+        return Component ( eObjectType.ScriptComponent, handle )
+    end
+
+    if argc ~= 3 then
+        error ( "ScriptComponent:Constructor - Unexpected amount of arguments. Must be 1 or 3. Got " .. argc .. "." )
+        return nil
+    end
+
+    -- Call origiated from Lua VM side.
+    local name = argv[ 1 ]
+    local script = argv[ 2 ]
+    local params = argv[ 3 ]
     return MakeScriptComponent ( av_ScriptComponentCreate ( name ), script, params )
 end
 

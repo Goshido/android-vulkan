@@ -3,7 +3,7 @@ require "av://engine/object.lua"
 
 GXVec3 = {}
 
--- methods
+-- Methods
 local function CrossProduct ( self, a, b )
     assert ( type ( self ) == "table" and self._type == eObjectType.GXVec3,
         [[GXVec3:CrossProduct - Calling not via ":" syntax.]]
@@ -129,7 +129,7 @@ local function SumScaled ( self, a, bScale, b )
     av_GXVec3SumScaled ( self._handle, a._handle, bScale, b._handle )
 end
 
--- metamethods
+-- Metamethods
 local mt = {
     __concat = function ( left, right )
         return string.format ( "%s%s", left, right )
@@ -147,10 +147,10 @@ local mt = {
 local function Constructor ( self )
     local obj = Object ( eObjectType.GXVec3 )
 
-    -- data
+    -- Data
     obj._handle = av_GXVec3Create ()
 
-    -- methods
+    -- Methods
     obj.CrossProduct = CrossProduct
     obj.Distance = Distance
     obj.DotProduct = DotProduct
@@ -169,5 +169,5 @@ end
 
 setmetatable ( GXVec3, { __call = Constructor } )
 
--- module contract
+-- Module contract
 return nil

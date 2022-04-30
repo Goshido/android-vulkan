@@ -26,7 +26,7 @@ Object = {
     _type = eObjectType.Unknown
 }
 
--- metamethods
+-- Metamethods
 local function Constructor ( self, objectType )
     return {
         _type = objectType
@@ -35,5 +35,5 @@ end
 
 setmetatable ( Object, { __call = Constructor } )
 
--- module contract
+-- Module contract
 return nil

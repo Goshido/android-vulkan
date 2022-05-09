@@ -1,4 +1,5 @@
 #include <pbr/mario/pipe_base.h>
+#include <pbr/coordinate_system.h>
 #include <pbr/rigid_body_component.h>
 #include <pbr/static_mesh_component.h>
 #include <guid_generator.h>
@@ -59,9 +60,8 @@ void PipeBase::SpawnBase ( android_vulkan::Renderer &renderer,
     android_vulkan::RigidBody& body = *collider.GetRigidBody ();
     body.EnableKinematic ();
 
-    constexpr float const rendererToPhysics = 1.0F / 32.0F;
     GXVec3 origin {};
-    origin.Multiply ( GXVec3 ( x, y, z ), rendererToPhysics );
+    origin.Multiply ( GXVec3 ( x, y, z ), METERS_IN_UNIT );
 
     GXVec3 location {};
     location.Sum ( origin, colliderOffset );

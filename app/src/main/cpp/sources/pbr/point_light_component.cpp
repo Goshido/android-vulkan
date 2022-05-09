@@ -92,4 +92,9 @@ void PointLightComponent::SetLocation ( GXVec3 const &location ) noexcept
     light.SetLocation ( location );
 }
 
+void PointLightComponent::OnTransform ( GXMat4 const &transformWorld ) noexcept
+{
+    SetLocation ( *reinterpret_cast<GXVec3 const*> ( &transformWorld._m[ 3U ][ 0U ] ) );
+}
+
 } // namespace pbr

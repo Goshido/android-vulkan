@@ -1,4 +1,5 @@
 #include <pbr/sweep_testing/sweep_testing.h>
+#include <pbr/coordinate_system.h>
 #include <pbr/material_manager.h>
 #include <pbr/mesh_manager.h>
 #include <gamepad.h>
@@ -197,8 +198,7 @@ bool SweepTesting::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
     constexpr GXVec3 lightLocation ( 0.5F, 2.0F, 0.0F );
 
     GXVec3 lightLocationRender {};
-    constexpr float renderScale = 32.0F;
-    lightLocationRender.Multiply ( lightLocation, renderScale );
+    lightLocationRender.Multiply ( lightLocation, UNITS_IN_METER );
     _light.SetLocation ( lightLocationRender );
 
     constexpr float lightBounds = 160.0F;

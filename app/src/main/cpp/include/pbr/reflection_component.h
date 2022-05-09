@@ -4,14 +4,16 @@
 
 #include "renderable_component.h"
 #include "reflection_component_desc.h"
+#include "transformable.h"
 
 
 namespace pbr {
 
-class ReflectionComponent final : public RenderableComponent
+class ReflectionComponent final : public RenderableComponent, public Transformable
 {
     private:
         LightRef    _probe;
+        bool        _isGlobal;
 
     public:
         ReflectionComponent () = delete;
@@ -31,9 +33,12 @@ class ReflectionComponent final : public RenderableComponent
 
         ~ReflectionComponent () override = default;
 
+        [[nodiscard]] bool IsGlobalReflection () const noexcept;
+
     private:
         void FreeTransferResources ( VkDevice device ) noexcept override;
         void Submit ( RenderSession &renderSession ) noexcept override;
+        void OnTransform ( GXMat4 const &transformWorld ) noexcept override;
 };
 
 } // namespace pbr

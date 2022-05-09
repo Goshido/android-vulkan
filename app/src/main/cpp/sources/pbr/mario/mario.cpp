@@ -111,19 +111,6 @@ void Mario::OnUpdate () noexcept
     auto& collider = static_cast<RigidBodyComponent&> ( *_rigidBody );
 
     android_vulkan::RigidBody& body = *collider.GetRigidBody ();
-    GXMat4 transform = body.GetTransform ();
-    GXVec3 bodyLoc {};
-    transform.GetW ( bodyLoc );
-
-    constexpr float physicsToRender = 32.0F;
-    GXVec3 location {};
-    location.Multiply ( bodyLoc, physicsToRender );
-    transform.SetW ( location );
-
-    // NOLINTNEXTLINE - downcast.
-    auto& comp = static_cast<StaticMeshComponent&> ( *_staticMesh );
-    comp.SetTransform ( transform );
-
     GXVec3 velocityLinear = body.GetVelocityLinear ();
 
     if ( _isJump )
@@ -141,7 +128,7 @@ void Mario::OnUpdate () noexcept
 
     GXVec3 force {};
     force.Multiply ( MOVE_FORCE, _move );
-    body.AddForce ( force, bodyLoc, true );
+    body.AddForce ( force, body.GetLocation (), true );
 }
 
 void Mario::ReleaseInput () noexcept

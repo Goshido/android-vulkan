@@ -11,6 +11,7 @@ namespace pbr {
 class RigidBodyComponent final : public Component
 {
     private:
+        Actor*                          _actor;
         android_vulkan::RigidBodyRef    _rigidBody;
 
     public:
@@ -28,7 +29,15 @@ class RigidBodyComponent final : public Component
         ~RigidBodyComponent () override = default;
 
         [[nodiscard]] android_vulkan::RigidBodyRef& GetRigidBody () noexcept;
-        [[nodiscard]] bool Register ( android_vulkan::Physics &physics ) noexcept;
+        [[nodiscard]] bool Register ( Actor &actor, android_vulkan::Physics &physics ) noexcept;
+
+    private:
+        void Init ( android_vulkan::ShapeRef &shape ) noexcept;
+
+        static void OnTransformUpdate ( android_vulkan::RigidBody::Context context,
+            GXVec3 const &location,
+            GXQuat const &rotation
+        ) noexcept;
 };
 
 } // namespace pbr

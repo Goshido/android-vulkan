@@ -26,6 +26,9 @@ using ComponentRef = std::shared_ptr<Component>;
 
 using ComponentList = std::list<std::reference_wrapper<ComponentRef>>;
 
+class Transformable;
+using TransformableList = std::list<std::reference_wrapper<Transformable>>;
+
 using LightRef = std::shared_ptr<Light>;
 using MaterialRef = std::shared_ptr<Material>;
 using MeshRef = std::shared_ptr<android_vulkan::MeshGeometry>;

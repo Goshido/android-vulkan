@@ -20,9 +20,11 @@ namespace pbr {
 
 class Component
 {
+    protected:
+        std::string const       _name;
+
     private:
         ClassID                 _classID;
-        std::string const       _name;
 
     public:
         Component () = delete;

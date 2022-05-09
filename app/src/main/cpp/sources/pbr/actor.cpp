@@ -1,7 +1,10 @@
 #include <pbr/actor.h>
+#include <pbr/point_light_component.h>
+#include <pbr/reflection_component.h>
+#include <pbr/rigid_body_component.h>
 #include <pbr/script_component.h>
 #include <pbr/script_engine.h>
-#include <pbr/rigid_body_component.h>
+#include <pbr/static_mesh_component.h>
 #include <guid_generator.h>
 #include <logger.h>
 
@@ -33,6 +36,14 @@ std::string const& Actor::GetName () const noexcept
     return _name;
 }
 
+void Actor::OnTransform ( GXMat4 const &transformWorld ) noexcept
+{
+    for ( auto& component : _transformableComponents )
+    {
+        component.get ().OnTransform ( transformWorld );
+    }
+}
+
 void Actor::RegisterComponents ( ComponentList &freeTransferResource,
     ComponentList &renderable,
     android_vulkan::Physics &physics,
@@ -58,9 +69,26 @@ void Actor::RegisterComponents ( ComponentList &freeTransferResource,
     {
         ClassID const classID = component->GetClassID ();
 
-        if ( classID == ClassID::Reflection | classID == ClassID::StaticMesh )
+        if ( classID == ClassID::StaticMesh )
         {
+            // NOLINTNEXTLINE - downcast.
+            auto& transformable = static_cast<StaticMeshComponent&> ( *component );
+
             freeTransferResource.emplace_back ( std::ref ( component ) );
+            _transformableComponents.emplace_back ( std::ref ( transformable ) );
+            continue;
+        }
+
+        if ( classID == ClassID::Reflection )
+        {
+            // NOLINTNEXTLINE - downcast.
+            auto& reflection = static_cast<ReflectionComponent&> ( *component );
+
+            freeTransferResource.emplace_back ( std::ref ( component ) );
+
+            if ( !reflection.IsGlobalReflection () )
+                _transformableComponents.emplace_back ( std::ref ( reflection ) );
+
             continue;
         }
 
@@ -69,7 +97,7 @@ void Actor::RegisterComponents ( ComponentList &freeTransferResource,
             // NOLINTNEXTLINE - downcast.
             auto& rigiBodyComponent = static_cast<RigidBodyComponent&> ( *component );
 
-            if ( !rigiBodyComponent.Register ( physics ) )
+            if ( !rigiBodyComponent.Register ( *this, physics ) )
             {
                 android_vulkan::LogWarning ( "pbr::Actor::RegisterComponents - Can't register rigid body "
                     "component %s.",
@@ -82,7 +110,11 @@ void Actor::RegisterComponents ( ComponentList &freeTransferResource,
 
         if ( classID == ClassID::PointLight )
         {
+            // NOLINTNEXTLINE - downcast.
+            auto& transformable = static_cast<PointLightComponent&> ( *component );
+
             renderable.emplace_back ( std::ref ( component ) );
+            _transformableComponents.emplace_back ( std::ref ( transformable ) );
             continue;
         }
 

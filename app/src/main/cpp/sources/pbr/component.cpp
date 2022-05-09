@@ -84,8 +84,8 @@ void Component::Register ( lua_State &vm ) noexcept
 }
 
 Component::Component ( ClassID classID, std::string &&name ) noexcept:
-    _classID ( classID ),
-    _name ( std::move ( name ) )
+    _name ( std::move ( name ) ),
+    _classID ( classID )
 {
     // NOTHING
 }

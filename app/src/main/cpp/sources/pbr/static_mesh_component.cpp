@@ -242,4 +242,9 @@ void StaticMeshComponent::SetTransform ( GXMat4 const &transform ) noexcept
     _mesh->GetBounds ().Transform ( _worldBounds, transform );
 }
 
+void StaticMeshComponent::OnTransform ( GXMat4 const &transformWorld ) noexcept
+{
+    SetTransform ( transformWorld );
+}
+
 } // namespace pbr

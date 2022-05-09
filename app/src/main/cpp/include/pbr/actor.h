@@ -25,6 +25,7 @@ class Actor final
     private:
         std::deque<ComponentRef>    _components {};
         std::string const           _name;
+        TransformableList           _transformableComponents {};
 
         static int                  _appendComponentIndex;
         static int                  _makeActorIndex;
@@ -44,6 +45,9 @@ class Actor final
 
         void AppendComponent ( ComponentRef &component ) noexcept;
         [[nodiscard]] std::string const& GetName () const noexcept;
+
+        // Note transfrom must be in render units.
+        void OnTransform ( GXMat4 const &transformWorld ) noexcept;
 
         void RegisterComponents ( ComponentList &freeTransferResource,
             ComponentList &renderable,

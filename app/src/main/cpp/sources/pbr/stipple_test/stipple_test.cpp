@@ -1,4 +1,5 @@
 #include <pbr/stipple_test/stipple_test.h>
+#include <pbr/coordinate_system.h>
 #include <pbr/material_manager.h>
 #include <pbr/mesh_manager.h>
 #include <pbr/stipple_material.h>
@@ -12,8 +13,6 @@ constexpr static float Z_FAR = 1.0e+4F;
 
 constexpr static uint32_t RESOLUTION_SCALE_WIDTH = 80U;
 constexpr static uint32_t RESOLUTION_SCALE_HEIGHT = 70U;
-
-constexpr static float RENDERER_SCALE = 32.0F;
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -126,16 +125,16 @@ void StippleTest::Animate ( float deltaTime ) noexcept
 {
     constexpr GXVec3 scale ( 0.5F, 2.0F, 0.3F );
 
-    constexpr GXVec3 renderScale ( scale._data[ 0U ] * RENDERER_SCALE,
-        scale._data[ 1U ] * RENDERER_SCALE,
-        scale._data[ 2U ] * RENDERER_SCALE
+    constexpr GXVec3 renderScale ( scale._data[ 0U ] * UNITS_IN_METER,
+        scale._data[ 1U ] * UNITS_IN_METER,
+        scale._data[ 2U ] * UNITS_IN_METER
     );
 
     constexpr GXVec3 location ( 0.0F, 2.5F, 0.0F );
 
-    constexpr GXVec3 renderLocation ( location._data[ 0U ] * RENDERER_SCALE,
-        location._data[ 1U ] * RENDERER_SCALE,
-        location._data[ 2U ] * RENDERER_SCALE
+    constexpr GXVec3 renderLocation ( location._data[ 0U ] * UNITS_IN_METER,
+        location._data[ 1U ] * UNITS_IN_METER,
+        location._data[ 2U ] * UNITS_IN_METER
     );
 
     constexpr GXVec3 rotationAxis ( 0.454F, 0.8677F, -0.20246F );
@@ -214,16 +213,16 @@ bool StippleTest::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
 
     constexpr GXVec3 floorLocation ( 0.0F, -0.25F, 0.0F );
 
-    constexpr GXVec3 floorRenderLocation ( floorLocation._data[ 0U ] * RENDERER_SCALE,
-        floorLocation._data[ 1U ] * RENDERER_SCALE,
-        floorLocation._data[ 2U ] * RENDERER_SCALE
+    constexpr GXVec3 floorRenderLocation ( floorLocation._data[ 0U ] * UNITS_IN_METER,
+        floorLocation._data[ 1U ] * UNITS_IN_METER,
+        floorLocation._data[ 2U ] * UNITS_IN_METER
     );
 
     constexpr GXVec3 floorScale ( 10.0F, 0.5F, 30.0F );
 
-    constexpr GXVec3 floorRenderScale ( floorScale._data[ 0U ] * RENDERER_SCALE,
-        floorScale._data[ 1U ] * RENDERER_SCALE,
-        floorScale._data[ 2U ] * RENDERER_SCALE
+    constexpr GXVec3 floorRenderScale ( floorScale._data[ 0U ] * UNITS_IN_METER,
+        floorScale._data[ 1U ] * UNITS_IN_METER,
+        floorScale._data[ 2U ] * UNITS_IN_METER
     );
 
     GXMat4 transform {};
@@ -263,9 +262,9 @@ bool StippleTest::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
 
     constexpr GXVec3 lightBounds ( 100.0F, 100.0F, 100.0F );
 
-    constexpr GXVec3 lightRenderBounds ( lightBounds._data[ 0U ] * RENDERER_SCALE,
-        lightBounds._data[ 1U ] * RENDERER_SCALE,
-        lightBounds._data[ 2U ] * RENDERER_SCALE
+    constexpr GXVec3 lightRenderBounds ( lightBounds._data[ 0U ] * UNITS_IN_METER,
+        lightBounds._data[ 1U ] * UNITS_IN_METER,
+        lightBounds._data[ 2U ] * UNITS_IN_METER
     );
 
     _light.SetBoundDimensions ( lightRenderBounds );
@@ -273,9 +272,9 @@ bool StippleTest::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
 
     constexpr GXVec3 lightLocation ( 0.0F, 15.0F, -1.5F );
 
-    constexpr GXVec3 lightRenderLocation ( lightLocation._data[ 0U ] * RENDERER_SCALE,
-        lightLocation._data[ 1U ] * RENDERER_SCALE,
-        lightLocation._data[ 2U ] * RENDERER_SCALE
+    constexpr GXVec3 lightRenderLocation ( lightLocation._data[ 0U ] * UNITS_IN_METER,
+        lightLocation._data[ 1U ] * UNITS_IN_METER,
+        lightLocation._data[ 2U ] * UNITS_IN_METER
     );
 
     _light.SetLocation ( lightRenderLocation );

@@ -1,4 +1,5 @@
 #include <pbr/box_stack/box_stack.h>
+#include <pbr/coordinate_system.h>
 #include <pbr/component.h>
 #include <pbr/material_manager.h>
 #include <pbr/mesh_manager.h>
@@ -49,14 +50,13 @@ bool BoxStack::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) 
     light.SetLocation ( lightLocation );
 
     GXMat4 transform {};
-    constexpr float rendererScale = 32.0F;
-    constexpr float sphereSize = 0.02F * rendererScale;
+    constexpr float sphereSize = 0.02F * UNITS_IN_METER;
     constexpr GXVec3 sphereDims ( sphereSize * 0.5F, sphereSize * 0.5F, sphereSize * 0.5F );
     transform.Scale ( sphereSize, sphereSize, sphereSize );
 
     auto submit = [ & ] ( GXVec3 const &loc, GXColorRGB const &color ) noexcept {
         GXVec3 location {};
-        location.Multiply ( loc, rendererScale );
+        location.Multiply ( loc, UNITS_IN_METER );
         transform.SetW ( location );
 
         GXAABB bounds{};
@@ -477,8 +477,6 @@ void BoxStack::OnRightBumper ( void* context ) noexcept
 
 void BoxStack::UpdateCuboid ( ComponentRef &cuboid, android_vulkan::RigidBodyRef &body ) noexcept
 {
-    constexpr float const physicsToRender = 32.0F;
-
     // NOLINTNEXTLINE
     auto& c = *static_cast<StaticMeshComponent*> ( cuboid.get () );
 
@@ -487,14 +485,14 @@ void BoxStack::UpdateCuboid ( ComponentRef &cuboid, android_vulkan::RigidBodyRef
     GXMat4 transform = body->GetTransform ();
 
     GXVec3 dims ( s.GetWidth (), s.GetHeight (), s.GetDepth () );
-    dims.Multiply ( dims, physicsToRender );
+    dims.Multiply ( dims, UNITS_IN_METER );
 
     GXMat4 scale {};
     scale.Scale ( dims._data[ 0U ], dims._data[ 1U ], dims._data[ 2U ] );
 
     GXVec3 location {};
     transform.GetW ( location );
-    location.Multiply ( location, physicsToRender );
+    location.Multiply ( location, UNITS_IN_METER );
     transform.SetW ( location );
 
     GXMat4 resultTransform {};

@@ -1,4 +1,5 @@
 #include <pbr/sweep_testing/actor_body.h>
+#include <pbr/coordinate_system.h>
 #include <pbr/opaque_material.h>
 #include <pbr/static_mesh_component.h>
 #include <shape_box.h>
@@ -118,9 +119,8 @@ void ActorBody::Submit ( RenderSession &renderSession ) noexcept
     // NOLINTNEXTLINE
     auto& shape = static_cast<android_vulkan::ShapeBox&> ( ph.GetShape () );
 
-    constexpr float rendererScale = 32.0F;
     GXVec3 scale {};
-    scale.Multiply ( shape.GetSize (), rendererScale );
+    scale.Multiply ( shape.GetSize (), UNITS_IN_METER );
 
     GXMat4 transform {};
 
@@ -134,7 +134,7 @@ void ActorBody::Submit ( RenderSession &renderSession ) noexcept
     z.Multiply ( *reinterpret_cast<GXVec3 const*> ( &orientation._m[ 2U ][ 0U ] ), scale._data[ 2U ] );
 
     auto& location = *reinterpret_cast<GXVec3*> ( &transform._m[ 3U ][ 0U ] );
-    location.Multiply ( ph.GetLocation (), rendererScale );
+    location.Multiply ( ph.GetLocation (), UNITS_IN_METER );
 
     transform._m[ 0U ][ 3U ] = transform._m[ 1U ][ 3U ] = transform._m[ 2U ][ 3U ] = 0.0F;
     transform._m[ 3U ][ 3U ] = 1.0F;

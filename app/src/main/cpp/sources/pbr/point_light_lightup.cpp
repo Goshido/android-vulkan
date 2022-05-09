@@ -1,4 +1,5 @@
 #include <pbr/point_light_lightup.h>
+#include <pbr/coordinate_system.h>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -11,10 +12,6 @@ GX_RESTORE_WARNING_STATE
 
 
 namespace pbr {
-
-constexpr static float UNITS_PER_METER = 32.0F;
-
-//----------------------------------------------------------------------------------------------------------------------
 
 bool PointLightLightup::Init ( android_vulkan::Renderer &renderer,
     VkCommandPool commandPool,
@@ -165,9 +162,8 @@ bool PointLightLightup::UpdateGPUData ( android_vulkan::Renderer &renderer,
     GXVec3 alpha {};
     GXVec3 betta {};
 
-    constexpr float gamma = 1.0F / UNITS_PER_METER;
     PointLightLightupProgram::LightData lightData {};
-    lightData._sceneScaleFactor = gamma;
+    lightData._sceneScaleFactor = METERS_IN_UNIT;
 
     // Note all shadowmap formats are same so grab first shadowmap and resolve.
     auto const [probeLight, probeShadowmap] = pointLightPass.GetPointLightInfo ( 0U );

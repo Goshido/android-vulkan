@@ -5,11 +5,12 @@
 #include "point_light.h"
 #include "point_light_component_desc.h"
 #include "renderable_component.h"
+#include "transformable.h"
 
 
 namespace pbr {
 
-class PointLightComponent final : public RenderableComponent
+class PointLightComponent final : public RenderableComponent, public Transformable
 {
     private:
         LightRef    _pointLight;
@@ -34,6 +35,9 @@ class PointLightComponent final : public RenderableComponent
         [[maybe_unused]] void SetHue ( GXColorRGB const &hue ) noexcept;
         void SetIntensity ( float intensity ) noexcept;
         void SetLocation ( GXVec3 const &location ) noexcept;
+
+    private:
+        void OnTransform ( GXMat4 const &transformWorld ) noexcept override;
 };
 
 } // namespace pbr

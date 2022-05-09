@@ -1,4 +1,5 @@
 #include <pbr/mario/riddle.h>
+#include <pbr/coordinate_system.h>
 #include <pbr/rigid_body_component.h>
 #include <pbr/static_mesh_component.h>
 #include <guid_generator.h>
@@ -60,9 +61,8 @@ void Riddle::Spawn ( android_vulkan::Renderer &renderer,
     android_vulkan::RigidBody& body = *collider.GetRigidBody ();
     body.EnableKinematic ();
 
-    constexpr float rendererToPhysics = 1.0F / 32.0F;
     GXVec3 origin {};
-    origin.Multiply ( GXVec3 ( x, y, z ), rendererToPhysics );
+    origin.Multiply ( GXVec3 ( x, y, z ), METERS_IN_UNIT );
 
     GXVec3 location {};
     location.Sum ( origin, COLLIDER_OFFSET );

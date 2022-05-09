@@ -46,6 +46,7 @@ ReflectionComponent::ReflectionComponent ( android_vulkan::Renderer &renderer,
     if ( desc._size == FLT_MAX )
     {
         _probe = std::make_shared<ReflectionProbeGlobal> ( prefilter );
+        _isGlobal = true;
         return;
     }
 
@@ -55,6 +56,12 @@ ReflectionComponent::ReflectionComponent ( android_vulkan::Renderer &renderer,
     std::memcpy ( &location, &desc._location, sizeof ( location ) );
 
     _probe = std::make_shared<ReflectionProbeLocal> ( prefilter, location, desc._size );
+    _isGlobal = false;
+}
+
+bool ReflectionComponent::IsGlobalReflection () const noexcept
+{
+    return _isGlobal;
 }
 
 void ReflectionComponent::FreeTransferResources ( VkDevice device ) noexcept
@@ -63,16 +70,22 @@ void ReflectionComponent::FreeTransferResources ( VkDevice device ) noexcept
         return;
 
     // NOLINTNEXTLINE - downcast.
-    auto& probe = static_cast<ReflectionProbe&> ( *_probe ); // NOLINT
+    auto& probe = static_cast<ReflectionProbe&> ( *_probe );
     probe.FreeTransferResources ( device );
 }
 
 void ReflectionComponent::Submit ( RenderSession &renderSession ) noexcept
 {
-    if ( _probe )
-    {
-        renderSession.SubmitLight ( _probe );
-    }
+    renderSession.SubmitLight ( _probe );
+}
+
+void ReflectionComponent::OnTransform ( GXMat4 const &transformWorld ) noexcept
+{
+
+    // NOLINTNEXTLINE - downcast.
+    auto& probe = static_cast<ReflectionProbeLocal&> ( *_probe );
+
+    probe.SetLocation ( *reinterpret_cast<GXVec3 const*> ( &transformWorld._m[ 3U ][ 0U ] ) );
 }
 
 } // namespace pbr

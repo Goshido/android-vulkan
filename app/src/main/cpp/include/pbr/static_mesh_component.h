@@ -4,11 +4,12 @@
 
 #include "renderable_component.h"
 #include "static_mesh_component_desc.h"
+#include "transformable.h"
 
 
 namespace pbr {
 
-class StaticMeshComponent final : public RenderableComponent
+class StaticMeshComponent final : public RenderableComponent, public Transformable
 {
     private:
         GXColorRGB      _color0;
@@ -81,6 +82,9 @@ class StaticMeshComponent final : public RenderableComponent
 
         [[nodiscard]] GXMat4 const& GetTransform () const noexcept;
         void SetTransform ( GXMat4 const &transform ) noexcept;
+
+    private:
+        void OnTransform ( GXMat4 const &transformWorld ) noexcept override;
 };
 
 } // namespace pbr

@@ -19,43 +19,45 @@ class RigidBody final
 {
     public:
         using Context = void*;
+        using TransformUpdateHandler = void ( * ) ( Context, GXVec3 const &location, GXQuat const &rotation ) noexcept;
 
     private:
-        Context                 _context;
+        Context                     _context;
 
-        float                   _dampingAngular;
-        float                   _dampingLinear;
+        float                       _dampingAngular;
+        float                       _dampingLinear;
 
-        bool                    _forceAwake;
-        GXMat3                  _inertiaTensorInverse;
+        bool                        _forceAwake;
+        GXMat3                      _inertiaTensorInverse;
 
-        bool                    _isAwake;
-        bool                    _isCanSleep;
-        bool                    _isKinematic;
+        bool                        _isAwake;
+        bool                        _isCanSleep;
+        bool                        _isKinematic;
 
-        GXVec3                  _location;
+        GXVec3                      _location;
 
-        float                   _mass;
-        float                   _massInverse;
+        float                       _mass;
+        float                       _massInverse;
 
-        Physics*                _physics;
-        GXQuat                  _rotation;
+        Physics*                    _physics;
+        GXQuat                      _rotation;
 
-        ShapeRef                _shape;
-        float                   _sleepTimeout;
+        ShapeRef                    _shape;
+        float                       _sleepTimeout;
 
-        GXVec3                  _totalForce;
-        GXVec3                  _totalTorque;
+        GXVec3                      _totalForce;
+        GXVec3                      _totalTorque;
 
         // This feature is primary for debugging purposes.
-        std::string             _tag;
+        std::string                 _tag;
 
-        GXMat4                  _transform;
+        GXMat4                      _transform;
+        TransformUpdateHandler      _transformUpdateHandler;
 
-        GXVec3                  _velocityAngular;
-        GXVec3                  _velocityLinear;
+        GXVec3                      _velocityAngular;
+        GXVec3                      _velocityLinear;
 
-        static std::mutex       _mutex;
+        static std::mutex           _mutex;
 
     public:
         RigidBody () noexcept;
@@ -133,6 +135,7 @@ class RigidBody final
         [[maybe_unused, nodiscard]] GXVec3 const& GetTotalTorque () const noexcept;
 
         [[nodiscard]] GXMat4 const& GetTransform () const noexcept;
+        void SetTransformUpdateHandler ( TransformUpdateHandler handler ) noexcept;
 
         void Integrate ( float deltaTime ) noexcept;
 

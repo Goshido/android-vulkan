@@ -1,4 +1,5 @@
 #include <pbr/collision/collision.h>
+#include <pbr/coordinate_system.h>
 #include <pbr/material_manager.h>
 #include <pbr/mesh_manager.h>
 #include <pbr/static_mesh_component.h>
@@ -7,12 +8,12 @@
 
 namespace pbr::collision {
 
-constexpr static float const FIELD_OF_VIEW = 75.0F;
-constexpr static float const Z_NEAR = 0.1F;
-constexpr static float const Z_FAR = 1.0e+4F;
+constexpr static float FIELD_OF_VIEW = 75.0F;
+constexpr static float Z_NEAR = 0.1F;
+constexpr static float Z_FAR = 1.0e+4F;
 
-constexpr static uint32_t const RESOLUTION_SCALE_WIDTH = 100U;
-constexpr static uint32_t const RESOLUTION_SCALE_HEIGHT = 100U;
+constexpr static uint32_t RESOLUTION_SCALE_WIDTH = 100U;
+constexpr static uint32_t RESOLUTION_SCALE_HEIGHT = 100U;
 
 bool Collision::IsReady () noexcept
 {
@@ -50,14 +51,13 @@ bool Collision::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime )
     }
 
     GXMat4 transform {};
-    constexpr float rendererScale = 32.0F;
-    constexpr float sphereSize = 0.02F * rendererScale;
+    constexpr float sphereSize = 0.02F * UNITS_IN_METER;
     constexpr GXVec3 sphereDims ( sphereSize * 0.5F, sphereSize * 0.5F, sphereSize * 0.5F );
     transform.Scale ( sphereSize, sphereSize, sphereSize );
 
     auto submit = [ & ] ( GXVec3 const &loc, GXColorRGB const &color ) noexcept {
         GXVec3 location {};
-        location.Multiply ( loc, rendererScale );
+        location.Multiply ( loc, UNITS_IN_METER );
         transform.SetW ( location );
 
         GXAABB bounds {};
@@ -400,8 +400,6 @@ bool Collision::AppendCuboid ( android_vulkan::Renderer &renderer,
 
 void Collision::UpdateCuboid ( CubeInfo &cube ) noexcept
 {
-    constexpr float const physicsToRender = 32.0F;
-
     // NOLINTNEXTLINE
     auto& c = *static_cast<StaticMeshComponent*> ( cube._component.get () );
 
@@ -410,14 +408,14 @@ void Collision::UpdateCuboid ( CubeInfo &cube ) noexcept
     GXMat4 transform = cube._body->GetTransform ();
 
     GXVec3 dims ( s.GetWidth (), s.GetHeight (), s.GetDepth () );
-    dims.Multiply ( dims, physicsToRender );
+    dims.Multiply ( dims, UNITS_IN_METER );
 
     GXMat4 scale {};
     scale.Scale ( dims._data[ 0U ], dims._data[ 1U ], dims._data[ 2U ] );
 
     GXVec3 location {};
     transform.GetW ( location );
-    location.Multiply ( location, physicsToRender );
+    location.Multiply ( location, UNITS_IN_METER );
     transform.SetW ( location );
 
     GXMat4 resultTransform {};

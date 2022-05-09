@@ -24,7 +24,7 @@ Property | Description
 --- | ---
 _X_ | from left to right
 _Y_ | from bottom to top
-_Z_ | from viewer to infinity
+_Z_ | viewer sight direction
 _Unit length_ | 1 [meter](https://en.wikipedia.org/wiki/Metre)
 
 ## <a id="metamethods">Metamethods</a>

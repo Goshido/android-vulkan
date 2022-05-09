@@ -9,6 +9,7 @@ require "av://engine/script_component.lua"
 - [_Brief_](#brief)
 - [_Metamethods_](#metamethods)
 - [`Constructor`](#constructor)
+- [`GetName ()`](#method-get-name)
 - [`OnActorConstructed ( self, actor )`](#method-on-actor-constructed)
 - [`OnPostPhysics ( self, deltaTime )`](#method-on-post-physics)
 - [`OnPrePhysics ( self, deltaTime )`](#method-on-pre-physics)
@@ -148,6 +149,38 @@ local params = {
 
 actor:AppendComponent ( ScriptComponent ( "Script", "av://assets/Scripts/player.lua", params ) )
 g_scene:AppendActor ( actor )
+```
+
+## <a id="method-get-name">`GetName ()`</a>
+
+Method returns name of the component.
+
+**Parameters:**
+
+- none
+
+**Return values:**
+
+- `#1` [_required, string_]: name of the component
+
+**Example:**
+
+```lua
+require "av://engine/scene.lua"
+
+
+local actor = Actor ( "Player" )
+
+local params = {
+    _health = 100,
+    _damage = 7
+}
+
+actor:AppendComponent ( ScriptComponent ( "Script", "av://assets/Scripts/player.lua", params ) )
+g_scene:AppendActor ( actor )
+
+local script = actor:FindComponent ( "Script" )
+local name = script:GetName ()
 ```
 
 ## <a id="method-on-actor-constructed">`OnActorConstructed ( self, actor )`</a>

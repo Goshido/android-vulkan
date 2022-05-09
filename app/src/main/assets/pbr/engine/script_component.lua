@@ -3,7 +3,7 @@ require "av://engine/component.lua"
 
 ScriptComponent = {}
 
--- helper
+-- Helper
 local function MakeParams ( params )
     if ( not params ) then
         return nil
@@ -29,7 +29,7 @@ local function MakeScriptComponent ( handle, script, params )
     return fabric ( handle, params )
 end
 
--- metamethods
+-- Metamethods
 local function Constructor ( self, ... )
     local argv = { ... }
     local argc = #argv
@@ -54,7 +54,7 @@ end
 
 setmetatable ( ScriptComponent, { __call = Constructor } )
 
--- module contract
+-- Module contract
 function RegisterScriptComponent ( handle, script, params )
     return MakeScriptComponent ( handle, script, MakeParams ( params ) )
 end

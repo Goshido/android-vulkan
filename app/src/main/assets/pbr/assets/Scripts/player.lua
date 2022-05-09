@@ -7,7 +7,7 @@ local Player = {}
 
 -- Engine events
 local function OnActorConstructed ( self, actor )
-    LogD ( "Player:OnActorConstructed >>>" )
+    LogD ( ">>> Player:OnActorConstructed" )
 
     for groupKey, group in pairs ( actor._components ) do
         for k, v in pairs ( group ) do

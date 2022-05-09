@@ -1,6 +1,17 @@
 #include <pbr/scene.h>
+#include <pbr/coordinate_system.h>
 #include <pbr/renderable_component.h>
 #include <pbr/script_engine.h>
+
+GX_DISABLE_COMMON_WARNINGS
+
+extern "C" {
+
+#include <lua/lauxlib.h>
+
+} // extern "C"
+
+GX_RESTORE_WARNING_STATE
 
 
 namespace pbr {
@@ -28,6 +39,22 @@ bool Scene::OnInitDevice ( android_vulkan::Physics &physics ) noexcept
 
     if ( lua_pcall ( _vm, 1, 1, ScriptEngine::GetErrorHandlerIndex () ) != LUA_OK )
         return false;
+
+    constexpr luaL_Reg const extentions[] =
+    {
+        {
+            .name = "av_SceneGetPhysicsToRendererScaleFactor",
+            .func = &Scene::OnGetPhysicsToRendererScaleFactor
+        },
+
+        {
+            .name = "av_SceneGetRendererToPhysicsScaleFactor",
+            .func = &Scene::OnGetRendererToPhysicsScaleFactor
+        }
+    };
+
+    for ( auto const& extension : extentions )
+        lua_register ( _vm, extension.name, extension.func );
 
     _sceneHandle = lua_gettop ( _vm );
 
@@ -151,6 +178,32 @@ void Scene::Submit ( RenderSession &renderSession ) noexcept
         auto& renderableComponent = static_cast<RenderableComponent&> ( *component.get () );
         renderableComponent.Submit ( renderSession );
     }
+}
+
+int Scene::OnGetPhysicsToRendererScaleFactor ( lua_State* state )
+{
+    if ( lua_checkstack ( state, 1 ) )
+    {
+        constexpr auto scaleFactor = static_cast<lua_Number> ( UNITS_IN_METER );
+        lua_pushnumber ( state, scaleFactor );
+        return 1;
+    }
+
+    android_vulkan::LogError ( "pbr::Scene::OnGetPhysicsToRendererScaleFactor - Stack too small." );
+    return 0;
+}
+
+int Scene::OnGetRendererToPhysicsScaleFactor ( lua_State* state )
+{
+    if ( lua_checkstack ( state, 1 ) )
+    {
+        constexpr auto scaleFactor = static_cast<lua_Number> ( METERS_IN_UNIT );
+        lua_pushnumber ( state, scaleFactor );
+        return 1;
+    }
+
+    android_vulkan::LogError ( "pbr::Scene::OnGetPhysicsToRendererScaleFactor - Stack too small." );
+    return 0;
 }
 
 } // namespace pbr

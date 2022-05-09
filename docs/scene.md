@@ -12,6 +12,8 @@
 - [`AppendActor ( actor )`](#method-append-actor)
 - [`FindActor ( name )`](#method-find-actor)
 - [`FindActors ( name )`](#method-find-actors)
+- [`GetPhysicsToRenderScaleFactor ()`](#method-get-physics-to-renderer-scale-factor)
+- [`GetRenderToPhysicsScaleFactor ()`](#method-get-renderer-to-physics-scale-factor)
 
 ## <a id="brief">Brief</a>
 
@@ -132,4 +134,59 @@ lamp1:AppendComponent ( PointLightComponent ( "Light" ) )
 g_scene:AppenActor ( lamp1 )
 
 local lamps = g_scene:FindActors ( "Lamp" )
+```
+
+## <a id="method-get-physics-to-renderer-scale-factor">`GetPhysicsToRendererScaleFactor ()`</a>
+
+Method returns scale factor to convert [physics coordinate system](./rigid-body-component.md#note-physics-coordinate-system) to render coordinate system.
+
+**Parameters:**
+
+- none
+
+**Return values:**
+
+- `#1` [_required, number_]: scale factor
+
+**Example:**
+
+```lua
+require "av://engine/scene.lua"
+
+
+local actor = Actor ( "Box" )
+local body = RigidBodyComponent ( "RigidBody" )
+actor:AppendComponent ( body )
+g_scene:AppendActor ( actor )
+
+local locationPhysics = GXVec3 ()
+body:GetLocation ( locationPhysics )
+
+local locationRender = GXVec3 ()
+locationRender:MultiplyScalar ( locationPhysics, g_scene:GetPhysicsToRenderScaleFactor () )
+```
+
+## <a id="method-get-renderer-to-physics-scale-factor">`GetRendererToPhysicsScaleFactor ()`</a>
+
+Method returns scale factor to convert render coordinate system to [physics coordinate system](./rigid-body-component.md#note-physics-coordinate-system).
+
+**Parameters:**
+
+- none
+
+**Return values:**
+
+- `#1` [_required, number_]: scale factor
+
+**Example:**
+
+```lua
+require "av://engine/scene.lua"
+
+
+local locationRender = GXVec3 ()
+locationRender:Init ( 777.0, 3.33, 1.0 )
+
+local locationPhysics = GXVec3 ()
+locationPhysics:MultiplyScalar ( locationRender, g_scene:GetRendererToPhysicsScaleFactor () )
 ```

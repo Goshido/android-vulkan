@@ -59,6 +59,17 @@ local function Length ( self )
     return av_GXVec3Length ( self._handle )
 end
 
+local function MultiplyScalar ( self, a, scale )
+    assert ( type ( self ) == "table" and self._type == eObjectType.GXVec3,
+        [[GXVec3:MultiplyScalar - Calling not via ":" syntax.]]
+    )
+
+    assert ( type ( a ) == "table" and a._type == eObjectType.GXVec3, [[GXVec3:MultiplyScalar - "a" is not a GXVec3.]] )
+    assert ( type ( scale ) == "number", [[GXVec3:MultiplyScalar - "scale" is not a number.]] )
+
+    av_GXVec3MultiplyScalar ( self._handle, a._handle, scale )
+end
+
 local function Normalize ( self )
     assert ( type ( self ) == "table" and self._type == eObjectType.GXVec3,
         [[GXVec3:Normalize - Calling not via ":" syntax.]]
@@ -156,6 +167,7 @@ local function Constructor ( self )
     obj.DotProduct = DotProduct
     obj.Init = Init
     obj.Length = Length
+    obj.MultiplyScalar = MultiplyScalar
     obj.Normalize = Normalize
     obj.Reverse = Reverse
     obj.SquaredDistance = SquaredDistance

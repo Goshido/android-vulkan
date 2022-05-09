@@ -5,7 +5,7 @@
 
 namespace pbr {
 
-[[maybe_unused]] int ScriptComponent::_registerScriptComponentIndex = std::numeric_limits<int>::max ();
+int ScriptComponent::_registerScriptComponentIndex = std::numeric_limits<int>::max ();
 
 ScriptComponent::ScriptComponent ( std::string &&script ) noexcept:
     Component ( ClassID::Script, android_vulkan::GUID::GenerateAsString ( "Script" ) ),
@@ -52,7 +52,7 @@ bool ScriptComponent::Init ( lua_State &vm ) noexcept
 
     if ( lua_getglobal ( &vm, "RegisterScriptComponent" ) != LUA_TFUNCTION )
     {
-        android_vulkan::LogError ( "pbr::Scene::OnInitDevice - Can't find register function." );
+        android_vulkan::LogError ( "pbr::ScriptComponent::Init - Can't find register function." );
         return false;
     }
 

@@ -97,13 +97,26 @@ void Actor::RegisterComponents ( ComponentList &freeTransferResource,
             // NOLINTNEXTLINE - downcast.
             auto& rigiBodyComponent = static_cast<RigidBodyComponent&> ( *component );
 
-            if ( !rigiBodyComponent.Register ( *this, physics ) )
+            lua_pushvalue ( &vm, _appendComponentIndex );
+            lua_pushvalue ( &vm, -2 );
+
+            if ( !rigiBodyComponent.Register ( *this, physics, vm ) )
             {
                 android_vulkan::LogWarning ( "pbr::Actor::RegisterComponents - Can't register rigid body "
                     "component %s.",
                     rigiBodyComponent.GetName ().c_str ()
                 );
+
+                lua_pop ( &vm, 2 );
+                continue;
             }
+
+            if ( lua_pcall ( &vm, 2, 0, ScriptEngine::GetErrorHandlerIndex () ) == LUA_OK )
+                continue;
+
+            android_vulkan::LogWarning ( "pbr::Actor::RegisterComponents - Can't append rigid body component "
+                "inside Lua VM."
+            );
 
             continue;
         }
@@ -132,13 +145,14 @@ void Actor::RegisterComponents ( ComponentList &freeTransferResource,
                     scriptComponent.GetName ().c_str ()
                 );
 
+                lua_pop ( &vm, 2 );
                 continue;
             }
 
             if ( lua_pcall ( &vm, 2, 0, ScriptEngine::GetErrorHandlerIndex () ) == LUA_OK )
                 continue;
 
-            android_vulkan::LogWarning ( "pbr::Actor::RegisterComponents - Can't register script component "
+            android_vulkan::LogWarning ( "pbr::Actor::RegisterComponents - Can't append script component "
                 "inside Lua VM."
             );
         }

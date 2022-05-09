@@ -9,5 +9,6 @@
 - [_GXVec3_](./gx-vec3.md)
 - [_GXVec4_](./gx-vec4.md)
 - [_Logger_](./logger.md)
+- [_RigidBodyComponent_](./rigid-body-component.md)
 - [_Scene_](./scene.md)
 - [_ScriptComponent_](./script-component.md)

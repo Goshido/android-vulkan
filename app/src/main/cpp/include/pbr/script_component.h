@@ -29,7 +29,7 @@ class ScriptComponent final : public Component
 
         ~ScriptComponent () override = default;
 
-        [[nodiscard]] bool Register ( lua_State &vm) noexcept;
+        [[nodiscard]] bool Register ( lua_State &vm ) noexcept;
 
         [[nodiscard]] static bool Init ( lua_State &vm ) noexcept;
 

@@ -58,6 +58,10 @@ class Scene final
         void AppendActor ( ActorRef &actor ) noexcept;
         void FreeTransferResources ( VkDevice device ) noexcept;
         void Submit ( RenderSession &renderSession ) noexcept;
+
+    private:
+        [[nodiscard]] static int OnGetPhysicsToRendererScaleFactor ( lua_State* state );
+        [[nodiscard]] static int OnGetRendererToPhysicsScaleFactor ( lua_State* state );
 };
 
 } // namespace pbr

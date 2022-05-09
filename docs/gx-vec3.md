@@ -14,6 +14,7 @@ require "av://engine/gx_vec3.lua"
 - [`DotProduct ( other )`](#method-dot-product)
 - [`Init ( x, y, z )`](#method-init)
 - [`Length ()`](#method-length)
+- [`MultiplyScalar ( a, scale )`](#method-multiply-scalar)
 - [`Normalize ()`](#method-normalize)
 - [`Reverse ()`](#method-reverse)
 - [`SquaredDistance ( other )`](#method-squared-distance)
@@ -224,6 +225,34 @@ require "av://engine/gx_vec3.lua"
 local v = GXVec3 ()
 v:Init ( 777.0, 3.33, 1.0 )
 local l = v:Length ()
+```
+
+## <a id="method-multiply-scalar">`MultiplyScalar ( a, scale )`</a>
+
+Method multiplies each component of vector `a` by `scale` value. The result is written to current vector.
+
+**Note:** It's perfectly fine to pass current vector as `a` parameter.
+
+**Parameters:**
+
+- `a` [_required, readonly, [GXVec3](./gx-vec3.md)_]: vector
+- `scale` [_required, readonly, number_]: scalar
+
+**Return values:**
+
+- none
+
+**Example:**
+
+```lua
+require "av://engine/gx_vec3.lua"
+
+
+local v = GXVec3 ()
+v:Init ( 777.0, 3.33, 1.0 )
+
+local res = GXVec3 ()
+res:MultiplyScalar ( v, -7.77 )
 ```
 
 ## <a id="method-normalize">`Normalize ()`</a>

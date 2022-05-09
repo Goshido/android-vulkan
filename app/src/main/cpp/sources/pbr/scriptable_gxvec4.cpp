@@ -29,7 +29,7 @@ void ScriptableGXVec4::Init ( lua_State &vm ) noexcept
     for ( size_t i = 0U; i < INITIAL_CAPACITY; ++i )
         Insert ( new Item {}, _free );
 
-    luaL_Reg const extentions[] =
+    constexpr luaL_Reg const extentions[] =
     {
         {
             .name = "av_GXVec4Create",

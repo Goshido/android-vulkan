@@ -30,7 +30,7 @@ void ScriptableGXVec3::Init ( lua_State &vm ) noexcept
     for ( size_t i = 0U; i < INITIAL_CAPACITY; ++i )
         Insert ( new Item {}, _free );
 
-    luaL_Reg const extentions[] =
+    constexpr luaL_Reg const extentions[] =
     {
         {
             .name = "av_GXVec3Create",
@@ -65,6 +65,11 @@ void ScriptableGXVec3::Init ( lua_State &vm ) noexcept
         {
             .name = "av_GXVec3Length",
             .func = &ScriptableGXVec3::OnLength
+        },
+
+        {
+            .name = "av_GXVec3MultiplyScalar",
+            .func = &ScriptableGXVec3::OnMultiplyScalar
         },
 
         {
@@ -254,6 +259,15 @@ int ScriptableGXVec3::OnLength ( lua_State* state )
     auto const& item = *static_cast<Item const*> ( lua_touserdata ( state, 1 ) );
     lua_pushnumber ( state, static_cast<lua_Number> ( item._vec3.Length () ) );
     return 1;
+}
+
+int ScriptableGXVec3::OnMultiplyScalar ( lua_State* state )
+{
+    auto& self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    auto const& a = *static_cast<Item const*> ( lua_touserdata ( state, 2 ) );
+
+    self._vec3.Multiply ( a._vec3, static_cast<GXFloat> ( lua_tonumber ( state, 3 ) ) );
+    return 0;
 }
 
 int ScriptableGXVec3::OnNormalize ( lua_State* state )

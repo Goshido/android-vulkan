@@ -17,7 +17,7 @@ namespace pbr {
 
 void ScriptableLogger::Register ( lua_State &vm ) noexcept
 {
-    luaL_Reg const extentions[] =
+    constexpr luaL_Reg const extentions[] =
     {
         {
             .name = "av_LogD",

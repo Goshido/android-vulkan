@@ -1,6 +1,7 @@
 #include <pbr/script_engine.h>
 #include <pbr/actor.h>
 #include <pbr/component.h>
+#include <pbr/rigid_body_component.h>
 #include <pbr/script_component.h>
 #include <pbr/scriptable_gxmat3.h>
 #include <pbr/scriptable_gxmat4.h>
@@ -80,7 +81,7 @@ bool ScriptEngine::ExtendFrontend () const noexcept
     Component::Register ( vm );
     ScriptableLogger::Register ( vm );
 
-    return ScriptComponent::Init ( vm ) && Actor::Register ( vm );
+    return ScriptComponent::Init ( vm ) && Actor::Register ( vm ) && RigidBodyComponent::Init ( vm );
 }
 
 bool ScriptEngine::InitInterfaceFunctions () noexcept
@@ -130,7 +131,7 @@ void ScriptEngine::InitLibraries () const noexcept
     // The idea is taken from luaL_openlibs implementation.
     // Commit SHA-1: 8426d9b4d4df1da3c5b2d759e509ae1c50a86667
 
-    luaL_Reg const libs[] =
+    constexpr luaL_Reg const libs[] =
     {
         { 
             .name = LUA_GNAME,

@@ -1,4 +1,5 @@
 require "av://engine/actor.lua"
+require "av://engine/rigid_body_component.lua"
 require "av://engine/script_component.lua"
 
 
@@ -53,6 +54,14 @@ local function FindActors ( self, name )
     return self._actors[ name ]
 end
 
+local function GetPhysicsToRendererScaleFactor ( self )
+    return av_SceneGetPhysicsToRendererScaleFactor ()
+end
+
+local function GetRendererToPhysicsScaleFactor ( self )
+    return av_SceneGetRendererToPhysicsScaleFactor ()
+end
+
 local function OnPostPhysics ( self, deltaTime )
     for k, v in pairs ( self._postPhysicsScripts ) do
         v:OnPostPhysics ( deltaTime )
@@ -86,6 +95,8 @@ local function Constructor ( self, handle )
     obj.AppendActor = AppendActor
     obj.FindActor = FindActor
     obj.FindActors = FindActors
+    obj.GetPhysicsToRendererScaleFactor = GetPhysicsToRendererScaleFactor
+    obj.GetRendererToPhysicsScaleFactor = GetRendererToPhysicsScaleFactor
     obj.OnPostPhysics = OnPostPhysics
     obj.OnPrePhysics = OnPrePhysics
     obj.OnUpdate = OnUpdate

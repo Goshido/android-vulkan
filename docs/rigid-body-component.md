@@ -1,0 +1,136 @@
+# _RigidBodyComponent_
+
+```lua
+require "av://engine/rigid_body_component.lua"
+```
+
+## Table of content
+
+- [_Brief_](#brief)
+- [_Metamethods_](#metamethods)
+- [`Constructor`](#constructor)
+- [`GetLocation ( location )`](#method-get-location)
+- [`GetName ()`](#method-get-name)
+
+## <a id="brief">Brief</a>
+
+Class represents rigid body entity which is one of the main building blocks of the physics simulation. There two main category for rigid bodies: *_kinematic_* and *_dynamic_*. The kinematic body has infinite mass and it is the best tool for describing level geometry. The dynamic body is simulated according physics laws. Dynamic body also controls the transfromation of every transformable components which are attached to the current [_Actor_](./actor.md).
+
+**Important rule:** There must be no more that one [_RigidBodyComponent_](./rigid-body-component.md) attached to current [_Actor_](./actor.md). This rule helps to avoid ambiguity between physics simulation and graphics representation.
+
+<a id="note-physics-coordinate-system">**Importan note:**</a> Physics coordinate system is different from renderer coordinate system in term of unit length. The following table describes physics coordinate system properties:
+
+Property | Description
+--- | ---
+_X_ | from left to right
+_Y_ | from bottom to top
+_Z_ | from viewer to infinity
+_Unit length_ | 1 [meter](https://en.wikipedia.org/wiki/Metre)
+
+## <a id="metamethods">Metamethods</a>
+
+Metamethod | Used
+--- | ---
+`__add` | ❌
+`__band` | ❌
+`__bnot` | ❌
+`__bor` | ❌
+`__bxor` | ❌
+`__call` | ✔️
+`__close` | ❌
+`__concat` | ❌
+`__div` | ❌
+`__eq` | ❌
+`__gc` | ❌
+`__idiv` | ❌
+`__index` | ❌
+`__le` | ❌
+`__len` | ❌
+`__lt` | ❌
+`__mod` | ❌
+`__mode` | ❌
+`__mul` | ❌
+`__name` | ❌
+`__newindex` | ❌
+`__pow` | ❌
+`__shl` | ❌
+`__shr` | ❌
+`__sub` | ❌
+`__tostring` | ❌
+`__unm` | ❌
+
+## <a id="constructor">`Constructor`</a>
+
+Constructor creates new rigid body component with default properties.
+
+**Parameters:**
+
+- `name` [_required, readonly, string_]: name of the component
+
+**Example:**
+
+```lua
+require "av://engine/scene.lua"
+
+
+local actor = Actor ( "Box" )
+
+actor:AppendComponent ( RigidBodyComponent ( "RigidBody" ) )
+g_scene:AppendActor ( actor )
+```
+
+## <a id="method-get-location">`GetLocation ( location )`</a>
+
+Method writes the body location in world space to the supplied `location` vector of the [_GXVec3_](./gx-vec3.md) type.
+
+**Note:** This method returns location in [physics coordinate system](#note-physics-coordinate-system).
+
+**Parameters:**
+
+- `location` [_required, writeonly, [_GXVec3_](./gx-vec3.md)_]: target vector
+
+**Return values:**
+
+- none
+
+**Example:**
+
+```lua
+require "av://engine/scene.lua"
+
+
+local actor = Actor ( "Box" )
+local body = RigidBodyComponent ( "RigidBody" )
+actor:AppendComponent ( body )
+g_scene:AppendActor ( actor )
+
+local location = GXVec3 ()
+body:GetLocation ( location )
+```
+
+## <a id="method-get-name">`GetName ()`</a>
+
+Method returns name of the component.
+
+**Parameters:**
+
+- none
+
+**Return values:**
+
+- `#1` [_required, string_]: name of the component
+
+**Example:**
+
+```lua
+require "av://engine/scene.lua"
+
+
+local actor = Actor ( "Box" )
+
+actor:AppendComponent ( RigidBodyComponent ( "RigidBody" ) )
+g_scene:AppendActor ( actor )
+
+local rigidBody = actor:FindComponent ( "RigidBody" )
+local name = rigidBody:GetName ()
+```

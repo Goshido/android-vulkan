@@ -1,3 +1,4 @@
+require "av://engine/gx_quat.lua"
 require "av://engine/gx_vec3.lua"
 require "av://engine/gx_vec4.lua"
 

@@ -1,5 +1,6 @@
 #include <pbr/script_engine.h>
 #include <pbr/actor.h>
+#include <pbr/camera_component.h>
 #include <pbr/component.h>
 #include <pbr/rigid_body_component.h>
 #include <pbr/script_component.h>
@@ -81,7 +82,10 @@ bool ScriptEngine::ExtendFrontend () const noexcept
     Component::Register ( vm );
     ScriptableLogger::Register ( vm );
 
-    return ScriptComponent::Init ( vm ) && Actor::Register ( vm ) && RigidBodyComponent::Init ( vm );
+    return ScriptComponent::Init ( vm ) &&
+        Actor::Init ( vm ) &&
+        RigidBodyComponent::Init ( vm ) &&
+        CameraComponent::Init ( vm );
 }
 
 bool ScriptEngine::InitInterfaceFunctions () noexcept
@@ -235,11 +239,13 @@ void ScriptEngine::Free ( lua_State* state ) noexcept
 {
     lua_close ( state );
 
-    pbr::ScriptableGXVec4::Destroy ();
-    pbr::ScriptableGXVec3::Destroy ();
-    pbr::ScriptableGXQuat::Destroy ();
-    pbr::ScriptableGXMat4::Destroy ();
-    pbr::ScriptableGXMat3::Destroy ();
+    ScriptableGXVec4::Destroy ();
+    ScriptableGXVec3::Destroy ();
+    ScriptableGXQuat::Destroy ();
+    ScriptableGXMat4::Destroy ();
+    ScriptableGXMat3::Destroy ();
+
+    Actor::Destroy ();
 }
 
 bool ScriptEngine::LoadScript ( lua_State* vm,

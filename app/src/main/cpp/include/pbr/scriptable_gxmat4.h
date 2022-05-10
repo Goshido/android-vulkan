@@ -45,6 +45,8 @@ class ScriptableGXMat4 final
         static void Init ( lua_State &vm ) noexcept;
         static void Destroy () noexcept;
 
+        [[nodiscard]] static GXMat4& Extract ( lua_State* state, int idx ) noexcept;
+
     private:
         static void Insert ( Item* item, Item*& list ) noexcept;
 

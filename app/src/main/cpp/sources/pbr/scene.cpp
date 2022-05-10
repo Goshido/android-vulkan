@@ -16,8 +16,33 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
+constexpr static float DEFAULT_ASPECT_RATIO = 1920.0F / 1080.0F;
+constexpr static float DEFAULT_FOV = 60.0F;
+constexpr static GXVec3 DEFAULT_LOCATION ( 0.0F, 0.0F, 0.0F );
+constexpr static float DEFAULT_Z_NEAR = 1.0e-1F;
+constexpr static float DEFAULT_Z_FAR = 1.0e+4F;
+
+//----------------------------------------------------------------------------------------------------------------------
+
+GXMat4 const& Scene::GetActiveCameraLocalMatrix () const noexcept
+{
+    return _camera->GetLocalMatrix ();
+}
+
+GXMat4 const& Scene::GetActiveCameraProjectionMatrix () const noexcept
+{
+    return _camera->GetProjectionMatrix ();
+}
+
 bool Scene::OnInitDevice ( android_vulkan::Physics &physics ) noexcept
 {
+    _defaultCamera.SetProjection ( GXDegToRad ( DEFAULT_FOV ), DEFAULT_ASPECT_RATIO, DEFAULT_Z_NEAR, DEFAULT_Z_FAR );
+
+    GXMat4 defaultTransform {};
+    defaultTransform.Translation ( DEFAULT_LOCATION );
+    _defaultCamera.SetLocal ( defaultTransform );
+    _camera = &_defaultCamera;
+
     _physics = &physics;
     ScriptEngine& scriptEngine = ScriptEngine::GetInstance ();
 
@@ -50,6 +75,26 @@ bool Scene::OnInitDevice ( android_vulkan::Physics &physics ) noexcept
         {
             .name = "av_SceneGetRendererToPhysicsScaleFactor",
             .func = &Scene::OnGetRendererToPhysicsScaleFactor
+        },
+
+        {
+            .name = "av_SceneGetRenderTargetAspectRatio",
+            .func = &Scene::OnGetRenderTargetAspectRatio
+        },
+
+        {
+            .name = "av_SceneGetRenderTargetWidth",
+            .func = &Scene::OnGetRenderTargetWidth
+        },
+
+        {
+            .name = "av_SceneGetRenderTargetHeight",
+            .func = &Scene::OnGetRenderTargetHeight
+        },
+
+        {
+            .name = "av_SceneSetActiveCamera",
+            .func = &Scene::OnSetActiveCamera
         }
     };
 
@@ -80,6 +125,9 @@ bool Scene::OnInitDevice ( android_vulkan::Physics &physics ) noexcept
     if ( !bind ( "OnPrePhysics", _onPrePhysicsIndex ) )
         return false;
 
+    if ( !bind ( "OnRenderTargetChanged", _onRenderTargetChangedIndex ) )
+        return false;
+
     return bind ( "OnUpdate", _onUpdateIndex );
 }
 
@@ -95,6 +143,7 @@ void Scene::OnDestroyDevice () noexcept
     _vm = nullptr;
     _onPostPhysicsIndex = std::numeric_limits<int>::max ();
     _onPrePhysicsIndex = std::numeric_limits<int>::max ();
+    _onRenderTargetChangedIndex = std::numeric_limits<int>::max ();
     _onUpdateIndex = std::numeric_limits<int>::max ();
     _sceneHandle = std::numeric_limits<int>::max ();
 }
@@ -127,6 +176,31 @@ bool Scene::OnPostPhysics ( double deltaTime ) noexcept
     lua_pushvalue ( _vm, _sceneHandle );
     lua_pushnumber ( _vm, deltaTime );
     lua_pcall ( _vm, 2, 0, ScriptEngine::GetErrorHandlerIndex () );
+
+    return true;
+}
+
+bool Scene::OnResolutionChanged ( VkExtent2D const &resolution, double aspectRatio ) noexcept
+{
+    auto const w = static_cast<lua_Integer> ( resolution.width );
+    auto const h = static_cast<lua_Integer> ( resolution.height );
+
+    if ( ( w == _width ) & ( h == _height ) & ( aspectRatio == _aspectRatio ) )
+        return true;
+
+    _aspectRatio = static_cast<lua_Number> ( aspectRatio );
+    _width = static_cast<lua_Integer> ( resolution.width );
+    _height = static_cast<lua_Integer> ( resolution.height );
+
+    if ( !lua_checkstack ( _vm, 2 ) )
+    {
+        android_vulkan::LogError ( "pbr::Scene::OnResolutionChanged - Stack too small." );
+        return false;
+    }
+
+    lua_pushvalue ( _vm, _onRenderTargetChangedIndex );
+    lua_pushvalue ( _vm, _sceneHandle );
+    lua_pcall ( _vm, 1, 0, ScriptEngine::GetErrorHandlerIndex () );
 
     return true;
 }
@@ -203,6 +277,52 @@ int Scene::OnGetRendererToPhysicsScaleFactor ( lua_State* state )
     }
 
     android_vulkan::LogError ( "pbr::Scene::OnGetPhysicsToRendererScaleFactor - Stack too small." );
+    return 0;
+}
+
+int Scene::OnGetRenderTargetAspectRatio ( lua_State* state )
+{
+    if ( !lua_checkstack ( state, 1 ) )
+    {
+        android_vulkan::LogError ( "pbr::Scene::OnGetRenderTargetAspectRatio - Stack too small." );
+        return 0;
+    }
+
+    auto const& self = *static_cast<Scene const*> ( lua_touserdata ( state, 1 ) );
+    lua_pushnumber ( state, self._aspectRatio );
+    return 1;
+}
+
+int Scene::OnGetRenderTargetWidth ( lua_State* state )
+{
+    if ( !lua_checkstack ( state, 1 ) )
+    {
+        android_vulkan::LogError ( "pbr::Scene::OnGetRenderTargetWidth - Stack too small." );
+        return 0;
+    }
+
+    auto const& self = *static_cast<Scene const*> ( lua_touserdata ( state, 1 ) );
+    lua_pushinteger ( state, self._width );
+    return 1;
+}
+
+int Scene::OnGetRenderTargetHeight ( lua_State* state )
+{
+    if ( !lua_checkstack ( state, 1 ) )
+    {
+        android_vulkan::LogError ( "pbr::Scene::OnGetRenderTargetHeight - Stack too small." );
+        return 0;
+    }
+
+    auto const& self = *static_cast<Scene const*> ( lua_touserdata ( state, 1 ) );
+    lua_pushinteger ( state, self._height );
+    return 1;
+}
+
+int Scene::OnSetActiveCamera ( lua_State* state )
+{
+    auto& self = *static_cast<Scene*> ( lua_touserdata ( state, 1 ) );
+    self._camera = static_cast<CameraComponent*> ( lua_touserdata ( state, 2 ) );
     return 0;
 }
 

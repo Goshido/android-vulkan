@@ -266,7 +266,7 @@ int ScriptableGXVec3::OnMultiplyScalar ( lua_State* state )
     auto& self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
     auto const& a = *static_cast<Item const*> ( lua_touserdata ( state, 2 ) );
 
-    self._vec3.Multiply ( a._vec3, static_cast<GXFloat> ( lua_tonumber ( state, 3 ) ) );
+    self._vec3.Multiply ( a._vec3, static_cast<float> ( lua_tonumber ( state, 3 ) ) );
     return 0;
 }
 

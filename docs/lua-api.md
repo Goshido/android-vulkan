@@ -3,6 +3,7 @@
 ## Modules
 
 - [_Actor_](./actor.md)
+- [_CameraComponent_](./camera-component.md)
 - [_GXMat3_](./gx-mat3.md)
 - [_GXMat4_](./gx-mat4.md)
 - [_GXQuat_](./gx-quat.md)

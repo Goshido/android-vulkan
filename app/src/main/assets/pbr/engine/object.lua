@@ -10,6 +10,7 @@ end ) ()
 
 eObjectType = {
     Actor = MakeUniqueID (),
+    CameraComponent = MakeUniqueID (),
     GXMat3 = MakeUniqueID (),
     GXMat4 = MakeUniqueID (),
     GXQuat = MakeUniqueID (),

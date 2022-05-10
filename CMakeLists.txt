@@ -78,6 +78,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/mandelbrot/mandelbrot_lut_color.cpp
     app/src/main/cpp/sources/pbr/actor.cpp
     app/src/main/cpp/sources/pbr/camera.cpp
+    app/src/main/cpp/sources/pbr/camera_component.cpp
     app/src/main/cpp/sources/pbr/component.cpp
     app/src/main/cpp/sources/pbr/cube_map_manager.cpp
     app/src/main/cpp/sources/pbr/default_texture_manager.cpp

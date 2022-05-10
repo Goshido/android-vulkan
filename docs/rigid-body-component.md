@@ -27,6 +27,8 @@ _Y_ | from bottom to top
 _Z_ | viewer sight direction
 _Unit length_ | 1 [meter](https://en.wikipedia.org/wiki/Metre)
 
+See [`Scene:GetPhysicsToRenderScaleFactor`](./scene.md#method-get-physics-to-renderer-scale-factor) and [`Scene:GetRenderToPhysicsScaleFactor`](./scene.md#method-get-renderer-to-physics-scale-factor)
+
 ## <a id="metamethods">Metamethods</a>
 
 Metamethod | Used

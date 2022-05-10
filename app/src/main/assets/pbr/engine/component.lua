@@ -5,7 +5,8 @@ Component = {}
 
 -- Utils
 local function IsComponent ( objectType )
-    return objectType == eObjectType.RigidBodyComponent or
+    return objectType == eObjectType.CameraComponent or
+        objectType == eObjectType.RigidBodyComponent or
         objectType == eObjectType.ScriptComponent
 end
 

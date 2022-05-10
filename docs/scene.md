@@ -14,6 +14,10 @@
 - [`FindActors ( name )`](#method-find-actors)
 - [`GetPhysicsToRenderScaleFactor ()`](#method-get-physics-to-renderer-scale-factor)
 - [`GetRenderToPhysicsScaleFactor ()`](#method-get-renderer-to-physics-scale-factor)
+- [`GetRenderTargetAspectRatio ()`](#method-get-render-target-aspect-ratio)
+- [`GetRenderTargetWidth ()`](#method-get-render-target-width)
+- [`GetRenderTargetHeight ()`](#method-get-render-target-height)
+- [`SetActiveCamera ( camera )`](#method-set-active-camera)
 
 ## <a id="brief">Brief</a>
 
@@ -189,4 +193,114 @@ locationRender:Init ( 777.0, 3.33, 1.0 )
 
 local locationPhysics = GXVec3 ()
 locationPhysics:MultiplyScalar ( locationRender, g_scene:GetRendererToPhysicsScaleFactor () )
+```
+
+## <a id="method-get-render-target-aspect-ratio">`GetRenderTargetAspectRatio ()`</a>
+
+Method returns effective aspect ratio for perspective cameras.
+
+**Note:** Using this value is especially important because of _dynamic resolution_ engine feature.
+
+**Parameters:**
+
+- none
+
+**Return values:**
+
+- `#1` [_required, number_]: aspect ratio
+
+**Example:**
+
+```lua
+require "av://engine/scene.lua"
+
+
+local aspectRatio = g_scene:GetRenderTargetAspectRatio ()
+```
+
+## <a id="method-get-render-target-width">`GetRenderTargetWidth ()`</a>
+
+Method returns render target width in pixels.
+
+**Parameters:**
+
+- none
+
+**Return values:**
+
+- `#1` [_required, integer_]: width in pixels
+
+**Example:**
+
+```lua
+require "av://engine/scene.lua"
+
+
+local width = g_scene:GetRenderTargetAspectRatio ()
+```
+
+## <a id="method-get-render-target-height">`GetRenderTargetHeight ()`</a>
+
+Method returns render target height in pixels.
+
+**Parameters:**
+
+- none
+
+**Return values:**
+
+- `#1` [_required, integer_]: height in pixels
+
+**Example:**
+
+```lua
+require "av://engine/scene.lua"
+
+
+local height = g_scene:GetRenderTargetHeight ()
+```
+
+## <a id="method-set-active-camera">`SetActiveCamera ( camera )`</a>
+
+Method sets active camera of [_CameraComponent_](./camera-component.md) type.
+
+**Parameters:**
+
+- `camera` [_required, readonly,  [_CameraComponent_](./camera-component.md)_]: future active camera
+
+**Return values:**
+
+- none
+
+**Example:**
+
+```lua
+require "av://engine/scene.lua"
+
+
+local mainCamera = Actor ( "Main Camera" )
+local cameraComponent = CameraComponent ( "Camera" )
+
+mainCamera:AppendComponent ( cameraComponent )
+g_scene:AppendActor ( mainCamera )
+
+local axis = GXVec3 ()
+axis:Init ( 7.77, 3.33, 1.0 )
+axis:Normalize ()
+
+local rotation = GXQuat ()
+rotation:FromAxisAngle ( axis, math.rad ( 77.7 ) )
+
+local origin = GXVec3 ()
+origin:Init ( 1.0, 333.0, 0.0 )
+
+local transform = GXMat4 ()
+transform:FromFast ( rotation, origin )
+cameraComponent:SetLocal ( transform )
+
+local width = 1920.0
+local height = 1080.0
+cameraComponent:SetProjection ( math.rad ( 60.0 ), width / height, 1.0e-1, 1.0e+4 )
+
+g_scene:SetActiveCamera ( cameraComponent )
 ```

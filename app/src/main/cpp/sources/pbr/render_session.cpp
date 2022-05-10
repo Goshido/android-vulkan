@@ -166,7 +166,7 @@ void RenderSession::SubmitLight ( LightRef &light ) noexcept
     auto const idx = static_cast<size_t> ( light->GetType () );
     assert ( idx < std::size ( _lightHandlers ) );
 
-    LightHandler handler = _lightHandlers[ idx ];
+    LightHandler const handler = _lightHandlers[ idx ];
 
     // C++ calling method by pointer syntax.
     ( this->*handler ) ( light );
@@ -185,7 +185,7 @@ void RenderSession::SubmitMesh ( MeshRef &mesh,
     auto const idx = static_cast<size_t> ( material->GetMaterialType () );
     assert ( idx < std::size ( _meshHandlers ) );
 
-    MeshHandler handler = _meshHandlers[ idx ];
+    MeshHandler const handler = _meshHandlers[ idx ];
 
     // Calling method by pointer C++ syntax.
     ( this->*handler ) ( mesh, material, local, worldBounds, color0, color1, color2, emission );

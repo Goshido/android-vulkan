@@ -2,6 +2,7 @@
 #define PBR_ACTOR_H
 
 
+#include "component_classes.h"
 #include "types.h"
 #include <physics.h>
 
@@ -23,12 +24,22 @@ namespace pbr {
 class Actor final
 {
     private:
-        std::deque<ComponentRef>    _components {};
-        std::string const           _name;
-        TransformableList           _transformableComponents {};
+        using RegisterHander = void ( Actor::* ) ( ComponentRef &component,
+            ComponentList &freeTransferResource,
+            ComponentList &renderable,
+            android_vulkan::Physics &physics,
+            lua_State &vm
+        ) noexcept;
 
-        static int                  _appendComponentIndex;
-        static int                  _makeActorIndex;
+    private:
+        std::deque<ComponentRef>                                _components {};
+        std::string const                                       _name;
+        TransformableList                                       _transformableComponents {};
+
+        static int                                              _appendComponentIndex;
+        static int                                              _makeActorIndex;
+
+        static std::unordered_map<ClassID, RegisterHander>      _registerHandlers;
 
     public:
         Actor () noexcept;
@@ -55,9 +66,52 @@ class Actor final
             lua_State &vm
         ) noexcept;
 
-        static bool Register ( lua_State &vm ) noexcept;
+        static bool Init ( lua_State &vm ) noexcept;
+        static void Destroy () noexcept;
 
     private:
+        void AppendCameraComponent ( ComponentRef &component,
+            ComponentList &freeTransferResource,
+            ComponentList &renderable,
+            android_vulkan::Physics &physics,
+            lua_State &vm
+        ) noexcept;
+
+        void AppendPointLightComponent ( ComponentRef &component,
+            ComponentList &freeTransferResource,
+            ComponentList &renderable,
+            android_vulkan::Physics &physics,
+            lua_State &vm
+        ) noexcept;
+
+        void AppendReflectionComponent ( ComponentRef &component,
+            ComponentList &freeTransferResource,
+            ComponentList &renderable,
+            android_vulkan::Physics &physics,
+            lua_State &vm
+        ) noexcept;
+
+        void AppendRigidBodyComponent ( ComponentRef &component,
+            ComponentList &freeTransferResource,
+            ComponentList &renderable,
+            android_vulkan::Physics &physics,
+            lua_State &vm
+        ) noexcept;
+
+        void AppendScriptComponent ( ComponentRef &component,
+            ComponentList &freeTransferResource,
+            ComponentList &renderable,
+            android_vulkan::Physics &physics,
+            lua_State &vm
+        ) noexcept;
+        
+        void AppendStaticMeshComponent ( ComponentRef &component,
+            ComponentList &freeTransferResource,
+            ComponentList &renderable,
+            android_vulkan::Physics &physics,
+            lua_State &vm
+        ) noexcept;
+
         [[nodiscard]] static int OnGetName ( lua_State* state );
 };
 

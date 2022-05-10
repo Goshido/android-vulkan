@@ -185,6 +185,12 @@ void ScriptableGXMat4::Destroy () noexcept
     free ( _used );
 }
 
+GXMat4& ScriptableGXMat4::Extract ( lua_State* state, int idx ) noexcept
+{
+    auto& item = *static_cast<Item*> ( lua_touserdata ( state, idx ) );
+    return item._matrix;
+}
+
 void ScriptableGXMat4::Insert ( Item* item, Item*& list ) noexcept
 {
     item->_previous = nullptr;

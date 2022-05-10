@@ -54,7 +54,8 @@ bool World1x1::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) 
 
     _camera.OnUpdate ( dt );
 
-    _renderSession.Begin ( _camera.GetLocalMatrix (), _camera.GetProjectionMatrix () );
+    //_renderSession.Begin ( _camera.GetLocalMatrix (), _camera.GetProjectionMatrix () );
+    _renderSession.Begin ( _scene.GetActiveCameraLocalMatrix (), _scene.GetActiveCameraProjectionMatrix () );
     _scene.Submit ( _renderSession );
 
     if ( !_scene.OnUpdate ( deltaTime ) )
@@ -106,6 +107,19 @@ bool World1x1::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
     logic->AppendComponent ( script );
     _scene.AppendActor ( logic );
 
+    ComponentRef cameraScript = std::make_shared<ScriptComponent> ( "av://assets/Scripts/camera.lua" );
+    ComponentRef cameraComponent = std::make_shared<CameraComponent> ( "Camera" );
+
+    // NOLINTNEXTLINE - downcast.
+    CameraComponent& cc = static_cast<CameraComponent&> ( *cameraComponent );
+    cc.SetProjection ( GXDegToRad ( 60.0F ), 1920.0F / 1080.0F, 1.0e-1F, 1.0e+4F );
+
+    ActorRef camera = std::make_shared<Actor> ( "Camera" );
+    camera->AppendComponent ( cameraScript );
+    camera->AppendComponent ( cameraComponent );
+
+    _scene.AppendActor ( camera );
+
     if ( !UploadGPUContent ( renderer ) )
     {
         OnDestroyDevice ( device );
@@ -148,6 +162,13 @@ bool World1x1::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcep
     _camera.OnResolutionChanged ( surfaceResolution );
 
     if ( !_renderSession.OnSwapchainCreated ( renderer, resolution, _commandPool ) )
+        return false;
+
+    bool const result = _scene.OnResolutionChanged ( resolution,
+        static_cast<double> ( surfaceResolution.width ) / static_cast<double> ( surfaceResolution.height )
+    );
+
+    if ( !result )
         return false;
 
     _physics.Resume ();

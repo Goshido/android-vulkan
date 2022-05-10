@@ -1,4 +1,5 @@
 #include <pbr/actor.h>
+#include <pbr/camera_component.h>
 #include <pbr/point_light_component.h>
 #include <pbr/reflection_component.h>
 #include <pbr/rigid_body_component.h>
@@ -13,6 +14,7 @@ namespace pbr {
 
 int Actor::_appendComponentIndex = std::numeric_limits<int>::max ();
 int Actor::_makeActorIndex = std::numeric_limits<int>::max ();
+std::unordered_map<ClassID, Actor::RegisterHander> Actor::_registerHandlers {};
 
 Actor::Actor () noexcept:
     _name ( android_vulkan::GUID::GenerateAsString ( "Actor" ) )
@@ -65,107 +67,36 @@ void Actor::RegisterComponents ( ComponentList &freeTransferResource,
         return;
     }
 
+    auto const end = _registerHandlers.end ();
+
     for ( auto& component : _components )
     {
-        ClassID const classID = component->GetClassID ();
+        auto findResult = _registerHandlers.find ( component->GetClassID () );
 
-        if ( classID == ClassID::StaticMesh )
-        {
-            // NOLINTNEXTLINE - downcast.
-            auto& transformable = static_cast<StaticMeshComponent&> ( *component );
-
-            freeTransferResource.emplace_back ( std::ref ( component ) );
-            _transformableComponents.emplace_back ( std::ref ( transformable ) );
+        if ( findResult == end )
             continue;
-        }
 
-        if ( classID == ClassID::Reflection )
-        {
-            // NOLINTNEXTLINE - downcast.
-            auto& reflection = static_cast<ReflectionComponent&> ( *component );
+        RegisterHander const handler = findResult->second;
 
-            freeTransferResource.emplace_back ( std::ref ( component ) );
-
-            if ( !reflection.IsGlobalReflection () )
-                _transformableComponents.emplace_back ( std::ref ( reflection ) );
-
-            continue;
-        }
-
-        if ( classID == ClassID::RigidBody )
-        {
-            // NOLINTNEXTLINE - downcast.
-            auto& rigiBodyComponent = static_cast<RigidBodyComponent&> ( *component );
-
-            lua_pushvalue ( &vm, _appendComponentIndex );
-            lua_pushvalue ( &vm, -2 );
-
-            if ( !rigiBodyComponent.Register ( *this, physics, vm ) )
-            {
-                android_vulkan::LogWarning ( "pbr::Actor::RegisterComponents - Can't register rigid body "
-                    "component %s.",
-                    rigiBodyComponent.GetName ().c_str ()
-                );
-
-                lua_pop ( &vm, 2 );
-                continue;
-            }
-
-            if ( lua_pcall ( &vm, 2, 0, ScriptEngine::GetErrorHandlerIndex () ) == LUA_OK )
-                continue;
-
-            android_vulkan::LogWarning ( "pbr::Actor::RegisterComponents - Can't append rigid body component "
-                "inside Lua VM."
-            );
-
-            continue;
-        }
-
-        if ( classID == ClassID::PointLight )
-        {
-            // NOLINTNEXTLINE - downcast.
-            auto& transformable = static_cast<PointLightComponent&> ( *component );
-
-            renderable.emplace_back ( std::ref ( component ) );
-            _transformableComponents.emplace_back ( std::ref ( transformable ) );
-            continue;
-        }
-
-        if ( classID == ClassID::Script )
-        {
-            lua_pushvalue ( &vm, _appendComponentIndex );
-            lua_pushvalue ( &vm, -2 );
-
-            // NOLINTNEXTLINE - downcast.
-            auto& scriptComponent = static_cast<ScriptComponent&> ( *component );
-
-            if ( !scriptComponent.Register ( vm ) )
-            {
-                android_vulkan::LogWarning ( "pbr::Actor::RegisterComponents - Can't register script component %s.",
-                    scriptComponent.GetName ().c_str ()
-                );
-
-                lua_pop ( &vm, 2 );
-                continue;
-            }
-
-            if ( lua_pcall ( &vm, 2, 0, ScriptEngine::GetErrorHandlerIndex () ) == LUA_OK )
-                continue;
-
-            android_vulkan::LogWarning ( "pbr::Actor::RegisterComponents - Can't append script component "
-                "inside Lua VM."
-            );
-        }
+        // C++ calling method by pointer syntax.
+        ( this->*handler ) ( component, freeTransferResource, renderable, physics, vm );
     }
 }
 
-bool Actor::Register ( lua_State &vm ) noexcept
+bool Actor::Init ( lua_State &vm ) noexcept
 {
+    _registerHandlers.emplace ( std::pair ( ClassID::Camera, &Actor::AppendCameraComponent ) );
+    _registerHandlers.emplace ( std::pair ( ClassID::PointLight, &Actor::AppendPointLightComponent ) );
+    _registerHandlers.emplace ( std::pair ( ClassID::Reflection, &Actor::AppendReflectionComponent ) );
+    _registerHandlers.emplace ( std::pair ( ClassID::RigidBody, &Actor::AppendRigidBodyComponent ) );
+    _registerHandlers.emplace ( std::pair ( ClassID::Script, &Actor::AppendScriptComponent ) );
+    _registerHandlers.emplace ( std::pair ( ClassID::StaticMesh, &Actor::AppendStaticMeshComponent ) );
+
     lua_register ( &vm, "av_ActorGetName", &Actor::OnGetName );
 
     if ( !lua_checkstack ( &vm, 2 ) )
     {
-        android_vulkan::LogError ( "pbr::Actor::Register - Stack is too small." );
+        android_vulkan::LogError ( "pbr::Actor::Init - Stack is too small." );
         return false;
     }
 
@@ -176,7 +107,7 @@ bool Actor::Register ( lua_State &vm ) noexcept
             return true;
         }
 
-        android_vulkan::LogError ( "pbr::Actor::Register - Can't find %s function.", function );
+        android_vulkan::LogError ( "pbr::Actor::Init - Can't find %s function.", function );
         return false;
     };
 
@@ -184,6 +115,155 @@ bool Actor::Register ( lua_State &vm ) noexcept
         return false;
 
     return bind ( "MakeActor", _makeActorIndex );
+}
+
+void Actor::Destroy () noexcept
+{
+    _registerHandlers.clear ();
+}
+
+// NOLINTNEXTLINE - can be made static.
+void Actor::AppendCameraComponent ( ComponentRef &component,
+    ComponentList &/*freeTransferResource*/,
+    ComponentList &/*renderable*/,
+    android_vulkan::Physics &/*physics*/,
+    lua_State &vm
+) noexcept
+{
+    // NOLINTNEXTLINE - downcast.
+    auto& cameraComponent = static_cast<CameraComponent&> ( *component );
+
+    lua_pushvalue ( &vm, _appendComponentIndex );
+    lua_pushvalue ( &vm, -2 );
+
+    if ( !cameraComponent.Register ( vm ) )
+    {
+        android_vulkan::LogWarning ( "pbr::Actor::AppendCameraComponent - Can't register camera component %s.",
+            cameraComponent.GetName ().c_str ()
+        );
+
+        lua_pop ( &vm, 2 );
+        return;
+    }
+
+    if ( lua_pcall ( &vm, 2, 0, ScriptEngine::GetErrorHandlerIndex () ) == LUA_OK )
+        return;
+
+    android_vulkan::LogWarning ( "pbr::Actor::AppendCameraComponent - Can't append camera component %s inside Lua VM.",
+        cameraComponent.GetName ().c_str ()
+    );
+}
+
+void Actor::AppendPointLightComponent ( ComponentRef &component,
+    ComponentList &/*freeTransferResource*/,
+    ComponentList &renderable,
+    android_vulkan::Physics &/*physics*/,
+    lua_State &/*vm*/
+) noexcept
+{
+    // NOLINTNEXTLINE - downcast.
+    auto& transformable = static_cast<PointLightComponent&> ( *component );
+
+    renderable.emplace_back ( std::ref ( component ) );
+    _transformableComponents.emplace_back ( std::ref ( transformable ) );
+}
+
+void Actor::AppendReflectionComponent ( ComponentRef &component,
+    ComponentList &freeTransferResource,
+    ComponentList &/*renderable*/,
+    android_vulkan::Physics &/*physics*/,
+    lua_State &/*vm*/
+) noexcept
+{
+    // NOLINTNEXTLINE - downcast.
+    auto& reflection = static_cast<ReflectionComponent&> ( *component );
+
+    freeTransferResource.emplace_back ( std::ref ( component ) );
+
+    if ( !reflection.IsGlobalReflection () )
+    {
+        _transformableComponents.emplace_back ( std::ref ( reflection ) );
+    }
+}
+
+void Actor::AppendRigidBodyComponent ( ComponentRef &component,
+    ComponentList &/*freeTransferResource*/,
+    ComponentList &/*renderable*/,
+    android_vulkan::Physics &physics,
+    lua_State &vm
+) noexcept
+{
+    // NOLINTNEXTLINE - downcast.
+    auto& rigiBodyComponent = static_cast<RigidBodyComponent&> ( *component );
+
+    lua_pushvalue ( &vm, _appendComponentIndex );
+    lua_pushvalue ( &vm, -2 );
+
+    if ( !rigiBodyComponent.Register ( *this, physics, vm ) )
+    {
+        android_vulkan::LogWarning ( "pbr::Actor::AppendRigidBodyComponent - Can't register rigid body "
+            "component %s.",
+            rigiBodyComponent.GetName ().c_str ()
+        );
+
+        lua_pop ( &vm, 2 );
+        return;
+    }
+
+    if ( lua_pcall ( &vm, 2, 0, ScriptEngine::GetErrorHandlerIndex () ) == LUA_OK )
+        return;
+
+    android_vulkan::LogWarning ( "pbr::Actor::AppendRigidBodyComponent - Can't append rigid body component %s "
+        "inside Lua VM.",
+        rigiBodyComponent.GetName ().c_str ()
+    );
+}
+
+// NOLINTNEXTLINE - can be made static.
+void Actor::AppendScriptComponent ( ComponentRef &component,
+    ComponentList &/*freeTransferResource*/,
+    ComponentList &/*renderable*/,
+    android_vulkan::Physics &/*physics*/,
+    lua_State &vm
+) noexcept
+{
+    lua_pushvalue ( &vm, _appendComponentIndex );
+    lua_pushvalue ( &vm, -2 );
+
+    // NOLINTNEXTLINE - downcast.
+    auto& scriptComponent = static_cast<ScriptComponent&> ( *component );
+
+    if ( !scriptComponent.Register ( vm ) )
+    {
+        android_vulkan::LogWarning ( "pbr::Actor::AppendScriptComponent - Can't register script component %s.",
+            scriptComponent.GetName ().c_str ()
+        );
+
+        lua_pop ( &vm, 2 );
+        return;
+    }
+
+    if ( lua_pcall ( &vm, 2, 0, ScriptEngine::GetErrorHandlerIndex () ) == LUA_OK )
+        return;
+
+    android_vulkan::LogWarning ( "pbr::Actor::AppendScriptComponent - Can't append script component %s "
+        "inside Lua VM.",
+        scriptComponent.GetName ().c_str ()
+    );
+}
+
+void Actor::AppendStaticMeshComponent ( ComponentRef &component,
+    ComponentList &freeTransferResource,
+    ComponentList &/*renderable*/,
+    android_vulkan::Physics &/*physics*/,
+    lua_State &/*vm*/
+) noexcept
+{
+    // NOLINTNEXTLINE - downcast.
+    auto& transformable = static_cast<StaticMeshComponent&> ( *component );
+
+    freeTransferResource.emplace_back ( std::ref ( component ) );
+    _transformableComponents.emplace_back ( std::ref ( transformable ) );
 }
 
 int Actor::OnGetName ( lua_State* state )

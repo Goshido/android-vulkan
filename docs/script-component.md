@@ -13,6 +13,7 @@ require "av://engine/script_component.lua"
 - [`OnActorConstructed ( self, actor )`](#method-on-actor-constructed)
 - [`OnPostPhysics ( self, deltaTime )`](#method-on-post-physics)
 - [`OnPrePhysics ( self, deltaTime )`](#method-on-pre-physics)
+- [`OnRenderTargetChanged ( self )`](#method-on-render-target-changed)
 - [`OnUpdate ( self, deltaTime )`](#method-on-update)
 
 ## <a id="brief">Brief</a>
@@ -40,6 +41,10 @@ local function OnPrePhysics ( self, deltaTime )
     -- Some implementation
 end
 
+local function OnRenderTargetChanged ( self )
+    -- Some implementation
+end
+
 local function OnUpdate ( self, deltaTime )
     -- Some implementation
 end
@@ -56,6 +61,7 @@ local function Constructor ( self, handle, params )
     obj.OnActorConstructed = OnActorConstructed
     obj.OnPostPhysics = OnPostPhysics
     obj.OnPrePhysics = OnPrePhysics
+    obj.OnRenderTargetChanged = OnRenderTargetChanged
     obj.OnUpdate = OnUpdate
 
     return obj
@@ -185,7 +191,7 @@ local name = script:GetName ()
 
 ## <a id="method-on-actor-constructed">`OnActorConstructed ( self, actor )`</a>
 
-Oprtional user provided event handler in the subclass implementaion. The method will be called by the engine after creation and appending of all components to the current [_Actor_](./actor.md) instance. The event graph is presented [here](#event-calling-order).
+Optional user provided event handler in the subclass implementaion. The method will be called by the engine after creation and appending of all components to the current [_Actor_](./actor.md) instance. The event graph is presented [here](#event-calling-order).
 
 **Note:** If [_Actor_](./actor.md) instance contains several [_ScriptComponent_](./script-component.md) instances the invocation order of `OnActorConstructed` for those components is undefined. That means that it's safe to query and find components attached to current [_Actor_](./actor.md) instance. But it's not safe to call any methods or read/modify any properties in the sibling components. They could not be initialized yet.
 
@@ -229,7 +235,7 @@ return Player
 
 ## <a id="method-on-post-physics">`OnPostPhysics ( self, deltaTime )`</a>
 
-Oprtional user provided event handler in the subclass implementaion. The method will be called by the engine right after physics simulation. The event graph is presented [here](#event-calling-order).
+Optional user provided event handler in the subclass implementaion. The method will be called by the engine right after physics simulation. The event graph is presented [here](#event-calling-order).
 
 **Parameters:**
 
@@ -271,7 +277,7 @@ return Player
 
 ## <a id="method-on-pre-physics">`OnPrePhysics ( self, deltaTime )`</a>
 
-Oprtional user provided event handler in the subclass implementaion. The method will be called by the engine right before physics simulation. The event graph is presented [here](#event-calling-order).
+Optional user provided event handler in the subclass implementaion. The method will be called by the engine right before physics simulation. The event graph is presented [here](#event-calling-order).
 
 **Parameters:**
 
@@ -311,9 +317,55 @@ setmetatable ( Player, { __call = Constructor } )
 return Player
 ```
 
+## <a id="method-on-render-target-changed">`OnRenderTargetChanged ( self )`</a>
+
+Optional user provided event handler in the subclass implementaion. The method will be called by the engine when render target changes its resolution or aspect ratio.
+
+**Parameters:**
+
+- `self` [_required, read/write, [ScriptComponent](./script-component.md)_]: part of _Lua OOP_ convention requred to invoke method via `:` syntax
+
+**Return values:**
+
+- none
+
+**Example:**
+
+```lua
+require "av://engine/logger.lua"
+require "av://engine/script_component.lua"
+
+
+local Camera = {}
+
+-- Engine events
+local function OnRenderTargetChanged ( self )
+    LogD ( "Name %s, Width %d, Height %d, Aspect ratio %f",
+        self:GetName (),
+        g_scene:GetRenderTargetAspectRatio (),
+        g_scene:GetRenderTargetWidth ()
+        g_scene:GetRenderTargetHeight ()
+    )
+end
+
+-- Metamethods
+local function Constructor ( self, handle, params )
+    local obj = ScriptComponent ( handle )
+
+    -- Engine events
+    obj.OnRenderTargetChanged = OnRenderTargetChanged
+    return obj
+end
+
+setmetatable ( Camera, { __call = Constructor } )
+
+-- Module function: fabric callable for Camera class.
+return Camera
+```
+
 ## <a id="method-on-update">`OnUpdate ( self, deltaTime )`</a>
 
-Oprtional user provided event handler in the subclass implementaion. The method will be called by the engine right after render object submissions and before end of the frame. The event graph is presented [here](#event-calling-order).
+Optional user provided event handler in the subclass implementaion. The method will be called by the engine right after render object submissions and before end of the frame. The event graph is presented [here](#event-calling-order).
 
 **Parameters:**
 

@@ -1,4 +1,5 @@
 require "av://engine/actor.lua"
+require "av://engine/camera_component.lua"
 require "av://engine/rigid_body_component.lua"
 require "av://engine/script_component.lua"
 
@@ -20,6 +21,7 @@ local function AppendActor ( self, actor )
 
     local postPhysicsScripts = self._postPhysicsScripts
     local prePhysicsScripts = self._prePhysicsScripts
+    local renderTargetChangerScripts = self._renderTargetChangeScripts
     local updateScripts = self._updateScripts
 
     for groupKey, group in pairs ( actor._components ) do
@@ -31,6 +33,10 @@ local function AppendActor ( self, actor )
 
                 if type ( v.OnPrePhysics ) == "function" then
                     table.insert ( prePhysicsScripts, v )
+                end
+
+                if type ( v.OnRenderTargetChanged ) == "function" then
+                    table.insert ( renderTargetChangerScripts, v )
                 end
 
                 if type ( v.OnUpdate ) == "function" then
@@ -62,6 +68,30 @@ local function GetRendererToPhysicsScaleFactor ( self )
     return av_SceneGetRendererToPhysicsScaleFactor ()
 end
 
+local function GetRenderTargetAspectRatio ( self )
+    assert ( type ( self ) == "table" and self._type == eObjectType.Scene,
+        [[Scene:GetRenderTargetAspectRatio - Calling not via ":" syntax.]]
+    )
+
+    return av_SceneGetRenderTargetAspectRatio ( self._handle )
+end
+
+local function GetRenderTargetWidth ( self )
+    assert ( type ( self ) == "table" and self._type == eObjectType.Scene,
+        [[Scene:GetRenderTargetWidth - Calling not via ":" syntax.]]
+    )
+
+    return av_SceneGetRenderTargetWidth ( self._handle )
+end
+
+local function GetRenderTargetHeight ( self )
+    assert ( type ( self ) == "table" and self._type == eObjectType.Scene,
+        [[Scene:GetRenderTargetHeight - Calling not via ":" syntax.]]
+    )
+
+    return av_SceneGetRenderTargetHeight ( self._handle )
+end
+
 local function OnPostPhysics ( self, deltaTime )
     for k, v in pairs ( self._postPhysicsScripts ) do
         v:OnPostPhysics ( deltaTime )
@@ -74,10 +104,28 @@ local function OnPrePhysics ( self, deltaTime )
     end
 end
 
+local function OnRenderTargetChanged ( self )
+    for k, v in pairs ( self._renderTargetChangeScripts ) do
+        v:OnRenderTargetChanged ()
+    end
+end
+
 local function OnUpdate ( self, deltaTime )
     for k, v in pairs ( self._updateScripts ) do
         v:OnUpdate ( deltaTime )
     end
+end
+
+local function SetActiveCamera ( self, camera )
+    assert ( type ( self ) == "table" and self._type == eObjectType.Scene,
+        [[Scene:SetActiveCamera - Calling not via ":" syntax.]]
+    )
+
+    assert ( type ( camera ) == "table" and camera._type == eObjectType.CameraComponent,
+        [[Scene:SetActiveCamera - "camera" is not a CameraComponent.]]
+    )
+
+    av_SceneSetActiveCamera ( self._handle, camera._handle )
 end
 
 -- Metamethods
@@ -89,6 +137,7 @@ local function Constructor ( self, handle )
     obj._handle = handle
     obj._postPhysicsScripts = {}
     obj._prePhysicsScripts = {}
+    obj._renderTargetChangeScripts = {}
     obj._updateScripts = {}
 
     -- Methods
@@ -97,9 +146,14 @@ local function Constructor ( self, handle )
     obj.FindActors = FindActors
     obj.GetPhysicsToRendererScaleFactor = GetPhysicsToRendererScaleFactor
     obj.GetRendererToPhysicsScaleFactor = GetRendererToPhysicsScaleFactor
+    obj.GetRenderTargetAspectRatio = GetRenderTargetAspectRatio
+    obj.GetRenderTargetWidth = GetRenderTargetWidth
+    obj.GetRenderTargetHeight = GetRenderTargetHeight
     obj.OnPostPhysics = OnPostPhysics
     obj.OnPrePhysics = OnPrePhysics
+    obj.OnRenderTargetChanged = OnRenderTargetChanged
     obj.OnUpdate = OnUpdate
+    obj.SetActiveCamera = SetActiveCamera
 
     return obj
 end

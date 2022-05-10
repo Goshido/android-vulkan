@@ -343,7 +343,7 @@ local function OnRenderTargetChanged ( self )
     LogD ( "Name %s, Width %d, Height %d, Aspect ratio %f",
         self:GetName (),
         g_scene:GetRenderTargetAspectRatio (),
-        g_scene:GetRenderTargetWidth ()
+        g_scene:GetRenderTargetWidth (),
         g_scene:GetRenderTargetHeight ()
     )
 end

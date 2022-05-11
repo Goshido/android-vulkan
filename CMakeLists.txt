@@ -152,7 +152,6 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/pbr/collision/collision.cpp
     app/src/main/cpp/sources/pbr/collision/manipulator.cpp
     app/src/main/cpp/sources/pbr/mario/brick.cpp
-    app/src/main/cpp/sources/pbr/mario/camera.cpp
     app/src/main/cpp/sources/pbr/mario/mario.cpp
     app/src/main/cpp/sources/pbr/mario/obstacle.cpp
     app/src/main/cpp/sources/pbr/mario/pipe_base.cpp

@@ -22,13 +22,6 @@ constexpr static float RESTITUTION = 0.0F;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-GXMat4 const& Mario::GetTransform () const noexcept
-{
-    // NOLINTNEXTLINE
-    auto& comp = static_cast<StaticMeshComponent&> ( *_staticMesh );
-    return comp.GetTransform ();
-}
-
 void Mario::CaptureInput () noexcept
 {
     android_vulkan::Gamepad& gamepad = android_vulkan::Gamepad::GetInstance ();

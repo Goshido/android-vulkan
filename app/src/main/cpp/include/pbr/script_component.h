@@ -24,8 +24,8 @@ class ScriptComponent final : public Component
         ScriptComponent ( ScriptComponent && ) = delete;
         ScriptComponent& operator = ( ScriptComponent && ) = delete;
 
-        [[maybe_unused]] explicit ScriptComponent ( std::string &&script ) noexcept;
-        explicit ScriptComponent ( std::string &&script, std::string &&params ) noexcept;
+        explicit ScriptComponent ( std::string &&script, std::string &&name ) noexcept;
+        explicit ScriptComponent ( std::string &&script, std::string &&params, std::string &&name ) noexcept;
 
         ~ScriptComponent () override = default;
 

@@ -52,9 +52,6 @@ bool World1x1::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) 
     if ( !_scene.OnPostPhysics ( deltaTime ) )
         return false;
 
-    _camera.OnUpdate ( dt );
-
-    //_renderSession.Begin ( _camera.GetLocalMatrix (), _camera.GetProjectionMatrix () );
     _renderSession.Begin ( _scene.GetActiveCameraLocalMatrix (), _scene.GetActiveCameraProjectionMatrix () );
     _scene.Submit ( _renderSession );
 
@@ -100,14 +97,15 @@ bool World1x1::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
     }
 
     ComponentRef script = std::make_shared<ScriptComponent> ( "av://assets/Scripts/player.lua",
-        "{ _msg = 'hello world', _state = 1 }"
+        "{ _msg = 'hello world', _state = 1 }",
+        "Player"
     );
 
     ActorRef logic = std::make_shared<Actor> ( "Logic" );
     logic->AppendComponent ( script );
     _scene.AppendActor ( logic );
 
-    ComponentRef cameraScript = std::make_shared<ScriptComponent> ( "av://assets/Scripts/camera.lua" );
+    ComponentRef cameraScript = std::make_shared<ScriptComponent> ( "av://assets/Scripts/camera.lua", "CameraScript" );
     ComponentRef cameraComponent = std::make_shared<CameraComponent> ( "Camera" );
 
     // NOLINTNEXTLINE - downcast.
@@ -159,7 +157,6 @@ bool World1x1::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcep
     resolution.height = resolution.height * RESOLUTION_SCALE_HEIGHT / 100U;
 
     VkExtent2D const& surfaceResolution = renderer.GetViewportResolution ();
-    _camera.OnResolutionChanged ( surfaceResolution );
 
     if ( !_renderSession.OnSwapchainCreated ( renderer, resolution, _commandPool ) )
         return false;
@@ -582,8 +579,6 @@ bool World1x1::UploadGPUContent ( android_vulkan::Renderer &renderer ) noexcept
     Riddle::Spawn ( renderer, commandBuffers, _scene, -12.8F, 128.0F, 4352.0F );
 
     _mario.Init ( renderer, commandBuffers, _scene, -0.8F, 4.4F, 3.00189F );
-    _camera.SetTarget ( _mario );
-    _camera.Focus ();
 
     result = android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( renderer.GetQueue () ),
         "pbr::mario::World1x1::UploadGPUContent",

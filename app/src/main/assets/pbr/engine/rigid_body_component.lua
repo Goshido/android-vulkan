@@ -13,7 +13,7 @@ local function GetLocation ( self, location )
         [[RigidBodyComponent:GetLocation - "location" is not a GXVec3.]]
     )
 
-    av_RigidBodyComponentGetLocation ( self._handle, location )
+    av_RigidBodyComponentGetLocation ( self._handle, location._handle )
 end
 
 -- This function is exported to C++ side.

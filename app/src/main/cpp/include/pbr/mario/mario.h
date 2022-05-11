@@ -2,13 +2,12 @@
 #define PBR_MARIO_H
 
 
-#include "target.h"
 #include <pbr/scene.h>
 
 
 namespace pbr::mario {
 
-class Mario final : public ITarget
+class Mario final
 {
     private:
         bool            _isJump = false;
@@ -26,9 +25,8 @@ class Mario final : public ITarget
         Mario ( Mario && ) = delete;
         Mario& operator = ( Mario && ) = delete;
 
-        ~Mario () override = default;
+        ~Mario () = default;
 
-        [[nodiscard]] GXMat4 const& GetTransform () const noexcept override;
         void CaptureInput () noexcept;
         void FreeTransferResources ( VkDevice device ) noexcept;
 

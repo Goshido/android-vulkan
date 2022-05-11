@@ -2,9 +2,7 @@
 #define PBR_MARIO_WORLD1x1_H
 
 
-#include "camera.h"
 #include "mario.h"
-#include <pbr/camera.h>
 #include <pbr/scene.h>
 #include <game.h>
 
@@ -14,7 +12,6 @@ namespace pbr::mario {
 class World1x1 final : public android_vulkan::Game
 {
     private:
-        pbr::mario::Camera              _camera {};
         std::vector<VkCommandBuffer>    _commandBuffers {};
         VkCommandPool                   _commandPool = VK_NULL_HANDLE;
         bool                            _isReady = false;

@@ -1,21 +1,20 @@
 #include <pbr/script_component.h>
 #include <pbr/script_engine.h>
-#include <guid_generator.h>
 
 
 namespace pbr {
 
 int ScriptComponent::_registerScriptComponentIndex = std::numeric_limits<int>::max ();
 
-ScriptComponent::ScriptComponent ( std::string &&script ) noexcept:
-    Component ( ClassID::Script, android_vulkan::GUID::GenerateAsString ( "Script" ) ),
+ScriptComponent::ScriptComponent ( std::string &&script, std::string &&name ) noexcept:
+    Component ( ClassID::Script, std::move ( name ) ),
     _script ( std::move ( script ) )
 {
     // NOTHING
 }
 
-ScriptComponent::ScriptComponent ( std::string &&script, std::string &&params ) noexcept:
-    Component ( ClassID::Script, android_vulkan::GUID::GenerateAsString ( "Script" ) ),
+ScriptComponent::ScriptComponent ( std::string &&script, std::string &&params, std::string &&name ) noexcept:
+    Component ( ClassID::Script, std::move ( name ) ),
     _script ( std::move ( script ) ),
     _params ( std::move ( params ) )
 {

@@ -13,13 +13,8 @@
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize"
             android:exported="true"
             android:label="@string/app_name"
-            android:name="android.app.NativeActivity"
+            android:name="com.goshidoInc.androidVulkan.Activity"
             android:screenOrientation="portrait">
-
-            <meta-data
-                android:name="android.app.lib_name"
-                android:value="android-vulkan">
-            </meta-data>
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

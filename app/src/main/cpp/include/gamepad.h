@@ -2,7 +2,10 @@
 #define ANDROID_VULKAN_GAMEPAD_H
 
 
-#include <GXCommon/GXWarning.h>
+#include "dpad.h"
+#include "key_bind.h"
+#include "stick.h"
+#include "trigger.h"
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -11,11 +14,6 @@ GX_DISABLE_COMMON_WARNINGS
 #include <thread>
 
 GX_RESTORE_WARNING_STATE
-
-#include "dpad.h"
-#include "key_action.h"
-#include "stick.h"
-#include "trigger.h"
 
 
 namespace android_vulkan {
@@ -39,7 +37,7 @@ enum class eGamepadKey : uint8_t
     View
 };
 
-constexpr auto const TOTAL_GAMEPAD_KEYS = static_cast<size_t> (
+constexpr auto TOTAL_GAMEPAD_KEYS = static_cast<size_t> (
     static_cast<uint8_t> ( eGamepadKey::View ) + 1U
 );
 
@@ -49,19 +47,17 @@ enum class eButtonState : uint8_t
     Up
 };
 
-constexpr auto const TOTAL_BUTTON_STATES = static_cast<size_t> ( static_cast<uint8_t> ( eButtonState::Up ) + 1U );
-constexpr size_t const ACTION_POOL_ELEMENT_COUNT = TOTAL_GAMEPAD_KEYS * TOTAL_BUTTON_STATES;
+inline constexpr auto TOTAL_BUTTON_STATES = static_cast<size_t> ( static_cast<uint8_t> ( eButtonState::Up ) + 1U );
+inline constexpr size_t ACTION_POOL_ELEMENT_COUNT = TOTAL_GAMEPAD_KEYS * TOTAL_BUTTON_STATES;
+
+struct KeyActionQueue final
+{
+    KeyBind     _keyBindPool[ ACTION_POOL_ELEMENT_COUNT ] {};
+    size_t      _actions = 0U;
+};
 
 class Gamepad final
 {
-    private:
-        struct KeyActionQueue final
-        {
-            KeyAction       _keyActionPool[ ACTION_POOL_ELEMENT_COUNT ] {};
-            KeyAction*      _freeKeyActions = nullptr;
-            KeyAction*      _readyKeyActions = nullptr;
-        };
-
     private:
         KeyBind             _downKeyBinds[ TOTAL_GAMEPAD_KEYS ];
         KeyBind             _upKeyBinds[ TOTAL_GAMEPAD_KEYS ];
@@ -116,8 +112,6 @@ class Gamepad final
     private:
         Gamepad () noexcept;
         ~Gamepad () = default;
-
-        void AddAction ( KeyBind const &bind ) noexcept;
 
         void ExecuteKeyEvents () noexcept;
         void ExecuteStickEvents () noexcept;

@@ -1,4 +1,5 @@
 #include <gamepad.h>
+#include <logger.h>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -11,7 +12,7 @@ GX_RESTORE_WARNING_STATE
 
 namespace android_vulkan {
 
-constexpr static auto TIMEOUT = std::chrono::milliseconds(10U);
+constexpr static auto TIMEOUT = std::chrono::milliseconds ( 10U );
 constexpr static int32_t EVENT_HANDLED = 1;
 constexpr static int32_t EVENT_IGNORED = 0;
 
@@ -173,39 +174,19 @@ Gamepad::Gamepad () noexcept:
     InitActionPool ();
 }
 
-void Gamepad::AddAction ( KeyBind const &bind ) noexcept
-{
-    // Note actions will be placed in reverse order.
-    // It is assumed that order does not matter.
-
-    KeyAction* newAction = _queueWrite->_freeKeyActions;
-    _queueWrite->_freeKeyActions = _queueWrite->_freeKeyActions->_next;
-
-    newAction->_bind = bind;
-    newAction->_next = _queueWrite->_readyKeyActions;
-    _queueWrite->_readyKeyActions = newAction;
-}
-
 void Gamepad::ExecuteKeyEvents () noexcept
 {
-    KeyAction* tail = nullptr;
+    size_t const actions = _queueRead->_actions;
+    KeyBind const* binds = _queueRead->_keyBindPool;
 
-    while ( _queueRead->_readyKeyActions )
+    for ( size_t i = 0U; i < actions; ++i )
     {
-        tail = _queueRead->_readyKeyActions;
-
-        KeyBind const& bind = _queueRead->_readyKeyActions->_bind;
+        KeyBind const& bind = binds[ i ];
         bind._handler ( bind._context );
-
-        _queueRead->_readyKeyActions = _queueRead->_readyKeyActions->_next;
     }
 
-    if ( !tail )
-        return;
-
     // Returning key actions to event pool.
-    tail->_next = _queueRead->_freeKeyActions;
-    _queueRead->_freeKeyActions = tail;
+    _queueRead->_actions = 0U;
 }
 
 void Gamepad::ExecuteStickEvents () noexcept
@@ -301,7 +282,7 @@ int32_t Gamepad::HandleKey ( AInputEvent* event ) noexcept
     if ( !target || !target->_handler )
         return EVENT_IGNORED;
 
-    AddAction ( *target );
+    _queueWrite->_keyBindPool[ _queueWrite->_actions++ ] = *target;
     return EVENT_HANDLED;
 }
 
@@ -331,19 +312,8 @@ void Gamepad::InitActionPool () noexcept
     _queueRead = &_queue0;
     _queueWrite = &_queue1;
 
-    constexpr size_t lastKey = ACTION_POOL_ELEMENT_COUNT - 1U;
-
-    for ( size_t i = 0U; i < lastKey; ++i )
-    {
-        _queueRead->_keyActionPool[ i ]._next = _queueRead->_keyActionPool + ( i + 1U );
-        _queueWrite->_keyActionPool[ i ]._next = _queueWrite->_keyActionPool + ( i + 1U );
-    }
-
-    _queueRead->_keyActionPool[ lastKey ]._next = nullptr;
-    _queueRead->_freeKeyActions = _queueRead->_keyActionPool;
-
-    _queueWrite->_keyActionPool[ lastKey ]._next = nullptr;
-    _queueWrite->_freeKeyActions = _queueWrite->_keyActionPool;
+    _queue0._actions = 0U;
+    _queue1._actions = 0U;
 }
 
 void Gamepad::SwapQueues () noexcept
@@ -374,7 +344,7 @@ void Gamepad::ResolveDPad () noexcept
         if ( !target._handler )
             return;
 
-        AddAction ( target );
+        _queueWrite->_keyBindPool[ _queueWrite->_actions++ ] = target;
     };
 
     resolve ( _dPadCurrent._down, _dPadOld._down, eGamepadKey::Down );

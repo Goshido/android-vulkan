@@ -2,50 +2,61 @@ package com.goshidoInc.androidVulkan
 
 
 import android.os.Bundle
-import android.util.Log
 import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.SurfaceHolder
 import android.view.View
 
 
-internal class Activity : android.app.Activity (), SurfaceHolder.Callback2
+internal class Activity : android.app.Activity (), SurfaceHolder.Callback2, AnalogControlListener
 {
-    companion object
+    private companion object
     {
-        const val TAG = "android_vulkan::C++"
+        init
+        {
+            System.loadLibrary ( "android-vulkan" )
+        }
     }
 
     private var isWindowCreated = false
 
-    private var dPad = DPad ()
+    private val dPad = DPad ( this )
 
-    private val leftStick = LeftStick ()
-    private val rightStick = RightStick ()
+    private val leftStick = LeftStick ( this )
+    private val rightStick = RightStick ( this )
 
-    private val leftTrigger = LeftTrigger ()
-    private val rightTrigger = RightTrigger ()
+    private val leftTrigger = LeftTrigger ( this )
+    private val rightTrigger = RightTrigger ( this )
+
+    private external fun doCreate ()
+    private external fun doDestroy ()
+    private external fun doKeyDown ( keyCode : Int )
+    private external fun doKeyUp ( keyCode : Int )
+    private external fun doLeftStick ( x : Float, y : Float )
+    private external fun doRightStick ( x : Float, y : Float )
+    private external fun doLeftTrigger ( value : Float )
+    private external fun doRightTrigger ( value : Float )
+    private external fun doSurfaceCreated ()
+    private external fun doSurfaceDestroyed ()
+    private external fun doWindowCreated ()
 
     override fun onCreate ( savedInstanceState : Bundle? )
     {
         super.onCreate ( savedInstanceState )
-
-        Log.d ( TAG, "~~~ onCreate" )
 
         window.takeSurface ( this )
 
         val view = View ( this )
         setContentView ( view )
         view.requestFocus ()
+
+        doCreate ()
     }
 
     override fun onDestroy ()
     {
         isWindowCreated = false
-
-        Log.d ( TAG, "~~~ onDestroy" )
-        // TODO call native.
-
+        doDestroy ()
         super.onDestroy ()
     }
 
@@ -54,8 +65,6 @@ internal class Activity : android.app.Activity (), SurfaceHolder.Callback2
         if ( event == null )
             return false
 
-        Log.d ( TAG, "~~~ onGenericMotionEvent" )
-
         leftStick.sync ( event )
         rightStick.sync ( event )
 
@@ -63,53 +72,64 @@ internal class Activity : android.app.Activity (), SurfaceHolder.Callback2
         rightTrigger.sync ( event )
 
         dPad.sync ( event )
-
-        // TODO call native.
         return true
     }
 
     override fun onKeyDown ( keyCode : Int, event : KeyEvent? ) : Boolean
     {
-        Log.d ( TAG, "~~~ onKeyDown $keyCode" )
-        // TODO call native.
+        doKeyDown ( keyCode )
         return true
     }
 
     override fun onKeyUp ( keyCode : Int, event : KeyEvent? ) : Boolean
     {
-        Log.d ( TAG, "~~~ onKeyUp $keyCode" )
-        // TODO call native.
+        doKeyUp ( keyCode )
         return true
+    }
+
+    override fun onLeftStick ( x : Float, y : Float )
+    {
+        doLeftStick ( x, y )
+    }
+
+    override fun onRightStick ( x : Float, y : Float )
+    {
+        doRightStick ( x, y )
+    }
+
+    override fun onLeftTrigger ( value : Float )
+    {
+        doLeftTrigger ( value )
+    }
+
+    override fun onRightTrigger ( value : Float )
+    {
+        doRightTrigger ( value )
     }
 
     override fun surfaceChanged ( holder : SurfaceHolder, format : Int, width : Int, height : Int )
     {
         // NOTHING
-        Log.d ( TAG, "~~~ surfaceChanged" )
     }
 
     override fun surfaceCreated ( holder : SurfaceHolder )
     {
         if ( !isWindowCreated )
         {
-            // TODO tell native about window.
-            Log.d ( TAG, "~~~ window created" )
             isWindowCreated = true
+            doWindowCreated ()
         }
 
-        Log.d ( TAG, "~~~ surfaceCreated" )
-        // TODO tell native about surface.
+        doSurfaceCreated ()
     }
 
     override fun surfaceDestroyed ( holder : SurfaceHolder )
     {
-        Log.d ( TAG, "~~~ surfaceDestroyed" )
-        // TODO call native.
+        doSurfaceDestroyed ()
     }
 
     override fun surfaceRedrawNeeded ( holder : SurfaceHolder )
     {
-        Log.d ( TAG, "~~~ surfaceRedrawNeeded" )
         // NOTHING
     }
 }

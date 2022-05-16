@@ -1,21 +1,40 @@
 package com.goshidoInc.androidVulkan
 
 
-import android.util.Log
 import android.view.MotionEvent
 
 
-internal sealed class Trigger ( private val AXIS : Int, private val PREFIX : String )
+internal sealed class Trigger ( protected val listener : AnalogControlListener )
 {
-    protected var value : Float = 0.0F
+    protected var oldValue : Float = 0.0F
 
-    fun sync ( event : MotionEvent )
+    abstract fun sync ( event : MotionEvent )
+}
+
+internal class LeftTrigger ( listener : AnalogControlListener ) : Trigger ( listener )
+{
+    override fun sync ( event : MotionEvent )
     {
-        value = event.getAxisValue ( AXIS )
+        val value = event.getAxisValue ( MotionEvent.AXIS_LTRIGGER )
 
-        Log.d ( Activity.TAG, "     $PREFIX: $value" )
+        if ( value == oldValue )
+            return
+
+        oldValue = value
+        listener.onLeftTrigger ( value )
     }
 }
 
-internal class LeftTrigger : Trigger ( MotionEvent.AXIS_LTRIGGER, "Left Trigger" )
-internal class RightTrigger : Trigger ( MotionEvent.AXIS_RTRIGGER, "Right Trigger" )
+internal class RightTrigger ( listener : AnalogControlListener ) : Trigger ( listener )
+{
+    override fun sync ( event : MotionEvent )
+    {
+        val value = event.getAxisValue ( MotionEvent.AXIS_RTRIGGER )
+
+        if ( value == oldValue )
+            return
+
+        oldValue = value
+        listener.onRightTrigger ( value )
+    }
+}

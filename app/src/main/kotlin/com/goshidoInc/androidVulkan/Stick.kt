@@ -4,24 +4,47 @@ package com.goshidoInc.androidVulkan
 import android.view.MotionEvent
 
 
-internal class LeftStick : Input2D ( "LS" )
+internal sealed class Stick ( protected val listener : AnalogControlListener )
+{
+    protected data class State
+    (
+        val x : Float = 0.0F,
+        val y : Float = 0.0F
+    )
+
+    protected var oldState = State ()
+
+    abstract fun sync ( event : MotionEvent )
+}
+
+internal class LeftStick ( listener : AnalogControlListener ) : Stick ( listener )
 {
     override fun sync ( event : MotionEvent )
     {
-        x = event.getAxisValue ( MotionEvent.AXIS_X )
-        y = -event.getAxisValue ( MotionEvent.AXIS_Y )
+        val currentState = State ( event.getAxisValue ( MotionEvent.AXIS_X ),
+            -event.getAxisValue ( MotionEvent.AXIS_Y )
+        )
 
-        yell ()
+        if ( oldState == currentState )
+            return
+
+        oldState = currentState
+        listener.onLeftStick ( currentState.x, currentState.y )
     }
 }
 
-internal class RightStick : Input2D ( "RS" )
+internal class RightStick ( listener : AnalogControlListener ) : Stick ( listener )
 {
     override fun sync ( event : MotionEvent )
     {
-        x = event.getAxisValue ( MotionEvent.AXIS_Z )
-        y = -event.getAxisValue ( MotionEvent.AXIS_RZ )
+        val currentState = State ( event.getAxisValue ( MotionEvent.AXIS_Z ),
+            -event.getAxisValue ( MotionEvent.AXIS_RZ )
+        )
 
-        yell ()
+        if ( oldState == currentState )
+            return
+
+        oldState = currentState
+        listener.onRightStick ( currentState.x, currentState.y )
     }
 }

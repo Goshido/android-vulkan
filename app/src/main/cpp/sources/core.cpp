@@ -207,4 +207,88 @@ int32_t Core::OnOSInputEvent ( android_app* app, AInputEvent *event )
     return core._gamepad.OnOSInputEvent ( event );
 }
 
+extern "C" {
+
+JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doCreate ( JNIEnv */*env*/, jobject /*obj*/ )
+{
+    // TODO
+    LogDebug ( "~~~ OnCreate" );
+}
+
+JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doDestroy ( JNIEnv */*env*/, jobject /*obj*/ )
+{
+    // TODO
+    LogDebug ( "~~~ OnDestroy" );
+}
+
+JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doKeyDown ( JNIEnv */*env*/, jobject /*obj*/, jint keyCode )
+{
+    // TODO
+    LogDebug ( "~~~ OnKeyDown %d", keyCode );
+}
+
+JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doKeyUp ( JNIEnv */*env*/, jobject /*obj*/, jint keyCode )
+{
+    // TODO
+    LogDebug ( "~~~ OnKeyUp %d", keyCode );
+}
+
+JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doLeftStick ( JNIEnv */*env*/,
+    jobject /*obj*/,
+    jfloat x,
+    jfloat y
+)
+{
+    // TODO
+    LogDebug ( "~~~ OnLeftStick %g %g", x, y );
+}
+
+JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doRightStick ( JNIEnv */*env*/,
+    jobject /*obj*/,
+    jfloat x,
+    jfloat y
+)
+{
+    // TODO
+    LogDebug ( "~~~ OnRightStick %g %g", x, y );
+}
+
+JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doLeftTrigger ( JNIEnv */*env*/,
+    jobject /*obj*/,
+    jfloat value
+)
+{
+    // TODO
+    LogDebug ( "~~~ OnLeftTrigger %g", value );
+}
+
+JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doRightTrigger ( JNIEnv */*env*/,
+    jobject /*obj*/,
+    jfloat value
+)
+{
+    // TODO
+    LogDebug ( "~~~ OnRightTrigger %g", value );
+}
+
+JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doSurfaceCreated ( JNIEnv */*env*/, jobject /*obj*/ )
+{
+    // TODO
+    LogDebug ( "~~~ OnSurfaceCreated" );
+}
+
+JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doSurfaceDestroyed ( JNIEnv */*env*/, jobject /*obj*/ )
+{
+    // TODO
+    LogDebug ( "~~~ OnSurfaceDestroyed" );
+}
+
+JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doWindowCreated ( JNIEnv */*env*/, jobject /*obj*/ )
+{
+    // TODO
+    LogDebug ( "~~~ OnWindowCreated" );
+}
+
+} // extern "C"
+
 } // namespace android_vulkan

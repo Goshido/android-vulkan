@@ -1,123 +1,218 @@
 #include <core.h>
 #include <logger.h>
+#include <mandelbrot/mandelbrot_analytic_color.h>
+#include <mandelbrot/mandelbrot_lut_color.h>
+#include <pbr/pbr_game.h>
+#include <pbr/box_stack/box_stack.h>
+#include <pbr/collision/collision.h>
+#include <pbr/mario/world1x1.h>
+#include <pbr/ray_casting/ray_casting.h>
+#include <pbr/stipple_test/stipple_test.h>
+#include <pbr/sweep_testing/sweep_testing.h>
+#include <rainbow/rainbow.h>
+#include <rotating_mesh/game_analytic.h>
+#include <rotating_mesh/game_lut.h>
+
+GX_DISABLE_COMMON_WARNINGS
+
+#include <android/asset_manager_jni.h>
+#include <android/native_window_jni.h>
+
+GX_RESTORE_WARNING_STATE
 
 
 namespace android_vulkan {
 
 AAssetManager* g_AssetManager = nullptr;
+Core* g_Core = nullptr;
 constexpr static double const FPS_PERIOD = 3.0;
+constexpr static auto TIMEOUT = std::chrono::milliseconds ( 10U );
 
-Core::Core ( android_app &app, Game &game ) noexcept:
-    _game ( game ),
-    _gamepad ( Gamepad::GetInstance () ),
-    _renderer {},
-    _fpsTimestamp {},
-    _frameTimestamp {}
+enum class eGame : uint16_t
 {
+    Collision,
+    BoxStack,
+    MandelbrotAnalyticColor,
+    MandelbrotLutColor,
+    PBR,
+    Rainbow,
+    RayCasting,
+    RotatingMeshAnalytic,
+    RotatingMeshLUT,
+    StippleTest,
+    SweepTesting,
+    World1x1
+};
 
-#ifdef ANDROID_VULKAN_DEBUG
+//----------------------------------------------------------------------------------------------------------------------
 
-    android_vulkan::LogInfo ( "Core::Core - Application was started." );
+Core::Core ( JNIEnv* env, jobject assetManager ) noexcept
+{
+    _assetManagerJVM = assetManager;
+    env->NewGlobalRef ( assetManager );
+    g_AssetManager = AAssetManager_fromJava ( env, assetManager );
 
-#endif // ANDROID_VULKAN_DEBUG
+    InitCommandHandlers ();
 
-    // grab asset manager
-    g_AssetManager = app.activity->assetManager;
+    static std::map<android_vulkan::eGame, std::shared_ptr<android_vulkan::Game>> const games =
+    {
+        { android_vulkan::eGame::Collision, std::make_shared<pbr::collision::Collision> () },
+        { android_vulkan::eGame::BoxStack, std::make_shared<pbr::box_stack::BoxStack> () },
+        { android_vulkan::eGame::MandelbrotAnalyticColor, std::make_shared<mandelbrot::MandelbrotAnalyticColor> () },
+        { android_vulkan::eGame::MandelbrotLutColor, std::make_shared<mandelbrot::MandelbrotLUTColor> () },
+        { android_vulkan::eGame::PBR, std::make_shared<pbr::PBRGame> () },
+        { android_vulkan::eGame::Rainbow, std::make_shared<rainbow::Rainbow> () },
+        { android_vulkan::eGame::RayCasting, std::make_shared<pbr::ray_casting::RayCasting> () },
+        { android_vulkan::eGame::RotatingMeshAnalytic, std::make_shared<rotating_mesh::GameAnalytic> () },
+        { android_vulkan::eGame::RotatingMeshLUT, std::make_shared<rotating_mesh::GameLUT> () },
+        { android_vulkan::eGame::StippleTest, std::make_shared<pbr::stipple_test::StippleTest> () },
+        { android_vulkan::eGame::SweepTesting, std::make_shared<pbr::sweep_testing::SweepTesting> () },
+        { android_vulkan::eGame::World1x1, std::make_shared<pbr::mario::World1x1> () }
+    };
 
-    app.onAppCmd = &Core::OnOSCommand;
-    app.onInputEvent = &Core::OnOSInputEvent;
-    app.userData = this;
+    _game = games.find ( android_vulkan::eGame::World1x1 )->second.get ();
 
-    ActivateFullScreen ( app );
+    _thread = std::thread (
+        [ this ] () noexcept {
+            if ( !_renderer.OnCreateDevice () )
+                return;
+
+            if ( !_game->OnInitDevice ( _renderer ) )
+                return;
+
+            while ( ExecuteMessageQueue () )
+            {
+                // C++ calling method by pointer syntax.
+                ( this->*_renderBodyHandler ) ();
+            }
+        }
+    );
 }
 
-bool Core::IsSuspend () const
+void Core::OnAboutDestroy ( JNIEnv* env ) noexcept
 {
-    return !_renderer.IsSwapchainCreated ();
+    {
+        std::unique_lock<std::mutex> const lock ( _mutex );
+        _writeQueue.push_back ( eCommand::Quit );
+    }
+
+    while ( _thread.joinable () )
+        std::this_thread::sleep_for ( TIMEOUT );
+
+    ANativeWindow_release ( _nativeWindow );
+    _nativeWindow = nullptr;
+
+    env->DeleteGlobalRef ( _assetManagerJVM );
+    _assetManagerJVM = nullptr;
+    g_AssetManager = nullptr;
 }
 
-void Core::OnFrame ()
+void Core::OnSurfaceCreated ( JNIEnv* env, jobject surface ) noexcept
 {
-    if ( !_game.IsReady () )
+    _nativeWindow = ANativeWindow_fromSurface ( env, surface );
+    std::unique_lock<std::mutex> const lock ( _mutex );
+    _writeQueue.push_back ( eCommand::SwapchainCreated );
+}
+
+void Core::OnSurfaceDestroyed () noexcept
+{
+    {
+        std::unique_lock<std::mutex> const lock ( _mutex );
+        _writeQueue.push_back ( eCommand::SwapchainDestroyed );
+    }
+
+    while ( !_readQueue.empty () | !_writeQueue.empty () )
+        std::this_thread::sleep_for ( TIMEOUT );
+
+    ANativeWindow_release ( _nativeWindow );
+}
+
+bool Core::ExecuteMessageQueue () noexcept
+{
+    {
+        std::unique_lock<std::mutex> const lock ( _mutex );
+        _readQueue.swap ( _writeQueue );
+    }
+
+    bool result = true;
+
+    for ( auto const command: _readQueue )
+    {
+        CommandHandler const handler = _commandHandlers[ static_cast<size_t> ( command ) ];
+
+        // C++ calling method by pointer syntax.
+        result &= ( this->*handler ) ();
+    }
+
+    _readQueue.clear ();
+    return result;
+}
+
+void Core::InitCommandHandlers () noexcept
+{
+    _commandHandlers[ static_cast<size_t> ( eCommand::SwapchainCreated ) ] = &Core::OnSwapchainCreated;
+    _commandHandlers[ static_cast<size_t> ( eCommand::SwapchainDestroyed ) ] = &Core::OnSwapchainDestroyed;
+    _commandHandlers[ static_cast<size_t> ( eCommand::Quit ) ] = &Core::OnQuit;
+}
+
+void Core::OnFrame () noexcept
+{
+    if ( !_game->IsReady () )
         return;
 
-    timestamp const now = std::chrono::system_clock::now ();
+    Timestamp const now = std::chrono::system_clock::now ();
     std::chrono::duration<double> const delta = now - _frameTimestamp;
 
-    if ( _renderer.CheckSwapchainStatus () && !_game.OnFrame ( _renderer, delta.count () ) )
+    if ( _renderer.CheckSwapchainStatus () && !_game->OnFrame ( _renderer, delta.count () ) )
         LogError ( "Core::OnFrame - Frame rendering failed." );
 
     _frameTimestamp = now;
     UpdateFPS ( now );
 }
 
-void Core::OnQuit ()
+// NOLINTNEXTLINE - method can be static
+void Core::OnIdle () noexcept
 {
-    _game.OnDestroyDevice ( _renderer.GetDevice () );
-    _renderer.OnDestroyDevice ();
-
-#ifdef ANDROID_VULKAN_DEBUG
-
-    android_vulkan::LogInfo ( "Core::OnQuit - Application was finished." );
-
-#endif // ANDROID_VULKAN_DEBUG
-
+    std::this_thread::sleep_for ( TIMEOUT );
 }
 
-void Core::OnInitWindow ( ANativeWindow &window )
+bool Core::OnQuit () noexcept
 {
-    if ( !_renderer.IsDeviceCreated () )
-    {
-        if ( !_renderer.OnCreateDevice () )
-            return;
+    _game->OnDestroyDevice ( _renderer.GetDevice () );
+    _renderer.OnDestroyDevice ();
 
-        if ( !_game.OnInitDevice ( _renderer ) )
-        {
-            _renderer.OnDestroyDevice ();
-            return;
-        }
-    }
+    return false;
+}
 
-    if ( !_renderer.OnCreateSwapchain ( window, false ) )
-    {
-        _game.OnDestroyDevice ( _renderer.GetDevice () );
-        _renderer.OnDestroyDevice ();
-        return;
-    }
+bool Core::OnSwapchainCreated () noexcept
+{
+    if ( !_renderer.OnCreateSwapchain ( *_nativeWindow, false ) )
+        return false;
 
-    if ( !_game.OnSwapchainCreated ( _renderer ) )
-    {
-        _renderer.OnDestroySwapchain ();
-        _game.OnDestroyDevice ( _renderer.GetDevice () );
-        _renderer.OnDestroyDevice ();
-    }
+    if ( !_game->OnSwapchainCreated ( _renderer ) )
+        return false;
 
     _fpsTimestamp = std::chrono::system_clock::now ();
     _frameTimestamp = _fpsTimestamp;
+    _renderBodyHandler = &Core::OnFrame;
 
-    _gamepad.Start ();
+    return true;
 }
 
-void Core::OnLowMemory ()
+bool Core::OnSwapchainDestroyed () noexcept
 {
-    // TODO
-    LogWarning ( "Core::OnLowMemory - APP_CMD_LOW_MEMORY has been received [app %p].", this );
-}
-
-void Core::OnTerminateWindow ()
-{
-    if ( !_renderer.IsSwapchainCreated () )
-        return;
+    _renderBodyHandler = &Core::OnIdle;
 
     if ( !_renderer.FinishAllJobs () )
-        LogError ( "Core::OnTerminateWindow - Can't finish all GPU jobs" );
+        return false;
 
-    _gamepad.Stop ();
-    _game.OnSwapchainDestroyed ( _renderer.GetDevice () );
+    _game->OnSwapchainDestroyed ( _renderer.GetDevice () );
     _renderer.OnDestroySwapchain ();
+
+    return true;
 }
 
-void Core::UpdateFPS ( timestamp now )
+void Core::UpdateFPS ( Timestamp now )
 {
     static uint32_t frameCount = 0U;
     ++frameCount;
@@ -133,91 +228,22 @@ void Core::UpdateFPS ( timestamp now )
     frameCount = 0U;
 }
 
-void Core::ActivateFullScreen ( android_app &app )
-{
-    // Based on https://stackoverflow.com/a/50831255
-
-    JNIEnv* env = nullptr;
-    app.activity->vm->AttachCurrentThread ( &env, nullptr );
-
-    jclass activityClass = env->FindClass ( "android/app/NativeActivity" );
-    jmethodID getWindow = env->GetMethodID ( activityClass, "getWindow", "()Landroid/view/Window;" );
-
-    jclass windowClass = env->FindClass ( "android/view/Window" );
-    jmethodID getDecorView = env->GetMethodID ( windowClass, "getDecorView", "()Landroid/view/View;" );
-
-    jclass viewClass = env->FindClass ( "android/view/View" );
-    jmethodID setSystemUiVisibility = env->GetMethodID ( viewClass, "setSystemUiVisibility", "(I)V" );
-
-    jobject window = env->CallObjectMethod ( app.activity->clazz, getWindow );
-
-    jobject decorView = env->CallObjectMethod ( window, getDecorView );
-
-    jfieldID flagFullscreenID = env->GetStaticFieldID ( viewClass, "SYSTEM_UI_FLAG_FULLSCREEN", "I" );
-    jfieldID flagHideNavigationID = env->GetStaticFieldID ( viewClass, "SYSTEM_UI_FLAG_HIDE_NAVIGATION", "I" );
-    jfieldID flagImmersiveStickyID = env->GetStaticFieldID ( viewClass, "SYSTEM_UI_FLAG_IMMERSIVE_STICKY", "I" );
-
-    const int flagFullscreen = env->GetStaticIntField ( viewClass, flagFullscreenID );
-    const int flagHideNavigation = env->GetStaticIntField ( viewClass, flagHideNavigationID );
-    const int flagImmersiveSticky = env->GetStaticIntField ( viewClass, flagImmersiveStickyID );
-
-    const int flag = static_cast<int> (
-        static_cast<uint> ( flagFullscreen ) |
-        static_cast<uint> ( flagHideNavigation ) |
-        static_cast<uint> ( flagImmersiveSticky )
-    );
-
-    env->CallVoidMethod ( decorView, setSystemUiVisibility, flag );
-    app.activity->vm->DetachCurrentThread ();
-}
-
-void Core::OnOSCommand ( android_app* app, int32_t cmd )
-{
-    auto& core = *static_cast<Core*> ( app->userData );
-
-    switch ( cmd )
-    {
-        case APP_CMD_INIT_WINDOW:
-            core.OnInitWindow ( *app->window );
-        break;
-
-        case APP_CMD_TERM_WINDOW:
-            core.OnTerminateWindow ();
-        break;
-
-        case APP_CMD_DESTROY:
-            core.OnQuit ();
-            app->onAppCmd = nullptr;
-            app->userData = nullptr;
-        break;
-
-        case APP_CMD_LOW_MEMORY:
-            core.OnLowMemory ();
-        break;
-
-        default:
-            // NOTHING
-        break;
-    }
-}
-
-int32_t Core::OnOSInputEvent ( android_app* app, AInputEvent *event )
-{
-    auto& core = *static_cast<Core*> ( app->userData );
-    return core._gamepad.OnOSInputEvent ( event );
-}
-
 extern "C" {
 
-JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doCreate ( JNIEnv */*env*/, jobject /*obj*/ )
+JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doCreate ( JNIEnv *env, jobject /*obj*/,
+    jobject assetManager )
 {
-    // TODO
+    g_Core = new Core ( env, assetManager );
     LogDebug ( "~~~ OnCreate" );
 }
 
-JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doDestroy ( JNIEnv */*env*/, jobject /*obj*/ )
+JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doDestroy ( JNIEnv *env, jobject /*obj*/ )
 {
-    // TODO
+    g_Core->OnAboutDestroy ( env );
+
+    delete g_Core;
+    g_Core = nullptr;
+
     LogDebug ( "~~~ OnDestroy" );
 }
 
@@ -271,22 +297,16 @@ JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doRightTrigger ( JNIEn
     LogDebug ( "~~~ OnRightTrigger %g", value );
 }
 
-JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doSurfaceCreated ( JNIEnv */*env*/, jobject /*obj*/ )
+JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doSurfaceCreated ( JNIEnv* env, jobject /*obj*/, jobject surface )
 {
-    // TODO
+    g_Core->OnSurfaceCreated ( env, surface );
     LogDebug ( "~~~ OnSurfaceCreated" );
 }
 
-JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doSurfaceDestroyed ( JNIEnv */*env*/, jobject /*obj*/ )
+JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doSurfaceDestroyed ( JNIEnv* /*env*/, jobject /*obj*/ )
 {
-    // TODO
+    g_Core->OnSurfaceDestroyed ();
     LogDebug ( "~~~ OnSurfaceDestroyed" );
-}
-
-JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doWindowCreated ( JNIEnv */*env*/, jobject /*obj*/ )
-{
-    // TODO
-    LogDebug ( "~~~ OnWindowCreated" );
 }
 
 } // extern "C"

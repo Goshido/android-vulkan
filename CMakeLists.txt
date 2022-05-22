@@ -7,33 +7,10 @@ project ( android-vulkan )
 # NDK 22.0.7026061 at link time (linking errors on Linux).
 string ( APPEND CMAKE_CXX_FLAGS_RELEASE " -flto=thin" )
 
-# Android native activity glue
-
-add_library ( native_app_glue
-    STATIC
-    ${ANDROID_NDK}/sources/android/native_app_glue/android_native_app_glue.c
-)
-
-target_include_directories ( native_app_glue
-    PUBLIC
-    ${ANDROID_NDK}/sources/android/native_app_glue
-)
-
-target_compile_options ( native_app_glue PRIVATE
-    -fno-exceptions
-    -fno-rtti
-)
-
-set_target_properties ( native_app_glue PROPERTIES
-    CXX_VISIBILITY_PRESET hidden
-)
-
-
 # log support
 find_library ( log-lib log REQUIRED )
 
 # Main app
-
 add_library ( android-vulkan
     SHARED
     app/src/main/cpp/sources/contact_detector.cpp
@@ -51,7 +28,6 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/key_bind.cpp
     app/src/main/cpp/sources/ktx_media_container.cpp
     app/src/main/cpp/sources/logger.cpp
-    app/src/main/cpp/sources/main.cpp
     app/src/main/cpp/sources/mesh_geometry.cpp
     app/src/main/cpp/sources/physics.cpp
     app/src/main/cpp/sources/ray_caster.cpp
@@ -173,7 +149,6 @@ add_library ( android-vulkan
 
 # ARM Neon support: All ARMv8-based devices support Neon. So no any additional compile flags need to specify.
 # See https://developer.android.com/ndk/guides/cpu-arm-neon#cmake_2
-
 target_include_directories ( android-vulkan
     PRIVATE
     app/src/main/cpp/include
@@ -206,15 +181,8 @@ target_compile_definitions ( android-vulkan
     -DVK_USE_PLATFORM_ANDROID_KHR
 )
 
-# Exporting native app glue entry point.
-# https://gcc.gnu.org/onlinedocs/gcc/Link-Options.html
-set (
-    CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -u ANativeActivity_onCreate"
-)
-
 target_link_libraries ( android-vulkan
     android
     ${log-lib}
-    native_app_glue
     ${CMAKE_SOURCE_DIR}/third-party/jniLibs/arm64-v8a/libLua.so
 )

@@ -1,9 +1,11 @@
 package com.goshidoInc.androidVulkan
 
 
+import android.content.res.AssetManager
 import android.os.Bundle
 import android.view.KeyEvent
 import android.view.MotionEvent
+import android.view.Surface
 import android.view.SurfaceHolder
 import android.view.View
 
@@ -18,8 +20,6 @@ internal class Activity : android.app.Activity (), SurfaceHolder.Callback2, Anal
         }
     }
 
-    private var isWindowCreated = false
-
     private val dPad = DPad ( this )
 
     private val leftStick = LeftStick ( this )
@@ -28,7 +28,7 @@ internal class Activity : android.app.Activity (), SurfaceHolder.Callback2, Anal
     private val leftTrigger = LeftTrigger ( this )
     private val rightTrigger = RightTrigger ( this )
 
-    private external fun doCreate ()
+    private external fun doCreate ( assetManager : AssetManager )
     private external fun doDestroy ()
     private external fun doKeyDown ( keyCode : Int )
     private external fun doKeyUp ( keyCode : Int )
@@ -36,9 +36,8 @@ internal class Activity : android.app.Activity (), SurfaceHolder.Callback2, Anal
     private external fun doRightStick ( x : Float, y : Float )
     private external fun doLeftTrigger ( value : Float )
     private external fun doRightTrigger ( value : Float )
-    private external fun doSurfaceCreated ()
+    private external fun doSurfaceCreated ( surface : Surface )
     private external fun doSurfaceDestroyed ()
-    private external fun doWindowCreated ()
 
     override fun onCreate ( savedInstanceState : Bundle? )
     {
@@ -50,12 +49,11 @@ internal class Activity : android.app.Activity (), SurfaceHolder.Callback2, Anal
         setContentView ( view )
         view.requestFocus ()
 
-        doCreate ()
+        doCreate ( assets )
     }
 
     override fun onDestroy ()
     {
-        isWindowCreated = false
         doDestroy ()
         super.onDestroy ()
     }
@@ -114,13 +112,7 @@ internal class Activity : android.app.Activity (), SurfaceHolder.Callback2, Anal
 
     override fun surfaceCreated ( holder : SurfaceHolder )
     {
-        if ( !isWindowCreated )
-        {
-            isWindowCreated = true
-            doWindowCreated ()
-        }
-
-        doSurfaceCreated ()
+        doSurfaceCreated ( holder.surface )
     }
 
     override fun surfaceDestroyed ( holder : SurfaceHolder )

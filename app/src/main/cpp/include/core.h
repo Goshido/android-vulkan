@@ -7,7 +7,9 @@
 GX_DISABLE_COMMON_WARNINGS
 
 #include <chrono>
-#include <android_native_app_glue.h>
+#include <thread>
+#include <android/asset_manager.h>
+#include <android/native_window.h>
 
 GX_RESTORE_WARNING_STATE
 
@@ -20,18 +22,40 @@ namespace android_vulkan {
 class Core final
 {
     private:
-        using timestamp = std::chrono::time_point<std::chrono::system_clock>;
+        using Timestamp = std::chrono::time_point<std::chrono::system_clock>;
+        using CommandHandler = bool ( Core::* ) () noexcept;
+        using RenderBodyHandler = void ( Core::* ) () noexcept;
+
+        enum class eCommand : uint8_t
+        {
+            SwapchainCreated = 0U,
+            SwapchainDestroyed,
+            Quit,
+            COUNT
+        };
 
     private:
-        Game&           _game;
-        Gamepad&        _gamepad;
+        Game*                           _game = nullptr;
+        [[maybe_unused]] Gamepad&       _gamepad = Gamepad::GetInstance ();
 
-        Renderer        _renderer;
-        timestamp       _fpsTimestamp;
-        timestamp       _frameTimestamp;
+        Renderer                        _renderer {};
+        Timestamp                       _fpsTimestamp {};
+        Timestamp                       _frameTimestamp {};
+
+        jobject                         _assetManagerJVM = nullptr;
+        ANativeWindow*                  _nativeWindow = nullptr;
+
+        std::vector<eCommand>           _readQueue {};
+        std::vector<eCommand>           _writeQueue {};
+
+        CommandHandler                  _commandHandlers[ static_cast<size_t>(eCommand::COUNT) ] {};
+        RenderBodyHandler               _renderBodyHandler = &Core::OnIdle;
+
+        std::thread                     _thread {};
+        std::mutex                      _mutex {};
 
     public:
-        explicit Core ( android_app &app, Game &game ) noexcept;
+        Core () = delete;
 
         Core ( Core const & ) = delete;
         Core& operator = ( Core const & ) = delete;
@@ -39,21 +63,26 @@ class Core final
         Core ( Core && ) = delete;
         Core& operator = ( Core && ) = delete;
 
+        explicit Core ( JNIEnv* env, jobject assetManager ) noexcept;
+
         ~Core () = default;
 
-        [[nodiscard]] bool IsSuspend () const;
-        void OnFrame ();
-        void OnQuit ();
+        void OnAboutDestroy ( JNIEnv* env ) noexcept;
+        void OnSurfaceCreated ( JNIEnv* env, jobject surface ) noexcept;
+        void OnSurfaceDestroyed () noexcept;
 
     private:
-        void OnInitWindow ( ANativeWindow &window );
-        void OnLowMemory ();
-        void OnTerminateWindow ();
-        void UpdateFPS ( timestamp now );
+        [[nodiscard]] bool ExecuteMessageQueue () noexcept;
+        void InitCommandHandlers () noexcept;
 
-        static void ActivateFullScreen ( android_app &app );
-        static void OnOSCommand ( android_app* app, int32_t cmd );
-        [[nodiscard]] static int32_t OnOSInputEvent ( android_app* app, AInputEvent* event );
+        void OnFrame () noexcept;
+        void OnIdle () noexcept;
+
+        bool OnQuit () noexcept;
+        bool OnSwapchainCreated () noexcept;
+        bool OnSwapchainDestroyed () noexcept;
+
+        void UpdateFPS ( Timestamp now );
 };
 
 } // namespace android_vulkan

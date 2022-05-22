@@ -24,7 +24,7 @@ class Core final
     private:
         using Timestamp = std::chrono::time_point<std::chrono::system_clock>;
         using CommandHandler = bool ( Core::* ) () noexcept;
-        using RenderBodyHandler = void ( Core::* ) () noexcept;
+        using RendererBodyHandler = void ( Core::* ) () noexcept;
 
         enum class eCommand : uint8_t
         {
@@ -49,7 +49,7 @@ class Core final
         std::vector<eCommand>           _writeQueue {};
 
         CommandHandler                  _commandHandlers[ static_cast<size_t>(eCommand::COUNT) ] {};
-        RenderBodyHandler               _renderBodyHandler = &Core::OnIdle;
+        RendererBodyHandler             _rendererBodyHandler = &Core::OnIdle;
 
         std::thread                     _thread {};
         std::mutex                      _mutex {};

@@ -83,7 +83,7 @@ Core::Core ( JNIEnv* env, jobject assetManager ) noexcept
             while ( ExecuteMessageQueue () )
             {
                 // C++ calling method by pointer syntax.
-                ( this->*_renderBodyHandler ) ();
+                ( this->*_rendererBodyHandler ) ();
             }
         }
     );
@@ -194,14 +194,14 @@ bool Core::OnSwapchainCreated () noexcept
 
     _fpsTimestamp = std::chrono::system_clock::now ();
     _frameTimestamp = _fpsTimestamp;
-    _renderBodyHandler = &Core::OnFrame;
+    _rendererBodyHandler = &Core::OnFrame;
 
     return true;
 }
 
 bool Core::OnSwapchainDestroyed () noexcept
 {
-    _renderBodyHandler = &Core::OnIdle;
+    _rendererBodyHandler = &Core::OnIdle;
 
     if ( !_renderer.FinishAllJobs () )
         return false;

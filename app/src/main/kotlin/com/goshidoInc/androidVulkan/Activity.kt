@@ -3,7 +3,11 @@ package com.goshidoInc.androidVulkan
 
 import android.content.res.AssetManager
 import android.os.Bundle
-import android.view.*
+import android.view.KeyEvent
+import android.view.MotionEvent
+import android.view.Surface
+import android.view.SurfaceHolder
+import android.view.View
 
 
 internal class Activity : android.app.Activity (), SurfaceHolder.Callback2, AnalogControlListener

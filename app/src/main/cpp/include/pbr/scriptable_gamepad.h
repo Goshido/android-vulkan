@@ -18,7 +18,8 @@ class ScriptableGamepad final
         };
 
     private:
-        KeyContext                          _keyContexts[ android_vulkan::ACTION_POOL_ELEMENT_COUNT ];
+        constexpr static size_t             ACTION_POOL_ELEMENT_COUNT = android_vulkan::TOTAL_GAMEPAD_KEYS * 77U;
+        KeyContext                          _keyContexts[ ACTION_POOL_ELEMENT_COUNT ];
 
     public:
         ScriptableGamepad () = default;

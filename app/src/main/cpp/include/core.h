@@ -2,19 +2,18 @@
 #define ANDROID_VULKAN_CORE_H
 
 
-#include <GXCommon/GXWarning.h>
+#include "game.h"
+#include "gamepad.h"
 
 GX_DISABLE_COMMON_WARNINGS
 
 #include <chrono>
 #include <thread>
+#include <jni.h>
 #include <android/asset_manager.h>
 #include <android/native_window.h>
 
 GX_RESTORE_WARNING_STATE
-
-#include "game.h"
-#include "gamepad.h"
 
 
 namespace android_vulkan {

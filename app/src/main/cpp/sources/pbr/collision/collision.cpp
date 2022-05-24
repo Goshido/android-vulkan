@@ -197,11 +197,11 @@ bool Collision::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
     _camera.SetLocation ( GXVec3 ( 0.77F, 20.8F, -55.4F ) );
     _camera.Update ( 0.0F );
 
-    constexpr size_t const cubeBuffers = 1U;
-    constexpr size_t const defaultMaterialBuffers = 5U;
-    constexpr size_t const sphereBuffers = 1U;
-    constexpr size_t const unlitMaterialBuffers = 5U;
-    constexpr size_t const totalBuffers = cubeBuffers + defaultMaterialBuffers + sphereBuffers + unlitMaterialBuffers;
+    constexpr size_t cubeBuffers = 1U;
+    constexpr size_t defaultMaterialBuffers = 5U;
+    constexpr size_t sphereBuffers = 1U;
+    constexpr size_t unlitMaterialBuffers = 5U;
+    constexpr size_t totalBuffers = cubeBuffers + defaultMaterialBuffers + sphereBuffers + unlitMaterialBuffers;
 
     VkCommandBufferAllocateInfo const allocateInfo
     {

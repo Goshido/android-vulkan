@@ -67,6 +67,16 @@ class Core final
         ~Core () = default;
 
         void OnAboutDestroy ( JNIEnv* env ) noexcept;
+
+        void OnKeyDown ( int32_t key ) const noexcept;
+        void OnKeyUp ( int32_t key ) const noexcept;
+
+        void OnLeftStick ( float x, float y ) const noexcept;
+        void OnRightStick ( float x, float y ) const noexcept;
+
+        void OnLeftTrigger ( float value ) const noexcept;
+        void OnRightTrigger ( float value ) const noexcept;
+
         void OnSurfaceCreated ( JNIEnv* env, jobject surface ) noexcept;
         void OnSurfaceDestroyed () noexcept;
 

@@ -454,7 +454,7 @@ bool Game::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept
     VkExtent2D const& resolution = renderer.GetViewportResolution ();
 
     _projectionMatrix.Perspective ( GXDegToRad ( FIELD_OF_VIEW ),
-        resolution.width / static_cast<float> ( resolution.height ),
+        static_cast<float> ( resolution.width ) / static_cast<float> ( resolution.height ),
         Z_NEAR,
         Z_FAR
     );
@@ -859,26 +859,28 @@ bool Game::CreatePipeline ( android_vulkan::Renderer &renderer ) noexcept
     viewportInfo.scissorCount = 1U;
     viewportInfo.pScissors = &scissor;
 
-    VkGraphicsPipelineCreateInfo pipelineInfo;
-    pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    pipelineInfo.pNext = nullptr;
-    pipelineInfo.flags = 0U;
-    pipelineInfo.subpass = 0U;
-    pipelineInfo.stageCount = static_cast<uint32_t> ( std::size ( stageInfo ) );
-    pipelineInfo.pStages = stageInfo;
-    pipelineInfo.renderPass = _renderPass;
-    pipelineInfo.pDynamicState = nullptr;
-    pipelineInfo.layout = _pipelineLayout;
-    pipelineInfo.basePipelineIndex = 0;
-    pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
-    pipelineInfo.pInputAssemblyState = &assemblyInfo;
-    pipelineInfo.pVertexInputState = &vertexInputInfo;
-    pipelineInfo.pTessellationState = nullptr;
-    pipelineInfo.pDepthStencilState = &depthStencilInfo;
-    pipelineInfo.pRasterizationState = &rasterizationInfo;
-    pipelineInfo.pViewportState = &viewportInfo;
-    pipelineInfo.pColorBlendState = &blendInfo;
-    pipelineInfo.pMultisampleState = &multisampleInfo;
+    VkGraphicsPipelineCreateInfo const pipelineInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .stageCount = static_cast<uint32_t> ( std::size ( stageInfo ) ),
+        .pStages = stageInfo,
+        .pVertexInputState = &vertexInputInfo,
+        .pInputAssemblyState = &assemblyInfo,
+        .pTessellationState = nullptr,
+        .pViewportState = &viewportInfo,
+        .pRasterizationState = &rasterizationInfo,
+        .pMultisampleState = &multisampleInfo,
+        .pDepthStencilState = &depthStencilInfo,
+        .pColorBlendState = &blendInfo,
+        .pDynamicState = nullptr,
+        .layout = _pipelineLayout,
+        .renderPass = _renderPass,
+        .subpass = 0U,
+        .basePipelineHandle = VK_NULL_HANDLE,
+        .basePipelineIndex = -1,
+    };
 
     VkDevice device = renderer.GetDevice ();
 

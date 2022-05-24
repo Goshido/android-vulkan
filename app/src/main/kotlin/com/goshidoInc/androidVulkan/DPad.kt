@@ -1,7 +1,6 @@
 package com.goshidoInc.androidVulkan
 
 
-import android.util.Log
 import android.view.KeyEvent
 import android.view.MotionEvent
 
@@ -18,6 +17,7 @@ internal class DPad ( private val notify : KeyEvent.Callback )
 
     private var currentState = State ()
     private var oldState = State ()
+    private var dPadEvent = KeyEvent ( KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_UNKNOWN )
 
     fun sync ( event : MotionEvent )
     {
@@ -58,11 +58,11 @@ internal class DPad ( private val notify : KeyEvent.Callback )
 
             if ( new )
             {
-                notify.onKeyDown ( key, null )
+                notify.onKeyDown ( key, dPadEvent )
                 return
             }
 
-            notify.onKeyUp ( key, null )
+            notify.onKeyUp ( key, dPadEvent )
         }
 
         resolve ( oldState.down, currentState.down, KeyEvent.KEYCODE_DPAD_DOWN )

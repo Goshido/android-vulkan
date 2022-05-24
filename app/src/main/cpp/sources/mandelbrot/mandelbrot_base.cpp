@@ -533,7 +533,8 @@ bool MandelbrotBase::CreatePipeline ( android_vulkan::Renderer &renderer ) noexc
         .layout = _pipelineLayout,
         .renderPass = _renderPass,
         .subpass = 0U,
-        .basePipelineHandle = VK_NULL_HANDLE
+        .basePipelineHandle = VK_NULL_HANDLE,
+        .basePipelineIndex = -1
     };
 
     result = android_vulkan::Renderer::CheckVkResult (

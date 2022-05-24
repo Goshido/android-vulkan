@@ -77,7 +77,7 @@ class Gamepad final
         Trigger                                 _rightTrigger {};
 
         std::unordered_map<int32_t, size_t>     _mapper;
-        std::mutex                              _mutex {};
+        std::mutex mutable                      _mutex {};
 
     public:
         [[nodiscard]] static Gamepad& GetInstance () noexcept;
@@ -102,6 +102,15 @@ class Gamepad final
 
         void BindRightTrigger ( void* context, TriggerHandler handler ) noexcept;
         void UnbindRightTrigger () noexcept;
+
+        void OnKeyDown ( int32_t key ) const noexcept;
+        void OnKeyUp ( int32_t key ) const noexcept;
+
+        void OnLeftStick ( float x, float y ) const noexcept;
+        void OnRightStick ( float x, float y ) const noexcept;
+
+        void OnLeftTrigger ( float value ) const noexcept;
+        void OnRightTrigger ( float value ) const noexcept;
 
     private:
         Gamepad () noexcept;

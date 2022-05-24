@@ -3,11 +3,7 @@ package com.goshidoInc.androidVulkan
 
 import android.content.res.AssetManager
 import android.os.Bundle
-import android.view.KeyEvent
-import android.view.MotionEvent
-import android.view.Surface
-import android.view.SurfaceHolder
-import android.view.View
+import android.view.*
 
 
 internal class Activity : android.app.Activity (), SurfaceHolder.Callback2, AnalogControlListener
@@ -50,6 +46,11 @@ internal class Activity : android.app.Activity (), SurfaceHolder.Callback2, Anal
         view.requestFocus ()
 
         doCreate ( assets )
+
+        window.decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_FULLSCREEN or
+            View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
+            View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+        )
     }
 
     override fun onDestroy ()
@@ -75,13 +76,17 @@ internal class Activity : android.app.Activity (), SurfaceHolder.Callback2, Anal
 
     override fun onKeyDown ( keyCode : Int, event : KeyEvent? ) : Boolean
     {
-        doKeyDown ( keyCode )
+        if ( event != null && event.repeatCount == 0 )
+            doKeyDown ( keyCode )
+
         return true
     }
 
     override fun onKeyUp ( keyCode : Int, event : KeyEvent? ) : Boolean
     {
-        doKeyUp ( keyCode )
+        if ( event != null && event.repeatCount == 0 )
+            doKeyUp ( keyCode )
+
         return true
     }
 

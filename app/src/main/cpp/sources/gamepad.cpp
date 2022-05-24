@@ -127,6 +127,78 @@ void Gamepad::UnbindRightTrigger () noexcept
     _rightTrigger._handler = nullptr;
 }
 
+void Gamepad::OnKeyDown ( int32_t key ) const noexcept
+{
+    std::unique_lock<std::mutex> const lock ( _mutex );
+    auto const findResult = _mapper.find ( key );
+
+    if ( findResult == _mapper.cend () )
+        return;
+
+    KeyBind const& bind = _downKeyBinds[ findResult->second ];
+
+    if ( !bind._handler )
+        return;
+
+    bind._handler ( bind._context );
+}
+
+void Gamepad::OnKeyUp ( int32_t key ) const noexcept
+{
+    std::unique_lock<std::mutex> const lock ( _mutex );
+    auto const findResult = _mapper.find ( key );
+
+    if ( findResult == _mapper.cend () )
+        return;
+
+    KeyBind const& bind = _upKeyBinds[ findResult->second ];
+
+    if ( !bind._handler )
+        return;
+
+    bind._handler ( bind._context );
+}
+
+void Gamepad::OnLeftStick ( float x, float y ) const noexcept
+{
+    std::unique_lock<std::mutex> const lock ( _mutex );
+
+    if ( !_leftStick._handler )
+        return;
+
+    _leftStick._handler ( _leftStick._context, x, y );
+}
+
+void Gamepad::OnRightStick ( float x, float y ) const noexcept
+{
+    std::unique_lock<std::mutex> const lock ( _mutex );
+
+    if ( !_rightStick._handler )
+        return;
+
+    _rightStick._handler ( _rightStick._context, x, y );
+}
+
+void Gamepad::OnLeftTrigger ( float value ) const noexcept
+{
+    std::unique_lock<std::mutex> const lock ( _mutex );
+
+    if ( !_leftTrigger._handler )
+        return;
+
+    _leftTrigger._handler ( _leftTrigger._context, value );
+}
+
+void Gamepad::OnRightTrigger ( float value ) const noexcept
+{
+    std::unique_lock<std::mutex> const lock ( _mutex );
+
+    if ( !_rightTrigger._handler )
+        return;
+
+    _rightTrigger._handler ( _rightTrigger._context, value );
+}
+
 Gamepad::Gamepad () noexcept
 {
     std::unique_lock<std::mutex> const lock ( _mutex );

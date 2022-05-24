@@ -79,7 +79,7 @@ bool ReflectionLocalProgram::Init ( android_vulkan::Renderer &renderer,
     pipelineInfo.renderPass = renderPass;
     pipelineInfo.subpass = subpass;
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
-    pipelineInfo.basePipelineIndex = 0;
+    pipelineInfo.basePipelineIndex = -1;
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateGraphicsPipelines ( device, VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),

@@ -69,7 +69,7 @@ bool GeometryPassProgram::Init ( android_vulkan::Renderer &renderer,
     pipelineInfo.renderPass = renderPass;
     pipelineInfo.subpass = subpass;
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
-    pipelineInfo.basePipelineIndex = 0;
+    pipelineInfo.basePipelineIndex = -1;
 
     char where[ 512U ];
     std::snprintf ( where, std::size ( where ), "%s::Init", _name.data () );

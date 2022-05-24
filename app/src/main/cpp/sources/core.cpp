@@ -23,10 +23,11 @@ GX_RESTORE_WARNING_STATE
 
 namespace android_vulkan {
 
-AAssetManager* g_AssetManager = nullptr;
-Core* g_Core = nullptr;
-constexpr static double const FPS_PERIOD = 3.0;
+constexpr static double FPS_PERIOD = 3.0;
 constexpr static auto TIMEOUT = std::chrono::milliseconds ( 10U );
+
+AAssetManager* g_AssetManager = nullptr;
+static Core* g_Core = nullptr;
 
 enum class eGame : uint16_t
 {
@@ -105,6 +106,36 @@ void Core::OnAboutDestroy ( JNIEnv* env ) noexcept
     env->DeleteGlobalRef ( _assetManagerJVM );
     _assetManagerJVM = nullptr;
     g_AssetManager = nullptr;
+}
+
+void Core::OnKeyDown ( int32_t key ) const noexcept
+{
+    _gamepad.OnKeyDown ( key );
+}
+
+void Core::OnKeyUp ( int32_t key ) const noexcept
+{
+    _gamepad.OnKeyUp ( key );
+}
+
+void Core::OnLeftStick ( float x, float y ) const noexcept
+{
+    _gamepad.OnLeftStick ( x, y );
+}
+
+void Core::OnRightStick ( float x, float y ) const noexcept
+{
+    _gamepad.OnRightStick ( x, y );
+}
+
+void Core::OnLeftTrigger ( float value ) const noexcept
+{
+    _gamepad.OnLeftTrigger ( value );
+}
+
+void Core::OnRightTrigger ( float value ) const noexcept
+{
+    _gamepad.OnRightTrigger ( value );
 }
 
 void Core::OnSurfaceCreated ( JNIEnv* env, jobject surface ) noexcept
@@ -230,83 +261,104 @@ void Core::UpdateFPS ( Timestamp now )
 
 extern "C" {
 
-JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doCreate ( JNIEnv *env, jobject /*obj*/,
-    jobject assetManager )
+JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doCreate ( JNIEnv* env,
+    jobject /*obj*/,
+    jobject assetManager
+)
 {
     g_Core = new Core ( env, assetManager );
-    LogDebug ( "~~~ OnCreate" );
 }
 
-JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doDestroy ( JNIEnv *env, jobject /*obj*/ )
+JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doDestroy ( JNIEnv* env, jobject /*obj*/ )
 {
+    if ( !g_Core )
+        return;
+
     g_Core->OnAboutDestroy ( env );
 
     delete g_Core;
     g_Core = nullptr;
-
-    LogDebug ( "~~~ OnDestroy" );
 }
 
-JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doKeyDown ( JNIEnv */*env*/, jobject /*obj*/, jint keyCode )
+JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doKeyDown ( JNIEnv* /*env*/, jobject /*obj*/, jint keyCode )
 {
-    // TODO
-    LogDebug ( "~~~ OnKeyDown %d", keyCode );
+    if ( !g_Core )
+        return;
+
+    g_Core->OnKeyDown ( keyCode );
 }
 
-JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doKeyUp ( JNIEnv */*env*/, jobject /*obj*/, jint keyCode )
+JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doKeyUp ( JNIEnv* /*env*/, jobject /*obj*/, jint keyCode )
 {
-    // TODO
-    LogDebug ( "~~~ OnKeyUp %d", keyCode );
+    if ( !g_Core )
+        return;
+
+    g_Core->OnKeyUp ( keyCode );
 }
 
-JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doLeftStick ( JNIEnv */*env*/,
+JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doLeftStick ( JNIEnv* /*env*/,
     jobject /*obj*/,
     jfloat x,
     jfloat y
 )
 {
-    // TODO
-    LogDebug ( "~~~ OnLeftStick %g %g", x, y );
+    if ( !g_Core )
+        return;
+
+    g_Core->OnLeftStick ( x, y );
 }
 
-JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doRightStick ( JNIEnv */*env*/,
+JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doRightStick ( JNIEnv* /*env*/,
     jobject /*obj*/,
     jfloat x,
     jfloat y
 )
 {
-    // TODO
-    LogDebug ( "~~~ OnRightStick %g %g", x, y );
+    if ( !g_Core )
+        return;
+
+    g_Core->OnRightStick ( x, y );
 }
 
-JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doLeftTrigger ( JNIEnv */*env*/,
+JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doLeftTrigger ( JNIEnv* /*env*/,
     jobject /*obj*/,
     jfloat value
 )
 {
-    // TODO
-    LogDebug ( "~~~ OnLeftTrigger %g", value );
+    if ( !g_Core )
+        return;
+
+    g_Core->OnLeftTrigger ( value );
 }
 
-JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doRightTrigger ( JNIEnv */*env*/,
+JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doRightTrigger ( JNIEnv* /*env*/,
     jobject /*obj*/,
     jfloat value
 )
 {
-    // TODO
-    LogDebug ( "~~~ OnRightTrigger %g", value );
+    if ( !g_Core )
+        return;
+
+    g_Core->OnRightTrigger ( value );
 }
 
-JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doSurfaceCreated ( JNIEnv* env, jobject /*obj*/, jobject surface )
+JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doSurfaceCreated ( JNIEnv* env,
+    jobject /*obj*/,
+    jobject surface
+)
 {
+    if ( !g_Core )
+        return;
+
     g_Core->OnSurfaceCreated ( env, surface );
-    LogDebug ( "~~~ OnSurfaceCreated" );
 }
 
 JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doSurfaceDestroyed ( JNIEnv* /*env*/, jobject /*obj*/ )
 {
+    if ( !g_Core )
+        return;
+
     g_Core->OnSurfaceDestroyed ();
-    LogDebug ( "~~~ OnSurfaceDestroyed" );
 }
 
 } // extern "C"

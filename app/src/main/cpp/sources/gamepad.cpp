@@ -1,5 +1,4 @@
 #include <gamepad.h>
-#include <logger.h>
 
 GX_DISABLE_COMMON_WARNINGS
 

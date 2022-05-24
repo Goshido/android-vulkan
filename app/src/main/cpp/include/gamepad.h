@@ -6,8 +6,8 @@
 
 GX_DISABLE_COMMON_WARNINGS
 
-#include <unordered_map>
 #include <mutex>
+#include <unordered_map>
 
 GX_RESTORE_WARNING_STATE
 
@@ -80,7 +80,7 @@ class Gamepad final
         std::mutex                              _mutex {};
 
     public:
-        static Gamepad& GetInstance () noexcept;
+        [[nodiscard]] static Gamepad& GetInstance () noexcept;
 
         Gamepad ( Gamepad const & ) = delete;
         Gamepad& operator = ( Gamepad const & ) = delete;

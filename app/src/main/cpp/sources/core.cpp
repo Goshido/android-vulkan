@@ -49,8 +49,7 @@ enum class eGame : uint16_t
 
 Core::Core ( JNIEnv* env, jobject assetManager ) noexcept
 {
-    _assetManagerJVM = assetManager;
-    env->NewGlobalRef ( assetManager );
+    _assetManagerJVM = env->NewGlobalRef ( assetManager );
     g_AssetManager = AAssetManager_fromJava ( env, assetManager );
 
     InitCommandHandlers ();
@@ -97,11 +96,8 @@ void Core::OnAboutDestroy ( JNIEnv* env ) noexcept
         _writeQueue.push_back ( eCommand::Quit );
     }
 
-    while ( _thread.joinable () )
-        std::this_thread::sleep_for ( TIMEOUT );
-
-    ANativeWindow_release ( _nativeWindow );
-    _nativeWindow = nullptr;
+    if ( _thread.joinable () )
+        _thread.join ();
 
     env->DeleteGlobalRef ( _assetManagerJVM );
     _assetManagerJVM = nullptr;
@@ -156,6 +152,7 @@ void Core::OnSurfaceDestroyed () noexcept
         std::this_thread::sleep_for ( TIMEOUT );
 
     ANativeWindow_release ( _nativeWindow );
+    _nativeWindow = nullptr;
 }
 
 bool Core::ExecuteMessageQueue () noexcept
@@ -267,6 +264,7 @@ JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doCreate ( JNIEnv* env
 )
 {
     g_Core = new Core ( env, assetManager );
+    LogInfo ( "Core has been created." );
 }
 
 JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doDestroy ( JNIEnv* env, jobject /*obj*/ )
@@ -278,6 +276,7 @@ JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doDestroy ( JNIEnv* en
 
     delete g_Core;
     g_Core = nullptr;
+    LogInfo ( "Core has been destroyed." );
 }
 
 JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doKeyDown ( JNIEnv* /*env*/, jobject /*obj*/, jint keyCode )

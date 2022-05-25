@@ -89,7 +89,15 @@ internal class Activity : android.app.Activity (), SurfaceHolder.Callback2, Anal
     override fun onKeyUp ( keyCode : Int, event : KeyEvent? ) : Boolean
     {
         if ( event != null && event.repeatCount == 0 )
+        {
             doKeyUp ( keyCode )
+
+            if ( keyCode == KeyEvent.KEYCODE_BUTTON_MODE )
+            {
+                // TODO deletage to C++ part.
+                finish();
+            }
+        }
 
         return true
     }

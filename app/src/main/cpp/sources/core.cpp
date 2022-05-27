@@ -47,10 +47,15 @@ enum class eGame : uint16_t
 
 //----------------------------------------------------------------------------------------------------------------------
 
-Core::Core ( JNIEnv* env, jobject assetManager ) noexcept
+Core::Core ( JNIEnv* env, jobject activity, jobject assetManager ) noexcept
 {
-    _assetManagerJVM = env->NewGlobalRef ( assetManager );
+    env->GetJavaVM ( &_vm );
+
+    _assetManager = env->NewGlobalRef ( assetManager );
     g_AssetManager = AAssetManager_fromJava ( env, assetManager );
+
+    _activity = env->NewGlobalRef ( activity );
+    _finishMethod = env->GetMethodID ( env->FindClass ( "com/goshidoInc/androidVulkan/Activity" ), "finish", "()V" );
 
     InitCommandHandlers ();
 
@@ -87,6 +92,8 @@ Core::Core ( JNIEnv* env, jobject assetManager ) noexcept
             }
         }
     );
+
+    _gamepad.BindKey ( this, &Core::OnHomeUp, eGamepadKey::Home, eButtonState::Up );
 }
 
 void Core::OnAboutDestroy ( JNIEnv* env ) noexcept
@@ -99,9 +106,15 @@ void Core::OnAboutDestroy ( JNIEnv* env ) noexcept
     if ( _thread.joinable () )
         _thread.join ();
 
-    env->DeleteGlobalRef ( _assetManagerJVM );
-    _assetManagerJVM = nullptr;
+    env->DeleteGlobalRef ( _assetManager );
+    _assetManager = nullptr;
     g_AssetManager = nullptr;
+
+    env->DeleteGlobalRef ( _activity );
+    _activity = nullptr;
+
+    _finishMethod = nullptr;
+    _vm = nullptr;
 }
 
 void Core::OnKeyDown ( int32_t key ) const noexcept
@@ -155,6 +168,12 @@ void Core::OnSurfaceDestroyed () noexcept
     _nativeWindow = nullptr;
 }
 
+void Core::Quit () noexcept
+{
+    std::unique_lock<std::mutex> const lock ( _mutex );
+    _writeQueue.push_back ( eCommand::QuitRequest );
+}
+
 bool Core::ExecuteMessageQueue () noexcept
 {
     {
@@ -178,9 +197,10 @@ bool Core::ExecuteMessageQueue () noexcept
 
 void Core::InitCommandHandlers () noexcept
 {
+    _commandHandlers[ static_cast<size_t> ( eCommand::Quit ) ] = &Core::OnQuit;
+    _commandHandlers[ static_cast<size_t> ( eCommand::QuitRequest ) ] = &Core::OnQuitRequest;
     _commandHandlers[ static_cast<size_t> ( eCommand::SwapchainCreated ) ] = &Core::OnSwapchainCreated;
     _commandHandlers[ static_cast<size_t> ( eCommand::SwapchainDestroyed ) ] = &Core::OnSwapchainDestroyed;
-    _commandHandlers[ static_cast<size_t> ( eCommand::Quit ) ] = &Core::OnQuit;
 }
 
 void Core::OnFrame () noexcept
@@ -210,6 +230,24 @@ bool Core::OnQuit () noexcept
     _renderer.OnDestroyDevice ();
 
     return false;
+}
+
+bool Core::OnQuitRequest () noexcept
+{
+    JNIEnv* env = nullptr;
+
+    JavaVMAttachArgs args
+    {
+        .version = JNI_VERSION_1_6,
+        .name = "Native Core",
+        .group = nullptr
+    };
+
+    _vm->AttachCurrentThread ( &env, &args );
+    env->CallVoidMethod ( _activity, _finishMethod );
+    _vm->DetachCurrentThread ();
+
+    return true;
 }
 
 bool Core::OnSwapchainCreated () noexcept
@@ -256,14 +294,17 @@ void Core::UpdateFPS ( Timestamp now )
     frameCount = 0U;
 }
 
+void Core::OnHomeUp ( void* context ) noexcept
+{
+    auto& core = *static_cast<Core*> ( context );
+    core.Quit ();
+}
+
 extern "C" {
 
-JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doCreate ( JNIEnv* env,
-    jobject /*obj*/,
-    jobject assetManager
-)
+JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doCreate ( JNIEnv* env, jobject obj, jobject assetManager )
 {
-    g_Core = new Core ( env, assetManager );
+    g_Core = new Core ( env, obj, assetManager );
     LogInfo ( "Core has been created." );
 }
 

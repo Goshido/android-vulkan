@@ -27,31 +27,36 @@ class Core final
 
         enum class eCommand : uint8_t
         {
-            SwapchainCreated = 0U,
+            Quit = 0U,
+            QuitRequest,
+            SwapchainCreated,
             SwapchainDestroyed,
-            Quit,
             COUNT
         };
 
     private:
-        Game*                           _game = nullptr;
-        [[maybe_unused]] Gamepad&       _gamepad = Gamepad::GetInstance ();
+        Game*                       _game = nullptr;
+        Gamepad&                    _gamepad = Gamepad::GetInstance ();
 
-        Renderer                        _renderer {};
-        Timestamp                       _fpsTimestamp {};
-        Timestamp                       _frameTimestamp {};
+        Renderer                    _renderer {};
+        Timestamp                   _fpsTimestamp {};
+        Timestamp                   _frameTimestamp {};
 
-        jobject                         _assetManagerJVM = nullptr;
-        ANativeWindow*                  _nativeWindow = nullptr;
+        jobject                     _activity = nullptr;
+        jobject                     _assetManager = nullptr;
+        jmethodID                   _finishMethod = nullptr;
+        JavaVM*                     _vm = nullptr;
 
-        std::vector<eCommand>           _readQueue {};
-        std::vector<eCommand>           _writeQueue {};
+        ANativeWindow*              _nativeWindow = nullptr;
 
-        CommandHandler                  _commandHandlers[ static_cast<size_t>(eCommand::COUNT) ] {};
-        RendererBodyHandler             _rendererBodyHandler = &Core::OnIdle;
+        std::vector<eCommand>       _readQueue {};
+        std::vector<eCommand>       _writeQueue {};
 
-        std::thread                     _thread {};
-        std::mutex                      _mutex {};
+        CommandHandler              _commandHandlers[ static_cast<size_t> ( eCommand::COUNT ) ] {};
+        RendererBodyHandler         _rendererBodyHandler = &Core::OnIdle;
+
+        std::thread                 _thread {};
+        std::mutex                  _mutex {};
 
     public:
         Core () = delete;
@@ -62,7 +67,7 @@ class Core final
         Core ( Core && ) = delete;
         Core& operator = ( Core && ) = delete;
 
-        explicit Core ( JNIEnv* env, jobject assetManager ) noexcept;
+        explicit Core ( JNIEnv* env, jobject activity, jobject assetManager ) noexcept;
 
         ~Core () = default;
 
@@ -80,6 +85,8 @@ class Core final
         void OnSurfaceCreated ( JNIEnv* env, jobject surface ) noexcept;
         void OnSurfaceDestroyed () noexcept;
 
+        void Quit () noexcept;
+
     private:
         [[nodiscard]] bool ExecuteMessageQueue () noexcept;
         void InitCommandHandlers () noexcept;
@@ -88,10 +95,13 @@ class Core final
         void OnIdle () noexcept;
 
         bool OnQuit () noexcept;
+        bool OnQuitRequest () noexcept;
         bool OnSwapchainCreated () noexcept;
         bool OnSwapchainDestroyed () noexcept;
 
         void UpdateFPS ( Timestamp now );
+
+        static void OnHomeUp ( void* context ) noexcept;
 };
 
 } // namespace android_vulkan

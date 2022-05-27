@@ -49,12 +49,13 @@ internal class Activity : android.app.Activity (), SurfaceHolder.Callback2, Anal
         setContentView ( view )
         view.requestFocus ()
 
-        doCreate ( assets )
-
-        window.decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_FULLSCREEN or
+        // Using legacy API for easy auto entering to fullscreen mode after swipes.
+        @Suppress ( "DEPRECATION" )
+        window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN or
             View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
             View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-        )
+
+        doCreate ( assets )
     }
 
     override fun onDestroy ()
@@ -89,15 +90,7 @@ internal class Activity : android.app.Activity (), SurfaceHolder.Callback2, Anal
     override fun onKeyUp ( keyCode : Int, event : KeyEvent? ) : Boolean
     {
         if ( event != null && event.repeatCount == 0 )
-        {
             doKeyUp ( keyCode )
-
-            if ( keyCode == KeyEvent.KEYCODE_BUTTON_MODE )
-            {
-                // TODO deletage to C++ part.
-                finish();
-            }
-        }
 
         return true
     }

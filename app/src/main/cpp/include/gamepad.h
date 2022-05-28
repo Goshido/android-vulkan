@@ -41,6 +41,8 @@ enum class eButtonState : uint8_t
     Up
 };
 
+constexpr inline static auto TOTAL_GAMEPAD_KEY_STATES = static_cast<size_t> ( eButtonState::Up ) + 1U;
+
 typedef void ( *KeyHandler ) ( void* context ) noexcept;
 typedef void ( *TriggerHandler ) ( void* context, float push ) noexcept;
 typedef void ( *StickHandler ) ( void* context, float horizontal, float vertical ) noexcept;

@@ -24,6 +24,11 @@ constexpr static float DEFAULT_Z_FAR = 1.0e+4F;
 
 //----------------------------------------------------------------------------------------------------------------------
 
+bool Scene::ExecuteInputEvents () noexcept
+{
+    return _gamepad.Execute ( *_vm, _sceneHandle, _onInputIndex );
+}
+
 GXMat4 const& Scene::GetActiveCameraLocalMatrix () const noexcept
 {
     return _camera->GetLocalMatrix ();
@@ -32,6 +37,16 @@ GXMat4 const& Scene::GetActiveCameraLocalMatrix () const noexcept
 GXMat4 const& Scene::GetActiveCameraProjectionMatrix () const noexcept
 {
     return _camera->GetProjectionMatrix ();
+}
+
+void Scene::OnCaptureInput () noexcept
+{
+    _gamepad.CaptureInput ();
+}
+
+void Scene::OnReleaseInput () const noexcept
+{
+    _gamepad.ReleaseInput ();
 }
 
 bool Scene::OnInitDevice ( android_vulkan::Physics &physics ) noexcept
@@ -119,6 +134,9 @@ bool Scene::OnInitDevice ( android_vulkan::Physics &physics ) noexcept
     if ( !bind ( "AppendActor", _appendActorIndex ) )
         return false;
 
+    if ( !bind ( "OnInput", _onInputIndex ) )
+        return false;
+
     if ( !bind ( "OnPostPhysics", _onPostPhysicsIndex ) )
         return false;
 
@@ -128,11 +146,15 @@ bool Scene::OnInitDevice ( android_vulkan::Physics &physics ) noexcept
     if ( !bind ( "OnRenderTargetChanged", _onRenderTargetChangedIndex ) )
         return false;
 
-    return bind ( "OnUpdate", _onUpdateIndex );
+    if ( !bind ( "OnUpdate", _onUpdateIndex ) )
+        return false;
+
+    return _gamepad.Init ( *_vm );
 }
 
 void Scene::OnDestroyDevice () noexcept
 {
+    _gamepad.Destroy ();
     _freeTransferResourceList.clear ();
     _renderableList.clear ();
     _actors.clear ();
@@ -140,12 +162,16 @@ void Scene::OnDestroyDevice () noexcept
     ScriptEngine::Destroy ();
 
     _physics = nullptr;
-    _vm = nullptr;
+
+    _appendActorIndex = std::numeric_limits<int>::max ();
+    _onInputIndex = std::numeric_limits<int>::max ();
     _onPostPhysicsIndex = std::numeric_limits<int>::max ();
     _onPrePhysicsIndex = std::numeric_limits<int>::max ();
     _onRenderTargetChangedIndex = std::numeric_limits<int>::max ();
     _onUpdateIndex = std::numeric_limits<int>::max ();
+
     _sceneHandle = std::numeric_limits<int>::max ();
+    _vm = nullptr;
 }
 
 bool Scene::OnPrePhysics ( double deltaTime ) noexcept

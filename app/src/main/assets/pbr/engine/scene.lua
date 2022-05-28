@@ -19,6 +19,7 @@ local function AppendActor ( self, actor )
 
     table.insert ( list, actor )
 
+    local inputScripts = self._inputScripts
     local postPhysicsScripts = self._postPhysicsScripts
     local prePhysicsScripts = self._prePhysicsScripts
     local renderTargetChangerScripts = self._renderTargetChangeScripts
@@ -27,6 +28,10 @@ local function AppendActor ( self, actor )
     for groupKey, group in pairs ( actor._components ) do
         for k, v in pairs ( group ) do
             if v._type == eObjectType.ScriptComponent then
+                if type ( v.OnInput ) == "function" then
+                    table.insert ( inputScripts, v )
+                end
+
                 if type ( v.OnPostPhysics ) == "function" then
                     table.insert ( postPhysicsScripts, v )
                 end
@@ -92,6 +97,12 @@ local function GetRenderTargetHeight ( self )
     return av_SceneGetRenderTargetHeight ( self._handle )
 end
 
+local function OnInput ( self, inputEvent )
+    for k, v in pairs ( self._inputScripts ) do
+        v:OnInput ( inputEvent )
+    end
+end
+
 local function OnPostPhysics ( self, deltaTime )
     for k, v in pairs ( self._postPhysicsScripts ) do
         v:OnPostPhysics ( deltaTime )
@@ -135,6 +146,7 @@ local function Constructor ( self, handle )
     -- Data
     obj._actors = {}
     obj._handle = handle
+    obj._inputScripts = {}
     obj._postPhysicsScripts = {}
     obj._prePhysicsScripts = {}
     obj._renderTargetChangeScripts = {}
@@ -149,6 +161,7 @@ local function Constructor ( self, handle )
     obj.GetRenderTargetAspectRatio = GetRenderTargetAspectRatio
     obj.GetRenderTargetWidth = GetRenderTargetWidth
     obj.GetRenderTargetHeight = GetRenderTargetHeight
+    obj.OnInput = OnInput
     obj.OnPostPhysics = OnPostPhysics
     obj.OnPrePhysics = OnPrePhysics
     obj.OnRenderTargetChanged = OnRenderTargetChanged

@@ -3,8 +3,9 @@
 
 
 #include "actor.h"
-#include "render_session.h"
 #include "camera_component.h"
+#include "render_session.h"
+#include "scriptable_gamepad.h"
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -24,18 +25,20 @@ class Scene final
     private:
         std::deque<ActorRef>        _actors {};
 
+        CameraComponent*            _camera = nullptr;
+        CameraComponent             _defaultCamera { "Default Camera" };
+        ScriptableGamepad           _gamepad {};
+        android_vulkan::Physics*    _physics = nullptr;
+
         ComponentList               _freeTransferResourceList {};
         ComponentList               _renderableList {};
 
-        android_vulkan::Physics*    _physics = nullptr;
-        CameraComponent*            _camera = nullptr;
-        CameraComponent             _defaultCamera { "Default Camera" };
-
         lua_Number                  _aspectRatio = 1.0;
-        lua_Integer                 _width = -1.0;
-        lua_Integer                 _height = -1.0;
+        lua_Integer                 _width = -1;
+        lua_Integer                 _height = -1;
 
         int                         _appendActorIndex = std::numeric_limits<int>::max ();
+        int                         _onInputIndex = std::numeric_limits<int>::max ();
         int                         _onPostPhysicsIndex = std::numeric_limits<int>::max ();
         int                         _onPrePhysicsIndex = std::numeric_limits<int>::max ();
         int                         _onRenderTargetChangedIndex = std::numeric_limits<int>::max ();
@@ -56,8 +59,13 @@ class Scene final
 
         ~Scene () = default;
 
+        [[nodiscard]] bool ExecuteInputEvents () noexcept;
+
         [[nodiscard]] GXMat4 const& GetActiveCameraLocalMatrix () const noexcept;
         [[nodiscard]] GXMat4 const& GetActiveCameraProjectionMatrix () const noexcept;
+
+        void OnCaptureInput () noexcept;
+        void OnReleaseInput () const noexcept;
 
         [[nodiscard]] bool OnInitDevice ( android_vulkan::Physics &physics ) noexcept;
         void OnDestroyDevice () noexcept;

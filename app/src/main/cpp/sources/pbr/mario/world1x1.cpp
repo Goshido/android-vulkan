@@ -41,6 +41,9 @@ bool World1x1::IsReady () noexcept
 
 bool World1x1::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) noexcept
 {
+    if ( !_scene.ExecuteInputEvents () )
+        return false;
+
     auto const dt = static_cast<float> ( deltaTime );
 
     if ( !_scene.OnPrePhysics ( deltaTime ) )
@@ -170,11 +173,14 @@ bool World1x1::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcep
 
     _physics.Resume ();
     _mario.CaptureInput ();
+    _scene.OnCaptureInput ();
+
     return true;
 }
 
 void World1x1::OnSwapchainDestroyed ( VkDevice device ) noexcept
 {
+    _scene.OnReleaseInput ();
     Mario::ReleaseInput ();
     _physics.Pause ();
     _renderSession.OnSwapchainDestroyed ( device );

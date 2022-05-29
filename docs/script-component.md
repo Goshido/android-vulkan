@@ -11,6 +11,7 @@ require "av://engine/script_component.lua"
 - [`Constructor`](#constructor)
 - [`GetName ()`](#method-get-name)
 - [`OnActorConstructed ( self, actor )`](#method-on-actor-constructed)
+- [`OnInput ( self, inputEvent )`](#method-on-input)
 - [`OnPostPhysics ( self, deltaTime )`](#method-on-post-physics)
 - [`OnPrePhysics ( self, deltaTime )`](#method-on-pre-physics)
 - [`OnRenderTargetChanged ( self )`](#method-on-render-target-changed)
@@ -30,6 +31,10 @@ local Player = {}
 
 -- Engine events
 local function OnActorConstructed ( self, actor )
+    -- Some implementation
+end
+
+local function OnInput ( self, inputEvent )
     -- Some implementation
 end
 
@@ -59,6 +64,7 @@ local function Constructor ( self, handle, params )
 
     -- Engine events (all optional)
     obj.OnActorConstructed = OnActorConstructed
+    obj.OnInput = OnInput
     obj.OnPostPhysics = OnPostPhysics
     obj.OnPrePhysics = OnPrePhysics
     obj.OnRenderTargetChanged = OnRenderTargetChanged
@@ -224,6 +230,55 @@ local function Constructor ( self, handle, params )
 
     -- Engine events
     obj.OnActorConstructed = OnActorConstructed
+    return obj
+end
+
+setmetatable ( Player, { __call = Constructor } )
+
+-- Module function: fabric callable for Player class.
+return Player
+```
+
+## <a id="method-on-input">`OnInput ( self, inputEvent )`</a>
+
+Optional user provided event handler in the subclass implementaion. The method will be called by the engine right after frame start. The event graph is presented [here](#event-calling-order).
+
+**Parameters:**
+
+- `self` [_required, read/write, [ScriptComponent](./script-component.md)_]: part of _Lua OOP_ convention requred to invoke method via `:` syntax
+- `inputEvent` [_required, readonly, [InputEvent](./input-event.md)_]: input event with state
+
+**Return values:**
+
+- none
+
+**Example:**
+
+```lua
+require "av://engine/logger.lua"
+require "av://engine/script_component.lua"
+
+
+local Player = {}
+
+-- Engine events
+local function OnInput ( self, inputEvent )
+    LogD ( "My name is %s. Got input event", self:GetName () )
+    LogD ( ">>>" )
+
+    for k, v in pairs ( inputEvent ) do
+        LogD ( "%s: %s", k, v )
+    end
+
+    LogD ( "<<<" )
+end
+
+-- Metamethods
+local function Constructor ( self, handle, params )
+    local obj = ScriptComponent ( handle )
+
+    -- Engine events
+    obj.OnInput = OnInput
     return obj
 end
 

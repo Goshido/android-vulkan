@@ -17,20 +17,20 @@ namespace android_vulkan {
 enum class eGamepadKey : uint8_t
 {
     A = 0U,
-    B,
-    X,
-    Y,
-    Down,
-    Left,
-    Right,
-    Up,
-    LeftStick,
-    RightStick,
-    LeftBumper,
-    RightBumper,
-    Home,
-    Menu,
-    View
+    B = 1U,
+    X = 2U,
+    Y = 3U,
+    Down = 4U,
+    Left = 5U,
+    Right = 6U,
+    Up = 7U,
+    LeftStick = 8U,
+    RightStick = 9U,
+    LeftBumper = 10U,
+    RightBumper = 11U,
+    Home = 12U,
+    Menu = 13U,
+    View = 14U
 };
 
 constexpr inline static auto TOTAL_GAMEPAD_KEYS = static_cast<size_t> ( eGamepadKey::View ) + 1U;

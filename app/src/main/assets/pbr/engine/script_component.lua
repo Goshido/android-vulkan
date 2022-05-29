@@ -1,4 +1,5 @@
 require "av://engine/component.lua"
+require "av://engine/input_event.lua"
 
 
 ScriptComponent = {}

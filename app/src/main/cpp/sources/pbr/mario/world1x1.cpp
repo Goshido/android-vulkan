@@ -8,11 +8,14 @@
 #include <pbr/cube_map_manager.h>
 #include <pbr/material_manager.h>
 #include <pbr/mesh_manager.h>
+#include <pbr/rigid_body_component.h>
 #include <pbr/scene_desc.h>
 #include <pbr/script_component.h>
 #include <pbr/script_engine.h>
+#include <pbr/static_mesh_component.h>
 #include <gamepad.h>
 #include <global_force_gravity.h>
+#include <shape_box.h>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -49,7 +52,7 @@ bool World1x1::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) 
     if ( !_scene.OnPrePhysics ( deltaTime ) )
         return false;
 
-    _mario.OnUpdate ();
+    //_mario.OnUpdate ();
     _physics.Simulate ( dt );
 
     if ( !_scene.OnPostPhysics ( deltaTime ) )
@@ -141,7 +144,7 @@ bool World1x1::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 void World1x1::OnDestroyDevice ( VkDevice device ) noexcept
 {
     _scene.OnDestroyDevice ();
-    _mario.Destroy ();
+    //_mario.Destroy ();
     _renderSession.OnDestroyDevice ( device );
     DestroyCommandPool ( device );
     _physics.Reset ();
@@ -172,7 +175,7 @@ bool World1x1::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcep
         return false;
 
     _physics.Resume ();
-    _mario.CaptureInput ();
+    //_mario.CaptureInput ();
     _scene.OnCaptureInput ();
 
     return true;
@@ -181,7 +184,7 @@ bool World1x1::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcep
 void World1x1::OnSwapchainDestroyed ( VkDevice device ) noexcept
 {
     _scene.OnReleaseInput ();
-    Mario::ReleaseInput ();
+    //Mario::ReleaseInput ();
     _physics.Pause ();
     _renderSession.OnSwapchainDestroyed ( device );
 }
@@ -474,6 +477,8 @@ bool World1x1::UploadGPUContent ( android_vulkan::Renderer &renderer ) noexcept
     static_assert ( sizeof ( GXVec3 ) == sizeof ( sceneDesc->_viewerLocation ) );
     assert ( sceneDesc->_formatVersion == SCENE_DESC_FORMAT_VERSION );
 
+    constexpr size_t MARIO_COMMAND_BUFFERS = 2U;
+
     auto const comBuffs = static_cast<size_t> (
         sceneDesc->_textureCount +
         sceneDesc->_meshCount +
@@ -481,7 +486,8 @@ bool World1x1::UploadGPUContent ( android_vulkan::Renderer &renderer ) noexcept
         PipeBase::CommandBufferCountRequirement () +
         Brick::CommandBufferCountRequirement () +
         Riddle::CommandBufferCountRequirement () +
-        Mario::CommandBufferCountRequirement ()
+        MARIO_COMMAND_BUFFERS
+        //Mario::CommandBufferCountRequirement ()
     );
 
     VkCommandBufferAllocateInfo const allocateInfo
@@ -584,7 +590,50 @@ bool World1x1::UploadGPUContent ( android_vulkan::Renderer &renderer ) noexcept
     Riddle::Spawn ( renderer, commandBuffers, _scene, -12.8F, 230.4F, 3328.0F );
     Riddle::Spawn ( renderer, commandBuffers, _scene, -12.8F, 128.0F, 4352.0F );
 
-    _mario.Init ( renderer, commandBuffers, _scene, -0.8F, 4.4F, 3.00189F );
+    bool success;
+
+    ComponentRef staticMesh = std::make_shared<StaticMeshComponent> ( renderer,
+        success,
+        consumed,
+        "pbr/assets/Props/experimental/world-1-1/mario/mario-cube.mesh2",
+        "pbr/assets/Props/experimental/world-1-1/mario/mario.mtl",
+        commandBuffers,
+        "Mesh"
+    );
+
+    commandBuffers += consumed;
+
+    if ( !success )
+        return false;
+
+    android_vulkan::ShapeRef shape = std::make_shared<android_vulkan::ShapeBox> ( 0.8F, 0.8F, 0.8F );
+    shape->SetFriction ( 0.5F );
+    shape->SetRestitution ( 0.0F );
+
+    ComponentRef rigidBody = std::make_shared<RigidBodyComponent> ( shape, "Collider" );
+
+    // NOLINTNEXTLINE - downcast.
+    auto& collider = static_cast<RigidBodyComponent&> ( *rigidBody );
+
+    android_vulkan::RigidBody& body = *collider.GetRigidBody ();
+    body.DisableKinematic ( true );
+    body.EnableSleep ();
+    body.SetDampingAngular ( 0.99F );
+    body.SetDampingLinear ( 0.99F );
+    body.SetMass ( 38.0F, true );
+    body.SetLocation ( -0.8F, 4.4F, 6.00189F, true );
+    body.SetShape ( shape, true );
+
+    ComponentRef script = std::make_shared<ScriptComponent> ( "av://assets/Scripts/mario.lua", "Logic" );
+
+    ActorRef actor = std::make_shared<Actor> ( "Mario" );
+    actor->AppendComponent ( staticMesh );
+    actor->AppendComponent ( rigidBody );
+    actor->AppendComponent ( script );
+
+    _scene.AppendActor ( actor );
+
+    //_mario.Init ( renderer, commandBuffers, _scene, -0.8F, 4.4F, 3.00189F );
 
     result = android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( renderer.GetQueue () ),
         "pbr::mario::World1x1::UploadGPUContent",
@@ -594,7 +643,7 @@ bool World1x1::UploadGPUContent ( android_vulkan::Renderer &renderer ) noexcept
     if ( !result )
         return false;
 
-    _mario.FreeTransferResources ( device );
+    //_mario.FreeTransferResources ( device );
     _scene.FreeTransferResources ( device );
     _isReady = true;
     return true;

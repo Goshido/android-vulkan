@@ -23,16 +23,6 @@ local function OnActorConstructed ( self, actor )
     g_scene:SetActiveCamera ( camera )
 end
 
-local function OnInput ( self, inputEvent )
-    LogD ( ">>>" )
-
-    for k, v in pairs ( inputEvent ) do
-        LogD ( "%s: %s", k, v )
-    end
-
-    LogD ( "<<<" )
-end
-
 local function OnRenderTargetChanged ( self )
     self._cameraComponent:SetProjection ( FOVY, g_scene:GetRenderTargetAspectRatio (), ZNEAR, ZFAR )
 end
@@ -88,16 +78,11 @@ local function Constructor ( self, handle, params )
     local obj = ScriptComponent ( handle )
 
     -- Data
-    obj._cameraComponent = nil
-
     obj._localMatrix = GXMat4 ()
     obj._localMatrix:RotationY ( math.rad ( -90.0 ) )
 
-    obj._tracker = nil
-
     -- Engine events
     obj.OnActorConstructed = OnActorConstructed
-    obj.OnInput = OnInput
     obj.OnPostPhysics = FindTracker
     obj.OnRenderTargetChanged = OnRenderTargetChanged
 

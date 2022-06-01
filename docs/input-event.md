@@ -34,7 +34,7 @@ The key event is a _digital event_ and is described by the following table:
 
 ```lua
 InputEvent = {
-    _type = ...
+    _type = ...,
     _key = ...
 }
 ```
@@ -65,8 +65,8 @@ The stick event is an _analog_ event and is described by the following table:
 
 ```lua
 InputEvent = {
-    _type = ...
-    _x = ...
+    _type = ...,
+    _x = ...,
     _y = ...
 }
 ```
@@ -83,7 +83,7 @@ The trigger event is an _analog_ event and is described by the following table:
 
 ```lua
 InputEvent = {
-    _type = ...
+    _type = ...,
     _value = ...
 }
 ```

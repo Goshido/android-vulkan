@@ -15,12 +15,12 @@ Usefull documentation is located [here](docs/documentation.md).
 Requirements:
 
 * _Windows Vista_+ or _Monjaro KDE_
-* _Android Studio Chipmunk | 2021.2.1_
-* _Android Studio Gradle Plugin 7.2.0_
+* _Android Studio Chipmunk | 2021.2.1 Patch 1_
+* _Android Studio Gradle Plugin 7.2.1_
 * _Android NDK 24.0.8215888 (side by side)_
 * _Android SDK 11.0 (API level 30)_
 * _Android SDK Build-Tools 32.0.0_
-* _Android SDK Platform-Tools 33.0.1_
+* _Android SDK Platform-Tools 33.0.2_
 * _CMake 3.18.1_
 * _DirectX Shader Compiler 1.6.2112.10152_
 * _Kotlin 1.6.21_

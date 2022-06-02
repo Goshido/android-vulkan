@@ -92,9 +92,9 @@ Method applies force to body.
 
 **Parameters:**
 
-- `force` [_required, readonly, [_GXVec3_](./gx-vec3.md)_]: force vector
+- `force` [_required, readonly, [_GXVec3_](./gx-vec3.md)_]: force vector in world space
 - `point` [_required, readonly, [_GXVec3_](./gx-vec3.md)_]: point to apply force in world space
-- `forceAwake` [_required, readonly, boolean_]: aware rigid body or not
+- `forceAwake` [_required, readonly, boolean_]: awake rigid body or not
 
 **Return values:**
 
@@ -184,7 +184,7 @@ Method returns current linear velocity of the body.
 
 **Parameters:**
 
-- `velocity` [_required, writeonly, [_GXVec3_](./gx-vec3.md)_]: velocity vector
+- `velocity` [_required, writeonly, [_GXVec3_](./gx-vec3.md)_]: velocity vector in world space
 
 **Return values:**
 
@@ -213,8 +213,8 @@ Method sets linear velocity to the body.
 
 **Parameters:**
 
-- `velocity` [_required, readonly, [_GXVec3_](./gx-vec3.md)_]: velocity vector
-- `forceAwake` [_required, readonly, boolean_]: aware rigid body or not
+- `velocity` [_required, readonly, [_GXVec3_](./gx-vec3.md)_]: velocity vector in world space
+- `forceAwake` [_required, readonly, boolean_]: awake rigid body or not
 
 **Return values:**
 

@@ -125,7 +125,7 @@ local function SetY ( self, y )
     )
 
     assert ( type ( y ) == "number", [[GXVec3:SetY - "y" is not a number.]] )
-    return av_GXVec3SetY ( self._handle, x )
+    return av_GXVec3SetY ( self._handle, y )
 end
 
 local function SetZ ( self, z )

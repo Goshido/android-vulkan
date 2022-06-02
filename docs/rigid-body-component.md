@@ -9,8 +9,11 @@ require "av://engine/rigid_body_component.lua"
 - [_Brief_](#brief)
 - [_Metamethods_](#metamethods)
 - [`Constructor`](#constructor)
+- [`AddForce ( force, point, forceAwake )`](#method-add-force)
 - [`GetLocation ( location )`](#method-get-location)
 - [`GetName ()`](#method-get-name)
+- [`GetVelocityLinear ( velocity )`](#method-get-velocity-linear)
+- [`SetVelocityLinear ( velocity, forceAwake )`](#method-set-velocity-linear)
 
 ## <a id="brief">Brief</a>
 
@@ -81,6 +84,42 @@ actor:AppendComponent ( RigidBodyComponent ( "RigidBody" ) )
 g_scene:AppendActor ( actor )
 ```
 
+## <a id="method-add-force">`AddForce ( force, point, forceAwake )`</a>
+
+Method applies force to body.
+
+**Note:** This method uses force vector and apply point in [physics coordinate system](#note-physics-coordinate-system).
+
+**Parameters:**
+
+- `force` [_required, readonly, [_GXVec3_](./gx-vec3.md)_]: force vector
+- `point` [_required, readonly, [_GXVec3_](./gx-vec3.md)_]: point to apply force in world space
+- `forceAwake` [_required, readonly, boolean_]: aware rigid body or not
+
+**Return values:**
+
+- none
+
+**Example:**
+
+```lua
+require "av://engine/scene.lua"
+
+
+local actor = Actor ( "Box" )
+local body = RigidBodyComponent ( "RigidBody" )
+actor:AppendComponent ( body )
+g_scene:AppendActor ( actor )
+
+local force = GXVec3 ()
+force:Init ( 0.0, 77.7, 0.0 )
+
+local point = GXVec3 ()
+point:Init ( 0.0, 0.0, 0.0 )
+
+body:AddForce ( force, point, true )
+```
+
 ## <a id="method-get-location">`GetLocation ( location )`</a>
 
 Method writes the body location in world space to the supplied `location` vector of the [_GXVec3_](./gx-vec3.md) type.
@@ -135,4 +174,63 @@ g_scene:AppendActor ( actor )
 
 local rigidBody = actor:FindComponent ( "RigidBody" )
 local name = rigidBody:GetName ()
+```
+
+## <a id="method-get-velocity-linear">`GetVelocityLinear ( velocity )`</a>
+
+Method returns current linear velocity of the body.
+
+**Note:** This method returns velocity in [physics coordinate system](#note-physics-coordinate-system).
+
+**Parameters:**
+
+- `velocity` [_required, writeonly, [_GXVec3_](./gx-vec3.md)_]: velocity vector
+
+**Return values:**
+
+- none
+
+**Example:**
+
+```lua
+require "av://engine/scene.lua"
+
+
+local actor = Actor ( "Box" )
+local body = RigidBodyComponent ( "RigidBody" )
+actor:AppendComponent ( body )
+g_scene:AppendActor ( actor )
+
+local velocity = GXVec3 ()
+body:GetVelocityLinear ( velocity )
+```
+
+## <a id="method-set-velocity-linear">`SetVelocityLinear ( velocity, forceAwake )`</a>
+
+Method sets linear velocity to the body.
+
+**Note:** This method uses [physics coordinate system](#note-physics-coordinate-system) for velocity vector.
+
+**Parameters:**
+
+- `velocity` [_required, readonly, [_GXVec3_](./gx-vec3.md)_]: velocity vector
+- `forceAwake` [_required, readonly, boolean_]: aware rigid body or not
+
+**Return values:**
+
+- none
+
+**Example:**
+
+```lua
+require "av://engine/scene.lua"
+
+
+local actor = Actor ( "Box" )
+local body = RigidBodyComponent ( "RigidBody" )
+actor:AppendComponent ( body )
+g_scene:AppendActor ( actor )
+
+local velocity = GXVec3 ()
+body:GetVelocityLinear ( velocity )
 ```

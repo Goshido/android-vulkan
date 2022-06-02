@@ -58,6 +58,21 @@ void ScriptableGXVec3::Init ( lua_State &vm ) noexcept
         },
 
         {
+            .name = "av_GXVec3GetX",
+            .func = &ScriptableGXVec3::OnGetX
+        },
+
+        {
+            .name = "av_GXVec3GetY",
+            .func = &ScriptableGXVec3::OnGetY
+        },
+
+        {
+            .name = "av_GXVec3GetZ",
+            .func = &ScriptableGXVec3::OnGetZ
+        },
+
+        {
             .name = "av_GXVec3Init",
             .func = &ScriptableGXVec3::OnInit
         },
@@ -80,6 +95,21 @@ void ScriptableGXVec3::Init ( lua_State &vm ) noexcept
         {
             .name = "av_GXVec3Reverse",
             .func = &ScriptableGXVec3::OnReverse
+        },
+
+        {
+            .name = "av_GXVec3SetX",
+            .func = &ScriptableGXVec3::OnSetX
+        },
+
+        {
+            .name = "av_GXVec3SetY",
+            .func = &ScriptableGXVec3::OnSetY
+        },
+
+        {
+            .name = "av_GXVec3SetZ",
+            .func = &ScriptableGXVec3::OnSetZ
         },
 
         {
@@ -236,6 +266,45 @@ int ScriptableGXVec3::OnDotProduct ( lua_State* state )
     return 1;
 }
 
+int ScriptableGXVec3::OnGetX ( lua_State* state )
+{
+    if ( !lua_checkstack ( state, 1 ) )
+    {
+        android_vulkan::LogWarning ( "pbr::ScriptableGXVec3::OnGetX - Stack too small." );
+        return 0;
+    }
+
+    auto const& item = *static_cast<Item const*> ( lua_touserdata ( state, 1 ) );
+    lua_pushnumber ( state, static_cast<lua_Number> ( item._vec3._data[ 0U ] ) );
+    return 1;
+}
+
+int ScriptableGXVec3::OnGetY ( lua_State* state )
+{
+    if ( !lua_checkstack ( state, 1 ) )
+    {
+        android_vulkan::LogWarning ( "pbr::ScriptableGXVec3::OnGetY - Stack too small." );
+        return 0;
+    }
+
+    auto const& item = *static_cast<Item const*> ( lua_touserdata ( state, 1 ) );
+    lua_pushnumber ( state, static_cast<lua_Number> ( item._vec3._data[ 1U ] ) );
+    return 1;
+}
+
+int ScriptableGXVec3::OnGetZ ( lua_State* state )
+{
+    if ( !lua_checkstack ( state, 1 ) )
+    {
+        android_vulkan::LogWarning ( "pbr::ScriptableGXVec3::OnGetZ - Stack too small." );
+        return 0;
+    }
+
+    auto const& item = *static_cast<Item const*> ( lua_touserdata ( state, 1 ) );
+    lua_pushnumber ( state, static_cast<lua_Number> ( item._vec3._data[ 2U ] ) );
+    return 1;
+}
+
 int ScriptableGXVec3::OnInit ( lua_State* state )
 {
     auto& item = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
@@ -281,6 +350,27 @@ int ScriptableGXVec3::OnReverse ( lua_State* state )
 {
     auto& item = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
     item._vec3.Reverse ();
+    return 0;
+}
+
+int ScriptableGXVec3::OnSetX ( lua_State* state )
+{
+    auto& item = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    item._vec3._data[ 0U ] = static_cast<float> ( lua_tonumber ( state, 2 ) );
+    return 0;
+}
+
+int ScriptableGXVec3::OnSetY ( lua_State* state )
+{
+    auto& item = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    item._vec3._data[ 1U ] = static_cast<float> ( lua_tonumber ( state, 2 ) );
+    return 0;
+}
+
+int ScriptableGXVec3::OnSetZ ( lua_State* state )
+{
+    auto& item = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    item._vec3._data[ 2U ] = static_cast<float> ( lua_tonumber ( state, 2 ) );
     return 0;
 }
 

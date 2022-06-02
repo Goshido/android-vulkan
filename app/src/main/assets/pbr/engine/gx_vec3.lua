@@ -39,6 +39,30 @@ local function DotProduct ( self, other )
     return av_GXVec3DotProduct ( self._handle, other._handle )
 end
 
+local function GetX ( self )
+    assert ( type ( self ) == "table" and self._type == eObjectType.GXVec3,
+        [[GXVec3:GetX - Calling not via ":" syntax.]]
+    )
+
+    return av_GXVec3GetX ( self._handle )
+end
+
+local function GetY ( self )
+    assert ( type ( self ) == "table" and self._type == eObjectType.GXVec3,
+        [[GXVec3:GetY - Calling not via ":" syntax.]]
+    )
+
+    return av_GXVec3GetY ( self._handle )
+end
+
+local function GetZ ( self )
+    assert ( type ( self ) == "table" and self._type == eObjectType.GXVec3,
+        [[GXVec3:GetZ - Calling not via ":" syntax.]]
+    )
+
+    return av_GXVec3GetZ ( self._handle )
+end
+
 local function Init ( self, x, y, z )
     assert ( type ( self ) == "table" and self._type == eObjectType.GXVec3,
         [[GXVec3:Init - Calling not via ":" syntax.]]
@@ -84,6 +108,33 @@ local function Reverse ( self )
     )
 
     av_GXVec3Reverse ( self._handle )
+end
+
+local function SetX ( self, x )
+    assert ( type ( self ) == "table" and self._type == eObjectType.GXVec3,
+        [[GXVec3:SetX - Calling not via ":" syntax.]]
+    )
+
+    assert ( type ( x ) == "number", [[GXVec3:SetX - "x" is not a number.]] )
+    return av_GXVec3SetX ( self._handle, x )
+end
+
+local function SetY ( self, y )
+    assert ( type ( self ) == "table" and self._type == eObjectType.GXVec3,
+        [[GXVec3:SetY - Calling not via ":" syntax.]]
+    )
+
+    assert ( type ( y ) == "number", [[GXVec3:SetY - "y" is not a number.]] )
+    return av_GXVec3SetY ( self._handle, x )
+end
+
+local function SetZ ( self, z )
+    assert ( type ( self ) == "table" and self._type == eObjectType.GXVec3,
+        [[GXVec3:SetZ - Calling not via ":" syntax.]]
+    )
+
+    assert ( type ( z ) == "number", [[GXVec3:SetZ - "z" is not a number.]] )
+    return av_GXVec3SetZ ( self._handle, z )
 end
 
 local function SquaredDistance ( self, other )
@@ -165,11 +216,17 @@ local function Constructor ( self )
     obj.CrossProduct = CrossProduct
     obj.Distance = Distance
     obj.DotProduct = DotProduct
+    obj.GetX = GetX
+    obj.GetY = GetY
+    obj.GetZ = GetZ
     obj.Init = Init
     obj.Length = Length
     obj.MultiplyScalar = MultiplyScalar
     obj.Normalize = Normalize
     obj.Reverse = Reverse
+    obj.SetX = SetX
+    obj.SetY = SetY
+    obj.SetZ = SetZ
     obj.SquaredDistance = SquaredDistance
     obj.SquaredLength = SquaredLength
     obj.Subtract = Subtract

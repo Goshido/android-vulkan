@@ -52,7 +52,6 @@ bool World1x1::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) 
     if ( !_scene.OnPrePhysics ( deltaTime ) )
         return false;
 
-    //_mario.OnUpdate ();
     _physics.Simulate ( dt );
 
     if ( !_scene.OnPostPhysics ( deltaTime ) )
@@ -144,7 +143,6 @@ bool World1x1::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 void World1x1::OnDestroyDevice ( VkDevice device ) noexcept
 {
     _scene.OnDestroyDevice ();
-    //_mario.Destroy ();
     _renderSession.OnDestroyDevice ( device );
     DestroyCommandPool ( device );
     _physics.Reset ();
@@ -175,7 +173,6 @@ bool World1x1::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcep
         return false;
 
     _physics.Resume ();
-    //_mario.CaptureInput ();
     _scene.OnCaptureInput ();
 
     return true;
@@ -184,7 +181,6 @@ bool World1x1::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcep
 void World1x1::OnSwapchainDestroyed ( VkDevice device ) noexcept
 {
     _scene.OnReleaseInput ();
-    //Mario::ReleaseInput ();
     _physics.Pause ();
     _renderSession.OnSwapchainDestroyed ( device );
 }
@@ -487,7 +483,6 @@ bool World1x1::UploadGPUContent ( android_vulkan::Renderer &renderer ) noexcept
         Brick::CommandBufferCountRequirement () +
         Riddle::CommandBufferCountRequirement () +
         MARIO_COMMAND_BUFFERS
-        //Mario::CommandBufferCountRequirement ()
     );
 
     VkCommandBufferAllocateInfo const allocateInfo
@@ -633,8 +628,6 @@ bool World1x1::UploadGPUContent ( android_vulkan::Renderer &renderer ) noexcept
 
     _scene.AppendActor ( actor );
 
-    //_mario.Init ( renderer, commandBuffers, _scene, -0.8F, 4.4F, 3.00189F );
-
     result = android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( renderer.GetQueue () ),
         "pbr::mario::World1x1::UploadGPUContent",
         "Can't run upload commands"
@@ -643,7 +636,6 @@ bool World1x1::UploadGPUContent ( android_vulkan::Renderer &renderer ) noexcept
     if ( !result )
         return false;
 
-    //_mario.FreeTransferResources ( device );
     _scene.FreeTransferResources ( device );
     _isReady = true;
     return true;

@@ -55,11 +55,17 @@ class ScriptableGXVec3 final
         [[nodiscard]] static int OnDestroy ( lua_State* state );
         [[nodiscard]] static int OnDistance ( lua_State* state );
         [[nodiscard]] static int OnDotProduct ( lua_State* state );
+        [[nodiscard]] static int OnGetX ( lua_State* state );
+        [[nodiscard]] static int OnGetY ( lua_State* state );
+        [[nodiscard]] static int OnGetZ ( lua_State* state );
         [[nodiscard]] static int OnInit ( lua_State* state );
         [[nodiscard]] static int OnLength ( lua_State* state );
         [[nodiscard]] static int OnMultiplyScalar ( lua_State* state );
         [[nodiscard]] static int OnNormalize ( lua_State* state );
         [[nodiscard]] static int OnReverse ( lua_State* state );
+        [[nodiscard]] static int OnSetX ( lua_State* state );
+        [[nodiscard]] static int OnSetY ( lua_State* state );
+        [[nodiscard]] static int OnSetZ ( lua_State* state );
         [[nodiscard]] static int OnSquaredDistance ( lua_State* state );
         [[nodiscard]] static int OnSquaredLength ( lua_State* state );
         [[nodiscard]] static int OnSubtract ( lua_State* state );

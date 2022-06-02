@@ -38,8 +38,11 @@ class RigidBodyComponent final : public Component
     private:
         void Setup ( android_vulkan::ShapeRef &shape ) noexcept;
 
+        [[nodiscard]] static int OnAddForce ( lua_State* state );
         [[nodiscard]] static int OnCreate ( lua_State* state );
         [[nodiscard]] static int OnGetLocation ( lua_State* state );
+        [[nodiscard]] static int OnGetVelocityLinear ( lua_State* state );
+        [[nodiscard]] static int OnSetVelocityLinear ( lua_State* state );
 
         static void OnTransformUpdate ( android_vulkan::RigidBody::Context context,
             GXVec3 const &location,

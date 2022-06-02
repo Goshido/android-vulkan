@@ -12,11 +12,17 @@ require "av://engine/gx_vec3.lua"
 - [`CrossProduct ( a, b )`](#method-cross-product)
 - [`Distance ( other )`](#method-distance)
 - [`DotProduct ( other )`](#method-dot-product)
+- [`GetX ()`](#method-get-x)
+- [`GetY ()`](#method-get-y)
+- [`GetZ ()`](#method-get-z)
 - [`Init ( x, y, z )`](#method-init)
 - [`Length ()`](#method-length)
 - [`MultiplyScalar ( a, scale )`](#method-multiply-scalar)
 - [`Normalize ()`](#method-normalize)
 - [`Reverse ()`](#method-reverse)
+- [`SetX ( x )`](#method-set-x)
+- [`SetY ( y )`](#method-set-y)
+- [`SetZ ( z )`](#method-set-z)
 - [`SquaredDistance ( other )`](#method-squared-distance)
 - [`SquaredLength ()`](#method-squared-length)
 - [`Subtract ( a, b )`](#method-subtract)
@@ -180,6 +186,78 @@ v1:Init ( 0.0, -33.3, 77.7 )
 local dot = v0:DotProduct ( v1 )
 ```
 
+## <a id="method-get-x">`GetX ()`</a>
+
+Method returns first component of the current vector.
+
+**Parameters:**
+
+- none
+
+**Return values:**
+
+- `#1` [_required, number_]: first component of the current vector
+
+**Example:**
+
+```lua
+require "av://engine/gx_vec3.lua"
+
+
+local v = GXVec3 ()
+v:Init ( 777.0, 3.33, 1.0 )
+
+local x = v:GetX ()
+```
+
+## <a id="method-get-y">`GetY ()`</a>
+
+Method returns second component of the current vector.
+
+**Parameters:**
+
+- none
+
+**Return values:**
+
+- `#1` [_required, number_]: second component of the current vector
+
+**Example:**
+
+```lua
+require "av://engine/gx_vec3.lua"
+
+
+local v = GXVec3 ()
+v:Init ( 777.0, 3.33, 1.0 )
+
+local y = v:GetY ()
+```
+
+## <a id="method-get-z">`GetZ ()`</a>
+
+Method returns third component of the current vector.
+
+**Parameters:**
+
+- none
+
+**Return values:**
+
+- `#1` [_required, number_]: third component of the current vector
+
+**Example:**
+
+```lua
+require "av://engine/gx_vec3.lua"
+
+
+local v = GXVec3 ()
+v:Init ( 777.0, 3.33, 1.0 )
+
+local z = v:GetZ ()
+```
+
 ## <a id="method-init">`Init ( x, y, z )`</a>
 
 Method initializes the vector with `x`, `y` and `z` values.
@@ -299,6 +377,78 @@ require "av://engine/gx_vec3.lua"
 local v = GXVec3 ()
 v:Init ( 777.0, 3.33, 1.0 )
 v:Reverse ()
+```
+
+## <a id="method-set-x">`SetX ( x )`</a>
+
+Method sets first component of the current vector.
+
+**Parameters:**
+
+- `x` [_required, readonly, number_]: first component
+
+**Return values:**
+
+- none
+
+**Example:**
+
+```lua
+require "av://engine/gx_vec3.lua"
+
+
+local v = GXVec3 ()
+v:Init ( 777.0, 3.33, 1.0 )
+
+v:SetX ( 0.0 )
+```
+
+## <a id="method-set-y">`SetY ( y )`</a>
+
+Method sets second component of the current vector.
+
+**Parameters:**
+
+- `y` [_required, readonly, number_]: second component
+
+**Return values:**
+
+- none
+
+**Example:**
+
+```lua
+require "av://engine/gx_vec3.lua"
+
+
+local v = GXVec3 ()
+v:Init ( 777.0, 3.33, 1.0 )
+
+v:SetY ( 0.0 )
+```
+
+## <a id="method-set-z">`SetZ ( z )`</a>
+
+Method sets third component of the current vector.
+
+**Parameters:**
+
+- `z` [_required, readonly, number_]: third component
+
+**Return values:**
+
+- none
+
+**Example:**
+
+```lua
+require "av://engine/gx_vec3.lua"
+
+
+local v = GXVec3 ()
+v:Init ( 777.0, 3.33, 1.0 )
+
+v:SetZ ( 0.0 )
 ```
 
 ## <a id="method-squared-distance">`SquaredDistance ( other )`</a>

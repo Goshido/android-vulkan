@@ -2,7 +2,6 @@
 #define PBR_MARIO_WORLD1x1_H
 
 
-//#include "mario.h"
 #include <pbr/scene.h>
 #include <game.h>
 
@@ -15,7 +14,6 @@ class World1x1 final : public android_vulkan::Game
         std::vector<VkCommandBuffer>    _commandBuffers {};
         VkCommandPool                   _commandPool = VK_NULL_HANDLE;
         bool                            _isReady = false;
-//        Mario                           _mario {};
         android_vulkan::Physics         _physics {};
         RenderSession                   _renderSession {};
         Scene                           _scene {};

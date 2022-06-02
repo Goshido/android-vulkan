@@ -80,6 +80,11 @@ bool RigidBodyComponent::Init ( lua_State &vm ) noexcept
     constexpr luaL_Reg const extentions[] =
     {
         {
+            .name = "av_RigidBodyComponentAddForce",
+            .func = &RigidBodyComponent::OnAddForce
+        },
+
+        {
             .name = "av_RigidBodyComponentCreate",
             .func = &RigidBodyComponent::OnCreate
         },
@@ -87,6 +92,16 @@ bool RigidBodyComponent::Init ( lua_State &vm ) noexcept
         {
             .name = "av_RigidBodyComponentGetLocation",
             .func = &RigidBodyComponent::OnGetLocation
+        },
+
+        {
+            .name = "av_RigidBodyComponentGetVelocityLinear",
+            .func = &RigidBodyComponent::OnGetVelocityLinear
+        },
+
+        {
+            .name = "av_RigidBodyComponentSetVelocityLinear",
+            .func = &RigidBodyComponent::OnSetVelocityLinear
         }
     };
 
@@ -104,6 +119,18 @@ void RigidBodyComponent::Setup ( android_vulkan::ShapeRef &shape ) noexcept
     body.SetTransformUpdateHandler ( &RigidBodyComponent::OnTransformUpdate );
 }
 
+int RigidBodyComponent::OnAddForce ( lua_State* state )
+{
+    auto& self = *static_cast<RigidBodyComponent*> ( lua_touserdata ( state, 1 ) );
+
+    self._rigidBody->AddForce ( ScriptableGXVec3::Extract ( state, 2 ),
+        ScriptableGXVec3::Extract ( state, 3 ),
+        static_cast<bool> ( lua_toboolean ( state, 4 ) )
+    );
+
+    return 0;
+}
+
 int RigidBodyComponent::OnCreate ( lua_State* /*state*/ )
 {
     // TODO
@@ -114,6 +141,24 @@ int RigidBodyComponent::OnGetLocation ( lua_State* state )
 {
     auto const& self = *static_cast<RigidBodyComponent const*> ( lua_touserdata ( state, 1 ) );
     ScriptableGXVec3::Extract ( state, 2 ) = self._rigidBody->GetLocation ();
+    return 0;
+}
+
+int RigidBodyComponent::OnGetVelocityLinear ( lua_State* state )
+{
+    auto const& self = *static_cast<RigidBodyComponent const*> ( lua_touserdata ( state, 1 ) );
+    ScriptableGXVec3::Extract ( state, 2 ) = self._rigidBody->GetVelocityLinear ();
+    return 0;
+}
+
+int RigidBodyComponent::OnSetVelocityLinear ( lua_State* state )
+{
+    auto& self = *static_cast<RigidBodyComponent*> ( lua_touserdata ( state, 1 ) );
+
+    self._rigidBody->SetVelocityLinear ( ScriptableGXVec3::Extract ( state, 2 ),
+        static_cast<bool> ( lua_toboolean ( state, 3 ) )
+    );
+
     return 0;
 }
 

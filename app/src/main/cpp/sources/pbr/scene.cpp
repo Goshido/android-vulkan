@@ -2,6 +2,7 @@
 #include <pbr/coordinate_system.h>
 #include <pbr/renderable_component.h>
 #include <pbr/script_engine.h>
+#include <core.h>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -105,6 +106,11 @@ bool Scene::OnInitDevice ( android_vulkan::Physics &physics ) noexcept
         {
             .name = "av_SceneGetRenderTargetHeight",
             .func = &Scene::OnGetRenderTargetHeight
+        },
+
+        {
+            .name = "av_SceneQuit",
+            .func = &Scene::OnQuit
         },
 
         {
@@ -343,6 +349,12 @@ int Scene::OnGetRenderTargetHeight ( lua_State* state )
     auto const& self = *static_cast<Scene const*> ( lua_touserdata ( state, 1 ) );
     lua_pushinteger ( state, self._height );
     return 1;
+}
+
+int Scene::OnQuit ( lua_State* /*state*/ )
+{
+    android_vulkan::Core::Quit ();
+    return 0;
 }
 
 int Scene::OnSetActiveCamera ( lua_State* state )

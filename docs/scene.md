@@ -17,6 +17,7 @@
 - [`GetRenderTargetAspectRatio ()`](#method-get-render-target-aspect-ratio)
 - [`GetRenderTargetWidth ()`](#method-get-render-target-width)
 - [`GetRenderTargetHeight ()`](#method-get-render-target-height)
+- [`Quit ()`](#method-quit)
 - [`SetActiveCamera ( camera )`](#method-set-active-camera)
 
 ## <a id="brief">Brief</a>
@@ -258,6 +259,26 @@ require "av://engine/scene.lua"
 
 
 local height = g_scene:GetRenderTargetHeight ()
+```
+
+## <a id="method-quit">`Quit ()`</a>
+
+Method closes application.
+
+**Parameters:**
+
+- none
+
+**Return values:**
+
+- none
+
+**Example:**
+
+```lua
+require "av://engine/scene.lua"
+
+g_scene:Quit ()
 ```
 
 ## <a id="method-set-active-camera">`SetActiveCamera ( camera )`</a>

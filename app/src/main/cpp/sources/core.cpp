@@ -93,7 +93,7 @@ Core::Core ( JNIEnv* env, jobject activity, jobject assetManager ) noexcept
         }
     );
 
-    _gamepad.BindKey ( this, &Core::OnHomeUp, eGamepadKey::Home, eButtonState::Up );
+    _gamepad.BindKey ( nullptr, &Core::OnHomeUp, eGamepadKey::Home, eButtonState::Up );
 }
 
 void Core::OnAboutDestroy ( JNIEnv* env ) noexcept
@@ -170,8 +170,11 @@ void Core::OnSurfaceDestroyed () noexcept
 
 void Core::Quit () noexcept
 {
-    std::unique_lock<std::mutex> const lock ( _mutex );
-    _writeQueue.push_back ( eCommand::QuitRequest );
+    if ( !g_Core )
+        return;
+
+    std::unique_lock<std::mutex> const lock ( g_Core->_mutex );
+    g_Core->_writeQueue.push_back ( eCommand::QuitRequest );
 }
 
 bool Core::ExecuteMessageQueue () noexcept
@@ -294,10 +297,9 @@ void Core::UpdateFPS ( Timestamp now )
     frameCount = 0U;
 }
 
-void Core::OnHomeUp ( void* context ) noexcept
+void Core::OnHomeUp ( void* /*context*/ ) noexcept
 {
-    auto& core = *static_cast<Core*> ( context );
-    core.Quit ();
+    Core::Quit ();
 }
 
 extern "C" {

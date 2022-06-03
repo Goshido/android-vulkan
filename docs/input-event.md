@@ -39,7 +39,7 @@ InputEvent = {
 }
 ```
 
-The `_type` could be `eEventType.KeyDown` or `eButtonState.KeyUp`.
+The `_type` could be `eEventType.KeyDown` or `eEventType.KeyUp`.
 
 The `_key` state could be one of the following values:
 

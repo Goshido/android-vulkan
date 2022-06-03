@@ -87,6 +87,7 @@ class Scene final
         [[nodiscard]] static int OnGetRenderTargetWidth ( lua_State* state );
         [[nodiscard]] static int OnGetRenderTargetHeight ( lua_State* state );
 
+        [[nodiscard]] static int OnQuit ( lua_State* state );
         [[nodiscard]] static int OnSetActiveCamera ( lua_State* state );
 };
 

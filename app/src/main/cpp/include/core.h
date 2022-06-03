@@ -85,7 +85,7 @@ class Core final
         void OnSurfaceCreated ( JNIEnv* env, jobject surface ) noexcept;
         void OnSurfaceDestroyed () noexcept;
 
-        void Quit () noexcept;
+        static void Quit () noexcept;
 
     private:
         [[nodiscard]] bool ExecuteMessageQueue () noexcept;

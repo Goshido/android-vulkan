@@ -127,6 +127,10 @@ local function OnUpdate ( self, deltaTime )
     end
 end
 
+local function Quit ( self )
+    av_SceneQuit ()
+end
+
 local function SetActiveCamera ( self, camera )
     assert ( type ( self ) == "table" and self._type == eObjectType.Scene,
         [[Scene:SetActiveCamera - Calling not via ":" syntax.]]
@@ -166,6 +170,7 @@ local function Constructor ( self, handle )
     obj.OnPrePhysics = OnPrePhysics
     obj.OnRenderTargetChanged = OnRenderTargetChanged
     obj.OnUpdate = OnUpdate
+    obj.Quit = Quit
     obj.SetActiveCamera = SetActiveCamera
 
     return obj

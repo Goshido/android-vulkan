@@ -42,6 +42,11 @@ local function OnInputActive ( self, inputEvent )
 
     if inputEvent._type == eEventType.KeyDown and inputEvent._key == eKey.A then
         self:Jump ()
+        return
+    end
+
+    if inputEvent._type == eEventType.KeyUp and inputEvent._key == eKey.Home then
+        self:QuitGame ()
     end
 end
 
@@ -88,6 +93,10 @@ local function OnActorConstructed ( self, actor )
     self.OnPrePhysics = OnPrePhysicsActive
 end
 
+local function QuitGame ( self )
+    g_scene:Quit ()
+end
+
 -- Metamethods
 local function Constructor ( self, handle, params )
     local obj = ScriptComponent ( handle )
@@ -99,6 +108,7 @@ local function Constructor ( self, handle, params )
     -- Methods
     obj.Jump = Jump
     obj.Move = Move
+    obj.QuitGame = QuitGame
 
     -- Engine events
     obj.OnActorConstructed = OnActorConstructed

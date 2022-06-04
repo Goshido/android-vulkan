@@ -1,4 +1,5 @@
 #include <pbr/sweep_testing/sweep_testing.h>
+#include <pbr/coordinate_system.h>
 #include <pbr/material_manager.h>
 #include <pbr/mesh_manager.h>
 #include <gamepad.h>
@@ -85,6 +86,7 @@ void SweepTesting::OnDestroyDevice ( VkDevice device ) noexcept
     }
 
     DestroyCommandPool ( device );
+    _physics.Reset ();
 
     MeshManager::Destroy ( device );
     MaterialManager::Destroy ( device );
@@ -173,7 +175,7 @@ bool SweepTesting::CreateCommandPool ( android_vulkan::Renderer &renderer ) noex
     if ( !result )
         return false;
 
-    AV_REGISTER_COMMAND_POOL ( "SweepTesting::_commandPool" )
+    AV_REGISTER_COMMAND_POOL ( "pbr::sweep_testing::SweepTesting::_commandPool" )
     return true;
 }
 
@@ -184,7 +186,7 @@ void SweepTesting::DestroyCommandPool ( VkDevice device ) noexcept
 
     vkDestroyCommandPool ( device, _commandPool, nullptr );
     _commandPool = VK_NULL_HANDLE;
-    AV_UNREGISTER_COMMAND_POOL ( "SweepTesting::_commandPool" )
+    AV_UNREGISTER_COMMAND_POOL ( "pbr::sweep_testing::SweepTesting::_commandPool" )
 }
 
 bool SweepTesting::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
@@ -196,8 +198,7 @@ bool SweepTesting::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
     constexpr GXVec3 lightLocation ( 0.5F, 2.0F, 0.0F );
 
     GXVec3 lightLocationRender {};
-    constexpr float renderScale = 32.0F;
-    lightLocationRender.Multiply ( lightLocation, renderScale );
+    lightLocationRender.Multiply ( lightLocation, UNITS_IN_METER );
     _light.SetLocation ( lightLocationRender );
 
     constexpr float lightBounds = 160.0F;

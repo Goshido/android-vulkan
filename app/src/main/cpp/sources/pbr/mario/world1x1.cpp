@@ -1,11 +1,18 @@
 #include <pbr/mario/world1x1.h>
+#include <pbr/mario/brick.h>
+#include <pbr/mario/obstacle.h>
 #include <pbr/mario/pipe_x1.h>
 #include <pbr/mario/pipe_x2.h>
+#include <pbr/mario/riddle.h>
 #include <pbr/component.h>
 #include <pbr/cube_map_manager.h>
 #include <pbr/material_manager.h>
 #include <pbr/mesh_manager.h>
+#include <pbr/rigid_body_component.h>
 #include <pbr/scene_desc.h>
+#include <pbr/script_component.h>
+#include <pbr/script_engine.h>
+#include <pbr/static_mesh_component.h>
 #include <gamepad.h>
 #include <global_force_gravity.h>
 #include <shape_box.h>
@@ -21,31 +28,40 @@ namespace pbr::mario {
 
 constexpr static char const SCENE[] = "pbr/assets/world-1-1.scene";
 
-constexpr static GXVec3 const FREE_FALL_ACCELERATION ( 0.0F, -9.81F, 0.0F );
+constexpr static GXVec3 FREE_FALL_ACCELERATION ( 0.0F, -9.81F, 0.0F );
 
-constexpr static uint32_t const RESOLUTION_SCALE_WIDTH = 80U;
-constexpr static uint32_t const RESOLUTION_SCALE_HEIGHT = 70U;
+constexpr static uint32_t RESOLUTION_SCALE_WIDTH = 80U;
+constexpr static uint32_t RESOLUTION_SCALE_HEIGHT = 70U;
 
-[[maybe_unused]] constexpr static uint32_t const SCENE_DESC_FORMAT_VERSION = 2U;
+[[maybe_unused]] constexpr static uint32_t SCENE_DESC_FORMAT_VERSION = 2U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
 bool World1x1::IsReady () noexcept
 {
-    return !_components.empty ();
+    return _isReady;
 }
 
 bool World1x1::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) noexcept
 {
+    if ( !_scene.ExecuteInputEvents () )
+        return false;
+
     auto const dt = static_cast<float> ( deltaTime );
 
-    _mario.OnUpdate ();
-    _physics.Simulate ( dt );
-    _camera.OnUpdate ( dt );
-    _renderSession.Begin ( _camera.GetLocalMatrix (), _camera.GetProjectionMatrix () );
+    if ( !_scene.OnPrePhysics ( deltaTime ) )
+        return false;
 
-    for ( auto& component : _components )
-        component->Submit ( _renderSession );
+    _physics.Simulate ( dt );
+
+    if ( !_scene.OnPostPhysics ( deltaTime ) )
+        return false;
+
+    _renderSession.Begin ( _scene.GetActiveCameraLocalMatrix (), _scene.GetActiveCameraProjectionMatrix () );
+    _scene.Submit ( _renderSession );
+
+    if ( !_scene.OnUpdate ( deltaTime ) )
+        return false;
 
     return _renderSession.End ( renderer, deltaTime );
 }
@@ -64,20 +80,48 @@ bool World1x1::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 
     bool result = android_vulkan::Renderer::CheckVkResult (
         vkCreateCommandPool ( device, &createInfo, nullptr, &_commandPool ),
-        "World1x1::OnInit",
+        "pbr::mario::World1x1::OnInit",
         "Can't create command pool"
     );
 
     if ( !result )
         return false;
 
-    AV_REGISTER_COMMAND_POOL ( "World1x1::_commandPool" )
+    AV_REGISTER_COMMAND_POOL ( "pbr::mario::World1x1::_commandPool" )
 
     if ( !_renderSession.OnInitDevice ( renderer, _commandPool ) )
     {
         OnDestroyDevice ( device );
         return false;
     }
+
+    if ( !_scene.OnInitDevice ( _physics ) )
+    {
+        OnDestroyDevice ( device );
+        return false;
+    }
+
+    ComponentRef script = std::make_shared<ScriptComponent> ( "av://assets/Scripts/player.lua",
+        "{ _msg = 'hello world', _state = 1 }",
+        "Player"
+    );
+
+    ActorRef logic = std::make_shared<Actor> ( "Logic" );
+    logic->AppendComponent ( script );
+    _scene.AppendActor ( logic );
+
+    ComponentRef cameraScript = std::make_shared<ScriptComponent> ( "av://assets/Scripts/camera.lua", "CameraScript" );
+    ComponentRef cameraComponent = std::make_shared<CameraComponent> ( "Camera" );
+
+    // NOLINTNEXTLINE - downcast.
+    CameraComponent& cc = static_cast<CameraComponent&> ( *cameraComponent );
+    cc.SetProjection ( GXDegToRad ( 60.0F ), 1920.0F / 1080.0F, 1.0e-1F, 1.0e+4F );
+
+    ActorRef camera = std::make_shared<Actor> ( "Camera" );
+    camera->AppendComponent ( cameraScript );
+    camera->AppendComponent ( cameraComponent );
+
+    _scene.AppendActor ( camera );
 
     if ( !UploadGPUContent ( renderer ) )
     {
@@ -98,13 +142,16 @@ bool World1x1::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 
 void World1x1::OnDestroyDevice ( VkDevice device ) noexcept
 {
-    _components.clear ();
+    _scene.OnDestroyDevice ();
     _renderSession.OnDestroyDevice ( device );
     DestroyCommandPool ( device );
+    _physics.Reset ();
 
     MeshManager::Destroy ( device );
     MaterialManager::Destroy ( device );
     CubeMapManager::Destroy ( device );
+
+    _isReady = false;
 }
 
 bool World1x1::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept
@@ -114,19 +161,26 @@ bool World1x1::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcep
     resolution.height = resolution.height * RESOLUTION_SCALE_HEIGHT / 100U;
 
     VkExtent2D const& surfaceResolution = renderer.GetViewportResolution ();
-    _camera.OnResolutionChanged ( surfaceResolution );
 
     if ( !_renderSession.OnSwapchainCreated ( renderer, resolution, _commandPool ) )
         return false;
 
+    bool const result = _scene.OnResolutionChanged ( resolution,
+        static_cast<double> ( surfaceResolution.width ) / static_cast<double> ( surfaceResolution.height )
+    );
+
+    if ( !result )
+        return false;
+
     _physics.Resume ();
-    _mario.CaptureInput ();
+    _scene.OnCaptureInput ();
+
     return true;
 }
 
 void World1x1::OnSwapchainDestroyed ( VkDevice device ) noexcept
 {
-    Mario::ReleaseInput ();
+    _scene.OnReleaseInput ();
     _physics.Pause ();
     _renderSession.OnSwapchainDestroyed ( device );
 }
@@ -137,164 +191,261 @@ bool World1x1::CreatePhysics () noexcept
 
     if ( !_physics.AddGlobalForce ( std::make_shared<android_vulkan::GlobalForceGravity> ( FREE_FALL_ACCELERATION ) ) )
     {
-        android_vulkan::LogError ( "World1x1::CreatePhysics - Can't add gravity." );
+        android_vulkan::LogError ( "pbr::mario::World1x1::CreatePhysics - Can't add gravity." );
         return false;
     }
 
-    auto append = [ & ] ( float x,
-        float y,
-        float z,
-        float w,
-        float h,
-        float d,
-        float friction,
-        char const* name
-    ) noexcept -> bool {
-        android_vulkan::RigidBodyRef body = std::make_shared<android_vulkan::RigidBody> ();
-        body->EnableKinematic ();
-        body->SetLocation ( x, y, z, false );
+    constexpr float boundaryFriction = 0.0F;
+    constexpr float normalFriction = 0.7F;
 
-        android_vulkan::ShapeRef shape = std::make_shared<android_vulkan::ShapeBox> ( w, h, d );
-        shape->SetFriction ( friction );
-        body->SetShape ( shape, false );
-
-        if ( _physics.AddRigidBody ( body ) )
-            return true;
-
-        android_vulkan::LogError ( "World1x1::CreatePhysics::append - Can't append %s", name );
-        return false;
-    };
-
-    constexpr float const boundaryFriction = 0.0F;
-    constexpr float const normalFriction = 0.7F;
-
-    if ( !append ( 4.0F, 7.2F, 84.8F, 8.0F, 16.0F, 169.6F, boundaryFriction, "boundary-001" ) )
-        return false;
-
-    if ( !append ( -5.6F, 7.2F, 84.8F, 8.0F, 16.0F, 169.6F, boundaryFriction, "boundary-002" ) )
-        return false;
-
-    if ( !append ( -0.8F, 7.2F, -4.0F, 17.6F, 16.0F, 8.0F, boundaryFriction, "boundary-003" ) )
-        return false;
-
-    if ( !append ( -0.8F, 7.2F, 173.6F, 17.6F, 16.0F, 8.0F, boundaryFriction, "boundary-004" ) )
-        return false;
-
-    if ( !append ( -0.8F, 2.4F, 109.2F, 1.6F, 1.6F, 2.4F, normalFriction, "concrete-001-collider-001-005" ) )
-        return false;
-
-    if ( !append ( -0.8F, 2.0F, 107.6F, 1.6F, 0.8F, 0.8F, 0.8F, "concrete-001-collider-001-006" ) )
-        return false;
-
-    if ( !append ( -0.8F, 3.6F, 109.6F, 1.6F, 0.8F, 1.6F, normalFriction, "concrete-001-collider-001-007" ) )
-        return false;
-
-    if ( !append ( -0.8F, 4.4F, 110.0F, 1.6F, 0.8F, 0.8F, normalFriction, "concrete-001-collider-001-008" ) )
-        return false;
-
-    if ( !append ( -0.8F, 2.4F, 113.2F, 1.6F, 1.6F, 2.4F, normalFriction, "concrete-002-collider-001-005" ) )
-        return false;
-
-    if ( !append ( -0.8F, 2.0F, 114.8F, 1.6F, 0.8F, 0.8F, normalFriction, "concrete-002-collider-001-006" ) )
-        return false;
-
-    if ( !append ( -0.8F, 3.6F, 112.8F, 1.6F, 0.8F, 1.6F, normalFriction, "concrete-002-collider-001-007" ) )
-        return false;
-
-    if ( !append ( -0.8F, 4.4F, 112.4F, 1.6F, 0.8F, 0.8F, normalFriction, "concrete-002-collider-001-008" ) )
-        return false;
-
-    if ( !append ( -0.8F, 2.4F, 125.2F, 1.6F, 1.6F, 2.4F, normalFriction, "concrete-002-collider-001-009" ) )
-        return false;
-
-    if ( !append ( -0.8F, 2.0F, 126.8F, 1.6F, 0.8F, 0.8F, normalFriction, "concrete-002-collider-001-010" ) )
-        return false;
-
-    if ( !append ( -0.8F, 3.6F, 124.8F, 1.6F, 0.8F, 1.6F, normalFriction, "concrete-002-collider-001-011" ) )
-        return false;
-
-    if ( !append ( -0.8F, 4.4F, 124.4F, 1.6F, 0.8F, 0.8F, normalFriction, "concrete-002-collider-001-012" ) )
-        return false;
-
-    if ( !append ( -0.8F, 2.8F, 121.2F, 1.6F, 2.4F, 2.4F, normalFriction, "concrete-003-collider-001-005" ) )
-        return false;
-
-    if ( !append ( -0.8F, 2.0F, 119.2F, 1.6F, 0.8F, 1.6F, normalFriction, "concrete-003-collider-001-006" ) )
-        return false;
-
-    if ( !append ( -0.8F, 2.8F, 119.6F, 1.6F, 0.8F, 0.8F, normalFriction, "concrete-003-collider-001-007" ) )
-        return false;
-
-    if ( !append ( -0.8F, 4.4F, 121.6F, 1.6F, 0.8F, 1.6F, normalFriction, "concrete-003-collider-001-008" ) )
-        return false;
-
-    if ( !append ( -0.8F, 3.6F, 150.0F, 1.6F, 4.0F, 4.0F, normalFriction, "concrete-004-collider-001-009" ) )
-        return false;
-
-    if ( !append ( -0.8F, 2.4F, 146.8F, 1.6F, 1.6F, 2.4F, normalFriction, "concrete-004-collider-001-010" ) )
-        return false;
-
-    if ( !append ( -0.8F, 2.0F, 145.2F, 1.6F, 0.8F, 0.8F, normalFriction, "concrete-004-collider-001-011" ) )
-        return false;
-
-    if ( !append ( -0.8F, 3.6F, 147.2F, 1.6F, 0.8F, 1.6F, normalFriction, "concrete-004-collider-001-012" ) )
-        return false;
-
-    if ( !append ( -0.8F, 4.4F, 147.6F, 1.6F, 0.8F, 0.8F, normalFriction, "concrete-004-collider-001-013" ) )
-        return false;
-
-    if ( !append ( -0.8F, 6.4F, 150.8F, 1.6F, 1.6F, 2.4F, normalFriction, "concrete-004-collider-001-014" ) )
-        return false;
-
-    if ( !append ( -0.8F, 6.0F, 149.2F, 1.6F, 0.8F, 0.8F, normalFriction, "concrete-004-collider-001-015" ) )
-        return false;
-
-    if ( !append ( -0.8F, 7.6F, 151.2F, 1.6F, 0.8F, 1.6F, normalFriction, "concrete-004-collider-001-016" ) )
-        return false;
-
-    if ( !append ( -0.8F, 2.0F, 158.8F, 1.6F, 0.8F, 0.8F, normalFriction, "concrete-005-collider-002" ) )
-        return false;
-
-    if ( !append ( -0.8F, 0.8F, 62.8F, 1.6F, 1.6F, 12.0F, normalFriction, "ground-x15-collider-002" ) )
-        return false;
-
-    if ( !append ( -0.8F, 0.8F, 146.8F, 1.6F, 1.6F, 45.6F, normalFriction, "ground-x57-collider-002" ) )
-        return false;
-
-    if ( !append ( -0.8F, 0.8F, 96.8F, 1.6F, 1.6F, 51.2F, normalFriction, "ground-x64-collider-002" ) )
-        return false;
-
-    if ( !append ( -0.8F, 0.8F, 27.6F, 1.6F, 1.6F, 55.2F, normalFriction, "ground-x69-collider-002" ) )
-        return false;
-
-    // Note it's generic lambda. Kinda template lambda.
-    auto appendActor = [ & ] ( auto &actors, char const* type ) noexcept -> bool {
-        for ( auto& actor : actors )
+    constexpr Obstacle::Item const boundary[] =
+    {
         {
-            if ( _physics.AddRigidBody ( actor->GetCollider () ) )
-                continue;
+            ._location = GXVec3 ( 4.0F, 7.2F, 84.8F ),
+            ._size = GXVec3 ( 8.0F, 16.0F, 169.6F ),
+            ._friction = boundaryFriction
+        },
 
-            android_vulkan::LogError ( "World1x1::CreatePhysics::appendActor - Can't append %s.", type );
-            return false;
+        {
+            ._location = GXVec3 ( -5.6F, 7.2F, 84.8F ),
+            ._size = GXVec3 ( 8.0F, 16.0F, 169.6F ),
+            ._friction = boundaryFriction
+        },
+
+        {
+            ._location = GXVec3 ( -0.8F, 7.2F, -4.0F ),
+            ._size = GXVec3 ( 17.6F, 16.0F, 8.0F ),
+            ._friction = boundaryFriction
+        },
+
+        {
+            ._location = GXVec3 ( -0.8F, 7.2F, 173.6F ),
+            ._size = GXVec3 ( 17.6F, 16.0F, 8.0F ),
+            ._friction = boundaryFriction
         }
-
-        return true;
     };
 
-    if ( !appendActor ( _pipes, "pipe" ) )
-        return false;
+    Obstacle::Spawn ( boundary, _scene, "Boundary" );
 
-    if ( !appendActor ( _bricks, "brick" ) )
-        return false;
+    constexpr Obstacle::Item const concrete1[] =
+    {
+        {
+            ._location = GXVec3 ( -0.8F, 2.4F, 109.2F ),
+            ._size = GXVec3 ( 1.6F, 1.6F, 2.4F ),
+            ._friction = normalFriction
+        },
 
-    if ( !appendActor ( _riddles, "riddle" ) )
-        return false;
+        {
+            ._location = GXVec3 ( -0.8F, 2.0F, 107.6F ),
+            ._size = GXVec3 ( 1.6F, 0.8F, 0.8F ),
+            ._friction = 0.8F
+        },
 
-    if ( _physics.AddRigidBody ( _mario.GetRigidBody () ) )
-        return true;
+        {
+            ._location = GXVec3 ( -0.8F, 3.6F, 109.6F ),
+            ._size = GXVec3 ( 1.6F, 0.8F, 1.6F ),
+            ._friction = normalFriction
+        },
 
-    android_vulkan::LogError ( "World1x1::CreatePhysics - Can't append mario." );
-    return false;
+        {
+            ._location = GXVec3 ( -0.8F, 4.4F, 110.0F ),
+            ._size = GXVec3 ( 1.6F, 0.8F, 0.8F ),
+            ._friction = normalFriction
+        }
+    };
+
+    Obstacle::Spawn ( concrete1, _scene, "Concrete #1" );
+
+    constexpr Obstacle::Item const concrete2[] =
+    {
+        {
+            ._location = GXVec3 ( -0.8F, 2.4F, 113.2F ),
+            ._size = GXVec3 ( 1.6F, 1.6F, 2.4F ),
+            ._friction = normalFriction
+        },
+
+        {
+            ._location = GXVec3 ( -0.8F, 2.0F, 114.8F ),
+            ._size = GXVec3 ( 1.6F, 0.8F, 0.8F ),
+            ._friction = normalFriction
+        },
+
+        {
+            ._location = GXVec3 ( -0.8F, 3.6F, 112.8F ),
+            ._size = GXVec3 ( 1.6F, 0.8F, 1.6F ),
+            ._friction = normalFriction
+        },
+
+        {
+            ._location = GXVec3 ( -0.8F, 4.4F, 112.4F ),
+            ._size = GXVec3 ( 1.6F, 0.8F, 0.8F ),
+            ._friction = normalFriction
+        },
+
+        {
+            ._location = GXVec3 ( -0.8F, 2.4F, 125.2F ),
+            ._size = GXVec3 ( 1.6F, 1.6F, 2.4F ),
+            ._friction = normalFriction
+        },
+
+        {
+            ._location = GXVec3 ( -0.8F, 2.0F, 126.8F ),
+            ._size = GXVec3 ( 1.6F, 0.8F, 0.8F ),
+            ._friction = normalFriction
+        },
+
+        {
+            ._location = GXVec3 ( -0.8F, 3.6F, 124.8F ),
+            ._size = GXVec3 ( 1.6F, 0.8F, 1.6F ),
+            ._friction = normalFriction
+        },
+
+        {
+            ._location = GXVec3 ( -0.8F, 4.4F, 124.4F ),
+            ._size = GXVec3 ( 1.6F, 0.8F, 0.8F ),
+            ._friction = normalFriction
+        }
+    };
+
+    Obstacle::Spawn ( concrete2, _scene, "Concrete #2" );
+
+    constexpr Obstacle::Item const concrete3[] =
+    {
+        {
+            ._location = GXVec3 ( -0.8F, 2.8F, 121.2F ),
+            ._size = GXVec3 ( 1.6F, 2.4F, 2.4F ),
+            ._friction = normalFriction
+        },
+
+        {
+            ._location = GXVec3 ( -0.8F, 2.0F, 119.2F ),
+            ._size = GXVec3 ( 1.6F, 0.8F, 1.6F ),
+            ._friction = normalFriction
+        },
+
+        {
+            ._location = GXVec3 ( -0.8F, 2.8F, 119.6F ),
+            ._size = GXVec3 ( 1.6F, 0.8F, 0.8F ),
+            ._friction = normalFriction
+        },
+
+        {
+            ._location = GXVec3 ( -0.8F, 4.4F, 121.6F ),
+            ._size = GXVec3 ( 1.6F, 0.8F, 1.6F ),
+            ._friction = normalFriction
+        }
+    };
+
+    Obstacle::Spawn ( concrete3, _scene, "Concrete #3" );
+
+    constexpr Obstacle::Item const concrete4[] =
+    {
+        {
+            ._location = GXVec3 ( -0.8F, 3.6F, 150.0F ),
+            ._size = GXVec3 ( 1.6F, 4.0F, 4.0F ),
+            ._friction = normalFriction
+        },
+
+        {
+            ._location = GXVec3 ( -0.8F, 2.4F, 146.8F ),
+            ._size = GXVec3 ( 1.6F, 1.6F, 2.4F ),
+            ._friction = normalFriction
+        },
+
+        {
+            ._location = GXVec3 ( -0.8F, 2.0F, 145.2F ),
+            ._size = GXVec3 ( 1.6F, 0.8F, 0.8F ),
+            ._friction = normalFriction
+        },
+
+        {
+            ._location = GXVec3 ( -0.8F, 3.6F, 147.2F ),
+            ._size = GXVec3 ( 1.6F, 0.8F, 1.6F ),
+            ._friction = normalFriction
+        },
+
+        {
+            ._location = GXVec3 ( -0.8F, 4.4F, 147.6F ),
+            ._size = GXVec3 ( 1.6F, 0.8F, 0.8F ),
+            ._friction = normalFriction
+        },
+
+        {
+            ._location = GXVec3 ( -0.8F, 6.4F, 150.8F ),
+            ._size = GXVec3 ( 1.6F, 1.6F, 2.4F ),
+            ._friction = normalFriction
+        },
+
+        {
+            ._location = GXVec3 ( -0.8F, 6.0F, 149.2F ),
+            ._size = GXVec3 ( 1.6F, 0.8F, 0.8F ),
+            ._friction = normalFriction
+        },
+
+        {
+            ._location = GXVec3 ( -0.8F, 7.6F, 151.2F ),
+            ._size = GXVec3 ( 1.6F, 0.8F, 1.6F ),
+            ._friction = normalFriction
+        }
+    };
+
+    Obstacle::Spawn ( concrete4, _scene, "Concrete #4" );
+
+    constexpr Obstacle::Item const concrete5[] =
+    {
+        {
+            ._location = GXVec3 ( -0.8F, 2.0F, 158.8F ),
+            ._size = GXVec3 ( 1.6F, 0.8F, 0.8F ),
+            ._friction = normalFriction
+        }
+    };
+
+    Obstacle::Spawn ( concrete5, _scene, "Concrete #5" );
+
+    constexpr Obstacle::Item const ground1[] =
+    {
+        {
+            ._location = GXVec3 ( -0.8F, 0.8F, 62.8F ),
+            ._size = GXVec3 ( 1.6F, 1.6F, 12.0F ),
+            ._friction = normalFriction
+        }
+    };
+
+    Obstacle::Spawn ( ground1, _scene, "Ground #1" );
+
+    constexpr Obstacle::Item const ground2[] =
+    {
+        {
+            ._location = GXVec3 ( -0.8F, 0.8F, 146.8F ),
+            ._size = GXVec3 ( 1.6F, 1.6F, 45.6F ),
+            ._friction = normalFriction
+        }
+    };
+
+    Obstacle::Spawn ( ground2, _scene, "Ground #2" );
+
+    constexpr Obstacle::Item const ground3[] =
+    {
+        {
+            ._location = GXVec3 ( -0.8F, 0.8F, 96.8F ),
+            ._size = GXVec3 ( 1.6F, 1.6F, 51.2F ),
+            ._friction = normalFriction
+        }
+    };
+
+    Obstacle::Spawn ( ground3, _scene, "Ground #3" );
+
+    constexpr Obstacle::Item const ground4[] =
+    {
+        {
+            ._location = GXVec3 ( -0.8F, 0.8F, 27.6F ),
+            ._size = GXVec3 ( 1.6F, 1.6F, 55.2F ),
+            ._friction = normalFriction
+        }
+    };
+
+    Obstacle::Spawn ( ground4, _scene, "Ground #4" );
+    return true;
 }
 
 void World1x1::DestroyCommandPool ( VkDevice device ) noexcept
@@ -304,7 +455,7 @@ void World1x1::DestroyCommandPool ( VkDevice device ) noexcept
 
     vkDestroyCommandPool ( device, _commandPool, nullptr );
     _commandPool = VK_NULL_HANDLE;
-    AV_UNREGISTER_COMMAND_POOL ( "World1x1::_commandPool" )
+    AV_UNREGISTER_COMMAND_POOL ( "pbr::mario::World1x1::_commandPool" )
 }
 
 bool World1x1::UploadGPUContent ( android_vulkan::Renderer &renderer ) noexcept
@@ -322,6 +473,8 @@ bool World1x1::UploadGPUContent ( android_vulkan::Renderer &renderer ) noexcept
     static_assert ( sizeof ( GXVec3 ) == sizeof ( sceneDesc->_viewerLocation ) );
     assert ( sceneDesc->_formatVersion == SCENE_DESC_FORMAT_VERSION );
 
+    constexpr size_t MARIO_COMMAND_BUFFERS = 2U;
+
     auto const comBuffs = static_cast<size_t> (
         sceneDesc->_textureCount +
         sceneDesc->_meshCount +
@@ -329,7 +482,7 @@ bool World1x1::UploadGPUContent ( android_vulkan::Renderer &renderer ) noexcept
         PipeBase::CommandBufferCountRequirement () +
         Brick::CommandBufferCountRequirement () +
         Riddle::CommandBufferCountRequirement () +
-        Mario::CommandBufferCountRequirement ()
+        MARIO_COMMAND_BUFFERS
     );
 
     VkCommandBufferAllocateInfo const allocateInfo
@@ -346,7 +499,7 @@ bool World1x1::UploadGPUContent ( android_vulkan::Renderer &renderer ) noexcept
 
     bool result = android_vulkan::Renderer::CheckVkResult (
         vkAllocateCommandBuffers ( device, &allocateInfo, _commandBuffers.data () ),
-        "World1x1::UploadGPUContent",
+        "pbr::mario::World1x1::UploadGPUContent",
         "Can't allocate command buffers"
     );
 
@@ -371,89 +524,120 @@ bool World1x1::UploadGPUContent ( android_vulkan::Renderer &renderer ) noexcept
         );
 
         if ( component )
-            _components.push_back ( component );
+        {
+            ActorRef actor = std::make_shared<Actor> ();
+            actor->AppendComponent ( component );
+            _scene.AppendActor ( actor );
+        }
 
         commandBuffers += consumed;
         readPointer += read;
     }
 
-    // Note it's generic lambda. Kinda templated lambda.
-    auto appendActor = [ & ] ( auto &storage, auto* actor, float x, float y, float z ) noexcept {
-        actor->Init ( renderer, consumed, commandBuffers, x, y, z );
-        _components.push_back ( actor->GetComponent () );
-        storage.reset ( actor );
-        commandBuffers += consumed;
-    };
+    PipeX1::Spawn ( renderer, commandBuffers, _scene, 0.0F, 27.2F, 716.8F );
+    PipeX1::Spawn ( renderer, commandBuffers, _scene, 0.0F, 52.8F, 972.8F );
+    PipeX1::Spawn ( renderer, commandBuffers, _scene, 0.0F, 27.2F, 4172.8F );
+    PipeX1::Spawn ( renderer, commandBuffers, _scene, 0.0F, 27.2F, 4582.4F );
+    PipeX2::Spawn ( renderer, commandBuffers, _scene, 0.0F, 51.2F, 1177.6F );
+    PipeX2::Spawn ( renderer, commandBuffers, _scene, 0.0F, 51.2F, 1459.2F );
 
-    appendActor ( _pipes[ 0U ], new PipeX1 (), 0.0F, 27.2F, 716.8F );
-    appendActor ( _pipes[ 1U ], new PipeX1 (), 0.0F, 52.8F, 972.8F );
-    appendActor ( _pipes[ 2U ], new PipeX1 (), 0.0F, 27.2F, 4172.8F );
-    appendActor ( _pipes[ 3U ], new PipeX1 (), 0.0F, 27.2F, 4582.4F );
-    appendActor ( _pipes[ 4U ], new PipeX2 (), 0.0F, 51.2F, 1177.6F );
-    appendActor ( _pipes[ 5U ], new PipeX2 (), 0.0F, 51.2F, 1459.2F );
+    Brick::Spawn ( renderer, commandBuffers, _scene, -12.8F, 128.0F, 512.0F );
+    Brick::Spawn ( renderer, commandBuffers, _scene, -12.8F, 128.0F, 563.2F );
+    Brick::Spawn ( renderer, commandBuffers, _scene, -12.8F, 128.0F, 614.4F );
+    Brick::Spawn ( renderer, commandBuffers, _scene, -12.8F, 128.0F, 1971.2F );
+    Brick::Spawn ( renderer, commandBuffers, _scene, -12.8F, 128.0F, 2022.4F );
+    Brick::Spawn ( renderer, commandBuffers, _scene, -12.8F, 230.4F, 2048.0F );
+    Brick::Spawn ( renderer, commandBuffers, _scene, -12.8F, 230.4F, 2073.6F );
+    Brick::Spawn ( renderer, commandBuffers, _scene, -12.8F, 230.4F, 2099.2F );
+    Brick::Spawn ( renderer, commandBuffers, _scene, -12.8F, 230.4F, 2124.8F );
+    Brick::Spawn ( renderer, commandBuffers, _scene, -12.8F, 230.4F, 2150.4F );
+    Brick::Spawn ( renderer, commandBuffers, _scene, -12.8F, 230.4F, 2176.0F );
+    Brick::Spawn ( renderer, commandBuffers, _scene, -12.8F, 230.4F, 2201.6F );
+    Brick::Spawn ( renderer, commandBuffers, _scene, -12.8F, 230.4F, 2227.2F );
+    Brick::Spawn ( renderer, commandBuffers, _scene, -12.8F, 230.4F, 2329.6F );
+    Brick::Spawn ( renderer, commandBuffers, _scene, -12.8F, 230.4F, 2355.2F );
+    Brick::Spawn ( renderer, commandBuffers, _scene, -12.8F, 230.4F, 2380.8F );
+    Brick::Spawn ( renderer, commandBuffers, _scene, -12.8F, 128.0F, 2406.4F );
+    Brick::Spawn ( renderer, commandBuffers, _scene, -12.8F, 128.0F, 2560.0F );
+    Brick::Spawn ( renderer, commandBuffers, _scene, -12.8F, 128.0F, 3020.8F );
+    Brick::Spawn ( renderer, commandBuffers, _scene, -12.8F, 230.4F, 3097.6F );
+    Brick::Spawn ( renderer, commandBuffers, _scene, -12.8F, 230.4F, 3123.2F );
+    Brick::Spawn ( renderer, commandBuffers, _scene, -12.8F, 230.4F, 3148.8F );
+    Brick::Spawn ( renderer, commandBuffers, _scene, -12.8F, 230.4F, 3276.8F );
+    Brick::Spawn ( renderer, commandBuffers, _scene, -12.8F, 230.4F, 3353.6F );
+    Brick::Spawn ( renderer, commandBuffers, _scene, -12.8F, 128.0F, 3302.4F );
+    Brick::Spawn ( renderer, commandBuffers, _scene, -12.8F, 128.0F, 3328.0F );
+    Brick::Spawn ( renderer, commandBuffers, _scene, -12.8F, 128.0F, 4300.8F );
+    Brick::Spawn ( renderer, commandBuffers, _scene, -12.8F, 128.0F, 4326.4F );
+    Brick::Spawn ( renderer, commandBuffers, _scene, -12.8F, 128.0F, 4377.6F );
 
-    appendActor ( _bricks[ 0U ], new Brick (), -12.8F, 128.0F, 512.0F );
-    appendActor ( _bricks[ 1U ], new Brick (), -12.8F, 128.0F, 563.2F );
-    appendActor ( _bricks[ 2U ], new Brick (), -12.8F, 128.0F, 614.4F );
-    appendActor ( _bricks[ 3U ], new Brick (), -12.8F, 128.0F, 1971.2F );
-    appendActor ( _bricks[ 4U ], new Brick (), -12.8F, 128.0F, 2022.4F );
-    appendActor ( _bricks[ 5U ], new Brick (), -12.8F, 230.4F, 2048.0F );
-    appendActor ( _bricks[ 6U ], new Brick (), -12.8F, 230.4F, 2073.6F );
-    appendActor ( _bricks[ 7U ], new Brick (), -12.8F, 230.4F, 2099.2F );
-    appendActor ( _bricks[ 8U ], new Brick (), -12.8F, 230.4F, 2124.8F );
-    appendActor ( _bricks[ 9U ], new Brick (), -12.8F, 230.4F, 2150.4F );
-    appendActor ( _bricks[ 10U ], new Brick (), -12.8F, 230.4F, 2176.0F );
-    appendActor ( _bricks[ 11U ], new Brick (), -12.8F, 230.4F, 2201.6F );
-    appendActor ( _bricks[ 12U ], new Brick (), -12.8F, 230.4F, 2227.2F );
-    appendActor ( _bricks[ 13U ], new Brick (), -12.8F, 230.4F, 2329.6F );
-    appendActor ( _bricks[ 14U ], new Brick (), -12.8F, 230.4F, 2355.2F );
-    appendActor ( _bricks[ 15U ], new Brick (), -12.8F, 230.4F, 2380.8F );
-    appendActor ( _bricks[ 16U ], new Brick (), -12.8F, 128.0F, 2406.4F );
-    appendActor ( _bricks[ 17U ], new Brick (), -12.8F, 128.0F, 2560.0F );
-    appendActor ( _bricks[ 18U ], new Brick (), -12.8F, 128.0F, 3020.8F );
-    appendActor ( _bricks[ 19U ], new Brick (), -12.8F, 230.4F, 3097.6F );
-    appendActor ( _bricks[ 20U ], new Brick (), -12.8F, 230.4F, 3123.2F );
-    appendActor ( _bricks[ 21U ], new Brick (), -12.8F, 230.4F, 3148.8F );
-    appendActor ( _bricks[ 22U ], new Brick (), -12.8F, 230.4F, 3276.8F );
-    appendActor ( _bricks[ 23U ], new Brick (), -12.8F, 230.4F, 3353.6F );
-    appendActor ( _bricks[ 24U ], new Brick (), -12.8F, 128.0F, 3302.4F );
-    appendActor ( _bricks[ 25U ], new Brick (), -12.8F, 128.0F, 3328.0F );
-    appendActor ( _bricks[ 26U ], new Brick (), -12.8F, 128.0F, 4300.8F );
-    appendActor ( _bricks[ 27U ], new Brick (), -12.8F, 128.0F, 4326.4F );
-    appendActor ( _bricks[ 28U ], new Brick (), -12.8F, 128.0F, 4377.6F );
+    Riddle::Spawn ( renderer, commandBuffers, _scene, -12.8F, 128.0F, 409.6F );
+    Riddle::Spawn ( renderer, commandBuffers, _scene, -12.8F, 128.0F, 537.6F );
+    Riddle::Spawn ( renderer, commandBuffers, _scene, -12.8F, 128.0F, 588.8F );
+    Riddle::Spawn ( renderer, commandBuffers, _scene, -12.8F, 230.4F, 563.2F );
+    Riddle::Spawn ( renderer, commandBuffers, _scene, -12.8F, 128.0F, 1996.8F );
+    Riddle::Spawn ( renderer, commandBuffers, _scene, -12.8F, 128.0F, 2713.6F );
+    Riddle::Spawn ( renderer, commandBuffers, _scene, -12.8F, 128.0F, 2790.4F );
+    Riddle::Spawn ( renderer, commandBuffers, _scene, -12.8F, 128.0F, 2867.2F );
+    Riddle::Spawn ( renderer, commandBuffers, _scene, -12.8F, 230.4F, 2406.4F );
+    Riddle::Spawn ( renderer, commandBuffers, _scene, -12.8F, 230.4F, 2790.4F );
+    Riddle::Spawn ( renderer, commandBuffers, _scene, -12.8F, 230.4F, 3302.4F );
+    Riddle::Spawn ( renderer, commandBuffers, _scene, -12.8F, 230.4F, 3328.0F );
+    Riddle::Spawn ( renderer, commandBuffers, _scene, -12.8F, 128.0F, 4352.0F );
 
-    appendActor ( _riddles[ 0U ], new Riddle (), -12.8F, 128.0F, 409.6F );
-    appendActor ( _riddles[ 1U ], new Riddle (), -12.8F, 128.0F, 537.6F );
-    appendActor ( _riddles[ 2U ], new Riddle (), -12.8F, 128.0F, 588.8F );
-    appendActor ( _riddles[ 3U ], new Riddle (), -12.8F, 230.4F, 563.2F );
-    appendActor ( _riddles[ 4U ], new Riddle (), -12.8F, 128.0F, 1996.8F );
-    appendActor ( _riddles[ 5U ], new Riddle (), -12.8F, 128.0F, 2713.6F );
-    appendActor ( _riddles[ 6U ], new Riddle (), -12.8F, 128.0F, 2790.4F );
-    appendActor ( _riddles[ 7U ], new Riddle (), -12.8F, 128.0F, 2867.2F );
-    appendActor ( _riddles[ 8U ], new Riddle (), -12.8F, 230.4F, 2406.4F );
-    appendActor ( _riddles[ 9U ], new Riddle (), -12.8F, 230.4F, 2790.4F );
-    appendActor ( _riddles[ 10U ], new Riddle (), -12.8F, 230.4F, 3302.4F );
-    appendActor ( _riddles[ 11U ], new Riddle (), -12.8F, 230.4F, 3328.0F );
-    appendActor ( _riddles[ 12U ], new Riddle (), -12.8F, 128.0F, 4352.0F );
+    bool success;
 
-    _mario.Init ( renderer, consumed, commandBuffers, -0.8F, 4.4F, 3.00189F );
-    _components.push_back ( _mario.GetComponent () );
+    ComponentRef staticMesh = std::make_shared<StaticMeshComponent> ( renderer,
+        success,
+        consumed,
+        "pbr/assets/Props/experimental/world-1-1/mario/mario-cube.mesh2",
+        "pbr/assets/Props/experimental/world-1-1/mario/mario.mtl",
+        commandBuffers,
+        "Mesh"
+    );
+
     commandBuffers += consumed;
 
-    _camera.SetTarget ( _mario );
-    _camera.Focus ();
+    if ( !success )
+        return false;
+
+    android_vulkan::ShapeRef shape = std::make_shared<android_vulkan::ShapeBox> ( 0.8F, 0.8F, 0.8F );
+    shape->SetFriction ( 0.5F );
+    shape->SetRestitution ( 0.0F );
+
+    ComponentRef rigidBody = std::make_shared<RigidBodyComponent> ( shape, "Collider" );
+
+    // NOLINTNEXTLINE - downcast.
+    auto& collider = static_cast<RigidBodyComponent&> ( *rigidBody );
+
+    android_vulkan::RigidBody& body = *collider.GetRigidBody ();
+    body.DisableKinematic ( true );
+    body.EnableSleep ();
+    body.SetDampingAngular ( 0.99F );
+    body.SetDampingLinear ( 0.99F );
+    body.SetMass ( 38.0F, true );
+    body.SetLocation ( -0.8F, 4.4F, 6.00189F, true );
+    body.SetShape ( shape, true );
+
+    ComponentRef script = std::make_shared<ScriptComponent> ( "av://assets/Scripts/mario.lua", "Logic" );
+
+    ActorRef actor = std::make_shared<Actor> ( "Mario" );
+    actor->AppendComponent ( staticMesh );
+    actor->AppendComponent ( rigidBody );
+    actor->AppendComponent ( script );
+
+    _scene.AppendActor ( actor );
 
     result = android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( renderer.GetQueue () ),
-        "World1x1::UploadGPUContent",
+        "pbr::mario::World1x1::UploadGPUContent",
         "Can't run upload commands"
     );
 
     if ( !result )
         return false;
 
-    for ( auto& component : _components )
-        component->FreeTransferResources ( device );
-
+    _scene.FreeTransferResources ( device );
+    _isReady = true;
     return true;
 }
 

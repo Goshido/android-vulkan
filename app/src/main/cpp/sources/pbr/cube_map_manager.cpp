@@ -3,12 +3,6 @@
 
 namespace pbr {
 
-CubeMapID::Hasher::Hasher () noexcept:
-    _hashServer {}
-{
-    // NOTHING
-}
-
 size_t CubeMapID::Hasher::operator () ( CubeMapID const &me ) const noexcept
 {
     // Hash function is based on Boost implementation:
@@ -32,7 +26,7 @@ size_t CubeMapID::Hasher::operator () ( CubeMapID const &me ) const noexcept
     return hash;
 }
 
-[[nodiscard]] bool CubeMapID::operator == ( CubeMapID const &other ) const noexcept
+bool CubeMapID::operator == ( CubeMapID const &other ) const noexcept
 {
     if ( _xPlusFile != other._xPlusFile )
         return false;
@@ -55,13 +49,13 @@ size_t CubeMapID::Hasher::operator () ( CubeMapID const &me ) const noexcept
 //----------------------------------------------------------------------------------------------------------------------
 
 CubeMapManager* CubeMapManager::_instance = nullptr;
-std::shared_timed_mutex CubeMapManager::_mutex;
+std::shared_timed_mutex CubeMapManager::_mutex {};
 
 TextureCubeRef CubeMapManager::LoadCubeMap ( android_vulkan::Renderer &renderer,
     size_t &commandBufferConsumed,
     android_vulkan::TextureCubeData const &data,
     VkCommandBuffer commandBuffer
-)
+) noexcept
 {
     commandBufferConsumed = 0U;
     TextureCubeRef textureCube = std::make_shared<android_vulkan::TextureCube> ();
@@ -92,7 +86,7 @@ TextureCubeRef CubeMapManager::LoadCubeMap ( android_vulkan::Renderer &renderer,
     return textureCube;
 }
 
-CubeMapManager& CubeMapManager::GetInstance ()
+CubeMapManager& CubeMapManager::GetInstance () noexcept
 {
     std::unique_lock<std::shared_timed_mutex> const lock ( _mutex );
 
@@ -102,7 +96,7 @@ CubeMapManager& CubeMapManager::GetInstance ()
     return *_instance;
 }
 
-void CubeMapManager::Destroy ( VkDevice device )
+void CubeMapManager::Destroy ( VkDevice device ) noexcept
 {
     std::unique_lock<std::shared_timed_mutex> const lock ( _mutex );
 
@@ -115,7 +109,7 @@ void CubeMapManager::Destroy ( VkDevice device )
     _instance = nullptr;
 }
 
-void CubeMapManager::DestroyInternal ( VkDevice device )
+void CubeMapManager::DestroyInternal ( VkDevice device ) noexcept
 {
     for ( auto& cubeMap : _cubeMaps )
         cubeMap.second->FreeResources ( device );
@@ -125,7 +119,7 @@ void CubeMapManager::DestroyInternal ( VkDevice device )
     _stringStorage.clear ();
 }
 
-std::string_view CubeMapManager::GetStringView ( char const* string )
+std::string_view CubeMapManager::GetStringView ( char const* string ) noexcept
 {
     auto const findResult = _knownFiles.find ( string );
 

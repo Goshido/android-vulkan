@@ -53,7 +53,7 @@ void StubDescriptorSetLayoutImpl::Destroy ( VkDevice device )
 
     vkDestroyDescriptorSetLayout ( device, _layout, nullptr );
     _layout = VK_NULL_HANDLE;
-    AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "StubDescriptorSetLayoutImpl::_layout" )
+    AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::StubDescriptorSetLayoutImpl::_layout" )
 }
 
 bool StubDescriptorSetLayoutImpl::Init ( android_vulkan::Renderer &renderer )
@@ -75,14 +75,14 @@ bool StubDescriptorSetLayoutImpl::Init ( android_vulkan::Renderer &renderer )
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateDescriptorSetLayout ( renderer.GetDevice (), &descriptorSetLayoutInfo, nullptr, &_layout ),
-        "StubDescriptorSetLayoutImpl::Init",
+        "pbr::StubDescriptorSetLayoutImpl::Init",
         "Can't create descriptor set layout"
     );
 
     if ( !result )
         return false;
 
-    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "StubDescriptorSetLayoutImpl::_layout" )
+    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::StubDescriptorSetLayoutImpl::_layout" )
 
     ++_references;
     return true;

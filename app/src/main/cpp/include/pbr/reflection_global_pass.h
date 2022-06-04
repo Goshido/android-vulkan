@@ -11,15 +11,15 @@ namespace pbr {
 class ReflectionGlobalPass final
 {
     private:
-        VkDescriptorPool                        _descriptorPool;
-        std::vector<VkDescriptorSet>            _descriptorSets;
-        std::vector<VkDescriptorImageInfo>      _imageInfo;
-        std::vector<TextureCubeRef>             _prefilters;
-        ReflectionGlobalProgram                 _program;
-        std::vector<VkWriteDescriptorSet>       _writeSets;
+        VkDescriptorPool                        _descriptorPool = VK_NULL_HANDLE;
+        std::vector<VkDescriptorSet>            _descriptorSets {};
+        std::vector<VkDescriptorImageInfo>      _imageInfo {};
+        std::vector<TextureCubeRef>             _prefilters {};
+        ReflectionGlobalProgram                 _program {};
+        std::vector<VkWriteDescriptorSet>       _writeSets {};
 
     public:
-        ReflectionGlobalPass () noexcept;
+        ReflectionGlobalPass () = default;
 
         ReflectionGlobalPass ( ReflectionGlobalPass const & ) = delete;
         ReflectionGlobalPass& operator = ( ReflectionGlobalPass const & ) = delete;
@@ -29,32 +29,32 @@ class ReflectionGlobalPass final
 
         ~ReflectionGlobalPass () = default;
 
-        void Append ( TextureCubeRef &prefilter );
+        void Append ( TextureCubeRef &prefilter ) noexcept;
 
         [[nodiscard]] bool Execute ( android_vulkan::Renderer &renderer,
             VkCommandBuffer commandBuffer,
             GXMat4 const &viewToWorld
-        );
+        ) noexcept;
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
             VkRenderPass renderPass,
             uint32_t subpass,
             VkExtent2D const &viewport
-        );
+        ) noexcept;
 
-        void Destroy ( VkDevice device );
+        void Destroy ( VkDevice device ) noexcept;
 
-        [[nodiscard]] size_t GetReflectionCount () const;
-        void Reset ();
+        [[nodiscard]] size_t GetReflectionCount () const noexcept;
+        void Reset () noexcept;
 
     private:
-        [[nodiscard]] bool AllocateDescriptorSets ( android_vulkan::Renderer &renderer, size_t neededSets );
-        void DestroyDescriptorPool ( VkDevice device );
+        [[nodiscard]] bool AllocateDescriptorSets ( android_vulkan::Renderer &renderer, size_t neededSets ) noexcept;
+        void DestroyDescriptorPool ( VkDevice device ) noexcept;
 
         [[nodiscard]] bool UpdateGPUData ( android_vulkan::Renderer &renderer,
             size_t count,
             GXMat4 const &viewToWorld
-        );
+        ) noexcept;
 };
 
 } // namespace pbr

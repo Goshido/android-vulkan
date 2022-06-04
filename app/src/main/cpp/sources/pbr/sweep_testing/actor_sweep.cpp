@@ -1,4 +1,5 @@
 #include <pbr/sweep_testing/actor_sweep.h>
+#include <pbr/coordinate_system.h>
 #include <pbr/static_mesh_component.h>
 #include <pbr/stipple_material.h>
 #include <gamepad.h>
@@ -31,7 +32,9 @@ void ActorSweep::ReleaseInput () noexcept
 
 void ActorSweep::FreeTransferResources ( VkDevice device ) noexcept
 {
-    _mesh->FreeTransferResources ( device );
+    // NOLINTNEXTLINE - downcast.
+    auto& mesh = static_cast<StaticMeshComponent&> ( *_mesh );
+    mesh.FreeTransferResources ( device );
 }
 
 void ActorSweep::Destroy () noexcept
@@ -73,7 +76,7 @@ bool ActorSweep::Init ( android_vulkan::Renderer &renderer,
     if ( !success )
         return false;
 
-    // NOLINTNEXTLINE
+    // NOLINTNEXTLINE - downcast.
     auto& m = static_cast<StaticMeshComponent&> ( *_mesh );
     m.SetColor0 ( GXColorRGB ( 1.0F, 1.0F, 1.0F, 0.5F ) );
     return true;
@@ -81,7 +84,7 @@ bool ActorSweep::Init ( android_vulkan::Renderer &renderer,
 
 void ActorSweep::SetOverlay ( Texture2DRef const &overlay ) noexcept
 {
-    // NOLINTNEXTLINE
+    // NOLINTNEXTLINE - downcast.
     auto& mesh = static_cast<StaticMeshComponent&> ( *_mesh );
 
     mesh.SetEmission (
@@ -93,7 +96,7 @@ void ActorSweep::SetOverlay ( Texture2DRef const &overlay ) noexcept
         )
     );
 
-    // NOLINTNEXTLINE
+    // NOLINTNEXTLINE - downcast.
     auto& material = static_cast<GeometryPassMaterial&> ( *mesh.GetMaterial () );
     material.SetEmission ( overlay );
 }
@@ -103,13 +106,12 @@ void ActorSweep::Submit ( RenderSession &renderSession ) noexcept
     if ( !_mesh )
         return;
 
-    // NOLINTNEXTLINE
+    // NOLINTNEXTLINE - downcast.
     auto const& shape = static_cast<android_vulkan::ShapeBox const&> ( *_shape );
     GXMat4 const& shapeTransform = shape.GetTransformWorld ();
 
-    constexpr float rendererScale = 32.0F;
     GXVec3 scale {};
-    scale.Multiply ( shape.GetSize (), rendererScale );
+    scale.Multiply ( shape.GetSize (), UNITS_IN_METER );
 
     GXMat4 transform {};
 
@@ -123,12 +125,12 @@ void ActorSweep::Submit ( RenderSession &renderSession ) noexcept
     z.Multiply ( *reinterpret_cast<GXVec3 const*> ( &shapeTransform._m[ 2U ][ 0U ] ), scale._data[ 2U ] );
 
     auto& location = *reinterpret_cast<GXVec3*> ( &transform._m[ 3U ][ 0U ] );
-    location.Multiply ( *reinterpret_cast<GXVec3 const*> ( &shapeTransform._m[ 3U ][ 0U ] ), rendererScale );
+    location.Multiply ( *reinterpret_cast<GXVec3 const*> ( &shapeTransform._m[ 3U ][ 0U ] ), UNITS_IN_METER );
 
     transform._m[ 0U ][ 3U ] = transform._m[ 1U ][ 3U ] = transform._m[ 2U ][ 3U ] = 0.0F;
     transform._m[ 3U ][ 3U ] = 1.0F;
 
-    // NOLINTNEXTLINE
+    // NOLINTNEXTLINE - downcast.
     auto& mesh = static_cast<StaticMeshComponent&> ( *_mesh );
     mesh.SetTransform ( transform );
     mesh.Submit ( renderSession );
@@ -173,7 +175,7 @@ void ActorSweep::UpdateLocation ( float deltaTime ) noexcept
     GXVec3 offset {};
     basis.MultiplyVectorMatrix ( offset, move );
 
-    // NOLINTNEXTLINE
+    // NOLINTNEXTLINE - downcast.
     auto& shape = static_cast<android_vulkan::ShapeBox&> ( *_shape );
     GXMat4 transform = shape.GetTransformWorld ();
     auto& location = *reinterpret_cast<GXVec3*> ( &transform._m[ 3U ][ 0U ] );

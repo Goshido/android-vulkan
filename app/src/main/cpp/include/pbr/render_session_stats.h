@@ -47,7 +47,7 @@ class RenderSessionStats final
         void RenderOpaque ( uint32_t vertexCount, uint32_t instanceCount ) noexcept;
         void SubmitOpaque ( uint32_t vertexCount ) noexcept;
 
-        [[maybe_unused]] void RenderStipple ( uint32_t vertexCount, uint32_t instanceCount ) noexcept;
+        void RenderStipple ( uint32_t vertexCount, uint32_t instanceCount ) noexcept;
         void SubmitStipple ( uint32_t vertexCount ) noexcept;
 
         void RenderPointLights ( size_t count ) noexcept;

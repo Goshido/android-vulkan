@@ -1,4 +1,4 @@
-// version 1.74
+// version 1.75
 
 #ifndef GX_MATH
 #define GX_MATH
@@ -524,6 +524,10 @@ struct [[maybe_unused]] GXQuat final
     [[maybe_unused]] GXVoid Identity () noexcept;
     [[maybe_unused]] GXVoid Normalize () noexcept;
     [[maybe_unused]] GXVoid Inverse ( GXQuat const &q ) noexcept;
+
+    // Result is valid if "unitQuaternion" is normalized.
+    [[maybe_unused]] GXVoid InverseFast ( GXQuat const &unitQuaternion ) noexcept;
+
     [[maybe_unused]] GXVoid FromAxisAngle ( GXFloat x, GXFloat y, GXFloat z, GXFloat angle ) noexcept;
     [[maybe_unused]] GXVoid FromAxisAngle ( GXVec3 const &axis, GXFloat angle ) noexcept;
 

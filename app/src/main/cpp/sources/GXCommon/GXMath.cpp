@@ -1,4 +1,4 @@
-﻿// version 1.74
+﻿// version 1.75
 
 #include <GXCommon/GXMath.h>
 
@@ -811,6 +811,15 @@ constexpr static GXUByte SOLUTION_YOTTA = 3U;
 [[maybe_unused]] GXVoid GXQuat::FromAxisAngle ( const GXVec3 &axis, GXFloat angle ) noexcept
 {
     FromAxisAngle ( axis._data[ 0U ], axis._data[ 1U ], axis._data[ 2U ], angle );
+}
+
+[[maybe_unused]] GXVoid GXQuat::InverseFast ( GXQuat const &unitQuaternion ) noexcept
+{
+    // See https://www.3dgep.com/understanding-quaternions/#Quaternion_Inverse
+    _data[ 0U ] = unitQuaternion._data[ 0U ];
+    _data[ 1U ] = -unitQuaternion._data[ 1U ];
+    _data[ 2U ] = -unitQuaternion._data[ 2U ];
+    _data[ 3U ] = -unitQuaternion._data[ 3U ];
 }
 
 [[maybe_unused]] GXVoid GXQuat::From ( GXMat3 const &rotationMatrix ) noexcept

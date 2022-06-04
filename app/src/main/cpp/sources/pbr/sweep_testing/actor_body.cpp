@@ -1,4 +1,5 @@
 #include <pbr/sweep_testing/actor_body.h>
+#include <pbr/coordinate_system.h>
 #include <pbr/opaque_material.h>
 #include <pbr/static_mesh_component.h>
 #include <shape_box.h>
@@ -20,14 +21,14 @@ GXColorRGB const ActorBody::_overlayColor (
 
 void ActorBody::EnableOverlay () noexcept
 {
-    // NOLINTNEXTLINE
+    // NOLINTNEXTLINE - downcast.
     auto& mesh = static_cast<StaticMeshComponent&> ( *_mesh );
     mesh.SetEmission ( _overlayColor );
 }
 
 void ActorBody::DisableOverlay () noexcept
 {
-    // NOLINTNEXTLINE
+    // NOLINTNEXTLINE - downcast.
     auto& mesh = static_cast<StaticMeshComponent&> ( *_mesh );
 
     constexpr GXColorRGB noOverlay ( 0.0F, 0.0F, 0.0F, 1.0F );
@@ -36,7 +37,9 @@ void ActorBody::DisableOverlay () noexcept
 
 void ActorBody::FreeTransferResources ( VkDevice device ) noexcept
 {
-    _mesh->FreeTransferResources ( device );
+    // NOLINTNEXTLINE - downcast.
+    auto& mesh = static_cast<StaticMeshComponent&> ( *_mesh );
+    mesh.FreeTransferResources ( device );
 }
 
 void ActorBody::Destroy () noexcept
@@ -65,7 +68,8 @@ bool ActorBody::Init ( android_vulkan::Renderer &renderer,
         commandBufferConsumed,
         "pbr/system/unit-cube.mesh2",
         "pbr/assets/System/DefaultCSG.mtl",
-        commandBuffers
+        commandBuffers,
+        "Mesh"
     );
 
     if ( !success )
@@ -92,10 +96,10 @@ bool ActorBody::Init ( android_vulkan::Renderer &renderer,
 
 void ActorBody::SetOverlay ( Texture2DRef const &overlay ) noexcept
 {
-    // NOLINTNEXTLINE
+    // NOLINTNEXTLINE - downcast.
     auto& mesh = static_cast<StaticMeshComponent&> ( *_mesh );
 
-    // NOLINTNEXTLINE
+    // NOLINTNEXTLINE - downcast.
     auto& material = static_cast<OpaqueMaterial&> ( *mesh.GetMaterial () );
     material.SetEmission ( overlay );
 
@@ -107,7 +111,7 @@ void ActorBody::Submit ( RenderSession &renderSession ) noexcept
     if ( !_mesh )
         return;
 
-    android_vulkan::RigidBody& ph = *_body.get ();
+    android_vulkan::RigidBody& ph = *_body;
 
     GXMat3 orientation {};
     orientation.FromFast ( ph.GetRotation () );
@@ -115,9 +119,8 @@ void ActorBody::Submit ( RenderSession &renderSession ) noexcept
     // NOLINTNEXTLINE
     auto& shape = static_cast<android_vulkan::ShapeBox&> ( ph.GetShape () );
 
-    constexpr float rendererScale = 32.0F;
     GXVec3 scale {};
-    scale.Multiply ( shape.GetSize (), rendererScale );
+    scale.Multiply ( shape.GetSize (), UNITS_IN_METER );
 
     GXMat4 transform {};
 
@@ -131,12 +134,12 @@ void ActorBody::Submit ( RenderSession &renderSession ) noexcept
     z.Multiply ( *reinterpret_cast<GXVec3 const*> ( &orientation._m[ 2U ][ 0U ] ), scale._data[ 2U ] );
 
     auto& location = *reinterpret_cast<GXVec3*> ( &transform._m[ 3U ][ 0U ] );
-    location.Multiply ( ph.GetLocation (), rendererScale );
+    location.Multiply ( ph.GetLocation (), UNITS_IN_METER );
 
     transform._m[ 0U ][ 3U ] = transform._m[ 1U ][ 3U ] = transform._m[ 2U ][ 3U ] = 0.0F;
     transform._m[ 3U ][ 3U ] = 1.0F;
 
-    // NOLINTNEXTLINE
+    // NOLINTNEXTLINE - downcast.
     auto& mesh = *static_cast<StaticMeshComponent*> ( _mesh.get () );
     mesh.SetTransform ( transform );
     mesh.Submit ( renderSession );

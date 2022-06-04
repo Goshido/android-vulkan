@@ -6,12 +6,14 @@ namespace pbr {
 
 constexpr static const char* VERTEX_SHADER = "shaders/point-light-shadowmap-generator-vs.spv";
 
-constexpr static const uint32_t COLOR_RENDER_TARGET_COUNT = 0U;
-constexpr static const size_t STAGE_COUNT = 1U;
-constexpr static const size_t VERTEX_ATTRIBUTE_COUNT = 1U;
+constexpr static uint32_t COLOR_RENDER_TARGET_COUNT = 0U;
+constexpr static size_t STAGE_COUNT = 1U;
+constexpr static size_t VERTEX_ATTRIBUTE_COUNT = 1U;
+
+//----------------------------------------------------------------------------------------------------------------------
 
 PointLightShadowmapGeneratorProgram::PointLightShadowmapGeneratorProgram () noexcept:
-    Program ( "PointLightShadowmapGeneratorProgram" )
+    Program ( "pbr::PointLightShadowmapGeneratorProgram" )
 {
     // NOTHING
 }
@@ -72,11 +74,11 @@ bool PointLightShadowmapGeneratorProgram::Init ( android_vulkan::Renderer &rende
     pipelineInfo.renderPass = renderPass;
     pipelineInfo.subpass = subpass;
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
-    pipelineInfo.basePipelineIndex = 0;
+    pipelineInfo.basePipelineIndex = -1;
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateGraphicsPipelines ( device, VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
-        "PointLightShadowmapGeneratorProgram::Init",
+        "pbr::PointLightShadowmapGeneratorProgram::Init",
         "Can't create pipeline"
     );
 
@@ -86,7 +88,7 @@ bool PointLightShadowmapGeneratorProgram::Init ( android_vulkan::Renderer &rende
         return false;
     }
 
-    AV_REGISTER_PIPELINE ( "PointLightShadowmapGeneratorProgram::_pipeline" )
+    AV_REGISTER_PIPELINE ( "pbr::PointLightShadowmapGeneratorProgram::_pipeline" )
     DestroyShaderModules ( device );
     return true;
 }
@@ -97,7 +99,7 @@ void PointLightShadowmapGeneratorProgram::Destroy ( VkDevice device ) noexcept
     {
         vkDestroyPipelineLayout ( device, _pipelineLayout, nullptr );
         _pipelineLayout = VK_NULL_HANDLE;
-        AV_UNREGISTER_PIPELINE_LAYOUT ( "PointLightShadowmapGeneratorProgram::_pipelineLayout" )
+        AV_UNREGISTER_PIPELINE_LAYOUT ( "pbr::PointLightShadowmapGeneratorProgram::_pipelineLayout" )
     }
 
     _instanceLayout.Destroy ( device );
@@ -106,7 +108,7 @@ void PointLightShadowmapGeneratorProgram::Destroy ( VkDevice device ) noexcept
     {
         vkDestroyPipeline ( device, _pipeline, nullptr );
         _pipeline = VK_NULL_HANDLE;
-        AV_UNREGISTER_PIPELINE ( "PointLightShadowmapGeneratorProgram::_pipeline" )
+        AV_UNREGISTER_PIPELINE ( "pbr::PointLightShadowmapGeneratorProgram::_pipeline" )
     }
 
     DestroyShaderModules ( device );
@@ -220,14 +222,14 @@ bool PointLightShadowmapGeneratorProgram::InitLayout ( android_vulkan::Renderer 
 
     const bool result = android_vulkan::Renderer::CheckVkResult (
         vkCreatePipelineLayout ( renderer.GetDevice (), &layoutInfo, nullptr, &_pipelineLayout ),
-        "PointLightShadowmapGeneratorProgram::InitLayout",
+        "pbr::PointLightShadowmapGeneratorProgram::InitLayout",
         "Can't create pipeline layout"
     );
 
     if ( !result )
         return false;
 
-    AV_REGISTER_PIPELINE_LAYOUT ( "PointLightShadowmapGeneratorProgram::_pipelineLayout" )
+    AV_REGISTER_PIPELINE_LAYOUT ( "pbr::PointLightShadowmapGeneratorProgram::_pipelineLayout" )
     layout = _pipelineLayout;
     return true;
 }
@@ -283,7 +285,7 @@ bool PointLightShadowmapGeneratorProgram::InitShaderInfo ( android_vulkan::Rende
     if ( !result )
         return false;
 
-    AV_REGISTER_SHADER_MODULE ( "PointLightShadowmapGeneratorProgram::_vertexShader" )
+    AV_REGISTER_SHADER_MODULE ( "pbr::PointLightShadowmapGeneratorProgram::_vertexShader" )
 
     sourceInfo->sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     sourceInfo->pNext = nullptr;
@@ -304,7 +306,7 @@ void PointLightShadowmapGeneratorProgram::DestroyShaderModules ( VkDevice device
 
     vkDestroyShaderModule ( device, _vertexShader, nullptr );
     _vertexShader = VK_NULL_HANDLE;
-    AV_UNREGISTER_SHADER_MODULE ( "PointLightShadowmapGeneratorProgram::_vertexShader" )
+    AV_UNREGISTER_SHADER_MODULE ( "pbr::PointLightShadowmapGeneratorProgram::_vertexShader" )
 }
 
 VkPipelineViewportStateCreateInfo const* PointLightShadowmapGeneratorProgram::InitViewportInfo (

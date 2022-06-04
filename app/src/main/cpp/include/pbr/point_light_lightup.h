@@ -16,20 +16,20 @@ class PointLightPass;
 class PointLightLightup final
 {
     private:
-        VkCommandBuffer                         _transferCommandBuffer;
-        VkCommandPool                           _commandPool;
-        VkDescriptorPool                        _descriptorPool;
+        VkCommandBuffer                         _transferCommandBuffer = VK_NULL_HANDLE;
+        VkCommandPool                           _commandPool = VK_NULL_HANDLE;
+        VkDescriptorPool                        _descriptorPool = VK_NULL_HANDLE;
         std::vector<VkDescriptorSet>            _descriptorSets;
-        std::vector<VkDescriptorImageInfo>      _imageInfo;
-        PointLightLightupProgram                _program;
-        Sampler                                 _sampler;
-        VkSubmitInfo                            _submitInfoTransfer;
-        std::vector<VkDescriptorBufferInfo>     _uniformInfoLightData;
-        UniformBufferPool                       _uniformPoolLightData;
-        std::vector<VkWriteDescriptorSet>       _writeSets;
+        std::vector<VkDescriptorImageInfo>      _imageInfo {};
+        PointLightLightupProgram                _program {};
+        Sampler                                 _sampler {};
+        VkSubmitInfo                            _submitInfoTransfer {};
+        std::vector<VkDescriptorBufferInfo>     _uniformInfoLightData {};
+        UniformBufferPool                       _uniformPoolLightData { eUniformPoolSize::Tiny_4M };
+        std::vector<VkWriteDescriptorSet>       _writeSets {};
 
     public:
-        PointLightLightup () noexcept;
+        PointLightLightup () = default;
 
         PointLightLightup ( PointLightLightup const & ) = delete;
         PointLightLightup& operator = ( PointLightLightup const & ) = delete;
@@ -44,21 +44,27 @@ class PointLightLightup final
             VkRenderPass renderPass,
             uint32_t subpass,
             VkExtent2D const &resolution
-        );
+        ) noexcept;
 
-        void Destroy ( VkDevice device );
+        void Destroy ( VkDevice device ) noexcept;
 
-        void Lightup ( VkCommandBuffer commandBuffer, android_vulkan::MeshGeometry &unitCube, size_t lightIndex );
+        void Lightup ( VkCommandBuffer commandBuffer,
+            android_vulkan::MeshGeometry &unitCube,
+            size_t lightIndex
+        ) noexcept;
 
         [[nodiscard]] bool UpdateGPUData ( android_vulkan::Renderer &renderer,
             PointLightPass const &pointLightPass,
             GXMat4 const &viewerLocal,
             GXMat4 const &view
-        );
+        ) noexcept;
 
     private:
-        [[nodiscard]] bool AllocateNativeDescriptorSets ( android_vulkan::Renderer &renderer, size_t neededSets );
-        void DestroyDescriptorPool ( VkDevice device );
+        [[nodiscard]] bool AllocateNativeDescriptorSets ( android_vulkan::Renderer &renderer,
+            size_t neededSets
+        ) noexcept;
+
+        void DestroyDescriptorPool ( VkDevice device ) noexcept;
 };
 
 } // namespace pbr

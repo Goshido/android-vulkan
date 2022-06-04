@@ -4,13 +4,7 @@
 
 namespace pbr {
 
-LightVolume::LightVolume () noexcept:
-    _program {}
-{
-    // NOTHING
-}
-
-void LightVolume::Execute ( uint32_t vertexCount, VkDescriptorSet transform, VkCommandBuffer commandBuffer )
+void LightVolume::Execute ( uint32_t vertexCount, VkDescriptorSet transform, VkCommandBuffer commandBuffer ) noexcept
 {
     _program.Bind ( commandBuffer );
     _program.SetTransform ( commandBuffer, transform );
@@ -20,7 +14,7 @@ void LightVolume::Execute ( uint32_t vertexCount, VkDescriptorSet transform, VkC
 bool LightVolume::Init ( android_vulkan::Renderer &renderer,
     GBuffer &gBuffer,
     VkRenderPass renderPass
-)
+) noexcept
 {
     VkDevice device = renderer.GetDevice ();
 
@@ -31,7 +25,7 @@ bool LightVolume::Init ( android_vulkan::Renderer &renderer,
     return false;
 }
 
-void LightVolume::Destroy ( VkDevice device )
+void LightVolume::Destroy ( VkDevice device ) noexcept
 {
     _program.Destroy ( device );
 }

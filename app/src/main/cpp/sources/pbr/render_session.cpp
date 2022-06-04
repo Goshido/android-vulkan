@@ -140,7 +140,7 @@ bool RenderSession::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
             return false;
         }
 
-        android_vulkan::LogInfo ( "RenderSession::OnSwapchainCreated - G-buffer resolution is %u x %u.",
+        android_vulkan::LogInfo ( "pbr::RenderSession::OnSwapchainCreated - G-buffer resolution is %u x %u.",
             resolution.width,
             resolution.height
         );
@@ -166,7 +166,7 @@ void RenderSession::SubmitLight ( LightRef &light ) noexcept
     auto const idx = static_cast<size_t> ( light->GetType () );
     assert ( idx < std::size ( _lightHandlers ) );
 
-    LightHandler handler = _lightHandlers[ idx ];
+    LightHandler const handler = _lightHandlers[ idx ];
 
     // C++ calling method by pointer syntax.
     ( this->*handler ) ( light );
@@ -185,7 +185,7 @@ void RenderSession::SubmitMesh ( MeshRef &mesh,
     auto const idx = static_cast<size_t> ( material->GetMaterialType () );
     assert ( idx < std::size ( _meshHandlers ) );
 
-    MeshHandler handler = _meshHandlers[ idx ];
+    MeshHandler const handler = _meshHandlers[ idx ];
 
     // Calling method by pointer C++ syntax.
     ( this->*handler ) ( mesh, material, local, worldBounds, color0, color1, color2, emission );
@@ -219,14 +219,14 @@ bool RenderSession::CreateGBufferFramebuffer ( android_vulkan::Renderer &rendere
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateFramebuffer ( renderer.GetDevice (), &framebufferInfo, nullptr, &_gBufferFramebuffer ),
-        "RenderSession::CreateGBufferFramebuffer",
+        "pbr::RenderSession::CreateGBufferFramebuffer",
         "Can't create GBuffer framebuffer"
     );
 
     if ( !result )
         return false;
 
-    AV_REGISTER_FRAMEBUFFER ( "RenderSession::_gBufferFramebuffer" )
+    AV_REGISTER_FRAMEBUFFER ( "pbr::RenderSession::_gBufferFramebuffer" )
     return true;
 }
 
@@ -320,14 +320,14 @@ bool RenderSession::CreateGBufferRenderPass ( android_vulkan::Renderer &renderer
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateRenderPass ( renderer.GetDevice (), &renderPassInfo, nullptr, &_gBufferRenderPass ),
-        "RenderSession::CreateGBufferRenderPass",
+        "pbr::RenderSession::CreateGBufferRenderPass",
         "Can't create render pass"
     );
 
     if ( !result )
         return false;
 
-    AV_REGISTER_RENDER_PASS ( "RenderSession::_gBufferRenderPass" )
+    AV_REGISTER_RENDER_PASS ( "pbr::RenderSession::_gBufferRenderPass" )
     return true;
 }
 
@@ -400,7 +400,7 @@ bool RenderSession::CreateGBufferResources ( android_vulkan::Renderer &renderer,
     };
 
     result = android_vulkan::Renderer::CheckVkResult ( vkDeviceWaitIdle ( device ),
-        "RenderSession::CreateGBufferResources",
+        "pbr::RenderSession::CreateGBufferResources",
         "Can't wait device idle"
     );
 
@@ -442,14 +442,14 @@ bool RenderSession::CreateGBufferSlotMapper ( android_vulkan::Renderer &renderer
 
     bool result = android_vulkan::Renderer::CheckVkResult (
         vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_gBufferDescriptorPool ),
-        "RenderSession::CreateGBufferSlotMapper",
+        "pbr::RenderSession::CreateGBufferSlotMapper",
         "Can't create descriptor pool"
     );
 
     if ( !result )
         return false;
 
-    AV_REGISTER_DESCRIPTOR_POOL ( "RenderSession::_gBufferDescriptorPool" )
+    AV_REGISTER_DESCRIPTOR_POOL ( "pbr::RenderSession::_gBufferDescriptorPool" )
 
     TexturePresentDescriptorSetLayout const layout;
     VkDescriptorSetLayout nativeLayout = layout.GetLayout ();
@@ -465,7 +465,7 @@ bool RenderSession::CreateGBufferSlotMapper ( android_vulkan::Renderer &renderer
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkAllocateDescriptorSets ( device, &allocateInfo, &_gBufferSlotMapper ),
-        "RenderSession::CreateGBufferSlotMapper",
+        "pbr::RenderSession::CreateGBufferSlotMapper",
         "Can't allocate descriptor sets"
     );
 
@@ -519,14 +519,14 @@ void RenderSession::DestroyGBufferResources ( VkDevice device ) noexcept
     {
         vkDestroyFramebuffer ( device, _gBufferFramebuffer, nullptr );
         _gBufferFramebuffer = VK_NULL_HANDLE;
-        AV_UNREGISTER_FRAMEBUFFER ( "RenderSession::_gBufferFramebuffer" )
+        AV_UNREGISTER_FRAMEBUFFER ( "pbr::RenderSession::_gBufferFramebuffer" )
     }
 
     if ( _gBufferRenderPass != VK_NULL_HANDLE )
     {
         vkDestroyRenderPass ( device, _gBufferRenderPass, nullptr );
         _gBufferRenderPass = VK_NULL_HANDLE;
-        AV_UNREGISTER_RENDER_PASS ( "RenderSession::_gBufferRenderPass" )
+        AV_UNREGISTER_RENDER_PASS ( "pbr::RenderSession::_gBufferRenderPass" )
     }
 
     _lightPass.Destroy ( device );
@@ -535,7 +535,7 @@ void RenderSession::DestroyGBufferResources ( VkDevice device ) noexcept
     {
         vkDestroyDescriptorPool ( device, _gBufferDescriptorPool, nullptr );
         _gBufferDescriptorPool = VK_NULL_HANDLE;
-        AV_UNREGISTER_DESCRIPTOR_POOL ( "RenderSession::_gBufferDescriptorPool" )
+        AV_UNREGISTER_DESCRIPTOR_POOL ( "pbr::RenderSession::_gBufferDescriptorPool" )
     }
 
     _geometryPass.Destroy ( device );
@@ -544,14 +544,14 @@ void RenderSession::DestroyGBufferResources ( VkDevice device ) noexcept
     {
         vkDestroyFramebuffer ( device, _gBufferFramebuffer, nullptr );
         _gBufferFramebuffer = VK_NULL_HANDLE;
-        AV_UNREGISTER_FRAMEBUFFER ( "RenderSession::_gBufferFramebuffer" )
+        AV_UNREGISTER_FRAMEBUFFER ( "pbr::RenderSession::_gBufferFramebuffer" )
     }
 
     if ( _gBufferRenderPass != VK_NULL_HANDLE )
     {
         vkDestroyRenderPass ( device, _gBufferRenderPass, nullptr );
         _gBufferRenderPass = VK_NULL_HANDLE;
-        AV_UNREGISTER_RENDER_PASS ( "RenderSession::_gBufferRenderPass" )
+        AV_UNREGISTER_RENDER_PASS ( "pbr::RenderSession::_gBufferRenderPass" )
     }
 
     _gBuffer.Destroy ( device );

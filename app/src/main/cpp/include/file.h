@@ -39,6 +39,7 @@ class File final
         [[maybe_unused, nodiscard]] std::vector<uint8_t> const& GetContent () const noexcept;
 
         [[nodiscard]] bool IsContentLoaded () const noexcept;
+        [[nodiscard]] bool IsExist () const noexcept;
         [[nodiscard]] bool LoadContent () noexcept;
 };
 

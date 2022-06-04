@@ -28,9 +28,15 @@ class ReflectionProbeLocal final : public ReflectionProbe
 
         ~ReflectionProbeLocal () override = default;
 
-        [[nodiscard]] GXAABB const& GetBounds () const;
-        [[nodiscard]] GXVec3 const& GetLocation () const;
-        [[nodiscard]] float GetSize () const;
+        [[nodiscard]] GXAABB const& GetBounds () const noexcept;
+
+        [[nodiscard]] GXVec3 const& GetLocation () const noexcept;
+        void SetLocation ( GXVec3 const &location ) noexcept;
+
+        [[nodiscard]] float GetSize () const noexcept;
+
+    private:
+        void UpdateBounds () noexcept;
 };
 
 } // namespace pbr

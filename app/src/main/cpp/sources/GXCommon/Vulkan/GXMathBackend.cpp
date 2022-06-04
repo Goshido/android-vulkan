@@ -1,4 +1,4 @@
-// version 1.3
+// version 1.4
 
 #include <GXCommon/GXMath.h>
 
@@ -9,13 +9,13 @@ GX_DISABLE_COMMON_WARNINGS
 GX_RESTORE_WARNING_STATE
 
 
-[[maybe_unused]] GXVoid GXMat4::Perspective ( GXFloat fieldOfViewYRadiands,
+[[maybe_unused]] GXVoid GXMat4::Perspective ( GXFloat fieldOfViewYRadians,
     GXFloat aspectRatio,
     GXFloat zNear,
     GXFloat zFar
 ) noexcept
 {
-    GXFloat const halfFovy = fieldOfViewYRadiands * 0.5F;
+    GXFloat const halfFovy = fieldOfViewYRadians * 0.5F;
     GXFloat const ctan = std::cos ( halfFovy ) / std::sin ( halfFovy );
     GXFloat const invRange = 1.0F / ( zFar - zNear );
 

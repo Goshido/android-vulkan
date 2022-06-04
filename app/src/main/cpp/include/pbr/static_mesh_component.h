@@ -2,14 +2,14 @@
 #define PBR_STATIC_MESH_COMPONENT_H
 
 
-#include "component.h"
+#include "renderable_component.h"
 #include "static_mesh_component_desc.h"
-#include "types.h"
+#include "transformable.h"
 
 
 namespace pbr {
 
-class StaticMeshComponent final : public Component
+class StaticMeshComponent final : public RenderableComponent, public Transformable
 {
     private:
         GXColorRGB      _color0;
@@ -45,7 +45,8 @@ class StaticMeshComponent final : public Component
             size_t &commandBufferConsumed,
             char const* mesh,
             char const* material,
-            VkCommandBuffer const* commandBuffers
+            VkCommandBuffer const* commandBuffers,
+            std::string &&name
         ) noexcept;
 
         // "commandBuffer" array MUST contain at least 1 free command buffers.
@@ -59,8 +60,8 @@ class StaticMeshComponent final : public Component
 
         ~StaticMeshComponent () override = default;
 
-        void Submit ( RenderSession &renderSession ) override;
-        void FreeTransferResources ( VkDevice device ) override;
+        void FreeTransferResources ( VkDevice device ) noexcept override;
+        void Submit ( RenderSession &renderSession ) noexcept override;
 
         [[maybe_unused, nodiscard]] GXAABB const& GetBoundsWorld () const noexcept;
 
@@ -81,6 +82,9 @@ class StaticMeshComponent final : public Component
 
         [[nodiscard]] GXMat4 const& GetTransform () const noexcept;
         void SetTransform ( GXMat4 const &transform ) noexcept;
+
+    private:
+        void OnTransform ( GXMat4 const &transformWorld ) noexcept override;
 };
 
 } // namespace pbr

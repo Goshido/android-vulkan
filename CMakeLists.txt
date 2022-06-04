@@ -7,35 +7,10 @@ project ( android-vulkan )
 # NDK 22.0.7026061 at link time (linking errors on Linux).
 string ( APPEND CMAKE_CXX_FLAGS_RELEASE " -flto=thin" )
 
-# Android native activity glue
-
-add_library ( native_app_glue
-    STATIC
-    ${ANDROID_NDK}/sources/android/native_app_glue/android_native_app_glue.c
-)
-
-target_include_directories ( native_app_glue
-    PUBLIC
-    ${ANDROID_NDK}/sources/android/native_app_glue
-)
-
-target_compile_options ( native_app_glue PRIVATE
-    -fno-exceptions
-    -fno-rtti
-)
-
-set_target_properties ( native_app_glue PROPERTIES
-    CXX_VISIBILITY_PRESET hidden
-)
-
 # log support
-
-find_library ( log-lib
-    log
-)
+find_library ( log-lib log REQUIRED )
 
 # Main app
-
 add_library ( android-vulkan
     SHARED
     app/src/main/cpp/sources/contact_detector.cpp
@@ -48,11 +23,10 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/gjk.cpp
     app/src/main/cpp/sources/gjk_base.cpp
     app/src/main/cpp/sources/global_force_gravity.cpp
+    app/src/main/cpp/sources/guid_generator.cpp
     app/src/main/cpp/sources/half_types.cpp
-    app/src/main/cpp/sources/key_bind.cpp
     app/src/main/cpp/sources/ktx_media_container.cpp
     app/src/main/cpp/sources/logger.cpp
-    app/src/main/cpp/sources/main.cpp
     app/src/main/cpp/sources/mesh_geometry.cpp
     app/src/main/cpp/sources/physics.cpp
     app/src/main/cpp/sources/ray_caster.cpp
@@ -62,11 +36,9 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/shape_box.cpp
     app/src/main/cpp/sources/shape_sphere.cpp
     app/src/main/cpp/sources/simplex.cpp
-    app/src/main/cpp/sources/stick.cpp
     app/src/main/cpp/sources/sutherland_hodgman.cpp
     app/src/main/cpp/sources/texture_cube.cpp
     app/src/main/cpp/sources/texture2D.cpp
-    app/src/main/cpp/sources/trigger.cpp
     app/src/main/cpp/sources/uniform_buffer.cpp
     app/src/main/cpp/sources/velocity_solver.cpp
     app/src/main/cpp/sources/vulkan_loader.cpp
@@ -77,7 +49,9 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/mandelbrot/mandelbrot_analytic_color.cpp
     app/src/main/cpp/sources/mandelbrot/mandelbrot_base.cpp
     app/src/main/cpp/sources/mandelbrot/mandelbrot_lut_color.cpp
+    app/src/main/cpp/sources/pbr/actor.cpp
     app/src/main/cpp/sources/pbr/camera.cpp
+    app/src/main/cpp/sources/pbr/camera_component.cpp
     app/src/main/cpp/sources/pbr/component.cpp
     app/src/main/cpp/sources/pbr/cube_map_manager.cpp
     app/src/main/cpp/sources/pbr/default_texture_manager.cpp
@@ -126,8 +100,20 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/pbr/reflection_probe_local.cpp
     app/src/main/cpp/sources/pbr/render_session.cpp
     app/src/main/cpp/sources/pbr/render_session_stats.cpp
+    app/src/main/cpp/sources/pbr/renderable_component.cpp
+    app/src/main/cpp/sources/pbr/rigid_body_component.cpp
     app/src/main/cpp/sources/pbr/sampler.cpp
     app/src/main/cpp/sources/pbr/sampler_manager.cpp
+    app/src/main/cpp/sources/pbr/scene.cpp
+    app/src/main/cpp/sources/pbr/script_component.cpp
+    app/src/main/cpp/sources/pbr/script_engine.cpp
+    app/src/main/cpp/sources/pbr/scriptable_gamepad.cpp
+    app/src/main/cpp/sources/pbr/scriptable_gxmat3.cpp
+    app/src/main/cpp/sources/pbr/scriptable_gxmat4.cpp
+    app/src/main/cpp/sources/pbr/scriptable_gxquat.cpp
+    app/src/main/cpp/sources/pbr/scriptable_gxvec3.cpp
+    app/src/main/cpp/sources/pbr/scriptable_gxvec4.cpp
+    app/src/main/cpp/sources/pbr/scriptable_logger.cpp
     app/src/main/cpp/sources/pbr/static_mesh_component.cpp
     app/src/main/cpp/sources/pbr/stipple_material.cpp
     app/src/main/cpp/sources/pbr/stipple_program.cpp
@@ -140,8 +126,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/pbr/collision/collision.cpp
     app/src/main/cpp/sources/pbr/collision/manipulator.cpp
     app/src/main/cpp/sources/pbr/mario/brick.cpp
-    app/src/main/cpp/sources/pbr/mario/camera.cpp
-    app/src/main/cpp/sources/pbr/mario/mario.cpp
+    app/src/main/cpp/sources/pbr/mario/obstacle.cpp
     app/src/main/cpp/sources/pbr/mario/pipe_base.cpp
     app/src/main/cpp/sources/pbr/mario/pipe_x1.cpp
     app/src/main/cpp/sources/pbr/mario/pipe_x2.cpp
@@ -160,7 +145,6 @@ add_library ( android-vulkan
 
 # ARM Neon support: All ARMv8-based devices support Neon. So no any additional compile flags need to specify.
 # See https://developer.android.com/ndk/guides/cpu-arm-neon#cmake_2
-
 target_include_directories ( android-vulkan
     PRIVATE
     app/src/main/cpp/include
@@ -193,14 +177,8 @@ target_compile_definitions ( android-vulkan
     -DVK_USE_PLATFORM_ANDROID_KHR
 )
 
-# Exporting native app glue entry point.
-# https://gcc.gnu.org/onlinedocs/gcc/Link-Options.html
-set (
-    CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -u ANativeActivity_onCreate"
-)
-
 target_link_libraries ( android-vulkan
     android
     ${log-lib}
-    native_app_glue
+    ${CMAKE_SOURCE_DIR}/third-party/jniLibs/arm64-v8a/libLua.so
 )

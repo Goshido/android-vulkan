@@ -1,15 +1,20 @@
 #include <pbr/component.h>
 #include <pbr/point_light_component.h>
-//#include <pbr/point_light_component_desc.h>
 #include <pbr/reflection_component.h>
 #include <pbr/static_mesh_component.h>
+#include <guid_generator.h>
 
 
 namespace pbr {
 
-[[maybe_unused]] ClassID Component::GetClassID () const
+ClassID Component::GetClassID () const noexcept
 {
     return _classID;
+}
+
+std::string const& Component::GetName () const noexcept
+{
+    return _name;
 }
 
 ComponentRef Component::Create ( android_vulkan::Renderer &renderer,
@@ -32,8 +37,8 @@ ComponentRef Component::Create ( android_vulkan::Renderer &renderer,
         commandBufferConsumed = 0U;
         dataRead = sizeof ( PointLightComponentDesc );
 
-        // Note it's safe cast like that here. "NOLINT" is a clang-tidy control comment.
-        auto const& d = static_cast<PointLightComponentDesc const&> ( desc ); // NOLINT
+        // NOLINTNEXTLINE - downcast.
+        auto const& d = static_cast<PointLightComponentDesc const&> ( desc );
 
         return std::make_shared<PointLightComponent> ( d );
     }
@@ -42,8 +47,8 @@ ComponentRef Component::Create ( android_vulkan::Renderer &renderer,
     {
         dataRead = sizeof ( StaticMeshComponentDesc );
 
-        // Note it's safe cast like that here. "NOLINT" is a clang-tidy control comment.
-        auto const& d = static_cast<StaticMeshComponentDesc const&> ( desc ); // NOLINT
+        // NOLINTNEXTLINE - downcast.
+        auto const& d = static_cast<StaticMeshComponentDesc const&> ( desc );
 
         bool success;
 
@@ -62,8 +67,8 @@ ComponentRef Component::Create ( android_vulkan::Renderer &renderer,
     {
         dataRead = sizeof ( ReflectionComponentDesc );
 
-        // Note it's safe cast like that here. "NOLINT" is a clang-tidy control comment.
-        auto const& d = static_cast<ReflectionComponentDesc const&> ( desc ); // NOLINT
+        // NOLINTNEXTLINE - downcast.
+        auto const& d = static_cast<ReflectionComponentDesc const&> ( desc );
 
         return std::make_shared<ReflectionComponent> ( renderer, commandBufferConsumed, d, data, commandBuffers );
     }
@@ -73,10 +78,30 @@ ComponentRef Component::Create ( android_vulkan::Renderer &renderer,
     return {};
 }
 
-Component::Component ( ClassID classID ) noexcept:
+void Component::Register ( lua_State &vm ) noexcept
+{
+    lua_register ( &vm, "av_ComponentGetName", &Component::OnGetName );
+}
+
+Component::Component ( ClassID classID, std::string &&name ) noexcept:
+    _name ( std::move ( name ) ),
     _classID ( classID )
 {
     // NOTHING
+}
+
+int Component::OnGetName ( lua_State* state )
+{
+    if ( !lua_checkstack ( state, 1 ) )
+    {
+        android_vulkan::LogWarning ( "pbr::Component::OnGetName - Stack too small." );
+        return 0;
+    }
+
+    auto const& self = *static_cast<Component const*> ( lua_touserdata ( state, 1 ) );
+    std::string const& n = self._name;
+    lua_pushlstring ( state, n.c_str (), n.size () );
+    return 1;
 }
 
 } // namespace pbr

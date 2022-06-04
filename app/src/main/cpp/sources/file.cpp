@@ -47,6 +47,17 @@ bool File::IsContentLoaded () const noexcept
     return !_content.empty ();
 }
 
+bool File::IsExist () const noexcept
+{
+    AAsset* asset = AAssetManager_open ( g_AssetManager, _filePath.c_str (), AASSET_MODE_STREAMING );
+
+    if ( !asset )
+        return false;
+
+    AAsset_close ( asset );
+    return true;
+}
+
 bool File::LoadContent () noexcept
 {
     if ( IsContentLoaded () )

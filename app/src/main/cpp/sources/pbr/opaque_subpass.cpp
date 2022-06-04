@@ -54,6 +54,14 @@ bool OpaqueSubpass::Execute ( android_vulkan::Renderer &renderer,
     return true;
 }
 
+void OpaqueSubpass::ReportGeometry ( RenderSessionStats &renderSessionStats,
+    uint32_t vertexCount,
+    uint32_t instanceCount
+) noexcept
+{
+    renderSessionStats.RenderOpaque ( vertexCount, instanceCount );
+}
+
 bool OpaqueSubpass::UpdateGPUData ( android_vulkan::Renderer &renderer,
     GXProjectionClipPlanes const &frustum,
     GXMat4 const &view,
@@ -87,7 +95,7 @@ bool OpaqueSubpass::UpdateGPUData ( android_vulkan::Renderer &renderer,
     };
 
     bool result = android_vulkan::Renderer::CheckVkResult ( vkBeginCommandBuffer ( _transferCommandBuffer, &beginInfo ),
-        "OpaqueSubpass::UpdateGPUData",
+        "pbr::OpaqueSubpass::UpdateGPUData",
         "Can't begin command buffer"
     );
 
@@ -157,7 +165,7 @@ bool OpaqueSubpass::UpdateGPUData ( android_vulkan::Renderer &renderer,
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkAllocateDescriptorSets ( device, &allocateInfo, descriptorSets ),
-        "OpaqueSubpass::UpdateGPUData",
+        "pbr::OpaqueSubpass::UpdateGPUData",
         "Can't allocate descriptor sets"
     );
 
@@ -267,7 +275,7 @@ bool OpaqueSubpass::UpdateGPUData ( android_vulkan::Renderer &renderer,
             if ( uniformUsed >= maxUniforms )
             {
                 android_vulkan::LogError (
-                    "OpaqueSubpass::UpdateGPUData - Uniform pool overflow has been detected (branch 1)!"
+                    "pbr::OpaqueSubpass::UpdateGPUData - Uniform pool overflow has been detected (branch 1)!"
                 );
 
                 return false;
@@ -314,7 +322,7 @@ bool OpaqueSubpass::UpdateGPUData ( android_vulkan::Renderer &renderer,
                 if ( uniformUsed >= maxUniforms )
                 {
                     android_vulkan::LogError (
-                        "OpaqueSubpass::UpdateGPUData - Uniform pool overflow has been detected (branch 0)!"
+                        "pbr::OpaqueSubpass::UpdateGPUData - Uniform pool overflow has been detected (branch 0)!"
                     );
 
                     return false;
@@ -383,7 +391,7 @@ bool OpaqueSubpass::UpdateGPUData ( android_vulkan::Renderer &renderer,
     );
 
     result = android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( _transferCommandBuffer ),
-        "OpaqueSubpass::UpdateGPUData",
+        "pbr::OpaqueSubpass::UpdateGPUData",
         "Can't end transfer command buffer"
     );
 
@@ -392,7 +400,7 @@ bool OpaqueSubpass::UpdateGPUData ( android_vulkan::Renderer &renderer,
 
     return android_vulkan::Renderer::CheckVkResult (
         vkQueueSubmit ( renderer.GetQueue (), 1U, &_submitInfoTransfer, VK_NULL_HANDLE ),
-        "OpaqueSubpass::UpdateGPUData",
+        "pbr::OpaqueSubpass::UpdateGPUData",
         "Can't submit transfer command buffer"
     );
 }

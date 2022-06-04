@@ -52,7 +52,7 @@ void GeometryPassTextureDescriptorSetLayoutImpl::Destroy ( VkDevice device ) noe
 
     vkDestroyDescriptorSetLayout ( device, _layout, nullptr );
     _layout = VK_NULL_HANDLE;
-    AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "GeometryPassTextureDescriptorSetLayoutImpl::_layout" )
+    AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::GeometryPassTextureDescriptorSetLayoutImpl::_layout" )
 }
 
 bool GeometryPassTextureDescriptorSetLayoutImpl::Init ( android_vulkan::Renderer &renderer ) noexcept
@@ -148,14 +148,14 @@ bool GeometryPassTextureDescriptorSetLayoutImpl::Init ( android_vulkan::Renderer
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateDescriptorSetLayout ( renderer.GetDevice (), &descriptorSetLayoutInfo, nullptr, &_layout ),
-        "GeometryPassTextureDescriptorSetLayoutImpl::Init",
+        "pbr::GeometryPassTextureDescriptorSetLayoutImpl::Init",
         "Can't create descriptor set layout"
     );
 
     if ( !result )
         return false;
 
-    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "GeometryPassTextureDescriptorSetLayoutImpl::_layout" )
+    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::GeometryPassTextureDescriptorSetLayoutImpl::_layout" )
 
     ++_references;
     return true;

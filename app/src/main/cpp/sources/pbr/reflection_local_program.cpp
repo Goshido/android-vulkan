@@ -4,15 +4,17 @@
 
 namespace pbr {
 
-constexpr static const size_t COLOR_RENDER_TARGET_COUNT = 1U;
-constexpr static const size_t STAGE_COUNT = 2U;
-constexpr static const size_t VERTEX_ATTRIBUTE_COUNT = 1U;
+constexpr static size_t COLOR_RENDER_TARGET_COUNT = 1U;
+constexpr static size_t STAGE_COUNT = 2U;
+constexpr static size_t VERTEX_ATTRIBUTE_COUNT = 1U;
 
 constexpr static const char* VERTEX_SHADER = "shaders/light-volume-vs.spv";
 constexpr static const char* FRAGMENT_SHADER = "shaders/reflection-local-ps.spv";
 
-ReflectionLocalProgram::ReflectionLocalProgram ():
-    LightLightupBaseProgram ( "ReflectionLocalProgram" ),
+//----------------------------------------------------------------------------------------------------------------------
+
+ReflectionLocalProgram::ReflectionLocalProgram () noexcept:
+    LightLightupBaseProgram ( "pbr::ReflectionLocalProgram" ),
     _commonLayout {},
     _lightVolumeLayout {},
     _reflectionLayout {}
@@ -77,11 +79,11 @@ bool ReflectionLocalProgram::Init ( android_vulkan::Renderer &renderer,
     pipelineInfo.renderPass = renderPass;
     pipelineInfo.subpass = subpass;
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
-    pipelineInfo.basePipelineIndex = 0;
+    pipelineInfo.basePipelineIndex = -1;
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateGraphicsPipelines ( device, VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
-        "ReflectionLocalProgram::Init",
+        "pbr::ReflectionLocalProgram::Init",
         "Can't create pipeline"
     );
 
@@ -91,7 +93,7 @@ bool ReflectionLocalProgram::Init ( android_vulkan::Renderer &renderer,
         return false;
     }
 
-    AV_REGISTER_PIPELINE ( "ReflectionLocalProgram::_pipeline" )
+    AV_REGISTER_PIPELINE ( "pbr::ReflectionLocalProgram::_pipeline" )
     DestroyShaderModules ( device );
     return true;
 }
@@ -102,14 +104,14 @@ void ReflectionLocalProgram::Destroy ( VkDevice device ) noexcept
     {
         vkDestroyPipeline ( device, _pipeline, nullptr );
         _pipeline = VK_NULL_HANDLE;
-        AV_UNREGISTER_PIPELINE ( "ReflectionLocalProgram::_pipeline" )
+        AV_UNREGISTER_PIPELINE ( "pbr::ReflectionLocalProgram::_pipeline" )
     }
 
     if ( _pipelineLayout != VK_NULL_HANDLE )
     {
         vkDestroyPipelineLayout ( device, _pipelineLayout, nullptr );
         _pipelineLayout = VK_NULL_HANDLE;
-        AV_UNREGISTER_PIPELINE_LAYOUT ( "ReflectionLocalProgram::_pipelineLayout" )
+        AV_UNREGISTER_PIPELINE_LAYOUT ( "pbr::ReflectionLocalProgram::_pipelineLayout" )
     }
 
     _reflectionLayout.Destroy ( device );
@@ -200,7 +202,7 @@ VkPipelineColorBlendStateCreateInfo const* ReflectionLocalProgram::InitColorBlen
     info.logicOp = VK_LOGIC_OP_NO_OP;
     info.attachmentCount = COLOR_RENDER_TARGET_COUNT;
     info.pAttachments = attachments;
-    memset ( info.blendConstants, 0, sizeof ( info.blendConstants ) );
+    std::memset ( info.blendConstants, 0, sizeof ( info.blendConstants ) );
 
     return &info;
 }
@@ -290,14 +292,14 @@ bool ReflectionLocalProgram::InitLayout ( android_vulkan::Renderer &renderer, Vk
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreatePipelineLayout ( renderer.GetDevice (), &layoutInfo, nullptr, &_pipelineLayout ),
-        "ReflectionLocalProgram::InitLayout",
+        "pbr::ReflectionLocalProgram::InitLayout",
         "Can't create pipeline layout"
     );
 
     if ( !result )
         return false;
 
-    AV_REGISTER_PIPELINE_LAYOUT ( "ReflectionLocalProgram::_pipelineLayout" )
+    AV_REGISTER_PIPELINE_LAYOUT ( "pbr::ReflectionLocalProgram::_pipelineLayout" )
     layout = _pipelineLayout;
     return true;
 }
@@ -353,7 +355,7 @@ bool ReflectionLocalProgram::InitShaderInfo ( android_vulkan::Renderer &renderer
     if ( !result )
         return false;
 
-    AV_REGISTER_SHADER_MODULE ( "ReflectionLocalProgram::_vertexShader" )
+    AV_REGISTER_SHADER_MODULE ( "pbr::ReflectionLocalProgram::_vertexShader" )
 
     result = renderer.CreateShader ( _fragmentShader,
         FRAGMENT_SHADER,
@@ -363,7 +365,7 @@ bool ReflectionLocalProgram::InitShaderInfo ( android_vulkan::Renderer &renderer
     if ( !result )
         return false;
 
-    AV_REGISTER_SHADER_MODULE ( "ReflectionLocalProgram::_fragmentShader" )
+    AV_REGISTER_SHADER_MODULE ( "pbr::ReflectionLocalProgram::_fragmentShader" )
 
     VkPipelineShaderStageCreateInfo& vertexStage = sourceInfo[ 0U ];
     vertexStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -393,7 +395,7 @@ void ReflectionLocalProgram::DestroyShaderModules ( VkDevice device ) noexcept
     {
         vkDestroyShaderModule ( device, _fragmentShader, nullptr );
         _fragmentShader = VK_NULL_HANDLE;
-        AV_UNREGISTER_SHADER_MODULE ( "ReflectionLocalProgram::_fragmentShader" )
+        AV_UNREGISTER_SHADER_MODULE ( "pbr::ReflectionLocalProgram::_fragmentShader" )
     }
 
     if ( _vertexShader == VK_NULL_HANDLE )
@@ -401,7 +403,7 @@ void ReflectionLocalProgram::DestroyShaderModules ( VkDevice device ) noexcept
 
     vkDestroyShaderModule ( device, _vertexShader, nullptr );
     _vertexShader = VK_NULL_HANDLE;
-    AV_UNREGISTER_SHADER_MODULE ( "ReflectionLocalProgram::_vertexShader" )
+    AV_UNREGISTER_SHADER_MODULE ( "pbr::ReflectionLocalProgram::_vertexShader" )
 }
 
 VkPipelineViewportStateCreateInfo const* ReflectionLocalProgram::InitViewportInfo (

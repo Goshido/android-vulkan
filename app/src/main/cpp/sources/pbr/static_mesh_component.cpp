@@ -2,6 +2,7 @@
 #include <pbr/static_mesh_component_desc.h>
 #include <pbr/material_manager.h>
 #include <pbr/mesh_manager.h>
+#include <guid_generator.h>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -16,6 +17,8 @@ namespace pbr {
 constexpr static GXColorRGB DEFAULT_COLOR ( 1.0F, 1.0F, 1.0F, 1.0F );
 constexpr static GXColorRGB DEFAULT_EMISSION ( 1.0F, 1.0F, 1.0F, 1.0F );
 
+//----------------------------------------------------------------------------------------------------------------------
+
 // NOLINTNEXTLINE - no initialization for some fields
 StaticMeshComponent::StaticMeshComponent ( android_vulkan::Renderer &renderer,
     bool &success,
@@ -24,7 +27,7 @@ StaticMeshComponent::StaticMeshComponent ( android_vulkan::Renderer &renderer,
     uint8_t const* data,
     VkCommandBuffer const* commandBuffers
 ) noexcept:
-    Component ( ClassID::StaticMesh ),
+    RenderableComponent ( ClassID::StaticMesh, android_vulkan::GUID::GenerateAsString ( "StaticMesh" ) ),
     _color0 ( desc._color0._red, desc._color0._green, desc._color0._blue, desc._color0._alpha ),
     _color1 ( desc._color1._red, desc._color1._green, desc._color1._blue, desc._color1._alpha ),
     _color2 ( desc._color2._red, desc._color2._green, desc._color2._blue, desc._color2._alpha ),
@@ -71,9 +74,10 @@ StaticMeshComponent::StaticMeshComponent ( android_vulkan::Renderer &renderer,
     size_t &commandBufferConsumed,
     char const* mesh,
     char const* material,
-    VkCommandBuffer const* commandBuffers
+    VkCommandBuffer const* commandBuffers,
+    std::string &&name
 ) noexcept:
-    Component ( ClassID::StaticMesh ),
+    RenderableComponent ( ClassID::StaticMesh, std::move ( name ) ),
     _color0 ( DEFAULT_COLOR ),
     _color1 ( DEFAULT_COLOR ),
     _color2 ( DEFAULT_COLOR ),
@@ -110,6 +114,7 @@ StaticMeshComponent::StaticMeshComponent ( android_vulkan::Renderer &renderer,
     commandBufferConsumed += consumed;
 }
 
+// NOLINTNEXTLINE - no initialization for some fields
 StaticMeshComponent::StaticMeshComponent ( android_vulkan::Renderer &renderer,
     bool &success,
     size_t &commandBufferConsumed,
@@ -117,7 +122,7 @@ StaticMeshComponent::StaticMeshComponent ( android_vulkan::Renderer &renderer,
     MaterialRef &material,
     VkCommandBuffer const* commandBuffers
 ) noexcept:
-    Component ( ClassID::StaticMesh ),
+    RenderableComponent ( ClassID::StaticMesh, android_vulkan::GUID::GenerateAsString ( "StaticMesh" ) ),
     _color0 ( DEFAULT_COLOR ),
     _color1 ( DEFAULT_COLOR ),
     _color2 ( DEFAULT_COLOR ),
@@ -141,12 +146,7 @@ StaticMeshComponent::StaticMeshComponent ( android_vulkan::Renderer &renderer,
     }
 }
 
-void StaticMeshComponent::Submit ( RenderSession &renderSession )
-{
-    renderSession.SubmitMesh ( _mesh, _material, _localMatrix, _worldBounds, _color0, _color1, _color2, _emission );
-}
-
-void StaticMeshComponent::FreeTransferResources ( VkDevice device )
+void StaticMeshComponent::FreeTransferResources ( VkDevice device ) noexcept
 {
     _mesh->FreeTransferResources ( device );
 
@@ -169,6 +169,11 @@ void StaticMeshComponent::FreeTransferResources ( VkDevice device )
         return;
 
     m.GetParam ()->FreeTransferResources ( device );
+}
+
+void StaticMeshComponent::Submit ( RenderSession &renderSession ) noexcept
+{
+    renderSession.SubmitMesh ( _mesh, _material, _localMatrix, _worldBounds, _color0, _color1, _color2, _emission );
 }
 
 [[maybe_unused]] GXAABB const& StaticMeshComponent::GetBoundsWorld () const noexcept
@@ -226,15 +231,20 @@ MaterialRef& StaticMeshComponent::GetMaterial () noexcept
     return _material;
 }
 
-[[maybe_unused]] GXMat4 const& StaticMeshComponent::GetTransform () const noexcept
+GXMat4 const& StaticMeshComponent::GetTransform () const noexcept
 {
     return _localMatrix;
 }
 
-[[maybe_unused]] void StaticMeshComponent::SetTransform ( GXMat4 const &transform ) noexcept
+void StaticMeshComponent::SetTransform ( GXMat4 const &transform ) noexcept
 {
     _localMatrix = transform;
     _mesh->GetBounds ().Transform ( _worldBounds, transform );
+}
+
+void StaticMeshComponent::OnTransform ( GXMat4 const &transformWorld ) noexcept
+{
+    SetTransform ( transformWorld );
 }
 
 } // namespace pbr

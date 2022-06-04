@@ -1,8 +1,8 @@
 #include <pbr/pbr_game.h>
-#include <pbr/component.h>
 #include <pbr/cube_map_manager.h>
 #include <pbr/material_manager.h>
 #include <pbr/mesh_manager.h>
+#include <pbr/renderable_component.h>
 #include <pbr/scene_desc.h>
 #include <gamepad.h>
 
@@ -37,19 +37,9 @@ constexpr static uint32_t RESOLUTION_SCALE_HEIGHT = 70U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-PBRGame::PBRGame () noexcept:
-    _camera {},
-    _commandPool ( VK_NULL_HANDLE ),
-    _commandBuffers {},
-    _renderSession {},
-    _components {}
-{
-    // NOTHING
-}
-
 bool PBRGame::IsReady () noexcept
 {
-    return !_components.empty ();
+    return !_allComponents.empty ();
 }
 
 bool PBRGame::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) noexcept
@@ -60,8 +50,12 @@ bool PBRGame::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) n
     GXMat4 const& cameraLocal = _camera.GetLocalMatrix ();
     _renderSession.Begin ( cameraLocal, _camera.GetProjectionMatrix () );
 
-    for ( auto& component : _components )
-        component->Submit ( _renderSession );
+    for ( auto& component : _renderableComponents )
+    {
+        // NOLINTNEXTLINE - downcast.
+        auto& renderableComponent = static_cast<RenderableComponent&> ( *component.get () );
+        renderableComponent.Submit ( _renderSession );
+    }
 
     return _renderSession.End ( renderer, deltaTime );
 }
@@ -80,14 +74,14 @@ bool PBRGame::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 
     bool result = android_vulkan::Renderer::CheckVkResult (
         vkCreateCommandPool ( device, &createInfo, nullptr, &_commandPool ),
-        "PBRGame::OnInit",
+        "pbr::PBRGame::OnInit",
         "Can't create command pool"
     );
 
     if ( !result )
         return false;
 
-    AV_REGISTER_COMMAND_POOL ( "PBRGame::_commandPool" )
+    AV_REGISTER_COMMAND_POOL ( "pbr::PBRGame::_commandPool" )
 
     if ( !_renderSession.OnInitDevice ( renderer, _commandPool ) )
     {
@@ -107,7 +101,9 @@ bool PBRGame::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 
 void PBRGame::OnDestroyDevice ( VkDevice device ) noexcept
 {
-    _components.clear ();
+    _allComponents.clear ();
+    _renderableComponents.clear ();
+
     _renderSession.OnDestroyDevice ( device );
     DestroyCommandPool ( device );
 
@@ -150,7 +146,7 @@ void PBRGame::DestroyCommandPool ( VkDevice device ) noexcept
 
     vkDestroyCommandPool ( device, _commandPool, nullptr );
     _commandPool = VK_NULL_HANDLE;
-    AV_UNREGISTER_COMMAND_POOL ( "PBRGame::_commandPool" )
+    AV_UNREGISTER_COMMAND_POOL ( "pbr::PBRGame::_commandPool" )
 }
 
 bool PBRGame::UploadGPUContent ( android_vulkan::Renderer& renderer ) noexcept
@@ -192,7 +188,7 @@ bool PBRGame::UploadGPUContent ( android_vulkan::Renderer& renderer ) noexcept
 
     bool result = android_vulkan::Renderer::CheckVkResult (
         vkAllocateCommandBuffers ( device, &allocateInfo, _commandBuffers.data () ),
-        "PBRGame::UploadGPUContent",
+        "pbr::PBRGame::UploadGPUContent",
         "Can't allocate command buffers"
     );
 
@@ -217,22 +213,34 @@ bool PBRGame::UploadGPUContent ( android_vulkan::Renderer& renderer ) noexcept
         );
 
         if ( component )
-            _components.push_back ( component );
+        {
+            _allComponents.push_back ( component );
+            ClassID const classID = component->GetClassID ();
+
+            if ( classID == ClassID::PointLight | classID == ClassID::Reflection | classID == ClassID::StaticMesh )
+            {
+                _renderableComponents.emplace_back ( std::reference_wrapper<ComponentRef> { _allComponents.back () } );
+            }
+        }
 
         commandBuffers += consumed;
         readPointer += read;
     }
 
     result = android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( renderer.GetQueue () ),
-        "PBRGame::UploadGPUContent",
+        "pbr::PBRGame::UploadGPUContent",
         "Can't run upload commands"
     );
 
     if ( !result )
         return false;
 
-    for ( auto& component : _components )
-        component->FreeTransferResources ( device );
+    for ( auto& component : _renderableComponents )
+    {
+        // NOLINTNEXTLINE - downcast.
+        auto& renderableComponent = static_cast<RenderableComponent&> ( *component.get () );
+        renderableComponent.FreeTransferResources ( device );
+    }
 
     return true;
 }

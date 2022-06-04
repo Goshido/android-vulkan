@@ -10,20 +10,20 @@ namespace pbr {
 class StubDescriptorSetLayout final : public DescriptorSetLayout
 {
     public:
-    StubDescriptorSetLayout () = default;
+        StubDescriptorSetLayout () = default;
 
-    StubDescriptorSetLayout ( StubDescriptorSetLayout const & ) = delete;
-    StubDescriptorSetLayout& operator = ( StubDescriptorSetLayout const & ) = delete;
+        StubDescriptorSetLayout ( StubDescriptorSetLayout const & ) = delete;
+        StubDescriptorSetLayout& operator = ( StubDescriptorSetLayout const & ) = delete;
 
-    StubDescriptorSetLayout ( StubDescriptorSetLayout && ) = delete;
-    StubDescriptorSetLayout& operator = ( StubDescriptorSetLayout && ) = delete;
+        StubDescriptorSetLayout ( StubDescriptorSetLayout && ) = delete;
+        StubDescriptorSetLayout& operator = ( StubDescriptorSetLayout && ) = delete;
 
-    ~StubDescriptorSetLayout () override = default;
+        ~StubDescriptorSetLayout () override = default;
 
-    void Destroy ( VkDevice device ) override;
-    [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer ) override;
+        void Destroy ( VkDevice device ) override;
+        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer ) override;
 
-    [[nodiscard]] VkDescriptorSetLayout GetLayout () const override;
+        [[nodiscard]] VkDescriptorSetLayout GetLayout () const override;
 };
 
 } // namespace pbr

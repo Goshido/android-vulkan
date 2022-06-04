@@ -62,11 +62,14 @@ add_library ( VkLayer_khronos_validation
     ../layers/cmd_buffer_state.cpp
     ../layers/image_state.cpp
     ../layers/pipeline_state.cpp
+    ../layers/pipeline_layout_state.cpp
+    ../layers/pipeline_sub_state.cpp
     ../layers/queue_state.cpp
     ../layers/render_pass_state.cpp
     ../layers/core_validation.cpp
     ../layers/drawdispatch.cpp
     ../layers/descriptor_sets.cpp
+    ../layers/descriptor_validation.cpp
     ../layers/buffer_validation.cpp
     ../layers/shader_module.cpp
     ../layers/shader_validation.cpp

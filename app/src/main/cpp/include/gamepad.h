@@ -6,16 +6,10 @@
 
 GX_DISABLE_COMMON_WARNINGS
 
-#include <cinttypes>
 #include <mutex>
-#include <thread>
+#include <unordered_map>
 
 GX_RESTORE_WARNING_STATE
-
-#include "dpad.h"
-#include "key_action.h"
-#include "stick.h"
-#include "trigger.h"
 
 
 namespace android_vulkan {
@@ -23,25 +17,23 @@ namespace android_vulkan {
 enum class eGamepadKey : uint8_t
 {
     A = 0U,
-    B,
-    X,
-    Y,
-    Down,
-    Left,
-    Right,
-    Up,
-    LeftStick,
-    RightStick,
-    LeftBumper,
-    RightBumper,
-    Home,
-    Menu,
-    View
+    B = 1U,
+    X = 2U,
+    Y = 3U,
+    Down = 4U,
+    Left = 5U,
+    Right = 6U,
+    Up = 7U,
+    LeftStick = 8U,
+    RightStick = 9U,
+    LeftBumper = 10U,
+    RightBumper = 11U,
+    Home = 12U,
+    Menu = 13U,
+    View = 14U
 };
 
-constexpr auto const TOTAL_GAMEPAD_KEYS = static_cast<size_t> (
-    static_cast<uint8_t> ( eGamepadKey::View ) + 1U
-);
+constexpr inline static auto TOTAL_GAMEPAD_KEYS = static_cast<size_t> ( eGamepadKey::View ) + 1U;
 
 enum class eButtonState : uint8_t
 {
@@ -49,49 +41,54 @@ enum class eButtonState : uint8_t
     Up
 };
 
-constexpr auto const TOTAL_BUTTON_STATES = static_cast<size_t> ( static_cast<uint8_t> ( eButtonState::Up ) + 1U );
-constexpr size_t const ACTION_POOL_ELEMENT_COUNT = TOTAL_GAMEPAD_KEYS * TOTAL_BUTTON_STATES;
+constexpr inline static auto TOTAL_GAMEPAD_KEY_STATES = static_cast<size_t> ( eButtonState::Up ) + 1U;
+
+typedef void ( *KeyHandler ) ( void* context ) noexcept;
+typedef void ( *TriggerHandler ) ( void* context, float push ) noexcept;
+typedef void ( *StickHandler ) ( void* context, float horizontal, float vertical ) noexcept;
 
 class Gamepad final
 {
     private:
-        struct KeyActionQueue final
+        struct KeyBind final
         {
-            KeyAction       _keyActionPool[ ACTION_POOL_ELEMENT_COUNT ] {};
-            KeyAction*      _freeKeyActions = nullptr;
-            KeyAction*      _readyKeyActions = nullptr;
+            void*                               _context;
+            KeyHandler                          _handler;
+        };
+
+        struct Stick final
+        {
+            void*                               _context;
+            StickHandler                        _handler;
+        };
+
+        struct Trigger final
+        {
+            void*                               _context;
+            TriggerHandler                      _handler;
         };
 
     private:
-        KeyBind             _downKeyBinds[ TOTAL_GAMEPAD_KEYS ];
-        KeyBind             _upKeyBinds[ TOTAL_GAMEPAD_KEYS ];
+        KeyBind                                 _downKeyBinds[ TOTAL_GAMEPAD_KEYS ] {};
+        KeyBind                                 _upKeyBinds[ TOTAL_GAMEPAD_KEYS ] {};
 
-        DPad                _dPadCurrent;
-        DPad                _dPadOld;
-        bool                _loop;
+        Stick                                   _leftStick {};
+        Stick                                   _rightStick {};
 
-        KeyActionQueue*     _queueRead;
-        KeyActionQueue*     _queueWrite;
-        KeyActionQueue      _queue0;
-        KeyActionQueue      _queue1;
+        Trigger                                 _leftTrigger {};
+        Trigger                                 _rightTrigger {};
 
-        Stick               _leftStick;
-        Stick               _rightStick;
-
-        Trigger             _leftTrigger;
-        Trigger             _rightTrigger;
-
-        std::mutex          _mutex;
-        std::thread         _thread;
+        std::unordered_map<int32_t, size_t>     _mapper;
+        std::mutex mutable                      _mutex {};
 
     public:
-        static Gamepad& GetInstance () noexcept;
+        [[nodiscard]] static Gamepad& GetInstance () noexcept;
 
-        Gamepad ( Gamepad const &other ) = delete;
-        Gamepad& operator = ( Gamepad const &other ) = delete;
+        Gamepad ( Gamepad const & ) = delete;
+        Gamepad& operator = ( Gamepad const & ) = delete;
 
-        Gamepad ( Gamepad &&other ) = delete;
-        Gamepad& operator = ( Gamepad &&other ) = delete;
+        Gamepad ( Gamepad && ) = delete;
+        Gamepad& operator = ( Gamepad && ) = delete;
 
         void BindKey ( void* context, KeyHandler handler, eGamepadKey key, eButtonState state ) noexcept;
         void UnbindKey ( eGamepadKey key, eButtonState state ) noexcept;
@@ -108,32 +105,18 @@ class Gamepad final
         void BindRightTrigger ( void* context, TriggerHandler handler ) noexcept;
         void UnbindRightTrigger () noexcept;
 
-        [[nodiscard]] int32_t OnOSInputEvent ( AInputEvent* event ) noexcept;
+        void OnKeyDown ( int32_t key ) const noexcept;
+        void OnKeyUp ( int32_t key ) const noexcept;
 
-        void Start () noexcept;
-        void Stop () noexcept;
+        void OnLeftStick ( float x, float y ) const noexcept;
+        void OnRightStick ( float x, float y ) const noexcept;
+
+        void OnLeftTrigger ( float value ) const noexcept;
+        void OnRightTrigger ( float value ) const noexcept;
 
     private:
         Gamepad () noexcept;
         ~Gamepad () = default;
-
-        void AddAction ( KeyBind const &bind ) noexcept;
-
-        void ExecuteKeyEvents () noexcept;
-        void ExecuteStickEvents () noexcept;
-        void ExecuteTriggerEvents () noexcept;
-
-        void HandleDPad ( AInputEvent* event ) noexcept;
-
-        [[nodiscard]] int32_t HandleKey ( AInputEvent* event ) noexcept;
-        [[nodiscard]] int32_t HandleMotion ( AInputEvent* event ) noexcept;
-
-        void HandleSticks ( AInputEvent* event ) noexcept;
-        void HandleTriggers ( AInputEvent* event ) noexcept;
-
-        void InitActionPool () noexcept;
-        void SwapQueues () noexcept;
-        void ResolveDPad () noexcept;
 };
 
 } // namespace android_vulkan

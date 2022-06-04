@@ -19,7 +19,7 @@ namespace pbr {
 class MeshManager final
 {
     private:
-        std::unordered_map<std::string_view, MeshRef>       _meshStorage;
+        std::unordered_map<std::string_view, MeshRef>       _meshStorage {};
 
         static MeshManager*                                 _instance;
         static std::shared_timed_mutex                      _mutex;

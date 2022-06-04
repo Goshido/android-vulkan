@@ -10,20 +10,20 @@ namespace pbr {
 class LightVolumeDescriptorSetLayout final : public DescriptorSetLayout
 {
     public:
-    LightVolumeDescriptorSetLayout () = default;
+        LightVolumeDescriptorSetLayout () = default;
 
-    LightVolumeDescriptorSetLayout ( LightVolumeDescriptorSetLayout const & ) = delete;
-    LightVolumeDescriptorSetLayout& operator = ( LightVolumeDescriptorSetLayout const & ) = delete;
+        LightVolumeDescriptorSetLayout ( LightVolumeDescriptorSetLayout const & ) = delete;
+        LightVolumeDescriptorSetLayout& operator = ( LightVolumeDescriptorSetLayout const & ) = delete;
 
-    LightVolumeDescriptorSetLayout ( LightVolumeDescriptorSetLayout && ) = delete;
-    LightVolumeDescriptorSetLayout& operator = ( LightVolumeDescriptorSetLayout && ) = delete;
+        LightVolumeDescriptorSetLayout ( LightVolumeDescriptorSetLayout && ) = delete;
+        LightVolumeDescriptorSetLayout& operator = ( LightVolumeDescriptorSetLayout && ) = delete;
 
-    ~LightVolumeDescriptorSetLayout () override = default;
+        ~LightVolumeDescriptorSetLayout () override = default;
 
-    void Destroy ( VkDevice device ) override;
-    [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer ) override;
+        void Destroy ( VkDevice device ) noexcept override;
+        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer ) noexcept override;
 
-    [[nodiscard]] VkDescriptorSetLayout GetLayout () const override;
+        [[nodiscard]] VkDescriptorSetLayout GetLayout () const noexcept override;
 };
 
 } // namespace pbr

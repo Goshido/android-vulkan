@@ -6,8 +6,8 @@ namespace pbr {
 constexpr static const char* VERTEX_SHADER = "shaders/screen-quad-vs.spv";
 constexpr static const char* FRAGMENT_SHADER = "shaders/texture-present-ps.spv";
 
-constexpr static const size_t COLOR_RENDER_TARGET_COUNT = 1U;
-constexpr static const size_t STAGE_COUNT = 2U;
+constexpr static size_t COLOR_RENDER_TARGET_COUNT = 1U;
+constexpr static size_t STAGE_COUNT = 2U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -68,11 +68,11 @@ bool TexturePresentProgram::Init ( android_vulkan::Renderer &renderer,
     pipelineInfo.renderPass = renderPass;
     pipelineInfo.subpass = subpass;
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
-    pipelineInfo.basePipelineIndex = 0;
+    pipelineInfo.basePipelineIndex = -1;
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateGraphicsPipelines ( device, VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
-        "TexturePresentProgram::Init",
+        "pbr::TexturePresentProgram::Init",
         "Can't create pipeline"
     );
 
@@ -82,7 +82,7 @@ bool TexturePresentProgram::Init ( android_vulkan::Renderer &renderer,
         return false;
     }
 
-    AV_REGISTER_PIPELINE ( "TexturePresentProgram::_pipeline" )
+    AV_REGISTER_PIPELINE ( "pbr::TexturePresentProgram::_pipeline" )
     DestroyShaderModules ( device );
     return true;
 }
@@ -93,14 +93,14 @@ void TexturePresentProgram::Destroy ( VkDevice device ) noexcept
     {
         vkDestroyPipeline ( device, _pipeline, nullptr );
         _pipeline = VK_NULL_HANDLE;
-        AV_UNREGISTER_PIPELINE ( "TexturePresentProgram::_pipeline" )
+        AV_UNREGISTER_PIPELINE ( "pbr::TexturePresentProgram::_pipeline" )
     }
 
     if ( _pipelineLayout != VK_NULL_HANDLE )
     {
         vkDestroyPipelineLayout ( device, _pipelineLayout, nullptr );
         _pipelineLayout = VK_NULL_HANDLE;
-        AV_UNREGISTER_PIPELINE_LAYOUT ( "TexturePresentProgram::_pipelineLayout" )
+        AV_UNREGISTER_PIPELINE_LAYOUT ( "pbr::TexturePresentProgram::_pipelineLayout" )
     }
 
     _descriptorSetLayout.Destroy ( device );
@@ -164,7 +164,7 @@ VkPipelineColorBlendStateCreateInfo const* TexturePresentProgram::InitColorBlend
     info.pAttachments = attachments;
     info.logicOpEnable = VK_FALSE;
     info.logicOp = VK_LOGIC_OP_NO_OP;
-    memset ( info.blendConstants, 0, sizeof ( info.blendConstants ) );
+    std::memset ( info.blendConstants, 0, sizeof ( info.blendConstants ) );
 
     return &info;
 }
@@ -190,7 +190,7 @@ VkPipelineDepthStencilStateCreateInfo const* TexturePresentProgram::InitDepthSte
     info.front.failOp = VK_STENCIL_OP_KEEP;
     info.front.passOp = VK_STENCIL_OP_KEEP;
     info.front.depthFailOp = VK_STENCIL_OP_KEEP;
-    memcpy ( &info.back, &info.front, sizeof ( info.back ) );
+    std::memcpy ( &info.back, &info.front, sizeof ( info.back ) );
 
     return &info;
 }
@@ -240,14 +240,14 @@ bool TexturePresentProgram::InitLayout ( android_vulkan::Renderer &renderer, VkP
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreatePipelineLayout ( renderer.GetDevice (), &layoutInfo, nullptr, &_pipelineLayout ),
-        "TexturePresentProgram::InitLayout",
+        "pbr::TexturePresentProgram::InitLayout",
         "Can't create pipeline layout"
     );
 
     if ( !result )
         return false;
 
-    AV_REGISTER_PIPELINE_LAYOUT ( "TexturePresentProgram::_pipelineLayout" )
+    AV_REGISTER_PIPELINE_LAYOUT ( "pbr::TexturePresentProgram::_pipelineLayout" )
     layout = _pipelineLayout;
     return true;
 }
@@ -303,7 +303,7 @@ bool TexturePresentProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
     if ( !result )
         return false;
 
-    AV_REGISTER_SHADER_MODULE ( "TexturePresentProgram::_vertexShader" )
+    AV_REGISTER_SHADER_MODULE ( "pbr::TexturePresentProgram::_vertexShader" )
 
     result = renderer.CreateShader ( _fragmentShader,
         FRAGMENT_SHADER,
@@ -313,7 +313,7 @@ bool TexturePresentProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
     if ( !result )
         return false;
 
-    AV_REGISTER_SHADER_MODULE ( "TexturePresentProgram::_fragmentShader" )
+    AV_REGISTER_SHADER_MODULE ( "pbr::TexturePresentProgram::_fragmentShader" )
 
     VkPipelineShaderStageCreateInfo& vertexStage = sourceInfo[ 0U ];
     vertexStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -343,7 +343,7 @@ void TexturePresentProgram::DestroyShaderModules ( VkDevice device ) noexcept
     {
         vkDestroyShaderModule ( device, _fragmentShader, nullptr );
         _fragmentShader = VK_NULL_HANDLE;
-        AV_UNREGISTER_SHADER_MODULE ( "TexturePresentProgram::_fragmentShader" )
+        AV_UNREGISTER_SHADER_MODULE ( "pbr::TexturePresentProgram::_fragmentShader" )
     }
 
     if ( _vertexShader == VK_NULL_HANDLE )
@@ -351,7 +351,7 @@ void TexturePresentProgram::DestroyShaderModules ( VkDevice device ) noexcept
 
     vkDestroyShaderModule ( device, _vertexShader, nullptr );
     _vertexShader = VK_NULL_HANDLE;
-    AV_UNREGISTER_SHADER_MODULE ( "TexturePresentProgram::_vertexShader" )
+    AV_UNREGISTER_SHADER_MODULE ( "pbr::TexturePresentProgram::_vertexShader" )
 }
 
 VkPipelineViewportStateCreateInfo const* TexturePresentProgram::InitViewportInfo (

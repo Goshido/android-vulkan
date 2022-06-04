@@ -70,6 +70,7 @@ class Physics final
         ) const noexcept;
 
         void Resume () noexcept;
+        void Reset () noexcept;
         void Simulate ( float deltaTime ) noexcept;
 
         // "result" vector will be resized if needed.

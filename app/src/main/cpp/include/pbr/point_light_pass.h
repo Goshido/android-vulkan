@@ -25,39 +25,39 @@ class PointLightPass final
         using PointLightShadowmapInfo = std::pair<TextureCubeRef, VkFramebuffer>;
 
     private:
-        VkCommandPool                           _commandPool;
-        VkFence                                 _fence;
-        std::vector<Interact>                   _interacts;
+        VkCommandPool                           _commandPool = VK_NULL_HANDLE;
+        VkFence                                 _fence = VK_NULL_HANDLE;
+        std::vector<Interact>                   _interacts {};
 
-        VkDescriptorPool                        _lightDescriptorPool;
-        std::vector<VkDescriptorSet>            _lightDescriptorSets;
-        VkSubmitInfo                            _lightSubmitInfoTransfer;
-        VkCommandBuffer                         _lightTransferCommandBuffer;
-        std::vector<VkDescriptorBufferInfo>     _lightUniformInfo;
-        UniformBufferPool                       _lightUniformPool;
-        std::vector<VkWriteDescriptorSet>       _lightWriteSets;
+        VkDescriptorPool                        _lightDescriptorPool = VK_NULL_HANDLE;
+        std::vector<VkDescriptorSet>            _lightDescriptorSets {};
+        VkSubmitInfo                            _lightSubmitInfoTransfer {};
+        VkCommandBuffer                         _lightTransferCommandBuffer = VK_NULL_HANDLE;
+        std::vector<VkDescriptorBufferInfo>     _lightUniformInfo {};
+        UniformBufferPool                       _lightUniformPool { eUniformPoolSize::Tiny_4M };
+        std::vector<VkWriteDescriptorSet>       _lightWriteSets {};
 
-        LightPassNotifier*                      _lightPassNotifier;
-        PointLightLightup                       _lightup;
+        LightPassNotifier*                      _lightPassNotifier = nullptr;
+        PointLightLightup                       _lightup {};
 
-        VkDescriptorPool                        _shadowmapDescriptorPool;
-        std::vector<VkDescriptorSet>            _shadowmapDescriptorSets;
-        PointLightShadowmapGeneratorProgram     _shadowmapProgram;
-        VkCommandBuffer                         _shadowmapRenderCommandBuffer;
-        VkRenderPass                            _shadowmapRenderPass;
-        VkRenderPassBeginInfo                   _shadowmapRenderPassInfo;
-        VkSubmitInfo                            _shadowmapSubmitInfoRender;
-        VkSubmitInfo                            _shadowmapSubmitInfoTransfer;
-        VkCommandBuffer                         _shadowmapTransferCommandBuffer;
-        std::vector<VkDescriptorBufferInfo>     _shadowmapUniformInfo;
-        UniformBufferPool                       _shadowmapUniformPool;
-        std::vector<VkWriteDescriptorSet>       _shadowmapWriteSets;
-        std::vector<PointLightShadowmapInfo>    _shadowmaps;
+        VkDescriptorPool                        _shadowmapDescriptorPool = VK_NULL_HANDLE;
+        std::vector<VkDescriptorSet>            _shadowmapDescriptorSets {};
+        PointLightShadowmapGeneratorProgram     _shadowmapProgram {};
+        VkCommandBuffer                         _shadowmapRenderCommandBuffer = VK_NULL_HANDLE;
+        VkRenderPass                            _shadowmapRenderPass = VK_NULL_HANDLE;
+        VkRenderPassBeginInfo                   _shadowmapRenderPassInfo {};
+        VkSubmitInfo                            _shadowmapSubmitInfoRender {};
+        VkSubmitInfo                            _shadowmapSubmitInfoTransfer {};
+        VkCommandBuffer                         _shadowmapTransferCommandBuffer = VK_NULL_HANDLE;
+        std::vector<VkDescriptorBufferInfo>     _shadowmapUniformInfo {};
+        UniformBufferPool                       _shadowmapUniformPool { eUniformPoolSize::Huge_64M };
+        std::vector<VkWriteDescriptorSet>       _shadowmapWriteSets {};
+        std::vector<PointLightShadowmapInfo>    _shadowmaps {};
 
-        size_t                                  _usedShadowmaps;
+        size_t                                  _usedShadowmaps = 0U;
 
     public:
-        PointLightPass () noexcept;
+        PointLightPass () = default;
 
         PointLightPass ( PointLightPass const & ) = delete;
         PointLightPass& operator = ( PointLightPass const & ) = delete;
@@ -74,46 +74,55 @@ class PointLightPass final
             GXMat4 const &viewerLocal,
             GXMat4 const &view,
             GXMat4 const &viewProjection
-        );
+        ) noexcept;
 
         [[nodiscard]] bool ExecuteShadowPhase ( android_vulkan::Renderer &renderer,
             SceneData const &sceneData,
             size_t opaqueMeshCount
-        );
+        ) noexcept;
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
             LightPassNotifier &notifier,
             VkCommandPool commandPool,
             VkExtent2D const &resolution,
             VkRenderPass lightupRenderPass
-        );
+        ) noexcept;
 
-        void Destroy ( VkDevice device );
+        void Destroy ( VkDevice device ) noexcept;
 
-        [[nodiscard]] size_t GetPointLightCount () const;
-        [[nodiscard]] PointLightInfo GetPointLightInfo ( size_t lightIndex ) const;
+        [[nodiscard]] size_t GetPointLightCount () const noexcept;
+        [[nodiscard]] PointLightInfo GetPointLightInfo ( size_t lightIndex ) const noexcept;
 
-        void Reset ();
-        void Submit ( LightRef const &light );
+        void Reset () noexcept;
+        void Submit ( LightRef const &light ) noexcept;
 
     private:
-        [[nodiscard]] bool AllocateLightDescriptorSets ( android_vulkan::Renderer &renderer, size_t neededSets );
-        [[nodiscard]] bool AllocateShadowmapDescriptorSets ( android_vulkan::Renderer &renderer, size_t neededSets );
+        [[nodiscard]] bool AllocateLightDescriptorSets ( android_vulkan::Renderer &renderer,
+            size_t neededSets
+        ) noexcept;
+
+        [[nodiscard]] bool AllocateShadowmapDescriptorSets ( android_vulkan::Renderer &renderer,
+            size_t neededSets
+        ) noexcept;
 
         // The method returns nullptr if it fails. Otherwise the method returns a valid pointer.
-        [[nodiscard]] PointLightShadowmapInfo* AcquirePointLightShadowmap ( android_vulkan::Renderer &renderer );
+        [[nodiscard]] PointLightShadowmapInfo* AcquirePointLightShadowmap (
+            android_vulkan::Renderer &renderer
+        ) noexcept;
 
-        [[nodiscard]] bool CreateShadowmapRenderPass ( VkDevice device );
-        void DestroyLightDescriptorPool ( VkDevice device );
-        void DestroyShadowmapDescriptorPool ( VkDevice device );
-        [[nodiscard]] bool GenerateShadowmaps ( android_vulkan::Renderer &renderer );
+        [[nodiscard]] bool CreateShadowmapRenderPass ( VkDevice device ) noexcept;
+        void DestroyLightDescriptorPool ( VkDevice device ) noexcept;
+        void DestroyShadowmapDescriptorPool ( VkDevice device ) noexcept;
+        [[nodiscard]] bool GenerateShadowmaps ( android_vulkan::Renderer &renderer ) noexcept;
 
         [[nodiscard]] bool UpdateShadowmapGPUData ( android_vulkan::Renderer &renderer,
             SceneData const &sceneData,
             size_t opaqueMeshCount
-        );
+        ) noexcept;
 
-        [[nodiscard]] bool UpdateLightGPUData ( android_vulkan::Renderer &renderer, GXMat4 const &viewProjection );
+        [[nodiscard]] bool UpdateLightGPUData ( android_vulkan::Renderer &renderer,
+            GXMat4 const &viewProjection
+        ) noexcept;
 };
 
 } // namespace pbr

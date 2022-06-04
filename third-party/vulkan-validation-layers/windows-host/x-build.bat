@@ -29,9 +29,9 @@ echo(
 echo(
 
 :: Copying final library to the repo
-xcopy /s/y "Release\stripped\libVkLayer_khronos_validation.so" "%INITIAL_DIR%\..\jniLibs\arm64-v8a"
+xcopy /s/y "Release\stripped\libVkLayer_khronos_validation.so" "%INITIAL_DIR%\..\..\jniLibs\arm64-v8a"
 echo(
-echo Stripped libVkLayer_khronos_validation.so was copied to %INITIAL_DIR%\..\jniLibs\arm64-v8a
+echo Stripped libVkLayer_khronos_validation.so was copied to %INITIAL_DIR%\..\..\jniLibs\arm64-v8a
 echo(
 
 echo Done.

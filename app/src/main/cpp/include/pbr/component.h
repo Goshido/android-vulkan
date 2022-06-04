@@ -3,16 +3,28 @@
 
 
 #include "component_desc.h"
-#include "render_session.h"
 #include "types.h"
+
+GX_DISABLE_COMMON_WARNINGS
+
+extern "C" {
+
+#include <lua/lstate.h>
+
+} // extern "C"
+
+GX_RESTORE_WARNING_STATE
 
 
 namespace pbr {
 
 class Component
 {
+    protected:
+        std::string const       _name;
+
     private:
-        ClassID     _classID;
+        ClassID                 _classID;
 
     public:
         Component () = delete;
@@ -25,10 +37,8 @@ class Component
 
         virtual ~Component () = default;
 
-        virtual void Submit ( RenderSession &renderSession ) = 0;
-        virtual void FreeTransferResources ( VkDevice device ) = 0;
-
-        [[nodiscard, maybe_unused]] ClassID GetClassID () const;
+        [[nodiscard]] ClassID GetClassID () const noexcept;
+        [[nodiscard]] std::string const& GetName () const noexcept;
 
         [[nodiscard]] static ComponentRef Create ( android_vulkan::Renderer &renderer,
             size_t &commandBufferConsumed,
@@ -38,8 +48,13 @@ class Component
             VkCommandBuffer const* commandBuffers
         ) noexcept;
 
+        static void Register ( lua_State &vm ) noexcept;
+
     protected:
-        explicit Component ( ClassID classID ) noexcept;
+        explicit Component ( ClassID classID, std::string &&name ) noexcept;
+
+    private:
+        [[nodiscard]] static int OnGetName ( lua_State* state );
 };
 
 } // namespace pbr

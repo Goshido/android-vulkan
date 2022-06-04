@@ -4,42 +4,42 @@
 
 namespace pbr {
 
-android_vulkan::Texture2D& GBuffer::GetAlbedo ()
+android_vulkan::Texture2D& GBuffer::GetAlbedo () noexcept
 {
     return _albedo;
 }
 
-android_vulkan::Texture2D& GBuffer::GetDepthStencil ()
+android_vulkan::Texture2D& GBuffer::GetDepthStencil () noexcept
 {
     return _depthStencil;
 }
 
-android_vulkan::Texture2D& GBuffer::GetHDRAccumulator ()
+android_vulkan::Texture2D& GBuffer::GetHDRAccumulator () noexcept
 {
     return _hdrAccumulator;
 }
 
-android_vulkan::Texture2D& GBuffer::GetNormal ()
+android_vulkan::Texture2D& GBuffer::GetNormal () noexcept
 {
     return _normal;
 }
 
-android_vulkan::Texture2D& GBuffer::GetParams ()
+android_vulkan::Texture2D& GBuffer::GetParams () noexcept
 {
     return _params;
 }
 
-VkImageView GBuffer::GetReadOnlyDepthImageView () const
+VkImageView GBuffer::GetReadOnlyDepthImageView () const noexcept
 {
     return _readOnlyDepthImageView;
 }
 
-const VkExtent2D& GBuffer::GetResolution () const
+const VkExtent2D& GBuffer::GetResolution () const noexcept
 {
     return _hdrAccumulator.GetResolution ();
 }
 
-bool GBuffer::Init ( android_vulkan::Renderer &renderer, VkExtent2D const &resolution )
+bool GBuffer::Init ( android_vulkan::Renderer &renderer, VkExtent2D const &resolution ) noexcept
 {
     constexpr const VkImageUsageFlags usageColor = AV_VK_FLAG ( VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT ) |
         AV_VK_FLAG ( VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT ) | AV_VK_FLAG ( VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT );
@@ -61,7 +61,7 @@ bool GBuffer::Init ( android_vulkan::Renderer &renderer, VkExtent2D const &resol
         return false;
     }
 
-    constexpr VkImageUsageFlags const usageAccumulator = AV_VK_FLAG ( VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT ) |
+    constexpr VkImageUsageFlags usageAccumulator = AV_VK_FLAG ( VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT ) |
         AV_VK_FLAG ( VK_IMAGE_USAGE_SAMPLED_BIT );
 
     if ( !_hdrAccumulator.CreateRenderTarget ( resolution, VK_FORMAT_R16G16B16A16_SFLOAT, usageAccumulator, renderer ) )
@@ -70,7 +70,7 @@ bool GBuffer::Init ( android_vulkan::Renderer &renderer, VkExtent2D const &resol
         return false;
     }
 
-    constexpr VkImageUsageFlags const usageDepthStencil = AV_VK_FLAG ( VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT ) |
+    constexpr VkImageUsageFlags usageDepthStencil = AV_VK_FLAG ( VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT ) |
         AV_VK_FLAG ( VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT ) | AV_VK_FLAG ( VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT );
 
     bool result = _depthStencil.CreateRenderTarget ( resolution,
@@ -114,7 +114,7 @@ bool GBuffer::Init ( android_vulkan::Renderer &renderer, VkExtent2D const &resol
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkCreateImageView ( device, &imageInfo, nullptr, &_readOnlyDepthImageView ),
-        "GBuffer::Init",
+        "pbr::GBuffer::Init",
         "Can't create read only depth image view"
     );
 
@@ -124,17 +124,17 @@ bool GBuffer::Init ( android_vulkan::Renderer &renderer, VkExtent2D const &resol
         return false;
     }
 
-    AV_REGISTER_IMAGE_VIEW ( "GBuffer::_readOnlyDepthImageView" )
+    AV_REGISTER_IMAGE_VIEW ( "pbr::GBuffer::_readOnlyDepthImageView" )
     return true;
 }
 
-void GBuffer::Destroy ( VkDevice device )
+void GBuffer::Destroy ( VkDevice device ) noexcept
 {
     if ( _readOnlyDepthImageView != VK_NULL_HANDLE )
     {
         vkDestroyImageView ( device, _readOnlyDepthImageView, nullptr );
         _readOnlyDepthImageView = VK_NULL_HANDLE;
-        AV_UNREGISTER_IMAGE_VIEW ( "GBuffer::_readOnlyDepthImageView" )
+        AV_UNREGISTER_IMAGE_VIEW ( "pbr::GBuffer::_readOnlyDepthImageView" )
     }
 
     _depthStencil.FreeResources ( device );

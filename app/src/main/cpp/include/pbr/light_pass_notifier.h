@@ -16,8 +16,8 @@ class LightPassNotifier
         LightPassNotifier ( LightPassNotifier && ) = delete;
         LightPassNotifier& operator = ( LightPassNotifier && ) = delete;
 
-        virtual void OnBeginLightWithVolume ( VkCommandBuffer commandBuffer ) = 0;
-        virtual void OnEndLightWithVolume ( VkCommandBuffer commandBuffer ) = 0;
+        virtual void OnBeginLightWithVolume ( VkCommandBuffer commandBuffer ) noexcept = 0;
+        virtual void OnEndLightWithVolume ( VkCommandBuffer commandBuffer ) noexcept = 0;
 
     protected:
         LightPassNotifier () = default;

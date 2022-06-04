@@ -10,18 +10,18 @@ namespace pbr {
 class PresentPass final
 {
     private:
-        uint32_t                        _framebufferIndex;
-        std::vector<VkFramebuffer>      _framebuffers;
-        VkRenderPass                    _renderPass;
-        VkPresentInfoKHR                _presentInfo;
-        TexturePresentProgram           _program;
-        VkSemaphore                     _renderEndSemaphore;
-        VkRenderPassBeginInfo           _renderInfo;
-        VkSubmitInfo                    _submitInfo;
-        VkSemaphore                     _targetAcquiredSemaphore;
+        uint32_t                        _framebufferIndex = std::numeric_limits<uint32_t>::max ();
+        std::vector<VkFramebuffer>      _framebuffers {};
+        VkRenderPass                    _renderPass = VK_NULL_HANDLE;
+        VkPresentInfoKHR                _presentInfo {};
+        TexturePresentProgram           _program {};
+        VkSemaphore                     _renderEndSemaphore = VK_NULL_HANDLE;
+        VkRenderPassBeginInfo           _renderInfo {};
+        VkSubmitInfo                    _submitInfo {};
+        VkSemaphore                     _targetAcquiredSemaphore = VK_NULL_HANDLE;
 
     public:
-        PresentPass () noexcept;
+        PresentPass () = default;
 
         PresentPass ( PresentPass const & ) = delete;
         PresentPass& operator = ( PresentPass const & ) = delete;
@@ -31,23 +31,23 @@ class PresentPass final
 
         ~PresentPass () = default;
 
-        [[nodiscard]] bool AcquirePresentTarget ( android_vulkan::Renderer &renderer );
+        [[nodiscard]] bool AcquirePresentTarget ( android_vulkan::Renderer &renderer ) noexcept;
 
-        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer );
-        void Destroy ( VkDevice device );
+        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer ) noexcept;
+        void Destroy ( VkDevice device ) noexcept;
 
         [[nodiscard]] bool Execute ( VkCommandBuffer commandBuffer,
             VkDescriptorSet presentTarget,
             VkFence fence,
             android_vulkan::Renderer &renderer
-        );
+        ) noexcept;
 
     private:
-        [[nodiscard]] bool CreateFramebuffers ( android_vulkan::Renderer &renderer );
-        void DestroyFramebuffers ( VkDevice device );
+        [[nodiscard]] bool CreateFramebuffers ( android_vulkan::Renderer &renderer ) noexcept;
+        void DestroyFramebuffers ( VkDevice device ) noexcept;
 
-        [[nodiscard]] bool CreateRenderPass ( android_vulkan::Renderer &renderer );
-        void InitCommonStructures ( VkExtent2D const &resolution );
+        [[nodiscard]] bool CreateRenderPass ( android_vulkan::Renderer &renderer ) noexcept;
+        void InitCommonStructures ( VkExtent2D const &resolution ) noexcept;
 };
 
 } // namespace pbr

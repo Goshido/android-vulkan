@@ -51,6 +51,7 @@ RigidBody::RigidBody () noexcept:
     _totalTorque {},
     _tag {},
     _transform {},
+    _transformUpdateHandler ( nullptr ),
     _velocityAngular {},
     _velocityLinear {}
 {
@@ -376,6 +377,11 @@ GXMat4 const& RigidBody::GetTransform () const noexcept
     return _transform;
 }
 
+void RigidBody::SetTransformUpdateHandler ( TransformUpdateHandler handler ) noexcept
+{
+    _transformUpdateHandler = handler;
+}
+
 void RigidBody::Integrate ( float deltaTime ) noexcept
 {
     if ( !_shape )
@@ -408,6 +414,11 @@ void RigidBody::Integrate ( float deltaTime ) noexcept
     ResetAccumulators ();
 
     _forceAwake = false;
+
+    if ( _transformUpdateHandler )
+    {
+        _transformUpdateHandler ( _context, _location, _rotation );
+    }
 }
 
 [[maybe_unused]] bool RigidBody::IsAwake () const noexcept

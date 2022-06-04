@@ -16,22 +16,22 @@ namespace pbr {
 class LightPass final : public LightPassNotifier
 {
     private:
-        constexpr static size_t const INPUT_ATTACHMENTS = 3U;
+        constexpr static size_t         INPUT_ATTACHMENTS = 3U;
 
-        VkCommandPool                   _commandPool;
-        VkImageMemoryBarrier            _imageBarriers[ INPUT_ATTACHMENTS ];
-        VkRenderPassBeginInfo           _lightupRenderPassInfo;
-        LightVolume                     _lightVolume;
-        LightupCommonDescriptorSet      _lightupCommonDescriptorSet;
-        size_t                          _lightupRenderPassCounter;
-        PointLightPass                  _pointLightPass;
-        ReflectionGlobalPass            _reflectionGlobalPass;
-        ReflectionLocalPass             _reflectionLocalPass;
-        VkCommandBuffer                 _transfer;
-        android_vulkan::MeshGeometry    _unitCube;
+        VkCommandPool                   _commandPool = VK_NULL_HANDLE;
+        VkImageMemoryBarrier            _imageBarriers[ INPUT_ATTACHMENTS ] {};
+        VkRenderPassBeginInfo           _lightupRenderPassInfo {};
+        LightVolume                     _lightVolume {};
+        LightupCommonDescriptorSet      _lightupCommonDescriptorSet {};
+        size_t                          _lightupRenderPassCounter = 0U;
+        PointLightPass                  _pointLightPass {};
+        ReflectionGlobalPass            _reflectionGlobalPass {};
+        ReflectionLocalPass             _reflectionLocalPass {};
+        VkCommandBuffer                 _transfer = VK_NULL_HANDLE;
+        android_vulkan::MeshGeometry    _unitCube {};
 
     public:
-        LightPass () noexcept;
+        LightPass () = default;
 
         LightPass ( LightPass const & ) = delete;
         LightPass& operator = ( LightPass const & ) = delete;
@@ -41,12 +41,16 @@ class LightPass final : public LightPassNotifier
 
         ~LightPass () = default;
 
-        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, VkCommandPool commandPool, GBuffer &gBuffer );
-        void Destroy ( VkDevice device );
+        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
+            VkCommandPool commandPool,
+            GBuffer &gBuffer
+        ) noexcept;
 
-        [[nodiscard]] size_t GetPointLightCount () const;
-        [[nodiscard]] size_t GetReflectionLocalCount () const;
-        void OnFreeTransferResources ( VkDevice device );
+        void Destroy ( VkDevice device ) noexcept;
+
+        [[nodiscard]] size_t GetPointLightCount () const noexcept;
+        [[nodiscard]] size_t GetReflectionLocalCount () const noexcept;
+        void OnFreeTransferResources ( VkDevice device ) noexcept;
 
         [[nodiscard]] bool OnPreGeometryPass ( android_vulkan::Renderer &renderer,
             VkExtent2D const &resolution,
@@ -56,29 +60,29 @@ class LightPass final : public LightPassNotifier
             GXMat4 const &view,
             GXMat4 const &viewProjection,
             GXMat4 const &cvvToView
-        );
+        ) noexcept;
 
         [[nodiscard]] bool OnPostGeometryPass ( android_vulkan::Renderer &renderer,
             VkCommandBuffer commandBuffer,
             GXMat4 const &viewerLocal,
             GXMat4 const &view,
             GXMat4 const &viewProjection
-        );
+        ) noexcept;
 
-        void Reset ();
+        void Reset () noexcept;
 
-        void SubmitPointLight ( LightRef const &light );
-        void SubmitReflectionGlobal ( TextureCubeRef &prefilter );
-        void SubmitReflectionLocal ( TextureCubeRef &prefilter, GXVec3 const &location, float size );
+        void SubmitPointLight ( LightRef const &light ) noexcept;
+        void SubmitReflectionGlobal ( TextureCubeRef &prefilter ) noexcept;
+        void SubmitReflectionLocal ( TextureCubeRef &prefilter, GXVec3 const &location, float size ) noexcept;
 
     private:
-        void OnBeginLightWithVolume ( VkCommandBuffer commandBuffer ) override;
-        void OnEndLightWithVolume ( VkCommandBuffer commandBuffer ) override;
+        void OnBeginLightWithVolume ( VkCommandBuffer commandBuffer ) noexcept override;
+        void OnEndLightWithVolume ( VkCommandBuffer commandBuffer ) noexcept override;
 
-        void CreateImageBarriers ( GBuffer &gBuffer );
-        [[nodiscard]] bool CreateLightupFramebuffer ( VkDevice device, GBuffer &gBuffer );
-        [[nodiscard]] bool CreateLightupRenderPass ( VkDevice device, GBuffer &gBuffer );
-        [[nodiscard]] bool CreateUnitCube ( android_vulkan::Renderer &renderer, VkCommandPool commandPool );
+        void CreateImageBarriers ( GBuffer &gBuffer ) noexcept;
+        [[nodiscard]] bool CreateLightupFramebuffer ( VkDevice device, GBuffer &gBuffer ) noexcept;
+        [[nodiscard]] bool CreateLightupRenderPass ( VkDevice device, GBuffer &gBuffer ) noexcept;
+        [[nodiscard]] bool CreateUnitCube ( android_vulkan::Renderer &renderer, VkCommandPool commandPool ) noexcept;
 };
 
 } // namespace pbr

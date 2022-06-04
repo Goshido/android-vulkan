@@ -2,16 +2,18 @@
 #define PBR_REFLECTION_COMPONENT_H
 
 
-#include "component.h"
+#include "renderable_component.h"
 #include "reflection_component_desc.h"
+#include "transformable.h"
 
 
 namespace pbr {
 
-class ReflectionComponent final : public Component
+class ReflectionComponent final : public RenderableComponent, public Transformable
 {
     private:
         LightRef    _probe;
+        bool        _isGlobal;
 
     public:
         ReflectionComponent () = delete;
@@ -25,15 +27,18 @@ class ReflectionComponent final : public Component
         explicit ReflectionComponent ( android_vulkan::Renderer &renderer,
             size_t &commandBufferConsumed,
             ReflectionComponentDesc const &desc,
-            uint8_t const *data,
+            uint8_t const* data,
             VkCommandBuffer const* commandBuffers
         ) noexcept;
 
         ~ReflectionComponent () override = default;
 
+        [[nodiscard]] bool IsGlobalReflection () const noexcept;
+
     private:
-        void FreeTransferResources ( VkDevice device ) override;
-        void Submit ( RenderSession &renderSession ) override;
+        void FreeTransferResources ( VkDevice device ) noexcept override;
+        void Submit ( RenderSession &renderSession ) noexcept override;
+        void OnTransform ( GXMat4 const &transformWorld ) noexcept override;
 };
 
 } // namespace pbr

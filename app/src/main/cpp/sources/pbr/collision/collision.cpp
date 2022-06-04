@@ -1,4 +1,5 @@
 #include <pbr/collision/collision.h>
+#include <pbr/coordinate_system.h>
 #include <pbr/material_manager.h>
 #include <pbr/mesh_manager.h>
 #include <pbr/static_mesh_component.h>
@@ -7,12 +8,12 @@
 
 namespace pbr::collision {
 
-constexpr static float const FIELD_OF_VIEW = 75.0F;
-constexpr static float const Z_NEAR = 0.1F;
-constexpr static float const Z_FAR = 1.0e+4F;
+constexpr static float FIELD_OF_VIEW = 75.0F;
+constexpr static float Z_NEAR = 0.1F;
+constexpr static float Z_FAR = 1.0e+4F;
 
-constexpr static uint32_t const RESOLUTION_SCALE_WIDTH = 100U;
-constexpr static uint32_t const RESOLUTION_SCALE_HEIGHT = 100U;
+constexpr static uint32_t RESOLUTION_SCALE_WIDTH = 100U;
+constexpr static uint32_t RESOLUTION_SCALE_HEIGHT = 100U;
 
 bool Collision::IsReady () noexcept
 {
@@ -32,29 +33,31 @@ bool Collision::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime )
     _contactManager.Reset ();
     _contactDetector.Check ( _contactManager, _cubes[ 0U ]._body, _cubes[ 1U ]._body );
 
-    // NOLINTNEXTLINE
+    // NOLINTNEXTLINE - downcast.
     auto& light = *static_cast<PointLightComponent*> ( _cameraLight.get () );
 
     GXVec3 lightLocation {};
     cameraLocal.GetW ( lightLocation );
     light.SetLocation ( lightLocation );
-    _cameraLight->Submit ( _renderSession );
+    light.Submit ( _renderSession );
 
     for ( auto& cube : _cubes )
     {
         UpdateCuboid ( cube );
-        cube._component->Submit ( _renderSession );
+
+        // NOLINTNEXTLINE - downcast.
+        auto& renderableComponent = static_cast<RenderableComponent&> ( *cube._component );
+        renderableComponent.Submit ( _renderSession );
     }
 
     GXMat4 transform {};
-    constexpr float const rendererScale = 32.0F;
-    constexpr float const sphereSize = 0.02F * rendererScale;
-    constexpr GXVec3 const sphereDims ( sphereSize * 0.5F, sphereSize * 0.5F, sphereSize * 0.5F );
+    constexpr float sphereSize = 0.02F * UNITS_IN_METER;
+    constexpr GXVec3 sphereDims ( sphereSize * 0.5F, sphereSize * 0.5F, sphereSize * 0.5F );
     transform.Scale ( sphereSize, sphereSize, sphereSize );
 
     auto submit = [ & ] ( GXVec3 const &loc, GXColorRGB const &color ) noexcept {
         GXVec3 location {};
-        location.Multiply ( loc, rendererScale );
+        location.Multiply ( loc, UNITS_IN_METER );
         transform.SetW ( location );
 
         GXAABB bounds {};
@@ -175,7 +178,7 @@ bool Collision::CreateCommandPool ( android_vulkan::Renderer &renderer ) noexcep
     if ( !result )
         return false;
 
-    AV_REGISTER_COMMAND_POOL ( "Collision::_commandPool" )
+    AV_REGISTER_COMMAND_POOL ( "pbr::collision::Collision::_commandPool" )
     return true;
 }
 
@@ -186,7 +189,7 @@ void Collision::DestroyCommandPool ( VkDevice device ) noexcept
 
     vkDestroyCommandPool ( device, _commandPool, nullptr );
     _commandPool = VK_NULL_HANDLE;
-    AV_UNREGISTER_COMMAND_POOL ( "Collision::_commandPool" )
+    AV_UNREGISTER_COMMAND_POOL ( "pbr::collision::Collision::_commandPool" )
 }
 
 bool Collision::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
@@ -194,11 +197,11 @@ bool Collision::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
     _camera.SetLocation ( GXVec3 ( 0.77F, 20.8F, -55.4F ) );
     _camera.Update ( 0.0F );
 
-    constexpr size_t const cubeBuffers = 1U;
-    constexpr size_t const defaultMaterialBuffers = 5U;
-    constexpr size_t const sphereBuffers = 1U;
-    constexpr size_t const unlitMaterialBuffers = 5U;
-    constexpr size_t const totalBuffers = cubeBuffers + defaultMaterialBuffers + sphereBuffers + unlitMaterialBuffers;
+    constexpr size_t cubeBuffers = 1U;
+    constexpr size_t defaultMaterialBuffers = 5U;
+    constexpr size_t sphereBuffers = 1U;
+    constexpr size_t unlitMaterialBuffers = 5U;
+    constexpr size_t totalBuffers = cubeBuffers + defaultMaterialBuffers + sphereBuffers + unlitMaterialBuffers;
 
     VkCommandBufferAllocateInfo const allocateInfo
     {
@@ -306,7 +309,11 @@ bool Collision::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
         return false;
 
     for ( auto& cube : _cubes )
-        cube._component->FreeTransferResources ( device );
+    {
+        // NOLINTNEXTLINE - downcast.
+        auto& renderableComponent = static_cast<RenderableComponent&> ( *cube._component );
+        renderableComponent.FreeTransferResources ( device );
+    }
 
     _contactMesh->FreeTransferResources ( device );
 
@@ -365,7 +372,8 @@ bool Collision::AppendCuboid ( android_vulkan::Renderer &renderer,
         commandBufferConsumed,
         "pbr/system/unit-cube.mesh2",
         material,
-        commandBuffers
+        commandBuffers,
+        "Mesh"
     );
 
     if ( !success )
@@ -392,8 +400,6 @@ bool Collision::AppendCuboid ( android_vulkan::Renderer &renderer,
 
 void Collision::UpdateCuboid ( CubeInfo &cube ) noexcept
 {
-    constexpr float const physicsToRender = 32.0F;
-
     // NOLINTNEXTLINE
     auto& c = *static_cast<StaticMeshComponent*> ( cube._component.get () );
 
@@ -402,14 +408,14 @@ void Collision::UpdateCuboid ( CubeInfo &cube ) noexcept
     GXMat4 transform = cube._body->GetTransform ();
 
     GXVec3 dims ( s.GetWidth (), s.GetHeight (), s.GetDepth () );
-    dims.Multiply ( dims, physicsToRender );
+    dims.Multiply ( dims, UNITS_IN_METER );
 
     GXMat4 scale {};
     scale.Scale ( dims._data[ 0U ], dims._data[ 1U ], dims._data[ 2U ] );
 
     GXVec3 location {};
     transform.GetW ( location );
-    location.Multiply ( location, physicsToRender );
+    location.Multiply ( location, UNITS_IN_METER );
     transform.SetW ( location );
 
     GXMat4 resultTransform {};

@@ -1,4 +1,5 @@
 #include <pbr/box_stack/box_stack.h>
+#include <pbr/coordinate_system.h>
 #include <pbr/component.h>
 #include <pbr/material_manager.h>
 #include <pbr/mesh_manager.h>
@@ -41,22 +42,21 @@ bool BoxStack::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) 
     GXMat4 const& cameraLocal = _camera.GetLocalMatrix ();
     _renderSession.Begin ( cameraLocal, _camera.GetProjectionMatrix () );
 
-    // NOLINTNEXTLINE
-    auto& light = *static_cast<PointLightComponent*> ( _cameraLight.get () );
+    // NOLINTNEXTLINE - downcast.
+    auto& light = static_cast<PointLightComponent&> ( *_cameraLight );
 
     GXVec3 lightLocation {};
     cameraLocal.GetW ( lightLocation );
     light.SetLocation ( lightLocation );
 
     GXMat4 transform {};
-    constexpr float const rendererScale = 32.0F;
-    constexpr float const sphereSize = 0.02F * rendererScale;
-    constexpr GXVec3 const sphereDims ( sphereSize * 0.5F, sphereSize * 0.5F, sphereSize * 0.5F );
+    constexpr float sphereSize = 0.02F * UNITS_IN_METER;
+    constexpr GXVec3 sphereDims ( sphereSize * 0.5F, sphereSize * 0.5F, sphereSize * 0.5F );
     transform.Scale ( sphereSize, sphereSize, sphereSize );
 
     auto submit = [ & ] ( GXVec3 const &loc, GXColorRGB const &color ) noexcept {
         GXVec3 location {};
-        location.Multiply ( loc, rendererScale );
+        location.Multiply ( loc, UNITS_IN_METER );
         transform.SetW ( location );
 
         GXAABB bounds{};
@@ -91,7 +91,11 @@ bool BoxStack::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) 
     }
 
     for ( auto& component : _components )
-        component->Submit ( _renderSession );
+    {
+        // NOLINTNEXTLINE - downcast.
+        auto& renderableComponent = static_cast<RenderableComponent&> ( *component );
+        renderableComponent.Submit ( _renderSession );
+    }
 
     return _renderSession.End ( renderer, deltaTime );
 }
@@ -110,14 +114,14 @@ bool BoxStack::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateCommandPool ( device, &createInfo, nullptr, &_commandPool ),
-        "BoxStack::OnInit",
+        "pbr::box_stack::BoxStack::OnInit",
         "Can't create command pool"
     );
 
     if ( !result )
         return false;
 
-    AV_REGISTER_COMMAND_POOL ( "BoxStack::_commandPool" )
+    AV_REGISTER_COMMAND_POOL ( "pbr::box_stack::BoxStack::_commandPool" )
 
     if ( !_renderSession.OnInitDevice ( renderer, _commandPool ) )
     {
@@ -144,6 +148,7 @@ void BoxStack::OnDestroyDevice ( VkDevice device ) noexcept
     _components.clear ();
     _renderSession.OnDestroyDevice ( device );
     DestroyCommandPool ( device );
+    _physics.Reset ();
 
     MeshManager::Destroy ( device );
     MaterialManager::Destroy ( device );
@@ -223,7 +228,8 @@ bool BoxStack::AppendCuboid ( android_vulkan::Renderer &renderer,
         commandBufferConsumed,
         "pbr/system/unit-cube.mesh2",
         material,
-        commandBuffers
+        commandBuffers,
+        "Mesh"
     );
 
     if ( !success )
@@ -254,7 +260,7 @@ bool BoxStack::AppendCuboid ( android_vulkan::Renderer &renderer,
         return true;
     }
 
-    android_vulkan::LogError ( "BoxStack::AppendCuboid - Can't add rigid body." );
+    android_vulkan::LogError ( "pbr::box_stack::BoxStack::AppendCuboid - Can't add rigid body." );
     return false;
 }
 
@@ -265,7 +271,7 @@ void BoxStack::DestroyCommandPool ( VkDevice device ) noexcept
 
     vkDestroyCommandPool ( device, _commandPool, nullptr );
     _commandPool = VK_NULL_HANDLE;
-    AV_UNREGISTER_COMMAND_POOL ( "BoxStack::_commandPool" )
+    AV_UNREGISTER_COMMAND_POOL ( "pbr::box_stack::BoxStack::_commandPool" )
 }
 
 bool BoxStack::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
@@ -304,7 +310,7 @@ bool BoxStack::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
 
     bool result = android_vulkan::Renderer::CheckVkResult (
         vkAllocateCommandBuffers ( device, &allocateInfo, commandBuffers ),
-        "BoxStack::CreateSceneManual",
+        "pbr::box_stack::BoxStack::CreateSceneManual",
         "Can't allocate command buffers"
     );
 
@@ -394,7 +400,7 @@ bool BoxStack::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
     _components.push_back ( _cameraLight );
 
     result = android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( renderer.GetQueue () ),
-        "BoxStack::CreateSceneManual",
+        "pbr::box_stack::BoxStack::CreateSceneManual",
         "Can't run upload commands"
     );
 
@@ -402,7 +408,11 @@ bool BoxStack::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
         return false;
 
     for ( auto& component : _components )
-        component->FreeTransferResources ( device );
+    {
+        // NOLINTNEXTLINE - downcast.
+        auto& renderableComponent = static_cast<RenderableComponent&> ( *component );
+        renderableComponent.FreeTransferResources ( device );
+    }
 
     _sphereMesh->FreeTransferResources ( device );
     return true;
@@ -467,8 +477,6 @@ void BoxStack::OnRightBumper ( void* context ) noexcept
 
 void BoxStack::UpdateCuboid ( ComponentRef &cuboid, android_vulkan::RigidBodyRef &body ) noexcept
 {
-    constexpr float const physicsToRender = 32.0F;
-
     // NOLINTNEXTLINE
     auto& c = *static_cast<StaticMeshComponent*> ( cuboid.get () );
 
@@ -477,14 +485,14 @@ void BoxStack::UpdateCuboid ( ComponentRef &cuboid, android_vulkan::RigidBodyRef
     GXMat4 transform = body->GetTransform ();
 
     GXVec3 dims ( s.GetWidth (), s.GetHeight (), s.GetDepth () );
-    dims.Multiply ( dims, physicsToRender );
+    dims.Multiply ( dims, UNITS_IN_METER );
 
     GXMat4 scale {};
     scale.Scale ( dims._data[ 0U ], dims._data[ 1U ], dims._data[ 2U ] );
 
     GXVec3 location {};
     transform.GetW ( location );
-    location.Multiply ( location, physicsToRender );
+    location.Multiply ( location, UNITS_IN_METER );
     transform.SetW ( location );
 
     GXMat4 resultTransform {};

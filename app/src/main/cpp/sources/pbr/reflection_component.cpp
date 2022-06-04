@@ -2,6 +2,7 @@
 #include <pbr/cube_map_manager.h>
 #include <pbr/reflection_probe_global.h>
 #include <pbr/reflection_probe_local.h>
+#include <guid_generator.h>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -9,17 +10,20 @@ GX_DISABLE_COMMON_WARNINGS
 
 GX_RESTORE_WARNING_STATE
 
+
 namespace pbr {
 
 [[maybe_unused]] constexpr static uint32_t const REFLECTION_COMPONENT_DESC_FORMAT_VERSION = 1U;
 
+//----------------------------------------------------------------------------------------------------------------------
+
 ReflectionComponent::ReflectionComponent ( android_vulkan::Renderer &renderer,
     size_t &commandBufferConsumed,
     ReflectionComponentDesc const &desc,
-    uint8_t const *data,
+    uint8_t const* data,
     VkCommandBuffer const* commandBuffers
 ) noexcept:
-    Component ( ClassID::Reflection )
+    RenderableComponent ( ClassID::Reflection, android_vulkan::GUID::GenerateAsString ( "Reflection" ) )
 {
     assert ( desc._formatVersion == REFLECTION_COMPONENT_DESC_FORMAT_VERSION );
 
@@ -33,7 +37,7 @@ ReflectionComponent::ReflectionComponent ( android_vulkan::Renderer &renderer,
         ._zMinusFile = reinterpret_cast<char const*> ( data + desc._sideZMinus )
     };
 
-    TextureCubeRef prefilter = CubeMapManager::GetInstance().LoadCubeMap ( renderer,
+    TextureCubeRef prefilter = CubeMapManager::GetInstance ().LoadCubeMap ( renderer,
         commandBufferConsumed,
         cubeData,
         *commandBuffers
@@ -42,33 +46,46 @@ ReflectionComponent::ReflectionComponent ( android_vulkan::Renderer &renderer,
     if ( desc._size == FLT_MAX )
     {
         _probe = std::make_shared<ReflectionProbeGlobal> ( prefilter );
+        _isGlobal = true;
         return;
     }
 
-    GXVec3 location;
+    GXVec3 location {};
     // Sanity checks.
     static_assert ( sizeof ( location ) == sizeof ( desc._location ) );
-    memcpy ( &location, &desc._location, sizeof ( location ) );
+    std::memcpy ( &location, &desc._location, sizeof ( location ) );
 
     _probe = std::make_shared<ReflectionProbeLocal> ( prefilter, location, desc._size );
+    _isGlobal = false;
 }
 
-void ReflectionComponent::FreeTransferResources ( VkDevice device )
+bool ReflectionComponent::IsGlobalReflection () const noexcept
+{
+    return _isGlobal;
+}
+
+void ReflectionComponent::FreeTransferResources ( VkDevice device ) noexcept
 {
     if ( !_probe )
         return;
 
-    // Note it's safe cast like that here. "NOLINT" is a clang-tidy control comment.
-    auto& probe = static_cast<ReflectionProbe&> ( *_probe.get () ); // NOLINT
+    // NOLINTNEXTLINE - downcast.
+    auto& probe = static_cast<ReflectionProbe&> ( *_probe );
     probe.FreeTransferResources ( device );
 }
 
-void ReflectionComponent::Submit ( RenderSession &renderSession )
+void ReflectionComponent::Submit ( RenderSession &renderSession ) noexcept
 {
-    if ( _probe )
-    {
-        renderSession.SubmitLight ( _probe );
-    }
+    renderSession.SubmitLight ( _probe );
+}
+
+void ReflectionComponent::OnTransform ( GXMat4 const &transformWorld ) noexcept
+{
+
+    // NOLINTNEXTLINE - downcast.
+    auto& probe = static_cast<ReflectionProbeLocal&> ( *_probe );
+
+    probe.SetLocation ( *reinterpret_cast<GXVec3 const*> ( &transformWorld._m[ 3U ][ 0U ] ) );
 }
 
 } // namespace pbr

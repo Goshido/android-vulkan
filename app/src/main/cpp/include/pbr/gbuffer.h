@@ -29,17 +29,17 @@ class GBuffer final
 
         ~GBuffer () = default;
 
-        [[nodiscard]] android_vulkan::Texture2D& GetAlbedo () ;
-        [[nodiscard]] android_vulkan::Texture2D& GetDepthStencil ();
-        [[nodiscard]] android_vulkan::Texture2D& GetHDRAccumulator ();
-        [[nodiscard]] android_vulkan::Texture2D& GetNormal ();
-        [[nodiscard]] android_vulkan::Texture2D& GetParams ();
+        [[nodiscard]] android_vulkan::Texture2D& GetAlbedo ()  noexcept;
+        [[nodiscard]] android_vulkan::Texture2D& GetDepthStencil () noexcept;
+        [[nodiscard]] android_vulkan::Texture2D& GetHDRAccumulator () noexcept;
+        [[nodiscard]] android_vulkan::Texture2D& GetNormal () noexcept;
+        [[nodiscard]] android_vulkan::Texture2D& GetParams () noexcept;
 
-        [[nodiscard]] VkImageView GetReadOnlyDepthImageView () const;
-        [[nodiscard]] VkExtent2D const& GetResolution () const;
+        [[nodiscard]] VkImageView GetReadOnlyDepthImageView () const noexcept;
+        [[nodiscard]] VkExtent2D const& GetResolution () const noexcept;
 
-        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, VkExtent2D const &resolution );
-        void Destroy ( VkDevice device );
+        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, VkExtent2D const &resolution ) noexcept;
+        void Destroy ( VkDevice device ) noexcept;
 };
 
 } // namespace pbr

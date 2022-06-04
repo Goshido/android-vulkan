@@ -10,10 +10,10 @@ namespace pbr {
 class Sampler final
 {
     private:
-        VkSampler       _sampler;
+        VkSampler       _sampler = VK_NULL_HANDLE;
 
     public:
-        Sampler () noexcept;
+        Sampler () = default;
 
         Sampler ( Sampler const & ) = delete;
         Sampler& operator = ( Sampler const & ) = delete;
@@ -23,10 +23,10 @@ class Sampler final
 
         ~Sampler () = default;
 
-        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, const VkSamplerCreateInfo &info );
-        void Destroy ( VkDevice device );
+        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, VkSamplerCreateInfo const &info ) noexcept;
+        void Destroy ( VkDevice device ) noexcept;
 
-        [[nodiscard]] VkSampler GetSampler () const;
+        [[nodiscard]] VkSampler GetSampler () const noexcept;
 };
 
 } // namespace pbr

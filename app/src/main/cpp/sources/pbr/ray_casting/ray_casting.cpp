@@ -86,6 +86,7 @@ void RayCasting::OnDestroyDevice ( VkDevice device ) noexcept
     _lineMesh.reset ();
 
     DestroyCommandPool ( device );
+    _physics.Reset ();
 
     MeshManager::Destroy ( device );
     MaterialManager::Destroy ( device );
@@ -146,11 +147,11 @@ void RayCasting::Animate ( float deltaTime ) noexcept
     constexpr GXVec3 l ( 0.0F, 0.0F, 0.0F );
     transform.FromFast ( b.GetRotation (), l );
 
-    // NOLINTNEXTLINE
-    auto& c = *static_cast<StaticMeshComponent*> ( _cube.get () );
+    // NOLINTNEXTLINE - downcast.
+    auto& c = static_cast<StaticMeshComponent&> ( *_cube );
 
-    // NOLINTNEXTLINE
-    auto const& boxShape = static_cast<android_vulkan::ShapeBox&> ( b.GetShape() );
+    // NOLINTNEXTLINE - downcast.
+    auto const& boxShape = static_cast<android_vulkan::ShapeBox&> ( b.GetShape () );
 
     GXMat4 local {};
     local.Scale ( boxShape.GetWidth (), boxShape.GetHeight (), boxShape.GetDepth () );
@@ -174,14 +175,14 @@ bool RayCasting::CreateCommandPool ( android_vulkan::Renderer &renderer ) noexce
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateCommandPool ( renderer.GetDevice (), &info, nullptr, &_commandPool ),
-        "RayCasting::CreateCommandPool",
+        "pbr::ray_casting::RayCasting::CreateCommandPool",
         "Can't create command pool"
     );
 
     if ( !result )
         return false;
 
-    AV_REGISTER_COMMAND_POOL ( "RayCasting::_commandPool" )
+    AV_REGISTER_COMMAND_POOL ( "pbr::ray_casting::RayCasting::_commandPool" )
     return true;
 }
 
@@ -192,7 +193,7 @@ void RayCasting::DestroyCommandPool ( VkDevice device ) noexcept
 
     vkDestroyCommandPool ( device, _commandPool, nullptr );
     _commandPool = VK_NULL_HANDLE;
-    AV_UNREGISTER_COMMAND_POOL ( "RayCasting::_commandPool" )
+    AV_UNREGISTER_COMMAND_POOL ( "pbr::ray_casting::RayCasting::_commandPool" )
 }
 
 bool RayCasting::LoadResources ( android_vulkan::Renderer &renderer ) noexcept
@@ -246,7 +247,8 @@ bool RayCasting::LoadResources ( android_vulkan::Renderer &renderer ) noexcept
         consumed,
         "pbr/system/unit-cube.mesh2",
         "pbr/assets/Props/PBR/DefaultCSGEmissiveBright.mtl",
-        cb
+        cb,
+        "Mesh"
     );
 
     if ( !success )
@@ -384,14 +386,17 @@ bool RayCasting::LoadResources ( android_vulkan::Renderer &renderer ) noexcept
     cb += 1U;
 
     result = android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( renderer.GetQueue () ),
-        "RayCasting::LoadResources",
+        "pbr::ray_casting::RayCasting::LoadResources",
         "Can't run upload commands"
     );
 
     if ( !result )
         return false;
 
-    _cube->FreeTransferResources ( device );
+    // NOLINTNEXTLINE - downcast.
+    auto& cube = static_cast<StaticMeshComponent&> ( *_cube );
+    cube.FreeTransferResources ( device );
+
     _rayTextureHit->FreeTransferResources ( device );
     _rayTextureNoHit->FreeTransferResources ( device );
     _normalTexture->FreeTransferResources ( device );
@@ -533,8 +538,8 @@ GXVec3 RayCasting::GenerateAngular () noexcept
 
 void RayCasting::SwitchEmission ( MaterialRef &material, Texture2DRef &emission ) noexcept
 {
-    // NOLINTNEXTLINE
-    auto& m = *static_cast<OpaqueMaterial*> ( material.get () );
+    // NOLINTNEXTLINE - downcast.
+    auto& m = static_cast<OpaqueMaterial&> ( *material );
     m.SetEmission ( emission );
 }
 

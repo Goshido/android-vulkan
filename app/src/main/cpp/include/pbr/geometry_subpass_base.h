@@ -48,6 +48,11 @@ class GeometrySubpassBase {
         GeometrySubpassBase () = default;
         ~GeometrySubpassBase () = default;
 
+        virtual void ReportGeometry ( RenderSessionStats &renderSessionStats,
+            uint32_t vertexCount,
+            uint32_t instanceCount
+        ) noexcept = 0;
+
         [[nodiscard]] size_t AggregateUniformCount () const noexcept;
 
         void AppendDrawcalls ( VkCommandBuffer commandBuffer,

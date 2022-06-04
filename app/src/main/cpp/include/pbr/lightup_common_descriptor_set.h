@@ -13,19 +13,19 @@ namespace pbr {
 class LightupCommonDescriptorSet final
 {
     private:
-        android_vulkan::Texture2D           _brdfLUT;
-        Sampler                             _brdfLUTSampler;
-        VkCommandBuffer                     _brdfTransfer;
-        VkCommandPool                       _commandPool;
-        VkDescriptorPool                    _descriptorPool;
-        LightupCommonDescriptorSetLayout    _layout;
-        VkPipelineLayout                    _pipelineLayout;
-        Sampler                             _prefilterSampler;
-        VkDescriptorSet                     _set;
-        android_vulkan::UniformBuffer       _uniformBuffer;
+        android_vulkan::Texture2D           _brdfLUT {};
+        Sampler                             _brdfLUTSampler {};
+        VkCommandBuffer                     _brdfTransfer = VK_NULL_HANDLE;
+        VkCommandPool                       _commandPool = VK_NULL_HANDLE;
+        VkDescriptorPool                    _descriptorPool = VK_NULL_HANDLE;
+        LightupCommonDescriptorSetLayout    _layout {};
+        VkPipelineLayout                    _pipelineLayout = VK_NULL_HANDLE;
+        Sampler                             _prefilterSampler {};
+        VkDescriptorSet                     _set = VK_NULL_HANDLE;
+        android_vulkan::UniformBuffer       _uniformBuffer {};
 
     public:
-        LightupCommonDescriptorSet () noexcept;
+        LightupCommonDescriptorSet () = default;
 
         LightupCommonDescriptorSet ( LightupCommonDescriptorSet const & ) = delete;
         LightupCommonDescriptorSet& operator = ( LightupCommonDescriptorSet const & ) = delete;
@@ -35,17 +35,21 @@ class LightupCommonDescriptorSet final
 
         ~LightupCommonDescriptorSet () = default;
 
-        void Bind ( VkCommandBuffer commandBuffer );
+        void Bind ( VkCommandBuffer commandBuffer ) noexcept;
 
-        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, VkCommandPool commandPool, GBuffer &gBuffer );
-        void Destroy ( VkDevice device );
-        void OnFreeTransferResources ( VkDevice device );
+        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
+            VkCommandPool commandPool,
+            GBuffer &gBuffer
+        ) noexcept;
+
+        void Destroy ( VkDevice device ) noexcept;
+        void OnFreeTransferResources ( VkDevice device ) noexcept;
 
         [[nodiscard]] bool Update ( android_vulkan::Renderer &renderer,
             VkExtent2D const &resolution,
             GXMat4 const &viewerLocal,
             GXMat4 const &cvvToView
-        );
+        ) noexcept;
 };
 
 } // namespace pbr

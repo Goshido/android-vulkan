@@ -18,7 +18,7 @@ void GeometrySubpassBase::Submit ( MeshRef &mesh,
     GXColorRGB const &emission
 ) noexcept
 {
-    // NOLINTNEXTLINE - downcast
+    // NOLINTNEXTLINE - downcast.
     auto& m = static_cast<GeometryPassMaterial&> ( *material );
     auto findResult = _sceneData.find ( m );
 
@@ -109,7 +109,7 @@ void GeometrySubpassBase::AppendDrawcalls ( VkCommandBuffer commandBuffer,
                 0U
             );
 
-            renderSessionStats.RenderOpaque ( mesh->GetVertexCount (), batches );
+            ReportGeometry ( renderSessionStats, mesh->GetVertexCount (), batches );
             ++uniformUsed;
         };
 
@@ -179,7 +179,7 @@ bool GeometrySubpassBase::InitBase ( android_vulkan::Renderer &renderer, VkComma
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkAllocateCommandBuffers ( device, &allocateInfo, &_transferCommandBuffer ),
-        "GeometrySubpassBase::Init",
+        "pbr::GeometrySubpassBase::Init",
         "Can't allocate transfer command buffer"
     );
 
@@ -227,7 +227,7 @@ void GeometrySubpassBase::DestroyDescriptorPool ( VkDevice device ) noexcept
 
     vkDestroyDescriptorPool ( device, _descriptorPool, nullptr );
     _descriptorPool = VK_NULL_HANDLE;
-    AV_UNREGISTER_DESCRIPTOR_POOL ( "GeometrySubpassBase::_descriptorPool" )
+    AV_UNREGISTER_DESCRIPTOR_POOL ( "pbr::GeometrySubpassBase::_descriptorPool" )
 }
 
 bool GeometrySubpassBase::RecreateDescriptorPool ( VkDevice device, size_t maxSets ) noexcept
@@ -246,14 +246,14 @@ bool GeometrySubpassBase::RecreateDescriptorPool ( VkDevice device, size_t maxSe
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_descriptorPool ),
-        "GeometrySubpassBase::UpdateGPUData",
+        "pbr::GeometrySubpassBase::UpdateGPUData",
         "Can't create descriptor pool"
     );
 
     if ( !result )
         return false;
 
-    AV_REGISTER_DESCRIPTOR_POOL ( "GeometrySubpassBase::_descriptorPool" )
+    AV_REGISTER_DESCRIPTOR_POOL ( "pbr::GeometrySubpassBase::_descriptorPool" )
     return true;
 }
 

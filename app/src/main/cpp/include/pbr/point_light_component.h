@@ -2,15 +2,15 @@
 #define PBR_POINT_LIGHT_COMPONENT_H
 
 
-#include "component.h"
 #include "point_light.h"
 #include "point_light_component_desc.h"
-#include "types.h"
+#include "renderable_component.h"
+#include "transformable.h"
 
 
 namespace pbr {
 
-class PointLightComponent final : public Component
+class PointLightComponent final : public RenderableComponent, public Transformable
 {
     private:
         LightRef    _pointLight;
@@ -28,7 +28,7 @@ class PointLightComponent final : public Component
 
         ~PointLightComponent () override = default;
 
-        void Submit ( RenderSession &renderSession ) override;
+        void Submit ( RenderSession &renderSession ) noexcept override;
 
         void SetBoundDimensions ( float width, float height, float depth ) noexcept;
         void SetBoundDimensions ( GXVec3 const &dimensions ) noexcept;
@@ -37,7 +37,7 @@ class PointLightComponent final : public Component
         void SetLocation ( GXVec3 const &location ) noexcept;
 
     private:
-        void FreeTransferResources ( VkDevice device ) override;
+        void OnTransform ( GXMat4 const &transformWorld ) noexcept override;
 };
 
 } // namespace pbr

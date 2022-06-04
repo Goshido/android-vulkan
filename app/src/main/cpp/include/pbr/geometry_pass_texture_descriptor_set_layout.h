@@ -15,11 +15,11 @@ class GeometryPassTextureDescriptorSetLayout final : public DescriptorSetLayout
     public:
         GeometryPassTextureDescriptorSetLayout () = default;
 
-        GeometryPassTextureDescriptorSetLayout ( GeometryPassTextureDescriptorSetLayout const &other ) = delete;
-        GeometryPassTextureDescriptorSetLayout& operator = ( GeometryPassTextureDescriptorSetLayout const &other ) = delete;
+        GeometryPassTextureDescriptorSetLayout ( GeometryPassTextureDescriptorSetLayout const & ) = delete;
+        GeometryPassTextureDescriptorSetLayout& operator = ( GeometryPassTextureDescriptorSetLayout const & ) = delete;
 
-        GeometryPassTextureDescriptorSetLayout ( GeometryPassTextureDescriptorSetLayout &&other ) = delete;
-        GeometryPassTextureDescriptorSetLayout& operator = ( GeometryPassTextureDescriptorSetLayout &&other ) = delete;
+        GeometryPassTextureDescriptorSetLayout ( GeometryPassTextureDescriptorSetLayout && ) = delete;
+        GeometryPassTextureDescriptorSetLayout& operator = ( GeometryPassTextureDescriptorSetLayout && ) = delete;
 
         ~GeometryPassTextureDescriptorSetLayout () override = default;
 

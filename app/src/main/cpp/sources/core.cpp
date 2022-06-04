@@ -75,7 +75,7 @@ Core::Core ( JNIEnv* env, jobject activity, jobject assetManager ) noexcept
         { android_vulkan::eGame::World1x1, std::make_shared<pbr::mario::World1x1> () }
     };
 
-    _game = games.find ( android_vulkan::eGame::World1x1 )->second.get ();
+    _game = games.find ( android_vulkan::eGame::PBR )->second.get ();
 
     _thread = std::thread (
         [ this ] () noexcept {

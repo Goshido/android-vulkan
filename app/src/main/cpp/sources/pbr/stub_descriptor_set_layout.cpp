@@ -30,8 +30,8 @@ class StubDescriptorSetLayoutImpl final
 
         ~StubDescriptorSetLayoutImpl () = default;
 
-        void Destroy ( VkDevice device );
-        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer );
+        void Destroy ( VkDevice device ) noexcept;
+        [[nodiscard]] bool Init ( VkDevice device ) noexcept;
 };
 
 StubDescriptorSetLayoutImpl::StubDescriptorSetLayoutImpl () noexcept:
@@ -41,7 +41,7 @@ StubDescriptorSetLayoutImpl::StubDescriptorSetLayoutImpl () noexcept:
     // NOTHING
 }
 
-void StubDescriptorSetLayoutImpl::Destroy ( VkDevice device )
+void StubDescriptorSetLayoutImpl::Destroy ( VkDevice device ) noexcept
 {
     if ( !_references )
         return;
@@ -56,7 +56,7 @@ void StubDescriptorSetLayoutImpl::Destroy ( VkDevice device )
     AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::StubDescriptorSetLayoutImpl::_layout" )
 }
 
-bool StubDescriptorSetLayoutImpl::Init ( android_vulkan::Renderer &renderer )
+bool StubDescriptorSetLayoutImpl::Init ( VkDevice device ) noexcept
 {
     if ( _references )
     {
@@ -74,7 +74,7 @@ bool StubDescriptorSetLayoutImpl::Init ( android_vulkan::Renderer &renderer )
     };
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateDescriptorSetLayout ( renderer.GetDevice (), &descriptorSetLayoutInfo, nullptr, &_layout ),
+        vkCreateDescriptorSetLayout ( device, &descriptorSetLayoutInfo, nullptr, &_layout ),
         "pbr::StubDescriptorSetLayoutImpl::Init",
         "Can't create descriptor set layout"
     );
@@ -92,17 +92,17 @@ static StubDescriptorSetLayoutImpl g_stubDescriptorSetLayout;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-void StubDescriptorSetLayout::Destroy ( VkDevice device )
+void StubDescriptorSetLayout::Destroy ( VkDevice device ) noexcept
 {
     g_stubDescriptorSetLayout.Destroy ( device );
 }
 
-bool StubDescriptorSetLayout::Init ( android_vulkan::Renderer &renderer )
+bool StubDescriptorSetLayout::Init ( VkDevice device ) noexcept
 {
-    return g_stubDescriptorSetLayout.Init ( renderer );
+    return g_stubDescriptorSetLayout.Init ( device );
 }
 
-VkDescriptorSetLayout StubDescriptorSetLayout::GetLayout () const
+VkDescriptorSetLayout StubDescriptorSetLayout::GetLayout () const noexcept
 {
     return g_stubDescriptorSetLayout._layout;
 }

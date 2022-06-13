@@ -162,7 +162,7 @@ bool TextureCube::UploadData ( android_vulkan::Renderer &renderer,
         for ( uint8_t mipIndex = 0U; mipIndex < mips; ++mipIndex )
         {
             MipInfo const& mip = side.GetMip ( mipIndex );
-            memcpy ( destination + static_cast<size_t> ( offset ), mip._data, static_cast<size_t> ( mip._size ) );
+            std::memcpy ( destination + static_cast<size_t> ( offset ), mip._data, static_cast<size_t> ( mip._size ) );
             offset += mip._size;
         }
     }

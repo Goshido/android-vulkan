@@ -6,34 +6,22 @@
 
 
 [[vk::binding ( 0, 0 )]]
+SamplerState                        g_sampler:              register ( s0 );
+
+[[vk::binding ( 0, 1 )]]
 Texture2D<float32_t4>               g_diffuseTexture:       register ( t0 );
 
-[[vk::binding ( 1, 0 )]]
-SamplerState                        g_diffuseSampler:       register ( s0 );
-
-[[vk::binding ( 2, 0 )]]
+[[vk::binding ( 1, 1 )]]
 Texture2D<float32_t4>               g_emissionTexture:      register ( t1 );
 
-[[vk::binding ( 3, 0 )]]
-SamplerState                        g_emissionSampler:      register ( s1 );
-
-[[vk::binding ( 4, 0 )]]
+[[vk::binding ( 2, 1 )]]
 Texture2D<float32_t4>               g_maskTexture:          register ( t2 );
 
-[[vk::binding ( 5, 0 )]]
-SamplerState                        g_maskSampler:          register ( s2 );
-
-[[vk::binding ( 6, 0 )]]
+[[vk::binding ( 3, 1 )]]
 Texture2D<float32_t4>               g_normalTexture:        register ( t3 );
 
-[[vk::binding ( 7, 0 )]]
-SamplerState                        g_normalSampler:        register ( s3 );
-
-[[vk::binding ( 8, 0 )]]
+[[vk::binding ( 4, 1 )]]
 Texture2D<float32_t4>               g_paramTexture:         register ( t4 );
-
-[[vk::binding ( 9, 0 )]]
-SamplerState                        g_paramSampler:         register ( s4 );
 
 struct InputData
 {
@@ -71,7 +59,7 @@ float32_t3 GetFinalNormalView ( in float32_t3 tangentView,
     in float32_t2 uv
 )
 {
-    const float32_t2 normalData = mad ( g_normalTexture.Sample ( g_normalSampler, uv ).xw,
+    const float32_t2 normalData = mad ( g_normalTexture.Sample ( g_sampler, uv ).xw,
         (float32_t2)2.0F,
         (float32_t2)( -1.0F )
     );
@@ -92,7 +80,7 @@ float32_t4 PackUnitVector ( in float32_t3 v )
 
 OutputData FillGBuffer ( in InputData inputData, in ObjectData objectData, in float32_t3 diffuseSample )
 {
-    float32_t3 maskSample = g_maskTexture.Sample ( g_maskSampler, inputData._uv ).xyz;
+    float32_t3 maskSample = g_maskTexture.Sample ( g_sampler, inputData._uv ).xyz;
     const float32_t maskSum = maskSample.x + maskSample.y + maskSample.z;
 
     if ( maskSum > 1.0F )
@@ -108,11 +96,11 @@ OutputData FillGBuffer ( in InputData inputData, in ObjectData objectData, in fl
     result._albedo = float32_t4 ( albedoOverlay * diffuseSample, 1.0F );
 
     result._emission = float32_t4 (
-        g_emissionTexture.Sample ( g_emissionSampler, inputData._uv ).xyz * objectData._emission.xyz,
+        g_emissionTexture.Sample ( g_sampler, inputData._uv ).xyz * objectData._emission.xyz,
         1.0F
     );
 
-    result._param = g_paramTexture.Sample ( g_paramSampler, inputData._uv );
+    result._param = g_paramTexture.Sample ( g_sampler, inputData._uv );
 
     result._normal = PackUnitVector (
         GetFinalNormalView ( inputData._tangentView, inputData._bitangentView, inputData._normalView, inputData._uv )

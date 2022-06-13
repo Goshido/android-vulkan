@@ -15,7 +15,7 @@ struct ObjectData
     float32_t4      _emission;
 };
 
-[[vk::binding ( 0, 1 )]]
+[[vk::binding ( 0, 2 )]]
 cbuffer InstanceData:       register ( b0 )
 {
     // sizeof ( ObjectData ) = 192 bytes

@@ -37,7 +37,7 @@ class GeometryPassTextureDescriptorSetLayoutImpl final
         ~GeometryPassTextureDescriptorSetLayoutImpl () = default;
 
         void Destroy ( VkDevice device ) noexcept;
-        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer ) noexcept;
+        [[nodiscard]] bool Init ( VkDevice device ) noexcept;
 };
 
 void GeometryPassTextureDescriptorSetLayoutImpl::Destroy ( VkDevice device ) noexcept
@@ -55,7 +55,7 @@ void GeometryPassTextureDescriptorSetLayoutImpl::Destroy ( VkDevice device ) noe
     AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::GeometryPassTextureDescriptorSetLayoutImpl::_layout" )
 }
 
-bool GeometryPassTextureDescriptorSetLayoutImpl::Init ( android_vulkan::Renderer &renderer ) noexcept
+bool GeometryPassTextureDescriptorSetLayoutImpl::Init ( VkDevice device ) noexcept
 {
     if ( _references )
     {
@@ -74,7 +74,7 @@ bool GeometryPassTextureDescriptorSetLayoutImpl::Init ( android_vulkan::Renderer
         },
         {
             .binding = 1U,
-            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
+            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
             .descriptorCount = 1U,
             .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
             .pImmutableSamplers = nullptr
@@ -88,7 +88,7 @@ bool GeometryPassTextureDescriptorSetLayoutImpl::Init ( android_vulkan::Renderer
         },
         {
             .binding = 3U,
-            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
+            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
             .descriptorCount = 1U,
             .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
             .pImmutableSamplers = nullptr
@@ -96,41 +96,6 @@ bool GeometryPassTextureDescriptorSetLayoutImpl::Init ( android_vulkan::Renderer
         {
             .binding = 4U,
             .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-            .descriptorCount = 1U,
-            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
-            .pImmutableSamplers = nullptr
-        },
-        {
-            .binding = 5U,
-            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
-            .descriptorCount = 1U,
-            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
-            .pImmutableSamplers = nullptr
-        },
-        {
-            .binding = 6U,
-            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-            .descriptorCount = 1U,
-            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
-            .pImmutableSamplers = nullptr
-        },
-        {
-            .binding = 7U,
-            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
-            .descriptorCount = 1U,
-            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
-            .pImmutableSamplers = nullptr
-        },
-        {
-            .binding = 8U,
-            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-            .descriptorCount = 1U,
-            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
-            .pImmutableSamplers = nullptr
-        },
-        {
-            .binding = 9U,
-            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
             .descriptorCount = 1U,
             .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
             .pImmutableSamplers = nullptr
@@ -147,7 +112,7 @@ bool GeometryPassTextureDescriptorSetLayoutImpl::Init ( android_vulkan::Renderer
     };
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateDescriptorSetLayout ( renderer.GetDevice (), &descriptorSetLayoutInfo, nullptr, &_layout ),
+        vkCreateDescriptorSetLayout ( device, &descriptorSetLayoutInfo, nullptr, &_layout ),
         "pbr::GeometryPassTextureDescriptorSetLayoutImpl::Init",
         "Can't create descriptor set layout"
     );
@@ -161,23 +126,23 @@ bool GeometryPassTextureDescriptorSetLayoutImpl::Init ( android_vulkan::Renderer
     return true;
 }
 
-static GeometryPassTextureDescriptorSetLayoutImpl g_opaqueTextureDescriptorSetLayout {};
+static GeometryPassTextureDescriptorSetLayoutImpl g_textureDescriptorSetLayout {};
 
 //----------------------------------------------------------------------------------------------------------------------
 
 void GeometryPassTextureDescriptorSetLayout::Destroy ( VkDevice device ) noexcept
 {
-    g_opaqueTextureDescriptorSetLayout.Destroy ( device );
+    g_textureDescriptorSetLayout.Destroy ( device );
 }
 
-bool GeometryPassTextureDescriptorSetLayout::Init ( android_vulkan::Renderer &renderer ) noexcept
+bool GeometryPassTextureDescriptorSetLayout::Init ( VkDevice device ) noexcept
 {
-    return g_opaqueTextureDescriptorSetLayout.Init ( renderer );
+    return g_textureDescriptorSetLayout.Init ( device );
 }
 
 VkDescriptorSetLayout GeometryPassTextureDescriptorSetLayout::GetLayout () const noexcept
 {
-    return g_opaqueTextureDescriptorSetLayout._layout;
+    return g_textureDescriptorSetLayout._layout;
 }
 
 } // namespace pbr

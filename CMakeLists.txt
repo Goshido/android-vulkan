@@ -61,6 +61,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/pbr/geometry_pass_instance_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/geometry_pass_material.cpp
     app/src/main/cpp/sources/pbr/geometry_pass_program.cpp
+    app/src/main/cpp/sources/pbr/geometry_pass_sampler_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/geometry_pass_texture_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/geometry_subpass_base.cpp
     app/src/main/cpp/sources/pbr/light.cpp

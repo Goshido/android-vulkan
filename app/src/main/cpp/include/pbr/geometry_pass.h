@@ -3,21 +3,28 @@
 
 
 #include <renderer.h>
+#include "geometry_pass_sampler_descriptor_set_layout.h"
 #include "opaque_subpass.h"
 #include "stipple_subpass.h"
+
 
 namespace pbr {
 
 class GeometryPass final
 {
     private:
-        VkCommandBuffer             _commandBuffer = VK_NULL_HANDLE;
-        VkFence                     _fence = VK_NULL_HANDLE;
+        VkCommandBuffer                             _commandBuffer = VK_NULL_HANDLE;
 
-        OpaqueSubpass               _opaqueSubpass {};
-        StippleSubpass              _stippleSubpass {};
+        VkDescriptorPool                            _descriptorPool = VK_NULL_HANDLE;
+        VkDescriptorSet                             _descriptorSet = VK_NULL_HANDLE;
+        GeometryPassSamplerDescriptorSetLayout      _descriptorSetLayout {};
 
-        VkRenderPassBeginInfo       _renderPassInfo {};
+        VkFence                                     _fence = VK_NULL_HANDLE;
+
+        OpaqueSubpass                               _opaqueSubpass {};
+        StippleSubpass                              _stippleSubpass {};
+
+        VkRenderPassBeginInfo                       _renderPassInfo {};
 
     public:
         GeometryPass () = default;
@@ -34,7 +41,8 @@ class GeometryPass final
             VkCommandPool commandPool,
             VkExtent2D const &resolution,
             VkRenderPass renderPass,
-            VkFramebuffer framebuffer
+            VkFramebuffer framebuffer,
+            SamplerManager &samplerManager
         ) noexcept;
 
         void Destroy ( VkDevice device ) noexcept;
@@ -45,7 +53,6 @@ class GeometryPass final
             GXMat4 const &view,
             GXMat4 const &viewProjection,
             DefaultTextureManager const &defaultTextureManager,
-            SamplerManager &samplerManager,
             RenderSessionStats &renderSessionStats
         ) noexcept;
 

@@ -123,7 +123,7 @@ bool UniformBuffer::Update ( android_vulkan::Renderer &renderer, uint8_t const* 
     if ( !result )
         return false;
 
-    memcpy ( dst, data, size );
+    std::memcpy ( dst, data, size );
     vkUnmapMemory ( device, _transferMemory );
 
     VkSubmitInfo submitInfo;

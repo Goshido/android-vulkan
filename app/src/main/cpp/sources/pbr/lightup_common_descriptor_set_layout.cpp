@@ -31,7 +31,7 @@ class LightupCommonDescriptorSetLayoutImpl final
         ~LightupCommonDescriptorSetLayoutImpl () = default;
 
         void Destroy ( VkDevice device ) noexcept;
-        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer ) noexcept;
+        [[nodiscard]] bool Init ( VkDevice device ) noexcept;
 };
 
 void LightupCommonDescriptorSetLayoutImpl::Destroy ( VkDevice device ) noexcept
@@ -49,7 +49,7 @@ void LightupCommonDescriptorSetLayoutImpl::Destroy ( VkDevice device ) noexcept
     AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::LightupCommonDescriptorSetLayoutImpl::_layout" )
 }
 
-bool LightupCommonDescriptorSetLayoutImpl::Init ( android_vulkan::Renderer &renderer ) noexcept
+bool LightupCommonDescriptorSetLayoutImpl::Init ( VkDevice device ) noexcept
 {
     if ( _references )
     {
@@ -127,7 +127,7 @@ bool LightupCommonDescriptorSetLayoutImpl::Init ( android_vulkan::Renderer &rend
     };
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateDescriptorSetLayout ( renderer.GetDevice (), &descriptorSetLayoutInfo, nullptr, &_layout ),
+        vkCreateDescriptorSetLayout ( device, &descriptorSetLayoutInfo, nullptr, &_layout ),
         "pbr::LightupCommonDescriptorSetLayoutImpl::Init",
         "Can't create descriptor set layout"
     );
@@ -150,9 +150,9 @@ void LightupCommonDescriptorSetLayout::Destroy ( VkDevice device ) noexcept
     g_lightupCommonDescriptorSetLayout.Destroy ( device );
 }
 
-bool LightupCommonDescriptorSetLayout::Init ( android_vulkan::Renderer &renderer ) noexcept
+bool LightupCommonDescriptorSetLayout::Init ( VkDevice device ) noexcept
 {
-    return g_lightupCommonDescriptorSetLayout.Init ( renderer );
+    return g_lightupCommonDescriptorSetLayout.Init ( device );
 }
 
 VkDescriptorSetLayout LightupCommonDescriptorSetLayout::GetLayout () const noexcept

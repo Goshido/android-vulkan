@@ -83,7 +83,7 @@ void GeometrySubpassBase::AppendDrawcalls ( VkCommandBuffer commandBuffer,
         auto instanceDrawer = [ & ] ( MeshRef const &mesh, uint32_t batches ) noexcept {
             if ( isUniformBind )
             {
-                program.SetDescriptorSet ( commandBuffer, instanceSets + uniformUsed, 1U, 1U );
+                program.SetDescriptorSet ( commandBuffer, instanceSets + uniformUsed, 2U, 1U );
             }
             else
             {
@@ -91,7 +91,7 @@ void GeometrySubpassBase::AppendDrawcalls ( VkCommandBuffer commandBuffer,
 
                 program.SetDescriptorSet ( commandBuffer,
                     sets,
-                    0U,
+                    1U,
                     static_cast<uint32_t> ( std::size ( sets ) )
                 );
 

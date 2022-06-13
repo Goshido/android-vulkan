@@ -69,7 +69,7 @@ bool PointLightLightupProgram::Init ( android_vulkan::Renderer &renderer,
     pipelineInfo.pColorBlendState = InitColorBlendInfo ( blendInfo, attachmentInfo );
     pipelineInfo.pDynamicState = nullptr;
 
-    if ( !InitLayout ( renderer, pipelineInfo.layout ) )
+    if ( !InitLayout ( device, pipelineInfo.layout ) )
     {
         Destroy ( device );
         return false;
@@ -256,15 +256,15 @@ VkPipelineInputAssemblyStateCreateInfo const* PointLightLightupProgram::InitInpu
     return &info;
 }
 
-bool PointLightLightupProgram::InitLayout ( android_vulkan::Renderer &renderer, VkPipelineLayout &layout ) noexcept
+bool PointLightLightupProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept
 {
-    if ( !_commonLayout.Init ( renderer ) )
+    if ( !_commonLayout.Init ( device ) )
         return false;
 
-    if ( !_lightVolumeLayout.Init ( renderer ) )
+    if ( !_lightVolumeLayout.Init ( device ) )
         return false;
 
-    if ( !_pointLightLayout.Init ( renderer ) )
+    if ( !_pointLightLayout.Init ( device ) )
         return false;
 
     VkDescriptorSetLayout const layouts[] =
@@ -286,7 +286,7 @@ bool PointLightLightupProgram::InitLayout ( android_vulkan::Renderer &renderer, 
     };
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreatePipelineLayout ( renderer.GetDevice (), &layoutInfo, nullptr, &_pipelineLayout ),
+        vkCreatePipelineLayout ( device, &layoutInfo, nullptr, &_pipelineLayout ),
         "pbr::PointLightLightupProgram::InitLayout",
         "Can't create pipeline layout"
     );

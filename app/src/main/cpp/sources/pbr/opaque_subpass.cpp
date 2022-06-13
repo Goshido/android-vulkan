@@ -32,22 +32,25 @@ bool OpaqueSubpass::Execute ( android_vulkan::Renderer &renderer,
     GXMat4 const &view,
     GXMat4 const &viewProjection,
     DefaultTextureManager const &defaultTextureManager,
-    SamplerManager &samplerManager,
-    RenderSessionStats &renderSessionStats
+    RenderSessionStats &renderSessionStats,
+    VkDescriptorSet samplerDescriptorSet,
+    bool &isSamplerUsed
 ) noexcept
 {
-    _descriptorSetStorage.clear ();
+    if ( _sceneData.empty () )
+        return true;
 
-    bool const result = UpdateGPUData ( renderer,
-        frustum,
-        view,
-        viewProjection,
-        defaultTextureManager,
-        samplerManager
-    );
-
-    if ( !result )
+    if ( !UpdateGPUData ( renderer, frustum, view, viewProjection, defaultTextureManager ) )
         return false;
+
+    if ( _uniformStorage.empty () )
+        return true;
+
+    if ( !isSamplerUsed )
+    {
+        _program.SetDescriptorSet ( commandBuffer, &samplerDescriptorSet, 0U, 1U );
+        isSamplerUsed = true;
+    }
 
     VkDescriptorSet const* textureSets = _descriptorSetStorage.data ();
     AppendDrawcalls ( commandBuffer, _program, textureSets, textureSets + _sceneData.size (), renderSessionStats );
@@ -66,8 +69,7 @@ bool OpaqueSubpass::UpdateGPUData ( android_vulkan::Renderer &renderer,
     GXProjectionClipPlanes const &frustum,
     GXMat4 const &view,
     GXMat4 const &viewProjection,
-    DefaultTextureManager const &defaultTextureManager,
-    SamplerManager &samplerManager
+    DefaultTextureManager const &defaultTextureManager
 ) noexcept
 {
     size_t const opaqueCount = _sceneData.size ();
@@ -77,7 +79,7 @@ bool OpaqueSubpass::UpdateGPUData ( android_vulkan::Renderer &renderer,
     _imageStorage.reserve ( textureCount );
 
     _writeStorage0.clear ();
-    _writeStorage0.reserve ( textureCount * 2U );
+    _writeStorage0.reserve ( textureCount );
 
     Program::DescriptorSetInfo const& descriptorSetInfo = _program.GetResourceInfo ();
     Program::SetItem const& descriptorSet0 = descriptorSetInfo[ 0U ];
@@ -180,19 +182,16 @@ bool OpaqueSubpass::UpdateGPUData ( android_vulkan::Renderer &renderer,
     writeInfo0.pBufferInfo = nullptr;
     writeInfo0.pTexelBufferView = nullptr;
 
-    VkSampler materialSampler = samplerManager.GetMaterialSampler ()->GetSampler ();
-
     auto textureBinder = [ & ] ( Texture2DRef const &texture,
         Texture2DRef const &defaultTexture,
-        uint32_t imageBindSlot,
-        uint32_t samplerBindSlot
+        uint32_t imageBindSlot
     ) noexcept {
         Texture2DRef const& t = texture ? texture : defaultTexture;
 
         writeInfo0.pImageInfo = &_imageStorage.emplace_back (
             VkDescriptorImageInfo
             {
-                .sampler = materialSampler,
+                .sampler = VK_NULL_HANDLE,
                 .imageView = t->GetImageView (),
                 .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
             }
@@ -200,10 +199,6 @@ bool OpaqueSubpass::UpdateGPUData ( android_vulkan::Renderer &renderer,
 
         writeInfo0.dstBinding = imageBindSlot;
         writeInfo0.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-        _writeStorage0.push_back ( writeInfo0 );
-
-        writeInfo0.dstBinding = samplerBindSlot;
-        writeInfo0.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
         _writeStorage0.push_back ( writeInfo0 );
     };
 
@@ -243,11 +238,11 @@ bool OpaqueSubpass::UpdateGPUData ( android_vulkan::Renderer &renderer,
 
         auto& m = const_cast<GeometryPassMaterial&> ( material );
 
-        textureBinder ( m.GetAlbedo (), defaultTextureManager.GetAlbedo (), 0U, 1U );
-        textureBinder ( m.GetEmission (), defaultTextureManager.GetEmission (), 2U, 3U );
-        textureBinder ( m.GetMask (), defaultTextureManager.GetMask (), 4U, 5U );
-        textureBinder ( m.GetNormal (), defaultTextureManager.GetNormal (), 6U, 7U );
-        textureBinder ( m.GetParam (), defaultTextureManager.GetParams (), 8U, 9U );
+        textureBinder ( m.GetAlbedo (), defaultTextureManager.GetAlbedo (), 0U );
+        textureBinder ( m.GetEmission (), defaultTextureManager.GetEmission (), 1U );
+        textureBinder ( m.GetMask (), defaultTextureManager.GetMask (), 2U );
+        textureBinder ( m.GetNormal (), defaultTextureManager.GetNormal (), 3U );
+        textureBinder ( m.GetParam (), defaultTextureManager.GetParams (), 4U );
     }
 
     vkUpdateDescriptorSets ( device,

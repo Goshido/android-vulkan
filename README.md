@@ -19,13 +19,13 @@ Requirements:
 * _Android Studio Gradle Plugin 7.2.1_
 * _Android NDK 24.0.8215888 (side by side)_
 * _Android SDK 11.0 (API level 30)_
-* _Android SDK Build-Tools 32.0.0_
+* _Android SDK Build-Tools 33.0.0_
 * _Android SDK Platform-Tools 33.0.2_
 * _CMake 3.18.1_
 * _DirectX Shader Compiler 1.6.2112.10230_
-* _Kotlin 1.6.21_
-* _Kotlin Gradle plugin 1.6.21_
-* _Vulkan Validation Layers_ `a5976603048607b105e19eb9e1d64f4a3e479ad4`
+* _Kotlin 1.7.0_
+* _Kotlin Gradle plugin 1.7.0_
+* _Vulkan Validation Layers_ `b986019b6ff5fc4f1827f28e5a06aed6dabac0ee`
 * _Lua_ `8426d9b4d4df1da3c5b2d759e509ae1c50a86667`
 * _Gradle 7.4.2-bin_
 * Real _Android 11_ device with _Vulkan 1.1.131_ support

@@ -11,3 +11,6 @@
 # CMake
 /app/.cxx
 /app/build
+
+# HLSL SPIR-V
+/app/src/main/hlsl/disassm/blob.txt

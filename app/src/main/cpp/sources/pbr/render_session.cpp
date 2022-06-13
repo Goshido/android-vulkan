@@ -50,7 +50,6 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
         _view,
         _viewProjection,
         _defaultTextureManager,
-        _samplerManager,
         _renderSessionStats
     );
 
@@ -103,7 +102,7 @@ bool RenderSession::OnInitDevice ( android_vulkan::Renderer &renderer, VkCommand
     _meshHandlers[ static_cast<size_t> ( eMaterialType::Opaque ) ] = &RenderSession::SubmitOpaqueCall;
     _meshHandlers[ static_cast<size_t> ( eMaterialType::Stipple ) ] = &RenderSession::SubmitStippleCall;
 
-    if ( !_texturePresentDescriptorSetLayout.Init ( renderer ) )
+    if ( !_texturePresentDescriptorSetLayout.Init ( renderer.GetDevice () ) )
         return false;
 
     if ( !_defaultTextureManager.Init ( renderer, commandPool ) )
@@ -354,7 +353,8 @@ bool RenderSession::CreateGBufferResources ( android_vulkan::Renderer &renderer,
         commandPool,
         _gBuffer.GetResolution (),
         _gBufferRenderPass,
-        _gBufferFramebuffer
+        _gBufferFramebuffer,
+        _samplerManager
     );
 
     if ( !result )

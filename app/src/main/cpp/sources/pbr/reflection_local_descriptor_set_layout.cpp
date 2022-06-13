@@ -31,7 +31,7 @@ class ReflectionLocalDescriptorSetLayoutImpl final
         ~ReflectionLocalDescriptorSetLayoutImpl () = default;
     
         void Destroy ( VkDevice device ) noexcept;
-        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer ) noexcept;
+        [[nodiscard]] bool Init ( VkDevice device ) noexcept;
 };
 
 void ReflectionLocalDescriptorSetLayoutImpl::Destroy ( VkDevice device ) noexcept
@@ -49,7 +49,7 @@ void ReflectionLocalDescriptorSetLayoutImpl::Destroy ( VkDevice device ) noexcep
     AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::ReflectionLocalDescriptorSetLayoutImpl::_layout" )
 }
 
-bool ReflectionLocalDescriptorSetLayoutImpl::Init ( android_vulkan::Renderer &renderer ) noexcept
+bool ReflectionLocalDescriptorSetLayoutImpl::Init ( VkDevice device ) noexcept
 {
     if ( _references )
     {
@@ -85,7 +85,7 @@ bool ReflectionLocalDescriptorSetLayoutImpl::Init ( android_vulkan::Renderer &re
     };
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateDescriptorSetLayout ( renderer.GetDevice (), &descriptorSetLayoutInfo, nullptr, &_layout ),
+        vkCreateDescriptorSetLayout ( device, &descriptorSetLayoutInfo, nullptr, &_layout ),
         "pbr::ReflectionLocalDescriptorSetLayoutImpl::Init",
         "Can't create descriptor set layout"
     );
@@ -108,9 +108,9 @@ void ReflectionLocalDescriptorSetLayout::Destroy ( VkDevice device ) noexcept
     g_reflectionLocalDescriptorSetLayout.Destroy ( device );
 }
 
-bool ReflectionLocalDescriptorSetLayout::Init ( android_vulkan::Renderer &renderer ) noexcept
+bool ReflectionLocalDescriptorSetLayout::Init ( VkDevice device ) noexcept
 {
-    return g_reflectionLocalDescriptorSetLayout.Init ( renderer );
+    return g_reflectionLocalDescriptorSetLayout.Init ( device );
 }
 
 VkDescriptorSetLayout ReflectionLocalDescriptorSetLayout::GetLayout () const noexcept

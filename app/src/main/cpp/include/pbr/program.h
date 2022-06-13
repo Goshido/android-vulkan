@@ -74,9 +74,7 @@ class Program
             VkPipelineInputAssemblyStateCreateInfo &info
         ) const noexcept = 0;
 
-        [[nodiscard]] virtual bool InitLayout ( android_vulkan::Renderer &renderer,
-            VkPipelineLayout &layout
-        ) noexcept = 0;
+        [[nodiscard]] virtual bool InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept = 0;
 
         [[nodiscard]] virtual VkPipelineMultisampleStateCreateInfo const* InitMultisampleInfo (
             VkPipelineMultisampleStateCreateInfo &info

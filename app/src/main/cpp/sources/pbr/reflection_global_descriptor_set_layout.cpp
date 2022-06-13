@@ -30,8 +30,8 @@ class ReflectionGlobalDescriptorSetLayoutImpl final
 
         ~ReflectionGlobalDescriptorSetLayoutImpl () = default;
 
-        void Destroy ( VkDevice device );
-        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer );
+        void Destroy ( VkDevice device ) noexcept;
+        [[nodiscard]] bool Init ( VkDevice device ) noexcept;
 };
 
 ReflectionGlobalDescriptorSetLayoutImpl::ReflectionGlobalDescriptorSetLayoutImpl () noexcept:
@@ -41,7 +41,7 @@ ReflectionGlobalDescriptorSetLayoutImpl::ReflectionGlobalDescriptorSetLayoutImpl
     // NOTHING
 }
 
-void ReflectionGlobalDescriptorSetLayoutImpl::Destroy ( VkDevice device )
+void ReflectionGlobalDescriptorSetLayoutImpl::Destroy ( VkDevice device ) noexcept
 {
     if ( !_references )
         return;
@@ -56,7 +56,7 @@ void ReflectionGlobalDescriptorSetLayoutImpl::Destroy ( VkDevice device )
     AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::ReflectionGlobalDescriptorSetLayoutImpl::_layout" )
 }
 
-bool ReflectionGlobalDescriptorSetLayoutImpl::Init ( android_vulkan::Renderer &renderer )
+bool ReflectionGlobalDescriptorSetLayoutImpl::Init ( VkDevice device ) noexcept
 {
     if ( _references )
     {
@@ -85,7 +85,7 @@ bool ReflectionGlobalDescriptorSetLayoutImpl::Init ( android_vulkan::Renderer &r
     };
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateDescriptorSetLayout ( renderer.GetDevice (), &descriptorSetLayoutInfo, nullptr, &_layout ),
+        vkCreateDescriptorSetLayout ( device, &descriptorSetLayoutInfo, nullptr, &_layout ),
         "pbr::ReflectionGlobalDescriptorSetLayoutImpl::Init",
         "Can't create descriptor set layout"
     );
@@ -103,17 +103,17 @@ static ReflectionGlobalDescriptorSetLayoutImpl g_reflectionGlobalDescriptorSetLa
 
 //----------------------------------------------------------------------------------------------------------------------
 
-void ReflectionGlobalDescriptorSetLayout::Destroy ( VkDevice device )
+void ReflectionGlobalDescriptorSetLayout::Destroy ( VkDevice device ) noexcept
 {
     g_reflectionGlobalDescriptorSetLayout.Destroy ( device );
 }
 
-bool ReflectionGlobalDescriptorSetLayout::Init ( android_vulkan::Renderer &renderer )
+bool ReflectionGlobalDescriptorSetLayout::Init ( VkDevice device ) noexcept
 {
-    return g_reflectionGlobalDescriptorSetLayout.Init ( renderer );
+    return g_reflectionGlobalDescriptorSetLayout.Init ( device );
 }
 
-VkDescriptorSetLayout ReflectionGlobalDescriptorSetLayout::GetLayout () const
+VkDescriptorSetLayout ReflectionGlobalDescriptorSetLayout::GetLayout () const noexcept
 {
     return g_reflectionGlobalDescriptorSetLayout._layout;
 }

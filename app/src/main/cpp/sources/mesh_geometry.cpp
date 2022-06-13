@@ -191,8 +191,8 @@ bool MeshGeometry::LoadMesh ( uint8_t const* vertexData,
     size_t const vertexOffset = sizeof ( uint32_t ) * indexCount;
     std::vector<uint8_t> storage ( vertexOffset + vertexDataSize );
     uint8_t* data = storage.data ();
-    memcpy ( data, indices, vertexOffset );
-    memcpy ( data + vertexOffset, vertexData, vertexDataSize );
+    std::memcpy ( data, indices, vertexOffset );
+    std::memcpy ( data + vertexOffset, vertexData, vertexDataSize );
 
     bool const result = UploadComplex ( data,
         vertexDataSize,

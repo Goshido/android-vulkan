@@ -551,7 +551,7 @@ bool Texture2D::UploadCompressed ( Renderer &renderer,
     for ( uint8_t i = 0U; i < mips; ++i )
     {
         MipInfo const& mip = ktx.GetMip ( i );
-        memcpy ( mappedBuffer + offset, mip._data, static_cast<size_t> ( mip._size ) );
+        std::memcpy ( mappedBuffer + offset, mip._data, static_cast<size_t> ( mip._size ) );
         offset += static_cast<size_t> ( mip._size );
     }
 
@@ -1044,7 +1044,7 @@ bool Texture2D::LoadImage ( std::vector<uint8_t> &pixelData,
             static_cast<size_t> ( width ) * static_cast<size_t> ( height ) * static_cast<size_t> ( channels );
 
         pixelData.resize ( size );
-        memcpy ( pixelData.data (), imagePixels, size );
+        std::memcpy ( pixelData.data (), imagePixels, size );
         free ( imagePixels );
 
         return true;

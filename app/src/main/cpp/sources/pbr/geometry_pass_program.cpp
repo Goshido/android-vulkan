@@ -60,7 +60,7 @@ bool GeometryPassProgram::Init ( android_vulkan::Renderer &renderer,
     pipelineInfo.pColorBlendState = InitColorBlendInfo ( blendInfo, attachmentInfo );
     pipelineInfo.pDynamicState = nullptr;
 
-    if ( !InitLayout ( renderer, pipelineInfo.layout ) )
+    if ( !InitLayout ( device, pipelineInfo.layout ) )
     {
         Destroy ( device );
         return false;
@@ -100,6 +100,7 @@ void GeometryPassProgram::Destroy ( VkDevice device ) noexcept
         AV_UNREGISTER_PIPELINE_LAYOUT ( std::string ( _name ) + "::_pipelineLayout" )
     }
 
+    _samplerLayout.Destroy ( device );
     _textureLayout.Destroy ( device );
     _instanceLayout.Destroy ( device );
 
@@ -119,14 +120,18 @@ Program::DescriptorSetInfo const& GeometryPassProgram::GetResourceInfo () const 
     {
         {
             {
+                .type = VK_DESCRIPTOR_TYPE_SAMPLER,
+                .descriptorCount = 1U
+            }
+        },
+
+        {
+            {
                 .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
                 .descriptorCount = 5U
             },
-            {
-                .type = VK_DESCRIPTOR_TYPE_SAMPLER,
-                .descriptorCount = 5U
-            }
         },
+
         {
             {
                 .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
@@ -240,16 +245,21 @@ VkPipelineInputAssemblyStateCreateInfo const* GeometryPassProgram::InitInputAsse
     return &info;
 }
 
-bool GeometryPassProgram::InitLayout ( android_vulkan::Renderer &renderer, VkPipelineLayout &layout ) noexcept
+bool GeometryPassProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept
 {
-    if ( !_instanceLayout.Init ( renderer ) )
+
+    if ( !_samplerLayout.Init ( device ) )
         return false;
 
-    if ( !_textureLayout.Init ( renderer ) )
+    if ( !_textureLayout.Init ( device ) )
+        return false;
+
+    if ( !_instanceLayout.Init ( device ) )
         return false;
 
     VkDescriptorSetLayout const layouts[] =
     {
+        _samplerLayout.GetLayout (),
         _textureLayout.GetLayout (),
         _instanceLayout.GetLayout ()
     };
@@ -269,7 +279,7 @@ bool GeometryPassProgram::InitLayout ( android_vulkan::Renderer &renderer, VkPip
     std::snprintf ( where, std::size ( where ), "%s::InitLayout", _name.data () );
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreatePipelineLayout ( renderer.GetDevice (), &layoutInfo, nullptr, &_pipelineLayout ),
+        vkCreatePipelineLayout ( device, &layoutInfo, nullptr, &_pipelineLayout ),
         where,
         "Can't create pipeline layout"
     );

@@ -31,7 +31,7 @@ class LightVolumeDescriptorSetLayoutImpl final
         ~LightVolumeDescriptorSetLayoutImpl () = default;
 
         void Destroy ( VkDevice device ) noexcept;
-        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer ) noexcept;
+        [[nodiscard]] bool Init ( VkDevice device ) noexcept;
 };
 
 void LightVolumeDescriptorSetLayoutImpl::Destroy ( VkDevice device ) noexcept
@@ -49,7 +49,7 @@ void LightVolumeDescriptorSetLayoutImpl::Destroy ( VkDevice device ) noexcept
     AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::LightVolumeDescriptorSetLayoutImpl::_layout" )
 }
 
-bool LightVolumeDescriptorSetLayoutImpl::Init ( android_vulkan::Renderer &renderer ) noexcept
+bool LightVolumeDescriptorSetLayoutImpl::Init ( VkDevice device ) noexcept
 {
     if ( _references )
     {
@@ -78,7 +78,7 @@ bool LightVolumeDescriptorSetLayoutImpl::Init ( android_vulkan::Renderer &render
     };
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateDescriptorSetLayout ( renderer.GetDevice (), &descriptorSetLayoutInfo, nullptr, &_layout ),
+        vkCreateDescriptorSetLayout ( device, &descriptorSetLayoutInfo, nullptr, &_layout ),
         "pbr::LightVolumeDescriptorSetLayoutImpl::Init",
         "Can't create descriptor set layout"
     );
@@ -101,9 +101,9 @@ void LightVolumeDescriptorSetLayout::Destroy ( VkDevice device ) noexcept
     g_lightVolumeDescriptorSetLayout.Destroy ( device );
 }
 
-bool LightVolumeDescriptorSetLayout::Init ( android_vulkan::Renderer &renderer ) noexcept
+bool LightVolumeDescriptorSetLayout::Init ( VkDevice device ) noexcept
 {
-    return g_lightVolumeDescriptorSetLayout.Init ( renderer );
+    return g_lightVolumeDescriptorSetLayout.Init ( device );
 }
 
 VkDescriptorSetLayout LightVolumeDescriptorSetLayout::GetLayout () const noexcept

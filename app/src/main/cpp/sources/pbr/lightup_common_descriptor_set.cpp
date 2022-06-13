@@ -74,7 +74,7 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
 
     AV_REGISTER_DESCRIPTOR_POOL ( "pbr::LightupCommonDescriptorSet::_descriptorPool" )
 
-    if ( !_layout.Init ( renderer ) )
+    if ( !_layout.Init ( device ) )
     {
         Destroy ( device );
         return false;
@@ -438,7 +438,7 @@ bool LightupCommonDescriptorSet::Update ( android_vulkan::Renderer &renderer,
             2.0F / static_cast<float> ( resolution.height )
         },
 
-        ._padding0_0 {},
+        ._padding0_0 {}
     };
 
     return _uniformBuffer.Update ( renderer, reinterpret_cast<uint8_t const*> ( &viewData ), sizeof ( viewData ) );

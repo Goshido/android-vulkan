@@ -66,9 +66,7 @@ class PointLightShadowmapGeneratorProgram final : public Program
             VkPipelineInputAssemblyStateCreateInfo &info
         ) const noexcept override;
 
-        [[nodiscard]] bool InitLayout ( android_vulkan::Renderer &renderer,
-            VkPipelineLayout &layout
-        ) noexcept override;
+        [[nodiscard]] bool InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept override;
 
         [[nodiscard]] VkPipelineMultisampleStateCreateInfo const* InitMultisampleInfo (
             VkPipelineMultisampleStateCreateInfo &info

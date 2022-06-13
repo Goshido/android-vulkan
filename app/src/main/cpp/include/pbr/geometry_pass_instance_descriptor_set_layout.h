@@ -24,7 +24,7 @@ class GeometryPassInstanceDescriptorSetLayout final : public DescriptorSetLayout
         ~GeometryPassInstanceDescriptorSetLayout () noexcept override = default;
 
         void Destroy ( VkDevice device ) noexcept override;
-        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer ) noexcept override;
+        [[nodiscard]] bool Init ( VkDevice device ) noexcept override;
 
         [[nodiscard]] VkDescriptorSetLayout GetLayout () const noexcept override;
 };

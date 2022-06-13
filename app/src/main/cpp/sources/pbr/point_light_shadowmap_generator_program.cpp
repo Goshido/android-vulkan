@@ -65,7 +65,7 @@ bool PointLightShadowmapGeneratorProgram::Init ( android_vulkan::Renderer &rende
     pipelineInfo.pColorBlendState = InitColorBlendInfo ( blendInfo, nullptr );
     pipelineInfo.pDynamicState = nullptr;
 
-    if ( !InitLayout ( renderer, pipelineInfo.layout ) )
+    if ( !InitLayout ( device, pipelineInfo.layout ) )
     {
         Destroy ( device );
         return false;
@@ -202,11 +202,9 @@ VkPipelineInputAssemblyStateCreateInfo const* PointLightShadowmapGeneratorProgra
     return &info;
 }
 
-bool PointLightShadowmapGeneratorProgram::InitLayout ( android_vulkan::Renderer &renderer,
-    VkPipelineLayout &layout
-) noexcept
+bool PointLightShadowmapGeneratorProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept
 {
-    if ( !_instanceLayout.Init ( renderer ) )
+    if ( !_instanceLayout.Init ( device ) )
         return false;
 
     VkDescriptorSetLayout layouts[] = { _instanceLayout.GetLayout () };
@@ -221,7 +219,7 @@ bool PointLightShadowmapGeneratorProgram::InitLayout ( android_vulkan::Renderer 
     layoutInfo.pPushConstantRanges = nullptr;
 
     const bool result = android_vulkan::Renderer::CheckVkResult (
-        vkCreatePipelineLayout ( renderer.GetDevice (), &layoutInfo, nullptr, &_pipelineLayout ),
+        vkCreatePipelineLayout ( device, &layoutInfo, nullptr, &_pipelineLayout ),
         "pbr::PointLightShadowmapGeneratorProgram::InitLayout",
         "Can't create pipeline layout"
     );

@@ -2016,7 +2016,7 @@ bool Renderer::PrintPhysicalDeviceExtensionInfo ( VkPhysicalDevice physicalDevic
         while ( targetExtensionStorage.size () < neededSpace )
             targetExtensionStorage.resize ( targetExtensionStorage.size () * 2U );
 
-        memcpy ( targetExtensionStorage.data () + offset, prop.extensionName, size );
+        std::memcpy ( targetExtensionStorage.data () + offset, prop.extensionName, size );
         targetExtensions.push_back ( reinterpret_cast<char const*> ( offset ) );
 
         offset = neededSpace;

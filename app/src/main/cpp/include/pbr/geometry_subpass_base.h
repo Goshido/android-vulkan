@@ -10,13 +10,21 @@
 
 namespace pbr {
 
-class GeometrySubpassBase {
+class GeometrySubpassBase
+{
+    protected:
+        struct AllocateInfo final
+        {
+            size_t                              _materials;
+            size_t                              _textures;
+            size_t                              _uniformBuffers;
+        };
+
     protected:
         VkDescriptorPool                        _descriptorPool = VK_NULL_HANDLE;
         std::vector<VkDescriptorSet>            _descriptorSetStorage {};
         std::vector<VkDescriptorImageInfo>      _imageStorage {};
         std::vector<VkDescriptorSetLayout>      _layouts {};
-        std::vector<VkDescriptorPoolSize>       _poolSizeStorage {};
         SceneData                               _sceneData {};
         VkSubmitInfo                            _submitInfoTransfer {};
         VkCommandBuffer                         _transferCommandBuffer = VK_NULL_HANDLE;
@@ -55,6 +63,10 @@ class GeometrySubpassBase {
 
         [[nodiscard]] size_t AggregateUniformCount () const noexcept;
 
+        void AllocateImageSystem ( size_t textureCount ) noexcept;
+        [[nodiscard]] AllocateInfo AllocateTransferSystem () noexcept;
+        void AllocateUniformBufferSystem ( size_t uniformCount ) noexcept;
+
         void AppendDrawcalls ( VkCommandBuffer commandBuffer,
             GeometryPassProgram &program,
             VkDescriptorSet const* textureSets,
@@ -69,7 +81,11 @@ class GeometrySubpassBase {
         void DestroyBase ( VkDevice device ) noexcept;
 
         void DestroyDescriptorPool ( VkDevice device ) noexcept;
-        [[nodiscard]] bool RecreateDescriptorPool ( VkDevice device, size_t maxSets ) noexcept;
+
+        [[nodiscard]] bool RecreateDescriptorPool ( VkDevice device,
+            size_t maxSets,
+            AllocateInfo const &allocateInfo
+        ) noexcept;
 };
 
 } // namespace pbr

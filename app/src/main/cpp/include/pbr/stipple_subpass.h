@@ -39,8 +39,9 @@ class StippleSubpass final : public GeometrySubpassBase
             GXMat4 const &view,
             GXMat4 const &viewProjection,
             DefaultTextureManager const &defaultTextureManager,
-            SamplerManager &samplerManager,
-            RenderSessionStats &renderSessionStats
+            RenderSessionStats &renderSessionStats,
+            VkDescriptorSet samplerDescriptorSet,
+            bool &isSamplerUsed
         ) noexcept;
 
     private:
@@ -52,9 +53,7 @@ class StippleSubpass final : public GeometrySubpassBase
         [[nodiscard]] bool UpdateGPUData ( android_vulkan::Renderer &renderer,
             GXMat4 const &view,
             GXMat4 const &viewProjection,
-            std::vector<VkDescriptorSet> &descriptorSetStorage,
-            DefaultTextureManager const &defaultTextureManager,
-            SamplerManager &samplerManager
+            DefaultTextureManager const &defaultTextureManager
         ) noexcept;
 };
 

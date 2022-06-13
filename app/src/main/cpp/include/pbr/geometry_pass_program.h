@@ -3,6 +3,7 @@
 
 
 #include "geometry_pass_instance_descriptor_set_layout.h"
+#include "geometry_pass_sampler_descriptor_set_layout.h"
 #include "geometry_pass_texture_descriptor_set_layout.h"
 #include "gpgpu_limits.inc"
 #include "program.h"
@@ -35,6 +36,7 @@ class GeometryPassProgram : public Program
 
     private:
         GeometryPassInstanceDescriptorSetLayout     _instanceLayout {};
+        GeometryPassSamplerDescriptorSetLayout      _samplerLayout {};
         GeometryPassTextureDescriptorSetLayout      _textureLayout {};
         std::string_view const                      _fragmentShaderSource;
 
@@ -81,9 +83,7 @@ class GeometryPassProgram : public Program
             VkPipelineInputAssemblyStateCreateInfo &info
         ) const noexcept override;
 
-        [[nodiscard]] bool InitLayout ( android_vulkan::Renderer &renderer,
-            VkPipelineLayout &layout
-        ) noexcept override;
+        [[nodiscard]] bool InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept override;
 
         [[nodiscard]] VkPipelineMultisampleStateCreateInfo const* InitMultisampleInfo (
             VkPipelineMultisampleStateCreateInfo &info

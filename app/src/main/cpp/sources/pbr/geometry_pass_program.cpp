@@ -120,14 +120,18 @@ Program::DescriptorSetInfo const& GeometryPassProgram::GetResourceInfo () const 
     {
         {
             {
+                .type = VK_DESCRIPTOR_TYPE_SAMPLER,
+                .descriptorCount = 1U
+            }
+        },
+
+        {
+            {
                 .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
                 .descriptorCount = 5U
             },
-            {
-                .type = VK_DESCRIPTOR_TYPE_SAMPLER,
-                .descriptorCount = 5U
-            }
         },
+
         {
             {
                 .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,

@@ -3,7 +3,7 @@ set COMPILE_FLAGS=-HV 2021 -spirv -fvk-use-dx-layout -fspv-reduce-load-size -fsp
 set PIVOT_DIRECTORY=.\..\..\..
 
 @echo on
-"%ANDROID_VULKAN_DXC_ROOT%\dxc.exe" %COMPILE_FLAGS% -T ps_6_7 -E PS -I %PIVOT_DIRECTORY%\hlsl -I %PIVOT_DIRECTORY%\cpp\include\pbr -Fo %PIVOT_DIRECTORY%\assets\shaders\%1-ps.spv -Fc %PIVOT_DIRECTORY%\hlsl\disassm\blob.txt %PIVOT_DIRECTORY%\hlsl\%1.ps
+"%ANDROID_VULKAN_DXC_ROOT%\dxc.exe" %COMPILE_FLAGS% -T ps_6_7 -E PS -I %PIVOT_DIRECTORY%\hlsl -I %PIVOT_DIRECTORY%\cpp\include\pbr -Fc %PIVOT_DIRECTORY%\hlsl\disassm\blob.txt %PIVOT_DIRECTORY%\hlsl\%1.ps
 
 @echo off
 echo Done

@@ -68,21 +68,7 @@ bool StippleSubpass::UpdateGPUData ( android_vulkan::Renderer &renderer,
     DefaultTextureManager const &defaultTextureManager
 ) noexcept
 {
-    size_t const stippleCount = _sceneData.size ();
-    size_t const textureCount = stippleCount * GeometryPassTextureDescriptorSetLayout::TEXTURE_SLOTS;
-
-    _imageStorage.clear ();
-    _imageStorage.reserve ( textureCount );
-
-    _writeStorage0.clear ();
-    _writeStorage0.reserve ( textureCount );
-
-    Program::DescriptorSetInfo const& descriptorSetInfo = _program.GetResourceInfo ();
-    Program::SetItem const& descriptorSet0 = descriptorSetInfo[ 0U ];
-    size_t uniqueFeatures = descriptorSet0.size ();
-
-    _uniformStorage.clear ();
-    _writeStorage1.clear ();
+    AllocateInfo const allocateInfo = AllocateTransferSystem ();
 
     constexpr VkCommandBufferBeginInfo beginInfo
     {
@@ -100,38 +86,10 @@ bool StippleSubpass::UpdateGPUData ( android_vulkan::Renderer &renderer,
     if ( !result )
         return false;
 
-    // Note reserve size is an estimation from the top.
-    size_t const uniformCount = AggregateUniformCount ();
-    _uniformStorage.reserve ( uniformCount );
-    _writeStorage1.reserve ( uniformCount );
-    ++uniqueFeatures;
-
-    _poolSizeStorage.clear ();
-    _poolSizeStorage.reserve ( uniqueFeatures );
-
-    for ( auto const& item : descriptorSet0 )
-    {
-        _poolSizeStorage.emplace_back (
-            VkDescriptorPoolSize
-            {
-                .type = item.type,
-                .descriptorCount = static_cast<uint32_t> ( item.descriptorCount * stippleCount + 1U )
-            }
-        );
-    }
-
-    _poolSizeStorage.emplace_back (
-        VkDescriptorPoolSize
-        {
-            .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            .descriptorCount = static_cast<uint32_t> ( uniformCount )
-        }
-    );
-
-    size_t const maxSets = stippleCount + uniformCount;
+    size_t const maxSets = allocateInfo._materials + allocateInfo._uniformBuffers;
     VkDevice device = renderer.GetDevice ();
 
-    if ( !RecreateDescriptorPool ( device, maxSets ) )
+    if ( !RecreateDescriptorPool ( device, maxSets, allocateInfo ) )
         return false;
 
     GeometryPassTextureDescriptorSetLayout const materialTextureLayout {};
@@ -140,16 +98,16 @@ bool StippleSubpass::UpdateGPUData ( android_vulkan::Renderer &renderer,
     _layouts.clear ();
     _layouts.reserve ( maxSets );
 
-    for ( size_t i = 0U; i < stippleCount; ++i )
+    for ( size_t i = 0U; i < allocateInfo._materials; ++i )
         _layouts.push_back ( materialTextureLayoutNative );
 
     GeometryPassInstanceDescriptorSetLayout const instanceLayout;
     VkDescriptorSetLayout instanceLayoutNative = instanceLayout.GetLayout ();
 
-    for ( size_t i = stippleCount; i < maxSets; ++i )
+    for ( size_t i = allocateInfo._materials; i < maxSets; ++i )
         _layouts.push_back ( instanceLayoutNative );
 
-    VkDescriptorSetAllocateInfo const allocateInfo
+    VkDescriptorSetAllocateInfo const descriptorAllocateInfo
     {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
         .pNext = nullptr,
@@ -162,7 +120,7 @@ bool StippleSubpass::UpdateGPUData ( android_vulkan::Renderer &renderer,
     VkDescriptorSet* descriptorSets = _descriptorSetStorage.data ();
 
     result = android_vulkan::Renderer::CheckVkResult (
-        vkAllocateDescriptorSets ( device, &allocateInfo, descriptorSets ),
+        vkAllocateDescriptorSets ( device, &descriptorAllocateInfo, descriptorSets ),
         "pbr::StippleSubpass::UpdateGPUData",
         "Can't allocate descriptor sets"
     );
@@ -170,90 +128,51 @@ bool StippleSubpass::UpdateGPUData ( android_vulkan::Renderer &renderer,
     if ( !result )
         return false;
 
-    VkWriteDescriptorSet writeInfo0 {};
-    writeInfo0.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    writeInfo0.pNext = nullptr;
-    writeInfo0.descriptorCount = 1U;
-    writeInfo0.dstArrayElement = 0U;
-    writeInfo0.pBufferInfo = nullptr;
-    writeInfo0.pTexelBufferView = nullptr;
+    size_t images = 0U;
 
-    auto textureBinder = [ & ] ( Texture2DRef const &texture,
+    auto textureBinder = [ & ] ( Texture2DRef const &texture,\
         Texture2DRef const &defaultTexture,
-        uint32_t imageBindSlot
+        VkDescriptorSet descriptSet
     ) noexcept {
         Texture2DRef const& t = texture ? texture : defaultTexture;
-
-        writeInfo0.pImageInfo = &_imageStorage.emplace_back (
-            VkDescriptorImageInfo
-            {
-                .sampler = VK_NULL_HANDLE,
-                .imageView = t->GetImageView (),
-                .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-            }
-        );
-
-        writeInfo0.dstBinding = imageBindSlot;
-        writeInfo0.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-        _writeStorage0.push_back ( writeInfo0 );
+        _imageStorage[ images ].imageView = t->GetImageView ();
+        _writeStorage0[ images ].dstSet = descriptSet;
+        ++images;
     };
-
-    VkWriteDescriptorSet writeInfo1 {};
-    writeInfo1.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    writeInfo1.pNext = nullptr;
-    writeInfo1.dstBinding = 0U;
-    writeInfo1.dstArrayElement = 0U;
-    writeInfo1.descriptorCount = 1U;
-    writeInfo1.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    writeInfo1.pImageInfo = nullptr;
-    writeInfo1.pTexelBufferView = nullptr;
 
     constexpr VkPipelineStageFlags syncFlags = AV_VK_FLAG ( VK_PIPELINE_STAGE_VERTEX_SHADER_BIT ) |
         AV_VK_FLAG ( VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT );
 
-    auto uniformBinder = [ & ] ( VkBuffer uniformBuffer, VkDescriptorSet descriptorSet ) noexcept {
-        writeInfo1.pBufferInfo = &_uniformStorage.emplace_back (
-            VkDescriptorBufferInfo
-            {
-                .buffer = uniformBuffer,
-                .offset = 0U,
-                .range = static_cast<VkDeviceSize> ( sizeof ( StippleProgram::InstanceData ) )
-            }
-        );
+    size_t uniforms = 0U;
 
-        writeInfo1.dstSet = descriptorSet;
-        _writeStorage1.push_back ( writeInfo1 );
+    auto uniformBinder = [ & ] ( VkBuffer uniformBuffer, VkDescriptorSet descriptorSet ) noexcept {
+        _uniformStorage[ uniforms ].buffer = uniformBuffer;
+        _writeStorage1[ uniforms ].dstSet = descriptorSet;
+        ++uniforms;
     };
 
     size_t i = 0U;
 
     for ( auto const& [material, call] : _sceneData )
     {
-        writeInfo0.dstSet = descriptorSets[ i ];
-        ++i;
-
         auto& m = const_cast<GeometryPassMaterial&> ( material );
+        VkDescriptorSet descriptorSet = descriptorSets[ i++ ];
 
-        textureBinder ( m.GetAlbedo (), defaultTextureManager.GetAlbedo (), 0U );
-        textureBinder ( m.GetEmission (), defaultTextureManager.GetEmission (), 1U );
-        textureBinder ( m.GetMask (), defaultTextureManager.GetMask (), 2U );
-        textureBinder ( m.GetNormal (), defaultTextureManager.GetNormal (), 3U );
-        textureBinder ( m.GetParam (), defaultTextureManager.GetParams (), 4U );
+        textureBinder ( m.GetAlbedo (), defaultTextureManager.GetAlbedo (), descriptorSet );
+        textureBinder ( m.GetEmission (), defaultTextureManager.GetEmission (), descriptorSet );
+        textureBinder ( m.GetMask (), defaultTextureManager.GetMask (), descriptorSet );
+        textureBinder ( m.GetNormal (), defaultTextureManager.GetNormal (), descriptorSet );
+        textureBinder ( m.GetParam (), defaultTextureManager.GetParams (), descriptorSet );
     }
 
-    vkUpdateDescriptorSets ( device,
-        static_cast<uint32_t> ( _writeStorage0.size () ),
-        _writeStorage0.data (),
-        0U,
-        nullptr
-    );
+    vkUpdateDescriptorSets ( device, static_cast<uint32_t> ( images ), _writeStorage0.data (), 0U, nullptr );
 
     GeometryPassProgram::InstanceData instanceData {};
     _uniformPool.Reset ();
 
     size_t uniformUsed = 0U;
     size_t const maxUniforms = _uniformPool.GetItemCount ();
-    VkDescriptorSet const* instanceDescriptorSet = descriptorSets + stippleCount;
+    VkDescriptorSet const* instanceDescriptorSet = descriptorSets + allocateInfo._materials;
 
     for ( auto const& call : _sceneData )
     {
@@ -358,12 +277,7 @@ bool StippleSubpass::UpdateGPUData ( android_vulkan::Renderer &renderer,
         }
     }
 
-    vkUpdateDescriptorSets ( device,
-        static_cast<uint32_t> ( _writeStorage1.size () ),
-        _writeStorage1.data (),
-        0U,
-        nullptr
-    );
+    vkUpdateDescriptorSets ( device, static_cast<uint32_t> ( uniforms ), _writeStorage1.data (), 0U, nullptr );
 
     result = android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( _transferCommandBuffer ),
         "pbr::StippleSubpass::UpdateGPUData",

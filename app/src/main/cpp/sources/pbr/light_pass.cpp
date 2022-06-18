@@ -550,7 +550,7 @@ bool LightPass::CreateLightupRenderPass ( VkDevice device, GBuffer &gBuffer ) no
         {
             .depthStencil
             {
-                .depth = 1.0F,
+                .depth = 0.0F,
                 .stencil = LightVolumeProgram::GetStencilInitialValue ()
             }
         }

@@ -1,4 +1,4 @@
-// version 1.4
+// version 1.5
 
 #include <GXCommon/GXMath.h>
 
@@ -15,15 +15,18 @@ GX_RESTORE_WARNING_STATE
     GXFloat zFar
 ) noexcept
 {
+    // The implementation is using reverse Z trick.
+    // See https://developer.nvidia.com/content/depth-precision-visualized
+
     GXFloat const halfFovy = fieldOfViewYRadians * 0.5F;
     GXFloat const ctan = std::cos ( halfFovy ) / std::sin ( halfFovy );
-    GXFloat const invRange = 1.0F / ( zFar - zNear );
+    GXFloat const invRange = 1.0F / ( zNear - zFar );
 
     _m[ 0U ][ 0U ] = ctan / aspectRatio;
     _m[ 1U ][ 1U ] = -ctan;
-    _m[ 2U ][ 2U ] = invRange * zFar;
+    _m[ 2U ][ 2U ] = invRange * zNear;
     _m[ 2U ][ 3U ] = 1.0F;
-    _m[ 3U ][ 2U ] = -invRange * zNear * zFar;
+    _m[ 3U ][ 2U ] = -invRange * zFar * zNear;
 
     _m[ 0U ][ 1U ] = _m[ 0U ][ 2U ] = _m[ 0U ][ 3U ] = 0.0F;
     _m[ 1U ][ 0U ] = _m[ 1U ][ 2U ] = _m[ 1U ][ 3U ] = 0.0F;

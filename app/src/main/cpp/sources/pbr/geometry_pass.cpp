@@ -157,7 +157,7 @@ bool GeometryPass::Init ( android_vulkan::Renderer &renderer,
         {
             .depthStencil
             {
-                .depth = 1.0F,
+                .depth = 0.0F,
                 .stencil = 0U
             }
         }

@@ -15,10 +15,10 @@ class LightLightupBaseProgram : public Program
 
         struct ViewData final
         {
-            GXMat4      _cvvToView;
-            GXMat4      _viewToWorld;
-            GXVec2      _invResolutionFactor;
-            GXVec2      _padding0_0;
+            [[maybe_unused]] GXMat4     _cvvToView;
+            [[maybe_unused]] GXMat4     _viewToWorld;
+            [[maybe_unused]] GXVec2     _invResolutionFactor;
+            [[maybe_unused]] GXVec2     _padding0_0;
         };
 
         AV_DX_ALIGNMENT_END

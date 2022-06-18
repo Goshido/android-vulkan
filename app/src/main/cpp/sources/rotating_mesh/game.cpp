@@ -771,7 +771,7 @@ bool Game::CreatePipeline ( android_vulkan::Renderer &renderer ) noexcept
     depthStencilInfo.stencilTestEnable = VK_FALSE;
     depthStencilInfo.depthTestEnable = VK_TRUE;
     depthStencilInfo.depthBoundsTestEnable = VK_FALSE;
-    depthStencilInfo.depthCompareOp = VK_COMPARE_OP_LESS;
+    depthStencilInfo.depthCompareOp = VK_COMPARE_OP_GREATER;
     depthStencilInfo.depthWriteEnable = VK_TRUE;
     depthStencilInfo.minDepthBounds = 0.0F;
     depthStencilInfo.maxDepthBounds = 1.0F;
@@ -1166,7 +1166,7 @@ bool Game::CreateCommandBuffers ( android_vulkan::Renderer &renderer ) noexcept
     std::memset ( &colorTarget.color, 0, sizeof ( colorTarget.color ) );
 
     VkClearValue& depthStencilTarget = clearValues[ 1U ];
-    depthStencilTarget.depthStencil.depth = 1.0F;
+    depthStencilTarget.depthStencil.depth = 0.0F;
     depthStencilTarget.depthStencil.stencil = 0x00000000U;
 
     VkRenderPassBeginInfo renderPassBeginInfo;

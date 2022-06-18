@@ -665,7 +665,7 @@ bool PointLightPass::CreateShadowmapRenderPass ( VkDevice device ) noexcept
         {
             .depthStencil
             {
-                .depth = 1.0F,
+                .depth = 0.0F,
                 .stencil = 0U
             }
         }

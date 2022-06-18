@@ -160,7 +160,7 @@ VkPipelineDepthStencilStateCreateInfo const* LightVolumeProgram::InitDepthStenci
     info.flags = 0U;
     info.depthTestEnable = VK_TRUE;
     info.depthWriteEnable = VK_FALSE;
-    info.depthCompareOp = VK_COMPARE_OP_GREATER;
+    info.depthCompareOp = VK_COMPARE_OP_LESS;
     info.depthBoundsTestEnable = VK_FALSE;
     info.stencilTestEnable = VK_TRUE;
 

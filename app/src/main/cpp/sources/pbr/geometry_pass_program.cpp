@@ -213,7 +213,7 @@ VkPipelineDepthStencilStateCreateInfo const* GeometryPassProgram::InitDepthStenc
     info.flags = 0U;
     info.depthTestEnable = VK_TRUE;
     info.depthWriteEnable = VK_TRUE;
-    info.depthCompareOp = VK_COMPARE_OP_LESS;
+    info.depthCompareOp = VK_COMPARE_OP_GREATER;
     info.depthBoundsTestEnable = VK_FALSE;
     info.stencilTestEnable = VK_FALSE;
 

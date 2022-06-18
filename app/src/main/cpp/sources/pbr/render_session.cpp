@@ -539,21 +539,6 @@ void RenderSession::DestroyGBufferResources ( VkDevice device ) noexcept
     }
 
     _geometryPass.Destroy ( device );
-
-    if ( _gBufferFramebuffer != VK_NULL_HANDLE )
-    {
-        vkDestroyFramebuffer ( device, _gBufferFramebuffer, nullptr );
-        _gBufferFramebuffer = VK_NULL_HANDLE;
-        AV_UNREGISTER_FRAMEBUFFER ( "pbr::RenderSession::_gBufferFramebuffer" )
-    }
-
-    if ( _gBufferRenderPass != VK_NULL_HANDLE )
-    {
-        vkDestroyRenderPass ( device, _gBufferRenderPass, nullptr );
-        _gBufferRenderPass = VK_NULL_HANDLE;
-        AV_UNREGISTER_RENDER_PASS ( "pbr::RenderSession::_gBufferRenderPass" )
-    }
-
     _gBuffer.Destroy ( device );
 }
 

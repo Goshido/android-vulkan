@@ -49,8 +49,7 @@ bool StippleSubpass::Execute ( android_vulkan::Renderer &renderer,
         isSamplerUsed = true;
     }
 
-    VkDescriptorSet const* textureSets = _descriptorSetStorage.data ();
-    AppendDrawcalls ( commandBuffer, _program, textureSets, textureSets + _sceneData.size (), renderSessionStats );
+    AppendDrawcalls ( commandBuffer, _program, renderSessionStats );
     return true;
 }
 
@@ -68,7 +67,10 @@ bool StippleSubpass::UpdateGPUData ( android_vulkan::Renderer &renderer,
     DefaultTextureManager const &defaultTextureManager
 ) noexcept
 {
-    AllocateInfo const allocateInfo = AllocateTransferSystem ();
+    VkDevice device = renderer.GetDevice ();
+
+    if ( !AllocateTransferSystem ( device ) )
+        return false;
 
     constexpr VkCommandBufferBeginInfo beginInfo
     {
@@ -86,93 +88,39 @@ bool StippleSubpass::UpdateGPUData ( android_vulkan::Renderer &renderer,
     if ( !result )
         return false;
 
-    size_t const maxSets = allocateInfo._materials + allocateInfo._uniformBuffers;
-    VkDevice device = renderer.GetDevice ();
-
-    if ( !RecreateDescriptorPool ( device, maxSets, allocateInfo ) )
-        return false;
-
-    GeometryPassTextureDescriptorSetLayout const materialTextureLayout {};
-    VkDescriptorSetLayout materialTextureLayoutNative = materialTextureLayout.GetLayout ();
-
-    _layouts.clear ();
-    _layouts.reserve ( maxSets );
-
-    for ( size_t i = 0U; i < allocateInfo._materials; ++i )
-        _layouts.push_back ( materialTextureLayoutNative );
-
-    GeometryPassInstanceDescriptorSetLayout const instanceLayout;
-    VkDescriptorSetLayout instanceLayoutNative = instanceLayout.GetLayout ();
-
-    for ( size_t i = allocateInfo._materials; i < maxSets; ++i )
-        _layouts.push_back ( instanceLayoutNative );
-
-    VkDescriptorSetAllocateInfo const descriptorAllocateInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-        .pNext = nullptr,
-        .descriptorPool = _descriptorPool,
-        .descriptorSetCount = static_cast<uint32_t> ( maxSets ),
-        .pSetLayouts = _layouts.data ()
-    };
-
-    _descriptorSetStorage.resize ( maxSets );
-    VkDescriptorSet* descriptorSets = _descriptorSetStorage.data ();
-
-    result = android_vulkan::Renderer::CheckVkResult (
-        vkAllocateDescriptorSets ( device, &descriptorAllocateInfo, descriptorSets ),
-        "pbr::StippleSubpass::UpdateGPUData",
-        "Can't allocate descriptor sets"
-    );
-
-    if ( !result )
-        return false;
-
     size_t images = 0U;
 
-    auto textureBinder = [ & ] ( Texture2DRef const &texture,\
-        Texture2DRef const &defaultTexture,
-        VkDescriptorSet descriptSet
-    ) noexcept {
+    auto textureBinder = [ & ] ( Texture2DRef const &texture, Texture2DRef const &defaultTexture ) noexcept {
         Texture2DRef const& t = texture ? texture : defaultTexture;
-        _imageStorage[ images ].imageView = t->GetImageView ();
-        _writeStorage0[ images ].dstSet = descriptSet;
-        ++images;
+        _imageStorage[ images++ ].imageView = t->GetImageView ();
     };
-
-    constexpr VkPipelineStageFlags syncFlags = AV_VK_FLAG ( VK_PIPELINE_STAGE_VERTEX_SHADER_BIT ) |
-        AV_VK_FLAG ( VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT );
 
     size_t uniforms = 0U;
 
-    auto uniformBinder = [ & ] ( VkBuffer uniformBuffer, VkDescriptorSet descriptorSet ) noexcept {
-        _uniformStorage[ uniforms ].buffer = uniformBuffer;
-        _writeStorage1[ uniforms ].dstSet = descriptorSet;
-        ++uniforms;
+    auto uniformBinder = [ & ] ( VkBuffer uniformBuffer ) noexcept {
+        _uniformStorage[ uniforms++ ].buffer = uniformBuffer;
     };
-
-    size_t i = 0U;
 
     for ( auto const& [material, call] : _sceneData )
     {
         auto& m = const_cast<GeometryPassMaterial&> ( material );
-        VkDescriptorSet descriptorSet = descriptorSets[ i++ ];
-
-        textureBinder ( m.GetAlbedo (), defaultTextureManager.GetAlbedo (), descriptorSet );
-        textureBinder ( m.GetEmission (), defaultTextureManager.GetEmission (), descriptorSet );
-        textureBinder ( m.GetMask (), defaultTextureManager.GetMask (), descriptorSet );
-        textureBinder ( m.GetNormal (), defaultTextureManager.GetNormal (), descriptorSet );
-        textureBinder ( m.GetParam (), defaultTextureManager.GetParams (), descriptorSet );
+        textureBinder ( m.GetAlbedo (), defaultTextureManager.GetAlbedo () );
+        textureBinder ( m.GetEmission (), defaultTextureManager.GetEmission () );
+        textureBinder ( m.GetMask (), defaultTextureManager.GetMask () );
+        textureBinder ( m.GetNormal (), defaultTextureManager.GetNormal () );
+        textureBinder ( m.GetParam (), defaultTextureManager.GetParams () );
     }
 
-    vkUpdateDescriptorSets ( device, static_cast<uint32_t> ( images ), _writeStorage0.data (), 0U, nullptr );
+    vkUpdateDescriptorSets ( device, static_cast<uint32_t> ( images ), _materialTransfer._writes.data (), 0U, nullptr );
 
     GeometryPassProgram::InstanceData instanceData {};
     _uniformPool.Reset ();
 
     size_t uniformUsed = 0U;
     size_t const maxUniforms = _uniformPool.GetItemCount ();
-    VkDescriptorSet const* instanceDescriptorSet = descriptorSets + allocateInfo._materials;
+
+    constexpr VkPipelineStageFlags syncFlags = AV_VK_FLAG ( VK_PIPELINE_STAGE_VERTEX_SHADER_BIT ) |
+        AV_VK_FLAG ( VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT );
 
     for ( auto const& call : _sceneData )
     {
@@ -195,20 +143,13 @@ bool StippleSubpass::UpdateGPUData ( android_vulkan::Renderer &renderer,
 
             objectData._localView.Multiply ( local, view );
             objectData._localViewProjection.Multiply ( local, viewProjection );
-
             objectData._color0 = geometryData._color0;
             objectData._color1 = geometryData._color1;
             objectData._color2 = geometryData._color2;
             objectData._emission = geometryData._emission;
 
             uniformBinder (
-                _uniformPool.Acquire ( renderer,
-                    _transferCommandBuffer,
-                    instanceData._instanceData,
-                    syncFlags
-                ),
-
-                instanceDescriptorSet[ uniformUsed ]
+                _uniformPool.Acquire ( renderer, _transferCommandBuffer, instanceData._instanceData, syncFlags )
             );
 
             ++uniformUsed;
@@ -233,13 +174,7 @@ bool StippleSubpass::UpdateGPUData ( android_vulkan::Renderer &renderer,
                 if ( instanceIndex >= PBR_OPAQUE_MAX_INSTANCE_COUNT )
                 {
                     uniformBinder (
-                        _uniformPool.Acquire ( renderer,
-                            _transferCommandBuffer,
-                            instanceData._instanceData,
-                            syncFlags
-                        ),
-
-                        instanceDescriptorSet[ uniformUsed ]
+                        _uniformPool.Acquire ( renderer, _transferCommandBuffer, instanceData._instanceData, syncFlags )
                     );
 
                     instanceIndex = 0U;
@@ -253,7 +188,6 @@ bool StippleSubpass::UpdateGPUData ( android_vulkan::Renderer &renderer,
 
                 objectData._localView.Multiply ( local, view );
                 objectData._localViewProjection.Multiply ( local, viewProjection );
-
                 objectData._color0 = opaqueData._color0;
                 objectData._color1 = opaqueData._color1;
                 objectData._color2 = opaqueData._color2;
@@ -264,20 +198,19 @@ bool StippleSubpass::UpdateGPUData ( android_vulkan::Renderer &renderer,
                 continue;
 
             uniformBinder (
-                _uniformPool.Acquire ( renderer,
-                    _transferCommandBuffer,
-                    instanceData._instanceData,
-                    syncFlags
-                ),
-
-                instanceDescriptorSet[ uniformUsed ]
+                _uniformPool.Acquire ( renderer, _transferCommandBuffer, instanceData._instanceData, syncFlags )
             );
 
             ++uniformUsed;
         }
     }
 
-    vkUpdateDescriptorSets ( device, static_cast<uint32_t> ( uniforms ), _writeStorage1.data (), 0U, nullptr );
+    vkUpdateDescriptorSets ( device,
+        static_cast<uint32_t> ( uniforms ),
+        _uniformTransfer._writes.data (),
+        0U,
+        nullptr
+    );
 
     result = android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( _transferCommandBuffer ),
         "pbr::StippleSubpass::UpdateGPUData",

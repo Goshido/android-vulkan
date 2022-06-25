@@ -12,26 +12,23 @@ namespace pbr {
 
 class GeometrySubpassBase
 {
-    protected:
-        struct AllocateInfo final
+    private:
+        struct TransferInfo final
         {
-            size_t                              _materials;
-            size_t                              _textures;
-            size_t                              _uniformBuffers;
+            std::vector<VkDescriptorSet>            _sets {};
+            VkDescriptorPool                        _pool = VK_NULL_HANDLE;
+            std::vector<VkWriteDescriptorSet>       _writes {};
         };
 
     protected:
-        VkDescriptorPool                        _descriptorPool = VK_NULL_HANDLE;
-        std::vector<VkDescriptorSet>            _descriptorSetStorage {};
-        std::vector<VkDescriptorImageInfo>      _imageStorage {};
-        std::vector<VkDescriptorSetLayout>      _layouts {};
-        SceneData                               _sceneData {};
-        VkSubmitInfo                            _submitInfoTransfer {};
-        VkCommandBuffer                         _transferCommandBuffer = VK_NULL_HANDLE;
-        UniformBufferPool                       _uniformPool { eUniformPoolSize::Huge_64M };
-        std::vector<VkDescriptorBufferInfo>     _uniformStorage {};
-        std::vector<VkWriteDescriptorSet>       _writeStorage0 {};
-        std::vector<VkWriteDescriptorSet>       _writeStorage1 {};
+        std::vector<VkDescriptorImageInfo>          _imageStorage {};
+        TransferInfo                                _materialTransfer {};
+        SceneData                                   _sceneData {};
+        VkSubmitInfo                                _submitInfoTransfer {};
+        VkCommandBuffer                             _transferCommandBuffer = VK_NULL_HANDLE;
+        UniformBufferPool                           _uniformPool { eUniformPoolSize::Huge_64M };
+        std::vector<VkDescriptorBufferInfo>         _uniformStorage {};
+        TransferInfo                                _uniformTransfer {};
 
     public:
         GeometrySubpassBase ( GeometrySubpassBase const & ) = delete;
@@ -62,15 +59,12 @@ class GeometrySubpassBase
         ) noexcept = 0;
 
         [[nodiscard]] size_t AggregateUniformCount () const noexcept;
-
-        void AllocateImageSystem ( size_t textureCount ) noexcept;
-        [[nodiscard]] AllocateInfo AllocateTransferSystem () noexcept;
-        void AllocateUniformBufferSystem ( size_t uniformCount ) noexcept;
+        [[nodiscard]] bool AllocateMaterialSystem ( VkDevice device, size_t materials, size_t textureCount ) noexcept;
+        [[nodiscard]] bool AllocateTransferSystem ( VkDevice device ) noexcept;
+        [[nodiscard]] bool AllocateUniformBufferSystem ( VkDevice device, size_t uniformCount ) noexcept;
 
         void AppendDrawcalls ( VkCommandBuffer commandBuffer,
             GeometryPassProgram &program,
-            VkDescriptorSet const* textureSets,
-            VkDescriptorSet const* instanceSets,
             RenderSessionStats &renderSessionStats
         ) noexcept;
 
@@ -80,12 +74,8 @@ class GeometrySubpassBase
         // Must be called from child class.
         void DestroyBase ( VkDevice device ) noexcept;
 
-        void DestroyDescriptorPool ( VkDevice device ) noexcept;
-
-        [[nodiscard]] bool RecreateDescriptorPool ( VkDevice device,
-            size_t maxSets,
-            AllocateInfo const &allocateInfo
-        ) noexcept;
+        void DestroyMaterialDescriptorPool ( VkDevice device ) noexcept;
+        void DestroyUniformDescriptorPool ( VkDevice device ) noexcept;
 };
 
 } // namespace pbr

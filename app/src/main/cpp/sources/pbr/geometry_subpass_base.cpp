@@ -52,8 +52,62 @@ size_t GeometrySubpassBase::AggregateUniformCount () const noexcept
     return count;
 }
 
-void GeometrySubpassBase::AllocateImageSystem ( size_t textureCount ) noexcept
+bool GeometrySubpassBase::AllocateMaterialSystem ( VkDevice device, size_t materials, size_t textureCount ) noexcept
 {
+    DestroyMaterialDescriptorPool ( device );
+
+    VkDescriptorPoolSize const poolSize
+    {
+        .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+        .descriptorCount = static_cast<uint32_t> ( textureCount )
+    };
+
+    VkDescriptorPoolCreateInfo const poolInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .maxSets = static_cast<uint32_t> ( materials ),
+        .poolSizeCount = 1U,
+        .pPoolSizes = &poolSize
+    };
+
+    bool result = android_vulkan::Renderer::CheckVkResult (
+        vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_materialTransfer._pool ),
+        "pbr::GeometrySubpassBase::AllocateMaterialSystem",
+        "Can't create descriptor pool"
+    );
+
+    if ( !result )
+        return false;
+
+    AV_REGISTER_DESCRIPTOR_POOL ( "pbr::GeometrySubpassBase::_materialTransfer._pool" )
+
+    std::vector<VkDescriptorSetLayout> const layouts ( materials,
+        GeometryPassTextureDescriptorSetLayout ().GetLayout ()
+    );
+
+    VkDescriptorSetAllocateInfo const allocateInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+        .pNext = nullptr,
+        .descriptorPool = _materialTransfer._pool,
+        .descriptorSetCount = poolInfo.maxSets,
+        .pSetLayouts = layouts.data ()
+    };
+
+    std::vector<VkDescriptorSet>& sets = _materialTransfer._sets;
+    sets.resize ( materials );
+
+    result = android_vulkan::Renderer::CheckVkResult (
+        vkAllocateDescriptorSets ( device, &allocateInfo, sets.data () ),
+        "pbr::GeometrySubpassBase::AllocateMaterialSystem",
+        "Can't allocate descriptor sets"
+    );
+
+    if ( !result )
+        return false;
+
     constexpr VkDescriptorImageInfo imageTemplate
     {
         .sampler = VK_NULL_HANDLE,
@@ -77,36 +131,98 @@ void GeometrySubpassBase::AllocateImageSystem ( size_t textureCount ) noexcept
         .pTexelBufferView = nullptr
     };
 
-    _writeStorage0.resize ( textureCount, writeTemplate );
+    std::vector<VkWriteDescriptorSet>& writes = _materialTransfer._writes;
+    writes.resize ( textureCount, writeTemplate );
 
     for ( size_t i = 0U; i < textureCount; ++i )
     {
-        VkWriteDescriptorSet& set = _writeStorage0[ i ];
+        VkWriteDescriptorSet& set = writes[ i ];
+        set.dstSet = sets[ i / GeometryPassTextureDescriptorSetLayout::TEXTURE_SLOTS ];
         set.dstBinding = i % GeometryPassTextureDescriptorSetLayout::TEXTURE_SLOTS;
         set.pImageInfo = &_imageStorage[ i ];
     }
+
+    return true;
 }
 
-GeometrySubpassBase::AllocateInfo GeometrySubpassBase::AllocateTransferSystem () noexcept
+bool GeometrySubpassBase::AllocateTransferSystem ( VkDevice device ) noexcept
 {
-    AllocateInfo result {};
-    result._materials = _sceneData.size ();
-    result._textures = result._materials * GeometryPassTextureDescriptorSetLayout::TEXTURE_SLOTS;
+    size_t const materials = _sceneData.size ();
+    size_t const textures = materials * GeometryPassTextureDescriptorSetLayout::TEXTURE_SLOTS;
 
-    if ( _imageStorage.size () < result._textures )
-        AllocateImageSystem ( result._textures );
+    if ( _imageStorage.size () < textures )
+    {
+        if ( !AllocateMaterialSystem ( device, materials, textures ) )
+        {
+            return false;
+        }
+    }
 
     // Note reserve size is an estimation from the top.
-    result._uniformBuffers = AggregateUniformCount ();
+    size_t const uniformBuffers = AggregateUniformCount ();
 
-    if ( _uniformStorage.size () < result._uniformBuffers )
-        AllocateUniformBufferSystem ( result._uniformBuffers );
+    if ( _uniformStorage.size () >= uniformBuffers )
+        return true;
 
-    return result;
+    return AllocateUniformBufferSystem ( device, uniformBuffers );
 }
 
-void GeometrySubpassBase::AllocateUniformBufferSystem ( size_t uniformCount ) noexcept
+bool GeometrySubpassBase::AllocateUniformBufferSystem ( VkDevice device, size_t uniformCount ) noexcept
 {
+    DestroyUniformDescriptorPool ( device );
+
+    VkDescriptorPoolSize const poolSize
+    {
+        .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        .descriptorCount = static_cast<uint32_t> ( uniformCount )
+    };
+
+    VkDescriptorPoolCreateInfo const poolInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .maxSets = static_cast<uint32_t> ( uniformCount ),
+        .poolSizeCount = 1U,
+        .pPoolSizes = &poolSize
+    };
+
+    bool result = android_vulkan::Renderer::CheckVkResult (
+        vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_uniformTransfer._pool ),
+        "pbr::GeometrySubpassBase::AllocateUniformBufferSystem",
+        "Can't create descriptor pool"
+    );
+
+    if ( !result )
+        return false;
+
+    AV_REGISTER_DESCRIPTOR_POOL ( "pbr::GeometrySubpassBase::_uniformTransfer._pool" )
+
+    std::vector<VkDescriptorSetLayout> const layouts ( uniformCount,
+        GeometryPassInstanceDescriptorSetLayout ().GetLayout ()
+    );
+
+    VkDescriptorSetAllocateInfo const allocateInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+        .pNext = nullptr,
+        .descriptorPool = _uniformTransfer._pool,
+        .descriptorSetCount = poolInfo.maxSets,
+        .pSetLayouts = layouts.data ()
+    };
+
+    std::vector<VkDescriptorSet>& sets = _uniformTransfer._sets;
+    sets.resize ( uniformCount );
+
+    result = android_vulkan::Renderer::CheckVkResult (
+        vkAllocateDescriptorSets ( device, &allocateInfo, sets.data () ),
+        "pbr::GeometrySubpassBase::AllocateUniformBufferSystem",
+        "Can't allocate descriptor sets"
+    );
+
+    if ( !result )
+        return false;
+
     constexpr VkDescriptorBufferInfo bufferTemplate
     {
         .buffer = VK_NULL_HANDLE,
@@ -130,24 +246,31 @@ void GeometrySubpassBase::AllocateUniformBufferSystem ( size_t uniformCount ) no
         .pTexelBufferView = nullptr
     };
 
-    _writeStorage1.resize ( uniformCount, writeTemplate );
+    std::vector<VkWriteDescriptorSet>& writes = _uniformTransfer._writes;
+    writes.resize ( uniformCount, writeTemplate );
 
     for ( size_t i = 0U; i < uniformCount; ++i )
     {
-        _writeStorage1[ i ].pBufferInfo = &_uniformStorage[ i ];
+        VkWriteDescriptorSet& set = writes[ i ];
+        set.dstSet = sets[ i ];
+        set.pBufferInfo = &_uniformStorage[ i ];
     }
+
+    return true;
 }
 
 void GeometrySubpassBase::AppendDrawcalls ( VkCommandBuffer commandBuffer,
     GeometryPassProgram &program,
-    VkDescriptorSet const* textureSets,
-    VkDescriptorSet const* instanceSets,
+
     RenderSessionStats &renderSessionStats
 ) noexcept
 {
     size_t textureSetIndex = 0U;
     size_t uniformUsed = 0U;
     bool isProgramBind = false;
+
+    VkDescriptorSet const* textureSets = _materialTransfer._sets.data ();
+    VkDescriptorSet const* instanceSets = _uniformTransfer._sets.data ();
 
     constexpr VkDeviceSize offset = 0U;
 
@@ -292,72 +415,38 @@ void GeometrySubpassBase::DestroyBase ( VkDevice device ) noexcept
         v.shrink_to_fit ();
     };
 
-    freeVector ( _descriptorSetStorage );
+    freeVector ( _materialTransfer._sets );
+    freeVector ( _materialTransfer._writes );
     freeVector ( _imageStorage );
-    freeVector ( _layouts );
+    freeVector ( _uniformTransfer._sets );
+    freeVector ( _uniformTransfer._writes );
     freeVector ( _uniformStorage );
-    freeVector ( _writeStorage0 );
-    freeVector ( _writeStorage1 );
 
-    DestroyDescriptorPool ( device );
+    DestroyUniformDescriptorPool ( device );
+    DestroyMaterialDescriptorPool ( device );
 
     _transferCommandBuffer = VK_NULL_HANDLE;
     _uniformPool.Destroy ( device );
 }
 
-void GeometrySubpassBase::DestroyDescriptorPool ( VkDevice device ) noexcept
+void GeometrySubpassBase::DestroyMaterialDescriptorPool ( VkDevice device ) noexcept
 {
-    if ( _descriptorPool == VK_NULL_HANDLE )
+    if ( _materialTransfer._pool == VK_NULL_HANDLE )
         return;
 
-    vkDestroyDescriptorPool ( device, _descriptorPool, nullptr );
-    _descriptorPool = VK_NULL_HANDLE;
-    AV_UNREGISTER_DESCRIPTOR_POOL ( "pbr::GeometrySubpassBase::_descriptorPool" )
+    vkDestroyDescriptorPool ( device, _materialTransfer._pool, nullptr );
+    _materialTransfer._pool = VK_NULL_HANDLE;
+    AV_UNREGISTER_DESCRIPTOR_POOL ( "pbr::GeometrySubpassBase::_materialTransfer._pool" )
 }
 
-bool GeometrySubpassBase::RecreateDescriptorPool ( VkDevice device,
-    size_t maxSets,
-    AllocateInfo const &allocateInfo
-) noexcept
+void GeometrySubpassBase::DestroyUniformDescriptorPool ( VkDevice device ) noexcept
 {
-    DestroyDescriptorPool ( device );
+    if ( _uniformTransfer._pool == VK_NULL_HANDLE )
+        return;
 
-    VkDescriptorPoolSize const poolSize[] =
-    {
-        VkDescriptorPoolSize
-        {
-            .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-            .descriptorCount = static_cast<uint32_t> ( allocateInfo._textures )
-        },
-
-        VkDescriptorPoolSize
-        {
-            .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            .descriptorCount = static_cast<uint32_t> ( allocateInfo._uniformBuffers )
-        }
-    };
-
-    VkDescriptorPoolCreateInfo const poolInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0U,
-        .maxSets = static_cast<uint32_t> ( maxSets ),
-        .poolSizeCount = static_cast<uint32_t> ( std::size ( poolSize ) ),
-        .pPoolSizes = poolSize
-    };
-
-    bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_descriptorPool ),
-        "pbr::GeometrySubpassBase::UpdateGPUData",
-        "Can't create descriptor pool"
-    );
-
-    if ( !result )
-        return false;
-
-    AV_REGISTER_DESCRIPTOR_POOL ( "pbr::GeometrySubpassBase::_descriptorPool" )
-    return true;
+    vkDestroyDescriptorPool ( device, _uniformTransfer._pool, nullptr );
+    _uniformTransfer._pool = VK_NULL_HANDLE;
+    AV_UNREGISTER_DESCRIPTOR_POOL ( "pbr::GeometrySubpassBase::_uniformTransfer._pool" )
 }
 
 } // namespace pbr

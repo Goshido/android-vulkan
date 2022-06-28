@@ -21,10 +21,10 @@ namespace pbr {
 class Component
 {
     protected:
-        std::string const       _name;
+        std::string     _name;
 
     private:
-        ClassID                 _classID;
+        ClassID         _classID;
 
     public:
         Component () = delete;
@@ -51,6 +51,7 @@ class Component
         static void Register ( lua_State &vm ) noexcept;
 
     protected:
+        explicit Component ( ClassID classID ) noexcept;
         explicit Component ( ClassID classID, std::string &&name ) noexcept;
 
     private:

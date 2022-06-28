@@ -40,7 +40,7 @@ ComponentRef Component::Create ( android_vulkan::Renderer &renderer,
         // NOLINTNEXTLINE - downcast.
         auto const& d = static_cast<PointLightComponentDesc const&> ( desc );
 
-        return std::make_shared<PointLightComponent> ( d );
+        return std::make_shared<PointLightComponent> ( d, data );
     }
 
     if ( desc._classID == ClassID::StaticMesh )
@@ -81,6 +81,12 @@ ComponentRef Component::Create ( android_vulkan::Renderer &renderer,
 void Component::Register ( lua_State &vm ) noexcept
 {
     lua_register ( &vm, "av_ComponentGetName", &Component::OnGetName );
+}
+
+Component::Component ( ClassID classID ) noexcept:
+    _classID ( classID )
+{
+    // NOTHING
 }
 
 Component::Component ( ClassID classID, std::string &&name ) noexcept:

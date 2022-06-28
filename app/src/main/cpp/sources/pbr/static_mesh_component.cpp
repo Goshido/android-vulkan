@@ -13,7 +13,7 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-[[maybe_unused]] constexpr static uint32_t const STATIC_MESH_COMPONENT_DESC_FORMAT_VERSION = 1U;
+[[maybe_unused]] constexpr static uint32_t const STATIC_MESH_COMPONENT_DESC_FORMAT_VERSION = 2U;
 constexpr static GXColorRGB DEFAULT_COLOR ( 1.0F, 1.0F, 1.0F, 1.0F );
 constexpr static GXColorRGB DEFAULT_EMISSION ( 1.0F, 1.0F, 1.0F, 1.0F );
 
@@ -27,7 +27,7 @@ StaticMeshComponent::StaticMeshComponent ( android_vulkan::Renderer &renderer,
     uint8_t const* data,
     VkCommandBuffer const* commandBuffers
 ) noexcept:
-    RenderableComponent ( ClassID::StaticMesh, android_vulkan::GUID::GenerateAsString ( "StaticMesh" ) ),
+    RenderableComponent ( ClassID::StaticMesh ),
     _color0 ( desc._color0._red, desc._color0._green, desc._color0._blue, desc._color0._alpha ),
     _color1 ( desc._color1._red, desc._color1._green, desc._color1._blue, desc._color1._alpha ),
     _color2 ( desc._color2._red, desc._color2._green, desc._color2._blue, desc._color2._alpha ),
@@ -36,6 +36,8 @@ StaticMeshComponent::StaticMeshComponent ( android_vulkan::Renderer &renderer,
     // Sanity checks.
     static_assert ( sizeof ( StaticMeshComponent::_localMatrix ) == sizeof ( desc._localMatrix ) );
     assert ( desc._formatVersion == STATIC_MESH_COMPONENT_DESC_FORMAT_VERSION );
+
+    _name = reinterpret_cast<char const*> ( data + desc._name );
 
     std::memcpy ( _localMatrix._data, &desc._localMatrix, sizeof ( _localMatrix ) );
     success = true;

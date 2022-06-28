@@ -25,6 +25,7 @@ class RenderableComponent : public Component
         virtual void Submit ( RenderSession &renderSession ) noexcept = 0;
 
     protected:
+        explicit RenderableComponent ( ClassID classID ) noexcept;
         explicit RenderableComponent ( ClassID classID, std::string &&name ) noexcept;
 };
 

@@ -13,7 +13,7 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-[[maybe_unused]] constexpr static uint32_t const REFLECTION_COMPONENT_DESC_FORMAT_VERSION = 1U;
+[[maybe_unused]] constexpr static uint32_t const REFLECTION_COMPONENT_DESC_FORMAT_VERSION = 2U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -23,9 +23,11 @@ ReflectionComponent::ReflectionComponent ( android_vulkan::Renderer &renderer,
     uint8_t const* data,
     VkCommandBuffer const* commandBuffers
 ) noexcept:
-    RenderableComponent ( ClassID::Reflection, android_vulkan::GUID::GenerateAsString ( "Reflection" ) )
+    RenderableComponent ( ClassID::Reflection )
 {
     assert ( desc._formatVersion == REFLECTION_COMPONENT_DESC_FORMAT_VERSION );
+
+    _name = reinterpret_cast<char const*> ( data + desc._name );
 
     android_vulkan::TextureCubeData const cubeData
     {

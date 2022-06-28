@@ -3,6 +3,7 @@
 
 
 #include "component_classes.h"
+#include <primitive_types.h>
 
 
 namespace pbr {
@@ -11,8 +12,9 @@ namespace pbr {
 
 struct ComponentDesc
 {
-    ClassID     _classID;
-    uint32_t    _formatVersion;
+    ClassID                         _classID;
+    uint32_t                        _formatVersion;
+    android_vulkan::UTF8Offset      _name;
 };
 
 #pragma pack ( pop )

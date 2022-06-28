@@ -2,6 +2,7 @@
 #define PBR_ACTOR_H
 
 
+#include "actor_desc.h"
 #include "component_classes.h"
 #include "types.h"
 #include <physics.h>
@@ -104,7 +105,7 @@ class Actor final
             android_vulkan::Physics &physics,
             lua_State &vm
         ) noexcept;
-        
+
         void AppendStaticMeshComponent ( ComponentRef &component,
             ComponentList &freeTransferResource,
             ComponentList &renderable,

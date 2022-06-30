@@ -9,23 +9,37 @@
 #include <guid_generator.h>
 #include <logger.h>
 
+GX_DISABLE_COMMON_WARNINGS
+
+#include <cassert>
+
+GX_RESTORE_WARNING_STATE
+
 
 namespace pbr {
+
+[[maybe_unused]] constexpr static uint32_t ACTOR_DESC_FORMAT_VERSION = 1U;
+
+
+//----------------------------------------------------------------------------------------------------------------------
 
 int Actor::_appendComponentIndex = std::numeric_limits<int>::max ();
 int Actor::_makeActorIndex = std::numeric_limits<int>::max ();
 std::unordered_map<ClassID, Actor::RegisterHander> Actor::_registerHandlers {};
 
-Actor::Actor () noexcept:
-    _name ( android_vulkan::GUID::GenerateAsString ( "Actor" ) )
-{
-    // NOTHING
-}
-
 Actor::Actor ( std::string &&name ) noexcept:
     _name ( std::move ( name ) )
 {
     // NOTHING
+}
+
+Actor::Actor ( ActorDesc const &desc, uint8_t const* data ) noexcept
+{
+    // Sanity checks.
+    static_assert ( sizeof ( ActorDesc::_localMatrix ) == sizeof ( desc._localMatrix ) );
+    assert ( desc._formatVersion == ACTOR_DESC_FORMAT_VERSION );
+
+    _name = reinterpret_cast<char const*> ( data + desc._name );
 }
 
 void Actor::AppendComponent ( ComponentRef &component ) noexcept

@@ -20,23 +20,14 @@ class PipeBase
 
         ~PipeBase () = delete;
 
-        [[nodiscard]] constexpr static size_t CommandBufferCountRequirement () noexcept
-        {
-            // Mesh geometry and one texture 2D.
-            return 2U;
-        }
-
     protected:
         // Note "x", "y" and "z" coordinates must be in renderer units.
-        static void SpawnBase ( android_vulkan::Renderer &renderer,
-            VkCommandBuffer const*& commandBuffers,
-            Scene &scene,
+        static void SpawnBase ( Scene &scene,
             float x,
             float y,
             float z,
             GXVec3 const &colliderOffset,
-            GXVec3 const &colliderSize,
-            char const* mesh
+            GXVec3 const &colliderSize
         ) noexcept;
 };
 

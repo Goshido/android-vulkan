@@ -21,19 +21,7 @@ class Brick final
         ~Brick () = delete;
 
         // Note "x", "y" and "z" coordinates must be in renderer units.
-        static void Spawn ( android_vulkan::Renderer &renderer,
-            VkCommandBuffer const*& commandBuffers,
-            Scene &scene,
-            float x,
-            float y,
-            float z
-        ) noexcept;
-
-        [[nodiscard]] constexpr static size_t CommandBufferCountRequirement () noexcept
-        {
-            // Mesh geometry and one texture 2D.
-            return 2U;
-        }
+        static void Spawn ( Scene &scene, float x, float y, float z ) noexcept;
 };
 
 } // namespace pbr::mario

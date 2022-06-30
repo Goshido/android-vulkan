@@ -21,13 +21,7 @@ class PipeX1 final : public PipeBase
         ~PipeX1 () = delete;
 
         // Note "x", "y" and "z" coordinates must be in renderer units.
-        static void Spawn ( android_vulkan::Renderer &renderer,
-            VkCommandBuffer const*& commandBuffers,
-            Scene &scene,
-            float x,
-            float y,
-            float z
-        ) noexcept;
+        static void Spawn ( Scene &scene, float x, float y, float z ) noexcept;
 };
 
 } // namespace pbr::mario

@@ -34,7 +34,7 @@ class Actor final
 
     private:
         std::deque<ComponentRef>                                _components {};
-        std::string const                                       _name;
+        std::string                                             _name;
         TransformableList                                       _transformableComponents {};
 
         static int                                              _appendComponentIndex;
@@ -43,7 +43,7 @@ class Actor final
         static std::unordered_map<ClassID, RegisterHander>      _registerHandlers;
 
     public:
-        Actor () noexcept;
+        Actor () = delete;
 
         Actor ( Actor const & ) = delete;
         Actor& operator = ( Actor const & ) = delete;
@@ -52,6 +52,7 @@ class Actor final
         Actor& operator = ( Actor && ) = delete;
 
         explicit Actor ( std::string &&name ) noexcept;
+        explicit Actor ( ActorDesc const &desc, uint8_t const* data ) noexcept;
 
         ~Actor () = default;
 

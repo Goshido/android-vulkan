@@ -13,6 +13,7 @@
 #include <pbr/script_component.h>
 #include <pbr/script_engine.h>
 #include <pbr/static_mesh_component.h>
+#include <pbr/actor_desc.h>
 #include <gamepad.h>
 #include <global_force_gravity.h>
 #include <shape_box.h>
@@ -33,7 +34,7 @@ constexpr static GXVec3 FREE_FALL_ACCELERATION ( 0.0F, -9.81F, 0.0F );
 constexpr static uint32_t RESOLUTION_SCALE_WIDTH = 80U;
 constexpr static uint32_t RESOLUTION_SCALE_HEIGHT = 70U;
 
-[[maybe_unused]] constexpr static uint32_t SCENE_DESC_FORMAT_VERSION = 2U;
+[[maybe_unused]] constexpr static uint32_t SCENE_DESC_FORMAT_VERSION = 3U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -479,9 +480,6 @@ bool World1x1::UploadGPUContent ( android_vulkan::Renderer &renderer ) noexcept
         sceneDesc->_textureCount +
         sceneDesc->_meshCount +
         sceneDesc->_envMapCount +
-        PipeBase::CommandBufferCountRequirement () +
-        Brick::CommandBufferCountRequirement () +
-        Riddle::CommandBufferCountRequirement () +
         MARIO_COMMAND_BUFFERS
     );
 
@@ -509,81 +507,89 @@ bool World1x1::UploadGPUContent ( android_vulkan::Renderer &renderer ) noexcept
     VkCommandBuffer const* commandBuffers = _commandBuffers.data ();
     uint8_t const* readPointer = data + sizeof ( pbr::SceneDesc );
 
-    auto const limit = static_cast<size_t> ( sceneDesc->_componentCount );
     size_t consumed = 0U;
     size_t read = 0U;
 
-    for ( size_t i = 0U; i < limit; ++i )
-    {
-        ComponentRef component = Component::Create ( renderer,
-            consumed,
-            read,
-            *reinterpret_cast<ComponentDesc const*> ( readPointer ),
-            data,
-            commandBuffers
-        );
+    auto const actors = static_cast<size_t> ( sceneDesc->_actorCount );
 
-        if ( component )
+    for ( size_t actorIdx = 0U; actorIdx < actors; ++actorIdx )
+    {
+        auto const& actorDesc = *reinterpret_cast<ActorDesc const*> ( readPointer );
+        readPointer += sizeof ( ActorDesc );
+        auto const components = static_cast<size_t> ( actorDesc._components );
+
+        ActorRef actor = std::make_shared<Actor> ( actorDesc, data );
+
+        for ( size_t componentIdx = 0U; componentIdx < components; ++componentIdx )
         {
-            ActorRef actor = std::make_shared<Actor> ();
-            actor->AppendComponent ( component );
-            _scene.AppendActor ( actor );
+            ComponentRef component = Component::Create ( renderer,
+                consumed,
+                read,
+                *reinterpret_cast<ComponentDesc const*> ( readPointer ),
+                data,
+                commandBuffers
+            );
+
+            if ( component )
+                actor->AppendComponent ( component );
+
+            commandBuffers += consumed;
+            readPointer += read;
         }
 
-        commandBuffers += consumed;
-        readPointer += read;
+        _scene.AppendActor ( actor );
     }
 
-    PipeX1::Spawn ( renderer, commandBuffers, _scene, 0.0F, 27.2F, 716.8F );
-    PipeX1::Spawn ( renderer, commandBuffers, _scene, 0.0F, 52.8F, 972.8F );
-    PipeX1::Spawn ( renderer, commandBuffers, _scene, 0.0F, 27.2F, 4172.8F );
-    PipeX1::Spawn ( renderer, commandBuffers, _scene, 0.0F, 27.2F, 4582.4F );
-    PipeX2::Spawn ( renderer, commandBuffers, _scene, 0.0F, 51.2F, 1177.6F );
-    PipeX2::Spawn ( renderer, commandBuffers, _scene, 0.0F, 51.2F, 1459.2F );
+    PipeX1::Spawn ( _scene, 0.0F, 27.2F, 716.8F );
+    PipeX1::Spawn ( _scene, 0.0F, 52.8F, 972.8F );
+    PipeX1::Spawn ( _scene, 0.0F, 27.2F, 4172.8F );
+    PipeX1::Spawn ( _scene, 0.0F, 27.2F, 4582.4F );
+    PipeX2::Spawn ( _scene, 0.0F, 51.2F, 1177.6F );
+    PipeX2::Spawn ( _scene, 0.0F, 51.2F, 1459.2F );
 
-    Brick::Spawn ( renderer, commandBuffers, _scene, -12.8F, 128.0F, 512.0F );
-    Brick::Spawn ( renderer, commandBuffers, _scene, -12.8F, 128.0F, 563.2F );
-    Brick::Spawn ( renderer, commandBuffers, _scene, -12.8F, 128.0F, 614.4F );
-    Brick::Spawn ( renderer, commandBuffers, _scene, -12.8F, 128.0F, 1971.2F );
-    Brick::Spawn ( renderer, commandBuffers, _scene, -12.8F, 128.0F, 2022.4F );
-    Brick::Spawn ( renderer, commandBuffers, _scene, -12.8F, 230.4F, 2048.0F );
-    Brick::Spawn ( renderer, commandBuffers, _scene, -12.8F, 230.4F, 2073.6F );
-    Brick::Spawn ( renderer, commandBuffers, _scene, -12.8F, 230.4F, 2099.2F );
-    Brick::Spawn ( renderer, commandBuffers, _scene, -12.8F, 230.4F, 2124.8F );
-    Brick::Spawn ( renderer, commandBuffers, _scene, -12.8F, 230.4F, 2150.4F );
-    Brick::Spawn ( renderer, commandBuffers, _scene, -12.8F, 230.4F, 2176.0F );
-    Brick::Spawn ( renderer, commandBuffers, _scene, -12.8F, 230.4F, 2201.6F );
-    Brick::Spawn ( renderer, commandBuffers, _scene, -12.8F, 230.4F, 2227.2F );
-    Brick::Spawn ( renderer, commandBuffers, _scene, -12.8F, 230.4F, 2329.6F );
-    Brick::Spawn ( renderer, commandBuffers, _scene, -12.8F, 230.4F, 2355.2F );
-    Brick::Spawn ( renderer, commandBuffers, _scene, -12.8F, 230.4F, 2380.8F );
-    Brick::Spawn ( renderer, commandBuffers, _scene, -12.8F, 128.0F, 2406.4F );
-    Brick::Spawn ( renderer, commandBuffers, _scene, -12.8F, 128.0F, 2560.0F );
-    Brick::Spawn ( renderer, commandBuffers, _scene, -12.8F, 128.0F, 3020.8F );
-    Brick::Spawn ( renderer, commandBuffers, _scene, -12.8F, 230.4F, 3097.6F );
-    Brick::Spawn ( renderer, commandBuffers, _scene, -12.8F, 230.4F, 3123.2F );
-    Brick::Spawn ( renderer, commandBuffers, _scene, -12.8F, 230.4F, 3148.8F );
-    Brick::Spawn ( renderer, commandBuffers, _scene, -12.8F, 230.4F, 3276.8F );
-    Brick::Spawn ( renderer, commandBuffers, _scene, -12.8F, 230.4F, 3353.6F );
-    Brick::Spawn ( renderer, commandBuffers, _scene, -12.8F, 128.0F, 3302.4F );
-    Brick::Spawn ( renderer, commandBuffers, _scene, -12.8F, 128.0F, 3328.0F );
-    Brick::Spawn ( renderer, commandBuffers, _scene, -12.8F, 128.0F, 4300.8F );
-    Brick::Spawn ( renderer, commandBuffers, _scene, -12.8F, 128.0F, 4326.4F );
-    Brick::Spawn ( renderer, commandBuffers, _scene, -12.8F, 128.0F, 4377.6F );
+    Brick::Spawn ( _scene, -12.8F, 128.0F, 512.0F );
+    Brick::Spawn ( _scene, -12.8F, 128.0F, 563.2F );
+    Brick::Spawn ( _scene, -12.8F, 128.0F, 614.4F );
+    Brick::Spawn ( _scene, -12.8F, 128.0F, 1971.2F );
+    Brick::Spawn ( _scene, -12.8F, 128.0F, 2022.4F );
+    Brick::Spawn ( _scene, -12.8F, 230.4F, 2048.0F );
+    Brick::Spawn ( _scene, -12.8F, 230.4F, 2073.6F );
+    Brick::Spawn ( _scene, -12.8F, 230.4F, 2099.2F );
+    Brick::Spawn ( _scene, -12.8F, 230.4F, 2124.8F );
+    Brick::Spawn ( _scene, -12.8F, 230.4F, 2150.4F );
+    Brick::Spawn ( _scene, -12.8F, 230.4F, 2176.0F );
+    Brick::Spawn ( _scene, -12.8F, 230.4F, 2201.6F );
+    Brick::Spawn ( _scene, -12.8F, 230.4F, 2227.2F );
+    Brick::Spawn ( _scene, -12.8F, 230.4F, 2329.6F );
+    Brick::Spawn ( _scene, -12.8F, 230.4F, 2355.2F );
+    Brick::Spawn ( _scene, -12.8F, 230.4F, 2380.8F );
+    Brick::Spawn ( _scene, -12.8F, 128.0F, 2406.4F );
+    Brick::Spawn ( _scene, -12.8F, 128.0F, 2560.0F );
+    Brick::Spawn ( _scene, -12.8F, 128.0F, 3020.8F );
+    Brick::Spawn ( _scene, -12.8F, 230.4F, 3097.6F );
+    Brick::Spawn ( _scene, -12.8F, 230.4F, 3123.2F );
+    Brick::Spawn ( _scene, -12.8F, 230.4F, 3148.8F );
+    Brick::Spawn ( _scene, -12.8F, 230.4F, 3276.8F );
+    Brick::Spawn ( _scene, -12.8F, 230.4F, 3353.6F );
+    Brick::Spawn ( _scene, -12.8F, 128.0F, 3302.4F );
+    Brick::Spawn ( _scene, -12.8F, 128.0F, 3328.0F );
+    Brick::Spawn ( _scene, -12.8F, 128.0F, 4300.8F );
+    Brick::Spawn ( _scene, -12.8F, 128.0F, 4326.4F );
+    Brick::Spawn ( _scene, -12.8F, 128.0F, 4377.6F );
 
-    Riddle::Spawn ( renderer, commandBuffers, _scene, -12.8F, 128.0F, 409.6F );
-    Riddle::Spawn ( renderer, commandBuffers, _scene, -12.8F, 128.0F, 537.6F );
-    Riddle::Spawn ( renderer, commandBuffers, _scene, -12.8F, 128.0F, 588.8F );
-    Riddle::Spawn ( renderer, commandBuffers, _scene, -12.8F, 230.4F, 563.2F );
-    Riddle::Spawn ( renderer, commandBuffers, _scene, -12.8F, 128.0F, 1996.8F );
-    Riddle::Spawn ( renderer, commandBuffers, _scene, -12.8F, 128.0F, 2713.6F );
-    Riddle::Spawn ( renderer, commandBuffers, _scene, -12.8F, 128.0F, 2790.4F );
-    Riddle::Spawn ( renderer, commandBuffers, _scene, -12.8F, 128.0F, 2867.2F );
-    Riddle::Spawn ( renderer, commandBuffers, _scene, -12.8F, 230.4F, 2406.4F );
-    Riddle::Spawn ( renderer, commandBuffers, _scene, -12.8F, 230.4F, 2790.4F );
-    Riddle::Spawn ( renderer, commandBuffers, _scene, -12.8F, 230.4F, 3302.4F );
-    Riddle::Spawn ( renderer, commandBuffers, _scene, -12.8F, 230.4F, 3328.0F );
-    Riddle::Spawn ( renderer, commandBuffers, _scene, -12.8F, 128.0F, 4352.0F );
+    Riddle::Spawn ( _scene, -12.8F, 128.0F, 409.6F );
+    Riddle::Spawn ( _scene, -12.8F, 128.0F, 537.6F );
+    Riddle::Spawn ( _scene, -12.8F, 128.0F, 588.8F );
+    Riddle::Spawn ( _scene, -12.8F, 230.4F, 563.2F );
+    Riddle::Spawn ( _scene, -12.8F, 128.0F, 1996.8F );
+    Riddle::Spawn ( _scene, -12.8F, 128.0F, 2713.6F );
+    Riddle::Spawn ( _scene, -12.8F, 128.0F, 2790.4F );
+    Riddle::Spawn ( _scene, -12.8F, 128.0F, 2867.2F );
+    Riddle::Spawn ( _scene, -12.8F, 230.4F, 2406.4F );
+    Riddle::Spawn ( _scene, -12.8F, 230.4F, 2790.4F );
+    Riddle::Spawn ( _scene, -12.8F, 230.4F, 3302.4F );
+    Riddle::Spawn ( _scene, -12.8F, 230.4F, 3328.0F );
+    Riddle::Spawn ( _scene, -12.8F, 128.0F, 4352.0F );
 
     bool success;
 

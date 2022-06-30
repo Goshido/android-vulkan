@@ -1,4 +1,5 @@
 #include <pbr/pbr_game.h>
+#include <pbr/actor_desc.h>
 #include <pbr/cube_map_manager.h>
 #include <pbr/material_manager.h>
 #include <pbr/mesh_manager.h>
@@ -26,7 +27,7 @@ constexpr static char const* SCENES[] =
 constexpr static size_t ACTIVE_SCENE = 0U;
 static_assert ( std::size ( SCENES ) > ACTIVE_SCENE );
 
-[[maybe_unused]] constexpr static uint32_t SCENE_DESC_FORMAT_VERSION = 2U;
+[[maybe_unused]] constexpr static uint32_t SCENE_DESC_FORMAT_VERSION = 3U;
 
 constexpr static float FIELD_OF_VIEW = 75.0F;
 constexpr static float Z_NEAR = 0.1F;
@@ -158,7 +159,7 @@ bool PBRGame::UploadGPUContent ( android_vulkan::Renderer& renderer ) noexcept
 
     std::vector<uint8_t> const& content = file.GetContent ();
     uint8_t const* data = content.data ();
-    auto const* sceneDesc = reinterpret_cast<pbr::SceneDesc const*> ( data );
+    auto const* sceneDesc = reinterpret_cast<SceneDesc const*> ( data );
 
     // Sanity checks.
     static_assert ( sizeof ( GXVec3 ) == sizeof ( sceneDesc->_viewerLocation ) );
@@ -196,35 +197,44 @@ bool PBRGame::UploadGPUContent ( android_vulkan::Renderer& renderer ) noexcept
         return false;
 
     VkCommandBuffer const* commandBuffers = _commandBuffers.data ();
-    uint8_t const* readPointer = data + sizeof ( pbr::SceneDesc );
+    uint8_t const* readPointer = data + sizeof ( SceneDesc );
 
-    auto const limit = static_cast<size_t> ( sceneDesc->_componentCount );
     size_t consumed = 0U;
     size_t read = 0U;
+    uint64_t const actors = sceneDesc->_actorCount;
 
-    for ( size_t i = 0U; i < limit; ++i )
+    for ( uint64_t actorIdx = 0U; actorIdx < actors; ++actorIdx )
     {
-        ComponentRef component = Component::Create ( renderer,
-            consumed,
-            read,
-            *reinterpret_cast<ComponentDesc const*> ( readPointer ),
-            data,
-            commandBuffers
-        );
+        auto const* actorDesc = reinterpret_cast<ActorDesc const*> ( readPointer );
+        readPointer += sizeof ( ActorDesc );
 
-        if ( component )
-        {
-            _allComponents.push_back ( component );
-            ClassID const classID = component->GetClassID ();
+        uint32_t const components = actorDesc->_components;
 
-            if ( classID == ClassID::PointLight | classID == ClassID::Reflection | classID == ClassID::StaticMesh )
+        for ( uint32_t compIdx = 0U; compIdx < components; ++compIdx ) {
+            ComponentRef component = Component::Create ( renderer,
+                consumed,
+                read,
+                *reinterpret_cast<ComponentDesc const*> ( readPointer ),
+                data,
+                commandBuffers
+            );
+
+            if ( component )
             {
-                _renderableComponents.emplace_back ( std::reference_wrapper<ComponentRef> { _allComponents.back () } );
-            }
-        }
+                _allComponents.push_back ( component );
+                ClassID const classID = component->GetClassID ();
 
-        commandBuffers += consumed;
-        readPointer += read;
+                if ( classID == ClassID::PointLight | classID == ClassID::Reflection | classID == ClassID::StaticMesh )
+                {
+                    _renderableComponents.emplace_back (
+                        std::reference_wrapper<ComponentRef> { _allComponents.back () }
+                    );
+                }
+            }
+
+            commandBuffers += consumed;
+            readPointer += read;
+        }
     }
 
     result = android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( renderer.GetQueue () ),

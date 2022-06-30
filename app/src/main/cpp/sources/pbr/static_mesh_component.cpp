@@ -13,7 +13,7 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-[[maybe_unused]] constexpr static uint32_t const STATIC_MESH_COMPONENT_DESC_FORMAT_VERSION = 2U;
+[[maybe_unused]] constexpr static uint32_t STATIC_MESH_COMPONENT_DESC_FORMAT_VERSION = 2U;
 constexpr static GXColorRGB DEFAULT_COLOR ( 1.0F, 1.0F, 1.0F, 1.0F );
 constexpr static GXColorRGB DEFAULT_EMISSION ( 1.0F, 1.0F, 1.0F, 1.0F );
 
@@ -233,7 +233,7 @@ MaterialRef& StaticMeshComponent::GetMaterial () noexcept
     return _material;
 }
 
-GXMat4 const& StaticMeshComponent::GetTransform () const noexcept
+[[maybe_unused]] GXMat4 const& StaticMeshComponent::GetTransform () const noexcept
 {
     return _localMatrix;
 }

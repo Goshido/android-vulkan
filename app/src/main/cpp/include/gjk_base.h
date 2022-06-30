@@ -30,9 +30,9 @@ class GJKBase
         [[nodiscard]] Simplex const& GetSimplex () const noexcept;
         [[nodiscard]] uint16_t GetSteps () const noexcept;
 
-        [[nodiscard, maybe_unused]] uint16_t GetTestLines () const noexcept;
-        [[nodiscard, maybe_unused]] uint16_t GetTestTetrahedrons () const noexcept;
-        [[nodiscard, maybe_unused]] uint16_t GetTestTriangles () const noexcept;
+        [[maybe_unused, nodiscard]] uint16_t GetTestLines () const noexcept;
+        [[maybe_unused, nodiscard]] uint16_t GetTestTetrahedrons () const noexcept;
+        [[maybe_unused, nodiscard]] uint16_t GetTestTriangles () const noexcept;
 
     protected:
         GJKBase () = default;

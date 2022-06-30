@@ -12,6 +12,7 @@ namespace pbr {
 struct SceneDesc final
 {
     uint32_t                    _formatVersion;
+    uint64_t                    _actorCount;
     uint64_t                    _componentCount;
     uint64_t                    _envMapCount;
     uint64_t                    _textureCount;

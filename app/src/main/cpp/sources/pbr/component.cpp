@@ -1,6 +1,7 @@
 #include <pbr/component.h>
 #include <pbr/point_light_component.h>
 #include <pbr/reflection_component.h>
+#include <pbr/rigid_body_component.h>
 #include <pbr/static_mesh_component.h>
 #include <guid_generator.h>
 
@@ -61,6 +62,17 @@ ComponentRef Component::Create ( android_vulkan::Renderer &renderer,
         );
 
         return success ? result : ComponentRef {};
+    }
+
+    if ( desc._classID == ClassID::RigidBody )
+    {
+        commandBufferConsumed = 0U;
+        dataRead = sizeof ( RigidBodyComponentDesc );
+
+        // NOLINTNEXTLINE - downcast.
+        auto const& d = static_cast<RigidBodyComponentDesc const&> ( desc );
+
+        return std::make_shared<RigidBodyComponent> ( dataRead, d, data );
     }
 
     if ( desc._classID == ClassID::Reflection )

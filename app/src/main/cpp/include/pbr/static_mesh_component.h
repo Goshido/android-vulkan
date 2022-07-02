@@ -80,7 +80,7 @@ class StaticMeshComponent final : public RenderableComponent, public Transformab
         [[nodiscard]] MaterialRef& GetMaterial () noexcept;
         [[maybe_unused, nodiscard]] MaterialRef const& GetMaterial () const noexcept;
 
-        [[nodiscard]] GXMat4 const& GetTransform () const noexcept;
+        [[maybe_unused, nodiscard]] GXMat4 const& GetTransform () const noexcept;
         void SetTransform ( GXMat4 const &transform ) noexcept;
 
     private:

@@ -5,11 +5,13 @@
 #include <pbr/scriptable_gxvec3.h>
 #include <guid_generator.h>
 #include <physics.h>
+#include <shape_box.h>
 
 GX_DISABLE_COMMON_WARNINGS
 
 extern "C" {
 
+#include <cassert>
 #include <lua/lauxlib.h>
 
 } // extern "C"
@@ -19,7 +21,79 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
+[[maybe_unused]] constexpr static uint32_t RIGID_BODY_COMPONENT_DESC_FORMAT_VERSION = 1U;
+[[maybe_unused]] constexpr static uint32_t BOX_SHAPE_DESC_FORMAT_VERSION = 1U;
+
+//----------------------------------------------------------------------------------------------------------------------
+
 int RigidBodyComponent::_registerRigidBodyComponentIndex = std::numeric_limits<int>::max ();
+
+RigidBodyComponent::RigidBodyComponent ( size_t &dataRead,
+    RigidBodyComponentDesc const &desc,
+    uint8_t const* data
+) noexcept:
+    Component ( ClassID::RigidBody ),
+    _actor ( nullptr ),
+    _rigidBody ( std::make_shared<android_vulkan::RigidBody> () )
+{
+    // Sanity checks.
+    assert ( desc._formatVersion == RIGID_BODY_COMPONENT_DESC_FORMAT_VERSION );
+
+    _name = reinterpret_cast<char const*> ( data + desc._name );
+
+    static_assert ( sizeof ( GXMat4 ) == sizeof ( desc._localMatrix ) );
+    auto const& m = reinterpret_cast<GXMat4 const&> ( desc._localMatrix );
+
+    // NOLINTNEXTLINE - downcast.
+    auto& body = static_cast<android_vulkan::RigidBody&> ( *_rigidBody );
+    body.SetLocation ( *reinterpret_cast<GXVec3 const*> ( &m._m[ 3U ][ 0U ] ), true );
+
+    GXQuat r {};
+    r.FromFast ( m );
+    body.SetRotation ( r, true );
+
+    switch ( desc._type )
+    {
+        case eRigidBodyTypeDesc::Dynamic:
+            body.DisableKinematic ( true );
+        break;
+
+        case eRigidBodyTypeDesc::Kinematic:
+            body.EnableKinematic ();
+        break;
+
+        default:
+            // IMPOSSIBLE
+        break;
+    }
+
+    auto const* base = reinterpret_cast<uint8_t const*> ( &desc );
+    auto const& shapeDesc = *reinterpret_cast<ShapeDesc const*> ( base + sizeof ( RigidBodyComponentDesc ) );
+
+    assert ( shapeDesc._type == eShapeTypeDesc::Box );
+
+    // NOLINTNEXTLINE - downcast.
+    auto const& boxDesc = static_cast<ShapeBoxDesc const&> ( shapeDesc );
+
+    // Sanity checks.
+    assert ( boxDesc._formatVersion == BOX_SHAPE_DESC_FORMAT_VERSION );
+
+    android_vulkan::ShapeRef shape = std::make_shared<android_vulkan::ShapeBox> ( boxDesc._dimensions[ 0U ],
+        boxDesc._dimensions[ 1U ],
+        boxDesc._dimensions[ 2U ]
+    );
+
+    // NOLINTNEXTLINE - downcast.
+    auto& boxShape = static_cast<android_vulkan::ShapeBox&> ( *shape );
+    boxShape.SetCollisionGroups ( boxDesc._collisionGroups );
+    boxShape.SetFriction ( boxDesc._friction );
+    boxShape.SetRestitution ( boxDesc._restitution );
+
+    body.SetMass ( boxDesc._mass, true );
+    dataRead += sizeof ( ShapeBoxDesc );
+
+    Setup ( shape );
+}
 
 RigidBodyComponent::RigidBodyComponent ( android_vulkan::ShapeRef &shape ) noexcept:
     Component ( ClassID::RigidBody, android_vulkan::GUID::GenerateAsString ( "RigidBody" ) ),

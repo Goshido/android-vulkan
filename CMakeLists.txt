@@ -126,12 +126,6 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/pbr/box_stack/box_stack.cpp
     app/src/main/cpp/sources/pbr/collision/collision.cpp
     app/src/main/cpp/sources/pbr/collision/manipulator.cpp
-    app/src/main/cpp/sources/pbr/mario/brick.cpp
-    app/src/main/cpp/sources/pbr/mario/obstacle.cpp
-    app/src/main/cpp/sources/pbr/mario/pipe_base.cpp
-    app/src/main/cpp/sources/pbr/mario/pipe_x1.cpp
-    app/src/main/cpp/sources/pbr/mario/pipe_x2.cpp
-    app/src/main/cpp/sources/pbr/mario/riddle.cpp
     app/src/main/cpp/sources/pbr/mario/world1x1.cpp
     app/src/main/cpp/sources/pbr/ray_casting/ray_casting.cpp
     app/src/main/cpp/sources/pbr/stipple_test/stipple_test.cpp

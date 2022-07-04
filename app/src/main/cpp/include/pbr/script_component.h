@@ -3,6 +3,7 @@
 
 
 #include "component.h"
+#include "script_component_desc.h"
 
 
 namespace pbr {

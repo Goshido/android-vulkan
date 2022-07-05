@@ -19,9 +19,7 @@ namespace pbr {
 constexpr static char const* SCENES[] =
 {
     "pbr/assets/N7_ADM_Reception.scene",
-    "pbr/assets/N7_ENG_Injection.scene",
-    "pbr/assets/physics-sandbox.scene",
-    "pbr/assets/world-1-1.scene"
+    "pbr/assets/N7_ENG_Injection.scene"
 };
 
 constexpr static size_t ACTIVE_SCENE = 0U;

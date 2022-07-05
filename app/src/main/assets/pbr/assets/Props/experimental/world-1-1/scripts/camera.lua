@@ -17,14 +17,16 @@ local Camera = {}
 
 -- Engine event handlers
 local function OnActorConstructed ( self, actor )
-    local camera = actor:FindComponent ( "Camera" )
+    local camera = actor:FindComponent ( self._cameraComponentName )
+    self._cameraComponentName = nil
+
     camera:SetProjection ( FOVY, g_scene:GetRenderTargetAspectRatio (), ZNEAR, ZFAR )
     self._cameraComponent = camera
     g_scene:SetActiveCamera ( camera )
 end
 
 local function OnRenderTargetChanged ( self )
-    self._cameraComponent:SetProjection ( FOVY, g_scene:GetRenderTargetAspectRatio (), ZNEAR, ZFAR )
+    self._cameraComponent:SetAspectRatio ( g_scene:GetRenderTargetAspectRatio () )
 end
 
 local function Tracking ( self, deltaTime )
@@ -54,13 +56,13 @@ local function Tracking ( self, deltaTime )
 end
 
 local function FindTracker ( self, deltaTime )
-    local mario = g_scene:FindActor ( "Mario" )
+    local mario = g_scene:FindActor ( self._targetActorName )
 
     if not mario then
         return
     end
 
-    local tracker = mario:FindComponent ( "Collider" )
+    local tracker = mario:FindComponent ( self._targetComponentName )
 
     local target = GXVec3 ()
     tracker:GetLocation ( target )
@@ -68,6 +70,8 @@ local function FindTracker ( self, deltaTime )
     self._localMatrix:SetW ( target )
 
     self._tracker = tracker
+    self._targetActorName = nil
+    self._targetComponentName = nil
 
     -- Switching from finding state to tracking state.
     self.OnPostPhysics = Tracking
@@ -78,6 +82,9 @@ local function Constructor ( self, handle, params )
     local obj = ScriptComponent ( handle )
 
     -- Data
+    obj._targetActorName = params._targetActor;
+    obj._targetComponentName = params._targetComponent;
+    obj._cameraComponentName = params._cameraComponent;
     obj._localMatrix = GXMat4 ()
     obj._localMatrix:RotationY ( math.rad ( -90.0 ) )
 

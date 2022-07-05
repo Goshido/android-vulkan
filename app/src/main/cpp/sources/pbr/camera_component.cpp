@@ -5,6 +5,8 @@
 
 GX_DISABLE_COMMON_WARNINGS
 
+#include <cassert>
+
 extern "C" {
 
 #include <lua/lauxlib.h>
@@ -16,19 +18,45 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
+[[maybe_unused]] constexpr static uint32_t CAMERA_COMPONENT_DESC_FORMAT_VERSION = 1U;
+
+constexpr static float DEFAULT_FIELD_OF_VIEW = 60.0F;
+constexpr static float DEFAULT_Z_NEAR = 1.0e-1F;
+constexpr static float DEFAULT_Z_FAR = 1.0e+4F;
+
+//----------------------------------------------------------------------------------------------------------------------
+
 int CameraComponent::_registerCameraComponentIndex = std::numeric_limits<int>::max ();
 
-// NOLINTNEXTLINE - uninitialized fields
 CameraComponent::CameraComponent () noexcept:
-    Component ( ClassID::Camera, android_vulkan::GUID::GenerateAsString ( "Camera" ) )
+    Component ( ClassID::Camera, android_vulkan::GUID::GenerateAsString ( "Camera" ) ),
+    _zNear ( DEFAULT_Z_NEAR ),
+    _zFar ( DEFAULT_Z_FAR ),
+    _fieldOfViewRadians ( GXDegToRad ( DEFAULT_FIELD_OF_VIEW ) )
 {
     _local.Identity ();
     _projection.Identity ();
 }
 
 // NOLINTNEXTLINE - uninitialized fields
+CameraComponent::CameraComponent ( CameraComponentDesc const &desc, uint8_t const* data ) noexcept:
+    Component ( ClassID::Camera )
+{
+    // Sanity checks.
+    static_assert ( sizeof ( desc._localMatrix ) == sizeof ( GXMat4 ) );
+    assert ( desc._formatVersion == CAMERA_COMPONENT_DESC_FORMAT_VERSION );
+
+    _name = reinterpret_cast<char const*> ( data + desc._name );
+    std::memcpy ( _local._data, &desc._localMatrix, sizeof ( _local ) );
+
+    SetProjection ( desc._fieldOfViewRadians, 1.0F, desc._zNear, desc._zFar );
+}
+
 CameraComponent::CameraComponent ( std::string &&name ) noexcept:
-    Component ( ClassID::Camera, std::move ( name ) )
+    Component ( ClassID::Camera, std::move ( name ) ),
+    _zNear ( DEFAULT_Z_NEAR ),
+    _zFar ( DEFAULT_Z_FAR ),
+    _fieldOfViewRadians ( GXDegToRad ( DEFAULT_FIELD_OF_VIEW ) )
 {
     _local.Identity ();
     _projection.Identity ();
@@ -44,6 +72,11 @@ GXMat4 const& CameraComponent::GetProjectionMatrix () const noexcept
     return _projection;
 }
 
+void CameraComponent::SetAspectRatio ( float aspectRatio ) noexcept
+{
+    _projection.Perspective ( _fieldOfViewRadians, aspectRatio, _zNear, _zFar );
+}
+
 void CameraComponent::SetLocal ( GXMat4 const &local ) noexcept
 {
     _local = local;
@@ -52,6 +85,9 @@ void CameraComponent::SetLocal ( GXMat4 const &local ) noexcept
 void CameraComponent::SetProjection ( float fieldOfViewRadians, float aspectRatio, float zNear, float zFar ) noexcept
 {
     _projection.Perspective ( fieldOfViewRadians, aspectRatio, zNear, zFar );
+    _zNear = zNear;
+    _zFar = zFar;
+    _fieldOfViewRadians = fieldOfViewRadians;
 }
 
 bool CameraComponent::Register ( lua_State &vm ) noexcept
@@ -92,6 +128,11 @@ bool CameraComponent::Init ( lua_State &vm ) noexcept
         },
 
         {
+            .name = "av_CameraComponentSetAspectRatio",
+            .func = &CameraComponent::OnSetAspectRatio
+        },
+
+        {
             .name = "av_CameraComponentSetLocal",
             .func = &CameraComponent::OnSetLocal
         },
@@ -114,6 +155,13 @@ int CameraComponent::OnCreate ( lua_State* /*state*/ )
     return 0;
 }
 
+int CameraComponent::OnSetAspectRatio ( lua_State* state )
+{
+    auto& self = *static_cast<CameraComponent*> ( lua_touserdata ( state, 1 ) );
+    self.SetAspectRatio ( static_cast<float> ( lua_tonumber ( state, 2 ) ) );
+    return 0;
+}
+
 int CameraComponent::OnSetLocal ( lua_State* state )
 {
     auto& self = *static_cast<CameraComponent*> ( lua_touserdata ( state, 1 ) );
@@ -125,7 +173,7 @@ int CameraComponent::OnSetProjection ( lua_State* state )
 {
     auto& self = *static_cast<CameraComponent*> ( lua_touserdata ( state, 1 ) );
 
-    self._projection.Perspective ( static_cast<float> ( lua_tonumber ( state, 2 ) ),
+    self.SetProjection ( static_cast<float> ( lua_tonumber ( state, 2 ) ),
         static_cast<float> ( lua_tonumber ( state, 3 ) ),
         static_cast<float> ( lua_tonumber ( state, 4 ) ),
         static_cast<float> ( lua_tonumber ( state, 5 ) )

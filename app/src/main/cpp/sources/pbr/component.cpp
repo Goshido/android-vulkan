@@ -1,4 +1,5 @@
 #include <pbr/component.h>
+#include <pbr/camera_component.h>
 #include <pbr/point_light_component.h>
 #include <pbr/reflection_component.h>
 #include <pbr/rigid_body_component.h>
@@ -27,24 +28,6 @@ ComponentRef Component::Create ( android_vulkan::Renderer &renderer,
     VkCommandBuffer const* commandBuffers
 ) noexcept
 {
-    if ( desc._classID == ClassID::Unknown )
-    {
-        commandBufferConsumed = 0U;
-        dataRead = sizeof ( ComponentDesc );
-        return {};
-    }
-
-    if ( desc._classID == ClassID::PointLight )
-    {
-        commandBufferConsumed = 0U;
-        dataRead = sizeof ( PointLightComponentDesc );
-
-        // NOLINTNEXTLINE - downcast.
-        auto const& d = static_cast<PointLightComponentDesc const&> ( desc );
-
-        return std::make_shared<PointLightComponent> ( d, data );
-    }
-
     if ( desc._classID == ClassID::StaticMesh )
     {
         dataRead = sizeof ( StaticMeshComponentDesc );
@@ -65,17 +48,6 @@ ComponentRef Component::Create ( android_vulkan::Renderer &renderer,
         return success ? result : ComponentRef {};
     }
 
-    if ( desc._classID == ClassID::Script )
-    {
-        commandBufferConsumed = 0U;
-        dataRead = sizeof ( ScriptComponentDesc );
-
-        // NOLINTNEXTLINE - downcast.
-        auto const& d = static_cast<ScriptComponentDesc const&> ( desc );
-
-        return std::make_shared<ScriptComponent> ( d, data );
-    }
-
     if ( desc._classID == ClassID::RigidBody )
     {
         commandBufferConsumed = 0U;
@@ -87,6 +59,28 @@ ComponentRef Component::Create ( android_vulkan::Renderer &renderer,
         return std::make_shared<RigidBodyComponent> ( dataRead, d, data );
     }
 
+    if ( desc._classID == ClassID::Script )
+    {
+        commandBufferConsumed = 0U;
+        dataRead = sizeof ( ScriptComponentDesc );
+
+        // NOLINTNEXTLINE - downcast.
+        auto const& d = static_cast<ScriptComponentDesc const&> ( desc );
+
+        return std::make_shared<ScriptComponent> ( d, data );
+    }
+
+    if ( desc._classID == ClassID::PointLight )
+    {
+        commandBufferConsumed = 0U;
+        dataRead = sizeof ( PointLightComponentDesc );
+
+        // NOLINTNEXTLINE - downcast.
+        auto const& d = static_cast<PointLightComponentDesc const&> ( desc );
+
+        return std::make_shared<PointLightComponent> ( d, data );
+    }
+
     if ( desc._classID == ClassID::Reflection )
     {
         dataRead = sizeof ( ReflectionComponentDesc );
@@ -95,6 +89,24 @@ ComponentRef Component::Create ( android_vulkan::Renderer &renderer,
         auto const& d = static_cast<ReflectionComponentDesc const&> ( desc );
 
         return std::make_shared<ReflectionComponent> ( renderer, commandBufferConsumed, d, data, commandBuffers );
+    }
+
+    if ( desc._classID == ClassID::Camera )
+    {
+        commandBufferConsumed = 0U;
+        dataRead = sizeof ( CameraComponentDesc );
+
+        // NOLINTNEXTLINE - downcast.
+        auto const& d = static_cast<CameraComponentDesc const&> ( desc );
+
+        return std::make_shared<CameraComponent> ( d, data );
+    }
+
+    if ( desc._classID == ClassID::Unknown )
+    {
+        commandBufferConsumed = 0U;
+        dataRead = sizeof ( ComponentDesc );
+        return {};
     }
 
     commandBufferConsumed = 0U;

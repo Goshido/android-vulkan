@@ -97,19 +97,6 @@ bool World1x1::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
         return false;
     }
 
-    ComponentRef cameraScript = std::make_shared<ScriptComponent> ( "av://assets/Scripts/camera.lua", "CameraScript" );
-    ComponentRef cameraComponent = std::make_shared<CameraComponent> ( "Camera" );
-
-    // NOLINTNEXTLINE - downcast.
-    CameraComponent& cc = static_cast<CameraComponent&> ( *cameraComponent );
-    cc.SetProjection ( GXDegToRad ( 60.0F ), 1920.0F / 1080.0F, 1.0e-1F, 1.0e+4F );
-
-    ActorRef camera = std::make_shared<Actor> ( "Camera" );
-    camera->AppendComponent ( cameraScript );
-    camera->AppendComponent ( cameraComponent );
-
-    _scene.AppendActor ( camera );
-
     if ( !UploadGPUContent ( renderer ) )
     {
         OnDestroyDevice ( device );

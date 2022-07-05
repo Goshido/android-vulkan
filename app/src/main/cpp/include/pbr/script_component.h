@@ -11,10 +11,10 @@ namespace pbr {
 class ScriptComponent final : public Component
 {
     private:
-        std::string const       _script;
-        std::string const       _params {};
+        std::string     _script {};
+        std::string     _params {};
 
-        static int              _registerScriptComponentIndex;
+        static int      _registerScriptComponentIndex;
 
     public:
         ScriptComponent () = delete;
@@ -25,6 +25,7 @@ class ScriptComponent final : public Component
         ScriptComponent ( ScriptComponent && ) = delete;
         ScriptComponent& operator = ( ScriptComponent && ) = delete;
 
+        explicit ScriptComponent ( ScriptComponentDesc const &desc, uint8_t const* data ) noexcept;
         explicit ScriptComponent ( std::string &&script, std::string &&name ) noexcept;
         explicit ScriptComponent ( std::string &&script, std::string &&params, std::string &&name ) noexcept;
 

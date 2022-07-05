@@ -1,10 +1,35 @@
 #include <pbr/script_component.h>
 #include <pbr/script_engine.h>
 
+GX_DISABLE_COMMON_WARNINGS
+
+#include <cassert>
+
+GX_RESTORE_WARNING_STATE
+
 
 namespace pbr {
 
+[[maybe_unused]] constexpr static uint32_t SCRIPT_COMPONENT_DESC_FORMAT_VERSION = 1U;
+
+//----------------------------------------------------------------------------------------------------------------------
+
 int ScriptComponent::_registerScriptComponentIndex = std::numeric_limits<int>::max ();
+
+ScriptComponent::ScriptComponent ( ScriptComponentDesc const &desc, uint8_t const* data ) noexcept:
+    Component ( ClassID::Script )
+{
+    // sanity check.
+    assert ( desc._formatVersion == SCRIPT_COMPONENT_DESC_FORMAT_VERSION );
+
+    _name = reinterpret_cast<char const*> ( data + desc._name );
+    _script = reinterpret_cast<char const*> ( data + desc._script );
+
+    if ( desc._params != android_vulkan::NO_UTF8_OFFSET )
+    {
+        _params = reinterpret_cast<char const*> ( data + desc._params );
+    }
+}
 
 ScriptComponent::ScriptComponent ( std::string &&script, std::string &&name ) noexcept:
     Component ( ClassID::Script, std::move ( name ) ),

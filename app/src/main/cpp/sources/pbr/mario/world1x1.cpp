@@ -97,15 +97,6 @@ bool World1x1::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
         return false;
     }
 
-    ComponentRef script = std::make_shared<ScriptComponent> ( "av://assets/Scripts/player.lua",
-        "{ _msg = 'hello world', _state = 1 }",
-        "Player"
-    );
-
-    ActorRef logic = std::make_shared<Actor> ( "Logic" );
-    logic->AppendComponent ( script );
-    _scene.AppendActor ( logic );
-
     ComponentRef cameraScript = std::make_shared<ScriptComponent> ( "av://assets/Scripts/camera.lua", "CameraScript" );
     ComponentRef cameraComponent = std::make_shared<CameraComponent> ( "Camera" );
 
@@ -282,49 +273,6 @@ bool World1x1::UploadGPUContent ( android_vulkan::Renderer &renderer ) noexcept
 
         _scene.AppendActor ( actor );
     }
-
-    bool success;
-
-    ComponentRef staticMesh = std::make_shared<StaticMeshComponent> ( renderer,
-        success,
-        consumed,
-        "pbr/assets/Props/experimental/world-1-1/mario/mario-cube.mesh2",
-        "pbr/assets/Props/experimental/world-1-1/mario/mario.mtl",
-        commandBuffers,
-        "Mesh"
-    );
-
-    commandBuffers += consumed;
-
-    if ( !success )
-        return false;
-
-    android_vulkan::ShapeRef shape = std::make_shared<android_vulkan::ShapeBox> ( 0.8F, 0.8F, 0.8F );
-    shape->SetFriction ( 0.5F );
-    shape->SetRestitution ( 0.0F );
-
-    ComponentRef rigidBody = std::make_shared<RigidBodyComponent> ( shape, "Collider" );
-
-    // NOLINTNEXTLINE - downcast.
-    auto& collider = static_cast<RigidBodyComponent&> ( *rigidBody );
-
-    android_vulkan::RigidBody& body = *collider.GetRigidBody ();
-    body.DisableKinematic ( true );
-    body.EnableSleep ();
-    body.SetDampingAngular ( 0.99F );
-    body.SetDampingLinear ( 0.99F );
-    body.SetMass ( 38.0F, true );
-    body.SetLocation ( -0.8F, 4.4F, 6.00189F, true );
-    body.SetShape ( shape, true );
-
-    ComponentRef script = std::make_shared<ScriptComponent> ( "av://assets/Scripts/mario.lua", "Logic" );
-
-    ActorRef actor = std::make_shared<Actor> ( "Mario" );
-    actor->AppendComponent ( staticMesh );
-    actor->AppendComponent ( rigidBody );
-    actor->AppendComponent ( script );
-
-    _scene.AppendActor ( actor );
 
     result = android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( renderer.GetQueue () ),
         "pbr::mario::World1x1::UploadGPUContent",

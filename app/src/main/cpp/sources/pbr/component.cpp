@@ -5,6 +5,7 @@
 #include <pbr/rigid_body_component.h>
 #include <pbr/script_component.h>
 #include <pbr/static_mesh_component.h>
+#include <pbr/transform_component.h>
 #include <guid_generator.h>
 
 
@@ -57,6 +58,17 @@ ComponentRef Component::Create ( android_vulkan::Renderer &renderer,
         auto const& d = static_cast<RigidBodyComponentDesc const&> ( desc );
 
         return std::make_shared<RigidBodyComponent> ( dataRead, d, data );
+    }
+
+    if ( desc._classID == ClassID::Transform )
+    {
+        commandBufferConsumed = 0U;
+        dataRead = sizeof ( TransformComponentDesc );
+
+        // NOLINTNEXTLINE - downcast.
+        auto const& d = static_cast<TransformComponentDesc const&> ( desc );
+
+        return std::make_shared<TransformComponent> ( d, data );
     }
 
     if ( desc._classID == ClassID::Script )

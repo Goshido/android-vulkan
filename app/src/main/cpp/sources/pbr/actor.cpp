@@ -6,6 +6,7 @@
 #include <pbr/script_component.h>
 #include <pbr/script_engine.h>
 #include <pbr/static_mesh_component.h>
+#include <pbr/transform_component.h>
 #include <guid_generator.h>
 #include <logger.h>
 
@@ -19,7 +20,6 @@ GX_RESTORE_WARNING_STATE
 namespace pbr {
 
 [[maybe_unused]] constexpr static uint32_t ACTOR_DESC_FORMAT_VERSION = 1U;
-
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -105,6 +105,7 @@ bool Actor::Init ( lua_State &vm ) noexcept
     _registerHandlers.emplace ( std::pair ( ClassID::RigidBody, &Actor::AppendRigidBodyComponent ) );
     _registerHandlers.emplace ( std::pair ( ClassID::Script, &Actor::AppendScriptComponent ) );
     _registerHandlers.emplace ( std::pair ( ClassID::StaticMesh, &Actor::AppendStaticMeshComponent ) );
+    _registerHandlers.emplace ( std::pair ( ClassID::Transform, &Actor::AppendTransformComponent ) );
 
     lua_register ( &vm, "av_ActorGetName", &Actor::OnGetName );
 
@@ -278,6 +279,39 @@ void Actor::AppendStaticMeshComponent ( ComponentRef &component,
 
     freeTransferResource.emplace_back ( std::ref ( component ) );
     _transformableComponents.emplace_back ( std::ref ( transformable ) );
+}
+
+// NOLINTNEXTLINE - can be made static.
+void Actor::AppendTransformComponent ( ComponentRef &component,
+    ComponentList &/*freeTransferResource*/,
+    ComponentList &/*renderable*/,
+    android_vulkan::Physics &/*physics*/,
+    lua_State &vm
+) noexcept
+{
+    // NOLINTNEXTLINE - downcast.
+    auto& transformComponent = static_cast<TransformComponent&> ( *component );
+
+    lua_pushvalue ( &vm, _appendComponentIndex );
+    lua_pushvalue ( &vm, -2 );
+
+    if ( !transformComponent.Register ( vm ) )
+    {
+        android_vulkan::LogWarning ( "pbr::Actor::AppendTransformComponent - Can't register transform component %s.",
+            transformComponent.GetName ().c_str ()
+        );
+
+        lua_pop ( &vm, 2 );
+        return;
+    }
+
+    if ( lua_pcall ( &vm, 2, 0, ScriptEngine::GetErrorHandlerIndex () ) == LUA_OK )
+        return;
+
+    android_vulkan::LogWarning ( "pbr::Actor::AppendTransformComponent - Can't append camera component %s inside "
+        "Lua VM.",
+        transformComponent.GetName ().c_str ()
+    );
 }
 
 int Actor::OnGetName ( lua_State* state )

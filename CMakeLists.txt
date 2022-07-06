@@ -122,6 +122,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/pbr/stub_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/texture_present_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/texture_present_program.cpp
+    app/src/main/cpp/sources/pbr/transform_component.cpp
     app/src/main/cpp/sources/pbr/uniform_buffer_pool.cpp
     app/src/main/cpp/sources/pbr/box_stack/box_stack.cpp
     app/src/main/cpp/sources/pbr/collision/collision.cpp

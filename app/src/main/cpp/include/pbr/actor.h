@@ -114,6 +114,13 @@ class Actor final
             lua_State &vm
         ) noexcept;
 
+        void AppendTransformComponent ( ComponentRef &component,
+            ComponentList &freeTransferResource,
+            ComponentList &renderable,
+            android_vulkan::Physics &physics,
+            lua_State &vm
+        ) noexcept;
+
         [[nodiscard]] static int OnGetName ( lua_State* state );
 };
 

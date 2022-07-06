@@ -108,7 +108,7 @@ local sun = Actor ( "Sun" )
 sun:AppendComponent ( PointLightComponent ( "Light" ) )
 g_scene:AppendActor ( sun )
 
-local lightSource = g_scene:FindComponent ( "Sun" )
+local lightSource = g_scene:FindActor ( "Sun" )
 ```
 
 ## <a id="method-find-actors">`FindActors ( name )`</a>

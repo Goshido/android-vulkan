@@ -20,11 +20,25 @@ namespace pbr {
 
 class Component
 {
-    protected:
-        std::string     _name;
+    public:
+        // Forward declaration. This will init '_handlers' static field.
+        class StaticInitializer;
 
     private:
-        ClassID         _classID;
+        using Handler = ComponentRef ( * ) ( android_vulkan::Renderer &renderer,
+            size_t &commandBufferConsumed,
+            size_t &dataRead,
+            ComponentDesc const &desc,
+            uint8_t const* data,
+            VkCommandBuffer const* commandBuffers
+        ) noexcept;
+
+    protected:
+        std::string         _name;
+
+    private:
+        ClassID             _classID;
+        static Handler      _handlers[ static_cast<size_t> ( ClassID::COUNT ) ];
 
     public:
         Component () = delete;
@@ -55,6 +69,70 @@ class Component
         explicit Component ( ClassID classID, std::string &&name ) noexcept;
 
     private:
+        [[nodiscard]] static ComponentRef CreateCamera ( android_vulkan::Renderer &renderer,
+            size_t &commandBufferConsumed,
+            size_t &dataRead,
+            ComponentDesc const &desc,
+            uint8_t const* data,
+            VkCommandBuffer const* commandBuffers
+        ) noexcept;
+
+        [[nodiscard]] static ComponentRef CreateStaticMesh ( android_vulkan::Renderer &renderer,
+            size_t &commandBufferConsumed,
+            size_t &dataRead,
+            ComponentDesc const &desc,
+            uint8_t const* data,
+            VkCommandBuffer const* commandBuffers
+        ) noexcept;
+
+        [[nodiscard]] static ComponentRef CreatePointLight ( android_vulkan::Renderer &renderer,
+            size_t &commandBufferConsumed,
+            size_t &dataRead,
+            ComponentDesc const &desc,
+            uint8_t const* data,
+            VkCommandBuffer const* commandBuffers
+        ) noexcept;
+
+        [[nodiscard]] static ComponentRef CreateReflection ( android_vulkan::Renderer &renderer,
+            size_t &commandBufferConsumed,
+            size_t &dataRead,
+            ComponentDesc const &desc,
+            uint8_t const* data,
+            VkCommandBuffer const* commandBuffers
+        ) noexcept;
+
+        [[nodiscard]] static ComponentRef CreateRigidBody ( android_vulkan::Renderer &renderer,
+            size_t &commandBufferConsumed,
+            size_t &dataRead,
+            ComponentDesc const &desc,
+            uint8_t const* data,
+            VkCommandBuffer const* commandBuffers
+        ) noexcept;
+
+        [[nodiscard]] static ComponentRef CreateScript ( android_vulkan::Renderer &renderer,
+            size_t &commandBufferConsumed,
+            size_t &dataRead,
+            ComponentDesc const &desc,
+            uint8_t const* data,
+            VkCommandBuffer const* commandBuffers
+        ) noexcept;
+
+        [[nodiscard]] static ComponentRef CreateTransform ( android_vulkan::Renderer &renderer,
+            size_t &commandBufferConsumed,
+            size_t &dataRead,
+            ComponentDesc const &desc,
+            uint8_t const* data,
+            VkCommandBuffer const* commandBuffers
+        ) noexcept;
+
+        [[nodiscard]] static ComponentRef CreateUnknown ( android_vulkan::Renderer &renderer,
+            size_t &commandBufferConsumed,
+            size_t &dataRead,
+            ComponentDesc const &desc,
+            uint8_t const* data,
+            VkCommandBuffer const* commandBuffers
+        ) noexcept;
+
         [[nodiscard]] static int OnGetName ( lua_State* state );
 };
 

@@ -6,10 +6,47 @@
 #include <pbr/script_component.h>
 #include <pbr/static_mesh_component.h>
 #include <pbr/transform_component.h>
-#include <guid_generator.h>
+
+GX_DISABLE_COMMON_WARNINGS
+
+#include <cassert>
+
+GX_RESTORE_WARNING_STATE
 
 
 namespace pbr {
+
+class Component::StaticInitializer final
+{
+    public:
+        StaticInitializer () noexcept;
+
+        StaticInitializer ( StaticInitializer const & ) = delete;
+        StaticInitializer& operator = ( StaticInitializer const & ) = delete;
+
+        StaticInitializer ( StaticInitializer && ) = delete;
+        StaticInitializer& operator = ( StaticInitializer && ) = delete;
+
+        ~StaticInitializer () = default;
+};
+
+Component::StaticInitializer::StaticInitializer () noexcept
+{
+    Component::_handlers[ static_cast<size_t> ( ClassID::Camera ) ] = &Component::CreateCamera;
+    Component::_handlers[ static_cast<size_t> ( ClassID::PointLight ) ] = &Component::CreatePointLight;
+    Component::_handlers[ static_cast<size_t> ( ClassID::Reflection ) ] = &Component::CreateReflection;
+    Component::_handlers[ static_cast<size_t> ( ClassID::RigidBody ) ] = &Component::CreateRigidBody;
+    Component::_handlers[ static_cast<size_t> ( ClassID::Script ) ] = &Component::CreateScript;
+    Component::_handlers[ static_cast<size_t> ( ClassID::StaticMesh ) ] = &Component::CreateStaticMesh;
+    Component::_handlers[ static_cast<size_t> ( ClassID::Transform ) ] = &Component::CreateTransform;
+    Component::_handlers[ static_cast<size_t> ( ClassID::Unknown ) ] = &Component::CreateUnknown;
+}
+
+[[maybe_unused]] static Component::StaticInitializer const g_StaticInitializer {};
+
+//----------------------------------------------------------------------------------------------------------------------
+
+Component::Handler Component::_handlers[ static_cast<size_t> ( ClassID::COUNT ) ] = {};
 
 ClassID Component::GetClassID () const noexcept
 {
@@ -29,101 +66,10 @@ ComponentRef Component::Create ( android_vulkan::Renderer &renderer,
     VkCommandBuffer const* commandBuffers
 ) noexcept
 {
-    if ( desc._classID == ClassID::StaticMesh )
-    {
-        dataRead = sizeof ( StaticMeshComponentDesc );
+    assert ( desc._classID < ClassID::COUNT );
 
-        // NOLINTNEXTLINE - downcast.
-        auto const& d = static_cast<StaticMeshComponentDesc const&> ( desc );
-
-        bool success;
-
-        ComponentRef result = std::make_shared<StaticMeshComponent> ( renderer,
-            success,
-            commandBufferConsumed,
-            d,
-            data,
-            commandBuffers
-        );
-
-        return success ? result : ComponentRef {};
-    }
-
-    if ( desc._classID == ClassID::RigidBody )
-    {
-        commandBufferConsumed = 0U;
-        dataRead = sizeof ( RigidBodyComponentDesc );
-
-        // NOLINTNEXTLINE - downcast.
-        auto const& d = static_cast<RigidBodyComponentDesc const&> ( desc );
-
-        return std::make_shared<RigidBodyComponent> ( dataRead, d, data );
-    }
-
-    if ( desc._classID == ClassID::Transform )
-    {
-        commandBufferConsumed = 0U;
-        dataRead = sizeof ( TransformComponentDesc );
-
-        // NOLINTNEXTLINE - downcast.
-        auto const& d = static_cast<TransformComponentDesc const&> ( desc );
-
-        return std::make_shared<TransformComponent> ( d, data );
-    }
-
-    if ( desc._classID == ClassID::Script )
-    {
-        commandBufferConsumed = 0U;
-        dataRead = sizeof ( ScriptComponentDesc );
-
-        // NOLINTNEXTLINE - downcast.
-        auto const& d = static_cast<ScriptComponentDesc const&> ( desc );
-
-        return std::make_shared<ScriptComponent> ( d, data );
-    }
-
-    if ( desc._classID == ClassID::PointLight )
-    {
-        commandBufferConsumed = 0U;
-        dataRead = sizeof ( PointLightComponentDesc );
-
-        // NOLINTNEXTLINE - downcast.
-        auto const& d = static_cast<PointLightComponentDesc const&> ( desc );
-
-        return std::make_shared<PointLightComponent> ( d, data );
-    }
-
-    if ( desc._classID == ClassID::Reflection )
-    {
-        dataRead = sizeof ( ReflectionComponentDesc );
-
-        // NOLINTNEXTLINE - downcast.
-        auto const& d = static_cast<ReflectionComponentDesc const&> ( desc );
-
-        return std::make_shared<ReflectionComponent> ( renderer, commandBufferConsumed, d, data, commandBuffers );
-    }
-
-    if ( desc._classID == ClassID::Camera )
-    {
-        commandBufferConsumed = 0U;
-        dataRead = sizeof ( CameraComponentDesc );
-
-        // NOLINTNEXTLINE - downcast.
-        auto const& d = static_cast<CameraComponentDesc const&> ( desc );
-
-        return std::make_shared<CameraComponent> ( d, data );
-    }
-
-    if ( desc._classID == ClassID::Unknown )
-    {
-        commandBufferConsumed = 0U;
-        dataRead = sizeof ( ComponentDesc );
-        return {};
-    }
-
-    commandBufferConsumed = 0U;
-    dataRead = sizeof ( ComponentDesc );
-    return {};
+    Handler const handler = _handlers[ static_cast<size_t> ( desc._classID ) ];
+    return handler ( renderer, commandBufferConsumed, dataRead, desc, data, commandBuffers );
 }
 
 void Component::Register ( lua_State &vm ) noexcept
@@ -142,6 +88,146 @@ Component::Component ( ClassID classID, std::string &&name ) noexcept:
     _classID ( classID )
 {
     // NOTHING
+}
+
+ComponentRef Component::CreateCamera ( android_vulkan::Renderer &/*renderer*/,
+    size_t &commandBufferConsumed,
+    size_t &dataRead,
+    ComponentDesc const &desc,
+    uint8_t const* data,
+    VkCommandBuffer const* /*commandBuffers*/
+) noexcept
+{
+    commandBufferConsumed = 0U;
+    dataRead = sizeof ( CameraComponentDesc );
+
+    // NOLINTNEXTLINE - downcast.
+    auto const& d = static_cast<CameraComponentDesc const&> ( desc );
+
+    return std::make_shared<CameraComponent> ( d, data );
+}
+
+ComponentRef Component::CreateStaticMesh ( android_vulkan::Renderer &renderer,
+    size_t &commandBufferConsumed,
+    size_t &dataRead,
+    ComponentDesc const &desc,
+    uint8_t const* data,
+    VkCommandBuffer const* commandBuffers
+) noexcept
+{
+    dataRead = sizeof ( StaticMeshComponentDesc );
+
+    // NOLINTNEXTLINE - downcast.
+    auto const& d = static_cast<StaticMeshComponentDesc const&> ( desc );
+
+    bool success;
+
+    ComponentRef result = std::make_shared<StaticMeshComponent> ( renderer,
+        success,
+        commandBufferConsumed,
+        d,
+        data,
+        commandBuffers
+    );
+
+    return success ? result : ComponentRef {};
+}
+
+ComponentRef Component::CreatePointLight ( android_vulkan::Renderer &/*renderer*/,
+    size_t &commandBufferConsumed,
+    size_t &dataRead,
+    ComponentDesc const &desc,
+    uint8_t const* data,
+    VkCommandBuffer const* /*commandBuffers*/
+) noexcept
+{
+    commandBufferConsumed = 0U;
+    dataRead = sizeof ( PointLightComponentDesc );
+
+    // NOLINTNEXTLINE - downcast.
+    auto const& d = static_cast<PointLightComponentDesc const&> ( desc );
+
+    return std::make_shared<PointLightComponent> ( d, data );
+}
+
+ComponentRef Component::CreateReflection ( android_vulkan::Renderer &renderer,
+    size_t &commandBufferConsumed,
+    size_t &dataRead,
+    ComponentDesc const &desc,
+    uint8_t const* data,
+    VkCommandBuffer const* commandBuffers
+) noexcept
+{
+    dataRead = sizeof ( ReflectionComponentDesc );
+
+    // NOLINTNEXTLINE - downcast.
+    auto const& d = static_cast<ReflectionComponentDesc const&> ( desc );
+
+    return std::make_shared<ReflectionComponent> ( renderer, commandBufferConsumed, d, data, commandBuffers );
+}
+
+ComponentRef Component::CreateRigidBody ( android_vulkan::Renderer &/*renderer*/,
+    size_t &commandBufferConsumed,
+    size_t &dataRead,
+    ComponentDesc const &desc,
+    uint8_t const* data,
+    VkCommandBuffer const* /*commandBuffers*/
+) noexcept
+{
+    commandBufferConsumed = 0U;
+    dataRead = sizeof ( RigidBodyComponentDesc );
+
+    // NOLINTNEXTLINE - downcast.
+    auto const& d = static_cast<RigidBodyComponentDesc const&> ( desc );
+
+    return std::make_shared<RigidBodyComponent> ( dataRead, d, data );
+}
+
+ComponentRef Component::CreateScript ( android_vulkan::Renderer &/*renderer*/,
+    size_t &commandBufferConsumed,
+    size_t &dataRead,
+    ComponentDesc const &desc,
+    uint8_t const* data,
+    VkCommandBuffer const* /*commandBuffers*/
+) noexcept
+{
+    commandBufferConsumed = 0U;
+    dataRead = sizeof ( ScriptComponentDesc );
+
+    // NOLINTNEXTLINE - downcast.
+    auto const& d = static_cast<ScriptComponentDesc const&> ( desc );
+
+    return std::make_shared<ScriptComponent> ( d, data );
+}
+
+ComponentRef Component::CreateTransform ( android_vulkan::Renderer &/*renderer*/,
+    size_t &commandBufferConsumed,
+    size_t &dataRead,
+    ComponentDesc const &desc,
+    uint8_t const* data,
+    VkCommandBuffer const* /*commandBuffers*/
+) noexcept
+{
+    commandBufferConsumed = 0U;
+    dataRead = sizeof ( TransformComponentDesc );
+
+    // NOLINTNEXTLINE - downcast.
+    auto const& d = static_cast<TransformComponentDesc const&> ( desc );
+
+    return std::make_shared<TransformComponent> ( d, data );
+}
+
+ComponentRef Component::CreateUnknown ( android_vulkan::Renderer &/*renderer*/,
+    size_t &commandBufferConsumed,
+    size_t &dataRead,
+    ComponentDesc const &/*desc*/,
+    uint8_t const* /*data*/,
+    VkCommandBuffer const* /*commandBuffers*/
+) noexcept
+{
+    commandBufferConsumed = 0U;
+    dataRead = sizeof ( ComponentDesc );
+    return {};
 }
 
 int Component::OnGetName ( lua_State* state )

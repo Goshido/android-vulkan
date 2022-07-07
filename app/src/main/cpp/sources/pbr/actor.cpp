@@ -23,9 +23,39 @@ namespace pbr {
 
 //----------------------------------------------------------------------------------------------------------------------
 
+class Actor::StaticInitializer final
+{
+    public:
+        StaticInitializer () noexcept;
+
+        StaticInitializer ( StaticInitializer const & ) = delete;
+        StaticInitializer& operator = ( StaticInitializer const & ) = delete;
+
+        StaticInitializer ( StaticInitializer && ) = delete;
+        StaticInitializer& operator = ( StaticInitializer && ) = delete;
+
+        ~StaticInitializer () = default;
+};
+
+Actor::StaticInitializer::StaticInitializer () noexcept
+{
+    Actor::_registerHandlers[ static_cast<size_t> ( ClassID::Camera ) ] = &Actor::AppendCameraComponent;
+    Actor::_registerHandlers[ static_cast<size_t> ( ClassID::PointLight ) ] = &Actor::AppendPointLightComponent;
+    Actor::_registerHandlers[ static_cast<size_t> ( ClassID::Reflection ) ] = &Actor::AppendReflectionComponent;
+    Actor::_registerHandlers[ static_cast<size_t> ( ClassID::RigidBody ) ] = &Actor::AppendRigidBodyComponent;
+    Actor::_registerHandlers[ static_cast<size_t> ( ClassID::Script ) ] = &Actor::AppendScriptComponent;
+    Actor::_registerHandlers[ static_cast<size_t> ( ClassID::StaticMesh ) ] = &Actor::AppendStaticMeshComponent;
+    Actor::_registerHandlers[ static_cast<size_t> ( ClassID::Transform ) ] = &Actor::AppendTransformComponent;
+    Actor::_registerHandlers[ static_cast<size_t> ( ClassID::Unknown ) ] = &Actor::AppendUnknownComponent;
+}
+
+[[maybe_unused]] static Actor::StaticInitializer const g_StaticInitializer {};
+
+//----------------------------------------------------------------------------------------------------------------------
+
 int Actor::_appendComponentIndex = std::numeric_limits<int>::max ();
 int Actor::_makeActorIndex = std::numeric_limits<int>::max ();
-std::unordered_map<ClassID, Actor::RegisterHander> Actor::_registerHandlers {};
+Actor::RegisterHander Actor::_registerHandlers[ static_cast<size_t> ( ClassID::COUNT ) ] = {};
 
 Actor::Actor ( std::string &&name ) noexcept:
     _name ( std::move ( name ) )
@@ -81,16 +111,9 @@ void Actor::RegisterComponents ( ComponentList &freeTransferResource,
         return;
     }
 
-    auto const end = _registerHandlers.end ();
-
     for ( auto& component : _components )
     {
-        auto findResult = _registerHandlers.find ( component->GetClassID () );
-
-        if ( findResult == end )
-            continue;
-
-        RegisterHander const handler = findResult->second;
+        RegisterHander const handler = _registerHandlers[ static_cast<size_t> ( component->GetClassID () ) ];
 
         // C++ calling method by pointer syntax.
         ( this->*handler ) ( component, freeTransferResource, renderable, physics, vm );
@@ -99,14 +122,6 @@ void Actor::RegisterComponents ( ComponentList &freeTransferResource,
 
 bool Actor::Init ( lua_State &vm ) noexcept
 {
-    _registerHandlers.emplace ( std::pair ( ClassID::Camera, &Actor::AppendCameraComponent ) );
-    _registerHandlers.emplace ( std::pair ( ClassID::PointLight, &Actor::AppendPointLightComponent ) );
-    _registerHandlers.emplace ( std::pair ( ClassID::Reflection, &Actor::AppendReflectionComponent ) );
-    _registerHandlers.emplace ( std::pair ( ClassID::RigidBody, &Actor::AppendRigidBodyComponent ) );
-    _registerHandlers.emplace ( std::pair ( ClassID::Script, &Actor::AppendScriptComponent ) );
-    _registerHandlers.emplace ( std::pair ( ClassID::StaticMesh, &Actor::AppendStaticMeshComponent ) );
-    _registerHandlers.emplace ( std::pair ( ClassID::Transform, &Actor::AppendTransformComponent ) );
-
     lua_register ( &vm, "av_ActorGetName", &Actor::OnGetName );
 
     if ( !lua_checkstack ( &vm, 2 ) )
@@ -130,11 +145,6 @@ bool Actor::Init ( lua_State &vm ) noexcept
         return false;
 
     return bind ( "MakeActor", _makeActorIndex );
-}
-
-void Actor::Destroy () noexcept
-{
-    _registerHandlers.clear ();
 }
 
 // NOLINTNEXTLINE - can be made static.
@@ -312,6 +322,18 @@ void Actor::AppendTransformComponent ( ComponentRef &component,
         "Lua VM.",
         transformComponent.GetName ().c_str ()
     );
+}
+
+// NOLINTNEXTLINE - can be made static.
+void Actor::AppendUnknownComponent ( ComponentRef &/*component*/,
+    ComponentList &/*freeTransferResource*/,
+    ComponentList &/*renderable*/,
+    android_vulkan::Physics &/*physics*/,
+    lua_State &/*vm*/
+) noexcept
+{
+    // IMPOSSIBLE
+    assert ( false );
 }
 
 int Actor::OnGetName ( lua_State* state )

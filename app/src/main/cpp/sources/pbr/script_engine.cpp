@@ -246,8 +246,6 @@ void ScriptEngine::Free ( lua_State* state ) noexcept
     ScriptableGXQuat::Destroy ();
     ScriptableGXMat4::Destroy ();
     ScriptableGXMat3::Destroy ();
-
-    Actor::Destroy ();
 }
 
 bool ScriptEngine::LoadScript ( lua_State* vm,

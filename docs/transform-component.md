@@ -95,5 +95,5 @@ platform:AppendComponent ( transform )
 g_scene:AppendActor ( platform )
 
 local t = GXMat4 ()
-transformComponent:GetTransform ( t )
+transform:GetTransform ( t )
 ```

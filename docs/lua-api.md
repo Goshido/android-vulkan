@@ -14,3 +14,4 @@
 - [_RigidBodyComponent_](./rigid-body-component.md)
 - [_Scene_](./scene.md)
 - [_ScriptComponent_](./script-component.md)
+- [_TransformComponent_](./transform-component.md)

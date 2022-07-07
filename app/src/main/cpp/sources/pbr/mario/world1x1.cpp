@@ -1,23 +1,9 @@
 #include <pbr/mario/world1x1.h>
-#include <pbr/component.h>
 #include <pbr/cube_map_manager.h>
 #include <pbr/material_manager.h>
 #include <pbr/mesh_manager.h>
-#include <pbr/rigid_body_component.h>
-#include <pbr/scene_desc.h>
-#include <pbr/script_component.h>
-#include <pbr/script_engine.h>
-#include <pbr/static_mesh_component.h>
-#include <pbr/actor_desc.h>
 #include <gamepad.h>
 #include <global_force_gravity.h>
-#include <shape_box.h>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <cassert>
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace pbr::mario {
@@ -28,8 +14,6 @@ constexpr static GXVec3 FREE_FALL_ACCELERATION ( 0.0F, -9.81F, 0.0F );
 
 constexpr static uint32_t RESOLUTION_SCALE_WIDTH = 80U;
 constexpr static uint32_t RESOLUTION_SCALE_HEIGHT = 70U;
-
-[[maybe_unused]] constexpr static uint32_t SCENE_DESC_FORMAT_VERSION = 3U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -97,11 +81,13 @@ bool World1x1::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
         return false;
     }
 
-    if ( !UploadGPUContent ( renderer ) )
+    if ( !_scene.LoadScene ( renderer, SCENE, _commandPool ) )
     {
         OnDestroyDevice ( device );
         return false;
     }
+
+    _isReady = true;
 
     _renderSession.FreeTransferResources ( device, _commandPool );
 
@@ -178,100 +164,6 @@ void World1x1::DestroyCommandPool ( VkDevice device ) noexcept
     vkDestroyCommandPool ( device, _commandPool, nullptr );
     _commandPool = VK_NULL_HANDLE;
     AV_UNREGISTER_COMMAND_POOL ( "pbr::mario::World1x1::_commandPool" )
-}
-
-bool World1x1::UploadGPUContent ( android_vulkan::Renderer &renderer ) noexcept
-{
-    android_vulkan::File file ( SCENE );
-
-    if ( !file.LoadContent () )
-        return false;
-
-    std::vector<uint8_t> const& content = file.GetContent ();
-    uint8_t const* data = content.data ();
-    auto const* sceneDesc = reinterpret_cast<pbr::SceneDesc const*> ( data );
-
-    // Sanity checks.
-    static_assert ( sizeof ( GXVec3 ) == sizeof ( sceneDesc->_viewerLocation ) );
-    assert ( sceneDesc->_formatVersion == SCENE_DESC_FORMAT_VERSION );
-
-    constexpr size_t MARIO_COMMAND_BUFFERS = 2U;
-
-    auto const comBuffs = static_cast<size_t> (
-        sceneDesc->_textureCount +
-        sceneDesc->_meshCount +
-        sceneDesc->_envMapCount +
-        MARIO_COMMAND_BUFFERS
-    );
-
-    VkCommandBufferAllocateInfo const allocateInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-        .pNext = nullptr,
-        .commandPool = _commandPool,
-        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-        .commandBufferCount = static_cast<uint32_t> ( comBuffs )
-    };
-
-    _commandBuffers.resize ( comBuffs );
-    VkDevice device = renderer.GetDevice ();
-
-    bool result = android_vulkan::Renderer::CheckVkResult (
-        vkAllocateCommandBuffers ( device, &allocateInfo, _commandBuffers.data () ),
-        "pbr::mario::World1x1::UploadGPUContent",
-        "Can't allocate command buffers"
-    );
-
-    if ( !result )
-        return false;
-
-    VkCommandBuffer const* commandBuffers = _commandBuffers.data ();
-    uint8_t const* readPointer = data + sizeof ( pbr::SceneDesc );
-
-    size_t consumed = 0U;
-    size_t read = 0U;
-
-    auto const actors = static_cast<size_t> ( sceneDesc->_actorCount );
-
-    for ( size_t actorIdx = 0U; actorIdx < actors; ++actorIdx )
-    {
-        auto const& actorDesc = *reinterpret_cast<ActorDesc const*> ( readPointer );
-        readPointer += sizeof ( ActorDesc );
-        auto const components = static_cast<size_t> ( actorDesc._components );
-
-        ActorRef actor = std::make_shared<Actor> ( actorDesc, data );
-
-        for ( size_t componentIdx = 0U; componentIdx < components; ++componentIdx )
-        {
-            ComponentRef component = Component::Create ( renderer,
-                consumed,
-                read,
-                *reinterpret_cast<ComponentDesc const*> ( readPointer ),
-                data,
-                commandBuffers
-            );
-
-            if ( component )
-                actor->AppendComponent ( component );
-
-            commandBuffers += consumed;
-            readPointer += read;
-        }
-
-        _scene.AppendActor ( actor );
-    }
-
-    result = android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( renderer.GetQueue () ),
-        "pbr::mario::World1x1::UploadGPUContent",
-        "Can't run upload commands"
-    );
-
-    if ( !result )
-        return false;
-
-    _scene.FreeTransferResources ( device );
-    _isReady = true;
-    return true;
 }
 
 } // namespace pbr::mario

@@ -11,7 +11,6 @@ namespace pbr::mario {
 class World1x1 final : public android_vulkan::Game
 {
     private:
-        std::vector<VkCommandBuffer>    _commandBuffers {};
         VkCommandPool                   _commandPool = VK_NULL_HANDLE;
         bool                            _isReady = false;
         android_vulkan::Physics         _physics {};
@@ -41,7 +40,6 @@ class World1x1 final : public android_vulkan::Game
 
         [[nodiscard]] bool CreatePhysics () noexcept;
         void DestroyCommandPool ( VkDevice device ) noexcept;
-        [[nodiscard]] bool UploadGPUContent ( android_vulkan::Renderer &renderer ) noexcept;
 };
 
 } // namespace pbr::mario

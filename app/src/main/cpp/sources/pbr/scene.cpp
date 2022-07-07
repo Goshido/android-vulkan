@@ -1,10 +1,14 @@
 #include <pbr/scene.h>
 #include <pbr/coordinate_system.h>
 #include <pbr/renderable_component.h>
+#include <pbr/scene_desc.h>
 #include <pbr/script_engine.h>
 #include <core.h>
+#include <file.h>
 
 GX_DISABLE_COMMON_WARNINGS
+
+#include <cassert>
 
 extern "C" {
 
@@ -22,6 +26,8 @@ constexpr static float DEFAULT_FOV = 60.0F;
 constexpr static GXVec3 DEFAULT_LOCATION ( 0.0F, 0.0F, 0.0F );
 constexpr static float DEFAULT_Z_NEAR = 1.0e-1F;
 constexpr static float DEFAULT_Z_FAR = 1.0e+4F;
+
+[[maybe_unused]] constexpr static uint32_t SCENE_DESC_FORMAT_VERSION = 3U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -274,6 +280,92 @@ void Scene::FreeTransferResources ( VkDevice device ) noexcept
     }
 
     _renderableList.splice ( _renderableList.cend (), _freeTransferResourceList );
+}
+
+bool Scene::LoadScene ( android_vulkan::Renderer &renderer, char const *scene, VkCommandPool commandPool ) noexcept
+{
+    android_vulkan::File file ( scene );
+
+    if ( !file.LoadContent () )
+        return false;
+
+    std::vector<uint8_t> const& content = file.GetContent ();
+    uint8_t const* data = content.data ();
+    auto const& desc = *reinterpret_cast<pbr::SceneDesc const*> ( data );
+
+    // Sanity checks.
+    static_assert ( sizeof ( GXVec3 ) == sizeof ( desc._viewerLocation ) );
+    assert ( desc._formatVersion == SCENE_DESC_FORMAT_VERSION );
+
+    auto const comBuffs = static_cast<size_t> ( desc._textureCount + desc._meshCount + desc._envMapCount );
+
+    VkCommandBufferAllocateInfo const allocateInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+        .pNext = nullptr,
+        .commandPool = commandPool,
+        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+        .commandBufferCount = static_cast<uint32_t> ( comBuffs )
+    };
+
+    std::vector<VkCommandBuffer> commandBuffers ( comBuffs );
+    VkDevice device = renderer.GetDevice ();
+
+    bool result = android_vulkan::Renderer::CheckVkResult (
+        vkAllocateCommandBuffers ( device, &allocateInfo, commandBuffers.data () ),
+        "pbr::Scene::LoadScene",
+        "Can't allocate command buffers"
+    );
+
+    if ( !result )
+        return false;
+
+    VkCommandBuffer const* cb = commandBuffers.data ();
+    uint8_t const* readPointer = data + sizeof ( pbr::SceneDesc );
+
+    size_t consumed = 0U;
+    size_t read = 0U;
+
+    auto const actors = static_cast<size_t> ( desc._actorCount );
+
+    for ( size_t actorIdx = 0U; actorIdx < actors; ++actorIdx )
+    {
+        auto const& actorDesc = *reinterpret_cast<ActorDesc const*> ( readPointer );
+        readPointer += sizeof ( ActorDesc );
+        auto const components = static_cast<size_t> ( actorDesc._components );
+
+        ActorRef actor = std::make_shared<Actor> ( actorDesc, data );
+
+        for ( size_t componentIdx = 0U; componentIdx < components; ++componentIdx )
+        {
+            ComponentRef component = Component::Create ( renderer,
+                consumed,
+                read,
+                *reinterpret_cast<ComponentDesc const*> ( readPointer ),
+                data,
+                cb
+            );
+
+            if ( component )
+                actor->AppendComponent ( component );
+
+            cb += consumed;
+            readPointer += read;
+        }
+
+        AppendActor ( actor );
+    }
+
+    result = android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( renderer.GetQueue () ),
+        "pbr::Scene::LoadScene",
+        "Can't run upload commands"
+    );
+
+    if ( !result )
+        return false;
+
+    FreeTransferResources ( device );
+    return true;
 }
 
 void Scene::Submit ( RenderSession &renderSession ) noexcept

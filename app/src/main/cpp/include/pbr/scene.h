@@ -77,6 +77,12 @@ class Scene final
 
         void AppendActor ( ActorRef &actor ) noexcept;
         void FreeTransferResources ( VkDevice device ) noexcept;
+
+        [[nodiscard]] bool LoadScene ( android_vulkan::Renderer &renderer,
+            char const *scene,
+            VkCommandPool commandPool
+        ) noexcept;
+
         void Submit ( RenderSession &renderSession ) noexcept;
 
     private:

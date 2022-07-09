@@ -9,6 +9,7 @@ require "av://engine/camera_component.lua"
 - [_Brief_](#brief)
 - [_Metamethods_](#metamethods)
 - [`Constructor`](#constructor)
+- [`SetAspectRatio ( aspectRatio )`](#method-set-aspect-ratio)
 - [`SetLocal ( localMatrix )`](#method-set-local)
 - [`SetProjection ( fieldOfViewRadians, aspectRatio, zNear, zFar )`](#method-set-projection)
 
@@ -80,6 +81,33 @@ local cameraComponent = CameraComponent ( "Camera" )
 
 mainCamera:AppendComponent ( cameraComponent )
 g_scene:AppendActor ( mainCamera )
+```
+
+## <a id="method-set-aspect-ratio">`SetAspectRatio ( aspectRatio )`</a>
+
+Method changes camera projection transformation.
+
+**Parameters:**
+
+- `aspectRatio` [_required, readonly, number_]: viewport aspect ratio, i.e. width devided by height
+
+**Return values:**
+
+- none
+
+```lua
+require "av://engine/scene.lua"
+
+
+local mainCamera = Actor ( "Main Camera" )
+local cameraComponent = CameraComponent ( "Camera" )
+
+mainCamera:AppendComponent ( cameraComponent )
+g_scene:AppendActor ( mainCamera )
+
+local width = 1920.0
+local height = 1080.0
+cameraComponent:SetAspectRatio ( width / height )
 ```
 
 ## <a id="method-set-local">`SetLocal ( localMatrix )`</a>

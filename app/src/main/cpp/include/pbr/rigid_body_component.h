@@ -3,6 +3,7 @@
 
 
 #include "component.h"
+#include "rigid_body_component_desc.h"
 #include <rigid_body.h>
 
 
@@ -24,6 +25,11 @@ class RigidBodyComponent final : public Component
 
         RigidBodyComponent ( RigidBodyComponent && ) = delete;
         RigidBodyComponent& operator = ( RigidBodyComponent && ) = delete;
+
+        explicit RigidBodyComponent ( size_t &dataRead,
+            RigidBodyComponentDesc const &desc,
+            uint8_t const* data
+        ) noexcept;
 
         explicit RigidBodyComponent ( android_vulkan::ShapeRef &shape ) noexcept;
         explicit RigidBodyComponent ( android_vulkan::ShapeRef &shape, std::string &&name ) noexcept;

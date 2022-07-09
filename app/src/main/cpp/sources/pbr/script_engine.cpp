@@ -10,6 +10,7 @@
 #include <pbr/scriptable_gxvec3.h>
 #include <pbr/scriptable_gxvec4.h>
 #include <pbr/scriptable_logger.h>
+#include <pbr/transform_component.h>
 #include <file.h>
 #include <logger.h>
 
@@ -85,7 +86,8 @@ bool ScriptEngine::ExtendFrontend () const noexcept
     return ScriptComponent::Init ( vm ) &&
         Actor::Init ( vm ) &&
         RigidBodyComponent::Init ( vm ) &&
-        CameraComponent::Init ( vm );
+        CameraComponent::Init ( vm ) &&
+        TransformComponent::Init ( vm );
 }
 
 bool ScriptEngine::InitInterfaceFunctions () noexcept
@@ -244,8 +246,6 @@ void ScriptEngine::Free ( lua_State* state ) noexcept
     ScriptableGXQuat::Destroy ();
     ScriptableGXMat4::Destroy ();
     ScriptableGXMat3::Destroy ();
-
-    Actor::Destroy ();
 }
 
 bool ScriptEngine::LoadScript ( lua_State* vm,

@@ -22,10 +22,10 @@ Requirements:
 * _Android SDK Build-Tools 33.0.0_
 * _Android SDK Platform-Tools 33.0.2_
 * _CMake 3.18.1_
-* _DirectX Shader Compiler 1.6.2112.10243_
+* _DirectX Shader Compiler 1.7.2207.10002_
 * _Kotlin 1.7.0_
 * _Kotlin Gradle plugin 1.7.0_
-* _Vulkan Validation Layers_ `afb8986592acc52b3ea1a25fc9a4fabb1311be49`
+* _Vulkan Validation Layers_ `58f83806b0be820246cffa9a31550b7ab856e5d4`
 * _Lua_ `8426d9b4d4df1da3c5b2d759e509ae1c50a86667`
 * _Gradle 7.4.2-bin_
 * Real _Android 11_ device with _Vulkan 1.1.131_ support

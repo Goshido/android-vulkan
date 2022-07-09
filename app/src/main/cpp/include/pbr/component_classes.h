@@ -21,7 +21,10 @@ enum class ClassID : uint64_t
     Reflection = 3U,
     Script = 4U,
     RigidBody = 5U,
-    Camera = 6U
+    Camera = 6U,
+    Transform = 7U,
+
+    COUNT = 8U
 };
 
 } // namespace pbr

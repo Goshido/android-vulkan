@@ -24,7 +24,7 @@ class PointLightComponent final : public RenderableComponent, public Transformab
         PointLightComponent ( PointLightComponent && ) = delete;
         PointLightComponent& operator = ( PointLightComponent && ) = delete;
 
-        explicit PointLightComponent ( PointLightComponentDesc const &desc ) noexcept;
+        explicit PointLightComponent ( PointLightComponentDesc const &desc, uint8_t const* data ) noexcept;
 
         ~PointLightComponent () override = default;
 

@@ -5,6 +5,15 @@ require "av://engine/gx_mat4.lua"
 CameraComponent = {}
 
 -- Methods
+local function SetAspectRatio ( self, aspectRatio )
+    assert ( type ( self ) == "table" and self._type == eObjectType.CameraComponent,
+        [[CameraComponent:SetAspectRatio - Calling not via ":" syntax.]]
+    )
+
+    assert ( type ( aspectRatio ) == "number", [[CameraComponent:SetAspectRatio - "aspectRatio" is not a number.]] )
+    av_CameraComponentSetAspectRatio ( self._handle, aspectRatio )
+end
+
 local function SetLocal ( self, localMatrix )
     assert ( type ( self ) == "table" and self._type == eObjectType.CameraComponent,
         [[CameraComponent:SetLocal - Calling not via ":" syntax.]]
@@ -38,6 +47,7 @@ function RegisterCameraComponent ( handle )
     local obj = Component ( eObjectType.CameraComponent, handle )
 
     -- Methods
+    obj.SetAspectRatio = SetAspectRatio
     obj.SetLocal = SetLocal
     obj.SetProjection = SetProjection
 

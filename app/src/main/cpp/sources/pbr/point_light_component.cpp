@@ -1,5 +1,4 @@
 #include <pbr/point_light_component.h>
-#include <pbr/point_light_component_desc.h>
 #include <guid_generator.h>
 
 GX_DISABLE_COMMON_WARNINGS
@@ -11,16 +10,18 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-[[maybe_unused]] constexpr static uint32_t const POINT_LIGHT_COMPONENT_DESC_FORMAT_VERSION = 1U;
+[[maybe_unused]] constexpr static uint32_t POINT_LIGHT_COMPONENT_DESC_FORMAT_VERSION = 2U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-PointLightComponent::PointLightComponent ( PointLightComponentDesc const &desc ) noexcept:
-    RenderableComponent ( ClassID::PointLight, android_vulkan::GUID::GenerateAsString ( "PointLight" ) )
+PointLightComponent::PointLightComponent ( PointLightComponentDesc const &desc, uint8_t const* data ) noexcept:
+    RenderableComponent ( ClassID::PointLight )
 {
     // Sanity checks.
     static_assert ( sizeof ( desc._location ) == sizeof ( GXVec3 ) );
     assert ( desc._formatVersion == POINT_LIGHT_COMPONENT_DESC_FORMAT_VERSION );
+
+    _name = reinterpret_cast<char const*> ( data + desc._name );
 
     android_vulkan::ColorUnorm const& hue = desc._hue;
 

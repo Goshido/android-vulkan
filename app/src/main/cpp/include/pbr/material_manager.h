@@ -2,7 +2,9 @@
 #define PBR_MATERIAL_MANAGER_H
 
 
-#include <GXCommon/GXWarning.h>
+#include "material_info.h"
+#include "types.h"
+#include <file.h>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -11,19 +13,31 @@ GX_DISABLE_COMMON_WARNINGS
 
 GX_RESTORE_WARNING_STATE
 
-#include <file.h>
-#include "types.h"
-
 
 namespace pbr {
 
 class MaterialManager final
 {
-    private:
-        std::unordered_map<std::string_view, Texture2DRef>      _textureStorage;
+    public:
+        // Forward declaration. This will init '_handlers' static field.
+        class StaticInitializer;
 
-        static MaterialManager*                                 _instance;
-        static std::shared_timed_mutex                          _mutex;
+    private:
+        using Handler = MaterialRef ( MaterialManager::* ) ( android_vulkan::Renderer &renderer,
+            size_t &commandBufferConsumed,
+            MaterialHeader const &header,
+            uint8_t const* data,
+            VkCommandBuffer const* commandBuffers
+        ) noexcept;
+
+        using Storage = std::unordered_map<std::string_view, Texture2DRef>;
+
+    private:
+        Storage                             _textureStorage;
+
+        static Handler                      _handlers[ static_cast<size_t> ( eMaterialTypeDesc::COUNT ) ];
+        static MaterialManager*             _instance;
+        static std::shared_timed_mutex      _mutex;
 
     public:
         MaterialManager ( MaterialManager const &other ) = delete;
@@ -51,7 +65,29 @@ class MaterialManager final
         MaterialManager() = default;
         ~MaterialManager () = default;
 
+        [[nodiscard]] MaterialRef CreateOpaqueMaterial ( android_vulkan::Renderer &renderer,
+            size_t &commandBufferConsumed,
+            MaterialHeader const &header,
+            uint8_t const* data,
+            VkCommandBuffer const* commandBuffers
+        ) noexcept;
+
+        [[nodiscard]] MaterialRef CreateStippleMaterial ( android_vulkan::Renderer &renderer,
+            size_t &commandBufferConsumed,
+            MaterialHeader const &header,
+            uint8_t const* data,
+            VkCommandBuffer const* commandBuffers
+        ) noexcept;
+
         void DestroyInternal ( VkDevice device ) noexcept;
+
+        [[nodiscard]] Texture2DRef LoadTexture ( android_vulkan::Renderer &renderer,
+            size_t &commandBufferConsumed,
+            uint8_t const *data,
+            uint64_t nameOffset,
+            android_vulkan::eFormat format,
+            VkCommandBuffer const* commandBuffers
+        ) noexcept;
 };
 
 } // namespace pbr

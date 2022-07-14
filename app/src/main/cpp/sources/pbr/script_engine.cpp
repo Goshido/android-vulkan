@@ -10,6 +10,7 @@
 #include <pbr/scriptable_gxvec3.h>
 #include <pbr/scriptable_gxvec4.h>
 #include <pbr/scriptable_logger.h>
+#include <pbr/static_mesh_component.h>
 #include <pbr/transform_component.h>
 #include <file.h>
 #include <logger.h>
@@ -87,7 +88,8 @@ bool ScriptEngine::ExtendFrontend () const noexcept
         Actor::Init ( vm ) &&
         RigidBodyComponent::Init ( vm ) &&
         CameraComponent::Init ( vm ) &&
-        TransformComponent::Init ( vm );
+        TransformComponent::Init ( vm ) &&
+        StaticMeshComponent::Init ( vm );
 }
 
 bool ScriptEngine::InitInterfaceFunctions () noexcept

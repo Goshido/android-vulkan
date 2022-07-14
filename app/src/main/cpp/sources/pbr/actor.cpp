@@ -281,7 +281,7 @@ void Actor::AppendStaticMeshComponent ( ComponentRef &component,
     ComponentList &freeTransferResource,
     ComponentList &/*renderable*/,
     android_vulkan::Physics &/*physics*/,
-    lua_State &/*vm*/
+    lua_State &vm
 ) noexcept
 {
     // NOLINTNEXTLINE - downcast.
@@ -289,6 +289,27 @@ void Actor::AppendStaticMeshComponent ( ComponentRef &component,
 
     freeTransferResource.emplace_back ( std::ref ( component ) );
     _transformableComponents.emplace_back ( std::ref ( transformable ) );
+
+    lua_pushvalue ( &vm, _appendComponentIndex );
+    lua_pushvalue ( &vm, -2 );
+
+    if ( !transformable.Register ( vm ) )
+    {
+        android_vulkan::LogWarning ( "pbr::Actor::AppendStaticMeshComponent - Can't register static mesh component %s.",
+            transformable.GetName ().c_str ()
+        );
+
+        lua_pop ( &vm, 2 );
+        return;
+    }
+
+    if ( lua_pcall ( &vm, 2, 0, ScriptEngine::GetErrorHandlerIndex () ) == LUA_OK )
+        return;
+
+    android_vulkan::LogWarning ( "pbr::Actor::AppendStaticMeshComponent - Can't append camera component %s inside "
+        "Lua VM.",
+        transformable.GetName ().c_str ()
+    );
 }
 
 // NOLINTNEXTLINE - can be made static.

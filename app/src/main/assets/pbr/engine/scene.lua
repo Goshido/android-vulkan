@@ -2,6 +2,7 @@ require "av://engine/actor.lua"
 require "av://engine/camera_component.lua"
 require "av://engine/rigid_body_component.lua"
 require "av://engine/script_component.lua"
+require "av://engine/static_mesh_component.lua"
 require "av://engine/transform_component.lua"
 
 

@@ -8,6 +8,7 @@ local function IsComponent ( objectType )
     return objectType == eObjectType.CameraComponent or
         objectType == eObjectType.RigidBodyComponent or
         objectType == eObjectType.ScriptComponent or
+        objectType == eObjectType.StaticMeshComponent or
         objectType == eObjectType.TransformComponent
 end
 

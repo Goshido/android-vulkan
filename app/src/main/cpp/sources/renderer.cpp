@@ -928,16 +928,6 @@ VkExtent2D const& Renderer::GetViewportResolution () const noexcept
     return _viewportResolution;
 }
 
-bool Renderer::IsDeviceCreated () const noexcept
-{
-    return _device != VK_NULL_HANDLE;
-}
-
-bool Renderer::IsSwapchainCreated () const noexcept
-{
-    return _swapchain != VK_NULL_HANDLE;
-}
-
 bool Renderer::OnCreateSwapchain ( ANativeWindow &nativeWindow, bool vSync ) noexcept
 {
     if ( !DeploySurface ( nativeWindow ) )

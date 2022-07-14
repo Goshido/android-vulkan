@@ -148,9 +148,6 @@ class Renderer final
         // by Renderer::GetSurfaceSize API.
         [[nodiscard]] VkExtent2D const& GetViewportResolution () const noexcept;
 
-        [[nodiscard]] bool IsDeviceCreated () const noexcept;
-        [[nodiscard]] bool IsSwapchainCreated () const noexcept;
-
         [[nodiscard]] bool OnCreateSwapchain ( ANativeWindow &nativeWindow, bool vSync ) noexcept;
         void OnDestroySwapchain () noexcept;
 

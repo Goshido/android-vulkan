@@ -19,6 +19,7 @@ eObjectType = {
     RigidBodyComponent = MakeUniqueID (),
     Scene = MakeUniqueID (),
     ScriptComponent = MakeUniqueID (),
+    StaticMeshComponent = MakeUniqueID (),
     TransformComponent = MakeUniqueID (),
     Unknown = MakeUniqueID ()
 }

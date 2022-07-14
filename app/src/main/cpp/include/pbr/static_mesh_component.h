@@ -21,6 +21,8 @@ class StaticMeshComponent final : public RenderableComponent, public Transformab
         MeshRef         _mesh;
         GXAABB          _worldBounds;
 
+        static int      _registerStaticMeshComponentIndex;
+
     public:
         StaticMeshComponent () = delete;
 
@@ -83,8 +85,16 @@ class StaticMeshComponent final : public RenderableComponent, public Transformab
         [[maybe_unused, nodiscard]] GXMat4 const& GetTransform () const noexcept;
         void SetTransform ( GXMat4 const &transform ) noexcept;
 
+        [[nodiscard]] bool Register ( lua_State &vm ) noexcept;
+
+        [[nodiscard]] static bool Init ( lua_State &vm ) noexcept;
+
     private:
         void OnTransform ( GXMat4 const &transformWorld ) noexcept override;
+
+        [[nodiscard]] static int OnCreate ( lua_State* state );
+        [[nodiscard]] static int OnGetLocal ( lua_State* state );
+        [[nodiscard]] static int OnSetLocal ( lua_State* state );
 };
 
 } // namespace pbr

@@ -6,7 +6,7 @@ StaticMeshComponent = {}
 
 -- Methods
 local function GetLocal ( self, localMatrix )
-    assert ( type ( self ) == "table" and self._type == eObjectType.CameraComponent,
+    assert ( type ( self ) == "table" and self._type == eObjectType.StaticMeshComponent,
         [[StaticMeshComponent:GetLocal - Calling not via ":" syntax.]]
     )
 
@@ -18,7 +18,7 @@ local function GetLocal ( self, localMatrix )
 end
 
 local function SetLocal ( self, localMatrix )
-    assert ( type ( self ) == "table" and self._type == eObjectType.CameraComponent,
+    assert ( type ( self ) == "table" and self._type == eObjectType.StaticMeshComponent,
         [[StaticMeshComponent:SetLocal - Calling not via ":" syntax.]]
     )
 

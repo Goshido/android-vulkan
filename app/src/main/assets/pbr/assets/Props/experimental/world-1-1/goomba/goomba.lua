@@ -1,6 +1,9 @@
 require "av://engine/script_component.lua"
 
 
+-- Constants
+local SPEED = 44.44448
+
 -- Class declaration
 local Goomba = {}
 
@@ -41,7 +44,39 @@ local function GetSensorParentTransform ( self, sensor, toParentTransform )
 end
 
 local function MoveTo ( self, origin )
-    -- TODO
+    local m = self._localMatrix
+    m:SetW ( origin )
+    self._mesh:SetLocal ( m )
+
+    local attachment = GXMat4 ()
+    attachment:Multiply ( self._sensorTopParent, m )
+    self._sensorTop:SetLocal ( attachment )
+
+    attachment:Multiply ( self._sensorLeftParent, m )
+    self._sensorLeft:SetLocal ( attachment )
+
+    attachment:Multiply ( self._sensorRightParent, m )
+    self._sensorRight:SetLocal ( attachment )
+end
+
+local function UpdateRoute ( self )
+    local route = self._route
+    local routeIdx = self._routeIdx
+    local routeNext = self._routeNext
+    local from = route[ routeIdx ]
+
+    routeNext = routeIdx + routeNext > ( routeNext > 0 and #route or 0 ) and -1 or 1
+    local routeIdx = routeIdx + routeNext
+    local to = route[ routeIdx ]
+
+    local v = self._velocity
+    v:Subtract ( to, from )
+    v:Normalize ()
+    v:MultiplyScalar ( v, SPEED )
+
+    self._to = to
+    self._routeIdx = routeIdx
+    self._routeNext = routeNext
 end
 
 -- Engine event handlers
@@ -69,6 +104,33 @@ local function OnActorConstructed ( self, actor )
     self._sensorRight = actor:FindComponent ( "SensorRight" )
     self._sensorRightOffset = self:GetOffset ( origin, actor, "SensorRightMin", "SensorRightMax" )
     self._sensorRightParent = self:GetSensorParentTransform ( self._sensorRight, toParentTransform )
+
+    local route = {}
+    table.insert ( route, self:GetOrigin ( actor, "Path001" ) )
+    table.insert ( route, self:GetOrigin ( actor, "Path002" ) )
+    self._route = route
+    self._routeIdx = 1
+    self._routeNext = 1
+    self._velocity = GXVec3 ()
+
+    self:UpdateRoute ()
+end
+
+local function OnPrePhysics ( self, deltaTime )
+    local tmp = GXVec3 ()
+    self._localMatrix:GetW ( tmp )
+
+    local v = GXVec3 ()
+    local velocity = self._velocity
+    v:MultiplyScalar ( velocity, deltaTime )
+    tmp:Sum ( tmp, v )
+
+    self:MoveTo ( tmp )
+    tmp:Subtract ( self._to, tmp )
+
+    if tmp:DotProduct ( velocity ) < 0 then
+        self:UpdateRoute ()
+    end
 end
 
 -- Metamethods
@@ -81,9 +143,11 @@ local function Constructor ( self, handle, params )
     obj.GetOrigin = GetOrigin
     obj.GetSensorParentTransform = GetSensorParentTransform
     obj.MoveTo = MoveTo
+    obj.UpdateRoute = UpdateRoute
 
     -- Engine events
     obj.OnActorConstructed = OnActorConstructed
+    obj.OnPrePhysics = OnPrePhysics
     return obj
 end
 

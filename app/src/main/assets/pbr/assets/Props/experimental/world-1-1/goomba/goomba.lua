@@ -8,29 +8,25 @@ local SPEED = 44.44448
 local Goomba = {}
 
 -- Methods
-local function GetOrigin ( self, actor, component )
+local function GetCenter ( self, min, max )
+    local diff = GXVec3 ()
+    diff:Subtract ( max, min )
+
+    local result = GXVec3 ()
+    result:SumScaled ( min, 0.5, diff )
+    return result
+end
+
+local function GetOrigin ( self, origin, actor, component )
     local t = GXMat4 ()
     actor:FindComponent ( component ):GetTransform ( t )
-
-    local result = GXVec3 ()
-    t:GetW ( result )
-    return result
+    t:GetW ( origin )
 end
 
-local function GetCenter ( self, actor, min, max )
-    local minOrigin = self:GetOrigin ( actor, min )
-
-    local diff = GXVec3 ()
-    diff:Subtract ( self:GetOrigin ( actor, max ), minOrigin )
-
-    local result = GXVec3 ()
-    result:SumScaled ( minOrigin, 0.5, diff )
-    return result
-end
-
-local function GetOffset ( self, parentOrigin, actor, min, max )
+local function GetSensorOffset ( self, parentOrigin, actor, min, max )
     local result = GXVec3 ()
     result:Subtract ( self:GetCenter ( actor, min, max ), parentOrigin )
+    result:MultiplyScalar ( result, g_scene:GetRendererToPhysicsScaleFactor () )
     return result
 end
 
@@ -40,6 +36,13 @@ local function GetSensorParentTransform ( self, sensor, toParentTransform )
 
     local result = GXMat4 ()
     result:Multiply ( m, toParentTransform )
+    return result
+end
+
+local function GetSensorSize ( self, min, max )
+    local result = GXVec3 ()
+    result:Subtract ( max, min )
+    result:MultiplyScalar ( result, g_scene:GetRendererToPhysicsScaleFactor () )
     return result
 end
 
@@ -59,29 +62,14 @@ local function MoveTo ( self, origin )
     self._sensorRight:SetLocal ( attachment )
 end
 
-local function UpdateRoute ( self )
-    local route = self._route
-    local routeIdx = self._routeIdx
-    local routeNext = self._routeNext
-    local from = route[ routeIdx ]
-
-    routeNext = routeIdx + routeNext > ( routeNext > 0 and #route or 0 ) and -1 or 1
-    local routeIdx = routeIdx + routeNext
-    local to = route[ routeIdx ]
-
-    local v = self._velocity
-    v:Subtract ( to, from )
-    v:Normalize ()
-    v:MultiplyScalar ( v, SPEED )
-
-    self._to = to
-    self._routeIdx = routeIdx
-    self._routeNext = routeNext
-end
-
 -- Engine event handlers
 local function OnActorConstructed ( self, actor )
-    local origin = self:GetCenter ( actor, "BodyMin", "BodyMax" )
+    local min = GXVec3 ()
+    local max = GXVec3 ()
+
+    self:GetOrigin ( min, actor, "BodyMin" )
+    self:GetOrigin ( max, actor, "BodyMax" )
+    local origin = self:GetCenter ( min, max )
 
     self._localMatrix = GXMat4 ()
     self._localMatrix:Identity ()
@@ -93,44 +81,41 @@ local function OnActorConstructed ( self, actor )
     local toParentTransform = GXMat4 ()
     toParentTransform:Inverse ( p )
 
+    self:GetOrigin ( min, actor, "SensorTopMin" )
+    self:GetOrigin ( max, actor, "SensorTopMax" )
     self._sensorTop = actor:FindComponent ( "SensorTop" )
-    self._sensorTopOffset = self:GetOffset ( origin, actor, "SensorTopMin", "SensorTopMax" )
+    self._sensorTopSize = self:GetSensorSize ( min, max )
+    self._sensorTopOffset = self:GetSensorOffset ( origin, min, max )
     self._sensorTopParent = self:GetSensorParentTransform ( self._sensorTop, toParentTransform )
 
+    self:GetOrigin ( min, actor, "SensorLeftMin" )
+    self:GetOrigin ( max, actor, "SensorLeftMax" )
     self._sensorLeft = actor:FindComponent ( "SensorLeft" )
-    self._sensorLeftOffset = self:GetOffset ( origin, actor, "SensorLeftMin", "SensorLeftMax" )
+    self._sensorLeftSize = self:GetSensorSize ( min, max )
+    self._sensorLeftOffset = self:GetSensorOffset ( origin, min, max )
     self._sensorLeftParent = self:GetSensorParentTransform ( self._sensorLeft, toParentTransform )
 
+    self:GetOrigin ( min, actor, "SensorRightMin" )
+    self:GetOrigin ( max, actor, "SensorRightMax" )
     self._sensorRight = actor:FindComponent ( "SensorRight" )
-    self._sensorRightOffset = self:GetOffset ( origin, actor, "SensorRightMin", "SensorRightMax" )
+    self._sensorRightSize = self:GetSensorSize ( min, max )
+    self._sensorRightOffset = self:GetSensorOffset ( origin, min, max )
     self._sensorRightParent = self:GetSensorParentTransform ( self._sensorRight, toParentTransform )
-
-    local route = {}
-    table.insert ( route, self:GetOrigin ( actor, "Path001" ) )
-    table.insert ( route, self:GetOrigin ( actor, "Path002" ) )
-    self._route = route
-    self._routeIdx = 1
-    self._routeNext = 1
-    self._velocity = GXVec3 ()
-
-    self:UpdateRoute ()
 end
 
-local function OnPrePhysics ( self, deltaTime )
-    local tmp = GXVec3 ()
-    self._localMatrix:GetW ( tmp )
+local function OnPostPhysics ( self, deltaTime )
+    local localMatrix = self._localMatrix
+
+    local m = GXMat4 ()
+    m:Clone ( localMatrix )
 
     local v = GXVec3 ()
-    local velocity = self._velocity
-    v:MultiplyScalar ( velocity, deltaTime )
-    tmp:Sum ( tmp, v )
+    localMatrix:GetW ( v )
 
-    self:MoveTo ( tmp )
-    tmp:Subtract ( self._to, tmp )
+    v:MultiplyScalar ( v, g_scene:GetRendererToPhysicsScaleFactor () )
+    m:SetW ( v )
 
-    if tmp:DotProduct ( velocity ) < 0 then
-        self:UpdateRoute ()
-    end
+    -- TODO
 end
 
 -- Metamethods
@@ -139,15 +124,16 @@ local function Constructor ( self, handle, params )
 
     -- Methods
     obj.GetCenter = GetCenter
-    obj.GetOffset = GetOffset
     obj.GetOrigin = GetOrigin
+    obj.GetSensorOffset = GetSensorOffset
     obj.GetSensorParentTransform = GetSensorParentTransform
+    obj.GetSensorSize = GetSensorSize
     obj.MoveTo = MoveTo
     obj.UpdateRoute = UpdateRoute
 
     -- Engine events
     obj.OnActorConstructed = OnActorConstructed
-    obj.OnPrePhysics = OnPrePhysics
+    obj.OnPostPhysics = OnPostPhysics
     return obj
 end
 

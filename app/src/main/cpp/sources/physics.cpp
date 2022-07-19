@@ -126,6 +126,45 @@ void Physics::Pause () noexcept
     _isPause = true;
 }
 
+void Physics::PenetrationTest ( std::vector<Penetration> &result,
+    EPA &epa,
+    ShapeRef const &shape,
+    uint32_t groups
+) const noexcept
+{
+    result.clear ();
+    Shape const& s = *shape;
+
+    auto check = [ &result, &epa, &s, groups ] ( std::unordered_set<RigidBodyRef> const &set ) noexcept {
+        GJK gjk {};
+
+        for ( auto& body : set )
+        {
+            Shape const& bodyShape = body->GetShape ();
+            gjk.Reset ();
+
+            if ( !( bodyShape.GetCollisionGroups () & groups ) || !gjk.Run ( s, bodyShape ) )
+                continue;
+
+            epa.Reset ();
+
+            if ( !epa.Run ( gjk.GetSimplex (), s, bodyShape ) )
+                continue;
+
+            result.emplace_back (
+                Penetration {
+                    ._body = body,
+                    ._depth = epa.GetDepth (),
+                    ._normal = epa.GetNormal ()
+                }
+            );
+        }
+    };
+
+    check ( _kinematics );
+    check ( _dynamics );
+}
+
 bool Physics::Raycast ( RaycastResult &result, uint32_t groups, GXVec3 const &from, GXVec3 const &to ) const noexcept
 {
     float dist = std::numeric_limits<float>::max ();

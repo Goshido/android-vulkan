@@ -9,6 +9,7 @@ require "av://engine/gx_mat4.lua"
 - [_Brief_](#brief)
 - [_Metamethods_](#metamethods)
 - [`Constructor`](#constructor)
+- [`Clone ( other )`](#method-clone)
 - [`FromFast ( unitQuaternion, origin )`](#method-from-fast)
 - [`GetX ( x )`](#method-get-x)
 - [`GetY ( y )`](#method-get-y)
@@ -123,6 +124,41 @@ require "av://engine/gx_mat4.lua"
 
 
 local m = GXMat4 ()
+```
+
+## <a id="method-clone">`Clone ( other )`</a>
+
+Method clones content of matrix to the current matrix.
+
+**Parameters:**
+
+- `other` [_required, readonly, [GXMat4](./gx-mat4.md)_]: matrix to clone
+
+**Return values:**
+
+- none
+
+**Example:**
+
+```lua
+require "av://engine/gx_quat.lua"
+
+
+local axis = GXVec3 ()
+axis:Init ( 7.77, 3.33, 1.0 )
+axis:Normalize ()
+
+local rotation = GXQuat ()
+rotation:FromAxisAngle ( axis, math.rad ( 77.7 ) )
+
+local origin = GXVec3 ()
+origin:Init ( 1.0, 333.0, 0.0 )
+
+local transform = GXMat4 ()
+transform:FromFast ( rotation, origin )
+
+local transformCopy = GXMat4 ()
+transformCopy:Clone ( transform )
 ```
 
 ## <a id="method-from-fast">`FromFast ( unitQuaternion, origin )`</a>

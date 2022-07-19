@@ -35,6 +35,11 @@ void ScriptableGXMat4::Init ( lua_State &vm ) noexcept
     constexpr luaL_Reg const extentions[] =
     {
         {
+            .name = "av_GXMat4Clone",
+            .func = &ScriptableGXMat4::OnClone
+        },
+
+        {
             .name = "av_GXMat4Create",
             .func = &ScriptableGXMat4::OnCreate
         },
@@ -200,6 +205,13 @@ void ScriptableGXMat4::Insert ( Item* item, Item*& list ) noexcept
         list->_previous = item;
 
     list = item;
+}
+
+int ScriptableGXMat4::OnClone ( lua_State* state )
+{
+    auto& self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    self._matrix = ScriptableGXMat4::Extract ( state, 2 );
+    return 0;
 }
 
 int ScriptableGXMat4::OnCreate ( lua_State* state )

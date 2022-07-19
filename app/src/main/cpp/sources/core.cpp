@@ -1,4 +1,5 @@
 #include <core.h>
+#include <bitwise.h>
 #include <logger.h>
 #include <mandelbrot/mandelbrot_analytic_color.h>
 #include <mandelbrot/mandelbrot_lut_color.h>
@@ -161,7 +162,7 @@ void Core::OnSurfaceDestroyed () noexcept
         _writeQueue.push_back ( eCommand::SwapchainDestroyed );
     }
 
-    while ( !_readQueue.empty () | !_writeQueue.empty () )
+    while ( AV_BITWISE ( !_readQueue.empty () ) | AV_BITWISE ( !_writeQueue.empty () ) )
         std::this_thread::sleep_for ( TIMEOUT );
 
     ANativeWindow_release ( _nativeWindow );

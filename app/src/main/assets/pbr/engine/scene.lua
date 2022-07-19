@@ -67,6 +67,25 @@ local function FindActors ( self, name )
     return self._actors[ name ]
 end
 
+local function GetPenetrationBox ( self, localMatrix, size, groups )
+    assert ( type ( self ) == "table" and self._type == eObjectType.Scene,
+        [[Scene:GetPenetrationBox - Calling not via ":" syntax.]]
+    )
+
+    assert ( type ( localMatrix ) == "table" and localMatrix._type == eObjectType.GXMat4,
+        [[Scene:GetPenetrationBox - "localMatrix" is not a GXMat4.]]
+    )
+
+    assert ( type ( size ) == "table" and size._type == eObjectType.GXVec3,
+        [[Scene:GetPenetrationBox - "size" is not a GXVec3.]]
+    )
+
+    assert ( type ( groups ) == "number", [[Scene:GetPenetrationBox - "groups" is not a number.]] )
+    av_SceneGetPenetrationBox ( self._handle, localMatrix._handle, size._handle, group )
+
+    -- TODO return actual result somehow.
+end
+
 local function GetPhysicsToRendererScaleFactor ( self )
     return av_SceneGetPhysicsToRendererScaleFactor ()
 end
@@ -162,6 +181,7 @@ local function Constructor ( self, handle )
     obj.AppendActor = AppendActor
     obj.FindActor = FindActor
     obj.FindActors = FindActors
+    obj.GetPenetrationBox = GetPenetrationBox
     obj.GetPhysicsToRendererScaleFactor = GetPhysicsToRendererScaleFactor
     obj.GetRendererToPhysicsScaleFactor = GetRendererToPhysicsScaleFactor
     obj.GetRenderTargetAspectRatio = GetRenderTargetAspectRatio

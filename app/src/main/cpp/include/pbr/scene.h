@@ -6,6 +6,7 @@
 #include "camera_component.h"
 #include "render_session.h"
 #include "scriptable_gamepad.h"
+#include <epa.h>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -23,30 +24,34 @@ namespace pbr {
 class Scene final
 {
     private:
-        std::deque<ActorRef>        _actors {};
+        std::deque<ActorRef>                        _actors {};
 
-        CameraComponent*            _camera = nullptr;
-        CameraComponent             _defaultCamera { "Default Camera" };
-        ScriptableGamepad           _gamepad {};
-        android_vulkan::Physics*    _physics = nullptr;
+        CameraComponent*                            _camera = nullptr;
+        CameraComponent                             _defaultCamera { "Default Camera" };
 
-        ComponentList               _freeTransferResourceList {};
-        ComponentList               _renderableList {};
+        android_vulkan::EPA                         _epa {};
+        ScriptableGamepad                           _gamepad {};
+        std::vector<android_vulkan::Penetration>    _penetrations {};
+        android_vulkan::Physics*                    _physics = nullptr;
+        android_vulkan::ShapeRef                    _shapeBox {};
 
-        lua_Number                  _aspectRatio = 1.0;
-        lua_Integer                 _width = -1;
-        lua_Integer                 _height = -1;
+        ComponentList                               _freeTransferResourceList {};
+        ComponentList                               _renderableList {};
 
-        int                         _appendActorIndex = std::numeric_limits<int>::max ();
-        int                         _onInputIndex = std::numeric_limits<int>::max ();
-        int                         _onPostPhysicsIndex = std::numeric_limits<int>::max ();
-        int                         _onPrePhysicsIndex = std::numeric_limits<int>::max ();
-        int                         _onRenderTargetChangedIndex = std::numeric_limits<int>::max ();
-        int                         _onUpdateIndex = std::numeric_limits<int>::max ();
+        lua_Number                                  _aspectRatio = 1.0;
+        lua_Integer                                 _width = -1;
+        lua_Integer                                 _height = -1;
 
-        int                         _sceneHandle = std::numeric_limits<int>::max ();
+        int                                         _appendActorIndex = std::numeric_limits<int>::max ();
+        int                                         _onInputIndex = std::numeric_limits<int>::max ();
+        int                                         _onPostPhysicsIndex = std::numeric_limits<int>::max ();
+        int                                         _onPrePhysicsIndex = std::numeric_limits<int>::max ();
+        int                                         _onRenderTargetChangedIndex = std::numeric_limits<int>::max ();
+        int                                         _onUpdateIndex = std::numeric_limits<int>::max ();
 
-        lua_State*                  _vm = nullptr;
+        int                                         _sceneHandle = std::numeric_limits<int>::max ();
+
+        lua_State*                                  _vm = nullptr;
 
     public:
         Scene () = default;
@@ -86,6 +91,12 @@ class Scene final
         void Submit ( RenderSession &renderSession ) noexcept;
 
     private:
+        [[nodiscard]] std::vector<android_vulkan::Penetration> const& DoPenetrationBox ( GXMat4 const &local,
+            GXVec3 const &size,
+            uint32_t groups
+        ) noexcept;
+
+        [[nodiscard]] static int OnGetPenetrationBox ( lua_State* state );
         [[nodiscard]] static int OnGetPhysicsToRendererScaleFactor ( lua_State* state );
         [[nodiscard]] static int OnGetRendererToPhysicsScaleFactor ( lua_State* state );
 

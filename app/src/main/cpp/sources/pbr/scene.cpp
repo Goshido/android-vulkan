@@ -3,8 +3,11 @@
 #include <pbr/renderable_component.h>
 #include <pbr/scene_desc.h>
 #include <pbr/script_engine.h>
+#include <pbr/scriptable_gxmat4.h>
+#include <pbr/scriptable_gxvec3.h>
 #include <core.h>
 #include <file.h>
+#include <shape_box.h>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -26,6 +29,8 @@ constexpr static float DEFAULT_FOV = 60.0F;
 constexpr static GXVec3 DEFAULT_LOCATION ( 0.0F, 0.0F, 0.0F );
 constexpr static float DEFAULT_Z_NEAR = 1.0e-1F;
 constexpr static float DEFAULT_Z_FAR = 1.0e+4F;
+
+constexpr static size_t INITIAL_PENETRATION_SIZE = 32U;
 
 [[maybe_unused]] constexpr static uint32_t SCENE_DESC_FORMAT_VERSION = 3U;
 
@@ -59,6 +64,8 @@ void Scene::OnReleaseInput () const noexcept
 bool Scene::OnInitDevice ( android_vulkan::Physics &physics ) noexcept
 {
     _defaultCamera.SetProjection ( GXDegToRad ( DEFAULT_FOV ), DEFAULT_ASPECT_RATIO, DEFAULT_Z_NEAR, DEFAULT_Z_FAR );
+    _penetrations.reserve ( INITIAL_PENETRATION_SIZE );
+    _shapeBox = std::make_shared<android_vulkan::ShapeBox> ( 1.0F, 1.0F, 1.0F );
 
     GXMat4 defaultTransform {};
     defaultTransform.Translation ( DEFAULT_LOCATION );
@@ -89,6 +96,11 @@ bool Scene::OnInitDevice ( android_vulkan::Physics &physics ) noexcept
 
     constexpr luaL_Reg const extentions[] =
     {
+        {
+            .name = "av_SceneGetPenetrationBox",
+            .func = &Scene::OnGetPenetrationBox
+        },
+
         {
             .name = "av_SceneGetPhysicsToRendererScaleFactor",
             .func = &Scene::OnGetPhysicsToRendererScaleFactor
@@ -174,6 +186,9 @@ void Scene::OnDestroyDevice () noexcept
     ScriptEngine::Destroy ();
 
     _physics = nullptr;
+    _penetrations.clear ();
+    _penetrations.shrink_to_fit ();
+    _shapeBox = nullptr;
 
     _appendActorIndex = std::numeric_limits<int>::max ();
     _onInputIndex = std::numeric_limits<int>::max ();
@@ -376,6 +391,38 @@ void Scene::Submit ( RenderSession &renderSession ) noexcept
         auto& renderableComponent = static_cast<RenderableComponent&> ( *component.get () );
         renderableComponent.Submit ( renderSession );
     }
+}
+
+std::vector<android_vulkan::Penetration> const& Scene::DoPenetrationBox ( GXMat4 const &local,
+    GXVec3 const &size,
+    uint32_t groups
+) noexcept
+{
+    // NOLINTNEXTLINE - downcast.
+    auto& boxShape = static_cast<android_vulkan::ShapeBox&> ( *_shapeBox );
+
+    boxShape.Resize ( size );
+    boxShape.UpdateCacheData ( local );
+    _physics->PenetrationTest ( _penetrations, _epa, _shapeBox, groups );
+
+    return _penetrations;
+}
+
+int Scene::OnGetPenetrationBox ( lua_State* state )
+{
+    // TODO check Lua stack space
+
+    auto& self = *static_cast<Scene*> ( lua_touserdata ( state, 1 ) );
+
+    [[maybe_unused]] std::vector<android_vulkan::Penetration> const& penetrations = self.DoPenetrationBox (
+        ScriptableGXMat4::Extract ( state, 2 ),
+        ScriptableGXVec3::Extract ( state, 3 ),
+        lua_tointeger ( state, 4 )
+    );
+
+    // TODO
+
+    return 0;
 }
 
 int Scene::OnGetPhysicsToRendererScaleFactor ( lua_State* state )

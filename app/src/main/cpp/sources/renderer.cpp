@@ -1,4 +1,7 @@
 #include <renderer.h>
+#include <bitwise.h>
+#include <file.h>
+#include <vulkan_utils.h>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -9,9 +12,6 @@ GX_DISABLE_COMMON_WARNINGS
 #include <unordered_map>
 
 GX_RESTORE_WARNING_STATE
-
-#include "file.h"
-#include "vulkan_utils.h"
 
 
 namespace android_vulkan {
@@ -1292,9 +1292,9 @@ bool Renderer::CheckRequiredDeviceExtensions ( std::vector<char const*> const &d
 
     // Note bitwise '&' is intentional. All checks must be done to view whole picture.
 
-    _isDeviceExtensionSupported = CheckExtensionMultiview ( allExtensions ) &
-        CheckExtensionShaderFloat16Int8 ( allExtensions ) &
-        CheckExtensionCommon ( allExtensions, VK_KHR_SWAPCHAIN_EXTENSION_NAME );
+    _isDeviceExtensionSupported = AV_BITWISE ( CheckExtensionMultiview ( allExtensions ) ) &
+        AV_BITWISE ( CheckExtensionShaderFloat16Int8 ( allExtensions ) ) &
+        AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_SWAPCHAIN_EXTENSION_NAME ) );
 
     _isDeviceExtensionChecked = true;
     return _isDeviceExtensionSupported;
@@ -2416,6 +2416,10 @@ bool Renderer::SelectTargetHardware ( VkPhysicalDevice &targetPhysicalDevice,
 {
     // Find physical device with graphic and compute queues.
 
+    constexpr auto target = static_cast<VkFlags> (
+        AV_VK_FLAG ( VK_QUEUE_COMPUTE_BIT ) | AV_VK_FLAG ( VK_QUEUE_GRAPHICS_BIT )
+    );
+
     for ( auto const& device : _physicalDeviceInfo )
     {
         auto const& queueFamilyInfo = device.second._queueFamilyInfo;
@@ -2425,7 +2429,7 @@ bool Renderer::SelectTargetHardware ( VkPhysicalDevice &targetPhysicalDevice,
         {
             VkFlags const queueFamilyFlags = queueFamilyInfo[ i ].first;
 
-            if ( !( queueFamilyFlags & VK_QUEUE_COMPUTE_BIT ) || !( queueFamilyFlags & VK_QUEUE_GRAPHICS_BIT ) )
+            if ( !( queueFamilyFlags & target ) )
                 continue;
 
             targetPhysicalDevice = device.first;

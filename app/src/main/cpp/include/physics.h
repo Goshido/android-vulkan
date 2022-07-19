@@ -17,6 +17,13 @@ GX_RESTORE_WARNING_STATE
 
 namespace android_vulkan {
 
+struct Penetration final
+{
+    RigidBodyRef    _body;
+    float           _depth;
+    GXVec3          _normal;
+};
+
 class Physics final
 {
     private:
@@ -59,6 +66,13 @@ class Physics final
         [[nodiscard]] bool IsPaused () const noexcept;
         void OnIntegrationTypeChanged ( RigidBody &rigidBody ) noexcept;
         void Pause () noexcept;
+
+        // "groups" will be used as filter during the test.
+        void PenetrationTest ( std::vector<Penetration> &result,
+            EPA &epa,
+            ShapeRef const &shape,
+            uint32_t groups
+        ) const noexcept;
 
         // The method returns true if ray hits anything. Otherwise the method returns false.
         // "groups" will be used as filter during the ray casting.

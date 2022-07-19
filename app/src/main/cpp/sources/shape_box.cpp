@@ -39,6 +39,12 @@ GXVec3 const& ShapeBox::GetSize () const noexcept
     return _size;
 }
 
+void ShapeBox::Resize ( GXVec3 const &size ) noexcept
+{
+    _size = size;
+    Init ();
+}
+
 void ShapeBox::CalculateInertiaTensor ( float mass ) noexcept
 {
     // https://en.wikipedia.org/wiki/List_of_moments_of_inertia

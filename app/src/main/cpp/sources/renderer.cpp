@@ -2429,7 +2429,7 @@ bool Renderer::SelectTargetHardware ( VkPhysicalDevice &targetPhysicalDevice,
         {
             VkFlags const queueFamilyFlags = queueFamilyInfo[ i ].first;
 
-            if ( !( queueFamilyFlags & target ) )
+            if ( ( queueFamilyFlags & target ) != target )
                 continue;
 
             targetPhysicalDevice = device.first;

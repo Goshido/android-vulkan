@@ -23,6 +23,18 @@ local function GetOrigin ( self, origin, actor, component )
     t:GetW ( origin )
 end
 
+local function GetPenetrations ( self, size, offset, localMatrix, origin )
+    local alpha = GXVec3 ()
+    localMatrix:MultiplyAsNormal ( alpha, offset )
+    alpha:Sum ( alpha, origin )
+
+    local m = GXMat4 ()
+    m:Clone ( localMatrix )
+    m:SetW ( alpha )
+
+    g_scene:GetPenetrationBox ( m, size, 0xFFFFFFFF )
+end
+
 local function GetSensorOffset ( self, parentOrigin, actor, min, max )
     local result = GXVec3 ()
     result:Subtract ( self:GetCenter ( actor, min, max ), parentOrigin )
@@ -106,14 +118,13 @@ end
 local function OnPostPhysics ( self, deltaTime )
     local localMatrix = self._localMatrix
 
-    local m = GXMat4 ()
-    m:Clone ( localMatrix )
+    local origin = GXVec3 ()
+    localMatrix:GetW ( origin )
+    origin:MultiplyScalar ( origin, g_scene:GetRendererToPhysicsScaleFactor () )
 
-    local v = GXVec3 ()
-    localMatrix:GetW ( v )
-
-    v:MultiplyScalar ( v, g_scene:GetRendererToPhysicsScaleFactor () )
-    m:SetW ( v )
+    self:GetPenetrations ( self._sensorTopSize, self._sensorTopOffset, localMatrix, origin )
+    self:GetPenetrations ( self._sensorLeftSize, self._sensorLeftOffset, localMatrix, origin )
+    self:GetPenetrations ( self._sensorRightSize, self._sensorRightOffset, localMatrix, origin )
 
     -- TODO
 end
@@ -125,6 +136,7 @@ local function Constructor ( self, handle, params )
     -- Methods
     obj.GetCenter = GetCenter
     obj.GetOrigin = GetOrigin
+    obj.GetPenetrations = GetPenetrations
     obj.GetSensorOffset = GetSensorOffset
     obj.GetSensorParentTransform = GetSensorParentTransform
     obj.GetSensorSize = GetSensorSize

@@ -6,8 +6,11 @@ plugins {
 android {
     compileSdkVersion 31
     buildToolsVersion "33.0.0"
-    ndkVersion "25.0.8775105"
-    //ndkVersion "24.0.8215888"
+
+    // Can't use NDK 25.0.8775105 until fix the debugging issue.
+    // See https://issuetracker.google.com/issues/239589378
+    ndkVersion "24.0.8215888"
+
     namespace 'com.goshidoInc.androidVulkan'
 
     defaultConfig {

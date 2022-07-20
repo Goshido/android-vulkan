@@ -9,3 +9,4 @@
 5) [Shader compilation](shader-compilation.md)
 6) [Building _Vulkan_ validation layers for _Android OS_](vulkan-validation-layers.md)
 7) [_Lua API_](lua-api.md)
+8) [About _NDK 25.0.8775105_ and _Android Studio_ debugger](about-NDK-25.0.8775105.md)

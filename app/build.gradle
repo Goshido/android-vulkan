@@ -6,11 +6,7 @@ plugins {
 android {
     compileSdkVersion 31
     buildToolsVersion "33.0.0"
-
-    // Can't use NDK 25.0.8775105 until fix the debugging issue.
-    // See https://issuetracker.google.com/issues/239589378
-    ndkVersion "24.0.8215888"
-
+    ndkVersion "25.0.8775105"
     namespace 'com.goshidoInc.androidVulkan'
 
     defaultConfig {
@@ -53,7 +49,7 @@ android {
     externalNativeBuild {
         cmake {
             path file('../CMakeLists.txt')
-            version "3.18.1"
+            version "3.22.1"
         }
     }
 
@@ -65,10 +61,18 @@ android {
 
             jniLibs {
                 srcDir makePrebuildLibraryPath()
+
             }
 
             java.srcDirs += "src/main/kotlin"
         }
+    }
+
+    // Solving '2 files found with path' error [CMake 3.22.1]. Based on ideas from
+    // https://dtuto.com/questions/8657/2-files-found-with-path-lib-arm64-v8a-libc-shared-so-from-inputs-react-native
+    packagingOptions {
+        jniLibs.pickFirsts.add("lib/arm64-v8a/libLua.so")
+        jniLibs.pickFirsts.add("lib/arm64-v8a/libVkLayer_khronos_validation.so")
     }
 }
 

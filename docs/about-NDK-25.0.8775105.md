@@ -23,3 +23,26 @@ At the moment **[2022/07/20]** any breakpoint inside native _C++_ code doesn't w
 The [video](https://drive.google.com/file/d/1MWUNINCH7XUyCcTAD9Mih4dmx7lZAbhd/view?usp=sharing) with issue live demonstration.
 
 [The issue](https://issuetracker.google.com/issues/239589378) which was addressed to the _Google_ guys.
+
+---
+
+**[2022-07-22]** _CMake 3.22.1_ is officially supported by _Android Studio_. After changing project to it and fixing new error with precompiled libraries the breakpoints begin to work.
+
+```gradle
+android {
+    ...
+
+    ndkVersion "25.0.8775105"
+
+    ...
+
+    // Solving '2 files found with path' error [CMake 3.22.1]. Based on ideas from
+    // https://dtuto.com/questions/8657/2-files-found-with-path-lib-arm64-v8a-libc-shared-so-from-inputs-react-native
+    packagingOptions {
+        jniLibs.pickFirsts.add("lib/arm64-v8a/libLua.so")
+        jniLibs.pickFirsts.add("lib/arm64-v8a/libVkLayer_khronos_validation.so")
+    }
+
+    ...
+}
+```

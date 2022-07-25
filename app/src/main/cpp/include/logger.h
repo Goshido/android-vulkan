@@ -4,10 +4,10 @@
 
 namespace android_vulkan {
 
-void LogDebug ( const char* format, ... );
-void LogError ( const char* format, ... );
-void LogInfo ( const char* format, ... );
-void LogWarning ( const char* format, ... );
+void LogDebug ( char const* format, ... );
+void LogError ( char const* format, ... );
+void LogInfo ( char const* format, ... );
+void LogWarning ( char const* format, ... );
 
 } // namespace android_vulkan
 

@@ -17,7 +17,7 @@ GX_RESTORE_WARNING_STATE
 
 namespace android_vulkan {
 
-constexpr static const char* INDENT = "    ";
+constexpr static char const* INDENT = "    ";
 
 class VulkanItem final
 {
@@ -26,55 +26,61 @@ class VulkanItem final
         std::string     _where;
 
     public:
-        VulkanItem ();
-        VulkanItem ( const VulkanItem &other ) = default;
-        explicit VulkanItem ( std::string &&where );
+        VulkanItem () noexcept;
 
-        VulkanItem& operator = ( const VulkanItem &other ) = delete;
+        VulkanItem ( VulkanItem const & ) = default;
+        VulkanItem& operator = ( VulkanItem const & ) = delete;
 
-        void IncrementInstanceCount ();
-        void DecrementInstanceCount ();
-        void GetInfo ( std::string &info ) const;
-        [[nodiscard]] bool IsLastInstance () const;
+        VulkanItem ( VulkanItem && ) = default;
+        VulkanItem& operator = ( VulkanItem && ) = default;
 
-        bool operator < ( const VulkanItem &other ) const;
+        explicit VulkanItem ( std::string &&where ) noexcept;
+
+        ~VulkanItem () = default;
+
+        void IncrementInstanceCount () noexcept;
+        void DecrementInstanceCount () noexcept;
+        void GetInfo ( std::string &info ) const noexcept;
+        [[nodiscard]] bool IsLastInstance () const noexcept;
+
+        bool operator < ( VulkanItem const &other ) const noexcept;
 };
 
-VulkanItem::VulkanItem ():
+VulkanItem::VulkanItem () noexcept:
     _instances ( 1U ),
     _where {}
 {
     // NOTHING
 }
 
-VulkanItem::VulkanItem ( std::string &&where ):
+VulkanItem::VulkanItem ( std::string &&where ) noexcept:
     _instances ( 1U ),
     _where ( std::move ( where ) )
 {
     // NOTHING
 }
 
-void VulkanItem::IncrementInstanceCount ()
+void VulkanItem::IncrementInstanceCount () noexcept
 {
     ++_instances;
 }
 
-void VulkanItem::DecrementInstanceCount ()
+void VulkanItem::DecrementInstanceCount () noexcept
 {
     --_instances;
 }
 
-void VulkanItem::GetInfo ( std::string &info ) const
+void VulkanItem::GetInfo ( std::string &info ) const noexcept
 {
     info = _where + " (instances: " + std::to_string ( static_cast<long long int> ( _instances ) ) + ")";
 }
 
-bool VulkanItem::IsLastInstance () const
+bool VulkanItem::IsLastInstance () const noexcept
 {
     return _instances == 1U;
 }
 
-bool VulkanItem::operator < ( const VulkanItem &other ) const
+bool VulkanItem::operator < ( const VulkanItem &other ) const noexcept
 {
     return _where < other._where;
 }
@@ -101,7 +107,7 @@ static std::set<VulkanItem>         g_ShaderModules;
 static std::set<VulkanItem>         g_Surfaces;
 static std::set<VulkanItem>         g_Swapchains;
 
-static bool CheckNonDispatchableObjectLeaks ( const char* objectType, std::set<VulkanItem> &storage )
+static bool CheckNonDispatchableObjectLeaks ( char const* objectType, std::set<VulkanItem> &storage )
 {
     if ( storage.empty () )
         return true;
@@ -132,15 +138,15 @@ static void RegisterNonDispatchableObject ( std::string &&where, std::set<Vulkan
     item.IncrementInstanceCount ();
 }
 
-static void UnregisterNonDispatchableObject ( const char* method,
-    const char* objectType,
+static void UnregisterNonDispatchableObject ( char const* method,
+    char const* objectType,
     std::string &&where,
     std::set<VulkanItem> &storage
 )
 {
     std::unique_lock<std::shared_timed_mutex> lock ( g_Lock );
-    const char* str = where.c_str ();
-    const auto findResult = storage.find ( VulkanItem ( std::move ( where ) ) );
+    char const* str = where.c_str ();
+    auto const findResult = storage.find ( VulkanItem ( std::move ( where ) ) );
 
     if ( findResult == storage.cend () )
     {

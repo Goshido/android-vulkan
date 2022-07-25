@@ -8,8 +8,8 @@ constexpr static uint32_t COLOR_RENDER_TARGET_COUNT = 1U;
 constexpr static size_t STAGE_COUNT = 2U;
 constexpr static size_t VERTEX_ATTRIBUTE_COUNT = 1U;
 
-constexpr static const char* FRAGMENT_SHADER = "shaders/point-light-ps.spv";
-constexpr static const char* VERTEX_SHADER = "shaders/light-volume-vs.spv";
+constexpr static char const* FRAGMENT_SHADER = "shaders/point-light-ps.spv";
+constexpr static char const* VERTEX_SHADER = "shaders/light-volume-vs.spv";
 
 //----------------------------------------------------------------------------------------------------------------------
 

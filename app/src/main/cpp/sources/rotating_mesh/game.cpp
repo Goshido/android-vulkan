@@ -18,7 +18,7 @@ namespace rotating_mesh {
 constexpr static char const* VERTEX_SHADER = "shaders/static-mesh-vs.spv";
 constexpr static char const* VERTEX_SHADER_ENTRY_POINT = "VS";
 
-constexpr static const char* FRAGMENT_SHADER_ENTRY_POINT = "PS";
+constexpr static char const* FRAGMENT_SHADER_ENTRY_POINT = "PS";
 
 constexpr static std::string_view MATERIAL_1_DIFFUSE = "textures/rotating_mesh/sonic-material-1-diffuse.ktx";
 constexpr static char const* MATERIAL_1_MESH = "meshes/rotating_mesh/sonic-material-1.mesh";

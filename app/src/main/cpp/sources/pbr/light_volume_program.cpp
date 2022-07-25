@@ -4,9 +4,10 @@
 namespace pbr {
 
 constexpr static uint32_t COLOR_RENDER_TARGET_COUNT = 0U;
-constexpr static size_t STAGE_COUNT = 1U;
+constexpr static size_t STAGE_COUNT = 2U;
 constexpr static size_t VERTEX_ATTRIBUTE_COUNT = 1U;
-constexpr static const char* VERTEX_SHADER = "shaders/light-volume-vs.spv";
+constexpr static char const* VERTEX_SHADER = "shaders/light-volume-vs.spv";
+constexpr static char const* FRAGMENT_SHADER = "shaders/null-ps.spv";
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -297,6 +298,16 @@ bool LightVolumeProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
 
     AV_REGISTER_SHADER_MODULE ( "pbr::LightVolumeProgram::_vertexShader" )
 
+    result = renderer.CreateShader ( _fragmentShader,
+        FRAGMENT_SHADER,
+        "Can't create fragment shader (pbr::LightVolumeProgram:)"
+    );
+
+    if ( !result )
+        return false;
+
+    AV_REGISTER_SHADER_MODULE ( "pbr::LightVolumeProgram:::_fragmentShader" )
+
     VkPipelineShaderStageCreateInfo& vertexStage = sourceInfo[ 0U ];
     vertexStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     vertexStage.pNext = nullptr;
@@ -306,12 +317,28 @@ bool LightVolumeProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
     vertexStage.pName = VERTEX_SHADER_ENTRY_POINT;
     vertexStage.pSpecializationInfo = nullptr;
 
+    VkPipelineShaderStageCreateInfo& fragmentStage = sourceInfo[ 1U ];
+    fragmentStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    fragmentStage.pNext = nullptr;
+    fragmentStage.flags = 0U;
+    fragmentStage.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+    fragmentStage.module = _fragmentShader;
+    fragmentStage.pName = FRAGMENT_SHADER_ENTRY_POINT;
+    fragmentStage.pSpecializationInfo = nullptr;
+
     targetInfo = sourceInfo;
     return true;
 }
 
 void LightVolumeProgram::DestroyShaderModules ( VkDevice device ) noexcept
 {
+    if ( _fragmentShader != VK_NULL_HANDLE )
+    {
+        vkDestroyShaderModule ( device, _fragmentShader, nullptr );
+        _fragmentShader = VK_NULL_HANDLE;
+        AV_UNREGISTER_SHADER_MODULE ( "pbr::LightVolumeProgram:::_fragmentShader" )
+    }
+
     if ( _vertexShader == VK_NULL_HANDLE )
         return;
 

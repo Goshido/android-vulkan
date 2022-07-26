@@ -2633,7 +2633,7 @@ VkBool32 VKAPI_PTR Renderer::OnVulkanDebugReport ( VkDebugReportFlagsEXT flags,
 {
     std::string_view const message ( pMessage );
 
-    constexpr std::string_view const tag ( "MessageID = " );
+    constexpr std::string_view tag ( "MessageID = " );
     auto const filterResult = message.find ( tag );
 
     assert ( filterResult != std::string_view::npos );

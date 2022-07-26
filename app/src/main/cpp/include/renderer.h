@@ -175,7 +175,6 @@ class Renderer final
         [[nodiscard]] static char const* ResolveVkFormat ( VkFormat format ) noexcept;
 
     private:
-        [[nodiscard]] bool CheckExtensionMultiview ( std::set<std::string> const &allExtensions ) noexcept;
         [[nodiscard]] bool CheckExtensionShaderFloat16Int8 ( std::set<std::string> const &allExtensions ) noexcept;
         [[nodiscard]] bool CheckRequiredDeviceExtensions ( std::vector<char const*> const &deviceExtensions ) noexcept;
 
@@ -207,7 +206,7 @@ class Renderer final
         void DestroySwapchain () noexcept;
 
         [[nodiscard]] bool PrintPhysicalDeviceExtensionInfo ( VkPhysicalDevice physicalDevice ) noexcept;
-        [[nodiscard]] bool PrintPhysicalDeviceFeatureInfo ( VkPhysicalDevice physicalDevice ) noexcept;
+        void PrintPhysicalDeviceFeatureInfo ( VkPhysicalDevice physicalDevice ) noexcept;
 
         void PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits ) noexcept;
         void PrintPhysicalDeviceMemoryProperties ( VkPhysicalDevice physicalDevice ) noexcept;

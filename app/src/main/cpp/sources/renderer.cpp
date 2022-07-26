@@ -9,7 +9,9 @@ GX_DISABLE_COMMON_WARNINGS
 #include <cinttypes>
 #include <cmath>
 #include <string>
+#include <string_view>
 #include <unordered_map>
+#include <unordered_set>
 
 GX_RESTORE_WARNING_STATE
 
@@ -23,9 +25,9 @@ constexpr static char const* INDENT_2 = "        ";
 constexpr static char const* INDENT_3 = "            ";
 constexpr static size_t const INITIAL_EXTENSION_STORAGE_SIZE = 64U;
 
-constexpr static uint32_t const MAJOR = 1U;
-constexpr static uint32_t const MINOR = 1U;
-constexpr static uint32_t const PATCH = 131U;
+constexpr static uint32_t MAJOR = 1U;
+constexpr static uint32_t MINOR = 1U;
+constexpr static uint32_t PATCH = 131U;
 
 // Note vulkan_core.h is a little bit dirty from clang-tidy point of view.
 // So suppress this third-party mess via "NOLINT" control comment.
@@ -372,6 +374,22 @@ VulkanPhysicalDeviceInfo::VulkanPhysicalDeviceInfo () noexcept:
 //----------------------------------------------------------------------------------------------------------------------
 
 #ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+
+// MessageID list of the ignored messages.
+static std::unordered_set<std::string_view> const g_validationFilter =
+{
+    // Attempting to enable deprecated extension VK_EXT_debug_report, but this extension has been deprecated by
+    // VK_EXT_debug_utils.
+    // [2022/07/26] There is no alternative on Android 11 platform.
+    "0x9111e735",
+
+    // Attempting to enable extension VK_EXT_debug_report, but this extension is intended to support use by applications
+    // when debugging and it is strongly recommended that it be otherwise avoided.
+    // [2022/07/26] Yeah. I'm pretty aware about that. Thank you.
+    "0x822806fa"
+};
+
+//----------------------------------------------------------------------------------------------------------------------
 
 std::map<VkDebugReportObjectTypeEXT, char const*> const Renderer::_vulkanObjectTypeMap =
 {
@@ -1204,39 +1222,6 @@ char const* Renderer::ResolveVkFormat ( VkFormat format ) noexcept
     return findResult == _vulkanFormatMap.cend () ? UNKNOWN_RESULT : findResult->second;
 }
 
-bool Renderer::CheckExtensionMultiview ( std::set<std::string> const &allExtensions ) noexcept
-{
-    if ( !CheckExtensionCommon ( allExtensions, VK_KHR_MULTIVIEW_EXTENSION_NAME ) )
-        return false;
-
-    VkPhysicalDeviceMultiviewFeatures hardwareSupport
-    {
-        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_FEATURES,
-        .pNext = nullptr,
-        .multiview = VK_FALSE,
-        .multiviewGeometryShader = VK_FALSE,
-        .multiviewTessellationShader = VK_FALSE
-    };
-
-    VkPhysicalDeviceFeatures2 probe
-    {
-        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
-        .pNext = &hardwareSupport,
-        .features {}
-    };
-
-    vkGetPhysicalDeviceFeatures2 ( _physicalDevice, &probe );
-
-    if ( hardwareSupport.multiview )
-    {
-        LogInfo ( "%sOK: multiview", INDENT_2 );
-        return true;
-    }
-
-    LogError ( "%sFAIL: multiview", INDENT_2 );
-    return false;
-}
-
 bool Renderer::CheckExtensionShaderFloat16Int8 ( std::set<std::string> const &allExtensions ) noexcept
 {
     if ( !CheckExtensionCommon ( allExtensions, VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME ) )
@@ -1292,8 +1277,7 @@ bool Renderer::CheckRequiredDeviceExtensions ( std::vector<char const*> const &d
 
     // Note bitwise '&' is intentional. All checks must be done to view whole picture.
 
-    _isDeviceExtensionSupported = AV_BITWISE ( CheckExtensionMultiview ( allExtensions ) ) &
-        AV_BITWISE ( CheckExtensionShaderFloat16Int8 ( allExtensions ) ) &
+    _isDeviceExtensionSupported = AV_BITWISE ( CheckExtensionShaderFloat16Int8 ( allExtensions ) ) &
         AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_SWAPCHAIN_EXTENSION_NAME ) );
 
     _isDeviceExtensionChecked = true;
@@ -1519,7 +1503,6 @@ bool Renderer::DeployDevice () noexcept
 
     constexpr char const* extensions[] =
     {
-        VK_KHR_MULTIVIEW_EXTENSION_NAME,
         VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME,
         VK_KHR_SWAPCHAIN_EXTENSION_NAME
     };
@@ -1619,8 +1602,26 @@ bool Renderer::DeployInstance () noexcept
 
 #ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
+    // [2022/07/26] GPU assisted validation is impossible on MALI G76 (driver 26) due to lack of required
+    // feature - VkPhysicalDeviceFeatures::vertexPipelineStoresAndAtomics.
+    constexpr static VkValidationFeatureEnableEXT const validationFeatures[] =
+    {
+        VK_VALIDATION_FEATURE_ENABLE_BEST_PRACTICES_EXT,
+        VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT
+    };
+
+    constexpr VkValidationFeaturesEXT validationInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT,
+        .pNext = nullptr,
+        .enabledValidationFeatureCount = static_cast<uint32_t> ( std::size ( validationFeatures ) ),
+        .pEnabledValidationFeatures = validationFeatures,
+        .disabledValidationFeatureCount = 0U,
+        .pDisabledValidationFeatures = nullptr
+    };
+
     _debugReportCallbackCreateInfoEXT.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
-    _debugReportCallbackCreateInfoEXT.pNext = nullptr;
+    _debugReportCallbackCreateInfoEXT.pNext = &validationInfo;
     _debugReportCallbackCreateInfoEXT.pUserData = this;
     _debugReportCallbackCreateInfoEXT.pfnCallback = &Renderer::OnVulkanDebugReport;
 
@@ -2021,7 +2022,7 @@ bool Renderer::PrintPhysicalDeviceExtensionInfo ( VkPhysicalDevice physicalDevic
     return true;
 }
 
-bool Renderer::PrintPhysicalDeviceFeatureInfo ( VkPhysicalDevice physicalDevice ) noexcept
+void Renderer::PrintPhysicalDeviceFeatureInfo ( VkPhysicalDevice physicalDevice ) noexcept
 {
     LogInfo ( ">>> Features:" );
 
@@ -2055,9 +2056,9 @@ bool Renderer::PrintPhysicalDeviceFeatureInfo ( VkPhysicalDevice physicalDevice 
     LogInfo ( "%sUnsupported:", INDENT_2 );
 
     for ( auto& item : unsupportedFeatures )
+    {
         LogInfo ( "%s%s", INDENT_3, item.data () );
-
-    return true;
+    }
 }
 
 void Renderer::PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits ) noexcept
@@ -2331,9 +2332,7 @@ bool Renderer::PrintPhysicalDeviceInfo ( uint32_t deviceIndex, VkPhysicalDevice 
     PrintPhysicalDeviceCommonProps ( props );
     PrintPhysicalDeviceLimits ( props.limits );
     PrintPhysicalDeviceSparse ( props.sparseProperties );
-
-    if ( !PrintPhysicalDeviceFeatureInfo ( physicalDevice ) )
-        return false;
+    PrintPhysicalDeviceFeatureInfo ( physicalDevice );
 
     if ( !PrintPhysicalDeviceExtensionInfo ( physicalDevice ) )
         return false;
@@ -2632,6 +2631,17 @@ VkBool32 VKAPI_PTR Renderer::OnVulkanDebugReport ( VkDebugReportFlagsEXT flags,
     void* pUserData
 )
 {
+    std::string_view const message ( pMessage );
+
+    constexpr std::string_view const tag ( "MessageID = " );
+    auto const filterResult = message.find ( tag );
+
+    assert ( filterResult != std::string_view::npos );
+    std::string_view const messageID = message.substr ( filterResult + tag.size () );
+
+    if ( g_validationFilter.count ( messageID.substr ( 0U, messageID.find ( ' ' ) ) ) > 0U )
+        return VK_FALSE;
+
     Renderer& renderer = *static_cast<Renderer*> ( pUserData );
     auto const findResult = renderer._loggerMapper.find ( flags );
 

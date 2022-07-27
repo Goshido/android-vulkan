@@ -718,7 +718,7 @@ bool Texture2D::UploadDataInternal ( Renderer &renderer,
     VkDevice device = renderer.GetDevice ();
     vkUnmapMemory ( device, _transferDeviceMemory );
 
-    constexpr VkCommandBufferBeginInfo const beginInfo
+    constexpr VkCommandBufferBeginInfo beginInfo
     {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
         .pNext = nullptr,

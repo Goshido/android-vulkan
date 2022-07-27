@@ -89,19 +89,19 @@ void MeshGeometry::FreeResources ( VkDevice device ) noexcept
 
 void MeshGeometry::FreeTransferResources ( VkDevice device ) noexcept
 {
-    if ( _transferMemory != VK_NULL_HANDLE )
+    if ( _transferBuffer != VK_NULL_HANDLE )
     {
-        vkFreeMemory ( device, _transferMemory, nullptr );
-        _transferMemory = VK_NULL_HANDLE;
-        AV_UNREGISTER_DEVICE_MEMORY ( "MeshGeometry::_transferMemory" )
+        vkDestroyBuffer ( device, _transferBuffer, nullptr );
+        _transferBuffer = VK_NULL_HANDLE;
+        AV_UNREGISTER_BUFFER ( "MeshGeometry::_transferBuffer" )
     }
 
-    if ( _transferBuffer == VK_NULL_HANDLE )
+    if ( _transferMemory == VK_NULL_HANDLE )
         return;
 
-    vkDestroyBuffer ( device, _transferBuffer, nullptr );
-    _transferBuffer = VK_NULL_HANDLE;
-    AV_UNREGISTER_BUFFER ( "MeshGeometry::_transferBuffer" )
+    vkFreeMemory ( device, _transferMemory, nullptr );
+    _transferMemory = VK_NULL_HANDLE;
+    AV_UNREGISTER_DEVICE_MEMORY ( "MeshGeometry::_transferMemory" )
 }
 
 GXAABB const& MeshGeometry::GetBounds () const noexcept

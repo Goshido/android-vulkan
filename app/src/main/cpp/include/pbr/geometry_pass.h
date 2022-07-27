@@ -61,12 +61,13 @@ class GeometryPass final
         [[nodiscard]] StippleSubpass& GetStippleSubpass () noexcept;
 
         void Reset () noexcept;
+        [[nodiscard]] bool WaitReady ( android_vulkan::Renderer &renderer ) const noexcept;
 
         // Return value optimization friendly method.
         [[nodiscard]] static VkSubpassDescription GetSubpassDescription () noexcept;
 
     private:
-        [[nodiscard]] bool BeginRenderPass ( android_vulkan::Renderer &renderer ) noexcept;
+        [[nodiscard]] bool BeginRenderPass () noexcept;
 };
 
 } // namespace pbr

@@ -29,10 +29,19 @@ void RenderSession::Begin ( GXMat4 const &viewerLocal, GXMat4 const &projection 
 
 bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime ) noexcept
 {
-    if ( !_presentPass.AcquirePresentTarget ( renderer ) )
+    if ( !_presentPass.AcquirePresentTarget ( renderer ) || !_geometryPass.WaitReady ( renderer ) )
         return false;
 
-    bool result = _lightPass.OnPreGeometryPass ( renderer,
+    bool result = android_vulkan::Renderer::CheckVkResult (
+        vkResetCommandPool ( renderer.GetDevice (), _commandPool, 0U ),
+        "pbr::RenderSession::End",
+        "Can't reset command pool"
+    );
+
+    if ( !result )
+        return false;
+
+    result = _lightPass.OnPreGeometryPass ( renderer,
         _gBuffer.GetResolution (),
         _geometryPass.GetOpaqueSubpass ().GetSceneData (),
         _opaqueMeshCount,
@@ -81,19 +90,19 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
         &_gBufferImageBarrier
     );
 
-    if ( !_presentPass.Execute ( commandBuffer, _gBufferSlotMapper, _geometryPass.GetFence (), renderer ) )
+    if ( !_presentPass.Execute ( renderer, commandBuffer, _gBufferSlotMapper, _geometryPass.GetFence () ) )
         return false;
 
     _renderSessionStats.PrintStats ( deltaTime );
     return true;
 }
 
-void RenderSession::FreeTransferResources ( VkDevice device, VkCommandPool commandPool ) noexcept
+void RenderSession::FreeTransferResources ( VkDevice device ) noexcept
 {
-    _defaultTextureManager.FreeTransferResources ( device, commandPool );
+    _defaultTextureManager.FreeTransferResources ( device, _commandPool );
 }
 
-bool RenderSession::OnInitDevice ( android_vulkan::Renderer &renderer, VkCommandPool commandPool ) noexcept
+bool RenderSession::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 {
     _lightHandlers[ static_cast<size_t> ( eLightType::PointLight ) ] = &RenderSession::SubmitPointLight;
     _lightHandlers[ static_cast<size_t> ( eLightType::ReflectionGlobal ) ] = &RenderSession::SubmitReflectionGlobal;
@@ -102,10 +111,31 @@ bool RenderSession::OnInitDevice ( android_vulkan::Renderer &renderer, VkCommand
     _meshHandlers[ static_cast<size_t> ( eMaterialType::Opaque ) ] = &RenderSession::SubmitOpaqueCall;
     _meshHandlers[ static_cast<size_t> ( eMaterialType::Stipple ) ] = &RenderSession::SubmitStippleCall;
 
+    VkCommandPoolCreateInfo const createInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .queueFamilyIndex = renderer.GetQueueFamilyIndex ()
+    };
+
+    VkDevice device = renderer.GetDevice ();
+
+    bool result = android_vulkan::Renderer::CheckVkResult (
+        vkCreateCommandPool ( device, &createInfo, nullptr, &_commandPool ),
+        "pbr::RenderSession::OnInitDevice",
+        "Can't create lead command pool"
+    );
+
+    if ( !result )
+        return false;
+
+    AV_REGISTER_COMMAND_POOL ( "pbr::RenderSession::_commandPool" )
+
     if ( !_texturePresentDescriptorSetLayout.Init ( renderer.GetDevice () ) )
         return false;
 
-    if ( !_defaultTextureManager.Init ( renderer, commandPool ) )
+    if ( !_defaultTextureManager.Init ( renderer, _commandPool ) )
         return false;
 
     return _samplerManager.Init ( renderer );
@@ -120,11 +150,17 @@ void RenderSession::OnDestroyDevice ( VkDevice device ) noexcept
     _samplerManager.Destroy ( device );
     _defaultTextureManager.Destroy ( device );
     DestroyGBufferResources ( device );
+
+    if ( _commandPool == VK_NULL_HANDLE )
+        return;
+
+    vkDestroyCommandPool ( device, _commandPool, nullptr );
+    _commandPool = VK_NULL_HANDLE;
+    AV_UNREGISTER_COMMAND_POOL ( "pbr::RenderSession::_commandPool" )
 }
 
 bool RenderSession::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
-    VkExtent2D const &resolution,
-    VkCommandPool commandPool
+    VkExtent2D const &resolution
 ) noexcept
 {
     VkExtent2D const& currentResolution = _gBuffer.GetResolution ();
@@ -133,7 +169,7 @@ bool RenderSession::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
     {
         DestroyGBufferResources ( renderer.GetDevice () );
 
-        if ( !CreateGBufferResources ( renderer, resolution, commandPool ) )
+        if ( !CreateGBufferResources ( renderer, resolution ) )
         {
             OnSwapchainDestroyed ( renderer.GetDevice () );
             return false;
@@ -331,8 +367,7 @@ bool RenderSession::CreateGBufferRenderPass ( android_vulkan::Renderer &renderer
 }
 
 bool RenderSession::CreateGBufferResources ( android_vulkan::Renderer &renderer,
-    VkExtent2D const &resolution,
-    VkCommandPool commandPool
+    VkExtent2D const &resolution
 ) noexcept
 {
     VkDevice device = renderer.GetDevice ();
@@ -350,7 +385,7 @@ bool RenderSession::CreateGBufferResources ( android_vulkan::Renderer &renderer,
     }
 
     bool result = _geometryPass.Init ( renderer,
-        commandPool,
+        _commandPool,
         _gBuffer.GetResolution (),
         _gBufferRenderPass,
         _gBufferFramebuffer,
@@ -363,7 +398,7 @@ bool RenderSession::CreateGBufferResources ( android_vulkan::Renderer &renderer,
         return false;
     }
 
-    if ( !_lightPass.Init ( renderer, commandPool, _gBuffer ) )
+    if ( !_lightPass.Init ( renderer, _commandPool, _gBuffer ) )
     {
         DestroyGBufferResources ( device );
         return false;

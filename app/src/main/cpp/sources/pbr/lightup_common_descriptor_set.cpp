@@ -31,6 +31,27 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
     GBuffer &gBuffer
 ) noexcept
 {
+    VkCommandPoolCreateInfo const createInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .queueFamilyIndex = renderer.GetQueueFamilyIndex ()
+    };
+
+    VkDevice device = renderer.GetDevice ();
+
+    bool result = android_vulkan::Renderer::CheckVkResult (
+        vkCreateCommandPool ( device, &createInfo, nullptr, &_persistentCommandPool ),
+        "pbr::LightupCommonDescriptorSet::Init",
+        "Can't create persistent command pool"
+    );
+
+    if ( !result )
+        return false;
+
+    AV_REGISTER_COMMAND_POOL ( "pbr::LightupCommonDescriptorSet::_persistentCommandPool" )
+
     constexpr static VkDescriptorPoolSize const poolSizes[] =
     {
         {
@@ -61,9 +82,7 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
         .pPoolSizes = poolSizes
     };
 
-    VkDevice device = renderer.GetDevice ();
-
-    bool result = android_vulkan::Renderer::CheckVkResult (
+    result = android_vulkan::Renderer::CheckVkResult (
         vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_descriptorPool ),
         "pbr::LightupCommonDescriptorSet::Init",
         "Can't create descriptor pool"
@@ -133,9 +152,9 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
         return false;
     }
 
-    _commandPool = commandPool;
+    _workingCommandPool = commandPool;
 
-    if ( !_uniformBuffer.Init ( renderer, _commandPool, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT ) )
+    if ( !_uniformBuffer.Init ( renderer, _persistentCommandPool, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT ) )
     {
         Destroy ( device );
         return false;
@@ -153,7 +172,7 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
     {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
         .pNext = nullptr,
-        .commandPool = _commandPool,
+        .commandPool = _workingCommandPool,
         .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
         .commandBufferCount = 1U
     };
@@ -270,7 +289,7 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
             .sampler = _prefilterSampler.GetSampler (),
             .imageView = VK_NULL_HANDLE,
             .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-        },
+        }
     };
 
     VkWriteDescriptorSet const writeInfo[]
@@ -385,11 +404,18 @@ void LightupCommonDescriptorSet::Destroy ( VkDevice device ) noexcept
 
     _uniformBuffer.FreeResources ( device );
 
-    if ( _commandPool != VK_NULL_HANDLE )
+    if ( _persistentCommandPool != VK_NULL_HANDLE )
     {
-        vkFreeCommandBuffers ( device, _commandPool, 1U, &_brdfTransfer );
+        vkDestroyCommandPool ( device, _persistentCommandPool, nullptr );
+        _persistentCommandPool = VK_NULL_HANDLE;
+        AV_UNREGISTER_COMMAND_POOL ( "pbr::LightupCommonDescriptorSet::_persistentCommandPool" )
+    }
+
+    if ( _workingCommandPool != VK_NULL_HANDLE )
+    {
+        vkFreeCommandBuffers ( device, _workingCommandPool, 1U, &_brdfTransfer );
         _brdfTransfer = VK_NULL_HANDLE;
-        _commandPool = VK_NULL_HANDLE;
+        _workingCommandPool = VK_NULL_HANDLE;
     }
 
     if ( _pipelineLayout != VK_NULL_HANDLE )
@@ -416,9 +442,9 @@ void LightupCommonDescriptorSet::OnFreeTransferResources ( VkDevice device ) noe
     if ( _brdfTransfer == VK_NULL_HANDLE )
         return;
 
-    vkFreeCommandBuffers ( device, _commandPool, 1U, &_brdfTransfer );
+    vkFreeCommandBuffers ( device, _workingCommandPool, 1U, &_brdfTransfer );
     _brdfTransfer = VK_NULL_HANDLE;
-    _commandPool = VK_NULL_HANDLE;
+    _workingCommandPool = VK_NULL_HANDLE;
 }
 
 bool LightupCommonDescriptorSet::Update ( android_vulkan::Renderer &renderer,

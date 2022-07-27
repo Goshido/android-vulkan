@@ -36,10 +36,10 @@ class PresentPass final
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer ) noexcept;
         void Destroy ( VkDevice device ) noexcept;
 
-        [[nodiscard]] bool Execute ( VkCommandBuffer commandBuffer,
+        [[nodiscard]] bool Execute ( android_vulkan::Renderer &renderer,
+            VkCommandBuffer commandBuffer,
             VkDescriptorSet presentTarget,
-            VkFence fence,
-            android_vulkan::Renderer &renderer
+            VkFence fence
         ) noexcept;
 
     private:

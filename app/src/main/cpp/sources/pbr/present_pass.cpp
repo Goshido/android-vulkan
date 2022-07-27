@@ -104,10 +104,10 @@ void PresentPass::Destroy ( VkDevice device ) noexcept
     }
 }
 
-bool PresentPass::Execute ( VkCommandBuffer commandBuffer,
+bool PresentPass::Execute ( android_vulkan::Renderer &renderer,
+    VkCommandBuffer commandBuffer,
     VkDescriptorSet presentTarget,
-    VkFence fence,
-    android_vulkan::Renderer &renderer
+    VkFence fence
 ) noexcept
 {
     _renderInfo.framebuffer = _framebuffers[ _framebufferIndex ];
@@ -120,7 +120,7 @@ bool PresentPass::Execute ( VkCommandBuffer commandBuffer,
     vkCmdEndRenderPass ( commandBuffer );
 
     bool result = android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
-        "pbr::RenderSession::End",
+        "pbr::PresentPass::Execute",
         "Can't end command buffer"
     );
 
@@ -131,7 +131,7 @@ bool PresentPass::Execute ( VkCommandBuffer commandBuffer,
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkQueueSubmit ( renderer.GetQueue (), 1U, &_submitInfo, fence ),
-        "pbr::RenderSession::End",
+        "pbr::PresentPass::End",
         "Can't submit geometry render command buffer"
     );
 
@@ -145,7 +145,7 @@ bool PresentPass::Execute ( VkCommandBuffer commandBuffer,
     _presentInfo.pImageIndices = &_framebufferIndex;
 
     result = android_vulkan::Renderer::CheckVkResult ( vkQueuePresentKHR ( renderer.GetQueue (), &_presentInfo ),
-        "pbr::RenderSession::EndFrame",
+        "pbr::PresentPass::EndFrame",
         "Can't present frame"
     );
 
@@ -153,7 +153,7 @@ bool PresentPass::Execute ( VkCommandBuffer commandBuffer,
         return false;
 
     return android_vulkan::Renderer::CheckVkResult ( presentResult,
-        "pbr::RenderSession::EndFrame",
+        "pbr::PresentPass::EndFrame",
         "Present queue has been failed"
     );
 }
@@ -281,7 +281,7 @@ bool PresentPass::CreateRenderPass ( android_vulkan::Renderer &renderer ) noexce
 
 void PresentPass::InitCommonStructures ( VkExtent2D const &resolution ) noexcept
 {
-    constexpr VkClearValue const clearValues[] =
+    constexpr static VkClearValue const clearValues[] =
     {
         {
             .color

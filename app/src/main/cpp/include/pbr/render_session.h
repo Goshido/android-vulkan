@@ -29,6 +29,8 @@ class RenderSession final
         ) noexcept;
 
     private:
+        VkCommandPool                           _commandPool = VK_NULL_HANDLE;
+
         GXMat4                                  _cvvToView {};
         GXMat4                                  _view {};
         GXMat4                                  _viewProjection {};
@@ -71,14 +73,13 @@ class RenderSession final
         void Begin ( GXMat4 const &viewerLocal, GXMat4 const &projection ) noexcept;
         [[nodiscard]] bool End ( android_vulkan::Renderer &renderer, double deltaTime ) noexcept;
 
-        void FreeTransferResources ( VkDevice device, VkCommandPool commandPool ) noexcept;
+        void FreeTransferResources ( VkDevice device ) noexcept;
 
-        [[nodiscard]] bool OnInitDevice ( android_vulkan::Renderer &renderer, VkCommandPool commandPool ) noexcept;
+        [[nodiscard]] bool OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept;
         void OnDestroyDevice ( VkDevice device ) noexcept;
 
         [[nodiscard]] bool OnSwapchainCreated ( android_vulkan::Renderer &renderer,
-            VkExtent2D const &resolution,
-            VkCommandPool commandPool
+            VkExtent2D const &resolution
         ) noexcept;
 
         void OnSwapchainDestroyed ( VkDevice device ) noexcept;
@@ -100,8 +101,7 @@ class RenderSession final
         [[nodiscard]] bool CreateGBufferRenderPass ( android_vulkan::Renderer &renderer ) noexcept;
 
         [[nodiscard]] bool CreateGBufferResources ( android_vulkan::Renderer &renderer,
-            VkExtent2D const &resolution,
-            VkCommandPool commandPool
+            VkExtent2D const &resolution
         ) noexcept;
 
         [[nodiscard]] bool CreateGBufferSlotMapper ( android_vulkan::Renderer &renderer ) noexcept;

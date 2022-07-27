@@ -386,7 +386,17 @@ static std::unordered_set<std::string_view> const g_validationFilter =
     // Attempting to enable extension VK_EXT_debug_report, but this extension is intended to support use by applications
     // when debugging and it is strongly recommended that it be otherwise avoided.
     // [2022/07/26] Yeah. I'm pretty aware about that. Thank you.
-    "0x822806fa"
+    "0x822806fa",
+
+    // Allocating a VkDeviceMemory of size XXX. This is a very small allocation (current threshold is XXX bytes).
+    // You should make large allocations and sub-allocate from one large VkDeviceMemory.
+    // [2022/07/27] Should think about it. Custom memory allocator task.
+    "0xdc18ad6b",
+
+    // Trying to bind VkImage (...) to a memory block which is fully consumed by the image. The required size of
+    // the allocation is 1088, but smaller images like this should be sub-allocated from larger memory blocks.
+    // [2022/07/27] Should think about it. Custom memory allocator task.
+    "0xb3d4346b"
 };
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -1622,6 +1632,7 @@ bool Renderer::DeployInstance () noexcept
 
     _debugReportCallbackCreateInfoEXT.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
     _debugReportCallbackCreateInfoEXT.pNext = &validationInfo;
+//    _debugReportCallbackCreateInfoEXT.pNext = nullptr;
     _debugReportCallbackCreateInfoEXT.pUserData = this;
     _debugReportCallbackCreateInfoEXT.pfnCallback = &Renderer::OnVulkanDebugReport;
 
@@ -1814,54 +1825,59 @@ void Renderer::DestroySurface () noexcept
 
 bool Renderer::DeploySwapchain ( bool vSync ) noexcept
 {
-    VkSwapchainCreateInfoKHR swapchainCreateInfoKHR;
-    swapchainCreateInfoKHR.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-    swapchainCreateInfoKHR.pNext = nullptr;
-    swapchainCreateInfoKHR.flags = 0U;
-    swapchainCreateInfoKHR.surface = _surface;
-    swapchainCreateInfoKHR.minImageCount = 2U;
-    swapchainCreateInfoKHR.imageArrayLayers = 1U;
-    swapchainCreateInfoKHR.imageExtent = _surfaceSize;
-    swapchainCreateInfoKHR.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-    swapchainCreateInfoKHR.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    swapchainCreateInfoKHR.queueFamilyIndexCount = VK_QUEUE_FAMILY_IGNORED;
-    swapchainCreateInfoKHR.pQueueFamilyIndices = nullptr;
+    VkPresentModeKHR presentMode;
 
-    // There is no much to say but you have to consider image rotation after projection transform in your code.
-    // That's a cost for memory bandwidth saving in the mobile device world.
-    // See https://community.arm.com/developer/tools-software/graphics/b/blog/posts/appropriate-use-of-surface-rotation
-    // See https://github.com/KhronosGroup/Vulkan-Samples/blob/master/samples/performance/surface_rotation/surface_rotation_tutorial.md
-    swapchainCreateInfoKHR.preTransform = _surfaceTransform;
-
-    swapchainCreateInfoKHR.clipped = VK_TRUE;
-    swapchainCreateInfoKHR.oldSwapchain = VK_NULL_HANDLE;
-
-    if ( !SelectTargetPresentMode ( swapchainCreateInfoKHR.presentMode, vSync ) )
+    if ( !SelectTargetPresentMode ( presentMode, vSync ) )
     {
         LogError ( "Renderer::DeploySwapchain - Can't select present mode." );
         return false;
     }
 
-    if ( !SelectTargetCompositeAlpha ( swapchainCreateInfoKHR.compositeAlpha ) )
+    VkCompositeAlphaFlagBitsKHR compositeAlpha;
+
+    if ( !SelectTargetCompositeAlpha ( compositeAlpha ) )
     {
         LogError ( "Renderer::DeploySwapchain - Can't select composite alpha mode." );
         return false;
     }
 
-    bool result = SelectTargetSurfaceFormat ( _surfaceFormat,
-        swapchainCreateInfoKHR.imageColorSpace,
-        _depthStencilImageFormat
-    );
+    VkColorSpaceKHR colorSpace;
 
-    if ( !result )
+    if ( !SelectTargetSurfaceFormat ( _surfaceFormat, colorSpace, _depthStencilImageFormat ) )
     {
         LogError ( "Renderer::DeploySwapchain - Can't select image format and color space." );
         return false;
     }
 
-    swapchainCreateInfoKHR.imageFormat = _surfaceFormat;
+    VkSwapchainCreateInfoKHR const swapchainInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
+        .pNext = nullptr,
+        .flags = 0U,
+        .surface = _surface,
+        .minImageCount = 3U,
+        .imageFormat = _surfaceFormat,
+        .imageColorSpace = colorSpace,
+        .imageExtent = _surfaceSize,
+        .imageArrayLayers = 1U,
+        .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+        .imageSharingMode = VK_SHARING_MODE_EXCLUSIVE,
+        .queueFamilyIndexCount = 0U,
+        .pQueueFamilyIndices = nullptr,
 
-    result = CheckVkResult ( vkCreateSwapchainKHR ( _device, &swapchainCreateInfoKHR, nullptr, &_swapchain ),
+        // There is no much to say but you have to consider image rotation after projection transform in your code.
+        // That's a cost for memory bandwidth saving in the mobile device world.
+        // See https://community.arm.com/developer/tools-software/graphics/b/blog/posts/appropriate-use-of-surface-rotation
+        // See https://github.com/KhronosGroup/Vulkan-Samples/blob/master/samples/performance/surface_rotation/surface_rotation_tutorial.md
+        .preTransform = _surfaceTransform,
+
+        .compositeAlpha = compositeAlpha,
+        .presentMode = presentMode,
+        .clipped = VK_TRUE,
+        .oldSwapchain = VK_NULL_HANDLE
+    };
+
+    bool result = CheckVkResult ( vkCreateSwapchainKHR ( _device, &swapchainInfo, nullptr, &_swapchain ),
         "Renderer::DeploySwapchain",
         "Can't create swapchain"
     );
@@ -1897,21 +1913,32 @@ bool Renderer::DeploySwapchain ( bool vSync ) noexcept
     _swapchainImageViews.clear ();
     _swapchainImageViews.reserve ( static_cast<size_t> ( imageCount ) );
 
-    VkImageViewCreateInfo imageViewCreateInfo;
-    imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-    imageViewCreateInfo.pNext = nullptr;
-    imageViewCreateInfo.flags = 0U;
-    imageViewCreateInfo.format = swapchainCreateInfoKHR.imageFormat;
-    imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-    imageViewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-    imageViewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-    imageViewCreateInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-    imageViewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-    imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    imageViewCreateInfo.subresourceRange.layerCount = 1U;
-    imageViewCreateInfo.subresourceRange.baseArrayLayer = 0U;
-    imageViewCreateInfo.subresourceRange.levelCount = 1U;
-    imageViewCreateInfo.subresourceRange.baseMipLevel = 0U;
+    VkImageViewCreateInfo imageViewCreateInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .image = VK_NULL_HANDLE,
+        .viewType = VK_IMAGE_VIEW_TYPE_2D,
+        .format = swapchainInfo.imageFormat,
+
+        .components
+        {
+            .r = VK_COMPONENT_SWIZZLE_IDENTITY,
+            .g = VK_COMPONENT_SWIZZLE_IDENTITY,
+            .b = VK_COMPONENT_SWIZZLE_IDENTITY,
+            .a = VK_COMPONENT_SWIZZLE_IDENTITY
+        },
+
+        .subresourceRange
+        {
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .baseMipLevel = 0U,
+            .levelCount = 1U,
+            .baseArrayLayer = 0U,
+            .layerCount = 1U
+        }
+    };
 
     for ( uint32_t i = 0U; i < imageCount; ++i )
     {

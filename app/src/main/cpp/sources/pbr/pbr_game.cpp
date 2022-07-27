@@ -82,7 +82,7 @@ bool PBRGame::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 
     AV_REGISTER_COMMAND_POOL ( "pbr::PBRGame::_commandPool" )
 
-    if ( !_renderSession.OnInitDevice ( renderer, _commandPool ) )
+    if ( !_renderSession.OnInitDevice ( renderer ) )
     {
        OnDestroyDevice ( device );
        return false;
@@ -94,7 +94,7 @@ bool PBRGame::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
         return false;
     }
 
-    _renderSession.FreeTransferResources ( device, _commandPool );
+    _renderSession.FreeTransferResources ( device );
     return true;
 }
 
@@ -125,7 +125,7 @@ bool PBRGame::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept
         Z_FAR
     );
 
-    if ( !_renderSession.OnSwapchainCreated ( renderer, resolution, _commandPool ) )
+    if ( !_renderSession.OnSwapchainCreated ( renderer, resolution ) )
         return false;
 
     _camera.CaptureInput ();

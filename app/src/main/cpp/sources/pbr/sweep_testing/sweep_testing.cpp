@@ -55,7 +55,7 @@ bool SweepTesting::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
         return false;
     }
 
-    if ( !_renderSession.OnInitDevice ( renderer, _commandPool ) )
+    if ( !_renderSession.OnInitDevice ( renderer ) )
     {
         OnDestroyDevice ( device );
         return false;
@@ -67,7 +67,7 @@ bool SweepTesting::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
         return false;
     }
 
-    _renderSession.FreeTransferResources ( device, _commandPool );
+    _renderSession.FreeTransferResources ( device );
     return true;
 }
 
@@ -108,7 +108,7 @@ bool SweepTesting::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noe
         Z_FAR
     );
 
-    if ( !_renderSession.OnSwapchainCreated ( renderer, resolution, _commandPool ) )
+    if ( !_renderSession.OnSwapchainCreated ( renderer, resolution ) )
         return false;
 
     BindControls ();

@@ -78,6 +78,9 @@ bool GeometryPass::Init ( android_vulkan::Renderer &renderer,
         "Can't allocate descriptor set"
     );
 
+    if ( !result )
+        return false;
+
     VkDescriptorImageInfo const samplerInfo
     {
         .sampler = samplerManager.GetMaterialSampler ()->GetSampler (),
@@ -208,10 +211,10 @@ VkCommandBuffer GeometryPass::Execute ( android_vulkan::Renderer &renderer,
     RenderSessionStats &renderSessionStats
 ) noexcept
 {
-    if ( !BeginRenderPass ( renderer ) )
+    if ( !BeginRenderPass () )
         return VK_NULL_HANDLE;
 
-    bool isSamplerused = false;
+    bool isSamplerUsed = false;
 
     bool result = _opaqueSubpass.Execute ( renderer,
         _commandBuffer,
@@ -221,7 +224,7 @@ VkCommandBuffer GeometryPass::Execute ( android_vulkan::Renderer &renderer,
         defaultTextureManager,
         renderSessionStats,
         _descriptorSet,
-        isSamplerused
+        isSamplerUsed
     );
 
     if ( !result )
@@ -234,7 +237,7 @@ VkCommandBuffer GeometryPass::Execute ( android_vulkan::Renderer &renderer,
         defaultTextureManager,
         renderSessionStats,
         _descriptorSet,
-        isSamplerused
+        isSamplerUsed
     );
 
     if ( !result )
@@ -263,6 +266,25 @@ void GeometryPass::Reset () noexcept
 {
     _opaqueSubpass.Reset ();
     _stippleSubpass.Reset ();
+}
+
+bool GeometryPass::WaitReady ( android_vulkan::Renderer &renderer ) const noexcept
+{
+    VkDevice device = renderer.GetDevice ();
+
+    bool const result = android_vulkan::Renderer::CheckVkResult (
+        vkWaitForFences ( device, 1U, &_fence, VK_TRUE, std::numeric_limits<uint64_t>::max () ),
+        "pbr::GeometryPass::WaitReady",
+        "Can't wait fence"
+    );
+
+    if ( !result )
+        return false;
+
+    return android_vulkan::Renderer::CheckVkResult ( vkResetFences ( device, 1U, &_fence ),
+        "pbr::GeometryPass::WaitReady",
+        "Can't reset fence"
+    );
 }
 
 VkSubpassDescription GeometryPass::GetSubpassDescription () noexcept
@@ -316,27 +338,8 @@ VkSubpassDescription GeometryPass::GetSubpassDescription () noexcept
     };
 }
 
-bool GeometryPass::BeginRenderPass ( android_vulkan::Renderer &renderer ) noexcept
+bool GeometryPass::BeginRenderPass () noexcept
 {
-    VkDevice device = renderer.GetDevice ();
-
-    bool result = android_vulkan::Renderer::CheckVkResult (
-        vkWaitForFences ( device, 1U, &_fence, VK_TRUE, UINT64_MAX ),
-        "pbr::GeometryPass::BeginRenderPass",
-        "Can't wait for fence"
-    );
-
-    if ( !result )
-        return false;
-
-    result = android_vulkan::Renderer::CheckVkResult ( vkResetFences ( device, 1U, &_fence ),
-        "GeometryPass::BeginRenderPass",
-        "Can't reset fence"
-    );
-
-    if ( !result )
-        return false;
-
     constexpr VkCommandBufferBeginInfo beginInfo
     {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
@@ -345,7 +348,7 @@ bool GeometryPass::BeginRenderPass ( android_vulkan::Renderer &renderer ) noexce
         .pInheritanceInfo = nullptr
     };
 
-    result = android_vulkan::Renderer::CheckVkResult ( vkBeginCommandBuffer ( _commandBuffer, &beginInfo ),
+    bool const result = android_vulkan::Renderer::CheckVkResult ( vkBeginCommandBuffer ( _commandBuffer, &beginInfo ),
         "pbr::GeometryPass::BeginRenderPass",
         "Can't begin rendering command buffer"
     );

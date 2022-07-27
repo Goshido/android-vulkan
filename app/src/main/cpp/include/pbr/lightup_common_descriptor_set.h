@@ -16,9 +16,12 @@ class LightupCommonDescriptorSet final
         android_vulkan::Texture2D           _brdfLUT {};
         Sampler                             _brdfLUTSampler {};
         VkCommandBuffer                     _brdfTransfer = VK_NULL_HANDLE;
-        VkCommandPool                       _commandPool = VK_NULL_HANDLE;
         VkDescriptorPool                    _descriptorPool = VK_NULL_HANDLE;
         LightupCommonDescriptorSetLayout    _layout {};
+
+        VkCommandPool                       _persistentCommandPool = VK_NULL_HANDLE;
+        VkCommandPool                       _workingCommandPool = VK_NULL_HANDLE;
+
         VkPipelineLayout                    _pipelineLayout = VK_NULL_HANDLE;
         Sampler                             _prefilterSampler {};
         VkDescriptorSet                     _set = VK_NULL_HANDLE;

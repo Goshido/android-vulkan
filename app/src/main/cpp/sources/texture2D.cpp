@@ -347,9 +347,17 @@ bool Texture2D::CreateCommonResources ( VkImageCreateInfo &imageInfo,
     VkMemoryRequirements memoryRequirements;
     vkGetImageMemoryRequirements ( device, _image, &memoryRequirements );
 
+    constexpr VkMemoryPropertyFlags const cases[] =
+    {
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+        AV_VK_FLAG ( VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT ) | AV_VK_FLAG ( VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT )
+    };
+
+    constexpr auto trans = static_cast<uint32_t> ( VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT );
+
     result = renderer.TryAllocateMemory ( _imageDeviceMemory,
         memoryRequirements,
-        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+        cases[ static_cast<size_t> ( ( usage & trans ) == trans ) ],
         "Can't allocate image memory (Texture2D::CreateCommonResources)"
     );
 

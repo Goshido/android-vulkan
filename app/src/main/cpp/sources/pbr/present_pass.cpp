@@ -249,7 +249,7 @@ bool PresentPass::CreateRenderPass ( android_vulkan::Renderer &renderer ) noexce
             .pResolveAttachments = nullptr,
             .pDepthStencilAttachment = nullptr,
             .preserveAttachmentCount = 0U,
-            .pPreserveAttachments = nullptr,
+            .pPreserveAttachments = nullptr
         }
     };
 
@@ -281,16 +281,6 @@ bool PresentPass::CreateRenderPass ( android_vulkan::Renderer &renderer ) noexce
 
 void PresentPass::InitCommonStructures ( VkExtent2D const &resolution ) noexcept
 {
-    constexpr static VkClearValue const clearValues[] =
-    {
-        {
-            .color
-            {
-                .float32 { 0.0F, 0.0F, 0.0F, 0.0F }
-            }
-        }
-    };
-
     _renderInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     _renderInfo.pNext = nullptr;
     _renderInfo.renderPass = _renderPass;
@@ -306,8 +296,8 @@ void PresentPass::InitCommonStructures ( VkExtent2D const &resolution ) noexcept
         .extent = resolution
     };
 
-    _renderInfo.clearValueCount = static_cast<uint32_t> ( std::size ( clearValues ) );
-    _renderInfo.pClearValues = clearValues;
+    _renderInfo.clearValueCount = 0U;
+    _renderInfo.pClearValues = nullptr;
 
     _presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
     _presentInfo.pNext = nullptr;

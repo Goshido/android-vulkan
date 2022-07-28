@@ -146,17 +146,19 @@ bool UniformBuffer::Update ( android_vulkan::Renderer &renderer, uint8_t const* 
 
 bool UniformBuffer::InitResources ( android_vulkan::Renderer &renderer, size_t size )
 {
-    VkDevice device = renderer.GetDevice ();
+    VkBufferCreateInfo bufferInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .size = size,
+        .usage = AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT ) | AV_VK_FLAG ( VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT ),
+        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+        .queueFamilyIndexCount = 0U,
+        .pQueueFamilyIndices = nullptr
+    };
 
-    VkBufferCreateInfo bufferInfo;
-    bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-    bufferInfo.pNext = nullptr;
-    bufferInfo.flags = 0U;
-    bufferInfo.size = size;
-    bufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-    bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    bufferInfo.queueFamilyIndexCount = 0U;
-    bufferInfo.pQueueFamilyIndices = nullptr;
+    VkDevice device = renderer.GetDevice ();
 
     bool result = Renderer::CheckVkResult ( vkCreateBuffer ( device, &bufferInfo, nullptr, &_buffer ),
         "UniformBuffer::InitResources",
@@ -234,11 +236,13 @@ bool UniformBuffer::InitResources ( android_vulkan::Renderer &renderer, size_t s
         return false;
     }
 
-    VkCommandBufferBeginInfo beginInfo;
-    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    beginInfo.pNext = nullptr;
-    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
-    beginInfo.pInheritanceInfo = nullptr;
+    constexpr VkCommandBufferBeginInfo beginInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .pInheritanceInfo = nullptr
+    };
 
     result = Renderer::CheckVkResult ( vkBeginCommandBuffer ( _commandBuffer, &beginInfo ),
         "UniformBuffer::InitResources",
@@ -251,15 +255,18 @@ bool UniformBuffer::InitResources ( android_vulkan::Renderer &renderer, size_t s
         return false;
     }
 
-    VkBufferMemoryBarrier barrier;
-    barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
-    barrier.pNext = nullptr;
-    barrier.buffer = _buffer;
-    barrier.size = size;
-    barrier.offset = 0U;
-    barrier.srcAccessMask = 0U;
-    barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-    barrier.srcQueueFamilyIndex = barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    VkBufferMemoryBarrier barrier
+    {
+        .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
+        .pNext = nullptr,
+        .srcAccessMask = 0U,
+        .dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
+        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .buffer = _buffer,
+        .offset = 0U,
+        .size = size
+    };
 
     vkCmdPipelineBarrier ( _commandBuffer,
         VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,

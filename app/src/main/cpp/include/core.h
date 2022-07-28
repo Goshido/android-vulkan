@@ -40,6 +40,7 @@ class Core final
 
         Renderer                    _renderer {};
         Timestamp                   _fpsTimestamp {};
+        uint32_t                    _frameCount = 0U;
         Timestamp                   _frameTimestamp {};
 
         jobject                     _activity = nullptr;

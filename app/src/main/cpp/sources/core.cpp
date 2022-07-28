@@ -76,7 +76,7 @@ Core::Core ( JNIEnv* env, jobject activity, jobject assetManager ) noexcept
         { android_vulkan::eGame::World1x1, std::make_shared<pbr::mario::World1x1> () }
     };
 
-    _game = games.find ( android_vulkan::eGame::World1x1 )->second.get ();
+    _game = games.find ( android_vulkan::eGame::PBR )->second.get ();
 
     _thread = std::thread (
         [ this ] () noexcept {
@@ -284,8 +284,7 @@ bool Core::OnSwapchainDestroyed () noexcept
 
 void Core::UpdateFPS ( Timestamp now )
 {
-    static uint32_t frameCount = 0U;
-    ++frameCount;
+    ++_frameCount;
 
     const std::chrono::duration<double> seconds = now - _fpsTimestamp;
     const double delta = seconds.count ();
@@ -293,9 +292,9 @@ void Core::UpdateFPS ( Timestamp now )
     if ( delta < FPS_PERIOD )
         return;
 
-    LogInfo ( "FPS: %g", frameCount / delta );
+    LogInfo ( "FPS: %g", _frameCount / delta );
     _fpsTimestamp = now;
-    frameCount = 0U;
+    _frameCount = 0U;
 }
 
 void Core::OnHomeUp ( void* /*context*/ ) noexcept

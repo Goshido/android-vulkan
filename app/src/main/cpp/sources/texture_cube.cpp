@@ -371,19 +371,19 @@ void TextureCube::FreeResources ( VkDevice device ) noexcept
 
 void TextureCube::FreeTransferResources ( VkDevice device ) noexcept
 {
-    if ( _transferDeviceMemory != VK_NULL_HANDLE )
+    if ( _transfer != VK_NULL_HANDLE )
     {
-        vkFreeMemory ( device, _transferDeviceMemory, nullptr );
-        _transferDeviceMemory = VK_NULL_HANDLE;
-        AV_UNREGISTER_DEVICE_MEMORY ( "TextureCube::_transferDeviceMemory" )
+        vkDestroyBuffer ( device, _transfer, nullptr );
+        _transfer = VK_NULL_HANDLE;
+        AV_UNREGISTER_BUFFER ( "TextureCube::_transfer" )
     }
 
-    if ( _transfer == VK_NULL_HANDLE )
+    if ( _transferDeviceMemory == VK_NULL_HANDLE )
         return;
 
-    vkDestroyBuffer ( device, _transfer, nullptr );
-    _transfer = VK_NULL_HANDLE;
-    AV_UNREGISTER_BUFFER ( "TextureCube::_transfer" )
+    vkFreeMemory ( device, _transferDeviceMemory, nullptr );
+    _transferDeviceMemory = VK_NULL_HANDLE;
+    AV_UNREGISTER_DEVICE_MEMORY ( "TextureCube::_transferDeviceMemory" )
 }
 
 VkFormat TextureCube::GetFormat () const noexcept

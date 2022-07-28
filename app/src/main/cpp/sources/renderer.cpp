@@ -396,7 +396,17 @@ static std::unordered_set<std::string_view> const g_validationFilter =
     // Trying to bind VkImage (...) to a memory block which is fully consumed by the image. The required size of
     // the allocation is 1088, but smaller images like this should be sub-allocated from larger memory blocks.
     // [2022/07/27] Should think about it. Custom memory allocator task.
-    "0xb3d4346b"
+    "0xb3d4346b",
+
+    // Performance Warning: This app has > 250 memory objects.
+    // [2022/07/28] Should think about it. Custom memory allocator task.
+    "0x58781063",
+
+    // This render pass does not have VkRenderPassCreateInfo.pAttachments->loadOp == VK_ATTACHMENT_LOAD_OP_CLEAR but
+    // VkRenderPassBeginInfo.clearValueCount > 0. VkRenderPassBeginInfo.pClearValues will be ignored and
+    // no attachments will be cleared.
+    // [2022/07/28] Wrong when only stencil value should be cleared VkRenderPassCreateInfo.pAttachments->stencilLoadOp.
+    "0x6beca064"
 };
 
 //----------------------------------------------------------------------------------------------------------------------

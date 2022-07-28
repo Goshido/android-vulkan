@@ -17,19 +17,11 @@ bool LightPass::Init ( android_vulkan::Renderer &renderer, VkCommandPool command
 
     VkDevice device = renderer.GetDevice ();
 
-    if ( !CreateLightupRenderPass ( device, gBuffer ) )
+    if ( !CreateLightupRenderPass ( device, gBuffer ) || !CreateLightupFramebuffer ( device, gBuffer ) )
     {
         Destroy ( device );
         return false;
     }
-
-    if ( !CreateLightupFramebuffer ( device, gBuffer ) )
-    {
-        Destroy ( device );
-        return false;
-    }
-
-    CreateImageBarriers ( gBuffer );
 
     if ( !_lightVolume.Init ( renderer, gBuffer, _lightupRenderPassInfo.renderPass ) )
     {
@@ -65,19 +57,11 @@ bool LightPass::Init ( android_vulkan::Renderer &renderer, VkCommandPool command
         resolution
     );
 
-    if ( !result )
-    {
-        Destroy ( renderer.GetDevice () );
-        return false;
-    }
+    if ( result && CreateUnitCube ( renderer, commandPool ) )
+        return true;
 
-    if ( !CreateUnitCube ( renderer, commandPool ) )
-    {
-        Destroy ( renderer.GetDevice () );
-        return false;
-    }
-
-    return true;
+    Destroy ( renderer.GetDevice () );
+    return false;
 }
 
 void LightPass::Destroy ( VkDevice device ) noexcept
@@ -169,18 +153,6 @@ bool LightPass::OnPostGeometryPass ( android_vulkan::Renderer &renderer,
     if ( lightVolumes + globalReflections == 0U )
         return true;
 
-    vkCmdPipelineBarrier ( commandBuffer,
-        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-        0U,
-        0U,
-        nullptr,
-        0U,
-        nullptr,
-        static_cast<uint32_t> ( INPUT_ATTACHMENTS ),
-        _imageBarriers
-    );
-
     _lightupCommonDescriptorSet.Bind ( commandBuffer );
 
     if ( lightVolumes )
@@ -264,39 +236,6 @@ void LightPass::OnEndLightWithVolume ( VkCommandBuffer commandBuffer ) noexcept
     --_lightupRenderPassCounter;
 }
 
-void LightPass::CreateImageBarriers ( GBuffer &gBuffer ) noexcept
-{
-    VkImageMemoryBarrier barrier
-    {
-        .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-        .pNext = nullptr,
-        .srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-        .dstAccessMask = VK_ACCESS_INPUT_ATTACHMENT_READ_BIT,
-        .oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-        .newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .image = gBuffer.GetAlbedo ().GetImage (),
-
-        .subresourceRange
-        {
-            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-            .baseMipLevel = 0U,
-            .levelCount = 1U,
-            .baseArrayLayer = 0U,
-            .layerCount = 1U
-        }
-    };
-
-    _imageBarriers[ 0U ] = barrier;
-
-    barrier.image = gBuffer.GetNormal ().GetImage ();
-    _imageBarriers[ 1U ] = barrier;
-
-    barrier.image = gBuffer.GetParams ().GetImage ();
-    _imageBarriers[ 2U ] = barrier;
-}
-
 bool LightPass::CreateLightupFramebuffer ( VkDevice device, GBuffer &gBuffer ) noexcept
 {
     VkImageView const attachments[] =
@@ -359,7 +298,7 @@ bool LightPass::CreateLightupRenderPass ( VkDevice device, GBuffer &gBuffer ) no
             .format = gBuffer.GetAlbedo ().GetFormat (),
             .samples = VK_SAMPLE_COUNT_1_BIT,
             .loadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
-            .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+            .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
             .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
             .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
             .initialLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
@@ -372,7 +311,7 @@ bool LightPass::CreateLightupRenderPass ( VkDevice device, GBuffer &gBuffer ) no
             .format = gBuffer.GetNormal ().GetFormat (),
             .samples = VK_SAMPLE_COUNT_1_BIT,
             .loadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
-            .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+            .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
             .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
             .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
             .initialLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
@@ -385,7 +324,7 @@ bool LightPass::CreateLightupRenderPass ( VkDevice device, GBuffer &gBuffer ) no
             .format = gBuffer.GetParams ().GetFormat (),
             .samples = VK_SAMPLE_COUNT_1_BIT,
             .loadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
-            .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+            .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
             .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
             .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
             .initialLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
@@ -447,6 +386,8 @@ bool LightPass::CreateLightupRenderPass ( VkDevice device, GBuffer &gBuffer ) no
         }
     };
 
+    constexpr static uint32_t const preserved[] = { 1U, 2U, 3U };
+
     constexpr static VkSubpassDescription subpasses[] =
     {
         {
@@ -458,8 +399,8 @@ bool LightPass::CreateLightupRenderPass ( VkDevice device, GBuffer &gBuffer ) no
             .pColorAttachments = nullptr,
             .pResolveAttachments = nullptr,
             .pDepthStencilAttachment = &depthStencilReference,
-            .preserveAttachmentCount = 0U,
-            .pPreserveAttachments = nullptr
+            .preserveAttachmentCount = static_cast<uint32_t> ( std::size ( preserved ) ),
+            .pPreserveAttachments = preserved
         },
         {
             .flags = 0U,
@@ -481,9 +422,9 @@ bool LightPass::CreateLightupRenderPass ( VkDevice device, GBuffer &gBuffer ) no
             .srcSubpass = 0U,
             .dstSubpass = 1U,
             .srcStageMask = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
-            .dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+            .dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
             .srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
-            .dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_INPUT_ATTACHMENT_READ_BIT,
+            .dstAccessMask = VK_ACCESS_INPUT_ATTACHMENT_READ_BIT,
             .dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
         }
     };

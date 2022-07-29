@@ -43,6 +43,7 @@ class Game : public android_vulkan::Game
         float                               _angle = 0.0F;
         android_vulkan::Texture2D           _depthStencilRenderTarget {};
 
+        VkFence                             _fence = VK_NULL_HANDLE;
         char const*                         _fragmentShader;
         std::vector<VkFramebuffer>          _framebuffers {};
 

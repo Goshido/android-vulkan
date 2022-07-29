@@ -502,6 +502,13 @@ void Texture2D::FreeResourceInternal ( VkDevice device ) noexcept
 {
     _mipLevels = 0U;
 
+    if ( _image != VK_NULL_HANDLE )
+    {
+        vkDestroyImage ( device, _image, nullptr );
+        _image = VK_NULL_HANDLE;
+        AV_UNREGISTER_IMAGE ( "Texture2D::_image" )
+    }
+
     if ( _imageView != VK_NULL_HANDLE )
     {
         vkDestroyImageView ( device, _imageView, nullptr );
@@ -509,19 +516,12 @@ void Texture2D::FreeResourceInternal ( VkDevice device ) noexcept
         AV_UNREGISTER_IMAGE_VIEW ( "Texture2D::_imageView" )
     }
 
-    if ( _imageDeviceMemory != VK_NULL_HANDLE )
-    {
-        vkFreeMemory ( device, _imageDeviceMemory, nullptr );
-        _imageDeviceMemory = VK_NULL_HANDLE;
-        AV_UNREGISTER_DEVICE_MEMORY ( "Texture2D::_imageDeviceMemory" )
-    }
-
-    if ( _image == VK_NULL_HANDLE )
+    if ( _imageDeviceMemory == VK_NULL_HANDLE )
         return;
 
-    vkDestroyImage ( device, _image, nullptr );
-    _image = VK_NULL_HANDLE;
-    AV_UNREGISTER_IMAGE ( "Texture2D::_image" )
+    vkFreeMemory ( device, _imageDeviceMemory, nullptr );
+    _imageDeviceMemory = VK_NULL_HANDLE;
+    AV_UNREGISTER_DEVICE_MEMORY ( "Texture2D::_imageDeviceMemory" )
 }
 
 bool Texture2D::UploadCompressed ( Renderer &renderer,

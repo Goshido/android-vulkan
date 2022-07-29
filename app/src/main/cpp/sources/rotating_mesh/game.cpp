@@ -567,7 +567,7 @@ bool Game::CreateCommandPool ( android_vulkan::Renderer &renderer ) noexcept
     {
         .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
         .pNext = nullptr,
-        .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+        .flags = 0U,
         .queueFamilyIndex = renderer.GetQueueFamilyIndex ()
     };
 
@@ -1115,17 +1115,62 @@ bool Game::CreateUniformBuffer ( android_vulkan::Renderer &renderer ) noexcept
     if ( !_transformBuffer.Init ( renderer, _commandPool, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT ) )
         return false;
 
+    constexpr VkFenceCreateInfo fenceInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U
+    };
+
+    bool result = android_vulkan::Renderer::CheckVkResult (
+        vkCreateFence ( renderer.GetDevice (), &fenceInfo, nullptr, &_fence ),
+        "rotating_mesh::Game::CreateUniformBuffer",
+        "Can't create fence"
+    );
+
+    if ( !result )
+        return false;
+
+    AV_REGISTER_FENCE ( "rotating_mesh::Game::_fence" )
+
     _transform._transform = renderer.GetPresentationEngineTransform ();
 
-    return _transformBuffer.Update ( renderer,
+    result = _transformBuffer.Update ( renderer,
+        _fence,
         reinterpret_cast<const uint8_t*> ( &_transform ),
         sizeof ( _transform )
+    );
+
+    if ( !result )
+        return false;
+
+    VkDevice device = renderer.GetDevice ();
+
+    result = android_vulkan::Renderer::CheckVkResult (
+        vkWaitForFences ( device, 1U, &_fence, VK_TRUE, std::numeric_limits<uint64_t>::max () ),
+        "pbr::Game::CreateUniformBuffer",
+        "Can't wait fence"
+    );
+
+    if ( !result )
+        return false;
+
+    return android_vulkan::Renderer::CheckVkResult ( vkResetFences ( device, 1U, &_fence ),
+        "pbr::Game::CreateUniformBuffer",
+        "Can't reset fence"
     );
 }
 
 void Game::DestroyUniformBuffer ( VkDevice device ) noexcept
 {
     _transformBuffer.FreeResources ( device );
+
+    if ( _fence == VK_NULL_HANDLE )
+        return;
+
+    vkDestroyFence ( device, _fence, nullptr );
+    _fence = VK_NULL_HANDLE;
+    AV_UNREGISTER_FENCE ( "rotating_mesh::Game::_fence" )
 }
 
 bool Game::CreateCommandBuffers ( android_vulkan::Renderer &renderer ) noexcept
@@ -1253,7 +1298,6 @@ void Game::DestroyCommandBuffers ( VkDevice device ) noexcept
     for ( auto const& [commandBuffer, fence] : _commandBuffers )
     {
         vkFreeCommandBuffers ( device, _commandPool, 1U, &commandBuffer );
-
         vkDestroyFence ( device, fence, nullptr );
         AV_UNREGISTER_FENCE ( "Game::_commandBuffers::_fence" )
     }
@@ -1265,7 +1309,6 @@ void Game::DestroyCommandBuffers ( VkDevice device ) noexcept
 bool Game::UpdateUniformBuffer ( android_vulkan::Renderer &renderer, double deltaTime ) noexcept
 {
     _angle += static_cast<float> ( deltaTime ) * ROTATION_SPEED;
-
     _transform._normalTransform.RotationY ( _angle );
     _transform._normalTransform.SetOrigin ( GXVec3 ( 0.0F, -1.0F, 3.0F ) );
 
@@ -1273,9 +1316,29 @@ bool Game::UpdateUniformBuffer ( android_vulkan::Renderer &renderer, double delt
     tmp.Multiply ( _transform._normalTransform, _projectionMatrix );
     _transform._transform.Multiply ( tmp, renderer.GetPresentationEngineTransform () );
 
-    return _transformBuffer.Update ( renderer,
+    bool result = _transformBuffer.Update ( renderer,
+        _fence,
         reinterpret_cast<const uint8_t*> ( &_transform ),
         sizeof ( _transform )
+    );
+
+    if ( !result )
+        return false;
+
+    VkDevice device = renderer.GetDevice ();
+
+    result = android_vulkan::Renderer::CheckVkResult (
+        vkWaitForFences ( device, 1U, &_fence, VK_TRUE, std::numeric_limits<uint64_t>::max () ),
+        "pbr::Game::UpdateUniformBuffer",
+        "Can't wait fence"
+    );
+
+    if ( !result )
+        return false;
+
+    return android_vulkan::Renderer::CheckVkResult ( vkResetFences ( device, 1U, &_fence ),
+        "pbr::Game::UpdateUniformBuffer",
+        "Can't reset fence"
     );
 }
 

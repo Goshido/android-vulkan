@@ -1,11 +1,4 @@
 #include <mandelbrot/mandelbrot_base.h>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <cmath>
-
-GX_RESTORE_WARNING_STATE
-
 #include <file.h>
 #include <vulkan_utils.h>
 
@@ -16,6 +9,8 @@ constexpr static char const* VERTEX_SHADER = "shaders/mandelbrot-vs.spv";
 
 constexpr static char const* VERTEX_SHADER_ENTRY_POINT = "VS";
 constexpr static char const* FRAGMENT_SHADER_ENTRY_POINT = "PS";
+
+//----------------------------------------------------------------------------------------------------------------------
 
 MandelbrotBase::MandelbrotBase ( char const* fragmentShaderSpirV ) noexcept:
     _fragmentShaderSpirV ( fragmentShaderSpirV )
@@ -46,9 +41,29 @@ bool MandelbrotBase::OnFrame ( android_vulkan::Renderer &renderer, double /*delt
         .pSignalSemaphores = &_renderPassEndedSemaphore
     };
 
-    bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkQueueSubmit ( renderer.GetQueue (), 1U, &submitInfo, VK_NULL_HANDLE ),
-        "MandelbrotBase::OnFrame",
+    VkFence fence = _fences[ static_cast<size_t> ( presentationImageIndex ) ];
+    VkDevice device = renderer.GetDevice ();
+
+    bool result = android_vulkan::Renderer::CheckVkResult (
+        vkWaitForFences ( device, 1U, &fence, VK_TRUE, std::numeric_limits<uint64_t>::max () ),
+        "mandelbrot::MandelbrotBase::OnFrame",
+        "Can't wait fence"
+    );
+
+    if ( !result )
+        return false;
+
+    result = android_vulkan::Renderer::CheckVkResult ( vkResetFences ( device, 1U, &fence ),
+        "mandelbrot::MandelbrotBase::OnFrame",
+        "Can't reset fence"
+    );
+
+    if ( !result )
+        return false;
+
+    result = android_vulkan::Renderer::CheckVkResult (
+        vkQueueSubmit ( renderer.GetQueue (), 1U, &submitInfo, fence ),
+        "mandelbrot::MandelbrotBase::OnFrame",
         "Can't submit command buffer"
     );
 
@@ -99,6 +114,12 @@ bool MandelbrotBase::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) n
         return false;
     }
 
+    if ( !CreateFences ( renderer.GetDevice () ) )
+    {
+        OnSwapchainDestroyed ( renderer.GetDevice () );
+        return false;
+    }
+
     if ( !CreatePipeline ( renderer ) )
     {
         OnSwapchainDestroyed ( renderer.GetDevice () );
@@ -110,6 +131,7 @@ bool MandelbrotBase::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) n
 
 void MandelbrotBase::OnSwapchainDestroyed ( VkDevice device ) noexcept
 {
+    DestroyFences ( device );
     DestroyPipeline ( device );
     DestroyFramebuffers ( device );
     DestroyRenderPass ( device );
@@ -173,7 +195,7 @@ bool MandelbrotBase::CreateCommandPool ( android_vulkan::Renderer &renderer ) no
     {
         .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
         .pNext = nullptr,
-        .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+        .flags = 0U,
         .queueFamilyIndex = renderer.GetQueueFamilyIndex ()
     };
 
@@ -200,6 +222,51 @@ void MandelbrotBase::DestroyCommandPool ( VkDevice device ) noexcept
     vkDestroyCommandPool ( device, _commandPool, nullptr );
     _commandPool = VK_NULL_HANDLE;
     AV_UNREGISTER_COMMAND_POOL ( "MandelbrotBase::_commandPool" )
+}
+
+bool MandelbrotBase::CreateFences ( VkDevice device ) noexcept
+{
+    size_t const count = _framebuffers.size ();
+    _fences.clear ();
+    _fences.reserve ( count );
+
+    constexpr VkFenceCreateInfo fenceInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = VK_FENCE_CREATE_SIGNALED_BIT
+    };
+
+    for ( size_t i = 0U; i < count; ++i )
+    {
+        VkFence fence;
+
+        bool const result = android_vulkan::Renderer::CheckVkResult (
+            vkCreateFence ( device, &fenceInfo, nullptr, &fence ),
+            "mandelbrot::MandelbrotBase::CreateFences",
+            "Can't create fence"
+        );
+
+        if ( !result )
+            return false;
+
+        AV_REGISTER_FENCE ( "mandelbrot::MandelbrotBase::_fence" )
+        _fences.push_back ( fence );
+    }
+
+    return true;
+}
+
+void MandelbrotBase::DestroyFences ( VkDevice device ) noexcept
+{
+    for ( auto fence : _fences )
+    {
+        vkDestroyFence ( device, fence, nullptr );
+        AV_UNREGISTER_FENCE ( "mandelbrot::MandelbrotBase::_fence" )
+    }
+
+    _fences.clear ();
+    _fences.shrink_to_fit ();
 }
 
 bool MandelbrotBase::CreateFramebuffers ( android_vulkan::Renderer &renderer ) noexcept

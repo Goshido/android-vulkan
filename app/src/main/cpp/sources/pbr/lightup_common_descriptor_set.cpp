@@ -162,7 +162,13 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
 
     LightLightupBaseProgram::ViewData const dummy {};
 
-    if ( !_uniformBuffer.Update ( renderer, reinterpret_cast<uint8_t const*> ( &dummy ), sizeof ( dummy ) ) )
+    result = _uniformBuffer.Update ( renderer,
+        VK_NULL_HANDLE,
+        reinterpret_cast<uint8_t const*> ( &dummy ),
+        sizeof ( dummy )
+    );
+
+    if ( !result )
     {
         Destroy ( device );
         return false;
@@ -467,7 +473,11 @@ bool LightupCommonDescriptorSet::Update ( android_vulkan::Renderer &renderer,
         ._padding0_0 {}
     };
 
-    return _uniformBuffer.Update ( renderer, reinterpret_cast<uint8_t const*> ( &viewData ), sizeof ( viewData ) );
+    return _uniformBuffer.Update ( renderer,
+        VK_NULL_HANDLE,
+        reinterpret_cast<uint8_t const*> ( &viewData ),
+        sizeof ( viewData )
+    );
 }
 
 } // namespace pbr

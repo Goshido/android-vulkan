@@ -354,19 +354,19 @@ void TextureCube::FreeResources ( VkDevice device ) noexcept
         AV_UNREGISTER_IMAGE_VIEW ( "TextureCube::_imageView" )
     }
 
-    if ( _imageDeviceMemory != VK_NULL_HANDLE )
+    if ( _image != VK_NULL_HANDLE )
     {
-        vkFreeMemory ( device, _imageDeviceMemory, nullptr );
-        _imageDeviceMemory = VK_NULL_HANDLE;
-        AV_UNREGISTER_DEVICE_MEMORY ( "TextureCube::_imageDeviceMemory" )
+        vkDestroyImage ( device, _image, nullptr );
+        _image = VK_NULL_HANDLE;
+        AV_UNREGISTER_IMAGE ( "TextureCube::_image" )
     }
 
-    if ( _image == VK_NULL_HANDLE )
+    if ( _imageDeviceMemory == VK_NULL_HANDLE )
         return;
 
-    vkDestroyImage ( device, _image, nullptr );
-    _image = VK_NULL_HANDLE;
-    AV_UNREGISTER_IMAGE ( "TextureCube::_image" )
+    vkFreeMemory ( device, _imageDeviceMemory, nullptr );
+    _imageDeviceMemory = VK_NULL_HANDLE;
+    AV_UNREGISTER_DEVICE_MEMORY ( "TextureCube::_imageDeviceMemory" )
 }
 
 void TextureCube::FreeTransferResources ( VkDevice device ) noexcept

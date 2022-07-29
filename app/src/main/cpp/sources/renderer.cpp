@@ -400,13 +400,7 @@ static std::unordered_set<std::string_view> const g_validationFilter =
 
     // Performance Warning: This app has > 250 memory objects.
     // [2022/07/28] Should think about it. Custom memory allocator task.
-    "0x58781063",
-
-    // This render pass does not have VkRenderPassCreateInfo.pAttachments->loadOp == VK_ATTACHMENT_LOAD_OP_CLEAR but
-    // VkRenderPassBeginInfo.clearValueCount > 0. VkRenderPassBeginInfo.pClearValues will be ignored and
-    // no attachments will be cleared.
-    // [2022/07/28] Wrong when only stencil value should be cleared VkRenderPassCreateInfo.pAttachments->stencilLoadOp.
-    "0x6beca064"
+    "0x58781063"
 };
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -1642,7 +1636,6 @@ bool Renderer::DeployInstance () noexcept
 
     _debugReportCallbackCreateInfoEXT.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
     _debugReportCallbackCreateInfoEXT.pNext = &validationInfo;
-//    _debugReportCallbackCreateInfoEXT.pNext = nullptr;
     _debugReportCallbackCreateInfoEXT.pUserData = this;
     _debugReportCallbackCreateInfoEXT.pfnCallback = &Renderer::OnVulkanDebugReport;
 

@@ -211,11 +211,11 @@ void MeshGeometry::FreeResourceInternal ( VkDevice device ) noexcept
 {
     _vertexCount = 0U;
 
-    if ( _bufferMemory != VK_NULL_HANDLE )
+    if ( _vertexBuffer != VK_NULL_HANDLE )
     {
-        vkFreeMemory ( device, _bufferMemory, nullptr );
-        _bufferMemory = VK_NULL_HANDLE;
-        AV_UNREGISTER_DEVICE_MEMORY ( "MeshGeometry::_bufferMemory" )
+        vkDestroyBuffer ( device, _vertexBuffer, nullptr );
+        _vertexBuffer = VK_NULL_HANDLE;
+        AV_UNREGISTER_BUFFER ( "MeshGeometry::_vertexBuffer" )
     }
 
     if ( _indexBuffer != VK_NULL_HANDLE )
@@ -225,12 +225,12 @@ void MeshGeometry::FreeResourceInternal ( VkDevice device ) noexcept
         AV_UNREGISTER_BUFFER ( "MeshGeometry::_indexBuffer" )
     }
 
-    if ( _vertexBuffer == VK_NULL_HANDLE )
+    if ( _bufferMemory == VK_NULL_HANDLE )
         return;
 
-    vkDestroyBuffer ( device, _vertexBuffer, nullptr );
-    _vertexBuffer = VK_NULL_HANDLE;
-    AV_UNREGISTER_BUFFER ( "MeshGeometry::_vertexBuffer" )
+    vkFreeMemory ( device, _bufferMemory, nullptr );
+    _bufferMemory = VK_NULL_HANDLE;
+    AV_UNREGISTER_DEVICE_MEMORY ( "MeshGeometry::_bufferMemory" )
 }
 
 bool MeshGeometry::LoadFromMesh ( std::string &&fileName,

@@ -11,28 +11,8 @@ GX_RESTORE_WARNING_STATE
 
 namespace android_vulkan {
 
-UniformBuffer::UniformBuffer () noexcept:
-    _size ( 0U ),
-    _buffer ( VK_NULL_HANDLE ),
-    _bufferMemory ( VK_NULL_HANDLE ),
-    _commandBuffer ( VK_NULL_HANDLE ),
-    _commandPool  ( VK_NULL_HANDLE ),
-    _targetStages ( VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT ),
-    _transfer ( VK_NULL_HANDLE ),
-    _transferMemory ( VK_NULL_HANDLE )
+void UniformBuffer::FreeResources ( VkDevice device ) noexcept
 {
-    // NOTHING
-}
-
-void UniformBuffer::FreeResources ( VkDevice device )
-{
-    if ( _transferMemory != VK_NULL_HANDLE )
-    {
-        vkFreeMemory ( device, _transferMemory, nullptr );
-        _transferMemory = VK_NULL_HANDLE;
-        AV_UNREGISTER_DEVICE_MEMORY ( "UniformBuffer::_transferMemory" )
-    }
-
     if ( _transfer != VK_NULL_HANDLE )
     {
         vkDestroyBuffer ( device, _transfer, nullptr );
@@ -40,11 +20,11 @@ void UniformBuffer::FreeResources ( VkDevice device )
         AV_UNREGISTER_BUFFER ( "UniformBuffer::_transfer" )
     }
 
-    if ( _bufferMemory != VK_NULL_HANDLE )
+    if ( _transferMemory != VK_NULL_HANDLE )
     {
-        vkFreeMemory ( device, _bufferMemory, nullptr );
-        _bufferMemory = VK_NULL_HANDLE;
-        AV_UNREGISTER_DEVICE_MEMORY ( "UniformBuffer::_bufferMemory" )
+        vkFreeMemory ( device, _transferMemory, nullptr );
+        _transferMemory = VK_NULL_HANDLE;
+        AV_UNREGISTER_DEVICE_MEMORY ( "UniformBuffer::_transferMemory" )
     }
 
     if ( _buffer != VK_NULL_HANDLE )
@@ -52,6 +32,13 @@ void UniformBuffer::FreeResources ( VkDevice device )
         vkDestroyBuffer ( device, _buffer, nullptr );
         _buffer = VK_NULL_HANDLE;
         AV_UNREGISTER_BUFFER ( "UniformBuffer::_buffer" )
+    }
+
+    if ( _bufferMemory != VK_NULL_HANDLE )
+    {
+        vkFreeMemory ( device, _bufferMemory, nullptr );
+        _bufferMemory = VK_NULL_HANDLE;
+        AV_UNREGISTER_DEVICE_MEMORY ( "UniformBuffer::_bufferMemory" )
     }
 
     if ( _commandBuffer != VK_NULL_HANDLE )
@@ -65,12 +52,12 @@ void UniformBuffer::FreeResources ( VkDevice device )
     _targetStages = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 }
 
-VkBuffer UniformBuffer::GetBuffer () const
+VkBuffer UniformBuffer::GetBuffer () const noexcept
 {
     return _buffer;
 }
 
-size_t UniformBuffer::GetSize () const
+size_t UniformBuffer::GetSize () const noexcept
 {
     return _size;
 }
@@ -78,7 +65,7 @@ size_t UniformBuffer::GetSize () const
 bool UniformBuffer::Init ( android_vulkan::Renderer &renderer,
     VkCommandPool commandPool,
     VkPipelineStageFlags targetStages
-)
+) noexcept
 {
     if ( _commandPool != VK_NULL_HANDLE )
         return true;
@@ -102,7 +89,11 @@ bool UniformBuffer::Init ( android_vulkan::Renderer &renderer,
     );
 }
 
-bool UniformBuffer::Update ( android_vulkan::Renderer &renderer, uint8_t const* data, size_t size )
+bool UniformBuffer::Update ( android_vulkan::Renderer &renderer,
+    VkFence fence,
+    uint8_t const* data,
+    size_t size
+) noexcept
 {
     assert ( size );
 
@@ -138,13 +129,13 @@ bool UniformBuffer::Update ( android_vulkan::Renderer &renderer, uint8_t const* 
     submitInfo.pSignalSemaphores = nullptr;
 
     return Renderer::CheckVkResult (
-        vkQueueSubmit ( renderer.GetQueue (), 1U, &submitInfo, VK_NULL_HANDLE ),
+        vkQueueSubmit ( renderer.GetQueue (), 1U, &submitInfo, fence ),
         "UniformBuffer::Update",
         "Can't submit upload command"
     );
 }
 
-bool UniformBuffer::InitResources ( android_vulkan::Renderer &renderer, size_t size )
+bool UniformBuffer::InitResources ( android_vulkan::Renderer &renderer, size_t size ) noexcept
 {
     VkBufferCreateInfo bufferInfo
     {

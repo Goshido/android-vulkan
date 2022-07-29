@@ -60,7 +60,10 @@ class PointLightLightupProgram final : public LightLightupBaseProgram
 
         void Destroy ( VkDevice device ) noexcept override;
 
-        void SetLightData ( VkCommandBuffer commandBuffer, VkDescriptorSet lightData ) const noexcept;
+        void SetLightData ( VkCommandBuffer commandBuffer,
+            VkDescriptorSet transform,
+            VkDescriptorSet lightData
+        ) const noexcept;
 
     private:
         [[nodiscard]] DescriptorSetInfo const& GetResourceInfo () const noexcept override;

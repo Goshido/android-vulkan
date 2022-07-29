@@ -13,6 +13,11 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
+void PointLightLightup::BindProgram ( VkCommandBuffer commandBuffer ) noexcept
+{
+    _program.Bind ( commandBuffer );
+}
+
 bool PointLightLightup::Init ( android_vulkan::Renderer &renderer,
     VkCommandPool commandPool,
     VkRenderPass renderPass,
@@ -120,13 +125,12 @@ void PointLightLightup::Destroy ( VkDevice device ) noexcept
 }
 
 void PointLightLightup::Lightup ( VkCommandBuffer commandBuffer,
+    VkDescriptorSet transform,
     android_vulkan::MeshGeometry &unitCube,
     size_t lightIndex
 ) noexcept
 {
-    _program.Bind ( commandBuffer );
-    _program.SetLightData ( commandBuffer, _descriptorSets[ lightIndex ] );
-
+    _program.SetLightData ( commandBuffer, transform, _descriptorSets[ lightIndex ] );
     vkCmdDrawIndexed ( commandBuffer, unitCube.GetVertexCount (), 1U, 0U, 0, 0U );
 }
 

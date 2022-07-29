@@ -37,13 +37,13 @@ class RenderSession final
         GXMat4                                  _viewerLocal {};
 
         DefaultTextureManager                   _defaultTextureManager {};
+        VkFramebuffer                           _framebuffer = VK_NULL_HANDLE;
         GXProjectionClipPlanes                  _frustum {};
+
+        VkFence                                 _fence = VK_NULL_HANDLE;
 
         GBuffer                                 _gBuffer {};
         VkDescriptorPool                        _gBufferDescriptorPool = VK_NULL_HANDLE;
-        VkFramebuffer                           _gBufferFramebuffer = VK_NULL_HANDLE;
-        VkImageMemoryBarrier                    _gBufferImageBarrier {};
-        VkRenderPass                            _gBufferRenderPass = VK_NULL_HANDLE;
         VkDescriptorSet                         _gBufferSlotMapper = VK_NULL_HANDLE;
 
         GeometryPass                            _geometryPass {};
@@ -51,10 +51,14 @@ class RenderSession final
         LightHandler                            _lightHandlers[ 3U ] {};
         LightPass                               _lightPass {};
 
+        VkCommandBuffer                         _commandBuffer = VK_NULL_HANDLE;
+
         MeshHandler                             _meshHandlers[ 2U ] {};
         size_t                                  _opaqueMeshCount = 0U;
 
         PresentPass                             _presentPass {};
+        VkRenderPass                            _renderPass = VK_NULL_HANDLE;
+        VkRenderPassBeginInfo                   _renderPassInfo {};
         RenderSessionStats                      _renderSessionStats {};
         SamplerManager                          _samplerManager {};
         TexturePresentDescriptorSetLayout       _texturePresentDescriptorSetLayout {};
@@ -97,8 +101,8 @@ class RenderSession final
         ) noexcept;
 
     private:
-        [[nodiscard]] bool CreateGBufferFramebuffer ( android_vulkan::Renderer &renderer ) noexcept;
-        [[nodiscard]] bool CreateGBufferRenderPass ( android_vulkan::Renderer &renderer ) noexcept;
+        [[nodiscard]] bool CreateFramebuffer ( android_vulkan::Renderer &renderer ) noexcept;
+        [[nodiscard]] bool CreateRenderPass ( android_vulkan::Renderer &renderer ) noexcept;
 
         [[nodiscard]] bool CreateGBufferResources ( android_vulkan::Renderer &renderer,
             VkExtent2D const &resolution

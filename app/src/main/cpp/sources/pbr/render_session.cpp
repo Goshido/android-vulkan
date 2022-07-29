@@ -29,11 +29,30 @@ void RenderSession::Begin ( GXMat4 const &viewerLocal, GXMat4 const &projection 
 
 bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime ) noexcept
 {
-    if ( !_presentPass.AcquirePresentTarget ( renderer ) || !_geometryPass.WaitReady ( renderer ) )
+    if ( !_presentPass.AcquirePresentTarget ( renderer ) )
         return false;
 
+    VkDevice device = renderer.GetDevice ();
+
     bool result = android_vulkan::Renderer::CheckVkResult (
-        vkResetCommandPool ( renderer.GetDevice (), _commandPool, 0U ),
+        vkWaitForFences ( device, 1U, &_fence, VK_TRUE, std::numeric_limits<uint64_t>::max () ),
+        "pbr::RenderSession::End",
+        "Can't wait fence"
+    );
+
+    if ( !result )
+        return false;
+
+    result = android_vulkan::Renderer::CheckVkResult ( vkResetFences ( device, 1U, &_fence ),
+        "pbr::RenderSession::End",
+        "Can't reset fence"
+    );
+
+    if ( !result )
+        return false;
+
+    result = android_vulkan::Renderer::CheckVkResult (
+        vkResetCommandPool ( device, _commandPool, 0U ),
         "pbr::RenderSession::End",
         "Can't reset command pool"
     );
@@ -54,7 +73,26 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
     if ( !result )
         return false;
 
-    VkCommandBuffer commandBuffer = _geometryPass.Execute ( renderer,
+    constexpr VkCommandBufferBeginInfo beginInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+        .pNext = nullptr,
+        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+        .pInheritanceInfo = nullptr
+    };
+
+    result = android_vulkan::Renderer::CheckVkResult ( vkBeginCommandBuffer ( _commandBuffer, &beginInfo ),
+        "pbr::RenderSession::End",
+        "Can't begin main render pass"
+    );
+
+    if ( !result )
+        return false;
+
+    vkCmdBeginRenderPass ( _commandBuffer, &_renderPassInfo, VK_SUBPASS_CONTENTS_INLINE );
+
+    result = _geometryPass.Execute ( renderer,
+        _commandBuffer,
         _frustum,
         _view,
         _viewProjection,
@@ -62,11 +100,13 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
         _renderSessionStats
     );
 
-    if ( commandBuffer == VK_NULL_HANDLE )
+    if ( !result )
         return false;
 
+    vkCmdNextSubpass ( _commandBuffer, VK_SUBPASS_CONTENTS_INLINE );
+
     result = _lightPass.OnPostGeometryPass ( renderer,
-        commandBuffer,
+        _commandBuffer,
         _viewerLocal,
         _view,
         _viewProjection
@@ -75,22 +115,12 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
     if ( !result )
         return false;
 
+    vkCmdEndRenderPass ( _commandBuffer );
+
     _renderSessionStats.RenderPointLights ( _lightPass.GetPointLightCount () );
     _renderSessionStats.RenderReflectionLocal ( _lightPass.GetReflectionLocalCount () );
 
-    vkCmdPipelineBarrier ( commandBuffer,
-        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-        0U,
-        0U,
-        nullptr,
-        0U,
-        nullptr,
-        1U,
-        &_gBufferImageBarrier
-    );
-
-    if ( !_presentPass.Execute ( renderer, commandBuffer, _gBufferSlotMapper, _geometryPass.GetFence () ) )
+    if ( !_presentPass.Execute ( renderer, _commandBuffer, _gBufferSlotMapper, _fence ) )
         return false;
 
     _renderSessionStats.PrintStats ( deltaTime );
@@ -121,7 +151,24 @@ bool RenderSession::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 
     VkDevice device = renderer.GetDevice ();
 
-    bool result = android_vulkan::Renderer::CheckVkResult (
+    constexpr VkFenceCreateInfo fenceInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = VK_FENCE_CREATE_SIGNALED_BIT
+    };
+
+    bool result = android_vulkan::Renderer::CheckVkResult ( vkCreateFence ( device, &fenceInfo, nullptr, &_fence ),
+        "pbr::RenderSession::OnInitDevice",
+        "Can't create fence"
+    );
+
+    if ( !result )
+        return false;
+
+    AV_REGISTER_FENCE ( "pbr::RenderSession::_fence" )
+
+    result = android_vulkan::Renderer::CheckVkResult (
         vkCreateCommandPool ( device, &createInfo, nullptr, &_commandPool ),
         "pbr::RenderSession::OnInitDevice",
         "Can't create lead command pool"
@@ -131,6 +178,24 @@ bool RenderSession::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
         return false;
 
     AV_REGISTER_COMMAND_POOL ( "pbr::RenderSession::_commandPool" )
+
+    VkCommandBufferAllocateInfo const bufferAllocateInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+        .pNext = nullptr,
+        .commandPool = _commandPool,
+        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+        .commandBufferCount = 1U
+    };
+
+    result = android_vulkan::Renderer::CheckVkResult (
+        vkAllocateCommandBuffers ( device, &bufferAllocateInfo, &_commandBuffer ),
+        "pbr::RenderSession::OnInitDevice",
+        "Can't allocate command buffer"
+    );
+
+    if ( !result )
+        return false;
 
     if ( !_texturePresentDescriptorSetLayout.Init ( renderer.GetDevice () ) )
         return false;
@@ -151,12 +216,26 @@ void RenderSession::OnDestroyDevice ( VkDevice device ) noexcept
     _defaultTextureManager.Destroy ( device );
     DestroyGBufferResources ( device );
 
-    if ( _commandPool == VK_NULL_HANDLE )
+    if ( _renderPass != VK_NULL_HANDLE )
+    {
+        vkDestroyRenderPass ( device, _renderPass, nullptr );
+        _renderPass = VK_NULL_HANDLE;
+        AV_UNREGISTER_RENDER_PASS ( "pbr::RenderSession::_renderPass" )
+    }
+
+    if ( _commandPool != VK_NULL_HANDLE )
+    {
+        vkDestroyCommandPool ( device, _commandPool, nullptr );
+        _commandPool = VK_NULL_HANDLE;
+        AV_UNREGISTER_COMMAND_POOL ( "pbr::RenderSession::_commandPool" )
+    }
+
+    if ( _fence == VK_NULL_HANDLE )
         return;
 
-    vkDestroyCommandPool ( device, _commandPool, nullptr );
-    _commandPool = VK_NULL_HANDLE;
-    AV_UNREGISTER_COMMAND_POOL ( "pbr::RenderSession::_commandPool" )
+    vkDestroyFence ( device, _fence, nullptr );
+    _fence = VK_NULL_HANDLE;
+    AV_UNREGISTER_FENCE ( "pbr::RenderSession::_fence" )
 }
 
 bool RenderSession::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
@@ -179,6 +258,8 @@ bool RenderSession::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
             resolution.width,
             resolution.height
         );
+
+
     }
 
     if ( _presentPass.Init ( renderer ) )
@@ -226,7 +307,7 @@ void RenderSession::SubmitMesh ( MeshRef &mesh,
     ( this->*handler ) ( mesh, material, local, worldBounds, color0, color1, color2, emission );
 }
 
-bool RenderSession::CreateGBufferFramebuffer ( android_vulkan::Renderer &renderer ) noexcept
+bool RenderSession::CreateFramebuffer ( android_vulkan::Renderer &renderer ) noexcept
 {
     VkExtent2D const& resolution = _gBuffer.GetResolution ();
 
@@ -244,7 +325,7 @@ bool RenderSession::CreateGBufferFramebuffer ( android_vulkan::Renderer &rendere
         .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0U,
-        .renderPass = _gBufferRenderPass,
+        .renderPass = _renderPass,
         .attachmentCount = std::size ( attachments ),
         .pAttachments = attachments,
         .width = resolution.width,
@@ -253,19 +334,22 @@ bool RenderSession::CreateGBufferFramebuffer ( android_vulkan::Renderer &rendere
     };
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateFramebuffer ( renderer.GetDevice (), &framebufferInfo, nullptr, &_gBufferFramebuffer ),
-        "pbr::RenderSession::CreateGBufferFramebuffer",
+        vkCreateFramebuffer ( renderer.GetDevice (), &framebufferInfo, nullptr, &_framebuffer ),
+        "pbr::RenderSession::CreateFramebuffer",
         "Can't create GBuffer framebuffer"
     );
 
     if ( !result )
         return false;
 
-    AV_REGISTER_FRAMEBUFFER ( "pbr::RenderSession::_gBufferFramebuffer" )
+    _renderPassInfo.framebuffer = _framebuffer;
+    _renderPassInfo.renderArea.extent = resolution;
+
+    AV_REGISTER_FRAMEBUFFER ( "pbr::RenderSession::_framebuffer" )
     return true;
 }
 
-bool RenderSession::CreateGBufferRenderPass ( android_vulkan::Renderer &renderer ) noexcept
+bool RenderSession::CreateRenderPass ( android_vulkan::Renderer &renderer ) noexcept
 {
     VkAttachmentDescription const attachments[]
     {
@@ -275,7 +359,7 @@ bool RenderSession::CreateGBufferRenderPass ( android_vulkan::Renderer &renderer
             .format = _gBuffer.GetAlbedo ().GetFormat (),
             .samples = VK_SAMPLE_COUNT_1_BIT,
             .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-            .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+            .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
             .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
             .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
             .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
@@ -292,7 +376,7 @@ bool RenderSession::CreateGBufferRenderPass ( android_vulkan::Renderer &renderer
             .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
             .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
             .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-            .finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+            .finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
         },
 
         // #2: normal
@@ -301,7 +385,7 @@ bool RenderSession::CreateGBufferRenderPass ( android_vulkan::Renderer &renderer
             .format = _gBuffer.GetNormal ().GetFormat (),
             .samples = VK_SAMPLE_COUNT_1_BIT,
             .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-            .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+            .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
             .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
             .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
             .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
@@ -314,7 +398,7 @@ bool RenderSession::CreateGBufferRenderPass ( android_vulkan::Renderer &renderer
             .format = _gBuffer.GetParams ().GetFormat (),
             .samples = VK_SAMPLE_COUNT_1_BIT,
             .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-            .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+            .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
             .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
             .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
             .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
@@ -327,17 +411,133 @@ bool RenderSession::CreateGBufferRenderPass ( android_vulkan::Renderer &renderer
             .format = _gBuffer.GetDepthStencil ().GetFormat (),
             .samples = VK_SAMPLE_COUNT_1_BIT,
             .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-            .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-            .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-            .stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE,
+            .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+            .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+            .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
             .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-            .finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
+            .finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL
         }
     };
 
-    static VkSubpassDescription const subpasses[] =
+    constexpr static VkAttachmentReference const geometryColorReferences[] =
     {
-        GeometryPass::GetSubpassDescription ()
+        // #0: albedo
+        {
+            .attachment = 0U,
+            .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+        },
+
+        // #1: emission
+        {
+            .attachment = 1U,
+            .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+        },
+
+        // #2: normal
+        {
+            .attachment = 2U,
+            .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+        },
+
+        // #3: params
+        {
+            .attachment = 3U,
+            .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+        }
+    };
+
+    // depth|stencil
+    constexpr static VkAttachmentReference geometryDepthStencilReference
+    {
+        .attachment = 4U,
+        .layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
+    };
+
+    constexpr static VkAttachmentReference const lightColorReferences[] =
+    {
+        // #1: HDR accumulator
+        {
+            .attachment = 1U,
+            .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+        }
+    };
+
+    constexpr static VkAttachmentReference const lightInputAttachments[] =
+    {
+        // #0: albedo
+        {
+            .attachment = 0U,
+            .layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+        },
+
+        // #2: normal
+        {
+            .attachment = 2U,
+            .layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+        },
+
+        // #3: params
+        {
+            .attachment = 3U,
+            .layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+        },
+
+        // #4: depth
+        {
+            .attachment = 4U,
+            .layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL
+        }
+    };
+
+    constexpr static VkSubpassDescription const subpasses[] =
+    {
+        {
+            .flags = 0U,
+            .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
+            .inputAttachmentCount = 0U,
+            .pInputAttachments = nullptr,
+            .colorAttachmentCount = static_cast<uint32_t> ( std::size ( geometryColorReferences ) ),
+            .pColorAttachments = geometryColorReferences,
+            .pResolveAttachments = nullptr,
+            .pDepthStencilAttachment = &geometryDepthStencilReference,
+            .preserveAttachmentCount = 0U,
+            .pPreserveAttachments = nullptr
+        },
+
+        {
+            .flags = 0U,
+            .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
+            .inputAttachmentCount = static_cast<uint32_t> ( std::size ( lightInputAttachments ) ),
+            .pInputAttachments = lightInputAttachments,
+            .colorAttachmentCount = static_cast<uint32_t> ( std::size ( lightColorReferences ) ),
+            .pColorAttachments = lightColorReferences,
+            .pResolveAttachments = nullptr,
+            .pDepthStencilAttachment = nullptr,
+            .preserveAttachmentCount = 0U,
+            .pPreserveAttachments = nullptr
+        }
+    };
+
+    constexpr static VkSubpassDependency const dependencies[] =
+    {
+        {
+            .srcSubpass = 0U,
+            .dstSubpass = 1U,
+            .srcStageMask = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+            .dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+            .srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+            .dstAccessMask = VK_ACCESS_INPUT_ATTACHMENT_READ_BIT,
+            .dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
+        },
+        {
+            .srcSubpass = 1U,
+            .dstSubpass = VK_SUBPASS_EXTERNAL,
+            .srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+            .dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+            .srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+            .dstAccessMask = VK_ACCESS_SHADER_READ_BIT,
+            .dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
+        }
     };
 
     VkRenderPassCreateInfo const renderPassInfo
@@ -349,20 +549,73 @@ bool RenderSession::CreateGBufferRenderPass ( android_vulkan::Renderer &renderer
         .pAttachments = attachments,
         .subpassCount = static_cast<uint32_t> ( std::size ( subpasses ) ),
         .pSubpasses = subpasses,
-        .dependencyCount = 0U,
-        .pDependencies = nullptr
+        .dependencyCount = static_cast<uint32_t> ( std::size ( dependencies ) ),
+        .pDependencies = dependencies
     };
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateRenderPass ( renderer.GetDevice (), &renderPassInfo, nullptr, &_gBufferRenderPass ),
-        "pbr::RenderSession::CreateGBufferRenderPass",
+        vkCreateRenderPass ( renderer.GetDevice (), &renderPassInfo, nullptr, &_renderPass ),
+        "pbr::RenderSession::CreateRenderPass",
         "Can't create render pass"
     );
 
     if ( !result )
         return false;
 
-    AV_REGISTER_RENDER_PASS ( "pbr::RenderSession::_gBufferRenderPass" )
+    AV_REGISTER_RENDER_PASS ( "pbr::RenderSession::_renderPass" )
+
+    constexpr static VkClearValue const clearValues[] =
+    {
+        // albedo
+        {
+            .color
+            {
+                .float32 = { 0.0F, 0.0F, 0.0F, 0.0F }
+            }
+        },
+
+        // emission
+        {
+            .color
+            {
+                .float32 = { 0.0F, 0.0F, 0.0F, 0.0F }
+            }
+        },
+
+        // normal
+        {
+            .color
+            {
+                .float32 = { 0.5F, 0.5F, 0.5F, 0.0F }
+            }
+        },
+
+        // param
+        {
+            .color
+            {
+                .float32 = { 0.5F, 0.5F, 0.5F, 0.0F }
+            }
+        },
+
+        // depth|stencil
+        {
+            .depthStencil
+            {
+                .depth = 0.0F,
+                .stencil = 0U
+            }
+        }
+    };
+
+    _renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    _renderPassInfo.pNext = nullptr;
+    _renderPassInfo.renderPass = _renderPass;
+    _renderPassInfo.clearValueCount = static_cast<uint32_t> ( std::size ( clearValues ) );
+    _renderPassInfo.pClearValues = clearValues;
+    _renderPassInfo.renderArea.offset.x = 0;
+    _renderPassInfo.renderArea.offset.y = 0;
+
     return true;
 }
 
@@ -372,67 +625,24 @@ bool RenderSession::CreateGBufferResources ( android_vulkan::Renderer &renderer,
 {
     VkDevice device = renderer.GetDevice ();
 
-    if ( !_gBuffer.Init ( renderer, resolution ) )
-    {
-        DestroyGBufferResources ( device );
+    if ( !_gBuffer.Init ( renderer, resolution ) || !CreateRenderPass ( renderer ) || !CreateFramebuffer ( renderer ) )
         return false;
-    }
-
-    if ( !CreateGBufferRenderPass ( renderer ) || !CreateGBufferFramebuffer ( renderer ) )
-    {
-        DestroyGBufferResources ( device );
-        return false;
-    }
 
     bool result = _geometryPass.Init ( renderer,
         _commandPool,
         _gBuffer.GetResolution (),
-        _gBufferRenderPass,
-        _gBufferFramebuffer,
+        _renderPass,
         _samplerManager
     );
 
     if ( !result )
-    {
-        DestroyGBufferResources ( device );
         return false;
-    }
 
-    if ( !_lightPass.Init ( renderer, _commandPool, _gBuffer ) )
-    {
-        DestroyGBufferResources ( device );
+    if ( !_lightPass.Init ( renderer, _commandPool, _renderPass, _gBuffer ) )
         return false;
-    }
 
     if ( !CreateGBufferSlotMapper ( renderer ) )
-    {
-        DestroyGBufferResources ( device );
         return false;
-    }
-
-    android_vulkan::Texture2D const& texture = _gBuffer.GetHDRAccumulator();
-
-    _gBufferImageBarrier =
-    {
-        .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-        .pNext = nullptr,
-        .srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-        .dstAccessMask = VK_ACCESS_SHADER_READ_BIT,
-        .oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-        .newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .image = texture.GetImage (),
-
-        .subresourceRange =
-        {
-            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-            .baseMipLevel = 0U,
-            .levelCount = static_cast<uint32_t> ( texture.GetMipLevelCount () ),
-            .baseArrayLayer = 0U,
-            .layerCount = 1U
-        }
-    };
 
     result = android_vulkan::Renderer::CheckVkResult ( vkDeviceWaitIdle ( device ),
         "pbr::RenderSession::CreateGBufferResources",
@@ -440,10 +650,7 @@ bool RenderSession::CreateGBufferResources ( android_vulkan::Renderer &renderer,
     );
 
     if ( !result )
-    {
-        DestroyGBufferResources ( device );
         return false;
-    }
 
     _lightPass.OnFreeTransferResources ( device );
     return true;
@@ -550,18 +757,11 @@ bool RenderSession::CreateGBufferSlotMapper ( android_vulkan::Renderer &renderer
 
 void RenderSession::DestroyGBufferResources ( VkDevice device ) noexcept
 {
-    if ( _gBufferFramebuffer != VK_NULL_HANDLE )
+    if ( _framebuffer != VK_NULL_HANDLE )
     {
-        vkDestroyFramebuffer ( device, _gBufferFramebuffer, nullptr );
-        _gBufferFramebuffer = VK_NULL_HANDLE;
-        AV_UNREGISTER_FRAMEBUFFER ( "pbr::RenderSession::_gBufferFramebuffer" )
-    }
-
-    if ( _gBufferRenderPass != VK_NULL_HANDLE )
-    {
-        vkDestroyRenderPass ( device, _gBufferRenderPass, nullptr );
-        _gBufferRenderPass = VK_NULL_HANDLE;
-        AV_UNREGISTER_RENDER_PASS ( "pbr::RenderSession::_gBufferRenderPass" )
+        vkDestroyFramebuffer ( device, _framebuffer, nullptr );
+        _framebuffer = VK_NULL_HANDLE;
+        AV_UNREGISTER_FRAMEBUFFER ( "pbr::RenderSession::_framebuffer" )
     }
 
     _lightPass.Destroy ( device );

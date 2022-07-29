@@ -3,7 +3,6 @@
 
 
 #include "mesh_geometry.h"
-#include "light_volume.h"
 #include "point_light.h"
 #include "point_light_lightup_program.h"
 #include "sampler.h"
@@ -39,6 +38,8 @@ class PointLightLightup final
 
         ~PointLightLightup () = default;
 
+        void BindProgram ( VkCommandBuffer commandBuffer ) noexcept;
+
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
             VkCommandPool commandPool,
             VkRenderPass renderPass,
@@ -49,6 +50,7 @@ class PointLightLightup final
         void Destroy ( VkDevice device ) noexcept;
 
         void Lightup ( VkCommandBuffer commandBuffer,
+            VkDescriptorSet transform,
             android_vulkan::MeshGeometry &unitCube,
             size_t lightIndex
         ) noexcept;

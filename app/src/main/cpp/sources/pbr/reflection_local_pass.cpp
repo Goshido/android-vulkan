@@ -24,7 +24,6 @@ void ReflectionLocalPass::Append ( TextureCubeRef &prefilter, GXVec3 const &loca
 }
 
 bool ReflectionLocalPass::Execute ( android_vulkan::Renderer &renderer,
-    LightVolume &lightVolume,
     android_vulkan::MeshGeometry &unitCube,
     VkCommandBuffer commandBuffer
 ) noexcept
@@ -64,20 +63,17 @@ bool ReflectionLocalPass::Execute ( android_vulkan::Renderer &renderer,
     vkCmdBindIndexBuffer ( commandBuffer, unitCube.GetIndexBuffer (), 0U, VK_INDEX_TYPE_UINT32 );
 
     size_t descriptorIndex = 0U;
+    _program.Bind ( commandBuffer );
 
     for ( size_t i = 0U; i < callCount; ++i )
     {
-        _lightPassNotifier->OnBeginLightWithVolume ( commandBuffer );
+        _program.SetLightData ( commandBuffer,
+            _descriptorSets[ descriptorIndex ],
+            _descriptorSets[ descriptorIndex + 1U ]
+        );
 
-        lightVolume.Execute ( vertexCount, _descriptorSets[ descriptorIndex ], commandBuffer );
-        vkCmdNextSubpass ( commandBuffer, VK_SUBPASS_CONTENTS_INLINE );
-
-        _program.Bind ( commandBuffer );
-        _program.SetLightData ( commandBuffer, _descriptorSets[ descriptorIndex + 1U ] );
         vkCmdDrawIndexed ( commandBuffer, vertexCount, 1U, 0U, 0, 0U );
-
         descriptorIndex += 2U;
-        _lightPassNotifier->OnEndLightWithVolume ( commandBuffer );
     }
 
     return true;
@@ -89,14 +85,12 @@ size_t ReflectionLocalPass::GetReflectionLocalCount () const noexcept
 }
 
 bool ReflectionLocalPass::Init ( android_vulkan::Renderer &renderer,
-    LightPassNotifier &notifier,
     VkCommandPool commandPool,
     VkRenderPass renderPass,
     uint32_t subpass,
     VkExtent2D const &viewport
 ) noexcept
 {
-    _lightPassNotifier = &notifier;
     VkDevice device = renderer.GetDevice ();
 
     if ( !_program.Init ( renderer, renderPass, subpass, viewport ) )
@@ -214,8 +208,6 @@ void ReflectionLocalPass::Destroy ( VkDevice device ) noexcept
 
     _writeSets.clear ();
     _writeSets.shrink_to_fit ();
-
-    _lightPassNotifier = nullptr;
 }
 
 void ReflectionLocalPass::Reset () noexcept
@@ -239,7 +231,7 @@ bool ReflectionLocalPass::UploadGPUData ( android_vulkan::Renderer &renderer,
     if ( !AllocateDescriptorSets ( renderer, _calls.size () ) )
         return false;
 
-    constexpr VkCommandBufferBeginInfo const beginInfo
+    constexpr VkCommandBufferBeginInfo beginInfo
     {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
         .pNext = nullptr,

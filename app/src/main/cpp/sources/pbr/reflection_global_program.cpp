@@ -211,7 +211,7 @@ VkPipelineDepthStencilStateCreateInfo const* ReflectionGlobalProgram::InitDepthS
         .passOp = VK_STENCIL_OP_KEEP,
         .depthFailOp = VK_STENCIL_OP_KEEP,
         .compareOp = VK_COMPARE_OP_ALWAYS,
-        .compareMask = UINT32_MAX,
+        .compareMask = std::numeric_limits<uint32_t>::max (),
         .writeMask = 0U,
         .reference = 0U
     };
@@ -222,7 +222,7 @@ VkPipelineDepthStencilStateCreateInfo const* ReflectionGlobalProgram::InitDepthS
         .passOp = VK_STENCIL_OP_KEEP,
         .depthFailOp = VK_STENCIL_OP_KEEP,
         .compareOp = VK_COMPARE_OP_ALWAYS,
-        .compareMask = UINT32_MAX,
+        .compareMask = std::numeric_limits<uint32_t>::max (),
         .writeMask = 0U,
         .reference = 0U
     };

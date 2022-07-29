@@ -1658,9 +1658,9 @@ bool Renderer::DeployInstance () noexcept
 
     constexpr static char const* extensions[] =
     {
+        VK_KHR_ANDROID_SURFACE_EXTENSION_NAME,
         VK_EXT_DEBUG_REPORT_EXTENSION_NAME,
-        VK_KHR_SURFACE_EXTENSION_NAME,
-        "VK_KHR_android_surface"
+        VK_KHR_SURFACE_EXTENSION_NAME
     };
 
     instanceCreateInfo.pNext = &_debugReportCallbackCreateInfoEXT;
@@ -1671,8 +1671,8 @@ bool Renderer::DeployInstance () noexcept
 
     constexpr static const char* extensions[] =
     {
-        VK_KHR_SURFACE_EXTENSION_NAME,
-        "VK_KHR_android_surface"
+        VK_KHR_ANDROID_SURFACE_EXTENSION_NAME,
+        VK_KHR_SURFACE_EXTENSION_NAME
     };
 
     instanceCreateInfo.pNext = nullptr;

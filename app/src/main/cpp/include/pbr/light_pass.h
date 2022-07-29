@@ -4,8 +4,6 @@
 
 #include "gbuffer.h"
 #include "lightup_common_descriptor_set.h"
-#include "light_pass_notifier.h"
-#include "light_volume.h"
 #include "point_light_pass.h"
 #include "reflection_global_pass.h"
 #include "reflection_local_pass.h"
@@ -13,14 +11,11 @@
 
 namespace pbr {
 
-class LightPass final : public LightPassNotifier
+class LightPass final
 {
     private:
         VkCommandPool                   _commandPool = VK_NULL_HANDLE;
-        VkRenderPassBeginInfo           _lightupRenderPassInfo {};
-        LightVolume                     _lightVolume {};
         LightupCommonDescriptorSet      _lightupCommonDescriptorSet {};
-        size_t                          _lightupRenderPassCounter = 0U;
         PointLightPass                  _pointLightPass {};
         ReflectionGlobalPass            _reflectionGlobalPass {};
         ReflectionLocalPass             _reflectionLocalPass {};
@@ -40,6 +35,7 @@ class LightPass final : public LightPassNotifier
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
             VkCommandPool commandPool,
+            VkRenderPass renderPass,
             GBuffer &gBuffer
         ) noexcept;
 
@@ -73,11 +69,6 @@ class LightPass final : public LightPassNotifier
         void SubmitReflectionLocal ( TextureCubeRef &prefilter, GXVec3 const &location, float size ) noexcept;
 
     private:
-        void OnBeginLightWithVolume ( VkCommandBuffer commandBuffer ) noexcept override;
-        void OnEndLightWithVolume ( VkCommandBuffer commandBuffer ) noexcept override;
-
-        [[nodiscard]] bool CreateLightupFramebuffer ( VkDevice device, GBuffer &gBuffer ) noexcept;
-        [[nodiscard]] bool CreateLightupRenderPass ( VkDevice device, GBuffer &gBuffer ) noexcept;
         [[nodiscard]] bool CreateUnitCube ( android_vulkan::Renderer &renderer, VkCommandPool commandPool ) noexcept;
 };
 

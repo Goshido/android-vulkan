@@ -2,8 +2,6 @@
 #define PBR_REFLECTION_LOCAL_PASS_H
 
 
-#include "light_pass_notifier.h"
-#include "light_volume.h"
 #include "reflection_local_program.h"
 #include "types.h"
 #include "uniform_buffer_pool.h"
@@ -40,7 +38,6 @@ class ReflectionLocalPass final
         VkDescriptorPool                        _descriptorPool = VK_NULL_HANDLE;
         std::vector<VkDescriptorSet>            _descriptorSets {};
         std::vector<VkDescriptorImageInfo>      _imageInfo {};
-        LightPassNotifier*                      _lightPassNotifier = nullptr;
         UniformBufferPool                       _lightVolumeUniforms { eUniformPoolSize::Tiny_4M };
         ReflectionLocalProgram                  _program {};
         UniformBufferPool                       _reflectionUniforms { eUniformPoolSize::Tiny_4M };
@@ -63,7 +60,6 @@ class ReflectionLocalPass final
         void Append ( TextureCubeRef &prefilter, GXVec3 const &location, float size ) noexcept;
 
         bool Execute ( android_vulkan::Renderer &renderer,
-            LightVolume &lightVolume,
             android_vulkan::MeshGeometry &unitCube,
             VkCommandBuffer commandBuffer
         ) noexcept;
@@ -71,7 +67,6 @@ class ReflectionLocalPass final
         [[nodiscard]] size_t GetReflectionLocalCount () const noexcept;
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
-            LightPassNotifier &notifier,
             VkCommandPool commandPool,
             VkRenderPass renderPass,
             uint32_t subpass,

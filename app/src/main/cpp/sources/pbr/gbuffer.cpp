@@ -42,7 +42,7 @@ const VkExtent2D& GBuffer::GetResolution () const noexcept
 bool GBuffer::Init ( android_vulkan::Renderer &renderer, VkExtent2D const &resolution ) noexcept
 {
     constexpr VkImageUsageFlags usageColor = AV_VK_FLAG ( VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT ) |
-        AV_VK_FLAG ( VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT );
+        AV_VK_FLAG ( VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT ) | AV_VK_FLAG ( VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT );
 
     if ( !_albedo.CreateRenderTarget ( resolution, VK_FORMAT_R8G8B8A8_SRGB, usageColor, renderer ) )
         return false;
@@ -71,7 +71,7 @@ bool GBuffer::Init ( android_vulkan::Renderer &renderer, VkExtent2D const &resol
     }
 
     constexpr VkImageUsageFlags usageDepthStencil = AV_VK_FLAG ( VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT ) |
-        AV_VK_FLAG ( VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT );
+        AV_VK_FLAG ( VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT ) | AV_VK_FLAG ( VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT );
 
     bool result = _depthStencil.CreateRenderTarget ( resolution,
         renderer.GetDefaultDepthStencilFormat (),

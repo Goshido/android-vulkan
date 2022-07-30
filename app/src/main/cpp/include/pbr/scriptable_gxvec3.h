@@ -19,7 +19,7 @@ namespace pbr {
 
 class ScriptableGXVec3 final
 {
-    private:
+    public:
         struct Item final
         {
             Item*       _previous;

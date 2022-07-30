@@ -80,13 +80,13 @@ bool Scene::OnInitDevice ( android_vulkan::Physics &physics ) noexcept
 
     _vm = &scriptEngine.GetVirtualMachine ();
 
-    if ( !lua_checkstack ( _vm, 5 ) )
+    if ( !lua_checkstack ( _vm, 8 ) )
     {
         android_vulkan::LogError ( "pbr::Scene::OnInitDevice - Stack too small." );
         return false;
     }
 
-    if ( int const type = lua_getglobal ( _vm, "CreateScene" ); type != LUA_TFUNCTION )
+    if ( lua_getglobal ( _vm, "CreateScene" ) != LUA_TFUNCTION )
         return false;
 
     lua_pushlightuserdata ( _vm, this );
@@ -173,11 +173,12 @@ bool Scene::OnInitDevice ( android_vulkan::Physics &physics ) noexcept
     if ( !bind ( "OnUpdate", _onUpdateIndex ) )
         return false;
 
-    return _gamepad.Init ( *_vm );
+    return _scriptablePenetration.Init ( *_vm ) && _gamepad.Init ( *_vm );
 }
 
 void Scene::OnDestroyDevice () noexcept
 {
+    _scriptablePenetration.Destroy ();
     _gamepad.Destroy ();
     _freeTransferResourceList.clear ();
     _renderableList.clear ();
@@ -410,19 +411,15 @@ std::vector<android_vulkan::Penetration> const& Scene::DoPenetrationBox ( GXMat4
 
 int Scene::OnGetPenetrationBox ( lua_State* state )
 {
-    // TODO check Lua stack space
-
     auto& self = *static_cast<Scene*> ( lua_touserdata ( state, 1 ) );
 
-    [[maybe_unused]] std::vector<android_vulkan::Penetration> const& penetrations = self.DoPenetrationBox (
+    std::vector<android_vulkan::Penetration> const& penetrations = self.DoPenetrationBox (
         ScriptableGXMat4::Extract ( state, 2 ),
         ScriptableGXVec3::Extract ( state, 3 ),
         lua_tointeger ( state, 4 )
     );
 
-    // TODO
-
-    return 0;
+    return static_cast<int> ( self._scriptablePenetration.PublishResult ( *state, penetrations ) );
 }
 
 int Scene::OnGetPhysicsToRendererScaleFactor ( lua_State* state )

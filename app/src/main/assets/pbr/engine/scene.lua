@@ -81,9 +81,7 @@ local function GetPenetrationBox ( self, localMatrix, size, groups )
     )
 
     assert ( type ( groups ) == "number", [[Scene:GetPenetrationBox - "groups" is not a number.]] )
-    av_SceneGetPenetrationBox ( self._handle, localMatrix._handle, size._handle, group )
-
-    -- TODO return actual result somehow.
+    return av_SceneGetPenetrationBox ( self._handle, localMatrix._handle, size._handle, groups )
 end
 
 local function GetPhysicsToRendererScaleFactor ( self )

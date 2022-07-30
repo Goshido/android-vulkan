@@ -1,4 +1,5 @@
 require "av://engine/script_component.lua"
+require "av://engine/logger.lua"
 
 
 -- Constants
@@ -32,7 +33,7 @@ local function GetPenetrations ( self, size, offset, localMatrix, origin )
     m:Clone ( localMatrix )
     m:SetW ( alpha )
 
-    g_scene:GetPenetrationBox ( m, size, 0xFFFFFFFF )
+    return g_scene:GetPenetrationBox ( m, size, 0xFFFFFFFF )
 end
 
 local function GetSensorOffset ( self, parentOrigin, actor, min, max )
@@ -123,7 +124,24 @@ local function OnPostPhysics ( self, deltaTime )
     origin:MultiplyScalar ( origin, g_scene:GetRendererToPhysicsScaleFactor () )
 
     self:GetPenetrations ( self._sensorTopSize, self._sensorTopOffset, localMatrix, origin )
-    self:GetPenetrations ( self._sensorLeftSize, self._sensorLeftOffset, localMatrix, origin )
+
+    local p = self:GetPenetrations ( self._sensorLeftSize, self._sensorLeftOffset, localMatrix, origin )
+    local count = p._count
+
+    LogE ( ">>>" )
+    LogE ( "    Count: %d", count )
+
+    local pns = p._penetrations
+
+    for i = 1, count do
+        local pn = pns[i];
+        LogE ( "    Penetration #%d", i )
+        LogE ( "        Normal: %s", pn._normal )
+        LogE ( "        Depth: %f", pn._depth )
+    end
+
+    LogE ( "<<<" )
+
     self:GetPenetrations ( self._sensorRightSize, self._sensorRightOffset, localMatrix, origin )
 
     -- TODO

@@ -6,17 +6,7 @@
 #include "camera_component.h"
 #include "render_session.h"
 #include "scriptable_gamepad.h"
-#include <epa.h>
-
-GX_DISABLE_COMMON_WARNINGS
-
-extern "C" {
-
-#include <lua/lstate.h>
-
-} // extern "C"
-
-GX_RESTORE_WARNING_STATE
+#include "scriptable_penetration.h"
 
 
 namespace pbr {
@@ -32,6 +22,7 @@ class Scene final
         android_vulkan::EPA                         _epa {};
         ScriptableGamepad                           _gamepad {};
         std::vector<android_vulkan::Penetration>    _penetrations {};
+        ScriptablePenetration                       _scriptablePenetration {};
         android_vulkan::Physics*                    _physics = nullptr;
         android_vulkan::ShapeRef                    _shapeBox {};
 

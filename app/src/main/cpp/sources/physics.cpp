@@ -143,12 +143,12 @@ void Physics::PenetrationTest ( std::vector<Penetration> &result,
             Shape const& bodyShape = body->GetShape ();
             gjk.Reset ();
 
-            if ( !( bodyShape.GetCollisionGroups () & groups ) || !gjk.Run ( s, bodyShape ) )
+            if ( !( bodyShape.GetCollisionGroups () & groups ) || !gjk.Run ( bodyShape, s ) )
                 continue;
 
             epa.Reset ();
 
-            if ( !epa.Run ( gjk.GetSimplex (), s, bodyShape ) )
+            if ( !epa.Run ( gjk.GetSimplex (), bodyShape, s ) )
                 continue;
 
             result.emplace_back (

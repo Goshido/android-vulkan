@@ -21,6 +21,8 @@ struct Penetration final
 {
     RigidBodyRef    _body;
     float           _depth;
+
+    // The direction in world space to move testing shape to resolve penetration.
     GXVec3          _normal;
 };
 

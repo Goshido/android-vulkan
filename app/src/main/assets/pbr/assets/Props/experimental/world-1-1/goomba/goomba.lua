@@ -3,7 +3,12 @@ require "av://engine/logger.lua"
 
 
 -- Constants
-local SPEED = 44.44448
+local SPEED = 1.3889
+
+local GRAVITY = GXVec3 ()
+GRAVITY:Init ( 0.0, -9.81, 0.0 )
+
+local LANDING_FACTOR = -1.0e-3
 
 -- Class declaration
 local Goomba = {}
@@ -82,6 +87,11 @@ local function OnActorConstructed ( self, actor )
 
     self:GetOrigin ( min, actor, "BodyMin" )
     self:GetOrigin ( max, actor, "BodyMax" )
+    self._bodySize = self:GetSensorSize ( min, max )
+
+    self._bodyOffset = GXVec3 ()
+    self._bodyOffset:Init ( 0.0, 0.0, 0.0 )
+
     local origin = self:GetCenter ( min, max )
 
     self._localMatrix = GXMat4 ()
@@ -114,6 +124,24 @@ local function OnActorConstructed ( self, actor )
     self._sensorRightSize = self:GetSensorSize ( min, max )
     self._sensorRightOffset = self:GetSensorOffset ( origin, min, max )
     self._sensorRightParent = self:GetSensorParentTransform ( self._sensorRight, toParentTransform )
+
+    self._horizontalVelocity:Init ( 0.0, 0.0, SPEED )
+    self._verticalVelocity:Init ( 0.0, 0.0, 0.0 )
+end
+
+local function OnPrePhysics ( self, deltaTime )
+    local vertical = self._verticalVelocity
+    vertical:SumScaled ( vertical, deltaTime, GRAVITY )
+
+    local velocity = GXVec3 ()
+    velocity:Sum ( self._horizontalVelocity, vertical )
+
+    local localMatrix = self._localMatrix
+    local origin = GXVec3 ()
+    localMatrix:GetW ( origin )
+
+    origin:SumScaled ( origin, deltaTime * g_scene:GetPhysicsToRendererScaleFactor (), velocity )
+    localMatrix:SetW ( origin )
 end
 
 local function OnPostPhysics ( self, deltaTime )
@@ -123,9 +151,7 @@ local function OnPostPhysics ( self, deltaTime )
     localMatrix:GetW ( origin )
     origin:MultiplyScalar ( origin, g_scene:GetRendererToPhysicsScaleFactor () )
 
-    self:GetPenetrations ( self._sensorTopSize, self._sensorTopOffset, localMatrix, origin )
-
-    local p = self:GetPenetrations ( self._sensorLeftSize, self._sensorLeftOffset, localMatrix, origin )
+    local p = self:GetPenetrations ( self._bodySize, self._bodyOffset, localMatrix, origin )
     local count = p._count
 
     LogE ( ">>>" )
@@ -138,18 +164,27 @@ local function OnPostPhysics ( self, deltaTime )
         LogE ( "    Penetration #%d", i )
         LogE ( "        Normal: %s", pn._normal )
         LogE ( "        Depth: %f", pn._depth )
+
+        origin:SumScaled ( origin, pn._depth, pn._normal )
+
+        if GRAVITY:DotProduct ( pn._normal ) < LANDING_FACTOR then
+            self._verticalVelocity:Init ( 0.0, 0.0, 0.0 )
+        end
     end
 
     LogE ( "<<<" )
 
-    self:GetPenetrations ( self._sensorRightSize, self._sensorRightOffset, localMatrix, origin )
-
-    -- TODO
+    origin:MultiplyScalar ( origin, g_scene:GetPhysicsToRendererScaleFactor () )
+    self:MoveTo ( origin )
 end
 
 -- Metamethods
 local function Constructor ( self, handle, params )
     local obj = ScriptComponent ( handle )
+
+    -- Data
+    obj._horizontalVelocity = GXVec3 ()
+    obj._verticalVelocity = GXVec3 ()
 
     -- Methods
     obj.GetCenter = GetCenter
@@ -163,7 +198,9 @@ local function Constructor ( self, handle, params )
 
     -- Engine events
     obj.OnActorConstructed = OnActorConstructed
+    obj.OnPrePhysics = OnPrePhysics
     obj.OnPostPhysics = OnPostPhysics
+
     return obj
 end
 

@@ -1,5 +1,4 @@
 require "av://engine/script_component.lua"
-require "av://engine/logger.lua"
 
 
 -- Constants
@@ -129,6 +128,30 @@ local function OnActorConstructed ( self, actor )
     self._verticalVelocity:Init ( 0.0, 0.0, 0.0 )
 end
 
+local function OnPostPhysics ( self, deltaTime )
+    local localMatrix = self._localMatrix
+
+    local origin = GXVec3 ()
+    localMatrix:GetW ( origin )
+    origin:MultiplyScalar ( origin, g_scene:GetRendererToPhysicsScaleFactor () )
+
+    local p = self:GetPenetrations ( self._bodySize, self._bodyOffset, localMatrix, origin )
+    local count = p._count
+    local pns = p._penetrations
+
+    for i = 1, count do
+        local pn = pns[i];
+        origin:SumScaled ( origin, pn._depth, pn._normal )
+
+        if GRAVITY:DotProduct ( pn._normal ) < LANDING_FACTOR then
+            self._verticalVelocity:Init ( 0.0, 0.0, 0.0 )
+        end
+    end
+
+    origin:MultiplyScalar ( origin, g_scene:GetPhysicsToRendererScaleFactor () )
+    self:MoveTo ( origin )
+end
+
 local function OnPrePhysics ( self, deltaTime )
     local vertical = self._verticalVelocity
     vertical:SumScaled ( vertical, deltaTime, GRAVITY )
@@ -142,40 +165,6 @@ local function OnPrePhysics ( self, deltaTime )
 
     origin:SumScaled ( origin, deltaTime * g_scene:GetPhysicsToRendererScaleFactor (), velocity )
     localMatrix:SetW ( origin )
-end
-
-local function OnPostPhysics ( self, deltaTime )
-    local localMatrix = self._localMatrix
-
-    local origin = GXVec3 ()
-    localMatrix:GetW ( origin )
-    origin:MultiplyScalar ( origin, g_scene:GetRendererToPhysicsScaleFactor () )
-
-    local p = self:GetPenetrations ( self._bodySize, self._bodyOffset, localMatrix, origin )
-    local count = p._count
-
-    LogE ( ">>>" )
-    LogE ( "    Count: %d", count )
-
-    local pns = p._penetrations
-
-    for i = 1, count do
-        local pn = pns[i];
-        LogE ( "    Penetration #%d", i )
-        LogE ( "        Normal: %s", pn._normal )
-        LogE ( "        Depth: %f", pn._depth )
-
-        origin:SumScaled ( origin, pn._depth, pn._normal )
-
-        if GRAVITY:DotProduct ( pn._normal ) < LANDING_FACTOR then
-            self._verticalVelocity:Init ( 0.0, 0.0, 0.0 )
-        end
-    end
-
-    LogE ( "<<<" )
-
-    origin:MultiplyScalar ( origin, g_scene:GetPhysicsToRendererScaleFactor () )
-    self:MoveTo ( origin )
 end
 
 -- Metamethods
@@ -194,12 +183,11 @@ local function Constructor ( self, handle, params )
     obj.GetSensorParentTransform = GetSensorParentTransform
     obj.GetSensorSize = GetSensorSize
     obj.MoveTo = MoveTo
-    obj.UpdateRoute = UpdateRoute
 
     -- Engine events
     obj.OnActorConstructed = OnActorConstructed
-    obj.OnPrePhysics = OnPrePhysics
     obj.OnPostPhysics = OnPostPhysics
+    obj.OnPrePhysics = OnPrePhysics
 
     return obj
 end

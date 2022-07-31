@@ -12,6 +12,7 @@
 - [`AppendActor ( actor )`](#method-append-actor)
 - [`FindActor ( name )`](#method-find-actor)
 - [`FindActors ( name )`](#method-find-actors)
+- [`GetPenetrationBox ( localMatrix, size, groups )`](#method-get-penetration-box)
 - [`GetPhysicsToRendererScaleFactor ()`](#method-get-physics-to-renderer-scale-factor)
 - [`GetRendererToPhysicsScaleFactor ()`](#method-get-renderer-to-physics-scale-factor)
 - [`GetRenderTargetAspectRatio ()`](#method-get-render-target-aspect-ratio)
@@ -139,6 +140,75 @@ lamp1:AppendComponent ( PointLightComponent ( "Light" ) )
 g_scene:AppenActor ( lamp1 )
 
 local lamps = g_scene:FindActors ( "Lamp" )
+```
+
+## <a id="method-get-penetration-box">`GetPenetrationBox ( localMatrix, size, groups )`</a>
+
+Method performs penetration test of box shape against physical scene. As a result method returns all colliding objects with information how to resolve each penetration.
+
+The test result is described by the following <a id="table-penetration">`Penetration`</a> table:
+
+```lua
+local Penetration = {
+    _count = ... as integer,
+
+    _penetrations = ... as array of tables,
+    {
+        1 = {
+            ._depth = ... as number,
+            ._normal = ... as GXVec3
+        },
+
+        2 = {
+            ._depth = ... as number,
+            ._normal = ... as GXVec3
+        },
+
+        ...
+
+        n = {
+            ._depth = ... as number,
+            ._normal = ... as GXVec3
+        }
+    }
+}
+```
+
+`_count` contains number of detected penetrations. The `_penetrations` field contains an array with penetration information. Note you **MUST NOT** rely on `_penetration` array length beause it could be bigger than actual number of penetrations for performance reasons. The Indexing is from `1` to be consistent with _Lua_ conventions. `_depth` and `_normal` fields contain information how to resolve each penetration. This values describe how to move shape box to eliminate penetration. Note that values are in the [physics coordinate system](./rigid-body-component.md#note-physics-coordinate-system).
+
+**Parameters:**
+
+- `localMatrix` [_required, readonly, [GXMat4](./gx-mat4.md)_]: transformation matrix for box shape in [physics coordinate system](./rigid-body-component.md#note-physics-coordinate-system). Origin is in the centre of the box shape
+- `size` [_required, readonly, [GXVec3](./gx-vec3.md)_]: width, height and depth of the box in [physics coordinate system](./rigid-body-component.md#note-physics-coordinate-system)
+- `groups` [_required, readonly, integer_]: 32-bitmask with collision groups which will be used during the test
+
+**Return values:**
+
+- `#1` [_required, readonly, [Penetration](#table-penetration)_]: penetration test result. You **MUST NOT** modify any field of this table because it's tightly connected with internal engine implementation for performance reasons. You **SHOULD** copy any data from the structure if needed. Caching results could trigger **undefined behaviour**
+
+**Example:**
+
+```lua
+require "av://engine/gx_quat.lua"
+
+
+local axis = GXVec3 ()
+axis:Init ( 7.77, 3.33, 1.0 )
+axis:Normalize ()
+
+local rotation = GXQuat ()
+rotation:FromAxisAngle ( axis, math.rad ( 77.7 ) )
+
+local origin = GXVec3 ()
+origin:Init ( 1.0, 333.0, 0.0 )
+
+local transform = GXMat4 ()
+transform:FromFast ( rotation, origin )
+
+local size = GXVec3 ()
+size:Init ( 7.0, 3.0, 15.0 )
+
+local penetrations = g_scene:GetPenetrationBox ( transform, size, 0xFFFFFFFF )
 ```
 
 ## <a id="method-get-physics-to-renderer-scale-factor">`GetPhysicsToRendererScaleFactor ()`</a>

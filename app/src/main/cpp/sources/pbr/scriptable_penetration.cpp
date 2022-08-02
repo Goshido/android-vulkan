@@ -15,6 +15,70 @@ constexpr static int INITIAL_CAPACITY = 128;
 
 //----------------------------------------------------------------------------------------------------------------------
 
+bool ScriptablePenetration::Init ( lua_State &vm ) noexcept
+{
+    if ( !lua_checkstack ( &vm, 8 ) )
+    {
+        android_vulkan::LogError ( "pbr::ScriptablePenetration::Init - Stack too small." );
+        return false;
+    }
+
+    lua_createtable ( &vm, 0, 2 );
+    lua_setglobal ( &vm, GLOBAL_NAME );
+    lua_getglobal ( &vm, GLOBAL_NAME );
+
+    lua_pushlstring ( &vm, FIELD_COUNT.data (), FIELD_COUNT.size () );
+    lua_pushinteger ( &vm, 0 );
+    lua_rawset ( &vm, -3 );
+
+    lua_pushlstring ( &vm, FIELD_PENETRATIONS.data (), FIELD_PENETRATIONS.size () );
+    lua_createtable ( &vm, INITIAL_CAPACITY, 0 );
+    lua_rawset ( &vm, -3 );
+
+    lua_pushlstring ( &vm, FIELD_PENETRATIONS.data (), FIELD_PENETRATIONS.size () );
+    lua_rawget ( &vm, -2 );
+    int const penetrationIndex = lua_gettop ( &vm );
+
+    if ( !FindVec3Constructor ( vm ) )
+    {
+        lua_pop ( &vm, 2 );
+        return false;
+    }
+
+
+    int const vec3Constructor = lua_gettop ( &vm );
+    constexpr GXVec3 normal ( 0.0F, 1.0F, 0.0F );
+
+    _normals.reserve ( static_cast<size_t> ( INITIAL_CAPACITY ) );
+
+    for ( int i = 1; i <= INITIAL_CAPACITY; ++i )
+    {
+        if ( !Append ( vm, vec3Constructor, penetrationIndex, 0.0, normal ) )
+        {
+            lua_pop ( &vm, 3 );
+            return false;
+        }
+    }
+
+    lua_pop ( &vm, 3 );
+    return true;
+}
+
+void ScriptablePenetration::Destroy ( lua_State &vm ) noexcept
+{
+    _normals.clear ();
+    _normals.shrink_to_fit ();
+
+    if ( !lua_checkstack ( &vm, 1 ) )
+    {
+        android_vulkan::LogError ( "pbr::ScriptablePenetration::Init - Stack too small." );
+        return;
+    }
+
+    lua_pushnil ( &vm );
+    lua_setglobal ( &vm, GLOBAL_NAME );
+}
+
 bool ScriptablePenetration::PublishResult ( lua_State &vm,
     std::vector<android_vulkan::Penetration> const &penetrations
 ) noexcept
@@ -96,61 +160,6 @@ bool ScriptablePenetration::PublishResult ( lua_State &vm,
     return true;
 }
 
-bool ScriptablePenetration::Init ( lua_State &vm ) noexcept
-{
-    if ( !lua_checkstack ( &vm, 8 ) )
-    {
-        android_vulkan::LogError ( "pbr::ScriptablePenetration::Init - Stack too small." );
-        return false;
-    }
-
-    lua_createtable ( &vm, 0, 2 );
-    lua_setglobal ( &vm, GLOBAL_NAME );
-    lua_getglobal ( &vm, GLOBAL_NAME );
-
-    lua_pushlstring ( &vm, FIELD_COUNT.data (), FIELD_COUNT.size () );
-    lua_pushinteger ( &vm, 0 );
-    lua_rawset ( &vm, -3 );
-
-    lua_pushlstring ( &vm, FIELD_PENETRATIONS.data (), FIELD_PENETRATIONS.size () );
-    lua_createtable ( &vm, INITIAL_CAPACITY, 0 );
-    lua_rawset ( &vm, -3 );
-
-    lua_pushlstring ( &vm, FIELD_PENETRATIONS.data (), FIELD_PENETRATIONS.size () );
-    lua_rawget ( &vm, -2 );
-    int const penetrationIndex = lua_gettop ( &vm );
-
-    if ( !FindVec3Constructor ( vm ) )
-    {
-        lua_pop ( &vm, 2 );
-        return false;
-    }
-
-
-    int const vec3Constructor = lua_gettop ( &vm );
-    constexpr GXVec3 normal ( 0.0F, 1.0F, 0.0F );
-
-    _normals.reserve ( static_cast<size_t> ( INITIAL_CAPACITY ) );
-
-    for ( int i = 1; i <= INITIAL_CAPACITY; ++i )
-    {
-        if ( !Append ( vm, vec3Constructor, penetrationIndex, 0.0, normal ) )
-        {
-            lua_pop ( &vm, 3 );
-            return false;
-        }
-    }
-
-    lua_pop ( &vm, 3 );
-    return true;
-}
-
-void ScriptablePenetration::Destroy () noexcept
-{
-    _normals.clear ();
-    _normals.shrink_to_fit ();
-}
-
 bool ScriptablePenetration::Append ( lua_State &vm,
     int vec3Constructor,
     int penetrationIndex,
@@ -179,7 +188,12 @@ bool ScriptablePenetration::Append ( lua_State &vm,
     lua_pushlstring ( &vm, fieldNormal.data (), fieldNormal.size () );
 
     lua_pushvalue ( &vm, vec3Constructor );
-    lua_pcall ( &vm, 0, 1, ScriptEngine::GetErrorHandlerIndex () );
+
+    if ( lua_pcall ( &vm, 0, 1, ScriptEngine::GetErrorHandlerIndex () ) != LUA_OK )
+    {
+        lua_pop ( &vm, 4 );
+        return false;
+    }
 
     lua_pushlstring ( &vm, fieldHandle.data (), fieldHandle.size () );
 

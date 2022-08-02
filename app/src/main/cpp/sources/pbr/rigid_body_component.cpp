@@ -111,11 +111,6 @@ RigidBodyComponent::RigidBodyComponent ( android_vulkan::ShapeRef &shape, std::s
     Setup ( shape );
 }
 
-android_vulkan::RigidBodyRef& RigidBodyComponent::GetRigidBody () noexcept
-{
-    return _rigidBody;
-}
-
 bool RigidBodyComponent::Register ( Actor &actor, android_vulkan::Physics &physics, lua_State &vm ) noexcept
 {
     _actor = &actor;
@@ -123,7 +118,7 @@ bool RigidBodyComponent::Register ( Actor &actor, android_vulkan::Physics &physi
     if ( !physics.AddRigidBody ( _rigidBody ) )
         return false;
 
-    if ( !lua_checkstack ( &vm, 2 ) )
+    if ( !lua_checkstack ( &vm, 3 ) )
     {
         android_vulkan::LogError ( "pbr::ScriptComponent::Register - Stack too small." );
         return false;
@@ -131,8 +126,9 @@ bool RigidBodyComponent::Register ( Actor &actor, android_vulkan::Physics &physi
 
     lua_pushvalue ( &vm, _registerRigidBodyComponentIndex );
     lua_pushlightuserdata ( &vm, this );
+    lua_pushlightuserdata ( &vm, _rigidBody.get () );
 
-    return lua_pcall ( &vm, 1, 1, ScriptEngine::GetErrorHandlerIndex () ) == LUA_OK;
+    return lua_pcall ( &vm, 2, 1, ScriptEngine::GetErrorHandlerIndex () ) == LUA_OK;
 }
 
 bool RigidBodyComponent::Init ( lua_State &vm ) noexcept

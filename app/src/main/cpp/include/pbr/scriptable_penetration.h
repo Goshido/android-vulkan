@@ -24,12 +24,12 @@ class ScriptablePenetration final
 
         ~ScriptablePenetration () = default;
 
+        [[nodiscard]] bool Init ( lua_State &vm ) noexcept;
+        void Destroy ( lua_State &vm ) noexcept;
+
         [[nodiscard]] bool PublishResult ( lua_State &vm,
             std::vector<android_vulkan::Penetration> const &penetrations
         ) noexcept;
-
-        [[nodiscard]] bool Init ( lua_State &vm ) noexcept;
-        void Destroy () noexcept;
 
     private:
         [[nodiscard]] bool Append ( lua_State &vm,

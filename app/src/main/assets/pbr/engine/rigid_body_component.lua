@@ -3,6 +3,13 @@ require "av://engine/component.lua"
 
 RigidBodyComponent = {}
 
+-- C++ internal
+local g_Storage = {}
+
+function FindRigidBodyComponent ( nativeRigidBody )
+    return g_Storage[ nativeRigidBody ]
+end
+
 -- Methods
 local function AddForce ( self, force, point, forceAwake )
     assert ( type ( self ) == "table" and self._type == eObjectType.RigidBodyComponent,
@@ -62,7 +69,7 @@ local function SetVelocityLinear ( self, velocity, forceAwake )
 end
 
 -- This function is exported to C++ side.
-function RegisterRigidBodyComponent ( handle )
+function RegisterRigidBodyComponent ( handle, nativeRigidBody )
     local obj = Component ( eObjectType.RigidBodyComponent, handle )
 
     -- Methods
@@ -71,12 +78,15 @@ function RegisterRigidBodyComponent ( handle )
     obj.GetVelocityLinear = GetVelocityLinear
     obj.SetVelocityLinear = SetVelocityLinear
 
+    g_Storage[ nativeRigidBody ] = obj
+
     return obj
 end
 
 -- Metamethods
 local function Constructor ( self, name )
-    return RegisterRigidBodyComponent ( av_RigidBodyComponentCreate ( name ) )
+    handle, nativeRigidBody = av_RigidBodyComponentCreate ( name )
+    return RegisterRigidBodyComponent ( handle, nativeRigidBody )
 end
 
 setmetatable ( RigidBodyComponent, { __call = Constructor } )

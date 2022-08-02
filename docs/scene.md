@@ -20,6 +20,7 @@
 - [`GetRenderTargetHeight ()`](#method-get-render-target-height)
 - [`Quit ()`](#method-quit)
 - [`SetActiveCamera ( camera )`](#method-set-active-camera)
+- [`SweepTestBox ( localMatrix, size, groups )`](#method-sweep-test-box)
 
 ## <a id="brief">Brief</a>
 
@@ -174,7 +175,7 @@ local Penetration = {
 }
 ```
 
-`_count` contains number of detected penetrations. The `_penetrations` field contains an array with penetration information. Note you **MUST NOT** rely on `_penetration` array length beause it could be bigger than actual number of penetrations for performance reasons. The Indexing is from `1` to be consistent with _Lua_ conventions. `_depth` and `_normal` fields contain information how to resolve each penetration. This values describe how to move shape box to eliminate penetration. Note that values are in the [physics coordinate system](./rigid-body-component.md#note-physics-coordinate-system).
+`_count` contains number of detected penetrations. The `_penetrations` field contains an array with penetration information. Note you **MUST NOT** rely on `_penetration` array length beause it could be bigger than actual number of penetrations for performance reasons. The indexing is from `1` to be consistent with _Lua_ conventions. `_depth` and `_normal` fields contain information how to resolve each penetration. This values describe how to move shape box to eliminate penetration. Note that values are in the [physics coordinate system](./rigid-body-component.md#note-physics-coordinate-system).
 
 **Parameters:**
 
@@ -394,4 +395,63 @@ local height = 1080.0
 cameraComponent:SetProjection ( math.rad ( 60.0 ), width / height, 1.0e-1, 1.0e+4 )
 
 g_scene:SetActiveCamera ( cameraComponent )
+```
+
+## <a id="method-sweep-test-box">`SweepTestBox ( localMatrix, size, groups )`</a>
+
+Method performs sweep test of box shape against physical scene. As a result method returns all objects which are covered by the box shape.
+
+The test result is described by the following <a id="table-sweep-test-result">`SweepTestResult`</a> table:
+
+```lua
+local SweepTestResult = {
+    _count = ... as integer,
+
+    _bodies = ... as array of tables,
+    {
+        1 = ... as RigidBodyComponent,
+        2 = ... as RigidBodyComponent,
+
+        ...
+
+        n = ... as RigidBodyComponent
+    }
+}
+```
+
+`_count` contains number of rigid body components after sweep test. The `_bodies` field contains an array with [_RigidBodyComponent_](./rigid-body-component.md) object which passed sweep test. Note you **MUST NOT** rely on `_bodies` array length beause it could be bigger than actual number of results for performance reasons. The indexing is from `1` to be consistent with _Lua_ conventions.
+
+**Parameters:**
+
+- `localMatrix` [_required, readonly, [GXMat4](./gx-mat4.md)_]: transformation matrix for box shape in [physics coordinate system](./rigid-body-component.md#note-physics-coordinate-system). Origin is in the centre of the box shape
+- `size` [_required, readonly, [GXVec3](./gx-vec3.md)_]: width, height and depth of the box in [physics coordinate system](./rigid-body-component.md#note-physics-coordinate-system)
+- `groups` [_required, readonly, integer_]: 32-bitmask with collision groups which will be used during the test
+
+**Return values:**
+
+- `#1` [_required, readonly, [SweepTestResult](#table-sweep-test-result)_]: sweep test result. You **MUST NOT** modify any field of this table because it's tightly connected with internal engine implementation for performance reasons. You **SHOULD** copy any data from the structure if needed. Caching results could trigger **undefined behaviour**
+
+**Example:**
+
+```lua
+require "av://engine/gx_quat.lua"
+
+
+local axis = GXVec3 ()
+axis:Init ( 7.77, 3.33, 1.0 )
+axis:Normalize ()
+
+local rotation = GXQuat ()
+rotation:FromAxisAngle ( axis, math.rad ( 77.7 ) )
+
+local origin = GXVec3 ()
+origin:Init ( 1.0, 333.0, 0.0 )
+
+local transform = GXMat4 ()
+transform:FromFast ( rotation, origin )
+
+local size = GXVec3 ()
+size:Init ( 7.0, 3.0, 15.0 )
+
+local sweep = g_scene:SweepTestBox ( transform, size, 0xFFFFFFFF )
 ```

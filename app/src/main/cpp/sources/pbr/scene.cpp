@@ -5,6 +5,7 @@
 #include <pbr/script_engine.h>
 #include <pbr/scriptable_gxmat4.h>
 #include <pbr/scriptable_gxvec3.h>
+#include <pbr/scriptable_sweep_test_result.h>
 #include <core.h>
 #include <file.h>
 #include <shape_box.h>
@@ -100,40 +101,37 @@ bool Scene::OnInitDevice ( android_vulkan::Physics &physics ) noexcept
             .name = "av_SceneGetPenetrationBox",
             .func = &Scene::OnGetPenetrationBox
         },
-
         {
             .name = "av_SceneGetPhysicsToRendererScaleFactor",
             .func = &Scene::OnGetPhysicsToRendererScaleFactor
         },
-
         {
             .name = "av_SceneGetRendererToPhysicsScaleFactor",
             .func = &Scene::OnGetRendererToPhysicsScaleFactor
         },
-
         {
             .name = "av_SceneGetRenderTargetAspectRatio",
             .func = &Scene::OnGetRenderTargetAspectRatio
         },
-
         {
             .name = "av_SceneGetRenderTargetWidth",
             .func = &Scene::OnGetRenderTargetWidth
         },
-
         {
             .name = "av_SceneGetRenderTargetHeight",
             .func = &Scene::OnGetRenderTargetHeight
         },
-
         {
             .name = "av_SceneQuit",
             .func = &Scene::OnQuit
         },
-
         {
             .name = "av_SceneSetActiveCamera",
             .func = &Scene::OnSetActiveCamera
+        },
+        {
+            .name = "av_SceneSweepTestBox",
+            .func = &Scene::OnSweepTestBox
         }
     };
 
@@ -173,12 +171,13 @@ bool Scene::OnInitDevice ( android_vulkan::Physics &physics ) noexcept
     if ( !bind ( "OnUpdate", _onUpdateIndex ) )
         return false;
 
-    return _scriptablePenetration.Init ( *_vm ) && _gamepad.Init ( *_vm );
+    return _scriptablePenetration.Init ( *_vm ) && ScriptableSweepTestResult::Init ( *_vm ) && _gamepad.Init ( *_vm );
 }
 
 void Scene::OnDestroyDevice () noexcept
 {
-    _scriptablePenetration.Destroy ();
+    ScriptableSweepTestResult::Destroy ( *_vm );
+    _scriptablePenetration.Destroy ( *_vm );
     _gamepad.Destroy ();
     _freeTransferResourceList.clear ();
     _renderableList.clear ();
@@ -187,8 +186,13 @@ void Scene::OnDestroyDevice () noexcept
     ScriptEngine::Destroy ();
 
     _physics = nullptr;
+
     _penetrations.clear ();
     _penetrations.shrink_to_fit ();
+
+    _sweepTestResult.clear ();
+    _sweepTestResult.shrink_to_fit ();
+
     _shapeBox = nullptr;
 
     _appendActorIndex = std::numeric_limits<int>::max ();
@@ -394,10 +398,7 @@ void Scene::Submit ( RenderSession &renderSession ) noexcept
     }
 }
 
-std::vector<android_vulkan::Penetration> const& Scene::DoPenetrationBox ( GXMat4 const &local,
-    GXVec3 const &size,
-    uint32_t groups
-) noexcept
+int Scene::DoPenetrationBox ( lua_State &vm, GXMat4 const &local, GXVec3 const &size, uint32_t groups ) noexcept
 {
     // NOLINTNEXTLINE - downcast.
     auto& boxShape = static_cast<android_vulkan::ShapeBox&> ( *_shapeBox );
@@ -405,21 +406,29 @@ std::vector<android_vulkan::Penetration> const& Scene::DoPenetrationBox ( GXMat4
     boxShape.Resize ( size );
     boxShape.UpdateCacheData ( local );
     _physics->PenetrationTest ( _penetrations, _epa, _shapeBox, groups );
+    return static_cast<int> ( _scriptablePenetration.PublishResult ( vm, _penetrations ) );
+}
 
-    return _penetrations;
+int Scene::DoSweepTestBox ( lua_State &vm, GXMat4 const &local, GXVec3 const &size, uint32_t groups ) noexcept
+{
+    // NOLINTNEXTLINE - downcast.
+    auto& boxShape = static_cast<android_vulkan::ShapeBox&> ( *_shapeBox );
+
+    boxShape.Resize ( size );
+    boxShape.UpdateCacheData ( local );
+    _physics->SweepTest ( _sweepTestResult, _shapeBox, groups );
+    return static_cast<int> ( ScriptableSweepTestResult::PublishResult ( vm, _sweepTestResult ) );
 }
 
 int Scene::OnGetPenetrationBox ( lua_State* state )
 {
     auto& self = *static_cast<Scene*> ( lua_touserdata ( state, 1 ) );
 
-    std::vector<android_vulkan::Penetration> const& penetrations = self.DoPenetrationBox (
+    return self.DoPenetrationBox ( *state,
         ScriptableGXMat4::Extract ( state, 2 ),
         ScriptableGXVec3::Extract ( state, 3 ),
         lua_tointeger ( state, 4 )
     );
-
-    return static_cast<int> ( self._scriptablePenetration.PublishResult ( *state, penetrations ) );
 }
 
 int Scene::OnGetPhysicsToRendererScaleFactor ( lua_State* state )
@@ -498,6 +507,17 @@ int Scene::OnSetActiveCamera ( lua_State* state )
     auto& self = *static_cast<Scene*> ( lua_touserdata ( state, 1 ) );
     self._camera = static_cast<CameraComponent*> ( lua_touserdata ( state, 2 ) );
     return 0;
+}
+
+int Scene::OnSweepTestBox ( lua_State* state )
+{
+    auto& self = *static_cast<Scene*> ( lua_touserdata ( state, 1 ) );
+
+    return self.DoSweepTestBox ( *state,
+        ScriptableGXMat4::Extract ( state, 2 ),
+        ScriptableGXVec3::Extract ( state, 3 ),
+        lua_tointeger ( state, 4 )
+    );
 }
 
 } // namespace pbr

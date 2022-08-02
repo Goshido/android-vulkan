@@ -50,6 +50,7 @@ class ScriptableGXVec3 final
     private:
         static void Insert ( Item* item, Item*& list ) noexcept;
 
+        [[nodiscard]] static int OnClone ( lua_State* state );
         [[nodiscard]] static int OnCreate ( lua_State* state );
         [[nodiscard]] static int OnCrossProduct ( lua_State* state );
         [[nodiscard]] static int OnDestroy ( lua_State* state );

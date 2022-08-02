@@ -162,6 +162,23 @@ local function SetActiveCamera ( self, camera )
     av_SceneSetActiveCamera ( self._handle, camera._handle )
 end
 
+local function SweepTestBox ( self, localMatrix, size, groups )
+    assert ( type ( self ) == "table" and self._type == eObjectType.Scene,
+        [[Scene:SweepTestBox - Calling not via ":" syntax.]]
+    )
+
+    assert ( type ( localMatrix ) == "table" and localMatrix._type == eObjectType.GXMat4,
+        [[Scene:SweepTestBox - "localMatrix" is not a GXMat4.]]
+    )
+
+    assert ( type ( size ) == "table" and size._type == eObjectType.GXVec3,
+        [[Scene:SweepTestBox - "size" is not a GXVec3.]]
+    )
+
+    assert ( type ( groups ) == "number", [[Scene:SweepTestBox - "groups" is not a number.]] )
+    return av_SceneSweepTestBox ( self._handle, localMatrix._handle, size._handle, groups )
+end
+
 -- Metamethods
 local function Constructor ( self, handle )
     local obj = Object ( eObjectType.Scene )
@@ -192,6 +209,7 @@ local function Constructor ( self, handle )
     obj.OnUpdate = OnUpdate
     obj.Quit = Quit
     obj.SetActiveCamera = SetActiveCamera
+    obj.SweepTestBox = SweepTestBox
 
     return obj
 end

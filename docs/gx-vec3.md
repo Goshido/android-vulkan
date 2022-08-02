@@ -9,6 +9,7 @@ require "av://engine/gx_vec3.lua"
 - [_Brief_](#brief)
 - [_Metamethods_](#metamethods)
 - [`Constructor`](#constructor)
+- [`Clone ( other )`](#method-clone)
 - [`CrossProduct ( a, b )`](#method-cross-product)
 - [`Distance ( other )`](#method-distance)
 - [`DotProduct ( other )`](#method-dot-product)
@@ -101,6 +102,31 @@ require "av://engine/gx_vec3.lua"
 
 
 local v = GXVec3 ()
+```
+
+## <a id="method-clone">`Clone ( other )`</a>
+
+Method clones content of vector to the current vector.
+
+**Parameters:**
+
+- `other` [_required, readonly, [GXVec3](./gx-vec3.md)_]: vector to clone
+
+**Return values:**
+
+- none
+
+**Example:**
+
+```lua
+require "av://engine/gx_vec3.lua"
+
+
+local vector = GXVec3 ()
+vector:Init ( 777.0, 3.33, 1.0 )
+
+local vectorCopy = GXVec3 ()
+vectorCopy:Clone ( vector )
 ```
 
 ## <a id="method-cross-product">`CrossProduct ( a, b )`</a>

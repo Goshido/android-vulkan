@@ -14,35 +14,36 @@ namespace pbr {
 class Scene final
 {
     private:
-        std::deque<ActorRef>                        _actors {};
+        std::deque<ActorRef>                            _actors {};
 
-        CameraComponent*                            _camera = nullptr;
-        CameraComponent                             _defaultCamera { "Default Camera" };
+        CameraComponent*                                _camera = nullptr;
+        CameraComponent                                 _defaultCamera { "Default Camera" };
 
-        android_vulkan::EPA                         _epa {};
-        ScriptableGamepad                           _gamepad {};
-        std::vector<android_vulkan::Penetration>    _penetrations {};
-        ScriptablePenetration                       _scriptablePenetration {};
-        android_vulkan::Physics*                    _physics = nullptr;
-        android_vulkan::ShapeRef                    _shapeBox {};
+        android_vulkan::EPA                             _epa {};
+        ScriptableGamepad                               _gamepad {};
+        std::vector<android_vulkan::Penetration>        _penetrations {};
+        android_vulkan::Physics*                        _physics = nullptr;
+        ScriptablePenetration                           _scriptablePenetration {};
+        android_vulkan::ShapeRef                        _shapeBox {};
+        std::vector<android_vulkan::RigidBodyRef>       _sweepTestResult {};
 
-        ComponentList                               _freeTransferResourceList {};
-        ComponentList                               _renderableList {};
+        ComponentList                                   _freeTransferResourceList {};
+        ComponentList                                   _renderableList {};
 
-        lua_Number                                  _aspectRatio = 1.0;
-        lua_Integer                                 _width = -1;
-        lua_Integer                                 _height = -1;
+        lua_Number                                      _aspectRatio = 1.0;
+        lua_Integer                                     _width = -1;
+        lua_Integer                                     _height = -1;
 
-        int                                         _appendActorIndex = std::numeric_limits<int>::max ();
-        int                                         _onInputIndex = std::numeric_limits<int>::max ();
-        int                                         _onPostPhysicsIndex = std::numeric_limits<int>::max ();
-        int                                         _onPrePhysicsIndex = std::numeric_limits<int>::max ();
-        int                                         _onRenderTargetChangedIndex = std::numeric_limits<int>::max ();
-        int                                         _onUpdateIndex = std::numeric_limits<int>::max ();
+        int                                             _appendActorIndex = std::numeric_limits<int>::max ();
+        int                                             _onInputIndex = std::numeric_limits<int>::max ();
+        int                                             _onPostPhysicsIndex = std::numeric_limits<int>::max ();
+        int                                             _onPrePhysicsIndex = std::numeric_limits<int>::max ();
+        int                                             _onRenderTargetChangedIndex = std::numeric_limits<int>::max ();
+        int                                             _onUpdateIndex = std::numeric_limits<int>::max ();
 
-        int                                         _sceneHandle = std::numeric_limits<int>::max ();
+        int                                             _sceneHandle = std::numeric_limits<int>::max ();
 
-        lua_State*                                  _vm = nullptr;
+        lua_State*                                      _vm = nullptr;
 
     public:
         Scene () = default;
@@ -82,7 +83,14 @@ class Scene final
         void Submit ( RenderSession &renderSession ) noexcept;
 
     private:
-        [[nodiscard]] std::vector<android_vulkan::Penetration> const& DoPenetrationBox ( GXMat4 const &local,
+        [[nodiscard]] int DoPenetrationBox ( lua_State &vm,
+            GXMat4 const &local,
+            GXVec3 const &size,
+            uint32_t groups
+        ) noexcept;
+
+        [[nodiscard]] int DoSweepTestBox ( lua_State &vm,
+            GXMat4 const &local,
             GXVec3 const &size,
             uint32_t groups
         ) noexcept;
@@ -97,6 +105,7 @@ class Scene final
 
         [[nodiscard]] static int OnQuit ( lua_State* state );
         [[nodiscard]] static int OnSetActiveCamera ( lua_State* state );
+        [[nodiscard]] static int OnSweepTestBox ( lua_State* state );
 };
 
 } // namespace pbr

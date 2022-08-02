@@ -36,7 +36,6 @@ class RigidBodyComponent final : public Component
 
         ~RigidBodyComponent () override = default;
 
-        [[nodiscard]] android_vulkan::RigidBodyRef& GetRigidBody () noexcept;
         [[nodiscard]] bool Register ( Actor &actor, android_vulkan::Physics &physics, lua_State &vm ) noexcept;
 
         [[nodiscard]] static bool Init ( lua_State &vm ) noexcept;

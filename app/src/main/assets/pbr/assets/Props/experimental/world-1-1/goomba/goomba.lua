@@ -13,6 +13,22 @@ local LANDING_FACTOR = -1.0e-3
 local Goomba = {}
 
 -- Methods
+local function CheckMoveSensor ( self, size, offset, localMatrix, origin, velocity )
+    local alpha = GXVec3 ()
+    localMatrix:MultiplyAsNormal ( alpha, offset )
+    alpha:Sum ( alpha, origin )
+
+    local m = GXMat4 ()
+    m:Clone ( localMatrix )
+    m:SetW ( alpha )
+
+    local sweep = g_scene:SweepTestBox ( m, size, 0xFFFFFFFF )
+
+    if sweep._count ~= 0 and velocity:DotProduct ( self._horizontalVelocity ) < -0.5 then
+        self._horizontalVelocity:Clone ( velocity )
+    end
+end
+
 local function GetCenter ( self, min, max )
     local diff = GXVec3 ()
     diff:Subtract ( max, min )
@@ -26,18 +42,6 @@ local function GetOrigin ( self, origin, actor, component )
     local t = GXMat4 ()
     actor:FindComponent ( component ):GetTransform ( t )
     t:GetW ( origin )
-end
-
-local function GetPenetrations ( self, size, offset, localMatrix, origin )
-    local alpha = GXVec3 ()
-    localMatrix:MultiplyAsNormal ( alpha, offset )
-    alpha:Sum ( alpha, origin )
-
-    local m = GXMat4 ()
-    m:Clone ( localMatrix )
-    m:SetW ( alpha )
-
-    return g_scene:GetPenetrationBox ( m, size, 0xFFFFFFFF )
 end
 
 local function GetSensorOffset ( self, parentOrigin, actor, min, max )
@@ -77,6 +81,32 @@ local function MoveTo ( self, origin )
 
     attachment:Multiply ( self._sensorRightParent, m )
     self._sensorRight:SetLocal ( attachment )
+end
+
+local function ResolvePenetrations ( self, localMatrix, origin )
+    local alpha = GXVec3 ()
+    localMatrix:MultiplyAsNormal ( alpha, self._bodyOffset )
+    alpha:Sum ( alpha, origin )
+
+    local m = GXMat4 ()
+    m:Clone ( localMatrix )
+    m:SetW ( alpha )
+
+    local p = g_scene:GetPenetrationBox ( m, self._bodySize, 0xFFFFFFFF )
+    local count = p._count
+    local pns = p._penetrations
+
+    for i = 1, count do
+        local pn = pns[i];
+        origin:SumScaled ( origin, pn._depth, pn._normal )
+
+        if GRAVITY:DotProduct ( pn._normal ) < LANDING_FACTOR then
+            self._verticalVelocity:Init ( 0.0, 0.0, 0.0 )
+        end
+    end
+
+    origin:MultiplyScalar ( origin, g_scene:GetPhysicsToRendererScaleFactor () )
+    self:MoveTo ( origin )
 end
 
 -- Engine event handlers
@@ -135,21 +165,14 @@ local function OnPostPhysics ( self, deltaTime )
     localMatrix:GetW ( origin )
     origin:MultiplyScalar ( origin, g_scene:GetRendererToPhysicsScaleFactor () )
 
-    local p = self:GetPenetrations ( self._bodySize, self._bodyOffset, localMatrix, origin )
-    local count = p._count
-    local pns = p._penetrations
+    local velocity = GXVec3 ()
+    velocity:Init ( 0.0, 0.0, -SPEED )
+    self:CheckMoveSensor ( self._sensorRightSize, self._sensorRightOffset, localMatrix, origin, velocity )
 
-    for i = 1, count do
-        local pn = pns[i];
-        origin:SumScaled ( origin, pn._depth, pn._normal )
+    velocity:Reverse ()
+    self:CheckMoveSensor ( self._sensorLeftSize, self._sensorLeftOffset, localMatrix, origin, velocity )
 
-        if GRAVITY:DotProduct ( pn._normal ) < LANDING_FACTOR then
-            self._verticalVelocity:Init ( 0.0, 0.0, 0.0 )
-        end
-    end
-
-    origin:MultiplyScalar ( origin, g_scene:GetPhysicsToRendererScaleFactor () )
-    self:MoveTo ( origin )
+    self:ResolvePenetrations ( localMatrix, origin )
 end
 
 local function OnPrePhysics ( self, deltaTime )
@@ -176,13 +199,14 @@ local function Constructor ( self, handle, params )
     obj._verticalVelocity = GXVec3 ()
 
     -- Methods
+    obj.CheckMoveSensor = CheckMoveSensor
     obj.GetCenter = GetCenter
     obj.GetOrigin = GetOrigin
-    obj.GetPenetrations = GetPenetrations
     obj.GetSensorOffset = GetSensorOffset
     obj.GetSensorParentTransform = GetSensorParentTransform
     obj.GetSensorSize = GetSensorSize
     obj.MoveTo = MoveTo
+    obj.ResolvePenetrations = ResolvePenetrations
 
     -- Engine events
     obj.OnActorConstructed = OnActorConstructed

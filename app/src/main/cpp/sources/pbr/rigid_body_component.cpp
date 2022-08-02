@@ -153,22 +153,22 @@ bool RigidBodyComponent::Init ( lua_State &vm ) noexcept
             .name = "av_RigidBodyComponentAddForce",
             .func = &RigidBodyComponent::OnAddForce
         },
-
         {
             .name = "av_RigidBodyComponentCreate",
             .func = &RigidBodyComponent::OnCreate
         },
-
         {
             .name = "av_RigidBodyComponentGetLocation",
             .func = &RigidBodyComponent::OnGetLocation
         },
-
+        {
+            .name = "av_RigidBodyComponentSetLocation",
+            .func = &RigidBodyComponent::OnSetLocation
+        },
         {
             .name = "av_RigidBodyComponentGetVelocityLinear",
             .func = &RigidBodyComponent::OnGetVelocityLinear
         },
-
         {
             .name = "av_RigidBodyComponentSetVelocityLinear",
             .func = &RigidBodyComponent::OnSetVelocityLinear
@@ -211,6 +211,13 @@ int RigidBodyComponent::OnGetLocation ( lua_State* state )
 {
     auto const& self = *static_cast<RigidBodyComponent const*> ( lua_touserdata ( state, 1 ) );
     ScriptableGXVec3::Extract ( state, 2 ) = self._rigidBody->GetLocation ();
+    return 0;
+}
+
+int RigidBodyComponent::OnSetLocation ( lua_State* state )
+{
+    auto& self = *static_cast<RigidBodyComponent*> ( lua_touserdata ( state, 1 ) );
+    self._rigidBody->SetLocation ( ScriptableGXVec3::Extract ( state, 2 ), true );
     return 0;
 }
 

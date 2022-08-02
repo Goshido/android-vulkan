@@ -46,6 +46,7 @@ class RigidBodyComponent final : public Component
         [[nodiscard]] static int OnAddForce ( lua_State* state );
         [[nodiscard]] static int OnCreate ( lua_State* state );
         [[nodiscard]] static int OnGetLocation ( lua_State* state );
+        [[nodiscard]] static int OnSetLocation ( lua_State* state );
         [[nodiscard]] static int OnGetVelocityLinear ( lua_State* state );
         [[nodiscard]] static int OnSetVelocityLinear ( lua_State* state );
 

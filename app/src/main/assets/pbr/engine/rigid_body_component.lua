@@ -40,6 +40,18 @@ local function GetLocation ( self, location )
     av_RigidBodyComponentGetLocation ( self._handle, location._handle )
 end
 
+local function SetLocation ( self, location )
+    assert ( type ( self ) == "table" and self._type == eObjectType.RigidBodyComponent,
+        [[RigidBodyComponent:SetLocation - Calling not via ":" syntax.]]
+    )
+
+    assert ( type ( location ) == "table" and location._type == eObjectType.GXVec3,
+        [[RigidBodyComponent:SetLocation - "location" is not a GXVec3.]]
+    )
+
+    av_RigidBodyComponentSetLocation ( self._handle, location._handle )
+end
+
 local function GetVelocityLinear ( self, velocity )
     assert ( type ( self ) == "table" and self._type == eObjectType.RigidBodyComponent,
         [[RigidBodyComponent:GetVelocityLinear - Calling not via ":" syntax.]]
@@ -75,6 +87,7 @@ function RegisterRigidBodyComponent ( handle, nativeRigidBody )
     -- Methods
     obj.AddForce = AddForce
     obj.GetLocation = GetLocation
+    obj.SetLocation = SetLocation
     obj.GetVelocityLinear = GetVelocityLinear
     obj.SetVelocityLinear = SetVelocityLinear
 

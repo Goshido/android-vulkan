@@ -8,8 +8,8 @@ namespace pbr {
 constexpr static std::string_view FIELD_COUNT = "_count";
 constexpr static std::string_view FIELD_BODIES = "_bodies";
 
-constexpr static char const GLOBAL_FUNCTION_NAME[] = "FindRigidBodyComponent";
-constexpr static char const GLOBAL_TABLE_NAME[] = "av_scriptableSweepTestResult";
+constexpr static char const GLOBAL_FUNCTION[] = "FindRigidBodyComponent";
+constexpr static char const GLOBAL_TABLE[] = "av_scriptableSweepTestResult";
 
 constexpr static int INITIAL_CAPACITY = 128;
 
@@ -24,8 +24,8 @@ bool ScriptableSweepTestResult::Init ( lua_State &vm ) noexcept
     }
 
     lua_createtable ( &vm, 0, 2 );
-    lua_setglobal ( &vm, GLOBAL_TABLE_NAME );
-    lua_getglobal ( &vm, GLOBAL_TABLE_NAME );
+    lua_setglobal ( &vm, GLOBAL_TABLE );
+    lua_getglobal ( &vm, GLOBAL_TABLE );
 
     lua_pushlstring ( &vm, FIELD_COUNT.data (), FIELD_COUNT.size () );
     lua_pushinteger ( &vm, 0 );
@@ -61,7 +61,7 @@ void ScriptableSweepTestResult::Destroy ( lua_State &vm ) noexcept
     }
 
     lua_pushnil ( &vm );
-    lua_setglobal ( &vm, GLOBAL_TABLE_NAME );
+    lua_setglobal ( &vm, GLOBAL_TABLE );
 }
 
 bool ScriptableSweepTestResult::PublishResult ( lua_State &vm,
@@ -76,7 +76,7 @@ bool ScriptableSweepTestResult::PublishResult ( lua_State &vm,
 
     size_t const count = sweepTestResult.size ();
 
-    lua_getglobal ( &vm, GLOBAL_TABLE_NAME );
+    lua_getglobal ( &vm, GLOBAL_TABLE );
     lua_pushlstring ( &vm, FIELD_COUNT.data (), FIELD_COUNT.size () );
     lua_pushinteger ( &vm, static_cast<int> ( count ) );
     lua_rawset ( &vm, -3 );
@@ -87,7 +87,7 @@ bool ScriptableSweepTestResult::PublishResult ( lua_State &vm,
     lua_pushlstring ( &vm, FIELD_BODIES.data (), FIELD_BODIES.size () );
     lua_rawget ( &vm, -2 );
 
-    lua_getglobal ( &vm, GLOBAL_FUNCTION_NAME );
+    lua_getglobal ( &vm, GLOBAL_FUNCTION );
 
     for ( size_t i = 0U; i < count; ++i )
     {

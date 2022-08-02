@@ -3,6 +3,7 @@
 
 
 #include <physics.h>
+#include "rigid_body_component.h"
 #include "scriptable_gxvec3.h"
 
 
@@ -36,7 +37,8 @@ class ScriptablePenetration final
             int vec3Constructor,
             int penetrationIndex,
             lua_Number depth,
-            GXVec3 const &normal
+            GXVec3 const &normal,
+            int rigidBodyComponentStack
         ) noexcept;
 
         [[nodiscard]] static bool FindVec3Constructor ( lua_State &vm ) noexcept;

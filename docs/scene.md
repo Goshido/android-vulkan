@@ -157,25 +157,28 @@ local Penetration = {
     {
         1 = {
             ._depth = ... as number,
-            ._normal = ... as GXVec3
+            ._normal = ... as GXVec3,
+            ._body = ... as RigidBodyComponent
         },
 
         2 = {
             ._depth = ... as number,
-            ._normal = ... as GXVec3
+            ._normal = ... as GXVec3,
+            ._body = ... as RigidBodyComponent
         },
 
         ...
 
         n = {
             ._depth = ... as number,
-            ._normal = ... as GXVec3
+            ._normal = ... as GXVec3,
+            ._body = ... as RigidBodyComponent
         }
     }
 }
 ```
 
-`_count` contains number of detected penetrations. The `_penetrations` field contains an array with penetration information. Note you **MUST NOT** rely on `_penetration` array length beause it could be bigger than actual number of penetrations for performance reasons. The indexing is from `1` to be consistent with _Lua_ conventions. `_depth` and `_normal` fields contain information how to resolve each penetration. This values describe how to move shape box to eliminate penetration. Note that values are in the [physics coordinate system](./rigid-body-component.md#note-physics-coordinate-system).
+`_count` contains number of detected penetrations. The `_penetrations` field contains an array with penetration information. Note you **MUST NOT** rely on `_penetration` array length beause it could be bigger than actual number of penetrations for performance reasons. The indexing is from `1` to be consistent with _Lua_ conventions. `_depth` and `_normal` fields contain information how to resolve each penetration. This values describe how to move shape box to eliminate penetration. Note that values are in the [physics coordinate system](./rigid-body-component.md#note-physics-coordinate-system). And finally `_body` contains the reference to the [_RigidBodyComponent_](./rigid-body-component.md).
 
 **Parameters:**
 

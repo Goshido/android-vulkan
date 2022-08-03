@@ -24,7 +24,7 @@ class Scene final
         std::vector<android_vulkan::Penetration>        _penetrations {};
         android_vulkan::Physics*                        _physics = nullptr;
         ScriptablePenetration                           _scriptablePenetration {};
-        android_vulkan::ShapeRef                        _shapeBox {};
+        android_vulkan::ShapeRef                        _shapeBoxes[ 2U ] = {};
         std::vector<android_vulkan::RigidBodyRef>       _sweepTestResult {};
 
         ComponentList                                   _freeTransferResourceList {};
@@ -83,6 +83,13 @@ class Scene final
         void Submit ( RenderSession &renderSession ) noexcept;
 
     private:
+        [[nodiscard]] int DoOverlapTestBoxBox ( lua_State &vm,
+            GXMat4 const &localA,
+            GXVec3 const &sizeA,
+            GXMat4 const &localB,
+            GXVec3 const &sizeB
+        ) noexcept;
+
         [[nodiscard]] int DoPenetrationBox ( lua_State &vm,
             GXMat4 const &local,
             GXVec3 const &size,
@@ -102,6 +109,8 @@ class Scene final
         [[nodiscard]] static int OnGetRenderTargetAspectRatio ( lua_State* state );
         [[nodiscard]] static int OnGetRenderTargetWidth ( lua_State* state );
         [[nodiscard]] static int OnGetRenderTargetHeight ( lua_State* state );
+
+        [[nodiscard]] static int OnOverlapTestBoxBox ( lua_State* state );
 
         [[nodiscard]] static int OnQuit ( lua_State* state );
         [[nodiscard]] static int OnSetActiveCamera ( lua_State* state );

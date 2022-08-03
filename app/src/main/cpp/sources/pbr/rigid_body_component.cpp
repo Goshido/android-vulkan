@@ -2,6 +2,7 @@
 #include <pbr/actor.h>
 #include <pbr/coordinate_system.h>
 #include <pbr/script_engine.h>
+#include <pbr/scriptable_gxmat4.h>
 #include <pbr/scriptable_gxvec3.h>
 #include <guid_generator.h>
 #include <physics.h>
@@ -166,6 +167,10 @@ bool RigidBodyComponent::Init ( lua_State &vm ) noexcept
             .func = &RigidBodyComponent::OnSetLocation
         },
         {
+            .name = "av_RigidBodyComponentGetTransform",
+            .func = &RigidBodyComponent::OnGetTransform
+        },
+        {
             .name = "av_RigidBodyComponentGetVelocityLinear",
             .func = &RigidBodyComponent::OnGetVelocityLinear
         },
@@ -218,6 +223,13 @@ int RigidBodyComponent::OnSetLocation ( lua_State* state )
 {
     auto& self = *static_cast<RigidBodyComponent*> ( lua_touserdata ( state, 1 ) );
     self._rigidBody->SetLocation ( ScriptableGXVec3::Extract ( state, 2 ), true );
+    return 0;
+}
+
+int RigidBodyComponent::OnGetTransform ( lua_State* state )
+{
+    auto const& self = *static_cast<RigidBodyComponent const*> ( lua_touserdata ( state, 1 ) );
+    ScriptableGXMat4::Extract ( state, 2 ) = self._rigidBody->GetTransform ();
     return 0;
 }
 

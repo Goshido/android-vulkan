@@ -66,7 +66,9 @@ bool Scene::OnInitDevice ( android_vulkan::Physics &physics ) noexcept
 {
     _defaultCamera.SetProjection ( GXDegToRad ( DEFAULT_FOV ), DEFAULT_ASPECT_RATIO, DEFAULT_Z_NEAR, DEFAULT_Z_FAR );
     _penetrations.reserve ( INITIAL_PENETRATION_SIZE );
-    _shapeBox = std::make_shared<android_vulkan::ShapeBox> ( 1.0F, 1.0F, 1.0F );
+
+    _shapeBoxes[ 0U ] = std::make_shared<android_vulkan::ShapeBox> ( 1.0F, 1.0F, 1.0F );
+    _shapeBoxes[ 1U ] = std::make_shared<android_vulkan::ShapeBox> ( 1.0F, 1.0F, 1.0F );
 
     GXMat4 defaultTransform {};
     defaultTransform.Translation ( DEFAULT_LOCATION );
@@ -120,6 +122,10 @@ bool Scene::OnInitDevice ( android_vulkan::Physics &physics ) noexcept
         {
             .name = "av_SceneGetRenderTargetHeight",
             .func = &Scene::OnGetRenderTargetHeight
+        },
+        {
+            .name = "av_SceneOverlapTestBoxBox",
+            .func = &Scene::OnOverlapTestBoxBox
         },
         {
             .name = "av_SceneQuit",
@@ -193,7 +199,8 @@ void Scene::OnDestroyDevice () noexcept
     _sweepTestResult.clear ();
     _sweepTestResult.shrink_to_fit ();
 
-    _shapeBox = nullptr;
+    _shapeBoxes[ 0U ] = nullptr;
+    _shapeBoxes[ 1U ] = nullptr;
 
     _appendActorIndex = std::numeric_limits<int>::max ();
     _onInputIndex = std::numeric_limits<int>::max ();
@@ -398,25 +405,68 @@ void Scene::Submit ( RenderSession &renderSession ) noexcept
     }
 }
 
+int Scene::DoOverlapTestBoxBox ( lua_State &vm,
+    GXMat4 const &localA,
+    GXVec3 const &sizeA,
+    GXMat4 const &localB,
+    GXVec3 const &sizeB
+) noexcept
+{
+    if ( !lua_checkstack ( &vm, 1 ) )
+    {
+        android_vulkan::LogError ( "pbr::Scene::DoOverlapTestBoxBox - Stack too small." );
+        return 0;
+    }
+
+    android_vulkan::Shape& shapeA = *_shapeBoxes[ 0U ];
+    android_vulkan::Shape& shapeB = *_shapeBoxes[ 1U ];
+
+    auto const setup = [] ( android_vulkan::Shape &shape, GXMat4 const &local, GXVec3 const &size ) noexcept {
+        // NOLINTNEXTLINE - downcast.
+        auto& boxShape = static_cast<android_vulkan::ShapeBox&> ( shape );
+
+        boxShape.Resize ( size );
+        boxShape.UpdateCacheData ( local );
+    };
+
+    setup ( shapeA, localA, sizeA );
+    setup ( shapeB, localB, sizeB );
+
+    if ( !shapeA.GetBoundsWorld ().IsOverlaped ( shapeB.GetBoundsWorld () ) )
+    {
+        lua_pushboolean ( &vm, static_cast<int> ( false ) );
+        return 1;
+    }
+
+    android_vulkan::GJK gjk {};
+    gjk.Reset ();
+    lua_pushboolean ( &vm, static_cast<int> ( gjk.Run ( shapeA, shapeB ) ) );
+    return 1;
+}
+
 int Scene::DoPenetrationBox ( lua_State &vm, GXMat4 const &local, GXVec3 const &size, uint32_t groups ) noexcept
 {
+    android_vulkan::ShapeRef& shape = _shapeBoxes[ 0U ];
+
     // NOLINTNEXTLINE - downcast.
-    auto& boxShape = static_cast<android_vulkan::ShapeBox&> ( *_shapeBox );
+    auto& boxShape = static_cast<android_vulkan::ShapeBox&> ( *shape );
 
     boxShape.Resize ( size );
     boxShape.UpdateCacheData ( local );
-    _physics->PenetrationTest ( _penetrations, _epa, _shapeBox, groups );
+    _physics->PenetrationTest ( _penetrations, _epa, shape, groups );
     return static_cast<int> ( _scriptablePenetration.PublishResult ( vm, _penetrations ) );
 }
 
 int Scene::DoSweepTestBox ( lua_State &vm, GXMat4 const &local, GXVec3 const &size, uint32_t groups ) noexcept
 {
+    android_vulkan::ShapeRef& shape = _shapeBoxes[ 0U ];
+
     // NOLINTNEXTLINE - downcast.
-    auto& boxShape = static_cast<android_vulkan::ShapeBox&> ( *_shapeBox );
+    auto& boxShape = static_cast<android_vulkan::ShapeBox&> ( *shape );
 
     boxShape.Resize ( size );
     boxShape.UpdateCacheData ( local );
-    _physics->SweepTest ( _sweepTestResult, _shapeBox, groups );
+    _physics->SweepTest ( _sweepTestResult, shape, groups );
     return static_cast<int> ( ScriptableSweepTestResult::PublishResult ( vm, _sweepTestResult ) );
 }
 
@@ -494,6 +544,18 @@ int Scene::OnGetRenderTargetHeight ( lua_State* state )
     auto const& self = *static_cast<Scene const*> ( lua_touserdata ( state, 1 ) );
     lua_pushinteger ( state, self._height );
     return 1;
+}
+
+int Scene::OnOverlapTestBoxBox ( lua_State* state )
+{
+    auto& self = *static_cast<Scene*> ( lua_touserdata ( state, 1 ) );
+
+    return self.DoOverlapTestBoxBox ( *state,
+        ScriptableGXMat4::Extract ( state, 2 ),
+        ScriptableGXVec3::Extract ( state, 3 ),
+        ScriptableGXMat4::Extract ( state, 4 ),
+        ScriptableGXVec3::Extract ( state, 5 )
+    );
 }
 
 int Scene::OnQuit ( lua_State* /*state*/ )

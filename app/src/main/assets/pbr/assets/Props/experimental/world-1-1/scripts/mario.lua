@@ -17,6 +17,31 @@ local MOVE_SPEED = 5.0
 local Mario = {}
 
 -- Methods
+local function GetOrigin ( self, actor, component )
+    local t = GXMat4 ()
+    actor:FindComponent ( component ):GetTransform ( t )
+    local origin = GXVec3 ()
+    t:GetW ( origin )
+    return origin
+end
+
+local function GetSensorSize ( self, min, max )
+    local result = GXVec3 ()
+    result:Subtract ( max, min )
+    result:MultiplyScalar ( result, g_scene:GetRendererToPhysicsScaleFactor () )
+    return result
+end
+
+local function GetShapeSize ( self )
+    return self._size
+end
+
+local function GetShapeTransform ( self )
+    local t = GXMat4 ()
+    self._rigidBody:GetTransform ( t )
+    return t
+end
+
 local function Jump ( self )
     self._isJump = true
 end
@@ -91,6 +116,10 @@ local function OnActorConstructed ( self, actor )
     self._rigidBody = actor:FindComponent ( "Collider" )
     self.OnInput = OnInputActive
     self.OnPrePhysics = OnPrePhysicsActive
+
+    local min = self:GetOrigin ( actor, "Min" )
+    local max = self:GetOrigin ( actor, "Max" )
+    self._size = self:GetSensorSize ( min, max )
 end
 
 local function QuitGame ( self )
@@ -106,6 +135,10 @@ local function Constructor ( self, handle, params )
     obj._move = 0.0
 
     -- Methods
+    obj.GetOrigin = GetOrigin
+    obj.GetSensorSize = GetSensorSize
+    obj.GetShapeSize = GetShapeSize
+    obj.GetShapeTransform = GetShapeTransform
     obj.Jump = Jump
     obj.Move = Move
     obj.QuitGame = QuitGame

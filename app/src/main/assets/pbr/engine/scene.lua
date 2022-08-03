@@ -146,6 +146,35 @@ local function OnUpdate ( self, deltaTime )
     end
 end
 
+local function OverlapTestBoxBox ( self, localMatrixA, sizeA, localMatrixB, sizeB )
+    assert ( type ( self ) == "table" and self._type == eObjectType.Scene,
+        [[Scene:OverlapTestBoxBox - Calling not via ":" syntax.]]
+    )
+
+    assert ( type ( localMatrixA ) == "table" and localMatrixA._type == eObjectType.GXMat4,
+        [[Scene:OverlapTestBoxBox - "localMatrixA" is not a GXMat4.]]
+    )
+
+    assert ( type ( sizeA ) == "table" and sizeA._type == eObjectType.GXVec3,
+        [[Scene:OverlapTestBoxBox - "sizeA" is not a GXVec3.]]
+    )
+
+    assert ( type ( localMatrixB ) == "table" and localMatrixB._type == eObjectType.GXMat4,
+        [[Scene:OverlapTestBoxBox - "localMatrixB" is not a GXMat4.]]
+    )
+
+    assert ( type ( sizeB ) == "table" and sizeB._type == eObjectType.GXVec3,
+        [[Scene:OverlapTestBoxBox - "sizeB" is not a GXVec3.]]
+    )
+
+    return av_SceneOverlapTestBoxBox ( self._handle,
+        localMatrixA._handle,
+        sizeA._handle,
+        localMatrixB._handle,
+        sizeB._handle
+    )
+end
+
 local function Quit ( self )
     av_SceneQuit ()
 end
@@ -207,6 +236,7 @@ local function Constructor ( self, handle )
     obj.OnPrePhysics = OnPrePhysics
     obj.OnRenderTargetChanged = OnRenderTargetChanged
     obj.OnUpdate = OnUpdate
+    obj.OverlapTestBoxBox = OverlapTestBoxBox
     obj.Quit = Quit
     obj.SetActiveCamera = SetActiveCamera
     obj.SweepTestBox = SweepTestBox

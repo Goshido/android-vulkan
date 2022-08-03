@@ -52,6 +52,18 @@ local function SetLocation ( self, location )
     av_RigidBodyComponentSetLocation ( self._handle, location._handle )
 end
 
+local function GetTransform ( self, transform )
+    assert ( type ( self ) == "table" and self._type == eObjectType.RigidBodyComponent,
+        [[RigidBodyComponent:GetTransform - Calling not via ":" syntax.]]
+    )
+
+    assert ( type ( transform ) == "table" and transform._type == eObjectType.GXMat4,
+        [[RigidBodyComponent:GetTransform - "transform" is not a GXMat4.]]
+    )
+
+    av_RigidBodyComponentGetTransform ( self._handle, transform._handle )
+end
+
 local function GetVelocityLinear ( self, velocity )
     assert ( type ( self ) == "table" and self._type == eObjectType.RigidBodyComponent,
         [[RigidBodyComponent:GetVelocityLinear - Calling not via ":" syntax.]]
@@ -88,6 +100,7 @@ function RegisterRigidBodyComponent ( handle, nativeRigidBody )
     obj.AddForce = AddForce
     obj.GetLocation = GetLocation
     obj.SetLocation = SetLocation
+    obj.GetTransform = GetTransform
     obj.GetVelocityLinear = GetVelocityLinear
     obj.SetVelocityLinear = SetVelocityLinear
 

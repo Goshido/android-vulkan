@@ -52,8 +52,14 @@ local function OnPrePhysicsMonitor ( self, deltaTime )
         mario:GetShapeSize ()
     )
 
-    if result then
+    if not result then
+        self._isOverlaped = false
+        return
+    end
+
+    if not self._isOverlaped then
         LogE ( "BOOM Shaka laka" )
+        self._isOverlaped = true
     end
 end
 
@@ -71,6 +77,9 @@ end
 -- Metamethods
 local function Constructor ( self, handle, params )
     local obj = ScriptComponent ( handle )
+
+    -- Data
+    obj._isOverlaped = false
 
     -- Methods
     obj.GetOrigin = GetOrigin

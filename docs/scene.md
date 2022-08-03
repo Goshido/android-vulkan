@@ -18,6 +18,7 @@
 - [`GetRenderTargetAspectRatio ()`](#method-get-render-target-aspect-ratio)
 - [`GetRenderTargetWidth ()`](#method-get-render-target-width)
 - [`GetRenderTargetHeight ()`](#method-get-render-target-height)
+- [`OverlapTestBoxBox ( localMatrixA, sizeA, localMatrixB, sizeB )`](#method-overlap-test-box-box)
 - [`Quit ()`](#method-quit)
 - [`SetActiveCamera ( camera )`](#method-set-active-camera)
 - [`SweepTestBox ( localMatrix, size, groups )`](#method-sweep-test-box)
@@ -333,6 +334,52 @@ require "av://engine/scene.lua"
 
 
 local height = g_scene:GetRenderTargetHeight ()
+```
+
+## <a id="method-overlap-test-box-box">`OverlapTestBoxBox ( localMatrixA, sizeA, localMatrixB, sizeB )`</a>
+
+Method performs overlap test of two box shapes.
+
+**Parameters:**
+
+- `localMatrixA` [_required, readonly, [GXMat4](./gx-mat4.md)_]: transformation matrix for box shape _A_ in [physics coordinate system](./rigid-body-component.md#note-physics-coordinate-system). Origin is in the centre of the box shape
+- `sizeA` [_required, readonly, [GXVec3](./gx-vec3.md)_]: width, height and depth of the box _A_ in [physics coordinate system](./rigid-body-component.md#note-physics-coordinate-system)
+- `localMatrixB` [_required, readonly, [GXMat4](./gx-mat4.md)_]: transformation matrix for box shape _B_ in [physics coordinate system](./rigid-body-component.md#note-physics-coordinate-system). Origin is in the centre of the box shape
+- `sizeB` [_required, readonly, [GXVec3](./gx-vec3.md)_]: width, height and depth of the box _B_ in [physics coordinate system](./rigid-body-component.md#note-physics-coordinate-system)
+
+**Return values:**
+
+- `#1` [_required, readonly, boolean_]: `true` if two shapes overlap. `false` otherwise 
+
+**Example:**
+
+```lua
+require "av://engine/gx_quat.lua"
+
+
+local axis = GXVec3 ()
+axis:Init ( 7.77, 3.33, 1.0 )
+axis:Normalize ()
+
+local rotation = GXQuat ()
+rotation:FromAxisAngle ( axis, math.rad ( 77.7 ) )
+
+local origin = GXVec3 ()
+origin:Init ( 1.0, 333.0, 0.0 )
+
+local transformA = GXMat4 ()
+transformA:FromFast ( rotation, origin )
+
+local sizeA = GXVec3 ()
+sizeA:Init ( 7.0, 3.0, 15.0 )
+
+local transformB = GXMat4 ()
+transformB:Identity ()
+
+local sizeB = GXVec3 ()
+sizeB:Init ( 3.0, 15.0, 7.0 )
+
+local isOverlap = g_scene:OverlapTestBoxBox ( transformA, sizeA, transformB, sizeB )
 ```
 
 ## <a id="method-quit">`Quit ()`</a>

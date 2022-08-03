@@ -37,9 +37,7 @@ local function GetShapeSize ( self )
 end
 
 local function GetShapeTransform ( self )
-    local t = GXMat4 ()
-    self._rigidBody:GetTransform ( t )
-    return t
+    return self._transform
 end
 
 local function Jump ( self )
@@ -79,6 +77,14 @@ local function OnInputIdle ( self, inputEvent )
     -- NOTHING
 end
 
+local function OnPostPhysicsActive ( self, deltaTime )
+    self._rigidBody:GetTransform ( self._transform )
+end
+
+local function OnPostPhysicsIdle ( self, deltaTime )
+    -- NOTHING
+end
+
 local function OnPrePhysicsActive ( self, deltaTime )
     local body = self._rigidBody
 
@@ -113,8 +119,12 @@ local function OnPrePhysicsIdle ( self, deltaTime )
 end
 
 local function OnActorConstructed ( self, actor )
-    self._rigidBody = actor:FindComponent ( "Collider" )
+    local body = actor:FindComponent ( "Collider" )
+    body:GetTransform ( self._transform )
+    self._rigidBody = body
+
     self.OnInput = OnInputActive
+    self.OnPostPhysics = OnPostPhysicsActive
     self.OnPrePhysics = OnPrePhysicsActive
 
     local min = self:GetOrigin ( actor, "Min" )
@@ -133,6 +143,7 @@ local function Constructor ( self, handle, params )
     -- Data
     obj._isJump = false
     obj._move = 0.0
+    obj._transform = GXMat4 ()
 
     -- Methods
     obj.GetOrigin = GetOrigin
@@ -146,6 +157,7 @@ local function Constructor ( self, handle, params )
     -- Engine events
     obj.OnActorConstructed = OnActorConstructed
     obj.OnInput = OnInputIdle
+    obj.OnPostPhysics = OnPostPhysicsIdle
     obj.OnPrePhysics = OnPrePhysicsIdle
 
     return obj

@@ -13,6 +13,7 @@ require "av://engine/rigid_body_component.lua"
 - [`GetLocation ( location )`](#method-get-location)
 - [`SetLocation ( location )`](#method-set-location)
 - [`GetName ()`](#method-get-name)
+- [`GetTransform ( transform )`](#method-get-transform)
 - [`GetVelocityLinear ( velocity )`](#method-get-velocity-linear)
 - [`SetVelocityLinear ( velocity, forceAwake )`](#method-set-velocity-linear)
 
@@ -208,6 +209,35 @@ g_scene:AppendActor ( actor )
 
 local rigidBody = actor:FindComponent ( "RigidBody" )
 local name = rigidBody:GetName ()
+```
+
+## <a id="method-get-transform">`GetTransform ( transform )`</a>
+
+Method returns current rigid body transformation matrix.
+
+**Note:** This method uses [physics coordinate system](#note-physics-coordinate-system) for transformation.
+
+**Parameters:**
+
+- `transform` [_required, writeonly, [_GXMat4_](./gx-mat4.md)_]: transform matrix in the world space
+
+**Return values:**
+
+- none
+
+**Example:**
+
+```lua
+require "av://engine/scene.lua"
+
+
+local actor = Actor ( "Box" )
+local body = RigidBodyComponent ( "RigidBody" )
+actor:AppendComponent ( body )
+g_scene:AppendActor ( actor )
+
+local transform = GXMat4 ()
+body:GetTransform ( transform )
 ```
 
 ## <a id="method-get-velocity-linear">`GetVelocityLinear ( velocity )`</a>

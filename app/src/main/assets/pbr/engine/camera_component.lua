@@ -42,6 +42,11 @@ local function SetProjection ( self, fieldOfViewRadians, aspectRatio, zNear, zFa
     av_CameraComponentSetProjection ( self._handle, fieldOfViewRadians, aspectRatio, zNear, zFar )
 end
 
+-- Engine event handlers
+local function OnDestroy ( self )
+    -- TODO
+end
+
 -- This function is exported to C++ side.
 function RegisterCameraComponent ( handle )
     local obj = Component ( eObjectType.CameraComponent, handle )
@@ -50,6 +55,9 @@ function RegisterCameraComponent ( handle )
     obj.SetAspectRatio = SetAspectRatio
     obj.SetLocal = SetLocal
     obj.SetProjection = SetProjection
+
+    -- Engine events
+    obj.OnDestroy = OnDestroy
 
     return obj
 end

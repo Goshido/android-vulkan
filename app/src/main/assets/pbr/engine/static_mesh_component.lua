@@ -29,6 +29,11 @@ local function SetLocal ( self, localMatrix )
     av_StaticMeshComponentSetLocal ( self._handle, localMatrix._handle )
 end
 
+-- Engine event handlers
+local function OnDestroy ( self )
+    av_StaticMeshComponentDestroy ( self._handle )
+end
+
 -- This function is exported to C++ side.
 function RegisterStaticMeshComponent ( handle )
     local obj = Component ( eObjectType.StaticMeshComponent, handle )
@@ -36,6 +41,9 @@ function RegisterStaticMeshComponent ( handle )
     -- Methods
     obj.GetLocal = GetLocal
     obj.SetLocal = SetLocal
+
+    -- Engine events
+    obj.OnDestroy = OnDestroy
 
     return obj
 end

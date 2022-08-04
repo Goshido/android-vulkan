@@ -5,6 +5,7 @@
 #include "actor.h"
 #include "camera_component.h"
 #include "render_session.h"
+#include "renderable_component.h"
 #include "scriptable_gamepad.h"
 #include "scriptable_penetration.h"
 
@@ -56,10 +57,12 @@ class Scene final
 
         ~Scene () = default;
 
+        void DetachRenderable ( RenderableComponent const &component ) noexcept;
         [[nodiscard]] bool ExecuteInputEvents () noexcept;
 
         [[nodiscard]] GXMat4 const& GetActiveCameraLocalMatrix () const noexcept;
         [[nodiscard]] GXMat4 const& GetActiveCameraProjectionMatrix () const noexcept;
+        [[nodiscard]] android_vulkan::Physics& GetPhysics () noexcept;
 
         void OnCaptureInput () noexcept;
         void OnReleaseInput () const noexcept;
@@ -80,6 +83,7 @@ class Scene final
             VkCommandPool commandPool
         ) noexcept;
 
+        void RemoveActor ( Actor const &actor ) noexcept;
         void Submit ( RenderSession &renderSession ) noexcept;
 
     private:

@@ -24,36 +24,40 @@ local function AppendActor ( self, actor )
     local inputScripts = self._inputScripts
     local postPhysicsScripts = self._postPhysicsScripts
     local prePhysicsScripts = self._prePhysicsScripts
-    local renderTargetChangerScripts = self._renderTargetChangeScripts
+    local renderTargetChangeScripts = self._renderTargetChangeScripts
     local updateScripts = self._updateScripts
 
     for groupKey, group in pairs ( actor._components ) do
         for k, v in pairs ( group ) do
             if v._type == eObjectType.ScriptComponent then
                 if type ( v.OnInput ) == "function" then
-                    table.insert ( inputScripts, v )
+                    inputScripts[ v ] = v
                 end
 
                 if type ( v.OnPostPhysics ) == "function" then
-                    table.insert ( postPhysicsScripts, v )
+                    postPhysicsScripts[ v ] = v
                 end
 
                 if type ( v.OnPrePhysics ) == "function" then
-                    table.insert ( prePhysicsScripts, v )
+                    prePhysicsScripts[ v ] = v
                 end
 
                 if type ( v.OnRenderTargetChanged ) == "function" then
-                    table.insert ( renderTargetChangerScripts, v )
+                    renderTargetChangeScripts[ v ] = v
                 end
 
                 if type ( v.OnUpdate ) == "function" then
-                    table.insert ( updateScripts, v )
+                    updateScripts[ v ] = v
                 end
             end
         end
     end
 
     actor:CommitComponents ()
+end
+
+local function DetachActor ( self, actor )
+    table.insert ( self._actorToDestroy, actor )
 end
 
 local function FindActor ( self, name )
@@ -144,6 +148,46 @@ local function OnUpdate ( self, deltaTime )
     for k, v in pairs ( self._updateScripts ) do
         v:OnUpdate ( deltaTime )
     end
+
+    local actorToDestroy = self._actorToDestroy
+
+    if #actorToDestroy == 0 then
+        return
+    end
+
+    local inputScripts = self._inputScripts
+    local postPhysicsScripts = self._postPhysicsScripts
+    local prePhysicsScripts = self._prePhysicsScripts
+    local renderTargetChangeScripts = self._renderTargetChangeScripts
+    local updateScripts = self._updateScripts
+    local actors = self._actors
+
+    for k, actor in pairs ( actorToDestroy ) do
+        for groupKey, group in pairs ( actor._components ) do
+            for k, v in pairs ( group ) do
+                if v._type == eObjectType.ScriptComponent then
+                    inputScripts[ v ] = nil
+                    postPhysicsScripts[ v ] = nil
+                    prePhysicsScripts[ v ] = nil
+                    renderTargetChangeScripts[ v ] = nil
+                    updateScripts[ v ] = nil
+                end
+            end
+        end
+
+        local list = actors[ actor:GetName () ]
+        local count = #list
+
+        for i = 1, count do
+            if list[ i ] == actor then
+                actor:OnDestroy ()
+                table.remove ( list, i )
+                break
+            end
+        end
+    end
+
+    self._actorToDestroy = {}
 end
 
 local function OverlapTestBoxBox ( self, localMatrixA, sizeA, localMatrixB, sizeB )
@@ -214,6 +258,7 @@ local function Constructor ( self, handle )
 
     -- Data
     obj._actors = {}
+    obj._actorToDestroy = {}
     obj._handle = handle
     obj._inputScripts = {}
     obj._postPhysicsScripts = {}
@@ -223,6 +268,7 @@ local function Constructor ( self, handle )
 
     -- Methods
     obj.AppendActor = AppendActor
+    obj.DetachActor = DetachActor
     obj.FindActor = FindActor
     obj.FindActors = FindActors
     obj.GetPenetrationBox = GetPenetrationBox

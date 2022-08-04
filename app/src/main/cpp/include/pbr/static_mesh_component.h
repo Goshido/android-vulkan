@@ -2,6 +2,7 @@
 #define PBR_STATIC_MESH_COMPONENT_H
 
 
+#include "actor.h"
 #include "renderable_component.h"
 #include "static_mesh_component_desc.h"
 #include "transformable.h"
@@ -12,6 +13,7 @@ namespace pbr {
 class StaticMeshComponent final : public RenderableComponent, public Transformable
 {
     private:
+        Actor*          _actor = nullptr;
         GXColorRGB      _color0;
         GXColorRGB      _color1;
         GXColorRGB      _color2;
@@ -85,7 +87,7 @@ class StaticMeshComponent final : public RenderableComponent, public Transformab
         [[maybe_unused, nodiscard]] GXMat4 const& GetTransform () const noexcept;
         void SetTransform ( GXMat4 const &transform ) noexcept;
 
-        [[nodiscard]] bool Register ( lua_State &vm ) noexcept;
+        [[nodiscard]] bool Register ( lua_State &vm, Actor &actor ) noexcept;
 
         [[nodiscard]] static bool Init ( lua_State &vm ) noexcept;
 
@@ -93,6 +95,7 @@ class StaticMeshComponent final : public RenderableComponent, public Transformab
         void OnTransform ( GXMat4 const &transformWorld ) noexcept override;
 
         [[nodiscard]] static int OnCreate ( lua_State* state );
+        [[nodiscard]] static int OnDestroy ( lua_State* state );
         [[nodiscard]] static int OnGetLocal ( lua_State* state );
         [[nodiscard]] static int OnSetLocal ( lua_State* state );
 };

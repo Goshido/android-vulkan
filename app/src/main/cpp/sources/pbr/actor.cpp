@@ -3,6 +3,7 @@
 #include <pbr/point_light_component.h>
 #include <pbr/reflection_component.h>
 #include <pbr/rigid_body_component.h>
+#include <pbr/scene.h>
 #include <pbr/script_component.h>
 #include <pbr/script_engine.h>
 #include <pbr/static_mesh_component.h>
@@ -13,6 +14,12 @@
 GX_DISABLE_COMMON_WARNINGS
 
 #include <cassert>
+
+extern "C" {
+
+#include <lua/lauxlib.h>
+
+} // extern "C"
 
 GX_RESTORE_WARNING_STATE
 
@@ -39,6 +46,15 @@ class Actor::StaticInitializer final
 
 Actor::StaticInitializer::StaticInitializer () noexcept
 {
+    Actor::_destroyHandlers[ static_cast<size_t> ( ClassID::Camera ) ] = &Actor::DestroyComponentStub;
+    Actor::_destroyHandlers[ static_cast<size_t> ( ClassID::PointLight ) ] = &Actor::DestroyComponentStub;
+    Actor::_destroyHandlers[ static_cast<size_t> ( ClassID::Reflection ) ] = &Actor::DestroyComponentStub;
+    Actor::_destroyHandlers[ static_cast<size_t> ( ClassID::RigidBody ) ] = &Actor::DestroyRigidBodyComponent;
+    Actor::_destroyHandlers[ static_cast<size_t> ( ClassID::Script ) ] = &Actor::DestroyComponentStub;
+    Actor::_destroyHandlers[ static_cast<size_t> ( ClassID::StaticMesh ) ] = &Actor::DestroyStaticMeshComponent;
+    Actor::_destroyHandlers[ static_cast<size_t> ( ClassID::Transform ) ] = &Actor::DestroyComponentStub;
+    Actor::_destroyHandlers[ static_cast<size_t> ( ClassID::Unknown ) ] = &Actor::DestroyComponentStub;
+
     Actor::_registerHandlers[ static_cast<size_t> ( ClassID::Camera ) ] = &Actor::AppendCameraComponent;
     Actor::_registerHandlers[ static_cast<size_t> ( ClassID::PointLight ) ] = &Actor::AppendPointLightComponent;
     Actor::_registerHandlers[ static_cast<size_t> ( ClassID::Reflection ) ] = &Actor::AppendReflectionComponent;
@@ -55,6 +71,7 @@ Actor::StaticInitializer::StaticInitializer () noexcept
 
 int Actor::_appendComponentIndex = std::numeric_limits<int>::max ();
 int Actor::_makeActorIndex = std::numeric_limits<int>::max ();
+Actor::DestroyHander Actor::_destroyHandlers[ static_cast<size_t> ( ClassID::COUNT ) ] = {};
 Actor::RegisterHander Actor::_registerHandlers[ static_cast<size_t> ( ClassID::COUNT ) ] = {};
 
 Actor::Actor ( std::string &&name ) noexcept:
@@ -77,6 +94,14 @@ void Actor::AppendComponent ( ComponentRef &component ) noexcept
     _components.push_back ( component );
 }
 
+void Actor::DestroyComponent ( Component &component ) noexcept
+{
+    DestroyHander const handler = _destroyHandlers[ static_cast<size_t> ( component.GetClassID () ) ];
+
+    // C++ calling method by pointer syntax.
+    ( this->*handler ) ( component );
+}
+
 std::string const& Actor::GetName () const noexcept
 {
     return _name;
@@ -90,7 +115,8 @@ void Actor::OnTransform ( GXMat4 const &transformWorld ) noexcept
     }
 }
 
-void Actor::RegisterComponents ( ComponentList &freeTransferResource,
+void Actor::RegisterComponents ( Scene &scene,
+    ComponentList &freeTransferResource,
     ComponentList &renderable,
     android_vulkan::Physics &physics,
     lua_State &vm
@@ -111,6 +137,8 @@ void Actor::RegisterComponents ( ComponentList &freeTransferResource,
         return;
     }
 
+    _scene = &scene;
+
     for ( auto& component : _components )
     {
         RegisterHander const handler = _registerHandlers[ static_cast<size_t> ( component->GetClassID () ) ];
@@ -122,7 +150,20 @@ void Actor::RegisterComponents ( ComponentList &freeTransferResource,
 
 bool Actor::Init ( lua_State &vm ) noexcept
 {
-    lua_register ( &vm, "av_ActorGetName", &Actor::OnGetName );
+    constexpr luaL_Reg const extentions[] =
+    {
+        {
+            .name = "av_ActorDestroy",
+            .func = &Actor::OnDestroy
+        },
+        {
+            .name = "av_ActorGetName",
+            .func = &Actor::OnGetName
+        }
+    };
+
+    for ( auto const& extension : extentions )
+        lua_register ( &vm, extension.name, extension.func );
 
     if ( !lua_checkstack ( &vm, 2 ) )
     {
@@ -189,7 +230,7 @@ void Actor::AppendPointLightComponent ( ComponentRef &component,
     // NOLINTNEXTLINE - downcast.
     auto& transformable = static_cast<PointLightComponent&> ( *component );
 
-    renderable.emplace_back ( std::ref ( component ) );
+    renderable.emplace_back ( std::ref ( transformable ) );
     _transformableComponents.emplace_back ( std::ref ( transformable ) );
 }
 
@@ -203,7 +244,7 @@ void Actor::AppendReflectionComponent ( ComponentRef &component,
     // NOLINTNEXTLINE - downcast.
     auto& reflection = static_cast<ReflectionComponent&> ( *component );
 
-    freeTransferResource.emplace_back ( std::ref ( component ) );
+    freeTransferResource.emplace_back ( reflection );
 
     if ( !reflection.IsGlobalReflection () )
     {
@@ -287,13 +328,13 @@ void Actor::AppendStaticMeshComponent ( ComponentRef &component,
     // NOLINTNEXTLINE - downcast.
     auto& transformable = static_cast<StaticMeshComponent&> ( *component );
 
-    freeTransferResource.emplace_back ( std::ref ( component ) );
+    freeTransferResource.emplace_back ( transformable );
     _transformableComponents.emplace_back ( std::ref ( transformable ) );
 
     lua_pushvalue ( &vm, _appendComponentIndex );
     lua_pushvalue ( &vm, -2 );
 
-    if ( !transformable.Register ( vm ) )
+    if ( !transformable.Register ( vm, *this ) )
     {
         android_vulkan::LogWarning ( "pbr::Actor::AppendStaticMeshComponent - Can't register static mesh component %s.",
             transformable.GetName ().c_str ()
@@ -355,6 +396,49 @@ void Actor::AppendUnknownComponent ( ComponentRef &/*component*/,
 {
     // IMPOSSIBLE
     assert ( false );
+}
+
+void Actor::DestroyRigidBodyComponent ( Component &component ) noexcept
+{
+    // NOLINTNEXTLINE - downcast.
+    auto& rigidBodyComponent = static_cast<RigidBodyComponent&> ( component );
+    rigidBodyComponent.Unregister ( _scene->GetPhysics () );
+    RemoveComponent ( component );
+}
+
+void Actor::DestroyStaticMeshComponent ( Component &component ) noexcept
+{
+    // NOLINTNEXTLINE - downcast.
+    _scene->DetachRenderable ( static_cast<RenderableComponent const&> ( component ) );
+    RemoveComponent ( component );
+}
+
+void Actor::DestroyComponentStub ( Component &/*component*/ ) noexcept
+{
+    // NOTHING
+}
+
+void Actor::RemoveComponent ( Component const &component ) noexcept
+{
+    auto const end = _components.cend ();
+
+    auto const findResult = std::find_if ( _components.cbegin (),
+        end,
+
+        [ &component ] ( ComponentRef const &e ) noexcept -> bool {
+            return e.get () == &component;
+        }
+    );
+
+    assert ( findResult != end );
+    _components.erase ( findResult );
+}
+
+int Actor::OnDestroy ( lua_State* state )
+{
+    auto const& self = *static_cast<Actor const*> ( lua_touserdata ( state, 1 ) );
+    self._scene->RemoveActor ( self );
+    return 0;
 }
 
 int Actor::OnGetName ( lua_State* state )

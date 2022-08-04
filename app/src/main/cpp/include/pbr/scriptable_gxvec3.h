@@ -62,6 +62,7 @@ class ScriptableGXVec3 final
         [[nodiscard]] static int OnInit ( lua_State* state );
         [[nodiscard]] static int OnLength ( lua_State* state );
         [[nodiscard]] static int OnMultiplyScalar ( lua_State* state );
+        [[nodiscard]] static int OnMultiplyVector ( lua_State* state );
         [[nodiscard]] static int OnNormalize ( lua_State* state );
         [[nodiscard]] static int OnReverse ( lua_State* state );
         [[nodiscard]] static int OnSetX ( lua_State* state );

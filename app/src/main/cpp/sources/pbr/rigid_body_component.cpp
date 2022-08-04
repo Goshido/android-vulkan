@@ -10,9 +10,10 @@
 
 GX_DISABLE_COMMON_WARNINGS
 
+#include <cassert>
+
 extern "C" {
 
-#include <cassert>
 #include <lua/lauxlib.h>
 
 } // extern "C"
@@ -132,6 +133,14 @@ bool RigidBodyComponent::Register ( Actor &actor, android_vulkan::Physics &physi
     return lua_pcall ( &vm, 2, 1, ScriptEngine::GetErrorHandlerIndex () ) == LUA_OK;
 }
 
+void RigidBodyComponent::Unregister ( android_vulkan::Physics &physics ) noexcept
+{
+    if ( !physics.RemoveRigidBody ( _rigidBody ) )
+    {
+        android_vulkan::LogWarning ( "pbr::RigidBodyComponent::Unregister - Can't remove body %s.", _name.c_str () );
+    }
+}
+
 bool RigidBodyComponent::Init ( lua_State &vm ) noexcept
 {
     if ( !lua_checkstack ( &vm, 1 ) )
@@ -157,6 +166,10 @@ bool RigidBodyComponent::Init ( lua_State &vm ) noexcept
         {
             .name = "av_RigidBodyComponentCreate",
             .func = &RigidBodyComponent::OnCreate
+        },
+        {
+            .name = "av_RigidBodyComponentDestroy",
+            .func = &RigidBodyComponent::OnDestroy
         },
         {
             .name = "av_RigidBodyComponentGetLocation",
@@ -209,6 +222,13 @@ int RigidBodyComponent::OnAddForce ( lua_State* state )
 int RigidBodyComponent::OnCreate ( lua_State* /*state*/ )
 {
     // TODO
+    return 0;
+}
+
+int RigidBodyComponent::OnDestroy ( lua_State* state )
+{
+    auto& self = *static_cast<RigidBodyComponent*> ( lua_touserdata ( state, 1 ) );
+    self._actor->DestroyComponent ( self );
     return 0;
 }
 

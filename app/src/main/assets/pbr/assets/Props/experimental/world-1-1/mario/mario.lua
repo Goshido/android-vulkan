@@ -40,6 +40,14 @@ local function GetShapeTransform ( self )
     return self._transform
 end
 
+local function Hit ( self, velocityMultiplier )
+    local body = self._rigidBody
+    local v = GXVec3 ()
+    body:GetVelocityLinear ( v )
+    v:MultiplyVector ( v, velocityMultiplier )
+    body:SetVelocityLinear ( v, true )
+end
+
 local function Jump ( self )
     self._isJump = true
 end
@@ -150,6 +158,7 @@ local function Constructor ( self, handle, params )
     obj.GetSensorSize = GetSensorSize
     obj.GetShapeSize = GetShapeSize
     obj.GetShapeTransform = GetShapeTransform
+    obj.Hit = Hit
     obj.Jump = Jump
     obj.Move = Move
     obj.QuitGame = QuitGame

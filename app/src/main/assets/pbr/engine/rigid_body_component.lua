@@ -92,6 +92,11 @@ local function SetVelocityLinear ( self, velocity, forceAwake )
     av_RigidBodyComponentSetVelocityLinear ( self._handle, velocity._handle, forceAwake )
 end
 
+-- Engine event handlers
+local function OnDestroy ( self )
+    av_RigidBodyComponentDestroy ( self._handle )
+end
+
 -- This function is exported to C++ side.
 function RegisterRigidBodyComponent ( handle, nativeRigidBody )
     local obj = Component ( eObjectType.RigidBodyComponent, handle )
@@ -103,6 +108,9 @@ function RegisterRigidBodyComponent ( handle, nativeRigidBody )
     obj.GetTransform = GetTransform
     obj.GetVelocityLinear = GetVelocityLinear
     obj.SetVelocityLinear = SetVelocityLinear
+
+    -- Engine events
+    obj.OnDestroy = OnDestroy
 
     g_Storage[ nativeRigidBody ] = obj
 

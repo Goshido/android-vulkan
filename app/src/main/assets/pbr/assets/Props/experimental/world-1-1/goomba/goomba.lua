@@ -7,7 +7,7 @@ local SPEED = 1.3889
 local GRAVITY = GXVec3 ()
 GRAVITY:Init ( 0.0, -9.81, 0.0 )
 
-local LANDING_FACTOR = -1.0e-3
+local LANDING_FACTOR = -1.0e-2
 
 -- Class declaration
 local Goomba = {}

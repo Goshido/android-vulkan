@@ -106,6 +106,17 @@ local function MultiplyScalar ( self, a, scale )
     av_GXVec3MultiplyScalar ( self._handle, a._handle, scale )
 end
 
+local function MultiplyVector ( self, a, b )
+    assert ( type ( self ) == "table" and self._type == eObjectType.GXVec3,
+        [[GXVec3:MultiplyScalar - Calling not via ":" syntax.]]
+    )
+
+    assert ( type ( a ) == "table" and a._type == eObjectType.GXVec3, [[GXVec3:MultiplyScalar - "a" is not a GXVec3.]] )
+    assert ( type ( b ) == "table" and b._type == eObjectType.GXVec3, [[GXVec3:MultiplyScalar - "b" is not a GXVec3.]] )
+
+    av_GXVec3MultiplyVector ( self._handle, a._handle, b._handle )
+end
+
 local function Normalize ( self )
     assert ( type ( self ) == "table" and self._type == eObjectType.GXVec3,
         [[GXVec3:Normalize - Calling not via ":" syntax.]]
@@ -235,6 +246,7 @@ local function Constructor ( self )
     obj.Init = Init
     obj.Length = Length
     obj.MultiplyScalar = MultiplyScalar
+    obj.MultiplyVector = MultiplyVector
     obj.Normalize = Normalize
     obj.Reverse = Reverse
     obj.SetX = SetX

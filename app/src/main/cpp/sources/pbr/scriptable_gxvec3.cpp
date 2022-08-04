@@ -81,6 +81,10 @@ void ScriptableGXVec3::Init ( lua_State &vm ) noexcept
             .func = &ScriptableGXVec3::OnMultiplyScalar
         },
         {
+            .name = "av_GXVec3MultiplyVector",
+            .func = &ScriptableGXVec3::OnMultiplyVector
+        },
+        {
             .name = "av_GXVec3Normalize",
             .func = &ScriptableGXVec3::OnNormalize
         },
@@ -326,6 +330,16 @@ int ScriptableGXVec3::OnMultiplyScalar ( lua_State* state )
     auto const& a = *static_cast<Item const*> ( lua_touserdata ( state, 2 ) );
 
     self._vec3.Multiply ( a._vec3, static_cast<float> ( lua_tonumber ( state, 3 ) ) );
+    return 0;
+}
+
+int ScriptableGXVec3::OnMultiplyVector ( lua_State* state )
+{
+    auto& self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    auto const& a = *static_cast<Item const*> ( lua_touserdata ( state, 2 ) );
+    auto const& b = *static_cast<Item const*> ( lua_touserdata ( state, 3 ) );
+
+    self._vec3.Multiply ( a._vec3, b._vec3 );
     return 0;
 }
 

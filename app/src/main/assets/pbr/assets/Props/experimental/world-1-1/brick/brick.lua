@@ -2,6 +2,10 @@ require "av://engine/script_component.lua"
 require "av://engine/logger.lua"
 
 
+-- Constants
+local VELOCITY_MULTIPLIER = GXVec3 ()
+VELOCITY_MULTIPLIER:Init ( 1.0, -0.75, 1.0 )
+
 -- Class declaration
 local Brick = {}
 
@@ -41,6 +45,7 @@ local function OnActorConstructed ( self, actor )
     local max = self:GetOrigin ( actor, "SensorMax" )
     self._sensorSize = self:GetSensorSize ( min, max )
     self._sensorTransform = self:GetSensorTransform ( min, max )
+    self._actor = actor
 end
 
 local function OnPrePhysicsMonitor ( self, deltaTime )
@@ -58,8 +63,9 @@ local function OnPrePhysicsMonitor ( self, deltaTime )
     end
 
     if not self._isOverlaped then
-        LogE ( "BOOM Shaka laka" )
         self._isOverlaped = true
+        mario:Hit ( VELOCITY_MULTIPLIER )
+        self._actor:Destroy ()
     end
 end
 
@@ -88,6 +94,7 @@ local function Constructor ( self, handle, params )
 
     -- Engine events
     obj.OnActorConstructed = OnActorConstructed
+    obj.OnDestroy = OnDestroy
     obj.OnPrePhysics = OnPrePhysicsSeek
 
     return obj

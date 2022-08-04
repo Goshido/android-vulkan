@@ -37,6 +37,34 @@ constexpr static size_t INITIAL_PENETRATION_SIZE = 32U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
+void Scene::DetachRenderable ( RenderableComponent const &component ) noexcept
+{
+    auto const remove = [] ( ComponentList &list, RenderableComponent const &component ) noexcept -> bool {
+        auto const end = list.cend ();
+
+        auto const findResult = std::find_if ( list.cbegin (),
+            end,
+
+            [ &component ] ( auto const &e ) noexcept -> bool {
+                return &e.get () == &component;
+            }
+        );
+
+        if ( findResult == end )
+            return false;
+
+        list.erase ( findResult );
+        return true;
+    };
+
+    if ( remove ( _freeTransferResourceList, component ) || remove ( _renderableList, component ) )
+        return;
+
+    android_vulkan::LogError ( "pbr::Scene::DetachRenderable - Can't remove component %s.",
+        component.GetName ().c_str ()
+    );
+}
+
 bool Scene::ExecuteInputEvents () noexcept
 {
     return _gamepad.Execute ( *_vm, _sceneHandle, _onInputIndex );
@@ -50,6 +78,12 @@ GXMat4 const& Scene::GetActiveCameraLocalMatrix () const noexcept
 GXMat4 const& Scene::GetActiveCameraProjectionMatrix () const noexcept
 {
     return _camera->GetProjectionMatrix ();
+}
+
+android_vulkan::Physics& Scene::GetPhysics () noexcept
+{
+    assert ( _physics );
+    return *_physics;
 }
 
 void Scene::OnCaptureInput () noexcept
@@ -292,7 +326,7 @@ void Scene::AppendActor ( ActorRef &actor ) noexcept
     lua_pushvalue ( _vm, _sceneHandle );
 
     _actors.push_back ( actor );
-    _actors.back ()->RegisterComponents ( _freeTransferResourceList, _renderableList, *_physics, *_vm );
+    _actors.back ()->RegisterComponents ( *this, _freeTransferResourceList, _renderableList, *_physics, *_vm );
 
     lua_pcall ( _vm, 2, 0, ScriptEngine::GetErrorHandlerIndex () );
 }
@@ -302,7 +336,7 @@ void Scene::FreeTransferResources ( VkDevice device ) noexcept
     for ( auto& component : _freeTransferResourceList )
     {
         // NOLINTNEXTLINE - downcast.
-        auto& renderableComponent = static_cast<RenderableComponent&> ( *component.get () );
+        auto& renderableComponent = static_cast<RenderableComponent&> ( component.get () );
         renderableComponent.FreeTransferResources ( device );
     }
 
@@ -395,12 +429,25 @@ bool Scene::LoadScene ( android_vulkan::Renderer &renderer, char const *scene, V
     return true;
 }
 
+void Scene::RemoveActor ( Actor const &actor ) noexcept
+{
+    auto const findResult = std::find_if ( _actors.cbegin (),
+        _actors.cend (),
+
+        [ &actor ] ( ActorRef const &e ) noexcept -> bool {
+            return e.get () == &actor;
+        }
+    );
+
+    _actors.erase ( findResult );
+}
+
 void Scene::Submit ( RenderSession &renderSession ) noexcept
 {
     for ( auto& component : _renderableList )
     {
         // NOLINTNEXTLINE - downcast.
-        auto& renderableComponent = static_cast<RenderableComponent&> ( *component.get () );
+        auto& renderableComponent = static_cast<RenderableComponent&> ( component.get () );
         renderableComponent.Submit ( renderSession );
     }
 }

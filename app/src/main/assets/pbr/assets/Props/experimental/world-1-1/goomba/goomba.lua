@@ -51,10 +51,6 @@ end
 local function CheckTopSensor ( self, localMatrix, origin )
     local mario = self._mario
 
-    if not mario then
-        return
-    end
-
     local p = GXVec3 ()
     p:Sum ( origin, self._sensorTopOffset )
     local m = GXMat4 ()

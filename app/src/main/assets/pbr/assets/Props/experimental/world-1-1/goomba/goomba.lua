@@ -9,6 +9,9 @@ GRAVITY:Init ( 0.0, -9.81, 0.0 )
 
 local LANDING_FACTOR = -1.0e-2
 
+local SQUASH_VELOCITY_FACTOR = GXVec3 ()
+SQUASH_VELOCITY_FACTOR:Init ( 1.0, -1.0, 1.0 )
+
 -- Class declaration
 local Goomba = {}
 
@@ -45,6 +48,32 @@ local function CheckMoveSensor ( self, size, offset, localMatrix, origin, veloci
     end
 end
 
+local function CheckTopSensor ( self, localMatrix, origin )
+    local mario = self._mario
+
+    if not mario then
+        return
+    end
+
+    local p = GXVec3 ()
+    p:Sum ( origin, self._sensorTopOffset )
+    local m = GXMat4 ()
+    m:Clone ( localMatrix )
+    m:SetW ( p )
+
+    local result = g_scene:OverlapTestBoxBox ( m, self._sensorTopSize,
+        mario:GetShapeTransform (),
+        mario:GetShapeSize ()
+    )
+
+    if not result then
+        return
+    end
+
+    mario:Hit ( SQUASH_VELOCITY_FACTOR )
+    self._actor:Destroy ()
+end
+
 local function GetCenter ( self, min, max )
     local diff = GXVec3 ()
     diff:Subtract ( max, min )
@@ -76,6 +105,8 @@ end
 
 -- Engine event handlers
 local function OnActorConstructed ( self, actor )
+    self._actor = actor
+
     local min = GXVec3 ()
     local max = GXVec3 ()
 
@@ -111,7 +142,7 @@ local function OnActorConstructed ( self, actor )
     self._verticalVelocity:Init ( 0.0, 0.0, 0.0 )
 end
 
-local function OnPostPhysics ( self, deltaTime )
+local function OnPostPhysicsAct ( self, deltaTime )
     local origin = GXVec3 ()
     local kinematic = self._bodyKinematic
     kinematic:GetLocation ( origin )
@@ -143,7 +174,11 @@ local function OnPostPhysics ( self, deltaTime )
     self._mesh:SetLocal ( m )
 end
 
-local function OnPrePhysics ( self, deltaTime )
+local function OnPostPhysicsIdle ( self, deltaTime )
+    -- NOTHING
+end
+
+local function OnPrePhysicsAct ( self, deltaTime )
     local localMatrix = self._localMatrix
     kinematic = self._bodyKinematic
 
@@ -157,6 +192,8 @@ local function OnPrePhysics ( self, deltaTime )
     velocity:Reverse ()
     self:CheckMoveSensor ( self._sensorLeftSize, self._sensorLeftOffset, localMatrix, origin, velocity )
 
+    self:CheckTopSensor ( localMatrix, origin )
+
     local vertical = self._verticalVelocity
     vertical:SumScaled ( vertical, deltaTime, GRAVITY )
 
@@ -164,6 +201,18 @@ local function OnPrePhysics ( self, deltaTime )
     velocity:Sum ( self._horizontalVelocity, vertical )
 
     kinematic:SetVelocityLinear ( velocity, true )
+end
+
+local function OnPrePhysicsSeek ( self, deltaTime )
+    local mario = g_scene:FindActor ( "Mario" )
+
+    if mario == nil then
+        return
+    end
+
+    self._mario = mario:FindComponent ( "Script" )
+    self.OnPostPhysics = OnPostPhysicsAct
+    self.OnPrePhysics = OnPrePhysicsAct
 end
 
 -- Metamethods
@@ -176,6 +225,7 @@ local function Constructor ( self, handle, params )
 
     -- Methods
     obj.CheckMoveSensor = CheckMoveSensor
+    obj.CheckTopSensor = CheckTopSensor
     obj.GetCenter = GetCenter
     obj.GetOrigin = GetOrigin
     obj.GetSensorOffset = GetSensorOffset
@@ -183,8 +233,8 @@ local function Constructor ( self, handle, params )
 
     -- Engine events
     obj.OnActorConstructed = OnActorConstructed
-    obj.OnPostPhysics = OnPostPhysics
-    obj.OnPrePhysics = OnPrePhysics
+    obj.OnPostPhysics = OnPostPhysicsIdle
+    obj.OnPrePhysics = OnPrePhysicsSeek
 
     return obj
 end

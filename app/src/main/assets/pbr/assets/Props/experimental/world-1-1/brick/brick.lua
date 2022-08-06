@@ -58,15 +58,11 @@ local function OnPrePhysicsMonitor ( self, deltaTime )
     )
 
     if not result then
-        self._isOverlaped = false
         return
     end
 
-    if not self._isOverlaped then
-        self._isOverlaped = true
-        mario:Hit ( VELOCITY_MULTIPLIER )
-        self._actor:Destroy ()
-    end
+    mario:Hit ( VELOCITY_MULTIPLIER )
+    self._actor:Destroy ()
 end
 
 local function OnPrePhysicsSeek ( self, deltaTime )
@@ -83,9 +79,6 @@ end
 -- Metamethods
 local function Constructor ( self, handle, params )
     local obj = ScriptComponent ( handle )
-
-    -- Data
-    obj._isOverlaped = false
 
     -- Methods
     obj.GetOrigin = GetOrigin

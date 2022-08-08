@@ -44,7 +44,7 @@ struct VulkanPhysicalDeviceInfo final
 class Renderer final
 {
     private:
-        using LogType = void (*) ( char const* format, ... );
+        using LogType = void ( * ) ( char const* format, ... );
 
     private:
         VkFormat                                                            _depthStencilImageFormat;
@@ -317,6 +317,11 @@ class Renderer final
         [[nodiscard]] static char const* ResolveVkPresentModeKHR ( VkPresentModeKHR mode ) noexcept;
         [[nodiscard]] static char const* ResolveVkResult ( VkResult result ) noexcept;
         [[nodiscard]] static char const* ResolveVkSurfaceTransform ( VkSurfaceTransformFlagsKHR transform ) noexcept;
+
+        [[nodiscard]] static std::string StringifyVkFlags ( VkFlags flags,
+            size_t flagSetCount,
+            std::pair<uint32_t, char const*> const flagSet[]
+        ) noexcept;
 };
 
 } // namespace android_vulkan

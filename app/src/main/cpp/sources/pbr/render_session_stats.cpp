@@ -28,15 +28,14 @@ void RenderSessionStats::PrintStats ( double deltaTime ) noexcept
         return;
 
     constexpr char const format[] =
-R"__(>>> pbr::RenderSessionStats::PrintStats:
+R"__(pbr::RenderSessionStats::PrintStats:
                         Submitted     Rendered    Culled
               Vertices  %9zu    %9zu    %s
          Opaque meshes  %9zu    %9zu    %s
         Stipple meshes  %9zu    %9zu    %s
           Point lights  %9zu    %9zu    %s
      Local reflections  %9zu    %9zu    %s
-    Global reflections  %9zu    %9zu    %s
-)__";
+    Global reflections  %9zu    %9zu    %s)__";
 
     auto avgCounter = [ & ] ( size_t counter ) noexcept -> size_t {
         return counter / _frameCount;

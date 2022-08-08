@@ -1155,10 +1155,20 @@ bool Renderer::TryAllocateMemory ( VkDeviceMemory &memory,
     allocateInfo.pNext = nullptr;
     allocateInfo.allocationSize = static_cast<uint32_t> ( size );
 
-    const bool result = SelectTargetMemoryTypeIndex ( allocateInfo.memoryTypeIndex, memoryProperties );
+    if ( !SelectTargetMemoryTypeIndex ( allocateInfo.memoryTypeIndex, memoryProperties ) )
+    {
+        std::string const flags = StringifyVkFlags ( memoryProperties,
+            g_vkMemoryPropertyFlagBitsMapperItems,
+            g_vkMemoryPropertyFlagBitsMapper
+        );
 
-    if ( !result )
+        LogError ( "Renderer::TryAllocateMemory - %s. Hardware does not support the following memory type:%s.",
+            errorMessage,
+            flags.c_str ()
+        );
+
         return false;
+    }
 
     return CheckVkResult ( vkAllocateMemory ( _device, &allocateInfo, nullptr, &memory ),
         "Renderer::TryAllocateMemory",
@@ -1177,13 +1187,20 @@ bool Renderer::TryAllocateMemory ( VkDeviceMemory &memory,
     allocateInfo.pNext = nullptr;
     allocateInfo.allocationSize = requirements.size;
 
-    bool result = SelectTargetMemoryTypeIndex ( allocateInfo.memoryTypeIndex,
-        requirements,
-        memoryProperties
-    );
+    if ( !SelectTargetMemoryTypeIndex ( allocateInfo.memoryTypeIndex, requirements, memoryProperties ) )
+    {
+        std::string const flags = StringifyVkFlags ( memoryProperties,
+            g_vkMemoryPropertyFlagBitsMapperItems,
+            g_vkMemoryPropertyFlagBitsMapper
+        );
 
-    if ( !result )
+        LogError ( "Renderer::TryAllocateMemory - %s. Hardware does not support the following memory type:%s.",
+            errorMessage,
+            flags.c_str ()
+        );
+
         return false;
+    }
 
     return CheckVkResult ( vkAllocateMemory ( _device, &allocateInfo, nullptr, &memory ),
         "Renderer::TryAllocateMemory",
@@ -1257,25 +1274,14 @@ bool Renderer::CheckExtensionShaderFloat16Int8 ( std::set<std::string> const &al
     };
 
     vkGetPhysicalDeviceFeatures2 ( _physicalDevice, &probe );
-    bool result = true;
 
     if ( hardwareSupport.shaderFloat16 )
     {
         LogInfo ( "%sOK: shaderFloat16", INDENT_2 );
-    }
-    else
-    {
-        LogError ( "%sFAIL: shaderFloat16", INDENT_2 );
-        result = false;
+        return true;
     }
 
-    if ( hardwareSupport.shaderInt8 )
-    {
-        LogInfo ( "%sOK: shaderInt8", INDENT_2 );
-        return result;
-    }
-
-    LogError ( "%sFAIL: shaderInt8", INDENT_2 );
+    LogError ( "%sFAIL: shaderFloat16", INDENT_2 );
     return false;
 }
 
@@ -1512,7 +1518,7 @@ bool Renderer::DeployDevice () noexcept
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT16_INT8_FEATURES_KHR,
         .pNext = const_cast<VkPhysicalDeviceMultiviewFeatures*> ( &multiviewFeatures ),
         .shaderFloat16 = VK_TRUE,
-        .shaderInt8 = VK_TRUE
+        .shaderInt8 = VK_FALSE
     };
 
     constexpr char const* extensions[] =
@@ -2973,21 +2979,7 @@ void Renderer::PrintVkFlagsProp ( char const* indent,
         return;
     }
 
-    std::string result;
-    auto const bitmask = static_cast<uint32_t const> ( flags );
-
-    for ( size_t i = 0U; i < flagSetCount; ++i )
-    {
-        auto const& item = flagSet[ i ];
-
-        if ( !( item.first & bitmask ) )
-            continue;
-
-        result += " ";
-        result += item.second;
-    }
-
-    LogInfo ( "%s%s:%s", indent, name, result.c_str () );
+    LogInfo ( "%s%s:%s", indent, name, StringifyVkFlags ( flags, flagSetCount, flagSet ).c_str () );
 }
 
 void Renderer::PrintVkHandler ( char const* indent, char const* name, void* handler ) noexcept
@@ -3119,6 +3111,28 @@ char const* Renderer::ResolveVkSurfaceTransform ( VkSurfaceTransformFlagsKHR tra
 
     constexpr static char const* unknownResult = "UNKNOWN";
     return unknownResult;
+}
+
+std::string Renderer::StringifyVkFlags ( VkFlags flags,
+    size_t flagSetCount,
+    std::pair<uint32_t, char const*> const flagSet[]
+) noexcept
+{
+    std::string result;
+    auto const bitmask = static_cast<uint32_t> ( flags );
+
+    for ( size_t i = 0U; i < flagSetCount; ++i )
+    {
+        auto const& item = flagSet[ i ];
+
+        if ( !( item.first & bitmask ) )
+            continue;
+
+        result += " ";
+        result += item.second;
+    }
+
+    return result;
 }
 
 } // namespace android_vulkan

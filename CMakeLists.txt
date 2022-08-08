@@ -155,8 +155,8 @@ set_target_properties ( android-vulkan PROPERTIES
 target_compile_options ( android-vulkan PRIVATE
     -fno-exceptions
     -fno-rtti
-    -Werror
     -Wall
+    -Werror
     -Wextra
     -Wpedantic
     -Wshadow

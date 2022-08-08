@@ -47,4 +47,6 @@ android {
 }
 ```
 
+---
+
 **[2022-07-29]** _Google_ guys confirmed the issue and promised to fix it in the next _Android Studio_ release. The [link](https://issuetracker.google.com/issues/239589378#comment3).

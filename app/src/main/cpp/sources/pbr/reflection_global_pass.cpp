@@ -1,4 +1,5 @@
 #include <pbr/reflection_global_pass.h>
+#include <trace.h>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -68,6 +69,7 @@ size_t ReflectionGlobalPass::GetReflectionCount () const noexcept
 
 void ReflectionGlobalPass::Reset () noexcept
 {
+    AV_TRACE ( "Reflection global reset" )
     _prefilters.clear ();
 }
 

@@ -1,4 +1,9 @@
 #include <pbr/render_session.h>
+#include <pbr/point_light.h>
+#include <pbr/reflection_probe_global.h>
+#include <pbr/reflection_probe_local.h>
+#include <trace.h>
+#include <vulkan_utils.h>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -7,16 +12,13 @@ GX_DISABLE_COMMON_WARNINGS
 
 GX_RESTORE_WARNING_STATE
 
-#include <vulkan_utils.h>
-#include <pbr/point_light.h>
-#include <pbr/reflection_probe_global.h>
-#include <pbr/reflection_probe_local.h>
-
 
 namespace pbr {
 
 void RenderSession::Begin ( GXMat4 const &viewerLocal, GXMat4 const &projection ) noexcept
 {
+    AV_TRACE ( "Begin render session" )
+
     _opaqueMeshCount = 0U;
     _cvvToView.Inverse ( projection );
     _viewerLocal = viewerLocal;
@@ -29,6 +31,8 @@ void RenderSession::Begin ( GXMat4 const &viewerLocal, GXMat4 const &projection 
 
 bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime ) noexcept
 {
+    AV_TRACE ( "End render session" )
+
     if ( !_presentPass.AcquirePresentTarget ( renderer ) )
         return false;
 

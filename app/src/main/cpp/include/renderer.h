@@ -1,5 +1,5 @@
-#ifndef RENDERER_H
-#define RENDERER_H
+#ifndef ANDROID_VULKAN_RENDERER_H
+#define ANDROID_VULKAN_RENDERER_H
 
 
 #include <GXCommon/GXWarning.h>
@@ -327,4 +327,4 @@ class Renderer final
 } // namespace android_vulkan
 
 
-#endif // RENDERER_H
+#endif // ANDROID_VULKAN_RENDERER_H

@@ -1,4 +1,5 @@
 #include <pbr/light_pass.h>
+#include <trace.h>
 #include <vulkan_utils.h>
 
 GX_DISABLE_COMMON_WARNINGS
@@ -95,6 +96,8 @@ bool LightPass::OnPreGeometryPass ( android_vulkan::Renderer &renderer,
     GXMat4 const &cvvToView
 ) noexcept
 {
+    AV_TRACE ( "Light pre-geometry" )
+
     if ( !_lightupCommonDescriptorSet.Update ( renderer, resolution, viewerLocal, cvvToView ) )
         return false;
 
@@ -111,6 +114,8 @@ bool LightPass::OnPostGeometryPass ( android_vulkan::Renderer &renderer,
     GXMat4 const &viewProjection
 ) noexcept
 {
+    AV_TRACE ( "Light post-geometry" )
+
     size_t const pointLights = _pointLightPass.GetPointLightCount ();
     size_t const localReflections = _reflectionLocalPass.GetReflectionLocalCount ();
     size_t const globalReflections = _reflectionGlobalPass.GetReflectionCount ();

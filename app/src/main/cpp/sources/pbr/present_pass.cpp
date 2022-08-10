@@ -1,10 +1,13 @@
 #include <pbr/present_pass.h>
+#include <trace.h>
 
 
 namespace pbr {
 
 bool PresentPass::AcquirePresentTarget ( android_vulkan::Renderer &renderer ) noexcept
 {
+    AV_TRACE ( "Acquire frame" )
+
     _framebufferIndex = UINT32_MAX;
 
     return android_vulkan::Renderer::CheckVkResult (
@@ -110,6 +113,8 @@ bool PresentPass::Execute ( android_vulkan::Renderer &renderer,
     VkFence fence
 ) noexcept
 {
+    AV_TRACE ( "Present" )
+
     _renderInfo.framebuffer = _framebuffers[ _framebufferIndex ];
 
     vkCmdBeginRenderPass ( commandBuffer, &_renderInfo, VK_SUBPASS_CONTENTS_INLINE );

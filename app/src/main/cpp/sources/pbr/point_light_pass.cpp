@@ -1,6 +1,6 @@
 #include <pbr/point_light_pass.h>
 #include <pbr/point_light.h>
-
+#include <trace.h>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -293,6 +293,8 @@ PointLightPass::PointLightInfo PointLightPass::GetPointLightInfo ( size_t lightI
 
 void PointLightPass::Reset () noexcept
 {
+    AV_TRACE ( "Point light reset" )
+
     _interacts.clear ();
     _usedShadowmaps = 0U;
 }

@@ -1,4 +1,5 @@
 #include <pbr/reflection_local_pass.h>
+#include <trace.h>
 
 
 namespace pbr {
@@ -212,6 +213,7 @@ void ReflectionLocalPass::Destroy ( VkDevice device ) noexcept
 
 void ReflectionLocalPass::Reset () noexcept
 {
+    AV_TRACE ( "Reflection local reset" )
     _calls.clear ();
 }
 

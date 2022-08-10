@@ -6,6 +6,7 @@
 #include <pbr/renderable_component.h>
 #include <pbr/scene_desc.h>
 #include <gamepad.h>
+#include <trace.h>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -43,6 +44,8 @@ bool PBRGame::IsReady () noexcept
 
 bool PBRGame::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) noexcept
 {
+    AV_TRACE ( "OnFrame" )
+
     auto const dt = static_cast<float> ( deltaTime );
 
     _camera.Update ( dt );

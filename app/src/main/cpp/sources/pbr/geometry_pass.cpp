@@ -1,4 +1,5 @@
 #include <pbr/geometry_pass.h>
+#include <trace.h>
 #include <vulkan_utils.h>
 
 
@@ -115,6 +116,8 @@ bool GeometryPass::Execute ( android_vulkan::Renderer &renderer,
     RenderSessionStats &renderSessionStats
 ) noexcept
 {
+    AV_TRACE ( "Geometry pass" )
+
     bool isSamplerUsed = false;
 
     bool const result = _opaqueSubpass.Execute ( renderer,

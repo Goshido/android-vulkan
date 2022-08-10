@@ -1,7 +1,6 @@
-#include <vulkan_utils.h>
-
 #ifdef ANDROID_VULKAN_DEBUG
 
+#include <vulkan_utils.h>
 #include <GXCommon/GXWarning.h>
 
 GX_DISABLE_COMMON_WARNINGS

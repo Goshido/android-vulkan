@@ -31,7 +31,9 @@ class PresentPass final
 
         ~PresentPass () = default;
 
-        [[nodiscard]] bool AcquirePresentTarget ( android_vulkan::Renderer &renderer ) noexcept;
+        [[nodiscard]] bool AcquirePresentTarget ( android_vulkan::Renderer &renderer,
+            size_t &swapchainImageIndex
+        ) noexcept;
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer ) noexcept;
         void Destroy ( VkDevice device ) noexcept;

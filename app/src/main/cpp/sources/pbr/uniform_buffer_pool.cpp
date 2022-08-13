@@ -67,6 +67,11 @@ void UniformBufferPool::Reset () noexcept
     _index = 0U;
 }
 
+size_t UniformBufferPool::GetAvailableItemCount () const noexcept
+{
+    return _pool.capacity () - _index;
+}
+
 size_t UniformBufferPool::GetItemCount () const noexcept
 {
     return _pool.capacity ();

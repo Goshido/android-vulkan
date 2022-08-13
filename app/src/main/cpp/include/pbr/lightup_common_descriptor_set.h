@@ -2,10 +2,10 @@
 #define PBR_LIGHTUP_COMMON_DESCRIPTOR_SET_H
 
 
-#include <uniform_buffer.h>
 #include "gbuffer.h"
 #include "lightup_common_descriptor_set_layout.h"
 #include "sampler.h"
+#include "uniform_buffer_pool.h"
 
 
 namespace pbr {
@@ -15,17 +15,13 @@ class LightupCommonDescriptorSet final
     private:
         android_vulkan::Texture2D           _brdfLUT {};
         Sampler                             _brdfLUTSampler {};
-        VkCommandBuffer                     _brdfTransfer = VK_NULL_HANDLE;
         VkDescriptorPool                    _descriptorPool = VK_NULL_HANDLE;
         LightupCommonDescriptorSetLayout    _layout {};
 
-        VkCommandPool                       _persistentCommandPool = VK_NULL_HANDLE;
-        VkCommandPool                       _workingCommandPool = VK_NULL_HANDLE;
-
         VkPipelineLayout                    _pipelineLayout = VK_NULL_HANDLE;
         Sampler                             _prefilterSampler {};
-        VkDescriptorSet                     _set = VK_NULL_HANDLE;
-        android_vulkan::UniformBuffer       _uniformBuffer {};
+        std::vector<VkDescriptorSet>        _sets {};
+        UniformBufferPool                   _uniforms { eUniformPoolSize::Tiny_4M };
 
     public:
         LightupCommonDescriptorSet () = default;
@@ -38,7 +34,7 @@ class LightupCommonDescriptorSet final
 
         ~LightupCommonDescriptorSet () = default;
 
-        void Bind ( VkCommandBuffer commandBuffer ) noexcept;
+        void Bind ( VkCommandBuffer commandBuffer, size_t swapchainImageIndex ) noexcept;
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
             VkCommandPool commandPool,
@@ -48,7 +44,9 @@ class LightupCommonDescriptorSet final
         void Destroy ( VkDevice device ) noexcept;
         void OnFreeTransferResources ( VkDevice device ) noexcept;
 
-        [[nodiscard]] bool Update ( android_vulkan::Renderer &renderer,
+        void Update ( android_vulkan::Renderer &renderer,
+            VkCommandBuffer commandBuffer,
+            size_t swapchainImageIndex,
             VkExtent2D const &resolution,
             GXMat4 const &viewerLocal,
             GXMat4 const &cvvToView

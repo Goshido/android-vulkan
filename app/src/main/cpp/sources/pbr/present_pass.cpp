@@ -4,13 +4,13 @@
 
 namespace pbr {
 
-bool PresentPass::AcquirePresentTarget ( android_vulkan::Renderer &renderer ) noexcept
+bool PresentPass::AcquirePresentTarget ( android_vulkan::Renderer &renderer, size_t &swapchainImageIndex ) noexcept
 {
     AV_TRACE ( "Acquire frame" )
 
     _framebufferIndex = UINT32_MAX;
 
-    return android_vulkan::Renderer::CheckVkResult (
+    bool const result = android_vulkan::Renderer::CheckVkResult (
         vkAcquireNextImageKHR ( renderer.GetDevice (),
             renderer.GetSwapchain (),
             UINT64_MAX,
@@ -22,6 +22,9 @@ bool PresentPass::AcquirePresentTarget ( android_vulkan::Renderer &renderer ) no
         "pbr::PresentPass::AcquirePresentTarget",
         "Can't get presentation image index"
     );
+
+    swapchainImageIndex = _framebufferIndex;
+    return result;
 }
 
 bool PresentPass::Init ( android_vulkan::Renderer &renderer ) noexcept

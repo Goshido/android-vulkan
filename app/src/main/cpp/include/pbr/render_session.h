@@ -28,8 +28,15 @@ class RenderSession final
             GXColorRGB const &emission
         ) noexcept;
 
+        struct CommandInfo final
+        {
+            VkCommandBuffer                     _buffer = VK_NULL_HANDLE;
+            VkFence                             _fence = VK_NULL_HANDLE;
+            VkCommandPool                       _pool = VK_NULL_HANDLE;
+        };
+
     private:
-        VkCommandPool                           _commandPool = VK_NULL_HANDLE;
+        std::vector<CommandInfo>                _commandInfo {};
 
         GXMat4                                  _cvvToView {};
         GXMat4                                  _view {};
@@ -40,8 +47,6 @@ class RenderSession final
         VkFramebuffer                           _framebuffer = VK_NULL_HANDLE;
         GXProjectionClipPlanes                  _frustum {};
 
-        VkFence                                 _fence = VK_NULL_HANDLE;
-
         GBuffer                                 _gBuffer {};
         VkDescriptorPool                        _gBufferDescriptorPool = VK_NULL_HANDLE;
         VkDescriptorSet                         _gBufferSlotMapper = VK_NULL_HANDLE;
@@ -50,8 +55,6 @@ class RenderSession final
 
         LightHandler                            _lightHandlers[ 3U ] {};
         LightPass                               _lightPass {};
-
-        VkCommandBuffer                         _commandBuffer = VK_NULL_HANDLE;
 
         MeshHandler                             _meshHandlers[ 2U ] {};
         size_t                                  _opaqueMeshCount = 0U;
@@ -135,6 +138,11 @@ class RenderSession final
         void SubmitPointLight ( LightRef &light ) noexcept;
         void SubmitReflectionGlobal ( LightRef &light ) noexcept;
         void SubmitReflectionLocal ( LightRef &light ) noexcept;
+
+        [[nodiscard]] static bool AllocateCommandInfo ( CommandInfo &info,
+            VkDevice device,
+            uint32_t queueIndex
+        ) noexcept;
 };
 
 } // namespace pbr

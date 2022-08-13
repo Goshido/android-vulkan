@@ -48,6 +48,7 @@ class UniformBufferPool final
             VkPipelineStageFlags targetStages
         ) noexcept;
 
+        [[nodiscard]] size_t GetAvailableItemCount () const noexcept;
         [[nodiscard]] size_t GetItemCount () const noexcept;
 
         // The method return all items to the pool.

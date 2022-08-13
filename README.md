@@ -15,8 +15,8 @@ Usefull documentation is located [here](docs/documentation.md).
 Requirements:
 
 * _Windows Vista_+ or _Monjaro KDE_
-* _Android Studio Chipmunk | 2021.2.1 Patch 1_
-* _Android Studio Gradle Plugin 7.2.1_
+* _Android Studio Chipmunk | 2021.2.1 Patch 2_
+* _Android Studio Gradle Plugin 7.2.2_
 * _Android NDK 25.0.8775105 (side by side)_
 * _Android SDK 11.0 (API level 30)_
 * _Android SDK Build-Tools 33.0.0_
@@ -24,7 +24,7 @@ Requirements:
 * _Kotlin 1.7.10_
 * _Kotlin Gradle plugin 1.7.10_
 * _CMake 3.22.1_
-* _Gradle 7.5-bin_
+* _Gradle 7.5.1-bin_
 * _DirectX Shader Compiler 1.7.2207.10009_
 * _Vulkan Validation Layers_ `bbff1dc59468540736f2535cdfbad3ff436e26ec`
 * _Lua_ `8426d9b4d4df1da3c5b2d759e509ae1c50a86667`

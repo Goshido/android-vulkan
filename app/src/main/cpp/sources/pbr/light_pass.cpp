@@ -17,33 +17,13 @@ bool LightPass::Init ( android_vulkan::Renderer &renderer,
     GBuffer &gBuffer
 ) noexcept
 {
-    if ( !_lightupCommonDescriptorSet.Init ( renderer, commandPool, gBuffer ) )
-    {
-        Destroy ( renderer.GetDevice () );
-        return false;
-    }
-
     VkExtent2D const& resolution = gBuffer.GetResolution ();
 
-    if ( !_pointLightPass.Init ( renderer, commandPool, resolution, renderPass ) )
-    {
-        Destroy ( renderer.GetDevice () );
-        return false;
-    }
-
-    if ( !_reflectionGlobalPass.Init ( renderer, renderPass, 1U, resolution ) )
-    {
-        Destroy ( renderer.GetDevice () );
-        return false;
-    }
-
-    bool const result = _reflectionLocalPass.Init ( renderer, commandPool, renderPass, 1U, resolution );
-
-    if ( result && CreateUnitCube ( renderer, commandPool ) )
-        return true;
-
-    Destroy ( renderer.GetDevice () );
-    return false;
+    return _pointLightPass.Init ( renderer, commandPool, resolution, renderPass ) &&
+        _reflectionGlobalPass.Init ( renderer, renderPass, 1U, resolution ) &&
+        _reflectionLocalPass.Init ( renderer, commandPool, renderPass, 1U, resolution ) &&
+        _lightupCommonDescriptorSet.Init ( renderer, commandPool, gBuffer ) &&
+        CreateUnitCube ( renderer, commandPool );
 }
 
 void LightPass::Destroy ( VkDevice device ) noexcept
@@ -87,6 +67,8 @@ void LightPass::OnFreeTransferResources ( VkDevice device ) noexcept
 }
 
 bool LightPass::OnPreGeometryPass ( android_vulkan::Renderer &renderer,
+    VkCommandBuffer commandBuffer,
+    size_t swapchainImageIndex,
     VkExtent2D const &resolution,
     SceneData const &sceneData,
     size_t opaqueMeshCount,
@@ -98,10 +80,15 @@ bool LightPass::OnPreGeometryPass ( android_vulkan::Renderer &renderer,
 {
     AV_TRACE ( "Light pre-geometry" )
 
-    if ( !_lightupCommonDescriptorSet.Update ( renderer, resolution, viewerLocal, cvvToView ) )
-        return false;
+    _lightupCommonDescriptorSet.Update ( renderer,
+        commandBuffer,
+        swapchainImageIndex,
+        resolution,
+        viewerLocal,
+        cvvToView
+    );
 
-    if ( !_pointLightPass.ExecuteShadowPhase ( renderer, sceneData, opaqueMeshCount ) )
+    if ( !_pointLightPass.ExecuteShadowPhase ( renderer, commandBuffer, sceneData, opaqueMeshCount ) )
         return false;
 
     return _reflectionLocalPass.UploadGPUData ( renderer, view, viewProjection );
@@ -109,6 +96,7 @@ bool LightPass::OnPreGeometryPass ( android_vulkan::Renderer &renderer,
 
 bool LightPass::OnPostGeometryPass ( android_vulkan::Renderer &renderer,
     VkCommandBuffer commandBuffer,
+    size_t swapchainImageIndex,
     GXMat4 const &viewerLocal,
     GXMat4 const &view,
     GXMat4 const &viewProjection
@@ -124,7 +112,7 @@ bool LightPass::OnPostGeometryPass ( android_vulkan::Renderer &renderer,
     if ( lightVolumes + globalReflections == 0U )
         return true;
 
-    _lightupCommonDescriptorSet.Bind ( commandBuffer );
+    _lightupCommonDescriptorSet.Bind ( commandBuffer, swapchainImageIndex );
 
     if ( pointLights )
     {

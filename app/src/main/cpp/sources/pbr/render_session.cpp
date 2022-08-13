@@ -33,13 +33,17 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
 {
     AV_TRACE ( "End render session" )
 
-    if ( !_presentPass.AcquirePresentTarget ( renderer ) )
+    size_t swapchainImageIndex;
+
+    if ( !_presentPass.AcquirePresentTarget ( renderer, swapchainImageIndex ) )
         return false;
 
+    CommandInfo& commandInfo = _commandInfo[ swapchainImageIndex ];
+    VkFence& fence = commandInfo._fence;
     VkDevice device = renderer.GetDevice ();
 
     bool result = android_vulkan::Renderer::CheckVkResult (
-        vkWaitForFences ( device, 1U, &_fence, VK_TRUE, std::numeric_limits<uint64_t>::max () ),
+        vkWaitForFences ( device, 1U, &fence, VK_TRUE, std::numeric_limits<uint64_t>::max () ),
         "pbr::RenderSession::End",
         "Can't wait fence"
     );
@@ -47,7 +51,7 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
     if ( !result )
         return false;
 
-    result = android_vulkan::Renderer::CheckVkResult ( vkResetFences ( device, 1U, &_fence ),
+    result = android_vulkan::Renderer::CheckVkResult ( vkResetFences ( device, 1U, &fence ),
         "pbr::RenderSession::End",
         "Can't reset fence"
     );
@@ -56,7 +60,7 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
         return false;
 
     result = android_vulkan::Renderer::CheckVkResult (
-        vkResetCommandPool ( device, _commandPool, 0U ),
+        vkResetCommandPool ( device, commandInfo._pool, 0U ),
         "pbr::RenderSession::End",
         "Can't reset command pool"
     );
@@ -64,7 +68,27 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
     if ( !result )
         return false;
 
+    VkCommandBuffer commandBuffer = commandInfo._buffer;
+
+    constexpr VkCommandBufferBeginInfo beginInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+        .pNext = nullptr,
+        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+        .pInheritanceInfo = nullptr
+    };
+
+    result = android_vulkan::Renderer::CheckVkResult ( vkBeginCommandBuffer ( commandBuffer, &beginInfo ),
+        "pbr::RenderSession::End",
+        "Can't begin main render pass"
+    );
+
+    if ( !result )
+        return false;
+
     result = _lightPass.OnPreGeometryPass ( renderer,
+        commandBuffer,
+        swapchainImageIndex,
         _gBuffer.GetResolution (),
         _geometryPass.GetOpaqueSubpass ().GetSceneData (),
         _opaqueMeshCount,
@@ -77,26 +101,10 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
     if ( !result )
         return false;
 
-    constexpr VkCommandBufferBeginInfo beginInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-        .pNext = nullptr,
-        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
-        .pInheritanceInfo = nullptr
-    };
-
-    result = android_vulkan::Renderer::CheckVkResult ( vkBeginCommandBuffer ( _commandBuffer, &beginInfo ),
-        "pbr::RenderSession::End",
-        "Can't begin main render pass"
-    );
-
-    if ( !result )
-        return false;
-
-    vkCmdBeginRenderPass ( _commandBuffer, &_renderPassInfo, VK_SUBPASS_CONTENTS_INLINE );
+    vkCmdBeginRenderPass ( commandInfo._buffer, &_renderPassInfo, VK_SUBPASS_CONTENTS_INLINE );
 
     result = _geometryPass.Execute ( renderer,
-        _commandBuffer,
+        commandBuffer,
         _frustum,
         _view,
         _viewProjection,
@@ -107,10 +115,11 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
     if ( !result )
         return false;
 
-    vkCmdNextSubpass ( _commandBuffer, VK_SUBPASS_CONTENTS_INLINE );
+    vkCmdNextSubpass ( commandBuffer, VK_SUBPASS_CONTENTS_INLINE );
 
     result = _lightPass.OnPostGeometryPass ( renderer,
-        _commandBuffer,
+        commandBuffer,
+        swapchainImageIndex,
         _viewerLocal,
         _view,
         _viewProjection
@@ -119,12 +128,12 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
     if ( !result )
         return false;
 
-    vkCmdEndRenderPass ( _commandBuffer );
+    vkCmdEndRenderPass ( commandBuffer );
 
     _renderSessionStats.RenderPointLights ( _lightPass.GetPointLightCount () );
     _renderSessionStats.RenderReflectionLocal ( _lightPass.GetReflectionLocalCount () );
 
-    if ( !_presentPass.Execute ( renderer, _commandBuffer, _gBufferSlotMapper, _fence ) )
+    if ( !_presentPass.Execute ( renderer, commandBuffer, _gBufferSlotMapper, fence ) )
         return false;
 
     _renderSessionStats.PrintStats ( deltaTime );
@@ -133,7 +142,7 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
 
 void RenderSession::FreeTransferResources ( VkDevice device ) noexcept
 {
-    _defaultTextureManager.FreeTransferResources ( device, _commandPool );
+    _defaultTextureManager.FreeTransferResources ( device, _commandInfo[ 0U ]._pool );
 }
 
 bool RenderSession::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
@@ -145,66 +154,16 @@ bool RenderSession::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
     _meshHandlers[ static_cast<size_t> ( eMaterialType::Opaque ) ] = &RenderSession::SubmitOpaqueCall;
     _meshHandlers[ static_cast<size_t> ( eMaterialType::Stipple ) ] = &RenderSession::SubmitStippleCall;
 
-    VkCommandPoolCreateInfo const createInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0U,
-        .queueFamilyIndex = renderer.GetQueueFamilyIndex ()
-    };
+    _commandInfo.resize ( 1U );
+    CommandInfo& commandInfo = _commandInfo[ 0U ];
 
-    VkDevice device = renderer.GetDevice ();
-
-    constexpr VkFenceCreateInfo fenceInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = VK_FENCE_CREATE_SIGNALED_BIT
-    };
-
-    bool result = android_vulkan::Renderer::CheckVkResult ( vkCreateFence ( device, &fenceInfo, nullptr, &_fence ),
-        "pbr::RenderSession::OnInitDevice",
-        "Can't create fence"
-    );
-
-    if ( !result )
-        return false;
-
-    AV_REGISTER_FENCE ( "pbr::RenderSession::_fence" )
-
-    result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateCommandPool ( device, &createInfo, nullptr, &_commandPool ),
-        "pbr::RenderSession::OnInitDevice",
-        "Can't create lead command pool"
-    );
-
-    if ( !result )
-        return false;
-
-    AV_REGISTER_COMMAND_POOL ( "pbr::RenderSession::_commandPool" )
-
-    VkCommandBufferAllocateInfo const bufferAllocateInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-        .pNext = nullptr,
-        .commandPool = _commandPool,
-        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-        .commandBufferCount = 1U
-    };
-
-    result = android_vulkan::Renderer::CheckVkResult (
-        vkAllocateCommandBuffers ( device, &bufferAllocateInfo, &_commandBuffer ),
-        "pbr::RenderSession::OnInitDevice",
-        "Can't allocate command buffer"
-    );
-
-    if ( !result )
+    if ( !AllocateCommandInfo ( commandInfo, renderer.GetDevice (), renderer.GetQueueFamilyIndex () ) )
         return false;
 
     if ( !_texturePresentDescriptorSetLayout.Init ( renderer.GetDevice () ) )
         return false;
 
-    if ( !_defaultTextureManager.Init ( renderer, _commandPool ) )
+    if ( !_defaultTextureManager.Init ( renderer, commandInfo._pool ) )
         return false;
 
     return _samplerManager.Init ( renderer );
@@ -227,19 +186,23 @@ void RenderSession::OnDestroyDevice ( VkDevice device ) noexcept
         AV_UNREGISTER_RENDER_PASS ( "pbr::RenderSession::_renderPass" )
     }
 
-    if ( _commandPool != VK_NULL_HANDLE )
+    for ( auto& commandInfo : _commandInfo )
     {
-        vkDestroyCommandPool ( device, _commandPool, nullptr );
-        _commandPool = VK_NULL_HANDLE;
-        AV_UNREGISTER_COMMAND_POOL ( "pbr::RenderSession::_commandPool" )
+        if ( commandInfo._pool != VK_NULL_HANDLE )
+        {
+            vkDestroyCommandPool ( device, commandInfo._pool, nullptr );
+            AV_UNREGISTER_COMMAND_POOL ( "pbr::RenderSession::_commandInfo::_pool" )
+        }
+
+        if ( commandInfo._fence == VK_NULL_HANDLE )
+            continue;
+
+        vkDestroyFence ( device, commandInfo._fence, nullptr );
+        AV_UNREGISTER_FENCE ( "pbr::RenderSession::_fence" )
     }
 
-    if ( _fence == VK_NULL_HANDLE )
-        return;
-
-    vkDestroyFence ( device, _fence, nullptr );
-    _fence = VK_NULL_HANDLE;
-    AV_UNREGISTER_FENCE ( "pbr::RenderSession::_fence" )
+    _commandInfo.clear ();
+    _commandInfo.shrink_to_fit ();
 }
 
 bool RenderSession::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
@@ -262,14 +225,29 @@ bool RenderSession::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
             resolution.width,
             resolution.height
         );
+    }
 
+    size_t const imageCount = renderer.GetPresentImageCount ();
+    size_t const commandPoolCount = _commandInfo.size ();
+    VkDevice device = renderer.GetDevice ();
 
+    if ( commandPoolCount < imageCount )
+    {
+        _commandInfo.resize ( imageCount );
+        uint32_t const queueIndex = renderer.GetQueueFamilyIndex ();
+
+        for ( size_t i = commandPoolCount; i < imageCount; ++i )
+        {
+            if ( !AllocateCommandInfo ( _commandInfo[ i ], device, queueIndex ) )
+            {
+                return false;
+            }
+        }
     }
 
     if ( _presentPass.Init ( renderer ) )
         return true;
 
-    VkDevice device = renderer.GetDevice ();
     DestroyGBufferResources ( device );
     OnSwapchainDestroyed ( device );
 
@@ -632,8 +610,10 @@ bool RenderSession::CreateGBufferResources ( android_vulkan::Renderer &renderer,
     if ( !_gBuffer.Init ( renderer, resolution ) || !CreateRenderPass ( renderer ) || !CreateFramebuffer ( renderer ) )
         return false;
 
+    VkCommandPool commandPool = _commandInfo[ 0U ]._pool;
+
     bool result = _geometryPass.Init ( renderer,
-        _commandPool,
+        commandPool,
         _gBuffer.GetResolution (),
         _renderPass,
         _samplerManager
@@ -642,7 +622,7 @@ bool RenderSession::CreateGBufferResources ( android_vulkan::Renderer &renderer,
     if ( !result )
         return false;
 
-    if ( !_lightPass.Init ( renderer, _commandPool, _renderPass, _gBuffer ) )
+    if ( !_lightPass.Init ( renderer, commandPool, _renderPass, _gBuffer ) )
         return false;
 
     if ( !CreateGBufferSlotMapper ( renderer ) )
@@ -848,6 +828,62 @@ void RenderSession::SubmitReflectionLocal ( LightRef &light ) noexcept
         return;
 
     _lightPass.SubmitReflectionLocal ( probe.GetPrefilter (), probe.GetLocation (), probe.GetSize () );
+}
+
+bool RenderSession::AllocateCommandInfo ( CommandInfo &info, VkDevice device, uint32_t queueIndex ) noexcept
+{
+    VkCommandPool& pool = info._pool;
+
+    constexpr VkFenceCreateInfo fenceInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = VK_FENCE_CREATE_SIGNALED_BIT
+    };
+
+    bool result = android_vulkan::Renderer::CheckVkResult ( vkCreateFence ( device, &fenceInfo, nullptr, &info._fence ),
+        "pbr::RenderSession::AllocateCommandInfo",
+        "Can't create fence"
+    );
+
+    if ( !result )
+        return false;
+
+    AV_REGISTER_FENCE ( "pbr::RenderSession::_fence" )
+
+    VkCommandPoolCreateInfo const createInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .queueFamilyIndex = queueIndex
+    };
+
+    result = android_vulkan::Renderer::CheckVkResult (
+        vkCreateCommandPool ( device, &createInfo, nullptr, &pool ),
+        "pbr::RenderSession::AllocateCommandInfo",
+        "Can't create lead command pool"
+    );
+
+    if ( !result )
+        return false;
+
+    AV_REGISTER_COMMAND_POOL ( "pbr::RenderSession::_commandInfo::_pool" )
+
+    VkCommandBufferAllocateInfo const bufferAllocateInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+        .pNext = nullptr,
+        .commandPool = pool,
+        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+        .commandBufferCount = 1U
+    };
+
+    return android_vulkan::Renderer::CheckVkResult (
+        vkAllocateCommandBuffers ( device, &bufferAllocateInfo, &info._buffer ),
+        "pbr::RenderSession::AllocateCommandInfo",
+        "Can't allocate command buffer"
+    );
 }
 
 } // namespace pbr

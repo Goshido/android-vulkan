@@ -46,6 +46,8 @@ class LightPass final
         void OnFreeTransferResources ( VkDevice device ) noexcept;
 
         [[nodiscard]] bool OnPreGeometryPass ( android_vulkan::Renderer &renderer,
+            VkCommandBuffer commandBuffer,
+            size_t swapchainImageIndex,
             VkExtent2D const &resolution,
             SceneData const &sceneData,
             size_t opaqueMeshCount,
@@ -57,6 +59,7 @@ class LightPass final
 
         [[nodiscard]] bool OnPostGeometryPass ( android_vulkan::Renderer &renderer,
             VkCommandBuffer commandBuffer,
+            size_t swapchainImageIndex,
             GXMat4 const &viewerLocal,
             GXMat4 const &view,
             GXMat4 const &viewProjection

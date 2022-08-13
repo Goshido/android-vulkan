@@ -125,6 +125,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/pbr/texture_present_program.cpp
     app/src/main/cpp/sources/pbr/transform_component.cpp
     app/src/main/cpp/sources/pbr/uniform_buffer_pool.cpp
+    app/src/main/cpp/sources/pbr/uniform_buffer_pool_manager.cpp
     app/src/main/cpp/sources/pbr/box_stack/box_stack.cpp
     app/src/main/cpp/sources/pbr/collision/collision.cpp
     app/src/main/cpp/sources/pbr/collision/manipulator.cpp
@@ -166,12 +167,12 @@ target_compile_options ( android-vulkan PRIVATE
 # See docs/preprocessor-macros.md
 target_compile_definitions ( android-vulkan
     PRIVATE
-    -DANDROID_ENABLE_TRACE
+#    -DANDROID_ENABLE_TRACE
     -DANDROID_NATIVE_MODE_PORTRAIT
-#    -DANDROID_VULKAN_DEBUG
+    -DANDROID_VULKAN_DEBUG
 #    -DANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
-#    -DANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
-#    -DANDROID_VULKAN_STRICT_MODE
+    -DANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+    -DANDROID_VULKAN_STRICT_MODE
     -DVK_NO_PROTOTYPES
     -DVK_USE_PLATFORM_ANDROID_KHR
 )

@@ -86,11 +86,10 @@ void PointLightLightup::Destroy ( VkDevice device ) noexcept
 
 void PointLightLightup::Lightup ( VkCommandBuffer commandBuffer,
     VkDescriptorSet transform,
-    android_vulkan::MeshGeometry &unitCube,
-    size_t lightIndex
+    android_vulkan::MeshGeometry &unitCube
 ) noexcept
 {
-    _program.SetLightData ( commandBuffer, transform, _descriptorSets[ lightIndex ] );
+    _program.SetLightData ( commandBuffer, transform, _descriptorSets[ _itemReadIndex ] );
     vkCmdDrawIndexed ( commandBuffer, unitCube.GetVertexCount (), 1U, 0U, 0, 0U );
     _itemReadIndex = ( _itemReadIndex + 1U ) % _descriptorSets.size ();
 }
@@ -226,7 +225,7 @@ bool PointLightLightup::AllocateNativeDescriptorSets ( android_vulkan::Renderer 
     {
         .sampler = _sampler.GetSampler (),
         .imageView = VK_NULL_HANDLE,
-        .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+        .imageLayout = VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_OPTIMAL
     };
 
     _imageInfo.resize ( setCount, image );

@@ -1298,6 +1298,8 @@ bool Renderer::CheckRequiredDeviceExtensions ( std::vector<char const*> const &d
     // Note bitwise '&' is intentional. All checks must be done to view whole picture.
 
     _isDeviceExtensionSupported = AV_BITWISE ( CheckExtensionShaderFloat16Int8 ( allExtensions ) ) &
+        AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_SEPARATE_DEPTH_STENCIL_LAYOUTS_EXTENSION_NAME ) ) &
+        AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME ) ) &
         AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_SWAPCHAIN_EXTENSION_NAME ) );
 
     _isDeviceExtensionChecked = true;
@@ -1504,10 +1506,17 @@ bool Renderer::DeployDevice () noexcept
     if ( !CheckRequiredFormats () )
         return false;
 
+    constexpr static VkPhysicalDeviceSeparateDepthStencilLayoutsFeatures separateDSLayoutFeatures
+    {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SEPARATE_DEPTH_STENCIL_LAYOUTS_FEATURES,
+        .pNext = nullptr,
+        .separateDepthStencilLayouts = VK_TRUE
+    };
+
     constexpr static VkPhysicalDeviceMultiviewFeatures multiviewFeatures
     {
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_FEATURES,
-        .pNext = nullptr,
+        .pNext = const_cast<VkPhysicalDeviceSeparateDepthStencilLayoutsFeatures*> ( &separateDSLayoutFeatures ),
         .multiview = VK_TRUE,
         .multiviewGeometryShader = VK_FALSE,
         .multiviewTessellationShader = VK_FALSE
@@ -1523,6 +1532,8 @@ bool Renderer::DeployDevice () noexcept
 
     constexpr char const* extensions[] =
     {
+        VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME,
+        VK_KHR_SEPARATE_DEPTH_STENCIL_LAYOUTS_EXTENSION_NAME,
         VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME,
         VK_KHR_SWAPCHAIN_EXTENSION_NAME
     };

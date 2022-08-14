@@ -55,8 +55,7 @@ class PointLightLightup final
 
         void Lightup ( VkCommandBuffer commandBuffer,
             VkDescriptorSet transform,
-            android_vulkan::MeshGeometry &unitCube,
-            size_t lightIndex
+            android_vulkan::MeshGeometry &unitCube
         ) noexcept;
 
         [[nodiscard]] bool UpdateGPUData ( android_vulkan::Renderer &renderer,

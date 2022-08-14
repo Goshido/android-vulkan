@@ -30,7 +30,7 @@ bool PointLightPass::ExecuteLightupPhase ( android_vulkan::MeshGeometry &unitCub
     size_t const limit = _interacts.size ();
 
     for ( size_t i = 0U; i < limit; ++i )
-        _lightup.Lightup ( commandBuffer, _lightBufferPool.Acquire (), unitCube, i );
+        _lightup.Lightup ( commandBuffer, _lightBufferPool.Acquire (), unitCube );
 
     _lightBufferPool.Commit ();
     _lightup.Commit ();
@@ -129,8 +129,8 @@ PointLightPass::PointLightInfo PointLightPass::GetPointLightInfo ( size_t lightI
 {
     assert ( lightIndex < _interacts.size () );
 
-    // Note it's safe cast like that here. "NOLINT" is a clang-tidy control comment.
-    auto* pointLight = static_cast<PointLight*> ( _interacts[ lightIndex ].first.get () ); // NOLINT
+    // NOLINTNEXTLINE - downcast.
+    auto* pointLight = static_cast<PointLight*> ( _interacts[ lightIndex ].first.get () );
 
     return std::make_pair ( pointLight, _shadowmaps[ lightIndex ].first.get () );
 }
@@ -236,7 +236,7 @@ bool PointLightPass::CreateShadowmapRenderPass ( VkDevice device ) noexcept
             .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
             .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
             .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-            .finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+            .finalLayout = VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_OPTIMAL
         }
     };
 
@@ -286,7 +286,7 @@ bool PointLightPass::CreateShadowmapRenderPass ( VkDevice device ) noexcept
         .pCorrelationMasks = correlationMasks
     };
 
-    constexpr static VkSubpassDependency const deps[] =
+    constexpr static VkSubpassDependency const dependencies[] =
     {
         {
             .srcSubpass = 0U,
@@ -308,8 +308,8 @@ bool PointLightPass::CreateShadowmapRenderPass ( VkDevice device ) noexcept
         .pAttachments = depthAttachment,
         .subpassCount = static_cast<uint32_t> ( subpassCount ),
         .pSubpasses = subpasses,
-        .dependencyCount = static_cast<uint32_t> ( std::size ( deps ) ),
-        .pDependencies = deps
+        .dependencyCount = static_cast<uint32_t> ( std::size ( dependencies ) ),
+        .pDependencies = dependencies
     };
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
@@ -323,7 +323,8 @@ bool PointLightPass::CreateShadowmapRenderPass ( VkDevice device ) noexcept
 
     AV_REGISTER_RENDER_PASS ( "PointLightPass::_shadowmapRenderPass" )
 
-    constexpr VkClearValue const clearValues[] =
+    // Must be static as well because it lose the function scope [read as garbage in debug builds].
+    constexpr static VkClearValue const clearValues[] =
     {
         {
             .depthStencil
@@ -334,7 +335,8 @@ bool PointLightPass::CreateShadowmapRenderPass ( VkDevice device ) noexcept
         }
     };
 
-    constexpr VkRect2D renderArea
+    // Must be static as well because it lose the function scope [read as garbage in debug builds].
+    constexpr static VkRect2D renderArea
     {
         .offset
         {

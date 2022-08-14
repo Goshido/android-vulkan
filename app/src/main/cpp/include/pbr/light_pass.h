@@ -60,9 +60,7 @@ class LightPass final
         [[nodiscard]] bool OnPostGeometryPass ( android_vulkan::Renderer &renderer,
             VkCommandBuffer commandBuffer,
             size_t swapchainImageIndex,
-            GXMat4 const &viewerLocal,
-            GXMat4 const &view,
-            GXMat4 const &viewProjection
+            GXMat4 const &viewerLocal
         ) noexcept;
 
         void Reset () noexcept;

@@ -120,9 +120,7 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
     result = _lightPass.OnPostGeometryPass ( renderer,
         commandBuffer,
         swapchainImageIndex,
-        _viewerLocal,
-        _view,
-        _viewProjection
+        _viewerLocal
     );
 
     if ( !result )

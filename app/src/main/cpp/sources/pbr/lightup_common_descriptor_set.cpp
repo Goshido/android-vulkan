@@ -327,6 +327,29 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
         return false;
 
     AV_REGISTER_PIPELINE_LAYOUT ( "pbr::LightupCommonDescriptorSet::_pipelineLayout" )
+
+    _bufferInfo.offset = 0U;
+    _bufferInfo.range = static_cast<VkDeviceSize> ( sizeof ( LightLightupBaseProgram::ViewData ) );
+
+    _writeInfo.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    _writeInfo.pNext = nullptr;
+    _writeInfo.dstBinding = 7U;
+    _writeInfo.dstArrayElement = 0U;
+    _writeInfo.descriptorCount = 1U;
+    _writeInfo.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    _writeInfo.pImageInfo = nullptr;
+    _writeInfo.pBufferInfo = &_bufferInfo;
+    _writeInfo.pTexelBufferView = nullptr;
+
+    _barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+    _barrier.pNext = nullptr;
+    _barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    _barrier.dstAccessMask = VK_ACCESS_UNIFORM_READ_BIT;
+    _barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    _barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    _barrier.offset = 0U;
+    _barrier.size = static_cast<VkDeviceSize> ( sizeof ( LightLightupBaseProgram::ViewData ) );
+
     return true;
 }
 
@@ -384,28 +407,25 @@ void LightupCommonDescriptorSet::Update ( android_vulkan::Renderer &renderer,
     if ( _uniforms.GetAvailableItemCount () < 1U )
         _uniforms.Reset ();
 
-    VkDescriptorBufferInfo const buffer
-    {
-        .buffer = _uniforms.Acquire ( renderer, commandBuffer, &viewData, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT ),
-        .offset = 0U,
-        .range = static_cast<VkDeviceSize> ( sizeof ( LightLightupBaseProgram::ViewData ) )
-    };
+    VkBuffer buffer = _uniforms.Acquire ( renderer, commandBuffer, &viewData, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT );
 
-    VkWriteDescriptorSet const writeInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-        .pNext = nullptr,
-        .dstSet = _sets[ swapchainImageIndex ],
-        .dstBinding = 7U,
-        .dstArrayElement = 0U,
-        .descriptorCount = 1U,
-        .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-        .pImageInfo = nullptr,
-        .pBufferInfo = &buffer,
-        .pTexelBufferView = nullptr
-    };
+    _bufferInfo.buffer = buffer;
+    _writeInfo.dstSet = _sets[ swapchainImageIndex ];
+    vkUpdateDescriptorSets ( renderer.GetDevice (), 1U, &_writeInfo, 0U, nullptr );
 
-    vkUpdateDescriptorSets ( renderer.GetDevice (), 1U, &writeInfo, 0U, nullptr );
+    _barrier.buffer = buffer;
+
+    vkCmdPipelineBarrier ( commandBuffer,
+        VK_PIPELINE_STAGE_TRANSFER_BIT,
+        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+        0U,
+        0U,
+        nullptr,
+        1U,
+        &_barrier,
+        0U,
+        nullptr
+    );
 }
 
 } // namespace pbr

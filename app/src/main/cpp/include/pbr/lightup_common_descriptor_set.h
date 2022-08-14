@@ -13,8 +13,10 @@ namespace pbr {
 class LightupCommonDescriptorSet final
 {
     private:
+        VkBufferMemoryBarrier               _barrier {};
         android_vulkan::Texture2D           _brdfLUT {};
         Sampler                             _brdfLUTSampler {};
+        VkDescriptorBufferInfo              _bufferInfo {};
         VkDescriptorPool                    _descriptorPool = VK_NULL_HANDLE;
         LightupCommonDescriptorSetLayout    _layout {};
 
@@ -22,6 +24,7 @@ class LightupCommonDescriptorSet final
         Sampler                             _prefilterSampler {};
         std::vector<VkDescriptorSet>        _sets {};
         UniformBufferPool                   _uniforms { eUniformPoolSize::Tiny_4M };
+        VkWriteDescriptorSet                _writeInfo {};
 
     public:
         LightupCommonDescriptorSet () = default;

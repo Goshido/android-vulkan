@@ -16,10 +16,10 @@ class UniformBufferPoolManager final
         VkDescriptorPool                        _descriptorPool = VK_NULL_HANDLE;
         std::vector<VkDescriptorSet>            _descriptorSets {};
 
-        size_t                                  _uniformWritten = 0U;
         size_t                                  _uniformBaseIndex = 0U;
         size_t                                  _uniformReadIndex = 0U;
         size_t                                  _uniformWriteIndex = 0U;
+        size_t                                  _uniformWritten = 0U;
 
         UniformBufferPool                       _uniformPool;
         std::vector<VkWriteDescriptorSet>       _writeSets {};

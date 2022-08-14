@@ -14,21 +14,13 @@ constexpr static uint32_t SHADOWMAP_RESOLUTION = 512U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-bool PointLightPass::ExecuteLightupPhase ( android_vulkan::Renderer &renderer,
-    android_vulkan::MeshGeometry &unitCube,
-    VkCommandBuffer commandBuffer,
-    GXMat4 const &viewerLocal,
-    GXMat4 const &view,
-    GXMat4 const &viewProjection
+bool PointLightPass::ExecuteLightupPhase ( android_vulkan::MeshGeometry &unitCube,
+    VkCommandBuffer commandBuffer
 ) noexcept
 {
     if ( _interacts.empty () )
         return true;
 
-    if ( !_lightup.UpdateGPUData ( renderer, *this, viewerLocal, view ) )
-        return false;
-
-    UpdateLightGPUData ( renderer, commandBuffer, viewProjection );
     constexpr VkDeviceSize offset = 0U;
 
     _lightup.BindProgram ( commandBuffer );
@@ -41,6 +33,7 @@ bool PointLightPass::ExecuteLightupPhase ( android_vulkan::Renderer &renderer,
         _lightup.Lightup ( commandBuffer, _lightBufferPool.Acquire (), unitCube, i );
 
     _lightBufferPool.Commit ();
+    _lightup.Commit ();
     return true;
 }
 
@@ -58,7 +51,6 @@ bool PointLightPass::ExecuteShadowPhase ( android_vulkan::Renderer &renderer,
 }
 
 bool PointLightPass::Init ( android_vulkan::Renderer &renderer,
-    VkCommandPool commandPool,
     VkExtent2D const &resolution,
     VkRenderPass lightupRenderPass
 ) noexcept
@@ -86,7 +78,7 @@ bool PointLightPass::Init ( android_vulkan::Renderer &renderer,
     if ( !result )
         return false;
 
-    if ( !_lightup.Init ( renderer, commandPool, lightupRenderPass, 1U, resolution ) )
+    if ( !_lightup.Init ( renderer, lightupRenderPass, 1U, resolution ) )
         return false;
 
     return _lightBufferPool.Init ( renderer,
@@ -156,6 +148,23 @@ void PointLightPass::Submit ( LightRef const &light ) noexcept
     _interacts.emplace_back ( std::make_pair ( light, ShadowCasters () ) );
 }
 
+bool PointLightPass::UploadGPUData ( android_vulkan::Renderer &renderer,
+    VkCommandBuffer commandBuffer,
+    GXMat4 const &viewerLocal,
+    GXMat4 const &view,
+    GXMat4 const &viewProjection
+) noexcept
+{
+    if ( _interacts.empty () )
+        return true;
+
+    if ( !_lightup.UpdateGPUData ( renderer, commandBuffer, *this, viewerLocal, view ) )
+        return false;
+
+    UpdateLightGPUData ( renderer, commandBuffer, viewProjection );
+    return true;
+}
+
 PointLightPass::PointLightShadowmapInfo* PointLightPass::AcquirePointLightShadowmap (
     android_vulkan::Renderer &renderer
 ) noexcept
@@ -216,7 +225,7 @@ PointLightPass::PointLightShadowmapInfo* PointLightPass::AcquirePointLightShadow
 
 bool PointLightPass::CreateShadowmapRenderPass ( VkDevice device ) noexcept
 {
-    VkAttachmentDescription const depthAttachment[] =
+    constexpr static VkAttachmentDescription const depthAttachment[] =
     {
         {
             .flags = 0U,
@@ -277,7 +286,20 @@ bool PointLightPass::CreateShadowmapRenderPass ( VkDevice device ) noexcept
         .pCorrelationMasks = correlationMasks
     };
 
-    VkRenderPassCreateInfo const renderPassInfo
+    constexpr static VkSubpassDependency const deps[] =
+    {
+        {
+            .srcSubpass = 0U,
+            .dstSubpass = VK_SUBPASS_EXTERNAL,
+            .srcStageMask = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+            .dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+            .srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+            .dstAccessMask = VK_ACCESS_SHADER_READ_BIT,
+            .dependencyFlags = 0U
+        }
+    };
+
+    constexpr VkRenderPassCreateInfo renderPassInfo
     {
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
         .pNext = &multiviewInfo,
@@ -286,8 +308,8 @@ bool PointLightPass::CreateShadowmapRenderPass ( VkDevice device ) noexcept
         .pAttachments = depthAttachment,
         .subpassCount = static_cast<uint32_t> ( subpassCount ),
         .pSubpasses = subpasses,
-        .dependencyCount = 0U,
-        .pDependencies = nullptr
+        .dependencyCount = static_cast<uint32_t> ( std::size ( deps ) ),
+        .pDependencies = deps
     };
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
@@ -301,7 +323,7 @@ bool PointLightPass::CreateShadowmapRenderPass ( VkDevice device ) noexcept
 
     AV_REGISTER_RENDER_PASS ( "PointLightPass::_shadowmapRenderPass" )
 
-    constexpr static VkClearValue const clearValues[] =
+    constexpr VkClearValue const clearValues[] =
     {
         {
             .depthStencil
@@ -312,7 +334,7 @@ bool PointLightPass::CreateShadowmapRenderPass ( VkDevice device ) noexcept
         }
     };
 
-    constexpr static VkRect2D renderArea
+    constexpr VkRect2D renderArea
     {
         .offset
         {

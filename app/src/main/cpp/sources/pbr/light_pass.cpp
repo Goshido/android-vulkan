@@ -19,7 +19,7 @@ bool LightPass::Init ( android_vulkan::Renderer &renderer,
 {
     VkExtent2D const& resolution = gBuffer.GetResolution ();
 
-    return _pointLightPass.Init ( renderer, commandPool, resolution, renderPass ) &&
+    return _pointLightPass.Init ( renderer, resolution, renderPass ) &&
         _reflectionGlobalPass.Init ( renderer, renderPass, 1U, resolution ) &&
         _reflectionLocalPass.Init ( renderer, commandPool, renderPass, 1U, resolution ) &&
         _lightupCommonDescriptorSet.Init ( renderer, commandPool, gBuffer ) &&
@@ -91,15 +91,14 @@ bool LightPass::OnPreGeometryPass ( android_vulkan::Renderer &renderer,
     if ( !_pointLightPass.ExecuteShadowPhase ( renderer, commandBuffer, sceneData, opaqueMeshCount ) )
         return false;
 
-    return _reflectionLocalPass.UploadGPUData ( renderer, view, viewProjection );
+    return _pointLightPass.UploadGPUData ( renderer, commandBuffer, viewerLocal, view, viewProjection ) &&
+        _reflectionLocalPass.UploadGPUData ( renderer, view, viewProjection );
 }
 
 bool LightPass::OnPostGeometryPass ( android_vulkan::Renderer &renderer,
     VkCommandBuffer commandBuffer,
     size_t swapchainImageIndex,
-    GXMat4 const &viewerLocal,
-    GXMat4 const &view,
-    GXMat4 const &viewProjection
+    GXMat4 const &viewerLocal
 ) noexcept
 {
     AV_TRACE ( "Light post-geometry" )
@@ -114,21 +113,8 @@ bool LightPass::OnPostGeometryPass ( android_vulkan::Renderer &renderer,
 
     _lightupCommonDescriptorSet.Bind ( commandBuffer, swapchainImageIndex );
 
-    if ( pointLights )
-    {
-        bool const result = _pointLightPass.ExecuteLightupPhase ( renderer,
-            _unitCube,
-            commandBuffer,
-            viewerLocal,
-            view,
-            viewProjection
-        );
-
-        if ( !result )
-        {
-            return false;
-        }
-    }
+    if ( pointLights && !_pointLightPass.ExecuteLightupPhase ( _unitCube, commandBuffer ) )
+        return false;
 
     if ( localReflections && !_reflectionLocalPass.Execute ( renderer, _unitCube, commandBuffer ) )
         return false;

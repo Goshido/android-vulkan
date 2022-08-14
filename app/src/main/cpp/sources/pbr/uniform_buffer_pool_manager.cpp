@@ -208,17 +208,15 @@ void UniformBufferPoolManager::Destroy ( VkDevice device, [[maybe_unused]] char 
         AV_UNREGISTER_DESCRIPTOR_POOL ( name )
     }
 
-    _barriers.clear ();
-    _barriers.shrink_to_fit ();
+    auto const clean = [] ( auto &vector ) noexcept {
+        vector.clear ();
+        vector.shrink_to_fit ();
+    };
 
-    _descriptorSets.clear ();
-    _descriptorSets.shrink_to_fit ();
-
-    _bufferInfo.clear ();
-    _bufferInfo.shrink_to_fit ();
-
-    _writeSets.clear ();
-    _writeSets.shrink_to_fit ();
+    clean ( _barriers );
+    clean ( _descriptorSets );
+    clean ( _bufferInfo );
+    clean ( _writeSets );
 
     _uniformPool.Destroy ( device );
 }

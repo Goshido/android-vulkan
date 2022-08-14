@@ -44,12 +44,8 @@ class PointLightPass final
 
         ~PointLightPass () = default;
 
-        [[nodiscard]] bool ExecuteLightupPhase ( android_vulkan::Renderer &renderer,
-            android_vulkan::MeshGeometry &unitCube,
-            VkCommandBuffer commandBuffer,
-            GXMat4 const &viewerLocal,
-            GXMat4 const &view,
-            GXMat4 const &viewProjection
+        [[nodiscard]] bool ExecuteLightupPhase ( android_vulkan::MeshGeometry &unitCube,
+            VkCommandBuffer commandBuffer
         ) noexcept;
 
         [[nodiscard]] bool ExecuteShadowPhase ( android_vulkan::Renderer &renderer,
@@ -59,7 +55,6 @@ class PointLightPass final
         ) noexcept;
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
-            VkCommandPool commandPool,
             VkExtent2D const &resolution,
             VkRenderPass lightupRenderPass
         ) noexcept;
@@ -71,6 +66,13 @@ class PointLightPass final
 
         void Reset () noexcept;
         void Submit ( LightRef const &light ) noexcept;
+
+        [[nodiscard]] bool UploadGPUData ( android_vulkan::Renderer &renderer,
+            VkCommandBuffer commandBuffer,
+            GXMat4 const &viewerLocal,
+            GXMat4 const &view,
+            GXMat4 const &viewProjection
+        ) noexcept;
 
     private:
         // The method returns nullptr if it fails. Otherwise the method returns a valid pointer.

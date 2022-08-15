@@ -23,11 +23,18 @@ bool LightPass::Init ( android_vulkan::Renderer &renderer,
         _reflectionGlobalPass.Init ( renderer, renderPass, 1U, resolution ) &&
         _reflectionLocalPass.Init ( renderer, commandPool, renderPass, 1U, resolution ) &&
         _lightupCommonDescriptorSet.Init ( renderer, commandPool, gBuffer ) &&
-        CreateUnitCube ( renderer, commandPool );
+        CreateUnitCube ( renderer, commandPool ) &&
+
+        _lightVolumeBufferPool.Init ( renderer,
+            LightVolumeDescriptorSetLayout {},
+            sizeof ( PointLightLightupProgram::VolumeData ),
+            "pbr::LightPass::_lightVolumeBufferPool"
+        );
 }
 
 void LightPass::Destroy ( VkDevice device ) noexcept
 {
+    _lightVolumeBufferPool.Destroy ( device, "pbr::LightPass::_lightVolumeBufferPool" );
     _unitCube.FreeResources ( device );
 
     _reflectionLocalPass.Destroy ( device );
@@ -91,8 +98,19 @@ bool LightPass::OnPreGeometryPass ( android_vulkan::Renderer &renderer,
     if ( !_pointLightPass.ExecuteShadowPhase ( renderer, commandBuffer, sceneData, opaqueMeshCount ) )
         return false;
 
-    return _pointLightPass.UploadGPUData ( renderer, commandBuffer, viewerLocal, view, viewProjection ) &&
-        _reflectionLocalPass.UploadGPUData ( renderer, view, viewProjection );
+    bool const result = _pointLightPass.UploadGPUData ( renderer,
+        commandBuffer,
+        _lightVolumeBufferPool,
+        viewerLocal,
+        view,
+        viewProjection
+    );
+
+    if ( !result || !_reflectionLocalPass.UploadGPUData ( renderer, view, viewProjection ) )
+        return false;
+
+    _lightVolumeBufferPool.IssueSync ( renderer.GetDevice (), commandBuffer );
+    return true;
 }
 
 bool LightPass::OnPostGeometryPass ( android_vulkan::Renderer &renderer,
@@ -113,16 +131,20 @@ bool LightPass::OnPostGeometryPass ( android_vulkan::Renderer &renderer,
 
     _lightupCommonDescriptorSet.Bind ( commandBuffer, swapchainImageIndex );
 
-    if ( pointLights && !_pointLightPass.ExecuteLightupPhase ( _unitCube, commandBuffer ) )
+    if ( pointLights && !_pointLightPass.ExecuteLightupPhase ( _unitCube, commandBuffer, _lightVolumeBufferPool ) )
         return false;
 
     if ( localReflections && !_reflectionLocalPass.Execute ( renderer, _unitCube, commandBuffer ) )
         return false;
 
     if ( !globalReflections )
+    {
+        _lightVolumeBufferPool.Commit ();
         return true;
+    }
 
     bool const result = _reflectionGlobalPass.Execute ( renderer, commandBuffer, viewerLocal );
+    _lightVolumeBufferPool.Commit ();
     return result;
 }
 

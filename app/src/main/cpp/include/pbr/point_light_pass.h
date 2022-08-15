@@ -22,7 +22,6 @@ class PointLightPass final
 
     private:
         std::vector<Interact>                   _interacts {};
-        UniformBufferPoolManager                _lightBufferPool { eUniformPoolSize::Tiny_4M };
         PointLightLightup                       _lightup {};
 
         UniformBufferPoolManager                _shadowmapBufferPool { eUniformPoolSize::Huge_64M };
@@ -45,7 +44,8 @@ class PointLightPass final
         ~PointLightPass () = default;
 
         [[nodiscard]] bool ExecuteLightupPhase ( android_vulkan::MeshGeometry &unitCube,
-            VkCommandBuffer commandBuffer
+            VkCommandBuffer commandBuffer,
+            UniformBufferPoolManager &lightVolumePool
         ) noexcept;
 
         [[nodiscard]] bool ExecuteShadowPhase ( android_vulkan::Renderer &renderer,
@@ -69,6 +69,7 @@ class PointLightPass final
 
         [[nodiscard]] bool UploadGPUData ( android_vulkan::Renderer &renderer,
             VkCommandBuffer commandBuffer,
+            UniformBufferPoolManager &lightVolumePool,
             GXMat4 const &viewerLocal,
             GXMat4 const &view,
             GXMat4 const &viewProjection
@@ -94,6 +95,7 @@ class PointLightPass final
 
         void UpdateLightGPUData ( android_vulkan::Renderer &renderer,
             VkCommandBuffer commandBuffer,
+            UniformBufferPoolManager &lightVolumePool,
             GXMat4 const &viewProjection
         ) noexcept;
 };

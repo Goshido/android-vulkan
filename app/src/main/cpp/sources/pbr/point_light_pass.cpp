@@ -15,7 +15,8 @@ constexpr static uint32_t SHADOWMAP_RESOLUTION = 512U;
 //----------------------------------------------------------------------------------------------------------------------
 
 bool PointLightPass::ExecuteLightupPhase ( android_vulkan::MeshGeometry &unitCube,
-    VkCommandBuffer commandBuffer
+    VkCommandBuffer commandBuffer,
+    UniformBufferPoolManager &lightVolumePool
 ) noexcept
 {
     if ( _interacts.empty () )
@@ -30,9 +31,8 @@ bool PointLightPass::ExecuteLightupPhase ( android_vulkan::MeshGeometry &unitCub
     size_t const limit = _interacts.size ();
 
     for ( size_t i = 0U; i < limit; ++i )
-        _lightup.Lightup ( commandBuffer, _lightBufferPool.Acquire (), unitCube );
+        _lightup.Lightup ( commandBuffer, lightVolumePool.Acquire (), unitCube );
 
-    _lightBufferPool.Commit ();
     _lightup.Commit ();
     return true;
 }
@@ -75,17 +75,7 @@ bool PointLightPass::Init ( android_vulkan::Renderer &renderer,
         "pbr::PointLightPass::_shadowmapBufferPool"
     );
 
-    if ( !result )
-        return false;
-
-    if ( !_lightup.Init ( renderer, lightupRenderPass, 1U, resolution ) )
-        return false;
-
-    return _lightBufferPool.Init ( renderer,
-        LightVolumeDescriptorSetLayout {},
-        sizeof ( PointLightLightupProgram::VolumeData ),
-        "pbr::PointLightPass::_lightBufferPool"
-    );
+    return result && _lightup.Init ( renderer, lightupRenderPass, 1U, resolution );
 }
 
 void PointLightPass::Destroy ( VkDevice device ) noexcept
@@ -108,7 +98,6 @@ void PointLightPass::Destroy ( VkDevice device ) noexcept
         _shadowmaps.clear ();
     }
 
-    _lightBufferPool.Destroy ( device, "pbr::PointLightPass::_lightBufferPool" );
     _shadowmapBufferPool.Destroy ( device, "pbr::PointLightPass::_shadowmapBufferPool" );
     _shadowmapProgram.Destroy ( device );
 
@@ -150,6 +139,7 @@ void PointLightPass::Submit ( LightRef const &light ) noexcept
 
 bool PointLightPass::UploadGPUData ( android_vulkan::Renderer &renderer,
     VkCommandBuffer commandBuffer,
+    UniformBufferPoolManager &lightVolumePool,
     GXMat4 const &viewerLocal,
     GXMat4 const &view,
     GXMat4 const &viewProjection
@@ -161,7 +151,7 @@ bool PointLightPass::UploadGPUData ( android_vulkan::Renderer &renderer,
     if ( !_lightup.UpdateGPUData ( renderer, commandBuffer, *this, viewerLocal, view ) )
         return false;
 
-    UpdateLightGPUData ( renderer, commandBuffer, viewProjection );
+    UpdateLightGPUData ( renderer, commandBuffer, lightVolumePool, viewProjection );
     return true;
 }
 
@@ -540,6 +530,7 @@ void PointLightPass::UpdateShadowmapGPUData ( android_vulkan::Renderer &renderer
 
 void PointLightPass::UpdateLightGPUData ( android_vulkan::Renderer &renderer,
     VkCommandBuffer commandBuffer,
+    UniformBufferPoolManager &lightVolumePool,
     GXMat4 const &viewProjection
 ) noexcept
 {
@@ -563,10 +554,8 @@ void PointLightPass::UpdateLightGPUData ( android_vulkan::Renderer &renderer,
         local.SetW ( alpha );
         transform.Multiply ( local, viewProjection );
 
-        _lightBufferPool.Push ( renderer, commandBuffer, &volumeData );
+        lightVolumePool.Push ( renderer, commandBuffer, &volumeData );
     }
-
-    _lightBufferPool.IssueSync ( renderer.GetDevice (), commandBuffer );
 }
 
 } // namespace pbr

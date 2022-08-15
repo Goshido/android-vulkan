@@ -20,6 +20,7 @@ enum class eUniformPoolSize : size_t
 class UniformBufferPool final
 {
     private:
+        bool const                  _autoSync;
         VkBufferMemoryBarrier       _barrier;
         VkBufferCreateInfo          _bufferInfo;
         VkDeviceMemory              _gpuMemory;
@@ -38,7 +39,7 @@ class UniformBufferPool final
         UniformBufferPool ( UniformBufferPool && ) = delete;
         UniformBufferPool& operator = ( UniformBufferPool && ) = delete;
 
-        explicit UniformBufferPool ( eUniformPoolSize size ) noexcept;
+        explicit UniformBufferPool ( eUniformPoolSize size, bool autoSync ) noexcept;
         ~UniformBufferPool () = default;
 
         // The method acquires one uniform buffer from the pool, inits it with data and returns the buffer to the user.

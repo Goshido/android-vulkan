@@ -5,7 +5,7 @@
 namespace pbr {
 
 UniformBufferPoolManager::UniformBufferPoolManager ( eUniformPoolSize size ) noexcept:
-    _uniformPool ( size )
+    _uniformPool ( size, false )
 {
     // NOTHING
 }

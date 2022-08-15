@@ -26,7 +26,7 @@ class GeometrySubpassBase
         SceneData                                   _sceneData {};
         VkSubmitInfo                                _submitInfoTransfer {};
         VkCommandBuffer                             _transferCommandBuffer = VK_NULL_HANDLE;
-        UniformBufferPool                           _uniformPool { eUniformPoolSize::Huge_64M };
+        UniformBufferPool                           _uniformPool { eUniformPoolSize::Huge_64M, true };
         std::vector<VkDescriptorBufferInfo>         _uniformStorage {};
         TransferInfo                                _uniformTransfer {};
 

@@ -317,7 +317,7 @@ void PointLightLightup::IssueSync ( VkDevice device, VkCommandBuffer commandBuff
 
     vkCmdPipelineBarrier ( commandBuffer,
         VK_PIPELINE_STAGE_TRANSFER_BIT,
-        VK_PIPELINE_STAGE_VERTEX_SHADER_BIT,
+        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
         0U,
         0U,
         nullptr,
@@ -341,7 +341,7 @@ void PointLightLightup::IssueSync ( VkDevice device, VkCommandBuffer commandBuff
 
     vkCmdPipelineBarrier ( commandBuffer,
         VK_PIPELINE_STAGE_TRANSFER_BIT,
-        VK_PIPELINE_STAGE_VERTEX_SHADER_BIT,
+        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
         0U,
         0U,
         nullptr,

@@ -38,9 +38,9 @@ class ReflectionLocalPass final
         VkDescriptorPool                        _descriptorPool = VK_NULL_HANDLE;
         std::vector<VkDescriptorSet>            _descriptorSets {};
         std::vector<VkDescriptorImageInfo>      _imageInfo {};
-        UniformBufferPool                       _lightVolumeUniforms { eUniformPoolSize::Tiny_4M };
+        UniformBufferPool                       _lightVolumeUniforms { eUniformPoolSize::Tiny_4M, true };
         ReflectionLocalProgram                  _program {};
-        UniformBufferPool                       _reflectionUniforms { eUniformPoolSize::Tiny_4M };
+        UniformBufferPool                       _reflectionUniforms { eUniformPoolSize::Tiny_4M, true };
         VkCommandBuffer                         _transfer = VK_NULL_HANDLE;
         VkFence                                 _transferFence = VK_NULL_HANDLE;
         VkSubmitInfo                            _transferSubmit {};

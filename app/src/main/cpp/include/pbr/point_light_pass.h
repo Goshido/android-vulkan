@@ -43,9 +43,9 @@ class PointLightPass final
 
         ~PointLightPass () = default;
 
-        [[nodiscard]] bool ExecuteLightupPhase ( android_vulkan::MeshGeometry &unitCube,
-            VkCommandBuffer commandBuffer,
-            UniformBufferPoolManager &lightVolumePool
+        void ExecuteLightupPhase ( VkCommandBuffer commandBuffer,
+            android_vulkan::MeshGeometry &unitCube,
+            UniformBufferPoolManager &volumeBufferPool
         ) noexcept;
 
         [[nodiscard]] bool ExecuteShadowPhase ( android_vulkan::Renderer &renderer,
@@ -67,9 +67,9 @@ class PointLightPass final
         void Reset () noexcept;
         void Submit ( LightRef const &light ) noexcept;
 
-        [[nodiscard]] bool UploadGPUData ( android_vulkan::Renderer &renderer,
+        void UploadGPUData ( android_vulkan::Renderer &renderer,
             VkCommandBuffer commandBuffer,
-            UniformBufferPoolManager &lightVolumePool,
+            UniformBufferPoolManager &volumeBufferPool,
             GXMat4 const &viewerLocal,
             GXMat4 const &view,
             GXMat4 const &viewProjection
@@ -95,7 +95,7 @@ class PointLightPass final
 
         void UpdateLightGPUData ( android_vulkan::Renderer &renderer,
             VkCommandBuffer commandBuffer,
-            UniformBufferPoolManager &lightVolumePool,
+            UniformBufferPoolManager &volumeBufferPool,
             GXMat4 const &viewProjection
         ) noexcept;
 };

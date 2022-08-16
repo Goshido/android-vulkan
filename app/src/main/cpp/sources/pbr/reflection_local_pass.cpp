@@ -4,10 +4,7 @@
 
 namespace pbr {
 
-constexpr static size_t BUFFERS_PER_CALL = 2U;
-constexpr static size_t DESCRIPTORS_PER_CALL = 2U;
-constexpr static size_t IMAGES_PER_CALL = 1U;
-constexpr static size_t WRITES_PER_CALL = BUFFERS_PER_CALL + IMAGES_PER_CALL;
+constexpr static size_t BIND_PER_SET = 2U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -19,65 +16,36 @@ ReflectionLocalPass::Call::Call ( GXVec3 const &location, TextureCubeRef &prefil
     // NOTHING
 }
 
+//----------------------------------------------------------------------------------------------------------------------
+
+void ReflectionLocalPass::Commit () noexcept
+{
+    _itemBaseIndex = _itemWriteIndex;
+    _itemReadIndex = _itemWriteIndex;
+    _itemWritten = 0U;
+}
+
 void ReflectionLocalPass::Append ( TextureCubeRef &prefilter, GXVec3 const &location, float size ) noexcept
 {
     _calls.emplace_back ( Call ( location, prefilter, size ) );
 }
 
-bool ReflectionLocalPass::Execute ( android_vulkan::Renderer &renderer,
+void ReflectionLocalPass::Execute ( VkCommandBuffer commandBuffer,
     android_vulkan::MeshGeometry &unitCube,
-    VkCommandBuffer commandBuffer
+    UniformBufferPoolManager &volumeBufferPool
 ) noexcept
 {
-    VkDevice device = renderer.GetDevice ();
-
-    bool result = android_vulkan::Renderer::CheckVkResult (
-        vkWaitForFences ( device, 1U, &_transferFence, VK_TRUE, UINT64_MAX ),
-        "pbr::ReflectionLocalPass::Execute",
-        "Can't wait for fence"
-    );
-
-    if ( !result )
-        return false;
-
-    result = android_vulkan::Renderer::CheckVkResult ( vkResetFences ( device, 1U, &_transferFence ),
-        "pbr::ReflectionLocalPass::Execute",
-        "Can't reset fence"
-    );
-
-    if ( !result )
-        return false;
-
-    size_t const callCount = _calls.size ();
-
-    vkUpdateDescriptorSets ( renderer.GetDevice (),
-        static_cast<uint32_t> ( callCount * WRITES_PER_CALL ),
-        _writeSets.data (),
-        0U,
-        nullptr
-    );
-
-    constexpr VkDeviceSize const offset = 0U;
-
-    uint32_t const vertexCount = unitCube.GetVertexCount ();
-    vkCmdBindVertexBuffers ( commandBuffer, 0U, 1U, &unitCube.GetVertexBuffer (), &offset );
-    vkCmdBindIndexBuffer ( commandBuffer, unitCube.GetIndexBuffer (), 0U, VK_INDEX_TYPE_UINT32 );
-
-    size_t descriptorIndex = 0U;
     _program.Bind ( commandBuffer );
+    size_t const count = _calls.size ();
 
-    for ( size_t i = 0U; i < callCount; ++i )
+    for ( size_t i = 0U; i < count; ++i )
     {
-        _program.SetLightData ( commandBuffer,
-            _descriptorSets[ descriptorIndex ],
-            _descriptorSets[ descriptorIndex + 1U ]
-        );
-
-        vkCmdDrawIndexed ( commandBuffer, vertexCount, 1U, 0U, 0, 0U );
-        descriptorIndex += 2U;
+        _program.SetLightData ( commandBuffer, volumeBufferPool.Acquire (), _descriptorSets[ _itemReadIndex ] );
+        vkCmdDrawIndexed ( commandBuffer, unitCube.GetVertexCount (), 1U, 0U, 0, 0U );
+        _itemReadIndex = ( _itemReadIndex + 1U ) % _descriptorSets.size ();
     }
 
-    return true;
+    Commit();
 }
 
 size_t ReflectionLocalPass::GetReflectionLocalCount () const noexcept
@@ -86,129 +54,37 @@ size_t ReflectionLocalPass::GetReflectionLocalCount () const noexcept
 }
 
 bool ReflectionLocalPass::Init ( android_vulkan::Renderer &renderer,
-    VkCommandPool commandPool,
     VkRenderPass renderPass,
     uint32_t subpass,
     VkExtent2D const &viewport
 ) noexcept
 {
-    VkDevice device = renderer.GetDevice ();
-
-    if ( !_program.Init ( renderer, renderPass, subpass, viewport ) )
-    {
-        Destroy ( device );
-        return false;
-    }
-
-    if ( !_lightVolumeUniforms.Init ( renderer, sizeof ( ReflectionLocalProgram::VolumeData ) ) )
-    {
-        Destroy ( device );
-        return false;
-    }
-
-    if ( !_reflectionUniforms.Init ( renderer, sizeof ( ReflectionLocalProgram::LightData ) ) )
-    {
-        Destroy ( device );
-        return false;
-    }
-
-    _commandPool = commandPool;
-
-    VkCommandBufferAllocateInfo const allocateInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-        .pNext = nullptr,
-        .commandPool = _commandPool,
-        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-        .commandBufferCount = 1U
-    };
-
-    bool result = android_vulkan::Renderer::CheckVkResult (
-        vkAllocateCommandBuffers ( device, &allocateInfo, &_transfer ),
-        "pbr::ReflectionLocalPass::Init",
-        "Can't allocate command buffers"
-    );
-
-    if ( !result )
-    {
-        Destroy ( device );
-        return false;
-    }
-
-    constexpr VkFenceCreateInfo const fenceInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0U
-    };
-
-    result = android_vulkan::Renderer::CheckVkResult ( vkCreateFence ( device, &fenceInfo, nullptr, &_transferFence ),
-        "pbr::ReflectionLocalPass::Init",
-        "Can't create fence"
-    );
-
-    if ( !result )
-    {
-        Destroy ( device );
-        return false;
-    }
-
-    AV_REGISTER_FENCE ( "pbr::ReflectionLocalPass::_transferFence" )
-
-    _transferSubmit =
-    {
-        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-        .pNext = nullptr,
-        .waitSemaphoreCount = 0U,
-        .pWaitSemaphores = nullptr,
-        .pWaitDstStageMask = nullptr,
-        .commandBufferCount = 1U,
-        .pCommandBuffers = &_transfer,
-        .signalSemaphoreCount = 0U,
-        .pSignalSemaphores = nullptr
-    };
-
-    return true;
+    return _program.Init ( renderer, renderPass, subpass, viewport ) && AllocateDescriptorSets ( renderer );
 }
 
 void ReflectionLocalPass::Destroy ( VkDevice device ) noexcept
 {
-    if ( _transferFence != VK_NULL_HANDLE )
+    if ( _descriptorPool != VK_NULL_HANDLE )
     {
-        vkDestroyFence ( device, _transferFence, nullptr );
-        _transferFence = VK_NULL_HANDLE;
-        AV_UNREGISTER_FENCE ( "pbr::ReflectionLocalPass::_transferFence" )
+        vkDestroyDescriptorPool ( device, _descriptorPool, nullptr );
+        _descriptorPool = VK_NULL_HANDLE;
+        AV_UNREGISTER_DESCRIPTOR_POOL ( "pbr::ReflectionLocalPass::_descriptorPool" )
     }
 
-    if ( _transfer != VK_NULL_HANDLE )
-    {
-        vkFreeCommandBuffers ( device, _commandPool, 1U, &_transfer );
-        _transfer = VK_NULL_HANDLE;
-    }
+    auto const clean = [] ( auto &vector ) noexcept {
+        vector.clear ();
+        vector.shrink_to_fit ();
+    };
 
-    _transferSubmit = {};
-    _commandPool = VK_NULL_HANDLE;
+    clean ( _barriers );
+    clean ( _bufferInfo );
+    clean ( _calls );
+    clean ( _descriptorSets );
+    clean ( _imageInfo );
+    clean ( _writeSets );
 
-    _reflectionUniforms.Destroy ( device );
-    _lightVolumeUniforms.Destroy ( device );
-
+    _uniformPool.Destroy ( device );
     _program.Destroy ( device );
-    DestroyDescriptorPool ( device );
-
-    _bufferInfo.clear ();
-    _bufferInfo.shrink_to_fit ();
-
-    _calls.clear ();
-    _calls.shrink_to_fit ();
-
-    _descriptorSets.clear ();
-    _descriptorSets.shrink_to_fit ();
-
-    _imageInfo.clear ();
-    _imageInfo.shrink_to_fit ();
-
-    _writeSets.clear ();
-    _writeSets.shrink_to_fit ();
 }
 
 void ReflectionLocalPass::Reset () noexcept
@@ -217,7 +93,9 @@ void ReflectionLocalPass::Reset () noexcept
     _calls.clear ();
 }
 
-bool ReflectionLocalPass::UploadGPUData ( android_vulkan::Renderer &renderer,
+void ReflectionLocalPass::UploadGPUData ( android_vulkan::Renderer &renderer,
+    VkCommandBuffer commandBuffer,
+    UniformBufferPoolManager &volumeBufferPool,
     GXMat4 const &view,
     GXMat4 const &viewProjection
 ) noexcept
@@ -225,108 +103,68 @@ bool ReflectionLocalPass::UploadGPUData ( android_vulkan::Renderer &renderer,
     size_t const callCount = _calls.size ();
 
     if ( !callCount )
-        return true;
-
-    _reflectionUniforms.Reset ();
-    _lightVolumeUniforms.Reset ();
-
-    if ( !AllocateDescriptorSets ( renderer, _calls.size () ) )
-        return false;
-
-    constexpr VkCommandBufferBeginInfo beginInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-        .pNext = nullptr,
-        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
-        .pInheritanceInfo = nullptr
-    };
-
-    bool result = android_vulkan::Renderer::CheckVkResult ( vkBeginCommandBuffer ( _transfer, &beginInfo ),
-        "pbr::ReflectionLocalPass::UploadGPUData",
-        "Can't begin command buffer"
-    );
-
-    if ( !result )
-        return false;
+        return;
 
     ReflectionLocalProgram::LightData lightData {};
-
-    ReflectionLocalProgram::VolumeData volumeData {};
     GXMat4 alpha {};
     alpha.Identity ();
 
-    size_t bufferIndex = 0U;
-    size_t imageIndex = 0U;
+    ReflectionLocalProgram::VolumeData volumeData {};
+    GXMat4& transform = volumeData._transform;
+    GXMat4 local {};
+    local.Identity ();
 
     for ( auto const& call : _calls )
     {
-        alpha._data[ 0U ] = call._size;
-        alpha._data[ 5U ] = call._size;
-        alpha._data[ 10U ] = call._size;
-        alpha.SetW ( call._location );
-        volumeData._transform.Multiply ( alpha, viewProjection );
+        local._data[ 0U ] = call._size;
+        local._data[ 5U ] = call._size;
+        local._data[ 10U ] = call._size;
+        local.SetW ( call._location );
 
-        VkDescriptorBufferInfo& lightVolumeBuffer = _bufferInfo[ bufferIndex++ ];
-        lightVolumeBuffer.range = static_cast<VkDeviceSize> ( sizeof ( volumeData ) );
+        transform.Multiply ( local, viewProjection );
+        volumeBufferPool.Push ( renderer, commandBuffer, &volumeData );
 
-        lightVolumeBuffer.buffer = _lightVolumeUniforms.Acquire ( renderer,
-            _transfer,
-            &volumeData,
-            VK_PIPELINE_STAGE_VERTEX_SHADER_BIT
-        );
-
-        _imageInfo[ imageIndex++ ].imageView = call._prefilter->GetImageView ();
+        _imageInfo[ _itemWriteIndex ].imageView = call._prefilter->GetImageView ();
 
         lightData._invSize = 2.0F / call._size;
         view.MultiplyAsPoint ( lightData._locationView, call._location );
 
-        VkDescriptorBufferInfo& lightDataBuffer = _bufferInfo[ bufferIndex++ ];
-        lightDataBuffer.range = static_cast<VkDeviceSize> ( sizeof ( lightData ) );
-
-        lightDataBuffer.buffer = _reflectionUniforms.Acquire ( renderer,
-            _transfer,
+        VkBuffer buffer = _uniformPool.Acquire ( renderer,
+            commandBuffer,
             &lightData,
             VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT
         );
+
+        _bufferInfo[ _itemWriteIndex ].buffer = buffer;
+        _barriers[ _itemWriteIndex ].buffer = buffer;
+        _itemWriteIndex = ( _itemWriteIndex + 1U ) % _descriptorSets.size ();
+
+        if ( _itemWriteIndex == 0U )
+            _uniformPool.Reset ();
+
+        ++_itemWritten;
     }
 
-    result = android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( _transfer ),
-        "pbr::ReflectionLocalPass::UploadGPUData",
-        "Can't end command buffer"
-    );
-
-    if ( !result )
-        return false;
-
-    return android_vulkan::Renderer::CheckVkResult (
-        vkQueueSubmit ( renderer.GetQueue (), 1U, &_transferSubmit, _transferFence ),
-        "pbr::ReflectionLocalPass::UploadGPUData",
-        "Can't submit command buffer"
-    );
+    IssueSync ( renderer.GetDevice (), commandBuffer );
 }
 
-bool ReflectionLocalPass::AllocateDescriptorSets ( android_vulkan::Renderer &renderer, size_t neededCalls ) noexcept
+bool ReflectionLocalPass::AllocateDescriptorSets ( android_vulkan::Renderer &renderer ) noexcept
 {
-    size_t const neededDescriptors = neededCalls * DESCRIPTORS_PER_CALL;
+    if ( !_uniformPool.Init ( renderer, sizeof ( ReflectionLocalProgram::LightData ) ) )
+        return false;
 
-    if ( neededDescriptors <= _descriptorSets.size () )
-        return true;
-
+    size_t const setCount = _uniformPool.GetAvailableItemCount ();
     VkDevice device = renderer.GetDevice ();
-    DestroyDescriptorPool ( device );
-
-    size_t const bufferCount = BUFFERS_PER_CALL * neededCalls;
-    size_t const imageCount = IMAGES_PER_CALL * neededCalls;
 
     VkDescriptorPoolSize const poolSizes[] =
     {
         {
             .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-            .descriptorCount = static_cast<uint32_t> ( imageCount )
+            .descriptorCount = static_cast<uint32_t> ( setCount )
         },
         {
             .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            .descriptorCount = static_cast<uint32_t> ( bufferCount )
+            .descriptorCount = static_cast<uint32_t> ( setCount )
         }
     };
 
@@ -335,14 +173,14 @@ bool ReflectionLocalPass::AllocateDescriptorSets ( android_vulkan::Renderer &ren
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0U,
-        .maxSets = static_cast<uint32_t> ( neededDescriptors ),
+        .maxSets = static_cast<uint32_t> ( setCount ),
         .poolSizeCount = static_cast<uint32_t> ( std::size ( poolSizes ) ),
         .pPoolSizes = poolSizes
     };
 
     bool result = android_vulkan::Renderer::CheckVkResult (
         vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_descriptorPool ),
-        "pbr::ReflectionLocalPass::AllocateDescriptorSets",
+        "pbr::ReflectionLocalPass::AllocateNativeDescriptorSets",
         "Can't create descriptor pool"
     );
 
@@ -351,19 +189,8 @@ bool ReflectionLocalPass::AllocateDescriptorSets ( android_vulkan::Renderer &ren
 
     AV_REGISTER_DESCRIPTOR_POOL ( "pbr::ReflectionLocalPass::_descriptorPool" )
 
-    LightVolumeDescriptorSetLayout const lightVolumeLayout;
-    VkDescriptorSetLayout lightVolumeNative = lightVolumeLayout.GetLayout ();
-
-    ReflectionLocalDescriptorSetLayout const reflectionLayout;
-    VkDescriptorSetLayout reflectionNative = reflectionLayout.GetLayout ();
-
-    std::vector<VkDescriptorSetLayout> layouts ( neededDescriptors );
-
-    for ( size_t i = 0U; i < neededDescriptors; i += DESCRIPTORS_PER_CALL )
-    {
-        layouts[ i ] = lightVolumeNative;
-        layouts[ i + 1U ] = reflectionNative;
-    }
+    _descriptorSets.resize ( setCount );
+    std::vector<VkDescriptorSetLayout> const layouts ( setCount, ReflectionLocalDescriptorSetLayout ().GetLayout () );
 
     VkDescriptorSetAllocateInfo const allocateInfo
     {
@@ -374,11 +201,9 @@ bool ReflectionLocalPass::AllocateDescriptorSets ( android_vulkan::Renderer &ren
         .pSetLayouts = layouts.data ()
     };
 
-    _descriptorSets.resize ( neededDescriptors );
-
     result = android_vulkan::Renderer::CheckVkResult (
         vkAllocateDescriptorSets ( device, &allocateInfo, _descriptorSets.data () ),
-        "pbr::ReflectionLocalPass::AllocateDescriptorSets",
+        "pbr::PointLightLightup::AllocateNativeDescriptorSets",
         "Can't allocate descriptor sets"
     );
 
@@ -387,30 +212,30 @@ bool ReflectionLocalPass::AllocateDescriptorSets ( android_vulkan::Renderer &ren
 
     // Initialize all immutable constant fields.
 
-    constexpr VkDescriptorBufferInfo const bufferInfo
-    {
-        .buffer = VK_NULL_HANDLE,
-        .offset = 0U,
-        .range = 0U
-    };
-
-    _bufferInfo.resize ( bufferCount, bufferInfo );
-
-    constexpr VkDescriptorImageInfo const imageInfo
+    constexpr VkDescriptorImageInfo image
     {
         .sampler = VK_NULL_HANDLE,
         .imageView = VK_NULL_HANDLE,
         .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
     };
 
-    _imageInfo.resize ( imageCount, imageInfo );
+    _imageInfo.resize ( setCount, image );
 
-    constexpr VkWriteDescriptorSet const writeSet
+    constexpr VkDescriptorBufferInfo uniform
+    {
+        .buffer = VK_NULL_HANDLE,
+        .offset = 0U,
+        .range = static_cast<VkDeviceSize> ( sizeof ( ReflectionLocalProgram::LightData ) )
+    };
+
+    _bufferInfo.resize ( setCount, uniform );
+
+    constexpr VkWriteDescriptorSet writeSet
     {
         .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
         .pNext = nullptr,
         .dstSet = VK_NULL_HANDLE,
-        .dstBinding = UINT32_MAX,
+        .dstBinding = 0U,
         .dstArrayElement = 0U,
         .descriptorCount = 1U,
         .descriptorType = VK_DESCRIPTOR_TYPE_MAX_ENUM,
@@ -419,50 +244,99 @@ bool ReflectionLocalPass::AllocateDescriptorSets ( android_vulkan::Renderer &ren
         .pTexelBufferView = nullptr
     };
 
-    size_t const writeCount = WRITES_PER_CALL * neededCalls;
-    _writeSets.resize ( writeCount, writeSet );
+    _writeSets.resize ( BIND_PER_SET * setCount, writeSet );
 
-    size_t setIndex = 0U;
-    size_t imageIndex = 0U;
-    size_t bufferIndex = 0U;
-
-    for ( size_t i = 0U; i < writeCount; i += WRITES_PER_CALL )
+    for ( size_t i = 0U; i < setCount; ++i )
     {
-        VkWriteDescriptorSet& lightVolumeBuffer = _writeSets[ i ];
-        VkWriteDescriptorSet& reflectionImage = _writeSets[ i + 1U ];
-        VkWriteDescriptorSet& reflectionBuffer = _writeSets[ i + 2U ];
+        size_t const base = BIND_PER_SET * i;
+        VkDescriptorSet set = _descriptorSets[ i ];
 
-        lightVolumeBuffer.dstSet = _descriptorSets[ setIndex++ ];
-        lightVolumeBuffer.dstBinding = 0U;
-        lightVolumeBuffer.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        lightVolumeBuffer.pBufferInfo = &_bufferInfo[ bufferIndex++ ];
+        VkWriteDescriptorSet& imageSet = _writeSets[ base ];
+        imageSet.dstSet = set;
+        imageSet.dstBinding = 0U;
+        imageSet.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+        imageSet.pImageInfo = &_imageInfo[ i ];
 
-        VkDescriptorSet reflectionSet = _descriptorSets[ setIndex++ ];
-
-        reflectionImage.dstSet = reflectionSet;
-        reflectionImage.dstBinding = 0U;
-        reflectionImage.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-        reflectionImage.pImageInfo = &_imageInfo[ imageIndex++ ];
-
-        reflectionBuffer.dstSet = reflectionSet;
-        reflectionBuffer.dstBinding = 1U;
-        reflectionBuffer.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        reflectionBuffer.pBufferInfo = &_bufferInfo[ bufferIndex++ ];
+        VkWriteDescriptorSet& bufferSet = _writeSets[ base + 1U ];
+        bufferSet.dstSet = set;
+        bufferSet.dstBinding = 1U;
+        bufferSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        bufferSet.pBufferInfo = &_bufferInfo[ i ];
     }
 
-    // Now all what is needed to do is to init "_imageInfo::imageView", "_bufferInfo::buffer" and "_bufferInfo::range".
+    constexpr VkBufferMemoryBarrier bufferBarrier
+    {
+        .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
+        .pNext = nullptr,
+        .srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
+        .dstAccessMask = VK_ACCESS_UNIFORM_READ_BIT,
+        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .buffer = VK_NULL_HANDLE,
+        .offset = 0U,
+        .size = static_cast<VkDeviceSize> ( sizeof ( ReflectionLocalProgram::LightData ) )
+    };
+
+    _barriers.resize ( setCount, bufferBarrier );
+
+    // Now all what is needed to do is to init "_bufferInfo::buffer" and "_imageInfo::imageView".
     // Then to invoke vkUpdateDescriptorSets.
+
+    _itemBaseIndex = 0U;
+    _itemReadIndex = 0U;
+    _itemWriteIndex = 0U;
+    _itemWritten = 0U;
+
     return true;
 }
 
-void ReflectionLocalPass::DestroyDescriptorPool ( VkDevice device ) noexcept
+void ReflectionLocalPass::IssueSync ( VkDevice device, VkCommandBuffer commandBuffer ) const noexcept
 {
-    if ( _descriptorPool == VK_NULL_HANDLE )
+    size_t const count = _descriptorSets.size ();
+    size_t const idx = _itemBaseIndex + _itemWritten;
+    size_t const cases[] = { 0U, idx - count };
+    size_t const more = cases[ static_cast<size_t> ( idx > count ) ];
+    size_t const available = _itemWritten - more;
+
+    VkBufferMemoryBarrier const* barriers = _barriers.data ();
+
+    vkCmdPipelineBarrier ( commandBuffer,
+        VK_PIPELINE_STAGE_TRANSFER_BIT,
+        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+        0U,
+        0U,
+        nullptr,
+        static_cast<uint32_t> ( available ),
+        barriers + _itemBaseIndex,
+        0U,
+        nullptr
+    );
+
+    VkWriteDescriptorSet const* writeSets = _writeSets.data ();
+
+    vkUpdateDescriptorSets ( device,
+        static_cast<uint32_t> ( BIND_PER_SET * available ),
+        writeSets + BIND_PER_SET * _itemBaseIndex,
+        0U,
+        nullptr
+    );
+
+    if ( more < 1U )
         return;
 
-    vkDestroyDescriptorPool ( device, _descriptorPool, nullptr );
-    _descriptorPool = VK_NULL_HANDLE;
-    AV_UNREGISTER_DESCRIPTOR_POOL ( "pbr::ReflectionLocalPass::_descriptorPool" )
+    vkCmdPipelineBarrier ( commandBuffer,
+        VK_PIPELINE_STAGE_TRANSFER_BIT,
+        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+        0U,
+        0U,
+        nullptr,
+        static_cast<uint32_t> ( more ),
+        barriers,
+        0U,
+        nullptr
+    );
+
+    vkUpdateDescriptorSets ( device, static_cast<uint32_t> ( BIND_PER_SET * more ), writeSets, 0U, nullptr );
 }
 
 } // namespace pbr

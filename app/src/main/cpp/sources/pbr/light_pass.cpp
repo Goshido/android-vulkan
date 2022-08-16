@@ -21,11 +21,11 @@ bool LightPass::Init ( android_vulkan::Renderer &renderer,
 
     return _pointLightPass.Init ( renderer, resolution, renderPass ) &&
         _reflectionGlobalPass.Init ( renderer, renderPass, 1U, resolution ) &&
-        _reflectionLocalPass.Init ( renderer, commandPool, renderPass, 1U, resolution ) &&
+        _reflectionLocalPass.Init ( renderer, renderPass, 1U, resolution ) &&
         _lightupCommonDescriptorSet.Init ( renderer, commandPool, gBuffer ) &&
         CreateUnitCube ( renderer, commandPool ) &&
 
-        _lightVolumeBufferPool.Init ( renderer,
+        _volumeBufferPool.Init ( renderer,
             LightVolumeDescriptorSetLayout {},
             sizeof ( PointLightLightupProgram::VolumeData ),
             "pbr::LightPass::_lightVolumeBufferPool"
@@ -34,7 +34,7 @@ bool LightPass::Init ( android_vulkan::Renderer &renderer,
 
 void LightPass::Destroy ( VkDevice device ) noexcept
 {
-    _lightVolumeBufferPool.Destroy ( device, "pbr::LightPass::_lightVolumeBufferPool" );
+    _volumeBufferPool.Destroy ( device, "pbr::LightPass::_lightVolumeBufferPool" );
     _unitCube.FreeResources ( device );
 
     _reflectionLocalPass.Destroy ( device );
@@ -98,18 +98,16 @@ bool LightPass::OnPreGeometryPass ( android_vulkan::Renderer &renderer,
     if ( !_pointLightPass.ExecuteShadowPhase ( renderer, commandBuffer, sceneData, opaqueMeshCount ) )
         return false;
 
-    bool const result = _pointLightPass.UploadGPUData ( renderer,
+    _pointLightPass.UploadGPUData ( renderer,
         commandBuffer,
-        _lightVolumeBufferPool,
+        _volumeBufferPool,
         viewerLocal,
         view,
         viewProjection
     );
 
-    if ( !result || !_reflectionLocalPass.UploadGPUData ( renderer, view, viewProjection ) )
-        return false;
-
-    _lightVolumeBufferPool.IssueSync ( renderer.GetDevice (), commandBuffer );
+    _reflectionLocalPass.UploadGPUData ( renderer, commandBuffer, _volumeBufferPool, view, viewProjection );
+    _volumeBufferPool.IssueSync ( renderer.GetDevice (), commandBuffer );
     return true;
 }
 
@@ -131,20 +129,20 @@ bool LightPass::OnPostGeometryPass ( android_vulkan::Renderer &renderer,
 
     _lightupCommonDescriptorSet.Bind ( commandBuffer, swapchainImageIndex );
 
-    if ( pointLights && !_pointLightPass.ExecuteLightupPhase ( _unitCube, commandBuffer, _lightVolumeBufferPool ) )
-        return false;
+    if ( pointLights )
+        _pointLightPass.ExecuteLightupPhase ( commandBuffer, _unitCube, _volumeBufferPool );
 
-    if ( localReflections && !_reflectionLocalPass.Execute ( renderer, _unitCube, commandBuffer ) )
-        return false;
+    if ( localReflections )
+        _reflectionLocalPass.Execute ( commandBuffer, _unitCube, _volumeBufferPool );
 
     if ( !globalReflections )
     {
-        _lightVolumeBufferPool.Commit ();
+        _volumeBufferPool.Commit ();
         return true;
     }
 
     bool const result = _reflectionGlobalPass.Execute ( renderer, commandBuffer, viewerLocal );
-    _lightVolumeBufferPool.Commit ();
+    _volumeBufferPool.Commit ();
     return result;
 }
 

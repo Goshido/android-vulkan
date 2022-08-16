@@ -4,7 +4,7 @@
 
 #include "reflection_local_program.h"
 #include "types.h"
-#include "uniform_buffer_pool.h"
+#include "uniform_buffer_pool_manager.h"
 
 
 namespace pbr {
@@ -32,18 +32,21 @@ class ReflectionLocalPass final
         };
 
     private:
+        std::vector<VkBufferMemoryBarrier>      _barriers {};
         std::vector<VkDescriptorBufferInfo>     _bufferInfo {};
         std::vector<Call>                       _calls {};
-        VkCommandPool                           _commandPool = VK_NULL_HANDLE;
         VkDescriptorPool                        _descriptorPool = VK_NULL_HANDLE;
         std::vector<VkDescriptorSet>            _descriptorSets {};
         std::vector<VkDescriptorImageInfo>      _imageInfo {};
-        UniformBufferPool                       _lightVolumeUniforms { eUniformPoolSize::Tiny_4M, true };
+
+        size_t                                  _itemBaseIndex = 0U;
+        size_t                                  _itemReadIndex = 0U;
+        size_t                                  _itemWriteIndex = 0U;
+        size_t                                  _itemWritten = 0U;
+
         ReflectionLocalProgram                  _program {};
-        UniformBufferPool                       _reflectionUniforms { eUniformPoolSize::Tiny_4M, true };
-        VkCommandBuffer                         _transfer = VK_NULL_HANDLE;
-        VkFence                                 _transferFence = VK_NULL_HANDLE;
-        VkSubmitInfo                            _transferSubmit {};
+
+        UniformBufferPool                       _uniformPool { eUniformPoolSize::Tiny_4M, false };
         std::vector<VkWriteDescriptorSet>       _writeSets {};
 
     public:
@@ -57,17 +60,17 @@ class ReflectionLocalPass final
 
         ~ReflectionLocalPass () = default;
 
+        void Commit () noexcept;
         void Append ( TextureCubeRef &prefilter, GXVec3 const &location, float size ) noexcept;
 
-        bool Execute ( android_vulkan::Renderer &renderer,
+        void Execute ( VkCommandBuffer commandBuffer,
             android_vulkan::MeshGeometry &unitCube,
-            VkCommandBuffer commandBuffer
+            UniformBufferPoolManager &volumeBufferPool
         ) noexcept;
 
         [[nodiscard]] size_t GetReflectionLocalCount () const noexcept;
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
-            VkCommandPool commandPool,
             VkRenderPass renderPass,
             uint32_t subpass,
             VkExtent2D const &viewport
@@ -77,14 +80,16 @@ class ReflectionLocalPass final
 
         void Reset () noexcept;
 
-        [[nodiscard]] bool UploadGPUData ( android_vulkan::Renderer &renderer,
+        void UploadGPUData ( android_vulkan::Renderer &renderer,
+            VkCommandBuffer commandBuffer,
+            UniformBufferPoolManager &volumeBufferPool,
             GXMat4 const &view,
             GXMat4 const &viewProjection
         ) noexcept;
 
     private:
-        [[nodiscard]] bool AllocateDescriptorSets ( android_vulkan::Renderer &renderer, size_t neededCalls ) noexcept;
-        void DestroyDescriptorPool ( VkDevice device ) noexcept;
+        [[nodiscard]] bool AllocateDescriptorSets ( android_vulkan::Renderer &renderer ) noexcept;
+        void IssueSync ( VkDevice device, VkCommandBuffer commandBuffer ) const noexcept;
 };
 
 } // namespace pbr

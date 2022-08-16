@@ -58,7 +58,7 @@ class PointLightLightup final
             android_vulkan::MeshGeometry &unitCube
         ) noexcept;
 
-        [[nodiscard]] bool UpdateGPUData ( android_vulkan::Renderer &renderer,
+        void UpdateGPUData ( android_vulkan::Renderer &renderer,
             VkCommandBuffer commandBuffer,
             PointLightPass const &pointLightPass,
             GXMat4 const &viewerLocal,
@@ -66,7 +66,7 @@ class PointLightLightup final
         ) noexcept;
 
     private:
-        [[nodiscard]] bool AllocateNativeDescriptorSets ( android_vulkan::Renderer &renderer ) noexcept;
+        [[nodiscard]] bool AllocateDescriptorSets ( android_vulkan::Renderer &renderer ) noexcept;
         void IssueSync ( VkDevice device, VkCommandBuffer commandBuffer ) const noexcept;
 };
 

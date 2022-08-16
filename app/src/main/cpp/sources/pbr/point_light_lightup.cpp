@@ -15,6 +15,8 @@ namespace pbr {
 
 constexpr static size_t BIND_PER_SET = 3U;
 
+//----------------------------------------------------------------------------------------------------------------------
+
 void PointLightLightup::Commit () noexcept
 {
     _itemBaseIndex = _itemWriteIndex;
@@ -56,7 +58,7 @@ bool PointLightLightup::Init ( android_vulkan::Renderer &renderer,
     };
 
     return _program.Init ( renderer, renderPass, subpass, resolution ) && _sampler.Init ( renderer, samplerInfo ) &&
-        AllocateNativeDescriptorSets ( renderer );
+        AllocateDescriptorSets ( renderer );
 }
 
 void PointLightLightup::Destroy ( VkDevice device ) noexcept
@@ -94,7 +96,7 @@ void PointLightLightup::Lightup ( VkCommandBuffer commandBuffer,
     _itemReadIndex = ( _itemReadIndex + 1U ) % _descriptorSets.size ();
 }
 
-bool PointLightLightup::UpdateGPUData ( android_vulkan::Renderer &renderer,
+void PointLightLightup::UpdateGPUData ( android_vulkan::Renderer &renderer,
     VkCommandBuffer commandBuffer,
     PointLightPass const &pointLightPass,
     GXMat4 const &viewerLocal,
@@ -150,10 +152,9 @@ bool PointLightLightup::UpdateGPUData ( android_vulkan::Renderer &renderer,
     }
 
     IssueSync ( renderer.GetDevice (), commandBuffer );
-    return true;
 }
 
-bool PointLightLightup::AllocateNativeDescriptorSets ( android_vulkan::Renderer &renderer ) noexcept
+bool PointLightLightup::AllocateDescriptorSets ( android_vulkan::Renderer &renderer ) noexcept
 {
     if ( !_uniformPool.Init ( renderer, sizeof ( PointLightLightupProgram::LightData ) ) )
         return false;
@@ -189,7 +190,7 @@ bool PointLightLightup::AllocateNativeDescriptorSets ( android_vulkan::Renderer 
 
     bool result = android_vulkan::Renderer::CheckVkResult (
         vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_descriptorPool ),
-        "pbr::PointLightLightup::AllocateNativeDescriptorSets",
+        "pbr::PointLightLightup::AllocateDescriptorSets",
         "Can't create descriptor pool"
     );
 
@@ -212,7 +213,7 @@ bool PointLightLightup::AllocateNativeDescriptorSets ( android_vulkan::Renderer 
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkAllocateDescriptorSets ( device, &allocateInfo, _descriptorSets.data () ),
-        "pbr::PointLightLightup::AllocateNativeDescriptorSets",
+        "pbr::PointLightLightup::AllocateDescriptorSets",
         "Can't allocate descriptor sets"
     );
 
@@ -279,7 +280,7 @@ bool PointLightLightup::AllocateNativeDescriptorSets ( android_vulkan::Renderer 
         bufferSet.pBufferInfo = &_bufferInfo[ i ];
     }
 
-    VkBufferMemoryBarrier const bufferBarrier
+    constexpr VkBufferMemoryBarrier bufferBarrier
     {
         .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
         .pNext = nullptr,

@@ -105,7 +105,7 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
     if ( !_uniforms.Init ( renderer, sizeof ( LightLightupBaseProgram::ViewData ) ) )
         return false;
 
-    VkCommandBufferAllocateInfo const commandBufferAllocateInfo
+    VkCommandBufferAllocateInfo const bufferAllocateInfo
     {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
         .pNext = nullptr,
@@ -114,10 +114,10 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
         .commandBufferCount = 1U
     };
 
-    VkCommandBuffer transfer;
+    VkCommandBuffer textureCommandBuffer;
 
     result = android_vulkan::Renderer::CheckVkResult (
-        vkAllocateCommandBuffers ( device, &commandBufferAllocateInfo, &transfer ),
+        vkAllocateCommandBuffers ( device, &bufferAllocateInfo, &textureCommandBuffer ),
         "pbr::LightupCommonDescriptorSet::Init",
         "Can't allocate command buffer"
     );
@@ -125,7 +125,7 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
     if ( !result )
         return false;
 
-    if ( !_brdfLUT.UploadData ( renderer, BRDF_LUT, android_vulkan::eFormat::Unorm, false, transfer ) )
+    if ( !_brdfLUT.UploadData ( renderer, BRDF_LUT, android_vulkan::eFormat::Unorm, false, textureCommandBuffer ) )
         return false;
 
     constexpr VkSamplerCreateInfo brdfSamplerInfo
@@ -150,7 +150,7 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
         .unnormalizedCoordinates = VK_FALSE
     };
 
-    if ( !_brdfLUTSampler.Init ( renderer, brdfSamplerInfo ) )
+    if ( !_brdfLUTSampler.Init ( device, brdfSamplerInfo ) )
         return false;
 
     constexpr VkSamplerCreateInfo prefilterSamplerInfo
@@ -175,7 +175,7 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
         .unnormalizedCoordinates = VK_FALSE
     };
 
-    if ( !_prefilterSampler.Init ( renderer, prefilterSamplerInfo ) )
+    if ( !_prefilterSampler.Init ( device, prefilterSamplerInfo ) )
         return false;
 
     VkDescriptorImageInfo const images[] =
@@ -382,7 +382,7 @@ void LightupCommonDescriptorSet::OnFreeTransferResources ( VkDevice device ) noe
     _brdfLUT.FreeTransferResources ( device );
 }
 
-void LightupCommonDescriptorSet::Update ( android_vulkan::Renderer &renderer,
+void LightupCommonDescriptorSet::Update ( VkDevice device,
     VkCommandBuffer commandBuffer,
     size_t swapchainImageIndex,
     VkExtent2D const &resolution,
@@ -407,11 +407,11 @@ void LightupCommonDescriptorSet::Update ( android_vulkan::Renderer &renderer,
     if ( _uniforms.GetAvailableItemCount () < 1U )
         _uniforms.Reset ();
 
-    VkBuffer buffer = _uniforms.Acquire ( renderer, commandBuffer, &viewData );
+    VkBuffer buffer = _uniforms.Push ( commandBuffer, &viewData, sizeof ( viewData ) );
 
     _bufferInfo.buffer = buffer;
     _writeInfo.dstSet = _sets[ swapchainImageIndex ];
-    vkUpdateDescriptorSets ( renderer.GetDevice (), 1U, &_writeInfo, 0U, nullptr );
+    vkUpdateDescriptorSets ( device, 1U, &_writeInfo, 0U, nullptr );
 
     _barrier.buffer = buffer;
 

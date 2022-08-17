@@ -12,18 +12,36 @@ GX_RESTORE_WARNING_STATE
 namespace pbr {
 
 bool LightPass::Init ( android_vulkan::Renderer &renderer,
-    VkCommandPool commandPool,
     VkRenderPass renderPass,
     GBuffer &gBuffer
 ) noexcept
 {
+    VkCommandPoolCreateInfo const createInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .queueFamilyIndex = renderer.GetQueueFamilyIndex ()
+    };
+
+    bool const result = android_vulkan::Renderer::CheckVkResult (
+        vkCreateCommandPool ( renderer.GetDevice (), &createInfo, nullptr, &_commandPool ),
+        "pbr::LightPass::Init",
+        "Can't create lead command pool"
+    );
+
+    if ( !result )
+        return false;
+
+    AV_REGISTER_COMMAND_POOL ( "pbr::LightPass::_commandPool" )
+
     VkExtent2D const& resolution = gBuffer.GetResolution ();
 
     return _pointLightPass.Init ( renderer, resolution, renderPass ) &&
         _reflectionGlobalPass.Init ( renderer, renderPass, 1U, resolution ) &&
         _reflectionLocalPass.Init ( renderer, renderPass, 1U, resolution ) &&
-        _lightupCommonDescriptorSet.Init ( renderer, commandPool, gBuffer ) &&
-        CreateUnitCube ( renderer, commandPool ) &&
+        _lightupCommonDescriptorSet.Init ( renderer, _commandPool, gBuffer ) &&
+        CreateUnitCube ( renderer ) &&
 
         _volumeBufferPool.Init ( renderer,
             LightVolumeDescriptorSetLayout {},
@@ -42,12 +60,12 @@ void LightPass::Destroy ( VkDevice device ) noexcept
     _pointLightPass.Destroy ( device );
     _lightupCommonDescriptorSet.Destroy ( device );
 
-    if ( _transfer == VK_NULL_HANDLE )
+    if ( _commandPool == VK_NULL_HANDLE )
         return;
 
-    vkFreeCommandBuffers ( device, _commandPool, 1U, &_transfer );
-    _transfer = VK_NULL_HANDLE;
+    vkDestroyCommandPool ( device, _commandPool, nullptr );
     _commandPool = VK_NULL_HANDLE;
+    AV_UNREGISTER_COMMAND_POOL ( "pbr::LightPass::_commandPool" )
 }
 
 size_t LightPass::GetPointLightCount () const noexcept
@@ -65,12 +83,12 @@ void LightPass::OnFreeTransferResources ( VkDevice device ) noexcept
     _unitCube.FreeTransferResources ( device );
     _lightupCommonDescriptorSet.OnFreeTransferResources ( device );
 
-    if ( _transfer == VK_NULL_HANDLE )
+    if ( _commandPool == VK_NULL_HANDLE )
         return;
 
-    vkFreeCommandBuffers ( device, _commandPool, 1U, &_transfer );
-    _transfer = VK_NULL_HANDLE;
+    vkDestroyCommandPool ( device, _commandPool, nullptr );
     _commandPool = VK_NULL_HANDLE;
+    AV_UNREGISTER_COMMAND_POOL ( "pbr::LightPass::_commandPool" )
 }
 
 bool LightPass::OnPreGeometryPass ( android_vulkan::Renderer &renderer,
@@ -87,7 +105,9 @@ bool LightPass::OnPreGeometryPass ( android_vulkan::Renderer &renderer,
 {
     AV_TRACE ( "Light pre-geometry" )
 
-    _lightupCommonDescriptorSet.Update ( renderer,
+    VkDevice device = renderer.GetDevice ();
+
+    _lightupCommonDescriptorSet.Update ( device,
         commandBuffer,
         swapchainImageIndex,
         resolution,
@@ -98,7 +118,7 @@ bool LightPass::OnPreGeometryPass ( android_vulkan::Renderer &renderer,
     if ( !_pointLightPass.ExecuteShadowPhase ( renderer, commandBuffer, sceneData, opaqueMeshCount ) )
         return false;
 
-    _pointLightPass.UploadGPUData ( renderer,
+    _pointLightPass.UploadGPUData ( device,
         commandBuffer,
         _volumeBufferPool,
         viewerLocal,
@@ -106,15 +126,15 @@ bool LightPass::OnPreGeometryPass ( android_vulkan::Renderer &renderer,
         viewProjection
     );
 
-    _reflectionLocalPass.UploadGPUData ( renderer, commandBuffer, _volumeBufferPool, view, viewProjection );
-    _volumeBufferPool.IssueSync ( renderer.GetDevice (), commandBuffer );
+    _reflectionLocalPass.UploadGPUData ( device, commandBuffer, _volumeBufferPool, view, viewProjection );
+    _volumeBufferPool.IssueSync ( device, commandBuffer );
+
     return true;
 }
 
-bool LightPass::OnPostGeometryPass ( android_vulkan::Renderer &renderer,
+void LightPass::OnPostGeometryPass ( VkDevice device,
     VkCommandBuffer commandBuffer,
-    size_t swapchainImageIndex,
-    GXMat4 const &viewerLocal
+    size_t swapchainImageIndex
 ) noexcept
 {
     AV_TRACE ( "Light post-geometry" )
@@ -125,7 +145,7 @@ bool LightPass::OnPostGeometryPass ( android_vulkan::Renderer &renderer,
     size_t const lightVolumes = pointLights + localReflections;
 
     if ( lightVolumes + globalReflections == 0U )
-        return true;
+        return;
 
     _lightupCommonDescriptorSet.Bind ( commandBuffer, swapchainImageIndex );
 
@@ -138,12 +158,11 @@ bool LightPass::OnPostGeometryPass ( android_vulkan::Renderer &renderer,
     if ( !globalReflections )
     {
         _volumeBufferPool.Commit ();
-        return true;
+        return;
     }
 
-    bool const result = _reflectionGlobalPass.Execute ( renderer, commandBuffer, viewerLocal );
+    _reflectionGlobalPass.Execute ( device, commandBuffer );
     _volumeBufferPool.Commit ();
-    return result;
 }
 
 void LightPass::Reset () noexcept
@@ -168,31 +187,8 @@ void LightPass::SubmitReflectionLocal ( TextureCubeRef &prefilter, GXVec3 const 
     _reflectionLocalPass.Append ( prefilter, location, size );
 }
 
-bool LightPass::CreateUnitCube ( android_vulkan::Renderer &renderer, VkCommandPool commandPool ) noexcept
+bool LightPass::CreateUnitCube ( android_vulkan::Renderer &renderer ) noexcept
 {
-    _commandPool = commandPool;
-
-    VkCommandBufferAllocateInfo const allocateInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-        .pNext = nullptr,
-        .commandPool = _commandPool,
-        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-        .commandBufferCount = 1U
-    };
-
-    bool result = android_vulkan::Renderer::CheckVkResult (
-        vkAllocateCommandBuffers ( renderer.GetDevice (), &allocateInfo, &_transfer ),
-        "pbr::LightPass::CreateUnitCube",
-        "Can't allocate command buffer"
-    );
-
-    if ( !result )
-    {
-        Destroy ( renderer.GetDevice () );
-        return false;
-    }
-
     constexpr GXVec3 const vertices[] =
     {
         GXVec3 ( -0.5F, -0.5F, -0.5F ),
@@ -225,13 +221,33 @@ bool LightPass::CreateUnitCube ( android_vulkan::Renderer &renderer, VkCommandPo
     bounds.AddVertex ( vertices[ 0U ] );
     bounds.AddVertex ( vertices[ 7U ] );
 
+    VkCommandBufferAllocateInfo const bufferAllocateInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+        .pNext = nullptr,
+        .commandPool = _commandPool,
+        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+        .commandBufferCount = 1U
+    };
+
+    VkCommandBuffer commandBuffer;
+
+    bool const result = android_vulkan::Renderer::CheckVkResult (
+        vkAllocateCommandBuffers ( renderer.GetDevice (), &bufferAllocateInfo, &commandBuffer ),
+        "pbr::CreateUnitCube::CreateUnitCube",
+        "Can't allocate command buffer"
+    );
+
+    if ( !result )
+        return false;
+
     return _unitCube.LoadMesh ( reinterpret_cast<uint8_t const*> ( vertices ),
         sizeof ( vertices ),
         indices,
         static_cast<uint32_t> ( std::size ( indices ) ),
         bounds,
         renderer,
-        _transfer
+        commandBuffer
     );
 }
 

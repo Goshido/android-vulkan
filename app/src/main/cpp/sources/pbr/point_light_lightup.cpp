@@ -57,7 +57,8 @@ bool PointLightLightup::Init ( android_vulkan::Renderer &renderer,
         .unnormalizedCoordinates = VK_FALSE
     };
 
-    return _program.Init ( renderer, renderPass, subpass, resolution ) && _sampler.Init ( renderer, samplerInfo ) &&
+    return _program.Init ( renderer, renderPass, subpass, resolution ) &&
+        _sampler.Init ( renderer.GetDevice (), samplerInfo ) &&
         AllocateDescriptorSets ( renderer );
 }
 
@@ -96,7 +97,7 @@ void PointLightLightup::Lightup ( VkCommandBuffer commandBuffer,
     _itemReadIndex = ( _itemReadIndex + 1U ) % _descriptorSets.size ();
 }
 
-void PointLightLightup::UpdateGPUData ( android_vulkan::Renderer &renderer,
+void PointLightLightup::UpdateGPUData ( VkDevice device,
     VkCommandBuffer commandBuffer,
     PointLightPass const &pointLightPass,
     GXMat4 const &viewerLocal,
@@ -134,14 +135,8 @@ void PointLightLightup::UpdateGPUData ( android_vulkan::Renderer &renderer,
         lightData._intensity = light->GetIntensity ();
 
         view.MultiplyAsPoint ( lightData._lightLocationView, location );
+        _uniformPool.Push ( commandBuffer, &lightData, sizeof ( lightData ) );
 
-        VkBuffer buffer = _bufferInfo[ _itemWriteIndex ].buffer = _uniformPool.Acquire ( renderer,
-            commandBuffer,
-            &lightData
-        );
-
-        _bufferInfo[ _itemWriteIndex ].buffer = buffer;
-        _barriers[ _itemWriteIndex ].buffer = buffer;
         _itemWriteIndex = ( _itemWriteIndex + 1U ) % _descriptorSets.size ();
 
         if ( _itemWriteIndex == 0U )
@@ -150,7 +145,7 @@ void PointLightLightup::UpdateGPUData ( android_vulkan::Renderer &renderer,
         ++_itemWritten;
     }
 
-    IssueSync ( renderer.GetDevice (), commandBuffer );
+    IssueSync ( device, commandBuffer );
 }
 
 bool PointLightLightup::AllocateDescriptorSets ( android_vulkan::Renderer &renderer ) noexcept
@@ -255,10 +250,31 @@ bool PointLightLightup::AllocateDescriptorSets ( android_vulkan::Renderer &rende
 
     _writeSets.resize ( BIND_PER_SET * setCount, writeSet );
 
+    constexpr VkBufferMemoryBarrier bufferBarrier
+    {
+        .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
+        .pNext = nullptr,
+        .srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
+        .dstAccessMask = VK_ACCESS_UNIFORM_READ_BIT,
+        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .buffer = VK_NULL_HANDLE,
+        .offset = 0U,
+        .size = static_cast<VkDeviceSize> ( sizeof ( PointLightLightupProgram::LightData ) )
+    };
+
+    _barriers.resize ( setCount, bufferBarrier );
+
     for ( size_t i = 0U; i < setCount; ++i )
     {
         size_t const base = BIND_PER_SET * i;
         VkDescriptorSet set = _descriptorSets[ i ];
+
+        VkBuffer buffer = _uniformPool.GetBuffer ( i );
+        _barriers[ i ].buffer = buffer;
+
+        VkDescriptorBufferInfo& bufferInfo = _bufferInfo[ i ];
+        bufferInfo.buffer = buffer;
 
         VkWriteDescriptorSet& imageSet = _writeSets[ base ];
         imageSet.dstSet = set;
@@ -276,23 +292,8 @@ bool PointLightLightup::AllocateDescriptorSets ( android_vulkan::Renderer &rende
         bufferSet.dstSet = set;
         bufferSet.dstBinding = 2U;
         bufferSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-        bufferSet.pBufferInfo = &_bufferInfo[ i ];
+        bufferSet.pBufferInfo = &bufferInfo;
     }
-
-    constexpr VkBufferMemoryBarrier bufferBarrier
-    {
-        .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
-        .pNext = nullptr,
-        .srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
-        .dstAccessMask = VK_ACCESS_UNIFORM_READ_BIT,
-        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .buffer = VK_NULL_HANDLE,
-        .offset = 0U,
-        .size = static_cast<VkDeviceSize> ( sizeof ( PointLightLightupProgram::LightData ) )
-    };
-
-    _barriers.resize ( setCount, bufferBarrier );
 
     // Now all what is needed to do is to init "_bufferInfo::buffer" and "_imageInfo::imageView".
     // Then to invoke vkUpdateDescriptorSets.

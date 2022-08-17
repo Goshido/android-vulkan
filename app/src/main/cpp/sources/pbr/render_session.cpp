@@ -101,20 +101,15 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
     if ( !result )
         return false;
 
-    _geometryPass.UploadGPUData ( renderer, commandBuffer, _frustum, _view, _viewProjection );
+    _geometryPass.UploadGPUData ( device, commandBuffer, _frustum, _view, _viewProjection );
 
     vkCmdBeginRenderPass ( commandBuffer, &_renderPassInfo, VK_SUBPASS_CONTENTS_INLINE );
+
     _geometryPass.Execute ( commandBuffer, _renderSessionStats );
+
     vkCmdNextSubpass ( commandBuffer, VK_SUBPASS_CONTENTS_INLINE );
 
-    result = _lightPass.OnPostGeometryPass ( renderer,
-        commandBuffer,
-        swapchainImageIndex,
-        _viewerLocal
-    );
-
-    if ( !result )
-        return false;
+    _lightPass.OnPostGeometryPass ( device, commandBuffer, swapchainImageIndex );
 
     vkCmdEndRenderPass ( commandBuffer );
 
@@ -145,16 +140,15 @@ bool RenderSession::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
     _commandInfo.resize ( 1U );
     CommandInfo& commandInfo = _commandInfo[ 0U ];
 
-    if ( !AllocateCommandInfo ( commandInfo, renderer.GetDevice (), renderer.GetQueueFamilyIndex () ) )
+    VkDevice device = renderer.GetDevice ();
+
+    if ( !AllocateCommandInfo ( commandInfo, device, renderer.GetQueueFamilyIndex () ) )
         return false;
 
-    if ( !_texturePresentDescriptorSetLayout.Init ( renderer.GetDevice () ) )
+    if ( !_texturePresentDescriptorSetLayout.Init ( device ) )
         return false;
 
-    if ( !_defaultTextureManager.Init ( renderer, commandInfo._pool ) )
-        return false;
-
-    return _samplerManager.Init ( renderer );
+    return _defaultTextureManager.Init ( renderer, commandInfo._pool ) && _samplerManager.Init ( device );
 }
 
 void RenderSession::OnDestroyDevice ( VkDevice device ) noexcept
@@ -598,8 +592,6 @@ bool RenderSession::CreateGBufferResources ( android_vulkan::Renderer &renderer,
     if ( !_gBuffer.Init ( renderer, resolution ) || !CreateRenderPass ( renderer ) || !CreateFramebuffer ( renderer ) )
         return false;
 
-    VkCommandPool commandPool = _commandInfo[ 0U ]._pool;
-
     bool result = _geometryPass.Init ( renderer,
         _gBuffer.GetResolution (),
         _renderPass,
@@ -607,10 +599,7 @@ bool RenderSession::CreateGBufferResources ( android_vulkan::Renderer &renderer,
         _defaultTextureManager
     );
 
-    if ( !result || !_lightPass.Init ( renderer, commandPool, _renderPass, _gBuffer ) )
-        return false;
-
-    if ( !CreateGBufferSlotMapper ( renderer ) )
+    if ( !result || !_lightPass.Init ( renderer, _renderPass, _gBuffer ) || !CreateGBufferSlotMapper ( renderer ) )
         return false;
 
     result = android_vulkan::Renderer::CheckVkResult ( vkDeviceWaitIdle ( device ),

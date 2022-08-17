@@ -19,7 +19,6 @@ class LightPass final
         PointLightPass                  _pointLightPass {};
         ReflectionGlobalPass            _reflectionGlobalPass {};
         ReflectionLocalPass             _reflectionLocalPass {};
-        VkCommandBuffer                 _transfer = VK_NULL_HANDLE;
         android_vulkan::MeshGeometry    _unitCube {};
 
         UniformBufferPoolManager        _volumeBufferPool
@@ -40,7 +39,6 @@ class LightPass final
         ~LightPass () = default;
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
-            VkCommandPool commandPool,
             VkRenderPass renderPass,
             GBuffer &gBuffer
         ) noexcept;
@@ -63,12 +61,7 @@ class LightPass final
             GXMat4 const &cvvToView
         ) noexcept;
 
-        [[nodiscard]] bool OnPostGeometryPass ( android_vulkan::Renderer &renderer,
-            VkCommandBuffer commandBuffer,
-            size_t swapchainImageIndex,
-            GXMat4 const &viewerLocal
-        ) noexcept;
-
+        void OnPostGeometryPass ( VkDevice device, VkCommandBuffer commandBuffer, size_t swapchainImageIndex ) noexcept;
         void Reset () noexcept;
 
         void SubmitPointLight ( LightRef const &light ) noexcept;
@@ -76,7 +69,7 @@ class LightPass final
         void SubmitReflectionLocal ( TextureCubeRef &prefilter, GXVec3 const &location, float size ) noexcept;
 
     private:
-        [[nodiscard]] bool CreateUnitCube ( android_vulkan::Renderer &renderer, VkCommandPool commandPool ) noexcept;
+        [[nodiscard]] bool CreateUnitCube ( android_vulkan::Renderer &renderer ) noexcept;
 };
 
 } // namespace pbr

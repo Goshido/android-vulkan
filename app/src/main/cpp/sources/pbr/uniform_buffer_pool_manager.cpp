@@ -68,14 +68,13 @@ void UniformBufferPoolManager::IssueSync ( VkDevice device, VkCommandBuffer comm
     vkUpdateDescriptorSets ( device, static_cast<uint32_t> ( more ), writeSets, 0U, nullptr );
 }
 
-void UniformBufferPoolManager::Push ( android_vulkan::Renderer &renderer,
-    VkCommandBuffer commandBuffer,
-    void const *item
-) noexcept
+void UniformBufferPoolManager::Push ( VkCommandBuffer commandBuffer, void const *item, size_t size ) noexcept
 {
-    VkBuffer buffer = _uniformPool.Acquire ( renderer, commandBuffer, item );
-    _bufferInfo[ _uniformWriteIndex ].buffer = buffer;
-    _barriers[ _uniformWriteIndex ].buffer = buffer;
+    _uniformPool.Push ( commandBuffer, item, size );
+
+    VkBufferMemoryBarrier& barrier = _barriers[ _uniformWriteIndex ];
+    barrier.size = static_cast<VkDeviceSize> ( size );
+
     _uniformWriteIndex = ( _uniformWriteIndex + 1U ) % _descriptorSets.size ();
 
     if ( _uniformWriteIndex == 0U )
@@ -173,13 +172,6 @@ bool UniformBufferPoolManager::Init ( android_vulkan::Renderer &renderer,
 
     _writeSets.resize ( setCount, writeSet );
 
-    for ( size_t i = 0U; i < setCount; ++i )
-    {
-        VkWriteDescriptorSet& uniformWriteSet = _writeSets[ i ];
-        uniformWriteSet.dstSet = _descriptorSets[ i ];
-        uniformWriteSet.pBufferInfo = &_bufferInfo[ i ];
-    }
-
     VkBufferMemoryBarrier const bufferBarrier
     {
         .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
@@ -194,6 +186,19 @@ bool UniformBufferPoolManager::Init ( android_vulkan::Renderer &renderer,
     };
 
     _barriers.resize ( setCount, bufferBarrier );
+
+    for ( size_t i = 0U; i < setCount; ++i )
+    {
+        VkBuffer buffer = _uniformPool.GetBuffer ( i );
+
+        VkDescriptorBufferInfo& bufferInfo = _bufferInfo[ i ];
+        bufferInfo.buffer = buffer;
+        _barriers[ i ].buffer = buffer;
+
+        VkWriteDescriptorSet& uniformWriteSet = _writeSets[ i ];
+        uniformWriteSet.dstSet = _descriptorSets[ i ];
+        uniformWriteSet.pBufferInfo = &bufferInfo;
+    }
 
     // Now all what is needed to do is to init "_bufferInfo::buffer". Then to invoke vkUpdateDescriptorSets.
     _uniformBaseIndex = 0U;

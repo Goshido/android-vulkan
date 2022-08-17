@@ -47,7 +47,7 @@ class LightupCommonDescriptorSet final
         void Destroy ( VkDevice device ) noexcept;
         void OnFreeTransferResources ( VkDevice device ) noexcept;
 
-        void Update ( android_vulkan::Renderer &renderer,
+        void Update ( VkDevice device,
             VkCommandBuffer commandBuffer,
             size_t swapchainImageIndex,
             VkExtent2D const &resolution,

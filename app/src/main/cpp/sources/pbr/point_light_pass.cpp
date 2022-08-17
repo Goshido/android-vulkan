@@ -45,7 +45,7 @@ bool PointLightPass::ExecuteShadowPhase ( android_vulkan::Renderer &renderer,
     if ( _interacts.empty () )
         return true;
 
-    UpdateShadowmapGPUData ( renderer, commandBuffer, sceneData, opaqueMeshCount ) ;
+    UpdateShadowmapGPUData ( renderer.GetDevice (), commandBuffer, sceneData, opaqueMeshCount );
     return GenerateShadowmaps ( renderer, commandBuffer );
 }
 
@@ -136,7 +136,7 @@ void PointLightPass::Submit ( LightRef const &light ) noexcept
     _interacts.emplace_back ( std::make_pair ( light, ShadowCasters () ) );
 }
 
-void PointLightPass::UploadGPUData ( android_vulkan::Renderer &renderer,
+void PointLightPass::UploadGPUData ( VkDevice device,
     VkCommandBuffer commandBuffer,
     UniformBufferPoolManager &volumeBufferPool,
     GXMat4 const &viewerLocal,
@@ -147,8 +147,8 @@ void PointLightPass::UploadGPUData ( android_vulkan::Renderer &renderer,
     if ( _interacts.empty () )
         return;
 
-    _lightup.UpdateGPUData ( renderer, commandBuffer, *this, viewerLocal, view );
-    UpdateLightGPUData ( renderer, commandBuffer, volumeBufferPool, viewProjection );
+    _lightup.UpdateGPUData ( device, commandBuffer, *this, viewerLocal, view );
+    UpdateLightGPUData ( commandBuffer, volumeBufferPool, viewProjection );
 }
 
 PointLightPass::PointLightShadowmapInfo* PointLightPass::AcquirePointLightShadowmap (
@@ -211,19 +211,17 @@ PointLightPass::PointLightShadowmapInfo* PointLightPass::AcquirePointLightShadow
 
 bool PointLightPass::CreateShadowmapRenderPass ( VkDevice device ) noexcept
 {
-    constexpr static VkAttachmentDescription const depthAttachment[] =
+    constexpr static VkAttachmentDescription depthAttachment
     {
-        {
-            .flags = 0U,
-            .format = VK_FORMAT_D32_SFLOAT,
-            .samples = VK_SAMPLE_COUNT_1_BIT,
-            .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-            .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-            .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
-            .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-            .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-            .finalLayout = VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_OPTIMAL
-        }
+        .flags = 0U,
+        .format = VK_FORMAT_D32_SFLOAT,
+        .samples = VK_SAMPLE_COUNT_1_BIT,
+        .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+        .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+        .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+        .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+        .finalLayout = VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_OPTIMAL
     };
 
     constexpr static VkAttachmentReference depthAttachmentReference
@@ -232,57 +230,44 @@ bool PointLightPass::CreateShadowmapRenderPass ( VkDevice device ) noexcept
         .layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
     };
 
-    constexpr static VkSubpassDescription const subpasses[]
+    constexpr static VkSubpassDescription subpass
     {
-        {
-            .flags = 0U,
-            .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
-            .inputAttachmentCount = 0U,
-            .pInputAttachments = nullptr,
-            .colorAttachmentCount = 0U,
-            .pColorAttachments = nullptr,
-            .pResolveAttachments = nullptr,
-            .pDepthStencilAttachment = &depthAttachmentReference,
-            .preserveAttachmentCount = 0U,
-            .pPreserveAttachments = nullptr
-        }
+        .flags = 0U,
+        .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
+        .inputAttachmentCount = 0U,
+        .pInputAttachments = nullptr,
+        .colorAttachmentCount = 0U,
+        .pColorAttachments = nullptr,
+        .pResolveAttachments = nullptr,
+        .pDepthStencilAttachment = &depthAttachmentReference,
+        .preserveAttachmentCount = 0U,
+        .pPreserveAttachments = nullptr
     };
 
-    constexpr size_t subpassCount = std::size ( subpasses );
-
-    constexpr static uint32_t const viewMasks[] =
-    {
-        0b00000000'00000000'00000000'00111111U
-    };
-
-    constexpr static uint32_t const correlationMasks[] =
-    {
-        0b00000000'00000000'00000000'00111111U
-    };
+    constexpr static uint32_t viewMask = 0b00000000'00000000'00000000'00111111U;
+    constexpr static uint32_t correlationMask = 0b00000000'00000000'00000000'00111111U;
 
     constexpr static VkRenderPassMultiviewCreateInfo multiviewInfo
     {
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_MULTIVIEW_CREATE_INFO,
         .pNext = nullptr,
-        .subpassCount = static_cast<uint32_t> ( subpassCount ),
-        .pViewMasks = viewMasks,
+        .subpassCount = 1U,
+        .pViewMasks = &viewMask,
         .dependencyCount = 0U,
         .pViewOffsets = nullptr,
-        .correlationMaskCount = static_cast<size_t> ( std::size ( correlationMasks ) ),
-        .pCorrelationMasks = correlationMasks
+        .correlationMaskCount = 1U,
+        .pCorrelationMasks = &correlationMask
     };
 
-    constexpr static VkSubpassDependency const dependencies[] =
+    constexpr static VkSubpassDependency dependency
     {
-        {
-            .srcSubpass = 0U,
-            .dstSubpass = VK_SUBPASS_EXTERNAL,
-            .srcStageMask = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
-            .dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-            .srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
-            .dstAccessMask = VK_ACCESS_SHADER_READ_BIT,
-            .dependencyFlags = 0U
-        }
+        .srcSubpass = 0U,
+        .dstSubpass = VK_SUBPASS_EXTERNAL,
+        .srcStageMask = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+        .dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+        .srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+        .dstAccessMask = VK_ACCESS_SHADER_READ_BIT,
+        .dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
     };
 
     constexpr VkRenderPassCreateInfo renderPassInfo
@@ -290,12 +275,12 @@ bool PointLightPass::CreateShadowmapRenderPass ( VkDevice device ) noexcept
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
         .pNext = &multiviewInfo,
         .flags = 0U,
-        .attachmentCount = static_cast<uint32_t> ( std::size ( depthAttachment ) ),
-        .pAttachments = depthAttachment,
-        .subpassCount = static_cast<uint32_t> ( subpassCount ),
-        .pSubpasses = subpasses,
-        .dependencyCount = static_cast<uint32_t> ( std::size ( dependencies ) ),
-        .pDependencies = dependencies
+        .attachmentCount = 1U,
+        .pAttachments = &depthAttachment,
+        .subpassCount = 1U,
+        .pSubpasses = &subpass,
+        .dependencyCount = 1U,
+        .pDependencies = &dependency
     };
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
@@ -310,14 +295,12 @@ bool PointLightPass::CreateShadowmapRenderPass ( VkDevice device ) noexcept
     AV_REGISTER_RENDER_PASS ( "PointLightPass::_shadowmapRenderPass" )
 
     // Must be static as well because it lose the function scope [read as garbage in debug builds].
-    constexpr static VkClearValue const clearValues[] =
+    constexpr static VkClearValue clearValues
     {
+        .depthStencil
         {
-            .depthStencil
-            {
-                .depth = 0.0F,
-                .stencil = 0U
-            }
+            .depth = 0.0F,
+            .stencil = 0U
         }
     };
 
@@ -341,8 +324,8 @@ bool PointLightPass::CreateShadowmapRenderPass ( VkDevice device ) noexcept
     _shadowmapRenderPassInfo.pNext = nullptr;
     _shadowmapRenderPassInfo.renderPass = _shadowmapRenderPass;
     _shadowmapRenderPassInfo.renderArea = renderArea;
-    _shadowmapRenderPassInfo.clearValueCount = std::size ( clearValues );
-    _shadowmapRenderPassInfo.pClearValues = clearValues;
+    _shadowmapRenderPassInfo.clearValueCount = 1U;
+    _shadowmapRenderPassInfo.pClearValues = &clearValues;
 
     return true;
 }
@@ -421,7 +404,7 @@ bool PointLightPass::GenerateShadowmaps ( android_vulkan::Renderer &renderer, Vk
     return true;
 }
 
-void PointLightPass::UpdateShadowmapGPUData ( android_vulkan::Renderer &renderer,
+void PointLightPass::UpdateShadowmapGPUData ( VkDevice device,
     VkCommandBuffer commandBuffer,
     SceneData const &sceneData,
     size_t opaqueMeshCount
@@ -463,7 +446,12 @@ void PointLightPass::UpdateShadowmapGPUData ( android_vulkan::Renderer &renderer
                 }
 
                 append ( matrices, 0U, opaqueData._local );
-                _shadowmapBufferPool.Push ( renderer, commandBuffer, &instanceData );
+
+                _shadowmapBufferPool.Push ( commandBuffer,
+                    &instanceData,
+                    sizeof ( PointLightShadowmapGeneratorProgram::ObjectData )
+                );
+
                 uniques->push_back ( mesh );
             }
 
@@ -514,23 +502,26 @@ void PointLightPass::UpdateShadowmapGPUData ( android_vulkan::Renderer &renderer
                     ++instance;
                 }
 
-                _shadowmapBufferPool.Push ( renderer, commandBuffer, &instanceData );
+                _shadowmapBufferPool.Push ( commandBuffer,
+                    &instanceData,
+                    batches * sizeof ( PointLightShadowmapGeneratorProgram::ObjectData )
+                );
+
                 remain -= batches;
             }
             while ( remain );
         }
     }
 
-    _shadowmapBufferPool.IssueSync ( renderer.GetDevice (), commandBuffer );
+    _shadowmapBufferPool.IssueSync ( device, commandBuffer );
 }
 
-void PointLightPass::UpdateLightGPUData ( android_vulkan::Renderer &renderer,
-    VkCommandBuffer commandBuffer,
+void PointLightPass::UpdateLightGPUData ( VkCommandBuffer commandBuffer,
     UniformBufferPoolManager &volumeBufferPool,
     GXMat4 const &viewProjection
 ) noexcept
 {
-    size_t lightCount = _interacts.size ();
+    size_t const lightCount = _interacts.size ();
 
     PointLightLightupProgram::VolumeData volumeData {};
     GXMat4& transform = volumeData._transform;
@@ -550,7 +541,7 @@ void PointLightPass::UpdateLightGPUData ( android_vulkan::Renderer &renderer,
         local.SetW ( alpha );
         transform.Multiply ( local, viewProjection );
 
-        volumeBufferPool.Push ( renderer, commandBuffer, &volumeData );
+        volumeBufferPool.Push ( commandBuffer, &volumeData, sizeof ( volumeData ) );
     }
 }
 

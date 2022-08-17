@@ -51,7 +51,7 @@ class GeometryPass final
 
         void Reset () noexcept;
 
-        void UploadGPUData ( android_vulkan::Renderer &renderer,
+        void UploadGPUData ( VkDevice device,
             VkCommandBuffer commandBuffer,
             GXProjectionClipPlanes const &frustum,
             GXMat4 const &view,

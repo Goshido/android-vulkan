@@ -3,7 +3,7 @@
 
 namespace pbr {
 
-bool SamplerManager::Init ( android_vulkan::Renderer &renderer ) noexcept
+bool SamplerManager::Init ( VkDevice device ) noexcept
 {
     _pointSampler = std::make_shared<Sampler> ();
 
@@ -29,7 +29,7 @@ bool SamplerManager::Init ( android_vulkan::Renderer &renderer ) noexcept
         .unnormalizedCoordinates = VK_FALSE
     };
 
-    if ( !_pointSampler->Init ( renderer, pointSamplerInfo ) )
+    if ( !_pointSampler->Init ( device, pointSamplerInfo ) )
     {
         _pointSampler = nullptr;
         return false;
@@ -59,7 +59,7 @@ bool SamplerManager::Init ( android_vulkan::Renderer &renderer ) noexcept
         .unnormalizedCoordinates = VK_FALSE
     };
 
-    if ( _materialSampler->Init ( renderer, materialSamplerInfo ) )
+    if ( _materialSampler->Init ( device, materialSamplerInfo ) )
         return true;
 
     _materialSampler = nullptr;

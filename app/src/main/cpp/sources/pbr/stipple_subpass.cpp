@@ -36,8 +36,7 @@ void StippleSubpass::Execute ( VkCommandBuffer commandBuffer,
     AppendDrawcalls ( commandBuffer, _program, materialPool, uniformPool, renderSessionStats );
 }
 
-void StippleSubpass::UpdateGPUData ( android_vulkan::Renderer &renderer,
-    VkCommandBuffer commandBuffer,
+void StippleSubpass::UpdateGPUData ( VkCommandBuffer commandBuffer,
     MaterialPool &materialPool,
     UniformBufferPoolManager &uniformPool,
     GXMat4 const &view,
@@ -68,7 +67,7 @@ void StippleSubpass::UpdateGPUData ( android_vulkan::Renderer &renderer,
             objectData._color2 = geometryData._color2;
             objectData._emission = geometryData._emission;
 
-            uniformPool.Push ( renderer, commandBuffer, instanceData._instanceData );
+            uniformPool.Push ( commandBuffer, instanceData._instanceData, sizeof ( GeometryPassProgram::ObjectData ) );
         }
 
         for ( auto const& item : geometryCall.GetBatchList () )
@@ -80,7 +79,7 @@ void StippleSubpass::UpdateGPUData ( android_vulkan::Renderer &renderer,
             {
                 if ( instanceIndex >= PBR_OPAQUE_MAX_INSTANCE_COUNT )
                 {
-                    uniformPool.Push ( renderer, commandBuffer, instanceData._instanceData );
+                    uniformPool.Push ( commandBuffer, instanceData._instanceData, sizeof ( instanceData ) );
                     instanceIndex = 0U;
                 }
 
@@ -95,10 +94,13 @@ void StippleSubpass::UpdateGPUData ( android_vulkan::Renderer &renderer,
                 objectData._emission = opaqueData._emission;
             }
 
-            if ( instanceIndex )
-            {
-                uniformPool.Push ( renderer, commandBuffer, instanceData._instanceData );
-            }
+            if ( !instanceIndex )
+                continue;
+
+            uniformPool.Push ( commandBuffer,
+                instanceData._instanceData,
+                instanceIndex * sizeof ( GeometryPassProgram::ObjectData )
+            );
         }
     }
 }

@@ -72,7 +72,7 @@ class PointLightPass final
         void Reset () noexcept;
         void Submit ( LightRef const &light ) noexcept;
 
-        void UploadGPUData ( android_vulkan::Renderer &renderer,
+        void UploadGPUData ( VkDevice device,
             VkCommandBuffer commandBuffer,
             UniformBufferPoolManager &volumeBufferPool,
             GXMat4 const &viewerLocal,
@@ -92,14 +92,13 @@ class PointLightPass final
             VkCommandBuffer commandBuffer
         ) noexcept;
 
-        void UpdateShadowmapGPUData ( android_vulkan::Renderer &renderer,
+        void UpdateShadowmapGPUData ( VkDevice device,
             VkCommandBuffer commandBuffer,
             SceneData const &sceneData,
             size_t opaqueMeshCount
         ) noexcept;
 
-        void UpdateLightGPUData ( android_vulkan::Renderer &renderer,
-            VkCommandBuffer commandBuffer,
+        void UpdateLightGPUData ( VkCommandBuffer commandBuffer,
             UniformBufferPoolManager &volumeBufferPool,
             GXMat4 const &viewProjection
         ) noexcept;

@@ -58,7 +58,7 @@ class PointLightLightup final
             android_vulkan::MeshGeometry &unitCube
         ) noexcept;
 
-        void UpdateGPUData ( android_vulkan::Renderer &renderer,
+        void UpdateGPUData ( VkDevice device,
             VkCommandBuffer commandBuffer,
             PointLightPass const &pointLightPass,
             GXMat4 const &viewerLocal,

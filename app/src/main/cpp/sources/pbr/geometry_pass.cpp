@@ -92,7 +92,7 @@ bool GeometryPass::Init ( android_vulkan::Renderer &renderer,
 
         _uniformPool.Init ( renderer,
             GeometryPassInstanceDescriptorSetLayout (),
-            sizeof ( GeometryPassProgram::ObjectData ),
+            sizeof ( GeometryPassProgram::InstanceData ),
             "pbr::GeometryPass::_uniformPool"
         ) &&
 
@@ -155,15 +155,14 @@ void GeometryPass::Reset () noexcept
     _stippleSubpass.Reset ();
 }
 
-void GeometryPass::UploadGPUData ( android_vulkan::Renderer &renderer,
+void GeometryPass::UploadGPUData ( VkDevice device,
     VkCommandBuffer commandBuffer,
     GXProjectionClipPlanes const &frustum,
     GXMat4 const &view,
     GXMat4 const &viewProjection
 ) noexcept
 {
-    _opaqueSubpass.UpdateGPUData ( renderer,
-        commandBuffer,
+    _opaqueSubpass.UpdateGPUData ( commandBuffer,
         _materialPool,
         _uniformPool,
         frustum,
@@ -171,15 +170,13 @@ void GeometryPass::UploadGPUData ( android_vulkan::Renderer &renderer,
         viewProjection
     );
 
-    _stippleSubpass.UpdateGPUData ( renderer,
-        commandBuffer,
+    _stippleSubpass.UpdateGPUData ( commandBuffer,
         _materialPool,
         _uniformPool,
         view,
         viewProjection
     );
 
-    VkDevice device = renderer.GetDevice ();
     _uniformPool.IssueSync ( device, commandBuffer );
     _materialPool.IssueSync ( device );
 }

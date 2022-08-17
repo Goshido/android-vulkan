@@ -14,8 +14,14 @@ class ReflectionGlobalPass final
         VkDescriptorPool                        _descriptorPool = VK_NULL_HANDLE;
         std::vector<VkDescriptorSet>            _descriptorSets {};
         std::vector<VkDescriptorImageInfo>      _imageInfo {};
+
+        size_t                                  _itemBaseIndex = 0U;
+        size_t                                  _itemReadIndex = 0U;
+        size_t                                  _itemWriteIndex = 0U;
+
         std::vector<TextureCubeRef>             _prefilters {};
         ReflectionGlobalProgram                 _program {};
+
         std::vector<VkWriteDescriptorSet>       _writeSets {};
 
     public:
@@ -30,11 +36,7 @@ class ReflectionGlobalPass final
         ~ReflectionGlobalPass () = default;
 
         void Append ( TextureCubeRef &prefilter ) noexcept;
-
-        [[nodiscard]] bool Execute ( android_vulkan::Renderer &renderer,
-            VkCommandBuffer commandBuffer,
-            GXMat4 const &viewToWorld
-        ) noexcept;
+        void Execute ( VkDevice device, VkCommandBuffer commandBuffer ) noexcept;
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
             VkRenderPass renderPass,
@@ -48,13 +50,8 @@ class ReflectionGlobalPass final
         void Reset () noexcept;
 
     private:
-        [[nodiscard]] bool AllocateDescriptorSets ( android_vulkan::Renderer &renderer, size_t neededSets ) noexcept;
-        void DestroyDescriptorPool ( VkDevice device ) noexcept;
-
-        [[nodiscard]] bool UpdateGPUData ( android_vulkan::Renderer &renderer,
-            size_t count,
-            GXMat4 const &viewToWorld
-        ) noexcept;
+        [[nodiscard]] bool AllocateDescriptorSets ( VkDevice device ) noexcept;
+        void UpdateGPUData ( VkDevice device, size_t count ) noexcept;
 };
 
 } // namespace pbr

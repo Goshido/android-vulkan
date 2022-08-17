@@ -608,7 +608,7 @@ bool MeshGeometry::UploadInternal ( size_t numUploads,
     std::memcpy ( transferData, data, dataSize );
     vkUnmapMemory ( device, _transferMemory );
 
-    VkCommandBufferBeginInfo const commandBufferBeginInfo
+    constexpr VkCommandBufferBeginInfo commandBufferBeginInfo
     {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
         .pNext = nullptr,

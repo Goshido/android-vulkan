@@ -41,7 +41,7 @@ class UniformBufferPoolManager final
         [[nodiscard]] VkDescriptorSet Acquire () noexcept;
         void Commit () noexcept;
         void IssueSync ( VkDevice device, VkCommandBuffer commandBuffer ) const noexcept;
-        void Push ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer, void const *item ) noexcept;
+        void Push ( VkCommandBuffer commandBuffer, void const* item, size_t size ) noexcept;
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
             DescriptorSetLayout const &descriptorSetLayout,

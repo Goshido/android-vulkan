@@ -43,8 +43,7 @@ class OpaqueSubpass final : public GeometrySubpassBase
             bool &isSamplerUsed
         ) noexcept;
 
-        void UpdateGPUData ( android_vulkan::Renderer &renderer,
-            VkCommandBuffer commandBuffer,
+        void UpdateGPUData ( VkCommandBuffer commandBuffer,
             MaterialPool &materialPool,
             UniformBufferPoolManager &uniformPool,
             GXProjectionClipPlanes const &frustum,

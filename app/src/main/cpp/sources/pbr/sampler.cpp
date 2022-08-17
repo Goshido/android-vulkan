@@ -10,12 +10,12 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-bool Sampler::Init ( android_vulkan::Renderer &renderer, VkSamplerCreateInfo const &info ) noexcept
+bool Sampler::Init ( VkDevice device, VkSamplerCreateInfo const &info ) noexcept
 {
     assert ( _sampler == VK_NULL_HANDLE );
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateSampler ( renderer.GetDevice (), &info, nullptr, &_sampler ),
+        vkCreateSampler ( device, &info, nullptr, &_sampler ),
         "pbr::Sampler::Init",
         "Can't create sampler"
     );

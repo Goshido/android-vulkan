@@ -93,7 +93,7 @@ void ReflectionLocalPass::Reset () noexcept
     _calls.clear ();
 }
 
-void ReflectionLocalPass::UploadGPUData ( android_vulkan::Renderer &renderer,
+void ReflectionLocalPass::UploadGPUData ( VkDevice device,
     VkCommandBuffer commandBuffer,
     UniformBufferPoolManager &volumeBufferPool,
     GXMat4 const &view,
@@ -122,16 +122,14 @@ void ReflectionLocalPass::UploadGPUData ( android_vulkan::Renderer &renderer,
         local.SetW ( call._location );
 
         transform.Multiply ( local, viewProjection );
-        volumeBufferPool.Push ( renderer, commandBuffer, &volumeData );
+        volumeBufferPool.Push ( commandBuffer, &volumeData, sizeof ( volumeData ) );
 
         _imageInfo[ _itemWriteIndex ].imageView = call._prefilter->GetImageView ();
 
         lightData._invSize = 2.0F / call._size;
         view.MultiplyAsPoint ( lightData._locationView, call._location );
-        VkBuffer buffer = _uniformPool.Acquire ( renderer, commandBuffer, &lightData );
+        _uniformPool.Push ( commandBuffer, &lightData, sizeof ( lightData ) );
 
-        _bufferInfo[ _itemWriteIndex ].buffer = buffer;
-        _barriers[ _itemWriteIndex ].buffer = buffer;
         _itemWriteIndex = ( _itemWriteIndex + 1U ) % _descriptorSets.size ();
 
         if ( _itemWriteIndex == 0U )
@@ -140,7 +138,7 @@ void ReflectionLocalPass::UploadGPUData ( android_vulkan::Renderer &renderer,
         ++_itemWritten;
     }
 
-    IssueSync ( renderer.GetDevice (), commandBuffer );
+    IssueSync ( device, commandBuffer );
 }
 
 bool ReflectionLocalPass::AllocateDescriptorSets ( android_vulkan::Renderer &renderer ) noexcept
@@ -241,24 +239,6 @@ bool ReflectionLocalPass::AllocateDescriptorSets ( android_vulkan::Renderer &ren
 
     _writeSets.resize ( BIND_PER_SET * setCount, writeSet );
 
-    for ( size_t i = 0U; i < setCount; ++i )
-    {
-        size_t const base = BIND_PER_SET * i;
-        VkDescriptorSet set = _descriptorSets[ i ];
-
-        VkWriteDescriptorSet& imageSet = _writeSets[ base ];
-        imageSet.dstSet = set;
-        imageSet.dstBinding = 0U;
-        imageSet.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-        imageSet.pImageInfo = &_imageInfo[ i ];
-
-        VkWriteDescriptorSet& bufferSet = _writeSets[ base + 1U ];
-        bufferSet.dstSet = set;
-        bufferSet.dstBinding = 1U;
-        bufferSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-        bufferSet.pBufferInfo = &_bufferInfo[ i ];
-    }
-
     constexpr VkBufferMemoryBarrier bufferBarrier
     {
         .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
@@ -273,6 +253,30 @@ bool ReflectionLocalPass::AllocateDescriptorSets ( android_vulkan::Renderer &ren
     };
 
     _barriers.resize ( setCount, bufferBarrier );
+
+    for ( size_t i = 0U; i < setCount; ++i )
+    {
+        size_t const base = BIND_PER_SET * i;
+        VkDescriptorSet set = _descriptorSets[ i ];
+        VkBuffer buffer = _uniformPool.GetBuffer ( i );
+
+        VkDescriptorBufferInfo& bufferInfo = _bufferInfo[ i ];
+        bufferInfo.buffer = buffer;
+
+        _barriers[ i ].buffer = buffer;
+
+        VkWriteDescriptorSet& imageSet = _writeSets[ base ];
+        imageSet.dstSet = set;
+        imageSet.dstBinding = 0U;
+        imageSet.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+        imageSet.pImageInfo = &_imageInfo[ i ];
+
+        VkWriteDescriptorSet& bufferSet = _writeSets[ base + 1U ];
+        bufferSet.dstSet = set;
+        bufferSet.dstBinding = 1U;
+        bufferSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        bufferSet.pBufferInfo = &bufferInfo;
+    }
 
     // Now all what is needed to do is to init "_bufferInfo::buffer" and "_imageInfo::imageView".
     // Then to invoke vkUpdateDescriptorSets.

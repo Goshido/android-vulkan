@@ -17,18 +17,18 @@ class PointLightShadowmapGeneratorProgram final : public Program
 
         struct ObjectData final
         {
-            [[maybe_unused]] GXMat4                 _transform[ PBR_POINT_LIGHT_SHADOW_CASTER_PROJECTION_COUNT ];
+            GXMat4                                  _transform[ PBR_POINT_LIGHT_SHADOW_CASTER_PROJECTION_COUNT ];
         };
 
-        struct [[maybe_unused]] InstanceData final
+        struct InstanceData final
         {
-            [[maybe_unused]] ObjectData             _instanceData[ PBR_POINT_LIGHT_MAX_SHADOW_CASTER_INSTANCE_COUNT ];
+            ObjectData                              _instanceData[ PBR_POINT_LIGHT_MAX_SHADOW_CASTER_INSTANCE_COUNT ];
         };
 
         AV_DX_ALIGNMENT_END
 
     private:
-        GeometryPassInstanceDescriptorSetLayout     _instanceLayout;
+        GeometryPassInstanceDescriptorSetLayout     _instanceLayout {};
 
     public:
         PointLightShadowmapGeneratorProgram () noexcept;

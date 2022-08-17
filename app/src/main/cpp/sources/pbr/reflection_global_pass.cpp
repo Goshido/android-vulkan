@@ -10,33 +10,37 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
+constexpr static size_t FRAMES = 5U;
+constexpr static size_t REFLECTION_PER_FRAME = 16384U;
+constexpr static size_t REFLECTIONS = FRAMES * REFLECTION_PER_FRAME;
+
+//----------------------------------------------------------------------------------------------------------------------
+
 void ReflectionGlobalPass::Append ( TextureCubeRef &prefilter ) noexcept
 {
     _prefilters.push_back ( prefilter );
 }
 
-bool ReflectionGlobalPass::Execute ( android_vulkan::Renderer &renderer,
-    VkCommandBuffer commandBuffer,
-    GXMat4 const &viewToWorld
-) noexcept
+void ReflectionGlobalPass::Execute ( VkDevice device, VkCommandBuffer commandBuffer ) noexcept
 {
     size_t const count = _prefilters.size ();
 
     if ( !count )
-        return true;
+        return;
 
-    if ( !UpdateGPUData ( renderer, count, viewToWorld ) )
-        return false;
+    UpdateGPUData ( device, count );
 
     _program.Bind ( commandBuffer );
 
     for ( size_t i = 0U; i < count; ++i )
     {
-        _program.SetDescriptorSet ( commandBuffer, _descriptorSets[ i ] );
+        _program.SetDescriptorSet ( commandBuffer, _descriptorSets[ _itemReadIndex ] );
         vkCmdDraw ( commandBuffer, 4U, 1U, 0U, 0U );
+        _itemReadIndex = ( _itemReadIndex + 1U ) % REFLECTIONS;
     }
 
-    return true;
+    _itemBaseIndex = _itemWriteIndex;
+    _itemReadIndex = _itemWriteIndex;
 }
 
 bool ReflectionGlobalPass::Init ( android_vulkan::Renderer &renderer,
@@ -45,19 +49,27 @@ bool ReflectionGlobalPass::Init ( android_vulkan::Renderer &renderer,
     VkExtent2D const &viewport
 ) noexcept
 {
-    if ( _program.Init ( renderer, renderPass, subpass, viewport ) )
-        return true;
-
-    Destroy ( renderer.GetDevice () );
-    return false;
+    return _program.Init ( renderer, renderPass, subpass, viewport ) &&
+        AllocateDescriptorSets ( renderer.GetDevice () );
 }
 
 void ReflectionGlobalPass::Destroy ( VkDevice device ) noexcept
 {
-    DestroyDescriptorPool ( device );
-    _descriptorSets.clear ();
-    _imageInfo.clear ();
-    _writeSets.clear ();
+    if ( _descriptorPool != VK_NULL_HANDLE )
+    {
+        vkDestroyDescriptorPool ( device, _descriptorPool, nullptr );
+        _descriptorPool = VK_NULL_HANDLE;
+        AV_UNREGISTER_DESCRIPTOR_POOL ( "pbr::ReflectionGlobalPass::_descriptorPool" )
+    }
+
+    auto const clean = [] ( auto &vector ) noexcept {
+        vector.clear ();
+        vector.shrink_to_fit ();
+    };
+
+    clean ( _descriptorSets );
+    clean ( _imageInfo );
+    clean ( _writeSets );
 
     _program.Destroy ( device );
 }
@@ -73,33 +85,22 @@ void ReflectionGlobalPass::Reset () noexcept
     _prefilters.clear ();
 }
 
-bool ReflectionGlobalPass::AllocateDescriptorSets ( android_vulkan::Renderer &renderer, size_t neededSets ) noexcept
+bool ReflectionGlobalPass::AllocateDescriptorSets ( VkDevice device ) noexcept
 {
-    assert ( neededSets );
-
-    if ( _descriptorSets.size () >= neededSets )
-        return true;
-
-    VkDevice device = renderer.GetDevice ();
-    DestroyDescriptorPool ( device );
-    auto const size = static_cast<uint32_t> ( neededSets );
-
-    VkDescriptorPoolSize const poolSizes[] =
+    constexpr static VkDescriptorPoolSize poolSizes
     {
-        {
-            .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-            .descriptorCount = size
-        }
+        .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+        .descriptorCount = static_cast<uint32_t> ( REFLECTIONS )
     };
 
-    VkDescriptorPoolCreateInfo const poolInfo
+    constexpr VkDescriptorPoolCreateInfo poolInfo
     {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0U,
-        .maxSets = size,
-        .poolSizeCount = static_cast<uint32_t> ( std::size ( poolSizes ) ),
-        .pPoolSizes = poolSizes
+        .maxSets = static_cast<uint32_t> ( REFLECTIONS ),
+        .poolSizeCount = 1U,
+        .pPoolSizes = &poolSizes
     };
 
     bool result = android_vulkan::Renderer::CheckVkResult (
@@ -111,12 +112,13 @@ bool ReflectionGlobalPass::AllocateDescriptorSets ( android_vulkan::Renderer &re
     if ( !result )
         return false;
 
-    AV_REGISTER_DESCRIPTOR_POOL ( "ReflectionGlobalPass::_descriptorPool" )
+    AV_REGISTER_DESCRIPTOR_POOL ( "pbr::ReflectionGlobalPass::_descriptorPool" )
 
-    _descriptorSets.resize ( neededSets, VK_NULL_HANDLE );
+    _descriptorSets.resize ( REFLECTIONS );
 
-    ReflectionGlobalDescriptorSetLayout const layout;
-    std::vector<VkDescriptorSetLayout> const layouts ( neededSets, layout.GetLayout () );
+    std::vector<VkDescriptorSetLayout> const layouts ( REFLECTIONS,
+        ReflectionGlobalDescriptorSetLayout ().GetLayout ()
+    );
 
     VkDescriptorSetAllocateInfo const allocateInfo
     {
@@ -145,7 +147,7 @@ bool ReflectionGlobalPass::AllocateDescriptorSets ( android_vulkan::Renderer &re
         .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
     };
 
-    _imageInfo.resize ( neededSets, image );
+    _imageInfo.resize ( REFLECTIONS, image );
 
     constexpr VkWriteDescriptorSet writeSet
     {
@@ -161,49 +163,45 @@ bool ReflectionGlobalPass::AllocateDescriptorSets ( android_vulkan::Renderer &re
         .pTexelBufferView = nullptr
     };
 
-    _writeSets.resize ( neededSets, writeSet );
+    _writeSets.resize ( REFLECTIONS, writeSet );
 
-    for ( size_t i = 0U; i < neededSets; ++i )
+    for ( size_t i = 0U; i < REFLECTIONS; ++i )
     {
         VkWriteDescriptorSet& write = _writeSets[ i ];
         write.dstSet = _descriptorSets[ i ];
         write.pImageInfo = &_imageInfo[ i ];
     }
 
-    // Now all what is needed to do is to init "_imageInfo::imageView" data.
+    // Now all what is needed to do is to init "_imageInfo::imageView".
     // Then to invoke vkUpdateDescriptorSets.
+
+    _itemBaseIndex = 0U;
+    _itemReadIndex = 0U;
+    _itemWriteIndex = 0U;
+
     return true;
 }
 
-void ReflectionGlobalPass::DestroyDescriptorPool ( VkDevice device ) noexcept
+void ReflectionGlobalPass::UpdateGPUData ( VkDevice device, size_t count ) noexcept
 {
-    if ( _descriptorPool == VK_NULL_HANDLE )
-        return;
-
-    vkDestroyDescriptorPool ( device, _descriptorPool, nullptr );
-    _descriptorPool = VK_NULL_HANDLE;
-    AV_UNREGISTER_DESCRIPTOR_POOL ( "ReflectionGlobalPass::_descriptorPool" )
-}
-
-bool ReflectionGlobalPass::UpdateGPUData ( android_vulkan::Renderer &renderer,
-    size_t count,
-    GXMat4 const &/*viewToWorld*/
-) noexcept
-{
-    if ( !AllocateDescriptorSets ( renderer, count ) )
-        return false;
-
     for ( size_t i = 0U; i < count; ++i )
-        _imageInfo[ i ].imageView = _prefilters[ i ]->GetImageView ();
+    {
+        _imageInfo[ _itemWriteIndex ].imageView = _prefilters[ i ]->GetImageView ();
+        _itemWriteIndex = ( _itemWriteIndex + 1U ) % REFLECTIONS;
+    }
 
-    vkUpdateDescriptorSets ( renderer.GetDevice (),
-        static_cast<uint32_t> ( _writeSets.size() ),
-        _writeSets.data (),
-        0U,
-        nullptr
-    );
+    size_t const idx = _itemBaseIndex + count;
+    size_t const cases[] = { 0U, idx - REFLECTIONS };
+    size_t const more = cases[ static_cast<size_t> ( idx > REFLECTIONS ) ];
+    size_t const available = count - more;
 
-    return true;
+    VkWriteDescriptorSet const* writeSets = _writeSets.data ();
+    vkUpdateDescriptorSets ( device, static_cast<uint32_t> ( available ), writeSets + _itemBaseIndex, 0U, nullptr );
+
+    if ( more > 0U )
+    {
+        vkUpdateDescriptorSets ( device, static_cast<uint32_t> ( more ), writeSets, 0U, nullptr );
+    }
 }
 
 } // namespace pbr

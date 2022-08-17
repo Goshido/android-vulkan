@@ -185,10 +185,9 @@ void MaterialPool::Destroy ( VkDevice device ) noexcept
 
 void MaterialPool::IssueSync ( VkDevice device ) const noexcept
 {
-    size_t const count = _descriptorSets.size ();
     size_t const idx = _itemBaseIndex + _itemWritten;
-    size_t const cases[] = { 0U, idx - count };
-    size_t const more = cases[ static_cast<size_t> ( idx > count ) ];
+    size_t const cases[] = { 0U, idx - MATERIALS };
+    size_t const more = cases[ static_cast<size_t> ( idx > MATERIALS ) ];
     size_t const available = _itemWritten - more;
 
     VkWriteDescriptorSet const* writeSets = _writeSets.data ();

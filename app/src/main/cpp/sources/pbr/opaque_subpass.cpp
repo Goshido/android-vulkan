@@ -9,42 +9,28 @@ SceneData& OpaqueSubpass::GetSceneData () noexcept
 }
 
 bool OpaqueSubpass::Init ( android_vulkan::Renderer &renderer,
-    VkCommandPool commandPool,
     VkExtent2D const &resolution,
     VkRenderPass renderPass
 ) noexcept
 {
-    if ( !InitBase ( renderer, commandPool ) )
-        return false;
-
     return _program.Init ( renderer, renderPass, 0U, resolution );
 }
 
 void OpaqueSubpass::Destroy ( VkDevice device ) noexcept
 {
     _program.Destroy ( device );
-    DestroyBase ( device );
 }
 
-bool OpaqueSubpass::Execute ( android_vulkan::Renderer &renderer,
-    VkCommandBuffer commandBuffer,
-    GXProjectionClipPlanes const &frustum,
-    GXMat4 const &view,
-    GXMat4 const &viewProjection,
-    DefaultTextureManager const &defaultTextureManager,
+void OpaqueSubpass::Execute ( VkCommandBuffer commandBuffer,
+    MaterialPool &materialPool,
+    UniformBufferPoolManager &uniformPool,
     RenderSessionStats &renderSessionStats,
     VkDescriptorSet samplerDescriptorSet,
     bool &isSamplerUsed
 ) noexcept
 {
     if ( _sceneData.empty () )
-        return true;
-
-    if ( !UpdateGPUData ( renderer, frustum, view, viewProjection, defaultTextureManager ) )
-        return false;
-
-    if ( _uniformStorage.empty () )
-        return true;
+        return;
 
     if ( !isSamplerUsed )
     {
@@ -52,79 +38,25 @@ bool OpaqueSubpass::Execute ( android_vulkan::Renderer &renderer,
         isSamplerUsed = true;
     }
 
-    AppendDrawcalls ( commandBuffer, _program, renderSessionStats );
-    return true;
+    AppendDrawcalls ( commandBuffer, _program, materialPool, uniformPool, renderSessionStats );
 }
 
-void OpaqueSubpass::ReportGeometry ( RenderSessionStats &renderSessionStats,
-    uint32_t vertexCount,
-    uint32_t instanceCount
-) noexcept
-{
-    renderSessionStats.RenderOpaque ( vertexCount, instanceCount );
-}
-
-bool OpaqueSubpass::UpdateGPUData ( android_vulkan::Renderer &renderer,
+void OpaqueSubpass::UpdateGPUData ( android_vulkan::Renderer &renderer,
+    VkCommandBuffer commandBuffer,
+    MaterialPool &materialPool,
+    UniformBufferPoolManager &uniformPool,
     GXProjectionClipPlanes const &frustum,
     GXMat4 const &view,
-    GXMat4 const &viewProjection,
-    DefaultTextureManager const &defaultTextureManager
+    GXMat4 const &viewProjection
 ) noexcept
 {
-    VkDevice device = renderer.GetDevice ();
-
-    if ( !AllocateTransferSystem ( device ) )
-        return false;
-
-    constexpr VkCommandBufferBeginInfo beginInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-        .pNext = nullptr,
-        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
-        .pInheritanceInfo = nullptr
-    };
-
-    bool result = android_vulkan::Renderer::CheckVkResult ( vkBeginCommandBuffer ( _transferCommandBuffer, &beginInfo ),
-        "pbr::OpaqueSubpass::UpdateGPUData",
-        "Can't begin command buffer"
-    );
-
-    if ( !result )
-        return false;
-
-    size_t images = 0U;
-
-    auto textureBinder = [ & ] ( Texture2DRef const &texture, Texture2DRef const &defaultTexture ) noexcept {
-        Texture2DRef const& t = texture ? texture : defaultTexture;
-        _imageStorage[ images++ ].imageView = t->GetImageView ();
-    };
-
-    size_t uniforms = 0U;
-
-    auto uniformBinder = [ & ] ( VkBuffer uniformBuffer ) noexcept {
-        _uniformStorage[ uniforms++ ].buffer = uniformBuffer;
-    };
+    if ( _sceneData.empty () )
+        return;
 
     for ( auto const& [material, call] : _sceneData )
-    {
-        auto& m = const_cast<GeometryPassMaterial&> ( material );
-        textureBinder ( m.GetAlbedo (), defaultTextureManager.GetAlbedo () );
-        textureBinder ( m.GetEmission (), defaultTextureManager.GetEmission () );
-        textureBinder ( m.GetMask (), defaultTextureManager.GetMask () );
-        textureBinder ( m.GetNormal (), defaultTextureManager.GetNormal () );
-        textureBinder ( m.GetParam (), defaultTextureManager.GetParams () );
-    }
-
-    vkUpdateDescriptorSets ( device, static_cast<uint32_t> ( images ), _materialTransfer._writes.data (), 0U, nullptr );
+        materialPool.Push ( const_cast<GeometryPassMaterial&> ( material ) );
 
     GeometryPassProgram::InstanceData instanceData {};
-    _uniformPool.Reset ();
-
-    size_t uniformUsed = 0U;
-    size_t const maxUniforms = _uniformPool.GetItemCount ();
-
-    constexpr VkPipelineStageFlags syncFlags = AV_VK_FLAG ( VK_PIPELINE_STAGE_VERTEX_SHADER_BIT ) |
-        AV_VK_FLAG ( VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT );
 
     for ( auto const& call : _sceneData )
     {
@@ -133,16 +65,6 @@ bool OpaqueSubpass::UpdateGPUData ( android_vulkan::Renderer &renderer,
         for ( auto const& [mesh, geometryData] : geometryCall.GetUniqueList () )
         {
             GeometryPassProgram::ObjectData& objectData = instanceData._instanceData[ 0U ];
-
-            if ( uniformUsed >= maxUniforms )
-            {
-                android_vulkan::LogError (
-                    "pbr::OpaqueSubpass::UpdateGPUData - Uniform pool overflow has been detected (branch 1)!"
-                );
-
-                return false;
-            }
-
             GXMat4 const& local = geometryData._local;
             auto& uniqueGeometryData = const_cast<GeometryData&> ( geometryData );
 
@@ -160,11 +82,7 @@ bool OpaqueSubpass::UpdateGPUData ( android_vulkan::Renderer &renderer,
             objectData._color2 = geometryData._color2;
             objectData._emission = geometryData._emission;
 
-            uniformBinder (
-                _uniformPool.Acquire ( renderer, _transferCommandBuffer, instanceData._instanceData, syncFlags )
-            );
-
-            ++uniformUsed;
+            uniformPool.Push ( renderer, commandBuffer, instanceData._instanceData );
         }
 
         for ( auto const& item : geometryCall.GetBatchList () )
@@ -174,26 +92,12 @@ bool OpaqueSubpass::UpdateGPUData ( android_vulkan::Renderer &renderer,
 
             for ( auto const& opaqueData : group._geometryData )
             {
-                if ( uniformUsed >= maxUniforms )
-                {
-                    android_vulkan::LogError (
-                        "pbr::OpaqueSubpass::UpdateGPUData - Uniform pool overflow has been detected (branch 0)!"
-                    );
-
-                    return false;
-                }
-
                 if ( instanceIndex >= PBR_OPAQUE_MAX_INSTANCE_COUNT )
                 {
-                    uniformBinder (
-                        _uniformPool.Acquire ( renderer, _transferCommandBuffer, instanceData._instanceData, syncFlags )
-                    );
-
+                    uniformPool.Push ( renderer, commandBuffer, instanceData._instanceData );
                     instanceIndex = 0U;
-                    ++uniformUsed;
                 }
 
-                GXMat4 const& local = opaqueData._local;
                 auto& batchGeometryData = const_cast<GeometryData&> ( opaqueData );
 
                 if ( !frustum.IsVisible ( batchGeometryData._worldBounds ) )
@@ -202,8 +106,8 @@ bool OpaqueSubpass::UpdateGPUData ( android_vulkan::Renderer &renderer,
                     continue;
                 }
 
-                GeometryPassProgram::ObjectData& objectData = instanceData._instanceData[ instanceIndex ];
-                ++instanceIndex;
+                GeometryPassProgram::ObjectData& objectData = instanceData._instanceData[ instanceIndex++ ];
+                GXMat4 const& local = opaqueData._local;
                 batchGeometryData._isVisible = true;
 
                 objectData._localView.Multiply ( local, view );
@@ -214,37 +118,20 @@ bool OpaqueSubpass::UpdateGPUData ( android_vulkan::Renderer &renderer,
                 objectData._emission = opaqueData._emission;
             }
 
-            if ( !instanceIndex )
-                continue;
-
-            uniformBinder (
-                _uniformPool.Acquire ( renderer, _transferCommandBuffer, instanceData._instanceData, syncFlags )
-            );
-
-            ++uniformUsed;
+            if ( instanceIndex )
+            {
+                uniformPool.Push ( renderer, commandBuffer, instanceData._instanceData );
+            }
         }
     }
+}
 
-    vkUpdateDescriptorSets ( device,
-        static_cast<uint32_t> ( uniforms ),
-        _uniformTransfer._writes.data (),
-        0U,
-        nullptr
-    );
-
-    result = android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( _transferCommandBuffer ),
-        "pbr::OpaqueSubpass::UpdateGPUData",
-        "Can't end transfer command buffer"
-    );
-
-    if ( !result )
-        return false;
-
-    return android_vulkan::Renderer::CheckVkResult (
-        vkQueueSubmit ( renderer.GetQueue (), 1U, &_submitInfoTransfer, VK_NULL_HANDLE ),
-        "pbr::OpaqueSubpass::UpdateGPUData",
-        "Can't submit transfer command buffer"
-    );
+void OpaqueSubpass::ReportGeometry ( RenderSessionStats &renderSessionStats,
+    uint32_t vertexCount,
+    uint32_t instanceCount
+) noexcept
+{
+    renderSessionStats.RenderOpaque ( vertexCount, instanceCount );
 }
 
 } // namespace pbr

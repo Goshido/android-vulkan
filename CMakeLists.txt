@@ -73,6 +73,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/pbr/light_volume_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/material.cpp
     app/src/main/cpp/sources/pbr/material_manager.cpp
+    app/src/main/cpp/sources/pbr/material_pool.cpp
     app/src/main/cpp/sources/pbr/mesh_group.cpp
     app/src/main/cpp/sources/pbr/mesh_manager.cpp
     app/src/main/cpp/sources/pbr/opaque_material.cpp

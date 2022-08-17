@@ -407,7 +407,7 @@ void LightupCommonDescriptorSet::Update ( android_vulkan::Renderer &renderer,
     if ( _uniforms.GetAvailableItemCount () < 1U )
         _uniforms.Reset ();
 
-    VkBuffer buffer = _uniforms.Acquire ( renderer, commandBuffer, &viewData, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT );
+    VkBuffer buffer = _uniforms.Acquire ( renderer, commandBuffer, &viewData );
 
     _bufferInfo.buffer = buffer;
     _writeInfo.dstSet = _sets[ swapchainImageIndex ];

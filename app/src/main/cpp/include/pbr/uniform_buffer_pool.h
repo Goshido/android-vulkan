@@ -20,7 +20,6 @@ enum class eUniformPoolSize : size_t
 class UniformBufferPool final
 {
     private:
-        bool const                  _autoSync;
         VkBufferMemoryBarrier       _barrier;
         VkBufferCreateInfo          _bufferInfo;
         VkDeviceMemory              _gpuMemory;
@@ -39,18 +38,16 @@ class UniformBufferPool final
         UniformBufferPool ( UniformBufferPool && ) = delete;
         UniformBufferPool& operator = ( UniformBufferPool && ) = delete;
 
-        explicit UniformBufferPool ( eUniformPoolSize size, bool autoSync ) noexcept;
+        explicit UniformBufferPool ( eUniformPoolSize size ) noexcept;
         ~UniformBufferPool () = default;
 
         // The method acquires one uniform buffer from the pool, inits it with data and returns the buffer to the user.
         [[nodiscard]] VkBuffer Acquire ( android_vulkan::Renderer &renderer,
             VkCommandBuffer commandBuffer,
-            void const* data,
-            VkPipelineStageFlags targetStages
+            void const* data
         ) noexcept;
 
         [[nodiscard]] size_t GetAvailableItemCount () const noexcept;
-        [[nodiscard]] size_t GetItemCount () const noexcept;
 
         // The method return all items to the pool.
         void Reset () noexcept;

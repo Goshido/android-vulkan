@@ -28,7 +28,7 @@ class PointLightLightup final
 
         PointLightLightupProgram                _program {};
         Sampler                                 _sampler {};
-        UniformBufferPool                       _uniformPool { eUniformPoolSize::Tiny_4M, false };
+        UniformBufferPool                       _uniformPool { eUniformPoolSize::Tiny_4M };
         std::vector<VkWriteDescriptorSet>       _writeSets {};
 
     public:

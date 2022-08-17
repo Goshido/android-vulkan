@@ -29,22 +29,27 @@ class OpaqueSubpass final : public GeometrySubpassBase
         [[nodiscard]] SceneData& GetSceneData () noexcept;
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
-            VkCommandPool commandPool,
             VkExtent2D const &resolution,
             VkRenderPass renderPass
         ) noexcept;
 
         void Destroy ( VkDevice device ) noexcept;
 
-        [[nodiscard]] bool Execute ( android_vulkan::Renderer &renderer,
-            VkCommandBuffer commandBuffer,
-            GXProjectionClipPlanes const &frustum,
-            GXMat4 const &view,
-            GXMat4 const &viewProjection,
-            DefaultTextureManager const &defaultTextureManager,
+        void Execute ( VkCommandBuffer commandBuffer,
+            MaterialPool &materialPool,
+            UniformBufferPoolManager &uniformPool,
             RenderSessionStats &renderSessionStats,
             VkDescriptorSet samplerDescriptorSet,
             bool &isSamplerUsed
+        ) noexcept;
+
+        void UpdateGPUData ( android_vulkan::Renderer &renderer,
+            VkCommandBuffer commandBuffer,
+            MaterialPool &materialPool,
+            UniformBufferPoolManager &uniformPool,
+            GXProjectionClipPlanes const &frustum,
+            GXMat4 const &view,
+            GXMat4 const &viewProjection
         ) noexcept;
 
     private:
@@ -52,13 +57,6 @@ class OpaqueSubpass final : public GeometrySubpassBase
             uint32_t vertexCount,
             uint32_t instanceCount
         ) noexcept override;
-
-        [[nodiscard]] bool UpdateGPUData ( android_vulkan::Renderer &renderer,
-            GXProjectionClipPlanes const &frustum,
-            GXMat4 const &view,
-            GXMat4 const &viewProjection,
-            DefaultTextureManager const &defaultTextureManager
-        ) noexcept;
 };
 
 } // namespace pbr

@@ -101,20 +101,10 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
     if ( !result )
         return false;
 
-    vkCmdBeginRenderPass ( commandInfo._buffer, &_renderPassInfo, VK_SUBPASS_CONTENTS_INLINE );
+    _geometryPass.UploadGPUData ( renderer, commandBuffer, _frustum, _view, _viewProjection );
 
-    result = _geometryPass.Execute ( renderer,
-        commandBuffer,
-        _frustum,
-        _view,
-        _viewProjection,
-        _defaultTextureManager,
-        _renderSessionStats
-    );
-
-    if ( !result )
-        return false;
-
+    vkCmdBeginRenderPass ( commandBuffer, &_renderPassInfo, VK_SUBPASS_CONTENTS_INLINE );
+    _geometryPass.Execute ( commandBuffer, _renderSessionStats );
     vkCmdNextSubpass ( commandBuffer, VK_SUBPASS_CONTENTS_INLINE );
 
     result = _lightPass.OnPostGeometryPass ( renderer,
@@ -611,16 +601,13 @@ bool RenderSession::CreateGBufferResources ( android_vulkan::Renderer &renderer,
     VkCommandPool commandPool = _commandInfo[ 0U ]._pool;
 
     bool result = _geometryPass.Init ( renderer,
-        commandPool,
         _gBuffer.GetResolution (),
         _renderPass,
-        _samplerManager
+        _samplerManager,
+        _defaultTextureManager
     );
 
-    if ( !result )
-        return false;
-
-    if ( !_lightPass.Init ( renderer, commandPool, _renderPass, _gBuffer ) )
+    if ( !result || !_lightPass.Init ( renderer, commandPool, _renderPass, _gBuffer ) )
         return false;
 
     if ( !CreateGBufferSlotMapper ( renderer ) )

@@ -24,7 +24,12 @@ class PointLightPass final
         std::vector<Interact>                   _interacts {};
         PointLightLightup                       _lightup {};
 
-        UniformBufferPoolManager                _shadowmapBufferPool { eUniformPoolSize::Huge_64M };
+        UniformBufferPoolManager                _shadowmapBufferPool
+        {
+            eUniformPoolSize::Huge_64M,
+            VK_PIPELINE_STAGE_VERTEX_SHADER_BIT
+        };
+
         PointLightShadowmapGeneratorProgram     _shadowmapProgram {};
         VkRenderPass                            _shadowmapRenderPass = VK_NULL_HANDLE;
         VkRenderPassBeginInfo                   _shadowmapRenderPassInfo {};

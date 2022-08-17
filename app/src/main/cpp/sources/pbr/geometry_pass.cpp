@@ -6,10 +6,10 @@
 namespace pbr {
 
 bool GeometryPass::Init ( android_vulkan::Renderer &renderer,
-    VkCommandPool commandPool,
     VkExtent2D const &resolution,
     VkRenderPass renderPass,
-    SamplerManager &samplerManager
+    SamplerManager &samplerManager,
+    DefaultTextureManager const &defaultTextureManager
 ) noexcept
 {
     VkDevice device = renderer.GetDevice ();
@@ -87,10 +87,16 @@ bool GeometryPass::Init ( android_vulkan::Renderer &renderer,
 
     vkUpdateDescriptorSets ( device, 1U, &writeSet, 0U, nullptr );
 
-    if ( !_opaqueSubpass.Init ( renderer, commandPool, resolution, renderPass ) )
-        return false;
+    return _opaqueSubpass.Init ( renderer, resolution, renderPass ) &&
+        _stippleSubpass.Init ( renderer, resolution, renderPass ) &&
 
-    return _stippleSubpass.Init ( renderer, commandPool, resolution, renderPass );
+        _uniformPool.Init ( renderer,
+            GeometryPassInstanceDescriptorSetLayout (),
+            sizeof ( GeometryPassProgram::ObjectData ),
+            "pbr::GeometryPass::_uniformPool"
+        ) &&
+
+        _materialPool.Init ( device, defaultTextureManager );
 }
 
 void GeometryPass::Destroy ( VkDevice device ) noexcept
@@ -99,50 +105,38 @@ void GeometryPass::Destroy ( VkDevice device ) noexcept
     _stippleSubpass.Destroy ( device );
     _opaqueSubpass.Destroy ( device );
 
-    if ( _descriptorPool != VK_NULL_HANDLE )
-    {
-        vkDestroyDescriptorPool ( device, _descriptorPool, nullptr );
-        AV_UNREGISTER_DESCRIPTOR_POOL ( "pbr::GeometryPass::_descriptorPool" )
-        _descriptorPool = VK_NULL_HANDLE;
-    }
+    if ( _descriptorPool == VK_NULL_HANDLE )
+        return;
+
+    vkDestroyDescriptorPool ( device, _descriptorPool, nullptr );
+    AV_UNREGISTER_DESCRIPTOR_POOL ( "pbr::GeometryPass::_descriptorPool" )
+    _descriptorPool = VK_NULL_HANDLE;
 }
 
-bool GeometryPass::Execute ( android_vulkan::Renderer &renderer,
-    VkCommandBuffer commandBuffer,
-    GXProjectionClipPlanes const &frustum,
-    GXMat4 const &view,
-    GXMat4 const &viewProjection,
-    DefaultTextureManager const &defaultTextureManager,
-    RenderSessionStats &renderSessionStats
-) noexcept
+void GeometryPass::Execute ( VkCommandBuffer commandBuffer, RenderSessionStats &renderSessionStats ) noexcept
 {
     AV_TRACE ( "Geometry pass" )
 
     bool isSamplerUsed = false;
 
-    bool const result = _opaqueSubpass.Execute ( renderer,
-        commandBuffer,
-        frustum,
-        view,
-        viewProjection,
-        defaultTextureManager,
+    _opaqueSubpass.Execute ( commandBuffer,
+        _materialPool,
+        _uniformPool,
         renderSessionStats,
         _descriptorSet,
         isSamplerUsed
     );
 
-    if ( !result )
-        return false;
-
-    return _stippleSubpass.Execute ( renderer,
-        commandBuffer,
-        view,
-        viewProjection,
-        defaultTextureManager,
+    _stippleSubpass.Execute ( commandBuffer,
+        _materialPool,
+        _uniformPool,
         renderSessionStats,
         _descriptorSet,
         isSamplerUsed
     );
+
+    _uniformPool.Commit ();
+    _materialPool.Commit ();
 }
 
 OpaqueSubpass& GeometryPass::GetOpaqueSubpass () noexcept
@@ -159,6 +153,35 @@ void GeometryPass::Reset () noexcept
 {
     _opaqueSubpass.Reset ();
     _stippleSubpass.Reset ();
+}
+
+void GeometryPass::UploadGPUData ( android_vulkan::Renderer &renderer,
+    VkCommandBuffer commandBuffer,
+    GXProjectionClipPlanes const &frustum,
+    GXMat4 const &view,
+    GXMat4 const &viewProjection
+) noexcept
+{
+    _opaqueSubpass.UpdateGPUData ( renderer,
+        commandBuffer,
+        _materialPool,
+        _uniformPool,
+        frustum,
+        view,
+        viewProjection
+    );
+
+    _stippleSubpass.UpdateGPUData ( renderer,
+        commandBuffer,
+        _materialPool,
+        _uniformPool,
+        view,
+        viewProjection
+    );
+
+    VkDevice device = renderer.GetDevice ();
+    _uniformPool.IssueSync ( device, commandBuffer );
+    _materialPool.IssueSync ( device );
 }
 
 } // namespace pbr

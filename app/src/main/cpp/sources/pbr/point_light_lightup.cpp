@@ -137,8 +137,7 @@ void PointLightLightup::UpdateGPUData ( android_vulkan::Renderer &renderer,
 
         VkBuffer buffer = _bufferInfo[ _itemWriteIndex ].buffer = _uniformPool.Acquire ( renderer,
             commandBuffer,
-            &lightData,
-            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT
+            &lightData
         );
 
         _bufferInfo[ _itemWriteIndex ].buffer = buffer;

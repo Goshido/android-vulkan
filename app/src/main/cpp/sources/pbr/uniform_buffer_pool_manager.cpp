@@ -4,8 +4,9 @@
 
 namespace pbr {
 
-UniformBufferPoolManager::UniformBufferPoolManager ( eUniformPoolSize size ) noexcept:
-    _uniformPool ( size, false )
+UniformBufferPoolManager::UniformBufferPoolManager ( eUniformPoolSize size, VkPipelineStageFlags syncFlags ) noexcept:
+    _syncFlags ( syncFlags ),
+    _uniformPool ( size )
 {
     // NOTHING
 }
@@ -36,7 +37,7 @@ void UniformBufferPoolManager::IssueSync ( VkDevice device, VkCommandBuffer comm
 
     vkCmdPipelineBarrier ( commandBuffer,
         VK_PIPELINE_STAGE_TRANSFER_BIT,
-        VK_PIPELINE_STAGE_VERTEX_SHADER_BIT,
+        _syncFlags,
         0U,
         0U,
         nullptr,
@@ -54,7 +55,7 @@ void UniformBufferPoolManager::IssueSync ( VkDevice device, VkCommandBuffer comm
 
     vkCmdPipelineBarrier ( commandBuffer,
         VK_PIPELINE_STAGE_TRANSFER_BIT,
-        VK_PIPELINE_STAGE_VERTEX_SHADER_BIT,
+        _syncFlags,
         0U,
         0U,
         nullptr,
@@ -72,7 +73,7 @@ void UniformBufferPoolManager::Push ( android_vulkan::Renderer &renderer,
     void const *item
 ) noexcept
 {
-    VkBuffer buffer = _uniformPool.Acquire ( renderer, commandBuffer, item, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT );
+    VkBuffer buffer = _uniformPool.Acquire ( renderer, commandBuffer, item );
     _bufferInfo[ _uniformWriteIndex ].buffer = buffer;
     _barriers[ _uniformWriteIndex ].buffer = buffer;
     _uniformWriteIndex = ( _uniformWriteIndex + 1U ) % _descriptorSets.size ();

@@ -15,6 +15,7 @@ class UniformBufferPoolManager final
         std::vector<VkDescriptorBufferInfo>     _bufferInfo {};
         VkDescriptorPool                        _descriptorPool = VK_NULL_HANDLE;
         std::vector<VkDescriptorSet>            _descriptorSets {};
+        VkPipelineStageFlags const              _syncFlags;
 
         size_t                                  _uniformBaseIndex = 0U;
         size_t                                  _uniformReadIndex = 0U;
@@ -33,7 +34,7 @@ class UniformBufferPoolManager final
         UniformBufferPoolManager ( UniformBufferPoolManager && ) = delete;
         UniformBufferPoolManager& operator = ( UniformBufferPoolManager && ) = delete;
 
-        explicit UniformBufferPoolManager ( eUniformPoolSize size ) noexcept;
+        explicit UniformBufferPoolManager ( eUniformPoolSize size, VkPipelineStageFlags syncFlags ) noexcept;
 
         ~UniformBufferPoolManager () = default;
 

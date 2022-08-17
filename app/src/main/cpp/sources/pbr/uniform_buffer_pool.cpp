@@ -20,8 +20,7 @@ constexpr static VkBufferUsageFlags USAGE = AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFE
 
 //----------------------------------------------------------------------------------------------------------------------
 
-UniformBufferPool::UniformBufferPool ( eUniformPoolSize size, bool autoSync ) noexcept:
-    _autoSync ( autoSync ),
+UniformBufferPool::UniformBufferPool ( eUniformPoolSize size ) noexcept:
     _barrier {},
     _bufferInfo {},
     _gpuMemory ( VK_NULL_HANDLE ),
@@ -36,8 +35,7 @@ UniformBufferPool::UniformBufferPool ( eUniformPoolSize size, bool autoSync ) no
 
 VkBuffer UniformBufferPool::Acquire ( android_vulkan::Renderer &renderer,
     VkCommandBuffer commandBuffer,
-    void const* data,
-    VkPipelineStageFlags targetStages
+    void const* data
 ) noexcept
 {
     assert ( _index < _pool.capacity () );
@@ -47,23 +45,6 @@ VkBuffer UniformBufferPool::Acquire ( android_vulkan::Renderer &renderer,
 
     VkBuffer buffer = _pool[ _index++ ];
     vkCmdUpdateBuffer ( commandBuffer, buffer, 0U, _itemSize, data );
-
-    if ( _autoSync )
-    {
-        _barrier.buffer = buffer;
-
-        vkCmdPipelineBarrier ( commandBuffer,
-            VK_PIPELINE_STAGE_TRANSFER_BIT,
-            targetStages,
-            0U,
-            0U,
-            nullptr,
-            1U,
-            &_barrier,
-            0U,
-            nullptr
-        );
-    }
 
     return buffer;
 }
@@ -76,11 +57,6 @@ void UniformBufferPool::Reset () noexcept
 size_t UniformBufferPool::GetAvailableItemCount () const noexcept
 {
     return _pool.capacity () - _index;
-}
-
-size_t UniformBufferPool::GetItemCount () const noexcept
-{
-    return _pool.capacity ();
 }
 
 bool UniformBufferPool::Init ( android_vulkan::Renderer &renderer, size_t itemSize ) noexcept

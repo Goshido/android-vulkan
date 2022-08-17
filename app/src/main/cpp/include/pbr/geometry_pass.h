@@ -2,7 +2,6 @@
 #define PBR_GEOMETRY_PASS_H
 
 
-#include "geometry_pass_sampler_descriptor_set_layout.h"
 #include "opaque_subpass.h"
 #include "stipple_subpass.h"
 
@@ -16,8 +15,15 @@ class GeometryPass final
         VkDescriptorSet                             _descriptorSet = VK_NULL_HANDLE;
         GeometryPassSamplerDescriptorSetLayout      _descriptorSetLayout {};
 
+        MaterialPool                                _materialPool {};
         OpaqueSubpass                               _opaqueSubpass {};
         StippleSubpass                              _stippleSubpass {};
+
+        UniformBufferPoolManager                    _uniformPool
+        {
+            eUniformPoolSize::Huge_64M,
+            AV_VK_FLAG ( VK_PIPELINE_STAGE_VERTEX_SHADER_BIT ) | AV_VK_FLAG ( VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT )
+        };
 
     public:
         GeometryPass () = default;
@@ -31,27 +37,26 @@ class GeometryPass final
         ~GeometryPass () = default;
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
-            VkCommandPool commandPool,
             VkExtent2D const &resolution,
             VkRenderPass renderPass,
-            SamplerManager &samplerManager
+            SamplerManager &samplerManager,
+            DefaultTextureManager const &defaultTextureManager
         ) noexcept;
 
         void Destroy ( VkDevice device ) noexcept;
-
-        [[nodiscard]] bool Execute ( android_vulkan::Renderer &renderer,
-            VkCommandBuffer commandBuffer,
-            GXProjectionClipPlanes const &frustum,
-            GXMat4 const &view,
-            GXMat4 const &viewProjection,
-            DefaultTextureManager const &defaultTextureManager,
-            RenderSessionStats &renderSessionStats
-        ) noexcept;
+        void Execute ( VkCommandBuffer commandBuffer, RenderSessionStats &renderSessionStats ) noexcept;
 
         [[nodiscard]] OpaqueSubpass& GetOpaqueSubpass () noexcept;
         [[nodiscard]] StippleSubpass& GetStippleSubpass () noexcept;
 
         void Reset () noexcept;
+
+        void UploadGPUData ( android_vulkan::Renderer &renderer,
+            VkCommandBuffer commandBuffer,
+            GXProjectionClipPlanes const &frustum,
+            GXMat4 const &view,
+            GXMat4 const &viewProjection
+        ) noexcept;
 };
 
 } // namespace pbr

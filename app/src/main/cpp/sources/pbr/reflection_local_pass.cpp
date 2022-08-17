@@ -128,12 +128,7 @@ void ReflectionLocalPass::UploadGPUData ( android_vulkan::Renderer &renderer,
 
         lightData._invSize = 2.0F / call._size;
         view.MultiplyAsPoint ( lightData._locationView, call._location );
-
-        VkBuffer buffer = _uniformPool.Acquire ( renderer,
-            commandBuffer,
-            &lightData,
-            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT
-        );
+        VkBuffer buffer = _uniformPool.Acquire ( renderer, commandBuffer, &lightData );
 
         _bufferInfo[ _itemWriteIndex ].buffer = buffer;
         _barriers[ _itemWriteIndex ].buffer = buffer;

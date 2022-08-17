@@ -46,7 +46,7 @@ class ReflectionLocalPass final
 
         ReflectionLocalProgram                  _program {};
 
-        UniformBufferPool                       _uniformPool { eUniformPoolSize::Tiny_4M, false };
+        UniformBufferPool                       _uniformPool { eUniformPoolSize::Tiny_4M };
         std::vector<VkWriteDescriptorSet>       _writeSets {};
 
     public:

@@ -104,6 +104,8 @@ void GeometryPass::Destroy ( VkDevice device ) noexcept
     _descriptorSetLayout.Destroy ( device );
     _stippleSubpass.Destroy ( device );
     _opaqueSubpass.Destroy ( device );
+    _uniformPool.Destroy ( device, "pbr::GeometryPass::_uniformPool" );
+    _materialPool.Destroy ( device );
 
     if ( _descriptorPool == VK_NULL_HANDLE )
         return;

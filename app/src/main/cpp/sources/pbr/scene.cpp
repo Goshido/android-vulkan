@@ -9,6 +9,7 @@
 #include <core.h>
 #include <file.h>
 #include <shape_box.h>
+#include <trace.h>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -67,6 +68,7 @@ void Scene::DetachRenderable ( RenderableComponent const &component ) noexcept
 
 bool Scene::ExecuteInputEvents () noexcept
 {
+    AV_TRACE ( "Lua: input events" )
     return _gamepad.Execute ( *_vm, _sceneHandle, _onInputIndex );
 }
 
@@ -249,6 +251,8 @@ void Scene::OnDestroyDevice () noexcept
 
 bool Scene::OnPrePhysics ( double deltaTime ) noexcept
 {
+    AV_TRACE ( "Lua: pre-physics" )
+
     if ( !lua_checkstack ( _vm, 3 ) )
     {
         android_vulkan::LogError ( "pbr::Scene::OnPrePhysics - Stack too small." );
@@ -265,6 +269,8 @@ bool Scene::OnPrePhysics ( double deltaTime ) noexcept
 
 bool Scene::OnPostPhysics ( double deltaTime ) noexcept
 {
+    AV_TRACE ( "Lua: post-physics" )
+
     if ( !lua_checkstack ( _vm, 3 ) )
     {
         android_vulkan::LogError ( "pbr::Scene::OnPostPhysics - Stack too small." );
@@ -306,6 +312,8 @@ bool Scene::OnResolutionChanged ( VkExtent2D const &resolution, double aspectRat
 
 bool Scene::OnUpdate ( double deltaTime ) noexcept
 {
+    AV_TRACE ( "Lua: update" )
+
     if ( !lua_checkstack ( _vm, 3 ) )
     {
         android_vulkan::LogError ( "pbr::Scene::OnUpdate - Stack too small." );
@@ -444,6 +452,8 @@ void Scene::RemoveActor ( Actor const &actor ) noexcept
 
 void Scene::Submit ( RenderSession &renderSession ) noexcept
 {
+    AV_TRACE ( "Submit components" )
+
     for ( auto& component : _renderableList )
     {
         // NOLINTNEXTLINE - downcast.

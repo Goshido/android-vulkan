@@ -1,6 +1,7 @@
 #include <physics.h>
 #include <contact_detector.h>
 #include <logger.h>
+#include <trace.h>
 #include <velocity_solver.h>
 
 GX_DISABLE_COMMON_WARNINGS
@@ -221,6 +222,8 @@ void Physics::Resume () noexcept
 
 void Physics::Simulate ( float deltaTime ) noexcept
 {
+    AV_TRACE ( "Physics simulation" )
+
     if ( _isPause )
     {
         if ( _debugRun )

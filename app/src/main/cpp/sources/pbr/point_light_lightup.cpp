@@ -13,54 +13,28 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
+constexpr static size_t BIND_PER_SET = 3U;
+
+//----------------------------------------------------------------------------------------------------------------------
+
+void PointLightLightup::Commit () noexcept
+{
+    _itemBaseIndex = _itemWriteIndex;
+    _itemReadIndex = _itemWriteIndex;
+    _itemWritten = 0U;
+}
+
+void PointLightLightup::BindProgram ( VkCommandBuffer commandBuffer ) noexcept
+{
+    _program.Bind ( commandBuffer );
+}
+
 bool PointLightLightup::Init ( android_vulkan::Renderer &renderer,
-    VkCommandPool commandPool,
     VkRenderPass renderPass,
     uint32_t subpass,
     VkExtent2D const &resolution
 ) noexcept
 {
-    _commandPool = commandPool;
-
-    VkCommandBufferAllocateInfo const allocateInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-        .pNext = nullptr,
-        .commandPool = _commandPool,
-        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-        .commandBufferCount = 1U
-    };
-
-    VkDevice device = renderer.GetDevice ();
-
-    bool result = android_vulkan::Renderer::CheckVkResult (
-        vkAllocateCommandBuffers ( device, &allocateInfo, &_transferCommandBuffer ),
-        "pbr::PointLightLightup::Init",
-        "Can't allocate command buffer"
-    );
-
-    if ( !result )
-    {
-        Destroy ( device );
-        return false;
-    }
-
-    _submitInfoTransfer.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    _submitInfoTransfer.pNext = nullptr;
-    _submitInfoTransfer.waitSemaphoreCount = 0U;
-    _submitInfoTransfer.pWaitSemaphores = nullptr;
-    _submitInfoTransfer.pWaitDstStageMask = nullptr;
-    _submitInfoTransfer.commandBufferCount = 1U;
-    _submitInfoTransfer.pCommandBuffers = &_transferCommandBuffer;
-    _submitInfoTransfer.signalSemaphoreCount = 0U;
-    _submitInfoTransfer.pSignalSemaphores = nullptr;
-
-    if ( !_program.Init ( renderer, renderPass, subpass, resolution ) )
-    {
-        Destroy ( device );
-        return false;
-    }
-
     constexpr VkSamplerCreateInfo samplerInfo
     {
         .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
@@ -83,146 +57,64 @@ bool PointLightLightup::Init ( android_vulkan::Renderer &renderer,
         .unnormalizedCoordinates = VK_FALSE
     };
 
-    if ( !_sampler.Init ( renderer, samplerInfo ) )
-    {
-        Destroy ( device );
-        return false;
-    }
-
-    if ( !_uniformPoolLightData.Init ( renderer, sizeof ( PointLightLightupProgram::LightData ) ) )
-    {
-        Destroy ( device );
-        return false;
-    }
-
-    return true;
+    return _program.Init ( renderer, renderPass, subpass, resolution ) &&
+        _sampler.Init ( renderer.GetDevice (), samplerInfo ) &&
+        AllocateDescriptorSets ( renderer );
 }
 
 void PointLightLightup::Destroy ( VkDevice device ) noexcept
 {
-    DestroyDescriptorPool ( device );
+    if ( _descriptorPool != VK_NULL_HANDLE )
+    {
+        vkDestroyDescriptorPool ( device, _descriptorPool, nullptr );
+        _descriptorPool = VK_NULL_HANDLE;
+        AV_UNREGISTER_DESCRIPTOR_POOL ( "pbr::PointLightLightup::_descriptorPool" )
+    }
 
-    _imageInfo.clear ();
-    _uniformInfoLightData.clear ();
-    _descriptorSets.clear ();
-    _writeSets.clear ();
+    auto const clean = [] ( auto &vector ) noexcept {
+        vector.clear ();
+        vector.shrink_to_fit ();
+    };
 
-    _uniformPoolLightData.Destroy ( device );
+    clean ( _barriers );
+    clean ( _bufferInfo );
+    clean ( _descriptorSets );
+    clean ( _imageInfo );
+    clean ( _writeSets );
+
+    _uniformPool.Destroy ( device );
     _sampler.Destroy ( device );
     _program.Destroy ( device );
-
-    if ( _commandPool == VK_NULL_HANDLE )
-        return;
-
-    vkFreeCommandBuffers ( device, _commandPool, 1U, &_transferCommandBuffer );
-    _transferCommandBuffer = VK_NULL_HANDLE;
-    _commandPool = VK_NULL_HANDLE;
 }
 
 void PointLightLightup::Lightup ( VkCommandBuffer commandBuffer,
-    android_vulkan::MeshGeometry &unitCube,
-    size_t lightIndex
+    VkDescriptorSet transform,
+    android_vulkan::MeshGeometry &unitCube
 ) noexcept
 {
-    _program.Bind ( commandBuffer );
-    _program.SetLightData ( commandBuffer, _descriptorSets[ lightIndex ] );
-
+    _program.SetLightData ( commandBuffer, transform, _descriptorSets[ _itemReadIndex ] );
     vkCmdDrawIndexed ( commandBuffer, unitCube.GetVertexCount (), 1U, 0U, 0, 0U );
+    _itemReadIndex = ( _itemReadIndex + 1U ) % _descriptorSets.size ();
 }
 
-bool PointLightLightup::UpdateGPUData ( android_vulkan::Renderer &renderer,
+void PointLightLightup::UpdateGPUData ( VkDevice device,
+    VkCommandBuffer commandBuffer,
     PointLightPass const &pointLightPass,
     GXMat4 const &viewerLocal,
     GXMat4 const &view
 ) noexcept
 {
-    _uniformPoolLightData.Reset();
     size_t const lightCount = pointLightPass.GetPointLightCount ();
-
-    if ( !AllocateNativeDescriptorSets ( renderer, lightCount ) )
-        return false;
-
-    constexpr VkCommandBufferBeginInfo beginInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-        .pNext = nullptr,
-        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
-        .pInheritanceInfo = nullptr
-    };
-
-    bool result = android_vulkan::Renderer::CheckVkResult ( vkBeginCommandBuffer ( _transferCommandBuffer, &beginInfo ),
-        "pbr::PointLightLightup::UpdateGPUData",
-        "Can't begin command buffer"
-    );
-
-    if ( !result )
-        return false;
-
-    size_t writeIndex = 0U;
     GXVec3 alpha {};
     GXVec3 betta {};
 
     PointLightLightupProgram::LightData lightData {};
     lightData._sceneScaleFactor = METERS_IN_UNIT;
 
-    // Note all shadowmap formats are same so grab first shadowmap and resolve.
-    auto const [probeLight, probeShadowmap] = pointLightPass.GetPointLightInfo ( 0U );
-
-    VkImageMemoryBarrier barrier
-    {
-        .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-        .pNext = nullptr,
-        .srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
-        .dstAccessMask = VK_ACCESS_SHADER_READ_BIT,
-        .oldLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-        .newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .image = VK_NULL_HANDLE,
-
-        .subresourceRange
-        {
-            .aspectMask = android_vulkan::Renderer::ResolveImageViewAspect ( probeShadowmap->GetFormat () ),
-            .baseMipLevel = 0U,
-            .levelCount = 1U,
-            .baseArrayLayer = 0U,
-            .layerCount = 6U
-        }
-    };
-
     for ( size_t i = 0U; i < lightCount; ++i )
     {
         auto const [light, shadowmap] = pointLightPass.GetPointLightInfo ( i );
-        VkDescriptorSet set = _descriptorSets[ i ];
-
-        VkDescriptorImageInfo& image = _imageInfo[ i ];
-        image.imageView = shadowmap->GetImageView ();
-        barrier.image = shadowmap->GetImage ();
-
-        vkCmdPipelineBarrier ( _transferCommandBuffer,
-            VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
-            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-            0U,
-            0U,
-            nullptr,
-            0U,
-            nullptr,
-            1U,
-            &barrier
-        );
-
-        VkWriteDescriptorSet &write0 = _writeSets[ writeIndex++ ];
-        write0.dstBinding = 0U;
-        write0.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-
-        VkWriteDescriptorSet &write1 = _writeSets[ writeIndex++ ];
-        write1.dstBinding = 1U;
-        write1.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
-
-        write0.dstSet = write1.dstSet = set;
-        write0.pImageInfo = write1.pImageInfo = &image;
-        write0.pBufferInfo = write1.pBufferInfo = nullptr;
-
+        _imageInfo[ _itemWriteIndex ].imageView = shadowmap->GetImageView ();
         lightData._lightProjection = light->GetProjection ();
 
         // Matrix optimization:
@@ -243,73 +135,40 @@ bool PointLightLightup::UpdateGPUData ( android_vulkan::Renderer &renderer,
         lightData._intensity = light->GetIntensity ();
 
         view.MultiplyAsPoint ( lightData._lightLocationView, location );
-        VkDescriptorBufferInfo& buffer = _uniformInfoLightData[ i ];
+        _uniformPool.Push ( commandBuffer, &lightData, sizeof ( lightData ) );
 
-        buffer.buffer = _uniformPoolLightData.Acquire ( renderer,
-            _transferCommandBuffer,
-            &lightData,
-            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT
-        );
+        _itemWriteIndex = ( _itemWriteIndex + 1U ) % _descriptorSets.size ();
 
-        VkWriteDescriptorSet &write2 = _writeSets[ writeIndex++ ];
-        write2.dstSet = set;
-        write2.dstBinding = 2U;
-        write2.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        write2.pImageInfo = nullptr;
-        write2.pBufferInfo = &buffer;
+        if ( _itemWriteIndex == 0U )
+            _uniformPool.Reset ();
+
+        ++_itemWritten;
     }
 
-    result = android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( _transferCommandBuffer ),
-        "pbr::PointLightLightup::UpdateGPUData",
-        "Can't end command buffer"
-    );
-
-    if ( !result )
-        return false;
-
-    result = android_vulkan::Renderer::CheckVkResult (
-        vkQueueSubmit ( renderer.GetQueue (), 1U, &_submitInfoTransfer, VK_NULL_HANDLE ),
-        "pbr::PointLightLightup::UpdateGPUData",
-        "Can't submit command buffer"
-    );
-
-    if ( !result )
-        return false;
-
-    vkUpdateDescriptorSets ( renderer.GetDevice (),
-        static_cast<uint32_t> ( _writeSets.size () ),
-        _writeSets.data (),
-        0U,
-        nullptr
-    );
-
-    return true;
+    IssueSync ( device, commandBuffer );
 }
 
-bool PointLightLightup::AllocateNativeDescriptorSets ( android_vulkan::Renderer &renderer, size_t neededSets ) noexcept
+bool PointLightLightup::AllocateDescriptorSets ( android_vulkan::Renderer &renderer ) noexcept
 {
-    assert ( neededSets );
+    if ( !_uniformPool.Init ( renderer, sizeof ( PointLightLightupProgram::LightData ) ) )
+        return false;
 
-    if ( _descriptorSets.size () >= neededSets )
-        return true;
-
+    size_t const setCount = _uniformPool.GetAvailableItemCount ();
     VkDevice device = renderer.GetDevice ();
-    DestroyDescriptorPool ( device );
-    auto const size = static_cast<uint32_t> ( neededSets );
 
     VkDescriptorPoolSize const poolSizes[] =
     {
         {
             .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-            .descriptorCount = size
+            .descriptorCount = static_cast<uint32_t> ( setCount )
         },
         {
             .type = VK_DESCRIPTOR_TYPE_SAMPLER,
-            .descriptorCount = size
+            .descriptorCount = static_cast<uint32_t> ( setCount )
         },
         {
             .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            .descriptorCount = size
+            .descriptorCount = static_cast<uint32_t> ( setCount )
         }
     };
 
@@ -318,14 +177,14 @@ bool PointLightLightup::AllocateNativeDescriptorSets ( android_vulkan::Renderer 
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0U,
-        .maxSets = size,
+        .maxSets = static_cast<uint32_t> ( setCount ),
         .poolSizeCount = static_cast<uint32_t> ( std::size ( poolSizes ) ),
         .pPoolSizes = poolSizes
     };
 
-    bool const result = android_vulkan::Renderer::CheckVkResult (
+    bool result = android_vulkan::Renderer::CheckVkResult (
         vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_descriptorPool ),
-        "pbr::PointLightLightup::AllocateNativeDescriptorSets",
+        "pbr::PointLightLightup::AllocateDescriptorSets",
         "Can't create descriptor pool"
     );
 
@@ -334,43 +193,8 @@ bool PointLightLightup::AllocateNativeDescriptorSets ( android_vulkan::Renderer 
 
     AV_REGISTER_DESCRIPTOR_POOL ( "pbr::PointLightLightup::_descriptorPool" )
 
-    VkDescriptorImageInfo const image
-    {
-        .sampler = _sampler.GetSampler (),
-        .imageView = VK_NULL_HANDLE,
-        .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-    };
-
-    _imageInfo.resize ( neededSets, image );
-
-    constexpr VkDescriptorBufferInfo uniform
-    {
-        .buffer = VK_NULL_HANDLE,
-        .offset = 0U,
-        .range = static_cast<VkDeviceSize> ( sizeof ( PointLightLightupProgram::LightData ) )
-    };
-
-    _uniformInfoLightData.resize ( neededSets, uniform );
-
-    constexpr VkWriteDescriptorSet writeSet
-    {
-        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-        .pNext = nullptr,
-        .dstSet = VK_NULL_HANDLE,
-        .dstBinding = UINT32_MAX,
-        .dstArrayElement = 0U,
-        .descriptorCount = 1U,
-        .descriptorType = VK_DESCRIPTOR_TYPE_MAX_ENUM,
-        .pImageInfo = nullptr,
-        .pBufferInfo = nullptr,
-        .pTexelBufferView = nullptr
-    };
-
-    _writeSets.resize ( 3U * neededSets, writeSet );
-    _descriptorSets.resize ( neededSets, VK_NULL_HANDLE );
-
-    PointLightDescriptorSetLayout const layout;
-    std::vector<VkDescriptorSetLayout> layouts ( neededSets, layout.GetLayout () );
+    _descriptorSets.resize ( setCount );
+    std::vector<VkDescriptorSetLayout> const layouts ( setCount, PointLightDescriptorSetLayout ().GetLayout () );
 
     VkDescriptorSetAllocateInfo const allocateInfo
     {
@@ -381,21 +205,154 @@ bool PointLightLightup::AllocateNativeDescriptorSets ( android_vulkan::Renderer 
         .pSetLayouts = layouts.data ()
     };
 
-    return android_vulkan::Renderer::CheckVkResult (
+    result = android_vulkan::Renderer::CheckVkResult (
         vkAllocateDescriptorSets ( device, &allocateInfo, _descriptorSets.data () ),
-        "pbr::PointLightLightup::AllocateNativeDescriptorSets",
+        "pbr::PointLightLightup::AllocateDescriptorSets",
         "Can't allocate descriptor sets"
     );
+
+    if ( !result )
+        return false;
+
+    // Initialize all immutable constant fields.
+
+    VkDescriptorImageInfo const image
+    {
+        .sampler = _sampler.GetSampler (),
+        .imageView = VK_NULL_HANDLE,
+        .imageLayout = VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_OPTIMAL
+    };
+
+    _imageInfo.resize ( setCount, image );
+
+    constexpr VkDescriptorBufferInfo uniform
+    {
+        .buffer = VK_NULL_HANDLE,
+        .offset = 0U,
+        .range = static_cast<VkDeviceSize> ( sizeof ( PointLightLightupProgram::LightData ) )
+    };
+
+    _bufferInfo.resize ( setCount, uniform );
+
+    constexpr VkWriteDescriptorSet writeSet
+    {
+        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        .pNext = nullptr,
+        .dstSet = VK_NULL_HANDLE,
+        .dstBinding = 0U,
+        .dstArrayElement = 0U,
+        .descriptorCount = 1U,
+        .descriptorType = VK_DESCRIPTOR_TYPE_MAX_ENUM,
+        .pImageInfo = nullptr,
+        .pBufferInfo = nullptr,
+        .pTexelBufferView = nullptr
+    };
+
+    _writeSets.resize ( BIND_PER_SET * setCount, writeSet );
+
+    constexpr VkBufferMemoryBarrier bufferBarrier
+    {
+        .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
+        .pNext = nullptr,
+        .srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
+        .dstAccessMask = VK_ACCESS_UNIFORM_READ_BIT,
+        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .buffer = VK_NULL_HANDLE,
+        .offset = 0U,
+        .size = static_cast<VkDeviceSize> ( sizeof ( PointLightLightupProgram::LightData ) )
+    };
+
+    _barriers.resize ( setCount, bufferBarrier );
+
+    for ( size_t i = 0U; i < setCount; ++i )
+    {
+        size_t const base = BIND_PER_SET * i;
+        VkDescriptorSet set = _descriptorSets[ i ];
+
+        VkBuffer buffer = _uniformPool.GetBuffer ( i );
+        _barriers[ i ].buffer = buffer;
+
+        VkDescriptorBufferInfo& bufferInfo = _bufferInfo[ i ];
+        bufferInfo.buffer = buffer;
+
+        VkWriteDescriptorSet& imageSet = _writeSets[ base ];
+        imageSet.dstSet = set;
+        imageSet.dstBinding = 0U;
+        imageSet.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+        imageSet.pImageInfo = &_imageInfo[ i ];
+
+        VkWriteDescriptorSet& samplerSet = _writeSets[ base + 1U ];
+        samplerSet.dstSet = set;
+        samplerSet.dstBinding = 1U;
+        samplerSet.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
+        samplerSet.pImageInfo = &_imageInfo[ i ];
+
+        VkWriteDescriptorSet& bufferSet = _writeSets[ base + 2U ];
+        bufferSet.dstSet = set;
+        bufferSet.dstBinding = 2U;
+        bufferSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        bufferSet.pBufferInfo = &bufferInfo;
+    }
+
+    // Now all what is needed to do is to init "_bufferInfo::buffer" and "_imageInfo::imageView".
+    // Then to invoke vkUpdateDescriptorSets.
+
+    _itemBaseIndex = 0U;
+    _itemReadIndex = 0U;
+    _itemWriteIndex = 0U;
+    _itemWritten = 0U;
+
+    return true;
 }
 
-void PointLightLightup::DestroyDescriptorPool ( VkDevice device ) noexcept
+void PointLightLightup::IssueSync ( VkDevice device, VkCommandBuffer commandBuffer ) const noexcept
 {
-    if ( _descriptorPool == VK_NULL_HANDLE )
+    size_t const count = _descriptorSets.size ();
+    size_t const idx = _itemBaseIndex + _itemWritten;
+    size_t const cases[] = { 0U, idx - count };
+    size_t const more = cases[ static_cast<size_t> ( idx > count ) ];
+    size_t const available = _itemWritten - more;
+
+    VkBufferMemoryBarrier const* barriers = _barriers.data ();
+
+    vkCmdPipelineBarrier ( commandBuffer,
+        VK_PIPELINE_STAGE_TRANSFER_BIT,
+        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+        0U,
+        0U,
+        nullptr,
+        static_cast<uint32_t> ( available ),
+        barriers + _itemBaseIndex,
+        0U,
+        nullptr
+    );
+
+    VkWriteDescriptorSet const* writeSets = _writeSets.data ();
+
+    vkUpdateDescriptorSets ( device,
+        static_cast<uint32_t> ( BIND_PER_SET * available ),
+        writeSets + BIND_PER_SET * _itemBaseIndex,
+        0U,
+        nullptr
+    );
+
+    if ( more < 1U )
         return;
 
-    vkDestroyDescriptorPool ( device, _descriptorPool, nullptr );
-    _descriptorPool = VK_NULL_HANDLE;
-    AV_UNREGISTER_DESCRIPTOR_POOL ( "pbr::PointLightLightup::_descriptorPool" )
+    vkCmdPipelineBarrier ( commandBuffer,
+        VK_PIPELINE_STAGE_TRANSFER_BIT,
+        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+        0U,
+        0U,
+        nullptr,
+        static_cast<uint32_t> ( more ),
+        barriers,
+        0U,
+        nullptr
+    );
+
+    vkUpdateDescriptorSets ( device, static_cast<uint32_t> ( BIND_PER_SET * more ), writeSets, 0U, nullptr );
 }
 
 } // namespace pbr

@@ -1,4 +1,7 @@
 #include <renderer.h>
+#include <bitwise.h>
+#include <file.h>
+#include <vulkan_utils.h>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -6,12 +9,11 @@ GX_DISABLE_COMMON_WARNINGS
 #include <cinttypes>
 #include <cmath>
 #include <string>
+#include <string_view>
 #include <unordered_map>
+#include <unordered_set>
 
 GX_RESTORE_WARNING_STATE
-
-#include "file.h"
-#include "vulkan_utils.h"
 
 
 namespace android_vulkan {
@@ -23,9 +25,9 @@ constexpr static char const* INDENT_2 = "        ";
 constexpr static char const* INDENT_3 = "            ";
 constexpr static size_t const INITIAL_EXTENSION_STORAGE_SIZE = 64U;
 
-constexpr static uint32_t const MAJOR = 1U;
-constexpr static uint32_t const MINOR = 1U;
-constexpr static uint32_t const PATCH = 131U;
+constexpr static uint32_t MAJOR = 1U;
+constexpr static uint32_t MINOR = 1U;
+constexpr static uint32_t PATCH = 131U;
 
 // Note vulkan_core.h is a little bit dirty from clang-tidy point of view.
 // So suppress this third-party mess via "NOLINT" control comment.
@@ -372,6 +374,36 @@ VulkanPhysicalDeviceInfo::VulkanPhysicalDeviceInfo () noexcept:
 //----------------------------------------------------------------------------------------------------------------------
 
 #ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+
+// MessageID list of the ignored messages.
+static std::unordered_set<std::string_view> const g_validationFilter =
+{
+    // Attempting to enable deprecated extension VK_EXT_debug_report, but this extension has been deprecated by
+    // VK_EXT_debug_utils.
+    // [2022/07/26] There is no alternative on Android 11 platform.
+    "0x9111e735",
+
+    // Attempting to enable extension VK_EXT_debug_report, but this extension is intended to support use by applications
+    // when debugging and it is strongly recommended that it be otherwise avoided.
+    // [2022/07/26] Yeah. I'm pretty aware about that. Thank you.
+    "0x822806fa",
+
+    // Allocating a VkDeviceMemory of size XXX. This is a very small allocation (current threshold is XXX bytes).
+    // You should make large allocations and sub-allocate from one large VkDeviceMemory.
+    // [2022/07/27] Should think about it. Custom memory allocator task.
+    "0xdc18ad6b",
+
+    // Trying to bind VkImage (...) to a memory block which is fully consumed by the image. The required size of
+    // the allocation is 1088, but smaller images like this should be sub-allocated from larger memory blocks.
+    // [2022/07/27] Should think about it. Custom memory allocator task.
+    "0xb3d4346b",
+
+    // Performance Warning: This app has > 250 memory objects.
+    // [2022/07/28] Should think about it. Custom memory allocator task.
+    "0x58781063"
+};
+
+//----------------------------------------------------------------------------------------------------------------------
 
 std::map<VkDebugReportObjectTypeEXT, char const*> const Renderer::_vulkanObjectTypeMap =
 {
@@ -928,16 +960,6 @@ VkExtent2D const& Renderer::GetViewportResolution () const noexcept
     return _viewportResolution;
 }
 
-bool Renderer::IsDeviceCreated () const noexcept
-{
-    return _device != VK_NULL_HANDLE;
-}
-
-bool Renderer::IsSwapchainCreated () const noexcept
-{
-    return _swapchain != VK_NULL_HANDLE;
-}
-
 bool Renderer::OnCreateSwapchain ( ANativeWindow &nativeWindow, bool vSync ) noexcept
 {
     if ( !DeploySurface ( nativeWindow ) )
@@ -1133,10 +1155,20 @@ bool Renderer::TryAllocateMemory ( VkDeviceMemory &memory,
     allocateInfo.pNext = nullptr;
     allocateInfo.allocationSize = static_cast<uint32_t> ( size );
 
-    const bool result = SelectTargetMemoryTypeIndex ( allocateInfo.memoryTypeIndex, memoryProperties );
+    if ( !SelectTargetMemoryTypeIndex ( allocateInfo.memoryTypeIndex, memoryProperties ) )
+    {
+        std::string const flags = StringifyVkFlags ( memoryProperties,
+            g_vkMemoryPropertyFlagBitsMapperItems,
+            g_vkMemoryPropertyFlagBitsMapper
+        );
 
-    if ( !result )
+        LogError ( "Renderer::TryAllocateMemory - %s. Hardware does not support the following memory type:%s.",
+            errorMessage,
+            flags.c_str ()
+        );
+
         return false;
+    }
 
     return CheckVkResult ( vkAllocateMemory ( _device, &allocateInfo, nullptr, &memory ),
         "Renderer::TryAllocateMemory",
@@ -1155,13 +1187,20 @@ bool Renderer::TryAllocateMemory ( VkDeviceMemory &memory,
     allocateInfo.pNext = nullptr;
     allocateInfo.allocationSize = requirements.size;
 
-    bool result = SelectTargetMemoryTypeIndex ( allocateInfo.memoryTypeIndex,
-        requirements,
-        memoryProperties
-    );
+    if ( !SelectTargetMemoryTypeIndex ( allocateInfo.memoryTypeIndex, requirements, memoryProperties ) )
+    {
+        std::string const flags = StringifyVkFlags ( memoryProperties,
+            g_vkMemoryPropertyFlagBitsMapperItems,
+            g_vkMemoryPropertyFlagBitsMapper
+        );
 
-    if ( !result )
+        LogError ( "Renderer::TryAllocateMemory - %s. Hardware does not support the following memory type:%s.",
+            errorMessage,
+            flags.c_str ()
+        );
+
         return false;
+    }
 
     return CheckVkResult ( vkAllocateMemory ( _device, &allocateInfo, nullptr, &memory ),
         "Renderer::TryAllocateMemory",
@@ -1214,39 +1253,6 @@ char const* Renderer::ResolveVkFormat ( VkFormat format ) noexcept
     return findResult == _vulkanFormatMap.cend () ? UNKNOWN_RESULT : findResult->second;
 }
 
-bool Renderer::CheckExtensionMultiview ( std::set<std::string> const &allExtensions ) noexcept
-{
-    if ( !CheckExtensionCommon ( allExtensions, VK_KHR_MULTIVIEW_EXTENSION_NAME ) )
-        return false;
-
-    VkPhysicalDeviceMultiviewFeatures hardwareSupport
-    {
-        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_FEATURES,
-        .pNext = nullptr,
-        .multiview = VK_FALSE,
-        .multiviewGeometryShader = VK_FALSE,
-        .multiviewTessellationShader = VK_FALSE
-    };
-
-    VkPhysicalDeviceFeatures2 probe
-    {
-        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
-        .pNext = &hardwareSupport,
-        .features {}
-    };
-
-    vkGetPhysicalDeviceFeatures2 ( _physicalDevice, &probe );
-
-    if ( hardwareSupport.multiview )
-    {
-        LogInfo ( "%sOK: multiview", INDENT_2 );
-        return true;
-    }
-
-    LogError ( "%sFAIL: multiview", INDENT_2 );
-    return false;
-}
-
 bool Renderer::CheckExtensionShaderFloat16Int8 ( std::set<std::string> const &allExtensions ) noexcept
 {
     if ( !CheckExtensionCommon ( allExtensions, VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME ) )
@@ -1268,25 +1274,14 @@ bool Renderer::CheckExtensionShaderFloat16Int8 ( std::set<std::string> const &al
     };
 
     vkGetPhysicalDeviceFeatures2 ( _physicalDevice, &probe );
-    bool result = true;
 
     if ( hardwareSupport.shaderFloat16 )
     {
         LogInfo ( "%sOK: shaderFloat16", INDENT_2 );
-    }
-    else
-    {
-        LogError ( "%sFAIL: shaderFloat16", INDENT_2 );
-        result = false;
+        return true;
     }
 
-    if ( hardwareSupport.shaderInt8 )
-    {
-        LogInfo ( "%sOK: shaderInt8", INDENT_2 );
-        return result;
-    }
-
-    LogError ( "%sFAIL: shaderInt8", INDENT_2 );
+    LogError ( "%sFAIL: shaderFloat16", INDENT_2 );
     return false;
 }
 
@@ -1302,9 +1297,10 @@ bool Renderer::CheckRequiredDeviceExtensions ( std::vector<char const*> const &d
 
     // Note bitwise '&' is intentional. All checks must be done to view whole picture.
 
-    _isDeviceExtensionSupported = CheckExtensionMultiview ( allExtensions ) &
-        CheckExtensionShaderFloat16Int8 ( allExtensions ) &
-        CheckExtensionCommon ( allExtensions, VK_KHR_SWAPCHAIN_EXTENSION_NAME );
+    _isDeviceExtensionSupported = AV_BITWISE ( CheckExtensionShaderFloat16Int8 ( allExtensions ) ) &
+        AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_SEPARATE_DEPTH_STENCIL_LAYOUTS_EXTENSION_NAME ) ) &
+        AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME ) ) &
+        AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_SWAPCHAIN_EXTENSION_NAME ) );
 
     _isDeviceExtensionChecked = true;
     return _isDeviceExtensionSupported;
@@ -1510,10 +1506,17 @@ bool Renderer::DeployDevice () noexcept
     if ( !CheckRequiredFormats () )
         return false;
 
+    constexpr static VkPhysicalDeviceSeparateDepthStencilLayoutsFeatures separateDSLayoutFeatures
+    {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SEPARATE_DEPTH_STENCIL_LAYOUTS_FEATURES,
+        .pNext = nullptr,
+        .separateDepthStencilLayouts = VK_TRUE
+    };
+
     constexpr static VkPhysicalDeviceMultiviewFeatures multiviewFeatures
     {
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_FEATURES,
-        .pNext = nullptr,
+        .pNext = const_cast<VkPhysicalDeviceSeparateDepthStencilLayoutsFeatures*> ( &separateDSLayoutFeatures ),
         .multiview = VK_TRUE,
         .multiviewGeometryShader = VK_FALSE,
         .multiviewTessellationShader = VK_FALSE
@@ -1524,12 +1527,13 @@ bool Renderer::DeployDevice () noexcept
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT16_INT8_FEATURES_KHR,
         .pNext = const_cast<VkPhysicalDeviceMultiviewFeatures*> ( &multiviewFeatures ),
         .shaderFloat16 = VK_TRUE,
-        .shaderInt8 = VK_TRUE
+        .shaderInt8 = VK_FALSE
     };
 
     constexpr char const* extensions[] =
     {
-        VK_KHR_MULTIVIEW_EXTENSION_NAME,
+        VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME,
+        VK_KHR_SEPARATE_DEPTH_STENCIL_LAYOUTS_EXTENSION_NAME,
         VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME,
         VK_KHR_SWAPCHAIN_EXTENSION_NAME
     };
@@ -1629,8 +1633,26 @@ bool Renderer::DeployInstance () noexcept
 
 #ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
+    // [2022/07/26] GPU assisted validation is impossible on MALI G76 (driver 26) due to lack of required
+    // feature - VkPhysicalDeviceFeatures::vertexPipelineStoresAndAtomics.
+    constexpr static VkValidationFeatureEnableEXT const validationFeatures[] =
+    {
+        VK_VALIDATION_FEATURE_ENABLE_BEST_PRACTICES_EXT,
+        VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT
+    };
+
+    constexpr VkValidationFeaturesEXT validationInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT,
+        .pNext = nullptr,
+        .enabledValidationFeatureCount = static_cast<uint32_t> ( std::size ( validationFeatures ) ),
+        .pEnabledValidationFeatures = validationFeatures,
+        .disabledValidationFeatureCount = 0U,
+        .pDisabledValidationFeatures = nullptr
+    };
+
     _debugReportCallbackCreateInfoEXT.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
-    _debugReportCallbackCreateInfoEXT.pNext = nullptr;
+    _debugReportCallbackCreateInfoEXT.pNext = &validationInfo;
     _debugReportCallbackCreateInfoEXT.pUserData = this;
     _debugReportCallbackCreateInfoEXT.pfnCallback = &Renderer::OnVulkanDebugReport;
 
@@ -1646,9 +1668,9 @@ bool Renderer::DeployInstance () noexcept
 
     constexpr static char const* extensions[] =
     {
+        VK_KHR_ANDROID_SURFACE_EXTENSION_NAME,
         VK_EXT_DEBUG_REPORT_EXTENSION_NAME,
-        VK_KHR_SURFACE_EXTENSION_NAME,
-        "VK_KHR_android_surface"
+        VK_KHR_SURFACE_EXTENSION_NAME
     };
 
     instanceCreateInfo.pNext = &_debugReportCallbackCreateInfoEXT;
@@ -1659,8 +1681,8 @@ bool Renderer::DeployInstance () noexcept
 
     constexpr static const char* extensions[] =
     {
-        VK_KHR_SURFACE_EXTENSION_NAME,
-        "VK_KHR_android_surface"
+        VK_KHR_ANDROID_SURFACE_EXTENSION_NAME,
+        VK_KHR_SURFACE_EXTENSION_NAME
     };
 
     instanceCreateInfo.pNext = nullptr;
@@ -1823,54 +1845,59 @@ void Renderer::DestroySurface () noexcept
 
 bool Renderer::DeploySwapchain ( bool vSync ) noexcept
 {
-    VkSwapchainCreateInfoKHR swapchainCreateInfoKHR;
-    swapchainCreateInfoKHR.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-    swapchainCreateInfoKHR.pNext = nullptr;
-    swapchainCreateInfoKHR.flags = 0U;
-    swapchainCreateInfoKHR.surface = _surface;
-    swapchainCreateInfoKHR.minImageCount = 2U;
-    swapchainCreateInfoKHR.imageArrayLayers = 1U;
-    swapchainCreateInfoKHR.imageExtent = _surfaceSize;
-    swapchainCreateInfoKHR.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-    swapchainCreateInfoKHR.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    swapchainCreateInfoKHR.queueFamilyIndexCount = VK_QUEUE_FAMILY_IGNORED;
-    swapchainCreateInfoKHR.pQueueFamilyIndices = nullptr;
+    VkPresentModeKHR presentMode;
 
-    // There is no much to say but you have to consider image rotation after projection transform in your code.
-    // That's a cost for memory bandwidth saving in the mobile device world.
-    // See https://community.arm.com/developer/tools-software/graphics/b/blog/posts/appropriate-use-of-surface-rotation
-    // See https://github.com/KhronosGroup/Vulkan-Samples/blob/master/samples/performance/surface_rotation/surface_rotation_tutorial.md
-    swapchainCreateInfoKHR.preTransform = _surfaceTransform;
-
-    swapchainCreateInfoKHR.clipped = VK_TRUE;
-    swapchainCreateInfoKHR.oldSwapchain = VK_NULL_HANDLE;
-
-    if ( !SelectTargetPresentMode ( swapchainCreateInfoKHR.presentMode, vSync ) )
+    if ( !SelectTargetPresentMode ( presentMode, vSync ) )
     {
         LogError ( "Renderer::DeploySwapchain - Can't select present mode." );
         return false;
     }
 
-    if ( !SelectTargetCompositeAlpha ( swapchainCreateInfoKHR.compositeAlpha ) )
+    VkCompositeAlphaFlagBitsKHR compositeAlpha;
+
+    if ( !SelectTargetCompositeAlpha ( compositeAlpha ) )
     {
         LogError ( "Renderer::DeploySwapchain - Can't select composite alpha mode." );
         return false;
     }
 
-    bool result = SelectTargetSurfaceFormat ( _surfaceFormat,
-        swapchainCreateInfoKHR.imageColorSpace,
-        _depthStencilImageFormat
-    );
+    VkColorSpaceKHR colorSpace;
 
-    if ( !result )
+    if ( !SelectTargetSurfaceFormat ( _surfaceFormat, colorSpace, _depthStencilImageFormat ) )
     {
         LogError ( "Renderer::DeploySwapchain - Can't select image format and color space." );
         return false;
     }
 
-    swapchainCreateInfoKHR.imageFormat = _surfaceFormat;
+    VkSwapchainCreateInfoKHR const swapchainInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
+        .pNext = nullptr,
+        .flags = 0U,
+        .surface = _surface,
+        .minImageCount = 3U,
+        .imageFormat = _surfaceFormat,
+        .imageColorSpace = colorSpace,
+        .imageExtent = _surfaceSize,
+        .imageArrayLayers = 1U,
+        .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+        .imageSharingMode = VK_SHARING_MODE_EXCLUSIVE,
+        .queueFamilyIndexCount = 0U,
+        .pQueueFamilyIndices = nullptr,
 
-    result = CheckVkResult ( vkCreateSwapchainKHR ( _device, &swapchainCreateInfoKHR, nullptr, &_swapchain ),
+        // There is no much to say but you have to consider image rotation after projection transform in your code.
+        // That's a cost for memory bandwidth saving in the mobile device world.
+        // See https://community.arm.com/developer/tools-software/graphics/b/blog/posts/appropriate-use-of-surface-rotation
+        // See https://github.com/KhronosGroup/Vulkan-Samples/blob/master/samples/performance/surface_rotation/surface_rotation_tutorial.md
+        .preTransform = _surfaceTransform,
+
+        .compositeAlpha = compositeAlpha,
+        .presentMode = presentMode,
+        .clipped = VK_TRUE,
+        .oldSwapchain = VK_NULL_HANDLE
+    };
+
+    bool result = CheckVkResult ( vkCreateSwapchainKHR ( _device, &swapchainInfo, nullptr, &_swapchain ),
         "Renderer::DeploySwapchain",
         "Can't create swapchain"
     );
@@ -1906,21 +1933,32 @@ bool Renderer::DeploySwapchain ( bool vSync ) noexcept
     _swapchainImageViews.clear ();
     _swapchainImageViews.reserve ( static_cast<size_t> ( imageCount ) );
 
-    VkImageViewCreateInfo imageViewCreateInfo;
-    imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-    imageViewCreateInfo.pNext = nullptr;
-    imageViewCreateInfo.flags = 0U;
-    imageViewCreateInfo.format = swapchainCreateInfoKHR.imageFormat;
-    imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-    imageViewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-    imageViewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-    imageViewCreateInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-    imageViewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-    imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    imageViewCreateInfo.subresourceRange.layerCount = 1U;
-    imageViewCreateInfo.subresourceRange.baseArrayLayer = 0U;
-    imageViewCreateInfo.subresourceRange.levelCount = 1U;
-    imageViewCreateInfo.subresourceRange.baseMipLevel = 0U;
+    VkImageViewCreateInfo imageViewCreateInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .image = VK_NULL_HANDLE,
+        .viewType = VK_IMAGE_VIEW_TYPE_2D,
+        .format = swapchainInfo.imageFormat,
+
+        .components
+        {
+            .r = VK_COMPONENT_SWIZZLE_IDENTITY,
+            .g = VK_COMPONENT_SWIZZLE_IDENTITY,
+            .b = VK_COMPONENT_SWIZZLE_IDENTITY,
+            .a = VK_COMPONENT_SWIZZLE_IDENTITY
+        },
+
+        .subresourceRange
+        {
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .baseMipLevel = 0U,
+            .levelCount = 1U,
+            .baseArrayLayer = 0U,
+            .layerCount = 1U
+        }
+    };
 
     for ( uint32_t i = 0U; i < imageCount; ++i )
     {
@@ -2031,7 +2069,7 @@ bool Renderer::PrintPhysicalDeviceExtensionInfo ( VkPhysicalDevice physicalDevic
     return true;
 }
 
-bool Renderer::PrintPhysicalDeviceFeatureInfo ( VkPhysicalDevice physicalDevice ) noexcept
+void Renderer::PrintPhysicalDeviceFeatureInfo ( VkPhysicalDevice physicalDevice ) noexcept
 {
     LogInfo ( ">>> Features:" );
 
@@ -2065,9 +2103,9 @@ bool Renderer::PrintPhysicalDeviceFeatureInfo ( VkPhysicalDevice physicalDevice 
     LogInfo ( "%sUnsupported:", INDENT_2 );
 
     for ( auto& item : unsupportedFeatures )
+    {
         LogInfo ( "%s%s", INDENT_3, item.data () );
-
-    return true;
+    }
 }
 
 void Renderer::PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits ) noexcept
@@ -2341,9 +2379,7 @@ bool Renderer::PrintPhysicalDeviceInfo ( uint32_t deviceIndex, VkPhysicalDevice 
     PrintPhysicalDeviceCommonProps ( props );
     PrintPhysicalDeviceLimits ( props.limits );
     PrintPhysicalDeviceSparse ( props.sparseProperties );
-
-    if ( !PrintPhysicalDeviceFeatureInfo ( physicalDevice ) )
-        return false;
+    PrintPhysicalDeviceFeatureInfo ( physicalDevice );
 
     if ( !PrintPhysicalDeviceExtensionInfo ( physicalDevice ) )
         return false;
@@ -2426,6 +2462,10 @@ bool Renderer::SelectTargetHardware ( VkPhysicalDevice &targetPhysicalDevice,
 {
     // Find physical device with graphic and compute queues.
 
+    constexpr auto target = static_cast<VkFlags> (
+        AV_VK_FLAG ( VK_QUEUE_COMPUTE_BIT ) | AV_VK_FLAG ( VK_QUEUE_GRAPHICS_BIT )
+    );
+
     for ( auto const& device : _physicalDeviceInfo )
     {
         auto const& queueFamilyInfo = device.second._queueFamilyInfo;
@@ -2435,7 +2475,7 @@ bool Renderer::SelectTargetHardware ( VkPhysicalDevice &targetPhysicalDevice,
         {
             VkFlags const queueFamilyFlags = queueFamilyInfo[ i ].first;
 
-            if ( !( queueFamilyFlags & VK_QUEUE_COMPUTE_BIT ) || !( queueFamilyFlags & VK_QUEUE_GRAPHICS_BIT ) )
+            if ( ( queueFamilyFlags & target ) != target )
                 continue;
 
             targetPhysicalDevice = device.first;
@@ -2638,6 +2678,17 @@ VkBool32 VKAPI_PTR Renderer::OnVulkanDebugReport ( VkDebugReportFlagsEXT flags,
     void* pUserData
 )
 {
+    std::string_view const message ( pMessage );
+
+    constexpr std::string_view tag ( "MessageID = " );
+    auto const filterResult = message.find ( tag );
+
+    assert ( filterResult != std::string_view::npos );
+    std::string_view const messageID = message.substr ( filterResult + tag.size () );
+
+    if ( g_validationFilter.count ( messageID.substr ( 0U, messageID.find ( ' ' ) ) ) > 0U )
+        return VK_FALSE;
+
     Renderer& renderer = *static_cast<Renderer*> ( pUserData );
     auto const findResult = renderer._loggerMapper.find ( flags );
 
@@ -2939,21 +2990,7 @@ void Renderer::PrintVkFlagsProp ( char const* indent,
         return;
     }
 
-    std::string result;
-    auto const bitmask = static_cast<uint32_t const> ( flags );
-
-    for ( size_t i = 0U; i < flagSetCount; ++i )
-    {
-        auto const& item = flagSet[ i ];
-
-        if ( !( item.first & bitmask ) )
-            continue;
-
-        result += " ";
-        result += item.second;
-    }
-
-    LogInfo ( "%s%s:%s", indent, name, result.c_str () );
+    LogInfo ( "%s%s:%s", indent, name, StringifyVkFlags ( flags, flagSetCount, flagSet ).c_str () );
 }
 
 void Renderer::PrintVkHandler ( char const* indent, char const* name, void* handler ) noexcept
@@ -3085,6 +3122,28 @@ char const* Renderer::ResolveVkSurfaceTransform ( VkSurfaceTransformFlagsKHR tra
 
     constexpr static char const* unknownResult = "UNKNOWN";
     return unknownResult;
+}
+
+std::string Renderer::StringifyVkFlags ( VkFlags flags,
+    size_t flagSetCount,
+    std::pair<uint32_t, char const*> const flagSet[]
+) noexcept
+{
+    std::string result;
+    auto const bitmask = static_cast<uint32_t> ( flags );
+
+    for ( size_t i = 0U; i < flagSetCount; ++i )
+    {
+        auto const& item = flagSet[ i ];
+
+        if ( !( item.first & bitmask ) )
+            continue;
+
+        result += " ";
+        result += item.second;
+    }
+
+    return result;
 }
 
 } // namespace android_vulkan

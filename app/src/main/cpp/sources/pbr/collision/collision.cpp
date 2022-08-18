@@ -105,7 +105,7 @@ bool Collision::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
         return false;
     }
 
-    if ( !_renderSession.OnInitDevice ( renderer, _commandPool ) )
+    if ( !_renderSession.OnInitDevice ( renderer ) )
     {
         OnDestroyDevice ( device );
         return false;
@@ -117,7 +117,7 @@ bool Collision::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
         return false;
     }
 
-    _renderSession.FreeTransferResources ( device, _commandPool );
+    _renderSession.FreeTransferResources ( device );
     return true;
 }
 
@@ -144,7 +144,7 @@ bool Collision::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexce
         Z_FAR
     );
 
-    if ( !_renderSession.OnSwapchainCreated ( renderer, resolution, _commandPool ) )
+    if ( !_renderSession.OnSwapchainCreated ( renderer, resolution ) )
         return false;
 
     _camera.CaptureInput ();
@@ -165,7 +165,7 @@ bool Collision::CreateCommandPool ( android_vulkan::Renderer &renderer ) noexcep
     {
         .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
         .pNext = nullptr,
-        .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+        .flags = 0U,
         .queueFamilyIndex = renderer.GetQueueFamilyIndex ()
     };
 

@@ -18,6 +18,8 @@ class MandelbrotBase : public android_vulkan::Game
         VkRenderPass                    _renderPass = VK_NULL_HANDLE;
 
     private:
+        std::vector<VkFence>            _fences {};
+
         VkSemaphore                     _renderPassEndedSemaphore = VK_NULL_HANDLE;
         VkSemaphore                     _renderTargetAcquiredSemaphore = VK_NULL_HANDLE;
 
@@ -56,6 +58,9 @@ class MandelbrotBase : public android_vulkan::Game
 
         [[nodiscard]] bool CreateCommandPool ( android_vulkan::Renderer &renderer ) noexcept;
         void DestroyCommandPool ( VkDevice device ) noexcept;
+
+        [[nodiscard]] bool CreateFences ( VkDevice device ) noexcept;
+        void DestroyFences ( VkDevice device ) noexcept;
 
         [[nodiscard]] bool CreateFramebuffers ( android_vulkan::Renderer &renderer ) noexcept;
         void DestroyFramebuffers ( VkDevice device ) noexcept;

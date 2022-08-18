@@ -52,7 +52,7 @@ bool World1x1::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
     {
         .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
         .pNext = nullptr,
-        .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+        .flags = 0U,
         .queueFamilyIndex = renderer.GetQueueFamilyIndex ()
     };
 
@@ -69,7 +69,7 @@ bool World1x1::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 
     AV_REGISTER_COMMAND_POOL ( "pbr::mario::World1x1::_commandPool" )
 
-    if ( !_renderSession.OnInitDevice ( renderer, _commandPool ) )
+    if ( !_renderSession.OnInitDevice ( renderer ) )
     {
         OnDestroyDevice ( device );
         return false;
@@ -89,7 +89,7 @@ bool World1x1::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 
     _isReady = true;
 
-    _renderSession.FreeTransferResources ( device, _commandPool );
+    _renderSession.FreeTransferResources ( device );
 
     if ( !CreatePhysics () )
     {
@@ -122,7 +122,7 @@ bool World1x1::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcep
 
     VkExtent2D const& surfaceResolution = renderer.GetViewportResolution ();
 
-    if ( !_renderSession.OnSwapchainCreated ( renderer, resolution, _commandPool ) )
+    if ( !_renderSession.OnSwapchainCreated ( renderer, resolution ) )
         return false;
 
     bool const result = _scene.OnResolutionChanged ( resolution,

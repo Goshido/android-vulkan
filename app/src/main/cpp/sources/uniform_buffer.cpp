@@ -11,28 +11,8 @@ GX_RESTORE_WARNING_STATE
 
 namespace android_vulkan {
 
-UniformBuffer::UniformBuffer () noexcept:
-    _size ( 0U ),
-    _buffer ( VK_NULL_HANDLE ),
-    _bufferMemory ( VK_NULL_HANDLE ),
-    _commandBuffer ( VK_NULL_HANDLE ),
-    _commandPool  ( VK_NULL_HANDLE ),
-    _targetStages ( VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT ),
-    _transfer ( VK_NULL_HANDLE ),
-    _transferMemory ( VK_NULL_HANDLE )
+void UniformBuffer::FreeResources ( VkDevice device ) noexcept
 {
-    // NOTHING
-}
-
-void UniformBuffer::FreeResources ( VkDevice device )
-{
-    if ( _transferMemory != VK_NULL_HANDLE )
-    {
-        vkFreeMemory ( device, _transferMemory, nullptr );
-        _transferMemory = VK_NULL_HANDLE;
-        AV_UNREGISTER_DEVICE_MEMORY ( "UniformBuffer::_transferMemory" )
-    }
-
     if ( _transfer != VK_NULL_HANDLE )
     {
         vkDestroyBuffer ( device, _transfer, nullptr );
@@ -40,11 +20,11 @@ void UniformBuffer::FreeResources ( VkDevice device )
         AV_UNREGISTER_BUFFER ( "UniformBuffer::_transfer" )
     }
 
-    if ( _bufferMemory != VK_NULL_HANDLE )
+    if ( _transferMemory != VK_NULL_HANDLE )
     {
-        vkFreeMemory ( device, _bufferMemory, nullptr );
-        _bufferMemory = VK_NULL_HANDLE;
-        AV_UNREGISTER_DEVICE_MEMORY ( "UniformBuffer::_bufferMemory" )
+        vkFreeMemory ( device, _transferMemory, nullptr );
+        _transferMemory = VK_NULL_HANDLE;
+        AV_UNREGISTER_DEVICE_MEMORY ( "UniformBuffer::_transferMemory" )
     }
 
     if ( _buffer != VK_NULL_HANDLE )
@@ -52,6 +32,13 @@ void UniformBuffer::FreeResources ( VkDevice device )
         vkDestroyBuffer ( device, _buffer, nullptr );
         _buffer = VK_NULL_HANDLE;
         AV_UNREGISTER_BUFFER ( "UniformBuffer::_buffer" )
+    }
+
+    if ( _bufferMemory != VK_NULL_HANDLE )
+    {
+        vkFreeMemory ( device, _bufferMemory, nullptr );
+        _bufferMemory = VK_NULL_HANDLE;
+        AV_UNREGISTER_DEVICE_MEMORY ( "UniformBuffer::_bufferMemory" )
     }
 
     if ( _commandBuffer != VK_NULL_HANDLE )
@@ -65,12 +52,12 @@ void UniformBuffer::FreeResources ( VkDevice device )
     _targetStages = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 }
 
-VkBuffer UniformBuffer::GetBuffer () const
+VkBuffer UniformBuffer::GetBuffer () const noexcept
 {
     return _buffer;
 }
 
-size_t UniformBuffer::GetSize () const
+size_t UniformBuffer::GetSize () const noexcept
 {
     return _size;
 }
@@ -78,7 +65,7 @@ size_t UniformBuffer::GetSize () const
 bool UniformBuffer::Init ( android_vulkan::Renderer &renderer,
     VkCommandPool commandPool,
     VkPipelineStageFlags targetStages
-)
+) noexcept
 {
     if ( _commandPool != VK_NULL_HANDLE )
         return true;
@@ -102,7 +89,11 @@ bool UniformBuffer::Init ( android_vulkan::Renderer &renderer,
     );
 }
 
-bool UniformBuffer::Update ( android_vulkan::Renderer &renderer, uint8_t const* data, size_t size )
+bool UniformBuffer::Update ( android_vulkan::Renderer &renderer,
+    VkFence fence,
+    uint8_t const* data,
+    size_t size
+) noexcept
 {
     assert ( size );
 
@@ -138,25 +129,27 @@ bool UniformBuffer::Update ( android_vulkan::Renderer &renderer, uint8_t const* 
     submitInfo.pSignalSemaphores = nullptr;
 
     return Renderer::CheckVkResult (
-        vkQueueSubmit ( renderer.GetQueue (), 1U, &submitInfo, VK_NULL_HANDLE ),
+        vkQueueSubmit ( renderer.GetQueue (), 1U, &submitInfo, fence ),
         "UniformBuffer::Update",
         "Can't submit upload command"
     );
 }
 
-bool UniformBuffer::InitResources ( android_vulkan::Renderer &renderer, size_t size )
+bool UniformBuffer::InitResources ( android_vulkan::Renderer &renderer, size_t size ) noexcept
 {
-    VkDevice device = renderer.GetDevice ();
+    VkBufferCreateInfo bufferInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .size = size,
+        .usage = AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT ) | AV_VK_FLAG ( VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT ),
+        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+        .queueFamilyIndexCount = 0U,
+        .pQueueFamilyIndices = nullptr
+    };
 
-    VkBufferCreateInfo bufferInfo;
-    bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-    bufferInfo.pNext = nullptr;
-    bufferInfo.flags = 0U;
-    bufferInfo.size = size;
-    bufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-    bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    bufferInfo.queueFamilyIndexCount = 0U;
-    bufferInfo.pQueueFamilyIndices = nullptr;
+    VkDevice device = renderer.GetDevice ();
 
     bool result = Renderer::CheckVkResult ( vkCreateBuffer ( device, &bufferInfo, nullptr, &_buffer ),
         "UniformBuffer::InitResources",
@@ -234,11 +227,13 @@ bool UniformBuffer::InitResources ( android_vulkan::Renderer &renderer, size_t s
         return false;
     }
 
-    VkCommandBufferBeginInfo beginInfo;
-    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    beginInfo.pNext = nullptr;
-    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
-    beginInfo.pInheritanceInfo = nullptr;
+    constexpr VkCommandBufferBeginInfo beginInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .pInheritanceInfo = nullptr
+    };
 
     result = Renderer::CheckVkResult ( vkBeginCommandBuffer ( _commandBuffer, &beginInfo ),
         "UniformBuffer::InitResources",
@@ -251,15 +246,18 @@ bool UniformBuffer::InitResources ( android_vulkan::Renderer &renderer, size_t s
         return false;
     }
 
-    VkBufferMemoryBarrier barrier;
-    barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
-    barrier.pNext = nullptr;
-    barrier.buffer = _buffer;
-    barrier.size = size;
-    barrier.offset = 0U;
-    barrier.srcAccessMask = 0U;
-    barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-    barrier.srcQueueFamilyIndex = barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    VkBufferMemoryBarrier barrier
+    {
+        .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
+        .pNext = nullptr,
+        .srcAccessMask = 0U,
+        .dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
+        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .buffer = _buffer,
+        .offset = 0U,
+        .size = size
+    };
 
     vkCmdPipelineBarrier ( _commandBuffer,
         VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,

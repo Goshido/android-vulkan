@@ -6,6 +6,7 @@
 #include <pbr/renderable_component.h>
 #include <pbr/scene_desc.h>
 #include <gamepad.h>
+#include <trace.h>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -43,6 +44,8 @@ bool PBRGame::IsReady () noexcept
 
 bool PBRGame::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) noexcept
 {
+    AV_TRACE ( "OnFrame" )
+
     auto const dt = static_cast<float> ( deltaTime );
 
     _camera.Update ( dt );
@@ -65,7 +68,7 @@ bool PBRGame::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
     {
         .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
         .pNext = nullptr,
-        .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+        .flags = 0U,
         .queueFamilyIndex = renderer.GetQueueFamilyIndex ()
     };
 
@@ -82,7 +85,7 @@ bool PBRGame::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 
     AV_REGISTER_COMMAND_POOL ( "pbr::PBRGame::_commandPool" )
 
-    if ( !_renderSession.OnInitDevice ( renderer, _commandPool ) )
+    if ( !_renderSession.OnInitDevice ( renderer ) )
     {
        OnDestroyDevice ( device );
        return false;
@@ -94,7 +97,7 @@ bool PBRGame::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
         return false;
     }
 
-    _renderSession.FreeTransferResources ( device, _commandPool );
+    _renderSession.FreeTransferResources ( device );
     return true;
 }
 
@@ -125,7 +128,7 @@ bool PBRGame::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept
         Z_FAR
     );
 
-    if ( !_renderSession.OnSwapchainCreated ( renderer, resolution, _commandPool ) )
+    if ( !_renderSession.OnSwapchainCreated ( renderer, resolution ) )
         return false;
 
     _camera.CaptureInput ();

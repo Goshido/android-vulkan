@@ -33,110 +33,97 @@ void ScriptableGXVec3::Init ( lua_State &vm ) noexcept
     constexpr luaL_Reg const extentions[] =
     {
         {
+            .name = "av_GXVec3Clone",
+            .func = &ScriptableGXVec3::OnClone
+        },
+        {
             .name = "av_GXVec3Create",
             .func = &ScriptableGXVec3::OnCreate
         },
-
         {
             .name = "av_GXVec3CrossProduct",
             .func = &ScriptableGXVec3::OnCrossProduct
         },
-
         {
             .name = "av_GXVec3Destroy",
             .func = &ScriptableGXVec3::OnDestroy
         },
-
         {
             .name = "av_GXVec3Distance",
             .func = &ScriptableGXVec3::OnDistance
         },
-
         {
             .name = "av_GXVec3DotProduct",
             .func = &ScriptableGXVec3::OnDotProduct
         },
-
         {
             .name = "av_GXVec3GetX",
             .func = &ScriptableGXVec3::OnGetX
         },
-
         {
             .name = "av_GXVec3GetY",
             .func = &ScriptableGXVec3::OnGetY
         },
-
         {
             .name = "av_GXVec3GetZ",
             .func = &ScriptableGXVec3::OnGetZ
         },
-
         {
             .name = "av_GXVec3Init",
             .func = &ScriptableGXVec3::OnInit
         },
-
         {
             .name = "av_GXVec3Length",
             .func = &ScriptableGXVec3::OnLength
         },
-
         {
             .name = "av_GXVec3MultiplyScalar",
             .func = &ScriptableGXVec3::OnMultiplyScalar
         },
-
+        {
+            .name = "av_GXVec3MultiplyVector",
+            .func = &ScriptableGXVec3::OnMultiplyVector
+        },
         {
             .name = "av_GXVec3Normalize",
             .func = &ScriptableGXVec3::OnNormalize
         },
-
         {
             .name = "av_GXVec3Reverse",
             .func = &ScriptableGXVec3::OnReverse
         },
-
         {
             .name = "av_GXVec3SetX",
             .func = &ScriptableGXVec3::OnSetX
         },
-
         {
             .name = "av_GXVec3SetY",
             .func = &ScriptableGXVec3::OnSetY
         },
-
         {
             .name = "av_GXVec3SetZ",
             .func = &ScriptableGXVec3::OnSetZ
         },
-
         {
             .name = "av_GXVec3SquaredDistance",
             .func = &ScriptableGXVec3::OnSquaredDistance
         },
-
         {
             .name = "av_GXVec3SquaredLength",
             .func = &ScriptableGXVec3::OnSquaredLength
         },
-
         {
             .name = "av_GXVec3Subtract",
             .func = &ScriptableGXVec3::OnSubtract
         },
-
         {
             .name = "av_GXVec3Sum",
             .func = &ScriptableGXVec3::OnSum
         },
-
         {
             .name = "av_GXVec3SumScaled",
             .func = &ScriptableGXVec3::OnSumScaled
         },
-
         {
             .name = "av_GXVec3ToString",
             .func = &ScriptableGXVec3::OnToString
@@ -183,6 +170,13 @@ void ScriptableGXVec3::Insert ( Item* item, Item*& list ) noexcept
         list->_previous = item;
 
     list = item;
+}
+
+int ScriptableGXVec3::OnClone ( lua_State* state )
+{
+    auto& self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    self._vec3 = ScriptableGXVec3::Extract ( state, 2 );
+    return 0;
 }
 
 int ScriptableGXVec3::OnCreate ( lua_State* state )
@@ -336,6 +330,16 @@ int ScriptableGXVec3::OnMultiplyScalar ( lua_State* state )
     auto const& a = *static_cast<Item const*> ( lua_touserdata ( state, 2 ) );
 
     self._vec3.Multiply ( a._vec3, static_cast<float> ( lua_tonumber ( state, 3 ) ) );
+    return 0;
+}
+
+int ScriptableGXVec3::OnMultiplyVector ( lua_State* state )
+{
+    auto& self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    auto const& a = *static_cast<Item const*> ( lua_touserdata ( state, 2 ) );
+    auto const& b = *static_cast<Item const*> ( lua_touserdata ( state, 3 ) );
+
+    self._vec3.Multiply ( a._vec3, b._vec3 );
     return 0;
 }
 

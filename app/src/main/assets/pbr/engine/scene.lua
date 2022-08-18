@@ -2,6 +2,7 @@ require "av://engine/actor.lua"
 require "av://engine/camera_component.lua"
 require "av://engine/rigid_body_component.lua"
 require "av://engine/script_component.lua"
+require "av://engine/static_mesh_component.lua"
 require "av://engine/transform_component.lua"
 
 
@@ -23,36 +24,40 @@ local function AppendActor ( self, actor )
     local inputScripts = self._inputScripts
     local postPhysicsScripts = self._postPhysicsScripts
     local prePhysicsScripts = self._prePhysicsScripts
-    local renderTargetChangerScripts = self._renderTargetChangeScripts
+    local renderTargetChangeScripts = self._renderTargetChangeScripts
     local updateScripts = self._updateScripts
 
     for groupKey, group in pairs ( actor._components ) do
         for k, v in pairs ( group ) do
             if v._type == eObjectType.ScriptComponent then
                 if type ( v.OnInput ) == "function" then
-                    table.insert ( inputScripts, v )
+                    inputScripts[ v ] = v
                 end
 
                 if type ( v.OnPostPhysics ) == "function" then
-                    table.insert ( postPhysicsScripts, v )
+                    postPhysicsScripts[ v ] = v
                 end
 
                 if type ( v.OnPrePhysics ) == "function" then
-                    table.insert ( prePhysicsScripts, v )
+                    prePhysicsScripts[ v ] = v
                 end
 
                 if type ( v.OnRenderTargetChanged ) == "function" then
-                    table.insert ( renderTargetChangerScripts, v )
+                    renderTargetChangeScripts[ v ] = v
                 end
 
                 if type ( v.OnUpdate ) == "function" then
-                    table.insert ( updateScripts, v )
+                    updateScripts[ v ] = v
                 end
             end
         end
     end
 
     actor:CommitComponents ()
+end
+
+local function DetachActor ( self, actor )
+    table.insert ( self._actorToDestroy, actor )
 end
 
 local function FindActor ( self, name )
@@ -64,6 +69,23 @@ end
 
 local function FindActors ( self, name )
     return self._actors[ name ]
+end
+
+local function GetPenetrationBox ( self, localMatrix, size, groups )
+    assert ( type ( self ) == "table" and self._type == eObjectType.Scene,
+        [[Scene:GetPenetrationBox - Calling not via ":" syntax.]]
+    )
+
+    assert ( type ( localMatrix ) == "table" and localMatrix._type == eObjectType.GXMat4,
+        [[Scene:GetPenetrationBox - "localMatrix" is not a GXMat4.]]
+    )
+
+    assert ( type ( size ) == "table" and size._type == eObjectType.GXVec3,
+        [[Scene:GetPenetrationBox - "size" is not a GXVec3.]]
+    )
+
+    assert ( type ( groups ) == "number", [[Scene:GetPenetrationBox - "groups" is not a number.]] )
+    return av_SceneGetPenetrationBox ( self._handle, localMatrix._handle, size._handle, groups )
 end
 
 local function GetPhysicsToRendererScaleFactor ( self )
@@ -126,6 +148,75 @@ local function OnUpdate ( self, deltaTime )
     for k, v in pairs ( self._updateScripts ) do
         v:OnUpdate ( deltaTime )
     end
+
+    local actorToDestroy = self._actorToDestroy
+
+    if #actorToDestroy == 0 then
+        return
+    end
+
+    local inputScripts = self._inputScripts
+    local postPhysicsScripts = self._postPhysicsScripts
+    local prePhysicsScripts = self._prePhysicsScripts
+    local renderTargetChangeScripts = self._renderTargetChangeScripts
+    local updateScripts = self._updateScripts
+    local actors = self._actors
+
+    for k, actor in pairs ( actorToDestroy ) do
+        for groupKey, group in pairs ( actor._components ) do
+            for k, v in pairs ( group ) do
+                if v._type == eObjectType.ScriptComponent then
+                    inputScripts[ v ] = nil
+                    postPhysicsScripts[ v ] = nil
+                    prePhysicsScripts[ v ] = nil
+                    renderTargetChangeScripts[ v ] = nil
+                    updateScripts[ v ] = nil
+                end
+            end
+        end
+
+        local list = actors[ actor:GetName () ]
+        local count = #list
+
+        for i = 1, count do
+            if list[ i ] == actor then
+                actor:OnDestroy ()
+                table.remove ( list, i )
+                break
+            end
+        end
+    end
+
+    self._actorToDestroy = {}
+end
+
+local function OverlapTestBoxBox ( self, localMatrixA, sizeA, localMatrixB, sizeB )
+    assert ( type ( self ) == "table" and self._type == eObjectType.Scene,
+        [[Scene:OverlapTestBoxBox - Calling not via ":" syntax.]]
+    )
+
+    assert ( type ( localMatrixA ) == "table" and localMatrixA._type == eObjectType.GXMat4,
+        [[Scene:OverlapTestBoxBox - "localMatrixA" is not a GXMat4.]]
+    )
+
+    assert ( type ( sizeA ) == "table" and sizeA._type == eObjectType.GXVec3,
+        [[Scene:OverlapTestBoxBox - "sizeA" is not a GXVec3.]]
+    )
+
+    assert ( type ( localMatrixB ) == "table" and localMatrixB._type == eObjectType.GXMat4,
+        [[Scene:OverlapTestBoxBox - "localMatrixB" is not a GXMat4.]]
+    )
+
+    assert ( type ( sizeB ) == "table" and sizeB._type == eObjectType.GXVec3,
+        [[Scene:OverlapTestBoxBox - "sizeB" is not a GXVec3.]]
+    )
+
+    return av_SceneOverlapTestBoxBox ( self._handle,
+        localMatrixA._handle,
+        sizeA._handle,
+        localMatrixB._handle,
+        sizeB._handle
+    )
 end
 
 local function Quit ( self )
@@ -144,12 +235,30 @@ local function SetActiveCamera ( self, camera )
     av_SceneSetActiveCamera ( self._handle, camera._handle )
 end
 
+local function SweepTestBox ( self, localMatrix, size, groups )
+    assert ( type ( self ) == "table" and self._type == eObjectType.Scene,
+        [[Scene:SweepTestBox - Calling not via ":" syntax.]]
+    )
+
+    assert ( type ( localMatrix ) == "table" and localMatrix._type == eObjectType.GXMat4,
+        [[Scene:SweepTestBox - "localMatrix" is not a GXMat4.]]
+    )
+
+    assert ( type ( size ) == "table" and size._type == eObjectType.GXVec3,
+        [[Scene:SweepTestBox - "size" is not a GXVec3.]]
+    )
+
+    assert ( type ( groups ) == "number", [[Scene:SweepTestBox - "groups" is not a number.]] )
+    return av_SceneSweepTestBox ( self._handle, localMatrix._handle, size._handle, groups )
+end
+
 -- Metamethods
 local function Constructor ( self, handle )
     local obj = Object ( eObjectType.Scene )
 
     -- Data
     obj._actors = {}
+    obj._actorToDestroy = {}
     obj._handle = handle
     obj._inputScripts = {}
     obj._postPhysicsScripts = {}
@@ -159,8 +268,10 @@ local function Constructor ( self, handle )
 
     -- Methods
     obj.AppendActor = AppendActor
+    obj.DetachActor = DetachActor
     obj.FindActor = FindActor
     obj.FindActors = FindActors
+    obj.GetPenetrationBox = GetPenetrationBox
     obj.GetPhysicsToRendererScaleFactor = GetPhysicsToRendererScaleFactor
     obj.GetRendererToPhysicsScaleFactor = GetRendererToPhysicsScaleFactor
     obj.GetRenderTargetAspectRatio = GetRenderTargetAspectRatio
@@ -171,8 +282,10 @@ local function Constructor ( self, handle )
     obj.OnPrePhysics = OnPrePhysics
     obj.OnRenderTargetChanged = OnRenderTargetChanged
     obj.OnUpdate = OnUpdate
+    obj.OverlapTestBoxBox = OverlapTestBoxBox
     obj.Quit = Quit
     obj.SetActiveCamera = SetActiveCamera
+    obj.SweepTestBox = SweepTestBox
 
     return obj
 end

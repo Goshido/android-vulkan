@@ -2,6 +2,7 @@
 #include <pbr/actor.h>
 #include <pbr/coordinate_system.h>
 #include <pbr/script_engine.h>
+#include <pbr/scriptable_gxmat4.h>
 #include <pbr/scriptable_gxvec3.h>
 #include <guid_generator.h>
 #include <physics.h>
@@ -9,9 +10,10 @@
 
 GX_DISABLE_COMMON_WARNINGS
 
+#include <cassert>
+
 extern "C" {
 
-#include <cassert>
 #include <lua/lauxlib.h>
 
 } // extern "C"
@@ -111,11 +113,6 @@ RigidBodyComponent::RigidBodyComponent ( android_vulkan::ShapeRef &shape, std::s
     Setup ( shape );
 }
 
-android_vulkan::RigidBodyRef& RigidBodyComponent::GetRigidBody () noexcept
-{
-    return _rigidBody;
-}
-
 bool RigidBodyComponent::Register ( Actor &actor, android_vulkan::Physics &physics, lua_State &vm ) noexcept
 {
     _actor = &actor;
@@ -123,7 +120,7 @@ bool RigidBodyComponent::Register ( Actor &actor, android_vulkan::Physics &physi
     if ( !physics.AddRigidBody ( _rigidBody ) )
         return false;
 
-    if ( !lua_checkstack ( &vm, 2 ) )
+    if ( !lua_checkstack ( &vm, 3 ) )
     {
         android_vulkan::LogError ( "pbr::ScriptComponent::Register - Stack too small." );
         return false;
@@ -131,8 +128,17 @@ bool RigidBodyComponent::Register ( Actor &actor, android_vulkan::Physics &physi
 
     lua_pushvalue ( &vm, _registerRigidBodyComponentIndex );
     lua_pushlightuserdata ( &vm, this );
+    lua_pushlightuserdata ( &vm, _rigidBody.get () );
 
-    return lua_pcall ( &vm, 1, 1, ScriptEngine::GetErrorHandlerIndex () ) == LUA_OK;
+    return lua_pcall ( &vm, 2, 1, ScriptEngine::GetErrorHandlerIndex () ) == LUA_OK;
+}
+
+void RigidBodyComponent::Unregister ( android_vulkan::Physics &physics ) noexcept
+{
+    if ( !physics.RemoveRigidBody ( _rigidBody ) )
+    {
+        android_vulkan::LogWarning ( "pbr::RigidBodyComponent::Unregister - Can't remove body %s.", _name.c_str () );
+    }
 }
 
 bool RigidBodyComponent::Init ( lua_State &vm ) noexcept
@@ -157,22 +163,30 @@ bool RigidBodyComponent::Init ( lua_State &vm ) noexcept
             .name = "av_RigidBodyComponentAddForce",
             .func = &RigidBodyComponent::OnAddForce
         },
-
         {
             .name = "av_RigidBodyComponentCreate",
             .func = &RigidBodyComponent::OnCreate
         },
-
+        {
+            .name = "av_RigidBodyComponentDestroy",
+            .func = &RigidBodyComponent::OnDestroy
+        },
         {
             .name = "av_RigidBodyComponentGetLocation",
             .func = &RigidBodyComponent::OnGetLocation
         },
-
+        {
+            .name = "av_RigidBodyComponentSetLocation",
+            .func = &RigidBodyComponent::OnSetLocation
+        },
+        {
+            .name = "av_RigidBodyComponentGetTransform",
+            .func = &RigidBodyComponent::OnGetTransform
+        },
         {
             .name = "av_RigidBodyComponentGetVelocityLinear",
             .func = &RigidBodyComponent::OnGetVelocityLinear
         },
-
         {
             .name = "av_RigidBodyComponentSetVelocityLinear",
             .func = &RigidBodyComponent::OnSetVelocityLinear
@@ -211,10 +225,31 @@ int RigidBodyComponent::OnCreate ( lua_State* /*state*/ )
     return 0;
 }
 
+int RigidBodyComponent::OnDestroy ( lua_State* state )
+{
+    auto& self = *static_cast<RigidBodyComponent*> ( lua_touserdata ( state, 1 ) );
+    self._actor->DestroyComponent ( self );
+    return 0;
+}
+
 int RigidBodyComponent::OnGetLocation ( lua_State* state )
 {
     auto const& self = *static_cast<RigidBodyComponent const*> ( lua_touserdata ( state, 1 ) );
     ScriptableGXVec3::Extract ( state, 2 ) = self._rigidBody->GetLocation ();
+    return 0;
+}
+
+int RigidBodyComponent::OnSetLocation ( lua_State* state )
+{
+    auto& self = *static_cast<RigidBodyComponent*> ( lua_touserdata ( state, 1 ) );
+    self._rigidBody->SetLocation ( ScriptableGXVec3::Extract ( state, 2 ), true );
+    return 0;
+}
+
+int RigidBodyComponent::OnGetTransform ( lua_State* state )
+{
+    auto const& self = *static_cast<RigidBodyComponent const*> ( lua_touserdata ( state, 1 ) );
+    ScriptableGXMat4::Extract ( state, 2 ) = self._rigidBody->GetTransform ();
     return 0;
 }
 

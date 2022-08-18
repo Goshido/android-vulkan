@@ -3,6 +3,13 @@ require "av://engine/component.lua"
 
 RigidBodyComponent = {}
 
+-- C++ internal
+local g_Storage = {}
+
+function FindRigidBodyComponent ( nativeRigidBody )
+    return g_Storage[ nativeRigidBody ]
+end
+
 -- Methods
 local function AddForce ( self, force, point, forceAwake )
     assert ( type ( self ) == "table" and self._type == eObjectType.RigidBodyComponent,
@@ -33,6 +40,30 @@ local function GetLocation ( self, location )
     av_RigidBodyComponentGetLocation ( self._handle, location._handle )
 end
 
+local function SetLocation ( self, location )
+    assert ( type ( self ) == "table" and self._type == eObjectType.RigidBodyComponent,
+        [[RigidBodyComponent:SetLocation - Calling not via ":" syntax.]]
+    )
+
+    assert ( type ( location ) == "table" and location._type == eObjectType.GXVec3,
+        [[RigidBodyComponent:SetLocation - "location" is not a GXVec3.]]
+    )
+
+    av_RigidBodyComponentSetLocation ( self._handle, location._handle )
+end
+
+local function GetTransform ( self, transform )
+    assert ( type ( self ) == "table" and self._type == eObjectType.RigidBodyComponent,
+        [[RigidBodyComponent:GetTransform - Calling not via ":" syntax.]]
+    )
+
+    assert ( type ( transform ) == "table" and transform._type == eObjectType.GXMat4,
+        [[RigidBodyComponent:GetTransform - "transform" is not a GXMat4.]]
+    )
+
+    av_RigidBodyComponentGetTransform ( self._handle, transform._handle )
+end
+
 local function GetVelocityLinear ( self, velocity )
     assert ( type ( self ) == "table" and self._type == eObjectType.RigidBodyComponent,
         [[RigidBodyComponent:GetVelocityLinear - Calling not via ":" syntax.]]
@@ -61,22 +92,35 @@ local function SetVelocityLinear ( self, velocity, forceAwake )
     av_RigidBodyComponentSetVelocityLinear ( self._handle, velocity._handle, forceAwake )
 end
 
+-- Engine event handlers
+local function OnDestroy ( self )
+    av_RigidBodyComponentDestroy ( self._handle )
+end
+
 -- This function is exported to C++ side.
-function RegisterRigidBodyComponent ( handle )
+function RegisterRigidBodyComponent ( handle, nativeRigidBody )
     local obj = Component ( eObjectType.RigidBodyComponent, handle )
 
     -- Methods
     obj.AddForce = AddForce
     obj.GetLocation = GetLocation
+    obj.SetLocation = SetLocation
+    obj.GetTransform = GetTransform
     obj.GetVelocityLinear = GetVelocityLinear
     obj.SetVelocityLinear = SetVelocityLinear
+
+    -- Engine events
+    obj.OnDestroy = OnDestroy
+
+    g_Storage[ nativeRigidBody ] = obj
 
     return obj
 end
 
 -- Metamethods
 local function Constructor ( self, name )
-    return RegisterRigidBodyComponent ( av_RigidBodyComponentCreate ( name ) )
+    handle, nativeRigidBody = av_RigidBodyComponentCreate ( name )
+    return RegisterRigidBodyComponent ( handle, nativeRigidBody )
 end
 
 setmetatable ( RigidBodyComponent, { __call = Constructor } )

@@ -36,8 +36,8 @@ class RigidBodyComponent final : public Component
 
         ~RigidBodyComponent () override = default;
 
-        [[nodiscard]] android_vulkan::RigidBodyRef& GetRigidBody () noexcept;
         [[nodiscard]] bool Register ( Actor &actor, android_vulkan::Physics &physics, lua_State &vm ) noexcept;
+        void Unregister ( android_vulkan::Physics &physics ) noexcept;
 
         [[nodiscard]] static bool Init ( lua_State &vm ) noexcept;
 
@@ -46,7 +46,10 @@ class RigidBodyComponent final : public Component
 
         [[nodiscard]] static int OnAddForce ( lua_State* state );
         [[nodiscard]] static int OnCreate ( lua_State* state );
+        [[nodiscard]] static int OnDestroy ( lua_State* state );
         [[nodiscard]] static int OnGetLocation ( lua_State* state );
+        [[nodiscard]] static int OnSetLocation ( lua_State* state );
+        [[nodiscard]] static int OnGetTransform ( lua_State* state );
         [[nodiscard]] static int OnGetVelocityLinear ( lua_State* state );
         [[nodiscard]] static int OnSetVelocityLinear ( lua_State* state );
 

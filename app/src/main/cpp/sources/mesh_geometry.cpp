@@ -89,19 +89,19 @@ void MeshGeometry::FreeResources ( VkDevice device ) noexcept
 
 void MeshGeometry::FreeTransferResources ( VkDevice device ) noexcept
 {
-    if ( _transferMemory != VK_NULL_HANDLE )
+    if ( _transferBuffer != VK_NULL_HANDLE )
     {
-        vkFreeMemory ( device, _transferMemory, nullptr );
-        _transferMemory = VK_NULL_HANDLE;
-        AV_UNREGISTER_DEVICE_MEMORY ( "MeshGeometry::_transferMemory" )
+        vkDestroyBuffer ( device, _transferBuffer, nullptr );
+        _transferBuffer = VK_NULL_HANDLE;
+        AV_UNREGISTER_BUFFER ( "MeshGeometry::_transferBuffer" )
     }
 
-    if ( _transferBuffer == VK_NULL_HANDLE )
+    if ( _transferMemory == VK_NULL_HANDLE )
         return;
 
-    vkDestroyBuffer ( device, _transferBuffer, nullptr );
-    _transferBuffer = VK_NULL_HANDLE;
-    AV_UNREGISTER_BUFFER ( "MeshGeometry::_transferBuffer" )
+    vkFreeMemory ( device, _transferMemory, nullptr );
+    _transferMemory = VK_NULL_HANDLE;
+    AV_UNREGISTER_DEVICE_MEMORY ( "MeshGeometry::_transferMemory" )
 }
 
 GXAABB const& MeshGeometry::GetBounds () const noexcept
@@ -211,11 +211,11 @@ void MeshGeometry::FreeResourceInternal ( VkDevice device ) noexcept
 {
     _vertexCount = 0U;
 
-    if ( _bufferMemory != VK_NULL_HANDLE )
+    if ( _vertexBuffer != VK_NULL_HANDLE )
     {
-        vkFreeMemory ( device, _bufferMemory, nullptr );
-        _bufferMemory = VK_NULL_HANDLE;
-        AV_UNREGISTER_DEVICE_MEMORY ( "MeshGeometry::_bufferMemory" )
+        vkDestroyBuffer ( device, _vertexBuffer, nullptr );
+        _vertexBuffer = VK_NULL_HANDLE;
+        AV_UNREGISTER_BUFFER ( "MeshGeometry::_vertexBuffer" )
     }
 
     if ( _indexBuffer != VK_NULL_HANDLE )
@@ -225,12 +225,12 @@ void MeshGeometry::FreeResourceInternal ( VkDevice device ) noexcept
         AV_UNREGISTER_BUFFER ( "MeshGeometry::_indexBuffer" )
     }
 
-    if ( _vertexBuffer == VK_NULL_HANDLE )
+    if ( _bufferMemory == VK_NULL_HANDLE )
         return;
 
-    vkDestroyBuffer ( device, _vertexBuffer, nullptr );
-    _vertexBuffer = VK_NULL_HANDLE;
-    AV_UNREGISTER_BUFFER ( "MeshGeometry::_vertexBuffer" )
+    vkFreeMemory ( device, _bufferMemory, nullptr );
+    _bufferMemory = VK_NULL_HANDLE;
+    AV_UNREGISTER_DEVICE_MEMORY ( "MeshGeometry::_bufferMemory" )
 }
 
 bool MeshGeometry::LoadFromMesh ( std::string &&fileName,
@@ -608,7 +608,7 @@ bool MeshGeometry::UploadInternal ( size_t numUploads,
     std::memcpy ( transferData, data, dataSize );
     vkUnmapMemory ( device, _transferMemory );
 
-    VkCommandBufferBeginInfo const commandBufferBeginInfo
+    constexpr VkCommandBufferBeginInfo commandBufferBeginInfo
     {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
         .pNext = nullptr,

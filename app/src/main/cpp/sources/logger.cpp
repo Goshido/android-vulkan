@@ -6,7 +6,7 @@ namespace android_vulkan {
 
 constexpr static char const* TAG = "android_vulkan::C++";
 
-void LogDebug ( const char* format, ... )
+void LogDebug ( char const* format, ... )
 {
     va_list args;
     va_start ( args, format );
@@ -14,7 +14,7 @@ void LogDebug ( const char* format, ... )
     va_end ( args );
 }
 
-void LogError ( const char* format, ... )
+void LogError ( char const* format, ... )
 {
     va_list args;
     va_start ( args, format );
@@ -22,7 +22,7 @@ void LogError ( const char* format, ... )
     va_end ( args );
 }
 
-void LogInfo ( const char* format, ... )
+void LogInfo ( char const* format, ... )
 {
     va_list args;
     va_start ( args, format );
@@ -30,7 +30,7 @@ void LogInfo ( const char* format, ... )
     va_end ( args );
 }
 
-void LogWarning ( const char* format, ... )
+void LogWarning ( char const* format, ... )
 {
     va_list args;
     va_start ( args, format );

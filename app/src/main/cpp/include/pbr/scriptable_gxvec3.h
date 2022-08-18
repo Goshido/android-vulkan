@@ -19,7 +19,7 @@ namespace pbr {
 
 class ScriptableGXVec3 final
 {
-    private:
+    public:
         struct Item final
         {
             Item*       _previous;
@@ -50,6 +50,7 @@ class ScriptableGXVec3 final
     private:
         static void Insert ( Item* item, Item*& list ) noexcept;
 
+        [[nodiscard]] static int OnClone ( lua_State* state );
         [[nodiscard]] static int OnCreate ( lua_State* state );
         [[nodiscard]] static int OnCrossProduct ( lua_State* state );
         [[nodiscard]] static int OnDestroy ( lua_State* state );
@@ -61,6 +62,7 @@ class ScriptableGXVec3 final
         [[nodiscard]] static int OnInit ( lua_State* state );
         [[nodiscard]] static int OnLength ( lua_State* state );
         [[nodiscard]] static int OnMultiplyScalar ( lua_State* state );
+        [[nodiscard]] static int OnMultiplyVector ( lua_State* state );
         [[nodiscard]] static int OnNormalize ( lua_State* state );
         [[nodiscard]] static int OnReverse ( lua_State* state );
         [[nodiscard]] static int OnSetX ( lua_State* state );

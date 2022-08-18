@@ -11,10 +11,6 @@ GX_RESTORE_WARNING_STATE
 
 namespace android_vulkan {
 
-constexpr static uint32_t const VULKAN_TEXTURE_CUBE_LAYERS = 6U;
-
-//----------------------------------------------------------------------------------------------------------------------
-
 bool TextureCube::CreateRenderTarget ( Renderer &renderer,
     VkExtent2D const &resolution,
     VkFormat format,
@@ -36,7 +32,7 @@ bool TextureCube::UploadData ( android_vulkan::Renderer &renderer,
     VkCommandBuffer commandBuffer
 ) noexcept
 {
-    constexpr auto const sideCount = static_cast<size_t> ( VULKAN_TEXTURE_CUBE_LAYERS );
+    constexpr auto const sideCount = static_cast<size_t> ( GetLayerCount () );
 
     KTXMediaContainer sides[ sideCount ];
     KTXMediaContainer& sideXPlus = sides[ 0U ];
@@ -215,7 +211,7 @@ bool TextureCube::UploadData ( android_vulkan::Renderer &renderer,
             .baseMipLevel = 0U,
             .levelCount = static_cast<uint32_t> ( mips ),
             .baseArrayLayer = 0U,
-            .layerCount = VULKAN_TEXTURE_CUBE_LAYERS
+            .layerCount = GetLayerCount ()
         }
     };
 
@@ -251,7 +247,7 @@ bool TextureCube::UploadData ( android_vulkan::Renderer &renderer,
 
     offset = 0U;
 
-    for ( uint32_t sideIndex = 0U; sideIndex < VULKAN_TEXTURE_CUBE_LAYERS; ++sideIndex )
+    for ( uint32_t sideIndex = 0U; sideIndex < GetLayerCount (); ++sideIndex )
     {
         imageSubresource.baseArrayLayer = sideIndex;
 
@@ -279,7 +275,7 @@ bool TextureCube::UploadData ( android_vulkan::Renderer &renderer,
         }
     }
 
-    barrierInfo.subresourceRange.layerCount = VULKAN_TEXTURE_CUBE_LAYERS;
+    barrierInfo.subresourceRange.layerCount = GetLayerCount ();
     barrierInfo.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
     barrierInfo.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
     barrierInfo.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
@@ -354,39 +350,39 @@ void TextureCube::FreeResources ( VkDevice device ) noexcept
         AV_UNREGISTER_IMAGE_VIEW ( "TextureCube::_imageView" )
     }
 
-    if ( _imageDeviceMemory != VK_NULL_HANDLE )
+    if ( _image != VK_NULL_HANDLE )
     {
-        vkFreeMemory ( device, _imageDeviceMemory, nullptr );
-        _imageDeviceMemory = VK_NULL_HANDLE;
-        AV_UNREGISTER_DEVICE_MEMORY ( "TextureCube::_imageDeviceMemory" )
+        vkDestroyImage ( device, _image, nullptr );
+        _image = VK_NULL_HANDLE;
+        AV_UNREGISTER_IMAGE ( "TextureCube::_image" )
     }
 
-    if ( _image == VK_NULL_HANDLE )
+    if ( _imageDeviceMemory == VK_NULL_HANDLE )
         return;
 
-    vkDestroyImage ( device, _image, nullptr );
-    _image = VK_NULL_HANDLE;
-    AV_UNREGISTER_IMAGE ( "TextureCube::_image" )
+    vkFreeMemory ( device, _imageDeviceMemory, nullptr );
+    _imageDeviceMemory = VK_NULL_HANDLE;
+    AV_UNREGISTER_DEVICE_MEMORY ( "TextureCube::_imageDeviceMemory" )
 }
 
 void TextureCube::FreeTransferResources ( VkDevice device ) noexcept
 {
-    if ( _transferDeviceMemory != VK_NULL_HANDLE )
+    if ( _transfer != VK_NULL_HANDLE )
     {
-        vkFreeMemory ( device, _transferDeviceMemory, nullptr );
-        _transferDeviceMemory = VK_NULL_HANDLE;
-        AV_UNREGISTER_DEVICE_MEMORY ( "TextureCube::_transferDeviceMemory" )
+        vkDestroyBuffer ( device, _transfer, nullptr );
+        _transfer = VK_NULL_HANDLE;
+        AV_UNREGISTER_BUFFER ( "TextureCube::_transfer" )
     }
 
-    if ( _transfer == VK_NULL_HANDLE )
+    if ( _transferDeviceMemory == VK_NULL_HANDLE )
         return;
 
-    vkDestroyBuffer ( device, _transfer, nullptr );
-    _transfer = VK_NULL_HANDLE;
-    AV_UNREGISTER_BUFFER ( "TextureCube::_transfer" )
+    vkFreeMemory ( device, _transferDeviceMemory, nullptr );
+    _transferDeviceMemory = VK_NULL_HANDLE;
+    AV_UNREGISTER_DEVICE_MEMORY ( "TextureCube::_transferDeviceMemory" )
 }
 
-VkFormat TextureCube::GetFormat () const noexcept
+[[maybe_unused]] VkFormat TextureCube::GetFormat () const noexcept
 {
     assert ( _format != VK_FORMAT_UNDEFINED );
     return _format;
@@ -435,7 +431,7 @@ VkImageView TextureCube::GetImageView () const noexcept
         },
 
         .mipLevels = mipLevels,
-        .arrayLayers = VULKAN_TEXTURE_CUBE_LAYERS,
+        .arrayLayers = GetLayerCount (),
         .samples = VK_SAMPLE_COUNT_1_BIT,
         .tiling = VK_IMAGE_TILING_OPTIMAL,
         .usage = usage,
@@ -508,7 +504,7 @@ VkImageView TextureCube::GetImageView () const noexcept
             .baseMipLevel = 0U,
             .levelCount = mipLevels,
             .baseArrayLayer = 0U,
-            .layerCount = VULKAN_TEXTURE_CUBE_LAYERS
+            .layerCount = GetLayerCount ()
         }
     };
 

@@ -1,12 +1,20 @@
 #include <pbr/static_mesh_component.h>
+#include <pbr/script_engine.h>
 #include <pbr/static_mesh_component_desc.h>
 #include <pbr/material_manager.h>
 #include <pbr/mesh_manager.h>
+#include <pbr/scriptable_gxmat4.h>
 #include <guid_generator.h>
 
 GX_DISABLE_COMMON_WARNINGS
 
 #include <cassert>
+
+extern "C" {
+
+#include <lua/lauxlib.h>
+
+} // extern "C"
 
 GX_RESTORE_WARNING_STATE
 
@@ -18,6 +26,8 @@ constexpr static GXColorRGB DEFAULT_COLOR ( 1.0F, 1.0F, 1.0F, 1.0F );
 constexpr static GXColorRGB DEFAULT_EMISSION ( 1.0F, 1.0F, 1.0F, 1.0F );
 
 //----------------------------------------------------------------------------------------------------------------------
+
+int StaticMeshComponent::_registerStaticMeshComponentIndex = std::numeric_limits<int>::max ();
 
 // NOLINTNEXTLINE - no initialization for some fields
 StaticMeshComponent::StaticMeshComponent ( android_vulkan::Renderer &renderer,
@@ -155,8 +165,8 @@ void StaticMeshComponent::FreeTransferResources ( VkDevice device ) noexcept
     if ( !_material )
         return;
 
-    // Note it's safe to cast like that here. "NOLINT" is clang-tidy control comment.
-    auto& m = static_cast<GeometryPassMaterial&> ( *_material ); // NOLINT
+    // NOLINTNEXTLINE - downcast.
+    auto& m = static_cast<GeometryPassMaterial&> ( *_material );
 
     if ( m.GetAlbedo () )
         m.GetAlbedo ()->FreeTransferResources ( device );
@@ -244,9 +254,93 @@ void StaticMeshComponent::SetTransform ( GXMat4 const &transform ) noexcept
     _mesh->GetBounds ().Transform ( _worldBounds, transform );
 }
 
+bool StaticMeshComponent::Register ( lua_State &vm, Actor &actor ) noexcept
+{
+    if ( !lua_checkstack ( &vm, 2 ) )
+    {
+        android_vulkan::LogError ( "pbr::StaticMeshComponent::Register - Stack too small." );
+        return false;
+    }
+
+    _actor = &actor;
+    lua_pushvalue ( &vm, _registerStaticMeshComponentIndex );
+    lua_pushlightuserdata ( &vm, this );
+
+    return lua_pcall ( &vm, 1, 1, ScriptEngine::GetErrorHandlerIndex () ) == LUA_OK;
+}
+
+bool StaticMeshComponent::Init ( lua_State &vm ) noexcept
+{
+    if ( !lua_checkstack ( &vm, 1 ) )
+    {
+        android_vulkan::LogError ( "pbr::StaticMeshComponent::Init - Stack too small." );
+        return false;
+    }
+
+    if ( lua_getglobal ( &vm, "RegisterStaticMeshComponent" ) != LUA_TFUNCTION )
+    {
+        android_vulkan::LogError ( "pbr::StaticMeshComponent::Init - Can't find register function." );
+        return false;
+    }
+
+    _registerStaticMeshComponentIndex = lua_gettop ( &vm );
+
+    constexpr luaL_Reg const extentions[] =
+    {
+        {
+            .name = "av_StaticMeshComponentCreate",
+            .func = &StaticMeshComponent::OnCreate
+        },
+        {
+            .name = "av_StaticMeshComponentDestroy",
+            .func = &StaticMeshComponent::OnDestroy
+        },
+        {
+            .name = "av_StaticMeshComponentGetLocal",
+            .func = &StaticMeshComponent::OnGetLocal
+        },
+        {
+            .name = "av_StaticMeshComponentSetLocal",
+            .func = &StaticMeshComponent::OnSetLocal
+        }
+    };
+
+    for ( auto const& extension : extentions )
+        lua_register ( &vm, extension.name, extension.func );
+
+    return true;
+}
+
 void StaticMeshComponent::OnTransform ( GXMat4 const &transformWorld ) noexcept
 {
     SetTransform ( transformWorld );
+}
+
+int StaticMeshComponent::OnCreate ( lua_State* /*state*/ )
+{
+    // TODO
+    return 0;
+}
+
+int StaticMeshComponent::OnDestroy ( lua_State* state )
+{
+    auto& self = *static_cast<StaticMeshComponent*> ( lua_touserdata ( state, 1 ) );
+    self._actor->DestroyComponent ( self );
+    return 0;
+}
+
+int StaticMeshComponent::OnGetLocal ( lua_State* state )
+{
+    auto const& self = *static_cast<StaticMeshComponent const*> ( lua_touserdata ( state, 1 ) );
+    ScriptableGXMat4::Extract ( state, 2 ) = self._localMatrix;
+    return 0;
+}
+
+int StaticMeshComponent::OnSetLocal ( lua_State* state )
+{
+    auto& self = *static_cast<StaticMeshComponent*> ( lua_touserdata ( state, 1 ) );
+    self.SetTransform ( ScriptableGXMat4::Extract ( state, 2 ) );
+    return 0;
 }
 
 } // namespace pbr

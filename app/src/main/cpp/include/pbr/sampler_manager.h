@@ -24,7 +24,7 @@ class SamplerManager final
 
         ~SamplerManager () = default;
 
-        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer ) noexcept;
+        [[nodiscard]] bool Init ( VkDevice device ) noexcept;
         void Destroy ( VkDevice device ) noexcept;
 
         [[nodiscard]] SamplerRef const& GetMaterialSampler () const noexcept;

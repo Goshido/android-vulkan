@@ -3,8 +3,8 @@
 
 namespace pbr {
 
-constexpr static const char* VERTEX_SHADER = "shaders/reflection-global-vs.spv";
-constexpr static const char* FRAGMENT_SHADER = "shaders/reflection-global-ps.spv";
+constexpr static char const* VERTEX_SHADER = "shaders/reflection-global-vs.spv";
+constexpr static char const* FRAGMENT_SHADER = "shaders/reflection-global-ps.spv";
 
 constexpr static size_t COLOR_RENDER_TARGET_COUNT = 1U;
 constexpr static size_t STAGE_COUNT = 2U;
@@ -211,7 +211,7 @@ VkPipelineDepthStencilStateCreateInfo const* ReflectionGlobalProgram::InitDepthS
         .passOp = VK_STENCIL_OP_KEEP,
         .depthFailOp = VK_STENCIL_OP_KEEP,
         .compareOp = VK_COMPARE_OP_ALWAYS,
-        .compareMask = UINT32_MAX,
+        .compareMask = std::numeric_limits<uint32_t>::max (),
         .writeMask = 0U,
         .reference = 0U
     };
@@ -222,7 +222,7 @@ VkPipelineDepthStencilStateCreateInfo const* ReflectionGlobalProgram::InitDepthS
         .passOp = VK_STENCIL_OP_KEEP,
         .depthFailOp = VK_STENCIL_OP_KEEP,
         .compareOp = VK_COMPARE_OP_ALWAYS,
-        .compareMask = UINT32_MAX,
+        .compareMask = std::numeric_limits<uint32_t>::max (),
         .writeMask = 0U,
         .reference = 0U
     };

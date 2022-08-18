@@ -9,6 +9,7 @@ require "av://engine/gx_vec3.lua"
 - [_Brief_](#brief)
 - [_Metamethods_](#metamethods)
 - [`Constructor`](#constructor)
+- [`Clone ( other )`](#method-clone)
 - [`CrossProduct ( a, b )`](#method-cross-product)
 - [`Distance ( other )`](#method-distance)
 - [`DotProduct ( other )`](#method-dot-product)
@@ -18,6 +19,7 @@ require "av://engine/gx_vec3.lua"
 - [`Init ( x, y, z )`](#method-init)
 - [`Length ()`](#method-length)
 - [`MultiplyScalar ( a, scale )`](#method-multiply-scalar)
+- [`MultiplyVector ( a, b )`](#method-multiply-vector)
 - [`Normalize ()`](#method-normalize)
 - [`Reverse ()`](#method-reverse)
 - [`SetX ( x )`](#method-set-x)
@@ -101,6 +103,31 @@ require "av://engine/gx_vec3.lua"
 
 
 local v = GXVec3 ()
+```
+
+## <a id="method-clone">`Clone ( other )`</a>
+
+Method clones content of vector to the current vector.
+
+**Parameters:**
+
+- `other` [_required, readonly, [GXVec3](./gx-vec3.md)_]: vector to clone
+
+**Return values:**
+
+- none
+
+**Example:**
+
+```lua
+require "av://engine/gx_vec3.lua"
+
+
+local vector = GXVec3 ()
+vector:Init ( 777.0, 3.33, 1.0 )
+
+local vectorCopy = GXVec3 ()
+vectorCopy:Clone ( vector )
 ```
 
 ## <a id="method-cross-product">`CrossProduct ( a, b )`</a>
@@ -331,6 +358,37 @@ v:Init ( 777.0, 3.33, 1.0 )
 
 local res = GXVec3 ()
 res:MultiplyScalar ( v, -7.77 )
+```
+
+## <a id="method-multiply-vector">`MultiplyVector ( a, b )`</a>
+
+Method performs per component vector multiplication. The result is written to current vector.
+
+**Note:** It's perfectly fine to pass current vector as `a`, `b` parameters.
+
+**Parameters:**
+
+- `a` [_required, readonly, [GXVec3](./gx-vec3.md)_]: first vector
+- `b` [_required, readonly, [GXVec3](./gx-vec3.md)_]: second vector
+
+**Return values:**
+
+- none
+
+**Example:**
+
+```lua
+require "av://engine/gx_vec3.lua"
+
+
+local v0 = GXVec3 ()
+v0:Init ( 777.0, 3.33, 1.0 )
+
+local v1 = GXVec3 ()
+v1:Init ( -3.0, 1.0, -77.7 )
+
+local res = GXVec3 ()
+res:MultiplyScalar ( v0, v1 )
 ```
 
 ## <a id="method-normalize">`Normalize ()`</a>

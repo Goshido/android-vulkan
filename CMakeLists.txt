@@ -1,4 +1,4 @@
-cmake_minimum_required ( VERSION 3.18.1 )
+cmake_minimum_required ( VERSION 3.22.1 )
 set ( CMAKE_CXX_STANDARD 20 )
 project ( android-vulkan )
 
@@ -39,6 +39,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/sutherland_hodgman.cpp
     app/src/main/cpp/sources/texture_cube.cpp
     app/src/main/cpp/sources/texture2D.cpp
+    app/src/main/cpp/sources/trace.cpp
     app/src/main/cpp/sources/uniform_buffer.cpp
     app/src/main/cpp/sources/velocity_solver.cpp
     app/src/main/cpp/sources/vulkan_loader.cpp
@@ -69,11 +70,10 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/pbr/lightup_common_descriptor_set.cpp
     app/src/main/cpp/sources/pbr/lightup_common_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/light_lightup_base_program.cpp
-    app/src/main/cpp/sources/pbr/light_volume.cpp
     app/src/main/cpp/sources/pbr/light_volume_descriptor_set_layout.cpp
-    app/src/main/cpp/sources/pbr/light_volume_program.cpp
     app/src/main/cpp/sources/pbr/material.cpp
     app/src/main/cpp/sources/pbr/material_manager.cpp
+    app/src/main/cpp/sources/pbr/material_pool.cpp
     app/src/main/cpp/sources/pbr/mesh_group.cpp
     app/src/main/cpp/sources/pbr/mesh_manager.cpp
     app/src/main/cpp/sources/pbr/opaque_material.cpp
@@ -115,6 +115,8 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/pbr/scriptable_gxvec3.cpp
     app/src/main/cpp/sources/pbr/scriptable_gxvec4.cpp
     app/src/main/cpp/sources/pbr/scriptable_logger.cpp
+    app/src/main/cpp/sources/pbr/scriptable_penetration.cpp
+    app/src/main/cpp/sources/pbr/scriptable_sweep_test_result.cpp
     app/src/main/cpp/sources/pbr/static_mesh_component.cpp
     app/src/main/cpp/sources/pbr/stipple_material.cpp
     app/src/main/cpp/sources/pbr/stipple_program.cpp
@@ -124,6 +126,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/pbr/texture_present_program.cpp
     app/src/main/cpp/sources/pbr/transform_component.cpp
     app/src/main/cpp/sources/pbr/uniform_buffer_pool.cpp
+    app/src/main/cpp/sources/pbr/uniform_buffer_pool_manager.cpp
     app/src/main/cpp/sources/pbr/box_stack/box_stack.cpp
     app/src/main/cpp/sources/pbr/collision/collision.cpp
     app/src/main/cpp/sources/pbr/collision/manipulator.cpp
@@ -155,8 +158,8 @@ set_target_properties ( android-vulkan PROPERTIES
 target_compile_options ( android-vulkan PRIVATE
     -fno-exceptions
     -fno-rtti
-    -Werror
     -Wall
+    -Werror
     -Wextra
     -Wpedantic
     -Wshadow
@@ -165,8 +168,10 @@ target_compile_options ( android-vulkan PRIVATE
 # See docs/preprocessor-macros.md
 target_compile_definitions ( android-vulkan
     PRIVATE
+#    -DANDROID_ENABLE_TRACE
     -DANDROID_NATIVE_MODE_PORTRAIT
     -DANDROID_VULKAN_DEBUG
+#    -DANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
     -DANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
     -DANDROID_VULKAN_STRICT_MODE
     -DVK_NO_PROTOTYPES

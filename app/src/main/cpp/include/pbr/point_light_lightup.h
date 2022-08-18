@@ -3,7 +3,6 @@
 
 
 #include "mesh_geometry.h"
-#include "light_volume.h"
 #include "point_light.h"
 #include "point_light_lightup_program.h"
 #include "sampler.h"
@@ -16,16 +15,20 @@ class PointLightPass;
 class PointLightLightup final
 {
     private:
-        VkCommandBuffer                         _transferCommandBuffer = VK_NULL_HANDLE;
-        VkCommandPool                           _commandPool = VK_NULL_HANDLE;
+        std::vector<VkBufferMemoryBarrier>      _barriers {};
+        std::vector<VkDescriptorBufferInfo>     _bufferInfo {};
         VkDescriptorPool                        _descriptorPool = VK_NULL_HANDLE;
         std::vector<VkDescriptorSet>            _descriptorSets;
         std::vector<VkDescriptorImageInfo>      _imageInfo {};
+
+        size_t                                  _itemBaseIndex = 0U;
+        size_t                                  _itemReadIndex = 0U;
+        size_t                                  _itemWriteIndex = 0U;
+        size_t                                  _itemWritten = 0U;
+
         PointLightLightupProgram                _program {};
         Sampler                                 _sampler {};
-        VkSubmitInfo                            _submitInfoTransfer {};
-        std::vector<VkDescriptorBufferInfo>     _uniformInfoLightData {};
-        UniformBufferPool                       _uniformPoolLightData { eUniformPoolSize::Tiny_4M };
+        UniformBufferPool                       _uniformPool { eUniformPoolSize::Tiny_4M };
         std::vector<VkWriteDescriptorSet>       _writeSets {};
 
     public:
@@ -39,8 +42,10 @@ class PointLightLightup final
 
         ~PointLightLightup () = default;
 
+        void Commit () noexcept;
+        void BindProgram ( VkCommandBuffer commandBuffer ) noexcept;
+
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
-            VkCommandPool commandPool,
             VkRenderPass renderPass,
             uint32_t subpass,
             VkExtent2D const &resolution
@@ -49,22 +54,20 @@ class PointLightLightup final
         void Destroy ( VkDevice device ) noexcept;
 
         void Lightup ( VkCommandBuffer commandBuffer,
-            android_vulkan::MeshGeometry &unitCube,
-            size_t lightIndex
+            VkDescriptorSet transform,
+            android_vulkan::MeshGeometry &unitCube
         ) noexcept;
 
-        [[nodiscard]] bool UpdateGPUData ( android_vulkan::Renderer &renderer,
+        void UpdateGPUData ( VkDevice device,
+            VkCommandBuffer commandBuffer,
             PointLightPass const &pointLightPass,
             GXMat4 const &viewerLocal,
             GXMat4 const &view
         ) noexcept;
 
     private:
-        [[nodiscard]] bool AllocateNativeDescriptorSets ( android_vulkan::Renderer &renderer,
-            size_t neededSets
-        ) noexcept;
-
-        void DestroyDescriptorPool ( VkDevice device ) noexcept;
+        [[nodiscard]] bool AllocateDescriptorSets ( android_vulkan::Renderer &renderer ) noexcept;
+        void IssueSync ( VkDevice device, VkCommandBuffer commandBuffer ) const noexcept;
 };
 
 } // namespace pbr

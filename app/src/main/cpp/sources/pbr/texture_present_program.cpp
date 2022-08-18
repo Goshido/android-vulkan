@@ -3,8 +3,8 @@
 
 namespace pbr {
 
-constexpr static const char* VERTEX_SHADER = "shaders/screen-quad-vs.spv";
-constexpr static const char* FRAGMENT_SHADER = "shaders/texture-present-ps.spv";
+constexpr static char const* VERTEX_SHADER = "shaders/screen-quad-vs.spv";
+constexpr static char const* FRAGMENT_SHADER = "shaders/texture-present-ps.spv";
 
 constexpr static size_t COLOR_RENDER_TARGET_COUNT = 1U;
 constexpr static size_t STAGE_COUNT = 2U;

@@ -129,13 +129,18 @@ void Gamepad::UnbindRightTrigger () noexcept
 
 void Gamepad::OnKeyDown ( int32_t key ) const noexcept
 {
-    std::unique_lock<std::mutex> const lock ( _mutex );
-    auto const findResult = _mapper.find ( key );
+    KeyBind bind {};
 
-    if ( findResult == _mapper.cend () )
-        return;
+    {
+        // Operator block is intentional because of unique lock.
+        std::unique_lock<std::mutex> const lock ( _mutex );
+        auto const findResult = _mapper.find ( key );
 
-    KeyBind const& bind = _downKeyBinds[ findResult->second ];
+        if ( findResult == _mapper.cend () )
+            return;
+
+        bind = _downKeyBinds[ findResult->second ];
+    }
 
     if ( !bind._handler )
         return;
@@ -145,13 +150,18 @@ void Gamepad::OnKeyDown ( int32_t key ) const noexcept
 
 void Gamepad::OnKeyUp ( int32_t key ) const noexcept
 {
-    std::unique_lock<std::mutex> const lock ( _mutex );
-    auto const findResult = _mapper.find ( key );
+    KeyBind bind {};
 
-    if ( findResult == _mapper.cend () )
-        return;
+    {
+        // Operator block is intentional because of unique lock.
+        std::unique_lock<std::mutex> const lock ( _mutex );
+        auto const findResult = _mapper.find ( key );
 
-    KeyBind const& bind = _upKeyBinds[ findResult->second ];
+        if ( findResult == _mapper.cend () )
+            return;
+
+        bind = _upKeyBinds[ findResult->second ];
+    }
 
     if ( !bind._handler )
         return;
@@ -161,42 +171,66 @@ void Gamepad::OnKeyUp ( int32_t key ) const noexcept
 
 void Gamepad::OnLeftStick ( float x, float y ) const noexcept
 {
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    Stick stick {};
 
-    if ( !_leftStick._handler )
+    {
+        // Operator block is intentional because of unique lock.
+        std::unique_lock<std::mutex> const lock ( _mutex );
+        stick = _leftStick;
+    }
+
+    if ( !stick._handler )
         return;
 
-    _leftStick._handler ( _leftStick._context, x, y );
+    stick._handler ( stick._context, x, y );
 }
 
 void Gamepad::OnRightStick ( float x, float y ) const noexcept
 {
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    Stick stick {};
 
-    if ( !_rightStick._handler )
+    {
+        // Operator block is intentional because of unique lock.
+        std::unique_lock<std::mutex> const lock ( _mutex );
+        stick = _rightStick;
+    }
+
+    if ( !stick._handler )
         return;
 
-    _rightStick._handler ( _rightStick._context, x, y );
+    stick._handler ( stick._context, x, y );
 }
 
 void Gamepad::OnLeftTrigger ( float value ) const noexcept
 {
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    Trigger trigger {};
 
-    if ( !_leftTrigger._handler )
+    {
+        // Operator block is intentional because of unique lock.
+        std::unique_lock<std::mutex> const lock ( _mutex );
+        trigger = _leftTrigger;
+    }
+
+    if ( !trigger._handler )
         return;
 
-    _leftTrigger._handler ( _leftTrigger._context, value );
+    trigger._handler ( trigger._context, value );
 }
 
 void Gamepad::OnRightTrigger ( float value ) const noexcept
 {
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    Trigger trigger {};
 
-    if ( !_rightTrigger._handler )
+    {
+        // Operator block is intentional because of unique lock.
+        std::unique_lock<std::mutex> const lock ( _mutex );
+        trigger = _rightTrigger;
+    }
+
+    if ( !trigger._handler )
         return;
 
-    _rightTrigger._handler ( _rightTrigger._context, value );
+    trigger._handler ( trigger._context, value );
 }
 
 Gamepad::Gamepad () noexcept

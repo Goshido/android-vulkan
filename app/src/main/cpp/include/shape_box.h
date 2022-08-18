@@ -10,8 +10,8 @@ namespace android_vulkan {
 class [[maybe_unused]] ShapeBox final : public Shape
 {
     private:
-        GXVec3          _localGeometry[ 8U ];
-        GXVec3 const    _size;
+        GXVec3      _localGeometry[ 8U ];
+        GXVec3      _size;
 
     public:
         ShapeBox () = delete;
@@ -32,6 +32,7 @@ class [[maybe_unused]] ShapeBox final : public Shape
         [[nodiscard]] float GetDepth () const noexcept;
 
         [[nodiscard]] GXVec3 const& GetSize () const noexcept;
+        void Resize ( GXVec3 const &size ) noexcept;
 
     private:
         void CalculateInertiaTensor ( float mass ) noexcept override;

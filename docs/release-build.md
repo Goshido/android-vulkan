@@ -17,3 +17,24 @@ Name | Description | Example
 `Build Variats` subsystem is responsible for the selection:
 
 <img src="./images/release-build-selector.png" width="629" />
+
+## Recommended `CMakeLists.txt` settings
+
+```cmake
+...
+
+# See docs/preprocessor-macros.md
+target_compile_definitions ( android-vulkan
+    PRIVATE
+#    -DANDROID_ENABLE_TRACE
+    -DANDROID_NATIVE_MODE_PORTRAIT
+#    -DANDROID_VULKAN_DEBUG
+#    -DANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
+#    -DANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+#    -DANDROID_VULKAN_STRICT_MODE
+    -DVK_NO_PROTOTYPES
+    -DVK_USE_PLATFORM_ANDROID_KHR
+)
+
+...
+```

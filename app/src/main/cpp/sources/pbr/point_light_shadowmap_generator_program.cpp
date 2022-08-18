@@ -4,10 +4,11 @@
 
 namespace pbr {
 
-constexpr static const char* VERTEX_SHADER = "shaders/point-light-shadowmap-generator-vs.spv";
+constexpr static char const* VERTEX_SHADER = "shaders/point-light-shadowmap-generator-vs.spv";
+constexpr static char const* FRAGMENT_SHADER = "shaders/null-ps.spv";
 
 constexpr static uint32_t COLOR_RENDER_TARGET_COUNT = 0U;
-constexpr static size_t STAGE_COUNT = 1U;
+constexpr static size_t STAGE_COUNT = 2U;
 constexpr static size_t VERTEX_ATTRIBUTE_COUNT = 1U;
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -32,7 +33,7 @@ bool PointLightShadowmapGeneratorProgram::Init ( android_vulkan::Renderer &rende
     VkPipelineMultisampleStateCreateInfo multisampleInfo;
     VkPipelineRasterizationStateCreateInfo rasterizationInfo;
     VkRect2D scissorDescription;
-    VkPipelineShaderStageCreateInfo stageInfo;
+    VkPipelineShaderStageCreateInfo stageInfo[ STAGE_COUNT ];
     VkPipelineVertexInputStateCreateInfo vertexInputInfo;
     VkViewport viewportDescription;
     VkPipelineViewportStateCreateInfo viewportInfo;
@@ -45,7 +46,7 @@ bool PointLightShadowmapGeneratorProgram::Init ( android_vulkan::Renderer &rende
 
     VkDevice device = renderer.GetDevice ();
 
-    if ( !InitShaderInfo ( renderer, pipelineInfo.pStages, &stageInfo ) )
+    if ( !InitShaderInfo ( renderer, pipelineInfo.pStages, stageInfo ) )
     {
         Destroy ( device );
         return false;
@@ -218,7 +219,7 @@ bool PointLightShadowmapGeneratorProgram::InitLayout ( VkDevice device, VkPipeli
     layoutInfo.pushConstantRangeCount = 0U;
     layoutInfo.pPushConstantRanges = nullptr;
 
-    const bool result = android_vulkan::Renderer::CheckVkResult (
+    bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreatePipelineLayout ( device, &layoutInfo, nullptr, &_pipelineLayout ),
         "pbr::PointLightShadowmapGeneratorProgram::InitLayout",
         "Can't create pipeline layout"
@@ -285,13 +286,33 @@ bool PointLightShadowmapGeneratorProgram::InitShaderInfo ( android_vulkan::Rende
 
     AV_REGISTER_SHADER_MODULE ( "pbr::PointLightShadowmapGeneratorProgram::_vertexShader" )
 
-    sourceInfo->sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    sourceInfo->pNext = nullptr;
-    sourceInfo->flags = 0U;
-    sourceInfo->stage = VK_SHADER_STAGE_VERTEX_BIT;
-    sourceInfo->module = _vertexShader;
-    sourceInfo->pName = VERTEX_SHADER_ENTRY_POINT;
-    sourceInfo->pSpecializationInfo = nullptr;
+    result = renderer.CreateShader ( _fragmentShader,
+        FRAGMENT_SHADER,
+        "Can't create fragment shader (pbr::PointLightShadowmapGeneratorProgram)"
+    );
+
+    if ( !result )
+        return false;
+
+    AV_REGISTER_SHADER_MODULE ( "pbr::PointLightShadowmapGeneratorProgram::_fragmentShader" )
+
+    VkPipelineShaderStageCreateInfo& vertexStage = sourceInfo[ 0U ];
+    vertexStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    vertexStage.pNext = nullptr;
+    vertexStage.flags = 0U;
+    vertexStage.stage = VK_SHADER_STAGE_VERTEX_BIT;
+    vertexStage.module = _vertexShader;
+    vertexStage.pName = VERTEX_SHADER_ENTRY_POINT;
+    vertexStage.pSpecializationInfo = nullptr;
+
+    VkPipelineShaderStageCreateInfo& fragmentStage = sourceInfo[ 1U ];
+    fragmentStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    fragmentStage.pNext = nullptr;
+    fragmentStage.flags = 0U;
+    fragmentStage.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+    fragmentStage.module = _fragmentShader;
+    fragmentStage.pName = FRAGMENT_SHADER_ENTRY_POINT;
+    fragmentStage.pSpecializationInfo = nullptr;
 
     targetInfo = sourceInfo;
     return true;
@@ -299,6 +320,13 @@ bool PointLightShadowmapGeneratorProgram::InitShaderInfo ( android_vulkan::Rende
 
 void PointLightShadowmapGeneratorProgram::DestroyShaderModules ( VkDevice device ) noexcept
 {
+    if ( _fragmentShader != VK_NULL_HANDLE )
+    {
+        vkDestroyShaderModule ( device, _fragmentShader, nullptr );
+        _fragmentShader = VK_NULL_HANDLE;
+        AV_UNREGISTER_SHADER_MODULE ( "pbr::PointLightShadowmapGeneratorProgram::_fragmentShader" )
+    }
+
     if ( _vertexShader == VK_NULL_HANDLE )
         return;
 

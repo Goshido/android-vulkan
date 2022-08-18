@@ -4,10 +4,12 @@
 
 _android-vulkan_ project is using the following preprocessor macros for compilation:
 
-* `ANDROID_NATIVE_MODE_PORTRAIT` or `ANDROID_NATIVE_MODE_LANDSCAPE`
-* `ANDROID_VULKAN_DEBUG`
-* `ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS`
-* `ANDROID_VULKAN_STRICT_MODE`
+* [`ANDROID_ENABLE_TRACE`](#macro-android-enable-trace)
+* [`ANDROID_NATIVE_MODE_PORTRAIT` or `ANDROID_NATIVE_MODE_LANDSCAPE`](#macro-android-native-mode)
+* [`ANDROID_VULKAN_DEBUG`](#macro-android-vulkan-debug)
+* [`ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION`](#macro-android-vulkan-enable-render-doc-integration)
+* [`ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS`](#macro-android-vulkan-enable-vulkan-validation-layers)
+* [`ANDROID_VULKAN_STRICT_MODE`](#macro-android-vulkan-strict-mode)
 
 Macros can be specified in the project's `CMakeLists.txt` file in the section:
 
@@ -19,9 +21,13 @@ target_compile_definitions ( android-vulkan
 )
 ```
 
-## `ANDROID_NATIVE_MODE_PORTRAIT` or `ANDROID_NATIVE_MODE_LANDSCAPE`
+## <a id="macro-android-enable-trace">`ANDROID_ENABLE_TRACE`</a>
 
-This macros is responsible for correct mapping between _presentation engine_ and _Vulkan_ output orientation. In most cases application must not introduce additional overhead on memory bandwidth on the mobile devices. So it's recommended to output final images with no additional work for _presentation engine_. On _Android_ you have to adjust two parameters for the project.
+This macro is responsible for _CPU_ tracing activation. _Android Studio_ has internal tool for trace collection and analysis. It is described [here](https://developer.android.com/studio/profile/record-traces).
+
+## <a id="macro-android-native-mode">`ANDROID_NATIVE_MODE_PORTRAIT` or `ANDROID_NATIVE_MODE_LANDSCAPE`</a>
+
+This macros are responsible for correct mapping between _presentation engine_ and _Vulkan_ output orientation. In most cases application must not introduce additional overhead on memory bandwidth on the mobile devices. So it's recommended to output final images with no additional work for _presentation engine_. On _Android_ you have to adjust two parameters for the project.
 
 **First** you have to choose correct macro
 
@@ -67,15 +73,21 @@ For more information please refer to the following guidelines:
 * [Vulkan Mobile Best Practice - Appropriate Use of Surface Rotation](https://community.arm.com/developer/tools-software/graphics/b/blog/posts/appropriate-use-of-surface-rotation)
 * [Appropriate use of surface rotation](https://github.com/KhronosGroup/Vulkan-Samples/blob/master/samples/performance/surface_rotation/surface_rotation_tutorial.md)
 
-## `ANDROID_VULKAN_DEBUG`
+## <a id="macro-android-vulkan-debug">`ANDROID_VULKAN_DEBUG`</a>
 
 This macro enables custom mechanism for reporting leaked _Vulkan_ ojects. Also the macro is used for additional debug output in the [_Logcat™_](logcat.md).
 
-## `ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS`
+## <a id="macro-android-vulkan-enable-render-doc-integration">`ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION`</a>
+
+This macro enables integration with [_RenderDoc_](https://renderdoc.org/). Note that macro is not compatible with [`ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS`](#macro-android-vulkan-enable-vulkan-validation-layers) macro.
+
+## <a id="macro-android-vulkan-enable-vulkan-validation-layers">`ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS`</a>
 
 This macro enables [_Khronos_ validation layer](https://developer.android.com/ndk/guides/graphics/validation-layer#apk-containing-layers). This introduces additional overhead in terms of execution. Macro is usefull in the develop time. Also validation layer can be disabled if current layer implementation contains unavoidable bugs and interferes with some features of the framework.
 
-## `ANDROID_VULKAN_STRICT_MODE`
+Note that macro is not compatible with [`ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION`](#macro-android-vulkan-enable-vulkan-validation-layers) macro.
+
+## <a id="macro-android-vulkan-strict-mode">`ANDROID_VULKAN_STRICT_MODE`</a>
 
 This macro is responsible for invocation of the `accert` instruction in the following situations:
 

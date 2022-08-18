@@ -11,7 +11,9 @@ require "av://engine/rigid_body_component.lua"
 - [`Constructor`](#constructor)
 - [`AddForce ( force, point, forceAwake )`](#method-add-force)
 - [`GetLocation ( location )`](#method-get-location)
+- [`SetLocation ( location )`](#method-set-location)
 - [`GetName ()`](#method-get-name)
+- [`GetTransform ( transform )`](#method-get-transform)
 - [`GetVelocityLinear ( velocity )`](#method-get-velocity-linear)
 - [`SetVelocityLinear ( velocity, forceAwake )`](#method-set-velocity-linear)
 
@@ -149,6 +151,39 @@ local location = GXVec3 ()
 body:GetLocation ( location )
 ```
 
+## <a id="method-set-location">`SetLocation ( location )`</a>
+
+Method sets the body location in world space to the supplied `location` vector of the [_GXVec3_](./gx-vec3.md) type.
+
+**Note:** This method sets location in [physics coordinate system](#note-physics-coordinate-system).
+
+**Note:** This method teleports rigid body to new location without any attempts to resolve potential contacts.
+
+**Parameters:**
+
+- `location` [_required, readonly, [_GXVec3_](./gx-vec3.md)_]: target vector
+
+**Return values:**
+
+- none
+
+**Example:**
+
+```lua
+require "av://engine/scene.lua"
+
+
+local actor = Actor ( "Box" )
+local body = RigidBodyComponent ( "RigidBody" )
+actor:AppendComponent ( body )
+g_scene:AppendActor ( actor )
+
+local location = GXVec3 ()
+location:Init ( 777.0, 3.33, 1.0 )
+
+body:SetLocation ( location )
+```
+
 ## <a id="method-get-name">`GetName ()`</a>
 
 Method returns name of the component.
@@ -174,6 +209,35 @@ g_scene:AppendActor ( actor )
 
 local rigidBody = actor:FindComponent ( "RigidBody" )
 local name = rigidBody:GetName ()
+```
+
+## <a id="method-get-transform">`GetTransform ( transform )`</a>
+
+Method returns current rigid body transformation matrix.
+
+**Note:** This method uses [physics coordinate system](#note-physics-coordinate-system) for transformation.
+
+**Parameters:**
+
+- `transform` [_required, writeonly, [_GXMat4_](./gx-mat4.md)_]: transform matrix in the world space
+
+**Return values:**
+
+- none
+
+**Example:**
+
+```lua
+require "av://engine/scene.lua"
+
+
+local actor = Actor ( "Box" )
+local body = RigidBodyComponent ( "RigidBody" )
+actor:AppendComponent ( body )
+g_scene:AppendActor ( actor )
+
+local transform = GXMat4 ()
+body:GetTransform ( transform )
 ```
 
 ## <a id="method-get-velocity-linear">`GetVelocityLinear ( velocity )`</a>

@@ -10,6 +10,7 @@ require "av://engine/actor.lua"
 - [_Metamethods_](#metamethods)
 - [`Constructor`](#constructor)
 - [`AppendComponent ( component )`](#method-append-component)
+- [`Destroy ()`](#method-destroy)
 - [`FindComponent ( name )`](#method-find-component)
 - [`FindComponents ( name )`](#method-find-components)
 - [`GetName ()`](#method-get-name)
@@ -90,6 +91,30 @@ require "av://engine/point_light_component.lua"
 
 local actor = Actor ( "Actor" )
 actor:AppendComponent ( PointLightComponent ( "Light" ) )
+```
+
+## <a id="method-destroy">`Destroy ()`</a>
+
+Method destroys actor with all attached components.
+
+**Parameters:**
+
+- none
+
+**Return values:**
+
+- none
+
+**Example:**
+
+```lua
+require "av://engine/actor.lua"
+
+
+local actor = Actor ( "Actor" )
+g_scene:AppendActor ( actor )
+
+actor:Destroy ()
 ```
 
 ## <a id="method-find-component">`FindComponent ( name )`</a>

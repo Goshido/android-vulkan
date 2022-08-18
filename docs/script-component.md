@@ -11,6 +11,7 @@ require "av://engine/script_component.lua"
 - [`Constructor`](#constructor)
 - [`GetName ()`](#method-get-name)
 - [`OnActorConstructed ( self, actor )`](#method-on-actor-constructed)
+- [`OnDestroy ( self )`](#method-on-destroy)
 - [`OnInput ( self, inputEvent )`](#method-on-input)
 - [`OnPostPhysics ( self, deltaTime )`](#method-on-post-physics)
 - [`OnPrePhysics ( self, deltaTime )`](#method-on-pre-physics)
@@ -230,6 +231,47 @@ local function Constructor ( self, handle, params )
 
     -- Engine events
     obj.OnActorConstructed = OnActorConstructed
+    return obj
+end
+
+setmetatable ( Player, { __call = Constructor } )
+
+-- Module function: fabric callable for Player class.
+return Player
+```
+
+## <a id="method-on-destroy">`OnDestroy ( self )`</a>
+
+Optional user provided event handler in the subclass implementaion. The method will be called by the engine right before [_Actor_](./actor.md) destroy.
+
+**Parameters:**
+
+- `self` [_required, read/write, [ScriptComponent](./script-component.md)_]: part of _Lua OOP_ convention requred to invoke method via `:` syntax
+
+**Return values:**
+
+- none
+
+**Example:**
+
+```lua
+require "av://engine/logger.lua"
+require "av://engine/script_component.lua"
+
+
+local Player = {}
+
+-- Engine events
+local function OnDestroy ( self )
+    LogD ( "My name is %s.", self:GetName () )
+end
+
+-- Metamethods
+local function Constructor ( self, handle, params )
+    local obj = ScriptComponent ( handle )
+
+    -- Engine events
+    obj.OnDestroy = OnDestroy
     return obj
 end
 

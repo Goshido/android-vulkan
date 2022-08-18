@@ -106,7 +106,7 @@ bool BoxStack::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
     {
         .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
         .pNext = nullptr,
-        .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+        .flags = 0U,
         .queueFamilyIndex = renderer.GetQueueFamilyIndex ()
     };
 
@@ -123,7 +123,7 @@ bool BoxStack::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 
     AV_REGISTER_COMMAND_POOL ( "pbr::box_stack::BoxStack::_commandPool" )
 
-    if ( !_renderSession.OnInitDevice ( renderer, _commandPool ) )
+    if ( !_renderSession.OnInitDevice ( renderer ) )
     {
         OnDestroyDevice ( device );
         return false;
@@ -137,7 +137,7 @@ bool BoxStack::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
         return false;
     }
 
-    _renderSession.FreeTransferResources ( device, _commandPool );
+    _renderSession.FreeTransferResources ( device );
     return true;
 }
 
@@ -170,7 +170,7 @@ bool BoxStack::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcep
         Z_FAR
     );
 
-    if ( !_renderSession.OnSwapchainCreated ( renderer, resolution, _commandPool ) )
+    if ( !_renderSession.OnSwapchainCreated ( renderer, resolution ) )
         return false;
 
     _camera.CaptureInput ();

@@ -1,13 +1,16 @@
 #include <pbr/present_pass.h>
+#include <trace.h>
 
 
 namespace pbr {
 
-bool PresentPass::AcquirePresentTarget ( android_vulkan::Renderer &renderer ) noexcept
+bool PresentPass::AcquirePresentTarget ( android_vulkan::Renderer &renderer, size_t &swapchainImageIndex ) noexcept
 {
+    AV_TRACE ( "Acquire frame" )
+
     _framebufferIndex = UINT32_MAX;
 
-    return android_vulkan::Renderer::CheckVkResult (
+    bool const result = android_vulkan::Renderer::CheckVkResult (
         vkAcquireNextImageKHR ( renderer.GetDevice (),
             renderer.GetSwapchain (),
             UINT64_MAX,
@@ -19,31 +22,22 @@ bool PresentPass::AcquirePresentTarget ( android_vulkan::Renderer &renderer ) no
         "pbr::PresentPass::AcquirePresentTarget",
         "Can't get presentation image index"
     );
+
+    swapchainImageIndex = _framebufferIndex;
+    return result;
 }
 
 bool PresentPass::Init ( android_vulkan::Renderer &renderer ) noexcept
 {
     VkDevice device = renderer.GetDevice ();
 
-    if ( !CreateRenderPass ( renderer ) )
-    {
-        Destroy ( device );
+    if ( !CreateRenderPass ( renderer ) || !CreateFramebuffers ( renderer ) )
         return false;
-    }
-
-    if ( !CreateFramebuffers ( renderer ) )
-    {
-        Destroy ( device );
-        return false;
-    }
 
     VkExtent2D const& resolution = renderer.GetSurfaceSize ();
 
     if ( !_program.Init ( renderer, _renderPass, 0U, resolution ) )
-    {
-        Destroy ( device );
         return false;
-    }
 
     constexpr VkSemaphoreCreateInfo const semaphoreInfo
     {
@@ -104,12 +98,14 @@ void PresentPass::Destroy ( VkDevice device ) noexcept
     }
 }
 
-bool PresentPass::Execute ( VkCommandBuffer commandBuffer,
+bool PresentPass::Execute ( android_vulkan::Renderer &renderer,
+    VkCommandBuffer commandBuffer,
     VkDescriptorSet presentTarget,
-    VkFence fence,
-    android_vulkan::Renderer &renderer
+    VkFence fence
 ) noexcept
 {
+    AV_TRACE ( "Present" )
+
     _renderInfo.framebuffer = _framebuffers[ _framebufferIndex ];
 
     vkCmdBeginRenderPass ( commandBuffer, &_renderInfo, VK_SUBPASS_CONTENTS_INLINE );
@@ -120,7 +116,7 @@ bool PresentPass::Execute ( VkCommandBuffer commandBuffer,
     vkCmdEndRenderPass ( commandBuffer );
 
     bool result = android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
-        "pbr::RenderSession::End",
+        "pbr::PresentPass::Execute",
         "Can't end command buffer"
     );
 
@@ -131,7 +127,7 @@ bool PresentPass::Execute ( VkCommandBuffer commandBuffer,
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkQueueSubmit ( renderer.GetQueue (), 1U, &_submitInfo, fence ),
-        "pbr::RenderSession::End",
+        "pbr::PresentPass::End",
         "Can't submit geometry render command buffer"
     );
 
@@ -145,7 +141,7 @@ bool PresentPass::Execute ( VkCommandBuffer commandBuffer,
     _presentInfo.pImageIndices = &_framebufferIndex;
 
     result = android_vulkan::Renderer::CheckVkResult ( vkQueuePresentKHR ( renderer.GetQueue (), &_presentInfo ),
-        "pbr::RenderSession::EndFrame",
+        "pbr::PresentPass::EndFrame",
         "Can't present frame"
     );
 
@@ -153,7 +149,7 @@ bool PresentPass::Execute ( VkCommandBuffer commandBuffer,
         return false;
 
     return android_vulkan::Renderer::CheckVkResult ( presentResult,
-        "pbr::RenderSession::EndFrame",
+        "pbr::PresentPass::EndFrame",
         "Present queue has been failed"
     );
 }
@@ -214,43 +210,48 @@ void PresentPass::DestroyFramebuffers ( VkDevice device ) noexcept
 
 bool PresentPass::CreateRenderPass ( android_vulkan::Renderer &renderer ) noexcept
 {
-    VkAttachmentDescription const attachment[] =
+    VkAttachmentDescription const attachment
     {
-        {
-            .flags = 0U,
-            .format = renderer.GetSurfaceFormat (),
-            .samples = VK_SAMPLE_COUNT_1_BIT,
-            .loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
-            .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-            .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
-            .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-            .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-            .finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
-        }
+        .flags = 0U,
+        .format = renderer.GetSurfaceFormat (),
+        .samples = VK_SAMPLE_COUNT_1_BIT,
+        .loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+        .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+        .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+        .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+        .finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
     };
 
-    constexpr static VkAttachmentReference const references[] =
+    constexpr static VkAttachmentReference reference
     {
-        {
-            .attachment = 0U,
-            .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
-        }
+        .attachment = 0U,
+        .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
     };
 
-    constexpr static VkSubpassDescription const subpasses[] =
+    constexpr VkSubpassDescription subpass
     {
-        {
-            .flags = 0U,
-            .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
-            .inputAttachmentCount = 0U,
-            .pInputAttachments = nullptr,
-            .colorAttachmentCount = static_cast<uint32_t> ( std::size ( references ) ),
-            .pColorAttachments = references,
-            .pResolveAttachments = nullptr,
-            .pDepthStencilAttachment = nullptr,
-            .preserveAttachmentCount = 0U,
-            .pPreserveAttachments = nullptr,
-        }
+        .flags = 0U,
+        .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
+        .inputAttachmentCount = 0U,
+        .pInputAttachments = nullptr,
+        .colorAttachmentCount = 1U,
+        .pColorAttachments = &reference,
+        .pResolveAttachments = nullptr,
+        .pDepthStencilAttachment = nullptr,
+        .preserveAttachmentCount = 0U,
+        .pPreserveAttachments = nullptr
+    };
+
+    constexpr VkSubpassDependency dependency
+    {
+        .srcSubpass = 0U,
+        .dstSubpass = VK_SUBPASS_EXTERNAL,
+        .srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+        .dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+        .srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+        .dstAccessMask = VK_ACCESS_NONE,
+        .dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
     };
 
     VkRenderPassCreateInfo const info
@@ -258,12 +259,12 @@ bool PresentPass::CreateRenderPass ( android_vulkan::Renderer &renderer ) noexce
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0U,
-        .attachmentCount = static_cast<uint32_t> ( std::size ( attachment ) ),
-        .pAttachments = attachment,
-        .subpassCount = static_cast<uint32_t> ( std::size ( subpasses ) ),
-        .pSubpasses = subpasses,
-        .dependencyCount = 0U,
-        .pDependencies = nullptr
+        .attachmentCount = 1U,
+        .pAttachments = &attachment,
+        .subpassCount = 1U,
+        .pSubpasses = &subpass,
+        .dependencyCount = 1U,
+        .pDependencies = &dependency
     };
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
@@ -281,16 +282,6 @@ bool PresentPass::CreateRenderPass ( android_vulkan::Renderer &renderer ) noexce
 
 void PresentPass::InitCommonStructures ( VkExtent2D const &resolution ) noexcept
 {
-    constexpr VkClearValue const clearValues[] =
-    {
-        {
-            .color
-            {
-                .float32 { 0.0F, 0.0F, 0.0F, 0.0F }
-            }
-        }
-    };
-
     _renderInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     _renderInfo.pNext = nullptr;
     _renderInfo.renderPass = _renderPass;
@@ -306,8 +297,8 @@ void PresentPass::InitCommonStructures ( VkExtent2D const &resolution ) noexcept
         .extent = resolution
     };
 
-    _renderInfo.clearValueCount = static_cast<uint32_t> ( std::size ( clearValues ) );
-    _renderInfo.pClearValues = clearValues;
+    _renderInfo.clearValueCount = 0U;
+    _renderInfo.pClearValues = nullptr;
 
     _presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
     _presentInfo.pNext = nullptr;

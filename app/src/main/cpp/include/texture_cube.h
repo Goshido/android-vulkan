@@ -65,11 +65,17 @@ class TextureCube final
         // _transfer and _transferDeviceMemory for Texture2D objects.
         void FreeTransferResources ( VkDevice device ) noexcept;
 
-        [[nodiscard]] VkFormat GetFormat () const noexcept;
+        [[maybe_unused, nodiscard]] VkFormat GetFormat () const noexcept;
         [[nodiscard]] VkImage GetImage () const noexcept;
         [[nodiscard]] VkImageView GetImageView () const noexcept;
         [[maybe_unused, nodiscard]] uint8_t GetMipLevelCount () const noexcept;
         [[maybe_unused, nodiscard]] VkExtent2D const& GetResolution () const noexcept;
+
+        [[nodiscard]] constexpr static uint32_t GetLayerCount () noexcept
+        {
+            // Vulkan feature: Cubemaps are treated as layered textures with 6 layers.
+            return 6U;
+        }
 
     private:
         [[maybe_unused, nodiscard]] bool CreateImageResources ( Renderer &renderer,

@@ -1,0 +1,27 @@
+#ifdef ANDROID_ENABLE_TRACE
+
+#include <trace.h>
+#include <GXCommon/GXWarning.h>
+
+GX_DISABLE_COMMON_WARNINGS
+
+#include <android/trace.h>
+
+GX_RESTORE_WARNING_STATE
+
+
+namespace android_vulkan {
+
+Trace::Trace ( char const* name ) noexcept
+{
+    ATrace_beginSection ( name );
+}
+
+Trace::~Trace () noexcept
+{
+    ATrace_endSection ();
+}
+
+} // namespace android_vulkan
+
+#endif // ANDROID_ENABLE_TRACE

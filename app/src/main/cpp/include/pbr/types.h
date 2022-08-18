@@ -24,7 +24,7 @@ using ActorRef = std::shared_ptr<Actor>;
 class Component;
 using ComponentRef = std::shared_ptr<Component>;
 
-using ComponentList = std::list<std::reference_wrapper<ComponentRef>>;
+using ComponentList = std::list<std::reference_wrapper<Component>>;
 
 class Transformable;
 using TransformableList = std::list<std::reference_wrapper<Transformable>>;

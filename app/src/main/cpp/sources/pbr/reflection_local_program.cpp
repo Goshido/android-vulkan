@@ -1,5 +1,4 @@
 #include <pbr/reflection_local_program.h>
-#include <pbr/light_volume_program.h>
 
 
 namespace pbr {
@@ -8,8 +7,8 @@ constexpr static size_t COLOR_RENDER_TARGET_COUNT = 1U;
 constexpr static size_t STAGE_COUNT = 2U;
 constexpr static size_t VERTEX_ATTRIBUTE_COUNT = 1U;
 
-constexpr static const char* VERTEX_SHADER = "shaders/light-volume-vs.spv";
-constexpr static const char* FRAGMENT_SHADER = "shaders/reflection-local-ps.spv";
+constexpr static char const* VERTEX_SHADER = "shaders/light-volume-vs.spv";
+constexpr static char const* FRAGMENT_SHADER = "shaders/reflection-local-ps.spv";
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -164,14 +163,19 @@ Program::DescriptorSetInfo const& ReflectionLocalProgram::GetResourceInfo () con
     return info;
 }
 
-void ReflectionLocalProgram::SetLightData ( VkCommandBuffer commandBuffer, VkDescriptorSet lightData ) const noexcept
+void ReflectionLocalProgram::SetLightData ( VkCommandBuffer commandBuffer,
+    VkDescriptorSet transform,
+    VkDescriptorSet lightData
+) const noexcept
 {
+    VkDescriptorSet const sets[] = { transform, lightData };
+
     vkCmdBindDescriptorSets ( commandBuffer,
         VK_PIPELINE_BIND_POINT_GRAPHICS,
         _pipelineLayout,
-        2U,
         1U,
-        &lightData,
+        static_cast<uint32_t> ( std::size ( sets ) ),
+        sets,
         0U,
         nullptr
     );
@@ -214,11 +218,11 @@ VkPipelineDepthStencilStateCreateInfo const* ReflectionLocalProgram::InitDepthSt
     info.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
     info.pNext = nullptr;
     info.flags = 0U;
-    info.depthTestEnable = VK_TRUE;
+    info.depthTestEnable = VK_FALSE;
     info.depthWriteEnable = VK_FALSE;
-    info.depthCompareOp = VK_COMPARE_OP_LESS;
+    info.depthCompareOp = VK_COMPARE_OP_ALWAYS;
     info.depthBoundsTestEnable = VK_FALSE;
-    info.stencilTestEnable = VK_TRUE;
+    info.stencilTestEnable = VK_FALSE;
 
     info.front =
     {
@@ -226,7 +230,7 @@ VkPipelineDepthStencilStateCreateInfo const* ReflectionLocalProgram::InitDepthSt
         .passOp = VK_STENCIL_OP_KEEP,
         .depthFailOp = VK_STENCIL_OP_KEEP,
         .compareOp = VK_COMPARE_OP_ALWAYS,
-        .compareMask = UINT32_MAX,
+        .compareMask = std::numeric_limits<uint32_t>::max (),
         .writeMask = 0U,
         .reference = 0U
     };
@@ -236,10 +240,10 @@ VkPipelineDepthStencilStateCreateInfo const* ReflectionLocalProgram::InitDepthSt
         .failOp = VK_STENCIL_OP_KEEP,
         .passOp = VK_STENCIL_OP_KEEP,
         .depthFailOp = VK_STENCIL_OP_KEEP,
-        .compareOp = VK_COMPARE_OP_EQUAL,
-        .compareMask = UINT32_MAX,
+        .compareOp = VK_COMPARE_OP_ALWAYS,
+        .compareMask = std::numeric_limits<uint32_t>::max (),
         .writeMask = 0U,
-        .reference = LightVolumeProgram::GetLightVolumeStencilValue ()
+        .reference = 0U
     };
 
     info.minDepthBounds = 0.0F;

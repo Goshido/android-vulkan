@@ -98,7 +98,7 @@ bool MandelbrotAnalyticColor::CreateCommandBuffer ( android_vulkan::Renderer &re
     {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
         .pNext = nullptr,
-        .flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT,
+        .flags = 0U,
         .pInheritanceInfo = nullptr
     };
 
@@ -110,15 +110,27 @@ bool MandelbrotAnalyticColor::CreateCommandBuffer ( android_vulkan::Renderer &re
         }
     };
 
-    VkRenderPassBeginInfo renderPassBeginInfo;
-    renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    renderPassBeginInfo.pNext = nullptr;
-    renderPassBeginInfo.renderPass = _renderPass;
-    renderPassBeginInfo.renderArea.offset.x = 0;
-    renderPassBeginInfo.renderArea.offset.y = 0;
-    renderPassBeginInfo.renderArea.extent = renderer.GetSurfaceSize ();
-    renderPassBeginInfo.clearValueCount = 1U;
-    renderPassBeginInfo.pClearValues = &colorClearValue;
+    VkRenderPassBeginInfo renderPassBeginInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+        .pNext = nullptr,
+        .renderPass = _renderPass,
+        .framebuffer = VK_NULL_HANDLE,
+
+        .renderArea
+        {
+            .offset
+            {
+                .x = 0,
+                .y = 0
+            },
+
+            .extent = renderer.GetSurfaceSize ()
+        },
+
+        .clearValueCount = 1U,
+        .pClearValues = &colorClearValue,
+    };
 
     for ( size_t i = 0U; i < framebufferCount; ++i )
     {

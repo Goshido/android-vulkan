@@ -1,4 +1,5 @@
 #include <core.h>
+#include <bitwise.h>
 #include <logger.h>
 #include <mandelbrot/mandelbrot_analytic_color.h>
 #include <mandelbrot/mandelbrot_lut_color.h>
@@ -161,7 +162,7 @@ void Core::OnSurfaceDestroyed () noexcept
         _writeQueue.push_back ( eCommand::SwapchainDestroyed );
     }
 
-    while ( !_readQueue.empty () | !_writeQueue.empty () )
+    while ( AV_BITWISE ( !_readQueue.empty () ) | AV_BITWISE ( !_writeQueue.empty () ) )
         std::this_thread::sleep_for ( TIMEOUT );
 
     ANativeWindow_release ( _nativeWindow );
@@ -283,8 +284,7 @@ bool Core::OnSwapchainDestroyed () noexcept
 
 void Core::UpdateFPS ( Timestamp now )
 {
-    static uint32_t frameCount = 0U;
-    ++frameCount;
+    ++_frameCount;
 
     const std::chrono::duration<double> seconds = now - _fpsTimestamp;
     const double delta = seconds.count ();
@@ -292,9 +292,9 @@ void Core::UpdateFPS ( Timestamp now )
     if ( delta < FPS_PERIOD )
         return;
 
-    LogInfo ( "FPS: %g", frameCount / delta );
+    LogInfo ( "FPS: %g", _frameCount / delta );
     _fpsTimestamp = now;
-    frameCount = 0U;
+    _frameCount = 0U;
 }
 
 void Core::OnHomeUp ( void* /*context*/ ) noexcept

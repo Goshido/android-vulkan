@@ -4,6 +4,18 @@ require "av://engine/object.lua"
 GXVec3 = {}
 
 -- Methods
+local function Clone ( self, other )
+    assert ( type ( self ) == "table" and self._type == eObjectType.GXVec3,
+        [[GXVec3:Clone - Calling not via ":" syntax.]]
+    )
+
+    assert ( type ( other ) == "table" and other._type == eObjectType.GXVec3,
+        [[GXVec3:Clone - "other" is not a GXVec3.]]
+    )
+
+    av_GXVec3Clone ( self._handle, other._handle )
+end
+
 local function CrossProduct ( self, a, b )
     assert ( type ( self ) == "table" and self._type == eObjectType.GXVec3,
         [[GXVec3:CrossProduct - Calling not via ":" syntax.]]
@@ -92,6 +104,17 @@ local function MultiplyScalar ( self, a, scale )
     assert ( type ( scale ) == "number", [[GXVec3:MultiplyScalar - "scale" is not a number.]] )
 
     av_GXVec3MultiplyScalar ( self._handle, a._handle, scale )
+end
+
+local function MultiplyVector ( self, a, b )
+    assert ( type ( self ) == "table" and self._type == eObjectType.GXVec3,
+        [[GXVec3:MultiplyScalar - Calling not via ":" syntax.]]
+    )
+
+    assert ( type ( a ) == "table" and a._type == eObjectType.GXVec3, [[GXVec3:MultiplyScalar - "a" is not a GXVec3.]] )
+    assert ( type ( b ) == "table" and b._type == eObjectType.GXVec3, [[GXVec3:MultiplyScalar - "b" is not a GXVec3.]] )
+
+    av_GXVec3MultiplyVector ( self._handle, a._handle, b._handle )
 end
 
 local function Normalize ( self )
@@ -213,6 +236,7 @@ local function Constructor ( self )
     obj._handle = av_GXVec3Create ()
 
     -- Methods
+    obj.Clone = Clone
     obj.CrossProduct = CrossProduct
     obj.Distance = Distance
     obj.DotProduct = DotProduct
@@ -222,6 +246,7 @@ local function Constructor ( self )
     obj.Init = Init
     obj.Length = Length
     obj.MultiplyScalar = MultiplyScalar
+    obj.MultiplyVector = MultiplyVector
     obj.Normalize = Normalize
     obj.Reverse = Reverse
     obj.SetX = SetX

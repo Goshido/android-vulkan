@@ -1,5 +1,5 @@
-#ifndef RENDERER_H
-#define RENDERER_H
+#ifndef ANDROID_VULKAN_RENDERER_H
+#define ANDROID_VULKAN_RENDERER_H
 
 
 #include <GXCommon/GXWarning.h>
@@ -44,7 +44,7 @@ struct VulkanPhysicalDeviceInfo final
 class Renderer final
 {
     private:
-        using LogType = void (*) ( char const* format, ... );
+        using LogType = void ( * ) ( char const* format, ... );
 
     private:
         VkFormat                                                            _depthStencilImageFormat;
@@ -148,9 +148,6 @@ class Renderer final
         // by Renderer::GetSurfaceSize API.
         [[nodiscard]] VkExtent2D const& GetViewportResolution () const noexcept;
 
-        [[nodiscard]] bool IsDeviceCreated () const noexcept;
-        [[nodiscard]] bool IsSwapchainCreated () const noexcept;
-
         [[nodiscard]] bool OnCreateSwapchain ( ANativeWindow &nativeWindow, bool vSync ) noexcept;
         void OnDestroySwapchain () noexcept;
 
@@ -178,7 +175,6 @@ class Renderer final
         [[nodiscard]] static char const* ResolveVkFormat ( VkFormat format ) noexcept;
 
     private:
-        [[nodiscard]] bool CheckExtensionMultiview ( std::set<std::string> const &allExtensions ) noexcept;
         [[nodiscard]] bool CheckExtensionShaderFloat16Int8 ( std::set<std::string> const &allExtensions ) noexcept;
         [[nodiscard]] bool CheckRequiredDeviceExtensions ( std::vector<char const*> const &deviceExtensions ) noexcept;
 
@@ -210,7 +206,7 @@ class Renderer final
         void DestroySwapchain () noexcept;
 
         [[nodiscard]] bool PrintPhysicalDeviceExtensionInfo ( VkPhysicalDevice physicalDevice ) noexcept;
-        [[nodiscard]] bool PrintPhysicalDeviceFeatureInfo ( VkPhysicalDevice physicalDevice ) noexcept;
+        void PrintPhysicalDeviceFeatureInfo ( VkPhysicalDevice physicalDevice ) noexcept;
 
         void PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits ) noexcept;
         void PrintPhysicalDeviceMemoryProperties ( VkPhysicalDevice physicalDevice ) noexcept;
@@ -251,8 +247,8 @@ class Renderer final
             uint64_t object,
             size_t location,
             int32_t messageCode,
-            const char* pLayerPrefix,
-            const char* pMessage,
+            char const* pLayerPrefix,
+            char const* pMessage,
             void* pUserData
         );
 
@@ -321,9 +317,14 @@ class Renderer final
         [[nodiscard]] static char const* ResolveVkPresentModeKHR ( VkPresentModeKHR mode ) noexcept;
         [[nodiscard]] static char const* ResolveVkResult ( VkResult result ) noexcept;
         [[nodiscard]] static char const* ResolveVkSurfaceTransform ( VkSurfaceTransformFlagsKHR transform ) noexcept;
+
+        [[nodiscard]] static std::string StringifyVkFlags ( VkFlags flags,
+            size_t flagSetCount,
+            std::pair<uint32_t, char const*> const flagSet[]
+        ) noexcept;
 };
 
 } // namespace android_vulkan
 
 
-#endif // RENDERER_H
+#endif // ANDROID_VULKAN_RENDERER_H

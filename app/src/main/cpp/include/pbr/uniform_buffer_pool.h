@@ -16,17 +16,15 @@ enum class eUniformPoolSize : size_t
     Huge_64M = 64U
 };
 
-// Note the method is NOT thread safe.
+// Note the class is NOT thread safe.
 class UniformBufferPool final
 {
     private:
-        VkBufferMemoryBarrier       _barrier;
-        VkBufferCreateInfo          _bufferInfo;
-        VkDeviceMemory              _gpuMemory;
-        VkDeviceSize                _gpuSpecificItemOffset;
-        size_t                      _index;
-        VkDeviceSize                _itemSize;
-        std::vector<VkBuffer>       _pool;
+        VkDeviceMemory              _gpuMemory = VK_NULL_HANDLE;
+        VkDeviceSize                _gpuSpecificItemOffset = 0U;
+        size_t                      _index = 0U;
+        VkDeviceSize                _itemSize = 0U;
+        std::vector<VkBuffer>       _pool {};
         size_t                      _size;
 
     public:
@@ -41,14 +39,12 @@ class UniformBufferPool final
         explicit UniformBufferPool ( eUniformPoolSize size ) noexcept;
         ~UniformBufferPool () = default;
 
-        // The method acquires one uniform buffer from the pool, inits it with data and returns the buffer to the user.
-        [[nodiscard]] VkBuffer Acquire ( android_vulkan::Renderer &renderer,
-            VkCommandBuffer commandBuffer,
-            void const* data,
-            VkPipelineStageFlags targetStages
-        ) noexcept;
+        // The method acquires one uniform buffer from the pool and fills it with data.
+        // Method return buffer which has been jsut written.
+        VkBuffer Push ( VkCommandBuffer commandBuffer, void const* data, size_t size ) noexcept;
 
-        [[nodiscard]] size_t GetItemCount () const noexcept;
+        [[nodiscard]] size_t GetAvailableItemCount () const noexcept;
+        [[nodiscard]] VkBuffer GetBuffer ( size_t bufferIndex ) const noexcept;
 
         // The method return all items to the pool.
         void Reset () noexcept;
@@ -57,7 +53,7 @@ class UniformBufferPool final
         void Destroy ( VkDevice device ) noexcept;
 
     private:
-        [[nodiscard]] bool AllocateItem ( android_vulkan::Renderer &renderer ) noexcept;
+        [[nodiscard]] bool AllocateBuffers ( android_vulkan::Renderer &renderer, size_t itemCount ) noexcept;
 
         [[nodiscard]] static bool ResolveAlignment ( android_vulkan::Renderer &renderer,
             size_t &alignment,

@@ -83,7 +83,7 @@ class MaterialManager final
 
         [[nodiscard]] Texture2DRef LoadTexture ( android_vulkan::Renderer &renderer,
             size_t &commandBufferConsumed,
-            uint8_t const *data,
+            uint8_t const* data,
             uint64_t nameOffset,
             android_vulkan::eFormat format,
             VkCommandBuffer const* commandBuffers

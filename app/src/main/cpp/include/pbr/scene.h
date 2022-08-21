@@ -79,7 +79,7 @@ class Scene final
         void FreeTransferResources ( VkDevice device ) noexcept;
 
         [[nodiscard]] bool LoadScene ( android_vulkan::Renderer &renderer,
-            char const *scene,
+            char const* scene,
             VkCommandPool commandPool
         ) noexcept;
 

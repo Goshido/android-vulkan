@@ -68,7 +68,7 @@ void UniformBufferPoolManager::IssueSync ( VkDevice device, VkCommandBuffer comm
     vkUpdateDescriptorSets ( device, static_cast<uint32_t> ( more ), writeSets, 0U, nullptr );
 }
 
-void UniformBufferPoolManager::Push ( VkCommandBuffer commandBuffer, void const *item, size_t size ) noexcept
+void UniformBufferPoolManager::Push ( VkCommandBuffer commandBuffer, void const* item, size_t size ) noexcept
 {
     _uniformPool.Push ( commandBuffer, item, size );
 
@@ -205,7 +205,7 @@ bool UniformBufferPoolManager::Init ( android_vulkan::Renderer &renderer,
     return true;
 }
 
-void UniformBufferPoolManager::Destroy ( VkDevice device, [[maybe_unused]] char const *name ) noexcept
+void UniformBufferPoolManager::Destroy ( VkDevice device, [[maybe_unused]] char const* name ) noexcept
 {
     if ( _descriptorPool != VK_NULL_HANDLE )
     {

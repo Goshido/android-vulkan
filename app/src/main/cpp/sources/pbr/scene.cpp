@@ -351,7 +351,7 @@ void Scene::FreeTransferResources ( VkDevice device ) noexcept
     _renderableList.splice ( _renderableList.cend (), _freeTransferResourceList );
 }
 
-bool Scene::LoadScene ( android_vulkan::Renderer &renderer, char const *scene, VkCommandPool commandPool ) noexcept
+bool Scene::LoadScene ( android_vulkan::Renderer &renderer, char const* scene, VkCommandPool commandPool ) noexcept
 {
     android_vulkan::File file ( scene );
 

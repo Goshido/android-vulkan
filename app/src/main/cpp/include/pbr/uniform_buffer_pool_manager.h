@@ -46,10 +46,10 @@ class UniformBufferPoolManager final
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
             DescriptorSetLayout const &descriptorSetLayout,
             size_t itemSize,
-            char const *name
+            char const* name
         ) noexcept;
 
-        void Destroy ( VkDevice device, char const *name ) noexcept;
+        void Destroy ( VkDevice device, char const* name ) noexcept;
 };
 
 } // namespace pbr

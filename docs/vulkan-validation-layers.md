@@ -26,7 +26,7 @@ After installing the _Python_ you have to disable _Windows 11_ aliases for pytho
 
 <img src="./images/python-windows-aliases.png" width="629" />
 
-It's needed because bootstrap scripts of the _Vulkan-ValidationLayers_ project are using `python3` calls. So the next obvious step is to create symbolic link `python3.exe` which will be connected with `python.exe`. Yes. It's possible on _Windows OS_. Run _cmd.exe_ with admistrative rights and call
+It's needed because bootstrap scripts of the _Vulkan-ValidationLayers_ project are using `python3` calls. So the next obvious step is to create symbolic link `python3.exe` which will be connected with `python.exe`. Yes. It's possible on _Windows OS_. Run _cmd.exe_ with administrative rights and call
 
 ```batch
 cd <python directory>
@@ -93,7 +93,7 @@ The artifacts will be here:
 
 ### Building `libVkLayer_khronos_validation.so`
 
-At this point we able to build _Vulkan_ validation layers for _Android_. Unfortunatelly stock building process via `Android.mk` files does not work out of the box. There are two reasons:
+At this point we able to build _Vulkan_ validation layers for _Android_. Unfortunately stock building process via `Android.mk` files does not work out of the box. There are two reasons:
 
 1) Force autotests with dependencies
 2) Mess with linking of the static libraries: `layer_utils`, `SPIRV-Tools` and `SPIRV-Tools-opt`
@@ -102,7 +102,7 @@ Good news is the legacy `Android.mk` could be written to _CMakeLists_ + _Ninja_ 
 
 So the last building process for _Windows OS_ is automated via script `<repo>/third-party/vulkan-validation-layers/windows-host/x-build.bat`
 
-In order to use it you have to specify two enviroment variables:
+In order to use it you have to specify two environment variables:
 
 Variable name | Meaning | Example
 --- | --- | ---
@@ -126,4 +126,4 @@ That's all!
 Name | Link | Status
 --- | --- | ---
 Incorrect validation of the `vkGetPhysicalDeviceSurfaceFormatsKHR` | [#3251](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/3251) | ✔️ Fixed
-Incorrect deinitialization and `VK_EXT_debug_report` | [#3327](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/3327) | ☄️ Driver bug
+Incorrect de-initialization and `VK_EXT_debug_report` | [#3327](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/3327) | ☄️ Driver bug

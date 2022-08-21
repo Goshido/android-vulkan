@@ -89,7 +89,7 @@ Method changes camera projection transformation.
 
 **Parameters:**
 
-- `aspectRatio` [_required, readonly, number_]: viewport aspect ratio, i.e. width devided by height
+- `aspectRatio` [_required, readonly, number_]: viewport aspect ratio, i.e. width divided by height
 
 **Return values:**
 
@@ -157,7 +157,7 @@ Method changes camera projection transformation.
 **Parameters:**
 
 - `fieldOfViewRadians` [_required, readonly, number_]: field of view angle of _Y_ axis in [radians](https://en.wikipedia.org/wiki/Radian)
-- `aspectRatio` [_required, readonly, number_]: viewport aspect ratio, i.e. width devided by height
+- `aspectRatio` [_required, readonly, number_]: viewport aspect ratio, i.e. width divided by height
 - `zNear` [_required, readonly, number_]: the distance to near clipping plane
 - `zFar` [_required, readonly, number_]: the distance to far clipping plane
 

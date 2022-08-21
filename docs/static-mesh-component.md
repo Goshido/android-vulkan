@@ -71,7 +71,7 @@ g_scene:AppendActor ( rock )
 
 ## <a id="method-get-local">`GetLocal ( localMatrix )`</a>
 
-Method returns local transform of the compoment.
+Method returns local transform of the component.
 
 **Parameters:**
 
@@ -97,7 +97,7 @@ mesh:GetLocal ( m )
 
 ## <a id="method-set-local">`SetLocal ( localMatrix )`</a>
 
-Method sets local transform of the compoment.
+Method sets local transform of the component.
 
 **Parameters:**
 

@@ -10,9 +10,6 @@ namespace pbr {
 class GeometryPassTextureDescriptorSetLayout final : public DescriptorSetLayout
 {
     public:
-        constexpr static size_t const TEXTURE_SLOTS = 5U;
-
-    public:
         GeometryPassTextureDescriptorSetLayout () = default;
 
         GeometryPassTextureDescriptorSetLayout ( GeometryPassTextureDescriptorSetLayout const & ) = delete;

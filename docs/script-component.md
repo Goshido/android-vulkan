@@ -198,13 +198,13 @@ local name = script:GetName ()
 
 ## <a id="method-on-actor-constructed">`OnActorConstructed ( self, actor )`</a>
 
-Optional user provided event handler in the subclass implementaion. The method will be called by the engine after creation and appending of all components to the current [_Actor_](./actor.md) instance. The event graph is presented [here](#event-calling-order).
+Optional user provided event handler in the subclass implementation. The method will be called by the engine after creation and appending of all components to the current [_Actor_](./actor.md) instance. The event graph is presented [here](#event-calling-order).
 
 **Note:** If [_Actor_](./actor.md) instance contains several [_ScriptComponent_](./script-component.md) instances the invocation order of `OnActorConstructed` for those components is undefined. That means that it's safe to query and find components attached to current [_Actor_](./actor.md) instance. But it's not safe to call any methods or read/modify any properties in the sibling components. They could not be initialized yet.
 
 **Parameters:**
 
-- `self` [_required, read/write, [ScriptComponent](./script-component.md)_]: part of _Lua OOP_ convention requred to invoke method via `:` syntax
+- `self` [_required, read/write, [ScriptComponent](./script-component.md)_]: part of _Lua OOP_ convention required to invoke method via `:` syntax
 - `actor` [_required, read/write, [Actor](./actor.md)_]: current [_Actor_](./actor.md) instance
 
 **Return values:**
@@ -242,11 +242,11 @@ return Player
 
 ## <a id="method-on-destroy">`OnDestroy ( self )`</a>
 
-Optional user provided event handler in the subclass implementaion. The method will be called by the engine right before [_Actor_](./actor.md) destroy.
+Optional user provided event handler in the subclass implementation. The method will be called by the engine right before [_Actor_](./actor.md) destroy.
 
 **Parameters:**
 
-- `self` [_required, read/write, [ScriptComponent](./script-component.md)_]: part of _Lua OOP_ convention requred to invoke method via `:` syntax
+- `self` [_required, read/write, [ScriptComponent](./script-component.md)_]: part of _Lua OOP_ convention required to invoke method via `:` syntax
 
 **Return values:**
 
@@ -283,11 +283,11 @@ return Player
 
 ## <a id="method-on-input">`OnInput ( self, inputEvent )`</a>
 
-Optional user provided event handler in the subclass implementaion. The method will be called by the engine right after frame start. The event graph is presented [here](#event-calling-order).
+Optional user provided event handler in the subclass implementation. The method will be called by the engine right after frame start. The event graph is presented [here](#event-calling-order).
 
 **Parameters:**
 
-- `self` [_required, read/write, [ScriptComponent](./script-component.md)_]: part of _Lua OOP_ convention requred to invoke method via `:` syntax
+- `self` [_required, read/write, [ScriptComponent](./script-component.md)_]: part of _Lua OOP_ convention required to invoke method via `:` syntax
 - `inputEvent` [_required, readonly, [InputEvent](./input-event.md)_]: input event with state
 
 **Return values:**
@@ -332,11 +332,11 @@ return Player
 
 ## <a id="method-on-post-physics">`OnPostPhysics ( self, deltaTime )`</a>
 
-Optional user provided event handler in the subclass implementaion. The method will be called by the engine right after physics simulation. The event graph is presented [here](#event-calling-order).
+Optional user provided event handler in the subclass implementation. The method will be called by the engine right after physics simulation. The event graph is presented [here](#event-calling-order).
 
 **Parameters:**
 
-- `self` [_required, read/write, [ScriptComponent](./script-component.md)_]: part of _Lua OOP_ convention requred to invoke method via `:` syntax
+- `self` [_required, read/write, [ScriptComponent](./script-component.md)_]: part of _Lua OOP_ convention required to invoke method via `:` syntax
 - `deltaTime` [_required, readonly, number_]: delta time in seconds between frames
 
 **Return values:**
@@ -374,11 +374,11 @@ return Player
 
 ## <a id="method-on-pre-physics">`OnPrePhysics ( self, deltaTime )`</a>
 
-Optional user provided event handler in the subclass implementaion. The method will be called by the engine right before physics simulation. The event graph is presented [here](#event-calling-order).
+Optional user provided event handler in the subclass implementation. The method will be called by the engine right before physics simulation. The event graph is presented [here](#event-calling-order).
 
 **Parameters:**
 
-- `self` [_required, read/write, [ScriptComponent](./script-component.md)_]: part of _Lua OOP_ convention requred to invoke method via `:` syntax
+- `self` [_required, read/write, [ScriptComponent](./script-component.md)_]: part of _Lua OOP_ convention required to invoke method via `:` syntax
 - `deltaTime` [_required, readonly, number_]: delta time in seconds between frames
 
 **Return values:**
@@ -416,11 +416,11 @@ return Player
 
 ## <a id="method-on-render-target-changed">`OnRenderTargetChanged ( self )`</a>
 
-Optional user provided event handler in the subclass implementaion. The method will be called by the engine when render target changes its resolution or aspect ratio.
+Optional user provided event handler in the subclass implementation. The method will be called by the engine when render target changes its resolution or aspect ratio.
 
 **Parameters:**
 
-- `self` [_required, read/write, [ScriptComponent](./script-component.md)_]: part of _Lua OOP_ convention requred to invoke method via `:` syntax
+- `self` [_required, read/write, [ScriptComponent](./script-component.md)_]: part of _Lua OOP_ convention required to invoke method via `:` syntax
 
 **Return values:**
 
@@ -462,11 +462,11 @@ return Camera
 
 ## <a id="method-on-update">`OnUpdate ( self, deltaTime )`</a>
 
-Optional user provided event handler in the subclass implementaion. The method will be called by the engine right after render object submissions and before end of the frame. The event graph is presented [here](#event-calling-order).
+Optional user provided event handler in the subclass implementation. The method will be called by the engine right after render object submissions and before end of the frame. The event graph is presented [here](#event-calling-order).
 
 **Parameters:**
 
-- `self` [_required, read/write, [ScriptComponent](./script-component.md)_]: part of _Lua OOP_ convention requred to invoke method via `:` syntax
+- `self` [_required, read/write, [ScriptComponent](./script-component.md)_]: part of _Lua OOP_ convention required to invoke method via `:` syntax
 - `deltaTime` [_required, readonly, number_]: delta time in seconds between frames
 
 **Return values:**

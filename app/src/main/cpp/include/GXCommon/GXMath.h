@@ -1,4 +1,4 @@
-// version 1.75
+// version 1.77
 
 #ifndef GX_MATH
 #define GX_MATH
@@ -679,7 +679,7 @@ struct [[maybe_unused]] GXMat4 final
 
     [[maybe_unused]] GXVoid Identity () noexcept;
 
-    [[maybe_unused]] GXVoid Perspective ( GXFloat fieldOfViewYRadiands,
+    [[maybe_unused]] GXVoid Perspective ( GXFloat fieldOfViewYRadians,
         GXFloat aspectRatio,
         GXFloat zNear,
         GXFloat zFar
@@ -721,7 +721,7 @@ struct [[maybe_unused]] GXMat4 final
     [[maybe_unused]] GXVoid MultiplyAsPoint ( GXVec3 &out, GXVec3 const &v ) const noexcept;
 
     // Result is valid if own matrix is perspective matrix.
-    [[maybe_unused]] GXVoid GetPerspectiveParams ( GXFloat &fieldOfViewYRadiands,
+    [[maybe_unused]] GXVoid GetPerspectiveParams ( GXFloat &fieldOfViewYRadians,
         GXFloat &aspectRatio,
         GXFloat &zNear,
         GXFloat &zFar

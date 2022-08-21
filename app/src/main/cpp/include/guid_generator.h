@@ -33,7 +33,7 @@ class GUID final
         {
             uint32_t    _timeLow;
             uint16_t    _timeMid;
-            uint16_t    _timeHiAndBersion;
+            uint16_t    _timeHiAndVersion;
             uint16_t    _clockSeq;
             uint8_t     _node[ 6U ];
         };

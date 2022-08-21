@@ -36,7 +36,7 @@ local function Constructor ( self, ... )
     local argc = #argv
 
     if argc == 1 then
-        -- Call origiated from C++ side.
+        -- Call originated from C++ side.
         local handle = argv[ 1 ]
         return Component ( eObjectType.ScriptComponent, handle )
     end
@@ -46,7 +46,7 @@ local function Constructor ( self, ... )
         return nil
     end
 
-    -- Call origiated from Lua VM side.
+    -- Call originated from Lua VM side.
     local name = argv[ 1 ]
     local script = argv[ 2 ]
     local params = argv[ 3 ]

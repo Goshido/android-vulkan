@@ -105,10 +105,10 @@ class RigidBody final
         void SetContext ( Context context ) noexcept;
 
         [[maybe_unused, nodiscard]] float GetDampingAngular () const noexcept;
-        void SetDampingAngular ( float damping ) noexcept;
+        [[maybe_unused]] void SetDampingAngular ( float damping ) noexcept;
 
         [[maybe_unused, nodiscard]] float GetDampingLinear () const noexcept;
-        void SetDampingLinear ( float damping ) noexcept;
+        [[maybe_unused]] void SetDampingLinear ( float damping ) noexcept;
 
         [[nodiscard]] GXMat3 const& GetInertiaTensorInverse () const noexcept;
 

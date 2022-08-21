@@ -16,7 +16,7 @@ std::string GUID::GenerateAsString ( std::string_view prefix ) noexcept
 {
     TimeUUID timeUUID = Unpack ( GenerateUUID () );
     timeUUID._clockSeq = ( timeUUID._clockSeq & UINT16_C ( 0x3FFF ) ) | UINT16_C ( 0x8000 );
-    timeUUID._timeHiAndBersion = (timeUUID._timeHiAndBersion & UINT16_C ( 0x0FFF ) ) | UINT16_C ( 0x4000 );
+    timeUUID._timeHiAndVersion = (timeUUID._timeHiAndVersion & UINT16_C ( 0x0FFF ) ) | UINT16_C ( 0x4000 );
 
     UUID const final = Pack ( timeUUID );
 
@@ -128,7 +128,7 @@ GUID::UUID GUID::Pack ( TimeUUID const &timeUUID ) noexcept
     tmp >>= 8U;
     out[ 4U ] = static_cast<uint8_t> ( tmp );
 
-    tmp = timeUUID._timeHiAndBersion;
+    tmp = timeUUID._timeHiAndVersion;
     out[ 7U ] = static_cast<uint8_t> ( tmp );
 
     tmp >>= 8U;
@@ -163,7 +163,7 @@ GUID::TimeUUID GUID::Unpack ( UUID const &uuid ) noexcept
 
     tmp = *ptr++;
     tmp = ( tmp << 8U ) | *ptr++;
-    result._timeHiAndBersion = tmp;
+    result._timeHiAndVersion = tmp;
 
     tmp = *ptr++;
     tmp = ( tmp << 8U ) | *ptr++;

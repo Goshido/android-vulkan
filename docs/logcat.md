@@ -1,6 +1,6 @@
 # _Logcat™_ best practices
 
-_android-vulkan_ project is using `android_vulkan::C++` tag for logging. But it's better to check output from the following standart libraries too:
+_android-vulkan_ project is using `android_vulkan::C++` tag for logging. But it's better to check output from the following standard libraries too:
 
 - _libc_
 - _gralloc_

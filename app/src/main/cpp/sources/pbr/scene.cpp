@@ -133,7 +133,7 @@ bool Scene::OnInitDevice ( android_vulkan::Physics &physics ) noexcept
     if ( lua_pcall ( _vm, 1, 1, ScriptEngine::GetErrorHandlerIndex () ) != LUA_OK )
         return false;
 
-    constexpr luaL_Reg const extentions[] =
+    constexpr luaL_Reg const extensions[] =
     {
         {
             .name = "av_SceneGetPenetrationBox",
@@ -177,7 +177,7 @@ bool Scene::OnInitDevice ( android_vulkan::Physics &physics ) noexcept
         }
     };
 
-    for ( auto const& extension : extentions )
+    for ( auto const& extension : extensions )
         lua_register ( _vm, extension.name, extension.func );
 
     _sceneHandle = lua_gettop ( _vm );

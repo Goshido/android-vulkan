@@ -43,17 +43,17 @@ uint16_t Half::Convert ( float value )
 
         if ( mantissa & 0x400000U )
         {
-            // singnaling NaN
+            // signaling NaN
             return static_cast<uint16_t> ( ( sign >> 16U ) | 0x00007C00U );
         }
 
-        // quet NaN
+        // quiet NaN
         return static_cast<uint16_t> ( ( sign >> 16U ) | 0x00007E00U );
     }
 
     const auto exponentRaw = static_cast<uint8_t> ( exponent >> 23U );
 
-    // removing exponent bias (substract 127)
+    // removing exponent bias (subtract 127)
     // see https://en.wikipedia.org/wiki/Single-precision_floating-point_format
     auto restoredExponent = static_cast<int16_t> ( exponentRaw - 0x7F );
 

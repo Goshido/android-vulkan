@@ -416,7 +416,7 @@ v:Normalize ()
 
 ## <a id="method-reverse">`Reverse ()`</a>
 
-Method makes the vector in oposite direction to current vector. The length of the result vector equals the lenght of original vector.
+Method makes the vector in opposite direction to current vector. The length of the result vector equals the length of original vector.
 
 **Parameters:**
 

@@ -150,7 +150,7 @@ void Actor::RegisterComponents ( Scene &scene,
 
 bool Actor::Init ( lua_State &vm ) noexcept
 {
-    constexpr luaL_Reg const extentions[] =
+    constexpr luaL_Reg const extensions[] =
     {
         {
             .name = "av_ActorDestroy",
@@ -162,7 +162,7 @@ bool Actor::Init ( lua_State &vm ) noexcept
         }
     };
 
-    for ( auto const& extension : extentions )
+    for ( auto const& extension : extensions )
         lua_register ( &vm, extension.name, extension.func );
 
     if ( !lua_checkstack ( &vm, 2 ) )
@@ -260,16 +260,16 @@ void Actor::AppendRigidBodyComponent ( ComponentRef &component,
 ) noexcept
 {
     // NOLINTNEXTLINE - downcast.
-    auto& rigiBodyComponent = static_cast<RigidBodyComponent&> ( *component );
+    auto& rigidBodyComponent = static_cast<RigidBodyComponent&> ( *component );
 
     lua_pushvalue ( &vm, _appendComponentIndex );
     lua_pushvalue ( &vm, -2 );
 
-    if ( !rigiBodyComponent.Register ( *this, physics, vm ) )
+    if ( !rigidBodyComponent.Register ( *this, physics, vm ) )
     {
         android_vulkan::LogWarning ( "pbr::Actor::AppendRigidBodyComponent - Can't register rigid body "
             "component %s.",
-            rigiBodyComponent.GetName ().c_str ()
+            rigidBodyComponent.GetName ().c_str ()
         );
 
         lua_pop ( &vm, 2 );
@@ -281,7 +281,7 @@ void Actor::AppendRigidBodyComponent ( ComponentRef &component,
 
     android_vulkan::LogWarning ( "pbr::Actor::AppendRigidBodyComponent - Can't append rigid body component %s "
         "inside Lua VM.",
-        rigiBodyComponent.GetName ().c_str ()
+        rigidBodyComponent.GetName ().c_str ()
     );
 }
 

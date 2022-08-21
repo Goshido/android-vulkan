@@ -40,7 +40,7 @@ class UniformBufferPool final
         ~UniformBufferPool () = default;
 
         // The method acquires one uniform buffer from the pool and fills it with data.
-        // Method return buffer which has been jsut written.
+        // Method return buffer which has been just written.
         VkBuffer Push ( VkCommandBuffer commandBuffer, void const* data, size_t size ) noexcept;
 
         [[nodiscard]] size_t GetAvailableItemCount () const noexcept;

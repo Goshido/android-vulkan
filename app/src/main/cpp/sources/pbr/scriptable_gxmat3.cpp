@@ -30,7 +30,7 @@ void ScriptableGXMat3::Init ( lua_State &vm ) noexcept
     for ( size_t i = 0U; i < INITIAL_CAPACITY; ++i )
         Insert ( new Item {}, _free );
 
-    constexpr luaL_Reg const extentions[] =
+    constexpr luaL_Reg const extensions[] =
     {
         {
             .name = "av_GXMat3Create",
@@ -108,7 +108,7 @@ void ScriptableGXMat3::Init ( lua_State &vm ) noexcept
         }
     };
 
-    for ( auto const& extension : extentions )
+    for ( auto const& extension : extensions )
     {
         lua_register ( &vm, extension.name, extension.func );
     }

@@ -1,4 +1,4 @@
-// version 1.5
+// version 1.6
 
 #include <GXCommon/GXMath.h>
 
@@ -51,7 +51,7 @@ GX_RESTORE_WARNING_STATE
 }
 
 // NOLINTNEXTLINE
-[[maybe_unused]] GXVoid GXMat4::GetPerspectiveParams ( GXFloat& /*fieldOfViewYRadiands*/,
+[[maybe_unused]] GXVoid GXMat4::GetPerspectiveParams ( GXFloat& /*fieldOfViewYRadians*/,
     GXFloat& /*aspectRatio*/,
     GXFloat& /*zNear*/,
     GXFloat& /*zFar*/

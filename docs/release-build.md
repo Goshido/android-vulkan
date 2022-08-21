@@ -4,7 +4,7 @@
 _Android_ development ecosystem requires to sign every release _APK_. It's achieved via `app/build.gragle` file. The sign certificate can be generated locally per user basis via built-in [_Android Studio_ tool](https://developer.android.com/studio/publish/app-signing#generate-key).
 
 ## Release environment setup
-As mentioned above the certificate information must be linked to the building process via `app/build.gradle` file. So it was decided to use approach based on user _environment variables_. This allows to not include security sensetive information under development repo. So the user have to declare the following environment variables:
+As mentioned above the certificate information must be linked to the building process via `app/build.gradle` file. So it was decided to use approach based on user _environment variables_. This allows to not include security sensitive information under development repo. So the user have to declare the following environment variables:
 
 Name | Description | Example
 --- | --- | ---

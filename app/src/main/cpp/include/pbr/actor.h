@@ -70,7 +70,7 @@ class Actor final
         void DestroyComponent ( Component &component ) noexcept;
         [[nodiscard]] std::string const& GetName () const noexcept;
 
-        // Note transfrom must be in render units.
+        // Note transform must be in render units.
         void OnTransform ( GXMat4 const &transformWorld ) noexcept;
 
         void RegisterComponents ( Scene &scene,

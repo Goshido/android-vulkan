@@ -43,7 +43,7 @@ Usually matrix class is used in _3D_ transformations. So by convention the matri
 
 `{vertex} x {transform #1} x {transform #2} x ...`
 
-It's possible bacause internal construction of scale, translation, rotation and projection transformations. For example classical **_model|view|projection_** transform looks like this in _Lua_:
+It's possible because internal construction of scale, translation, rotation and projection transformations. For example classical **_model|view|projection_** transform looks like this in _Lua_:
 
 ```lua
 require "av://engine/gx_mat4.lua"
@@ -170,7 +170,7 @@ Method initializes the matrix with composite rotation and translation transforma
 **Parameters:**
 
 - `unitQuaternion` [_required, readonly, [GXQuat](./gx-quat.md)_]: rotation which is represented by [quaternion](https://en.wikipedia.org/wiki/Quaternion)
-- `origin` [_required, readonly, [GXVec3](./gx-vec3.md)_]: the coordinate of the orgin of result transformation
+- `origin` [_required, readonly, [GXVec3](./gx-vec3.md)_]: the coordinate of the origin of result transformation
 
 **Return values:**
 
@@ -748,9 +748,9 @@ Method initializes the current matrix as translation transformation.
 
 **Parameters:**
 
-- `x` [_required, readonly, number_]: _X_-coodinate of the origin
-- `y` [_required, readonly, number_]: _Y_-coodinate of the origin
-- `z` [_required, readonly, number_]: _Z_-coodinate of the origin
+- `x` [_required, readonly, number_]: _X_-coordinate of the origin
+- `y` [_required, readonly, number_]: _Y_-coordinate of the origin
+- `z` [_required, readonly, number_]: _Z_-coordinate of the origin
 
 **Return values:**
 

@@ -66,7 +66,7 @@ class TextureCube final
         void FreeTransferResources ( VkDevice device ) noexcept;
 
         [[maybe_unused, nodiscard]] VkFormat GetFormat () const noexcept;
-        [[nodiscard]] VkImage GetImage () const noexcept;
+        [[maybe_unused, nodiscard]] VkImage GetImage () const noexcept;
         [[nodiscard]] VkImageView GetImageView () const noexcept;
         [[maybe_unused, nodiscard]] uint8_t GetMipLevelCount () const noexcept;
         [[maybe_unused, nodiscard]] VkExtent2D const& GetResolution () const noexcept;

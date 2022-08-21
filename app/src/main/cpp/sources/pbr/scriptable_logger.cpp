@@ -17,7 +17,7 @@ namespace pbr {
 
 void ScriptableLogger::Register ( lua_State &vm ) noexcept
 {
-    constexpr luaL_Reg const extentions[] =
+    constexpr luaL_Reg const extensions[] =
     {
         {
             .name = "av_LogD",
@@ -40,7 +40,7 @@ void ScriptableLogger::Register ( lua_State &vm ) noexcept
         }
     };
 
-    for ( auto const& extension : extentions )
+    for ( auto const& extension : extensions )
     {
         lua_register ( &vm, extension.name, extension.func );
     }

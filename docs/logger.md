@@ -51,11 +51,11 @@ Metamethod | Used
 
 ## <a id="function-logd">`LogD ( format, ... )`</a>
 
-Function prints the message to log with _debug_ tag. The function supports formating string [technique](https://en.cppreference.com/w/cpp/io/c/fprintf).
+Function prints the message to log with _debug_ tag. The function supports formatting string [technique](https://en.cppreference.com/w/cpp/io/c/fprintf).
 
 **Parameters:**
 
-- `format` [_required, readonly, string_]: message or [formating string](https://en.cppreference.com/w/cpp/io/c/fprintf)
+- `format` [_required, readonly, string_]: message or [formatting string](https://en.cppreference.com/w/cpp/io/c/fprintf)
 - `...` [_optional, readonly, any_]: optional parameters controlled by `format` string
 
 **Return values:**
@@ -76,11 +76,11 @@ LogD ( "The values: %s, %f", s, 77.7 )
 
 ## <a id="function-loge">`LogE ( format, ... )`</a>
 
-Function prints the message to log with _error_ tag. The function supports formating string [technique](https://en.cppreference.com/w/cpp/io/c/fprintf).
+Function prints the message to log with _error_ tag. The function supports formatting string [technique](https://en.cppreference.com/w/cpp/io/c/fprintf).
 
 **Parameters:**
 
-- `format` [_required, readonly, string_]: message or [formating string](https://en.cppreference.com/w/cpp/io/c/fprintf)
+- `format` [_required, readonly, string_]: message or [formatting string](https://en.cppreference.com/w/cpp/io/c/fprintf)
 - `...` [_optional, readonly, any_]: optional parameters controlled by `format` string
 
 **Return values:**
@@ -101,11 +101,11 @@ LogE ( "The values: %s, %f", s, 77.7 )
 
 ## <a id="function-logi">`LogI ( format, ... )`</a>
 
-Function prints the message to log with _info_ tag. The function supports formating string [technique](https://en.cppreference.com/w/cpp/io/c/fprintf).
+Function prints the message to log with _info_ tag. The function supports formatting string [technique](https://en.cppreference.com/w/cpp/io/c/fprintf).
 
 **Parameters:**
 
-- `format` [_required, readonly, string_]: message or [formating string](https://en.cppreference.com/w/cpp/io/c/fprintf)
+- `format` [_required, readonly, string_]: message or [formatting string](https://en.cppreference.com/w/cpp/io/c/fprintf)
 - `...` [_optional, readonly, any_]: optional parameters controlled by `format` string
 
 **Return values:**
@@ -126,11 +126,11 @@ LogI ( "The values: %s, %f", s, 77.7 )
 
 ## <a id="function-logw">`LogW ( format, ... )`</a>
 
-Function prints the message to log with _warning_ tag. The function supports formating string [technique](https://en.cppreference.com/w/cpp/io/c/fprintf).
+Function prints the message to log with _warning_ tag. The function supports formatting string [technique](https://en.cppreference.com/w/cpp/io/c/fprintf).
 
 **Parameters:**
 
-- `format` [_required, readonly, string_]: message or [formating string](https://en.cppreference.com/w/cpp/io/c/fprintf)
+- `format` [_required, readonly, string_]: message or [formatting string](https://en.cppreference.com/w/cpp/io/c/fprintf)
 - `...` [_optional, readonly, any_]: optional parameters controlled by `format` string
 
 **Return values:**

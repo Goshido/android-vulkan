@@ -237,7 +237,7 @@ void RigidBody::SetContext ( Context context ) noexcept
     return _dampingAngular;
 }
 
-void RigidBody::SetDampingAngular ( float damping ) noexcept
+[[maybe_unused]] void RigidBody::SetDampingAngular ( float damping ) noexcept
 {
     _dampingAngular = damping;
 }
@@ -247,7 +247,7 @@ void RigidBody::SetDampingAngular ( float damping ) noexcept
     return _dampingLinear;
 }
 
-void RigidBody::SetDampingLinear ( float damping ) noexcept
+[[maybe_unused]] void RigidBody::SetDampingLinear ( float damping ) noexcept
 {
     _dampingLinear = damping;
 }

@@ -245,7 +245,7 @@ bool ScriptablePenetration::Append ( lua_State &vm,
     // Normal field append.
     lua_rawset ( &vm, -3 );
 
-    // Rigig body component append.
+    // Rigid body component append.
     lua_pushlstring ( &vm, FIELD_BODY.data (), FIELD_BODY.size () );
     lua_pushvalue ( &vm, rigidBodyComponentStack );
     lua_rawset ( &vm, -3 );

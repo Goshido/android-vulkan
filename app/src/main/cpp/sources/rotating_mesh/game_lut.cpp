@@ -392,14 +392,15 @@ bool GameLUT::CreateSpecularLUTTexture ( android_vulkan::Renderer &renderer, VkC
     std::vector<uint8_t> lutData ( totalSamples * sizeof ( android_vulkan::Half ) );
     auto* samples = reinterpret_cast<android_vulkan::Half*> ( lutData.data () );
 
-    auto jobThread = [ samples ] ( size_t startIndex, int shininess ) {
+    auto jobThread = [ samples ] ( size_t startIndex, size_t shininess ) {
         do
         {
             constexpr auto nextOffset = SPECULAR_GENERATOR_THREADS * SPECULAR_ANGLE_SAMPLES;
             constexpr auto convert = 1.0F / static_cast<const float> ( SPECULAR_ANGLE_SAMPLES );
+            auto const s = static_cast<float> ( shininess );
 
             for ( size_t i = 0U; i < SPECULAR_ANGLE_SAMPLES; ++i )
-                samples[ startIndex + i ] = std::pow ( static_cast<float> ( i ) * convert, shininess );
+                samples[ startIndex + i ] = std::pow ( static_cast<float> ( i ) * convert, s );
 
             shininess += static_cast<int> ( SPECULAR_GENERATOR_THREADS );
             startIndex += nextOffset;
@@ -410,7 +411,7 @@ bool GameLUT::CreateSpecularLUTTexture ( android_vulkan::Renderer &renderer, VkC
     std::array<std::thread, SPECULAR_GENERATOR_THREADS> jobPool;
 
     for ( size_t i = 0U; i < SPECULAR_GENERATOR_THREADS; ++i )
-        jobPool[ i ] = std::thread ( jobThread, i * SPECULAR_ANGLE_SAMPLES, static_cast<int> ( i ) );
+        jobPool[ i ] = std::thread ( jobThread, i * SPECULAR_ANGLE_SAMPLES, i );
 
     for ( size_t i = 0U; i < SPECULAR_GENERATOR_THREADS; ++i )
         jobPool[ i ].join ();

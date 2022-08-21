@@ -13,7 +13,7 @@ class TransformComponent final : public Component
     private:
         GXMat4          _local {};
 
-        static int      _registerTranformComponentIndex;
+        static int      _registerTransformComponentIndex;
 
     public:
         TransformComponent () noexcept;

@@ -120,7 +120,7 @@ bool CameraComponent::Init ( lua_State &vm ) noexcept
 
     _registerCameraComponentIndex = lua_gettop ( &vm );
 
-    constexpr luaL_Reg const extentions[] =
+    constexpr luaL_Reg const extensions[] =
     {
         {
             .name = "av_CameraComponentCreate",
@@ -143,7 +143,7 @@ bool CameraComponent::Init ( lua_State &vm ) noexcept
         }
     };
 
-    for ( auto const& extension : extentions )
+    for ( auto const& extension : extensions )
         lua_register ( &vm, extension.name, extension.func );
 
     return true;

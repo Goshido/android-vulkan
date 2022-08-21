@@ -19,11 +19,11 @@ require "av://engine/rigid_body_component.lua"
 
 ## <a id="brief">Brief</a>
 
-Class represents rigid body entity which is one of the main building blocks of the physics simulation. There two main category for rigid bodies: *_kinematic_* and *_dynamic_*. The kinematic body has infinite mass and it is the best tool for describing level geometry. The dynamic body is simulated according physics laws. Dynamic body also controls the transfromation of every transformable components which are attached to the current [_Actor_](./actor.md).
+Class represents rigid body entity which is one of the main building blocks of the physics simulation. There two main category for rigid bodies: *_kinematic_* and *_dynamic_*. The kinematic body has infinite mass and it is the best tool for describing level geometry. The dynamic body is simulated according physics laws. Dynamic body also controls the transformation of every transformable components which are attached to the current [_Actor_](./actor.md).
 
 **Important rule:** There must be no more that one [_RigidBodyComponent_](./rigid-body-component.md) attached to current [_Actor_](./actor.md). This rule helps to avoid ambiguity between physics simulation and graphics representation.
 
-<a id="note-physics-coordinate-system">**Importan note:**</a> Physics coordinate system is different from renderer coordinate system in term of unit length. The following table describes physics coordinate system properties:
+<a id="note-physics-coordinate-system">**Important note:**</a> Physics coordinate system is different from renderer coordinate system in term of unit length. The following table describes physics coordinate system properties:
 
 Property | Description
 --- | ---

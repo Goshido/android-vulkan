@@ -75,7 +75,7 @@ For more information please refer to the following guidelines:
 
 ## <a id="macro-android-vulkan-debug">`ANDROID_VULKAN_DEBUG`</a>
 
-This macro enables custom mechanism for reporting leaked _Vulkan_ ojects. Also the macro is used for additional debug output in the [_Logcat™_](logcat.md).
+This macro enables custom mechanism for reporting leaked _Vulkan_ objects. Also the macro is used for additional debug output in the [_Logcat™_](logcat.md).
 
 ## <a id="macro-android-vulkan-enable-render-doc-integration">`ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION`</a>
 
@@ -83,7 +83,7 @@ This macro enables integration with [_RenderDoc_](https://renderdoc.org/). Note 
 
 ## <a id="macro-android-vulkan-enable-vulkan-validation-layers">`ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS`</a>
 
-This macro enables [_Khronos_ validation layer](https://developer.android.com/ndk/guides/graphics/validation-layer#apk-containing-layers). This introduces additional overhead in terms of execution. Macro is usefull in the develop time. Also validation layer can be disabled if current layer implementation contains unavoidable bugs and interferes with some features of the framework.
+This macro enables [_Khronos_ validation layer](https://developer.android.com/ndk/guides/graphics/validation-layer#apk-containing-layers). This introduces additional overhead in terms of execution. Macro is useful in the develop time. Also validation layer can be disabled if current layer implementation contains unavoidable bugs and interferes with some features of the framework.
 
 Note that macro is not compatible with [`ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION`](#macro-android-vulkan-enable-vulkan-validation-layers) macro.
 

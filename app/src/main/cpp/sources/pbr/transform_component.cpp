@@ -22,7 +22,7 @@ namespace pbr {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-int TransformComponent::_registerTranformComponentIndex = std::numeric_limits<int>::max ();
+int TransformComponent::_registerTransformComponentIndex = std::numeric_limits<int>::max ();
 
 TransformComponent::TransformComponent () noexcept:
     Component ( ClassID::Transform, android_vulkan::GUID::GenerateAsString ( "Transform" ) )
@@ -49,7 +49,7 @@ bool TransformComponent::Register ( lua_State &vm ) noexcept
         return false;
     }
 
-    lua_pushvalue ( &vm, _registerTranformComponentIndex );
+    lua_pushvalue ( &vm, _registerTransformComponentIndex );
     lua_pushlightuserdata ( &vm, this );
 
     return lua_pcall ( &vm, 1, 1, ScriptEngine::GetErrorHandlerIndex () ) == LUA_OK;
@@ -69,9 +69,9 @@ bool TransformComponent::Init ( lua_State &vm ) noexcept
         return false;
     }
 
-    _registerTranformComponentIndex = lua_gettop ( &vm );
+    _registerTransformComponentIndex = lua_gettop ( &vm );
 
-    constexpr luaL_Reg const extentions[] =
+    constexpr luaL_Reg const extensions[] =
     {
         {
             .name = "av_TransformComponentCreate",
@@ -84,7 +84,7 @@ bool TransformComponent::Init ( lua_State &vm ) noexcept
         }
     };
 
-    for ( auto const& extension : extentions )
+    for ( auto const& extension : extensions )
         lua_register ( &vm, extension.name, extension.func );
 
     return true;

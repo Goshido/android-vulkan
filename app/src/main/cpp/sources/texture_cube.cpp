@@ -388,7 +388,7 @@ void TextureCube::FreeTransferResources ( VkDevice device ) noexcept
     return _format;
 }
 
-VkImage TextureCube::GetImage () const noexcept
+[[maybe_unused]] VkImage TextureCube::GetImage () const noexcept
 {
     return _image;
 }

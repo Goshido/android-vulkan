@@ -45,10 +45,6 @@ internal class Activity : android.app.Activity (), SurfaceHolder.Callback2, Anal
 
         window.takeSurface ( this )
 
-        val view = View ( this )
-        setContentView ( view )
-        view.requestFocus ()
-
         // Using legacy API for easy auto entering to fullscreen mode after swipes.
         @Suppress ( "DEPRECATION" )
         window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN or

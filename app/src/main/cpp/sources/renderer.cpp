@@ -1182,10 +1182,13 @@ bool Renderer::TryAllocateMemory ( VkDeviceMemory &memory,
     char const* errorMessage
 ) const noexcept
 {
-    VkMemoryAllocateInfo allocateInfo {};
-    allocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-    allocateInfo.pNext = nullptr;
-    allocateInfo.allocationSize = requirements.size;
+    VkMemoryAllocateInfo allocateInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+        .pNext = nullptr,
+        .allocationSize = requirements.size,
+        .memoryTypeIndex = std::numeric_limits<uint32_t>::max ()
+    };
 
     if ( !SelectTargetMemoryTypeIndex ( allocateInfo.memoryTypeIndex, requirements, memoryProperties ) )
     {

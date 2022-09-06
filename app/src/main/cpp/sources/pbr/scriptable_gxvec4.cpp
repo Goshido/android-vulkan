@@ -67,7 +67,7 @@ void ScriptableGXVec4::Destroy () noexcept
         {
             Item* d = item;
             item = item->_next;
-            delete ( d );
+            delete d;
         }
 
         head = nullptr;

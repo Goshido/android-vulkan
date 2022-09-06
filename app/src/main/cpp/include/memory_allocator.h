@@ -6,7 +6,6 @@
 
 GX_DISABLE_COMMON_WARNINGS
 
-#include <deque>
 #include <list>
 #include <map>
 #include <mutex>
@@ -23,25 +22,29 @@ class [[maybe_unused]] MemoryAllocator final
         class Chunk final
         {
             private:
-                enum class Kind : uint8_t
+                using Offset = VkDeviceSize;
+
+                struct Block final
                 {
-                    Free,
-                    Occupied [[maybe_unused]]
+                    Block*                  _previous = nullptr;
+                    Block*                  _next = nullptr;
+                    Block*                  _meInOtherList = nullptr;
+
+                    Offset                  _offset = std::numeric_limits<Offset>::max ();
+                    VkDeviceSize            _size = 0U;
                 };
 
-                using Offset = VkDeviceSize;
-                using Size = VkDeviceSize;
-                using BlockChain = std::pair<Kind, Size>;
-                using BlockInfo = std::pair<Offset, Size>;
+                struct Blocks final
+                {
+                    Block*                  _head = nullptr;
+                    Block*                  _tail = nullptr;
+                };
 
             private:
-                std::list<BlockChain>       _blockChain {};
-                std::deque<BlockInfo>       _freeBlocks {};
+                Block*                      _blockChain = nullptr;
+                Blocks                      _freeBlocks {};
                 VkDeviceMemory              _memory = VK_NULL_HANDLE;
-                std::map<Offset, Size>      _usedBlocks {};
-
-                constexpr static Size       MEGABYTES_PER_CHUNK = 128U;
-                constexpr static Size       BYTES_PER_CHUNK = MEGABYTES_PER_CHUNK * 1024U * 1024U;
+                std::map<Offset, Block*>    _usedBlocks {};
 
             public:
                 Chunk () = default;
@@ -54,8 +57,12 @@ class [[maybe_unused]] MemoryAllocator final
 
                 ~Chunk () = default;
 
+                [[nodiscard]] bool FreeMemory ( VkDeviceMemory memory, VkDeviceSize offset ) noexcept;
+
                 [[nodiscard]] bool Init ( VkDevice device, size_t memoryTypeIndex ) noexcept;
                 void Destroy ( VkDevice device ) noexcept;
+
+                [[nodiscard]] bool IsUsed () const noexcept;
 
                 [[nodiscard]] bool TryAllocateMemory ( VkDeviceMemory &memory,
                     VkDeviceSize &offset,
@@ -63,7 +70,8 @@ class [[maybe_unused]] MemoryAllocator final
                 ) noexcept;
 
             private:
-                void AppendFreeBlock ( Offset offset, Size size ) noexcept;
+                [[nodiscard]] Block* AppendFreeBlock ( Offset offset, VkDeviceSize size ) noexcept;
+                void RemoveFreeBlock ( Block const &block ) noexcept;
         };
 
     private:
@@ -82,6 +90,7 @@ class [[maybe_unused]] MemoryAllocator final
 
         ~MemoryAllocator () = default;
 
+        [[maybe_unused]] void FreeMemory ( VkDevice device, VkDeviceMemory memory, VkDeviceSize offset ) noexcept;
         [[maybe_unused]] void Init ( VkPhysicalDeviceMemoryProperties const &properties ) noexcept;
 
         [[maybe_unused, nodiscard]] bool TryAllocateMemory ( VkDeviceMemory &memory,

@@ -33,55 +33,33 @@ void MemoryAllocator::Chunk::FreeMemory ( VkDeviceSize offset ) noexcept
     Offset mergeOffset = offset;
     VkDeviceSize mergeSize = block->_size;
 
-    Blocks mergeBlocks
-    {
-        ._head = block,
-        ._tail = block
-    };
+    // By convention only used block has "_freePrevious" and "_freeNext" as nullptr.
+    // Note "_freePrevious" and "_freeNext" could be nullptr if there is only one empty block in chunk.
+    // So it's needed to check "_freeBlocks" link as well.
 
-    // Note by convention only free block has link to block in "_freeBlocks" list.
-
-    if ( Block* before = block->_previous; before && before->_meInOtherList )
+    if ( Block* before = block->_blockChainPrevious; before )
     {
-        mergeBlocks._head = before;
-        mergeOffset = before->_offset;
-        mergeSize += before->_size;
-        RemoveFreeBlock ( *before->_meInOtherList );
+        if ( before->_freePrevious != nullptr | _freeBlocks._head == before )
+        {
+            mergeOffset = before->_offset;
+            mergeSize += before->_size;
+            RemoveFreeBlock ( *before );
+        }
     }
 
-    if ( Block* after = block->_next; after && after->_meInOtherList )
+    if ( Block* after = block->_blockChainNext; after )
     {
-        mergeBlocks._tail = after;
-        mergeSize += after->_size;
-        RemoveFreeBlock ( *after->_meInOtherList );
+        if ( after->_freePrevious != nullptr | _freeBlocks._head == after )
+        {
+            mergeSize += after->_size;
+            RemoveFreeBlock ( *after );
+        }
     }
 
-    // Saving link to the next block after merged region.
-    Block* nextBlock = mergeBlocks._tail->_next;
-
-    // Collect merged block...
-    Block& mergeBlock = *mergeBlocks._head;
-    mergeBlock._offset = mergeOffset;
-    mergeBlock._size = mergeSize;
-    mergeBlock._meInOtherList = AppendFreeBlock ( mergeOffset, mergeSize );
-
-    // Removing blocks which are merged...
-    mergeBlocks._tail->_next = nullptr;
-    block = mergeBlocks._head->_next;
-
-    while ( block )
-    {
-        Block* d = block;
-        block = block->_next;
-        delete d;
-    }
-
-    // Linking merged region to rest of the "_blockChain" list.
-
-    if ( nextBlock )
-        nextBlock->_previous = &mergeBlock;
-
-    mergeBlock._next = nextBlock;
+    // Collect merged free block...
+    block->_size = mergeSize;
+    block->_offset = mergeOffset;
+    LinkFreeBlock ( *block );
 }
 
 bool MemoryAllocator::Chunk::Init ( VkDevice device, size_t memoryTypeIndex ) noexcept
@@ -104,24 +82,18 @@ bool MemoryAllocator::Chunk::Init ( VkDevice device, size_t memoryTypeIndex ) no
 
     AV_REGISTER_DEVICE_MEMORY ( "MemoryAllocator::Chunk::_memory" )
 
-    _blockChain = new Block {
-        ._previous = nullptr,
-        ._next = nullptr,
-        ._meInOtherList = nullptr,
+    _blockChain = new Block
+    {
+        ._blockChainPrevious = nullptr,
+        ._blockChainNext = nullptr,
+        ._freePrevious = nullptr,
+        ._freeNext = nullptr,
         ._offset = 0U,
         ._size = BYTES_PER_CHUNK
     };
 
-    _freeBlocks._head = new Block {
-        ._previous = nullptr,
-        ._next = nullptr,
-        ._meInOtherList = _blockChain,
-        ._offset = 0U,
-        ._size = BYTES_PER_CHUNK
-    };
-
-    _freeBlocks._tail = _freeBlocks._head;
-    _blockChain->_meInOtherList = _freeBlocks._head;
+    _freeBlocks._head = _blockChain;
+    _freeBlocks._tail = _blockChain;
 
     return true;
 }
@@ -135,23 +107,19 @@ void MemoryAllocator::Chunk::Destroy ( VkDevice device ) noexcept
     _memory = VK_NULL_HANDLE;
     AV_UNREGISTER_DEVICE_MEMORY ( "MemoryAllocator::Chunk::_memory" )
 
-    auto const clear = [] ( Block*& block ) noexcept {
-        Block* b = block;
+    Block* b = _blockChain;
 
-        while ( b )
-        {
-            Block* p = b;
-            b = b->_next;
-            delete p;
-        }
+    while ( b )
+    {
+        Block* p = b;
+        b = b->_blockChainNext;
+        delete p;
+    }
 
-        block = nullptr;
-    };
-
-    clear ( _freeBlocks._head );
+    _blockChain = nullptr;
+    _freeBlocks._head = nullptr;
     _freeBlocks._tail = nullptr;
 
-    clear ( _blockChain );
     _usedBlocks.clear ();
 }
 
@@ -165,11 +133,15 @@ bool MemoryAllocator::Chunk::TryAllocateMemory ( VkDeviceMemory &memory,
     VkMemoryRequirements const &requirements
 ) noexcept
 {
-    for ( Block* freeBlock = _freeBlocks._head; freeBlock; freeBlock = freeBlock->_next )
+    if ( !_freeBlocks._tail || requirements.size > _freeBlocks._tail->_size )
+        return false;
+
+    for ( Block* block = _freeBlocks._head; block; block = block->_freeNext )
     {
-        auto const size = static_cast<size_t> ( freeBlock->_size );
+        Offset const freeBlockOffset = block->_offset;
+        auto const size = static_cast<size_t> ( block->_size );
         size_t space = size;
-        auto* ptr = reinterpret_cast<void*> ( freeBlock->_offset );
+        auto* ptr = reinterpret_cast<void*> ( freeBlockOffset );
 
         ptr = std::align ( static_cast<size_t> ( requirements.alignment ),
             static_cast<size_t> ( requirements.size ),
@@ -180,78 +152,55 @@ bool MemoryAllocator::Chunk::TryAllocateMemory ( VkDeviceMemory &memory,
         if ( !ptr )
             continue;
 
-        Block* blockChainItem = freeBlock->_meInOtherList;
-        Block* nextBlock = blockChainItem->_next;
-        Block* lastBlock = nullptr;
+        auto const resultOffset = reinterpret_cast<VkDeviceSize> ( ptr );
+        UnlinkFreeBlock ( *block );
 
-        // "blockChainBlock" could be transformed into 4 cases:
+        // By convention used block has "_freePrevious" and "_freeNext" as nullptr.
+        block->_freePrevious = nullptr;
+        block->_freeNext = nullptr;
+
+        block->_offset = resultOffset;
+        block->_size = requirements.size;
+
+        _usedBlocks.emplace ( resultOffset, block );
+
+        // "block" could be transformed into 4 cases:
         //  - used block
         //  - free block, used block
         //  - used block, free block
         //  - free block, used block, free block
 
-        auto const append = [ &lastBlock, &blockChainItem ] ( Block* meInOtherList,
-            Offset offset,
-            VkDeviceSize size
-        ) noexcept {
-            if ( !lastBlock )
-            {
-                blockChainItem->_meInOtherList = meInOtherList;
-                blockChainItem->_offset = offset;
-                blockChainItem->_size = size;
-
-                lastBlock = blockChainItem;
-                return;
-            }
-
-            auto* block = new Block
-            {
-                ._previous = lastBlock,
-                ._next = nullptr,
-                ._meInOtherList = meInOtherList,
-                ._offset = offset,
-                ._size = size
-            };
-
-            lastBlock->_next = block;
-            lastBlock = block;
-        };
-
-        Offset const freeBlockOffset = freeBlock->_offset;
-        RemoveFreeBlock ( *freeBlock );
-
         if ( size_t const before = size - space; before )
         {
             // There is an empty space in front of occupied memory block because of alignment.
-            append ( AppendFreeBlock ( freeBlockOffset, static_cast<VkDeviceSize> ( before ) ),
-                freeBlockOffset,
-                static_cast<VkDeviceSize> ( before )
-            );
+            Block* freeBlock = AppendFreeBlock ( freeBlockOffset, static_cast<VkDeviceSize> ( before ) );
+            Block* prev = block->_blockChainPrevious;
+
+            if ( prev )
+                prev->_blockChainNext = freeBlock;
+            else
+                _blockChain = freeBlock;
+
+            freeBlock->_blockChainNext = block;
+            freeBlock->_blockChainPrevious = prev;
         }
-
-        auto const resultOffset = reinterpret_cast<VkDeviceSize> ( ptr );
-        offset = resultOffset;
-        memory = _memory;
-
-        // Note by convention used block has no link to any block in "_blockChain" list.
-        append ( nullptr, resultOffset, requirements.size );
-        _usedBlocks.emplace ( resultOffset, lastBlock );
 
         if ( size_t const left = space - static_cast<size_t> ( requirements.size ); left )
         {
             // There is an empty space after occupied memory block.
-            Offset const blockOffset = resultOffset + requirements.size;
+            Block* freeBlock = AppendFreeBlock ( resultOffset + requirements.size, static_cast<VkDeviceSize> ( left ) );
+            Block* next = block->_blockChainNext;
 
-            append ( AppendFreeBlock ( blockOffset, static_cast<VkDeviceSize> ( left ) ),
-                blockOffset,
-                static_cast<VkDeviceSize> ( left )
-            );
+            if ( next )
+                next->_blockChainPrevious = freeBlock;
+
+            freeBlock->_blockChainNext = next;
+            freeBlock->_blockChainPrevious = block;
         }
 
-        if ( nextBlock )
-            nextBlock->_previous = lastBlock;
+        offset = resultOffset;
+        memory = _memory;
 
-        lastBlock->_next = nextBlock;
         return true;
     }
 
@@ -262,64 +211,88 @@ MemoryAllocator::Chunk::Block* MemoryAllocator::Chunk::AppendFreeBlock ( Offset 
 {
     auto* block = new Block
     {
-        ._previous = nullptr,
-        ._next = nullptr,
-        ._meInOtherList = nullptr,
+        ._blockChainPrevious = nullptr,
+        ._blockChainNext = nullptr,
+        ._freePrevious = nullptr,
+        ._freeNext = nullptr,
         ._offset = offset,
         ._size = size
     };
 
-    for ( Block* freeBlock = _freeBlocks._head; freeBlock; freeBlock = freeBlock->_next )
+    LinkFreeBlock ( *block );
+    return block;
+}
+
+void MemoryAllocator::Chunk::RemoveFreeBlock ( Block &block ) noexcept
+{
+    Block* p = block._blockChainPrevious;
+    Block* n = block._blockChainNext;
+
+    if ( p )
+        p->_blockChainNext = n;
+    else
+        _blockChain = n;
+
+    if ( n )
+        n->_blockChainPrevious = p;
+
+    UnlinkFreeBlock ( block );
+    delete &block;
+}
+
+void MemoryAllocator::Chunk::LinkFreeBlock ( Block &block ) noexcept
+{
+    VkDeviceSize const size = block._size;
+
+    for ( Block* freeBlock = _freeBlocks._head; freeBlock; freeBlock = freeBlock->_freeNext )
     {
         if ( size > freeBlock->_size )
             continue;
 
-        block->_previous = freeBlock->_previous;
-        block->_next = freeBlock;
-        freeBlock->_previous = block;
+        block._freePrevious = freeBlock->_freePrevious;
+        block._freeNext = freeBlock;
+        freeBlock->_freePrevious = &block;
 
         if ( freeBlock == _freeBlocks._head )
         {
             // The smallest block so far. It should be added to head.
-            _freeBlocks._head = block;
+            _freeBlocks._head = &block;
         }
 
-        return block;
+        return;
     }
 
     if ( !_freeBlocks._head )
     {
         // "_freeBlocks" is empty.
-        _freeBlocks._head = block;
+        _freeBlocks._head = &block;
     }
     else
     {
         // The biggest block so far. It should be added to tail.
-        block->_previous = _freeBlocks._tail;
+        block._freePrevious = _freeBlocks._tail;
     }
 
-    _freeBlocks._tail = block;
-    return block;
+    _freeBlocks._tail = &block;
 }
 
-void MemoryAllocator::Chunk::RemoveFreeBlock ( Block const &block ) noexcept
+void MemoryAllocator::Chunk::UnlinkFreeBlock ( Block &block ) noexcept
 {
-    Block* p = block._previous;
-    Block* n = block._next;
+    Block* p = block._freePrevious;
+    Block* n = block._freeNext;
 
     if ( p )
-        p->_next = n;
+        p->_freeNext = n;
+    else
+        _freeBlocks._head = n;
 
     if ( n )
-        n->_previous = p;
+    {
+        n->_freePrevious = p;
+        return;
+    }
 
-    Block* headCases[] = { _freeBlocks._head, _freeBlocks._head->_next };
-    Block* tailCases[] = { _freeBlocks._tail, _freeBlocks._tail->_previous };
-
-    _freeBlocks._head = headCases[ static_cast<size_t> ( &block == _freeBlocks._head ) ];
-    _freeBlocks._tail = tailCases[ static_cast<size_t> ( &block == _freeBlocks._tail ) ];
-
-    delete &block;
+    _freeBlocks._tail = p;
 }
 
 //----------------------------------------------------------------------------------------------------------------------

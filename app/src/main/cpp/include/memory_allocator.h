@@ -26,9 +26,11 @@ class [[maybe_unused]] MemoryAllocator final
 
                 struct Block final
                 {
-                    Block*                                  _previous = nullptr;
-                    Block*                                  _next = nullptr;
-                    Block*                                  _meInOtherList = nullptr;
+                    Block*                                  _blockChainPrevious = nullptr;
+                    Block*                                  _blockChainNext = nullptr;
+
+                    Block*                                  _freePrevious = nullptr;
+                    Block*                                  _freeNext = nullptr;
 
                     Offset                                  _offset = std::numeric_limits<Offset>::max ();
                     VkDeviceSize                            _size = 0U;
@@ -71,7 +73,10 @@ class [[maybe_unused]] MemoryAllocator final
 
             private:
                 [[nodiscard]] Block* AppendFreeBlock ( Offset offset, VkDeviceSize size ) noexcept;
-                void RemoveFreeBlock ( Block const &block ) noexcept;
+                void RemoveFreeBlock ( Block &block ) noexcept;
+
+                void LinkFreeBlock ( Block &block ) noexcept;
+                void UnlinkFreeBlock ( Block &block ) noexcept;
         };
 
         using Chunks = std::list<Chunk>;

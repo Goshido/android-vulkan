@@ -7,8 +7,8 @@
 GX_DISABLE_COMMON_WARNINGS
 
 #include <list>
-#include <map>
 #include <mutex>
+#include <unordered_map>
 #include <vulkan/vulkan_core.h>
 
 GX_RESTORE_WARNING_STATE
@@ -26,25 +26,25 @@ class [[maybe_unused]] MemoryAllocator final
 
                 struct Block final
                 {
-                    Block*                  _previous = nullptr;
-                    Block*                  _next = nullptr;
-                    Block*                  _meInOtherList = nullptr;
+                    Block*                                  _previous = nullptr;
+                    Block*                                  _next = nullptr;
+                    Block*                                  _meInOtherList = nullptr;
 
-                    Offset                  _offset = std::numeric_limits<Offset>::max ();
-                    VkDeviceSize            _size = 0U;
+                    Offset                                  _offset = std::numeric_limits<Offset>::max ();
+                    VkDeviceSize                            _size = 0U;
                 };
 
                 struct Blocks final
                 {
-                    Block*                  _head = nullptr;
-                    Block*                  _tail = nullptr;
+                    Block*                                  _head = nullptr;
+                    Block*                                  _tail = nullptr;
                 };
 
             private:
-                Block*                      _blockChain = nullptr;
-                Blocks                      _freeBlocks {};
-                VkDeviceMemory              _memory = VK_NULL_HANDLE;
-                std::map<Offset, Block*>    _usedBlocks {};
+                Block*                                      _blockChain = nullptr;
+                Blocks                                      _freeBlocks {};
+                VkDeviceMemory                              _memory = VK_NULL_HANDLE;
+                std::unordered_map<Offset, Block*>          _usedBlocks {};
 
             public:
                 Chunk () = default;
@@ -57,7 +57,7 @@ class [[maybe_unused]] MemoryAllocator final
 
                 ~Chunk () = default;
 
-                [[nodiscard]] bool FreeMemory ( VkDeviceMemory memory, VkDeviceSize offset ) noexcept;
+                void FreeMemory ( VkDeviceSize offset ) noexcept;
 
                 [[nodiscard]] bool Init ( VkDevice device, size_t memoryTypeIndex ) noexcept;
                 void Destroy ( VkDevice device ) noexcept;
@@ -74,10 +74,14 @@ class [[maybe_unused]] MemoryAllocator final
                 void RemoveFreeBlock ( Block const &block ) noexcept;
         };
 
+        using Chunks = std::list<Chunk>;
+        using ChunkInfo = std::pair<Chunks*, Chunks::iterator>;
+
     private:
-        std::list<Chunk>                    _memory[ VK_MAX_MEMORY_TYPES ] {};
-        VkPhysicalDeviceMemoryProperties    _properties {};
-        std::mutex                          _mutex {};
+        std::unordered_map<VkDeviceMemory, ChunkInfo>       _chunkMap {};
+        Chunks                                              _memory[ VK_MAX_MEMORY_TYPES ] {};
+        VkPhysicalDeviceMemoryProperties                    _properties {};
+        std::mutex                                          _mutex {};
 
     public:
         MemoryAllocator () = default;

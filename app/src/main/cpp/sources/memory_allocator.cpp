@@ -16,11 +16,8 @@ constexpr static VkDeviceSize BYTES_PER_CHUNK = MEGABYTES_PER_CHUNK * 1024U * 10
 
 //----------------------------------------------------------------------------------------------------------------------
 
-bool MemoryAllocator::Chunk::FreeMemory ( VkDeviceMemory memory, VkDeviceSize offset ) noexcept
+void MemoryAllocator::Chunk::FreeMemory ( VkDeviceSize offset ) noexcept
 {
-    if ( memory != _memory )
-        return false;
-
     auto const findResult = _usedBlocks.find ( offset );
     assert ( findResult != _usedBlocks.cend () );
 
@@ -74,14 +71,17 @@ bool MemoryAllocator::Chunk::FreeMemory ( VkDeviceMemory memory, VkDeviceSize of
 
     while ( block )
     {
-        Block* p = block;
+        Block* d = block;
         block = block->_next;
-        delete p;
+        delete d;
     }
 
     // Linking merged region to rest of the "_blockChain" list.
+
+    if ( nextBlock )
+        nextBlock->_previous = &mergeBlock;
+
     mergeBlock._next = nextBlock;
-    return true;
 }
 
 bool MemoryAllocator::Chunk::Init ( VkDevice device, size_t memoryTypeIndex ) noexcept
@@ -148,11 +148,10 @@ void MemoryAllocator::Chunk::Destroy ( VkDevice device ) noexcept
         block = nullptr;
     };
 
-    clear ( _blockChain );
-
     clear ( _freeBlocks._head );
     _freeBlocks._tail = nullptr;
 
+    clear ( _blockChain );
     _usedBlocks.clear ();
 }
 
@@ -218,13 +217,14 @@ bool MemoryAllocator::Chunk::TryAllocateMemory ( VkDeviceMemory &memory,
             lastBlock = block;
         };
 
+        Offset const freeBlockOffset = freeBlock->_offset;
         RemoveFreeBlock ( *freeBlock );
 
         if ( size_t const before = size - space; before )
         {
             // There is an empty space in front of occupied memory block because of alignment.
-            append ( AppendFreeBlock ( freeBlock->_offset, static_cast<VkDeviceSize> ( before ) ),
-                freeBlock->_offset,
+            append ( AppendFreeBlock ( freeBlockOffset, static_cast<VkDeviceSize> ( before ) ),
+                freeBlockOffset,
                 static_cast<VkDeviceSize> ( before )
             );
         }
@@ -247,6 +247,9 @@ bool MemoryAllocator::Chunk::TryAllocateMemory ( VkDeviceMemory &memory,
                 static_cast<VkDeviceSize> ( left )
             );
         }
+
+        if ( nextBlock )
+            nextBlock->_previous = lastBlock;
 
         lastBlock->_next = nextBlock;
         return true;
@@ -273,6 +276,7 @@ MemoryAllocator::Chunk::Block* MemoryAllocator::Chunk::AppendFreeBlock ( Offset 
 
         block->_previous = freeBlock->_previous;
         block->_next = freeBlock;
+        freeBlock->_previous = block;
 
         if ( freeBlock == _freeBlocks._head )
         {
@@ -327,27 +331,18 @@ void MemoryAllocator::Chunk::RemoveFreeBlock ( Block const &block ) noexcept
 {
     std::unique_lock<std::mutex> const lock ( _mutex );
 
-    for ( auto& chunks : _memory )
-    {
-        auto const end = chunks.end ();
+    auto findResult = _chunkMap.find ( memory );
+    assert ( findResult != _chunkMap.end () );
 
-        for ( auto chunk = chunks.begin (); chunk != end; ++chunk )
-        {
-            if ( chunk->FreeMemory ( memory, offset ) )
-            {
-                if ( !chunk->IsUsed () )
-                {
-                    chunk->Destroy ( device );
-                    chunks.erase ( chunk );
-                }
+    auto [chunks, chunk] = findResult->second;
+    chunk->FreeMemory ( offset );
 
-                return;
-            }
-        }
-    }
+    if ( chunk->IsUsed () )
+        return;
 
-    LogError ( "MemoryAllocator::FreeMemory - Can't free Vulkan memory!" );
-    assert ( false );
+    chunk->Destroy ( device );
+    chunks->erase ( chunk );
+    _chunkMap.erase ( findResult );
 }
 
 [[maybe_unused]] void MemoryAllocator::Init ( VkPhysicalDeviceMemoryProperties const &properties ) noexcept
@@ -392,8 +387,16 @@ void MemoryAllocator::Chunk::RemoveFreeBlock ( Block const &block ) noexcept
         }
     }
 
-    Chunk& chunk = chunks.emplace_back ();
-    return chunk.Init ( device, memoryTypeIndex ) && chunk.TryAllocateMemory ( memory, offset, requirements );
+    Chunk& chunk = chunks.emplace_front ();
+
+    bool const result = chunk.Init ( device, memoryTypeIndex ) &&
+        chunk.TryAllocateMemory ( memory, offset, requirements );
+
+    if ( !result )
+        return false;
+
+    _chunkMap.emplace ( memory, std::make_pair ( &chunks, chunks.begin () ) );
+    return true;
 }
 
 } // namespace android_vulkan

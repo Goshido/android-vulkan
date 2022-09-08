@@ -134,7 +134,11 @@ bool MemoryAllocator::Chunk::TryAllocateMemory ( VkDeviceMemory &memory,
 ) noexcept
 {
     if ( !_freeBlocks._tail || requirements.size > _freeBlocks._tail->_size )
+    {
+        // Free blocks are sorted by size. So the biggest possible block should be at list tail.
+        // The biggest block is less than requested. Early exit.
         return false;
+    }
 
     for ( Block* block = _freeBlocks._head; block; block = block->_freeNext )
     {
@@ -271,6 +275,7 @@ void MemoryAllocator::Chunk::LinkFreeBlock ( Block &block ) noexcept
     {
         // The biggest block so far. It should be added to tail.
         block._freePrevious = _freeBlocks._tail;
+        _freeBlocks._tail->_freeNext = &block;
     }
 
     _freeBlocks._tail = &block;

@@ -1,10 +1,13 @@
 #include <memory_allocator.h>
+#include <core.h>
 #include <renderer.h>
 #include <vulkan_utils.h>
 
 GX_DISABLE_COMMON_WARNINGS
 
 #include <cassert>
+#include <chrono>
+#include <fstream>
 
 GX_RESTORE_WARNING_STATE
 
@@ -439,12 +442,13 @@ void MemoryAllocator::Chunk::UnlinkFreeBlock ( Block &block ) noexcept
     if ( _chunkMap.empty () )
         return;
 
-    std::string json {};
+    constexpr size_t snapshotInitialSizeBytes =
+        SNAPSHOT_INITIAL_SIZE_MEGABYTES * static_cast<size_t> ( BYTES_PER_MEGABYTE );
 
-    constexpr size_t snapshotInitialSizeBytes = SNAPSHOT_INITIAL_SIZE_MEGABYTES * BYTES_PER_MEGABYTE;
+    std::string json {};
     json.reserve ( snapshotInitialSizeBytes );
 
-    constexpr std::string_view begin ( R"__({"traceEvents":[)__" );
+    constexpr std::string_view begin = R"__({"traceEvents":[)__";
     json.append ( begin.data (), begin.size () );
     bool isFirst = true;
 
@@ -469,8 +473,30 @@ void MemoryAllocator::Chunk::UnlinkFreeBlock ( Block &block ) noexcept
         }
     }
 
-    constexpr std::string_view end ( "]}" );
+    constexpr std::string_view end = "]}";
     json.append ( end.data (), end.size () );
+
+    auto const timeStamp = std::chrono::system_clock::to_time_t ( std::chrono::system_clock::now () );
+    tm timeInfo {};
+    localtime_r ( &timeStamp, &timeInfo );
+
+    char path[ 1024U ];
+
+    std::snprintf ( path,
+        std::size ( path ),
+        R"__(%s/vulkan memory snapshot %d-%02d-%02d %02d-%02d-%02d %s.json)__",
+        Core::GetCacheDirectory ().c_str (),
+        timeInfo.tm_year,
+        timeInfo.tm_mon,
+        timeInfo.tm_mday,
+        timeInfo.tm_hour,
+        timeInfo.tm_min,
+        timeInfo.tm_sec,
+        timeInfo.tm_zone
+    );
+
+    std::ofstream report ( path, std::ios::binary | std::ios::trunc | std::ios::out );
+    report.write ( json.data (), static_cast<std::streamsize> ( json.size () ) );
 }
 
 [[maybe_unused]] bool MemoryAllocator::TryAllocateMemory ( VkDeviceMemory &memory,
@@ -556,7 +582,7 @@ void MemoryAllocator::MakeJSONChunks ( std::string &json, size_t id, VkMemoryPro
         }
     }
 
-    constexpr std::string_view end ( R"__("}})__" );
+    constexpr std::string_view end = R"__("}})__";
     json.append ( end.data (), end.size () );
 }
 

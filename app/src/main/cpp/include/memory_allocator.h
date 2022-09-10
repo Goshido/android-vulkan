@@ -103,7 +103,9 @@ class [[maybe_unused]] MemoryAllocator final
         [[maybe_unused]] void FreeMemory ( VkDevice device, VkDeviceMemory memory, VkDeviceSize offset ) noexcept;
         [[maybe_unused]] void Init ( VkPhysicalDeviceMemoryProperties const &properties ) noexcept;
 
-        // The snapshot is JSON file which could be opened in Google Chrome browser via chrome://tracing util.
+        // Method generates a snapshot which is JSON file. The snapshot could be opened in Google Chrome browser
+        // via chrome://tracing util. The snapshot is located in the app's cache directory and has name:
+        //      vulkan memory snapshot <date and time>.json
         // [2022/09/08] Last checked in Google Chrome v105.0.5195.102.
         [[maybe_unused]] void MakeSnapshot () noexcept;
 
@@ -114,6 +116,7 @@ class [[maybe_unused]] MemoryAllocator final
             VkMemoryPropertyFlags properties
         ) noexcept;
 
+    private:
         static void MakeJSONChunks ( std::string &json, size_t id, VkMemoryPropertyFlags props ) noexcept;
 };
 

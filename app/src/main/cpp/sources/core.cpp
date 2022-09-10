@@ -16,6 +16,7 @@
 
 GX_DISABLE_COMMON_WARNINGS
 
+#include <cassert>
 #include <android/asset_manager_jni.h>
 #include <android/native_window_jni.h>
 
@@ -48,7 +49,8 @@ enum class eGame : uint16_t
 
 //----------------------------------------------------------------------------------------------------------------------
 
-Core::Core ( JNIEnv* env, jobject activity, jobject assetManager ) noexcept
+Core::Core ( JNIEnv* env, jobject activity, jobject assetManager, std::string &&cacheDirectory ) noexcept:
+    _cacheDirectory ( std::move ( cacheDirectory ) )
 {
     env->GetJavaVM ( &_vm );
 
@@ -167,6 +169,12 @@ void Core::OnSurfaceDestroyed () noexcept
 
     ANativeWindow_release ( _nativeWindow );
     _nativeWindow = nullptr;
+}
+
+std::string const& Core::GetCacheDirectory () noexcept
+{
+    assert ( g_Core );
+    return g_Core->_cacheDirectory;
 }
 
 void Core::Quit () noexcept
@@ -304,9 +312,15 @@ void Core::OnHomeUp ( void* /*context*/ ) noexcept
 
 extern "C" {
 
-JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doCreate ( JNIEnv* env, jobject obj, jobject assetManager )
+JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doCreate ( JNIEnv* env,
+    jobject obj,
+    jobject assetManager,
+    jstring cacheDirectory
+)
 {
-    g_Core = new Core ( env, obj, assetManager );
+    char const* utf8 = env->GetStringUTFChars ( cacheDirectory, nullptr );
+    g_Core = new Core ( env, obj, assetManager, utf8 );
+    env->ReleaseStringUTFChars ( cacheDirectory, utf8 );
     LogInfo ( "Core has been created." );
 }
 

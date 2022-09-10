@@ -28,7 +28,7 @@ internal class Activity : android.app.Activity (), SurfaceHolder.Callback2, Anal
     private val leftTrigger = LeftTrigger ( this )
     private val rightTrigger = RightTrigger ( this )
 
-    private external fun doCreate ( assetManager : AssetManager )
+    private external fun doCreate ( assetManager : AssetManager, cacheDirectory : String )
     private external fun doDestroy ()
     private external fun doKeyDown ( keyCode : Int )
     private external fun doKeyUp ( keyCode : Int )
@@ -51,7 +51,7 @@ internal class Activity : android.app.Activity (), SurfaceHolder.Callback2, Anal
             View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
             View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
 
-        doCreate ( assets )
+        doCreate ( assets, cacheDir.absolutePath )
     }
 
     override fun onDestroy ()

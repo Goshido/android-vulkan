@@ -65,6 +65,7 @@ class [[maybe_unused]] MemoryAllocator final
                 void Destroy ( VkDevice device ) noexcept;
 
                 [[nodiscard]] bool IsUsed () const noexcept;
+                void MakeJSONChunk ( std::string &json, size_t idChunks, size_t idChunk ) const noexcept;
 
                 [[nodiscard]] bool TryAllocateMemory ( VkDeviceMemory &memory,
                     VkDeviceSize &offset,
@@ -102,12 +103,18 @@ class [[maybe_unused]] MemoryAllocator final
         [[maybe_unused]] void FreeMemory ( VkDevice device, VkDeviceMemory memory, VkDeviceSize offset ) noexcept;
         [[maybe_unused]] void Init ( VkPhysicalDeviceMemoryProperties const &properties ) noexcept;
 
+        // The snapshot is JSON file which could be opened in Google Chrome browser via chrome://tracing util.
+        // [2022/09/08] Last checked in Google Chrome v105.0.5195.102.
+        [[maybe_unused]] void MakeSnapshot () noexcept;
+
         [[maybe_unused, nodiscard]] bool TryAllocateMemory ( VkDeviceMemory &memory,
             VkDeviceSize &offset,
             VkDevice device,
             VkMemoryRequirements const &requirements,
             VkMemoryPropertyFlags properties
         ) noexcept;
+
+        static void MakeJSONChunks ( std::string &json, size_t id, VkMemoryPropertyFlags props ) noexcept;
 };
 
 } // namespace android_vulkan

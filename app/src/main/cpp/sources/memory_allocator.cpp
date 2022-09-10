@@ -11,8 +11,14 @@ GX_RESTORE_WARNING_STATE
 
 namespace android_vulkan {
 
+constexpr static VkDeviceSize BYTES_PER_KILOBYTE = 1024U;
+constexpr static VkDeviceSize BYTES_PER_MEGABYTE = 1024U * BYTES_PER_KILOBYTE;
+constexpr static VkDeviceSize BYTES_PER_GIGABYTE = 1024U * BYTES_PER_MEGABYTE;
+
 constexpr static VkDeviceSize MEGABYTES_PER_CHUNK = 128U;
-constexpr static VkDeviceSize BYTES_PER_CHUNK = MEGABYTES_PER_CHUNK * 1024U * 1024U;
+constexpr static VkDeviceSize BYTES_PER_CHUNK = MEGABYTES_PER_CHUNK * BYTES_PER_MEGABYTE;
+
+constexpr static size_t SNAPSHOT_INITIAL_SIZE_MEGABYTES = 4U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -126,6 +132,101 @@ void MemoryAllocator::Chunk::Destroy ( VkDevice device ) noexcept
 bool MemoryAllocator::Chunk::IsUsed () const noexcept
 {
     return !_usedBlocks.empty ();
+}
+
+void MemoryAllocator::Chunk::MakeJSONChunk ( std::string &json, size_t idChunks, size_t idChunk ) const noexcept
+{
+    char buffer[ 256U ];
+    Offset offset = 0U;
+    VkDeviceSize size = 0U;
+
+    char idChunksString[ 32U ];
+    std::snprintf ( idChunksString, std::size ( idChunksString ), "%zu", idChunks );
+
+    char idChunkString[ 32U ];
+    std::snprintf ( idChunkString, std::size ( idChunkString ), "%zu", idChunk );
+
+    // This improve visualization in chrome://tracing by separating two and more sequentially used blocks.
+    constexpr Offset separator = 1U;
+
+    constexpr char const* cases[] = { "Free", "Used" };
+    constexpr char const begin[] = R"__(,{"name": "%s", "ph": "B", "pid": %s, "tid": %s, "ts": %zu})__";
+    constexpr char const end[] = R"__(,{"name": "%s", "ph": "E", "pid": %s, "tid": %s, "ts": %zu})__";
+
+    for ( Block const* block = _blockChain; block; block = block->_blockChainNext )
+    {
+        // By convention only used block has "_freePrevious" and "_freeNext" as nullptr.
+        // Note "_freePrevious" and "_freeNext" could be nullptr if there is only one empty block in chunk.
+        // So it's needed to check "_freeBlocks" link as well.
+        auto const idx = static_cast<size_t> ( block->_freePrevious == nullptr & _freeBlocks._head != block );
+        char const* blockType = cases[ idx ];
+
+        // Branchless optimization: Free block produces "idx" == 0U, used block produces "idx" == 1U.
+        size += block->_size * static_cast<VkDeviceSize> ( idx );
+
+        json.append ( buffer,
+            static_cast<size_t> (
+                std::snprintf ( buffer,
+                    std::size ( buffer ),
+                    begin,
+                    blockType,
+                    idChunksString,
+                    idChunkString,
+                    static_cast<size_t> ( offset )
+                )
+            )
+        );
+
+        offset += block->_size;
+
+        json.append ( buffer,
+            static_cast<size_t> (
+                std::snprintf ( buffer,
+                    std::size ( buffer ),
+                    end,
+                    blockType,
+                    idChunksString,
+                    idChunkString,
+                    static_cast<size_t> ( offset )
+                )
+            )
+        );
+
+        offset += separator;
+    }
+
+    constexpr double toPercent = 100.0 / static_cast<double> ( BYTES_PER_CHUNK );
+
+    constexpr char const meta[] =
+        R"__(,{"name":"thread_name","ph":"M","pid":%s,"tid":%s,"args":{"name":"Chunk #%s: %s, %.0f%%"}})__";
+
+    char buffer2[ 32U ];
+    constexpr double toKB = 1.0 / static_cast<double> ( BYTES_PER_KILOBYTE );
+    constexpr double toMB = 1.0 / static_cast<double> ( BYTES_PER_MEGABYTE );
+    constexpr double toGB = 1.0 / static_cast<double> ( BYTES_PER_GIGABYTE );
+
+    if ( size < BYTES_PER_KILOBYTE )
+        std::snprintf ( buffer2, std::size ( buffer2 ), "%zu bytes", static_cast<size_t> ( size ) );
+    else if ( size < BYTES_PER_MEGABYTE )
+        std::snprintf ( buffer2, std::size ( buffer2 ), "%.2f Kb", static_cast<double> ( size ) * toKB );
+    else if ( size < BYTES_PER_GIGABYTE )
+        std::snprintf ( buffer2, std::size ( buffer2 ), "%.2f Mb", static_cast<double> ( size ) * toMB );
+    else
+        std::snprintf ( buffer2, std::size ( buffer2 ), "%.2f Gb", static_cast<double> ( size ) * toGB );
+
+    json.append ( buffer,
+        static_cast<size_t> (
+            std::snprintf ( buffer,
+                std::size ( buffer ),
+                meta,
+                idChunksString,
+                idChunkString,
+                idChunkString,
+                buffer2,
+                static_cast<double > ( size ) * toPercent
+            )
+        )
+    );
 }
 
 bool MemoryAllocator::Chunk::TryAllocateMemory ( VkDeviceMemory &memory,
@@ -328,6 +429,50 @@ void MemoryAllocator::Chunk::UnlinkFreeBlock ( Block &block ) noexcept
     _properties = properties;
 }
 
+[[maybe_unused]] void MemoryAllocator::MakeSnapshot () noexcept
+{
+    // See chrome://tracing JSON format here:
+    // https://docs.google.com/document/d/1CvAClvFfyA5R-PhYUmn5OOQtYMH4h6I0nSsKchNAySU/edit
+
+    std::unique_lock<std::mutex> const lock ( _mutex );
+
+    if ( _chunkMap.empty () )
+        return;
+
+    std::string json {};
+
+    constexpr size_t snapshotInitialSizeBytes = SNAPSHOT_INITIAL_SIZE_MEGABYTES * BYTES_PER_MEGABYTE;
+    json.reserve ( snapshotInitialSizeBytes );
+
+    constexpr std::string_view begin ( R"__({"traceEvents":[)__" );
+    json.append ( begin.data (), begin.size () );
+    bool isFirst = true;
+
+    for ( size_t i = 0U; i < _properties.memoryTypeCount; ++i )
+    {
+        Chunks const& chunks = _memory[ i ];
+
+        if ( chunks.empty () )
+            continue;
+
+        if ( isFirst )
+            isFirst = false;
+        else
+            json.append ( ",", 1 );
+
+        MakeJSONChunks ( json, i, _properties.memoryTypes[ i ].propertyFlags );
+        size_t id = 0U;
+
+        for ( Chunk const& chunk : chunks )
+        {
+            chunk.MakeJSONChunk ( json, i, id++ );
+        }
+    }
+
+    constexpr std::string_view end ( "]}" );
+    json.append ( end.data (), end.size () );
+}
+
 [[maybe_unused]] bool MemoryAllocator::TryAllocateMemory ( VkDeviceMemory &memory,
     VkDeviceSize &offset,
     VkDevice device,
@@ -375,6 +520,44 @@ void MemoryAllocator::Chunk::UnlinkFreeBlock ( Block &block ) noexcept
 
     _chunkMap.emplace ( memory, std::make_pair ( &chunks, chunks.begin () ) );
     return true;
+}
+
+void MemoryAllocator::MakeJSONChunks ( std::string &json, size_t id, VkMemoryPropertyFlags props ) noexcept
+{
+    constexpr char const begin[] =
+        R"__({"name":"process_name","ph":"M","pid":%zu,"args":{"name":"Memory index #%zu:)__";
+
+    char buffer[ 128U ];
+    json.append ( buffer, static_cast<size_t> ( std::snprintf ( buffer, std::size ( buffer ), begin, id, id ) ) );
+
+#define AV_ENTRY(x) std::make_pair ( static_cast<uint32_t> ( x ), std::string_view ( " "#x ) )
+
+    constexpr std::pair<uint32_t, std::string_view> const cases[] =
+    {
+        AV_ENTRY ( VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT ),
+        AV_ENTRY ( VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT ),
+        AV_ENTRY ( VK_MEMORY_PROPERTY_HOST_COHERENT_BIT ),
+        AV_ENTRY ( VK_MEMORY_PROPERTY_HOST_CACHED_BIT ),
+        AV_ENTRY ( VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT ),
+        AV_ENTRY ( VK_MEMORY_PROPERTY_PROTECTED_BIT ),
+        AV_ENTRY ( VK_MEMORY_PROPERTY_DEVICE_COHERENT_BIT_AMD ),
+        AV_ENTRY ( VK_MEMORY_PROPERTY_DEVICE_UNCACHED_BIT_AMD ),
+        AV_ENTRY ( VK_MEMORY_PROPERTY_RDMA_CAPABLE_BIT_NV ),
+        AV_ENTRY ( VK_MEMORY_PROPERTY_RDMA_CAPABLE_BIT_NV )
+    };
+
+#undef AV_ENTRY
+
+    for ( auto const& [prop, name] : cases )
+    {
+        if ( prop & props )
+        {
+            json.append ( name.data (), name.size () );
+        }
+    }
+
+    constexpr std::string_view end ( R"__("}})__" );
+    json.append ( end.data (), end.size () );
 }
 
 } // namespace android_vulkan

@@ -59,7 +59,7 @@ void LightPass::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 
     _reflectionLocalPass.Destroy ( device );
     _reflectionGlobalPass.Destroy ( device );
-    _pointLightPass.Destroy ( device );
+    _pointLightPass.Destroy ( renderer );
     _lightupCommonDescriptorSet.Destroy ( renderer );
 
     if ( _commandPool == VK_NULL_HANDLE )

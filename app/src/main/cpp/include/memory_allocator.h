@@ -16,7 +16,7 @@ GX_RESTORE_WARNING_STATE
 
 namespace android_vulkan {
 
-class [[maybe_unused]] MemoryAllocator final
+class MemoryAllocator final
 {
     private:
         class Chunk final

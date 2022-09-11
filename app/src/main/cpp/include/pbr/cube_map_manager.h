@@ -80,13 +80,13 @@ class CubeMapManager final
         ) noexcept;
 
         [[nodiscard]] static CubeMapManager& GetInstance () noexcept;
-        static void Destroy ( VkDevice device ) noexcept;
+        static void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
 
     private:
         CubeMapManager () = default;
         ~CubeMapManager () = default;
 
-        void DestroyInternal ( VkDevice device ) noexcept;
+        void DestroyInternal ( android_vulkan::Renderer &renderer ) noexcept;
         [[nodiscard]] std::string_view GetStringView ( char const* string ) noexcept;
 };
 

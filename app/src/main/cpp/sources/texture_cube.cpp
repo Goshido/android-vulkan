@@ -32,7 +32,7 @@ bool TextureCube::UploadData ( android_vulkan::Renderer &renderer,
     VkCommandBuffer commandBuffer
 ) noexcept
 {
-    constexpr auto const sideCount = static_cast<size_t> ( GetLayerCount () );
+    constexpr auto sideCount = static_cast<size_t> ( GetLayerCount () );
 
     KTXMediaContainer sides[ sideCount ];
     KTXMediaContainer& sideXPlus = sides[ 0U ];
@@ -94,62 +94,45 @@ bool TextureCube::UploadData ( android_vulkan::Renderer &renderer,
     );
 
     if ( !result )
-    {
-        FreeResources ( device );
         return false;
-    }
 
     AV_REGISTER_BUFFER ( "TextureCube::_transfer" )
 
     VkMemoryRequirements memoryRequirements;
     vkGetBufferMemoryRequirements ( device, _transfer, &memoryRequirements );
 
-    result = renderer.TryAllocateMemory ( _transferDeviceMemory,
+    result = renderer.TryAllocateMemory ( _transferMemory,
+        _transferOffset,
         memoryRequirements,
         AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_COHERENT_BIT ) | AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT ),
         "Can't allocate transfer device memory (TextureCube::UploadData)"
     );
 
     if ( !result )
-    {
-        FreeResources ( device );
         return false;
-    }
 
-    AV_REGISTER_DEVICE_MEMORY ( "TextureCube::_transferDeviceMemory" )
+    AV_REGISTER_DEVICE_MEMORY ( "TextureCube::_transferMemory" )
 
     result = Renderer::CheckVkResult (
-        vkBindBufferMemory ( device, _transfer, _transferDeviceMemory, 0U ),
+        vkBindBufferMemory ( device, _transfer, _transferMemory, _transferOffset ),
         "TextureCube::UploadData",
         "Can't bind transfer memory"
     );
 
     if ( !result )
-    {
-        FreeResources ( device );
         return false;
-    }
 
-    uint8_t* destination = nullptr;
+    void* destination;
 
-    result = Renderer::CheckVkResult (
-        vkMapMemory ( device,
-            _transferDeviceMemory,
-            0U,
-            bufferInfo.size,
-            0U,
-            reinterpret_cast<void**> ( &destination )
-        ),
-
+    result = renderer.MapMemory ( destination,
+        _transferMemory,
+        _transferOffset,
         "TextureCube::UploadData",
         "Can't map transfer memory"
     );
 
     if ( !result )
-    {
-        FreeResources ( device );
         return false;
-    }
 
     VkDeviceSize offset = 0U;
 
@@ -158,21 +141,23 @@ bool TextureCube::UploadData ( android_vulkan::Renderer &renderer,
         for ( uint8_t mipIndex = 0U; mipIndex < mips; ++mipIndex )
         {
             MipInfo const& mip = side.GetMip ( mipIndex );
-            std::memcpy ( destination + static_cast<size_t> ( offset ), mip._data, static_cast<size_t> ( mip._size ) );
+
+            std::memcpy ( static_cast<uint8_t*> ( destination ) + static_cast<size_t> ( offset ),
+                mip._data,
+                static_cast<size_t> ( mip._size )
+            );
+
             offset += mip._size;
         }
     }
 
-    vkUnmapMemory ( device, _transferDeviceMemory );
+    renderer.UnmapMemory ( _transferMemory );
 
     constexpr VkImageUsageFlags const flags = AV_VK_FLAG ( VK_IMAGE_USAGE_SAMPLED_BIT ) |
         AV_VK_FLAG ( VK_IMAGE_USAGE_TRANSFER_DST_BIT );
 
     if ( !CreateImageResources ( renderer, resolution, format, flags, static_cast<uint32_t> ( mips ) ) )
-    {
-        FreeResources ( device );
         return false;
-    }
 
     VkCommandBufferBeginInfo const beginInfo
     {
@@ -188,10 +173,7 @@ bool TextureCube::UploadData ( android_vulkan::Renderer &renderer,
     );
 
     if ( !result )
-    {
-        FreeResources ( device );
         return false;
-    }
 
     VkImageMemoryBarrier barrierInfo
     {
@@ -299,10 +281,7 @@ bool TextureCube::UploadData ( android_vulkan::Renderer &renderer,
     );
 
     if ( !result )
-    {
-        FreeResources ( device );
         return false;
-    }
 
     VkSubmitInfo const submitInfo
     {
@@ -323,10 +302,7 @@ bool TextureCube::UploadData ( android_vulkan::Renderer &renderer,
     );
 
     if ( !result )
-    {
-        FreeResources ( device );
         return false;
-    }
 
     _mipLevels = mips;
     _format = format;
@@ -335,13 +311,14 @@ bool TextureCube::UploadData ( android_vulkan::Renderer &renderer,
     return true;
 }
 
-void TextureCube::FreeResources ( VkDevice device ) noexcept
+void TextureCube::FreeResources ( Renderer &renderer ) noexcept
 {
     _format = VK_FORMAT_UNDEFINED;
     _mipLevels = 0U;
-    memset ( &_resolution, 0, sizeof ( _resolution ) );
+    std::memset ( &_resolution, 0, sizeof ( _resolution ) );
 
-    FreeTransferResources ( device );
+    FreeTransferResources ( renderer );
+    VkDevice device = renderer.GetDevice ();
 
     if ( _imageView != VK_NULL_HANDLE )
     {
@@ -357,29 +334,31 @@ void TextureCube::FreeResources ( VkDevice device ) noexcept
         AV_UNREGISTER_IMAGE ( "TextureCube::_image" )
     }
 
-    if ( _imageDeviceMemory == VK_NULL_HANDLE )
+    if ( _imageMemory == VK_NULL_HANDLE )
         return;
 
-    vkFreeMemory ( device, _imageDeviceMemory, nullptr );
-    _imageDeviceMemory = VK_NULL_HANDLE;
-    AV_UNREGISTER_DEVICE_MEMORY ( "TextureCube::_imageDeviceMemory" )
+    renderer.FreeMemory ( _imageMemory, _imageOffset );
+    _imageMemory = VK_NULL_HANDLE;
+    _imageOffset = std::numeric_limits<VkDeviceSize>::max ();
+    AV_UNREGISTER_DEVICE_MEMORY ( "TextureCube::_imageMemory" )
 }
 
-void TextureCube::FreeTransferResources ( VkDevice device ) noexcept
+void TextureCube::FreeTransferResources ( Renderer &renderer ) noexcept
 {
     if ( _transfer != VK_NULL_HANDLE )
     {
-        vkDestroyBuffer ( device, _transfer, nullptr );
+        vkDestroyBuffer ( renderer.GetDevice (), _transfer, nullptr );
         _transfer = VK_NULL_HANDLE;
         AV_UNREGISTER_BUFFER ( "TextureCube::_transfer" )
     }
 
-    if ( _transferDeviceMemory == VK_NULL_HANDLE )
+    if ( _transferMemory == VK_NULL_HANDLE )
         return;
 
-    vkFreeMemory ( device, _transferDeviceMemory, nullptr );
-    _transferDeviceMemory = VK_NULL_HANDLE;
-    AV_UNREGISTER_DEVICE_MEMORY ( "TextureCube::_transferDeviceMemory" )
+    renderer.FreeMemory ( _transferMemory, _transferOffset );
+    _transferMemory = VK_NULL_HANDLE;
+    _transferOffset = std::numeric_limits<VkDeviceSize>::max ();
+    AV_UNREGISTER_DEVICE_MEMORY ( "TextureCube::_transferMemory" )
 }
 
 [[maybe_unused]] VkFormat TextureCube::GetFormat () const noexcept
@@ -408,7 +387,7 @@ VkImageView TextureCube::GetImageView () const noexcept
     return _resolution;
 }
 
-[[maybe_unused]] bool TextureCube::CreateImageResources ( Renderer &renderer,
+bool TextureCube::CreateImageResources ( Renderer &renderer,
     VkExtent2D const &resolution,
     VkFormat format,
     VkImageUsageFlags usage,
@@ -456,30 +435,25 @@ VkImageView TextureCube::GetImageView () const noexcept
     VkMemoryRequirements memoryRequirements;
     vkGetImageMemoryRequirements ( device, _image, &memoryRequirements );
 
-    result = renderer.TryAllocateMemory ( _imageDeviceMemory,
+    result = renderer.TryAllocateMemory ( _imageMemory,
+        _imageOffset,
         memoryRequirements,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
         "Can't allocate image memory (TextureCube::CreateImageResources)"
     );
 
     if ( !result )
-    {
-        FreeResources ( device );
         return false;
-    }
 
-    AV_REGISTER_DEVICE_MEMORY ( "TextureCube::_imageDeviceMemory" )
+    AV_REGISTER_DEVICE_MEMORY ( "TextureCube::_imageMemory" )
 
-    result = Renderer::CheckVkResult ( vkBindImageMemory ( device, _image, _imageDeviceMemory, 0U ),
+    result = Renderer::CheckVkResult ( vkBindImageMemory ( device, _image, _imageMemory, _imageOffset ),
         "TextureCube::CreateImageResources",
         "Can't bind image memory"
     );
 
     if ( !result )
-    {
-        FreeResources ( device );
         return false;
-    }
 
     VkImageViewCreateInfo const viewInfo
     {
@@ -514,10 +488,7 @@ VkImageView TextureCube::GetImageView () const noexcept
     );
 
     if ( !result )
-    {
-        FreeResources ( device );
         return false;
-    }
 
     AV_REGISTER_IMAGE_VIEW ( "TextureCube::_imageView" )
     return true;

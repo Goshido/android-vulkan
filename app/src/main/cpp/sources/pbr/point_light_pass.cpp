@@ -77,8 +77,9 @@ bool PointLightPass::Init ( android_vulkan::Renderer &renderer,
     return result && _lightup.Init ( renderer, lightupRenderPass, 1U, resolution );
 }
 
-void PointLightPass::Destroy ( VkDevice device ) noexcept
+void PointLightPass::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 {
+    VkDevice device = renderer.GetDevice ();
     _lightup.Destroy ( device );
 
     if ( !_shadowmaps.empty () )
@@ -88,7 +89,7 @@ void PointLightPass::Destroy ( VkDevice device ) noexcept
             if ( framebuffer == VK_NULL_HANDLE )
                 continue;
 
-            image->FreeResources ( device );
+            image->FreeResources ( renderer );
 
             vkDestroyFramebuffer ( device, framebuffer, nullptr );
             AV_UNREGISTER_FRAMEBUFFER ( "PointLightPass::_shadowmaps" )
@@ -199,7 +200,7 @@ PointLightPass::PointLightShadowmapInfo* PointLightPass::AcquirePointLightShadow
 
     if ( !result )
     {
-        shadowmap->FreeResources ( device );
+        shadowmap->FreeResources ( renderer );
         return nullptr;
     }
 

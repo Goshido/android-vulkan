@@ -96,23 +96,23 @@ CubeMapManager& CubeMapManager::GetInstance () noexcept
     return *_instance;
 }
 
-void CubeMapManager::Destroy ( VkDevice device ) noexcept
+void CubeMapManager::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 {
     std::unique_lock<std::shared_timed_mutex> const lock ( _mutex );
 
     if ( !_instance )
         return;
 
-    _instance->DestroyInternal ( device );
+    _instance->DestroyInternal ( renderer );
 
     delete _instance;
     _instance = nullptr;
 }
 
-void CubeMapManager::DestroyInternal ( VkDevice device ) noexcept
+void CubeMapManager::DestroyInternal ( android_vulkan::Renderer &renderer ) noexcept
 {
     for ( auto& cubeMap : _cubeMaps )
-        cubeMap.second->FreeResources ( device );
+        cubeMap.second->FreeResources ( renderer );
 
     _cubeMaps.clear ();
     _knownFiles.clear ();

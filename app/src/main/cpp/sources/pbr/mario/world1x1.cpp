@@ -86,13 +86,12 @@ void World1x1::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
     _scene.OnDestroyDevice ();
     _renderSession.OnDestroyDevice ( renderer );
 
-    VkDevice device = renderer.GetDevice ();
-    DestroyCommandPool ( device );
+    DestroyCommandPool ( renderer.GetDevice () );
     _physics.Reset ();
 
     MeshManager::Destroy ( renderer );
     MaterialManager::Destroy ( renderer );
-    CubeMapManager::Destroy ( device );
+    CubeMapManager::Destroy ( renderer );
 
     _isReady = false;
 }

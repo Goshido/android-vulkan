@@ -102,14 +102,12 @@ void PBRGame::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
     _allComponents.clear ();
     _renderableComponents.clear ();
 
-    VkDevice device = renderer.GetDevice ();
-
     _renderSession.OnDestroyDevice ( renderer );
-    DestroyCommandPool ( device );
+    DestroyCommandPool ( renderer.GetDevice () );
 
     MeshManager::Destroy ( renderer );
     MaterialManager::Destroy ( renderer );
-    CubeMapManager::Destroy ( device );
+    CubeMapManager::Destroy ( renderer );
 }
 
 bool PBRGame::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept

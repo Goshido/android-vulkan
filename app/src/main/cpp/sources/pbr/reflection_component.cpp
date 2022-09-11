@@ -73,7 +73,7 @@ void ReflectionComponent::FreeTransferResources ( android_vulkan::Renderer &rend
 
     // NOLINTNEXTLINE - downcast.
     auto& probe = static_cast<ReflectionProbe&> ( *_probe );
-    probe.FreeTransferResources ( renderer.GetDevice () );
+    probe.FreeTransferResources ( renderer );
 }
 
 void ReflectionComponent::Submit ( RenderSession &renderSession ) noexcept

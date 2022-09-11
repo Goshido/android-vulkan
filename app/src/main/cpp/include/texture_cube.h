@@ -25,14 +25,16 @@ class TextureCube final
         VkFormat            _format = VK_FORMAT_UNDEFINED;
 
         VkImage             _image = VK_NULL_HANDLE;
-        VkDeviceMemory      _imageDeviceMemory = VK_NULL_HANDLE;
+        VkDeviceMemory      _imageMemory = VK_NULL_HANDLE;
+        VkDeviceSize        _imageOffset = std::numeric_limits<VkDeviceSize>::max ();
         VkImageView         _imageView = VK_NULL_HANDLE;
 
         uint8_t             _mipLevels = 0U;
         VkExtent2D          _resolution { .width = 0U, .height = 0U };
 
         VkBuffer            _transfer = VK_NULL_HANDLE;
-        VkDeviceMemory      _transferDeviceMemory = VK_NULL_HANDLE;
+        VkDeviceMemory      _transferMemory = VK_NULL_HANDLE;
+        VkDeviceSize        _transferOffset = std::numeric_limits<VkDeviceSize>::max ();
 
     public:
         TextureCube () = default;
@@ -57,13 +59,13 @@ class TextureCube final
             VkCommandBuffer commandBuffer
         ) noexcept;
 
-        void FreeResources ( VkDevice device ) noexcept;
+        void FreeResources ( Renderer &renderer ) noexcept;
 
         // optimization: _transfer and _transferDeviceMemory are needed only for uploading pixel data to the Vulkan
         // texture object. Uploading itself is done via command submit: vkCmdCopyBufferToImage. So you can make a
         // bunch of vkCmdCopyBufferToImage call for different textures and after completion you can free
         // _transfer and _transferDeviceMemory for Texture2D objects.
-        void FreeTransferResources ( VkDevice device ) noexcept;
+        void FreeTransferResources ( Renderer &renderer ) noexcept;
 
         [[maybe_unused, nodiscard]] VkFormat GetFormat () const noexcept;
         [[maybe_unused, nodiscard]] VkImage GetImage () const noexcept;
@@ -78,7 +80,7 @@ class TextureCube final
         }
 
     private:
-        [[maybe_unused, nodiscard]] bool CreateImageResources ( Renderer &renderer,
+        [[nodiscard]] bool CreateImageResources ( Renderer &renderer,
             VkExtent2D const &resolution,
             VkFormat format,
             VkImageUsageFlags usage,

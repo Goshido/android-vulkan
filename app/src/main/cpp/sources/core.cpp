@@ -238,9 +238,8 @@ void Core::OnIdle () noexcept
 
 bool Core::OnQuit () noexcept
 {
-    _game->OnDestroyDevice ( _renderer.GetDevice () );
+    _game->OnDestroyDevice ( _renderer );
     _renderer.OnDestroyDevice ();
-
     return false;
 }
 
@@ -264,10 +263,7 @@ bool Core::OnQuitRequest () noexcept
 
 bool Core::OnSwapchainCreated () noexcept
 {
-    if ( !_renderer.OnCreateSwapchain ( *_nativeWindow, false ) )
-        return false;
-
-    if ( !_game->OnSwapchainCreated ( _renderer ) )
+    if ( !_renderer.OnCreateSwapchain ( *_nativeWindow, false ) || !_game->OnSwapchainCreated ( _renderer ) )
         return false;
 
     _fpsTimestamp = std::chrono::system_clock::now ();
@@ -284,7 +280,7 @@ bool Core::OnSwapchainDestroyed () noexcept
     if ( !_renderer.FinishAllJobs () )
         return false;
 
-    _game->OnSwapchainDestroyed ( _renderer.GetDevice () );
+    _game->OnSwapchainDestroyed ( _renderer );
     _renderer.OnDestroySwapchain ();
 
     return true;

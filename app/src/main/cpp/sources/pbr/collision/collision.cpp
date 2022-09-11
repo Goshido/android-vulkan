@@ -97,34 +97,18 @@ bool Collision::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime )
 
 bool Collision::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 {
-    VkDevice device = renderer.GetDevice ();
-
-    if ( !CreateCommandPool ( renderer ) )
-    {
-        OnDestroyDevice ( device );
+    if ( !CreateCommandPool ( renderer ) || !_renderSession.OnInitDevice ( renderer ) || !CreateScene ( renderer ) )
         return false;
-    }
 
-    if ( !_renderSession.OnInitDevice ( renderer ) )
-    {
-        OnDestroyDevice ( device );
-        return false;
-    }
-
-    if ( !CreateScene ( renderer ) )
-    {
-        OnDestroyDevice ( device );
-        return false;
-    }
-
-    _renderSession.FreeTransferResources ( device );
+    _renderSession.FreeTransferResources ( renderer );
     return true;
 }
 
-void Collision::OnDestroyDevice ( VkDevice device ) noexcept
+void Collision::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
 {
-    DestroyScene ( device );
-    _renderSession.OnDestroyDevice ( device );
+    VkDevice device = renderer.GetDevice ();
+    DestroyScene ( renderer );
+    _renderSession.OnDestroyDevice ( renderer );
     DestroyCommandPool ( device );
 }
 
@@ -152,11 +136,11 @@ bool Collision::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexce
     return true;
 }
 
-void Collision::OnSwapchainDestroyed ( VkDevice device ) noexcept
+void Collision::OnSwapchainDestroyed ( android_vulkan::Renderer &renderer ) noexcept
 {
     _manipulator.Free ();
     _camera.ReleaseInput ();
-    _renderSession.OnSwapchainDestroyed ( device );
+    _renderSession.OnSwapchainDestroyed ( renderer.GetDevice () );
 }
 
 bool Collision::CreateCommandPool ( android_vulkan::Renderer &renderer ) noexcept
@@ -312,7 +296,7 @@ bool Collision::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
     {
         // NOLINTNEXTLINE - downcast.
         auto& renderableComponent = static_cast<RenderableComponent&> ( *cube._component );
-        renderableComponent.FreeTransferResources ( device );
+        renderableComponent.FreeTransferResources ( renderer );
     }
 
     _contactMesh->FreeTransferResources ( device );
@@ -321,21 +305,21 @@ bool Collision::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
     auto& m = static_cast<GeometryPassMaterial&> ( *_contactMaterial ); // NOLINT
 
     if ( m.GetAlbedo () )
-        m.GetAlbedo ()->FreeTransferResources ( device );
+        m.GetAlbedo ()->FreeTransferResources ( renderer );
 
     if ( m.GetEmission () )
-        m.GetEmission ()->FreeTransferResources ( device );
+        m.GetEmission ()->FreeTransferResources ( renderer );
 
     if ( m.GetNormal () )
-        m.GetNormal ()->FreeTransferResources ( device );
+        m.GetNormal ()->FreeTransferResources ( renderer );
 
     if ( m.GetParam () )
-        m.GetParam ()->FreeTransferResources ( device );
+        m.GetParam ()->FreeTransferResources ( renderer );
 
     return true;
 }
 
-void Collision::DestroyScene ( VkDevice device ) noexcept
+void Collision::DestroyScene ( android_vulkan::Renderer &renderer ) noexcept
 {
     _cubes.clear ();
     _cubes.shrink_to_fit ();
@@ -345,8 +329,8 @@ void Collision::DestroyScene ( VkDevice device ) noexcept
 
     _cameraLight = nullptr;
 
-    MeshManager::Destroy ( device );
-    MaterialManager::Destroy ( device );
+    MeshManager::Destroy ( renderer.GetDevice () );
+    MaterialManager::Destroy ( renderer );
 }
 
 bool Collision::AppendCuboid ( android_vulkan::Renderer &renderer,

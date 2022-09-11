@@ -4,13 +4,14 @@
 
 namespace pbr {
 
-void DefaultTextureManager::FreeTransferResources ( VkDevice device, VkCommandPool commandPool ) noexcept
+void DefaultTextureManager::FreeTransferResources ( android_vulkan::Renderer &renderer,
+    VkCommandPool commandPool ) noexcept
 {
-    auto freeJob = [ device ] ( Texture2DRef &texture ) noexcept {
+    auto const freeJob = [ &renderer ] ( Texture2DRef &texture ) noexcept {
         if ( !texture )
             return;
 
-        texture->FreeTransferResources ( device );
+        texture->FreeTransferResources ( renderer );
     };
 
     freeJob ( _albedo );
@@ -19,7 +20,11 @@ void DefaultTextureManager::FreeTransferResources ( VkDevice device, VkCommandPo
     freeJob ( _normal );
     freeJob ( _params );
 
-    vkFreeCommandBuffers ( device, commandPool, static_cast<uint32_t> ( BUFFER_COUNT ), _commandBuffers );
+    vkFreeCommandBuffers ( renderer.GetDevice (),
+        commandPool,
+        static_cast<uint32_t> ( BUFFER_COUNT ),
+        _commandBuffers
+    );
 
     for ( auto& c : _commandBuffers )
     {
@@ -107,13 +112,13 @@ bool DefaultTextureManager::Init ( android_vulkan::Renderer &renderer, VkCommand
     return textureLoader ( _params, paramData, sizeof ( paramData ), VK_FORMAT_R8G8B8A8_UNORM, _commandBuffers[ 4U ] );
 }
 
-void DefaultTextureManager::Destroy ( VkDevice device ) noexcept
+void DefaultTextureManager::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 {
-    auto freeJob = [ device ] ( Texture2DRef &texture ) {
+    auto const freeJob = [ &renderer ] ( Texture2DRef &texture ) noexcept {
         if ( !texture )
             return;
 
-        texture->FreeResources ( device );
+        texture->FreeResources ( renderer );
         texture = nullptr;
     };
 

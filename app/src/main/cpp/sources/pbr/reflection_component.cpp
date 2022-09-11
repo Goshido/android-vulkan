@@ -66,14 +66,14 @@ bool ReflectionComponent::IsGlobalReflection () const noexcept
     return _isGlobal;
 }
 
-void ReflectionComponent::FreeTransferResources ( VkDevice device ) noexcept
+void ReflectionComponent::FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept
 {
     if ( !_probe )
         return;
 
     // NOLINTNEXTLINE - downcast.
     auto& probe = static_cast<ReflectionProbe&> ( *_probe );
-    probe.FreeTransferResources ( device );
+    probe.FreeTransferResources ( renderer.GetDevice () );
 }
 
 void ReflectionComponent::Submit ( RenderSession &renderSession ) noexcept

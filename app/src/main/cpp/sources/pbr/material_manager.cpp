@@ -84,14 +84,14 @@ MaterialManager& MaterialManager::GetInstance () noexcept
     return *_instance;
 }
 
-void MaterialManager::Destroy ( VkDevice device ) noexcept
+void MaterialManager::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 {
     std::unique_lock<std::shared_timed_mutex> const lock ( _mutex );
 
     if ( !_instance )
         return;
 
-    _instance->DestroyInternal ( device );
+    _instance->DestroyInternal ( renderer );
 
     delete _instance;
     _instance = nullptr;
@@ -295,10 +295,10 @@ MaterialRef MaterialManager::CreateStippleMaterial ( android_vulkan::Renderer &r
     return material;
 }
 
-void MaterialManager::DestroyInternal ( VkDevice device ) noexcept
+void MaterialManager::DestroyInternal ( android_vulkan::Renderer &renderer ) noexcept
 {
     for ( auto& texture : _textureStorage )
-        texture.second->FreeResources ( device );
+        texture.second->FreeResources ( renderer );
 
     _textureStorage.clear ();
 }

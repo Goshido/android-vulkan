@@ -100,16 +100,11 @@ class [[maybe_unused]] MemoryAllocator final
 
         ~MemoryAllocator () = default;
 
-        [[maybe_unused]] void FreeMemory ( VkDevice device, VkDeviceMemory memory, VkDeviceSize offset ) noexcept;
-        [[maybe_unused]] void Init ( VkPhysicalDeviceMemoryProperties const &properties ) noexcept;
+        void FreeMemory ( VkDevice device, VkDeviceMemory memory, VkDeviceSize offset ) noexcept;
+        void Init ( VkPhysicalDeviceMemoryProperties const &properties ) noexcept;
+        void MakeSnapshot () noexcept;
 
-        // Method generates a snapshot which is JSON file. The snapshot could be opened in Google Chrome browser
-        // via chrome://tracing util. The snapshot is located in the app's cache directory and has name:
-        //      vulkan memory snapshot <date and time>.json
-        // [2022/09/08] Last checked in Google Chrome v105.0.5195.102.
-        [[maybe_unused]] void MakeSnapshot () noexcept;
-
-        [[maybe_unused, nodiscard]] bool TryAllocateMemory ( VkDeviceMemory &memory,
+        [[nodiscard]] bool TryAllocateMemory ( VkDeviceMemory &memory,
             VkDeviceSize &offset,
             VkDevice device,
             VkMemoryRequirements const &requirements,

@@ -2,7 +2,11 @@
 #define ANDROID_VULKAN_RENDERER_H
 
 
-#include <GXCommon/GXWarning.h>
+#include <GXCommon/GXMath.h>
+#include "logger.h"
+#include "memory_allocator.h"
+#include "vulkan_api.h"
+#include "vulkan_loader.h"
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -12,11 +16,6 @@ GX_DISABLE_COMMON_WARNINGS
 #include <android/native_window.h>
 
 GX_RESTORE_WARNING_STATE
-
-#include <GXCommon/GXMath.h>
-#include "logger.h"
-#include "vulkan_api.h"
-#include "vulkan_loader.h"
 
 
 namespace android_vulkan {
@@ -55,6 +54,7 @@ class Renderer final
         bool                                                                _isDeviceExtensionSupported;
 
         size_t                                                              _maxUniformBufferRange;
+        MemoryAllocator                                                     _memoryAllocator;
 
         VkPhysicalDevice                                                    _physicalDevice;
 
@@ -167,6 +167,21 @@ class Renderer final
             VkMemoryPropertyFlags memoryProperties,
             char const* errorMessage
         ) const noexcept;
+
+        [[nodiscard]] bool TryAllocateMemory ( VkDeviceMemory &memory,
+            VkDeviceSize &offset,
+            VkMemoryRequirements const &requirements,
+            VkMemoryPropertyFlags memoryProperties,
+            char const* errorMessage
+        ) noexcept;
+
+        void FreeMemory ( VkDeviceMemory memory, VkDeviceSize offset ) noexcept;
+
+        // Method generates a snapshot which is JSON file. The snapshot could be opened in Google Chrome browser
+        // via chrome://tracing util. The snapshot is located in the app's cache directory and has name:
+        //      vulkan memory snapshot <date and time>.json
+        // [2022/09/11] Last checked in Google Chrome v105.0.5195.102.
+        [[maybe_unused]] void MakeVulkanMemorySnapshot () noexcept;
 
         // Method returns true is "result" equals VK_SUCCESS. Otherwise method returns false.
         [[nodiscard]] static bool CheckVkResult ( VkResult result, char const* from, char const* message ) noexcept;

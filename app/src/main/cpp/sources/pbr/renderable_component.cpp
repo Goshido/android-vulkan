@@ -3,7 +3,7 @@
 
 namespace pbr {
 
-void RenderableComponent::FreeTransferResources ( VkDevice /*device*/ ) noexcept
+void RenderableComponent::FreeTransferResources ( android_vulkan::Renderer &/*renderer*/ ) noexcept
 {
     // NOTHING
 }

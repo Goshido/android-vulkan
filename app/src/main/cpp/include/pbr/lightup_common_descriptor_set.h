@@ -44,8 +44,8 @@ class LightupCommonDescriptorSet final
             GBuffer &gBuffer
         ) noexcept;
 
-        void Destroy ( VkDevice device ) noexcept;
-        void OnFreeTransferResources ( VkDevice device ) noexcept;
+        void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
+        void OnFreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept;
 
         void Update ( VkDevice device,
             VkCommandBuffer commandBuffer,

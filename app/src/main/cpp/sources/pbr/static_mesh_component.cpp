@@ -158,9 +158,9 @@ StaticMeshComponent::StaticMeshComponent ( android_vulkan::Renderer &renderer,
     }
 }
 
-void StaticMeshComponent::FreeTransferResources ( VkDevice device ) noexcept
+void StaticMeshComponent::FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept
 {
-    _mesh->FreeTransferResources ( device );
+    _mesh->FreeTransferResources ( renderer.GetDevice () );
 
     if ( !_material )
         return;
@@ -169,18 +169,18 @@ void StaticMeshComponent::FreeTransferResources ( VkDevice device ) noexcept
     auto& m = static_cast<GeometryPassMaterial&> ( *_material );
 
     if ( m.GetAlbedo () )
-        m.GetAlbedo ()->FreeTransferResources ( device );
+        m.GetAlbedo ()->FreeTransferResources ( renderer );
 
     if ( m.GetEmission () )
-        m.GetEmission ()->FreeTransferResources ( device );
+        m.GetEmission ()->FreeTransferResources ( renderer );
 
     if ( m.GetNormal () )
-        m.GetNormal ()->FreeTransferResources ( device );
+        m.GetNormal ()->FreeTransferResources ( renderer );
 
     if ( !m.GetParam () )
         return;
 
-    m.GetParam ()->FreeTransferResources ( device );
+    m.GetParam ()->FreeTransferResources ( renderer );
 }
 
 void StaticMeshComponent::Submit ( RenderSession &renderSession ) noexcept

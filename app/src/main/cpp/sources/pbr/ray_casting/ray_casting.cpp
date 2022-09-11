@@ -40,48 +40,32 @@ bool RayCasting::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime 
 
 bool RayCasting::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 {
-    VkDevice device = renderer.GetDevice ();
-
-    if ( !CreateCommandPool ( renderer ) )
-    {
-        OnDestroyDevice ( device );
+    if ( !CreateCommandPool ( renderer ) || !_renderSession.OnInitDevice ( renderer ) || !LoadResources ( renderer ) )
         return false;
-    }
 
-    if ( !_renderSession.OnInitDevice ( renderer ) )
-    {
-        OnDestroyDevice ( device );
-        return false;
-    }
-
-    if ( !LoadResources ( renderer ) )
-    {
-        OnDestroyDevice ( device );
-        return false;
-    }
-
-    _renderSession.FreeTransferResources ( device );
+    _renderSession.FreeTransferResources ( renderer );
     return true;
 }
 
-void RayCasting::OnDestroyDevice ( VkDevice device ) noexcept
+void RayCasting::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
 {
     _body.reset ();
     _cube.reset ();
 
-    _renderSession.OnDestroyDevice ( device );
+    _renderSession.OnDestroyDevice ( renderer );
 
-    _normalTexture->FreeResources ( device );
+    _normalTexture->FreeResources ( renderer );
     _normalTexture.reset ();
     _normalMaterial.reset ();
 
-    _rayTextureHit->FreeResources ( device );
+    _rayTextureHit->FreeResources ( renderer );
     _rayTextureHit.reset ();
 
-    _rayTextureNoHit->FreeResources ( device );
+    _rayTextureNoHit->FreeResources ( renderer );
     _rayTextureNoHit.reset ();
     _rayMaterial.reset ();
 
+    VkDevice device = renderer.GetDevice ();
     _lineMesh->FreeResources ( device );
     _lineMesh.reset ();
 
@@ -89,7 +73,7 @@ void RayCasting::OnDestroyDevice ( VkDevice device ) noexcept
     _physics.Reset ();
 
     MeshManager::Destroy ( device );
-    MaterialManager::Destroy ( device );
+    MaterialManager::Destroy ( renderer );
 }
 
 bool RayCasting::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept
@@ -116,11 +100,11 @@ bool RayCasting::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexc
     return true;
 }
 
-void RayCasting::OnSwapchainDestroyed ( VkDevice device ) noexcept
+void RayCasting::OnSwapchainDestroyed ( android_vulkan::Renderer &renderer ) noexcept
 {
     _physics.Pause ();
     _camera.ReleaseInput ();
-    _renderSession.OnSwapchainDestroyed ( device );
+    _renderSession.OnSwapchainDestroyed ( renderer.GetDevice () );
 }
 
 void RayCasting::Animate ( float deltaTime ) noexcept
@@ -395,11 +379,11 @@ bool RayCasting::LoadResources ( android_vulkan::Renderer &renderer ) noexcept
 
     // NOLINTNEXTLINE - downcast.
     auto& cube = static_cast<StaticMeshComponent&> ( *_cube );
-    cube.FreeTransferResources ( device );
+    cube.FreeTransferResources ( renderer );
 
-    _rayTextureHit->FreeTransferResources ( device );
-    _rayTextureNoHit->FreeTransferResources ( device );
-    _normalTexture->FreeTransferResources ( device );
+    _rayTextureHit->FreeTransferResources ( renderer );
+    _rayTextureNoHit->FreeTransferResources ( renderer );
+    _normalTexture->FreeTransferResources ( renderer );
     lineMesh.FreeTransferResources ( device );
 
     return true;

@@ -33,10 +33,10 @@ class MandelbrotLUTColor final : public MandelbrotBase
 
     private:
         [[nodiscard]] bool OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept override;
-        void OnDestroyDevice ( VkDevice device ) noexcept override;
+        void OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept override;
 
         [[nodiscard]] bool OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept override;
-        void OnSwapchainDestroyed ( VkDevice device ) noexcept override;
+        void OnSwapchainDestroyed ( android_vulkan::Renderer &renderer ) noexcept override;
 
         [[nodiscard]] bool CreatePipelineLayout ( android_vulkan::Renderer &renderer ) noexcept override;
         void DestroyPipelineLayout ( VkDevice device ) noexcept override;

@@ -36,7 +36,7 @@ class ReflectionComponent final : public RenderableComponent, public Transformab
         [[nodiscard]] bool IsGlobalReflection () const noexcept;
 
     private:
-        void FreeTransferResources ( VkDevice device ) noexcept override;
+        void FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept override;
         void Submit ( RenderSession &renderSession ) noexcept override;
         void OnTransform ( GXMat4 const &transformWorld ) noexcept override;
 };

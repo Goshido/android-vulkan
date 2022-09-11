@@ -76,7 +76,7 @@ class Scene final
         [[nodiscard]] bool OnUpdate ( double deltaTime ) noexcept;
 
         void AppendActor ( ActorRef &actor ) noexcept;
-        void FreeTransferResources ( VkDevice device ) noexcept;
+        void FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept;
 
         [[nodiscard]] bool LoadScene ( android_vulkan::Renderer &renderer,
             char const* scene,

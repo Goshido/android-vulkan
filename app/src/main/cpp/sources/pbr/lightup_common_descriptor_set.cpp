@@ -353,11 +353,12 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
     return true;
 }
 
-void LightupCommonDescriptorSet::Destroy ( VkDevice device ) noexcept
+void LightupCommonDescriptorSet::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 {
+    VkDevice device = renderer.GetDevice ();
     _prefilterSampler.Destroy ( device );
     _brdfLUTSampler.Destroy ( device );
-    _brdfLUT.FreeResources ( device );
+    _brdfLUT.FreeResources ( renderer );
     _uniforms.Destroy ( device );
 
     if ( _pipelineLayout != VK_NULL_HANDLE )
@@ -377,9 +378,9 @@ void LightupCommonDescriptorSet::Destroy ( VkDevice device ) noexcept
     AV_UNREGISTER_DESCRIPTOR_POOL ( "pbr::LightupCommonDescriptorSet::_descriptorPool" )
 }
 
-void LightupCommonDescriptorSet::OnFreeTransferResources ( VkDevice device ) noexcept
+void LightupCommonDescriptorSet::OnFreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept
 {
-    _brdfLUT.FreeTransferResources ( device );
+    _brdfLUT.FreeTransferResources ( renderer );
 }
 
 void LightupCommonDescriptorSet::Update ( VkDevice device,

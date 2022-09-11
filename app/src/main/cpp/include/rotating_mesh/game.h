@@ -84,7 +84,7 @@ class Game : public android_vulkan::Game
 
         [[nodiscard]] virtual bool CreateSamplers ( android_vulkan::Renderer &renderer ) noexcept;
         virtual void DestroySamplers ( VkDevice device ) noexcept;
-        virtual void DestroyTextures ( VkDevice device ) noexcept;
+        virtual void DestroyTextures ( android_vulkan::Renderer &renderer ) noexcept;
 
         [[nodiscard]] bool CreateCommonTextures ( android_vulkan::Renderer &renderer,
             VkCommandBuffer* commandBuffers
@@ -102,10 +102,10 @@ class Game : public android_vulkan::Game
         [[nodiscard]] bool OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) noexcept override;
 
         [[nodiscard]] bool OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept override;
-        void OnDestroyDevice ( VkDevice device ) noexcept override;
+        void OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept override;
 
         [[nodiscard]] bool OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept override;
-        void OnSwapchainDestroyed ( VkDevice device ) noexcept override;
+        void OnSwapchainDestroyed ( android_vulkan::Renderer &renderer ) noexcept override;
 
         [[nodiscard]] bool BeginFrame ( android_vulkan::Renderer &renderer, size_t &imageIndex ) noexcept;
         [[nodiscard]] bool EndFrame ( android_vulkan::Renderer &renderer, uint32_t imageIndex ) noexcept;
@@ -117,7 +117,7 @@ class Game : public android_vulkan::Game
         void DestroyMeshes ( VkDevice device ) noexcept;
 
         [[nodiscard]] bool CreateFramebuffers ( android_vulkan::Renderer &renderer ) noexcept;
-        void DestroyFramebuffers ( VkDevice device ) noexcept;
+        void DestroyFramebuffers ( android_vulkan::Renderer &renderer ) noexcept;
 
         [[nodiscard]] bool CreatePipeline ( android_vulkan::Renderer &renderer ) noexcept;
         void DestroyPipeline ( VkDevice device ) noexcept;

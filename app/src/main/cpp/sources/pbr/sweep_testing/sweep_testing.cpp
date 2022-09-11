@@ -41,39 +41,21 @@ bool SweepTesting::OnFrame ( android_vulkan::Renderer &renderer, double deltaTim
         body.Submit ( _renderSession );
 
     _sweep.Submit ( _renderSession );
-
     return _renderSession.End ( renderer, deltaTime );
 }
 
 bool SweepTesting::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 {
-    VkDevice device = renderer.GetDevice ();
-
-    if ( !CreateCommandPool ( renderer ) )
-    {
-        OnDestroyDevice ( device );
+    if ( !CreateCommandPool ( renderer ) || !_renderSession.OnInitDevice ( renderer ) || !CreateScene ( renderer ) )
         return false;
-    }
 
-    if ( !_renderSession.OnInitDevice ( renderer ) )
-    {
-        OnDestroyDevice ( device );
-        return false;
-    }
-
-    if ( !CreateScene ( renderer ) )
-    {
-        OnDestroyDevice ( device );
-        return false;
-    }
-
-    _renderSession.FreeTransferResources ( device );
+    _renderSession.FreeTransferResources ( renderer );
     return true;
 }
 
-void SweepTesting::OnDestroyDevice ( VkDevice device ) noexcept
+void SweepTesting::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
 {
-    _renderSession.OnDestroyDevice ( device );
+    _renderSession.OnDestroyDevice ( renderer );
     _sweep.Destroy ();
 
     for ( auto& body : _bodies )
@@ -81,15 +63,16 @@ void SweepTesting::OnDestroyDevice ( VkDevice device ) noexcept
 
     if ( _overlay )
     {
-        _overlay->FreeResources ( device );
+        _overlay->FreeResources ( renderer );
         _overlay.reset ();
     }
 
+    VkDevice device = renderer.GetDevice ();
     DestroyCommandPool ( device );
     _physics.Reset ();
 
     MeshManager::Destroy ( device );
-    MaterialManager::Destroy ( device );
+    MaterialManager::Destroy ( renderer );
 }
 
 bool SweepTesting::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept
@@ -116,11 +99,11 @@ bool SweepTesting::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noe
     return true;
 }
 
-void SweepTesting::OnSwapchainDestroyed ( VkDevice device ) noexcept
+void SweepTesting::OnSwapchainDestroyed ( android_vulkan::Renderer &renderer ) noexcept
 {
     UnbindControls ();
     _physics.Pause ();
-    _renderSession.OnSwapchainDestroyed ( device );
+    _renderSession.OnSwapchainDestroyed ( renderer.GetDevice () );
 }
 
 void SweepTesting::BindControls () noexcept
@@ -306,14 +289,14 @@ bool SweepTesting::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
     if ( !result )
         return false;
 
-    _sweep.FreeTransferResources ( device );
+    _sweep.FreeTransferResources ( renderer );
     _sweep.SetOverlay ( _overlay );
 
-    t.FreeTransferResources ( device );
+    t.FreeTransferResources ( renderer );
 
     for ( auto& body : _bodies )
     {
-        body.FreeTransferResources ( device );
+        body.FreeTransferResources ( renderer );
         body.SetOverlay ( _overlay );
     }
 

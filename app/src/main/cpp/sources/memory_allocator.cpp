@@ -248,17 +248,31 @@ bool MemoryAllocator::Chunk::TryAllocateMemory ( VkDeviceMemory &memory,
     {
         Offset const freeBlockOffset = block->_offset;
         auto const size = static_cast<size_t> ( block->_size );
-        size_t space = size;
         auto* ptr = reinterpret_cast<void*> ( freeBlockOffset );
-
-        ptr = std::align ( static_cast<size_t> ( requirements.alignment ),
-            static_cast<size_t> ( requirements.size ),
-            ptr,
-            space
-        );
+        size_t space = size;
 
         if ( !ptr )
-            continue;
+        {
+            // Block with offset 0. Any alignment should work. Checking only required size.
+            if ( requirements.size > size )
+            {
+                continue;
+            }
+        }
+        else
+        {
+            ptr = std::align ( static_cast<size_t> ( requirements.alignment ),
+                static_cast<size_t> ( requirements.size ),
+                ptr,
+                space
+            );
+
+            if ( !ptr )
+            {
+                // Failed to allocate block with requested size and alignment.
+                continue;
+            }
+        }
 
         auto const resultOffset = reinterpret_cast<VkDeviceSize> ( ptr );
         UnlinkFreeBlock ( *block );
@@ -291,6 +305,7 @@ bool MemoryAllocator::Chunk::TryAllocateMemory ( VkDeviceMemory &memory,
 
             freeBlock->_blockChainNext = block;
             freeBlock->_blockChainPrevious = prev;
+            block->_blockChainPrevious = freeBlock;
         }
 
         if ( size_t const left = space - static_cast<size_t> ( requirements.size ); left )
@@ -304,6 +319,7 @@ bool MemoryAllocator::Chunk::TryAllocateMemory ( VkDeviceMemory &memory,
 
             freeBlock->_blockChainNext = next;
             freeBlock->_blockChainPrevious = block;
+            block->_blockChainNext = freeBlock;
         }
 
         offset = resultOffset;
@@ -357,11 +373,16 @@ void MemoryAllocator::Chunk::LinkFreeBlock ( Block &block ) noexcept
         if ( size > freeBlock->_size )
             continue;
 
-        block._freePrevious = freeBlock->_freePrevious;
+        Block* before = freeBlock->_freePrevious;
+        block._freePrevious = before;
         block._freeNext = freeBlock;
         freeBlock->_freePrevious = &block;
 
-        if ( freeBlock == _freeBlocks._head )
+        if ( before )
+        {
+            before->_freeNext = &block;
+        }
+        else
         {
             // The smallest block so far. It should be added to head.
             _freeBlocks._head = &block;
@@ -406,7 +427,7 @@ void MemoryAllocator::Chunk::UnlinkFreeBlock ( Block &block ) noexcept
 
 //----------------------------------------------------------------------------------------------------------------------
 
-[[maybe_unused]] void MemoryAllocator::FreeMemory ( VkDevice device,
+void MemoryAllocator::FreeMemory ( VkDevice device,
     VkDeviceMemory memory,
     VkDeviceSize offset
 ) noexcept
@@ -427,12 +448,12 @@ void MemoryAllocator::Chunk::UnlinkFreeBlock ( Block &block ) noexcept
     _chunkMap.erase ( findResult );
 }
 
-[[maybe_unused]] void MemoryAllocator::Init ( VkPhysicalDeviceMemoryProperties const &properties ) noexcept
+void MemoryAllocator::Init ( VkPhysicalDeviceMemoryProperties const &properties ) noexcept
 {
     _properties = properties;
 }
 
-[[maybe_unused]] void MemoryAllocator::MakeSnapshot () noexcept
+void MemoryAllocator::MakeSnapshot () noexcept
 {
     // See chrome://tracing JSON format here:
     // https://docs.google.com/document/d/1CvAClvFfyA5R-PhYUmn5OOQtYMH4h6I0nSsKchNAySU/edit
@@ -477,8 +498,7 @@ void MemoryAllocator::Chunk::UnlinkFreeBlock ( Block &block ) noexcept
     json.append ( end.data (), end.size () );
 
     auto const timeStamp = std::chrono::system_clock::to_time_t ( std::chrono::system_clock::now () );
-    tm timeInfo {};
-    localtime_r ( &timeStamp, &timeInfo );
+    std::tm const& timeInfo = *std::localtime ( &timeStamp );
 
     char path[ 1024U ];
 
@@ -486,7 +506,7 @@ void MemoryAllocator::Chunk::UnlinkFreeBlock ( Block &block ) noexcept
         std::size ( path ),
         R"__(%s/vulkan memory snapshot %d-%02d-%02d %02d-%02d-%02d %s.json)__",
         Core::GetCacheDirectory ().c_str (),
-        timeInfo.tm_year,
+        1900 + timeInfo.tm_year,
         timeInfo.tm_mon,
         timeInfo.tm_mday,
         timeInfo.tm_hour,
@@ -499,7 +519,7 @@ void MemoryAllocator::Chunk::UnlinkFreeBlock ( Block &block ) noexcept
     report.write ( json.data (), static_cast<std::streamsize> ( json.size () ) );
 }
 
-[[maybe_unused]] bool MemoryAllocator::TryAllocateMemory ( VkDeviceMemory &memory,
+bool MemoryAllocator::TryAllocateMemory ( VkDeviceMemory &memory,
     VkDeviceSize &offset,
     VkDevice device,
     VkMemoryRequirements const &requirements,

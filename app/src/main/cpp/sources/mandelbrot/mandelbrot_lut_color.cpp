@@ -35,48 +35,27 @@ MandelbrotLUTColor::MandelbrotLUTColor () noexcept:
 
 bool MandelbrotLUTColor::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 {
-    if ( !MandelbrotBase::OnInitDevice ( renderer ) )
-        return false;
-
-    if ( !CreateLUT ( renderer ) )
-    {
-        OnDestroyDevice ( renderer.GetDevice () );
-        return false;
-    }
-
-    if ( !CreateDescriptorSet ( renderer ) )
-    {
-        OnDestroyDevice ( renderer.GetDevice () );
-        return false;
-    }
-
-    return true;
+    return MandelbrotBase::OnInitDevice ( renderer ) && CreateLUT ( renderer ) && CreateDescriptorSet ( renderer );
 }
 
-void MandelbrotLUTColor::OnDestroyDevice ( VkDevice device ) noexcept
+void MandelbrotLUTColor::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
 {
+    VkDevice device = renderer.GetDevice ();
+
     DestroyDescriptorSet ( device );
     DestroyLUT ( device );
-
-    MandelbrotBase::OnDestroyDevice ( device );
+    MandelbrotBase::OnDestroyDevice ( renderer );
 }
 
 bool MandelbrotLUTColor::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept
 {
-    if ( !MandelbrotBase::OnSwapchainCreated ( renderer ) )
-        return false;
-
-    if ( CreateCommandBuffer ( renderer ) )
-        return true;
-
-    OnSwapchainDestroyed ( renderer.GetDevice () );
-    return false;
+    return MandelbrotBase::OnSwapchainCreated ( renderer ) && CreateCommandBuffer ( renderer );
 }
 
-void MandelbrotLUTColor::OnSwapchainDestroyed ( VkDevice device ) noexcept
+void MandelbrotLUTColor::OnSwapchainDestroyed ( android_vulkan::Renderer &renderer ) noexcept
 {
-    DestroyCommandBuffer ( device );
-    MandelbrotBase::OnSwapchainDestroyed ( device );
+    DestroyCommandBuffer ( renderer.GetDevice () );
+    MandelbrotBase::OnSwapchainDestroyed ( renderer );
 }
 
 bool MandelbrotLUTColor::CreatePipelineLayout ( android_vulkan::Renderer &renderer ) noexcept

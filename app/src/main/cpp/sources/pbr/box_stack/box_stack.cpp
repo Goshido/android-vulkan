@@ -110,10 +110,8 @@ bool BoxStack::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
         .queueFamilyIndex = renderer.GetQueueFamilyIndex ()
     };
 
-    VkDevice device = renderer.GetDevice ();
-
     bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateCommandPool ( device, &createInfo, nullptr, &_commandPool ),
+        vkCreateCommandPool ( renderer.GetDevice (), &createInfo, nullptr, &_commandPool ),
         "pbr::box_stack::BoxStack::OnInit",
         "Can't create command pool"
     );
@@ -124,34 +122,31 @@ bool BoxStack::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
     AV_REGISTER_COMMAND_POOL ( "pbr::box_stack::BoxStack::_commandPool" )
 
     if ( !_renderSession.OnInitDevice ( renderer ) )
-    {
-        OnDestroyDevice ( device );
         return false;
-    }
 
     InitColors ();
 
     if ( !CreateSceneManual ( renderer ) )
-    {
-        OnDestroyDevice ( device );
         return false;
-    }
 
-    _renderSession.FreeTransferResources ( device );
+    _renderSession.FreeTransferResources ( renderer );
     return true;
 }
 
-void BoxStack::OnDestroyDevice ( VkDevice device ) noexcept
+void BoxStack::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
 {
     DestroyPhysics ();
     _cubes.clear ();
     _components.clear ();
-    _renderSession.OnDestroyDevice ( device );
+    _renderSession.OnDestroyDevice ( renderer );
+
+    VkDevice device = renderer.GetDevice ();
+
     DestroyCommandPool ( device );
     _physics.Reset ();
 
     MeshManager::Destroy ( device );
-    MaterialManager::Destroy ( device );
+    MaterialManager::Destroy ( renderer );
 }
 
 bool BoxStack::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept
@@ -193,7 +188,7 @@ bool BoxStack::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcep
     return true;
 }
 
-void BoxStack::OnSwapchainDestroyed ( VkDevice device ) noexcept
+void BoxStack::OnSwapchainDestroyed ( android_vulkan::Renderer &renderer ) noexcept
 {
     android_vulkan::Gamepad& gamepad = android_vulkan::Gamepad::GetInstance ();
     gamepad.UnbindKey ( android_vulkan::eGamepadKey::LeftBumper, android_vulkan::eButtonState::Down );
@@ -202,7 +197,7 @@ void BoxStack::OnSwapchainDestroyed ( VkDevice device ) noexcept
     _physics.Pause ();
 
     _camera.ReleaseInput ();
-    _renderSession.OnSwapchainDestroyed ( device );
+    _renderSession.OnSwapchainDestroyed ( renderer.GetDevice () );
 }
 
 bool BoxStack::AppendCuboid ( android_vulkan::Renderer &renderer,
@@ -411,7 +406,7 @@ bool BoxStack::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
     {
         // NOLINTNEXTLINE - downcast.
         auto& renderableComponent = static_cast<RenderableComponent&> ( *component );
-        renderableComponent.FreeTransferResources ( device );
+        renderableComponent.FreeTransferResources ( renderer );
     }
 
     _sphereMesh->FreeTransferResources ( device );

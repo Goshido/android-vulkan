@@ -812,6 +812,7 @@ Renderer::Renderer () noexcept:
     _isDeviceExtensionChecked ( false ),
     _isDeviceExtensionSupported ( false ),
     _maxUniformBufferRange {},
+    _memoryAllocator {},
     _physicalDevice ( VK_NULL_HANDLE ),
     _queue ( VK_NULL_HANDLE ),
     _queueFamilyIndex ( VK_QUEUE_FAMILY_IGNORED ),
@@ -1211,6 +1212,30 @@ bool Renderer::TryAllocateMemory ( VkDeviceMemory &memory,
     );
 }
 
+bool Renderer::TryAllocateMemory ( VkDeviceMemory &memory,
+    VkDeviceSize &offset,
+    VkMemoryRequirements const &requirements,
+    VkMemoryPropertyFlags memoryProperties,
+    char const* errorMessage
+) noexcept
+{
+    if ( _memoryAllocator.TryAllocateMemory ( memory, offset, _device, requirements, memoryProperties ) )
+        return true;
+
+    LogError ( "Renderer::TryAllocateMemory - %s.", errorMessage );
+    return false;
+}
+
+void Renderer::FreeMemory ( VkDeviceMemory memory, VkDeviceSize offset ) noexcept
+{
+    _memoryAllocator.FreeMemory ( _device, memory, offset );
+}
+
+void Renderer::MakeVulkanMemorySnapshot () noexcept
+{
+    _memoryAllocator.MakeSnapshot ();
+}
+
 bool Renderer::CheckVkResult ( VkResult result, char const* from, char const* message ) noexcept
 {
     if ( result == VK_SUCCESS )
@@ -1569,6 +1594,7 @@ bool Renderer::DeployDevice () noexcept
         return false;
 
     vkGetDeviceQueue ( _device, _queueFamilyIndex, 0U, &_queue );
+    _memoryAllocator.Init ( _physicalDeviceMemoryProperties );
     return true;
 }
 

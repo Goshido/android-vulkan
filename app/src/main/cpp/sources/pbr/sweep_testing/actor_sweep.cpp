@@ -11,6 +11,8 @@ namespace pbr::sweep_testing {
 constexpr static float MOVING_SPEED = 1.25F;
 constexpr static float STICK_DEAD_ZONE = 0.2F;
 
+//----------------------------------------------------------------------------------------------------------------------
+
 void ActorSweep::CaptureInput ( GXMat4 const &cameraLocal ) noexcept
 {
     _cameraLeft = *reinterpret_cast<GXVec3 const*> ( &cameraLocal._m[ 0U ][ 0U ] );
@@ -30,11 +32,11 @@ void ActorSweep::ReleaseInput () noexcept
     _moveSpeed = noMove;
 }
 
-void ActorSweep::FreeTransferResources ( VkDevice device ) noexcept
+void ActorSweep::FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept
 {
     // NOLINTNEXTLINE - downcast.
     auto& mesh = static_cast<StaticMeshComponent&> ( *_mesh );
-    mesh.FreeTransferResources ( device );
+    mesh.FreeTransferResources ( renderer );
 }
 
 void ActorSweep::Destroy () noexcept

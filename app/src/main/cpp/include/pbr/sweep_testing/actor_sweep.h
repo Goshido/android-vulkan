@@ -30,7 +30,7 @@ class ActorSweep final
         void CaptureInput ( GXMat4 const &cameraLocal ) noexcept;
         void ReleaseInput () noexcept;
 
-        void FreeTransferResources ( VkDevice device ) noexcept;
+        void FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept;
 
         void Destroy () noexcept;
         [[nodiscard]] android_vulkan::ShapeRef const& GetShape () noexcept;

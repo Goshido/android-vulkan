@@ -150,40 +150,22 @@ bool Rainbow::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) n
 
 bool Rainbow::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 {
-    if ( CreatePresentationSyncPrimitive ( renderer ) )
-        return true;
-
-    OnDestroyDevice ( renderer.GetDevice() );
-    return false;
+    return CreatePresentationSyncPrimitive ( renderer );
 }
 
-void Rainbow::OnDestroyDevice ( VkDevice device ) noexcept
+void Rainbow::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
 {
-    DestroyPresentationSyncPrimitive ( device );
+    DestroyPresentationSyncPrimitive ( renderer.GetDevice () );
 }
 
 bool Rainbow::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept
 {
-    if ( !CreateRenderPass ( renderer ) )
-        return false;
-
-    if ( !CreateFramebuffers ( renderer ) )
-    {
-        OnSwapchainDestroyed ( renderer.GetDevice () );
-        return false;
-    }
-
-    if ( !CreateCommandBuffer ( renderer ) )
-    {
-        OnSwapchainDestroyed ( renderer.GetDevice () );
-        return false;
-    }
-
-    return true;
+    return CreateRenderPass ( renderer ) && CreateFramebuffers ( renderer ) && CreateCommandBuffer ( renderer );
 }
 
-void Rainbow::OnSwapchainDestroyed ( VkDevice device ) noexcept
+void Rainbow::OnSwapchainDestroyed ( android_vulkan::Renderer &renderer ) noexcept
 {
+    VkDevice device = renderer.GetDevice ();
     DestroyCommandBuffer ( device );
     DestroyFramebuffers ( device );
     DestroyRenderPass ( device );

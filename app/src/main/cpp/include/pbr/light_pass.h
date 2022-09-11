@@ -43,11 +43,11 @@ class LightPass final
             GBuffer &gBuffer
         ) noexcept;
 
-        void Destroy ( VkDevice device ) noexcept;
+        void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
 
         [[nodiscard]] size_t GetPointLightCount () const noexcept;
         [[nodiscard]] size_t GetReflectionLocalCount () const noexcept;
-        void OnFreeTransferResources ( VkDevice device ) noexcept;
+        void OnFreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept;
 
         [[nodiscard]] bool OnPreGeometryPass ( android_vulkan::Renderer &renderer,
             VkCommandBuffer commandBuffer,

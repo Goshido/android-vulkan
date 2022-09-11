@@ -156,12 +156,12 @@ void Game::DestroySamplers ( VkDevice device ) noexcept
     AV_UNREGISTER_SAMPLER ( "Game::_sampler01Mips" )
 }
 
-void Game::DestroyTextures ( VkDevice device ) noexcept
+void Game::DestroyTextures ( android_vulkan::Renderer &renderer ) noexcept
 {
     for ( auto& item : _drawcalls )
     {
-        item._diffuse.FreeResources ( device );
-        item._normal.FreeResources ( device );
+        item._diffuse.FreeResources ( renderer );
+        item._normal.FreeResources ( renderer );
         item._diffuseSampler = item._normalSampler = VK_NULL_HANDLE;
     }
 }
@@ -385,65 +385,26 @@ bool Game::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) noex
 
 bool Game::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 {
-    if ( !CreateSyncPrimitives ( renderer ) )
-    {
-        OnDestroyDevice ( renderer.GetDevice () );
-        return false;
-    }
-
-    if ( !CreateCommandPool ( renderer ) )
-    {
-        OnDestroyDevice ( renderer.GetDevice () );
-        return false;
-    }
-
-    if ( !CreateUniformBuffer ( renderer ) )
-    {
-        OnDestroyDevice ( renderer.GetDevice () );
-        return false;
-    }
-
-    if ( !CreateSamplers ( renderer ) )
-    {
-        OnDestroyDevice ( renderer.GetDevice () );
-        return false;
-    }
-
-    if ( !LoadGPUContent ( renderer ) )
-    {
-        OnDestroyDevice ( renderer.GetDevice () );
-        return false;
-    }
-
-    if ( !CreateShaderModules ( renderer ) )
-    {
-        OnDestroyDevice ( renderer.GetDevice () );
-        return false;
-    }
-
-    if ( !CreatePipelineLayout ( renderer ) )
-    {
-        OnDestroyDevice ( renderer.GetDevice () );
-        return false;
-    }
-
-    if ( !CreateDescriptorSet ( renderer ) )
-    {
-        OnDestroyDevice ( renderer.GetDevice () );
-        return false;
-    }
-
-    return true;
+    return CreateSyncPrimitives ( renderer ) &&
+        CreateCommandPool ( renderer ) &&
+        CreateUniformBuffer ( renderer ) &&
+        CreateSamplers ( renderer ) &&
+        LoadGPUContent ( renderer ) &&
+        CreateShaderModules ( renderer ) &&
+        CreatePipelineLayout ( renderer ) &&
+        CreateDescriptorSet ( renderer );
 }
 
-void Game::OnDestroyDevice ( VkDevice device ) noexcept
+void Game::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
 {
+    VkDevice device = renderer.GetDevice ();
+
     DestroyDescriptorSet ( device );
     DestroyPipelineLayout ( device );
     DestroyShaderModules ( device );
     DestroySamplers ( device );
     DestroyMeshes ( device );
-    DestroyTextures ( device );
+    DestroyTextures ( renderer );
     DestroyUniformBuffer ( device );
     DestroyCommandPool ( device );
     DestroySyncPrimitives ( device );
@@ -459,38 +420,19 @@ bool Game::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept
         Z_FAR
     );
 
-    if ( !CreateRenderPass ( renderer ) )
-    {
-        OnSwapchainDestroyed ( renderer.GetDevice () );
-        return false;
-    }
-
-    if ( !CreateFramebuffers ( renderer ) )
-    {
-        OnSwapchainDestroyed ( renderer.GetDevice () );
-        return false;
-    }
-
-    if ( !CreatePipeline ( renderer ) )
-    {
-        OnSwapchainDestroyed ( renderer.GetDevice () );
-        return false;
-    }
-
-    if ( !CreateCommandBuffers ( renderer ) )
-    {
-        OnSwapchainDestroyed ( renderer.GetDevice () );
-        return false;
-    }
-
-    return true;
+    return CreateRenderPass ( renderer ) &&
+        CreateFramebuffers ( renderer ) &&
+        CreatePipeline ( renderer ) &&
+        CreateCommandBuffers ( renderer );
 }
 
-void Game::OnSwapchainDestroyed ( VkDevice device ) noexcept
+void Game::OnSwapchainDestroyed ( android_vulkan::Renderer &renderer ) noexcept
 {
+    VkDevice device = renderer.GetDevice ();
+
     DestroyCommandBuffers ( device );
     DestroyPipeline ( device );
-    DestroyFramebuffers ( device );
+    DestroyFramebuffers ( renderer );
     DestroyRenderPass ( device );
 }
 
@@ -675,10 +617,12 @@ bool Game::CreateFramebuffers ( android_vulkan::Renderer &renderer ) noexcept
     return true;
 }
 
-void Game::DestroyFramebuffers ( VkDevice device ) noexcept
+void Game::DestroyFramebuffers ( android_vulkan::Renderer &renderer ) noexcept
 {
     if ( !_framebuffers.empty () )
     {
+        VkDevice device = renderer.GetDevice ();
+
         for ( auto framebuffer : _framebuffers )
         {
             vkDestroyFramebuffer ( device, framebuffer, nullptr );
@@ -688,7 +632,7 @@ void Game::DestroyFramebuffers ( VkDevice device ) noexcept
         _framebuffers.clear ();
     }
 
-    _depthStencilRenderTarget.FreeResources ( device );
+    _depthStencilRenderTarget.FreeResources ( renderer );
 }
 
 bool Game::CreatePipeline ( android_vulkan::Renderer &renderer ) noexcept

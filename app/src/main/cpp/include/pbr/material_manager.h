@@ -54,7 +54,7 @@ class MaterialManager final
         ) noexcept;
 
         [[nodiscard]] static MaterialManager& GetInstance () noexcept;
-        static void Destroy ( VkDevice device ) noexcept;
+        static void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
 
         [[nodiscard]] constexpr static uint32_t MaxCommandBufferPerMaterial () noexcept
         {
@@ -79,7 +79,7 @@ class MaterialManager final
             VkCommandBuffer const* commandBuffers
         ) noexcept;
 
-        void DestroyInternal ( VkDevice device ) noexcept;
+        void DestroyInternal ( android_vulkan::Renderer &renderer ) noexcept;
 
         [[nodiscard]] Texture2DRef LoadTexture ( android_vulkan::Renderer &renderer,
             size_t &commandBufferConsumed,

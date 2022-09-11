@@ -50,15 +50,17 @@ bool LightPass::Init ( android_vulkan::Renderer &renderer,
         );
 }
 
-void LightPass::Destroy ( VkDevice device ) noexcept
+void LightPass::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 {
+    VkDevice device = renderer.GetDevice ();
+
     _volumeBufferPool.Destroy ( device, "pbr::LightPass::_lightVolumeBufferPool" );
     _unitCube.FreeResources ( device );
 
     _reflectionLocalPass.Destroy ( device );
     _reflectionGlobalPass.Destroy ( device );
     _pointLightPass.Destroy ( device );
-    _lightupCommonDescriptorSet.Destroy ( device );
+    _lightupCommonDescriptorSet.Destroy ( renderer );
 
     if ( _commandPool == VK_NULL_HANDLE )
         return;
@@ -78,10 +80,12 @@ size_t LightPass::GetReflectionLocalCount () const noexcept
     return _reflectionLocalPass.GetReflectionLocalCount ();
 }
 
-void LightPass::OnFreeTransferResources ( VkDevice device ) noexcept
+void LightPass::OnFreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept
 {
+    VkDevice device = renderer.GetDevice ();
+
     _unitCube.FreeTransferResources ( device );
-    _lightupCommonDescriptorSet.OnFreeTransferResources ( device );
+    _lightupCommonDescriptorSet.OnFreeTransferResources ( renderer );
 
     if ( _commandPool == VK_NULL_HANDLE )
         return;

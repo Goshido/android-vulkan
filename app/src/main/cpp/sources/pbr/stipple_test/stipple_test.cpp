@@ -69,11 +69,10 @@ bool StippleTest::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 void StippleTest::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
 {
     _renderSession.OnDestroyDevice ( renderer );
-    VkDevice device = renderer.GetDevice ();
 
     if ( _commandPool != VK_NULL_HANDLE )
     {
-        vkDestroyCommandPool ( device, _commandPool, nullptr );
+        vkDestroyCommandPool ( renderer.GetDevice (), _commandPool, nullptr );
         _commandPool = VK_NULL_HANDLE;
         AV_UNREGISTER_COMMAND_POOL ( "StippleTest::_commandPool" )
     }
@@ -81,7 +80,7 @@ void StippleTest::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcep
     _floor = nullptr;
     _stipple = nullptr;
 
-    MeshManager::Destroy ( device );
+    MeshManager::Destroy ( renderer );
     MaterialManager::Destroy ( renderer );
 }
 

@@ -437,14 +437,14 @@ void MemoryAllocator::FreeMemory ( VkDevice device,
     auto findResult = _chunkMap.find ( memory );
     assert ( findResult != _chunkMap.end () );
 
-    auto [chunks, chunk] = findResult->second;
-    chunk->FreeMemory ( offset );
+    ChunkInfo& chunkInfo = findResult->second;
+    chunkInfo._chunk->FreeMemory ( offset );
 
-    if ( chunk->IsUsed () )
+    if ( chunkInfo._chunk->IsUsed () )
         return;
 
-    chunk->Destroy ( device );
-    chunks->erase ( chunk );
+    chunkInfo._chunk->Destroy ( device );
+    chunkInfo._chunks->erase ( chunkInfo._chunk );
     _chunkMap.erase ( findResult );
 }
 
@@ -519,6 +519,54 @@ void MemoryAllocator::MakeSnapshot () noexcept
     report.write ( json.data (), static_cast<std::streamsize> ( json.size () ) );
 }
 
+bool MemoryAllocator::MapMemory ( void*& ptr,
+    VkDevice device,
+    VkDeviceMemory memory,
+    VkDeviceSize offset,
+    char const* from,
+    char const* message
+) noexcept
+{
+    std::unique_lock<std::mutex> const lock ( _mutex );
+
+    auto findResult = _chunkMap.find ( memory );
+    assert ( findResult != _chunkMap.end () );
+    ChunkInfo& chunkInfo = findResult->second;
+
+    if ( ++chunkInfo._mapCounter > 1U )
+    {
+        ptr = static_cast<uint8_t*> ( chunkInfo._mapPointer ) + offset;
+        return true;
+    }
+
+    bool const result = Renderer::CheckVkResult (
+        vkMapMemory ( device, memory, 0U, BYTES_PER_CHUNK, 0U, &chunkInfo._mapPointer ),
+        from,
+        message
+    );
+
+    if ( !result )
+        return false;
+
+    ptr = static_cast<uint8_t*> ( chunkInfo._mapPointer ) + offset;
+    return true;
+}
+
+void MemoryAllocator::UnmapMemory ( VkDevice device, VkDeviceMemory memory ) noexcept
+{
+    std::unique_lock<std::mutex> const lock ( _mutex );
+
+    auto findResult = _chunkMap.find ( memory );
+    assert ( findResult != _chunkMap.end () );
+    ChunkInfo& chunkInfo = findResult->second;
+
+    if ( --chunkInfo._mapCounter > 0U )
+        return;
+
+    vkUnmapMemory ( device, memory );
+    chunkInfo._mapPointer = nullptr;
+}
+
 bool MemoryAllocator::TryAllocateMemory ( VkDeviceMemory &memory,
     VkDeviceSize &offset,
     VkDevice device,
@@ -564,7 +612,16 @@ bool MemoryAllocator::TryAllocateMemory ( VkDeviceMemory &memory,
     if ( !result )
         return false;
 
-    _chunkMap.emplace ( memory, std::make_pair ( &chunks, chunks.begin () ) );
+    _chunkMap.emplace ( memory,
+        ChunkInfo
+        {
+            ._chunk = chunks.begin (),
+            ._chunks = &chunks,
+            ._mapCounter = 0U,
+            ._mapPointer = nullptr
+        }
+    );
+
     return true;
 }
 

@@ -65,14 +65,13 @@ void RayCasting::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
     _rayTextureNoHit.reset ();
     _rayMaterial.reset ();
 
-    VkDevice device = renderer.GetDevice ();
-    _lineMesh->FreeResources ( device );
+    _lineMesh->FreeResources ( renderer );
     _lineMesh.reset ();
 
-    DestroyCommandPool ( device );
+    DestroyCommandPool ( renderer.GetDevice () );
     _physics.Reset ();
 
-    MeshManager::Destroy ( device );
+    MeshManager::Destroy ( renderer );
     MaterialManager::Destroy ( renderer );
 }
 
@@ -212,10 +211,8 @@ bool RayCasting::LoadResources ( android_vulkan::Renderer &renderer ) noexcept
     std::array<VkCommandBuffer, comBuffs> commandBuffers {};
     VkCommandBuffer* cb = commandBuffers.data ();
 
-    VkDevice device = renderer.GetDevice ();
-
     bool result = android_vulkan::Renderer::CheckVkResult (
-        vkAllocateCommandBuffers ( device, &allocateInfo, cb ),
+        vkAllocateCommandBuffers ( renderer.GetDevice (), &allocateInfo, cb ),
         "RayCasting::LoadResources",
         "Can't allocate command buffers"
     );
@@ -384,7 +381,7 @@ bool RayCasting::LoadResources ( android_vulkan::Renderer &renderer ) noexcept
     _rayTextureHit->FreeTransferResources ( renderer );
     _rayTextureNoHit->FreeTransferResources ( renderer );
     _normalTexture->FreeTransferResources ( renderer );
-    lineMesh.FreeTransferResources ( device );
+    lineMesh.FreeTransferResources ( renderer );
 
     return true;
 }

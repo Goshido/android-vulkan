@@ -482,8 +482,9 @@ bool Texture2D::CreateTransferResources ( uint8_t* &mappedBuffer, VkDeviceSize s
 
     void* destination = nullptr;
 
-    result = Renderer::CheckVkResult (
-        vkMapMemory ( device, _transferDeviceMemory, _transferMemoryOffset, bufferInfo.size, 0U, &destination ),
+    result = renderer.MapMemory ( destination,
+        _transferDeviceMemory,
+        _transferMemoryOffset,
         "Texture2D::CreateTransferResources",
         "Can't map transfer memory"
     );
@@ -565,8 +566,7 @@ bool Texture2D::UploadCompressed ( Renderer &renderer,
         offset += static_cast<size_t> ( mip._size );
     }
 
-    VkDevice device = renderer.GetDevice ();
-    vkUnmapMemory ( device, _transferDeviceMemory );
+    renderer.UnmapMemory ( _transferDeviceMemory );
 
     constexpr VkCommandBufferBeginInfo beginInfo
     {
@@ -725,8 +725,7 @@ bool Texture2D::UploadDataInternal ( Renderer &renderer,
         return false;
 
     std::memcpy ( mappedBuffer, data, size );
-    VkDevice device = renderer.GetDevice ();
-    vkUnmapMemory ( device, _transferDeviceMemory );
+    renderer.UnmapMemory ( _transferDeviceMemory );
 
     constexpr VkCommandBufferBeginInfo beginInfo
     {

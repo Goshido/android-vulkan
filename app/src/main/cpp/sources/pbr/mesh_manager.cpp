@@ -43,23 +43,23 @@ MeshManager& MeshManager::GetInstance () noexcept
     return *_instance;
 }
 
-void MeshManager::Destroy ( VkDevice device ) noexcept
+void MeshManager::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 {
     std::unique_lock<std::shared_timed_mutex> const lock ( _mutex );
 
     if ( !_instance )
         return;
 
-    _instance->DestroyInternal ( device );
+    _instance->DestroyInternal ( renderer );
 
     delete _instance;
     _instance = nullptr;
 }
 
-void MeshManager::DestroyInternal ( VkDevice device ) noexcept
+void MeshManager::DestroyInternal ( android_vulkan::Renderer &renderer ) noexcept
 {
     for ( auto& mesh : _meshStorage )
-        mesh.second->FreeResources ( device );
+        mesh.second->FreeResources ( renderer );
 
     _meshStorage.clear ();
 }

@@ -160,7 +160,7 @@ StaticMeshComponent::StaticMeshComponent ( android_vulkan::Renderer &renderer,
 
 void StaticMeshComponent::FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept
 {
-    _mesh->FreeTransferResources ( renderer.GetDevice () );
+    _mesh->FreeTransferResources ( renderer );
 
     if ( !_material )
         return;

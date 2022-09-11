@@ -114,7 +114,7 @@ class Game : public android_vulkan::Game
         void DestroyCommandPool ( VkDevice device ) noexcept;
 
         void DestroyDescriptorSet ( VkDevice device ) noexcept;
-        void DestroyMeshes ( VkDevice device ) noexcept;
+        void DestroyMeshes ( android_vulkan::Renderer &renderer ) noexcept;
 
         [[nodiscard]] bool CreateFramebuffers ( android_vulkan::Renderer &renderer ) noexcept;
         void DestroyFramebuffers ( android_vulkan::Renderer &renderer ) noexcept;

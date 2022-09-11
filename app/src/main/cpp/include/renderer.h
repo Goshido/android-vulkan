@@ -177,6 +177,15 @@ class Renderer final
 
         void FreeMemory ( VkDeviceMemory memory, VkDeviceSize offset ) noexcept;
 
+        [[nodiscard]] bool MapMemory ( void*& ptr,
+            VkDeviceMemory memory,
+            VkDeviceSize offset,
+            char const* from,
+            char const* message
+        ) noexcept;
+
+        void UnmapMemory ( VkDeviceMemory memory ) noexcept;
+
         // Method generates a snapshot which is JSON file. The snapshot could be opened in Google Chrome browser
         // via chrome://tracing util. The snapshot is located in the app's cache directory and has name:
         //      vulkan memory snapshot <date and time>.json

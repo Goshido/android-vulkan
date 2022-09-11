@@ -38,13 +38,13 @@ class MeshManager final
         ) noexcept;
 
         [[nodiscard]] static MeshManager& GetInstance () noexcept;
-        static void Destroy ( VkDevice device ) noexcept;
+        static void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
 
     protected:
         MeshManager () = default;
         ~MeshManager () = default;
 
-        void DestroyInternal ( VkDevice device ) noexcept;
+        void DestroyInternal ( android_vulkan::Renderer &renderer ) noexcept;
 };
 
 } // namespace pbr

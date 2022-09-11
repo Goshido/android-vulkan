@@ -198,10 +198,9 @@ bool Collision::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
 
     _commandBuffers.resize ( totalBuffers );
     VkCommandBuffer* commandBuffers = _commandBuffers.data ();
-    VkDevice device = renderer.GetDevice ();
 
     bool result = android_vulkan::Renderer::CheckVkResult (
-        vkAllocateCommandBuffers ( device, &allocateInfo, commandBuffers ),
+        vkAllocateCommandBuffers ( renderer.GetDevice (), &allocateInfo, commandBuffers ),
         "Collision::CreateScene",
         "Can't allocate command buffers"
     );
@@ -299,7 +298,7 @@ bool Collision::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
         renderableComponent.FreeTransferResources ( renderer );
     }
 
-    _contactMesh->FreeTransferResources ( device );
+    _contactMesh->FreeTransferResources ( renderer );
 
     // Note it's safe to cast like that here. "NOLINT" is clang-tidy control comment.
     auto& m = static_cast<GeometryPassMaterial&> ( *_contactMaterial ); // NOLINT
@@ -329,7 +328,7 @@ void Collision::DestroyScene ( android_vulkan::Renderer &renderer ) noexcept
 
     _cameraLight = nullptr;
 
-    MeshManager::Destroy ( renderer.GetDevice () );
+    MeshManager::Destroy ( renderer );
     MaterialManager::Destroy ( renderer );
 }
 

@@ -19,7 +19,7 @@ GX_RESTORE_WARNING_STATE
 
 namespace android_vulkan {
 
-constexpr static size_t const UV_THREADS = 4U;
+constexpr static size_t UV_THREADS = 4U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -68,40 +68,29 @@ static std::map<VkBufferUsageFlags, BufferSyncItem> const g_accessMapper =
 
 //----------------------------------------------------------------------------------------------------------------------
 
-MeshGeometry::MeshGeometry () noexcept:
-    _bounds {},
-    _indexBuffer ( VK_NULL_HANDLE ),
-    _vertexBuffer ( VK_NULL_HANDLE ),
-    _bufferMemory ( VK_NULL_HANDLE ),
-    _transferBuffer ( VK_NULL_HANDLE ),
-    _transferMemory ( VK_NULL_HANDLE ),
-    _vertexCount ( 0U )
+void MeshGeometry::FreeResources ( Renderer &renderer ) noexcept
 {
-    // NOTHING
-}
-
-void MeshGeometry::FreeResources ( VkDevice device ) noexcept
-{
-    FreeTransferResources ( device );
-    FreeResourceInternal ( device );
+    FreeTransferResources ( renderer );
+    FreeResourceInternal ( renderer );
     _fileName.clear ();
 }
 
-void MeshGeometry::FreeTransferResources ( VkDevice device ) noexcept
+void MeshGeometry::FreeTransferResources ( Renderer &renderer ) noexcept
 {
     if ( _transferBuffer != VK_NULL_HANDLE )
     {
-        vkDestroyBuffer ( device, _transferBuffer, nullptr );
+        vkDestroyBuffer ( renderer.GetDevice (), _transferBuffer, nullptr );
         _transferBuffer = VK_NULL_HANDLE;
         AV_UNREGISTER_BUFFER ( "MeshGeometry::_transferBuffer" )
     }
 
-    if ( _transferMemory == VK_NULL_HANDLE )
+    if ( _transferBufferMemory == VK_NULL_HANDLE )
         return;
 
-    vkFreeMemory ( device, _transferMemory, nullptr );
-    _transferMemory = VK_NULL_HANDLE;
-    AV_UNREGISTER_DEVICE_MEMORY ( "MeshGeometry::_transferMemory" )
+    renderer.FreeMemory ( _transferBufferMemory, _transferBufferOffset );
+    _transferBufferMemory = VK_NULL_HANDLE;
+    _transferBufferOffset = std::numeric_limits<VkDeviceSize>::max ();
+    AV_UNREGISTER_DEVICE_MEMORY ( "MeshGeometry::_transferBufferMemory" )
 }
 
 GXAABB const& MeshGeometry::GetBounds () const noexcept
@@ -173,7 +162,7 @@ bool MeshGeometry::LoadMesh ( std::string &&fileName,
     VkCommandBuffer commandBuffer
 ) noexcept
 {
-    FreeResources ( renderer.GetDevice () );
+    FreeResources ( renderer );
     return UploadSimple ( data, size, vertexCount, usage, renderer, commandBuffer );
 }
 
@@ -186,7 +175,7 @@ bool MeshGeometry::LoadMesh ( uint8_t const* vertexData,
     VkCommandBuffer commandBuffer
 ) noexcept
 {
-    FreeResources ( renderer.GetDevice () );
+    FreeResources ( renderer );
 
     size_t const vertexOffset = sizeof ( uint32_t ) * indexCount;
     std::vector<uint8_t> storage ( vertexOffset + vertexDataSize );
@@ -207,9 +196,10 @@ bool MeshGeometry::LoadMesh ( uint8_t const* vertexData,
     return result;
 }
 
-void MeshGeometry::FreeResourceInternal ( VkDevice device ) noexcept
+void MeshGeometry::FreeResourceInternal ( Renderer &renderer ) noexcept
 {
     _vertexCount = 0U;
+    VkDevice device = renderer.GetDevice ();
 
     if ( _vertexBuffer != VK_NULL_HANDLE )
     {
@@ -225,12 +215,21 @@ void MeshGeometry::FreeResourceInternal ( VkDevice device ) noexcept
         AV_UNREGISTER_BUFFER ( "MeshGeometry::_indexBuffer" )
     }
 
-    if ( _bufferMemory == VK_NULL_HANDLE )
+    if ( _indexBufferMemory != VK_NULL_HANDLE )
+    {
+        renderer.FreeMemory ( _indexBufferMemory, _indexBufferOffset );
+        _indexBufferMemory = VK_NULL_HANDLE;
+        _indexBufferOffset = std::numeric_limits<VkDeviceSize>::max ();
+        AV_UNREGISTER_DEVICE_MEMORY ( "MeshGeometry::_indexBufferMemory" )
+    }
+
+    if ( _vertexBufferMemory == VK_NULL_HANDLE )
         return;
 
-    vkFreeMemory ( device, _bufferMemory, nullptr );
-    _bufferMemory = VK_NULL_HANDLE;
-    AV_UNREGISTER_DEVICE_MEMORY ( "MeshGeometry::_bufferMemory" )
+    renderer.FreeMemory ( _vertexBufferMemory, _vertexBufferOffset );
+    _vertexBufferMemory = VK_NULL_HANDLE;
+    _vertexBufferOffset = std::numeric_limits<VkDeviceSize>::max ();
+    AV_UNREGISTER_DEVICE_MEMORY ( "MeshGeometry::_vertexBufferMemory" )
 }
 
 bool MeshGeometry::LoadFromMesh ( std::string &&fileName,
@@ -239,7 +238,7 @@ bool MeshGeometry::LoadFromMesh ( std::string &&fileName,
     VkCommandBuffer commandBuffer
 ) noexcept
 {
-    FreeResourceInternal ( renderer.GetDevice () );
+    FreeResourceInternal ( renderer );
 
     File file ( fileName );
 
@@ -315,7 +314,7 @@ bool MeshGeometry::LoadFromMesh2 ( std::string &&fileName,
     VkCommandBuffer commandBuffer
 ) noexcept
 {
-    FreeResourceInternal ( renderer.GetDevice () );
+    FreeResourceInternal ( renderer );
     File file ( fileName );
 
     if ( !file.LoadContent () )
@@ -352,7 +351,7 @@ bool MeshGeometry::UploadComplex ( uint8_t const* data,
     VkCommandBuffer commandBuffer
 ) noexcept
 {
-    constexpr VkBufferUsageFlags const indexBufferUsageFlags = AV_VK_FLAG ( VK_BUFFER_USAGE_INDEX_BUFFER_BIT ) |
+    constexpr VkBufferUsageFlags indexBufferUsageFlags = AV_VK_FLAG ( VK_BUFFER_USAGE_INDEX_BUFFER_BIT ) |
         AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT );
 
     auto const indexBufferSize = static_cast<VkDeviceSize> ( indexCount * sizeof ( uint32_t ) );
@@ -382,10 +381,31 @@ bool MeshGeometry::UploadComplex ( uint8_t const* data,
 
     AV_REGISTER_BUFFER ( "MeshGeometry::_indexBuffer" )
 
-    VkMemoryRequirements indexBufferMemoryRequirements;
-    vkGetBufferMemoryRequirements ( device, _indexBuffer, &indexBufferMemoryRequirements );
+    VkMemoryRequirements memoryRequirements;
+    vkGetBufferMemoryRequirements ( device, _indexBuffer, &memoryRequirements );
 
-    constexpr VkBufferUsageFlags const vertexBufferUsageFlags = AV_VK_FLAG ( VK_BUFFER_USAGE_VERTEX_BUFFER_BIT ) |
+    result = renderer.TryAllocateMemory ( _indexBufferMemory,
+        _indexBufferOffset,
+        memoryRequirements,
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+        "Can't allocate index buffer memory (MeshGeometry::UploadComplex)"
+    );
+
+    if ( !result )
+        return false;
+
+    AV_REGISTER_DEVICE_MEMORY ( "MeshGeometry::_indexBufferMemory" )
+
+    result = Renderer::CheckVkResult (
+        vkBindBufferMemory ( device, _indexBuffer, _indexBufferMemory, _indexBufferOffset ),
+        "MeshGeometry::UploadComplex",
+        "Can't bind index buffer memory"
+    );
+
+    if ( !result )
+        return false;
+
+    constexpr VkBufferUsageFlags vertexBufferUsageFlags = AV_VK_FLAG ( VK_BUFFER_USAGE_VERTEX_BUFFER_BIT ) |
         AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT );
 
     bufferInfo.size = static_cast<VkDeviceSize> ( vertexDataSize );
@@ -397,91 +417,32 @@ bool MeshGeometry::UploadComplex ( uint8_t const* data,
     );
 
     if ( !result )
-    {
-        FreeResources ( device );
         return false;
-    }
 
     AV_REGISTER_BUFFER ( "MeshGeometry::_vertexBuffer" )
 
-    VkMemoryRequirements vertexBufferMemoryRequirements;
-    vkGetBufferMemoryRequirements ( device, _vertexBuffer, &vertexBufferMemoryRequirements );
+    vkGetBufferMemoryRequirements ( device, _vertexBuffer, &memoryRequirements );
 
-    if ( indexBufferMemoryRequirements.memoryTypeBits != vertexBufferMemoryRequirements.memoryTypeBits )
-    {
-        constexpr char const format[] =
-R"__(MeshGeometry::UploadComplex - Memory usage bits are not same:
-    index buffer memory bits: 0x%08X
-    vertex buffer memory bits: 0x%08X)__";
-
-        LogError ( format,
-            indexBufferMemoryRequirements.memoryTypeBits,
-            vertexBufferMemoryRequirements.memoryTypeBits
-        );
-
-        assert ( indexBufferMemoryRequirements.memoryTypeBits == vertexBufferMemoryRequirements.memoryTypeBits );
-        FreeResources ( device );
-        return false;
-    }
-
-    // Allocate all in one GPU memory.
-    void* afterIndexBuffer = reinterpret_cast<void*> ( indexBufferMemoryRequirements.size );
-
-    // Estimation from top.
-    size_t rest = vertexBufferMemoryRequirements.size + vertexBufferMemoryRequirements.alignment;
-
-    auto const vertexDataOffset = reinterpret_cast<size_t const> (
-        std::align (
-            static_cast<size_t> ( vertexBufferMemoryRequirements.alignment ),
-            static_cast<size_t> ( vertexBufferMemoryRequirements.size ),
-            afterIndexBuffer,
-            rest
-        )
-    );
-
-    VkMemoryRequirements const bufferMemoryRequirements
-    {
-        .size = static_cast<VkDeviceSize> ( vertexDataOffset ) + vertexBufferMemoryRequirements.size,
-        .alignment = indexBufferMemoryRequirements.alignment,
-        .memoryTypeBits = vertexBufferMemoryRequirements.memoryTypeBits
-    };
-
-    result = renderer.TryAllocateMemory ( _bufferMemory,
-        bufferMemoryRequirements,
+    result = renderer.TryAllocateMemory ( _vertexBufferMemory,
+        _vertexBufferOffset,
+        memoryRequirements,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-        "Can't allocate buffer memory (MeshGeometry::UploadComplex)"
+        "Can't allocate vertex buffer memory (MeshGeometry::UploadComplex)"
     );
 
     if ( !result )
-    {
-        FreeResources ( device );
         return false;
-    }
 
-    AV_REGISTER_DEVICE_MEMORY ( "MeshGeometry::_bufferMemory" )
-
-    result = Renderer::CheckVkResult ( vkBindBufferMemory ( device, _indexBuffer, _bufferMemory, 0U ),
-        "MeshGeometry::UploadComplex",
-        "Can't bind index buffer memory"
-    );
-
-    if ( !result )
-    {
-        FreeResources ( device );
-        return false;
-    }
+    AV_REGISTER_DEVICE_MEMORY ( "MeshGeometry::_vertexBufferMemory" )
 
     result = Renderer::CheckVkResult (
-        vkBindBufferMemory ( device, _vertexBuffer, _bufferMemory, static_cast<VkDeviceSize> ( vertexDataOffset ) ),
+        vkBindBufferMemory ( device, _vertexBuffer, _vertexBufferMemory, _vertexBufferOffset ),
         "MeshGeometry::UploadComplex",
         "Can't bind vertex buffer memory"
     );
 
     if ( !result )
-    {
-        FreeResources ( device );
         return false;
-    }
 
     VkBufferCopy const copyInfo[] =
     {
@@ -493,7 +454,7 @@ R"__(MeshGeometry::UploadComplex - Memory usage bits are not same:
         {
             .srcOffset = indexBufferSize,
             .dstOffset = 0U,
-            .size = bufferInfo.size
+            .size = static_cast<VkDeviceSize> ( vertexDataSize )
         }
     };
 
@@ -552,10 +513,7 @@ bool MeshGeometry::UploadInternal ( size_t numUploads,
     );
 
     if ( !result )
-    {
-        FreeResources ( device );
         return false;
-    }
 
     AV_REGISTER_BUFFER ( "MeshGeometry::_transferBuffer" )
 
@@ -565,48 +523,41 @@ bool MeshGeometry::UploadInternal ( size_t numUploads,
     constexpr VkMemoryPropertyFlags const flags = AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_COHERENT_BIT ) |
         AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT );
 
-    result = renderer.TryAllocateMemory ( _transferMemory,
+    result = renderer.TryAllocateMemory ( _transferBufferMemory,
+        _transferBufferOffset,
         transferMemoryRequirements,
         flags,
         "Can't allocate transfer memory (MeshGeometry::UploadInternal)"
     );
 
     if ( !result )
-    {
-        FreeResources ( device );
         return false;
-    }
 
-    AV_REGISTER_DEVICE_MEMORY ( "MeshGeometry::_transferMemory" )
+    AV_REGISTER_DEVICE_MEMORY ( "MeshGeometry::_transferBufferMemory" )
 
     result = Renderer::CheckVkResult (
-        vkBindBufferMemory ( device, _transferBuffer, _transferMemory, 0U ),
+        vkBindBufferMemory ( device, _transferBuffer, _transferBufferMemory, _transferBufferOffset ),
         "MeshGeometry::UploadInternal",
         "Can't bind transfer memory"
     );
 
     if ( !result )
-    {
-        FreeResources ( device );
         return false;
-    }
 
     void* transferData = nullptr;
 
-    result = Renderer::CheckVkResult (
-        vkMapMemory ( device, _transferMemory, 0U, transferMemoryRequirements.size, 0U, &transferData ),
+    result = renderer.MapMemory ( transferData,
+        _transferBufferMemory,
+        _transferBufferOffset,
         "MeshGeometry::UploadInternal",
         "Can't map data"
     );
 
     if ( !result )
-    {
-        FreeResources ( device );
         return false;
-    }
 
     std::memcpy ( transferData, data, dataSize );
-    vkUnmapMemory ( device, _transferMemory );
+    renderer.UnmapMemory ( _transferBufferMemory );
 
     constexpr VkCommandBufferBeginInfo commandBufferBeginInfo
     {
@@ -622,10 +573,7 @@ bool MeshGeometry::UploadInternal ( size_t numUploads,
     );
 
     if ( !result )
-    {
-        FreeResources ( device );
         return false;
-    }
 
     // Note most extreme case is 2 upload jobs (vertex buffer and index buffer).
     VkBufferMemoryBarrier barrierInfo[ 2U ];
@@ -640,7 +588,6 @@ bool MeshGeometry::UploadInternal ( size_t numUploads,
         if ( findResult == g_accessMapper.cend () )
         {
             LogError ( "MeshGeometry::UploadInternal - Unexpected usage 0x%08X", usages[ i ] );
-            FreeResources ( device );
             return false;
         }
 
@@ -679,10 +626,7 @@ bool MeshGeometry::UploadInternal ( size_t numUploads,
     );
 
     if ( !result )
-    {
-        FreeResources ( device );
         return false;
-    }
 
     VkSubmitInfo const submitInfo
     {
@@ -697,17 +641,11 @@ bool MeshGeometry::UploadInternal ( size_t numUploads,
         .pSignalSemaphores = nullptr
     };
 
-    result = Renderer::CheckVkResult (
+    return Renderer::CheckVkResult (
         vkQueueSubmit ( renderer.GetQueue (), 1U, &submitInfo, VK_NULL_HANDLE ),
         "MeshGeometry::LoadFromMesh2",
         "Can't submit command"
     );
-
-    if ( result )
-        return true;
-
-    FreeResources ( device );
-    return false;
 }
 
 bool MeshGeometry::UploadSimple ( uint8_t const* data,
@@ -746,30 +684,26 @@ bool MeshGeometry::UploadSimple ( uint8_t const* data,
     VkMemoryRequirements memoryRequirements;
     vkGetBufferMemoryRequirements ( device, _vertexBuffer, &memoryRequirements );
 
-    result = renderer.TryAllocateMemory ( _bufferMemory,
+    result = renderer.TryAllocateMemory ( _vertexBufferMemory,
+        _vertexBufferOffset,
         memoryRequirements,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
         "Can't allocate buffer memory (MeshGeometry::LoadMeshInternal)"
     );
 
     if ( !result )
-    {
-        FreeResources ( device );
         return false;
-    }
 
-    AV_REGISTER_DEVICE_MEMORY ( "MeshGeometry::_bufferMemory" )
+    AV_REGISTER_DEVICE_MEMORY ( "MeshGeometry::_vertexBufferMemory" )
 
-    result = Renderer::CheckVkResult ( vkBindBufferMemory ( device, _vertexBuffer, _bufferMemory, 0U ),
+    result = Renderer::CheckVkResult (
+        vkBindBufferMemory ( device, _vertexBuffer, _vertexBufferMemory, _vertexBufferOffset ),
         "MeshGeometry::UploadSimple",
         "Can't bind buffer memory"
     );
 
     if ( !result )
-    {
-        FreeResources ( device );
         return false;
-    }
 
     VkBufferCopy const copyInfo
     {

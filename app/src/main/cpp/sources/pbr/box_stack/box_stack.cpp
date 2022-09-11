@@ -140,12 +140,10 @@ void BoxStack::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
     _components.clear ();
     _renderSession.OnDestroyDevice ( renderer );
 
-    VkDevice device = renderer.GetDevice ();
-
-    DestroyCommandPool ( device );
+    DestroyCommandPool ( renderer.GetDevice () );
     _physics.Reset ();
 
-    MeshManager::Destroy ( device );
+    MeshManager::Destroy ( renderer );
     MaterialManager::Destroy ( renderer );
 }
 
@@ -301,10 +299,9 @@ bool BoxStack::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
 
     _commandBuffers.resize ( comBuffs );
     VkCommandBuffer* commandBuffers = _commandBuffers.data ();
-    VkDevice device = renderer.GetDevice ();
 
     bool result = android_vulkan::Renderer::CheckVkResult (
-        vkAllocateCommandBuffers ( device, &allocateInfo, commandBuffers ),
+        vkAllocateCommandBuffers ( renderer.GetDevice (), &allocateInfo, commandBuffers ),
         "pbr::box_stack::BoxStack::CreateSceneManual",
         "Can't allocate command buffers"
     );
@@ -409,7 +406,7 @@ bool BoxStack::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
         renderableComponent.FreeTransferResources ( renderer );
     }
 
-    _sphereMesh->FreeTransferResources ( device );
+    _sphereMesh->FreeTransferResources ( renderer );
     return true;
 }
 

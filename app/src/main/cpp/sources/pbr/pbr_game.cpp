@@ -59,6 +59,11 @@ bool PBRGame::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) n
         renderableComponent.Submit ( _renderSession );
     }
 
+    static size_t counter = 0U;
+
+    if ( ++counter == 2U )
+        renderer.MakeVulkanMemorySnapshot ();
+
     return _renderSession.End ( renderer, deltaTime );
 }
 
@@ -102,7 +107,7 @@ void PBRGame::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
     _renderSession.OnDestroyDevice ( renderer );
     DestroyCommandPool ( device );
 
-    MeshManager::Destroy ( device );
+    MeshManager::Destroy ( renderer );
     MaterialManager::Destroy ( renderer );
     CubeMapManager::Destroy ( device );
 }

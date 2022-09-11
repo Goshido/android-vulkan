@@ -1231,7 +1231,22 @@ void Renderer::FreeMemory ( VkDeviceMemory memory, VkDeviceSize offset ) noexcep
     _memoryAllocator.FreeMemory ( _device, memory, offset );
 }
 
-void Renderer::MakeVulkanMemorySnapshot () noexcept
+bool Renderer::MapMemory ( void*& ptr,
+    VkDeviceMemory memory,
+    VkDeviceSize offset,
+    char const* from,
+    char const* message
+) noexcept
+{
+    return _memoryAllocator.MapMemory ( ptr, _device, memory, offset, from, message );
+}
+
+void Renderer::UnmapMemory ( VkDeviceMemory memory ) noexcept
+{
+    _memoryAllocator.UnmapMemory ( _device, memory );
+}
+
+[[maybe_unused]] void Renderer::MakeVulkanMemorySnapshot () noexcept
 {
     _memoryAllocator.MakeSnapshot ();
 }

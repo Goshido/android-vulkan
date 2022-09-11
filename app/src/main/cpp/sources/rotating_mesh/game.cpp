@@ -403,7 +403,7 @@ void Game::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
     DestroyPipelineLayout ( device );
     DestroyShaderModules ( device );
     DestroySamplers ( device );
-    DestroyMeshes ( device );
+    DestroyMeshes ( renderer );
     DestroyTextures ( renderer );
     DestroyUniformBuffer ( device );
     DestroyCommandPool ( device );
@@ -557,11 +557,11 @@ void Game::DestroyDescriptorSet ( VkDevice device ) noexcept
     AV_UNREGISTER_DESCRIPTOR_POOL ( "Game::_descriptorPool" )
 }
 
-void Game::DestroyMeshes ( VkDevice device ) noexcept
+void Game::DestroyMeshes ( android_vulkan::Renderer &renderer ) noexcept
 {
     for ( auto& item : _drawcalls )
     {
-        item._mesh.FreeResources ( device );
+        item._mesh.FreeResources ( renderer );
     }
 }
 

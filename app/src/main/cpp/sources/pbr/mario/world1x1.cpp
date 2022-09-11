@@ -90,7 +90,7 @@ void World1x1::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
     DestroyCommandPool ( device );
     _physics.Reset ();
 
-    MeshManager::Destroy ( device );
+    MeshManager::Destroy ( renderer );
     MaterialManager::Destroy ( renderer );
     CubeMapManager::Destroy ( device );
 

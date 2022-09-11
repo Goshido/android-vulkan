@@ -26,14 +26,14 @@ class [[maybe_unused]] MemoryAllocator final
 
                 struct Block final
                 {
-                    Block*                                  _blockChainPrevious = nullptr;
-                    Block*                                  _blockChainNext = nullptr;
+                    Block*                                  _blockChainPrevious;
+                    Block*                                  _blockChainNext;
 
-                    Block*                                  _freePrevious = nullptr;
-                    Block*                                  _freeNext = nullptr;
+                    Block*                                  _freePrevious;
+                    Block*                                  _freeNext;
 
-                    Offset                                  _offset = std::numeric_limits<Offset>::max ();
-                    VkDeviceSize                            _size = 0U;
+                    Offset                                  _offset;
+                    VkDeviceSize                            _size;
                 };
 
                 struct Blocks final
@@ -81,7 +81,14 @@ class [[maybe_unused]] MemoryAllocator final
         };
 
         using Chunks = std::list<Chunk>;
-        using ChunkInfo = std::pair<Chunks*, Chunks::iterator>;
+
+        struct ChunkInfo final
+        {
+            Chunks::iterator                                _chunk;
+            Chunks*                                         _chunks;
+            size_t                                          _mapCounter;
+            void*                                           _mapPointer;
+        };
 
     private:
         std::unordered_map<VkDeviceMemory, ChunkInfo>       _chunkMap {};
@@ -103,6 +110,16 @@ class [[maybe_unused]] MemoryAllocator final
         void FreeMemory ( VkDevice device, VkDeviceMemory memory, VkDeviceSize offset ) noexcept;
         void Init ( VkPhysicalDeviceMemoryProperties const &properties ) noexcept;
         void MakeSnapshot () noexcept;
+
+        [[nodiscard]] bool MapMemory ( void*& ptr,
+            VkDevice device,
+            VkDeviceMemory memory,
+            VkDeviceSize offset,
+            char const* from,
+            char const* message
+        ) noexcept;
+
+        void UnmapMemory ( VkDevice device, VkDeviceMemory memory ) noexcept;
 
         [[nodiscard]] bool TryAllocateMemory ( VkDeviceMemory &memory,
             VkDeviceSize &offset,

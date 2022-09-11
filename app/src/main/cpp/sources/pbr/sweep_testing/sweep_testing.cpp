@@ -67,11 +67,10 @@ void SweepTesting::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexce
         _overlay.reset ();
     }
 
-    VkDevice device = renderer.GetDevice ();
-    DestroyCommandPool ( device );
+    DestroyCommandPool ( renderer.GetDevice () );
     _physics.Reset ();
 
-    MeshManager::Destroy ( device );
+    MeshManager::Destroy ( renderer );
     MaterialManager::Destroy ( renderer );
 }
 

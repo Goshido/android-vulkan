@@ -405,7 +405,7 @@ void Game::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
     DestroySamplers ( device );
     DestroyMeshes ( renderer );
     DestroyTextures ( renderer );
-    DestroyUniformBuffer ( device );
+    DestroyUniformBuffer ( renderer );
     DestroyCommandPool ( device );
     DestroySyncPrimitives ( device );
 }
@@ -1105,14 +1105,14 @@ bool Game::CreateUniformBuffer ( android_vulkan::Renderer &renderer ) noexcept
     );
 }
 
-void Game::DestroyUniformBuffer ( VkDevice device ) noexcept
+void Game::DestroyUniformBuffer ( android_vulkan::Renderer &renderer ) noexcept
 {
-    _transformBuffer.FreeResources ( device );
+    _transformBuffer.FreeResources ( renderer );
 
     if ( _fence == VK_NULL_HANDLE )
         return;
 
-    vkDestroyFence ( device, _fence, nullptr );
+    vkDestroyFence ( renderer.GetDevice (), _fence, nullptr );
     _fence = VK_NULL_HANDLE;
     AV_UNREGISTER_FENCE ( "rotating_mesh::Game::_fence" )
 }

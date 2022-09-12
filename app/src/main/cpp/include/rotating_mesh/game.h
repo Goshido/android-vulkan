@@ -134,7 +134,7 @@ class Game : public android_vulkan::Game
         void DestroySyncPrimitives ( VkDevice device ) noexcept;
 
         [[nodiscard]] bool CreateUniformBuffer ( android_vulkan::Renderer &renderer ) noexcept;
-        void DestroyUniformBuffer ( VkDevice device ) noexcept;
+        void DestroyUniformBuffer ( android_vulkan::Renderer &renderer ) noexcept;
 
         [[nodiscard]] bool CreateCommandBuffers ( android_vulkan::Renderer &renderer ) noexcept;
         void DestroyCommandBuffers ( VkDevice device ) noexcept;

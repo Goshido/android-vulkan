@@ -29,6 +29,8 @@ class MandelbrotBase : public android_vulkan::Game
         char const*                     _fragmentShaderSpirV;
 
     public:
+        MandelbrotBase () = delete;
+
         MandelbrotBase ( MandelbrotBase const & ) = delete;
         MandelbrotBase& operator = ( MandelbrotBase const & ) = delete;
 

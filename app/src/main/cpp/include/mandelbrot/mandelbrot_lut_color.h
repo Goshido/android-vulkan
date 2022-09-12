@@ -10,15 +10,16 @@ namespace mandelbrot {
 class MandelbrotLUTColor final : public MandelbrotBase
 {
     private:
-        VkDescriptorPool            _descriptorPool;
-        VkDescriptorSet             _descriptorSet;
-        VkDescriptorSetLayout       _descriptorSetLayout;
+        VkDescriptorPool            _descriptorPool = VK_NULL_HANDLE;
+        VkDescriptorSet             _descriptorSet = VK_NULL_HANDLE;
+        VkDescriptorSetLayout       _descriptorSetLayout = VK_NULL_HANDLE;
 
-        VkImage                     _lut;
-        VkDeviceMemory              _lutDeviceMemory;
-        VkImageView                 _lutView;
+        VkImage                     _lut = VK_NULL_HANDLE;
+        VkDeviceMemory              _lutMemory = VK_NULL_HANDLE;
+        VkDeviceSize                _lutOffset = std::numeric_limits<VkDeviceSize>::max ();
 
-        VkSampler                   _sampler;
+        VkImageView                 _lutView = VK_NULL_HANDLE;
+        VkSampler                   _sampler = VK_NULL_HANDLE;
 
     public:
         MandelbrotLUTColor () noexcept;
@@ -48,7 +49,7 @@ class MandelbrotLUTColor final : public MandelbrotBase
         void DestroyDescriptorSet ( VkDevice device ) noexcept;
 
         [[nodiscard]] bool CreateLUT ( android_vulkan::Renderer &renderer ) noexcept;
-        void DestroyLUT ( VkDevice device ) noexcept;
+        void DestroyLUT ( android_vulkan::Renderer &renderer  ) noexcept;
 
         [[nodiscard]] bool UploadLUTSamples ( android_vulkan::Renderer &renderer ) noexcept;
 

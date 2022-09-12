@@ -62,8 +62,10 @@ bool PointLightLightup::Init ( android_vulkan::Renderer &renderer,
         AllocateDescriptorSets ( renderer );
 }
 
-void PointLightLightup::Destroy ( VkDevice device ) noexcept
+void PointLightLightup::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 {
+    VkDevice device = renderer.GetDevice ();
+
     if ( _descriptorPool != VK_NULL_HANDLE )
     {
         vkDestroyDescriptorPool ( device, _descriptorPool, nullptr );
@@ -82,7 +84,7 @@ void PointLightLightup::Destroy ( VkDevice device ) noexcept
     clean ( _imageInfo );
     clean ( _writeSets );
 
-    _uniformPool.Destroy ( device );
+    _uniformPool.Destroy ( renderer );
     _sampler.Destroy ( device );
     _program.Destroy ( device );
 }

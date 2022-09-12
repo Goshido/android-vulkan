@@ -359,7 +359,7 @@ void LightupCommonDescriptorSet::Destroy ( android_vulkan::Renderer &renderer ) 
     _prefilterSampler.Destroy ( device );
     _brdfLUTSampler.Destroy ( device );
     _brdfLUT.FreeResources ( renderer );
-    _uniforms.Destroy ( device );
+    _uniforms.Destroy ( renderer );
 
     if ( _pipelineLayout != VK_NULL_HANDLE )
     {

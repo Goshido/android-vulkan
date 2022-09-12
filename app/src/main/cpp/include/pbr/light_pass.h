@@ -23,7 +23,7 @@ class LightPass final
 
         UniformBufferPoolManager        _volumeBufferPool
         {
-            eUniformPoolSize::Tiny_4M,
+            eUniformPoolSize::Nanoscopic_64KB,
             VK_PIPELINE_STAGE_VERTEX_SHADER_BIT
         };
 

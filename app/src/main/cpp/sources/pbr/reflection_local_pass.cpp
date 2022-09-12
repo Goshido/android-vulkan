@@ -62,8 +62,10 @@ bool ReflectionLocalPass::Init ( android_vulkan::Renderer &renderer,
     return _program.Init ( renderer, renderPass, subpass, viewport ) && AllocateDescriptorSets ( renderer );
 }
 
-void ReflectionLocalPass::Destroy ( VkDevice device ) noexcept
+void ReflectionLocalPass::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 {
+    VkDevice device = renderer.GetDevice ();
+
     if ( _descriptorPool != VK_NULL_HANDLE )
     {
         vkDestroyDescriptorPool ( device, _descriptorPool, nullptr );
@@ -83,7 +85,7 @@ void ReflectionLocalPass::Destroy ( VkDevice device ) noexcept
     clean ( _imageInfo );
     clean ( _writeSets );
 
-    _uniformPool.Destroy ( device );
+    _uniformPool.Destroy ( renderer );
     _program.Destroy ( device );
 }
 

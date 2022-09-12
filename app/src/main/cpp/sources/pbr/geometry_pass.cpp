@@ -99,12 +99,14 @@ bool GeometryPass::Init ( android_vulkan::Renderer &renderer,
         _materialPool.Init ( device, defaultTextureManager );
 }
 
-void GeometryPass::Destroy ( VkDevice device ) noexcept
+void GeometryPass::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 {
+    VkDevice device = renderer.GetDevice ();
+
     _descriptorSetLayout.Destroy ( device );
     _stippleSubpass.Destroy ( device );
     _opaqueSubpass.Destroy ( device );
-    _uniformPool.Destroy ( device, "pbr::GeometryPass::_uniformPool" );
+    _uniformPool.Destroy ( renderer, "pbr::GeometryPass::_uniformPool" );
     _materialPool.Destroy ( device );
 
     if ( _descriptorPool == VK_NULL_HANDLE )

@@ -51,7 +51,7 @@ class PointLightLightup final
             VkExtent2D const &resolution
         ) noexcept;
 
-        void Destroy ( VkDevice device ) noexcept;
+        void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
 
         void Lightup ( VkCommandBuffer commandBuffer,
             VkDescriptorSet transform,

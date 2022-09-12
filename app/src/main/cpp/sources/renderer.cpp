@@ -386,21 +386,7 @@ static std::unordered_set<std::string_view> const g_validationFilter =
     // Attempting to enable extension VK_EXT_debug_report, but this extension is intended to support use by applications
     // when debugging and it is strongly recommended that it be otherwise avoided.
     // [2022/07/26] Yeah. I'm pretty aware about that. Thank you.
-    "0x822806fa",
-
-    // Allocating a VkDeviceMemory of size XXX. This is a very small allocation (current threshold is XXX bytes).
-    // You should make large allocations and sub-allocate from one large VkDeviceMemory.
-    // [2022/07/27] Should think about it. Custom memory allocator task.
-    "0xdc18ad6b",
-
-    // Trying to bind VkImage (...) to a memory block which is fully consumed by the image. The required size of
-    // the allocation is 1088, but smaller images like this should be sub-allocated from larger memory blocks.
-    // [2022/07/27] Should think about it. Custom memory allocator task.
-    "0xb3d4346b",
-
-    // Performance Warning: This app has > 250 memory objects.
-    // [2022/07/28] Should think about it. Custom memory allocator task.
-    "0x58781063"
+    "0x822806fa"
 };
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -1143,73 +1129,6 @@ void Renderer::OnDestroyDevice () noexcept
     {
         LogError ( "Renderer::OnDestroyDevice - Can't unload Vulkan functions." );
     }
-}
-
-bool Renderer::TryAllocateMemory ( VkDeviceMemory &memory,
-    size_t size,
-    VkMemoryPropertyFlags memoryProperties,
-    char const* errorMessage
-) const noexcept
-{
-    VkMemoryAllocateInfo allocateInfo {};
-    allocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-    allocateInfo.pNext = nullptr;
-    allocateInfo.allocationSize = static_cast<uint32_t> ( size );
-
-    if ( !SelectTargetMemoryTypeIndex ( allocateInfo.memoryTypeIndex, memoryProperties ) )
-    {
-        std::string const flags = StringifyVkFlags ( memoryProperties,
-            g_vkMemoryPropertyFlagBitsMapperItems,
-            g_vkMemoryPropertyFlagBitsMapper
-        );
-
-        LogError ( "Renderer::TryAllocateMemory - %s. Hardware does not support the following memory type:%s.",
-            errorMessage,
-            flags.c_str ()
-        );
-
-        return false;
-    }
-
-    return CheckVkResult ( vkAllocateMemory ( _device, &allocateInfo, nullptr, &memory ),
-        "Renderer::TryAllocateMemory",
-        errorMessage
-    );
-}
-
-bool Renderer::TryAllocateMemory ( VkDeviceMemory &memory,
-    VkMemoryRequirements const &requirements,
-    VkMemoryPropertyFlags memoryProperties,
-    char const* errorMessage
-) const noexcept
-{
-    VkMemoryAllocateInfo allocateInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-        .pNext = nullptr,
-        .allocationSize = requirements.size,
-        .memoryTypeIndex = std::numeric_limits<uint32_t>::max ()
-    };
-
-    if ( !SelectTargetMemoryTypeIndex ( allocateInfo.memoryTypeIndex, requirements, memoryProperties ) )
-    {
-        std::string const flags = StringifyVkFlags ( memoryProperties,
-            g_vkMemoryPropertyFlagBitsMapperItems,
-            g_vkMemoryPropertyFlagBitsMapper
-        );
-
-        LogError ( "Renderer::TryAllocateMemory - %s. Hardware does not support the following memory type:%s.",
-            errorMessage,
-            flags.c_str ()
-        );
-
-        return false;
-    }
-
-    return CheckVkResult ( vkAllocateMemory ( _device, &allocateInfo, nullptr, &memory ),
-        "Renderer::TryAllocateMemory",
-        errorMessage
-    );
 }
 
 bool Renderer::TryAllocateMemory ( VkDeviceMemory &memory,
@@ -2530,46 +2449,6 @@ bool Renderer::SelectTargetHardware ( VkPhysicalDevice &targetPhysicalDevice,
     }
 
     LogError ( "Renderer::SelectTargetHardware - Can't find target hardware!" );
-    return false;
-}
-
-bool Renderer::SelectTargetMemoryTypeIndex ( uint32_t &targetMemoryTypeIndex,
-    VkMemoryPropertyFlags memoryProperties
-) const noexcept
-{
-    for ( uint32_t i = 0U; i < _physicalDeviceMemoryProperties.memoryTypeCount; ++i )
-    {
-        VkMemoryType const& memoryType = _physicalDeviceMemoryProperties.memoryTypes[ i ];
-
-        if ( ( memoryType.propertyFlags & memoryProperties ) != memoryProperties )
-            continue;
-
-        targetMemoryTypeIndex = i;
-        return true;
-    }
-
-    return false;
-}
-
-bool Renderer::SelectTargetMemoryTypeIndex ( uint32_t &targetMemoryTypeIndex,
-    VkMemoryRequirements const &memoryRequirements,
-    VkMemoryPropertyFlags memoryProperties
-) const noexcept
-{
-    for ( uint32_t i = 0U; i < _physicalDeviceMemoryProperties.memoryTypeCount; ++i )
-    {
-        if ( !( memoryRequirements.memoryTypeBits & ( 1U << i ) ) )
-            continue;
-
-        VkMemoryType const& memoryType = _physicalDeviceMemoryProperties.memoryTypes[ i ];
-
-        if ( ( memoryType.propertyFlags & memoryProperties ) != memoryProperties )
-            continue;
-
-        targetMemoryTypeIndex = i;
-        return true;
-    }
-
     return false;
 }
 

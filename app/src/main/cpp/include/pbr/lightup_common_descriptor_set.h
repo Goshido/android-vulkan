@@ -23,7 +23,7 @@ class LightupCommonDescriptorSet final
         VkPipelineLayout                    _pipelineLayout = VK_NULL_HANDLE;
         Sampler                             _prefilterSampler {};
         std::vector<VkDescriptorSet>        _sets {};
-        UniformBufferPool                   _uniforms { eUniformPoolSize::Tiny_4M };
+        UniformBufferPool                   _uniforms { eUniformPoolSize::Nanoscopic_64KB };
         VkWriteDescriptorSet                _writeInfo {};
 
     public:

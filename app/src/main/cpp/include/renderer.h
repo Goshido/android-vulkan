@@ -154,20 +154,6 @@ class Renderer final
         [[nodiscard]] bool OnCreateDevice () noexcept;
         void OnDestroyDevice () noexcept;
 
-        // Note method will invoke AV_REGISTER_DEVICE_MEMORY internally if success.
-        [[nodiscard]] bool TryAllocateMemory ( VkDeviceMemory &memory,
-            size_t size,
-            VkMemoryPropertyFlags memoryProperties,
-            char const* errorMessage
-        ) const noexcept;
-
-        // Note method will invoke AV_REGISTER_DEVICE_MEMORY internally if success.
-        [[nodiscard]] bool TryAllocateMemory ( VkDeviceMemory &memory,
-            VkMemoryRequirements const &requirements,
-            VkMemoryPropertyFlags memoryProperties,
-            char const* errorMessage
-        ) const noexcept;
-
         [[nodiscard]] bool TryAllocateMemory ( VkDeviceMemory &memory,
             VkDeviceSize &offset,
             VkMemoryRequirements const &requirements,
@@ -189,7 +175,7 @@ class Renderer final
         // Method generates a snapshot which is JSON file. The snapshot could be opened in Google Chrome browser
         // via chrome://tracing util. The snapshot is located in the app's cache directory and has name:
         //      vulkan memory snapshot <date and time>.json
-        // [2022/09/11] Last checked in Google Chrome v105.0.5195.102.
+        // [2022/09/13] Last checked in Google Chrome v105.0.5195.102.
         [[maybe_unused]] void MakeVulkanMemorySnapshot () noexcept;
 
         // Method returns true is "result" equals VK_SUCCESS. Otherwise method returns false.
@@ -242,15 +228,6 @@ class Renderer final
 
         [[nodiscard]] bool SelectTargetHardware ( VkPhysicalDevice &targetPhysicalDevice,
             uint32_t &targetQueueFamilyIndex
-        ) const noexcept;
-
-        [[nodiscard]] bool SelectTargetMemoryTypeIndex ( uint32_t &targetMemoryTypeIndex,
-            VkMemoryPropertyFlags memoryProperties
-        ) const noexcept;
-
-        [[nodiscard]] bool SelectTargetMemoryTypeIndex ( uint32_t &targetMemoryTypeIndex,
-            VkMemoryRequirements const &memoryRequirements,
-            VkMemoryPropertyFlags memoryProperties
         ) const noexcept;
 
         [[nodiscard]] bool SelectTargetPresentMode ( VkPresentModeKHR &targetPresentMode, bool vSync ) const noexcept;

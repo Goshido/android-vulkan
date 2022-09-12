@@ -735,7 +735,7 @@ void RenderSession::DestroyGBufferResources ( android_vulkan::Renderer &renderer
         AV_UNREGISTER_DESCRIPTOR_POOL ( "pbr::RenderSession::_gBufferDescriptorPool" )
     }
 
-    _geometryPass.Destroy ( device );
+    _geometryPass.Destroy ( renderer );
     _gBuffer.Destroy ( renderer );
 }
 

@@ -80,7 +80,7 @@ bool PointLightPass::Init ( android_vulkan::Renderer &renderer,
 void PointLightPass::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 {
     VkDevice device = renderer.GetDevice ();
-    _lightup.Destroy ( device );
+    _lightup.Destroy ( renderer );
 
     if ( !_shadowmaps.empty () )
     {
@@ -98,7 +98,7 @@ void PointLightPass::Destroy ( android_vulkan::Renderer &renderer ) noexcept
         _shadowmaps.clear ();
     }
 
-    _shadowmapBufferPool.Destroy ( device, "pbr::PointLightPass::_shadowmapBufferPool" );
+    _shadowmapBufferPool.Destroy ( renderer, "pbr::PointLightPass::_shadowmapBufferPool" );
     _shadowmapProgram.Destroy ( device );
 
     if ( _shadowmapRenderPass == VK_NULL_HANDLE )

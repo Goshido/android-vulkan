@@ -172,10 +172,7 @@ class Renderer final
 
         void UnmapMemory ( VkDeviceMemory memory ) noexcept;
 
-        // Method generates a snapshot which is JSON file. The snapshot could be opened in Google Chrome browser
-        // via chrome://tracing util. The snapshot is located in the app's cache directory and has name:
-        //      vulkan memory snapshot <date and time>.json
-        // [2022/09/13] Last checked in Google Chrome v105.0.5195.102.
+        // See docs/vulkan-memory-view.md
         [[maybe_unused]] void MakeVulkanMemorySnapshot () noexcept;
 
         // Method returns true is "result" equals VK_SUCCESS. Otherwise method returns false.

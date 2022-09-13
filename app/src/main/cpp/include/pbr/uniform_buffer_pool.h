@@ -22,17 +22,11 @@ enum class eUniformPoolSize : size_t
 class UniformBufferPool final
 {
     private:
-        struct Item final
-        {
-            VkBuffer                _buffer = VK_NULL_HANDLE;
-            VkDeviceMemory          _memory = VK_NULL_HANDLE;
-            VkDeviceSize            _offset = std::numeric_limits<VkDeviceSize>::max ();
-        };
-
-    private:
+        std::vector<VkBuffer>       _buffers {};
+        VkDeviceMemory              _memory = VK_NULL_HANDLE;
         size_t                      _index = 0U;
         size_t                      _itemSize = 0U;
-        std::vector<Item>           _pool {};
+        VkDeviceSize                _offset = std::numeric_limits<VkDeviceSize>::max ();
         size_t                      _size;
 
     public:
@@ -62,13 +56,14 @@ class UniformBufferPool final
 
     private:
         [[nodiscard]] bool AllocateBuffers ( android_vulkan::Renderer &renderer,
+            VkMemoryRequirements &requirements,
             size_t itemCount,
-            size_t itemSize
+            VkBufferCreateInfo const &bufferInfo
         ) noexcept;
 
-        [[nodiscard]] static bool ResolveAlignment ( android_vulkan::Renderer &renderer,
-            size_t &alignment,
-            size_t itemSize
+        [[nodiscard]] static bool ResolveMemoryRequirements ( android_vulkan::Renderer &renderer,
+            VkMemoryRequirements &requirements,
+            VkBufferCreateInfo const &bufferInfo
         ) noexcept;
 };
 

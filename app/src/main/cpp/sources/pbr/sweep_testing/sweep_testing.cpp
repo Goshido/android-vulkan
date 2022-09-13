@@ -299,6 +299,7 @@ bool SweepTesting::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
         body.SetOverlay ( _overlay );
     }
 
+    MaterialManager::GetInstance ().FreeTransferResources ( renderer );
     return true;
 }
 

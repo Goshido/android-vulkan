@@ -12,3 +12,4 @@
 1) [Release build](release-build.md)
 1) [_RenderDoc_ integration](renderdoc-integration.md)
 1) [Shader compilation](shader-compilation.md)
+1) [_Vulkan_ memory view](vulkan-memory-view.md)

@@ -406,6 +406,7 @@ bool BoxStack::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
         renderableComponent.FreeTransferResources ( renderer );
     }
 
+    MaterialManager::GetInstance ().FreeTransferResources ( renderer );
     _sphereMesh->FreeTransferResources ( renderer );
     return true;
 }

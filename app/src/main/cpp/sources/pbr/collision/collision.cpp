@@ -300,8 +300,8 @@ bool Collision::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
 
     _contactMesh->FreeTransferResources ( renderer );
 
-    // Note it's safe to cast like that here. "NOLINT" is clang-tidy control comment.
-    auto& m = static_cast<GeometryPassMaterial&> ( *_contactMaterial ); // NOLINT
+    // NOLINTNEXTLINE - downcast.
+    auto& m = static_cast<GeometryPassMaterial&> ( *_contactMaterial );
 
     if ( m.GetAlbedo () )
         m.GetAlbedo ()->FreeTransferResources ( renderer );
@@ -315,6 +315,7 @@ bool Collision::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
     if ( m.GetParam () )
         m.GetParam ()->FreeTransferResources ( renderer );
 
+    MaterialManager::GetInstance ().FreeTransferResources ( renderer );
     return true;
 }
 

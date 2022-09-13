@@ -1,5 +1,6 @@
 #include <pbr/scene.h>
 #include <pbr/coordinate_system.h>
+#include <pbr/material_manager.h>
 #include <pbr/renderable_component.h>
 #include <pbr/scene_desc.h>
 #include <pbr/script_engine.h>
@@ -348,6 +349,7 @@ void Scene::FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcep
         renderableComponent.FreeTransferResources ( renderer );
     }
 
+    MaterialManager::GetInstance ().FreeTransferResources ( renderer );
     _renderableList.splice ( _renderableList.cend (), _freeTransferResourceList );
 }
 

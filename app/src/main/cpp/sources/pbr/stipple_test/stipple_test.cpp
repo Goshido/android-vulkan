@@ -250,6 +250,7 @@ bool StippleTest::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
 
     _floor->FreeTransferResources ( renderer );
     _stipple->FreeTransferResources ( renderer );
+    MaterialManager::GetInstance ().FreeTransferResources ( renderer );
 
     constexpr GXVec3 lightBounds ( 100.0F, 100.0F, 100.0F );
 

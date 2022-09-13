@@ -59,11 +59,6 @@ bool PBRGame::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) n
         renderableComponent.Submit ( _renderSession );
     }
 
-    static size_t counter = 0U;
-
-    if ( ++counter == 2U )
-        renderer.MakeVulkanMemorySnapshot ();
-
     return _renderSession.End ( renderer, deltaTime );
 }
 
@@ -249,6 +244,7 @@ bool PBRGame::UploadGPUContent ( android_vulkan::Renderer &renderer ) noexcept
         renderableComponent.FreeTransferResources ( renderer );
     }
 
+    MaterialManager::GetInstance ().FreeTransferResources ( renderer );
     return true;
 }
 

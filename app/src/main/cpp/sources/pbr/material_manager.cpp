@@ -44,7 +44,7 @@ MaterialManager::StaticInitializer::StaticInitializer () noexcept
 
 MaterialManager::Handler MaterialManager::_handlers[ static_cast<size_t> ( eMaterialTypeDesc::COUNT ) ] = {};
 MaterialManager* MaterialManager::_instance = nullptr;
-std::shared_timed_mutex MaterialManager::_mutex;
+std::mutex MaterialManager::_mutex;
 
 MaterialRef MaterialManager::LoadMaterial ( android_vulkan::Renderer &renderer,
     size_t &commandBufferConsumed,
@@ -57,7 +57,7 @@ MaterialRef MaterialManager::LoadMaterial ( android_vulkan::Renderer &renderer,
     if ( !fileName )
         return std::make_shared<OpaqueMaterial> ();
 
-    std::unique_lock<std::shared_timed_mutex> const lock ( _mutex );
+    std::unique_lock<std::mutex> const lock ( _mutex );
     android_vulkan::File file ( fileName );
 
     if ( !file.LoadContent () )
@@ -74,9 +74,22 @@ MaterialRef MaterialManager::LoadMaterial ( android_vulkan::Renderer &renderer,
     return ( this->*handler ) ( renderer, commandBufferConsumed, header, data, commandBuffers );
 }
 
+void MaterialManager::FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept
+{
+    std::unique_lock<std::mutex> const lock ( _mutex );
+
+    if ( _toFreeTransferResource.empty () )
+        return;
+
+    for ( auto* texture : _toFreeTransferResource )
+        texture->FreeTransferResources ( renderer );
+
+    _toFreeTransferResource.clear ();
+}
+
 MaterialManager& MaterialManager::GetInstance () noexcept
 {
-    std::unique_lock<std::shared_timed_mutex> const lock ( _mutex );
+    std::unique_lock<std::mutex> const lock ( _mutex );
 
     if ( !_instance )
         _instance = new MaterialManager ();
@@ -86,7 +99,7 @@ MaterialManager& MaterialManager::GetInstance () noexcept
 
 void MaterialManager::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 {
-    std::unique_lock<std::shared_timed_mutex> const lock ( _mutex );
+    std::unique_lock<std::mutex> const lock ( _mutex );
 
     if ( !_instance )
         return;
@@ -320,9 +333,14 @@ Texture2DRef MaterialManager::LoadTexture ( android_vulkan::Renderer &renderer,
     Texture2DRef texture = std::make_shared<android_vulkan::Texture2D> ();
 
     if ( !texture->UploadData ( renderer, name, format, true, commandBuffers[ commandBufferConsumed ] ) )
+    {
         texture = nullptr;
+    }
     else
+    {
         _textureStorage.insert ( std::make_pair ( std::string_view ( texture->GetName () ), texture ) );
+        _toFreeTransferResource.push_back ( texture.get () );
+    }
 
     ++commandBufferConsumed;
     return texture;

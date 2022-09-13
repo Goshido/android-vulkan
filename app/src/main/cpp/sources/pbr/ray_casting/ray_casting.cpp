@@ -382,6 +382,7 @@ bool RayCasting::LoadResources ( android_vulkan::Renderer &renderer ) noexcept
     _rayTextureNoHit->FreeTransferResources ( renderer );
     _normalTexture->FreeTransferResources ( renderer );
     lineMesh.FreeTransferResources ( renderer );
+    MaterialManager::GetInstance ().FreeTransferResources ( renderer );
 
     return true;
 }

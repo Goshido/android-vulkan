@@ -24,7 +24,7 @@ constexpr static VkDeviceSize BYTES_PER_CHUNK = MEGABYTES_PER_CHUNK * BYTES_PER_
 
 constexpr static size_t SNAPSHOT_INITIAL_SIZE_MEGABYTES = 16U;
 
-constexpr uint32_t STAGED_MEMORY_MASK = AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_COHERENT_BIT ) |
+constexpr uint32_t STAGING_MEMORY_MASK = AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_COHERENT_BIT ) |
     AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT );
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -465,7 +465,7 @@ void MemoryAllocator::Init ( VkPhysicalDeviceMemoryProperties const &properties 
     {
         VkMemoryType const& memoryType = properties.memoryTypes[ i ];
 
-        if ( memoryType.propertyFlags & STAGED_MEMORY_MASK )
+        if ( memoryType.propertyFlags & STAGING_MEMORY_MASK )
         {
             _stagingMemoryTypeIndex = i;
             return;
@@ -642,7 +642,7 @@ bool MemoryAllocator::TryAllocateMemory ( VkDeviceMemory &memory,
 
     std::unique_lock<std::mutex> const lock ( _mutex );
 
-    bool const isStaging = ( properties & STAGED_MEMORY_MASK ) == STAGED_MEMORY_MASK;
+    bool const isStaging = ( properties & STAGING_MEMORY_MASK ) == STAGING_MEMORY_MASK;
     auto& chunks = isStaging ? _stagingMemory : _notStagedMemory[ memoryTypeIndex ];
 
     for ( auto& chunk : chunks )

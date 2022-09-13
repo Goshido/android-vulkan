@@ -22,7 +22,7 @@ constexpr static VkDeviceSize BYTES_PER_GIGABYTE = 1024U * BYTES_PER_MEGABYTE;
 constexpr static VkDeviceSize MEGABYTES_PER_CHUNK = 128U;
 constexpr static VkDeviceSize BYTES_PER_CHUNK = MEGABYTES_PER_CHUNK * BYTES_PER_MEGABYTE;
 
-constexpr static size_t SNAPSHOT_INITIAL_SIZE_MEGABYTES = 4U;
+constexpr static size_t SNAPSHOT_INITIAL_SIZE_MEGABYTES = 16U;
 
 constexpr uint32_t STAGED_MEMORY_MASK = AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_COHERENT_BIT ) |
     AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT );
@@ -157,8 +157,8 @@ void MemoryAllocator::Chunk::MakeJSONChunk ( std::string &json, size_t idChunks,
     constexpr Offset separator = 1U;
 
     constexpr char const* cases[] = { "Free", "Used" };
-    constexpr char const begin[] = R"__(,{"name": "%s", "ph": "B", "pid": %s, "tid": %s, "ts": %zu})__";
-    constexpr char const end[] = R"__(,{"name": "%s", "ph": "E", "pid": %s, "tid": %s, "ts": %zu})__";
+    constexpr char const begin[] = R"__(,{"name":"%s","ph":"B","pid":%s,"tid":%s,"ts":%zu})__";
+    constexpr char const end[] = R"__(,{"name":"%s","ph":"E","pid":%s,"tid":%s,"ts":%zu})__";
 
     for ( Block const* block = _blockChain; block; block = block->_blockChainNext )
     {
@@ -684,7 +684,7 @@ void MemoryAllocator::MakeJSONChunks ( std::string &json,
     constexpr char const begin[] =
         R"__({"name":"process_name","ph":"M","pid":%zu,"args":{"name":"Memory index #%zu [%s]:)__";
 
-    char buffer[ 128U ];
+    char buffer[ 256U ];
 
     json.append ( buffer,
         static_cast<size_t> ( std::snprintf ( buffer, std::size ( buffer ), begin, idChunks, memoryIndex, type ) )

@@ -1534,6 +1534,8 @@ bool Renderer::DeployDevice () noexcept
 
 void Renderer::DestroyDevice () noexcept
 {
+    _memoryAllocator.Destroy ( _device );
+
     if ( !_device )
     {
         AV_CHECK_VULKAN_LEAKS ()

@@ -86,14 +86,17 @@ class MemoryAllocator final
         {
             Chunks::iterator                                _chunk;
             Chunks*                                         _chunks;
+            bool                                            _isStaging;
             size_t                                          _mapCounter;
             void*                                           _mapPointer;
         };
 
     private:
         std::unordered_map<VkDeviceMemory, ChunkInfo>       _chunkMap {};
-        Chunks                                              _memory[ VK_MAX_MEMORY_TYPES ] {};
+        Chunks                                              _notStagedMemory[ VK_MAX_MEMORY_TYPES ] {};
         VkPhysicalDeviceMemoryProperties                    _properties {};
+        Chunks                                              _stagingMemory {};
+        size_t                                              _stagingMemoryTypeIndex = VK_MAX_MEMORY_TYPES;
         std::mutex                                          _mutex {};
 
     public:
@@ -108,7 +111,10 @@ class MemoryAllocator final
         ~MemoryAllocator () = default;
 
         void FreeMemory ( VkDevice device, VkDeviceMemory memory, VkDeviceSize offset ) noexcept;
+
         void Init ( VkPhysicalDeviceMemoryProperties const &properties ) noexcept;
+        void Destroy ( VkDevice device ) noexcept;
+
         void MakeSnapshot () noexcept;
 
         [[nodiscard]] bool MapMemory ( void*& ptr,
@@ -129,7 +135,12 @@ class MemoryAllocator final
         ) noexcept;
 
     private:
-        static void MakeJSONChunks ( std::string &json, size_t id, VkMemoryPropertyFlags props ) noexcept;
+        static void MakeJSONChunks ( std::string &json,
+            size_t memoryIndex,
+            size_t idChunks,
+            VkMemoryPropertyFlags props,
+            char const* type
+        ) noexcept;
 };
 
 } // namespace android_vulkan

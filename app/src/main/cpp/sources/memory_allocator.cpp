@@ -1,4 +1,5 @@
 #include <memory_allocator.h>
+#include <bitwise.h>
 #include <core.h>
 #include <renderer.h>
 #include <vulkan_utils.h>
@@ -22,6 +23,9 @@ constexpr static VkDeviceSize MEGABYTES_PER_CHUNK = 128U;
 constexpr static VkDeviceSize BYTES_PER_CHUNK = MEGABYTES_PER_CHUNK * BYTES_PER_MEGABYTE;
 
 constexpr static size_t SNAPSHOT_INITIAL_SIZE_MEGABYTES = 4U;
+
+constexpr uint32_t STAGED_MEMORY_MASK = AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_COHERENT_BIT ) |
+    AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT );
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -440,7 +444,12 @@ void MemoryAllocator::FreeMemory ( VkDevice device,
     ChunkInfo& chunkInfo = findResult->second;
     chunkInfo._chunk->FreeMemory ( offset );
 
-    if ( chunkInfo._chunk->IsUsed () )
+    // Optimization: preserving last staging chunk...
+
+    bool const isSkip = AV_BITWISE ( chunkInfo._chunk->IsUsed () ) |
+        AV_BITWISE ( chunkInfo._isStaging & ( _stagingMemory.size () < 2U ) );
+
+    if ( isSkip )
         return;
 
     chunkInfo._chunk->Destroy ( device );
@@ -451,6 +460,29 @@ void MemoryAllocator::FreeMemory ( VkDevice device,
 void MemoryAllocator::Init ( VkPhysicalDeviceMemoryProperties const &properties ) noexcept
 {
     _properties = properties;
+
+    for ( uint32_t i = 0U; i < properties.memoryTypeCount; ++i )
+    {
+        VkMemoryType const& memoryType = properties.memoryTypes[ i ];
+
+        if ( memoryType.propertyFlags & STAGED_MEMORY_MASK )
+        {
+            _stagingMemoryTypeIndex = i;
+            return;
+        }
+    }
+
+    assert ( false );
+}
+
+void MemoryAllocator::Destroy ( VkDevice device ) noexcept
+{
+    if ( _stagingMemory.empty () )
+        return;
+
+    _stagingMemory.front ().Destroy ( device );
+    _stagingMemory.clear ();
+    _chunkMap.clear ();
 }
 
 void MemoryAllocator::MakeSnapshot () noexcept
@@ -473,26 +505,41 @@ void MemoryAllocator::MakeSnapshot () noexcept
     json.append ( begin.data (), begin.size () );
     bool isFirst = true;
 
-    for ( size_t i = 0U; i < _properties.memoryTypeCount; ++i )
-    {
-        Chunks const& chunks = _memory[ i ];
-
+    auto const dump = [ & ] ( size_t memoryIndex,
+        size_t idChunks,
+        Chunks const &chunks,
+        VkMemoryPropertyFlags flags,
+        char const* type
+    ) noexcept {
         if ( chunks.empty () )
-            continue;
+            return;
 
         if ( isFirst )
             isFirst = false;
         else
             json.append ( ",", 1 );
 
-        MakeJSONChunks ( json, i, _properties.memoryTypes[ i ].propertyFlags );
+        MakeJSONChunks ( json, memoryIndex, idChunks, flags, type );
         size_t id = 0U;
 
         for ( Chunk const& chunk : chunks )
         {
-            chunk.MakeJSONChunk ( json, i, id++ );
+            chunk.MakeJSONChunk ( json, idChunks, id++ );
         }
-    }
+    };
+
+    VkMemoryType const* memoryTypes = _properties.memoryTypes;
+
+    dump ( _stagingMemoryTypeIndex,
+        VK_MAX_MEMORY_TYPES,
+        _stagingMemory,
+        memoryTypes[ _stagingMemoryTypeIndex ].propertyFlags
+        ,
+        "STAGING"
+    );
+
+    for ( size_t i = 0U; i < _properties.memoryTypeCount; ++i )
+        dump ( i, i, _notStagedMemory[ i ], memoryTypes[ i ].propertyFlags, "NON STAGING" );
 
     constexpr std::string_view end = "]}";
     json.append ( end.data (), end.size () );
@@ -594,7 +641,9 @@ bool MemoryAllocator::TryAllocateMemory ( VkDeviceMemory &memory,
         return false;
 
     std::unique_lock<std::mutex> const lock ( _mutex );
-    auto& chunks = _memory[ memoryTypeIndex ];
+
+    bool const isStaging = ( properties & STAGED_MEMORY_MASK ) == STAGED_MEMORY_MASK;
+    auto& chunks = isStaging ? _stagingMemory : _notStagedMemory[ memoryTypeIndex ];
 
     for ( auto& chunk : chunks )
     {
@@ -617,6 +666,7 @@ bool MemoryAllocator::TryAllocateMemory ( VkDeviceMemory &memory,
         {
             ._chunk = chunks.begin (),
             ._chunks = &chunks,
+            ._isStaging = isStaging,
             ._mapCounter = 0U,
             ._mapPointer = nullptr
         }
@@ -625,13 +675,20 @@ bool MemoryAllocator::TryAllocateMemory ( VkDeviceMemory &memory,
     return true;
 }
 
-void MemoryAllocator::MakeJSONChunks ( std::string &json, size_t id, VkMemoryPropertyFlags props ) noexcept
+void MemoryAllocator::MakeJSONChunks ( std::string &json,
+    size_t memoryIndex,
+    size_t idChunks,
+    VkMemoryPropertyFlags props, char const* type
+) noexcept
 {
     constexpr char const begin[] =
-        R"__({"name":"process_name","ph":"M","pid":%zu,"args":{"name":"Memory index #%zu:)__";
+        R"__({"name":"process_name","ph":"M","pid":%zu,"args":{"name":"Memory index #%zu [%s]:)__";
 
     char buffer[ 128U ];
-    json.append ( buffer, static_cast<size_t> ( std::snprintf ( buffer, std::size ( buffer ), begin, id, id ) ) );
+
+    json.append ( buffer,
+        static_cast<size_t> ( std::snprintf ( buffer, std::size ( buffer ), begin, idChunks, memoryIndex, type ) )
+    );
 
 #define AV_ENTRY(x) std::make_pair ( static_cast<uint32_t> ( x ), std::string_view ( " "#x ) )
 

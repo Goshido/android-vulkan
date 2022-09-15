@@ -390,7 +390,11 @@ static std::unordered_set<std::string_view> const g_validationFilter =
 
     // VALIDATION LAYERS WARNING: Using debug builds of the validation layers *will* adversely affect performance.
     // [2022/09/15] Yeah. I'm pretty aware about that. Thank you.
-    "0x26ac7233"
+    "0x26ac7233",
+
+    // Input attachment descriptor image view is not a subpass input attachment.
+    // [2022/09/15] The issues is here: https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/4555
+    "0xe897be5f"
 };
 
 //----------------------------------------------------------------------------------------------------------------------

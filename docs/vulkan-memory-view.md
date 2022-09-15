@@ -10,7 +10,7 @@ The project has ability to make a snapshot of current _Vulkan_ memory state. The
 
 <img src="./images/vulkan-memory-viewer.png"/>
 
-A couple notes about data intepretation:
+A couple notes about data interpretation:
 
 `Chunk #0: 75.30Mb, 59%` means that memory chunk contains 75.30 Mb data which is in use and has occupancy of 59% used memory.
 
@@ -20,7 +20,7 @@ A couple notes about data intepretation:
 
 `[NON STAGING]` is opposite to `[STAGING]` memory. Anything but intercommunicating.
 
-Note that empty space between block is just for better visualization in viewer. There is **NO** any empty space between blocks in memory layout.
+Note that empty space between blocks is just for better visualization in viewer. There is **NO** any empty space between blocks in actual memory layout.
 
 ## Snapshot location
 
@@ -34,7 +34,7 @@ For example: `/data/data/com.goshidoInc.androidVulkan/cache/vulkan memory snapsh
 
 ## About _Perfetto_
 
-It's not a secret that [_Perfetto_](https://ui.perfetto.dev/) tool could also preview trace files. Unfortunatelly it was detected that version _v26.1-ef7b0_ has a bug which trims memory property information for memory index information block.
+It's not a secret that [_Perfetto_](https://ui.perfetto.dev/) tool could also preview trace files. Unfortunately it was detected that version _v26.1-ef7b0_ has a bug which trims memory property information for memory index information block.
 
 <img src="./images/perfetto-issue.png"/>
 

@@ -386,7 +386,11 @@ static std::unordered_set<std::string_view> const g_validationFilter =
     // Attempting to enable extension VK_EXT_debug_report, but this extension is intended to support use by applications
     // when debugging and it is strongly recommended that it be otherwise avoided.
     // [2022/07/26] Yeah. I'm pretty aware about that. Thank you.
-    "0x822806fa"
+    "0x822806fa",
+
+    // VALIDATION LAYERS WARNING: Using debug builds of the validation layers *will* adversely affect performance.
+    // [2022/09/15] Yeah. I'm pretty aware about that. Thank you.
+    "0x26ac7233"
 };
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -792,6 +796,7 @@ std::map<VkSurfaceTransformFlagsKHR, char const*> const Renderer::_vulkanSurface
 //----------------------------------------------------------------------------------------------------------------------
 
 Renderer::Renderer () noexcept:
+    _depthImageFormat ( VK_FORMAT_UNDEFINED ),
     _depthStencilImageFormat ( VK_FORMAT_UNDEFINED ),
     _device ( VK_NULL_HANDLE ),
     _instance ( VK_NULL_HANDLE ),
@@ -885,6 +890,11 @@ bool Renderer::FinishAllJobs () noexcept
         "Renderer::FinishAllJobs",
         "Can't wait queue idle"
     );
+}
+
+VkFormat Renderer::GetDefaultDepthFormat () const noexcept
+{
+    return _depthImageFormat;
 }
 
 VkFormat Renderer::GetDefaultDepthStencilFormat () const noexcept
@@ -1828,7 +1838,7 @@ bool Renderer::DeploySwapchain ( bool vSync ) noexcept
 
     VkColorSpaceKHR colorSpace;
 
-    if ( !SelectTargetSurfaceFormat ( _surfaceFormat, colorSpace, _depthStencilImageFormat ) )
+    if ( !SelectTargetSurfaceFormat ( _surfaceFormat, colorSpace, _depthImageFormat, _depthStencilImageFormat ) )
     {
         LogError ( "Renderer::DeploySwapchain - Can't select image format and color space." );
         return false;
@@ -2504,6 +2514,7 @@ bool Renderer::SelectTargetPresentMode ( VkPresentModeKHR &targetPresentMode, bo
 
 bool Renderer::SelectTargetSurfaceFormat ( VkFormat &targetColorFormat,
     VkColorSpaceKHR &targetColorSpace,
+    VkFormat &targetDepthFormat,
     VkFormat &targetDepthStencilFormat
 ) const noexcept
 {
@@ -2536,6 +2547,29 @@ bool Renderer::SelectTargetSurfaceFormat ( VkFormat &targetColorFormat,
         }
     }
 
+    auto const check = [ & ] ( VkFormat &dst,
+        VkFormat const* options,
+        size_t count,
+        char const* type
+    ) noexcept -> bool {
+        for ( size_t i = 0U; i < count; ++i )
+        {
+            VkFormat const format = options[ i ];
+
+            VkFormatProperties props;
+            vkGetPhysicalDeviceFormatProperties ( _physicalDevice, format, &props );
+
+            if ( !( props.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT ) )
+                continue;
+
+            dst = format;
+            return true;
+        }
+
+        LogError ( "Renderer::SelectTargetSurfaceFormat - Can't select % format.", type );
+        return false;
+    };
+
     constexpr VkFormat const depthStencilOptions[]
     {
         VK_FORMAT_D24_UNORM_S8_UINT,
@@ -2543,36 +2577,64 @@ bool Renderer::SelectTargetSurfaceFormat ( VkFormat &targetColorFormat,
         VK_FORMAT_D16_UNORM_S8_UINT
     };
 
-    for ( auto probe : depthStencilOptions )
+    constexpr VkFormat const depthOptions[]
     {
-        VkFormatProperties props;
-        vkGetPhysicalDeviceFormatProperties ( _physicalDevice, probe, &props );
+        VK_FORMAT_D32_SFLOAT,
+        VK_FORMAT_X8_D24_UNORM_PACK32,
+        VK_FORMAT_D16_UNORM
+    };
 
-        if ( !( props.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT ) )
-            continue;
+    if ( !check ( targetDepthFormat, depthOptions, std::size ( depthOptions ), "depth" ) )
+        return false;
 
-        targetDepthStencilFormat = probe;
+    if ( !check ( targetDepthStencilFormat, depthStencilOptions, std::size ( depthStencilOptions ), "depth|stencil" ) )
+        return false;
 
-        constexpr char const* format = R"__(Renderer::SelectTargetSurfaceFormat - Surface format selected:
+//    for ( auto probe : depthStencilOptions )
+//    {
+//        VkFormatProperties props;
+//        vkGetPhysicalDeviceFormatProperties ( _physicalDevice, probe, &props );
+//
+//        if ( !( props.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT ) )
+//            continue;
+//
+//        targetDepthStencilFormat = probe;
+//    }
+//
+//    for ( auto probe : depthStencilOptions )
+//    {
+//        VkFormatProperties props;
+//        vkGetPhysicalDeviceFormatProperties ( _physicalDevice, probe, &props );
+//
+//        if ( !( props.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT ) )
+//            continue;
+//
+//        targetDepthStencilFormat = probe;
+//    }
+
+    constexpr char const format[] = R"__(Renderer::SelectTargetSurfaceFormat - Surface format selected:
 %sColor format: %s
 %sColor space: %s
+%sDepth format: %s
 %sDepth|stencil format: %s
 )__";
 
-        LogInfo ( format,
-            INDENT_1,
-            ResolveVkFormat ( targetColorFormat ),
-            INDENT_1,
-            ResolveVkColorSpaceKHR ( targetColorSpace ),
-            INDENT_1,
-            ResolveVkFormat ( targetDepthStencilFormat )
-        );
+    LogInfo ( format,
+        INDENT_1,
+        ResolveVkFormat ( targetColorFormat ),
+        INDENT_1,
+        ResolveVkColorSpaceKHR ( targetColorSpace ),
+        INDENT_1,
+        ResolveVkFormat ( targetDepthFormat ),
+        INDENT_1,
+        ResolveVkFormat ( targetDepthStencilFormat )
+    );
 
-        return true;
-    }
-
-    LogError ( "Renderer::SelectTargetSurfaceFormat - Can't select depth|stencil format." );
-    return false;
+    return true;
+//    }
+//
+//    LogError ( "Renderer::SelectTargetSurfaceFormat - Can't select depth|stencil format." );
+//    return false;
 }
 
 bool Renderer::CheckExtensionCommon ( std::set<std::string> const &allExtensions,

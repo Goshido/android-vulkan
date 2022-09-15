@@ -197,8 +197,8 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
         },
         {
             .sampler = VK_NULL_HANDLE,
-            .imageView = gBuffer.GetReadOnlyDepthImageView (),
-            .imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL
+            .imageView = gBuffer.GetDepthStencil ().GetImageView (),
+            .imageLayout = VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_OPTIMAL
         },
         {
             .sampler = _brdfLUTSampler.GetSampler (),

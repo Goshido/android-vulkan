@@ -23,6 +23,7 @@ target_include_directories ( layer_utils
     ../layers
     ../layers/generated
     robin-hood-hashing/src/include
+    SPIRV-Tools/external/spirv-headers/include
 )
 
 target_compile_definitions ( layer_utils
@@ -34,7 +35,6 @@ target_compile_definitions ( layer_utils
 )
 
 target_compile_options ( layer_utils PRIVATE
-    -std=c++11
     -Wall
     -Werror
     -Wno-unused-function
@@ -124,8 +124,7 @@ target_compile_definitions ( VkLayer_khronos_validation
     -DUSE_ROBIN_HOOD_HASHING
 )
 
-set ( CMAKE_CXX_FLAGS
-    -std=c++11
+target_compile_options ( VkLayer_khronos_validation PRIVATE
     -Wall
     -Werror
     -Wno-unused-function

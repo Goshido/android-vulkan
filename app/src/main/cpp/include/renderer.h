@@ -46,6 +46,7 @@ class Renderer final
         using LogType = void ( * ) ( char const* format, ... );
 
     private:
+        VkFormat                                                            _depthImageFormat;
         VkFormat                                                            _depthStencilImageFormat;
         VkDevice                                                            _device;
         VkInstance                                                          _instance;
@@ -124,6 +125,7 @@ class Renderer final
 
         [[nodiscard]] bool FinishAllJobs () noexcept;
 
+        [[nodiscard]] VkFormat GetDefaultDepthFormat () const noexcept;
         [[nodiscard]] VkFormat GetDefaultDepthStencilFormat () const noexcept;
         [[nodiscard]] VkDevice GetDevice () const noexcept;
         [[nodiscard]] size_t GetMaxUniformBufferRange () const noexcept;
@@ -231,6 +233,7 @@ class Renderer final
 
         [[nodiscard]] bool SelectTargetSurfaceFormat ( VkFormat &targetColorFormat,
             VkColorSpaceKHR &targetColorSpace,
+            VkFormat &targetDepthFormat,
             VkFormat &targetDepthStencilFormat
         ) const noexcept;
 

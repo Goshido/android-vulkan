@@ -43,7 +43,7 @@ class GeometryPass final
             DefaultTextureManager const &defaultTextureManager
         ) noexcept;
 
-        void Destroy ( VkDevice device ) noexcept;
+        void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
         void Execute ( VkCommandBuffer commandBuffer, RenderSessionStats &renderSessionStats ) noexcept;
 
         [[nodiscard]] OpaqueSubpass& GetOpaqueSubpass () noexcept;

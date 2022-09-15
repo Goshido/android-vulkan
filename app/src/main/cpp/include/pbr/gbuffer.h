@@ -16,8 +16,6 @@ class GBuffer final
         android_vulkan::Texture2D       _normal {};
         android_vulkan::Texture2D       _params {};
 
-        VkImageView                     _readOnlyDepthImageView = VK_NULL_HANDLE;
-
     public:
         GBuffer () = default;
 
@@ -35,11 +33,10 @@ class GBuffer final
         [[nodiscard]] android_vulkan::Texture2D& GetNormal () noexcept;
         [[nodiscard]] android_vulkan::Texture2D& GetParams () noexcept;
 
-        [[nodiscard]] VkImageView GetReadOnlyDepthImageView () const noexcept;
         [[nodiscard]] VkExtent2D const& GetResolution () const noexcept;
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, VkExtent2D const &resolution ) noexcept;
-        void Destroy ( VkDevice device ) noexcept;
+        void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
 };
 
 } // namespace pbr

@@ -46,7 +46,7 @@ class ReflectionLocalPass final
 
         ReflectionLocalProgram                  _program {};
 
-        UniformBufferPool                       _uniformPool { eUniformPoolSize::Tiny_4M };
+        UniformBufferPool                       _uniformPool { eUniformPoolSize::Nanoscopic_64KB };
         std::vector<VkWriteDescriptorSet>       _writeSets {};
 
     public:
@@ -76,7 +76,7 @@ class ReflectionLocalPass final
             VkExtent2D const &viewport
         ) noexcept;
 
-        void Destroy ( VkDevice device ) noexcept;
+        void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
 
         void Reset () noexcept;
 

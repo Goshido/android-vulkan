@@ -21,7 +21,7 @@ class RenderableComponent : public Component
 
         ~RenderableComponent () override = default;
 
-        virtual void FreeTransferResources ( VkDevice device ) noexcept;
+        virtual void FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept;
         virtual void Submit ( RenderSession &renderSession ) noexcept = 0;
 
     protected:

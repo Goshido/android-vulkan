@@ -80,10 +80,10 @@ class RenderSession final
         void Begin ( GXMat4 const &viewerLocal, GXMat4 const &projection ) noexcept;
         [[nodiscard]] bool End ( android_vulkan::Renderer &renderer, double deltaTime ) noexcept;
 
-        void FreeTransferResources ( VkDevice device ) noexcept;
+        void FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept;
 
         [[nodiscard]] bool OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept;
-        void OnDestroyDevice ( VkDevice device ) noexcept;
+        void OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept;
 
         [[nodiscard]] bool OnSwapchainCreated ( android_vulkan::Renderer &renderer,
             VkExtent2D const &resolution
@@ -112,8 +112,7 @@ class RenderSession final
         ) noexcept;
 
         [[nodiscard]] bool CreateGBufferSlotMapper ( android_vulkan::Renderer &renderer ) noexcept;
-
-        void DestroyGBufferResources ( VkDevice device ) noexcept;
+        void DestroyGBufferResources ( android_vulkan::Renderer &renderer ) noexcept;
 
         void SubmitOpaqueCall ( MeshRef &mesh,
             MaterialRef const &material,

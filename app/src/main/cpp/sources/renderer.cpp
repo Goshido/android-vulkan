@@ -388,19 +388,13 @@ static std::unordered_set<std::string_view> const g_validationFilter =
     // [2022/07/26] Yeah. I'm pretty aware about that. Thank you.
     "0x822806fa",
 
-    // Allocating a VkDeviceMemory of size XXX. This is a very small allocation (current threshold is XXX bytes).
-    // You should make large allocations and sub-allocate from one large VkDeviceMemory.
-    // [2022/07/27] Should think about it. Custom memory allocator task.
-    "0xdc18ad6b",
+    // VALIDATION LAYERS WARNING: Using debug builds of the validation layers *will* adversely affect performance.
+    // [2022/09/15] Yeah. I'm pretty aware about that. Thank you.
+    "0x26ac7233",
 
-    // Trying to bind VkImage (...) to a memory block which is fully consumed by the image. The required size of
-    // the allocation is 1088, but smaller images like this should be sub-allocated from larger memory blocks.
-    // [2022/07/27] Should think about it. Custom memory allocator task.
-    "0xb3d4346b",
-
-    // Performance Warning: This app has > 250 memory objects.
-    // [2022/07/28] Should think about it. Custom memory allocator task.
-    "0x58781063"
+    // Input attachment descriptor image view is not a subpass input attachment.
+    // [2022/09/15] The issues is here: https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/4555
+    "0xe897be5f"
 };
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -806,12 +800,14 @@ std::map<VkSurfaceTransformFlagsKHR, char const*> const Renderer::_vulkanSurface
 //----------------------------------------------------------------------------------------------------------------------
 
 Renderer::Renderer () noexcept:
+    _depthImageFormat ( VK_FORMAT_UNDEFINED ),
     _depthStencilImageFormat ( VK_FORMAT_UNDEFINED ),
     _device ( VK_NULL_HANDLE ),
     _instance ( VK_NULL_HANDLE ),
     _isDeviceExtensionChecked ( false ),
     _isDeviceExtensionSupported ( false ),
     _maxUniformBufferRange {},
+    _memoryAllocator {},
     _physicalDevice ( VK_NULL_HANDLE ),
     _queue ( VK_NULL_HANDLE ),
     _queueFamilyIndex ( VK_QUEUE_FAMILY_IGNORED ),
@@ -898,6 +894,11 @@ bool Renderer::FinishAllJobs () noexcept
         "Renderer::FinishAllJobs",
         "Can't wait queue idle"
     );
+}
+
+VkFormat Renderer::GetDefaultDepthFormat () const noexcept
+{
+    return _depthImageFormat;
 }
 
 VkFormat Renderer::GetDefaultDepthStencilFormat () const noexcept
@@ -1145,67 +1146,42 @@ void Renderer::OnDestroyDevice () noexcept
 }
 
 bool Renderer::TryAllocateMemory ( VkDeviceMemory &memory,
-    size_t size,
-    VkMemoryPropertyFlags memoryProperties,
-    char const* errorMessage
-) const noexcept
-{
-    VkMemoryAllocateInfo allocateInfo {};
-    allocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-    allocateInfo.pNext = nullptr;
-    allocateInfo.allocationSize = static_cast<uint32_t> ( size );
-
-    if ( !SelectTargetMemoryTypeIndex ( allocateInfo.memoryTypeIndex, memoryProperties ) )
-    {
-        std::string const flags = StringifyVkFlags ( memoryProperties,
-            g_vkMemoryPropertyFlagBitsMapperItems,
-            g_vkMemoryPropertyFlagBitsMapper
-        );
-
-        LogError ( "Renderer::TryAllocateMemory - %s. Hardware does not support the following memory type:%s.",
-            errorMessage,
-            flags.c_str ()
-        );
-
-        return false;
-    }
-
-    return CheckVkResult ( vkAllocateMemory ( _device, &allocateInfo, nullptr, &memory ),
-        "Renderer::TryAllocateMemory",
-        errorMessage
-    );
-}
-
-bool Renderer::TryAllocateMemory ( VkDeviceMemory &memory,
+    VkDeviceSize &offset,
     VkMemoryRequirements const &requirements,
     VkMemoryPropertyFlags memoryProperties,
     char const* errorMessage
-) const noexcept
+) noexcept
 {
-    VkMemoryAllocateInfo allocateInfo {};
-    allocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-    allocateInfo.pNext = nullptr;
-    allocateInfo.allocationSize = requirements.size;
+    if ( _memoryAllocator.TryAllocateMemory ( memory, offset, _device, requirements, memoryProperties ) )
+        return true;
 
-    if ( !SelectTargetMemoryTypeIndex ( allocateInfo.memoryTypeIndex, requirements, memoryProperties ) )
-    {
-        std::string const flags = StringifyVkFlags ( memoryProperties,
-            g_vkMemoryPropertyFlagBitsMapperItems,
-            g_vkMemoryPropertyFlagBitsMapper
-        );
+    LogError ( "Renderer::TryAllocateMemory - %s.", errorMessage );
+    return false;
+}
 
-        LogError ( "Renderer::TryAllocateMemory - %s. Hardware does not support the following memory type:%s.",
-            errorMessage,
-            flags.c_str ()
-        );
+void Renderer::FreeMemory ( VkDeviceMemory memory, VkDeviceSize offset ) noexcept
+{
+    _memoryAllocator.FreeMemory ( _device, memory, offset );
+}
 
-        return false;
-    }
+bool Renderer::MapMemory ( void*& ptr,
+    VkDeviceMemory memory,
+    VkDeviceSize offset,
+    char const* from,
+    char const* message
+) noexcept
+{
+    return _memoryAllocator.MapMemory ( ptr, _device, memory, offset, from, message );
+}
 
-    return CheckVkResult ( vkAllocateMemory ( _device, &allocateInfo, nullptr, &memory ),
-        "Renderer::TryAllocateMemory",
-        errorMessage
-    );
+void Renderer::UnmapMemory ( VkDeviceMemory memory ) noexcept
+{
+    _memoryAllocator.UnmapMemory ( _device, memory );
+}
+
+[[maybe_unused]] void Renderer::MakeVulkanMemorySnapshot () noexcept
+{
+    _memoryAllocator.MakeSnapshot ();
 }
 
 bool Renderer::CheckVkResult ( VkResult result, char const* from, char const* message ) noexcept
@@ -1566,11 +1542,14 @@ bool Renderer::DeployDevice () noexcept
         return false;
 
     vkGetDeviceQueue ( _device, _queueFamilyIndex, 0U, &_queue );
+    _memoryAllocator.Init ( _physicalDeviceMemoryProperties );
     return true;
 }
 
 void Renderer::DestroyDevice () noexcept
 {
+    _memoryAllocator.Destroy ( _device );
+
     if ( !_device )
     {
         AV_CHECK_VULKAN_LEAKS ()
@@ -1863,7 +1842,7 @@ bool Renderer::DeploySwapchain ( bool vSync ) noexcept
 
     VkColorSpaceKHR colorSpace;
 
-    if ( !SelectTargetSurfaceFormat ( _surfaceFormat, colorSpace, _depthStencilImageFormat ) )
+    if ( !SelectTargetSurfaceFormat ( _surfaceFormat, colorSpace, _depthImageFormat, _depthStencilImageFormat ) )
     {
         LogError ( "Renderer::DeploySwapchain - Can't select image format and color space." );
         return false;
@@ -2489,46 +2468,6 @@ bool Renderer::SelectTargetHardware ( VkPhysicalDevice &targetPhysicalDevice,
     return false;
 }
 
-bool Renderer::SelectTargetMemoryTypeIndex ( uint32_t &targetMemoryTypeIndex,
-    VkMemoryPropertyFlags memoryProperties
-) const noexcept
-{
-    for ( uint32_t i = 0U; i < _physicalDeviceMemoryProperties.memoryTypeCount; ++i )
-    {
-        VkMemoryType const& memoryType = _physicalDeviceMemoryProperties.memoryTypes[ i ];
-
-        if ( ( memoryType.propertyFlags & memoryProperties ) != memoryProperties )
-            continue;
-
-        targetMemoryTypeIndex = i;
-        return true;
-    }
-
-    return false;
-}
-
-bool Renderer::SelectTargetMemoryTypeIndex ( uint32_t &targetMemoryTypeIndex,
-    VkMemoryRequirements const &memoryRequirements,
-    VkMemoryPropertyFlags memoryProperties
-) const noexcept
-{
-    for ( uint32_t i = 0U; i < _physicalDeviceMemoryProperties.memoryTypeCount; ++i )
-    {
-        if ( !( memoryRequirements.memoryTypeBits & ( 1U << i ) ) )
-            continue;
-
-        VkMemoryType const& memoryType = _physicalDeviceMemoryProperties.memoryTypes[ i ];
-
-        if ( ( memoryType.propertyFlags & memoryProperties ) != memoryProperties )
-            continue;
-
-        targetMemoryTypeIndex = i;
-        return true;
-    }
-
-    return false;
-}
-
 bool Renderer::SelectTargetPresentMode ( VkPresentModeKHR &targetPresentMode, bool vSync ) const noexcept
 {
     // Try to find VK_PRESENT_MODE_MAILBOX_KHR present mode.
@@ -2579,6 +2518,7 @@ bool Renderer::SelectTargetPresentMode ( VkPresentModeKHR &targetPresentMode, bo
 
 bool Renderer::SelectTargetSurfaceFormat ( VkFormat &targetColorFormat,
     VkColorSpaceKHR &targetColorSpace,
+    VkFormat &targetDepthFormat,
     VkFormat &targetDepthStencilFormat
 ) const noexcept
 {
@@ -2611,6 +2551,29 @@ bool Renderer::SelectTargetSurfaceFormat ( VkFormat &targetColorFormat,
         }
     }
 
+    auto const check = [ & ] ( VkFormat &dst,
+        VkFormat const* options,
+        size_t count,
+        char const* type
+    ) noexcept -> bool {
+        for ( size_t i = 0U; i < count; ++i )
+        {
+            VkFormat const format = options[ i ];
+
+            VkFormatProperties props;
+            vkGetPhysicalDeviceFormatProperties ( _physicalDevice, format, &props );
+
+            if ( !( props.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT ) )
+                continue;
+
+            dst = format;
+            return true;
+        }
+
+        LogError ( "Renderer::SelectTargetSurfaceFormat - Can't select % format.", type );
+        return false;
+    };
+
     constexpr VkFormat const depthStencilOptions[]
     {
         VK_FORMAT_D24_UNORM_S8_UINT,
@@ -2618,36 +2581,64 @@ bool Renderer::SelectTargetSurfaceFormat ( VkFormat &targetColorFormat,
         VK_FORMAT_D16_UNORM_S8_UINT
     };
 
-    for ( auto probe : depthStencilOptions )
+    constexpr VkFormat const depthOptions[]
     {
-        VkFormatProperties props;
-        vkGetPhysicalDeviceFormatProperties ( _physicalDevice, probe, &props );
+        VK_FORMAT_D32_SFLOAT,
+        VK_FORMAT_X8_D24_UNORM_PACK32,
+        VK_FORMAT_D16_UNORM
+    };
 
-        if ( !( props.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT ) )
-            continue;
+    if ( !check ( targetDepthFormat, depthOptions, std::size ( depthOptions ), "depth" ) )
+        return false;
 
-        targetDepthStencilFormat = probe;
+    if ( !check ( targetDepthStencilFormat, depthStencilOptions, std::size ( depthStencilOptions ), "depth|stencil" ) )
+        return false;
 
-        constexpr char const* format = R"__(Renderer::SelectTargetSurfaceFormat - Surface format selected:
+//    for ( auto probe : depthStencilOptions )
+//    {
+//        VkFormatProperties props;
+//        vkGetPhysicalDeviceFormatProperties ( _physicalDevice, probe, &props );
+//
+//        if ( !( props.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT ) )
+//            continue;
+//
+//        targetDepthStencilFormat = probe;
+//    }
+//
+//    for ( auto probe : depthStencilOptions )
+//    {
+//        VkFormatProperties props;
+//        vkGetPhysicalDeviceFormatProperties ( _physicalDevice, probe, &props );
+//
+//        if ( !( props.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT ) )
+//            continue;
+//
+//        targetDepthStencilFormat = probe;
+//    }
+
+    constexpr char const format[] = R"__(Renderer::SelectTargetSurfaceFormat - Surface format selected:
 %sColor format: %s
 %sColor space: %s
+%sDepth format: %s
 %sDepth|stencil format: %s
 )__";
 
-        LogInfo ( format,
-            INDENT_1,
-            ResolveVkFormat ( targetColorFormat ),
-            INDENT_1,
-            ResolveVkColorSpaceKHR ( targetColorSpace ),
-            INDENT_1,
-            ResolveVkFormat ( targetDepthStencilFormat )
-        );
+    LogInfo ( format,
+        INDENT_1,
+        ResolveVkFormat ( targetColorFormat ),
+        INDENT_1,
+        ResolveVkColorSpaceKHR ( targetColorSpace ),
+        INDENT_1,
+        ResolveVkFormat ( targetDepthFormat ),
+        INDENT_1,
+        ResolveVkFormat ( targetDepthStencilFormat )
+    );
 
-        return true;
-    }
-
-    LogError ( "Renderer::SelectTargetSurfaceFormat - Can't select depth|stencil format." );
-    return false;
+    return true;
+//    }
+//
+//    LogError ( "Renderer::SelectTargetSurfaceFormat - Can't select depth|stencil format." );
+//    return false;
 }
 
 bool Renderer::CheckExtensionCommon ( std::set<std::string> const &allExtensions,

@@ -64,7 +64,7 @@ class StaticMeshComponent final : public RenderableComponent, public Transformab
 
         ~StaticMeshComponent () override = default;
 
-        void FreeTransferResources ( VkDevice device ) noexcept override;
+        void FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept override;
         void Submit ( RenderSession &renderSession ) noexcept override;
 
         [[maybe_unused, nodiscard]] GXAABB const& GetBoundsWorld () const noexcept;

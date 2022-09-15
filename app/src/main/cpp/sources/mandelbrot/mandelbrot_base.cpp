@@ -75,29 +75,14 @@ bool MandelbrotBase::OnFrame ( android_vulkan::Renderer &renderer, double /*delt
 
 bool MandelbrotBase::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 {
-    if ( !CreatePresentationSyncPrimitive ( renderer ) )
-    {
-        OnDestroyDevice ( renderer.GetDevice () );
-        return false;
-    }
-
-    if ( !CreateCommandPool ( renderer ) )
-    {
-        OnDestroyDevice ( renderer.GetDevice () );
-        return false;
-    }
-
-    if ( !CreatePipelineLayout ( renderer ) )
-    {
-        OnDestroyDevice ( renderer.GetDevice () );
-        return false;
-    }
-
-    return true;
+    return CreatePresentationSyncPrimitive ( renderer ) &&
+        CreateCommandPool ( renderer ) &&
+        CreatePipelineLayout ( renderer );
 }
 
-void MandelbrotBase::OnDestroyDevice ( VkDevice device ) noexcept
+void MandelbrotBase::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
 {
+    VkDevice device = renderer.GetDevice ();
     DestroyPipelineLayout ( device );
     DestroyCommandPool ( device );
     DestroyPresentationSyncPrimitive ( device );
@@ -105,32 +90,16 @@ void MandelbrotBase::OnDestroyDevice ( VkDevice device ) noexcept
 
 bool MandelbrotBase::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept
 {
-    if ( !CreateRenderPass ( renderer ) )
-        return false;
-
-    if ( !CreateFramebuffers ( renderer ) )
-    {
-        OnSwapchainDestroyed ( renderer.GetDevice () );
-        return false;
-    }
-
-    if ( !CreateFences ( renderer.GetDevice () ) )
-    {
-        OnSwapchainDestroyed ( renderer.GetDevice () );
-        return false;
-    }
-
-    if ( !CreatePipeline ( renderer ) )
-    {
-        OnSwapchainDestroyed ( renderer.GetDevice () );
-        return false;
-    }
-
-    return true;
+    return CreateRenderPass ( renderer ) &&
+        CreateFramebuffers ( renderer ) &&
+        CreateFences ( renderer.GetDevice () ) &&
+        CreatePipeline ( renderer );
 }
 
-void MandelbrotBase::OnSwapchainDestroyed ( VkDevice device ) noexcept
+void MandelbrotBase::OnSwapchainDestroyed ( android_vulkan::Renderer &renderer ) noexcept
 {
+    VkDevice device = renderer.GetDevice ();
+
     DestroyFences ( device );
     DestroyPipeline ( device );
     DestroyFramebuffers ( device );

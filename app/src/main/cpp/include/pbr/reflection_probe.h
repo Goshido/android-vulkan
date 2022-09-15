@@ -22,7 +22,7 @@ class ReflectionProbe : public Light
         ReflectionProbe ( ReflectionProbe && ) = delete;
         ReflectionProbe& operator = ( ReflectionProbe && ) = delete;
 
-        void FreeTransferResources ( VkDevice device ) noexcept;
+        void FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept;
         [[nodiscard]] TextureCubeRef& GetPrefilter () noexcept;
 
     protected:

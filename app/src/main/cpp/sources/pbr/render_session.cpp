@@ -123,9 +123,9 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
     return true;
 }
 
-void RenderSession::FreeTransferResources ( VkDevice device ) noexcept
+void RenderSession::FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept
 {
-    _defaultTextureManager.FreeTransferResources ( device, _commandInfo[ 0U ]._pool );
+    _defaultTextureManager.FreeTransferResources ( renderer, _commandInfo[ 0U ]._pool );
 }
 
 bool RenderSession::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
@@ -151,15 +151,17 @@ bool RenderSession::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
     return _defaultTextureManager.Init ( renderer, commandInfo._pool ) && _samplerManager.Init ( device );
 }
 
-void RenderSession::OnDestroyDevice ( VkDevice device ) noexcept
+void RenderSession::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
 {
     std::memset ( _lightHandlers, 0, sizeof ( _lightHandlers ) );
     std::memset ( _meshHandlers, 0, sizeof ( _meshHandlers ) );
 
+    VkDevice device = renderer.GetDevice ();
+
     _texturePresentDescriptorSetLayout.Destroy ( device );
     _samplerManager.Destroy ( device );
-    _defaultTextureManager.Destroy ( device );
-    DestroyGBufferResources ( device );
+    _defaultTextureManager.Destroy ( renderer );
+    DestroyGBufferResources ( renderer );
 
     if ( _renderPass != VK_NULL_HANDLE )
     {
@@ -195,7 +197,7 @@ bool RenderSession::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
 
     if ( ( currentResolution.width != resolution.width ) | ( currentResolution.height != resolution.height ) )
     {
-        DestroyGBufferResources ( renderer.GetDevice () );
+        DestroyGBufferResources ( renderer );
 
         if ( !CreateGBufferResources ( renderer, resolution ) )
         {
@@ -230,7 +232,7 @@ bool RenderSession::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
     if ( _presentPass.Init ( renderer ) )
         return true;
 
-    DestroyGBufferResources ( device );
+    DestroyGBufferResources ( renderer );
     OnSwapchainDestroyed ( device );
 
     return false;
@@ -610,7 +612,7 @@ bool RenderSession::CreateGBufferResources ( android_vulkan::Renderer &renderer,
     if ( !result )
         return false;
 
-    _lightPass.OnFreeTransferResources ( device );
+    _lightPass.OnFreeTransferResources ( renderer );
     return true;
 }
 
@@ -713,8 +715,10 @@ bool RenderSession::CreateGBufferSlotMapper ( android_vulkan::Renderer &renderer
     return true;
 }
 
-void RenderSession::DestroyGBufferResources ( VkDevice device ) noexcept
+void RenderSession::DestroyGBufferResources ( android_vulkan::Renderer &renderer ) noexcept
 {
+    VkDevice device = renderer.GetDevice ();
+
     if ( _framebuffer != VK_NULL_HANDLE )
     {
         vkDestroyFramebuffer ( device, _framebuffer, nullptr );
@@ -722,7 +726,7 @@ void RenderSession::DestroyGBufferResources ( VkDevice device ) noexcept
         AV_UNREGISTER_FRAMEBUFFER ( "pbr::RenderSession::_framebuffer" )
     }
 
-    _lightPass.Destroy ( device );
+    _lightPass.Destroy ( renderer );
 
     if ( _gBufferDescriptorPool != VK_NULL_HANDLE )
     {
@@ -731,8 +735,8 @@ void RenderSession::DestroyGBufferResources ( VkDevice device ) noexcept
         AV_UNREGISTER_DESCRIPTOR_POOL ( "pbr::RenderSession::_gBufferDescriptorPool" )
     }
 
-    _geometryPass.Destroy ( device );
-    _gBuffer.Destroy ( device );
+    _geometryPass.Destroy ( renderer );
+    _gBuffer.Destroy ( renderer );
 }
 
 void RenderSession::SubmitOpaqueCall ( MeshRef &mesh,

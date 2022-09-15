@@ -1,5 +1,6 @@
 #include <pbr/scene.h>
 #include <pbr/coordinate_system.h>
+#include <pbr/material_manager.h>
 #include <pbr/renderable_component.h>
 #include <pbr/scene_desc.h>
 #include <pbr/script_engine.h>
@@ -339,15 +340,16 @@ void Scene::AppendActor ( ActorRef &actor ) noexcept
     lua_pcall ( _vm, 2, 0, ScriptEngine::GetErrorHandlerIndex () );
 }
 
-void Scene::FreeTransferResources ( VkDevice device ) noexcept
+void Scene::FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept
 {
     for ( auto& component : _freeTransferResourceList )
     {
         // NOLINTNEXTLINE - downcast.
         auto& renderableComponent = static_cast<RenderableComponent&> ( component.get () );
-        renderableComponent.FreeTransferResources ( device );
+        renderableComponent.FreeTransferResources ( renderer );
     }
 
+    MaterialManager::GetInstance ().FreeTransferResources ( renderer );
     _renderableList.splice ( _renderableList.cend (), _freeTransferResourceList );
 }
 
@@ -433,7 +435,7 @@ bool Scene::LoadScene ( android_vulkan::Renderer &renderer, char const* scene, V
     if ( !result )
         return false;
 
-    FreeTransferResources ( device );
+    FreeTransferResources ( renderer );
     return true;
 }
 

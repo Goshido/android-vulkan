@@ -32,10 +32,10 @@ class DefaultTextureManager final
 
         ~DefaultTextureManager () = default;
 
-        void FreeTransferResources ( VkDevice device, VkCommandPool commandPool ) noexcept;
+        void FreeTransferResources ( android_vulkan::Renderer &renderer, VkCommandPool commandPool ) noexcept;
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, VkCommandPool commandPool ) noexcept;
-        void Destroy ( VkDevice device ) noexcept;
+        void Destroy ( android_vulkan::Renderer &renderer) noexcept;
 
         [[nodiscard]] Texture2DRef const& GetAlbedo () const noexcept;
         [[nodiscard]] Texture2DRef const& GetEmission () const noexcept;

@@ -64,7 +64,7 @@ class PointLightPass final
             VkRenderPass lightupRenderPass
         ) noexcept;
 
-        void Destroy ( VkDevice device ) noexcept;
+        void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
 
         [[nodiscard]] size_t GetPointLightCount () const noexcept;
         [[nodiscard]] PointLightInfo GetPointLightInfo ( size_t lightIndex ) const noexcept;

@@ -69,47 +69,29 @@ bool World1x1::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 
     AV_REGISTER_COMMAND_POOL ( "pbr::mario::World1x1::_commandPool" )
 
-    if ( !_renderSession.OnInitDevice ( renderer ) )
-    {
-        OnDestroyDevice ( device );
+    if ( !_renderSession.OnInitDevice ( renderer ) || !_scene.OnInitDevice ( _physics ) )
         return false;
-    }
-
-    if ( !_scene.OnInitDevice ( _physics ) )
-    {
-        OnDestroyDevice ( device );
-        return false;
-    }
 
     if ( !_scene.LoadScene ( renderer, SCENE, _commandPool ) )
-    {
-        OnDestroyDevice ( device );
         return false;
-    }
 
     _isReady = true;
+    _renderSession.FreeTransferResources ( renderer );
 
-    _renderSession.FreeTransferResources ( device );
-
-    if ( !CreatePhysics () )
-    {
-        OnDestroyDevice ( device );
-        return false;
-    }
-
-    return true;
+    return CreatePhysics ();
 }
 
-void World1x1::OnDestroyDevice ( VkDevice device ) noexcept
+void World1x1::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
 {
     _scene.OnDestroyDevice ();
-    _renderSession.OnDestroyDevice ( device );
-    DestroyCommandPool ( device );
+    _renderSession.OnDestroyDevice ( renderer );
+
+    DestroyCommandPool ( renderer.GetDevice () );
     _physics.Reset ();
 
-    MeshManager::Destroy ( device );
-    MaterialManager::Destroy ( device );
-    CubeMapManager::Destroy ( device );
+    MeshManager::Destroy ( renderer );
+    MaterialManager::Destroy ( renderer );
+    CubeMapManager::Destroy ( renderer );
 
     _isReady = false;
 }
@@ -138,11 +120,11 @@ bool World1x1::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcep
     return true;
 }
 
-void World1x1::OnSwapchainDestroyed ( VkDevice device ) noexcept
+void World1x1::OnSwapchainDestroyed ( android_vulkan::Renderer &renderer ) noexcept
 {
     _scene.OnReleaseInput ();
     _physics.Pause ();
-    _renderSession.OnSwapchainDestroyed ( device );
+    _renderSession.OnSwapchainDestroyed ( renderer.GetDevice () );
 }
 
 bool World1x1::CreatePhysics () noexcept

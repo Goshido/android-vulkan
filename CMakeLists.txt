@@ -27,6 +27,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/half_types.cpp
     app/src/main/cpp/sources/ktx_media_container.cpp
     app/src/main/cpp/sources/logger.cpp
+    app/src/main/cpp/sources/memory_allocator.cpp
     app/src/main/cpp/sources/mesh_geometry.cpp
     app/src/main/cpp/sources/physics.cpp
     app/src/main/cpp/sources/ray_caster.cpp

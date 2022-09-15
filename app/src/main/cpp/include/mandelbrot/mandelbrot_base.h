@@ -29,6 +29,8 @@ class MandelbrotBase : public android_vulkan::Game
         char const*                     _fragmentShaderSpirV;
 
     public:
+        MandelbrotBase () = delete;
+
         MandelbrotBase ( MandelbrotBase const & ) = delete;
         MandelbrotBase& operator = ( MandelbrotBase const & ) = delete;
 
@@ -42,10 +44,10 @@ class MandelbrotBase : public android_vulkan::Game
         [[nodiscard]] bool OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) noexcept override;
 
         [[nodiscard]] bool OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept override;
-        void OnDestroyDevice ( VkDevice device ) noexcept override;
+        void OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept override;
 
         [[nodiscard]] bool OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept override;
-        void OnSwapchainDestroyed ( VkDevice device ) noexcept override;
+        void OnSwapchainDestroyed ( android_vulkan::Renderer &renderer ) noexcept override;
 
         [[nodiscard]] virtual bool CreatePipelineLayout ( android_vulkan::Renderer &renderer ) noexcept = 0;
         virtual void DestroyPipelineLayout ( VkDevice device ) noexcept = 0;

@@ -197,8 +197,8 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
         },
         {
             .sampler = VK_NULL_HANDLE,
-            .imageView = gBuffer.GetReadOnlyDepthImageView (),
-            .imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL
+            .imageView = gBuffer.GetDepthStencil ().GetImageView (),
+            .imageLayout = VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_OPTIMAL
         },
         {
             .sampler = _brdfLUTSampler.GetSampler (),
@@ -353,12 +353,13 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
     return true;
 }
 
-void LightupCommonDescriptorSet::Destroy ( VkDevice device ) noexcept
+void LightupCommonDescriptorSet::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 {
+    VkDevice device = renderer.GetDevice ();
     _prefilterSampler.Destroy ( device );
     _brdfLUTSampler.Destroy ( device );
-    _brdfLUT.FreeResources ( device );
-    _uniforms.Destroy ( device );
+    _brdfLUT.FreeResources ( renderer );
+    _uniforms.Destroy ( renderer );
 
     if ( _pipelineLayout != VK_NULL_HANDLE )
     {
@@ -377,9 +378,9 @@ void LightupCommonDescriptorSet::Destroy ( VkDevice device ) noexcept
     AV_UNREGISTER_DESCRIPTOR_POOL ( "pbr::LightupCommonDescriptorSet::_descriptorPool" )
 }
 
-void LightupCommonDescriptorSet::OnFreeTransferResources ( VkDevice device ) noexcept
+void LightupCommonDescriptorSet::OnFreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept
 {
-    _brdfLUT.FreeTransferResources ( device );
+    _brdfLUT.FreeTransferResources ( renderer );
 }
 
 void LightupCommonDescriptorSet::Update ( VkDevice device,

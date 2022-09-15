@@ -2,9 +2,9 @@
 
 namespace pbr {
 
-void ReflectionProbe::FreeTransferResources ( VkDevice device ) noexcept
+void ReflectionProbe::FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept
 {
-    _prefilter->FreeTransferResources ( device );
+    _prefilter->FreeTransferResources ( renderer );
 }
 
 TextureCubeRef& ReflectionProbe::GetPrefilter () noexcept

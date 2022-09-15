@@ -23,7 +23,7 @@ class LightupCommonDescriptorSet final
         VkPipelineLayout                    _pipelineLayout = VK_NULL_HANDLE;
         Sampler                             _prefilterSampler {};
         std::vector<VkDescriptorSet>        _sets {};
-        UniformBufferPool                   _uniforms { eUniformPoolSize::Tiny_4M };
+        UniformBufferPool                   _uniforms { eUniformPoolSize::Nanoscopic_64KB };
         VkWriteDescriptorSet                _writeInfo {};
 
     public:
@@ -44,8 +44,8 @@ class LightupCommonDescriptorSet final
             GBuffer &gBuffer
         ) noexcept;
 
-        void Destroy ( VkDevice device ) noexcept;
-        void OnFreeTransferResources ( VkDevice device ) noexcept;
+        void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
+        void OnFreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept;
 
         void Update ( VkDevice device,
             VkCommandBuffer commandBuffer,

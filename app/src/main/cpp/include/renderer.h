@@ -2,7 +2,11 @@
 #define ANDROID_VULKAN_RENDERER_H
 
 
-#include <GXCommon/GXWarning.h>
+#include <GXCommon/GXMath.h>
+#include "logger.h"
+#include "memory_allocator.h"
+#include "vulkan_api.h"
+#include "vulkan_loader.h"
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -12,11 +16,6 @@ GX_DISABLE_COMMON_WARNINGS
 #include <android/native_window.h>
 
 GX_RESTORE_WARNING_STATE
-
-#include <GXCommon/GXMath.h>
-#include "logger.h"
-#include "vulkan_api.h"
-#include "vulkan_loader.h"
 
 
 namespace android_vulkan {
@@ -47,6 +46,7 @@ class Renderer final
         using LogType = void ( * ) ( char const* format, ... );
 
     private:
+        VkFormat                                                            _depthImageFormat;
         VkFormat                                                            _depthStencilImageFormat;
         VkDevice                                                            _device;
         VkInstance                                                          _instance;
@@ -55,6 +55,7 @@ class Renderer final
         bool                                                                _isDeviceExtensionSupported;
 
         size_t                                                              _maxUniformBufferRange;
+        MemoryAllocator                                                     _memoryAllocator;
 
         VkPhysicalDevice                                                    _physicalDevice;
 
@@ -124,6 +125,7 @@ class Renderer final
 
         [[nodiscard]] bool FinishAllJobs () noexcept;
 
+        [[nodiscard]] VkFormat GetDefaultDepthFormat () const noexcept;
         [[nodiscard]] VkFormat GetDefaultDepthStencilFormat () const noexcept;
         [[nodiscard]] VkDevice GetDevice () const noexcept;
         [[nodiscard]] size_t GetMaxUniformBufferRange () const noexcept;
@@ -154,19 +156,26 @@ class Renderer final
         [[nodiscard]] bool OnCreateDevice () noexcept;
         void OnDestroyDevice () noexcept;
 
-        // Note method will invoke AV_REGISTER_DEVICE_MEMORY internally if success.
         [[nodiscard]] bool TryAllocateMemory ( VkDeviceMemory &memory,
-            size_t size,
-            VkMemoryPropertyFlags memoryProperties,
-            char const* errorMessage
-        ) const noexcept;
-
-        // Note method will invoke AV_REGISTER_DEVICE_MEMORY internally if success.
-        [[nodiscard]] bool TryAllocateMemory ( VkDeviceMemory &memory,
+            VkDeviceSize &offset,
             VkMemoryRequirements const &requirements,
             VkMemoryPropertyFlags memoryProperties,
             char const* errorMessage
-        ) const noexcept;
+        ) noexcept;
+
+        void FreeMemory ( VkDeviceMemory memory, VkDeviceSize offset ) noexcept;
+
+        [[nodiscard]] bool MapMemory ( void*& ptr,
+            VkDeviceMemory memory,
+            VkDeviceSize offset,
+            char const* from,
+            char const* message
+        ) noexcept;
+
+        void UnmapMemory ( VkDeviceMemory memory ) noexcept;
+
+        // See docs/vulkan-memory-view.md
+        [[maybe_unused]] void MakeVulkanMemorySnapshot () noexcept;
 
         // Method returns true is "result" equals VK_SUCCESS. Otherwise method returns false.
         [[nodiscard]] static bool CheckVkResult ( VkResult result, char const* from, char const* message ) noexcept;
@@ -220,19 +229,11 @@ class Renderer final
             uint32_t &targetQueueFamilyIndex
         ) const noexcept;
 
-        [[nodiscard]] bool SelectTargetMemoryTypeIndex ( uint32_t &targetMemoryTypeIndex,
-            VkMemoryPropertyFlags memoryProperties
-        ) const noexcept;
-
-        [[nodiscard]] bool SelectTargetMemoryTypeIndex ( uint32_t &targetMemoryTypeIndex,
-            VkMemoryRequirements const &memoryRequirements,
-            VkMemoryPropertyFlags memoryProperties
-        ) const noexcept;
-
         [[nodiscard]] bool SelectTargetPresentMode ( VkPresentModeKHR &targetPresentMode, bool vSync ) const noexcept;
 
         [[nodiscard]] bool SelectTargetSurfaceFormat ( VkFormat &targetColorFormat,
             VkColorSpaceKHR &targetColorSpace,
+            VkFormat &targetDepthFormat,
             VkFormat &targetDepthStencilFormat
         ) const noexcept;
 

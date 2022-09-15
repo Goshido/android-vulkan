@@ -60,7 +60,7 @@ bool Texture2D::CreateRenderTarget ( VkExtent2D const &resolution,
     Renderer &renderer
 ) noexcept
 {
-    FreeResources ( renderer.GetDevice () );
+    FreeResources ( renderer );
     VkImageCreateInfo imageInfo;
 
     if ( !CreateCommonResources ( imageInfo, resolution, format, usage, 1U, renderer ) )
@@ -70,21 +70,21 @@ bool Texture2D::CreateRenderTarget ( VkExtent2D const &resolution,
     return true;
 }
 
-void Texture2D::FreeResources ( VkDevice device ) noexcept
+void Texture2D::FreeResources ( Renderer &renderer ) noexcept
 {
-    FreeTransferResources ( device );
-    FreeResourceInternal ( device );
+    FreeTransferResources ( renderer );
+    FreeResourceInternal ( renderer );
 
     _format = VK_FORMAT_UNDEFINED;
-    memset ( &_resolution, 0, sizeof ( _resolution ) );
+    std::memset ( &_resolution, 0, sizeof ( _resolution ) );
     _fileName.clear ();
 }
 
-void Texture2D::FreeTransferResources ( VkDevice device ) noexcept
+void Texture2D::FreeTransferResources ( Renderer &renderer ) noexcept
 {
     if ( _transfer != VK_NULL_HANDLE )
     {
-        vkDestroyBuffer ( device, _transfer, nullptr );
+        vkDestroyBuffer ( renderer.GetDevice (), _transfer, nullptr );
         _transfer = VK_NULL_HANDLE;
         AV_UNREGISTER_BUFFER ( "Texture2D::_transfer" )
     }
@@ -92,8 +92,9 @@ void Texture2D::FreeTransferResources ( VkDevice device ) noexcept
     if ( _transferDeviceMemory == VK_NULL_HANDLE )
         return;
 
-    vkFreeMemory ( device, _transferDeviceMemory, nullptr );
+    renderer.FreeMemory ( _transferDeviceMemory, _transferMemoryOffset );
     _transferDeviceMemory = VK_NULL_HANDLE;
+    _transferMemoryOffset = 0U;
     AV_UNREGISTER_DEVICE_MEMORY ( "Texture2D::_transferDeviceMemory" )
 }
 
@@ -141,7 +142,7 @@ VkExtent2D const& Texture2D::GetResolution () const noexcept
         return false;
     }
 
-    FreeResourceInternal ( renderer.GetDevice () );
+    FreeResourceInternal ( renderer );
     std::vector<uint8_t> pixelData;
 
     int width = 0;
@@ -193,16 +194,13 @@ bool Texture2D::UploadData ( Renderer &renderer,
     VkCommandBuffer commandBuffer
 ) noexcept
 {
-    if ( fileName == "textures/1x1-alpha.png" )
-        GXMat3 const stop {};
-
     if ( fileName.empty () )
     {
         LogError ( "Texture2D::UploadData - Can't upload data. Filename is empty." );
         return false;
     }
 
-    FreeResourceInternal ( renderer.GetDevice () );
+    FreeResourceInternal ( renderer );
 
     if ( IsCompressed ( fileName ) )
     {
@@ -286,7 +284,7 @@ bool Texture2D::UploadData ( Renderer &renderer,
     VkCommandBuffer commandBuffer
 ) noexcept
 {
-    FreeResources ( renderer.GetDevice () );
+    FreeResources ( renderer );
     VkImageCreateInfo imageInfo;
 
     bool const result = CreateCommonResources ( imageInfo,
@@ -356,6 +354,7 @@ bool Texture2D::CreateCommonResources ( VkImageCreateInfo &imageInfo,
     constexpr auto trans = static_cast<uint32_t> ( VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT );
 
     result = renderer.TryAllocateMemory ( _imageDeviceMemory,
+        _imageMemoryOffset,
         memoryRequirements,
         cases[ static_cast<size_t> ( ( usage & trans ) == trans ) ],
         "Can't allocate image memory (Texture2D::CreateCommonResources)"
@@ -363,20 +362,20 @@ bool Texture2D::CreateCommonResources ( VkImageCreateInfo &imageInfo,
 
     if ( !result )
     {
-        FreeResources ( device );
+        FreeResources ( renderer );
         return false;
     }
 
     AV_REGISTER_DEVICE_MEMORY ( "Texture2D::_imageDeviceMemory" )
 
-    result = Renderer::CheckVkResult ( vkBindImageMemory ( device, _image, _imageDeviceMemory, 0U ),
+    result = Renderer::CheckVkResult ( vkBindImageMemory ( device, _image, _imageDeviceMemory, _imageMemoryOffset ),
         "Texture2D::CreateCommonResources",
         "Can't bind image memory"
     );
 
     if ( !result )
     {
-        FreeResources ( device );
+        FreeResources ( renderer );
         return false;
     }
 
@@ -414,7 +413,7 @@ bool Texture2D::CreateCommonResources ( VkImageCreateInfo &imageInfo,
 
     if ( !result )
     {
-        FreeResources ( device );
+        FreeResources ( renderer );
         return false;
     }
 
@@ -445,7 +444,7 @@ bool Texture2D::CreateTransferResources ( uint8_t* &mappedBuffer, VkDeviceSize s
 
     if ( !result )
     {
-        FreeResources ( device );
+        FreeResources ( renderer );
         return false;
     }
 
@@ -455,6 +454,7 @@ bool Texture2D::CreateTransferResources ( uint8_t* &mappedBuffer, VkDeviceSize s
     vkGetBufferMemoryRequirements ( device, _transfer, &memoryRequirements );
 
     result = renderer.TryAllocateMemory ( _transferDeviceMemory,
+        _transferMemoryOffset,
         memoryRequirements,
         AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_COHERENT_BIT ) | AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT ),
         "Can't allocate transfer device memory (Texture2D::CreateTransferResources)"
@@ -462,35 +462,36 @@ bool Texture2D::CreateTransferResources ( uint8_t* &mappedBuffer, VkDeviceSize s
 
     if ( !result )
     {
-        FreeResources ( device );
+        FreeResources ( renderer );
         return false;
     }
 
     AV_REGISTER_DEVICE_MEMORY ( "Texture2D::_transferDeviceMemory" )
 
     result = Renderer::CheckVkResult (
-        vkBindBufferMemory ( device, _transfer, _transferDeviceMemory, 0U ),
+        vkBindBufferMemory ( device, _transfer, _transferDeviceMemory, _transferMemoryOffset ),
         "Texture2D::CreateTransferResources",
         "Can't bind transfer memory"
     );
 
     if ( !result )
     {
-        FreeResources ( device );
+        FreeResources ( renderer );
         return false;
     }
 
     void* destination = nullptr;
 
-    result = Renderer::CheckVkResult (
-        vkMapMemory ( device, _transferDeviceMemory, 0U, bufferInfo.size, 0U, &destination ),
+    result = renderer.MapMemory ( destination,
+        _transferDeviceMemory,
+        _transferMemoryOffset,
         "Texture2D::CreateTransferResources",
         "Can't map transfer memory"
     );
 
     if ( !result )
     {
-        FreeResources ( device );
+        FreeResources ( renderer );
         return false;
     }
 
@@ -498,9 +499,10 @@ bool Texture2D::CreateTransferResources ( uint8_t* &mappedBuffer, VkDeviceSize s
     return true;
 }
 
-void Texture2D::FreeResourceInternal ( VkDevice device ) noexcept
+void Texture2D::FreeResourceInternal ( Renderer &renderer ) noexcept
 {
     _mipLevels = 0U;
+    VkDevice device = renderer.GetDevice ();
 
     if ( _image != VK_NULL_HANDLE )
     {
@@ -519,8 +521,9 @@ void Texture2D::FreeResourceInternal ( VkDevice device ) noexcept
     if ( _imageDeviceMemory == VK_NULL_HANDLE )
         return;
 
-    vkFreeMemory ( device, _imageDeviceMemory, nullptr );
+    renderer.FreeMemory ( _imageDeviceMemory, _imageMemoryOffset );
     _imageDeviceMemory = VK_NULL_HANDLE;
+    _imageMemoryOffset = 0U;
     AV_UNREGISTER_DEVICE_MEMORY ( "Texture2D::_imageDeviceMemory" )
 }
 
@@ -563,10 +566,9 @@ bool Texture2D::UploadCompressed ( Renderer &renderer,
         offset += static_cast<size_t> ( mip._size );
     }
 
-    VkDevice device = renderer.GetDevice ();
-    vkUnmapMemory ( device, _transferDeviceMemory );
+    renderer.UnmapMemory ( _transferDeviceMemory );
 
-    constexpr VkCommandBufferBeginInfo const beginInfo
+    constexpr VkCommandBufferBeginInfo beginInfo
     {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
         .pNext = nullptr,
@@ -581,7 +583,7 @@ bool Texture2D::UploadCompressed ( Renderer &renderer,
 
     if ( !result )
     {
-        FreeResources ( device );
+        FreeResources ( renderer );
         return false;
     }
 
@@ -677,7 +679,7 @@ bool Texture2D::UploadCompressed ( Renderer &renderer,
 
     if ( !result )
     {
-        FreeResources ( device );
+        FreeResources ( renderer );
         return false;
     }
 
@@ -701,7 +703,7 @@ bool Texture2D::UploadCompressed ( Renderer &renderer,
 
     if ( !result )
     {
-        FreeResources ( device );
+        FreeResources ( renderer );
         return false;
     }
 
@@ -723,8 +725,7 @@ bool Texture2D::UploadDataInternal ( Renderer &renderer,
         return false;
 
     std::memcpy ( mappedBuffer, data, size );
-    VkDevice device = renderer.GetDevice ();
-    vkUnmapMemory ( device, _transferDeviceMemory );
+    renderer.UnmapMemory ( _transferDeviceMemory );
 
     constexpr VkCommandBufferBeginInfo beginInfo
     {
@@ -741,7 +742,7 @@ bool Texture2D::UploadDataInternal ( Renderer &renderer,
 
     if ( !result )
     {
-        FreeResources ( device );
+        FreeResources ( renderer );
         return false;
     }
 
@@ -836,7 +837,7 @@ bool Texture2D::UploadDataInternal ( Renderer &renderer,
 
         if ( !result )
         {
-            FreeResources ( device );
+            FreeResources ( renderer );
             return false;
         }
 
@@ -861,7 +862,7 @@ bool Texture2D::UploadDataInternal ( Renderer &renderer,
 
         if ( !result )
         {
-            FreeResources ( device );
+            FreeResources ( renderer );
             return false;
         }
 
@@ -1006,7 +1007,7 @@ bool Texture2D::UploadDataInternal ( Renderer &renderer,
 
     if ( !result )
     {
-        FreeResources ( device );
+        FreeResources ( renderer );
         return false;
     }
 
@@ -1031,7 +1032,7 @@ bool Texture2D::UploadDataInternal ( Renderer &renderer,
 
     if ( !result )
     {
-        FreeResources ( device );
+        FreeResources ( renderer );
         return false;
     }
 

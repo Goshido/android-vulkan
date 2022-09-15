@@ -284,18 +284,13 @@ bool GameLUT::LoadGPUContent ( android_vulkan::Renderer &renderer ) noexcept
         .commandBufferCount = static_cast<uint32_t> ( commandBufferCount )
     };
 
-    VkDevice device = renderer.GetDevice ();
-
     bool result = android_vulkan::Renderer::CheckVkResult (
         vkAllocateCommandBuffers ( renderer.GetDevice (), &allocateInfo, commandBuffers ),
         "GameLUT::LoadGPUContent",
         "Can't allocate command buffers"
     );
 
-    if ( !result )
-        return false;
-
-    if ( !CreateCommonTextures ( renderer, commandBuffers ) )
+    if ( !result || !CreateCommonTextures ( renderer, commandBuffers ) )
         return false;
 
     if ( !CreateSpecularLUTTexture ( renderer, commandBuffers[ 6U ] ) )
@@ -314,14 +309,14 @@ bool GameLUT::LoadGPUContent ( android_vulkan::Renderer &renderer ) noexcept
 
     for ( auto& item : _drawcalls )
     {
-        item._mesh.FreeTransferResources ( device );
-        item._diffuse.FreeTransferResources ( device );
-        item._normal.FreeTransferResources ( device );
+        item._mesh.FreeTransferResources ( renderer );
+        item._diffuse.FreeTransferResources ( renderer );
+        item._normal.FreeTransferResources ( renderer );
     }
 
-    _specularLUTTexture.FreeTransferResources ( device );
+    _specularLUTTexture.FreeTransferResources ( renderer );
 
-    vkFreeCommandBuffers ( device, _commandPool, allocateInfo.commandBufferCount, commandBuffers );
+    vkFreeCommandBuffers ( renderer.GetDevice (), _commandPool, allocateInfo.commandBufferCount, commandBuffers );
     return true;
 }
 
@@ -379,10 +374,10 @@ void GameLUT::DestroySamplers ( VkDevice device ) noexcept
     AV_UNREGISTER_SAMPLER ( "GameLUT::_specularLUTSampler" )
 }
 
-void GameLUT::DestroyTextures ( VkDevice device ) noexcept
+void GameLUT::DestroyTextures ( android_vulkan::Renderer &renderer ) noexcept
 {
-    DestroySpecularLUTTexture ( device );
-    Game::DestroyTextures ( device );
+    DestroySpecularLUTTexture ( renderer );
+    Game::DestroyTextures ( renderer );
 }
 
 bool GameLUT::CreateSpecularLUTTexture ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept
@@ -431,9 +426,9 @@ bool GameLUT::CreateSpecularLUTTexture ( android_vulkan::Renderer &renderer, VkC
     );
 }
 
-void GameLUT::DestroySpecularLUTTexture ( VkDevice device ) noexcept
+void GameLUT::DestroySpecularLUTTexture ( android_vulkan::Renderer &renderer ) noexcept
 {
-    _specularLUTTexture.FreeResources ( device );
+    _specularLUTTexture.FreeResources ( renderer );
 }
 
 } // namespace rotating_mesh

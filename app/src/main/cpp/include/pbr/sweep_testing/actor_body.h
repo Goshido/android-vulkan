@@ -34,7 +34,7 @@ class ActorBody final
         void EnableOverlay () noexcept;
         void DisableOverlay () noexcept;
 
-        void FreeTransferResources ( VkDevice device ) noexcept;
+        void FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept;
         void Destroy () noexcept;
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,

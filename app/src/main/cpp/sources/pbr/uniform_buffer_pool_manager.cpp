@@ -205,11 +205,12 @@ bool UniformBufferPoolManager::Init ( android_vulkan::Renderer &renderer,
     return true;
 }
 
-void UniformBufferPoolManager::Destroy ( VkDevice device, [[maybe_unused]] char const* name ) noexcept
+void UniformBufferPoolManager::Destroy ( android_vulkan::Renderer &renderer,
+    [[maybe_unused]] char const* name ) noexcept
 {
     if ( _descriptorPool != VK_NULL_HANDLE )
     {
-        vkDestroyDescriptorPool ( device, _descriptorPool, nullptr );
+        vkDestroyDescriptorPool ( renderer.GetDevice (), _descriptorPool, nullptr );
         _descriptorPool = VK_NULL_HANDLE;
         AV_UNREGISTER_DESCRIPTOR_POOL ( name )
     }
@@ -224,7 +225,7 @@ void UniformBufferPoolManager::Destroy ( VkDevice device, [[maybe_unused]] char 
     clean ( _bufferInfo );
     clean ( _writeSets );
 
-    _uniformPool.Destroy ( device );
+    _uniformPool.Destroy ( renderer );
 }
 
 } // namespace pbr

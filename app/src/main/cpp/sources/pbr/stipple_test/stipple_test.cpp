@@ -59,29 +59,20 @@ bool StippleTest::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 
     AV_REGISTER_COMMAND_POOL ( "StippleTest::_commandPool" )
 
-    if ( !_renderSession.OnInitDevice ( renderer ) )
-    {
-        OnDestroyDevice ( device );
+    if ( !_renderSession.OnInitDevice ( renderer ) || !CreateScene ( renderer ) )
         return false;
-    }
 
-    if ( !CreateScene ( renderer ) )
-    {
-        OnDestroyDevice ( device );
-        return false;
-    }
-
-    _renderSession.FreeTransferResources ( device );
+    _renderSession.FreeTransferResources ( renderer );
     return true;
 }
 
-void StippleTest::OnDestroyDevice ( VkDevice device ) noexcept
+void StippleTest::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
 {
-    _renderSession.OnDestroyDevice ( device );
+    _renderSession.OnDestroyDevice ( renderer );
 
     if ( _commandPool != VK_NULL_HANDLE )
     {
-        vkDestroyCommandPool ( device, _commandPool, nullptr );
+        vkDestroyCommandPool ( renderer.GetDevice (), _commandPool, nullptr );
         _commandPool = VK_NULL_HANDLE;
         AV_UNREGISTER_COMMAND_POOL ( "StippleTest::_commandPool" )
     }
@@ -89,8 +80,8 @@ void StippleTest::OnDestroyDevice ( VkDevice device ) noexcept
     _floor = nullptr;
     _stipple = nullptr;
 
-    MeshManager::Destroy ( device );
-    MaterialManager::Destroy ( device );
+    MeshManager::Destroy ( renderer );
+    MaterialManager::Destroy ( renderer );
 }
 
 bool StippleTest::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept
@@ -115,9 +106,9 @@ bool StippleTest::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noex
     return _renderSession.OnSwapchainCreated ( renderer, resolution );
 }
 
-void StippleTest::OnSwapchainDestroyed ( VkDevice device ) noexcept
+void StippleTest::OnSwapchainDestroyed ( android_vulkan::Renderer &renderer ) noexcept
 {
-    _renderSession.OnSwapchainDestroyed ( device );
+    _renderSession.OnSwapchainDestroyed ( renderer.GetDevice () );
     _camera.ReleaseInput ();
 }
 
@@ -257,8 +248,9 @@ bool StippleTest::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
     if ( !result )
         return false;
 
-    _floor->FreeTransferResources ( device );
-    _stipple->FreeTransferResources ( device );
+    _floor->FreeTransferResources ( renderer );
+    _stipple->FreeTransferResources ( renderer );
+    MaterialManager::GetInstance ().FreeTransferResources ( renderer );
 
     constexpr GXVec3 lightBounds ( 100.0F, 100.0F, 100.0F );
 

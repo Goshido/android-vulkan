@@ -14,20 +14,13 @@ MandelbrotAnalyticColor::MandelbrotAnalyticColor () noexcept:
 
 bool MandelbrotAnalyticColor::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept
 {
-    if ( !MandelbrotBase::OnSwapchainCreated ( renderer ) )
-        return false;
-
-    if ( CreateCommandBuffer ( renderer ) )
-        return true;
-
-    OnSwapchainDestroyed ( renderer.GetDevice () );
-    return false;
+    return MandelbrotBase::OnSwapchainCreated ( renderer ) && CreateCommandBuffer ( renderer );
 }
 
-void MandelbrotAnalyticColor::OnSwapchainDestroyed ( VkDevice device ) noexcept
+void MandelbrotAnalyticColor::OnSwapchainDestroyed ( android_vulkan::Renderer &renderer ) noexcept
 {
-    DestroyCommandBuffer ( device );
-    MandelbrotBase::OnSwapchainDestroyed ( device );
+    DestroyCommandBuffer ( renderer.GetDevice () );
+    MandelbrotBase::OnSwapchainDestroyed ( renderer );
 }
 
 bool MandelbrotAnalyticColor::CreatePipelineLayout ( android_vulkan::Renderer &renderer ) noexcept

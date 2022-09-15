@@ -85,33 +85,24 @@ bool PBRGame::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 
     AV_REGISTER_COMMAND_POOL ( "pbr::PBRGame::_commandPool" )
 
-    if ( !_renderSession.OnInitDevice ( renderer ) )
-    {
-       OnDestroyDevice ( device );
+    if ( !_renderSession.OnInitDevice ( renderer ) || !UploadGPUContent ( renderer ) )
        return false;
-    }
 
-    if ( !UploadGPUContent ( renderer ) )
-    {
-        OnDestroyDevice ( device );
-        return false;
-    }
-
-    _renderSession.FreeTransferResources ( device );
+    _renderSession.FreeTransferResources ( renderer );
     return true;
 }
 
-void PBRGame::OnDestroyDevice ( VkDevice device ) noexcept
+void PBRGame::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
 {
     _allComponents.clear ();
     _renderableComponents.clear ();
 
-    _renderSession.OnDestroyDevice ( device );
-    DestroyCommandPool ( device );
+    _renderSession.OnDestroyDevice ( renderer );
+    DestroyCommandPool ( renderer.GetDevice () );
 
-    MeshManager::Destroy ( device );
-    MaterialManager::Destroy ( device );
-    CubeMapManager::Destroy ( device );
+    MeshManager::Destroy ( renderer );
+    MaterialManager::Destroy ( renderer );
+    CubeMapManager::Destroy ( renderer );
 }
 
 bool PBRGame::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept
@@ -135,10 +126,10 @@ bool PBRGame::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept
     return true;
 }
 
-void PBRGame::OnSwapchainDestroyed ( VkDevice device ) noexcept
+void PBRGame::OnSwapchainDestroyed ( android_vulkan::Renderer &renderer ) noexcept
 {
     _camera.ReleaseInput ();
-    _renderSession.OnSwapchainDestroyed ( device );
+    _renderSession.OnSwapchainDestroyed ( renderer.GetDevice () );
 }
 
 void PBRGame::DestroyCommandPool ( VkDevice device ) noexcept
@@ -151,7 +142,7 @@ void PBRGame::DestroyCommandPool ( VkDevice device ) noexcept
     AV_UNREGISTER_COMMAND_POOL ( "pbr::PBRGame::_commandPool" )
 }
 
-bool PBRGame::UploadGPUContent ( android_vulkan::Renderer& renderer ) noexcept
+bool PBRGame::UploadGPUContent ( android_vulkan::Renderer &renderer ) noexcept
 {
     android_vulkan::File file ( SCENES[ ACTIVE_SCENE ] );
 
@@ -250,9 +241,10 @@ bool PBRGame::UploadGPUContent ( android_vulkan::Renderer& renderer ) noexcept
     {
         // NOLINTNEXTLINE - downcast.
         auto& renderableComponent = static_cast<RenderableComponent&> ( *component.get () );
-        renderableComponent.FreeTransferResources ( device );
+        renderableComponent.FreeTransferResources ( renderer );
     }
 
+    MaterialManager::GetInstance ().FreeTransferResources ( renderer );
     return true;
 }
 

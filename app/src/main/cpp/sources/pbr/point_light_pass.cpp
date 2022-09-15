@@ -77,9 +77,10 @@ bool PointLightPass::Init ( android_vulkan::Renderer &renderer,
     return result && _lightup.Init ( renderer, lightupRenderPass, 1U, resolution );
 }
 
-void PointLightPass::Destroy ( VkDevice device ) noexcept
+void PointLightPass::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 {
-    _lightup.Destroy ( device );
+    VkDevice device = renderer.GetDevice ();
+    _lightup.Destroy ( renderer );
 
     if ( !_shadowmaps.empty () )
     {
@@ -88,7 +89,7 @@ void PointLightPass::Destroy ( VkDevice device ) noexcept
             if ( framebuffer == VK_NULL_HANDLE )
                 continue;
 
-            image->FreeResources ( device );
+            image->FreeResources ( renderer );
 
             vkDestroyFramebuffer ( device, framebuffer, nullptr );
             AV_UNREGISTER_FRAMEBUFFER ( "PointLightPass::_shadowmaps" )
@@ -97,7 +98,7 @@ void PointLightPass::Destroy ( VkDevice device ) noexcept
         _shadowmaps.clear ();
     }
 
-    _shadowmapBufferPool.Destroy ( device, "pbr::PointLightPass::_shadowmapBufferPool" );
+    _shadowmapBufferPool.Destroy ( renderer, "pbr::PointLightPass::_shadowmapBufferPool" );
     _shadowmapProgram.Destroy ( device );
 
     if ( _shadowmapRenderPass == VK_NULL_HANDLE )
@@ -171,7 +172,7 @@ PointLightPass::PointLightShadowmapInfo* PointLightPass::AcquirePointLightShadow
     constexpr VkImageUsageFlags flags = AV_VK_FLAG ( VK_IMAGE_USAGE_SAMPLED_BIT ) |
         AV_VK_FLAG ( VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT );
 
-    if ( !shadowmap->CreateRenderTarget ( renderer, resolution, VK_FORMAT_D32_SFLOAT, flags ) )
+    if ( !shadowmap->CreateRenderTarget ( renderer, resolution, renderer.GetDefaultDepthFormat (), flags ) )
         return nullptr;
 
     VkImageView const attachments[] = { shadowmap->GetImageView () };
@@ -199,7 +200,7 @@ PointLightPass::PointLightShadowmapInfo* PointLightPass::AcquirePointLightShadow
 
     if ( !result )
     {
-        shadowmap->FreeResources ( device );
+        shadowmap->FreeResources ( renderer );
         return nullptr;
     }
 

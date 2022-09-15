@@ -8,7 +8,8 @@
 
 GX_DISABLE_COMMON_WARNINGS
 
-#include <shared_mutex>
+#include <deque>
+#include <mutex>
 #include <unordered_map>
 
 GX_RESTORE_WARNING_STATE
@@ -33,18 +34,19 @@ class MaterialManager final
         using Storage = std::unordered_map<std::string_view, Texture2DRef>;
 
     private:
-        Storage                             _textureStorage;
+        Storage                                     _textureStorage {};
+        std::deque<android_vulkan::Texture2D*>      _toFreeTransferResource {};
 
-        static Handler                      _handlers[ static_cast<size_t> ( eMaterialTypeDesc::COUNT ) ];
-        static MaterialManager*             _instance;
-        static std::shared_timed_mutex      _mutex;
+        static Handler                              _handlers[ static_cast<size_t> ( eMaterialTypeDesc::COUNT ) ];
+        static MaterialManager*                     _instance;
+        static std::mutex                           _mutex;
 
     public:
-        MaterialManager ( MaterialManager const &other ) = delete;
-        MaterialManager& operator = ( MaterialManager const &other ) = delete;
+        MaterialManager ( MaterialManager const & ) = delete;
+        MaterialManager& operator = ( MaterialManager const & ) = delete;
 
-        MaterialManager ( MaterialManager &&other ) = delete;
-        MaterialManager& operator = ( MaterialManager &&other ) = delete;
+        MaterialManager ( MaterialManager && ) = delete;
+        MaterialManager& operator = ( MaterialManager && ) = delete;
 
         // Note commandBuffers must point to at least 4 free command buffers.
         [[nodiscard]] MaterialRef LoadMaterial ( android_vulkan::Renderer &renderer,
@@ -53,8 +55,10 @@ class MaterialManager final
             VkCommandBuffer const* commandBuffers
         ) noexcept;
 
+        void FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept;
+
         [[nodiscard]] static MaterialManager& GetInstance () noexcept;
-        static void Destroy ( VkDevice device ) noexcept;
+        static void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
 
         [[nodiscard]] constexpr static uint32_t MaxCommandBufferPerMaterial () noexcept
         {
@@ -79,7 +83,7 @@ class MaterialManager final
             VkCommandBuffer const* commandBuffers
         ) noexcept;
 
-        void DestroyInternal ( VkDevice device ) noexcept;
+        void DestroyInternal ( android_vulkan::Renderer &renderer ) noexcept;
 
         [[nodiscard]] Texture2DRef LoadTexture ( android_vulkan::Renderer &renderer,
             size_t &commandBufferConsumed,

@@ -27,9 +27,9 @@ Useful documentation is located [here](docs/documentation.md).
 * _Kotlin Gradle plugin 1.7.10_
 * _CMake 3.22.1_
 * _Gradle 7.5.1-bin_
-* _DirectX Shader Compiler 1.7.2207.10021_
-* _Vulkan Validation Layers_ `bc7cacd509df1f3ac89949a586031d7105b27f97`
-* _Lua 5.4.5_ `d61b0c60287c38008d312ddd11724a15b1737f7b`
+* _DirectX Shader Compiler 1.7.2207.10036_
+* _Vulkan Validation Layers_ `92ed21f6a188b02dfc62a88c0ac40d5153429704`
+* _Lua 5.4.5_ `71bc69c2afaf49ab5f54f3443af9ae70dd1fed06`
 * Real _Android 11_ device with _Vulkan 1.1.131_ support
 * [_ARM Neon A64_](https://developer.arm.com/architectures/instruction-sets/simd-isas/neon/neon-programmers-guide-for-armv8-a/introducing-neon-for-armv8-a) native support
 

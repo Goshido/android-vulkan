@@ -16,6 +16,7 @@ class UniformBuffer final
 
         VkBuffer                _buffer = VK_NULL_HANDLE;
         VkDeviceMemory          _bufferMemory = VK_NULL_HANDLE;
+        VkDeviceSize            _bufferOffset = std::numeric_limits<VkDeviceSize>::max ();
 
         VkCommandBuffer         _commandBuffer = VK_NULL_HANDLE;
         VkCommandPool           _commandPool = VK_NULL_HANDLE;
@@ -24,6 +25,7 @@ class UniformBuffer final
 
         VkBuffer                _transfer = VK_NULL_HANDLE;
         VkDeviceMemory          _transferMemory = VK_NULL_HANDLE;
+        VkDeviceSize            _transferOffset = std::numeric_limits<VkDeviceSize>::max ();
 
     public:
         UniformBuffer () = default;
@@ -36,7 +38,7 @@ class UniformBuffer final
 
         ~UniformBuffer () = default;
 
-        void FreeResources ( VkDevice device ) noexcept;
+        void FreeResources ( android_vulkan::Renderer &renderer ) noexcept;
         [[nodiscard]] VkBuffer GetBuffer () const noexcept;
         [[nodiscard]] size_t GetSize () const noexcept;
 

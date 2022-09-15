@@ -16,6 +16,7 @@
 
 GX_DISABLE_COMMON_WARNINGS
 
+#include <cassert>
 #include <android/asset_manager_jni.h>
 #include <android/native_window_jni.h>
 
@@ -48,7 +49,8 @@ enum class eGame : uint16_t
 
 //----------------------------------------------------------------------------------------------------------------------
 
-Core::Core ( JNIEnv* env, jobject activity, jobject assetManager ) noexcept
+Core::Core ( JNIEnv* env, jobject activity, jobject assetManager, std::string &&cacheDirectory ) noexcept:
+    _cacheDirectory ( std::move ( cacheDirectory ) )
 {
     env->GetJavaVM ( &_vm );
 
@@ -169,6 +171,12 @@ void Core::OnSurfaceDestroyed () noexcept
     _nativeWindow = nullptr;
 }
 
+std::string const& Core::GetCacheDirectory () noexcept
+{
+    assert ( g_Core );
+    return g_Core->_cacheDirectory;
+}
+
 void Core::Quit () noexcept
 {
     if ( !g_Core )
@@ -230,9 +238,8 @@ void Core::OnIdle () noexcept
 
 bool Core::OnQuit () noexcept
 {
-    _game->OnDestroyDevice ( _renderer.GetDevice () );
+    _game->OnDestroyDevice ( _renderer );
     _renderer.OnDestroyDevice ();
-
     return false;
 }
 
@@ -256,10 +263,7 @@ bool Core::OnQuitRequest () noexcept
 
 bool Core::OnSwapchainCreated () noexcept
 {
-    if ( !_renderer.OnCreateSwapchain ( *_nativeWindow, false ) )
-        return false;
-
-    if ( !_game->OnSwapchainCreated ( _renderer ) )
+    if ( !_renderer.OnCreateSwapchain ( *_nativeWindow, false ) || !_game->OnSwapchainCreated ( _renderer ) )
         return false;
 
     _fpsTimestamp = std::chrono::system_clock::now ();
@@ -276,7 +280,7 @@ bool Core::OnSwapchainDestroyed () noexcept
     if ( !_renderer.FinishAllJobs () )
         return false;
 
-    _game->OnSwapchainDestroyed ( _renderer.GetDevice () );
+    _game->OnSwapchainDestroyed ( _renderer );
     _renderer.OnDestroySwapchain ();
 
     return true;
@@ -304,9 +308,15 @@ void Core::OnHomeUp ( void* /*context*/ ) noexcept
 
 extern "C" {
 
-JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doCreate ( JNIEnv* env, jobject obj, jobject assetManager )
+JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doCreate ( JNIEnv* env,
+    jobject obj,
+    jobject assetManager,
+    jstring cacheDirectory
+)
 {
-    g_Core = new Core ( env, obj, assetManager );
+    char const* utf8 = env->GetStringUTFChars ( cacheDirectory, nullptr );
+    g_Core = new Core ( env, obj, assetManager, utf8 );
+    env->ReleaseStringUTFChars ( cacheDirectory, utf8 );
     LogInfo ( "Core has been created." );
 }
 

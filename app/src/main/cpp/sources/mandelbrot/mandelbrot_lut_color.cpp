@@ -20,63 +20,35 @@ constexpr static VkDeviceSize LUT_SAMPLE_SIZE = 4U;
 constexpr static VkDeviceSize LUT_SIZE = LUT_SAMPLE_COUNT * LUT_SAMPLE_SIZE;
 constexpr static size_t INIT_THREADS = 4U;
 
+//----------------------------------------------------------------------------------------------------------------------
+
 MandelbrotLUTColor::MandelbrotLUTColor () noexcept:
-    MandelbrotBase ( FRAGMENT_SHADER ),
-    _descriptorPool ( VK_NULL_HANDLE ),
-    _descriptorSet ( VK_NULL_HANDLE ),
-    _descriptorSetLayout ( VK_NULL_HANDLE ),
-    _lut ( VK_NULL_HANDLE ),
-    _lutDeviceMemory ( VK_NULL_HANDLE ),
-    _lutView ( VK_NULL_HANDLE ),
-    _sampler ( VK_NULL_HANDLE )
+    MandelbrotBase ( FRAGMENT_SHADER )
 {
     // NOTHING
 }
 
 bool MandelbrotLUTColor::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 {
-    if ( !MandelbrotBase::OnInitDevice ( renderer ) )
-        return false;
-
-    if ( !CreateLUT ( renderer ) )
-    {
-        OnDestroyDevice ( renderer.GetDevice () );
-        return false;
-    }
-
-    if ( !CreateDescriptorSet ( renderer ) )
-    {
-        OnDestroyDevice ( renderer.GetDevice () );
-        return false;
-    }
-
-    return true;
+    return MandelbrotBase::OnInitDevice ( renderer ) && CreateLUT ( renderer ) && CreateDescriptorSet ( renderer );
 }
 
-void MandelbrotLUTColor::OnDestroyDevice ( VkDevice device ) noexcept
+void MandelbrotLUTColor::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
 {
-    DestroyDescriptorSet ( device );
-    DestroyLUT ( device );
-
-    MandelbrotBase::OnDestroyDevice ( device );
+    DestroyDescriptorSet ( renderer.GetDevice () );
+    DestroyLUT ( renderer );
+    MandelbrotBase::OnDestroyDevice ( renderer );
 }
 
 bool MandelbrotLUTColor::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept
 {
-    if ( !MandelbrotBase::OnSwapchainCreated ( renderer ) )
-        return false;
-
-    if ( CreateCommandBuffer ( renderer ) )
-        return true;
-
-    OnSwapchainDestroyed ( renderer.GetDevice () );
-    return false;
+    return MandelbrotBase::OnSwapchainCreated ( renderer ) && CreateCommandBuffer ( renderer );
 }
 
-void MandelbrotLUTColor::OnSwapchainDestroyed ( VkDevice device ) noexcept
+void MandelbrotLUTColor::OnSwapchainDestroyed ( android_vulkan::Renderer &renderer ) noexcept
 {
-    DestroyCommandBuffer ( device );
-    MandelbrotBase::OnSwapchainDestroyed ( device );
+    DestroyCommandBuffer ( renderer.GetDevice () );
+    MandelbrotBase::OnSwapchainDestroyed ( renderer );
 }
 
 bool MandelbrotLUTColor::CreatePipelineLayout ( android_vulkan::Renderer &renderer ) noexcept
@@ -169,19 +141,14 @@ bool MandelbrotLUTColor::CreateCommandBuffer ( android_vulkan::Renderer &rendere
         .commandBufferCount = static_cast<uint32_t> ( framebufferCount )
     };
 
-    VkDevice device = renderer.GetDevice ();
-
     bool result = android_vulkan::Renderer::CheckVkResult (
-        vkAllocateCommandBuffers ( device, &commandBufferInfo, _commandBuffer.data () ),
+        vkAllocateCommandBuffers ( renderer.GetDevice (), &commandBufferInfo, _commandBuffer.data () ),
         "MandelbrotLUTColor::CreateCommandBuffer",
         "Can't allocate command buffer"
     );
 
     if ( !result )
-    {
-        DestroyCommandBuffer ( device );
         return false;
-    }
 
     constexpr VkCommandBufferBeginInfo commandBufferBeginInfo
     {
@@ -232,10 +199,7 @@ bool MandelbrotLUTColor::CreateCommandBuffer ( android_vulkan::Renderer &rendere
         );
 
         if ( !result )
-        {
-            DestroyCommandBuffer ( device );
             return false;
-        }
 
         renderPassBeginInfo.framebuffer = _framebuffers[ i ];
 
@@ -261,11 +225,7 @@ bool MandelbrotLUTColor::CreateCommandBuffer ( android_vulkan::Renderer &rendere
         );
     }
 
-    if ( result )
-        return true;
-
-    DestroyCommandBuffer ( device );
-    return false;
+    return result;
 }
 
 void MandelbrotLUTColor::DestroyCommandBuffer ( VkDevice device ) noexcept
@@ -341,29 +301,21 @@ bool MandelbrotLUTColor::CreateDescriptorSet (  android_vulkan::Renderer &render
         .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
     };
 
-    VkWriteDescriptorSet const writeDescriptorSet[]
+    VkWriteDescriptorSet const writeDescriptorSet
     {
-        {
-            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-            .pNext = nullptr,
-            .dstSet = _descriptorSet,
-            .dstBinding = 0U,
-            .dstArrayElement = 0U,
-            .descriptorCount = 1U,
-            .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-            .pImageInfo = &imageInfo,
-            .pBufferInfo = nullptr,
-            .pTexelBufferView = nullptr
-        }
+        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        .pNext = nullptr,
+        .dstSet = _descriptorSet,
+        .dstBinding = 0U,
+        .dstArrayElement = 0U,
+        .descriptorCount = 1U,
+        .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+        .pImageInfo = &imageInfo,
+        .pBufferInfo = nullptr,
+        .pTexelBufferView = nullptr
     };
 
-    vkUpdateDescriptorSets ( device,
-        static_cast<uint32_t> ( std::size ( writeDescriptorSet ) ),
-        writeDescriptorSet,
-        0U,
-        nullptr
-    );
-
+    vkUpdateDescriptorSets ( device, 1U, &writeDescriptorSet, 0U, nullptr );
     return true;
 }
 
@@ -426,30 +378,25 @@ bool MandelbrotLUTColor::CreateLUT ( android_vulkan::Renderer &renderer ) noexce
     VkMemoryRequirements requirements;
     vkGetImageMemoryRequirements ( device, _lut, &requirements );
 
-    result = renderer.TryAllocateMemory ( _lutDeviceMemory,
+    result = renderer.TryAllocateMemory ( _lutMemory,
+        _lutOffset,
         requirements,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
         "Can't allocate LUT memory (MandelbrotLUTColor::CreateLUT)"
     );
 
     if ( !result )
-    {
-        DestroyLUT ( device );
         return false;
-    }
 
-    AV_REGISTER_DEVICE_MEMORY ( "MandelbrotLUTColor::_lutDeviceMemory" )
+    AV_REGISTER_DEVICE_MEMORY ( "MandelbrotLUTColor::_lutMemory" )
 
-    result = android_vulkan::Renderer::CheckVkResult ( vkBindImageMemory ( device, _lut, _lutDeviceMemory, 0U ),
+    result = android_vulkan::Renderer::CheckVkResult ( vkBindImageMemory ( device, _lut, _lutMemory, _lutOffset ),
         "MandelbrotLUTColor::_lutDeviceMemory",
         "Can't bind LUT memory to the image"
     );
 
     if ( !result )
-    {
-        DestroyLUT ( device );
         return false;
-    }
 
     VkImageViewCreateInfo const imageViewInfo
     {
@@ -484,10 +431,7 @@ bool MandelbrotLUTColor::CreateLUT ( android_vulkan::Renderer &renderer ) noexce
     );
 
     if ( !result )
-    {
-        DestroyLUT ( device );
         return false;
-    }
 
     AV_REGISTER_IMAGE_VIEW ( "MandelbrotLUTColor::_lutView" )
 
@@ -519,22 +463,21 @@ bool MandelbrotLUTColor::CreateLUT ( android_vulkan::Renderer &renderer ) noexce
     );
 
     if ( !result )
-    {
-        DestroyLUT ( device );
         return false;
-    }
 
     AV_REGISTER_SAMPLER ( "MandelbrotLUTColor::_sampler" )
 
     if ( UploadLUTSamples ( renderer ) )
         return true;
 
-    DestroyLUT ( device );
+    DestroyLUT ( renderer );
     return false;
 }
 
-void MandelbrotLUTColor::DestroyLUT ( VkDevice device ) noexcept
+void MandelbrotLUTColor::DestroyLUT ( android_vulkan::Renderer &renderer  ) noexcept
 {
+    VkDevice device = renderer.GetDevice ();
+
     if ( _sampler != VK_NULL_HANDLE )
     {
         vkDestroySampler ( device, _sampler, nullptr );
@@ -556,12 +499,13 @@ void MandelbrotLUTColor::DestroyLUT ( VkDevice device ) noexcept
         AV_UNREGISTER_IMAGE ( "MandelbrotLUTColor::_lut" )
     }
 
-    if ( _lutDeviceMemory == VK_NULL_HANDLE )
+    if ( _lutMemory == VK_NULL_HANDLE )
         return;
 
-    vkFreeMemory ( device, _lutDeviceMemory, nullptr );
-    _lutDeviceMemory = VK_NULL_HANDLE;
-    AV_UNREGISTER_DEVICE_MEMORY ( "MandelbrotLUTColor::_lutDeviceMemory" )
+    renderer.FreeMemory ( _lutMemory, _lutOffset );
+    _lutMemory = VK_NULL_HANDLE;
+    _lutOffset = std::numeric_limits<VkDeviceSize>::max ();
+    AV_UNREGISTER_DEVICE_MEMORY ( "MandelbrotLUTColor::_lutMemory" )
 }
 
 bool MandelbrotLUTColor::UploadLUTSamples ( android_vulkan::Renderer &renderer ) noexcept
@@ -595,25 +539,28 @@ bool MandelbrotLUTColor::UploadLUTSamples ( android_vulkan::Renderer &renderer )
     VkMemoryRequirements requirements;
     vkGetBufferMemoryRequirements ( device, transfer, &requirements );
 
-    VkDeviceMemory transferDeviceMemory = VK_NULL_HANDLE;
+    VkDeviceMemory transferMemory = VK_NULL_HANDLE;
+    VkDeviceSize transferOffset = std::numeric_limits<VkDeviceSize>::max ();
 
-    result = renderer.TryAllocateMemory ( transferDeviceMemory,
+    result = renderer.TryAllocateMemory ( transferMemory,
+        transferOffset,
         requirements,
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT ) | AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_COHERENT_BIT ),
         "Can't allocate transfer memory (MandelbrotLUTColor::UploadLUTSamples)"
     );
 
-    auto freeTransferResource = [ & ] () noexcept {
+
+    auto const freeTransferResource = [ & ] () noexcept {
         if ( transfer != VK_NULL_HANDLE )
         {
             vkDestroyBuffer ( device, transfer, nullptr );
             AV_UNREGISTER_BUFFER ( "MandelbrotLUTColor::UploadLUTSamples::transfer" )
         }
 
-        if ( transferDeviceMemory != VK_NULL_HANDLE )
+        if ( transferMemory != VK_NULL_HANDLE )
         {
-            vkFreeMemory ( device, transferDeviceMemory, nullptr );
-            AV_UNREGISTER_DEVICE_MEMORY ( "MandelbrotLUTColor::UploadLUTSamples::transferDeviceMemory" )
+            renderer.FreeMemory ( transferMemory, transferOffset );
+            AV_UNREGISTER_DEVICE_MEMORY ( "MandelbrotLUTColor::UploadLUTSamples::transferMemory" )
         }
     };
 
@@ -623,10 +570,10 @@ bool MandelbrotLUTColor::UploadLUTSamples ( android_vulkan::Renderer &renderer )
         return false;
     }
 
-    AV_REGISTER_DEVICE_MEMORY ( "MandelbrotLUTColor::UploadLUTSamples::transferDeviceMemory" )
+    AV_REGISTER_DEVICE_MEMORY ( "MandelbrotLUTColor::UploadLUTSamples::transferMemory" )
 
     result = android_vulkan::Renderer::CheckVkResult (
-        vkBindBufferMemory ( device, transfer, transferDeviceMemory, 0U ),
+        vkBindBufferMemory ( device, transfer, transferMemory, transferOffset ),
         "MandelbrotLUTColor::CreateLUT",
         "Can't bind memory to the transfer buffer"
     );
@@ -639,8 +586,9 @@ bool MandelbrotLUTColor::UploadLUTSamples ( android_vulkan::Renderer &renderer )
 
     void* data = nullptr;
 
-    result = android_vulkan::Renderer::CheckVkResult (
-        vkMapMemory ( device, transferDeviceMemory, 0U, LUT_SIZE, 0U, &data ),
+    result = renderer.MapMemory ( data,
+        transferMemory,
+        transferOffset,
         "MandelbrotLUTColor::CreateLUT",
         "Can't map transfer memory"
     );
@@ -652,7 +600,7 @@ bool MandelbrotLUTColor::UploadLUTSamples ( android_vulkan::Renderer &renderer )
     }
 
     InitLUTSamples ( static_cast<uint8_t*> ( data ) );
-    vkUnmapMemory ( device, transferDeviceMemory );
+    renderer.UnmapMemory ( transferMemory );
 
     VkCommandBuffer uploadJob = VK_NULL_HANDLE;
 
@@ -696,19 +644,28 @@ bool MandelbrotLUTColor::UploadLUTSamples ( android_vulkan::Renderer &renderer )
         return false;
     }
 
-    VkImageMemoryBarrier barrier;
-    barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-    barrier.pNext = nullptr;
-    barrier.image = _lut;
-    barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-    barrier.srcAccessMask = 0U;
-    barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-    barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    barrier.subresourceRange.levelCount = barrier.subresourceRange.layerCount = 1U;
-    barrier.subresourceRange.baseArrayLayer = barrier.subresourceRange.baseMipLevel = 0U;
+    VkImageMemoryBarrier barrier
+    {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+        .pNext = nullptr,
+
+        .srcAccessMask = 0U,
+        .dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
+        .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+        .newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .image = _lut,
+
+        .subresourceRange =
+        {
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .baseMipLevel = 0U,
+            .levelCount = 1U,
+            .baseArrayLayer = 0U,
+            .layerCount = 1U
+        }
+    };
 
     vkCmdPipelineBarrier ( uploadJob,
         VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,

@@ -9,22 +9,24 @@ namespace pbr {
 
 enum class eUniformPoolSize : size_t
 {
-    Tiny_4M = 4U,
-    Small_8M [[maybe_unused]] = 8U,
-    Medium_16M [[maybe_unused]] = 16U,
-    Big_32M [[maybe_unused]] = 32U,
-    Huge_64M = 64U
+    Nanoscopic_64KB = 64U,
+    Microscopic_1M [[maybe_unused]] = 1024U,
+    Tiny_4M = 4096U,
+    Small_8M [[maybe_unused]] = 8192U,
+    Medium_16M [[maybe_unused]] = 16384U,
+    Big_32M [[maybe_unused]] = 32768U,
+    Huge_64M = 65536U
 };
 
 // Note the class is NOT thread safe.
 class UniformBufferPool final
 {
     private:
-        VkDeviceMemory              _gpuMemory = VK_NULL_HANDLE;
-        VkDeviceSize                _gpuSpecificItemOffset = 0U;
+        std::vector<VkBuffer>       _buffers {};
+        VkDeviceMemory              _memory = VK_NULL_HANDLE;
         size_t                      _index = 0U;
-        VkDeviceSize                _itemSize = 0U;
-        std::vector<VkBuffer>       _pool {};
+        size_t                      _itemSize = 0U;
+        VkDeviceSize                _offset = std::numeric_limits<VkDeviceSize>::max ();
         size_t                      _size;
 
     public:
@@ -50,14 +52,18 @@ class UniformBufferPool final
         void Reset () noexcept;
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, size_t itemSize ) noexcept;
-        void Destroy ( VkDevice device ) noexcept;
+        void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
 
     private:
-        [[nodiscard]] bool AllocateBuffers ( android_vulkan::Renderer &renderer, size_t itemCount ) noexcept;
+        [[nodiscard]] bool AllocateBuffers ( android_vulkan::Renderer &renderer,
+            VkMemoryRequirements &requirements,
+            size_t itemCount,
+            VkBufferCreateInfo const &bufferInfo
+        ) noexcept;
 
-        [[nodiscard]] static bool ResolveAlignment ( android_vulkan::Renderer &renderer,
-            size_t &alignment,
-            size_t itemSize
+        [[nodiscard]] static bool ResolveMemoryRequirements ( android_vulkan::Renderer &renderer,
+            VkMemoryRequirements &requirements,
+            VkBufferCreateInfo const &bufferInfo
         ) noexcept;
 };
 

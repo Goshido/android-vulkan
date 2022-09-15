@@ -224,18 +224,13 @@ bool GameAnalytic::LoadGPUContent ( android_vulkan::Renderer &renderer ) noexcep
         .commandBufferCount = static_cast<uint32_t> ( commandBufferCount )
     };
 
-    VkDevice device = renderer.GetDevice ();
-
     bool result = android_vulkan::Renderer::CheckVkResult (
         vkAllocateCommandBuffers ( renderer.GetDevice (), &allocateInfo, commandBuffers ),
         "GameLUT::LoadGPUContent",
         "Can't allocate command buffers"
     );
 
-    if ( !result )
-        return false;
-
-    if ( !CreateCommonTextures ( renderer, commandBuffers ) )
+    if ( !result || !CreateCommonTextures ( renderer, commandBuffers ) )
         return false;
 
     if ( !CreateMeshes ( renderer, commandBuffers + TEXTURE_COMMAND_BUFFERS ) )
@@ -251,12 +246,12 @@ bool GameAnalytic::LoadGPUContent ( android_vulkan::Renderer &renderer ) noexcep
 
     for ( auto& item : _drawcalls )
     {
-        item._mesh.FreeTransferResources ( device );
-        item._diffuse.FreeTransferResources ( device );
-        item._normal.FreeTransferResources ( device );
+        item._mesh.FreeTransferResources ( renderer );
+        item._diffuse.FreeTransferResources ( renderer );
+        item._normal.FreeTransferResources ( renderer );
     }
 
-    vkFreeCommandBuffers ( device, _commandPool, allocateInfo.commandBufferCount, commandBuffers );
+    vkFreeCommandBuffers ( renderer.GetDevice (), _commandPool, allocateInfo.commandBufferCount, commandBuffers );
     return true;
 }
 

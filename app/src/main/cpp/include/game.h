@@ -22,10 +22,10 @@ class Game
         [[nodiscard]] virtual bool OnFrame ( Renderer &renderer, double deltaTime ) noexcept = 0;
 
         [[nodiscard]] virtual bool OnInitDevice ( Renderer &renderer ) noexcept = 0;
-        virtual void OnDestroyDevice ( VkDevice device ) noexcept = 0;
+        virtual void OnDestroyDevice ( Renderer &renderer ) noexcept = 0;
 
         [[nodiscard]] virtual bool OnSwapchainCreated ( Renderer &renderer ) noexcept = 0;
-        virtual void OnSwapchainDestroyed ( VkDevice device ) noexcept = 0;
+        virtual void OnSwapchainDestroyed ( Renderer &renderer ) noexcept = 0;
 
     protected:
         Game () = default;

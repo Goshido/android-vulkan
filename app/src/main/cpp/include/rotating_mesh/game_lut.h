@@ -31,14 +31,13 @@ class GameLUT final : public Game
 
         [[nodiscard]] bool CreateSamplers ( android_vulkan::Renderer &renderer ) noexcept override;
         void DestroySamplers ( VkDevice device ) noexcept override;
-
-        void DestroyTextures ( VkDevice device ) noexcept override;
+        void DestroyTextures ( android_vulkan::Renderer &renderer ) noexcept override;
 
         [[nodiscard]] bool CreateSpecularLUTTexture ( android_vulkan::Renderer &renderer,
             VkCommandBuffer commandBuffer
         )  noexcept;
 
-        void DestroySpecularLUTTexture ( VkDevice device ) noexcept;
+        void DestroySpecularLUTTexture ( android_vulkan::Renderer &renderer ) noexcept;
 };
 
 } // namespace rotating_mesh

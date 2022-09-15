@@ -54,10 +54,10 @@ class BoxStack final : public android_vulkan::Game
         [[nodiscard]] bool OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) noexcept override;
 
         [[nodiscard]] bool OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept override;
-        void OnDestroyDevice ( VkDevice device ) noexcept override;
+        void OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept override;
 
         [[nodiscard]] bool OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept override;
-        void OnSwapchainDestroyed ( VkDevice device ) noexcept override;
+        void OnSwapchainDestroyed ( android_vulkan::Renderer &renderer ) noexcept override;
 
         [[nodiscard]] bool AppendCuboid ( android_vulkan::Renderer &renderer,
             VkCommandBuffer const* commandBuffers,

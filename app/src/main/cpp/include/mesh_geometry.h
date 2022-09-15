@@ -18,20 +18,25 @@ namespace android_vulkan {
 class MeshGeometry final
 {
     private:
-        GXAABB              _bounds;
+        GXAABB              _bounds {};
 
-        VkBuffer            _indexBuffer;
-        VkBuffer            _vertexBuffer;
-        VkDeviceMemory      _bufferMemory;
+        VkBuffer            _indexBuffer = VK_NULL_HANDLE;
+        VkDeviceMemory      _indexBufferMemory = VK_NULL_HANDLE;
+        VkDeviceSize        _indexBufferOffset = std::numeric_limits<VkDeviceSize>::max ();
 
-        VkBuffer            _transferBuffer;
-        VkDeviceMemory      _transferMemory;
+        VkBuffer            _vertexBuffer = VK_NULL_HANDLE;
+        VkDeviceMemory      _vertexBufferMemory = VK_NULL_HANDLE;
+        VkDeviceSize        _vertexBufferOffset = std::numeric_limits<VkDeviceSize>::max ();
 
-        uint32_t            _vertexCount;
-        std::string         _fileName;
+        VkBuffer            _transferBuffer = VK_NULL_HANDLE;
+        VkDeviceMemory      _transferBufferMemory = VK_NULL_HANDLE;
+        VkDeviceSize        _transferBufferOffset = std::numeric_limits<VkDeviceSize>::max ();
+
+        uint32_t            _vertexCount = 0U;
+        std::string         _fileName {};
 
     public:
-        MeshGeometry () noexcept;
+        MeshGeometry () = default;
 
         MeshGeometry ( MeshGeometry const & ) = delete;
         MeshGeometry& operator = ( MeshGeometry const & ) = delete;
@@ -41,8 +46,8 @@ class MeshGeometry final
 
         ~MeshGeometry () = default;
 
-        void FreeResources ( VkDevice device ) noexcept;
-        void FreeTransferResources ( VkDevice device ) noexcept;
+        void FreeResources ( Renderer &renderer ) noexcept;
+        void FreeTransferResources ( Renderer &renderer ) noexcept;
 
         [[nodiscard]] GXAABB const& GetBounds () const noexcept;
         [[nodiscard]] VkBuffer const& GetVertexBuffer () const noexcept;
@@ -79,7 +84,7 @@ class MeshGeometry final
         ) noexcept;
 
     private:
-        void FreeResourceInternal ( VkDevice device ) noexcept;
+        void FreeResourceInternal ( Renderer &renderer ) noexcept;
 
         [[nodiscard]] bool LoadFromMesh ( std::string &&fileName,
             VkBufferUsageFlags usage,

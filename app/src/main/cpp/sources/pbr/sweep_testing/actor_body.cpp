@@ -35,11 +35,11 @@ void ActorBody::DisableOverlay () noexcept
     mesh.SetEmission ( noOverlay );
 }
 
-void ActorBody::FreeTransferResources ( VkDevice device ) noexcept
+void ActorBody::FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept
 {
     // NOLINTNEXTLINE - downcast.
     auto& mesh = static_cast<StaticMeshComponent&> ( *_mesh );
-    mesh.FreeTransferResources ( device );
+    mesh.FreeTransferResources ( renderer );
 }
 
 void ActorBody::Destroy () noexcept

@@ -28,6 +28,7 @@ class Texture2D final
 
         VkImage             _image = VK_NULL_HANDLE;
         VkDeviceMemory      _imageDeviceMemory = VK_NULL_HANDLE;
+        VkDeviceSize        _imageMemoryOffset = 0U;
         VkImageView         _imageView = VK_NULL_HANDLE;
 
         uint8_t             _mipLevels = 0U;
@@ -35,6 +36,7 @@ class Texture2D final
 
         VkBuffer            _transfer = VK_NULL_HANDLE;
         VkDeviceMemory      _transferDeviceMemory = VK_NULL_HANDLE;
+        VkDeviceSize        _transferMemoryOffset = 0U;
 
         std::string         _fileName {};
 
@@ -58,13 +60,13 @@ class Texture2D final
             Renderer &renderer
         ) noexcept;
 
-        void FreeResources ( VkDevice device ) noexcept;
+        void FreeResources ( Renderer &renderer ) noexcept;
 
         // optimization: _transfer and _transferDeviceMemory are needed only for uploading pixel data to the Vulkan
         // texture object. Uploading itself is done via command submit: vkCmdCopyBufferToImage. So you can make a
         // bunch of vkCmdCopyBufferToImage call for different textures and after completion you can free
         // _transfer and _transferDeviceMemory for Texture2D objects.
-        void FreeTransferResources ( VkDevice device ) noexcept;
+        void FreeTransferResources ( Renderer &renderer ) noexcept;
 
         [[nodiscard]] VkFormat GetFormat () const noexcept;
         [[nodiscard]] VkImage GetImage () const noexcept;
@@ -136,7 +138,7 @@ class Texture2D final
             Renderer &renderer
         ) noexcept;
 
-        void FreeResourceInternal ( VkDevice device ) noexcept;
+        void FreeResourceInternal ( Renderer &renderer ) noexcept;
 
         [[nodiscard]] bool UploadCompressed ( Renderer &renderer,
             std::string const &fileName,

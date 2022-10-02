@@ -67,7 +67,9 @@ class Scene final
         void OnCaptureInput () noexcept;
         void OnReleaseInput () const noexcept;
 
-        [[nodiscard]] bool OnInitDevice ( android_vulkan::Physics &physics ) noexcept;
+        [[nodiscard]] bool OnInitDevice ( android_vulkan::Renderer &renderer,
+            android_vulkan::Physics &physics ) noexcept;
+
         void OnDestroyDevice () noexcept;
 
         [[nodiscard]] bool OnPrePhysics ( double deltaTime ) noexcept;

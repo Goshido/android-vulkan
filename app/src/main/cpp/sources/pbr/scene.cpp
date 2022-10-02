@@ -6,6 +6,7 @@
 #include <pbr/script_engine.h>
 #include <pbr/scriptable_gxmat4.h>
 #include <pbr/scriptable_gxvec3.h>
+#include <pbr/scriptable_material.h>
 #include <pbr/scriptable_sweep_test_result.h>
 #include <core.h>
 #include <file.h>
@@ -99,7 +100,7 @@ void Scene::OnReleaseInput () const noexcept
     _gamepad.ReleaseInput ();
 }
 
-bool Scene::OnInitDevice ( android_vulkan::Physics &physics ) noexcept
+bool Scene::OnInitDevice ( android_vulkan::Renderer &renderer, android_vulkan::Physics &physics ) noexcept
 {
     _defaultCamera.SetProjection ( GXDegToRad ( DEFAULT_FOV ), DEFAULT_ASPECT_RATIO, DEFAULT_Z_NEAR, DEFAULT_Z_FAR );
     _penetrations.reserve ( INITIAL_PENETRATION_SIZE );
@@ -115,7 +116,7 @@ bool Scene::OnInitDevice ( android_vulkan::Physics &physics ) noexcept
     _physics = &physics;
     ScriptEngine& scriptEngine = ScriptEngine::GetInstance ();
 
-    if ( !scriptEngine.Init () )
+    if ( !scriptEngine.Init ( renderer ) )
         return false;
 
     _vm = &scriptEngine.GetVirtualMachine ();
@@ -283,7 +284,7 @@ bool Scene::OnPostPhysics ( double deltaTime ) noexcept
     lua_pushnumber ( _vm, deltaTime );
     lua_pcall ( _vm, 2, 0, ScriptEngine::GetErrorHandlerIndex () );
 
-    return true;
+    return ScriptableMaterial::Sync ();
 }
 
 bool Scene::OnResolutionChanged ( VkExtent2D const &resolution, double aspectRatio ) noexcept

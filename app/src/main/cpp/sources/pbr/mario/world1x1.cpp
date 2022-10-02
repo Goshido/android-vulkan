@@ -69,7 +69,7 @@ bool World1x1::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 
     AV_REGISTER_COMMAND_POOL ( "pbr::mario::World1x1::_commandPool" )
 
-    if ( !_renderSession.OnInitDevice ( renderer ) || !_scene.OnInitDevice ( _physics ) )
+    if ( !_renderSession.OnInitDevice ( renderer ) || !_scene.OnInitDevice ( renderer, _physics ) )
         return false;
 
     if ( !_scene.LoadScene ( renderer, SCENE, _commandPool ) )

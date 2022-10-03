@@ -9,7 +9,8 @@ std::shared_timed_mutex MeshManager::_mutex;
 MeshRef MeshManager::LoadMesh ( android_vulkan::Renderer &renderer,
     size_t &commandBufferConsumed,
     char const* fileName,
-    VkCommandBuffer commandBuffer
+    VkCommandBuffer commandBuffer,
+    VkFence fence
 ) noexcept
 {
     commandBufferConsumed = 0U;
@@ -24,7 +25,7 @@ MeshRef MeshManager::LoadMesh ( android_vulkan::Renderer &renderer,
     if ( findResult != _meshStorage.cend () )
         return findResult->second;
 
-    if ( !mesh->LoadMesh ( fileName, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, renderer, commandBuffer ) )
+    if ( !mesh->LoadMesh ( fileName, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, renderer, commandBuffer, fence ) )
         mesh = nullptr;
     else
         _meshStorage.insert ( std::make_pair ( std::string_view ( mesh->GetName () ), mesh ) );

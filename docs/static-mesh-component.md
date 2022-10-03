@@ -30,7 +30,7 @@ Metamethod | Used
 `__concat` | ❌
 `__div` | ❌
 `__eq` | ❌
-`__gc` | ❌
+`__gc` | ✔️
 `__idiv` | ❌
 `__index` | ❌
 `__le` | ❌
@@ -55,6 +55,7 @@ Constructor creates new static mesh component with default properties.
 **Parameters:**
 
 - `name` [_required, readonly, string_]: name of the component
+- `meshFile` [_required, readonly, string_]: file path to mesh asset
 
 **Example:**
 
@@ -63,7 +64,7 @@ require "av://engine/scene.lua"
 
 
 local rock = Actor ( "Rock" )
-local mesh = StaticMeshComponent ( "Mesh" )
+local mesh = StaticMeshComponent ( "Mesh", "pbr/assets/System/Default.mesh2" )
 
 rock:AppendComponent ( mesh )
 g_scene:AppendActor ( rock )
@@ -86,7 +87,7 @@ require "av://engine/scene.lua"
 
 
 local rock = Actor ( "Rock" )
-local mesh = StaticMeshComponent ( "Mesh" )
+local mesh = StaticMeshComponent ( "Mesh", "pbr/assets/System/Default.mesh2" )
 
 rock:AppendComponent ( mesh )
 g_scene:AppendActor ( rock )
@@ -112,7 +113,7 @@ require "av://engine/scene.lua"
 
 
 local rock = Actor ( "Rock" )
-local mesh = StaticMeshComponent ( "Mesh" )
+local mesh = StaticMeshComponent ( "Mesh", "pbr/assets/System/Default.mesh2" )
 
 rock:AppendComponent ( mesh )
 g_scene:AppendActor ( rock )

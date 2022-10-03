@@ -25,9 +25,20 @@ namespace pbr {
 constexpr static GXColorRGB DEFAULT_COLOR ( 1.0F, 1.0F, 1.0F, 1.0F );
 constexpr static GXColorRGB DEFAULT_EMISSION ( 1.0F, 1.0F, 1.0F, 1.0F );
 
+constexpr static size_t ALLOCATE_COMMAND_BUFFERS = 8U;
+constexpr static size_t INITIAL_COMMAND_BUFFERS = 32U;
+
+constexpr static char const DEFAULT_MATERIAL[] = "pbr/assets/System/Default.mtl";
+
 //----------------------------------------------------------------------------------------------------------------------
 
+size_t StaticMeshComponent::_commandBufferIndex = 0U;
+std::vector<VkCommandBuffer> StaticMeshComponent::_commandBuffers {};
+VkCommandPool StaticMeshComponent::_commandPool {};
+std::vector<VkFence> StaticMeshComponent::_fences {};
 int StaticMeshComponent::_registerStaticMeshComponentIndex = std::numeric_limits<int>::max ();
+android_vulkan::Renderer* StaticMeshComponent::_renderer = nullptr;
+std::unordered_map<Component const*, ComponentRef> StaticMeshComponent::_staticMeshes {};
 
 // NOLINTNEXTLINE - no initialization for some fields
 StaticMeshComponent::StaticMeshComponent ( android_vulkan::Renderer &renderer,
@@ -35,7 +46,8 @@ StaticMeshComponent::StaticMeshComponent ( android_vulkan::Renderer &renderer,
     size_t &commandBufferConsumed,
     StaticMeshComponentDesc const &desc,
     uint8_t const* data,
-    VkCommandBuffer const* commandBuffers
+    VkCommandBuffer const* commandBuffers,
+    VkFence const* fences
 ) noexcept:
     RenderableComponent ( ClassID::StaticMesh ),
     _color0 ( desc._color0._red, desc._color0._green, desc._color0._blue, desc._color0._alpha ),
@@ -70,7 +82,8 @@ StaticMeshComponent::StaticMeshComponent ( android_vulkan::Renderer &renderer,
     _mesh = MeshManager::GetInstance ().LoadMesh ( renderer,
         consumed,
         reinterpret_cast<char const*> ( data + desc._mesh ),
-        commandBuffers[ commandBufferConsumed ]
+        commandBuffers[ commandBufferConsumed ],
+        fences ? fences[ commandBufferConsumed ] : VK_NULL_HANDLE
     );
 
     if ( !_mesh )
@@ -88,6 +101,7 @@ StaticMeshComponent::StaticMeshComponent ( android_vulkan::Renderer &renderer,
     char const* mesh,
     char const* material,
     VkCommandBuffer const* commandBuffers,
+    VkFence const* fences,
     std::string &&name
 ) noexcept:
     RenderableComponent ( ClassID::StaticMesh, std::move ( name ) ),
@@ -117,7 +131,8 @@ StaticMeshComponent::StaticMeshComponent ( android_vulkan::Renderer &renderer,
     _mesh = MeshManager::GetInstance ().LoadMesh ( renderer,
         consumed,
         mesh,
-        commandBuffers[ commandBufferConsumed ]
+        commandBuffers[ commandBufferConsumed ],
+        fences ? fences[ commandBufferConsumed ] : VK_NULL_HANDLE
     );
 
     if ( !_mesh )
@@ -134,7 +149,8 @@ StaticMeshComponent::StaticMeshComponent ( android_vulkan::Renderer &renderer,
     size_t &commandBufferConsumed,
     char const* mesh,
     MaterialRef &material,
-    VkCommandBuffer const* commandBuffers
+    VkCommandBuffer const* commandBuffers,
+    VkFence const* fences
 ) noexcept:
     RenderableComponent ( ClassID::StaticMesh, android_vulkan::GUID::GenerateAsString ( "StaticMesh" ) ),
     _color0 ( DEFAULT_COLOR ),
@@ -149,7 +165,8 @@ StaticMeshComponent::StaticMeshComponent ( android_vulkan::Renderer &renderer,
     _mesh = MeshManager::GetInstance ().LoadMesh ( renderer,
         commandBufferConsumed,
         mesh,
-        commandBuffers[ commandBufferConsumed ]
+        commandBuffers[ commandBufferConsumed ],
+        fences ? fences[ commandBufferConsumed ] : VK_NULL_HANDLE
     );
 
     success = static_cast<bool> ( _mesh );
@@ -271,7 +288,7 @@ bool StaticMeshComponent::Register ( lua_State &vm, Actor &actor ) noexcept
     return lua_pcall ( &vm, 1, 1, ScriptEngine::GetErrorHandlerIndex () ) == LUA_OK;
 }
 
-bool StaticMeshComponent::Init ( lua_State &vm ) noexcept
+bool StaticMeshComponent::Init ( lua_State &vm, android_vulkan::Renderer &renderer ) noexcept
 {
     if ( !lua_checkstack ( &vm, 1 ) )
     {
@@ -298,6 +315,10 @@ bool StaticMeshComponent::Init ( lua_State &vm ) noexcept
             .func = &StaticMeshComponent::OnDestroy
         },
         {
+            .name = "av_StaticMeshComponentGarbageCollected",
+            .func = &StaticMeshComponent::OnGarbageCollected
+        },
+        {
             .name = "av_StaticMeshComponentGetLocal",
             .func = &StaticMeshComponent::OnGetLocal
         },
@@ -310,6 +331,96 @@ bool StaticMeshComponent::Init ( lua_State &vm ) noexcept
     for ( auto const& extension : extensions )
         lua_register ( &vm, extension.name, extension.func );
 
+    _renderer = &renderer;
+
+    VkCommandPoolCreateInfo createInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .queueFamilyIndex = renderer.GetQueueFamilyIndex ()
+    };
+
+    VkDevice device = renderer.GetDevice ();
+
+    bool const result = android_vulkan::Renderer::CheckVkResult (
+        vkCreateCommandPool ( device, &createInfo, nullptr, &_commandPool ),
+        "pbr::StaticMeshComponent::Init",
+        "Can't create command pool"
+    );
+
+    if ( !result )
+        return false;
+
+    AV_REGISTER_COMMAND_POOL ( "pbr::StaticMeshComponent::_commandPool" )
+    return AllocateCommandBuffers ( INITIAL_COMMAND_BUFFERS );
+}
+
+void StaticMeshComponent::Destroy () noexcept
+{
+    _staticMeshes.clear ();
+    VkDevice device = _renderer->GetDevice ();
+
+    if ( _commandPool != VK_NULL_HANDLE )
+    {
+        vkDestroyCommandPool ( device, _commandPool, nullptr );
+        _commandPool = VK_NULL_HANDLE;
+        AV_UNREGISTER_COMMAND_POOL ( "pbr::StaticMeshComponent::_commandPool" )
+    }
+
+    auto const clean = [] ( auto &v ) noexcept {
+        v.clear ();
+        v.shrink_to_fit ();
+    };
+
+    clean ( _commandBuffers );
+
+    for ( auto fence : _fences )
+    {
+        vkDestroyFence ( device, fence, nullptr );
+        AV_UNREGISTER_FENCE ( "pbr::StaticMeshComponent::_fences" )
+    }
+
+    clean ( _fences );
+    _renderer = nullptr;
+}
+
+bool StaticMeshComponent::Sync () noexcept
+{
+    if ( !_commandBufferIndex )
+        return true;
+
+    VkDevice device = _renderer->GetDevice ();
+    auto const fenceCount = static_cast<uint32_t> ( _commandBufferIndex );
+    VkFence* fences = _fences.data ();
+
+    bool result = android_vulkan::Renderer::CheckVkResult (
+        vkWaitForFences ( device, fenceCount, fences, VK_TRUE, std::numeric_limits<uint64_t>::max () ),
+        "pbr::StaticMeshComponent::Sync",
+        "Can't wait fence"
+    );
+
+    if ( !result )
+        return false;
+
+    result = android_vulkan::Renderer::CheckVkResult ( vkResetFences ( device, fenceCount, fences ),
+        "pbr::StaticMeshComponent::Sync",
+        "Can't reset fence"
+    );
+
+    if ( !result )
+        return false;
+
+    result = android_vulkan::Renderer::CheckVkResult (
+        vkResetCommandPool ( _renderer->GetDevice (), _commandPool, 0U ),
+        "pbr::StaticMeshComponent::Sync",
+        "Can't reset command pool"
+    );
+
+    if ( !result )
+        return false;
+
+    _commandBufferIndex = 0U;
     return true;
 }
 
@@ -318,16 +429,131 @@ void StaticMeshComponent::OnTransform ( GXMat4 const &transformWorld ) noexcept
     SetTransform ( transformWorld );
 }
 
-int StaticMeshComponent::OnCreate ( lua_State* /*state*/ )
+bool StaticMeshComponent::AllocateCommandBuffers ( size_t amount ) noexcept
 {
-    // TODO
-    return 0;
+    size_t const current = _commandBuffers.size ();
+    size_t const size = current + amount;
+    _commandBuffers.resize ( size );
+
+    VkCommandBufferAllocateInfo const allocateInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+        .pNext = nullptr,
+        .commandPool = _commandPool,
+        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+        .commandBufferCount = static_cast<uint32_t> ( amount )
+    };
+
+    VkDevice device = _renderer->GetDevice ();
+
+    bool result = android_vulkan::Renderer::CheckVkResult (
+        vkAllocateCommandBuffers ( device, &allocateInfo, &_commandBuffers[ current ] ),
+        "pbr::StaticMeshComponent::AllocateCommandBuffers",
+        "Can't allocate command buffer"
+    );
+
+    if ( !result )
+        return false;
+
+    _fences.resize ( size );
+
+    constexpr VkFenceCreateInfo fenceInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = VK_FENCE_CREATE_SIGNALED_BIT
+    };
+
+    VkFence* fences = _fences.data ();
+
+    for ( size_t i = current; i < size; ++i )
+    {
+        result = android_vulkan::Renderer::CheckVkResult ( vkCreateFence ( device, &fenceInfo, nullptr, fences + i ),
+            "pbr::StaticMeshComponent::AllocateCommandBuffers",
+            "Can't create fence"
+        );
+
+        if ( !result )
+            return false;
+
+        AV_REGISTER_FENCE ( "pbr::StaticMeshComponent::_fences" )
+    }
+
+    return true;
+}
+
+int StaticMeshComponent::OnCreate ( lua_State* state )
+{
+    if ( !lua_checkstack ( state, 1 ) )
+    {
+        android_vulkan::LogWarning ( "pbr::StaticMeshComponent::OnCreate - Stack too small." );
+        return 0;
+    }
+
+    char const* name = lua_tostring ( state, 1 );
+
+    if ( !name )
+    {
+        lua_pushnil ( state );
+        return 1;
+    }
+
+    char const* meshFile = lua_tostring ( state, 2 );
+
+    if ( !meshFile )
+    {
+        lua_pushnil ( state );
+        return 1;
+    }
+
+    size_t const available = _commandBuffers.size () - _commandBufferIndex;
+
+    if ( available < 1U )
+    {
+        if ( !AllocateCommandBuffers ( ALLOCATE_COMMAND_BUFFERS ) )
+        {
+            lua_pushnil ( state );
+            return 1;
+        }
+    }
+
+    size_t consumed;
+    bool success;
+
+    ComponentRef staticMesh = std::make_shared<StaticMeshComponent> ( *_renderer,
+        success,
+        consumed,
+        meshFile,
+        DEFAULT_MATERIAL,
+        &_commandBuffers[ _commandBufferIndex ],
+        &_fences[ _commandBufferIndex ],
+        name
+    );
+
+    if ( !success )
+    {
+        lua_pushnil ( state );
+        return 1;
+    }
+
+    Component* handle = staticMesh.get ();
+    _staticMeshes.emplace ( handle, std::move ( staticMesh ) );
+
+    _commandBufferIndex += consumed;
+    lua_pushlightuserdata ( state, handle );
+    return 1;
 }
 
 int StaticMeshComponent::OnDestroy ( lua_State* state )
 {
     auto& self = *static_cast<StaticMeshComponent*> ( lua_touserdata ( state, 1 ) );
     self._actor->DestroyComponent ( self );
+    return 0;
+}
+
+int StaticMeshComponent::OnGarbageCollected ( lua_State* state )
+{
+    _staticMeshes.erase ( static_cast<Component*> ( lua_touserdata ( state, 1 ) ) );
     return 0;
 }
 

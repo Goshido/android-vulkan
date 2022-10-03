@@ -196,6 +196,7 @@ bool StippleTest::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
         "pbr/system/unit-cube.mesh2",
         "pbr/assets/System/DefaultCSG.mtl",
         cb,
+        nullptr,
         "Floor"
     );
 
@@ -232,7 +233,8 @@ bool StippleTest::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
         consumed,
         "pbr/system/unit-cube.mesh2",
         stippleMaterial,
-        cb
+        cb,
+        nullptr
     );
 
     if ( !success )

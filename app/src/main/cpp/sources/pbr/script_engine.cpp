@@ -90,7 +90,7 @@ bool ScriptEngine::ExtendFrontend ( android_vulkan::Renderer &renderer ) const n
         RigidBodyComponent::Init ( vm ) &&
         CameraComponent::Init ( vm ) &&
         TransformComponent::Init ( vm ) &&
-        StaticMeshComponent::Init ( vm ) &&
+        StaticMeshComponent::Init ( vm, renderer ) &&
         ScriptableMaterial::Init ( vm, renderer );
 }
 
@@ -250,6 +250,7 @@ void ScriptEngine::Free ( lua_State* state ) noexcept
     ScriptableGXQuat::Destroy ();
     ScriptableGXMat4::Destroy ();
     ScriptableGXMat3::Destroy ();
+    StaticMeshComponent::Destroy ();
     ScriptableMaterial::Destroy ();
 }
 

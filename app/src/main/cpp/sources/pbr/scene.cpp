@@ -8,6 +8,7 @@
 #include <pbr/scriptable_gxvec3.h>
 #include <pbr/scriptable_material.h>
 #include <pbr/scriptable_sweep_test_result.h>
+#include <pbr/static_mesh_component.h>
 #include <core.h>
 #include <file.h>
 #include <shape_box.h>
@@ -284,7 +285,7 @@ bool Scene::OnPostPhysics ( double deltaTime ) noexcept
     lua_pushnumber ( _vm, deltaTime );
     lua_pcall ( _vm, 2, 0, ScriptEngine::GetErrorHandlerIndex () );
 
-    return ScriptableMaterial::Sync ();
+    return ScriptableMaterial::Sync () && StaticMeshComponent::Sync ();
 }
 
 bool Scene::OnResolutionChanged ( VkExtent2D const &resolution, double aspectRatio ) noexcept

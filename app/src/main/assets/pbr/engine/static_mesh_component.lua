@@ -34,6 +34,13 @@ local function OnDestroy ( self )
     av_StaticMeshComponentDestroy ( self._handle )
 end
 
+-- Metamethods
+local mt = {
+    __gc = function ( self )
+        av_StaticMeshComponentGarbageCollected ( self._handle )
+    end
+}
+
 -- This function is exported to C++ side.
 function RegisterStaticMeshComponent ( handle )
     local obj = Component ( eObjectType.StaticMeshComponent, handle )
@@ -45,12 +52,11 @@ function RegisterStaticMeshComponent ( handle )
     -- Engine events
     obj.OnDestroy = OnDestroy
 
-    return obj
+    return setmetatable ( obj, mt )
 end
 
--- Metamethods
-local function Constructor ( self, name )
-    return RegisterStaticMeshComponent ( av_StaticMeshComponentCreate ( name ) )
+local function Constructor ( self, name, meshFile )
+    return RegisterStaticMeshComponent ( av_StaticMeshComponentCreate ( name, meshFile ) )
 end
 
 setmetatable ( StaticMeshComponent, { __call = Constructor } )

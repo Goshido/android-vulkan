@@ -17,8 +17,8 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-constexpr static size_t INITIAL_COMMAND_BUFFERS = 32U * MaterialManager::MaxCommandBufferPerMaterial ();
 constexpr static size_t ALLOCATE_COMMAND_BUFFERS = 8U * MaterialManager::MaxCommandBufferPerMaterial ();
+constexpr static size_t INITIAL_COMMAND_BUFFERS = 32U * MaterialManager::MaxCommandBufferPerMaterial ();
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -128,7 +128,7 @@ bool ScriptableMaterial::Sync () noexcept
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkResetCommandPool ( _renderer->GetDevice (), _commandPool, 0U ),
-        "Rainbow::OnFrame",
+        "pbr::ScriptableMaterial::Sync",
         "Can't reset command pool"
     );
 

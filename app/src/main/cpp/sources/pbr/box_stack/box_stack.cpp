@@ -222,6 +222,7 @@ bool BoxStack::AppendCuboid ( android_vulkan::Renderer &renderer,
         "pbr/system/unit-cube.mesh2",
         material,
         commandBuffers,
+        nullptr,
         "Mesh"
     );
 
@@ -372,7 +373,8 @@ bool BoxStack::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
     _sphereMesh = MeshManager::GetInstance ().LoadMesh ( renderer,
         consumed,
         "pbr/system/unit-sphere.mesh2",
-        *commandBuffers
+        *commandBuffers,
+        VK_NULL_HANDLE
     );
 
     commandBuffers += consumed;

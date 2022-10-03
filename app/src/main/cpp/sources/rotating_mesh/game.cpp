@@ -275,7 +275,9 @@ bool Game::CreateMeshes ( android_vulkan::Renderer &renderer, VkCommandBuffer* c
     {
         bool const result = _drawcalls[ i ]._mesh.LoadMesh ( meshFiles[ i ],
             VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-            renderer, commandBuffers[ i ]
+            renderer,
+            commandBuffers[ i ],
+            VK_NULL_HANDLE
         );
 
         if ( result )

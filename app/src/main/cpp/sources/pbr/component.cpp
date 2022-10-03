@@ -127,7 +127,8 @@ ComponentRef Component::CreateStaticMesh ( android_vulkan::Renderer &renderer,
         commandBufferConsumed,
         d,
         data,
-        commandBuffers
+        commandBuffers,
+        nullptr
     );
 
     return success ? result : ComponentRef {};

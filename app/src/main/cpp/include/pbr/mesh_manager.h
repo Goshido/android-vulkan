@@ -34,7 +34,8 @@ class MeshManager final
         [[nodiscard]] MeshRef LoadMesh ( android_vulkan::Renderer &renderer,
             size_t &commandBufferConsumed,
             char const* fileName,
-            VkCommandBuffer commandBuffer
+            VkCommandBuffer commandBuffer,
+            VkFence fence
         ) noexcept;
 
         [[nodiscard]] static MeshManager& GetInstance () noexcept;

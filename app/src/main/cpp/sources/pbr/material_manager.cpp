@@ -49,7 +49,8 @@ std::mutex MaterialManager::_mutex;
 MaterialRef MaterialManager::LoadMaterial ( android_vulkan::Renderer &renderer,
     size_t &commandBufferConsumed,
     char const* fileName,
-    VkCommandBuffer const* commandBuffers
+    VkCommandBuffer const* commandBuffers,
+    VkFence const* fences
 ) noexcept
 {
     commandBufferConsumed = 0U;
@@ -71,7 +72,7 @@ MaterialRef MaterialManager::LoadMaterial ( android_vulkan::Renderer &renderer,
     Handler const handler = _handlers[ static_cast<size_t> ( header._type ) ];
 
     // C++ calling method by pointer syntax.
-    return ( this->*handler ) ( renderer, commandBufferConsumed, header, data, commandBuffers );
+    return ( this->*handler ) ( renderer, commandBufferConsumed, header, data, commandBuffers, fences );
 }
 
 void MaterialManager::FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept
@@ -114,7 +115,8 @@ MaterialRef MaterialManager::CreateOpaqueMaterial ( android_vulkan::Renderer &re
     size_t &commandBufferConsumed,
     MaterialHeader const &header,
     uint8_t const* data,
-    VkCommandBuffer const* commandBuffers
+    VkCommandBuffer const* commandBuffers,
+    VkFence const* fences
 ) noexcept
 {
     // NOLINTNEXTLINE - downcast.
@@ -133,7 +135,8 @@ MaterialRef MaterialManager::CreateOpaqueMaterial ( android_vulkan::Renderer &re
             data,
             h._diffuseOffset,
             android_vulkan::eFormat::Unorm,
-            commandBuffers
+            commandBuffers,
+            fences
         );
 
         if ( !texture )
@@ -149,7 +152,8 @@ MaterialRef MaterialManager::CreateOpaqueMaterial ( android_vulkan::Renderer &re
             data,
             h._emissionOffset,
             android_vulkan::eFormat::Unorm,
-            commandBuffers
+            commandBuffers,
+            fences
         );
 
         if ( !texture )
@@ -165,7 +169,8 @@ MaterialRef MaterialManager::CreateOpaqueMaterial ( android_vulkan::Renderer &re
             data,
             h._maskOffset,
             android_vulkan::eFormat::Unorm,
-            commandBuffers
+            commandBuffers,
+            fences
         );
 
         if ( !texture )
@@ -181,7 +186,8 @@ MaterialRef MaterialManager::CreateOpaqueMaterial ( android_vulkan::Renderer &re
             data,
             h._normalOffset,
             android_vulkan::eFormat::Unorm,
-            commandBuffers
+            commandBuffers,
+            fences
         );
 
         if ( !texture )
@@ -197,7 +203,8 @@ MaterialRef MaterialManager::CreateOpaqueMaterial ( android_vulkan::Renderer &re
             data,
             h._paramOffset,
             android_vulkan::eFormat::Unorm,
-            commandBuffers
+            commandBuffers,
+            fences
         );
 
         if ( !texture )
@@ -213,7 +220,8 @@ MaterialRef MaterialManager::CreateStippleMaterial ( android_vulkan::Renderer &r
     size_t &commandBufferConsumed,
     MaterialHeader const &header,
     uint8_t const* data,
-    VkCommandBuffer const* commandBuffers
+    VkCommandBuffer const* commandBuffers,
+    VkFence const* fences
 ) noexcept
 {
     // NOLINTNEXTLINE - downcast.
@@ -232,7 +240,8 @@ MaterialRef MaterialManager::CreateStippleMaterial ( android_vulkan::Renderer &r
             data,
             h._diffuseOffset,
             android_vulkan::eFormat::Unorm,
-            commandBuffers
+            commandBuffers,
+            fences
         );
 
         if ( !texture )
@@ -248,7 +257,8 @@ MaterialRef MaterialManager::CreateStippleMaterial ( android_vulkan::Renderer &r
             data,
             h._emissionOffset,
             android_vulkan::eFormat::Unorm,
-            commandBuffers
+            commandBuffers,
+            fences
         );
 
         if ( !texture )
@@ -264,7 +274,8 @@ MaterialRef MaterialManager::CreateStippleMaterial ( android_vulkan::Renderer &r
             data,
             h._maskOffset,
             android_vulkan::eFormat::Unorm,
-            commandBuffers
+            commandBuffers,
+            fences
         );
 
         if ( !texture )
@@ -280,7 +291,8 @@ MaterialRef MaterialManager::CreateStippleMaterial ( android_vulkan::Renderer &r
             data,
             h._normalOffset,
             android_vulkan::eFormat::Unorm,
-            commandBuffers
+            commandBuffers,
+            fences
         );
 
         if ( !texture )
@@ -296,7 +308,8 @@ MaterialRef MaterialManager::CreateStippleMaterial ( android_vulkan::Renderer &r
             data,
             h._paramOffset,
             android_vulkan::eFormat::Unorm,
-            commandBuffers
+            commandBuffers,
+            fences
         );
 
         if ( !texture )
@@ -321,7 +334,8 @@ Texture2DRef MaterialManager::LoadTexture ( android_vulkan::Renderer &renderer,
     uint8_t const* data,
     uint64_t nameOffset,
     android_vulkan::eFormat format,
-    VkCommandBuffer const* commandBuffers
+    VkCommandBuffer const* commandBuffers,
+    VkFence const* fences
 ) noexcept
 {
     auto const* name = reinterpret_cast<char const*> ( data + nameOffset );
@@ -331,8 +345,9 @@ Texture2DRef MaterialManager::LoadTexture ( android_vulkan::Renderer &renderer,
         return findResult->second;
 
     Texture2DRef texture = std::make_shared<android_vulkan::Texture2D> ();
+    VkFence fnc = fences ? fences[ commandBufferConsumed ] : VK_NULL_HANDLE;
 
-    if ( !texture->UploadData ( renderer, name, format, true, commandBuffers[ commandBufferConsumed ] ) )
+    if ( !texture->UploadData ( renderer, name, format, true, commandBuffers[ commandBufferConsumed ], fnc ) )
     {
         texture = nullptr;
     }

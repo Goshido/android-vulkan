@@ -1,3 +1,4 @@
+require "av://engine/material.lua"
 require "av://engine/script_component.lua"
 
 
@@ -138,6 +139,8 @@ local function OnActorConstructed ( self, actor )
     local min = self:GetOrigin ( actor, "Min" )
     local max = self:GetOrigin ( actor, "Max" )
     self._size = self:GetSensorSize ( min, max )
+
+    self._material = Material ( "pbr/assets/Props/Display/JURANISplash.mtl" )
 end
 
 local function QuitGame ( self )

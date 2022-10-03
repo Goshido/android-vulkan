@@ -224,7 +224,8 @@ int ScriptableMaterial::OnCreate ( lua_State* state )
     MaterialRef material = MaterialManager::GetInstance ().LoadMaterial ( *_renderer,
         consumed,
         materialFile,
-        &_commandBuffers[ _commandBufferIndex ]
+        &_commandBuffers[ _commandBufferIndex ],
+        &_fences[ _commandBufferIndex ]
     );
 
     if ( !material )

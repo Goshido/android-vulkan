@@ -380,7 +380,8 @@ bool BoxStack::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
     _sphereMaterial = MaterialManager::GetInstance ().LoadMaterial ( renderer,
         consumed,
         "pbr/assets/System/Default.mtl",
-        commandBuffers
+        commandBuffers,
+        nullptr
     );
 
     _cameraLight = std::make_shared<PointLightComponent> ();

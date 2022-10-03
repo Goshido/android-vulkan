@@ -55,7 +55,8 @@ StaticMeshComponent::StaticMeshComponent ( android_vulkan::Renderer &renderer,
     _material = MaterialManager::GetInstance ().LoadMaterial ( renderer,
         commandBufferConsumed,
         reinterpret_cast<char const*> ( data + desc._material ),
-        commandBuffers
+        commandBuffers,
+        nullptr
     );
 
     if ( !_material )
@@ -101,7 +102,8 @@ StaticMeshComponent::StaticMeshComponent ( android_vulkan::Renderer &renderer,
     _material = MaterialManager::GetInstance ().LoadMaterial ( renderer,
         commandBufferConsumed,
         material,
-        commandBuffers
+        commandBuffers,
+        nullptr
     );
 
     if ( !_material )

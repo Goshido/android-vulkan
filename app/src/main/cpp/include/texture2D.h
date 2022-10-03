@@ -69,7 +69,7 @@ class Texture2D final
         void FreeTransferResources ( Renderer &renderer ) noexcept;
 
         [[nodiscard]] VkFormat GetFormat () const noexcept;
-        [[nodiscard]] VkImage GetImage () const noexcept;
+        [[maybe_unused, nodiscard]] VkImage GetImage () const noexcept;
         [[nodiscard]] VkImageView GetImageView () const noexcept;
         [[nodiscard]] uint8_t GetMipLevelCount () const noexcept;
         [[nodiscard]] std::string const& GetName () const noexcept;
@@ -80,7 +80,8 @@ class Texture2D final
             std::string const &fileName,
             eFormat format,
             bool isGenerateMipmaps,
-            VkCommandBuffer commandBuffer
+            VkCommandBuffer commandBuffer,
+            VkFence fence
         ) noexcept;
 
         // Supported media containers:
@@ -90,7 +91,8 @@ class Texture2D final
             std::string &&fileName,
             eFormat format,
             bool isGenerateMipmaps,
-            VkCommandBuffer commandBuffer
+            VkCommandBuffer commandBuffer,
+            VkFence fence
         ) noexcept;
 
         // Supported media containers:
@@ -100,7 +102,8 @@ class Texture2D final
             std::string_view const &fileName,
             eFormat format,
             bool isGenerateMipmaps,
-            VkCommandBuffer commandBuffer
+            VkCommandBuffer commandBuffer,
+            VkFence fence
         ) noexcept;
 
         // Supported media containers:
@@ -110,7 +113,8 @@ class Texture2D final
             char const* fileName,
             eFormat format,
             bool isGenerateMipmaps,
-            VkCommandBuffer commandBuffer
+            VkCommandBuffer commandBuffer,
+            VkFence fence
         ) noexcept;
 
         [[nodiscard]] bool UploadData ( Renderer &renderer,
@@ -119,7 +123,8 @@ class Texture2D final
             VkExtent2D const &resolution,
             VkFormat format,
             bool isGenerateMipmaps,
-            VkCommandBuffer commandBuffer
+            VkCommandBuffer commandBuffer,
+            VkFence fence
         ) noexcept;
 
     private:
@@ -151,7 +156,8 @@ class Texture2D final
             size_t size,
             bool isGenerateMipmaps,
             VkImageCreateInfo const &imageInfo,
-            VkCommandBuffer commandBuffer
+            VkCommandBuffer commandBuffer,
+            VkFence fence
         ) noexcept;
 
         [[nodiscard]] static bool IsCompressed ( std::string const &fileName ) noexcept;

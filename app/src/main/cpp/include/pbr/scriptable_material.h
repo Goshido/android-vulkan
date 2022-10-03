@@ -44,7 +44,7 @@ class ScriptableMaterial final
         [[nodiscard]] static bool Init ( lua_State &vm, android_vulkan::Renderer &renderer ) noexcept;
         static void Destroy () noexcept;
 
-        // Waiting until all texture date will be uploaded to GPU.
+        // Waiting until all texture data will be uploaded to GPU.
         [[nodiscard]] static bool Sync () noexcept;
 
     private:

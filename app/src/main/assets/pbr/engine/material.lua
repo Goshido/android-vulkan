@@ -15,7 +15,8 @@ local function Constructor ( self, materialFile )
     local handle = av_MaterialCreate ( materialFile )
 
     if handle == nil then
-    return;
+        return
+    end
 
     local obj = Object ( eObjectType.Material )
 

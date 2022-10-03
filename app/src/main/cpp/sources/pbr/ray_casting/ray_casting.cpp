@@ -484,7 +484,8 @@ bool RayCasting::CreateTexture ( android_vulkan::Renderer &renderer,
 
         VK_FORMAT_R8G8B8A8_SRGB,
         false,
-        *commandBuffers
+        *commandBuffers,
+        VK_NULL_HANDLE
     );
 
     if ( !result )

@@ -125,7 +125,15 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
     if ( !result )
         return false;
 
-    if ( !_brdfLUT.UploadData ( renderer, BRDF_LUT, android_vulkan::eFormat::Unorm, false, textureCommandBuffer ) )
+    result = _brdfLUT.UploadData ( renderer,
+        BRDF_LUT,
+        android_vulkan::eFormat::Unorm,
+        false,
+        textureCommandBuffer,
+        VK_NULL_HANDLE
+    );
+
+    if ( !result )
         return false;
 
     constexpr VkSamplerCreateInfo brdfSamplerInfo

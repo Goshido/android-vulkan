@@ -273,7 +273,8 @@ bool Collision::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
     _contactMaterial = MaterialManager::GetInstance ().LoadMaterial ( renderer,
         consumed,
         "pbr/assets/System/Default.mtl",
-        commandBuffers
+        commandBuffers,
+        nullptr
     );
 
     _cameraLight = std::make_shared<PointLightComponent> ();

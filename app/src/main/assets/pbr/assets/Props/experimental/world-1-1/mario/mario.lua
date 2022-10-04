@@ -1,5 +1,6 @@
 require "av://engine/material.lua"
 require "av://engine/script_component.lua"
+require "av://engine/static_mesh_component.lua"
 
 
 -- Constants

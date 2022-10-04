@@ -28,7 +28,6 @@ class Scene final
         android_vulkan::ShapeRef                        _shapeBoxes[ 2U ] = {};
         std::vector<android_vulkan::RigidBodyRef>       _sweepTestResult {};
 
-        ComponentList                                   _freeTransferResourceList {};
         ComponentList                                   _renderableList {};
 
         lua_Number                                      _aspectRatio = 1.0;
@@ -78,7 +77,6 @@ class Scene final
         [[nodiscard]] bool OnUpdate ( double deltaTime ) noexcept;
 
         void AppendActor ( ActorRef &actor ) noexcept;
-        void FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept;
 
         [[nodiscard]] bool LoadScene ( android_vulkan::Renderer &renderer,
             char const* scene,
@@ -86,7 +84,7 @@ class Scene final
         ) noexcept;
 
         void RemoveActor ( Actor const &actor ) noexcept;
-        void Submit ( RenderSession &renderSession ) noexcept;
+        void Submit ( android_vulkan::Renderer &renderer, RenderSession &renderSession ) noexcept;
 
     private:
         [[nodiscard]] int DoOverlapTestBoxBox ( lua_State &vm,
@@ -107,6 +105,8 @@ class Scene final
             GXVec3 const &size,
             uint32_t groups
         ) noexcept;
+
+        static void FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept;
 
         [[nodiscard]] static int OnGetPenetrationBox ( lua_State* state );
         [[nodiscard]] static int OnGetPhysicsToRendererScaleFactor ( lua_State* state );

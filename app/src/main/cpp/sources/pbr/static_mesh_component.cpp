@@ -461,7 +461,7 @@ bool StaticMeshComponent::AllocateCommandBuffers ( size_t amount ) noexcept
     {
         .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
         .pNext = nullptr,
-        .flags = VK_FENCE_CREATE_SIGNALED_BIT
+        .flags = 0U
     };
 
     VkFence* fences = _fences.data ();

@@ -1,5 +1,6 @@
 #include <pbr/scene.h>
 #include <pbr/coordinate_system.h>
+#include <pbr/mesh_manager.h>
 #include <pbr/material_manager.h>
 #include <pbr/renderable_component.h>
 #include <pbr/scene_desc.h>
@@ -43,26 +44,21 @@ constexpr static size_t INITIAL_PENETRATION_SIZE = 32U;
 
 void Scene::DetachRenderable ( RenderableComponent const &component ) noexcept
 {
-    auto const remove = [] ( ComponentList &list, RenderableComponent const &component ) noexcept -> bool {
-        auto const end = list.cend ();
+    auto const end = _renderableList.cend ();
 
-        auto const findResult = std::find_if ( list.cbegin (),
-            end,
+    auto const findResult = std::find_if ( _renderableList.cbegin (),
+        end,
 
-            [ &component ] ( auto const &e ) noexcept -> bool {
-                return &e.get () == &component;
-            }
-        );
+        [ &component ] ( auto const &e ) noexcept -> bool {
+            return &e.get () == &component;
+        }
+    );
 
-        if ( findResult == end )
-            return false;
-
-        list.erase ( findResult );
-        return true;
-    };
-
-    if ( remove ( _freeTransferResourceList, component ) || remove ( _renderableList, component ) )
+    if ( findResult != end )
+    {
+        _renderableList.erase ( findResult );
         return;
+    }
 
     android_vulkan::LogError ( "pbr::Scene::DetachRenderable - Can't remove component %s.",
         component.GetName ().c_str ()
@@ -224,7 +220,6 @@ void Scene::OnDestroyDevice () noexcept
     ScriptableSweepTestResult::Destroy ( *_vm );
     _scriptablePenetration.Destroy ( *_vm );
     _gamepad.Destroy ();
-    _freeTransferResourceList.clear ();
     _renderableList.clear ();
     _actors.clear ();
 
@@ -337,22 +332,9 @@ void Scene::AppendActor ( ActorRef &actor ) noexcept
     lua_pushvalue ( _vm, _sceneHandle );
 
     _actors.push_back ( actor );
-    _actors.back ()->RegisterComponents ( *this, _freeTransferResourceList, _renderableList, *_physics, *_vm );
+    _actors.back ()->RegisterComponents ( *this, _renderableList, *_physics, *_vm );
 
     lua_pcall ( _vm, 2, 0, ScriptEngine::GetErrorHandlerIndex () );
-}
-
-void Scene::FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept
-{
-    for ( auto& component : _freeTransferResourceList )
-    {
-        // NOLINTNEXTLINE - downcast.
-        auto& renderableComponent = static_cast<RenderableComponent&> ( component.get () );
-        renderableComponent.FreeTransferResources ( renderer );
-    }
-
-    MaterialManager::GetInstance ().FreeTransferResources ( renderer );
-    _renderableList.splice ( _renderableList.cend (), _freeTransferResourceList );
 }
 
 bool Scene::LoadScene ( android_vulkan::Renderer &renderer, char const* scene, VkCommandPool commandPool ) noexcept
@@ -454,9 +436,10 @@ void Scene::RemoveActor ( Actor const &actor ) noexcept
     _actors.erase ( findResult );
 }
 
-void Scene::Submit ( RenderSession &renderSession ) noexcept
+void Scene::Submit ( android_vulkan::Renderer &renderer, RenderSession &renderSession ) noexcept
 {
     AV_TRACE ( "Submit components" )
+    FreeTransferResources ( renderer );
 
     for ( auto& component : _renderableList )
     {
@@ -529,6 +512,12 @@ int Scene::DoSweepTestBox ( lua_State &vm, GXMat4 const &local, GXVec3 const &si
     boxShape.UpdateCacheData ( local );
     _physics->SweepTest ( _sweepTestResult, shape, groups );
     return static_cast<int> ( ScriptableSweepTestResult::PublishResult ( vm, _sweepTestResult ) );
+}
+
+void Scene::FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept
+{
+    MaterialManager::GetInstance ().FreeTransferResources ( renderer );
+    MeshManager::GetInstance ().FreeTransferResources ( renderer );
 }
 
 int Scene::OnGetPenetrationBox ( lua_State* state )

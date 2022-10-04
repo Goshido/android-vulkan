@@ -116,7 +116,6 @@ void Actor::OnTransform ( GXMat4 const &transformWorld ) noexcept
 }
 
 void Actor::RegisterComponents ( Scene &scene,
-    ComponentList &freeTransferResource,
     ComponentList &renderable,
     android_vulkan::Physics &physics,
     lua_State &vm
@@ -144,7 +143,7 @@ void Actor::RegisterComponents ( Scene &scene,
         RegisterHander const handler = _registerHandlers[ static_cast<size_t> ( component->GetClassID () ) ];
 
         // C++ calling method by pointer syntax.
-        ( this->*handler ) ( component, freeTransferResource, renderable, physics, vm );
+        ( this->*handler ) ( component, renderable, physics, vm );
     }
 }
 
@@ -190,7 +189,6 @@ bool Actor::Init ( lua_State &vm ) noexcept
 
 // NOLINTNEXTLINE - can be made static.
 void Actor::AppendCameraComponent ( ComponentRef &component,
-    ComponentList &/*freeTransferResource*/,
     ComponentList &/*renderable*/,
     android_vulkan::Physics &/*physics*/,
     lua_State &vm
@@ -221,7 +219,6 @@ void Actor::AppendCameraComponent ( ComponentRef &component,
 }
 
 void Actor::AppendPointLightComponent ( ComponentRef &component,
-    ComponentList &/*freeTransferResource*/,
     ComponentList &renderable,
     android_vulkan::Physics &/*physics*/,
     lua_State &/*vm*/
@@ -235,8 +232,7 @@ void Actor::AppendPointLightComponent ( ComponentRef &component,
 }
 
 void Actor::AppendReflectionComponent ( ComponentRef &component,
-    ComponentList &freeTransferResource,
-    ComponentList &/*renderable*/,
+    ComponentList &renderable,
     android_vulkan::Physics &/*physics*/,
     lua_State &/*vm*/
 ) noexcept
@@ -244,7 +240,7 @@ void Actor::AppendReflectionComponent ( ComponentRef &component,
     // NOLINTNEXTLINE - downcast.
     auto& reflection = static_cast<ReflectionComponent&> ( *component );
 
-    freeTransferResource.emplace_back ( reflection );
+    renderable.emplace_back ( reflection );
 
     if ( !reflection.IsGlobalReflection () )
     {
@@ -253,7 +249,6 @@ void Actor::AppendReflectionComponent ( ComponentRef &component,
 }
 
 void Actor::AppendRigidBodyComponent ( ComponentRef &component,
-    ComponentList &/*freeTransferResource*/,
     ComponentList &/*renderable*/,
     android_vulkan::Physics &physics,
     lua_State &vm
@@ -287,7 +282,6 @@ void Actor::AppendRigidBodyComponent ( ComponentRef &component,
 
 // NOLINTNEXTLINE - can be made static.
 void Actor::AppendScriptComponent ( ComponentRef &component,
-    ComponentList &/*freeTransferResource*/,
     ComponentList &/*renderable*/,
     android_vulkan::Physics &/*physics*/,
     lua_State &vm
@@ -319,8 +313,7 @@ void Actor::AppendScriptComponent ( ComponentRef &component,
 }
 
 void Actor::AppendStaticMeshComponent ( ComponentRef &component,
-    ComponentList &freeTransferResource,
-    ComponentList &/*renderable*/,
+    ComponentList &renderable,
     android_vulkan::Physics &/*physics*/,
     lua_State &vm
 ) noexcept
@@ -328,7 +321,7 @@ void Actor::AppendStaticMeshComponent ( ComponentRef &component,
     // NOLINTNEXTLINE - downcast.
     auto& transformable = static_cast<StaticMeshComponent&> ( *component );
 
-    freeTransferResource.emplace_back ( transformable );
+    renderable.emplace_back ( transformable );
     _transformableComponents.emplace_back ( std::ref ( transformable ) );
 
     lua_pushvalue ( &vm, _appendComponentIndex );
@@ -355,7 +348,6 @@ void Actor::AppendStaticMeshComponent ( ComponentRef &component,
 
 // NOLINTNEXTLINE - can be made static.
 void Actor::AppendTransformComponent ( ComponentRef &component,
-    ComponentList &/*freeTransferResource*/,
     ComponentList &/*renderable*/,
     android_vulkan::Physics &/*physics*/,
     lua_State &vm
@@ -388,7 +380,6 @@ void Actor::AppendTransformComponent ( ComponentRef &component,
 
 // NOLINTNEXTLINE - can be made static.
 void Actor::AppendUnknownComponent ( ComponentRef &/*component*/,
-    ComponentList &/*freeTransferResource*/,
     ComponentList &/*renderable*/,
     android_vulkan::Physics &/*physics*/,
     lua_State &/*vm*/

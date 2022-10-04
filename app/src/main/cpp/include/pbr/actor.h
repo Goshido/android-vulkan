@@ -34,7 +34,6 @@ class Actor final
         using DestroyHander = void ( Actor::* ) ( Component &component ) noexcept;
 
         using RegisterHander = void ( Actor::* ) ( ComponentRef &component,
-            ComponentList &freeTransferResource,
             ComponentList &renderable,
             android_vulkan::Physics &physics,
             lua_State &vm
@@ -74,7 +73,6 @@ class Actor final
         void OnTransform ( GXMat4 const &transformWorld ) noexcept;
 
         void RegisterComponents ( Scene &scene,
-            ComponentList &freeTransferResource,
             ComponentList &renderable,
             android_vulkan::Physics &physics,
             lua_State &vm
@@ -84,56 +82,48 @@ class Actor final
 
     private:
         void AppendCameraComponent ( ComponentRef &component,
-            ComponentList &freeTransferResource,
             ComponentList &renderable,
             android_vulkan::Physics &physics,
             lua_State &vm
         ) noexcept;
 
         void AppendPointLightComponent ( ComponentRef &component,
-            ComponentList &freeTransferResource,
             ComponentList &renderable,
             android_vulkan::Physics &physics,
             lua_State &vm
         ) noexcept;
 
         void AppendReflectionComponent ( ComponentRef &component,
-            ComponentList &freeTransferResource,
             ComponentList &renderable,
             android_vulkan::Physics &physics,
             lua_State &vm
         ) noexcept;
 
         void AppendRigidBodyComponent ( ComponentRef &component,
-            ComponentList &freeTransferResource,
             ComponentList &renderable,
             android_vulkan::Physics &physics,
             lua_State &vm
         ) noexcept;
 
         void AppendScriptComponent ( ComponentRef &component,
-            ComponentList &freeTransferResource,
             ComponentList &renderable,
             android_vulkan::Physics &physics,
             lua_State &vm
         ) noexcept;
 
         void AppendStaticMeshComponent ( ComponentRef &component,
-            ComponentList &freeTransferResource,
             ComponentList &renderable,
             android_vulkan::Physics &physics,
             lua_State &vm
         ) noexcept;
 
         void AppendTransformComponent ( ComponentRef &component,
-            ComponentList &freeTransferResource,
             ComponentList &renderable,
             android_vulkan::Physics &physics,
             lua_State &vm
         ) noexcept;
 
         void AppendUnknownComponent ( ComponentRef &component,
-            ComponentList &freeTransferResource,
             ComponentList &renderable,
             android_vulkan::Physics &physics,
             lua_State &vm

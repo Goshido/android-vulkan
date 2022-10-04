@@ -49,6 +49,8 @@ class MaterialManager final
         MaterialManager ( MaterialManager && ) = delete;
         MaterialManager& operator = ( MaterialManager && ) = delete;
 
+        void FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept;
+
         // Note commandBuffers must point to at least 4 free command buffers.
         [[nodiscard]] MaterialRef LoadMaterial ( android_vulkan::Renderer &renderer,
             size_t &commandBufferConsumed,
@@ -56,8 +58,6 @@ class MaterialManager final
             VkCommandBuffer const* commandBuffers,
             VkFence const* fences
         ) noexcept;
-
-        void FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept;
 
         [[nodiscard]] static MaterialManager& GetInstance () noexcept;
         static void Destroy ( android_vulkan::Renderer &renderer ) noexcept;

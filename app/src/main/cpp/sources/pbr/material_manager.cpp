@@ -46,6 +46,19 @@ MaterialManager::Handler MaterialManager::_handlers[ static_cast<size_t> ( eMate
 MaterialManager* MaterialManager::_instance = nullptr;
 std::mutex MaterialManager::_mutex;
 
+void MaterialManager::FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept
+{
+    std::unique_lock<std::mutex> const lock ( _mutex );
+
+    if ( _toFreeTransferResource.empty () )
+        return;
+
+    for ( auto* texture : _toFreeTransferResource )
+        texture->FreeTransferResources ( renderer );
+
+    _toFreeTransferResource.clear ();
+}
+
 MaterialRef MaterialManager::LoadMaterial ( android_vulkan::Renderer &renderer,
     size_t &commandBufferConsumed,
     char const* fileName,
@@ -73,19 +86,6 @@ MaterialRef MaterialManager::LoadMaterial ( android_vulkan::Renderer &renderer,
 
     // C++ calling method by pointer syntax.
     return ( this->*handler ) ( renderer, commandBufferConsumed, header, data, commandBuffers, fences );
-}
-
-void MaterialManager::FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept
-{
-    std::unique_lock<std::mutex> const lock ( _mutex );
-
-    if ( _toFreeTransferResource.empty () )
-        return;
-
-    for ( auto* texture : _toFreeTransferResource )
-        texture->FreeTransferResources ( renderer );
-
-    _toFreeTransferResource.clear ();
 }
 
 MaterialManager& MaterialManager::GetInstance () noexcept

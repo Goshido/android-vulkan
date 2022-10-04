@@ -38,7 +38,7 @@ bool World1x1::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) 
         return false;
 
     _renderSession.Begin ( _scene.GetActiveCameraLocalMatrix (), _scene.GetActiveCameraProjectionMatrix () );
-    _scene.Submit ( _renderSession );
+    _scene.Submit ( renderer, _renderSession );
 
     if ( !_scene.OnUpdate ( deltaTime ) )
         return false;

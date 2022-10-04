@@ -37,6 +37,7 @@ class ReflectionComponent final : public RenderableComponent, public Transformab
 
     private:
         void FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept override;
+        [[nodiscard]] ComponentRef& GetReference () noexcept override;
         void Submit ( RenderSession &renderSession ) noexcept override;
         void OnTransform ( GXMat4 const &transformWorld ) noexcept override;
 };

@@ -252,6 +252,7 @@ void ScriptEngine::Free ( lua_State* state ) noexcept
     ScriptableGXMat3::Destroy ();
     StaticMeshComponent::Destroy ();
     ScriptableMaterial::Destroy ();
+    Actor::Destroy ();
 }
 
 bool ScriptEngine::LoadScript ( lua_State* vm,

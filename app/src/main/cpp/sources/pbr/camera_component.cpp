@@ -149,6 +149,13 @@ bool CameraComponent::Init ( lua_State &vm ) noexcept
     return true;
 }
 
+ComponentRef& CameraComponent::GetReference () noexcept
+{
+    // TODO
+    static ComponentRef dummy {};
+    return dummy;
+}
+
 int CameraComponent::OnCreate ( lua_State* /*state*/ )
 {
     // TODO

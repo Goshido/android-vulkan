@@ -199,6 +199,13 @@ bool RigidBodyComponent::Init ( lua_State &vm ) noexcept
     return true;
 }
 
+ComponentRef& RigidBodyComponent::GetReference () noexcept
+{
+    // TODO
+    static ComponentRef dummy {};
+    return dummy;
+}
+
 void RigidBodyComponent::Setup ( android_vulkan::ShapeRef &shape ) noexcept
 {
     android_vulkan::RigidBody& body = *_rigidBody;

@@ -90,6 +90,13 @@ bool TransformComponent::Init ( lua_State &vm ) noexcept
     return true;
 }
 
+ComponentRef& TransformComponent::GetReference () noexcept
+{
+    // TODO
+    static ComponentRef dummy {};
+    return dummy;
+}
+
 int TransformComponent::OnCreate ( lua_State* /*state*/ )
 {
     // TODO

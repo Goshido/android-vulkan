@@ -42,6 +42,8 @@ class RigidBodyComponent final : public Component
         [[nodiscard]] static bool Init ( lua_State &vm ) noexcept;
 
     private:
+        [[nodiscard]] ComponentRef& GetReference () noexcept override;
+
         void Setup ( android_vulkan::ShapeRef &shape ) noexcept;
 
         [[nodiscard]] static int OnAddForce ( lua_State* state );

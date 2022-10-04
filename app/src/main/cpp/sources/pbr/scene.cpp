@@ -135,6 +135,10 @@ bool Scene::OnInitDevice ( android_vulkan::Renderer &renderer, android_vulkan::P
     constexpr luaL_Reg const extensions[] =
     {
         {
+            .name = "av_SceneAppendActor",
+            .func = &Scene::OnAppendActor
+        },
+        {
             .name = "av_SceneGetPenetrationBox",
             .func = &Scene::OnGetPenetrationBox
         },
@@ -194,7 +198,7 @@ bool Scene::OnInitDevice ( android_vulkan::Renderer &renderer, android_vulkan::P
         return false;
     };
 
-    if ( !bind ( "AppendActor", _appendActorIndex ) )
+    if ( !bind ( "AppendActorFromNative", _appendActorFromNativeIndex ) )
         return false;
 
     if ( !bind ( "OnInput", _onInputIndex ) )
@@ -236,7 +240,7 @@ void Scene::OnDestroyDevice () noexcept
     _shapeBoxes[ 0U ] = nullptr;
     _shapeBoxes[ 1U ] = nullptr;
 
-    _appendActorIndex = std::numeric_limits<int>::max ();
+    _appendActorFromNativeIndex = std::numeric_limits<int>::max ();
     _onInputIndex = std::numeric_limits<int>::max ();
     _onPostPhysicsIndex = std::numeric_limits<int>::max ();
     _onPrePhysicsIndex = std::numeric_limits<int>::max ();
@@ -324,17 +328,6 @@ bool Scene::OnUpdate ( double deltaTime ) noexcept
     lua_pcall ( _vm, 2, 0, ScriptEngine::GetErrorHandlerIndex () );
 
     return true;
-}
-
-void Scene::AppendActor ( ActorRef &actor ) noexcept
-{
-    lua_pushvalue ( _vm, _appendActorIndex );
-    lua_pushvalue ( _vm, _sceneHandle );
-
-    _actors.push_back ( actor );
-    _actors.back ()->RegisterComponents ( *this, _renderableList, *_physics, *_vm );
-
-    lua_pcall ( _vm, 2, 0, ScriptEngine::GetErrorHandlerIndex () );
 }
 
 bool Scene::LoadScene ( android_vulkan::Renderer &renderer, char const* scene, VkCommandPool commandPool ) noexcept
@@ -449,6 +442,23 @@ void Scene::Submit ( android_vulkan::Renderer &renderer, RenderSession &renderSe
     }
 }
 
+void Scene::AppendActor ( ActorRef &actor ) noexcept
+{
+    if ( !lua_checkstack ( _vm, 2 ) )
+    {
+        android_vulkan::LogError ( "pbr::Scene::AppendActor - Stack too small." );
+        return;
+    }
+
+    lua_pushvalue ( _vm, _appendActorFromNativeIndex );
+    lua_pushvalue ( _vm, _sceneHandle );
+
+    _actors.push_back ( actor );
+    _actors.back ()->RegisterComponentsFromNative ( *this, _renderableList, *_physics, *_vm );
+
+    lua_pcall ( _vm, 2, 0, ScriptEngine::GetErrorHandlerIndex () );
+}
+
 int Scene::DoOverlapTestBoxBox ( lua_State &vm,
     GXMat4 const &localA,
     GXVec3 const &sizeA,
@@ -518,6 +528,14 @@ void Scene::FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcep
 {
     MaterialManager::GetInstance ().FreeTransferResources ( renderer );
     MeshManager::GetInstance ().FreeTransferResources ( renderer );
+}
+
+int Scene::OnAppendActor ( lua_State* state )
+{
+    auto& self = *static_cast<Scene*> ( lua_touserdata ( state, 1 ) );
+    self._actors.push_back ( Actor::GetReference ( *static_cast<Actor const*> ( lua_touserdata ( state, 2 ) ) ) );
+    self._actors.back ()->RegisterComponentsFromScript ( self, self._renderableList, *self._physics );
+    return 0;
 }
 
 int Scene::OnGetPenetrationBox ( lua_State* state )

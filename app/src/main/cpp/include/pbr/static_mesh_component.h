@@ -96,7 +96,8 @@ class StaticMeshComponent final : public RenderableComponent, public Transformab
         [[maybe_unused, nodiscard]] GXMat4 const& GetTransform () const noexcept;
         void SetTransform ( GXMat4 const &transform ) noexcept;
 
-        [[nodiscard]] bool Register ( lua_State &vm, Actor &actor ) noexcept;
+        [[nodiscard]] bool RegisterFromNative ( lua_State &vm, Actor &actor ) noexcept;
+        void RegisterFromScript ( Actor &actor ) noexcept;
 
         [[nodiscard]] static bool Init ( lua_State &vm, android_vulkan::Renderer &renderer ) noexcept;
         static void Destroy () noexcept;
@@ -105,6 +106,7 @@ class StaticMeshComponent final : public RenderableComponent, public Transformab
         [[maybe_unused, nodiscard]] static bool Sync () noexcept;
 
     private:
+        [[nodiscard]] ComponentRef& GetReference () noexcept override;
         void OnTransform ( GXMat4 const &transformWorld ) noexcept override;
 
         [[nodiscard]] static bool AllocateCommandBuffers ( size_t amount ) noexcept;

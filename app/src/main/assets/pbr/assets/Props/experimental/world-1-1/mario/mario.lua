@@ -1,3 +1,4 @@
+require "av://engine/actor.lua"
 require "av://engine/material.lua"
 require "av://engine/script_component.lua"
 require "av://engine/static_mesh_component.lua"
@@ -89,6 +90,15 @@ end
 
 local function OnPostPhysicsActive ( self, deltaTime )
     self._rigidBody:GetTransform ( self._transform )
+
+    if self._xActor and deltaTime < 0.5 then
+        self._xTimer = self._xTimer - deltaTime
+
+        if self._xTimer < 0.0 then
+            self._xActor = nil
+            self._xTimer = nil
+        end
+    end
 end
 
 local function OnPostPhysicsIdle ( self, deltaTime )
@@ -140,6 +150,11 @@ local function OnActorConstructed ( self, actor )
     local min = self:GetOrigin ( actor, "Min" )
     local max = self:GetOrigin ( actor, "Max" )
     self._size = self:GetSensorSize ( min, max )
+
+    self._xActor = Actor ( "XActor" )
+    self._xActor:AppendComponent ( StaticMeshComponent ( "xMESH", "pbr/assets/System/Default.mesh2" ) )
+    g_scene:AppendActor ( self._xActor )
+    self._xTimer = 5.0
 end
 
 local function QuitGame ( self )

@@ -273,19 +273,25 @@ void StaticMeshComponent::SetTransform ( GXMat4 const &transform ) noexcept
     _mesh->GetBounds ().Transform ( _worldBounds, transform );
 }
 
-bool StaticMeshComponent::Register ( lua_State &vm, Actor &actor ) noexcept
+bool StaticMeshComponent::RegisterFromNative ( lua_State &vm, Actor &actor ) noexcept
 {
+    _actor = &actor;
+
     if ( !lua_checkstack ( &vm, 2 ) )
     {
-        android_vulkan::LogError ( "pbr::StaticMeshComponent::Register - Stack too small." );
+        android_vulkan::LogError ( "pbr::StaticMeshComponent::RegisterFromNative - Stack too small." );
         return false;
     }
 
-    _actor = &actor;
     lua_pushvalue ( &vm, _registerStaticMeshComponentIndex );
     lua_pushlightuserdata ( &vm, this );
 
     return lua_pcall ( &vm, 1, 1, ScriptEngine::GetErrorHandlerIndex () ) == LUA_OK;
+}
+
+void StaticMeshComponent::RegisterFromScript ( Actor &actor ) noexcept
+{
+    _actor = &actor;
 }
 
 bool StaticMeshComponent::Init ( lua_State &vm, android_vulkan::Renderer &renderer ) noexcept
@@ -315,7 +321,7 @@ bool StaticMeshComponent::Init ( lua_State &vm, android_vulkan::Renderer &render
             .func = &StaticMeshComponent::OnDestroy
         },
         {
-            .name = "av_StaticMeshComponentGarbageCollected",
+            .name = "av_StaticMeshComponentCollectGarbage",
             .func = &StaticMeshComponent::OnGarbageCollected
         },
         {
@@ -422,6 +428,13 @@ bool StaticMeshComponent::Sync () noexcept
 
     _commandBufferIndex = 0U;
     return true;
+}
+
+ComponentRef& StaticMeshComponent::GetReference () noexcept
+{
+    auto findResult = _staticMeshes.find ( this );
+    assert ( findResult != _staticMeshes.end () );
+    return findResult->second;
 }
 
 void StaticMeshComponent::OnTransform ( GXMat4 const &transformWorld ) noexcept

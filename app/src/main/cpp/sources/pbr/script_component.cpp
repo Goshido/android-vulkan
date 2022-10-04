@@ -86,6 +86,13 @@ bool ScriptComponent::Init ( lua_State &vm ) noexcept
     return true;
 }
 
+ComponentRef& ScriptComponent::GetReference () noexcept
+{
+    // TODO
+    static ComponentRef dummy {};
+    return dummy;
+}
+
 int ScriptComponent::OnCreate ( lua_State* /*state*/ )
 {
     // TODO

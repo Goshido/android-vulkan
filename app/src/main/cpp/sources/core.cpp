@@ -174,7 +174,8 @@ void Core::OnSurfaceDestroyed () noexcept
 std::string const& Core::GetCacheDirectory () noexcept
 {
     assert ( g_Core );
-    return g_Core->_cacheDirectory;
+    static std::string const nullDirectory = "fuck!";
+    return g_Core ? g_Core->_cacheDirectory : nullDirectory;
 }
 
 void Core::Quit () noexcept
@@ -195,7 +196,7 @@ bool Core::ExecuteMessageQueue () noexcept
 
     bool result = true;
 
-    for ( auto const command: _readQueue )
+    for ( auto const command : _readQueue )
     {
         CommandHandler const handler = _commandHandlers[ static_cast<size_t> ( command ) ];
 

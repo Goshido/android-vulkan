@@ -37,7 +37,7 @@ end
 -- Metamethods
 local mt = {
     __gc = function ( self )
-        av_StaticMeshComponentGarbageCollected ( self._handle )
+        av_StaticMeshComponentCollectGarbage ( self._handle )
     end
 }
 

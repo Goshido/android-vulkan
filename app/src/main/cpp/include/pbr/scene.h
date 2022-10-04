@@ -34,7 +34,7 @@ class Scene final
         lua_Integer                                     _width = -1;
         lua_Integer                                     _height = -1;
 
-        int                                             _appendActorIndex = std::numeric_limits<int>::max ();
+        int                                             _appendActorFromNativeIndex = std::numeric_limits<int>::max ();
         int                                             _onInputIndex = std::numeric_limits<int>::max ();
         int                                             _onPostPhysicsIndex = std::numeric_limits<int>::max ();
         int                                             _onPrePhysicsIndex = std::numeric_limits<int>::max ();
@@ -76,8 +76,6 @@ class Scene final
         [[nodiscard]] bool OnResolutionChanged ( VkExtent2D const &resolution, double aspectRatio ) noexcept;
         [[nodiscard]] bool OnUpdate ( double deltaTime ) noexcept;
 
-        void AppendActor ( ActorRef &actor ) noexcept;
-
         [[nodiscard]] bool LoadScene ( android_vulkan::Renderer &renderer,
             char const* scene,
             VkCommandPool commandPool
@@ -87,6 +85,8 @@ class Scene final
         void Submit ( android_vulkan::Renderer &renderer, RenderSession &renderSession ) noexcept;
 
     private:
+        void AppendActor ( ActorRef &actor ) noexcept;
+
         [[nodiscard]] int DoOverlapTestBoxBox ( lua_State &vm,
             GXMat4 const &localA,
             GXVec3 const &sizeA,
@@ -108,6 +108,7 @@ class Scene final
 
         static void FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept;
 
+        [[nodiscard]] static int OnAppendActor ( lua_State* state );
         [[nodiscard]] static int OnGetPenetrationBox ( lua_State* state );
         [[nodiscard]] static int OnGetPhysicsToRendererScaleFactor ( lua_State* state );
         [[nodiscard]] static int OnGetRendererToPhysicsScaleFactor ( lua_State* state );

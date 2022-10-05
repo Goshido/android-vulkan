@@ -147,6 +147,7 @@ Method sets material to component.
 **Example:**
 
 ```lua
+require "av://engine/material.lua"
 require "av://engine/scene.lua"
 
 

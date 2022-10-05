@@ -345,7 +345,7 @@ void Actor::AppendRigidBodyComponentFromNative ( ComponentRef &component,
     lua_pushvalue ( &vm, _appendComponentFromNativeIndex );
     lua_pushvalue ( &vm, -2 );
 
-    if ( !rigidBodyComponent.Register ( *this, physics, vm ) )
+    if ( !rigidBodyComponent.RegisterFromNative ( *this, physics, vm ) )
     {
         android_vulkan::LogWarning (
             "pbr::Actor::AppendRigidBodyComponentFromNative - Can't register rigid body component %s.",
@@ -366,13 +366,21 @@ void Actor::AppendRigidBodyComponentFromNative ( ComponentRef &component,
 }
 
 // NOLINTNEXTLINE - can be made static.
-void Actor::AppendRigidBodyComponentFromScript ( ComponentRef &/*component*/,
+void Actor::AppendRigidBodyComponentFromScript ( ComponentRef &component,
     ComponentList &/*renderable*/,
-    android_vulkan::Physics &/*physics*/
+    android_vulkan::Physics &physics
 ) noexcept
 {
-    // TODO
-    assert ( false );
+    // NOLINTNEXTLINE - downcast.
+    auto& rigidBodyComponent = static_cast<RigidBodyComponent&> ( *component );
+
+    if ( rigidBodyComponent.RegisterFromScript ( *this, physics ) )
+        return;
+
+    android_vulkan::LogWarning (
+        "pbr::Actor::AppendRigidBodyComponentFromScript - Can't register rigid body component %s.",
+        rigidBodyComponent.GetName ().c_str ()
+    );
 }
 
 // NOLINTNEXTLINE - can be made static.

@@ -7,6 +7,7 @@
 #include <guid_generator.h>
 #include <physics.h>
 #include <shape_box.h>
+#include <shape_sphere.h>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -29,6 +30,7 @@ namespace pbr {
 //----------------------------------------------------------------------------------------------------------------------
 
 int RigidBodyComponent::_registerRigidBodyComponentIndex = std::numeric_limits<int>::max ();
+std::unordered_map<Component const*, ComponentRef> RigidBodyComponent::_rigidBodies {};
 
 RigidBodyComponent::RigidBodyComponent ( size_t &dataRead,
     RigidBodyComponentDesc const &desc,
@@ -94,7 +96,15 @@ RigidBodyComponent::RigidBodyComponent ( size_t &dataRead,
     body.SetMass ( boxDesc._mass, true );
     dataRead += sizeof ( ShapeBoxDesc );
 
-    Setup ( shape );
+    Setup ( shape, true );
+}
+
+RigidBodyComponent::RigidBodyComponent ( std::string &&name ) noexcept:
+    Component ( ClassID::RigidBody, std::move ( name ) ),
+    _actor ( nullptr ),
+    _rigidBody ( std::make_shared<android_vulkan::RigidBody> () )
+{
+    // NOTHING
 }
 
 RigidBodyComponent::RigidBodyComponent ( android_vulkan::ShapeRef &shape ) noexcept:
@@ -102,7 +112,7 @@ RigidBodyComponent::RigidBodyComponent ( android_vulkan::ShapeRef &shape ) noexc
     _actor ( nullptr ),
     _rigidBody ( std::make_shared<android_vulkan::RigidBody> () )
 {
-    Setup ( shape );
+    Setup ( shape, true );
 }
 
 RigidBodyComponent::RigidBodyComponent ( android_vulkan::ShapeRef &shape, std::string &&name ) noexcept:
@@ -110,10 +120,10 @@ RigidBodyComponent::RigidBodyComponent ( android_vulkan::ShapeRef &shape, std::s
     _actor ( nullptr ),
     _rigidBody ( std::make_shared<android_vulkan::RigidBody> () )
 {
-    Setup ( shape );
+    Setup ( shape, true );
 }
 
-bool RigidBodyComponent::Register ( Actor &actor, android_vulkan::Physics &physics, lua_State &vm ) noexcept
+bool RigidBodyComponent::RegisterFromNative ( Actor &actor, android_vulkan::Physics &physics, lua_State &vm ) noexcept
 {
     _actor = &actor;
 
@@ -131,6 +141,12 @@ bool RigidBodyComponent::Register ( Actor &actor, android_vulkan::Physics &physi
     lua_pushlightuserdata ( &vm, _rigidBody.get () );
 
     return lua_pcall ( &vm, 2, 1, ScriptEngine::GetErrorHandlerIndex () ) == LUA_OK;
+}
+
+bool RigidBodyComponent::RegisterFromScript ( Actor &actor, android_vulkan::Physics &physics ) noexcept
+{
+    _actor = &actor;
+    return physics.AddRigidBody ( _rigidBody );
 }
 
 void RigidBodyComponent::Unregister ( android_vulkan::Physics &physics ) noexcept
@@ -164,6 +180,10 @@ bool RigidBodyComponent::Init ( lua_State &vm ) noexcept
             .func = &RigidBodyComponent::OnAddForce
         },
         {
+            .name = "av_RigidBodyComponentCollectGarbage",
+            .func = &RigidBodyComponent::OnGarbageCollected
+        },
+        {
             .name = "av_RigidBodyComponentCreate",
             .func = &RigidBodyComponent::OnCreate
         },
@@ -178,6 +198,14 @@ bool RigidBodyComponent::Init ( lua_State &vm ) noexcept
         {
             .name = "av_RigidBodyComponentSetLocation",
             .func = &RigidBodyComponent::OnSetLocation
+        },
+        {
+            .name = "av_RigidBodyComponentSetShapeBox",
+            .func = &RigidBodyComponent::OnSetShapeBox
+        },
+        {
+            .name = "av_RigidBodyComponentSetShapeSphere",
+            .func = &RigidBodyComponent::OnSetShapeSphere
         },
         {
             .name = "av_RigidBodyComponentGetTransform",
@@ -199,17 +227,22 @@ bool RigidBodyComponent::Init ( lua_State &vm ) noexcept
     return true;
 }
 
-ComponentRef& RigidBodyComponent::GetReference () noexcept
+void RigidBodyComponent::Destroy () noexcept
 {
-    // TODO
-    static ComponentRef dummy {};
-    return dummy;
+    _rigidBodies.clear ();
 }
 
-void RigidBodyComponent::Setup ( android_vulkan::ShapeRef &shape ) noexcept
+ComponentRef& RigidBodyComponent::GetReference () noexcept
+{
+    auto findResult = _rigidBodies.find ( this );
+    assert ( findResult != _rigidBodies.end () );
+    return findResult->second;
+}
+
+void RigidBodyComponent::Setup ( android_vulkan::ShapeRef &shape, bool forceAwake ) noexcept
 {
     android_vulkan::RigidBody& body = *_rigidBody;
-    body.SetShape ( shape, true );
+    body.SetShape ( shape, forceAwake );
     body.SetContext ( this );
     body.SetTransformUpdateHandler ( &RigidBodyComponent::OnTransformUpdate );
 }
@@ -226,10 +259,32 @@ int RigidBodyComponent::OnAddForce ( lua_State* state )
     return 0;
 }
 
-int RigidBodyComponent::OnCreate ( lua_State* /*state*/ )
+int RigidBodyComponent::OnCreate ( lua_State* state )
 {
-    // TODO
-    return 0;
+    if ( !lua_checkstack ( state, 2 ) )
+    {
+        android_vulkan::LogWarning ( "pbr::RigidBodyComponent::OnCreate - Stack too small." );
+        return 0;
+    }
+
+    char const* name = lua_tostring ( state, 1 );
+
+    if ( !name )
+    {
+        lua_pushnil ( state );
+        return 1;
+    }
+
+    ComponentRef rigidBody = std::make_shared<RigidBodyComponent> ( name );
+
+    // NOLINTNEXTLINE - downcast.
+    auto& handle = static_cast<RigidBodyComponent &> ( *rigidBody );
+
+    lua_pushlightuserdata ( state, &handle );
+    lua_pushlightuserdata ( state, handle._rigidBody.get () );
+
+    _rigidBodies.emplace ( &handle, std::move ( rigidBody ) );
+    return 2;
 }
 
 int RigidBodyComponent::OnDestroy ( lua_State* state )
@@ -239,10 +294,40 @@ int RigidBodyComponent::OnDestroy ( lua_State* state )
     return 0;
 }
 
+int RigidBodyComponent::OnGarbageCollected ( lua_State* state )
+{
+    _rigidBodies.erase ( static_cast<Component*> ( lua_touserdata ( state, 1 ) ) );
+    return 0;
+}
+
 int RigidBodyComponent::OnGetLocation ( lua_State* state )
 {
     auto const& self = *static_cast<RigidBodyComponent const*> ( lua_touserdata ( state, 1 ) );
     ScriptableGXVec3::Extract ( state, 2 ) = self._rigidBody->GetLocation ();
+    return 0;
+}
+
+int RigidBodyComponent::OnSetShapeBox ( lua_State* state )
+{
+    auto& self = *static_cast<RigidBodyComponent*> ( lua_touserdata ( state, 1 ) );
+
+    android_vulkan::ShapeRef shape = std::make_shared<android_vulkan::ShapeBox> (
+        ScriptableGXVec3::Extract ( state, 2 )
+    );
+
+    self.Setup ( shape, lua_toboolean ( state, 3 ) );
+    return 0;
+}
+
+int RigidBodyComponent::OnSetShapeSphere ( lua_State* state )
+{
+    auto& self = *static_cast<RigidBodyComponent*> ( lua_touserdata ( state, 1 ) );
+
+    android_vulkan::ShapeRef shape = std::make_shared<android_vulkan::ShapeSphere> (
+        static_cast<float> ( lua_tonumber ( state, 2 ) )
+    );
+
+    self.Setup ( shape, lua_toboolean ( state, 3 ) );
     return 0;
 }
 

@@ -103,7 +103,7 @@ class StaticMeshComponent final : public RenderableComponent, public Transformab
         static void Destroy () noexcept;
 
         // Waiting until all mesh data will be uploaded to GPU.
-        [[maybe_unused, nodiscard]] static bool Sync () noexcept;
+        [[nodiscard]] static bool Sync () noexcept;
 
     private:
         [[nodiscard]] ComponentRef& GetReference () noexcept override;

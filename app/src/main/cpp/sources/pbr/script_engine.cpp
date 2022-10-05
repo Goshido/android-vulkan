@@ -250,6 +250,7 @@ void ScriptEngine::Free ( lua_State* state ) noexcept
     ScriptableGXQuat::Destroy ();
     ScriptableGXMat4::Destroy ();
     ScriptableGXMat3::Destroy ();
+    RigidBodyComponent::Destroy ();
     StaticMeshComponent::Destroy ();
     ScriptableMaterial::Destroy ();
     Actor::Destroy ();

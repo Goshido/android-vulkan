@@ -11,6 +11,7 @@ require "av://engine/static_mesh_component.lua"
 - [`Constructor`](#constructor)
 - [`GetLocal ( localMatrix )`](#method-get-local)
 - [`SetLocal ( localMatrix )`](#method-set-local)
+- [`SetMaterial ( material )`](#method-set-material)
 
 ## <a id="brief">Brief</a>
 
@@ -82,6 +83,8 @@ Method returns local transform of the component.
 
 - none
 
+**Example:**
+
 ```lua
 require "av://engine/scene.lua"
 
@@ -108,6 +111,8 @@ Method sets local transform of the component.
 
 - none
 
+**Example:**
+
 ```lua
 require "av://engine/scene.lua"
 
@@ -125,4 +130,30 @@ local m = GXMat4 ()
 m:RotationX ( math.rad ( 33.3 ) )
 m:SetW ( v )
 mesh:SetLocal ( m )
+```
+
+## <a id="method-set-material">`SetMaterial ( material )`</a>
+
+Method sets material to component.
+
+**Parameters:**
+
+- `material` [_required, readonly, [_Material_](./material.md)_]: material
+
+**Return values:**
+
+- none
+
+**Example:**
+
+```lua
+require "av://engine/scene.lua"
+
+
+local rock = Actor ( "Rock" )
+local mesh = StaticMeshComponent ( "Mesh", "pbr/assets/System/Default.mesh2" )
+mesh:SetMaterial ( Material ( "pbr/assets/System/Default.mtl" ) )
+
+rock:AppendComponent ( mesh )
+g_scene:AppendActor ( rock )
 ```

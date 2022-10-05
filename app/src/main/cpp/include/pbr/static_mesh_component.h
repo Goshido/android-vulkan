@@ -116,6 +116,7 @@ class StaticMeshComponent final : public RenderableComponent, public Transformab
         [[nodiscard]] static int OnGarbageCollected ( lua_State* state );
         [[nodiscard]] static int OnGetLocal ( lua_State* state );
         [[nodiscard]] static int OnSetLocal ( lua_State* state );
+        [[nodiscard]] static int OnSetMaterial ( lua_State* state );
 };
 
 } // namespace pbr

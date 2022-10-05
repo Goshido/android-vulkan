@@ -863,7 +863,7 @@ bool Texture2D::UploadDataInternal ( Renderer &renderer,
         };
 
         result = Renderer::CheckVkResult (
-            vkQueueSubmit ( renderer.GetQueue (), 1U, &submitInfo, VK_NULL_HANDLE ),
+            vkQueueSubmit ( renderer.GetQueue (), 1U, &submitInfo, fence ),
             "Texture2D::UploadDataInternal",
             "Can't submit command"
         );

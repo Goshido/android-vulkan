@@ -100,6 +100,13 @@ void ScriptableMaterial::Destroy () noexcept
     _renderer = nullptr;
 }
 
+MaterialRef& ScriptableMaterial::GetReference ( Material const &handle ) noexcept
+{
+    auto findResult = _materials.find ( &handle );
+    assert ( findResult != _materials.end () );
+    return findResult->second;
+}
+
 bool ScriptableMaterial::Sync () noexcept
 {
     if ( !_commandBufferIndex )

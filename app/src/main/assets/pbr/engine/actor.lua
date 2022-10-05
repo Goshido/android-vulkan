@@ -4,6 +4,20 @@ require "av://engine/object.lua"
 Actor = {}
 
 
+-- This function is exported to C++ side.
+function AppendComponentFromNative ( self, component )
+    local name = component:GetName ()
+    local components = self._components
+    local list = components[ name ]
+
+    if not list then
+        list = {}
+        components[ name ] = list
+    end
+
+    table.insert ( list, component )
+end
+
 -- Methods
 local function AppendComponent ( self, component )
     assert ( type ( self ) == "table" and self._type == eObjectType.Actor,
@@ -22,6 +36,7 @@ local function AppendComponent ( self, component )
 
     assert ( isComponent, [[Actor:AppendComponent - "component" is not compatible entity.]] )
     av_ActorAppendComponent ( self._handle, component._handle )
+    AppendComponentFromNative ( self, component )
 end
 
 local function CommitComponents ( self )
@@ -69,21 +84,6 @@ local function OnDestroy ( self )
 
     self._components = nil
     av_ActorDestroy ( self._handle )
-end
-
--- Helpers
--- This function is exported to C++ side.
-function AppendComponentFromNative ( self, component )
-    local name = component:GetName ()
-    local components = self._components
-    local list = components[ name ]
-
-    if not list then
-        list = {}
-        components[ name ] = list
-    end
-
-    table.insert ( list, component )
 end
 
 -- Metamethods

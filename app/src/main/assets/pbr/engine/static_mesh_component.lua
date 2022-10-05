@@ -29,6 +29,18 @@ local function SetLocal ( self, localMatrix )
     av_StaticMeshComponentSetLocal ( self._handle, localMatrix._handle )
 end
 
+local function SetMaterial ( self, material )
+    assert ( type ( self ) == "table" and self._type == eObjectType.StaticMeshComponent,
+        [[StaticMeshComponent:SetMaterial - Calling not via ":" syntax.]]
+    )
+
+    assert ( type ( material ) == "table" and material._type == eObjectType.Material,
+        [[StaticMeshComponent:SetMaterial - "material" is not a Material entity.]]
+    )
+
+    av_StaticMeshComponentSetMaterial ( self._handle, material._handle )
+end
+
 -- Engine event handlers
 local function OnDestroy ( self )
     av_StaticMeshComponentDestroy ( self._handle )
@@ -48,6 +60,7 @@ function RegisterStaticMeshComponent ( handle )
     -- Methods
     obj.GetLocal = GetLocal
     obj.SetLocal = SetLocal
+    obj.SetMaterial = SetMaterial
 
     -- Engine events
     obj.OnDestroy = OnDestroy

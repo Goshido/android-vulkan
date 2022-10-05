@@ -152,7 +152,9 @@ local function OnActorConstructed ( self, actor )
     self._size = self:GetSensorSize ( min, max )
 
     self._xActor = Actor ( "XActor" )
-    self._xActor:AppendComponent ( StaticMeshComponent ( "xMESH", "pbr/assets/System/Default.mesh2" ) )
+    local xMesh = StaticMeshComponent ( "xMESH", "pbr/assets/System/Default.mesh2" )
+    xMesh:SetMaterial ( Material ( "pbr/assets/Props/experimental/world-1-1/sensors/Sensor.mtl" ) )
+    self._xActor:AppendComponent ( xMesh )
     g_scene:AppendActor ( self._xActor )
     self._xTimer = 5.0
 end

@@ -1,5 +1,6 @@
 #include <pbr/static_mesh_component.h>
 #include <pbr/script_engine.h>
+#include <pbr/scriptable_material.h>
 #include <pbr/static_mesh_component_desc.h>
 #include <pbr/material_manager.h>
 #include <pbr/mesh_manager.h>
@@ -331,6 +332,10 @@ bool StaticMeshComponent::Init ( lua_State &vm, android_vulkan::Renderer &render
         {
             .name = "av_StaticMeshComponentSetLocal",
             .func = &StaticMeshComponent::OnSetLocal
+        },
+        {
+            .name = "av_StaticMeshComponentSetMaterial",
+            .func = &StaticMeshComponent::OnSetMaterial
         }
     };
 
@@ -581,6 +586,17 @@ int StaticMeshComponent::OnSetLocal ( lua_State* state )
 {
     auto& self = *static_cast<StaticMeshComponent*> ( lua_touserdata ( state, 1 ) );
     self.SetTransform ( ScriptableGXMat4::Extract ( state, 2 ) );
+    return 0;
+}
+
+int StaticMeshComponent::OnSetMaterial ( lua_State* state )
+{
+    auto& self = *static_cast<StaticMeshComponent*> ( lua_touserdata ( state, 1 ) );
+
+    self._material = ScriptableMaterial::GetReference (
+        *static_cast<Material const *> ( lua_touserdata ( state, 2 ) )
+    );
+
     return 0;
 }
 

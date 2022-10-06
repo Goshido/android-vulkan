@@ -117,6 +117,7 @@ end
 
 -- Engine event handlers
 local function OnDestroy ( self )
+    g_Storage[ self._nativeRigidBody ] = nil
     av_RigidBodyComponentDestroy ( self._handle )
 end
 
@@ -130,6 +131,9 @@ local mt = {
 -- This function is exported to C++ side.
 function RegisterRigidBodyComponent ( handle, nativeRigidBody )
     local obj = Component ( eObjectType.RigidBodyComponent, handle )
+
+    -- Data
+    obj._nativeRigidBody = nativeRigidBody
 
     -- Methods
     obj.AddForce = AddForce
@@ -145,7 +149,6 @@ function RegisterRigidBodyComponent ( handle, nativeRigidBody )
     obj.OnDestroy = OnDestroy
 
     g_Storage[ nativeRigidBody ] = obj
-
     return setmetatable ( obj, mt )
 end
 

@@ -96,6 +96,7 @@ local function OnPostPhysicsActive ( self, deltaTime )
         self._xTimer = self._xTimer - deltaTime
 
         if self._xTimer < 0.0 then
+            self._xActor:Destroy ()
             self._xActor = nil
             self._xTimer = nil
         end

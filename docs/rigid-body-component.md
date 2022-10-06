@@ -13,6 +13,8 @@ require "av://engine/rigid_body_component.lua"
 - [`GetLocation ( location )`](#method-get-location)
 - [`SetLocation ( location )`](#method-set-location)
 - [`GetName ()`](#method-get-name)
+- [`SetShapeBox ( size, forceAwake )`](#method-set-shape-box)
+- [`SetShapeSphere ( radius, forceAwake )`](#method-set-shape-sphere)
 - [`GetTransform ( transform )`](#method-get-transform)
 - [`GetVelocityLinear ( velocity )`](#method-get-velocity-linear)
 - [`SetVelocityLinear ( velocity, forceAwake )`](#method-set-velocity-linear)
@@ -48,7 +50,7 @@ Metamethod | Used
 `__concat` | ❌
 `__div` | ❌
 `__eq` | ❌
-`__gc` | ❌
+`__gc` | ✔️
 `__idiv` | ❌
 `__index` | ❌
 `__le` | ❌
@@ -209,6 +211,68 @@ g_scene:AppendActor ( actor )
 
 local rigidBody = actor:FindComponent ( "RigidBody" )
 local name = rigidBody:GetName ()
+```
+
+## <a id="method-set-shape-box">`SetShapeBox ( size, forceAwake )`</a>
+
+Method sets box shape with supplied `size` of the [_GXVec3_](./gx-vec3.md) type to the rigid body.
+
+**Note:** This method sets size in [physics coordinate system](#note-physics-coordinate-system).
+
+**Parameters:**
+
+- `size` [_required, readonly, [_GXVec3_](./gx-vec3.md)_]: size of the box shape
+- `forceAwake` [_required, readonly, number_]: awake rigid body object simulation or not
+
+**Return values:**
+
+- none
+
+**Example:**
+
+```lua
+require "av://engine/scene.lua"
+
+
+local actor = Actor ( "Box" )
+
+local body = RigidBodyComponent ( "RigidBody" )
+local size = GXVec3 ()
+size:Init ( 1.0, 1.0, 1.0 )
+body:SetShapeBox ( size, true )
+
+actor:AppendComponent ( body )
+g_scene:AppendActor ( actor )
+```
+
+## <a id="method-set-shape-sphere">`SetShapeSphere ( radius, forceAwake )`</a>
+
+Method sets sphere shape with supplied `radius` to the rigid body.
+
+**Note:** This method sets radius in [physics coordinate system](#note-physics-coordinate-system).
+
+**Parameters:**
+
+- `radius` [_required, readonly, number_]: size of the box shape
+- `forceAwake` [_required, readonly, number_]: awake rigid body object simulation or not
+
+**Return values:**
+
+- none
+
+**Example:**
+
+```lua
+require "av://engine/scene.lua"
+
+
+local actor = Actor ( "Box" )
+
+local body = RigidBodyComponent ( "RigidBody" )
+body:SetShapeSphere ( 0.5, true )
+
+actor:AppendComponent ( body )
+g_scene:AppendActor ( actor )
 ```
 
 ## <a id="method-get-transform">`GetTransform ( transform )`</a>

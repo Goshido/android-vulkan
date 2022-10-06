@@ -2,6 +2,7 @@ require "av://engine/actor.lua"
 require "av://engine/material.lua"
 require "av://engine/script_component.lua"
 require "av://engine/static_mesh_component.lua"
+require "av://engine/rigid_body_component.lua"
 
 
 -- Constants
@@ -151,11 +152,26 @@ local function OnActorConstructed ( self, actor )
     local max = self:GetOrigin ( actor, "Max" )
     self._size = self:GetSensorSize ( min, max )
 
-    self._xActor = Actor ( "XActor" )
-    local xMesh = StaticMeshComponent ( "xMESH", "pbr/assets/System/Default.mesh2" )
+    local xMesh = StaticMeshComponent ( "xMesh", "pbr/assets/System/Default.mesh2" )
     xMesh:SetMaterial ( Material ( "pbr/assets/Props/experimental/world-1-1/sensors/Sensor.mtl" ) )
-    self._xActor:AppendComponent ( xMesh )
-    g_scene:AppendActor ( self._xActor )
+
+    local offset = GXVec3 ()
+    offset:Init ( 0.0, 3.0, 0.0 )
+
+    local location = GXVec3 ()
+    self._transform:GetW ( location )
+    location:Sum ( location, offset )
+
+    local xRigidBody = RigidBodyComponent ( "xRigidBody" )
+    xRigidBody:SetLocation ( location )
+    xRigidBody:SetShapeSphere ( 0.5, true )
+
+    local xActor = Actor ( "xActor" )
+    xActor:AppendComponent ( xMesh )
+    xActor:AppendComponent ( xRigidBody )
+    g_scene:AppendActor ( xActor )
+
+    self._xActor = xActor
     self._xTimer = 5.0
 end
 

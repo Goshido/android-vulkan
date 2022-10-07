@@ -396,7 +396,7 @@ void Actor::AppendScriptComponentFromNative ( ComponentRef &component,
     // NOLINTNEXTLINE - downcast.
     auto& scriptComponent = static_cast<ScriptComponent&> ( *component );
 
-    if ( !scriptComponent.Register ( vm ) )
+    if ( !scriptComponent.RegisterFromNative ( vm, *this ) )
     {
         android_vulkan::LogWarning (
             "pbr::Actor::AppendScriptComponentFromNative - Can't register script component %s.",
@@ -417,13 +417,14 @@ void Actor::AppendScriptComponentFromNative ( ComponentRef &component,
 }
 
 // NOLINTNEXTLINE - can be made static.
-void Actor::AppendScriptComponentFromScript ( ComponentRef &/*component*/,
+void Actor::AppendScriptComponentFromScript ( ComponentRef &component,
     ComponentList &/*renderable*/,
     android_vulkan::Physics &/*physics*/
 ) noexcept
 {
-    // TODO
-    assert ( false );
+    // NOLINTNEXTLINE - downcast.
+    auto& scriptComponent = static_cast<ScriptComponent&> ( *component );
+    scriptComponent.RegisterFromScript ( *this );
 }
 
 void Actor::AppendStaticMeshComponentFromNative ( ComponentRef &component,

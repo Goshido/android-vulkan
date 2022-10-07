@@ -147,22 +147,18 @@ void ScriptEngine::InitLibraries () const noexcept
             .name = LUA_GNAME,
             .func = &luaopen_base
         },
-
         {
             .name = LUA_LOADLIBNAME,
             .func = &luaopen_package
         },
-
         {
             .name = LUA_MATHLIBNAME,
             .func = &luaopen_math
         },
-
         {
             .name = LUA_STRLIBNAME,
             .func = &luaopen_string
         },
-
         {
             .name = LUA_TABLIBNAME,
             .func = &luaopen_table
@@ -252,6 +248,7 @@ void ScriptEngine::Free ( lua_State* state ) noexcept
     ScriptableGXMat3::Destroy ();
     RigidBodyComponent::Destroy ();
     StaticMeshComponent::Destroy ();
+    ScriptComponent::Destroy ();
     ScriptableMaterial::Destroy ();
     Actor::Destroy ();
 }

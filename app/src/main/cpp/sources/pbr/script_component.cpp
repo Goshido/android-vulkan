@@ -5,6 +5,12 @@ GX_DISABLE_COMMON_WARNINGS
 
 #include <cassert>
 
+extern "C" {
+
+#include <lua/lauxlib.h>
+
+} // extern "C"
+
 GX_RESTORE_WARNING_STATE
 
 
@@ -15,6 +21,7 @@ namespace pbr {
 //----------------------------------------------------------------------------------------------------------------------
 
 int ScriptComponent::_registerScriptComponentIndex = std::numeric_limits<int>::max ();
+std::unordered_map<Component const*, ComponentRef> ScriptComponent::_scripts {};
 
 ScriptComponent::ScriptComponent ( ScriptComponentDesc const &desc, uint8_t const* data ) noexcept:
     Component ( ClassID::Script )
@@ -29,6 +36,12 @@ ScriptComponent::ScriptComponent ( ScriptComponentDesc const &desc, uint8_t cons
     {
         _params = reinterpret_cast<char const*> ( data + desc._params );
     }
+}
+
+ScriptComponent::ScriptComponent ( std::string &&name ) noexcept:
+    Component ( ClassID::Script, std::move ( name ) )
+{
+    // NOTHING
 }
 
 ScriptComponent::ScriptComponent ( std::string &&script, std::string &&name ) noexcept:
@@ -46,13 +59,15 @@ ScriptComponent::ScriptComponent ( std::string &&script, std::string &&params, s
     // NOTHING
 }
 
-bool ScriptComponent::Register ( lua_State &vm ) noexcept
+bool ScriptComponent::RegisterFromNative ( lua_State &vm, Actor &actor ) noexcept
 {
     if ( !lua_checkstack ( &vm, 5 ) )
     {
-        android_vulkan::LogError ( "pbr::ScriptComponent::Register - Stack too small." );
+        android_vulkan::LogError ( "pbr::ScriptComponent::RegisterFromNative - Stack too small." );
         return false;
     }
+
+    _actor = &actor;
 
     lua_pushvalue ( &vm, _registerScriptComponentIndex );
     lua_pushlightuserdata ( &vm, this );
@@ -64,6 +79,11 @@ bool ScriptComponent::Register ( lua_State &vm ) noexcept
         lua_pushlstring ( &vm, _params.c_str (), _params.size () );
 
     return lua_pcall ( &vm, 3, 1, ScriptEngine::GetErrorHandlerIndex () ) == LUA_OK;
+}
+
+void ScriptComponent::RegisterFromScript ( Actor &actor ) noexcept
+{
+    _actor = &actor;
 }
 
 bool ScriptComponent::Init ( lua_State &vm ) noexcept
@@ -82,20 +102,75 @@ bool ScriptComponent::Init ( lua_State &vm ) noexcept
 
     _registerScriptComponentIndex = lua_gettop ( &vm );
 
-    lua_register ( &vm, "av_ScriptComponentCreate", &ScriptComponent::OnCreate );
+
+    constexpr luaL_Reg const extensions[] =
+    {
+        {
+            .name = "av_ScriptComponentCreate",
+            .func = &ScriptComponent::OnCreate
+        },
+        {
+            .name = "av_ScriptComponentDestroy",
+            .func = &ScriptComponent::OnDestroy
+        },
+        {
+            .name = "av_ScriptComponentCollectGarbage",
+            .func = &ScriptComponent::OnGarbageCollected
+        }
+    };
+
+    for ( auto const& extension : extensions )
+        lua_register ( &vm, extension.name, extension.func );
+
     return true;
+}
+
+void ScriptComponent::Destroy () noexcept
+{
+    _scripts.clear ();
 }
 
 ComponentRef& ScriptComponent::GetReference () noexcept
 {
-    // TODO
-    static ComponentRef dummy {};
-    return dummy;
+    auto findResult = _scripts.find ( this );
+    assert ( findResult != _scripts.end () );
+    return findResult->second;
 }
 
-int ScriptComponent::OnCreate ( lua_State* /*state*/ )
+int ScriptComponent::OnCreate ( lua_State* state )
 {
-    // TODO
+    if ( !lua_checkstack ( state, 1 ) )
+    {
+        android_vulkan::LogWarning ( "pbr::ScriptComponent::OnCreate - Stack too small." );
+        return 0;
+    }
+
+    char const* name = lua_tostring ( state, 1 );
+
+    if ( !name )
+    {
+        lua_pushnil ( state );
+        return 1;
+    }
+
+    ComponentRef component = std::make_shared<ScriptComponent> ( name );
+    Component* handle = component.get ();
+    _scripts.emplace ( handle, std::move ( component ) );
+
+    lua_pushlightuserdata ( state, handle );
+    return 1;
+}
+
+int ScriptComponent::OnDestroy ( lua_State* state )
+{
+    auto& self = *static_cast<ScriptComponent*> ( lua_touserdata ( state, 1 ) );
+    self._actor->DestroyComponent ( self );
+    return 0;
+}
+
+int ScriptComponent::OnGarbageCollected ( lua_State* state )
+{
+    _scripts.erase ( static_cast<Component*> ( lua_touserdata ( state, 1 ) ) );
     return 0;
 }
 

@@ -87,7 +87,6 @@ local function Constructor ( self, handle, params )
 
     -- Engine events
     obj.OnActorConstructed = OnActorConstructed
-    obj.OnDestroy = OnDestroy
     obj.OnPrePhysics = OnPrePhysicsSeek
 
     return obj

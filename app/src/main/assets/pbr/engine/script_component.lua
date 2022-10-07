@@ -1,5 +1,6 @@
 require "av://engine/component.lua"
 require "av://engine/input_event.lua"
+require "av://engine/logger.lua"
 
 
 ScriptComponent = {}
@@ -25,20 +26,44 @@ local function MakeParams ( params )
     return result
 end
 
-local function MakeScriptComponent ( handle, script, params )
-    local fabric = require ( script )
-    return fabric ( handle, params )
+-- Engine event handlers
+local function OnDestroy ( self )
+    if type ( self.OnAboutToDestroy ) == "function" then
+        self:OnAboutToDestroy ()
+    end
+
+    av_ScriptComponentDestroy ( self._handle )
 end
 
 -- Metamethods
+local mt = {
+    __gc = function ( self )
+        av_ScriptComponentCollectGarbage ( self._handle )
+    end
+}
+
+local function MakeScriptComponent ( handle, script, params )
+    local fabric = require ( script )
+    obj = fabric ( handle, params )
+
+    if not obj then
+        return nil
+    end
+
+    -- Engine events
+    obj.OnDestroy = OnDestroy
+
+    return setmetatable ( obj, mt )
+end
+
 local function Constructor ( self, ... )
     local argv = { ... }
     local argc = #argv
 
     if argc == 1 then
-        -- Call originated from C++ side.
+        -- Call originated from ScriptComponent successor constructor.
         local handle = argv[ 1 ]
-        return Component ( eObjectType.ScriptComponent, handle )
+        return setmetatable ( Component ( eObjectType.ScriptComponent, handle ), mt )
     end
 
     if argc ~= 3 then

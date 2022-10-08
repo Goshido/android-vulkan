@@ -1,8 +1,4 @@
-require "av://engine/actor.lua"
-require "av://engine/material.lua"
 require "av://engine/script_component.lua"
-require "av://engine/static_mesh_component.lua"
-require "av://engine/rigid_body_component.lua"
 
 
 -- Constants
@@ -91,16 +87,6 @@ end
 
 local function OnPostPhysicsActive ( self, deltaTime )
     self._rigidBody:GetTransform ( self._transform )
-
-    if self._xActor and deltaTime < 0.5 then
-        self._xTimer = self._xTimer - deltaTime
-
-        if self._xTimer < 0.0 then
-            self._xActor:Destroy ()
-            self._xActor = nil
-            self._xTimer = nil
-        end
-    end
 end
 
 local function OnPostPhysicsIdle ( self, deltaTime )
@@ -152,31 +138,6 @@ local function OnActorConstructed ( self, actor )
     local min = self:GetOrigin ( actor, "Min" )
     local max = self:GetOrigin ( actor, "Max" )
     self._size = self:GetSensorSize ( min, max )
-
-    local xMesh = StaticMeshComponent ( "xMesh", "pbr/assets/System/Default.mesh2" )
-    xMesh:SetMaterial ( Material ( "pbr/assets/Props/experimental/world-1-1/sensors/Sensor.mtl" ) )
-
-    local offset = GXVec3 ()
-    offset:Init ( 0.0, 3.0, 0.0 )
-
-    local location = GXVec3 ()
-    self._transform:GetW ( location )
-    location:Sum ( location, offset )
-
-    local xRigidBody = RigidBodyComponent ( "xRigidBody" )
-    xRigidBody:SetLocation ( location )
-    xRigidBody:SetShapeSphere ( 0.5, true )
-
-    local xScript = ScriptComponent ( "xScript", "av://assets/Props/experimental/world-1-1/debris/debris.lua", nil )
-
-    local xActor = Actor ( "xActor" )
-    xActor:AppendComponent ( xMesh )
-    xActor:AppendComponent ( xRigidBody )
-    xActor:AppendComponent ( xScript )
-    g_scene:AppendActor ( xActor )
-
-    self._xActor = xActor
-    self._xTimer = 5.0
 end
 
 local function QuitGame ( self )

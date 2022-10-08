@@ -5,6 +5,18 @@ require "av://engine/gx_mat4.lua"
 StaticMeshComponent = {}
 
 -- Methods
+local function SetColor0 ( self, color0 )
+    assert ( type ( self ) == "table" and self._type == eObjectType.StaticMeshComponent,
+        [[StaticMeshComponent:SetColor0 - Calling not via ":" syntax.]]
+    )
+
+    assert ( type ( color0 ) == "table" and color0._type == eObjectType.GXVec4,
+        [[StaticMeshComponent:SetColor0 - "color0" is not GXVec4.]]
+    )
+
+    av_StaticMeshComponentSetColor0 ( self._handle, color0._handle )
+end
+
 local function GetLocal ( self, localMatrix )
     assert ( type ( self ) == "table" and self._type == eObjectType.StaticMeshComponent,
         [[StaticMeshComponent:GetLocal - Calling not via ":" syntax.]]
@@ -58,6 +70,7 @@ function RegisterStaticMeshComponent ( handle )
     local obj = Component ( eObjectType.StaticMeshComponent, handle )
 
     -- Methods
+    obj.SetColor0 = SetColor0
     obj.GetLocal = GetLocal
     obj.SetLocal = SetLocal
     obj.SetMaterial = SetMaterial

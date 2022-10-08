@@ -360,5 +360,5 @@ actor:AppendComponent ( body )
 g_scene:AppendActor ( actor )
 
 local velocity = GXVec3 ()
-body:GetVelocityLinear ( velocity )
+body:SetVelocityLinear ( velocity, true )
 ```

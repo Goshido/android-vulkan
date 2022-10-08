@@ -1,5 +1,6 @@
 #include <pbr/static_mesh_component.h>
 #include <pbr/script_engine.h>
+#include <pbr/scriptable_gxvec4.h>
 #include <pbr/scriptable_material.h>
 #include <pbr/static_mesh_component_desc.h>
 #include <pbr/material_manager.h>
@@ -326,6 +327,10 @@ bool StaticMeshComponent::Init ( lua_State &vm, android_vulkan::Renderer &render
             .func = &StaticMeshComponent::OnGarbageCollected
         },
         {
+            .name = "av_StaticMeshComponentSetColor0",
+            .func = &StaticMeshComponent::OnSetColor0
+        },
+        {
             .name = "av_StaticMeshComponentGetLocal",
             .func = &StaticMeshComponent::OnGetLocal
         },
@@ -572,6 +577,14 @@ int StaticMeshComponent::OnDestroy ( lua_State* state )
 int StaticMeshComponent::OnGarbageCollected ( lua_State* state )
 {
     _staticMeshes.erase ( static_cast<Component*> ( lua_touserdata ( state, 1 ) ) );
+    return 0;
+}
+
+int StaticMeshComponent::OnSetColor0 ( lua_State* state )
+{
+    auto& self = *static_cast<StaticMeshComponent*> ( lua_touserdata ( state, 1 ) );
+    GXVec4 const& color = ScriptableGXVec4::Extract ( state, 2 );
+    self.SetColor0 ( GXColorRGB ( color._data[ 0U ], color._data[ 1U ], color._data[ 2U ], color._data[ 3U ] ) );
     return 0;
 }
 

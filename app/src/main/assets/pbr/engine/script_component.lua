@@ -66,7 +66,7 @@ local function Constructor ( self, ... )
         return setmetatable ( Component ( eObjectType.ScriptComponent, handle ), mt )
     end
 
-    if argc ~= 3 then
+    if argc ~= 2 and argc ~= 3 then
         error ( "ScriptComponent:Constructor - Unexpected amount of arguments. Must be 1 or 3. Got " .. argc .. "." )
         return nil
     end

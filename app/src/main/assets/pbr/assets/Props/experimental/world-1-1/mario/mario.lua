@@ -167,9 +167,12 @@ local function OnActorConstructed ( self, actor )
     xRigidBody:SetLocation ( location )
     xRigidBody:SetShapeSphere ( 0.5, true )
 
+    local xScript = ScriptComponent ( "xScript", "av://assets/Props/experimental/world-1-1/debris/debris.lua", nil )
+
     local xActor = Actor ( "xActor" )
     xActor:AppendComponent ( xMesh )
     xActor:AppendComponent ( xRigidBody )
+    xActor:AppendComponent ( xScript )
     g_scene:AppendActor ( xActor )
 
     self._xActor = xActor

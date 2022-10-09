@@ -65,3 +65,9 @@ For example:
 Variable name | Value
 --- | ---
 `ANDROID_VULKAN_DXC_ROOT` | `D:\Development\DXC-builds\Release-2022-09-14\bin`
+
+### Reported issues
+
+Name | Link | Status
+--- | --- | ---
+SPIR-V degradation 1.7.2207.10069 compare to 1.7.2207.10036 | [#4714](https://github.com/microsoft/DirectXShaderCompiler/issues/4714) | ❌ Submitted

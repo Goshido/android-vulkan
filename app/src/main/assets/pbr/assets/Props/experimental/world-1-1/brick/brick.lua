@@ -1,13 +1,19 @@
+require "av://engine/material.lua"
+require "av://engine/scene.lua"
 require "av://engine/script_component.lua"
-require "av://engine/logger.lua"
+require "av://engine/static_mesh_component.lua"
 
 
 -- Constants
+local DEBRIS_RADIUS = 0.2
+local DEBRIS_VELOCITY_FACTOR = 2.5e-1
+
 local VELOCITY_MULTIPLIER = GXVec3 ()
 VELOCITY_MULTIPLIER:Init ( 1.0, -0.75, 1.0 )
 
+
 -- Class declaration
-local Brick = {}
+local BrickExt = {}
 
 -- Methods
 local function GetOrigin ( self, actor, component )
@@ -16,6 +22,36 @@ local function GetOrigin ( self, actor, component )
     local origin = GXVec3 ()
     t:GetW ( origin )
     return origin
+end
+
+local function SpawnDebris ( self, debrisBegin, debrisEnd )
+    local brickActor = self._actor
+
+    local mesh = StaticMeshComponent ( "Mesh", "pbr/assets/Props/experimental/world-1-1/debris/debris.mesh2" )
+    mesh:SetMaterial ( Material ( "pbr/assets/Props/experimental/world-1-1/brick/brick.mtl" ) )
+
+    local rigidBody = RigidBodyComponent ( "RigidBody" )
+
+    local location = self:GetOrigin ( brickActor, debrisBegin )
+    local velocity = GXVec3 ()
+    velocity:Subtract ( self:GetOrigin ( brickActor, debrisEnd ), location )
+    velocity:MultiplyScalar ( velocity, DEBRIS_VELOCITY_FACTOR )
+    rigidBody:SetVelocityLinear ( velocity, true )
+
+    location:MultiplyScalar ( location, g_scene:GetRendererToPhysicsScaleFactor () )
+    rigidBody:SetLocation ( location )
+
+    rigidBody:SetShapeSphere ( DEBRIS_RADIUS, true )
+
+    local debrisActor = Actor ( "Debris" )
+    debrisActor:AppendComponent ( mesh )
+    debrisActor:AppendComponent ( rigidBody )
+
+    debrisActor:AppendComponent (
+        ScriptComponent ( "Script", "av://assets/Props/experimental/world-1-1/debris/debris.lua", nil )
+    )
+
+    g_scene:AppendActor ( debrisActor )
 end
 
 local function GetSensorSize ( self, min, max )
@@ -61,6 +97,11 @@ local function OnPrePhysicsMonitor ( self, deltaTime )
         return
     end
 
+    self:SpawnDebris ( "DebrisBegin001", "DebrisEnd001" )
+    self:SpawnDebris ( "DebrisBegin002", "DebrisEnd002" )
+    self:SpawnDebris ( "DebrisBegin003", "DebrisEnd003" )
+    self:SpawnDebris ( "DebrisBegin004", "DebrisEnd004" )
+
     mario:Hit ( VELOCITY_MULTIPLIER )
     self._actor:Destroy ()
 end
@@ -84,6 +125,7 @@ local function Constructor ( self, handle, params )
     obj.GetOrigin = GetOrigin
     obj.GetSensorSize = GetSensorSize
     obj.GetSensorTransform = GetSensorTransform
+    obj.SpawnDebris = SpawnDebris
 
     -- Engine events
     obj.OnActorConstructed = OnActorConstructed
@@ -92,7 +134,7 @@ local function Constructor ( self, handle, params )
     return obj
 end
 
-setmetatable ( Brick, { __call = Constructor } )
+setmetatable ( BrickExt, { __call = Constructor } )
 
--- Module function: fabric callable for Brick class
-return Brick
+-- Module function: fabric callable for BrickExt class
+return BrickExt

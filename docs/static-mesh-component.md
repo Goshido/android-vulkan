@@ -9,6 +9,10 @@ require "av://engine/static_mesh_component.lua"
 - [_Brief_](#brief)
 - [_Metamethods_](#metamethods)
 - [`Constructor`](#constructor)
+- [`SetColor0 ( color )`](#method-set-color-0)
+- [`SetColor1 ( color )`](#method-set-color-1)
+- [`SetColor2 ( color )`](#method-set-color-2)
+- [`SetEmission ( color )`](#method-set-emission)
 - [`GetLocal ( localMatrix )`](#method-get-local)
 - [`SetLocal ( localMatrix )`](#method-set-local)
 - [`SetMaterial ( material )`](#method-set-material)
@@ -69,6 +73,122 @@ local mesh = StaticMeshComponent ( "Mesh", "pbr/assets/System/Default.mesh2" )
 
 rock:AppendComponent ( mesh )
 g_scene:AppendActor ( rock )
+```
+
+## <a id="method-set-color-0">`SetColor0 ( color )`</a>
+
+Method sets material's [_Color0_](./material.md#blend-mask) value.
+
+**Parameters:**
+
+- `color` [_required, readonly, [_GXVec4_](./gx-vec4.md)_]: color value
+
+**Return values:**
+
+- none
+
+**Example:**
+
+```lua
+require "av://engine/scene.lua"
+
+
+local rock = Actor ( "Rock" )
+local mesh = StaticMeshComponent ( "Mesh", "pbr/assets/System/Default.mesh2" )
+
+rock:AppendComponent ( mesh )
+g_scene:AppendActor ( rock )
+
+local color = GXVec4 ()
+color:Init ( 0.45, 0.72, 0.0, 1.0 )
+mesh:SetColor0 ( color )
+```
+
+## <a id="method-set-color-1">`SetColor1 ( color )`</a>
+
+Method sets material's [_Color1_](./material.md#blend-mask) value.
+
+**Parameters:**
+
+- `color` [_required, readonly, [_GXVec3_](./gx-vec3.md)_]: color value
+
+**Return values:**
+
+- none
+
+**Example:**
+
+```lua
+require "av://engine/scene.lua"
+
+
+local rock = Actor ( "Rock" )
+local mesh = StaticMeshComponent ( "Mesh", "pbr/assets/System/Default.mesh2" )
+
+rock:AppendComponent ( mesh )
+g_scene:AppendActor ( rock )
+
+local color = GXVec3 ()
+color:Init ( 0.45, 0.72, 0.0 )
+mesh:SetColor1 ( color )
+```
+
+## <a id="method-set-color-2">`SetColor2 ( color )`</a>
+
+Method sets material's [_Color2_](./material.md#blend-mask) value.
+
+**Parameters:**
+
+- `color` [_required, readonly, [_GXVec3_](./gx-vec3.md)_]: color value
+
+**Return values:**
+
+- none
+
+**Example:**
+
+```lua
+require "av://engine/scene.lua"
+
+
+local rock = Actor ( "Rock" )
+local mesh = StaticMeshComponent ( "Mesh", "pbr/assets/System/Default.mesh2" )
+
+rock:AppendComponent ( mesh )
+g_scene:AppendActor ( rock )
+
+local color = GXVec3 ()
+color:Init ( 0.45, 0.72, 0.0 )
+mesh:SetColor2 ( color )
+```
+
+## <a id="method-set-emission">`SetEmission ( emission )`</a>
+
+Method sets material's [_Emission_](./material.md#emisson) value.
+
+**Parameters:**
+
+- `emission` [_required, readonly, [_GXVec3_](./gx-vec3.md)_]: emission value
+
+**Return values:**
+
+- none
+
+**Example:**
+
+```lua
+require "av://engine/scene.lua"
+
+
+local rock = Actor ( "Rock" )
+local mesh = StaticMeshComponent ( "Mesh", "pbr/assets/System/Default.mesh2" )
+
+rock:AppendComponent ( mesh )
+g_scene:AppendActor ( rock )
+
+local emission = GXVec3 ()
+emission:Init ( 0.45, 0.72, 0.0 )
+mesh:SetEmission ( emission )
 ```
 
 ## <a id="method-get-local">`GetLocal ( localMatrix )`</a>

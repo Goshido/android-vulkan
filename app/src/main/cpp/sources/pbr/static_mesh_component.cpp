@@ -1,5 +1,6 @@
 #include <pbr/static_mesh_component.h>
 #include <pbr/script_engine.h>
+#include <pbr/scriptable_gxvec3.h>
 #include <pbr/scriptable_gxvec4.h>
 #include <pbr/scriptable_material.h>
 #include <pbr/static_mesh_component_desc.h>
@@ -331,6 +332,18 @@ bool StaticMeshComponent::Init ( lua_State &vm, android_vulkan::Renderer &render
             .func = &StaticMeshComponent::OnSetColor0
         },
         {
+            .name = "av_StaticMeshComponentSetColor1",
+            .func = &StaticMeshComponent::OnSetColor1
+        },
+        {
+            .name = "av_StaticMeshComponentSetColor2",
+            .func = &StaticMeshComponent::OnSetColor2
+        },
+        {
+            .name = "av_StaticMeshComponentSetEmission",
+            .func = &StaticMeshComponent::OnSetEmission
+        },
+        {
             .name = "av_StaticMeshComponentGetLocal",
             .func = &StaticMeshComponent::OnGetLocal
         },
@@ -585,6 +598,30 @@ int StaticMeshComponent::OnSetColor0 ( lua_State* state )
     auto& self = *static_cast<StaticMeshComponent*> ( lua_touserdata ( state, 1 ) );
     GXVec4 const& color = ScriptableGXVec4::Extract ( state, 2 );
     self.SetColor0 ( GXColorRGB ( color._data[ 0U ], color._data[ 1U ], color._data[ 2U ], color._data[ 3U ] ) );
+    return 0;
+}
+
+int StaticMeshComponent::OnSetColor1 ( lua_State* state )
+{
+    auto& self = *static_cast<StaticMeshComponent*> ( lua_touserdata ( state, 1 ) );
+    GXVec3 const& color = ScriptableGXVec3::Extract ( state, 2 );
+    self.SetColor1 ( GXColorRGB ( color._data[ 0U ], color._data[ 1U ], color._data[ 2U ], 1.0F ) );
+    return 0;
+}
+
+int StaticMeshComponent::OnSetColor2 ( lua_State* state )
+{
+    auto& self = *static_cast<StaticMeshComponent*> ( lua_touserdata ( state, 1 ) );
+    GXVec3 const& color = ScriptableGXVec3::Extract ( state, 2 );
+    self.SetColor2 ( GXColorRGB ( color._data[ 0U ], color._data[ 1U ], color._data[ 2U ], 1.0F ) );
+    return 0;
+}
+
+int StaticMeshComponent::OnSetEmission ( lua_State* state )
+{
+    auto& self = *static_cast<StaticMeshComponent*> ( lua_touserdata ( state, 1 ) );
+    GXVec3 const& emission = ScriptableGXVec3::Extract ( state, 2 );
+    self.SetEmission ( GXColorRGB ( emission._data[ 0U ], emission._data[ 1U ], emission._data[ 2U ], 1.0F ) );
     return 0;
 }
 

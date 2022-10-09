@@ -16,6 +16,7 @@ extern "C" {
 } // extern "C"
 
 #include <deque>
+#include <unordered_map>
 
 GX_RESTORE_WARNING_STATE
 
@@ -33,24 +34,33 @@ class Actor final
     private:
         using DestroyHander = void ( Actor::* ) ( Component &component ) noexcept;
 
-        using RegisterHander = void ( Actor::* ) ( ComponentRef &component,
-            ComponentList &freeTransferResource,
+        using RegisterFromNativeHander = void ( Actor::* ) ( ComponentRef &component,
             ComponentList &renderable,
             android_vulkan::Physics &physics,
             lua_State &vm
         ) noexcept;
 
+        using RegisterFromScriptHander = void ( Actor::* ) ( ComponentRef &component,
+            ComponentList &renderable,
+            android_vulkan::Physics &physics
+        ) noexcept;
+
+        using SpawnActors = std::unordered_map<Actor const*, ActorRef>;
+
     private:
-        std::deque<ComponentRef>    _components {};
-        std::string                 _name;
-        Scene*                      _scene = nullptr;
-        TransformableList           _transformableComponents {};
+        std::deque<ComponentRef>            _components {};
+        std::string                         _name;
+        Scene*                              _scene = nullptr;
+        TransformableList                   _transformableComponents {};
 
-        static int                  _appendComponentIndex;
-        static int                  _makeActorIndex;
+        static int                          _appendComponentFromNativeIndex;
+        static int                          _makeActorIndex;
 
-        static DestroyHander        _destroyHandlers[ static_cast<size_t> ( ClassID::COUNT ) ];
-        static RegisterHander       _registerHandlers[ static_cast<size_t> ( ClassID::COUNT ) ];
+        static DestroyHander                _destroyHandlers[ static_cast<size_t> ( ClassID::COUNT ) ];
+        static RegisterFromNativeHander     _registerFromNativeHandlers[ static_cast<size_t> ( ClassID::COUNT ) ];
+        static RegisterFromScriptHander     _registerFromScriptHandlers[ static_cast<size_t> ( ClassID::COUNT ) ];
+
+        static SpawnActors                  _spawnActors;
 
     public:
         Actor () = delete;
@@ -73,70 +83,108 @@ class Actor final
         // Note transform must be in render units.
         void OnTransform ( GXMat4 const &transformWorld ) noexcept;
 
-        void RegisterComponents ( Scene &scene,
-            ComponentList &freeTransferResource,
+        void RegisterComponentsFromNative ( Scene &scene,
             ComponentList &renderable,
             android_vulkan::Physics &physics,
             lua_State &vm
+        ) noexcept;
+
+        void RegisterComponentsFromScript ( Scene &scene,
+            ComponentList &renderable,
+            android_vulkan::Physics &physics
         ) noexcept;
 
         static bool Init ( lua_State &vm ) noexcept;
+        static void Destroy () noexcept;
+        [[nodiscard]] static ActorRef& GetReference ( Actor const &handle ) noexcept;
 
     private:
-        void AppendCameraComponent ( ComponentRef &component,
-            ComponentList &freeTransferResource,
+        void AppendCameraComponentFromNative ( ComponentRef &component,
             ComponentList &renderable,
             android_vulkan::Physics &physics,
             lua_State &vm
         ) noexcept;
 
-        void AppendPointLightComponent ( ComponentRef &component,
-            ComponentList &freeTransferResource,
+        void AppendCameraComponentFromScript ( ComponentRef &component,
+            ComponentList &renderable,
+            android_vulkan::Physics &physics
+        ) noexcept;
+
+        void AppendPointLightComponentFromNative ( ComponentRef &component,
             ComponentList &renderable,
             android_vulkan::Physics &physics,
             lua_State &vm
         ) noexcept;
 
-        void AppendReflectionComponent ( ComponentRef &component,
-            ComponentList &freeTransferResource,
+        void AppendPointLightComponentFromScript ( ComponentRef &component,
+            ComponentList &renderable,
+            android_vulkan::Physics &physics
+        ) noexcept;
+
+        void AppendReflectionComponentFromNative ( ComponentRef &component,
             ComponentList &renderable,
             android_vulkan::Physics &physics,
             lua_State &vm
         ) noexcept;
 
-        void AppendRigidBodyComponent ( ComponentRef &component,
-            ComponentList &freeTransferResource,
+        void AppendReflectionComponentFromScript ( ComponentRef &component,
+            ComponentList &renderable,
+            android_vulkan::Physics &physics
+        ) noexcept;
+
+        void AppendRigidBodyComponentFromNative ( ComponentRef &component,
             ComponentList &renderable,
             android_vulkan::Physics &physics,
             lua_State &vm
         ) noexcept;
 
-        void AppendScriptComponent ( ComponentRef &component,
-            ComponentList &freeTransferResource,
+        void AppendRigidBodyComponentFromScript ( ComponentRef &component,
+            ComponentList &renderable,
+            android_vulkan::Physics &physics
+        ) noexcept;
+
+        void AppendScriptComponentFromNative ( ComponentRef &component,
             ComponentList &renderable,
             android_vulkan::Physics &physics,
             lua_State &vm
         ) noexcept;
 
-        void AppendStaticMeshComponent ( ComponentRef &component,
-            ComponentList &freeTransferResource,
+        void AppendScriptComponentFromScript ( ComponentRef &component,
+            ComponentList &renderable,
+            android_vulkan::Physics &physics
+        ) noexcept;
+
+        void AppendStaticMeshComponentFromNative ( ComponentRef &component,
             ComponentList &renderable,
             android_vulkan::Physics &physics,
             lua_State &vm
         ) noexcept;
 
-        void AppendTransformComponent ( ComponentRef &component,
-            ComponentList &freeTransferResource,
+        void AppendStaticMeshComponentFromScript ( ComponentRef &component,
+            ComponentList &renderable,
+            android_vulkan::Physics &physics
+        ) noexcept;
+
+        void AppendTransformComponentFromNative ( ComponentRef &component,
             ComponentList &renderable,
             android_vulkan::Physics &physics,
             lua_State &vm
         ) noexcept;
 
-        void AppendUnknownComponent ( ComponentRef &component,
-            ComponentList &freeTransferResource,
+        void AppendTransformComponentFromScript ( ComponentRef &component,
+            ComponentList &renderable,
+            android_vulkan::Physics &physics
+        ) noexcept;
+
+        void AppendUnknownComponentFromNative ( ComponentRef &component,
             ComponentList &renderable,
             android_vulkan::Physics &physics,
             lua_State &vm
+        ) noexcept;
+
+        void AppendUnknownComponentFromScript ( ComponentRef &component,
+            ComponentList &renderable,
+            android_vulkan::Physics &physics
         ) noexcept;
 
         void DestroyRigidBodyComponent ( Component &component ) noexcept;
@@ -145,7 +193,10 @@ class Actor final
 
         void RemoveComponent ( Component const &component ) noexcept;
 
+        [[nodiscard]] static int OnAppendComponent ( lua_State* state );
+        [[nodiscard]] static int OnCreate ( lua_State* state );
         [[nodiscard]] static int OnDestroy ( lua_State* state );
+        [[nodiscard]] static int OnGarbageCollected ( lua_State* state );
         [[nodiscard]] static int OnGetName ( lua_State* state );
 };
 

@@ -51,6 +51,8 @@ class Component
 
         virtual ~Component () = default;
 
+        [[nodiscard]] virtual ComponentRef& GetReference () noexcept = 0;
+
         [[nodiscard]] ClassID GetClassID () const noexcept;
         [[nodiscard]] std::string const& GetName () const noexcept;
 

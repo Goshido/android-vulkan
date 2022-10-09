@@ -4,12 +4,26 @@
 namespace pbr {
 
 MeshManager* MeshManager::_instance = nullptr;
-std::shared_timed_mutex MeshManager::_mutex;
+std::mutex MeshManager::_mutex;
+
+void MeshManager::FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept
+{
+    std::unique_lock<std::mutex> const lock ( _mutex );
+
+    if ( _toFreeTransferResource.empty () )
+        return;
+
+    for ( auto* mesh : _toFreeTransferResource )
+        mesh->FreeTransferResources ( renderer );
+
+    _toFreeTransferResource.clear ();
+}
 
 MeshRef MeshManager::LoadMesh ( android_vulkan::Renderer &renderer,
     size_t &commandBufferConsumed,
     char const* fileName,
-    VkCommandBuffer commandBuffer
+    VkCommandBuffer commandBuffer,
+    VkFence fence
 ) noexcept
 {
     commandBufferConsumed = 0U;
@@ -18,16 +32,21 @@ MeshRef MeshManager::LoadMesh ( android_vulkan::Renderer &renderer,
     if ( !fileName )
         return mesh;
 
-    std::unique_lock<std::shared_timed_mutex> const lock ( _mutex );
+    std::unique_lock<std::mutex> const lock ( _mutex );
     auto findResult = _meshStorage.find ( fileName );
 
     if ( findResult != _meshStorage.cend () )
         return findResult->second;
 
-    if ( !mesh->LoadMesh ( fileName, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, renderer, commandBuffer ) )
+    if ( !mesh->LoadMesh ( fileName, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, renderer, commandBuffer, fence ) )
+    {
         mesh = nullptr;
+    }
     else
+    {
         _meshStorage.insert ( std::make_pair ( std::string_view ( mesh->GetName () ), mesh ) );
+        _toFreeTransferResource.push_back ( mesh.get () );
+    }
 
     commandBufferConsumed = 1U;
     return mesh;
@@ -35,7 +54,7 @@ MeshRef MeshManager::LoadMesh ( android_vulkan::Renderer &renderer,
 
 MeshManager& MeshManager::GetInstance () noexcept
 {
-    std::unique_lock<std::shared_timed_mutex> const lock ( _mutex );
+    std::unique_lock<std::mutex> const lock ( _mutex );
 
     if ( !_instance )
         _instance = new MeshManager ();
@@ -45,7 +64,7 @@ MeshManager& MeshManager::GetInstance () noexcept
 
 void MeshManager::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 {
-    std::unique_lock<std::shared_timed_mutex> const lock ( _mutex );
+    std::unique_lock<std::mutex> const lock ( _mutex );
 
     if ( !_instance )
         return;

@@ -229,6 +229,7 @@ bool RayCasting::LoadResources ( android_vulkan::Renderer &renderer ) noexcept
         "pbr/system/unit-cube.mesh2",
         "pbr/assets/Props/PBR/DefaultCSGEmissiveBright.mtl",
         cb,
+        nullptr,
         "Mesh"
     );
 
@@ -358,7 +359,8 @@ bool RayCasting::LoadResources ( android_vulkan::Renderer &renderer ) noexcept
         static_cast<uint32_t> ( std::size ( indices ) ),
         bounds,
         renderer,
-        *cb
+        *cb,
+        VK_NULL_HANDLE
     );
 
     if ( !result )
@@ -484,7 +486,8 @@ bool RayCasting::CreateTexture ( android_vulkan::Renderer &renderer,
 
         VK_FORMAT_R8G8B8A8_SRGB,
         false,
-        *commandBuffers
+        *commandBuffers,
+        VK_NULL_HANDLE
     );
 
     if ( !result )

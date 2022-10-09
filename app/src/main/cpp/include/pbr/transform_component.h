@@ -33,6 +33,8 @@ class TransformComponent final : public Component
         [[nodiscard]] static bool Init ( lua_State &vm ) noexcept;
 
     private:
+        [[nodiscard]] ComponentRef& GetReference () noexcept override;
+
         [[nodiscard]] static int OnCreate ( lua_State* state );
         [[nodiscard]] static int OnGetTransform ( lua_State* state );
 };

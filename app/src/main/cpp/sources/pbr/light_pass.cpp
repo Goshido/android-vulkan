@@ -249,7 +249,8 @@ bool LightPass::CreateUnitCube ( android_vulkan::Renderer &renderer ) noexcept
         static_cast<uint32_t> ( std::size ( indices ) ),
         bounds,
         renderer,
-        commandBuffer
+        commandBuffer,
+        VK_NULL_HANDLE
     );
 }
 

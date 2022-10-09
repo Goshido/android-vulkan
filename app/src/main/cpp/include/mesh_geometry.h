@@ -63,7 +63,8 @@ class MeshGeometry final
         [[nodiscard]] bool LoadMesh ( std::string &&fileName,
             VkBufferUsageFlags usage,
             Renderer &renderer,
-            VkCommandBuffer commandBuffer
+            VkCommandBuffer commandBuffer,
+            VkFence fence
         ) noexcept;
 
         [[maybe_unused, nodiscard]] bool LoadMesh ( uint8_t const* data,
@@ -71,7 +72,8 @@ class MeshGeometry final
             uint32_t vertexCount,
             VkBufferUsageFlags usage,
             Renderer &renderer,
-            VkCommandBuffer commandBuffer
+            VkCommandBuffer commandBuffer,
+            VkFence fence
         ) noexcept;
 
         [[nodiscard]] bool LoadMesh ( uint8_t const* vertexData,
@@ -80,7 +82,8 @@ class MeshGeometry final
             uint32_t indexCount,
             GXAABB const &bounds,
             Renderer &renderer,
-            VkCommandBuffer commandBuffer
+            VkCommandBuffer commandBuffer,
+            VkFence fence
         ) noexcept;
 
     private:
@@ -89,19 +92,22 @@ class MeshGeometry final
         [[nodiscard]] bool LoadFromMesh ( std::string &&fileName,
             VkBufferUsageFlags usage,
             Renderer &renderer,
-            VkCommandBuffer commandBuffer
+            VkCommandBuffer commandBuffer,
+            VkFence fence
         ) noexcept;
 
         [[nodiscard]] bool LoadFromMesh2 ( std::string &&fileName,
             Renderer &renderer,
-            VkCommandBuffer commandBuffer
+            VkCommandBuffer commandBuffer,
+            VkFence fence
         ) noexcept;
 
         [[nodiscard]] bool UploadComplex ( uint8_t const* data,
             size_t vertexDataSize,
             uint32_t indexCount,
             Renderer &renderer,
-            VkCommandBuffer commandBuffer
+            VkCommandBuffer commandBuffer,
+            VkFence fence
         ) noexcept;
 
         [[nodiscard]] bool UploadInternal ( size_t numUploads,
@@ -111,7 +117,8 @@ class MeshGeometry final
             uint8_t const* data,
             size_t dataSize,
             Renderer &renderer,
-            VkCommandBuffer commandBuffer
+            VkCommandBuffer commandBuffer,
+            VkFence fence
         ) noexcept;
 
         [[nodiscard]] bool UploadSimple ( uint8_t const* data,
@@ -119,7 +126,8 @@ class MeshGeometry final
             uint32_t vertexCount,
             VkBufferUsageFlags usage,
             Renderer &renderer,
-            VkCommandBuffer commandBuffer
+            VkCommandBuffer commandBuffer,
+            VkFence fence
         ) noexcept;
 };
 

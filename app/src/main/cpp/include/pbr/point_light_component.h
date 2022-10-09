@@ -37,6 +37,7 @@ class PointLightComponent final : public RenderableComponent, public Transformab
         void SetLocation ( GXVec3 const &location ) noexcept;
 
     private:
+        [[nodiscard]] ComponentRef& GetReference () noexcept override;
         void OnTransform ( GXMat4 const &transformWorld ) noexcept override;
 };
 

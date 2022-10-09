@@ -76,6 +76,13 @@ void ReflectionComponent::FreeTransferResources ( android_vulkan::Renderer &rend
     probe.FreeTransferResources ( renderer );
 }
 
+ComponentRef& ReflectionComponent::GetReference () noexcept
+{
+    // TODO
+    static ComponentRef dummy {};
+    return dummy;
+}
+
 void ReflectionComponent::Submit ( RenderSession &renderSession ) noexcept
 {
     renderSession.SubmitLight ( _probe );

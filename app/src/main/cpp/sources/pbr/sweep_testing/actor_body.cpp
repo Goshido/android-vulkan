@@ -69,6 +69,7 @@ bool ActorBody::Init ( android_vulkan::Renderer &renderer,
         "pbr/system/unit-cube.mesh2",
         "pbr/assets/System/DefaultCSG.mtl",
         commandBuffers,
+        nullptr,
         "Mesh"
     );
 

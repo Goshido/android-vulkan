@@ -28,14 +28,13 @@ class Scene final
         android_vulkan::ShapeRef                        _shapeBoxes[ 2U ] = {};
         std::vector<android_vulkan::RigidBodyRef>       _sweepTestResult {};
 
-        ComponentList                                   _freeTransferResourceList {};
         ComponentList                                   _renderableList {};
 
         lua_Number                                      _aspectRatio = 1.0;
         lua_Integer                                     _width = -1;
         lua_Integer                                     _height = -1;
 
-        int                                             _appendActorIndex = std::numeric_limits<int>::max ();
+        int                                             _appendActorFromNativeIndex = std::numeric_limits<int>::max ();
         int                                             _onInputIndex = std::numeric_limits<int>::max ();
         int                                             _onPostPhysicsIndex = std::numeric_limits<int>::max ();
         int                                             _onPrePhysicsIndex = std::numeric_limits<int>::max ();
@@ -67,7 +66,9 @@ class Scene final
         void OnCaptureInput () noexcept;
         void OnReleaseInput () const noexcept;
 
-        [[nodiscard]] bool OnInitDevice ( android_vulkan::Physics &physics ) noexcept;
+        [[nodiscard]] bool OnInitDevice ( android_vulkan::Renderer &renderer,
+            android_vulkan::Physics &physics ) noexcept;
+
         void OnDestroyDevice () noexcept;
 
         [[nodiscard]] bool OnPrePhysics ( double deltaTime ) noexcept;
@@ -75,18 +76,17 @@ class Scene final
         [[nodiscard]] bool OnResolutionChanged ( VkExtent2D const &resolution, double aspectRatio ) noexcept;
         [[nodiscard]] bool OnUpdate ( double deltaTime ) noexcept;
 
-        void AppendActor ( ActorRef &actor ) noexcept;
-        void FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept;
-
         [[nodiscard]] bool LoadScene ( android_vulkan::Renderer &renderer,
             char const* scene,
             VkCommandPool commandPool
         ) noexcept;
 
         void RemoveActor ( Actor const &actor ) noexcept;
-        void Submit ( RenderSession &renderSession ) noexcept;
+        void Submit ( android_vulkan::Renderer &renderer, RenderSession &renderSession ) noexcept;
 
     private:
+        void AppendActor ( ActorRef &actor ) noexcept;
+
         [[nodiscard]] int DoOverlapTestBoxBox ( lua_State &vm,
             GXMat4 const &localA,
             GXVec3 const &sizeA,
@@ -106,6 +106,9 @@ class Scene final
             uint32_t groups
         ) noexcept;
 
+        static void FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept;
+
+        [[nodiscard]] static int OnAppendActor ( lua_State* state );
         [[nodiscard]] static int OnGetPenetrationBox ( lua_State* state );
         [[nodiscard]] static int OnGetPhysicsToRendererScaleFactor ( lua_State* state );
         [[nodiscard]] static int OnGetRendererToPhysicsScaleFactor ( lua_State* state );

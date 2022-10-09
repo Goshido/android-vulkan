@@ -1,12 +1,15 @@
 #include <pbr/scene.h>
 #include <pbr/coordinate_system.h>
+#include <pbr/mesh_manager.h>
 #include <pbr/material_manager.h>
 #include <pbr/renderable_component.h>
 #include <pbr/scene_desc.h>
 #include <pbr/script_engine.h>
 #include <pbr/scriptable_gxmat4.h>
 #include <pbr/scriptable_gxvec3.h>
+#include <pbr/scriptable_material.h>
 #include <pbr/scriptable_sweep_test_result.h>
+#include <pbr/static_mesh_component.h>
 #include <core.h>
 #include <file.h>
 #include <shape_box.h>
@@ -41,26 +44,21 @@ constexpr static size_t INITIAL_PENETRATION_SIZE = 32U;
 
 void Scene::DetachRenderable ( RenderableComponent const &component ) noexcept
 {
-    auto const remove = [] ( ComponentList &list, RenderableComponent const &component ) noexcept -> bool {
-        auto const end = list.cend ();
+    auto const end = _renderableList.cend ();
 
-        auto const findResult = std::find_if ( list.cbegin (),
-            end,
+    auto const findResult = std::find_if ( _renderableList.cbegin (),
+        end,
 
-            [ &component ] ( auto const &e ) noexcept -> bool {
-                return &e.get () == &component;
-            }
-        );
+        [ &component ] ( auto const &e ) noexcept -> bool {
+            return &e.get () == &component;
+        }
+    );
 
-        if ( findResult == end )
-            return false;
-
-        list.erase ( findResult );
-        return true;
-    };
-
-    if ( remove ( _freeTransferResourceList, component ) || remove ( _renderableList, component ) )
+    if ( findResult != end )
+    {
+        _renderableList.erase ( findResult );
         return;
+    }
 
     android_vulkan::LogError ( "pbr::Scene::DetachRenderable - Can't remove component %s.",
         component.GetName ().c_str ()
@@ -99,7 +97,7 @@ void Scene::OnReleaseInput () const noexcept
     _gamepad.ReleaseInput ();
 }
 
-bool Scene::OnInitDevice ( android_vulkan::Physics &physics ) noexcept
+bool Scene::OnInitDevice ( android_vulkan::Renderer &renderer, android_vulkan::Physics &physics ) noexcept
 {
     _defaultCamera.SetProjection ( GXDegToRad ( DEFAULT_FOV ), DEFAULT_ASPECT_RATIO, DEFAULT_Z_NEAR, DEFAULT_Z_FAR );
     _penetrations.reserve ( INITIAL_PENETRATION_SIZE );
@@ -115,7 +113,7 @@ bool Scene::OnInitDevice ( android_vulkan::Physics &physics ) noexcept
     _physics = &physics;
     ScriptEngine& scriptEngine = ScriptEngine::GetInstance ();
 
-    if ( !scriptEngine.Init () )
+    if ( !scriptEngine.Init ( renderer ) )
         return false;
 
     _vm = &scriptEngine.GetVirtualMachine ();
@@ -136,6 +134,10 @@ bool Scene::OnInitDevice ( android_vulkan::Physics &physics ) noexcept
 
     constexpr luaL_Reg const extensions[] =
     {
+        {
+            .name = "av_SceneAppendActor",
+            .func = &Scene::OnAppendActor
+        },
         {
             .name = "av_SceneGetPenetrationBox",
             .func = &Scene::OnGetPenetrationBox
@@ -196,7 +198,7 @@ bool Scene::OnInitDevice ( android_vulkan::Physics &physics ) noexcept
         return false;
     };
 
-    if ( !bind ( "AppendActor", _appendActorIndex ) )
+    if ( !bind ( "AppendActorFromNative", _appendActorFromNativeIndex ) )
         return false;
 
     if ( !bind ( "OnInput", _onInputIndex ) )
@@ -222,7 +224,6 @@ void Scene::OnDestroyDevice () noexcept
     ScriptableSweepTestResult::Destroy ( *_vm );
     _scriptablePenetration.Destroy ( *_vm );
     _gamepad.Destroy ();
-    _freeTransferResourceList.clear ();
     _renderableList.clear ();
     _actors.clear ();
 
@@ -239,7 +240,7 @@ void Scene::OnDestroyDevice () noexcept
     _shapeBoxes[ 0U ] = nullptr;
     _shapeBoxes[ 1U ] = nullptr;
 
-    _appendActorIndex = std::numeric_limits<int>::max ();
+    _appendActorFromNativeIndex = std::numeric_limits<int>::max ();
     _onInputIndex = std::numeric_limits<int>::max ();
     _onPostPhysicsIndex = std::numeric_limits<int>::max ();
     _onPrePhysicsIndex = std::numeric_limits<int>::max ();
@@ -283,7 +284,7 @@ bool Scene::OnPostPhysics ( double deltaTime ) noexcept
     lua_pushnumber ( _vm, deltaTime );
     lua_pcall ( _vm, 2, 0, ScriptEngine::GetErrorHandlerIndex () );
 
-    return true;
+    return ScriptableMaterial::Sync () && StaticMeshComponent::Sync ();
 }
 
 bool Scene::OnResolutionChanged ( VkExtent2D const &resolution, double aspectRatio ) noexcept
@@ -327,30 +328,6 @@ bool Scene::OnUpdate ( double deltaTime ) noexcept
     lua_pcall ( _vm, 2, 0, ScriptEngine::GetErrorHandlerIndex () );
 
     return true;
-}
-
-void Scene::AppendActor ( ActorRef &actor ) noexcept
-{
-    lua_pushvalue ( _vm, _appendActorIndex );
-    lua_pushvalue ( _vm, _sceneHandle );
-
-    _actors.push_back ( actor );
-    _actors.back ()->RegisterComponents ( *this, _freeTransferResourceList, _renderableList, *_physics, *_vm );
-
-    lua_pcall ( _vm, 2, 0, ScriptEngine::GetErrorHandlerIndex () );
-}
-
-void Scene::FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept
-{
-    for ( auto& component : _freeTransferResourceList )
-    {
-        // NOLINTNEXTLINE - downcast.
-        auto& renderableComponent = static_cast<RenderableComponent&> ( component.get () );
-        renderableComponent.FreeTransferResources ( renderer );
-    }
-
-    MaterialManager::GetInstance ().FreeTransferResources ( renderer );
-    _renderableList.splice ( _renderableList.cend (), _freeTransferResourceList );
 }
 
 bool Scene::LoadScene ( android_vulkan::Renderer &renderer, char const* scene, VkCommandPool commandPool ) noexcept
@@ -452,9 +429,10 @@ void Scene::RemoveActor ( Actor const &actor ) noexcept
     _actors.erase ( findResult );
 }
 
-void Scene::Submit ( RenderSession &renderSession ) noexcept
+void Scene::Submit ( android_vulkan::Renderer &renderer, RenderSession &renderSession ) noexcept
 {
     AV_TRACE ( "Submit components" )
+    FreeTransferResources ( renderer );
 
     for ( auto& component : _renderableList )
     {
@@ -462,6 +440,23 @@ void Scene::Submit ( RenderSession &renderSession ) noexcept
         auto& renderableComponent = static_cast<RenderableComponent&> ( component.get () );
         renderableComponent.Submit ( renderSession );
     }
+}
+
+void Scene::AppendActor ( ActorRef &actor ) noexcept
+{
+    if ( !lua_checkstack ( _vm, 2 ) )
+    {
+        android_vulkan::LogError ( "pbr::Scene::AppendActor - Stack too small." );
+        return;
+    }
+
+    lua_pushvalue ( _vm, _appendActorFromNativeIndex );
+    lua_pushvalue ( _vm, _sceneHandle );
+
+    _actors.push_back ( actor );
+    _actors.back ()->RegisterComponentsFromNative ( *this, _renderableList, *_physics, *_vm );
+
+    lua_pcall ( _vm, 2, 0, ScriptEngine::GetErrorHandlerIndex () );
 }
 
 int Scene::DoOverlapTestBoxBox ( lua_State &vm,
@@ -527,6 +522,20 @@ int Scene::DoSweepTestBox ( lua_State &vm, GXMat4 const &local, GXVec3 const &si
     boxShape.UpdateCacheData ( local );
     _physics->SweepTest ( _sweepTestResult, shape, groups );
     return static_cast<int> ( ScriptableSweepTestResult::PublishResult ( vm, _sweepTestResult ) );
+}
+
+void Scene::FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept
+{
+    MaterialManager::GetInstance ().FreeTransferResources ( renderer );
+    MeshManager::GetInstance ().FreeTransferResources ( renderer );
+}
+
+int Scene::OnAppendActor ( lua_State* state )
+{
+    auto& self = *static_cast<Scene*> ( lua_touserdata ( state, 1 ) );
+    self._actors.push_back ( Actor::GetReference ( *static_cast<Actor const*> ( lua_touserdata ( state, 2 ) ) ) );
+    self._actors.back ()->RegisterComponentsFromScript ( self, self._renderableList, *self._physics );
+    return 0;
 }
 
 int Scene::OnGetPenetrationBox ( lua_State* state )

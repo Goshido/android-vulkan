@@ -104,7 +104,7 @@ VkFormat Texture2D::GetFormat () const noexcept
     return _format;
 }
 
-VkImage Texture2D::GetImage () const noexcept
+[[maybe_unused]] VkImage Texture2D::GetImage () const noexcept
 {
     return _image;
 }
@@ -133,7 +133,8 @@ VkExtent2D const& Texture2D::GetResolution () const noexcept
     std::string const &fileName,
     eFormat format,
     bool isGenerateMipmaps,
-    VkCommandBuffer commandBuffer
+    VkCommandBuffer commandBuffer,
+    VkFence fence
 ) noexcept
 {
     if ( fileName.empty () )
@@ -177,7 +178,8 @@ VkExtent2D const& Texture2D::GetResolution () const noexcept
         pixelData.size (),
         isGenerateMipmaps,
         imageInfo,
-        commandBuffer
+        commandBuffer,
+        fence
     );
 
     if ( !result )
@@ -191,7 +193,8 @@ bool Texture2D::UploadData ( Renderer &renderer,
     std::string &&fileName,
     eFormat format,
     bool isGenerateMipmaps,
-    VkCommandBuffer commandBuffer
+    VkCommandBuffer commandBuffer,
+    VkFence fence
 ) noexcept
 {
     if ( fileName.empty () )
@@ -245,7 +248,8 @@ bool Texture2D::UploadData ( Renderer &renderer,
         pixelData.size (),
         isGenerateMipmaps,
         imageInfo,
-        commandBuffer
+        commandBuffer,
+        fence
     );
 
     if ( !result )
@@ -259,20 +263,22 @@ bool Texture2D::UploadData ( Renderer &renderer,
     std::string_view const &fileName,
     eFormat format,
     bool isGenerateMipmaps,
-    VkCommandBuffer commandBuffer
+    VkCommandBuffer commandBuffer,
+    VkFence fence
 ) noexcept
 {
-    return UploadData ( renderer, std::string ( fileName ), format, isGenerateMipmaps, commandBuffer );
+    return UploadData ( renderer, std::string ( fileName ), format, isGenerateMipmaps, commandBuffer, fence );
 }
 
 bool Texture2D::UploadData ( Renderer &renderer,
     char const *fileName,
     eFormat format,
     bool isGenerateMipmaps,
-    VkCommandBuffer commandBuffer
+    VkCommandBuffer commandBuffer,
+    VkFence fence
 ) noexcept
 {
-    return UploadData ( renderer, std::string ( fileName ), format, isGenerateMipmaps, commandBuffer );
+    return UploadData ( renderer, std::string ( fileName ), format, isGenerateMipmaps, commandBuffer, fence );
 }
 
 bool Texture2D::UploadData ( Renderer &renderer,
@@ -281,7 +287,8 @@ bool Texture2D::UploadData ( Renderer &renderer,
     VkExtent2D const &resolution,
     VkFormat format,
     bool isGenerateMipmaps,
-    VkCommandBuffer commandBuffer
+    VkCommandBuffer commandBuffer,
+    VkFence fence
 ) noexcept
 {
     FreeResources ( renderer );
@@ -298,7 +305,7 @@ bool Texture2D::UploadData ( Renderer &renderer,
     if ( !result )
         return false;
 
-    return UploadDataInternal ( renderer, data, size, isGenerateMipmaps, imageInfo, commandBuffer );
+    return UploadDataInternal ( renderer, data, size, isGenerateMipmaps, imageInfo, commandBuffer, fence );
 }
 
 bool Texture2D::CreateCommonResources ( VkImageCreateInfo &imageInfo,
@@ -716,7 +723,8 @@ bool Texture2D::UploadDataInternal ( Renderer &renderer,
     size_t size,
     bool isGenerateMipmaps,
     VkImageCreateInfo const &imageInfo,
-    VkCommandBuffer commandBuffer
+    VkCommandBuffer commandBuffer,
+    VkFence fence
 ) noexcept
 {
     uint8_t* mappedBuffer = nullptr;
@@ -855,7 +863,7 @@ bool Texture2D::UploadDataInternal ( Renderer &renderer,
         };
 
         result = Renderer::CheckVkResult (
-            vkQueueSubmit ( renderer.GetQueue (), 1U, &submitInfo, VK_NULL_HANDLE ),
+            vkQueueSubmit ( renderer.GetQueue (), 1U, &submitInfo, fence ),
             "Texture2D::UploadDataInternal",
             "Can't submit command"
         );
@@ -1025,7 +1033,7 @@ bool Texture2D::UploadDataInternal ( Renderer &renderer,
     };
 
     result = Renderer::CheckVkResult (
-        vkQueueSubmit ( renderer.GetQueue (), 1U, &submitInfo, VK_NULL_HANDLE ),
+        vkQueueSubmit ( renderer.GetQueue (), 1U, &submitInfo, fence ),
         "Texture2D::UploadDataInternal",
         "Can't submit command"
     );

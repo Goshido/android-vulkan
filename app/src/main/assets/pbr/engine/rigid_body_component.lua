@@ -52,6 +52,29 @@ local function SetLocation ( self, location )
     av_RigidBodyComponentSetLocation ( self._handle, location._handle )
 end
 
+local function SetShapeBox ( self, size, forceAwake )
+    assert ( type ( self ) == "table" and self._type == eObjectType.RigidBodyComponent,
+        [[RigidBodyComponent:SetShapeBox - Calling not via ":" syntax.]]
+    )
+
+    assert ( type ( size ) == "table" and size._type == eObjectType.GXVec3,
+        [[RigidBodyComponent:SetShapeBox - "size" is not a GXVec3.]]
+    )
+
+    assert ( type ( forceAwake ) == "boolean", [[RigidBodyComponent:SetShapeBox - "forceAwake" is not a boolean.]] )
+    av_RigidBodyComponentSetShapeBox ( self._handle, size._handle, forceAwake )
+end
+
+local function SetShapeSphere ( self, radius, forceAwake )
+    assert ( type ( self ) == "table" and self._type == eObjectType.RigidBodyComponent,
+        [[RigidBodyComponent:SetShapeSphere - Calling not via ":" syntax.]]
+    )
+
+    assert ( type ( radius ) == "number", [[RigidBodyComponent:SetShapeSphere - "radius" is not a number.]] )
+    assert ( type ( forceAwake ) == "boolean", [[RigidBodyComponent:SetShapeSphere - "forceAwake" is not a boolean.]] )
+    av_RigidBodyComponentSetShapeSphere ( self._handle, radius, forceAwake )
+end
+
 local function GetTransform ( self, transform )
     assert ( type ( self ) == "table" and self._type == eObjectType.RigidBodyComponent,
         [[RigidBodyComponent:GetTransform - Calling not via ":" syntax.]]
@@ -94,17 +117,30 @@ end
 
 -- Engine event handlers
 local function OnDestroy ( self )
+    g_Storage[ self._nativeRigidBody ] = nil
     av_RigidBodyComponentDestroy ( self._handle )
 end
+
+-- Metamethods
+local mt = {
+    __gc = function ( self )
+        av_RigidBodyComponentCollectGarbage ( self._handle )
+    end
+}
 
 -- This function is exported to C++ side.
 function RegisterRigidBodyComponent ( handle, nativeRigidBody )
     local obj = Component ( eObjectType.RigidBodyComponent, handle )
 
+    -- Data
+    obj._nativeRigidBody = nativeRigidBody
+
     -- Methods
     obj.AddForce = AddForce
     obj.GetLocation = GetLocation
     obj.SetLocation = SetLocation
+    obj.SetShapeBox = SetShapeBox
+    obj.SetShapeSphere = SetShapeSphere
     obj.GetTransform = GetTransform
     obj.GetVelocityLinear = GetVelocityLinear
     obj.SetVelocityLinear = SetVelocityLinear
@@ -113,11 +149,9 @@ function RegisterRigidBodyComponent ( handle, nativeRigidBody )
     obj.OnDestroy = OnDestroy
 
     g_Storage[ nativeRigidBody ] = obj
-
-    return obj
+    return setmetatable ( obj, mt )
 end
 
--- Metamethods
 local function Constructor ( self, name )
     handle, nativeRigidBody = av_RigidBodyComponentCreate ( name )
     return RegisterRigidBodyComponent ( handle, nativeRigidBody )

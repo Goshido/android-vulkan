@@ -16,6 +16,7 @@ eObjectType = {
     GXQuat = MakeUniqueID (),
     GXVec3 = MakeUniqueID (),
     GXVec4 = MakeUniqueID (),
+    Material = MakeUniqueID (),
     RigidBodyComponent = MakeUniqueID (),
     Scene = MakeUniqueID (),
     ScriptComponent = MakeUniqueID (),

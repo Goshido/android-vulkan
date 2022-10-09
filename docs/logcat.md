@@ -7,8 +7,8 @@ _android-vulkan_ project is using `android_vulkan::C++` tag for logging. But it'
 - _ion_
 - _Gralloc3_
 
-So recommended _Logcat_'s regex filter is:
+So recommended _Logcat_'s filter is:
 
 ```txt
-^(?:android_vulkan\:\:C\+\+|libc|DEBUG|gralloc|ion|Gralloc3)$
+package:mine tag:android_vulkan::C++ tag:libc tag:DEBUG tag:gralloc tag:ion tag:Gralloc3
 ```

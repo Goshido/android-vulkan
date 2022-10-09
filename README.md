@@ -17,8 +17,8 @@ Useful documentation is located [here](docs/documentation.md).
 ### Requirements
 
 * _Windows Vista_+ or _Monjaro KDE_
-* _Android Studio Chipmunk | 2021.2.1 Patch 2_
-* _Android Studio Gradle Plugin 7.2.2_
+* _Android Studio Dolphin | 2021.3.1_
+* _Android Studio Gradle Plugin 7.3.0_
 * _Android NDK 25.1.8937393 (side by side)_
 * _Android SDK 11.0 (API level 30)_
 * _Android SDK Build-Tools 33.0.0_
@@ -28,8 +28,8 @@ Useful documentation is located [here](docs/documentation.md).
 * _CMake 3.22.1_
 * _Gradle 7.5.1-bin_
 * _DirectX Shader Compiler 1.7.2207.10036_
-* _Vulkan Validation Layers_ `e5afd16e31388ade3585a44af19388f4a7c18d10`
-* _Lua 5.4.5_ `71bc69c2afaf49ab5f54f3443af9ae70dd1fed06`
+* _Vulkan Validation Layers_ `5a9de7a853ee2c24c416a2c97bf614c28d71a1b5`
+* _Lua 5.4.5_ `26be27459b11feabed52cf40aaa76f86c7edc977`
 * Real _Android 11_ device with _Vulkan 1.1.131_ support
 * [_ARM Neon A64_](https://developer.arm.com/architectures/instruction-sets/simd-isas/neon/neon-programmers-guide-for-armv8-a/introducing-neon-for-armv8-a) native support
 

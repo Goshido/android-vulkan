@@ -41,11 +41,11 @@ local function GetShapeTransform ( self )
 end
 
 local function Hit ( self, velocityMultiplier )
-    local body = self._rigidBody
-    local v = GXVec3 ()
-    body:GetVelocityLinear ( v )
-    v:MultiplyVector ( v, velocityMultiplier )
-    body:SetVelocityLinear ( v, true )
+    local v = self._velocityMultiplier
+
+    if velocityMultiplier:SquaredLength () > v:SquaredLength () then
+        v:Clone ( velocityMultiplier )
+    end
 end
 
 local function Jump ( self )
@@ -87,6 +87,7 @@ end
 
 local function OnPostPhysicsActive ( self, deltaTime )
     self._rigidBody:GetTransform ( self._transform )
+    self._rigidBody:GetVelocityLinear ( self._velocity )
 end
 
 local function OnPostPhysicsIdle ( self, deltaTime )
@@ -95,9 +96,14 @@ end
 
 local function OnPrePhysicsActive ( self, deltaTime )
     local body = self._rigidBody
+    local velocityLinear = self._velocity
+    local velocityMultiplier = self._velocityMultiplier
 
-    local velocityLinear = GXVec3 ()
-    body:GetVelocityLinear ( velocityLinear )
+    if velocityMultiplier:SquaredLength () > 0.1 then
+        velocityLinear:MultiplyVector ( velocityLinear, velocityMultiplier )
+        body:SetVelocityLinear ( velocityLinear, true )
+        velocityMultiplier:Init ( 0.0, 0.0, 0.0 )
+    end
 
     if self._isJump then
         velocityLinear:Sum ( velocityLinear, JUMP_SPEED )
@@ -129,6 +135,7 @@ end
 local function OnActorConstructed ( self, actor )
     local body = actor:FindComponent ( "Collider" )
     body:GetTransform ( self._transform )
+    body:GetVelocityLinear ( self._velocity )
     self._rigidBody = body
 
     self.OnInput = OnInputActive
@@ -152,6 +159,11 @@ local function Constructor ( self, handle, params )
     obj._isJump = false
     obj._move = 0.0
     obj._transform = GXMat4 ()
+    obj._velocity = GXVec3 ()
+
+    local v = GXVec3 ()
+    v:Init ( 0.0, 0.0, 0.0 )
+    obj._velocityMultiplier = v
 
     -- Methods
     obj.GetOrigin = GetOrigin

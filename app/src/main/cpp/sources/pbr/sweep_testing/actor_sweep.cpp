@@ -72,7 +72,8 @@ bool ActorSweep::Init ( android_vulkan::Renderer &renderer,
         commandBufferConsumed,
         "pbr/system/unit-cube.mesh2",
         material,
-        commandBuffers
+        commandBuffers,
+        nullptr
     );
 
     if ( !success )

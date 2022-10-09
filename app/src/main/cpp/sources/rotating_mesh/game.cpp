@@ -202,7 +202,8 @@ bool Game::CreateCommonTextures ( android_vulkan::Renderer &renderer, VkCommandB
             textureFiles[ i ],
             android_vulkan::eFormat::sRGB,
             true,
-            commandBuffers[ i ]
+            commandBuffers[ i ],
+            VK_NULL_HANDLE
         );
 
         if ( !result )
@@ -217,7 +218,8 @@ bool Game::CreateCommonTextures ( android_vulkan::Renderer &renderer, VkCommandB
         MATERIAL_2_NORMAL,
         android_vulkan::eFormat::Unorm,
         true,
-        commandBuffers[ 3U ]
+        commandBuffers[ 3U ],
+        VK_NULL_HANDLE
     );
 
     if ( !result )
@@ -231,7 +233,8 @@ bool Game::CreateCommonTextures ( android_vulkan::Renderer &renderer, VkCommandB
         MATERIAL_3_NORMAL,
         android_vulkan::eFormat::Unorm,
         true,
-        commandBuffers[ 4U ]
+        commandBuffers[ 4U ],
+        VK_NULL_HANDLE
     );
 
     if ( !result )
@@ -248,7 +251,8 @@ bool Game::CreateCommonTextures ( android_vulkan::Renderer &renderer, VkCommandB
         VkExtent2D { .width = 1U, .height = 1U },
         VK_FORMAT_R8G8B8A8_UNORM,
         false,
-        commandBuffers[ 5U ]
+        commandBuffers[ 5U ],
+        VK_NULL_HANDLE
     );
 
     if ( !result )
@@ -271,7 +275,9 @@ bool Game::CreateMeshes ( android_vulkan::Renderer &renderer, VkCommandBuffer* c
     {
         bool const result = _drawcalls[ i ]._mesh.LoadMesh ( meshFiles[ i ],
             VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-            renderer, commandBuffers[ i ]
+            renderer,
+            commandBuffers[ i ],
+            VK_NULL_HANDLE
         );
 
         if ( result )

@@ -262,7 +262,8 @@ bool Collision::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
     _contactMesh = MeshManager::GetInstance ().LoadMesh ( renderer,
         consumed,
         "pbr/system/unit-sphere.mesh2",
-        *commandBuffers
+        *commandBuffers,
+        VK_NULL_HANDLE
     );
 
     if ( !_contactMesh )
@@ -273,7 +274,8 @@ bool Collision::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
     _contactMaterial = MaterialManager::GetInstance ().LoadMaterial ( renderer,
         consumed,
         "pbr/assets/System/Default.mtl",
-        commandBuffers
+        commandBuffers,
+        nullptr
     );
 
     _cameraLight = std::make_shared<PointLightComponent> ();
@@ -357,6 +359,7 @@ bool Collision::AppendCuboid ( android_vulkan::Renderer &renderer,
         "pbr/system/unit-cube.mesh2",
         material,
         commandBuffers,
+        nullptr,
         "Mesh"
     );
 

@@ -28,7 +28,8 @@ class MaterialManager final
             size_t &commandBufferConsumed,
             MaterialHeader const &header,
             uint8_t const* data,
-            VkCommandBuffer const* commandBuffers
+            VkCommandBuffer const* commandBuffers,
+            VkFence const* fences
         ) noexcept;
 
         using Storage = std::unordered_map<std::string_view, Texture2DRef>;
@@ -48,14 +49,15 @@ class MaterialManager final
         MaterialManager ( MaterialManager && ) = delete;
         MaterialManager& operator = ( MaterialManager && ) = delete;
 
+        void FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept;
+
         // Note commandBuffers must point to at least 4 free command buffers.
         [[nodiscard]] MaterialRef LoadMaterial ( android_vulkan::Renderer &renderer,
             size_t &commandBufferConsumed,
             char const* fileName,
-            VkCommandBuffer const* commandBuffers
+            VkCommandBuffer const* commandBuffers,
+            VkFence const* fences
         ) noexcept;
-
-        void FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept;
 
         [[nodiscard]] static MaterialManager& GetInstance () noexcept;
         static void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
@@ -73,14 +75,16 @@ class MaterialManager final
             size_t &commandBufferConsumed,
             MaterialHeader const &header,
             uint8_t const* data,
-            VkCommandBuffer const* commandBuffers
+            VkCommandBuffer const* commandBuffers,
+            VkFence const* fences
         ) noexcept;
 
         [[nodiscard]] MaterialRef CreateStippleMaterial ( android_vulkan::Renderer &renderer,
             size_t &commandBufferConsumed,
             MaterialHeader const &header,
             uint8_t const* data,
-            VkCommandBuffer const* commandBuffers
+            VkCommandBuffer const* commandBuffers,
+            VkFence const* fences
         ) noexcept;
 
         void DestroyInternal ( android_vulkan::Renderer &renderer ) noexcept;
@@ -90,7 +94,8 @@ class MaterialManager final
             uint8_t const* data,
             uint64_t nameOffset,
             android_vulkan::eFormat format,
-            VkCommandBuffer const* commandBuffers
+            VkCommandBuffer const* commandBuffers,
+            VkFence const* fences
         ) noexcept;
 };
 

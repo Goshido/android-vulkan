@@ -131,7 +131,8 @@ bool MeshGeometry::IsUnique () const noexcept
 bool MeshGeometry::LoadMesh ( std::string &&fileName,
     VkBufferUsageFlags usage,
     Renderer &renderer,
-    VkCommandBuffer commandBuffer
+    VkCommandBuffer commandBuffer,
+    VkFence fence
 ) noexcept
 {
     if ( fileName.empty () )
@@ -144,12 +145,12 @@ bool MeshGeometry::LoadMesh ( std::string &&fileName,
     std::smatch match;
 
     if ( std::regex_match ( fileName, match, isMesh2 ) )
-        return LoadFromMesh2 ( std::move ( fileName ), renderer, commandBuffer );
+        return LoadFromMesh2 ( std::move ( fileName ), renderer, commandBuffer, fence );
 
     static std::regex const isMesh ( R"__(^.+?\.mesh$)__" );
 
     if ( std::regex_match ( fileName, match, isMesh ) )
-        return LoadFromMesh ( std::move ( fileName ), usage, renderer, commandBuffer );
+        return LoadFromMesh ( std::move ( fileName ), usage, renderer, commandBuffer, fence );
 
     return false;
 }
@@ -159,11 +160,12 @@ bool MeshGeometry::LoadMesh ( std::string &&fileName,
     uint32_t vertexCount,
     VkBufferUsageFlags usage,
     Renderer &renderer,
-    VkCommandBuffer commandBuffer
+    VkCommandBuffer commandBuffer,
+    VkFence fence
 ) noexcept
 {
     FreeResources ( renderer );
-    return UploadSimple ( data, size, vertexCount, usage, renderer, commandBuffer );
+    return UploadSimple ( data, size, vertexCount, usage, renderer, commandBuffer, fence );
 }
 
 bool MeshGeometry::LoadMesh ( uint8_t const* vertexData,
@@ -172,7 +174,8 @@ bool MeshGeometry::LoadMesh ( uint8_t const* vertexData,
     uint32_t indexCount,
     GXAABB const &bounds,
     Renderer &renderer,
-    VkCommandBuffer commandBuffer
+    VkCommandBuffer commandBuffer,
+    VkFence fence
 ) noexcept
 {
     FreeResources ( renderer );
@@ -187,7 +190,8 @@ bool MeshGeometry::LoadMesh ( uint8_t const* vertexData,
         vertexDataSize,
         indexCount,
         renderer,
-        commandBuffer
+        commandBuffer,
+        fence
     );
 
     if ( result )
@@ -235,7 +239,8 @@ void MeshGeometry::FreeResourceInternal ( Renderer &renderer ) noexcept
 bool MeshGeometry::LoadFromMesh ( std::string &&fileName,
     VkBufferUsageFlags usage,
     Renderer &renderer,
-    VkCommandBuffer commandBuffer
+    VkCommandBuffer commandBuffer,
+    VkFence fence
 ) noexcept
 {
     FreeResourceInternal ( renderer );
@@ -299,7 +304,8 @@ bool MeshGeometry::LoadFromMesh ( std::string &&fileName,
         header.totalVertices,
         usage,
         renderer,
-        commandBuffer
+        commandBuffer,
+        fence
     );
 
     if ( !result )
@@ -311,7 +317,8 @@ bool MeshGeometry::LoadFromMesh ( std::string &&fileName,
 
 bool MeshGeometry::LoadFromMesh2 ( std::string &&fileName,
     Renderer &renderer,
-    VkCommandBuffer commandBuffer
+    VkCommandBuffer commandBuffer,
+    VkFence fence
 ) noexcept
 {
     FreeResourceInternal ( renderer );
@@ -328,7 +335,8 @@ bool MeshGeometry::LoadFromMesh2 ( std::string &&fileName,
         static_cast<size_t> ( header._vertexCount ) * sizeof ( Mesh2Vertex ),
         static_cast<uint32_t> ( header._indexCount ),
         renderer,
-        commandBuffer
+        commandBuffer,
+        fence
     );
 
     if ( !result )
@@ -348,7 +356,8 @@ bool MeshGeometry::UploadComplex ( uint8_t const* data,
     size_t vertexDataSize,
     uint32_t indexCount,
     Renderer &renderer,
-    VkCommandBuffer commandBuffer
+    VkCommandBuffer commandBuffer,
+    VkFence fence
 ) noexcept
 {
     constexpr VkBufferUsageFlags indexBufferUsageFlags = AV_VK_FLAG ( VK_BUFFER_USAGE_INDEX_BUFFER_BIT ) |
@@ -473,7 +482,8 @@ bool MeshGeometry::UploadComplex ( uint8_t const* data,
         data,
         static_cast<size_t> ( indexBufferSize + bufferInfo.size ),
         renderer,
-        commandBuffer
+        commandBuffer,
+        fence
     );
 
     if ( result )
@@ -489,7 +499,8 @@ bool MeshGeometry::UploadInternal ( size_t numUploads,
     uint8_t const* data,
     size_t dataSize,
     Renderer &renderer,
-    VkCommandBuffer commandBuffer
+    VkCommandBuffer commandBuffer,
+    VkFence fence
 ) noexcept
 {
     VkBufferCreateInfo const bufferInfo
@@ -642,8 +653,8 @@ bool MeshGeometry::UploadInternal ( size_t numUploads,
     };
 
     return Renderer::CheckVkResult (
-        vkQueueSubmit ( renderer.GetQueue (), 1U, &submitInfo, VK_NULL_HANDLE ),
-        "MeshGeometry::LoadFromMesh2",
+        vkQueueSubmit ( renderer.GetQueue (), 1U, &submitInfo, fence ),
+        "MeshGeometry::UploadInternal",
         "Can't submit command"
     );
 }
@@ -653,7 +664,8 @@ bool MeshGeometry::UploadSimple ( uint8_t const* data,
     uint32_t vertexCount,
     VkBufferUsageFlags usage,
     Renderer &renderer,
-    VkCommandBuffer commandBuffer
+    VkCommandBuffer commandBuffer,
+    VkFence fence
 ) noexcept
 {
     VkBufferCreateInfo const bufferInfo
@@ -719,7 +731,8 @@ bool MeshGeometry::UploadSimple ( uint8_t const* data,
         data,
         size,
         renderer,
-        commandBuffer
+        commandBuffer,
+        fence
     );
 
     if ( !result )

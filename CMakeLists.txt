@@ -116,6 +116,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/pbr/scriptable_gxvec3.cpp
     app/src/main/cpp/sources/pbr/scriptable_gxvec4.cpp
     app/src/main/cpp/sources/pbr/scriptable_logger.cpp
+    app/src/main/cpp/sources/pbr/scriptable_material.cpp
     app/src/main/cpp/sources/pbr/scriptable_penetration.cpp
     app/src/main/cpp/sources/pbr/scriptable_sweep_test_result.cpp
     app/src/main/cpp/sources/pbr/static_mesh_component.cpp

@@ -230,7 +230,8 @@ bool SweepTesting::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
 
         VK_FORMAT_R8G8B8A8_SRGB,
         false,
-        *cb
+        *cb,
+        VK_NULL_HANDLE
     );
 
     if ( !result )

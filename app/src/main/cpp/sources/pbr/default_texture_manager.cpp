@@ -64,7 +64,8 @@ bool DefaultTextureManager::Init ( android_vulkan::Renderer &renderer, VkCommand
             resolution,
             format,
             false,
-            commandBuffer
+            commandBuffer,
+            VK_NULL_HANDLE
         );
 
         if ( result )

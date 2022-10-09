@@ -10,6 +10,7 @@
 #include <pbr/scriptable_gxvec3.h>
 #include <pbr/scriptable_gxvec4.h>
 #include <pbr/scriptable_logger.h>
+#include <pbr/scriptable_material.h>
 #include <pbr/static_mesh_component.h>
 #include <pbr/transform_component.h>
 #include <file.h>
@@ -43,7 +44,7 @@ lua_State& ScriptEngine::GetVirtualMachine () noexcept
     return *_vm;
 }
 
-bool ScriptEngine::Init () noexcept
+bool ScriptEngine::Init ( android_vulkan::Renderer &renderer ) noexcept
 {
     if ( !InitLua () )
         return false;
@@ -51,7 +52,7 @@ bool ScriptEngine::Init () noexcept
     if ( !LoadScript ( _vm.get (), SCRIPT, SCRIPT ) )
         return false;
 
-    return InitInterfaceFunctions ();
+    return InitInterfaceFunctions ( renderer );
 }
 
 ScriptEngine& ScriptEngine::GetInstance () noexcept
@@ -71,7 +72,7 @@ void ScriptEngine::Destroy () noexcept
     _instance = nullptr;
 }
 
-bool ScriptEngine::ExtendFrontend () const noexcept
+bool ScriptEngine::ExtendFrontend ( android_vulkan::Renderer &renderer ) const noexcept
 {
     lua_State& vm = *_vm;
 
@@ -89,10 +90,11 @@ bool ScriptEngine::ExtendFrontend () const noexcept
         RigidBodyComponent::Init ( vm ) &&
         CameraComponent::Init ( vm ) &&
         TransformComponent::Init ( vm ) &&
-        StaticMeshComponent::Init ( vm );
+        StaticMeshComponent::Init ( vm, renderer ) &&
+        ScriptableMaterial::Init ( vm, renderer );
 }
 
-bool ScriptEngine::InitInterfaceFunctions () noexcept
+bool ScriptEngine::InitInterfaceFunctions ( android_vulkan::Renderer &renderer ) noexcept
 {
     lua_State* vm = _vm.get ();
 
@@ -116,7 +118,7 @@ bool ScriptEngine::InitInterfaceFunctions () noexcept
     }
 
     lua_pushcfunction ( vm, &ScriptEngine::OnErrorHandler );
-    return ExtendFrontend ();
+    return ExtendFrontend ( renderer );
 }
 
 bool ScriptEngine::InitLua () noexcept
@@ -145,22 +147,18 @@ void ScriptEngine::InitLibraries () const noexcept
             .name = LUA_GNAME,
             .func = &luaopen_base
         },
-
         {
             .name = LUA_LOADLIBNAME,
             .func = &luaopen_package
         },
-
         {
             .name = LUA_MATHLIBNAME,
             .func = &luaopen_math
         },
-
         {
             .name = LUA_STRLIBNAME,
             .func = &luaopen_string
         },
-
         {
             .name = LUA_TABLIBNAME,
             .func = &luaopen_table
@@ -248,6 +246,11 @@ void ScriptEngine::Free ( lua_State* state ) noexcept
     ScriptableGXQuat::Destroy ();
     ScriptableGXMat4::Destroy ();
     ScriptableGXMat3::Destroy ();
+    RigidBodyComponent::Destroy ();
+    StaticMeshComponent::Destroy ();
+    ScriptComponent::Destroy ();
+    ScriptableMaterial::Destroy ();
+    Actor::Destroy ();
 }
 
 bool ScriptEngine::LoadScript ( lua_State* vm,

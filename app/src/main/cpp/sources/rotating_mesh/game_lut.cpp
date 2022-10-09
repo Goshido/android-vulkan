@@ -422,7 +422,8 @@ bool GameLUT::CreateSpecularLUTTexture ( android_vulkan::Renderer &renderer, VkC
 
         VK_FORMAT_R16_SFLOAT,
         false,
-        commandBuffer
+        commandBuffer,
+        VK_NULL_HANDLE
     );
 }
 

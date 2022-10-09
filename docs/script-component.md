@@ -10,8 +10,8 @@ require "av://engine/script_component.lua"
 - [_Metamethods_](#metamethods)
 - [`Constructor`](#constructor)
 - [`GetName ()`](#method-get-name)
+- [`OnAboutToDestroy ( self )`](#method-on-about-to-destroy)
 - [`OnActorConstructed ( self, actor )`](#method-on-actor-constructed)
-- [`OnDestroy ( self )`](#method-on-destroy)
 - [`OnInput ( self, inputEvent )`](#method-on-input)
 - [`OnPostPhysics ( self, deltaTime )`](#method-on-post-physics)
 - [`OnPrePhysics ( self, deltaTime )`](#method-on-pre-physics)
@@ -31,6 +31,10 @@ require "av://engine/script_component.lua"
 local Player = {}
 
 -- Engine events
+local function OnAboutToDestroy ( self )
+    -- Some implementation
+end
+
 local function OnActorConstructed ( self, actor )
     -- Some implementation
 end
@@ -64,6 +68,7 @@ local function Constructor ( self, handle, params )
     obj._damage = params._damage
 
     -- Engine events (all optional)
+    obj.OnAboutToDestroy = OnAboutToDestroy
     obj.OnActorConstructed = OnActorConstructed
     obj.OnInput = OnInput
     obj.OnPostPhysics = OnPostPhysics
@@ -240,7 +245,7 @@ setmetatable ( Player, { __call = Constructor } )
 return Player
 ```
 
-## <a id="method-on-destroy">`OnDestroy ( self )`</a>
+## <a id="method-on-about-to-destroy">`OnAboutToDestroy ( self )`</a>
 
 Optional user provided event handler in the subclass implementation. The method will be called by the engine right before [_Actor_](./actor.md) destroy.
 
@@ -262,7 +267,7 @@ require "av://engine/script_component.lua"
 local Player = {}
 
 -- Engine events
-local function OnDestroy ( self )
+local function OnAboutToDestroy ( self )
     LogD ( "My name is %s.", self:GetName () )
 end
 
@@ -271,7 +276,7 @@ local function Constructor ( self, handle, params )
     local obj = ScriptComponent ( handle )
 
     -- Engine events
-    obj.OnDestroy = OnDestroy
+    obj.OnAboutToDestroy = OnAboutToDestroy
     return obj
 end
 

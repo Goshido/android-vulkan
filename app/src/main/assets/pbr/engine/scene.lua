@@ -9,7 +9,7 @@ require "av://engine/transform_component.lua"
 local Scene = {}
 
 -- Methods
-local function AppendActor ( self, actor )
+local function AppendActorFromNative ( self, actor )
     local name = actor:GetName ()
     local actors = self._actors
     local list = actors[ name ]
@@ -54,6 +54,19 @@ local function AppendActor ( self, actor )
     end
 
     actor:CommitComponents ()
+end
+
+local function AppendActor ( self, actor )
+    assert ( type ( self ) == "table" and self._type == eObjectType.Scene,
+        [[Scene:AppendActor - Calling not via ":" syntax.]]
+    )
+
+    assert ( type ( actor ) == "table" and actor._type == eObjectType.Actor,
+        [[Scene:AppendActor - "actor" is not actor object.]]
+    )
+
+    av_SceneAppendActor ( self._handle, actor._handle )
+    AppendActorFromNative ( self, actor )
 end
 
 local function DetachActor ( self, actor )
@@ -268,6 +281,7 @@ local function Constructor ( self, handle )
 
     -- Methods
     obj.AppendActor = AppendActor
+    obj.AppendActorFromNative = AppendActorFromNative
     obj.DetachActor = DetachActor
     obj.FindActor = FindActor
     obj.FindActors = FindActors

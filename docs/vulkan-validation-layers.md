@@ -6,7 +6,7 @@ Starting from _Android NDK_ `23.0.7599858` the _Vulkan_ validation layers have b
 
 ## Compatible version
 
-The manual is based on `5a9de7a853ee2c24c416a2c97bf614c28d71a1b5` commit of the [_Vulkan-ValidationLayers_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) repo. The manual is primary aimed for _Windows OS_ users.
+The manual is based on `f4fecc90d3d7d958e37eddf7689472246d99f8f3` commit of the [_Vulkan-ValidationLayers_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) repo. The manual is primary aimed for _Windows OS_ users.
 
 ## Requirements
 
@@ -14,7 +14,7 @@ The manual is based on `5a9de7a853ee2c24c416a2c97bf614c28d71a1b5` commit of the 
 - _Android NDK 25.1.8937393_
 - _CMake 3.22.1_
 - _Ninja 1.10.2_
-- _Python 3.10.0_
+- _Python 3.11.1_
 
 ## Building
 
@@ -47,10 +47,13 @@ At this point it's time to build dependencies: `glslang`, `SPIRV-Tools` and `SPI
 To build `glslang` go to `build-android/glslang` and run
 
 ```cmake
+mkdir install
+
 set ANDROID_NDK_ROOT=<Path to Android NDK v25.1.8937393>
 set ANDROID_CMAKE_DIR=<Path to Android's CMake v3.22.1>
+
 "%ANDROID_CMAKE_DIR%\cmake" . -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=./install -DANDROID_ABI=arm64-v8a -DCMAKE_BUILD_TYPE=Release -DANDROID_STL=c++_static -DANDROID_PLATFORM=android-30 -DCMAKE_SYSTEM_NAME=Android -DANDROID_TOOLCHAIN=clang -DANDROID_ARM_MODE=arm -DCMAKE_MAKE_PROGRAM=%ANDROID_NDK_ROOT%/prebuilt/windows-x86_64/bin/make -DCMAKE_TOOLCHAIN_FILE=%ANDROID_NDK_ROOT%/build/cmake/android.toolchain.cmake
-"%ANDROID_CMAKE_DIR%\cmake" --build .
+"%ANDROID_CMAKE_DIR%\cmake" --build . -j16
 ```
 
 The artifact will be here:
@@ -82,7 +85,7 @@ mkdir build && cd build
 mkdir libs
 mkdir app
 
-%ANDROID_NDK%/ndk-build -C ../android_test NDK_PROJECT_PATH=. NDK_LIBS_OUT=%CD%\libs NDK_APP_OUT=%CD%\app
+%ANDROID_NDK%/ndk-build -C ../android_test NDK_PROJECT_PATH=. NDK_LIBS_OUT=%CD%\libs NDK_APP_OUT=%CD%\app -j16
 ```
 
 The artifacts will be here:
@@ -128,3 +131,5 @@ Name | Link | Status
 Incorrect validation of the `vkGetPhysicalDeviceSurfaceFormatsKHR` | [#3251](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/3251) | ✔️ Fixed
 Incorrect de-initialization and `VK_EXT_debug_report` | [#3327](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/3327) | ☄️ Driver bug
 Input attachment descriptor image view is not a subpass input attachment | [#4555](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/4555) | ✔️ Fixed
+master build broken for some time | [#5014](https://github.com/KhronosGroup/SPIRV-Tools/issues/5014) | ❌ Submitted
+Broken Android build | [#4947](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/4947) | ❌ Submitted

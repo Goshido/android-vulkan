@@ -72,6 +72,7 @@ add_library ( VkLayer_khronos_validation
     ../layers/descriptor_validation.cpp
     ../layers/buffer_validation.cpp
     ../layers/shader_module.cpp
+    ../layers/shader_instruction.cpp
     ../layers/shader_validation.cpp
     ../layers/generated/spirv_validation_helper.cpp
     ../layers/generated/spirv_grammar_helper.cpp
@@ -119,6 +120,7 @@ target_include_directories ( VkLayer_khronos_validation
 target_compile_definitions ( VkLayer_khronos_validation
     PRIVATE
     -DVK_ENABLE_BETA_EXTENSIONS
+    -DXXH_NO_LONG_LON
     -DVK_USE_PLATFORM_ANDROID_KHR
     -DVK_PROTOTYPES
     -DUSE_ROBIN_HOOD_HASHING

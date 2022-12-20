@@ -22,6 +22,9 @@ GX_DISABLE_COMMON_WARNINGS
 
 GX_RESTORE_WARNING_STATE
 
+// REMOVE ME
+#include <sound_storage.h>
+
 
 namespace android_vulkan {
 
@@ -48,6 +51,11 @@ enum class eGame : uint16_t
 };
 
 //----------------------------------------------------------------------------------------------------------------------
+
+static void TEST () noexcept
+{
+    // MAKE some tests here
+}
 
 Core::Core ( JNIEnv* env, jobject activity, jobject assetManager, std::string &&cacheDirectory ) noexcept:
     _cacheDirectory ( std::move ( cacheDirectory ) )
@@ -78,14 +86,11 @@ Core::Core ( JNIEnv* env, jobject activity, jobject assetManager, std::string &&
         { android_vulkan::eGame::World1x1, std::make_shared<pbr::mario::World1x1> () }
     };
 
-    _game = games.find ( android_vulkan::eGame::PBR )->second.get ();
+    _game = games.find ( android_vulkan::eGame::World1x1 )->second.get ();
 
     _thread = std::thread (
         [ this ] () noexcept {
-            if ( !_renderer.OnCreateDevice () )
-                return;
-
-            if ( !_game->OnInitDevice ( _renderer ) )
+            if ( !_renderer.OnCreateDevice () || !_game->OnInitDevice ( _renderer ) )
                 return;
 
             while ( ExecuteMessageQueue () )
@@ -97,6 +102,7 @@ Core::Core ( JNIEnv* env, jobject activity, jobject assetManager, std::string &&
     );
 
     _gamepad.BindKey ( nullptr, &Core::OnHomeUp, eGamepadKey::Home, eButtonState::Up );
+    TEST ();
 }
 
 void Core::OnAboutDestroy ( JNIEnv* env ) noexcept

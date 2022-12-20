@@ -29,6 +29,8 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/logger.cpp
     app/src/main/cpp/sources/memory_allocator.cpp
     app/src/main/cpp/sources/mesh_geometry.cpp
+    app/src/main/cpp/sources/pcm_streamer.cpp
+    app/src/main/cpp/sources/pcm_streamer_wav.cpp
     app/src/main/cpp/sources/physics.cpp
     app/src/main/cpp/sources/ray_caster.cpp
     app/src/main/cpp/sources/renderer.cpp
@@ -37,6 +39,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/shape_box.cpp
     app/src/main/cpp/sources/shape_sphere.cpp
     app/src/main/cpp/sources/simplex.cpp
+    app/src/main/cpp/sources/sound_storage.cpp
     app/src/main/cpp/sources/sutherland_hodgman.cpp
     app/src/main/cpp/sources/texture_cube.cpp
     app/src/main/cpp/sources/texture2D.cpp

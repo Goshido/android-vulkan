@@ -177,7 +177,7 @@ class Renderer final
         // See docs/vulkan-memory-view.md
         [[maybe_unused]] void MakeVulkanMemorySnapshot () noexcept;
 
-        // Method returns true is "result" equals VK_SUCCESS. Otherwise method returns false.
+        // Method returns true if "result" equals VK_SUCCESS. Otherwise method returns false.
         [[nodiscard]] static bool CheckVkResult ( VkResult result, char const* from, char const* message ) noexcept;
 
         [[nodiscard]] static VkImageAspectFlags ResolveImageViewAspect ( VkFormat format ) noexcept;

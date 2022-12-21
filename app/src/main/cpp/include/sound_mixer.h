@@ -34,7 +34,7 @@ class [[maybe_unused]] SoundMixer final
         [[maybe_unused, nodiscard]] bool Init () noexcept;
         void Destroy () noexcept;
 
-        // Method returns true is "result" equals VK_SUCCESS. Otherwise method returns false.
+        // Method returns true if "result" equals AAUDIO_OK. Otherwise method returns false.
         [[nodiscard]] static bool CheckAAudioResult ( aaudio_result_t result,
             char const* from,
             char const* message

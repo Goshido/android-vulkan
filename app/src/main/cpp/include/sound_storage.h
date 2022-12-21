@@ -16,7 +16,7 @@ GX_RESTORE_WARNING_STATE
 
 namespace android_vulkan {
 
-class [[maybe_unused]] SoundStorage final
+class SoundStorage final
 {
     public:
         using SoundFile = std::shared_ptr<std::vector<uint8_t> const>;

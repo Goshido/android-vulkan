@@ -23,7 +23,7 @@ class PCMStreamer
 
         struct Info final
         {
-            [[maybe_unused]] uint8_t                _bytesPerChannelSample = 2U;
+            uint8_t                                 _bytesPerChannelSample = 2U;
             uint8_t                                 _channelCount = 1U;
             uint32_t                                _sampleRate = 44100U;
         };
@@ -49,7 +49,7 @@ class PCMStreamer
 
         // Note bufferLengthMs is in milliseconds,
         [[maybe_unused, nodiscard]] bool SetSoundAsset ( SoundStorage &soundStorage,
-            std::string &&file,
+            std::string_view const file,
             size_t bufferLengthMs
         ) noexcept;
 
@@ -57,6 +57,8 @@ class PCMStreamer
         PCMStreamer () = default;
 
         [[nodiscard]] virtual std::optional<Info> ResolveInfo () noexcept = 0;
+
+        [[nodiscard]] static bool IsFormatSupported ( std::string_view const file, Info const &info ) noexcept;
 };
 
 } // namespace android_vulkan

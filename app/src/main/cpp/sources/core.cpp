@@ -23,7 +23,7 @@ GX_DISABLE_COMMON_WARNINGS
 GX_RESTORE_WARNING_STATE
 
 // REMOVE ME
-#include <sound_storage.h>
+#include <sound_mixer.h>
 
 
 namespace android_vulkan {
@@ -54,7 +54,12 @@ enum class eGame : uint16_t
 
 static void TEST () noexcept
 {
-    // MAKE some tests here
+    SoundMixer mixer {};
+
+    if ( !mixer.Init () )
+        return;
+
+    mixer.Destroy ();
 }
 
 Core::Core ( JNIEnv* env, jobject activity, jobject assetManager, std::string &&cacheDirectory ) noexcept:

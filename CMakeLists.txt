@@ -39,6 +39,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/shape_box.cpp
     app/src/main/cpp/sources/shape_sphere.cpp
     app/src/main/cpp/sources/simplex.cpp
+    app/src/main/cpp/sources/sound_mixer.cpp
     app/src/main/cpp/sources/sound_storage.cpp
     app/src/main/cpp/sources/sutherland_hodgman.cpp
     app/src/main/cpp/sources/texture_cube.cpp
@@ -184,6 +185,7 @@ target_compile_definitions ( android-vulkan
 )
 
 target_link_libraries ( android-vulkan
+    aaudio
     android
     ${log-lib}
     ${CMAKE_SOURCE_DIR}/third-party/jniLibs/arm64-v8a/libLua.so

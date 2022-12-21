@@ -17,7 +17,7 @@ namespace android_vulkan {
 class [[maybe_unused]] SoundMixer final
 {
     private:
-        AAudioStreamBuilder*        _buildler = nullptr;
+        AAudioStreamBuilder*        _builder = nullptr;
         [[maybe_unused]] size_t     _burstSize = std::numeric_limits<size_t>::max ();
 
     public:

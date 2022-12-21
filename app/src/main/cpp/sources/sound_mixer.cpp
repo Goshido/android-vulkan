@@ -12,7 +12,7 @@ namespace android_vulkan {
 
 [[maybe_unused]] bool SoundMixer::Init () noexcept
 {
-    if ( !CheckAAudioResult ( AAudio_createStreamBuilder ( &_buildler ), "SoundMixer::Init", "Can't create builder" ) )
+    if ( !CheckAAudioResult ( AAudio_createStreamBuilder ( &_builder ), "SoundMixer::Init", "Can't create builder" ) )
     {
         Destroy ();
         return false;
@@ -24,18 +24,15 @@ namespace android_vulkan {
 
 void SoundMixer::Destroy () noexcept
 {
-    if ( !_buildler )
+    if ( !_builder )
         return;
 
-    bool const result = CheckAAudioResult ( AAudioStreamBuilder_delete ( _buildler ),
+    [[maybe_unused]] bool const result = CheckAAudioResult ( AAudioStreamBuilder_delete ( _builder ),
         "SoundMixer::Destroy",
         "Can't destroy builder"
     );
 
-    if ( !result )
-        LogWarning ( "SoundMixer::Destroy - Strange, very strange." );
-
-    _buildler = nullptr;
+    _builder = nullptr;
 }
 
 bool SoundMixer::CheckAAudioResult ( aaudio_result_t result, char const* from, char const* message ) noexcept

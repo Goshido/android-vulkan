@@ -32,8 +32,8 @@ class StreamCloser final
         ~StreamCloser () noexcept;
 };
 
-StreamCloser::StreamCloser ( AAudioStream &stream ) noexcept
-    : _stream ( stream )
+StreamCloser::StreamCloser ( AAudioStream &stream ) noexcept:
+    _stream ( stream )
 {
     // NOTHING
 }

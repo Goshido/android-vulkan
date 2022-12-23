@@ -9,9 +9,9 @@ namespace android_vulkan {
     return _channelCount;
 }
 
-[[maybe_unused]] bool PCMStreamer::SetSoundAsset ( SoundStorage &soundStorage,
+bool PCMStreamer::SetSoundAsset ( SoundStorage &soundStorage,
     std::string_view const file,
-    size_t bufferLengthMs
+    size_t bufferFrames
 ) noexcept
 {
     auto asset = soundStorage.GetFile ( std::string ( file ) );
@@ -32,10 +32,7 @@ namespace android_vulkan {
 
     _activeBuffer = 0U;
     _channelCount = info._channelCount;
-    size_t const sizePerSecond = info._channelCount * info._sampleRate * sizeof ( PCMType );
-
-    constexpr size_t millisecondsPerSecond = 1000U;
-    size_t const size = sizePerSecond * bufferLengthMs / millisecondsPerSecond;
+    size_t const size = info._channelCount * bufferFrames;
 
     for ( auto& buffer : _buffers )
         buffer.resize ( size );

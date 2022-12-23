@@ -13,6 +13,31 @@ GX_RESTORE_WARNING_STATE
 
 namespace android_vulkan {
 
+namespace {
+
+constexpr float CHANNEL_VOLUME = 1.0F;
+
+[[nodiscard]] char const* GetFormatString ( aaudio_format_t fmt, std::span<char> unknownFormat ) noexcept
+{
+    static std::unordered_map<aaudio_format_t, char const*> const map
+    {
+        { AAUDIO_FORMAT_INVALID, "AAUDIO_FORMAT_INVALID" },
+        { AAUDIO_FORMAT_UNSPECIFIED, "AAUDIO_FORMAT_UNSPECIFIED" },
+        { AAUDIO_FORMAT_PCM_I16, "AAUDIO_FORMAT_PCM_I16" },
+        { AAUDIO_FORMAT_PCM_FLOAT, "AAUDIO_FORMAT_PCM_FLOAT" },
+        { AAUDIO_FORMAT_PCM_I24_PACKED, "AAUDIO_FORMAT_PCM_I24_PACKED" },
+        { AAUDIO_FORMAT_PCM_I32, "AAUDIO_FORMAT_PCM_I32" }
+    };
+
+    if ( auto const findResult = map.find ( fmt ); findResult != map.cend () )
+        return findResult->second;
+
+    std::snprintf ( unknownFormat.data (), unknownFormat.size (), "UNKNOWN [%d]", static_cast<int> ( fmt ) );
+    return unknownFormat.data ();
+};
+
+} // end of anonymous namespace
+
 class StreamCloser final
 {
     private:
@@ -53,6 +78,9 @@ StreamCloser::~StreamCloser () noexcept
 
 [[maybe_unused]] bool SoundMixer::Init () noexcept
 {
+    std::fill_n ( _channelVolume, std::size ( _channelVolume ), CHANNEL_VOLUME );
+    SetMasterVolume ( _masterVolume );
+
     if ( !CheckAAudioResult ( AAudio_createStreamBuilder ( &_builder ), "SoundMixer::Init", "Can't create builder" ) )
     {
         Destroy ();
@@ -138,9 +166,117 @@ void SoundMixer::Destroy () noexcept
     _builder = nullptr;
 }
 
+[[maybe_unused, nodiscard]] std::optional<AAudioStream*> SoundMixer::CreateStream (
+    SoundEmitter::Context &emitter
+) noexcept
+{
+    AAudioStreamBuilder_setDataCallback ( _builder, &SoundMixer::PCMCallback, &emitter );
+
+    AAudioStream* stream = nullptr;
+    aaudio_result_t result = AAudioStreamBuilder_openStream ( _builder, &stream );
+
+    if ( !CheckAAudioResult ( result, "SoundMixer::CreateStream", "Can't open stream" ) )
+        return std::nullopt;
+
+    if ( int32_t const sampleRate = AAudioStream_getSampleRate ( stream ); sampleRate != GetSampleRate () )
+    {
+        StreamCloser const streamCloser ( *stream );
+
+        LogError ( "SoundMixer::CreateStream - Unexpected sample rate %" PRIi32 ". Should be %" PRIi32 ".",
+            sampleRate,
+            GetSampleRate ()
+        );
+
+        assert ( false );
+        return std::nullopt;
+    }
+
+    if ( aaudio_format_t const format = AAudioStream_getFormat ( stream ); format != GetFormat () )
+    {
+        StreamCloser const streamCloser ( *stream );
+
+        constexpr size_t size = 128U;
+        char current[ size ];
+        char expected[ size ];
+
+        LogError ( "SoundMixer::CreateStream - Unexpected format %s. Should be %s.",
+            GetFormatString ( format, current ),
+            GetFormatString ( GetFormat (), expected )
+        );
+
+        assert ( false );
+        return std::nullopt;
+    }
+
+    if ( int32_t const channels = AAudioStream_getChannelCount ( stream ); channels != GetChannelCount () )
+    {
+        StreamCloser const streamCloser ( *stream );
+
+        LogError ( "SoundMixer::CreateStream - Unexpected channel count %" PRIi32 ". Should be %" PRIi32 ".",
+            channels,
+            GetChannelCount ()
+        );
+
+        assert ( false );
+        return std::nullopt;
+    }
+
+    int32_t const frames = AAudioStream_setBufferSizeInFrames ( stream, _bufferFrameCount );
+
+    if ( frames != _bufferFrameCount )
+    {
+        StreamCloser const streamCloser ( *stream );
+
+        LogError ( "SoundMixer::CreateStream - Unexpected buffer frame count %" PRIi32 ". Should be %" PRIi32 ".",
+            frames,
+            _bufferFrameCount
+        );
+
+        assert ( false );
+        return std::nullopt;
+    }
+
+    return stream;
+}
+
+size_t SoundMixer::GetBufferFrameCount () const noexcept
+{
+    return static_cast<size_t> ( _bufferFrameCount );
+}
+
 [[maybe_unused]] size_t SoundMixer::GetBufferSampleCount () const noexcept
 {
     return _bufferSampleCount;
+}
+
+[[maybe_unused]] float SoundMixer::GetChannelVolume ( eSoundChannel channel ) const noexcept
+{
+    return _channelVolume[ static_cast<size_t> ( channel ) ];
+}
+
+[[maybe_unused]] void SoundMixer::SetChannelVolume ( eSoundChannel channel, float volume ) noexcept
+{
+    _channelVolume[ static_cast<size_t> ( channel ) ] = volume;
+}
+
+[[maybe_unused]] float SoundMixer::GetEffectiveChannelVolume ( eSoundChannel channel ) const noexcept
+{
+    return _effectiveChannelVolume[ static_cast<size_t> ( channel ) ];
+}
+
+[[maybe_unused]] float SoundMixer::GetMasterVolume () const noexcept
+{
+    return _masterVolume;
+}
+
+void SoundMixer::SetMasterVolume ( float volume ) noexcept
+{
+    _masterVolume = volume;
+
+    for ( size_t i = 0U; i < TOTAL_SOUND_CHANNELS; ++i )
+    {
+        _effectiveChannelVolume[ i ] = volume * _channelVolume[ i ];
+    }
 }
 
 bool SoundMixer::CheckAAudioResult ( aaudio_result_t result, char const* from, char const* message ) noexcept
@@ -203,6 +339,22 @@ bool SoundMixer::ResolveBufferSize () noexcept
     return true;
 }
 
+aaudio_data_callback_result_t SoundMixer::PCMCallback ( AAudioStream* /*stream*/,
+    void* userData,
+    void* audioData,
+    int32_t numFrames
+)
+{
+    auto& context = *static_cast<SoundEmitter::Context*> ( userData );
+    assert ( context._soundMixer->_bufferFrameCount == numFrames );
+
+    context._soundEmitter->FillPCM (
+        std::span ( static_cast<PCMStreamer::PCMType*> ( audioData ), static_cast<size_t> ( numFrames ) )
+    );
+
+    return AAUDIO_CALLBACK_RESULT_CONTINUE;
+}
+
 void SoundMixer::PrintStreamInfo ( AAudioStream &stream, char const* header ) noexcept
 {
     constexpr char const format[] =
@@ -226,26 +378,6 @@ R"__(SoundMixer::PrintStreamInfo - %s:
 <<<)__";
 
     constexpr size_t size = 128U;
-    char unknownFormat[ size ];
-
-    auto const getFormat = [ &unknownFormat ] ( aaudio_format_t fmt ) noexcept -> char const* {
-        static std::unordered_map<aaudio_format_t, char const*> const map
-        {
-            { AAUDIO_FORMAT_INVALID, "AAUDIO_FORMAT_INVALID" },
-            { AAUDIO_FORMAT_UNSPECIFIED, "AAUDIO_FORMAT_UNSPECIFIED" },
-            { AAUDIO_FORMAT_PCM_I16, "AAUDIO_FORMAT_PCM_I16" },
-            { AAUDIO_FORMAT_PCM_FLOAT, "AAUDIO_FORMAT_PCM_FLOAT" },
-            { AAUDIO_FORMAT_PCM_I24_PACKED, "AAUDIO_FORMAT_PCM_I24_PACKED" },
-            { AAUDIO_FORMAT_PCM_I32, "AAUDIO_FORMAT_PCM_I32" }
-        };
-
-        if ( auto const findResult = map.find ( fmt ); findResult != map.cend () )
-            return findResult->second;
-
-        std::snprintf ( unknownFormat, size, "UNKNOWN [%d]", static_cast<int> ( fmt ) );
-        return unknownFormat;
-    };
-
     char unknownSharingMode[ size ];
 
     auto const getSharingMode = [ &unknownSharingMode ] ( aaudio_sharing_mode_t mode ) noexcept -> char const* {
@@ -359,6 +491,8 @@ R"__(SoundMixer::PrintStreamInfo - %s:
         return unknownContentType;
     };
 
+    char unknownFormat[ size ];
+
     LogInfo ( format,
         header,
         &stream,
@@ -369,7 +503,7 @@ R"__(SoundMixer::PrintStreamInfo - %s:
         static_cast<int> ( AAudioStream_getSampleRate ( &stream ) ),
         static_cast<int> ( AAudioStream_getChannelCount ( &stream ) ),
         static_cast<int> ( AAudioStream_getDeviceId ( &stream ) ),
-        getFormat ( AAudioStream_getFormat ( &stream ) ),
+        GetFormatString ( AAudioStream_getFormat ( &stream ), unknownFormat ),
         getSharingMode ( AAudioStream_getSharingMode ( &stream ) ),
         getPerformanceMode ( AAudioStream_getPerformanceMode ( &stream ) ),
         getDirection ( AAudioStream_getDirection ( &stream ) ),

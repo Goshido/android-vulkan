@@ -23,6 +23,7 @@ GX_DISABLE_COMMON_WARNINGS
 GX_RESTORE_WARNING_STATE
 
 // REMOVE ME
+#include <sound_emitter_global.h>
 #include <sound_mixer.h>
 
 
@@ -59,8 +60,25 @@ static void TEST () noexcept
     if ( !mixer.Init () )
         return;
 
+    SoundStorage storage {};
+    SoundEmitterGlobal emitter {};
+
+    if ( !emitter.Init ( mixer, eSoundChannel::Speech ) )
+    {
+        mixer.Destroy ();
+        return;
+    }
+
+    if ( !emitter.SetSoundAsset ( storage, "sounds/Surprise motherfucker.wav" ) )
+        LogWarning ( "Can't set sound asset!" );
+
+    if ( !emitter.Destroy () )
+        LogWarning ( "Can't destroy emitter!" );
+
     mixer.Destroy ();
 }
+
+//----------------------------------------------------------------------------------------------------------------------
 
 Core::Core ( JNIEnv* env, jobject activity, jobject assetManager, std::string &&cacheDirectory ) noexcept:
     _cacheDirectory ( std::move ( cacheDirectory ) )

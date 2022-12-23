@@ -47,10 +47,9 @@ class PCMStreamer
 
         [[maybe_unused, nodiscard]] uint8_t GetChannelCount () const noexcept;
 
-        // Note bufferLengthMs is in milliseconds,
-        [[maybe_unused, nodiscard]] bool SetSoundAsset ( SoundStorage &soundStorage,
+        [[nodiscard]] bool SetSoundAsset ( SoundStorage &soundStorage,
             std::string_view const file,
-            size_t bufferLengthMs
+            size_t bufferFrames
         ) noexcept;
 
     protected:

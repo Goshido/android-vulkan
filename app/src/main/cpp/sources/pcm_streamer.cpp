@@ -17,12 +17,7 @@ bool PCMStreamer::SetSoundAsset ( SoundStorage &soundStorage, std::string_view c
     if ( result == std::nullopt )
         return false;
 
-    Info const &info = *result;
-
-    if ( !IsFormatSupported ( file, info ) )
-        return false;
-
-    return true;
+    return IsFormatSupported ( file, *result );
 }
 
 PCMStreamer::PCMStreamer ( SoundEmitter &soundEmitter, OnStopRequest callback ) noexcept:

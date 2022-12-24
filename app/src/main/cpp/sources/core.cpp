@@ -59,8 +59,6 @@ SoundMixer mixer {};
 SoundStorage storage {};
 SoundEmitterGlobal emitter {};
 
-} // end of anonymous namespace
-
 static void TEST () noexcept
 {
     if ( !mixer.Init () )
@@ -72,8 +70,10 @@ static void TEST () noexcept
         return;
     }
 
-    //if ( !emitter.SetSoundAsset ( storage, "sounds/doom_eternal_54. Meathook.wav", false ) )
-    if ( !emitter.SetSoundAsset ( storage, "sounds/Surprise motherfucker.wav", true ) )
+    if ( !emitter.SetSoundAsset ( storage, "sounds/sine.wav", true ) )
+//    if ( !emitter.SetSoundAsset ( storage, "sounds/sine_stereo.wav", true ) )
+//    if ( !emitter.SetSoundAsset ( storage, "sounds/doom_eternal_54. Meathook.wav", false ) )
+//    if ( !emitter.SetSoundAsset ( storage, "sounds/Surprise motherfucker.wav", true ) )
         LogWarning ( "Can't set sound asset!" );
 
     if ( emitter.Play () )
@@ -84,6 +84,8 @@ static void TEST () noexcept
 
     mixer.Destroy ();
 }
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 

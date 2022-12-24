@@ -10,16 +10,22 @@ namespace android_vulkan {
 class PCMStreamerWAV final : public PCMStreamer
 {
     private:
+        struct Consume final
+        {
+            size_t      _bufferSampleCount = 0U;
+            size_t      _pcmSampleCount = 0U;
+        };
+
         using LoopHandler = void ( PCMStreamerWAV::* ) ( PCMType* buffer,
             size_t bufferSamples,
             PCMType const* pcm,
-            size_t canRead,
+            Consume consume,
             int32_t leftGain,
             int32_t rightGain
         ) noexcept;
 
-        using ReadHandler = void ( PCMStreamerWAV::* ) ( PCMType* buffer,
-            size_t canRead,
+        using ReadHandler = Consume ( PCMStreamerWAV::* ) ( PCMType* buffer,
+            size_t bufferSamples,
             PCMType const* pcm,
             int32_t leftGain,
             int32_t rightGain
@@ -55,7 +61,7 @@ class PCMStreamerWAV final : public PCMStreamer
         void HandleLoopedMono ( PCMType* buffer,
             size_t bufferSamples,
             PCMType const* pcm,
-            size_t canRead,
+            Consume consume,
             int32_t leftGain,
             int32_t rightGain
         ) noexcept;
@@ -63,7 +69,7 @@ class PCMStreamerWAV final : public PCMStreamer
         void HandleLoopedStereo ( PCMType* buffer,
             size_t bufferSamples,
             PCMType const* pcm,
-            size_t canRead,
+            Consume consume,
             int32_t leftGain,
             int32_t rightGain
         ) noexcept;
@@ -71,20 +77,20 @@ class PCMStreamerWAV final : public PCMStreamer
         void HandleNonLooped ( PCMType* buffer,
             size_t bufferSamples,
             PCMType const* pcm,
-            size_t canRead,
+            Consume consume,
             int32_t leftGain,
             int32_t rightGain
         ) noexcept;
 
-        void HandleMono ( PCMType* buffer,
-            size_t canRead,
+        [[nodiscard]] Consume HandleMono ( PCMType* buffer,
+            size_t bufferSamples,
             PCMType const* pcm,
             int32_t leftGain,
             int32_t rightGain
         ) noexcept;
 
-        void HandleStereo ( PCMType* buffer,
-            size_t canRead,
+        [[nodiscard]] Consume HandleStereo ( PCMType* buffer,
+            size_t bufferSamples,
             PCMType const* pcm,
             int32_t leftGain,
             int32_t rightGain

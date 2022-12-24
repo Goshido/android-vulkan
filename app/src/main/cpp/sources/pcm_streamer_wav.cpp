@@ -36,10 +36,9 @@ struct WAVEHeader final
 
 #pragma pack ( pop )
 
-constexpr int16_t SCALE = std::numeric_limits<int16_t>::max ();
-constexpr auto DENUMERATOR = static_cast<int32_t> ( SCALE );
-
 } // end of anonymous namespace
+
+//----------------------------------------------------------------------------------------------------------------------
 
 PCMStreamerWAV::PCMStreamerWAV ( SoundEmitter &soundEmitter, OnStopRequest callback ) noexcept:
     PCMStreamer ( soundEmitter, callback )
@@ -52,25 +51,23 @@ void PCMStreamerWAV::GetNextBuffer ( std::span<PCMType> buffer,
     float rightChannelVolume
 ) noexcept
 {
+    auto const leftGain = static_cast<int32_t> ( leftChannelVolume * static_cast<float> ( INTEGER_DIVISION_SCALE ) );
+    auto const rightGain = static_cast<int32_t> ( rightChannelVolume * static_cast<float> ( INTEGER_DIVISION_SCALE ) );
+
     PCMType* target = buffer.data ();
-
-    auto const leftGain = static_cast<int32_t> ( leftChannelVolume * static_cast<float> ( SCALE ) );
-    auto const rightGain = static_cast<int32_t> ( rightChannelVolume * static_cast<float> ( SCALE ) );
-
     auto const* pcm = reinterpret_cast<PCMType const*> ( _soundFile->data () + sizeof ( WAVEHeader ) );
     size_t const bufferSamples = buffer.size ();
 
-    // Buffer size should be smaller than total samples. Otherwise it's needed a more complicated implementation.
-    assert ( _sampleCount >= bufferSamples  );
-
-    size_t const cases[] = { bufferSamples, _sampleCount - _offset };
-    size_t const canRead = cases[ static_cast<size_t> ( _offset + bufferSamples > _sampleCount ) ];
+    // C++ calling method by pointer syntax.
+    Consume const consume = ( this->*_readHandler ) ( target,
+        bufferSamples,
+        pcm + _offset,
+        leftGain,
+        rightGain
+    );
 
     // C++ calling method by pointer syntax.
-    ( this->*_readHandler ) ( target, canRead, pcm + _offset, leftGain, rightGain );
-
-    // C++ calling method by pointer syntax.
-    ( this->*_loopHandler ) ( target, bufferSamples, pcm, canRead, leftGain, rightGain );
+    ( this->*_loopHandler ) ( target, bufferSamples, pcm, consume, leftGain, rightGain );
 }
 
 std::optional<PCMStreamer::Info> PCMStreamerWAV::ResolveInfo ( bool looped ) noexcept
@@ -101,58 +98,16 @@ std::optional<PCMStreamer::Info> PCMStreamerWAV::ResolveInfo ( bool looped ) noe
     };
 }
 
-void PCMStreamerWAV::HandleLoopedStereo ( PCMType* buffer,
-    size_t bufferSamples,
-    PCMType const* pcm,
-    size_t canRead,
-    int32_t leftGain,
-    int32_t rightGain
-) noexcept
-{
-    size_t const rest = bufferSamples - canRead;
-    _offset = ( _offset + canRead ) % _sampleCount;
-
-    if ( rest == 0U )
-        return;
-
-    buffer += bufferSamples - rest;
-
-    for ( size_t i = 0U; i < rest; i += 2U )
-    {
-        size_t const rightIdx = i + 1U;
-
-        auto const leftSample = static_cast<int32_t> ( pcm[ i ] );
-        auto const rightSample = static_cast<int32_t> ( pcm[ rightIdx ] );
-
-        buffer[ i ] = static_cast<PCMType> ( leftSample * leftGain / DENUMERATOR );
-        buffer[ rightIdx ] = static_cast<PCMType> ( rightSample * rightGain / DENUMERATOR );
-    }
-
-    _offset = rest;
-}
-
-void PCMStreamerWAV::HandleLoopedMono ( PCMType* /*buffer*/,
-    size_t /*bufferSamples*/,
-    PCMType const* /*pcm*/,
-    size_t /*canRead*/,
-    int32_t /*leftGain*/,
-    int32_t /*rightGain*/
-) noexcept
-{
-    // TODO
-    assert ( false );
-}
-
 void PCMStreamerWAV::HandleNonLooped ( PCMType* buffer,
     size_t bufferSamples,
     PCMType const* /*pcm*/,
-    size_t canRead,
+    Consume consume,
     int32_t /*leftGain*/,
     int32_t /*rightGain*/
 ) noexcept
 {
-    size_t const rest = bufferSamples - canRead;
-    _offset += canRead;
+    size_t const rest = bufferSamples - consume._bufferSampleCount;
+    _offset += consume._pcmSampleCount;
 
     if ( rest > 0U )
     {
@@ -165,36 +120,6 @@ void PCMStreamerWAV::HandleNonLooped ( PCMType* buffer,
 
     _onStopRequest ( _soundEmitter );
     _offset = 0U;
-}
-
-void PCMStreamerWAV::HandleMono ( PCMType* /*buffer*/,
-    size_t /*canRead*/,
-    PCMType const* /*pcm*/,
-    int32_t /*leftGain*/,
-    int32_t /*rightGain*/
-) noexcept
-{
-    // TODO
-    assert ( false );
-}
-
-void PCMStreamerWAV::HandleStereo ( PCMType* buffer,
-    size_t canRead,
-    PCMType const* pcm,
-    int32_t leftGain,
-    int32_t rightGain
-) noexcept
-{
-    for ( size_t i = 0U; i < canRead; i += 2U )
-    {
-        size_t const rightIdx = i + 1U;
-
-        auto const leftSample = static_cast<int32_t> ( pcm[ i ] );
-        auto const rightSample = static_cast<int32_t> ( pcm[ rightIdx ] );
-
-        buffer[ i ] = static_cast<PCMType> ( leftSample * leftGain / DENUMERATOR );
-        buffer[ rightIdx ] = static_cast<PCMType> ( rightSample * rightGain / DENUMERATOR );
-    }
 }
 
 } // namespace android_vulkan

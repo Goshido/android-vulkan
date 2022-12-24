@@ -21,6 +21,8 @@ class PCMStreamer
         using PCMType = int16_t;
         using OnStopRequest = void ( * ) ( SoundEmitter &emitter ) noexcept;
 
+        constexpr static int16_t INTEGER_DIVISION_SCALE = std::numeric_limits<int16_t>::max () - 1U;
+
     protected:
         struct Info final
         {

@@ -21,7 +21,7 @@ class [[maybe_unused]] SoundEmitterGlobal final : public SoundEmitter
         ~SoundEmitterGlobal () override = default;
 
     private:
-        void FillPCM ( std::span<PCMStreamer::PCMType> buffer ) noexcept override;
+        void FillPCM ( std::span<PCMStreamer::PCMType> buffer, float channelVolume ) noexcept override;
 };
 
 } // namespace android_vulkan

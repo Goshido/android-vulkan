@@ -4,15 +4,7 @@
 
 namespace android_vulkan {
 
-[[maybe_unused]] uint8_t PCMStreamer::GetChannelCount () const noexcept
-{
-    return _channelCount;
-}
-
-bool PCMStreamer::SetSoundAsset ( SoundStorage &soundStorage,
-    std::string_view const file,
-    size_t bufferFrames
-) noexcept
+bool PCMStreamer::SetSoundAsset ( SoundStorage &soundStorage, std::string_view const file, bool looped ) noexcept
 {
     auto asset = soundStorage.GetFile ( std::string ( file ) );
 
@@ -20,7 +12,7 @@ bool PCMStreamer::SetSoundAsset ( SoundStorage &soundStorage,
         return false;
 
     _soundFile = *asset;
-    auto const result = ResolveInfo ();
+    auto const result = ResolveInfo ( looped );
 
     if ( result == std::nullopt )
         return false;
@@ -30,14 +22,14 @@ bool PCMStreamer::SetSoundAsset ( SoundStorage &soundStorage,
     if ( !IsFormatSupported ( file, info ) )
         return false;
 
-    _activeBuffer = 0U;
-    _channelCount = info._channelCount;
-    size_t const size = info._channelCount * bufferFrames;
-
-    for ( auto& buffer : _buffers )
-        buffer.resize ( size );
-
     return true;
+}
+
+PCMStreamer::PCMStreamer ( SoundEmitter &soundEmitter, OnStopRequest callback ) noexcept:
+    _onStopRequest ( callback ),
+    _soundEmitter ( soundEmitter )
+{
+    // NOTHING
 }
 
 bool PCMStreamer::IsFormatSupported ( std::string_view const file, Info const &info ) noexcept

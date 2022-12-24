@@ -16,11 +16,10 @@ namespace android_vulkan {
 {
     _context =
     {
+        ._soundChannel = channel,
         ._soundMixer = &soundMixer,
         ._soundEmitter = this
     };
-
-    _channel = channel;
 
     if ( auto const stream = soundMixer.CreateStream ( _context ); stream != std::nullopt )
     {
@@ -51,7 +50,50 @@ namespace android_vulkan {
     return true;
 }
 
-[[maybe_unused]] bool SoundEmitter::SetSoundAsset ( SoundStorage &soundStorage, std::string_view const file ) noexcept
+[[maybe_unused]] float SoundEmitter::GetVolume () const noexcept
+{
+    return _volume;
+}
+
+[[maybe_unused]] void SoundEmitter::SetVolume ( float volume ) noexcept
+{
+    _volume = std::clamp ( volume, 0.0F, 1.0F );
+}
+
+[[maybe_unused]] bool SoundEmitter::Pause () noexcept
+{
+    assert ( ( _stream != nullptr ) & static_cast<bool> ( _streamer ) );
+
+    return SoundMixer::CheckAAudioResult ( AAudioStream_requestPause ( _stream ),
+        "SoundEmitter::Pause",
+        "Can't pause"
+    );
+}
+
+[[maybe_unused]] bool SoundEmitter::Play () noexcept
+{
+    assert ( ( _stream != nullptr ) & static_cast<bool> ( _streamer ) );
+
+    return SoundMixer::CheckAAudioResult ( AAudioStream_requestStart ( _stream ),
+        "SoundEmitter::Play",
+        "Can't play"
+    );
+}
+
+[[maybe_unused]] bool SoundEmitter::Stop () noexcept
+{
+    assert ( ( _stream != nullptr ) & static_cast<bool> ( _streamer ) );
+
+    return SoundMixer::CheckAAudioResult ( AAudioStream_requestStop ( _stream ),
+        "SoundEmitter::Stop",
+        "Can't stop"
+    );
+}
+
+[[maybe_unused]] bool SoundEmitter::SetSoundAsset ( SoundStorage &soundStorage,
+    std::string_view const file,
+    bool looped
+) noexcept
 {
     switch ( GetStreamerType ( file ) )
     {
@@ -61,7 +103,7 @@ namespace android_vulkan {
         break;
 
         case eStreamerType::WAV:
-            _streamer = std::make_unique<PCMStreamerWAV> ();
+            _streamer = std::make_unique<PCMStreamerWAV> ( *this, &SoundEmitter::OnStopRequested );
         break;
 
         default:
@@ -69,7 +111,7 @@ namespace android_vulkan {
         break;
     }
 
-    if ( _streamer->SetSoundAsset ( soundStorage, file, _context._soundMixer->GetBufferFrameCount () ) )
+    if ( _streamer->SetSoundAsset ( soundStorage, file, looped ) )
         return true;
 
     _streamer = nullptr;
@@ -80,6 +122,14 @@ SoundEmitter::eStreamerType SoundEmitter::GetStreamerType ( std::string_view con
 {
     // TODO
     return eStreamerType::WAV;
+}
+
+void SoundEmitter::OnStopRequested ( SoundEmitter &soundEmitter ) noexcept
+{
+    if ( !soundEmitter.Stop () )
+    {
+        LogWarning ( "SoundEmitter::OnStopRequested - Can't stop." );
+    }
 }
 
 } // namespace android_vulkan

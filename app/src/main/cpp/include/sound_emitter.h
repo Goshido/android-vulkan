@@ -22,6 +22,7 @@ class SoundEmitter
     public:
         struct Context final
         {
+            eSoundChannel                   _soundChannel = eSoundChannel::VFX;
             SoundMixer*                     _soundMixer = nullptr;
             SoundEmitter*                   _soundEmitter = nullptr;
         };
@@ -34,10 +35,10 @@ class SoundEmitter
         };
 
     protected:
-        [[maybe_unused]] eSoundChannel      _channel = eSoundChannel::Music;
         Context                             _context {};
         AAudioStream*                       _stream = nullptr;
         std::unique_ptr<PCMStreamer>        _streamer {};
+        float                               _volume = 1.0F;
 
     public:
         SoundEmitter ( SoundEmitter const & ) = delete;
@@ -46,13 +47,21 @@ class SoundEmitter
         SoundEmitter ( SoundEmitter && ) = delete;
         SoundEmitter& operator = ( SoundEmitter && ) = delete;
 
-        virtual void FillPCM ( std::span<PCMStreamer::PCMType> buffer ) noexcept = 0;
+        virtual void FillPCM ( std::span<PCMStreamer::PCMType> buffer, float channelVolume ) noexcept = 0;
 
         [[maybe_unused, nodiscard]] bool Init ( SoundMixer &soundMixer, eSoundChannel channel ) noexcept;
         [[maybe_unused, nodiscard]] bool Destroy () noexcept;
 
+        [[maybe_unused, nodiscard]] float GetVolume () const noexcept;
+        [[maybe_unused]] void SetVolume ( float volume ) noexcept;
+
+        [[maybe_unused, nodiscard]] bool Pause () noexcept;
+        [[maybe_unused, nodiscard]] bool Play () noexcept;
+        [[maybe_unused, nodiscard]] bool Stop () noexcept;
+
         [[maybe_unused, nodiscard]] bool SetSoundAsset ( SoundStorage &soundStorage,
-            std::string_view const file
+            std::string_view const file,
+            bool looped
         ) noexcept;
 
     protected:
@@ -60,6 +69,7 @@ class SoundEmitter
         virtual ~SoundEmitter () = default;
 
         [[nodiscard]] static eStreamerType GetStreamerType ( std::string_view const asset ) noexcept;
+        static void OnStopRequested ( SoundEmitter &soundEmitter ) noexcept;
 };
 
 } // namespace android_vulkan

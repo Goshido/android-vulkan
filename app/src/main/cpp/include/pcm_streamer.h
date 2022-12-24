@@ -13,28 +13,30 @@ GX_RESTORE_WARNING_STATE
 
 namespace android_vulkan {
 
+class SoundEmitter;
+
 class PCMStreamer
 {
     public:
         using PCMType = int16_t;
+        using OnStopRequest = void ( * ) ( SoundEmitter &emitter ) noexcept;
 
     protected:
-        static constexpr size_t                     BUFFER_COUNT = 2U;
-
         struct Info final
         {
-            uint8_t                                 _bytesPerChannelSample = 2U;
-            uint8_t                                 _channelCount = 1U;
-            uint32_t                                _sampleRate = 44100U;
+            uint8_t                 _bytesPerChannelSample = 2U;
+            uint8_t                 _channelCount = 1U;
+            uint32_t                _sampleRate = 44100U;
         };
 
     protected:
-        [[maybe_unused]] size_t                     _activeBuffer = 0U;
-        std::vector<PCMType>                        _buffers[ BUFFER_COUNT ]{};
-        uint8_t                                     _channelCount = 1U;
-        [[maybe_unused]] SoundStorage::SoundFile    _soundFile {};
+        OnStopRequest               _onStopRequest = nullptr;
+        SoundEmitter&               _soundEmitter;
+        SoundStorage::SoundFile     _soundFile {};
 
     public:
+        PCMStreamer () = delete;
+
         PCMStreamer ( PCMStreamer const & ) = delete;
         PCMStreamer& operator = ( PCMStreamer const & ) = delete;
 
@@ -43,19 +45,19 @@ class PCMStreamer
 
         virtual ~PCMStreamer () = default;
 
-        [[maybe_unused, nodiscard]] virtual std::span<PCMType const> GetNextBuffer () noexcept = 0;
-
-        [[maybe_unused, nodiscard]] uint8_t GetChannelCount () const noexcept;
+        virtual void GetNextBuffer ( std::span<PCMType> buffer, float leftChannelVolume,
+            float rightChannelVolume
+        ) noexcept = 0;
 
         [[nodiscard]] bool SetSoundAsset ( SoundStorage &soundStorage,
             std::string_view const file,
-            size_t bufferFrames
+            bool looped
         ) noexcept;
 
     protected:
-        PCMStreamer () = default;
+        explicit PCMStreamer ( SoundEmitter &soundEmitter, OnStopRequest callback ) noexcept;
 
-        [[nodiscard]] virtual std::optional<Info> ResolveInfo () noexcept = 0;
+        [[nodiscard]] virtual std::optional<Info> ResolveInfo ( bool looped ) noexcept = 0;
 
         [[nodiscard]] static bool IsFormatSupported ( std::string_view const file, Info const &info ) noexcept;
 };

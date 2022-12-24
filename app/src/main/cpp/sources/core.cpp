@@ -53,15 +53,18 @@ enum class eGame : uint16_t
 
 //----------------------------------------------------------------------------------------------------------------------
 
+namespace {
+
+SoundMixer mixer {};
+SoundStorage storage {};
+SoundEmitterGlobal emitter {};
+
+} // end of anonymous namespace
+
 static void TEST () noexcept
 {
-    SoundMixer mixer {};
-
     if ( !mixer.Init () )
         return;
-
-    SoundStorage storage {};
-    SoundEmitterGlobal emitter {};
 
     if ( !emitter.Init ( mixer, eSoundChannel::Speech ) )
     {
@@ -69,8 +72,12 @@ static void TEST () noexcept
         return;
     }
 
-    if ( !emitter.SetSoundAsset ( storage, "sounds/Surprise motherfucker.wav" ) )
+    //if ( !emitter.SetSoundAsset ( storage, "sounds/doom_eternal_54. Meathook.wav", false ) )
+    if ( !emitter.SetSoundAsset ( storage, "sounds/Surprise motherfucker.wav", true ) )
         LogWarning ( "Can't set sound asset!" );
+
+    if ( emitter.Play () )
+        return;
 
     if ( !emitter.Destroy () )
         LogWarning ( "Can't destroy emitter!" );

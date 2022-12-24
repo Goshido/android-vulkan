@@ -46,8 +46,6 @@ class [[maybe_unused]] SoundMixer final
             SoundEmitter::Context &context
         ) noexcept;
 
-        [[nodiscard]] size_t GetBufferFrameCount () const noexcept;
-
         // Note this is exact amount of samples for all channels in total.
         // For example stereo asset with 7 frames will return 14 samples.
         [[maybe_unused, nodiscard]] size_t GetBufferSampleCount () const noexcept;

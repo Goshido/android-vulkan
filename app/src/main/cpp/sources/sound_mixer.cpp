@@ -239,11 +239,6 @@ void SoundMixer::Destroy () noexcept
     return stream;
 }
 
-size_t SoundMixer::GetBufferFrameCount () const noexcept
-{
-    return static_cast<size_t> ( _bufferFrameCount );
-}
-
 [[maybe_unused]] size_t SoundMixer::GetBufferSampleCount () const noexcept
 {
     return _bufferSampleCount;
@@ -256,7 +251,7 @@ size_t SoundMixer::GetBufferFrameCount () const noexcept
 
 [[maybe_unused]] void SoundMixer::SetChannelVolume ( eSoundChannel channel, float volume ) noexcept
 {
-    _channelVolume[ static_cast<size_t> ( channel ) ] = volume;
+    _channelVolume[ static_cast<size_t> ( channel ) ] = std::clamp ( volume, 0.0F, 1.0F );
 }
 
 [[maybe_unused]] float SoundMixer::GetEffectiveChannelVolume ( eSoundChannel channel ) const noexcept
@@ -271,7 +266,7 @@ size_t SoundMixer::GetBufferFrameCount () const noexcept
 
 void SoundMixer::SetMasterVolume ( float volume ) noexcept
 {
-    _masterVolume = volume;
+    _masterVolume = std::clamp ( volume, 0.0F, 1.0F );
 
     for ( size_t i = 0U; i < TOTAL_SOUND_CHANNELS; ++i )
     {
@@ -285,7 +280,7 @@ bool SoundMixer::CheckAAudioResult ( aaudio_result_t result, char const* from, c
         return true;
 
     // Positive value. This case should be process differently by AAudio design.
-    assert ( result > 0 );
+    assert ( result < 0 );
 
     LogError ( "%s - %s. Error: %s.", from, message, AAudio_convertResultToText ( result ) );
     return false;
@@ -349,7 +344,11 @@ aaudio_data_callback_result_t SoundMixer::PCMCallback ( AAudioStream* /*stream*/
     assert ( context._soundMixer->_bufferFrameCount == numFrames );
 
     context._soundEmitter->FillPCM (
-        std::span ( static_cast<PCMStreamer::PCMType*> ( audioData ), static_cast<size_t> ( numFrames ) )
+        std::span ( static_cast<PCMStreamer::PCMType*> ( audioData ),
+            static_cast<size_t> ( numFrames * GetChannelCount () )
+        ),
+
+        context._soundMixer->_effectiveChannelVolume[ static_cast<size_t> ( context._soundChannel ) ]
     );
 
     return AAUDIO_CALLBACK_RESULT_CONTINUE;

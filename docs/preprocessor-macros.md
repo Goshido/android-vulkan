@@ -75,7 +75,12 @@ For more information please refer to the following guidelines:
 
 ## <a id="macro-android-vulkan-debug">`ANDROID_VULKAN_DEBUG`</a>
 
-This macro enables custom mechanism for reporting leaked _Vulkan_ objects. Also the macro is used for additional debug output in the [_Logcat™_](logcat.md).
+This macro enables custom mechanism for reporting leaked:
+
+- _Vulkan_ objects
+- sound emitter objects
+
+Also the macro is used for additional debug output in the [_Logcat™_](logcat.md).
 
 ## <a id="macro-android-vulkan-enable-render-doc-integration">`ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION`</a>
 
@@ -93,3 +98,4 @@ This macro is responsible for invocation of the `accert` instruction in the foll
 
 * [_Khronos_ validation layer](https://developer.android.com/ndk/guides/graphics/validation-layer#apk-containing-layers) detects some errors or suboptimal execution
 * It's detected some memory leak of the _Vulkan_'s objects
+* It's detected some memory leak of the sound emitter objects

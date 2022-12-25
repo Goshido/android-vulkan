@@ -36,6 +36,8 @@ class SoundEmitter
 
     protected:
         Context                             _context {};
+        std::string                         _file {};
+        bool                                _isPlaying = false;
         AAudioStream*                       _stream = nullptr;
         std::unique_ptr<PCMStreamer>        _streamer {};
         float                               _volume = 1.0F;
@@ -52,12 +54,17 @@ class SoundEmitter
         [[maybe_unused, nodiscard]] bool Init ( SoundMixer &soundMixer, eSoundChannel channel ) noexcept;
         [[maybe_unused, nodiscard]] bool Destroy () noexcept;
 
+        [[nodiscard]] Context& GetContext () noexcept;
+        [[nodiscard]] std::string const& GetFile () const noexcept;
+
         [[maybe_unused, nodiscard]] float GetVolume () const noexcept;
         [[maybe_unused]] void SetVolume ( float volume ) noexcept;
 
         [[maybe_unused, nodiscard]] bool Pause () noexcept;
-        [[maybe_unused, nodiscard]] bool Play () noexcept;
+        [[nodiscard]] bool Play () noexcept;
         [[maybe_unused, nodiscard]] bool Stop () noexcept;
+
+        void OnStreamRecreated ( AAudioStream &stream ) noexcept;
 
         [[maybe_unused, nodiscard]] bool SetSoundAsset ( SoundStorage &soundStorage,
             std::string_view const file,

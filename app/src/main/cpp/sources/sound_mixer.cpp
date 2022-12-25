@@ -6,6 +6,7 @@ GX_DISABLE_COMMON_WARNINGS
 #include <cassert>
 #include <cinttypes>
 #include <cstdio>
+#include <thread>
 #include <unordered_map>
 
 GX_RESTORE_WARNING_STATE
@@ -65,13 +66,10 @@ StreamCloser::StreamCloser ( AAudioStream &stream ) noexcept:
 
 StreamCloser::~StreamCloser () noexcept
 {
-    aaudio_result_t const result = AAudioStream_close ( &_stream );
-
-    if ( !SoundMixer::CheckAAudioResult ( result, "StreamCloser::~StreamCloser", "Can't close stream" ) )
-    {
-        LogWarning ( "StreamCloser::~StreamCloser - Strange. Very strange,,," );
-        assert ( false );
-    }
+    SoundMixer::CheckAAudioResult ( AAudioStream_close ( &_stream ),
+        "StreamCloser::~StreamCloser",
+        "Can't close stream"
+    );
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -101,6 +99,7 @@ StreamCloser::~StreamCloser () noexcept
 
     AAudioStreamBuilder_setChannelCount ( _builder, GetChannelCount () );
     AAudioStreamBuilder_setContentType ( _builder, AAUDIO_CONTENT_TYPE_SONIFICATION );
+    AAudioStreamBuilder_setErrorCallback ( _builder, &SoundMixer::ErrorCallback, this );
     AAudioStreamBuilder_setDirection ( _builder, AAUDIO_DIRECTION_OUTPUT );
     AAudioStreamBuilder_setFormat ( _builder, GetFormat () );
     AAudioStreamBuilder_setPerformanceMode ( _builder, AAUDIO_PERFORMANCE_MODE_NONE );
@@ -128,11 +127,7 @@ StreamCloser::~StreamCloser () noexcept
     if ( result < 0 )
     {
         // Error happens.
-        [[maybe_unused]] bool const dummy = CheckAAudioResult ( result,
-            "SoundMixer::Init",
-            "Can't change probe buffer size"
-        );
-
+        CheckAAudioResult ( result, "SoundMixer::Init", "Can't change probe buffer size" );
         Destroy ();
         return false;
     }
@@ -155,88 +150,71 @@ StreamCloser::~StreamCloser () noexcept
 
 void SoundMixer::Destroy () noexcept
 {
+
+#ifdef ANDROID_VULKAN_DEBUG
+
+    if ( !_emitters.empty () )
+    {
+        constexpr char const format[] =
+R"__(SoundMixer::Destroy - Memory leak detected: %zu
+>>>)__";
+
+        LogError ( format, _emitters.size () );
+
+        for ( auto const& record : _emitters )
+            LogError ( "    %s", record.second->GetFile ().c_str () );
+
+        LogError ( "<<<" );
+
+#ifdef ANDROID_VULKAN_STRICT_MODE
+
+        assert ( false );
+
+#endif // ANDROID_VULKAN_STRICT_MODE
+
+    }
+
+#endif // ANDROID_VULKAN_DEBUG
+
     if ( !_builder )
         return;
 
-    [[maybe_unused]] bool const result = CheckAAudioResult ( AAudioStreamBuilder_delete ( _builder ),
-        "SoundMixer::Destroy",
-        "Can't destroy builder"
-    );
-
+    CheckAAudioResult ( AAudioStreamBuilder_delete ( _builder ), "SoundMixer::Destroy", "Can't destroy builder" );
     _builder = nullptr;
 }
 
-[[maybe_unused, nodiscard]] std::optional<AAudioStream*> SoundMixer::CreateStream (
-    SoundEmitter::Context &emitter
-) noexcept
+std::optional<AAudioStream*> SoundMixer::CreateStream ( SoundEmitter::Context &context ) noexcept
 {
-    AAudioStreamBuilder_setDataCallback ( _builder, &SoundMixer::PCMCallback, &emitter );
+    std::unique_lock<std::mutex> const lock ( _mutex );
+    auto result = CreateStreamInternal ( context );
 
-    AAudioStream* stream = nullptr;
-    aaudio_result_t result = AAudioStreamBuilder_openStream ( _builder, &stream );
+    if ( result != std::nullopt )
+        _emitters.emplace ( *result, context._soundEmitter );
 
-    if ( !CheckAAudioResult ( result, "SoundMixer::CreateStream", "Can't open stream" ) )
-        return std::nullopt;
+    return result;
+}
 
-    if ( int32_t const sampleRate = AAudioStream_getSampleRate ( stream ); sampleRate != GetSampleRate () )
+bool SoundMixer::DestroyStream ( AAudioStream &stream ) noexcept
+{
+    std::unique_lock<std::mutex> const lock ( _mutex );
+
+    bool const result = SoundMixer::CheckAAudioResult ( AAudioStream_close ( &stream ),
+        "SoundMixer::DestroyStream",
+        "Can't close stream"
+    );
+
+    if ( !result )
+        return false;
+
+    if ( auto const findResult = _emitters.find ( &stream ); findResult != _emitters.cend () )
     {
-        StreamCloser const streamCloser ( *stream );
-
-        LogError ( "SoundMixer::CreateStream - Unexpected sample rate %" PRIi32 ". Should be %" PRIi32 ".",
-            sampleRate,
-            GetSampleRate ()
-        );
-
-        assert ( false );
-        return std::nullopt;
+        _emitters.erase ( findResult );
+        return true;
     }
 
-    if ( aaudio_format_t const format = AAudioStream_getFormat ( stream ); format != GetFormat () )
-    {
-        StreamCloser const streamCloser ( *stream );
-
-        constexpr size_t size = 128U;
-        char current[ size ];
-        char expected[ size ];
-
-        LogError ( "SoundMixer::CreateStream - Unexpected format %s. Should be %s.",
-            GetFormatString ( format, current ),
-            GetFormatString ( GetFormat (), expected )
-        );
-
-        assert ( false );
-        return std::nullopt;
-    }
-
-    if ( int32_t const channels = AAudioStream_getChannelCount ( stream ); channels != GetChannelCount () )
-    {
-        StreamCloser const streamCloser ( *stream );
-
-        LogError ( "SoundMixer::CreateStream - Unexpected channel count %" PRIi32 ". Should be %" PRIi32 ".",
-            channels,
-            GetChannelCount ()
-        );
-
-        assert ( false );
-        return std::nullopt;
-    }
-
-    int32_t const frames = AAudioStream_setBufferSizeInFrames ( stream, _bufferFrameCount );
-
-    if ( frames != _bufferFrameCount )
-    {
-        StreamCloser const streamCloser ( *stream );
-
-        LogError ( "SoundMixer::CreateStream - Unexpected buffer frame count %" PRIi32 ". Should be %" PRIi32 ".",
-            frames,
-            _bufferFrameCount
-        );
-
-        assert ( false );
-        return std::nullopt;
-    }
-
-    return stream;
+    LogError ( "SoundMixer::DestroyStream - Can't find stream!" );
+    assert ( false );
+    return false;
 }
 
 [[maybe_unused]] size_t SoundMixer::GetBufferSampleCount () const noexcept
@@ -252,11 +230,6 @@ void SoundMixer::Destroy () noexcept
 [[maybe_unused]] void SoundMixer::SetChannelVolume ( eSoundChannel channel, float volume ) noexcept
 {
     _channelVolume[ static_cast<size_t> ( channel ) ] = std::clamp ( volume, 0.0F, 1.0F );
-}
-
-[[maybe_unused]] float SoundMixer::GetEffectiveChannelVolume ( eSoundChannel channel ) const noexcept
-{
-    return _effectiveChannelVolume[ static_cast<size_t> ( channel ) ];
 }
 
 [[maybe_unused]] float SoundMixer::GetMasterVolume () const noexcept
@@ -284,6 +257,113 @@ bool SoundMixer::CheckAAudioResult ( aaudio_result_t result, char const* from, c
 
     LogError ( "%s - %s. Error: %s.", from, message, AAudio_convertResultToText ( result ) );
     return false;
+}
+
+void SoundMixer::RecreateSoundEmitter ( AAudioStream &stream ) noexcept
+{
+    std::thread thread (
+        [ this, &stream ] () noexcept {
+            std::unique_lock<std::mutex> const lock ( _mutex );
+            auto findResult = _emitters.find ( &stream );
+
+            if ( findResult == _emitters.cend () )
+            {
+                LogError ( "SoundMixer::RecreateSoundEmitter - Can't find sound emitter." );
+                assert ( false );
+                return;
+            }
+
+            SoundEmitter& emitter = *findResult->second;
+            StreamCloser const closer ( *findResult->first );
+            _emitters.erase ( findResult );
+            auto result = CreateStreamInternal ( emitter.GetContext () );
+
+            if ( result == std::nullopt )
+            {
+                LogError ( "SoundMixer::RecreateSoundEmitter - Can't create new AAudioStream." );
+                assert ( false );
+                return;
+            }
+
+            AAudioStream* newStream = *result;
+            emitter.OnStreamRecreated ( *newStream );
+            _emitters.emplace ( newStream, &emitter );
+        }
+    );
+
+    thread.detach ();
+}
+
+std::optional<AAudioStream*> SoundMixer::CreateStreamInternal ( SoundEmitter::Context &context ) noexcept
+{
+    AAudioStreamBuilder_setDataCallback ( _builder, &SoundMixer::PCMCallback, &context );
+
+    AAudioStream* stream = nullptr;
+    aaudio_result_t result = AAudioStreamBuilder_openStream ( _builder, &stream );
+
+    if ( !CheckAAudioResult ( result, "SoundMixer::CreateStreamInternal", "Can't open stream" ) )
+        return std::nullopt;
+
+    if ( int32_t const sampleRate = AAudioStream_getSampleRate ( stream ); sampleRate != GetSampleRate () )
+    {
+        StreamCloser const streamCloser ( *stream );
+
+        LogError ( "SoundMixer::CreateStreamInternal - Unexpected sample rate %" PRIi32 ". Should be %" PRIi32 ".",
+            sampleRate,
+            GetSampleRate ()
+        );
+
+        assert ( false );
+        return std::nullopt;
+    }
+
+    if ( aaudio_format_t const format = AAudioStream_getFormat ( stream ); format != GetFormat () )
+    {
+        StreamCloser const streamCloser ( *stream );
+
+        constexpr size_t size = 128U;
+        char current[ size ];
+        char expected[ size ];
+
+        LogError ( "SoundMixer::CreateStreamInternal - Unexpected format %s. Should be %s.",
+            GetFormatString ( format, current ),
+            GetFormatString ( GetFormat (), expected )
+        );
+
+        assert ( false );
+        return std::nullopt;
+    }
+
+    if ( int32_t const channels = AAudioStream_getChannelCount ( stream ); channels != GetChannelCount () )
+    {
+        StreamCloser const streamCloser ( *stream );
+
+        LogError ( "SoundMixer::CreateStreamInternal - Unexpected channel count %" PRIi32 ". Should be %" PRIi32 ".",
+            channels,
+            GetChannelCount ()
+        );
+
+        assert ( false );
+        return std::nullopt;
+    }
+
+    int32_t const frames = AAudioStream_setBufferSizeInFrames ( stream, _bufferFrameCount );
+
+    if ( frames != _bufferFrameCount )
+    {
+        StreamCloser const streamCloser ( *stream );
+
+        LogError ( "SoundMixer::CreateStreamInternal - Unexpected buffer frame count %" PRIi32 ". "
+            "Should be %" PRIi32 ".",
+            frames,
+            _bufferFrameCount
+        );
+
+        assert ( false );
+        return std::nullopt;
+    }
+
+    return stream;
 }
 
 bool SoundMixer::ResolveBufferSize () noexcept
@@ -314,7 +394,7 @@ bool SoundMixer::ResolveBufferSize () noexcept
         // Error happens.
         char msg[ 128U ];
         std::snprintf ( msg, std::size ( msg ), "Can't change stream buffer size to %" PRIi32, burst );
-        [[maybe_unused]] bool const dummy = CheckAAudioResult ( result, "SoundMixer::ResolveBufferSize", msg );
+        CheckAAudioResult ( result, "SoundMixer::ResolveBufferSize", msg );
         return false;
     }
 
@@ -332,6 +412,18 @@ bool SoundMixer::ResolveBufferSize () noexcept
     _bufferFrameCount = burst;
     _bufferSampleCount = static_cast<size_t> ( burst * GetChannelCount () );
     return true;
+}
+
+void SoundMixer::ErrorCallback ( AAudioStream* stream, void* userData, aaudio_result_t err )
+{
+    CheckAAudioResult ( err, "SoundMixer::ErrorCallback", "Got error from AAudio subsystem" );
+
+    if ( err != AAUDIO_ERROR_DISCONNECTED )
+        return;
+
+    LogInfo ( "SoundMixer::ErrorCallback - Main audio endpoint has been disconnected, Trying to restore sound..." );
+    auto& soundMixer = *static_cast<SoundMixer*> ( userData );
+    soundMixer.RecreateSoundEmitter ( *stream );
 }
 
 aaudio_data_callback_result_t SoundMixer::PCMCallback ( AAudioStream* /*stream*/,

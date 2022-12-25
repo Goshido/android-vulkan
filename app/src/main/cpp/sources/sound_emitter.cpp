@@ -33,21 +33,29 @@ namespace android_vulkan {
 [[maybe_unused]] bool SoundEmitter::Destroy () noexcept
 {
     if ( _streamer )
+    {
+        _file.clear ();
         _streamer = nullptr;
+    }
 
     if ( !_stream )
         return true;
 
-    bool const result = SoundMixer::CheckAAudioResult ( AAudioStream_close ( _stream ),
-        "SoundEmitter::Destroy",
-        "Can't close stream"
-    );
-
-    if ( !result )
+    if ( bool const result = _context._soundMixer->DestroyStream ( *_stream ); !result )
         return false;
 
     _stream = nullptr;
     return true;
+}
+
+SoundEmitter::Context& SoundEmitter::GetContext () noexcept
+{
+    return _context;
+}
+
+std::string const& SoundEmitter::GetFile () const noexcept
+{
+    return _file;
 }
 
 [[maybe_unused]] float SoundEmitter::GetVolume () const noexcept
@@ -64,30 +72,58 @@ namespace android_vulkan {
 {
     assert ( ( _stream != nullptr ) & static_cast<bool> ( _streamer ) );
 
-    return SoundMixer::CheckAAudioResult ( AAudioStream_requestPause ( _stream ),
+    bool const result = SoundMixer::CheckAAudioResult ( AAudioStream_requestPause ( _stream ),
         "SoundEmitter::Pause",
         "Can't pause"
     );
+
+    if ( result )
+        _isPlaying = false;
+
+    return result;
 }
 
-[[maybe_unused]] bool SoundEmitter::Play () noexcept
+bool SoundEmitter::Play () noexcept
 {
     assert ( ( _stream != nullptr ) & static_cast<bool> ( _streamer ) );
 
-    return SoundMixer::CheckAAudioResult ( AAudioStream_requestStart ( _stream ),
+    bool const result =  SoundMixer::CheckAAudioResult ( AAudioStream_requestStart ( _stream ),
         "SoundEmitter::Play",
         "Can't play"
     );
+
+    if ( result )
+        _isPlaying = true;
+
+    return result;
 }
 
 [[maybe_unused]] bool SoundEmitter::Stop () noexcept
 {
     assert ( ( _stream != nullptr ) & static_cast<bool> ( _streamer ) );
 
-    return SoundMixer::CheckAAudioResult ( AAudioStream_requestStop ( _stream ),
+    bool const result = SoundMixer::CheckAAudioResult ( AAudioStream_requestStop ( _stream ),
         "SoundEmitter::Stop",
         "Can't stop"
     );
+
+    if ( result )
+        _isPlaying = false;
+
+    return result;
+}
+
+void SoundEmitter::OnStreamRecreated ( AAudioStream &stream ) noexcept
+{
+    _stream = &stream;
+
+    if ( !_isPlaying )
+        return;
+
+    if ( !Play () )
+    {
+        LogWarning ( "SoundEmitter::OnStreamRecreated - Can't start playing." );
+    }
 }
 
 [[maybe_unused]] bool SoundEmitter::SetSoundAsset ( SoundStorage &soundStorage,
@@ -112,7 +148,10 @@ namespace android_vulkan {
     }
 
     if ( _streamer->SetSoundAsset ( soundStorage, file, looped ) )
+    {
+        _file = file;
         return true;
+    }
 
     _streamer = nullptr;
     return false;

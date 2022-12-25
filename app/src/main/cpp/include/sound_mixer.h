@@ -18,6 +18,9 @@ namespace android_vulkan {
 class [[maybe_unused]] SoundMixer final
 {
     private:
+        using Emitters = std::unordered_map<AAudioStream*, SoundEmitter*>;
+
+    private:
         constexpr static auto   TOTAL_SOUND_CHANNELS = static_cast<size_t> ( eSoundChannel::Speech ) + 1U;
 
         int32_t                 _bufferFrameCount = std::numeric_limits<int32_t>::min ();
@@ -25,7 +28,9 @@ class [[maybe_unused]] SoundMixer final
         AAudioStreamBuilder*    _builder = nullptr;
         float                   _channelVolume[ TOTAL_SOUND_CHANNELS ] {};
         float                   _effectiveChannelVolume[ TOTAL_SOUND_CHANNELS ] {};
+        Emitters                _emitters {};
         float                   _masterVolume = 1.0F;
+        std::mutex              _mutex {};
 
     public:
         SoundMixer () = default;
@@ -42,9 +47,8 @@ class [[maybe_unused]] SoundMixer final
         void Destroy () noexcept;
 
         // Note SoundMixer is not owned AAudioStream. The callee MUST make AAudioStream_close call.
-        [[maybe_unused, nodiscard]] std::optional<AAudioStream*> CreateStream (
-            SoundEmitter::Context &context
-        ) noexcept;
+        [[nodiscard]] std::optional<AAudioStream*> CreateStream ( SoundEmitter::Context &context ) noexcept;
+        [[nodiscard]] bool DestroyStream ( AAudioStream &stream ) noexcept;
 
         // Note this is exact amount of samples for all channels in total.
         // For example stereo asset with 7 frames will return 14 samples.
@@ -53,16 +57,11 @@ class [[maybe_unused]] SoundMixer final
         [[maybe_unused, nodiscard]] float GetChannelVolume ( eSoundChannel channel ) const noexcept;
         [[maybe_unused]] void SetChannelVolume ( eSoundChannel channel, float volume ) noexcept;
 
-        [[maybe_unused, nodiscard]] float GetEffectiveChannelVolume ( eSoundChannel channel ) const noexcept;
-
         [[maybe_unused, nodiscard]] float GetMasterVolume () const noexcept;
         void SetMasterVolume ( float volume ) noexcept;
 
         // Method returns true if "result" equals AAUDIO_OK. Otherwise method returns false.
-        [[nodiscard]] static bool CheckAAudioResult ( aaudio_result_t result,
-            char const* from,
-            char const* message
-        ) noexcept;
+        static bool CheckAAudioResult ( aaudio_result_t result, char const* from, char const* message ) noexcept;
 
         [[nodiscard]] constexpr static int32_t GetChannelCount () noexcept
         {
@@ -80,7 +79,11 @@ class [[maybe_unused]] SoundMixer final
         }
 
     private:
+        [[nodiscard]] std::optional<AAudioStream*> CreateStreamInternal ( SoundEmitter::Context &context ) noexcept;
         [[nodiscard]] bool ResolveBufferSize () noexcept;
+        void RecreateSoundEmitter ( AAudioStream &stream ) noexcept;
+
+        static void ErrorCallback ( AAudioStream* stream, void* userData, aaudio_result_t err );
 
         [[nodiscard]] static aaudio_data_callback_result_t PCMCallback ( AAudioStream* stream,
             void* userData,

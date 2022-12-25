@@ -28,6 +28,9 @@ Useful documentation is located [here](docs/documentation.md).
 * _CMake 3.22.1_
 * _Gradle 7.6-bin_
 * _DirectX Shader Compiler 1.7.2212.10002_
+* _libogg 1.3.5_ `db5c7a49ce7ebda47b15b78471e78fb7f2483e22`
+* _libvorbis 1.3.7_ `84c023699cdf023a32fa4ded32019f194afcdad0`
+* _libvorbisfile 1.3.7_ `84c023699cdf023a32fa4ded32019f194afcdad0`
 * _Vulkan Validation Layers_ `f4fecc90d3d7d958e37eddf7689472246d99f8f3`
 * _Lua 5.4.5_ `be908a7d4d8130264ad67c5789169769f824c5d1`
 * Real _Android 11_ device with _Vulkan 1.1.131_ support

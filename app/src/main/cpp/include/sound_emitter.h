@@ -63,7 +63,7 @@ class SoundEmitter
 
         [[maybe_unused, nodiscard]] bool Pause () noexcept;
         [[nodiscard]] bool Play () noexcept;
-        [[maybe_unused, nodiscard]] bool Stop () noexcept;
+        [[nodiscard]] bool Stop () noexcept;
 
         void OnStreamRecreated ( AAudioStream &stream ) noexcept;
 

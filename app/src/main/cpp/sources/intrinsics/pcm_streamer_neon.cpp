@@ -107,7 +107,7 @@ int32x4_t NeonConverter::MakeNominator ( int32_t leftGain, int32_t rightGain ) n
 
 //----------------------------------------------------------------------------------------------------------------------
 
-void PCMStreamerWAV::HandleLoopedStereo ( PCMType* buffer,
+void PCMStreamer::HandleLoopedStereo ( PCMType* buffer,
     size_t bufferSamples,
     PCMType const* pcm,
     Consume consume,
@@ -157,7 +157,7 @@ void PCMStreamerWAV::HandleLoopedStereo ( PCMType* buffer,
     _offset = rest;
 }
 
-void PCMStreamerWAV::HandleLoopedMono ( PCMType* buffer,
+void PCMStreamer::HandleLoopedMono ( PCMType* buffer,
     size_t bufferSamples,
     PCMType const* pcm,
     Consume consume,
@@ -208,18 +208,15 @@ void PCMStreamerWAV::HandleLoopedMono ( PCMType* buffer,
     _offset = restInPCMSamples;
 }
 
-PCMStreamerWAV::Consume PCMStreamerWAV::HandleMono ( PCMType* buffer,
+PCMStreamer::Consume PCMStreamer::HandleMono ( PCMType* buffer,
     size_t bufferSamples,
     PCMType const* pcm,
+    bool lastPCMBuffer,
     int32_t leftGain,
     int32_t rightGain
 ) noexcept
 {
     size_t const bufferFrames = bufferSamples >> 1U;
-
-    // Buffer size should be smaller than total samples. Otherwise it's needed a more complicated implementation.
-    assert ( bufferFrames <= _sampleCount );
-
     size_t const cases[] = { bufferFrames, _sampleCount - _offset };
     size_t const canRead = cases[ static_cast<size_t> ( _offset + bufferFrames > _sampleCount ) ];
 
@@ -259,20 +256,19 @@ PCMStreamerWAV::Consume PCMStreamerWAV::HandleMono ( PCMType* buffer,
     return Consume
     {
         ._bufferSampleCount = canRead << 1U,
+        ._lastPCMBuffer = lastPCMBuffer,
         ._pcmSampleCount = canRead
     };
 }
 
-PCMStreamerWAV::Consume PCMStreamerWAV::HandleStereo ( PCMType* buffer,
+PCMStreamer::Consume PCMStreamer::HandleStereo ( PCMType* buffer,
     size_t bufferSamples,
     PCMType const* pcm,
+    bool lastPCMBuffer,
     int32_t leftGain,
     int32_t rightGain
 ) noexcept
 {
-    // Buffer size should be smaller than total samples. Otherwise it's needed a more complicated implementation.
-    assert ( _sampleCount >= bufferSamples );
-
     size_t const cases[] = { bufferSamples, _sampleCount - _offset };
     size_t const canRead = cases[ static_cast<size_t> ( _offset + bufferSamples > _sampleCount ) ];
 
@@ -312,6 +308,7 @@ PCMStreamerWAV::Consume PCMStreamerWAV::HandleStereo ( PCMType* buffer,
     return Consume
     {
         ._bufferSampleCount = canRead,
+        ._lastPCMBuffer = lastPCMBuffer,
         ._pcmSampleCount = canRead
     };
 }

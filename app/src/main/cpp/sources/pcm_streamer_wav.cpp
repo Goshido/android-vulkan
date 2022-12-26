@@ -1,13 +1,6 @@
 #include <logger.h>
 #include <pcm_streamer_wav.h>
 
-GX_DISABLE_COMMON_WARNINGS
-
-#include <cassert>
-#include <fstream>
-
-GX_RESTORE_WARNING_STATE
-
 
 namespace android_vulkan {
 
@@ -59,10 +52,32 @@ void PCMStreamerWAV::GetNextBuffer ( std::span<PCMType> buffer,
     auto const* pcm = reinterpret_cast<PCMType const*> ( _soundFile->data () + sizeof ( WAVEHeader ) );
     size_t const bufferSamples = buffer.size ();
 
+    if ( bufferSamples > _sampleCount )
+    {
+        // C++ calling method by pointer syntax.
+        ( this->*_loopHandler ) ( target,
+            bufferSamples,
+            pcm,
+
+            Consume
+            {
+                ._bufferSampleCount = 0U,
+                ._lastPCMBuffer = true,
+                ._pcmSampleCount = 0U
+            },
+
+            leftGain,
+            rightGain
+        );
+
+        return;
+    }
+
     // C++ calling method by pointer syntax.
     Consume const consume = ( this->*_readHandler ) ( target,
         bufferSamples,
         pcm + _offset,
+        true,
         leftGain,
         rightGain
     );
@@ -71,25 +86,10 @@ void PCMStreamerWAV::GetNextBuffer ( std::span<PCMType> buffer,
     ( this->*_loopHandler ) ( target, bufferSamples, pcm, consume, leftGain, rightGain );
 }
 
-std::optional<PCMStreamer::Info> PCMStreamerWAV::ResolveInfo ( bool looped, size_t /*samplesPerBurst*/ ) noexcept
+std::optional<PCMStreamer::Info> PCMStreamerWAV::ResolveInfo ( bool /*looped*/, size_t /*samplesPerBurst*/ ) noexcept
 {
     auto const& header = *reinterpret_cast<WAVEHeader const*> ( _soundFile->data () );
-    _offset = 0U;
     _sampleCount = static_cast<size_t> ( header._dataChunkSize ) / sizeof ( PCMType );
-
-    bool const isStereo = header._numChannels > 1U;
-    constexpr ReadHandler const readHandlers[] = { &PCMStreamerWAV::HandleMono, &PCMStreamerWAV::HandleStereo };
-    _readHandler = readHandlers[ static_cast<size_t> ( isStereo ) ];
-
-    constexpr LoopHandler const loopHandlers[] =
-    {
-        &PCMStreamerWAV::HandleNonLooped,
-        &PCMStreamerWAV::HandleNonLooped,
-        &PCMStreamerWAV::HandleLoopedMono,
-        &PCMStreamerWAV::HandleLoopedStereo
-    };
-
-    _loopHandler = loopHandlers[ ( static_cast<size_t> ( looped ) << 1U ) | static_cast<size_t> ( isStereo ) ];
 
     return Info
     {
@@ -97,47 +97,6 @@ std::optional<PCMStreamer::Info> PCMStreamerWAV::ResolveInfo ( bool looped, size
         ._channelCount = static_cast<uint8_t> ( header._numChannels ),
         ._sampleRate = header._sampleRate
     };
-
-//    std::ifstream report ( "/data/data/com.goshidoInc.androidVulkan/cache/q.wav", std::ios::binary | std::ios::ate );
-//    auto const size = report.tellg ();
-//    report.seekg ( 0, std::ios_base::beg );
-//
-//    report.read ( reinterpret_cast<char*> ( const_cast<uint8_t*> ( _soundFile->data () ) + sizeof ( WAVEHeader ) ),
-//        size
-//    );
-//
-//    _sampleCount = size / sizeof ( PCMType );
-//
-//    return Info
-//    {
-//        ._bytesPerChannelSample =  static_cast<uint8_t> ( header._bitsPerSample / 8U ),
-//        ._channelCount = static_cast<uint8_t> ( header._numChannels ),
-//        ._sampleRate = header._sampleRate
-//    };
-}
-
-void PCMStreamerWAV::HandleNonLooped ( PCMType* buffer,
-    size_t bufferSamples,
-    PCMType const* /*pcm*/,
-    Consume consume,
-    int32_t /*leftGain*/,
-    int32_t /*rightGain*/
-) noexcept
-{
-    size_t const rest = bufferSamples - consume._bufferSampleCount;
-    _offset += consume._pcmSampleCount;
-
-    if ( rest > 0U )
-    {
-        std::memset ( buffer + ( bufferSamples - rest ), 0, rest * sizeof ( PCMType ) );
-        return;
-    }
-
-    if ( _offset < _sampleCount )
-        return;
-
-    _onStopRequest ( _soundEmitter );
-    _offset = 0U;
 }
 
 } // namespace android_vulkan

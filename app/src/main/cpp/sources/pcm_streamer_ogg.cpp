@@ -5,7 +5,6 @@
 GX_DISABLE_COMMON_WARNINGS
 
 #include <cassert>
-#include <fstream>
 
 GX_RESTORE_WARNING_STATE
 
@@ -14,18 +13,18 @@ namespace android_vulkan {
 
 namespace {
 
-constexpr size_t DECOMPRESSED_SAMPLES_HINT = 1U * 1024U * 1024U / sizeof ( PCMStreamer::PCMType );
-constexpr auto DENOMINATOR = static_cast<int32_t> ( PCMStreamer::INTEGER_DIVISION_SCALE );
-
 constexpr uint8_t OGG_BYTES_PER_CHANNEL = 2U;
 static_assert ( OGG_BYTES_PER_CHANNEL == sizeof ( PCMStreamer::PCMType ) );
+
+constexpr size_t PCM_SAMPLES_HINT = 1U * 1024U * 1024U / sizeof ( PCMStreamer::PCMType );
 
 //----------------------------------------------------------------------------------------------------------------------
 
 class VorbisCloser final
 {
     private:
-        OggVorbis_File&       _file;
+        OggVorbis_File&             _file;
+        [[maybe_unused]] bool&      _isFileOpen;
 
     public:
         VorbisCloser () = delete;
@@ -36,13 +35,14 @@ class VorbisCloser final
         VorbisCloser ( VorbisCloser && ) = delete;
         VorbisCloser& operator = ( VorbisCloser && ) = delete;
 
-        explicit VorbisCloser ( OggVorbis_File &file ) noexcept;
+        explicit VorbisCloser ( OggVorbis_File &file, bool &isFileOpen ) noexcept;
 
         ~VorbisCloser () noexcept;
 };
 
-VorbisCloser::VorbisCloser ( OggVorbis_File &file ) noexcept:
-    _file ( file )
+VorbisCloser::VorbisCloser ( OggVorbis_File &file, bool &isFileOpen ) noexcept:
+    _file ( file ),
+    _isFileOpen ( isFileOpen )
 {
     // NOTHING
 }
@@ -53,6 +53,8 @@ VorbisCloser::~VorbisCloser () noexcept
         "VorbisCloser::~VorbisCloser",
         "Can't close file"
     );
+
+    _isFileOpen = false;
 }
 
 } // end of anonymous namespace
@@ -69,7 +71,7 @@ PCMStreamerOGG::~PCMStreamerOGG ()
 {
     if ( _isFileOpen )
     {
-        VorbisCloser const vorbisCloser ( _fileOGG );
+        VorbisCloser const vorbisCloser ( _fileOGG, _isFileOpen );
     }
 }
 
@@ -88,6 +90,10 @@ bool PCMStreamerOGG::CheckVorbisResult ( int result,
     char const* err = [] ( int result, char* unknown ) noexcept -> char const* {
         static std::unordered_map<int, char const*> const map
         {
+            { OV_FALSE, "OV_FALSE" },
+            { OV_EOF, "OV_EOF" },
+            { OV_HOLE, "OV_HOLE" },
+            { OV_EREAD, "OV_EREAD" },
             { OV_EFAULT, "OV_EFAULT" },
             { OV_EIMPL, "OV_EIMPL" },
             { OV_EINVAL, "OV_EINVAL" },
@@ -122,27 +128,51 @@ void PCMStreamerOGG::GetNextBuffer ( std::span<PCMType> buffer,
     PCMType* target = buffer.data ();
     size_t const bufferSamples = buffer.size ();
 
-    DecompressData const &data = _decompressedBuffers[ _activeBufferIndex ];
+    PCMData const& data = _pcmBuffers[ _activeBufferIndex ];
     PCMType const* pcm = data._samples.data ();
 
     // Spinlock to decompress data.
-    while ( data._sampleCount == 0U );
+    while ( _readyBuffers.load () == 0U );
 
     _sampleCount = data._sampleCount;
+
+    if ( bufferSamples > _sampleCount )
+    {
+        // C++ calling method by pointer syntax.
+        ( this->*_loopHandler ) ( target,
+            bufferSamples,
+            pcm,
+
+            Consume
+            {
+                ._bufferSampleCount = 0U,
+                ._lastPCMBuffer = data._lastBuffer,
+                ._pcmSampleCount = 0U
+            },
+
+            leftGain,
+            rightGain
+        );
+
+        return;
+    }
 
     // C++ calling method by pointer syntax.
     Consume const consume = ( this->*_readHandler ) ( target,
         bufferSamples,
         pcm + _offset,
+        data._lastBuffer,
         leftGain,
         rightGain
     );
 
     if ( _offset + consume._pcmSampleCount >= _sampleCount )
     {
-        --_readyBuffers;
+        // Expectation: this is thread shared code. This should work without race condition while decompressor has
+        // enough time to fill next PCM buffer. Available time is the period when active PCM buffer is consuming by
+        // sound tract.
         _activeBufferIndex = ( _activeBufferIndex + 1U ) % BUFFER_COUNT;
-        LogError ( "~~~ %zu", _activeBufferIndex );
+        _readyBuffers.fetch_sub ( 1U );
     }
 
     // C++ calling method by pointer syntax.
@@ -151,22 +181,25 @@ void PCMStreamerOGG::GetNextBuffer ( std::span<PCMType> buffer,
 
 void PCMStreamerOGG::OnDecompress () noexcept
 {
-    if ( _readyBuffers == BUFFER_COUNT )
-        return;
+    std::unique_lock<std::mutex> const lock ( _mutex );
 
-    auto const bufferBytes = static_cast<long> ( sizeof ( PCMType ) * _decompressedBuffers->_samples.size () );
+    // Expectation: this is thread shared code. This should work without race condition while decompressor has enough
+    // time to fill next PCM buffer. Available time is the period when active PCM buffer is consuming by sound tract.
+    uint8_t readyBuffer = _readyBuffers.load ();
+
+    if ( readyBuffer == BUFFER_COUNT )
+        return;
 
     constexpr int BIG_ENDIAN = 0;
     constexpr int WORD_SIZE_16BIT = 2;
     constexpr int SIGNED_SAMPLES = 1;
     constexpr long END_OF_FILE = 0;
 
-    LogError ( "PCMStreamerOGG::OnDecompress" );
-
-    auto const fill = [ this ] ( DecompressData &data, long bufferBytes ) noexcept  -> bool {
+    auto const fill = [ this ] ( PCMData &data, long bufferBytes ) noexcept -> bool {
         int bitstream;
         long read = 0;
         char* buffer = reinterpret_cast<char*> ( data._samples.data () );
+        data._lastBuffer = false;
 
         while ( read < bufferBytes )
         {
@@ -196,7 +229,10 @@ void PCMStreamerOGG::OnDecompress () noexcept
                 continue;
 
             if ( !_looped )
+            {
+                data._lastBuffer = true;
                 break;
+            }
 
             int const result = ov_pcm_seek ( &_fileOGG, 0 );
 
@@ -211,27 +247,50 @@ void PCMStreamerOGG::OnDecompress () noexcept
         return true;
     };
 
-    if ( _readyBuffers == 0U )
+    auto const bufferBytes = static_cast<long> ( sizeof ( PCMType ) * _pcmBuffers->_samples.size () );
+
+    if ( readyBuffer == 0U )
     {
-        if ( !fill ( _decompressedBuffers[ 0U ], bufferBytes ) )
+        if ( !fill ( _pcmBuffers[ 0U ], bufferBytes ) )
             return;
 
-        _readyBuffers = 1U;
+        readyBuffer = 1U;
     }
 
-    if ( !fill ( _decompressedBuffers[ ( _activeBufferIndex + 1U ) % BUFFER_COUNT ], bufferBytes ) )
+    if ( !fill ( _pcmBuffers[ ( _activeBufferIndex + 1U ) % BUFFER_COUNT ], bufferBytes ) )
         return;
 
-    ++_readyBuffers;
+    _readyBuffers.store ( readyBuffer + 1U );
+}
+
+bool PCMStreamerOGG::Reset () noexcept
+{
+    std::unique_lock<std::mutex> const lock ( _mutex );
+
+    if ( !PCMStreamer::Reset () )
+        return false;
+
+    if ( !_isFileOpen )
+        return true;
+
+    int const result = ov_pcm_seek ( &_fileOGG, 0 );
+
+    if ( !CheckVorbisResult ( result, "PCMStreamerOGG::Reset", "Can't perform seek operation" ) )
+    {
+        assert ( false );
+        return false;
+    }
+
+    _activeBufferIndex = 0U;
+    _readyBuffers.store ( 0U );
+
+    return true;
 }
 
 std::optional<PCMStreamer::Info> PCMStreamerOGG::ResolveInfo ( bool looped, size_t samplesPerBurst ) noexcept
 {
     if ( _isFileOpen )
-    {
-        VorbisCloser const vorbisCloser ( _fileOGG );
-        _isFileOpen = false;
-    }
+        VorbisCloser const vorbisCloser ( _fileOGG, _isFileOpen );
 
     int const res = ov_open_callbacks ( this,
         &_fileOGG,
@@ -251,72 +310,19 @@ std::optional<PCMStreamer::Info> PCMStreamerOGG::ResolveInfo ( bool looped, size
 
     if ( !CheckVorbisResult ( res, "PCMStreamerOGG::ResolveInfo", "Can't open asset" ) )
     {
-        VorbisCloser const vorbisCloser ( _fileOGG );
-        _isFileOpen = false;
+        VorbisCloser const vorbisCloser ( _fileOGG, _isFileOpen );
         return std::nullopt;
     }
 
     vorbis_info const* info = ov_info ( &_fileOGG, 0 );
-    int const result = ov_pcm_seek ( &_fileOGG, 0 );
 
-    if ( !CheckVorbisResult ( result, "PCMStreamerOGG::ResolveInfo", "Can't perform seek operation" ) )
+    if ( !AllocateDecompressBuffers ( static_cast<size_t> ( info->channels ), samplesPerBurst ) )
     {
-        VorbisCloser const vorbisCloser ( _fileOGG );
-        _isFileOpen = false;
+        VorbisCloser const vorbisCloser ( _fileOGG, _isFileOpen );
         return std::nullopt;
     }
 
-    bool const isStereo = info->channels > 1;
-    constexpr ReadHandler const readHandlers[] = { &PCMStreamerOGG::HandleMono, &PCMStreamerOGG::HandleStereo };
-    _readHandler = readHandlers[ static_cast<size_t> ( isStereo ) ];
-
-    constexpr LoopHandler const loopHandlers[] =
-    {
-        &PCMStreamerOGG::HandleNonLooped,
-        &PCMStreamerOGG::HandleNonLooped,
-        &PCMStreamerOGG::HandleLoopedMono,
-        &PCMStreamerOGG::HandleLoopedStereo
-    };
-
-    _loopHandler = loopHandlers[ ( static_cast<size_t> ( looped ) << 1U ) | static_cast<size_t> ( isStereo ) ];
     _looped = looped;
-    AllocateDecompressBuffers ( static_cast<size_t> ( info->channels ), samplesPerBurst );
-
-//    Info inf
-//    {
-//        ._bytesPerChannelSample = OGG_BYTES_PER_CHANNEL,
-//        ._channelCount = static_cast<uint8_t> ( info->channels ),
-//        ._sampleRate = static_cast<uint32_t> ( info->rate )
-//    };
-//
-//    {
-//        VorbisCloser const vorbisCloser ( _fileOGG );
-//    }
-//
-//    ov_open_callbacks ( this,
-//        &_fileOGG,
-//        nullptr,
-//        0,
-//
-//        ov_callbacks
-//        {
-//            .read_func = &PCMStreamerOGG::Read,
-//            .seek_func = &PCMStreamerOGG::Seek,
-//            .close_func = &PCMStreamerOGG::Close,
-//            .tell_func = &PCMStreamerOGG::Tell
-//        }
-//    );
-
-//    OnDecompress ();
-
-//    std::ofstream report ( "/data/data/com.goshidoInc.androidVulkan/cache/q.wav",
-//        std::ios::binary | std::ios::trunc | std::ios::out
-//    );
-//
-//    size_t const sz = _decompressedBuffers[ 0U ]._sampleCount * sizeof ( PCMType );
-//    report.write ( reinterpret_cast<char const*> ( _decompressedBuffers[ 0U ]._samples.data () ), sz );
-
-//    return inf;
 
     return Info
     {
@@ -326,169 +332,27 @@ std::optional<PCMStreamer::Info> PCMStreamerOGG::ResolveInfo ( bool looped, size
     };
 }
 
-void PCMStreamerOGG::AllocateDecompressBuffers ( size_t channels, size_t samplesPerBurst ) noexcept
+bool PCMStreamerOGG::AllocateDecompressBuffers ( size_t channels, size_t samplesPerBurst ) noexcept
 {
     static_assert ( SoundMixer::GetChannelCount () == 2U );
 
-    // 2 channels - samplesPerBurst equal to decompressed sample count.
-    // 1 channel - samplesPerBurst should be divided by 2 to make optimal decompressed sample count.
-    size_t const optimal = samplesPerBurst / ( 3U - channels );
-    size_t const sampleCount = DECOMPRESSED_SAMPLES_HINT / optimal * optimal;
+    if ( channels < 1U || channels > 2U )
+    {
+        LogError ( "PCMStreamerOGG::AllocateDecompressBuffers - Unsupported channel amount %zu.", channels );
+        return false;
+    }
 
-    for ( auto& buffer : _decompressedBuffers )
+    // 1 channel - samplesPerBurst should be divided by 2 to make optimal decompressed sample count.
+    // 2 channels - samplesPerBurst equal to decompressed sample count.
+    size_t const optimal = samplesPerBurst / ( 3U - channels );
+    size_t const sampleCount = PCM_SAMPLES_HINT / optimal * optimal;
+
+    for ( auto& buffer : _pcmBuffers )
         buffer._samples.resize ( sampleCount );
 
     _activeBufferIndex = 0U;
     _readyBuffers = 0U;
-}
-
-void PCMStreamerOGG::HandleLoopedMono ( PCMType* buffer,
-    size_t bufferSamples,
-    PCMType const* pcm,
-    Consume consume,
-    int32_t leftGain,
-    int32_t rightGain
-) noexcept
-{
-    size_t const restInBufferSamples = bufferSamples - consume._bufferSampleCount;
-    _offset = ( _offset + consume._pcmSampleCount ) % _sampleCount;
-
-    if ( restInBufferSamples == 0U )
-        return;
-
-    buffer += bufferSamples - restInBufferSamples;
-    size_t const restInPCMSamples = restInBufferSamples >> 1U;
-
-    for ( size_t i = 0U; i < restInPCMSamples; ++i )
-    {
-        size_t const leftIdx = i << 1U;
-        size_t const rightIdx = leftIdx + 1U;
-
-        auto const sample = static_cast<int32_t> ( pcm[ i ] );
-
-        buffer[ leftIdx ] = static_cast<PCMType> ( sample * leftGain / DENOMINATOR );
-        buffer[ rightIdx ] = static_cast<PCMType> ( sample * rightGain / DENOMINATOR );
-    }
-
-    _offset = restInPCMSamples;
-}
-
-void PCMStreamerOGG::HandleLoopedStereo ( PCMType* buffer,
-    size_t bufferSamples,
-    PCMType const* pcm,
-    Consume consume,
-    int32_t leftGain,
-    int32_t rightGain
-) noexcept
-{
-    size_t const rest = bufferSamples - consume._bufferSampleCount;
-    _offset = ( _offset + consume._pcmSampleCount ) % _sampleCount;
-
-    if ( rest == 0U )
-        return;
-
-    buffer += bufferSamples - rest;
-
-    for ( size_t i = 0U; i < rest; i += 2U )
-    {
-        size_t const rightIdx = i + 1U;
-
-        auto const leftSample = static_cast<int32_t> ( pcm[ i ] );
-        auto const rightSample = static_cast<int32_t> ( pcm[ rightIdx ] );
-
-        buffer[ i ] = static_cast<PCMType> ( leftSample * leftGain / DENOMINATOR );
-        buffer[ rightIdx ] = static_cast<PCMType> ( rightSample * rightGain / DENOMINATOR );
-    }
-
-    _offset = rest;
-}
-
-void PCMStreamerOGG::HandleNonLooped ( PCMType* buffer,
-    size_t bufferSamples,
-    PCMType const* /*pcm*/,
-    Consume consume,
-    int32_t /*leftGain*/,
-    int32_t /*rightGain*/
-) noexcept
-{
-    size_t const rest = bufferSamples - consume._bufferSampleCount;
-    _offset += consume._pcmSampleCount;
-
-    if ( rest > 0U )
-    {
-        std::memset ( buffer + ( bufferSamples - rest ), 0, rest * sizeof ( PCMType ) );
-        return;
-    }
-
-    if ( _offset < _sampleCount )
-        return;
-
-    _onStopRequest ( _soundEmitter );
-    _offset = 0U;
-}
-
-PCMStreamerOGG::Consume PCMStreamerOGG::HandleMono ( PCMType* buffer,
-    size_t bufferSamples,
-    PCMType const* pcm,
-    int32_t leftGain,
-    int32_t rightGain
-) noexcept
-{
-    size_t const bufferFrames = bufferSamples >> 1U;
-
-    // Buffer size should be smaller than total samples. Otherwise it's needed a more complicated implementation.
-    assert ( bufferFrames <= _sampleCount );
-
-    size_t const cases[] = { bufferFrames, _sampleCount - _offset };
-    size_t const canRead = cases[ static_cast<size_t> ( _offset + bufferFrames > _sampleCount ) ];
-
-    for ( size_t i = 0U; i < canRead; ++i )
-    {
-        size_t const leftIdx = i << 1U;
-        size_t const rightIdx = leftIdx + 1U;
-
-        auto const sample = static_cast<int32_t> ( pcm[ i ] );
-
-        buffer[ leftIdx ] = static_cast<PCMType> ( sample * leftGain / DENOMINATOR );
-        buffer[ rightIdx ] = static_cast<PCMType> ( sample * rightGain / DENOMINATOR );
-    }
-
-    return Consume
-    {
-        ._bufferSampleCount = canRead << 1U,
-        ._pcmSampleCount = canRead
-    };
-}
-
-PCMStreamerOGG::Consume PCMStreamerOGG::HandleStereo ( PCMType* buffer,
-    size_t bufferSamples,
-    PCMType const* pcm,
-    int32_t leftGain,
-    int32_t rightGain
-) noexcept
-{
-    // Buffer size should be smaller than total samples. Otherwise it's needed a more complicated implementation.
-    assert ( _sampleCount >= bufferSamples );
-
-    size_t const cases[] = { bufferSamples, _sampleCount - _offset };
-    size_t const canRead = cases[ static_cast<size_t> ( _offset + bufferSamples > _sampleCount ) ];
-
-    for ( size_t i = 0U; i < canRead; i += 2U )
-    {
-        size_t const rightIdx = i + 1U;
-
-        auto const leftSample = static_cast<int32_t> ( pcm[ i ] );
-        auto const rightSample = static_cast<int32_t> ( pcm[ rightIdx ] );
-
-        buffer[ i ] = static_cast<PCMType> ( leftSample * leftGain / DENOMINATOR );
-        buffer[ rightIdx ] = static_cast<PCMType> ( rightSample * rightGain / DENOMINATOR );
-    }
-
-    return Consume
-    {
-        ._bufferSampleCount = canRead,
-        ._pcmSampleCount = canRead
-    };
+    return true;
 }
 
 int PCMStreamerOGG::CloseInternal () noexcept
@@ -551,7 +415,7 @@ int PCMStreamerOGG::Close ( void* datasource )
 
 size_t PCMStreamerOGG::Read ( void* ptr, size_t size, size_t count, void* datasource )
 {
-    // Note return value should be similar to std::fread
+    // Note return value should be similar to std::fread.
     // https://en.cppreference.com/w/cpp/io/c/fread
     auto& streamer = *static_cast<PCMStreamerOGG*> ( datasource );
     return streamer.ReadInternal ( ptr, size, count );

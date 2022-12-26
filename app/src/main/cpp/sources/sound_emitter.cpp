@@ -33,6 +33,9 @@ namespace android_vulkan {
 
 [[maybe_unused]] bool SoundEmitter::Destroy () noexcept
 {
+    if ( _isPlaying && !Stop () )
+        LogWarning ( "SoundEmitter::Destroy - Can't stop." );
+
     if ( _streamer )
     {
         _file.clear ();
@@ -99,7 +102,7 @@ bool SoundEmitter::Play () noexcept
     return result;
 }
 
-[[maybe_unused]] bool SoundEmitter::Stop () noexcept
+bool SoundEmitter::Stop () noexcept
 {
     assert ( ( _stream != nullptr ) & static_cast<bool> ( _streamer ) );
 
@@ -109,7 +112,12 @@ bool SoundEmitter::Play () noexcept
     );
 
     if ( result )
+    {
+        if ( !_streamer->Reset () )
+            return false;
+
         _isPlaying = false;
+    }
 
     return result;
 }
@@ -191,10 +199,16 @@ SoundEmitter::eStreamerType SoundEmitter::GetStreamerType ( std::string_view con
 
 void SoundEmitter::OnStopRequested ( SoundEmitter &soundEmitter ) noexcept
 {
-    if ( !soundEmitter.Stop () )
-    {
-        LogWarning ( "SoundEmitter::OnStopRequested - Can't stop." );
-    }
+    std::thread thread (
+        [ &soundEmitter ] () noexcept {
+            if ( !soundEmitter.Stop () )
+            {
+                LogWarning ( "SoundEmitter::OnStopRequested - Can't stop." );
+            }
+        }
+    );
+
+    thread.detach ();
 }
 
 } // namespace android_vulkan

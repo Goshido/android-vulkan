@@ -55,7 +55,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/GXCommon/GXMath.cpp
     app/src/main/cpp/sources/GXCommon/Intrinsics/GXMathNeon.cpp
     app/src/main/cpp/sources/GXCommon/Vulkan/GXMathBackend.cpp
-    app/src/main/cpp/sources/intrinsics/pcm_streamer_wav_neon.cpp
+    app/src/main/cpp/sources/intrinsics/pcm_streamer_neon.cpp
     app/src/main/cpp/sources/mandelbrot/mandelbrot_analytic_color.cpp
     app/src/main/cpp/sources/mandelbrot/mandelbrot_base.cpp
     app/src/main/cpp/sources/mandelbrot/mandelbrot_lut_color.cpp

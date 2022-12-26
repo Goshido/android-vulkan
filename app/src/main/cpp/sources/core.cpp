@@ -64,19 +64,17 @@ static void TEST () noexcept
     if ( !mixer.Init () )
         return;
 
-    if ( !emitter.Init ( mixer, eSoundChannel::Speech ) )
+    if ( !emitter.Init ( mixer, eSoundChannel::Music ) )
     {
         mixer.Destroy ();
         return;
     }
 
 //    if ( !emitter.SetSoundAsset ( storage, "sounds/sine.wav", true ) )
+//    if ( !emitter.SetSoundAsset ( storage, "sounds/sine.ogg", true ) )
 //    if ( !emitter.SetSoundAsset ( storage, "sounds/sine_stereo.wav", true ) )
 //    if ( !emitter.SetSoundAsset ( storage, "sounds/sine_stereo.ogg", true ) )
-//    if ( !emitter.SetSoundAsset ( storage, "sounds/doom_eternal_54. Meathook.wav", false ) )
-    if ( !emitter.SetSoundAsset ( storage, "sounds/doom_eternal_54. Meathook.ogg", false ) )
-//    if ( !emitter.SetSoundAsset ( storage, "sounds/Credits.ogg", false ) )
-//    if ( !emitter.SetSoundAsset ( storage, "sounds/Surprise motherfucker.wav", true ) )
+    if ( !emitter.SetSoundAsset ( storage, "sounds/Credits.ogg", false ) )
         LogWarning ( "Can't set sound asset!" );
 
     if ( emitter.Play () )

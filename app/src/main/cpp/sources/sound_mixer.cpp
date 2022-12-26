@@ -16,7 +16,7 @@ namespace android_vulkan {
 namespace {
 
 constexpr float CHANNEL_VOLUME = 1.0F;
-constexpr static auto DECOMPRESSOR_TIMEOUT = std::chrono::milliseconds ( 2U );
+constexpr static auto DECOMPRESSOR_TIMEOUT = std::chrono::milliseconds ( 1U );
 
 //----------------------------------------------------------------------------------------------------------------------
 

@@ -18,36 +18,6 @@ constexpr auto DENOMINATOR = static_cast<int32_t> ( PCMStreamer::INTEGER_DIVISIO
 
 //----------------------------------------------------------------------------------------------------------------------
 
-void PCMStreamerWAV::HandleLoopedStereo ( PCMType* buffer,
-    size_t bufferSamples,
-    PCMType const* pcm,
-    Consume consume,
-    int32_t leftGain,
-    int32_t rightGain
-) noexcept
-{
-    size_t const rest = bufferSamples - consume._bufferSampleCount;
-    _offset = ( _offset + consume._pcmSampleCount ) % _sampleCount;
-
-    if ( rest == 0U )
-        return;
-
-    buffer += bufferSamples - rest;
-
-    for ( size_t i = 0U; i < rest; i += 2U )
-    {
-        size_t const rightIdx = i + 1U;
-
-        auto const leftSample = static_cast<int32_t> ( pcm[ i ] );
-        auto const rightSample = static_cast<int32_t> ( pcm[ rightIdx ] );
-
-        buffer[ i ] = static_cast<PCMType> ( leftSample * leftGain / DENOMINATOR );
-        buffer[ rightIdx ] = static_cast<PCMType> ( rightSample * rightGain / DENOMINATOR );
-    }
-
-    _offset = rest;
-}
-
 void PCMStreamerWAV::HandleLoopedMono ( PCMType* buffer,
     size_t bufferSamples,
     PCMType const* pcm,
@@ -77,6 +47,36 @@ void PCMStreamerWAV::HandleLoopedMono ( PCMType* buffer,
     }
 
     _offset = restInPCMSamples;
+}
+
+void PCMStreamerWAV::HandleLoopedStereo ( PCMType* buffer,
+    size_t bufferSamples,
+    PCMType const* pcm,
+    Consume consume,
+    int32_t leftGain,
+    int32_t rightGain
+) noexcept
+{
+    size_t const rest = bufferSamples - consume._bufferSampleCount;
+    _offset = ( _offset + consume._pcmSampleCount ) % _sampleCount;
+
+    if ( rest == 0U )
+        return;
+
+    buffer += bufferSamples - rest;
+
+    for ( size_t i = 0U; i < rest; i += 2U )
+    {
+        size_t const rightIdx = i + 1U;
+
+        auto const leftSample = static_cast<int32_t> ( pcm[ i ] );
+        auto const rightSample = static_cast<int32_t> ( pcm[ rightIdx ] );
+
+        buffer[ i ] = static_cast<PCMType> ( leftSample * leftGain / DENOMINATOR );
+        buffer[ rightIdx ] = static_cast<PCMType> ( rightSample * rightGain / DENOMINATOR );
+    }
+
+    _offset = rest;
 }
 
 PCMStreamerWAV::Consume PCMStreamerWAV::HandleMono ( PCMType* buffer,

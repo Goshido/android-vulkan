@@ -1,10 +1,30 @@
 #include <logger.h>
 #include <pcm_streamer.h>
 
+GX_DISABLE_COMMON_WARNINGS
+
+#include <cassert>
+
+GX_RESTORE_WARNING_STATE
+
 
 namespace android_vulkan {
 
-bool PCMStreamer::SetSoundAsset ( SoundStorage &soundStorage, std::string_view const file, bool looped ) noexcept
+void PCMStreamer::OnDecompress () noexcept
+{
+    assert ( false );
+}
+
+bool PCMStreamer::IsDecompressor () const noexcept
+{
+    return _decompressor;
+}
+
+bool PCMStreamer::SetSoundAsset ( SoundStorage &soundStorage,
+    std::string_view const file,
+    bool looped,
+    size_t samplesPerBurst
+) noexcept
 {
     auto asset = soundStorage.GetFile ( std::string ( file ) );
 
@@ -12,7 +32,7 @@ bool PCMStreamer::SetSoundAsset ( SoundStorage &soundStorage, std::string_view c
         return false;
 
     _soundFile = *asset;
-    auto const result = ResolveInfo ( looped );
+    auto const result = ResolveInfo ( looped, samplesPerBurst );
 
     if ( result == std::nullopt )
         return false;
@@ -20,7 +40,8 @@ bool PCMStreamer::SetSoundAsset ( SoundStorage &soundStorage, std::string_view c
     return IsFormatSupported ( file, *result );
 }
 
-PCMStreamer::PCMStreamer ( SoundEmitter &soundEmitter, OnStopRequest callback ) noexcept:
+PCMStreamer::PCMStreamer ( SoundEmitter &soundEmitter, OnStopRequest callback, bool decompressor ) noexcept:
+    _decompressor ( decompressor ),
     _onStopRequest ( callback ),
     _soundEmitter ( soundEmitter )
 {

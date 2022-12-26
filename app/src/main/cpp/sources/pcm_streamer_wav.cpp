@@ -4,6 +4,7 @@
 GX_DISABLE_COMMON_WARNINGS
 
 #include <cassert>
+#include <fstream>
 
 GX_RESTORE_WARNING_STATE
 
@@ -41,7 +42,7 @@ struct WAVEHeader final
 //----------------------------------------------------------------------------------------------------------------------
 
 PCMStreamerWAV::PCMStreamerWAV ( SoundEmitter &soundEmitter, OnStopRequest callback ) noexcept:
-    PCMStreamer ( soundEmitter, callback )
+    PCMStreamer ( soundEmitter, callback, false )
 {
     // NOTHING
 }
@@ -70,7 +71,7 @@ void PCMStreamerWAV::GetNextBuffer ( std::span<PCMType> buffer,
     ( this->*_loopHandler ) ( target, bufferSamples, pcm, consume, leftGain, rightGain );
 }
 
-std::optional<PCMStreamer::Info> PCMStreamerWAV::ResolveInfo ( bool looped ) noexcept
+std::optional<PCMStreamer::Info> PCMStreamerWAV::ResolveInfo ( bool looped, size_t /*samplesPerBurst*/ ) noexcept
 {
     auto const& header = *reinterpret_cast<WAVEHeader const*> ( _soundFile->data () );
     _offset = 0U;
@@ -96,6 +97,23 @@ std::optional<PCMStreamer::Info> PCMStreamerWAV::ResolveInfo ( bool looped ) noe
         ._channelCount = static_cast<uint8_t> ( header._numChannels ),
         ._sampleRate = header._sampleRate
     };
+
+//    std::ifstream report ( "/data/data/com.goshidoInc.androidVulkan/cache/q.wav", std::ios::binary | std::ios::ate );
+//    auto const size = report.tellg ();
+//    report.seekg ( 0, std::ios_base::beg );
+//
+//    report.read ( reinterpret_cast<char*> ( const_cast<uint8_t*> ( _soundFile->data () ) + sizeof ( WAVEHeader ) ),
+//        size
+//    );
+//
+//    _sampleCount = size / sizeof ( PCMType );
+//
+//    return Info
+//    {
+//        ._bytesPerChannelSample =  static_cast<uint8_t> ( header._bitsPerSample / 8U ),
+//        ._channelCount = static_cast<uint8_t> ( header._numChannels ),
+//        ._sampleRate = header._sampleRate
+//    };
 }
 
 void PCMStreamerWAV::HandleNonLooped ( PCMType* buffer,

@@ -30,6 +30,7 @@ class SoundEmitter
     protected:
         enum class eStreamerType : uint16_t
         {
+            UNKNOWN,
             OGG,
             WAV
         };

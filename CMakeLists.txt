@@ -30,6 +30,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/memory_allocator.cpp
     app/src/main/cpp/sources/mesh_geometry.cpp
     app/src/main/cpp/sources/pcm_streamer.cpp
+    app/src/main/cpp/sources/pcm_streamer_ogg.cpp
     app/src/main/cpp/sources/pcm_streamer_wav.cpp
     app/src/main/cpp/sources/physics.cpp
     app/src/main/cpp/sources/ray_caster.cpp
@@ -192,4 +193,5 @@ target_link_libraries ( android-vulkan
     android
     ${log-lib}
     ${CMAKE_SOURCE_DIR}/third-party/jniLibs/arm64-v8a/libLua.so
+    ${CMAKE_SOURCE_DIR}/third-party/jniLibs/arm64-v8a/libvorbisfile.so
 )

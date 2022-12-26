@@ -1,4 +1,5 @@
 #include <logger.h>
+#include <pcm_streamer_ogg.h>
 #include <pcm_streamer_wav.h>
 #include <sound_emitter.h>
 #include <sound_mixer.h>
@@ -131,36 +132,61 @@ void SoundEmitter::OnStreamRecreated ( AAudioStream &stream ) noexcept
     bool looped
 ) noexcept
 {
+    if ( _streamer && _streamer->IsDecompressor () )
+        _context._soundMixer->UnregisterDecompressor ( *_stream );
+
     switch ( GetStreamerType ( file ) )
     {
         case eStreamerType::OGG:
-            // TODO
-            assert ( false );
+            _streamer = std::make_unique<PCMStreamerOGG> ( *this, &SoundEmitter::OnStopRequested );
         break;
 
         case eStreamerType::WAV:
             _streamer = std::make_unique<PCMStreamerWAV> ( *this, &SoundEmitter::OnStopRequested );
         break;
 
+        case eStreamerType::UNKNOWN:
+            [[fallthrough]];
         default:
-            // IMPOSSIBLE
-        break;
+        return false;
     }
 
-    if ( _streamer->SetSoundAsset ( soundStorage, file, looped ) )
+    if ( !_streamer->SetSoundAsset ( soundStorage, file, looped, _context._soundMixer->GetBufferSampleCount () ) )
     {
-        _file = file;
-        return true;
+        _streamer = nullptr;
+        return false;
     }
 
-    _streamer = nullptr;
-    return false;
+    _file = file;
+
+    if ( _streamer->IsDecompressor () )
+        _context._soundMixer->RegisterDecompressor ( *_stream, *_streamer );
+
+    return true;
 }
 
-SoundEmitter::eStreamerType SoundEmitter::GetStreamerType ( std::string_view const /*asset*/ ) noexcept
+SoundEmitter::eStreamerType SoundEmitter::GetStreamerType ( std::string_view const asset ) noexcept
 {
-    // TODO
-    return eStreamerType::WAV;
+    auto const findResult = asset.find_last_of ( '.' );
+
+    if ( findResult == std::string_view::npos )
+    {
+        LogError ( "SoundEmitter::GetStreamerType - Unknown format (branch 1). Asset: %s", asset.data () );
+        assert ( false );
+        return eStreamerType::UNKNOWN;
+    }
+
+    std::string_view const ext = asset.substr ( findResult + 1U );
+
+    if ( ext == "ogg" )
+        return eStreamerType::OGG;
+
+    if ( ext == "wav" )
+        return eStreamerType::WAV;
+
+    LogError ( "SoundEmitter::GetStreamerType - Unknown format (branch 2). Asset: %s", asset.data () );
+    assert ( false );
+    return eStreamerType::UNKNOWN;
 }
 
 void SoundEmitter::OnStopRequested ( SoundEmitter &soundEmitter ) noexcept

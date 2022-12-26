@@ -31,6 +31,9 @@ class PCMStreamer
             uint32_t                _sampleRate = 44100U;
         };
 
+    private:
+        bool                        _decompressor = false;
+
     protected:
         OnStopRequest               _onStopRequest = nullptr;
         SoundEmitter&               _soundEmitter;
@@ -51,15 +54,20 @@ class PCMStreamer
             float rightChannelVolume
         ) noexcept = 0;
 
+        virtual void OnDecompress () noexcept;
+
+        [[nodiscard]] bool IsDecompressor () const noexcept;
+
         [[nodiscard]] bool SetSoundAsset ( SoundStorage &soundStorage,
             std::string_view const file,
-            bool looped
+            bool looped,
+            size_t samplesPerBurst
         ) noexcept;
 
     protected:
-        explicit PCMStreamer ( SoundEmitter &soundEmitter, OnStopRequest callback ) noexcept;
+        explicit PCMStreamer ( SoundEmitter &soundEmitter, OnStopRequest callback, bool decompressor ) noexcept;
 
-        [[nodiscard]] virtual std::optional<Info> ResolveInfo ( bool looped ) noexcept = 0;
+        [[nodiscard]] virtual std::optional<Info> ResolveInfo ( bool looped, size_t samplesPerBurst ) noexcept = 0;
 
         [[nodiscard]] static bool IsFormatSupported ( std::string_view const file, Info const &info ) noexcept;
 };

@@ -8,6 +8,7 @@ GX_DISABLE_COMMON_WARNINGS
 
 #include <limits>
 #include <optional>
+#include <thread>
 #include <aaudio/AAudio.h>
 
 GX_RESTORE_WARNING_STATE
@@ -19,6 +20,7 @@ class [[maybe_unused]] SoundMixer final
 {
     private:
         using Emitters = std::unordered_map<AAudioStream*, SoundEmitter*>;
+        using Decompressors = std::unordered_map<AAudioStream*, PCMStreamer*>;
 
     private:
         constexpr static auto   TOTAL_SOUND_CHANNELS = static_cast<size_t> ( eSoundChannel::Speech ) + 1U;
@@ -27,6 +29,11 @@ class [[maybe_unused]] SoundMixer final
         size_t                  _bufferSampleCount = std::numeric_limits<size_t>::max ();
         AAudioStreamBuilder*    _builder = nullptr;
         float                   _channelVolume[ TOTAL_SOUND_CHANNELS ] {};
+
+        bool                    _decompressorFlag = true;
+        std::thread             _decompressorThread {};
+        Decompressors           _decompressors {};
+
         float                   _effectiveChannelVolume[ TOTAL_SOUND_CHANNELS ] {};
         Emitters                _emitters {};
         float                   _masterVolume = 1.0F;
@@ -59,6 +66,9 @@ class [[maybe_unused]] SoundMixer final
 
         [[maybe_unused, nodiscard]] float GetMasterVolume () const noexcept;
         void SetMasterVolume ( float volume ) noexcept;
+
+        void RegisterDecompressor ( AAudioStream &stream, PCMStreamer &streamer ) noexcept;
+        void UnregisterDecompressor ( AAudioStream &stream ) noexcept;
 
         // Method returns true if "result" equals AAUDIO_OK. Otherwise method returns false.
         static bool CheckAAudioResult ( aaudio_result_t result, char const* from, char const* message ) noexcept;

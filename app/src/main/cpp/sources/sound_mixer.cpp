@@ -6,7 +6,6 @@ GX_DISABLE_COMMON_WARNINGS
 #include <cassert>
 #include <cinttypes>
 #include <cstdio>
-#include <thread>
 #include <unordered_map>
 
 GX_RESTORE_WARNING_STATE
@@ -17,6 +16,9 @@ namespace android_vulkan {
 namespace {
 
 constexpr float CHANNEL_VOLUME = 1.0F;
+constexpr static auto DECOMPRESSOR_TIMEOUT = std::chrono::milliseconds ( 2U );
+
+//----------------------------------------------------------------------------------------------------------------------
 
 [[nodiscard]] char const* GetFormatString ( aaudio_format_t fmt, std::span<char> unknownFormat ) noexcept
 {
@@ -145,11 +147,33 @@ StreamCloser::~StreamCloser () noexcept
     }
 
     PrintStreamInfo ( *probe, "Engine parameters" );
+    _decompressorFlag = true;
+
+    _decompressorThread = std::thread (
+        [ this ] () noexcept {
+            while ( _decompressorFlag )
+            {
+                std::unique_lock<std::mutex> const lock ( _mutex );
+
+                for ( auto& record: _decompressors )
+                    record.second->OnDecompress ();
+
+                // To not consume too much CPU time.
+                std::this_thread::sleep_for ( DECOMPRESSOR_TIMEOUT );
+            }
+        }
+    );
+
     return true;
 }
 
 void SoundMixer::Destroy () noexcept
 {
+    if ( _decompressorThread.joinable () )
+    {
+        _decompressorFlag = false;
+        _decompressorThread.join ();
+    }
 
 #ifdef ANDROID_VULKAN_DEBUG
 
@@ -208,6 +232,7 @@ bool SoundMixer::DestroyStream ( AAudioStream &stream ) noexcept
 
     if ( auto const findResult = _emitters.find ( &stream ); findResult != _emitters.cend () )
     {
+        _decompressors.erase ( &stream );
         _emitters.erase ( findResult );
         return true;
     }
@@ -247,6 +272,31 @@ void SoundMixer::SetMasterVolume ( float volume ) noexcept
     }
 }
 
+void SoundMixer::RegisterDecompressor ( AAudioStream &stream, PCMStreamer &streamer ) noexcept
+{
+    std::unique_lock<std::mutex> const lock ( _mutex );
+
+    if ( _decompressors.contains ( &stream ) )
+    {
+        LogError ( "SoundMixer::RegisterDecompressor - Stream already registered. Please check business logic." );
+        assert ( false );
+        return;
+    }
+
+    _decompressors.emplace ( &stream, &streamer );
+}
+
+void SoundMixer::UnregisterDecompressor ( AAudioStream &stream ) noexcept
+{
+    std::unique_lock<std::mutex> const lock ( _mutex );
+
+    if ( _decompressors.erase ( &stream ) > 0U )
+        return;
+
+    LogError ( "SoundMixer::UnregisterDecompressor - Can't find stream. Please check business logic." );
+    assert ( false );
+}
+
 bool SoundMixer::CheckAAudioResult ( aaudio_result_t result, char const* from, char const* message ) noexcept
 {
     if ( result == AAUDIO_OK )
@@ -264,18 +314,17 @@ void SoundMixer::RecreateSoundEmitter ( AAudioStream &stream ) noexcept
     std::thread thread (
         [ this, &stream ] () noexcept {
             std::unique_lock<std::mutex> const lock ( _mutex );
-            auto findResult = _emitters.find ( &stream );
+            auto const emitterFind = _emitters.find ( &stream );
 
-            if ( findResult == _emitters.cend () )
+            if ( emitterFind == _emitters.cend () )
             {
                 LogError ( "SoundMixer::RecreateSoundEmitter - Can't find sound emitter." );
                 assert ( false );
                 return;
             }
 
-            SoundEmitter& emitter = *findResult->second;
-            StreamCloser const closer ( *findResult->first );
-            _emitters.erase ( findResult );
+            SoundEmitter& emitter = *emitterFind->second;
+            StreamCloser const closer ( *emitterFind->first );
             auto result = CreateStreamInternal ( emitter.GetContext () );
 
             if ( result == std::nullopt )
@@ -286,7 +335,16 @@ void SoundMixer::RecreateSoundEmitter ( AAudioStream &stream ) noexcept
             }
 
             AAudioStream* newStream = *result;
+
+            if ( auto const streamerFind = _decompressors.find ( &stream ); streamerFind != _decompressors.cend () )
+            {
+                PCMStreamer* streamer = streamerFind->second;
+                _decompressors.erase ( streamerFind );
+                _decompressors.emplace ( newStream, streamer );
+            }
+
             emitter.OnStreamRecreated ( *newStream );
+            _emitters.erase ( emitterFind );
             _emitters.emplace ( newStream, &emitter );
         }
     );

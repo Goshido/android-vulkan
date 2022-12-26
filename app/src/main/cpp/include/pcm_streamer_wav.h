@@ -56,7 +56,7 @@ class PCMStreamerWAV final : public PCMStreamer
             float rightChannelVolume
         ) noexcept override;
 
-        [[nodiscard]] std::optional<Info> ResolveInfo ( bool looped ) noexcept override;
+        [[nodiscard]] std::optional<Info> ResolveInfo ( bool looped, size_t samplesPerBurst ) noexcept override;
 
         void HandleLoopedMono ( PCMType* buffer,
             size_t bufferSamples,

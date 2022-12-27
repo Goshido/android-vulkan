@@ -30,8 +30,8 @@ internal class Activity : android.app.Activity (), SurfaceHolder.Callback2, Anal
 
     private external fun doCreate ( assetManager : AssetManager, cacheDirectory : String )
     private external fun doDestroy ()
-    private external fun doKeyDown ( keyCode : Int )
-    private external fun doKeyUp ( keyCode : Int )
+    private external fun doKeyDown ( keyCode : Int ) : Boolean
+    private external fun doKeyUp ( keyCode : Int ) : Boolean
     private external fun doLeftStick ( x : Float, y : Float )
     private external fun doRightStick ( x : Float, y : Float )
     private external fun doLeftTrigger ( value : Float )
@@ -77,18 +77,18 @@ internal class Activity : android.app.Activity (), SurfaceHolder.Callback2, Anal
 
     override fun onKeyDown ( keyCode : Int, event : KeyEvent? ) : Boolean
     {
-        if ( event != null && event.repeatCount == 0 )
-            doKeyDown ( keyCode )
+        if ( event != null && event.repeatCount == 0 && doKeyDown ( keyCode ) )
+            return true
 
-        return true
+        return super.onKeyDown ( keyCode, event )
     }
 
     override fun onKeyUp ( keyCode : Int, event : KeyEvent? ) : Boolean
     {
-        if ( event != null && event.repeatCount == 0 )
-            doKeyUp ( keyCode )
+        if ( event != null && event.repeatCount == 0 && doKeyUp ( keyCode ) )
+            return true
 
-        return true
+        return super.onKeyUp ( keyCode, event )
     }
 
     override fun onLeftStick ( x : Float, y : Float )

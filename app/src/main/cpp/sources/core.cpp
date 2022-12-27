@@ -117,14 +117,14 @@ void Core::OnAboutDestroy ( JNIEnv* env ) noexcept
     _vm = nullptr;
 }
 
-void Core::OnKeyDown ( int32_t key ) const noexcept
+bool Core::OnKeyDown ( int32_t key ) const noexcept
 {
-    _gamepad.OnKeyDown ( key );
+    return _gamepad.OnKeyDown ( key );
 }
 
-void Core::OnKeyUp ( int32_t key ) const noexcept
+bool Core::OnKeyUp ( int32_t key ) const noexcept
 {
-    _gamepad.OnKeyUp ( key );
+    return _gamepad.OnKeyUp ( key );
 }
 
 void Core::OnLeftStick ( float x, float y ) const noexcept
@@ -330,20 +330,22 @@ JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doDestroy ( JNIEnv* en
     LogInfo ( "Core has been destroyed." );
 }
 
-JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doKeyDown ( JNIEnv* /*env*/, jobject /*obj*/, jint keyCode )
+JNIEXPORT jboolean Java_com_goshidoInc_androidVulkan_Activity_doKeyDown ( JNIEnv* /*env*/, jobject /*obj*/, jint keyCode )
 {
     if ( !g_Core )
-        return;
+        return JNI_FALSE;
 
-    g_Core->OnKeyDown ( keyCode );
+    constexpr jboolean const cases[] = { JNI_FALSE, JNI_TRUE };
+    return cases[ static_cast<size_t> ( g_Core->OnKeyDown ( keyCode ) ) ];
 }
 
-JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doKeyUp ( JNIEnv* /*env*/, jobject /*obj*/, jint keyCode )
+JNIEXPORT jboolean Java_com_goshidoInc_androidVulkan_Activity_doKeyUp ( JNIEnv* /*env*/, jobject /*obj*/, jint keyCode )
 {
     if ( !g_Core )
-        return;
+        return JNI_FALSE;
 
-    g_Core->OnKeyUp ( keyCode );
+    constexpr jboolean const cases[] = { JNI_FALSE, JNI_TRUE };
+    return cases[ static_cast<size_t> ( g_Core->OnKeyUp ( keyCode ) ) ];
 }
 
 JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doLeftStick ( JNIEnv* /*env*/,

@@ -76,8 +76,8 @@ class Core final
 
         void OnAboutDestroy ( JNIEnv* env ) noexcept;
 
-        void OnKeyDown ( int32_t key ) const noexcept;
-        void OnKeyUp ( int32_t key ) const noexcept;
+        [[nodiscard]] bool OnKeyDown ( int32_t key ) const noexcept;
+        [[nodiscard]] bool OnKeyUp ( int32_t key ) const noexcept;
 
         void OnLeftStick ( float x, float y ) const noexcept;
         void OnRightStick ( float x, float y ) const noexcept;

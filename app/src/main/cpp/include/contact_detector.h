@@ -81,7 +81,7 @@ class ContactDetector final
             GXVec3 const &vertex
         ) noexcept;
 
-        void NotifyEPAFail () noexcept;
+        [[maybe_unused]] void NotifyEPAFail () noexcept;
 
         static void AppendExtremePoint ( Vertices &vertices,
             Shape const &shape,

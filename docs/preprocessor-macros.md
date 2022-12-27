@@ -80,6 +80,10 @@ This macro enables custom mechanism for reporting leaked:
 - _Vulkan_ objects
 - sound emitter objects
 
+This macro also reports about:
+
+- potential inaccurate results during physics simualtion
+
 Also the macro is used for additional debug output in the [_Logcat™_](logcat.md).
 
 ## <a id="macro-android-vulkan-enable-render-doc-integration">`ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION`</a>

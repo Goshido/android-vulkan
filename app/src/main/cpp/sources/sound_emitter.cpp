@@ -38,6 +38,9 @@ namespace android_vulkan {
 
     if ( _streamer )
     {
+        if ( _streamer->IsDecompressor () )
+            _context._soundMixer->UnregisterDecompressor ( *_stream );
+
         _file.clear ();
         _streamer = nullptr;
     }

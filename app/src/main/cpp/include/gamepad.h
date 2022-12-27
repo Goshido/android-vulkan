@@ -105,8 +105,8 @@ class Gamepad final
         void BindRightTrigger ( void* context, TriggerHandler handler ) noexcept;
         void UnbindRightTrigger () noexcept;
 
-        void OnKeyDown ( int32_t key ) const noexcept;
-        void OnKeyUp ( int32_t key ) const noexcept;
+        [[nodiscard]] bool OnKeyDown ( int32_t key ) const noexcept;
+        [[nodiscard]] bool OnKeyUp ( int32_t key ) const noexcept;
 
         void OnLeftStick ( float x, float y ) const noexcept;
         void OnRightStick ( float x, float y ) const noexcept;

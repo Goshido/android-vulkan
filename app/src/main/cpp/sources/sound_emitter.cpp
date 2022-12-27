@@ -57,7 +57,7 @@ SoundEmitter::Context& SoundEmitter::GetContext () noexcept
     return _context;
 }
 
-std::string const& SoundEmitter::GetFile () const noexcept
+[[maybe_unused]] std::string const& SoundEmitter::GetFile () const noexcept
 {
     return _file;
 }
@@ -72,7 +72,12 @@ std::string const& SoundEmitter::GetFile () const noexcept
     _volume = std::clamp ( volume, 0.0F, 1.0F );
 }
 
-[[maybe_unused]] bool SoundEmitter::Pause () noexcept
+bool SoundEmitter::IsPlaying () const noexcept
+{
+    return _isPlaying;
+}
+
+bool SoundEmitter::Pause () noexcept
 {
     assert ( ( _stream != nullptr ) & static_cast<bool> ( _streamer ) );
 

@@ -100,6 +100,7 @@ class PCMStreamer
 
         [[nodiscard]] virtual std::optional<Info> ResolveInfo ( bool looped, size_t samplesPerBurst ) noexcept = 0;
 
+    private:
         void HandleLoopedMono ( PCMType* buffer,
             size_t bufferSamples,
             PCMType const* pcm,

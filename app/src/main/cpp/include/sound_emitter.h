@@ -22,9 +22,9 @@ class SoundEmitter
     public:
         struct Context final
         {
-            eSoundChannel                   _soundChannel = eSoundChannel::VFX;
-            SoundMixer*                     _soundMixer = nullptr;
-            SoundEmitter*                   _soundEmitter = nullptr;
+            eSoundChannel               _soundChannel = eSoundChannel::VFX;
+            SoundMixer*                 _soundMixer = nullptr;
+            SoundEmitter*               _soundEmitter = nullptr;
         };
 
     protected:
@@ -36,12 +36,12 @@ class SoundEmitter
         };
 
     protected:
-        Context                             _context {};
-        std::string                         _file {};
-        bool                                _isPlaying = false;
-        AAudioStream*                       _stream = nullptr;
-        std::unique_ptr<PCMStreamer>        _streamer {};
-        float                               _volume = 1.0F;
+        Context                         _context {};
+        std::string                     _file {};
+        bool                            _isPlaying = false;
+        AAudioStream*                   _stream = nullptr;
+        std::unique_ptr<PCMStreamer>    _streamer {};
+        float                           _volume = 1.0F;
 
     public:
         SoundEmitter ( SoundEmitter const & ) = delete;
@@ -56,12 +56,13 @@ class SoundEmitter
         [[maybe_unused, nodiscard]] bool Destroy () noexcept;
 
         [[nodiscard]] Context& GetContext () noexcept;
-        [[nodiscard]] std::string const& GetFile () const noexcept;
+        [[nodiscard, maybe_unused]] std::string const& GetFile () const noexcept;
 
         [[maybe_unused, nodiscard]] float GetVolume () const noexcept;
         [[maybe_unused]] void SetVolume ( float volume ) noexcept;
 
-        [[maybe_unused, nodiscard]] bool Pause () noexcept;
+        [[nodiscard]] bool IsPlaying () const noexcept;
+        [[nodiscard]] bool Pause () noexcept;
         [[nodiscard]] bool Play () noexcept;
         [[nodiscard]] bool Stop () noexcept;
 

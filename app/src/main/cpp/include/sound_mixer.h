@@ -6,38 +6,41 @@
 
 GX_DISABLE_COMMON_WARNINGS
 
+#include <deque>
 #include <limits>
 #include <optional>
 #include <thread>
 #include <aaudio/AAudio.h>
+
 
 GX_RESTORE_WARNING_STATE
 
 
 namespace android_vulkan {
 
-class [[maybe_unused]] SoundMixer final
+class SoundMixer final
 {
     private:
         using Emitters = std::unordered_map<AAudioStream*, SoundEmitter*>;
         using Decompressors = std::unordered_map<AAudioStream*, PCMStreamer*>;
 
     private:
-        constexpr static auto   TOTAL_SOUND_CHANNELS = static_cast<size_t> ( eSoundChannel::Speech ) + 1U;
+        constexpr static auto           TOTAL_SOUND_CHANNELS = static_cast<size_t> ( eSoundChannel::Speech ) + 1U;
 
-        int32_t                 _bufferFrameCount = std::numeric_limits<int32_t>::min ();
-        size_t                  _bufferSampleCount = std::numeric_limits<size_t>::max ();
-        AAudioStreamBuilder*    _builder = nullptr;
-        float                   _channelVolume[ TOTAL_SOUND_CHANNELS ] {};
+        int32_t                         _bufferFrameCount = std::numeric_limits<int32_t>::min ();
+        size_t                          _bufferSampleCount = std::numeric_limits<size_t>::max ();
+        AAudioStreamBuilder*            _builder = nullptr;
+        float                           _channelVolume[ TOTAL_SOUND_CHANNELS ] {};
 
-        bool                    _decompressorFlag = true;
-        std::thread             _decompressorThread {};
-        Decompressors           _decompressors {};
+        bool                            _decompressorFlag = true;
+        std::thread                     _decompressorThread {};
+        Decompressors                   _decompressors {};
 
-        float                   _effectiveChannelVolume[ TOTAL_SOUND_CHANNELS ] {};
-        Emitters                _emitters {};
-        float                   _masterVolume = 1.0F;
-        std::mutex              _mutex {};
+        float                           _effectiveChannelVolume[ TOTAL_SOUND_CHANNELS ] {};
+        Emitters                        _emitters {};
+        std::deque<SoundEmitter*>       _emittersToResume {};
+        float                           _masterVolume = 1.0F;
+        std::mutex                      _mutex {};
 
     public:
         SoundMixer () = default;
@@ -50,7 +53,7 @@ class [[maybe_unused]] SoundMixer final
 
         ~SoundMixer () = default;
 
-        [[maybe_unused, nodiscard]] bool Init () noexcept;
+        [[nodiscard]] bool Init () noexcept;
         void Destroy () noexcept;
 
         // Note SoundMixer is not owned AAudioStream. The callee MUST make AAudioStream_close call.
@@ -66,6 +69,9 @@ class [[maybe_unused]] SoundMixer final
 
         [[maybe_unused, nodiscard]] float GetMasterVolume () const noexcept;
         void SetMasterVolume ( float volume ) noexcept;
+
+        void Pause () noexcept;
+        void Resume () noexcept;
 
         void RegisterDecompressor ( AAudioStream &stream, PCMStreamer &streamer ) noexcept;
         void UnregisterDecompressor ( AAudioStream &stream ) noexcept;

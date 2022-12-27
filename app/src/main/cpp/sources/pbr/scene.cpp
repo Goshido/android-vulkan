@@ -87,18 +87,24 @@ android_vulkan::Physics& Scene::GetPhysics () noexcept
     return *_physics;
 }
 
-void Scene::OnCaptureInput () noexcept
-{
-    _gamepad.CaptureInput ();
-}
-
-void Scene::OnReleaseInput () const noexcept
-{
-    _gamepad.ReleaseInput ();
-}
-
 bool Scene::OnInitDevice ( android_vulkan::Renderer &renderer, android_vulkan::Physics &physics ) noexcept
 {
+    if ( !_soundMixer.Init () )
+        return false;
+
+    if ( !_soundEmitter.Init ( _soundMixer, android_vulkan::eSoundChannel::Music ) )
+        return false;
+
+    //    if ( !_soundEmitter.SetSoundAsset ( storage, "sounds/sine.wav", true ) )
+    //    if ( !_soundEmitter.SetSoundAsset ( storage, "sounds/sine.ogg", true ) )
+    //    if ( !_soundEmitter.SetSoundAsset ( storage, "sounds/sine_stereo.wav", true ) )
+    //    if ( !_soundEmitter.SetSoundAsset ( storage, "sounds/sine_stereo.ogg", true ) )
+    if ( !_soundEmitter.SetSoundAsset ( _soundStorage, "sounds/Credits.ogg", false ) )
+        return false;
+
+    if ( !_soundEmitter.Play () )
+        return false;
+
     _defaultCamera.SetProjection ( GXDegToRad ( DEFAULT_FOV ), DEFAULT_ASPECT_RATIO, DEFAULT_Z_NEAR, DEFAULT_Z_FAR );
     _penetrations.reserve ( INITIAL_PENETRATION_SIZE );
 
@@ -249,6 +255,23 @@ void Scene::OnDestroyDevice () noexcept
 
     _sceneHandle = std::numeric_limits<int>::max ();
     _vm = nullptr;
+
+    if ( !_soundEmitter.Destroy () )
+        android_vulkan::LogWarning ( "Scene::OnDestroyDevice - Can't destroy sound emitter." );
+
+    _soundMixer.Destroy ();
+}
+
+void Scene::OnPause () noexcept
+{
+    _soundMixer.Pause ();
+    _gamepad.ReleaseInput ();
+}
+
+void Scene::OnResume () noexcept
+{
+    _soundMixer.Resume ();
+    _gamepad.CaptureInput ();
 }
 
 bool Scene::OnPrePhysics ( double deltaTime ) noexcept

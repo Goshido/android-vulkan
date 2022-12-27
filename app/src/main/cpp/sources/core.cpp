@@ -22,10 +22,6 @@ GX_DISABLE_COMMON_WARNINGS
 
 GX_RESTORE_WARNING_STATE
 
-// REMOVE ME
-#include <sound_emitter_global.h>
-#include <sound_mixer.h>
-
 
 namespace android_vulkan {
 
@@ -50,43 +46,6 @@ enum class eGame : uint16_t
     SweepTesting,
     World1x1
 };
-
-//----------------------------------------------------------------------------------------------------------------------
-
-namespace {
-
-SoundMixer mixer {};
-SoundStorage storage {};
-SoundEmitterGlobal emitter {};
-
-static void TEST () noexcept
-{
-    if ( !mixer.Init () )
-        return;
-
-    if ( !emitter.Init ( mixer, eSoundChannel::Music ) )
-    {
-        mixer.Destroy ();
-        return;
-    }
-
-//    if ( !emitter.SetSoundAsset ( storage, "sounds/sine.wav", true ) )
-//    if ( !emitter.SetSoundAsset ( storage, "sounds/sine.ogg", true ) )
-//    if ( !emitter.SetSoundAsset ( storage, "sounds/sine_stereo.wav", true ) )
-//    if ( !emitter.SetSoundAsset ( storage, "sounds/sine_stereo.ogg", true ) )
-    if ( !emitter.SetSoundAsset ( storage, "sounds/Credits.ogg", false ) )
-        LogWarning ( "Can't set sound asset!" );
-
-    if ( emitter.Play () )
-        return;
-
-    if ( !emitter.Destroy () )
-        LogWarning ( "Can't destroy emitter!" );
-
-    mixer.Destroy ();
-}
-
-} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -135,7 +94,6 @@ Core::Core ( JNIEnv* env, jobject activity, jobject assetManager, std::string &&
     );
 
     _gamepad.BindKey ( nullptr, &Core::OnHomeUp, eGamepadKey::Home, eButtonState::Up );
-    TEST ();
 }
 
 void Core::OnAboutDestroy ( JNIEnv* env ) noexcept

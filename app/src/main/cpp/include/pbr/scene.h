@@ -9,6 +9,11 @@
 #include "scriptable_gamepad.h"
 #include "scriptable_penetration.h"
 
+// REMOVE ME
+#include <sound_emitter_global.h>
+
+#include <sound_mixer.h>
+
 
 namespace pbr {
 
@@ -26,6 +31,12 @@ class Scene final
         android_vulkan::Physics*                        _physics = nullptr;
         ScriptablePenetration                           _scriptablePenetration {};
         android_vulkan::ShapeRef                        _shapeBoxes[ 2U ] = {};
+
+        // REMOVE ME
+        android_vulkan::SoundEmitterGlobal              _soundEmitter {};
+
+        android_vulkan::SoundMixer                      _soundMixer {};
+        android_vulkan::SoundStorage                    _soundStorage {};
         std::vector<android_vulkan::RigidBodyRef>       _sweepTestResult {};
 
         ComponentList                                   _renderableList {};
@@ -63,13 +74,13 @@ class Scene final
         [[nodiscard]] GXMat4 const& GetActiveCameraProjectionMatrix () const noexcept;
         [[nodiscard]] android_vulkan::Physics& GetPhysics () noexcept;
 
-        void OnCaptureInput () noexcept;
-        void OnReleaseInput () const noexcept;
-
         [[nodiscard]] bool OnInitDevice ( android_vulkan::Renderer &renderer,
             android_vulkan::Physics &physics ) noexcept;
 
         void OnDestroyDevice () noexcept;
+
+        void OnPause () noexcept;
+        void OnResume () noexcept;
 
         [[nodiscard]] bool OnPrePhysics ( double deltaTime ) noexcept;
         [[nodiscard]] bool OnPostPhysics ( double deltaTime ) noexcept;

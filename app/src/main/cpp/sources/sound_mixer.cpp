@@ -76,7 +76,7 @@ StreamCloser::~StreamCloser () noexcept
 
 //----------------------------------------------------------------------------------------------------------------------
 
-[[maybe_unused]] bool SoundMixer::Init () noexcept
+bool SoundMixer::Init () noexcept
 {
     std::fill_n ( _channelVolume, std::size ( _channelVolume ), CHANNEL_VOLUME );
     SetMasterVolume ( _masterVolume );
@@ -270,6 +270,35 @@ void SoundMixer::SetMasterVolume ( float volume ) noexcept
     {
         _effectiveChannelVolume[ i ] = volume * _channelVolume[ i ];
     }
+}
+
+void SoundMixer::Pause () noexcept
+{
+    for ( auto& record : _emitters )
+    {
+        SoundEmitter* emitter = record.second;
+
+        if ( emitter->IsPlaying () )
+        {
+            if ( emitter->Pause () )
+            {
+                _emittersToResume.push_back ( emitter );
+            }
+        }
+    }
+}
+
+void SoundMixer::Resume () noexcept
+{
+    for ( auto* emitter : _emittersToResume )
+    {
+        if ( !emitter->Play () )
+        {
+            LogWarning ( "SoundMixer::OnResume - Can't play," );
+        }
+    }
+
+    _emittersToResume.clear ();
 }
 
 void SoundMixer::RegisterDecompressor ( AAudioStream &stream, PCMStreamer &streamer ) noexcept

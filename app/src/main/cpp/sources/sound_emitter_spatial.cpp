@@ -11,6 +11,12 @@ GX_RESTORE_WARNING_STATE
 
 namespace android_vulkan {
 
+[[maybe_unused]] void SoundEmitterSpatial::SetVolume ( float volume ) noexcept
+{
+    SoundEmitter::SetVolume ( volume );
+    _previousVolume = GXVec2 ( volume, volume );
+}
+
 [[maybe_unused]] bool SoundEmitterSpatial::Init ( SoundMixer &soundMixer,
     eSoundChannel channel,
     GXVec3 const &location,
@@ -54,15 +60,21 @@ void SoundEmitterSpatial::FillPCM ( std::span<PCMStreamer::PCMType> buffer, floa
         soundDirection = fallbackDirection;
     }
 
-    GXVec2 leftRight ( soundDirection.DotProduct ( listener._leftDirection ),
+    GXVec2 volume ( soundDirection.DotProduct ( listener._leftDirection ),
         soundDirection.DotProduct ( listener._rightDirection )
     );
 
     float const attenuation = channelVolume * _volume * distanceAttenuation;
     constexpr GXVec2 factor ( 0.5F, 0.5F );
-    leftRight.Sum ( factor, 0.5F, leftRight );
-    leftRight.Multiply ( leftRight, attenuation );
-    _streamer->GetNextBuffer ( buffer, leftRight._data[ 0U ], leftRight._data[ 1U ] );
+    volume.Sum ( factor, 0.5F, volume );
+    volume.Multiply ( volume, attenuation );
+
+    _streamer->GetNextBuffer ( buffer,
+        PCMStreamer::Gain ( _previousVolume._data[ 0U ], volume._data[ 0U ] ),
+        PCMStreamer::Gain ( _previousVolume._data[ 1U ], volume._data[ 1U ] )
+    );
+
+    _previousVolume = volume;
 }
 
 } // namespace android_vulkan

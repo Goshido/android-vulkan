@@ -8,11 +8,6 @@
 #include "renderable_component.h"
 #include "scriptable_gamepad.h"
 #include "scriptable_penetration.h"
-
-// REMOVE ME
-#include <sound_emitter_global.h>
-#include <sound_emitter_spatial.h>
-
 #include <sound_mixer.h>
 
 
@@ -32,10 +27,6 @@ class Scene final
         android_vulkan::Physics*                        _physics = nullptr;
         ScriptablePenetration                           _scriptablePenetration {};
         android_vulkan::ShapeRef                        _shapeBoxes[ 2U ] = {};
-
-        // REMOVE ME
-        android_vulkan::SoundEmitterSpatial             _soundEmitter {};
-
         android_vulkan::SoundMixer                      _soundMixer {};
         android_vulkan::SoundStorage                    _soundStorage {};
         std::vector<android_vulkan::RigidBodyRef>       _sweepTestResult {};

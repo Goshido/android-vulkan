@@ -18,8 +18,8 @@ constexpr auto DENOMINATOR = static_cast<int32_t> ( PCMStreamer::INTEGER_DIVISIO
 
 constexpr size_t IN_NEON_REGISTERS = 4U;
 constexpr size_t SAMPLES_PER_REGISTER = 4U;
-constexpr size_t STEREO_SAMPLES_PER_ITERATION = IN_NEON_REGISTERS * SAMPLES_PER_REGISTER;
-constexpr size_t MONO_SAMPLES_PER_ITERATION = STEREO_SAMPLES_PER_ITERATION / 2U;
+constexpr size_t STEREO_SAMPLES_PER_BATCH = IN_NEON_REGISTERS * SAMPLES_PER_REGISTER;
+constexpr size_t MONO_SAMPLES_PER_BATCH = STEREO_SAMPLES_PER_BATCH / 2U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -45,10 +45,42 @@ class NeonConverter final
             int32x4_t const &correction
         ) noexcept;
 
+        static void Convert ( PCMStreamer::PCMType* target,
+            int32x4_t const &before,
+            int32x4_t const &diff,
+            int32x4_t const &correction,
+            int16_t leftSample,
+            int16_t rightSample,
+            int32_t sampleFactor,
+            int32_t sampleCount
+        ) noexcept;
+
+        [[nodiscard]] static int32x4_t MakeBeforeFactor ( int32_t leftBefore, int32_t rightBefore ) noexcept;
         [[nodiscard]] static int32x4_t MakeCorrectionVector () noexcept;
-        [[nodiscard]] static int32x4_t MakeNominator ( int32_t leftGain, int32_t rightGain ) noexcept;
+
+        [[nodiscard]] static int32x4_t MakeDiffFactor ( int32_t currentLeft,
+            int32_t currentRight,
+            int32x4_t const &before
+        ) noexcept;
+
+        [[nodiscard]] static int32x4_t MakeNominator ( int32x4_t const &before,
+            int32x4_t const &diff,
+            int32x4_t const &correction,
+            int32_t sampleFactor,
+            int32_t sampleCount
+        ) noexcept;
+
+        static void UpdateGain ( int32_t &left,
+            int32_t &right,
+            int32x4_t const &before,
+            int32x4_t const &diff,
+            int32x4_t const &correction,
+            int32_t sampleFactor,
+            int32_t sampleCount
+        ) noexcept;
 
     private:
+        [[nodiscard]] static int32x2_t Divide ( int32x2_t v, int32x4_t const &correction ) noexcept;
         [[nodiscard]] static int32x4_t Divide ( int32x4_t v, int32x4_t const &correction ) noexcept;
 };
 
@@ -81,15 +113,37 @@ void NeonConverter::Convert ( PCMStreamer::PCMType* target,
     vst1q_s32 ( scratchPad + 8U, t2 );
     vst1q_s32 ( scratchPad + 12U, t3 );
 
-    for ( size_t idx = 0U; idx < STEREO_SAMPLES_PER_ITERATION; ++idx )
+    for ( size_t idx = 0U; idx < STEREO_SAMPLES_PER_BATCH; ++idx )
     {
         target[ idx ] = static_cast<PCMStreamer::PCMType>( scratchPad[ idx ] );
     }
 }
 
-int32x4_t NeonConverter::Divide ( int32x4_t v, int32x4_t const &correction ) noexcept
+void NeonConverter::Convert ( PCMStreamer::PCMType* target,
+    int32x4_t const &before,
+    int32x4_t const &diff,
+    int32x4_t const &correction,
+    int16_t leftSample,
+    int16_t rightSample,
+    int32_t sampleFactor,
+    int32_t sampleCount
+) noexcept
 {
-    return vshrq_n_s32 ( vaddq_s32 ( v, vandq_s32 ( vcltzq_s32 ( v ), correction ) ), 15 );
+    int32_t data[] = { leftSample, rightSample };
+    int32x2_t const s = vld1_s32 ( data );
+
+    int32x2_t const alpha = vmul_s32 ( vget_high_s32 ( diff ), vdup_n_s32 ( sampleFactor / sampleCount ) );
+    int32x2_t const n = vadd_s32 ( vget_high_s32 ( before ), Divide ( alpha, correction ) );
+    
+    vst1_s32 ( data, NeonConverter::Divide ( vmul_s32 ( s, n ), correction ) );
+    target[ 0U ] = data[ 0U ];
+    target[ 1U ] = data[ 1U ];
+}
+
+int32x4_t NeonConverter::MakeBeforeFactor ( int32_t leftBefore, int32_t rightBefore ) noexcept
+{
+    int32_t const data[] = { leftBefore, rightBefore, leftBefore, rightBefore };
+    return vld1q_s32 ( data );
 }
 
 int32x4_t NeonConverter::MakeCorrectionVector () noexcept
@@ -97,74 +151,66 @@ int32x4_t NeonConverter::MakeCorrectionVector () noexcept
     return vdupq_n_s32 ( DENOMINATOR - 1 );
 }
 
-int32x4_t NeonConverter::MakeNominator ( int32_t leftGain, int32_t rightGain ) noexcept
+int32x4_t NeonConverter::MakeDiffFactor ( int32_t currentLeft,
+    int32_t currentRight,
+    int32x4_t const &before
+) noexcept
 {
-    int32_t const nominatorData[] = { leftGain, rightGain, leftGain, rightGain };
-    return vld1q_s32 ( nominatorData );
+    int32_t const data[] = { currentLeft, currentRight, currentLeft, currentRight };
+    return vsubq_s32 ( vld1q_s32 ( data ), before );
+}
+
+int32x4_t NeonConverter::MakeNominator ( int32x4_t const &beforeFactor,
+    int32x4_t const &diffFactor,
+    int32x4_t const &correction,
+    int32_t sampleFactor,
+    int32_t sampleCount
+) noexcept
+{
+    int32x4_t const alpha = vmulq_s32 ( diffFactor, vdupq_n_s32 ( sampleFactor / sampleCount ) );
+    return vaddq_s32 ( beforeFactor, Divide ( alpha, correction ) );
+}
+
+void NeonConverter::UpdateGain ( int32_t &left,
+    int32_t &right,
+    int32x4_t const &before,
+    int32x4_t const &diff,
+    int32x4_t const &correction,
+    int32_t sampleFactor,
+    int32_t sampleCount
+) noexcept
+{
+    int32x2_t const alpha = vmul_s32 ( vget_high_s32 ( diff ), vdup_n_s32 ( sampleFactor / sampleCount ) );
+
+    int32_t gains[ 2U ];
+    vst1_s32 ( gains, vadd_s32 ( vget_high_s32 ( before ), Divide ( alpha, correction ) ) );
+
+    left = gains[ 0U ];
+    right = gains[ 1U ];
+}
+
+int32x2_t NeonConverter::Divide ( int32x2_t v, int32x4_t const &correction ) noexcept
+{
+    return vshr_n_s32 ( vadd_s32 ( v, vand_s32 ( vcltz_s32 ( v ), vget_high_s32 ( correction ) ) ), 15 );
+}
+
+int32x4_t NeonConverter::Divide ( int32x4_t v, int32x4_t const &correction ) noexcept
+{
+    return vshrq_n_s32 ( vaddq_s32 ( v, vandq_s32 ( vcltzq_s32 ( v ), correction ) ), 15 );
 }
 
 } // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 
-void PCMStreamer::HandleLoopedStereo ( PCMType* buffer,
-    size_t bufferSamples,
+void PCMStreamer::HandleLoopedMono ( std::span<PCMType> buffer,
     PCMType const* pcm,
     Consume consume,
-    int32_t leftGain,
-    int32_t rightGain
+    Gain leftGain,
+    Gain rightGain
 ) noexcept
 {
-    size_t const rest = bufferSamples - consume._bufferSampleCount;
-    _offset = ( _offset + consume._pcmSampleCount ) % _sampleCount;
-
-    if ( rest == 0U )
-        return;
-
-    size_t const neonIterations = rest / STEREO_SAMPLES_PER_ITERATION;
-    int32x4_t const nominator = NeonConverter::MakeNominator ( leftGain, rightGain );
-    int32x4_t const correction = NeonConverter::MakeCorrectionVector ();
-
-    PCMType const* neonSource = pcm;
-    PCMType* neonTarget = buffer + bufferSamples - rest;
-
-    for ( size_t i = 0U; i < neonIterations; ++i )
-    {
-        int32_t scratchPad[] =
-        {
-            neonSource[ 0U ], neonSource[ 1U ], neonSource[ 2U ], neonSource[ 3U ],
-            neonSource[ 4U ], neonSource[ 5U ], neonSource[ 6U ], neonSource[ 7U ],
-            neonSource[ 8U ], neonSource[ 9U ], neonSource[ 10U ], neonSource[ 11U ],
-            neonSource[ 12U ], neonSource[ 13U ], neonSource[ 14U ], neonSource[ 15U ]
-        };
-
-        NeonConverter::Convert ( neonTarget, scratchPad, nominator, correction );
-        neonSource += STEREO_SAMPLES_PER_ITERATION;
-        neonTarget += STEREO_SAMPLES_PER_ITERATION;
-    }
-
-    for ( size_t i = neonIterations * STEREO_SAMPLES_PER_ITERATION; i < rest; i += 2U )
-    {
-        size_t const rightIdx = i + 1U;
-
-        auto const leftSample = static_cast<int32_t> ( pcm[ i ] );
-        auto const rightSample = static_cast<int32_t> ( pcm[ rightIdx ] );
-
-        buffer[ i ] = static_cast<PCMType> ( leftSample * leftGain / DENOMINATOR );
-        buffer[ rightIdx ] = static_cast<PCMType> ( rightSample * rightGain / DENOMINATOR );
-    }
-
-    _offset = rest;
-}
-
-void PCMStreamer::HandleLoopedMono ( PCMType* buffer,
-    size_t bufferSamples,
-    PCMType const* pcm,
-    Consume consume,
-    int32_t leftGain,
-    int32_t rightGain
-) noexcept
-{
+    size_t const bufferSamples = buffer.size ();
     size_t const restInBufferSamples = bufferSamples - consume._bufferSampleCount;
     _offset = ( _offset + consume._pcmSampleCount ) % _sampleCount;
 
@@ -172,86 +218,152 @@ void PCMStreamer::HandleLoopedMono ( PCMType* buffer,
         return;
 
     size_t const restInPCMSamples = restInBufferSamples >> 1U;
-    size_t const neonIterations = restInPCMSamples / MONO_SAMPLES_PER_ITERATION;
-    int32x4_t const nominator = NeonConverter::MakeNominator ( leftGain, rightGain );
+    auto const restSamples = static_cast<int32_t> ( restInPCMSamples );
+    auto const batches = static_cast<int32_t> ( restInPCMSamples / MONO_SAMPLES_PER_BATCH );
+
+    constexpr int32_t aFactor = MONO_SAMPLES_PER_BATCH * DENOMINATOR;
     int32x4_t const correction = NeonConverter::MakeCorrectionVector ();
+    int32x4_t const before = NeonConverter::MakeBeforeFactor ( leftGain._before, rightGain._before );
+    int32x4_t const diff = NeonConverter::MakeDiffFactor ( leftGain._current, rightGain._current, before );
 
-    PCMType const* neonSource = pcm;
-    PCMType* neonTarget = buffer + bufferSamples - restInBufferSamples;
+    PCMType const* source = pcm;
+    PCMType* target = buffer.data () + ( bufferSamples - restInBufferSamples );
 
-    for ( size_t i = 0U; i < neonIterations; ++i )
+    for ( int32_t i = 0; i < batches; ++i )
     {
+        int32x4_t const nominator = NeonConverter::MakeNominator ( before, diff, correction, i * aFactor, restSamples );
+
         int32_t scratchPad[] =
         {
-            neonSource[ 0U ], neonSource[ 0U ], neonSource[ 1U ], neonSource[ 1U ],
-            neonSource[ 2U ], neonSource[ 2U ], neonSource[ 3U ], neonSource[ 3U ],
-            neonSource[ 4U ], neonSource[ 4U ], neonSource[ 5U ], neonSource[ 5U ],
-            neonSource[ 6U ], neonSource[ 6U ], neonSource[ 7U ], neonSource[ 7U ]
+            source[ 0U ], source[ 0U ], source[ 1U ], source[ 1U ],
+            source[ 2U ], source[ 2U ], source[ 3U ], source[ 3U ],
+            source[ 4U ], source[ 4U ], source[ 5U ], source[ 5U ],
+            source[ 6U ], source[ 6U ], source[ 7U ], source[ 7U ]
         };
 
-        NeonConverter::Convert ( neonTarget, scratchPad, nominator, correction );
-        neonSource += MONO_SAMPLES_PER_ITERATION;
-        neonTarget += STEREO_SAMPLES_PER_ITERATION;
+        NeonConverter::Convert ( target, scratchPad, nominator, correction );
+        source += MONO_SAMPLES_PER_BATCH;
+        target += STEREO_SAMPLES_PER_BATCH;
     }
 
-    for ( size_t i = neonIterations * MONO_SAMPLES_PER_ITERATION; i < restInPCMSamples; i += 2U )
+    for ( int32_t i = batches * static_cast<int32_t> ( MONO_SAMPLES_PER_BATCH ); i < restSamples; ++i )
     {
-        size_t const leftIdx = i << 1U;
-        size_t const rightIdx = leftIdx + 1U;
-
-        auto const sample = static_cast<int32_t> ( pcm[ i ] );
-
-        buffer[ leftIdx ] = static_cast<PCMType> ( sample * leftGain / DENOMINATOR );
-        buffer[ rightIdx ] = static_cast<PCMType> ( sample * rightGain / DENOMINATOR );
+        int16_t const sample = pcm[ i ];
+        NeonConverter::Convert ( target, before, diff, correction, sample, sample, i * DENOMINATOR, restSamples );
+        target += 2U;
     }
 
     _offset = restInPCMSamples;
 }
 
-PCMStreamer::Consume PCMStreamer::HandleMono ( PCMType* buffer,
-    size_t bufferSamples,
+void PCMStreamer::HandleLoopedStereo ( std::span<PCMType> buffer,
     PCMType const* pcm,
-    bool lastPCMBuffer,
-    int32_t leftGain,
-    int32_t rightGain
+    Consume consume,
+    Gain leftGain,
+    Gain rightGain
 ) noexcept
 {
-    size_t const bufferFrames = bufferSamples >> 1U;
+    size_t const bufferSamples = buffer.size ();
+    size_t const rest = bufferSamples - consume._bufferSampleCount;
+    _offset = ( _offset + consume._pcmSampleCount ) % _sampleCount;
+
+    if ( rest == 0U )
+        return;
+
+    auto const restSamples = static_cast<int32_t> ( rest );
+    auto const batches = static_cast<int32_t> ( rest / STEREO_SAMPLES_PER_BATCH );
+
+    constexpr int32_t aFactor = STEREO_SAMPLES_PER_BATCH * DENOMINATOR;
+    int32x4_t const correction = NeonConverter::MakeCorrectionVector ();
+    int32x4_t const before = NeonConverter::MakeBeforeFactor ( leftGain._before, rightGain._before );
+    int32x4_t const diff = NeonConverter::MakeDiffFactor ( leftGain._current, rightGain._current, before );
+
+    PCMType const* source = pcm;
+    PCMType* target = buffer.data () + ( bufferSamples - rest );
+
+    for ( int32_t i = 0; i < batches; ++i )
+    {
+        int32x4_t const nominator = NeonConverter::MakeNominator ( before, diff, correction, i * aFactor, restSamples );
+
+        int32_t scratchPad[] =
+        {
+            source[ 0U ], source[ 1U ], source[ 2U ], source[ 3U ],
+            source[ 4U ], source[ 5U ], source[ 6U ], source[ 7U ],
+            source[ 8U ], source[ 9U ], source[ 10U ], source[ 11U ],
+            source[ 12U ], source[ 13U ], source[ 14U ], source[ 15U ]
+        };
+
+        NeonConverter::Convert ( target, scratchPad, nominator, correction );
+        source += STEREO_SAMPLES_PER_BATCH;
+        target += STEREO_SAMPLES_PER_BATCH;
+    }
+
+    for ( int32_t i = batches * static_cast<int32_t> ( STEREO_SAMPLES_PER_BATCH ); i < restSamples; i += 2 )
+    {
+        NeonConverter::Convert ( target,
+            before,
+            diff,
+            correction,
+            pcm[ i ],
+            pcm[ i + 1 ],
+            i * DENOMINATOR,
+            restSamples
+        );
+
+        target += 2U;
+    }
+
+    _offset = rest;
+}
+
+PCMStreamer::Consume PCMStreamer::HandleMono ( std::span<PCMType> buffer,
+    Gain &leftGain,
+    Gain &rightGain,
+    PCMType const* pcm,
+    bool lastPCMBuffer
+) noexcept
+{
+    size_t const bufferFrames = buffer.size () >> 1U;
     size_t const cases[] = { bufferFrames, _sampleCount - _offset };
     size_t const canRead = cases[ static_cast<size_t> ( _offset + bufferFrames > _sampleCount ) ];
 
-    size_t const neonIterations = canRead / MONO_SAMPLES_PER_ITERATION;
-    int32x4_t const nominator = NeonConverter::MakeNominator ( leftGain, rightGain );
+    auto const available = static_cast<int32_t> ( canRead );
+    auto const batches = static_cast<int32_t> ( available / MONO_SAMPLES_PER_BATCH );
+    auto const s = static_cast<int32_t> ( bufferFrames );
+
+    constexpr int32_t aFactor = MONO_SAMPLES_PER_BATCH * DENOMINATOR;
     int32x4_t const correction = NeonConverter::MakeCorrectionVector ();
+    int32x4_t const before = NeonConverter::MakeBeforeFactor ( leftGain._before, rightGain._before );
+    int32x4_t const diff = NeonConverter::MakeDiffFactor ( leftGain._current, rightGain._current, before );
 
-    PCMType const* neonSource = pcm;
-    PCMType* neonTarget = buffer;
+    PCMType const* source = pcm;
+    PCMType* target = buffer.data ();
 
-    for ( size_t i = 0U; i < neonIterations; ++i )
+    for ( int32_t i = 0; i < batches; ++i )
     {
+        int32x4_t const nominator = NeonConverter::MakeNominator ( before, diff, correction, i * aFactor, s );
+
         int32_t scratchPad[] =
         {
-            neonSource[ 0U ], neonSource[ 0U ], neonSource[ 1U ], neonSource[ 1U ],
-            neonSource[ 2U ], neonSource[ 2U ], neonSource[ 3U ], neonSource[ 3U ],
-            neonSource[ 4U ], neonSource[ 4U ], neonSource[ 5U ], neonSource[ 5U ],
-            neonSource[ 6U ], neonSource[ 6U ], neonSource[ 7U ], neonSource[ 7U ]
+            source[ 0U ], source[ 0U ], source[ 1U ], source[ 1U ],
+            source[ 2U ], source[ 2U ], source[ 3U ], source[ 3U ],
+            source[ 4U ], source[ 4U ], source[ 5U ], source[ 5U ],
+            source[ 6U ], source[ 6U ], source[ 7U ], source[ 7U ]
         };
 
-        NeonConverter::Convert ( neonTarget, scratchPad, nominator, correction );
-        neonSource += MONO_SAMPLES_PER_ITERATION;
-        neonTarget += STEREO_SAMPLES_PER_ITERATION;
+        NeonConverter::Convert ( target, scratchPad, nominator, correction );
+        source += MONO_SAMPLES_PER_BATCH;
+        target += STEREO_SAMPLES_PER_BATCH;
     }
 
-    for ( size_t i = neonIterations * MONO_SAMPLES_PER_ITERATION; i < canRead; i += 2U )
+    for ( int32_t i = batches * static_cast<int32_t> ( MONO_SAMPLES_PER_BATCH ); i < available; ++i )
     {
-        size_t const leftIdx = i << 1U;
-        size_t const rightIdx = leftIdx + 1U;
-
-        auto const sample = static_cast<int32_t> ( pcm[ i ] );
-
-        buffer[ leftIdx ] = static_cast<PCMType> ( sample * leftGain / DENOMINATOR );
-        buffer[ rightIdx ] = static_cast<PCMType> ( sample * rightGain / DENOMINATOR );
+        int16_t const sample = pcm[ i ];
+        NeonConverter::Convert ( target, before, diff, correction, sample, sample, i * DENOMINATOR, s );
+        target += 2U;
     }
+
+    NeonConverter::UpdateGain ( leftGain._current, rightGain._current, before, diff, correction, available, s );
 
     return Consume
     {
@@ -261,49 +373,53 @@ PCMStreamer::Consume PCMStreamer::HandleMono ( PCMType* buffer,
     };
 }
 
-PCMStreamer::Consume PCMStreamer::HandleStereo ( PCMType* buffer,
-    size_t bufferSamples,
+PCMStreamer::Consume PCMStreamer::HandleStereo ( std::span<PCMType> buffer,
+    Gain &leftGain,
+    Gain &rightGain,
     PCMType const* pcm,
-    bool lastPCMBuffer,
-    int32_t leftGain,
-    int32_t rightGain
+    bool lastPCMBuffer
 ) noexcept
 {
+    size_t const bufferSamples = buffer.size ();
     size_t const cases[] = { bufferSamples, _sampleCount - _offset };
     size_t const canRead = cases[ static_cast<size_t> ( _offset + bufferSamples > _sampleCount ) ];
 
-    size_t const neonIterations = canRead / STEREO_SAMPLES_PER_ITERATION;
-    int32x4_t const nominator = NeonConverter::MakeNominator ( leftGain, rightGain );
+    auto const available = static_cast<int32_t> ( canRead );
+    auto const batches = static_cast<int32_t> ( available / STEREO_SAMPLES_PER_BATCH );
+    auto const s = static_cast<int32_t> ( bufferSamples );
+
+    constexpr int32_t aFactor = STEREO_SAMPLES_PER_BATCH * DENOMINATOR;
     int32x4_t const correction = NeonConverter::MakeCorrectionVector ();
+    int32x4_t const before = NeonConverter::MakeBeforeFactor ( leftGain._before, rightGain._before );
+    int32x4_t const diff = NeonConverter::MakeDiffFactor ( leftGain._current, rightGain._current, before );
 
-    PCMType const* neonSource = pcm;
-    PCMType* neonTarget = buffer;
+    PCMType const* source = pcm;
+    PCMType* target = buffer.data ();
 
-    for ( size_t i = 0U; i < neonIterations; ++i )
+    for ( int32_t i = 0; i < batches; ++i )
     {
+        int32x4_t const nominator = NeonConverter::MakeNominator ( before, diff, correction, i * aFactor, s );
+
         int32_t scratchPad[] =
         {
-            neonSource[ 0U ], neonSource[ 1U ], neonSource[ 2U ], neonSource[ 3U ],
-            neonSource[ 4U ], neonSource[ 5U ], neonSource[ 6U ], neonSource[ 7U ],
-            neonSource[ 8U ], neonSource[ 9U ], neonSource[ 10U ], neonSource[ 11U ],
-            neonSource[ 12U ], neonSource[ 13U ], neonSource[ 14U ], neonSource[ 15U ]
+            source[ 0U ], source[ 1U ], source[ 2U ], source[ 3U ],
+            source[ 4U ], source[ 5U ], source[ 6U ], source[ 7U ],
+            source[ 8U ], source[ 9U ], source[ 10U ], source[ 11U ],
+            source[ 12U ], source[ 13U ], source[ 14U ], source[ 15U ]
         };
 
-        NeonConverter::Convert ( neonTarget, scratchPad, nominator, correction );
-        neonSource += STEREO_SAMPLES_PER_ITERATION;
-        neonTarget += STEREO_SAMPLES_PER_ITERATION;
+        NeonConverter::Convert ( target, scratchPad, nominator, correction );
+        source += STEREO_SAMPLES_PER_BATCH;
+        target += STEREO_SAMPLES_PER_BATCH;
     }
 
-    for ( size_t i = neonIterations * STEREO_SAMPLES_PER_ITERATION; i < canRead; i += 2U )
+    for ( int32_t i = batches * static_cast<int32_t> ( STEREO_SAMPLES_PER_BATCH ); i < available; i += 2 )
     {
-        size_t const rightIdx = i + 1U;
-
-        auto const leftSample = static_cast<int32_t> ( pcm[ i ] );
-        auto const rightSample = static_cast<int32_t> ( pcm[ rightIdx ] );
-
-        buffer[ i ] = static_cast<PCMType> ( leftSample * leftGain / DENOMINATOR );
-        buffer[ rightIdx ] = static_cast<PCMType> ( rightSample * rightGain / DENOMINATOR );
+        NeonConverter::Convert ( target, before, diff, correction, pcm[ i ], pcm[ i + 1 ], i * DENOMINATOR, s );
+        target += 2U;
     }
+
+    NeonConverter::UpdateGain ( leftGain._current, rightGain._current, before, diff, correction, available, s );
 
     return Consume
     {

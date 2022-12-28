@@ -13,6 +13,7 @@ class [[maybe_unused]] SoundEmitterSpatial final : public SoundEmitter
     private:
         float       _distanceFactor = 1.0F;
         GXVec3      _location { 0.0F, 0.0F, 0.0F };
+        GXVec2      _previousVolume { 1.0F, 1.0F };
 
     public:
         SoundEmitterSpatial () = default;
@@ -24,6 +25,8 @@ class [[maybe_unused]] SoundEmitterSpatial final : public SoundEmitter
         SoundEmitterSpatial& operator = ( SoundEmitterSpatial && ) = delete;
 
         ~SoundEmitterSpatial () override = default;
+
+        [[maybe_unused]] void SetVolume ( float volume ) noexcept override;
 
         [[maybe_unused, nodiscard]] bool Init ( SoundMixer &soundMixer,
             eSoundChannel channel,

@@ -40,23 +40,14 @@ PCMStreamerWAV::PCMStreamerWAV ( SoundEmitter &soundEmitter, OnStopRequest callb
     // NOTHING
 }
 
-void PCMStreamerWAV::GetNextBuffer ( std::span<PCMType> buffer,
-    float leftChannelVolume,
-    float rightChannelVolume
-) noexcept
+void PCMStreamerWAV::GetNextBuffer ( std::span<PCMType> buffer, Gain left, Gain right ) noexcept
 {
-    auto const leftGain = static_cast<int32_t> ( leftChannelVolume * static_cast<float> ( INTEGER_DIVISION_SCALE ) );
-    auto const rightGain = static_cast<int32_t> ( rightChannelVolume * static_cast<float> ( INTEGER_DIVISION_SCALE ) );
-
-    PCMType* target = buffer.data ();
     auto const* pcm = reinterpret_cast<PCMType const*> ( _soundFile->data () + sizeof ( WAVEHeader ) );
-    size_t const bufferSamples = buffer.size ();
 
-    if ( bufferSamples > _sampleCount )
+    if ( buffer.size () > _sampleCount )
     {
         // C++ calling method by pointer syntax.
-        ( this->*_loopHandler ) ( target,
-            bufferSamples,
+        ( this->*_loopHandler ) ( buffer,
             pcm,
 
             Consume
@@ -66,24 +57,23 @@ void PCMStreamerWAV::GetNextBuffer ( std::span<PCMType> buffer,
                 ._pcmSampleCount = 0U
             },
 
-            leftGain,
-            rightGain
+            left,
+            right
         );
 
         return;
     }
 
     // C++ calling method by pointer syntax.
-    Consume const consume = ( this->*_readHandler ) ( target,
-        bufferSamples,
+    Consume const consume = ( this->*_readHandler ) ( buffer,
+        left,
+        right,
         pcm + _offset,
-        true,
-        leftGain,
-        rightGain
+        true
     );
 
     // C++ calling method by pointer syntax.
-    ( this->*_loopHandler ) ( target, bufferSamples, pcm, consume, leftGain, rightGain );
+    ( this->*_loopHandler ) ( buffer, pcm, consume, left, right );
 }
 
 std::optional<PCMStreamer::Info> PCMStreamerWAV::ResolveInfo ( bool /*looped*/, size_t /*samplesPerBurst*/ ) noexcept

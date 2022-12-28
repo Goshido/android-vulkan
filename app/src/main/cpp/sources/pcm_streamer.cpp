@@ -62,20 +62,20 @@ bool PCMStreamer::SetSoundAsset ( SoundStorage &soundStorage,
     return true;
 }
 
-void PCMStreamer::HandleNonLooped ( PCMType* buffer,
-    size_t bufferSamples,
+void PCMStreamer::HandleNonLooped ( std::span<PCMType> buffer,
     PCMType const* /*pcm*/,
     Consume consume,
-    int32_t /*leftGain*/,
-    int32_t /*rightGain*/
+    Gain /*leftGain*/,
+    Gain /*rightGain*/
 ) noexcept
 {
+    size_t const bufferSamples = buffer.size ();
     size_t const rest = bufferSamples - consume._bufferSampleCount;
     _offset += consume._pcmSampleCount;
 
     if ( rest > 0U )
     {
-        std::memset ( buffer + ( bufferSamples - rest ), 0, rest * sizeof ( PCMType ) );
+        std::memset ( buffer.data () + ( bufferSamples - rest ), 0, rest * sizeof ( PCMType ) );
         return;
     }
 

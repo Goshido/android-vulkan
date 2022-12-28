@@ -19,7 +19,8 @@ void SoundEmitterGlobal::FillPCM ( std::span<PCMStreamer::PCMType> buffer, float
     assert ( _streamer );
 
     float const volume = _volume * channelVolume;
-    _streamer->GetNextBuffer ( buffer, volume, volume );
+    PCMStreamer::Gain const gain ( volume, volume );
+    _streamer->GetNextBuffer ( buffer, gain, gain );
 }
 
 } // namespace android_vulkan

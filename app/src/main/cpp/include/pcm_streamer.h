@@ -18,10 +18,35 @@ class SoundEmitter;
 class PCMStreamer
 {
     public:
+        constexpr static int16_t INTEGER_DIVISION_SCALE = std::numeric_limits<int16_t>::max () - 1U;
+
         using PCMType = int16_t;
         using OnStopRequest = void ( * ) ( SoundEmitter &emitter ) noexcept;
 
-        constexpr static int16_t INTEGER_DIVISION_SCALE = std::numeric_limits<int16_t>::max () - 1U;
+        class Gain final
+        {
+            public:
+                int32_t             _before = static_cast<int32_t> ( INTEGER_DIVISION_SCALE );
+                int32_t             _current = static_cast<int32_t> ( INTEGER_DIVISION_SCALE );
+
+            public:
+                Gain () = delete;
+
+                Gain ( Gain const & ) = default;
+                Gain& operator = ( Gain const & ) = default;
+
+                Gain ( Gain && ) = default;
+                Gain& operator = ( Gain && ) = default;
+
+                constexpr explicit Gain ( float volumeBefore, float volumeCurrent ) noexcept:
+                    _before ( static_cast<int32_t> ( volumeBefore * static_cast<float> ( INTEGER_DIVISION_SCALE ) ) ),
+                    _current ( static_cast<int32_t> ( volumeCurrent * static_cast<float> ( INTEGER_DIVISION_SCALE ) ) )
+                {
+                    // NOTHING
+                }
+
+                ~Gain () = default;
+        };
 
     protected:
         struct Consume final
@@ -38,20 +63,18 @@ class PCMStreamer
             uint32_t                _sampleRate = 44100U;
         };
 
-        using ReadHandler = Consume ( PCMStreamer::* ) ( PCMType* buffer,
-            size_t bufferSamples,
+        using ReadHandler = Consume ( PCMStreamer::* ) ( std::span<PCMType> buffer,
+            Gain &leftGain,
+            Gain &rightGain,
             PCMType const* pcm,
-            bool lastPCMBuffer,
-            int32_t leftGain,
-            int32_t rightGain
+            bool lastPCMBuffer
         ) noexcept;
 
-        using LoopHandler = void ( PCMStreamer::* ) ( PCMType* buffer,
-            size_t bufferSamples,
+        using LoopHandler = void ( PCMStreamer::* ) ( std::span<PCMType> buffer,
             PCMType const* pcm,
             Consume consume,
-            int32_t leftGain,
-            int32_t rightGain
+            Gain leftGain,
+            Gain rightGain
         ) noexcept;
 
     private:
@@ -78,10 +101,7 @@ class PCMStreamer
 
         virtual ~PCMStreamer () = default;
 
-        virtual void GetNextBuffer ( std::span<PCMType> buffer, float leftChannelVolume,
-            float rightChannelVolume
-        ) noexcept = 0;
-
+        virtual void GetNextBuffer ( std::span<PCMType> buffer, Gain left, Gain right ) noexcept = 0;
         virtual void OnDecompress () noexcept;
 
         // Method must be called by child classes,
@@ -101,44 +121,39 @@ class PCMStreamer
         [[nodiscard]] virtual std::optional<Info> ResolveInfo ( bool looped, size_t samplesPerBurst ) noexcept = 0;
 
     private:
-        void HandleLoopedMono ( PCMType* buffer,
-            size_t bufferSamples,
+        void HandleLoopedMono ( std::span<PCMType> buffer,
             PCMType const* pcm,
             Consume consume,
-            int32_t leftGain,
-            int32_t rightGain
+            Gain leftGain,
+            Gain rightGain
         ) noexcept;
 
-        void HandleLoopedStereo ( PCMType* buffer,
-            size_t bufferSamples,
+        void HandleLoopedStereo ( std::span<PCMType> buffer,
             PCMType const* pcm,
             Consume consume,
-            int32_t leftGain,
-            int32_t rightGain
+            Gain leftGain,
+            Gain rightGain
         ) noexcept;
 
-        void HandleNonLooped ( PCMType* buffer,
-            size_t bufferSamples,
+        void HandleNonLooped ( std::span<PCMType> buffer,
             PCMType const* pcm,
             Consume consume,
-            int32_t leftGain,
-            int32_t rightGain
+            Gain leftGain,
+            Gain rightGain
         ) noexcept;
 
-        [[nodiscard]] Consume HandleMono ( PCMType* buffer,
-            size_t bufferSamples,
+        [[nodiscard]] Consume HandleMono ( std::span<PCMType> buffer,
+            Gain &leftGain,
+            Gain &rightGain,
             PCMType const* pcm,
-            bool lastPCMBuffer,
-            int32_t leftGain,
-            int32_t rightGain
+            bool lastPCMBuffer
         ) noexcept;
 
-        [[nodiscard]] Consume HandleStereo ( PCMType* buffer,
-            size_t bufferSamples,
+        [[nodiscard]] Consume HandleStereo ( std::span<PCMType> buffer,
+            Gain &leftGain,
+            Gain &rightGain,
             PCMType const* pcm,
-            bool lastPCMBuffer,
-            int32_t leftGain,
-            int32_t rightGain
+            bool lastPCMBuffer
         ) noexcept;
 
         [[nodiscard]] static bool IsFormatSupported ( std::string_view const file, Info const &info ) noexcept;

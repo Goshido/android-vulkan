@@ -52,13 +52,15 @@ class SoundEmitter
 
         virtual void FillPCM ( std::span<PCMStreamer::PCMType> buffer, float channelVolume ) noexcept = 0;
 
+        // Note method should be call in child class.
+        [[maybe_unused]] virtual void SetVolume ( float volume ) noexcept;
+
         [[maybe_unused, nodiscard]] bool Destroy () noexcept;
 
         [[nodiscard]] Context& GetContext () noexcept;
         [[nodiscard, maybe_unused]] std::string const& GetFile () const noexcept;
 
         [[maybe_unused, nodiscard]] float GetVolume () const noexcept;
-        [[maybe_unused]] void SetVolume ( float volume ) noexcept;
 
         [[nodiscard]] bool IsPlaying () const noexcept;
         [[nodiscard]] bool Pause () noexcept;

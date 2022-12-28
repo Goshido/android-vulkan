@@ -53,11 +53,7 @@ class PCMStreamerOGG final : public PCMStreamer
         static bool CheckVorbisResult ( int result, char const* from, char const* message ) noexcept;
 
     private:
-        void GetNextBuffer ( std::span<PCMType> buffer,
-            float leftChannelVolume,
-            float rightChannelVolume
-        ) noexcept override;
-
+        void GetNextBuffer ( std::span<PCMType> buffer, Gain left, Gain right ) noexcept override;
         void OnDecompress () noexcept override;
         [[nodiscard]] bool Reset () noexcept override;
         [[nodiscard]] std::optional<Info> ResolveInfo ( bool looped, size_t samplesPerBurst ) noexcept override;

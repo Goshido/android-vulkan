@@ -117,17 +117,8 @@ bool PCMStreamerOGG::CheckVorbisResult ( int result,
     return false;
 }
 
-void PCMStreamerOGG::GetNextBuffer ( std::span<PCMType> buffer,
-    float leftChannelVolume,
-    float rightChannelVolume
-) noexcept
+void PCMStreamerOGG::GetNextBuffer ( std::span<PCMType> buffer, Gain left, Gain right ) noexcept
 {
-    auto const leftGain = static_cast<int32_t> ( leftChannelVolume * static_cast<float> ( INTEGER_DIVISION_SCALE ) );
-    auto const rightGain = static_cast<int32_t> ( rightChannelVolume * static_cast<float> ( INTEGER_DIVISION_SCALE ) );
-
-    PCMType* target = buffer.data ();
-    size_t const bufferSamples = buffer.size ();
-
     PCMData const& data = _pcmBuffers[ _activeBufferIndex ];
     PCMType const* pcm = data._samples.data ();
 
@@ -136,11 +127,10 @@ void PCMStreamerOGG::GetNextBuffer ( std::span<PCMType> buffer,
 
     _sampleCount = data._sampleCount;
 
-    if ( bufferSamples > _sampleCount )
+    if ( buffer.size () > _sampleCount )
     {
         // C++ calling method by pointer syntax.
-        ( this->*_loopHandler ) ( target,
-            bufferSamples,
+        ( this->*_loopHandler ) ( buffer,
             pcm,
 
             Consume
@@ -150,21 +140,15 @@ void PCMStreamerOGG::GetNextBuffer ( std::span<PCMType> buffer,
                 ._pcmSampleCount = 0U
             },
 
-            leftGain,
-            rightGain
+            left,
+            right
         );
 
         return;
     }
 
     // C++ calling method by pointer syntax.
-    Consume const consume = ( this->*_readHandler ) ( target,
-        bufferSamples,
-        pcm + _offset,
-        data._lastBuffer,
-        leftGain,
-        rightGain
-    );
+    Consume const consume = ( this->*_readHandler ) ( buffer, left, right, pcm + _offset, data._lastBuffer );
 
     if ( _offset + consume._pcmSampleCount >= _sampleCount )
     {
@@ -176,7 +160,7 @@ void PCMStreamerOGG::GetNextBuffer ( std::span<PCMType> buffer,
     }
 
     // C++ calling method by pointer syntax.
-    ( this->*_loopHandler ) ( target, bufferSamples, pcm, consume, leftGain, rightGain );
+    ( this->*_loopHandler ) ( buffer, pcm, consume, left, right );
 }
 
 void PCMStreamerOGG::OnDecompress () noexcept

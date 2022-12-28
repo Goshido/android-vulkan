@@ -42,8 +42,6 @@ constexpr size_t INITIAL_PENETRATION_SIZE = 32U;
 
 [[maybe_unused]] constexpr uint32_t SCENE_DESC_FORMAT_VERSION = 3U;
 
-constexpr GXVec3 FUCK_LOCATION ( 479.717F, 190.419F, 134.596F );
-
 } // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -96,27 +94,6 @@ android_vulkan::Physics& Scene::GetPhysics () noexcept
 bool Scene::OnInitDevice ( android_vulkan::Renderer &renderer, android_vulkan::Physics &physics ) noexcept
 {
     if ( !_soundMixer.Init () )
-        return false;
-
-    GXMat3 o {};
-    o.SetX ( GXVec3 ( 0.0F, 0.0F, 1.0F ) );
-    o.SetY ( GXVec3 ( 0.0F, 1.0F, 0.0F ) );
-    o.SetZ ( GXVec3 ( -1.0F, 0.0F, 0.0F ) );
-
-    GXQuat orientation {};
-    orientation.FromFast ( o );
-
-    _soundMixer.SetListenerOrientation ( orientation );
-    _soundMixer.SetListenerLocation ( FUCK_LOCATION );
-
-    if ( !_soundEmitter.Init ( _soundMixer, android_vulkan::eSoundChannel::Music, FUCK_LOCATION, 10.0F ) )
-        return false;
-
-    if ( !_soundEmitter.SetSoundAsset ( _soundStorage, "sounds/sine.wav", true ) )
-    //    if ( !_soundEmitter.SetSoundAsset ( _soundStorage, "sounds/sine.ogg", true ) )
-    //    if ( !_soundEmitter.SetSoundAsset ( _soundStorage, "sounds/sine_stereo.wav", true ) )
-    //    if ( !_soundEmitter.SetSoundAsset ( _soundStorage, "sounds/sine_stereo.ogg", true ) )
-//    if ( !_soundEmitter.SetSoundAsset ( _soundStorage, "sounds/Credits.ogg", false ) )
         return false;
 
     _defaultCamera.SetProjection ( GXDegToRad ( DEFAULT_FOV ), DEFAULT_ASPECT_RATIO, DEFAULT_Z_NEAR, DEFAULT_Z_FAR );
@@ -270,9 +247,6 @@ void Scene::OnDestroyDevice () noexcept
     _sceneHandle = std::numeric_limits<int>::max ();
     _vm = nullptr;
 
-    if ( !_soundEmitter.Destroy () )
-        android_vulkan::LogWarning ( "Scene::OnDestroyDevice - Can't destroy sound emitter." );
-
     _soundMixer.Destroy ();
 }
 
@@ -291,34 +265,6 @@ void Scene::OnResume () noexcept
 bool Scene::OnPrePhysics ( double deltaTime ) noexcept
 {
     AV_TRACE ( "Lua: pre-physics" )
-
-    {
-        // TODO REMOVE
-        static float a = 0.0F;
-        a += deltaTime;
-
-        static struct Once final {
-            Once ( android_vulkan::SoundEmitterSpatial &e, android_vulkan::SoundMixer &mixer, float aa ) noexcept
-            {
-                if ( !e.Play () )
-                {
-                    android_vulkan::LogWarning ( "Bruh" );
-                }
-
-                GXQuat q {};
-                q.FromAxisAngle ( 0.0F, 1.0F, 0.0F, aa );
-                mixer.SetListenerOrientation ( q );
-            }
-        } doOnce ( _soundEmitter, _soundMixer, a );
-
-        GXVec3 n = FUCK_LOCATION;
-        n._data[ 0U ] += -1.0F;
-        _soundEmitter.SetLocation ( n );
-
-        GXQuat q {};
-        q.FromAxisAngle ( 0.0F, 1.0F, 0.0F, a );
-        _soundMixer.SetListenerOrientation ( q );
-    }
 
     if ( !lua_checkstack ( _vm, 3 ) )
     {

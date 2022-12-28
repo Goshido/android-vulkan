@@ -42,6 +42,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/simplex.cpp
     app/src/main/cpp/sources/sound_emitter.cpp
     app/src/main/cpp/sources/sound_emitter_global.cpp
+    app/src/main/cpp/sources/sound_emitter_spatial.cpp
     app/src/main/cpp/sources/sound_mixer.cpp
     app/src/main/cpp/sources/sound_storage.cpp
     app/src/main/cpp/sources/sutherland_hodgman.cpp

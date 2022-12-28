@@ -3,6 +3,7 @@
 
 
 #include "sound_emitter.h"
+#include "sound_listener_info.h"
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -39,6 +40,12 @@ class SoundMixer final
         float                           _effectiveChannelVolume[ TOTAL_SOUND_CHANNELS ] {};
         Emitters                        _emitters {};
         std::deque<SoundEmitter*>       _emittersToResume {};
+
+
+        SoundListenerInfo               _listenerInfo {};
+        GXQuat                          _listenerOrientation {};
+        bool                            _listenerTransformChanged = true;
+
         float                           _masterVolume = 1.0F;
         std::mutex                      _mutex {};
 
@@ -69,6 +76,10 @@ class SoundMixer final
 
         [[maybe_unused, nodiscard]] float GetMasterVolume () const noexcept;
         void SetMasterVolume ( float volume ) noexcept;
+
+        [[nodiscard]] SoundListenerInfo const& GetListenerInfo () noexcept;
+        [[maybe_unused]] void SetListenerLocation ( GXVec3 const &location ) noexcept;
+        [[maybe_unused]] void SetListenerOrientation ( GXQuat const &orientation ) noexcept;
 
         void Pause () noexcept;
         void Resume () noexcept;

@@ -52,7 +52,6 @@ class SoundEmitter
 
         virtual void FillPCM ( std::span<PCMStreamer::PCMType> buffer, float channelVolume ) noexcept = 0;
 
-        [[maybe_unused, nodiscard]] bool Init ( SoundMixer &soundMixer, eSoundChannel channel ) noexcept;
         [[maybe_unused, nodiscard]] bool Destroy () noexcept;
 
         [[nodiscard]] Context& GetContext () noexcept;
@@ -76,6 +75,8 @@ class SoundEmitter
     protected:
         SoundEmitter () = default;
         virtual ~SoundEmitter () = default;
+
+        [[nodiscard]] bool InitInternal ( SoundMixer &soundMixer, eSoundChannel channel ) noexcept;
 
         [[nodiscard]] static eStreamerType GetStreamerType ( std::string_view const asset ) noexcept;
         static void OnStopRequested ( SoundEmitter &soundEmitter ) noexcept;

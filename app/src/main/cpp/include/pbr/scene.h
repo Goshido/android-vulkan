@@ -11,6 +11,7 @@
 
 // REMOVE ME
 #include <sound_emitter_global.h>
+#include <sound_emitter_spatial.h>
 
 #include <sound_mixer.h>
 
@@ -33,7 +34,7 @@ class Scene final
         android_vulkan::ShapeRef                        _shapeBoxes[ 2U ] = {};
 
         // REMOVE ME
-        android_vulkan::SoundEmitterGlobal              _soundEmitter {};
+        android_vulkan::SoundEmitterSpatial             _soundEmitter {};
 
         android_vulkan::SoundMixer                      _soundMixer {};
         android_vulkan::SoundStorage                    _soundStorage {};

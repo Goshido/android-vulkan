@@ -78,6 +78,8 @@ StreamCloser::~StreamCloser () noexcept
 
 bool SoundMixer::Init () noexcept
 {
+    _listenerOrientation.Identity ();
+
     std::fill_n ( _channelVolume, std::size ( _channelVolume ), CHANNEL_VOLUME );
     SetMasterVolume ( _masterVolume );
 
@@ -270,6 +272,34 @@ void SoundMixer::SetMasterVolume ( float volume ) noexcept
     {
         _effectiveChannelVolume[ i ] = volume * _channelVolume[ i ];
     }
+}
+
+SoundListenerInfo const& SoundMixer::GetListenerInfo () noexcept
+{
+    if ( _listenerTransformChanged )
+    {
+        constexpr GXVec3 le ( -1.0F, 0.0F, 0.0F );
+
+        _listenerOrientation.TransformFast ( _listenerInfo._leftDirection, le );
+        _listenerInfo._rightDirection = _listenerInfo._leftDirection;
+        _listenerInfo._rightDirection.Reverse ();
+
+        _listenerTransformChanged = false;
+    }
+
+    return _listenerInfo;
+}
+
+[[maybe_unused]] void SoundMixer::SetListenerLocation ( GXVec3 const &location ) noexcept
+{
+    _listenerInfo._location = location;
+    _listenerTransformChanged = true;
+}
+
+[[maybe_unused]] void SoundMixer::SetListenerOrientation ( GXQuat const &orientation ) noexcept
+{
+    _listenerOrientation = orientation;
+    _listenerTransformChanged = true;
 }
 
 void SoundMixer::Pause () noexcept

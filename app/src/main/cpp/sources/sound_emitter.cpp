@@ -13,24 +13,6 @@ GX_RESTORE_WARNING_STATE
 
 namespace android_vulkan {
 
-[[maybe_unused]] bool SoundEmitter::Init ( SoundMixer &soundMixer, eSoundChannel channel ) noexcept
-{
-    _context =
-    {
-        ._soundChannel = channel,
-        ._soundMixer = &soundMixer,
-        ._soundEmitter = this
-    };
-
-    if ( auto const stream = soundMixer.CreateStream ( _context ); stream != std::nullopt )
-    {
-        _stream = *stream;
-        return true;
-    }
-
-    return false;
-}
-
 [[maybe_unused]] bool SoundEmitter::Destroy () noexcept
 {
     if ( _isPlaying && !Stop () )
@@ -179,6 +161,24 @@ void SoundEmitter::OnStreamRecreated ( AAudioStream &stream ) noexcept
         _context._soundMixer->RegisterDecompressor ( *_stream, *_streamer );
 
     return true;
+}
+
+bool SoundEmitter::InitInternal ( SoundMixer &soundMixer, eSoundChannel channel ) noexcept
+{
+    _context =
+    {
+        ._soundChannel = channel,
+        ._soundMixer = &soundMixer,
+        ._soundEmitter = this
+    };
+
+    if ( auto const stream = soundMixer.CreateStream ( _context ); stream != std::nullopt )
+    {
+        _stream = *stream;
+        return true;
+    }
+
+    return false;
 }
 
 SoundEmitter::eStreamerType SoundEmitter::GetStreamerType ( std::string_view const asset ) noexcept

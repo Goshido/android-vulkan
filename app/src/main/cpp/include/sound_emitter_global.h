@@ -20,6 +20,8 @@ class [[maybe_unused]] SoundEmitterGlobal final : public SoundEmitter
 
         ~SoundEmitterGlobal () override = default;
 
+        [[maybe_unused, nodiscard]] bool Init ( SoundMixer &soundMixer, eSoundChannel channel ) noexcept;
+
     private:
         void FillPCM ( std::span<PCMStreamer::PCMType> buffer, float channelVolume ) noexcept override;
 };

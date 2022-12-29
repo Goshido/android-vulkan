@@ -28,7 +28,6 @@ class Scene final
         ScriptablePenetration                           _scriptablePenetration {};
         android_vulkan::ShapeRef                        _shapeBoxes[ 2U ] = {};
         android_vulkan::SoundMixer                      _soundMixer {};
-        android_vulkan::SoundStorage                    _soundStorage {};
         std::vector<android_vulkan::RigidBodyRef>       _sweepTestResult {};
 
         ComponentList                                   _renderableList {};
@@ -67,7 +66,8 @@ class Scene final
         [[nodiscard]] android_vulkan::Physics& GetPhysics () noexcept;
 
         [[nodiscard]] bool OnInitDevice ( android_vulkan::Renderer &renderer,
-            android_vulkan::Physics &physics ) noexcept;
+            android_vulkan::Physics &physics
+        ) noexcept;
 
         void OnDestroyDevice () noexcept;
 

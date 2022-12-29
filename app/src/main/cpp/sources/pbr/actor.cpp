@@ -6,6 +6,7 @@
 #include <pbr/scene.h>
 #include <pbr/script_component.h>
 #include <pbr/script_engine.h>
+#include <pbr/sound_emitter_global_component.h>
 #include <pbr/static_mesh_component.h>
 #include <pbr/transform_component.h>
 #include <guid_generator.h>
@@ -61,6 +62,7 @@ Actor::StaticInitializer::StaticInitializer () noexcept
     native[ static_cast<size_t> ( ClassID::Reflection ) ] = &Actor::AppendReflectionComponentFromNative;
     native[ static_cast<size_t> ( ClassID::RigidBody ) ] = &Actor::AppendRigidBodyComponentFromNative;
     native[ static_cast<size_t> ( ClassID::Script ) ] = &Actor::AppendScriptComponentFromNative;
+    native[ static_cast<size_t> ( ClassID::SoundEmitterGlobal ) ] = &Actor::AppendSoundEmitterGlobalComponentFromNative;
     native[ static_cast<size_t> ( ClassID::StaticMesh ) ] = &Actor::AppendStaticMeshComponentFromNative;
     native[ static_cast<size_t> ( ClassID::Transform ) ] = &Actor::AppendTransformComponentFromNative;
     native[ static_cast<size_t> ( ClassID::Unknown ) ] = &Actor::AppendUnknownComponentFromNative;
@@ -71,6 +73,7 @@ Actor::StaticInitializer::StaticInitializer () noexcept
     script[ static_cast<size_t> ( ClassID::Reflection ) ] = &Actor::AppendReflectionComponentFromScript;
     script[ static_cast<size_t> ( ClassID::RigidBody ) ] = &Actor::AppendRigidBodyComponentFromScript;
     script[ static_cast<size_t> ( ClassID::Script ) ] = &Actor::AppendScriptComponentFromScript;
+    script[ static_cast<size_t> ( ClassID::SoundEmitterGlobal ) ] = &Actor::AppendSoundEmitterGlobalComponentFromScript;
     script[ static_cast<size_t> ( ClassID::StaticMesh ) ] = &Actor::AppendStaticMeshComponentFromScript;
     script[ static_cast<size_t> ( ClassID::Transform ) ] = &Actor::AppendTransformComponentFromScript;
     script[ static_cast<size_t> ( ClassID::Unknown ) ] = &Actor::AppendUnknownComponentFromScript;
@@ -240,7 +243,6 @@ ActorRef& Actor::GetReference ( Actor const &handle ) noexcept
     return findResult->second;
 }
 
-// NOLINTNEXTLINE - can be made static.
 void Actor::AppendCameraComponentFromNative ( ComponentRef &component,
     ComponentList &/*renderable*/,
     android_vulkan::Physics &/*physics*/,
@@ -273,7 +275,6 @@ void Actor::AppendCameraComponentFromNative ( ComponentRef &component,
     );
 }
 
-// NOLINTNEXTLINE - can be made static.
 void Actor::AppendCameraComponentFromScript ( ComponentRef &/*component*/,
     ComponentList &/*renderable*/,
     android_vulkan::Physics &/*physics*/
@@ -296,7 +297,6 @@ void Actor::AppendPointLightComponentFromNative ( ComponentRef &component,
     _transformableComponents.emplace_back ( std::ref ( transformable ) );
 }
 
-// NOLINTNEXTLINE - can be made static.
 void Actor::AppendPointLightComponentFromScript ( ComponentRef &/*component*/,
     ComponentList &/*renderable*/,
     android_vulkan::Physics &/*physics*/
@@ -323,7 +323,6 @@ void Actor::AppendReflectionComponentFromNative ( ComponentRef &component,
     }
 }
 
-// NOLINTNEXTLINE - can be made static.
 void Actor::AppendReflectionComponentFromScript ( ComponentRef &/*component*/,
     ComponentList &/*renderable*/,
     android_vulkan::Physics &/*physics*/
@@ -365,7 +364,6 @@ void Actor::AppendRigidBodyComponentFromNative ( ComponentRef &component,
     );
 }
 
-// NOLINTNEXTLINE - can be made static.
 void Actor::AppendRigidBodyComponentFromScript ( ComponentRef &component,
     ComponentList &/*renderable*/,
     android_vulkan::Physics &physics
@@ -383,7 +381,6 @@ void Actor::AppendRigidBodyComponentFromScript ( ComponentRef &component,
     );
 }
 
-// NOLINTNEXTLINE - can be made static.
 void Actor::AppendScriptComponentFromNative ( ComponentRef &component,
     ComponentList &/*renderable*/,
     android_vulkan::Physics &/*physics*/,
@@ -416,7 +413,6 @@ void Actor::AppendScriptComponentFromNative ( ComponentRef &component,
     );
 }
 
-// NOLINTNEXTLINE - can be made static.
 void Actor::AppendScriptComponentFromScript ( ComponentRef &component,
     ComponentList &/*renderable*/,
     android_vulkan::Physics &/*physics*/
@@ -425,6 +421,49 @@ void Actor::AppendScriptComponentFromScript ( ComponentRef &component,
     // NOLINTNEXTLINE - downcast.
     auto& scriptComponent = static_cast<ScriptComponent&> ( *component );
     scriptComponent.RegisterFromScript ( *this );
+}
+
+void Actor::AppendSoundEmitterGlobalComponentFromNative ( ComponentRef &component,
+    ComponentList &/*renderable*/,
+    android_vulkan::Physics &/*physics*/,
+    lua_State &vm
+) noexcept
+{
+    lua_pushvalue ( &vm, _appendComponentFromNativeIndex );
+    lua_pushvalue ( &vm, -2 );
+
+    // NOLINTNEXTLINE - downcast.
+    auto& emitterComponent = static_cast<SoundEmitterGlobalComponent&> ( *component );
+
+    if ( !emitterComponent.RegisterFromNative ( vm, *this ) )
+    {
+        android_vulkan::LogWarning (
+            "pbr::Actor::AppendSoundEmitterGlobalComponentFromNative - Can't register sound emitter component %s.",
+            emitterComponent.GetName ().c_str ()
+        );
+
+        lua_pop ( &vm, 2 );
+        return;
+    }
+
+    if ( lua_pcall ( &vm, 2, 0, ScriptEngine::GetErrorHandlerIndex () ) == LUA_OK )
+        return;
+
+    android_vulkan::LogWarning (
+        "pbr::Actor::AppendSoundEmitterGlobalComponentFromNative - Can't append sound emitter component %s "
+        "inside Lua VM.",
+        emitterComponent.GetName ().c_str ()
+    );
+}
+
+void Actor::AppendSoundEmitterGlobalComponentFromScript ( ComponentRef &component,
+    ComponentList &/*renderable*/,
+    android_vulkan::Physics &/*physics*/
+) noexcept
+{
+    // NOLINTNEXTLINE - downcast.
+    auto& emitterComponent = static_cast<SoundEmitterGlobalComponent&> ( *component );
+    emitterComponent.RegisterFromScript ( *this );
 }
 
 void Actor::AppendStaticMeshComponentFromNative ( ComponentRef &component,
@@ -475,7 +514,6 @@ void Actor::AppendStaticMeshComponentFromScript ( ComponentRef &component,
     transformable.RegisterFromScript ( *this );
 }
 
-// NOLINTNEXTLINE - can be made static.
 void Actor::AppendTransformComponentFromNative ( ComponentRef &component,
     ComponentList &/*renderable*/,
     android_vulkan::Physics &/*physics*/,
@@ -508,7 +546,6 @@ void Actor::AppendTransformComponentFromNative ( ComponentRef &component,
     );
 }
 
-// NOLINTNEXTLINE - can be made static.
 void Actor::AppendTransformComponentFromScript ( ComponentRef &/*component*/,
     ComponentList &/*renderable*/,
     android_vulkan::Physics &/*physics*/
@@ -518,7 +555,6 @@ void Actor::AppendTransformComponentFromScript ( ComponentRef &/*component*/,
     assert ( false );
 }
 
-// NOLINTNEXTLINE - can be made static.
 void Actor::AppendUnknownComponentFromNative ( ComponentRef &/*component*/,
     ComponentList &/*renderable*/,
     android_vulkan::Physics &/*physics*/,
@@ -529,7 +565,6 @@ void Actor::AppendUnknownComponentFromNative ( ComponentRef &/*component*/,
     assert ( false );
 }
 
-// NOLINTNEXTLINE - can be made static.
 void Actor::AppendUnknownComponentFromScript ( ComponentRef &/*component*/,
     ComponentList &/*renderable*/,
     android_vulkan::Physics &/*physics*/

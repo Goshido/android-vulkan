@@ -296,6 +296,11 @@ SoundListenerInfo const& SoundMixer::GetListenerInfo () noexcept
     _listenerTransformChanged = true;
 }
 
+SoundStorage& SoundMixer::GetSoundStorage () noexcept
+{
+    return _soundStorage;
+}
+
 [[maybe_unused]] void SoundMixer::SetListenerOrientation ( GXQuat const &orientation ) noexcept
 {
     _listenerOrientation = orientation;

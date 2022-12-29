@@ -4,6 +4,7 @@
 
 #include "sound_emitter.h"
 #include "sound_listener_info.h"
+#include "sound_storage.h"
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -49,6 +50,8 @@ class SoundMixer final
         float                           _masterVolume = 1.0F;
         std::mutex                      _mutex {};
 
+        SoundStorage                    _soundStorage {};
+
     public:
         SoundMixer () = default;
 
@@ -80,6 +83,8 @@ class SoundMixer final
         [[nodiscard]] SoundListenerInfo const& GetListenerInfo () noexcept;
         [[maybe_unused]] void SetListenerLocation ( GXVec3 const &location ) noexcept;
         [[maybe_unused]] void SetListenerOrientation ( GXQuat const &orientation ) noexcept;
+
+        [[nodiscard]] SoundStorage& GetSoundStorage () noexcept;
 
         void Pause () noexcept;
         void Resume () noexcept;

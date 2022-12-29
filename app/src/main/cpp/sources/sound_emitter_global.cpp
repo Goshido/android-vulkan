@@ -9,7 +9,7 @@ GX_RESTORE_WARNING_STATE
 
 namespace android_vulkan {
 
-[[maybe_unused]] bool SoundEmitterGlobal::Init ( SoundMixer &soundMixer, eSoundChannel channel ) noexcept
+bool SoundEmitterGlobal::Init ( SoundMixer &soundMixer, eSoundChannel channel ) noexcept
 {
     return InitInternal ( soundMixer, channel );
 }

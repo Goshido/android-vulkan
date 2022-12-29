@@ -11,6 +11,7 @@
 #include <pbr/scriptable_gxvec4.h>
 #include <pbr/scriptable_logger.h>
 #include <pbr/scriptable_material.h>
+#include <pbr/sound_emitter_global_component.h>
 #include <pbr/static_mesh_component.h>
 #include <pbr/transform_component.h>
 #include <file.h>
@@ -44,7 +45,7 @@ lua_State& ScriptEngine::GetVirtualMachine () noexcept
     return *_vm;
 }
 
-bool ScriptEngine::Init ( android_vulkan::Renderer &renderer ) noexcept
+bool ScriptEngine::Init ( android_vulkan::Renderer &renderer, android_vulkan::SoundMixer &soundMixer ) noexcept
 {
     if ( !InitLua () )
         return false;
@@ -52,7 +53,7 @@ bool ScriptEngine::Init ( android_vulkan::Renderer &renderer ) noexcept
     if ( !LoadScript ( _vm.get (), SCRIPT, SCRIPT ) )
         return false;
 
-    return InitInterfaceFunctions ( renderer );
+    return InitInterfaceFunctions ( renderer, soundMixer );
 }
 
 ScriptEngine& ScriptEngine::GetInstance () noexcept
@@ -72,7 +73,9 @@ void ScriptEngine::Destroy () noexcept
     _instance = nullptr;
 }
 
-bool ScriptEngine::ExtendFrontend ( android_vulkan::Renderer &renderer ) const noexcept
+bool ScriptEngine::ExtendFrontend ( android_vulkan::Renderer &renderer,
+    android_vulkan::SoundMixer &soundMixer
+) const noexcept
 {
     lua_State& vm = *_vm;
 
@@ -91,10 +94,13 @@ bool ScriptEngine::ExtendFrontend ( android_vulkan::Renderer &renderer ) const n
         CameraComponent::Init ( vm ) &&
         TransformComponent::Init ( vm ) &&
         StaticMeshComponent::Init ( vm, renderer ) &&
-        ScriptableMaterial::Init ( vm, renderer );
+        ScriptableMaterial::Init ( vm, renderer ) &&
+        SoundEmitterGlobalComponent::Init ( vm, soundMixer );
 }
 
-bool ScriptEngine::InitInterfaceFunctions ( android_vulkan::Renderer &renderer ) noexcept
+bool ScriptEngine::InitInterfaceFunctions ( android_vulkan::Renderer &renderer,
+    android_vulkan::SoundMixer &soundMixer
+) noexcept
 {
     lua_State* vm = _vm.get ();
 
@@ -118,7 +124,7 @@ bool ScriptEngine::InitInterfaceFunctions ( android_vulkan::Renderer &renderer )
     }
 
     lua_pushcfunction ( vm, &ScriptEngine::OnErrorHandler );
-    return ExtendFrontend ( renderer );
+    return ExtendFrontend ( renderer, soundMixer );
 }
 
 bool ScriptEngine::InitLua () noexcept
@@ -241,6 +247,7 @@ void ScriptEngine::Free ( lua_State* state ) noexcept
 {
     lua_close ( state );
 
+    SoundEmitterGlobalComponent::Destroy ();
     ScriptableGXVec4::Destroy ();
     ScriptableGXVec3::Destroy ();
     ScriptableGXQuat::Destroy ();

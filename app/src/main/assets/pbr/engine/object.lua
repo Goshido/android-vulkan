@@ -22,6 +22,7 @@ eObjectType = {
     ScriptComponent = MakeUniqueID (),
     StaticMeshComponent = MakeUniqueID (),
     TransformComponent = MakeUniqueID (),
+    SoundEmitterGlobalComponent = MakeUniqueID (),
     Unknown = MakeUniqueID ()
 }
 

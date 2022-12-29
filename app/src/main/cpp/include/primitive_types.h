@@ -15,6 +15,10 @@ namespace android_vulkan {
 
 #pragma pack ( push, 1 )
 
+using Boolean = uint8_t;
+constexpr Boolean const TRUE = 1U;
+constexpr Boolean const FALSE = 0U;
+
 using Mat4x4 = float[ 16U ];
 using Vec2 = float[ 2U ];
 using Vec3 = float[ 3U ];

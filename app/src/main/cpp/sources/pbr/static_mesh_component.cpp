@@ -24,14 +24,18 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-[[maybe_unused]] constexpr static uint32_t STATIC_MESH_COMPONENT_DESC_FORMAT_VERSION = 2U;
-constexpr static GXColorRGB DEFAULT_COLOR ( 1.0F, 1.0F, 1.0F, 1.0F );
-constexpr static GXColorRGB DEFAULT_EMISSION ( 1.0F, 1.0F, 1.0F, 1.0F );
+namespace {
 
-constexpr static size_t ALLOCATE_COMMAND_BUFFERS = 8U;
-constexpr static size_t INITIAL_COMMAND_BUFFERS = 32U;
+[[maybe_unused]] constexpr uint32_t STATIC_MESH_COMPONENT_DESC_FORMAT_VERSION = 2U;
+constexpr GXColorRGB DEFAULT_COLOR ( 1.0F, 1.0F, 1.0F, 1.0F );
+constexpr GXColorRGB DEFAULT_EMISSION ( 1.0F, 1.0F, 1.0F, 1.0F );
 
-constexpr static char const DEFAULT_MATERIAL[] = "pbr/assets/System/Default.mtl";
+constexpr size_t ALLOCATE_COMMAND_BUFFERS = 8U;
+constexpr size_t INITIAL_COMMAND_BUFFERS = 32U;
+
+constexpr char const DEFAULT_MATERIAL[] = "pbr/assets/System/Default.mtl";
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 

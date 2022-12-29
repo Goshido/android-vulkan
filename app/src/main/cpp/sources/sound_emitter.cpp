@@ -13,7 +13,7 @@ GX_RESTORE_WARNING_STATE
 
 namespace android_vulkan {
 
-[[maybe_unused]] bool SoundEmitter::Destroy () noexcept
+bool SoundEmitter::Destroy () noexcept
 {
     if ( _isPlaying && !Stop () )
         LogWarning ( "SoundEmitter::Destroy - Can't stop." );
@@ -47,12 +47,12 @@ SoundEmitter::Context& SoundEmitter::GetContext () noexcept
     return _file;
 }
 
-[[maybe_unused]] float SoundEmitter::GetVolume () const noexcept
+float SoundEmitter::GetVolume () const noexcept
 {
     return _volume;
 }
 
-[[maybe_unused]] void SoundEmitter::SetVolume ( float volume ) noexcept
+void SoundEmitter::SetVolume ( float volume ) noexcept
 {
     _volume = std::clamp ( volume, 0.0F, 1.0F );
 }
@@ -125,10 +125,7 @@ void SoundEmitter::OnStreamRecreated ( AAudioStream &stream ) noexcept
     }
 }
 
-[[maybe_unused]] bool SoundEmitter::SetSoundAsset ( SoundStorage &soundStorage,
-    std::string_view const file,
-    bool looped
-) noexcept
+bool SoundEmitter::SetSoundAsset ( std::string_view const file, bool looped ) noexcept
 {
     if ( _streamer && _streamer->IsDecompressor () )
         _context._soundMixer->UnregisterDecompressor ( *_stream );
@@ -149,7 +146,13 @@ void SoundEmitter::OnStreamRecreated ( AAudioStream &stream ) noexcept
         return false;
     }
 
-    if ( !_streamer->SetSoundAsset ( soundStorage, file, looped, _context._soundMixer->GetBufferSampleCount () ) )
+    bool const result = _streamer->SetSoundAsset ( _context._soundMixer->GetSoundStorage (),
+        file,
+        looped,
+        _context._soundMixer->GetBufferSampleCount ()
+    );
+
+    if ( !result )
     {
         _streamer = nullptr;
         return false;

@@ -4,7 +4,6 @@
 
 #include "pcm_streamer.h"
 #include "sound_channel.h"
-#include "pcm_streamer.h"
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -53,14 +52,13 @@ class SoundEmitter
         virtual void FillPCM ( std::span<PCMStreamer::PCMType> buffer, float channelVolume ) noexcept = 0;
 
         // Note method should be call in child class.
-        [[maybe_unused]] virtual void SetVolume ( float volume ) noexcept;
+        virtual void SetVolume ( float volume ) noexcept;
 
-        [[maybe_unused, nodiscard]] bool Destroy () noexcept;
+        [[nodiscard]] bool Destroy () noexcept;
 
         [[nodiscard]] Context& GetContext () noexcept;
         [[nodiscard, maybe_unused]] std::string const& GetFile () const noexcept;
-
-        [[maybe_unused, nodiscard]] float GetVolume () const noexcept;
+        [[nodiscard]] float GetVolume () const noexcept;
 
         [[nodiscard]] bool IsPlaying () const noexcept;
         [[nodiscard]] bool Pause () noexcept;
@@ -68,11 +66,7 @@ class SoundEmitter
         [[nodiscard]] bool Stop () noexcept;
 
         void OnStreamRecreated ( AAudioStream &stream ) noexcept;
-
-        [[maybe_unused, nodiscard]] bool SetSoundAsset ( SoundStorage &soundStorage,
-            std::string_view const file,
-            bool looped
-        ) noexcept;
+        [[nodiscard]] bool SetSoundAsset ( std::string_view const file, bool looped ) noexcept;
 
     protected:
         SoundEmitter () = default;

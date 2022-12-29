@@ -154,6 +154,17 @@ class Actor final
             android_vulkan::Physics &physics
         ) noexcept;
 
+        void AppendSoundEmitterGlobalComponentFromNative ( ComponentRef &component,
+            ComponentList &renderable,
+            android_vulkan::Physics &physics,
+            lua_State &vm
+        ) noexcept;
+
+        void AppendSoundEmitterGlobalComponentFromScript ( ComponentRef &component,
+            ComponentList &renderable,
+            android_vulkan::Physics &physics
+        ) noexcept;
+
         void AppendStaticMeshComponentFromNative ( ComponentRef &component,
             ComponentList &renderable,
             android_vulkan::Physics &physics,

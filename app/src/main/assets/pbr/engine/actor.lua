@@ -32,7 +32,8 @@ local function AppendComponent ( self, component )
         t == eObjectType.TransformComponent or
         t == eObjectType.ScriptComponent or
         t == eObjectType.RigidBodyComponent or
-        t == eObjectType.CameraComponent
+        t == eObjectType.CameraComponent or
+        t == eObjectType.SoundEmitterGlobalComponent
 
     assert ( isComponent, [[Actor:AppendComponent - "component" is not compatible entity.]] )
     av_ActorAppendComponent ( self._handle, component._handle )

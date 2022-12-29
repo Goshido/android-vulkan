@@ -7,7 +7,7 @@
 
 namespace android_vulkan {
 
-class [[maybe_unused]] SoundEmitterGlobal final : public SoundEmitter
+class SoundEmitterGlobal final : public SoundEmitter
 {
     public:
         SoundEmitterGlobal () = default;
@@ -20,7 +20,7 @@ class [[maybe_unused]] SoundEmitterGlobal final : public SoundEmitter
 
         ~SoundEmitterGlobal () override = default;
 
-        [[maybe_unused, nodiscard]] bool Init ( SoundMixer &soundMixer, eSoundChannel channel ) noexcept;
+        [[nodiscard]] bool Init ( SoundMixer &soundMixer, eSoundChannel channel ) noexcept;
 
     private:
         void FillPCM ( std::span<PCMStreamer::PCMType> buffer, float channelVolume ) noexcept override;

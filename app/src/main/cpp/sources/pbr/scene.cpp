@@ -110,7 +110,7 @@ bool Scene::OnInitDevice ( android_vulkan::Renderer &renderer, android_vulkan::P
     _physics = &physics;
     ScriptEngine& scriptEngine = ScriptEngine::GetInstance ();
 
-    if ( !scriptEngine.Init ( renderer ) )
+    if ( !scriptEngine.Init ( renderer, _soundMixer ) )
         return false;
 
     _vm = &scriptEngine.GetVirtualMachine ();
@@ -218,13 +218,12 @@ bool Scene::OnInitDevice ( android_vulkan::Renderer &renderer, android_vulkan::P
 
 void Scene::OnDestroyDevice () noexcept
 {
+    ScriptEngine::Destroy ();
     ScriptableSweepTestResult::Destroy ( *_vm );
     _scriptablePenetration.Destroy ( *_vm );
     _gamepad.Destroy ();
     _renderableList.clear ();
     _actors.clear ();
-
-    ScriptEngine::Destroy ();
 
     _physics = nullptr;
 

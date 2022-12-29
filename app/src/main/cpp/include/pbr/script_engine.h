@@ -9,6 +9,7 @@ GX_DISABLE_COMMON_WARNINGS
 // Note "lstate.h" defines 'ispow2' macro which breaks bit.h C++ include.
 #include <string_view>
 #include <renderer.h>
+#include <sound_mixer.h>
 
 extern "C" {
 
@@ -38,7 +39,7 @@ class ScriptEngine final
         ScriptEngine& operator = ( ScriptEngine && ) = delete;
 
         [[nodiscard]] lua_State& GetVirtualMachine () noexcept;
-        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer ) noexcept;
+        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, android_vulkan::SoundMixer &soundMixer ) noexcept;
 
         [[nodiscard]] static ScriptEngine& GetInstance () noexcept;
         static void Destroy () noexcept;
@@ -53,8 +54,15 @@ class ScriptEngine final
         ~ScriptEngine () = default;
 
         void BanFunctions () const noexcept;
-        [[nodiscard]] bool ExtendFrontend ( android_vulkan::Renderer &renderer ) const noexcept;
-        [[nodiscard]] bool InitInterfaceFunctions ( android_vulkan::Renderer &renderer ) noexcept;
+
+        [[nodiscard]] bool ExtendFrontend ( android_vulkan::Renderer &renderer,
+            android_vulkan::SoundMixer &soundMixer
+        ) const noexcept;
+
+        [[nodiscard]] bool InitInterfaceFunctions ( android_vulkan::Renderer &renderer,
+            android_vulkan::SoundMixer &soundMixer
+        ) noexcept;
+
         [[nodiscard]] bool InitLua () noexcept;
         void InitLibraries () const noexcept;
         void InitLogFacility () const noexcept;

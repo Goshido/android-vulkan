@@ -6,7 +6,7 @@
 
 GX_DISABLE_COMMON_WARNINGS
 
-#include <cinttypes>
+#include <cstdint>
 
 GX_RESTORE_WARNING_STATE
 
@@ -16,8 +16,8 @@ namespace android_vulkan {
 #pragma pack ( push, 1 )
 
 using Boolean = uint8_t;
-constexpr Boolean const TRUE = 1U;
-constexpr Boolean const FALSE = 0U;
+[[maybe_unused]] constexpr Boolean const TRUE = 1U;
+[[maybe_unused]] constexpr Boolean const FALSE = 0U;
 
 using Mat4x4 = float[ 16U ];
 using Vec2 = float[ 2U ];
@@ -38,6 +38,14 @@ struct AABB final
 {
     Vec3        _min;
     Vec3        _max;
+};
+
+enum class eSoundChannel : uint8_t
+{
+    Music [[maybe_unused]] = 0U,
+    Ambient [[maybe_unused]] = 1U,
+    SFX [[maybe_unused]] = 2U,
+    Speech [[maybe_unused]] = 3U
 };
 
 #pragma pack ( pop )

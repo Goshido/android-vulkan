@@ -3,6 +3,7 @@ require "av://engine/camera_component.lua"
 require "av://engine/rigid_body_component.lua"
 require "av://engine/script_component.lua"
 require "av://engine/sound_emitter_global_component.lua"
+require "av://engine/sound_emitter_spatial_component.lua"
 require "av://engine/static_mesh_component.lua"
 require "av://engine/transform_component.lua"
 
@@ -249,6 +250,18 @@ local function SetActiveCamera ( self, camera )
     av_SceneSetActiveCamera ( self._handle, camera._handle )
 end
 
+local function SetSoundListenerTransform ( self, localMatrix )
+    assert ( type ( self ) == "table" and self._type == eObjectType.Scene,
+        [[Scene:SetSoundListenerTransform - Calling not via ":" syntax.]]
+    )
+
+    assert ( type ( localMatrix ) == "table" and localMatrix._type == eObjectType.GXMat4,
+        [[Scene:SetSoundListenerTransform - "localMatrix" is not a GXMat4.]]
+    )
+
+    av_SceneSetSoundListenerTransform ( self._handle, localMatrix._handle )
+end
+
 local function SweepTestBox ( self, localMatrix, size, groups )
     assert ( type ( self ) == "table" and self._type == eObjectType.Scene,
         [[Scene:SweepTestBox - Calling not via ":" syntax.]]
@@ -300,6 +313,7 @@ local function Constructor ( self, handle )
     obj.OverlapTestBoxBox = OverlapTestBoxBox
     obj.Quit = Quit
     obj.SetActiveCamera = SetActiveCamera
+    obj.SetSoundListenerTransform = SetSoundListenerTransform
     obj.SweepTestBox = SweepTestBox
 
     return obj

@@ -72,7 +72,7 @@ class SoundMixer final
 
         // Note this is exact amount of samples for all channels in total.
         // For example stereo asset with 7 frames will return 14 samples.
-        [[maybe_unused, nodiscard]] size_t GetBufferSampleCount () const noexcept;
+        [[nodiscard]] size_t GetBufferSampleCount () const noexcept;
 
         [[maybe_unused, nodiscard]] float GetChannelVolume ( eSoundChannel channel ) const noexcept;
         [[maybe_unused]] void SetChannelVolume ( eSoundChannel channel, float volume ) noexcept;

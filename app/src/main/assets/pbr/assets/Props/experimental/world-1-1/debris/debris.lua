@@ -53,7 +53,7 @@ local function Constructor ( self, handle, params )
     obj.OnUpdate = Life
 
     -- Data
-    obj._timer = LIFE_TIME;
+    obj._timer = LIFE_TIME
 
     return obj;
 end

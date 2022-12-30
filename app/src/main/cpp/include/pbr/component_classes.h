@@ -24,8 +24,9 @@ enum class ClassID : uint64_t
     Camera = 6U,
     Transform = 7U,
     SoundEmitterGlobal = 8U,
+    SoundEmitterSpatial = 9U,
 
-    COUNT = 9U
+    COUNT = 10U
 };
 
 } // namespace pbr

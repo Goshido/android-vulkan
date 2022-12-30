@@ -43,7 +43,7 @@ size_t StaticMeshComponent::_commandBufferIndex = 0U;
 std::vector<VkCommandBuffer> StaticMeshComponent::_commandBuffers {};
 VkCommandPool StaticMeshComponent::_commandPool {};
 std::vector<VkFence> StaticMeshComponent::_fences {};
-int StaticMeshComponent::_registerStaticMeshComponentIndex = std::numeric_limits<int>::max ();
+int StaticMeshComponent::_registerComponentIndex = std::numeric_limits<int>::max ();
 android_vulkan::Renderer* StaticMeshComponent::_renderer = nullptr;
 std::unordered_map<Component const*, ComponentRef> StaticMeshComponent::_staticMeshes {};
 
@@ -290,7 +290,7 @@ bool StaticMeshComponent::RegisterFromNative ( lua_State &vm, Actor &actor ) noe
         return false;
     }
 
-    lua_pushvalue ( &vm, _registerStaticMeshComponentIndex );
+    lua_pushvalue ( &vm, _registerComponentIndex );
     lua_pushlightuserdata ( &vm, this );
 
     return lua_pcall ( &vm, 1, 1, ScriptEngine::GetErrorHandlerIndex () ) == LUA_OK;
@@ -315,7 +315,7 @@ bool StaticMeshComponent::Init ( lua_State &vm, android_vulkan::Renderer &render
         return false;
     }
 
-    _registerStaticMeshComponentIndex = lua_gettop ( &vm );
+    _registerComponentIndex = lua_gettop ( &vm );
 
     constexpr luaL_Reg const extensions[] =
     {

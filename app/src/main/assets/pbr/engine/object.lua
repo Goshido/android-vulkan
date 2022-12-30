@@ -23,6 +23,7 @@ eObjectType = {
     StaticMeshComponent = MakeUniqueID (),
     TransformComponent = MakeUniqueID (),
     SoundEmitterGlobalComponent = MakeUniqueID (),
+    SoundEmitterSpatialComponent = MakeUniqueID (),
     Unknown = MakeUniqueID ()
 }
 

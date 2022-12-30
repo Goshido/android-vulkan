@@ -11,21 +11,10 @@ GX_RESTORE_WARNING_STATE
 
 namespace android_vulkan {
 
-[[maybe_unused]] void SoundEmitterSpatial::SetVolume ( float volume ) noexcept
+void SoundEmitterSpatial::SetVolume ( float volume ) noexcept
 {
     SoundEmitter::SetVolume ( volume );
     _previousVolume = GXVec2 ( volume, volume );
-}
-
-[[maybe_unused]] bool SoundEmitterSpatial::Init ( SoundMixer &soundMixer,
-    eSoundChannel channel,
-    GXVec3 const &location,
-    float distance
-) noexcept
-{
-    SetLocation ( location );
-    SetDistance ( distance );
-    return InitInternal ( soundMixer, channel );
 }
 
 void SoundEmitterSpatial::SetDistance ( float distance ) noexcept

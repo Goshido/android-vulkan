@@ -127,6 +127,14 @@ class Component
             VkCommandBuffer const* commandBuffers
         ) noexcept;
 
+        [[nodiscard]] static ComponentRef CreateSoundEmitterSpatial ( android_vulkan::Renderer &renderer,
+            size_t &commandBufferConsumed,
+            size_t &dataRead,
+            ComponentDesc const &desc,
+            uint8_t const* data,
+            VkCommandBuffer const* commandBuffers
+        ) noexcept;
+
         [[nodiscard]] static ComponentRef CreateTransform ( android_vulkan::Renderer &renderer,
             size_t &commandBufferConsumed,
             size_t &dataRead,

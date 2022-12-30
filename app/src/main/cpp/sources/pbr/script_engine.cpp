@@ -12,6 +12,7 @@
 #include <pbr/scriptable_logger.h>
 #include <pbr/scriptable_material.h>
 #include <pbr/sound_emitter_global_component.h>
+#include <pbr/sound_emitter_spatial_component.h>
 #include <pbr/static_mesh_component.h>
 #include <pbr/transform_component.h>
 #include <file.h>
@@ -95,7 +96,8 @@ bool ScriptEngine::ExtendFrontend ( android_vulkan::Renderer &renderer,
         TransformComponent::Init ( vm ) &&
         StaticMeshComponent::Init ( vm, renderer ) &&
         ScriptableMaterial::Init ( vm, renderer ) &&
-        SoundEmitterGlobalComponent::Init ( vm, soundMixer );
+        SoundEmitterGlobalComponent::Init ( vm, soundMixer ) &&
+        SoundEmitterSpatialComponent::Init ( vm, soundMixer );
 }
 
 bool ScriptEngine::InitInterfaceFunctions ( android_vulkan::Renderer &renderer,
@@ -247,6 +249,7 @@ void ScriptEngine::Free ( lua_State* state ) noexcept
 {
     lua_close ( state );
 
+    SoundEmitterSpatialComponent::Destroy ();
     SoundEmitterGlobalComponent::Destroy ();
     ScriptableGXVec4::Destroy ();
     ScriptableGXVec3::Destroy ();

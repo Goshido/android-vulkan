@@ -23,6 +23,8 @@ namespace {
 
 } // end of anonymous namespace
 
+//----------------------------------------------------------------------------------------------------------------------
+
 int SoundEmitterGlobalComponent::_registerComponentIndex = std::numeric_limits<int>::max ();
 std::unordered_map<Component const*, ComponentRef> SoundEmitterGlobalComponent::_soundEmitters {};
 android_vulkan::SoundMixer* SoundEmitterGlobalComponent::_soundMixer = nullptr;

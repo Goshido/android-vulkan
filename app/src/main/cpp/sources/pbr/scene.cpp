@@ -172,6 +172,10 @@ bool Scene::OnInitDevice ( android_vulkan::Renderer &renderer, android_vulkan::P
             .func = &Scene::OnSetActiveCamera
         },
         {
+            .name = "av_SceneSetSoundListenerTransform",
+            .func = &Scene::OnSetSoundListenerTransform
+        },
+        {
             .name = "av_SceneSweepTestBox",
             .func = &Scene::OnSweepTestBox
         }
@@ -646,6 +650,19 @@ int Scene::OnSetActiveCamera ( lua_State* state )
 {
     auto& self = *static_cast<Scene*> ( lua_touserdata ( state, 1 ) );
     self._camera = static_cast<CameraComponent*> ( lua_touserdata ( state, 2 ) );
+    return 0;
+}
+
+int Scene::OnSetSoundListenerTransform ( lua_State* state )
+{
+    auto& self = *static_cast<Scene*> ( lua_touserdata ( state, 1 ) );
+    GXMat4 const& transform = ScriptableGXMat4::Extract ( state, 2 );
+    self._soundMixer.SetListenerLocation ( *reinterpret_cast<GXVec3 const*> ( &transform._m[ 3U ][ 0U ] ) );
+
+    GXQuat orientation {};
+    orientation.From ( transform );
+    self._soundMixer.SetListenerOrientation ( orientation );
+
     return 0;
 }
 

@@ -21,6 +21,7 @@
 - [`OverlapTestBoxBox ( localMatrixA, sizeA, localMatrixB, sizeB )`](#method-overlap-test-box-box)
 - [`Quit ()`](#method-quit)
 - [`SetActiveCamera ( camera )`](#method-set-active-camera)
+- [`SetSoundListenerTransform ( localMatrix )`](#method-set-sound-listener-transform)
 - [`SweepTestBox ( localMatrix, size, groups )`](#method-sweep-test-box)
 
 ## <a id="brief">Brief</a>
@@ -445,6 +446,40 @@ local height = 1080.0
 cameraComponent:SetProjection ( math.rad ( 60.0 ), width / height, 1.0e-1, 1.0e+4 )
 
 g_scene:SetActiveCamera ( cameraComponent )
+```
+
+## <a id="method-set-sound-listener-transform">`SetSoundListenerTransform ( localMatrix )`</a>
+
+Method sets sound listener transformation.
+
+**Parameters:**
+
+- `localMatrix` [_required, readonly, [GXMat4](./gx-mat4.md)_]: transformation matrix in [physics coordinate system](./rigid-body-component.md#note-physics-coordinate-system)
+
+**Return values:**
+
+- none
+
+**Example:**
+
+```lua
+require "av://engine/gx_quat.lua"
+
+
+local axis = GXVec3 ()
+axis:Init ( 7.77, 3.33, 1.0 )
+axis:Normalize ()
+
+local rotation = GXQuat ()
+rotation:FromAxisAngle ( axis, math.rad ( 77.7 ) )
+
+local origin = GXVec3 ()
+origin:Init ( 1.0, 333.0, 0.0 )
+
+local transform = GXMat4 ()
+transform:FromFast ( rotation, origin )
+
+g_scene:SetSoundListenerTransform ( transform )
 ```
 
 ## <a id="method-sweep-test-box">`SweepTestBox ( localMatrix, size, groups )`</a>

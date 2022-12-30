@@ -16,6 +16,7 @@
 - [_Scene_](./scene.md)
 - [_ScriptComponent_](./script-component.md)
 - [_SoundEmitterGlobalComponent_](./sound-emitter-global-component.md)
+- [_SoundEmitterSpatialComponent_](./sound-emitter-spatial-component.md)
 - [_StaticMeshComponent_](./static-mesh-component.md)
 - [_TransformComponent_](./transform-component.md)
 - [_eSoundChannel_](./sound-channel.md)

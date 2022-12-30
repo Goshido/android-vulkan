@@ -8,7 +8,7 @@
 
 namespace android_vulkan {
 
-class [[maybe_unused]] SoundEmitterSpatial final : public SoundEmitter
+class SoundEmitterSpatial final : public SoundEmitter
 {
     private:
         float       _distanceFactor = 1.0F;
@@ -26,14 +26,7 @@ class [[maybe_unused]] SoundEmitterSpatial final : public SoundEmitter
 
         ~SoundEmitterSpatial () override = default;
 
-        [[maybe_unused]] void SetVolume ( float volume ) noexcept override;
-
-        [[maybe_unused, nodiscard]] bool Init ( SoundMixer &soundMixer,
-            eSoundChannel channel,
-            GXVec3 const &location,
-            float distance
-        ) noexcept;
-
+        void SetVolume ( float volume ) noexcept override;
         void SetDistance ( float distance ) noexcept;
         void SetLocation ( GXVec3 const &location ) noexcept;
 

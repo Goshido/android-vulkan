@@ -1,9 +1,11 @@
 #include <logger.h>
 #include <pcm_streamer.h>
+#include <sound_mixer.h>
 
 GX_DISABLE_COMMON_WARNINGS
 
 #include <cassert>
+#include <cinttypes>
 
 GX_RESTORE_WARNING_STATE
 
@@ -100,6 +102,18 @@ PCMStreamer::PCMStreamer ( SoundEmitter &soundEmitter, OnStopRequest callback, b
 
 bool PCMStreamer::IsFormatSupported ( std::string_view const file, Info const &info ) noexcept
 {
+    if ( info._sampleRate != static_cast<int32_t> ( SoundMixer::GetSampleRate () ) )
+    {
+        LogError ( "PCMStreamer::IsFormatSupported - Unsupported %" PRIu32 " sample rate. Please re-encode sound as "
+                "16 bit mono|stereo signed with %" PRIi32 " sample rate. File: %s",
+            info._sampleRate,
+            SoundMixer::GetSampleRate (),
+            file.data ()
+        );
+
+        return false;
+    }
+
     if ( info._channelCount == 0U | info._channelCount > 2U )
     {
         LogError ( "PCMStreamer::IsFormatSupported - Unsupported %hhu channel count. Please re-encode sound as "

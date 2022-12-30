@@ -18,7 +18,7 @@ The script could set sound channel via predefined entity:
 eSoundChannel = {
     Music = 0,
     Ambient = 1,
-    VFX = 2,
+    SFX = 2,
     Speech = 3
 }
 ```

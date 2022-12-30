@@ -1,7 +1,7 @@
-# _SoundEmitterGlobalComponent_
+# _SoundEmitterSpatialComponent_
 
 ```lua
-require "av://engine/sound_emitter_global_component.lua"
+require "av://engine/sound_emitter_spatial_component.lua"
 ```
 
 ## Table of content
@@ -14,12 +14,14 @@ require "av://engine/sound_emitter_global_component.lua"
 - [`IsPlaying ()`](#method-is-playing)
 - [`Pause ()`](#method-pause)
 - [`Play ()`](#method-play)
+- [`SetDistance ( distance )`](#method-set-distance)
+- [`SetLocation ( location )`](#method-set-location)
 - [`SetSoundAsset ( asset, looped )`](#method-set-sound-asset)
 - [`Stop ()`](#method-stop)
 
 ## <a id="brief">Brief</a>
 
-Class represents global sound emitter entity on the scene. It's kinda sound inside player's head. Such sound has no any real position on the scene.
+Class represents spatial sound emitter entity. It's sound with real position and distance in [physics coordinate system](./rigid-body-component.md#note-physics-coordinate-system).
 
 ## <a id="metamethods">Metamethods</a>
 
@@ -55,7 +57,7 @@ Metamethod | Used
 
 ## <a id="constructor">`Constructor`</a>
 
-Constructor creates new global sound emitter component.
+Constructor creates new spatial sound emitter component.
 
 **Parameters:**
 
@@ -66,11 +68,11 @@ Constructor creates new global sound emitter component.
 
 ```lua
 require "av://engine/scene.lua"
-require "av://engine/sound_emitter_global_component.lua"
+require "av://engine/sound_emitter_spatial_component.lua"
 
 
 local actor = Actor ( "Actor" )
-actor:AppendComponent ( SoundEmitterGlobalComponent ( "Music", eSoundChannel.Music ) )
+actor:AppendComponent ( SoundEmitterSpatialComponent ( "SFX", eSoundChannel.SFX ) ) )
 g_scene:AppendActor ( actor )
 ```
 
@@ -90,16 +92,16 @@ Method returns the volume of the emitter.
 
 ```lua
 require "av://engine/scene.lua"
-require "av://engine/sound_emitter_global_component.lua"
+require "av://engine/sound_emitter_spatial_component.lua"
 
 
 local actor = Actor ( "Actor" )
 
-local music = SoundEmitterGlobalComponent ( "Music", eSoundChannel.Music )
-actor:AppendComponent ( music )
+local sfx = SoundEmitterSpatialComponent ( "SFX", eSoundChannel.SFX ) )
+actor:AppendComponent ( voice )
 g_scene:AppendActor ( actor )
 
-local volume = music:GetVolume ()
+local volume = voice:GetVolume ()
 ```
 
 ## <a id="method-set-volume">`SetVolume ( volume )`</a>
@@ -118,16 +120,16 @@ Method sets the volume of the emitter.
 
 ```lua
 require "av://engine/scene.lua"
-require "av://engine/sound_emitter_global_component.lua"
+require "av://engine/sound_emitter_spatial_component.lua"
 
 
 local actor = Actor ( "Actor" )
 
-local music = SoundEmitterGlobalComponent ( "Music", eSoundChannel.Music )
-actor:AppendComponent ( music )
+local sfx = SoundEmitterSpatialComponent ( "SFX", eSoundChannel.SFX ) )
+actor:AppendComponent ( sfx )
 g_scene:AppendActor ( actor )
 
-music:SetVolume ()
+sfx:SetVolume ()
 ```
 
 ## <a id="method-is-playing">`IsPlaying ()`</a>
@@ -146,16 +148,16 @@ Method tells if the emitter is playing sound or not.
 
 ```lua
 require "av://engine/scene.lua"
-require "av://engine/sound_emitter_global_component.lua"
+require "av://engine/sound_emitter_spatial_component.lua"
 
 
 local actor = Actor ( "Actor" )
 
-local music = SoundEmitterGlobalComponent ( "Music", eSoundChannel.Music )
-actor:AppendComponent ( music )
+local sfx = SoundEmitterSpatialComponent ( "SFX", eSoundChannel.SFX ) )
+actor:AppendComponent ( sfx )
 g_scene:AppendActor ( actor )
 
-local isPlaying = music:IsPlaying ()
+local isPlaying = sfx:IsPlaying ()
 ```
 
 ## <a id="method-pause">`Pause ()`</a>
@@ -174,18 +176,18 @@ Method sets the playing of sound on pause.
 
 ```lua
 require "av://engine/scene.lua"
-require "av://engine/sound_emitter_global_component.lua"
+require "av://engine/sound_emitter_spatial_component.lua"
 
 
 local actor = Actor ( "Actor" )
 
-local music = SoundEmitterGlobalComponent ( "Music", eSoundChannel.Music )
-actor:AppendComponent ( music )
+local sfx = SoundEmitterSpatialComponent ( "SFX", eSoundChannel.SFX ) )
+actor:AppendComponent ( sfx )
 g_scene:AppendActor ( actor )
 
-music:SetSoundAsset ( "sounds/Credits.ogg", true )
-music:Play ()
-local success = music:Pause ()
+sfx:SetSoundAsset ( "sounds/sine.ogg", true )
+sfx:Play ()
+local success = sfx:Pause ()
 ```
 
 ## <a id="method-play">`Play ()`</a>
@@ -204,17 +206,75 @@ Method begins sound playing.
 
 ```lua
 require "av://engine/scene.lua"
-require "av://engine/sound_emitter_global_component.lua"
+require "av://engine/sound_emitter_spatial_component.lua"
 
 
 local actor = Actor ( "Actor" )
 
-local music = SoundEmitterGlobalComponent ( "Music", eSoundChannel.Music )
-actor:AppendComponent ( music )
+local sfx = SoundEmitterSpatialComponent ( "SFX", eSoundChannel.SFX ) )
+actor:AppendComponent ( sfx )
 g_scene:AppendActor ( actor )
 
-music:SetSoundAsset ( "sounds/Credits.ogg", true )
-local success = music:Play ()
+sfx:SetSoundAsset ( "sounds/sine.ogg", true )
+local success = sfx:Play ()
+```
+
+## <a id="method-set-distance">`SetDistance ( distance )`</a>
+
+Method sets emitter distance in [physics coordinate system](./rigid-body-component.md#note-physics-coordinate-system) units.
+
+**Parameters:**
+
+- `distance` [_required, readonly, number_]: distance which emitter affects
+
+**Return values:**
+
+- none
+
+**Example:**
+
+```lua
+require "av://engine/scene.lua"
+require "av://engine/sound_emitter_spatial_component.lua"
+
+
+local actor = Actor ( "Actor" )
+
+local sfx = SoundEmitterSpatialComponent ( "SFX", eSoundChannel.SFX ) )
+actor:AppendComponent ( sfx )
+g_scene:AppendActor ( actor )
+
+sfx:SetDistance ( 42.0 )
+```
+
+## <a id="method-set-location">`SetLocation ( location )`</a>
+
+Method sets emitter location in [physics coordinate system](./rigid-body-component.md#note-physics-coordinate-system).
+
+**Parameters:**
+
+- `location` [_required, readonly, [_GXVec3_](./gx-vec3.md)__]: emitter location
+
+**Return values:**
+
+- none
+
+**Example:**
+
+```lua
+require "av://engine/scene.lua"
+require "av://engine/sound_emitter_spatial_component.lua"
+
+
+local actor = Actor ( "Actor" )
+
+local sfx = SoundEmitterSpatialComponent ( "SFX", eSoundChannel.SFX ) )
+actor:AppendComponent ( sfx )
+g_scene:AppendActor ( actor )
+
+local location = GXVec3 ()
+location:Init ( 777.0, 3.33, 1.0 )
+sfx:SetLocation ( location )
 ```
 
 ## <a id="method-set-sound-asset">`SetSoundAsset ( asset, looped )`</a>
@@ -234,16 +294,16 @@ Method sets sound asset for playing.
 
 ```lua
 require "av://engine/scene.lua"
-require "av://engine/sound_emitter_global_component.lua"
+require "av://engine/sound_emitter_spatial_component.lua"
 
 
 local actor = Actor ( "Actor" )
 
-local music = SoundEmitterGlobalComponent ( "Music", eSoundChannel.Music )
-actor:AppendComponent ( music )
+local sfx = SoundEmitterSpatialComponent ( "SFX", eSoundChannel.SFX ) )
+actor:AppendComponent ( sfx )
 g_scene:AppendActor ( actor )
 
-local success = music:SetSoundAsset ( "sounds/Credits.ogg", true )
+local success = sfx:SetSoundAsset ( "sounds/sine.ogg", true )
 ```
 
 ## <a id="method-stop">`Stop ()`</a>
@@ -262,16 +322,16 @@ Method stops the playing of sound.
 
 ```lua
 require "av://engine/scene.lua"
-require "av://engine/sound_emitter_global_component.lua"
+require "av://engine/sound_emitter_spatial_component.lua"
 
 
 local actor = Actor ( "Actor" )
 
-local music = SoundEmitterGlobalComponent ( "Music", eSoundChannel.Music )
-actor:AppendComponent ( music )
+local sfx = SoundEmitterSpatialComponent ( "SFX", eSoundChannel.SFX ) )
+actor:AppendComponent ( sfx )
 g_scene:AppendActor ( actor )
 
-music:SetSoundAsset ( "sounds/Credits.ogg", true )
-music:Play ()
-local success = music:Stop ()
+sfx:SetSoundAsset ( "sounds/sine.ogg", true )
+sfx:Play ()
+local success = sfx:Stop ()
 ```

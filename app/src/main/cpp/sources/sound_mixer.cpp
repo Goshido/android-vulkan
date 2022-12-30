@@ -244,7 +244,7 @@ bool SoundMixer::DestroyStream ( AAudioStream &stream ) noexcept
     return false;
 }
 
-[[maybe_unused]] size_t SoundMixer::GetBufferSampleCount () const noexcept
+size_t SoundMixer::GetBufferSampleCount () const noexcept
 {
     return _bufferSampleCount;
 }

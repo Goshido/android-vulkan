@@ -1,3 +1,4 @@
+require "av://engine/scene.lua"
 require "av://engine/script_component.lua"
 
 
@@ -51,8 +52,15 @@ local function Tracking ( self, deltaTime )
 
     loc:SumScaled ( loc, length * SPEED * deltaTime, delta )
     localMatrix:SetW ( loc )
-
     self._cameraComponent:SetLocal ( localMatrix )
+
+    local listenerLocal = GXMat4 ()
+    listenerLocal:Clone ( localMatrix )
+
+    loc:MultiplyScalar ( loc, g_scene:GetRendererToPhysicsScaleFactor () )
+    listenerLocal:SetW ( loc )
+
+    g_scene:SetSoundListenerTransform ( listenerLocal )
 end
 
 local function FindTracker ( self, deltaTime )

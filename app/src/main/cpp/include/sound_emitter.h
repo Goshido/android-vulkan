@@ -3,7 +3,7 @@
 
 
 #include "pcm_streamer.h"
-#include "sound_channel.h"
+#include "primitive_types.h"
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -21,7 +21,7 @@ class SoundEmitter
     public:
         struct Context final
         {
-            eSoundChannel               _soundChannel = eSoundChannel::VFX;
+            eSoundChannel               _soundChannel = eSoundChannel::SFX;
             SoundMixer*                 _soundMixer = nullptr;
             SoundEmitter*               _soundEmitter = nullptr;
         };
@@ -54,6 +54,7 @@ class SoundEmitter
         // Note method should be call in child class.
         virtual void SetVolume ( float volume ) noexcept;
 
+        [[nodiscard]] bool Init ( SoundMixer &soundMixer, eSoundChannel channel ) noexcept;
         [[nodiscard]] bool Destroy () noexcept;
 
         [[nodiscard]] Context& GetContext () noexcept;
@@ -71,8 +72,6 @@ class SoundEmitter
     protected:
         SoundEmitter () = default;
         virtual ~SoundEmitter () = default;
-
-        [[nodiscard]] bool InitInternal ( SoundMixer &soundMixer, eSoundChannel channel ) noexcept;
 
         [[nodiscard]] static eStreamerType GetStreamerType ( std::string_view const asset ) noexcept;
         static void OnStopRequested ( SoundEmitter &soundEmitter ) noexcept;

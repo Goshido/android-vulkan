@@ -1,7 +1,6 @@
 require "av://engine/material.lua"
 require "av://engine/scene.lua"
-require "av://engine/script_component.lua"
-require "av://engine/static_mesh_component.lua"
+require "av://engine/sound_channel.lua"
 
 
 -- Constants
@@ -22,6 +21,27 @@ local function GetOrigin ( self, actor, component )
     local origin = GXVec3 ()
     t:GetW ( origin )
     return origin
+end
+
+local function GetSensorSize ( self, min, max )
+    local result = GXVec3 ()
+    result:Subtract ( max, min )
+    result:MultiplyScalar ( result, g_scene:GetRendererToPhysicsScaleFactor () )
+    return result
+end
+
+local function GetSensorTransform ( self, min, max )
+    local diff = GXVec3 ()
+    diff:Subtract ( max, min )
+
+    local origin = GXVec3 ()
+    origin:SumScaled ( min, 0.5, diff )
+    origin:MultiplyScalar ( origin, g_scene:GetRendererToPhysicsScaleFactor () )
+
+    local result = GXMat4 ()
+    result:Identity ()
+    result:SetW ( origin )
+    return result
 end
 
 local function SpawnDebris ( self, debrisBegin, debrisEnd )
@@ -54,25 +74,28 @@ local function SpawnDebris ( self, debrisBegin, debrisEnd )
     g_scene:AppendActor ( debrisActor )
 end
 
-local function GetSensorSize ( self, min, max )
-    local result = GXVec3 ()
-    result:Subtract ( max, min )
-    result:MultiplyScalar ( result, g_scene:GetRendererToPhysicsScaleFactor () )
-    return result
-end
+local function SpawnSound ( self )
+    local location = self:GetOrigin ( self._actor, "DebrisBegin001" )
+    location:MultiplyScalar ( location, g_scene:GetRendererToPhysicsScaleFactor () )
 
-local function GetSensorTransform ( self, min, max )
-    local diff = GXVec3 ()
-    diff:Subtract ( max, min )
+    local actor = Actor ( "BrickSound" )
 
-    local origin = GXVec3 ()
-    origin:SumScaled ( min, 0.5, diff )
-    origin:MultiplyScalar ( origin, g_scene:GetRendererToPhysicsScaleFactor () )
+    actor:AppendComponent (
+        ScriptComponent ( "Script",
+            "av://assets/Props/experimental/world-1-1/logic/single_shot_sound.lua",
 
-    local result = GXMat4 ()
-    result:Identity ()
-    result:SetW ( origin )
-    return result
+            {
+                _duration = 1.0,
+                _distance = 45.0,
+                _location = location,
+                _soundAsset = "pbr/assets/Props/experimental/world-1-1/debris/break-block.wav",
+                _soundChannel = eSoundChannel.SFX,
+                _volume = 1.0
+            }
+        )
+    )
+
+    g_scene:AppendActor ( actor )
 end
 
 -- Engine event handlers
@@ -96,6 +119,8 @@ local function OnPrePhysicsMonitor ( self, deltaTime )
     if not result then
         return
     end
+
+    self:SpawnSound ()
 
     self:SpawnDebris ( "DebrisBegin001", "DebrisEnd001" )
     self:SpawnDebris ( "DebrisBegin002", "DebrisEnd002" )
@@ -125,6 +150,7 @@ local function Constructor ( self, handle, params )
     obj.GetOrigin = GetOrigin
     obj.GetSensorSize = GetSensorSize
     obj.GetSensorTransform = GetSensorTransform
+    obj.SpawnSound = SpawnSound
     obj.SpawnDebris = SpawnDebris
 
     -- Engine events

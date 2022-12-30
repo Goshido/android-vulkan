@@ -253,7 +253,7 @@ Method sets emitter location in [physics coordinate system](./rigid-body-compone
 
 **Parameters:**
 
-- `location` [_required, readonly, [_GXVec3_](./gx-vec3.md)__]: emitter location
+- `location` [_required, readonly, [_GXVec3_](./gx-vec3.md)_]: emitter location
 
 **Return values:**
 

@@ -20,6 +20,8 @@ GX_RESTORE_WARNING_STATE
 
 namespace android_vulkan {
 
+// Class is taking into consideration AAudio limitations.
+// See docs/aaudio-issues.md
 class SoundMixer final
 {
     private:
@@ -42,12 +44,12 @@ class SoundMixer final
         Emitters                        _emitters {};
         std::deque<SoundEmitter*>       _emittersToResume {};
 
-
         SoundListenerInfo               _listenerInfo {};
         GXQuat                          _listenerOrientation {};
         bool                            _listenerTransformChanged = true;
 
         float                           _masterVolume = 1.0F;
+        [[maybe_unused]] size_t         _maxHardwareStreams = 0U;
         std::mutex                      _mutex {};
 
         SoundStorage                    _soundStorage {};
@@ -113,6 +115,7 @@ class SoundMixer final
     private:
         [[nodiscard]] std::optional<AAudioStream*> CreateStreamInternal ( SoundEmitter::Context &context ) noexcept;
         [[nodiscard]] bool ResolveBufferSize () noexcept;
+        [[nodiscard]] bool ResolveMaximumHardwareStreams () noexcept;
         void RecreateSoundEmitter ( AAudioStream &stream ) noexcept;
 
         static void ErrorCallback ( AAudioStream* stream, void* userData, aaudio_result_t err );

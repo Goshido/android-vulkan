@@ -17,6 +17,7 @@ namespace {
 
 constexpr float CHANNEL_VOLUME = 1.0F;
 constexpr static auto DECOMPRESSOR_TIMEOUT = std::chrono::milliseconds ( 1U );
+constexpr static size_t MAX_HARDWARE_STREAM_CAP = 42U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -38,8 +39,6 @@ constexpr static auto DECOMPRESSOR_TIMEOUT = std::chrono::milliseconds ( 1U );
     std::snprintf ( unknownFormat.data (), unknownFormat.size (), "UNKNOWN [%d]", static_cast<int> ( fmt ) );
     return unknownFormat.data ();
 };
-
-} // end of anonymous namespace
 
 class StreamCloser final
 {
@@ -73,6 +72,8 @@ StreamCloser::~StreamCloser () noexcept
         "Can't close stream"
     );
 }
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -125,30 +126,40 @@ bool SoundMixer::Init () noexcept
         return false;
     }
 
-    StreamCloser const streamCloser ( *probe );
-    result = AAudioStream_setBufferSizeInFrames ( probe, _bufferFrameCount );
-
-    if ( result < 0 )
     {
-        // Error happens.
-        CheckAAudioResult ( result, "SoundMixer::Init", "Can't change probe buffer size" );
+        // Operator block is needed because StreamCloser instance.
+        StreamCloser const streamCloser ( *probe );
+        result = AAudioStream_setBufferSizeInFrames ( probe, _bufferFrameCount );
+
+        if ( result < 0 )
+        {
+            // Error happens.
+            CheckAAudioResult ( result, "SoundMixer::Init", "Can't change probe buffer size" );
+            Destroy ();
+            return false;
+        }
+
+        if ( result != _bufferFrameCount )
+        {
+            LogError ( "SoundMixer::Init - Can't change stream buffer size to %" PRIi32 ". "
+                "Actual returned size is %d.",
+                _bufferFrameCount,
+                static_cast<int> ( result )
+            );
+
+            Destroy ();
+            return false;
+        }
+
+        PrintStreamInfo ( *probe, "Engine parameters" );
+    }
+
+    if ( !ResolveMaximumHardwareStreams () )
+    {
         Destroy ();
         return false;
     }
 
-    if ( result != _bufferFrameCount )
-    {
-        LogError ( "SoundMixer::Init - Can't change stream buffer size to %" PRIi32 ". "
-            "Actual returned size is %d.",
-            _bufferFrameCount,
-            static_cast<int> ( result )
-        );
-
-        Destroy ();
-        return false;
-    }
-
-    PrintStreamInfo ( *probe, "Engine parameters" );
     _decompressorFlag = true;
 
     _decompressorThread = std::thread (
@@ -371,6 +382,53 @@ bool SoundMixer::CheckAAudioResult ( aaudio_result_t result, char const* from, c
 
     LogError ( "%s - %s. Error: %s.", from, message, AAudio_convertResultToText ( result ) );
     return false;
+}
+
+bool SoundMixer::ResolveMaximumHardwareStreams () noexcept
+{
+    _maxHardwareStreams = 0U;
+
+    std::vector<AAudioStream*> probes {};
+    probes.reserve ( MAX_HARDWARE_STREAM_CAP );
+    size_t counter = 0U;
+
+    for ( ; counter < MAX_HARDWARE_STREAM_CAP; ++counter )
+    {
+        AAudioStreamBuilder_setDataCallback ( _builder, &SoundMixer::PCMCallback, nullptr );
+        AAudioStream* stream = nullptr;
+
+        if ( AAudioStreamBuilder_openStream ( _builder, &stream ) != AAUDIO_OK )
+            break;
+
+        probes.push_back ( stream );
+    }
+
+    bool result = true;
+
+    for ( auto probe : probes )
+    {
+        result &= SoundMixer::CheckAAudioResult ( AAudioStream_close ( probe ),
+            "SoundMixer::ResolveMaximumHardwareStreams",
+            "Can't close stream"
+        );
+    }
+
+    if ( counter < 0U )
+    {
+        LogError ( "SoundMixer::ResolveMaximumHardwareStreams - No available hardware streams!" );
+        assert ( false );
+        return false;
+    }
+
+    if ( !result )
+    {
+        assert ( false );
+        return false;
+    }
+
+    LogInfo ( "SoundMixer::ResolveMaximumHardwareStreams - Hardware streams: %zu.", counter );
+    _maxHardwareStreams = counter;
+    return true;
 }
 
 void SoundMixer::RecreateSoundEmitter ( AAudioStream &stream ) noexcept

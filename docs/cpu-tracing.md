@@ -5,6 +5,17 @@ The project supports _Android Studio_'s [tracing tool](https://developer.android
 ```cmake
 ...
 
+# Treat compile warnings as errors
+target_compile_options ( android-vulkan PRIVATE
+    -fno-exceptions
+    -fno-rtti
+    -Wall
+    -Werror
+    -Wextra
+    -Wpedantic
+#    -Wshadow
+)
+
 # See docs/preprocessor-macros.md
 target_compile_definitions ( android-vulkan
     PRIVATE

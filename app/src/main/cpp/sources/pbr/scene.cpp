@@ -172,8 +172,16 @@ bool Scene::OnInitDevice ( android_vulkan::Renderer &renderer, android_vulkan::P
             .func = &Scene::OnSetActiveCamera
         },
         {
+            .name = "av_SceneSetSoundChannelVolume",
+            .func = &Scene::OnSetSoundChannelVolume
+        },
+        {
             .name = "av_SceneSetSoundListenerTransform",
             .func = &Scene::OnSetSoundListenerTransform
+        },
+        {
+            .name = "av_SceneSetSoundMasterVolume",
+            .func = &Scene::OnSetSoundMasterVolume
         },
         {
             .name = "av_SceneSweepTestBox",
@@ -653,6 +661,17 @@ int Scene::OnSetActiveCamera ( lua_State* state )
     return 0;
 }
 
+int Scene::OnSetSoundChannelVolume ( lua_State* state )
+{
+    auto& self = *static_cast<Scene*> ( lua_touserdata ( state, 1 ) );
+
+    self._soundMixer.SetChannelVolume ( static_cast<android_vulkan::eSoundChannel> ( lua_tointeger ( state, 2 ) ),
+        static_cast<float> ( lua_tonumber ( state, 3 ) )
+    );
+
+    return 0;
+}
+
 int Scene::OnSetSoundListenerTransform ( lua_State* state )
 {
     auto& self = *static_cast<Scene*> ( lua_touserdata ( state, 1 ) );
@@ -663,6 +682,13 @@ int Scene::OnSetSoundListenerTransform ( lua_State* state )
     orientation.From ( transform );
     self._soundMixer.SetListenerOrientation ( orientation );
 
+    return 0;
+}
+
+int Scene::OnSetSoundMasterVolume ( lua_State* state )
+{
+    auto& self = *static_cast<Scene*> ( lua_touserdata ( state, 1 ) );
+    self._soundMixer.SetMasterVolume ( static_cast<float> ( lua_tonumber ( state, 2 ) ) );
     return 0;
 }
 

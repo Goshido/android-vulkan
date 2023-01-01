@@ -16,8 +16,8 @@ namespace android_vulkan {
 namespace {
 
 constexpr float CHANNEL_VOLUME = 1.0F;
-constexpr static auto DECOMPRESSOR_TIMEOUT = std::chrono::milliseconds ( 1U );
 constexpr static size_t MAX_HARDWARE_STREAM_CAP = 42U;
+constexpr static auto WORKER_TIMEOUT = std::chrono::milliseconds ( 1U );
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -74,6 +74,42 @@ StreamCloser::~StreamCloser () noexcept
 }
 
 } // end of anonymous namespace
+
+//----------------------------------------------------------------------------------------------------------------------
+
+SoundMixer::StreamInfo::StreamInfo ( SoundMixer &mixer, StreamList::iterator used ) noexcept:
+    _mixer ( &mixer ),
+    _used ( used )
+{
+    // NOTHING
+}
+
+bool SoundMixer::StreamInfo::LockAndReturnFillSilence () noexcept
+{
+    auto& fillLock = *_fillLock;
+    bool expected = false;
+
+    while ( !fillLock.compare_exchange_weak ( expected, true ) );
+    assert ( !expected );
+
+    return _fillSilence;
+}
+
+void SoundMixer::StreamInfo::Release () noexcept
+{
+    _fillLock->store ( false );
+}
+
+void SoundMixer::StreamInfo::Modify ( bool fillSilence ) noexcept
+{
+    auto& fillLock = *_fillLock;
+    bool expected = false;
+
+    while ( !fillLock.compare_exchange_weak ( expected, true ) );
+    assert ( !expected );
+    _fillSilence = fillSilence;
+    fillLock.store ( false );
+}
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -154,25 +190,42 @@ bool SoundMixer::Init () noexcept
         PrintStreamInfo ( *probe, "Engine parameters" );
     }
 
-    if ( !ResolveMaximumHardwareStreams () )
+    if ( !CreateHardwareStreams () )
     {
         Destroy ();
         return false;
     }
 
-    _decompressorFlag = true;
+    _workerFlag = true;
 
-    _decompressorThread = std::thread (
+    _workerThread = std::thread (
         [ this ] () noexcept {
-            while ( _decompressorFlag )
+            while ( _workerFlag )
             {
+                // To not consume too much CPU time.
+                std::this_thread::sleep_for ( WORKER_TIMEOUT );
+
                 std::unique_lock<std::mutex> const lock ( _mutex );
 
-                for ( auto& record: _decompressors )
-                    record.second->OnDecompress ();
+                for ( auto* streamer : _decompressors )
+                    streamer->OnDecompress ();
 
-                // To not consume too much CPU time.
-                std::this_thread::sleep_for ( DECOMPRESSOR_TIMEOUT );
+                for ( auto const& action : _actionQueue )
+                {
+                    // [2022/12/31] For example play operation could take 6 ms. So moving execution in another thread.
+                    std::thread actionThread (
+                        [] ( ActionHandler handler, AAudioStream* stream ) noexcept {
+                            handler ( *stream );
+                        },
+
+                        action._handler,
+                        action._stream
+                    );
+
+                    actionThread.detach ();
+                }
+
+                _actionQueue.clear ();
             }
         }
     );
@@ -182,24 +235,37 @@ bool SoundMixer::Init () noexcept
 
 void SoundMixer::Destroy () noexcept
 {
-    if ( _decompressorThread.joinable () )
+    if ( _workerThread.joinable () )
     {
-        _decompressorFlag = false;
-        _decompressorThread.join ();
+        _workerFlag = false;
+        _workerThread.join ();
+    }
+
+    std::unique_lock<std::mutex> const lock ( _mutex );
+
+    for ( auto& si : _streamInfo )
+    {
+        SoundMixer::CheckAAudioResult ( AAudioStream_close ( si._stream ),
+            "SoundMixer::Destroy",
+            "Can't close stream"
+        );
     }
 
 #ifdef ANDROID_VULKAN_DEBUG
 
-    if ( !_emitters.empty () )
+    if ( !_streamMap.empty () )
     {
         constexpr char const format[] =
 R"__(SoundMixer::Destroy - Memory leak detected: %zu
 >>>)__";
 
-        LogError ( format, _emitters.size () );
+        LogError ( format, _streamMap.size () );
 
-        for ( auto const& record : _emitters )
-            LogError ( "    %s", record.second->GetFile ().c_str () );
+        for ( auto const& record : _streamMap )
+        {
+            StreamInfo const& si = *record.second;
+            LogError ( "    %s", si._emitter->GetFile ().c_str () );
+        }
 
         LogError ( "<<<" );
 
@@ -213,46 +279,16 @@ R"__(SoundMixer::Destroy - Memory leak detected: %zu
 
 #endif // ANDROID_VULKAN_DEBUG
 
+    _streamMap.clear ();
+    _streamInfo.clear ();
+    _free.clear ();
+    _used.clear ();
+
     if ( !_builder )
         return;
 
     CheckAAudioResult ( AAudioStreamBuilder_delete ( _builder ), "SoundMixer::Destroy", "Can't destroy builder" );
     _builder = nullptr;
-}
-
-std::optional<AAudioStream*> SoundMixer::CreateStream ( SoundEmitter::Context &context ) noexcept
-{
-    std::unique_lock<std::mutex> const lock ( _mutex );
-    auto result = CreateStreamInternal ( context );
-
-    if ( result != std::nullopt )
-        _emitters.emplace ( *result, context._soundEmitter );
-
-    return result;
-}
-
-bool SoundMixer::DestroyStream ( AAudioStream &stream ) noexcept
-{
-    std::unique_lock<std::mutex> const lock ( _mutex );
-
-    bool const result = SoundMixer::CheckAAudioResult ( AAudioStream_close ( &stream ),
-        "SoundMixer::DestroyStream",
-        "Can't close stream"
-    );
-
-    if ( !result )
-        return false;
-
-    if ( auto const findResult = _emitters.find ( &stream ); findResult != _emitters.cend () )
-    {
-        _decompressors.erase ( &stream );
-        _emitters.erase ( findResult );
-        return true;
-    }
-
-    LogError ( "SoundMixer::DestroyStream - Can't find stream!" );
-    assert ( false );
-    return false;
 }
 
 size_t SoundMixer::GetBufferSampleCount () const noexcept
@@ -301,7 +337,7 @@ SoundListenerInfo const& SoundMixer::GetListenerInfo () noexcept
     return _listenerInfo;
 }
 
-[[maybe_unused]] void SoundMixer::SetListenerLocation ( GXVec3 const &location ) noexcept
+void SoundMixer::SetListenerLocation ( GXVec3 const &location ) noexcept
 {
     _listenerInfo._location = location;
     _listenerTransformChanged = true;
@@ -312,7 +348,7 @@ SoundStorage& SoundMixer::GetSoundStorage () noexcept
     return _soundStorage;
 }
 
-[[maybe_unused]] void SoundMixer::SetListenerOrientation ( GXQuat const &orientation ) noexcept
+void SoundMixer::SetListenerOrientation ( GXQuat const &orientation ) noexcept
 {
     _listenerOrientation = orientation;
     _listenerTransformChanged = true;
@@ -320,55 +356,157 @@ SoundStorage& SoundMixer::GetSoundStorage () noexcept
 
 void SoundMixer::Pause () noexcept
 {
-    for ( auto& record : _emitters )
-    {
-        SoundEmitter* emitter = record.second;
+    std::unique_lock<std::mutex> const lock ( _mutex );
 
-        if ( emitter->IsPlaying () )
+    for ( auto& record : _streamMap )
+    {
+        StreamInfo const& si = *record.second;
+
+        if ( si._emitter->IsPlaying () )
         {
-            if ( emitter->Pause () )
-            {
-                _emittersToResume.push_back ( emitter );
-            }
+            AAudioStream* stream = si._stream;
+
+            _actionQueue.emplace_back (
+                ActionInfo
+                {
+                    ._handler = &SoundMixer::ExecutePause,
+                    ._stream = stream
+                }
+            );
+
+            _streamToResume.push_back ( stream );
         }
     }
 }
 
 void SoundMixer::Resume () noexcept
 {
-    for ( auto* emitter : _emittersToResume )
+    std::unique_lock<std::mutex> const lock ( _mutex );
+
+    for ( auto* stream : _streamToResume )
     {
-        if ( !emitter->Play () )
-        {
-            LogWarning ( "SoundMixer::OnResume - Can't play," );
-        }
+        _actionQueue.emplace_back (
+            ActionInfo
+            {
+                ._handler = &SoundMixer::ExecutePlay,
+                ._stream = stream
+            }
+        );
     }
 
-    _emittersToResume.clear ();
+    _streamToResume.clear ();
 }
 
-void SoundMixer::RegisterDecompressor ( AAudioStream &stream, PCMStreamer &streamer ) noexcept
+bool SoundMixer::RequestPause ( SoundEmitter &emitter ) noexcept
+{
+    std::unique_lock<std::mutex> const lock ( _mutex );
+    auto findResult = _streamMap.find ( &emitter );
+
+    if ( findResult == _streamMap.end () )
+    {
+        LogWarning ( "SoundMixer::RequestPause - Can't find emitter. Abort..." );
+        assert ( false );
+        return false;
+    }
+
+    StreamInfo& si = *findResult->second;
+    si.Modify ( true );
+
+    _free.splice ( _free.begin (), _used, si._used );
+    _streamMap.erase ( findResult );
+
+    _actionQueue.emplace_back (
+        ActionInfo
+        {
+            ._handler = &SoundMixer::ExecutePause,
+            ._stream = si._stream
+        }
+    );
+
+    return true;
+}
+
+bool SoundMixer::RequestPlay ( SoundEmitter &emitter ) noexcept
 {
     std::unique_lock<std::mutex> const lock ( _mutex );
 
-    if ( _decompressors.contains ( &stream ) )
+    if ( _free.empty () )
     {
-        LogError ( "SoundMixer::RegisterDecompressor - Stream already registered. Please check business logic." );
+        LogWarning ( "SoundMixer::RequestPlay - No more free streams. Abort..." );
+        return false;
+    }
+
+    _used.splice ( _used.cbegin (), _free, _free.cbegin () );
+
+    StreamInfo& si = *_used.front ();
+    si.Modify ( false );
+
+    si._emitter = &emitter;
+    si._used = _used.begin ();
+    _streamMap.emplace ( &emitter, &si );
+
+    _actionQueue.emplace_back (
+        ActionInfo
+        {
+            ._handler = &SoundMixer::ExecutePlay,
+            ._stream = si._stream
+        }
+    );
+
+    return true;
+}
+
+bool SoundMixer::RequestStop ( SoundEmitter &emitter ) noexcept
+{
+    std::unique_lock<std::mutex> const lock ( _mutex );
+    auto findResult = _streamMap.find ( &emitter );
+
+    if ( findResult == _streamMap.end () )
+    {
+        LogWarning ( "SoundMixer::RequestStop - Can't find emitter. Abort..." );
+        assert ( false );
+        return false;
+    }
+
+    StreamInfo& si = *findResult->second;
+    si.Modify ( true );
+
+    _free.splice ( _free.begin (), _used, si._used );
+    _streamMap.erase ( findResult );
+
+    _actionQueue.emplace_back (
+        ActionInfo
+        {
+            ._handler = &SoundMixer::ExecuteStop,
+            ._stream = si._stream
+        }
+    );
+
+    return true;
+}
+
+void SoundMixer::RegisterDecompressor ( PCMStreamer &streamer ) noexcept
+{
+    std::unique_lock<std::mutex> const lock ( _mutex );
+
+    if ( _decompressors.contains ( &streamer ) )
+    {
+        LogError ( "SoundMixer::RegisterDecompressor - Decompressor already registered. Please check business logic." );
         assert ( false );
         return;
     }
 
-    _decompressors.emplace ( &stream, &streamer );
+    _decompressors.insert ( &streamer );
 }
 
-void SoundMixer::UnregisterDecompressor ( AAudioStream &stream ) noexcept
+void SoundMixer::UnregisterDecompressor ( PCMStreamer &streamer ) noexcept
 {
     std::unique_lock<std::mutex> const lock ( _mutex );
 
-    if ( _decompressors.erase ( &stream ) > 0U )
+    if ( _decompressors.erase ( &streamer ) > 0U )
         return;
 
-    LogError ( "SoundMixer::UnregisterDecompressor - Can't find stream. Please check business logic." );
+    LogError ( "SoundMixer::UnregisterDecompressor - Can't find decompressor. Please check business logic." );
     assert ( false );
 }
 
@@ -384,166 +522,94 @@ bool SoundMixer::CheckAAudioResult ( aaudio_result_t result, char const* from, c
     return false;
 }
 
-bool SoundMixer::ResolveMaximumHardwareStreams () noexcept
+bool SoundMixer::CreateHardwareStreams () noexcept
 {
-    _maxHardwareStreams = 0U;
-
-    std::vector<AAudioStream*> probes {};
-    probes.reserve ( MAX_HARDWARE_STREAM_CAP );
+    _streamInfo.reserve ( MAX_HARDWARE_STREAM_CAP );
     size_t counter = 0U;
 
     for ( ; counter < MAX_HARDWARE_STREAM_CAP; ++counter )
     {
-        AAudioStreamBuilder_setDataCallback ( _builder, &SoundMixer::PCMCallback, nullptr );
-        AAudioStream* stream = nullptr;
+        StreamInfo& si = _streamInfo.emplace_back ( StreamInfo ( *this, _used.end () ) );
+        AAudioStreamBuilder_setDataCallback ( _builder, &SoundMixer::PCMCallback, &si );
 
-        if ( AAudioStreamBuilder_openStream ( _builder, &stream ) != AAUDIO_OK )
+        if ( AAudioStreamBuilder_openStream ( _builder, &si._stream ) != AAUDIO_OK )
+        {
+            _streamInfo.pop_back ();
             break;
+        }
 
-        probes.push_back ( stream );
-    }
+        if ( !ValidateStream ( *si._stream ) )
+        {
+            return false;
+        }
 
-    bool result = true;
-
-    for ( auto probe : probes )
-    {
-        result &= SoundMixer::CheckAAudioResult ( AAudioStream_close ( probe ),
-            "SoundMixer::ResolveMaximumHardwareStreams",
-            "Can't close stream"
-        );
+        _free.push_back ( &si );
     }
 
     if ( counter < 0U )
     {
-        LogError ( "SoundMixer::ResolveMaximumHardwareStreams - No available hardware streams!" );
+        LogError ( "SoundMixer::CreateHardwareStreams - No available hardware streams!" );
         assert ( false );
         return false;
     }
 
-    if ( !result )
-    {
-        assert ( false );
-        return false;
-    }
-
-    LogInfo ( "SoundMixer::ResolveMaximumHardwareStreams - Hardware streams: %zu.", counter );
-    _maxHardwareStreams = counter;
+    LogInfo ( "SoundMixer::CreateHardwareStreams - Hardware streams: %zu.", counter );
     return true;
 }
 
-void SoundMixer::RecreateSoundEmitter ( AAudioStream &stream ) noexcept
+std::optional<AAudioStream*> SoundMixer::CreateStream ( StreamInfo &streamInfo) noexcept
 {
-    std::thread thread (
-        [ this, &stream ] () noexcept {
-            std::unique_lock<std::mutex> const lock ( _mutex );
-            auto const emitterFind = _emitters.find ( &stream );
-
-            if ( emitterFind == _emitters.cend () )
-            {
-                LogError ( "SoundMixer::RecreateSoundEmitter - Can't find sound emitter." );
-                assert ( false );
-                return;
-            }
-
-            SoundEmitter& emitter = *emitterFind->second;
-            StreamCloser const closer ( *emitterFind->first );
-            auto result = CreateStreamInternal ( emitter.GetContext () );
-
-            if ( result == std::nullopt )
-            {
-                LogError ( "SoundMixer::RecreateSoundEmitter - Can't create new AAudioStream." );
-                assert ( false );
-                return;
-            }
-
-            AAudioStream* newStream = *result;
-
-            if ( auto const streamerFind = _decompressors.find ( &stream ); streamerFind != _decompressors.cend () )
-            {
-                PCMStreamer* streamer = streamerFind->second;
-                _decompressors.erase ( streamerFind );
-                _decompressors.emplace ( newStream, streamer );
-            }
-
-            emitter.OnStreamRecreated ( *newStream );
-            _emitters.erase ( emitterFind );
-            _emitters.emplace ( newStream, &emitter );
-        }
-    );
-
-    thread.detach ();
-}
-
-std::optional<AAudioStream*> SoundMixer::CreateStreamInternal ( SoundEmitter::Context &context ) noexcept
-{
-    AAudioStreamBuilder_setDataCallback ( _builder, &SoundMixer::PCMCallback, &context );
+    AAudioStreamBuilder_setDataCallback ( _builder, &SoundMixer::PCMCallback, &streamInfo );
 
     AAudioStream* stream = nullptr;
     aaudio_result_t result = AAudioStreamBuilder_openStream ( _builder, &stream );
 
-    if ( !CheckAAudioResult ( result, "SoundMixer::CreateStreamInternal", "Can't open stream" ) )
+    if ( !CheckAAudioResult ( result, "SoundMixer::CreateStream", "Can't open stream" ) )
         return std::nullopt;
 
-    if ( int32_t const sampleRate = AAudioStream_getSampleRate ( stream ); sampleRate != GetSampleRate () )
-    {
-        StreamCloser const streamCloser ( *stream );
-
-        LogError ( "SoundMixer::CreateStreamInternal - Unexpected sample rate %" PRIi32 ". Should be %" PRIi32 ".",
-            sampleRate,
-            GetSampleRate ()
-        );
-
-        assert ( false );
+    if ( !ValidateStream ( *stream ) )
         return std::nullopt;
-    }
-
-    if ( aaudio_format_t const format = AAudioStream_getFormat ( stream ); format != GetFormat () )
-    {
-        StreamCloser const streamCloser ( *stream );
-
-        constexpr size_t size = 128U;
-        char current[ size ];
-        char expected[ size ];
-
-        LogError ( "SoundMixer::CreateStreamInternal - Unexpected format %s. Should be %s.",
-            GetFormatString ( format, current ),
-            GetFormatString ( GetFormat (), expected )
-        );
-
-        assert ( false );
-        return std::nullopt;
-    }
-
-    if ( int32_t const channels = AAudioStream_getChannelCount ( stream ); channels != GetChannelCount () )
-    {
-        StreamCloser const streamCloser ( *stream );
-
-        LogError ( "SoundMixer::CreateStreamInternal - Unexpected channel count %" PRIi32 ". Should be %" PRIi32 ".",
-            channels,
-            GetChannelCount ()
-        );
-
-        assert ( false );
-        return std::nullopt;
-    }
-
-    int32_t const frames = AAudioStream_setBufferSizeInFrames ( stream, _bufferFrameCount );
-
-    if ( frames != _bufferFrameCount )
-    {
-        StreamCloser const streamCloser ( *stream );
-
-        LogError ( "SoundMixer::CreateStreamInternal - Unexpected buffer frame count %" PRIi32 ". "
-            "Should be %" PRIi32 ".",
-            frames,
-            _bufferFrameCount
-        );
-
-        assert ( false );
-        return std::nullopt;
-    }
 
     return stream;
+}
+
+void SoundMixer::RecreateSoundStream ( AAudioStream &stream ) noexcept
+{
+    std::thread thread (
+        [ this, &stream ] () noexcept {
+            std::unique_lock<std::mutex> const lock ( _mutex );
+
+            StreamCloser const closer ( stream );
+            StreamInfo* targetStreamInfo = nullptr;
+
+            for ( auto& si : _streamInfo )
+            {
+                if ( si._stream == &stream )
+                {
+                    targetStreamInfo = &si;
+                    break;
+                }
+            }
+
+            if ( !targetStreamInfo )
+            {
+                LogError ( "SoundMixer::RecreateSoundStream - Can't find stream." );
+                assert ( false );
+                return;
+            }
+
+            if ( auto result = CreateStream ( *targetStreamInfo ); result != std::nullopt )
+            {
+                targetStreamInfo->_stream = *result;
+                return;
+            }
+
+            LogError ( "SoundMixer::RecreateSoundStream - Can't create new AAudioStream." );
+            assert ( false );
+        }
+    );
+
+    thread.detach ();
 }
 
 bool SoundMixer::ResolveBufferSize () noexcept
@@ -594,6 +660,67 @@ bool SoundMixer::ResolveBufferSize () noexcept
     return true;
 }
 
+bool SoundMixer::ValidateStream ( AAudioStream &stream ) const noexcept
+{
+    if ( int32_t const sampleRate = AAudioStream_getSampleRate ( &stream ); sampleRate != GetSampleRate () )
+    {
+        StreamCloser const streamCloser ( stream );
+
+        LogError ( "SoundMixer::ValidateStream - Unexpected sample rate %" PRIi32 ". Should be %" PRIi32 ".",
+            sampleRate,
+            GetSampleRate ()
+        );
+
+        assert ( false );
+        return false;
+    }
+
+    if ( aaudio_format_t const format = AAudioStream_getFormat ( &stream ); format != GetFormat () )
+    {
+        StreamCloser const streamCloser ( stream );
+
+        constexpr size_t size = 128U;
+        char current[ size ];
+        char expected[ size ];
+
+        LogError ( "SoundMixer::ValidateStream - Unexpected format %s. Should be %s.",
+            GetFormatString ( format, current ),
+            GetFormatString ( GetFormat (), expected )
+        );
+
+        assert ( false );
+        return false;
+    }
+
+    if ( int32_t const channels = AAudioStream_getChannelCount ( &stream ); channels != GetChannelCount () )
+    {
+        StreamCloser const streamCloser ( stream );
+
+        LogError ( "SoundMixer::ValidateStream - Unexpected channel count %" PRIi32 ". Should be %" PRIi32 ".",
+            channels,
+            GetChannelCount ()
+        );
+
+        assert ( false );
+        return false;
+    }
+
+    int32_t const frames = AAudioStream_setBufferSizeInFrames ( &stream, _bufferFrameCount );
+
+    if ( frames == _bufferFrameCount )
+        return true;
+
+    StreamCloser const streamCloser ( stream );
+
+    LogError ( "SoundMixer::ValidateStream - Unexpected buffer frame count %" PRIi32 ". Should be %" PRIi32 ".",
+        frames,
+        _bufferFrameCount
+    );
+
+    assert ( false );
+    return false;
+}
+
 void SoundMixer::ErrorCallback ( AAudioStream* stream, void* userData, aaudio_result_t err )
 {
     CheckAAudioResult ( err, "SoundMixer::ErrorCallback", "Got error from AAudio subsystem" );
@@ -603,7 +730,31 @@ void SoundMixer::ErrorCallback ( AAudioStream* stream, void* userData, aaudio_re
 
     LogInfo ( "SoundMixer::ErrorCallback - Main audio endpoint has been disconnected, Trying to restore sound..." );
     auto& soundMixer = *static_cast<SoundMixer*> ( userData );
-    soundMixer.RecreateSoundEmitter ( *stream );
+    soundMixer.RecreateSoundStream ( *stream );
+}
+
+void SoundMixer::ExecutePause ( AAudioStream &stream ) noexcept
+{
+    SoundMixer::CheckAAudioResult ( AAudioStream_requestPause ( &stream ),
+        "SoundMixer::ExecutePause",
+        "Can't pause"
+    );
+}
+
+void SoundMixer::ExecutePlay ( AAudioStream &stream ) noexcept
+{
+    SoundMixer::CheckAAudioResult ( AAudioStream_requestStart ( &stream ),
+        "SoundMixer::ExecutePlay",
+        "Can't play"
+    );
+}
+
+void SoundMixer::ExecuteStop ( AAudioStream &stream ) noexcept
+{
+    SoundMixer::CheckAAudioResult ( AAudioStream_requestStop ( &stream ),
+        "SoundMixer::ExecuteStop",
+        "Can't stop"
+    );
 }
 
 aaudio_data_callback_result_t SoundMixer::PCMCallback ( AAudioStream* /*stream*/,
@@ -612,17 +763,28 @@ aaudio_data_callback_result_t SoundMixer::PCMCallback ( AAudioStream* /*stream*/
     int32_t numFrames
 )
 {
-    auto& context = *static_cast<SoundEmitter::Context*> ( userData );
-    assert ( context._soundMixer->_bufferFrameCount == numFrames );
+    auto& si = *static_cast<StreamInfo*> ( userData );
 
-    context._soundEmitter->FillPCM (
+    if ( si.LockAndReturnFillSilence () )
+    {
+        constexpr auto sizeFactor = static_cast<size_t> ( GetChannelCount () ) * sizeof ( PCMStreamer::PCMType );
+        std::memset ( audioData, 0,  static_cast<size_t> ( numFrames * sizeFactor ) );
+        si.Release ();
+        return AAUDIO_CALLBACK_RESULT_CONTINUE;
+    }
+
+    SoundMixer* mixer = si._mixer;
+    assert ( mixer->_bufferFrameCount == numFrames );
+
+    si._emitter->FillPCM (
         std::span ( static_cast<PCMStreamer::PCMType*> ( audioData ),
             static_cast<size_t> ( numFrames * GetChannelCount () )
         ),
 
-        context._soundMixer->_effectiveChannelVolume[ static_cast<size_t> ( context._soundChannel ) ]
+        mixer->_effectiveChannelVolume[ static_cast<size_t> ( si._emitter->GetSoundChannel () ) ]
     );
 
+    si.Release ();
     return AAUDIO_CALLBACK_RESULT_CONTINUE;
 }
 

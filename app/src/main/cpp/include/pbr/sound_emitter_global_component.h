@@ -34,10 +34,7 @@ class SoundEmitterGlobalComponent final : public Component
             uint8_t const* data
         ) noexcept;
 
-        explicit SoundEmitterGlobalComponent ( bool &success,
-            android_vulkan::eSoundChannel channel,
-            std::string &&name
-        ) noexcept;
+        explicit SoundEmitterGlobalComponent ( android_vulkan::eSoundChannel channel, std::string &&name ) noexcept;
 
         ~SoundEmitterGlobalComponent () override = default;
 

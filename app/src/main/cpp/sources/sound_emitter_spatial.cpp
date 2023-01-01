@@ -32,7 +32,7 @@ void SoundEmitterSpatial::FillPCM ( std::span<PCMStreamer::PCMType> buffer, floa
 {
     assert ( _streamer );
 
-    SoundListenerInfo const& listener = _context._soundMixer->GetListenerInfo ();
+    SoundListenerInfo const& listener = _mixer->GetListenerInfo ();
     GXVec3 soundDirection {};
     soundDirection.Subtract ( _location, listener._location );
 

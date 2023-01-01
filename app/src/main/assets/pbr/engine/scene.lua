@@ -250,6 +250,21 @@ local function SetActiveCamera ( self, camera )
     av_SceneSetActiveCamera ( self._handle, camera._handle )
 end
 
+local function SetSoundChannelVolume ( self, soundChannel, volume )
+    assert ( type ( self ) == "table" and self._type == eObjectType.Scene,
+        [[Scene:SetSoundChannelVolume - Calling not via ":" syntax.]]
+    )
+
+    assert ( type ( soundChannel ) == "number", [[Scene:SetSoundChannelVolume - "soundChannel" is not a number."]] )
+
+    assert ( soundChannel >= 0 and soundChannel < eSoundChannel.TOTAL,
+        [[Scene:SetSoundChannelVolume - Incorrect sound channel.]]
+    )
+
+    assert ( type ( volume ) == "number", [[Scene:SetSoundChannelVolume - "volume" is not a number.]] )
+    av_SceneSetSoundChannelVolume ( self._handle, soundChannel, volume )
+end
+
 local function SetSoundListenerTransform ( self, localMatrix )
     assert ( type ( self ) == "table" and self._type == eObjectType.Scene,
         [[Scene:SetSoundListenerTransform - Calling not via ":" syntax.]]
@@ -260,6 +275,15 @@ local function SetSoundListenerTransform ( self, localMatrix )
     )
 
     av_SceneSetSoundListenerTransform ( self._handle, localMatrix._handle )
+end
+
+local function SetSoundMasterVolume ( self, volume )
+    assert ( type ( self ) == "table" and self._type == eObjectType.Scene,
+        [[Scene:SetSoundMasterVolume - Calling not via ":" syntax.]]
+    )
+
+    assert ( type ( volume ) == "number", [[Scene:SetSoundMasterVolume - "volume" is not a number.]] )
+    av_SceneSetSoundMasterVolume ( self._handle, volume )
 end
 
 local function SweepTestBox ( self, localMatrix, size, groups )
@@ -313,7 +337,9 @@ local function Constructor ( self, handle )
     obj.OverlapTestBoxBox = OverlapTestBoxBox
     obj.Quit = Quit
     obj.SetActiveCamera = SetActiveCamera
+    obj.SetSoundChannelVolume = SetSoundChannelVolume
     obj.SetSoundListenerTransform = SetSoundListenerTransform
+    obj.SetSoundMasterVolume = SetSoundMasterVolume
     obj.SweepTestBox = SweepTestBox
 
     return obj

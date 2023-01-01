@@ -18,14 +18,6 @@ class SoundMixer;
 
 class SoundEmitter
 {
-    public:
-        struct Context final
-        {
-            eSoundChannel               _soundChannel = eSoundChannel::SFX;
-            SoundMixer*                 _soundMixer = nullptr;
-            SoundEmitter*               _soundEmitter = nullptr;
-        };
-
     protected:
         enum class eStreamerType : uint16_t
         {
@@ -35,10 +27,10 @@ class SoundEmitter
         };
 
     protected:
-        Context                         _context {};
+        eSoundChannel                   _channel = eSoundChannel::SFX;
         std::string                     _file {};
         bool                            _isPlaying = false;
-        AAudioStream*                   _stream = nullptr;
+        SoundMixer*                     _mixer = nullptr;
         std::unique_ptr<PCMStreamer>    _streamer {};
         float                           _volume = 1.0F;
 
@@ -54,11 +46,11 @@ class SoundEmitter
         // Note method should be call in child class.
         virtual void SetVolume ( float volume ) noexcept;
 
-        [[nodiscard]] bool Init ( SoundMixer &soundMixer, eSoundChannel channel ) noexcept;
+        void Init ( SoundMixer &soundMixer, eSoundChannel channel ) noexcept;
         [[nodiscard]] bool Destroy () noexcept;
 
-        [[nodiscard]] Context& GetContext () noexcept;
         [[nodiscard, maybe_unused]] std::string const& GetFile () const noexcept;
+        [[nodiscard]] eSoundChannel GetSoundChannel () const noexcept;
         [[nodiscard]] float GetVolume () const noexcept;
 
         [[nodiscard]] bool IsPlaying () const noexcept;
@@ -66,7 +58,6 @@ class SoundEmitter
         [[nodiscard]] bool Play () noexcept;
         [[nodiscard]] bool Stop () noexcept;
 
-        void OnStreamRecreated ( AAudioStream &stream ) noexcept;
         [[nodiscard]] bool SetSoundAsset ( std::string_view const file, bool looped ) noexcept;
 
     protected:

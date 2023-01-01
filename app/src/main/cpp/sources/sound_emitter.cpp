@@ -13,22 +13,10 @@ GX_RESTORE_WARNING_STATE
 
 namespace android_vulkan {
 
-bool SoundEmitter::Init ( SoundMixer &soundMixer, eSoundChannel channel ) noexcept
+void SoundEmitter::Init ( SoundMixer &soundMixer, eSoundChannel channel ) noexcept
 {
-    _context =
-    {
-        ._soundChannel = channel,
-        ._soundMixer = &soundMixer,
-        ._soundEmitter = this
-    };
-
-    if ( auto const stream = soundMixer.CreateStream ( _context ); stream != std::nullopt )
-    {
-        _stream = *stream;
-        return true;
-    }
-
-    return false;
+    _channel = channel;
+    _mixer = &soundMixer;
 }
 
 bool SoundEmitter::Destroy () noexcept
@@ -39,30 +27,24 @@ bool SoundEmitter::Destroy () noexcept
     if ( _streamer )
     {
         if ( _streamer->IsDecompressor () )
-            _context._soundMixer->UnregisterDecompressor ( *_stream );
+            _mixer->UnregisterDecompressor ( *_streamer );
 
         _file.clear ();
         _streamer = nullptr;
     }
 
-    if ( !_stream )
-        return true;
-
-    if ( bool const result = _context._soundMixer->DestroyStream ( *_stream ); !result )
-        return false;
-
-    _stream = nullptr;
+    _mixer = nullptr;
     return true;
-}
-
-SoundEmitter::Context& SoundEmitter::GetContext () noexcept
-{
-    return _context;
 }
 
 [[maybe_unused]] std::string const& SoundEmitter::GetFile () const noexcept
 {
     return _file;
+}
+
+eSoundChannel SoundEmitter::GetSoundChannel () const noexcept
+{
+    return _channel;
 }
 
 float SoundEmitter::GetVolume () const noexcept
@@ -82,71 +64,50 @@ bool SoundEmitter::IsPlaying () const noexcept
 
 bool SoundEmitter::Pause () noexcept
 {
-    assert ( ( _stream != nullptr ) & static_cast<bool> ( _streamer ) );
+    assert ( ( _mixer != nullptr ) & static_cast<bool> ( _streamer ) );
 
-    bool const result = SoundMixer::CheckAAudioResult ( AAudioStream_requestPause ( _stream ),
-        "SoundEmitter::Pause",
-        "Can't pause"
-    );
-
-    if ( result )
+    if ( _mixer->RequestPause ( *this ) )
+    {
         _isPlaying = false;
+        return true;
+    }
 
-    return result;
+    return false;
 }
 
 bool SoundEmitter::Play () noexcept
 {
-    assert ( ( _stream != nullptr ) & static_cast<bool> ( _streamer ) );
+    assert ( ( _mixer != nullptr ) & static_cast<bool> ( _streamer ) );
 
-    bool const result =  SoundMixer::CheckAAudioResult ( AAudioStream_requestStart ( _stream ),
-        "SoundEmitter::Play",
-        "Can't play"
-    );
-
-    if ( result )
+    if ( _mixer->RequestPlay ( *this ) )
+    {
         _isPlaying = true;
+        return false;
+    }
 
-    return result;
+    return false;
 }
 
 bool SoundEmitter::Stop () noexcept
 {
-    assert ( ( _stream != nullptr ) & static_cast<bool> ( _streamer ) );
+    assert ( ( _mixer != nullptr ) & static_cast<bool> ( _streamer ) );
 
-    bool const result = SoundMixer::CheckAAudioResult ( AAudioStream_requestStop ( _stream ),
-        "SoundEmitter::Stop",
-        "Can't stop"
-    );
-
-    if ( result )
+    if ( _mixer->RequestStop ( *this ) )
     {
         if ( !_streamer->Reset () )
             return false;
 
         _isPlaying = false;
+        return true;
     }
 
-    return result;
-}
-
-void SoundEmitter::OnStreamRecreated ( AAudioStream &stream ) noexcept
-{
-    _stream = &stream;
-
-    if ( !_isPlaying )
-        return;
-
-    if ( !Play () )
-    {
-        LogWarning ( "SoundEmitter::OnStreamRecreated - Can't start playing." );
-    }
+    return false;
 }
 
 bool SoundEmitter::SetSoundAsset ( std::string_view const file, bool looped ) noexcept
 {
     if ( _streamer && _streamer->IsDecompressor () )
-        _context._soundMixer->UnregisterDecompressor ( *_stream );
+        _mixer->UnregisterDecompressor ( *_streamer );
 
     switch ( GetStreamerType ( file ) )
     {
@@ -164,10 +125,10 @@ bool SoundEmitter::SetSoundAsset ( std::string_view const file, bool looped ) no
         return false;
     }
 
-    bool const result = _streamer->SetSoundAsset ( _context._soundMixer->GetSoundStorage (),
+    bool const result = _streamer->SetSoundAsset ( _mixer->GetSoundStorage (),
         file,
         looped,
-        _context._soundMixer->GetBufferSampleCount ()
+        _mixer->GetBufferSampleCount ()
     );
 
     if ( !result )
@@ -179,7 +140,7 @@ bool SoundEmitter::SetSoundAsset ( std::string_view const file, bool looped ) no
     _file = file;
 
     if ( _streamer->IsDecompressor () )
-        _context._soundMixer->RegisterDecompressor ( *_stream, *_streamer );
+        _mixer->RegisterDecompressor ( *_streamer );
 
     return true;
 }

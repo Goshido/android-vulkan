@@ -153,6 +153,7 @@ local function OnActorConstructed ( self, actor )
 
     local music = SoundEmitterGlobalComponent ( "Music", eSoundChannel.Music )
     music:SetSoundAsset ( "sounds/Credits.ogg", true )
+    music:SetVolume ( 0.25 )
     actor:AppendComponent ( music )
     self._music = music
 end

@@ -21,7 +21,9 @@
 - [`OverlapTestBoxBox ( localMatrixA, sizeA, localMatrixB, sizeB )`](#method-overlap-test-box-box)
 - [`Quit ()`](#method-quit)
 - [`SetActiveCamera ( camera )`](#method-set-active-camera)
+- [`SetSoundChannelVolume ( soundChannel, volume )`](#method-set-sound-channel-volume)
 - [`SetSoundListenerTransform ( localMatrix )`](#method-set-sound-listener-transform)
+- [`SetSoundMasterVolume ( volume )`](#method-set-sound-master-volume)
 - [`SweepTestBox ( localMatrix, size, groups )`](#method-sweep-test-box)
 
 ## <a id="brief">Brief</a>
@@ -448,6 +450,47 @@ cameraComponent:SetProjection ( math.rad ( 60.0 ), width / height, 1.0e-1, 1.0e+
 g_scene:SetActiveCamera ( cameraComponent )
 ```
 
+## <a id="method-set-sound-channel-volume">`SetSoundChannelVolume ( soundChannel, volume )`</a>
+
+Method sets sound channel volume.
+
+**Parameters:**
+
+- `soundChannel` [_required, readonly, [eSoundChannel](./sound-channel.md)_]: sound channel
+- `volume` [_required, readonly, number_]: volume in range from `0.0` to `1.0`. The `0.0` value means total silence
+
+**Return values:**
+
+- none
+
+**Example:**
+
+```lua
+g_scene:SetSoundChannelVolume ( eSoundChannel.SFX, 0.42 )
+```
+
+## <a id="method-sweep-test-box">`SweepTestBox ( localMatrix, size, groups )`</a>
+
+Method performs sweep test of box shape against physical scene. As a result method returns all objects which are covered by the box shape.
+
+The test result is described by the following <a id="table-sweep-test-result">`SweepTestResult`</a> table:
+
+```lua
+local SweepTestResult = {
+    _count = ... as integer,
+
+    _bodies = ... as array of tables,
+    {
+        1 = ... as RigidBodyComponent,
+        2 = ... as RigidBodyComponent,
+
+        ...
+
+        n = ... as RigidBodyComponent
+    }
+}
+```
+
 ## <a id="method-set-sound-listener-transform">`SetSoundListenerTransform ( localMatrix )`</a>
 
 Method sets sound listener transformation.
@@ -480,6 +523,24 @@ local transform = GXMat4 ()
 transform:FromFast ( rotation, origin )
 
 g_scene:SetSoundListenerTransform ( transform )
+```
+
+## <a id="method-set-sound-master-volume">`SetSoundMasterVolume ( volume )`</a>
+
+Method sets sound system master volume.
+
+**Parameters:**
+
+- `volume` [_required, readonly, number_]: volume in range from `0.0` to `1.0`. The `0.0` value means total silence
+
+**Return values:**
+
+- none
+
+**Example:**
+
+```lua
+g_scene:SetSoundMasterVolume ( 0.42 )
 ```
 
 ## <a id="method-sweep-test-box">`SweepTestBox ( localMatrix, size, groups )`</a>

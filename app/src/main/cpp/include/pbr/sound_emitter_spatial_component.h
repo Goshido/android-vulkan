@@ -34,10 +34,7 @@ class SoundEmitterSpatialComponent final : public Component
             uint8_t const* data
         ) noexcept;
 
-        explicit SoundEmitterSpatialComponent ( bool &success,
-            android_vulkan::eSoundChannel channel,
-            std::string &&name
-        ) noexcept;
+        explicit SoundEmitterSpatialComponent ( android_vulkan::eSoundChannel channel, std::string &&name ) noexcept;
 
         ~SoundEmitterSpatialComponent () override = default;
 

@@ -127,7 +127,7 @@ local music = SoundEmitterGlobalComponent ( "Music", eSoundChannel.Music )
 actor:AppendComponent ( music )
 g_scene:AppendActor ( actor )
 
-music:SetVolume ()
+music:SetVolume ( 0.42 )
 ```
 
 ## <a id="method-is-playing">`IsPlaying ()`</a>

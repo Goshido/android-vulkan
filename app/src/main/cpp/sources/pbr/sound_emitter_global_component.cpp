@@ -39,12 +39,7 @@ SoundEmitterGlobalComponent::SoundEmitterGlobalComponent ( bool &success,
     assert ( desc._formatVersion == SOUND_EMITTER_GLOBAL_COMPONENT_DESC_FORMAT_VERSION );
     _name = reinterpret_cast<char const*> ( data + desc._name );
 
-    if ( !_soundEmitter.Init ( *_soundMixer, static_cast<android_vulkan::eSoundChannel> ( desc._channel ) ) )
-    {
-        success = false;
-        return;
-    }
-
+    _soundEmitter.Init ( *_soundMixer, static_cast<android_vulkan::eSoundChannel> ( desc._channel ) );
     _soundEmitter.SetVolume ( desc._volume );
 
     if ( desc._soundAsset == android_vulkan::NO_UTF8_OFFSET )
@@ -72,13 +67,12 @@ SoundEmitterGlobalComponent::SoundEmitterGlobalComponent ( bool &success,
     success = false;
 }
 
-SoundEmitterGlobalComponent::SoundEmitterGlobalComponent ( bool &success,
-    android_vulkan::eSoundChannel channel,
+SoundEmitterGlobalComponent::SoundEmitterGlobalComponent ( android_vulkan::eSoundChannel channel,
     std::string &&name
 ) noexcept:
     Component ( ClassID::SoundEmitterGlobal, std::move ( name ) )
 {
-    success = _soundEmitter.Init ( *_soundMixer, channel );
+    _soundEmitter.Init ( *_soundMixer, channel );
 }
 
 bool SoundEmitterGlobalComponent::IsPlaying () const noexcept
@@ -232,18 +226,10 @@ int SoundEmitterGlobalComponent::OnCreate ( lua_State* state )
         return 1;
     }
 
-    bool success;
-
-    ComponentRef staticMesh = std::make_shared<SoundEmitterGlobalComponent> ( success,
+    ComponentRef staticMesh = std::make_shared<SoundEmitterGlobalComponent> (
         static_cast<android_vulkan::eSoundChannel> ( lua_tointeger ( state, 3 ) ),
         name
     );
-
-    if ( !success )
-    {
-        lua_pushnil ( state );
-        return 1;
-    }
 
     Component* handle = staticMesh.get ();
     _soundEmitters.emplace ( handle, std::move ( staticMesh ) );

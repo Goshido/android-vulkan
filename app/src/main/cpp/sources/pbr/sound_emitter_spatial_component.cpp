@@ -42,12 +42,7 @@ SoundEmitterSpatialComponent::SoundEmitterSpatialComponent ( bool &success,
 
     _name = reinterpret_cast<char const*> ( data + desc._name );
 
-    if ( !_soundEmitter.Init ( *_soundMixer, static_cast<android_vulkan::eSoundChannel> ( desc._channel ) ) )
-    {
-        success = false;
-        return;
-    }
-
+    _soundEmitter.Init ( *_soundMixer, static_cast<android_vulkan::eSoundChannel> ( desc._channel ) );
     _soundEmitter.SetDistance ( desc._distance );
     _soundEmitter.SetLocation ( *reinterpret_cast<GXVec3 const*> ( &desc._location ) );
     _soundEmitter.SetVolume ( desc._volume );
@@ -77,13 +72,12 @@ SoundEmitterSpatialComponent::SoundEmitterSpatialComponent ( bool &success,
     success = false;
 }
 
-SoundEmitterSpatialComponent::SoundEmitterSpatialComponent ( bool &success,
-    android_vulkan::eSoundChannel channel,
+SoundEmitterSpatialComponent::SoundEmitterSpatialComponent ( android_vulkan::eSoundChannel channel,
     std::string &&name
 ) noexcept:
     Component ( ClassID::SoundEmitterSpatial, std::move ( name ) )
 {
-    success = _soundEmitter.Init ( *_soundMixer, channel );
+    _soundEmitter.Init ( *_soundMixer, channel );
 }
 
 bool SoundEmitterSpatialComponent::IsPlaying () const noexcept
@@ -255,18 +249,10 @@ int SoundEmitterSpatialComponent::OnCreate ( lua_State* state )
         return 1;
     }
 
-    bool success;
-
-    ComponentRef staticMesh = std::make_shared<SoundEmitterSpatialComponent> ( success,
+    ComponentRef staticMesh = std::make_shared<SoundEmitterSpatialComponent> (
         static_cast<android_vulkan::eSoundChannel> ( lua_tointeger ( state, 3 ) ),
         name
     );
-
-    if ( !success )
-    {
-        lua_pushnil ( state );
-        return 1;
-    }
 
     Component* handle = staticMesh.get ();
     _soundEmitters.emplace ( handle, std::move ( staticMesh ) );

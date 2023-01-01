@@ -124,7 +124,9 @@ class Scene final
 
         [[nodiscard]] static int OnQuit ( lua_State* state );
         [[nodiscard]] static int OnSetActiveCamera ( lua_State* state );
+        [[nodiscard]] static int OnSetSoundChannelVolume ( lua_State* state );
         [[nodiscard]] static int OnSetSoundListenerTransform ( lua_State* state );
+        [[nodiscard]] static int OnSetSoundMasterVolume ( lua_State* state );
         [[nodiscard]] static int OnSweepTestBox ( lua_State* state );
 };
 

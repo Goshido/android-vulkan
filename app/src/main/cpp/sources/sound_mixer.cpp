@@ -17,7 +17,7 @@ namespace {
 
 constexpr float CHANNEL_VOLUME = 1.0F;
 constexpr static size_t MAX_HARDWARE_STREAM_CAP = 42U;
-constexpr static auto WORKER_TIMEOUT = std::chrono::milliseconds ( 1U );
+constexpr static auto WORKER_TIMEOUT = std::chrono::microseconds ( 1U );
 
 //----------------------------------------------------------------------------------------------------------------------
 

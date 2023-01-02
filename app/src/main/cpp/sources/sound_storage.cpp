@@ -23,7 +23,7 @@ std::optional<SoundStorage::SoundFile> SoundStorage::GetFile ( std::string &&fil
     return iterator->second;
 }
 
-[[maybe_unused]] void SoundStorage::Trim () noexcept
+void SoundStorage::Trim () noexcept
 {
     std::unique_lock<std::mutex> const lock ( _mutex );
 

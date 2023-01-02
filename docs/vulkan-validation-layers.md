@@ -131,5 +131,5 @@ Name | Link | Status
 Incorrect validation of the `vkGetPhysicalDeviceSurfaceFormatsKHR` | [#3251](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/3251) | ✔️ Fixed
 Incorrect de-initialization and `VK_EXT_debug_report` | [#3327](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/3327) | ☄️ Driver bug
 Input attachment descriptor image view is not a subpass input attachment | [#4555](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/4555) | ✔️ Fixed
-master build broken for some time | [#5014](https://github.com/KhronosGroup/SPIRV-Tools/issues/5014) | ❌ Submitted
-Broken Android build | [#4947](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/4947) | ❌ Submitted
+master build broken for some time | [#5014](https://github.com/KhronosGroup/SPIRV-Tools/issues/5014) | ✔️ Fixed
+Broken Android build | [#4947](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/4947) | ⚠️ Closed with issue

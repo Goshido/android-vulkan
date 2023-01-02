@@ -16,8 +16,9 @@ namespace android_vulkan {
 namespace {
 
 constexpr float CHANNEL_VOLUME = 1.0F;
-constexpr static size_t MAX_HARDWARE_STREAM_CAP = 42U;
-constexpr static auto WORKER_TIMEOUT = std::chrono::microseconds ( 1U );
+constexpr size_t MAX_HARDWARE_STREAM_CAP = 42U;
+constexpr double TRIM_TIMEOUT_SECONDS = 5.0F;
+constexpr auto WORKER_TIMEOUT = std::chrono::microseconds ( 1U );
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -200,6 +201,8 @@ bool SoundMixer::Init () noexcept
 
     _workerThread = std::thread (
         [ this ] () noexcept {
+            auto last = std::chrono::system_clock::now ();
+
             while ( _workerFlag )
             {
                 // To not consume too much CPU time.
@@ -226,6 +229,14 @@ bool SoundMixer::Init () noexcept
                 }
 
                 _actionQueue.clear ();
+
+                auto const now = std::chrono::system_clock::now ();
+
+                if ( std::chrono::duration<double> const delta = now - last; delta.count () < TRIM_TIMEOUT_SECONDS )
+                    continue;
+
+                last = now;
+                _soundStorage.Trim ();
             }
         }
     );

@@ -39,7 +39,7 @@ class SoundStorage final
         [[nodiscard]] std::optional<SoundFile> GetFile ( std::string &&file ) noexcept;
 
         // Method removes elements from storage which are not owned at this moment.
-        [[maybe_unused]] void Trim () noexcept;
+        void Trim () noexcept;
 };
 
 } // namespace android_vulkan

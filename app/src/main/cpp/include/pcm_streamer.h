@@ -68,7 +68,7 @@ class PCMStreamer
             Gain &rightGain,
             PCMType const* pcm,
             bool lastPCMBuffer
-        ) noexcept;
+        ) const noexcept;
 
         using LoopHandler = void ( PCMStreamer::* ) ( std::span<PCMType> buffer,
             PCMType const* pcm,
@@ -147,14 +147,14 @@ class PCMStreamer
             Gain &rightGain,
             PCMType const* pcm,
             bool lastPCMBuffer
-        ) noexcept;
+        ) const noexcept;
 
         [[nodiscard]] Consume HandleStereo ( std::span<PCMType> buffer,
             Gain &leftGain,
             Gain &rightGain,
             PCMType const* pcm,
             bool lastPCMBuffer
-        ) noexcept;
+        ) const noexcept;
 
         [[nodiscard]] static bool IsFormatSupported ( std::string_view const file, Info const &info ) noexcept;
 };

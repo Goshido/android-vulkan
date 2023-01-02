@@ -136,8 +136,8 @@ void NeonConverter::Convert ( PCMStreamer::PCMType* target,
     int32x2_t const n = vadd_s32 ( vget_high_s32 ( before ), Divide ( alpha, correction ) );
     
     vst1_s32 ( data, NeonConverter::Divide ( vmul_s32 ( s, n ), correction ) );
-    target[ 0U ] = data[ 0U ];
-    target[ 1U ] = data[ 1U ];
+    target[ 0U ] = static_cast<PCMStreamer::PCMType> ( data[ 0U ] );
+    target[ 1U ] = static_cast<PCMStreamer::PCMType> ( data[ 1U ] );
 }
 
 int32x4_t NeonConverter::MakeBeforeFactor ( int32_t leftBefore, int32_t rightBefore ) noexcept
@@ -321,7 +321,7 @@ PCMStreamer::Consume PCMStreamer::HandleMono ( std::span<PCMType> buffer,
     Gain &rightGain,
     PCMType const* pcm,
     bool lastPCMBuffer
-) noexcept
+) const noexcept
 {
     size_t const bufferFrames = buffer.size () >> 1U;
     size_t const cases[] = { bufferFrames, _sampleCount - _offset };
@@ -378,7 +378,7 @@ PCMStreamer::Consume PCMStreamer::HandleStereo ( std::span<PCMType> buffer,
     Gain &rightGain,
     PCMType const* pcm,
     bool lastPCMBuffer
-) noexcept
+) const noexcept
 {
     size_t const bufferSamples = buffer.size ();
     size_t const cases[] = { bufferSamples, _sampleCount - _offset };

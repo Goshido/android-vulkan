@@ -97,7 +97,7 @@ PCMStreamer::Consume PCMStreamer::HandleMono ( std::span<PCMType> buffer,
     Gain &rightGain,
     PCMType const* pcm,
     bool lastPCMBuffer
-) noexcept
+) const noexcept
 {
     size_t const bufferFrames = buffer.size () >> 1U;
     size_t const cases[] = { bufferFrames, _sampleCount - _offset };
@@ -138,7 +138,7 @@ PCMStreamer::Consume PCMStreamer::HandleStereo ( std::span<PCMType> buffer,
     Gain &rightGain,
     PCMType const* pcm,
     bool lastPCMBuffer
-) noexcept
+) const noexcept
 {
     size_t const bufferSamples = buffer.size ();
     size_t const cases[] = { bufferSamples, _sampleCount - _offset };

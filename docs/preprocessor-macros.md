@@ -82,7 +82,7 @@ This macro enables custom mechanism for reporting leaked:
 
 This macro also reports about:
 
-- potential inaccurate results during physics simualtion
+- potential inaccurate results during physics simulation
 
 Also the macro is used for additional debug output in the [_Logcat™_](logcat.md).
 

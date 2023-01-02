@@ -667,7 +667,7 @@ bool SoundMixer::ResolveBufferSize () noexcept
     }
 
     _bufferFrameCount = burst;
-    _bufferSampleCount = static_cast<size_t> ( burst * GetChannelCount () );
+    _bufferSampleCount = static_cast<size_t> ( burst ) * static_cast<size_t> ( GetChannelCount () );
     return true;
 }
 

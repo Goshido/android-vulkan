@@ -258,6 +258,7 @@ ActorRef& Actor::GetReference ( Actor const &handle ) noexcept
     return findResult->second;
 }
 
+// NOLINTNEXTLINE - can be made static.
 void Actor::AppendCameraComponentFromNative ( ComponentRef &component,
     ComponentList &/*renderable*/,
     android_vulkan::Physics &/*physics*/,
@@ -290,6 +291,7 @@ void Actor::AppendCameraComponentFromNative ( ComponentRef &component,
     );
 }
 
+// NOLINTNEXTLINE - can be made static.
 void Actor::AppendCameraComponentFromScript ( ComponentRef &/*component*/,
     ComponentList &/*renderable*/,
     android_vulkan::Physics &/*physics*/
@@ -312,6 +314,7 @@ void Actor::AppendPointLightComponentFromNative ( ComponentRef &component,
     _transformableComponents.emplace_back ( std::ref ( transformable ) );
 }
 
+// NOLINTNEXTLINE - can be made static.
 void Actor::AppendPointLightComponentFromScript ( ComponentRef &/*component*/,
     ComponentList &/*renderable*/,
     android_vulkan::Physics &/*physics*/
@@ -338,6 +341,7 @@ void Actor::AppendReflectionComponentFromNative ( ComponentRef &component,
     }
 }
 
+// NOLINTNEXTLINE - can be made static.
 void Actor::AppendReflectionComponentFromScript ( ComponentRef &/*component*/,
     ComponentList &/*renderable*/,
     android_vulkan::Physics &/*physics*/
@@ -572,6 +576,7 @@ void Actor::AppendStaticMeshComponentFromScript ( ComponentRef &component,
     transformable.RegisterFromScript ( *this );
 }
 
+// NOLINTNEXTLINE - can be made static.
 void Actor::AppendTransformComponentFromNative ( ComponentRef &component,
     ComponentList &/*renderable*/,
     android_vulkan::Physics &/*physics*/,
@@ -604,6 +609,7 @@ void Actor::AppendTransformComponentFromNative ( ComponentRef &component,
     );
 }
 
+// NOLINTNEXTLINE - can be made static.
 void Actor::AppendTransformComponentFromScript ( ComponentRef &/*component*/,
     ComponentList &/*renderable*/,
     android_vulkan::Physics &/*physics*/
@@ -613,6 +619,7 @@ void Actor::AppendTransformComponentFromScript ( ComponentRef &/*component*/,
     assert ( false );
 }
 
+// NOLINTNEXTLINE - can be made static.
 void Actor::AppendUnknownComponentFromNative ( ComponentRef &/*component*/,
     ComponentList &/*renderable*/,
     android_vulkan::Physics &/*physics*/,
@@ -623,6 +630,7 @@ void Actor::AppendUnknownComponentFromNative ( ComponentRef &/*component*/,
     assert ( false );
 }
 
+// NOLINTNEXTLINE - can be made static.
 void Actor::AppendUnknownComponentFromScript ( ComponentRef &/*component*/,
     ComponentList &/*renderable*/,
     android_vulkan::Physics &/*physics*/

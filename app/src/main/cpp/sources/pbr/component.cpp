@@ -4,6 +4,8 @@
 #include <pbr/reflection_component.h>
 #include <pbr/rigid_body_component.h>
 #include <pbr/script_component.h>
+#include <pbr/sound_emitter_global_component.h>
+#include <pbr/sound_emitter_spatial_component.h>
 #include <pbr/static_mesh_component.h>
 #include <pbr/transform_component.h>
 
@@ -37,12 +39,21 @@ Component::StaticInitializer::StaticInitializer () noexcept
     Component::_handlers[ static_cast<size_t> ( ClassID::Reflection ) ] = &Component::CreateReflection;
     Component::_handlers[ static_cast<size_t> ( ClassID::RigidBody ) ] = &Component::CreateRigidBody;
     Component::_handlers[ static_cast<size_t> ( ClassID::Script ) ] = &Component::CreateScript;
+    Component::_handlers[ static_cast<size_t> ( ClassID::SoundEmitterGlobal ) ] = &Component::CreateSoundEmitterGlobal;
+
+    Component::_handlers[ static_cast<size_t> ( ClassID::SoundEmitterSpatial ) ] =
+        &Component::CreateSoundEmitterSpatial;
+
     Component::_handlers[ static_cast<size_t> ( ClassID::StaticMesh ) ] = &Component::CreateStaticMesh;
     Component::_handlers[ static_cast<size_t> ( ClassID::Transform ) ] = &Component::CreateTransform;
     Component::_handlers[ static_cast<size_t> ( ClassID::Unknown ) ] = &Component::CreateUnknown;
 }
 
-[[maybe_unused]] static Component::StaticInitializer const g_StaticInitializer {};
+namespace {
+
+[[maybe_unused]] Component::StaticInitializer const g_StaticInitializer {};
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -199,6 +210,44 @@ ComponentRef Component::CreateScript ( android_vulkan::Renderer &/*renderer*/,
     auto const& d = static_cast<ScriptComponentDesc const&> ( desc );
 
     return std::make_shared<ScriptComponent> ( d, data );
+}
+
+ComponentRef Component::CreateSoundEmitterGlobal ( android_vulkan::Renderer &/*renderer*/,
+    size_t &commandBufferConsumed,
+    size_t &dataRead,
+    ComponentDesc const &desc,
+    uint8_t const* data,
+    VkCommandBuffer const* /*commandBuffers*/
+) noexcept
+{
+    commandBufferConsumed = 0U;
+    dataRead = sizeof ( SoundEmitterGlobalComponentDesc );
+
+    // NOLINTNEXTLINE - downcast.
+    auto const& d = static_cast<SoundEmitterGlobalComponentDesc const&> ( desc );
+
+    bool success;
+    ComponentRef result = std::make_shared<SoundEmitterGlobalComponent> ( success, d, data );
+    return success ? result : ComponentRef {};
+}
+
+ComponentRef Component::CreateSoundEmitterSpatial ( android_vulkan::Renderer &/*renderer*/,
+    size_t &commandBufferConsumed,
+    size_t &dataRead,
+    ComponentDesc const &desc,
+    uint8_t const* data,
+    VkCommandBuffer const* /*commandBuffers*/
+) noexcept
+{
+    commandBufferConsumed = 0U;
+    dataRead = sizeof ( SoundEmitterSpatialComponentDesc );
+
+    // NOLINTNEXTLINE - downcast.
+    auto const& d = static_cast<SoundEmitterSpatialComponentDesc const&> ( desc );
+
+    bool success;
+    ComponentRef result = std::make_shared<SoundEmitterSpatialComponent> ( success, d, data );
+    return success ? result : ComponentRef {};
 }
 
 ComponentRef Component::CreateTransform ( android_vulkan::Renderer &/*renderer*/,

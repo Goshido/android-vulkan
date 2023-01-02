@@ -24,14 +24,18 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-[[maybe_unused]] constexpr static uint32_t STATIC_MESH_COMPONENT_DESC_FORMAT_VERSION = 2U;
-constexpr static GXColorRGB DEFAULT_COLOR ( 1.0F, 1.0F, 1.0F, 1.0F );
-constexpr static GXColorRGB DEFAULT_EMISSION ( 1.0F, 1.0F, 1.0F, 1.0F );
+namespace {
 
-constexpr static size_t ALLOCATE_COMMAND_BUFFERS = 8U;
-constexpr static size_t INITIAL_COMMAND_BUFFERS = 32U;
+[[maybe_unused]] constexpr uint32_t STATIC_MESH_COMPONENT_DESC_FORMAT_VERSION = 2U;
+constexpr GXColorRGB DEFAULT_COLOR ( 1.0F, 1.0F, 1.0F, 1.0F );
+constexpr GXColorRGB DEFAULT_EMISSION ( 1.0F, 1.0F, 1.0F, 1.0F );
 
-constexpr static char const DEFAULT_MATERIAL[] = "pbr/assets/System/Default.mtl";
+constexpr size_t ALLOCATE_COMMAND_BUFFERS = 8U;
+constexpr size_t INITIAL_COMMAND_BUFFERS = 32U;
+
+constexpr char const DEFAULT_MATERIAL[] = "pbr/assets/System/Default.mtl";
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -39,7 +43,7 @@ size_t StaticMeshComponent::_commandBufferIndex = 0U;
 std::vector<VkCommandBuffer> StaticMeshComponent::_commandBuffers {};
 VkCommandPool StaticMeshComponent::_commandPool {};
 std::vector<VkFence> StaticMeshComponent::_fences {};
-int StaticMeshComponent::_registerStaticMeshComponentIndex = std::numeric_limits<int>::max ();
+int StaticMeshComponent::_registerComponentIndex = std::numeric_limits<int>::max ();
 android_vulkan::Renderer* StaticMeshComponent::_renderer = nullptr;
 std::unordered_map<Component const*, ComponentRef> StaticMeshComponent::_staticMeshes {};
 
@@ -286,7 +290,7 @@ bool StaticMeshComponent::RegisterFromNative ( lua_State &vm, Actor &actor ) noe
         return false;
     }
 
-    lua_pushvalue ( &vm, _registerStaticMeshComponentIndex );
+    lua_pushvalue ( &vm, _registerComponentIndex );
     lua_pushlightuserdata ( &vm, this );
 
     return lua_pcall ( &vm, 1, 1, ScriptEngine::GetErrorHandlerIndex () ) == LUA_OK;
@@ -311,7 +315,7 @@ bool StaticMeshComponent::Init ( lua_State &vm, android_vulkan::Renderer &render
         return false;
     }
 
-    _registerStaticMeshComponentIndex = lua_gettop ( &vm );
+    _registerComponentIndex = lua_gettop ( &vm );
 
     constexpr luaL_Reg const extensions[] =
     {

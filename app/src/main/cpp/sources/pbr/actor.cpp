@@ -6,6 +6,8 @@
 #include <pbr/scene.h>
 #include <pbr/script_component.h>
 #include <pbr/script_engine.h>
+#include <pbr/sound_emitter_global_component.h>
+#include <pbr/sound_emitter_spatial_component.h>
 #include <pbr/static_mesh_component.h>
 #include <pbr/transform_component.h>
 #include <guid_generator.h>
@@ -26,10 +28,6 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-[[maybe_unused]] constexpr static uint32_t ACTOR_DESC_FORMAT_VERSION = 1U;
-
-//----------------------------------------------------------------------------------------------------------------------
-
 class Actor::StaticInitializer final
 {
     public:
@@ -46,14 +44,17 @@ class Actor::StaticInitializer final
 
 Actor::StaticInitializer::StaticInitializer () noexcept
 {
-    Actor::_destroyHandlers[ static_cast<size_t> ( ClassID::Camera ) ] = &Actor::DestroyComponentStub;
-    Actor::_destroyHandlers[ static_cast<size_t> ( ClassID::PointLight ) ] = &Actor::DestroyComponentStub;
-    Actor::_destroyHandlers[ static_cast<size_t> ( ClassID::Reflection ) ] = &Actor::DestroyComponentStub;
-    Actor::_destroyHandlers[ static_cast<size_t> ( ClassID::RigidBody ) ] = &Actor::DestroyRigidBodyComponent;
-    Actor::_destroyHandlers[ static_cast<size_t> ( ClassID::Script ) ] = &Actor::DestroyComponentStub;
-    Actor::_destroyHandlers[ static_cast<size_t> ( ClassID::StaticMesh ) ] = &Actor::DestroyStaticMeshComponent;
-    Actor::_destroyHandlers[ static_cast<size_t> ( ClassID::Transform ) ] = &Actor::DestroyComponentStub;
-    Actor::_destroyHandlers[ static_cast<size_t> ( ClassID::Unknown ) ] = &Actor::DestroyComponentStub;
+    auto* destroy = Actor::_destroyHandlers;
+    destroy[ static_cast<size_t> ( ClassID::Camera ) ] = &Actor::DestroyComponentStub;
+    destroy[ static_cast<size_t> ( ClassID::PointLight ) ] = &Actor::DestroyComponentStub;
+    destroy[ static_cast<size_t> ( ClassID::Reflection ) ] = &Actor::DestroyComponentStub;
+    destroy[ static_cast<size_t> ( ClassID::RigidBody ) ] = &Actor::DestroyRigidBodyComponent;
+    destroy[ static_cast<size_t> ( ClassID::Script ) ] = &Actor::DestroyComponentStub;
+    destroy[ static_cast<size_t> ( ClassID::SoundEmitterGlobal ) ] = &Actor::DestroyComponentStub;
+    destroy[ static_cast<size_t> ( ClassID::SoundEmitterSpatial ) ] = &Actor::DestroyComponentStub;
+    destroy[ static_cast<size_t> ( ClassID::StaticMesh ) ] = &Actor::DestroyStaticMeshComponent;
+    destroy[ static_cast<size_t> ( ClassID::Transform ) ] = &Actor::DestroyComponentStub;
+    destroy[ static_cast<size_t> ( ClassID::Unknown ) ] = &Actor::DestroyComponentStub;
 
     auto* native = Actor::_registerFromNativeHandlers;
     native[ static_cast<size_t> ( ClassID::Camera ) ] = &Actor::AppendCameraComponentFromNative;
@@ -61,6 +62,11 @@ Actor::StaticInitializer::StaticInitializer () noexcept
     native[ static_cast<size_t> ( ClassID::Reflection ) ] = &Actor::AppendReflectionComponentFromNative;
     native[ static_cast<size_t> ( ClassID::RigidBody ) ] = &Actor::AppendRigidBodyComponentFromNative;
     native[ static_cast<size_t> ( ClassID::Script ) ] = &Actor::AppendScriptComponentFromNative;
+    native[ static_cast<size_t> ( ClassID::SoundEmitterGlobal ) ] = &Actor::AppendSoundEmitterGlobalComponentFromNative;
+
+    native[ static_cast<size_t> ( ClassID::SoundEmitterSpatial ) ] =
+        &Actor::AppendSoundEmitterSpatialComponentFromNative;
+
     native[ static_cast<size_t> ( ClassID::StaticMesh ) ] = &Actor::AppendStaticMeshComponentFromNative;
     native[ static_cast<size_t> ( ClassID::Transform ) ] = &Actor::AppendTransformComponentFromNative;
     native[ static_cast<size_t> ( ClassID::Unknown ) ] = &Actor::AppendUnknownComponentFromNative;
@@ -71,12 +77,24 @@ Actor::StaticInitializer::StaticInitializer () noexcept
     script[ static_cast<size_t> ( ClassID::Reflection ) ] = &Actor::AppendReflectionComponentFromScript;
     script[ static_cast<size_t> ( ClassID::RigidBody ) ] = &Actor::AppendRigidBodyComponentFromScript;
     script[ static_cast<size_t> ( ClassID::Script ) ] = &Actor::AppendScriptComponentFromScript;
+    script[ static_cast<size_t> ( ClassID::SoundEmitterGlobal ) ] = &Actor::AppendSoundEmitterGlobalComponentFromScript;
+
+    script[ static_cast<size_t> ( ClassID::SoundEmitterSpatial ) ] =
+        &Actor::AppendSoundEmitterSpatialComponentFromScript;
+
     script[ static_cast<size_t> ( ClassID::StaticMesh ) ] = &Actor::AppendStaticMeshComponentFromScript;
     script[ static_cast<size_t> ( ClassID::Transform ) ] = &Actor::AppendTransformComponentFromScript;
     script[ static_cast<size_t> ( ClassID::Unknown ) ] = &Actor::AppendUnknownComponentFromScript;
 }
 
-[[maybe_unused]] static Actor::StaticInitializer const g_StaticInitializer {};
+//----------------------------------------------------------------------------------------------------------------------
+
+namespace {
+
+[[maybe_unused]] constexpr uint32_t ACTOR_DESC_FORMAT_VERSION = 1U;
+[[maybe_unused]] Actor::StaticInitializer const g_StaticInitializer {};
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -365,7 +383,6 @@ void Actor::AppendRigidBodyComponentFromNative ( ComponentRef &component,
     );
 }
 
-// NOLINTNEXTLINE - can be made static.
 void Actor::AppendRigidBodyComponentFromScript ( ComponentRef &component,
     ComponentList &/*renderable*/,
     android_vulkan::Physics &physics
@@ -383,7 +400,6 @@ void Actor::AppendRigidBodyComponentFromScript ( ComponentRef &component,
     );
 }
 
-// NOLINTNEXTLINE - can be made static.
 void Actor::AppendScriptComponentFromNative ( ComponentRef &component,
     ComponentList &/*renderable*/,
     android_vulkan::Physics &/*physics*/,
@@ -416,7 +432,6 @@ void Actor::AppendScriptComponentFromNative ( ComponentRef &component,
     );
 }
 
-// NOLINTNEXTLINE - can be made static.
 void Actor::AppendScriptComponentFromScript ( ComponentRef &component,
     ComponentList &/*renderable*/,
     android_vulkan::Physics &/*physics*/
@@ -425,6 +440,92 @@ void Actor::AppendScriptComponentFromScript ( ComponentRef &component,
     // NOLINTNEXTLINE - downcast.
     auto& scriptComponent = static_cast<ScriptComponent&> ( *component );
     scriptComponent.RegisterFromScript ( *this );
+}
+
+void Actor::AppendSoundEmitterGlobalComponentFromNative ( ComponentRef &component,
+    ComponentList &/*renderable*/,
+    android_vulkan::Physics &/*physics*/,
+    lua_State &vm
+) noexcept
+{
+    lua_pushvalue ( &vm, _appendComponentFromNativeIndex );
+    lua_pushvalue ( &vm, -2 );
+
+    // NOLINTNEXTLINE - downcast.
+    auto& emitterComponent = static_cast<SoundEmitterGlobalComponent&> ( *component );
+
+    if ( !emitterComponent.RegisterFromNative ( vm, *this ) )
+    {
+        android_vulkan::LogWarning (
+            "pbr::Actor::AppendSoundEmitterGlobalComponentFromNative - Can't register sound emitter component %s.",
+            emitterComponent.GetName ().c_str ()
+        );
+
+        lua_pop ( &vm, 2 );
+        return;
+    }
+
+    if ( lua_pcall ( &vm, 2, 0, ScriptEngine::GetErrorHandlerIndex () ) == LUA_OK )
+        return;
+
+    android_vulkan::LogWarning (
+        "pbr::Actor::AppendSoundEmitterGlobalComponentFromNative - Can't append sound emitter component %s "
+        "inside Lua VM.",
+        emitterComponent.GetName ().c_str ()
+    );
+}
+
+void Actor::AppendSoundEmitterGlobalComponentFromScript ( ComponentRef &component,
+    ComponentList &/*renderable*/,
+    android_vulkan::Physics &/*physics*/
+) noexcept
+{
+    // NOLINTNEXTLINE - downcast.
+    auto& emitterComponent = static_cast<SoundEmitterGlobalComponent&> ( *component );
+    emitterComponent.RegisterFromScript ( *this );
+}
+
+void Actor::AppendSoundEmitterSpatialComponentFromNative ( ComponentRef &component,
+    ComponentList &/*renderable*/,
+    android_vulkan::Physics &/*physics*/,
+    lua_State &vm
+) noexcept
+{
+    lua_pushvalue ( &vm, _appendComponentFromNativeIndex );
+    lua_pushvalue ( &vm, -2 );
+
+    // NOLINTNEXTLINE - downcast.
+    auto& emitterComponent = static_cast<SoundEmitterSpatialComponent&> ( *component );
+
+    if ( !emitterComponent.RegisterFromNative ( vm, *this ) )
+    {
+        android_vulkan::LogWarning (
+            "pbr::Actor::AppendSoundEmitterSpatialComponentFromNative - Can't register sound emitter component %s.",
+            emitterComponent.GetName ().c_str ()
+        );
+
+        lua_pop ( &vm, 2 );
+        return;
+    }
+
+    if ( lua_pcall ( &vm, 2, 0, ScriptEngine::GetErrorHandlerIndex () ) == LUA_OK )
+        return;
+
+    android_vulkan::LogWarning (
+        "pbr::Actor::AppendSoundEmitterSpatialComponentFromNative - Can't append sound emitter component %s "
+        "inside Lua VM.",
+        emitterComponent.GetName ().c_str ()
+    );
+}
+
+void Actor::AppendSoundEmitterSpatialComponentFromScript ( ComponentRef &component,
+    ComponentList &/*renderable*/,
+    android_vulkan::Physics &/*physics*/
+) noexcept
+{
+    // NOLINTNEXTLINE - downcast.
+    auto& emitterComponent = static_cast<SoundEmitterSpatialComponent&> ( *component );
+    emitterComponent.RegisterFromScript ( *this );
 }
 
 void Actor::AppendStaticMeshComponentFromNative ( ComponentRef &component,

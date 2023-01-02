@@ -19,8 +19,12 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
+namespace {
+
 // ~10 Mb of data at 64bit system
-constexpr static size_t INITIAL_CAPACITY = 131'072U;
+constexpr size_t INITIAL_CAPACITY = 131'072U;
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -38,127 +42,102 @@ void ScriptableGXMat4::Init ( lua_State &vm ) noexcept
             .name = "av_GXMat4Clone",
             .func = &ScriptableGXMat4::OnClone
         },
-
         {
             .name = "av_GXMat4Create",
             .func = &ScriptableGXMat4::OnCreate
         },
-
         {
             .name = "av_GXMat4Destroy",
             .func = &ScriptableGXMat4::OnDestroy
         },
-
         {
             .name = "av_GXMat4FromFast",
             .func = &ScriptableGXMat4::OnFromFast
         },
-
         {
             .name = "av_GXMat4GetX",
             .func = &ScriptableGXMat4::OnGetX
         },
-
         {
             .name = "av_GXMat4GetY",
             .func = &ScriptableGXMat4::OnGetY
         },
-
         {
             .name = "av_GXMat4GetZ",
             .func = &ScriptableGXMat4::OnGetZ
         },
-
         {
             .name = "av_GXMat4GetW",
             .func = &ScriptableGXMat4::OnGetW
         },
-
         {
             .name = "av_GXMat4Identity",
             .func = &ScriptableGXMat4::OnIdentity
         },
-
         {
             .name = "av_GXMat4Inverse",
             .func = &ScriptableGXMat4::OnInverse
         },
-
         {
             .name = "av_GXMat4Multiply",
             .func = &ScriptableGXMat4::OnMultiply
         },
-
         {
             .name = "av_GXMat4MultiplyMatrixVector",
             .func = &ScriptableGXMat4::OnMultiplyMatrixVector
         },
-
         {
             .name = "av_GXMat4MultiplyAsNormal",
             .func = &ScriptableGXMat4::OnMultiplyAsNormal
         },
-
         {
             .name = "av_GXMat4MultiplyAsPoint",
             .func = &ScriptableGXMat4::OnMultiplyAsPoint
         },
-
         {
             .name = "av_GXMat4MultiplyVectorMatrix",
             .func = &ScriptableGXMat4::OnMultiplyVectorMatrix
         },
-
         {
             .name = "av_GXMat4Perspective",
             .func = &ScriptableGXMat4::OnPerspective
         },
-
         {
             .name = "av_GXMat4RotationX",
             .func = &ScriptableGXMat4::OnRotationX
         },
-
         {
             .name = "av_GXMat4RotationY",
             .func = &ScriptableGXMat4::OnRotationY
         },
-
         {
             .name = "av_GXMat4RotationZ",
             .func = &ScriptableGXMat4::OnRotationZ
         },
-
         {
             .name = "av_GXMat4Scale",
             .func = &ScriptableGXMat4::OnScale
         },
-
         {
             .name = "av_GXMat4SetX",
             .func = &ScriptableGXMat4::OnSetX
         },
-
         {
             .name = "av_GXMat4SetY",
             .func = &ScriptableGXMat4::OnSetY
         },
-
         {
             .name = "av_GXMat4SetZ",
             .func = &ScriptableGXMat4::OnSetZ
         },
-
         {
             .name = "av_GXMat4SetW",
             .func = &ScriptableGXMat4::OnSetW
         },
-
         {
             .name = "av_GXMat4ToString",
             .func = &ScriptableGXMat4::OnToString
         },
-
         {
             .name = "av_GXMat4Translation",
             .func = &ScriptableGXMat4::OnTranslation

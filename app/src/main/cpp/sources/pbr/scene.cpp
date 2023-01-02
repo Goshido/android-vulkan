@@ -30,15 +30,19 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-constexpr static float DEFAULT_ASPECT_RATIO = 1920.0F / 1080.0F;
-constexpr static float DEFAULT_FOV = 60.0F;
-constexpr static GXVec3 DEFAULT_LOCATION ( 0.0F, 0.0F, 0.0F );
-constexpr static float DEFAULT_Z_NEAR = 1.0e-1F;
-constexpr static float DEFAULT_Z_FAR = 1.0e+4F;
+namespace {
 
-constexpr static size_t INITIAL_PENETRATION_SIZE = 32U;
+constexpr float DEFAULT_ASPECT_RATIO = 1920.0F / 1080.0F;
+constexpr float DEFAULT_FOV = 60.0F;
+constexpr GXVec3 DEFAULT_LOCATION ( 0.0F, 0.0F, 0.0F );
+constexpr float DEFAULT_Z_NEAR = 1.0e-1F;
+constexpr float DEFAULT_Z_FAR = 1.0e+4F;
 
-[[maybe_unused]] constexpr static uint32_t SCENE_DESC_FORMAT_VERSION = 3U;
+constexpr size_t INITIAL_PENETRATION_SIZE = 32U;
+
+[[maybe_unused]] constexpr uint32_t SCENE_DESC_FORMAT_VERSION = 3U;
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -87,18 +91,11 @@ android_vulkan::Physics& Scene::GetPhysics () noexcept
     return *_physics;
 }
 
-void Scene::OnCaptureInput () noexcept
-{
-    _gamepad.CaptureInput ();
-}
-
-void Scene::OnReleaseInput () const noexcept
-{
-    _gamepad.ReleaseInput ();
-}
-
 bool Scene::OnInitDevice ( android_vulkan::Renderer &renderer, android_vulkan::Physics &physics ) noexcept
 {
+    if ( !_soundMixer.Init () )
+        return false;
+
     _defaultCamera.SetProjection ( GXDegToRad ( DEFAULT_FOV ), DEFAULT_ASPECT_RATIO, DEFAULT_Z_NEAR, DEFAULT_Z_FAR );
     _penetrations.reserve ( INITIAL_PENETRATION_SIZE );
 
@@ -113,7 +110,7 @@ bool Scene::OnInitDevice ( android_vulkan::Renderer &renderer, android_vulkan::P
     _physics = &physics;
     ScriptEngine& scriptEngine = ScriptEngine::GetInstance ();
 
-    if ( !scriptEngine.Init ( renderer ) )
+    if ( !scriptEngine.Init ( renderer, _soundMixer ) )
         return false;
 
     _vm = &scriptEngine.GetVirtualMachine ();
@@ -175,6 +172,18 @@ bool Scene::OnInitDevice ( android_vulkan::Renderer &renderer, android_vulkan::P
             .func = &Scene::OnSetActiveCamera
         },
         {
+            .name = "av_SceneSetSoundChannelVolume",
+            .func = &Scene::OnSetSoundChannelVolume
+        },
+        {
+            .name = "av_SceneSetSoundListenerTransform",
+            .func = &Scene::OnSetSoundListenerTransform
+        },
+        {
+            .name = "av_SceneSetSoundMasterVolume",
+            .func = &Scene::OnSetSoundMasterVolume
+        },
+        {
             .name = "av_SceneSweepTestBox",
             .func = &Scene::OnSweepTestBox
         }
@@ -221,13 +230,12 @@ bool Scene::OnInitDevice ( android_vulkan::Renderer &renderer, android_vulkan::P
 
 void Scene::OnDestroyDevice () noexcept
 {
+    ScriptEngine::Destroy ();
     ScriptableSweepTestResult::Destroy ( *_vm );
     _scriptablePenetration.Destroy ( *_vm );
     _gamepad.Destroy ();
     _renderableList.clear ();
     _actors.clear ();
-
-    ScriptEngine::Destroy ();
 
     _physics = nullptr;
 
@@ -249,6 +257,20 @@ void Scene::OnDestroyDevice () noexcept
 
     _sceneHandle = std::numeric_limits<int>::max ();
     _vm = nullptr;
+
+    _soundMixer.Destroy ();
+}
+
+void Scene::OnPause () noexcept
+{
+    _soundMixer.Pause ();
+    _gamepad.ReleaseInput ();
+}
+
+void Scene::OnResume () noexcept
+{
+    _soundMixer.Resume ();
+    _gamepad.CaptureInput ();
 }
 
 bool Scene::OnPrePhysics ( double deltaTime ) noexcept
@@ -636,6 +658,37 @@ int Scene::OnSetActiveCamera ( lua_State* state )
 {
     auto& self = *static_cast<Scene*> ( lua_touserdata ( state, 1 ) );
     self._camera = static_cast<CameraComponent*> ( lua_touserdata ( state, 2 ) );
+    return 0;
+}
+
+int Scene::OnSetSoundChannelVolume ( lua_State* state )
+{
+    auto& self = *static_cast<Scene*> ( lua_touserdata ( state, 1 ) );
+
+    self._soundMixer.SetChannelVolume ( static_cast<android_vulkan::eSoundChannel> ( lua_tointeger ( state, 2 ) ),
+        static_cast<float> ( lua_tonumber ( state, 3 ) )
+    );
+
+    return 0;
+}
+
+int Scene::OnSetSoundListenerTransform ( lua_State* state )
+{
+    auto& self = *static_cast<Scene*> ( lua_touserdata ( state, 1 ) );
+    GXMat4 const& transform = ScriptableGXMat4::Extract ( state, 2 );
+    self._soundMixer.SetListenerLocation ( *reinterpret_cast<GXVec3 const*> ( &transform._m[ 3U ][ 0U ] ) );
+
+    GXQuat orientation {};
+    orientation.From ( transform );
+    self._soundMixer.SetListenerOrientation ( orientation );
+
+    return 0;
+}
+
+int Scene::OnSetSoundMasterVolume ( lua_State* state )
+{
+    auto& self = *static_cast<Scene*> ( lua_touserdata ( state, 1 ) );
+    self._soundMixer.SetMasterVolume ( static_cast<float> ( lua_tonumber ( state, 2 ) ) );
     return 0;
 }
 

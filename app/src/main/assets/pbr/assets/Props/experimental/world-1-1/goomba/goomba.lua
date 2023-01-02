@@ -1,4 +1,5 @@
 require "av://engine/script_component.lua"
+require "av://engine/sound_channel.lua"
 
 
 -- Constants
@@ -67,6 +68,8 @@ local function CheckTopSensor ( self, localMatrix, origin )
     end
 
     mario:Hit ( SQUASH_VELOCITY_FACTOR )
+    self:SpawnSound ()
+
     self._actor:Destroy ()
 end
 
@@ -97,6 +100,30 @@ local function GetSensorSize ( self, min, max )
     result:Subtract ( max, min )
     result:MultiplyScalar ( result, g_scene:GetRendererToPhysicsScaleFactor () )
     return result
+end
+
+local function SpawnSound ( self )
+    local location = GXVec3 ()
+    self._bodyKinematic:GetLocation ( location )
+
+    local actor = Actor ( "GoombaSound" )
+
+    actor:AppendComponent (
+        ScriptComponent ( "Script",
+            "av://assets/Props/experimental/world-1-1/logic/single_shot_sound.lua",
+
+            {
+                _duration = 1.0,
+                _distance = 45.0,
+                _location = location,
+                _soundAsset = "pbr/assets/Props/experimental/world-1-1/sounds/kick.wav",
+                _soundChannel = eSoundChannel.SFX,
+                _volume = 1.0
+            }
+        )
+    )
+
+    g_scene:AppendActor ( actor )
 end
 
 -- Engine event handlers
@@ -226,6 +253,7 @@ local function Constructor ( self, handle, params )
     obj.GetOrigin = GetOrigin
     obj.GetSensorOffset = GetSensorOffset
     obj.GetSensorSize = GetSensorSize
+    obj.SpawnSound = SpawnSound
 
     -- Engine events
     obj.OnActorConstructed = OnActorConstructed

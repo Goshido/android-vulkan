@@ -127,7 +127,7 @@ void Gamepad::UnbindRightTrigger () noexcept
     _rightTrigger._handler = nullptr;
 }
 
-void Gamepad::OnKeyDown ( int32_t key ) const noexcept
+bool Gamepad::OnKeyDown ( int32_t key ) const noexcept
 {
     KeyBind bind {};
 
@@ -137,18 +137,19 @@ void Gamepad::OnKeyDown ( int32_t key ) const noexcept
         auto const findResult = _mapper.find ( key );
 
         if ( findResult == _mapper.cend () )
-            return;
+            return false;
 
         bind = _downKeyBinds[ findResult->second ];
     }
 
     if ( !bind._handler )
-        return;
+        return false;
 
     bind._handler ( bind._context );
+    return true;
 }
 
-void Gamepad::OnKeyUp ( int32_t key ) const noexcept
+bool Gamepad::OnKeyUp ( int32_t key ) const noexcept
 {
     KeyBind bind {};
 
@@ -158,15 +159,16 @@ void Gamepad::OnKeyUp ( int32_t key ) const noexcept
         auto const findResult = _mapper.find ( key );
 
         if ( findResult == _mapper.cend () )
-            return;
+            return false;
 
         bind = _upKeyBinds[ findResult->second ];
     }
 
     if ( !bind._handler )
-        return;
+        return false;
 
     bind._handler ( bind._context );
+    return true;
 }
 
 void Gamepad::OnLeftStick ( float x, float y ) const noexcept

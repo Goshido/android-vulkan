@@ -9,7 +9,9 @@ local function IsComponent ( objectType )
         objectType == eObjectType.RigidBodyComponent or
         objectType == eObjectType.ScriptComponent or
         objectType == eObjectType.StaticMeshComponent or
-        objectType == eObjectType.TransformComponent
+        objectType == eObjectType.TransformComponent or
+        objectType == eObjectType.SoundEmitterGlobalComponent or
+        objectType == eObjectType.SoundEmitterSpatialComponent
 end
 
 -- Methods

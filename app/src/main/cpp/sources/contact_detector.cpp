@@ -50,7 +50,13 @@ void ContactDetector::Check ( ContactManager &contactManager, RigidBodyRef const
 
     if ( !_epa.Run ( _gjk.GetSimplex (), shapeA, shapeB ) )
     {
+
+#ifdef ANDROID_VULKAN_DEBUG
+
         NotifyEPAFail ();
+
+#endif // ANDROID_VULKAN_DEBUG
+
         return;
     }
 
@@ -493,7 +499,7 @@ void ContactDetector::ManifoldPoint ( ContactManager &contactManager,
     contactManager.Warm ( *manifold );
 }
 
-void ContactDetector::NotifyEPAFail () noexcept
+[[maybe_unused]] void ContactDetector::NotifyEPAFail () noexcept
 {
     constexpr char const format[] =
 R"__(ContactDetector::NotifyEPAFail - Can't find penetration depth and separation normal.

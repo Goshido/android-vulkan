@@ -4,6 +4,7 @@
 
 1) [About _C++ 20_, `-Wpedantic` support and _Android Studio_ integration](about-c++20-and-pedantic.md)
 1) [About _NDK 25.0.8775105_ and _Android Studio_ debugger](about-NDK-25.0.8775105.md)
+1) [_AAudio_ issues](aaudio-issues.md)
 1) [Building _Vulkan_ validation layers for _Android OS_](vulkan-validation-layers.md)
 1) [_CPU_ tracing](cpu-tracing.md)
 1) [_Logcat™_ best practices](logcat.md)

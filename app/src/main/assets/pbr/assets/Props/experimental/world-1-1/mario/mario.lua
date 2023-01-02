@@ -1,4 +1,5 @@
 require "av://engine/script_component.lua"
+require "av://engine/sound_emitter_global_component.lua"
 
 
 -- Constants
@@ -88,6 +89,10 @@ end
 local function OnPostPhysicsActive ( self, deltaTime )
     self._rigidBody:GetTransform ( self._transform )
     self._rigidBody:GetVelocityLinear ( self._velocity )
+
+    if self._music and not self._music:IsPlaying () then
+        self._music:Play ()
+    end
 end
 
 local function OnPostPhysicsIdle ( self, deltaTime )
@@ -145,9 +150,17 @@ local function OnActorConstructed ( self, actor )
     local min = self:GetOrigin ( actor, "Min" )
     local max = self:GetOrigin ( actor, "Max" )
     self._size = self:GetSensorSize ( min, max )
+
+    local music = SoundEmitterGlobalComponent ( "Music", eSoundChannel.Music )
+    music:SetSoundAsset ( "sounds/Credits.ogg", true )
+    music:SetVolume ( 0.25 )
+    actor:AppendComponent ( music )
+    self._music = music
 end
 
 local function QuitGame ( self )
+    self._music:Stop ()
+    self._music = nil
     g_scene:Quit ()
 end
 

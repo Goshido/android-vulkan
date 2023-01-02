@@ -115,14 +115,14 @@ bool World1x1::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcep
         return false;
 
     _physics.Resume ();
-    _scene.OnCaptureInput ();
+    _scene.OnResume ();
 
     return true;
 }
 
 void World1x1::OnSwapchainDestroyed ( android_vulkan::Renderer &renderer ) noexcept
 {
-    _scene.OnReleaseInput ();
+    _scene.OnPause ();
     _physics.Pause ();
     _renderSession.OnSwapchainDestroyed ( renderer.GetDevice () );
 }

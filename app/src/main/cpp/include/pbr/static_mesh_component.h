@@ -27,7 +27,7 @@ class StaticMeshComponent final : public RenderableComponent, public Transformab
         static std::vector<VkCommandBuffer>                             _commandBuffers;
         static VkCommandPool                                            _commandPool;
         static std::vector<VkFence>                                     _fences;
-        static int                                                      _registerStaticMeshComponentIndex;
+        static int                                                      _registerComponentIndex;
         static android_vulkan::Renderer*                                _renderer;
         static std::unordered_map<Component const*, ComponentRef>       _staticMeshes;
 

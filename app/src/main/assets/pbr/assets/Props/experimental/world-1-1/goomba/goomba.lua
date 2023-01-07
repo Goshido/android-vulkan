@@ -110,7 +110,7 @@ local function SpawnSound ( self )
 
     actor:AppendComponent (
         ScriptComponent ( "Script",
-            "av://assets/Props/experimental/world-1-1/logic/single_shot_sound.lua",
+            "av://assets/Props/experimental/world-1-1/scripts/single_shot_sound.lua",
 
             {
                 _duration = 1.0,

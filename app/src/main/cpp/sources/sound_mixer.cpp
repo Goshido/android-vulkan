@@ -39,7 +39,7 @@ constexpr auto WORKER_TIMEOUT = std::chrono::microseconds ( 1U );
 
     std::snprintf ( unknownFormat.data (), unknownFormat.size (), "UNKNOWN [%d]", static_cast<int> ( fmt ) );
     return unknownFormat.data ();
-};
+}
 
 class StreamCloser final
 {
@@ -155,48 +155,13 @@ bool SoundMixer::Init () noexcept
         return false;
     }
 
-    result = AAudioStreamBuilder_openStream ( _builder, &probe );
-
-    if ( !CheckAAudioResult ( result, "SoundMixer::ResolveBufferSize", "Can't open engine probe stream" ) )
-    {
-        Destroy ();
-        return false;
-    }
-
-    {
-        // Operator block is needed because StreamCloser instance.
-        StreamCloser const streamCloser ( *probe );
-        result = AAudioStream_setBufferSizeInFrames ( probe, _bufferFrameCount );
-
-        if ( result < 0 )
-        {
-            // Error happens.
-            CheckAAudioResult ( result, "SoundMixer::Init", "Can't change probe buffer size" );
-            Destroy ();
-            return false;
-        }
-
-        if ( result != _bufferFrameCount )
-        {
-            LogError ( "SoundMixer::Init - Can't change stream buffer size to %" PRIi32 ". "
-                "Actual returned size is %d.",
-                _bufferFrameCount,
-                static_cast<int> ( result )
-            );
-
-            Destroy ();
-            return false;
-        }
-
-        PrintStreamInfo ( *probe, "Engine parameters" );
-    }
-
     if ( !CreateHardwareStreams () )
     {
         Destroy ();
         return false;
     }
 
+    PrintStreamInfo ( *_streamInfo.front ()._stream, "Engine parameters" );
     _workerFlag = true;
 
     _workerThread = std::thread (
@@ -549,10 +514,14 @@ bool SoundMixer::CreateHardwareStreams () noexcept
             break;
         }
 
-        if ( !ValidateStream ( *si._stream ) )
+        if ( !SetStreamBufferSize ( *si._stream, "SoundMixer::CreateHardwareStreams" ) )
         {
+            assert ( false );
             return false;
         }
+
+        if ( !ValidateStream ( *si._stream ) )
+            return false;
 
         _free.push_back ( &si );
     }
@@ -576,6 +545,9 @@ std::optional<AAudioStream*> SoundMixer::CreateStream ( StreamInfo &streamInfo) 
     aaudio_result_t result = AAudioStreamBuilder_openStream ( _builder, &stream );
 
     if ( !CheckAAudioResult ( result, "SoundMixer::CreateStream", "Can't open stream" ) )
+        return std::nullopt;
+
+    if ( !SetStreamBufferSize ( *stream, "SoundMixer::CreateStream" ) )
         return std::nullopt;
 
     if ( !ValidateStream ( *stream ) )
@@ -644,6 +616,7 @@ bool SoundMixer::ResolveBufferSize () noexcept
     if ( !CheckAAudioResult ( result, "SoundMixer::ResolveBufferSize", "Can't open probe stream (branch 2)" ) )
         return false;
 
+    StreamCloser const streamCloser ( *probe );
     result = AAudioStream_setBufferSizeInFrames ( probe, burst );
 
     if ( result < 0 )
@@ -655,20 +628,24 @@ bool SoundMixer::ResolveBufferSize () noexcept
         return false;
     }
 
-    if ( result != burst )
-    {
-        LogError ( "SoundMixer::ResolveBufferSize - Can't change stream buffer size to burst size %" PRIi32 ". "
-            "Actual returned size is %d.",
-            burst,
-            static_cast<int> ( result )
-        );
-
-        return false;
-    }
-
-    _bufferFrameCount = burst;
-    _bufferSampleCount = static_cast<size_t> ( burst ) * static_cast<size_t> ( GetChannelCount () );
+    _bufferFrameCount = static_cast<int32_t> ( result );
+    _bufferSampleCount = static_cast<size_t> ( result ) * static_cast<size_t> ( GetChannelCount () );
     return true;
+}
+
+bool SoundMixer::SetStreamBufferSize ( AAudioStream &stream, char const* where ) const noexcept
+{
+    aaudio_result_t const result = AAudioStream_setBufferSizeInFrames ( &stream, _bufferFrameCount );
+
+    if ( result > 0 )
+        return true;
+
+    // Error happened.
+    char msg[ 128U ];
+    std::snprintf ( msg, std::size ( msg ), "Can't change stream buffer size to %" PRIi32, _bufferFrameCount );
+    CheckAAudioResult ( result, where, msg );
+    assert ( false );
+    return false;
 }
 
 bool SoundMixer::ValidateStream ( AAudioStream &stream ) const noexcept
@@ -785,7 +762,6 @@ aaudio_data_callback_result_t SoundMixer::PCMCallback ( AAudioStream* /*stream*/
     }
 
     SoundMixer* mixer = si._mixer;
-    assert ( mixer->_bufferFrameCount == numFrames );
 
     si._emitter->FillPCM (
         std::span ( static_cast<PCMStreamer::PCMType*> ( audioData ),

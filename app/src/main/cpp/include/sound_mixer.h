@@ -167,6 +167,7 @@ class SoundMixer final
 
         void RecreateSoundStream ( AAudioStream &stream ) noexcept;
         [[nodiscard]] bool ResolveBufferSize () noexcept;
+        [[nodiscard]] bool SetStreamBufferSize ( AAudioStream &stream, char const* where ) const noexcept;
         [[nodiscard]] bool ValidateStream ( AAudioStream &stream ) const noexcept;
 
         static void ErrorCallback ( AAudioStream* stream, void* userData, aaudio_result_t err );
@@ -182,7 +183,6 @@ class SoundMixer final
         );
 
         static void PrintStreamInfo ( AAudioStream &stream, char const* header ) noexcept;
-
 };
 
 } // namespace android_vulkan

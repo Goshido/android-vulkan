@@ -13,6 +13,7 @@ add_library ( layer_utils
     STATIC
     ../layers/vk_layer_config.cpp
     ../layers/vk_layer_extension_utils.cpp
+    ../layers/vk_layer_logging.cpp
     ../layers/vk_layer_utils.cpp
     ../layers/generated/vk_format_utils.cpp
 )
@@ -39,6 +40,7 @@ target_compile_options ( layer_utils PRIVATE
     -Werror
     -Wno-unused-function
     -Wno-unused-const-variable
+    -fvisibility=hidden
 )
 
 set_target_properties ( layer_utils PROPERTIES
@@ -56,7 +58,9 @@ find_library ( log-lib
 add_library ( VkLayer_khronos_validation
     SHARED
     ../layers/state_tracker.cpp
+    ../layers/android_validation.cpp
     ../layers/device_memory_state.cpp
+    ../layers/device_memory_validation.cpp
     ../layers/base_node.cpp
     ../layers/buffer_state.cpp
     ../layers/cmd_buffer_state.cpp
@@ -64,8 +68,11 @@ add_library ( VkLayer_khronos_validation
     ../layers/pipeline_state.cpp
     ../layers/pipeline_layout_state.cpp
     ../layers/pipeline_sub_state.cpp
+    ../layers/pipeline_validation.cpp
     ../layers/queue_state.cpp
     ../layers/render_pass_state.cpp
+    ../layers/video_session_state.cpp
+    ../layers/video_validation.cpp
     ../layers/core_validation.cpp
     ../layers/drawdispatch.cpp
     ../layers/descriptor_sets.cpp
@@ -91,6 +98,9 @@ add_library ( VkLayer_khronos_validation
     ../layers/generated/layer_chassis_dispatch.cpp
     ../layers/generated/chassis.cpp
     ../layers/layer_options.cpp
+    ../layers/query_validation.cpp
+    ../layers/ray_tracing_validation.cpp
+    ../layers/wsi_validation.cpp
     ../layers/xxhash.c
     ../layers/generated/parameter_validation.cpp
     ../layers/parameter_validation_utils.cpp
@@ -120,10 +130,10 @@ target_include_directories ( VkLayer_khronos_validation
 target_compile_definitions ( VkLayer_khronos_validation
     PRIVATE
     -DVK_ENABLE_BETA_EXTENSIONS
-    -DXXH_NO_LONG_LON
     -DVK_USE_PLATFORM_ANDROID_KHR
     -DVK_PROTOTYPES
     -DUSE_ROBIN_HOOD_HASHING
+    -DXXH_NO_LONG_LONG
 )
 
 target_compile_options ( VkLayer_khronos_validation PRIVATE
@@ -132,6 +142,7 @@ target_compile_options ( VkLayer_khronos_validation PRIVATE
     -Wno-unused-function
     -Wno-unused-const-variable
     -frtti
+    -fvisibility=hidden
 )
 
 target_link_libraries ( VkLayer_khronos_validation

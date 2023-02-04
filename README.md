@@ -18,7 +18,7 @@ Useful documentation is located [here](docs/documentation.md).
 
 * _Windows Vista_+ or _Monjaro KDE_
 * [_Android Studio Electric Eel | 2022.1.1 Patch 1_](https://developer.android.com/studio)
-* _Android Studio Gradle Plugin 7.3.1_
+* _Android Studio Gradle Plugin 7.4.1_
 * _Android NDK 25.2.9519653 (side by side)_
 * _Android SDK 11.0 (API level 30)_
 * _Android SDK Build-Tools 33.0.1_

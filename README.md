@@ -17,22 +17,22 @@ Useful documentation is located [here](docs/documentation.md).
 ### Requirements
 
 * _Windows Vista_+ or _Monjaro KDE_
-* [_Android Studio Dolphin | 2021.3.1 Patch 1_](https://developer.android.com/studio)
+* [_Android Studio Electric Eel | 2022.1.1 Patch 1_](https://developer.android.com/studio)
 * _Android Studio Gradle Plugin 7.3.1_
-* _Android NDK 25.1.8937393 (side by side)_
+* _Android NDK 25.2.9519653 (side by side)_
 * _Android SDK 11.0 (API level 30)_
 * _Android SDK Build-Tools 33.0.1_
 * _Android SDK Platform-Tools 33.0.3_
-* _Kotlin 1.7.20_
-* _Kotlin Gradle plugin 1.7.20_
+* _Kotlin 1.8.10_
+* _Kotlin Gradle plugin 1.8.0_
 * _CMake 3.22.1_
 * [_Gradle 7.6-bin_](https://services.gradle.org/distributions/)
-* [_DirectX Shader Compiler 1.7.2212.10023_](https://github.com/microsoft/DirectXShaderCompiler)
+* [_DirectX Shader Compiler 1.7.2212.10065_](https://github.com/microsoft/DirectXShaderCompiler)
 * [_libogg 1.3.5_](https://gitlab.xiph.org/xiph/ogg) `db5c7a49ce7ebda47b15b78471e78fb7f2483e22`
 * [_libvorbis 1.3.7_](https://gitlab.xiph.org/xiph/vorbis) `84c023699cdf023a32fa4ded32019f194afcdad0`
 * [_libvorbisfile 1.3.7_](https://gitlab.xiph.org/xiph/vorbis) `84c023699cdf023a32fa4ded32019f194afcdad0`
-* [_Vulkan Validation Layers_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) `6d6acb9ad84f8ad8cf429f5171873ce272503888`
-* [_Lua 5.4.5_](https://github.com/lua/lua) `be908a7d4d8130264ad67c5789169769f824c5d1`
+* [_Vulkan Validation Layers_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) `e7b63ce7ba3187a65da8c757676c71330be29346`
+* [_Lua 5.4.5_](https://github.com/lua/lua) `cf08915d62e338c987b71c078b148490510e9fe7`
 * Real _Android 11_ device with _Vulkan 1.1.131_ support
 * [_ARM Neon A64_](https://developer.arm.com/architectures/instruction-sets/simd-isas/neon/neon-programmers-guide-for-armv8-a/introducing-neon-for-armv8-a) native support
 

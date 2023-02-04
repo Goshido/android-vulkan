@@ -6,12 +6,12 @@ Starting from _Android NDK_ `23.0.7599858` the _Vulkan_ validation layers have b
 
 ## Compatible version
 
-The manual is based on `6d6acb9ad84f8ad8cf429f5171873ce272503888` commit of the [_Vulkan-ValidationLayers_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) repo. The manual is primary aimed for _Windows OS_ users.
+The manual is based on `e7b63ce7ba3187a65da8c757676c71330be29346` commit of the [_Vulkan-ValidationLayers_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) repo. The manual is primary aimed for _Windows OS_ users.
 
 ## Requirements
 
 - _Windows 11_
-- _Android NDK 25.1.8937393_
+- _Android NDK 25.2.9519653_
 - _CMake 3.22.1_
 - _Ninja 1.10.2_
 - _Python 3.11.1_
@@ -49,7 +49,7 @@ To build `glslang` go to `build-android/glslang` and run
 ```cmake
 mkdir install
 
-set ANDROID_NDK_ROOT=<Path to Android NDK v25.1.8937393>
+set ANDROID_NDK_ROOT=<Path to Android NDK v25.2.9519653>
 set ANDROID_CMAKE_DIR=<Path to Android's CMake v3.22.1>
 
 "%ANDROID_CMAKE_DIR%\cmake" . -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=./install -DANDROID_ABI=arm64-v8a -DCMAKE_BUILD_TYPE=Release -DANDROID_STL=c++_static -DANDROID_PLATFORM=android-30 -DCMAKE_SYSTEM_NAME=Android -DANDROID_TOOLCHAIN=clang -DANDROID_ARM_MODE=arm -DCMAKE_MAKE_PROGRAM=%ANDROID_NDK_ROOT%/prebuilt/windows-x86_64/bin/make -DCMAKE_TOOLCHAIN_FILE=%ANDROID_NDK_ROOT%/build/cmake/android.toolchain.cmake
@@ -79,7 +79,7 @@ To build `SPIRV-Tools` and `SPIRV-Tools-opt` go to `build-android/SPIRV-Tools` a
 
 ```txt
 python utils/git-sync-deps
-set ANDROID_NDK=<Path to Android NDK v25.1.8937393>
+set ANDROID_NDK=<Path to Android NDK v25.2.9519653>
 
 mkdir build && cd build
 mkdir libs
@@ -109,7 +109,7 @@ In order to use it you have to specify two environment variables:
 
 Variable name | Meaning | Example
 --- | --- | ---
-`NDK_DIR` | Directory where Android NDK is installed | `D:\Development\android-sdk\ndk\25.1.8937393`
+`NDK_DIR` | Directory where Android NDK is installed | `D:\Development\android-sdk\ndk\25.2.9519653`
 `ANDROID_CMAKE_DIR` | Directory where Android CMake is installed | `D:\Programs\Android\Sdk\cmake\3.22.1\bin`
 `VK_LAYER_DIR` | directory where Vulkan validation layer source code is located for Android | `D:\Development\Vulkan-ValidationLayers\build-android`
 

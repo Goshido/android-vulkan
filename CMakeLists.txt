@@ -160,6 +160,7 @@ add_library ( android-vulkan
 target_include_directories ( android-vulkan
     PRIVATE
     app/src/main/cpp/include
+    app/src/main/cpp/include/freetype2
 )
 
 # Disable libandroid-vulkan.so symbol publishing

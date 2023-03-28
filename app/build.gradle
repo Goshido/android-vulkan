@@ -5,7 +5,7 @@ plugins {
 
 android {
     compileSdkVersion 31
-    buildToolsVersion "33.0.1"
+    buildToolsVersion "33.0.2"
     ndkVersion "25.2.9519653"
     namespace 'com.goshidoInc.androidVulkan'
 
@@ -66,13 +66,6 @@ android {
 
             java.srcDirs += "src/main/kotlin"
         }
-    }
-
-    // Solving '2 files found with path' error [CMake 3.22.1]. Based on ideas from
-    // https://dtuto.com/questions/8657/2-files-found-with-path-lib-arm64-v8a-libc-shared-so-from-inputs-react-native
-    packagingOptions {
-        jniLibs.pickFirsts.add("lib/arm64-v8a/libLua.so")
-        jniLibs.pickFirsts.add("lib/arm64-v8a/libVkLayer_khronos_validation.so")
     }
 }
 

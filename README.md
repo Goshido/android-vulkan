@@ -17,16 +17,16 @@ Useful documentation is located [here](docs/documentation.md).
 ### Requirements
 
 * _Windows Vista_+ or _Monjaro KDE_
-* [_Android Studio Electric Eel | 2022.1.1 Patch 1_](https://developer.android.com/studio)
-* _Android Studio Gradle Plugin 7.4.1_
+* [_Android Studio Electric Eel | 2022.1.1 Patch 2_](https://developer.android.com/studio)
+* _Android Studio Gradle Plugin 7.4.2_
 * _Android NDK 25.2.9519653 (side by side)_
 * _Android SDK 11.0 (API level 30)_
-* _Android SDK Build-Tools 33.0.1_
-* _Android SDK Platform-Tools 33.0.3_
+* _Android SDK Build-Tools 33.0.2_
+* _Android SDK Platform-Tools 34.0.1_
 * _Kotlin 1.8.10_
 * _Kotlin Gradle plugin 1.8.0_
 * _CMake 3.22.1_
-* [_Gradle 7.6-bin_](https://services.gradle.org/distributions/)
+* [_Gradle 7.6.1-bin_](https://services.gradle.org/distributions/)
 * [_DirectX Shader Compiler 1.7.2212.10065_](https://github.com/microsoft/DirectXShaderCompiler)
 * [_libogg 1.3.5_](https://gitlab.xiph.org/xiph/ogg) `db5c7a49ce7ebda47b15b78471e78fb7f2483e22`
 * [_libvorbis 1.3.7_](https://gitlab.xiph.org/xiph/vorbis) `84c023699cdf023a32fa4ded32019f194afcdad0`

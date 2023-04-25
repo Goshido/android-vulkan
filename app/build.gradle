@@ -17,6 +17,17 @@ android {
         versionName "1.0"
     }
 
+    // [2023-04-25] This allows to use recent Kotlin toolchain. Without it you will get the following error:
+    // 'compileDebugJavaWithJavac' task (current target is 1.8) and 'compileDebugKotlin' task
+    // (current target is 17) jvm target compatibility should be set to the same Java version.
+    // Consider using JVM toolchain: https://kotl.in/gradle/jvm/toolchain
+    //
+    // See https://kotlinlang.org/docs/gradle-configure-project.html#gradle-java-toolchains-support
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
     // Release stuff and certificates. No hardcode. All delegates to the user environment.
     // Based on https://gist.github.com/lifuzu/9822276
     signingConfigs {

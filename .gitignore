@@ -14,3 +14,7 @@
 
 # HLSL SPIR-V
 /app/src/main/hlsl/disassm/blob.txt
+
+# Tools
+/tools/html-validator/.vscode/
+/tools/html-validator/build/

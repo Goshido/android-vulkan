@@ -25,7 +25,6 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/guid_generator.cpp
     app/src/main/cpp/sources/half_types.cpp
     app/src/main/cpp/sources/ktx_media_container.cpp
-    app/src/main/cpp/sources/logger.cpp
     app/src/main/cpp/sources/memory_allocator.cpp
     app/src/main/cpp/sources/mesh_geometry.cpp
     app/src/main/cpp/sources/pcm_streamer.cpp
@@ -197,6 +196,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/pbr/sweep_testing/actor_sweep.cpp
     app/src/main/cpp/sources/pbr/sweep_testing/sweep_testing.cpp
     app/src/main/cpp/sources/platform/android/file.cpp
+    app/src/main/cpp/sources/platform/android/logger.cpp
     app/src/main/cpp/sources/rainbow/rainbow.cpp
     app/src/main/cpp/sources/rotating_mesh/game.cpp
     app/src/main/cpp/sources/rotating_mesh/game_analytic.cpp

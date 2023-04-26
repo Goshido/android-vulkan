@@ -1,0 +1,45 @@
+#include "..\\..\\include\\version.h"
+
+#define STR(x) #x
+#define STRINGAZE(x) STR(x)
+#define VERSION_STRING STRINGAZE ( HTML_VALIDATOR_VERSION_MAJOR ) "." STRINGAZE ( HTML_VALIDATOR_VERSION_MINOR ) "." STRINGAZE ( HTML_VALIDATOR_VERSION_RELEASE ) "." STRINGAZE ( HTML_VALIDATOR_VERSION_BUILD ) "\0"
+
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION HTML_VALIDATOR_VERSION_MAJOR,HTML_VALIDATOR_VERSION_MINOR,HTML_VALIDATOR_VERSION_RELEASE,HTML_VALIDATOR_VERSION_BUILD
+PRODUCTVERSION HTML_VALIDATOR_VERSION_MAJOR,HTML_VALIDATOR_VERSION_MINOR,HTML_VALIDATOR_VERSION_RELEASE,HTML_VALIDATOR_VERSION_BUILD
+FILEFLAGSMASK 0x3fL
+
+#ifdef _DEBUG
+
+FILEFLAGS 0x1L
+
+#else
+
+FILEFLAGS 0x0L
+
+#endif
+
+FILEOS 0x40004L
+FILETYPE 0x1L
+FILESUBTYPE 0x0L
+
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904B0"
+        BEGIN
+            VALUE "CompanyName", "Goshido Inc."
+            VALUE "FileDescription", "HTML Validator"
+            VALUE "FileVersion", VERSION_STRING
+            VALUE "InternalName", "html-validator.exe"
+            VALUE "LegalCopyright", "2023 - 2023 © Goshido Inc. All rights reserved."
+            VALUE "OriginalFilename", "html-validator.exe"
+            VALUE "ProductName", "HTML Validator"
+            VALUE "ProductVersion", VERSION_STRING
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END

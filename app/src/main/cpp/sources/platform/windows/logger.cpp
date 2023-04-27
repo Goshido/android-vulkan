@@ -18,6 +18,7 @@ void LogDebug ( char const* format, ... )
     va_start ( args, format );
     std::vprintf ( format, args );
     va_end ( args );
+    std::printf ( "\n" );
 }
 
 void LogError ( char const* format, ... )
@@ -26,6 +27,7 @@ void LogError ( char const* format, ... )
     va_start ( args, format );
     std::vprintf ( format, args );
     va_end ( args );
+    std::printf ( "\n" );
 }
 
 void LogInfo ( char const* format, ... )
@@ -34,6 +36,7 @@ void LogInfo ( char const* format, ... )
     va_start ( args, format );
     std::vprintf ( format, args );
     va_end ( args );
+    std::printf ( "\n" );
 }
 
 void LogWarning ( char const* format, ... )
@@ -42,6 +45,7 @@ void LogWarning ( char const* format, ... )
     va_start ( args, format );
     std::vprintf ( format, args );
     va_end ( args );
+    std::printf ( "\n" );
 }
 
 } // namespace android_vulkan

@@ -14,7 +14,7 @@ _HTML_ validator tool assists the content creator during the process of creating
 
 <img src="./images/html-validator.png"/>
 
-<div style="text-align: right;"><a href="#table-of-content">↬ table of content ⇧</a></div>
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="how-to-use">How to use</a>
 
@@ -36,7 +36,7 @@ html-validator.exe "D:\Development\html5\assets\index.html"
 
 Or just drag'n'drop main _HTML_ file on `html-validator.exe`.
 
-<div style="text-align: right;"><a href="#table-of-content">↬ table of content ⇧</a></div>
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="how-to-build">How to build</a>
 
@@ -61,4 +61,4 @@ The project file is written on _CMake_. It's located in
 
 It's expected that the project will build out of the box for toolchain from [_requirements_](#requirements).
 
-<div style="text-align: right;"><a href="#table-of-content">↬ table of content ⇧</a></div>
+[↬ table of content ⇧](#table-of-content)

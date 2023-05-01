@@ -199,7 +199,7 @@ Property | Value
 
 Supported attributes: _N/A_.
 
-Default style: _N/A_, all attributes are `inherit`.
+Default style: _N/A_, all _CSS_ properties are `inherit`.
 
 [↬ table of content ⇧](#table-of-content)
 

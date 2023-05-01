@@ -126,6 +126,8 @@ Property | Value
 
 #### <a id="div">_DIV_</a>
 
+Supported child elements: [`div`](#div), [`img`](#img) and [`text`](#text).
+
 Supported attributes:
 
 Attribute | Constraint
@@ -160,6 +162,8 @@ Property | Value
 [↬ table of content ⇧](#table-of-content)
 
 #### <a id="img">_IMG_</a>
+
+Supported child elements: _N/A_.
 
 Supported attributes:
 
@@ -196,6 +200,8 @@ Property | Value
 [↬ table of content ⇧](#table-of-content)
 
 #### <a id="text">Text</a>
+
+Supported child elements: _N/A_.
 
 Supported attributes: _N/A_.
 

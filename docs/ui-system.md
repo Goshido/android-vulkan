@@ -242,7 +242,7 @@ Supported values: `block`, `inline-block` and `none`.
 
 ### <a id="font-family">`font-family`</a>
 
-Supported values: _UTF-8_ identifier. The font itself must be specified via [`@font-face`](#font-face) rule. There are **NO ANY DEFALUT FONT** _UI_ system. Every font **MUST BE** specified explicitly.
+Supported values: _UTF-8_ identifier. The font itself must be specified via [`@font-face`](#font-face) rule. There are **NO ANY DEFALUT FONT** for _UI_ system. Every font **MUST BE** specified explicitly.
 
 [↬ table of content ⇧](#table-of-content)
 

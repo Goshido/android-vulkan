@@ -1,0 +1,71 @@
+@font-face {
+    font-family: "Mario";
+    src: url("../fonts/PressStart2P-vaV7.ttf");
+}
+
+.ui-panel {
+    position: static;
+    padding: 7mm 15mm 0mm;
+    height: 10mm;
+    background-color: black;
+    font-size: 0px;
+}
+
+.main-font {
+    font-family: "Mario";
+    font-size: 12pt;
+    color: white;
+}
+
+.cell {
+    display: inline-block;
+    vertical-align: bottom;
+    width: 100%;
+}
+
+.coin-cell {
+    display: inline-block;
+    width: 100%;
+    font-size: 0mm;
+}
+
+.coin-line {
+    display: inline-block;
+    text-align: right;
+    width: 40%;
+}
+
+.coin {
+    display: inline-block;
+    margin-right: 1mm;
+    height: 5mm;
+}
+
+#lives {
+    display: inline-block;
+    text-align: left;
+    width: 60%;
+}
+
+.head-column {
+    display: inline-block;
+    text-align: left;
+    width: 25%;
+}
+
+.middle-column {
+    display: inline-block;
+    text-align: center;
+    width: 25%;
+}
+
+.tail-column {
+    display: inline-block;
+    text-align: right;
+    width: 25%;
+}
+
+#main-widget {
+    margin: 0px;
+    font-family: "Mario";
+}

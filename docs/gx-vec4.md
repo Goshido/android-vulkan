@@ -27,12 +27,14 @@ m:RorationX ( math.rad ( 77.7 ) )
 
 -- Performing vRow = v x m.
 local vRow = GXVec4 ()
-m:MultiplyVectorMatrix ( vRow, v );
+m:MultiplyVectorMatrix ( vRow, v )
 
 -- Performing vColumn = m x v.
 local vColumn = GXVec4 ()
-m:MultiplyMatrixVector ( vColumn, v );
+m:MultiplyMatrixVector ( vColumn, v )
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="metamethods">Metamethods</a>
 
@@ -66,6 +68,8 @@ Metamethod | Used
 `__tostring` | ✔️
 `__unm` | ❌
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="constructor">`Constructor`</a>
 
 Constructor creates new object with undefined initial values.
@@ -82,6 +86,8 @@ require "av://engine/gx_vec4.lua"
 
 local v = GXVec4 ()
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-init">`Init ( x, y, z, w )`</a>
 
@@ -107,3 +113,5 @@ require "av://engine/gx_vec4.lua"
 local v = GXVec4 ()
 v:Init ( 777.0, 3.33, 0.0, 1.0 )
 ```
+
+[↬ table of content ⇧](#table-of-content)

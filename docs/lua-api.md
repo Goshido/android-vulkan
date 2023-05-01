@@ -20,3 +20,4 @@
 - [_StaticMeshComponent_](./static-mesh-component.md)
 - [_TransformComponent_](./transform-component.md)
 - [_eSoundChannel_](./sound-channel.md)
+- [_UILayer_](./ui-layer.md)

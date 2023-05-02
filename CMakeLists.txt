@@ -179,6 +179,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/pbr/texture_present_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/texture_present_program.cpp
     app/src/main/cpp/sources/pbr/transform_component.cpp
+    app/src/main/cpp/sources/pbr/ui_layer.cpp
     app/src/main/cpp/sources/pbr/uniform_buffer_pool.cpp
     app/src/main/cpp/sources/pbr/uniform_buffer_pool_manager.cpp
     app/src/main/cpp/sources/pbr/unique_attribute_checker.cpp

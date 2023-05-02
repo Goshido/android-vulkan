@@ -567,8 +567,8 @@ Method performs subtract operation: `a` - `b`. The result is written to current 
 
 **Parameters:**
 
-- `a` [_required, *readonly, [GXVec3](./gx-vec3.md)_]: first vector
-- `b` [_required, *readonly, [GXVec3](./gx-vec3.md)_]: second vector
+- `a` [_required, readonly, [GXVec3](./gx-vec3.md)_]: first vector
+- `b` [_required, readonly, [GXVec3](./gx-vec3.md)_]: second vector
 
 **Return values:**
 
@@ -598,8 +598,8 @@ Method sums `a`, `b` and writes the result in current vector.
 
 **Parameters:**
 
-- `a` [_required, *readonly, [GXVec3](./gx-vec3.md)_]: first vector
-- `b` [_required, *readonly, [GXVec3](./gx-vec3.md)_]: second vector
+- `a` [_required, readonly, [GXVec3](./gx-vec3.md)_]: first vector
+- `b` [_required, readonly, [GXVec3](./gx-vec3.md)_]: second vector
 
 **Return values:**
 
@@ -629,9 +629,9 @@ Method performs the operation: `a` + `bScale` x `b`. The result is written to cu
 
 **Parameters:**
 
-- `a` [_required, *readonly, [GXVec3](./gx-vec3.md)_]: first vector
+- `a` [_required, readonly, [GXVec3](./gx-vec3.md)_]: first vector
 - `bScale` [_required, readonly, number_]: scale factor for second vector
-- `b` [_required, *readonly, [GXVec3](./gx-vec3.md)_]: second vector
+- `b` [_required, readonly, [GXVec3](./gx-vec3.md)_]: second vector
 
 **Return values:**
 

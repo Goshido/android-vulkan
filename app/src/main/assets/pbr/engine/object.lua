@@ -24,6 +24,7 @@ eObjectType = {
     TransformComponent = MakeUniqueID (),
     SoundEmitterGlobalComponent = MakeUniqueID (),
     SoundEmitterSpatialComponent = MakeUniqueID (),
+    UILayer = MakeUniqueID (),
     Unknown = MakeUniqueID ()
 }
 

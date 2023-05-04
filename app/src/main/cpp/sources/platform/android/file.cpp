@@ -3,6 +3,7 @@
 GX_DISABLE_COMMON_WARNINGS
 
 #include <cassert>
+#include <filesystem>
 #include <android/asset_manager.h>
 
 GX_RESTORE_WARNING_STATE
@@ -12,22 +13,47 @@ GX_RESTORE_WARNING_STATE
 
 namespace android_vulkan {
 
+namespace {
+
+// Android NDK 25.2.9519653 and Android 11 do not allow to have '../' in the asset path.
+// Such path could not be resolved in runtime and AAssetManager_open returns nullptr.
+[[nodiscard]] std::string NormalizeAssetPath ( std::string &&asset ) noexcept
+{
+    constexpr char hackRoot = '/';
+    constexpr size_t hackRootSize = 1U;
+    std::string p = std::filesystem::weakly_canonical ( std::filesystem::path ( hackRoot + asset ) ).string ();
+
+    if ( p.empty () )
+        return asset;
+
+    // Removing hacky root directory without reallocations.
+    char* str = p.data ();
+    size_t const newSize = p.size () - hackRootSize;
+
+    std::memmove ( str, str + hackRootSize, newSize );
+    p.resize ( newSize );
+
+    return p;
+}
+
+} // end of anonymous namespace
+
 extern AAssetManager* g_AssetManager;
 
 File::File ( std::string &&filePath ) noexcept:
-    _filePath ( std::move ( filePath ) )
+    _filePath ( NormalizeAssetPath ( std::move ( filePath ) ) )
 {
     // NOTHING
 }
 
 File::File ( std::string_view const &filePath ) noexcept:
-    _filePath ( filePath )
+    _filePath ( NormalizeAssetPath ( std::string ( filePath ) ) )
 {
     // NOTHING
 }
 
 File::File ( char const* filePath ) noexcept:
-    _filePath ( filePath )
+    _filePath ( NormalizeAssetPath ( filePath ) )
 {
     // NOTHING
 }
@@ -37,7 +63,7 @@ std::vector<uint8_t>& File::GetContent () noexcept
     return _content;
 }
 
-[[maybe_unused]] std::vector<uint8_t> const& File::GetContent () const noexcept
+std::vector<uint8_t> const& File::GetContent () const noexcept
 {
     return _content;
 }

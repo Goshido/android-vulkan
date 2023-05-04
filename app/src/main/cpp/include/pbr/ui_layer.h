@@ -2,11 +2,13 @@
 #define PBR_UI_LAYER_H
 
 
+#include "html5_parser.h"
 #include <GXCommon/GXWarning.h>
 
 GX_DISABLE_COMMON_WARNINGS
 
 #include <string>
+#include <unordered_set>
 
 extern "C" {
 
@@ -21,14 +23,18 @@ namespace pbr {
 
 class UILayer final
 {
+    private:
+        HTML5Parser                             _html {};
+        static std::unordered_set<UILayer*>     _uiLayers;
+
     public:
         UILayer () = delete;
 
-        UILayer ( UILayer const & ) = default;
-        UILayer& operator = ( UILayer const & ) = default;
+        UILayer ( UILayer const & ) = delete;
+        UILayer& operator = ( UILayer const & ) = delete;
 
-        UILayer ( UILayer && ) = default;
-        UILayer& operator = ( UILayer && ) = default;
+        UILayer ( UILayer && ) = delete;
+        UILayer& operator = ( UILayer && ) = delete;
 
         [[maybe_unused]] explicit UILayer ( bool &success, std::string &&uiAsset ) noexcept;
 

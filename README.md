@@ -17,8 +17,8 @@ Useful documentation is located [here](docs/documentation.md).
 ### Requirements
 
 * _Windows Vista_+ or _Monjaro KDE_
-* [_Android Studio Flamingo | 2022.2.1_](https://developer.android.com/studio)
-* _Android Studio Gradle Plugin 8.0.0_
+* [_Android Studio Flamingo | 2022.2.1 Patch 1_](https://developer.android.com/studio)
+* _Android Studio Gradle Plugin 8.0.1_
 * _Android NDK 25.2.9519653 (side by side)_
 * _Android SDK 11.0 (API level 30)_
 * _Android SDK Build-Tools 33.0.2_

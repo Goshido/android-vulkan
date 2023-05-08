@@ -76,6 +76,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/pbr/display_property.cpp
     app/src/main/cpp/sources/pbr/display_property_checker.cpp
     app/src/main/cpp/sources/pbr/div_html5_element.cpp
+    app/src/main/cpp/sources/pbr/div_ui_element.cpp
     app/src/main/cpp/sources/pbr/doctype_parser.cpp
     app/src/main/cpp/sources/pbr/fail_property_checker.cpp
     app/src/main/cpp/sources/pbr/font_face_css_rule.cpp

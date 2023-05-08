@@ -171,7 +171,7 @@ Attribute | Constraint
 --- | ---
 `id` | _UTF-8_ string. Must be unique. _CSS_ will be applied **AFTER** styles from `class` attribute.
 `class` | _UTF-8_ string. Supports list of classes. _CSS_ will be applied in order of declaration of the classes and **BEFORE** styles from `id` attribute.
-`src` | _UTF-8_ path to image asset. The path is relative from main _HTML_ file. Asset could be `.ktx`, `.png`, `.jpeg`, `.bmp` and `.tga`. In case of `.ktx` the framework will try to find `.png` version of the file. It's for browser compatibility as a preview tool.
+`src` | _UTF-8_ path to image asset. The path is relative from main _HTML_ file. Asset could be `.ktx`, `.png`, `.jpeg`, `.bmp` and `.tga`. In case of `.png` the framework will try to find `.ktx` version of the file as top priority. Such feature was implemented  for browser compatibility as a preview tool. It's because modern browsers **[2023-05-05]** are not able to render `.ktx` images which are highly optimized for mobile hardware.
 
 Default style:
 

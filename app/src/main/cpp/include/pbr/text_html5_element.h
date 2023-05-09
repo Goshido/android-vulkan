@@ -25,7 +25,7 @@ class TextHTML5Element final : public HTML5Element
 
         ~TextHTML5Element () override = default;
 
-        [[nodiscard]] std::u32string const& GetText () const noexcept;
+        [[nodiscard]] std::u32string& GetText () noexcept;
 
         [[nodiscard]] static std::optional<Result> Parse ( char const* html, Stream stream ) noexcept;
 };

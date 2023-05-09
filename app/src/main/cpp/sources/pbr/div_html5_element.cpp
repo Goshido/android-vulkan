@@ -47,7 +47,12 @@ DIVHTML5Element::DIVHTML5Element ( std::u32string &&id,
     _cssComputedValues._height = LengthValue ( LengthValue::eType::Auto, 0.0F );
 }
 
-std::u32string const& DIVHTML5Element::GetID () const noexcept
+HTML5Childs& DIVHTML5Element::GetChilds () noexcept
+{
+    return _childs;
+}
+
+std::u32string& DIVHTML5Element::GetID () noexcept
 {
     return _id;
 }

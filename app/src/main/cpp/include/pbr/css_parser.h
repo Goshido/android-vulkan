@@ -28,8 +28,8 @@ class CSSParser final
         CSSParser ( CSSParser const & ) = delete;
         CSSParser& operator = ( CSSParser const & ) = delete;
 
-        CSSParser ( CSSParser && ) = delete;
-        CSSParser& operator = ( CSSParser && ) = delete;
+        CSSParser ( CSSParser && ) = default;
+        CSSParser& operator = ( CSSParser && ) = default;
 
         ~CSSParser () = default;
 

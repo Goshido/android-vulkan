@@ -21,7 +21,7 @@ class DIVHTML5Element final : public HTML5Element
     private:
         HTML5Childs                                 _childs {};
         std::unordered_set<std::u32string> const    _classes {};
-        std::u32string const                        _id {};
+        std::u32string                              _id {};
 
     public:
         DIVHTML5Element () = delete;
@@ -39,7 +39,8 @@ class DIVHTML5Element final : public HTML5Element
 
         ~DIVHTML5Element () override = default;
 
-        [[nodiscard]] std::u32string const& GetID () const noexcept;
+        [[nodiscard]] HTML5Childs& GetChilds () noexcept;
+        [[nodiscard]] std::u32string& GetID () noexcept;
 
         [[nodiscard]] static std::optional<Result> Parse ( char const* html,
             Stream stream,

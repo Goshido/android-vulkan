@@ -12,7 +12,7 @@ TextHTML5Element::TextHTML5Element ( std::u32string &&text ) noexcept:
     // NOTHING
 }
 
-std::u32string const& TextHTML5Element::GetText () const noexcept
+std::u32string& TextHTML5Element::GetText () noexcept
 {
     return _text;
 }

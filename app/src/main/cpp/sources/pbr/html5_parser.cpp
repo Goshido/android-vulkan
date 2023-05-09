@@ -24,6 +24,26 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
+CSSComputedValues& HTML5Parser::GetBodyCSS () noexcept
+{
+    return _cssComputedValues;
+}
+
+std::u32string& HTML5Parser::GetBodyID () noexcept
+{
+    return _bodyID;
+}
+
+HTML5Childs& HTML5Parser::GetBodyChilds () noexcept
+{
+    return _bodyChilds;
+}
+
+CSSParser& HTML5Parser::GetCSSParser () noexcept
+{
+    return _css;
+}
+
 bool HTML5Parser::Parse ( char const* html, Stream stream, char const* assetRoot ) noexcept
 {
     auto skip = Whitespace::Skip ( html, stream );

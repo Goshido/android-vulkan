@@ -1,10 +1,10 @@
-#include <logger.h>
 #include <pbr/image_attribute_checker.h>
 #include <pbr/img_html5_element.h>
 #include <pbr/set_attribute_checker.h>
 #include <pbr/unique_attribute_checker.h>
 #include <pbr/utf8_parser.h>
 #include <pbr/whitespace.h>
+#include <logger.h>
 
 
 namespace pbr {
@@ -45,7 +45,12 @@ IMGHTML5Element::IMGHTML5Element ( std::u32string &&id,
     _cssComputedValues._height = LengthValue ( LengthValue::eType::Auto, 0.0F );
 }
 
-std::u32string const& IMGHTML5Element::GetID () const noexcept
+std::string& IMGHTML5Element::GetAssetPath () noexcept
+{
+    return _assetPath;
+}
+
+std::u32string& IMGHTML5Element::GetID () noexcept
 {
     return _id;
 }

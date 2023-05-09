@@ -38,6 +38,11 @@ class HTML5Parser final
 
         ~HTML5Parser () = default;
 
+        [[nodiscard]] CSSComputedValues& GetBodyCSS () noexcept;
+        [[nodiscard]] HTML5Childs& GetBodyChilds () noexcept;
+        [[nodiscard]] std::u32string& GetBodyID () noexcept;
+        [[nodiscard]] CSSParser& GetCSSParser () noexcept;
+
         [[nodiscard]] bool Parse ( char const* html, Stream stream, char const* assetRoot ) noexcept;
 
     private:

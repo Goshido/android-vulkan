@@ -21,7 +21,7 @@ class IMGHTML5Element final : public HTML5Element
     private:
         std::string                                 _assetPath {};
         std::unordered_set<std::u32string> const    _classes {};
-        std::u32string const                        _id {};
+        std::u32string                              _id {};
 
     public:
         IMGHTML5Element () = delete;
@@ -39,7 +39,8 @@ class IMGHTML5Element final : public HTML5Element
 
         ~IMGHTML5Element () override = default;
 
-        [[nodiscard]] std::u32string const& GetID () const noexcept;
+        [[nodiscard]] std::string& GetAssetPath () noexcept;
+        [[nodiscard]] std::u32string& GetID () noexcept;
 
         [[nodiscard]] static std::optional<Result> Parse ( char const* html,
             Stream stream,

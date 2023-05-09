@@ -96,6 +96,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/pbr/html5_parser.cpp
     app/src/main/cpp/sources/pbr/html5_tag.cpp
     app/src/main/cpp/sources/pbr/image_attribute_checker.cpp
+    app/src/main/cpp/sources/pbr/image_ui_element.cpp
     app/src/main/cpp/sources/pbr/img_html5_element.cpp
     app/src/main/cpp/sources/pbr/length_property.cpp
     app/src/main/cpp/sources/pbr/length_property_checker.cpp
@@ -177,9 +178,11 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/pbr/text_align_property.cpp
     app/src/main/cpp/sources/pbr/text_align_property_checker.cpp
     app/src/main/cpp/sources/pbr/text_html5_element.cpp
+    app/src/main/cpp/sources/pbr/text_ui_element.cpp
     app/src/main/cpp/sources/pbr/texture_present_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/texture_present_program.cpp
     app/src/main/cpp/sources/pbr/transform_component.cpp
+    app/src/main/cpp/sources/pbr/ui_element.cpp
     app/src/main/cpp/sources/pbr/ui_layer.cpp
     app/src/main/cpp/sources/pbr/uniform_buffer_pool.cpp
     app/src/main/cpp/sources/pbr/uniform_buffer_pool_manager.cpp

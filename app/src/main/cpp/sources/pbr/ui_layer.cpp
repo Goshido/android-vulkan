@@ -1,3 +1,9 @@
+#include <pbr/div_html5_element.h>
+#include <pbr/html5_parser.h>
+#include <pbr/img_html5_element.h>
+#include <pbr/image_ui_element.h>
+#include <pbr/text_html5_element.h>
+#include <pbr/text_ui_element.h>
 #include <pbr/ui_layer.h>
 #include <file.h>
 #include <logger.h>
@@ -21,21 +27,96 @@ std::unordered_set<UILayer*> UILayer::_uiLayers {};
 
 UILayer::UILayer ( bool &success, std::string &&uiAsset ) noexcept
 {
-
     android_vulkan::File asset ( uiAsset );
+    success = asset.LoadContent ();
 
-    if ( !asset.LoadContent () )
-    {
-        success = false;
+    if ( !success )
         return;
-    }
 
     std::vector<uint8_t>& content = asset.GetContent ();
+    HTML5Parser html {};
 
-    success = _html.Parse ( uiAsset.c_str (),
+    success = html.Parse ( uiAsset.c_str (),
         Stream ( Stream::Data ( content.data (), content.size () ), 1U ),
         std::filesystem::path ( uiAsset ).parent_path ().string ().c_str ()
     );
+
+    if ( !success )
+        return;
+
+    _css = std::move ( html.GetCSSParser () );
+    _body = std::make_unique<DIVUIElement> ( html.GetBodyCSS () );
+
+    if ( std::u32string& id = html.GetBodyID (); !id.empty () )
+        _namedElements.emplace ( std::move ( id ), _body.get () );
+
+    // Using recursive lambda trick. Generic lambda. Pay attention to last parameter.
+    auto const append = [] ( NamedElements &namedElements,
+        UIElement &root,
+        HTML5Element &htmlChild,
+        auto append
+    ) noexcept -> bool
+    {
+        HTML5Tag const tag = htmlChild.GetTag ();
+
+        if ( tag == HTML5Tag::eTag::Text )
+        {
+            // NOLINTNEXTLINE - downcast.
+            auto& text = static_cast<TextHTML5Element&> ( htmlChild );
+
+            root.AppendChildElement ( std::make_unique<TextUIElement> ( std::move ( text.GetText () ) ) );
+            return true;
+        }
+
+        if ( tag == HTML5Tag::eTag::IMG )
+        {
+            // NOLINTNEXTLINE - downcast.
+            auto& img = static_cast<IMGHTML5Element&> ( htmlChild );
+
+            ImageUIElement* i = new ImageUIElement ( std::move ( img.GetAssetPath () ), img._cssComputedValues );
+
+            if ( std::u32string& id = img.GetID (); !id.empty () )
+                namedElements.emplace ( std::move ( id ), i );
+
+            root.AppendChildElement ( std::unique_ptr<UIElement> ( i ) );
+            return true;
+        }
+
+        if ( tag != HTML5Tag::eTag::DIV )
+        {
+            android_vulkan::LogWarning ( "pbr::UILayer::UILayer - Unexpected tag '%s',", tag.ToString () );
+            return false;
+        }
+
+        // NOLINTNEXTLINE - downcast.
+        auto& div = static_cast<DIVHTML5Element&> ( htmlChild );
+
+        DIVUIElement* d = new DIVUIElement ( div._cssComputedValues );
+
+        if ( std::u32string& id = div.GetID (); !id.empty () )
+            namedElements.emplace ( std::move ( id ), d );
+
+        root.AppendChildElement ( std::unique_ptr<UIElement> ( d ) );
+
+        for ( HTML5Childs& childs = div.GetChilds (); auto& child : childs )
+        {
+            if ( !append ( namedElements, *d, *child, append ) )
+            {
+                return false;
+            }
+        }
+
+        return true;
+    };
+
+    for ( HTML5Childs& childs = html.GetBodyChilds (); auto& child : childs )
+    {
+        if ( !append ( _namedElements, *_body, *child, append ) )
+        {
+            success = false;
+            return;
+        }
+    }
 }
 
 bool UILayer::Init ( lua_State &vm ) noexcept

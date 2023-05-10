@@ -3,11 +3,12 @@
 
 namespace pbr {
 
-ImageUIElement::ImageUIElement ( std::string &&asset, CSSComputedValues const &/*css*/ ) noexcept:
+ImageUIElement::ImageUIElement ( std::string &&asset, CSSComputedValues const &css ) noexcept:
     UIElement ( true ),
-    _asset ( std::move ( asset ) )
+    _asset ( std::move ( asset ) ),
+    _css ( css )
 {
-    // TODO
+    // NOTHING
 }
 
 void ImageUIElement::ApplyLayout () noexcept

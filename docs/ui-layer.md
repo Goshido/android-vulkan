@@ -1,4 +1,4 @@
-# _UI_ layer
+# _UILayer_
 
 ```lua
 require "av://engine/ui_layer.lua"
@@ -42,7 +42,7 @@ Metamethod | Used
 `__concat` | ❌
 `__div` | ❌
 `__eq` | ❌
-`__gc` | ❌
+`__gc` | ✔️
 `__idiv` | ❌
 `__index` | ❌
 `__le` | ❌

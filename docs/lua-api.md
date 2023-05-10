@@ -4,6 +4,7 @@
 
 - [_Actor_](./actor.md)
 - [_CameraComponent_](./camera-component.md)
+- [_DIVUIElement_](./div_ui_element.md)
 - [_GXMat3_](./gx-mat3.md)
 - [_GXMat4_](./gx-mat4.md)
 - [_GXQuat_](./gx-quat.md)
@@ -18,6 +19,7 @@
 - [_SoundEmitterGlobalComponent_](./sound-emitter-global-component.md)
 - [_SoundEmitterSpatialComponent_](./sound-emitter-spatial-component.md)
 - [_StaticMeshComponent_](./static-mesh-component.md)
+- [_TextUIElement_](./text-ui-element.md)
 - [_TransformComponent_](./transform-component.md)
 - [_eSoundChannel_](./sound-channel.md)
 - [_UILayer_](./ui-layer.md)

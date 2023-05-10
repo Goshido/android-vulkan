@@ -11,7 +11,9 @@ namespace pbr {
 class ImageUIElement : public UIElement
 {
     private:
-        std::string     _asset;
+        std::string             _asset {};
+        CSSComputedValues       _css {};
+
 
     public:
         ImageUIElement () = delete;

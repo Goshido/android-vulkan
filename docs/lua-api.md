@@ -10,6 +10,7 @@
 - [_GXQuat_](./gx-quat.md)
 - [_GXVec3_](./gx-vec3.md)
 - [_GXVec4_](./gx-vec4.md)
+- [_ImageUIElement_](./image-ui-element.md)
 - [_InputEvent_](./input-event.md)
 - [_Logger_](./logger.md)
 - [_Material_](./material.md)

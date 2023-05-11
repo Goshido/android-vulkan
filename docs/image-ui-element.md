@@ -1,7 +1,7 @@
-# _DIVUIElement_
+# _ImageUIElement_
 
 ```lua
-require "av://engine/div_ui_element.lua"
+require "av://engine/image_ui_element.lua"
 ```
 
 
@@ -10,23 +10,20 @@ require "av://engine/div_ui_element.lua"
 - [_Brief_](#brief)
 - [_Metamethods_](#metamethods)
 - [`Constructor`](#constructor)
-- [`GetTextElement ()`](#method-get-text-element)
 - [`Hide ()`](#method-hide)
 - [`Show ()`](#method-show)
 
 ## <a id="brief">Brief</a>
 
-Class allows to manipulate [_DIV_](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/div) element inside [_UI_ system](ui-system.md) assets.
-
-**Note:** The _HTML_ body element could be treated as [_DIV_](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/div) element.
+Class allows to manipulate [_IMG_](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/img) element inside [_UI_ system](ui-system.md) assets.
 
 ```lua
-require "av://engine/text_ui_element.lua"
-require "av://engine/div_ui_element.lua"
+require "av://engine/image_ui_element.lua"
+require "av://engine/ui_layer.lua"
 
 
 local uiLayer = UILayer ( "example/ui/index.html" )
-local div = uiLayer:Find ( "main-widget" )
+local image = uiLayer:Find ( "coin" )
 ```
 
 [↬ table of content ⇧](#table-of-content)
@@ -71,34 +68,6 @@ _N/A_
 
 [↬ table of content ⇧](#table-of-content)
 
-## <a id="method-get-text-element">`GetTextElement ()`</a>
-
-Methods returns **FIRST** child [_TextUIElement_](./text-ui-element.md) of current [_DIV_](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/div) element. _HTML_ doesn't provide any ways to create named text elements. So this method is the way to overcome that rule.
-
-**Parameters:**
-
-- none
-
-**Return values:**
-
-- `#1` [_required, [_TextUIElement_](./text-ui-element.md) or nil_]: first found [_TextUIElement_](./text-ui-element.md) if it exists. Otherwise `nil`.
-
-**Example:**
-
-```lua
-require "av://engine/div_ui_element.lua"
-require "av://engine/text_ui_element.lua"
-require "av://engine/ui_layer.lua"
-
-
-local uiLayer = UILayer ( "example/ui/index.html" )
-
-local div = uiLayer:Find ( "main-widget" )
-local text = div:GetTextElement ()
-```
-
-[↬ table of content ⇧](#table-of-content)
-
 ## <a id="method-hide">`Hide ()`</a>
 
 Method hides element.
@@ -114,14 +83,14 @@ Method hides element.
 **Example:**
 
 ```lua
-require "av://engine/div_ui_element.lua"
+require "av://engine/image_ui_element.lua"
 require "av://engine/ui_layer.lua"
 
 
 local uiLayer = UILayer ( "example/ui/index.html" )
 
-local div = uiLayer:Find ( "main-widget" )
-div:Hide ()
+local image = uiLayer:Find ( "coin" )
+image:Hide ()
 ```
 
 [↬ table of content ⇧](#table-of-content)
@@ -141,14 +110,14 @@ Method shows element.
 **Example:**
 
 ```lua
-require "av://engine/div_ui_element.lua"
+require "av://engine/image_ui_element.lua"
 require "av://engine/ui_layer.lua"
 
 
 local uiLayer = UILayer ( "example/ui/index.html" )
 
-local div = uiLayer:Find ( "main-widget" )
-div:Show ()
+local image = uiLayer:Find ( "coin" )
+image:Show ()
 ```
 
 [↬ table of content ⇧](#table-of-content)

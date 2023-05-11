@@ -45,7 +45,7 @@ Metamethod | Used
 `__concat` | ❌
 `__div` | ❌
 `__eq` | ❌
-`__gc` | ❌
+`__gc` | ✔️
 `__idiv` | ❌
 `__index` | ❌
 `__le` | ❌
@@ -73,7 +73,7 @@ _N/A_
 
 ## <a id="method-hide">`Hide ()`</a>
 
-Method hides text element.
+Method hides element.
 
 **Parameters:**
 
@@ -100,7 +100,7 @@ text:Hide ()
 
 ## <a id="method-show">`Show ()`</a>
 
-Method shows text element.
+Method shows element.
 
 **Parameters:**
 

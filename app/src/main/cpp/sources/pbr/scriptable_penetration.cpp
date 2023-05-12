@@ -21,7 +21,7 @@ bool ScriptablePenetration::Init ( lua_State &vm ) noexcept
 {
     if ( !lua_checkstack ( &vm, 5 ) )
     {
-        android_vulkan::LogError ( "pbr::ScriptablePenetration::Init - Stack too small." );
+        android_vulkan::LogError ( "pbr::ScriptablePenetration::Init - Stack is too small." );
         return false;
     }
 
@@ -77,7 +77,7 @@ void ScriptablePenetration::Destroy ( lua_State &vm ) noexcept
 
     if ( !lua_checkstack ( &vm, 1 ) )
     {
-        android_vulkan::LogError ( "pbr::ScriptablePenetration::Init - Stack too small." );
+        android_vulkan::LogError ( "pbr::ScriptablePenetration::Init - Stack is too small." );
         return;
     }
 
@@ -91,7 +91,7 @@ bool ScriptablePenetration::PublishResult ( lua_State &vm,
 {
     if ( !lua_checkstack ( &vm, 7 ) )
     {
-        android_vulkan::LogError ( "pbr::ScriptablePenetration::PublishResult - Stack too small." );
+        android_vulkan::LogError ( "pbr::ScriptablePenetration::PublishResult - Stack is too small." );
         return false;
     }
 
@@ -202,7 +202,7 @@ bool ScriptablePenetration::Append ( lua_State &vm,
 {
     if ( !lua_checkstack ( &vm, 5 ) )
     {
-        android_vulkan::LogError ( "pbr::ScriptablePenetration::Append - Stack too small." );
+        android_vulkan::LogError ( "pbr::ScriptablePenetration::Append - Stack is too small." );
         return false;
     }
 
@@ -259,7 +259,7 @@ bool ScriptablePenetration::FindVec3Constructor ( lua_State &vm ) noexcept
 {
     if ( !lua_checkstack ( &vm, 3 ) )
     {
-        android_vulkan::LogError ( "pbr::ScriptablePenetration::FindVec3Constructor - Stack too small." );
+        android_vulkan::LogError ( "pbr::ScriptablePenetration::FindVec3Constructor - Stack is too small." );
         return false;
     }
 

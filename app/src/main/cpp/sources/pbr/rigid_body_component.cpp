@@ -132,7 +132,7 @@ bool RigidBodyComponent::RegisterFromNative ( Actor &actor, android_vulkan::Phys
 
     if ( !lua_checkstack ( &vm, 3 ) )
     {
-        android_vulkan::LogError ( "pbr::ScriptComponent::Register - Stack too small." );
+        android_vulkan::LogError ( "pbr::ScriptComponent::Register - Stack is too small." );
         return false;
     }
 
@@ -161,7 +161,7 @@ bool RigidBodyComponent::Init ( lua_State &vm ) noexcept
 {
     if ( !lua_checkstack ( &vm, 1 ) )
     {
-        android_vulkan::LogError ( "pbr::RigidBodyComponent::Init - Stack too small." );
+        android_vulkan::LogError ( "pbr::RigidBodyComponent::Init - Stack is too small." );
         return false;
     }
 
@@ -263,7 +263,7 @@ int RigidBodyComponent::OnCreate ( lua_State* state )
 {
     if ( !lua_checkstack ( state, 2 ) )
     {
-        android_vulkan::LogWarning ( "pbr::RigidBodyComponent::OnCreate - Stack too small." );
+        android_vulkan::LogWarning ( "pbr::RigidBodyComponent::OnCreate - Stack is too small." );
         return 0;
     }
 

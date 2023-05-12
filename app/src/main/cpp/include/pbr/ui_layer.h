@@ -35,11 +35,11 @@ class UILayer final
         UILayer ( UILayer && ) = delete;
         UILayer& operator = ( UILayer && ) = delete;
 
-        explicit UILayer ( bool &success, std::string &&uiAsset ) noexcept;
+        explicit UILayer ( bool &success, lua_State &vm, std::string &&uiAsset ) noexcept;
 
         ~UILayer () = default;
 
-        [[nodiscard]] static bool Init ( lua_State &vm ) noexcept;
+        static void Init ( lua_State &vm ) noexcept;
         static void Destroy () noexcept;
 
     private:

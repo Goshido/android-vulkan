@@ -94,7 +94,7 @@ bool CameraComponent::Register ( lua_State &vm ) noexcept
 {
     if ( !lua_checkstack ( &vm, 2 ) )
     {
-        android_vulkan::LogError ( "pbr::CameraComponent::Register - Stack too small." );
+        android_vulkan::LogError ( "pbr::CameraComponent::Register - Stack is too small." );
         return false;
     }
 
@@ -108,7 +108,7 @@ bool CameraComponent::Init ( lua_State &vm ) noexcept
 {
     if ( !lua_checkstack ( &vm, 1 ) )
     {
-        android_vulkan::LogError ( "pbr::CameraComponent::Init - Stack too small." );
+        android_vulkan::LogError ( "pbr::CameraComponent::Init - Stack is too small." );
         return false;
     }
 

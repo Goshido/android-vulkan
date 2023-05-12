@@ -131,7 +131,7 @@ bool SoundEmitterSpatialComponent::RegisterFromNative ( lua_State &vm, Actor &ac
 
     if ( !lua_checkstack ( &vm, 2 ) )
     {
-        android_vulkan::LogError ( "pbr::SoundEmitterSpatialComponent::RegisterFromNative - Stack too small." );
+        android_vulkan::LogError ( "pbr::SoundEmitterSpatialComponent::RegisterFromNative - Stack is too small." );
         return false;
     }
 
@@ -150,7 +150,7 @@ bool SoundEmitterSpatialComponent::Init ( lua_State &vm, android_vulkan::SoundMi
 {
     if ( !lua_checkstack ( &vm, 1 ) )
     {
-        android_vulkan::LogError ( "pbr::SoundEmitterSpatialComponent::Init - Stack too small." );
+        android_vulkan::LogError ( "pbr::SoundEmitterSpatialComponent::Init - Stack is too small." );
         return false;
     }
 
@@ -237,7 +237,7 @@ int SoundEmitterSpatialComponent::OnCreate ( lua_State* state )
 {
     if ( !lua_checkstack ( state, 1 ) )
     {
-        android_vulkan::LogWarning ( "pbr::SoundEmitterSpatialComponent::OnCreate - Stack too small." );
+        android_vulkan::LogWarning ( "pbr::SoundEmitterSpatialComponent::OnCreate - Stack is too small." );
         return 0;
     }
 
@@ -284,7 +284,7 @@ int SoundEmitterSpatialComponent::OnGetVolume ( lua_State* state )
 {
     if ( !lua_checkstack ( state, 1 ) )
     {
-        android_vulkan::LogWarning ( "pbr::SoundEmitterSpatialComponent::OnGetVolume - Stack too small." );
+        android_vulkan::LogWarning ( "pbr::SoundEmitterSpatialComponent::OnGetVolume - Stack is too small." );
         return 0;
     }
 
@@ -297,7 +297,7 @@ int SoundEmitterSpatialComponent::OnIsPlaying ( lua_State* state )
 {
     if ( !lua_checkstack ( state, 1 ) )
     {
-        android_vulkan::LogWarning ( "pbr::SoundEmitterSpatialComponent::OnIsPlaying - Stack too small." );
+        android_vulkan::LogWarning ( "pbr::SoundEmitterSpatialComponent::OnIsPlaying - Stack is too small." );
         return 0;
     }
 
@@ -310,7 +310,7 @@ int SoundEmitterSpatialComponent::OnPause ( lua_State* state )
 {
     if ( !lua_checkstack ( state, 1 ) )
     {
-        android_vulkan::LogWarning ( "pbr::SoundEmitterSpatialComponent::OnPause - Stack too small." );
+        android_vulkan::LogWarning ( "pbr::SoundEmitterSpatialComponent::OnPause - Stack is too small." );
         return 0;
     }
 
@@ -323,7 +323,7 @@ int SoundEmitterSpatialComponent::OnPlay ( lua_State* state )
 {
     if ( !lua_checkstack ( state, 1 ) )
     {
-        android_vulkan::LogWarning ( "pbr::SoundEmitterSpatialComponent::OnPlay - Stack too small." );
+        android_vulkan::LogWarning ( "pbr::SoundEmitterSpatialComponent::OnPlay - Stack is too small." );
         return 0;
     }
 
@@ -350,7 +350,7 @@ int SoundEmitterSpatialComponent::OnSetSoundAsset ( lua_State* state )
 {
     if ( !lua_checkstack ( state, 1 ) )
     {
-        android_vulkan::LogWarning ( "pbr::OnSetSoundAsset::OnStop - Stack too small." );
+        android_vulkan::LogWarning ( "pbr::OnSetSoundAsset::OnStop - Stack is too small." );
         return 0;
     }
 
@@ -379,7 +379,7 @@ int SoundEmitterSpatialComponent::OnStop ( lua_State* state )
 {
     if ( !lua_checkstack ( state, 1 ) )
     {
-        android_vulkan::LogWarning ( "pbr::SoundEmitterSpatialComponent::OnStop - Stack too small." );
+        android_vulkan::LogWarning ( "pbr::SoundEmitterSpatialComponent::OnStop - Stack is too small." );
         return 0;
     }
 

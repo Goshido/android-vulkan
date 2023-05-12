@@ -286,7 +286,7 @@ bool StaticMeshComponent::RegisterFromNative ( lua_State &vm, Actor &actor ) noe
 
     if ( !lua_checkstack ( &vm, 2 ) )
     {
-        android_vulkan::LogError ( "pbr::StaticMeshComponent::RegisterFromNative - Stack too small." );
+        android_vulkan::LogError ( "pbr::StaticMeshComponent::RegisterFromNative - Stack is too small." );
         return false;
     }
 
@@ -305,7 +305,7 @@ bool StaticMeshComponent::Init ( lua_State &vm, android_vulkan::Renderer &render
 {
     if ( !lua_checkstack ( &vm, 1 ) )
     {
-        android_vulkan::LogError ( "pbr::StaticMeshComponent::Init - Stack too small." );
+        android_vulkan::LogError ( "pbr::StaticMeshComponent::Init - Stack is too small." );
         return false;
     }
 
@@ -526,7 +526,7 @@ int StaticMeshComponent::OnCreate ( lua_State* state )
 {
     if ( !lua_checkstack ( state, 1 ) )
     {
-        android_vulkan::LogWarning ( "pbr::StaticMeshComponent::OnCreate - Stack too small." );
+        android_vulkan::LogWarning ( "pbr::StaticMeshComponent::OnCreate - Stack is too small." );
         return 0;
     }
 

@@ -45,7 +45,7 @@ bool TransformComponent::Register ( lua_State &vm ) noexcept
 {
     if ( !lua_checkstack ( &vm, 2 ) )
     {
-        android_vulkan::LogError ( "pbr::TransformComponent::Register - Stack too small." );
+        android_vulkan::LogError ( "pbr::TransformComponent::Register - Stack is too small." );
         return false;
     }
 
@@ -59,7 +59,7 @@ bool TransformComponent::Init ( lua_State &vm ) noexcept
 {
     if ( !lua_checkstack ( &vm, 1 ) )
     {
-        android_vulkan::LogError ( "pbr::TransformComponent::Init - Stack too small." );
+        android_vulkan::LogError ( "pbr::TransformComponent::Init - Stack is too small." );
         return false;
     }
 

@@ -19,7 +19,7 @@ bool ScriptableSweepTestResult::Init ( lua_State &vm ) noexcept
 {
     if ( !lua_checkstack ( &vm, 4 ) )
     {
-        android_vulkan::LogError ( "pbr::ScriptableSweepTestResult::Init - Stack too small." );
+        android_vulkan::LogError ( "pbr::ScriptableSweepTestResult::Init - Stack is too small." );
         return false;
     }
 
@@ -56,7 +56,7 @@ void ScriptableSweepTestResult::Destroy ( lua_State &vm ) noexcept
 {
     if ( !lua_checkstack ( &vm, 1 ) )
     {
-        android_vulkan::LogError ( "pbr::ScriptableSweepTestResult::Init - Stack too small." );
+        android_vulkan::LogError ( "pbr::ScriptableSweepTestResult::Init - Stack is too small." );
         return;
     }
 
@@ -70,7 +70,7 @@ bool ScriptableSweepTestResult::PublishResult ( lua_State &vm,
 {
     if ( !lua_checkstack ( &vm, 6 ) )
     {
-        android_vulkan::LogError ( "pbr::ScriptableSweepTestResult::PublishResult - Stack too small." );
+        android_vulkan::LogError ( "pbr::ScriptableSweepTestResult::PublishResult - Stack is too small." );
         return false;
     }
 

@@ -688,7 +688,7 @@ int Actor::OnCreate ( lua_State* state )
 {
     if ( !lua_checkstack ( state, 1 ) )
     {
-        android_vulkan::LogWarning ( "pbr::Actor::OnCreate - Stack too small." );
+        android_vulkan::LogWarning ( "pbr::Actor::OnCreate - Stack is too small." );
         return 0;
     }
 
@@ -717,7 +717,7 @@ int Actor::OnGetName ( lua_State* state )
 {
     if ( !lua_checkstack ( state, 1 ) )
     {
-        android_vulkan::LogWarning ( "pbr::Actor::OnGetName - Stack too small." );
+        android_vulkan::LogWarning ( "pbr::Actor::OnGetName - Stack is too small." );
         return 0;
     }
 

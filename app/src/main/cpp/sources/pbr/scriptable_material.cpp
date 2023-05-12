@@ -203,7 +203,7 @@ int ScriptableMaterial::OnCreate ( lua_State* state )
 {
     if ( !lua_checkstack ( state, 1 ) )
     {
-        android_vulkan::LogWarning ( "pbr::ScriptableMaterial::OnCreate - Stack too small." );
+        android_vulkan::LogWarning ( "pbr::ScriptableMaterial::OnCreate - Stack is too small." );
         return 0;
     }
 

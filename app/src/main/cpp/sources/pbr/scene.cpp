@@ -117,7 +117,7 @@ bool Scene::OnInitDevice ( android_vulkan::Renderer &renderer, android_vulkan::P
 
     if ( !lua_checkstack ( _vm, 8 ) )
     {
-        android_vulkan::LogError ( "pbr::Scene::OnInitDevice - Stack too small." );
+        android_vulkan::LogError ( "pbr::Scene::OnInitDevice - Stack is too small." );
         return false;
     }
 
@@ -279,7 +279,7 @@ bool Scene::OnPrePhysics ( double deltaTime ) noexcept
 
     if ( !lua_checkstack ( _vm, 3 ) )
     {
-        android_vulkan::LogError ( "pbr::Scene::OnPrePhysics - Stack too small." );
+        android_vulkan::LogError ( "pbr::Scene::OnPrePhysics - Stack is too small." );
         return false;
     }
 
@@ -297,7 +297,7 @@ bool Scene::OnPostPhysics ( double deltaTime ) noexcept
 
     if ( !lua_checkstack ( _vm, 3 ) )
     {
-        android_vulkan::LogError ( "pbr::Scene::OnPostPhysics - Stack too small." );
+        android_vulkan::LogError ( "pbr::Scene::OnPostPhysics - Stack is too small." );
         return false;
     }
 
@@ -323,7 +323,7 @@ bool Scene::OnResolutionChanged ( VkExtent2D const &resolution, double aspectRat
 
     if ( !lua_checkstack ( _vm, 2 ) )
     {
-        android_vulkan::LogError ( "pbr::Scene::OnResolutionChanged - Stack too small." );
+        android_vulkan::LogError ( "pbr::Scene::OnResolutionChanged - Stack is too small." );
         return false;
     }
 
@@ -340,7 +340,7 @@ bool Scene::OnUpdate ( double deltaTime ) noexcept
 
     if ( !lua_checkstack ( _vm, 3 ) )
     {
-        android_vulkan::LogError ( "pbr::Scene::OnUpdate - Stack too small." );
+        android_vulkan::LogError ( "pbr::Scene::OnUpdate - Stack is too small." );
         return false;
     }
 
@@ -468,7 +468,7 @@ void Scene::AppendActor ( ActorRef &actor ) noexcept
 {
     if ( !lua_checkstack ( _vm, 2 ) )
     {
-        android_vulkan::LogError ( "pbr::Scene::AppendActor - Stack too small." );
+        android_vulkan::LogError ( "pbr::Scene::AppendActor - Stack is too small." );
         return;
     }
 
@@ -490,7 +490,7 @@ int Scene::DoOverlapTestBoxBox ( lua_State &vm,
 {
     if ( !lua_checkstack ( &vm, 1 ) )
     {
-        android_vulkan::LogError ( "pbr::Scene::DoOverlapTestBoxBox - Stack too small." );
+        android_vulkan::LogError ( "pbr::Scene::DoOverlapTestBoxBox - Stack is too small." );
         return 0;
     }
 
@@ -580,7 +580,7 @@ int Scene::OnGetPhysicsToRendererScaleFactor ( lua_State* state )
         return 1;
     }
 
-    android_vulkan::LogError ( "pbr::Scene::OnGetPhysicsToRendererScaleFactor - Stack too small." );
+    android_vulkan::LogError ( "pbr::Scene::OnGetPhysicsToRendererScaleFactor - Stack is too small." );
     return 0;
 }
 
@@ -593,7 +593,7 @@ int Scene::OnGetRendererToPhysicsScaleFactor ( lua_State* state )
         return 1;
     }
 
-    android_vulkan::LogError ( "pbr::Scene::OnGetPhysicsToRendererScaleFactor - Stack too small." );
+    android_vulkan::LogError ( "pbr::Scene::OnGetPhysicsToRendererScaleFactor - Stack is too small." );
     return 0;
 }
 
@@ -601,7 +601,7 @@ int Scene::OnGetRenderTargetAspectRatio ( lua_State* state )
 {
     if ( !lua_checkstack ( state, 1 ) )
     {
-        android_vulkan::LogError ( "pbr::Scene::OnGetRenderTargetAspectRatio - Stack too small." );
+        android_vulkan::LogError ( "pbr::Scene::OnGetRenderTargetAspectRatio - Stack is too small." );
         return 0;
     }
 
@@ -614,7 +614,7 @@ int Scene::OnGetRenderTargetWidth ( lua_State* state )
 {
     if ( !lua_checkstack ( state, 1 ) )
     {
-        android_vulkan::LogError ( "pbr::Scene::OnGetRenderTargetWidth - Stack too small." );
+        android_vulkan::LogError ( "pbr::Scene::OnGetRenderTargetWidth - Stack is too small." );
         return 0;
     }
 
@@ -627,7 +627,7 @@ int Scene::OnGetRenderTargetHeight ( lua_State* state )
 {
     if ( !lua_checkstack ( state, 1 ) )
     {
-        android_vulkan::LogError ( "pbr::Scene::OnGetRenderTargetHeight - Stack too small." );
+        android_vulkan::LogError ( "pbr::Scene::OnGetRenderTargetHeight - Stack is too small." );
         return 0;
     }
 

@@ -284,7 +284,7 @@ int Component::OnGetName ( lua_State* state )
 {
     if ( !lua_checkstack ( state, 1 ) )
     {
-        android_vulkan::LogWarning ( "pbr::Component::OnGetName - Stack too small." );
+        android_vulkan::LogWarning ( "pbr::Component::OnGetName - Stack is too small." );
         return 0;
     }
 

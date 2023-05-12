@@ -1,10 +1,13 @@
 require "av://engine/actor.lua"
 require "av://engine/camera_component.lua"
+require "av://engine/div_ui_element.lua"
+require "av://engine/image_ui_element.lua"
 require "av://engine/rigid_body_component.lua"
 require "av://engine/script_component.lua"
 require "av://engine/sound_emitter_global_component.lua"
 require "av://engine/sound_emitter_spatial_component.lua"
 require "av://engine/static_mesh_component.lua"
+require "av://engine/text_ui_element.lua"
 require "av://engine/transform_component.lua"
 
 

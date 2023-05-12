@@ -25,7 +25,7 @@ namespace pbr {
 
 std::unordered_set<UILayer*> UILayer::_uiLayers {};
 
-UILayer::UILayer ( bool &success, std::string &&uiAsset ) noexcept
+UILayer::UILayer ( bool &success, lua_State &vm, std::string &&uiAsset ) noexcept
 {
     android_vulkan::File asset ( uiAsset );
     success = asset.LoadContent ();
@@ -45,13 +45,17 @@ UILayer::UILayer ( bool &success, std::string &&uiAsset ) noexcept
         return;
 
     _css = std::move ( html.GetCSSParser () );
-    _body = std::make_unique<DIVUIElement> ( html.GetBodyCSS () );
+    _body = std::make_unique<DIVUIElement> ( success, vm, html.GetBodyCSS () );
+
+    if ( !success )
+        return;
 
     if ( std::u32string& id = html.GetBodyID (); !id.empty () )
         _namedElements.emplace ( std::move ( id ), _body.get () );
 
     // Using recursive lambda trick. Generic lambda. Pay attention to last parameter.
-    auto const append = [] ( NamedElements &namedElements,
+    auto const append = [] ( lua_State &vm,
+        NamedElements &namedElements,
         UIElement &root,
         HTML5Element &htmlChild,
         auto append
@@ -91,7 +95,14 @@ UILayer::UILayer ( bool &success, std::string &&uiAsset ) noexcept
         // NOLINTNEXTLINE - downcast.
         auto& div = static_cast<DIVHTML5Element&> ( htmlChild );
 
-        DIVUIElement* d = new DIVUIElement ( div._cssComputedValues );
+        bool success;
+        DIVUIElement* d = new DIVUIElement ( success, vm, div._cssComputedValues );
+
+        if ( !success )
+        {
+            delete d;
+            return false;
+        }
 
         if ( std::u32string& id = div.GetID (); !id.empty () )
             namedElements.emplace ( std::move ( id ), d );
@@ -100,7 +111,7 @@ UILayer::UILayer ( bool &success, std::string &&uiAsset ) noexcept
 
         for ( HTML5Childs& childs = div.GetChilds (); auto& child : childs )
         {
-            if ( !append ( namedElements, *d, *child, append ) )
+            if ( !append ( vm, namedElements, *d, *child, append ) )
             {
                 return false;
             }
@@ -111,7 +122,7 @@ UILayer::UILayer ( bool &success, std::string &&uiAsset ) noexcept
 
     for ( HTML5Childs& childs = html.GetBodyChilds (); auto& child : childs )
     {
-        if ( !append ( _namedElements, *_body, *child, append ) )
+        if ( !append ( vm, _namedElements, *_body, *child, append ) )
         {
             success = false;
             return;
@@ -119,7 +130,7 @@ UILayer::UILayer ( bool &success, std::string &&uiAsset ) noexcept
     }
 }
 
-bool UILayer::Init ( lua_State &vm ) noexcept
+void UILayer::Init ( lua_State &vm ) noexcept
 {
     constexpr luaL_Reg const extensions[] =
     {
@@ -150,9 +161,9 @@ bool UILayer::Init ( lua_State &vm ) noexcept
     };
 
     for ( auto const& extension : extensions )
+    {
         lua_register ( &vm, extension.name, extension.func );
-
-    return true;
+    }
 }
 
 [[maybe_unused]] void UILayer::Destroy () noexcept
@@ -164,7 +175,7 @@ int UILayer::OnCreate ( lua_State* state )
 {
     if ( !lua_checkstack ( state, 1 ) )
     {
-        android_vulkan::LogWarning ( "pbr::UILayer::OnCreate - Stack too small." );
+        android_vulkan::LogWarning ( "pbr::UILayer::OnCreate - Stack is too small." );
         return 0;
     }
 
@@ -177,7 +188,7 @@ int UILayer::OnCreate ( lua_State* state )
     }
 
     bool success;
-    UILayer* layer = new UILayer ( success, uiAsset );
+    UILayer* layer = new UILayer ( success, *state, uiAsset );
 
     if ( success )
     {

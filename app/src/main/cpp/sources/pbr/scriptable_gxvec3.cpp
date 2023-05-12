@@ -234,7 +234,7 @@ int ScriptableGXVec3::OnDistance ( lua_State* state )
 {
     if ( !lua_checkstack ( state, 1 ) )
     {
-        android_vulkan::LogWarning ( "pbr::ScriptableGXVec3::OnDistance - Stack too small." );
+        android_vulkan::LogWarning ( "pbr::ScriptableGXVec3::OnDistance - Stack is too small." );
         return 0;
     }
 
@@ -249,7 +249,7 @@ int ScriptableGXVec3::OnDotProduct ( lua_State* state )
 {
     if ( !lua_checkstack ( state, 1 ) )
     {
-        android_vulkan::LogWarning ( "pbr::ScriptableGXVec3::OnDotProduct - Stack too small." );
+        android_vulkan::LogWarning ( "pbr::ScriptableGXVec3::OnDotProduct - Stack is too small." );
         return 0;
     }
 
@@ -264,7 +264,7 @@ int ScriptableGXVec3::OnGetX ( lua_State* state )
 {
     if ( !lua_checkstack ( state, 1 ) )
     {
-        android_vulkan::LogWarning ( "pbr::ScriptableGXVec3::OnGetX - Stack too small." );
+        android_vulkan::LogWarning ( "pbr::ScriptableGXVec3::OnGetX - Stack is too small." );
         return 0;
     }
 
@@ -277,7 +277,7 @@ int ScriptableGXVec3::OnGetY ( lua_State* state )
 {
     if ( !lua_checkstack ( state, 1 ) )
     {
-        android_vulkan::LogWarning ( "pbr::ScriptableGXVec3::OnGetY - Stack too small." );
+        android_vulkan::LogWarning ( "pbr::ScriptableGXVec3::OnGetY - Stack is too small." );
         return 0;
     }
 
@@ -290,7 +290,7 @@ int ScriptableGXVec3::OnGetZ ( lua_State* state )
 {
     if ( !lua_checkstack ( state, 1 ) )
     {
-        android_vulkan::LogWarning ( "pbr::ScriptableGXVec3::OnGetZ - Stack too small." );
+        android_vulkan::LogWarning ( "pbr::ScriptableGXVec3::OnGetZ - Stack is too small." );
         return 0;
     }
 
@@ -315,7 +315,7 @@ int ScriptableGXVec3::OnLength ( lua_State* state )
 {
     if ( !lua_checkstack ( state, 1 ) )
     {
-        android_vulkan::LogWarning ( "pbr::ScriptableGXVec3::OnLength - Stack too small." );
+        android_vulkan::LogWarning ( "pbr::ScriptableGXVec3::OnLength - Stack is too small." );
         return 0;
     }
 
@@ -382,7 +382,7 @@ int ScriptableGXVec3::OnSquaredDistance ( lua_State* state )
 {
     if ( !lua_checkstack ( state, 1 ) )
     {
-        android_vulkan::LogWarning ( "pbr::ScriptableGXVec3::OnSquaredDistance - Stack too small." );
+        android_vulkan::LogWarning ( "pbr::ScriptableGXVec3::OnSquaredDistance - Stack is too small." );
         return 0;
     }
 
@@ -396,7 +396,7 @@ int ScriptableGXVec3::OnSquaredLength ( lua_State* state )
 {
     if ( !lua_checkstack ( state, 1 ) )
     {
-        android_vulkan::LogWarning ( "pbr::ScriptableGXVec3::OnSquaredLength - Stack too small." );
+        android_vulkan::LogWarning ( "pbr::ScriptableGXVec3::OnSquaredLength - Stack is too small." );
         return 0;
     }
 

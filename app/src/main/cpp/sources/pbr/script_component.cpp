@@ -63,7 +63,7 @@ bool ScriptComponent::RegisterFromNative ( lua_State &vm, Actor &actor ) noexcep
 {
     if ( !lua_checkstack ( &vm, 5 ) )
     {
-        android_vulkan::LogError ( "pbr::ScriptComponent::RegisterFromNative - Stack too small." );
+        android_vulkan::LogError ( "pbr::ScriptComponent::RegisterFromNative - Stack is too small." );
         return false;
     }
 
@@ -90,7 +90,7 @@ bool ScriptComponent::Init ( lua_State &vm ) noexcept
 {
     if ( !lua_checkstack ( &vm, 1 ) )
     {
-        android_vulkan::LogError ( "pbr::ScriptComponent::Init - Stack too small." );
+        android_vulkan::LogError ( "pbr::ScriptComponent::Init - Stack is too small." );
         return false;
     }
 
@@ -141,7 +141,7 @@ int ScriptComponent::OnCreate ( lua_State* state )
 {
     if ( !lua_checkstack ( state, 1 ) )
     {
-        android_vulkan::LogWarning ( "pbr::ScriptComponent::OnCreate - Stack too small." );
+        android_vulkan::LogWarning ( "pbr::ScriptComponent::OnCreate - Stack is too small." );
         return 0;
     }
 

@@ -36,12 +36,18 @@ class TextUIElement : public UIElement
 
         ~TextUIElement () override = default;
 
+        static void Init ( lua_State &vm ) noexcept;
+
     private:
         void ApplyLayout () noexcept override;
         void Render () noexcept override;
 
-        [[nodiscard]] static int OnSetColor ( lua_State* state );
+        [[nodiscard]] static int OnGarbageCollected ( lua_State* state );
+        [[nodiscard]] static int OnHide ( lua_State* state );
+        [[nodiscard]] static int OnSetColorHSV ( lua_State* state );
+        [[nodiscard]] static int OnSetColorRGB ( lua_State* state );
         [[nodiscard]] static int OnSetText ( lua_State* state );
+        [[nodiscard]] static int OnShow ( lua_State* state );
 };
 
 } // namespace pbr

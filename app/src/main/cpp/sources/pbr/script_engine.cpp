@@ -2,6 +2,8 @@
 #include <pbr/actor.h>
 #include <pbr/camera_component.h>
 #include <pbr/component.h>
+#include <pbr/div_ui_element.h>
+#include <pbr/image_ui_element.h>
 #include <pbr/rigid_body_component.h>
 #include <pbr/script_component.h>
 #include <pbr/scriptable_gxmat3.h>
@@ -14,6 +16,7 @@
 #include <pbr/sound_emitter_global_component.h>
 #include <pbr/sound_emitter_spatial_component.h>
 #include <pbr/static_mesh_component.h>
+#include <pbr/text_ui_element.h>
 #include <pbr/transform_component.h>
 #include <pbr/ui_layer.h>
 #include <file.h>
@@ -87,6 +90,11 @@ bool ScriptEngine::ExtendFrontend ( android_vulkan::Renderer &renderer,
     ScriptableGXVec3::Init ( vm );
     ScriptableGXVec4::Init ( vm );
 
+    UILayer::Init ( vm );
+    DIVUIElement::Init ( vm );
+    ImageUIElement::Init ( vm );
+    TextUIElement::Init ( vm );
+
     Component::Register ( vm );
     ScriptableLogger::Register ( vm );
 
@@ -98,8 +106,7 @@ bool ScriptEngine::ExtendFrontend ( android_vulkan::Renderer &renderer,
         StaticMeshComponent::Init ( vm, renderer ) &&
         ScriptableMaterial::Init ( vm, renderer ) &&
         SoundEmitterGlobalComponent::Init ( vm, soundMixer ) &&
-        SoundEmitterSpatialComponent::Init ( vm, soundMixer ) &&
-        UILayer::Init ( vm );
+        SoundEmitterSpatialComponent::Init ( vm, soundMixer );
 }
 
 bool ScriptEngine::InitInterfaceFunctions ( android_vulkan::Renderer &renderer,

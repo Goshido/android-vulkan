@@ -29,13 +29,20 @@ class DIVUIElement final : public UIElement
         DIVUIElement ( DIVUIElement && ) = delete;
         DIVUIElement& operator = ( DIVUIElement && ) = delete;
 
-        explicit DIVUIElement ( CSSComputedValues const &css ) noexcept;
+        explicit DIVUIElement ( bool &success, lua_State &vm, CSSComputedValues const &css ) noexcept;
+
         ~DIVUIElement () override = default;
+
+        static void Init ( lua_State &vm ) noexcept;
 
     private:
         void AppendChildElement ( std::unique_ptr<UIElement> &&element ) noexcept override;
         void ApplyLayout () noexcept override;
         void Render () noexcept override;
+
+        [[nodiscard]] static int OnGarbageCollected ( lua_State* state );
+        [[nodiscard]] static int OnHide ( lua_State* state );
+        [[nodiscard]] static int OnShow ( lua_State* state );
 };
 
 } // namespace pbr

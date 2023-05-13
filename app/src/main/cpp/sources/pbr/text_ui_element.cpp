@@ -1,4 +1,6 @@
 #include <pbr/text_ui_element.h>
+#include <pbr/script_engine.h>
+#include <logger.h>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -13,11 +15,28 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-TextUIElement::TextUIElement ( std::u32string &&text ) noexcept:
+TextUIElement::TextUIElement ( bool &success, lua_State &vm, std::u32string &&text ) noexcept:
     UIElement ( true ),
     _text ( std::move ( text ) )
 {
-    // NOTHING
+    if ( success = lua_checkstack ( &vm, 2 ); !success )
+    {
+        android_vulkan::LogError ( "pbr::TextUIElement::TextUIElement - Stack is too small." );
+        return;
+    }
+
+    if ( success = lua_getglobal ( &vm, "RegisterTextUIElement" ) == LUA_TFUNCTION; !success )
+    {
+        android_vulkan::LogError ( "pbr::TextUIElement::TextUIElement - Can't find register function." );
+        return;
+    }
+
+    lua_pushlightuserdata ( &vm, this );
+
+    if ( success = lua_pcall ( &vm, 1, 1, ScriptEngine::GetErrorHandlerIndex () ) == LUA_OK; !success )
+    {
+        android_vulkan::LogWarning ( "pbr::TextUIElement::TextUIElement - Can't append element inside Lua VM." );
+    }
 }
 
 void TextUIElement::Init ( lua_State &vm ) noexcept

@@ -17,12 +17,8 @@ namespace pbr {
 class UILayer final
 {
     private:
-        using NamedElements = std::unordered_map<std::u32string, UIElement*>;
-
-    private:
         std::unique_ptr<DIVUIElement>           _body {};
         CSSParser                               _css {};
-        NamedElements                           _namedElements {};
 
         static std::unordered_set<UILayer*>     _uiLayers;
 
@@ -35,7 +31,7 @@ class UILayer final
         UILayer ( UILayer && ) = delete;
         UILayer& operator = ( UILayer && ) = delete;
 
-        explicit UILayer ( bool &success, lua_State &vm, std::string &&uiAsset ) noexcept;
+        explicit UILayer ( bool &success, lua_State &vm ) noexcept;
 
         ~UILayer () = default;
 

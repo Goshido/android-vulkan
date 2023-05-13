@@ -2,9 +2,11 @@
 #include <pbr/html5_parser.h>
 #include <pbr/img_html5_element.h>
 #include <pbr/image_ui_element.h>
+#include <pbr/script_engine.h>
 #include <pbr/text_html5_element.h>
 #include <pbr/text_ui_element.h>
 #include <pbr/ui_layer.h>
+#include <pbr/utf8_parser.h>
 #include <file.h>
 #include <logger.h>
 
@@ -25,18 +27,28 @@ namespace pbr {
 
 std::unordered_set<UILayer*> UILayer::_uiLayers {};
 
-UILayer::UILayer ( bool &success, lua_State &vm, std::string &&uiAsset ) noexcept
+UILayer::UILayer ( bool &success, lua_State &vm ) noexcept
 {
-    android_vulkan::File asset ( uiAsset );
-    success = asset.LoadContent ();
+    constexpr int uiLayerIdx = 1;
+    constexpr int uiAssetIdx = 2;
 
-    if ( !success )
+    char const* uiAsset = lua_tostring ( &vm, uiAssetIdx );
+
+    if ( !uiAsset )
+    {
+        success = false;
+        return;
+    }
+
+    android_vulkan::File asset ( uiAsset );
+
+    if ( success = asset.LoadContent (); !success )
         return;
 
     std::vector<uint8_t>& content = asset.GetContent ();
     HTML5Parser html {};
 
-    success = html.Parse ( uiAsset.c_str (),
+    success = html.Parse ( uiAsset,
         Stream ( Stream::Data ( content.data (), content.size () ), 1U ),
         std::filesystem::path ( uiAsset ).parent_path ().string ().c_str ()
     );
@@ -44,23 +56,86 @@ UILayer::UILayer ( bool &success, lua_State &vm, std::string &&uiAsset ) noexcep
     if ( !success )
         return;
 
+    if ( !lua_checkstack ( &vm, 6 ) )
+    {
+        android_vulkan::LogWarning ( "pbr::UILayer::UILayer - Stack is too small." );
+        success = false;
+        return;
+    }
+
+    constexpr std::string_view registerNamedElement = "RegisterNamedElement";
+    lua_pushlstring ( &vm, registerNamedElement.data (), registerNamedElement.size () );
+
+    if ( success = lua_rawget ( &vm, uiLayerIdx ) == LUA_TFUNCTION; !success )
+    {
+        android_vulkan::LogWarning ( "pbr::UILayer::UILayer - Can't find 'UILayer:RegisterNamedElement' method." );
+        return;
+    }
+
+    int const registerNamedElementIdx = lua_gettop ( &vm );
     _css = std::move ( html.GetCSSParser () );
     _body = std::make_unique<DIVUIElement> ( success, vm, html.GetBodyCSS () );
 
     if ( !success )
+    {
+        lua_pop ( &vm, 1 );
         return;
+    }
 
-    if ( std::u32string& id = html.GetBodyID (); !id.empty () )
-        _namedElements.emplace ( std::move ( id ), _body.get () );
+    // TODO refactor move to dedicated static method.
+    auto const registerElement = [] ( lua_State &vm,
+        std::u32string const &id,
+        int registerNamedElementIdx
+    ) noexcept -> bool {
+        if ( id.empty () )
+            return true;
 
+        lua_pushvalue ( &vm, registerNamedElementIdx );
+        lua_pushvalue ( &vm, uiLayerIdx );
+        lua_pushvalue ( &vm, -3 );
+
+        auto const name = UTF8Parser::ToUTF8 ( id );
+        std::string const& n = *name;
+        lua_pushlstring ( &vm, n.c_str (), n.size () );
+
+        if ( lua_pcall ( &vm, 3, 0, ScriptEngine::GetErrorHandlerIndex () ) == LUA_OK )
+            return true;
+
+        android_vulkan::LogWarning ( "pbr::UILayer::UILayer - Can't register named element '%s'", n.c_str () );
+        return false;
+    };
+
+    if ( success = registerElement ( vm, html.GetBodyID (), registerNamedElementIdx ); !success )
+    {
+        lua_pop ( &vm, 2 );
+        return;
+    }
+
+    constexpr std::string_view appendChildElement = "AppendChildElement";
+    lua_pushlstring ( &vm, appendChildElement.data (), appendChildElement.size () );
+
+    if ( success = lua_rawget ( &vm, -2 ) == LUA_TFUNCTION; !success )
+    {
+        android_vulkan::LogWarning ( "pbr::UILayer::UILayer - Can't find 'DIVUIElement:AppendChildElement' method." );
+        lua_pop ( &vm, 2 );
+        return;
+    }
+
+    lua_rotate ( &vm, -2, 1 );
+    int const appendChildElementIdx = lua_gettop ( &vm ) - 1;
+
+    // TODO refactor move to dedicated static method.
     // Using recursive lambda trick. Generic lambda. Pay attention to last parameter.
     auto const append = [] ( lua_State &vm,
-        NamedElements &namedElements,
-        UIElement &root,
+        DIVUIElement &root,
         HTML5Element &htmlChild,
+        int appendChildElementIdx,
+        int registerNamedElementIdx,
+        auto registerElement,
         auto append
     ) noexcept -> bool
     {
+        bool success;
         HTML5Tag const tag = htmlChild.GetTag ();
 
         if ( tag == HTML5Tag::eTag::Text )
@@ -68,8 +143,15 @@ UILayer::UILayer ( bool &success, lua_State &vm, std::string &&uiAsset ) noexcep
             // NOLINTNEXTLINE - downcast.
             auto& text = static_cast<TextHTML5Element&> ( htmlChild );
 
-            root.AppendChildElement ( std::make_unique<TextUIElement> ( std::move ( text.GetText () ) ) );
-            return true;
+            TextUIElement* t = new TextUIElement ( success, vm, std::move ( text.GetText () ) );
+
+            if ( !success )
+            {
+                delete t;
+                return false;
+            }
+
+            return root.AppendChildElement ( vm, appendChildElementIdx, std::unique_ptr<UIElement> ( t ) );
         }
 
         if ( tag == HTML5Tag::eTag::IMG )
@@ -77,13 +159,20 @@ UILayer::UILayer ( bool &success, lua_State &vm, std::string &&uiAsset ) noexcep
             // NOLINTNEXTLINE - downcast.
             auto& img = static_cast<IMGHTML5Element&> ( htmlChild );
 
-            ImageUIElement* i = new ImageUIElement ( std::move ( img.GetAssetPath () ), img._cssComputedValues );
+            ImageUIElement* i = new ImageUIElement ( success,
+                vm,
+                std::move ( img.GetAssetPath () ),
+                img._cssComputedValues
+            );
 
-            if ( std::u32string& id = img.GetID (); !id.empty () )
-                namedElements.emplace ( std::move ( id ), i );
+            if ( !success )
+            {
+                delete i;
+                return false;
+            }
 
-            root.AppendChildElement ( std::unique_ptr<UIElement> ( i ) );
-            return true;
+            return registerElement ( vm, img.GetID (), registerNamedElementIdx ) &&
+                root.AppendChildElement ( vm, appendChildElementIdx, std::unique_ptr<UIElement> ( i ) );
         }
 
         if ( tag != HTML5Tag::eTag::DIV )
@@ -95,7 +184,6 @@ UILayer::UILayer ( bool &success, lua_State &vm, std::string &&uiAsset ) noexcep
         // NOLINTNEXTLINE - downcast.
         auto& div = static_cast<DIVHTML5Element&> ( htmlChild );
 
-        bool success;
         DIVUIElement* d = new DIVUIElement ( success, vm, div._cssComputedValues );
 
         if ( !success )
@@ -104,30 +192,30 @@ UILayer::UILayer ( bool &success, lua_State &vm, std::string &&uiAsset ) noexcep
             return false;
         }
 
-        if ( std::u32string& id = div.GetID (); !id.empty () )
-            namedElements.emplace ( std::move ( id ), d );
-
-        root.AppendChildElement ( std::unique_ptr<UIElement> ( d ) );
-
         for ( HTML5Childs& childs = div.GetChilds (); auto& child : childs )
         {
-            if ( !append ( vm, namedElements, *d, *child, append ) )
+            if ( !append ( vm, *d, *child, appendChildElementIdx, registerNamedElementIdx, registerElement, append ) )
             {
+                lua_pop ( &vm, 1 );
                 return false;
             }
         }
 
-        return true;
+        return registerElement ( vm, div.GetID (), registerNamedElementIdx ) &&
+            root.AppendChildElement ( vm, appendChildElementIdx, std::unique_ptr<UIElement> ( d ) );
     };
 
     for ( HTML5Childs& childs = html.GetBodyChilds (); auto& child : childs )
     {
-        if ( !append ( vm, _namedElements, *_body, *child, append ) )
-        {
-            success = false;
-            return;
-        }
+        if ( append ( vm, *_body, *child, appendChildElementIdx, registerNamedElementIdx, registerElement, append ) )
+            continue;
+
+        success = false;
+        lua_pop ( &vm, 3 );
+        return;
     }
+
+    lua_pop ( &vm, 3 );
 }
 
 void UILayer::Init ( lua_State &vm ) noexcept
@@ -173,22 +261,8 @@ void UILayer::Init ( lua_State &vm ) noexcept
 
 int UILayer::OnCreate ( lua_State* state )
 {
-    if ( !lua_checkstack ( state, 1 ) )
-    {
-        android_vulkan::LogWarning ( "pbr::UILayer::OnCreate - Stack is too small." );
-        return 0;
-    }
-
-    char const* uiAsset = lua_tostring ( state, 1 );
-
-    if ( !uiAsset )
-    {
-        lua_pushnil ( state );
-        return 1;
-    }
-
     bool success;
-    UILayer* layer = new UILayer ( success, *state, uiAsset );
+    UILayer* layer = new UILayer ( success, *state/*, uiAsset*/ );
 
     if ( success )
     {

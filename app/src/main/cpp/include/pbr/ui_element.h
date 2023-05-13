@@ -7,6 +7,7 @@
 GX_DISABLE_COMMON_WARNINGS
 
 #include <memory>
+#include <string>
 
 extern "C" {
 
@@ -38,7 +39,6 @@ class UIElement
 
         virtual ~UIElement () = default;
 
-        virtual void AppendChildElement ( std::unique_ptr<UIElement> &&element ) noexcept;
         virtual void ApplyLayout () noexcept = 0;
         virtual void Render () noexcept = 0;
 

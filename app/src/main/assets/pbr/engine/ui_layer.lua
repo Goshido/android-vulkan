@@ -37,6 +37,15 @@ local function IsVisible ( self )
     return av_UILayerIsVisible ( self._handle )
 end
 
+-- Engine method
+local function RegisterNamedElement ( self, element, name )
+    if not self._namedElements then
+        self._namedElements = {}
+    end
+
+    self._namedElements[ name ] = element
+end
+
 -- Metamethods
 local mt = {
     __gc = function ( self )
@@ -49,14 +58,17 @@ local function Constructor ( self, path )
 
     local obj = Object ( eObjectType.UILayer )
 
-    -- Data
-    obj._handle = av_UILayerCreate ( path )
+    -- Engine method
+    obj.RegisterNamedElement = RegisterNamedElement
 
     -- Methods
     obj.Find = Find
     obj.Hide = Hide
     obj.Show = Show
     obj.IsVisible = IsVisible
+
+    -- Data
+    obj._handle = av_UILayerCreate ( obj, path )
 
     return setmetatable ( obj, mt )
 end

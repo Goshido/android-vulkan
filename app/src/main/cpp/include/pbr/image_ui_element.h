@@ -24,7 +24,11 @@ class ImageUIElement : public UIElement
         ImageUIElement ( ImageUIElement && ) = delete;
         ImageUIElement& operator = ( ImageUIElement && ) = delete;
 
-        explicit ImageUIElement ( std::string &&asset, CSSComputedValues const &css ) noexcept;
+        explicit ImageUIElement ( bool &success,
+            lua_State &vm,
+            std::string &&asset,
+            CSSComputedValues const &css
+        ) noexcept;
 
         ~ImageUIElement () override = default;
 

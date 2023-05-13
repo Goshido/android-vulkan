@@ -33,10 +33,35 @@ DIVUIElement::DIVUIElement ( bool &success, lua_State &vm, CSSComputedValues con
 
     lua_pushlightuserdata ( &vm, this );
 
-    if ( success = lua_pcall ( &vm, 1, 0, ScriptEngine::GetErrorHandlerIndex () ) == LUA_OK; !success )
+    if ( success = lua_pcall ( &vm, 1, 1, ScriptEngine::GetErrorHandlerIndex () ) == LUA_OK; !success )
     {
         android_vulkan::LogWarning ( "pbr::DIVUIElement::DIVUIElement - Can't append element inside Lua VM." );
     }
+}
+
+bool DIVUIElement::AppendChildElement ( lua_State &vm,
+    int appendChildElementIdx,
+    std::unique_ptr<UIElement> &&element
+) noexcept
+{
+    if ( !lua_checkstack ( &vm, 3 ) )
+    {
+        android_vulkan::LogError ( "pbr::DIVUIElement::AppendChildElement - Stack is too small." );
+        return false;
+    }
+
+    lua_pushvalue ( &vm, appendChildElementIdx );
+    lua_pushvalue ( &vm, -3 );
+    lua_rotate ( &vm, -3, -1 );
+
+    if ( lua_pcall ( &vm, 2, 0, ScriptEngine::GetErrorHandlerIndex () ) == LUA_OK )
+    {
+        _childs.emplace_back ( std::move ( element ) );
+        return true;
+    }
+
+    android_vulkan::LogWarning ( "pbr::DIVUIElement::AppendChildElement - Can't append child element inside Lua VM." );
+    return false;
 }
 
 void DIVUIElement::Init ( lua_State &vm ) noexcept
@@ -61,11 +86,6 @@ void DIVUIElement::Init ( lua_State &vm ) noexcept
     {
         lua_register ( &vm, extension.name, extension.func );
     }
-}
-
-void DIVUIElement::AppendChildElement ( std::unique_ptr<UIElement> &&element ) noexcept
-{
-    _childs.emplace_back ( std::move ( element ) );
 }
 
 void DIVUIElement::ApplyLayout () noexcept

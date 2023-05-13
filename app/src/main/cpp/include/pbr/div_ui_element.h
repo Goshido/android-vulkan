@@ -33,10 +33,18 @@ class DIVUIElement final : public UIElement
 
         ~DIVUIElement () override = default;
 
+        // Lua stack must have the following configuration:
+        //      stack[ -1 ] -> child element
+        //      stack[ -2 ] -> parent element
+        // At the end method will remove 'child element' from Lua stack.
+        [[nodiscard]] bool AppendChildElement ( lua_State &vm,
+            int appendChildElementIdx,
+            std::unique_ptr<UIElement> &&element
+        ) noexcept;
+
         static void Init ( lua_State &vm ) noexcept;
 
     private:
-        void AppendChildElement ( std::unique_ptr<UIElement> &&element ) noexcept override;
         void ApplyLayout () noexcept override;
         void Render () noexcept override;
 

@@ -32,7 +32,7 @@ class TextUIElement : public UIElement
         TextUIElement ( TextUIElement && ) = delete;
         TextUIElement& operator = ( TextUIElement && ) = delete;
 
-        explicit TextUIElement ( std::u32string &&text ) noexcept;
+        explicit TextUIElement ( bool &success, lua_State &vm, std::u32string &&text ) noexcept;
 
         ~TextUIElement () override = default;
 

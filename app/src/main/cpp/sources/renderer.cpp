@@ -2599,28 +2599,6 @@ bool Renderer::SelectTargetSurfaceFormat ( VkFormat &targetColorFormat,
     if ( !check ( targetDepthStencilFormat, depthStencilOptions, std::size ( depthStencilOptions ), "depth|stencil" ) )
         return false;
 
-//    for ( auto probe : depthStencilOptions )
-//    {
-//        VkFormatProperties props;
-//        vkGetPhysicalDeviceFormatProperties ( _physicalDevice, probe, &props );
-//
-//        if ( !( props.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT ) )
-//            continue;
-//
-//        targetDepthStencilFormat = probe;
-//    }
-//
-//    for ( auto probe : depthStencilOptions )
-//    {
-//        VkFormatProperties props;
-//        vkGetPhysicalDeviceFormatProperties ( _physicalDevice, probe, &props );
-//
-//        if ( !( props.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT ) )
-//            continue;
-//
-//        targetDepthStencilFormat = probe;
-//    }
-
     constexpr char const format[] = R"__(Renderer::SelectTargetSurfaceFormat - Surface format selected:
 %sColor format: %s
 %sColor space: %s
@@ -2640,10 +2618,6 @@ bool Renderer::SelectTargetSurfaceFormat ( VkFormat &targetColorFormat,
     );
 
     return true;
-//    }
-//
-//    LogError ( "Renderer::SelectTargetSurfaceFormat - Can't select depth|stencil format." );
-//    return false;
 }
 
 bool Renderer::CheckExtensionCommon ( std::set<std::string> const &allExtensions,

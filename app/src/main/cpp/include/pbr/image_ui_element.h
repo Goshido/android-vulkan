@@ -26,6 +26,7 @@ class ImageUIElement : public UIElement
 
         explicit ImageUIElement ( bool &success,
             lua_State &vm,
+            int errorHandlerIdx,
             std::string &&asset,
             CSSComputedValues const &css
         ) noexcept;
@@ -39,8 +40,6 @@ class ImageUIElement : public UIElement
         void Render () noexcept override;
 
         [[nodiscard]] static int OnGarbageCollected ( lua_State* state );
-        [[nodiscard]] static int OnHide ( lua_State* state );
-        [[nodiscard]] static int OnShow ( lua_State* state );
 };
 
 } // namespace pbr

@@ -42,12 +42,15 @@ class UIElement
         virtual void ApplyLayout () noexcept = 0;
         virtual void Render () noexcept = 0;
 
+        static void Init ( lua_State &vm ) noexcept;
+
     protected:
         explicit UIElement ( bool visible ) noexcept;
 
     private:
-        [[nodiscard]] static int OnShow ( lua_State* state );
         [[nodiscard]] static int OnHide ( lua_State* state );
+        [[nodiscard]] static int OnIsVisible ( lua_State* state );
+        [[nodiscard]] static int OnShow ( lua_State* state );
 };
 
 } // namespace pbr

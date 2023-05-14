@@ -78,6 +78,12 @@ void ScriptEngine::Destroy () noexcept
     _instance = nullptr;
 }
 
+int ScriptEngine::PushErrorHandlerToStack ( lua_State &vm ) noexcept
+{
+    lua_pushcfunction ( &vm, &ScriptEngine::OnErrorHandler );
+    return lua_gettop ( &vm );
+}
+
 bool ScriptEngine::ExtendFrontend ( android_vulkan::Renderer &renderer,
     android_vulkan::SoundMixer &soundMixer
 ) const noexcept
@@ -91,6 +97,7 @@ bool ScriptEngine::ExtendFrontend ( android_vulkan::Renderer &renderer,
     ScriptableGXVec4::Init ( vm );
 
     UILayer::Init ( vm );
+    UIElement::Init ( vm );
     DIVUIElement::Init ( vm );
     ImageUIElement::Init ( vm );
     TextUIElement::Init ( vm );
@@ -258,7 +265,6 @@ void ScriptEngine::Free ( lua_State* state ) noexcept
 {
     lua_close ( state );
 
-    UILayer::Destroy ();
     SoundEmitterSpatialComponent::Destroy ();
     SoundEmitterGlobalComponent::Destroy ();
     ScriptableGXVec4::Destroy ();

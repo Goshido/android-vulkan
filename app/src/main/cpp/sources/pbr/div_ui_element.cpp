@@ -1,5 +1,4 @@
 #include <pbr/div_ui_element.h>
-#include <pbr/script_engine.h>
 #include <logger.h>
 
 GX_DISABLE_COMMON_WARNINGS
@@ -15,7 +14,7 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-DIVUIElement::DIVUIElement ( bool &success, lua_State &vm, CSSComputedValues const &css ) noexcept:
+DIVUIElement::DIVUIElement ( bool &success, lua_State &vm, int errorHandlerIdx, CSSComputedValues const &css ) noexcept:
     UIElement ( css._display != DisplayProperty::eValue::None ),
     _css ( css )
 {
@@ -33,13 +32,14 @@ DIVUIElement::DIVUIElement ( bool &success, lua_State &vm, CSSComputedValues con
 
     lua_pushlightuserdata ( &vm, this );
 
-    if ( success = lua_pcall ( &vm, 1, 1, ScriptEngine::GetErrorHandlerIndex () ) == LUA_OK; !success )
+    if ( success = lua_pcall ( &vm, 1, 1, errorHandlerIdx ) == LUA_OK; !success )
     {
         android_vulkan::LogWarning ( "pbr::DIVUIElement::DIVUIElement - Can't append element inside Lua VM." );
     }
 }
 
 bool DIVUIElement::AppendChildElement ( lua_State &vm,
+    int errorHandlerIdx,
     int appendChildElementIdx,
     std::unique_ptr<UIElement> &&element
 ) noexcept
@@ -54,7 +54,7 @@ bool DIVUIElement::AppendChildElement ( lua_State &vm,
     lua_pushvalue ( &vm, -3 );
     lua_rotate ( &vm, -3, -1 );
 
-    if ( lua_pcall ( &vm, 2, 0, ScriptEngine::GetErrorHandlerIndex () ) == LUA_OK )
+    if ( lua_pcall ( &vm, 2, 0, errorHandlerIdx ) == LUA_OK )
     {
         _childs.emplace_back ( std::move ( element ) );
         return true;
@@ -71,14 +71,6 @@ void DIVUIElement::Init ( lua_State &vm ) noexcept
         {
             .name = "av_DIVUIElementCollectGarbage",
             .func = &DIVUIElement::OnGarbageCollected
-        },
-        {
-            .name = "av_DIVUIElementHide",
-            .func = &DIVUIElement::OnHide
-        },
-        {
-            .name = "av_DIVUIElementShow",
-            .func = &DIVUIElement::OnShow
         }
     };
 
@@ -99,18 +91,6 @@ void DIVUIElement::Render () noexcept
 }
 
 int DIVUIElement::OnGarbageCollected ( lua_State* /*state*/ )
-{
-    // TODO
-    return 0;
-}
-
-int DIVUIElement::OnHide ( lua_State* /*state*/ )
-{
-    // TODO
-    return 0;
-}
-
-int DIVUIElement::OnShow ( lua_State* /*state*/ )
 {
     // TODO
     return 0;

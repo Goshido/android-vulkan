@@ -1,5 +1,4 @@
 #include <pbr/image_ui_element.h>
-#include <pbr/script_engine.h>
 #include <logger.h>
 
 GX_DISABLE_COMMON_WARNINGS
@@ -17,6 +16,7 @@ namespace pbr {
 
 ImageUIElement::ImageUIElement ( bool &success,
     lua_State &vm,
+    int errorHandlerIdx,
     std::string &&asset,
     CSSComputedValues const &css
 ) noexcept:
@@ -38,7 +38,7 @@ ImageUIElement::ImageUIElement ( bool &success,
 
     lua_pushlightuserdata ( &vm, this );
 
-    if ( success = lua_pcall ( &vm, 1, 1, ScriptEngine::GetErrorHandlerIndex () ) == LUA_OK; !success )
+    if ( success = lua_pcall ( &vm, 1, 1, errorHandlerIdx ) == LUA_OK; !success )
     {
         android_vulkan::LogWarning ( "pbr::ImageUIElement::ImageUIElement - Can't append element inside Lua VM." );
     }
@@ -51,14 +51,6 @@ void ImageUIElement::Init ( lua_State &vm ) noexcept
         {
             .name = "av_ImageUIElementCollectGarbage",
             .func = &ImageUIElement::OnGarbageCollected
-        },
-        {
-            .name = "av_ImageUIElementHide",
-            .func = &ImageUIElement::OnHide
-        },
-        {
-            .name = "av_ImageUIElementShow",
-            .func = &ImageUIElement::OnShow
         }
     };
 
@@ -79,18 +71,6 @@ void ImageUIElement::Render () noexcept
 }
 
 int ImageUIElement::OnGarbageCollected ( lua_State* /*state*/ )
-{
-    // TODO
-    return 0;
-}
-
-int ImageUIElement::OnHide ( lua_State* /*state*/ )
-{
-    // TODO
-    return 0;
-}
-
-int ImageUIElement::OnShow ( lua_State* /*state*/ )
 {
     // TODO
     return 0;

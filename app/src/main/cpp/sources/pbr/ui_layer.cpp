@@ -31,7 +31,6 @@ UILayer::UILayer ( bool &success, lua_State &vm ) noexcept
 {
     constexpr int uiLayerIdx = 1;
     constexpr int uiAssetIdx = 2;
-
     char const* uiAsset = lua_tostring ( &vm, uiAssetIdx );
 
     if ( !uiAsset )
@@ -56,7 +55,7 @@ UILayer::UILayer ( bool &success, lua_State &vm ) noexcept
     if ( !success )
         return;
 
-    if ( !lua_checkstack ( &vm, 6 ) )
+    if ( !lua_checkstack ( &vm, 7 ) )
     {
         android_vulkan::LogWarning ( "pbr::UILayer::UILayer - Stack is too small." );
         success = false;
@@ -73,41 +72,23 @@ UILayer::UILayer ( bool &success, lua_State &vm ) noexcept
     }
 
     int const registerNamedElementIdx = lua_gettop ( &vm );
+    int const errorHandlerIdx = ScriptEngine::PushErrorHandlerToStack ( vm );
+
     _css = std::move ( html.GetCSSParser () );
-    _body = std::make_unique<DIVUIElement> ( success, vm, html.GetBodyCSS () );
+    _body = std::make_unique<DIVUIElement> ( success, vm, errorHandlerIdx, html.GetBodyCSS () );
 
     if ( !success )
     {
-        lua_pop ( &vm, 1 );
+        _body = nullptr;
+        lua_pop ( &vm, 2 );
         return;
     }
 
-    // TODO refactor move to dedicated static method.
-    auto const registerElement = [] ( lua_State &vm,
-        std::u32string const &id,
-        int registerNamedElementIdx
-    ) noexcept -> bool {
-        if ( id.empty () )
-            return true;
+    success = RegisterNamedElement ( vm, errorHandlerIdx, uiLayerIdx, registerNamedElementIdx, html.GetBodyID () );
 
-        lua_pushvalue ( &vm, registerNamedElementIdx );
-        lua_pushvalue ( &vm, uiLayerIdx );
-        lua_pushvalue ( &vm, -3 );
-
-        auto const name = UTF8Parser::ToUTF8 ( id );
-        std::string const& n = *name;
-        lua_pushlstring ( &vm, n.c_str (), n.size () );
-
-        if ( lua_pcall ( &vm, 3, 0, ScriptEngine::GetErrorHandlerIndex () ) == LUA_OK )
-            return true;
-
-        android_vulkan::LogWarning ( "pbr::UILayer::UILayer - Can't register named element '%s'", n.c_str () );
-        return false;
-    };
-
-    if ( success = registerElement ( vm, html.GetBodyID (), registerNamedElementIdx ); !success )
+    if ( !success )
     {
-        lua_pop ( &vm, 2 );
+        lua_pop ( &vm, 3 );
         return;
     }
 
@@ -117,105 +98,32 @@ UILayer::UILayer ( bool &success, lua_State &vm ) noexcept
     if ( success = lua_rawget ( &vm, -2 ) == LUA_TFUNCTION; !success )
     {
         android_vulkan::LogWarning ( "pbr::UILayer::UILayer - Can't find 'DIVUIElement:AppendChildElement' method." );
-        lua_pop ( &vm, 2 );
+        lua_pop ( &vm, 3 );
         return;
     }
 
     lua_rotate ( &vm, -2, 1 );
     int const appendChildElementIdx = lua_gettop ( &vm ) - 1;
 
-    // TODO refactor move to dedicated static method.
-    // Using recursive lambda trick. Generic lambda. Pay attention to last parameter.
-    auto const append = [] ( lua_State &vm,
-        DIVUIElement &root,
-        HTML5Element &htmlChild,
-        int appendChildElementIdx,
-        int registerNamedElementIdx,
-        auto registerElement,
-        auto append
-    ) noexcept -> bool
-    {
-        bool success;
-        HTML5Tag const tag = htmlChild.GetTag ();
-
-        if ( tag == HTML5Tag::eTag::Text )
-        {
-            // NOLINTNEXTLINE - downcast.
-            auto& text = static_cast<TextHTML5Element&> ( htmlChild );
-
-            TextUIElement* t = new TextUIElement ( success, vm, std::move ( text.GetText () ) );
-
-            if ( !success )
-            {
-                delete t;
-                return false;
-            }
-
-            return root.AppendChildElement ( vm, appendChildElementIdx, std::unique_ptr<UIElement> ( t ) );
-        }
-
-        if ( tag == HTML5Tag::eTag::IMG )
-        {
-            // NOLINTNEXTLINE - downcast.
-            auto& img = static_cast<IMGHTML5Element&> ( htmlChild );
-
-            ImageUIElement* i = new ImageUIElement ( success,
-                vm,
-                std::move ( img.GetAssetPath () ),
-                img._cssComputedValues
-            );
-
-            if ( !success )
-            {
-                delete i;
-                return false;
-            }
-
-            return registerElement ( vm, img.GetID (), registerNamedElementIdx ) &&
-                root.AppendChildElement ( vm, appendChildElementIdx, std::unique_ptr<UIElement> ( i ) );
-        }
-
-        if ( tag != HTML5Tag::eTag::DIV )
-        {
-            android_vulkan::LogWarning ( "pbr::UILayer::UILayer - Unexpected tag '%s',", tag.ToString () );
-            return false;
-        }
-
-        // NOLINTNEXTLINE - downcast.
-        auto& div = static_cast<DIVHTML5Element&> ( htmlChild );
-
-        DIVUIElement* d = new DIVUIElement ( success, vm, div._cssComputedValues );
-
-        if ( !success )
-        {
-            delete d;
-            return false;
-        }
-
-        for ( HTML5Childs& childs = div.GetChilds (); auto& child : childs )
-        {
-            if ( !append ( vm, *d, *child, appendChildElementIdx, registerNamedElementIdx, registerElement, append ) )
-            {
-                lua_pop ( &vm, 1 );
-                return false;
-            }
-        }
-
-        return registerElement ( vm, div.GetID (), registerNamedElementIdx ) &&
-            root.AppendChildElement ( vm, appendChildElementIdx, std::unique_ptr<UIElement> ( d ) );
-    };
-
     for ( HTML5Childs& childs = html.GetBodyChilds (); auto& child : childs )
     {
-        if ( append ( vm, *_body, *child, appendChildElementIdx, registerNamedElementIdx, registerElement, append ) )
+        success = AppendChild ( vm,
+            errorHandlerIdx,
+            appendChildElementIdx,
+            uiLayerIdx,
+            registerNamedElementIdx,
+            *_body,
+            *child
+        );
+
+        if ( success )
             continue;
 
-        success = false;
-        lua_pop ( &vm, 3 );
+        lua_pop ( &vm, 4 );
         return;
     }
 
-    lua_pop ( &vm, 3 );
+    lua_pop ( &vm, 4 );
 }
 
 void UILayer::Init ( lua_State &vm ) noexcept
@@ -254,15 +162,135 @@ void UILayer::Init ( lua_State &vm ) noexcept
     }
 }
 
-[[maybe_unused]] void UILayer::Destroy () noexcept
+// NOLINTNEXTLINE - recursive call chain.
+bool UILayer::AppendChild ( lua_State &vm,
+    int errorHandlerIdx,
+    int appendChildElementIdx,
+    int uiLayerIdx,
+    int registerNamedElementIdx,
+    DIVUIElement &parent,
+    HTML5Element &htmlChild
+) noexcept
 {
-    // TODO
+    bool success;
+    HTML5Tag const tag = htmlChild.GetTag ();
+
+    if ( tag == HTML5Tag::eTag::Text )
+    {
+        // NOLINTNEXTLINE - downcast.
+        auto& text = static_cast<TextHTML5Element&> ( htmlChild );
+
+        auto* t = new TextUIElement ( success, vm, errorHandlerIdx, std::move ( text.GetText () ) );
+
+        if ( !success )
+        {
+            delete t;
+            return false;
+        }
+
+        return parent.AppendChildElement ( vm, errorHandlerIdx, appendChildElementIdx, std::unique_ptr<UIElement> ( t ) );
+    }
+
+    if ( tag == HTML5Tag::eTag::IMG )
+    {
+        // NOLINTNEXTLINE - downcast.
+        auto& img = static_cast<IMGHTML5Element&> ( htmlChild );
+
+        auto* i = new ImageUIElement ( success,
+            vm,
+            errorHandlerIdx,
+            std::move ( img.GetAssetPath () ),
+            img._cssComputedValues
+        );
+
+        if ( !success )
+        {
+            delete i;
+            return false;
+        }
+
+        if ( !RegisterNamedElement ( vm, errorHandlerIdx, uiLayerIdx, registerNamedElementIdx, img.GetID () ) )
+        {
+            lua_pop ( &vm, 1 );
+            return false;
+        }
+
+        return parent.AppendChildElement ( vm, errorHandlerIdx, appendChildElementIdx, std::unique_ptr<UIElement> ( i ) );
+    }
+
+    if ( tag != HTML5Tag::eTag::DIV )
+    {
+        android_vulkan::LogWarning ( "pbr::UILayer::AppendChild - Unexpected tag '%s',", tag.ToString () );
+        return false;
+    }
+
+    // NOLINTNEXTLINE - downcast.
+    auto& div = static_cast<DIVHTML5Element&> ( htmlChild );
+
+    auto* d = new DIVUIElement ( success, vm, errorHandlerIdx, div._cssComputedValues );
+
+    if ( !success )
+    {
+        delete d;
+        return false;
+    }
+
+    for ( HTML5Childs& childs = div.GetChilds (); auto& child : childs )
+    {
+        success = AppendChild ( vm,
+            errorHandlerIdx,
+            appendChildElementIdx,
+            uiLayerIdx,
+            registerNamedElementIdx,
+            *d,
+            *child
+        );
+
+        if ( !success )
+        {
+            lua_pop ( &vm, 1 );
+            return false;
+        }
+    }
+
+    if ( !RegisterNamedElement ( vm, errorHandlerIdx, uiLayerIdx, registerNamedElementIdx, div.GetID () ) )
+    {
+        lua_pop ( &vm, 1 );
+        return false;
+    }
+
+    return parent.AppendChildElement ( vm, errorHandlerIdx, appendChildElementIdx, std::unique_ptr<UIElement> ( d ) );
+}
+
+bool UILayer::RegisterNamedElement ( lua_State &vm,
+    int errorHandlerIdx,
+    int uiLayerIdx,
+    int registerNamedElementIdx,
+    std::u32string const &id
+) noexcept
+{
+    if ( id.empty () )
+        return true;
+
+    lua_pushvalue ( &vm, registerNamedElementIdx );
+    lua_pushvalue ( &vm, uiLayerIdx );
+    lua_pushvalue ( &vm, -3 );
+
+    auto const name = UTF8Parser::ToUTF8 ( id );
+    std::string const& n = *name;
+    lua_pushlstring ( &vm, n.c_str (), n.size () );
+
+    if ( lua_pcall ( &vm, 3, 0, errorHandlerIdx ) == LUA_OK )
+        return true;
+
+    android_vulkan::LogWarning ( "pbr::UILayer::RegisterNamedElement - Can't register element '%s'.", n.c_str () );
+    return false;
 }
 
 int UILayer::OnCreate ( lua_State* state )
 {
     bool success;
-    UILayer* layer = new UILayer ( success, *state/*, uiAsset*/ );
+    auto* layer = new UILayer ( success, *state );
 
     if ( success )
     {

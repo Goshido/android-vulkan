@@ -32,7 +32,7 @@ class TextUIElement : public UIElement
         TextUIElement ( TextUIElement && ) = delete;
         TextUIElement& operator = ( TextUIElement && ) = delete;
 
-        explicit TextUIElement ( bool &success, lua_State &vm, std::u32string &&text ) noexcept;
+        explicit TextUIElement ( bool &success, lua_State &vm, int errorHandlerIdx, std::u32string &&text ) noexcept;
 
         ~TextUIElement () override = default;
 
@@ -43,11 +43,9 @@ class TextUIElement : public UIElement
         void Render () noexcept override;
 
         [[nodiscard]] static int OnGarbageCollected ( lua_State* state );
-        [[nodiscard]] static int OnHide ( lua_State* state );
         [[nodiscard]] static int OnSetColorHSV ( lua_State* state );
         [[nodiscard]] static int OnSetColorRGB ( lua_State* state );
         [[nodiscard]] static int OnSetText ( lua_State* state );
-        [[nodiscard]] static int OnShow ( lua_State* state );
 };
 
 } // namespace pbr

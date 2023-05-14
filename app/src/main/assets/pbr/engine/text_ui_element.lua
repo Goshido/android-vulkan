@@ -1,25 +1,9 @@
-require "av://engine/object.lua"
+require "av://engine/ui_element.lua"
 
 
 local TextUIElement = {}
 
 -- Methods
-local function Hide ( self )
-    assert ( type ( self ) == "table" and self._type == eObjectType.TextUIElement,
-        [[TextUIElement:Hide - Calling not via ":" syntax.]]
-    )
-
-    av_TextUIElementHide ( self._handle )
-end
-
-local function Show ( self )
-    assert ( type ( self ) == "table" and self._type == eObjectType.TextUIElement,
-        [[TextUIElement:Show - Calling not via ":" syntax.]]
-    )
-
-    av_TextUIElementShow ( self._handle )
-end
-
 local function SetColorHSV ( self, h, s, v, a )
     assert ( type ( self ) == "table" and self._type == eObjectType.TextUIElement,
         [[TextUIElement:SetColorHSV - Calling not via ":" syntax.]]
@@ -64,14 +48,12 @@ local mt = {
 
 -- This function is exported to C++ side.
 function RegisterTextUIElement ( handle )
-    local obj = Object ( eObjectType.TextUIElement )
+    local obj = UIElement ( eObjectType.TextUIElement )
 
     -- Data
     obj._handle = handle
 
     -- Methods
-    obj.Hide = Hide
-    obj.Show = Show
     obj.SetColorHSV = SetColorHSV
     obj.SetColorRGB = SetColorRGB
     obj.SetText = SetText

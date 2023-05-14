@@ -29,7 +29,11 @@ class DIVUIElement final : public UIElement
         DIVUIElement ( DIVUIElement && ) = delete;
         DIVUIElement& operator = ( DIVUIElement && ) = delete;
 
-        explicit DIVUIElement ( bool &success, lua_State &vm, CSSComputedValues const &css ) noexcept;
+        explicit DIVUIElement ( bool &success,
+            lua_State &vm,
+            int errorHandlerIdx,
+            CSSComputedValues const &css
+        ) noexcept;
 
         ~DIVUIElement () override = default;
 
@@ -38,6 +42,7 @@ class DIVUIElement final : public UIElement
         //      stack[ -2 ] -> parent element
         // At the end method will remove 'child element' from Lua stack.
         [[nodiscard]] bool AppendChildElement ( lua_State &vm,
+            int errorHandlerIdx,
             int appendChildElementIdx,
             std::unique_ptr<UIElement> &&element
         ) noexcept;
@@ -49,8 +54,6 @@ class DIVUIElement final : public UIElement
         void Render () noexcept override;
 
         [[nodiscard]] static int OnGarbageCollected ( lua_State* state );
-        [[nodiscard]] static int OnHide ( lua_State* state );
-        [[nodiscard]] static int OnShow ( lua_State* state );
 };
 
 } // namespace pbr

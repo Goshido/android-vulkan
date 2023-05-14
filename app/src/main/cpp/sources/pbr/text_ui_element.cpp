@@ -1,5 +1,4 @@
 #include <pbr/text_ui_element.h>
-#include <pbr/script_engine.h>
 #include <logger.h>
 
 GX_DISABLE_COMMON_WARNINGS
@@ -15,7 +14,7 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-TextUIElement::TextUIElement ( bool &success, lua_State &vm, std::u32string &&text ) noexcept:
+TextUIElement::TextUIElement ( bool &success, lua_State &vm, int errorHandlerIdx, std::u32string &&text ) noexcept:
     UIElement ( true ),
     _text ( std::move ( text ) )
 {
@@ -33,7 +32,7 @@ TextUIElement::TextUIElement ( bool &success, lua_State &vm, std::u32string &&te
 
     lua_pushlightuserdata ( &vm, this );
 
-    if ( success = lua_pcall ( &vm, 1, 1, ScriptEngine::GetErrorHandlerIndex () ) == LUA_OK; !success )
+    if ( success = lua_pcall ( &vm, 1, 1, errorHandlerIdx ) == LUA_OK; !success )
     {
         android_vulkan::LogWarning ( "pbr::TextUIElement::TextUIElement - Can't append element inside Lua VM." );
     }
@@ -46,14 +45,6 @@ void TextUIElement::Init ( lua_State &vm ) noexcept
         {
             .name = "av_TextUIElementCollectGarbage",
             .func = &TextUIElement::OnGarbageCollected
-        },
-        {
-            .name = "av_TextUIElementHide",
-            .func = &TextUIElement::OnHide
-        },
-        {
-            .name = "av_TextUIElementShow",
-            .func = &TextUIElement::OnShow
         },
         {
             .name = "av_TextUIElementSetColorHSV",
@@ -91,12 +82,6 @@ int TextUIElement::OnGarbageCollected ( lua_State* /*state*/ )
     return 0;
 }
 
-int TextUIElement::OnHide ( lua_State* /*state*/ )
-{
-    // TODO
-    return 0;
-}
-
 int TextUIElement::OnSetColorHSV ( lua_State* /*state*/ )
 {
     // TODO
@@ -110,12 +95,6 @@ int TextUIElement::OnSetColorRGB ( lua_State* /*state*/ )
 }
 
 int TextUIElement::OnSetText ( lua_State* /*state*/ )
-{
-    // TODO
-    return 0;
-}
-
-int TextUIElement::OnShow ( lua_State* /*state*/ )
 {
     // TODO
     return 0;

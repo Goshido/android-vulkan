@@ -3,6 +3,7 @@
 
 
 #include "div_ui_element.h"
+#include "html5_element.h"
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -36,9 +37,24 @@ class UILayer final
         ~UILayer () = default;
 
         static void Init ( lua_State &vm ) noexcept;
-        static void Destroy () noexcept;
 
     private:
+        [[nodiscard]] static bool AppendChild ( lua_State &vm,
+            int errorHandlerIdx,
+            int appendChildElementIdx,
+            int uiLayerIdx,
+            int registerNamedElementIdx,
+            DIVUIElement &parent,
+            HTML5Element &htmlChild
+        ) noexcept;
+
+        [[nodiscard]] static bool RegisterNamedElement ( lua_State &vm,
+            int errorHandlerIdx,
+            int uiLayerIdx,
+            int registerNamedElementIdx,
+            std::u32string const &id
+        ) noexcept;
+
         [[nodiscard]] static int OnCreate ( lua_State* state );
         [[nodiscard]] static int OnFind ( lua_State* state );
         [[nodiscard]] static int OnGarbageCollected ( lua_State* state );

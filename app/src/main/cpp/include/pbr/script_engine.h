@@ -44,10 +44,17 @@ class ScriptEngine final
         [[nodiscard]] static ScriptEngine& GetInstance () noexcept;
         static void Destroy () noexcept;
 
+        // Valid if Lua call performed from initial function. No any nested function calls happened.
         [[nodiscard]] constexpr static int GetErrorHandlerIndex () noexcept
         {
             return 1;
         }
+
+        // Method finds and places Lua error handler to stack. Method returns positive stack index of Lua error handler.
+        // Note: it's up to caller to remove this handler from the stack later.
+        // Why: Lua stack has function frames. Positive stack index counts from current function frame.
+        // It's a problem for nested function calls. Method allows to get meaningful error messages in logger.
+        [[nodiscard]] static int PushErrorHandlerToStack ( lua_State &vm ) noexcept;
 
     private:
         ScriptEngine () = default;

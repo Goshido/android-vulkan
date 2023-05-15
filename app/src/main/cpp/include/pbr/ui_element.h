@@ -8,6 +8,7 @@ GX_DISABLE_COMMON_WARNINGS
 
 #include <memory>
 #include <string>
+#include <unordered_map>
 
 extern "C" {
 
@@ -25,8 +26,14 @@ namespace pbr {
 
 class UIElement
 {
+    private:
+        using Storage = std::unordered_map<UIElement const*, std::unique_ptr<UIElement>>;
+
+    private:
+        static Storage      _uiElements;
+
     protected:
-        bool    _visible = false;
+        bool                _visible = false;
 
     public:
         UIElement () = delete;
@@ -42,12 +49,14 @@ class UIElement
         virtual void ApplyLayout () noexcept = 0;
         virtual void Render () noexcept = 0;
 
-        static void Init ( lua_State &vm ) noexcept;
+        static void InitCommon ( lua_State &vm ) noexcept;
+        static void AppendElement ( UIElement &element ) noexcept;
 
     protected:
         explicit UIElement ( bool visible ) noexcept;
 
     private:
+        [[nodiscard]] static int OnGarbageCollected ( lua_State* state );
         [[nodiscard]] static int OnHide ( lua_State* state );
         [[nodiscard]] static int OnIsVisible ( lua_State* state );
         [[nodiscard]] static int OnShow ( lua_State* state );

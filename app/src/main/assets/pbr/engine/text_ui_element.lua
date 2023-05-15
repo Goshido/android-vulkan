@@ -42,7 +42,7 @@ end
 -- Metamethods
 local mt = {
     __gc = function ( self )
-        av_TextUIElementCollectGarbage ( self._handle )
+        av_UIElementCollectGarbage ( self._handle )
     end
 }
 

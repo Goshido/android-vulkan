@@ -9,8 +9,7 @@ local function Find ( self, id )
         [[UILayer:Find - Calling not via ":" syntax.]]
     )
 
-    assert ( type ( id ) == "string", [[UILayer:Find - "id" is not string.]] )
-    return av_UILayerFind ( self._handle, id )
+    return self._namedElements and self._namedElements[ id ] or nil
 end
 
 local function Hide ( self )

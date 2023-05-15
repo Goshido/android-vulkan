@@ -6,7 +6,7 @@ local ImageUIElement = {}
 -- Metamethods
 local mt = {
     __gc = function ( self )
-        av_ImageUIElementCollectGarbage ( self._handle )
+        av_UIElementCollectGarbage ( self._handle )
     end
 }
 

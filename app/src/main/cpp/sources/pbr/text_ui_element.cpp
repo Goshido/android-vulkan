@@ -1,4 +1,5 @@
 #include <pbr/text_ui_element.h>
+#include <pbr/ui_layer.h>
 #include <logger.h>
 
 GX_DISABLE_COMMON_WARNINGS
@@ -43,10 +44,6 @@ void TextUIElement::Init ( lua_State &vm ) noexcept
     constexpr luaL_Reg const extensions[] =
     {
         {
-            .name = "av_TextUIElementCollectGarbage",
-            .func = &TextUIElement::OnGarbageCollected
-        },
-        {
             .name = "av_TextUIElementSetColorHSV",
             .func = &TextUIElement::OnSetColorHSV
         },
@@ -74,12 +71,6 @@ void TextUIElement::ApplyLayout () noexcept
 void TextUIElement::Render () noexcept
 {
     // TODO
-}
-
-int TextUIElement::OnGarbageCollected ( lua_State* /*state*/ )
-{
-    // TODO
-    return 0;
 }
 
 int TextUIElement::OnSetColorHSV ( lua_State* /*state*/ )

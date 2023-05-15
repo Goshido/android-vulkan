@@ -42,7 +42,6 @@ class TextUIElement : public UIElement
         void ApplyLayout () noexcept override;
         void Render () noexcept override;
 
-        [[nodiscard]] static int OnGarbageCollected ( lua_State* state );
         [[nodiscard]] static int OnSetColorHSV ( lua_State* state );
         [[nodiscard]] static int OnSetColorRGB ( lua_State* state );
         [[nodiscard]] static int OnSetText ( lua_State* state );

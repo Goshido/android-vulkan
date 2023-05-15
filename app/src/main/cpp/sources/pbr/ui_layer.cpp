@@ -75,14 +75,21 @@ UILayer::UILayer ( bool &success, lua_State &vm ) noexcept
     int const errorHandlerIdx = ScriptEngine::PushErrorHandlerToStack ( vm );
 
     _css = std::move ( html.GetCSSParser () );
-    _body = std::make_unique<DIVUIElement> ( success, vm, errorHandlerIdx, html.GetBodyCSS () );
+    _body = new DIVUIElement ( success, vm, errorHandlerIdx, html.GetBodyCSS () );
 
     if ( !success )
     {
-        _body = nullptr;
+        delete _body;
         lua_pop ( &vm, 2 );
         return;
     }
+
+    // Creating '_body' property in 'UILayer' instance (Lua side).
+    constexpr std::string_view bodyProp = "_body";
+    lua_pushlstring ( &vm, bodyProp.data (), bodyProp.size () );
+    lua_pushvalue ( &vm, -2 );
+    lua_rawset ( &vm, uiLayerIdx );
+    UIElement::AppendElement ( *_body );
 
     success = RegisterNamedElement ( vm, errorHandlerIdx, uiLayerIdx, registerNamedElementIdx, html.GetBodyID () );
 
@@ -135,10 +142,6 @@ void UILayer::Init ( lua_State &vm ) noexcept
             .func = &UILayer::OnCreate
         },
         {
-            .name = "av_UILayerFind",
-            .func = &UILayer::OnFind
-        },
-        {
             .name = "av_UILayerCollectGarbage",
             .func = &UILayer::OnGarbageCollected
         },
@@ -188,7 +191,8 @@ bool UILayer::AppendChild ( lua_State &vm,
             return false;
         }
 
-        return parent.AppendChildElement ( vm, errorHandlerIdx, appendChildElementIdx, std::unique_ptr<UIElement> ( t ) );
+        UIElement::AppendElement ( *t );
+        return parent.AppendChildElement ( vm, errorHandlerIdx, appendChildElementIdx, *t );
     }
 
     if ( tag == HTML5Tag::eTag::IMG )
@@ -209,13 +213,15 @@ bool UILayer::AppendChild ( lua_State &vm,
             return false;
         }
 
+        UIElement::AppendElement ( *i );
+
         if ( !RegisterNamedElement ( vm, errorHandlerIdx, uiLayerIdx, registerNamedElementIdx, img.GetID () ) )
         {
             lua_pop ( &vm, 1 );
             return false;
         }
 
-        return parent.AppendChildElement ( vm, errorHandlerIdx, appendChildElementIdx, std::unique_ptr<UIElement> ( i ) );
+        return parent.AppendChildElement ( vm, errorHandlerIdx, appendChildElementIdx, *i );
     }
 
     if ( tag != HTML5Tag::eTag::DIV )
@@ -234,6 +240,8 @@ bool UILayer::AppendChild ( lua_State &vm,
         delete d;
         return false;
     }
+
+    UIElement::AppendElement ( *d );
 
     for ( HTML5Childs& childs = div.GetChilds (); auto& child : childs )
     {
@@ -259,7 +267,7 @@ bool UILayer::AppendChild ( lua_State &vm,
         return false;
     }
 
-    return parent.AppendChildElement ( vm, errorHandlerIdx, appendChildElementIdx, std::unique_ptr<UIElement> ( d ) );
+    return parent.AppendChildElement ( vm, errorHandlerIdx, appendChildElementIdx, *d );
 }
 
 bool UILayer::RegisterNamedElement ( lua_State &vm,
@@ -302,13 +310,6 @@ int UILayer::OnCreate ( lua_State* state )
     delete layer;
     lua_pushnil ( state );
     return 1;
-}
-
-int UILayer::OnFind ( lua_State* /*state*/ )
-{
-    android_vulkan::LogDebug ( "UILayer::OnFind" );
-    // TODO
-    return 0;
 }
 
 int UILayer::OnGarbageCollected ( lua_State* state )

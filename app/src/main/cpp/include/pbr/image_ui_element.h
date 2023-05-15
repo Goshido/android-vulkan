@@ -33,13 +33,9 @@ class ImageUIElement : public UIElement
 
         ~ImageUIElement () override = default;
 
-        static void Init ( lua_State &vm ) noexcept;
-
     private:
         void ApplyLayout () noexcept override;
         void Render () noexcept override;
-
-        [[nodiscard]] static int OnGarbageCollected ( lua_State* state );
 };
 
 } // namespace pbr

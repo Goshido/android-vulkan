@@ -1,4 +1,5 @@
 #include <pbr/div_ui_element.h>
+#include <pbr/ui_layer.h>
 #include <logger.h>
 
 GX_DISABLE_COMMON_WARNINGS
@@ -41,7 +42,7 @@ DIVUIElement::DIVUIElement ( bool &success, lua_State &vm, int errorHandlerIdx, 
 bool DIVUIElement::AppendChildElement ( lua_State &vm,
     int errorHandlerIdx,
     int appendChildElementIdx,
-    std::unique_ptr<UIElement> &&element
+    UIElement &element
 ) noexcept
 {
     if ( !lua_checkstack ( &vm, 3 ) )
@@ -56,28 +57,12 @@ bool DIVUIElement::AppendChildElement ( lua_State &vm,
 
     if ( lua_pcall ( &vm, 2, 0, errorHandlerIdx ) == LUA_OK )
     {
-        _childs.emplace_back ( std::move ( element ) );
+        _childs.emplace_back ( &element );
         return true;
     }
 
     android_vulkan::LogWarning ( "pbr::DIVUIElement::AppendChildElement - Can't append child element inside Lua VM." );
     return false;
-}
-
-void DIVUIElement::Init ( lua_State &vm ) noexcept
-{
-    constexpr luaL_Reg const extensions[] =
-    {
-        {
-            .name = "av_DIVUIElementCollectGarbage",
-            .func = &DIVUIElement::OnGarbageCollected
-        }
-    };
-
-    for ( auto const& extension : extensions )
-    {
-        lua_register ( &vm, extension.name, extension.func );
-    }
 }
 
 void DIVUIElement::ApplyLayout () noexcept
@@ -88,12 +73,6 @@ void DIVUIElement::ApplyLayout () noexcept
 void DIVUIElement::Render () noexcept
 {
     // TODO
-}
-
-int DIVUIElement::OnGarbageCollected ( lua_State* /*state*/ )
-{
-    // TODO
-    return 0;
 }
 
 } // namespace pbr

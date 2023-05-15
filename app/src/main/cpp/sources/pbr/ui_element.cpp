@@ -3,6 +3,8 @@
 
 GX_DISABLE_COMMON_WARNINGS
 
+#include <cassert>
+
 extern "C" {
 
 #include <lua/lauxlib.h>
@@ -14,11 +16,16 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-void UIElement::Init ( lua_State &vm ) noexcept
+std::unordered_map<UIElement const*, std::unique_ptr<UIElement>> UIElement::_uiElements {};
+
+void UIElement::InitCommon ( lua_State &vm ) noexcept
 {
     constexpr luaL_Reg const extensions[] =
     {
-
+        {
+            .name = "av_UIElementCollectGarbage",
+            .func = &UIElement::OnGarbageCollected
+        },
         {
             .name = "av_UIElementHide",
             .func = &UIElement::OnHide
@@ -39,10 +46,31 @@ void UIElement::Init ( lua_State &vm ) noexcept
     }
 }
 
+void UIElement::AppendElement ( UIElement &element ) noexcept
+{
+    _uiElements.emplace ( &element, std::unique_ptr<UIElement> ( &element ) );
+}
+
 UIElement::UIElement ( bool visible ) noexcept:
     _visible ( visible )
 {
     // NOTHING
+}
+
+int UIElement::OnGarbageCollected ( lua_State* state )
+{
+    auto const* element = static_cast<UIElement const*> ( lua_touserdata ( state, 1 ) );
+
+    if ( auto const findResult = _uiElements.find ( element ); findResult != _uiElements.cend () )
+    {
+        android_vulkan::LogError ( "~~~ BOOM" );
+        _uiElements.erase ( findResult );
+        return 0;
+    }
+
+    android_vulkan::LogWarning ( "pbr::UIElement::OnGarbageCollected - Can't find element." );
+    assert ( false );
+    return 0;
 }
 
 int UIElement::OnHide ( lua_State* state )

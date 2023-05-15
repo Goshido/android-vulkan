@@ -97,9 +97,7 @@ bool ScriptEngine::ExtendFrontend ( android_vulkan::Renderer &renderer,
     ScriptableGXVec4::Init ( vm );
 
     UILayer::Init ( vm );
-    UIElement::Init ( vm );
-    DIVUIElement::Init ( vm );
-    ImageUIElement::Init ( vm );
+    UIElement::InitCommon ( vm );
     TextUIElement::Init ( vm );
 
     Component::Register ( vm );

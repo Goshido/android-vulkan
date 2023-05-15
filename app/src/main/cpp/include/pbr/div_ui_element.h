@@ -17,8 +17,8 @@ namespace pbr {
 class DIVUIElement final : public UIElement
 {
     private:
-        std::deque<std::unique_ptr<UIElement>>      _childs {};
-        CSSComputedValues                           _css {};
+        std::deque<UIElement*>      _childs {};
+        CSSComputedValues           _css {};
 
     public:
         DIVUIElement () = delete;
@@ -44,16 +44,12 @@ class DIVUIElement final : public UIElement
         [[nodiscard]] bool AppendChildElement ( lua_State &vm,
             int errorHandlerIdx,
             int appendChildElementIdx,
-            std::unique_ptr<UIElement> &&element
+            UIElement &element
         ) noexcept;
-
-        static void Init ( lua_State &vm ) noexcept;
 
     private:
         void ApplyLayout () noexcept override;
         void Render () noexcept override;
-
-        [[nodiscard]] static int OnGarbageCollected ( lua_State* state );
 };
 
 } // namespace pbr

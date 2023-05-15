@@ -18,7 +18,7 @@ namespace pbr {
 class UILayer final
 {
     private:
-        std::unique_ptr<DIVUIElement>           _body {};
+        DIVUIElement*                           _body = nullptr;
         CSSParser                               _css {};
 
         static std::unordered_set<UILayer*>     _uiLayers;
@@ -56,7 +56,6 @@ class UILayer final
         ) noexcept;
 
         [[nodiscard]] static int OnCreate ( lua_State* state );
-        [[nodiscard]] static int OnFind ( lua_State* state );
         [[nodiscard]] static int OnGarbageCollected ( lua_State* state );
         [[nodiscard]] static int OnHide ( lua_State* state );
         [[nodiscard]] static int OnIsVisible ( lua_State* state );

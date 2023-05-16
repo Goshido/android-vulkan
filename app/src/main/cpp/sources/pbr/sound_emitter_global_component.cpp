@@ -200,6 +200,12 @@ bool SoundEmitterGlobalComponent::Init ( lua_State &vm, android_vulkan::SoundMix
 
 void SoundEmitterGlobalComponent::Destroy () noexcept
 {
+    if ( !_soundEmitters.empty () )
+    {
+        android_vulkan::LogWarning ( "pbr::SoundEmitterGlobalComponent::Destroy - Memory leak." );
+        assert ( false );
+    }
+
     _soundEmitters.clear ();
 }
 

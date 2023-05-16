@@ -127,6 +127,12 @@ bool ScriptComponent::Init ( lua_State &vm ) noexcept
 
 void ScriptComponent::Destroy () noexcept
 {
+    if ( !_scripts.empty () )
+    {
+        android_vulkan::LogWarning ( "pbr::ScriptComponent::Destroy - Memory leak." );
+        assert ( false );
+    }
+
     _scripts.clear ();
 }
 

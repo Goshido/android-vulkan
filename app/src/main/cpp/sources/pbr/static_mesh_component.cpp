@@ -391,6 +391,12 @@ bool StaticMeshComponent::Init ( lua_State &vm, android_vulkan::Renderer &render
 
 void StaticMeshComponent::Destroy () noexcept
 {
+    if ( !_staticMeshes.empty () )
+    {
+        android_vulkan::LogWarning ( "pbr::StaticMeshComponent::Destroy - Memory leak." );
+        assert ( false );
+    }
+
     _staticMeshes.clear ();
     VkDevice device = _renderer->GetDevice ();
 

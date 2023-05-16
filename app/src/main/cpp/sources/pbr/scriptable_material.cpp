@@ -73,6 +73,12 @@ bool ScriptableMaterial::Init ( lua_State &vm, android_vulkan::Renderer &rendere
 
 void ScriptableMaterial::Destroy () noexcept
 {
+    if ( !_materials.empty () )
+    {
+        android_vulkan::LogWarning ( "pbr::ScriptableMaterial::Destroy - Memory leak." );
+        assert ( false );
+    }
+
     _materials.clear ();
     VkDevice device = _renderer->GetDevice ();
 

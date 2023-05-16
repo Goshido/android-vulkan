@@ -229,6 +229,12 @@ bool RigidBodyComponent::Init ( lua_State &vm ) noexcept
 
 void RigidBodyComponent::Destroy () noexcept
 {
+    if ( !_rigidBodies.empty () )
+    {
+        android_vulkan::LogWarning ( "pbr::RigidBodyComponent::Destroy - Memory leak." );
+        assert ( false );
+    }
+
     _rigidBodies.clear ();
 }
 

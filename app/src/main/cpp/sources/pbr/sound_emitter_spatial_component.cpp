@@ -223,6 +223,12 @@ bool SoundEmitterSpatialComponent::Init ( lua_State &vm, android_vulkan::SoundMi
 
 void SoundEmitterSpatialComponent::Destroy () noexcept
 {
+    if ( !_soundEmitters.empty () )
+    {
+        android_vulkan::LogWarning ( "pbr::SoundEmitterSpatialComponent::Destroy - Memory leak." );
+        assert ( false );
+    }
+
     _soundEmitters.clear ();
 }
 

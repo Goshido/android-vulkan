@@ -275,6 +275,7 @@ void ScriptEngine::Free ( lua_State* state ) noexcept
     ScriptComponent::Destroy ();
     ScriptableMaterial::Destroy ();
     Actor::Destroy ();
+    UIElement::Destroy ();
 }
 
 bool ScriptEngine::LoadScript ( lua_State* vm,

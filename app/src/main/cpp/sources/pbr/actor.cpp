@@ -248,6 +248,12 @@ bool Actor::Init ( lua_State &vm ) noexcept
 
 void Actor::Destroy () noexcept
 {
+    if ( !_spawnActors.empty () )
+    {
+        android_vulkan::LogWarning ( "pbr::Actor::Destroy - Memory leak." );
+        assert ( false );
+    }
+
     _spawnActors.clear ();
 }
 

@@ -18,6 +18,11 @@ namespace pbr {
 
 std::unordered_map<UIElement const*, std::unique_ptr<UIElement>> UIElement::_uiElements {};
 
+void UIElement::AppendElement ( UIElement &element ) noexcept
+{
+    _uiElements.emplace ( &element, std::unique_ptr<UIElement> ( &element ) );
+}
+
 void UIElement::InitCommon ( lua_State &vm ) noexcept
 {
     constexpr luaL_Reg const extensions[] =
@@ -46,9 +51,15 @@ void UIElement::InitCommon ( lua_State &vm ) noexcept
     }
 }
 
-void UIElement::AppendElement ( UIElement &element ) noexcept
+void UIElement::Destroy () noexcept
 {
-    _uiElements.emplace ( &element, std::unique_ptr<UIElement> ( &element ) );
+    if ( !_uiElements.empty () )
+    {
+        android_vulkan::LogWarning ( "pbr::UIElement::Destroy - Memory leak." );
+        assert ( false );
+    }
+
+    _uiElements.clear ();
 }
 
 UIElement::UIElement ( bool visible ) noexcept:
@@ -63,7 +74,6 @@ int UIElement::OnGarbageCollected ( lua_State* state )
 
     if ( auto const findResult = _uiElements.find ( element ); findResult != _uiElements.cend () )
     {
-        android_vulkan::LogError ( "~~~ BOOM" );
         _uiElements.erase ( findResult );
         return 0;
     }

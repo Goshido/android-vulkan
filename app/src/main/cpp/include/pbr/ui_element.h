@@ -49,8 +49,9 @@ class UIElement
         virtual void ApplyLayout () noexcept = 0;
         virtual void Render () noexcept = 0;
 
-        static void InitCommon ( lua_State &vm ) noexcept;
         static void AppendElement ( UIElement &element ) noexcept;
+        static void InitCommon ( lua_State &vm ) noexcept;
+        static void Destroy () noexcept;
 
     protected:
         explicit UIElement ( bool visible ) noexcept;

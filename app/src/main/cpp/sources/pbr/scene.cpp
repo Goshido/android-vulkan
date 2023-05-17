@@ -10,6 +10,7 @@
 #include <pbr/scriptable_material.h>
 #include <pbr/scriptable_sweep_test_result.h>
 #include <pbr/static_mesh_component.h>
+#include <pbr/ui_layer.h>
 #include <core.h>
 #include <file.h>
 #include <shape_box.h>
@@ -134,6 +135,14 @@ bool Scene::OnInitDevice ( android_vulkan::Renderer &renderer, android_vulkan::P
         {
             .name = "av_SceneAppendActor",
             .func = &Scene::OnAppendActor
+        },
+        {
+            .name = "av_SceneAppendUILayer",
+            .func = &Scene::OnAppendUILayer
+        },
+        {
+            .name = "av_SceneDetachUILayer",
+            .func = &Scene::OnDetachUILayer
         },
         {
             .name = "av_SceneGetPenetrationBox",
@@ -462,6 +471,11 @@ void Scene::Submit ( android_vulkan::Renderer &renderer, RenderSession &renderSe
         auto& renderableComponent = static_cast<RenderableComponent&> ( component.get () );
         renderableComponent.Submit ( renderSession );
     }
+
+    for ( auto& uiLayer : _uiLayerList )
+    {
+        uiLayer.get ().Submit ();
+    }
 }
 
 void Scene::AppendActor ( ActorRef &actor ) noexcept
@@ -557,6 +571,40 @@ int Scene::OnAppendActor ( lua_State* state )
     auto& self = *static_cast<Scene*> ( lua_touserdata ( state, 1 ) );
     self._actors.push_back ( Actor::GetReference ( *static_cast<Actor const*> ( lua_touserdata ( state, 2 ) ) ) );
     self._actors.back ()->RegisterComponentsFromScript ( self, self._renderableList, *self._physics );
+    return 0;
+}
+
+int Scene::OnAppendUILayer ( lua_State* state )
+{
+    auto& self = *static_cast<Scene*> ( lua_touserdata ( state, 1 ) );
+    self._uiLayerList.emplace_back ( *static_cast<UILayer*> ( lua_touserdata ( state, 2 ) ) );
+    return 0;
+}
+
+int Scene::OnDetachUILayer ( lua_State* state )
+{
+    auto& self = *static_cast<Scene*> ( lua_touserdata ( state, 1 ) );
+    auto& uiLayer = *static_cast<UILayer*> ( lua_touserdata ( state, 2 ) );
+
+    UILayerList& list = self._uiLayerList;
+    auto const end = list.cend ();
+
+    auto const findResult = std::find_if ( list.cbegin (),
+        end,
+
+        [ &uiLayer ] ( auto const &e ) noexcept -> bool {
+            return &e.get () == &uiLayer;
+        }
+    );
+
+    if ( findResult != end )
+    {
+        list.erase ( findResult );
+        return 0;
+    }
+
+    android_vulkan::LogError ( "pbr::Scene::OnDetachUILayer - Can't remove UI layer." );
+    assert ( false );
     return 0;
 }
 

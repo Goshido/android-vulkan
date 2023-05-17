@@ -2,8 +2,6 @@
 #include <pbr/actor.h>
 #include <pbr/camera_component.h>
 #include <pbr/component.h>
-#include <pbr/div_ui_element.h>
-#include <pbr/image_ui_element.h>
 #include <pbr/rigid_body_component.h>
 #include <pbr/script_component.h>
 #include <pbr/scriptable_gxmat3.h>
@@ -276,6 +274,7 @@ void ScriptEngine::Free ( lua_State* state ) noexcept
     ScriptableMaterial::Destroy ();
     Actor::Destroy ();
     UIElement::Destroy ();
+    UILayer::Destroy ();
 }
 
 bool ScriptEngine::LoadScript ( lua_State* vm,

@@ -92,6 +92,9 @@ bool SoundEmitter::Stop () noexcept
 {
     assert ( ( _mixer != nullptr ) & static_cast<bool> ( _streamer ) );
 
+    if ( !_isPlaying )
+        return true;
+
     if ( _mixer->RequestStop ( *this ) )
     {
         if ( !_streamer->Reset () )

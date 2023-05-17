@@ -1,5 +1,4 @@
 #include <pbr/div_ui_element.h>
-#include <pbr/ui_layer.h>
 #include <logger.h>
 
 GX_DISABLE_COMMON_WARNINGS
@@ -39,6 +38,26 @@ DIVUIElement::DIVUIElement ( bool &success, lua_State &vm, int errorHandlerIdx, 
     }
 }
 
+void DIVUIElement::ApplyLayout () noexcept
+{
+    // TODO
+
+    for ( auto* child : _children )
+    {
+        child->ApplyLayout ();
+    }
+}
+
+void DIVUIElement::Render () noexcept
+{
+    // TODO
+
+    for ( auto* child : _children )
+    {
+        child->Render ();
+    }
+}
+
 bool DIVUIElement::AppendChildElement ( lua_State &vm,
     int errorHandlerIdx,
     int appendChildElementIdx,
@@ -57,22 +76,12 @@ bool DIVUIElement::AppendChildElement ( lua_State &vm,
 
     if ( lua_pcall ( &vm, 2, 0, errorHandlerIdx ) == LUA_OK )
     {
-        _childs.emplace_back ( &element );
+        _children.emplace_back ( &element );
         return true;
     }
 
     android_vulkan::LogWarning ( "pbr::DIVUIElement::AppendChildElement - Can't append child element inside Lua VM." );
     return false;
-}
-
-void DIVUIElement::ApplyLayout () noexcept
-{
-    // TODO
-}
-
-void DIVUIElement::Render () noexcept
-{
-    // TODO
 }
 
 } // namespace pbr

@@ -36,7 +36,10 @@ class UILayer final
 
         ~UILayer () = default;
 
+        void Submit () noexcept;
+
         static void Init ( lua_State &vm ) noexcept;
+        static void Destroy () noexcept;
 
     private:
         [[nodiscard]] static bool AppendChild ( lua_State &vm,

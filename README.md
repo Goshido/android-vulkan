@@ -33,6 +33,7 @@ Useful documentation is located [here](docs/documentation.md).
 * [_libogg 1.3.5_](https://gitlab.xiph.org/xiph/ogg) `db5c7a49ce7ebda47b15b78471e78fb7f2483e22`
 * [_libvorbis 1.3.7_](https://gitlab.xiph.org/xiph/vorbis) `84c023699cdf023a32fa4ded32019f194afcdad0`
 * [_libvorbisfile 1.3.7_](https://gitlab.xiph.org/xiph/vorbis) `84c023699cdf023a32fa4ded32019f194afcdad0`
+* [_stb_image 2.28_](https://github.com/nothings/stb) `5736b15f7ea0ffb08dd38af21067c314d6a3aae9`
 * [_Vulkan Validation Layers_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) `ce2c6eff3457a331efd64da800c5ac393285cf40`
 * [_Lua 5.4.6_](https://github.com/lua/lua) `6443185167c77adcc8552a3fee7edab7895db1a9`
 * Real _Android 11_ device with _Vulkan 1.1.131_ support

@@ -46,7 +46,7 @@ class HTML5Element
         explicit HTML5Element ( HTML5Tag::eTag tag ) noexcept;
 };
 
-using HTML5Childs = std::deque<std::shared_ptr<HTML5Element>>;
+using HTML5Children = std::deque<std::shared_ptr<HTML5Element>>;
 
 } // namespace pbr
 

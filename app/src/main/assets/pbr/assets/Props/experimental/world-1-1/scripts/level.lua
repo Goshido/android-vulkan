@@ -25,6 +25,14 @@ local function OnInputActive ( self, inputEvent )
     end
 end
 
+local function OnPostPhysics ( self, deltaTime )
+    self._ttl = self._ttl - deltaTime
+
+    if self._ttl < 0.0 then
+        self:QuitGame ()
+    end
+end
+
 local function OnUpdateIdle ( self, deltaTime )
     -- NOTHING
 end
@@ -53,6 +61,7 @@ local function Constructor ( self, handle, params )
 
     -- Data
     obj._uiLayer = UILayer ( params._uiAsset )
+    obj._ttl = 10.0
 
     -- Methods
     obj.QuitGame = QuitGame
@@ -60,6 +69,7 @@ local function Constructor ( self, handle, params )
     -- Engine events
     obj.OnActorConstructed = OnActorConstructed
     obj.OnInput = OnInputIdle
+    obj.OnPostPhysics = OnPostPhysics
     obj.OnUpdate = OnUpdateIdle
 
     return obj

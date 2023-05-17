@@ -17,7 +17,7 @@ namespace pbr {
 class DIVUIElement final : public UIElement
 {
     private:
-        std::deque<UIElement*>      _childs {};
+        std::deque<UIElement*>      _children {};
         CSSComputedValues           _css {};
 
     public:
@@ -37,6 +37,9 @@ class DIVUIElement final : public UIElement
 
         ~DIVUIElement () override = default;
 
+        void ApplyLayout () noexcept override;
+        void Render () noexcept override;
+
         // Lua stack must have the following configuration:
         //      stack[ -1 ] -> child element
         //      stack[ -2 ] -> parent element
@@ -46,10 +49,6 @@ class DIVUIElement final : public UIElement
             int appendChildElementIdx,
             UIElement &element
         ) noexcept;
-
-    private:
-        void ApplyLayout () noexcept override;
-        void Render () noexcept override;
 };
 
 } // namespace pbr

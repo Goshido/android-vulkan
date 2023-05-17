@@ -74,8 +74,16 @@ local function AppendActor ( self, actor )
     AppendActorFromNative ( self, actor )
 end
 
+local function AppendUILayer ( self, uiLayer )
+    av_SceneAppendUILayer ( self._handle, uiLayer._handle )
+end
+
 local function DetachActor ( self, actor )
     table.insert ( self._actorToDestroy, actor )
+end
+
+local function DetachUILayer ( self, uiLayer )
+    av_SceneDetachUILayer ( self._handle, uiLayer._handle )
 end
 
 local function FindActor ( self, name )
@@ -323,7 +331,9 @@ local function Constructor ( self, handle )
     -- Methods
     obj.AppendActor = AppendActor
     obj.AppendActorFromNative = AppendActorFromNative
+    obj.AppendUILayer = AppendUILayer
     obj.DetachActor = DetachActor
+    obj.DetachUILayer = DetachUILayer
     obj.FindActor = FindActor
     obj.FindActors = FindActors
     obj.GetPenetrationBox = GetPenetrationBox

@@ -31,6 +31,7 @@ class Scene final
         std::vector<android_vulkan::RigidBodyRef>       _sweepTestResult {};
 
         ComponentList                                   _renderableList {};
+        UILayerList                                     _uiLayerList {};
 
         lua_Number                                      _aspectRatio = 1.0;
         lua_Integer                                     _width = -1;
@@ -112,6 +113,8 @@ class Scene final
         static void FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept;
 
         [[nodiscard]] static int OnAppendActor ( lua_State* state );
+        [[nodiscard]] static int OnAppendUILayer ( lua_State* state );
+        [[nodiscard]] static int OnDetachUILayer ( lua_State* state );
         [[nodiscard]] static int OnGetPenetrationBox ( lua_State* state );
         [[nodiscard]] static int OnGetPhysicsToRendererScaleFactor ( lua_State* state );
         [[nodiscard]] static int OnGetRendererToPhysicsScaleFactor ( lua_State* state );

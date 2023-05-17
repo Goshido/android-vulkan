@@ -12,6 +12,7 @@
 
 GX_DISABLE_COMMON_WARNINGS
 
+#include <cassert>
 #include <filesystem>
 
 extern "C" {
@@ -112,7 +113,7 @@ UILayer::UILayer ( bool &success, lua_State &vm ) noexcept
     lua_rotate ( &vm, -2, 1 );
     int const appendChildElementIdx = lua_gettop ( &vm ) - 1;
 
-    for ( HTML5Childs& childs = html.GetBodyChilds (); auto& child : childs )
+    for ( HTML5Children& children = html.GetBodyChildren (); auto& child : children )
     {
         success = AppendChild ( vm,
             errorHandlerIdx,
@@ -131,6 +132,12 @@ UILayer::UILayer ( bool &success, lua_State &vm ) noexcept
     }
 
     lua_pop ( &vm, 4 );
+}
+
+void UILayer::Submit () noexcept
+{
+    _body->ApplyLayout ();
+    _body->Render ();
 }
 
 void UILayer::Init ( lua_State &vm ) noexcept
@@ -163,6 +170,17 @@ void UILayer::Init ( lua_State &vm ) noexcept
     {
         lua_register ( &vm, extension.name, extension.func );
     }
+}
+
+void UILayer::Destroy () noexcept
+{
+    if ( !_uiLayers.empty () )
+    {
+        android_vulkan::LogWarning ( "pbr::UILayer::Destroy - Memory leak." );
+        assert ( false );
+    }
+
+    _uiLayers.clear ();
 }
 
 // NOLINTNEXTLINE - recursive call chain.
@@ -243,7 +261,7 @@ bool UILayer::AppendChild ( lua_State &vm,
 
     UIElement::AppendElement ( *d );
 
-    for ( HTML5Childs& childs = div.GetChilds (); auto& child : childs )
+    for ( HTML5Children& children = div.GetChildren (); auto& child : children )
     {
         success = AppendChild ( vm,
             errorHandlerIdx,
@@ -309,6 +327,7 @@ int UILayer::OnCreate ( lua_State* state )
 
     delete layer;
     lua_pushnil ( state );
+
     return 1;
 }
 

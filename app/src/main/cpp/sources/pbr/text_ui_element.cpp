@@ -1,5 +1,4 @@
 #include <pbr/text_ui_element.h>
-#include <pbr/ui_layer.h>
 #include <logger.h>
 
 GX_DISABLE_COMMON_WARNINGS

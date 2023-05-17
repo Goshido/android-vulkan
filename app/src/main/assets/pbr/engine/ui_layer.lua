@@ -48,6 +48,7 @@ end
 -- Metamethods
 local mt = {
     __gc = function ( self )
+        g_scene:DetachUILayer ( self )
         av_UILayerCollectGarbage ( self._handle )
     end
 }
@@ -68,8 +69,10 @@ local function Constructor ( self, path )
 
     -- Data
     obj._handle = av_UILayerCreate ( obj, path )
+    obj = setmetatable ( obj, mt )
 
-    return setmetatable ( obj, mt )
+    g_scene:AppendUILayer ( obj )
+    return obj
 end
 
 setmetatable ( UILayer, { __call = Constructor } )

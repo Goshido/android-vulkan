@@ -13,10 +13,10 @@ namespace pbr {
 
 DIVHTML5Element::DIVHTML5Element ( std::u32string &&id,
     std::unordered_set<std::u32string> &&classes,
-    HTML5Childs &&childs
+    HTML5Children &&children
 ) noexcept:
     HTML5Element ( HTML5Tag::eTag::DIV ),
-    _childs ( std::move ( childs ) ),
+    _children ( std::move ( children ) ),
     _classes ( std::move ( classes ) ),
     _id ( std::move ( id ) )
 {
@@ -47,9 +47,9 @@ DIVHTML5Element::DIVHTML5Element ( std::u32string &&id,
     _cssComputedValues._height = LengthValue ( LengthValue::eType::Auto, 0.0F );
 }
 
-HTML5Childs& DIVHTML5Element::GetChilds () noexcept
+HTML5Children& DIVHTML5Element::GetChildren () noexcept
 {
-    return _childs;
+    return _children;
 }
 
 std::u32string& DIVHTML5Element::GetID () noexcept
@@ -57,6 +57,7 @@ std::u32string& DIVHTML5Element::GetID () noexcept
     return _id;
 }
 
+// NOLINTNEXTLINE - recursive call.
 std::optional<HTML5Element::Result> DIVHTML5Element::Parse ( char const* html,
     Stream stream,
     char const* assetRoot,
@@ -145,7 +146,7 @@ std::optional<HTML5Element::Result> DIVHTML5Element::Parse ( char const* html,
     if ( !stream.ExpectNotEmpty ( html, "pbr::DIVHTML5Element::Parse" ) )
         return std::nullopt;
 
-    HTML5Childs childs {};
+    HTML5Children children {};
 
     for ( ; ; )
     {
@@ -167,7 +168,7 @@ std::optional<HTML5Element::Result> DIVHTML5Element::Parse ( char const* html,
             {
                 ._element = std::make_shared<DIVHTML5Element> ( std::move ( id ),
                     std::move ( classes ),
-                    std::move ( childs )
+                    std::move ( children )
                 ),
 
                 ._newStream = tag->_newStream
@@ -186,7 +187,7 @@ std::optional<HTML5Element::Result> DIVHTML5Element::Parse ( char const* html,
             if ( !text )
                 return std::nullopt;
 
-            childs.push_back ( text->_element );
+            children.push_back ( text->_element );
             stream = text->_newStream;
             continue;
         }
@@ -207,7 +208,7 @@ std::optional<HTML5Element::Result> DIVHTML5Element::Parse ( char const* html,
             if ( !div )
                 return std::nullopt;
 
-            childs.push_back ( div->_element );
+            children.push_back ( div->_element );
             stream = div->_newStream;
             continue;
         }
@@ -219,7 +220,7 @@ std::optional<HTML5Element::Result> DIVHTML5Element::Parse ( char const* html,
             if ( !img )
                 return std::nullopt;
 
-            childs.push_back ( img->_element );
+            children.push_back ( img->_element );
             stream = img->_newStream;
             continue;
         }
@@ -239,7 +240,7 @@ bool DIVHTML5Element::ApplyCSS ( char const* html, CSSParser const &css ) noexce
     if ( !_cssComputedValues.ApplyCSS ( html, css, _classes, _id ) )
         return false;
 
-    for ( auto& element : _childs )
+    for ( auto& element : _children )
     {
         if ( !element->ApplyCSS ( html, css ) )
         {

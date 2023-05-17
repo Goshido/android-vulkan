@@ -15,12 +15,6 @@
 #include <pbr/utf8_parser.h>
 #include <pbr/whitespace.h>
 
-GX_DISABLE_COMMON_WARNINGS
-
-#include <cassert>
-
-GX_RESTORE_WARNING_STATE
-
 
 namespace pbr {
 
@@ -34,9 +28,9 @@ std::u32string& HTML5Parser::GetBodyID () noexcept
     return _bodyID;
 }
 
-HTML5Childs& HTML5Parser::GetBodyChilds () noexcept
+HTML5Children& HTML5Parser::GetBodyChildren () noexcept
 {
-    return _bodyChilds;
+    return _bodyChildren;
 }
 
 CSSParser& HTML5Parser::GetCSSParser () noexcept
@@ -293,7 +287,7 @@ ParseResult HTML5Parser::ParseBodyElement ( char const* html, Stream stream, cha
             if ( !text )
                 return std::nullopt;
 
-            _bodyChilds.push_back ( text->_element );
+            _bodyChildren.push_back ( text->_element );
             stream = text->_newStream;
             continue;
         }
@@ -314,7 +308,7 @@ ParseResult HTML5Parser::ParseBodyElement ( char const* html, Stream stream, cha
             if ( !div )
                 return std::nullopt;
 
-            _bodyChilds.push_back ( div->_element );
+            _bodyChildren.push_back ( div->_element );
             stream = div->_newStream;
             continue;
         }
@@ -326,7 +320,7 @@ ParseResult HTML5Parser::ParseBodyElement ( char const* html, Stream stream, cha
             if ( !img )
                 return std::nullopt;
 
-            _bodyChilds.push_back ( img->_element );
+            _bodyChildren.push_back ( img->_element );
             stream = img->_newStream;
             continue;
         }
@@ -458,7 +452,7 @@ bool HTML5Parser::ParseHTMLElement ( char const* html, Stream stream, char const
     if ( !_cssComputedValues.ApplyCSS ( html, _css, _bodyClasses, _bodyID ) )
         return false;
 
-    for ( auto& element : _bodyChilds )
+    for ( auto& element : _bodyChildren )
     {
         if ( !element->ApplyCSS ( html, _css ) )
         {

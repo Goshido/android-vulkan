@@ -21,7 +21,7 @@ class HTML5Parser final
         bool                                    _headElementParsed = false;
 
         std::unordered_set<std::u32string>      _bodyClasses {};
-        HTML5Childs                             _bodyChilds {};
+        HTML5Children                           _bodyChildren {};
         std::u32string                          _bodyID {};
 
         CSSParser                               _css {};
@@ -39,7 +39,7 @@ class HTML5Parser final
         ~HTML5Parser () = default;
 
         [[nodiscard]] CSSComputedValues& GetBodyCSS () noexcept;
-        [[nodiscard]] HTML5Childs& GetBodyChilds () noexcept;
+        [[nodiscard]] HTML5Children& GetBodyChildren () noexcept;
         [[nodiscard]] std::u32string& GetBodyID () noexcept;
         [[nodiscard]] CSSParser& GetCSSParser () noexcept;
 

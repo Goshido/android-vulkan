@@ -19,7 +19,7 @@ class DIVHTML5Element final : public HTML5Element
         CSSComputedValues                           _cssComputedValues {};
 
     private:
-        HTML5Childs                                 _childs {};
+        HTML5Children                               _children {};
         std::unordered_set<std::u32string> const    _classes {};
         std::u32string                              _id {};
 
@@ -34,12 +34,12 @@ class DIVHTML5Element final : public HTML5Element
 
         explicit DIVHTML5Element ( std::u32string &&id,
             std::unordered_set<std::u32string> &&classes,
-            HTML5Childs &&childs
+            HTML5Children &&children
         ) noexcept;
 
         ~DIVHTML5Element () override = default;
 
-        [[nodiscard]] HTML5Childs& GetChilds () noexcept;
+        [[nodiscard]] HTML5Children& GetChildren () noexcept;
         [[nodiscard]] std::u32string& GetID () noexcept;
 
         [[nodiscard]] static std::optional<Result> Parse ( char const* html,

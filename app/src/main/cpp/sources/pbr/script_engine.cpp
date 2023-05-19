@@ -94,7 +94,7 @@ bool ScriptEngine::ExtendFrontend ( android_vulkan::Renderer &renderer,
     ScriptableGXVec3::Init ( vm );
     ScriptableGXVec4::Init ( vm );
 
-    UILayer::Init ( vm );
+    UILayer::InitLuaFrontend ( vm );
     UIElement::InitCommon ( vm );
     TextUIElement::Init ( vm );
 

@@ -33,6 +33,8 @@ namespace pbr {
 
 namespace {
 
+constexpr float COMFORTABLE_VIEW_DISTANCE_METERS = 3.5e-1F;
+
 constexpr float DEFAULT_ASPECT_RATIO = 1920.0F / 1080.0F;
 constexpr float DEFAULT_FOV = 60.0F;
 constexpr GXVec3 DEFAULT_LOCATION ( 0.0F, 0.0F, 0.0F );
@@ -96,6 +98,8 @@ bool Scene::OnInitDevice ( android_vulkan::Renderer &renderer, android_vulkan::P
 {
     if ( !_soundMixer.Init () )
         return false;
+
+    UILayer::InitCSSUnitConverter ( renderer.GetDPI (), COMFORTABLE_VIEW_DISTANCE_METERS );
 
     _defaultCamera.SetProjection ( GXDegToRad ( DEFAULT_FOV ), DEFAULT_ASPECT_RATIO, DEFAULT_Z_NEAR, DEFAULT_Z_FAR );
     _penetrations.reserve ( INITIAL_PENETRATION_SIZE );

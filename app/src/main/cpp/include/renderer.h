@@ -49,6 +49,7 @@ class Renderer final
         VkFormat                                                            _depthImageFormat;
         VkFormat                                                            _depthStencilImageFormat;
         VkDevice                                                            _device;
+        float                                                               _dpi;
         VkInstance                                                          _instance;
 
         bool                                                                _isDeviceExtensionChecked;
@@ -128,6 +129,7 @@ class Renderer final
         [[nodiscard]] VkFormat GetDefaultDepthFormat () const noexcept;
         [[nodiscard]] VkFormat GetDefaultDepthStencilFormat () const noexcept;
         [[nodiscard]] VkDevice GetDevice () const noexcept;
+        [[nodiscard]] float GetDPI () const noexcept;
         [[nodiscard]] size_t GetMaxUniformBufferRange () const noexcept;
 
         [[nodiscard]] size_t GetPresentImageCount () const noexcept;
@@ -153,7 +155,7 @@ class Renderer final
         [[nodiscard]] bool OnCreateSwapchain ( ANativeWindow &nativeWindow, bool vSync ) noexcept;
         void OnDestroySwapchain () noexcept;
 
-        [[nodiscard]] bool OnCreateDevice () noexcept;
+        [[nodiscard]] bool OnCreateDevice ( float dpi ) noexcept;
         void OnDestroyDevice () noexcept;
 
         [[nodiscard]] bool TryAllocateMemory ( VkDeviceMemory &memory,

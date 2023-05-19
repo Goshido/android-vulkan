@@ -26,6 +26,7 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
+UILayer::CSSUnitToDevicePixel UILayer::_cssUnitToDevicePixel;
 std::unordered_set<UILayer*> UILayer::_uiLayers {};
 
 UILayer::UILayer ( bool &success, lua_State &vm ) noexcept
@@ -140,7 +141,30 @@ void UILayer::Submit () noexcept
     _body->Render ();
 }
 
-void UILayer::Init ( lua_State &vm ) noexcept
+void UILayer::InitCSSUnitConverter ( float dpi, float comfortableViewDistanceMeters ) noexcept
+{
+    // See full explanation in documentation: UI system, CSS Units and hardware DPI.
+    // <repo/docs/ui-system.md#css-units-and-dpi
+
+    constexpr float dpiSpec = 96.0F;
+    constexpr float distanceSpec = 28.0F;
+    constexpr float meterToInch = 3.93701e+1F;
+    constexpr float dpiFactor = meterToInch / ( dpiSpec * distanceSpec );
+
+    _cssUnitToDevicePixel._fromPX = dpi * comfortableViewDistanceMeters * dpiFactor;
+
+    constexpr float inchToPX = 96.0F;
+    constexpr float inchToMM = 25.4F;
+    constexpr float pxToMM = inchToPX / inchToMM;
+    _cssUnitToDevicePixel._fromMM = pxToMM * _cssUnitToDevicePixel._fromPX;
+
+    constexpr float inchToPT = 72.0F;
+    constexpr float pxToPT = inchToPX / inchToPT;
+    _cssUnitToDevicePixel._fromPT = pxToPT * _cssUnitToDevicePixel._fromPX;
+    GXColorRGB const stop {};
+}
+
+void UILayer::InitLuaFrontend ( lua_State &vm ) noexcept
 {
     constexpr luaL_Reg const extensions[] =
     {

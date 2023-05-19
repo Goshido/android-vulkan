@@ -28,7 +28,7 @@ internal class Activity : android.app.Activity (), SurfaceHolder.Callback2, Anal
     private val leftTrigger = LeftTrigger ( this )
     private val rightTrigger = RightTrigger ( this )
 
-    private external fun doCreate ( assetManager : AssetManager, cacheDirectory : String )
+    private external fun doCreate ( assetManager : AssetManager, cacheDirectory : String, dpi : Float )
     private external fun doDestroy ()
     private external fun doKeyDown ( keyCode : Int ) : Boolean
     private external fun doKeyUp ( keyCode : Int ) : Boolean
@@ -42,7 +42,6 @@ internal class Activity : android.app.Activity (), SurfaceHolder.Callback2, Anal
     override fun onCreate ( savedInstanceState : Bundle? )
     {
         super.onCreate ( savedInstanceState )
-
         window.takeSurface ( this )
 
         // Using legacy API for easy auto entering to fullscreen mode after swipes.
@@ -51,7 +50,7 @@ internal class Activity : android.app.Activity (), SurfaceHolder.Callback2, Anal
             View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
             View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
 
-        doCreate ( assets, cacheDir.absolutePath )
+        doCreate ( assets, cacheDir.absolutePath, resources.displayMetrics.xdpi )
     }
 
     override fun onDestroy ()

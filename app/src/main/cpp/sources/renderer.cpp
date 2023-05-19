@@ -7,7 +7,6 @@ GX_DISABLE_COMMON_WARNINGS
 
 #include <cassert>
 #include <cinttypes>
-#include <cmath>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -808,6 +807,7 @@ Renderer::Renderer () noexcept:
     _depthImageFormat ( VK_FORMAT_UNDEFINED ),
     _depthStencilImageFormat ( VK_FORMAT_UNDEFINED ),
     _device ( VK_NULL_HANDLE ),
+    _dpi ( 96.0F ),
     _instance ( VK_NULL_HANDLE ),
     _isDeviceExtensionChecked ( false ),
     _isDeviceExtensionSupported ( false ),
@@ -916,6 +916,11 @@ VkDevice Renderer::GetDevice () const noexcept
     return _device;
 }
 
+float Renderer::GetDPI () const noexcept
+{
+    return _dpi;
+}
+
 size_t Renderer::GetMaxUniformBufferRange () const noexcept
 {
     return _maxUniformBufferRange;
@@ -984,7 +989,7 @@ void Renderer::OnDestroySwapchain () noexcept
     DestroySurface ();
 }
 
-bool Renderer::OnCreateDevice () noexcept
+bool Renderer::OnCreateDevice ( float dpi ) noexcept
 {
     if ( !_vulkanLoader.AcquireBootstrapFunctions () )
         return false;
@@ -1111,7 +1116,10 @@ bool Renderer::OnCreateDevice () noexcept
         PrintPhysicalDeviceGroupInfo ( i, groupProps[ i ] );
 
     if ( DeployDevice () )
+    {
+        _dpi = dpi;
         return true;
+    }
 
     _physicalDeviceGroups.clear ();
     _physicalDeviceInfo.clear ();

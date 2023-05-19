@@ -17,10 +17,19 @@ namespace pbr {
 
 class UILayer final
 {
+    public:
+        struct CSSUnitToDevicePixel final
+        {
+            [[maybe_unused]] float              _fromMM = 3.7795F;
+            [[maybe_unused]] float              _fromPT = 1.333F;
+            float                               _fromPX = 1.0F;
+        };
+
     private:
         DIVUIElement*                           _body = nullptr;
         CSSParser                               _css {};
 
+        static CSSUnitToDevicePixel             _cssUnitToDevicePixel;
         static std::unordered_set<UILayer*>     _uiLayers;
 
     public:
@@ -38,7 +47,8 @@ class UILayer final
 
         void Submit () noexcept;
 
-        static void Init ( lua_State &vm ) noexcept;
+        static void InitCSSUnitConverter ( float dpi, float comfortableViewDistanceMeters ) noexcept;
+        static void InitLuaFrontend ( lua_State &vm ) noexcept;
         static void Destroy () noexcept;
 
     private:

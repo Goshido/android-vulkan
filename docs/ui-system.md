@@ -52,7 +52,7 @@ In order to create _UI_ elements the content creator has to create [_UILayer_](.
 
 ## <a id="css-units-and-dpi">_CSS Units_ and hardware _DPI_</a>
 
-Information is based on [_CSS specification_](https://www.w3.org/TR/css3-values/#absolute-lengths) and [pactical manual](https://web.dev/high-dpi/). `px`, `pt` and `mm` will be measured in _device specific_ pixels.
+Information is based on [_CSS specification_](https://www.w3.org/TR/css3-values/#absolute-lengths) and [practical manual](https://web.dev/high-dpi/). `px`, `pt` and `mm` will be measured in _device specific_ pixels.
 
 $$DPI_{hardware} = \textit{device specific}$$
 

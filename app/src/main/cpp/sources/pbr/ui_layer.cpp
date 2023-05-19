@@ -161,7 +161,6 @@ void UILayer::InitCSSUnitConverter ( float dpi, float comfortableViewDistanceMet
     constexpr float inchToPT = 72.0F;
     constexpr float pxToPT = inchToPX / inchToPT;
     _cssUnitToDevicePixel._fromPT = pxToPT * _cssUnitToDevicePixel._fromPX;
-    GXColorRGB const stop {};
 }
 
 void UILayer::InitLuaFrontend ( lua_State &vm ) noexcept

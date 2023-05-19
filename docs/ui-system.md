@@ -55,37 +55,50 @@ In order to create _UI_ elements the content creator has to create [_UILayer_](.
 Information is based on [_CSS specification_](https://www.w3.org/TR/css3-values/#absolute-lengths) and [pactical manual](https://web.dev/high-dpi/). `px`, `pt` and `mm` will be measured in _device specific_ pixels.
 
 $$DPI_{hardware} = \textit{device specific}$$
+
 $$distance_{meters} = \textit{user preference}$$
 
 $$\hspace{1cm}$$
 
 $$DPI_{spec} = 96$$
+
 $$distance_{spec} = 28 (\textit{inches})$$
+
 $$meterToInch = 3.93701e+1$$
 
 $$\hspace{1cm}$$
 
 $$DPI_{ideal} = DPI_{spec} \cdot \dfrac{distance_{spec}}{distance_{comfort}}$$
+
 $$distance_{comfort} = distance_{meters} \cdot meterToInch$$
+
 $$DPI_{ideal} = DPI_{spec} \cdot \dfrac{distance_{spec}}{distance_{meters} \cdot meterToInch} = \dfrac{DPI_{spec} \cdot distance_{spec}}{distance_{meters} \cdot meterToInch}$$
+
 $$px = \dfrac{DPI_{hardware}}{DPI_{ideal}} = \dfrac{DPI_{hardware} \cdot distance_{meters} \cdot meterToInch}{DPI_{spec} \cdot distance_{spec}}$$
+
 $$DPI_{factor} = \dfrac{meterToInch}{DPI_{spec} \cdot distance_{spec}}$$
+
 $$px = DPI_{hardware} \cdot distance_{meters} \cdot DPI_{factor}$$
 
 ---
 
 $$inch = 96px$$
+
 $$inch = 72pt$$
+
 $$inch = 25.4mm$$
+
 
 $$\hspace{1cm}$$
 
 $$25.4mm = 96px$$
+
 $$mm = \dfrac{96px}{25.4}$$
 
 $$\hspace{1cm}$$
 
 $$96px = 72pt$$
+
 $$pt = \dfrac{96px}{72}$$
 
 [↬ table of content ⇧](#table-of-content)

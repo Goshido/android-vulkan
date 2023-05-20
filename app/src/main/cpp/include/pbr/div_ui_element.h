@@ -18,6 +18,8 @@ class DIVUIElement final : public UIElement
 {
     private:
         std::deque<UIElement*>      _children {};
+
+    public:
         CSSComputedValues           _css {};
 
     public:
@@ -30,6 +32,7 @@ class DIVUIElement final : public UIElement
         DIVUIElement& operator = ( DIVUIElement && ) = delete;
 
         explicit DIVUIElement ( bool &success,
+            UIElement const* parent,
             lua_State &vm,
             int errorHandlerIdx,
             CSSComputedValues const &css
@@ -37,7 +40,14 @@ class DIVUIElement final : public UIElement
 
         ~DIVUIElement () override = default;
 
-        void ApplyLayout () noexcept override;
+        void ApplyLayout ( android_vulkan::Renderer &renderer,
+            GXVec2 &penLocation,
+            float &lineHeight,
+            GXVec2 const &canvasSize,
+            float parentLeft,
+            float parentWidth
+        ) noexcept override;
+
         void Render () noexcept override;
 
         // Lua stack must have the following configuration:

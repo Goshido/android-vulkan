@@ -2,7 +2,7 @@
 #define PBR_UI_ELEMENT_H
 
 
-#include <GXCommon/GXWarning.h>
+#include <renderer.h>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -36,6 +36,9 @@ class UIElement
         bool                _visible = false;
 
     public:
+        UIElement const*    _parent = nullptr;
+
+    public:
         UIElement () = delete;
 
         UIElement ( UIElement const & ) = delete;
@@ -46,7 +49,14 @@ class UIElement
 
         virtual ~UIElement () = default;
 
-        virtual void ApplyLayout () noexcept = 0;
+        virtual void ApplyLayout ( android_vulkan::Renderer &renderer,
+            GXVec2 &penLocation,
+            float &lineHeight,
+            GXVec2 const &canvasSize,
+            float parentLeft,
+            float parentWidth
+        ) noexcept = 0;
+
         virtual void Render () noexcept = 0;
 
         static void AppendElement ( UIElement &element ) noexcept;
@@ -54,7 +64,7 @@ class UIElement
         static void Destroy () noexcept;
 
     protected:
-        explicit UIElement ( bool visible ) noexcept;
+        explicit UIElement ( bool visible, UIElement const* parent ) noexcept;
 
     private:
         [[nodiscard]] static int OnGarbageCollected ( lua_State* state );

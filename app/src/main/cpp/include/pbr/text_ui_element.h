@@ -32,15 +32,30 @@ class TextUIElement : public UIElement
         TextUIElement ( TextUIElement && ) = delete;
         TextUIElement& operator = ( TextUIElement && ) = delete;
 
-        explicit TextUIElement ( bool &success, lua_State &vm, int errorHandlerIdx, std::u32string &&text ) noexcept;
+        explicit TextUIElement ( bool &success,
+            UIElement const* parent,
+            lua_State &vm,
+            int errorHandlerIdx,
+            std::u32string &&text
+        ) noexcept;
 
         ~TextUIElement () override = default;
 
         static void Init ( lua_State &vm ) noexcept;
 
     private:
-        void ApplyLayout () noexcept override;
+        void ApplyLayout ( android_vulkan::Renderer &renderer,
+            GXVec2 &penLocation,
+            float &lineHeight,
+            GXVec2 const &canvasSize,
+            float parentLeft,
+            float parentWidth
+        ) noexcept override;
+
         void Render () noexcept override;
+
+        [[maybe_unused, nodiscard]] GXColorRGB const* ResolveColor () const noexcept;
+        [[nodiscard]] std::string const* ResolveFont () const noexcept;
 
         [[nodiscard]] static int OnSetColorHSV ( lua_State* state );
         [[nodiscard]] static int OnSetColorRGB ( lua_State* state );

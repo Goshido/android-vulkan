@@ -4,6 +4,7 @@
 
 #include "div_ui_element.h"
 #include "html5_element.h"
+#include "render_session.h"
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -45,7 +46,7 @@ class UILayer final
 
         ~UILayer () = default;
 
-        void Submit () noexcept;
+        void Submit ( android_vulkan::Renderer &renderer, RenderSession &renderSession ) noexcept;
 
         static void InitCSSUnitConverter ( float dpi, float comfortableViewDistanceMeters ) noexcept;
         static void InitLuaFrontend ( lua_State &vm ) noexcept;

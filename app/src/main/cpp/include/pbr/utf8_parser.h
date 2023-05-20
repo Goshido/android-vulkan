@@ -35,6 +35,7 @@ class UTF8Parser final
         ~UTF8Parser () = delete;
 
         [[nodiscard]] static std::optional<Result> Parse ( char const* where, Stream stream ) noexcept;
+        [[nodiscard]] static std::optional<std::u32string> ToU32String ( std::string_view string ) noexcept;
         [[nodiscard]] static std::optional<std::string> ToUTF8 ( std::u32string_view string ) noexcept;
 };
 

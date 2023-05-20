@@ -3,6 +3,11 @@ require "av://engine/ui_element.lua"
 
 local DIVUIElement = {}
 
+-- Methods
+local function GetTextElement ( self )
+    return self._text
+end
+
 -- Engine method
 local function AppendChildElement ( self, element )
     if not self._childs then
@@ -29,6 +34,9 @@ function RegisterDIVUIElement ( handle )
 
     -- Data
     obj._handle = handle
+
+    -- Methods
+    obj.GetTextElement = GetTextElement
 
     -- Engine method
     obj.AppendChildElement = AppendChildElement

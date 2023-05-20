@@ -137,6 +137,29 @@ std::optional<UTF8Parser::Result> UTF8Parser::Parse ( char const* where, Stream 
     return std::nullopt;
 }
 
+std::optional<std::u32string> UTF8Parser::ToU32String ( std::string_view string ) noexcept
+{
+    std::u32string result {};
+    result.reserve ( string.size () + 1U );
+
+    auto* str = const_cast<char*> ( string.data () );
+    Stream stream ( Stream::Data ( reinterpret_cast<uint8_t*> ( str ), string.size () ), 1U );
+
+    while ( !stream._data.empty () )
+    {
+        auto const probe = Parse ( "UTF8Parser::ToU32String", stream );
+
+        if ( !probe )
+            return nullptr;
+
+        result.push_back ( probe->_character );
+        stream = probe->_newStream;
+    }
+
+    result.push_back ( 0U );
+    return std::move ( result );
+}
+
 std::optional<std::string> UTF8Parser::ToUTF8 ( std::u32string_view string ) noexcept
 {
     std::string result {};

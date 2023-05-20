@@ -77,7 +77,7 @@ UILayer::UILayer ( bool &success, lua_State &vm ) noexcept
     int const errorHandlerIdx = ScriptEngine::PushErrorHandlerToStack ( vm );
 
     _css = std::move ( html.GetCSSParser () );
-    _body = new DIVUIElement ( success, vm, errorHandlerIdx, html.GetBodyCSS () );
+    _body = new DIVUIElement ( success, nullptr, vm, errorHandlerIdx, html.GetBodyCSS () );
 
     if ( !success )
     {
@@ -135,9 +135,15 @@ UILayer::UILayer ( bool &success, lua_State &vm ) noexcept
     lua_pop ( &vm, 4 );
 }
 
-void UILayer::Submit () noexcept
+void UILayer::Submit ( android_vulkan::Renderer &renderer, RenderSession &/*renderSession*/ ) noexcept
 {
-    _body->ApplyLayout ();
+    VkExtent2D const viewport = renderer.GetViewportResolution ();
+    GXVec2 const canvasSize ( static_cast<float> ( viewport.width ), static_cast<float> ( viewport.height ) );
+
+    GXVec2 penLocation {};
+    float lineHeight = 0.0F;
+    _body->ApplyLayout ( renderer, penLocation, lineHeight, canvasSize, 0.0F, canvasSize._data[ 0U ] );
+
     _body->Render ();
 }
 
@@ -224,7 +230,7 @@ bool UILayer::AppendChild ( lua_State &vm,
         // NOLINTNEXTLINE - downcast.
         auto& text = static_cast<TextHTML5Element&> ( htmlChild );
 
-        auto* t = new TextUIElement ( success, vm, errorHandlerIdx, std::move ( text.GetText () ) );
+        auto* t = new TextUIElement ( success, &parent, vm, errorHandlerIdx, std::move ( text.GetText () ) );
 
         if ( !success )
         {
@@ -242,6 +248,7 @@ bool UILayer::AppendChild ( lua_State &vm,
         auto& img = static_cast<IMGHTML5Element&> ( htmlChild );
 
         auto* i = new ImageUIElement ( success,
+            &parent,
             vm,
             errorHandlerIdx,
             std::move ( img.GetAssetPath () ),
@@ -274,7 +281,7 @@ bool UILayer::AppendChild ( lua_State &vm,
     // NOLINTNEXTLINE - downcast.
     auto& div = static_cast<DIVHTML5Element&> ( htmlChild );
 
-    auto* d = new DIVUIElement ( success, vm, errorHandlerIdx, div._cssComputedValues );
+    auto* d = new DIVUIElement ( success, &parent, vm, errorHandlerIdx, div._cssComputedValues );
 
     if ( !success )
     {

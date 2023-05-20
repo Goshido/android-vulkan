@@ -15,12 +15,13 @@ GX_RESTORE_WARNING_STATE
 namespace pbr {
 
 ImageUIElement::ImageUIElement ( bool &success,
+    UIElement const* parent,
     lua_State &vm,
     int errorHandlerIdx,
     std::string &&asset,
     CSSComputedValues const &css
 ) noexcept:
-    UIElement ( true ),
+    UIElement ( true, parent ),
     _asset ( std::move ( asset ) ),
     _css ( css )
 {
@@ -44,7 +45,13 @@ ImageUIElement::ImageUIElement ( bool &success,
     }
 }
 
-void ImageUIElement::ApplyLayout () noexcept
+void ImageUIElement::ApplyLayout ( android_vulkan::Renderer &/*renderer*/,
+    GXVec2 &/*penLocation*/,
+    float &/*lineHeight*/,
+    GXVec2 const &/*canvasSize*/,
+    float /*parentLeft*/,
+    float /*parentWidth*/
+) noexcept
 {
     // TODO
 }

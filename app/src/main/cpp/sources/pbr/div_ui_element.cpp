@@ -14,8 +14,13 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-DIVUIElement::DIVUIElement ( bool &success, lua_State &vm, int errorHandlerIdx, CSSComputedValues const &css ) noexcept:
-    UIElement ( css._display != DisplayProperty::eValue::None ),
+DIVUIElement::DIVUIElement ( bool &success,
+    UIElement const* parent,
+    lua_State &vm,
+    int errorHandlerIdx,
+    CSSComputedValues const &css
+) noexcept:
+    UIElement ( css._display != DisplayProperty::eValue::None, parent ),
     _css ( css )
 {
     if ( success = lua_checkstack ( &vm, 2 ); !success )
@@ -38,13 +43,19 @@ DIVUIElement::DIVUIElement ( bool &success, lua_State &vm, int errorHandlerIdx, 
     }
 }
 
-void DIVUIElement::ApplyLayout () noexcept
+void DIVUIElement::ApplyLayout ( android_vulkan::Renderer &renderer,
+    GXVec2 &penLocation,
+    float &lineHeight,
+    GXVec2 const &canvasSize,
+    float parentLeft,
+    float parentWidth
+) noexcept
 {
     // TODO
 
     for ( auto* child : _children )
     {
-        child->ApplyLayout ();
+        child->ApplyLayout ( renderer, penLocation, lineHeight, canvasSize, parentLeft, parentWidth );
     }
 }
 

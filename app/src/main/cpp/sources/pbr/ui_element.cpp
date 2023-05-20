@@ -62,8 +62,9 @@ void UIElement::Destroy () noexcept
     _uiElements.clear ();
 }
 
-UIElement::UIElement ( bool visible ) noexcept:
-    _visible ( visible )
+UIElement::UIElement ( bool visible, UIElement const* parent ) noexcept:
+    _visible ( visible ),
+    _parent ( parent )
 {
     // NOTHING
 }

@@ -478,7 +478,7 @@ void Scene::Submit ( android_vulkan::Renderer &renderer, RenderSession &renderSe
 
     for ( auto& uiLayer : _uiLayerList )
     {
-        uiLayer.get ().Submit ();
+        uiLayer.get ().Submit ( renderer, renderSession );
     }
 }
 

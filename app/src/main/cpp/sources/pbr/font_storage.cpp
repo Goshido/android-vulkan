@@ -14,10 +14,15 @@ void FontStorage::Destroy () noexcept
     if ( !_library )
         return;
 
-    [[maybe_unused]] bool const result = CheckFTResult ( FT_Done_FreeType ( _library ),
+    bool const result = CheckFTResult ( FT_Done_FreeType ( _library ),
         "pbr::FontStorage::Destroy",
         "Can't close FreeType"
     );
+
+    if ( result )
+    {
+        _library = nullptr;
+    }
 }
 
 FontStorage::GlyphInfo const& FontStorage::GetGlyphInfo ( android_vulkan::Renderer &/*renderer*/,

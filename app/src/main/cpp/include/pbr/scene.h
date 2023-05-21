@@ -4,6 +4,7 @@
 
 #include "actor.h"
 #include "camera_component.h"
+#include "font_storage.h"
 #include "render_session.h"
 #include "renderable_component.h"
 #include "scriptable_gamepad.h"
@@ -86,7 +87,11 @@ class Scene final
         ) noexcept;
 
         void RemoveActor ( Actor const &actor ) noexcept;
-        void Submit ( android_vulkan::Renderer &renderer, RenderSession &renderSession ) noexcept;
+
+        void Submit ( android_vulkan::Renderer &renderer,
+            RenderSession &renderSession,
+            FontStorage &fontStorage
+        ) noexcept;
 
     private:
         void AppendActor ( ActorRef &actor ) noexcept;

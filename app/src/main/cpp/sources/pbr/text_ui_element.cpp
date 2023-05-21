@@ -71,7 +71,9 @@ void TextUIElement::Init ( lua_State &vm ) noexcept
     }
 }
 
-void TextUIElement::ApplyLayout ( android_vulkan::Renderer &/*renderer*/,
+void TextUIElement::ApplyLayout ( android_vulkan::Renderer &renderer,
+    FontStorage &fontStorage,
+    CSSUnitToDevicePixel const &cssUnits,
     GXVec2 &/*penLocation*/,
     float &/*lineHeight*/,
     GXVec2 const &/*canvasSize*/,
@@ -83,7 +85,14 @@ void TextUIElement::ApplyLayout ( android_vulkan::Renderer &/*renderer*/,
         return;
 
     std::string const& font = *ResolveFont ();
-    (void)font;
+    uint32_t const size = ResolveFontSize ( cssUnits );
+
+    for ( char32_t const c : _text )
+    {
+        FontStorage::GlyphInfo const& gi = fontStorage.GetGlyphInfo ( renderer, font, size, c );
+        (void)gi;
+        // TODO
+    }
 }
 
 void TextUIElement::Render () noexcept
@@ -128,6 +137,61 @@ std::string const* TextUIElement::ResolveFont () const noexcept
 
     assert ( false );
     return nullptr;
+}
+
+uint32_t TextUIElement::ResolveFontSize ( CSSUnitToDevicePixel const &cssUnits ) const noexcept
+{
+    LengthValue const* target = nullptr;
+    float relativeScale = 1.0F;
+    LengthValue::eType type;
+
+    for ( UIElement const* p = _parent; p; p = p->_parent )
+    {
+        // NOLINTNEXTLINE - downcast.
+        auto const& div = *static_cast<DIVUIElement const*> ( p );
+        LengthValue const& size = div._css._fontSize;
+        type = size.GetType ();
+
+        if ( type == LengthValue::eType::EM )
+        {
+            relativeScale *= size.GetValue ();
+            continue;
+        }
+
+        if ( type == LengthValue::eType::Percent )
+        {
+            relativeScale *= 1.0e-2F * size.GetValue ();
+            continue;
+        }
+
+        if ( type == LengthValue::eType::Auto )
+            continue;
+
+        target = &size;
+        break;
+    }
+
+    assert ( target );
+
+    switch ( type )
+    {
+        case LengthValue::eType::MM:
+        return static_cast<uint32_t> ( relativeScale * target->GetValue () * cssUnits._fromMM );
+
+        case LengthValue::eType::PT:
+        return static_cast<uint32_t> ( relativeScale * target->GetValue () * cssUnits._fromPT );
+
+        case LengthValue::eType::PX:
+        return static_cast<uint32_t> ( relativeScale * target->GetValue () * cssUnits._fromPX );
+
+        case LengthValue::eType::Percent:
+        case LengthValue::eType::EM:
+        case LengthValue::eType::Auto:
+        default:
+            // IMPOSSIBLE
+            assert ( false );
+        return 0;
+    }
 }
 
 int TextUIElement::OnSetColorHSV ( lua_State* state )

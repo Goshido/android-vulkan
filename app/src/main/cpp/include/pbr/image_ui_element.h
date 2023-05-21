@@ -36,6 +36,8 @@ class ImageUIElement : public UIElement
 
     private:
         void ApplyLayout ( android_vulkan::Renderer &renderer,
+            FontStorage &fontStorage,
+            CSSUnitToDevicePixel const &cssUnits,
             GXVec2 &penLocation,
             float &lineHeight,
             GXVec2 const &canvasSize,
@@ -47,5 +49,6 @@ class ImageUIElement : public UIElement
 };
 
 } // namespace pbr
+
 
 #endif // PBR_IMAGE_UI_ELEMENT_H

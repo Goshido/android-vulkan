@@ -82,6 +82,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/pbr/font_face_css_rule.cpp
     app/src/main/cpp/sources/pbr/font_family_property.cpp
     app/src/main/cpp/sources/pbr/font_family_property_checker.cpp
+    app/src/main/cpp/sources/pbr/font_storage.cpp
     app/src/main/cpp/sources/pbr/gbuffer.cpp
     app/src/main/cpp/sources/pbr/geometry_call.cpp
     app/src/main/cpp/sources/pbr/geometry_pass.cpp
@@ -249,6 +250,7 @@ target_link_libraries ( android-vulkan
     aaudio
     android
     ${log-lib}
+    ${CMAKE_SOURCE_DIR}/third-party/jniLibs/arm64-v8a/libfreetype.so
     ${CMAKE_SOURCE_DIR}/third-party/jniLibs/arm64-v8a/libLua.so
     ${CMAKE_SOURCE_DIR}/third-party/jniLibs/arm64-v8a/libvorbisfile.so
 )

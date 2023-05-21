@@ -26,7 +26,7 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-UILayer::CSSUnitToDevicePixel UILayer::_cssUnitToDevicePixel;
+CSSUnitToDevicePixel UILayer::_cssUnitToDevicePixel {};
 std::unordered_set<UILayer*> UILayer::_uiLayers {};
 
 UILayer::UILayer ( bool &success, lua_State &vm ) noexcept
@@ -135,14 +135,26 @@ UILayer::UILayer ( bool &success, lua_State &vm ) noexcept
     lua_pop ( &vm, 4 );
 }
 
-void UILayer::Submit ( android_vulkan::Renderer &renderer, RenderSession &/*renderSession*/ ) noexcept
+void UILayer::Submit ( android_vulkan::Renderer &renderer,
+    RenderSession &/*renderSession*/,
+    FontStorage &fontStorage
+) noexcept
 {
     VkExtent2D const viewport = renderer.GetViewportResolution ();
     GXVec2 const canvasSize ( static_cast<float> ( viewport.width ), static_cast<float> ( viewport.height ) );
 
     GXVec2 penLocation {};
     float lineHeight = 0.0F;
-    _body->ApplyLayout ( renderer, penLocation, lineHeight, canvasSize, 0.0F, canvasSize._data[ 0U ] );
+
+    _body->ApplyLayout ( renderer,
+        fontStorage,
+        _cssUnitToDevicePixel,
+        penLocation,
+        lineHeight,
+        canvasSize,
+        0.0F,
+        canvasSize._data[ 0U ]
+    );
 
     _body->Render ();
 }

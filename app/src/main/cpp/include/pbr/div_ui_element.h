@@ -41,6 +41,8 @@ class DIVUIElement final : public UIElement
         ~DIVUIElement () override = default;
 
         void ApplyLayout ( android_vulkan::Renderer &renderer,
+            FontStorage &fontStorage,
+            CSSUnitToDevicePixel const &cssUnits,
             GXVec2 &penLocation,
             float &lineHeight,
             GXVec2 const &canvasSize,
@@ -62,5 +64,6 @@ class DIVUIElement final : public UIElement
 };
 
 } // namespace pbr
+
 
 #endif // PBR_DIV_UI_ELEMENT_H

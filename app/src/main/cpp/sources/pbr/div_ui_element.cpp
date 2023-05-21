@@ -44,6 +44,8 @@ DIVUIElement::DIVUIElement ( bool &success,
 }
 
 void DIVUIElement::ApplyLayout ( android_vulkan::Renderer &renderer,
+    FontStorage &fontStorage,
+    CSSUnitToDevicePixel const &cssUnits,
     GXVec2 &penLocation,
     float &lineHeight,
     GXVec2 const &canvasSize,
@@ -55,7 +57,15 @@ void DIVUIElement::ApplyLayout ( android_vulkan::Renderer &renderer,
 
     for ( auto* child : _children )
     {
-        child->ApplyLayout ( renderer, penLocation, lineHeight, canvasSize, parentLeft, parentWidth );
+        child->ApplyLayout ( renderer,
+            fontStorage,
+            cssUnits,
+            penLocation,
+            lineHeight,
+            canvasSize,
+            parentLeft,
+            parentWidth
+        );
     }
 }
 

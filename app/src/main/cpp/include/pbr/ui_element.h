@@ -2,7 +2,8 @@
 #define PBR_UI_ELEMENT_H
 
 
-#include <renderer.h>
+#include "css_unit_to_device_pixel.h"
+#include "font_storage.h"
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -50,6 +51,8 @@ class UIElement
         virtual ~UIElement () = default;
 
         virtual void ApplyLayout ( android_vulkan::Renderer &renderer,
+            FontStorage &fontStorage,
+            CSSUnitToDevicePixel const &cssUnits,
             GXVec2 &penLocation,
             float &lineHeight,
             GXVec2 const &canvasSize,
@@ -74,5 +77,6 @@ class UIElement
 };
 
 } // namespace pbr
+
 
 #endif // PBR_UI_ELEMENT_H

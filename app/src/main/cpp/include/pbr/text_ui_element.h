@@ -45,6 +45,8 @@ class TextUIElement : public UIElement
 
     private:
         void ApplyLayout ( android_vulkan::Renderer &renderer,
+            FontStorage &fontStorage,
+            CSSUnitToDevicePixel const &cssUnits,
             GXVec2 &penLocation,
             float &lineHeight,
             GXVec2 const &canvasSize,
@@ -56,6 +58,7 @@ class TextUIElement : public UIElement
 
         [[maybe_unused, nodiscard]] GXColorRGB const* ResolveColor () const noexcept;
         [[nodiscard]] std::string const* ResolveFont () const noexcept;
+        [[nodiscard]] uint32_t ResolveFontSize ( CSSUnitToDevicePixel const &cssUnits ) const noexcept;
 
         [[nodiscard]] static int OnSetColorHSV ( lua_State* state );
         [[nodiscard]] static int OnSetColorRGB ( lua_State* state );
@@ -63,5 +66,6 @@ class TextUIElement : public UIElement
 };
 
 } // namespace pbr
+
 
 #endif // PBR_TEXT_UI_ELEMENT_H

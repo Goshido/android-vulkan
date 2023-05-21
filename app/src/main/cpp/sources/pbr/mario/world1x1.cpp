@@ -38,7 +38,7 @@ bool World1x1::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) 
         return false;
 
     _renderSession.Begin ( _scene.GetActiveCameraLocalMatrix (), _scene.GetActiveCameraProjectionMatrix () );
-    _scene.Submit ( renderer, _renderSession );
+    _scene.Submit ( renderer, _renderSession, _fontStorage );
 
     if ( !_scene.OnUpdate ( deltaTime ) )
         return false;
@@ -48,6 +48,9 @@ bool World1x1::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) 
 
 bool World1x1::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 {
+    if ( !_fontStorage.Init () )
+        return false;
+
     VkCommandPoolCreateInfo const createInfo
     {
         .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
@@ -93,6 +96,7 @@ void World1x1::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
     MaterialManager::Destroy ( renderer );
     CubeMapManager::Destroy ( renderer );
 
+    _fontStorage.Destroy ();
     _isReady = false;
 }
 

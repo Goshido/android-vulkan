@@ -18,14 +18,6 @@ namespace pbr {
 
 class UILayer final
 {
-    public:
-        struct CSSUnitToDevicePixel final
-        {
-            [[maybe_unused]] float              _fromMM = 3.7795F;
-            [[maybe_unused]] float              _fromPT = 1.333F;
-            float                               _fromPX = 1.0F;
-        };
-
     private:
         DIVUIElement*                           _body = nullptr;
         CSSParser                               _css {};
@@ -46,7 +38,10 @@ class UILayer final
 
         ~UILayer () = default;
 
-        void Submit ( android_vulkan::Renderer &renderer, RenderSession &renderSession ) noexcept;
+        void Submit ( android_vulkan::Renderer &renderer,
+            RenderSession &renderSession,
+            FontStorage &fontStorage
+        ) noexcept;
 
         static void InitCSSUnitConverter ( float dpi, float comfortableViewDistanceMeters ) noexcept;
         static void InitLuaFrontend ( lua_State &vm ) noexcept;

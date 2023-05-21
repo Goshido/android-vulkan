@@ -464,7 +464,10 @@ void Scene::RemoveActor ( Actor const &actor ) noexcept
     _actors.erase ( findResult );
 }
 
-void Scene::Submit ( android_vulkan::Renderer &renderer, RenderSession &renderSession ) noexcept
+void Scene::Submit ( android_vulkan::Renderer &renderer,
+    RenderSession &renderSession,
+    FontStorage &fontStorage
+) noexcept
 {
     AV_TRACE ( "Submit components" )
     FreeTransferResources ( renderer );
@@ -478,7 +481,7 @@ void Scene::Submit ( android_vulkan::Renderer &renderer, RenderSession &renderSe
 
     for ( auto& uiLayer : _uiLayerList )
     {
-        uiLayer.get ().Submit ( renderer, renderSession );
+        uiLayer.get ().Submit ( renderer, renderSession, fontStorage );
     }
 }
 

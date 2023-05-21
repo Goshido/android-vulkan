@@ -29,7 +29,7 @@ Useful documentation is located [here](docs/documentation.md).
 * _CMake 3.22.1_
 * [_Gradle 8.0.2-bin_](https://services.gradle.org/distributions/)
 * [_DirectX Shader Compiler 1.7.2212.10142_](https://github.com/microsoft/DirectXShaderCompiler)
-* [_libfreetype 2.13.0_](https://gitlab.freedesktop.org/freetype/freetype) `872a759b468ef0d88b0636d6beb074fe6b87f9cd`
+* [_libfreetype 2.13.0_](https://gitlab.freedesktop.org/freetype/freetype) `562f34819229080abb05b4e7ae7e9e47fc84c6eb`
 * [_libogg 1.3.5_](https://gitlab.xiph.org/xiph/ogg) `db5c7a49ce7ebda47b15b78471e78fb7f2483e22`
 * [_libvorbis 1.3.7_](https://gitlab.xiph.org/xiph/vorbis) `84c023699cdf023a32fa4ded32019f194afcdad0`
 * [_libvorbisfile 1.3.7_](https://gitlab.xiph.org/xiph/vorbis) `84c023699cdf023a32fa4ded32019f194afcdad0`

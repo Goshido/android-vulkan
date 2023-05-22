@@ -48,9 +48,6 @@ bool World1x1::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) 
 
 bool World1x1::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 {
-    if ( !_fontStorage.Init () )
-        return false;
-
     VkCommandPoolCreateInfo const createInfo
     {
         .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
@@ -96,13 +93,17 @@ void World1x1::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
     MaterialManager::Destroy ( renderer );
     CubeMapManager::Destroy ( renderer );
 
-    _fontStorage.Destroy ();
+    _fontStorage.Destroy ( renderer );
     _isReady = false;
 }
 
 bool World1x1::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept
 {
     VkExtent2D resolution = renderer.GetViewportResolution ();
+
+    if ( !_fontStorage.Init ( resolution ) )
+        return false;
+
     resolution.width = resolution.width * RESOLUTION_SCALE_WIDTH / 100U;
     resolution.height = resolution.height * RESOLUTION_SCALE_HEIGHT / 100U;
 

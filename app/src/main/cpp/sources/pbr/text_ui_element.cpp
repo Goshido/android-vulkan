@@ -86,10 +86,11 @@ void TextUIElement::ApplyLayout ( android_vulkan::Renderer &renderer,
 
     std::string const& font = *ResolveFont ();
     uint32_t const size = ResolveFontSize ( cssUnits );
+    FontStorage::FontHash const hash = FontStorage::GetFontHash ( font, size );
 
     for ( char32_t const c : _text )
     {
-        FontStorage::GlyphInfo const& gi = fontStorage.GetGlyphInfo ( renderer, font, size, c );
+        FontStorage::GlyphInfo const& gi = fontStorage.GetGlyphInfo ( renderer, hash, c );
         (void)gi;
         // TODO
     }

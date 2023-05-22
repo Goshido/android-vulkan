@@ -23,6 +23,8 @@ DIVUIElement::DIVUIElement ( bool &success,
     UIElement ( css._display != DisplayProperty::eValue::None, parent ),
     _css ( css )
 {
+    // TODO simplify font file location. Remove any '..' and '.' from path. Use move semantic.
+
     if ( success = lua_checkstack ( &vm, 2 ); !success )
     {
         android_vulkan::LogError ( "pbr::DIVUIElement::DIVUIElement - Stack is too small." );

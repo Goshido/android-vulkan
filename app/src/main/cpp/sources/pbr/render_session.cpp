@@ -469,7 +469,6 @@ bool RenderSession::CreateRenderPass ( android_vulkan::Renderer &renderer ) noex
             .preserveAttachmentCount = 0U,
             .pPreserveAttachments = nullptr
         },
-
         {
             .flags = 0U,
             .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
@@ -489,9 +488,15 @@ bool RenderSession::CreateRenderPass ( android_vulkan::Renderer &renderer ) noex
         {
             .srcSubpass = 0U,
             .dstSubpass = 1U,
-            .srcStageMask = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+
+            .srcStageMask = AV_VK_FLAG ( VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT ) |
+                AV_VK_FLAG ( VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT ),
+
             .dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-            .srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+
+            .srcAccessMask = AV_VK_FLAG ( VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT ) |
+                AV_VK_FLAG ( VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT ),
+
             .dstAccessMask = VK_ACCESS_INPUT_ATTACHMENT_READ_BIT,
             .dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
         },

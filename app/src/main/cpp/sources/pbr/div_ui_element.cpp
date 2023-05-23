@@ -1,4 +1,5 @@
 #include <pbr/div_ui_element.h>
+#include <file.h>
 #include <logger.h>
 
 GX_DISABLE_COMMON_WARNINGS
@@ -18,12 +19,12 @@ DIVUIElement::DIVUIElement ( bool &success,
     UIElement const* parent,
     lua_State &vm,
     int errorHandlerIdx,
-    CSSComputedValues const &css
+    CSSComputedValues &&css
 ) noexcept:
     UIElement ( css._display != DisplayProperty::eValue::None, parent ),
-    _css ( css )
+    _css ( std::move ( css ) )
 {
-    // TODO simplify font file location. Remove any '..' and '.' from path. Use move semantic.
+    _css._fontFile = std::move ( android_vulkan::File ( std::move ( _css._fontFile ) ).GetPath () );
 
     if ( success = lua_checkstack ( &vm, 2 ); !success )
     {

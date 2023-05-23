@@ -77,7 +77,7 @@ UILayer::UILayer ( bool &success, lua_State &vm ) noexcept
     int const errorHandlerIdx = ScriptEngine::PushErrorHandlerToStack ( vm );
 
     _css = std::move ( html.GetCSSParser () );
-    _body = new DIVUIElement ( success, nullptr, vm, errorHandlerIdx, html.GetBodyCSS () );
+    _body = new DIVUIElement ( success, nullptr, vm, errorHandlerIdx, std::move ( html.GetBodyCSS () ) );
 
     if ( !success )
     {
@@ -293,7 +293,7 @@ bool UILayer::AppendChild ( lua_State &vm,
     // NOLINTNEXTLINE - downcast.
     auto& div = static_cast<DIVHTML5Element&> ( htmlChild );
 
-    auto* d = new DIVUIElement ( success, &parent, vm, errorHandlerIdx, div._cssComputedValues );
+    auto* d = new DIVUIElement ( success, &parent, vm, errorHandlerIdx, std::move ( div._cssComputedValues ) );
 
     if ( !success )
     {

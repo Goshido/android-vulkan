@@ -35,6 +35,7 @@ class FontStorage final
     private:
         struct FontData final
         {
+            FT_Face                                     _face;
             std::vector<uint8_t>                        _fontAsset;
             std::unordered_map<char32_t, GlyphInfo>     _glyphs;
         };
@@ -93,13 +94,14 @@ class FontStorage final
         [[nodiscard]] bool Init ( VkExtent2D const &nativeViewport ) noexcept;
         void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
 
+        [[nodiscard]] std::optional<FontHash> GetFontHash ( std::string_view font, uint32_t size ) noexcept;
+
         [[nodiscard]] GlyphInfo const& GetGlyphInfo ( android_vulkan::Renderer &renderer,
             FontHash fontHash,
             char32_t character
         ) noexcept;
 
         [[nodiscard]] static bool CheckFTResult ( FT_Error result, char const* from, char const* message ) noexcept;
-        [[nodiscard]] static FontHash GetFontHash ( std::string_view font, uint32_t size ) noexcept;
 };
 
 } // namespace pbr

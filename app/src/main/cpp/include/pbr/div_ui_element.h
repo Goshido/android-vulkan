@@ -35,7 +35,7 @@ class DIVUIElement final : public UIElement
             UIElement const* parent,
             lua_State &vm,
             int errorHandlerIdx,
-            CSSComputedValues const &css
+            CSSComputedValues &&css
         ) noexcept;
 
         ~DIVUIElement () override = default;

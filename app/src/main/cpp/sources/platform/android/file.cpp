@@ -68,6 +68,16 @@ std::vector<uint8_t> const& File::GetContent () const noexcept
     return _content;
 }
 
+std::string& File::GetPath () noexcept
+{
+    return _filePath;
+}
+
+std::string const& File::GetPath () const noexcept
+{
+    return _filePath;
+}
+
 bool File::IsContentLoaded () const noexcept
 {
     return !_content.empty ();

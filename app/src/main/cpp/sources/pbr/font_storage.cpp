@@ -1,4 +1,5 @@
 #include <pbr/font_storage.h>
+#include <file.h>
 #include <logger.h>
 
 
@@ -48,11 +49,63 @@ void FontStorage::Destroy ( android_vulkan::Renderer &/*renderer*/ ) noexcept
     }
 }
 
+std::optional<FontStorage::FontHash> FontStorage::GetFontHash ( std::string_view font, uint32_t size ) noexcept
+{
+    // Hash function is based on Boost implementation:
+    // https://www.boost.org/doc/libs/1_55_0/doc/html/hash/reference.html#boost.hash_combine.
+    constexpr size_t magic = 0x9E3779B9U;
+
+    static std::hash<uint32_t> const hashInteger {};
+    static std::hash<std::string_view> const hashStringView {};
+
+    size_t hash = 0U;
+    hash ^= hashStringView ( font ) + magic + ( hash << 6U ) + ( hash >> 2U );
+    hash ^= ( hashInteger ( size ) + magic + ( hash << 6U ) + ( hash >> 2U ) );
+
+    if ( auto const findResult = _fonts.find ( hash ); findResult != _fonts.cend () )
+        return hash;
+
+    android_vulkan::File fontAsset ( font );
+    [[maybe_unused]] bool const result = fontAsset.LoadContent ();
+
+    auto status = _fonts.emplace ( hash,
+        FontData
+        {
+            ._face = nullptr,
+            ._fontAsset = std::move ( fontAsset.GetContent () ),
+            ._glyphs = {}
+        }
+    );
+
+    FontData& fontData = status.first->second;
+
+    bool const init = CheckFTResult (
+        FT_New_Memory_Face ( _library,
+            fontData._fontAsset.data (),
+            static_cast<FT_Long> ( fontData._fontAsset.size () - 82470U ),
+            0,
+            &fontData._face
+        ),
+
+        "pbr::FontStorage::GetFontHash",
+        "Can't load face"
+    );
+
+    if ( init )
+        return hash;
+
+    _fonts.erase ( status.first );
+    return std::nullopt;
+}
+
 FontStorage::GlyphInfo const& FontStorage::GetGlyphInfo ( android_vulkan::Renderer &/*renderer*/,
     size_t /*fontHash*/,
     char32_t /*character*/
 ) noexcept
 {
+    //FontData& fontData = _fonts[ fontHash ];
+
+
     // TODO
     constexpr static GlyphInfo dummy {};
     return dummy;
@@ -65,20 +118,6 @@ bool FontStorage::CheckFTResult ( FT_Error result, char const* from, char const*
 
     android_vulkan::LogError ( "%s - %s. Error: %s.", from, message, FT_Error_String ( result ) );
     return false;
-}
-
-FontStorage::FontHash FontStorage::GetFontHash ( std::string_view font, uint32_t size ) noexcept
-{
-    // Hash function is based on Boost implementation:
-    // https://www.boost.org/doc/libs/1_55_0/doc/html/hash/reference.html#boost.hash_combine.
-    constexpr size_t magic = 0x9E3779B9U;
-
-    static std::hash<uint32_t> const hashInteger {};
-    static std::hash<std::string_view> const hashStringView {};
-
-    size_t hash = 0U;
-    hash ^= hashStringView ( font ) + magic + ( hash << 6U ) + ( hash >> 2U );
-    return hash ^ ( hashInteger ( size ) + magic + ( hash << 6U ) + ( hash >> 2U ) );
 }
 
 } // namespace pbr

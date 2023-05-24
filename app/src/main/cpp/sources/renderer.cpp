@@ -389,16 +389,7 @@ static std::unordered_set<std::string_view> const g_validationFilter =
 
     // VALIDATION LAYERS WARNING: Using debug builds of the validation layers *will* adversely affect performance.
     // [2022/09/15] Yeah. I'm pretty aware about that. Thank you.
-    "0x26ac7233",
-
-    // message: Validation Error: [ SYNC-HAZARD-WRITE-AFTER-WRITE ] Object 0: handle = 0x2723ba0000000037,
-    // type = VK_OBJECT_TYPE_RENDER_PASS; | MessageID = 0x5c0ec5d6 |
-    // vkCmdNextSubpass: Hazard WRITE_AFTER_WRITE in subpass 1 for attachment 0 image layout transition
-    // (old_layout: VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, new_layout: VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL).
-    // Access info (usage: SYNC_IMAGE_LAYOUT_TRANSITION,
-    // prior_usage: SYNC_COLOR_ATTACHMENT_OUTPUT_COLOR_ATTACHMENT_WRITE, write_barriers: 0,
-    // command: vkCmdDrawIndexed, seq_no: 17, reset_no: 2).
-    "0x5c0ec5d6"
+    "0x26ac7233"
 };
 
 //----------------------------------------------------------------------------------------------------------------------

@@ -501,7 +501,8 @@ bool RenderSession::CreateRenderPass ( android_vulkan::Renderer &renderer ) noex
             .srcAccessMask = AV_VK_FLAG ( VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT ) |
                 AV_VK_FLAG ( VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT ),
 
-            .dstAccessMask = AV_VK_FLAG ( VK_ACCESS_COLOR_ATTACHMENT_READ_BIT ) |
+            .dstAccessMask = AV_VK_FLAG ( VK_ACCESS_INPUT_ATTACHMENT_READ_BIT ) |
+                AV_VK_FLAG ( VK_ACCESS_COLOR_ATTACHMENT_READ_BIT ) |
                 AV_VK_FLAG ( VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT ) |
                 AV_VK_FLAG ( VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT ) |
                 AV_VK_FLAG ( VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT ),

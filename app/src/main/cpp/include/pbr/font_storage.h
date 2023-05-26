@@ -9,6 +9,7 @@ GX_DISABLE_COMMON_WARNINGS
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
+#include <forward_list>
 #include <string>
 
 GX_RESTORE_WARNING_STATE
@@ -19,8 +20,6 @@ namespace pbr {
 class FontStorage final
 {
     public:
-        using FontHash = size_t;
-
         struct GlyphInfo final
         {
             [[maybe_unused]] uint32_t                   _atlasLayer;
@@ -32,13 +31,24 @@ class FontStorage final
             [[maybe_unused]] int32_t                    _offsetY;
         };
 
-    private:
-        struct FontData final
+        struct FontResource final
         {
             FT_Face                                     _face;
             std::vector<uint8_t>                        _fontAsset;
+        };
+
+        struct FontData final
+        {
+            [[maybe_unused]] FontResource*              _fontResource;
             std::unordered_map<char32_t, GlyphInfo>     _glyphs;
         };
+
+        using FontHash = size_t;
+        using FontVault = std::unordered_map<FontHash, FontData>;
+        using Font = FontVault::iterator;
+
+    private:
+        using FontResources = std::unordered_map<std::string_view, FontResource>;
 
         struct StagingBuffer final
         {
@@ -76,9 +86,11 @@ class FontStorage final
 
     private:
         Atlas                                           _atlas {};
-        std::unordered_map<FontHash, FontData>          _fonts {};
+        FontVault                                       _fonts {};
+        FontResources                                   _fontResources {};
         FT_Library                                      _library = nullptr;
         std::vector<StagingBuffer>                      _stagingBuffers {};
+        std::forward_list<std::string>                  _stringHeap {};
 
     public:
         FontStorage () = default;
@@ -94,14 +106,17 @@ class FontStorage final
         [[nodiscard]] bool Init ( VkExtent2D const &nativeViewport ) noexcept;
         void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
 
-        [[nodiscard]] std::optional<FontHash> GetFontHash ( std::string_view font, uint32_t size ) noexcept;
+        [[nodiscard]] std::optional<Font> GetFont ( std::string_view font, uint32_t size ) noexcept;
 
         [[nodiscard]] GlyphInfo const& GetGlyphInfo ( android_vulkan::Renderer &renderer,
-            FontHash fontHash,
+            Font font,
             char32_t character
         ) noexcept;
 
         [[nodiscard]] static bool CheckFTResult ( FT_Error result, char const* from, char const* message ) noexcept;
+
+    private:
+        [[nodiscard]] std::optional<FontResource*> GetFontResource ( std::string_view font ) noexcept;
 };
 
 } // namespace pbr

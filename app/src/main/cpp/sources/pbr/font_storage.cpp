@@ -49,21 +49,28 @@ void FontStorage::Destroy ( android_vulkan::Renderer &/*renderer*/ ) noexcept
     }
 }
 
-std::optional<FontStorage::FontHash> FontStorage::GetFontHash ( std::string_view font, uint32_t size ) noexcept
+std::optional<FontStorage::Font> FontStorage::GetFont ( std::string_view font, uint32_t size ) noexcept
 {
+    auto fontResource = GetFontResource ( font );
+
+    if ( !fontResource )
+        return std::nullopt;
+
+    FontResource* f = *fontResource;
+
     // Hash function is based on Boost implementation:
     // https://www.boost.org/doc/libs/1_55_0/doc/html/hash/reference.html#boost.hash_combine.
     constexpr size_t magic = 0x9E3779B9U;
 
     static std::hash<uint32_t> const hashInteger {};
-    static std::hash<std::string_view> const hashStringView {};
+    static std::hash<void*> const hashAddress {};
 
-    size_t hash = 0U;
-    hash ^= hashStringView ( font ) + magic + ( hash << 6U ) + ( hash >> 2U );
+    FontHash hash = 0U;
+    hash ^= hashAddress ( f ) + magic + ( hash << 6U ) + ( hash >> 2U );
     hash ^= ( hashInteger ( size ) + magic + ( hash << 6U ) + ( hash >> 2U ) );
 
-    if ( auto const findResult = _fonts.find ( hash ); findResult != _fonts.cend () )
-        return hash;
+    if ( auto findResult = _fonts.find ( hash ); findResult != _fonts.end () )
+        return findResult;
 
     android_vulkan::File fontAsset ( font );
     [[maybe_unused]] bool const result = fontAsset.LoadContent ();
@@ -71,40 +78,20 @@ std::optional<FontStorage::FontHash> FontStorage::GetFontHash ( std::string_view
     auto status = _fonts.emplace ( hash,
         FontData
         {
-            ._face = nullptr,
-            ._fontAsset = std::move ( fontAsset.GetContent () ),
+            ._fontResource = f,
             ._glyphs = {}
         }
     );
 
-    FontData& fontData = status.first->second;
-
-    bool const init = CheckFTResult (
-        FT_New_Memory_Face ( _library,
-            fontData._fontAsset.data (),
-            static_cast<FT_Long> ( fontData._fontAsset.size () - 82470U ),
-            0,
-            &fontData._face
-        ),
-
-        "pbr::FontStorage::GetFontHash",
-        "Can't load face"
-    );
-
-    if ( init )
-        return hash;
-
-    _fonts.erase ( status.first );
-    return std::nullopt;
+    return status.first;
 }
 
 FontStorage::GlyphInfo const& FontStorage::GetGlyphInfo ( android_vulkan::Renderer &/*renderer*/,
-    size_t /*fontHash*/,
+    Font /*font*/,
     char32_t /*character*/
 ) noexcept
 {
     //FontData& fontData = _fonts[ fontHash ];
-
 
     // TODO
     constexpr static GlyphInfo dummy {};
@@ -118,6 +105,44 @@ bool FontStorage::CheckFTResult ( FT_Error result, char const* from, char const*
 
     android_vulkan::LogError ( "%s - %s. Error: %s.", from, message, FT_Error_String ( result ) );
     return false;
+}
+
+std::optional<FontStorage::FontResource*> FontStorage::GetFontResource ( std::string_view font ) noexcept
+{
+    if ( auto const findResult = _fontResources.find ( font ); findResult != _fontResources.cend () )
+        return &findResult->second;
+
+    android_vulkan::File fontAsset ( font );
+    [[maybe_unused]] bool const result = fontAsset.LoadContent ();
+
+    auto status = _fontResources.emplace ( std::string_view ( _stringHeap.emplace_front ( font ) ),
+        FontResource
+        {
+            ._face = nullptr,
+            ._fontAsset = std::move ( fontAsset.GetContent () )
+        }
+    );
+
+    FontResource& resource = status.first->second;
+
+    bool const init = CheckFTResult (
+        FT_New_Memory_Face ( _library,
+            resource._fontAsset.data (),
+            static_cast<FT_Long> ( resource._fontAsset.size () ),
+            0,
+            &resource._face
+        ),
+
+        "pbr::FontStorage::GetFontResource",
+        "Can't load face"
+    );
+
+    if ( init )
+        return &resource;
+
+    _fontResources.erase ( status.first );
+    _stringHeap.pop_front ();
+    return std::nullopt;
 }
 
 } // namespace pbr

@@ -455,7 +455,7 @@ bool RenderSession::CreateRenderPass ( android_vulkan::Renderer &renderer ) noex
         }
     };
 
-    constexpr static VkSubpassDescription const subpasses[] =
+    constexpr VkSubpassDescription const subpasses[] =
     {
         {
             .flags = 0U,
@@ -483,14 +483,13 @@ bool RenderSession::CreateRenderPass ( android_vulkan::Renderer &renderer ) noex
         }
     };
 
-    constexpr static VkSubpassDependency const dependencies[] =
+    constexpr VkSubpassDependency const dependencies[] =
     {
         {
             .srcSubpass = 0U,
             .dstSubpass = 1U,
 
-            .srcStageMask = AV_VK_FLAG ( VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT ) |
-                AV_VK_FLAG ( VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT ) |
+            .srcStageMask = AV_VK_FLAG ( VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT ) |
                 AV_VK_FLAG ( VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT ),
 
             .dstStageMask = AV_VK_FLAG ( VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT ) |
@@ -514,7 +513,6 @@ bool RenderSession::CreateRenderPass ( android_vulkan::Renderer &renderer ) noex
             .dstSubpass = VK_SUBPASS_EXTERNAL,
 
             .srcStageMask = AV_VK_FLAG ( VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT ) |
-                AV_VK_FLAG ( VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT ) |
                 AV_VK_FLAG ( VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT ),
 
             .dstStageMask = AV_VK_FLAG ( VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT ) |
@@ -522,13 +520,11 @@ bool RenderSession::CreateRenderPass ( android_vulkan::Renderer &renderer ) noex
                 AV_VK_FLAG ( VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT ),
 
             .srcAccessMask = AV_VK_FLAG ( VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT ) |
-                AV_VK_FLAG ( VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT ),
+                AV_VK_FLAG ( VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT ),
 
-            .dstAccessMask = AV_VK_FLAG ( VK_ACCESS_COLOR_ATTACHMENT_READ_BIT ) |
+            .dstAccessMask = AV_VK_FLAG ( VK_ACCESS_SHADER_READ_BIT ) |
                 AV_VK_FLAG ( VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT ) |
-                AV_VK_FLAG ( VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT ) |
-                AV_VK_FLAG ( VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT ) |
-                AV_VK_FLAG ( VK_ACCESS_SHADER_READ_BIT ),
+                AV_VK_FLAG ( VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT ),
 
             .dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
         }

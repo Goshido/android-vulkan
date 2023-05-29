@@ -5,6 +5,19 @@
 
 namespace pbr {
 
+[[nodiscard]] bool FontStorage::StagingBuffer::Init ( android_vulkan::Renderer &/*renderer*/ ) noexcept
+{
+    // TODO
+    return true;
+}
+
+void FontStorage::StagingBuffer::Destroy ( VkDevice /*device*/ ) noexcept
+{
+    // TODO
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
 [[maybe_unused]] bool FontStorage::Atlas::AddLayer ( android_vulkan::Renderer &/*renderer*/,
     VkCommandBuffer /*commandBuffer*/
 ) noexcept
@@ -13,7 +26,7 @@ namespace pbr {
     return true;
 }
 
-void FontStorage::Atlas::Destroy () noexcept
+void FontStorage::Atlas::Destroy ( VkDevice /*device*/ ) noexcept
 {
     // TODO
 }
@@ -31,9 +44,18 @@ bool FontStorage::Init ( VkExtent2D const &nativeViewport ) noexcept
     return CheckFTResult ( FT_Init_FreeType ( &_library ), "pbr::FontStorage::Init", "Can't init FreeType" );
 }
 
-void FontStorage::Destroy ( android_vulkan::Renderer &/*renderer*/ ) noexcept
+void FontStorage::Destroy ( VkDevice device ) noexcept
 {
-    _atlas.Destroy ();
+    _atlas.Destroy ( device );
+
+    for ( auto& buffer : _freeStagingBuffers )
+        buffer.Destroy ( device );
+
+    for ( auto& buffer : _usedStagingBuffers )
+        buffer.Destroy ( device );
+
+    _freeStagingBuffers.clear ();
+    _usedStagingBuffers.clear ();
 
     if ( !_library )
         return;
@@ -43,10 +65,13 @@ void FontStorage::Destroy ( android_vulkan::Renderer &/*renderer*/ ) noexcept
         "Can't close FreeType"
     );
 
-    if ( result )
-    {
-        _library = nullptr;
-    }
+    if ( !result )
+        return;
+
+    _library = nullptr;
+    _fonts.clear ();
+    _fontResources.clear ();
+    _stringHeap.clear ();
 }
 
 std::optional<FontStorage::Font> FontStorage::GetFont ( std::string_view font, uint32_t size ) noexcept
@@ -79,6 +104,7 @@ std::optional<FontStorage::Font> FontStorage::GetFont ( std::string_view font, u
         FontData
         {
             ._fontResource = f,
+            ._fontSize = size,
             ._glyphs = {}
         }
     );
@@ -86,16 +112,18 @@ std::optional<FontStorage::Font> FontStorage::GetFont ( std::string_view font, u
     return status.first;
 }
 
-FontStorage::GlyphInfo const& FontStorage::GetGlyphInfo ( android_vulkan::Renderer &/*renderer*/,
-    Font /*font*/,
-    char32_t /*character*/
+FontStorage::GlyphInfo const& FontStorage::GetGlyphInfo ( android_vulkan::Renderer &renderer,
+    Font font,
+    char32_t character
 ) noexcept
 {
-    //FontData& fontData = _fonts[ fontHash ];
+    FontData& fontData = font->second;
+    GlyphStorage& glyphs = fontData._glyphs;
 
-    // TODO
-    constexpr static GlyphInfo dummy {};
-    return dummy;
+    if ( auto const glyph = glyphs.find ( character ); glyph != glyphs.cend () )
+        return glyph->second;
+
+    return EmbedGlyph ( renderer, glyphs, fontData._fontResource->_face, fontData._fontSize, character );
 }
 
 bool FontStorage::CheckFTResult ( FT_Error result, char const* from, char const* message ) noexcept
@@ -105,6 +133,36 @@ bool FontStorage::CheckFTResult ( FT_Error result, char const* from, char const*
 
     android_vulkan::LogError ( "%s - %s. Error: %s.", from, message, FT_Error_String ( result ) );
     return false;
+}
+
+FontStorage::GlyphInfo const& FontStorage::EmbedGlyph ( android_vulkan::Renderer &renderer,
+    GlyphStorage &/*glyphs*/,
+    FT_Face /*face*/,
+    uint32_t /*fontSize*/,
+    char32_t /*character*/
+) noexcept
+{
+    constexpr static GlyphInfo nullGlyph
+    {
+        ._atlasLayer = 0U,
+        ._topLeft = GXVec2 ( 0.0F, 0.0F ),
+        ._bottomRight = GXVec2 ( 0.0F, 0.0F ),
+        ._width = 0U,
+        ._height = 0U,
+        ._advance = 0U,
+        ._offsetY = 0U
+    };
+
+    auto query = GetStagingBuffer ( renderer );
+
+    if ( !query )
+        return nullGlyph;
+
+    StagingBuffer& stagingBuffer = *query.value ();
+    (void)stagingBuffer;
+
+    // TODO
+    return nullGlyph;
 }
 
 std::optional<FontStorage::FontResource*> FontStorage::GetFontResource ( std::string_view font ) noexcept
@@ -142,6 +200,20 @@ std::optional<FontStorage::FontResource*> FontStorage::GetFontResource ( std::st
 
     _fontResources.erase ( status.first );
     _stringHeap.pop_front ();
+    return std::nullopt;
+}
+
+std::optional<FontStorage::StagingBuffer*> FontStorage::GetStagingBuffer (
+    android_vulkan::Renderer &renderer ) noexcept
+{
+    if ( !_freeStagingBuffers.empty () )
+        return &_freeStagingBuffers.front ();
+
+    StagingBuffer& stagingBuffer = _freeStagingBuffers.emplace_front ();
+
+    if ( stagingBuffer.Init ( renderer ) )
+        return &stagingBuffer;
+
     return std::nullopt;
 }
 

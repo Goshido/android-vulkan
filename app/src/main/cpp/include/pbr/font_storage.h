@@ -22,25 +22,28 @@ class FontStorage final
     public:
         struct GlyphInfo final
         {
-            [[maybe_unused]] uint32_t                   _atlasLayer;
-            [[maybe_unused]] GXVec2                     _topLeft;
-            [[maybe_unused]] GXVec2                     _bottomRight;
-            [[maybe_unused]] int32_t                    _width;
-            [[maybe_unused]] int32_t                    _height;
-            [[maybe_unused]] int32_t                    _advance;
-            [[maybe_unused]] int32_t                    _offsetY;
+            [[maybe_unused]] uint32_t           _atlasLayer;
+            [[maybe_unused]] GXVec2             _topLeft;
+            [[maybe_unused]] GXVec2             _bottomRight;
+            [[maybe_unused]] int32_t            _width;
+            [[maybe_unused]] int32_t            _height;
+            [[maybe_unused]] int32_t            _advance;
+            [[maybe_unused]] int32_t            _offsetY;
         };
 
         struct FontResource final
         {
-            FT_Face                                     _face;
-            std::vector<uint8_t>                        _fontAsset;
+            FT_Face                             _face;
+            std::vector<uint8_t>                _fontAsset;
         };
+
+        using GlyphStorage = std::unordered_map<char32_t, GlyphInfo>;
 
         struct FontData final
         {
-            [[maybe_unused]] FontResource*              _fontResource;
-            std::unordered_map<char32_t, GlyphInfo>     _glyphs;
+            FontResource*                       _fontResource;
+            uint32_t                            _fontSize;
+            GlyphStorage                        _glyphs;
         };
 
         using FontHash = size_t;
@@ -58,39 +61,45 @@ class FontStorage final
                 FullLinePresent [[maybe_unused]]
             };
 
-            [[maybe_unused]] VkBuffer                   _buffer = VK_NULL_HANDLE;
-            [[maybe_unused]] VkDeviceMemory             _memory = VK_NULL_HANDLE;
-            [[maybe_unused]] eState                     _state = eState::FirstLine;
+            [[maybe_unused]] VkBuffer           _buffer = VK_NULL_HANDLE;
+            [[maybe_unused]] VkDeviceMemory     _memory = VK_NULL_HANDLE;
+            [[maybe_unused]] eState             _state = eState::FirstLine;
 
-            [[maybe_unused]] uint32_t                   _startX = 0U;
-            [[maybe_unused]] uint32_t                   _startY = 0U;
+            [[maybe_unused]] uint32_t           _startX = 0U;
+            [[maybe_unused]] uint32_t           _startY = 0U;
 
-            [[maybe_unused]] uint32_t                   _endX = 0U;
-            [[maybe_unused]] uint32_t                   _endY = 0U;
+            [[maybe_unused]] uint32_t           _endX = 0U;
+            [[maybe_unused]] uint32_t           _endY = 0U;
+
+            [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer ) noexcept;
+            void Destroy ( VkDevice device ) noexcept;
         };
 
         struct Atlas final
         {
-            [[maybe_unused]] VkBuffer                   _buffer = VK_NULL_HANDLE;
-            [[maybe_unused]] uint32_t                   _layers = 0U;
-            [[maybe_unused]] VkDeviceMemory             _memory = VK_NULL_HANDLE;
-            [[maybe_unused]] VkExtent2D                 _resolution {};
+            [[maybe_unused]] VkBuffer           _buffer = VK_NULL_HANDLE;
+            [[maybe_unused]] uint32_t           _layers = 0U;
+            [[maybe_unused]] VkDeviceMemory     _memory = VK_NULL_HANDLE;
+            [[maybe_unused]] VkExtent2D         _resolution {};
 
             [[maybe_unused, nodiscard]] bool AddLayer ( android_vulkan::Renderer &renderer,
                 VkCommandBuffer commandBuffer
             ) noexcept;
 
-            void Destroy () noexcept;
+            void Destroy ( VkDevice device ) noexcept;
             void SetResolution ( VkExtent2D const &resolution ) noexcept;
         };
 
     private:
-        Atlas                                           _atlas {};
-        FontVault                                       _fonts {};
-        FontResources                                   _fontResources {};
-        FT_Library                                      _library = nullptr;
-        std::vector<StagingBuffer>                      _stagingBuffers {};
-        std::forward_list<std::string>                  _stringHeap {};
+        Atlas                                   _atlas {};
+        FontResources                           _fontResources {};
+        FontVault                               _fonts {};
+
+        std::list<StagingBuffer>                _freeStagingBuffers {};
+        std::list<StagingBuffer>                _usedStagingBuffers {};
+
+        FT_Library                              _library = nullptr;
+        std::forward_list<std::string>          _stringHeap {};
 
     public:
         FontStorage () = default;
@@ -104,7 +113,7 @@ class FontStorage final
         ~FontStorage () = default;
 
         [[nodiscard]] bool Init ( VkExtent2D const &nativeViewport ) noexcept;
-        void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
+        void Destroy ( VkDevice device ) noexcept;
 
         [[nodiscard]] std::optional<Font> GetFont ( std::string_view font, uint32_t size ) noexcept;
 
@@ -116,7 +125,15 @@ class FontStorage final
         [[nodiscard]] static bool CheckFTResult ( FT_Error result, char const* from, char const* message ) noexcept;
 
     private:
+        [[nodiscard]] GlyphInfo const& EmbedGlyph ( android_vulkan::Renderer &renderer,
+            GlyphStorage &glyphs,
+            FT_Face face,
+            uint32_t fontSize,
+            char32_t character
+        ) noexcept;
+
         [[nodiscard]] std::optional<FontResource*> GetFontResource ( std::string_view font ) noexcept;
+        [[nodiscard]] std::optional<StagingBuffer*> GetStagingBuffer ( android_vulkan::Renderer &renderer ) noexcept;
 };
 
 } // namespace pbr

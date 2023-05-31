@@ -61,8 +61,9 @@ class FontStorage final
                 FullLinePresent [[maybe_unused]]
             };
 
-            [[maybe_unused]] VkBuffer           _buffer = VK_NULL_HANDLE;
-            [[maybe_unused]] VkDeviceMemory     _memory = VK_NULL_HANDLE;
+            VkBuffer                            _buffer = VK_NULL_HANDLE;
+            VkDeviceMemory                      _memory = VK_NULL_HANDLE;
+            VkDeviceSize                        _memoryOffset = 0U;
             [[maybe_unused]] eState             _state = eState::FirstLine;
 
             [[maybe_unused]] uint32_t           _startX = 0U;
@@ -71,8 +72,8 @@ class FontStorage final
             [[maybe_unused]] uint32_t           _endX = 0U;
             [[maybe_unused]] uint32_t           _endY = 0U;
 
-            [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer ) noexcept;
-            void Destroy ( VkDevice device ) noexcept;
+            [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, uint32_t side ) noexcept;
+            void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
         };
 
         struct Atlas final
@@ -80,13 +81,14 @@ class FontStorage final
             [[maybe_unused]] VkBuffer           _buffer = VK_NULL_HANDLE;
             [[maybe_unused]] uint32_t           _layers = 0U;
             [[maybe_unused]] VkDeviceMemory     _memory = VK_NULL_HANDLE;
-            [[maybe_unused]] VkExtent2D         _resolution {};
+            [[maybe_unused]] VkDeviceSize       _memoryOffset = 0U;
+            uint32_t                            _side {};
 
             [[maybe_unused, nodiscard]] bool AddLayer ( android_vulkan::Renderer &renderer,
                 VkCommandBuffer commandBuffer
             ) noexcept;
 
-            void Destroy ( VkDevice device ) noexcept;
+            void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
             void SetResolution ( VkExtent2D const &resolution ) noexcept;
         };
 
@@ -113,7 +115,7 @@ class FontStorage final
         ~FontStorage () = default;
 
         [[nodiscard]] bool Init ( VkExtent2D const &nativeViewport ) noexcept;
-        void Destroy ( VkDevice device ) noexcept;
+        void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
 
         [[nodiscard]] std::optional<Font> GetFont ( std::string_view font, uint32_t size ) noexcept;
 
@@ -121,8 +123,6 @@ class FontStorage final
             Font font,
             char32_t character
         ) noexcept;
-
-        [[nodiscard]] static bool CheckFTResult ( FT_Error result, char const* from, char const* message ) noexcept;
 
     private:
         [[nodiscard]] GlyphInfo const& EmbedGlyph ( android_vulkan::Renderer &renderer,
@@ -134,6 +134,8 @@ class FontStorage final
 
         [[nodiscard]] std::optional<FontResource*> GetFontResource ( std::string_view font ) noexcept;
         [[nodiscard]] std::optional<StagingBuffer*> GetStagingBuffer ( android_vulkan::Renderer &renderer ) noexcept;
+
+        [[nodiscard]] static bool CheckFTResult ( FT_Error result, char const* from, char const* message ) noexcept;
 };
 
 } // namespace pbr

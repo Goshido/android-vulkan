@@ -86,7 +86,6 @@ void World1x1::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
     _scene.OnDestroyDevice ();
     _renderSession.OnDestroyDevice ( renderer );
 
-    VkDevice device = renderer.GetDevice ();
     DestroyCommandPool ( renderer.GetDevice () );
     _physics.Reset ();
 
@@ -94,7 +93,7 @@ void World1x1::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
     MaterialManager::Destroy ( renderer );
     CubeMapManager::Destroy ( renderer );
 
-    _fontStorage.Destroy ( device );
+    _fontStorage.Destroy ( renderer );
     _isReady = false;
 }
 

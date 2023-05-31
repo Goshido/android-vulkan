@@ -857,7 +857,7 @@ bool RenderSession::AllocateCommandInfo ( CommandInfo &info, VkDevice device, ui
     {
         .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
         .pNext = nullptr,
-        .flags = 0U,
+        .flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT,
         .queueFamilyIndex = queueIndex
     };
 

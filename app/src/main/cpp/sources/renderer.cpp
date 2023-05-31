@@ -375,21 +375,21 @@ VulkanPhysicalDeviceInfo::VulkanPhysicalDeviceInfo () noexcept:
 #ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
 // MessageID list of the ignored messages.
-static std::unordered_set<std::string_view> const g_validationFilter =
+static std::unordered_set<size_t> const g_validationFilter =
 {
     // Attempting to enable deprecated extension VK_EXT_debug_report, but this extension has been deprecated by
     // VK_EXT_debug_utils.
     // [2022/07/26] There is no alternative on Android 11 platform.
-    "0x9111e735",
+    0x9111e735U,
 
     // Attempting to enable extension VK_EXT_debug_report, but this extension is intended to support use by applications
     // when debugging and it is strongly recommended that it be otherwise avoided.
     // [2022/07/26] Yeah. I'm pretty aware about that. Thank you.
-    "0x822806fa",
+    0x822806faU,
 
     // VALIDATION LAYERS WARNING: Using debug builds of the validation layers *will* adversely affect performance.
     // [2022/09/15] Yeah. I'm pretty aware about that. Thank you.
-    "0x26ac7233"
+    0x26ac7233U
 };
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -2647,15 +2647,7 @@ VkBool32 VKAPI_PTR Renderer::OnVulkanDebugReport ( VkDebugReportFlagsEXT flags,
     void* pUserData
 )
 {
-    std::string_view const message ( pMessage );
-
-    constexpr std::string_view tag ( "MessageID = " );
-    auto const filterResult = message.find ( tag );
-
-    assert ( filterResult != std::string_view::npos );
-    std::string_view const messageID = message.substr ( filterResult + tag.size () );
-
-    if ( g_validationFilter.count ( messageID.substr ( 0U, messageID.find ( ' ' ) ) ) > 0U )
+    if ( g_validationFilter.count ( location ) > 0U )
         return VK_FALSE;
 
     Renderer& renderer = *static_cast<Renderer*> ( pUserData );

@@ -73,7 +73,7 @@ void TextUIElement::Init ( lua_State &vm ) noexcept
 
 void TextUIElement::ApplyLayout ( android_vulkan::Renderer &renderer,
     FontStorage &fontStorage,
-    CSSUnitToDevicePixel const &cssUnits,
+    CSSUnitToDevicePixel const &/*cssUnits*/,
     GXVec2 &/*penLocation*/,
     float &/*lineHeight*/,
     GXVec2 const &/*canvasSize*/,
@@ -85,19 +85,37 @@ void TextUIElement::ApplyLayout ( android_vulkan::Renderer &renderer,
         return;
 
     std::string const& fontAsset = *ResolveFont ();
-    uint32_t const size = ResolveFontSize ( cssUnits );
-    auto font = fontStorage.GetFont ( fontAsset, size );
+//    uint32_t const size = ResolveFontSize ( cssUnits );
+//    auto font = fontStorage.GetFont ( fontAsset, size );
+//
+//    if ( !font )
+//        return;
+//
+//    auto f = *font;
+//
+//    for ( char32_t const c : _text )
+//    {
+//        FontStorage::GlyphInfo const& gi = fontStorage.GetGlyphInfo ( renderer, f, c );
+//        (void)gi;
+//        // TODO
+//    }
 
-    if ( !font )
-        return;
-
-    auto f = *font;
-
-    for ( char32_t const c : _text )
+    // FUCK it's debug
+    for ( uint32_t sz = 32U; sz < 400U; ++sz )
     {
-        FontStorage::GlyphInfo const& gi = fontStorage.GetGlyphInfo ( renderer, f, c );
-        (void)gi;
-        // TODO
+        auto font = fontStorage.GetFont ( fontAsset, sz );
+
+        if ( !font )
+            return;
+
+        auto f = *font;
+
+        for ( char32_t const c: _text )
+        {
+            FontStorage::GlyphInfo const& gi = fontStorage.GetGlyphInfo ( renderer, f, c );
+            (void)gi;
+            // TODO
+        }
     }
 }
 

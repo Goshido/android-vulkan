@@ -6,6 +6,12 @@
 
 namespace pbr {
 
+namespace {
+
+constexpr uint32_t SPECIAL_GLYPH_ATLAS_LAYER = 0U;
+
+} // end of anonymous namespace
+
 bool FontStorage::StagingBuffer::Init ( android_vulkan::Renderer &renderer, uint32_t side ) noexcept
 {
     auto const s = static_cast<VkDeviceSize> ( side );
@@ -49,14 +55,38 @@ bool FontStorage::StagingBuffer::Init ( android_vulkan::Renderer &renderer, uint
 
     AV_REGISTER_DEVICE_MEMORY ( "pbr::FontStorage::StagingBuffer::_memory" )
 
-    return android_vulkan::Renderer::CheckVkResult ( vkBindBufferMemory ( device, _buffer, _memory, _memoryOffset ),
+    result = android_vulkan::Renderer::CheckVkResult ( vkBindBufferMemory ( device, _buffer, _memory, _memoryOffset ),
         "pbr::FontStorage::StagingBuffer",
         "Can't bind memory"
     );
+
+    if ( !result )
+        return false;
+
+    void* data;
+
+    result = renderer.MapMemory ( data,
+        _memory,
+        _memoryOffset,
+        "pbr::FontStorage::StagingBuffer::Init",
+        "Can't map memory"
+    );
+
+    if ( !result )
+        return false;
+
+    _data = static_cast<uint8_t*> ( data );
+    return true;
 }
 
 void FontStorage::StagingBuffer::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 {
+    if ( _data )
+    {
+        renderer.UnmapMemory ( _memory );
+        _data = nullptr;
+    }
+
     if ( _memory != VK_NULL_HANDLE )
     {
         renderer.FreeMemory ( _memory, _memoryOffset );
@@ -95,10 +125,17 @@ void FontStorage::Atlas::SetResolution ( VkExtent2D const &resolution ) noexcept
 
 //----------------------------------------------------------------------------------------------------------------------
 
-bool FontStorage::Init ( VkExtent2D const &nativeViewport ) noexcept
+bool FontStorage::Init (  android_vulkan::Renderer &renderer, VkExtent2D const &nativeViewport ) noexcept
 {
     _atlas.SetResolution ( nativeViewport );
-    return CheckFTResult ( FT_Init_FreeType ( &_library ), "pbr::FontStorage::Init", "Can't init FreeType" );
+    _pixToUV = 1.0F / static_cast<float> ( _atlas._side );
+
+    float const h = _pixToUV * 0.5F;
+    _halfPixelUV._data[ 0U ] = h;
+    _halfPixelUV._data[ 1U ] = h;
+
+    return MakeSpecialGlyphs ( renderer ) &&
+        CheckFTResult ( FT_Init_FreeType ( &_library ), "pbr::FontStorage::Init", "Can't init FreeType" );
 }
 
 void FontStorage::Destroy ( android_vulkan::Renderer &renderer ) noexcept
@@ -108,11 +145,11 @@ void FontStorage::Destroy ( android_vulkan::Renderer &renderer ) noexcept
     for ( auto& buffer : _freeStagingBuffers )
         buffer.Destroy ( renderer );
 
-    for ( auto& buffer : _usedStagingBuffers )
+    for ( auto& buffer : _fullStagingBuffers )
         buffer.Destroy ( renderer );
 
     _freeStagingBuffers.clear ();
-    _usedStagingBuffers.clear ();
+    _fullStagingBuffers.clear ();
 
     if ( !_library )
         return;
@@ -129,6 +166,12 @@ void FontStorage::Destroy ( android_vulkan::Renderer &renderer ) noexcept
     _fonts.clear ();
     _fontResources.clear ();
     _stringHeap.clear ();
+}
+
+bool FontStorage::UploadGPUData ( android_vulkan::Renderer &/*renderer*/, VkCommandBuffer /*commandBuffer*/ ) noexcept
+{
+    // TODO
+    return true;
 }
 
 std::optional<FontStorage::Font> FontStorage::GetFont ( std::string_view font, uint32_t size ) noexcept
@@ -183,41 +226,20 @@ FontStorage::GlyphInfo const& FontStorage::GetGlyphInfo ( android_vulkan::Render
     return EmbedGlyph ( renderer, glyphs, fontData._fontResource->_face, fontData._fontSize, character );
 }
 
-bool FontStorage::CheckFTResult ( FT_Error result, char const* from, char const* message ) noexcept
-{
-    if ( result == FT_Err_Ok )
-        return true;
-
-    android_vulkan::LogError ( "%s - %s. Error: %s.", from, message, FT_Error_String ( result ) );
-    return false;
-}
-
 FontStorage::GlyphInfo const& FontStorage::EmbedGlyph ( android_vulkan::Renderer &renderer,
-    GlyphStorage &/*glyphs*/,
+    GlyphStorage &glyphs,
     FT_Face face,
     uint32_t fontSize,
     char32_t character
 ) noexcept
 {
-    constexpr static GlyphInfo nullGlyph
-    {
-        ._atlasLayer = 0U,
-        ._topLeft = GXVec2 ( 0.0F, 0.0F ),
-        ._bottomRight = GXVec2 ( 0.0F, 0.0F ),
-        ._width = 0U,
-        ._height = 0U,
-        ._advance = 0U,
-        ._offsetY = 0U
-    };
-
+    constexpr static GlyphInfo nullGlyph {};
     auto query = GetStagingBuffer ( renderer );
 
     if ( !query )
         return nullGlyph;
 
-    StagingBuffer& stagingBuffer = *query.value ();
-    (void)stagingBuffer;
-
+    StagingBuffer* stagingBuffer = query.value ();
     auto const s = static_cast<FT_UInt> ( fontSize );
 
     if ( !CheckFTResult ( FT_Set_Pixel_Sizes ( face, s, s ), "pbr::FontStorage::EmbedGlyph", "Can't set size" ) )
@@ -234,10 +256,108 @@ FontStorage::GlyphInfo const& FontStorage::EmbedGlyph ( android_vulkan::Renderer
     FT_GlyphSlot slot = face->glyph;
     FT_Bitmap const &bm = slot->bitmap;
 
-    auto const* raster = static_cast<uint8_t const*> ( bm.buffer );
-    auto const pitch = static_cast<ptrdiff_t> ( bm.pitch );
     auto const rows = static_cast<uint32_t> ( bm.rows );
     auto const width = static_cast<size_t> ( bm.width );
+
+    if ( ( rows == 0U ) | ( width == 0U ) )
+    {
+        auto const status = glyphs.emplace ( character,
+            GlyphInfo
+            {
+                ._atlasLayer = SPECIAL_GLYPH_ATLAS_LAYER,
+                ._topLeft = _transparentGlyphUV,
+                ._bottomRight = _transparentGlyphUV,
+                ._width = static_cast<int32_t> ( width ),
+                ._height = static_cast<int32_t> ( rows ),
+                ._advance = static_cast<int32_t> ( slot->advance.x ) >> 6,
+                ._offsetY = static_cast<int32_t> ( slot->metrics.horiBearingY - slot->metrics.height ) >> 6
+            }
+        );
+
+        return status.first->second;
+    }
+
+    uint32_t const side = _atlas._side;
+
+    if ( ( rows > side ) | ( width > side ) )
+    {
+        android_vulkan::LogWarning ( "FontStorage::EmbedGlyph - Font size is way too big: %u", fontSize );
+        return nullGlyph;
+    }
+
+    uint32_t const toRight = width - 1U;
+    uint32_t const toBottom = rows - 1U;
+
+    uint32_t lineHeight =  stagingBuffer->_lineHeight;
+
+    // Move position on one pixel right to not overwrite previously rendered glyph last column.
+    uint32_t left = stagingBuffer->_endX + static_cast<uint32_t> ( stagingBuffer->_endX > 0U );
+    uint32_t top = stagingBuffer->_endY;
+
+    auto const goToNewLine = [ & ]() noexcept {
+        if ( stagingBuffer->_state == StagingBuffer::eState::FirstLine )
+            stagingBuffer->_firstLineHeight = stagingBuffer->_lineHeight;
+
+        stagingBuffer->_state = StagingBuffer::eState::FullLinePresent;
+        lineHeight = 0U;
+    };
+
+    if ( left >= side )
+    {
+        goToNewLine ();
+        left = 0U;
+        top += stagingBuffer->_lineHeight;
+    }
+
+    auto const completeStagingBuffer = [ & ]() noexcept -> bool {
+        _fullStagingBuffers.splice ( _fullStagingBuffers.cend (),
+            _freeStagingBuffers,
+            _freeStagingBuffers.cbegin ()
+        );
+
+        query = GetStagingBuffer ( renderer );
+
+        if ( !query )
+            return false;
+
+        stagingBuffer = query.value ();
+        return true;
+    };
+
+    if ( top >= side )
+    {
+        if ( !completeStagingBuffer () )
+            return nullGlyph;
+
+        top = 0U;
+    }
+
+    uint32_t right = left + toRight;
+    uint32_t bottom = top + toBottom;
+
+    if ( right >= side )
+    {
+        goToNewLine ();
+        right = toRight;
+        bottom += stagingBuffer->_lineHeight;
+    }
+
+    if ( bottom >= side )
+    {
+        if ( !completeStagingBuffer () )
+            return nullGlyph;
+
+        top = 0U;
+        bottom = toBottom;
+    }
+
+    stagingBuffer->_lineHeight = std::max ( lineHeight, rows );
+    stagingBuffer->_endX = right;
+    stagingBuffer->_endY = top;
+    uint8_t* data = stagingBuffer->_data + ( top * side ) + left;
+
+    auto const* raster = static_cast<uint8_t const*> ( bm.buffer );
+    auto const pitch = static_cast<ptrdiff_t> ( bm.pitch );
 
     // 'pitch' is positive when glyph image is stored from top to bottom line flow.
     // 'pitch' is negative when glyph image is stored from bottom to top line flow.
@@ -245,14 +365,25 @@ FontStorage::GlyphInfo const& FontStorage::EmbedGlyph ( android_vulkan::Renderer
 
     for ( uint32_t row = 0U; row < rows; ++row )
     {
-        // TODO here should be writing to staging buffer memory via std::memcpy.
-        (void)raster;
-        (void)width;
+        std::memcpy ( data, raster, static_cast<size_t> ( width ) );
         raster += pitch;
+        data += static_cast<size_t> ( side );
     }
 
-    // TODO
-    return nullGlyph;
+    auto const status = glyphs.emplace ( character,
+        GlyphInfo
+        {
+            ._atlasLayer = _atlas._layers + static_cast<uint32_t> ( _fullStagingBuffers.size () ),
+            ._topLeft = PixToUV ( left, top ),
+            ._bottomRight = PixToUV ( right, bottom ),
+            ._width = static_cast<int32_t> ( width ),
+            ._height = static_cast<int32_t> ( rows ),
+            ._advance = static_cast<int32_t> ( slot->advance.x ) >> 6,
+            ._offsetY = static_cast<int32_t> ( slot->metrics.horiBearingY - slot->metrics.height ) >> 6
+        }
+    );
+
+    return status.first->second;
 }
 
 std::optional<FontStorage::FontResource*> FontStorage::GetFontResource ( std::string_view font ) noexcept
@@ -305,6 +436,42 @@ std::optional<FontStorage::StagingBuffer*> FontStorage::GetStagingBuffer (
         return &stagingBuffer;
 
     return std::nullopt;
+}
+
+bool FontStorage::MakeSpecialGlyphs ( android_vulkan::Renderer &renderer ) noexcept
+{
+    auto query = GetStagingBuffer ( renderer );
+
+    if ( !query )
+        return false;
+
+    _opaqueGlyphUV = PixToUV ( 0U, 0U );
+    _transparentGlyphUV = PixToUV ( 1U, 0U );
+
+    StagingBuffer &stagingBuffer = *query.value ();
+    stagingBuffer._data[ 0U ] = std::numeric_limits<uint8_t>::max ();
+    stagingBuffer._data[ 1U ] = 0U;
+
+    stagingBuffer._endX = 1U;
+    stagingBuffer._lineHeight = 1U;
+
+    return true;
+}
+
+GXVec2 FontStorage::PixToUV ( uint32_t x, uint32_t y ) const noexcept
+{
+    GXVec2 result {};
+    result.Sum ( _halfPixelUV, _pixToUV, GXVec2 ( static_cast<float> ( x ), static_cast<float> ( y ) ) );
+    return result;
+}
+
+bool FontStorage::CheckFTResult ( FT_Error result, char const* from, char const* message ) noexcept
+{
+    if ( result == FT_Err_Ok )
+        return true;
+
+    android_vulkan::LogError ( "%s - %s. Error: %s.", from, message, FT_Error_String ( result ) );
+    return false;
 }
 
 } // namespace pbr

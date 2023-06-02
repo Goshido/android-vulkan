@@ -3,6 +3,7 @@
 
 
 #include "default_texture_manager.h"
+#include "font_storage.h"
 #include "geometry_pass.h"
 #include "light_pass.h"
 #include "present_pass.h"
@@ -44,6 +45,7 @@ class RenderSession final
         GXMat4                                  _viewerLocal {};
 
         DefaultTextureManager                   _defaultTextureManager {};
+        FontStorage*                            _fontStorage = nullptr;
         VkFramebuffer                           _framebuffer = VK_NULL_HANDLE;
         GXProjectionClipPlanes                  _frustum {};
 
@@ -91,6 +93,7 @@ class RenderSession final
 
         void OnSwapchainDestroyed ( VkDevice device ) noexcept;
 
+        void SetFontStorage ( FontStorage &fontStorage ) noexcept;
         void SubmitLight ( LightRef &light ) noexcept;
 
         void SubmitMesh ( MeshRef &mesh,

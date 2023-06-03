@@ -315,7 +315,7 @@ bool ApplyHandlers::HandleFail ( char const* html,
         css.GetSource ().c_str ()
     );
 
-    assert ( false );
+    AV_ASSERT ( false )
     return false;
 }
 

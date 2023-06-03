@@ -1,12 +1,7 @@
 #include <pbr/material_manager.h>
 #include <pbr/opaque_material.h>
 #include <pbr/stipple_material.h>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <cassert>
-
-GX_RESTORE_WARNING_STATE
+#include <av_assert.h>
 
 
 namespace pbr {
@@ -81,7 +76,7 @@ MaterialRef MaterialManager::LoadMaterial ( android_vulkan::Renderer &renderer,
     uint8_t const* data = content.data ();
     auto const& header = *reinterpret_cast<MaterialHeader const*> ( data );
 
-    assert ( header._type < eMaterialTypeDesc::COUNT );
+    AV_ASSERT ( header._type < eMaterialTypeDesc::COUNT )
     Handler const handler = _handlers[ static_cast<size_t> ( header._type ) ];
 
     // C++ calling method by pointer syntax.
@@ -122,7 +117,7 @@ MaterialRef MaterialManager::CreateOpaqueMaterial ( android_vulkan::Renderer &re
     // NOLINTNEXTLINE - downcast.
     auto const& h = static_cast<OpaqueMaterialHeader const &> ( header );
 
-    assert ( h._formatVersion == OPAQUE_MATERIAL_FORMAT_VERSION );
+    AV_ASSERT ( h._formatVersion == OPAQUE_MATERIAL_FORMAT_VERSION )
     MaterialRef material = std::make_shared<OpaqueMaterial> ();
 
     // NOLINTNEXTLINE - downcast.
@@ -227,7 +222,7 @@ MaterialRef MaterialManager::CreateStippleMaterial ( android_vulkan::Renderer &r
     // NOLINTNEXTLINE - downcast.
     auto const& h = static_cast<StippleMaterialHeader const&> ( header );
 
-    assert ( h._formatVersion == STIPPLE_MATERIAL_FORMAT_VERSION );
+    AV_ASSERT ( h._formatVersion == STIPPLE_MATERIAL_FORMAT_VERSION )
     MaterialRef material = std::make_shared<StippleMaterial> ();
 
     // NOLINTNEXTLINE - downcast.

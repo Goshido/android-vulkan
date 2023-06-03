@@ -11,11 +11,10 @@
 #include <pbr/static_mesh_component.h>
 #include <pbr/transform_component.h>
 #include <guid_generator.h>
+#include <av_assert.h>
 #include <logger.h>
 
 GX_DISABLE_COMMON_WARNINGS
-
-#include <cassert>
 
 extern "C" {
 
@@ -115,7 +114,7 @@ Actor::Actor ( ActorDesc const &desc, uint8_t const* data ) noexcept
 {
     // Sanity checks.
     static_assert ( sizeof ( ActorDesc::_localMatrix ) == sizeof ( desc._localMatrix ) );
-    assert ( desc._formatVersion == ACTOR_DESC_FORMAT_VERSION );
+    AV_ASSERT ( desc._formatVersion == ACTOR_DESC_FORMAT_VERSION )
 
     _name = reinterpret_cast<char const*> ( data + desc._name );
 }
@@ -251,7 +250,7 @@ void Actor::Destroy () noexcept
     if ( !_spawnActors.empty () )
     {
         android_vulkan::LogWarning ( "pbr::Actor::Destroy - Memory leak." );
-        assert ( false );
+        AV_ASSERT ( false )
     }
 
     _spawnActors.clear ();
@@ -260,7 +259,7 @@ void Actor::Destroy () noexcept
 ActorRef& Actor::GetReference ( Actor const &handle ) noexcept
 {
     auto findResult = _spawnActors.find ( &handle );
-    assert ( findResult != _spawnActors.end () );
+    AV_ASSERT ( findResult != _spawnActors.end () )
     return findResult->second;
 }
 
@@ -304,7 +303,7 @@ void Actor::AppendCameraComponentFromScript ( ComponentRef &/*component*/,
 ) noexcept
 {
     // TODO
-    assert ( false );
+    AV_ASSERT ( false )
 }
 
 void Actor::AppendPointLightComponentFromNative ( ComponentRef &component,
@@ -327,7 +326,7 @@ void Actor::AppendPointLightComponentFromScript ( ComponentRef &/*component*/,
 ) noexcept
 {
     // TODO
-    assert ( false );
+    AV_ASSERT ( false )
 }
 
 void Actor::AppendReflectionComponentFromNative ( ComponentRef &component,
@@ -354,7 +353,7 @@ void Actor::AppendReflectionComponentFromScript ( ComponentRef &/*component*/,
 ) noexcept
 {
     // TODO
-    assert ( false );
+    AV_ASSERT ( false )
 }
 
 void Actor::AppendRigidBodyComponentFromNative ( ComponentRef &component,
@@ -622,7 +621,7 @@ void Actor::AppendTransformComponentFromScript ( ComponentRef &/*component*/,
 ) noexcept
 {
     // TODO
-    assert ( false );
+    AV_ASSERT ( false )
 }
 
 // NOLINTNEXTLINE - can be made static.
@@ -633,7 +632,7 @@ void Actor::AppendUnknownComponentFromNative ( ComponentRef &/*component*/,
 ) noexcept
 {
     // IMPOSSIBLE
-    assert ( false );
+    AV_ASSERT ( false )
 }
 
 // NOLINTNEXTLINE - can be made static.
@@ -643,7 +642,7 @@ void Actor::AppendUnknownComponentFromScript ( ComponentRef &/*component*/,
 ) noexcept
 {
     // IMPOSSIBLE
-    assert ( false );
+    AV_ASSERT ( false )
 }
 
 void Actor::DestroyRigidBodyComponent ( Component &component ) noexcept
@@ -678,7 +677,7 @@ void Actor::RemoveComponent ( Component const &component ) noexcept
         }
     );
 
-    assert ( findResult != end );
+    AV_ASSERT ( findResult != end )
     _components.erase ( findResult );
 }
 

@@ -1,11 +1,10 @@
 #include <pbr/camera_component.h>
 #include <pbr/script_engine.h>
 #include <pbr/scriptable_gxmat4.h>
+#include <av_assert.h>
 #include <guid_generator.h>
 
 GX_DISABLE_COMMON_WARNINGS
-
-#include <cassert>
 
 extern "C" {
 
@@ -44,7 +43,7 @@ CameraComponent::CameraComponent ( CameraComponentDesc const &desc, uint8_t cons
 {
     // Sanity checks.
     static_assert ( sizeof ( desc._localMatrix ) == sizeof ( GXMat4 ) );
-    assert ( desc._formatVersion == CAMERA_COMPONENT_DESC_FORMAT_VERSION );
+    AV_ASSERT ( desc._formatVersion == CAMERA_COMPONENT_DESC_FORMAT_VERSION )
 
     _name = reinterpret_cast<char const*> ( data + desc._name );
     std::memcpy ( _local._data, &desc._localMatrix, sizeof ( _local ) );

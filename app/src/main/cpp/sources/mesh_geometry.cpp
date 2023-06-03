@@ -3,7 +3,6 @@
 GX_DISABLE_COMMON_WARNINGS
 
 #include <array>
-#include <cassert>
 #include <regex>
 #include <thread>
 

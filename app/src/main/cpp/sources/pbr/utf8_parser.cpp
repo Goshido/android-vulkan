@@ -156,7 +156,6 @@ std::optional<std::u32string> UTF8Parser::ToU32String ( std::string_view string 
         stream = probe->_newStream;
     }
 
-    result.push_back ( 0U );
     return std::move ( result );
 }
 

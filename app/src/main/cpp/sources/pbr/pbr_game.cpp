@@ -5,14 +5,9 @@
 #include <pbr/mesh_manager.h>
 #include <pbr/renderable_component.h>
 #include <pbr/scene_desc.h>
+#include <av_assert.h>
 #include <gamepad.h>
 #include <trace.h>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <cassert>
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace pbr {
@@ -155,7 +150,7 @@ bool PBRGame::UploadGPUContent ( android_vulkan::Renderer &renderer ) noexcept
 
     // Sanity checks.
     static_assert ( sizeof ( GXVec3 ) == sizeof ( sceneDesc->_viewerLocation ) );
-    assert ( sceneDesc->_formatVersion == SCENE_DESC_FORMAT_VERSION );
+    AV_ASSERT ( sceneDesc->_formatVersion == SCENE_DESC_FORMAT_VERSION )
 
     _camera.SetLocation ( *reinterpret_cast<GXVec3 const*> ( &sceneDesc->_viewerLocation ) );
     _camera.SetRotation ( sceneDesc->_viewerPitch, sceneDesc->_viewerYaw );

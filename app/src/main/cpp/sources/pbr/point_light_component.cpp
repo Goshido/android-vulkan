@@ -1,11 +1,6 @@
 #include <pbr/point_light_component.h>
+#include <av_assert.h>
 #include <guid_generator.h>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <cassert>
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace pbr {
@@ -19,7 +14,7 @@ PointLightComponent::PointLightComponent ( PointLightComponentDesc const &desc, 
 {
     // Sanity checks.
     static_assert ( sizeof ( desc._location ) == sizeof ( GXVec3 ) );
-    assert ( desc._formatVersion == POINT_LIGHT_COMPONENT_DESC_FORMAT_VERSION );
+    AV_ASSERT ( desc._formatVersion == POINT_LIGHT_COMPONENT_DESC_FORMAT_VERSION )
 
     _name = reinterpret_cast<char const*> ( data + desc._name );
 

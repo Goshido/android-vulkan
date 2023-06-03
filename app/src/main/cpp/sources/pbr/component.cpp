@@ -8,12 +8,7 @@
 #include <pbr/sound_emitter_spatial_component.h>
 #include <pbr/static_mesh_component.h>
 #include <pbr/transform_component.h>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <cassert>
-
-GX_RESTORE_WARNING_STATE
+#include <av_assert.h>
 
 
 namespace pbr {

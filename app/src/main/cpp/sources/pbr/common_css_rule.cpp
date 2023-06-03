@@ -1,4 +1,3 @@
-#include <logger.h>
 #include <pbr/color_property.h>
 #include <pbr/color_property_checker.h>
 #include <pbr/common_css_rule.h>
@@ -15,12 +14,8 @@
 #include <pbr/utf8_parser.h>
 #include <pbr/vertical_align_property_checker.h>
 #include <pbr/whitespace.h>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <cassert>
-
-GX_RESTORE_WARNING_STATE
+#include <av_assert.h>
+#include <logger.h>
 
 
 namespace pbr {
@@ -74,7 +69,7 @@ ParseResult CommonCSSRule::Parse ( char const* css, Stream stream, eType type, C
         else
         {
             android_vulkan::LogWarning ( "pbr::CommonCSSRule::Parse - Can't convert to UTF-8." );
-            assert ( false );
+            AV_ASSERT ( false )
         }
 
         android_vulkan::LogError ( "pbr::CommonCSSRule::Parse - %s:%zu: %s rule with name '%s' already exist.",

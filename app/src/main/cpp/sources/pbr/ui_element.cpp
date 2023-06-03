@@ -1,9 +1,8 @@
 #include <pbr/ui_element.h>
+#include <av_assert.h>
 #include <logger.h>
 
 GX_DISABLE_COMMON_WARNINGS
-
-#include <cassert>
 
 extern "C" {
 
@@ -56,7 +55,7 @@ void UIElement::Destroy () noexcept
     if ( !_uiElements.empty () )
     {
         android_vulkan::LogWarning ( "pbr::UIElement::Destroy - Memory leak." );
-        assert ( false );
+        AV_ASSERT ( false )
     }
 
     _uiElements.clear ();
@@ -80,7 +79,7 @@ int UIElement::OnGarbageCollected ( lua_State* state )
     }
 
     android_vulkan::LogWarning ( "pbr::UIElement::OnGarbageCollected - Can't find element." );
-    assert ( false );
+    AV_ASSERT ( false )
     return 0;
 }
 

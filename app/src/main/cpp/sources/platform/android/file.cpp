@@ -2,7 +2,6 @@
 
 GX_DISABLE_COMMON_WARNINGS
 
-#include <cassert>
 #include <filesystem>
 #include <android/asset_manager.h>
 

@@ -17,13 +17,13 @@
 #include <pbr/text_ui_element.h>
 #include <pbr/transform_component.h>
 #include <pbr/ui_layer.h>
+#include <av_assert.h>
 #include <file.h>
 #include <logger.h>
 
 GX_DISABLE_COMMON_WARNINGS
 
 #include <algorithm>
-#include <cassert>
 
 extern "C" {
 
@@ -328,7 +328,7 @@ int ScriptEngine::OnErrorHandler ( lua_State* state )
     android_vulkan::LogError ( "pbr::ScriptEngine::OnErrorHandler - Error: %s", lua_tostring ( state, -1 ) );
     lua_pop ( state, 1 );
 
-    assert ( 0 );
+    AV_ASSERT ( false )
     return 0;
 }
 
@@ -345,7 +345,7 @@ R"__(pbr::ScriptEngine::OnPanic - Lua VM:
 
 
     android_vulkan::LogError ( format, message );
-    assert ( 0 );
+    AV_ASSERT ( false )
 
     // Abort Lua VW
     return 0;
@@ -430,7 +430,7 @@ R"__(pbr::ScriptEngine::OnWarning - Lua VM:
 %s)__";
 
     android_vulkan::LogWarning ( format, message );
-    assert ( 0 );
+    AV_ASSERT ( false )
 }
 
 } // namespace pbr

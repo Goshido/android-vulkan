@@ -1,9 +1,9 @@
+#include <av_assert.h>
 #include <ktx_media_container.h>
 #include "logger.h"
 
 GX_DISABLE_COMMON_WARNINGS
 
-#include <cassert>
 #include <memory>
 #include <unordered_map>
 #include <GLES3/gl32.h>
@@ -54,19 +54,19 @@ KTXMediaContainer::KTXMediaContainer () noexcept:
 
 VkFormat KTXMediaContainer::GetFormat () const
 {
-    assert ( _format != VK_FORMAT_UNDEFINED );
+    AV_ASSERT ( _format != VK_FORMAT_UNDEFINED )
     return _format;
 }
 
 uint8_t KTXMediaContainer::GetMipCount () const
 {
-    assert ( _format != VK_FORMAT_UNDEFINED );
+    AV_ASSERT ( _format != VK_FORMAT_UNDEFINED )
     return _mipCount;
 }
 
 MipInfo const& KTXMediaContainer::GetMip ( uint8_t mip ) const
 {
-    assert ( _format != VK_FORMAT_UNDEFINED );
+    AV_ASSERT ( _format != VK_FORMAT_UNDEFINED )
     return _mips[ mip ];
 }
 
@@ -77,7 +77,7 @@ VkDeviceSize KTXMediaContainer::GetTotalSize () const
 
 bool KTXMediaContainer::Init ( char const* fileName )
 {
-    assert ( !_file );
+    AV_ASSERT ( !_file )
 
     _file = std::make_unique<File> ( fileName );
 
@@ -143,7 +143,7 @@ void KTXMediaContainer::ExtractMips ( uint8_t const* rawData, size_t size, KTXHe
     uint8_t const* view = GetMipmapData ( rawData, header, reader );
     auto const mips = static_cast<size_t const> ( reader ( header._numberOfMipmapLevels ) );
 
-    assert ( mips <= MAX_MIPS );
+    AV_ASSERT ( mips <= MAX_MIPS )
 
     VkExtent2D resolution;
     resolution.width = reader ( header._pixelWidth );

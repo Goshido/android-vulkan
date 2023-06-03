@@ -1,14 +1,9 @@
+#include <av_assert.h>
 #include <physics.h>
 #include <contact_detector.h>
 #include <logger.h>
 #include <trace.h>
 #include <velocity_solver.h>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <cassert>
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace android_vulkan {
@@ -105,7 +100,7 @@ std::vector<ContactManifold> const& Physics::GetContactManifolds () const noexce
 
 [[maybe_unused]] void Physics::SetTimeSpeed ( float speed ) noexcept
 {
-    assert ( speed != 0.0F );
+    AV_ASSERT ( speed != 0.0F )
     _timeSpeed = speed;
     _fixedTimeStep = FIXED_TIME_STEP * speed;
     _fixedTimeStepInverse = 1.0F / _fixedTimeStep;

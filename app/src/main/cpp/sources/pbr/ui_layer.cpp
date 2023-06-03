@@ -7,12 +7,12 @@
 #include <pbr/text_ui_element.h>
 #include <pbr/ui_layer.h>
 #include <pbr/utf8_parser.h>
+#include <av_assert.h>
 #include <file.h>
 #include <logger.h>
 
 GX_DISABLE_COMMON_WARNINGS
 
-#include <cassert>
 #include <filesystem>
 
 extern "C" {
@@ -218,7 +218,7 @@ void UILayer::Destroy () noexcept
     if ( !_uiLayers.empty () )
     {
         android_vulkan::LogWarning ( "pbr::UILayer::Destroy - Memory leak." );
-        assert ( false );
+        AV_ASSERT ( false )
     }
 
     _uiLayers.clear ();

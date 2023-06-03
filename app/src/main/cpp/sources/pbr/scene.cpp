@@ -11,14 +11,13 @@
 #include <pbr/scriptable_sweep_test_result.h>
 #include <pbr/static_mesh_component.h>
 #include <pbr/ui_layer.h>
+#include <av_assert.h>
 #include <core.h>
 #include <file.h>
 #include <shape_box.h>
 #include <trace.h>
 
 GX_DISABLE_COMMON_WARNINGS
-
-#include <cassert>
 
 extern "C" {
 
@@ -90,7 +89,7 @@ GXMat4 const& Scene::GetActiveCameraProjectionMatrix () const noexcept
 
 android_vulkan::Physics& Scene::GetPhysics () noexcept
 {
-    assert ( _physics );
+    AV_ASSERT ( _physics )
     return *_physics;
 }
 
@@ -378,7 +377,7 @@ bool Scene::LoadScene ( android_vulkan::Renderer &renderer, char const* scene, V
 
     // Sanity checks.
     static_assert ( sizeof ( GXVec3 ) == sizeof ( desc._viewerLocation ) );
-    assert ( desc._formatVersion == SCENE_DESC_FORMAT_VERSION );
+    AV_ASSERT ( desc._formatVersion == SCENE_DESC_FORMAT_VERSION )
 
     auto const comBuffs = static_cast<size_t> ( desc._textureCount + desc._meshCount + desc._envMapCount );
 
@@ -611,7 +610,7 @@ int Scene::OnDetachUILayer ( lua_State* state )
     }
 
     android_vulkan::LogError ( "pbr::Scene::OnDetachUILayer - Can't remove UI layer." );
-    assert ( false );
+    AV_ASSERT ( false )
     return 0;
 }
 

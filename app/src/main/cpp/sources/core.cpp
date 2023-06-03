@@ -1,3 +1,4 @@
+#include <av_assert.h>
 #include <core.h>
 #include <bitwise.h>
 #include <logger.h>
@@ -16,7 +17,6 @@
 
 GX_DISABLE_COMMON_WARNINGS
 
-#include <cassert>
 #include <locale>
 #include <android/asset_manager_jni.h>
 #include <android/native_window_jni.h>
@@ -174,7 +174,7 @@ void Core::OnSurfaceDestroyed () noexcept
 
 std::string const& Core::GetCacheDirectory () noexcept
 {
-    assert ( g_Core );
+    AV_ASSERT ( g_Core )
     static std::string const nullDirectory = "fuck!";
     return g_Core ? g_Core->_cacheDirectory : nullDirectory;
 }

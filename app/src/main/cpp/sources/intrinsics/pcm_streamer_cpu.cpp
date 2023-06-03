@@ -1,12 +1,6 @@
 #include <logger.h>
 #include <pcm_streamer_wav.h>
 
-GX_DISABLE_COMMON_WARNINGS
-
-#include <cassert>
-
-GX_RESTORE_WARNING_STATE
-
 
 namespace android_vulkan {
 

@@ -2,13 +2,13 @@
 #include <pbr/point_light.h>
 #include <pbr/reflection_probe_global.h>
 #include <pbr/reflection_probe_local.h>
+#include <av_assert.h>
 #include <trace.h>
 #include <vulkan_utils.h>
 
 GX_DISABLE_COMMON_WARNINGS
 
 #include <algorithm>
-#include <cassert>
 
 GX_RESTORE_WARNING_STATE
 
@@ -256,7 +256,7 @@ void RenderSession::SetFontStorage ( FontStorage &fontStorage ) noexcept
 void RenderSession::SubmitLight ( LightRef &light ) noexcept
 {
     auto const idx = static_cast<size_t> ( light->GetType () );
-    assert ( idx < std::size ( _lightHandlers ) );
+    AV_ASSERT ( idx < std::size ( _lightHandlers ) )
 
     LightHandler const handler = _lightHandlers[ idx ];
 
@@ -275,7 +275,7 @@ void RenderSession::SubmitMesh ( MeshRef &mesh,
 ) noexcept
 {
     auto const idx = static_cast<size_t> ( material->GetMaterialType () );
-    assert ( idx < std::size ( _meshHandlers ) );
+    AV_ASSERT ( idx < std::size ( _meshHandlers ) )
 
     MeshHandler const handler = _meshHandlers[ idx ];
 

@@ -1,11 +1,6 @@
 #include <pbr/uniform_buffer_pool.h>
+#include <av_assert.h>
 #include <vulkan_utils.h>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <cassert>
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace pbr {
@@ -25,8 +20,8 @@ UniformBufferPool::UniformBufferPool ( eUniformPoolSize size ) noexcept:
 
 VkBuffer UniformBufferPool::Push ( VkCommandBuffer commandBuffer, void const* data, size_t size ) noexcept
 {
-    assert ( size <= _itemSize );
-    assert ( _buffers.size () > _index );
+    AV_ASSERT ( size <= _itemSize )
+    AV_ASSERT ( _buffers.size () > _index )
 
     VkBuffer buffer = _buffers[ _index++ ];
     vkCmdUpdateBuffer ( commandBuffer, buffer, 0U, size, data );
@@ -45,14 +40,14 @@ size_t UniformBufferPool::GetAvailableItemCount () const noexcept
 
 VkBuffer UniformBufferPool::GetBuffer ( size_t bufferIndex ) const noexcept
 {
-    assert ( bufferIndex < _buffers.size () );
+    AV_ASSERT ( bufferIndex < _buffers.size () )
     return _buffers[ bufferIndex ];
 }
 
 bool UniformBufferPool::Init ( android_vulkan::Renderer &renderer, size_t itemSize ) noexcept
 {
-    assert ( itemSize <= renderer.GetMaxUniformBufferRange () );
-    assert ( itemSize <= UPDATE_BUFFER_MAX_SIZE );
+    AV_ASSERT ( itemSize <= renderer.GetMaxUniformBufferRange () )
+    AV_ASSERT ( itemSize <= UPDATE_BUFFER_MAX_SIZE )
 
     VkBufferCreateInfo const bufferInfo
     {

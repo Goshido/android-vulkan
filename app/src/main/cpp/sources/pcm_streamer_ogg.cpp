@@ -1,12 +1,7 @@
+#include <av_assert.h>
 #include <logger.h>
 #include <pcm_streamer_ogg.h>
 #include <sound_mixer.h>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <cassert>
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace android_vulkan {
@@ -203,7 +198,7 @@ void PCMStreamerOGG::OnDecompress () noexcept
                     "Can't decompress PCM"
                 );
 
-                assert ( false );
+                AV_ASSERT ( false )
                 return false;
             }
 
@@ -222,7 +217,7 @@ void PCMStreamerOGG::OnDecompress () noexcept
 
             if ( !CheckVorbisResult ( result, "PCMStreamerOGG::OnDecompress", "Can't perform seek operation" ) )
             {
-                assert ( false );
+                AV_ASSERT ( false )
                 return false;
             }
         }
@@ -261,7 +256,7 @@ bool PCMStreamerOGG::Reset () noexcept
 
     if ( !CheckVorbisResult ( result, "PCMStreamerOGG::Reset", "Can't perform seek operation" ) )
     {
-        assert ( false );
+        AV_ASSERT ( false )
         return false;
     }
 
@@ -378,7 +373,7 @@ int PCMStreamerOGG::SeekInternal ( ogg_int64_t offset, int whence ) noexcept
 
         default:
             // IMPOSSIBLE
-            assert ( false );
+            AV_ASSERT ( false )
         break;
     }
 

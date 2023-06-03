@@ -1,15 +1,10 @@
+#include <av_assert.h>
 #include <logger.h>
 #include <pbr/color_property.h>
 #include <pbr/css_computed_values.h>
 #include <pbr/font_family_property.h>
 #include <pbr/length_property.h>
 #include <pbr/utf8_parser.h>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <cassert>
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace pbr {

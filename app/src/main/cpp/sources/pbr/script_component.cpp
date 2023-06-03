@@ -1,9 +1,8 @@
 #include <pbr/script_component.h>
 #include <pbr/script_engine.h>
+#include <av_assert.h>
 
 GX_DISABLE_COMMON_WARNINGS
-
-#include <cassert>
 
 extern "C" {
 
@@ -27,7 +26,7 @@ ScriptComponent::ScriptComponent ( ScriptComponentDesc const &desc, uint8_t cons
     Component ( ClassID::Script )
 {
     // sanity check.
-    assert ( desc._formatVersion == SCRIPT_COMPONENT_DESC_FORMAT_VERSION );
+    AV_ASSERT ( desc._formatVersion == SCRIPT_COMPONENT_DESC_FORMAT_VERSION )
 
     _name = reinterpret_cast<char const*> ( data + desc._name );
     _script = reinterpret_cast<char const*> ( data + desc._script );
@@ -130,7 +129,7 @@ void ScriptComponent::Destroy () noexcept
     if ( !_scripts.empty () )
     {
         android_vulkan::LogWarning ( "pbr::ScriptComponent::Destroy - Memory leak." );
-        assert ( false );
+        AV_ASSERT ( false )
     }
 
     _scripts.clear ();
@@ -139,7 +138,7 @@ void ScriptComponent::Destroy () noexcept
 ComponentRef& ScriptComponent::GetReference () noexcept
 {
     auto findResult = _scripts.find ( this );
-    assert ( findResult != _scripts.end () );
+    AV_ASSERT ( findResult != _scripts.end () )
     return findResult->second;
 }
 

@@ -1,11 +1,11 @@
 #ifdef ANDROID_VULKAN_DEBUG
 
+#include <av_assert.h>
 #include <vulkan_utils.h>
 #include <GXCommon/GXWarning.h>
 
 GX_DISABLE_COMMON_WARNINGS
 
-#include <cassert>
 #include <set>
 #include <shared_mutex>
 
@@ -157,7 +157,7 @@ static void UnregisterNonDispatchableObject ( char const* method,
 
 #ifdef ANDROID_VULKAN_STRICT_MODE
 
-        assert ( !"UnregisterNonDispatchableObject triggered!" );
+        AV_ASSERT ( false )
 
 #endif
 
@@ -199,7 +199,7 @@ void CheckVulkanLeaks ()
 #ifdef ANDROID_VULKAN_STRICT_MODE
 
     if ( !result )
-        assert ( !"CheckVulkanLeaks triggered!" );
+        AV_ASSERT ( false )
 
 #endif // ANDROID_VULKAN_STRICT_MODE
 

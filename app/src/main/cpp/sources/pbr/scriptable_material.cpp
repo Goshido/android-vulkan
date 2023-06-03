@@ -1,5 +1,6 @@
 #include <pbr/scriptable_material.h>
 #include <pbr/material_manager.h>
+#include <av_assert.h>
 #include <vulkan_utils.h>
 
 GX_DISABLE_COMMON_WARNINGS
@@ -9,8 +10,6 @@ extern "C" {
 #include <lua/lauxlib.h>
 
 } // extern "C"
-
-#include <cassert>
 
 GX_RESTORE_WARNING_STATE
 
@@ -76,7 +75,7 @@ void ScriptableMaterial::Destroy () noexcept
     if ( !_materials.empty () )
     {
         android_vulkan::LogWarning ( "pbr::ScriptableMaterial::Destroy - Memory leak." );
-        assert ( false );
+        AV_ASSERT ( false )
     }
 
     _materials.clear ();
@@ -109,7 +108,7 @@ void ScriptableMaterial::Destroy () noexcept
 MaterialRef& ScriptableMaterial::GetReference ( Material const &handle ) noexcept
 {
     auto findResult = _materials.find ( &handle );
-    assert ( findResult != _materials.end () );
+    AV_ASSERT ( findResult != _materials.end () )
     return findResult->second;
 }
 
@@ -259,7 +258,7 @@ int ScriptableMaterial::OnDestroy ( lua_State* state )
 {
     auto const* handle = static_cast<Material const*> ( lua_touserdata ( state, 1 ) );
     [[maybe_unused]] auto const result = _materials.erase ( handle );
-    assert ( result > 0U );
+    AV_ASSERT ( result > 0U )
     return 0;
 }
 

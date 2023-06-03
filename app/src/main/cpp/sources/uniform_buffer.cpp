@@ -1,11 +1,5 @@
+#include <av_assert.h>
 #include <uniform_buffer.h>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <cassert>
-
-GX_RESTORE_WARNING_STATE
-
 #include <vulkan_utils.h>
 
 
@@ -99,7 +93,7 @@ bool UniformBuffer::Update ( android_vulkan::Renderer &renderer,
     size_t size
 ) noexcept
 {
-    assert ( size );
+    AV_ASSERT ( size )
 
     if ( !_size && !InitResources ( renderer, size ) )
         return false;

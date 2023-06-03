@@ -1,3 +1,4 @@
+#include <av_assert.h>
 #include <renderer.h>
 #include <bitwise.h>
 #include <file.h>
@@ -5,7 +6,6 @@
 
 GX_DISABLE_COMMON_WARNINGS
 
-#include <cassert>
 #include <cinttypes>
 #include <string>
 #include <string_view>
@@ -2692,12 +2692,7 @@ message: %s
 
 #ifdef ANDROID_VULKAN_STRICT_MODE
 
-    // Note lambda syntax is used here only for preventing unreachable code warning from static analyzer.
-    // Not so proud of this code. Maybe there is a more elegant compiler agnostic solution for this...
-
-    [] () noexcept {
-        assert ( !"Renderer::OnVulkanDebugReport - Triggered!" );
-    } ();
+    AV_ASSERT ( false )
 
 #endif // ANDROID_VULKAN_STRICT_MODE
 

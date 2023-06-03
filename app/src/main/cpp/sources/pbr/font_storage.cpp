@@ -300,14 +300,13 @@ FontStorage::GlyphInfo const& FontStorage::EmbedGlyph ( android_vulkan::Renderer
 
         stagingBuffer->_state = StagingBuffer::eState::FullLinePresent;
         lineHeight = 0U;
+
+        top += stagingBuffer->_lineHeight;
+        left = 0U;
     };
 
     if ( left >= side )
-    {
         goToNewLine ();
-        left = 0U;
-        top += stagingBuffer->_lineHeight;
-    }
 
     auto const completeStagingBuffer = [ & ]() noexcept -> bool {
         _fullStagingBuffers.splice ( _fullStagingBuffers.cend (),
@@ -320,17 +319,15 @@ FontStorage::GlyphInfo const& FontStorage::EmbedGlyph ( android_vulkan::Renderer
         if ( !query )
             return false;
 
+        lineHeight = 0U;
+        top = 0U;
+        left = 0U;
         stagingBuffer = query.value ();
         return true;
     };
 
-    if ( top >= side )
-    {
-        if ( !completeStagingBuffer () )
-            return nullGlyph;
-
-        top = 0U;
-    }
+    if ( top >= side && !completeStagingBuffer () )
+        return nullGlyph;
 
     uint32_t right = left + toRight;
     uint32_t bottom = top + toBottom;
@@ -338,8 +335,8 @@ FontStorage::GlyphInfo const& FontStorage::EmbedGlyph ( android_vulkan::Renderer
     if ( right >= side )
     {
         goToNewLine ();
+        bottom = top + toBottom;
         right = toRight;
-        bottom += stagingBuffer->_lineHeight;
     }
 
     if ( bottom >= side )
@@ -347,8 +344,8 @@ FontStorage::GlyphInfo const& FontStorage::EmbedGlyph ( android_vulkan::Renderer
         if ( !completeStagingBuffer () )
             return nullGlyph;
 
-        top = 0U;
         bottom = toBottom;
+        right = toRight;
     }
 
     stagingBuffer->_lineHeight = std::max ( lineHeight, rows );

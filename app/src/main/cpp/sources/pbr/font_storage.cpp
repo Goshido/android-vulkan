@@ -87,35 +87,186 @@ void FontStorage::StagingBuffer::Destroy ( android_vulkan::Renderer &renderer ) 
         _data = nullptr;
     }
 
-    if ( _memory != VK_NULL_HANDLE )
+    if ( _buffer != VK_NULL_HANDLE )
     {
-        renderer.FreeMemory ( _memory, _memoryOffset );
-        _memory = VK_NULL_HANDLE;
-        _memoryOffset = 0U;
-        AV_UNREGISTER_DEVICE_MEMORY ( "pbr::FontStorage::StagingBuffer::_memory" )
+        vkDestroyBuffer ( renderer.GetDevice (), _buffer, nullptr );
+        _buffer = VK_NULL_HANDLE;
+        AV_UNREGISTER_BUFFER ( "pbr::FontStorage::StagingBuffer::_buffer" )
     }
 
-    if ( _buffer == VK_NULL_HANDLE )
+    if ( _memory == VK_NULL_HANDLE )
         return;
 
-    vkDestroyBuffer ( renderer.GetDevice (), _buffer, nullptr );
-    _buffer = VK_NULL_HANDLE;
-    AV_UNREGISTER_BUFFER ( "pbr::FontStorage::StagingBuffer::_buffer" )
+    renderer.FreeMemory ( _memory, _memoryOffset );
+    _memory = VK_NULL_HANDLE;
+    _memoryOffset = 0U;
+    AV_UNREGISTER_DEVICE_MEMORY ( "pbr::FontStorage::StagingBuffer::_memory" )
 }
 
 //----------------------------------------------------------------------------------------------------------------------
 
-[[maybe_unused]] bool FontStorage::Atlas::AddLayer ( android_vulkan::Renderer &/*renderer*/,
-    VkCommandBuffer /*commandBuffer*/
+bool FontStorage::Atlas::AddLayers ( android_vulkan::Renderer &renderer,
+    VkCommandBuffer /*commandBuffer*/,
+    uint32_t layers
 ) noexcept
 {
-    // TODO
+    _oldResource = _resource;
+    uint32_t const layerCount = _layers + layers;
+
+    VkImageCreateInfo const imageInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = VK_IMAGE_CREATE_2D_ARRAY_COMPATIBLE_BIT,
+        .imageType = VK_IMAGE_TYPE_3D,
+        .format = VK_FORMAT_R8_UNORM,
+
+        .extent
+        {
+            .width = _side,
+            .height = _side,
+            .depth = layerCount
+        },
+
+        .mipLevels = 1U,
+        .arrayLayers = 1U,
+        .samples = VK_SAMPLE_COUNT_1_BIT,
+        .tiling = VK_IMAGE_TILING_OPTIMAL,
+
+        .usage = AV_VK_FLAG ( VK_IMAGE_USAGE_SAMPLED_BIT ) | AV_VK_FLAG ( VK_IMAGE_USAGE_TRANSFER_SRC_BIT ) |
+            AV_VK_FLAG ( VK_IMAGE_USAGE_TRANSFER_DST_BIT ),
+
+        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+        .queueFamilyIndexCount = 0U,
+        .pQueueFamilyIndices = nullptr,
+        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED
+    };
+
+    VkDevice device = renderer.GetDevice ();
+
+    bool result = android_vulkan::Renderer::CheckVkResult (
+        vkCreateImage ( device, &imageInfo, nullptr, &_resource._image ),
+        "pbr::FontStorage::Atlas::AddLayer",
+        "Can't create image"
+    );
+
+    if ( !result )
+        return false;
+
+    AV_REGISTER_IMAGE ( "pbr::FontStorage::Atlas::_image" )
+
+    VkMemoryRequirements memoryRequirements;
+    vkGetImageMemoryRequirements ( device, _resource._image, &memoryRequirements );
+
+    result = renderer.TryAllocateMemory ( _resource._memory,
+        _resource._memoryOffset,
+        memoryRequirements,
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+        "Can't allocate image memory (pbr::FontStorage::Atlas::AddLayer)"
+    );
+
+    if ( !result )
+        return false;
+
+    AV_REGISTER_DEVICE_MEMORY ( "pbr::FontStorage::Atlas::_memory" )
+
+    result = android_vulkan::Renderer::CheckVkResult (
+        vkBindImageMemory ( device, _resource._image, _resource._memory, _resource._memoryOffset ),
+        "pbr::FontStorage::Atlas::AddLayer",
+        "Can't bind image memory"
+    );
+
+    if ( !result )
+        return false;
+
+    VkImageViewCreateInfo const viewInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .image = _resource._image,
+        .viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY,
+        .format = imageInfo.format,
+
+        .components
+        {
+            .r = VK_COMPONENT_SWIZZLE_IDENTITY,
+            .g = VK_COMPONENT_SWIZZLE_IDENTITY,
+            .b = VK_COMPONENT_SWIZZLE_IDENTITY,
+            .a = VK_COMPONENT_SWIZZLE_IDENTITY
+        },
+
+        .subresourceRange
+        {
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .baseMipLevel = 0U,
+            .levelCount = 1U,
+            .baseArrayLayer = 0U,
+            .layerCount = layerCount
+        }
+    };
+
+    result = android_vulkan::Renderer::CheckVkResult (
+        vkCreateImageView ( device, &viewInfo, nullptr, &_resource._view ),
+        "pbr::FontStorage::Atlas::AddLayer",
+        "Can't create image"
+    );
+
+    if ( !result )
+        return false;
+
+    AV_REGISTER_IMAGE_VIEW ( "pbr::FontStorage::Atlas::_view" )
+
+    if ( _oldResource._image == VK_NULL_HANDLE )
+    {
+        // There is no old atlas to copy from.
+        _layers = layerCount;
+        return true;
+    }
+
+    // There is an old atlas. It's needed to copy data from it.
+
+    // TODO copy
+
+    _layers = layerCount;
     return true;
 }
 
-void FontStorage::Atlas::Destroy ( android_vulkan::Renderer &/*renderer*/ ) noexcept
+void FontStorage::Atlas::Cleanup ( android_vulkan::Renderer &renderer ) noexcept
 {
-    // TODO
+    if ( _oldResource._image == VK_NULL_HANDLE )
+        return;
+
+    VkDevice device = renderer.GetDevice ();
+    vkDestroyImage ( device, _oldResource._image, nullptr );
+    _oldResource._image = VK_NULL_HANDLE;
+    AV_UNREGISTER_IMAGE ( "pbr::FontStorage::Atlas::_image" )
+
+    if ( _oldResource._view != VK_NULL_HANDLE )
+    {
+        vkDestroyImageView ( device, _oldResource._view, nullptr );
+        _oldResource._view = VK_NULL_HANDLE;
+        AV_UNREGISTER_IMAGE_VIEW ( "pbr::FontStorage::Atlas::_view" )
+    }
+
+    if ( _oldResource._memory == VK_NULL_HANDLE )
+        return;
+
+    renderer.FreeMemory ( _oldResource._memory, _resource._memoryOffset );
+    _oldResource._memory = VK_NULL_HANDLE;
+    _resource._memoryOffset = 0U;
+    AV_UNREGISTER_DEVICE_MEMORY ( "pbr::FontStorage::Atlas::_memory" )
+}
+
+void FontStorage::Atlas::Destroy ( android_vulkan::Renderer &renderer ) noexcept
+{
+    Cleanup ( renderer );
+
+    _oldResource = _resource;
+    Cleanup ( renderer );
+
+    _imageCopy.clear ();
+    _imageCopy.shrink_to_fit ();
 }
 
 void FontStorage::Atlas::SetResolution ( VkExtent2D const &resolution ) noexcept
@@ -142,14 +293,19 @@ void FontStorage::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 {
     _atlas.Destroy ( renderer );
 
-    for ( auto& buffer : _freeStagingBuffers )
-        buffer.Destroy ( renderer );
+    auto const clear = [ & ] ( auto &buffers ) noexcept {
+        for ( auto& buffer : buffers )
+            buffer.Destroy ( renderer );
 
-    for ( auto& buffer : _fullStagingBuffers )
-        buffer.Destroy ( renderer );
+        buffers.clear ();
+    };
 
-    _freeStagingBuffers.clear ();
-    _fullStagingBuffers.clear ();
+    clear ( _activeStagingBuffer );
+    clear ( _freeStagingBuffers );
+    clear ( _fullStagingBuffers );
+
+    _bufferImageCopy.clear ();
+    _bufferImageCopy.shrink_to_fit ();
 
     if ( !_library )
         return;
@@ -168,9 +324,35 @@ void FontStorage::Destroy ( android_vulkan::Renderer &renderer ) noexcept
     _stringHeap.clear ();
 }
 
-bool FontStorage::UploadGPUData ( android_vulkan::Renderer &/*renderer*/, VkCommandBuffer /*commandBuffer*/ ) noexcept
+bool FontStorage::UploadGPUData ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept
 {
-    // TODO
+    _atlas.Cleanup ( renderer );
+
+    if ( _activeStagingBuffer.empty () )
+        return true;
+
+    size_t newLayers = 0U;
+
+    if ( _fullStagingBuffers.empty () )
+    {
+        // It's needed to request one layer if atlas is empty.
+        newLayers += static_cast<size_t> ( _atlas._layers == 0U );
+    }
+    else
+    {
+        // It's needed to add one more layer if full buffer in the front starts from top left corner.
+        StagingBuffer const& sb = _fullStagingBuffers.front ();
+        newLayers += _fullStagingBuffers.size () + static_cast<size_t> ( sb._startX == 0U & sb._startY == 0U );
+    }
+
+    if ( newLayers && !_atlas.AddLayers ( renderer, commandBuffer, static_cast<uint32_t> ( newLayers ) ) )
+        return false;
+
+    // VkBufferImageCopy for new glyphs
+
+    // TODO upload staging buffers.
+    // TODO rebuild '_activeStagingBuffer', '_freeStagingBuffers' and '_fullStagingBuffers'.
+
     return true;
 }
 
@@ -310,8 +492,8 @@ FontStorage::GlyphInfo const& FontStorage::EmbedGlyph ( android_vulkan::Renderer
 
     auto const completeStagingBuffer = [ & ]() noexcept -> bool {
         _fullStagingBuffers.splice ( _fullStagingBuffers.cend (),
-            _freeStagingBuffers,
-            _freeStagingBuffers.cbegin ()
+            _activeStagingBuffer,
+            _activeStagingBuffer.cbegin ()
         );
 
         query = GetStagingBuffer ( renderer );
@@ -367,10 +549,13 @@ FontStorage::GlyphInfo const& FontStorage::EmbedGlyph ( android_vulkan::Renderer
         data += static_cast<size_t> ( side );
     }
 
+    uint32_t const cases[] = { 0U, _atlas._layers - 1U };
+    uint32_t const base = cases[ static_cast<size_t> ( _atlas._layers != 0U ) ];
+
     auto const status = glyphs.emplace ( character,
         GlyphInfo
         {
-            ._atlasLayer = _atlas._layers + static_cast<uint32_t> ( _fullStagingBuffers.size () ),
+            ._atlasLayer = base + static_cast<uint32_t> ( _fullStagingBuffers.size () ),
             ._topLeft = PixToUV ( left, top ),
             ._bottomRight = PixToUV ( right, bottom ),
             ._width = static_cast<int32_t> ( width ),
@@ -424,10 +609,20 @@ std::optional<FontStorage::FontResource*> FontStorage::GetFontResource ( std::st
 std::optional<FontStorage::StagingBuffer*> FontStorage::GetStagingBuffer (
     android_vulkan::Renderer &renderer ) noexcept
 {
-    if ( !_freeStagingBuffers.empty () )
-        return &_freeStagingBuffers.front ();
+    if ( !_activeStagingBuffer.empty () )
+        return &_activeStagingBuffer.front ();
 
-    StagingBuffer& stagingBuffer = _freeStagingBuffers.emplace_front ();
+    if ( !_freeStagingBuffers.empty () )
+    {
+        _activeStagingBuffer.splice ( _activeStagingBuffer.cend (),
+            _freeStagingBuffers,
+            _freeStagingBuffers.cbegin ()
+        );
+
+        return &_activeStagingBuffer.front ();
+    }
+
+    StagingBuffer& stagingBuffer = _activeStagingBuffer.emplace_front ();
 
     if ( stagingBuffer.Init ( renderer, _atlas._side ) )
         return &stagingBuffer;

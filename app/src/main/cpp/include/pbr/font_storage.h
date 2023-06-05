@@ -22,28 +22,28 @@ class FontStorage final
     public:
         struct GlyphInfo final
         {
-            [[maybe_unused]] uint32_t           _atlasLayer = 0U;
-            [[maybe_unused]] GXVec2             _topLeft = GXVec2 ( 0.0F, 0.0F );
-            [[maybe_unused]] GXVec2             _bottomRight = GXVec2 ( 0.0F, 0.0F );
-            [[maybe_unused]] int32_t            _width = 0;
-            [[maybe_unused]] int32_t            _height = 0;
-            [[maybe_unused]] int32_t            _advance = 0;
-            [[maybe_unused]] int32_t            _offsetY = 0;
+            [[maybe_unused]] uint32_t       _atlasLayer = 0U;
+            [[maybe_unused]] GXVec2         _topLeft = GXVec2 ( 0.0F, 0.0F );
+            [[maybe_unused]] GXVec2         _bottomRight = GXVec2 ( 0.0F, 0.0F );
+            [[maybe_unused]] int32_t        _width = 0;
+            [[maybe_unused]] int32_t        _height = 0;
+            [[maybe_unused]] int32_t        _advance = 0;
+            [[maybe_unused]] int32_t        _offsetY = 0;
         };
 
         struct FontResource final
         {
-            FT_Face                             _face;
-            std::vector<uint8_t>                _fontAsset;
+            FT_Face                         _face;
+            std::vector<uint8_t>            _fontAsset;
         };
 
         using GlyphStorage = std::unordered_map<char32_t, GlyphInfo>;
 
         struct FontData final
         {
-            FontResource*                       _fontResource;
-            uint32_t                            _fontSize;
-            GlyphStorage                        _glyphs;
+            FontResource*                   _fontResource;
+            uint32_t                        _fontSize;
+            GlyphStorage                    _glyphs;
         };
 
         using FontHash = size_t;
@@ -61,58 +61,71 @@ class FontStorage final
                 FullLinePresent
             };
 
-            VkBuffer                            _buffer = VK_NULL_HANDLE;
-            uint8_t*                            _data = nullptr;
-            VkDeviceMemory                      _memory = VK_NULL_HANDLE;
-            VkDeviceSize                        _memoryOffset = 0U;
-            eState                              _state = eState::FirstLine;
+            VkBuffer                        _buffer = VK_NULL_HANDLE;
+            uint8_t*                        _data = nullptr;
+            VkDeviceMemory                  _memory = VK_NULL_HANDLE;
+            VkDeviceSize                    _memoryOffset = 0U;
+            eState                          _state = eState::FirstLine;
 
-            [[maybe_unused]] uint32_t           _firstLineHeight = 0U;
-            uint32_t                            _lineHeight = 0U;
+            [[maybe_unused]] uint32_t       _firstLineHeight = 0U;
+            uint32_t                        _lineHeight = 0U;
 
-            [[maybe_unused]] uint32_t           _startX = 0U;
-            [[maybe_unused]] uint32_t           _startY = 0U;
+            [[maybe_unused]] uint32_t       _startX = 0U;
+            [[maybe_unused]] uint32_t       _startY = 0U;
 
-            uint32_t                            _endX = 0U;
-            uint32_t                            _endY = 0U;
+            uint32_t                        _endX = 0U;
+            uint32_t                        _endY = 0U;
 
             [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, uint32_t side ) noexcept;
             void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
         };
 
+        struct ImageResource final
+        {
+            VkImage                         _image = VK_NULL_HANDLE;
+            VkImageView                     _view = VK_NULL_HANDLE;
+            VkDeviceMemory                  _memory = VK_NULL_HANDLE;
+            VkDeviceSize                    _memoryOffset = 0U;
+        };
+
         struct Atlas final
         {
-            [[maybe_unused]] VkImage            _image = VK_NULL_HANDLE;
-            [[maybe_unused]] VkImageView        _imageView = VK_NULL_HANDLE;
-            [[maybe_unused]] uint32_t           _layers = 0U;
-            [[maybe_unused]] VkDeviceMemory     _memory = VK_NULL_HANDLE;
-            [[maybe_unused]] VkDeviceSize       _memoryOffset = 0U;
-            uint32_t                            _side = 0U;
+            ImageResource                   _resource {};
+            ImageResource                   _oldResource {};
 
-            [[maybe_unused, nodiscard]] bool AddLayer ( android_vulkan::Renderer &renderer,
-                VkCommandBuffer commandBuffer
+            std::vector<VkImageCopy>        _imageCopy {};
+            uint32_t                        _layers = 0U;
+            uint32_t                        _side = 0U;
+
+            [[nodiscard]] bool AddLayers ( android_vulkan::Renderer &renderer,
+                VkCommandBuffer commandBuffer,
+                uint32_t layers
             ) noexcept;
 
+            void Cleanup ( android_vulkan::Renderer &renderer ) noexcept;
             void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
             void SetResolution ( VkExtent2D const &resolution ) noexcept;
         };
 
     private:
-        Atlas                                   _atlas {};
-        FontResources                           _fontResources {};
-        FontVault                               _fonts {};
+        Atlas                               _atlas {};
+        FontResources                       _fontResources {};
+        FontVault                           _fonts {};
 
-        std::list<StagingBuffer>                _freeStagingBuffers {};
-        std::list<StagingBuffer>                _fullStagingBuffers {};
+        std::list<StagingBuffer>            _activeStagingBuffer {};
+        std::list<StagingBuffer>            _freeStagingBuffers {};
+        std::list<StagingBuffer>            _fullStagingBuffers {};
 
-        FT_Library                              _library = nullptr;
-        std::forward_list<std::string>          _stringHeap {};
+        std::vector<VkBufferImageCopy>      _bufferImageCopy {};
 
-        GXVec2                                  _halfPixelUV {};
-        float                                   _pixToUV {};
+        FT_Library                          _library = nullptr;
+        std::forward_list<std::string>      _stringHeap {};
 
-        GXVec2                                  _opaqueGlyphUV {};
-        GXVec2                                  _transparentGlyphUV {};
+        GXVec2                              _halfPixelUV {};
+        float                               _pixToUV {};
+
+        GXVec2                              _opaqueGlyphUV {};
+        GXVec2                              _transparentGlyphUV {};
 
     public:
         FontStorage () = default;

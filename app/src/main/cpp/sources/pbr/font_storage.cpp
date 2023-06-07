@@ -106,7 +106,7 @@ void FontStorage::StagingBuffer::Destroy ( android_vulkan::Renderer &renderer ) 
 //----------------------------------------------------------------------------------------------------------------------
 
 bool FontStorage::Atlas::AddLayers ( android_vulkan::Renderer &renderer,
-    VkCommandBuffer /*commandBuffer*/,
+    VkCommandBuffer commandBuffer,
     uint32_t layers
 ) noexcept
 {
@@ -117,19 +117,19 @@ bool FontStorage::Atlas::AddLayers ( android_vulkan::Renderer &renderer,
     {
         .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
         .pNext = nullptr,
-        .flags = VK_IMAGE_CREATE_2D_ARRAY_COMPATIBLE_BIT,
-        .imageType = VK_IMAGE_TYPE_3D,
+        .flags = 0U,
+        .imageType = VK_IMAGE_TYPE_2D,
         .format = VK_FORMAT_R8_UNORM,
 
         .extent
         {
             .width = _side,
             .height = _side,
-            .depth = layerCount
+            .depth = 1U
         },
 
         .mipLevels = 1U,
-        .arrayLayers = 1U,
+        .arrayLayers = layerCount,
         .samples = VK_SAMPLE_COUNT_1_BIT,
         .tiling = VK_IMAGE_TILING_OPTIMAL,
 
@@ -217,16 +217,8 @@ bool FontStorage::Atlas::AddLayers ( android_vulkan::Renderer &renderer,
 
     AV_REGISTER_IMAGE_VIEW ( "pbr::FontStorage::Atlas::_view" )
 
-    if ( _oldResource._image == VK_NULL_HANDLE )
-    {
-        // There is no old atlas to copy from.
-        _layers = layerCount;
-        return true;
-    }
-
-    // There is an old atlas. It's needed to copy data from it.
-
-    // TODO copy
+    if ( _oldResource._image != VK_NULL_HANDLE )
+        Copy ( commandBuffer );
 
     _layers = layerCount;
     return true;
@@ -256,6 +248,219 @@ void FontStorage::Atlas::Cleanup ( android_vulkan::Renderer &renderer ) noexcept
     _oldResource._memory = VK_NULL_HANDLE;
     _resource._memoryOffset = 0U;
     AV_UNREGISTER_DEVICE_MEMORY ( "pbr::FontStorage::Atlas::_memory" )
+}
+
+void FontStorage::Atlas::Copy ( VkCommandBuffer commandBuffer ) noexcept
+{
+    VkImageMemoryBarrier const barriers[] =
+    {
+        {
+            .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+            .pNext = nullptr,
+            .srcAccessMask = VK_ACCESS_SHADER_READ_BIT,
+            .dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT,
+            .oldLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+            .newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+            .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+            .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+            .image = _resource._image,
+
+            .subresourceRange
+            {
+                .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                .baseMipLevel = 0U,
+                .levelCount = 1U,
+                .baseArrayLayer = 0U,
+                .layerCount = _layers
+            }
+        },
+        {
+            .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+            .pNext = nullptr,
+            .srcAccessMask = 0U,
+            .dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
+            .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+            .newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+            .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+            .image = _resource._image,
+
+            .subresourceRange
+            {
+                .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                .baseMipLevel = 0U,
+                .levelCount = 1U,
+                .baseArrayLayer = 0U,
+                .layerCount = _layers
+            }
+        }
+    };
+
+    vkCmdPipelineBarrier ( commandBuffer,
+        VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+        VK_PIPELINE_STAGE_TRANSFER_BIT,
+        VK_DEPENDENCY_BY_REGION_BIT,
+        0U,
+        nullptr,
+        0U,
+        nullptr,
+        static_cast<uint32_t> ( std::size ( barriers ) ),
+        barriers
+    );
+
+    size_t idx = 0U;
+    uint32_t fullLayers = _layers;
+
+    if ( _line._height != 0U )
+    {
+        VkImageCopy& lineCopy = _imageCopy[ 0U ];
+        --fullLayers;
+
+        lineCopy = VkImageCopy
+        {
+            .srcSubresource
+            {
+                .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                .mipLevel = 0U,
+                .baseArrayLayer = fullLayers,
+                .layerCount = 1U
+            },
+
+            .srcOffset
+            {
+                .x = 0,
+                .y = static_cast<int32_t> ( _line._y ),
+                .z = 0
+            },
+
+            .dstSubresource
+            {
+                .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                .mipLevel = 0U,
+                .baseArrayLayer = fullLayers,
+                .layerCount = 1U
+            },
+
+            .dstOffset
+            {
+                .x = 0,
+                .y = static_cast<int32_t> ( _line._y ),
+                .z = 0
+            },
+
+            .extent
+            {
+                .width = _line._x + 1U,
+                .height = _line._height,
+                .depth = 1U
+            }
+        };
+
+        idx = 1U;
+
+        if ( _line._y > 0U )
+        {
+            VkImageCopy& regionCopy = _imageCopy[ 1U ];
+
+            regionCopy = VkImageCopy
+            {
+                .srcSubresource
+                {
+                    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                    .mipLevel = 0U,
+                    .baseArrayLayer = fullLayers,
+                    .layerCount = 1U
+                },
+
+                .srcOffset
+                {
+                    .x = 0,
+                    .y = 0,
+                    .z = 0
+                },
+
+                .dstSubresource
+                {
+                    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                    .mipLevel = 0U,
+                    .baseArrayLayer = fullLayers,
+                    .layerCount = 1U
+                },
+
+                .dstOffset
+                {
+                    .x = 0,
+                    .y = 0,
+                    .z = 0
+                },
+
+                .extent
+                {
+                    .width = _side,
+                    .height = _line._y + 1U,
+                    .depth = 1U
+                }
+            };
+
+            idx = 2U;
+        }
+    }
+
+    if ( fullLayers > 0U )
+    {
+        VkImageCopy& fullCopy = _imageCopy[ idx ];
+
+        fullCopy = VkImageCopy
+        {
+            .srcSubresource
+            {
+                .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                .mipLevel = 0U,
+                .baseArrayLayer = 0U,
+                .layerCount = fullLayers
+            },
+
+            .srcOffset
+            {
+                .x = 0,
+                .y = 0,
+                .z = 0
+            },
+
+            .dstSubresource
+            {
+                .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                .mipLevel = 0U,
+                .baseArrayLayer = 0U,
+                .layerCount = fullLayers
+            },
+
+            .dstOffset
+            {
+                .x = 0,
+                .y = 0,
+                .z = 0
+            },
+
+            .extent
+            {
+                .width = _side,
+                .height = _side,
+                .depth = fullLayers
+            }
+        };
+
+        ++idx;
+    }
+
+    vkCmdCopyImage ( commandBuffer,
+        _oldResource._image,
+        VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+        _resource._image,
+        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        idx,
+        _imageCopy.data ()
+    );
 }
 
 void FontStorage::Atlas::Destroy ( android_vulkan::Renderer &renderer ) noexcept
@@ -342,7 +547,8 @@ bool FontStorage::UploadGPUData ( android_vulkan::Renderer &renderer, VkCommandB
     {
         // It's needed to add one more layer if full buffer in the front starts from top left corner.
         StagingBuffer const& sb = _fullStagingBuffers.front ();
-        newLayers += _fullStagingBuffers.size () + static_cast<size_t> ( sb._startX == 0U & sb._startY == 0U );
+        Line const& l = sb._startLine;
+        newLayers += _fullStagingBuffers.size () + static_cast<size_t> ( l._x == 0U & l._y == 0U );
     }
 
     if ( newLayers && !_atlas.AddLayers ( renderer, commandBuffer, static_cast<uint32_t> ( newLayers ) ) )
@@ -470,20 +676,21 @@ FontStorage::GlyphInfo const& FontStorage::EmbedGlyph ( android_vulkan::Renderer
     uint32_t const toRight = width - 1U;
     uint32_t const toBottom = rows - 1U;
 
-    uint32_t lineHeight =  stagingBuffer->_lineHeight;
+    uint32_t lineHeight = stagingBuffer->_endLine._height;
 
     // Move position on one pixel right to not overwrite previously rendered glyph last column.
-    uint32_t left = stagingBuffer->_endX + static_cast<uint32_t> ( stagingBuffer->_endX > 0U );
-    uint32_t top = stagingBuffer->_endY;
+    uint32_t const x = stagingBuffer->_endLine._x;
+    uint32_t left = x + static_cast<uint32_t> ( x > 0U );
+    uint32_t top = stagingBuffer->_endLine._y;
 
     auto const goToNewLine = [ & ]() noexcept {
         if ( stagingBuffer->_state == StagingBuffer::eState::FirstLine )
-            stagingBuffer->_firstLineHeight = stagingBuffer->_lineHeight;
+            stagingBuffer->_startLine._height = stagingBuffer->_endLine._height;
 
         stagingBuffer->_state = StagingBuffer::eState::FullLinePresent;
         lineHeight = 0U;
 
-        top += stagingBuffer->_lineHeight;
+        top += stagingBuffer->_endLine._height;
         left = 0U;
     };
 
@@ -530,9 +737,9 @@ FontStorage::GlyphInfo const& FontStorage::EmbedGlyph ( android_vulkan::Renderer
         right = toRight;
     }
 
-    stagingBuffer->_lineHeight = std::max ( lineHeight, rows );
-    stagingBuffer->_endX = right;
-    stagingBuffer->_endY = top;
+    stagingBuffer->_endLine._height = std::max ( lineHeight, rows );
+    stagingBuffer->_endLine._x = right;
+    stagingBuffer->_endLine._y = top;
     uint8_t* data = stagingBuffer->_data + ( top * side ) + left;
 
     auto const* raster = static_cast<uint8_t const*> ( bm.buffer );
@@ -644,8 +851,8 @@ bool FontStorage::MakeSpecialGlyphs ( android_vulkan::Renderer &renderer ) noexc
     stagingBuffer._data[ 0U ] = std::numeric_limits<uint8_t>::max ();
     stagingBuffer._data[ 1U ] = 0U;
 
-    stagingBuffer._endX = 1U;
-    stagingBuffer._lineHeight = 1U;
+    stagingBuffer._endLine._x = 1U;
+    stagingBuffer._endLine._height = 1U;
 
     return true;
 }

@@ -53,6 +53,13 @@ class FontStorage final
     private:
         using FontResources = std::unordered_map<std::string_view, FontResource>;
 
+        struct Line final
+        {
+            uint32_t                        _height = 0U;
+            uint32_t                        _x = 0U;
+            uint32_t                        _y = 0U;
+        };
+
         struct StagingBuffer final
         {
             enum class eState : uint8_t
@@ -67,14 +74,8 @@ class FontStorage final
             VkDeviceSize                    _memoryOffset = 0U;
             eState                          _state = eState::FirstLine;
 
-            [[maybe_unused]] uint32_t       _firstLineHeight = 0U;
-            uint32_t                        _lineHeight = 0U;
-
-            [[maybe_unused]] uint32_t       _startX = 0U;
-            [[maybe_unused]] uint32_t       _startY = 0U;
-
-            uint32_t                        _endX = 0U;
-            uint32_t                        _endY = 0U;
+            Line                            _endLine {};
+            Line                            _startLine {};
 
             [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, uint32_t side ) noexcept;
             void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
@@ -95,6 +96,7 @@ class FontStorage final
 
             std::vector<VkImageCopy>        _imageCopy {};
             uint32_t                        _layers = 0U;
+            Line                            _line {};
             uint32_t                        _side = 0U;
 
             [[nodiscard]] bool AddLayers ( android_vulkan::Renderer &renderer,
@@ -103,6 +105,7 @@ class FontStorage final
             ) noexcept;
 
             void Cleanup ( android_vulkan::Renderer &renderer ) noexcept;
+            void Copy ( VkCommandBuffer commandBuffer ) noexcept;
             void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
             void SetResolution ( VkExtent2D const &resolution ) noexcept;
         };

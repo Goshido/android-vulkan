@@ -79,6 +79,7 @@ class FontStorage final
 
             [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, uint32_t side ) noexcept;
             void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
+            void Reset () noexcept;
         };
 
         struct ImageResource final
@@ -94,7 +95,6 @@ class FontStorage final
             ImageResource                   _resource {};
             ImageResource                   _oldResource {};
 
-            std::vector<VkImageCopy>        _imageCopy {};
             uint32_t                        _layers = 0U;
             Line                            _line {};
             uint32_t                        _side = 0U;
@@ -105,7 +105,7 @@ class FontStorage final
             ) noexcept;
 
             void Cleanup ( android_vulkan::Renderer &renderer ) noexcept;
-            void Copy ( VkCommandBuffer commandBuffer ) noexcept;
+            void Copy ( VkCommandBuffer commandBuffer, uint32_t newLayers ) noexcept;
             void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
             void SetResolution ( VkExtent2D const &resolution ) noexcept;
         };
@@ -118,8 +118,6 @@ class FontStorage final
         std::list<StagingBuffer>            _activeStagingBuffer {};
         std::list<StagingBuffer>            _freeStagingBuffers {};
         std::list<StagingBuffer>            _fullStagingBuffers {};
-
-        std::vector<VkBufferImageCopy>      _bufferImageCopy {};
 
         FT_Library                          _library = nullptr;
         std::forward_list<std::string>      _stringHeap {};
@@ -165,6 +163,7 @@ class FontStorage final
 
         [[nodiscard]] bool MakeSpecialGlyphs ( android_vulkan::Renderer &renderer ) noexcept;
         [[nodiscard]] GXVec2 PixToUV ( uint32_t x, uint32_t y ) const noexcept;
+        void TransferPixels ( VkCommandBuffer commandBuffer ) noexcept;
 
         [[nodiscard]] static bool CheckFTResult ( FT_Error result, char const* from, char const* message ) noexcept;
 };

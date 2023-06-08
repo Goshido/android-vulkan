@@ -103,6 +103,25 @@ void FontStorage::StagingBuffer::Destroy ( android_vulkan::Renderer &renderer ) 
     AV_UNREGISTER_DEVICE_MEMORY ( "pbr::FontStorage::StagingBuffer::_memory" )
 }
 
+void FontStorage::StagingBuffer::Reset () noexcept
+{
+    _startLine =
+    {
+        ._height = 0U,
+        ._x = 0U,
+        ._y = 0U
+    };
+
+    _endLine =
+    {
+        ._height = 0U,
+        ._x = 0U,
+        ._y = 0U
+    };
+
+    _state = StagingBuffer::eState::FirstLine;
+}
+
 //----------------------------------------------------------------------------------------------------------------------
 
 bool FontStorage::Atlas::AddLayers ( android_vulkan::Renderer &renderer,
@@ -218,7 +237,7 @@ bool FontStorage::Atlas::AddLayers ( android_vulkan::Renderer &renderer,
     AV_REGISTER_IMAGE_VIEW ( "pbr::FontStorage::Atlas::_view" )
 
     if ( _oldResource._image != VK_NULL_HANDLE )
-        Copy ( commandBuffer );
+        Copy ( commandBuffer, layerCount );
 
     _layers = layerCount;
     return true;
@@ -250,7 +269,7 @@ void FontStorage::Atlas::Cleanup ( android_vulkan::Renderer &renderer ) noexcept
     AV_UNREGISTER_DEVICE_MEMORY ( "pbr::FontStorage::Atlas::_memory" )
 }
 
-void FontStorage::Atlas::Copy ( VkCommandBuffer commandBuffer ) noexcept
+void FontStorage::Atlas::Copy ( VkCommandBuffer commandBuffer, uint32_t newLayers ) noexcept
 {
     VkImageMemoryBarrier const barriers[] =
     {
@@ -263,7 +282,7 @@ void FontStorage::Atlas::Copy ( VkCommandBuffer commandBuffer ) noexcept
             .newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
             .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
             .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-            .image = _resource._image,
+            .image = _oldResource._image,
 
             .subresourceRange
             {
@@ -277,7 +296,7 @@ void FontStorage::Atlas::Copy ( VkCommandBuffer commandBuffer ) noexcept
         {
             .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
             .pNext = nullptr,
-            .srcAccessMask = 0U,
+            .srcAccessMask = VK_ACCESS_NONE,
             .dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
             .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
             .newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
@@ -291,13 +310,13 @@ void FontStorage::Atlas::Copy ( VkCommandBuffer commandBuffer ) noexcept
                 .baseMipLevel = 0U,
                 .levelCount = 1U,
                 .baseArrayLayer = 0U,
-                .layerCount = _layers
+                .layerCount = newLayers
             }
         }
     };
 
     vkCmdPipelineBarrier ( commandBuffer,
-        VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+        AV_VK_FLAG ( VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT ) | AV_VK_FLAG ( VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT ),
         VK_PIPELINE_STAGE_TRANSFER_BIT,
         VK_DEPENDENCY_BY_REGION_BIT,
         0U,
@@ -308,15 +327,15 @@ void FontStorage::Atlas::Copy ( VkCommandBuffer commandBuffer ) noexcept
         barriers
     );
 
-    size_t idx = 0U;
     uint32_t fullLayers = _layers;
+    VkImageCopy imageCopy[ 3U ];
+    uint32_t count = 0U;
 
     if ( _line._height != 0U )
     {
-        VkImageCopy& lineCopy = _imageCopy[ 0U ];
         --fullLayers;
 
-        lineCopy = VkImageCopy
+        imageCopy[ 0U ] =
         {
             .srcSubresource
             {
@@ -356,13 +375,11 @@ void FontStorage::Atlas::Copy ( VkCommandBuffer commandBuffer ) noexcept
             }
         };
 
-        idx = 1U;
+        count = 1U;
 
         if ( _line._y > 0U )
         {
-            VkImageCopy& regionCopy = _imageCopy[ 1U ];
-
-            regionCopy = VkImageCopy
+            imageCopy[ 1U ] =
             {
                 .srcSubresource
                 {
@@ -402,15 +419,13 @@ void FontStorage::Atlas::Copy ( VkCommandBuffer commandBuffer ) noexcept
                 }
             };
 
-            idx = 2U;
+            count = 2U;
         }
     }
 
     if ( fullLayers > 0U )
     {
-        VkImageCopy& fullCopy = _imageCopy[ idx ];
-
-        fullCopy = VkImageCopy
+        imageCopy[ count ] =
         {
             .srcSubresource
             {
@@ -446,11 +461,11 @@ void FontStorage::Atlas::Copy ( VkCommandBuffer commandBuffer ) noexcept
             {
                 .width = _side,
                 .height = _side,
-                .depth = fullLayers
+                .depth = 1U
             }
         };
 
-        ++idx;
+        ++count;
     }
 
     vkCmdCopyImage ( commandBuffer,
@@ -458,8 +473,8 @@ void FontStorage::Atlas::Copy ( VkCommandBuffer commandBuffer ) noexcept
         VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
         _resource._image,
         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-        idx,
-        _imageCopy.data ()
+        count,
+        imageCopy
     );
 }
 
@@ -469,9 +484,6 @@ void FontStorage::Atlas::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 
     _oldResource = _resource;
     Cleanup ( renderer );
-
-    _imageCopy.clear ();
-    _imageCopy.shrink_to_fit ();
 }
 
 void FontStorage::Atlas::SetResolution ( VkExtent2D const &resolution ) noexcept
@@ -508,9 +520,6 @@ void FontStorage::Destroy ( android_vulkan::Renderer &renderer ) noexcept
     clear ( _activeStagingBuffer );
     clear ( _freeStagingBuffers );
     clear ( _fullStagingBuffers );
-
-    _bufferImageCopy.clear ();
-    _bufferImageCopy.shrink_to_fit ();
 
     if ( !_library )
         return;
@@ -554,10 +563,82 @@ bool FontStorage::UploadGPUData ( android_vulkan::Renderer &renderer, VkCommandB
     if ( newLayers && !_atlas.AddLayers ( renderer, commandBuffer, static_cast<uint32_t> ( newLayers ) ) )
         return false;
 
-    // VkBufferImageCopy for new glyphs
+    uint32_t affectedLayers = _atlas._layers;
 
-    // TODO upload staging buffers.
-    // TODO rebuild '_activeStagingBuffer', '_freeStagingBuffers' and '_fullStagingBuffers'.
+    if ( newLayers == 0U )
+    {
+        VkImageMemoryBarrier const barrier
+        {
+            .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+            .pNext = nullptr,
+            .srcAccessMask = VK_ACCESS_SHADER_READ_BIT,
+            .dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
+            .oldLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+            .newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+            .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+            .image = _atlas._resource._image,
+
+            .subresourceRange
+            {
+                .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                .baseMipLevel = 0U,
+                .levelCount = 1U,
+                .baseArrayLayer = _atlas._layers - 1U,
+                .layerCount = 1U
+            }
+        };
+
+        vkCmdPipelineBarrier ( commandBuffer,
+            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+            VK_PIPELINE_STAGE_TRANSFER_BIT,
+            VK_DEPENDENCY_BY_REGION_BIT,
+            0U,
+            nullptr,
+            0U,
+            nullptr,
+            1U,
+            &barrier
+        );
+
+        affectedLayers = 1U;
+    }
+
+    TransferPixels ( commandBuffer );
+
+    VkImageMemoryBarrier const barrier
+    {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+        .pNext = nullptr,
+        .srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
+        .dstAccessMask = VK_ACCESS_SHADER_READ_BIT,
+        .oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        .newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .image = _atlas._resource._image,
+
+        .subresourceRange
+        {
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .baseMipLevel = 0U,
+            .levelCount = 1U,
+            .baseArrayLayer = _atlas._layers - affectedLayers,
+            .layerCount = affectedLayers
+        }
+    };
+
+    vkCmdPipelineBarrier ( commandBuffer,
+        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+        VK_PIPELINE_STAGE_TRANSFER_BIT,
+        VK_DEPENDENCY_BY_REGION_BIT,
+        0U,
+        nullptr,
+        0U,
+        nullptr,
+        1U,
+        &barrier
+    );
 
     return true;
 }
@@ -862,6 +943,268 @@ GXVec2 FontStorage::PixToUV ( uint32_t x, uint32_t y ) const noexcept
     GXVec2 result {};
     result.Sum ( _halfPixelUV, _pixToUV, GXVec2 ( static_cast<float> ( x ), static_cast<float> ( y ) ) );
     return result;
+}
+
+void FontStorage::TransferPixels ( VkCommandBuffer commandBuffer ) noexcept
+{
+    VkBufferImageCopy bufferImageCopy[ 3U ];
+    uint32_t targetLayer = _atlas._layers - 1U;
+
+    auto const offset = [ side = static_cast<VkDeviceSize> ( _atlas._side ) ] ( uint32_t x,
+        uint32_t y
+    ) noexcept -> VkDeviceSize
+    {
+        return static_cast<VkDeviceSize> ( y ) * side + static_cast<VkDeviceSize> ( x );
+    };
+
+    auto const transferComplex = [ & ] ( StagingBuffer const &b ) noexcept {
+        if ( b._startLine._y == b._endLine._y )
+        {
+            // Single area case.
+            bufferImageCopy[ 0U ] =
+            {
+                .bufferOffset = offset ( b._startLine._x, b._startLine._y ),
+                .bufferRowLength = _atlas._side,
+                .bufferImageHeight = b._endLine._height,
+
+                .imageSubresource
+                {
+                    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                    .mipLevel = 0U,
+                    .baseArrayLayer = targetLayer,
+                    .layerCount = 1U
+                },
+
+                .imageOffset
+                {
+                    .x = static_cast<int32_t> ( b._startLine._x ),
+                    .y = static_cast<int32_t> ( b._endLine._y ),
+                    .z = 0
+                },
+
+                .imageExtent
+                {
+                    .width = b._endLine._x - b._startLine._x + 1U,
+                    .height = b._endLine._height,
+                    .depth = 1U,
+                }
+            };
+
+            vkCmdCopyBufferToImage ( commandBuffer,
+                b._buffer,
+                _atlas._resource._image,
+                VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                1U,
+                bufferImageCopy
+            );
+
+            return;
+        }
+
+        // Two or three areas. Definitely has distinct first line and end line areas,
+        // Middle area is questionable.
+
+        // First line area.
+        bufferImageCopy[ 0U ] =
+        {
+            .bufferOffset = offset ( b._startLine._x, b._startLine._y ),
+            .bufferRowLength = _atlas._side,
+            .bufferImageHeight = b._startLine._height,
+
+            .imageSubresource
+            {
+                .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                .mipLevel = 0U,
+                .baseArrayLayer = targetLayer,
+                .layerCount = 1U
+            },
+
+            .imageOffset
+            {
+                .x = static_cast<int32_t> ( b._startLine._x ),
+                .y = static_cast<int32_t> ( b._startLine._y ),
+                .z = 0
+            },
+
+            .imageExtent
+            {
+                .width = _atlas._side - b._startLine._x,
+                .height = b._startLine._height,
+                .depth = 1U,
+            }
+        };
+
+        uint32_t const nextY = b._startLine._y + b._startLine._height;
+        size_t idx = 1U;
+
+        if ( nextY != b._endLine._y )
+        {
+            // Middle area.
+            bufferImageCopy[ 1U ] =
+            {
+                .bufferOffset = offset ( 0U, nextY ),
+                .bufferRowLength = _atlas._side,
+                .bufferImageHeight = b._endLine._y - nextY,
+
+                .imageSubresource
+                {
+                    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                    .mipLevel = 0U,
+                    .baseArrayLayer = targetLayer,
+                    .layerCount = 1U
+                },
+
+                .imageOffset
+                {
+                    .x = 0,
+                    .y = static_cast<int32_t> ( nextY ),
+                    .z = 0
+                },
+
+                .imageExtent
+                {
+                    .width = _atlas._side,
+                    .height = b._endLine._y - nextY,
+                    .depth = 1U,
+                }
+            };
+
+            idx = 2U;
+        }
+
+        // End line area.
+        bufferImageCopy[ idx ] =
+        {
+            .bufferOffset = offset ( 0U, b._endLine._y ),
+            .bufferRowLength = _atlas._side,
+            .bufferImageHeight = b._endLine._height,
+
+            .imageSubresource
+            {
+                .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                .mipLevel = 0U,
+                .baseArrayLayer = targetLayer,
+                .layerCount = 1U
+            },
+
+            .imageOffset
+            {
+                .x = 0,
+                .y = static_cast<int32_t> ( b._endLine._y ),
+                .z = 0
+            },
+
+            .imageExtent
+            {
+                .width = b._endLine._x + 1U,
+                .height = b._endLine._height,
+                .depth = 1U,
+            }
+        };
+
+        vkCmdCopyBufferToImage ( commandBuffer,
+            b._buffer,
+            _atlas._resource._image,
+            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            idx + 1U,
+            bufferImageCopy
+        );
+    };
+
+    if ( !_fullStagingBuffers.empty () )
+    {
+        // First full buffer is special is could have one, two or three areas.
+        StagingBuffer &b = _fullStagingBuffers.front ();
+        transferComplex ( b );
+        b.Reset ();
+
+        _freeStagingBuffers.splice ( _freeStagingBuffers.cend (),
+            _fullStagingBuffers,
+            _fullStagingBuffers.cbegin ()
+        );
+
+        ++targetLayer;
+    }
+
+    while ( !_fullStagingBuffers.empty () )
+    {
+        // Rest full buffers contain only one area: entire atlas layer.
+        StagingBuffer &b = _fullStagingBuffers.front ();
+
+        bufferImageCopy[ 0U ] =
+        {
+            .bufferOffset = 0U,
+            .bufferRowLength = 0U,
+            .bufferImageHeight = 0U,
+
+            .imageSubresource
+            {
+                .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                .mipLevel = 0U,
+                .baseArrayLayer = targetLayer,
+                .layerCount = 1U
+            },
+
+            .imageOffset
+            {
+                .x = 0,
+                .y = 0,
+                .z = 0
+            },
+
+            .imageExtent
+            {
+                .width = _atlas._side,
+                .height = _atlas._side,
+                .depth = 1U,
+            }
+        };
+
+        vkCmdCopyBufferToImage ( commandBuffer,
+            b._buffer,
+            _atlas._resource._image,
+            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            1U,
+            bufferImageCopy
+        );
+
+        b.Reset ();
+
+        _freeStagingBuffers.splice ( _freeStagingBuffers.cend (),
+            _fullStagingBuffers,
+            _fullStagingBuffers.cbegin ()
+        );
+
+        ++targetLayer;
+    }
+
+    StagingBuffer &b = _activeStagingBuffer.front ();
+    transferComplex ( b );
+
+    b._startLine._x = b._endLine._x + 1U;
+    b._startLine._y = b._endLine._y;
+    b._startLine._height = b._endLine._height;
+    b._state = StagingBuffer::eState::FirstLine;
+
+    if ( b._startLine._x >= _atlas._side )
+    {
+        b._startLine._height = 0U;
+        b._startLine._x = 0U;
+        b._startLine._y += b._endLine._height;
+    }
+
+    if ( b._startLine._y < _atlas._side )
+    {
+        b._endLine = b._startLine;
+        return;
+    }
+
+    b.Reset ();
+
+    _freeStagingBuffers.splice ( _freeStagingBuffers.cend (),
+        _activeStagingBuffer,
+        _activeStagingBuffer.cbegin ()
+    );
 }
 
 bool FontStorage::CheckFTResult ( FT_Error result, char const* from, char const* message ) noexcept

@@ -91,11 +91,14 @@ void TextUIElement::ApplyLayout ( android_vulkan::Renderer &renderer,
         return;
 
     auto f = *font;
+    int32_t const lineHeight = f->second._lineHeight;
+    (void)lineHeight;
 
     for ( char32_t const c : _text )
     {
         FontStorage::GlyphInfo const& gi = fontStorage.GetGlyphInfo ( renderer, f, c );
         (void)gi;
+        GXVec2 const stop{};
         // TODO
     }
 }

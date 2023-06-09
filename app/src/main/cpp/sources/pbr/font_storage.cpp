@@ -545,6 +545,7 @@ bool FontStorage::UploadGPUData ( android_vulkan::Renderer &renderer, VkCommandB
     if ( _activeStagingBuffer.empty () )
         return true;
 
+    bool const isEmptyAtlas = _atlas._layers == 0U;
     size_t newLayers = 0U;
 
     if ( _fullStagingBuffers.empty () )
@@ -565,15 +566,15 @@ bool FontStorage::UploadGPUData ( android_vulkan::Renderer &renderer, VkCommandB
 
     uint32_t affectedLayers = _atlas._layers;
 
-    if ( newLayers == 0U )
+    if ( ( newLayers == 0U ) | isEmptyAtlas )
     {
-        VkImageMemoryBarrier const barrier
+        VkImageMemoryBarrier barrier
         {
             .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
             .pNext = nullptr,
-            .srcAccessMask = VK_ACCESS_SHADER_READ_BIT,
+            .srcAccessMask = VK_ACCESS_NONE,
             .dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
-            .oldLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+            .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
             .newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
             .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
             .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
@@ -584,10 +585,19 @@ bool FontStorage::UploadGPUData ( android_vulkan::Renderer &renderer, VkCommandB
                 .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
                 .baseMipLevel = 0U,
                 .levelCount = 1U,
-                .baseArrayLayer = _atlas._layers - 1U,
-                .layerCount = 1U
+                .baseArrayLayer = 0U,
+                .layerCount = affectedLayers
             }
         };
+
+        if ( !isEmptyAtlas )
+        {
+            barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+            barrier.oldLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            barrier.subresourceRange.baseArrayLayer = _atlas._layers - 1U;
+            barrier.subresourceRange.layerCount = 1U;
+            affectedLayers = 1U;
+        }
 
         vkCmdPipelineBarrier ( commandBuffer,
             VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
@@ -600,8 +610,6 @@ bool FontStorage::UploadGPUData ( android_vulkan::Renderer &renderer, VkCommandB
             1U,
             &barrier
         );
-
-        affectedLayers = 1U;
     }
 
     TransferPixels ( commandBuffer );
@@ -629,8 +637,8 @@ bool FontStorage::UploadGPUData ( android_vulkan::Renderer &renderer, VkCommandB
     };
 
     vkCmdPipelineBarrier ( commandBuffer,
-        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
         VK_PIPELINE_STAGE_TRANSFER_BIT,
+        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
         VK_DEPENDENCY_BY_REGION_BIT,
         0U,
         nullptr,
@@ -666,15 +674,19 @@ std::optional<FontStorage::Font> FontStorage::GetFont ( std::string_view font, u
     if ( auto findResult = _fonts.find ( hash ); findResult != _fonts.end () )
         return findResult;
 
-    android_vulkan::File fontAsset ( font );
-    [[maybe_unused]] bool const result = fontAsset.LoadContent ();
+    auto const s = static_cast<FT_UInt> ( size );
+    FT_Face face = f->_face;
+
+    if ( !CheckFTResult ( FT_Set_Pixel_Sizes ( face, s, s ), "pbr::FontStorage::GetFont", "Can't set size" ) )
+        return std::nullopt;
 
     auto status = _fonts.emplace ( hash,
         FontData
         {
             ._fontResource = f,
             ._fontSize = size,
-            ._glyphs = {}
+            ._glyphs = {},
+            ._lineHeight = static_cast<int32_t> ( static_cast<uint32_t> ( face->size->metrics.height ) >> 6U )
         }
     );
 
@@ -738,8 +750,8 @@ FontStorage::GlyphInfo const& FontStorage::EmbedGlyph ( android_vulkan::Renderer
                 ._bottomRight = _transparentGlyphUV,
                 ._width = static_cast<int32_t> ( width ),
                 ._height = static_cast<int32_t> ( rows ),
-                ._advance = static_cast<int32_t> ( slot->advance.x ) >> 6,
-                ._offsetY = static_cast<int32_t> ( slot->metrics.horiBearingY - slot->metrics.height ) >> 6
+                ._advance = static_cast<int32_t> ( slot->advance.x ) >> 6U,
+                ._offsetY = static_cast<int32_t> ( slot->metrics.height - slot->metrics.horiBearingY ) >> 6U
             }
         );
 
@@ -848,8 +860,8 @@ FontStorage::GlyphInfo const& FontStorage::EmbedGlyph ( android_vulkan::Renderer
             ._bottomRight = PixToUV ( right, bottom ),
             ._width = static_cast<int32_t> ( width ),
             ._height = static_cast<int32_t> ( rows ),
-            ._advance = static_cast<int32_t> ( slot->advance.x ) >> 6,
-            ._offsetY = static_cast<int32_t> ( slot->metrics.horiBearingY - slot->metrics.height ) >> 6
+            ._advance = static_cast<int32_t> ( slot->advance.x ) >> 6U,
+            ._offsetY = static_cast<int32_t> ( slot->metrics.height - slot->metrics.horiBearingY ) >> 6U
         }
     );
 
@@ -1181,6 +1193,13 @@ void FontStorage::TransferPixels ( VkCommandBuffer commandBuffer ) noexcept
     StagingBuffer &b = _activeStagingBuffer.front ();
     transferComplex ( b );
 
+    _freeStagingBuffers.splice ( _freeStagingBuffers.cend (),
+        _activeStagingBuffer,
+        _activeStagingBuffer.cbegin ()
+    );
+
+    _atlas._line = b._endLine;
+
     b._startLine._x = b._endLine._x + 1U;
     b._startLine._y = b._endLine._y;
     b._startLine._height = b._endLine._height;
@@ -1200,11 +1219,6 @@ void FontStorage::TransferPixels ( VkCommandBuffer commandBuffer ) noexcept
     }
 
     b.Reset ();
-
-    _freeStagingBuffers.splice ( _freeStagingBuffers.cend (),
-        _activeStagingBuffer,
-        _activeStagingBuffer.cbegin ()
-    );
 }
 
 bool FontStorage::CheckFTResult ( FT_Error result, char const* from, char const* message ) noexcept

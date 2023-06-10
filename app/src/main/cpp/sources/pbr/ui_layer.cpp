@@ -143,7 +143,7 @@ void UILayer::Submit ( android_vulkan::Renderer &renderer,
     VkExtent2D const viewport = renderer.GetViewportResolution ();
     GXVec2 const canvasSize ( static_cast<float> ( viewport.width ), static_cast<float> ( viewport.height ) );
 
-    GXVec2 penLocation {};
+    GXVec2 penLocation ( 0.0F, 0.0F );
     float lineHeight = 0.0F;
 
     _body->ApplyLayout ( renderer,

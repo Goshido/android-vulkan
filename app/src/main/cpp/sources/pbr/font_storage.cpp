@@ -659,6 +659,11 @@ std::optional<FontStorage::Font> FontStorage::GetFont ( std::string_view font, u
         return std::nullopt;
 
     FontResource* f = *fontResource;
+    auto const s = static_cast<FT_UInt> ( size );
+    FT_Face face = f->_face;
+
+    if ( !CheckFTResult ( FT_Set_Pixel_Sizes ( face, s, s ), "pbr::FontStorage::GetFont", "Can't set size" ) )
+        return std::nullopt;
 
     // Hash function is based on Boost implementation:
     // https://www.boost.org/doc/libs/1_55_0/doc/html/hash/reference.html#boost.hash_combine.
@@ -673,12 +678,6 @@ std::optional<FontStorage::Font> FontStorage::GetFont ( std::string_view font, u
 
     if ( auto findResult = _fonts.find ( hash ); findResult != _fonts.end () )
         return findResult;
-
-    auto const s = static_cast<FT_UInt> ( size );
-    FT_Face face = f->_face;
-
-    if ( !CheckFTResult ( FT_Set_Pixel_Sizes ( face, s, s ), "pbr::FontStorage::GetFont", "Can't set size" ) )
-        return std::nullopt;
 
     auto status = _fonts.emplace ( hash,
         FontData
@@ -721,10 +720,6 @@ FontStorage::GlyphInfo const& FontStorage::EmbedGlyph ( android_vulkan::Renderer
         return nullGlyph;
 
     StagingBuffer* stagingBuffer = query.value ();
-    auto const s = static_cast<FT_UInt> ( fontSize );
-
-    if ( !CheckFTResult ( FT_Set_Pixel_Sizes ( face, s, s ), "pbr::FontStorage::EmbedGlyph", "Can't set size" ) )
-        return nullGlyph;
 
     bool const result = CheckFTResult ( FT_Load_Char ( face, static_cast<FT_ULong> ( character ), FT_LOAD_RENDER ),
         "pbr::FontStorage::EmbedGlyph",
@@ -866,6 +861,31 @@ FontStorage::GlyphInfo const& FontStorage::EmbedGlyph ( android_vulkan::Renderer
     );
 
     return status.first->second;
+}
+
+int32_t FontStorage::GetKerning ( Font font, char32_t left, char32_t right ) noexcept
+{
+    FT_Face face = font->second._fontResource->_face;
+
+    if ( !FT_HAS_KERNING ( face ) )
+        return 0;
+
+    FT_Vector delta {};
+
+    bool const status = CheckFTResult (
+        FT_Get_Kerning ( face,
+            FT_Get_Char_Index ( face, left ),
+            FT_Get_Char_Index ( face, right ),
+            FT_KERNING_DEFAULT,
+            &delta
+        ),
+
+        "pbr::FontStorage::GetKerning",
+        "Can't resolve kerning"
+    );
+
+    int32_t const cases[] = { 0, static_cast<int32_t> ( delta.x >> 6 ) };
+    return cases[ static_cast<size_t> ( status ) ];
 }
 
 std::optional<FontStorage::FontResource*> FontStorage::GetFontResource ( std::string_view font ) noexcept

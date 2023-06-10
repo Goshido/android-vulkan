@@ -151,6 +151,8 @@ class FontStorage final
             char32_t character
         ) noexcept;
 
+        [[nodiscard]] int32_t GetKerning ( Font font, char32_t left, char32_t right ) noexcept;
+
     private:
         [[nodiscard]] GlyphInfo const& EmbedGlyph ( android_vulkan::Renderer &renderer,
             GlyphStorage &glyphs,

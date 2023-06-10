@@ -73,14 +73,16 @@ void TextUIElement::Init ( lua_State &vm ) noexcept
 void TextUIElement::ApplyLayout ( android_vulkan::Renderer &renderer,
     FontStorage &fontStorage,
     CSSUnitToDevicePixel const &cssUnits,
-    GXVec2 &/*penLocation*/,
-    float &/*lineHeight*/,
+    GXVec2 &penLocation,
+    float &lineHeight,
     GXVec2 const &/*canvasSize*/,
-    float /*parentLeft*/,
-    float /*parentWidth*/
+    float parentLeft,
+    float parentWidth
 ) noexcept
 {
-    if ( !_visible )
+    bool const isEmpty = _text.empty ();
+
+    if ( !_visible | isEmpty )
         return;
 
     std::string const& fontAsset = *ResolveFont ();
@@ -91,16 +93,42 @@ void TextUIElement::ApplyLayout ( android_vulkan::Renderer &renderer,
         return;
 
     auto f = *font;
-    int32_t const lineHeight = f->second._lineHeight;
-    (void)lineHeight;
+    constexpr size_t firstNewLineHeightIdx = 1U;
 
-    for ( char32_t const c : _text )
+    int32_t const newLineHeight[] =
     {
-        FontStorage::GlyphInfo const& gi = fontStorage.GetGlyphInfo ( renderer, f, c );
-        (void)gi;
-        GXVec2 const stop{};
-        // TODO
+        f->second._lineHeight,
+        std::max ( f->second._lineHeight, static_cast<int32_t> ( lineHeight ) )
+    };
+
+    auto const l = static_cast<int32_t> ( parentLeft );
+    auto const w = static_cast<int32_t> ( penLocation._data[ 0U ] + parentWidth );
+
+    auto x = static_cast<int32_t> ( penLocation._data[ 0U ] );
+    int32_t y = static_cast<int32_t> ( penLocation._data[ 1U ] ) + newLineHeight[ firstNewLineHeightIdx ];
+
+    bool firstLine = true;
+    char32_t leftCharacter = 0;
+
+    for ( char32_t const rightCharacter : _text )
+    {
+        FontStorage::GlyphInfo const& gi = fontStorage.GetGlyphInfo ( renderer, f, rightCharacter );
+        x += gi._advance + fontStorage.GetKerning ( f, leftCharacter, rightCharacter );
+        leftCharacter = rightCharacter;
+
+        if ( x < w )
+            continue;
+
+        x = l;
+        y += newLineHeight[ static_cast<size_t> ( firstLine ) ];
+        firstLine = false;
     }
+
+    auto const h = static_cast<float> ( newLineHeight[ static_cast<size_t> ( firstLine ) ] );
+
+    lineHeight = h;
+    penLocation._data[ 0U ] = static_cast<float> ( x );
+    penLocation._data[ 1U ] = static_cast<float> ( y ) - h;
 }
 
 void TextUIElement::Render () noexcept

@@ -35,16 +35,7 @@ class ImageUIElement : public UIElement
         ~ImageUIElement () override = default;
 
     private:
-        void ApplyLayout ( android_vulkan::Renderer &renderer,
-            FontStorage &fontStorage,
-            CSSUnitToDevicePixel const &cssUnits,
-            GXVec2 &penLocation,
-            float &lineHeight,
-            GXVec2 const &canvasSize,
-            float parentLeft,
-            float parentWidth
-        ) noexcept override;
-
+        void ApplyLayout ( ApplyLayoutInfo &info ) noexcept override;
         void Render () noexcept override;
 };
 

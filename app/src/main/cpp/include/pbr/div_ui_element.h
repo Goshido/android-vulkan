@@ -18,6 +18,7 @@ class DIVUIElement final : public UIElement
 {
     private:
         std::deque<UIElement*>      _children {};
+        std::vector<float>          _lineHeights {};
 
     public:
         CSSComputedValues           _css {};
@@ -40,16 +41,7 @@ class DIVUIElement final : public UIElement
 
         ~DIVUIElement () override = default;
 
-        void ApplyLayout ( android_vulkan::Renderer &renderer,
-            FontStorage &fontStorage,
-            CSSUnitToDevicePixel const &cssUnits,
-            GXVec2 &penLocation,
-            float &lineHeight,
-            GXVec2 const &canvasSize,
-            float parentLeft,
-            float parentWidth
-        ) noexcept override;
-
+        void ApplyLayout ( ApplyLayoutInfo &info ) noexcept override;
         void Render () noexcept override;
 
         // Lua stack must have the following configuration:
@@ -61,6 +53,12 @@ class DIVUIElement final : public UIElement
             int appendChildElementIdx,
             UIElement &element
         ) noexcept;
+
+    private:
+        [[nodiscard]] float ResolvePixelLength ( LengthValue const &length,
+            float parentLength,
+            CSSUnitToDevicePixel const &units
+        ) const noexcept;
 };
 
 } // namespace pbr

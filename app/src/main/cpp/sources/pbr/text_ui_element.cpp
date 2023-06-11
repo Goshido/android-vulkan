@@ -70,65 +70,102 @@ void TextUIElement::Init ( lua_State &vm ) noexcept
     }
 }
 
-void TextUIElement::ApplyLayout ( android_vulkan::Renderer &renderer,
-    FontStorage &fontStorage,
-    CSSUnitToDevicePixel const &cssUnits,
-    GXVec2 &penLocation,
-    float &lineHeight,
-    GXVec2 const &/*canvasSize*/,
-    float parentLeft,
-    float parentWidth
-) noexcept
+void TextUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
 {
     bool const isEmpty = _text.empty ();
 
     if ( !_visible | isEmpty )
         return;
 
+    FontStorage& fontStorage = *info._fontStorage;
+
     std::string const& fontAsset = *ResolveFont ();
-    uint32_t const size = ResolveFontSize ( cssUnits );
+    auto const size = static_cast<uint32_t> ( ResolveFontSize ( *info._cssUnits, *_parent ) );
     auto font = fontStorage.GetFont ( fontAsset, size );
 
     if ( !font )
         return;
 
     auto f = *font;
-    constexpr size_t firstNewLineHeightIdx = 1U;
 
-    int32_t const newLineHeight[] =
+    constexpr size_t fontHeightIdx = 0U;
+    constexpr size_t firstLineHeightIdx = 1U;
+
+    float& currentLineHeight = info._currentLineHeight;
+    auto const currentLineHeightInteger = static_cast<int32_t> ( currentLineHeight );
+
+    int32_t const lineHeights[] =
     {
         f->second._lineHeight,
-        std::max ( f->second._lineHeight, static_cast<int32_t> ( lineHeight ) )
+        std::max ( f->second._lineHeight, currentLineHeightInteger )
     };
 
-    auto const l = static_cast<int32_t> ( parentLeft );
-    auto const w = static_cast<int32_t> ( penLocation._data[ 0U ] + parentWidth );
+    GXVec2& penLocation = info._penLocation;
+
+    auto const l = static_cast<int32_t> ( info._parentTopLeft._data[ 0U ] );
+    auto const w = static_cast<int32_t> ( penLocation._data[ 0U ] + info._canvasSize._data[ 0U ] );
 
     auto x = static_cast<int32_t> ( penLocation._data[ 0U ] );
-    int32_t y = static_cast<int32_t> ( penLocation._data[ 1U ] ) + newLineHeight[ firstNewLineHeightIdx ];
 
-    bool firstLine = true;
+    float dummy;
+    float const fraction = std::modf ( penLocation._data[ 1U ], &dummy );
+    auto y = static_cast<int32_t> ( penLocation._data[ 1U ] );
+
+    std::u32string_view text = _text;
+
+    size_t line = 0U;
     char32_t leftCharacter = 0;
+    android_vulkan::Renderer& renderer = *info._renderer;
 
-    for ( char32_t const rightCharacter : _text )
+    {
+        // Unroll first iteration of traverse loop to reduce amount of branching.
+        char32_t const rightCharacter = text[ 0U ];
+        text = text.substr ( 1U );
+
+        FontStorage::GlyphInfo const& gi = fontStorage.GetGlyphInfo ( renderer, f, rightCharacter );
+        x += gi._advance + fontStorage.GetKerning ( f, leftCharacter, rightCharacter );
+        leftCharacter = rightCharacter;
+
+        if ( x < w )
+        {
+            y += lineHeights[ firstLineHeightIdx ];
+        }
+        else
+        {
+            x = l + gi._advance;
+            y += currentLineHeightInteger + lineHeights[ fontHeightIdx ];
+            line = 1U;
+        }
+    }
+
+    constexpr size_t firstLineChangedIdx = 1U;
+    bool firstLineState[] = { false, false };
+
+    for ( char32_t const rightCharacter : text )
     {
         FontStorage::GlyphInfo const& gi = fontStorage.GetGlyphInfo ( renderer, f, rightCharacter );
         x += gi._advance + fontStorage.GetKerning ( f, leftCharacter, rightCharacter );
         leftCharacter = rightCharacter;
 
         if ( x < w )
+        {
+            firstLineState[ static_cast<size_t> ( line == 0U ) ] = true;
             continue;
+        }
 
-        x = l;
-        y += newLineHeight[ static_cast<size_t> ( firstLine ) ];
-        firstLine = false;
+        x = l + gi._advance;
+        y += lineHeights[ static_cast<size_t> ( line == 0U ) ];
+        ++line;
     }
 
-    auto const h = static_cast<float> ( newLineHeight[ static_cast<size_t> ( firstLine ) ] );
+    int32_t const cases[] = { currentLineHeightInteger, lineHeights[ firstLineHeightIdx ] };
+    currentLineHeight = static_cast<float> ( cases[ static_cast<size_t> ( firstLineState[ firstLineChangedIdx ] ) ] );
 
-    lineHeight = h;
+    info._newLineHeight = static_cast<float> ( lineHeights[ fontHeightIdx ] );
+    info._newLines = line;
+
     penLocation._data[ 0U ] = static_cast<float> ( x );
-    penLocation._data[ 1U ] = static_cast<float> ( y ) - h;
+    penLocation._data[ 1U ] = fraction + static_cast<float> ( y - lineHeights[ static_cast<size_t> ( line == 0U ) ] );
 }
 
 void TextUIElement::Render () noexcept
@@ -175,60 +212,6 @@ std::string const* TextUIElement::ResolveFont () const noexcept
     return nullptr;
 }
 
-uint32_t TextUIElement::ResolveFontSize ( CSSUnitToDevicePixel const &cssUnits ) const noexcept
-{
-    LengthValue const* target = nullptr;
-    float relativeScale = 1.0F;
-    LengthValue::eType type;
-
-    for ( UIElement const* p = _parent; p; p = p->_parent )
-    {
-        // NOLINTNEXTLINE - downcast.
-        auto const& div = *static_cast<DIVUIElement const*> ( p );
-        LengthValue const& size = div._css._fontSize;
-        type = size.GetType ();
-
-        if ( type == LengthValue::eType::EM )
-        {
-            relativeScale *= size.GetValue ();
-            continue;
-        }
-
-        if ( type == LengthValue::eType::Percent )
-        {
-            relativeScale *= 1.0e-2F * size.GetValue ();
-            continue;
-        }
-
-        if ( type == LengthValue::eType::Auto )
-            continue;
-
-        target = &size;
-        break;
-    }
-
-    assert ( target );
-
-    switch ( type )
-    {
-        case LengthValue::eType::MM:
-        return static_cast<uint32_t> ( relativeScale * target->GetValue () * cssUnits._fromMM );
-
-        case LengthValue::eType::PT:
-        return static_cast<uint32_t> ( relativeScale * target->GetValue () * cssUnits._fromPT );
-
-        case LengthValue::eType::PX:
-        return static_cast<uint32_t> ( relativeScale * target->GetValue () * cssUnits._fromPX );
-
-        case LengthValue::eType::Percent:
-        case LengthValue::eType::EM:
-        case LengthValue::eType::Auto:
-        default:
-            // IMPOSSIBLE
-            AV_ASSERT ( false )
-        return 0;
-    }
-}
 
 int TextUIElement::OnSetColorHSV ( lua_State* state )
 {

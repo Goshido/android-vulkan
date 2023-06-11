@@ -15,7 +15,7 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-class TextUIElement : public UIElement
+class TextUIElement final : public UIElement
 {
     private:
         // Way the user could override color which arrived from CSS.
@@ -44,21 +44,11 @@ class TextUIElement : public UIElement
         static void Init ( lua_State &vm ) noexcept;
 
     private:
-        void ApplyLayout ( android_vulkan::Renderer &renderer,
-            FontStorage &fontStorage,
-            CSSUnitToDevicePixel const &cssUnits,
-            GXVec2 &penLocation,
-            float &lineHeight,
-            GXVec2 const &canvasSize,
-            float parentLeft,
-            float parentWidth
-        ) noexcept override;
-
+        void ApplyLayout ( ApplyLayoutInfo &info ) noexcept override;
         void Render () noexcept override;
 
         [[maybe_unused, nodiscard]] GXColorRGB const* ResolveColor () const noexcept;
         [[nodiscard]] std::string const* ResolveFont () const noexcept;
-        [[nodiscard]] uint32_t ResolveFontSize ( CSSUnitToDevicePixel const &cssUnits ) const noexcept;
 
         [[nodiscard]] static int OnSetColorHSV ( lua_State* state );
         [[nodiscard]] static int OnSetColorRGB ( lua_State* state );

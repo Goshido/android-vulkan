@@ -27,17 +27,31 @@ namespace pbr {
 
 class UIElement
 {
+    public:
+        struct ApplyLayoutInfo final
+        {
+            GXVec2 const                    _canvasSize;
+            CSSUnitToDevicePixel const*     _cssUnits;
+            float                           _currentLineHeight;
+            FontStorage*                    _fontStorage;
+            float                           _newLineHeight;
+            size_t                          _newLines;
+            GXVec2 const                    _parentTopLeft;
+            GXVec2                          _penLocation;
+            android_vulkan::Renderer*       _renderer;
+        };
+
     private:
         using Storage = std::unordered_map<UIElement const*, std::unique_ptr<UIElement>>;
 
     private:
-        static Storage      _uiElements;
+        static Storage                      _uiElements;
 
     protected:
-        bool                _visible = false;
+        bool                                _visible = false;
 
     public:
-        UIElement const*    _parent = nullptr;
+        UIElement const*                    _parent = nullptr;
 
     public:
         UIElement () = delete;
@@ -50,16 +64,7 @@ class UIElement
 
         virtual ~UIElement () = default;
 
-        virtual void ApplyLayout ( android_vulkan::Renderer &renderer,
-            FontStorage &fontStorage,
-            CSSUnitToDevicePixel const &cssUnits,
-            GXVec2 &penLocation,
-            float &lineHeight,
-            GXVec2 const &canvasSize,
-            float parentLeft,
-            float parentWidth
-        ) noexcept = 0;
-
+        virtual void ApplyLayout ( ApplyLayoutInfo &info ) noexcept = 0;
         virtual void Render () noexcept = 0;
 
         static void AppendElement ( UIElement &element ) noexcept;
@@ -68,6 +73,10 @@ class UIElement
 
     protected:
         explicit UIElement ( bool visible, UIElement const* parent ) noexcept;
+
+        [[nodiscard]] static float ResolveFontSize ( CSSUnitToDevicePixel const &cssUnits,
+            UIElement const &startTraverseElement
+        ) noexcept;
 
     private:
         [[nodiscard]] static int OnGarbageCollected ( lua_State* state );

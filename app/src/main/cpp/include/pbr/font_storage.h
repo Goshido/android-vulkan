@@ -27,7 +27,7 @@ class FontStorage final
             GXVec2                          _bottomRight = GXVec2 ( 0.0F, 0.0F );
             [[maybe_unused]] int32_t        _width = 0;
             int32_t                         _height = 0;
-            [[maybe_unused]] int32_t        _advance = 0;
+            int32_t                         _advance = 0;
             [[maybe_unused]] int32_t        _offsetY = 0;
         };
 

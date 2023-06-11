@@ -141,21 +141,21 @@ void UILayer::Submit ( android_vulkan::Renderer &renderer,
 ) noexcept
 {
     VkExtent2D const viewport = renderer.GetViewportResolution ();
-    GXVec2 const canvasSize ( static_cast<float> ( viewport.width ), static_cast<float> ( viewport.height ) );
 
-    GXVec2 penLocation ( 0.0F, 0.0F );
-    float lineHeight = 0.0F;
+    UIElement::ApplyLayoutInfo info
+    {
+        ._canvasSize = GXVec2 ( static_cast<float> ( viewport.width ), static_cast<float> ( viewport.height ) ),
+        ._cssUnits = &_cssUnitToDevicePixel,
+        ._currentLineHeight = 0.0F,
+        ._fontStorage = &fontStorage,
+        ._newLineHeight = 0.0F,
+        ._newLines = 0U,
+        ._parentTopLeft = GXVec2 ( 0.0F, 0.0F ),
+        ._penLocation = GXVec2 ( 0.0F, 0.0F ),
+        ._renderer = &renderer
+    };
 
-    _body->ApplyLayout ( renderer,
-        fontStorage,
-        _cssUnitToDevicePixel,
-        penLocation,
-        lineHeight,
-        canvasSize,
-        0.0F,
-        canvasSize._data[ 0U ]
-    );
-
+    _body->ApplyLayout ( info );
     _body->Render ();
 }
 

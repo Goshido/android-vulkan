@@ -45,15 +45,7 @@ ImageUIElement::ImageUIElement ( bool &success,
     }
 }
 
-void ImageUIElement::ApplyLayout ( android_vulkan::Renderer &/*renderer*/,
-    FontStorage &/*fontStorage*/,
-    CSSUnitToDevicePixel const &/*cssUnits*/,
-    GXVec2 &/*penLocation*/,
-    float &/*lineHeight*/,
-    GXVec2 const &/*canvasSize*/,
-    float /*parentLeft*/,
-    float /*parentWidth*/
-) noexcept
+void ImageUIElement::ApplyLayout ( ApplyLayoutInfo &/*info*/ ) noexcept
 {
     // TODO
 }

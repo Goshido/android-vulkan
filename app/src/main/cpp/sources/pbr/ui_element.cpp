@@ -1,3 +1,4 @@
+#include <pbr/div_ui_element.h>
 #include <pbr/ui_element.h>
 #include <av_assert.h>
 #include <logger.h>
@@ -66,6 +67,63 @@ UIElement::UIElement ( bool visible, UIElement const* parent ) noexcept:
     _parent ( parent )
 {
     // NOTHING
+}
+
+float UIElement::ResolveFontSize ( CSSUnitToDevicePixel const &cssUnits,
+    UIElement const &startTraverseElement
+) noexcept
+{
+    LengthValue const* target = nullptr;
+    float relativeScale = 1.0F;
+    LengthValue::eType type;
+
+    for ( UIElement const* p = &startTraverseElement; p; p = p->_parent )
+    {
+        // NOLINTNEXTLINE - downcast.
+        auto const& div = *static_cast<DIVUIElement const*> ( p );
+        LengthValue const& size = div._css._fontSize;
+        type = size.GetType ();
+
+        if ( type == LengthValue::eType::EM )
+        {
+            relativeScale *= size.GetValue ();
+            continue;
+        }
+
+        if ( type == LengthValue::eType::Percent )
+        {
+            relativeScale *= 1.0e-2F * size.GetValue ();
+            continue;
+        }
+
+        if ( type == LengthValue::eType::Auto )
+            continue;
+
+        target = &size;
+        break;
+    }
+
+    assert ( target );
+
+    switch ( type )
+    {
+        case LengthValue::eType::MM:
+        return relativeScale * target->GetValue () * cssUnits._fromMM;
+
+        case LengthValue::eType::PT:
+        return relativeScale * target->GetValue () * cssUnits._fromPT;
+
+        case LengthValue::eType::PX:
+        return relativeScale * target->GetValue () * cssUnits._fromPX;
+
+        case LengthValue::eType::Percent:
+        case LengthValue::eType::EM:
+        case LengthValue::eType::Auto:
+        default:
+            // IMPOSSIBLE
+            AV_ASSERT ( false )
+        return 0.0F;
+    }
 }
 
 int UIElement::OnGarbageCollected ( lua_State* state )

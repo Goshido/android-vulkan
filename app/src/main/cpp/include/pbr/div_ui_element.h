@@ -18,7 +18,11 @@ class DIVUIElement final : public UIElement
 {
     private:
         std::deque<UIElement*>      _children {};
+        bool                        _isAutoWidth;
+        bool                        _isAutoHeight;
+        bool                        _isInlineBlock;
         std::vector<float>          _lineHeights {};
+        size_t                      _widthSelectorBase;
 
     public:
         CSSComputedValues           _css {};
@@ -55,8 +59,11 @@ class DIVUIElement final : public UIElement
         ) noexcept;
 
     private:
+        void ProcessChildren ( ApplyLayoutInfo &childInfo ) noexcept;
+
         [[nodiscard]] float ResolvePixelLength ( LengthValue const &length,
             float parentLength,
+            bool isHeight,
             CSSUnitToDevicePixel const &units
         ) const noexcept;
 };

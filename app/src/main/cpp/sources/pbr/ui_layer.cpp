@@ -152,7 +152,8 @@ void UILayer::Submit ( android_vulkan::Renderer &renderer,
         ._newLines = 0U,
         ._parentTopLeft = GXVec2 ( 0.0F, 0.0F ),
         ._penLocation = GXVec2 ( 0.0F, 0.0F ),
-        ._renderer = &renderer
+        ._renderer = &renderer,
+        ._vertices = 0U
     };
 
     _body->ApplyLayout ( info );

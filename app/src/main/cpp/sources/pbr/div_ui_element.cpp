@@ -23,6 +23,14 @@ DIVUIElement::DIVUIElement ( bool &success,
     CSSComputedValues &&css
 ) noexcept:
     UIElement ( css._display != DisplayProperty::eValue::None, parent ),
+    _isAutoWidth ( css._width.GetType () == LengthValue::eType::Auto ),
+    _isAutoHeight ( css._height.GetType () == LengthValue::eType::Auto ),
+    _isInlineBlock ( css._display == DisplayProperty::eValue::InlineBlock ),
+
+    _widthSelectorBase (
+        ( static_cast<size_t> ( _isInlineBlock ) << 2U ) | ( static_cast<size_t> ( _isAutoWidth ) << 1U )
+    ),
+
     _css ( std::move ( css ) )
 {
     _css._fontFile = std::move ( android_vulkan::File ( std::move ( _css._fontFile ) ).GetPath () );
@@ -52,21 +60,32 @@ void DIVUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
     if ( !_visible )
         return;
 
+    // Method contains a lot of branchless optimizations.
+
     GXVec2 const& canvasSize = info._canvasSize;
     CSSUnitToDevicePixel const& units = *info._cssUnits;
 
-    GXVec2 const marginTopLeft ( ResolvePixelLength ( _css._marginLeft, canvasSize._data[ 0U ], units ),
-        ResolvePixelLength ( _css._marginTop, canvasSize._data[ 1U ], units )
+    GXVec2 const marginTopLeft ( ResolvePixelLength ( _css._marginLeft, canvasSize._data[ 0U ], false, units ),
+        ResolvePixelLength ( _css._marginTop, canvasSize._data[ 1U ], true, units )
     );
 
-    GXVec2 const paddingTopLeft ( ResolvePixelLength ( _css._paddingLeft, canvasSize._data[ 0U ], units ),
-        ResolvePixelLength ( _css._paddingTop, canvasSize._data[ 1U ], units )
+    GXVec2 const paddingTopLeft ( ResolvePixelLength ( _css._paddingLeft, canvasSize._data[ 0U ], false, units ),
+        ResolvePixelLength ( _css._paddingTop, canvasSize._data[ 1U ], true, units )
+    );
+
+    GXVec2 const marginBottomRight ( ResolvePixelLength ( _css._marginRight, canvasSize._data[ 0U ], false, units ),
+        ResolvePixelLength ( _css._marginBottom, canvasSize._data[ 1U ], true, units )
+    );
+
+    GXVec2 const paddingBottomRight ( ResolvePixelLength ( _css._paddingRight, canvasSize._data[ 0U ], false, units ),
+        ResolvePixelLength ( _css._paddingBottom, canvasSize._data[ 1U ], true, units )
     );
 
     GXVec2 alpha {};
     alpha.Sum ( marginTopLeft, paddingTopLeft );
 
     GXVec2 penLocation {};
+    float const& parentLeft = info._parentTopLeft._data[ 0U ];
 
     switch ( _css._position )
     {
@@ -75,7 +94,7 @@ void DIVUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
         break;
 
         case PositionProperty::eValue::Static:
-            if ( _css._display == DisplayProperty::eValue::InlineBlock )
+            if ( _isInlineBlock )
             {
                 penLocation.Sum ( info._penLocation, alpha );
             }
@@ -83,7 +102,7 @@ void DIVUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
             {
                 // 'block' territory. Element should be started from new line.
                 GXVec2 beta {};
-                beta.Sum ( alpha, GXVec2 ( info._parentTopLeft._data[ 0U ], info._currentLineHeight ) );
+                beta.Sum ( alpha, GXVec2 ( parentLeft, info._currentLineHeight ) );
 
                 penLocation._data[ 0U ] = beta._data[ 0U ];
                 penLocation._data[ 1U ] += beta._data[ 1U ];
@@ -95,12 +114,32 @@ void DIVUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
         return;
     }
 
+    float const& parentWidth = canvasSize._data[ 0U ];
+    float const& penX = penLocation._data[ 0U ];
+    float const& paddingRight = paddingBottomRight._data[ 0U ];
+    float const& marginRight = marginBottomRight._data[ 0U ];
+
+    float const widthCases[] =
+    {
+        ResolvePixelLength ( _css._width, parentWidth, false, units ),
+        parentWidth + parentLeft - ( penX + paddingRight + marginRight )
+    };
+
+    GXVec2 canvas ( widthCases[ static_cast<size_t> ( _isAutoWidth | !_isInlineBlock ) ],
+        ResolvePixelLength ( _css._height, canvasSize._data[ 1U ], true, units )
+    );
+
+    if ( canvas._data[ 0U ] == 0.0F )
+    {
+        // Trying to resolve recursion with 'auto' width from parent and 'percentage' width from child.
+        bool const isPercent = _css._width.GetType () == LengthValue::eType::Percent;
+        float const cases[] = { 0.0F, 1.0e-2F * parentWidth * _css._width.GetValue () };
+        canvas._data[ 0U ] = cases[ static_cast<size_t> ( isPercent & !_isInlineBlock ) ];
+    }
+
     ApplyLayoutInfo childInfo
     {
-        ._canvasSize = GXVec2 ( ResolvePixelLength ( _css._width, canvasSize._data[ 0U ], units ),
-            ResolvePixelLength ( _css._height, canvasSize._data[ 1U ], units )
-        ),
-
+        ._canvasSize = canvas,
         ._cssUnits = info._cssUnits,
         ._currentLineHeight = 0.0F,
         ._fontStorage = info._fontStorage,
@@ -108,70 +147,85 @@ void DIVUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
         ._newLines = 0U,
         ._parentTopLeft = penLocation,
         ._penLocation = penLocation,
-        ._renderer = info._renderer
+        ._renderer = info._renderer,
+        ._vertices = 0U
     };
 
     _lineHeights.clear ();
-    _lineHeights.push_back ( 0.0F );
 
-    for ( auto* child : _children )
+    if ( canvas._data[ 0U ] > 0.0F  )
+        ProcessChildren ( childInfo );
+
+    bool const hasLines = !_lineHeights.empty ();
+
+    if ( _isAutoHeight & hasLines )
+        canvas._data[ 1U ] = childInfo._penLocation._data[ 1U ] - penLocation._data[ 1U ] + _lineHeights.back ();
+
+    float const finalWidth[] =
     {
-        child->ApplyLayout ( childInfo );
-        _lineHeights.front () = childInfo._currentLineHeight;
+        widthCases[ 0U ],
+        widthCases[ 0U ],
+        widthCases[ 1U ],
+        widthCases[ 1U ],
+        widthCases[ 0U ],
+        widthCases[ 0U ],
+        childInfo._penLocation._data[ 0U ] - penLocation._data[ 0U ],
+        widthCases[ 1U ]
+    };
 
-        size_t const newLines = childInfo._newLines;
+    bool const isFullLine = _lineHeights.size () > 1U;
+    size_t const selector = _widthSelectorBase | static_cast<size_t> ( isFullLine );
+    canvas._data[ 0U ] = finalWidth[ selector ];
 
-        if ( !newLines )
-            continue;
+    GXVec2 padding {};
+    padding.Sum ( paddingTopLeft, paddingBottomRight );
 
-        float const h = childInfo._newLineHeight;
-        _lineHeights.reserve ( _lineHeights.size () + newLines );
+    GXVec2 drawableArea {};
+    drawableArea.Sum ( canvas, padding );
 
-        for ( size_t i = 0U; i < newLines; ++i )
-            _lineHeights.push_back ( h );
+    auto const sizeCheck = [] ( GXVec2 const &size ) noexcept -> bool {
+        return ( size._data[ 0U ] > 0.0F ) & ( size._data[ 1U ] > 0.0F );
+    };
 
-        childInfo._currentLineHeight = h;
-    }
+    // Opaque background requires rectangle (two triangles).
+    size_t const vertices[] = { childInfo._vertices, childInfo._vertices + 6U };
+    bool const hasBackgroundColor = _css._backgroundColor.GetValue ()._data[ 3U ] != 0.0F;
+    bool const hasBackgroundArea = sizeCheck ( drawableArea );
+    info._vertices += vertices[ static_cast<size_t> ( hasBackgroundColor & hasBackgroundArea ) ];
 
     if ( _css._position == PositionProperty::eValue::Absolute )
         return;
 
-    GXVec2 const marginBottomRight ( ResolvePixelLength ( _css._marginRight, canvasSize._data[ 0U ], units ),
-        ResolvePixelLength ( _css._marginBottom, canvasSize._data[ 1U ], units )
-    );
-
-    GXVec2 const paddingBottomRight ( ResolvePixelLength ( _css._paddingRight, canvasSize._data[ 0U ], units ),
-        ResolvePixelLength ( _css._paddingBottom, canvasSize._data[ 1U ], units )
-    );
-
-    GXVec2 canvas = childInfo._canvasSize;
-
-    if ( _css._height.GetType () == LengthValue::eType::Auto )
-        canvas._data[ 1U ] = childInfo._penLocation._data[ 1U ] - info._penLocation._data[ 1U ] + _lineHeights.back ();
+    GXVec2 beta {};
+    beta.Sum ( canvas, alpha );
 
     GXVec2 gamma {};
-    gamma.Sum ( canvas, alpha );
-
-    GXVec2 yotta {};
-    yotta.Sum ( marginBottomRight, paddingBottomRight );
+    gamma.Sum ( marginBottomRight, paddingBottomRight );
 
     GXVec2 blockSize {};
-    blockSize.Sum ( gamma, yotta );
+    blockSize.Sum ( beta, gamma );
+
+    if ( !sizeCheck ( blockSize ) )
+        return;
 
     if ( _css._display == DisplayProperty::eValue::Block )
     {
         // Block starts from new line and consumes whole parent block line.
-        info._newLines = 1U;
-        info._penLocation._data[ 0U ] = info._parentTopLeft._data[ 0U ];
-        info._penLocation._data[ 1U ] += info._currentLineHeight + blockSize._data[ 1U ];
+        float const cases[] = { blockSize._data[ 1U ], info._currentLineHeight };
+        auto const s = static_cast<size_t> ( info._currentLineHeight != 0.0F );
+
+        info._currentLineHeight = cases[ s ];
+        info._newLines = s;
+        info._newLineHeight = blockSize._data[ 1U ];
+        info._penLocation._data[ 0U ] = parentLeft + blockSize._data[ 0U ];
+        info._penLocation._data[ 1U ] = info._parentTopLeft._data[ 1U ];
         return;
     }
 
     // 'inline-block' territory.
 
     bool const firstBlock = info._penLocation.IsEqual ( info._parentTopLeft );
-
-    float const rest = info._canvasSize._data[ 0U ] + info._parentTopLeft._data[ 0U ] - info._penLocation._data[ 0U ];
+    float const rest = parentWidth + parentLeft - info._penLocation._data[ 0U ];
     bool const blockCanFit = rest >= blockSize._data[ 0U ];
 
     if ( firstBlock | blockCanFit )
@@ -185,7 +239,7 @@ void DIVUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
     // Block goes to the new line of parent block.
     info._newLines = 1U;
     info._newLineHeight = blockSize._data[ 1U ];
-    info._penLocation._data[ 0U ] = blockSize._data[ 0U ];
+    info._penLocation._data[ 0U ] = parentLeft + blockSize._data[ 0U ];
     info._penLocation._data[ 1U ] += info._currentLineHeight;
 }
 
@@ -225,8 +279,33 @@ bool DIVUIElement::AppendChildElement ( lua_State &vm,
     return false;
 }
 
+void DIVUIElement::ProcessChildren ( ApplyLayoutInfo &childInfo ) noexcept
+{
+    _lineHeights.push_back ( 0.0F );
+
+    for ( auto* child : _children )
+    {
+        child->ApplyLayout ( childInfo );
+        _lineHeights.front () = childInfo._currentLineHeight;
+
+        size_t const newLines = childInfo._newLines;
+
+        if ( !newLines )
+            continue;
+
+        float const h = childInfo._newLineHeight;
+        _lineHeights.reserve ( _lineHeights.size () + newLines );
+
+        for ( size_t i = 0U; i < newLines; ++i )
+            _lineHeights.push_back ( h );
+
+        childInfo._currentLineHeight = h;
+    }
+}
+
 float DIVUIElement::ResolvePixelLength ( LengthValue const &length,
     float parentLength,
+    bool isHeight,
     CSSUnitToDevicePixel const &units
 ) const noexcept
 {
@@ -245,16 +324,32 @@ float DIVUIElement::ResolvePixelLength ( LengthValue const &length,
         return units._fromPX * length.GetValue ();
 
         case LengthValue::eType::Percent:
-        return 1.0e-2F * parentLength * length.GetValue ();
+        {
+            if ( _parent )
+            {
+                // NOLINTNEXTLINE - downcast.
+                auto const& div = *static_cast<DIVUIElement const*> ( _parent );
+
+                LengthValue const* cases[] = { &div._css._width, &div._css._height };
+                bool const isAuto = cases[ static_cast<size_t> ( isHeight ) ]->GetType () == LengthValue::eType::Auto;
+
+                if ( isAuto & isHeight )
+                {
+                    // It's recursion. Doing exactly the same as Google Chrome v114.0.5735.110 does.
+                    return 0.0F;
+                }
+            }
+
+            return 1.0e-2F * parentLength * length.GetValue ();
+        }
 
         case LengthValue::eType::Auto:
-        return 1.0F;
+        return 0.0F;
 
         default:
             AV_ASSERT ( false )
         return 0.0F;
     }
-
 }
 
 } // namespace pbr

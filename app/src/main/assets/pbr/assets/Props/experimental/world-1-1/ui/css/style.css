@@ -5,8 +5,8 @@
 
 .ui-panel {
     position: static;
-    padding: 7mm 15mm 0mm;
-    height: 10mm;
+    padding: 7mm 15mm 1mm 15mm;
+    height: auto;
     background-color: black;
     font-size: 0px;
 }

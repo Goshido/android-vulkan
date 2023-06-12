@@ -103,7 +103,7 @@ void TextUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
     GXVec2& penLocation = info._penLocation;
 
     auto const l = static_cast<int32_t> ( info._parentTopLeft._data[ 0U ] );
-    auto const w = static_cast<int32_t> ( penLocation._data[ 0U ] + info._canvasSize._data[ 0U ] );
+    auto const w = static_cast<int32_t> ( info._parentTopLeft._data[ 0U ] + info._canvasSize._data[ 0U ] );
 
     auto x = static_cast<int32_t> ( penLocation._data[ 0U ] );
 
@@ -166,6 +166,9 @@ void TextUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
 
     penLocation._data[ 0U ] = static_cast<float> ( x );
     penLocation._data[ 1U ] = fraction + static_cast<float> ( y - lineHeights[ static_cast<size_t> ( line == 0U ) ] );
+
+    // One glyph is one rectangle (two triangles).
+    info._vertices += 6U * text.size ();
 }
 
 void TextUIElement::Render () noexcept

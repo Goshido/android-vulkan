@@ -39,6 +39,7 @@ class UIElement
             GXVec2 const                    _parentTopLeft;
             GXVec2                          _penLocation;
             android_vulkan::Renderer*       _renderer;
+            size_t                          _vertices;
         };
 
     private:

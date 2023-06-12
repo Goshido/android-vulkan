@@ -38,8 +38,6 @@ local function OnActorConstructed ( self, actor )
     self.OnInput = OnInputActive
     self.OnUpdate = OnUpdateActive
 
-    self._uiLayer:Find ( "score" ):GetTextElement ():SetText ( "Fucking Уебан" )
-
     local music = SoundEmitterGlobalComponent ( "Music", eSoundChannel.Music )
     music:SetSoundAsset ( "sounds/Credits.ogg", true )
     music:SetVolume ( 0.25 )

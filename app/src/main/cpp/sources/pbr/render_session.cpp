@@ -192,6 +192,8 @@ void RenderSession::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexc
 
     _commandInfo.clear ();
     _commandInfo.shrink_to_fit ();
+
+    _uiPass.Destroy ( renderer );
 }
 
 bool RenderSession::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
@@ -234,7 +236,10 @@ bool RenderSession::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
         }
     }
 
-    if ( _presentPass.Init ( renderer ) )
+    if ( !_presentPass.Init ( renderer ) )
+        return false;
+
+    if ( _uiPass.SetResolution ( renderer, _presentPass.FUCKGetRenderPass () ) )
         return true;
 
     DestroyGBufferResources ( renderer );

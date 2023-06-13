@@ -9,6 +9,7 @@
 #include "present_pass.h"
 #include "reflection_global_pass.h"
 #include "shadow_casters.h"
+#include "ui_pass.h"
 
 
 namespace pbr {
@@ -67,6 +68,8 @@ class RenderSession final
         RenderSessionStats                      _renderSessionStats {};
         SamplerManager                          _samplerManager {};
         TexturePresentDescriptorSetLayout       _texturePresentDescriptorSetLayout {};
+
+        UIPass                                  _uiPass;
 
     public:
         RenderSession () = default;

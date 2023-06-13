@@ -1,4 +1,5 @@
 #include <pbr/ui_program.h>
+#include <pbr/ui_program.inc>
 #include <pbr/ui_vertex_info.h>
 
 
@@ -9,7 +10,7 @@ namespace {
 constexpr char const* VERTEX_SHADER = "shaders/ui-vs.spv";
 constexpr char const* FRAGMENT_SHADER = "shaders/ui-ps.spv";
 
-constexpr uint32_t COLOR_RENDER_TARGET_COUNT = 0U;
+constexpr uint32_t COLOR_RENDER_TARGET_COUNT = 1U;
 constexpr size_t STAGE_COUNT = 2U;
 constexpr size_t VERTEX_ATTRIBUTE_COUNT = 4U;
 
@@ -30,7 +31,8 @@ bool UIProgram::Init ( android_vulkan::Renderer &renderer,
 ) noexcept
 {
     VkPipelineInputAssemblyStateCreateInfo assemblyInfo {};
-    VkVertexInputAttributeDescription attributeDescriptions {};
+    VkPipelineColorBlendAttachmentState attachmentInfo[ COLOR_RENDER_TARGET_COUNT ];
+    VkVertexInputAttributeDescription attributeDescriptions[ VERTEX_ATTRIBUTE_COUNT ];
     VkVertexInputBindingDescription bindingDescription {};
     VkPipelineColorBlendStateCreateInfo blendInfo {};
     VkPipelineDepthStencilStateCreateInfo depthStencilInfo {};
@@ -51,13 +53,10 @@ bool UIProgram::Init ( android_vulkan::Renderer &renderer,
     VkDevice device = renderer.GetDevice ();
 
     if ( !InitShaderInfo ( renderer, pipelineInfo.pStages, stageInfo ) )
-    {
-        Destroy ( device );
         return false;
-    }
 
     pipelineInfo.pVertexInputState = InitVertexInputInfo ( vertexInputInfo,
-        &attributeDescriptions,
+        attributeDescriptions,
         &bindingDescription
     );
 
@@ -67,14 +66,11 @@ bool UIProgram::Init ( android_vulkan::Renderer &renderer,
     pipelineInfo.pRasterizationState = InitRasterizationInfo ( rasterizationInfo );
     pipelineInfo.pMultisampleState = InitMultisampleInfo ( multisampleInfo );
     pipelineInfo.pDepthStencilState = InitDepthStencilInfo ( depthStencilInfo );
-    pipelineInfo.pColorBlendState = InitColorBlendInfo ( blendInfo, nullptr );
+    pipelineInfo.pColorBlendState = InitColorBlendInfo ( blendInfo, attachmentInfo );
     pipelineInfo.pDynamicState = nullptr;
 
     if ( !InitLayout ( device, pipelineInfo.layout ) )
-    {
-        Destroy ( device );
         return false;
-    }
 
     pipelineInfo.renderPass = renderPass;
     pipelineInfo.subpass = subpass;
@@ -88,10 +84,7 @@ bool UIProgram::Init ( android_vulkan::Renderer &renderer,
     );
 
     if ( !result )
-    {
-        Destroy ( device );
         return false;
-    }
 
     AV_REGISTER_PIPELINE ( "pbr::UIProgram::_pipeline" )
     DestroyShaderModules ( device );
@@ -106,6 +99,9 @@ void UIProgram::Destroy ( VkDevice device ) noexcept
         _pipelineLayout = VK_NULL_HANDLE;
         AV_UNREGISTER_PIPELINE_LAYOUT ( "pbr::UIProgram::_pipelineLayout" )
     }
+
+    _imageLayout.Destroy ( device );
+    _commonLayout.Destroy ( device );
 
     if ( _pipeline != VK_NULL_HANDLE )
     {
@@ -125,16 +121,20 @@ Program::DescriptorSetInfo const& UIProgram::GetResourceInfo () const noexcept
             {
                 .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
                 .descriptorCount = 1U
-            }
-        },
-        {
+            },
             {
                 .type = VK_DESCRIPTOR_TYPE_SAMPLER,
                 .descriptorCount = 2U
             },
             {
                 .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-                .descriptorCount = 2U
+                .descriptorCount = 1U
+            }
+        },
+        {
+            {
+                .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+                .descriptorCount = 1U
             }
         }
     };
@@ -147,6 +147,23 @@ VkPipelineColorBlendStateCreateInfo const* UIProgram::InitColorBlendInfo (
     VkPipelineColorBlendAttachmentState* attachments
 ) const noexcept
 {
+    *attachments =
+    {
+        .blendEnable = VK_TRUE,
+        .srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA,
+        .dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+        .colorBlendOp = VK_BLEND_OP_ADD,
+        .srcAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
+        .dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
+        .alphaBlendOp = VK_BLEND_OP_ADD,
+
+        .colorWriteMask =
+            AV_VK_FLAG ( VK_COLOR_COMPONENT_R_BIT ) |
+            AV_VK_FLAG ( VK_COLOR_COMPONENT_G_BIT ) |
+            AV_VK_FLAG ( VK_COLOR_COMPONENT_B_BIT ) |
+            AV_VK_FLAG ( VK_COLOR_COMPONENT_A_BIT )
+    };
+
     info =
     {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
@@ -154,7 +171,7 @@ VkPipelineColorBlendStateCreateInfo const* UIProgram::InitColorBlendInfo (
         .flags = 0U,
         .logicOpEnable = VK_FALSE,
         .logicOp = VK_LOGIC_OP_NO_OP,
-        .attachmentCount = COLOR_RENDER_TARGET_COUNT,
+        .attachmentCount = static_cast<uint32_t> ( COLOR_RENDER_TARGET_COUNT ),
         .pAttachments = attachments,
         .blendConstants = { 0.0F, 0.0F, 0.0F, 0.0F }
     };
@@ -224,18 +241,18 @@ VkPipelineInputAssemblyStateCreateInfo const* UIProgram::InitInputAssemblyInfo (
 
 bool UIProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept
 {
-//    if ( !_instanceLayout.Init ( device ) )
-//        return false;
-//
-//    VkDescriptorSetLayout layouts[] = { _instanceLayout.GetLayout () };
+    if ( !_commonLayout.Init ( device ) || !_imageLayout.Init ( device ) )
+        return false;
+
+    VkDescriptorSetLayout const layouts[] = { _commonLayout.GetLayout (), _imageLayout.GetLayout () };
 
     VkPipelineLayoutCreateInfo const layoutInfo
     {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0U,
-        //.setLayoutCount = static_cast<uint32_t> ( std::size ( layouts ) ),
-        //.pSetLayouts = layouts,
+        .setLayoutCount = static_cast<uint32_t> ( std::size ( layouts ) ),
+        .pSetLayouts = layouts,
         .pushConstantRangeCount = 0U,
         .pPushConstantRanges = nullptr
     };
@@ -421,33 +438,33 @@ VkPipelineVertexInputStateCreateInfo const* UIProgram::InitVertexInputInfo (
         .inputRate = VK_VERTEX_INPUT_RATE_VERTEX
     };
 
-    attributes[ 0U ] =
+    attributes[ IN_SLOT_VERTEX ] =
     {
-        .location = 0U,
+        .location = IN_SLOT_VERTEX,
         .binding = 0U,
         .format = VK_FORMAT_R32G32_SFLOAT,
         .offset = static_cast<uint32_t> ( offsetof ( UIVertexInfo, _vertex ) )
     };
 
-    attributes[ 1U ] =
+    attributes[ IN_SLOT_COLOR ] =
     {
-        .location = 1U,
+        .location = IN_SLOT_COLOR,
         .binding = 0U,
         .format = VK_FORMAT_R32G32B32A32_SFLOAT,
         .offset = static_cast<uint32_t> ( offsetof ( UIVertexInfo, _color ) )
     };
 
-    attributes[ 2U ] =
+    attributes[ IN_SLOT_ATLAS ] =
     {
-        .location = 2U,
+        .location = IN_SLOT_ATLAS,
         .binding = 0U,
-        .format = VK_FORMAT_R32G32_SFLOAT,
-        .offset = static_cast<uint32_t> ( offsetof ( UIVertexInfo, _atlasUV ) )
+        .format = VK_FORMAT_R32G32B32_SFLOAT,
+        .offset = static_cast<uint32_t> ( offsetof ( UIVertexInfo, _atlas ) )
     };
 
-    attributes[ 3U ] =
+    attributes[ IN_SLOT_IMAGE_UV ] =
     {
-        .location = 0U,
+        .location = IN_SLOT_IMAGE_UV,
         .binding = 0U,
         .format = VK_FORMAT_R32G32_SFLOAT,
         .offset = static_cast<uint32_t> ( offsetof ( UIVertexInfo, _imageUV ) )

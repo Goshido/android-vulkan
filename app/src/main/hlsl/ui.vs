@@ -1,4 +1,7 @@
-[[vk::binding ( 0, 0 )]]
+#include "ui_program.inc"
+
+
+[[vk::binding ( BIND_TRANSFORM, SET_TRANSFORM )]]
 cbuffer Transform:                                  register ( b0 )
 {
     float32_t4x4                    _transform;
@@ -6,16 +9,16 @@ cbuffer Transform:                                  register ( b0 )
 
 struct InputData
 {
-    [[vk::location ( 0 )]]
+    [[vk::location ( IN_SLOT_VERTEX )]]
     float32_t2                      _vertex:        VERTEX;
 
-    [[vk::location ( 1 )]]
+    [[vk::location ( IN_SLOT_COLOR )]]
     float32_t4                      _color:         COLOR;
 
-    [[vk::location ( 2 )]]
-    float32_t2                      _atlasUV:       ATLAS;
+    [[vk::location ( IN_SLOT_ATLAS )]]
+    float32_t3                      _atlas:         ATLAS;
 
-    [[vk::location ( 3 )]]
+    [[vk::location ( IN_SLOT_IMAGE_UV )]]
     float32_t2                      _imageUV:       IMAGE;
 };
 
@@ -23,13 +26,16 @@ struct OutputData
 {
     linear float32_t4               _vertexH:       SV_Position;
 
-    [[vk::location ( 0 )]]
+    [[vk::location ( ATT_SLOT_COLOR )]]
     nointerpolation float32_t4      _color:         COLOR;
 
-    [[vk::location ( 1 )]]
-    noperspective float32_t2        _atlasUV:       ATLAS;
+    [[vk::location ( ATT_SLOT_ATLAS_UV )]]
+    noperspective float32_t2        _atlasUV:       ATLAS_UV;
 
-    [[vk::location ( 2 )]]
+    [[vk::location ( ATT_SLOT_ATLAS_LAYER )]]
+    nointerpolation float32_t       _atlasLayer:    ATLAS_LAYER;
+
+    [[vk::location ( ATT_SLOT_IMAGE_UV )]]
     noperspective float32_t2        _imageUV:       IMAGE;
 };
 
@@ -42,7 +48,8 @@ OutputData VS ( in InputData inputData )
     result._vertexH = mul ( _transform, float32_t4 ( inputData._vertex, 0.5F, 1.0F ) );
 
     result._color = inputData._color;
-    result._atlasUV = inputData._atlasUV;
+    result._atlasUV = inputData._atlas.xy;
+    result._atlasLayer = inputData._atlas.z;
     result._imageUV = inputData._imageUV;
 
     return result;

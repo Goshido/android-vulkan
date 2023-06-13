@@ -72,6 +72,9 @@ bool World1x1::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
     if ( !_renderSession.OnInitDevice ( renderer ) || !_scene.OnInitDevice ( renderer, _physics ) )
         return false;
 
+    if ( !_fontStorage.Init () )
+        return false;
+
     _renderSession.SetFontStorage ( _fontStorage );
 
     if ( !_scene.LoadScene ( renderer, SCENE, _commandPool ) )
@@ -103,7 +106,7 @@ bool World1x1::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcep
 {
     VkExtent2D resolution = renderer.GetViewportResolution ();
 
-    if ( !_fontStorage.Init ( renderer, resolution ) )
+    if ( !_fontStorage.SetMediaResolution ( renderer, resolution ) )
         return false;
 
     resolution.width = resolution.width * RESOLUTION_SCALE_WIDTH / 100U;

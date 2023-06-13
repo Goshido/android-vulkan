@@ -108,7 +108,6 @@ class FontStorage final
             void Cleanup ( android_vulkan::Renderer &renderer ) noexcept;
             void Copy ( VkCommandBuffer commandBuffer, uint32_t newLayers ) noexcept;
             void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
-            void SetResolution ( VkExtent2D const &resolution ) noexcept;
         };
 
     private:
@@ -140,10 +139,9 @@ class FontStorage final
 
         ~FontStorage () = default;
 
-        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, VkExtent2D const &nativeViewport ) noexcept;
+        [[nodiscard]] bool Init () noexcept;
         void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
 
-        [[nodiscard]] bool UploadGPUData ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept;
         [[nodiscard]] std::optional<Font> GetFont ( std::string_view font, uint32_t size ) noexcept;
 
         [[nodiscard]] GlyphInfo const& GetGlyphInfo ( android_vulkan::Renderer &renderer,
@@ -151,9 +149,17 @@ class FontStorage final
             char32_t character
         ) noexcept;
 
-        [[nodiscard]] int32_t GetKerning ( Font font, char32_t left, char32_t right ) noexcept;
+        [[nodiscard]] bool SetMediaResolution ( android_vulkan::Renderer &renderer,
+            VkExtent2D const &nativeViewport
+        ) noexcept;
+
+        [[nodiscard]] bool UploadGPUData ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept;
+
+        [[nodiscard]] static int32_t GetKerning ( Font font, char32_t left, char32_t right ) noexcept;
 
     private:
+        void DestroyAtlas ( android_vulkan::Renderer &renderer ) noexcept;
+
         [[nodiscard]] GlyphInfo const& EmbedGlyph ( android_vulkan::Renderer &renderer,
             GlyphStorage &glyphs,
             FT_Face face,

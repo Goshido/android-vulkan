@@ -1,24 +1,30 @@
-[[vk::binding ( 1, 0 )]]
+#include "ui_program.inc"
+
+
+[[vk::binding ( BIND_ATLAS_SAMPLER, SET_ATLAS_SAMPLER )]]
 SamplerState                        g_atlasSampler:     register ( s0 );
 
-[[vk::binding ( 2, 0 )]]
-Texture2D<float32_t4>               g_atlasTexture:     register ( t0 );
+[[vk::binding ( BIND_ATLAS_TEXTURE, SET_ATLAS_TEXTURE )]]
+Texture2DArray<float32_t>           g_atlasTexture:     register ( t0 );
 
-[[vk::binding ( 0, 1 )]]
+[[vk::binding ( BIND_IMAGE_SAMPLER, SET_IMAGE_SAMPLER )]]
 SamplerState                        g_imageSampler:     register ( s1 );
 
-[[vk::binding ( 1, 1 )]]
+[[vk::binding ( BIND_IMAGE_TEXTURE, SET_IMAGE_TEXTURE )]]
 Texture2D<float32_t4>               g_imageTexture:     register ( t1 );
 
 struct InputData
 {
-    [[vk::location ( 0 )]]
+    [[vk::location ( ATT_SLOT_COLOR )]]
     nointerpolation float32_t4      _color:             COLOR;
 
-    [[vk::location ( 1 )]]
-    noperspective float32_t2        _atlasUV:           ATLAS;
+    [[vk::location ( ATT_SLOT_ATLAS_UV )]]
+    noperspective float32_t2        _atlasUV:           ATLAS_UV;
 
-    [[vk::location ( 2 )]]
+    [[vk::location ( ATT_SLOT_ATLAS_LAYER )]]
+    nointerpolation float32_t       _atlasLayer:        ATLAS_LAYER;
+
+    [[vk::location ( ATT_SLOT_IMAGE_UV )]]
     noperspective float32_t2        _imageUV:           IMAGE;
 };
 
@@ -26,7 +32,12 @@ struct InputData
 
 float32_t4 PS ( in InputData inputData ): SV_Target0
 {
-    const float32_t4 atlasSample = g_atlasTexture.SampleLevel ( g_atlasSampler, inputData._atlasUV, 0.0F );
-    const float32_t4 imageSample = g_imageTexture.SampleLevel ( g_imageSampler, inputData._imageUV, 0.0F );
-    return inputData._color * ( atlasSample + imageSample );
+    const float32_t4 imagePart =
+        inputData._color * g_imageTexture.SampleLevel ( g_imageSampler, inputData._imageUV, 0.0F );
+
+    const float32_t3 coordinate = float32_t3 ( inputData._atlasUV, inputData._atlasLayer );
+    const float32_t atlasSample = g_atlasTexture.SampleLevel ( g_atlasSampler, coordinate, 0.0F ).x;
+    const float32_t4 textPart = float32_t4 ( inputData._color.xyz, atlasSample * inputData._color.a );
+
+    return lerp ( textPart, imagePart, (float32_t4)( atlasSample == 0.0F ) );
 }

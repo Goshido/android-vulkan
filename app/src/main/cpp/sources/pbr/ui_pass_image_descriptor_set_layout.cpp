@@ -1,4 +1,5 @@
-#include <pbr/geometry_pass_instance_descriptor_set_layout.h>
+#include <pbr/ui_pass_image_descriptor_set_layout.h>
+#include <pbr/ui_program.inc>
 #include <vulkan_utils.h>
 
 GX_DISABLE_COMMON_WARNINGS
@@ -47,7 +48,7 @@ void DescriptorSetLayout::Destroy ( VkDevice device ) noexcept
 
     vkDestroyDescriptorSetLayout ( device, _descriptorSetLayout, nullptr );
     _descriptorSetLayout = VK_NULL_HANDLE;
-    AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::GeometryPassInstanceDescriptorSetLayout::_descriptorSetLayout" )
+    AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::UIPassImageDescriptorSetLayout::_descriptorSetLayout" )
 }
 
 bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
@@ -60,10 +61,10 @@ bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
 
     constexpr static VkDescriptorSetLayoutBinding binding
     {
-        .binding = 0U,
-        .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        .binding = BIND_IMAGE_TEXTURE,
+        .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
         .descriptorCount = 1U,
-        .stageFlags = AV_VK_FLAG ( VK_SHADER_STAGE_VERTEX_BIT ) | AV_VK_FLAG ( VK_SHADER_STAGE_FRAGMENT_BIT ),
+        .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
         .pImmutableSamplers = nullptr
     };
 
@@ -78,14 +79,14 @@ bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateDescriptorSetLayout ( device, &info, nullptr, &_descriptorSetLayout ),
-        "pbr::GeometryPassInstanceDescriptorSetLayout::Init",
+        "pbr::UIPassImageDescriptorSetLayout::Init",
         "Can't create descriptor set layout"
     );
 
     if ( !result )
         return false;
 
-    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::GeometryPassInstanceDescriptorSetLayout::_descriptorSetLayout" )
+    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::UIPassImageDescriptorSetLayout::_descriptorSetLayout" )
 
     ++_references;
     return true;
@@ -97,17 +98,17 @@ DescriptorSetLayout g_descriptorSetLayout {};
 
 //----------------------------------------------------------------------------------------------------------------------
 
-void GeometryPassInstanceDescriptorSetLayout::Destroy ( VkDevice device ) noexcept
+void UIPassImageDescriptorSetLayout::Destroy ( VkDevice device ) noexcept
 {
     g_descriptorSetLayout.Destroy ( device );
 }
 
-bool GeometryPassInstanceDescriptorSetLayout::Init ( VkDevice device ) noexcept
+bool UIPassImageDescriptorSetLayout::Init ( VkDevice device ) noexcept
 {
     return g_descriptorSetLayout.Init ( device );
 }
 
-VkDescriptorSetLayout GeometryPassInstanceDescriptorSetLayout::GetLayout () const noexcept
+VkDescriptorSetLayout UIPassImageDescriptorSetLayout::GetLayout () const noexcept
 {
     return g_descriptorSetLayout._descriptorSetLayout;
 }

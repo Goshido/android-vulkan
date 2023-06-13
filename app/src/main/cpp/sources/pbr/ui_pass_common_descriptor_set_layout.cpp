@@ -1,4 +1,5 @@
-#include <pbr/geometry_pass_instance_descriptor_set_layout.h>
+#include <pbr/ui_pass_common_descriptor_set_layout.h>
+#include <pbr/ui_program.inc>
 #include <vulkan_utils.h>
 
 GX_DISABLE_COMMON_WARNINGS
@@ -47,7 +48,7 @@ void DescriptorSetLayout::Destroy ( VkDevice device ) noexcept
 
     vkDestroyDescriptorSetLayout ( device, _descriptorSetLayout, nullptr );
     _descriptorSetLayout = VK_NULL_HANDLE;
-    AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::GeometryPassInstanceDescriptorSetLayout::_descriptorSetLayout" )
+    AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::UIPassCommonDescriptorSetLayout::_descriptorSetLayout" )
 }
 
 bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
@@ -58,13 +59,36 @@ bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
         return true;
     }
 
-    constexpr static VkDescriptorSetLayoutBinding binding
+    constexpr static VkDescriptorSetLayoutBinding const bindings[] =
     {
-        .binding = 0U,
-        .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-        .descriptorCount = 1U,
-        .stageFlags = AV_VK_FLAG ( VK_SHADER_STAGE_VERTEX_BIT ) | AV_VK_FLAG ( VK_SHADER_STAGE_FRAGMENT_BIT ),
-        .pImmutableSamplers = nullptr
+        {
+            .binding = BIND_TRANSFORM,
+            .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            .descriptorCount = 1U,
+            .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
+            .pImmutableSamplers = nullptr
+        },
+        {
+            .binding = BIND_ATLAS_SAMPLER,
+            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
+            .descriptorCount = 1U,
+            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+            .pImmutableSamplers = nullptr
+        },
+        {
+            .binding = BIND_ATLAS_TEXTURE,
+            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+            .descriptorCount = 1U,
+            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+            .pImmutableSamplers = nullptr
+        },
+        {
+            .binding = BIND_IMAGE_SAMPLER,
+            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
+            .descriptorCount = 1U,
+            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+            .pImmutableSamplers = nullptr
+        }
     };
 
     constexpr VkDescriptorSetLayoutCreateInfo info
@@ -72,20 +96,20 @@ bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0U,
-        .bindingCount = 1U,
-        .pBindings = &binding
+        .bindingCount = static_cast<uint32_t> ( std::size ( bindings ) ),
+        .pBindings = bindings
     };
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateDescriptorSetLayout ( device, &info, nullptr, &_descriptorSetLayout ),
-        "pbr::GeometryPassInstanceDescriptorSetLayout::Init",
+        "pbr::UIPassCommonDescriptorSetLayout::Init",
         "Can't create descriptor set layout"
     );
 
     if ( !result )
         return false;
 
-    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::GeometryPassInstanceDescriptorSetLayout::_descriptorSetLayout" )
+    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::UIPassCommonDescriptorSetLayout::_descriptorSetLayout" )
 
     ++_references;
     return true;
@@ -97,17 +121,17 @@ DescriptorSetLayout g_descriptorSetLayout {};
 
 //----------------------------------------------------------------------------------------------------------------------
 
-void GeometryPassInstanceDescriptorSetLayout::Destroy ( VkDevice device ) noexcept
+void UIPassCommonDescriptorSetLayout::Destroy ( VkDevice device ) noexcept
 {
     g_descriptorSetLayout.Destroy ( device );
 }
 
-bool GeometryPassInstanceDescriptorSetLayout::Init ( VkDevice device ) noexcept
+bool UIPassCommonDescriptorSetLayout::Init ( VkDevice device ) noexcept
 {
     return g_descriptorSetLayout.Init ( device );
 }
 
-VkDescriptorSetLayout GeometryPassInstanceDescriptorSetLayout::GetLayout () const noexcept
+VkDescriptorSetLayout UIPassCommonDescriptorSetLayout::GetLayout () const noexcept
 {
     return g_descriptorSetLayout._descriptorSetLayout;
 }

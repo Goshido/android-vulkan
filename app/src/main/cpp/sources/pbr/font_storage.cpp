@@ -486,40 +486,16 @@ void FontStorage::Atlas::Destroy ( android_vulkan::Renderer &renderer ) noexcept
     Cleanup ( renderer );
 }
 
-void FontStorage::Atlas::SetResolution ( VkExtent2D const &resolution ) noexcept
-{
-    _side = std::min ( resolution.width, resolution.height );
-}
-
 //----------------------------------------------------------------------------------------------------------------------
 
-bool FontStorage::Init (  android_vulkan::Renderer &renderer, VkExtent2D const &nativeViewport ) noexcept
+bool FontStorage::Init () noexcept
 {
-    _atlas.SetResolution ( nativeViewport );
-    _pixToUV = 1.0F / static_cast<float> ( _atlas._side );
-
-    float const h = _pixToUV * 0.5F;
-    _halfPixelUV._data[ 0U ] = h;
-    _halfPixelUV._data[ 1U ] = h;
-
-    return MakeSpecialGlyphs ( renderer ) &&
-        CheckFTResult ( FT_Init_FreeType ( &_library ), "pbr::FontStorage::Init", "Can't init FreeType" );
+    return CheckFTResult ( FT_Init_FreeType ( &_library ), "pbr::FontStorage::Init", "Can't init FreeType" );
 }
 
 void FontStorage::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 {
-    _atlas.Destroy ( renderer );
-
-    auto const clear = [ & ] ( auto &buffers ) noexcept {
-        for ( auto& buffer : buffers )
-            buffer.Destroy ( renderer );
-
-        buffers.clear ();
-    };
-
-    clear ( _activeStagingBuffer );
-    clear ( _freeStagingBuffers );
-    clear ( _fullStagingBuffers );
+    DestroyAtlas ( renderer );
 
     if ( !_library )
         return;
@@ -533,9 +509,90 @@ void FontStorage::Destroy ( android_vulkan::Renderer &renderer ) noexcept
         return;
 
     _library = nullptr;
-    _fonts.clear ();
     _fontResources.clear ();
     _stringHeap.clear ();
+}
+
+std::optional<FontStorage::Font> FontStorage::GetFont ( std::string_view font, uint32_t size ) noexcept
+{
+    auto fontResource = GetFontResource ( font );
+
+    if ( !fontResource )
+        return std::nullopt;
+
+    FontResource* f = *fontResource;
+    auto const s = static_cast<FT_UInt> ( size );
+    FT_Face face = f->_face;
+
+    if ( !CheckFTResult ( FT_Set_Pixel_Sizes ( face, s, s ), "pbr::FontStorage::GetFont", "Can't set size" ) )
+        return std::nullopt;
+
+    // Hash function is based on Boost implementation:
+    // https://www.boost.org/doc/libs/1_55_0/doc/html/hash/reference.html#boost.hash_combine.
+    constexpr size_t magic = 0x9E3779B9U;
+
+    static std::hash<uint32_t> const hashInteger {};
+    static std::hash<void*> const hashAddress {};
+
+    FontHash hash = 0U;
+    hash ^= hashAddress ( f ) + magic + ( hash << 6U ) + ( hash >> 2U );
+    hash ^= ( hashInteger ( size ) + magic + ( hash << 6U ) + ( hash >> 2U ) );
+
+    if ( auto findResult = _fonts.find ( hash ); findResult != _fonts.end () )
+        return findResult;
+
+    auto status = _fonts.emplace ( hash,
+        FontData
+        {
+            ._fontResource = f,
+            ._fontSize = size,
+            ._glyphs = {},
+            ._lineHeight = static_cast<int32_t> ( static_cast<uint32_t> ( face->size->metrics.height ) >> 6U )
+        }
+    );
+
+    return status.first;
+}
+
+FontStorage::GlyphInfo const& FontStorage::GetGlyphInfo ( android_vulkan::Renderer &renderer,
+    Font font,
+    char32_t character
+) noexcept
+{
+    FontData& fontData = font->second;
+    GlyphStorage& glyphs = fontData._glyphs;
+
+    if ( auto const glyph = glyphs.find ( character ); glyph != glyphs.cend () )
+        return glyph->second;
+
+    return EmbedGlyph ( renderer, glyphs, fontData._fontResource->_face, fontData._fontSize, character );
+}
+
+bool FontStorage::SetMediaResolution ( android_vulkan::Renderer &renderer, VkExtent2D const &nativeViewport ) noexcept
+{
+    uint32_t const side = std::min ( nativeViewport.width, nativeViewport.height );
+
+    if ( side == _atlas._side )
+        return true;
+
+    bool const result = android_vulkan::Renderer::CheckVkResult ( vkDeviceWaitIdle ( renderer.GetDevice () ),
+        "pbr::FontStorage::SetMediaResolution",
+        "Can't wait device idle"
+    );
+
+    if ( !result )
+        return false;
+
+    DestroyAtlas ( renderer );
+
+    _atlas._side = side;
+    _pixToUV = 1.0F / static_cast<float> ( side );
+
+    float const h = _pixToUV * 0.5F;
+    _halfPixelUV._data[ 0U ] = h;
+    _halfPixelUV._data[ 1U ] = h;
+
+    return MakeSpecialGlyphs ( renderer );
 }
 
 bool FontStorage::UploadGPUData ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept
@@ -651,59 +708,47 @@ bool FontStorage::UploadGPUData ( android_vulkan::Renderer &renderer, VkCommandB
     return true;
 }
 
-std::optional<FontStorage::Font> FontStorage::GetFont ( std::string_view font, uint32_t size ) noexcept
+int32_t FontStorage::GetKerning ( Font font, char32_t left, char32_t right ) noexcept
 {
-    auto fontResource = GetFontResource ( font );
+    FT_Face face = font->second._fontResource->_face;
 
-    if ( !fontResource )
-        return std::nullopt;
+    if ( !FT_HAS_KERNING ( face ) )
+        return 0;
 
-    FontResource* f = *fontResource;
-    auto const s = static_cast<FT_UInt> ( size );
-    FT_Face face = f->_face;
+    FT_Vector delta {};
 
-    if ( !CheckFTResult ( FT_Set_Pixel_Sizes ( face, s, s ), "pbr::FontStorage::GetFont", "Can't set size" ) )
-        return std::nullopt;
+    bool const status = CheckFTResult (
+        FT_Get_Kerning ( face,
+            FT_Get_Char_Index ( face, left ),
+            FT_Get_Char_Index ( face, right ),
+            FT_KERNING_DEFAULT,
+            &delta
+        ),
 
-    // Hash function is based on Boost implementation:
-    // https://www.boost.org/doc/libs/1_55_0/doc/html/hash/reference.html#boost.hash_combine.
-    constexpr size_t magic = 0x9E3779B9U;
-
-    static std::hash<uint32_t> const hashInteger {};
-    static std::hash<void*> const hashAddress {};
-
-    FontHash hash = 0U;
-    hash ^= hashAddress ( f ) + magic + ( hash << 6U ) + ( hash >> 2U );
-    hash ^= ( hashInteger ( size ) + magic + ( hash << 6U ) + ( hash >> 2U ) );
-
-    if ( auto findResult = _fonts.find ( hash ); findResult != _fonts.end () )
-        return findResult;
-
-    auto status = _fonts.emplace ( hash,
-        FontData
-        {
-            ._fontResource = f,
-            ._fontSize = size,
-            ._glyphs = {},
-            ._lineHeight = static_cast<int32_t> ( static_cast<uint32_t> ( face->size->metrics.height ) >> 6U )
-        }
+        "pbr::FontStorage::GetKerning",
+        "Can't resolve kerning"
     );
 
-    return status.first;
+    int32_t const cases[] = { 0, static_cast<int32_t> ( delta.x >> 6 ) };
+    return cases[ static_cast<size_t> ( status ) ];
 }
 
-FontStorage::GlyphInfo const& FontStorage::GetGlyphInfo ( android_vulkan::Renderer &renderer,
-    Font font,
-    char32_t character
-) noexcept
+void FontStorage::DestroyAtlas ( android_vulkan::Renderer &renderer ) noexcept
 {
-    FontData& fontData = font->second;
-    GlyphStorage& glyphs = fontData._glyphs;
+    _atlas.Destroy ( renderer );
 
-    if ( auto const glyph = glyphs.find ( character ); glyph != glyphs.cend () )
-        return glyph->second;
+    auto const clear = [ & ] ( auto &buffers ) noexcept {
+        for ( auto& buffer : buffers )
+            buffer.Destroy ( renderer );
 
-    return EmbedGlyph ( renderer, glyphs, fontData._fontResource->_face, fontData._fontSize, character );
+        buffers.clear ();
+    };
+
+    clear ( _activeStagingBuffer );
+    clear ( _freeStagingBuffers );
+    clear ( _fullStagingBuffers );
+
+    _fonts.clear ();
 }
 
 FontStorage::GlyphInfo const& FontStorage::EmbedGlyph ( android_vulkan::Renderer &renderer,
@@ -861,31 +906,6 @@ FontStorage::GlyphInfo const& FontStorage::EmbedGlyph ( android_vulkan::Renderer
     );
 
     return status.first->second;
-}
-
-int32_t FontStorage::GetKerning ( Font font, char32_t left, char32_t right ) noexcept
-{
-    FT_Face face = font->second._fontResource->_face;
-
-    if ( !FT_HAS_KERNING ( face ) )
-        return 0;
-
-    FT_Vector delta {};
-
-    bool const status = CheckFTResult (
-        FT_Get_Kerning ( face,
-            FT_Get_Char_Index ( face, left ),
-            FT_Get_Char_Index ( face, right ),
-            FT_KERNING_DEFAULT,
-            &delta
-        ),
-
-        "pbr::FontStorage::GetKerning",
-        "Can't resolve kerning"
-    );
-
-    int32_t const cases[] = { 0, static_cast<int32_t> ( delta.x >> 6 ) };
-    return cases[ static_cast<size_t> ( status ) ];
 }
 
 std::optional<FontStorage::FontResource*> FontStorage::GetFontResource ( std::string_view font ) noexcept

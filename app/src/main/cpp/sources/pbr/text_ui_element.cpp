@@ -123,7 +123,7 @@ void TextUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
         text = text.substr ( 1U );
 
         FontStorage::GlyphInfo const& gi = fontStorage.GetGlyphInfo ( renderer, f, rightCharacter );
-        x += gi._advance + fontStorage.GetKerning ( f, leftCharacter, rightCharacter );
+        x += gi._advance + FontStorage::GetKerning ( f, leftCharacter, rightCharacter );
         leftCharacter = rightCharacter;
 
         if ( x < w )
@@ -144,7 +144,7 @@ void TextUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
     for ( char32_t const rightCharacter : text )
     {
         FontStorage::GlyphInfo const& gi = fontStorage.GetGlyphInfo ( renderer, f, rightCharacter );
-        x += gi._advance + fontStorage.GetKerning ( f, leftCharacter, rightCharacter );
+        x += gi._advance + FontStorage::GetKerning ( f, leftCharacter, rightCharacter );
         leftCharacter = rightCharacter;
 
         if ( x < w )

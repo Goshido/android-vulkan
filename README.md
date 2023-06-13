@@ -21,7 +21,7 @@ Useful documentation is located [here](docs/documentation.md).
 * _Android Studio Gradle Plugin 8.0.2_
 * _Android NDK 25.2.9519653 (side by side)_
 * _Android SDK 11.0 (API level 30)_
-* _Android SDK Build-Tools 33.0.2_
+* _Android SDK Build-Tools 34.0.0_
 * _Android SDK Platform-Tools 34.0.3_
 * _Kotlin 1.8.10_
 * _Kotlin Gradle plugin 1.8.20_

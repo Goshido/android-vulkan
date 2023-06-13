@@ -1,0 +1,32 @@
+[[vk::binding ( 1, 0 )]]
+SamplerState                        g_atlasSampler:     register ( s0 );
+
+[[vk::binding ( 2, 0 )]]
+Texture2D<float32_t4>               g_atlasTexture:     register ( t0 );
+
+[[vk::binding ( 0, 1 )]]
+SamplerState                        g_imageSampler:     register ( s1 );
+
+[[vk::binding ( 1, 1 )]]
+Texture2D<float32_t4>               g_imageTexture:     register ( t1 );
+
+struct InputData
+{
+    [[vk::location ( 0 )]]
+    nointerpolation float32_t4      _color:             COLOR;
+
+    [[vk::location ( 1 )]]
+    noperspective float32_t2        _atlasUV:           ATLAS;
+
+    [[vk::location ( 2 )]]
+    noperspective float32_t2        _imageUV:           IMAGE;
+};
+
+//----------------------------------------------------------------------------------------------------------------------
+
+float32_t4 PS ( in InputData inputData ): SV_Target0
+{
+    const float32_t4 atlasSample = g_atlasTexture.SampleLevel ( g_atlasSampler, inputData._atlasUV, 0.0F );
+    const float32_t4 imageSample = g_imageTexture.SampleLevel ( g_imageSampler, inputData._imageUV, 0.0F );
+    return inputData._color * ( atlasSample + imageSample );
+}

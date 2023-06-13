@@ -1,45 +1,35 @@
-#ifndef PBR_POINT_LIGHT_SHADOWMAP_GENERATOR_PROGRAM_H
-#define PBR_POINT_LIGHT_SHADOWMAP_GENERATOR_PROGRAM_H
+#ifndef PBR_UI_PROGRAM_H
+#define PBR_UI_PROGRAM_H
 
 
-#include "geometry_pass_instance_descriptor_set_layout.h"
-#include "gpgpu_limits.inc"
 #include "program.h"
 #include <vulkan_utils.h>
 
 
 namespace pbr {
 
-class PointLightShadowmapGeneratorProgram final : public Program
+class UIProgram final : public Program
 {
     public:
         AV_DX_ALIGNMENT_BEGIN
 
-        struct ObjectData final
+        struct Transform final
         {
-            GXMat4                                  _transform[ PBR_POINT_LIGHT_SHADOW_CASTER_PROJECTION_COUNT ];
-        };
-
-        struct InstanceData final
-        {
-            ObjectData                              _instanceData[ PBR_POINT_LIGHT_MAX_SHADOW_CASTER_INSTANCE_COUNT ];
+            GXMat4      _transform;
         };
 
         AV_DX_ALIGNMENT_END
 
-    private:
-        GeometryPassInstanceDescriptorSetLayout     _instanceLayout {};
-
     public:
-        PointLightShadowmapGeneratorProgram () noexcept;
+        UIProgram () noexcept;
 
-        PointLightShadowmapGeneratorProgram ( PointLightShadowmapGeneratorProgram const & ) = delete;
-        PointLightShadowmapGeneratorProgram& operator = ( PointLightShadowmapGeneratorProgram const & ) = delete;
+        UIProgram ( UIProgram const & ) = delete;
+        UIProgram& operator = ( UIProgram const & ) = delete;
 
-        PointLightShadowmapGeneratorProgram ( PointLightShadowmapGeneratorProgram && ) = delete;
-        PointLightShadowmapGeneratorProgram& operator = ( PointLightShadowmapGeneratorProgram && ) = delete;
+        UIProgram ( UIProgram && ) = delete;
+        UIProgram& operator = ( UIProgram && ) = delete;
 
-        ~PointLightShadowmapGeneratorProgram () override = default;
+        ~UIProgram () override = default;
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
             VkRenderPass renderPass,
@@ -49,8 +39,6 @@ class PointLightShadowmapGeneratorProgram final : public Program
 
         void Destroy ( VkDevice device ) noexcept override;
         [[nodiscard]] DescriptorSetInfo const& GetResourceInfo () const noexcept override;
-
-        void SetDescriptorSet ( VkCommandBuffer commandBuffer, VkDescriptorSet sets ) const noexcept;
 
     private:
         [[nodiscard]] VkPipelineColorBlendStateCreateInfo const* InitColorBlendInfo (
@@ -100,4 +88,4 @@ class PointLightShadowmapGeneratorProgram final : public Program
 } // namespace pbr
 
 
-#endif // PBR_POINT_LIGHT_SHADOWMAP_GENERATOR_PROGRAM_H
+#endif // PBR_UI_PROGRAM_H

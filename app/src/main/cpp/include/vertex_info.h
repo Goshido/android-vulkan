@@ -11,11 +11,11 @@ namespace android_vulkan {
 
 struct VertexInfo final
 {
-    [[maybe_unused]] GXVec3     _vertex;
-    [[maybe_unused]] GXVec2     _uv;
-    [[maybe_unused]] GXVec3     _normal;
-    [[maybe_unused]] GXVec3     _tangent;
-    [[maybe_unused]] GXVec3     _bitangent;
+    GXVec3      _vertex;
+    GXVec2      _uv;
+    GXVec3      _normal;
+    GXVec3      _tangent;
+    GXVec3      _bitangent;
 
     VertexInfo () = default;
 

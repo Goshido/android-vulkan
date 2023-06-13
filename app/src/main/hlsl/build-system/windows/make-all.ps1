@@ -10,6 +10,7 @@ Clear-Host
 .\make-vs.ps1 reflection-global
 .\make-vs.ps1 screen-quad
 .\make-vs.ps1 static-mesh
+.\make-vs.ps1 ui
 
 # pixel shaders
 .\make-ps.ps1 blinn-phong-analytic
@@ -23,3 +24,4 @@ Clear-Host
 .\make-ps.ps1 reflection-local
 .\make-ps.ps1 stipple
 .\make-ps.ps1 texture-present
+.\make-ps.ps1 ui

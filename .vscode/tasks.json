@@ -32,6 +32,90 @@
                 "quoting": "weak",
                 "value" : "${workspaceFolder}/app/src/main/hlsl/build-system/windows/make-all.ps1"
             }
+        },
+        {
+            "label": "Validate Vertex Shader",
+            "type": "shell",
+            "group": "build",
+
+            "options": {
+                "cwd": "${workspaceFolder}/app/src/main/hlsl/build-system/windows"
+            },
+
+            "command": {
+                "quoting": "weak",
+                "value" : "${workspaceFolder}/app/src/main/hlsl/build-system/windows/validate-vs.ps1"
+            },
+
+            "args": [
+                {
+                    "quoting": "strong",
+                    "value": "${file}"
+                }
+            ]
+        },
+        {
+            "label": "Validate Pixel Shader",
+            "type": "shell",
+            "group": "build",
+
+            "options": {
+                "cwd": "${workspaceFolder}/app/src/main/hlsl/build-system/windows"
+            },
+
+            "command": {
+                "quoting": "weak",
+                "value" : "${workspaceFolder}/app/src/main/hlsl/build-system/windows/validate-ps.ps1"
+            },
+
+            "args": [
+                {
+                    "quoting": "strong",
+                    "value": "${file}"
+                }
+            ]
+        },
+        {
+            "label": "Disassemble Vertex Shader",
+            "type": "shell",
+            "group": "build",
+
+            "options": {
+                "cwd": "${workspaceFolder}/app/src/main/hlsl/build-system/windows"
+            },
+
+            "command": {
+                "quoting": "weak",
+                "value" : "${workspaceFolder}/app/src/main/hlsl/build-system/windows/disassm-vs.ps1"
+            },
+
+            "args": [
+                {
+                    "quoting": "strong",
+                    "value": "${file}"
+                }
+            ]
+        },
+        {
+            "label": "Disassemble Pixel Shader",
+            "type": "shell",
+            "group": "build",
+
+            "options": {
+                "cwd": "${workspaceFolder}/app/src/main/hlsl/build-system/windows"
+            },
+
+            "command": {
+                "quoting": "weak",
+                "value" : "${workspaceFolder}/app/src/main/hlsl/build-system/windows/disassm-ps.ps1"
+            },
+
+            "args": [
+                {
+                    "quoting": "strong",
+                    "value": "${file}"
+                }
+            ]
         }
     ]
 }

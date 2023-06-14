@@ -463,25 +463,11 @@ void Scene::RemoveActor ( Actor const &actor ) noexcept
     _actors.erase ( findResult );
 }
 
-void Scene::Submit ( android_vulkan::Renderer &renderer,
-    RenderSession &renderSession,
-    FontStorage &fontStorage
-) noexcept
+void Scene::Submit ( android_vulkan::Renderer &renderer, RenderSession &renderSession ) noexcept
 {
-    AV_TRACE ( "Submit components" )
-    FreeTransferResources ( renderer );
-
-    for ( auto& component : _renderableList )
-    {
-        // NOLINTNEXTLINE - downcast.
-        auto& renderableComponent = static_cast<RenderableComponent&> ( component.get () );
-        renderableComponent.Submit ( renderSession );
-    }
-
-    for ( auto& uiLayer : _uiLayerList )
-    {
-        uiLayer.get ().Submit ( renderer, renderSession, fontStorage );
-    }
+    AV_TRACE ( "Scene submit" )
+    SubmitComponents ( renderer, renderSession );
+    SubmitUI ( renderer, renderSession );
 }
 
 void Scene::AppendActor ( ActorRef &actor ) noexcept
@@ -564,6 +550,63 @@ int Scene::DoSweepTestBox ( lua_State &vm, GXMat4 const &local, GXVec3 const &si
     boxShape.UpdateCacheData ( local );
     _physics->SweepTest ( _sweepTestResult, shape, groups );
     return static_cast<int> ( ScriptableSweepTestResult::PublishResult ( vm, _sweepTestResult ) );
+}
+
+void Scene::SubmitComponents ( android_vulkan::Renderer &renderer, RenderSession &renderSession ) noexcept
+{
+    AV_TRACE ( "Components" )
+
+    FreeTransferResources ( renderer );
+
+    for ( auto& component : _renderableList )
+    {
+        // NOLINTNEXTLINE - downcast.
+        auto& renderableComponent = static_cast<RenderableComponent&> ( component.get () );
+        renderableComponent.Submit ( renderSession );
+    }
+}
+
+void Scene::SubmitUI ( android_vulkan::Renderer &renderer, RenderSession &renderSession ) noexcept
+{
+    AV_TRACE ( "UI" )
+
+    UIPass& uiPass = renderSession.GetUIPass ();
+    FontStorage& fontStorage = uiPass.GetFontStorage ();
+
+    bool needRedraw = false;
+    size_t neededUIVertices = 0U;
+
+    for ( auto& uiLayer : _uiLayerList )
+    {
+        UILayer::LayoutStatus const status = uiLayer.get ().ApplyLayout ( renderer, fontStorage );
+        needRedraw |= status._needRedraw;
+        neededUIVertices += status._neededUIVertices;
+    }
+
+    if ( !needRedraw )
+        return;
+
+    if ( neededUIVertices == 0U )
+    {
+        uiPass.RequestEmptyUI ();
+        return;
+    }
+
+    UIPass::UIBufferResponse response = uiPass.RequestUIBuffer ( neededUIVertices );
+
+    if ( !response )
+    {
+        uiPass.RequestEmptyUI ();
+        return;
+    }
+
+    UIPass::VertexBuffer vertexBuffer = *response;
+    (void)vertexBuffer;
+
+    for ( auto& uiLayer : _uiLayerList )
+    {
+        uiLayer.get ().Submit ( renderer, renderSession, fontStorage );
+    }
 }
 
 void Scene::FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept

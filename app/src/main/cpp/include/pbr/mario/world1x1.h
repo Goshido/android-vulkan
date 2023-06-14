@@ -12,7 +12,6 @@ class World1x1 final : public android_vulkan::Game
 {
     private:
         VkCommandPool                   _commandPool = VK_NULL_HANDLE;
-        FontStorage                     _fontStorage {};
         bool                            _isReady = false;
         android_vulkan::Physics         _physics {};
         RenderSession                   _renderSession {};

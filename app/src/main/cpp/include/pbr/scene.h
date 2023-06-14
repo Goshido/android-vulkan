@@ -87,11 +87,7 @@ class Scene final
         ) noexcept;
 
         void RemoveActor ( Actor const &actor ) noexcept;
-
-        void Submit ( android_vulkan::Renderer &renderer,
-            RenderSession &renderSession,
-            FontStorage &fontStorage
-        ) noexcept;
+        void Submit ( android_vulkan::Renderer &renderer, RenderSession &renderSession ) noexcept;
 
     private:
         void AppendActor ( ActorRef &actor ) noexcept;
@@ -114,6 +110,9 @@ class Scene final
             GXVec3 const &size,
             uint32_t groups
         ) noexcept;
+
+        void SubmitComponents ( android_vulkan::Renderer &renderer, RenderSession &renderSession ) noexcept;
+        void SubmitUI ( android_vulkan::Renderer &renderer, RenderSession &renderSession ) noexcept;
 
         static void FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept;
 

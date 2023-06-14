@@ -86,9 +86,6 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
     if ( !result )
         return false;
 
-    if ( _fontStorage && !_fontStorage->UploadGPUData ( renderer, commandBuffer ) )
-        return false;
-
     result = _lightPass.OnPreGeometryPass ( renderer,
         commandBuffer,
         swapchainImageIndex,
@@ -116,6 +113,9 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
 
     vkCmdEndRenderPass ( commandBuffer );
 
+    if ( !_uiPass.Execute ( renderer, commandBuffer ) )
+        return false;
+
     _renderSessionStats.RenderPointLights ( _lightPass.GetPointLightCount () );
     _renderSessionStats.RenderReflectionLocal ( _lightPass.GetReflectionLocalCount () );
 
@@ -129,6 +129,11 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
 void RenderSession::FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept
 {
     _defaultTextureManager.FreeTransferResources ( renderer, _commandInfo[ 0U ]._pool );
+}
+
+UIPass& RenderSession::GetUIPass () noexcept
+{
+    return _uiPass;
 }
 
 bool RenderSession::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
@@ -158,8 +163,6 @@ bool RenderSession::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 
 void RenderSession::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
 {
-    _fontStorage = nullptr;
-
     std::memset ( _lightHandlers, 0, sizeof ( _lightHandlers ) );
     std::memset ( _meshHandlers, 0, sizeof ( _meshHandlers ) );
 
@@ -253,11 +256,6 @@ bool RenderSession::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
 void RenderSession::OnSwapchainDestroyed ( VkDevice device ) noexcept
 {
     _presentPass.Destroy ( device );
-}
-
-void RenderSession::SetFontStorage ( FontStorage &fontStorage ) noexcept
-{
-    _fontStorage = &fontStorage;
 }
 
 void RenderSession::SubmitLight ( LightRef &light ) noexcept

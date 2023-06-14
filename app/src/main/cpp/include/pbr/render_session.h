@@ -3,7 +3,6 @@
 
 
 #include "default_texture_manager.h"
-#include "font_storage.h"
 #include "geometry_pass.h"
 #include "light_pass.h"
 #include "present_pass.h"
@@ -46,7 +45,6 @@ class RenderSession final
         GXMat4                                  _viewerLocal {};
 
         DefaultTextureManager                   _defaultTextureManager {};
-        FontStorage*                            _fontStorage = nullptr;
         VkFramebuffer                           _framebuffer = VK_NULL_HANDLE;
         GXProjectionClipPlanes                  _frustum {};
 
@@ -86,6 +84,7 @@ class RenderSession final
         [[nodiscard]] bool End ( android_vulkan::Renderer &renderer, double deltaTime ) noexcept;
 
         void FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept;
+        [[nodiscard]] UIPass& GetUIPass () noexcept;
 
         [[nodiscard]] bool OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept;
         void OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept;
@@ -95,8 +94,6 @@ class RenderSession final
         ) noexcept;
 
         void OnSwapchainDestroyed ( VkDevice device ) noexcept;
-
-        void SetFontStorage ( FontStorage &fontStorage ) noexcept;
         void SubmitLight ( LightRef &light ) noexcept;
 
         void SubmitMesh ( MeshRef &mesh,

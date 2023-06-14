@@ -18,6 +18,13 @@ namespace pbr {
 
 class UILayer final
 {
+    public:
+        struct LayoutStatus final
+        {
+            bool                                _needRedraw = true;
+            size_t                              _neededUIVertices = 0U;
+        };
+
     private:
         DIVUIElement*                           _body = nullptr;
         CSSParser                               _css {};
@@ -37,6 +44,10 @@ class UILayer final
         explicit UILayer ( bool &success, lua_State &vm ) noexcept;
 
         ~UILayer () = default;
+
+        [[nodiscard]] LayoutStatus ApplyLayout ( android_vulkan::Renderer &renderer,
+            FontStorage &fontStorage
+        ) noexcept;
 
         void Submit ( android_vulkan::Renderer &renderer,
             RenderSession &renderSession,

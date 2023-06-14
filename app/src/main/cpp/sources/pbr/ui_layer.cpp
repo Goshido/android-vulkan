@@ -135,10 +135,7 @@ UILayer::UILayer ( bool &success, lua_State &vm ) noexcept
     lua_pop ( &vm, 4 );
 }
 
-void UILayer::Submit ( android_vulkan::Renderer &renderer,
-    RenderSession &/*renderSession*/,
-    FontStorage &fontStorage
-) noexcept
+UILayer::LayoutStatus UILayer::ApplyLayout ( android_vulkan::Renderer &renderer, FontStorage &fontStorage ) noexcept
 {
     VkExtent2D const viewport = renderer.GetViewportResolution ();
 
@@ -157,6 +154,19 @@ void UILayer::Submit ( android_vulkan::Renderer &renderer,
     };
 
     _body->ApplyLayout ( info );
+
+    return
+    {
+        ._needRedraw = true,
+        ._neededUIVertices = info._vertices
+    };
+}
+
+void UILayer::Submit ( android_vulkan::Renderer &/*renderer*/,
+    RenderSession &/*renderSession*/,
+    FontStorage &/*fontStorage*/
+) noexcept
+{
     _body->Render ();
 }
 

@@ -38,7 +38,7 @@ bool World1x1::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) 
         return false;
 
     _renderSession.Begin ( _scene.GetActiveCameraLocalMatrix (), _scene.GetActiveCameraProjectionMatrix () );
-    _scene.Submit ( renderer, _renderSession, _fontStorage );
+    _scene.Submit ( renderer, _renderSession );
 
     if ( !_scene.OnUpdate ( deltaTime ) )
         return false;
@@ -72,11 +72,6 @@ bool World1x1::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
     if ( !_renderSession.OnInitDevice ( renderer ) || !_scene.OnInitDevice ( renderer, _physics ) )
         return false;
 
-    if ( !_fontStorage.Init () )
-        return false;
-
-    _renderSession.SetFontStorage ( _fontStorage );
-
     if ( !_scene.LoadScene ( renderer, SCENE, _commandPool ) )
         return false;
 
@@ -98,16 +93,12 @@ void World1x1::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
     MaterialManager::Destroy ( renderer );
     CubeMapManager::Destroy ( renderer );
 
-    _fontStorage.Destroy ( renderer );
     _isReady = false;
 }
 
 bool World1x1::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept
 {
     VkExtent2D resolution = renderer.GetViewportResolution ();
-
-    if ( !_fontStorage.SetMediaResolution ( renderer, resolution ) )
-        return false;
 
     resolution.width = resolution.width * RESOLUTION_SCALE_WIDTH / 100U;
     resolution.height = resolution.height * RESOLUTION_SCALE_HEIGHT / 100U;

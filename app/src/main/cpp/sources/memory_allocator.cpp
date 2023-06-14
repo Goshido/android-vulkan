@@ -439,7 +439,7 @@ void MemoryAllocator::FreeMemory ( VkDevice device,
     std::unique_lock<std::mutex> const lock ( _mutex );
 
     auto findResult = _chunkMap.find ( memory );
-    assert ( findResult != _chunkMap.end () );
+    AV_ASSERT ( findResult != _chunkMap.end () )
 
     ChunkInfo& chunkInfo = findResult->second;
     chunkInfo._chunk->FreeMemory ( offset );

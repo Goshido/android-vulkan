@@ -1,4 +1,6 @@
 #include <pbr/ui_pass.h>
+#include <av_assert.h>
+#include <trace.h>
 
 
 namespace pbr {
@@ -86,6 +88,9 @@ void UIPass::Buffer::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 
 bool UIPass::Init ( android_vulkan::Renderer &renderer ) noexcept
 {
+    if ( !_fontStorage.Init () )
+        return false;
+
     constexpr auto stagingProps = static_cast<VkMemoryPropertyFlags> (
         AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT ) | AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_COHERENT_BIT )
     );
@@ -126,6 +131,50 @@ void UIPass::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 
     _staging.Destroy ( renderer );
     _vertex.Destroy ( renderer );
+    _fontStorage.Destroy ( renderer );
+}
+
+bool UIPass::Execute ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept
+{
+    AV_TRACE ( "UI pass execute" )
+
+    if ( !_fontStorage.UploadGPUData ( renderer, commandBuffer ) )
+        return false;
+
+    // TODO
+    return true;
+}
+
+FontStorage& UIPass::GetFontStorage () noexcept
+{
+    return _fontStorage;
+}
+
+void UIPass::RequestEmptyUI () noexcept
+{
+    // TODO
+}
+
+UIPass::UIBufferResponse UIPass::RequestUIBuffer ( size_t neededVertices ) noexcept
+{
+    if ( neededVertices > MAX_VERTICES )
+    {
+        android_vulkan::LogWarning ( "pbr::UIPass::RequestUIBuffer - Too many vertices was requested: %zu.",
+            neededVertices
+        );
+
+        AV_ASSERT ( false )
+        return std::nullopt;
+    }
+
+    constexpr size_t probeIdx = 1U;
+    size_t const cases[] = { 0U, _currentVertexIndex + neededVertices };
+    size_t const nextIdx = cases[ static_cast<size_t> ( cases[ probeIdx ] < MAX_VERTICES ) ];
+
+    VertexBuffer const result = VertexBuffer ( _data + _currentVertexIndex, neededVertices );
+    _currentVertexIndex = nextIdx;
+
+    return result;
 }
 
 bool UIPass::SetResolution ( android_vulkan::Renderer &renderer, VkRenderPass renderPass ) noexcept
@@ -135,6 +184,9 @@ bool UIPass::SetResolution ( android_vulkan::Renderer &renderer, VkRenderPass re
     if ( ( _resolution.width == resolution.width ) & ( _resolution.height == resolution.height ) )
         return true;
 
+    if ( !_fontStorage.SetMediaResolution ( renderer, resolution ) )
+        return false;
+
     _program.Destroy ( renderer.GetDevice () );
 
     if ( !_program.Init ( renderer, renderPass, 0U, resolution ) )
@@ -142,6 +194,21 @@ bool UIPass::SetResolution ( android_vulkan::Renderer &renderer, VkRenderPass re
 
     _resolution = resolution;
     return true;
+}
+
+void UIPass::SubmitImage () noexcept
+{
+    // TODO
+}
+
+void UIPass::SubmitRectangle () noexcept
+{
+    // TODO
+}
+
+void UIPass::SubmitText ( size_t /*usedVertices*/ ) noexcept
+{
+    // TODO
 }
 
 } // namespace pbr

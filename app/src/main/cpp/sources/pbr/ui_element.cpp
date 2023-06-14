@@ -103,7 +103,7 @@ float UIElement::ResolveFontSize ( CSSUnitToDevicePixel const &cssUnits,
         break;
     }
 
-    assert ( target );
+    AV_ASSERT ( target )
 
     switch ( type )
     {

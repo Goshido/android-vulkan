@@ -72,7 +72,7 @@ ComponentRef Component::Create ( android_vulkan::Renderer &renderer,
     VkCommandBuffer const* commandBuffers
 ) noexcept
 {
-    assert ( desc._classID < ClassID::COUNT );
+    AV_ASSERT ( desc._classID < ClassID::COUNT )
 
     Handler const handler = _handlers[ static_cast<size_t> ( desc._classID ) ];
     return handler ( renderer, commandBufferConsumed, dataRead, desc, data, commandBuffers );

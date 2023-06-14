@@ -151,7 +151,9 @@ bool RenderSession::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
     if ( !_texturePresentDescriptorSetLayout.Init ( device ) )
         return false;
 
-    return _defaultTextureManager.Init ( renderer, commandInfo._pool ) && _samplerManager.Init ( device );
+    return _defaultTextureManager.Init ( renderer, commandInfo._pool ) &&
+        _samplerManager.Init ( device ) &&
+        _uiPass.Init ( renderer );
 }
 
 void RenderSession::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept

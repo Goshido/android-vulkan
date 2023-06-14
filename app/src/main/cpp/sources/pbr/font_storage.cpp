@@ -8,7 +8,7 @@ namespace pbr {
 
 namespace {
 
-constexpr uint32_t SPECIAL_GLYPH_ATLAS_LAYER = 0U;
+constexpr float SPECIAL_GLYPH_ATLAS_LAYER = 0.0F;
 
 } // end of anonymous namespace
 
@@ -895,7 +895,7 @@ FontStorage::GlyphInfo const& FontStorage::EmbedGlyph ( android_vulkan::Renderer
     auto const status = glyphs.emplace ( character,
         GlyphInfo
         {
-            ._atlasLayer = base + static_cast<uint32_t> ( _fullStagingBuffers.size () ),
+            ._atlasLayer = static_cast<float> ( base + static_cast<uint32_t> ( _fullStagingBuffers.size () ) ),
             ._topLeft = PixToUV ( left, top ),
             ._bottomRight = PixToUV ( right, bottom ),
             ._width = static_cast<int32_t> ( width ),

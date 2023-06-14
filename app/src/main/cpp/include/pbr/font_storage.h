@@ -22,7 +22,7 @@ class FontStorage final
     public:
         struct GlyphInfo final
         {
-            [[maybe_unused]] uint32_t       _atlasLayer = 0U;
+            [[maybe_unused]] float          _atlasLayer = 0U;
             GXVec2                          _topLeft = GXVec2 ( 0.0F, 0.0F );
             GXVec2                          _bottomRight = GXVec2 ( 0.0F, 0.0F );
             [[maybe_unused]] int32_t        _width = 0;

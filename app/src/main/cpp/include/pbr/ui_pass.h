@@ -18,8 +18,7 @@ namespace pbr {
 class UIPass final
 {
     public:
-        using VertexBuffer = std::span<UIVertexInfo>;
-        using UIBufferResponse = std::optional<VertexBuffer>;
+        using UIBufferResponse = std::optional<UIVertexBuffer>;
 
     private:
         struct Buffer final
@@ -40,6 +39,7 @@ class UIPass final
 
     private:
         UIVertexInfo*           _data = nullptr;
+        size_t                  _sceneImageVertexIndex = 0U;
         size_t                  _currentVertexIndex = 0U;
         FontStorage             _fontStorage {};
         UIProgram               _program {};

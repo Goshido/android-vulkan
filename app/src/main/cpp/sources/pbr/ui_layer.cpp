@@ -162,18 +162,15 @@ UILayer::LayoutStatus UILayer::ApplyLayout ( android_vulkan::Renderer &renderer,
     };
 }
 
-void UILayer::Submit ( android_vulkan::Renderer &/*renderer*/,
-    RenderSession &/*renderSession*/,
-    FontStorage &/*fontStorage*/
-) noexcept
+void UILayer::Submit ( UIElement::SubmitInfo &info ) noexcept
 {
-    _body->Render ();
+    _body->Submit ( info );
 }
 
 void UILayer::InitCSSUnitConverter ( float dpi, float comfortableViewDistanceMeters ) noexcept
 {
     // See full explanation in documentation: UI system, CSS Units and hardware DPI.
-    // <repo/docs/ui-system.md#css-units-and-dpi
+    // <repo>/docs/ui-system.md#css-units-and-dpi
 
     constexpr float dpiSpec = 96.0F;
     constexpr float distanceSpec = 28.0F;
@@ -275,7 +272,7 @@ bool UILayer::AppendChild ( lua_State &vm,
             vm,
             errorHandlerIdx,
             std::move ( img.GetAssetPath () ),
-            img._cssComputedValues
+            std::move ( img._cssComputedValues )
         );
 
         if ( !success )

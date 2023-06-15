@@ -19,7 +19,7 @@ ImageUIElement::ImageUIElement ( bool &success,
     lua_State &vm,
     int errorHandlerIdx,
     std::string &&asset,
-    CSSComputedValues const &css
+    CSSComputedValues &&css
 ) noexcept:
     UIElement ( true, parent ),
     _asset ( std::move ( asset ) ),
@@ -50,7 +50,7 @@ void ImageUIElement::ApplyLayout ( ApplyLayoutInfo &/*info*/ ) noexcept
     // TODO
 }
 
-void ImageUIElement::Render () noexcept
+void ImageUIElement::Submit ( SubmitInfo &/*info*/ ) noexcept
 {
     // TODO
 }

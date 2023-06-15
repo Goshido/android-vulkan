@@ -785,7 +785,6 @@ FontStorage::GlyphInfo const& FontStorage::EmbedGlyph ( android_vulkan::Renderer
         auto const status = glyphs.emplace ( character,
             GlyphInfo
             {
-                ._atlasLayer = SPECIAL_GLYPH_ATLAS_LAYER,
                 ._topLeft = _transparentGlyphUV,
                 ._bottomRight = _transparentGlyphUV,
                 ._width = static_cast<int32_t> ( width ),
@@ -891,13 +890,13 @@ FontStorage::GlyphInfo const& FontStorage::EmbedGlyph ( android_vulkan::Renderer
 
     uint32_t const cases[] = { 0U, _atlas._layers - 1U };
     uint32_t const base = cases[ static_cast<size_t> ( _atlas._layers != 0U ) ];
+    auto const layer = static_cast<float> ( base + static_cast<uint32_t> ( _fullStagingBuffers.size () ) );
 
     auto const status = glyphs.emplace ( character,
         GlyphInfo
         {
-            ._atlasLayer = static_cast<float> ( base + static_cast<uint32_t> ( _fullStagingBuffers.size () ) ),
-            ._topLeft = PixToUV ( left, top ),
-            ._bottomRight = PixToUV ( right, bottom ),
+            ._topLeft = PixToUV ( left, top, layer ),
+            ._bottomRight = PixToUV ( right, bottom, layer ),
             ._width = static_cast<int32_t> ( width ),
             ._height = static_cast<int32_t> ( rows ),
             ._advance = static_cast<int32_t> ( slot->advance.x ) >> 6U,
@@ -977,8 +976,8 @@ bool FontStorage::MakeSpecialGlyphs ( android_vulkan::Renderer &renderer ) noexc
     if ( !query )
         return false;
 
-    _opaqueGlyphUV = PixToUV ( 0U, 0U );
-    _transparentGlyphUV = PixToUV ( 1U, 0U );
+    _opaqueGlyphUV = PixToUV ( 0U, 0U, SPECIAL_GLYPH_ATLAS_LAYER );
+    _transparentGlyphUV = PixToUV ( 1U, 0U, SPECIAL_GLYPH_ATLAS_LAYER );
 
     StagingBuffer &stagingBuffer = *query.value ();
     stagingBuffer._data[ 0U ] = std::numeric_limits<uint8_t>::max ();
@@ -990,11 +989,11 @@ bool FontStorage::MakeSpecialGlyphs ( android_vulkan::Renderer &renderer ) noexc
     return true;
 }
 
-GXVec2 FontStorage::PixToUV ( uint32_t x, uint32_t y ) const noexcept
+GXVec3 FontStorage::PixToUV ( uint32_t x, uint32_t y, float layer ) const noexcept
 {
-    GXVec2 result {};
-    result.Sum ( _halfPixelUV, _pixToUV, GXVec2 ( static_cast<float> ( x ), static_cast<float> ( y ) ) );
-    return result;
+    GXVec2 a {};
+    a.Sum ( _halfPixelUV, _pixToUV, GXVec2 ( static_cast<float> ( x ), static_cast<float> ( y ) ) );
+    return GXVec3 ( a._data[ 0U ], a._data[ 1U ], layer );
 }
 
 void FontStorage::TransferPixels ( VkCommandBuffer commandBuffer ) noexcept

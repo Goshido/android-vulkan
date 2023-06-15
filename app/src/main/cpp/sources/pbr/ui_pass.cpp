@@ -9,6 +9,7 @@ namespace {
 
 constexpr size_t MAX_VERTICES = 762600U;
 constexpr size_t BUFFER_BYTES = MAX_VERTICES * sizeof ( UIVertexInfo );
+constexpr size_t SCENE_IMAGE_VERTICES = 6U;
 
 } // end of anonymous namespace
 
@@ -157,10 +158,13 @@ void UIPass::RequestEmptyUI () noexcept
 
 UIPass::UIBufferResponse UIPass::RequestUIBuffer ( size_t neededVertices ) noexcept
 {
-    if ( neededVertices > MAX_VERTICES )
+    size_t const actualVertices = neededVertices + SCENE_IMAGE_VERTICES;
+
+    if ( actualVertices > MAX_VERTICES )
     {
-        android_vulkan::LogWarning ( "pbr::UIPass::RequestUIBuffer - Too many vertices was requested: %zu.",
-            neededVertices
+        android_vulkan::LogWarning ( "pbr::UIPass::RequestUIBuffer - Too many vertices was requested: %zu + %zu.",
+            neededVertices,
+            SCENE_IMAGE_VERTICES
         );
 
         AV_ASSERT ( false )
@@ -168,10 +172,11 @@ UIPass::UIBufferResponse UIPass::RequestUIBuffer ( size_t neededVertices ) noexc
     }
 
     constexpr size_t probeIdx = 1U;
-    size_t const cases[] = { 0U, _currentVertexIndex + neededVertices };
+    size_t const cases[] = { 0U, _currentVertexIndex + actualVertices };
     size_t const nextIdx = cases[ static_cast<size_t> ( cases[ probeIdx ] < MAX_VERTICES ) ];
 
-    VertexBuffer const result = VertexBuffer ( _data + _currentVertexIndex, neededVertices );
+    _sceneImageVertexIndex = _currentVertexIndex;
+    UIVertexBuffer const result = UIVertexBuffer ( _data + _currentVertexIndex + SCENE_IMAGE_VERTICES, neededVertices );
     _currentVertexIndex = nextIdx;
 
     return result;

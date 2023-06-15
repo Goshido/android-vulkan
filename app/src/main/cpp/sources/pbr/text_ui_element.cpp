@@ -26,6 +26,8 @@ TextUIElement::TextUIElement ( bool &success,
     UIElement ( true, parent ),
     _text ( std::move ( text ) )
 {
+    _glyphs.resize ( _text.size () );
+
     if ( success = lua_checkstack ( &vm, 2 ); !success )
     {
         android_vulkan::LogError ( "pbr::TextUIElement::TextUIElement - Stack is too small." );
@@ -77,6 +79,7 @@ void TextUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
     if ( !_visible | isEmpty )
         return;
 
+    _glyphs.clear ();
     FontStorage& fontStorage = *info._fontStorage;
 
     std::string const& fontAsset = *ResolveFont ();
@@ -117,23 +120,43 @@ void TextUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
     char32_t leftCharacter = 0;
     android_vulkan::Renderer& renderer = *info._renderer;
 
+    auto const appendGlyph = [ this ] ( int32_t x, int32_t y, FontStorage::GlyphInfo const &glyphInfo ) noexcept {
+        y += glyphInfo._offsetY;
+
+        _glyphs.emplace_back (
+            Glyph
+            {
+                ._topLeft = GXVec2 ( static_cast<float> ( x ), static_cast<float> ( y ) ),
+
+                ._bottomRight = GXVec2 ( static_cast<float> ( x + glyphInfo._width ),
+                    static_cast<float> ( y + glyphInfo._height )
+                ),
+
+                ._atlasTopLeft = glyphInfo._topLeft,
+                ._atlasBottomRight = glyphInfo._bottomRight
+            }
+        );
+    };
+
     {
         // Unroll first iteration of traverse loop to reduce amount of branching.
         char32_t const rightCharacter = text[ 0U ];
         text = text.substr ( 1U );
 
         FontStorage::GlyphInfo const& gi = fontStorage.GetGlyphInfo ( renderer, f, rightCharacter );
+        int32_t const baseX = x;
         x += gi._advance + FontStorage::GetKerning ( f, leftCharacter, rightCharacter );
         leftCharacter = rightCharacter;
 
         if ( x < w )
         {
-            y += lineHeights[ firstLineHeightIdx ];
+            appendGlyph ( baseX, y, gi );
         }
         else
         {
+            y += currentLineHeightInteger;
+            appendGlyph ( baseX, y, gi );
             x = l + gi._advance;
-            y += currentLineHeightInteger + lineHeights[ fontHeightIdx ];
             line = 1U;
         }
     }
@@ -144,17 +167,20 @@ void TextUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
     for ( char32_t const rightCharacter : text )
     {
         FontStorage::GlyphInfo const& gi = fontStorage.GetGlyphInfo ( renderer, f, rightCharacter );
+        int32_t const baseX = x;
         x += gi._advance + FontStorage::GetKerning ( f, leftCharacter, rightCharacter );
         leftCharacter = rightCharacter;
 
         if ( x < w )
         {
+            appendGlyph ( baseX, y, gi );
             firstLineState[ static_cast<size_t> ( line == 0U ) ] = true;
             continue;
         }
 
         x = l + gi._advance;
         y += lineHeights[ static_cast<size_t> ( line == 0U ) ];
+        appendGlyph ( baseX, y, gi );
         ++line;
     }
 
@@ -165,21 +191,98 @@ void TextUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
     info._newLines = line;
 
     penLocation._data[ 0U ] = static_cast<float> ( x );
-    penLocation._data[ 1U ] = fraction + static_cast<float> ( y - lineHeights[ static_cast<size_t> ( line == 0U ) ] );
+    penLocation._data[ 1U ] = static_cast<float> ( y ) + fraction;
 
     // One glyph is one rectangle (two triangles).
     info._vertices += 6U * text.size ();
 }
 
-void TextUIElement::Render () noexcept
+void TextUIElement::Submit ( SubmitInfo &info ) noexcept
 {
-    // TODO
+    size_t const glyphCount = _glyphs.size ();
+
+    if ( !_visible | ( glyphCount == 0U ) )
+        return;
+
+    UIVertexBuffer& vertexBuffer = info._vertexBuffer;
+    UIVertexInfo* v = vertexBuffer.data ();
+
+    Glyph const* glyphs = _glyphs.data ();
+    GXColorRGB const& color = ResolveColor ();
+
+    constexpr size_t verticesPerGlyph = 6U;
+    constexpr GXVec2 imageUV ( 0.5F, 0.5F );
+
+    for ( size_t i = 0U; i < glyphCount; ++i )
+    {
+        Glyph const& g = glyphs[ i ];
+
+        v[ 0U ] =
+        {
+            ._vertex = g._topLeft,
+            ._color = color,
+            ._atlas = g._atlasTopLeft,
+            ._imageUV = imageUV
+        };
+
+        v[ 1U ] =
+        {
+            ._vertex = GXVec2 ( g._bottomRight._data[ 0U ], g._topLeft._data[ 1U ] ),
+            ._color = color,
+
+            ._atlas =
+                GXVec3 ( g._atlasBottomRight._data[ 0U ], g._atlasTopLeft._data[ 1U ], g._atlasTopLeft._data[ 2U ] ),
+
+            ._imageUV = imageUV
+        };
+
+        v[ 2U ] =
+        {
+            ._vertex = g._bottomRight,
+            ._color = color,
+            ._atlas = g._atlasBottomRight,
+            ._imageUV = imageUV
+        };
+
+        v[ 3U ] =
+        {
+            ._vertex = g._bottomRight,
+            ._color = color,
+            ._atlas = g._atlasBottomRight,
+            ._imageUV = imageUV
+        };
+
+        v[ 4U ] =
+        {
+            ._vertex = GXVec2 ( g._topLeft._data[ 0U ], g._bottomRight._data[ 1U ] ),
+            ._color = color,
+
+            ._atlas =
+                GXVec3 ( g._atlasTopLeft._data[ 0U ], g._atlasBottomRight._data[ 1U ], g._atlasTopLeft._data[ 2U ] ),
+
+            ._imageUV = imageUV
+        };
+
+        v[ 5U ] =
+        {
+            ._vertex = g._topLeft,
+            ._color = color,
+            ._atlas = g._atlasTopLeft,
+            ._imageUV = imageUV
+        };
+
+        v += verticesPerGlyph;
+    }
+
+    size_t const vertexCount = glyphCount * verticesPerGlyph;
+    vertexBuffer = vertexBuffer.subspan ( vertexCount );
+    info._uiPass->SubmitText ( vertexCount );
 }
 
-[[maybe_unused]] GXColorRGB const* TextUIElement::ResolveColor () const noexcept
+GXColorRGB const& TextUIElement::ResolveColor () const noexcept
 {
     if ( _color )
-        return &_color.value ();
+        return _color.value ();
 
     for ( UIElement const* p = _parent; p; p = p->_parent )
     {
@@ -189,12 +292,15 @@ void TextUIElement::Render () noexcept
 
         if ( !color.IsInherit () )
         {
-            return &color.GetValue ();
+            return color.GetValue ();
         }
     }
 
+    android_vulkan::LogError ( "pbr::TextUIElement::ResolveColor - No color was found!" );
     AV_ASSERT ( false )
-    return nullptr;
+
+    constexpr static GXColorRGB nullColor ( 0.0F, 0.0F, 0.0F, 1.0F );
+    return nullColor;
 }
 
 std::string const* TextUIElement::ResolveFont () const noexcept
@@ -249,6 +355,7 @@ int TextUIElement::OnSetText ( lua_State* state )
 
     auto& self = *static_cast<TextUIElement*> ( lua_touserdata ( state, 1 ) );
     self._text = std::move ( *str );
+    self._glyphs.resize ( self._text.size () );
     return 0;
 }
 

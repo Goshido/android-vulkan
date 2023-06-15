@@ -46,7 +46,7 @@ class DIVUIElement final : public UIElement
         ~DIVUIElement () override = default;
 
         void ApplyLayout ( ApplyLayoutInfo &info ) noexcept override;
-        void Render () noexcept override;
+        void Submit ( SubmitInfo &info ) noexcept override;
 
         // Lua stack must have the following configuration:
         //      stack[ -1 ] -> child element

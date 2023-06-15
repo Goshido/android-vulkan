@@ -29,14 +29,14 @@ class ImageUIElement : public UIElement
             lua_State &vm,
             int errorHandlerIdx,
             std::string &&asset,
-            CSSComputedValues const &css
+            CSSComputedValues &&css
         ) noexcept;
 
         ~ImageUIElement () override = default;
 
     private:
         void ApplyLayout ( ApplyLayoutInfo &info ) noexcept override;
-        void Render () noexcept override;
+        void Submit ( SubmitInfo &info ) noexcept override;
 };
 
 } // namespace pbr

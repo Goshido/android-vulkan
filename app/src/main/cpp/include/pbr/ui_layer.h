@@ -4,7 +4,7 @@
 
 #include "div_ui_element.h"
 #include "html5_element.h"
-#include "render_session.h"
+#include "ui_pass.h"
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -49,10 +49,7 @@ class UILayer final
             FontStorage &fontStorage
         ) noexcept;
 
-        void Submit ( android_vulkan::Renderer &renderer,
-            RenderSession &renderSession,
-            FontStorage &fontStorage
-        ) noexcept;
+        void Submit ( UIElement::SubmitInfo &info ) noexcept;
 
         static void InitCSSUnitConverter ( float dpi, float comfortableViewDistanceMeters ) noexcept;
         static void InitLuaFrontend ( lua_State &vm ) noexcept;

@@ -600,12 +600,16 @@ void Scene::SubmitUI ( android_vulkan::Renderer &renderer, RenderSession &render
         return;
     }
 
-    UIPass::VertexBuffer vertexBuffer = *response;
-    (void)vertexBuffer;
+    UIElement::SubmitInfo info
+    {
+        ._fontStorage = &fontStorage,
+        ._uiPass = &uiPass,
+        ._vertexBuffer = *response
+    };
 
     for ( auto& uiLayer : _uiLayerList )
     {
-        uiLayer.get ().Submit ( renderer, renderSession, fontStorage );
+        uiLayer.get ().Submit ( info );
     }
 }
 

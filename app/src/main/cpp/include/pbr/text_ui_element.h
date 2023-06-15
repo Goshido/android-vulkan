@@ -18,10 +18,21 @@ namespace pbr {
 class TextUIElement final : public UIElement
 {
     private:
+        struct Glyph final
+        {
+            GXVec2                      _topLeft;
+            GXVec2                      _bottomRight;
+
+            GXVec3                      _atlasTopLeft;
+            GXVec3                      _atlasBottomRight;
+        };
+
+    private:
         // Way the user could override color which arrived from CSS.
         std::optional<GXColorRGB>       _color {};
 
         std::u32string                  _text {};
+        std::vector<Glyph>              _glyphs {};
 
     public:
         TextUIElement () = delete;
@@ -45,9 +56,9 @@ class TextUIElement final : public UIElement
 
     private:
         void ApplyLayout ( ApplyLayoutInfo &info ) noexcept override;
-        void Render () noexcept override;
+        void Submit ( SubmitInfo &info ) noexcept override;
 
-        [[maybe_unused, nodiscard]] GXColorRGB const* ResolveColor () const noexcept;
+        [[nodiscard]] GXColorRGB const& ResolveColor () const noexcept;
         [[nodiscard]] std::string const* ResolveFont () const noexcept;
 
         [[nodiscard]] static int OnSetColorHSV ( lua_State* state );

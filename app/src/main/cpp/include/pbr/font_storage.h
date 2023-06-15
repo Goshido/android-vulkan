@@ -22,29 +22,28 @@ class FontStorage final
     public:
         struct GlyphInfo final
         {
-            [[maybe_unused]] float          _atlasLayer = 0U;
-            GXVec2                          _topLeft = GXVec2 ( 0.0F, 0.0F );
-            GXVec2                          _bottomRight = GXVec2 ( 0.0F, 0.0F );
-            [[maybe_unused]] int32_t        _width = 0;
-            int32_t                         _height = 0;
-            int32_t                         _advance = 0;
-            [[maybe_unused]] int32_t        _offsetY = 0;
+            GXVec3                  _topLeft = GXVec3 ( 0.0F, 0.0F, 0.0F );
+            GXVec3                  _bottomRight = GXVec3 ( 0.0F, 0.0F, 0.0F );
+            int32_t                 _width = 0;
+            int32_t                 _height = 0;
+            int32_t                 _advance = 0;
+            int32_t                 _offsetY = 0;
         };
 
         struct FontResource final
         {
-            FT_Face                         _face;
-            std::vector<uint8_t>            _fontAsset;
+            FT_Face                 _face;
+            std::vector<uint8_t>    _fontAsset;
         };
 
         using GlyphStorage = std::unordered_map<char32_t, GlyphInfo>;
 
         struct FontData final
         {
-            FontResource*                   _fontResource;
-            uint32_t                        _fontSize;
-            GlyphStorage                    _glyphs;
-            int32_t                         _lineHeight;
+            FontResource*           _fontResource;
+            uint32_t                _fontSize;
+            GlyphStorage            _glyphs;
+            int32_t                 _lineHeight;
         };
 
         using FontHash = size_t;
@@ -56,9 +55,9 @@ class FontStorage final
 
         struct Line final
         {
-            uint32_t                        _height = 0U;
-            uint32_t                        _x = 0U;
-            uint32_t                        _y = 0U;
+            uint32_t                _height = 0U;
+            uint32_t                _x = 0U;
+            uint32_t                _y = 0U;
         };
 
         struct StagingBuffer final
@@ -69,14 +68,14 @@ class FontStorage final
                 FullLinePresent
             };
 
-            VkBuffer                        _buffer = VK_NULL_HANDLE;
-            uint8_t*                        _data = nullptr;
-            VkDeviceMemory                  _memory = VK_NULL_HANDLE;
-            VkDeviceSize                    _memoryOffset = 0U;
-            eState                          _state = eState::FirstLine;
+            VkBuffer                _buffer = VK_NULL_HANDLE;
+            uint8_t*                _data = nullptr;
+            VkDeviceMemory          _memory = VK_NULL_HANDLE;
+            VkDeviceSize            _memoryOffset = 0U;
+            eState                  _state = eState::FirstLine;
 
-            Line                            _endLine {};
-            Line                            _startLine {};
+            Line                    _endLine {};
+            Line                    _startLine {};
 
             [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, uint32_t side ) noexcept;
             void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
@@ -85,20 +84,20 @@ class FontStorage final
 
         struct ImageResource final
         {
-            VkImage                         _image = VK_NULL_HANDLE;
-            VkImageView                     _view = VK_NULL_HANDLE;
-            VkDeviceMemory                  _memory = VK_NULL_HANDLE;
-            VkDeviceSize                    _memoryOffset = 0U;
+            VkImage                 _image = VK_NULL_HANDLE;
+            VkImageView             _view = VK_NULL_HANDLE;
+            VkDeviceMemory          _memory = VK_NULL_HANDLE;
+            VkDeviceSize            _memoryOffset = 0U;
         };
 
         struct Atlas final
         {
-            ImageResource                   _resource {};
-            ImageResource                   _oldResource {};
+            ImageResource           _resource {};
+            ImageResource           _oldResource {};
 
-            uint32_t                        _layers = 0U;
-            Line                            _line {};
-            uint32_t                        _side = 0U;
+            uint32_t                _layers = 0U;
+            Line                    _line {};
+            uint32_t                _side = 0U;
 
             [[nodiscard]] bool AddLayers ( android_vulkan::Renderer &renderer,
                 VkCommandBuffer commandBuffer,
@@ -125,8 +124,8 @@ class FontStorage final
         GXVec2                              _halfPixelUV {};
         float                               _pixToUV {};
 
-        GXVec2                              _opaqueGlyphUV {};
-        GXVec2                              _transparentGlyphUV {};
+        GXVec3                              _opaqueGlyphUV {};
+        GXVec3                              _transparentGlyphUV {};
 
     public:
         FontStorage () = default;
@@ -171,7 +170,7 @@ class FontStorage final
         [[nodiscard]] std::optional<StagingBuffer*> GetStagingBuffer ( android_vulkan::Renderer &renderer ) noexcept;
 
         [[nodiscard]] bool MakeSpecialGlyphs ( android_vulkan::Renderer &renderer ) noexcept;
-        [[nodiscard]] GXVec2 PixToUV ( uint32_t x, uint32_t y ) const noexcept;
+        [[nodiscard]] GXVec3 PixToUV ( uint32_t x, uint32_t y, float layer ) const noexcept;
         void TransferPixels ( VkCommandBuffer commandBuffer ) noexcept;
 
         [[nodiscard]] static bool CheckFTResult ( FT_Error result, char const* from, char const* message ) noexcept;

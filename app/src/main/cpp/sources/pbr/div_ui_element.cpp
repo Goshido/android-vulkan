@@ -243,13 +243,13 @@ void DIVUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
     info._penLocation._data[ 1U ] += info._currentLineHeight;
 }
 
-void DIVUIElement::Render () noexcept
+void DIVUIElement::Submit ( SubmitInfo &info ) noexcept
 {
     // TODO
 
     for ( auto* child : _children )
     {
-        child->Render ();
+        child->Submit ( info );
     }
 }
 

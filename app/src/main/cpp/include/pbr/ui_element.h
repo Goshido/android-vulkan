@@ -4,6 +4,8 @@
 
 #include "css_unit_to_device_pixel.h"
 #include "font_storage.h"
+#include "ui_pass.h"
+#include "ui_vertex_info.h"
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -42,6 +44,13 @@ class UIElement
             size_t                          _vertices;
         };
 
+        struct SubmitInfo final
+        {
+            FontStorage*                    _fontStorage;
+            UIPass*                         _uiPass;
+            UIVertexBuffer                  _vertexBuffer;
+        };
+
     private:
         using Storage = std::unordered_map<UIElement const*, std::unique_ptr<UIElement>>;
 
@@ -66,7 +75,7 @@ class UIElement
         virtual ~UIElement () = default;
 
         virtual void ApplyLayout ( ApplyLayoutInfo &info ) noexcept = 0;
-        virtual void Render () noexcept = 0;
+        virtual void Submit ( SubmitInfo &info ) noexcept = 0;
 
         static void AppendElement ( UIElement &element ) noexcept;
         static void InitCommon ( lua_State &vm ) noexcept;

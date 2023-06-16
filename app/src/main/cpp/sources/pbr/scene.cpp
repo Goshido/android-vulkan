@@ -584,11 +584,15 @@ void Scene::SubmitUI ( android_vulkan::Renderer &renderer, RenderSession &render
     }
 
     if ( !needRedraw )
+    {
+        uiPass.Commit ();
         return;
+    }
 
     if ( neededUIVertices == 0U )
     {
         uiPass.RequestEmptyUI ();
+        uiPass.Commit ();
         return;
     }
 
@@ -597,6 +601,7 @@ void Scene::SubmitUI ( android_vulkan::Renderer &renderer, RenderSession &render
     if ( !response )
     {
         uiPass.RequestEmptyUI ();
+        uiPass.Commit ();
         return;
     }
 
@@ -608,9 +613,9 @@ void Scene::SubmitUI ( android_vulkan::Renderer &renderer, RenderSession &render
     };
 
     for ( auto& uiLayer : _uiLayerList )
-    {
         uiLayer.get ().Submit ( info );
-    }
+
+    uiPass.Commit ();
 }
 
 void Scene::FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept

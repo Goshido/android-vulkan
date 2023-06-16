@@ -65,7 +65,7 @@ void DIVUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
     GXVec2 const& canvasSize = info._canvasSize;
     CSSUnitToDevicePixel const& units = *info._cssUnits;
 
-    GXVec2 const marginTopLeft ( ResolvePixelLength ( _css._marginLeft, canvasSize._data[ 0U ], false, units ),
+    GXVec2 marginTopLeft ( ResolvePixelLength ( _css._marginLeft, canvasSize._data[ 0U ], false, units ),
         ResolvePixelLength ( _css._marginTop, canvasSize._data[ 1U ], true, units )
     );
 
@@ -73,7 +73,7 @@ void DIVUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
         ResolvePixelLength ( _css._paddingTop, canvasSize._data[ 1U ], true, units )
     );
 
-    GXVec2 const marginBottomRight ( ResolvePixelLength ( _css._marginRight, canvasSize._data[ 0U ], false, units ),
+    GXVec2 marginBottomRight ( ResolvePixelLength ( _css._marginRight, canvasSize._data[ 0U ], false, units ),
         ResolvePixelLength ( _css._marginBottom, canvasSize._data[ 1U ], true, units )
     );
 
@@ -194,7 +194,11 @@ void DIVUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
     info._vertices += vertices[ static_cast<size_t> ( hasBackgroundColor & hasBackgroundArea ) ];
 
     if ( _css._position == PositionProperty::eValue::Absolute )
+    {
+        _topLeft = marginTopLeft;
+        _bottomRight.Sum ( marginTopLeft, drawableArea );
         return;
+    }
 
     GXVec2 beta {};
     beta.Sum ( canvas, alpha );
@@ -208,6 +212,18 @@ void DIVUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
     if ( !sizeCheck ( blockSize ) )
         return;
 
+    auto const computeVisibleBounds = [ & ] () noexcept {
+        // Reusing "marginBottomRight" and "marginTopLeft" variables. They will be not used anyway.
+        marginTopLeft.Reverse ();
+        marginBottomRight.Reverse ();
+
+        GXVec2 yotta {};
+        yotta.Sum ( blockSize, GXVec2 ( marginTopLeft._data[ 0U ], marginBottomRight._data[ 1U ] ) );
+
+        _topLeft.Subtract ( info._penLocation, GXVec2 ( yotta._data[ 0U ], -marginTopLeft._data[ 1U ] ) );
+        _bottomRight.Sum ( info._penLocation, GXVec2 ( marginBottomRight._data[ 0U ], yotta._data[ 1U ] ) );
+    };
+
     if ( _css._display == DisplayProperty::eValue::Block )
     {
         // Block starts from new line and consumes whole parent block line.
@@ -219,6 +235,8 @@ void DIVUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
         info._newLineHeight = blockSize._data[ 1U ];
         info._penLocation._data[ 0U ] = parentLeft + blockSize._data[ 0U ];
         info._penLocation._data[ 1U ] = info._parentTopLeft._data[ 1U ];
+
+        computeVisibleBounds ();
         return;
     }
 
@@ -233,6 +251,8 @@ void DIVUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
         info._currentLineHeight = std::max ( info._currentLineHeight, blockSize._data[ 1U ] );
         info._newLines = 0U;
         info._penLocation._data[ 0U ] += blockSize._data[ 0U ];
+
+        computeVisibleBounds ();
         return;
     }
 
@@ -241,11 +261,38 @@ void DIVUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
     info._newLineHeight = blockSize._data[ 1U ];
     info._penLocation._data[ 0U ] = parentLeft + blockSize._data[ 0U ];
     info._penLocation._data[ 1U ] += info._currentLineHeight;
+
+    computeVisibleBounds ();
 }
 
 void DIVUIElement::Submit ( SubmitInfo &info ) noexcept
 {
-    // TODO
+    if ( !_visible )
+        return;
+
+    GXColorRGB const& color = _css._backgroundColor.GetValue ();
+
+    if ( color._data[ 3U ] > 0.0F )
+    {
+        constexpr GXVec2 imageUV ( 0.5F, 0.5F );
+
+        UIVertexBuffer& vertexBuffer = info._vertexBuffer;
+        FontStorage::GlyphInfo const& glyphInfo = info._fontStorage->GetOpaqueGlyphInfo ();
+
+        UIPass::AppendRectangle ( vertexBuffer.data (),
+            color,
+            _topLeft,
+            _bottomRight,
+            glyphInfo._topLeft,
+            glyphInfo._bottomRight,
+            imageUV,
+            imageUV
+        );
+
+        constexpr size_t verticesPerBackground = 6U;
+        vertexBuffer = vertexBuffer.subspan ( verticesPerBackground );
+        info._uiPass->SubmitRectangle ();
+    }
 
     for ( auto* child : _children )
     {

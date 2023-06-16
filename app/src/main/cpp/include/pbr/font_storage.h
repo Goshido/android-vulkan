@@ -124,8 +124,8 @@ class FontStorage final
         GXVec2                              _halfPixelUV {};
         float                               _pixToUV {};
 
-        GXVec3                              _opaqueGlyphUV {};
-        GXVec3                              _transparentGlyphUV {};
+        GlyphInfo                           _opaqueGlyph {};
+        GlyphInfo                           _transparentGlyph {};
 
     public:
         FontStorage () = default;
@@ -142,6 +142,9 @@ class FontStorage final
         void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
 
         [[nodiscard]] std::optional<Font> GetFont ( std::string_view font, uint32_t size ) noexcept;
+
+        [[nodiscard]] GlyphInfo const& GetOpaqueGlyphInfo () const noexcept;
+        [[nodiscard]] GlyphInfo const& GetTransparentGlyphInfo () const noexcept;
 
         [[nodiscard]] GlyphInfo const& GetGlyphInfo ( android_vulkan::Renderer &renderer,
             Font font,

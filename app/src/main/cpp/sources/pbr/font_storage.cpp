@@ -554,6 +554,16 @@ std::optional<FontStorage::Font> FontStorage::GetFont ( std::string_view font, u
     return status.first;
 }
 
+FontStorage::GlyphInfo const& FontStorage::GetOpaqueGlyphInfo () const noexcept
+{
+    return _opaqueGlyph;
+}
+
+FontStorage::GlyphInfo const& FontStorage::GetTransparentGlyphInfo () const noexcept
+{
+    return _transparentGlyph;
+}
+
 FontStorage::GlyphInfo const& FontStorage::GetGlyphInfo ( android_vulkan::Renderer &renderer,
     Font font,
     char32_t character
@@ -785,8 +795,8 @@ FontStorage::GlyphInfo const& FontStorage::EmbedGlyph ( android_vulkan::Renderer
         auto const status = glyphs.emplace ( character,
             GlyphInfo
             {
-                ._topLeft = _transparentGlyphUV,
-                ._bottomRight = _transparentGlyphUV,
+                ._topLeft = _transparentGlyph._topLeft,
+                ._bottomRight = _transparentGlyph._bottomRight,
                 ._width = static_cast<int32_t> ( width ),
                 ._height = static_cast<int32_t> ( rows ),
                 ._advance = static_cast<int32_t> ( slot->advance.x ) >> 6U,
@@ -976,8 +986,29 @@ bool FontStorage::MakeSpecialGlyphs ( android_vulkan::Renderer &renderer ) noexc
     if ( !query )
         return false;
 
-    _opaqueGlyphUV = PixToUV ( 0U, 0U, SPECIAL_GLYPH_ATLAS_LAYER );
-    _transparentGlyphUV = PixToUV ( 1U, 0U, SPECIAL_GLYPH_ATLAS_LAYER );
+    GXVec3 const opaque = PixToUV ( 0U, 0U, SPECIAL_GLYPH_ATLAS_LAYER );
+
+    _opaqueGlyph =
+    {
+        ._topLeft = opaque,
+        ._bottomRight = opaque,
+        ._width = 1,
+        ._height = 1,
+        ._advance = 0,
+        ._offsetY = 0
+    };
+
+    GXVec3 const transparent = PixToUV ( 1U, 0U, SPECIAL_GLYPH_ATLAS_LAYER );
+
+    _transparentGlyph =
+    {
+        ._topLeft = transparent,
+        ._bottomRight = transparent,
+        ._width = 1,
+        ._height = 1,
+        ._advance = 0,
+        ._offsetY = 0
+    };
 
     StagingBuffer &stagingBuffer = *query.value ();
     stagingBuffer._data[ 0U ] = std::numeric_limits<uint8_t>::max ();

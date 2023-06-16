@@ -18,11 +18,17 @@ class DIVUIElement final : public UIElement
 {
     private:
         std::deque<UIElement*>      _children {};
+
         bool                        _isAutoWidth;
         bool                        _isAutoHeight;
         bool                        _isInlineBlock;
+
         std::vector<float>          _lineHeights {};
-        size_t                      _widthSelectorBase;
+
+        GXVec2                      _topLeft {};
+        GXVec2                      _bottomRight {};
+
+        size_t const                _widthSelectorBase;
 
     public:
         CSSComputedValues           _css {};

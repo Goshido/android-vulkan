@@ -133,17 +133,23 @@ void UIPass::Destroy ( android_vulkan::Renderer &renderer ) noexcept
     _staging.Destroy ( renderer );
     _vertex.Destroy ( renderer );
     _fontStorage.Destroy ( renderer );
+
+    _isSceneImageEmbedded = false;
+    _hasChanges = false;
 }
 
-bool UIPass::Execute ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept
+void UIPass::Commit () noexcept
 {
-    AV_TRACE ( "UI pass execute" )
+    if ( !_isSceneImageEmbedded && !EmbedSceneImage () )
+        return;
 
-    if ( !_fontStorage.UploadGPUData ( renderer, commandBuffer ) )
-        return false;
+    // TODO last block of vertices.
+}
 
+void UIPass::Execute ( VkCommandBuffer /*commandBuffer*/ ) noexcept
+{
+    AV_TRACE ( "UI pass: Execute" )
     // TODO
-    return true;
 }
 
 FontStorage& UIPass::GetFontStorage () noexcept
@@ -178,6 +184,7 @@ UIPass::UIBufferResponse UIPass::RequestUIBuffer ( size_t neededVertices ) noexc
     _sceneImageVertexIndex = _currentVertexIndex;
     UIVertexBuffer const result = UIVertexBuffer ( _data + _currentVertexIndex + SCENE_IMAGE_VERTICES, neededVertices );
     _currentVertexIndex = nextIdx;
+    _isSceneImageEmbedded = false;
 
     return result;
 }
@@ -198,22 +205,136 @@ bool UIPass::SetResolution ( android_vulkan::Renderer &renderer, VkRenderPass re
         return false;
 
     _resolution = resolution;
+    _bottomRight = GXVec2 ( static_cast<float> ( resolution.width ), static_cast<float> ( resolution.height ) );
+
     return true;
 }
 
 void UIPass::SubmitImage () noexcept
 {
     // TODO
+    _hasChanges = true;
 }
 
 void UIPass::SubmitRectangle () noexcept
 {
     // TODO
+    _hasChanges = true;
 }
 
 void UIPass::SubmitText ( size_t /*usedVertices*/ ) noexcept
 {
     // TODO
+    _hasChanges = true;
+}
+
+bool UIPass::UploadGPUData (android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept
+{
+    AV_TRACE ( "UI pass: Upload GPU data" )
+
+    if ( !_fontStorage.UploadGPUData ( renderer, commandBuffer ) )
+        return false;
+
+    if ( !_hasChanges )
+        return true;
+
+    // TODO
+    _hasChanges = false;
+    return true;
+}
+
+void UIPass::AppendRectangle ( UIVertexInfo* target,
+    GXColorRGB const &color,
+    GXVec2 const &topLeft,
+    GXVec2 const &bottomRight,
+    GXVec3 const &glyphTopLeft,
+    GXVec3 const &glyphBottomRight,
+    GXVec2 const &imageTopLeft,
+    GXVec2 const &imageBottomRight
+) noexcept
+{
+    target[ 0U ] =
+    {
+        ._vertex = topLeft,
+        ._color = color,
+        ._atlas = glyphTopLeft,
+        ._imageUV = imageTopLeft
+    };
+
+    target[ 1U ] =
+    {
+        ._vertex = GXVec2 ( bottomRight._data[ 0U ], topLeft._data[ 1U ] ),
+        ._color = color,
+        ._atlas = GXVec3 ( glyphBottomRight._data[ 0U ], glyphTopLeft._data[ 1U ], glyphTopLeft._data[ 2U ] ),
+        ._imageUV = GXVec2 ( imageBottomRight._data[ 0U ], imageTopLeft._data[ 1U ] )
+    };
+
+    target[ 2U ] =
+    {
+        ._vertex = bottomRight,
+        ._color = color,
+        ._atlas = glyphBottomRight,
+        ._imageUV = imageBottomRight
+    };
+
+    target[ 3U ] =
+    {
+        ._vertex = bottomRight,
+        ._color = color,
+        ._atlas = glyphBottomRight,
+        ._imageUV = imageBottomRight
+    };
+
+    target[ 4U ] =
+    {
+        ._vertex = GXVec2 ( topLeft._data[ 0U ], bottomRight._data[ 1U ] ),
+        ._color = color,
+        ._atlas = GXVec3 ( glyphTopLeft._data[ 0U ], glyphBottomRight._data[ 1U ], glyphTopLeft._data[ 2U ] ),
+        ._imageUV = GXVec2 ( imageTopLeft._data[ 0U ], imageBottomRight._data[ 1U ] )
+    };
+
+    target[ 5U ] =
+    {
+        ._vertex = topLeft,
+        ._color = color,
+        ._atlas = glyphTopLeft,
+        ._imageUV = imageTopLeft
+    };
+}
+
+bool UIPass::EmbedSceneImage () noexcept
+{
+    if ( !_hasChanges )
+    {
+        // Passing zero vertices because "RequestUIBuffer" implicitly adds 6 vertices for scene image rectangle needs.
+        if ( UIBufferResponse const response = RequestUIBuffer ( 0U ); !response )
+        {
+            return false;
+        }
+    }
+
+    constexpr GXColorRGB white ( 1.0F, 1.0F, 1.0F, 1.0F );
+    constexpr GXVec2 topLeft ( 0.0F, 0.0F );
+
+    constexpr GXVec2 imageTopLeft ( 0.0F, 0.0F );
+    constexpr GXVec2 imageBottomRight ( 1.0F, 1.0F );
+
+    FontStorage::GlyphInfo const& g = _fontStorage.GetTransparentGlyphInfo ();
+
+    AppendRectangle ( _data + _sceneImageVertexIndex,
+        white,
+        topLeft,
+        _bottomRight,
+        g._topLeft,
+        g._bottomRight,
+        imageTopLeft,
+        imageBottomRight
+    );
+
+    SubmitImage ();
+    _isSceneImageEmbedded = true;
+
+    return true;
 }
 
 } // namespace pbr

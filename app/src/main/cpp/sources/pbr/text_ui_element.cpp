@@ -217,59 +217,15 @@ void TextUIElement::Submit ( SubmitInfo &info ) noexcept
     {
         Glyph const& g = glyphs[ i ];
 
-        v[ 0U ] =
-        {
-            ._vertex = g._topLeft,
-            ._color = color,
-            ._atlas = g._atlasTopLeft,
-            ._imageUV = imageUV
-        };
-
-        v[ 1U ] =
-        {
-            ._vertex = GXVec2 ( g._bottomRight._data[ 0U ], g._topLeft._data[ 1U ] ),
-            ._color = color,
-
-            ._atlas =
-                GXVec3 ( g._atlasBottomRight._data[ 0U ], g._atlasTopLeft._data[ 1U ], g._atlasTopLeft._data[ 2U ] ),
-
-            ._imageUV = imageUV
-        };
-
-        v[ 2U ] =
-        {
-            ._vertex = g._bottomRight,
-            ._color = color,
-            ._atlas = g._atlasBottomRight,
-            ._imageUV = imageUV
-        };
-
-        v[ 3U ] =
-        {
-            ._vertex = g._bottomRight,
-            ._color = color,
-            ._atlas = g._atlasBottomRight,
-            ._imageUV = imageUV
-        };
-
-        v[ 4U ] =
-        {
-            ._vertex = GXVec2 ( g._topLeft._data[ 0U ], g._bottomRight._data[ 1U ] ),
-            ._color = color,
-
-            ._atlas =
-                GXVec3 ( g._atlasTopLeft._data[ 0U ], g._atlasBottomRight._data[ 1U ], g._atlasTopLeft._data[ 2U ] ),
-
-            ._imageUV = imageUV
-        };
-
-        v[ 5U ] =
-        {
-            ._vertex = g._topLeft,
-            ._color = color,
-            ._atlas = g._atlasTopLeft,
-            ._imageUV = imageUV
-        };
+        UIPass::AppendRectangle ( v,
+            color,
+            g._topLeft,
+            g._bottomRight,
+            g._atlasTopLeft,
+            g._atlasBottomRight,
+            imageUV,
+            imageUV
+        );
 
         v += verticesPerGlyph;
     }

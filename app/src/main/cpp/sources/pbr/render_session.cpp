@@ -83,7 +83,7 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
         "Can't begin main render pass"
     );
 
-    if ( !result )
+    if ( !result || !_uiPass.UploadGPUData ( renderer, commandBuffer ) )
         return false;
 
     result = _lightPass.OnPreGeometryPass ( renderer,
@@ -113,8 +113,7 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
 
     vkCmdEndRenderPass ( commandBuffer );
 
-    if ( !_uiPass.Execute ( renderer, commandBuffer ) )
-        return false;
+    _uiPass.Execute ( commandBuffer );
 
     _renderSessionStats.RenderPointLights ( _lightPass.GetPointLightCount () );
     _renderSessionStats.RenderReflectionLocal ( _lightPass.GetReflectionLocalCount () );

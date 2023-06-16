@@ -38,10 +38,15 @@ class UIPass final
         };
 
     private:
+        GXVec2                  _bottomRight {};
         UIVertexInfo*           _data = nullptr;
         size_t                  _sceneImageVertexIndex = 0U;
         size_t                  _currentVertexIndex = 0U;
         FontStorage             _fontStorage {};
+
+        bool                    _hasChanges = false;
+        bool                    _isSceneImageEmbedded = false;
+
         UIProgram               _program {};
 
         VkExtent2D              _resolution
@@ -66,18 +71,33 @@ class UIPass final
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer ) noexcept;
         void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
-        [[nodiscard]] bool Execute ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept;
+
+        void Commit () noexcept;
+        void Execute ( VkCommandBuffer commandBuffer ) noexcept;
 
         [[nodiscard]] FontStorage& GetFontStorage () noexcept;
-
         void RequestEmptyUI () noexcept;
         [[nodiscard]] UIBufferResponse RequestUIBuffer ( size_t neededVertices ) noexcept;
-
         [[nodiscard]] bool SetResolution ( android_vulkan::Renderer &renderer, VkRenderPass renderPass ) noexcept;
 
         void SubmitImage () noexcept;
         void SubmitRectangle () noexcept;
         void SubmitText ( size_t usedVertices ) noexcept;
+
+        [[nodiscard]] bool UploadGPUData ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept;
+
+        static void AppendRectangle ( UIVertexInfo* target,
+            GXColorRGB const &color,
+            GXVec2 const &topLeft,
+            GXVec2 const &bottomRight,
+            GXVec3 const &glyphTopLeft,
+            GXVec3 const &glyphBottomRight,
+            GXVec2 const &imageTopLeft,
+            GXVec2 const &imageBottomRight
+        ) noexcept;
+
+    private:
+        [[nodiscard]] bool EmbedSceneImage () noexcept;
 };
 
 } // namespace pbr

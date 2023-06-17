@@ -28,7 +28,7 @@ android {
         targetCompatibility JavaVersion.VERSION_17
     }
 
-    // Release stuff and certificates. No hardcode. All delegates to the user environment.
+    // Release stuff and certificates. No hardcode. All settings are delegated to the user environment.
     // Based on https://gist.github.com/lifuzu/9822276
     signingConfigs {
         release {

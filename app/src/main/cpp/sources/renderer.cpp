@@ -1395,13 +1395,13 @@ bool Renderer::DeployDebugFeatures () noexcept
         vkGetInstanceProcAddr ( _instance, "vkCreateDebugReportCallbackEXT" )
     );
 
-    assert ( vkCreateDebugReportCallbackEXT );
+    AV_ASSERT ( vkCreateDebugReportCallbackEXT )
 
     vkDestroyDebugReportCallbackEXT = reinterpret_cast<PFN_vkDestroyDebugReportCallbackEXT> (
         vkGetInstanceProcAddr ( _instance, "vkDestroyDebugReportCallbackEXT" )
     );
 
-    assert ( vkDestroyDebugReportCallbackEXT );
+    AV_ASSERT ( vkDestroyDebugReportCallbackEXT )
 
     _loggerMapper.insert (
         std::make_pair ( VK_DEBUG_REPORT_INFORMATION_BIT_EXT,

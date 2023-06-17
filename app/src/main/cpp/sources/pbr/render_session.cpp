@@ -243,7 +243,12 @@ bool RenderSession::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
     if ( !_presentPass.Init ( renderer ) )
         return false;
 
-    if ( _uiPass.SetResolution ( renderer, _presentPass.FUCKGetRenderPass () ) )
+    bool const result = _uiPass.SetPresentationInfo ( renderer,
+        _presentPass.FUCKGetRenderPass (),
+        _gBuffer.GetHDRAccumulator ().GetImage ()
+    );
+
+    if ( result )
         return true;
 
     DestroyGBufferResources ( renderer );

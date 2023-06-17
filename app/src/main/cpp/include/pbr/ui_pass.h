@@ -3,6 +3,7 @@
 
 
 #include "font_storage.h"
+#include "types.h"
 #include "ui_program.h"
 #include "ui_vertex_info.h"
 
@@ -23,10 +24,10 @@ class UIPass final
     private:
         struct Buffer final
         {
-            VkBuffer            _buffer = VK_NULL_HANDLE;
-            VkDeviceMemory      _memory = VK_NULL_HANDLE;
-            char const*         _name = nullptr;
-            VkDeviceSize        _memoryOffset = 0U;
+            VkBuffer                _buffer = VK_NULL_HANDLE;
+            VkDeviceMemory          _memory = VK_NULL_HANDLE;
+            char const*             _name = nullptr;
+            VkDeviceSize            _memoryOffset = 0U;
 
             [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
                 VkBufferUsageFlags usage,
@@ -37,26 +38,37 @@ class UIPass final
             void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
         };
 
+        struct Job final
+        {
+            Texture2DRef            _texture {};
+            uint32_t                _vertices {};
+        };
+
     private:
-        GXVec2                  _bottomRight {};
-        UIVertexInfo*           _data = nullptr;
-        size_t                  _sceneImageVertexIndex = 0U;
-        size_t                  _currentVertexIndex = 0U;
-        FontStorage             _fontStorage {};
+        GXVec2                      _bottomRight {};
+        UIVertexInfo*               _data = nullptr;
 
-        bool                    _hasChanges = false;
-        bool                    _isSceneImageEmbedded = false;
+        size_t                      _currentVertexIndex = 0U;
+        size_t                      _sceneImageVertexIndex = 0U;
 
-        UIProgram               _program {};
+        FontStorage                 _fontStorage {};
 
-        VkExtent2D              _resolution
+        bool                        _hasChanges = false;
+        bool                        _isSceneImageEmbedded = false;
+        std::vector<Job>            _jobs {};
+
+        UIProgram                   _program {};
+
+        VkExtent2D                  _resolution
         {
             .width = 0U,
             .height = 0U
         };
 
-        Buffer                  _staging {};
-        Buffer                  _vertex {};
+        [[maybe_unused]] VkImage    _sceneImage = VK_NULL_HANDLE;
+
+        Buffer                      _staging {};
+        Buffer                      _vertex {};
 
     public:
         UIPass () = default;
@@ -72,19 +84,28 @@ class UIPass final
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer ) noexcept;
         void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
 
-        void Commit () noexcept;
+        [[nodiscard]] bool Commit () noexcept;
         void Execute ( VkCommandBuffer commandBuffer ) noexcept;
 
         [[nodiscard]] FontStorage& GetFontStorage () noexcept;
         void RequestEmptyUI () noexcept;
         [[nodiscard]] UIBufferResponse RequestUIBuffer ( size_t neededVertices ) noexcept;
-        [[nodiscard]] bool SetResolution ( android_vulkan::Renderer &renderer, VkRenderPass renderPass ) noexcept;
 
-        void SubmitImage () noexcept;
+        [[nodiscard]] bool SetPresentationInfo ( android_vulkan::Renderer &renderer,
+            VkRenderPass renderPass,
+            VkImage scene
+        ) noexcept;
+
+        [[maybe_unused]] void SubmitImage ( Texture2DRef const &texture ) noexcept;
         void SubmitRectangle () noexcept;
         void SubmitText ( size_t usedVertices ) noexcept;
 
         [[nodiscard]] bool UploadGPUData ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept;
+
+        [[nodiscard]] constexpr static size_t GetVerticesPerRectangle () noexcept
+        {
+            return 6U;
+        }
 
         static void AppendRectangle ( UIVertexInfo* target,
             GXColorRGB const &color,
@@ -97,7 +118,7 @@ class UIPass final
         ) noexcept;
 
     private:
-        [[nodiscard]] bool EmbedSceneImage () noexcept;
+        void SubmitNonImage ( size_t usedVertices ) noexcept;
 };
 
 } // namespace pbr

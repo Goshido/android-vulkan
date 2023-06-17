@@ -9,7 +9,6 @@ namespace {
 
 constexpr size_t MAX_VERTICES = 762600U;
 constexpr size_t BUFFER_BYTES = MAX_VERTICES * sizeof ( UIVertexInfo );
-constexpr size_t SCENE_IMAGE_VERTICES = 6U;
 
 } // end of anonymous namespace
 
@@ -138,12 +137,40 @@ void UIPass::Destroy ( android_vulkan::Renderer &renderer ) noexcept
     _hasChanges = false;
 }
 
-void UIPass::Commit () noexcept
+bool UIPass::Commit () noexcept
 {
-    if ( !_isSceneImageEmbedded && !EmbedSceneImage () )
-        return;
+    if ( _isSceneImageEmbedded )
+        return true;
 
-    // TODO last block of vertices.
+    if ( !_hasChanges )
+    {
+        // Passing zero vertices because "RequestUIBuffer" implicitly adds 6 vertices for scene image rectangle needs.
+        if ( UIBufferResponse const response = RequestUIBuffer ( 0U ); !response )
+        {
+            return false;
+        }
+    }
+
+    constexpr GXColorRGB white ( 1.0F, 1.0F, 1.0F, 1.0F );
+    constexpr GXVec2 topLeft ( 0.0F, 0.0F );
+
+    constexpr GXVec2 imageTopLeft ( 0.0F, 0.0F );
+    constexpr GXVec2 imageBottomRight ( 1.0F, 1.0F );
+
+    FontStorage::GlyphInfo const& g = _fontStorage.GetTransparentGlyphInfo ();
+
+    AppendRectangle ( _data + _sceneImageVertexIndex,
+        white,
+        topLeft,
+        _bottomRight,
+        g._topLeft,
+        g._bottomRight,
+        imageTopLeft,
+        imageBottomRight
+    );
+
+    _isSceneImageEmbedded = true;
+    return true;
 }
 
 void UIPass::Execute ( VkCommandBuffer /*commandBuffer*/ ) noexcept
@@ -159,18 +186,24 @@ FontStorage& UIPass::GetFontStorage () noexcept
 
 void UIPass::RequestEmptyUI () noexcept
 {
-    // TODO
+    if ( !_jobs.empty () )
+    {
+        _hasChanges = true;
+        _isSceneImageEmbedded = false;
+    }
+
+    _jobs.clear ();
 }
 
 UIPass::UIBufferResponse UIPass::RequestUIBuffer ( size_t neededVertices ) noexcept
 {
-    size_t const actualVertices = neededVertices + SCENE_IMAGE_VERTICES;
+    size_t const actualVertices = neededVertices + GetVerticesPerRectangle ();
 
     if ( actualVertices > MAX_VERTICES )
     {
         android_vulkan::LogWarning ( "pbr::UIPass::RequestUIBuffer - Too many vertices was requested: %zu + %zu.",
             neededVertices,
-            SCENE_IMAGE_VERTICES
+            GetVerticesPerRectangle ()
         );
 
         AV_ASSERT ( false )
@@ -182,15 +215,20 @@ UIPass::UIBufferResponse UIPass::RequestUIBuffer ( size_t neededVertices ) noexc
     size_t const nextIdx = cases[ static_cast<size_t> ( cases[ probeIdx ] < MAX_VERTICES ) ];
 
     _sceneImageVertexIndex = _currentVertexIndex;
-    UIVertexBuffer const result = UIVertexBuffer ( _data + _currentVertexIndex + SCENE_IMAGE_VERTICES, neededVertices );
+
+    UIVertexBuffer const result = UIVertexBuffer ( _data + _currentVertexIndex + GetVerticesPerRectangle (),
+        neededVertices
+    );
+
     _currentVertexIndex = nextIdx;
     _isSceneImageEmbedded = false;
 
     return result;
 }
 
-bool UIPass::SetResolution ( android_vulkan::Renderer &renderer, VkRenderPass renderPass ) noexcept
+bool UIPass::SetPresentationInfo ( android_vulkan::Renderer &renderer, VkRenderPass renderPass, VkImage scene ) noexcept
 {
+    _sceneImage = scene;
     VkExtent2D const& resolution = renderer.GetSurfaceSize ();
 
     if ( ( _resolution.width == resolution.width ) & ( _resolution.height == resolution.height ) )
@@ -210,25 +248,32 @@ bool UIPass::SetResolution ( android_vulkan::Renderer &renderer, VkRenderPass re
     return true;
 }
 
-void UIPass::SubmitImage () noexcept
+[[maybe_unused]] void UIPass::SubmitImage ( Texture2DRef const &texture ) noexcept
 {
-    // TODO
+    // TODO actual image and in use|free logic
+
+    _jobs.emplace_back (
+        Job
+        {
+            ._texture = texture,
+            ._vertices = static_cast<uint32_t> ( GetVerticesPerRectangle () )
+        }
+    );
+
     _hasChanges = true;
 }
 
 void UIPass::SubmitRectangle () noexcept
 {
-    // TODO
-    _hasChanges = true;
+    SubmitNonImage ( GetVerticesPerRectangle () );
 }
 
-void UIPass::SubmitText ( size_t /*usedVertices*/ ) noexcept
+void UIPass::SubmitText ( size_t usedVertices ) noexcept
 {
-    // TODO
-    _hasChanges = true;
+    SubmitNonImage ( usedVertices );
 }
 
-bool UIPass::UploadGPUData (android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept
+bool UIPass::UploadGPUData ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept
 {
     AV_TRACE ( "UI pass: Upload GPU data" )
 
@@ -238,7 +283,44 @@ bool UIPass::UploadGPUData (android_vulkan::Renderer &renderer, VkCommandBuffer 
     if ( !_hasChanges )
         return true;
 
-    // TODO
+    constexpr size_t const elementSize = sizeof ( UIVertexInfo );
+    auto const offset = static_cast<VkDeviceSize> ( _sceneImageVertexIndex * elementSize );
+    auto const size = static_cast<VkDeviceSize> ( elementSize * ( _currentVertexIndex - _sceneImageVertexIndex ) );
+
+    VkBufferCopy const copy
+    {
+        .srcOffset = offset,
+        .dstOffset = offset,
+        .size = size
+    };
+
+    vkCmdCopyBuffer ( commandBuffer, _staging._buffer, _vertex._buffer, 1U, &copy );
+
+    VkBufferMemoryBarrier const barrier
+    {
+        .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
+        .pNext = nullptr,
+        .srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
+        .dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT,
+        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .buffer = _vertex._buffer,
+        .offset = offset,
+        .size = size
+    };
+
+    vkCmdPipelineBarrier ( commandBuffer,
+        VK_PIPELINE_STAGE_TRANSFER_BIT,
+        VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
+        0U,
+        0U,
+        nullptr,
+        1U,
+        &barrier,
+        0U,
+        nullptr
+    );
+
     _hasChanges = false;
     return true;
 }
@@ -302,39 +384,38 @@ void UIPass::AppendRectangle ( UIVertexInfo* target,
     };
 }
 
-bool UIPass::EmbedSceneImage () noexcept
+void UIPass::SubmitNonImage ( size_t usedVertices ) noexcept
 {
-    if ( !_hasChanges )
+    _hasChanges = true;
+
+    if ( _jobs.empty () )
     {
-        // Passing zero vertices because "RequestUIBuffer" implicitly adds 6 vertices for scene image rectangle needs.
-        if ( UIBufferResponse const response = RequestUIBuffer ( 0U ); !response )
-        {
-            return false;
-        }
+        _jobs.emplace_back (
+            Job
+            {
+                ._texture = {},
+                ._vertices = static_cast<uint32_t> ( usedVertices )
+            }
+        );
+
+        return;
     }
 
-    constexpr GXColorRGB white ( 1.0F, 1.0F, 1.0F, 1.0F );
-    constexpr GXVec2 topLeft ( 0.0F, 0.0F );
+    Job& last = _jobs.back ();
 
-    constexpr GXVec2 imageTopLeft ( 0.0F, 0.0F );
-    constexpr GXVec2 imageBottomRight ( 1.0F, 1.0F );
+    if ( !last._texture )
+    {
+        last._vertices += static_cast<uint32_t> ( GetVerticesPerRectangle () );
+        return;
+    }
 
-    FontStorage::GlyphInfo const& g = _fontStorage.GetTransparentGlyphInfo ();
-
-    AppendRectangle ( _data + _sceneImageVertexIndex,
-        white,
-        topLeft,
-        _bottomRight,
-        g._topLeft,
-        g._bottomRight,
-        imageTopLeft,
-        imageBottomRight
+    _jobs.emplace_back (
+        Job
+        {
+            ._texture = {},
+            ._vertices = static_cast<uint32_t> ( usedVertices )
+        }
     );
-
-    SubmitImage ();
-    _isSceneImageEmbedded = true;
-
-    return true;
 }
 
 } // namespace pbr

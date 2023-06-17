@@ -177,7 +177,7 @@ void CheckVulkanLeaks ()
 {
     std::shared_lock<std::shared_timed_mutex> lock ( g_Lock );
 
-    bool result = CheckNonDispatchableObjectLeaks ( "Buffer", g_Buffers );
+    [[maybe_unused]] bool result = CheckNonDispatchableObjectLeaks ( "Buffer", g_Buffers );
     result &= CheckNonDispatchableObjectLeaks ( "Command pool", g_CommandPools );
     result &= CheckNonDispatchableObjectLeaks ( "Descriptor pool", g_DescriptorPools );
     result &= CheckNonDispatchableObjectLeaks ( "Descriptor set layout", g_DescriptorSetLayouts );
@@ -196,12 +196,12 @@ void CheckVulkanLeaks ()
     result &= CheckNonDispatchableObjectLeaks ( "Surface", g_Surfaces );
     result &= CheckNonDispatchableObjectLeaks ( "Swapchain", g_Swapchains );
 
-#ifdef ANDROID_VULKAN_STRICT_MODE
+#if defined ( ANDROID_VULKAN_STRICT_MODE ) && !defined ( NDEBUG )
 
     if ( !result )
         AV_ASSERT ( false )
 
-#endif // ANDROID_VULKAN_STRICT_MODE
+#endif
 
 }
 

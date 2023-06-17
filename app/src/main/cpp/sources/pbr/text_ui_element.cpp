@@ -193,8 +193,7 @@ void TextUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
     penLocation._data[ 0U ] = static_cast<float> ( x );
     penLocation._data[ 1U ] = static_cast<float> ( y ) + fraction;
 
-    // One glyph is one rectangle (two triangles).
-    info._vertices += 6U * text.size ();
+    info._vertices += text.size () * UIPass::GetVerticesPerRectangle ();
 }
 
 void TextUIElement::Submit ( SubmitInfo &info ) noexcept
@@ -210,7 +209,7 @@ void TextUIElement::Submit ( SubmitInfo &info ) noexcept
     Glyph const* glyphs = _glyphs.data ();
     GXColorRGB const& color = ResolveColor ();
 
-    constexpr size_t verticesPerGlyph = 6U;
+    constexpr size_t verticesPerGlyph = UIPass::GetVerticesPerRectangle ();
     constexpr GXVec2 imageUV ( 0.5F, 0.5F );
 
     for ( size_t i = 0U; i < glyphCount; ++i )

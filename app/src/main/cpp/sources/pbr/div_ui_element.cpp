@@ -188,7 +188,7 @@ void DIVUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
     };
 
     // Opaque background requires rectangle (two triangles).
-    size_t const vertices[] = { childInfo._vertices, childInfo._vertices + 6U };
+    size_t const vertices[] = { childInfo._vertices, childInfo._vertices + UIPass::GetVerticesPerRectangle () };
     bool const hasBackgroundColor = _css._backgroundColor.GetValue ()._data[ 3U ] != 0.0F;
     bool const hasBackgroundArea = sizeCheck ( drawableArea );
     info._vertices += vertices[ static_cast<size_t> ( hasBackgroundColor & hasBackgroundArea ) ];
@@ -289,8 +289,7 @@ void DIVUIElement::Submit ( SubmitInfo &info ) noexcept
             imageUV
         );
 
-        constexpr size_t verticesPerBackground = 6U;
-        vertexBuffer = vertexBuffer.subspan ( verticesPerBackground );
+        vertexBuffer = vertexBuffer.subspan ( UIPass::GetVerticesPerRectangle () );
         info._uiPass->SubmitRectangle ();
     }
 

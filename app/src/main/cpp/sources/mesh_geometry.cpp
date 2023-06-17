@@ -605,17 +605,22 @@ bool MeshGeometry::UploadInternal ( size_t numUploads,
         srcStages |= syncItem._srcStage;
         dstStages |= syncItem._dstStage;
 
-        VkBufferMemoryBarrier& barrier = barrierInfo[ i ];
-        barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
-        barrier.pNext = nullptr;
-        barrier.buffer = dstBuffers[ i ];
-        barrier.srcAccessMask = syncItem._srcAccessMask;
-        barrier.dstAccessMask = syncItem._dstAccessMask;
-        barrier.size = copyBuffer.size;
-        barrier.offset = 0U;
-        barrier.srcQueueFamilyIndex = barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        VkBuffer buffer = dstBuffers[ i ];
 
-        vkCmdCopyBuffer ( commandBuffer, _transferBuffer, barrier.buffer, 1U, &copyBuffer );
+        barrierInfo[ i ] =
+        {
+            .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
+            .pNext = nullptr,
+            .srcAccessMask = syncItem._srcAccessMask,
+            .dstAccessMask = syncItem._dstAccessMask,
+            .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+            .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+            .buffer = dstBuffers[ i ],
+            .offset = 0U,
+            .size = copyBuffer.size
+        };
+
+        vkCmdCopyBuffer ( commandBuffer, _transferBuffer, buffer, 1U, &copyBuffer );
     }
 
     vkCmdPipelineBarrier ( commandBuffer,

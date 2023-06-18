@@ -86,6 +86,7 @@ void UniformBufferPoolManager::Push ( VkCommandBuffer commandBuffer, void const*
 bool UniformBufferPoolManager::Init ( android_vulkan::Renderer &renderer,
     DescriptorSetLayout const &descriptorSetLayout,
     size_t itemSize,
+    uint32_t bind,
     [[maybe_unused]] char const* name
 ) noexcept
 {
@@ -95,12 +96,10 @@ bool UniformBufferPoolManager::Init ( android_vulkan::Renderer &renderer,
     size_t const setCount = _uniformPool.GetAvailableItemCount ();
     VkDevice device = renderer.GetDevice ();
 
-    VkDescriptorPoolSize const poolSizes[] =
+    VkDescriptorPoolSize const poolSizes =
     {
-        {
-            .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            .descriptorCount = static_cast<uint32_t> ( setCount )
-        }
+        .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        .descriptorCount = static_cast<uint32_t> ( setCount )
     };
 
     VkDescriptorPoolCreateInfo const poolInfo
@@ -109,8 +108,8 @@ bool UniformBufferPoolManager::Init ( android_vulkan::Renderer &renderer,
         .pNext = nullptr,
         .flags = 0U,
         .maxSets = static_cast<uint32_t> ( setCount ),
-        .poolSizeCount = static_cast<uint32_t> ( std::size ( poolSizes ) ),
-        .pPoolSizes = poolSizes
+        .poolSizeCount = 1U,
+        .pPoolSizes = &poolSizes
     };
 
     bool result = android_vulkan::Renderer::CheckVkResult (
@@ -156,12 +155,12 @@ bool UniformBufferPoolManager::Init ( android_vulkan::Renderer &renderer,
 
     _bufferInfo.resize ( setCount, uniform );
 
-    constexpr VkWriteDescriptorSet writeSet
+    VkWriteDescriptorSet const writeSet
     {
         .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
         .pNext = nullptr,
         .dstSet = VK_NULL_HANDLE,
-        .dstBinding = 0U,
+        .dstBinding = bind,
         .dstArrayElement = 0U,
         .descriptorCount = 1U,
         .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,

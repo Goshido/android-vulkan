@@ -5,16 +5,20 @@
 
 namespace pbr {
 
-constexpr static size_t FRAMES = 5U;
-constexpr static size_t MATERIALS_PER_FRAME = 16384U;
-constexpr static size_t BIND_PER_SET = 5U;
-constexpr static size_t MATERIALS = FRAMES * MATERIALS_PER_FRAME;
+namespace {
 
-constexpr static size_t SLOT_DIFFUSE = 0U;
-constexpr static size_t SLOT_EMISSION = 1U;
-constexpr static size_t SLOT_MASK = 2U;
-constexpr static size_t SLOT_NORMAL = 3U;
-constexpr static size_t SLOT_PARAM = 4U;
+constexpr size_t FRAMES = 5U;
+constexpr size_t MATERIALS_PER_FRAME = 16384U;
+constexpr size_t BIND_PER_SET = 5U;
+constexpr size_t MATERIALS = FRAMES * MATERIALS_PER_FRAME;
+
+constexpr size_t SLOT_DIFFUSE = 0U;
+constexpr size_t SLOT_EMISSION = 1U;
+constexpr size_t SLOT_MASK = 2U;
+constexpr size_t SLOT_NORMAL = 3U;
+constexpr size_t SLOT_PARAM = 4U;
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 

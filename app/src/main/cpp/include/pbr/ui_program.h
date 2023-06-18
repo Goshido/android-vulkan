@@ -5,6 +5,7 @@
 #include "program.h"
 #include "ui_pass_common_descriptor_set_layout.h"
 #include "ui_pass_image_descriptor_set_layout.h"
+#include "ui_pass_transform_descriptor_set_layout.h"
 #include <vulkan_utils.h>
 
 
@@ -17,14 +18,15 @@ class UIProgram final : public Program
 
         struct Transform final
         {
-            GXMat4                          _transform;
+            GXMat4                              _transform;
         };
 
         AV_DX_ALIGNMENT_END
 
     private:
-        UIPassCommonDescriptorSetLayout     _commonLayout {};
-        UIPassImageDescriptorSetLayout      _imageLayout {};
+        UIPassCommonDescriptorSetLayout         _commonLayout {};
+        UIPassImageDescriptorSetLayout          _imageLayout {};
+        UIPassTransformDescriptorSetLayout      _transformLayout {};
 
     public:
         UIProgram () noexcept;

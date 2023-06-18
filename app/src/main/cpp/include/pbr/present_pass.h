@@ -44,9 +44,6 @@ class PresentPass final
             VkFence fence
         ) noexcept;
 
-        // FUCK remove it.
-        [[nodiscard]] VkRenderPass FUCKGetRenderPass () const noexcept;
-
     private:
         [[nodiscard]] bool CreateFramebuffers ( android_vulkan::Renderer &renderer ) noexcept;
         void DestroyFramebuffers ( VkDevice device ) noexcept;

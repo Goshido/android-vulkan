@@ -1,4 +1,4 @@
-#include <pbr/ui_pass_common_descriptor_set_layout.h>
+#include <pbr/ui_pass_transform_descriptor_set_layout.h>
 #include <pbr/ui_program.inc>
 #include <vulkan_utils.h>
 
@@ -48,7 +48,7 @@ void DescriptorSetLayout::Destroy ( VkDevice device ) noexcept
 
     vkDestroyDescriptorSetLayout ( device, _descriptorSetLayout, nullptr );
     _descriptorSetLayout = VK_NULL_HANDLE;
-    AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::UIPassCommonDescriptorSetLayout::_descriptorSetLayout" )
+    AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::UIPassTransformDescriptorSetLayout::_descriptorSetLayout" )
 }
 
 bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
@@ -59,29 +59,13 @@ bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
         return true;
     }
 
-    constexpr static VkDescriptorSetLayoutBinding const bindings[] =
+    constexpr static VkDescriptorSetLayoutBinding binding
     {
-        {
-            .binding = BIND_ATLAS_SAMPLER,
-            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
-            .descriptorCount = 1U,
-            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
-            .pImmutableSamplers = nullptr
-        },
-        {
-            .binding = BIND_ATLAS_TEXTURE,
-            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-            .descriptorCount = 1U,
-            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
-            .pImmutableSamplers = nullptr
-        },
-        {
-            .binding = BIND_IMAGE_SAMPLER,
-            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
-            .descriptorCount = 1U,
-            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
-            .pImmutableSamplers = nullptr
-        }
+        .binding = BIND_TRANSFORM,
+        .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        .descriptorCount = 1U,
+        .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
+        .pImmutableSamplers = nullptr
     };
 
     constexpr VkDescriptorSetLayoutCreateInfo info
@@ -89,20 +73,20 @@ bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0U,
-        .bindingCount = static_cast<uint32_t> ( std::size ( bindings ) ),
-        .pBindings = bindings
+        .bindingCount = 1U,
+        .pBindings = &binding
     };
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateDescriptorSetLayout ( device, &info, nullptr, &_descriptorSetLayout ),
-        "pbr::UIPassCommonDescriptorSetLayout::Init",
+        "pbr::UIPassTransformDescriptorSetLayout::Init",
         "Can't create descriptor set layout"
     );
 
     if ( !result )
         return false;
 
-    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::UIPassCommonDescriptorSetLayout::_descriptorSetLayout" )
+    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::UIPassTransformDescriptorSetLayout::_descriptorSetLayout" )
 
     ++_references;
     return true;
@@ -114,17 +98,17 @@ DescriptorSetLayout g_descriptorSetLayout {};
 
 //----------------------------------------------------------------------------------------------------------------------
 
-void UIPassCommonDescriptorSetLayout::Destroy ( VkDevice device ) noexcept
+void UIPassTransformDescriptorSetLayout::Destroy ( VkDevice device ) noexcept
 {
     g_descriptorSetLayout.Destroy ( device );
 }
 
-bool UIPassCommonDescriptorSetLayout::Init ( VkDevice device ) noexcept
+bool UIPassTransformDescriptorSetLayout::Init ( VkDevice device ) noexcept
 {
     return g_descriptorSetLayout.Init ( device );
 }
 
-VkDescriptorSetLayout UIPassCommonDescriptorSetLayout::GetLayout () const noexcept
+VkDescriptorSetLayout UIPassTransformDescriptorSetLayout::GetLayout () const noexcept
 {
     return g_descriptorSetLayout._descriptorSetLayout;
 }

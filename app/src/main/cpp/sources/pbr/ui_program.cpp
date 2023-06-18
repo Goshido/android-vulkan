@@ -102,6 +102,7 @@ void UIProgram::Destroy ( VkDevice device ) noexcept
 
     _imageLayout.Destroy ( device );
     _commonLayout.Destroy ( device );
+    _transformLayout.Destroy ( device );
 
     if ( _pipeline != VK_NULL_HANDLE )
     {
@@ -122,6 +123,8 @@ Program::DescriptorSetInfo const& UIProgram::GetResourceInfo () const noexcept
                 .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
                 .descriptorCount = 1U
             },
+        },
+        {
             {
                 .type = VK_DESCRIPTOR_TYPE_SAMPLER,
                 .descriptorCount = 2U
@@ -241,10 +244,15 @@ VkPipelineInputAssemblyStateCreateInfo const* UIProgram::InitInputAssemblyInfo (
 
 bool UIProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept
 {
-    if ( !_commonLayout.Init ( device ) || !_imageLayout.Init ( device ) )
+    if ( !_transformLayout.Init ( device ) || !_commonLayout.Init ( device ) || !_imageLayout.Init ( device ) )
         return false;
 
-    VkDescriptorSetLayout const layouts[] = { _commonLayout.GetLayout (), _imageLayout.GetLayout () };
+    VkDescriptorSetLayout const layouts[] =
+    {
+        _transformLayout.GetLayout (),
+        _commonLayout.GetLayout (),
+        _imageLayout.GetLayout ()
+    };
 
     VkPipelineLayoutCreateInfo const layoutInfo
     {

@@ -113,7 +113,7 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
 
     vkCmdEndRenderPass ( commandBuffer );
 
-    _uiPass.Execute ( commandBuffer );
+    _uiPass.Execute ( commandBuffer, _samplerManager );
 
     _renderSessionStats.RenderPointLights ( _lightPass.GetPointLightCount () );
     _renderSessionStats.RenderReflectionLocal ( _lightPass.GetReflectionLocalCount () );
@@ -243,12 +243,7 @@ bool RenderSession::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
     if ( !_presentPass.Init ( renderer ) )
         return false;
 
-    bool const result = _uiPass.SetPresentationInfo ( renderer,
-        _presentPass.FUCKGetRenderPass (),
-        _gBuffer.GetHDRAccumulator ().GetImage ()
-    );
-
-    if ( result )
+    if ( _uiPass.SetPresentationInfo ( renderer, _gBuffer.GetHDRAccumulator ().GetImage () ) )
         return true;
 
     DestroyGBufferResources ( renderer );

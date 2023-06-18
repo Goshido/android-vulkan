@@ -1,13 +1,13 @@
 #include "ui_program.inc"
 
 
-[[vk::binding ( BIND_ATLAS_SAMPLER, SET_ATLAS_SAMPLER )]]
+[[vk::binding ( BIND_ATLAS_SAMPLER, SET_COMMON )]]
 SamplerState                        g_atlasSampler:     register ( s0 );
 
-[[vk::binding ( BIND_ATLAS_TEXTURE, SET_ATLAS_TEXTURE )]]
+[[vk::binding ( BIND_ATLAS_TEXTURE, SET_COMMON )]]
 Texture2DArray<float32_t>           g_atlasTexture:     register ( t0 );
 
-[[vk::binding ( BIND_IMAGE_SAMPLER, SET_IMAGE_SAMPLER )]]
+[[vk::binding ( BIND_IMAGE_SAMPLER, SET_COMMON )]]
 SamplerState                        g_imageSampler:     register ( s1 );
 
 [[vk::binding ( BIND_IMAGE_TEXTURE, SET_IMAGE_TEXTURE )]]

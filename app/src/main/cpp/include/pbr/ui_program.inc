@@ -12,20 +12,16 @@
 #define ATT_SLOT_ATLAS_LAYER    2
 #define ATT_SLOT_IMAGE_UV       3
 
-#define BIND_TRANSFORM          0
 #define SET_TRANSFORM           0
+#define BIND_TRANSFORM          0
 
-#define BIND_ATLAS_SAMPLER      1
-#define SET_ATLAS_SAMPLER       0
+#define SET_COMMON              1
+#define BIND_ATLAS_SAMPLER      0
+#define BIND_ATLAS_TEXTURE      1
+#define BIND_IMAGE_SAMPLER      2
 
-#define BIND_ATLAS_TEXTURE      2
-#define SET_ATLAS_TEXTURE       0
-
-#define BIND_IMAGE_SAMPLER      3
-#define SET_IMAGE_SAMPLER       0
-
+#define SET_IMAGE_TEXTURE       2
 #define BIND_IMAGE_TEXTURE      0
-#define SET_IMAGE_TEXTURE       1
 
 
 #endif // UI_PROGRAM_INC

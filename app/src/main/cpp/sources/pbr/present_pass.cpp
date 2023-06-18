@@ -154,11 +154,6 @@ bool PresentPass::Execute ( android_vulkan::Renderer &renderer,
     );
 }
 
-VkRenderPass PresentPass::FUCKGetRenderPass () const noexcept
-{
-    return _renderPass;
-}
-
 bool PresentPass::CreateFramebuffers ( android_vulkan::Renderer &renderer ) noexcept
 {
     size_t const framebufferCount = renderer.GetPresentImageCount ();

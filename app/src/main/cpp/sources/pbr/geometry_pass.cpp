@@ -93,6 +93,7 @@ bool GeometryPass::Init ( android_vulkan::Renderer &renderer,
         _uniformPool.Init ( renderer,
             GeometryPassInstanceDescriptorSetLayout (),
             sizeof ( GeometryPassProgram::InstanceData ),
+            0U,
             "pbr::GeometryPass::_uniformPool"
         ) &&
 

@@ -40,6 +40,7 @@ bool LightPass::Init ( android_vulkan::Renderer &renderer,
         _volumeBufferPool.Init ( renderer,
             LightVolumeDescriptorSetLayout {},
             sizeof ( PointLightLightupProgram::VolumeData ),
+            0U,
             "pbr::LightPass::_lightVolumeBufferPool"
         );
 }

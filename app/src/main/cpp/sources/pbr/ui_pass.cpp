@@ -1,4 +1,5 @@
 #include <pbr/ui_pass.h>
+#include <pbr/ui_program.inc>
 #include <av_assert.h>
 #include <trace.h>
 
@@ -100,7 +101,7 @@ bool UIPass::Init ( android_vulkan::Renderer &renderer ) noexcept
 
     void* data;
 
-    bool const result = renderer.MapMemory ( data,
+    bool result = renderer.MapMemory ( data,
         _staging._memory,
         _staging._memoryOffset,
         "pbr::UIPass::Init",
@@ -112,16 +113,79 @@ bool UIPass::Init ( android_vulkan::Renderer &renderer ) noexcept
 
     _data = static_cast<UIVertexInfo*> ( data );
 
-    return _vertex.Init ( renderer,
-        AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT ) | AV_VK_FLAG ( VK_BUFFER_USAGE_VERTEX_BUFFER_BIT ),
-        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-        "pbr::UIPass::_vertex"
+    constexpr VkSemaphoreCreateInfo const semaphoreInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U
+    };
+
+    VkDevice device = renderer.GetDevice ();
+
+    result = android_vulkan::Renderer::CheckVkResult (
+        vkCreateSemaphore ( device, &semaphoreInfo, nullptr, &_renderEndSemaphore ),
+        "pbr::UIPass::Init",
+        "Can't create render pass end semaphore"
     );
+
+    if ( !result )
+        return false;
+
+    AV_REGISTER_SEMAPHORE ( "pbr::UIPass::_renderEndSemaphore" )
+
+    result = android_vulkan::Renderer::CheckVkResult (
+        vkCreateSemaphore ( device, &semaphoreInfo, nullptr, &_targetAcquiredSemaphore ),
+        "pbr::UIPass::Init",
+        "Can't create render target acquired semaphore"
+    );
+
+    if ( !result )
+        return false;
+
+    AV_REGISTER_SEMAPHORE ( "pbr::UIPass::_targetAcquiredSemaphore" )
+
+    InitCommonStructures ();
+
+    return _commonLayout.Init ( device ) &&
+        _imageLayout.Init ( device ) &&
+        _transformLayout.Init ( device ) &&
+
+        _vertex.Init ( renderer,
+            AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT ) | AV_VK_FLAG ( VK_BUFFER_USAGE_VERTEX_BUFFER_BIT ),
+            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+            "pbr::UIPass::_vertex"
+        ) &&
+
+        _uniformPool.Init ( renderer,
+            _transformLayout,
+            sizeof ( UIProgram::Transform ),
+            BIND_TRANSFORM,
+            "pbr::UIPass::_uniformPool"
+        );
 }
 
 void UIPass::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 {
-    _program.Destroy ( renderer.GetDevice () );
+    VkDevice device = renderer.GetDevice ();
+    _commonLayout.Destroy ( device );
+    _imageLayout.Destroy ( device );
+    _transformLayout.Destroy ( device );
+
+    if ( _targetAcquiredSemaphore != VK_NULL_HANDLE )
+    {
+        vkDestroySemaphore ( device, _targetAcquiredSemaphore, nullptr );
+        _targetAcquiredSemaphore = VK_NULL_HANDLE;
+        AV_UNREGISTER_SEMAPHORE ( "pbr::UIPass::_targetAcquiredSemaphore" )
+    }
+
+    if ( _renderEndSemaphore != VK_NULL_HANDLE )
+    {
+        vkDestroySemaphore ( device, _renderEndSemaphore, nullptr );
+        _renderEndSemaphore = VK_NULL_HANDLE;
+        AV_UNREGISTER_SEMAPHORE ( "pbr::UIPass::_renderEndSemaphore" )
+    }
+
+    _program.Destroy ( device );
 
     if ( _data )
     {
@@ -129,9 +193,24 @@ void UIPass::Destroy ( android_vulkan::Renderer &renderer ) noexcept
         _data = nullptr;
     }
 
+    DestroyFramebuffers ( device );
+    DestroyRenderPass ( device );
+
+    _renderInfo.renderArea.extent =
+    {
+        .width = 0U,
+        .height = 0U
+    };
+
     _staging.Destroy ( renderer );
     _vertex.Destroy ( renderer );
     _fontStorage.Destroy ( renderer );
+
+    _currentVertexIndex = 0U;
+    _sceneImageVertexIndex = 0U;
+
+    _jobs.clear ();
+    _jobs.shrink_to_fit ();
 
     _isSceneImageEmbedded = false;
     _hasChanges = false;
@@ -173,7 +252,7 @@ bool UIPass::Commit () noexcept
     return true;
 }
 
-void UIPass::Execute ( VkCommandBuffer /*commandBuffer*/ ) noexcept
+void UIPass::Execute ( VkCommandBuffer /*commandBuffer*/, SamplerManager const &/*samplerManager*/ ) noexcept
 {
     AV_TRACE ( "UI pass: Execute" )
     // TODO
@@ -226,23 +305,31 @@ UIPass::UIBufferResponse UIPass::RequestUIBuffer ( size_t neededVertices ) noexc
     return result;
 }
 
-bool UIPass::SetPresentationInfo ( android_vulkan::Renderer &renderer, VkRenderPass renderPass, VkImage scene ) noexcept
+bool UIPass::SetPresentationInfo ( android_vulkan::Renderer &renderer, VkImage scene ) noexcept
 {
     _sceneImage = scene;
     VkExtent2D const& resolution = renderer.GetSurfaceSize ();
+    VkExtent2D& r = _renderInfo.renderArea.extent;
 
-    if ( ( _resolution.width == resolution.width ) & ( _resolution.height == resolution.height ) )
+    if ( ( r.width == resolution.width ) & ( r.height == resolution.height ) )
         return true;
 
     if ( !_fontStorage.SetMediaResolution ( renderer, resolution ) )
         return false;
 
-    _program.Destroy ( renderer.GetDevice () );
+    VkDevice device = renderer.GetDevice ();
+    _program.Destroy ( device );
+    DestroyRenderPass ( device );
 
-    if ( !_program.Init ( renderer, renderPass, 0U, resolution ) )
+    if ( !CreateRenderPass ( renderer ) || !_program.Init ( renderer, _renderPass, 0U, resolution ) )
         return false;
 
-    _resolution = resolution;
+    DestroyFramebuffers ( device );
+
+    if ( !CreateFramebuffers ( renderer, resolution ) )
+        return false;
+
+    r = resolution;
     _bottomRight = GXVec2 ( static_cast<float> ( resolution.width ), static_cast<float> ( resolution.height ) );
 
     return true;
@@ -381,6 +468,199 @@ void UIPass::AppendRectangle ( UIVertexInfo* target,
         ._color = color,
         ._atlas = glyphTopLeft,
         ._imageUV = imageTopLeft
+    };
+}
+
+bool UIPass::CreateFramebuffers ( android_vulkan::Renderer &renderer, VkExtent2D const &resolution ) noexcept
+{
+    size_t const framebufferCount = renderer.GetPresentImageCount ();
+    _framebuffers.reserve ( framebufferCount );
+
+    VkFramebufferCreateInfo framebufferInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .renderPass = _renderPass,
+        .attachmentCount = 1U,
+        .pAttachments = nullptr,
+        .width = resolution.width,
+        .height = resolution.height,
+        .layers = 1U
+    };
+
+    VkDevice device = renderer.GetDevice ();
+
+    for ( size_t i = 0U; i < framebufferCount; ++i )
+    {
+        framebufferInfo.pAttachments = &renderer.GetPresentImageView ( i );
+        VkFramebuffer framebuffer;
+
+        bool const result = android_vulkan::Renderer::CheckVkResult (
+            vkCreateFramebuffer ( device, &framebufferInfo, nullptr, &framebuffer ),
+            "pbr::UIPass::CreateFramebuffers",
+            "Can't create a framebuffer"
+        );
+
+        if ( !result )
+            return false;
+
+        _framebuffers.push_back ( framebuffer );
+        AV_REGISTER_FRAMEBUFFER ( "pbr::UIPass::_framebuffers" )
+    }
+
+    return true;
+}
+
+void UIPass::DestroyFramebuffers ( VkDevice device ) noexcept
+{
+    if ( _framebuffers.empty () )
+        return;
+
+    for ( auto framebuffer : _framebuffers )
+    {
+        vkDestroyFramebuffer ( device, framebuffer, nullptr );
+        AV_UNREGISTER_FRAMEBUFFER ( "pbr::UIPass::_framebuffers" )
+    }
+
+    _framebuffers.clear ();
+}
+
+bool UIPass::CreateRenderPass ( android_vulkan::Renderer &renderer ) noexcept
+{
+    VkAttachmentDescription const attachment
+    {
+        .flags = 0U,
+        .format = renderer.GetSurfaceFormat (),
+        .samples = VK_SAMPLE_COUNT_1_BIT,
+        .loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+        .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+        .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+        .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+        .finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
+    };
+
+    constexpr static VkAttachmentReference reference
+    {
+        .attachment = 0U,
+        .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+    };
+
+    constexpr VkSubpassDescription subpass
+    {
+        .flags = 0U,
+        .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
+        .inputAttachmentCount = 0U,
+        .pInputAttachments = nullptr,
+        .colorAttachmentCount = 1U,
+        .pColorAttachments = &reference,
+        .pResolveAttachments = nullptr,
+        .pDepthStencilAttachment = nullptr,
+        .preserveAttachmentCount = 0U,
+        .pPreserveAttachments = nullptr
+    };
+
+    constexpr VkSubpassDependency dependency
+    {
+        .srcSubpass = 0U,
+        .dstSubpass = VK_SUBPASS_EXTERNAL,
+        .srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+        .dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+        .srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+        .dstAccessMask = VK_ACCESS_NONE,
+        .dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
+    };
+
+    VkRenderPassCreateInfo const info
+    {
+        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .attachmentCount = 1U,
+        .pAttachments = &attachment,
+        .subpassCount = 1U,
+        .pSubpasses = &subpass,
+        .dependencyCount = 1U,
+        .pDependencies = &dependency
+    };
+
+    bool const result = android_vulkan::Renderer::CheckVkResult (
+        vkCreateRenderPass ( renderer.GetDevice (), &info, nullptr, &_renderPass ),
+        "pbr::UIPass::CreateRenderPass",
+        "Can't create render pass"
+    );
+
+    if ( !result )
+        return false;
+
+    AV_REGISTER_RENDER_PASS ( "pbr::UIPass::_renderPass" )
+    return true;
+}
+
+void UIPass::DestroyRenderPass ( VkDevice device ) noexcept
+{
+    if ( _renderPass == VK_NULL_HANDLE )
+        return;
+
+    vkDestroyRenderPass ( device, _renderPass, nullptr );
+    _renderPass = VK_NULL_HANDLE;
+    AV_UNREGISTER_RENDER_PASS ( "pbr::UIPass::_renderPass" )
+}
+
+void UIPass::InitCommonStructures () noexcept
+{
+    _renderInfo =
+    {
+        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+        .pNext = nullptr,
+        .renderPass = _renderPass,
+        .framebuffer = VK_NULL_HANDLE,
+
+        .renderArea =
+        {
+            .offset
+            {
+                .x = 0,
+                .y = 0
+            },
+
+            .extent =
+            {
+                .width = 0U,
+                .height = 0U
+            }
+        },
+
+        .clearValueCount = 0U,
+        .pClearValues = nullptr
+    };
+
+    _presentInfo =
+    {
+        .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+        .pNext = nullptr,
+        .waitSemaphoreCount = 1U,
+        .pWaitSemaphores = &_renderEndSemaphore,
+        .swapchainCount = 1U,
+        .pSwapchains = nullptr,
+        .pImageIndices = nullptr,
+        .pResults = nullptr
+    };
+
+    constexpr static VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+
+    _submitInfo =
+    {
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+        .pNext = nullptr,
+        .waitSemaphoreCount = 1U,
+        .pWaitSemaphores = &_targetAcquiredSemaphore,
+        .pWaitDstStageMask = &waitStage,
+        .commandBufferCount = 1U,
+        .pCommandBuffers = nullptr,
+        .signalSemaphoreCount = 1U,
+        .pSignalSemaphores = &_renderEndSemaphore
     };
 }
 

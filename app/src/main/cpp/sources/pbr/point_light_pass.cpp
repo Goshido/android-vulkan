@@ -66,6 +66,7 @@ bool PointLightPass::Init ( android_vulkan::Renderer &renderer,
     bool const result = _shadowmapBufferPool.Init ( renderer,
         GeometryPassInstanceDescriptorSetLayout {},
         sizeof ( PointLightShadowmapGeneratorProgram::InstanceData ),
+        0U,
         "pbr::PointLightPass::_shadowmapBufferPool"
     );
 

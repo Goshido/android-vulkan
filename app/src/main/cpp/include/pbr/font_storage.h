@@ -141,6 +141,7 @@ class FontStorage final
         [[nodiscard]] bool Init () noexcept;
         void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
 
+        [[nodiscard]] VkImageView GetAtlasImageView () const noexcept;
         [[nodiscard]] std::optional<Font> GetFont ( std::string_view font, uint32_t size ) noexcept;
 
         [[nodiscard]] GlyphInfo const& GetOpaqueGlyphInfo () const noexcept;

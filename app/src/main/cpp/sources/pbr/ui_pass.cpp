@@ -8,10 +8,123 @@ namespace pbr {
 
 namespace {
 
+constexpr size_t MAX_IMAGES = 1024U;
 constexpr size_t MAX_VERTICES = 762600U;
 constexpr size_t BUFFER_BYTES = MAX_VERTICES * sizeof ( UIVertexInfo );
 
 } // end of anonymous namespace
+
+//----------------------------------------------------------------------------------------------------------------------
+
+bool UIPass::CommonDescriptorSet::Init ( VkDevice device,
+    VkDescriptorPool descriptorPool,
+    SamplerManager const &samplerManager
+) noexcept
+{
+    if ( !_layout.Init ( device ) )
+        return false;
+
+    VkDescriptorSetLayout layout = _layout.GetLayout ();
+
+    VkDescriptorSetAllocateInfo const allocateInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+        .pNext = nullptr,
+        .descriptorPool = descriptorPool,
+        .descriptorSetCount = 1U,
+        .pSetLayouts = &layout
+    };
+
+    bool const result = android_vulkan::Renderer::CheckVkResult (
+        vkAllocateDescriptorSets ( device, &allocateInfo, &_descriptorSet ),
+        "pbr::UIPass::CommonDescriptorSet::Init",
+        "Can't allocate descriptor sets"
+    );
+
+    if ( !result )
+        return false;
+
+    VkDescriptorImageInfo const imageInfo[] =
+    {
+        {
+            .sampler = samplerManager.GetPointSampler ()->GetSampler (),
+            .imageView = VK_NULL_HANDLE,
+            .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+        },
+        {
+            .sampler = samplerManager.GetMaterialSampler ()->GetSampler (),
+            .imageView = VK_NULL_HANDLE,
+            .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+        }
+    };
+
+    VkWriteDescriptorSet const writes[] =
+    {
+        {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .pNext = nullptr,
+            .dstSet = _descriptorSet,
+            .dstBinding = BIND_ATLAS_SAMPLER,
+            .dstArrayElement = 0U,
+            .descriptorCount = 1U,
+            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
+            .pImageInfo = imageInfo,
+            .pBufferInfo = nullptr,
+            .pTexelBufferView = nullptr
+        },
+        {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .pNext = nullptr,
+            .dstSet = _descriptorSet,
+            .dstBinding = BIND_IMAGE_SAMPLER,
+            .dstArrayElement = 0U,
+            .descriptorCount = 1U,
+            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
+            .pImageInfo = imageInfo + 1U,
+            .pBufferInfo = nullptr,
+            .pTexelBufferView = nullptr
+        }
+    };
+
+    vkUpdateDescriptorSets ( device, static_cast<uint32_t> ( std::size ( writes ) ), writes, 0U, nullptr );
+
+    _imageInfo =
+    {
+        .sampler = VK_NULL_HANDLE,
+        .imageView = VK_NULL_HANDLE,
+        .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+    };
+
+    _write =
+    {
+        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        .pNext = nullptr,
+        .dstSet = _descriptorSet,
+        .dstBinding = BIND_ATLAS_TEXTURE,
+        .dstArrayElement = 0U,
+        .descriptorCount = 1U,
+        .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+        .pImageInfo = &_imageInfo,
+        .pBufferInfo = nullptr,
+        .pTexelBufferView = nullptr
+    };
+
+    return true;
+}
+
+void UIPass::CommonDescriptorSet::Destroy ( VkDevice device ) noexcept
+{
+    _layout.Destroy ( device );
+}
+
+void UIPass::CommonDescriptorSet::Update ( VkDevice device, VkImageView currentAtlas ) noexcept
+{
+    if ( _imageInfo.imageView == currentAtlas )
+        return;
+
+    _imageInfo.imageView = currentAtlas;
+    vkUpdateDescriptorSets ( device, 1U, &_write, 0U, nullptr );
+}
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -87,7 +200,89 @@ void UIPass::Buffer::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 
 //----------------------------------------------------------------------------------------------------------------------
 
-bool UIPass::Init ( android_vulkan::Renderer &renderer ) noexcept
+bool UIPass::ImageDescriptorSets::Init ( VkDevice device, VkDescriptorPool descriptorPool ) noexcept
+{
+    if ( !_layout.Init ( device ) )
+        return false;
+
+    _descriptorSets.resize ( MAX_IMAGES, VK_NULL_HANDLE );
+    std::vector<VkDescriptorSetLayout> const layouts ( MAX_IMAGES, _layout.GetLayout () );
+    VkDescriptorSet* ds = _descriptorSets.data ();
+
+    VkDescriptorSetAllocateInfo const allocateInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+        .pNext = nullptr,
+        .descriptorPool = descriptorPool,
+        .descriptorSetCount = static_cast<uint32_t> ( MAX_IMAGES ),
+        .pSetLayouts = layouts.data ()
+    };
+
+    bool const result = android_vulkan::Renderer::CheckVkResult (
+        vkAllocateDescriptorSets ( device, &allocateInfo, ds ),
+        "pbr::UIPass::ImageDescriptorSets::Init",
+        "Can't allocate descriptor sets"
+    );
+
+    if ( !result )
+        return false;
+
+    VkDescriptorImageInfo const imageInfo
+    {
+        .sampler = VK_NULL_HANDLE,
+        .imageView = VK_NULL_HANDLE,
+        .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+    };
+
+    _imageInfo.resize ( MAX_IMAGES, imageInfo );
+
+    VkWriteDescriptorSet const writeSet
+    {
+        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        .pNext = nullptr,
+        .dstSet = VK_NULL_HANDLE,
+        .dstBinding = BIND_IMAGE_TEXTURE,
+        .dstArrayElement = 0U,
+        .descriptorCount = 1U,
+        .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+        .pImageInfo = nullptr,
+        .pBufferInfo = nullptr,
+        .pTexelBufferView = nullptr
+    };
+
+    _writeSets.resize ( MAX_IMAGES, writeSet );
+    VkDescriptorImageInfo const* imageInfoData = _imageInfo.data ();
+
+    for ( size_t i = 0U; i < MAX_IMAGES; ++i )
+    {
+        VkWriteDescriptorSet& write = _writeSets[ i ];
+        write.dstSet = ds[ i ];
+        write.pImageInfo = imageInfoData + i;
+    }
+
+    _readIndex = 0U;
+    _writeIndex = 0U;
+
+    return true;
+}
+
+void UIPass::ImageDescriptorSets::Destroy ( VkDevice device ) noexcept
+{
+    _layout.Destroy ( device );
+
+    auto const clear = [] ( auto &v ) noexcept {
+        v.clear ();
+        v.shrink_to_fit ();
+    };
+
+    clear ( _writeSets );
+    clear ( _descriptorSets );
+    clear ( _imageInfo );
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+bool UIPass::Init ( android_vulkan::Renderer &renderer, SamplerManager const &samplerManager ) noexcept
 {
     if ( !_fontStorage.Init () )
         return false;
@@ -146,8 +341,45 @@ bool UIPass::Init ( android_vulkan::Renderer &renderer ) noexcept
 
     InitCommonStructures ();
 
-    return _commonLayout.Init ( device ) &&
-        _imageLayout.Init ( device ) &&
+    constexpr size_t commonDescriptorSetCount = 1U;
+    constexpr size_t imageDescriptorSetCount = MAX_IMAGES;
+    constexpr size_t descriptorSetCount = commonDescriptorSetCount + imageDescriptorSetCount;
+
+    constexpr static VkDescriptorPoolSize const poolSizes[] =
+    {
+        {
+            .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+            .descriptorCount = static_cast<uint32_t> ( descriptorSetCount )
+        },
+        {
+            .type = VK_DESCRIPTOR_TYPE_SAMPLER,
+            .descriptorCount = 2U
+        }
+    };
+
+    constexpr VkDescriptorPoolCreateInfo poolInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .maxSets = static_cast<uint32_t> ( descriptorSetCount ),
+        .poolSizeCount = static_cast<uint32_t> ( std::size ( poolSizes ) ),
+        .pPoolSizes = poolSizes
+    };
+
+    result = android_vulkan::Renderer::CheckVkResult (
+        vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_descriptorPool ),
+        "pbr::UIPass::Init",
+        "Can't create descriptor pool"
+    );
+
+    if ( !result )
+        return false;
+
+    AV_REGISTER_DESCRIPTOR_POOL ( "pbr::UIPass::_descriptorPool" )
+
+    return _commonDescriptorSet.Init ( device, _descriptorPool, samplerManager ) &&
+        _imageDescriptorSets.Init ( device, _descriptorPool ) &&
         _transformLayout.Init ( device ) &&
 
         _vertex.Init ( renderer,
@@ -166,10 +398,19 @@ bool UIPass::Init ( android_vulkan::Renderer &renderer ) noexcept
 
 void UIPass::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 {
+    _uniformPool.Destroy ( renderer, "pbr::UIPass::_uniformPool" );
+
     VkDevice device = renderer.GetDevice ();
-    _commonLayout.Destroy ( device );
-    _imageLayout.Destroy ( device );
+    _imageDescriptorSets.Destroy ( device );
+    _commonDescriptorSet.Destroy ( device );
     _transformLayout.Destroy ( device );
+
+    if ( _descriptorPool != VK_NULL_HANDLE )
+    {
+        vkDestroyDescriptorPool ( renderer.GetDevice (), _descriptorPool, nullptr );
+        _descriptorPool = VK_NULL_HANDLE;
+        AV_UNREGISTER_DESCRIPTOR_POOL ( "pbr::UIPass::_descriptorPool" )
+    }
 
     if ( _targetAcquiredSemaphore != VK_NULL_HANDLE )
     {
@@ -252,7 +493,7 @@ bool UIPass::Commit () noexcept
     return true;
 }
 
-void UIPass::Execute ( VkCommandBuffer /*commandBuffer*/, SamplerManager const &/*samplerManager*/ ) noexcept
+void UIPass::Execute ( VkCommandBuffer /*commandBuffer*/ ) noexcept
 {
     AV_TRACE ( "UI pass: Execute" )
     // TODO
@@ -305,9 +546,11 @@ UIPass::UIBufferResponse UIPass::RequestUIBuffer ( size_t neededVertices ) noexc
     return result;
 }
 
-bool UIPass::SetPresentationInfo ( android_vulkan::Renderer &renderer, VkImage scene ) noexcept
+bool UIPass::SetPresentationInfo ( android_vulkan::Renderer &renderer, android_vulkan::Texture2D const &scene ) noexcept
 {
-    _sceneImage = scene;
+    _sceneImage = scene.GetImage ();
+    _sceneView = scene.GetImageView ();
+
     VkExtent2D const& resolution = renderer.GetSurfaceSize ();
     VkExtent2D& r = _renderInfo.renderArea.extent;
 

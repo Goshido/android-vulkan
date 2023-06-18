@@ -113,7 +113,7 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
 
     vkCmdEndRenderPass ( commandBuffer );
 
-    _uiPass.Execute ( commandBuffer, _samplerManager );
+    _uiPass.Execute ( commandBuffer );
 
     _renderSessionStats.RenderPointLights ( _lightPass.GetPointLightCount () );
     _renderSessionStats.RenderReflectionLocal ( _lightPass.GetReflectionLocalCount () );
@@ -157,7 +157,7 @@ bool RenderSession::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 
     return _defaultTextureManager.Init ( renderer, commandInfo._pool ) &&
         _samplerManager.Init ( device ) &&
-        _uiPass.Init ( renderer );
+        _uiPass.Init ( renderer, _samplerManager );
 }
 
 void RenderSession::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
@@ -243,7 +243,7 @@ bool RenderSession::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
     if ( !_presentPass.Init ( renderer ) )
         return false;
 
-    if ( _uiPass.SetPresentationInfo ( renderer, _gBuffer.GetHDRAccumulator ().GetImage () ) )
+    if ( _uiPass.SetPresentationInfo ( renderer, _gBuffer.GetHDRAccumulator () ) )
         return true;
 
     DestroyGBufferResources ( renderer );

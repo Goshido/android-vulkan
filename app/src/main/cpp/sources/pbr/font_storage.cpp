@@ -513,6 +513,11 @@ void FontStorage::Destroy ( android_vulkan::Renderer &renderer ) noexcept
     _stringHeap.clear ();
 }
 
+VkImageView FontStorage::GetAtlasImageView () const noexcept
+{
+    return _atlas._resource._view;
+}
+
 std::optional<FontStorage::Font> FontStorage::GetFont ( std::string_view font, uint32_t size ) noexcept
 {
     auto fontResource = GetFontResource ( font );

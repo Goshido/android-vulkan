@@ -35,7 +35,10 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
 
     size_t swapchainImageIndex;
 
-    if ( !_presentPass.AcquirePresentTarget ( renderer, swapchainImageIndex ) )
+//    if ( !_presentPass.AcquirePresentTarget ( renderer, swapchainImageIndex ) )
+//        return false;
+
+    if ( !_uiPass.AcquirePresentTarget ( renderer, swapchainImageIndex ) )
         return false;
 
     CommandInfo& commandInfo = _commandInfo[ swapchainImageIndex ];
@@ -113,12 +116,15 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
 
     vkCmdEndRenderPass ( commandBuffer );
 
-    _uiPass.Execute ( commandBuffer );
-
     _renderSessionStats.RenderPointLights ( _lightPass.GetPointLightCount () );
     _renderSessionStats.RenderReflectionLocal ( _lightPass.GetReflectionLocalCount () );
 
-    if ( !_presentPass.Execute ( renderer, commandBuffer, _gBufferSlotMapper, fence ) )
+//    if ( !_presentPass.Execute ( renderer, commandBuffer, _gBufferSlotMapper, fence ) )
+//        return false;
+
+    // TODO UI stats.
+
+    if ( !_uiPass.Execute ( renderer, commandBuffer, fence ) )
         return false;
 
     _renderSessionStats.PrintStats ( deltaTime );
@@ -152,12 +158,12 @@ bool RenderSession::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
     if ( !AllocateCommandInfo ( commandInfo, device, renderer.GetQueueFamilyIndex () ) )
         return false;
 
-    if ( !_texturePresentDescriptorSetLayout.Init ( device ) )
-        return false;
+//    if ( !_texturePresentDescriptorSetLayout.Init ( device ) )
+//        return false;
 
     return _defaultTextureManager.Init ( renderer, commandInfo._pool ) &&
         _samplerManager.Init ( device ) &&
-        _uiPass.Init ( renderer, _samplerManager );
+        _uiPass.Init ( renderer, _samplerManager, _defaultTextureManager.GetTransparent ()->GetImageView () );
 }
 
 void RenderSession::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
@@ -167,7 +173,7 @@ void RenderSession::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexc
 
     VkDevice device = renderer.GetDevice ();
 
-    _texturePresentDescriptorSetLayout.Destroy ( device );
+//    _texturePresentDescriptorSetLayout.Destroy ( device );
     _samplerManager.Destroy ( device );
     _defaultTextureManager.Destroy ( renderer );
     DestroyGBufferResources ( renderer );
@@ -240,10 +246,10 @@ bool RenderSession::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
         }
     }
 
-    if ( !_presentPass.Init ( renderer ) )
-        return false;
+//    if ( !_presentPass.Init ( renderer ) )
+//        return false;
 
-    if ( _uiPass.SetPresentationInfo ( renderer, _gBuffer.GetHDRAccumulator () ) )
+    if ( _uiPass.OnSwapchainCrated ( renderer, _gBuffer.GetHDRAccumulator ().GetImageView () ) )
         return true;
 
     DestroyGBufferResources ( renderer );
@@ -254,7 +260,8 @@ bool RenderSession::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
 
 void RenderSession::OnSwapchainDestroyed ( VkDevice device ) noexcept
 {
-    _presentPass.Destroy ( device );
+    //_presentPass.Destroy ( device );
+    _uiPass.OnSwapchainDestroyed ( device );
 }
 
 void RenderSession::SubmitLight ( LightRef &light ) noexcept
@@ -639,7 +646,7 @@ bool RenderSession::CreateGBufferResources ( android_vulkan::Renderer &renderer,
         _defaultTextureManager
     );
 
-    if ( !result || !_lightPass.Init ( renderer, _renderPass, _gBuffer ) || !CreateGBufferSlotMapper ( renderer ) )
+    if ( !result || !_lightPass.Init ( renderer, _renderPass, _gBuffer )/* || !CreateGBufferSlotMapper ( renderer ) */)
         return false;
 
     result = android_vulkan::Renderer::CheckVkResult ( vkDeviceWaitIdle ( device ),
@@ -653,105 +660,105 @@ bool RenderSession::CreateGBufferResources ( android_vulkan::Renderer &renderer,
     _lightPass.OnFreeTransferResources ( renderer );
     return true;
 }
-
-bool RenderSession::CreateGBufferSlotMapper ( android_vulkan::Renderer &renderer ) noexcept
-{
-    constexpr static VkDescriptorPoolSize const poolSizes[] =
-    {
-        {
-            .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-            .descriptorCount = 1U
-        },
-        {
-            .type = VK_DESCRIPTOR_TYPE_SAMPLER,
-            .descriptorCount = 1U
-        }
-    };
-
-    constexpr VkDescriptorPoolCreateInfo poolInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0U,
-        .maxSets = 1U,
-        .poolSizeCount = static_cast<uint32_t> ( std::size ( poolSizes ) ),
-        .pPoolSizes = poolSizes
-    };
-
-    VkDevice device = renderer.GetDevice ();
-
-    bool result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_gBufferDescriptorPool ),
-        "pbr::RenderSession::CreateGBufferSlotMapper",
-        "Can't create descriptor pool"
-    );
-
-    if ( !result )
-        return false;
-
-    AV_REGISTER_DESCRIPTOR_POOL ( "pbr::RenderSession::_gBufferDescriptorPool" )
-
-    TexturePresentDescriptorSetLayout const layout;
-    VkDescriptorSetLayout nativeLayout = layout.GetLayout ();
-
-    VkDescriptorSetAllocateInfo const allocateInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-        .pNext = nullptr,
-        .descriptorPool = _gBufferDescriptorPool,
-        .descriptorSetCount = 1U,
-        .pSetLayouts = &nativeLayout
-    };
-
-    result = android_vulkan::Renderer::CheckVkResult (
-        vkAllocateDescriptorSets ( device, &allocateInfo, &_gBufferSlotMapper ),
-        "pbr::RenderSession::CreateGBufferSlotMapper",
-        "Can't allocate descriptor sets"
-    );
-
-    if ( !result )
-        return false;
-
-    VkDescriptorImageInfo const imageInfo[] =
-    {
-        {
-            .sampler = _samplerManager.GetPointSampler ()->GetSampler (),
-            .imageView = _gBuffer.GetHDRAccumulator ().GetImageView (),
-            .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-        }
-    };
-
-    VkWriteDescriptorSet const writeSets[] =
-    {
-        {
-            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-            .pNext = nullptr,
-            .dstSet = _gBufferSlotMapper,
-            .dstBinding = 0U,
-            .dstArrayElement = 0U,
-            .descriptorCount = 1U,
-            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-            .pImageInfo = imageInfo,
-            .pBufferInfo = nullptr,
-            .pTexelBufferView = nullptr
-        },
-        {
-            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-            .pNext = nullptr,
-            .dstSet = _gBufferSlotMapper,
-            .dstBinding = 1U,
-            .dstArrayElement = 0U,
-            .descriptorCount = 1U,
-            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
-            .pImageInfo = imageInfo,
-            .pBufferInfo = nullptr,
-            .pTexelBufferView = nullptr
-        }
-    };
-
-    vkUpdateDescriptorSets ( device, static_cast<uint32_t> ( std::size ( writeSets ) ), writeSets, 0U, nullptr );
-    return true;
-}
+//
+//bool RenderSession::CreateGBufferSlotMapper ( android_vulkan::Renderer &renderer ) noexcept
+//{
+//    constexpr static VkDescriptorPoolSize const poolSizes[] =
+//    {
+//        {
+//            .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+//            .descriptorCount = 1U
+//        },
+//        {
+//            .type = VK_DESCRIPTOR_TYPE_SAMPLER,
+//            .descriptorCount = 1U
+//        }
+//    };
+//
+//    constexpr VkDescriptorPoolCreateInfo poolInfo
+//    {
+//        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+//        .pNext = nullptr,
+//        .flags = 0U,
+//        .maxSets = 1U,
+//        .poolSizeCount = static_cast<uint32_t> ( std::size ( poolSizes ) ),
+//        .pPoolSizes = poolSizes
+//    };
+//
+//    VkDevice device = renderer.GetDevice ();
+//
+//    bool result = android_vulkan::Renderer::CheckVkResult (
+//        vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_gBufferDescriptorPool ),
+//        "pbr::RenderSession::CreateGBufferSlotMapper",
+//        "Can't create descriptor pool"
+//    );
+//
+//    if ( !result )
+//        return false;
+//
+//    AV_REGISTER_DESCRIPTOR_POOL ( "pbr::RenderSession::_gBufferDescriptorPool" )
+//
+//    TexturePresentDescriptorSetLayout const layout;
+//    VkDescriptorSetLayout nativeLayout = layout.GetLayout ();
+//
+//    VkDescriptorSetAllocateInfo const allocateInfo
+//    {
+//        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+//        .pNext = nullptr,
+//        .descriptorPool = _gBufferDescriptorPool,
+//        .descriptorSetCount = 1U,
+//        .pSetLayouts = &nativeLayout
+//    };
+//
+//    result = android_vulkan::Renderer::CheckVkResult (
+//        vkAllocateDescriptorSets ( device, &allocateInfo, &_gBufferSlotMapper ),
+//        "pbr::RenderSession::CreateGBufferSlotMapper",
+//        "Can't allocate descriptor sets"
+//    );
+//
+//    if ( !result )
+//        return false;
+//
+//    VkDescriptorImageInfo const imageInfo[] =
+//    {
+//        {
+//            .sampler = _samplerManager.GetPointSampler ()->GetSampler (),
+//            .imageView = _gBuffer.GetHDRAccumulator ().GetImageView (),
+//            .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+//        }
+//    };
+//
+//    VkWriteDescriptorSet const writeSets[] =
+//    {
+//        {
+//            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+//            .pNext = nullptr,
+//            .dstSet = _gBufferSlotMapper,
+//            .dstBinding = 0U,
+//            .dstArrayElement = 0U,
+//            .descriptorCount = 1U,
+//            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+//            .pImageInfo = imageInfo,
+//            .pBufferInfo = nullptr,
+//            .pTexelBufferView = nullptr
+//        },
+//        {
+//            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+//            .pNext = nullptr,
+//            .dstSet = _gBufferSlotMapper,
+//            .dstBinding = 1U,
+//            .dstArrayElement = 0U,
+//            .descriptorCount = 1U,
+//            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
+//            .pImageInfo = imageInfo,
+//            .pBufferInfo = nullptr,
+//            .pTexelBufferView = nullptr
+//        }
+//    };
+//
+//    vkUpdateDescriptorSets ( device, static_cast<uint32_t> ( std::size ( writeSets ) ), writeSets, 0U, nullptr );
+//    return true;
+//}
 
 void RenderSession::DestroyGBufferResources ( android_vulkan::Renderer &renderer ) noexcept
 {
@@ -766,12 +773,12 @@ void RenderSession::DestroyGBufferResources ( android_vulkan::Renderer &renderer
 
     _lightPass.Destroy ( renderer );
 
-    if ( _gBufferDescriptorPool != VK_NULL_HANDLE )
-    {
-        vkDestroyDescriptorPool ( device, _gBufferDescriptorPool, nullptr );
-        _gBufferDescriptorPool = VK_NULL_HANDLE;
-        AV_UNREGISTER_DESCRIPTOR_POOL ( "pbr::RenderSession::_gBufferDescriptorPool" )
-    }
+//    if ( _gBufferDescriptorPool != VK_NULL_HANDLE )
+//    {
+//        vkDestroyDescriptorPool ( device, _gBufferDescriptorPool, nullptr );
+//        _gBufferDescriptorPool = VK_NULL_HANDLE;
+//        AV_UNREGISTER_DESCRIPTOR_POOL ( "pbr::RenderSession::_gBufferDescriptorPool" )
+//    }
 
     _geometryPass.Destroy ( renderer );
     _gBuffer.Destroy ( renderer );

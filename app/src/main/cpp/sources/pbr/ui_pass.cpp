@@ -282,8 +282,38 @@ void UIPass::ImageDescriptorSets::Destroy ( VkDevice device ) noexcept
 
 //----------------------------------------------------------------------------------------------------------------------
 
-bool UIPass::Init ( android_vulkan::Renderer &renderer, SamplerManager const &samplerManager ) noexcept
+[[nodiscard]] bool UIPass::AcquirePresentTarget ( android_vulkan::Renderer &renderer,
+    size_t &swapchainImageIndex
+) noexcept
 {
+    AV_TRACE ( "Acquire swapchain image" )
+
+    _framebufferIndex = std::numeric_limits<uint32_t>::max ();
+
+    bool const result = android_vulkan::Renderer::CheckVkResult (
+        vkAcquireNextImageKHR ( renderer.GetDevice (),
+            renderer.GetSwapchain (),
+            std::numeric_limits<uint64_t>::max (),
+            _targetAcquiredSemaphore,
+            VK_NULL_HANDLE,
+            &_framebufferIndex
+        ),
+
+        "pbr::UIPass::AcquirePresentTarget",
+        "Can't get presentation image index"
+    );
+
+    swapchainImageIndex = _framebufferIndex;
+    return result;
+}
+
+bool UIPass::Init ( android_vulkan::Renderer &renderer,
+    SamplerManager const &samplerManager,
+    VkImageView transparent
+) noexcept
+{
+    _transparent = transparent;
+
     if ( !_fontStorage.Init () )
         return false;
 
@@ -493,15 +523,101 @@ bool UIPass::Commit () noexcept
     return true;
 }
 
-void UIPass::Execute ( VkCommandBuffer /*commandBuffer*/ ) noexcept
+bool UIPass::Execute ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer, VkFence fence ) noexcept
 {
     AV_TRACE ( "UI pass: Execute" )
-    // TODO
+    _renderInfo.framebuffer = _framebuffers[ _framebufferIndex ];
+
+    vkCmdBeginRenderPass ( commandBuffer, &_renderInfo, VK_SUBPASS_CONTENTS_INLINE );
+    _program.Bind ( commandBuffer );
+
+    VkDescriptorSet const sets[] =
+    {
+        _transformDescriptorSet,
+        _commonDescriptorSet._descriptorSet,
+
+    };
+
+    // TODO iterate over all jobs as well.
+    _program.SetDescriptorSet ( commandBuffer, sets, 0U, static_cast<uint32_t> ( std::size ( sets ) ) );
+
+    vkCmdDraw ( commandBuffer, GetVerticesPerRectangle (), 1U, 0U, 0U );
+
+    vkCmdEndRenderPass ( commandBuffer );
+
+    bool result = android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
+        "pbr::UIPass::Execute",
+        "Can't end command buffer"
+    );
+
+    if ( !result )
+        return false;
+
+    _submitInfo.pCommandBuffers = &commandBuffer;
+
+    result = android_vulkan::Renderer::CheckVkResult (
+        vkQueueSubmit ( renderer.GetQueue (), 1U, &_submitInfo, fence ),
+        "pbr::UIPass::End",
+        "Can't submit command buffer"
+    );
+
+    if ( !result )
+        return false;
+
+    VkResult presentResult = VK_ERROR_DEVICE_LOST;
+
+    _presentInfo.pResults = &presentResult;
+    _presentInfo.pSwapchains = &renderer.GetSwapchain ();
+    _presentInfo.pImageIndices = &_framebufferIndex;
+
+    result = android_vulkan::Renderer::CheckVkResult ( vkQueuePresentKHR ( renderer.GetQueue (), &_presentInfo ),
+        "pbr::UIPass::EndFrame",
+        "Can't present frame"
+    );
+
+    if ( !result )
+        return false;
+
+    return android_vulkan::Renderer::CheckVkResult ( presentResult,
+        "pbr::UIPass::EndFrame",
+        "Present queue has been failed"
+    );
 }
 
 FontStorage& UIPass::GetFontStorage () noexcept
 {
     return _fontStorage;
+}
+
+bool UIPass::OnSwapchainCrated ( android_vulkan::Renderer &renderer, VkImageView scene ) noexcept
+{
+    _scene = scene;
+
+    VkExtent2D const& resolution = renderer.GetSurfaceSize ();
+    VkExtent2D& r = _renderInfo.renderArea.extent;
+
+    if ( ( r.width == resolution.width ) & ( r.height == resolution.height ) )
+        return true;
+
+    bool const result = _fontStorage.SetMediaResolution ( renderer, resolution ) &&
+        CreateRenderPass ( renderer ) &&
+        _program.Init ( renderer, _renderInfo.renderPass, 0U, resolution ) &&
+        CreateFramebuffers ( renderer, resolution );
+
+    if ( !result )
+        return false;
+
+    r = resolution;
+    _bottomRight = GXVec2 ( static_cast<float> ( resolution.width ), static_cast<float> ( resolution.height ) );
+
+    _isTransformChanged = true;
+    return true;
+}
+
+void UIPass::OnSwapchainDestroyed ( VkDevice device ) noexcept
+{
+    _program.Destroy ( device );
+    DestroyFramebuffers ( device );
 }
 
 void UIPass::RequestEmptyUI () noexcept
@@ -546,38 +662,6 @@ UIPass::UIBufferResponse UIPass::RequestUIBuffer ( size_t neededVertices ) noexc
     return result;
 }
 
-bool UIPass::SetPresentationInfo ( android_vulkan::Renderer &renderer, android_vulkan::Texture2D const &scene ) noexcept
-{
-    _sceneImage = scene.GetImage ();
-    _sceneView = scene.GetImageView ();
-
-    VkExtent2D const& resolution = renderer.GetSurfaceSize ();
-    VkExtent2D& r = _renderInfo.renderArea.extent;
-
-    if ( ( r.width == resolution.width ) & ( r.height == resolution.height ) )
-        return true;
-
-    if ( !_fontStorage.SetMediaResolution ( renderer, resolution ) )
-        return false;
-
-    VkDevice device = renderer.GetDevice ();
-    _program.Destroy ( device );
-    DestroyRenderPass ( device );
-
-    if ( !CreateRenderPass ( renderer ) || !_program.Init ( renderer, _renderPass, 0U, resolution ) )
-        return false;
-
-    DestroyFramebuffers ( device );
-
-    if ( !CreateFramebuffers ( renderer, resolution ) )
-        return false;
-
-    r = resolution;
-    _bottomRight = GXVec2 ( static_cast<float> ( resolution.width ), static_cast<float> ( resolution.height ) );
-
-    return true;
-}
-
 [[maybe_unused]] void UIPass::SubmitImage ( Texture2DRef const &texture ) noexcept
 {
     // TODO actual image and in use|free logic
@@ -610,48 +694,12 @@ bool UIPass::UploadGPUData ( android_vulkan::Renderer &renderer, VkCommandBuffer
     if ( !_fontStorage.UploadGPUData ( renderer, commandBuffer ) )
         return false;
 
-    if ( !_hasChanges )
-        return true;
+    if ( _isTransformChanged )
+        UpdateTransform ( renderer, commandBuffer );
 
-    constexpr size_t const elementSize = sizeof ( UIVertexInfo );
-    auto const offset = static_cast<VkDeviceSize> ( _sceneImageVertexIndex * elementSize );
-    auto const size = static_cast<VkDeviceSize> ( elementSize * ( _currentVertexIndex - _sceneImageVertexIndex ) );
+    if ( _hasChanges )
+        UpdateGeometry ( commandBuffer );
 
-    VkBufferCopy const copy
-    {
-        .srcOffset = offset,
-        .dstOffset = offset,
-        .size = size
-    };
-
-    vkCmdCopyBuffer ( commandBuffer, _staging._buffer, _vertex._buffer, 1U, &copy );
-
-    VkBufferMemoryBarrier const barrier
-    {
-        .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
-        .pNext = nullptr,
-        .srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
-        .dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT,
-        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .buffer = _vertex._buffer,
-        .offset = offset,
-        .size = size
-    };
-
-    vkCmdPipelineBarrier ( commandBuffer,
-        VK_PIPELINE_STAGE_TRANSFER_BIT,
-        VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
-        0U,
-        0U,
-        nullptr,
-        1U,
-        &barrier,
-        0U,
-        nullptr
-    );
-
-    _hasChanges = false;
     return true;
 }
 
@@ -724,7 +772,7 @@ bool UIPass::CreateFramebuffers ( android_vulkan::Renderer &renderer, VkExtent2D
         .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0U,
-        .renderPass = _renderPass,
+        .renderPass = _renderInfo.renderPass,
         .attachmentCount = 1U,
         .pAttachments = nullptr,
         .width = resolution.width,
@@ -771,6 +819,9 @@ void UIPass::DestroyFramebuffers ( VkDevice device ) noexcept
 
 bool UIPass::CreateRenderPass ( android_vulkan::Renderer &renderer ) noexcept
 {
+    if ( _renderInfo.renderPass != VK_NULL_HANDLE )
+        return true;
+
     VkAttachmentDescription const attachment
     {
         .flags = 0U,
@@ -829,7 +880,7 @@ bool UIPass::CreateRenderPass ( android_vulkan::Renderer &renderer ) noexcept
     };
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateRenderPass ( renderer.GetDevice (), &info, nullptr, &_renderPass ),
+        vkCreateRenderPass ( renderer.GetDevice (), &info, nullptr, &_renderInfo.renderPass ),
         "pbr::UIPass::CreateRenderPass",
         "Can't create render pass"
     );
@@ -843,11 +894,11 @@ bool UIPass::CreateRenderPass ( android_vulkan::Renderer &renderer ) noexcept
 
 void UIPass::DestroyRenderPass ( VkDevice device ) noexcept
 {
-    if ( _renderPass == VK_NULL_HANDLE )
+    if ( _renderInfo.renderPass == VK_NULL_HANDLE )
         return;
 
-    vkDestroyRenderPass ( device, _renderPass, nullptr );
-    _renderPass = VK_NULL_HANDLE;
+    vkDestroyRenderPass ( device, _renderInfo.renderPass, nullptr );
+    _renderInfo.renderPass = VK_NULL_HANDLE;
     AV_UNREGISTER_RENDER_PASS ( "pbr::UIPass::_renderPass" )
 }
 
@@ -857,7 +908,7 @@ void UIPass::InitCommonStructures () noexcept
     {
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
         .pNext = nullptr,
-        .renderPass = _renderPass,
+        .renderPass = VK_NULL_HANDLE,
         .framebuffer = VK_NULL_HANDLE,
 
         .renderArea =
@@ -939,6 +990,74 @@ void UIPass::SubmitNonImage ( size_t usedVertices ) noexcept
             ._vertices = static_cast<uint32_t> ( usedVertices )
         }
     );
+}
+
+void UIPass::UpdateGeometry ( VkCommandBuffer commandBuffer ) noexcept
+{
+    constexpr size_t const elementSize = sizeof ( UIVertexInfo );
+    auto const offset = static_cast<VkDeviceSize> ( _sceneImageVertexIndex * elementSize );
+    auto const size = static_cast<VkDeviceSize> ( elementSize * ( _currentVertexIndex - _sceneImageVertexIndex ) );
+
+    VkBufferCopy const copy
+    {
+        .srcOffset = offset,
+        .dstOffset = offset,
+        .size = size
+    };
+
+    vkCmdCopyBuffer ( commandBuffer, _staging._buffer, _vertex._buffer, 1U, &copy );
+
+    VkBufferMemoryBarrier const barrier
+    {
+        .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
+        .pNext = nullptr,
+        .srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
+        .dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT,
+        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .buffer = _vertex._buffer,
+        .offset = offset,
+        .size = size
+    };
+
+    vkCmdPipelineBarrier ( commandBuffer,
+        VK_PIPELINE_STAGE_TRANSFER_BIT,
+        VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
+        0U,
+        0U,
+        nullptr,
+        1U,
+        &barrier,
+        0U,
+        nullptr
+    );
+
+    _hasChanges = false;
+}
+
+void UIPass::UpdateTransform ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept
+{
+    GXMat4 projection {};
+    projection.Ortho ( _bottomRight._data[ 0U ], _bottomRight._data[ 1U ], 0.0F, 1.0F );
+
+    GXVec2 offset {};
+    offset.Multiply ( _bottomRight, -0.5F );
+
+    GXMat4 translate {};
+    translate.Translation ( offset._data[ 0U ], offset._data[ 1U ], 0.0F );
+
+    GXMat4 alpha {};
+    alpha.Multiply ( translate, renderer.GetPresentationEngineTransform () );
+
+    UIProgram::Transform transform {};
+    transform._transform.Multiply ( alpha, projection );
+
+    _uniformPool.Push ( commandBuffer, &transform, sizeof ( transform ) );
+    _transformDescriptorSet = _uniformPool.Acquire ();
+    _uniformPool.Commit ();
+
+    _uniformPool.IssueSync ( renderer.GetDevice (), commandBuffer );
+    _isTransformChanged = false;
 }
 
 } // namespace pbr

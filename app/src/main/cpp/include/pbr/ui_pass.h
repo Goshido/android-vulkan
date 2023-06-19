@@ -37,7 +37,6 @@ class UIPass final
             ) noexcept;
 
             void Destroy ( VkDevice device ) noexcept;
-
             void Update ( VkDevice device, VkImageView currentAtlas ) noexcept;
         };
 
@@ -70,6 +69,8 @@ class UIPass final
 
             [[nodiscard]] bool Init ( VkDevice device, VkDescriptorPool descriptorPool ) noexcept;
             void Destroy ( VkDevice device ) noexcept;
+
+            // TODO push and sync
         };
 
         struct Job final
@@ -98,22 +99,23 @@ class UIPass final
 
         bool                                        _hasChanges = false;
         bool                                        _isSceneImageEmbedded = false;
+        bool                                        _isTransformChanged = false;
         std::vector<Job>                            _jobs {};
 
         [[maybe_unused]] VkPresentInfoKHR           _presentInfo {};
         UIProgram                                   _program {};
         VkSemaphore                                 _renderEndSemaphore = VK_NULL_HANDLE;
         VkRenderPassBeginInfo                       _renderInfo {};
-        VkRenderPass                                _renderPass = VK_NULL_HANDLE;
 
-        [[maybe_unused]] VkImage                    _sceneImage = VK_NULL_HANDLE;
-        [[maybe_unused]] VkImageView                _sceneView = VK_NULL_HANDLE;
+        [[maybe_unused]] VkImageView                _scene = VK_NULL_HANDLE;
         [[maybe_unused]] VkSubmitInfo               _submitInfo {};
 
         Buffer                                      _staging {};
         Buffer                                      _vertex {};
 
         VkSemaphore                                 _targetAcquiredSemaphore = VK_NULL_HANDLE;
+        [[maybe_unused]] VkDescriptorSet            _transformDescriptorSet = VK_NULL_HANDLE;
+        [[maybe_unused]] VkImageView                _transparent = VK_NULL_HANDLE;
 
         UniformBufferPoolManager                    _uniformPool
         {
@@ -132,20 +134,31 @@ class UIPass final
 
         ~UIPass () = default;
 
-        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, SamplerManager const &samplerManager ) noexcept;
+        [[nodiscard]] bool AcquirePresentTarget ( android_vulkan::Renderer &renderer,
+            size_t &swapchainImageIndex
+        ) noexcept;
+
+        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
+            SamplerManager const &samplerManager,
+            VkImageView transparent
+        ) noexcept;
+
         void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
 
         [[nodiscard]] bool Commit () noexcept;
-        void Execute ( VkCommandBuffer commandBuffer ) noexcept;
+
+        [[nodiscard]] bool Execute ( android_vulkan::Renderer &renderer,
+            VkCommandBuffer commandBuffer,
+            VkFence fence
+        ) noexcept;
 
         [[nodiscard]] FontStorage& GetFontStorage () noexcept;
 
+        [[nodiscard]] bool OnSwapchainCrated ( android_vulkan::Renderer &renderer, VkImageView scene ) noexcept;
+        void OnSwapchainDestroyed ( VkDevice device ) noexcept;
+
         void RequestEmptyUI () noexcept;
         [[nodiscard]] UIBufferResponse RequestUIBuffer ( size_t neededVertices ) noexcept;
-
-        [[nodiscard]] bool SetPresentationInfo ( android_vulkan::Renderer &renderer,
-            android_vulkan::Texture2D const &scene
-        ) noexcept;
 
         [[maybe_unused]] void SubmitImage ( Texture2DRef const &texture ) noexcept;
         void SubmitRectangle () noexcept;
@@ -180,6 +193,9 @@ class UIPass final
 
         void InitCommonStructures () noexcept;
         void SubmitNonImage ( size_t usedVertices ) noexcept;
+
+        void UpdateGeometry ( VkCommandBuffer commandBuffer ) noexcept;
+        void UpdateTransform ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept;
 };
 
 } // namespace pbr

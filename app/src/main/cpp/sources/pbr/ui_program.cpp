@@ -145,6 +145,23 @@ Program::DescriptorSetInfo const& UIProgram::GetResourceInfo () const noexcept
     return info;
 }
 
+void UIProgram::SetDescriptorSet ( VkCommandBuffer commandBuffer,
+    VkDescriptorSet const* sets,
+    uint32_t startIndex,
+    uint32_t count
+) const noexcept
+{
+    vkCmdBindDescriptorSets ( commandBuffer,
+        VK_PIPELINE_BIND_POINT_GRAPHICS,
+        _pipelineLayout,
+        startIndex,
+        count,
+        sets,
+        0U,
+        nullptr
+    );
+}
+
 VkPipelineColorBlendStateCreateInfo const* UIProgram::InitColorBlendInfo (
     VkPipelineColorBlendStateCreateInfo &info,
     VkPipelineColorBlendAttachmentState* attachments

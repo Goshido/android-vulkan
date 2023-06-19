@@ -48,6 +48,12 @@ class UIProgram final : public Program
         void Destroy ( VkDevice device ) noexcept override;
         [[nodiscard]] DescriptorSetInfo const& GetResourceInfo () const noexcept override;
 
+        void SetDescriptorSet ( VkCommandBuffer commandBuffer,
+            VkDescriptorSet const* sets,
+            uint32_t startIndex,
+            uint32_t count
+        ) const noexcept;
+
     private:
         [[nodiscard]] VkPipelineColorBlendStateCreateInfo const* InitColorBlendInfo (
             VkPipelineColorBlendStateCreateInfo &info,

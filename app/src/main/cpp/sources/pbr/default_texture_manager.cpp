@@ -19,6 +19,7 @@ void DefaultTextureManager::FreeTransferResources ( android_vulkan::Renderer &re
     freeJob ( _mask );
     freeJob ( _normal );
     freeJob ( _params );
+    freeJob ( _transparent );
 
     vkFreeCommandBuffers ( renderer.GetDevice (),
         commandPool,
@@ -49,14 +50,22 @@ bool DefaultTextureManager::Init ( android_vulkan::Renderer &renderer, VkCommand
         "Can't allocate command buffers"
     );
 
-    auto textureLoader = [ &renderer ] ( Texture2DRef &texture,
+    if ( !result )
+        return false;
+
+    auto const textureLoader = [ &renderer ] ( Texture2DRef &texture,
         uint8_t const* data,
         size_t size,
         VkFormat format,
         VkCommandBuffer commandBuffer
     ) noexcept -> bool {
         texture = std::make_shared<android_vulkan::Texture2D> ();
-        constexpr VkExtent2D resolution { .width = 1U, .height = 1U };
+
+        constexpr VkExtent2D resolution
+        {
+            .width = 1U,
+            .height = 1U
+        };
 
         bool const result = texture->UploadData ( renderer,
             data,
@@ -110,7 +119,18 @@ bool DefaultTextureManager::Init ( android_vulkan::Renderer &renderer, VkCommand
         return false;
 
     constexpr uint8_t const paramData[ 4U ] = { 128U, 128U, 128U, 128U };
-    return textureLoader ( _params, paramData, sizeof ( paramData ), VK_FORMAT_R8G8B8A8_UNORM, _commandBuffers[ 4U ] );
+
+    if ( !textureLoader ( _params, paramData, sizeof ( paramData ), VK_FORMAT_R8G8B8A8_UNORM, _commandBuffers[ 4U ] ) )
+        return false;
+
+    constexpr uint8_t const transparentData[ 4U ] = { 0U, 0U, 0U, 0U };
+
+    return textureLoader ( _transparent,
+        transparentData,
+        sizeof ( transparentData ),
+        VK_FORMAT_R8G8B8A8_UNORM,
+        _commandBuffers[ 5U ]
+    );
 }
 
 void DefaultTextureManager::Destroy ( android_vulkan::Renderer &renderer ) noexcept
@@ -153,6 +173,11 @@ Texture2DRef const& DefaultTextureManager::GetNormal () const noexcept
 Texture2DRef const& DefaultTextureManager::GetParams () const noexcept
 {
     return _params;
+}
+
+Texture2DRef const& DefaultTextureManager::GetTransparent () const noexcept
+{
+    return _transparent;
 }
 
 } // namespace pbr

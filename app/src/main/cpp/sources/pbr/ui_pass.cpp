@@ -12,6 +12,8 @@ constexpr size_t MAX_IMAGES = 1024U;
 constexpr size_t MAX_VERTICES = 762600U;
 constexpr size_t BUFFER_BYTES = MAX_VERTICES * sizeof ( UIVertexInfo );
 
+constexpr size_t TRANSPARENT_DESCRIPTOR_SET_COUNT = 1U;
+
 } // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -200,13 +202,18 @@ void UIPass::Buffer::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 
 //----------------------------------------------------------------------------------------------------------------------
 
-bool UIPass::ImageDescriptorSets::Init ( VkDevice device, VkDescriptorPool descriptorPool ) noexcept
+bool UIPass::ImageDescriptorSets::Init ( VkDevice device,
+    VkDescriptorPool descriptorPool,
+    VkImageView transparent
+) noexcept
 {
     if ( !_layout.Init ( device ) )
         return false;
 
-    _descriptorSets.resize ( MAX_IMAGES, VK_NULL_HANDLE );
-    std::vector<VkDescriptorSetLayout> const layouts ( MAX_IMAGES, _layout.GetLayout () );
+    constexpr size_t count = MAX_IMAGES + TRANSPARENT_DESCRIPTOR_SET_COUNT;
+    _descriptorSets.resize ( count, VK_NULL_HANDLE );
+
+    std::vector<VkDescriptorSetLayout> const layouts ( count, _layout.GetLayout () );
     VkDescriptorSet* ds = _descriptorSets.data ();
 
     VkDescriptorSetAllocateInfo const allocateInfo
@@ -214,7 +221,7 @@ bool UIPass::ImageDescriptorSets::Init ( VkDevice device, VkDescriptorPool descr
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
         .pNext = nullptr,
         .descriptorPool = descriptorPool,
-        .descriptorSetCount = static_cast<uint32_t> ( MAX_IMAGES ),
+        .descriptorSetCount = static_cast<uint32_t> ( count ),
         .pSetLayouts = layouts.data ()
     };
 
@@ -227,7 +234,10 @@ bool UIPass::ImageDescriptorSets::Init ( VkDevice device, VkDescriptorPool descr
     if ( !result )
         return false;
 
-    VkDescriptorImageInfo const imageInfo
+    _transparent = _descriptorSets.back ();
+    _descriptorSets.pop_back ();
+
+    VkDescriptorImageInfo imageInfo
     {
         .sampler = VK_NULL_HANDLE,
         .imageView = VK_NULL_HANDLE,
@@ -236,7 +246,7 @@ bool UIPass::ImageDescriptorSets::Init ( VkDevice device, VkDescriptorPool descr
 
     _imageInfo.resize ( MAX_IMAGES, imageInfo );
 
-    VkWriteDescriptorSet const writeSet
+    VkWriteDescriptorSet writeSet
     {
         .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
         .pNext = nullptr,
@@ -260,8 +270,15 @@ bool UIPass::ImageDescriptorSets::Init ( VkDevice device, VkDescriptorPool descr
         write.pImageInfo = imageInfoData + i;
     }
 
-    _readIndex = 0U;
-    _writeIndex = 0U;
+    _commitIndex = 0U;
+    _startIndex = 0U;
+    _written = 0U;
+
+    // Init transparent descriptor set.
+    imageInfo.imageView = transparent;
+    writeSet.dstSet = _transparent;
+    writeSet.pImageInfo = &imageInfo;
+    vkUpdateDescriptorSets ( device, 1U, &writeSet, 0U, nullptr );
 
     return true;
 }
@@ -278,6 +295,32 @@ void UIPass::ImageDescriptorSets::Destroy ( VkDevice device ) noexcept
     clear ( _writeSets );
     clear ( _descriptorSets );
     clear ( _imageInfo );
+}
+
+void UIPass::ImageDescriptorSets::Commit ( VkDevice device ) noexcept
+{
+    size_t const idx = _startIndex + _written;
+    size_t const cases[] = { 0U, idx - MAX_IMAGES };
+    size_t const more = cases[ static_cast<size_t> ( idx > MAX_IMAGES ) ];
+    size_t const available = _written - more;
+
+    VkWriteDescriptorSet const* writeSets = _writeSets.data ();
+    vkUpdateDescriptorSets ( device, static_cast<uint32_t> ( available ), writeSets + _startIndex, 0U, nullptr );
+
+    _commitIndex = _startIndex;
+    _startIndex = idx % MAX_IMAGES;
+    _written = 0U;
+
+    if ( more >= 1U )
+    {
+        vkUpdateDescriptorSets ( device, static_cast<uint32_t> ( more ), writeSets, 0U, nullptr );
+    }
+}
+
+void UIPass::ImageDescriptorSets::Push ( VkImageView view ) noexcept
+{
+    _imageInfo[ ( _startIndex + _written ) % MAX_IMAGES ].imageView = view;
+    ++_written;
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -373,7 +416,9 @@ bool UIPass::Init ( android_vulkan::Renderer &renderer,
 
     constexpr size_t commonDescriptorSetCount = 1U;
     constexpr size_t imageDescriptorSetCount = MAX_IMAGES;
-    constexpr size_t descriptorSetCount = commonDescriptorSetCount + imageDescriptorSetCount;
+
+    constexpr size_t descriptorSetCount =
+        commonDescriptorSetCount + imageDescriptorSetCount + TRANSPARENT_DESCRIPTOR_SET_COUNT;
 
     constexpr static VkDescriptorPoolSize const poolSizes[] =
     {
@@ -409,7 +454,7 @@ bool UIPass::Init ( android_vulkan::Renderer &renderer,
     AV_REGISTER_DESCRIPTOR_POOL ( "pbr::UIPass::_descriptorPool" )
 
     return _commonDescriptorSet.Init ( device, _descriptorPool, samplerManager ) &&
-        _imageDescriptorSets.Init ( device, _descriptorPool ) &&
+        _imageDescriptorSets.Init ( device, _descriptorPool, transparent ) &&
         _transformLayout.Init ( device ) &&
 
         _vertex.Init ( renderer,
@@ -487,8 +532,10 @@ void UIPass::Destroy ( android_vulkan::Renderer &renderer ) noexcept
     _hasChanges = false;
 }
 
-bool UIPass::Commit () noexcept
+bool UIPass::Commit ( VkDevice device ) noexcept
 {
+    _imageDescriptorSets.Commit ( device );
+
     if ( _isSceneImageEmbedded )
         return true;
 
@@ -519,6 +566,7 @@ bool UIPass::Commit () noexcept
         imageBottomRight
     );
 
+    _imageDescriptorSets.Push ( _scene );
     _isSceneImageEmbedded = true;
     return true;
 }
@@ -535,13 +583,26 @@ bool UIPass::Execute ( android_vulkan::Renderer &renderer, VkCommandBuffer comma
     {
         _transformDescriptorSet,
         _commonDescriptorSet._descriptorSet,
-
+        _imageDescriptorSets._descriptorSets[ _imageDescriptorSets._commitIndex ]
     };
 
-    // TODO iterate over all jobs as well.
     _program.SetDescriptorSet ( commandBuffer, sets, 0U, static_cast<uint32_t> ( std::size ( sets ) ) );
 
-    vkCmdDraw ( commandBuffer, GetVerticesPerRectangle (), 1U, 0U, 0U );
+    constexpr VkDeviceSize offset = 0U;
+    vkCmdBindVertexBuffers ( commandBuffer, 0U, 1U, &_vertex._buffer, &offset );
+
+    auto start = static_cast<uint32_t> ( _sceneImageVertexIndex );
+    vkCmdDraw ( commandBuffer, GetVerticesPerRectangle (), 1U, start, 0U );
+    start += GetVerticesPerRectangle ();
+
+    // TODO support image rectangles as well.
+    _program.SetDescriptorSet ( commandBuffer, &_imageDescriptorSets._transparent, 2U, 1U );
+
+    for ( auto const& job : _jobs )
+    {
+        vkCmdDraw ( commandBuffer, job._vertices, 1U, start, 0U );
+        start += job._vertices;
+    }
 
     vkCmdEndRenderPass ( commandBuffer );
 
@@ -589,7 +650,7 @@ FontStorage& UIPass::GetFontStorage () noexcept
     return _fontStorage;
 }
 
-bool UIPass::OnSwapchainCrated ( android_vulkan::Renderer &renderer, VkImageView scene ) noexcept
+bool UIPass::OnSwapchainCreated ( android_vulkan::Renderer &renderer, VkImageView scene ) noexcept
 {
     _scene = scene;
 
@@ -608,7 +669,9 @@ bool UIPass::OnSwapchainCrated ( android_vulkan::Renderer &renderer, VkImageView
         return false;
 
     r = resolution;
-    _bottomRight = GXVec2 ( static_cast<float> ( resolution.width ), static_cast<float> ( resolution.height ) );
+
+    VkExtent2D const& viewport = renderer.GetViewportResolution ();
+    _bottomRight = GXVec2 ( static_cast<float> ( viewport.width ), static_cast<float> ( viewport.height ) );
 
     _isTransformChanged = true;
     return true;
@@ -633,6 +696,7 @@ void UIPass::RequestEmptyUI () noexcept
 
 UIPass::UIBufferResponse UIPass::RequestUIBuffer ( size_t neededVertices ) noexcept
 {
+    RequestEmptyUI ();
     size_t const actualVertices = neededVertices + GetVerticesPerRectangle ();
 
     if ( actualVertices > MAX_VERTICES )
@@ -656,6 +720,7 @@ UIPass::UIBufferResponse UIPass::RequestUIBuffer ( size_t neededVertices ) noexc
         neededVertices
     );
 
+    _imageDescriptorSets.Push ( _scene );
     _currentVertexIndex = nextIdx;
     _isSceneImageEmbedded = false;
 
@@ -693,6 +758,8 @@ bool UIPass::UploadGPUData ( android_vulkan::Renderer &renderer, VkCommandBuffer
 
     if ( !_fontStorage.UploadGPUData ( renderer, commandBuffer ) )
         return false;
+
+    _commonDescriptorSet.Update ( renderer.GetDevice (), _fontStorage.GetAtlasImageView () );
 
     if ( _isTransformChanged )
         UpdateTransform ( renderer, commandBuffer );
@@ -979,7 +1046,7 @@ void UIPass::SubmitNonImage ( size_t usedVertices ) noexcept
 
     if ( !last._texture )
     {
-        last._vertices += static_cast<uint32_t> ( GetVerticesPerRectangle () );
+        last._vertices += usedVertices;
         return;
     }
 
@@ -1037,26 +1104,39 @@ void UIPass::UpdateGeometry ( VkCommandBuffer commandBuffer ) noexcept
 
 void UIPass::UpdateTransform ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept
 {
+    VkExtent2D const& surface = renderer.GetSurfaceSize ();
+
+    // UI assets use common UI flow. X from left to right. Y from top to down.
+    // Ortho matrix transform 3D space to homogenous space. For Vulkan it inverses Y axis according to CVV.
+    // It's opposite to UI flow. So UI transform should offset geometry by half of screen and mirror image Y axis.
+
     GXMat4 projection {};
-    projection.Ortho ( _bottomRight._data[ 0U ], _bottomRight._data[ 1U ], 0.0F, 1.0F );
+    projection.Ortho ( static_cast<float> ( surface.width ), static_cast<float> ( surface.height ), 0.0F, 1.0F );
 
-    GXVec2 offset {};
-    offset.Multiply ( _bottomRight, -0.5F );
+    GXVec2 h {};
+    h.Multiply ( _bottomRight, -0.5F );
 
-    GXMat4 translate {};
-    translate.Translation ( offset._data[ 0U ], offset._data[ 1U ], 0.0F );
+    GXMat4 move {};
+    move.Translation ( h._data[ 0U ], h._data[ 1U ], 0.0F );
 
     GXMat4 alpha {};
-    alpha.Multiply ( translate, renderer.GetPresentationEngineTransform () );
+    alpha.Multiply ( move, renderer.GetPresentationEngineTransform () );
+
+    GXMat4 mirror {};
+    mirror.Scale ( 1.0F, -1.0F, 1.0F );
+
+    GXMat4 beta {};
+    beta.Multiply ( alpha, mirror );
 
     UIProgram::Transform transform {};
-    transform._transform.Multiply ( alpha, projection );
+    transform._transform.Multiply ( beta, projection );
 
     _uniformPool.Push ( commandBuffer, &transform, sizeof ( transform ) );
     _transformDescriptorSet = _uniformPool.Acquire ();
-    _uniformPool.Commit ();
 
     _uniformPool.IssueSync ( renderer.GetDevice (), commandBuffer );
+    _uniformPool.Commit ();
+
     _isTransformChanged = false;
 }
 

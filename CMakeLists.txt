@@ -130,7 +130,6 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/pbr/point_light_shadowmap_generator_program.cpp
     app/src/main/cpp/sources/pbr/position_property.cpp
     app/src/main/cpp/sources/pbr/position_property_checker.cpp
-    app/src/main/cpp/sources/pbr/present_pass.cpp
     app/src/main/cpp/sources/pbr/program.cpp
     app/src/main/cpp/sources/pbr/property.cpp
     app/src/main/cpp/sources/pbr/property_checker.cpp
@@ -180,8 +179,6 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/pbr/text_align_property_checker.cpp
     app/src/main/cpp/sources/pbr/text_html5_element.cpp
     app/src/main/cpp/sources/pbr/text_ui_element.cpp
-    app/src/main/cpp/sources/pbr/texture_present_descriptor_set_layout.cpp
-    app/src/main/cpp/sources/pbr/texture_present_program.cpp
     app/src/main/cpp/sources/pbr/transform_component.cpp
     app/src/main/cpp/sources/pbr/ui_element.cpp
     app/src/main/cpp/sources/pbr/ui_layer.cpp

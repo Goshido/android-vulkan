@@ -121,7 +121,7 @@ void TextUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
     android_vulkan::Renderer& renderer = *info._renderer;
 
     auto const appendGlyph = [ this ] ( int32_t x, int32_t y, FontStorage::GlyphInfo const &glyphInfo ) noexcept {
-        y += glyphInfo._offsetY;
+        y -= glyphInfo._offsetY;
 
         _glyphs.emplace_back (
             Glyph
@@ -193,7 +193,7 @@ void TextUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
     penLocation._data[ 0U ] = static_cast<float> ( x );
     penLocation._data[ 1U ] = static_cast<float> ( y ) + fraction;
 
-    info._vertices += text.size () * UIPass::GetVerticesPerRectangle ();
+    info._vertices += _text.size () * UIPass::GetVerticesPerRectangle ();
 }
 
 void TextUIElement::Submit ( SubmitInfo &info ) noexcept

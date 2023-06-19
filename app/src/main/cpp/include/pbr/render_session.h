@@ -5,7 +5,6 @@
 #include "default_texture_manager.h"
 #include "geometry_pass.h"
 #include "light_pass.h"
-//#include "present_pass.h"
 #include "reflection_global_pass.h"
 #include "shadow_casters.h"
 #include "ui_pass.h"
@@ -49,9 +48,6 @@ class RenderSession final
         GXProjectionClipPlanes                  _frustum {};
 
         GBuffer                                 _gBuffer {};
-//        VkDescriptorPool                        _gBufferDescriptorPool = VK_NULL_HANDLE;
-//        VkDescriptorSet                         _gBufferSlotMapper = VK_NULL_HANDLE;
-
         GeometryPass                            _geometryPass {};
 
         LightHandler                            _lightHandlers[ 3U ] {};
@@ -60,12 +56,10 @@ class RenderSession final
         MeshHandler                             _meshHandlers[ 2U ] {};
         size_t                                  _opaqueMeshCount = 0U;
 
-//        PresentPass                             _presentPass {};
         VkRenderPass                            _renderPass = VK_NULL_HANDLE;
         VkRenderPassBeginInfo                   _renderPassInfo {};
         RenderSessionStats                      _renderSessionStats {};
         SamplerManager                          _samplerManager {};
-//        TexturePresentDescriptorSetLayout       _texturePresentDescriptorSetLayout {};
 
         UIPass                                  _uiPass;
 
@@ -114,7 +108,6 @@ class RenderSession final
             VkExtent2D const &resolution
         ) noexcept;
 
-//        [[nodiscard]] bool CreateGBufferSlotMapper ( android_vulkan::Renderer &renderer ) noexcept;
         void DestroyGBufferResources ( android_vulkan::Renderer &renderer ) noexcept;
 
         void SubmitOpaqueCall ( MeshRef &mesh,

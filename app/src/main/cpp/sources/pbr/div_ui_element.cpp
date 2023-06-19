@@ -86,6 +86,17 @@ void DIVUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
 
     GXVec2 penLocation {};
     float const& parentLeft = info._parentTopLeft._data[ 0U ];
+    float const& parentWidth = canvasSize._data[ 0U ];
+    float const& paddingRight = paddingBottomRight._data[ 0U ];
+    float const& marginRight = marginBottomRight._data[ 0U ];
+
+    auto const newLine = [ & ] () noexcept {
+        GXVec2 beta {};
+        beta.Sum ( alpha, GXVec2 ( parentLeft, info._currentLineHeight ) );
+
+        penLocation._data[ 0U ] = beta._data[ 0U ];
+        penLocation._data[ 1U ] += beta._data[ 1U ];
+    };
 
     switch ( _css._position )
     {
@@ -94,19 +105,21 @@ void DIVUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
         break;
 
         case PositionProperty::eValue::Static:
-            if ( _isInlineBlock )
+        {
+            if ( !_isInlineBlock )
             {
-                penLocation.Sum ( info._penLocation, alpha );
+                newLine ();
+                break;
             }
-            else
-            {
-                // 'block' territory. Element should be started from new line.
-                GXVec2 beta {};
-                beta.Sum ( alpha, GXVec2 ( parentLeft, info._currentLineHeight ) );
 
-                penLocation._data[ 0U ] = beta._data[ 0U ];
-                penLocation._data[ 1U ] += beta._data[ 1U ];
+            penLocation.Sum ( info._penLocation, alpha );
+            float const beta = penLocation._data[ 0U ] + marginRight + paddingRight;
+
+            if ( parentWidth + parentLeft - beta <= 0.0F )
+            {
+                newLine ();
             }
+        }
         break;
 
         default:
@@ -114,15 +127,10 @@ void DIVUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
         return;
     }
 
-    float const& parentWidth = canvasSize._data[ 0U ];
-    float const& penX = penLocation._data[ 0U ];
-    float const& paddingRight = paddingBottomRight._data[ 0U ];
-    float const& marginRight = marginBottomRight._data[ 0U ];
-
     float const widthCases[] =
     {
         ResolvePixelLength ( _css._width, parentWidth, false, units ),
-        parentWidth + parentLeft - ( penX + paddingRight + marginRight )
+        parentWidth + parentLeft - ( penLocation._data[ 0U ] + paddingRight + marginRight )
     };
 
     GXVec2 canvas ( widthCases[ static_cast<size_t> ( _isAutoWidth | !_isInlineBlock ) ],

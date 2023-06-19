@@ -58,19 +58,27 @@ class UIPass final
 
         struct ImageDescriptorSets final
         {
+            size_t                                  _commitIndex = 0U;
+            size_t                                  _startIndex = 0U;
+            size_t                                  _written = 0U;
+
             std::vector<VkDescriptorSet>            _descriptorSets {};
             UIPassImageDescriptorSetLayout          _layout {};
 
             std::vector<VkDescriptorImageInfo>      _imageInfo {};
             std::vector<VkWriteDescriptorSet>       _writeSets {};
 
-            [[maybe_unused]] size_t                 _readIndex = 0U;
-            [[maybe_unused]] size_t                 _writeIndex = 0U;
+            VkDescriptorSet                         _transparent = VK_NULL_HANDLE;
 
-            [[nodiscard]] bool Init ( VkDevice device, VkDescriptorPool descriptorPool ) noexcept;
+            [[nodiscard]] bool Init ( VkDevice device,
+                VkDescriptorPool descriptorPool,
+                VkImageView transparent
+            ) noexcept;
+
             void Destroy ( VkDevice device ) noexcept;
 
-            // TODO push and sync
+            void Commit ( VkDevice device ) noexcept;
+            void Push ( VkImageView view ) noexcept;
         };
 
         struct Job final
@@ -94,7 +102,7 @@ class UIPass final
 
         FontStorage                                 _fontStorage {};
 
-        [[maybe_unused]] uint32_t                   _framebufferIndex = std::numeric_limits<uint32_t>::max ();
+        uint32_t                                    _framebufferIndex = std::numeric_limits<uint32_t>::max ();
         std::vector<VkFramebuffer>                  _framebuffers {};
 
         bool                                        _hasChanges = false;
@@ -102,19 +110,19 @@ class UIPass final
         bool                                        _isTransformChanged = false;
         std::vector<Job>                            _jobs {};
 
-        [[maybe_unused]] VkPresentInfoKHR           _presentInfo {};
+        VkPresentInfoKHR                            _presentInfo {};
         UIProgram                                   _program {};
         VkSemaphore                                 _renderEndSemaphore = VK_NULL_HANDLE;
         VkRenderPassBeginInfo                       _renderInfo {};
 
-        [[maybe_unused]] VkImageView                _scene = VK_NULL_HANDLE;
-        [[maybe_unused]] VkSubmitInfo               _submitInfo {};
+        VkImageView                                 _scene = VK_NULL_HANDLE;
+        VkSubmitInfo                                _submitInfo {};
 
         Buffer                                      _staging {};
         Buffer                                      _vertex {};
 
         VkSemaphore                                 _targetAcquiredSemaphore = VK_NULL_HANDLE;
-        [[maybe_unused]] VkDescriptorSet            _transformDescriptorSet = VK_NULL_HANDLE;
+        VkDescriptorSet                             _transformDescriptorSet = VK_NULL_HANDLE;
         [[maybe_unused]] VkImageView                _transparent = VK_NULL_HANDLE;
 
         UniformBufferPoolManager                    _uniformPool
@@ -145,7 +153,7 @@ class UIPass final
 
         void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
 
-        [[nodiscard]] bool Commit () noexcept;
+        [[nodiscard]] bool Commit ( VkDevice device ) noexcept;
 
         [[nodiscard]] bool Execute ( android_vulkan::Renderer &renderer,
             VkCommandBuffer commandBuffer,
@@ -154,7 +162,7 @@ class UIPass final
 
         [[nodiscard]] FontStorage& GetFontStorage () noexcept;
 
-        [[nodiscard]] bool OnSwapchainCrated ( android_vulkan::Renderer &renderer, VkImageView scene ) noexcept;
+        [[nodiscard]] bool OnSwapchainCreated ( android_vulkan::Renderer &renderer, VkImageView scene ) noexcept;
         void OnSwapchainDestroyed ( VkDevice device ) noexcept;
 
         void RequestEmptyUI () noexcept;

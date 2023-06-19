@@ -8,7 +8,6 @@ Clear-Host
 .\make-vs.ps1 mandelbrot
 .\make-vs.ps1 point-light-shadowmap-generator
 .\make-vs.ps1 reflection-global
-.\make-vs.ps1 screen-quad
 .\make-vs.ps1 static-mesh
 .\make-vs.ps1 ui
 
@@ -23,5 +22,4 @@ Clear-Host
 .\make-ps.ps1 reflection-global
 .\make-ps.ps1 reflection-local
 .\make-ps.ps1 stipple
-.\make-ps.ps1 texture-present
 .\make-ps.ps1 ui

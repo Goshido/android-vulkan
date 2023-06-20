@@ -21,16 +21,21 @@
     display: inline-block;
     vertical-align: bottom;
     width: 100%;
-    background-color: rgb(118, 41, 206);
 }
 
-.coin-cell {
+.coin-top-line {
+    display: inline-block;
+    width: 100%;
+    height: 1em;
+}
+
+.coin-bottom-line {
     display: inline-block;
     width: 100%;
     font-size: 0mm;
 }
 
-.coin-line {
+.coin-image {
     display: inline-block;
     text-align: right;
     width: 40%;

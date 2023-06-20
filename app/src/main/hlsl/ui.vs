@@ -4,7 +4,8 @@
 [[vk::binding ( BIND_TRANSFORM, SET_TRANSFORM )]]
 cbuffer Transform:                                  register ( b0 )
 {
-    float32_t4x4                    _transform;
+    float32_t2x2                    _rotateScale;
+    float32_t2                      _offset;
 };
 
 struct InputData
@@ -45,8 +46,7 @@ OutputData VS ( in InputData inputData )
 {
     OutputData result;
 
-    result._vertexH = mul ( _transform, float32_t4 ( inputData._vertex, 0.5F, 1.0F ) );
-
+    result._vertexH = float32_t4 ( mul ( _rotateScale, inputData._vertex ) + _offset, 0.5F, 1.0F );
     result._color = inputData._color;
     result._atlasUV = inputData._atlas.xy;
     result._atlasLayer = inputData._atlas.z;

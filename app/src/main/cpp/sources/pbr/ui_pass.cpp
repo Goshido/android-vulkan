@@ -303,6 +303,9 @@ void UIPass::ImageDescriptorSets::Destroy ( VkDevice device ) noexcept
 
 void UIPass::ImageDescriptorSets::Commit ( VkDevice device ) noexcept
 {
+    if ( !_written )
+        return;
+
     size_t const idx = _startIndex + _written;
     size_t const cases[] = { 0U, idx - MAX_IMAGES };
     size_t const more = cases[ static_cast<size_t> ( idx > MAX_IMAGES ) ];
@@ -641,24 +644,36 @@ FontStorage& UIPass::GetFontStorage () noexcept
 bool UIPass::OnSwapchainCreated ( android_vulkan::Renderer &renderer, VkImageView scene ) noexcept
 {
     VkExtent2D const& resolution = renderer.GetSurfaceSize ();
+    bool const hasRenderPass = _renderInfo.renderPass != VK_NULL_HANDLE;
+
+    if ( hasRenderPass && !CreateFramebuffers ( renderer, resolution ) )
+        return false;
+
     VkExtent2D& r = _renderInfo.renderArea.extent;
 
     if ( ( r.width == resolution.width ) & ( r.height == resolution.height ) )
         return true;
 
+    VkDevice device = renderer.GetDevice ();
+
+    if ( hasRenderPass )
+        _program.Destroy ( device );
+
     bool const result = _fontStorage.SetMediaResolution ( renderer, resolution ) &&
         CreateRenderPass ( renderer ) &&
-        _program.Init ( renderer, _renderInfo.renderPass, 0U, resolution ) &&
-        CreateFramebuffers ( renderer, resolution );
+        _program.Init ( renderer, _renderInfo.renderPass, 0U, resolution );
 
     if ( !result )
+        return false;
+
+    if ( _framebuffers.empty () && !CreateFramebuffers ( renderer, resolution ) )
         return false;
 
     r = resolution;
 
     VkExtent2D const& viewport = renderer.GetViewportResolution ();
     _bottomRight = GXVec2 ( static_cast<float> ( viewport.width ), static_cast<float> ( viewport.height ) );
-    _imageDescriptorSets.UpdateScene ( renderer.GetDevice (), scene );
+    _imageDescriptorSets.UpdateScene ( device, scene );
 
     _isTransformChanged = true;
     return true;
@@ -666,7 +681,6 @@ bool UIPass::OnSwapchainCreated ( android_vulkan::Renderer &renderer, VkImageVie
 
 void UIPass::OnSwapchainDestroyed ( VkDevice device ) noexcept
 {
-    _program.Destroy ( device );
     DestroyFramebuffers ( device );
 }
 
@@ -1128,6 +1142,7 @@ bool UIPass::UpdateSceneImage () noexcept
     );
 
     _isSceneImageEmbedded = true;
+    _hasChanges = true;
     return true;
 }
 
@@ -1142,8 +1157,10 @@ void UIPass::UpdateTransform ( android_vulkan::Renderer &renderer, VkCommandBuff
     GXMat4 projection {};
     projection.Ortho ( static_cast<float> ( surface.width ), static_cast<float> ( surface.height ), 0.0F, 1.0F );
 
+    constexpr GXVec2 halfPixelOffset ( -0.5F, -0.5F );
+
     GXVec2 h {};
-    h.Multiply ( _bottomRight, -0.5F );
+    h.Sum ( halfPixelOffset, -0.5F, _bottomRight );
 
     GXMat4 move {};
     move.Translation ( h._data[ 0U ], h._data[ 1U ], 0.0F );
@@ -1157,8 +1174,13 @@ void UIPass::UpdateTransform ( android_vulkan::Renderer &renderer, VkCommandBuff
     GXMat4 beta {};
     beta.Multiply ( alpha, mirror );
 
+    GXMat4 uiTransform {};
+    uiTransform.Multiply ( beta, projection );
+
     UIProgram::Transform transform {};
-    transform._transform.Multiply ( beta, projection );
+    transform._rotateScaleRow0 = *reinterpret_cast<GXVec2 const*> ( &uiTransform._m[ 0U ][ 0U ] );
+    transform._rotateScaleRow1 = *reinterpret_cast<GXVec2 const*> ( &uiTransform._m[ 1U ][ 0U ] );
+    transform._offset = *reinterpret_cast<GXVec2 const*> ( &uiTransform._m[ 3U ][ 0U ] );
 
     _uniformPool.Push ( commandBuffer, &transform, sizeof ( transform ) );
     _transformDescriptorSet = _uniformPool.Acquire ();

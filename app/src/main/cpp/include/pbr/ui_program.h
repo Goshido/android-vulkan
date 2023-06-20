@@ -18,7 +18,10 @@ class UIProgram final : public Program
 
         struct Transform final
         {
-            GXMat4                              _transform;
+            GXVec2                              _rotateScaleRow0;
+            GXVec2                              _padding0;
+            GXVec2                              _rotateScaleRow1;
+            GXVec2                              _offset;
         };
 
         AV_DX_ALIGNMENT_END

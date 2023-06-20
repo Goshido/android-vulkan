@@ -463,11 +463,11 @@ void Scene::RemoveActor ( Actor const &actor ) noexcept
     _actors.erase ( findResult );
 }
 
-bool Scene::Submit ( android_vulkan::Renderer &renderer, RenderSession &renderSession ) noexcept
+void Scene::Submit ( android_vulkan::Renderer &renderer, RenderSession &renderSession ) noexcept
 {
     AV_TRACE ( "Scene submit" )
     SubmitComponents ( renderer, renderSession );
-    return SubmitUI ( renderer, renderSession );
+    SubmitUI ( renderer, renderSession );
 }
 
 void Scene::AppendActor ( ActorRef &actor ) noexcept
@@ -566,7 +566,7 @@ void Scene::SubmitComponents ( android_vulkan::Renderer &renderer, RenderSession
     }
 }
 
-bool Scene::SubmitUI ( android_vulkan::Renderer &renderer, RenderSession &renderSession ) noexcept
+void Scene::SubmitUI ( android_vulkan::Renderer &renderer, RenderSession &renderSession ) noexcept
 {
     AV_TRACE ( "UI" )
 
@@ -584,12 +584,12 @@ bool Scene::SubmitUI ( android_vulkan::Renderer &renderer, RenderSession &render
     }
 
     if ( !needRedraw )
-        return uiPass.Commit ( renderer.GetDevice () );
+        return;
 
     if ( neededUIVertices == 0U )
     {
         uiPass.RequestEmptyUI ();
-        return uiPass.Commit ( renderer.GetDevice () );
+        return;
     }
 
     UIPass::UIBufferResponse response = uiPass.RequestUIBuffer ( neededUIVertices );
@@ -597,7 +597,7 @@ bool Scene::SubmitUI ( android_vulkan::Renderer &renderer, RenderSession &render
     if ( !response )
     {
         uiPass.RequestEmptyUI ();
-        return uiPass.Commit ( renderer.GetDevice () );
+        return;
     }
 
     UIElement::SubmitInfo info
@@ -608,9 +608,9 @@ bool Scene::SubmitUI ( android_vulkan::Renderer &renderer, RenderSession &render
     };
 
     for ( auto& uiLayer : _uiLayerList )
+    {
         uiLayer.get ().Submit ( info );
-
-    return uiPass.Commit ( renderer.GetDevice () );
+    }
 }
 
 void Scene::FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept

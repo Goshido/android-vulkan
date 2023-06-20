@@ -21,6 +21,7 @@
     display: inline-block;
     vertical-align: bottom;
     width: 100%;
+    background-color: rgb(118, 41, 206);
 }
 
 .coin-cell {

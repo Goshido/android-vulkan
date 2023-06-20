@@ -58,7 +58,7 @@ class UIPass final
 
         struct ImageDescriptorSets final
         {
-            size_t                                  _commitIndex = 0U;
+            [[maybe_unused]] size_t                 _commitIndex = 0U;
             size_t                                  _startIndex = 0U;
             size_t                                  _written = 0U;
 
@@ -68,6 +68,7 @@ class UIPass final
             std::vector<VkDescriptorImageInfo>      _imageInfo {};
             std::vector<VkWriteDescriptorSet>       _writeSets {};
 
+            VkDescriptorSet                         _scene = VK_NULL_HANDLE;
             VkDescriptorSet                         _transparent = VK_NULL_HANDLE;
 
             [[nodiscard]] bool Init ( VkDevice device,
@@ -79,6 +80,7 @@ class UIPass final
 
             void Commit ( VkDevice device ) noexcept;
             void Push ( VkImageView view ) noexcept;
+            void UpdateScene ( VkDevice device, VkImageView scene ) noexcept;
         };
 
         struct Job final
@@ -97,8 +99,8 @@ class UIPass final
         VkDescriptorPool                            _descriptorPool = VK_NULL_HANDLE;
         ImageDescriptorSets                         _imageDescriptorSets {};
 
-        size_t                                      _currentVertexIndex = 0U;
         size_t                                      _sceneImageVertexIndex = 0U;
+        size_t                                      _writeVertexIndex = 0U;
 
         FontStorage                                 _fontStorage {};
 
@@ -115,7 +117,6 @@ class UIPass final
         VkSemaphore                                 _renderEndSemaphore = VK_NULL_HANDLE;
         VkRenderPassBeginInfo                       _renderInfo {};
 
-        VkImageView                                 _scene = VK_NULL_HANDLE;
         VkSubmitInfo                                _submitInfo {};
 
         Buffer                                      _staging {};
@@ -123,7 +124,6 @@ class UIPass final
 
         VkSemaphore                                 _targetAcquiredSemaphore = VK_NULL_HANDLE;
         VkDescriptorSet                             _transformDescriptorSet = VK_NULL_HANDLE;
-        [[maybe_unused]] VkImageView                _transparent = VK_NULL_HANDLE;
 
         UniformBufferPoolManager                    _uniformPool
         {
@@ -152,8 +152,6 @@ class UIPass final
         ) noexcept;
 
         void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
-
-        [[nodiscard]] bool Commit ( VkDevice device ) noexcept;
 
         [[nodiscard]] bool Execute ( android_vulkan::Renderer &renderer,
             VkCommandBuffer commandBuffer,
@@ -203,6 +201,7 @@ class UIPass final
         void SubmitNonImage ( size_t usedVertices ) noexcept;
 
         void UpdateGeometry ( VkCommandBuffer commandBuffer ) noexcept;
+        [[nodiscard]] bool UpdateSceneImage () noexcept;
         void UpdateTransform ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept;
 };
 

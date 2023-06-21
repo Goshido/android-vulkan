@@ -36,7 +36,12 @@ float32_t4 PS ( in InputData inputData ): SV_Target0
         inputData._color * g_imageTexture.SampleLevel ( g_imageSampler, inputData._imageUV, 0.0F );
 
     const float32_t3 coordinate = float32_t3 ( inputData._atlasUV, inputData._atlasLayer );
-    const float32_t atlasSample = g_atlasTexture.SampleLevel ( g_atlasSampler, coordinate, 0.0F ).x;
+
+    //const float32_t atlasSample = g_atlasTexture.SampleLevel ( g_atlasSampler, coordinate, 0.0F ).x;
+
+    // FUCK
+    const float32_t atlasSample = g_atlasTexture.SampleLevel ( g_imageSampler, coordinate, 0.0F ).x;
+
     const float32_t4 textPart = float32_t4 ( inputData._color.xyz, atlasSample * inputData._color.a );
 
     return lerp ( textPart, imagePart, (float32_t4)( atlasSample == 0.0F ) );

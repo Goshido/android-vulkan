@@ -898,7 +898,8 @@ bool UIPass::CreateRenderPass ( android_vulkan::Renderer &renderer ) noexcept
         .flags = 0U,
         .format = renderer.GetSurfaceFormat (),
         .samples = VK_SAMPLE_COUNT_1_BIT,
-        .loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+//        .loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+        .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
         .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
         .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
         .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
@@ -975,6 +976,15 @@ void UIPass::DestroyRenderPass ( VkDevice device ) noexcept
 
 void UIPass::InitCommonStructures () noexcept
 {
+    // FUCK
+    constexpr VkClearValue fuck
+    {
+        .color
+        {
+            .float32 { 0.0F, 0.0F, 0.0F, 1.0F }
+        }
+    };
+
     _renderInfo =
     {
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
@@ -997,8 +1007,10 @@ void UIPass::InitCommonStructures () noexcept
             }
         },
 
-        .clearValueCount = 0U,
-        .pClearValues = nullptr
+//        .clearValueCount = 0U,
+//        .pClearValues = nullptr
+        .clearValueCount = 1U,
+        .pClearValues = &fuck
     };
 
     _presentInfo =
@@ -1123,11 +1135,13 @@ bool UIPass::UpdateSceneImage () noexcept
         }
     }
 
+    GXVec2 const halfPixelUV ( 0.5F / _bottomRight._data[ 0U ], 0.5F / _bottomRight._data[ 1U ] );
+
     constexpr GXColorRGB white ( 1.0F, 1.0F, 1.0F, 1.0F );
     constexpr GXVec2 topLeft ( 0.0F, 0.0F );
 
-    constexpr GXVec2 imageTopLeft ( 0.0F, 0.0F );
-    constexpr GXVec2 imageBottomRight ( 1.0F, 1.0F );
+    GXVec2 imageBottomRight {};
+    imageBottomRight.Sum ( GXVec2 ( 1.0F, 1.0F ), halfPixelUV );
 
     FontStorage::GlyphInfo const& g = _fontStorage.GetTransparentGlyphInfo ();
 
@@ -1137,7 +1151,7 @@ bool UIPass::UpdateSceneImage () noexcept
         _bottomRight,
         g._topLeft,
         g._bottomRight,
-        imageTopLeft,
+        halfPixelUV,
         imageBottomRight
     );
 
@@ -1148,39 +1162,14 @@ bool UIPass::UpdateSceneImage () noexcept
 
 void UIPass::UpdateTransform ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept
 {
-    VkExtent2D const& surface = renderer.GetSurfaceSize ();
-
-    // UI assets use common UI flow. X from left to right. Y from top to down.
-    // Ortho matrix transform 3D space to homogenous space. For Vulkan it inverses Y axis according to CVV.
-    // It's opposite to UI flow. So UI transform should offset geometry by half of screen and mirror image Y axis.
-
-    GXMat4 projection {};
-    projection.Ortho ( static_cast<float> ( surface.width ), static_cast<float> ( surface.height ), 0.0F, 1.0F );
-
-    constexpr GXVec2 halfPixelOffset ( -0.5F, -0.5F );
-
-    GXVec2 h {};
-    h.Sum ( halfPixelOffset, -0.5F, _bottomRight );
-
-    GXMat4 move {};
-    move.Translation ( h._data[ 0U ], h._data[ 1U ], 0.0F );
-
-    GXMat4 alpha {};
-    alpha.Multiply ( move, renderer.GetPresentationEngineTransform () );
-
-    GXMat4 mirror {};
-    mirror.Scale ( 1.0F, -1.0F, 1.0F );
-
-    GXMat4 beta {};
-    beta.Multiply ( alpha, mirror );
-
-    GXMat4 uiTransform {};
-    uiTransform.Multiply ( beta, projection );
+    float const scaleX = 2.0F / _bottomRight._data[ 0U ];
+    float const scaleY = 2.0F / _bottomRight._data[ 1U ];
+    GXMat4 const& orientation = renderer.GetPresentationEngineTransform ();
 
     UIProgram::Transform transform {};
-    transform._rotateScaleRow0 = *reinterpret_cast<GXVec2 const*> ( &uiTransform._m[ 0U ][ 0U ] );
-    transform._rotateScaleRow1 = *reinterpret_cast<GXVec2 const*> ( &uiTransform._m[ 1U ][ 0U ] );
-    transform._offset = *reinterpret_cast<GXVec2 const*> ( &uiTransform._m[ 3U ][ 0U ] );
+    transform._rotateScaleRow0.Multiply ( *reinterpret_cast<GXVec2 const*> ( &orientation._m[ 0U ][ 0U ] ), scaleX );
+    transform._rotateScaleRow1.Multiply ( *reinterpret_cast<GXVec2 const*> ( &orientation._m[ 1U ][ 0U ] ), scaleY );
+    transform._offset.Multiply ( _bottomRight, -0.5F );
 
     _uniformPool.Push ( commandBuffer, &transform, sizeof ( transform ) );
     _transformDescriptorSet = _uniformPool.Acquire ();

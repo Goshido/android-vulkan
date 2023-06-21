@@ -46,7 +46,7 @@ OutputData VS ( in InputData inputData )
 {
     OutputData result;
 
-    result._vertexH = float32_t4 ( mul ( _rotateScale, inputData._vertex ) + _offset, 0.5F, 1.0F );
+    result._vertexH = float32_t4 ( mul ( _rotateScale, inputData._vertex + _offset ), 0.5F, 1.0F );
     result._color = inputData._color;
     result._atlasUV = inputData._atlas.xy;
     result._atlasLayer = inputData._atlas.z;

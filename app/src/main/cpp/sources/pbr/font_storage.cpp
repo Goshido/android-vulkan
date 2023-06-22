@@ -603,9 +603,9 @@ bool FontStorage::SetMediaResolution ( android_vulkan::Renderer &renderer, VkExt
     _atlas._side = side;
     _pixToUV = 1.0F / static_cast<float> ( side );
 
-    float const h = _pixToUV * 0.5F;
-    _halfPixelUV._data[ 0U ] = h;
-    _halfPixelUV._data[ 1U ] = h;
+    float const threshold = _pixToUV * 0.25F;
+    _pointSamplerUVThreshold._data[ 0U ] = threshold;
+    _pointSamplerUVThreshold._data[ 1U ] = threshold;
 
     return MakeSpecialGlyphs ( renderer );
 }
@@ -911,7 +911,7 @@ FontStorage::GlyphInfo const& FontStorage::EmbedGlyph ( android_vulkan::Renderer
         GlyphInfo
         {
             ._topLeft = PixToUV ( left, top, layer ),
-            ._bottomRight = PixToUV ( right, bottom, layer ),
+            ._bottomRight = PixToUV ( right + 1U, bottom + 1U, layer ),
             ._width = static_cast<int32_t> ( width ),
             ._height = static_cast<int32_t> ( rows ),
             ._advance = static_cast<int32_t> ( slot->advance.x ) >> 6U,
@@ -1027,9 +1027,13 @@ bool FontStorage::MakeSpecialGlyphs ( android_vulkan::Renderer &renderer ) noexc
 
 GXVec3 FontStorage::PixToUV ( uint32_t x, uint32_t y, float layer ) const noexcept
 {
-    GXVec2 a {};
-    a.Sum ( _halfPixelUV, _pixToUV, GXVec2 ( static_cast<float> ( x ), static_cast<float> ( y ) ) );
-    return GXVec3 ( a._data[ 0U ], a._data[ 1U ], layer );
+    GXVec3 result {};
+    result._data[ 2U ] = layer;
+
+    auto& uv = *reinterpret_cast<GXVec2*> ( &result );
+    uv.Sum ( _pointSamplerUVThreshold, _pixToUV, GXVec2 ( static_cast<float> ( x ), static_cast<float> ( y ) ) );
+
+    return result;
 }
 
 void FontStorage::TransferPixels ( VkCommandBuffer commandBuffer ) noexcept

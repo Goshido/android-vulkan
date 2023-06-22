@@ -121,8 +121,8 @@ class FontStorage final
         FT_Library                          _library = nullptr;
         std::forward_list<std::string>      _stringHeap {};
 
-        GXVec2                              _halfPixelUV {};
         float                               _pixToUV {};
+        GXVec2                              _pointSamplerUVThreshold {};
 
         GlyphInfo                           _opaqueGlyph {};
         GlyphInfo                           _transparentGlyph {};

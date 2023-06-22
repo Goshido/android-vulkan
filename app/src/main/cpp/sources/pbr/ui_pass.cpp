@@ -898,7 +898,6 @@ bool UIPass::CreateRenderPass ( android_vulkan::Renderer &renderer ) noexcept
         .flags = 0U,
         .format = renderer.GetSurfaceFormat (),
         .samples = VK_SAMPLE_COUNT_1_BIT,
-//        .loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
         .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
         .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
         .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
@@ -976,8 +975,7 @@ void UIPass::DestroyRenderPass ( VkDevice device ) noexcept
 
 void UIPass::InitCommonStructures () noexcept
 {
-    // FUCK
-    constexpr VkClearValue fuck
+    constexpr VkClearValue clearColor
     {
         .color
         {
@@ -1007,10 +1005,8 @@ void UIPass::InitCommonStructures () noexcept
             }
         },
 
-//        .clearValueCount = 0U,
-//        .pClearValues = nullptr
         .clearValueCount = 1U,
-        .pClearValues = &fuck
+        .pClearValues = &clearColor
     };
 
     _presentInfo =
@@ -1080,12 +1076,6 @@ void UIPass::UpdateGeometry ( VkCommandBuffer commandBuffer ) noexcept
     constexpr size_t const elementSize = sizeof ( UIVertexInfo );
     auto const offset = static_cast<VkDeviceSize> ( elementSize * _sceneImageVertexIndex );
     auto const size = static_cast<VkDeviceSize> ( elementSize * ( _writeVertexIndex - _sceneImageVertexIndex ) );
-
-    // FUCK
-    size_t const start = _writeVertexIndex - 6U;
-    UIVertexInfo vv[ 6U ];
-    std::memcpy ( vv, _data + start, sizeof ( vv ) );
-    (void)vv;
 
     VkBufferCopy const copy
     {

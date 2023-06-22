@@ -212,10 +212,6 @@ void TextUIElement::Submit ( SubmitInfo &info ) noexcept
     constexpr size_t verticesPerGlyph = UIPass::GetVerticesPerRectangle ();
     constexpr GXVec2 imageUV ( 0.5F, 0.5F );
 
-    // FUCK remove it
-    if ( _text == U"383" )
-        GXVec2 const stop {};
-
     for ( size_t i = 0U; i < glyphCount; ++i )
     {
         Glyph const& g = glyphs[ i ];

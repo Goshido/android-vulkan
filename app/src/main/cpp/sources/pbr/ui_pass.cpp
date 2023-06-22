@@ -1,3 +1,4 @@
+#include <pbr/image_ui_element.h>
 #include <pbr/ui_pass.h>
 #include <pbr/ui_program.inc>
 #include <av_assert.h>
@@ -358,9 +359,7 @@ void UIPass::ImageDescriptorSets::UpdateScene ( VkDevice device, VkImageView sce
 
 //----------------------------------------------------------------------------------------------------------------------
 
-[[nodiscard]] bool UIPass::AcquirePresentTarget ( android_vulkan::Renderer &renderer,
-    size_t &swapchainImageIndex
-) noexcept
+bool UIPass::AcquirePresentTarget ( android_vulkan::Renderer &renderer, size_t &swapchainImageIndex ) noexcept
 {
     AV_TRACE ( "Acquire swapchain image" )
 
@@ -383,7 +382,100 @@ void UIPass::ImageDescriptorSets::UpdateScene ( VkDevice device, VkImageView sce
     return result;
 }
 
-bool UIPass::Init ( android_vulkan::Renderer &renderer,
+bool UIPass::Execute ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer, VkFence fence ) noexcept
+{
+    AV_TRACE ( "UI pass: Execute" )
+
+    if ( !ImageUIElement::SyncGPU () )
+        return false;
+
+    _renderInfo.framebuffer = _framebuffers[ _framebufferIndex ];
+
+    vkCmdBeginRenderPass ( commandBuffer, &_renderInfo, VK_SUBPASS_CONTENTS_INLINE );
+    _program.Bind ( commandBuffer );
+
+    VkDescriptorSet const sets[] =
+    {
+        _transformDescriptorSet,
+        _commonDescriptorSet._descriptorSet,
+        _imageDescriptorSets._scene
+    };
+
+    _program.SetDescriptorSet ( commandBuffer, sets, 0U, static_cast<uint32_t> ( std::size ( sets ) ) );
+
+    constexpr VkDeviceSize offset = 0U;
+    vkCmdBindVertexBuffers ( commandBuffer, 0U, 1U, &_vertex._buffer, &offset );
+
+    auto start = static_cast<uint32_t> ( _sceneImageVertexIndex );
+    vkCmdDraw ( commandBuffer, GetVerticesPerRectangle (), 1U, start, 0U );
+    start += GetVerticesPerRectangle ();
+
+    size_t imageIdx = _imageDescriptorSets._commitIndex;
+    VkDescriptorSet* ds = _imageDescriptorSets._descriptorSets.data ();
+
+    for ( auto const& job : _jobs )
+    {
+        if ( !job._texture )
+        {
+            _program.SetDescriptorSet ( commandBuffer, &_imageDescriptorSets._transparent, 2U, 1U );
+        }
+        else
+        {
+            _program.SetDescriptorSet ( commandBuffer, ds + imageIdx, 2U, 1U );
+            imageIdx = ( imageIdx + 1U ) % MAX_IMAGES;
+        }
+
+        vkCmdDraw ( commandBuffer, job._vertices, 1U, start, 0U );
+        start += job._vertices;
+    }
+
+    vkCmdEndRenderPass ( commandBuffer );
+
+    bool result = android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
+        "pbr::UIPass::Execute",
+        "Can't end command buffer"
+    );
+
+    if ( !result )
+        return false;
+
+    _submitInfo.pCommandBuffers = &commandBuffer;
+
+    result = android_vulkan::Renderer::CheckVkResult (
+        vkQueueSubmit ( renderer.GetQueue (), 1U, &_submitInfo, fence ),
+        "pbr::UIPass::End",
+        "Can't submit command buffer"
+    );
+
+    if ( !result )
+        return false;
+
+    VkResult presentResult = VK_ERROR_DEVICE_LOST;
+
+    _presentInfo.pResults = &presentResult;
+    _presentInfo.pSwapchains = &renderer.GetSwapchain ();
+    _presentInfo.pImageIndices = &_framebufferIndex;
+
+    result = android_vulkan::Renderer::CheckVkResult ( vkQueuePresentKHR ( renderer.GetQueue (), &_presentInfo ),
+        "pbr::UIPass::EndFrame",
+        "Can't present frame"
+    );
+
+    if ( !result )
+        return false;
+
+    return android_vulkan::Renderer::CheckVkResult ( presentResult,
+        "pbr::UIPass::EndFrame",
+        "Present queue has been failed"
+    );
+}
+
+FontStorage& UIPass::GetFontStorage () noexcept
+{
+    return _fontStorage;
+}
+
+bool UIPass::OnInitDevice ( android_vulkan::Renderer &renderer,
     SamplerManager const &samplerManager,
     VkImageView transparent
 ) noexcept
@@ -403,7 +495,7 @@ bool UIPass::Init ( android_vulkan::Renderer &renderer,
     bool result = renderer.MapMemory ( data,
         _staging._memory,
         _staging._memoryOffset,
-        "pbr::UIPass::Init",
+        "pbr::UIPass::OnInitDevice",
         "Can't map memory"
     );
 
@@ -423,7 +515,7 @@ bool UIPass::Init ( android_vulkan::Renderer &renderer,
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkCreateSemaphore ( device, &semaphoreInfo, nullptr, &_renderEndSemaphore ),
-        "pbr::UIPass::Init",
+        "pbr::UIPass::OnInitDevice",
         "Can't create render pass end semaphore"
     );
 
@@ -434,7 +526,7 @@ bool UIPass::Init ( android_vulkan::Renderer &renderer,
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkCreateSemaphore ( device, &semaphoreInfo, nullptr, &_targetAcquiredSemaphore ),
-        "pbr::UIPass::Init",
+        "pbr::UIPass::OnInitDevice",
         "Can't create render target acquired semaphore"
     );
 
@@ -474,7 +566,7 @@ bool UIPass::Init ( android_vulkan::Renderer &renderer,
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_descriptorPool ),
-        "pbr::UIPass::Init",
+        "pbr::UIPass::OnInitDevice",
         "Can't create descriptor pool"
     );
 
@@ -486,6 +578,7 @@ bool UIPass::Init ( android_vulkan::Renderer &renderer,
     return _commonDescriptorSet.Init ( device, _descriptorPool, samplerManager ) &&
         _imageDescriptorSets.Init ( device, _descriptorPool, transparent ) &&
         _transformLayout.Init ( device ) &&
+        ImageUIElement::OnInitDevice ( renderer ) &&
 
         _vertex.Init ( renderer,
             AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT ) | AV_VK_FLAG ( VK_BUFFER_USAGE_VERTEX_BUFFER_BIT ),
@@ -501,8 +594,9 @@ bool UIPass::Init ( android_vulkan::Renderer &renderer,
         );
 }
 
-void UIPass::Destroy ( android_vulkan::Renderer &renderer ) noexcept
+void UIPass::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
 {
+    ImageUIElement::OnDestroyDevice ();
     _uniformPool.Destroy ( renderer, "pbr::UIPass::_uniformPool" );
 
     VkDevice device = renderer.GetDevice ();
@@ -560,85 +654,6 @@ void UIPass::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 
     _isSceneImageEmbedded = false;
     _hasChanges = false;
-}
-
-bool UIPass::Execute ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer, VkFence fence ) noexcept
-{
-    AV_TRACE ( "UI pass: Execute" )
-    _renderInfo.framebuffer = _framebuffers[ _framebufferIndex ];
-
-    vkCmdBeginRenderPass ( commandBuffer, &_renderInfo, VK_SUBPASS_CONTENTS_INLINE );
-    _program.Bind ( commandBuffer );
-
-    VkDescriptorSet const sets[] =
-    {
-        _transformDescriptorSet,
-        _commonDescriptorSet._descriptorSet,
-        _imageDescriptorSets._scene
-    };
-
-    _program.SetDescriptorSet ( commandBuffer, sets, 0U, static_cast<uint32_t> ( std::size ( sets ) ) );
-
-    constexpr VkDeviceSize offset = 0U;
-    vkCmdBindVertexBuffers ( commandBuffer, 0U, 1U, &_vertex._buffer, &offset );
-
-    auto start = static_cast<uint32_t> ( _sceneImageVertexIndex );
-    vkCmdDraw ( commandBuffer, GetVerticesPerRectangle (), 1U, start, 0U );
-    start += GetVerticesPerRectangle ();
-
-    // TODO support image rectangles as well.
-    _program.SetDescriptorSet ( commandBuffer, &_imageDescriptorSets._transparent, 2U, 1U );
-
-    for ( auto const& job : _jobs )
-    {
-        vkCmdDraw ( commandBuffer, job._vertices, 1U, start, 0U );
-        start += job._vertices;
-    }
-
-    vkCmdEndRenderPass ( commandBuffer );
-
-    bool result = android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
-        "pbr::UIPass::Execute",
-        "Can't end command buffer"
-    );
-
-    if ( !result )
-        return false;
-
-    _submitInfo.pCommandBuffers = &commandBuffer;
-
-    result = android_vulkan::Renderer::CheckVkResult (
-        vkQueueSubmit ( renderer.GetQueue (), 1U, &_submitInfo, fence ),
-        "pbr::UIPass::End",
-        "Can't submit command buffer"
-    );
-
-    if ( !result )
-        return false;
-
-    VkResult presentResult = VK_ERROR_DEVICE_LOST;
-
-    _presentInfo.pResults = &presentResult;
-    _presentInfo.pSwapchains = &renderer.GetSwapchain ();
-    _presentInfo.pImageIndices = &_framebufferIndex;
-
-    result = android_vulkan::Renderer::CheckVkResult ( vkQueuePresentKHR ( renderer.GetQueue (), &_presentInfo ),
-        "pbr::UIPass::EndFrame",
-        "Can't present frame"
-    );
-
-    if ( !result )
-        return false;
-
-    return android_vulkan::Renderer::CheckVkResult ( presentResult,
-        "pbr::UIPass::EndFrame",
-        "Present queue has been failed"
-    );
-}
-
-FontStorage& UIPass::GetFontStorage () noexcept
-{
-    return _fontStorage;
 }
 
 bool UIPass::OnSwapchainCreated ( android_vulkan::Renderer &renderer, VkImageView scene ) noexcept
@@ -725,9 +740,9 @@ UIPass::UIBufferResponse UIPass::RequestUIBuffer ( size_t neededVertices ) noexc
     return result;
 }
 
-[[maybe_unused]] void UIPass::SubmitImage ( Texture2DRef const &texture ) noexcept
+void UIPass::SubmitImage ( Texture2DRef const &texture ) noexcept
 {
-    // TODO actual image and in use|free logic
+    _imageDescriptorSets.Push ( texture->GetImageView () );
 
     _jobs.emplace_back (
         Job
@@ -757,7 +772,7 @@ bool UIPass::UploadGPUData ( android_vulkan::Renderer &renderer, VkCommandBuffer
     VkDevice device = renderer.GetDevice ();
     _imageDescriptorSets.Commit ( device );
 
-    if ( !_fontStorage.UploadGPUData ( renderer, commandBuffer ) )
+    if ( !_fontStorage.UploadGPUData ( renderer, commandBuffer, static_cast<size_t> ( _framebufferIndex ) ) )
         return false;
 
     _commonDescriptorSet.Update ( device, _fontStorage.GetAtlasImageView () );

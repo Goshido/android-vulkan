@@ -66,12 +66,6 @@ class DIVUIElement final : public UIElement
 
     private:
         void ProcessChildren ( ApplyLayoutInfo &childInfo ) noexcept;
-
-        [[nodiscard]] float ResolvePixelLength ( LengthValue const &length,
-            float parentLength,
-            bool isHeight,
-            CSSUnitToDevicePixel const &units
-        ) const noexcept;
 };
 
 } // namespace pbr

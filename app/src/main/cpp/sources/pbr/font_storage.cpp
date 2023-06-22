@@ -126,10 +126,12 @@ void FontStorage::StagingBuffer::Reset () noexcept
 
 bool FontStorage::Atlas::AddLayers ( android_vulkan::Renderer &renderer,
     VkCommandBuffer commandBuffer,
+    size_t swapchainImageIndex,
     uint32_t layers
 ) noexcept
 {
-    _oldResource = _resource;
+    ImageResource& oldResource = _dyingResources[ swapchainImageIndex ];
+    oldResource = _resource;
     uint32_t const layerCount = _layers + layers;
 
     VkImageCreateInfo const imageInfo
@@ -236,40 +238,59 @@ bool FontStorage::Atlas::AddLayers ( android_vulkan::Renderer &renderer,
 
     AV_REGISTER_IMAGE_VIEW ( "pbr::FontStorage::Atlas::_view" )
 
-    if ( _oldResource._image != VK_NULL_HANDLE )
-        Copy ( commandBuffer, layerCount );
+    if ( oldResource._image != VK_NULL_HANDLE )
+        Copy ( commandBuffer, oldResource, layerCount );
 
     _layers = layerCount;
     return true;
 }
 
-void FontStorage::Atlas::Cleanup ( android_vulkan::Renderer &renderer ) noexcept
+void FontStorage::Atlas::Init ( uint32_t side, size_t swapchainImages ) noexcept
 {
-    if ( _oldResource._image == VK_NULL_HANDLE )
+    _side = side;
+    _dyingResources.resize ( swapchainImages, {} );
+}
+
+void FontStorage::Atlas::Destroy ( android_vulkan::Renderer &renderer ) noexcept
+{
+    for ( ImageResource& imageResource : _dyingResources )
+        FreeImageResource ( renderer, imageResource );
+
+    FreeImageResource ( renderer, _resource );
+}
+
+void FontStorage::Atlas::Cleanup ( android_vulkan::Renderer &renderer, size_t swapchainImageIndex ) noexcept
+{
+    FreeImageResource ( renderer, _dyingResources[ swapchainImageIndex ] );
+}
+
+void FontStorage::Atlas::FreeImageResource ( android_vulkan::Renderer &renderer, ImageResource &resource ) noexcept
+{
+    if ( resource._image == VK_NULL_HANDLE )
         return;
 
     VkDevice device = renderer.GetDevice ();
-    vkDestroyImage ( device, _oldResource._image, nullptr );
-    _oldResource._image = VK_NULL_HANDLE;
+    vkDestroyImage ( device, resource._image, nullptr );
+    resource._image = VK_NULL_HANDLE;
     AV_UNREGISTER_IMAGE ( "pbr::FontStorage::Atlas::_image" )
 
-    if ( _oldResource._view != VK_NULL_HANDLE )
+    if ( resource._view != VK_NULL_HANDLE )
     {
-        vkDestroyImageView ( device, _oldResource._view, nullptr );
-        _oldResource._view = VK_NULL_HANDLE;
+        vkDestroyImageView ( device, resource._view, nullptr );
+        resource._view = VK_NULL_HANDLE;
         AV_UNREGISTER_IMAGE_VIEW ( "pbr::FontStorage::Atlas::_view" )
     }
 
-    if ( _oldResource._memory == VK_NULL_HANDLE )
+    if ( resource._memory == VK_NULL_HANDLE )
         return;
 
-    renderer.FreeMemory ( _oldResource._memory, _resource._memoryOffset );
-    _oldResource._memory = VK_NULL_HANDLE;
-    _resource._memoryOffset = 0U;
+    renderer.FreeMemory ( resource._memory, resource._memoryOffset );
+    resource._memory = VK_NULL_HANDLE;
+    resource._memoryOffset = 0U;
     AV_UNREGISTER_DEVICE_MEMORY ( "pbr::FontStorage::Atlas::_memory" )
 }
 
-void FontStorage::Atlas::Copy ( VkCommandBuffer commandBuffer, uint32_t newLayers ) noexcept
+void FontStorage::Atlas::Copy ( VkCommandBuffer commandBuffer, ImageResource &oldResource, uint32_t newLayers ) noexcept
 {
     VkImageMemoryBarrier const barriers[] =
     {
@@ -282,7 +303,7 @@ void FontStorage::Atlas::Copy ( VkCommandBuffer commandBuffer, uint32_t newLayer
             .newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
             .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
             .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-            .image = _oldResource._image,
+            .image = oldResource._image,
 
             .subresourceRange
             {
@@ -469,21 +490,13 @@ void FontStorage::Atlas::Copy ( VkCommandBuffer commandBuffer, uint32_t newLayer
     }
 
     vkCmdCopyImage ( commandBuffer,
-        _oldResource._image,
+        oldResource._image,
         VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
         _resource._image,
         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
         count,
         imageCopy
     );
-}
-
-void FontStorage::Atlas::Destroy ( android_vulkan::Renderer &renderer ) noexcept
-{
-    Cleanup ( renderer );
-
-    _oldResource = _resource;
-    Cleanup ( renderer );
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -583,7 +596,9 @@ FontStorage::GlyphInfo const& FontStorage::GetGlyphInfo ( android_vulkan::Render
     return EmbedGlyph ( renderer, glyphs, fontData._fontResource->_face, fontData._fontSize, character );
 }
 
-bool FontStorage::SetMediaResolution ( android_vulkan::Renderer &renderer, VkExtent2D const &nativeViewport ) noexcept
+bool FontStorage::SetMediaResolution ( android_vulkan::Renderer &renderer,
+    VkExtent2D const &nativeViewport
+) noexcept
 {
     uint32_t const side = std::min ( nativeViewport.width, nativeViewport.height );
 
@@ -600,7 +615,7 @@ bool FontStorage::SetMediaResolution ( android_vulkan::Renderer &renderer, VkExt
 
     DestroyAtlas ( renderer );
 
-    _atlas._side = side;
+    _atlas.Init ( side, renderer.GetPresentImageCount () );
     _pixToUV = 1.0F / static_cast<float> ( side );
 
     float const threshold = _pixToUV * 0.25F;
@@ -610,9 +625,12 @@ bool FontStorage::SetMediaResolution ( android_vulkan::Renderer &renderer, VkExt
     return MakeSpecialGlyphs ( renderer );
 }
 
-bool FontStorage::UploadGPUData ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept
+bool FontStorage::UploadGPUData ( android_vulkan::Renderer &renderer,
+    VkCommandBuffer commandBuffer,
+    size_t swapchainImageIndex
+) noexcept
 {
-    _atlas.Cleanup ( renderer );
+    _atlas.Cleanup ( renderer, swapchainImageIndex );
 
     if ( _activeStagingBuffer.empty () )
         return true;
@@ -633,8 +651,13 @@ bool FontStorage::UploadGPUData ( android_vulkan::Renderer &renderer, VkCommandB
         newLayers += _fullStagingBuffers.size () + static_cast<size_t> ( l._x == 0U & l._y == 0U );
     }
 
-    if ( newLayers && !_atlas.AddLayers ( renderer, commandBuffer, static_cast<uint32_t> ( newLayers ) ) )
-        return false;
+    if ( newLayers )
+    {
+        if ( !_atlas.AddLayers ( renderer, commandBuffer, swapchainImageIndex, static_cast<uint32_t> ( newLayers ) ) )
+        {
+            return false;
+        }
+    }
 
     uint32_t affectedLayers = _atlas._layers;
 

@@ -146,13 +146,6 @@ class UIPass final
             size_t &swapchainImageIndex
         ) noexcept;
 
-        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
-            SamplerManager const &samplerManager,
-            VkImageView transparent
-        ) noexcept;
-
-        void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
-
         [[nodiscard]] bool Execute ( android_vulkan::Renderer &renderer,
             VkCommandBuffer commandBuffer,
             VkFence fence
@@ -160,13 +153,20 @@ class UIPass final
 
         [[nodiscard]] FontStorage& GetFontStorage () noexcept;
 
+        [[nodiscard]] bool OnInitDevice ( android_vulkan::Renderer &renderer,
+            SamplerManager const &samplerManager,
+            VkImageView transparent
+        ) noexcept;
+
+        void OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept;
+
         [[nodiscard]] bool OnSwapchainCreated ( android_vulkan::Renderer &renderer, VkImageView scene ) noexcept;
         void OnSwapchainDestroyed ( VkDevice device ) noexcept;
 
         void RequestEmptyUI () noexcept;
         [[nodiscard]] UIBufferResponse RequestUIBuffer ( size_t neededVertices ) noexcept;
 
-        [[maybe_unused]] void SubmitImage ( Texture2DRef const &texture ) noexcept;
+        void SubmitImage ( Texture2DRef const &texture ) noexcept;
         void SubmitRectangle () noexcept;
         void SubmitText ( size_t usedVertices ) noexcept;
 

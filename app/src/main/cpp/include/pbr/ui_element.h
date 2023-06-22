@@ -4,6 +4,7 @@
 
 #include "css_unit_to_device_pixel.h"
 #include "font_storage.h"
+#include "length_value.h"
 #include "ui_pass.h"
 #include "ui_vertex_info.h"
 
@@ -87,6 +88,12 @@ class UIElement
         [[nodiscard]] static float ResolveFontSize ( CSSUnitToDevicePixel const &cssUnits,
             UIElement const &startTraverseElement
         ) noexcept;
+
+        [[nodiscard]] float ResolvePixelLength ( LengthValue const &length,
+            float parentLength,
+            bool isHeight,
+            CSSUnitToDevicePixel const &units
+        ) const noexcept;
 
     private:
         [[nodiscard]] static int OnGarbageCollected ( lua_State* state );

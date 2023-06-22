@@ -16,8 +16,12 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-constexpr static size_t ALLOCATE_COMMAND_BUFFERS = 8U * MaterialManager::MaxCommandBufferPerMaterial ();
-constexpr static size_t INITIAL_COMMAND_BUFFERS = 32U * MaterialManager::MaxCommandBufferPerMaterial ();
+namespace {
+
+constexpr size_t ALLOCATE_COMMAND_BUFFERS = 8U * MaterialManager::MaxCommandBufferPerMaterial ();
+constexpr size_t INITIAL_COMMAND_BUFFERS = 32U * MaterialManager::MaxCommandBufferPerMaterial ();
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -47,7 +51,7 @@ bool ScriptableMaterial::Init ( lua_State &vm, android_vulkan::Renderer &rendere
 
     _renderer = &renderer;
 
-    VkCommandPoolCreateInfo createInfo
+    VkCommandPoolCreateInfo const createInfo
     {
         .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
         .pNext = nullptr,
@@ -55,10 +59,8 @@ bool ScriptableMaterial::Init ( lua_State &vm, android_vulkan::Renderer &rendere
         .queueFamilyIndex = renderer.GetQueueFamilyIndex ()
     };
 
-    VkDevice device = renderer.GetDevice ();
-
     bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateCommandPool ( device, &createInfo, nullptr, &_commandPool ),
+        vkCreateCommandPool ( renderer.GetDevice (), &createInfo, nullptr, &_commandPool ),
         "pbr::ScriptableMaterial::Init",
         "Can't create command pool"
     );
@@ -139,7 +141,7 @@ bool ScriptableMaterial::Sync () noexcept
         return false;
 
     result = android_vulkan::Renderer::CheckVkResult (
-        vkResetCommandPool ( _renderer->GetDevice (), _commandPool, 0U ),
+        vkResetCommandPool ( device, _commandPool, 0U ),
         "pbr::ScriptableMaterial::Sync",
         "Can't reset command pool"
     );

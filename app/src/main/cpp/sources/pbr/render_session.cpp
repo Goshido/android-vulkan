@@ -154,7 +154,7 @@ bool RenderSession::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 
     return _defaultTextureManager.Init ( renderer, commandInfo._pool ) &&
         _samplerManager.Init ( device ) &&
-        _uiPass.Init ( renderer, _samplerManager, _defaultTextureManager.GetTransparent ()->GetImageView () );
+        _uiPass.OnInitDevice ( renderer, _samplerManager, _defaultTextureManager.GetTransparent ()->GetImageView () );
 }
 
 void RenderSession::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
@@ -193,7 +193,7 @@ void RenderSession::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexc
     _commandInfo.clear ();
     _commandInfo.shrink_to_fit ();
 
-    _uiPass.Destroy ( renderer );
+    _uiPass.OnDestroyDevice ( renderer );
 }
 
 bool RenderSession::OnSwapchainCreated ( android_vulkan::Renderer &renderer,

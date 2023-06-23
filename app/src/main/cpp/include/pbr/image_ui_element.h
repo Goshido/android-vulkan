@@ -23,13 +23,6 @@ class ImageUIElement : public UIElement
         GXVec2                                                  _topLeft {};
         GXVec2                                                  _bottomRight {};
 
-        static size_t                                           _commandBufferIndex;
-        static std::vector<VkCommandBuffer>                     _commandBuffers;
-        static VkCommandPool                                    _commandPool;
-        static std::vector<VkFence>                             _fences;
-        static android_vulkan::Renderer*                        _renderer;
-        static std::unordered_map<std::string, Texture2DRef>    _textures;
-
     public:
         ImageUIElement () = delete;
 
@@ -47,11 +40,7 @@ class ImageUIElement : public UIElement
             CSSComputedValues &&css
         ) noexcept;
 
-        ~ImageUIElement () override = default;
-
-        [[nodiscard]] static bool OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept;
-        static void OnDestroyDevice () noexcept;
-        [[nodiscard]] static bool SyncGPU () noexcept;
+        ~ImageUIElement () noexcept override;
 
     private:
         void ApplyLayout ( ApplyLayoutInfo &info ) noexcept override;
@@ -60,8 +49,6 @@ class ImageUIElement : public UIElement
         [[nodiscard]] GXVec2 ResolveSize ( GXVec2 const& parentCanvasSize, CSSUnitToDevicePixel const& units ) noexcept;
         [[nodiscard]] GXVec2 ResolveSizeByWidth ( float parentWidth, CSSUnitToDevicePixel const &units ) noexcept;
         [[nodiscard]] GXVec2 ResolveSizeByHeight ( float parentHeight, CSSUnitToDevicePixel const &units ) noexcept;
-
-        [[nodiscard]] static bool AllocateCommandBuffers ( size_t amount ) noexcept;
 };
 
 } // namespace pbr

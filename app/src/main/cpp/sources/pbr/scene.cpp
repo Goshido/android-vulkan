@@ -583,14 +583,14 @@ void Scene::SubmitUI ( android_vulkan::Renderer &renderer, RenderSession &render
         neededUIVertices += status._neededUIVertices;
     }
 
-    if ( !needRedraw )
-        return;
-
     if ( neededUIVertices == 0U )
     {
         uiPass.RequestEmptyUI ();
         return;
     }
+
+    if ( !needRedraw )
+        return;
 
     UIPass::UIBufferResponse response = uiPass.RequestUIBuffer ( neededUIVertices );
 

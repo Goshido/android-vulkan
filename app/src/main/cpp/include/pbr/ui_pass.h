@@ -58,7 +58,7 @@ class UIPass final
 
         struct ImageDescriptorSets final
         {
-            [[maybe_unused]] size_t                 _commitIndex = 0U;
+            size_t                                  _commitIndex = 0U;
             size_t                                  _startIndex = 0U;
             size_t                                  _written = 0U;
 
@@ -83,9 +83,22 @@ class UIPass final
             void UpdateScene ( VkDevice device, VkImageView scene ) noexcept;
         };
 
+        struct InUseImageTracker final
+        {
+            using Entry = std::unordered_map<Texture2DRef, size_t>;
+
+            std::vector<Entry>                      _registry {};
+
+            void Init ( size_t swapchainImages ) noexcept;
+            void Destroy () noexcept;
+
+            void CollectGarbage ( size_t swapchainImageIndex ) noexcept;
+            void MarkInUse ( Texture2DRef const &texture, size_t swapchainImageIndex );
+        };
+
         struct Job final
         {
-            Texture2DRef                            _texture {};
+            Texture2DRef const*                     _texture = nullptr;
             uint32_t                                _vertices {};
         };
 
@@ -98,6 +111,7 @@ class UIPass final
         CommonDescriptorSet                         _commonDescriptorSet {};
         VkDescriptorPool                            _descriptorPool = VK_NULL_HANDLE;
         ImageDescriptorSets                         _imageDescriptorSets {};
+        InUseImageTracker                           _inUseImageTracker {};
 
         size_t                                      _sceneImageVertexIndex = 0U;
         size_t                                      _writeVertexIndex = 0U;
@@ -152,6 +166,7 @@ class UIPass final
         ) noexcept;
 
         [[nodiscard]] FontStorage& GetFontStorage () noexcept;
+        [[nodiscard]] size_t GetUsedVertexCount () const noexcept;
 
         [[nodiscard]] bool OnInitDevice ( android_vulkan::Renderer &renderer,
             SamplerManager const &samplerManager,
@@ -186,6 +201,9 @@ class UIPass final
             GXVec2 const &imageTopLeft,
             GXVec2 const &imageBottomRight
         ) noexcept;
+
+        static void ReleaseImage ( Texture2DRef const &image ) noexcept;
+        [[nodiscard]] static std::optional<Texture2DRef const> RequestImage ( std::string const &asset ) noexcept;
 
     private:
         [[nodiscard]] bool CreateFramebuffers ( android_vulkan::Renderer &renderer,

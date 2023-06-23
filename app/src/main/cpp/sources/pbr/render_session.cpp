@@ -113,13 +113,12 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
 
     vkCmdEndRenderPass ( commandBuffer );
 
-    _renderSessionStats.RenderPointLights ( _lightPass.GetPointLightCount () );
-    _renderSessionStats.RenderReflectionLocal ( _lightPass.GetReflectionLocalCount () );
-
-    // TODO UI stats.
-
     if ( !_uiPass.Execute ( renderer, commandBuffer, fence ) )
         return false;
+
+    _renderSessionStats.RenderPointLights ( _lightPass.GetPointLightCount () );
+    _renderSessionStats.RenderReflectionLocal ( _lightPass.GetReflectionLocalCount () );
+    _renderSessionStats.SubmitUIVertices ( _uiPass.GetUsedVertexCount () );
 
     _renderSessionStats.PrintStats ( deltaTime );
     return true;

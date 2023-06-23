@@ -18,6 +18,21 @@ namespace pbr {
 
 std::unordered_map<UIElement const*, std::unique_ptr<UIElement>> UIElement::_uiElements {};
 
+void UIElement::Hide () noexcept
+{
+    _visible = false;
+}
+
+void UIElement::Show () noexcept
+{
+    _visible = true;
+}
+
+bool UIElement::IsVisible () const noexcept
+{
+    return _visible;
+}
+
 void UIElement::AppendElement ( UIElement &element ) noexcept
 {
     _uiElements.emplace ( &element, std::unique_ptr<UIElement> ( &element ) );

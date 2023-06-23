@@ -78,6 +78,10 @@ class UIElement
         virtual void ApplyLayout ( ApplyLayoutInfo &info ) noexcept = 0;
         virtual void Submit ( SubmitInfo &info ) noexcept = 0;
 
+        void Hide () noexcept;
+        void Show () noexcept;
+        [[nodiscard]] bool IsVisible () const noexcept;
+
         static void AppendElement ( UIElement &element ) noexcept;
         static void InitCommon ( lua_State &vm ) noexcept;
         static void Destroy () noexcept;

@@ -1,13 +1,22 @@
-#include <pbr/image_ui_element.h>
 #include <pbr/ui_pass.h>
 #include <pbr/ui_program.inc>
 #include <av_assert.h>
 #include <trace.h>
 
+GX_DISABLE_COMMON_WARNINGS
+
+#include <unordered_set>
+
+GX_RESTORE_WARNING_STATE
+
 
 namespace pbr {
 
 namespace {
+
+constexpr size_t ALLOCATE_COMMAND_BUFFERS = 8U;
+constexpr size_t COMMAND_BUFFERS_PER_TEXTURE = 1U;
+constexpr size_t INITIAL_COMMAND_BUFFERS = 32U;
 
 constexpr size_t MAX_IMAGES = 1024U;
 constexpr size_t MAX_VERTICES = 762600U;
@@ -15,6 +24,265 @@ constexpr size_t BUFFER_BYTES = MAX_VERTICES * sizeof ( UIVertexInfo );
 
 constexpr size_t SCENE_DESCRIPTOR_SET_COUNT = 1U;
 constexpr size_t TRANSPARENT_DESCRIPTOR_SET_COUNT = 1U;
+
+//----------------------------------------------------------------------------------------------------------------------
+
+class ImageStorage final
+{
+    private:
+        static size_t                                                   _commandBufferIndex;
+        static std::vector<VkCommandBuffer>                             _commandBuffers;
+        static VkCommandPool                                            _commandPool;
+        static std::vector<VkFence>                                     _fences;
+        static android_vulkan::Renderer*                                _renderer;
+        static std::unordered_map<std::string, Texture2DRef const*>     _textureMap;
+        static std::unordered_set<Texture2DRef>                         _textures;
+
+    public:
+        ImageStorage () = delete;
+
+        ImageStorage ( ImageStorage const & ) = delete;
+        ImageStorage& operator = ( ImageStorage const & ) = delete;
+
+        ImageStorage ( ImageStorage && ) = delete;
+        ImageStorage& operator = ( ImageStorage && ) = delete;
+
+        ~ImageStorage () = delete;
+
+        static void ReleaseImage ( Texture2DRef const &image ) noexcept;
+        [[nodiscard]] static std::optional<Texture2DRef const> GetImage ( std::string const &asset ) noexcept;
+
+        [[nodiscard]] static bool OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept;
+        static void OnDestroyDevice () noexcept;
+        [[nodiscard]] static bool SyncGPU () noexcept;
+
+    private:
+        [[nodiscard]] static bool AllocateCommandBuffers ( size_t amount ) noexcept;
+};
+
+size_t ImageStorage::_commandBufferIndex = 0U;
+std::vector<VkCommandBuffer> ImageStorage::_commandBuffers {};
+VkCommandPool ImageStorage::_commandPool = VK_NULL_HANDLE;
+std::vector<VkFence> ImageStorage::_fences {};
+android_vulkan::Renderer* ImageStorage::_renderer = nullptr;
+std::unordered_map<std::string, Texture2DRef const*> ImageStorage::_textureMap {};
+std::unordered_set<Texture2DRef> ImageStorage::_textures {};
+
+void ImageStorage::ReleaseImage ( Texture2DRef const &image ) noexcept
+{
+    // About to delete resource event somewhere in user code.
+    // One reference inside '_textures'. One reference in user code. Two references in total.
+    // Current reference count equal two: safe to delete all image resources.
+    // More that two references means that someone is still holding reference. Do nothing in that case.
+
+    if ( image.use_count () > 2U )
+        return;
+
+    auto const findResult = _textures.find ( image );
+    Texture2DRef const& t = *findResult;
+    t->FreeResources ( *_renderer );
+
+    auto const end = _textureMap.cend ();
+
+    for ( auto i = _textureMap.cbegin (); i != end; ++i )
+    {
+        if ( i->second != &t )
+            continue;
+
+        _textureMap.erase ( i );
+        break;
+    }
+
+    _textures.erase ( findResult );
+}
+
+std::optional<Texture2DRef const> ImageStorage::GetImage ( std::string const &asset ) noexcept
+{
+    if ( _commandBuffers.size () - _commandBufferIndex < COMMAND_BUFFERS_PER_TEXTURE )
+    {
+        if ( !AllocateCommandBuffers ( ALLOCATE_COMMAND_BUFFERS ) )
+        {
+            return std::nullopt;
+        }
+    }
+
+    if ( auto const findResult = _textureMap.find ( asset ); findResult != _textureMap.cend () )
+        return *findResult->second;
+
+    Texture2DRef texture = std::make_shared<android_vulkan::Texture2D> ();
+
+    bool const result = texture->UploadData ( *_renderer,
+        asset,
+        android_vulkan::eFormat::sRGB,
+        true,
+        _commandBuffers[ _commandBufferIndex ],
+        _fences[ _commandBufferIndex ]
+    );
+
+    if ( !result )
+        return std::nullopt;
+
+    _commandBufferIndex += COMMAND_BUFFERS_PER_TEXTURE;
+
+    auto status = _textures.emplace ( std::move ( texture ) );
+    Texture2DRef const& t = *status.first;
+    _textureMap.emplace ( asset, &t );
+
+    return t;
+}
+
+bool ImageStorage::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
+{
+    _renderer = &renderer;
+
+    VkCommandPoolCreateInfo const createInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .queueFamilyIndex = renderer.GetQueueFamilyIndex ()
+    };
+
+    bool const result = android_vulkan::Renderer::CheckVkResult (
+        vkCreateCommandPool ( renderer.GetDevice (), &createInfo, nullptr, &_commandPool ),
+        "pbr::ImageStorage::OnInitDevice",
+        "Can't create command pool"
+    );
+
+    if ( !result )
+        return false;
+
+    AV_REGISTER_COMMAND_POOL ( "pbr::ImageStorage::_commandPool" )
+    return AllocateCommandBuffers ( INITIAL_COMMAND_BUFFERS );
+}
+
+void ImageStorage::OnDestroyDevice () noexcept
+{
+    if ( !_textures.empty () )
+    {
+        android_vulkan::LogWarning ( "pbr::ImageStorage::OnDestroyDevice - Memory leak." );
+        AV_ASSERT ( false )
+    }
+
+    _textures.clear ();
+
+    VkDevice device = _renderer->GetDevice ();
+
+    if ( _commandPool != VK_NULL_HANDLE )
+    {
+        vkDestroyCommandPool ( device, _commandPool, nullptr );
+        _commandPool = VK_NULL_HANDLE;
+        AV_UNREGISTER_COMMAND_POOL ( "pbr::ImageStorage::_commandPool" )
+    }
+
+    auto const clean = [] ( auto &v ) noexcept {
+        v.clear ();
+        v.shrink_to_fit ();
+    };
+
+    clean ( _commandBuffers );
+
+    for ( auto fence : _fences )
+    {
+        vkDestroyFence ( device, fence, nullptr );
+        AV_UNREGISTER_FENCE ( "pbr::ImageStorage::_fences" )
+    }
+
+    clean ( _fences );
+    _renderer = nullptr;
+}
+
+bool ImageStorage::SyncGPU () noexcept
+{
+    if ( !_commandBufferIndex )
+        return true;
+
+    VkDevice device = _renderer->GetDevice ();
+    auto const fenceCount = static_cast<uint32_t> ( _commandBufferIndex );
+    VkFence* fences = _fences.data ();
+
+    bool result = android_vulkan::Renderer::CheckVkResult (
+        vkWaitForFences ( device, fenceCount, fences, VK_TRUE, std::numeric_limits<uint64_t>::max () ),
+        "pbr::ImageStorage::SyncGPU",
+        "Can't wait fence"
+    );
+
+    if ( !result )
+        return false;
+
+    result = android_vulkan::Renderer::CheckVkResult ( vkResetFences ( device, fenceCount, fences ),
+        "pbr::ImageStorage::SyncGPU",
+        "Can't reset fence"
+    );
+
+    if ( !result )
+        return false;
+
+    result = android_vulkan::Renderer::CheckVkResult (
+        vkResetCommandPool ( device, _commandPool, 0U ),
+        "pbr::ImageStorage::SyncGPU",
+        "Can't reset command pool"
+    );
+
+    if ( !result )
+        return false;
+
+    _commandBufferIndex = 0U;
+    return true;
+}
+
+bool ImageStorage::AllocateCommandBuffers ( size_t amount ) noexcept
+{
+    size_t const current = _commandBuffers.size ();
+    size_t const size = current + amount;
+    _commandBuffers.resize ( size );
+
+    VkCommandBufferAllocateInfo const allocateInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+        .pNext = nullptr,
+        .commandPool = _commandPool,
+        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+        .commandBufferCount = static_cast<uint32_t> ( amount )
+    };
+
+    VkDevice device = _renderer->GetDevice ();
+
+    bool result = android_vulkan::Renderer::CheckVkResult (
+        vkAllocateCommandBuffers ( device, &allocateInfo, &_commandBuffers[ current ] ),
+        "pbr::ImageStorage::AllocateCommandBuffers",
+        "Can't allocate command buffer"
+    );
+
+    if ( !result )
+        return false;
+
+    _fences.resize ( size );
+
+    constexpr VkFenceCreateInfo fenceInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U
+    };
+
+    VkFence* fences = _fences.data ();
+
+    for ( size_t i = current; i < size; ++i )
+    {
+        result = android_vulkan::Renderer::CheckVkResult ( vkCreateFence ( device, &fenceInfo, nullptr, fences + i ),
+            "pbr::ImageStorage::AllocateCommandBuffers",
+            "Can't create fence"
+        );
+
+        if ( !result )
+            return false;
+
+        AV_REGISTER_FENCE ( "pbr::ImageStorage::_fences" )
+    }
+
+    return true;
+}
 
 } // end of anonymous namespace
 
@@ -359,6 +627,63 @@ void UIPass::ImageDescriptorSets::UpdateScene ( VkDevice device, VkImageView sce
 
 //----------------------------------------------------------------------------------------------------------------------
 
+void UIPass::InUseImageTracker::Init ( size_t swapchainImages ) noexcept
+{
+    _registry.resize ( swapchainImages );
+}
+
+void UIPass::InUseImageTracker::Destroy () noexcept
+{
+    for ( Entry& entry : _registry )
+    {
+        auto const end = entry.cend ();
+
+        for ( auto e = entry.cbegin (); e != end; )
+        {
+            ImageStorage::ReleaseImage ( e->first );
+            e = entry.erase ( e );
+        }
+    }
+
+    _registry.clear ();
+}
+
+void UIPass::InUseImageTracker::CollectGarbage ( size_t swapchainImageIndex ) noexcept
+{
+    Entry& entry = _registry[ swapchainImageIndex ];
+    auto end = entry.end ();
+
+    for ( auto i = entry.begin (); i != end; )
+    {
+        size_t& references = i->second;
+
+        if ( --references; references )
+        {
+            ++i;
+            continue;
+        }
+
+        ImageStorage::ReleaseImage ( i->first );
+        i = entry.erase ( i );
+    }
+}
+
+void UIPass::InUseImageTracker::MarkInUse ( Texture2DRef const &texture, size_t swapchainImageIndex )
+{
+    Entry& entry = _registry[ swapchainImageIndex ];
+    auto i = entry.find ( texture );
+
+    if ( i == entry.end () )
+    {
+        auto result = entry.emplace ( texture, 1U );
+        i = result.first;
+    }
+
+    ++( i->second );
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
 bool UIPass::AcquirePresentTarget ( android_vulkan::Renderer &renderer, size_t &swapchainImageIndex ) noexcept
 {
     AV_TRACE ( "Acquire swapchain image" )
@@ -386,7 +711,7 @@ bool UIPass::Execute ( android_vulkan::Renderer &renderer, VkCommandBuffer comma
 {
     AV_TRACE ( "UI pass: Execute" )
 
-    if ( !ImageUIElement::SyncGPU () )
+    if ( !ImageStorage::SyncGPU () )
         return false;
 
     _renderInfo.framebuffer = _framebuffers[ _framebufferIndex ];
@@ -421,6 +746,7 @@ bool UIPass::Execute ( android_vulkan::Renderer &renderer, VkCommandBuffer comma
         }
         else
         {
+            _inUseImageTracker.MarkInUse ( *job._texture, _framebufferIndex );
             _program.SetDescriptorSet ( commandBuffer, ds + imageIdx, 2U, 1U );
             imageIdx = ( imageIdx + 1U ) % MAX_IMAGES;
         }
@@ -450,6 +776,8 @@ bool UIPass::Execute ( android_vulkan::Renderer &renderer, VkCommandBuffer comma
     if ( !result )
         return false;
 
+    _inUseImageTracker.CollectGarbage ( _framebufferIndex );
+
     VkResult presentResult = VK_ERROR_DEVICE_LOST;
 
     _presentInfo.pResults = &presentResult;
@@ -473,6 +801,11 @@ bool UIPass::Execute ( android_vulkan::Renderer &renderer, VkCommandBuffer comma
 FontStorage& UIPass::GetFontStorage () noexcept
 {
     return _fontStorage;
+}
+
+size_t UIPass::GetUsedVertexCount () const noexcept
+{
+    return _writeVertexIndex - _sceneImageVertexIndex;
 }
 
 bool UIPass::OnInitDevice ( android_vulkan::Renderer &renderer,
@@ -578,7 +911,7 @@ bool UIPass::OnInitDevice ( android_vulkan::Renderer &renderer,
     return _commonDescriptorSet.Init ( device, _descriptorPool, samplerManager ) &&
         _imageDescriptorSets.Init ( device, _descriptorPool, transparent ) &&
         _transformLayout.Init ( device ) &&
-        ImageUIElement::OnInitDevice ( renderer ) &&
+        ImageStorage::OnInitDevice ( renderer ) &&
 
         _vertex.Init ( renderer,
             AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT ) | AV_VK_FLAG ( VK_BUFFER_USAGE_VERTEX_BUFFER_BIT ),
@@ -596,7 +929,6 @@ bool UIPass::OnInitDevice ( android_vulkan::Renderer &renderer,
 
 void UIPass::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
 {
-    ImageUIElement::OnDestroyDevice ();
     _uniformPool.Destroy ( renderer, "pbr::UIPass::_uniformPool" );
 
     VkDevice device = renderer.GetDevice ();
@@ -654,6 +986,8 @@ void UIPass::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
 
     _isSceneImageEmbedded = false;
     _hasChanges = false;
+
+    ImageStorage::OnDestroyDevice ();
 }
 
 bool UIPass::OnSwapchainCreated ( android_vulkan::Renderer &renderer, VkImageView scene ) noexcept
@@ -747,7 +1081,7 @@ void UIPass::SubmitImage ( Texture2DRef const &texture ) noexcept
     _jobs.emplace_back (
         Job
         {
-            ._texture = texture,
+            ._texture = &texture,
             ._vertices = static_cast<uint32_t> ( GetVerticesPerRectangle () )
         }
     );
@@ -848,6 +1182,16 @@ void UIPass::AppendRectangle ( UIVertexInfo* target,
     };
 }
 
+void UIPass::ReleaseImage ( Texture2DRef const &image ) noexcept
+{
+    ImageStorage::ReleaseImage ( image );
+}
+
+std::optional<Texture2DRef const> UIPass::RequestImage ( std::string const &asset ) noexcept
+{
+    return ImageStorage::GetImage ( asset );
+}
+
 bool UIPass::CreateFramebuffers ( android_vulkan::Renderer &renderer, VkExtent2D const &resolution ) noexcept
 {
     size_t const framebufferCount = renderer.GetPresentImageCount ();
@@ -886,6 +1230,7 @@ bool UIPass::CreateFramebuffers ( android_vulkan::Renderer &renderer, VkExtent2D
         AV_REGISTER_FRAMEBUFFER ( "pbr::UIPass::_framebuffers" )
     }
 
+    _inUseImageTracker.Init ( framebufferCount );
     return true;
 }
 
@@ -901,6 +1246,7 @@ void UIPass::DestroyFramebuffers ( VkDevice device ) noexcept
     }
 
     _framebuffers.clear ();
+    _inUseImageTracker.Destroy ();
 }
 
 bool UIPass::CreateRenderPass ( android_vulkan::Renderer &renderer ) noexcept

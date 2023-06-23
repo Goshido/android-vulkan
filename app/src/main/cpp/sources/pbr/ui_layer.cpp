@@ -360,6 +360,7 @@ bool UILayer::RegisterNamedElement ( lua_State &vm,
         return true;
 
     android_vulkan::LogWarning ( "pbr::UILayer::RegisterNamedElement - Can't register element '%s'.", n.c_str () );
+    AV_ASSERT ( false )
     return false;
 }
 
@@ -387,24 +388,46 @@ int UILayer::OnGarbageCollected ( lua_State* state )
     return 0;
 }
 
-int UILayer::OnHide ( lua_State* /*state*/ )
+int UILayer::OnHide ( lua_State* state )
 {
-    android_vulkan::LogDebug ( "UILayer::OnHide" );
-    // TODO
+    auto& layer = *static_cast<UILayer*> ( lua_touserdata ( state, 1 ) );
+
+    if ( layer._body )
+    {
+        layer._body->Hide ();
+        return 0;
+    }
+
+    android_vulkan::LogDebug ( "pbr::UILayer::OnHide - Layer has no body. Doing nothing." );
+    AV_ASSERT ( false )
     return 0;
 }
 
-int UILayer::OnIsVisible ( lua_State* /*state*/ )
+int UILayer::OnIsVisible ( lua_State* state )
 {
-    android_vulkan::LogDebug ( "UILayer::OnIsVisible" );
-    // TODO
-    return 0;
+    if ( !lua_checkstack ( state, 1 ) )
+    {
+        android_vulkan::LogWarning ( "pbr::UILayer::OnIsVisible - Stack is too small." );
+        return 0;
+    }
+
+    auto const& layer = *static_cast<UILayer const*> ( lua_touserdata ( state, 1 ) );
+    lua_pushboolean ( state, layer._body != nullptr && layer._body->IsVisible () );
+    return 1;
 }
 
-int UILayer::OnShow ( lua_State* /*state*/ )
+int UILayer::OnShow ( lua_State* state )
 {
-    android_vulkan::LogDebug ( "UILayer::OnShow" );
-    // TODO
+    auto& layer = *static_cast<UILayer*> ( lua_touserdata ( state, 1 ) );
+
+    if ( layer._body )
+    {
+        layer._body->Show ();
+        return 0;
+    }
+
+    android_vulkan::LogDebug ( "pbr::UILayer::OnShow - Layer has no body. Doing nothing." );
+    AV_ASSERT ( false )
     return 0;
 }
 

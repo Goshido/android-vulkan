@@ -15,23 +15,6 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-namespace {
-
-constexpr size_t ALLOCATE_COMMAND_BUFFERS = 8U;
-constexpr size_t COMMAND_BUFFERS_PER_TEXTURE = 1U;
-constexpr size_t INITIAL_COMMAND_BUFFERS = 32U;
-
-} // end of anonymous namespace
-
-//----------------------------------------------------------------------------------------------------------------------
-
-size_t ImageUIElement::_commandBufferIndex = 0U;
-std::vector<VkCommandBuffer> ImageUIElement::_commandBuffers {};
-VkCommandPool ImageUIElement::_commandPool = VK_NULL_HANDLE;
-std::vector<VkFence> ImageUIElement::_fences {};
-android_vulkan::Renderer* ImageUIElement::_renderer = nullptr;
-std::unordered_map<std::string, Texture2DRef> ImageUIElement::_textures {};
-
 ImageUIElement::ImageUIElement ( bool &success,
     UIElement const* parent,
     lua_State &vm,
@@ -63,141 +46,23 @@ ImageUIElement::ImageUIElement ( bool &success,
     if ( success = lua_pcall ( &vm, 1, 1, errorHandlerIdx ) == LUA_OK; !success )
     {
         android_vulkan::LogWarning ( "pbr::ImageUIElement::ImageUIElement - Can't append element inside Lua VM." );
-    }
-
-    if ( _commandBuffers.size () - _commandBufferIndex < COMMAND_BUFFERS_PER_TEXTURE )
-    {
-        if ( success = AllocateCommandBuffers ( ALLOCATE_COMMAND_BUFFERS ); !success )
-        {
-            return;
-        }
-    }
-
-    if ( auto const findResult = _textures.find ( _asset ); findResult != _textures.cend () )
-    {
-        _texture = findResult->second;
         return;
     }
 
-    _texture = std::make_shared<android_vulkan::Texture2D> ();
+    auto const texture = UIPass::RequestImage ( _asset );
 
-    success = _texture->UploadData ( *_renderer,
-        _asset,
-        android_vulkan::eFormat::sRGB,
-        true,
-        _commandBuffers[ _commandBufferIndex ],
-        _fences[ _commandBufferIndex ]
-    );
-
-    if ( !success )
+    if ( success = texture.has_value (); success )
     {
-        _visible = false;
-        _texture = nullptr;
-        return;
+        _texture = *texture;
     }
-
-    _commandBufferIndex += COMMAND_BUFFERS_PER_TEXTURE;
-    _textures.emplace ( _asset, _texture );
 }
 
-bool ImageUIElement::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
+ImageUIElement::~ImageUIElement () noexcept
 {
-    _renderer = &renderer;
-
-    VkCommandPoolCreateInfo const createInfo
+    if ( _texture )
     {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0U,
-        .queueFamilyIndex = renderer.GetQueueFamilyIndex ()
-    };
-
-    bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateCommandPool ( renderer.GetDevice (), &createInfo, nullptr, &_commandPool ),
-        "pbr::ImageUIElement::OnInitDevice",
-        "Can't create command pool"
-    );
-
-    if ( !result )
-        return false;
-
-    AV_REGISTER_COMMAND_POOL ( "pbr::ImageUIElement::_commandPool" )
-    return AllocateCommandBuffers ( INITIAL_COMMAND_BUFFERS );
-}
-
-void ImageUIElement::OnDestroyDevice () noexcept
-{
-    if ( !_textures.empty () )
-    {
-        android_vulkan::LogWarning ( "pbr::ImageUIElement::OnDestroyDevice - Memory leak." );
-        AV_ASSERT ( false )
+        UIPass::ReleaseImage ( _texture );
     }
-
-    _textures.clear ();
-
-    VkDevice device = _renderer->GetDevice ();
-
-    if ( _commandPool != VK_NULL_HANDLE )
-    {
-        vkDestroyCommandPool ( device, _commandPool, nullptr );
-        _commandPool = VK_NULL_HANDLE;
-        AV_UNREGISTER_COMMAND_POOL ( "pbr::ImageUIElement::_commandPool" )
-    }
-
-    auto const clean = [] ( auto &v ) noexcept {
-        v.clear ();
-        v.shrink_to_fit ();
-    };
-
-    clean ( _commandBuffers );
-
-    for ( auto fence : _fences )
-    {
-        vkDestroyFence ( device, fence, nullptr );
-        AV_UNREGISTER_FENCE ( "pbr::ImageUIElement::_fences" )
-    }
-
-    clean ( _fences );
-    _renderer = nullptr;
-}
-
-bool ImageUIElement::SyncGPU () noexcept
-{
-    if ( !_commandBufferIndex )
-        return true;
-
-    VkDevice device = _renderer->GetDevice ();
-    auto const fenceCount = static_cast<uint32_t> ( _commandBufferIndex );
-    VkFence* fences = _fences.data ();
-
-    bool result = android_vulkan::Renderer::CheckVkResult (
-        vkWaitForFences ( device, fenceCount, fences, VK_TRUE, std::numeric_limits<uint64_t>::max () ),
-        "pbr::ImageUIElement::SyncGPU",
-        "Can't wait fence"
-    );
-
-    if ( !result )
-        return false;
-
-    result = android_vulkan::Renderer::CheckVkResult ( vkResetFences ( device, fenceCount, fences ),
-        "pbr::ImageUIElement::SyncGPU",
-        "Can't reset fence"
-    );
-
-    if ( !result )
-        return false;
-
-    result = android_vulkan::Renderer::CheckVkResult (
-        vkResetCommandPool ( device, _commandPool, 0U ),
-        "pbr::ImageUIElement::SyncGPU",
-        "Can't reset command pool"
-    );
-
-    if ( !result )
-        return false;
-
-    _commandBufferIndex = 0U;
-    return true;
 }
 
 void ImageUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
@@ -408,59 +273,6 @@ GXVec2 ImageUIElement::ResolveSizeByHeight ( float parentHeight, CSSUnitToDevice
     result._data[ 0U ] = result._data[ 1U ] * static_cast<float> ( r.width ) / static_cast<float> ( r.height );
 
     return result;
-}
-
-bool ImageUIElement::AllocateCommandBuffers ( size_t amount ) noexcept
-{
-    size_t const current = _commandBuffers.size ();
-    size_t const size = current + amount;
-    _commandBuffers.resize ( size );
-
-    VkCommandBufferAllocateInfo const allocateInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-        .pNext = nullptr,
-        .commandPool = _commandPool,
-        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-        .commandBufferCount = static_cast<uint32_t> ( amount )
-    };
-
-    VkDevice device = _renderer->GetDevice ();
-
-    bool result = android_vulkan::Renderer::CheckVkResult (
-        vkAllocateCommandBuffers ( device, &allocateInfo, &_commandBuffers[ current ] ),
-        "pbr::ImageUIElement::AllocateCommandBuffers",
-        "Can't allocate command buffer"
-    );
-
-    if ( !result )
-        return false;
-
-    _fences.resize ( size );
-
-    constexpr VkFenceCreateInfo fenceInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0U
-    };
-
-    VkFence* fences = _fences.data ();
-
-    for ( size_t i = current; i < size; ++i )
-    {
-        result = android_vulkan::Renderer::CheckVkResult ( vkCreateFence ( device, &fenceInfo, nullptr, fences + i ),
-            "pbr::ImageUIElement::AllocateCommandBuffers",
-            "Can't create fence"
-        );
-
-        if ( !result )
-            return false;
-
-        AV_REGISTER_FENCE ( "pbr::ImageUIElement::_fences" )
-    }
-
-    return true;
 }
 
 } // namespace pbr

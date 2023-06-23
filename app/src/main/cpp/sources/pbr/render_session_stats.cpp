@@ -35,7 +35,8 @@ R"__(pbr::RenderSessionStats::PrintStats:
         Stipple meshes  %9zu    %9zu    %s
           Point lights  %9zu    %9zu    %s
      Local reflections  %9zu    %9zu    %s
-    Global reflections  %9zu    %9zu    %s)__";
+    Global reflections  %9zu    %9zu    %s
+           UI vertices  %9zu    %9zu        0%%)__";
 
     auto avgCounter = [ & ] ( size_t counter ) noexcept -> size_t {
         return counter / _frameCount;
@@ -62,6 +63,7 @@ R"__(pbr::RenderSessionStats::PrintStats:
     };
 
     size_t const g = avgCounter ( _renderReflectionsGlobal );
+    size_t const ui = avgCounter ( _submitUIVertices );
 
     android_vulkan::LogInfo ( format,
         avgCounter ( _submitVertices ),
@@ -81,7 +83,9 @@ R"__(pbr::RenderSessionStats::PrintStats:
         avgPercent ( reflectionLocalCull, _renderReflectionsLocal, _submitReflectionsLocal ),
         g,
         g,
-        avgPercent ( reflectionGlobalCull, g, g )
+        avgPercent ( reflectionGlobalCull, g, g ),
+        ui,
+        ui
     );
 
     Reset ();
@@ -136,6 +140,11 @@ void RenderSessionStats::SubmitReflectionLocal () noexcept
     ++_submitReflectionsLocal;
 }
 
+void RenderSessionStats::SubmitUIVertices ( size_t count ) noexcept
+{
+    _submitUIVertices += count;
+}
+
 void RenderSessionStats::Reset () noexcept
 {
     _frameCount = 0U;
@@ -149,6 +158,7 @@ void RenderSessionStats::Reset () noexcept
     _submitStippleMeshes = 0U;
     _submitPointLights = 0U;
     _submitReflectionsLocal = 0U;
+    _submitUIVertices = 0U;
     _submitVertices = 0U;
     _timeout = TIMEOUT;
 }

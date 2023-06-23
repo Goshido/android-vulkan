@@ -148,6 +148,7 @@ void DefaultTextureManager::Destroy ( android_vulkan::Renderer &renderer ) noexc
     freeJob ( _mask );
     freeJob ( _emission );
     freeJob ( _albedo );
+    freeJob ( _transparent );
 }
 
 Texture2DRef const& DefaultTextureManager::GetAlbedo () const noexcept

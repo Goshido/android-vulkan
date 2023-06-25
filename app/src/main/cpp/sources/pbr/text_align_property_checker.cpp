@@ -11,7 +11,8 @@ std::unordered_map<std::u32string_view, TextAlignProperty::eValue> const VALUES 
 {
     { U"center", TextAlignProperty::eValue::Center },
     { U"left", TextAlignProperty::eValue::Left },
-    { U"right", TextAlignProperty::eValue::Right }
+    { U"right", TextAlignProperty::eValue::Right },
+    { U"inherit", TextAlignProperty::eValue::Inherit }
 };
 
 } // end of anonymous namespace

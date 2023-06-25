@@ -20,19 +20,30 @@ class TextUIElement final : public UIElement
     private:
         struct Glyph final
         {
-            GXVec2                      _topLeft;
-            GXVec2                      _bottomRight;
+            float                       _advance;
+            float                       _offsetY;
+            size_t                      _parentLine;
+            GXVec2                      _size;
 
             GXVec3                      _atlasTopLeft;
             GXVec3                      _atlasBottomRight;
         };
 
+        struct Line final
+        {
+            size_t                      _glyphs = 0U;
+            float                       _length = 0U;
+        };
+
+        using AlignHander = float ( * ) ( float penX, float parentWidth, float lineLength ) noexcept;
+
     private:
         // Way the user could override color which arrived from CSS.
         std::optional<GXColorRGB>       _color {};
 
-        std::u32string                  _text {};
         std::vector<Glyph>              _glyphs {};
+        std::vector<Line>               _lines {};
+        std::u32string                  _text {};
 
     public:
         TextUIElement () = delete;
@@ -61,9 +72,15 @@ class TextUIElement final : public UIElement
         [[nodiscard]] GXColorRGB const& ResolveColor () const noexcept;
         [[nodiscard]] std::string const* ResolveFont () const noexcept;
 
+        [[nodiscard]] static float AlignCenter ( float penX, float parentWidth, float lineLength ) noexcept;
+        [[nodiscard]] static float AlignLeft ( float penX, float parentWidth, float lineLength ) noexcept;
+        [[nodiscard]] static float AlignRight ( float penX, float parentWidth, float lineLength ) noexcept;
+
         [[nodiscard]] static int OnSetColorHSV ( lua_State* state );
         [[nodiscard]] static int OnSetColorRGB ( lua_State* state );
         [[nodiscard]] static int OnSetText ( lua_State* state );
+
+        [[nodiscard]] static AlignHander ResolveAlignment ( UIElement const* parent ) noexcept;
 };
 
 } // namespace pbr

@@ -11,17 +11,20 @@ namespace pbr {
 class ImageUIElement : public UIElement
 {
     private:
-        std::string                                             _asset {};
-        CSSComputedValues                                       _css {};
+        std::string             _asset {};
+        GXVec2                  _blockSize {};
+        CSSComputedValues       _css {};
 
-        bool                                                    _isAutoWidth;
-        bool                                                    _isAutoHeight;
-        bool                                                    _isInlineBlock;
+        bool                    _isAutoWidth;
+        bool                    _isAutoHeight;
+        bool                    _isInlineBlock;
 
-        Texture2DRef                                            _texture {};
+        GXVec2                  _canvasTopLeftOffset {};
+        size_t                  _parentLine = 0U;
+        Texture2DRef            _texture {};
 
-        GXVec2                                                  _topLeft {};
-        GXVec2                                                  _bottomRight {};
+        GXVec2                  _topLeft {};
+        GXVec2                  _bottomRight {};
 
     public:
         ImageUIElement () = delete;

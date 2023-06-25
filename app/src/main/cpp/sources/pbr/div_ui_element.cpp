@@ -61,6 +61,7 @@ void DIVUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
         return;
 
     // Method contains a lot of branchless optimizations.
+    _parentLine = info._parentLine;
 
     GXVec2 const& canvasSize = info._canvasSize;
     CSSUnitToDevicePixel const& units = *info._cssUnits;
@@ -81,44 +82,45 @@ void DIVUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
         ResolvePixelLength ( _css._paddingBottom, canvasSize._data[ 1U ], true, units )
     );
 
-    GXVec2 alpha {};
-    alpha.Sum ( marginTopLeft, paddingTopLeft );
+    _canvasTopLeftOffset.Sum ( marginTopLeft, paddingTopLeft );
 
     GXVec2 penLocation {};
     float const& parentLeft = info._parentTopLeft._data[ 0U ];
     float const& parentWidth = canvasSize._data[ 0U ];
     float const& paddingRight = paddingBottomRight._data[ 0U ];
     float const& marginRight = marginBottomRight._data[ 0U ];
+    size_t const oldVertices = info._vertices;
 
     auto const newLine = [ & ] () noexcept {
         GXVec2 beta {};
-        beta.Sum ( alpha, GXVec2 ( parentLeft, info._currentLineHeight ) );
+        beta.Sum ( _canvasTopLeftOffset, GXVec2 ( parentLeft, info._currentLineHeight ) );
 
         penLocation._data[ 0U ] = beta._data[ 0U ];
         penLocation._data[ 1U ] += beta._data[ 1U ];
+        ++_parentLine;
     };
 
     switch ( _css._position )
     {
         case PositionProperty::eValue::Absolute:
-            penLocation.Sum ( info._parentTopLeft, alpha );
+            penLocation.Sum ( info._parentTopLeft, _canvasTopLeftOffset );
+            _parentLine = 0U;
         break;
 
         case PositionProperty::eValue::Static:
         {
+            _parentLine = info._parentLine;
+
+            if ( parentLeft == info._penLocation._data[ 0U ] )
+                break;
+
             if ( !_isInlineBlock )
             {
                 newLine ();
                 break;
             }
 
-            penLocation.Sum ( info._penLocation, alpha );
-            float const beta = penLocation._data[ 0U ] + marginRight + paddingRight;
-
-            if ( parentWidth + parentLeft - beta <= 0.0F )
-            {
-                newLine ();
-            }
+            penLocation.Sum ( info._penLocation, _canvasTopLeftOffset );
         }
         break;
 
@@ -152,7 +154,7 @@ void DIVUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
         ._currentLineHeight = 0.0F,
         ._fontStorage = info._fontStorage,
         ._newLineHeight = 0.0F,
-        ._newLines = 0U,
+        ._parentLine = 0U,
         ._parentTopLeft = penLocation,
         ._penLocation = penLocation,
         ._renderer = info._renderer,
@@ -184,6 +186,7 @@ void DIVUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
     bool const isFullLine = _lineHeights.size () > 1U;
     size_t const selector = _widthSelectorBase | static_cast<size_t> ( isFullLine );
     canvas._data[ 0U ] = finalWidth[ selector ];
+    _canvasWidth = canvas._data[ 0U ];
 
     GXVec2 padding {};
     padding.Sum ( paddingTopLeft, paddingBottomRight );
@@ -201,6 +204,14 @@ void DIVUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
     bool const hasBackgroundArea = sizeCheck ( drawableArea );
     info._vertices += vertices[ static_cast<size_t> ( hasBackgroundColor & hasBackgroundArea ) ];
 
+    GXVec2 beta {};
+    beta.Sum ( canvas, _canvasTopLeftOffset );
+
+    GXVec2 gamma {};
+    gamma.Sum ( marginBottomRight, paddingBottomRight );
+
+    _blockSize.Sum ( beta, gamma );
+
     if ( _css._position == PositionProperty::eValue::Absolute )
     {
         _topLeft = marginTopLeft;
@@ -208,16 +219,7 @@ void DIVUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
         return;
     }
 
-    GXVec2 beta {};
-    beta.Sum ( canvas, alpha );
-
-    GXVec2 gamma {};
-    gamma.Sum ( marginBottomRight, paddingBottomRight );
-
-    GXVec2 blockSize {};
-    blockSize.Sum ( beta, gamma );
-
-    if ( !sizeCheck ( blockSize ) )
+    if ( !sizeCheck ( _blockSize ) )
         return;
 
     auto const computeVisibleBounds = [ & ] () noexcept {
@@ -226,7 +228,7 @@ void DIVUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
         marginBottomRight.Reverse ();
 
         GXVec2 yotta {};
-        yotta.Sum ( blockSize, GXVec2 ( marginTopLeft._data[ 0U ], marginBottomRight._data[ 1U ] ) );
+        yotta.Sum ( _blockSize, GXVec2 ( marginTopLeft._data[ 0U ], marginBottomRight._data[ 1U ] ) );
 
         _topLeft.Subtract ( info._penLocation, GXVec2 ( yotta._data[ 0U ], -marginTopLeft._data[ 1U ] ) );
         _bottomRight.Sum ( info._penLocation, GXVec2 ( marginBottomRight._data[ 0U ], yotta._data[ 1U ] ) );
@@ -235,14 +237,14 @@ void DIVUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
     if ( _css._display == DisplayProperty::eValue::Block )
     {
         // Block starts from new line and consumes whole parent block line.
-        float const cases[] = { blockSize._data[ 1U ], info._currentLineHeight };
+        float const cases[] = { _blockSize._data[ 1U ], info._currentLineHeight };
         auto const s = static_cast<size_t> ( info._currentLineHeight != 0.0F );
 
         info._currentLineHeight = cases[ s ];
-        info._newLines = s;
-        info._newLineHeight = blockSize._data[ 1U ];
-        info._penLocation._data[ 0U ] = parentLeft + blockSize._data[ 0U ];
-        info._penLocation._data[ 1U ] = info._parentTopLeft._data[ 1U ];
+        info._parentLine += s;
+        info._newLineHeight = _blockSize._data[ 1U ];
+        info._penLocation._data[ 0U ] = info._parentTopLeft._data[ 0U ];
+        info._penLocation._data[ 1U ] = info._penLocation._data[ 1U ] + info._currentLineHeight;
 
         computeVisibleBounds ();
         return;
@@ -252,25 +254,26 @@ void DIVUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
 
     bool const firstBlock = info._penLocation.IsEqual ( info._parentTopLeft );
     float const rest = parentWidth + parentLeft - info._penLocation._data[ 0U ];
-    bool const blockCanFit = rest >= blockSize._data[ 0U ];
+    bool const blockCanFit = rest >= _blockSize._data[ 0U ] - 0.25F;
 
     if ( firstBlock | blockCanFit )
     {
-        info._currentLineHeight = std::max ( info._currentLineHeight, blockSize._data[ 1U ] );
-        info._newLines = 0U;
-        info._penLocation._data[ 0U ] += blockSize._data[ 0U ];
+        info._currentLineHeight = std::max ( info._currentLineHeight, _blockSize._data[ 1U ] );
+        info._penLocation._data[ 0U ] += _blockSize._data[ 0U ];
 
         computeVisibleBounds ();
         return;
     }
 
-    // Block goes to the new line of parent block.
-    info._newLines = 1U;
-    info._newLineHeight = blockSize._data[ 1U ];
-    info._penLocation._data[ 0U ] = parentLeft + blockSize._data[ 0U ];
+    // Block goes to the new line of parent block and requires recalculation.
+    ++info._parentLine;
+    info._penLocation._data[ 0U ] = info._parentTopLeft._data[ 0U ];
     info._penLocation._data[ 1U ] += info._currentLineHeight;
+    info._newLineHeight = info._currentLineHeight;
+    info._currentLineHeight = 0.0F;
+    info._vertices = oldVertices;
 
-    computeVisibleBounds ();
+    ApplyLayout ( info );
 }
 
 void DIVUIElement::Submit ( SubmitInfo &info ) noexcept
@@ -301,10 +304,33 @@ void DIVUIElement::Submit ( SubmitInfo &info ) noexcept
         info._uiPass->SubmitRectangle ();
     }
 
-    for ( auto* child : _children )
+    GXVec2 pen = info._pen;
+
+    if ( info._line != _parentLine )
     {
-        child->Submit ( info );
+        pen._data[ 0U ] = info._parentTopLeft._data[ 0U ];
+        pen._data[ 1U ] += info._parentLineHeights[ info._line ];
     }
+
+    GXVec2 topLeft {};
+    topLeft.Sum ( pen, _canvasTopLeftOffset );
+
+    SubmitInfo submitInfo
+    {
+        ._fontStorage = info._fontStorage,
+        ._parentLineHeights = _lineHeights.data (),
+        ._parentTopLeft = topLeft,
+        ._parentWidth = _canvasWidth,
+        ._pen = topLeft,
+        ._uiPass = info._uiPass,
+        ._vertexBuffer = info._vertexBuffer
+    };
+
+    for ( auto* child : _children )
+        child->Submit ( submitInfo );
+
+    info._pen._data[ 0U ] += _blockSize._data[ 0U ];
+    info._vertexBuffer = submitInfo._vertexBuffer;
 }
 
 bool DIVUIElement::AppendChildElement ( lua_State &vm,
@@ -339,10 +365,12 @@ void DIVUIElement::ProcessChildren ( ApplyLayoutInfo &childInfo ) noexcept
 
     for ( auto* child : _children )
     {
+        size_t const oldLine = childInfo._parentLine;
+
         child->ApplyLayout ( childInfo );
         _lineHeights.front () = childInfo._currentLineHeight;
 
-        size_t const newLines = childInfo._newLines;
+        size_t const newLines = childInfo._parentLine - oldLine;
 
         if ( !newLines )
             continue;

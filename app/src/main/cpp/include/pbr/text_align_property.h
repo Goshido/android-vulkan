@@ -14,11 +14,12 @@ class TextAlignProperty final : public Property
         {
             Center,
             Left,
-            Right
+            Right,
+            Inherit
         };
 
     private:
-        eValue      _value = eValue::Left;
+        eValue      _value = eValue::Inherit;
 
     public:
         TextAlignProperty () = delete;

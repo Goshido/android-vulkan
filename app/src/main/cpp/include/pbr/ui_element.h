@@ -38,7 +38,7 @@ class UIElement
             float                           _currentLineHeight;
             FontStorage*                    _fontStorage;
             float                           _newLineHeight;
-            size_t                          _newLines;
+            size_t                          _parentLine;
             GXVec2 const                    _parentTopLeft;
             GXVec2                          _penLocation;
             android_vulkan::Renderer*       _renderer;
@@ -48,6 +48,11 @@ class UIElement
         struct SubmitInfo final
         {
             FontStorage*                    _fontStorage;
+            size_t                          _line;
+            float const*                    _parentLineHeights;
+            GXVec2                          _parentTopLeft;
+            float                           _parentWidth;
+            GXVec2                          _pen;
             UIPass*                         _uiPass;
             UIVertexBuffer                  _vertexBuffer;
         };

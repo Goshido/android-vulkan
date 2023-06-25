@@ -17,6 +17,7 @@ namespace pbr {
 class DIVUIElement final : public UIElement
 {
     private:
+        GXVec2                      _blockSize {};
         std::deque<UIElement*>      _children {};
 
         bool                        _isAutoWidth;
@@ -24,6 +25,9 @@ class DIVUIElement final : public UIElement
         bool                        _isInlineBlock;
 
         std::vector<float>          _lineHeights {};
+        GXVec2                      _canvasTopLeftOffset {};
+        float                       _canvasWidth = 0.0F;
+        size_t                      _parentLine = 0U;
 
         GXVec2                      _topLeft {};
         GXVec2                      _bottomRight {};

@@ -40,7 +40,7 @@ DIVHTML5Element::DIVHTML5Element ( std::u32string &&id,
     _cssComputedValues._paddingTop = LengthValue ( LengthValue::eType::PX, 0.0F );
 
     _cssComputedValues._position = PositionProperty::eValue::Static;
-    _cssComputedValues._textAlign = TextAlignProperty::eValue::Left;
+    _cssComputedValues._textAlign = TextAlignProperty::eValue::Inherit;
     _cssComputedValues._verticalAlign = VerticalAlignProperty::eValue::Top;
 
     _cssComputedValues._width = LengthValue ( LengthValue::eType::Auto, 0.0F );

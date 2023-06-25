@@ -601,11 +601,13 @@ void Scene::SubmitUI ( android_vulkan::Renderer &renderer, RenderSession &render
     }
 
     auto const lineHeight = static_cast<float> ( renderer.GetViewportResolution ().height );
+    constexpr float lineOffsets = 0.0F;
 
     UIElement::SubmitInfo info
     {
         ._fontStorage = &fontStorage,
         ._parentLineHeights = &lineHeight,
+        ._parentLineOffsets = &lineOffsets,
         ._parentTopLeft = GXVec2 ( 0.0F, 0.0F ),
         ._parentWidth = static_cast<float> ( renderer.GetViewportResolution ().width ),
         ._pen = GXVec2 ( 0.0F, 0.0F ),

@@ -364,21 +364,6 @@ std::string const* TextUIElement::ResolveFont () const noexcept
     return nullptr;
 }
 
-float TextUIElement::AlignCenter ( float penX, float parentWidth, float lineLength ) noexcept
-{
-    return penX + 0.5F * ( parentWidth - lineLength );
-}
-
-float TextUIElement::AlignLeft ( float penX, float /*parentWidth*/, float /*lineLength*/ ) noexcept
-{
-    return penX;
-}
-
-float TextUIElement::AlignRight ( float penX, float parentWidth, float lineLength ) noexcept
-{
-    return penX + parentWidth - lineLength;
-}
-
 int TextUIElement::OnSetColorHSV ( lua_State* state )
 {
     auto const h = static_cast<float> ( lua_tonumber ( state, 2 ) );
@@ -414,34 +399,6 @@ int TextUIElement::OnSetText ( lua_State* state )
     self._text = std::move ( *str );
     self._glyphs.resize ( self._text.size () );
     return 0;
-}
-
-TextUIElement::AlignHander TextUIElement::ResolveAlignment ( UIElement const* parent ) noexcept
-{
-    while ( parent )
-    {
-        // NOLINTNEXTLINE - downcast
-        auto const& div = static_cast<DIVUIElement const&> ( *parent );
-
-        switch ( div._css._textAlign )
-        {
-            case TextAlignProperty::eValue::Center:
-            return &TextUIElement::AlignCenter;
-
-            case TextAlignProperty::eValue::Left:
-            return &TextUIElement::AlignLeft;
-
-            case TextAlignProperty::eValue::Right:
-            return &TextUIElement::AlignRight;
-
-            case TextAlignProperty::eValue::Inherit:
-                parent = parent->_parent;
-            break;
-        }
-    }
-
-    AV_ASSERT ( false )
-    return &TextUIElement::AlignLeft;
 }
 
 } // namespace pbr

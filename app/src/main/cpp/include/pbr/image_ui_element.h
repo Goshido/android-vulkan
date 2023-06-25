@@ -13,6 +13,8 @@ class ImageUIElement : public UIElement
     private:
         std::string             _asset {};
         GXVec2                  _blockSize {};
+        GXVec2                  _borderSize {};
+        GXVec2                  _marginTopLeft {};
         CSSComputedValues       _css {};
 
         bool                    _isAutoWidth;
@@ -21,10 +23,8 @@ class ImageUIElement : public UIElement
 
         GXVec2                  _canvasTopLeftOffset {};
         size_t                  _parentLine = 0U;
+        GXVec2                  _parentSize {};
         Texture2DRef            _texture {};
-
-        GXVec2                  _topLeft {};
-        GXVec2                  _bottomRight {};
 
     public:
         ImageUIElement () = delete;

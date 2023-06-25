@@ -72,11 +72,12 @@ void ImageUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
 
     // Method contains a lot of branchless optimizations.
     _parentLine = info._parentLine;
+    _parentSize = info._canvasSize;
 
     GXVec2 const& canvasSize = info._canvasSize;
     CSSUnitToDevicePixel const& units = *info._cssUnits;
 
-    GXVec2 marginTopLeft ( ResolvePixelLength ( _css._marginLeft, canvasSize._data[ 0U ], false, units ),
+    _marginTopLeft = GXVec2 ( ResolvePixelLength ( _css._marginLeft, canvasSize._data[ 0U ], false, units ),
         ResolvePixelLength ( _css._marginTop, canvasSize._data[ 1U ], true, units )
     );
 
@@ -92,7 +93,7 @@ void ImageUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
         ResolvePixelLength ( _css._paddingBottom, canvasSize._data[ 1U ], true, units )
     );
 
-    _canvasTopLeftOffset.Sum ( marginTopLeft, paddingTopLeft );
+    _canvasTopLeftOffset.Sum ( _marginTopLeft, paddingTopLeft );
 
     GXVec2 penLocation {};
     float const& parentLeft = info._parentTopLeft._data[ 0U ];
@@ -137,9 +138,9 @@ void ImageUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
         return;
     }
 
-    GXVec2 const imageArea = ResolveSize ( canvasSize, units );
+    _borderSize = ResolveSize ( canvasSize, units );
     GXVec2 beta {};
-    beta.Sum ( imageArea, _canvasTopLeftOffset );
+    beta.Sum ( _borderSize, _canvasTopLeftOffset );
 
     GXVec2 gamma {};
     gamma.Sum ( marginBottomRight, paddingBottomRight );
@@ -147,12 +148,7 @@ void ImageUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
     _blockSize.Sum ( beta, gamma );
 
     if ( _css._position == PositionProperty::eValue::Absolute )
-    {
-        GXVec2 topLeftOffset {};
-        _topLeft = penLocation;
-        _bottomRight.Sum ( _topLeft, imageArea );
         return;
-    }
 
     // 'static' position territory
 
@@ -160,18 +156,6 @@ void ImageUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
         return;
 
     info._vertices += UIPass::GetVerticesPerRectangle ();
-
-    auto const computeVisibleBounds = [ & ] () noexcept {
-        // Reusing "marginBottomRight" and "marginTopLeft" variables. They will be not used anyway.
-        marginTopLeft.Reverse ();
-        marginBottomRight.Reverse ();
-
-        GXVec2 yotta {};
-        yotta.Sum ( _blockSize, GXVec2 ( marginTopLeft._data[ 0U ], marginBottomRight._data[ 1U ] ) );
-
-        _topLeft.Subtract ( info._penLocation, GXVec2 ( yotta._data[ 0U ], -marginTopLeft._data[ 1U ] ) );
-        _bottomRight.Sum ( info._penLocation, GXVec2 ( marginBottomRight._data[ 0U ], yotta._data[ 1U ] ) );
-    };
 
     if ( _css._display == DisplayProperty::eValue::Block )
     {
@@ -184,8 +168,6 @@ void ImageUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
         info._newLineHeight = _blockSize._data[ 1U ];
         info._penLocation._data[ 0U ] = parentLeft + _blockSize._data[ 0U ];
         info._penLocation._data[ 1U ] = info._parentTopLeft._data[ 1U ];
-
-        computeVisibleBounds ();
         return;
     }
 
@@ -199,8 +181,6 @@ void ImageUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
     {
         info._currentLineHeight = std::max ( info._currentLineHeight, _blockSize._data[ 1U ] );
         info._penLocation._data[ 0U ] += _blockSize._data[ 0U ];
-
-        computeVisibleBounds ();
         return;
     }
 
@@ -224,13 +204,27 @@ void ImageUIElement::Submit ( SubmitInfo &info ) noexcept
     constexpr GXVec2 imageTopLeft ( 0.0F, 0.0F );
     constexpr GXVec2 imageBottomRight ( 1.0F, 1.0F );
 
+    AlignHander const handler = ResolveAlignment ( _parent );
+
+    float const& penX = info._pen._data[ 0U ];
+    float const& borderOffsetX = _canvasTopLeftOffset._data[ 0U ];
+    float const& parentLeft = _parentSize._data[ 0U ];
+    float const& blockWidth = _blockSize._data[ 0U ];
+
+    GXVec2 topLeft {};
+    topLeft._data[ 0U ] = handler ( penX, parentLeft, blockWidth ) + borderOffsetX;
+    topLeft._data[ 1U ] = info._parentTopLeft._data[ 1U ] + info._parentLineOffsets[ _parentLine ];
+
+    GXVec2 bottomRight {};
+    bottomRight.Sum ( topLeft, _borderSize );
+
     FontStorage::GlyphInfo const& g = info._fontStorage->GetTransparentGlyphInfo ();
     UIVertexBuffer& vertexBuffer = info._vertexBuffer;
 
     UIPass::AppendRectangle ( vertexBuffer.data (),
         white,
-        _topLeft,
-        _bottomRight,
+        topLeft,
+        bottomRight,
         g._topLeft,
         g._bottomRight,
         imageTopLeft,

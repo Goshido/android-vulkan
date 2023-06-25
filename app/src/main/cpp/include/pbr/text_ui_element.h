@@ -72,15 +72,9 @@ class TextUIElement final : public UIElement
         [[nodiscard]] GXColorRGB const& ResolveColor () const noexcept;
         [[nodiscard]] std::string const* ResolveFont () const noexcept;
 
-        [[nodiscard]] static float AlignCenter ( float penX, float parentWidth, float lineLength ) noexcept;
-        [[nodiscard]] static float AlignLeft ( float penX, float parentWidth, float lineLength ) noexcept;
-        [[nodiscard]] static float AlignRight ( float penX, float parentWidth, float lineLength ) noexcept;
-
         [[nodiscard]] static int OnSetColorHSV ( lua_State* state );
         [[nodiscard]] static int OnSetColorRGB ( lua_State* state );
         [[nodiscard]] static int OnSetText ( lua_State* state );
-
-        [[nodiscard]] static AlignHander ResolveAlignment ( UIElement const* parent ) noexcept;
 };
 
 } // namespace pbr

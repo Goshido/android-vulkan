@@ -18,6 +18,8 @@ class DIVUIElement final : public UIElement
 {
     private:
         GXVec2                      _blockSize {};
+        GXVec2                      _borderSize {};
+        GXVec2                      _marginTopLeft {};
         std::deque<UIElement*>      _children {};
 
         bool                        _isAutoWidth;
@@ -25,13 +27,10 @@ class DIVUIElement final : public UIElement
         bool                        _isInlineBlock;
 
         std::vector<float>          _lineHeights {};
+        std::vector<float>          _lineOffsets {};
         GXVec2                      _canvasTopLeftOffset {};
         float                       _canvasWidth = 0.0F;
         size_t                      _parentLine = 0U;
-
-        GXVec2                      _topLeft {};
-        GXVec2                      _bottomRight {};
-
         size_t const                _widthSelectorBase;
 
     public:

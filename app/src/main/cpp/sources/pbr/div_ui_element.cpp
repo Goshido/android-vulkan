@@ -66,7 +66,7 @@ void DIVUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
     GXVec2 const& canvasSize = info._canvasSize;
     CSSUnitToDevicePixel const& units = *info._cssUnits;
 
-    GXVec2 marginTopLeft ( ResolvePixelLength ( _css._marginLeft, canvasSize._data[ 0U ], false, units ),
+    _marginTopLeft = GXVec2 ( ResolvePixelLength ( _css._marginLeft, canvasSize._data[ 0U ], false, units ),
         ResolvePixelLength ( _css._marginTop, canvasSize._data[ 1U ], true, units )
     );
 
@@ -82,7 +82,7 @@ void DIVUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
         ResolvePixelLength ( _css._paddingBottom, canvasSize._data[ 1U ], true, units )
     );
 
-    _canvasTopLeftOffset.Sum ( marginTopLeft, paddingTopLeft );
+    _canvasTopLeftOffset.Sum ( _marginTopLeft, paddingTopLeft );
 
     GXVec2 penLocation {};
     float const& parentLeft = info._parentTopLeft._data[ 0U ];
@@ -162,6 +162,7 @@ void DIVUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
     };
 
     _lineHeights.clear ();
+    _lineOffsets.clear ();
 
     if ( canvas._data[ 0U ] > 0.0F  )
         ProcessChildren ( childInfo );
@@ -191,8 +192,7 @@ void DIVUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
     GXVec2 padding {};
     padding.Sum ( paddingTopLeft, paddingBottomRight );
 
-    GXVec2 drawableArea {};
-    drawableArea.Sum ( canvas, padding );
+    _borderSize.Sum ( canvas, padding );
 
     auto const sizeCheck = [] ( GXVec2 const &size ) noexcept -> bool {
         return ( size._data[ 0U ] > 0.0F ) & ( size._data[ 1U ] > 0.0F );
@@ -201,7 +201,7 @@ void DIVUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
     // Opaque background requires rectangle (two triangles).
     size_t const vertices[] = { childInfo._vertices, childInfo._vertices + UIPass::GetVerticesPerRectangle () };
     bool const hasBackgroundColor = _css._backgroundColor.GetValue ()._data[ 3U ] != 0.0F;
-    bool const hasBackgroundArea = sizeCheck ( drawableArea );
+    bool const hasBackgroundArea = sizeCheck ( _borderSize );
     info._vertices += vertices[ static_cast<size_t> ( hasBackgroundColor & hasBackgroundArea ) ];
 
     GXVec2 beta {};
@@ -213,26 +213,10 @@ void DIVUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
     _blockSize.Sum ( beta, gamma );
 
     if ( _css._position == PositionProperty::eValue::Absolute )
-    {
-        _topLeft = marginTopLeft;
-        _bottomRight.Sum ( marginTopLeft, drawableArea );
         return;
-    }
 
     if ( !sizeCheck ( _blockSize ) )
         return;
-
-    auto const computeVisibleBounds = [ & ] () noexcept {
-        // Reusing "marginBottomRight" and "marginTopLeft" variables. They will be not used anyway.
-        marginTopLeft.Reverse ();
-        marginBottomRight.Reverse ();
-
-        GXVec2 yotta {};
-        yotta.Sum ( _blockSize, GXVec2 ( marginTopLeft._data[ 0U ], marginBottomRight._data[ 1U ] ) );
-
-        _topLeft.Subtract ( info._penLocation, GXVec2 ( yotta._data[ 0U ], -marginTopLeft._data[ 1U ] ) );
-        _bottomRight.Sum ( info._penLocation, GXVec2 ( marginBottomRight._data[ 0U ], yotta._data[ 1U ] ) );
-    };
 
     if ( _css._display == DisplayProperty::eValue::Block )
     {
@@ -245,8 +229,6 @@ void DIVUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
         info._newLineHeight = _blockSize._data[ 1U ];
         info._penLocation._data[ 0U ] = info._parentTopLeft._data[ 0U ];
         info._penLocation._data[ 1U ] = info._penLocation._data[ 1U ] + info._currentLineHeight;
-
-        computeVisibleBounds ();
         return;
     }
 
@@ -260,8 +242,6 @@ void DIVUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
     {
         info._currentLineHeight = std::max ( info._currentLineHeight, _blockSize._data[ 1U ] );
         info._penLocation._data[ 0U ] += _blockSize._data[ 0U ];
-
-        computeVisibleBounds ();
         return;
     }
 
@@ -287,13 +267,20 @@ void DIVUIElement::Submit ( SubmitInfo &info ) noexcept
     {
         constexpr GXVec2 imageUV ( 0.5F, 0.5F );
 
+        GXVec2 topLeft {};
+        topLeft.Sum ( info._parentTopLeft, _marginTopLeft );
+        topLeft._data[ 1U ] += info._parentLineOffsets[ _parentLine ];
+
+        GXVec2 bottomRight {};
+        bottomRight.Sum ( topLeft, _borderSize );
+
         UIVertexBuffer& vertexBuffer = info._vertexBuffer;
         FontStorage::GlyphInfo const& glyphInfo = info._fontStorage->GetOpaqueGlyphInfo ();
 
         UIPass::AppendRectangle ( vertexBuffer.data (),
             color,
-            _topLeft,
-            _bottomRight,
+            topLeft,
+            bottomRight,
             glyphInfo._topLeft,
             glyphInfo._bottomRight,
             imageUV,
@@ -319,6 +306,7 @@ void DIVUIElement::Submit ( SubmitInfo &info ) noexcept
     {
         ._fontStorage = info._fontStorage,
         ._parentLineHeights = _lineHeights.data (),
+        ._parentLineOffsets = _lineOffsets.data (),
         ._parentTopLeft = topLeft,
         ._parentWidth = _canvasWidth,
         ._pen = topLeft,
@@ -362,24 +350,35 @@ bool DIVUIElement::AppendChildElement ( lua_State &vm,
 void DIVUIElement::ProcessChildren ( ApplyLayoutInfo &childInfo ) noexcept
 {
     _lineHeights.push_back ( 0.0F );
+    _lineOffsets.push_back ( 0.0F );
+    float y = 0.0F;
 
     for ( auto* child : _children )
     {
         size_t const oldLine = childInfo._parentLine;
 
         child->ApplyLayout ( childInfo );
-        _lineHeights.front () = childInfo._currentLineHeight;
+        _lineHeights.back () = childInfo._currentLineHeight;
 
         size_t const newLines = childInfo._parentLine - oldLine;
 
         if ( !newLines )
             continue;
 
+        y += childInfo._currentLineHeight;
+        size_t const needed = _lineHeights.size () + newLines;
+
         float const h = childInfo._newLineHeight;
-        _lineHeights.reserve ( _lineHeights.size () + newLines );
+        _lineHeights.reserve ( needed );
+        _lineOffsets.reserve ( needed );
 
         for ( size_t i = 0U; i < newLines; ++i )
+        {
             _lineHeights.push_back ( h );
+
+            _lineOffsets.push_back ( y );
+            y += h;
+        }
 
         childInfo._currentLineHeight = h;
     }

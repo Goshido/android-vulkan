@@ -190,6 +190,21 @@ float UIElement::ResolvePixelLength ( LengthValue const &length,
     }
 }
 
+float UIElement::AlignCenter ( float penX, float parentWidth, float lineLength ) noexcept
+{
+    return penX + 0.5F * ( parentWidth - lineLength );
+}
+
+float UIElement::AlignLeft ( float penX, float /*parentWidth*/, float /*lineLength*/ ) noexcept
+{
+    return penX;
+}
+
+float UIElement::AlignRight ( float penX, float parentWidth, float lineLength ) noexcept
+{
+    return penX + parentWidth - lineLength;
+}
+
 int UIElement::OnGarbageCollected ( lua_State* state )
 {
     auto const* element = static_cast<UIElement const*> ( lua_touserdata ( state, 1 ) );
@@ -230,6 +245,34 @@ int UIElement::OnShow ( lua_State* state )
     auto& item = *static_cast<UIElement*> ( lua_touserdata ( state, 1 ) );
     item._visible = true;
     return 0;
+}
+
+UIElement::AlignHander UIElement::ResolveAlignment ( UIElement const* parent ) noexcept
+{
+    while ( parent )
+    {
+        // NOLINTNEXTLINE - downcast
+        auto const& div = static_cast<DIVUIElement const&> ( *parent );
+
+        switch ( div._css._textAlign )
+        {
+            case TextAlignProperty::eValue::Center:
+            return &UIElement::AlignCenter;
+
+            case TextAlignProperty::eValue::Left:
+            return &UIElement::AlignLeft;
+
+            case TextAlignProperty::eValue::Right:
+            return &UIElement::AlignRight;
+
+            case TextAlignProperty::eValue::Inherit:
+                parent = parent->_parent;
+            break;
+        }
+    }
+
+    AV_ASSERT ( false )
+    return &UIElement::AlignLeft;
 }
 
 } // namespace pbr

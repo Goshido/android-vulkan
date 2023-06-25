@@ -380,7 +380,7 @@ Supported values: `absolute` and `static`.
 
 ### <a id="text-align">`text-align`</a>
 
-Supported values: `center`, `left` and `right`.
+Supported values: `center`, `left`, `right` and `inherit`.
 
 [↬ table of content ⇧](#table-of-content)
 

@@ -817,9 +817,11 @@ FontStorage::GlyphInfo const& FontStorage::EmbedGlyph ( android_vulkan::Renderer
 
     auto const rows = static_cast<uint32_t> ( bm.rows );
     auto const width = static_cast<size_t> ( bm.width );
-
     auto const advance = static_cast<int32_t> ( slot->advance.x ) >> 6U;
-    auto const offsetY = static_cast<int32_t> ( slot->metrics.height - slot->metrics.horiBearingY ) >> 6U;
+
+    int32_t const toBaseLine = static_cast<int32_t> ( fontSize ) - static_cast<int32_t> ( rows );
+    auto const offsetYFactor = static_cast<int32_t> ( slot->metrics.height - slot->metrics.horiBearingY ) >> 6U;
+    int32_t const offsetY = toBaseLine + offsetYFactor;
 
     if ( ( rows == 0U ) | ( width == 0U ) )
     {
@@ -830,11 +832,8 @@ FontStorage::GlyphInfo const& FontStorage::EmbedGlyph ( android_vulkan::Renderer
                 ._bottomRight = _transparentGlyph._bottomRight,
                 ._width = static_cast<int32_t> ( width ),
                 ._height = static_cast<int32_t> ( rows ),
-                ._size = GXVec2 ( static_cast<float> ( width ), static_cast<float> ( rows ) ),
                 ._advance = advance,
-                ._advanceF = static_cast<float> ( advance ),
-                ._offsetY = offsetY,
-                ._offsetYF = static_cast<float> ( offsetY )
+                ._offsetY = offsetY
             }
         );
 
@@ -943,11 +942,8 @@ FontStorage::GlyphInfo const& FontStorage::EmbedGlyph ( android_vulkan::Renderer
             ._bottomRight = PixToUV ( right + 1U, bottom + 1U, layer ),
             ._width = static_cast<int32_t> ( width ),
             ._height = static_cast<int32_t> ( rows ),
-            ._size = GXVec2 ( static_cast<float> ( width ), static_cast<float> ( rows ) ),
-            ._advance = static_cast<int32_t> ( slot->advance.x ) >> 6U,
-            ._advanceF = static_cast<float> ( advance ),
-            ._offsetY = static_cast<int32_t> ( slot->metrics.height - slot->metrics.horiBearingY ) >> 6U,
-            ._offsetYF = static_cast<float> ( offsetY )
+            ._advance = advance,
+            ._offsetY = offsetY
         }
     );
 

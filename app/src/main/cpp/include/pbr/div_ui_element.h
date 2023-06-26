@@ -19,22 +19,24 @@ class DIVUIElement final : public UIElement
     private:
         GXVec2                      _blockSize {};
         GXVec2                      _borderSize {};
-        GXVec2                      _marginTopLeft {};
+
+        GXVec2                      _canvasSize {};
+        GXVec2                      _canvasTopLeftOffset {};
+
         std::deque<UIElement*>      _children {};
+        GXVec2                      _marginTopLeft {};
 
         bool                        _isAutoWidth;
         bool                        _isAutoHeight;
         bool                        _isInlineBlock;
 
         std::vector<float>          _lineHeights {};
-        std::vector<float>          _lineOffsets {};
-        GXVec2                      _canvasTopLeftOffset {};
-        float                       _canvasWidth = 0.0F;
+
         size_t                      _parentLine = 0U;
         size_t const                _widthSelectorBase;
 
     public:
-        CSSComputedValues           _css {};
+        CSSComputedValues           _css;
 
     public:
         DIVUIElement () = delete;
@@ -66,9 +68,6 @@ class DIVUIElement final : public UIElement
             int appendChildElementIdx,
             UIElement &element
         ) noexcept;
-
-    private:
-        void ProcessChildren ( ApplyLayoutInfo &childInfo ) noexcept;
 };
 
 } // namespace pbr

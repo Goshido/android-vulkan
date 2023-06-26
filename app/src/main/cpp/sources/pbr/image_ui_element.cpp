@@ -1,3 +1,4 @@
+#include <pbr/div_ui_element.h>
 #include <pbr/image_ui_element.h>
 #include <av_assert.h>
 #include <logger.h>
@@ -71,9 +72,10 @@ void ImageUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
         return;
 
     // Method contains a lot of branchless optimizations.
-    _parentLine = info._parentLine;
-    _parentSize = info._canvasSize;
+    std::vector<float>& lineHeights = *info._lineHeights;
+    _parentLine = lineHeights.size () - 1U;
 
+    _parentSize = info._canvasSize;
     GXVec2 const& canvasSize = info._canvasSize;
     CSSUnitToDevicePixel const& units = *info._cssUnits;
 
@@ -102,7 +104,7 @@ void ImageUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
 
     auto const newLine = [ & ] () noexcept {
         GXVec2 beta {};
-        beta.Sum ( _canvasTopLeftOffset, GXVec2 ( parentLeft, info._currentLineHeight ) );
+        beta.Sum ( _canvasTopLeftOffset, GXVec2 ( parentLeft, lineHeights.back () ) );
 
         penLocation._data[ 0U ] = beta._data[ 0U ];
         penLocation._data[ 1U ] += beta._data[ 1U ];
@@ -118,10 +120,11 @@ void ImageUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
 
         case PositionProperty::eValue::Static:
         {
-            _parentLine = info._parentLine;
-
             if ( parentLeft == info._penLocation._data[ 0U ] )
+            {
+                penLocation.Sum ( info._penLocation, _canvasTopLeftOffset );
                 break;
+            }
 
             if ( !_isInlineBlock )
             {
@@ -160,14 +163,14 @@ void ImageUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
     if ( _css._display == DisplayProperty::eValue::Block )
     {
         // Block starts from new line and consumes whole parent block line.
-        float const cases[] = { _blockSize._data[ 1U ], info._currentLineHeight };
-        auto const s = static_cast<size_t> ( info._currentLineHeight != 0.0F );
+        float const currentLineHeight = lineHeights.back ();
 
-        info._currentLineHeight = cases[ s ];
-        info._parentLine += s;
-        info._newLineHeight = _blockSize._data[ 1U ];
-        info._penLocation._data[ 0U ] = parentLeft + _blockSize._data[ 0U ];
-        info._penLocation._data[ 1U ] = info._parentTopLeft._data[ 1U ];
+        float const cases[] = { _blockSize._data[ 1U ], currentLineHeight };
+        auto const s = static_cast<size_t> ( currentLineHeight != 0.0F );
+
+        lineHeights.back () = cases[ s ];
+        info._penLocation._data[ 0U ] = info._parentTopLeft._data[ 0U ];
+        info._penLocation._data[ 1U ] = info._penLocation._data[ 1U ] + cases[ s ];
         return;
     }
 
@@ -179,17 +182,15 @@ void ImageUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
 
     if ( firstBlock | blockCanFit )
     {
-        info._currentLineHeight = std::max ( info._currentLineHeight, _blockSize._data[ 1U ] );
+        lineHeights.back () = std::max ( lineHeights.back (), _blockSize._data[ 1U ] );
         info._penLocation._data[ 0U ] += _blockSize._data[ 0U ];
         return;
     }
 
     // Block goes to the new line of parent block.
-    ++info._parentLine;
     info._penLocation._data[ 0U ] = info._parentTopLeft._data[ 0U ];
-    info._penLocation._data[ 1U ] += info._currentLineHeight;
-    info._newLineHeight = info._currentLineHeight;
-    info._currentLineHeight = 0.0F;
+    info._penLocation._data[ 1U ] += lineHeights.back ();
+    info._lineHeights->push_back ( 0.0F );
     info._vertices = oldVertices;
 
     ApplyLayout ( info );
@@ -200,23 +201,34 @@ void ImageUIElement::Submit ( SubmitInfo &info ) noexcept
     if ( !_visible )
         return;
 
-    constexpr GXColorRGB white ( 1.0F, 1.0F, 1.0F, 1.0F );
-    constexpr GXVec2 imageTopLeft ( 0.0F, 0.0F );
-    constexpr GXVec2 imageBottomRight ( 1.0F, 1.0F );
+    GXVec2 pen = info._pen;
 
-    AlignHander const handler = ResolveAlignment ( _parent );
+    if ( info._line != _parentLine )
+    {
+        pen._data[ 0U ] = info._parentTopLeft._data[ 0U ];
+        pen._data[ 1U ] += info._parentLineHeights[ info._line ];
+    }
+
+    AlignHander const verticalAlign = ResolveVerticalAlignment ( this );
+    pen._data[ 1U ] = verticalAlign ( pen._data[ 1U ], info._parentLineHeights[ _parentLine ], _blockSize._data[ 1U ] );
+
+    GXVec2 topLeft {};
+    topLeft.Sum ( pen, _canvasTopLeftOffset );
 
     float const& penX = info._pen._data[ 0U ];
     float const& borderOffsetX = _canvasTopLeftOffset._data[ 0U ];
     float const& parentLeft = _parentSize._data[ 0U ];
     float const& blockWidth = _blockSize._data[ 0U ];
 
-    GXVec2 topLeft {};
+    AlignHander const handler = ResolveTextAlignment ( _parent );
     topLeft._data[ 0U ] = handler ( penX, parentLeft, blockWidth ) + borderOffsetX;
-    topLeft._data[ 1U ] = info._parentTopLeft._data[ 1U ] + info._parentLineOffsets[ _parentLine ];
 
     GXVec2 bottomRight {};
     bottomRight.Sum ( topLeft, _borderSize );
+
+    constexpr GXColorRGB white ( 1.0F, 1.0F, 1.0F, 1.0F );
+    constexpr GXVec2 imageTopLeft ( 0.0F, 0.0F );
+    constexpr GXVec2 imageBottomRight ( 1.0F, 1.0F );
 
     FontStorage::GlyphInfo const& g = info._fontStorage->GetTransparentGlyphInfo ();
     UIVertexBuffer& vertexBuffer = info._vertexBuffer;

@@ -600,24 +600,11 @@ void Scene::SubmitUI ( android_vulkan::Renderer &renderer, RenderSession &render
         return;
     }
 
-    auto const lineHeight = static_cast<float> ( renderer.GetViewportResolution ().height );
-    constexpr float lineOffsets = 0.0F;
-
-    UIElement::SubmitInfo info
-    {
-        ._fontStorage = &fontStorage,
-        ._parentLineHeights = &lineHeight,
-        ._parentLineOffsets = &lineOffsets,
-        ._parentTopLeft = GXVec2 ( 0.0F, 0.0F ),
-        ._parentWidth = static_cast<float> ( renderer.GetViewportResolution ().width ),
-        ._pen = GXVec2 ( 0.0F, 0.0F ),
-        ._uiPass = &uiPass,
-        ._vertexBuffer = *response
-    };
+    uint32_t const viewportWidth = renderer.GetViewportResolution ().width;
 
     for ( auto& uiLayer : _uiLayerList )
     {
-        uiLayer.get ().Submit ( info );
+        uiLayer.get ().Submit ( uiPass, fontStorage, viewportWidth, *response );
     }
 }
 

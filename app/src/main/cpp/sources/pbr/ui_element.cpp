@@ -84,6 +84,55 @@ UIElement::UIElement ( bool visible, UIElement const* parent ) noexcept:
     // NOTHING
 }
 
+float UIElement::ResolvePixelLength ( LengthValue const &length,
+    float parentLength,
+    bool isHeight,
+    CSSUnitToDevicePixel const &units
+) const noexcept
+{
+    switch ( length.GetType () )
+    {
+        case LengthValue::eType::EM:
+        return static_cast<float> ( ResolveFontSize ( units, *this ) );
+
+        case LengthValue::eType::MM:
+        return units._fromMM * length.GetValue ();
+
+        case LengthValue::eType::PT:
+        return units._fromPT * length.GetValue ();
+
+        case LengthValue::eType::PX:
+        return units._fromPX * length.GetValue ();
+
+        case LengthValue::eType::Percent:
+        {
+            if ( _parent )
+            {
+                // NOLINTNEXTLINE - downcast.
+                auto const& div = *static_cast<DIVUIElement const*> ( _parent );
+
+                LengthValue const* cases[] = { &div._css._width, &div._css._height };
+                bool const isAuto = cases[ static_cast<size_t> ( isHeight ) ]->GetType () == LengthValue::eType::Auto;
+
+                if ( isAuto & isHeight )
+                {
+                    // It's recursion. Doing exactly the same as Google Chrome v114.0.5735.110 does.
+                    return 0.0F;
+                }
+            }
+
+            return 1.0e-2F * parentLength * length.GetValue ();
+        }
+
+        case LengthValue::eType::Auto:
+        return 0.0F;
+
+        default:
+            AV_ASSERT ( false )
+        return 0.0F;
+    }
+}
+
 float UIElement::ResolveFontSize ( CSSUnitToDevicePixel const &cssUnits,
     UIElement const &startTraverseElement
 ) noexcept
@@ -141,68 +190,75 @@ float UIElement::ResolveFontSize ( CSSUnitToDevicePixel const &cssUnits,
     }
 }
 
-float UIElement::ResolvePixelLength ( LengthValue const &length,
-    float parentLength,
-    bool isHeight,
-    CSSUnitToDevicePixel const &units
-) const noexcept
+UIElement::AlignHander UIElement::ResolveTextAlignment ( UIElement const* parent ) noexcept
 {
-    switch ( length.GetType () )
+    while ( parent )
     {
-        case LengthValue::eType::EM:
-        return static_cast<float> ( ResolveFontSize ( units, *this ) );
+        // NOLINTNEXTLINE - downcast
+        auto const& div = static_cast<DIVUIElement const&> ( *parent );
 
-        case LengthValue::eType::MM:
-        return units._fromMM * length.GetValue ();
-
-        case LengthValue::eType::PT:
-        return units._fromPT * length.GetValue ();
-
-        case LengthValue::eType::PX:
-        return units._fromPX * length.GetValue ();
-
-        case LengthValue::eType::Percent:
+        switch ( div._css._textAlign )
         {
-            if ( _parent )
-            {
-                // NOLINTNEXTLINE - downcast.
-                auto const& div = *static_cast<DIVUIElement const*> ( _parent );
+            case TextAlignProperty::eValue::Center:
+            return &UIElement::AlignToCenter;
 
-                LengthValue const* cases[] = { &div._css._width, &div._css._height };
-                bool const isAuto = cases[ static_cast<size_t> ( isHeight ) ]->GetType () == LengthValue::eType::Auto;
+            case TextAlignProperty::eValue::Left:
+            return &UIElement::AlignToStart;
 
-                if ( isAuto & isHeight )
-                {
-                    // It's recursion. Doing exactly the same as Google Chrome v114.0.5735.110 does.
-                    return 0.0F;
-                }
-            }
+            case TextAlignProperty::eValue::Right:
+            return &UIElement::AlignToEnd;
 
-            return 1.0e-2F * parentLength * length.GetValue ();
+            case TextAlignProperty::eValue::Inherit:
+                parent = parent->_parent;
+            break;
         }
-
-        case LengthValue::eType::Auto:
-        return 0.0F;
-
-        default:
-            AV_ASSERT ( false )
-        return 0.0F;
     }
+
+    AV_ASSERT ( false )
+    return &UIElement::AlignToStart;
 }
 
-float UIElement::AlignCenter ( float penX, float parentWidth, float lineLength ) noexcept
+UIElement::AlignHander UIElement::ResolveVerticalAlignment ( UIElement const* parent ) noexcept
 {
-    return penX + 0.5F * ( parentWidth - lineLength );
+    while ( parent )
+    {
+        // NOLINTNEXTLINE - downcast
+        auto const& div = static_cast<DIVUIElement const&> ( *parent );
+
+        switch ( div._css._verticalAlign )
+        {
+            case VerticalAlignProperty::eValue::Bottom:
+            return &UIElement::AlignToEnd;
+
+            case VerticalAlignProperty::eValue::Middle:
+            return &UIElement::AlignToCenter;
+
+            case VerticalAlignProperty::eValue::Top:
+            return &UIElement::AlignToStart;
+
+            case VerticalAlignProperty::eValue::Inherit:
+                parent = parent->_parent;
+            break;
+        }
+    }
+
+    AV_ASSERT ( false )
+    return &UIElement::AlignToStart;
 }
 
-float UIElement::AlignLeft ( float penX, float /*parentWidth*/, float /*lineLength*/ ) noexcept
+float UIElement::AlignToCenter ( float pen, float parentSize, float lineSize ) noexcept
 {
-    return penX;
+    return pen + 0.5F * ( parentSize - lineSize );
 }
 
-float UIElement::AlignRight ( float penX, float parentWidth, float lineLength ) noexcept
+float UIElement::AlignToStart ( float pen, float /*parentSize*/, float /*lineSize*/ ) noexcept
 {
-    return penX + parentWidth - lineLength;
+    return pen;
+}
+
+float UIElement::AlignToEnd ( float pen, float parentSize, float lineSize ) noexcept
+{
+    return pen + parentSize - lineSize;
 }
 
 int UIElement::OnGarbageCollected ( lua_State* state )
@@ -245,34 +301,6 @@ int UIElement::OnShow ( lua_State* state )
     auto& item = *static_cast<UIElement*> ( lua_touserdata ( state, 1 ) );
     item._visible = true;
     return 0;
-}
-
-UIElement::AlignHander UIElement::ResolveAlignment ( UIElement const* parent ) noexcept
-{
-    while ( parent )
-    {
-        // NOLINTNEXTLINE - downcast
-        auto const& div = static_cast<DIVUIElement const&> ( *parent );
-
-        switch ( div._css._textAlign )
-        {
-            case TextAlignProperty::eValue::Center:
-            return &UIElement::AlignCenter;
-
-            case TextAlignProperty::eValue::Left:
-            return &UIElement::AlignLeft;
-
-            case TextAlignProperty::eValue::Right:
-            return &UIElement::AlignRight;
-
-            case TextAlignProperty::eValue::Inherit:
-                parent = parent->_parent;
-            break;
-        }
-    }
-
-    AV_ASSERT ( false )
-    return &UIElement::AlignLeft;
 }
 
 } // namespace pbr

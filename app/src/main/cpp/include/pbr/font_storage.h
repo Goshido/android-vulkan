@@ -24,16 +24,10 @@ class FontStorage final
         {
             GXVec3                              _topLeft = GXVec3 ( 0.0F, 0.0F, 0.0F );
             GXVec3                              _bottomRight = GXVec3 ( 0.0F, 0.0F, 0.0F );
-
             int32_t                             _width = 0;
             int32_t                             _height = 0;
-            GXVec2                              _size {};
-
             int32_t                             _advance = 0;
-            float                               _advanceF = 0.0F;
-
             int32_t                             _offsetY = 0;
-            float                               _offsetYF = 0.0F;
         };
 
         struct FontResource final

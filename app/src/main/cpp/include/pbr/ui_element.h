@@ -35,10 +35,8 @@ class UIElement
         {
             GXVec2 const                    _canvasSize;
             CSSUnitToDevicePixel const*     _cssUnits;
-            float                           _currentLineHeight;
             FontStorage*                    _fontStorage;
-            float                           _newLineHeight;
-            size_t                          _parentLine;
+            std::vector<float>*             _lineHeights;
             GXVec2 const                    _parentTopLeft;
             GXVec2                          _penLocation;
             android_vulkan::Renderer*       _renderer;
@@ -50,7 +48,6 @@ class UIElement
             FontStorage*                    _fontStorage;
             size_t                          _line;
             float const*                    _parentLineHeights;
-            float const*                    _parentLineOffsets;
             GXVec2                          _parentTopLeft;
             float                           _parentWidth;
             GXVec2                          _pen;
@@ -58,11 +55,11 @@ class UIElement
             UIVertexBuffer                  _vertexBuffer;
         };
 
-    protected:
-        using AlignHander = float ( * ) ( float penX, float parentWidth, float lineLength ) noexcept;
-
     private:
         using Storage = std::unordered_map<UIElement const*, std::unique_ptr<UIElement>>;
+
+    protected:
+        using AlignHander = float ( * ) ( float pen, float parentSize, float lineSize ) noexcept;
 
     private:
         static Storage                      _uiElements;
@@ -98,22 +95,23 @@ class UIElement
     protected:
         explicit UIElement ( bool visible, UIElement const* parent ) noexcept;
 
-        [[nodiscard]] static AlignHander ResolveAlignment ( UIElement const* parent ) noexcept;
-
-        [[nodiscard]] static float ResolveFontSize ( CSSUnitToDevicePixel const &cssUnits,
-            UIElement const &startTraverseElement
-        ) noexcept;
-
         [[nodiscard]] float ResolvePixelLength ( LengthValue const &length,
             float parentLength,
             bool isHeight,
             CSSUnitToDevicePixel const &units
         ) const noexcept;
 
+        [[nodiscard]] static float ResolveFontSize ( CSSUnitToDevicePixel const &cssUnits,
+            UIElement const &startTraverseElement
+        ) noexcept;
+
+        [[nodiscard]] static AlignHander ResolveTextAlignment ( UIElement const* parent ) noexcept;
+        [[nodiscard]] static AlignHander ResolveVerticalAlignment ( UIElement const* parent ) noexcept;
+
     private:
-        [[nodiscard]] static float AlignCenter ( float penX, float parentWidth, float lineLength ) noexcept;
-        [[nodiscard]] static float AlignLeft ( float penX, float parentWidth, float lineLength ) noexcept;
-        [[nodiscard]] static float AlignRight ( float penX, float parentWidth, float lineLength ) noexcept;
+        [[nodiscard]] static float AlignToCenter ( float pen, float parentSize, float lineSize ) noexcept;
+        [[nodiscard]] static float AlignToStart ( float pen, float parentSize, float lineSize ) noexcept;
+        [[nodiscard]] static float AlignToEnd ( float pen, float parentSize, float lineSize ) noexcept;
 
         [[nodiscard]] static int OnGarbageCollected ( lua_State* state );
         [[nodiscard]] static int OnHide ( lua_State* state );

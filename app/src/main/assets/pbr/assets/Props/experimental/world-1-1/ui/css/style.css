@@ -7,8 +7,9 @@
     position: static;
     padding: 7mm 15mm 1mm 15mm;
     height: auto;
-    background-color: black;
+    background-color: rgb(40, 21, 206);
     font-size: 0px;
+    vertical-align: bottom;
 }
 
 .main-font {
@@ -39,6 +40,7 @@
     display: inline-block;
     text-align: right;
     width: 40%;
+    background-color: red;
 }
 
 .coin {
@@ -57,18 +59,25 @@
     display: inline-block;
     text-align: left;
     width: 25%;
+    background-color: green;
 }
 
 .middle-column {
     display: inline-block;
     text-align: center;
     width: 25%;
+    background-color: chocolate;
+}
+
+.middle-column-2 {
+    background-color: rgb(143, 22, 88);
 }
 
 .tail-column {
     display: inline-block;
     text-align: right;
     width: 25%;
+    background-color: darkolivegreen;
 }
 
 #main-widget {

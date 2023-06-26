@@ -386,7 +386,7 @@ Supported values: `center`, `left`, `right` and `inherit`.
 
 ### <a id="vertical-align">`vertical-align`</a>
 
-Supported values: `bottom`, `middle` and `top`.
+Supported values: `bottom`, `middle`, `top` and `inherit`.
 
 [↬ table of content ⇧](#table-of-content)
 

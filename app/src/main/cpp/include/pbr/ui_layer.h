@@ -28,6 +28,7 @@ class UILayer final
     private:
         DIVUIElement*                           _body = nullptr;
         CSSParser                               _css {};
+        std::vector<float>                      _lineHeights { 1U, 0.0F };
 
         static CSSUnitToDevicePixel             _cssUnitToDevicePixel;
         static std::unordered_set<UILayer*>     _uiLayers;
@@ -49,7 +50,11 @@ class UILayer final
             FontStorage &fontStorage
         ) noexcept;
 
-        void Submit ( UIElement::SubmitInfo &info ) noexcept;
+        void Submit ( UIPass &uiPass,
+            FontStorage &fontStorage,
+            uint32_t viewportWidth,
+            UIVertexBuffer vertexBuffer
+        ) noexcept;
 
         static void InitCSSUnitConverter ( float dpi, float comfortableViewDistanceMeters ) noexcept;
         static void InitLuaFrontend ( lua_State &vm ) noexcept;

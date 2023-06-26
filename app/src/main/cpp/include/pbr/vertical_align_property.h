@@ -14,11 +14,12 @@ class VerticalAlignProperty final : public Property
         {
             Bottom,
             Middle,
-            Top
+            Top,
+            Inherit
         };
 
     private:
-        eValue      _value = eValue::Top;
+        eValue      _value = eValue::Inherit;
 
     public:
         VerticalAlignProperty () = delete;

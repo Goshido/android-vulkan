@@ -139,14 +139,15 @@ UILayer::LayoutStatus UILayer::ApplyLayout ( android_vulkan::Renderer &renderer,
 {
     VkExtent2D const viewport = renderer.GetViewportResolution ();
 
+    _lineHeights.clear ();
+    _lineHeights.push_back ( 0.0F );
+
     UIElement::ApplyLayoutInfo info
     {
         ._canvasSize = GXVec2 ( static_cast<float> ( viewport.width ), static_cast<float> ( viewport.height ) ),
         ._cssUnits = &_cssUnitToDevicePixel,
-        ._currentLineHeight = 0.0F,
         ._fontStorage = &fontStorage,
-        ._newLineHeight = 0.0F,
-        ._parentLine = 0U,
+        ._lineHeights = &_lineHeights,
         ._parentTopLeft = GXVec2 ( 0.0F, 0.0F ),
         ._penLocation = GXVec2 ( 0.0F, 0.0F ),
         ._renderer = &renderer,
@@ -162,8 +163,23 @@ UILayer::LayoutStatus UILayer::ApplyLayout ( android_vulkan::Renderer &renderer,
     };
 }
 
-void UILayer::Submit ( UIElement::SubmitInfo &info ) noexcept
+void UILayer::Submit ( UIPass &uiPass,
+    FontStorage &fontStorage,
+    uint32_t viewportWidth,
+    UIVertexBuffer vertexBuffer
+) noexcept
 {
+    UIElement::SubmitInfo info
+    {
+        ._fontStorage = &fontStorage,
+        ._parentLineHeights = _lineHeights.data (),
+        ._parentTopLeft = GXVec2 ( 0.0F, 0.0F ),
+        ._parentWidth = static_cast<float> ( viewportWidth ),
+        ._pen = GXVec2 ( 0.0F, 0.0F ),
+        ._uiPass = &uiPass,
+        ._vertexBuffer = vertexBuffer
+    };
+
     _body->Submit ( info );
 }
 

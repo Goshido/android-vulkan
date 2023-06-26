@@ -80,7 +80,6 @@ void TextUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
         return;
 
     size_t const glyphCount = _text.size ();
-
     _lines.clear ();
 
     // Estimation from top.
@@ -99,18 +98,16 @@ void TextUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
         return;
 
     auto f = *font;
-
-    constexpr size_t fontHeightIdx = 0U;
     constexpr size_t firstLineHeightIdx = 1U;
 
-    float& currentLineHeight = info._currentLineHeight;
-    auto const currentLineHeightInteger = static_cast<int32_t> ( currentLineHeight );
+    std::vector<float>& divLineHeights = *info._lineHeights;
+    size_t const startLine = divLineHeights.size () - 1U;
+    size_t parentLine = startLine;
 
-    int32_t const lineHeights[] =
-    {
-        f->second._lineHeight,
-        std::max ( f->second._lineHeight, currentLineHeightInteger )
-    };
+    float& currentLineHeight = divLineHeights.back ();
+    auto const currentLineHeightInteger = static_cast<int32_t> ( currentLineHeight );
+    _fontSize = f->second._lineHeight;
+    int32_t const lineHeights[] = { _fontSize, std::max ( _fontSize, currentLineHeightInteger ) };
 
     GXVec2& penLocation = info._penLocation;
     float const canvasWidth = info._canvasSize._data[ 0U ];
@@ -120,7 +117,7 @@ void TextUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
     auto const w = static_cast<int32_t> ( parentLeft + canvasWidth );
 
     auto x = static_cast<int32_t> ( penLocation._data[ 0U ] );
-    auto start = static_cast<int32_t> ( canvasWidth + parentLeft - penLocation._data[ 1U ] );
+    auto start = x;
 
     size_t glyphsPerLine = 0U;
 
@@ -130,8 +127,6 @@ void TextUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
 
     std::u32string_view text = _text;
 
-    size_t const startLine = info._parentLine;
-    size_t parentLine = info._parentLine;
     char32_t leftCharacter = 0;
     android_vulkan::Renderer& renderer = *info._renderer;
 
@@ -139,12 +134,13 @@ void TextUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
         _glyphs.emplace_back (
             Glyph
             {
-                ._advance = 0.0F,
-                ._offsetY = glyphInfo._offsetYF,
-                ._parentLine = line,
-                ._size = glyphInfo._size,
+                ._advance = 0,
                 ._atlasTopLeft = glyphInfo._topLeft,
-                ._atlasBottomRight = glyphInfo._bottomRight
+                ._atlasBottomRight = glyphInfo._bottomRight,
+                ._offsetY = glyphInfo._offsetY,
+                ._parentLine = line,
+                ._width = glyphInfo._width,
+                ._height = glyphInfo._height
             }
         );
     };
@@ -170,13 +166,14 @@ void TextUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
         else
         {
             _lines.emplace_back ( Line {} );
-            start = 0;
+            start = l;
 
             ++parentLine;
             y += currentLineHeightInteger;
             x = l + gi->_advance;
 
             appendGlyph ( parentLine, *gi );
+            divLineHeights.push_back ( static_cast<float> ( _fontSize ) );
         }
     }
 
@@ -196,7 +193,7 @@ void TextUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
 
         if ( x < w )
         {
-            glyph->_advance = static_cast<float> ( baseX - previousX );
+            glyph->_advance = baseX - previousX;
             ++glyph;
 
             previousX = baseX;
@@ -210,11 +207,11 @@ void TextUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
             Line
             {
                 ._glyphs = glyphsPerLine - 1U,
-                ._length = static_cast<float> ( x - ( advance + start ) )
+                ._length = x - ( advance + start )
             }
         );
 
-        start = 0;
+        start = l;
         glyphsPerLine = 1U;
         ++glyph;
 
@@ -224,23 +221,22 @@ void TextUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
 
         appendGlyph ( parentLine, *gi );
         previousX = l;
+
+        divLineHeights.push_back ( static_cast<float> ( _fontSize ) );
     }
 
-    glyph->_advance = gi->_advanceF;
+    glyph->_advance = gi->_advance;
 
     _lines.emplace_back (
         Line
         {
             ._glyphs = glyphsPerLine,
-            ._length = static_cast<float> ( x + gi->_width - gi->_advance )
+            ._length = x + gi->_width - ( gi->_advance + start )
         }
     );
 
     int32_t const cases[] = { currentLineHeightInteger, lineHeights[ firstLineHeightIdx ] };
     currentLineHeight = static_cast<float> ( cases[ static_cast<size_t> ( firstLineState[ firstLineChangedIdx ] ) ] );
-
-    info._parentLine = parentLine;
-    info._newLineHeight = static_cast<float> ( lineHeights[ fontHeightIdx ] );
 
     penLocation._data[ 0U ] = static_cast<float> ( x );
     penLocation._data[ 1U ] = static_cast<float> ( y ) + fraction;
@@ -278,47 +274,53 @@ void TextUIElement::Submit ( SubmitInfo &info ) noexcept
         ++height;
     }
 
-    AlignHander const handler = ResolveAlignment ( _parent );
+    AlignIntegerHander const textAlignment = ResolveIntegerTextAlignment ( _parent );
+    AlignIntegerHander const verticalAlignment = ResolveIntegerVerticalAlignment ( _parent );
+
+    auto x = static_cast<int32_t> ( pen._data[ 0U ] );
+    auto y = static_cast<int32_t> ( pen._data[ 1U ] );
+
+    auto const parentLeft = static_cast<int32_t> ( info._parentTopLeft._data[ 0U ] );
+    auto const parentWidth =  static_cast<int32_t> ( info._parentWidth );
 
     for ( Line const& line : _lines )
     {
-        pen._data[ 0U ] = handler ( pen._data[ 0U ], info._parentWidth, line._length );
-
-        pen._data[ 0U ] = std::floor ( pen._data[ 0U ] );
-        pen._data[ 1U ] = std::floor ( pen._data[ 1U ] );
-
+        x = textAlignment ( x, parentWidth, line._length );
+        y = verticalAlignment ( y, static_cast<int32_t> ( *height ), _fontSize );
         limit += line._glyphs;
 
         for ( ; i < limit; ++i )
         {
             Glyph const& g = glyphs[ i ];
-            GXVec2 topLeft ( pen._data[ 0U ], pen._data[ 1U ] - g._offsetY );
 
-            GXVec2 bottomRight {};
-            bottomRight.Sum ( topLeft, g._size );
+            int32_t const glyphTop = y + g._offsetY;
+            int32_t const glyphBottom = glyphTop + g._height;
+            int32_t const glyphRight = x + g._width;
 
             UIPass::AppendRectangle ( v,
                 color,
-                topLeft,
-                bottomRight,
+                GXVec2 ( static_cast<float> ( x ), static_cast<float> ( glyphTop ) ),
+                GXVec2 ( static_cast<float> ( glyphRight ), static_cast<float> ( glyphBottom ) ),
                 g._atlasTopLeft,
                 g._atlasBottomRight,
                 imageUV,
                 imageUV
             );
 
-            pen._data[ 0U ] += g._advance;
+            x += g._advance;
             v += verticesPerGlyph;
         }
 
-        pen._data[ 0U ] = info._parentTopLeft._data[ 0U ];
         pen._data[ 1U ] += *height;
         ++height;
+
+        x = parentLeft;
+        y = static_cast<int32_t> ( pen._data[ 1U ] );
     }
 
     size_t const vertexCount = glyphCount * verticesPerGlyph;
     vertexBuffer = vertexBuffer.subspan ( vertexCount );
-    info._pen = pen;
+    info._pen = GXVec2 ( static_cast<float> ( x ), pen._data[ 1U ] );
     info._uiPass->SubmitText ( vertexCount );
 }
 
@@ -362,6 +364,77 @@ std::string const* TextUIElement::ResolveFont () const noexcept
 
     AV_ASSERT ( false )
     return nullptr;
+}
+
+int32_t TextUIElement::AlignIntegerToCenter ( int32_t pen, int32_t parentSize, int32_t lineSize ) noexcept
+{
+    return pen + ( ( parentSize - lineSize ) / 2 );
+}
+
+int32_t TextUIElement::AlignIntegerToStart ( int32_t pen, int32_t /*parentSize*/, int32_t /*lineLength*/ ) noexcept
+{
+    return pen;
+}
+
+int32_t TextUIElement::AlignIntegerToEnd ( int32_t pen, int32_t parentSize, int32_t lineSize ) noexcept
+{
+    return pen + parentSize - lineSize;
+}
+
+TextUIElement::AlignIntegerHander TextUIElement::ResolveIntegerTextAlignment ( UIElement const* parent ) noexcept
+{
+    while ( parent )
+    {
+        // NOLINTNEXTLINE - downcast
+        auto const& div = static_cast<DIVUIElement const&> ( *parent );
+
+        switch ( div._css._textAlign )
+        {
+            case TextAlignProperty::eValue::Center:
+            return &TextUIElement::AlignIntegerToCenter;
+
+            case TextAlignProperty::eValue::Left:
+            return &TextUIElement::AlignIntegerToStart;
+
+            case TextAlignProperty::eValue::Right:
+            return &TextUIElement::AlignIntegerToEnd;
+
+            case TextAlignProperty::eValue::Inherit:
+                parent = parent->_parent;
+            break;
+        }
+    }
+
+    AV_ASSERT ( false )
+    return &TextUIElement::AlignIntegerToStart;
+}
+
+TextUIElement::AlignIntegerHander TextUIElement::ResolveIntegerVerticalAlignment ( UIElement const* parent ) noexcept
+{
+    while ( parent )
+    {
+        // NOLINTNEXTLINE - downcast
+        auto const& div = static_cast<DIVUIElement const&> ( *parent );
+
+        switch ( div._css._verticalAlign )
+        {
+            case VerticalAlignProperty::eValue::Bottom:
+            return &TextUIElement::AlignIntegerToEnd;
+
+            case VerticalAlignProperty::eValue::Middle:
+            return &TextUIElement::AlignIntegerToCenter;
+
+            case VerticalAlignProperty::eValue::Top:
+            return &TextUIElement::AlignIntegerToStart;
+
+            case VerticalAlignProperty::eValue::Inherit:
+                parent = parent->_parent;
+            break;
+        }
+    }
+
+    AV_ASSERT ( false )
+    return &TextUIElement::AlignIntegerToStart;
 }
 
 int TextUIElement::OnSetColorHSV ( lua_State* state )

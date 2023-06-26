@@ -11,7 +11,8 @@ std::unordered_map<std::u32string_view, VerticalAlignProperty::eValue> const VAL
 {
     { U"bottom", VerticalAlignProperty::eValue::Bottom },
     { U"middle", VerticalAlignProperty::eValue::Middle },
-    { U"top", VerticalAlignProperty::eValue::Top }
+    { U"top", VerticalAlignProperty::eValue::Top },
+    { U"inherit", VerticalAlignProperty::eValue::Inherit }
 };
 
 } // end of anonymous namespace

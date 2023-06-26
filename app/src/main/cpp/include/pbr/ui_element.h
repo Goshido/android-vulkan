@@ -37,7 +37,6 @@ class UIElement
             CSSUnitToDevicePixel const*     _cssUnits;
             FontStorage*                    _fontStorage;
             std::vector<float>*             _lineHeights;
-            GXVec2 const                    _parentTopLeft;
             GXVec2                          _penLocation;
             android_vulkan::Renderer*       _renderer;
             size_t                          _vertices;

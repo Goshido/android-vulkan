@@ -111,10 +111,7 @@ void TextUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
 
     GXVec2& penLocation = info._penLocation;
     float const canvasWidth = info._canvasSize._data[ 0U ];
-    float const parentLeft = info._parentTopLeft._data[ 0U ];
-
-    auto const l = static_cast<int32_t> ( parentLeft );
-    auto const w = static_cast<int32_t> ( parentLeft + canvasWidth );
+    auto const w = static_cast<int32_t> ( canvasWidth );
 
     auto x = static_cast<int32_t> ( penLocation._data[ 0U ] );
     auto start = x;
@@ -166,11 +163,11 @@ void TextUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
         else
         {
             _lines.emplace_back ( Line {} );
-            start = l;
+            start = 0;
 
             ++parentLine;
             y += currentLineHeightInteger;
-            x = l + gi->_advance;
+            x = gi->_advance;
 
             appendGlyph ( parentLine, *gi );
             divLineHeights.push_back ( static_cast<float> ( _fontSize ) );
@@ -211,16 +208,16 @@ void TextUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
             }
         );
 
-        start = l;
+        start = 0;
         glyphsPerLine = 1U;
         ++glyph;
 
-        x = l + gi->_advance;
+        x = gi->_advance;
         y += lineHeights[ static_cast<size_t> ( parentLine == startLine ) ];
         ++parentLine;
 
         appendGlyph ( parentLine, *gi );
-        previousX = l;
+        previousX = 0;
 
         divLineHeights.push_back ( static_cast<float> ( _fontSize ) );
     }

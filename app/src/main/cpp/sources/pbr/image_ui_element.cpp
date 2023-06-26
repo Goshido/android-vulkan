@@ -98,31 +98,29 @@ void ImageUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
     _canvasTopLeftOffset.Sum ( _marginTopLeft, paddingTopLeft );
 
     GXVec2 penLocation {};
-    float const& parentLeft = info._parentTopLeft._data[ 0U ];
     float const& parentWidth = canvasSize._data[ 0U ];
     size_t const oldVertices = info._vertices;
 
     auto const newLine = [ & ] () noexcept {
-        GXVec2 beta {};
-        beta.Sum ( _canvasTopLeftOffset, GXVec2 ( parentLeft, lineHeights.back () ) );
-
-        penLocation._data[ 0U ] = beta._data[ 0U ];
-        penLocation._data[ 1U ] += beta._data[ 1U ];
+        penLocation._data[ 0U ] = _canvasTopLeftOffset._data[ 0U ];
+        penLocation._data[ 1U ] += _canvasTopLeftOffset._data[ 1U ] + lineHeights.back ();
         ++_parentLine;
     };
+
+    GXVec2& outPenLocation = info._penLocation;
 
     switch ( _css._position )
     {
         case PositionProperty::eValue::Absolute:
-            penLocation.Sum ( info._parentTopLeft, _canvasTopLeftOffset );
+            penLocation = _canvasTopLeftOffset;
             _parentLine = 0U;
         break;
 
         case PositionProperty::eValue::Static:
         {
-            if ( parentLeft == info._penLocation._data[ 0U ] )
+            if ( outPenLocation._data[ 0U ] == 0.0F )
             {
-                penLocation.Sum ( info._penLocation, _canvasTopLeftOffset );
+                penLocation.Sum ( outPenLocation, _canvasTopLeftOffset );
                 break;
             }
 
@@ -132,7 +130,7 @@ void ImageUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
                 break;
             }
 
-            penLocation.Sum ( info._penLocation, _canvasTopLeftOffset );
+            penLocation.Sum ( outPenLocation, _canvasTopLeftOffset );
         }
         break;
 
@@ -169,27 +167,27 @@ void ImageUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
         auto const s = static_cast<size_t> ( currentLineHeight != 0.0F );
 
         lineHeights.back () = cases[ s ];
-        info._penLocation._data[ 0U ] = info._parentTopLeft._data[ 0U ];
-        info._penLocation._data[ 1U ] = info._penLocation._data[ 1U ] + cases[ s ];
+        outPenLocation._data[ 0U ] = 0.0F;
+        outPenLocation._data[ 1U ] += cases[ s ];
         return;
     }
 
     // 'inline-block' territory.
 
-    bool const firstBlock = info._penLocation.IsEqual ( info._parentTopLeft );
-    float const rest = parentWidth + parentLeft - info._penLocation._data[ 0U ];
+    bool const firstBlock = outPenLocation._data[ 0U ] == 0.0F & outPenLocation._data[ 1U ] == 0.0F;
+    float const rest = parentWidth - outPenLocation._data[ 0U ];
     bool const blockCanFit = rest >= _blockSize._data[ 0U ];
 
     if ( firstBlock | blockCanFit )
     {
         lineHeights.back () = std::max ( lineHeights.back (), _blockSize._data[ 1U ] );
-        info._penLocation._data[ 0U ] += _blockSize._data[ 0U ];
+        outPenLocation._data[ 0U ] += _blockSize._data[ 0U ];
         return;
     }
 
     // Block goes to the new line of parent block.
-    info._penLocation._data[ 0U ] = info._parentTopLeft._data[ 0U ];
-    info._penLocation._data[ 1U ] += lineHeights.back ();
+    outPenLocation._data[ 0U ] = 0.0F;
+    outPenLocation._data[ 1U ] += lineHeights.back ();
     info._lineHeights->push_back ( 0.0F );
     info._vertices = oldVertices;
 

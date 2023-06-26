@@ -63,6 +63,7 @@ void DIVUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
     // Method contains a lot of branchless optimizations.
     std::vector<float>& lineHeights = *info._lineHeights;
     _parentLine = lineHeights.size () - 1U;
+    size_t const oldVertices = info._vertices;
 
     GXVec2 const& canvasSize = info._canvasSize;
     CSSUnitToDevicePixel const& units = *info._cssUnits;
@@ -84,35 +85,28 @@ void DIVUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
     );
 
     _canvasTopLeftOffset.Sum ( _marginTopLeft, paddingTopLeft );
-
     GXVec2 penLocation {};
-    float const& parentLeft = info._parentTopLeft._data[ 0U ];
-    float const& parentWidth = canvasSize._data[ 0U ];
-    float const& paddingRight = paddingBottomRight._data[ 0U ];
-    float const& marginRight = marginBottomRight._data[ 0U ];
-    size_t const oldVertices = info._vertices;
 
     auto const newLine = [ & ] () noexcept {
-        GXVec2 beta {};
-        beta.Sum ( _canvasTopLeftOffset, GXVec2 ( parentLeft, lineHeights.back () ) );
-
-        penLocation._data[ 0U ] = beta._data[ 0U ];
-        penLocation._data[ 1U ] += beta._data[ 1U ];
+        penLocation._data[ 0U ] = _canvasTopLeftOffset._data[ 0U ];
+        penLocation._data[ 1U ] += _canvasTopLeftOffset._data[ 1U ] + lineHeights.back ();
         ++_parentLine;
     };
+
+    GXVec2& outPenLocation = info._penLocation;
 
     switch ( _css._position )
     {
         case PositionProperty::eValue::Absolute:
-            penLocation.Sum ( info._parentTopLeft, _canvasTopLeftOffset );
+            penLocation = _canvasTopLeftOffset;
             _parentLine = 0U;
         break;
 
         case PositionProperty::eValue::Static:
         {
-            if ( parentLeft == info._penLocation._data[ 0U ] )
+            if ( outPenLocation._data[ 0U ] == 0.0F )
             {
-                penLocation.Sum ( info._penLocation, _canvasTopLeftOffset );
+                penLocation.Sum ( outPenLocation, _canvasTopLeftOffset );
                 break;
             }
 
@@ -122,7 +116,7 @@ void DIVUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
                 break;
             }
 
-            penLocation.Sum ( info._penLocation, _canvasTopLeftOffset );
+            penLocation.Sum ( outPenLocation, _canvasTopLeftOffset );
         }
         break;
 
@@ -131,10 +125,14 @@ void DIVUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
         return;
     }
 
+    float const& parentWidth = canvasSize._data[ 0U ];
+    float const& paddingRight = paddingBottomRight._data[ 0U ];
+    float const& marginRight = marginBottomRight._data[ 0U ];
+
     float const widthCases[] =
     {
         ResolvePixelLength ( _css._width, parentWidth, false, units ),
-        parentWidth + parentLeft - ( penLocation._data[ 0U ] + paddingRight + marginRight )
+        parentWidth - ( penLocation._data[ 0U ] + paddingRight + marginRight )
     };
 
     _canvasSize = GXVec2 ( widthCases[ static_cast<size_t> ( _isAutoWidth | !_isInlineBlock ) ],
@@ -158,24 +156,18 @@ void DIVUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
         ._cssUnits = info._cssUnits,
         ._fontStorage = info._fontStorage,
         ._lineHeights = &_lineHeights,
-        ._parentTopLeft = penLocation,
-        ._penLocation = penLocation,
+        ._penLocation = GXVec2 ( 0.0F, 0.0F ),
         ._renderer = info._renderer,
         ._vertices = 0U
     };
 
-    if ( _canvasSize._data[ 0U ] > 0.0F )
-    {
-        for ( auto* child : _children )
-        {
-            child->ApplyLayout ( childInfo );
-        }
-    }
+    for ( auto* child : _children )
+        child->ApplyLayout ( childInfo );
 
     bool const hasLines = !_lineHeights.empty ();
 
     if ( _isAutoHeight & hasLines )
-        _canvasSize._data[ 1U ] = childInfo._penLocation._data[ 1U ] - penLocation._data[ 1U ] + _lineHeights.back ();
+        _canvasSize._data[ 1U ] = childInfo._penLocation._data[ 1U ] + _lineHeights.back ();
 
     float const finalWidth[] =
     {
@@ -231,27 +223,27 @@ void DIVUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
         auto const s = static_cast<size_t> ( currentLineHeight != 0.0F );
 
         lineHeights.back () = cases[ s ];
-        info._penLocation._data[ 0U ] = info._parentTopLeft._data[ 0U ];
-        info._penLocation._data[ 1U ] = info._penLocation._data[ 1U ] + cases[ s ];
+        outPenLocation._data[ 0U ] = 0.0F;
+        outPenLocation._data[ 1U ] += cases[ s ];
         return;
     }
 
     // 'inline-block' territory.
 
-    bool const firstBlock = info._penLocation.IsEqual ( info._parentTopLeft );
-    float const rest = parentWidth + parentLeft - info._penLocation._data[ 0U ];
+    bool const firstBlock = outPenLocation._data[ 0U ] == 0.0F & outPenLocation._data[ 1U ] == 0.0F;
+    float const rest = parentWidth - outPenLocation._data[ 0U ];
     bool const blockCanFit = rest >= _blockSize._data[ 0U ] - 0.25F;
 
     if ( firstBlock | blockCanFit )
     {
         lineHeights.back () = std::max ( lineHeights.back (), _blockSize._data[ 1U ] );
-        info._penLocation._data[ 0U ] += _blockSize._data[ 0U ];
+        outPenLocation._data[ 0U ] += _blockSize._data[ 0U ];
         return;
     }
 
     // Block goes to the new line of parent block and requires recalculation.
-    info._penLocation._data[ 0U ] = info._parentTopLeft._data[ 0U ];
-    info._penLocation._data[ 1U ] += lineHeights.back ();
+    outPenLocation._data[ 0U ] = 0.0F;
+    outPenLocation._data[ 1U ] += lineHeights.back ();
     info._lineHeights->push_back ( 0.0F );
     info._vertices = oldVertices;
 

@@ -26,7 +26,16 @@ local function OnInputActive ( self, inputEvent )
 end
 
 local function OnUpdateIdle ( self, deltaTime )
-    -- NOTHING
+    self._timerNow = self._timerNow - deltaTime
+    local now = math.ceil ( self._timerNow )
+
+    if now == self._timerLast then
+        return
+    end
+
+    self._timerNow = now
+    self._timerLast = now
+    self._uiTimer:SetText ( string.format ( "%d", now ) )
 end
 
 local function OnUpdateActive ( self, deltaTime )
@@ -43,6 +52,10 @@ local function OnActorConstructed ( self, actor )
     music:SetVolume ( 0.25 )
     actor:AppendComponent ( music )
     self._music = music
+
+    local uiTimer = self._uiLayer:Find ( "timer" ):GetTextElement ()
+    uiTimer:SetText ( string.format ( "%d", self._timerNow ) )
+    self._uiTimer = uiTimer
 end
 
 -- Metamethods
@@ -51,6 +64,11 @@ local function Constructor ( self, handle, params )
 
     -- Data
     obj._uiLayer = UILayer ( params._uiAsset )
+
+    obj._timerLast = 383.999
+    obj._timerNow = 383.0
+
+    -- obj._uiDebug = UILayer ( "pbr/assets/Props/experimental/world-1-1/ui/debug.html" )
 
     -- Methods
     obj.QuitGame = QuitGame

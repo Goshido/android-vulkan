@@ -1,0 +1,58 @@
+@font-face {
+    font-family: "Trebuchet-Bold";
+    src: url("../fonts/trebucbd.ttf");
+}
+
+@font-face {
+    font-family: "Trebuchet-Regular";
+    src: url("../fonts/trebuc.ttf");
+}
+
+.main {
+    font-family: "Trebuchet-Regular";
+    font-size: 0px;
+    margin: 0px;
+}
+
+.panel {
+    position: static;
+    display: inline-block;
+    background-color: rgba(26, 117, 153, 0.719);
+    width: 30mm;
+    margin: 30mm 0px 0px 15mm;
+    padding: 6mm 6mm 6mm 6mm;
+}
+
+.line {
+    position: static;
+    display: block;
+    font-size: 14pt;
+}
+
+.header {
+    position: static;
+    display: inline-block;
+    font-family: "Trebuchet-Bold";
+    text-align: right;
+    margin-right: 0.5em;
+}
+
+.x-coordinate {
+    color: rgb(184, 52, 52);
+}
+
+.y-coordinate {
+    color: rgb(57, 184, 52);
+}
+
+.z-coordinate {
+    color: rgb(100, 98, 209);
+}
+
+.value {
+    position: static;
+    display: inline-block;
+    font-family: "Trebuchet-Regular";
+    color: white;
+    text-align: left;
+}

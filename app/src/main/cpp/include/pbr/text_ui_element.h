@@ -46,7 +46,7 @@ class TextUIElement final : public UIElement
             GXVec2                          _penOut {};
             size_t                          _vertices = 0U;
 
-            [[nodiscard]] bool Run ( ApplyLayoutInfo &info ) noexcept;
+            [[nodiscard]] bool Run ( ApplyInfo &info ) noexcept;
         };
 
         struct SubmitCache final
@@ -61,8 +61,9 @@ class TextUIElement final : public UIElement
             GXVec2                          _parenTopLeft {};
 
             std::vector<UIVertexInfo>       _vertices {};
+            size_t                          _vertexBufferBytes = 0U;
 
-            [[nodiscard]] bool Run ( SubmitInfo &info, std::vector<float> const &cachedLineHeight ) noexcept;
+            [[nodiscard]] bool Run ( UpdateInfo &info, std::vector<float> const &cachedLineHeight ) noexcept;
         };
 
         using AlignIntegerHander = int32_t ( * ) ( int32_t pen, int32_t parentSize, int32_t lineSize ) noexcept;
@@ -101,8 +102,9 @@ class TextUIElement final : public UIElement
         static void Init ( lua_State &vm ) noexcept;
 
     private:
-        void ApplyLayout ( ApplyLayoutInfo &info ) noexcept override;
+        void ApplyLayout ( ApplyInfo &info ) noexcept override;
         void Submit ( SubmitInfo &info ) noexcept override;
+        [[nodiscard]] bool UpdateCache ( UpdateInfo &info ) noexcept override;
 
         [[nodiscard]] GXColorRGB const& ResolveColor () const noexcept;
         [[nodiscard]] std::string const* ResolveFont () const noexcept;

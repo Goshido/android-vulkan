@@ -22,16 +22,14 @@ DIVUIElement::DIVUIElement ( bool &success,
     int errorHandlerIdx,
     CSSComputedValues &&css
 ) noexcept:
-    UIElement ( css._display != DisplayProperty::eValue::None, parent ),
+    CSSUIElement ( css._display != DisplayProperty::eValue::None, parent, std::move ( css ) ),
     _isAutoWidth ( css._width.GetType () == LengthValue::eType::Auto ),
     _isAutoHeight ( css._height.GetType () == LengthValue::eType::Auto ),
     _isInlineBlock ( css._display == DisplayProperty::eValue::InlineBlock ),
 
     _widthSelectorBase (
         ( static_cast<size_t> ( _isInlineBlock ) << 2U ) | ( static_cast<size_t> ( _isAutoWidth ) << 1U )
-    ),
-
-    _css ( std::move ( css ) )
+    )
 {
     _css._fontFile = std::move ( android_vulkan::File ( std::move ( _css._fontFile ) ).GetPath () );
 
@@ -55,7 +53,7 @@ DIVUIElement::DIVUIElement ( bool &success,
     }
 }
 
-void DIVUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
+void DIVUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
 {
     if ( !_visible )
         return;
@@ -63,8 +61,8 @@ void DIVUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
     // Method contains a lot of branchless optimizations.
     std::vector<float>& lineHeights = *info._lineHeights;
     _parentLine = lineHeights.size () - 1U;
-    size_t const oldVertices = info._vertices;
 
+    size_t const oldVertices = info._vertices;
     GXVec2 const& canvasSize = info._canvasSize;
     CSSUnitToDevicePixel const& units = *info._cssUnits;
 
@@ -85,28 +83,28 @@ void DIVUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
     );
 
     _canvasTopLeftOffset.Sum ( _marginTopLeft, paddingTopLeft );
-    GXVec2 penLocation {};
+    GXVec2 pen {};
 
     auto const newLine = [ & ] () noexcept {
-        penLocation._data[ 0U ] = _canvasTopLeftOffset._data[ 0U ];
-        penLocation._data[ 1U ] += _canvasTopLeftOffset._data[ 1U ] + lineHeights.back ();
+        pen._data[ 0U ] = _canvasTopLeftOffset._data[ 0U ];
+        pen._data[ 1U ] += _canvasTopLeftOffset._data[ 1U ] + lineHeights.back ();
         ++_parentLine;
     };
 
-    GXVec2& outPen = info._pen;
+    GXVec2& penOut = info._pen;
 
     switch ( _css._position )
     {
         case PositionProperty::eValue::Absolute:
-            penLocation = _canvasTopLeftOffset;
+            pen = _canvasTopLeftOffset;
             _parentLine = 0U;
         break;
 
         case PositionProperty::eValue::Static:
         {
-            if ( outPen._data[ 0U ] == 0.0F )
+            if ( penOut._data[ 0U ] == 0.0F )
             {
-                penLocation.Sum ( outPen, _canvasTopLeftOffset );
+                pen.Sum ( penOut, _canvasTopLeftOffset );
                 break;
             }
 
@@ -116,7 +114,7 @@ void DIVUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
                 break;
             }
 
-            penLocation.Sum ( outPen, _canvasTopLeftOffset );
+            pen.Sum ( penOut, _canvasTopLeftOffset );
         }
         break;
 
@@ -132,7 +130,7 @@ void DIVUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
     float const widthCases[] =
     {
         ResolvePixelLength ( _css._width, parentWidth, false, units ),
-        parentWidth - ( penLocation._data[ 0U ] + paddingRight + marginRight )
+        parentWidth - ( pen._data[ 0U ] + paddingRight + marginRight )
     };
 
     _canvasSize = GXVec2 ( widthCases[ static_cast<size_t> ( _isAutoWidth | !_isInlineBlock ) ],
@@ -150,7 +148,7 @@ void DIVUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
     _lineHeights.clear ();
     _lineHeights.push_back ( 0.0F );
 
-    ApplyLayoutInfo childInfo
+    ApplyInfo childInfo
     {
         ._canvasSize = _canvasSize,
         ._cssUnits = info._cssUnits,
@@ -177,7 +175,7 @@ void DIVUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
         widthCases[ 1U ],
         widthCases[ 0U ],
         widthCases[ 0U ],
-        childInfo._pen._data[ 0U ] - penLocation._data[ 0U ],
+        childInfo._pen._data[ 0U ] - pen._data[ 0U ],
         widthCases[ 1U ]
     };
 
@@ -198,7 +196,8 @@ void DIVUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
     size_t const vertices[] = { childInfo._vertices, childInfo._vertices + UIPass::GetVerticesPerRectangle () };
     bool const hasBackgroundColor = _css._backgroundColor.GetValue ()._data[ 3U ] != 0.0F;
     bool const hasBackgroundArea = sizeCheck ( _borderSize );
-    info._vertices += vertices[ static_cast<size_t> ( hasBackgroundColor & hasBackgroundArea ) ];
+    _hasBackground = hasBackgroundColor & hasBackgroundArea;
+    info._vertices += vertices[ static_cast<size_t> ( _hasBackground ) ];
 
     GXVec2 beta {};
     beta.Sum ( _canvasSize, _canvasTopLeftOffset );
@@ -218,34 +217,39 @@ void DIVUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
     {
         // Block starts from new line and consumes whole parent block line.
         float const currentLineHeight = lineHeights.back ();
-
         float const cases[] = { _blockSize._data[ 1U ], currentLineHeight };
-        auto const s = static_cast<size_t> ( currentLineHeight != 0.0F );
+        float const h = cases[ static_cast<size_t> ( currentLineHeight != 0.0F ) ];
 
-        lineHeights.back () = cases[ s ];
-        outPen._data[ 0U ] = 0.0F;
-        outPen._data[ 1U ] += cases[ s ];
+        lineHeights.back () = h;
+        lineHeights.push_back ( 0.0F );
+
+        penOut._data[ 0U ] = 0.0F;
+        penOut._data[ 1U ] += h;
+
+        info._hasChanges |= childInfo._hasChanges;
         return;
     }
 
     // 'inline-block' territory.
 
     constexpr GXVec2 zero ( 0.0F, 0.0F );
-    bool const firstBlock = outPen.IsEqual ( zero );
-    float const rest = parentWidth - outPen._data[ 0U ];
+    bool const firstBlock = penOut.IsEqual ( zero );
+    float const rest = parentWidth - penOut._data[ 0U ];
     bool const blockCanFit = rest >= _blockSize._data[ 0U ] - 0.25F;
 
     if ( firstBlock | blockCanFit )
     {
-        lineHeights.back () = std::max ( lineHeights.back (), _blockSize._data[ 1U ] );
-        outPen._data[ 0U ] += _blockSize._data[ 0U ];
+        float const h = std::max ( lineHeights.back (), _blockSize._data[ 1U ] );
+        lineHeights.back () = h;
+        penOut._data[ 0U ] += _blockSize._data[ 0U ];
+        info._hasChanges |= childInfo._hasChanges;
         return;
     }
 
     // Block goes to the new line of parent block and requires recalculation.
-    outPen._data[ 0U ] = 0.0F;
-    outPen._data[ 1U ] += lineHeights.back ();
-    info._lineHeights->push_back ( 0.0F );
+    penOut._data[ 0U ] = 0.0F;
+    penOut._data[ 1U ] += lineHeights.back ();
+    lineHeights.push_back ( 0.0F );
     info._vertices = oldVertices;
 
     ApplyLayout ( info );
@@ -256,7 +260,30 @@ void DIVUIElement::Submit ( SubmitInfo &info ) noexcept
     if ( !_visible )
         return;
 
-    GXColorRGB const& color = _css._backgroundColor.GetValue ();
+    if ( _hasBackground )
+    {
+        constexpr size_t vertices = UIPass::GetVerticesPerRectangle ();
+        constexpr size_t bytes = vertices * sizeof ( UIVertexInfo );
+
+        UIVertexBuffer& uiVertexBuffer = info._vertexBuffer;
+        std::memcpy ( uiVertexBuffer.data (), _vertices, bytes );
+        uiVertexBuffer = uiVertexBuffer.subspan ( vertices );
+
+        info._uiPass->SubmitRectangle ();
+    }
+
+    for ( auto* child : _children )
+    {
+        child->Submit ( info );
+    }
+}
+
+bool DIVUIElement::UpdateCache ( UpdateInfo &info ) noexcept
+{
+    if ( !_visible )
+        return false;
+
+
     GXVec2 pen = info._pen;
 
     if ( info._line != _parentLine )
@@ -265,11 +292,12 @@ void DIVUIElement::Submit ( SubmitInfo &info ) noexcept
         pen._data[ 1U ] += info._parentLineHeights[ info._line ];
     }
 
-    AlignHander const verticalAlign = ResolveVerticalAlignment ( this );
+    AlignHander const verticalAlign = ResolveVerticalAlignment ( *this );
     pen._data[ 1U ] = verticalAlign ( pen._data[ 1U ], info._parentLineHeights[ _parentLine ], _blockSize._data[ 1U ] );
 
-    if ( color._data[ 3U ] > 0.0F )
+    if ( _hasBackground )
     {
+        GXColorRGB const& color = _css._backgroundColor.GetValue ();
         constexpr GXVec2 imageUV ( 0.5F, 0.5F );
 
         GXVec2 topLeft {};
@@ -278,10 +306,9 @@ void DIVUIElement::Submit ( SubmitInfo &info ) noexcept
         GXVec2 bottomRight {};
         bottomRight.Sum ( topLeft, _borderSize );
 
-        UIVertexBuffer& vertexBuffer = info._vertexBuffer;
         FontStorage::GlyphInfo const& glyphInfo = info._fontStorage->GetOpaqueGlyphInfo ();
 
-        UIPass::AppendRectangle ( vertexBuffer.data (),
+        UIPass::AppendRectangle ( _vertices,
             color,
             topLeft,
             bottomRight,
@@ -290,31 +317,28 @@ void DIVUIElement::Submit ( SubmitInfo &info ) noexcept
             imageUV,
             imageUV
         );
-
-        vertexBuffer = vertexBuffer.subspan ( UIPass::GetVerticesPerRectangle () );
-        info._uiPass->SubmitRectangle ();
     }
 
     GXVec2 topLeft {};
     topLeft.Sum ( pen, _canvasTopLeftOffset );
 
-    SubmitInfo submitInfo
+    UpdateInfo updateInfo
     {
         ._fontStorage = info._fontStorage,
         ._line = 0U,
         ._parentLineHeights = _lineHeights.data (),
         ._parentTopLeft = topLeft,
         ._parentWidth = _canvasSize._data[ 0U ],
-        ._pen = topLeft,
-        ._uiPass = info._uiPass,
-        ._vertexBuffer = info._vertexBuffer
+        ._pen = topLeft
     };
 
+    bool needRefill = false;
+
     for ( auto* child : _children )
-        child->Submit ( submitInfo );
+        needRefill |= child->UpdateCache ( updateInfo );
 
     info._pen._data[ 0U ] += _blockSize._data[ 0U ];
-    info._vertexBuffer = submitInfo._vertexBuffer;
+    return needRefill;
 }
 
 bool DIVUIElement::AppendChildElement ( lua_State &vm,

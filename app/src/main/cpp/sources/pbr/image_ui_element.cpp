@@ -1,4 +1,3 @@
-#include <pbr/div_ui_element.h>
 #include <pbr/image_ui_element.h>
 #include <av_assert.h>
 #include <logger.h>
@@ -16,6 +15,62 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
+bool ImageUIElement::ApplyLayoutCache::Run ( ApplyInfo &info ) noexcept
+{
+    if ( _lineHeights.empty () )
+    {
+        // Worst case scenario.
+        _lineHeights.reserve ( 2U );
+        _lineHeights.push_back ( info._lineHeights->back () );
+        return false;
+    }
+
+    bool const c0 = _secondIteration;
+    bool const c1 = _lineHeights.front () < info._lineHeights->back ();
+    bool const c2 = !_penIn.IsEqual ( info._pen );
+
+    _secondIteration = false;
+
+    if ( c0 | c1 | c2 )
+    {
+        if ( !c0 )
+        {
+            _lineHeights.clear ();
+            _lineHeights.push_back ( info._lineHeights->back () );
+        }
+
+        return false;
+    }
+
+    info._pen = _penOut;
+    info._vertices += UIPass::GetVerticesPerRectangle ();
+
+    std::vector<float>& lines = *info._lineHeights;
+    lines.pop_back ();
+    lines.insert ( lines.cend (), _lineHeights.cbegin (), _lineHeights.cend () );
+
+    return true;
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+bool ImageUIElement::SubmitCache::Run ( UpdateInfo &info, std::vector<float> const &cachedLineHeight ) noexcept
+{
+    bool const c0 = !_penIn.IsEqual ( info._pen );
+    bool const c1 = !_parenTopLeft.IsEqual ( info._parentTopLeft );
+
+    std::span<float const> dst ( info._parentLineHeights + info._line, cachedLineHeight.size () );
+    bool const c2 = !std::equal ( dst.cbegin (), dst.cend (), cachedLineHeight.cbegin () );
+
+    if ( c0 | c1 | c2 )
+        return false;
+
+    info._pen = _penOut;
+    return true;
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
 ImageUIElement::ImageUIElement ( bool &success,
     UIElement const* parent,
     lua_State &vm,
@@ -23,9 +78,8 @@ ImageUIElement::ImageUIElement ( bool &success,
     std::string &&asset,
     CSSComputedValues &&css
 ) noexcept:
-    UIElement ( true, parent ),
+    CSSUIElement ( true, parent, std::move ( css ) ),
     _asset ( std::move ( asset ) ),
-    _css ( css ),
     _isAutoWidth ( css._width.GetType () == LengthValue::eType::Auto ),
     _isAutoHeight ( css._height.GetType () == LengthValue::eType::Auto ),
     _isInlineBlock ( css._display == DisplayProperty::eValue::InlineBlock )
@@ -54,26 +108,27 @@ ImageUIElement::ImageUIElement ( bool &success,
 
     if ( success = texture.has_value (); success )
     {
-        _texture = *texture;
+        _submitCache._texture = *texture;
     }
 }
 
 ImageUIElement::~ImageUIElement () noexcept
 {
-    if ( _texture )
+    if ( _submitCache._texture )
     {
-        UIPass::ReleaseImage ( _texture );
+        UIPass::ReleaseImage ( _submitCache._texture );
     }
 }
 
-void ImageUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
+void ImageUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
 {
-    if ( !_visible )
+    if ( !_visible || _applyLayoutCache.Run ( info ) )
         return;
 
     // Method contains a lot of branchless optimizations.
     std::vector<float>& lineHeights = *info._lineHeights;
     _parentLine = lineHeights.size () - 1U;
+    _applyLayoutCache._penIn = info._pen;
 
     _parentSize = info._canvasSize;
     GXVec2 const& canvasSize = info._canvasSize;
@@ -97,30 +152,30 @@ void ImageUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
 
     _canvasTopLeftOffset.Sum ( _marginTopLeft, paddingTopLeft );
 
-    GXVec2 penLocation {};
+    GXVec2 pen {};
     float const& parentWidth = canvasSize._data[ 0U ];
     size_t const oldVertices = info._vertices;
 
     auto const newLine = [ & ] () noexcept {
-        penLocation._data[ 0U ] = _canvasTopLeftOffset._data[ 0U ];
-        penLocation._data[ 1U ] += _canvasTopLeftOffset._data[ 1U ] + lineHeights.back ();
+        pen._data[ 0U ] = _canvasTopLeftOffset._data[ 0U ];
+        pen._data[ 1U ] += _canvasTopLeftOffset._data[ 1U ] + lineHeights.back ();
         ++_parentLine;
     };
 
-    GXVec2& outPen = info._pen;
+    GXVec2& penOut = info._pen;
 
     switch ( _css._position )
     {
         case PositionProperty::eValue::Absolute:
-            penLocation = _canvasTopLeftOffset;
+            pen = _canvasTopLeftOffset;
             _parentLine = 0U;
         break;
 
         case PositionProperty::eValue::Static:
         {
-            if ( outPen._data[ 0U ] == 0.0F )
+            if ( penOut._data[ 0U ] == 0.0F )
             {
-                penLocation.Sum ( outPen, _canvasTopLeftOffset );
+                pen.Sum ( penOut, _canvasTopLeftOffset );
                 break;
             }
 
@@ -130,7 +185,7 @@ void ImageUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
                 break;
             }
 
-            penLocation.Sum ( outPen, _canvasTopLeftOffset );
+            pen.Sum ( penOut, _canvasTopLeftOffset );
         }
         break;
 
@@ -149,12 +204,14 @@ void ImageUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
     _blockSize.Sum ( beta, gamma );
 
     if ( _css._position == PositionProperty::eValue::Absolute )
+    {
+        info._hasChanges = true;
+        _applyLayoutCache._lineHeights.back () = _blockSize._data[ 1U ];
+        _applyLayoutCache._penOut = penOut;
         return;
+    }
 
     // 'static' position territory
-
-    if ( ( _blockSize._data[ 0U ] <= 0.0F ) | ( _blockSize._data[ 1U ] <= 0.0F ) )
-        return;
 
     info._vertices += UIPass::GetVerticesPerRectangle ();
 
@@ -164,41 +221,73 @@ void ImageUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
         float const currentLineHeight = lineHeights.back ();
 
         float const cases[] = { _blockSize._data[ 1U ], currentLineHeight };
-        auto const s = static_cast<size_t> ( currentLineHeight != 0.0F );
+        float const h = cases[ static_cast<size_t> ( currentLineHeight != 0.0F ) ];
 
-        lineHeights.back () = cases[ s ];
-        outPen._data[ 0U ] = 0.0F;
-        outPen._data[ 1U ] += cases[ s ];
+        lineHeights.back () = h;
+        _applyLayoutCache._lineHeights.back () = h;
+
+        penOut._data[ 0U ] = 0.0F;
+        penOut._data[ 1U ] += h;
+
+        _applyLayoutCache._penOut = penOut;
+        info._hasChanges = true;
         return;
     }
 
     // 'inline-block' territory.
 
     constexpr GXVec2 zero ( 0.0F, 0.0F );
-    bool const firstBlock = outPen.IsEqual ( zero );
-    float const rest = parentWidth - outPen._data[ 0U ];
+    bool const firstBlock = penOut.IsEqual ( zero );
+    float const rest = parentWidth - penOut._data[ 0U ];
     bool const blockCanFit = rest >= _blockSize._data[ 0U ];
 
     if ( firstBlock | blockCanFit )
     {
-        lineHeights.back () = std::max ( lineHeights.back (), _blockSize._data[ 1U ] );
-        outPen._data[ 0U ] += _blockSize._data[ 0U ];
+        float const h = std::max ( lineHeights.back (), _blockSize._data[ 1U ] );
+        lineHeights.back () = h;
+        _applyLayoutCache._lineHeights.back () = h;
+
+        penOut._data[ 0U ] += _blockSize._data[ 0U ];
+        _applyLayoutCache._penOut = penOut;
+
+        info._hasChanges = true;
         return;
     }
 
     // Block goes to the new line of parent block.
-    outPen._data[ 0U ] = 0.0F;
-    outPen._data[ 1U ] += lineHeights.back ();
-    info._lineHeights->push_back ( 0.0F );
+    penOut._data[ 0U ] = 0.0F;
+    penOut._data[ 1U ] += lineHeights.back ();
+    lineHeights.push_back ( 0.0F );
     info._vertices = oldVertices;
+    _applyLayoutCache._secondIteration = true;
 
     ApplyLayout ( info );
 }
+
+size_t fff = 0U;
 
 void ImageUIElement::Submit ( SubmitInfo &info ) noexcept
 {
     if ( !_visible )
         return;
+
+    constexpr size_t vertices = UIPass::GetVerticesPerRectangle ();
+    constexpr size_t bytes = vertices * sizeof ( UIVertexInfo );
+
+    UIVertexBuffer& uiVertexBuffer = info._vertexBuffer;
+    std::memcpy ( uiVertexBuffer.data (), _submitCache._vertices, bytes );
+    uiVertexBuffer = uiVertexBuffer.subspan ( vertices );
+
+    info._uiPass->SubmitImage ( _submitCache._texture );
+}
+
+bool ImageUIElement::UpdateCache ( UpdateInfo &info ) noexcept
+{
+    if ( !_visible || _submitCache.Run ( info, _applyLayoutCache._lineHeights ) )
+        return false;
+
+    _submitCache._parenTopLeft = info._parentTopLeft;
+    _submitCache._penIn = info._pen;
 
     GXVec2 pen = info._pen;
 
@@ -208,7 +297,7 @@ void ImageUIElement::Submit ( SubmitInfo &info ) noexcept
         pen._data[ 1U ] += info._parentLineHeights[ info._line ];
     }
 
-    AlignHander const verticalAlign = ResolveVerticalAlignment ( this );
+    AlignHander const verticalAlign = ResolveVerticalAlignment ( *this );
     pen._data[ 1U ] = verticalAlign ( pen._data[ 1U ], info._parentLineHeights[ _parentLine ], _blockSize._data[ 1U ] );
 
     GXVec2 topLeft {};
@@ -219,7 +308,8 @@ void ImageUIElement::Submit ( SubmitInfo &info ) noexcept
     float const& parentLeft = _parentSize._data[ 0U ];
     float const& blockWidth = _blockSize._data[ 0U ];
 
-    AlignHander const handler = ResolveTextAlignment ( _parent );
+    // NOLINTNEXTLINE - downcast
+    AlignHander const handler = ResolveTextAlignment ( static_cast<CSSUIElement const &> ( *_parent ) );
     topLeft._data[ 0U ] = handler ( penX, parentLeft, blockWidth ) + borderOffsetX;
 
     GXVec2 bottomRight {};
@@ -230,9 +320,8 @@ void ImageUIElement::Submit ( SubmitInfo &info ) noexcept
     constexpr GXVec2 imageBottomRight ( 1.0F, 1.0F );
 
     FontStorage::GlyphInfo const& g = info._fontStorage->GetTransparentGlyphInfo ();
-    UIVertexBuffer& vertexBuffer = info._vertexBuffer;
 
-    UIPass::AppendRectangle ( vertexBuffer.data (),
+    UIPass::AppendRectangle ( _submitCache._vertices,
         white,
         topLeft,
         bottomRight,
@@ -242,8 +331,11 @@ void ImageUIElement::Submit ( SubmitInfo &info ) noexcept
         imageBottomRight
     );
 
-    vertexBuffer = vertexBuffer.subspan ( UIPass::GetVerticesPerRectangle () );
-    info._uiPass->SubmitImage ( _texture );
+    pen._data[ 0U ] += blockWidth;
+    _submitCache._penOut = pen;
+
+    info._pen = pen;
+    return true;
 }
 
 GXVec2 ImageUIElement::ResolveSize ( GXVec2 const& parentCanvasSize, CSSUnitToDevicePixel const& units ) noexcept
@@ -261,7 +353,7 @@ GXVec2 ImageUIElement::ResolveSize ( GXVec2 const& parentCanvasSize, CSSUnitToDe
 
 GXVec2 ImageUIElement::ResolveSizeByWidth ( float parentWidth, CSSUnitToDevicePixel const &units ) noexcept
 {
-    VkExtent2D const &r = _texture->GetResolution ();
+    VkExtent2D const &r = _submitCache._texture->GetResolution ();
 
     GXVec2 result {};
     result._data[ 0U ] = ResolvePixelLength ( _css._width, parentWidth, false, units );
@@ -272,7 +364,7 @@ GXVec2 ImageUIElement::ResolveSizeByWidth ( float parentWidth, CSSUnitToDevicePi
 
 GXVec2 ImageUIElement::ResolveSizeByHeight ( float parentHeight, CSSUnitToDevicePixel const &units ) noexcept
 {
-    VkExtent2D const &r = _texture->GetResolution ();
+    VkExtent2D const &r = _submitCache._texture->GetResolution ();
 
     GXVec2 result {};
     result._data[ 1U ] = ResolvePixelLength ( _css._height, parentHeight, true, units );

@@ -71,6 +71,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/pbr/component.cpp
     app/src/main/cpp/sources/pbr/css_computed_values.cpp
     app/src/main/cpp/sources/pbr/css_parser.cpp
+    app/src/main/cpp/sources/pbr/css_ui_element.cpp
     app/src/main/cpp/sources/pbr/cube_map_manager.cpp
     app/src/main/cpp/sources/pbr/default_texture_manager.cpp
     app/src/main/cpp/sources/pbr/display_property.cpp

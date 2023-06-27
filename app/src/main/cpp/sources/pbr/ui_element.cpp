@@ -1,5 +1,4 @@
-#include <pbr/div_ui_element.h>
-#include <pbr/ui_element.h>
+#include <pbr/css_ui_element.h>
 #include <av_assert.h>
 #include <logger.h>
 
@@ -109,7 +108,7 @@ float UIElement::ResolvePixelLength ( LengthValue const &length,
             if ( _parent )
             {
                 // NOLINTNEXTLINE - downcast.
-                auto const& div = *static_cast<DIVUIElement const*> ( _parent );
+                auto const& div = *static_cast<CSSUIElement const*> ( _parent );
 
                 LengthValue const* cases[] = { &div._css._width, &div._css._height };
                 bool const isAuto = cases[ static_cast<size_t> ( isHeight ) ]->GetType () == LengthValue::eType::Auto;
@@ -144,7 +143,7 @@ float UIElement::ResolveFontSize ( CSSUnitToDevicePixel const &cssUnits,
     for ( UIElement const* p = &startTraverseElement; p; p = p->_parent )
     {
         // NOLINTNEXTLINE - downcast.
-        auto const& div = *static_cast<DIVUIElement const*> ( p );
+        auto const& div = *static_cast<CSSUIElement const*> ( p );
         LengthValue const& size = div._css._fontSize;
         type = size.GetType ();
 
@@ -190,14 +189,13 @@ float UIElement::ResolveFontSize ( CSSUnitToDevicePixel const &cssUnits,
     }
 }
 
-UIElement::AlignHander UIElement::ResolveTextAlignment ( UIElement const* parent ) noexcept
+UIElement::AlignHander UIElement::ResolveTextAlignment ( CSSUIElement const &parent ) noexcept
 {
-    while ( parent )
-    {
-        // NOLINTNEXTLINE - downcast
-        auto const& div = static_cast<DIVUIElement const&> ( *parent );
+    CSSUIElement const* p = &parent;
 
-        switch ( div._css._textAlign )
+    while ( p )
+    {
+        switch ( p->_css._textAlign )
         {
             case TextAlignProperty::eValue::Center:
             return &UIElement::AlignToCenter;
@@ -209,7 +207,8 @@ UIElement::AlignHander UIElement::ResolveTextAlignment ( UIElement const* parent
             return &UIElement::AlignToEnd;
 
             case TextAlignProperty::eValue::Inherit:
-                parent = parent->_parent;
+                // NOLINTNEXTLINE - downcast
+                p = static_cast<CSSUIElement const*> ( p->_parent );
             break;
         }
     }
@@ -218,14 +217,13 @@ UIElement::AlignHander UIElement::ResolveTextAlignment ( UIElement const* parent
     return &UIElement::AlignToStart;
 }
 
-UIElement::AlignHander UIElement::ResolveVerticalAlignment ( UIElement const* parent ) noexcept
+UIElement::AlignHander UIElement::ResolveVerticalAlignment ( CSSUIElement const &parent ) noexcept
 {
-    while ( parent )
-    {
-        // NOLINTNEXTLINE - downcast
-        auto const& div = static_cast<DIVUIElement const&> ( *parent );
+    CSSUIElement const* p = &parent;
 
-        switch ( div._css._verticalAlign )
+    while ( p )
+    {
+        switch ( p->_css._verticalAlign )
         {
             case VerticalAlignProperty::eValue::Bottom:
             return &UIElement::AlignToEnd;
@@ -237,7 +235,8 @@ UIElement::AlignHander UIElement::ResolveVerticalAlignment ( UIElement const* pa
             return &UIElement::AlignToStart;
 
             case VerticalAlignProperty::eValue::Inherit:
-                parent = parent->_parent;
+                // NOLINTNEXTLINE - downcast
+                p = static_cast<CSSUIElement const*> ( p->_parent );
             break;
         }
     }

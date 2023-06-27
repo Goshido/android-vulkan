@@ -21,7 +21,7 @@ class UILayer final
     public:
         struct LayoutStatus final
         {
-            bool                                _needRedraw = true;
+            bool                                _hasChanges = true;
             size_t                              _neededUIVertices = 0U;
         };
 
@@ -50,11 +50,8 @@ class UILayer final
             FontStorage &fontStorage
         ) noexcept;
 
-        void Submit ( UIPass &uiPass,
-            FontStorage &fontStorage,
-            uint32_t viewportWidth,
-            UIVertexBuffer vertexBuffer
-        ) noexcept;
+        void Submit ( UIElement::SubmitInfo &info ) noexcept;
+        [[nodiscard]] bool UpdateCache ( FontStorage &fontStorage, uint32_t viewportWidth ) noexcept;
 
         static void InitCSSUnitConverter ( float dpi, float comfortableViewDistanceMeters ) noexcept;
         static void InitLuaFrontend ( lua_State &vm ) noexcept;

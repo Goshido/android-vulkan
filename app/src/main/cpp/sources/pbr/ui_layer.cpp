@@ -142,11 +142,12 @@ UILayer::LayoutStatus UILayer::ApplyLayout ( android_vulkan::Renderer &renderer,
     _lineHeights.clear ();
     _lineHeights.push_back ( 0.0F );
 
-    UIElement::ApplyLayoutInfo info
+    UIElement::ApplyInfo info
     {
         ._canvasSize = GXVec2 ( static_cast<float> ( viewport.width ), static_cast<float> ( viewport.height ) ),
         ._cssUnits = &_cssUnitToDevicePixel,
         ._fontStorage = &fontStorage,
+        ._hasChanges = false,
         ._lineHeights = &_lineHeights,
         ._pen = GXVec2 ( 0.0F, 0.0F ),
         ._renderer = &renderer,
@@ -157,29 +158,28 @@ UILayer::LayoutStatus UILayer::ApplyLayout ( android_vulkan::Renderer &renderer,
 
     return
     {
-        ._needRedraw = true,
+        ._hasChanges = info._hasChanges,
         ._neededUIVertices = info._vertices
     };
 }
 
-void UILayer::Submit ( UIPass &uiPass,
-    FontStorage &fontStorage,
-    uint32_t viewportWidth,
-    UIVertexBuffer vertexBuffer
-) noexcept
+void UILayer::Submit ( UIElement::SubmitInfo &info ) noexcept
 {
-    UIElement::SubmitInfo info
+    _body->Submit ( info );
+}
+
+bool UILayer::UpdateCache ( FontStorage &fontStorage, uint32_t viewportWidth ) noexcept
+{
+    UIElement::UpdateInfo info
     {
         ._fontStorage = &fontStorage,
         ._parentLineHeights = _lineHeights.data (),
         ._parentTopLeft = GXVec2 ( 0.0F, 0.0F ),
         ._parentWidth = static_cast<float> ( viewportWidth ),
-        ._pen = GXVec2 ( 0.0F, 0.0F ),
-        ._uiPass = &uiPass,
-        ._vertexBuffer = vertexBuffer
+        ._pen = GXVec2 ( 0.0F, 0.0F )
     };
 
-    _body->Submit ( info );
+    return _body->UpdateCache ( info );
 }
 
 void UILayer::InitCSSUnitConverter ( float dpi, float comfortableViewDistanceMeters ) noexcept

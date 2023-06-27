@@ -17,7 +17,7 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-bool TextUIElement::ApplyLayoutCache::Run ( ApplyLayoutInfo &info ) noexcept
+bool TextUIElement::ApplyLayoutCache::Run ( ApplyInfo &info ) noexcept
 {
     if ( _lineHeights.empty () )
         return false;
@@ -43,7 +43,7 @@ bool TextUIElement::ApplyLayoutCache::Run ( ApplyLayoutInfo &info ) noexcept
 
 //----------------------------------------------------------------------------------------------------------------------
 
-bool TextUIElement::SubmitCache::Run ( SubmitInfo &info, std::vector<float> const &cachedLineHeight ) noexcept
+bool TextUIElement::SubmitCache::Run ( UpdateInfo &info, std::vector<float> const &cachedLineHeight ) noexcept
 {
     bool const c0 = _isTextChanged;
     bool const c1 = _isColorChanged;
@@ -56,15 +56,10 @@ bool TextUIElement::SubmitCache::Run ( SubmitInfo &info, std::vector<float> cons
     _isTextChanged = false;
     _isColorChanged = false;
 
-    // FUCK remove it
-    bool const FUCK = true;
-
-    if ( c0 | c1 | c2 | c3 | c4 | FUCK )
+    if ( c0 | c1 | c2 | c3 | c4 )
         return false;
 
     info._pen = _penOut;
-
-    // TODO
     return true;
 }
 
@@ -125,16 +120,12 @@ void TextUIElement::Init ( lua_State &vm ) noexcept
     }
 }
 
-void TextUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
+void TextUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
 {
-    bool const isEmpty = _text.empty ();
-
-    if ( !_visible | isEmpty )
+    if ( ( !_visible | _text.empty () ) || _applyLayoutCache.Run ( info ) )
         return;
 
-    if ( _applyLayoutCache.Run ( info ) )
-        return;
-
+    info._hasChanges = true;
     size_t const glyphCount = _text.size ();
     _lines.clear ();
     _applyLayoutCache._lineHeights.clear ();
@@ -295,7 +286,7 @@ void TextUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
         Line
         {
             ._glyphs = glyphsPerLine,
-            ._length = x + gi->_width - ( gi->_advance + start )
+            ._length = x - start
         }
     );
 
@@ -314,21 +305,38 @@ void TextUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
 
 void TextUIElement::Submit ( SubmitInfo &info ) noexcept
 {
+    if ( !_visible )
+        return;
+
+    size_t const vertices = _submitCache._vertices.size ();
+    UIVertexBuffer& uiVertexBuffer = info._vertexBuffer;
+    std::memcpy ( uiVertexBuffer.data (), _submitCache._vertices.data (), _submitCache._vertexBufferBytes );
+    uiVertexBuffer = uiVertexBuffer.subspan ( vertices );
+
+    info._uiPass->SubmitText ( vertices );
+}
+
+bool TextUIElement::UpdateCache ( UpdateInfo &info ) noexcept
+{
     size_t const glyphCount = _glyphs.size ();
 
-    if ( !_visible | ( glyphCount == 0U ) )
-        return;
+    if ( ( !_visible | ( glyphCount == 0U ) ) || _submitCache.Run ( info, _applyLayoutCache._lineHeights ) )
+        return false;
 
-    if ( _submitCache.Run ( info, _applyLayoutCache._lineHeights ) )
-        return;
+    _submitCache._parenTopLeft = info._parentTopLeft;
+    _submitCache._penIn = info._pen;
 
-    UIVertexBuffer& vertexBuffer = info._vertexBuffer;
-    UIVertexInfo* v = vertexBuffer.data ();
+    std::vector<UIVertexInfo>& vertexBuffer = _submitCache._vertices;
+    vertexBuffer.clear ();
+
+    constexpr size_t verticesPerGlyph = UIPass::GetVerticesPerRectangle ();
+    size_t const vertexCount = glyphCount * verticesPerGlyph;
+    vertexBuffer.resize ( vertexCount );
+    UIVertexInfo* begin = vertexBuffer.data ();
+    UIVertexInfo* v = begin;
 
     Glyph const* glyphs = _glyphs.data ();
     GXColorRGB const& color = ResolveColor ();
-
-    constexpr size_t verticesPerGlyph = UIPass::GetVerticesPerRectangle ();
     constexpr GXVec2 imageUV ( 0.5F, 0.5F );
 
     size_t limit = 0U;
@@ -389,10 +397,12 @@ void TextUIElement::Submit ( SubmitInfo &info ) noexcept
         y = static_cast<int32_t> ( pen._data[ 1U ] );
     }
 
-    size_t const vertexCount = glyphCount * verticesPerGlyph;
-    vertexBuffer = vertexBuffer.subspan ( vertexCount );
-    info._pen = GXVec2 ( static_cast<float> ( x ), pen._data[ 1U ] );
-    info._uiPass->SubmitText ( vertexCount );
+    GXVec2 const penOut = GXVec2 ( static_cast<float> ( x ), pen._data[ 1U ] );
+    _submitCache._penOut = penOut;
+    info._pen = penOut;
+
+    _submitCache._vertexBufferBytes = vertexCount * sizeof ( UIVertexInfo );
+    return true;
 }
 
 GXColorRGB const& TextUIElement::ResolveColor () const noexcept

@@ -573,13 +573,13 @@ void Scene::SubmitUI ( android_vulkan::Renderer &renderer, RenderSession &render
     UIPass& uiPass = renderSession.GetUIPass ();
     FontStorage& fontStorage = uiPass.GetFontStorage ();
 
-    bool needRedraw = false;
+    bool needRefill = false;
     size_t neededUIVertices = 0U;
 
     for ( auto& uiLayer : _uiLayerList )
     {
         UILayer::LayoutStatus const status = uiLayer.get ().ApplyLayout ( renderer, fontStorage );
-        needRedraw |= status._needRedraw;
+        needRefill |= status._hasChanges;
         neededUIVertices += status._neededUIVertices;
     }
 
@@ -589,7 +589,12 @@ void Scene::SubmitUI ( android_vulkan::Renderer &renderer, RenderSession &render
         return;
     }
 
-    if ( !needRedraw )
+    uint32_t const viewportWidth = renderer.GetViewportResolution ().width;
+
+    for ( auto& uiLayer : _uiLayerList )
+        needRefill |= uiLayer.get ().UpdateCache ( fontStorage, viewportWidth );
+
+    if ( !needRefill )
         return;
 
     UIPass::UIBufferResponse response = uiPass.RequestUIBuffer ( neededUIVertices );
@@ -600,11 +605,15 @@ void Scene::SubmitUI ( android_vulkan::Renderer &renderer, RenderSession &render
         return;
     }
 
-    uint32_t const viewportWidth = renderer.GetViewportResolution ().width;
+    UIElement::SubmitInfo info
+    {
+        ._uiPass = &uiPass,
+        ._vertexBuffer = *response
+    };
 
     for ( auto& uiLayer : _uiLayerList )
     {
-        uiLayer.get ().Submit ( uiPass, fontStorage, viewportWidth, *response );
+        uiLayer.get ().Submit ( info );
     }
 }
 

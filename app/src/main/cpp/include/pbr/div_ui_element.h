@@ -2,8 +2,7 @@
 #define PBR_DIV_UI_ELEMENT_H
 
 
-#include "css_computed_values.h"
-#include "ui_element.h"
+#include "css_ui_element.h"
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -14,7 +13,7 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-class DIVUIElement final : public UIElement
+class DIVUIElement final : public CSSUIElement
 {
     private:
         GXVec2                      _blockSize {};
@@ -24,6 +23,7 @@ class DIVUIElement final : public UIElement
         GXVec2                      _canvasTopLeftOffset {};
 
         std::deque<UIElement*>      _children {};
+        bool                        _hasBackground = false;
         GXVec2                      _marginTopLeft {};
 
         bool                        _isAutoWidth;
@@ -31,12 +31,9 @@ class DIVUIElement final : public UIElement
         bool                        _isInlineBlock;
 
         std::vector<float>          _lineHeights {};
-
         size_t                      _parentLine = 0U;
+        UIVertexInfo                _vertices[ UIPass::GetVerticesPerRectangle() ];
         size_t const                _widthSelectorBase;
-
-    public:
-        CSSComputedValues           _css;
 
     public:
         DIVUIElement () = delete;
@@ -56,8 +53,9 @@ class DIVUIElement final : public UIElement
 
         ~DIVUIElement () override = default;
 
-        void ApplyLayout ( ApplyLayoutInfo &info ) noexcept override;
+        void ApplyLayout ( ApplyInfo &info ) noexcept override;
         void Submit ( SubmitInfo &info ) noexcept override;
+        [[nodiscard]] bool UpdateCache ( UpdateInfo &info ) noexcept override;
 
         // Lua stack must have the following configuration:
         //      stack[ -1 ] -> child element

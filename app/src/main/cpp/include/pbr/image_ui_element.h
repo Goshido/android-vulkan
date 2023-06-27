@@ -2,29 +2,54 @@
 #define PBR_IMAGE_UI_ELEMENT_H
 
 
-#include "css_computed_values.h"
-#include "ui_element.h"
+#include "css_ui_element.h"
 
 
 namespace pbr {
 
-class ImageUIElement : public UIElement
+class ImageUIElement final : public CSSUIElement
 {
     private:
-        std::string             _asset {};
-        GXVec2                  _blockSize {};
-        GXVec2                  _borderSize {};
-        GXVec2                  _marginTopLeft {};
-        CSSComputedValues       _css {};
+        struct ApplyLayoutCache final
+        {
+            std::vector<float>      _lineHeights {};
+            GXVec2                  _penIn {};
+            GXVec2                  _penOut {};
+            bool                    _secondIteration = false;
 
-        bool                    _isAutoWidth;
-        bool                    _isAutoHeight;
-        bool                    _isInlineBlock;
+            [[nodiscard]] bool Run ( ApplyInfo &info ) noexcept;
+        };
 
-        GXVec2                  _canvasTopLeftOffset {};
-        size_t                  _parentLine = 0U;
-        GXVec2                  _parentSize {};
-        Texture2DRef            _texture {};
+        struct SubmitCache final
+        {
+            GXVec2                  _penIn {};
+            GXVec2                  _penOut {};
+
+            std::vector<float>      _parentLineHeights {};
+            GXVec2                  _parenTopLeft {};
+            Texture2DRef            _texture {};
+
+            UIVertexInfo            _vertices[ UIPass::GetVerticesPerRectangle() ];
+
+            [[nodiscard]] bool Run ( UpdateInfo &info, std::vector<float> const &cachedLineHeight ) noexcept;
+        };
+
+    private:
+        ApplyLayoutCache            _applyLayoutCache {};
+        SubmitCache                 _submitCache {};
+
+        std::string                 _asset {};
+        GXVec2                      _blockSize {};
+        GXVec2                      _borderSize {};
+        GXVec2                      _marginTopLeft {};
+
+        bool                        _isAutoWidth;
+        bool                        _isAutoHeight;
+        bool                        _isInlineBlock;
+
+        GXVec2                      _canvasTopLeftOffset {};
+        size_t                      _parentLine = 0U;
+        GXVec2                      _parentSize {};
 
     public:
         ImageUIElement () = delete;
@@ -46,8 +71,9 @@ class ImageUIElement : public UIElement
         ~ImageUIElement () noexcept override;
 
     private:
-        void ApplyLayout ( ApplyLayoutInfo &info ) noexcept override;
+        void ApplyLayout ( ApplyInfo &info ) noexcept override;
         void Submit ( SubmitInfo &info ) noexcept override;
+        [[nodiscard]] bool UpdateCache ( UpdateInfo &info ) noexcept override;
 
         [[nodiscard]] GXVec2 ResolveSize ( GXVec2 const& parentCanvasSize, CSSUnitToDevicePixel const& units ) noexcept;
         [[nodiscard]] GXVec2 ResolveSizeByWidth ( float parentWidth, CSSUnitToDevicePixel const &units ) noexcept;

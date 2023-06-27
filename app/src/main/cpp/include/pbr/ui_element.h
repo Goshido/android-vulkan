@@ -28,14 +28,18 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
+// Forward declaration
+class CSSUIElement;
+
 class UIElement
 {
     public:
-        struct ApplyLayoutInfo final
+        struct ApplyInfo final
         {
             GXVec2 const                    _canvasSize;
             CSSUnitToDevicePixel const*     _cssUnits;
             FontStorage*                    _fontStorage;
+            bool                            _hasChanges;
             std::vector<float>*             _lineHeights;
             GXVec2                          _pen;
             android_vulkan::Renderer*       _renderer;
@@ -44,14 +48,18 @@ class UIElement
 
         struct SubmitInfo final
         {
+            UIPass*                         _uiPass;
+            UIVertexBuffer                  _vertexBuffer;
+        };
+
+        struct UpdateInfo final
+        {
             FontStorage*                    _fontStorage;
             size_t                          _line;
             float const*                    _parentLineHeights;
             GXVec2                          _parentTopLeft;
             float                           _parentWidth;
             GXVec2                          _pen;
-            UIPass*                         _uiPass;
-            UIVertexBuffer                  _vertexBuffer;
         };
 
     private:
@@ -80,8 +88,15 @@ class UIElement
 
         virtual ~UIElement () = default;
 
-        virtual void ApplyLayout ( ApplyLayoutInfo &info ) noexcept = 0;
+        // Apply block layout without positioning.
+        virtual void ApplyLayout ( ApplyInfo &info ) noexcept = 0;
+
+        // Upload UI vertices to UI buffer from internal caches.
         virtual void Submit ( SubmitInfo &info ) noexcept = 0;
+
+        // Update internal caches.
+        // Method returns true if geometry should be re-filled. Otherwise method returns false.
+        [[nodiscard]] virtual bool UpdateCache ( UpdateInfo &info ) noexcept = 0;
 
         void Hide () noexcept;
         void Show () noexcept;
@@ -104,8 +119,8 @@ class UIElement
             UIElement const &startTraverseElement
         ) noexcept;
 
-        [[nodiscard]] static AlignHander ResolveTextAlignment ( UIElement const* parent ) noexcept;
-        [[nodiscard]] static AlignHander ResolveVerticalAlignment ( UIElement const* parent ) noexcept;
+        [[nodiscard]] static AlignHander ResolveTextAlignment ( CSSUIElement const &parent ) noexcept;
+        [[nodiscard]] static AlignHander ResolveVerticalAlignment ( CSSUIElement const &parent ) noexcept;
 
     private:
         [[nodiscard]] static float AlignToCenter ( float pen, float parentSize, float lineSize ) noexcept;

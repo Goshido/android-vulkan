@@ -148,7 +148,7 @@ UILayer::LayoutStatus UILayer::ApplyLayout ( android_vulkan::Renderer &renderer,
         ._cssUnits = &_cssUnitToDevicePixel,
         ._fontStorage = &fontStorage,
         ._lineHeights = &_lineHeights,
-        ._penLocation = GXVec2 ( 0.0F, 0.0F ),
+        ._pen = GXVec2 ( 0.0F, 0.0F ),
         ._renderer = &renderer,
         ._vertices = 0U
     };

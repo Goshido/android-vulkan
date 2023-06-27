@@ -93,7 +93,7 @@ void DIVUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
         ++_parentLine;
     };
 
-    GXVec2& outPenLocation = info._penLocation;
+    GXVec2& outPen = info._pen;
 
     switch ( _css._position )
     {
@@ -104,9 +104,9 @@ void DIVUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
 
         case PositionProperty::eValue::Static:
         {
-            if ( outPenLocation._data[ 0U ] == 0.0F )
+            if ( outPen._data[ 0U ] == 0.0F )
             {
-                penLocation.Sum ( outPenLocation, _canvasTopLeftOffset );
+                penLocation.Sum ( outPen, _canvasTopLeftOffset );
                 break;
             }
 
@@ -116,7 +116,7 @@ void DIVUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
                 break;
             }
 
-            penLocation.Sum ( outPenLocation, _canvasTopLeftOffset );
+            penLocation.Sum ( outPen, _canvasTopLeftOffset );
         }
         break;
 
@@ -156,7 +156,7 @@ void DIVUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
         ._cssUnits = info._cssUnits,
         ._fontStorage = info._fontStorage,
         ._lineHeights = &_lineHeights,
-        ._penLocation = GXVec2 ( 0.0F, 0.0F ),
+        ._pen = GXVec2 ( 0.0F, 0.0F ),
         ._renderer = info._renderer,
         ._vertices = 0U
     };
@@ -167,7 +167,7 @@ void DIVUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
     bool const hasLines = !_lineHeights.empty ();
 
     if ( _isAutoHeight & hasLines )
-        _canvasSize._data[ 1U ] = childInfo._penLocation._data[ 1U ] + _lineHeights.back ();
+        _canvasSize._data[ 1U ] = childInfo._pen._data[ 1U ] + _lineHeights.back ();
 
     float const finalWidth[] =
     {
@@ -177,7 +177,7 @@ void DIVUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
         widthCases[ 1U ],
         widthCases[ 0U ],
         widthCases[ 0U ],
-        childInfo._penLocation._data[ 0U ] - penLocation._data[ 0U ],
+        childInfo._pen._data[ 0U ] - penLocation._data[ 0U ],
         widthCases[ 1U ]
     };
 
@@ -223,27 +223,28 @@ void DIVUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
         auto const s = static_cast<size_t> ( currentLineHeight != 0.0F );
 
         lineHeights.back () = cases[ s ];
-        outPenLocation._data[ 0U ] = 0.0F;
-        outPenLocation._data[ 1U ] += cases[ s ];
+        outPen._data[ 0U ] = 0.0F;
+        outPen._data[ 1U ] += cases[ s ];
         return;
     }
 
     // 'inline-block' territory.
 
-    bool const firstBlock = outPenLocation._data[ 0U ] == 0.0F & outPenLocation._data[ 1U ] == 0.0F;
-    float const rest = parentWidth - outPenLocation._data[ 0U ];
+    constexpr GXVec2 zero ( 0.0F, 0.0F );
+    bool const firstBlock = outPen.IsEqual ( zero );
+    float const rest = parentWidth - outPen._data[ 0U ];
     bool const blockCanFit = rest >= _blockSize._data[ 0U ] - 0.25F;
 
     if ( firstBlock | blockCanFit )
     {
         lineHeights.back () = std::max ( lineHeights.back (), _blockSize._data[ 1U ] );
-        outPenLocation._data[ 0U ] += _blockSize._data[ 0U ];
+        outPen._data[ 0U ] += _blockSize._data[ 0U ];
         return;
     }
 
     // Block goes to the new line of parent block and requires recalculation.
-    outPenLocation._data[ 0U ] = 0.0F;
-    outPenLocation._data[ 1U ] += lineHeights.back ();
+    outPen._data[ 0U ] = 0.0F;
+    outPen._data[ 1U ] += lineHeights.back ();
     info._lineHeights->push_back ( 0.0F );
     info._vertices = oldVertices;
 

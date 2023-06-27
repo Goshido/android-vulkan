@@ -17,6 +17,59 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
+bool TextUIElement::ApplyLayoutCache::Run ( ApplyLayoutInfo &info ) noexcept
+{
+    if ( _lineHeights.empty () )
+        return false;
+
+    bool const c0 = _isTextChanged;
+    bool const c1 = _lineHeights.front () < info._lineHeights->back ();
+    bool const c2 = !_penIn.IsEqual ( info._pen );
+
+    _isTextChanged = false;
+
+    if ( c0 | c1 | c2 )
+        return false;
+
+    info._pen = _penOut;
+    info._vertices += _vertices;
+
+    std::vector<float>& lines = *info._lineHeights;
+    lines.pop_back ();
+    lines.insert ( lines.cend (), _lineHeights.cbegin (), _lineHeights.cend () );
+
+    return true;
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+bool TextUIElement::SubmitCache::Run ( SubmitInfo &info, std::vector<float> const &cachedLineHeight ) noexcept
+{
+    bool const c0 = _isTextChanged;
+    bool const c1 = _isColorChanged;
+    bool const c2 = !_penIn.IsEqual ( info._pen );
+    bool const c3 = !_parenTopLeft.IsEqual ( info._parentTopLeft );
+
+    std::span<float const> dst ( info._parentLineHeights + info._line, cachedLineHeight.size () );
+    bool const c4 = !std::equal ( dst.cbegin (), dst.cend (), cachedLineHeight.cbegin () );
+
+    _isTextChanged = false;
+    _isColorChanged = false;
+
+    // FUCK remove it
+    bool const FUCK = true;
+
+    if ( c0 | c1 | c2 | c3 | c4 | FUCK )
+        return false;
+
+    info._pen = _penOut;
+
+    // TODO
+    return true;
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
 TextUIElement::TextUIElement ( bool &success,
     UIElement const* parent,
     lua_State &vm,
@@ -79,11 +132,16 @@ void TextUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
     if ( !_visible | isEmpty )
         return;
 
+    if ( _applyLayoutCache.Run ( info ) )
+        return;
+
     size_t const glyphCount = _text.size ();
     _lines.clear ();
+    _applyLayoutCache._lineHeights.clear ();
 
     // Estimation from top.
     _lines.reserve ( glyphCount );
+    _applyLayoutCache._lineHeights.reserve ( glyphCount );
 
     _glyphs.clear ();
     _glyphs.reserve ( glyphCount );
@@ -105,22 +163,29 @@ void TextUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
     size_t parentLine = startLine;
 
     float& currentLineHeight = divLineHeights.back ();
+    _applyLayoutCache._lineHeights.push_back ( currentLineHeight );
+
     auto const currentLineHeightInteger = static_cast<int32_t> ( currentLineHeight );
+
     _fontSize = f->second._lineHeight;
+    auto const fontSizeF = static_cast<float> ( _fontSize );
+
     int32_t const lineHeights[] = { _fontSize, std::max ( _fontSize, currentLineHeightInteger ) };
 
-    GXVec2& penLocation = info._penLocation;
+    GXVec2& pen = info._pen;
+    _applyLayoutCache._penIn = pen;
+
     float const canvasWidth = info._canvasSize._data[ 0U ];
     auto const w = static_cast<int32_t> ( canvasWidth );
 
-    auto x = static_cast<int32_t> ( penLocation._data[ 0U ] );
+    auto x = static_cast<int32_t> ( pen._data[ 0U ] );
     auto start = x;
 
     size_t glyphsPerLine = 0U;
 
     float dummy;
-    float const fraction = std::modf ( penLocation._data[ 1U ], &dummy );
-    auto y = static_cast<int32_t> ( penLocation._data[ 1U ] );
+    float const fraction = std::modf ( pen._data[ 1U ], &dummy );
+    auto y = static_cast<int32_t> ( pen._data[ 1U ] );
 
     std::u32string_view text = _text;
 
@@ -170,7 +235,8 @@ void TextUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
             x = gi->_advance;
 
             appendGlyph ( parentLine, *gi );
-            divLineHeights.push_back ( static_cast<float> ( _fontSize ) );
+            divLineHeights.push_back ( fontSizeF );
+            _applyLayoutCache._lineHeights.push_back ( fontSizeF );
         }
     }
 
@@ -219,7 +285,8 @@ void TextUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
         appendGlyph ( parentLine, *gi );
         previousX = 0;
 
-        divLineHeights.push_back ( static_cast<float> ( _fontSize ) );
+        divLineHeights.push_back ( fontSizeF );
+        _applyLayoutCache._lineHeights.push_back ( fontSizeF );
     }
 
     glyph->_advance = gi->_advance;
@@ -234,11 +301,15 @@ void TextUIElement::ApplyLayout ( ApplyLayoutInfo &info ) noexcept
 
     int32_t const cases[] = { currentLineHeightInteger, lineHeights[ firstLineHeightIdx ] };
     currentLineHeight = static_cast<float> ( cases[ static_cast<size_t> ( firstLineState[ firstLineChangedIdx ] ) ] );
+    _applyLayoutCache._lineHeights.front () = currentLineHeight;
 
-    penLocation._data[ 0U ] = static_cast<float> ( x );
-    penLocation._data[ 1U ] = static_cast<float> ( y ) + fraction;
+    pen._data[ 0U ] = static_cast<float> ( x );
+    pen._data[ 1U ] = static_cast<float> ( y ) + fraction;
+    _applyLayoutCache._penOut = pen;
 
-    info._vertices += _text.size () * UIPass::GetVerticesPerRectangle ();
+    size_t const vertices = _text.size () * UIPass::GetVerticesPerRectangle ();
+    _applyLayoutCache._vertices = vertices;
+    info._vertices += vertices;
 }
 
 void TextUIElement::Submit ( SubmitInfo &info ) noexcept
@@ -246,6 +317,9 @@ void TextUIElement::Submit ( SubmitInfo &info ) noexcept
     size_t const glyphCount = _glyphs.size ();
 
     if ( !_visible | ( glyphCount == 0U ) )
+        return;
+
+    if ( _submitCache.Run ( info, _applyLayoutCache._lineHeights ) )
         return;
 
     UIVertexBuffer& vertexBuffer = info._vertexBuffer;
@@ -443,6 +517,7 @@ int TextUIElement::OnSetColorHSV ( lua_State* state )
 
     auto& self = *static_cast<TextUIElement*> ( lua_touserdata ( state, 1 ) );
     self._color = GXColorRGB ( GXColorHSV ( h, s, v, a ) );
+    self._submitCache._isColorChanged = true;
     return 0;
 }
 
@@ -455,6 +530,7 @@ int TextUIElement::OnSetColorRGB ( lua_State* state )
 
     auto& self = *static_cast<TextUIElement*> ( lua_touserdata ( state, 1 ) );
     self._color = GXColorRGB ( r, g, b, a );
+    self._submitCache._isColorChanged = true;
     return 0;
 }
 
@@ -468,6 +544,8 @@ int TextUIElement::OnSetText ( lua_State* state )
     auto& self = *static_cast<TextUIElement*> ( lua_touserdata ( state, 1 ) );
     self._text = std::move ( *str );
     self._glyphs.resize ( self._text.size () );
+    self._applyLayoutCache._isTextChanged = true;
+    self._submitCache._isTextChanged = true;
     return 0;
 }
 

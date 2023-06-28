@@ -1,18 +1,13 @@
 #include <pbr/sampler.h>
+#include <av_assert.h>
 #include <vulkan_utils.h>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <cassert>
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace pbr {
 
 bool Sampler::Init ( VkDevice device, VkSamplerCreateInfo const &info ) noexcept
 {
-    assert ( _sampler == VK_NULL_HANDLE );
+    AV_ASSERT ( _sampler == VK_NULL_HANDLE )
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateSampler ( device, &info, nullptr, &_sampler ),

@@ -38,6 +38,9 @@ class File final
         [[nodiscard]] std::vector<uint8_t>& GetContent () noexcept;
         [[maybe_unused, nodiscard]] std::vector<uint8_t> const& GetContent () const noexcept;
 
+        [[maybe_unused, nodiscard]] std::string& GetPath () noexcept;
+        [[maybe_unused, nodiscard]] std::string const& GetPath () const noexcept;
+
         [[nodiscard]] bool IsContentLoaded () const noexcept;
         [[nodiscard]] bool IsExist () const noexcept;
         [[nodiscard]] bool LoadContent () noexcept;

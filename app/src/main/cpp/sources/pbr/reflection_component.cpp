@@ -2,13 +2,8 @@
 #include <pbr/cube_map_manager.h>
 #include <pbr/reflection_probe_global.h>
 #include <pbr/reflection_probe_local.h>
+#include <av_assert.h>
 #include <guid_generator.h>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <cassert>
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace pbr {
@@ -25,7 +20,7 @@ ReflectionComponent::ReflectionComponent ( android_vulkan::Renderer &renderer,
 ) noexcept:
     RenderableComponent ( ClassID::Reflection )
 {
-    assert ( desc._formatVersion == REFLECTION_COMPONENT_DESC_FORMAT_VERSION );
+    AV_ASSERT ( desc._formatVersion == REFLECTION_COMPONENT_DESC_FORMAT_VERSION )
 
     _name = reinterpret_cast<char const*> ( data + desc._name );
 

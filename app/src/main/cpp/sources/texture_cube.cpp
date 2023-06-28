@@ -1,12 +1,7 @@
+#include <av_assert.h>
 #include <texture_cube.h>
 #include <ktx_media_container.h>
 #include <vulkan_utils.h>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <cassert>
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace android_vulkan {
@@ -363,7 +358,7 @@ void TextureCube::FreeTransferResources ( Renderer &renderer ) noexcept
 
 [[maybe_unused]] VkFormat TextureCube::GetFormat () const noexcept
 {
-    assert ( _format != VK_FORMAT_UNDEFINED );
+    AV_ASSERT ( _format != VK_FORMAT_UNDEFINED )
     return _format;
 }
 

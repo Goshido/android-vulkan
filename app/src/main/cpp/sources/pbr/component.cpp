@@ -8,12 +8,7 @@
 #include <pbr/sound_emitter_spatial_component.h>
 #include <pbr/static_mesh_component.h>
 #include <pbr/transform_component.h>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <cassert>
-
-GX_RESTORE_WARNING_STATE
+#include <av_assert.h>
 
 
 namespace pbr {
@@ -77,7 +72,7 @@ ComponentRef Component::Create ( android_vulkan::Renderer &renderer,
     VkCommandBuffer const* commandBuffers
 ) noexcept
 {
-    assert ( desc._classID < ClassID::COUNT );
+    AV_ASSERT ( desc._classID < ClassID::COUNT )
 
     Handler const handler = _handlers[ static_cast<size_t> ( desc._classID ) ];
     return handler ( renderer, commandBufferConsumed, dataRead, desc, data, commandBuffers );
@@ -284,7 +279,7 @@ int Component::OnGetName ( lua_State* state )
 {
     if ( !lua_checkstack ( state, 1 ) )
     {
-        android_vulkan::LogWarning ( "pbr::Component::OnGetName - Stack too small." );
+        android_vulkan::LogWarning ( "pbr::Component::OnGetName - Stack is too small." );
         return 0;
     }
 

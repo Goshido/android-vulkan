@@ -1,4 +1,5 @@
 #include <pbr/geometry_pass_instance_descriptor_set_layout.h>
+#include <vulkan_utils.h>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -6,12 +7,12 @@ GX_DISABLE_COMMON_WARNINGS
 
 GX_RESTORE_WARNING_STATE
 
-#include <vulkan_utils.h>
-
 
 namespace pbr {
 
-class GeometryPassInstanceDescriptorSetLayoutImpl final
+namespace {
+
+class DescriptorSetLayout final
 {
     public:
         VkDescriptorSetLayout       _descriptorSetLayout = VK_NULL_HANDLE;
@@ -20,27 +21,21 @@ class GeometryPassInstanceDescriptorSetLayoutImpl final
         std::atomic_size_t          _references = 0U;
 
     public:
-        GeometryPassInstanceDescriptorSetLayoutImpl () = default;
+        DescriptorSetLayout () = default;
 
-        GeometryPassInstanceDescriptorSetLayoutImpl ( GeometryPassInstanceDescriptorSetLayoutImpl const & ) = delete;
+        DescriptorSetLayout ( DescriptorSetLayout const & ) = delete;
+        DescriptorSetLayout& operator = ( DescriptorSetLayout const & ) = delete;
 
-        GeometryPassInstanceDescriptorSetLayoutImpl& operator = (
-            GeometryPassInstanceDescriptorSetLayoutImpl const &
-        ) = delete;
+        DescriptorSetLayout ( DescriptorSetLayout && ) = delete;
+        DescriptorSetLayout& operator = ( DescriptorSetLayout && ) = delete;
 
-        GeometryPassInstanceDescriptorSetLayoutImpl ( GeometryPassInstanceDescriptorSetLayoutImpl && ) = delete;
-
-        GeometryPassInstanceDescriptorSetLayoutImpl& operator = (
-            GeometryPassInstanceDescriptorSetLayoutImpl &&
-        ) = delete;
-
-        ~GeometryPassInstanceDescriptorSetLayoutImpl () = default;
+        ~DescriptorSetLayout () = default;
 
         void Destroy ( VkDevice device ) noexcept;
         [[nodiscard]] bool Init ( VkDevice device ) noexcept;
 };
 
-void GeometryPassInstanceDescriptorSetLayoutImpl::Destroy ( VkDevice device ) noexcept
+void DescriptorSetLayout::Destroy ( VkDevice device ) noexcept
 {
     if ( !_references )
         return;
@@ -52,10 +47,10 @@ void GeometryPassInstanceDescriptorSetLayoutImpl::Destroy ( VkDevice device ) no
 
     vkDestroyDescriptorSetLayout ( device, _descriptorSetLayout, nullptr );
     _descriptorSetLayout = VK_NULL_HANDLE;
-    AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::GeometryPassInstanceDescriptorSetLayoutImpl::_descriptorSetLayout" )
+    AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::GeometryPassInstanceDescriptorSetLayout::_descriptorSetLayout" )
 }
 
-bool GeometryPassInstanceDescriptorSetLayoutImpl::Init ( VkDevice device ) noexcept
+bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
 {
     if ( _references )
     {
@@ -63,58 +58,58 @@ bool GeometryPassInstanceDescriptorSetLayoutImpl::Init ( VkDevice device ) noexc
         return true;
     }
 
-    constexpr static VkDescriptorSetLayoutBinding const bindings[] =
+    constexpr static VkDescriptorSetLayoutBinding binding
     {
-        {
-            .binding = 0U,
-            .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            .descriptorCount = 1U,
-            .stageFlags = AV_VK_FLAG ( VK_SHADER_STAGE_VERTEX_BIT ) | AV_VK_FLAG ( VK_SHADER_STAGE_FRAGMENT_BIT ),
-            .pImmutableSamplers = nullptr
-        }
+        .binding = 0U,
+        .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        .descriptorCount = 1U,
+        .stageFlags = AV_VK_FLAG ( VK_SHADER_STAGE_VERTEX_BIT ) | AV_VK_FLAG ( VK_SHADER_STAGE_FRAGMENT_BIT ),
+        .pImmutableSamplers = nullptr
     };
 
-    constexpr VkDescriptorSetLayoutCreateInfo descriptorSetLayoutInfo
+    constexpr VkDescriptorSetLayoutCreateInfo info
     {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0U,
-        .bindingCount = static_cast<uint32_t> ( std::size ( bindings ) ),
-        .pBindings = bindings
+        .bindingCount = 1U,
+        .pBindings = &binding
     };
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateDescriptorSetLayout ( device, &descriptorSetLayoutInfo, nullptr, &_descriptorSetLayout ),
-        "pbr::GeometryPassInstanceDescriptorSetLayoutImpl::Init",
+        vkCreateDescriptorSetLayout ( device, &info, nullptr, &_descriptorSetLayout ),
+        "pbr::GeometryPassInstanceDescriptorSetLayout::Init",
         "Can't create descriptor set layout"
     );
 
     if ( !result )
         return false;
 
-    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::GeometryPassInstanceDescriptorSetLayoutImpl::_descriptorSetLayout" )
+    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::GeometryPassInstanceDescriptorSetLayout::_descriptorSetLayout" )
 
     ++_references;
     return true;
 }
 
-static GeometryPassInstanceDescriptorSetLayoutImpl g_opaqueInstanceDescriptorSetLayout {};
+DescriptorSetLayout g_descriptorSetLayout {};
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 
 void GeometryPassInstanceDescriptorSetLayout::Destroy ( VkDevice device ) noexcept
 {
-    g_opaqueInstanceDescriptorSetLayout.Destroy ( device );
+    g_descriptorSetLayout.Destroy ( device );
 }
 
 bool GeometryPassInstanceDescriptorSetLayout::Init ( VkDevice device ) noexcept
 {
-    return g_opaqueInstanceDescriptorSetLayout.Init ( device );
+    return g_descriptorSetLayout.Init ( device );
 }
 
 VkDescriptorSetLayout GeometryPassInstanceDescriptorSetLayout::GetLayout () const noexcept
 {
-    return g_opaqueInstanceDescriptorSetLayout._descriptorSetLayout;
+    return g_descriptorSetLayout._descriptorSetLayout;
 }
 
 } // namespace pbr

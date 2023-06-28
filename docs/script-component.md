@@ -4,7 +4,7 @@
 require "av://engine/script_component.lua"
 ```
 
-## Table of content
+## <a id="table-of-content">Table of content</a>
 
 - [_Brief_](#brief)
 - [_Metamethods_](#metamethods)
@@ -110,6 +110,8 @@ The event handler calling <a id="event-calling-order">order</a> looks like this:
 
 <img src="./images/engine-events.png"/>
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="metamethods">Metamethods</a>
 
 Metamethod | Used
@@ -142,6 +144,8 @@ Metamethod | Used
 `__tostring` | ❌
 `__unm` | ❌
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="constructor">`Constructor`</a>
 
 Constructor makes new script component from the source code and parameters.
@@ -168,6 +172,8 @@ local params = {
 actor:AppendComponent ( ScriptComponent ( "Script", "av://assets/Scripts/player.lua", params ) )
 g_scene:AppendActor ( actor )
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-get-name">`GetName ()`</a>
 
@@ -200,6 +206,8 @@ g_scene:AppendActor ( actor )
 local script = actor:FindComponent ( "Script" )
 local name = script:GetName ()
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-on-actor-constructed">`OnActorConstructed ( self, actor )`</a>
 
@@ -245,6 +253,8 @@ setmetatable ( Player, { __call = Constructor } )
 return Player
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-on-about-to-destroy">`OnAboutToDestroy ( self )`</a>
 
 Optional user provided event handler in the subclass implementation. The method will be called by the engine right before [_Actor_](./actor.md) destroy.
@@ -285,6 +295,8 @@ setmetatable ( Player, { __call = Constructor } )
 -- Module function: fabric callable for Player class.
 return Player
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-on-input">`OnInput ( self, inputEvent )`</a>
 
@@ -335,6 +347,8 @@ setmetatable ( Player, { __call = Constructor } )
 return Player
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-on-post-physics">`OnPostPhysics ( self, deltaTime )`</a>
 
 Optional user provided event handler in the subclass implementation. The method will be called by the engine right after physics simulation. The event graph is presented [here](#event-calling-order).
@@ -377,6 +391,8 @@ setmetatable ( Player, { __call = Constructor } )
 return Player
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-on-pre-physics">`OnPrePhysics ( self, deltaTime )`</a>
 
 Optional user provided event handler in the subclass implementation. The method will be called by the engine right before physics simulation. The event graph is presented [here](#event-calling-order).
@@ -418,6 +434,8 @@ setmetatable ( Player, { __call = Constructor } )
 -- Module function: fabric callable for Player class.
 return Player
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-on-render-target-changed">`OnRenderTargetChanged ( self )`</a>
 
@@ -465,6 +483,8 @@ setmetatable ( Camera, { __call = Constructor } )
 return Camera
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-on-update">`OnUpdate ( self, deltaTime )`</a>
 
 Optional user provided event handler in the subclass implementation. The method will be called by the engine right after render object submissions and before end of the frame. The event graph is presented [here](#event-calling-order).
@@ -506,3 +526,5 @@ setmetatable ( Player, { __call = Constructor } )
 -- Module function: fabric callable for Player class.
 return Player
 ```
+
+[↬ table of content ⇧](#table-of-content)

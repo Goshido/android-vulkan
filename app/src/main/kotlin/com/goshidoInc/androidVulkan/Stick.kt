@@ -13,13 +13,11 @@ internal sealed class Stick ( protected val listener : AnalogControlListener )
     )
 
     protected var oldState = State ()
-
-    abstract fun sync ( event : MotionEvent )
 }
 
 internal class LeftStick ( listener : AnalogControlListener ) : Stick ( listener )
 {
-    override fun sync ( event : MotionEvent )
+    fun sync ( event : MotionEvent )
     {
         val currentState = State ( event.getAxisValue ( MotionEvent.AXIS_X ),
             -event.getAxisValue ( MotionEvent.AXIS_Y )
@@ -35,7 +33,7 @@ internal class LeftStick ( listener : AnalogControlListener ) : Stick ( listener
 
 internal class RightStick ( listener : AnalogControlListener ) : Stick ( listener )
 {
-    override fun sync ( event : MotionEvent )
+    fun sync ( event : MotionEvent )
     {
         val currentState = State ( event.getAxisValue ( MotionEvent.AXIS_Z ),
             -event.getAxisValue ( MotionEvent.AXIS_RZ )

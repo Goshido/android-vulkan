@@ -4,7 +4,7 @@
 -- No need to require anything. g_scene is an object instance of the Scene class and it's created globally.
 ```
 
-## Table of content
+## <a id="table-of-content">Table of content</a>
 
 - [_Brief_](#brief)
 - [_Metamethods_](#metamethods)
@@ -29,6 +29,8 @@
 ## <a id="brief">Brief</a>
 
 Class represents scene entity which is used as foundation for scriptable logic. Scene holds active [actors](./actor.md) and allows to manage them via various methods. There is only one instance of [_Scene_](./scene.md) class called `g_scene` which is accessible from everywhere.
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="metamethods">Metamethods</a>
 
@@ -62,9 +64,13 @@ Metamethod | Used
 `__tostring` | ❌
 `__unm` | ❌
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="constructor">`Constructor`</a>
 
 _N/A_
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-append-actor">`AppendActor ( actor )`</a>
 
@@ -91,6 +97,8 @@ sun:AppendComponent ( PointLightComponent ( "Light" ) )
 g_scene:AppendActor ( sun )
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-find-actor">`FindActor ( name )`</a>
 
 Method returns first existing [_Actor_](./actor.md) with `name`. Otherwise method returns `nil`.
@@ -116,6 +124,8 @@ g_scene:AppendActor ( sun )
 
 local lightSource = g_scene:FindActor ( "Sun" )
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-find-actors">`FindActors ( name )`</a>
 
@@ -146,6 +156,8 @@ g_scene:AppenActor ( lamp1 )
 
 local lamps = g_scene:FindActors ( "Lamp" )
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-get-penetration-box">`GetPenetrationBox ( localMatrix, size, groups )`</a>
 
@@ -219,6 +231,8 @@ size:Init ( 7.0, 3.0, 15.0 )
 local penetrations = g_scene:GetPenetrationBox ( transform, size, 0xFFFFFFFF )
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-get-physics-to-renderer-scale-factor">`GetPhysicsToRendererScaleFactor ()`</a>
 
 Method returns scale factor to convert [physics coordinate system](./rigid-body-component.md#note-physics-coordinate-system) to render coordinate system.
@@ -249,6 +263,8 @@ local locationRender = GXVec3 ()
 locationRender:MultiplyScalar ( locationPhysics, g_scene:GetPhysicsToRenderScaleFactor () )
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-get-renderer-to-physics-scale-factor">`GetRendererToPhysicsScaleFactor ()`</a>
 
 Method returns scale factor to convert render coordinate system to [physics coordinate system](./rigid-body-component.md#note-physics-coordinate-system).
@@ -274,6 +290,8 @@ local locationPhysics = GXVec3 ()
 locationPhysics:MultiplyScalar ( locationRender, g_scene:GetRendererToPhysicsScaleFactor () )
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-get-render-target-aspect-ratio">`GetRenderTargetAspectRatio ()`</a>
 
 Method returns effective aspect ratio for perspective cameras.
@@ -297,6 +315,8 @@ require "av://engine/scene.lua"
 local aspectRatio = g_scene:GetRenderTargetAspectRatio ()
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-get-render-target-width">`GetRenderTargetWidth ()`</a>
 
 Method returns render target width in pixels.
@@ -318,6 +338,8 @@ require "av://engine/scene.lua"
 local width = g_scene:GetRenderTargetAspectRatio ()
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-get-render-target-height">`GetRenderTargetHeight ()`</a>
 
 Method returns render target height in pixels.
@@ -338,6 +360,8 @@ require "av://engine/scene.lua"
 
 local height = g_scene:GetRenderTargetHeight ()
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-overlap-test-box-box">`OverlapTestBoxBox ( localMatrixA, sizeA, localMatrixB, sizeB )`</a>
 
@@ -385,6 +409,8 @@ sizeB:Init ( 3.0, 15.0, 7.0 )
 local isOverlap = g_scene:OverlapTestBoxBox ( transformA, sizeA, transformB, sizeB )
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-quit">`Quit ()`</a>
 
 Method closes application.
@@ -404,6 +430,8 @@ require "av://engine/scene.lua"
 
 g_scene:Quit ()
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-set-active-camera">`SetActiveCamera ( camera )`</a>
 
@@ -450,6 +478,8 @@ cameraComponent:SetProjection ( math.rad ( 60.0 ), width / height, 1.0e-1, 1.0e+
 g_scene:SetActiveCamera ( cameraComponent )
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-set-sound-channel-volume">`SetSoundChannelVolume ( soundChannel, volume )`</a>
 
 Method sets sound channel volume.
@@ -468,6 +498,8 @@ Method sets sound channel volume.
 ```lua
 g_scene:SetSoundChannelVolume ( eSoundChannel.SFX, 0.42 )
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-sweep-test-box">`SweepTestBox ( localMatrix, size, groups )`</a>
 
@@ -490,6 +522,8 @@ local SweepTestResult = {
     }
 }
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-set-sound-listener-transform">`SetSoundListenerTransform ( localMatrix )`</a>
 
@@ -525,6 +559,8 @@ transform:FromFast ( rotation, origin )
 g_scene:SetSoundListenerTransform ( transform )
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-set-sound-master-volume">`SetSoundMasterVolume ( volume )`</a>
 
 Method sets sound system master volume.
@@ -542,6 +578,8 @@ Method sets sound system master volume.
 ```lua
 g_scene:SetSoundMasterVolume ( 0.42 )
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-sweep-test-box">`SweepTestBox ( localMatrix, size, groups )`</a>
 
@@ -601,3 +639,5 @@ size:Init ( 7.0, 3.0, 15.0 )
 
 local sweep = g_scene:SweepTestBox ( transform, size, 0xFFFFFFFF )
 ```
+
+[↬ table of content ⇧](#table-of-content)

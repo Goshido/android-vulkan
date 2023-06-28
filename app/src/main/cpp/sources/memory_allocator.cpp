@@ -1,3 +1,4 @@
+#include <av_assert.h>
 #include <memory_allocator.h>
 #include <bitwise.h>
 #include <core.h>
@@ -6,7 +7,6 @@
 
 GX_DISABLE_COMMON_WARNINGS
 
-#include <cassert>
 #include <chrono>
 #include <fstream>
 
@@ -32,7 +32,7 @@ constexpr uint32_t STAGING_MEMORY_MASK = AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_CO
 void MemoryAllocator::Chunk::FreeMemory ( VkDeviceSize offset ) noexcept
 {
     auto const findResult = _usedBlocks.find ( offset );
-    assert ( findResult != _usedBlocks.cend () );
+    AV_ASSERT ( findResult != _usedBlocks.cend () )
 
     Block* block = findResult->second;
     _usedBlocks.erase ( findResult );
@@ -439,7 +439,7 @@ void MemoryAllocator::FreeMemory ( VkDevice device,
     std::unique_lock<std::mutex> const lock ( _mutex );
 
     auto findResult = _chunkMap.find ( memory );
-    assert ( findResult != _chunkMap.end () );
+    AV_ASSERT ( findResult != _chunkMap.end () )
 
     ChunkInfo& chunkInfo = findResult->second;
     chunkInfo._chunk->FreeMemory ( offset );
@@ -472,7 +472,7 @@ void MemoryAllocator::Init ( VkPhysicalDeviceMemoryProperties const &properties 
         }
     }
 
-    assert ( false );
+    AV_ASSERT ( false )
 }
 
 void MemoryAllocator::Destroy ( VkDevice device ) noexcept
@@ -577,7 +577,7 @@ bool MemoryAllocator::MapMemory ( void*& ptr,
     std::unique_lock<std::mutex> const lock ( _mutex );
 
     auto findResult = _chunkMap.find ( memory );
-    assert ( findResult != _chunkMap.end () );
+    AV_ASSERT ( findResult != _chunkMap.end () )
     ChunkInfo& chunkInfo = findResult->second;
 
     if ( ++chunkInfo._mapCounter > 1U )
@@ -604,7 +604,7 @@ void MemoryAllocator::UnmapMemory ( VkDevice device, VkDeviceMemory memory ) noe
     std::unique_lock<std::mutex> const lock ( _mutex );
 
     auto findResult = _chunkMap.find ( memory );
-    assert ( findResult != _chunkMap.end () );
+    AV_ASSERT ( findResult != _chunkMap.end () )
     ChunkInfo& chunkInfo = findResult->second;
 
     if ( --chunkInfo._mapCounter > 0U )

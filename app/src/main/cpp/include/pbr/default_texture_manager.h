@@ -10,7 +10,7 @@ namespace pbr {
 class DefaultTextureManager final
 {
     private:
-        constexpr static size_t BUFFER_COUNT = 5U;
+        constexpr static size_t BUFFER_COUNT = 6U;
 
     private:
         Texture2DRef        _albedo {};
@@ -18,6 +18,7 @@ class DefaultTextureManager final
         Texture2DRef        _mask {};
         Texture2DRef        _normal {};
         Texture2DRef        _params {};
+        Texture2DRef        _transparent {};
 
         VkCommandBuffer     _commandBuffers[ BUFFER_COUNT ];
 
@@ -42,6 +43,7 @@ class DefaultTextureManager final
         [[nodiscard]] Texture2DRef const& GetMask () const noexcept;
         [[nodiscard]] Texture2DRef const& GetNormal () const noexcept;
         [[nodiscard]] Texture2DRef const& GetParams () const noexcept;
+        [[nodiscard]] Texture2DRef const& GetTransparent () const noexcept;
 };
 
 } // namespace pbr

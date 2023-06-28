@@ -4,11 +4,15 @@
 
 namespace pbr {
 
-constexpr static char const* VERTEX_SHADER = "shaders/common-opaque-vs.spv";
+namespace {
 
-constexpr static size_t COLOR_RENDER_TARGET_COUNT = 4U;
-constexpr static size_t STAGE_COUNT = 2U;
-constexpr static size_t VERTEX_ATTRIBUTE_COUNT = 5U;
+constexpr char const* VERTEX_SHADER = "shaders/common-opaque-vs.spv";
+
+constexpr size_t COLOR_RENDER_TARGET_COUNT = 4U;
+constexpr size_t STAGE_COUNT = 2U;
+constexpr size_t VERTEX_ATTRIBUTE_COUNT = 5U;
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -41,10 +45,7 @@ bool GeometryPassProgram::Init ( android_vulkan::Renderer &renderer,
     VkDevice device = renderer.GetDevice ();
 
     if ( !InitShaderInfo ( renderer, pipelineInfo.pStages, stageInfo ) )
-    {
-        Destroy ( device );
         return false;
-    }
 
     pipelineInfo.pVertexInputState = InitVertexInputInfo ( vertexInputInfo,
         attributeDescriptions,
@@ -61,10 +62,7 @@ bool GeometryPassProgram::Init ( android_vulkan::Renderer &renderer,
     pipelineInfo.pDynamicState = nullptr;
 
     if ( !InitLayout ( device, pipelineInfo.layout ) )
-    {
-        Destroy ( device );
         return false;
-    }
 
     pipelineInfo.renderPass = renderPass;
     pipelineInfo.subpass = subpass;
@@ -81,10 +79,7 @@ bool GeometryPassProgram::Init ( android_vulkan::Renderer &renderer,
     );
 
     if ( !result )
-    {
-        Destroy ( device );
         return false;
-    }
 
     AV_REGISTER_PIPELINE ( std::string ( _name ) + "::_pipeline" )
     DestroyShaderModules ( device );
@@ -124,14 +119,12 @@ Program::DescriptorSetInfo const& GeometryPassProgram::GetResourceInfo () const 
                 .descriptorCount = 1U
             }
         },
-
         {
             {
                 .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
                 .descriptorCount = 5U
             },
         },
-
         {
             {
                 .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
@@ -172,34 +165,85 @@ VkPipelineColorBlendStateCreateInfo const* GeometryPassProgram::InitColorBlendIn
     VkPipelineColorBlendAttachmentState* attachments
 ) const noexcept
 {
-    VkPipelineColorBlendAttachmentState& albedo = attachments[ 0U ];
-    albedo.blendEnable = VK_FALSE;
-    albedo.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
-    albedo.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
-    albedo.colorBlendOp = VK_BLEND_OP_ADD;
-    albedo.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-    albedo.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-    albedo.alphaBlendOp = VK_BLEND_OP_ADD;
+    attachments[ 0U ] =
+    {
+        .blendEnable = VK_FALSE,
+        .srcColorBlendFactor = VK_BLEND_FACTOR_ONE,
+        .dstColorBlendFactor = VK_BLEND_FACTOR_ZERO,
+        .colorBlendOp = VK_BLEND_OP_ADD,
+        .srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
+        .dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
+        .alphaBlendOp = VK_BLEND_OP_ADD,
 
-    albedo.colorWriteMask =
-        AV_VK_FLAG ( VK_COLOR_COMPONENT_R_BIT ) |
-        AV_VK_FLAG ( VK_COLOR_COMPONENT_G_BIT ) |
-        AV_VK_FLAG ( VK_COLOR_COMPONENT_B_BIT ) |
-        AV_VK_FLAG ( VK_COLOR_COMPONENT_A_BIT );
+        .colorWriteMask =
+            AV_VK_FLAG ( VK_COLOR_COMPONENT_R_BIT ) |
+            AV_VK_FLAG ( VK_COLOR_COMPONENT_G_BIT ) |
+            AV_VK_FLAG ( VK_COLOR_COMPONENT_B_BIT ) |
+            AV_VK_FLAG ( VK_COLOR_COMPONENT_A_BIT )
+    };
 
-    constexpr auto const limit = static_cast<ptrdiff_t> ( COLOR_RENDER_TARGET_COUNT );
+    attachments[ 1U ] =
+    {
+        .blendEnable = VK_FALSE,
+        .srcColorBlendFactor = VK_BLEND_FACTOR_ONE,
+        .dstColorBlendFactor = VK_BLEND_FACTOR_ZERO,
+        .colorBlendOp = VK_BLEND_OP_ADD,
+        .srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
+        .dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
+        .alphaBlendOp = VK_BLEND_OP_ADD,
 
-    for ( ptrdiff_t i = 1; i < limit; ++i )
-        std::memcpy ( attachments + i, &albedo, sizeof ( albedo ) );
+        .colorWriteMask =
+            AV_VK_FLAG ( VK_COLOR_COMPONENT_R_BIT ) |
+            AV_VK_FLAG ( VK_COLOR_COMPONENT_G_BIT ) |
+            AV_VK_FLAG ( VK_COLOR_COMPONENT_B_BIT ) |
+            AV_VK_FLAG ( VK_COLOR_COMPONENT_A_BIT )
+    };
 
-    info.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-    info.pNext = nullptr;
-    info.flags = 0U;
-    info.logicOpEnable = VK_FALSE;
-    info.logicOp = VK_LOGIC_OP_NO_OP;
-    info.attachmentCount = static_cast<uint32_t> ( COLOR_RENDER_TARGET_COUNT );
-    info.pAttachments = attachments;
-    std::memset ( info.blendConstants, 0, sizeof ( info.blendConstants ) );
+    attachments[ 2U ] =
+    {
+        .blendEnable = VK_FALSE,
+        .srcColorBlendFactor = VK_BLEND_FACTOR_ONE,
+        .dstColorBlendFactor = VK_BLEND_FACTOR_ZERO,
+        .colorBlendOp = VK_BLEND_OP_ADD,
+        .srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
+        .dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
+        .alphaBlendOp = VK_BLEND_OP_ADD,
+
+        .colorWriteMask =
+            AV_VK_FLAG ( VK_COLOR_COMPONENT_R_BIT ) |
+            AV_VK_FLAG ( VK_COLOR_COMPONENT_G_BIT ) |
+            AV_VK_FLAG ( VK_COLOR_COMPONENT_B_BIT ) |
+            AV_VK_FLAG ( VK_COLOR_COMPONENT_A_BIT )
+    };
+
+    attachments[ 3U ] =
+    {
+        .blendEnable = VK_FALSE,
+        .srcColorBlendFactor = VK_BLEND_FACTOR_ONE,
+        .dstColorBlendFactor = VK_BLEND_FACTOR_ZERO,
+        .colorBlendOp = VK_BLEND_OP_ADD,
+        .srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
+        .dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
+        .alphaBlendOp = VK_BLEND_OP_ADD,
+
+        .colorWriteMask =
+            AV_VK_FLAG ( VK_COLOR_COMPONENT_R_BIT ) |
+            AV_VK_FLAG ( VK_COLOR_COMPONENT_G_BIT ) |
+            AV_VK_FLAG ( VK_COLOR_COMPONENT_B_BIT ) |
+            AV_VK_FLAG ( VK_COLOR_COMPONENT_A_BIT )
+    };
+
+    info =
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .logicOpEnable = VK_FALSE,
+        .logicOp = VK_LOGIC_OP_NO_OP,
+        .attachmentCount = static_cast<uint32_t> ( COLOR_RENDER_TARGET_COUNT ),
+        .pAttachments = attachments,
+        .blendConstants = { 0.0F, 0.0F, 0.0F, 0.0F }
+    };
 
     return &info;
 }
@@ -208,26 +252,42 @@ VkPipelineDepthStencilStateCreateInfo const* GeometryPassProgram::InitDepthStenc
     VkPipelineDepthStencilStateCreateInfo &info
 ) const noexcept
 {
-    info.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-    info.pNext = nullptr;
-    info.flags = 0U;
-    info.depthTestEnable = VK_TRUE;
-    info.depthWriteEnable = VK_TRUE;
-    info.depthCompareOp = VK_COMPARE_OP_GREATER;
-    info.depthBoundsTestEnable = VK_FALSE;
-    info.stencilTestEnable = VK_FALSE;
+    info =
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .depthTestEnable = VK_TRUE,
+        .depthWriteEnable = VK_TRUE,
+        .depthCompareOp = VK_COMPARE_OP_GREATER,
+        .depthBoundsTestEnable = VK_FALSE,
+        .stencilTestEnable = VK_FALSE,
 
-    info.front.failOp = VK_STENCIL_OP_KEEP;
-    info.front.passOp = VK_STENCIL_OP_KEEP;
-    info.front.depthFailOp = VK_STENCIL_OP_KEEP;
-    info.front.compareOp = VK_COMPARE_OP_ALWAYS;
-    info.front.compareMask = UINT32_MAX;
-    info.front.writeMask = 0x00U;
-    info.front.reference = UINT32_MAX;
-    std::memcpy ( &info.back, &info.front, sizeof ( info.back ) );
+        .front
+        {
+            .failOp = VK_STENCIL_OP_KEEP,
+            .passOp = VK_STENCIL_OP_KEEP,
+            .depthFailOp = VK_STENCIL_OP_KEEP,
+            .compareOp = VK_COMPARE_OP_ALWAYS,
+            .compareMask = std::numeric_limits<uint32_t>::max (),
+            .writeMask = 0x00U,
+            .reference = std::numeric_limits<uint32_t>::max ()
+        },
 
-    info.minDepthBounds = 0.0F;
-    info.maxDepthBounds = 1.0F;
+        .back
+        {
+            .failOp = VK_STENCIL_OP_KEEP,
+            .passOp = VK_STENCIL_OP_KEEP,
+            .depthFailOp = VK_STENCIL_OP_KEEP,
+            .compareOp = VK_COMPARE_OP_ALWAYS,
+            .compareMask = std::numeric_limits<uint32_t>::max (),
+            .writeMask = 0x00U,
+            .reference = std::numeric_limits<uint32_t>::max ()
+        },
+
+        .minDepthBounds = 0.0F,
+        .maxDepthBounds = 1.0F
+    };
 
     return &info;
 }
@@ -236,11 +296,14 @@ VkPipelineInputAssemblyStateCreateInfo const* GeometryPassProgram::InitInputAsse
     VkPipelineInputAssemblyStateCreateInfo &info
 ) const noexcept
 {
-    info.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-    info.pNext = nullptr;
-    info.flags = 0U;
-    info.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-    info.primitiveRestartEnable = VK_FALSE;
+    info =
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+        .primitiveRestartEnable = VK_FALSE
+    };
 
     return &info;
 }
@@ -296,15 +359,18 @@ VkPipelineMultisampleStateCreateInfo const* GeometryPassProgram::InitMultisample
     VkPipelineMultisampleStateCreateInfo &info
 ) const noexcept
 {
-    info.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-    info.pNext = nullptr;
-    info.flags = 0U;
-    info.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
-    info.sampleShadingEnable = VK_FALSE;
-    info.minSampleShading = 0.0F;
-    info.pSampleMask = nullptr;
-    info.alphaToCoverageEnable = VK_FALSE;
-    info.alphaToOneEnable = VK_FALSE;
+    info =
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
+        .sampleShadingEnable = VK_FALSE,
+        .minSampleShading = 0.0F,
+        .pSampleMask = nullptr,
+        .alphaToCoverageEnable = VK_FALSE,
+        .alphaToOneEnable = VK_FALSE
+    };
 
     return &info;
 }
@@ -313,19 +379,22 @@ VkPipelineRasterizationStateCreateInfo const* GeometryPassProgram::InitRasteriza
     VkPipelineRasterizationStateCreateInfo &info
 ) const noexcept
 {
-    info.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-    info.pNext = nullptr;
-    info.flags = 0U;
-    info.depthClampEnable = VK_FALSE;
-    info.rasterizerDiscardEnable = VK_FALSE;
-    info.polygonMode = VK_POLYGON_MODE_FILL;
-    info.cullMode = VK_CULL_MODE_BACK_BIT;
-    info.frontFace = VK_FRONT_FACE_CLOCKWISE;
-    info.depthBiasEnable = VK_FALSE;
-    info.depthBiasConstantFactor = 0.0F;
-    info.depthBiasClamp = 0.0F;
-    info.depthBiasSlopeFactor = 0.0F;
-    info.lineWidth = 1.0F;
+    info =
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .depthClampEnable = VK_FALSE,
+        .rasterizerDiscardEnable = VK_FALSE,
+        .polygonMode = VK_POLYGON_MODE_FILL,
+        .cullMode = VK_CULL_MODE_BACK_BIT,
+        .frontFace = VK_FRONT_FACE_CLOCKWISE,
+        .depthBiasEnable = VK_FALSE,
+        .depthBiasConstantFactor = 0.0F,
+        .depthBiasClamp = 0.0F,
+        .depthBiasSlopeFactor = 0.0F,
+        .lineWidth = 1.0F
+    };
 
     return &info;
 }
@@ -349,23 +418,27 @@ bool GeometryPassProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
 
     AV_REGISTER_SHADER_MODULE ( std::string ( _name ) + "::_fragmentShader" )
 
-    VkPipelineShaderStageCreateInfo& vertexStage = sourceInfo[ 0U ];
-    vertexStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    vertexStage.pNext = nullptr;
-    vertexStage.flags = 0U;
-    vertexStage.stage = VK_SHADER_STAGE_VERTEX_BIT;
-    vertexStage.module = _vertexShader;
-    vertexStage.pName = VERTEX_SHADER_ENTRY_POINT;
-    vertexStage.pSpecializationInfo = nullptr;
+    sourceInfo[ 0U ] =
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .stage = VK_SHADER_STAGE_VERTEX_BIT,
+        .module = _vertexShader,
+        .pName = VERTEX_SHADER_ENTRY_POINT,
+        .pSpecializationInfo = nullptr
+    };
 
-    VkPipelineShaderStageCreateInfo& fragmentStage = sourceInfo[ 1U ];
-    fragmentStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    fragmentStage.pNext = nullptr;
-    fragmentStage.flags = 0U;
-    fragmentStage.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-    fragmentStage.module = _fragmentShader;
-    fragmentStage.pName = FRAGMENT_SHADER_ENTRY_POINT;
-    fragmentStage.pSpecializationInfo = nullptr;
+    sourceInfo[ 1U ] =
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
+        .module = _fragmentShader,
+        .pName = FRAGMENT_SHADER_ENTRY_POINT,
+        .pSpecializationInfo = nullptr
+    };
 
     targetInfo = sourceInfo;
     return true;
@@ -395,24 +468,37 @@ VkPipelineViewportStateCreateInfo const* GeometryPassProgram::InitViewportInfo (
     VkExtent2D const &viewport
 ) const noexcept
 {
-    viewportInfo.x = 0.0F;
-    viewportInfo.y = 0.0F;
-    viewportInfo.width = static_cast<float> ( viewport.width );
-    viewportInfo.height = static_cast<float> ( viewport.height );
-    viewportInfo.minDepth = 0.0F;
-    viewportInfo.maxDepth = 1.0F;
+    viewportInfo =
+    {
+        .x = 0.0F,
+        .y = 0.0F,
+        .width = static_cast<float> ( viewport.width ),
+        .height = static_cast<float> ( viewport.height ),
+        .minDepth = 0.0F,
+        .maxDepth = 1.0F
+    };
 
-    scissorInfo.offset.x = 0;
-    scissorInfo.offset.y = 0;
-    scissorInfo.extent = viewport;
+    scissorInfo =
+    {
+        .offset =
+        {
+            .x = 0,
+            .y = 0
+        },
 
-    info.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-    info.pNext = nullptr;
-    info.flags = 0U;
-    info.viewportCount = 1U;
-    info.pViewports = &viewportInfo;
-    info.scissorCount = 1U;
-    info.pScissors = &scissorInfo;
+        .extent = viewport
+    };
+
+    info =
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .viewportCount = 1U,
+        .pViewports = &viewportInfo,
+        .scissorCount = 1U,
+        .pScissors = &scissorInfo
+    };
 
     return &info;
 }
@@ -423,47 +509,63 @@ VkPipelineVertexInputStateCreateInfo const* GeometryPassProgram::InitVertexInput
     VkVertexInputBindingDescription* binds
 ) const noexcept
 {
-    binds->binding = 0U;
-    binds->stride = static_cast<uint32_t> ( sizeof ( android_vulkan::VertexInfo ) );
-    binds->inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+    *binds =
+    {
+        .binding = 0U,
+        .stride = static_cast<uint32_t> ( sizeof ( android_vulkan::VertexInfo ) ),
+        .inputRate = VK_VERTEX_INPUT_RATE_VERTEX
+    };
 
-    VkVertexInputAttributeDescription& vertex = attributes[ 0U ];
-    vertex.location = 0U;
-    vertex.binding = 0U;
-    vertex.format = VK_FORMAT_R32G32B32_SFLOAT;
-    vertex.offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _vertex ) );
+    attributes[ 0U ] =
+    {
+        .location = 0U,
+        .binding = 0U,
+        .format = VK_FORMAT_R32G32B32_SFLOAT,
+        .offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _vertex ) )
+    };
 
-    VkVertexInputAttributeDescription& uv = attributes[ 1U ];
-    uv.location = 1U;
-    uv.binding = 0U;
-    uv.format = VK_FORMAT_R32G32_SFLOAT;
-    uv.offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _uv ) );
+    attributes[ 1U ] =
+    {
+        .location = 1U,
+        .binding = 0U,
+        .format = VK_FORMAT_R32G32_SFLOAT,
+        .offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _uv ) )
+    };
 
-    VkVertexInputAttributeDescription& normal = attributes[ 2U ];
-    normal.location = 2U;
-    normal.binding = 0U;
-    normal.format = VK_FORMAT_R32G32B32_SFLOAT;
-    normal.offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _normal ) );
+    attributes[ 2U ] =
+    {
+        .location = 2U,
+        .binding = 0U,
+        .format = VK_FORMAT_R32G32B32_SFLOAT,
+        .offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _normal ) )
+    };
 
-    VkVertexInputAttributeDescription& tangent = attributes[ 3U ];
-    tangent.location = 3U;
-    tangent.binding = 0U;
-    tangent.format = VK_FORMAT_R32G32B32_SFLOAT;
-    tangent.offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _tangent ) );
+    attributes[ 3U ] =
+    {
+        .location = 3U,
+        .binding = 0U,
+        .format = VK_FORMAT_R32G32B32_SFLOAT,
+        .offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _tangent ) )
+    };
 
-    VkVertexInputAttributeDescription& bitangent = attributes[ 4U ];
-    bitangent.location = 4U;
-    bitangent.binding = 0U;
-    bitangent.format = VK_FORMAT_R32G32B32_SFLOAT;
-    bitangent.offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _bitangent ) );
+    attributes[ 4U ] =
+    {
+        .location = 4U,
+        .binding = 0U,
+        .format = VK_FORMAT_R32G32B32_SFLOAT,
+        .offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _bitangent ) )
+    };
 
-    info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    info.pNext = nullptr;
-    info.flags = 0U;
-    info.vertexBindingDescriptionCount = 1U;
-    info.pVertexBindingDescriptions = binds;
-    info.vertexAttributeDescriptionCount = static_cast<uint32_t> ( VERTEX_ATTRIBUTE_COUNT );
-    info.pVertexAttributeDescriptions = attributes;
+    info =
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .vertexBindingDescriptionCount = 1U,
+        .pVertexBindingDescriptions = binds,
+        .vertexAttributeDescriptionCount = static_cast<uint32_t> ( VERTEX_ATTRIBUTE_COUNT ),
+        .pVertexAttributeDescriptions = attributes
+    };
 
     return &info;
 }

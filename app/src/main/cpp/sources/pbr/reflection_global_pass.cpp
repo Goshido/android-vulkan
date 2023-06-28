@@ -1,12 +1,6 @@
 #include <pbr/reflection_global_pass.h>
 #include <trace.h>
 
-GX_DISABLE_COMMON_WARNINGS
-
-#include <cassert>
-
-GX_RESTORE_WARNING_STATE
-
 
 namespace pbr {
 

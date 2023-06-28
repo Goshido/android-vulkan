@@ -49,7 +49,7 @@ class SoundEmitter
         void Init ( SoundMixer &soundMixer, eSoundChannel channel ) noexcept;
         [[nodiscard]] bool Destroy () noexcept;
 
-        [[nodiscard, maybe_unused]] std::string const& GetFile () const noexcept;
+        [[nodiscard]] std::string const& GetFile () const noexcept;
         [[nodiscard]] eSoundChannel GetSoundChannel () const noexcept;
         [[nodiscard]] float GetVolume () const noexcept;
 

@@ -1,9 +1,9 @@
+#include <av_assert.h>
 #include <logger.h>
 #include <sound_mixer.h>
 
 GX_DISABLE_COMMON_WARNINGS
 
-#include <cassert>
 #include <cinttypes>
 #include <cstdio>
 #include <unordered_map>
@@ -16,7 +16,7 @@ namespace android_vulkan {
 namespace {
 
 constexpr float CHANNEL_VOLUME = 1.0F;
-constexpr size_t MAX_HARDWARE_STREAM_CAP = 42U;
+constexpr size_t MAX_HARDWARE_STREAM_CAP = 32U;
 constexpr double TRIM_TIMEOUT_SECONDS = 5.0F;
 constexpr auto WORKER_TIMEOUT = std::chrono::microseconds ( 1U );
 
@@ -90,8 +90,10 @@ bool SoundMixer::StreamInfo::LockAndReturnFillSilence () noexcept
     auto& fillLock = *_fillLock;
     bool expected = false;
 
-    while ( !fillLock.compare_exchange_weak ( expected, true ) );
-    assert ( !expected );
+    while ( !fillLock.compare_exchange_weak ( expected, true ) )
+    {}
+
+    AV_ASSERT ( !expected )
 
     return _fillSilence;
 }
@@ -106,8 +108,9 @@ void SoundMixer::StreamInfo::Modify ( bool fillSilence ) noexcept
     auto& fillLock = *_fillLock;
     bool expected = false;
 
-    while ( !fillLock.compare_exchange_weak ( expected, true ) );
-    assert ( !expected );
+    while ( !fillLock.compare_exchange_weak ( expected, true ) ) {}
+
+    AV_ASSERT ( !expected )
     _fillSilence = fillSilence;
     fillLock.store ( false );
 }
@@ -247,7 +250,7 @@ R"__(SoundMixer::Destroy - Memory leak detected: %zu
 
 #ifdef ANDROID_VULKAN_STRICT_MODE
 
-        assert ( false );
+        AV_ASSERT ( false )
 
 #endif // ANDROID_VULKAN_STRICT_MODE
 
@@ -277,7 +280,7 @@ size_t SoundMixer::GetBufferSampleCount () const noexcept
     return _channelVolume[ static_cast<size_t> ( channel ) ];
 }
 
-[[maybe_unused]] void SoundMixer::SetChannelVolume ( eSoundChannel channel, float volume ) noexcept
+void SoundMixer::SetChannelVolume ( eSoundChannel channel, float volume ) noexcept
 {
     _channelVolume[ static_cast<size_t> ( channel ) ] = std::clamp ( volume, 0.0F, 1.0F );
 }
@@ -381,7 +384,7 @@ bool SoundMixer::RequestPause ( SoundEmitter &emitter ) noexcept
     if ( findResult == _streamMap.end () )
     {
         LogWarning ( "SoundMixer::RequestPause - Can't find emitter. Abort..." );
-        assert ( false );
+        AV_ASSERT ( false )
         return false;
     }
 
@@ -440,7 +443,7 @@ bool SoundMixer::RequestStop ( SoundEmitter &emitter ) noexcept
     if ( findResult == _streamMap.end () )
     {
         LogWarning ( "SoundMixer::RequestStop - Can't find emitter. Abort..." );
-        assert ( false );
+        AV_ASSERT ( false )
         return false;
     }
 
@@ -468,7 +471,7 @@ void SoundMixer::RegisterDecompressor ( PCMStreamer &streamer ) noexcept
     if ( _decompressors.contains ( &streamer ) )
     {
         LogError ( "SoundMixer::RegisterDecompressor - Decompressor already registered. Please check business logic." );
-        assert ( false );
+        AV_ASSERT ( false )
         return;
     }
 
@@ -483,7 +486,7 @@ void SoundMixer::UnregisterDecompressor ( PCMStreamer &streamer ) noexcept
         return;
 
     LogError ( "SoundMixer::UnregisterDecompressor - Can't find decompressor. Please check business logic." );
-    assert ( false );
+    AV_ASSERT ( false )
 }
 
 bool SoundMixer::CheckAAudioResult ( aaudio_result_t result, char const* from, char const* message ) noexcept
@@ -492,7 +495,7 @@ bool SoundMixer::CheckAAudioResult ( aaudio_result_t result, char const* from, c
         return true;
 
     // Positive value. This case should be process differently by AAudio design.
-    assert ( result < 0 );
+    AV_ASSERT ( result < 0 )
 
     LogError ( "%s - %s. Error: %s.", from, message, AAudio_convertResultToText ( result ) );
     return false;
@@ -516,7 +519,7 @@ bool SoundMixer::CreateHardwareStreams () noexcept
 
         if ( !SetStreamBufferSize ( *si._stream, "SoundMixer::CreateHardwareStreams" ) )
         {
-            assert ( false );
+            AV_ASSERT ( false )
             return false;
         }
 
@@ -526,10 +529,10 @@ bool SoundMixer::CreateHardwareStreams () noexcept
         _free.push_back ( &si );
     }
 
-    if ( counter < 0U )
+    if ( counter < 1U )
     {
         LogError ( "SoundMixer::CreateHardwareStreams - No available hardware streams!" );
-        assert ( false );
+        AV_ASSERT ( false )
         return false;
     }
 
@@ -577,7 +580,7 @@ void SoundMixer::RecreateSoundStream ( AAudioStream &stream ) noexcept
             if ( !targetStreamInfo )
             {
                 LogError ( "SoundMixer::RecreateSoundStream - Can't find stream." );
-                assert ( false );
+                AV_ASSERT ( false )
                 return;
             }
 
@@ -588,7 +591,7 @@ void SoundMixer::RecreateSoundStream ( AAudioStream &stream ) noexcept
             }
 
             LogError ( "SoundMixer::RecreateSoundStream - Can't create new AAudioStream." );
-            assert ( false );
+            AV_ASSERT ( false )
         }
     );
 
@@ -644,7 +647,7 @@ bool SoundMixer::SetStreamBufferSize ( AAudioStream &stream, char const* where )
     char msg[ 128U ];
     std::snprintf ( msg, std::size ( msg ), "Can't change stream buffer size to %" PRIi32, _bufferFrameCount );
     CheckAAudioResult ( result, where, msg );
-    assert ( false );
+    AV_ASSERT ( false )
     return false;
 }
 
@@ -659,7 +662,7 @@ bool SoundMixer::ValidateStream ( AAudioStream &stream ) const noexcept
             GetSampleRate ()
         );
 
-        assert ( false );
+        AV_ASSERT ( false )
         return false;
     }
 
@@ -676,7 +679,7 @@ bool SoundMixer::ValidateStream ( AAudioStream &stream ) const noexcept
             GetFormatString ( GetFormat (), expected )
         );
 
-        assert ( false );
+        AV_ASSERT ( false )
         return false;
     }
 
@@ -689,7 +692,7 @@ bool SoundMixer::ValidateStream ( AAudioStream &stream ) const noexcept
             GetChannelCount ()
         );
 
-        assert ( false );
+        AV_ASSERT ( false )
         return false;
     }
 
@@ -705,7 +708,7 @@ bool SoundMixer::ValidateStream ( AAudioStream &stream ) const noexcept
         _bufferFrameCount
     );
 
-    assert ( false );
+    AV_ASSERT ( false )
     return false;
 }
 

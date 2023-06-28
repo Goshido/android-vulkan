@@ -4,7 +4,7 @@
 require "av://engine/gx_mat3.lua"
 ```
 
-## Table of content
+## <a id="table-of-content">Table of content</a>
 
 - [_Brief_](#brief)
 - [_Metamethods_](#metamethods)
@@ -25,6 +25,8 @@ require "av://engine/gx_mat3.lua"
 The class represents 3x3 matrix of `float32_t` values. The matrix layout in memory looks like this:
 
 <img src="./images/gx-mat3-layout.png"/>
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="metamethods">Metamethods</a>
 
@@ -58,6 +60,8 @@ Metamethod | Used
 `__tostring` | ✔️
 `__unm` | ❌
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="constructor">`Constructor`</a>
 
 Constructor creates new object with undefined initial values.
@@ -74,6 +78,8 @@ require "av://engine/gx_mat3.lua"
 
 local m = GXMat3 ()
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-get-x">`GetX ( x )`</a>
 
@@ -100,6 +106,8 @@ local v = GXVec3 ()
 m:GetX ( v )
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-get-y">`GetY ( y )`</a>
 
 Method writes the [_Y_ row](#brief) of current matrix to the supplied `y` vector of the [_GXVec3_](./gx-vec3.md) type.
@@ -124,6 +132,8 @@ m:Identity ()
 local v = GXVec3 ()
 m:GetY ( v )
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-get-z">`GetZ ( z )`</a>
 
@@ -150,6 +160,8 @@ local v = GXVec3 ()
 m:GetZ ( v )
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-identity">`Identity ()`</a>
 
 Method initializes the matrix as [identity matrix](https://en.wikipedia.org/wiki/Identity_matrix).
@@ -171,6 +183,8 @@ require "av://engine/gx_mat3.lua"
 local m = GXMat3 ()
 m:Identity ()
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-inverse">`Inverse ( sourceMatrix )`</a>
 
@@ -207,6 +221,8 @@ m:SetZ ( z )
 local i = GXMat3 ()
 i:Inverse ( m )
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-multiply">`Multiply ( a, b )`</a>
 
@@ -259,6 +275,8 @@ local m = GXMat3 ()
 m:Multiply ( a, b )
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-multiply-matrix-vector">`MultiplyMatrixVector ( out, v )`</a>
 
 Method performs matrix-vector multiplication of current matrix `self` and `v` [column-vector](https://en.wikipedia.org/wiki/Row_and_column_vectors): `self` x `v`. The result is written to the `out` [column-vector](https://en.wikipedia.org/wiki/Row_and_column_vectors).
@@ -298,6 +316,8 @@ v0:Init ( 1.0, 777.0, 33.3 )
 local v1 = GXVec3 ()
 m:MultiplyMatrixVector ( v1, v0 )
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-multiply-vector-matrix">`MultiplyVectorMatrix ( out, v )`</a>
 
@@ -339,6 +359,8 @@ local v1 = GXVec3 ()
 m:MultiplyVectorMatrix ( v1, v0 )
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-set-x">`SetX ( x )`</a>
 
 Method sets the [_X_ row](#brief) of current matrix from the supplied `x` vector of the [_GXVec3_](./gx-vec3.md) type.
@@ -364,6 +386,8 @@ local m = GXMat3 ()
 m:Identity ()
 m:SetX ( v )
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-set-y">`SetY ( y )`</a>
 
@@ -391,6 +415,8 @@ m:Identity ()
 m:SetY ( v )
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-set-z">`SetZ ( z )`</a>
 
 Method sets the [_Z_ row](#brief) of current matrix from the supplied `z` vector of the [_GXVec3_](./gx-vec3.md) type.
@@ -416,6 +442,8 @@ local m = GXMat3 ()
 m:Identity ()
 m:SetZ ( v )
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-transpose">`Transpose ( sourceMatrix )`</a>
 
@@ -452,3 +480,5 @@ m:SetZ ( z )
 local t = GXMat3 ()
 t:Transpose ( m )
 ```
+
+[↬ table of content ⇧](#table-of-content)

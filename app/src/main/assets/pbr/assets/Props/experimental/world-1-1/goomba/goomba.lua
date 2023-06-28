@@ -9,6 +9,7 @@ local GRAVITY = GXVec3 ()
 GRAVITY:Init ( 0.0, -9.81, 0.0 )
 
 local LANDING_FACTOR = -1.0e-2
+local SCORE = 100
 
 local SQUASH_VELOCITY_FACTOR = GXVec3 ()
 SQUASH_VELOCITY_FACTOR:Init ( 1.0, -1.0, 1.0 )
@@ -17,6 +18,10 @@ SQUASH_VELOCITY_FACTOR:Init ( 1.0, -1.0, 1.0 )
 local Goomba = {}
 
 -- Methods
+local function AddScore ( self )
+    g_scene:FindActor ( "Mastermind" ):FindComponent ( "LevelScript" ):AddScore ( SCORE )
+end
+
 local function CheckMoveSensor ( self, size, offset, localMatrix, origin, velocity )
     local alpha = GXVec3 ()
     localMatrix:MultiplyAsNormal ( alpha, offset )
@@ -68,6 +73,7 @@ local function CheckTopSensor ( self, localMatrix, origin )
     end
 
     mario:Hit ( SQUASH_VELOCITY_FACTOR )
+    self:AddScore ()
     self:SpawnSound ()
 
     self._actor:Destroy ()
@@ -247,6 +253,7 @@ local function Constructor ( self, handle, params )
     obj._verticalVelocity = GXVec3 ()
 
     -- Methods
+    obj.AddScore = AddScore
     obj.CheckMoveSensor = CheckMoveSensor
     obj.CheckTopSensor = CheckTopSensor
     obj.GetCenter = GetCenter

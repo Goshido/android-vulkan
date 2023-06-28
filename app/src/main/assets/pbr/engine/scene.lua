@@ -1,10 +1,13 @@
 require "av://engine/actor.lua"
 require "av://engine/camera_component.lua"
+require "av://engine/div_ui_element.lua"
+require "av://engine/image_ui_element.lua"
 require "av://engine/rigid_body_component.lua"
 require "av://engine/script_component.lua"
 require "av://engine/sound_emitter_global_component.lua"
 require "av://engine/sound_emitter_spatial_component.lua"
 require "av://engine/static_mesh_component.lua"
+require "av://engine/text_ui_element.lua"
 require "av://engine/transform_component.lua"
 
 
@@ -71,8 +74,16 @@ local function AppendActor ( self, actor )
     AppendActorFromNative ( self, actor )
 end
 
+local function AppendUILayer ( self, uiLayer )
+    av_SceneAppendUILayer ( self._handle, uiLayer._handle )
+end
+
 local function DetachActor ( self, actor )
     table.insert ( self._actorToDestroy, actor )
+end
+
+local function DetachUILayer ( self, uiLayer )
+    av_SceneDetachUILayer ( self._handle, uiLayer._handle )
 end
 
 local function FindActor ( self, name )
@@ -320,7 +331,9 @@ local function Constructor ( self, handle )
     -- Methods
     obj.AppendActor = AppendActor
     obj.AppendActorFromNative = AppendActorFromNative
+    obj.AppendUILayer = AppendUILayer
     obj.DetachActor = DetachActor
+    obj.DetachUILayer = DetachUILayer
     obj.FindActor = FindActor
     obj.FindActors = FindActors
     obj.GetPenetrationBox = GetPenetrationBox

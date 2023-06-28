@@ -91,7 +91,7 @@ bool ScriptableGamepad::Execute ( lua_State &vm, int sceneHandleIndex, int onInp
 {
     if ( !lua_checkstack ( &vm, 3 ) )
     {
-        android_vulkan::LogError ( "pbr::ScriptableGamepad::Execute - Stack too small." );
+        android_vulkan::LogError ( "pbr::ScriptableGamepad::Execute - Stack is too small." );
         return false;
     }
 
@@ -224,7 +224,7 @@ bool ScriptableGamepad::AllocateKeyInputEvent ( int &eventIndex, lua_State &vm, 
 {
     if ( !lua_checkstack ( &vm, 3 ) )
     {
-        android_vulkan::LogError ( "pbr::ScriptableGamepad::AllocateKeyInputEvent - Stack too small." );
+        android_vulkan::LogError ( "pbr::ScriptableGamepad::AllocateKeyInputEvent - Stack is too small." );
         return false;
     }
 
@@ -246,7 +246,7 @@ bool ScriptableGamepad::AllocateStickInputEvent ( int &eventIndex, lua_State &vm
 {
     if ( !lua_checkstack ( &vm, 3 ) )
     {
-        android_vulkan::LogError ( "pbr::ScriptableGamepad::AllocateStickInputEvent - Stack too small." );
+        android_vulkan::LogError ( "pbr::ScriptableGamepad::AllocateStickInputEvent - Stack is too small." );
         return false;
     }
 
@@ -272,7 +272,7 @@ bool ScriptableGamepad::AllocateTriggerInputEvent ( int &eventIndex, lua_State &
 {
     if ( !lua_checkstack ( &vm, 3 ) )
     {
-        android_vulkan::LogError ( "pbr::ScriptableGamepad::AllocateTriggerInputEvent - Stack too small." );
+        android_vulkan::LogError ( "pbr::ScriptableGamepad::AllocateTriggerInputEvent - Stack is too small." );
         return false;
     }
 

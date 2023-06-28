@@ -28,6 +28,7 @@ class RenderSessionStats final
         std::atomic_size_t      _submitStippleMeshes = 0U;
         std::atomic_size_t      _submitPointLights = 0U;
         std::atomic_size_t      _submitReflectionsLocal = 0U;
+        std::atomic_size_t      _submitUIVertices = 0U;
         std::atomic_size_t      _submitVertices = 0U;
         double                  _timeout;
 
@@ -57,6 +58,8 @@ class RenderSessionStats final
 
         void RenderReflectionLocal ( size_t count ) noexcept;
         void SubmitReflectionLocal () noexcept;
+
+        void SubmitUIVertices ( size_t count ) noexcept;
 
     private:
         void Reset () noexcept;

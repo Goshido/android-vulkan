@@ -1,12 +1,5 @@
 #include <pbr/point_light_lightup.h>
 #include <pbr/coordinate_system.h>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <cassert>
-
-GX_RESTORE_WARNING_STATE
-
 #include <pbr/point_light_descriptor_set_layout.h>
 #include <pbr/point_light_pass.h>
 

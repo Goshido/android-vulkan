@@ -1,3 +1,4 @@
+#include <av_assert.h>
 #include <core.h>
 #include <bitwise.h>
 #include <logger.h>
@@ -16,7 +17,7 @@
 
 GX_DISABLE_COMMON_WARNINGS
 
-#include <cassert>
+#include <locale>
 #include <android/asset_manager_jni.h>
 #include <android/native_window_jni.h>
 
@@ -49,9 +50,12 @@ enum class eGame : uint16_t
 
 //----------------------------------------------------------------------------------------------------------------------
 
-Core::Core ( JNIEnv* env, jobject activity, jobject assetManager, std::string &&cacheDirectory ) noexcept:
+Core::Core ( JNIEnv* env, jobject activity, jobject assetManager, std::string &&cacheDirectory, float dpi ) noexcept:
     _cacheDirectory ( std::move ( cacheDirectory ) )
 {
+    // It's needed for various parsers from string data. For example for float parsers.
+    std::locale::global ( std::locale::classic () );
+
     env->GetJavaVM ( &_vm );
 
     _assetManager = env->NewGlobalRef ( assetManager );
@@ -78,11 +82,11 @@ Core::Core ( JNIEnv* env, jobject activity, jobject assetManager, std::string &&
         { android_vulkan::eGame::World1x1, std::make_shared<pbr::mario::World1x1> () }
     };
 
-    _game = games.find ( android_vulkan::eGame::PBR )->second.get ();
+    _game = games.find ( android_vulkan::eGame::World1x1 )->second.get ();
 
     _thread = std::thread (
-        [ this ] () noexcept {
-            if ( !_renderer.OnCreateDevice () || !_game->OnInitDevice ( _renderer ) )
+        [ this, dpi ] () noexcept {
+            if ( !_renderer.OnCreateDevice ( dpi ) || !_game->OnInitDevice ( _renderer ) )
                 return;
 
             while ( ExecuteMessageQueue () )
@@ -170,7 +174,7 @@ void Core::OnSurfaceDestroyed () noexcept
 
 std::string const& Core::GetCacheDirectory () noexcept
 {
-    assert ( g_Core );
+    AV_ASSERT ( g_Core )
     static std::string const nullDirectory = "fuck!";
     return g_Core ? g_Core->_cacheDirectory : nullDirectory;
 }
@@ -309,11 +313,12 @@ extern "C" {
 JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doCreate ( JNIEnv* env,
     jobject obj,
     jobject assetManager,
-    jstring cacheDirectory
+    jstring cacheDirectory,
+    jfloat dpi
 )
 {
     char const* utf8 = env->GetStringUTFChars ( cacheDirectory, nullptr );
-    g_Core = new Core ( env, obj, assetManager, utf8 );
+    g_Core = new Core ( env, obj, assetManager, utf8, dpi );
     env->ReleaseStringUTFChars ( cacheDirectory, utf8 );
     LogInfo ( "Core has been created." );
 }

@@ -7,11 +7,10 @@
 #include <pbr/material_manager.h>
 #include <pbr/mesh_manager.h>
 #include <pbr/scriptable_gxmat4.h>
+#include <av_assert.h>
 #include <guid_generator.h>
 
 GX_DISABLE_COMMON_WARNINGS
-
-#include <cassert>
 
 extern "C" {
 
@@ -64,7 +63,7 @@ StaticMeshComponent::StaticMeshComponent ( android_vulkan::Renderer &renderer,
 {
     // Sanity checks.
     static_assert ( sizeof ( StaticMeshComponent::_localMatrix ) == sizeof ( desc._localMatrix ) );
-    assert ( desc._formatVersion == STATIC_MESH_COMPONENT_DESC_FORMAT_VERSION );
+    AV_ASSERT ( desc._formatVersion == STATIC_MESH_COMPONENT_DESC_FORMAT_VERSION )
 
     _name = reinterpret_cast<char const*> ( data + desc._name );
 
@@ -286,7 +285,7 @@ bool StaticMeshComponent::RegisterFromNative ( lua_State &vm, Actor &actor ) noe
 
     if ( !lua_checkstack ( &vm, 2 ) )
     {
-        android_vulkan::LogError ( "pbr::StaticMeshComponent::RegisterFromNative - Stack too small." );
+        android_vulkan::LogError ( "pbr::StaticMeshComponent::RegisterFromNative - Stack is too small." );
         return false;
     }
 
@@ -305,7 +304,7 @@ bool StaticMeshComponent::Init ( lua_State &vm, android_vulkan::Renderer &render
 {
     if ( !lua_checkstack ( &vm, 1 ) )
     {
-        android_vulkan::LogError ( "pbr::StaticMeshComponent::Init - Stack too small." );
+        android_vulkan::LogError ( "pbr::StaticMeshComponent::Init - Stack is too small." );
         return false;
     }
 
@@ -391,6 +390,12 @@ bool StaticMeshComponent::Init ( lua_State &vm, android_vulkan::Renderer &render
 
 void StaticMeshComponent::Destroy () noexcept
 {
+    if ( !_staticMeshes.empty () )
+    {
+        android_vulkan::LogWarning ( "pbr::StaticMeshComponent::Destroy - Memory leak." );
+        AV_ASSERT ( false )
+    }
+
     _staticMeshes.clear ();
     VkDevice device = _renderer->GetDevice ();
 
@@ -460,7 +465,7 @@ bool StaticMeshComponent::Sync () noexcept
 ComponentRef& StaticMeshComponent::GetReference () noexcept
 {
     auto findResult = _staticMeshes.find ( this );
-    assert ( findResult != _staticMeshes.end () );
+    AV_ASSERT ( findResult != _staticMeshes.end () )
     return findResult->second;
 }
 
@@ -526,7 +531,7 @@ int StaticMeshComponent::OnCreate ( lua_State* state )
 {
     if ( !lua_checkstack ( state, 1 ) )
     {
-        android_vulkan::LogWarning ( "pbr::StaticMeshComponent::OnCreate - Stack too small." );
+        android_vulkan::LogWarning ( "pbr::StaticMeshComponent::OnCreate - Stack is too small." );
         return 0;
     }
 

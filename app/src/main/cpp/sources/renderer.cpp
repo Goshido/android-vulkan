@@ -1,3 +1,4 @@
+#include <av_assert.h>
 #include <renderer.h>
 #include <bitwise.h>
 #include <file.h>
@@ -5,9 +6,7 @@
 
 GX_DISABLE_COMMON_WARNINGS
 
-#include <cassert>
 #include <cinttypes>
-#include <cmath>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -376,21 +375,21 @@ VulkanPhysicalDeviceInfo::VulkanPhysicalDeviceInfo () noexcept:
 #ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
 // MessageID list of the ignored messages.
-static std::unordered_set<std::string_view> const g_validationFilter =
+static std::unordered_set<size_t> const g_validationFilter =
 {
     // Attempting to enable deprecated extension VK_EXT_debug_report, but this extension has been deprecated by
     // VK_EXT_debug_utils.
     // [2022/07/26] There is no alternative on Android 11 platform.
-    "0x9111e735",
+    0x9111e735U,
 
     // Attempting to enable extension VK_EXT_debug_report, but this extension is intended to support use by applications
     // when debugging and it is strongly recommended that it be otherwise avoided.
     // [2022/07/26] Yeah. I'm pretty aware about that. Thank you.
-    "0x822806fa",
+    0x822806faU,
 
     // VALIDATION LAYERS WARNING: Using debug builds of the validation layers *will* adversely affect performance.
     // [2022/09/15] Yeah. I'm pretty aware about that. Thank you.
-    "0x26ac7233"
+    0x26ac7233U
 };
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -799,6 +798,7 @@ Renderer::Renderer () noexcept:
     _depthImageFormat ( VK_FORMAT_UNDEFINED ),
     _depthStencilImageFormat ( VK_FORMAT_UNDEFINED ),
     _device ( VK_NULL_HANDLE ),
+    _dpi ( 96.0F ),
     _instance ( VK_NULL_HANDLE ),
     _isDeviceExtensionChecked ( false ),
     _isDeviceExtensionSupported ( false ),
@@ -907,6 +907,11 @@ VkDevice Renderer::GetDevice () const noexcept
     return _device;
 }
 
+float Renderer::GetDPI () const noexcept
+{
+    return _dpi;
+}
+
 size_t Renderer::GetMaxUniformBufferRange () const noexcept
 {
     return _maxUniformBufferRange;
@@ -975,7 +980,7 @@ void Renderer::OnDestroySwapchain () noexcept
     DestroySurface ();
 }
 
-bool Renderer::OnCreateDevice () noexcept
+bool Renderer::OnCreateDevice ( float dpi ) noexcept
 {
     if ( !_vulkanLoader.AcquireBootstrapFunctions () )
         return false;
@@ -1102,7 +1107,10 @@ bool Renderer::OnCreateDevice () noexcept
         PrintPhysicalDeviceGroupInfo ( i, groupProps[ i ] );
 
     if ( DeployDevice () )
+    {
+        _dpi = dpi;
         return true;
+    }
 
     _physicalDeviceGroups.clear ();
     _physicalDeviceInfo.clear ();
@@ -1366,6 +1374,7 @@ bool Renderer::CheckRequiredFormats () noexcept
     probe ( VK_FORMAT_R8G8B8A8_UNORM, "VK_FORMAT_R8G8B8A8_UNORM" );
     probe ( VK_FORMAT_R8G8_SRGB, "VK_FORMAT_R8G8_SRGB" );
     probe ( VK_FORMAT_R8_SRGB, "VK_FORMAT_R8_SRGB" );
+    probe ( VK_FORMAT_R8_UNORM, "VK_FORMAT_R8_UNORM" );
     probe ( VK_FORMAT_S8_UINT, "VK_FORMAT_S8_UINT" );
     probe ( VK_FORMAT_X8_D24_UNORM_PACK32, "VK_FORMAT_X8_D24_UNORM_PACK32" );
 
@@ -1386,13 +1395,13 @@ bool Renderer::DeployDebugFeatures () noexcept
         vkGetInstanceProcAddr ( _instance, "vkCreateDebugReportCallbackEXT" )
     );
 
-    assert ( vkCreateDebugReportCallbackEXT );
+    AV_ASSERT ( vkCreateDebugReportCallbackEXT )
 
     vkDestroyDebugReportCallbackEXT = reinterpret_cast<PFN_vkDestroyDebugReportCallbackEXT> (
         vkGetInstanceProcAddr ( _instance, "vkDestroyDebugReportCallbackEXT" )
     );
 
-    assert ( vkDestroyDebugReportCallbackEXT );
+    AV_ASSERT ( vkDestroyDebugReportCallbackEXT )
 
     _loggerMapper.insert (
         std::make_pair ( VK_DEBUG_REPORT_INFORMATION_BIT_EXT,
@@ -2590,28 +2599,6 @@ bool Renderer::SelectTargetSurfaceFormat ( VkFormat &targetColorFormat,
     if ( !check ( targetDepthStencilFormat, depthStencilOptions, std::size ( depthStencilOptions ), "depth|stencil" ) )
         return false;
 
-//    for ( auto probe : depthStencilOptions )
-//    {
-//        VkFormatProperties props;
-//        vkGetPhysicalDeviceFormatProperties ( _physicalDevice, probe, &props );
-//
-//        if ( !( props.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT ) )
-//            continue;
-//
-//        targetDepthStencilFormat = probe;
-//    }
-//
-//    for ( auto probe : depthStencilOptions )
-//    {
-//        VkFormatProperties props;
-//        vkGetPhysicalDeviceFormatProperties ( _physicalDevice, probe, &props );
-//
-//        if ( !( props.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT ) )
-//            continue;
-//
-//        targetDepthStencilFormat = probe;
-//    }
-
     constexpr char const format[] = R"__(Renderer::SelectTargetSurfaceFormat - Surface format selected:
 %sColor format: %s
 %sColor space: %s
@@ -2631,10 +2618,6 @@ bool Renderer::SelectTargetSurfaceFormat ( VkFormat &targetColorFormat,
     );
 
     return true;
-//    }
-//
-//    LogError ( "Renderer::SelectTargetSurfaceFormat - Can't select depth|stencil format." );
-//    return false;
 }
 
 bool Renderer::CheckExtensionCommon ( std::set<std::string> const &allExtensions,
@@ -2665,15 +2648,7 @@ VkBool32 VKAPI_PTR Renderer::OnVulkanDebugReport ( VkDebugReportFlagsEXT flags,
     void* pUserData
 )
 {
-    std::string_view const message ( pMessage );
-
-    constexpr std::string_view tag ( "MessageID = " );
-    auto const filterResult = message.find ( tag );
-
-    assert ( filterResult != std::string_view::npos );
-    std::string_view const messageID = message.substr ( filterResult + tag.size () );
-
-    if ( g_validationFilter.count ( messageID.substr ( 0U, messageID.find ( ' ' ) ) ) > 0U )
+    if ( g_validationFilter.count ( location ) > 0U )
         return VK_FALSE;
 
     Renderer& renderer = *static_cast<Renderer*> ( pUserData );
@@ -2718,12 +2693,7 @@ message: %s
 
 #ifdef ANDROID_VULKAN_STRICT_MODE
 
-    // Note lambda syntax is used here only for preventing unreachable code warning from static analyzer.
-    // Not so proud of this code. Maybe there is a more elegant compiler agnostic solution for this...
-
-    [] () noexcept {
-        assert ( !"Renderer::OnVulkanDebugReport - Triggered!" );
-    } ();
+    AV_ASSERT ( false )
 
 #endif // ANDROID_VULKAN_STRICT_MODE
 

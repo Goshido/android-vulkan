@@ -1,10 +1,10 @@
+#include <av_assert.h>
 #include <velocity_solver.h>
 #include <logger.h>
 
 GX_DISABLE_COMMON_WARNINGS
 
 #include <algorithm>
-#include <cassert>
 
 GX_RESTORE_WARNING_STATE
 
@@ -121,8 +121,8 @@ float VelocitySolver::ComputeBaumgarteTerm ( GXVec3 const &wA,
 
     for ( auto& manifold : contactManager.GetContactManifolds () )
     {
-        assert ( manifold._contactCount > 0U );
-        assert ( manifold._contactCount <= histogram.size () );
+        AV_ASSERT ( manifold._contactCount > 0U )
+        AV_ASSERT ( manifold._contactCount <= histogram.size () )
         ++manifolds;
         ++( histogram[ manifold._contactCount - 1U ] );
     }

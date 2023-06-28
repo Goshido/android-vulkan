@@ -1,4 +1,4 @@
-// version 1.6
+// version 1.7
 
 #include <GXCommon/GXMath.h>
 
@@ -10,6 +10,11 @@ GX_DISABLE_COMMON_WARNINGS
 
 GX_RESTORE_WARNING_STATE
 
+
+[[maybe_unused]] GXVoid GXVec2::Reverse () noexcept
+{
+    vst1_f32 ( _data, vneg_f32 ( vld1_f32 ( _data ) ) );
+}
 
 [[maybe_unused]] GXVoid GXVec2::CalculateNormalFast ( GXVec2 const &a, GXVec2 const &b ) noexcept
 {

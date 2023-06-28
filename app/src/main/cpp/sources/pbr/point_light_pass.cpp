@@ -1,11 +1,6 @@
 #include <pbr/point_light_pass.h>
+#include <av_assert.h>
 #include <trace.h>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <cassert>
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace pbr {
@@ -71,6 +66,7 @@ bool PointLightPass::Init ( android_vulkan::Renderer &renderer,
     bool const result = _shadowmapBufferPool.Init ( renderer,
         GeometryPassInstanceDescriptorSetLayout {},
         sizeof ( PointLightShadowmapGeneratorProgram::InstanceData ),
+        0U,
         "pbr::PointLightPass::_shadowmapBufferPool"
     );
 
@@ -116,7 +112,7 @@ size_t PointLightPass::GetPointLightCount () const noexcept
 
 PointLightPass::PointLightInfo PointLightPass::GetPointLightInfo ( size_t lightIndex ) const noexcept
 {
-    assert ( lightIndex < _interacts.size () );
+    AV_ASSERT ( lightIndex < _interacts.size () )
 
     // NOLINTNEXTLINE - downcast.
     auto* pointLight = static_cast<PointLight*> ( _interacts[ lightIndex ].first.get () );

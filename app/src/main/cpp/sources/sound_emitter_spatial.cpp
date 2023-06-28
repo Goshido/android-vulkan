@@ -1,12 +1,7 @@
+#include <av_assert.h>
 #include <logger.h>
 #include <sound_emitter_spatial.h>
 #include <sound_mixer.h>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <cassert>
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace android_vulkan {
@@ -19,7 +14,7 @@ void SoundEmitterSpatial::SetVolume ( float volume ) noexcept
 
 void SoundEmitterSpatial::SetDistance ( float distance ) noexcept
 {
-    assert ( distance > 0.0F );
+    AV_ASSERT ( distance > 0.0F )
     _distanceFactor = 1.0F / distance;
 }
 
@@ -30,7 +25,7 @@ void SoundEmitterSpatial::SetLocation ( GXVec3 const &location ) noexcept
 
 void SoundEmitterSpatial::FillPCM ( std::span<PCMStreamer::PCMType> buffer, float channelVolume ) noexcept
 {
-    assert ( _streamer );
+    AV_ASSERT ( _streamer )
 
     SoundListenerInfo const& listener = _mixer->GetListenerInfo ();
     GXVec3 soundDirection {};

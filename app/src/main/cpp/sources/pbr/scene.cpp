@@ -10,14 +10,14 @@
 #include <pbr/scriptable_material.h>
 #include <pbr/scriptable_sweep_test_result.h>
 #include <pbr/static_mesh_component.h>
+#include <pbr/ui_layer.h>
+#include <av_assert.h>
 #include <core.h>
 #include <file.h>
 #include <shape_box.h>
 #include <trace.h>
 
 GX_DISABLE_COMMON_WARNINGS
-
-#include <cassert>
 
 extern "C" {
 
@@ -31,6 +31,8 @@ GX_RESTORE_WARNING_STATE
 namespace pbr {
 
 namespace {
+
+constexpr float COMFORTABLE_VIEW_DISTANCE_METERS = 3.5e-1F;
 
 constexpr float DEFAULT_ASPECT_RATIO = 1920.0F / 1080.0F;
 constexpr float DEFAULT_FOV = 60.0F;
@@ -87,7 +89,7 @@ GXMat4 const& Scene::GetActiveCameraProjectionMatrix () const noexcept
 
 android_vulkan::Physics& Scene::GetPhysics () noexcept
 {
-    assert ( _physics );
+    AV_ASSERT ( _physics )
     return *_physics;
 }
 
@@ -95,6 +97,8 @@ bool Scene::OnInitDevice ( android_vulkan::Renderer &renderer, android_vulkan::P
 {
     if ( !_soundMixer.Init () )
         return false;
+
+    UILayer::InitCSSUnitConverter ( renderer.GetDPI (), COMFORTABLE_VIEW_DISTANCE_METERS );
 
     _defaultCamera.SetProjection ( GXDegToRad ( DEFAULT_FOV ), DEFAULT_ASPECT_RATIO, DEFAULT_Z_NEAR, DEFAULT_Z_FAR );
     _penetrations.reserve ( INITIAL_PENETRATION_SIZE );
@@ -117,7 +121,7 @@ bool Scene::OnInitDevice ( android_vulkan::Renderer &renderer, android_vulkan::P
 
     if ( !lua_checkstack ( _vm, 8 ) )
     {
-        android_vulkan::LogError ( "pbr::Scene::OnInitDevice - Stack too small." );
+        android_vulkan::LogError ( "pbr::Scene::OnInitDevice - Stack is too small." );
         return false;
     }
 
@@ -134,6 +138,14 @@ bool Scene::OnInitDevice ( android_vulkan::Renderer &renderer, android_vulkan::P
         {
             .name = "av_SceneAppendActor",
             .func = &Scene::OnAppendActor
+        },
+        {
+            .name = "av_SceneAppendUILayer",
+            .func = &Scene::OnAppendUILayer
+        },
+        {
+            .name = "av_SceneDetachUILayer",
+            .func = &Scene::OnDetachUILayer
         },
         {
             .name = "av_SceneGetPenetrationBox",
@@ -279,7 +291,7 @@ bool Scene::OnPrePhysics ( double deltaTime ) noexcept
 
     if ( !lua_checkstack ( _vm, 3 ) )
     {
-        android_vulkan::LogError ( "pbr::Scene::OnPrePhysics - Stack too small." );
+        android_vulkan::LogError ( "pbr::Scene::OnPrePhysics - Stack is too small." );
         return false;
     }
 
@@ -297,7 +309,7 @@ bool Scene::OnPostPhysics ( double deltaTime ) noexcept
 
     if ( !lua_checkstack ( _vm, 3 ) )
     {
-        android_vulkan::LogError ( "pbr::Scene::OnPostPhysics - Stack too small." );
+        android_vulkan::LogError ( "pbr::Scene::OnPostPhysics - Stack is too small." );
         return false;
     }
 
@@ -323,7 +335,7 @@ bool Scene::OnResolutionChanged ( VkExtent2D const &resolution, double aspectRat
 
     if ( !lua_checkstack ( _vm, 2 ) )
     {
-        android_vulkan::LogError ( "pbr::Scene::OnResolutionChanged - Stack too small." );
+        android_vulkan::LogError ( "pbr::Scene::OnResolutionChanged - Stack is too small." );
         return false;
     }
 
@@ -340,7 +352,7 @@ bool Scene::OnUpdate ( double deltaTime ) noexcept
 
     if ( !lua_checkstack ( _vm, 3 ) )
     {
-        android_vulkan::LogError ( "pbr::Scene::OnUpdate - Stack too small." );
+        android_vulkan::LogError ( "pbr::Scene::OnUpdate - Stack is too small." );
         return false;
     }
 
@@ -365,7 +377,7 @@ bool Scene::LoadScene ( android_vulkan::Renderer &renderer, char const* scene, V
 
     // Sanity checks.
     static_assert ( sizeof ( GXVec3 ) == sizeof ( desc._viewerLocation ) );
-    assert ( desc._formatVersion == SCENE_DESC_FORMAT_VERSION );
+    AV_ASSERT ( desc._formatVersion == SCENE_DESC_FORMAT_VERSION )
 
     auto const comBuffs = static_cast<size_t> ( desc._textureCount + desc._meshCount + desc._envMapCount );
 
@@ -453,22 +465,16 @@ void Scene::RemoveActor ( Actor const &actor ) noexcept
 
 void Scene::Submit ( android_vulkan::Renderer &renderer, RenderSession &renderSession ) noexcept
 {
-    AV_TRACE ( "Submit components" )
-    FreeTransferResources ( renderer );
-
-    for ( auto& component : _renderableList )
-    {
-        // NOLINTNEXTLINE - downcast.
-        auto& renderableComponent = static_cast<RenderableComponent&> ( component.get () );
-        renderableComponent.Submit ( renderSession );
-    }
+    AV_TRACE ( "Scene submit" )
+    SubmitComponents ( renderer, renderSession );
+    SubmitUI ( renderer, renderSession );
 }
 
 void Scene::AppendActor ( ActorRef &actor ) noexcept
 {
     if ( !lua_checkstack ( _vm, 2 ) )
     {
-        android_vulkan::LogError ( "pbr::Scene::AppendActor - Stack too small." );
+        android_vulkan::LogError ( "pbr::Scene::AppendActor - Stack is too small." );
         return;
     }
 
@@ -490,7 +496,7 @@ int Scene::DoOverlapTestBoxBox ( lua_State &vm,
 {
     if ( !lua_checkstack ( &vm, 1 ) )
     {
-        android_vulkan::LogError ( "pbr::Scene::DoOverlapTestBoxBox - Stack too small." );
+        android_vulkan::LogError ( "pbr::Scene::DoOverlapTestBoxBox - Stack is too small." );
         return 0;
     }
 
@@ -546,6 +552,71 @@ int Scene::DoSweepTestBox ( lua_State &vm, GXMat4 const &local, GXVec3 const &si
     return static_cast<int> ( ScriptableSweepTestResult::PublishResult ( vm, _sweepTestResult ) );
 }
 
+void Scene::SubmitComponents ( android_vulkan::Renderer &renderer, RenderSession &renderSession ) noexcept
+{
+    AV_TRACE ( "Components" )
+
+    FreeTransferResources ( renderer );
+
+    for ( auto& component : _renderableList )
+    {
+        // NOLINTNEXTLINE - downcast.
+        auto& renderableComponent = static_cast<RenderableComponent&> ( component.get () );
+        renderableComponent.Submit ( renderSession );
+    }
+}
+
+void Scene::SubmitUI ( android_vulkan::Renderer &renderer, RenderSession &renderSession ) noexcept
+{
+    AV_TRACE ( "UI" )
+
+    UIPass& uiPass = renderSession.GetUIPass ();
+    FontStorage& fontStorage = uiPass.GetFontStorage ();
+
+    bool needRefill = false;
+    size_t neededUIVertices = 0U;
+
+    for ( auto& uiLayer : _uiLayerList )
+    {
+        UILayer::LayoutStatus const status = uiLayer.get ().ApplyLayout ( renderer, fontStorage );
+        needRefill |= status._hasChanges;
+        neededUIVertices += status._neededUIVertices;
+    }
+
+    if ( neededUIVertices == 0U )
+    {
+        uiPass.RequestEmptyUI ();
+        return;
+    }
+
+    VkExtent2D const& viewport = renderer.GetViewportResolution ();
+
+    for ( auto& uiLayer : _uiLayerList )
+        needRefill |= uiLayer.get ().UpdateCache ( fontStorage, viewport );
+
+    if ( !needRefill )
+        return;
+
+    UIPass::UIBufferResponse response = uiPass.RequestUIBuffer ( neededUIVertices );
+
+    if ( !response )
+    {
+        uiPass.RequestEmptyUI ();
+        return;
+    }
+
+    UIElement::SubmitInfo info
+    {
+        ._uiPass = &uiPass,
+        ._vertexBuffer = *response
+    };
+
+    for ( auto& uiLayer : _uiLayerList )
+    {
+        uiLayer.get ().Submit ( info );
+    }
+}
+
 void Scene::FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept
 {
     MaterialManager::GetInstance ().FreeTransferResources ( renderer );
@@ -557,6 +628,40 @@ int Scene::OnAppendActor ( lua_State* state )
     auto& self = *static_cast<Scene*> ( lua_touserdata ( state, 1 ) );
     self._actors.push_back ( Actor::GetReference ( *static_cast<Actor const*> ( lua_touserdata ( state, 2 ) ) ) );
     self._actors.back ()->RegisterComponentsFromScript ( self, self._renderableList, *self._physics );
+    return 0;
+}
+
+int Scene::OnAppendUILayer ( lua_State* state )
+{
+    auto& self = *static_cast<Scene*> ( lua_touserdata ( state, 1 ) );
+    self._uiLayerList.emplace_back ( *static_cast<UILayer*> ( lua_touserdata ( state, 2 ) ) );
+    return 0;
+}
+
+int Scene::OnDetachUILayer ( lua_State* state )
+{
+    auto& self = *static_cast<Scene*> ( lua_touserdata ( state, 1 ) );
+    auto& uiLayer = *static_cast<UILayer*> ( lua_touserdata ( state, 2 ) );
+
+    UILayerList& list = self._uiLayerList;
+    auto const end = list.cend ();
+
+    auto const findResult = std::find_if ( list.cbegin (),
+        end,
+
+        [ &uiLayer ] ( auto const &e ) noexcept -> bool {
+            return &e.get () == &uiLayer;
+        }
+    );
+
+    if ( findResult != end )
+    {
+        list.erase ( findResult );
+        return 0;
+    }
+
+    android_vulkan::LogError ( "pbr::Scene::OnDetachUILayer - Can't remove UI layer." );
+    AV_ASSERT ( false )
     return 0;
 }
 
@@ -580,7 +685,7 @@ int Scene::OnGetPhysicsToRendererScaleFactor ( lua_State* state )
         return 1;
     }
 
-    android_vulkan::LogError ( "pbr::Scene::OnGetPhysicsToRendererScaleFactor - Stack too small." );
+    android_vulkan::LogError ( "pbr::Scene::OnGetPhysicsToRendererScaleFactor - Stack is too small." );
     return 0;
 }
 
@@ -593,7 +698,7 @@ int Scene::OnGetRendererToPhysicsScaleFactor ( lua_State* state )
         return 1;
     }
 
-    android_vulkan::LogError ( "pbr::Scene::OnGetPhysicsToRendererScaleFactor - Stack too small." );
+    android_vulkan::LogError ( "pbr::Scene::OnGetPhysicsToRendererScaleFactor - Stack is too small." );
     return 0;
 }
 
@@ -601,7 +706,7 @@ int Scene::OnGetRenderTargetAspectRatio ( lua_State* state )
 {
     if ( !lua_checkstack ( state, 1 ) )
     {
-        android_vulkan::LogError ( "pbr::Scene::OnGetRenderTargetAspectRatio - Stack too small." );
+        android_vulkan::LogError ( "pbr::Scene::OnGetRenderTargetAspectRatio - Stack is too small." );
         return 0;
     }
 
@@ -614,7 +719,7 @@ int Scene::OnGetRenderTargetWidth ( lua_State* state )
 {
     if ( !lua_checkstack ( state, 1 ) )
     {
-        android_vulkan::LogError ( "pbr::Scene::OnGetRenderTargetWidth - Stack too small." );
+        android_vulkan::LogError ( "pbr::Scene::OnGetRenderTargetWidth - Stack is too small." );
         return 0;
     }
 
@@ -627,7 +732,7 @@ int Scene::OnGetRenderTargetHeight ( lua_State* state )
 {
     if ( !lua_checkstack ( state, 1 ) )
     {
-        android_vulkan::LogError ( "pbr::Scene::OnGetRenderTargetHeight - Stack too small." );
+        android_vulkan::LogError ( "pbr::Scene::OnGetRenderTargetHeight - Stack is too small." );
         return 0;
     }
 

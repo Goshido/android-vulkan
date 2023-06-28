@@ -1,5 +1,5 @@
 [[vk::binding ( 0 )]]
-cbuffer Transform:                          register ( b0 )
+cbuffer Transform:                              register ( b0 )
 {
     float32_t4x4            _transform;
     float32_t4x4            _normalTransform;

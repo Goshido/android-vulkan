@@ -1,11 +1,10 @@
 #include <pbr/camera_component.h>
 #include <pbr/script_engine.h>
 #include <pbr/scriptable_gxmat4.h>
+#include <av_assert.h>
 #include <guid_generator.h>
 
 GX_DISABLE_COMMON_WARNINGS
-
-#include <cassert>
 
 extern "C" {
 
@@ -44,7 +43,7 @@ CameraComponent::CameraComponent ( CameraComponentDesc const &desc, uint8_t cons
 {
     // Sanity checks.
     static_assert ( sizeof ( desc._localMatrix ) == sizeof ( GXMat4 ) );
-    assert ( desc._formatVersion == CAMERA_COMPONENT_DESC_FORMAT_VERSION );
+    AV_ASSERT ( desc._formatVersion == CAMERA_COMPONENT_DESC_FORMAT_VERSION )
 
     _name = reinterpret_cast<char const*> ( data + desc._name );
     std::memcpy ( _local._data, &desc._localMatrix, sizeof ( _local ) );
@@ -94,7 +93,7 @@ bool CameraComponent::Register ( lua_State &vm ) noexcept
 {
     if ( !lua_checkstack ( &vm, 2 ) )
     {
-        android_vulkan::LogError ( "pbr::CameraComponent::Register - Stack too small." );
+        android_vulkan::LogError ( "pbr::CameraComponent::Register - Stack is too small." );
         return false;
     }
 
@@ -108,7 +107,7 @@ bool CameraComponent::Init ( lua_State &vm ) noexcept
 {
     if ( !lua_checkstack ( &vm, 1 ) )
     {
-        android_vulkan::LogError ( "pbr::CameraComponent::Init - Stack too small." );
+        android_vulkan::LogError ( "pbr::CameraComponent::Init - Stack is too small." );
         return false;
     }
 

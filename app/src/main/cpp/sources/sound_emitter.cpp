@@ -1,14 +1,9 @@
+#include <av_assert.h>
 #include <logger.h>
 #include <pcm_streamer_ogg.h>
 #include <pcm_streamer_wav.h>
 #include <sound_emitter.h>
 #include <sound_mixer.h>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <cassert>
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace android_vulkan {
@@ -64,7 +59,7 @@ bool SoundEmitter::IsPlaying () const noexcept
 
 bool SoundEmitter::Pause () noexcept
 {
-    assert ( ( _mixer != nullptr ) & static_cast<bool> ( _streamer ) );
+    AV_ASSERT ( ( _mixer != nullptr ) & static_cast<bool> ( _streamer ) )
 
     if ( _mixer->RequestPause ( *this ) )
     {
@@ -77,7 +72,7 @@ bool SoundEmitter::Pause () noexcept
 
 bool SoundEmitter::Play () noexcept
 {
-    assert ( ( _mixer != nullptr ) & static_cast<bool> ( _streamer ) );
+    AV_ASSERT ( ( _mixer != nullptr ) & static_cast<bool> ( _streamer ) )
 
     if ( _mixer->RequestPlay ( *this ) )
     {
@@ -90,7 +85,10 @@ bool SoundEmitter::Play () noexcept
 
 bool SoundEmitter::Stop () noexcept
 {
-    assert ( ( _mixer != nullptr ) & static_cast<bool> ( _streamer ) );
+    AV_ASSERT ( ( _mixer != nullptr ) & static_cast<bool> ( _streamer ) )
+
+    if ( !_isPlaying )
+        return true;
 
     if ( _mixer->RequestStop ( *this ) )
     {
@@ -152,7 +150,7 @@ SoundEmitter::eStreamerType SoundEmitter::GetStreamerType ( std::string_view con
     if ( findResult == std::string_view::npos )
     {
         LogError ( "SoundEmitter::GetStreamerType - Unknown format (branch 1). Asset: %s", asset.data () );
-        assert ( false );
+        AV_ASSERT ( false )
         return eStreamerType::UNKNOWN;
     }
 
@@ -165,7 +163,7 @@ SoundEmitter::eStreamerType SoundEmitter::GetStreamerType ( std::string_view con
         return eStreamerType::WAV;
 
     LogError ( "SoundEmitter::GetStreamerType - Unknown format (branch 2). Asset: %s", asset.data () );
-    assert ( false );
+    AV_ASSERT ( false )
     return eStreamerType::UNKNOWN;
 }
 

@@ -4,12 +4,16 @@
 
 namespace pbr {
 
-constexpr static char const* VERTEX_SHADER = "shaders/point-light-shadowmap-generator-vs.spv";
-constexpr static char const* FRAGMENT_SHADER = "shaders/null-ps.spv";
+namespace {
 
-constexpr static uint32_t COLOR_RENDER_TARGET_COUNT = 0U;
-constexpr static size_t STAGE_COUNT = 2U;
-constexpr static size_t VERTEX_ATTRIBUTE_COUNT = 1U;
+constexpr char const* VERTEX_SHADER = "shaders/point-light-shadowmap-generator-vs.spv";
+constexpr char const* FRAGMENT_SHADER = "shaders/null-ps.spv";
+
+constexpr uint32_t COLOR_RENDER_TARGET_COUNT = 0U;
+constexpr size_t STAGE_COUNT = 2U;
+constexpr size_t VERTEX_ATTRIBUTE_COUNT = 1U;
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -179,9 +183,9 @@ VkPipelineDepthStencilStateCreateInfo const* PointLightShadowmapGeneratorProgram
     info.front.passOp = VK_STENCIL_OP_KEEP;
     info.front.depthFailOp = VK_STENCIL_OP_KEEP;
     info.front.compareOp = VK_COMPARE_OP_ALWAYS;
-    info.front.compareMask = UINT32_MAX;
+    info.front.compareMask = std::numeric_limits<uint32_t>::max ();
     info.front.writeMask = 0x00U;
-    info.front.reference = UINT32_MAX;
+    info.front.reference = std::numeric_limits<uint32_t>::max ();
     std::memcpy ( &info.back, &info.front, sizeof ( info.back ) );
 
     info.minDepthBounds = 0.0F;

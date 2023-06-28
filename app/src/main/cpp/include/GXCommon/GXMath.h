@@ -1,4 +1,4 @@
-// version 1.77
+// version 1.78
 
 #ifndef GX_MATH
 #define GX_MATH
@@ -58,6 +58,7 @@ struct [[maybe_unused]] GXVec2 final
 
     [[maybe_unused]] GXVoid Init ( GXFloat x, GXFloat y ) noexcept;
     [[maybe_unused]] GXVoid Normalize () noexcept;
+    [[maybe_unused]] GXVoid Reverse () noexcept;
 
     // No normalization
     [[maybe_unused]] GXVoid CalculateNormalFast ( GXVec2 const &a, GXVec2 const &b ) noexcept;

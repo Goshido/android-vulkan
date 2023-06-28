@@ -29,7 +29,7 @@ size_t ContactManager::Hasher::operator () ( Key const &me ) const noexcept
 
     auto hashCombine = [ & ] ( RigidBody const* body ) noexcept
     {
-        constexpr size_t const magic = 0x9e3779b9U;
+        constexpr size_t magic = 0x9E3779B9U;
         hash ^= _hashServer ( body ) + magic + ( hash << 6U ) + ( hash >> 2U );
     };
 

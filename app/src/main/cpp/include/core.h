@@ -70,7 +70,12 @@ class Core final
         Core ( Core && ) = delete;
         Core& operator = ( Core && ) = delete;
 
-        explicit Core ( JNIEnv* env, jobject activity, jobject assetManager, std::string &&cacheDirectory ) noexcept;
+        explicit Core ( JNIEnv* env,
+            jobject activity,
+            jobject assetManager,
+            std::string &&cacheDirectory,
+            float dpi
+        ) noexcept;
 
         ~Core () = default;
 

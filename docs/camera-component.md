@@ -4,7 +4,7 @@
 require "av://engine/camera_component.lua"
 ```
 
-## Table of content
+## <a id="table-of-content">Table of content</a>
 
 - [_Brief_](#brief)
 - [_Metamethods_](#metamethods)
@@ -29,6 +29,8 @@ g_scene:AppendActor ( mainCamera )
 
 g_scene:SetActiveCamera ( cameraComponent )
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="metamethods">Metamethods</a>
 
@@ -62,6 +64,8 @@ Metamethod | Used
 `__tostring` | ❌
 `__unm` | ❌
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="constructor">`Constructor`</a>
 
 Constructor creates new rigid body component with default properties.
@@ -82,6 +86,8 @@ local cameraComponent = CameraComponent ( "Camera" )
 mainCamera:AppendComponent ( cameraComponent )
 g_scene:AppendActor ( mainCamera )
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-set-aspect-ratio">`SetAspectRatio ( aspectRatio )`</a>
 
@@ -109,6 +115,8 @@ local width = 1920.0
 local height = 1080.0
 cameraComponent:SetAspectRatio ( width / height )
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-set-local">`SetLocal ( localMatrix )`</a>
 
@@ -150,6 +158,8 @@ transform:FromFast ( rotation, origin )
 cameraComponent:SetLocal ( transform )
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-set-projection">`SetProjection ( fieldOfViewRadians, aspectRatio, zNear, zFar )`</a>
 
 Method changes camera projection transformation.
@@ -179,3 +189,5 @@ local width = 1920.0
 local height = 1080.0
 cameraComponent:SetProjection ( math.rad ( 60.0 ), width / height, 1.0e-1, 1.0e+4 )
 ```
+
+[↬ table of content ⇧](#table-of-content)

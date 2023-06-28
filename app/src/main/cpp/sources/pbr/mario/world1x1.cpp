@@ -38,6 +38,7 @@ bool World1x1::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) 
         return false;
 
     _renderSession.Begin ( _scene.GetActiveCameraLocalMatrix (), _scene.GetActiveCameraProjectionMatrix () );
+
     _scene.Submit ( renderer, _renderSession );
 
     if ( !_scene.OnUpdate ( deltaTime ) )
@@ -99,6 +100,7 @@ void World1x1::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
 bool World1x1::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept
 {
     VkExtent2D resolution = renderer.GetViewportResolution ();
+
     resolution.width = resolution.width * RESOLUTION_SCALE_WIDTH / 100U;
     resolution.height = resolution.height * RESOLUTION_SCALE_HEIGHT / 100U;
 

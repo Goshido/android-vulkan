@@ -1,12 +1,7 @@
+#include <av_assert.h>
 #include <rigid_body.h>
 #include <logger.h>
 #include <physics.h>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <cassert>
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace android_vulkan {
@@ -331,7 +326,7 @@ void RigidBody::SetRotation ( GXQuat const &rotation, bool forceAwake ) noexcept
 
 Shape& RigidBody::GetShape () noexcept
 {
-    assert ( _shape );
+    AV_ASSERT ( _shape )
     return *_shape;
 }
 

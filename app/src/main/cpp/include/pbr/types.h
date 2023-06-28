@@ -23,11 +23,13 @@ using ActorRef = std::shared_ptr<Actor>;
 
 class Component;
 using ComponentRef = std::shared_ptr<Component>;
-
 using ComponentList = std::list<std::reference_wrapper<Component>>;
 
 class Transformable;
 using TransformableList = std::list<std::reference_wrapper<Transformable>>;
+
+class UILayer;
+using UILayerList = std::list<std::reference_wrapper<UILayer>>;
 
 using LightRef = std::shared_ptr<Light>;
 using MaterialRef = std::shared_ptr<Material>;

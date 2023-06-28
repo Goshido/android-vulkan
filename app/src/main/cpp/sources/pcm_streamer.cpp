@@ -1,10 +1,10 @@
+#include <av_assert.h>
 #include <logger.h>
 #include <pcm_streamer.h>
 #include <sound_mixer.h>
 
 GX_DISABLE_COMMON_WARNINGS
 
-#include <cassert>
 #include <cinttypes>
 
 GX_RESTORE_WARNING_STATE
@@ -15,7 +15,7 @@ namespace android_vulkan {
 void PCMStreamer::OnDecompress () noexcept
 {
     // Stub implementation. This code should not be called from decompressor thread. It's an implementation error.
-    assert ( false );
+    AV_ASSERT ( false )
 }
 
 bool PCMStreamer::Reset () noexcept

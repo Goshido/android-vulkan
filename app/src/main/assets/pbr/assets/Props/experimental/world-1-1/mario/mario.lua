@@ -1,5 +1,4 @@
 require "av://engine/script_component.lua"
-require "av://engine/sound_emitter_global_component.lua"
 
 
 -- Constants
@@ -76,10 +75,6 @@ local function OnInputActive ( self, inputEvent )
         self:Jump ()
         return
     end
-
-    if inputEvent._type == eEventType.KeyUp and inputEvent._key == eKey.Home then
-        self:QuitGame ()
-    end
 end
 
 local function OnInputIdle ( self, inputEvent )
@@ -89,10 +84,6 @@ end
 local function OnPostPhysicsActive ( self, deltaTime )
     self._rigidBody:GetTransform ( self._transform )
     self._rigidBody:GetVelocityLinear ( self._velocity )
-
-    if self._music and not self._music:IsPlaying () then
-        self._music:Play ()
-    end
 end
 
 local function OnPostPhysicsIdle ( self, deltaTime )
@@ -150,18 +141,6 @@ local function OnActorConstructed ( self, actor )
     local min = self:GetOrigin ( actor, "Min" )
     local max = self:GetOrigin ( actor, "Max" )
     self._size = self:GetSensorSize ( min, max )
-
-    local music = SoundEmitterGlobalComponent ( "Music", eSoundChannel.Music )
-    music:SetSoundAsset ( "sounds/Credits.ogg", true )
-    music:SetVolume ( 0.25 )
-    actor:AppendComponent ( music )
-    self._music = music
-end
-
-local function QuitGame ( self )
-    self._music:Stop ()
-    self._music = nil
-    g_scene:Quit ()
 end
 
 -- Metamethods
@@ -186,7 +165,6 @@ local function Constructor ( self, handle, params )
     obj.Hit = Hit
     obj.Jump = Jump
     obj.Move = Move
-    obj.QuitGame = QuitGame
 
     -- Engine events
     obj.OnActorConstructed = OnActorConstructed

@@ -21,7 +21,7 @@ class GeometryPassInstanceDescriptorSetLayout final : public DescriptorSetLayout
         GeometryPassInstanceDescriptorSetLayout ( GeometryPassInstanceDescriptorSetLayout && ) = delete;
         GeometryPassInstanceDescriptorSetLayout& operator = ( GeometryPassInstanceDescriptorSetLayout && ) = delete;
 
-        ~GeometryPassInstanceDescriptorSetLayout () noexcept override = default;
+        ~GeometryPassInstanceDescriptorSetLayout () override = default;
 
         void Destroy ( VkDevice device ) noexcept override;
         [[nodiscard]] bool Init ( VkDevice device ) noexcept override;

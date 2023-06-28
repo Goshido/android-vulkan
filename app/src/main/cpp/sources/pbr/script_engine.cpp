@@ -14,14 +14,16 @@
 #include <pbr/sound_emitter_global_component.h>
 #include <pbr/sound_emitter_spatial_component.h>
 #include <pbr/static_mesh_component.h>
+#include <pbr/text_ui_element.h>
 #include <pbr/transform_component.h>
+#include <pbr/ui_layer.h>
+#include <av_assert.h>
 #include <file.h>
 #include <logger.h>
 
 GX_DISABLE_COMMON_WARNINGS
 
 #include <algorithm>
-#include <cassert>
 
 extern "C" {
 
@@ -74,6 +76,12 @@ void ScriptEngine::Destroy () noexcept
     _instance = nullptr;
 }
 
+int ScriptEngine::PushErrorHandlerToStack ( lua_State &vm ) noexcept
+{
+    lua_pushcfunction ( &vm, &ScriptEngine::OnErrorHandler );
+    return lua_gettop ( &vm );
+}
+
 bool ScriptEngine::ExtendFrontend ( android_vulkan::Renderer &renderer,
     android_vulkan::SoundMixer &soundMixer
 ) const noexcept
@@ -85,6 +93,10 @@ bool ScriptEngine::ExtendFrontend ( android_vulkan::Renderer &renderer,
     ScriptableGXQuat::Init ( vm );
     ScriptableGXVec3::Init ( vm );
     ScriptableGXVec4::Init ( vm );
+
+    UILayer::InitLuaFrontend ( vm );
+    UIElement::InitCommon ( vm );
+    TextUIElement::Init ( vm );
 
     Component::Register ( vm );
     ScriptableLogger::Register ( vm );
@@ -261,6 +273,8 @@ void ScriptEngine::Free ( lua_State* state ) noexcept
     ScriptComponent::Destroy ();
     ScriptableMaterial::Destroy ();
     Actor::Destroy ();
+    UIElement::Destroy ();
+    UILayer::Destroy ();
 }
 
 bool ScriptEngine::LoadScript ( lua_State* vm,
@@ -314,7 +328,7 @@ int ScriptEngine::OnErrorHandler ( lua_State* state )
     android_vulkan::LogError ( "pbr::ScriptEngine::OnErrorHandler - Error: %s", lua_tostring ( state, -1 ) );
     lua_pop ( state, 1 );
 
-    assert ( 0 );
+    AV_ASSERT ( false )
     return 0;
 }
 
@@ -331,7 +345,7 @@ R"__(pbr::ScriptEngine::OnPanic - Lua VM:
 
 
     android_vulkan::LogError ( format, message );
-    assert ( 0 );
+    AV_ASSERT ( false )
 
     // Abort Lua VW
     return 0;
@@ -416,7 +430,7 @@ R"__(pbr::ScriptEngine::OnWarning - Lua VM:
 %s)__";
 
     android_vulkan::LogWarning ( format, message );
-    assert ( 0 );
+    AV_ASSERT ( false )
 }
 
 } // namespace pbr

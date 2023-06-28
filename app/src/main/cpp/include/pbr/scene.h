@@ -4,6 +4,7 @@
 
 #include "actor.h"
 #include "camera_component.h"
+#include "font_storage.h"
 #include "render_session.h"
 #include "renderable_component.h"
 #include "scriptable_gamepad.h"
@@ -31,6 +32,7 @@ class Scene final
         std::vector<android_vulkan::RigidBodyRef>       _sweepTestResult {};
 
         ComponentList                                   _renderableList {};
+        UILayerList                                     _uiLayerList {};
 
         lua_Number                                      _aspectRatio = 1.0;
         lua_Integer                                     _width = -1;
@@ -109,9 +111,14 @@ class Scene final
             uint32_t groups
         ) noexcept;
 
+        void SubmitComponents ( android_vulkan::Renderer &renderer, RenderSession &renderSession ) noexcept;
+        void SubmitUI ( android_vulkan::Renderer &renderer, RenderSession &renderSession ) noexcept;
+
         static void FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept;
 
         [[nodiscard]] static int OnAppendActor ( lua_State* state );
+        [[nodiscard]] static int OnAppendUILayer ( lua_State* state );
+        [[nodiscard]] static int OnDetachUILayer ( lua_State* state );
         [[nodiscard]] static int OnGetPenetrationBox ( lua_State* state );
         [[nodiscard]] static int OnGetPhysicsToRendererScaleFactor ( lua_State* state );
         [[nodiscard]] static int OnGetRendererToPhysicsScaleFactor ( lua_State* state );

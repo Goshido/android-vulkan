@@ -3,7 +3,6 @@
 
 GX_DISABLE_COMMON_WARNINGS
 
-#include <cassert>
 #include <arm_neon.h>
 
 GX_RESTORE_WARNING_STATE

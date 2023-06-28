@@ -1,5 +1,6 @@
 #include <pbr/scriptable_material.h>
 #include <pbr/material_manager.h>
+#include <av_assert.h>
 #include <vulkan_utils.h>
 
 GX_DISABLE_COMMON_WARNINGS
@@ -10,15 +11,17 @@ extern "C" {
 
 } // extern "C"
 
-#include <cassert>
-
 GX_RESTORE_WARNING_STATE
 
 
 namespace pbr {
 
-constexpr static size_t ALLOCATE_COMMAND_BUFFERS = 8U * MaterialManager::MaxCommandBufferPerMaterial ();
-constexpr static size_t INITIAL_COMMAND_BUFFERS = 32U * MaterialManager::MaxCommandBufferPerMaterial ();
+namespace {
+
+constexpr size_t ALLOCATE_COMMAND_BUFFERS = 8U * MaterialManager::MaxCommandBufferPerMaterial ();
+constexpr size_t INITIAL_COMMAND_BUFFERS = 32U * MaterialManager::MaxCommandBufferPerMaterial ();
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -48,7 +51,7 @@ bool ScriptableMaterial::Init ( lua_State &vm, android_vulkan::Renderer &rendere
 
     _renderer = &renderer;
 
-    VkCommandPoolCreateInfo createInfo
+    VkCommandPoolCreateInfo const createInfo
     {
         .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
         .pNext = nullptr,
@@ -56,10 +59,8 @@ bool ScriptableMaterial::Init ( lua_State &vm, android_vulkan::Renderer &rendere
         .queueFamilyIndex = renderer.GetQueueFamilyIndex ()
     };
 
-    VkDevice device = renderer.GetDevice ();
-
     bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateCommandPool ( device, &createInfo, nullptr, &_commandPool ),
+        vkCreateCommandPool ( renderer.GetDevice (), &createInfo, nullptr, &_commandPool ),
         "pbr::ScriptableMaterial::Init",
         "Can't create command pool"
     );
@@ -73,6 +74,12 @@ bool ScriptableMaterial::Init ( lua_State &vm, android_vulkan::Renderer &rendere
 
 void ScriptableMaterial::Destroy () noexcept
 {
+    if ( !_materials.empty () )
+    {
+        android_vulkan::LogWarning ( "pbr::ScriptableMaterial::Destroy - Memory leak." );
+        AV_ASSERT ( false )
+    }
+
     _materials.clear ();
     VkDevice device = _renderer->GetDevice ();
 
@@ -103,7 +110,7 @@ void ScriptableMaterial::Destroy () noexcept
 MaterialRef& ScriptableMaterial::GetReference ( Material const &handle ) noexcept
 {
     auto findResult = _materials.find ( &handle );
-    assert ( findResult != _materials.end () );
+    AV_ASSERT ( findResult != _materials.end () )
     return findResult->second;
 }
 
@@ -134,7 +141,7 @@ bool ScriptableMaterial::Sync () noexcept
         return false;
 
     result = android_vulkan::Renderer::CheckVkResult (
-        vkResetCommandPool ( _renderer->GetDevice (), _commandPool, 0U ),
+        vkResetCommandPool ( device, _commandPool, 0U ),
         "pbr::ScriptableMaterial::Sync",
         "Can't reset command pool"
     );
@@ -203,7 +210,7 @@ int ScriptableMaterial::OnCreate ( lua_State* state )
 {
     if ( !lua_checkstack ( state, 1 ) )
     {
-        android_vulkan::LogWarning ( "pbr::ScriptableMaterial::OnCreate - Stack too small." );
+        android_vulkan::LogWarning ( "pbr::ScriptableMaterial::OnCreate - Stack is too small." );
         return 0;
     }
 
@@ -253,7 +260,7 @@ int ScriptableMaterial::OnDestroy ( lua_State* state )
 {
     auto const* handle = static_cast<Material const*> ( lua_touserdata ( state, 1 ) );
     [[maybe_unused]] auto const result = _materials.erase ( handle );
-    assert ( result > 0U );
+    AV_ASSERT ( result > 0U )
     return 0;
 }
 

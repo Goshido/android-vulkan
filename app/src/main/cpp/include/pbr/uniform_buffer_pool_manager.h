@@ -46,6 +46,7 @@ class UniformBufferPoolManager final
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
             DescriptorSetLayout const &descriptorSetLayout,
             size_t itemSize,
+            uint32_t bind,
             char const* name
         ) noexcept;
 

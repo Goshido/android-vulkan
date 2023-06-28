@@ -93,6 +93,7 @@ bool GeometryPass::Init ( android_vulkan::Renderer &renderer,
         _uniformPool.Init ( renderer,
             GeometryPassInstanceDescriptorSetLayout (),
             sizeof ( GeometryPassProgram::InstanceData ),
+            0U,
             "pbr::GeometryPass::_uniformPool"
         ) &&
 
@@ -119,7 +120,7 @@ void GeometryPass::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 
 void GeometryPass::Execute ( VkCommandBuffer commandBuffer, RenderSessionStats &renderSessionStats ) noexcept
 {
-    AV_TRACE ( "Geometry pass" )
+    AV_TRACE ( "Geometry pass: Execute" )
 
     bool isSamplerUsed = false;
 
@@ -166,6 +167,8 @@ void GeometryPass::UploadGPUData ( VkDevice device,
     GXMat4 const &viewProjection
 ) noexcept
 {
+    AV_TRACE ( "Geometry pass: Upload GPU data" )
+
     _opaqueSubpass.UpdateGPUData ( commandBuffer,
         _materialPool,
         _uniformPool,

@@ -153,7 +153,7 @@ void TextUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
     size_t const startLine = divLineHeights.size () - 1U;
     size_t parentLine = startLine;
 
-    float& currentLineHeight = divLineHeights.back ();
+    float const currentLineHeight = divLineHeights.back ();
     _applyLayoutCache._lineHeights.push_back ( currentLineHeight );
 
     auto const currentLineHeightInteger = static_cast<int32_t> ( currentLineHeight );
@@ -162,6 +162,7 @@ void TextUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
     auto const fontSizeF = static_cast<float> ( _fontSize );
 
     int32_t const lineHeights[] = { _fontSize, std::max ( _fontSize, currentLineHeightInteger ) };
+    float const lineHeightsF[] = { fontSizeF, std::max ( fontSizeF, currentLineHeight ) };
 
     GXVec2& pen = info._pen;
     _applyLayoutCache._penIn = pen;
@@ -215,6 +216,10 @@ void TextUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
         if ( x < w )
         {
             appendGlyph ( parentLine, *gi );
+
+            float const h = lineHeightsF[ firstLineHeightIdx ];
+            divLineHeights.back () = h;
+            _applyLayoutCache._lineHeights.back () = h;
         }
         else
         {
@@ -233,9 +238,6 @@ void TextUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
 
     Glyph* glyph = _glyphs.data ();
 
-    constexpr size_t firstLineChangedIdx = 1U;
-    bool firstLineState[] = { false, false };
-
     for ( char32_t const rightCharacter : text )
     {
         gi = &fontStorage.GetGlyphInfo ( renderer, f, rightCharacter );
@@ -243,17 +245,20 @@ void TextUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
         int32_t const advance = gi->_advance + FontStorage::GetKerning ( f, leftCharacter, rightCharacter );
         x += advance;
         leftCharacter = rightCharacter;
-        ++glyphsPerLine;
 
         if ( x < w )
         {
+            ++glyphsPerLine;
+
             glyph->_advance = baseX - previousX;
             ++glyph;
 
             previousX = baseX;
-
             appendGlyph ( parentLine, *gi );
-            firstLineState[ static_cast<size_t> ( parentLine == startLine ) ] = true;
+
+            float const h = lineHeightsF[ static_cast<size_t> ( parentLine == startLine ) ];
+            divLineHeights.back () = h;
+            _applyLayoutCache._lineHeights.back () = h;
             continue;
         }
 
@@ -289,10 +294,6 @@ void TextUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
             ._length = x - start
         }
     );
-
-    int32_t const cases[] = { currentLineHeightInteger, lineHeights[ firstLineHeightIdx ] };
-    currentLineHeight = static_cast<float> ( cases[ static_cast<size_t> ( firstLineState[ firstLineChangedIdx ] ) ] );
-    _applyLayoutCache._lineHeights.front () = currentLineHeight;
 
     pen._data[ 0U ] = static_cast<float> ( x );
     pen._data[ 1U ] = static_cast<float> ( y ) + fraction;

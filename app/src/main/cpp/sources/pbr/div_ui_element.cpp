@@ -23,9 +23,9 @@ DIVUIElement::DIVUIElement ( bool &success,
     CSSComputedValues &&css
 ) noexcept:
     CSSUIElement ( css._display != DisplayProperty::eValue::None, parent, std::move ( css ) ),
-    _isAutoWidth ( css._width.GetType () == LengthValue::eType::Auto ),
-    _isAutoHeight ( css._height.GetType () == LengthValue::eType::Auto ),
-    _isInlineBlock ( css._display == DisplayProperty::eValue::InlineBlock ),
+    _isAutoWidth ( _css._width.GetType () == LengthValue::eType::Auto ),
+    _isAutoHeight ( _css._height.GetType () == LengthValue::eType::Auto ),
+    _isInlineBlock ( _css._display == DisplayProperty::eValue::InlineBlock ),
 
     _widthSelectorBase (
         ( static_cast<size_t> ( _isInlineBlock ) << 2U ) | ( static_cast<size_t> ( _isAutoWidth ) << 1U )
@@ -175,7 +175,7 @@ void DIVUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
         widthCases[ 1U ],
         widthCases[ 0U ],
         widthCases[ 0U ],
-        childInfo._pen._data[ 0U ] - pen._data[ 0U ],
+        childInfo._pen._data[ 0U ],
         widthCases[ 1U ]
     };
 
@@ -283,16 +283,25 @@ bool DIVUIElement::UpdateCache ( UpdateInfo &info ) noexcept
     if ( !_visible )
         return false;
 
-
     GXVec2 pen = info._pen;
 
     if ( info._line != _parentLine )
     {
         pen._data[ 0U ] = info._parentTopLeft._data[ 0U ];
         pen._data[ 1U ] += info._parentLineHeights[ info._line ];
+
+        info._pen._data[ 1U ] = pen._data[ 1U ];
+        info._line = _parentLine;
     }
 
-    AlignHander const verticalAlign = ResolveVerticalAlignment ( *this );
+//    if ( _parent )
+//    {
+//        // NOLINTNEXTLINE - downcast
+//        AlignHander const handler = ResolveTextAlignment ( static_cast<CSSUIElement const &> ( *_parent ) );
+//        pen._data[ 0U ] = handler ( pen._data[ 0U ], info._parentWidth, _blockSize._data[ 0U ] );
+//    }
+
+    AlignHander const verticalAlign = ResolveVerticalAlignment ( static_cast<CSSUIElement const &> ( *this ) );
     pen._data[ 1U ] = verticalAlign ( pen._data[ 1U ], info._parentLineHeights[ _parentLine ], _blockSize._data[ 1U ] );
 
     if ( _hasBackground )

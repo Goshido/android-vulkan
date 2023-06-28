@@ -25,7 +25,7 @@ local function OnInputActive ( self, inputEvent )
     end
 end
 
-local function OnUpdateIdle ( self, deltaTime )
+local function OnUpdateMain ( self, deltaTime )
     self._timerNow = self._timerNow - deltaTime
     local now = math.ceil ( self._timerNow )
 
@@ -38,14 +38,14 @@ local function OnUpdateIdle ( self, deltaTime )
     self._uiTimer:SetText ( string.format ( "%d", now ) )
 end
 
-local function OnUpdateActive ( self, deltaTime )
+local function OnUpdateFirst ( self, deltaTime )
     self._music:Play ()
-    self.OnUpdate = OnUpdateIdle
+    self.OnUpdate = OnUpdateMain
+    OnUpdateMain ( self, deltaTime )
 end
 
 local function OnActorConstructed ( self, actor )
     self.OnInput = OnInputActive
-    self.OnUpdate = OnUpdateActive
 
     local music = SoundEmitterGlobalComponent ( "Music", eSoundChannel.Music )
     music:SetSoundAsset ( "sounds/Credits.ogg", true )
@@ -68,7 +68,7 @@ local function Constructor ( self, handle, params )
     obj._timerLast = 383.999
     obj._timerNow = 383.0
 
-    -- obj._uiDebug = UILayer ( "pbr/assets/Props/experimental/world-1-1/ui/debug.html" )
+    obj._uiDebug = UILayer ( "pbr/assets/Props/experimental/world-1-1/ui/debug.html" )
 
     -- Methods
     obj.QuitGame = QuitGame
@@ -76,7 +76,7 @@ local function Constructor ( self, handle, params )
     -- Engine events
     obj.OnActorConstructed = OnActorConstructed
     obj.OnInput = OnInputIdle
-    obj.OnUpdate = OnUpdateIdle
+    obj.OnUpdate = OnUpdateFirst
 
     return obj
 end

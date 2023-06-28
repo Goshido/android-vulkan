@@ -32,7 +32,7 @@ class DIVUIElement final : public CSSUIElement
 
         std::vector<float>          _lineHeights {};
         size_t                      _parentLine = 0U;
-        UIVertexInfo                _vertices[ UIPass::GetVerticesPerRectangle() ];
+        UIVertexInfo                _vertices[ UIPass::GetVerticesPerRectangle() ] {};
         size_t const                _widthSelectorBase;
 
     public:

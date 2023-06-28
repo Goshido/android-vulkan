@@ -80,9 +80,9 @@ ImageUIElement::ImageUIElement ( bool &success,
 ) noexcept:
     CSSUIElement ( true, parent, std::move ( css ) ),
     _asset ( std::move ( asset ) ),
-    _isAutoWidth ( css._width.GetType () == LengthValue::eType::Auto ),
-    _isAutoHeight ( css._height.GetType () == LengthValue::eType::Auto ),
-    _isInlineBlock ( css._display == DisplayProperty::eValue::InlineBlock )
+    _isAutoWidth ( _css._width.GetType () == LengthValue::eType::Auto ),
+    _isAutoHeight ( _css._height.GetType () == LengthValue::eType::Auto ),
+    _isInlineBlock ( _css._display == DisplayProperty::eValue::InlineBlock )
 {
     if ( success = lua_checkstack ( &vm, 2 ); !success )
     {
@@ -308,7 +308,7 @@ bool ImageUIElement::UpdateCache ( UpdateInfo &info ) noexcept
     float const& parentLeft = _parentSize._data[ 0U ];
     float const& blockWidth = _blockSize._data[ 0U ];
 
-    // NOLINTNEXTLINE - downcast
+    // NOLINTNEXTLINE - downcast.
     AlignHander const handler = ResolveTextAlignment ( static_cast<CSSUIElement const &> ( *_parent ) );
     topLeft._data[ 0U ] = handler ( penX, parentLeft, blockWidth ) + borderOffsetX;
 

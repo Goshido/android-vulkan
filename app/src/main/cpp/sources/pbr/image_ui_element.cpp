@@ -264,8 +264,6 @@ void ImageUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
     ApplyLayout ( info );
 }
 
-size_t fff = 0U;
-
 void ImageUIElement::Submit ( SubmitInfo &info ) noexcept
 {
     if ( !_visible )
@@ -283,8 +281,11 @@ void ImageUIElement::Submit ( SubmitInfo &info ) noexcept
 
 bool ImageUIElement::UpdateCache ( UpdateInfo &info ) noexcept
 {
+    bool const needRefill = _visibilityChanged;
+    _visibilityChanged = false;
+
     if ( !_visible || _submitCache.Run ( info, _applyLayoutCache._lineHeights ) )
-        return false;
+        return needRefill;
 
     _submitCache._parenTopLeft = info._parentTopLeft;
     _submitCache._penIn = info._pen;

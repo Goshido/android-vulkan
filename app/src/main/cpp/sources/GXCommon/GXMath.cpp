@@ -1,4 +1,4 @@
-﻿// version 1.76
+// version 1.77
 
 #include <GXCommon/GXMath.h>
 
@@ -77,7 +77,7 @@ constexpr static GXUByte SOLUTION_YOTTA = 3U;
 
 [[maybe_unused]] GXBool GXVec2::IsEqual ( GXVec2 const &other ) const noexcept
 {
-    return _data[ 0U ] == other._data[ 0U ] & _data[ 1U ] == other._data[ 1U ];
+    return ( _data[ 0U ] == other._data[ 0U ] ) & ( _data[ 1U ] == other._data[ 1U ] );
 }
 
 //----------------------------------------------------------------------------------------------------------------------

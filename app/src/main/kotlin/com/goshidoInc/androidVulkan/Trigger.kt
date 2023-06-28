@@ -7,13 +7,11 @@ import android.view.MotionEvent
 internal sealed class Trigger ( protected val listener : AnalogControlListener )
 {
     protected var oldValue : Float = 0.0F
-
-    abstract fun sync ( event : MotionEvent )
 }
 
 internal class LeftTrigger ( listener : AnalogControlListener ) : Trigger ( listener )
 {
-    override fun sync ( event : MotionEvent )
+    fun sync ( event : MotionEvent )
     {
         val value = event.getAxisValue ( MotionEvent.AXIS_LTRIGGER )
 
@@ -27,7 +25,7 @@ internal class LeftTrigger ( listener : AnalogControlListener ) : Trigger ( list
 
 internal class RightTrigger ( listener : AnalogControlListener ) : Trigger ( listener )
 {
-    override fun sync ( event : MotionEvent )
+    fun sync ( event : MotionEvent )
     {
         val value = event.getAxisValue ( MotionEvent.AXIS_RTRIGGER )
 

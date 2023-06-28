@@ -1,4 +1,4 @@
-// version 1.2
+// version 1.3
 // No include guard allowed
 // Not include this explicitly! Use GXCommon/GXWarning.h instead.
 
@@ -21,6 +21,7 @@
     GX_DISABLE_WARNING ( 4505 )     /* unreferenced local function has been removed */ \
     GX_DISABLE_WARNING ( 4530 )     /* C++ exception handler used, but unwind semantics are not enabled. Specify /EHsc */ \
     GX_DISABLE_WARNING ( 4555 )     /* expression has no effect; expected expression with side-effect */ \
+    GX_DISABLE_WARNING ( 4619 )     /* #pragma warning : there is no warning number 'number' */ \
     GX_DISABLE_WARNING ( 4625 )     /* copy constructor was implicitly defined as deleted */ \
     GX_DISABLE_WARNING ( 4626 )     /* assignment operator was implicitly defined as deleted */ \
     GX_DISABLE_WARNING ( 4668 )     /* 'symbol' is not defined as a preprocessor macro, replacing with '0' for 'directives' */ \

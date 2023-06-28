@@ -51,7 +51,7 @@ class UILayer final
         ) noexcept;
 
         void Submit ( UIElement::SubmitInfo &info ) noexcept;
-        [[nodiscard]] bool UpdateCache ( FontStorage &fontStorage, uint32_t viewportWidth ) noexcept;
+        [[nodiscard]] bool UpdateCache ( FontStorage &fontStorage, VkExtent2D const &viewport ) noexcept;
 
         static void InitCSSUnitConverter ( float dpi, float comfortableViewDistanceMeters ) noexcept;
         static void InitLuaFrontend ( lua_State &vm ) noexcept;

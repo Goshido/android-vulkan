@@ -3,7 +3,7 @@ set ( CMAKE_CXX_STANDARD 20 )
 project ( Vulkan-validation-layers )
 
 # Enable link time optimization for release build via native flag.
-# Note there is CMAKE_INTERPROCEDURAL_OPTIMZATION_RELEASE built-in variable but it works not reliably with
+# Note there is CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE built-in variable but it works not reliably with
 # NDK 22.0.7026061 at link time (linking errors on Linux).
 string ( APPEND CMAKE_CXX_FLAGS_RELEASE " -flto=thin" )
 
@@ -15,13 +15,14 @@ add_library ( layer_utils
     ../layers/utils/vk_layer_extension_utils.cpp
     ../layers/error_message/logging.cpp
     ../layers/utils/vk_layer_utils.cpp
-    ../layers/generated/vk_format_utils.cpp
+    ../layers/utils/ray_tracing_utils.cpp
+    ../layers/vulkan/generated/vk_format_utils.cpp
     ../layers/external/xxhash.cpp
 )
 
 target_include_directories ( layer_utils
     PRIVATE
-    ../layers/generated
+    ../layers/vulkan
     ../layers
     Vulkan-Headers/include
     ../layers/external
@@ -93,12 +94,13 @@ add_library ( VkLayer_khronos_validation
     ../layers/state_tracker/shader_instruction.cpp
     ../layers/core_checks/cc_shader.cpp
     ../layers/core_checks/cc_synchronization.cpp
-    ../layers/generated/spirv_validation_helper.cpp
-    ../layers/generated/spirv_grammar_helper.cpp
-    ../layers/generated/command_validation.cpp
-    ../layers/generated/dynamic_state_helper.cpp
+    ../layers/vulkan/generated/spirv_validation_helper.cpp
+    ../layers/vulkan/generated/spirv_grammar_helper.cpp
+    ../layers/vulkan/generated/command_validation.cpp
+    ../layers/vulkan/generated/dynamic_state_helper.cpp
     ../layers/gpu_validation/gpu_validation.cpp
     ../layers/gpu_validation/gpu_utils.cpp
+    ../layers/gpu_validation/gv_descriptor_sets.cpp
     ../layers/gpu_validation/debug_printf.cpp
     ../layers/best_practices/best_practices_utils.cpp
     ../layers/best_practices/bp_buffer.cpp
@@ -116,23 +118,23 @@ add_library ( VkLayer_khronos_validation
     ../layers/best_practices/bp_synchronization.cpp
     ../layers/best_practices/bp_video.cpp
     ../layers/best_practices/bp_wsi.cpp
-    ../layers/generated/best_practices.cpp
+    ../layers/vulkan/generated/best_practices.cpp
     ../layers/sync/sync_utils.cpp
     ../layers/sync/sync_vuid_maps.cpp
     ../layers/error_message/core_error_location.cpp
-    ../layers/generated/sync_validation_types.cpp
+    ../layers/vulkan/generated/sync_validation_types.cpp
     ../layers/sync/sync_validation.cpp
-    ../layers/utils/convert_to_renderpass2.cpp
-    ../layers/generated/layer_chassis_dispatch.cpp
-    ../layers/generated/chassis.cpp
-    ../layers/generated/valid_param_values.cpp
+    ../layers/utils/convert_utils.cpp
+    ../layers/vulkan/generated/layer_chassis_dispatch.cpp
+    ../layers/vulkan/generated/chassis.cpp
+    ../layers/vulkan/generated/valid_param_values.cpp
     ../layers/layer_options.cpp
     ../layers/core_checks/cc_query.cpp
     ../layers/core_checks/cc_queue.cpp
     ../layers/core_checks/cc_ray_tracing.cpp
     ../layers/core_checks/cc_wsi.cpp
     ../layers/core_checks/cc_ycbcr.cpp
-    ../layers/generated/parameter_validation.cpp
+    ../layers/vulkan/generated/parameter_validation.cpp
     ../layers/stateless/sl_buffer.cpp
     ../layers/stateless/sl_cmd_buffer_dynamic.cpp
     ../layers/stateless/sl_cmd_buffer.cpp
@@ -146,15 +148,17 @@ add_library ( VkLayer_khronos_validation
     ../layers/stateless/sl_ray_tracing.cpp
     ../layers/stateless/sl_render_pass.cpp
     ../layers/stateless/sl_synchronization.cpp
+    ../layers/stateless/sl_utils.cpp
     ../layers/stateless/sl_wsi.cpp
-    ../layers/generated/object_tracker.cpp
+    ../layers/vulkan/generated/object_tracker.cpp
     ../layers/object_tracker/object_tracker_utils.cpp
-    ../layers/generated/thread_safety.cpp
-    ../layers/generated/vk_safe_struct_utils.cpp
-    ../layers/generated/vk_safe_struct_core.cpp
-    ../layers/generated/vk_safe_struct_khr.cpp
-    ../layers/generated/vk_safe_struct_ext.cpp
-    ../layers/generated/vk_safe_struct_vendor.cpp
+    ../layers/vulkan/generated/thread_safety.cpp
+    ../layers/thread_tracker/thread_safety_validation.cpp
+    ../layers/vulkan/generated/vk_safe_struct_utils.cpp
+    ../layers/vulkan/generated/vk_safe_struct_core.cpp
+    ../layers/vulkan/generated/vk_safe_struct_khr.cpp
+    ../layers/vulkan/generated/vk_safe_struct_ext.cpp
+    ../layers/vulkan/generated/vk_safe_struct_vendor.cpp
     ../layers/state_tracker/image_layout_map.cpp
     ../layers/containers/subresource_adapter.cpp
     ../layers/external/vma/vma.cpp
@@ -167,7 +171,7 @@ set_target_properties ( VkLayer_khronos_validation PROPERTIES
 target_include_directories ( VkLayer_khronos_validation
     PRIVATE
     ../layers
-    ../layers/generated
+    ../layers/vulkan
     Vulkan-Headers/include
     ../layers/external
     robin-hood-hashing/src/include

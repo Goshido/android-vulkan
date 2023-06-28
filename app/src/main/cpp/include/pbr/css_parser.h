@@ -41,7 +41,7 @@ class CSSParser final
 
         [[nodiscard]] std::optional<CSSProps const*> FindID ( std::u32string const &id ) const noexcept;
 
-        // Resturns source file path from which CSS rules were constructed.
+        // Method returns source file path from which CSS rules were constructed.
         [[nodiscard]] std::string const& GetSource () const noexcept;
 
         [[nodiscard]] bool Parse ( char const* css, Stream stream, std::string &&assetRoot ) noexcept;

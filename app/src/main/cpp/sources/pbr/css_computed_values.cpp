@@ -61,6 +61,14 @@ class ApplyHandlers final
             CSSParser const &css
         ) noexcept;
 
+        [[nodiscard]] static bool HandleBottom ( char const* html,
+            CSSComputedValues &target,
+            Property const &property,
+            char const* kind,
+            std::u32string const &name,
+            CSSParser const &css
+        ) noexcept;
+
         [[nodiscard]] static bool HandleColor ( char const* html,
             CSSComputedValues &target,
             Property const &property,
@@ -102,6 +110,14 @@ class ApplyHandlers final
         ) noexcept;
 
         [[nodiscard]] static bool HandleHeight ( char const* html,
+            CSSComputedValues &target,
+            Property const &property,
+            char const* kind,
+            std::u32string const &name,
+            CSSParser const &css
+        ) noexcept;
+
+        [[nodiscard]] static bool HandleLeft ( char const* html,
             CSSComputedValues &target,
             Property const &property,
             char const* kind,
@@ -181,7 +197,23 @@ class ApplyHandlers final
             CSSParser const &css
         ) noexcept;
 
+        [[nodiscard]] static bool HandleRight ( char const* html,
+            CSSComputedValues &target,
+            Property const &property,
+            char const* kind,
+            std::u32string const &name,
+            CSSParser const &css
+        ) noexcept;
+
         [[nodiscard]] static bool HandleTextAlign ( char const* html,
+            CSSComputedValues &target,
+            Property const &property,
+            char const* kind,
+            std::u32string const &name,
+            CSSParser const &css
+        ) noexcept;
+
+        [[nodiscard]] static bool HandleTop ( char const* html,
             CSSComputedValues &target,
             Property const &property,
             char const* kind,
@@ -212,11 +244,13 @@ ApplyHandlers::ApplyHandlers () noexcept
 {
     _handlers[ static_cast<size_t> ( Property::eType::BackgroundColor ) ] = &ApplyHandlers::HandleBackgroundColor;
     _handlers[ static_cast<size_t> ( Property::eType::BackgroundSize ) ] = &ApplyHandlers::HandleBackgroundSize;
+    _handlers[ static_cast<size_t> ( Property::eType::Bottom ) ] = &ApplyHandlers::HandleBottom;
     _handlers[ static_cast<size_t> ( Property::eType::Color ) ] = &ApplyHandlers::HandleColor;
     _handlers[ static_cast<size_t> ( Property::eType::Display ) ] = &ApplyHandlers::HandleDisplay;
     _handlers[ static_cast<size_t> ( Property::eType::FontFamily ) ] = &ApplyHandlers::HandleFontFamily;
     _handlers[ static_cast<size_t> ( Property::eType::FontSize ) ] = &ApplyHandlers::HandleFontSize;
     _handlers[ static_cast<size_t> ( Property::eType::Height ) ] = &ApplyHandlers::HandleHeight;
+    _handlers[ static_cast<size_t> ( Property::eType::Left ) ] = &ApplyHandlers::HandleLeft;
     _handlers[ static_cast<size_t> ( Property::eType::Margin ) ] = &ApplyHandlers::HandleFail;
     _handlers[ static_cast<size_t> ( Property::eType::MarginBottom ) ] = &ApplyHandlers::HandleMarginBottom;
     _handlers[ static_cast<size_t> ( Property::eType::MarginLeft ) ] = &ApplyHandlers::HandleMarginLeft;
@@ -228,8 +262,10 @@ ApplyHandlers::ApplyHandlers () noexcept
     _handlers[ static_cast<size_t> ( Property::eType::PaddingRight ) ] = &ApplyHandlers::HandlePaddingRight;
     _handlers[ static_cast<size_t> ( Property::eType::PaddingTop ) ] = &ApplyHandlers::HandlePaddingTop;
     _handlers[ static_cast<size_t> ( Property::eType::Position ) ] = &ApplyHandlers::HandlePosition;
+    _handlers[ static_cast<size_t> ( Property::eType::Right ) ] = &ApplyHandlers::HandleRight;
     _handlers[ static_cast<size_t> ( Property::eType::SRC ) ] = &ApplyHandlers::HandleFail;
     _handlers[ static_cast<size_t> ( Property::eType::TextAlign ) ] = &ApplyHandlers::HandleTextAlign;
+    _handlers[ static_cast<size_t> ( Property::eType::Top ) ] = &ApplyHandlers::HandleTop;
     _handlers[ static_cast<size_t> ( Property::eType::VerticalAlign ) ] = &ApplyHandlers::HandleVerticalAlign;
     _handlers[ static_cast<size_t> ( Property::eType::Width ) ] = &ApplyHandlers::HandleWidth;
 }
@@ -271,6 +307,19 @@ bool ApplyHandlers::HandleBackgroundSize ( char const* /*html*/,
     return true;
 }
 
+bool ApplyHandlers::HandleBottom ( char const* /*html*/,
+    CSSComputedValues &target,
+    Property const &property,
+    char const* /*kind*/,
+    std::u32string const &/*name*/,
+    CSSParser const &/*css*/
+) noexcept
+{
+    // NOLINTNEXTLINE - downcast.
+    target._bottom = static_cast<LengthProperty const&> ( property ).GetValue ();
+    return true;
+}
+
 bool ApplyHandlers::HandleColor ( char const* /*html*/,
     CSSComputedValues &target,
     Property const &property,
@@ -305,8 +354,8 @@ bool ApplyHandlers::HandleFail ( char const* html,
     CSSParser const &css
 ) noexcept
 {
-    android_vulkan::LogError ( "pbr::ApplyHandlers::HandleFail - %s: Shouild not be possible to get '%zu' "
-        "property type ID here. Check CSS %s '%s' inside file '%s'. Check ApplyHandlers implementaion. "
+    android_vulkan::LogError ( "pbr::ApplyHandlers::HandleFail - %s: Should not be possible to get '%zu' "
+        "property type ID here. Check CSS %s '%s' inside file '%s'. Check ApplyHandlers implementation. "
         "Maybe missing something?",
         html,
         static_cast<size_t> ( property.GetType () ),
@@ -373,6 +422,19 @@ bool ApplyHandlers::HandleHeight ( char const* /*html*/,
 {
     // NOLINTNEXTLINE - downcast.
     target._height = static_cast<LengthProperty const&> ( property ).GetValue ();
+    return true;
+}
+
+bool ApplyHandlers::HandleLeft ( char const* /*html*/,
+    CSSComputedValues &target,
+    Property const &property,
+    char const* /*kind*/,
+    std::u32string const &/*name*/,
+    CSSParser const &/*css*/
+) noexcept
+{
+    // NOLINTNEXTLINE - downcast.
+    target._left = static_cast<LengthProperty const&> ( property ).GetValue ();
     return true;
 }
 
@@ -493,6 +555,19 @@ bool ApplyHandlers::HandlePosition ( char const* /*html*/,
     return true;
 }
 
+bool ApplyHandlers::HandleRight ( char const* /*html*/,
+    CSSComputedValues &target,
+    Property const &property,
+    char const* /*kind*/,
+    std::u32string const &/*name*/,
+    CSSParser const &/*css*/
+) noexcept
+{
+    // NOLINTNEXTLINE - downcast.
+    target._right = static_cast<LengthProperty const&> ( property ).GetValue ();
+    return true;
+}
+
 bool ApplyHandlers::HandleTextAlign ( char const* /*html*/,
     CSSComputedValues &target,
     Property const &property,
@@ -503,6 +578,19 @@ bool ApplyHandlers::HandleTextAlign ( char const* /*html*/,
 {
     // NOLINTNEXTLINE - downcast.
     target._textAlign = static_cast<TextAlignProperty const&> ( property ).GetValue ();
+    return true;
+}
+
+bool ApplyHandlers::HandleTop ( char const* /*html*/,
+    CSSComputedValues &target,
+    Property const &property,
+    char const* /*kind*/,
+    std::u32string const &/*name*/,
+    CSSParser const &/*css*/
+) noexcept
+{
+    // NOLINTNEXTLINE - downcast.
+    target._top = static_cast<LengthProperty const&> ( property ).GetValue ();
     return true;
 }
 
@@ -578,6 +666,7 @@ bool CSSComputedValues::ApplyCSS ( char const* html,
 
     auto const& props = *target.value ();
 
+    // NOLINTNEXTLINE - replace loop by range-for.
     for ( auto const& prop : props )
     {
         if ( !g_ApplyHandlers.Handle ( html, *this, *prop, "ID", id, css ) )

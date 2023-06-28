@@ -33,7 +33,7 @@ std::unordered_map<eAttribute, std::string_view> const AttributeParser::_names =
     { eAttribute::Class, "class" },
     { eAttribute::HREF, "href" },
     { eAttribute::ID, "id" },
-    { eAttribute::No_Attribute, "no-attribtute" },
+    { eAttribute::No_Attribute, "no-attribute" },
     { eAttribute::REL, "rel" },
     { eAttribute::SRC, "src" }
 };

@@ -27,6 +27,11 @@ class CSSComputedValues final
         ColorValue                          _backgroundColor;
         LengthValue                         _backgroundSize;
 
+        LengthValue                         _bottom;
+        LengthValue                         _left;
+        LengthValue                         _right;
+        LengthValue                         _top;
+
         ColorValue                          _color;
         DisplayProperty::eValue             _display;
 

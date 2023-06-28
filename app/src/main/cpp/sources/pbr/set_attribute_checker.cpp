@@ -10,7 +10,7 @@ SetAttributeChecker::SetAttributeChecker ( char const *html,
     AttributeChecker ( html, attribute ),
     _target ( target )
 {
-    // NOHTING
+    // NOTHING
 }
 
 AttributeChecker::Result SetAttributeChecker::Process ( AttributeParser::Result &result ) noexcept

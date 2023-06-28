@@ -97,7 +97,7 @@ void DIVUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
     {
         case PositionProperty::eValue::Absolute:
             pen = _canvasTopLeftOffset;
-            _parentLine = 0U;
+            _parentLine = std::numeric_limits<size_t>::max ();
         break;
 
         case PositionProperty::eValue::Static:
@@ -280,26 +280,60 @@ void DIVUIElement::Submit ( SubmitInfo &info ) noexcept
 
 bool DIVUIElement::UpdateCache ( UpdateInfo &info ) noexcept
 {
+    bool needRefill = _visibilityChanged;
+    _visibilityChanged = false;
+
     if ( !_visible )
-        return false;
+        return needRefill;
 
-    GXVec2 pen = info._pen;
+    GXVec2 pen {};
 
-    if ( info._line != _parentLine )
+    if ( _css._position == PositionProperty::eValue::Static )
     {
-        pen._data[ 0U ] = info._parentTopLeft._data[ 0U ];
-        pen._data[ 1U ] += info._parentLineHeights[ info._line ];
+        pen = info._pen;
 
-        info._pen._data[ 1U ] = pen._data[ 1U ];
-        info._line = _parentLine;
+        if ( info._line != _parentLine )
+        {
+            pen._data[ 0U ] = info._parentTopLeft._data[ 0U ];
+            pen._data[ 1U ] += info._parentLineHeights[ info._line ];
+
+            info._pen._data[ 1U ] = pen._data[ 1U ];
+            info._line = _parentLine;
+        }
     }
+    else
+    {
+        // 'absolute' block territory.
+        pen = info._parentTopLeft;
 
-//    if ( _parent )
-//    {
-//        // NOLINTNEXTLINE - downcast
-//        AlignHander const handler = ResolveTextAlignment ( static_cast<CSSUIElement const &> ( *_parent ) );
-//        pen._data[ 0U ] = handler ( pen._data[ 0U ], info._parentWidth, _blockSize._data[ 0U ] );
-//    }
+        if ( _css._top.GetType () != LengthValue::eType::Auto )
+            pen._data[ 1U ] += ResolvePixelLength ( _css._top, info._parentSize._data[ 1U ], true, *info._cssUnits );
+
+        if ( _css._bottom.GetType () != LengthValue::eType::Auto )
+        {
+            float const offset = ResolvePixelLength ( _css._bottom,
+                info._parentSize._data[ 1U ],
+                true,
+                *info._cssUnits
+            );
+
+            pen._data[ 1U ] += info._parentSize._data[ 1U ] - ( _blockSize._data[ 1U ] + offset );
+        }
+
+        if ( _css._left.GetType () != LengthValue::eType::Auto )
+            pen._data[ 0U ] += ResolvePixelLength ( _css._left, info._parentSize._data[ 0U ], false, *info._cssUnits );
+
+        if ( _css._right.GetType () != LengthValue::eType::Auto )
+        {
+            float const offset = ResolvePixelLength ( _css._right,
+                info._parentSize._data[ 0U ],
+                false,
+                *info._cssUnits
+            );
+
+            pen._data[ 0U ] += info._parentSize._data[ 0U ] - ( _blockSize._data[ 0U ] + offset );
+        }
+    }
 
     AlignHander const verticalAlign = ResolveVerticalAlignment ( static_cast<CSSUIElement const &> ( *this ) );
     pen._data[ 1U ] = verticalAlign ( pen._data[ 1U ], info._parentLineHeights[ _parentLine ], _blockSize._data[ 1U ] );
@@ -333,15 +367,14 @@ bool DIVUIElement::UpdateCache ( UpdateInfo &info ) noexcept
 
     UpdateInfo updateInfo
     {
+        ._cssUnits = info._cssUnits,
         ._fontStorage = info._fontStorage,
         ._line = 0U,
         ._parentLineHeights = _lineHeights.data (),
+        ._parentSize = _canvasSize,
         ._parentTopLeft = topLeft,
-        ._parentWidth = _canvasSize._data[ 0U ],
         ._pen = topLeft
     };
-
-    bool needRefill = false;
 
     for ( auto* child : _children )
         needRefill |= child->UpdateCache ( updateInfo );

@@ -122,7 +122,7 @@ class SoundMixer final
         [[nodiscard]] size_t GetBufferSampleCount () const noexcept;
 
         [[maybe_unused, nodiscard]] float GetChannelVolume ( eSoundChannel channel ) const noexcept;
-        [[maybe_unused]] void SetChannelVolume ( eSoundChannel channel, float volume ) noexcept;
+        void SetChannelVolume ( eSoundChannel channel, float volume ) noexcept;
 
         [[maybe_unused, nodiscard]] float GetMasterVolume () const noexcept;
         void SetMasterVolume ( float volume ) noexcept;

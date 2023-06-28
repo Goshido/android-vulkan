@@ -104,6 +104,7 @@ class UIPass final
 
     private:
         GXVec2                                      _bottomRight {};
+        VkBufferMemoryBarrier                       _bufferBarrier {};
         UIPassTransformDescriptorSetLayout          _transformLayout {};
 
         UIVertexInfo*                               _data = nullptr;

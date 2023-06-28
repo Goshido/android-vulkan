@@ -7,6 +7,8 @@ require "av://engine/sound_channel.lua"
 local DEBRIS_RADIUS = 0.2
 local DEBRIS_VELOCITY_FACTOR = 2.5e-1
 
+local SCORE = 200
+
 local VELOCITY_MULTIPLIER = GXVec3 ()
 VELOCITY_MULTIPLIER:Init ( 1.0, -0.75, 1.0 )
 
@@ -15,6 +17,10 @@ VELOCITY_MULTIPLIER:Init ( 1.0, -0.75, 1.0 )
 local BrickExt = {}
 
 -- Methods
+local function AddScore ( self )
+    g_scene:FindActor ( "Mastermind" ):FindComponent ( "LevelScript" ):AddScore ( SCORE )
+end
+
 local function GetOrigin ( self, actor, component )
     local t = GXMat4 ()
     actor:FindComponent ( component ):GetTransform ( t )
@@ -128,6 +134,8 @@ local function OnPrePhysicsMonitor ( self, deltaTime )
     self:SpawnDebris ( "DebrisBegin004", "DebrisEnd004" )
 
     mario:Hit ( VELOCITY_MULTIPLIER )
+    self:AddScore ()
+
     self._actor:Destroy ()
 end
 
@@ -147,6 +155,7 @@ local function Constructor ( self, handle, params )
     local obj = ScriptComponent ( handle )
 
     -- Methods
+    obj.AddScore = AddScore
     obj.GetOrigin = GetOrigin
     obj.GetSensorSize = GetSensorSize
     obj.GetSensorTransform = GetSensorTransform

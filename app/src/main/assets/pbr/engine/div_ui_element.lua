@@ -10,11 +10,11 @@ end
 
 -- Engine method
 local function AppendChildElement ( self, element )
-    if not self._childs then
-        self._childs = {}
+    if not self._children then
+        self._children = {}
     end
 
-    table.insert ( self._childs, element )
+    table.insert ( self._children, element )
 
     if not self._text and element._type == eObjectType.TextUIElement then
         self._text = element

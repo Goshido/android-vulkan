@@ -20,11 +20,13 @@ class Property
         {
             BackgroundColor = 0U,
             BackgroundSize,
+            Bottom,
             Color,
             Display,
             FontFamily,
             FontSize,
             Height,
+            Left,
             Margin,
             MarginBottom,
             MarginLeft,
@@ -36,8 +38,10 @@ class Property
             PaddingRight,
             PaddingTop,
             Position,
+            Right,
             SRC,
             TextAlign,
+            Top,
             VerticalAlign,
             Width
         };

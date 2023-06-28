@@ -168,14 +168,15 @@ void UILayer::Submit ( UIElement::SubmitInfo &info ) noexcept
     _body->Submit ( info );
 }
 
-bool UILayer::UpdateCache ( FontStorage &fontStorage, uint32_t viewportWidth ) noexcept
+bool UILayer::UpdateCache ( FontStorage &fontStorage, VkExtent2D const &viewport ) noexcept
 {
     UIElement::UpdateInfo info
     {
+        ._cssUnits = &_cssUnitToDevicePixel,
         ._fontStorage = &fontStorage,
         ._parentLineHeights = _lineHeights.data (),
+        ._parentSize = GXVec2 ( static_cast<float> ( viewport.width ), static_cast<float> ( viewport.height ) ),
         ._parentTopLeft = GXVec2 ( 0.0F, 0.0F ),
-        ._parentWidth = static_cast<float> ( viewportWidth ),
         ._pen = GXVec2 ( 0.0F, 0.0F )
     };
 

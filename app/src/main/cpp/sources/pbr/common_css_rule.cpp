@@ -162,6 +162,22 @@ ParseResult CommonCSSRule::Parse ( char const* css, Stream stream, eType type, C
     LengthPropertyChecker marginRightChecker ( css, Property::eType::MarginRight, marginRight );
     checkers[ static_cast<size_t> ( Property::eType::MarginRight ) ] = &marginRightChecker;
 
+    LengthValue bottom {};
+    LengthPropertyChecker bottomChecker ( css, Property::eType::Bottom, bottom );
+    checkers[ static_cast<size_t> ( Property::eType::Bottom ) ] = &bottomChecker;
+
+    LengthValue top {};
+    LengthPropertyChecker topChecker ( css, Property::eType::Top, top );
+    checkers[ static_cast<size_t> ( Property::eType::Top ) ] = &topChecker;
+
+    LengthValue left {};
+    LengthPropertyChecker leftChecker ( css, Property::eType::Left, left );
+    checkers[ static_cast<size_t> ( Property::eType::Left ) ] = &leftChecker;
+
+    LengthValue right {};
+    LengthPropertyChecker rightChecker ( css, Property::eType::Right, right );
+    checkers[ static_cast<size_t> ( Property::eType::Right ) ] = &rightChecker;
+
     LengthValue width {};
     LengthPropertyChecker widthChecker ( css, Property::eType::Width, width );
     checkers[ static_cast<size_t> ( Property::eType::Width ) ] = &widthChecker;
@@ -282,6 +298,18 @@ ParseResult CommonCSSRule::Parse ( char const* css, Stream stream, eType type, C
 
     if ( shorthand | marginLeftChecker.IsDetected () )
         props.emplace_back ( std::make_unique<LengthProperty> ( Property::eType::MarginLeft, marginLeft ) );
+
+    if ( topChecker.IsDetected () )
+        props.emplace_back ( std::make_unique<LengthProperty> ( Property::eType::Top, top ) );
+
+    if ( rightChecker.IsDetected () )
+        props.emplace_back ( std::make_unique<LengthProperty> ( Property::eType::Right, right ) );
+
+    if ( bottomChecker.IsDetected () )
+        props.emplace_back ( std::make_unique<LengthProperty> ( Property::eType::Bottom, bottom ) );
+
+    if ( leftChecker.IsDetected () )
+        props.emplace_back ( std::make_unique<LengthProperty> ( Property::eType::Left, left ) );
 
     if ( widthChecker.IsDetected () )
         props.emplace_back ( std::make_unique<LengthProperty> ( Property::eType::Width, width ) );

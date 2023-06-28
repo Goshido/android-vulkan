@@ -16,7 +16,7 @@ require "av://engine/ui_layer.lua"
 
 ## <a id="brief">Brief</a>
 
-[_UILayer_](./ui-layer.md) is a fundamental building block of the [_UI_ system](ui-system.md). Class allows to load _UI_ assets from [_HTML_](https://en.wikipedia.org/wiki/HTML) + [_CSS_](https://en.wikipedia.org/wiki/CSS) files. Additionaly class provides methods for searching child elements.
+[_UILayer_](./ui-layer.md) is a fundamental building block of the [_UI_ system](ui-system.md). Class allows to load _UI_ assets from [_HTML_](https://en.wikipedia.org/wiki/HTML) + [_CSS_](https://en.wikipedia.org/wiki/CSS) files. Additionally class provides methods for searching child elements.
 
 ```lua
 require "av://engine/ui_layer.lua"

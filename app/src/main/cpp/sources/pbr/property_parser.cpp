@@ -11,11 +11,13 @@ std::unordered_map<std::string_view, Property::eType> const PropertyParser::_pro
 {
     { "background-color", Property::eType::BackgroundColor },
     { "background-size", Property::eType::BackgroundSize },
+    { "bottom", Property::eType::Bottom },
     { "color", Property::eType::Color },
     { "display", Property::eType::Display },
     { "font-family", Property::eType::FontFamily },
     { "font-size", Property::eType::FontSize },
     { "height", Property::eType::Height },
+    { "left", Property::eType::Left },
     { "margin", Property::eType::Margin },
     { "margin-bottom", Property::eType::MarginBottom },
     { "margin-left", Property::eType::MarginLeft },
@@ -27,8 +29,10 @@ std::unordered_map<std::string_view, Property::eType> const PropertyParser::_pro
     { "padding-right", Property::eType::PaddingRight },
     { "padding-top", Property::eType::PaddingTop },
     { "position", Property::eType::Position },
+    { "right", Property::eType::Right },
     { "src", Property::eType::SRC },
     { "text-align", Property::eType::TextAlign },
+    { "top", Property::eType::Top },
     { "vertical-align", Property::eType::VerticalAlign },
     { "width", Property::eType::Width }
 };
@@ -37,11 +41,13 @@ std::unordered_map<Property::eType, std::string_view> const PropertyParser::_nam
 {
     { Property::eType::BackgroundColor, "background-color" },
     { Property::eType::BackgroundSize, "background-size" },
+    { Property::eType::Bottom, "bottom" },
     { Property::eType::Color, "color" },
     { Property::eType::Display, "display" },
     { Property::eType::FontFamily, "font-family" },
     { Property::eType::FontSize, "font-size" },
     { Property::eType::Height, "height" },
+    { Property::eType::Left, "left" },
     { Property::eType::Margin, "margin" },
     { Property::eType::MarginBottom, "margin-bottom" },
     { Property::eType::MarginLeft, "margin-left" },
@@ -53,8 +59,10 @@ std::unordered_map<Property::eType, std::string_view> const PropertyParser::_nam
     { Property::eType::PaddingRight, "padding-right" },
     { Property::eType::PaddingTop, "padding-top" },
     { Property::eType::Position, "position" },
+    { Property::eType::Right, "right" },
     { Property::eType::SRC, "src" },
     { Property::eType::TextAlign, "text-align" },
+    { Property::eType::Top, "top" },
     { Property::eType::VerticalAlign, "vertical-align" },
     { Property::eType::Width, "width" }
 };

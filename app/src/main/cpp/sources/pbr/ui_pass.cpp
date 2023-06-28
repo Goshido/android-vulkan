@@ -868,6 +868,15 @@ bool UIPass::OnInitDevice ( android_vulkan::Renderer &renderer,
 
     AV_REGISTER_SEMAPHORE ( "pbr::UIPass::_targetAcquiredSemaphore" )
 
+    result = _vertex.Init ( renderer,
+        AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT ) | AV_VK_FLAG ( VK_BUFFER_USAGE_VERTEX_BUFFER_BIT ),
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+        "pbr::UIPass::_vertex"
+    );
+
+    if ( !result )
+        return false;
+
     InitCommonStructures ();
 
     constexpr size_t commonDescriptorSetCount = 1U;
@@ -912,12 +921,6 @@ bool UIPass::OnInitDevice ( android_vulkan::Renderer &renderer,
         _imageDescriptorSets.Init ( device, _descriptorPool, transparent ) &&
         _transformLayout.Init ( device ) &&
         ImageStorage::OnInitDevice ( renderer ) &&
-
-        _vertex.Init ( renderer,
-            AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT ) | AV_VK_FLAG ( VK_BUFFER_USAGE_VERTEX_BUFFER_BIT ),
-            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-            "pbr::UIPass::_vertex"
-        ) &&
 
         _uniformPool.Init ( renderer,
             _transformLayout,
@@ -1336,6 +1339,19 @@ void UIPass::DestroyRenderPass ( VkDevice device ) noexcept
 
 void UIPass::InitCommonStructures () noexcept
 {
+    _bufferBarrier =
+    {
+        .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
+        .pNext = nullptr,
+        .srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
+        .dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT,
+        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .buffer = _vertex._buffer,
+        .offset = 0U,
+        .size = 0U
+    };
+
     constexpr VkClearValue clearColor
     {
         .color
@@ -1447,18 +1463,8 @@ void UIPass::UpdateGeometry ( VkCommandBuffer commandBuffer ) noexcept
 
     vkCmdCopyBuffer ( commandBuffer, _staging._buffer, _vertex._buffer, 1U, &copy );
 
-    VkBufferMemoryBarrier const barrier
-    {
-        .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
-        .pNext = nullptr,
-        .srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
-        .dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT,
-        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .buffer = _vertex._buffer,
-        .offset = offset,
-        .size = size
-    };
+    _bufferBarrier.offset = offset;
+    _bufferBarrier.size = size;
 
     vkCmdPipelineBarrier ( commandBuffer,
         VK_PIPELINE_STAGE_TRANSFER_BIT,
@@ -1467,7 +1473,7 @@ void UIPass::UpdateGeometry ( VkCommandBuffer commandBuffer ) noexcept
         0U,
         nullptr,
         1U,
-        &barrier,
+        &_bufferBarrier,
         0U,
         nullptr
     );

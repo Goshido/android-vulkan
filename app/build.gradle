@@ -73,6 +73,7 @@ android {
             }
 
             jniLibs {
+                // noinspection GroovyImplicitNullArgumentCall
                 srcDir makePrebuildLibraryPath()
 
             }

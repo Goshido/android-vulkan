@@ -7,7 +7,7 @@ DisplayProperty::DisplayProperty ( eValue value ) noexcept:
     Property ( Property::eType::Display ),
     _value ( value )
 {
-    // NOHTING
+    // NOTHING
 }
 
 DisplayProperty::eValue DisplayProperty::GetValue () const noexcept

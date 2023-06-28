@@ -25,7 +25,7 @@ namespace {
     if ( p.empty () )
         return asset;
 
-    // Removing hacky root directory without reallocations.
+    // Removing hacky root directory without reallocation.
     char* str = p.data ();
     size_t const newSize = p.size () - hackRootSize;
 

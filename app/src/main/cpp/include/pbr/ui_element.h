@@ -54,11 +54,12 @@ class UIElement
 
         struct UpdateInfo final
         {
+            CSSUnitToDevicePixel const*     _cssUnits;
             FontStorage*                    _fontStorage;
             size_t                          _line;
             float const*                    _parentLineHeights;
+            GXVec2                          _parentSize;
             GXVec2                          _parentTopLeft;
-            float                           _parentWidth;
             GXVec2                          _pen;
         };
 
@@ -73,6 +74,7 @@ class UIElement
 
     protected:
         bool                                _visible = false;
+        bool                                _visibilityChanged = true;
 
     public:
         UIElement const*                    _parent = nullptr;

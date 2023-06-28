@@ -16,7 +16,7 @@ namespace android_vulkan {
 namespace {
 
 constexpr float CHANNEL_VOLUME = 1.0F;
-constexpr size_t MAX_HARDWARE_STREAM_CAP = 42U;
+constexpr size_t MAX_HARDWARE_STREAM_CAP = 32U;
 constexpr double TRIM_TIMEOUT_SECONDS = 5.0F;
 constexpr auto WORKER_TIMEOUT = std::chrono::microseconds ( 1U );
 
@@ -280,7 +280,7 @@ size_t SoundMixer::GetBufferSampleCount () const noexcept
     return _channelVolume[ static_cast<size_t> ( channel ) ];
 }
 
-[[maybe_unused]] void SoundMixer::SetChannelVolume ( eSoundChannel channel, float volume ) noexcept
+void SoundMixer::SetChannelVolume ( eSoundChannel channel, float volume ) noexcept
 {
     _channelVolume[ static_cast<size_t> ( channel ) ] = std::clamp ( volume, 0.0F, 1.0F );
 }

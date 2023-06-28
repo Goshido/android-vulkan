@@ -4,7 +4,7 @@
 require "av://engine/gx_vec3.lua"
 ```
 
-## Table of content
+## <a id="table-of-content">Table of content</a>
 
 - [_Brief_](#brief)
 - [_Metamethods_](#metamethods)
@@ -56,6 +56,8 @@ local vColumn = GXVec3 ()
 m:MultiplyMatrixVector ( vColumn, v );
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="metamethods">Metamethods</a>
 
 Metamethod | Used
@@ -88,6 +90,8 @@ Metamethod | Used
 `__tostring` | ✔️
 `__unm` | ❌
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="constructor">`Constructor`</a>
 
 Constructor creates new object with undefined initial values.
@@ -104,6 +108,8 @@ require "av://engine/gx_vec3.lua"
 
 local v = GXVec3 ()
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-clone">`Clone ( other )`</a>
 
@@ -129,6 +135,8 @@ vector:Init ( 777.0, 3.33, 1.0 )
 local vectorCopy = GXVec3 ()
 vectorCopy:Clone ( vector )
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-cross-product">`CrossProduct ( a, b )`</a>
 
@@ -159,6 +167,8 @@ local cross = GXVec3 ()
 cross:CrossProduct ( v0, v1 )
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-distance">`Distance ( other )`</a>
 
 Method returns distance between current point and `other` point.
@@ -185,6 +195,8 @@ v1:Init ( 0.0, -33.3, 77.7 )
 
 local d = v0:Distance ( v1 )
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-dot-product">`DotProduct ( other )`</a>
 
@@ -213,6 +225,8 @@ v1:Init ( 0.0, -33.3, 77.7 )
 local dot = v0:DotProduct ( v1 )
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-get-x">`GetX ()`</a>
 
 Method returns first component of the current vector.
@@ -236,6 +250,8 @@ v:Init ( 777.0, 3.33, 1.0 )
 
 local x = v:GetX ()
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-get-y">`GetY ()`</a>
 
@@ -261,6 +277,8 @@ v:Init ( 777.0, 3.33, 1.0 )
 local y = v:GetY ()
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-get-z">`GetZ ()`</a>
 
 Method returns third component of the current vector.
@@ -284,6 +302,8 @@ v:Init ( 777.0, 3.33, 1.0 )
 
 local z = v:GetZ ()
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-init">`Init ( x, y, z )`</a>
 
@@ -309,6 +329,8 @@ local v = GXVec3 ()
 v:Init ( 777.0, 3.33, 1.0 )
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-length">`Length ()`</a>
 
 Method returns vector length.
@@ -331,6 +353,8 @@ local v = GXVec3 ()
 v:Init ( 777.0, 3.33, 1.0 )
 local l = v:Length ()
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-multiply-scalar">`MultiplyScalar ( a, scale )`</a>
 
@@ -359,6 +383,8 @@ v:Init ( 777.0, 3.33, 1.0 )
 local res = GXVec3 ()
 res:MultiplyScalar ( v, -7.77 )
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-multiply-vector">`MultiplyVector ( a, b )`</a>
 
@@ -391,6 +417,8 @@ local res = GXVec3 ()
 res:MultiplyScalar ( v0, v1 )
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-normalize">`Normalize ()`</a>
 
 Method normalizes the vector.
@@ -414,6 +442,8 @@ v:Init ( 777.0, 3.33, 1.0 )
 v:Normalize ()
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-reverse">`Reverse ()`</a>
 
 Method makes the vector in opposite direction to current vector. The length of the result vector equals the length of original vector.
@@ -436,6 +466,8 @@ local v = GXVec3 ()
 v:Init ( 777.0, 3.33, 1.0 )
 v:Reverse ()
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-set-x">`SetX ( x )`</a>
 
@@ -461,6 +493,8 @@ v:Init ( 777.0, 3.33, 1.0 )
 v:SetX ( 0.0 )
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-set-y">`SetY ( y )`</a>
 
 Method sets second component of the current vector.
@@ -485,6 +519,8 @@ v:Init ( 777.0, 3.33, 1.0 )
 v:SetY ( 0.0 )
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-set-z">`SetZ ( z )`</a>
 
 Method sets third component of the current vector.
@@ -508,6 +544,8 @@ v:Init ( 777.0, 3.33, 1.0 )
 
 v:SetZ ( 0.0 )
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-squared-distance">`SquaredDistance ( other )`</a>
 
@@ -536,6 +574,8 @@ v1:Init ( 0.0, -33.3, 77.7 )
 local sd = v0:SquaredDistance ( v1 )
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-squared-length">`SquaredLength ()`</a>
 
 Method returns squared length of the vector. This method is faster that normal [GXVec3:Length](#method-length). Method could be useful in fast comparisons.
@@ -558,6 +598,8 @@ local v = GXVec3 ()
 v:Init ( 777.0, 3.33, 1.0 )
 local sl = v:SquaredLength ()
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-subtract">`Subtract ( a, b )`</a>
 
@@ -590,6 +632,8 @@ local s = GXVec3 ()
 s:Subtract ( v0, v1 )
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-sum">`Sum ( a, b )`</a>
 
 Method sums `a`, `b` and writes the result in current vector.
@@ -620,6 +664,8 @@ v1:Init ( 0.0, -33.3, 77.7 )
 local sum = GXVec3 ()
 sum:Sum ( v0, v1 )
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-sum-scaled">`SumScaled ( a, bScale, b )`</a>
 
@@ -652,3 +698,5 @@ v1:Init ( 0.0, -33.3, 77.7 )
 local s = GXVec3 ()
 s:SumScaled ( v0, 3.14, v1 )
 ```
+
+[↬ table of content ⇧](#table-of-content)

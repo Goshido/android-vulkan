@@ -122,7 +122,9 @@ void TextUIElement::Init ( lua_State &vm ) noexcept
 
 void TextUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
 {
-    if ( ( !_visible | _text.empty () ) || _applyLayoutCache.Run ( info ) )
+    bool const isEmpty = _text.empty ();
+
+    if ( ( !_visible | isEmpty ) || _applyLayoutCache.Run ( info ) )
         return;
 
     info._hasChanges = true;
@@ -320,9 +322,11 @@ void TextUIElement::Submit ( SubmitInfo &info ) noexcept
 bool TextUIElement::UpdateCache ( UpdateInfo &info ) noexcept
 {
     size_t const glyphCount = _glyphs.size ();
+    bool const needRefill = _visibilityChanged;
+    _visibilityChanged = false;
 
     if ( ( !_visible | ( glyphCount == 0U ) ) || _submitCache.Run ( info, _applyLayoutCache._lineHeights ) )
-        return false;
+        return needRefill;
 
     _submitCache._parenTopLeft = info._parentTopLeft;
     _submitCache._penIn = info._pen;
@@ -361,7 +365,7 @@ bool TextUIElement::UpdateCache ( UpdateInfo &info ) noexcept
     auto y = static_cast<int32_t> ( pen._data[ 1U ] );
 
     auto const parentLeft = static_cast<int32_t> ( info._parentTopLeft._data[ 0U ] );
-    auto const parentWidth =  static_cast<int32_t> ( info._parentWidth );
+    auto const parentWidth =  static_cast<int32_t> ( info._parentSize._data[ 0U ] );
 
     for ( Line const& line : _lines )
     {
@@ -548,11 +552,11 @@ int TextUIElement::OnSetColorRGB ( lua_State* state )
 int TextUIElement::OnSetText ( lua_State* state )
 {
     auto str = UTF8Parser::ToU32String ( lua_tostring ( state, 2 ) );
+    auto& self = *static_cast<TextUIElement*> ( lua_touserdata ( state, 1 ) );
 
-    if ( !str )
+    if ( !str || str == self._text )
         return 0;
 
-    auto& self = *static_cast<TextUIElement*> ( lua_touserdata ( state, 1 ) );
     self._text = std::move ( *str );
     self._glyphs.resize ( self._text.size () );
     self._applyLayoutCache._isTextChanged = true;

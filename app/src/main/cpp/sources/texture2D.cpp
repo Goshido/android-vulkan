@@ -128,7 +128,7 @@ VkExtent2D const& Texture2D::GetResolution () const noexcept
     return _resolution;
 }
 
-[[maybe_unused]] bool Texture2D::UploadData ( Renderer &renderer,
+bool Texture2D::UploadData ( Renderer &renderer,
     std::string const &fileName,
     eFormat format,
     bool isGenerateMipmaps,

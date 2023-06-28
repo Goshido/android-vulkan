@@ -15,6 +15,10 @@
   - [`@font-face`](#font-face)
   - [`backgroground-color`](#background-color)
   - [`background-size`](#background-size)
+  - [`bottom`](#bottom)
+  - [`left`](#left)
+  - [`right`](#right)
+  - [`top`](#top)
   - [`color`](#color)
   - [`display`](#display)
   - [`font-family`](#font-family)
@@ -37,7 +41,7 @@
 
 ## <a id="brief">Brief</a>
 
-Framework is using [_HTML_](https://en.wikipedia.org/wiki/HTML) + [_CSS_](https://en.wikipedia.org/wiki/CSS) files for _UI_ assets. The system very similar to _Web_-development. The main difference is _Lua_ scripting instead of _JavaScript_. It's needed to understand that frameworks is using subset of [_HTML_](https://en.wikipedia.org/wiki/HTML) + [_CSS_](https://en.wikipedia.org/wiki/CSS) entities as common sence. Such limited set of elements allows to create robust user interfaces without legacy complexity of modern _Web_ technology.
+Framework is using [_HTML_](https://en.wikipedia.org/wiki/HTML) + [_CSS_](https://en.wikipedia.org/wiki/CSS) files for _UI_ assets. The system very similar to _Web_-development. The main difference is _Lua_ scripting instead of _JavaScript_. It's needed to understand that frameworks is using subset of [_HTML_](https://en.wikipedia.org/wiki/HTML) + [_CSS_](https://en.wikipedia.org/wiki/CSS) entities as common sense. Such limited set of elements allows to create robust user interfaces without legacy complexity of modern _Web_ technology.
 
 In addition framework provides [_HTML_ + _CSS_ validator](./html-validator.md). The validator could work in background and notify content creator about detected problems at exact file and line. Usually content creation workflow looks like this:
 
@@ -158,6 +162,10 @@ Property | Value
 --- | ---
 [`background-color`](#background-color) | `transparent`
 [`background-size`](#background-size) | `100%`
+[`bottom`](#bottom) | `auto`
+[`left`](#left) | `auto`
+[`right`](#right) | `auto`
+[`top`](#top) | `auto`
 [`color`](#color) | `black`
 [`display`](#display) | `block`
 [`font-family`](#font-family) | `inherit`
@@ -195,6 +203,10 @@ Property | Value
 --- | ---
 [`background-color`](#background-color) | `transparent`
 [`background-size`](#background-size) | `100%`
+[`bottom`](#bottom) | `auto`
+[`left`](#left) | `auto`
+[`right`](#right) | `auto`
+[`top`](#top) | `auto`
 [`color`](#color) | `transparent`
 [`display`](#display) | `block`
 [`font-family`](#font-family) | `inherit`
@@ -233,6 +245,10 @@ Property | Value
 --- | ---
 [`background-color`](#background-color) | `transparent`
 [`background-size`](#background-size) | `100%`
+[`bottom`](#bottom) | `auto`
+[`left`](#left) | `auto`
+[`right`](#right) | `auto`
+[`top`](#top) | `auto`
 [`color`](#color) | `transparent`
 [`display`](#color) | `inline-block`
 [`font-family`](#font-family) | `inherit`
@@ -288,6 +304,30 @@ Supported values: `em`, `px`, `pt`, `mm` and `%`.
 
 [↬ table of content ⇧](#table-of-content)
 
+### <a id="bottom">`bottom`</a>
+
+Supported values: `em`, `px`, `pt`, `mm`, `%` and `auto`.
+
+[↬ table of content ⇧](#table-of-content)
+
+### <a id="left">`left`</a>
+
+Supported values: `em`, `px`, `pt`, `mm`, `%` and `auto`.
+
+[↬ table of content ⇧](#table-of-content)
+
+### <a id="right">`right`</a>
+
+Supported values: `em`, `px`, `pt`, `mm`, `%` and `auto`.
+
+[↬ table of content ⇧](#table-of-content)
+
+### <a id="top">`top`</a>
+
+Supported values: `em`, `px`, `pt`, `mm`, `%` and `auto`.
+
+[↬ table of content ⇧](#table-of-content)
+
 ### <a id="color">`color`</a>
 
 Supported values: [_HEX_ color](https://www.w3schools.com/css/css_colors_hex.asp), [_RGB_ color](https://www.w3schools.com/css/css_colors_rgb.asp), [_HSL_ color](https://www.w3schools.com/css/css_colors_hsl.asp) and [named color](https://developer.mozilla.org/en-US/docs/Web/CSS/named-color).
@@ -302,7 +342,7 @@ Supported values: `block`, `inline-block` and `none`.
 
 ### <a id="font-family">`font-family`</a>
 
-Supported values: _UTF-8_ identifier. The font itself must be specified via [`@font-face`](#font-face) rule. There are **NO ANY DEFALUT FONT** for _UI_ system. Every font **MUST BE** specified explicitly.
+Supported values: _UTF-8_ identifier. The font itself must be specified via [`@font-face`](#font-face) rule. There are **NO ANY DEFAULT FONT** for _UI_ system. Every font **MUST BE** specified explicitly.
 
 [↬ table of content ⇧](#table-of-content)
 
@@ -338,7 +378,7 @@ Supported values: `em`, `px`, `pt`, `mm` and `%`.
 
 ### <a id="margin">`margin`</a>
 
-Supported values: From 1 to 4 values accoring to [_CSS_ specification](https://developer.mozilla.org/en-US/docs/Web/CSS/margin). Units: `em`, `px`, `pt`, `mm` and `%`.
+Supported values: From 1 to 4 values according to [_CSS_ specification](https://developer.mozilla.org/en-US/docs/Web/CSS/margin). Units: `em`, `px`, `pt`, `mm` and `%`.
 
 [↬ table of content ⇧](#table-of-content)
 
@@ -368,7 +408,7 @@ Supported values: `em`, `px`, `pt`, `mm` and `%`.
 
 ### <a id="padding">`padding`</a>
 
-Supported values: From 1 to 4 values accoring to [_CSS_ specification](https://developer.mozilla.org/en-US/docs/Web/CSS/padding). Units: `em`, `px`, `pt`, `mm` and `%`.
+Supported values: From 1 to 4 values according to [_CSS_ specification](https://developer.mozilla.org/en-US/docs/Web/CSS/padding). Units: `em`, `px`, `pt`, `mm` and `%`.
 
 [↬ table of content ⇧](#table-of-content)
 

@@ -3,7 +3,7 @@ set ( CMAKE_CXX_STANDARD 20 )
 project ( android-vulkan )
 
 # Enable link time optimization for release build via native flag.
-# Note there is CMAKE_INTERPROCEDURAL_OPTIMZATION_RELEASE built-in variable but it works not reliably with
+# Note there is CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE built-in variable but it works not reliably with
 # NDK 22.0.7026061 at link time (linking errors on Linux).
 string ( APPEND CMAKE_CXX_FLAGS_RELEASE " -flto=thin" )
 

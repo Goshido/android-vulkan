@@ -279,6 +279,7 @@ int UIElement::OnHide ( lua_State* state )
 {
     auto& item = *static_cast<UIElement*> ( lua_touserdata ( state, 1 ) );
     item._visible = false;
+    item._visibilityChanged = true;
     return 0;
 }
 
@@ -299,6 +300,7 @@ int UIElement::OnShow ( lua_State* state )
 {
     auto& item = *static_cast<UIElement*> ( lua_touserdata ( state, 1 ) );
     item._visible = true;
+    item._visibilityChanged = true;
     return 0;
 }
 

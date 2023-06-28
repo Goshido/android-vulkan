@@ -135,6 +135,11 @@ void HTML5Parser::ApplyDefaultCSS () noexcept
     _cssComputedValues._backgroundColor = ColorValue ( false, GXColorRGB ( 0.0F, 0.0F, 0.0F, 0.0F ) );
     _cssComputedValues._backgroundSize = LengthValue ( LengthValue::eType::Percent, 100.0F );
 
+    _cssComputedValues._bottom = LengthValue ( LengthValue::eType::Auto, 0.0F );
+    _cssComputedValues._left = LengthValue ( LengthValue::eType::Auto, 0.0F );
+    _cssComputedValues._right = LengthValue ( LengthValue::eType::Auto, 0.0F );
+    _cssComputedValues._top = LengthValue ( LengthValue::eType::Auto, 0.0F );
+
     _cssComputedValues._color = ColorValue ( false, GXColorRGB ( 0.0F, 0.0F, 0.0F, 1.0F ) );
     _cssComputedValues._display = DisplayProperty::eValue::Block;
 

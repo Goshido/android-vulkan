@@ -589,10 +589,10 @@ void Scene::SubmitUI ( android_vulkan::Renderer &renderer, RenderSession &render
         return;
     }
 
-    uint32_t const viewportWidth = renderer.GetViewportResolution ().width;
+    VkExtent2D const& viewport = renderer.GetViewportResolution ();
 
     for ( auto& uiLayer : _uiLayerList )
-        needRefill |= uiLayer.get ().UpdateCache ( fontStorage, viewportWidth );
+        needRefill |= uiLayer.get ().UpdateCache ( fontStorage, viewport );
 
     if ( !needRefill )
         return;

@@ -71,14 +71,11 @@ class Renderer final
 
 #ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
-        PFN_vkCreateDebugReportCallbackEXT                                  vkCreateDebugReportCallbackEXT;
-        PFN_vkDestroyDebugReportCallbackEXT                                 vkDestroyDebugReportCallbackEXT;
+        PFN_vkCreateDebugUtilsMessengerEXT                                  vkCreateDebugUtilsMessengerEXT;
+        PFN_vkDestroyDebugUtilsMessengerEXT                                 vkDestroyDebugUtilsMessengerEXT;
 
-        VkDebugReportCallbackEXT                                            _debugReportCallback;
-        VkDebugReportCallbackCreateInfoEXT                                  _debugReportCallbackCreateInfoEXT;
-
-        std::map<VkDebugReportFlagsEXT, std::pair<LogType, char const*>>    _loggerMapper;
-        static std::map<VkDebugReportObjectTypeEXT, char const*> const      _vulkanObjectTypeMap;
+        VkDebugUtilsMessengerEXT                                            _debugUtilsMessenger;
+        VkDebugUtilsMessengerCreateInfoEXT                                  _debugUtilsMessengerCreateInfo;
 
 #endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
@@ -245,13 +242,10 @@ class Renderer final
 
 #ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
-        [[nodiscard]] static VkBool32 VKAPI_PTR OnVulkanDebugReport ( VkDebugReportFlagsEXT flags,
-            VkDebugReportObjectTypeEXT objectType,
-            uint64_t object,
-            size_t location,
-            int32_t messageCode,
-            char const* pLayerPrefix,
-            char const* pMessage,
+        [[nodiscard]] static VkBool32 VKAPI_PTR OnVulkanDebugUtils (
+            VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+            VkDebugUtilsMessageTypeFlagsEXT messageTypes,
+            VkDebugUtilsMessengerCallbackDataEXT const* pCallbackData,
             void* pUserData
         );
 
@@ -304,13 +298,6 @@ class Renderer final
         static void PrintVkVersion ( char const* indent, char const* name, uint32_t version ) noexcept;
 
         [[nodiscard]] static char const* ResolvePhysicalDeviceType ( VkPhysicalDeviceType type ) noexcept;
-
-#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
-
-        [[nodiscard]] static char const* ResolveVkDebugReportObjectType ( VkDebugReportObjectTypeEXT type ) noexcept;
-
-#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
-
         [[nodiscard]] static char const* ResolveVkColorSpaceKHR ( VkColorSpaceKHR colorSpace ) noexcept;
 
         [[nodiscard]] static char const* ResolveVkCompositeAlpha (

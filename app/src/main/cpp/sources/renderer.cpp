@@ -375,7 +375,7 @@ VulkanPhysicalDeviceInfo::VulkanPhysicalDeviceInfo () noexcept:
 #ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
 // MessageID list of the ignored messages.
-static std::unordered_set<size_t> const g_validationFilter =
+static std::unordered_set<uint32_t> const g_validationFilter =
 {
     // Attempting to enable deprecated extension VK_EXT_debug_report, but this extension has been deprecated by
     // VK_EXT_debug_utils.
@@ -392,62 +392,28 @@ static std::unordered_set<size_t> const g_validationFilter =
     0x26ac7233U
 };
 
-//----------------------------------------------------------------------------------------------------------------------
-
-std::map<VkDebugReportObjectTypeEXT, char const*> const Renderer::_vulkanObjectTypeMap =
+constexpr static std::pair<uint32_t, char const*> const g_vkDebugUtilsMessageSeverityFlagBitsEXTMapper[] =
 {
-    { VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_VIEW_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_VIEW_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_POOL_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_POOL_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_POOL_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_POOL_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_SET_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_SET_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_DEVICE_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_DEVICE_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_DEVICE_MEMORY_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_DEVICE_MEMORY_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_DISPLAY_KHR_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_DISPLAY_KHR_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_DISPLAY_MODE_KHR_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_DISPLAY_MODE_KHR_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_EVENT_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_EVENT_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_FENCE_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_FENCE_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_FRAMEBUFFER_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_FRAMEBUFFER_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_INSTANCE_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_INSTANCE_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_PHYSICAL_DEVICE_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_PHYSICAL_DEVICE_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_CACHE_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_CACHE_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_LAYOUT_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_LAYOUT_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_QUERY_POOL_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_QUERY_POOL_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_QUEUE_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_QUEUE_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_RENDER_PASS_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_RENDER_PASS_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_SEMAPHORE_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_SEMAPHORE_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_SHADER_MODULE_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_SHADER_MODULE_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_SURFACE_KHR_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_SURFACE_KHR_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_SWAPCHAIN_KHR_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_SWAPCHAIN_KHR_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_UNKNOWN_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_UNKNOWN_EXT" },
-    { VK_DEBUG_REPORT_OBJECT_TYPE_VALIDATION_CACHE_EXT_EXT, "VK_DEBUG_REPORT_OBJECT_TYPE_VALIDATION_CACHE_EXT_EXT" },
-
-    {
-        VK_DEBUG_REPORT_OBJECT_TYPE_ACCELERATION_STRUCTURE_NV_EXT,
-        "VK_DEBUG_REPORT_OBJECT_TYPE_ACCELERATION_STRUCTURE_NV_EXT"
-    },
-
-    {
-        VK_DEBUG_REPORT_OBJECT_TYPE_DEBUG_REPORT_CALLBACK_EXT_EXT,
-        "VK_DEBUG_REPORT_OBJECT_TYPE_DEBUG_REPORT_CALLBACK_EXT_EXT"
-    },
-
-    {
-        VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_UPDATE_TEMPLATE_EXT,
-        "VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_UPDATE_TEMPLATE_EXT"
-    },
-
-    {
-        VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_YCBCR_CONVERSION_EXT,
-        "VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_YCBCR_CONVERSION_EXT"
-    }
+    { VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT, "Verbose" },
+    { VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT, "Info" },
+    { VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT, "Warning" },
+    { VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT, "Error" }
 };
+
+constexpr static size_t const g_vkDebugUtilsMessageSeverityFlagBitsEXTMapperItems = std::size (
+    g_vkDebugUtilsMessageSeverityFlagBitsEXTMapper
+);
+
+constexpr static std::pair<uint32_t, char const*> const g_vkDebugUtilsMessageTypeFlagBitsEXTMapper[] =
+{
+    { VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT, "General" },
+    { VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT, "Validation" },
+    { VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT, "Performance" }
+};
+
+constexpr static size_t const g_vkDebugUtilsMessageTypeFlagBitsEXTMapperItems = std::size (
+    g_vkDebugUtilsMessageTypeFlagBitsEXTMapper
+);
 
 #endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
@@ -815,12 +781,12 @@ Renderer::Renderer () noexcept:
 
 #ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
-    vkCreateDebugReportCallbackEXT ( nullptr ),
-    vkDestroyDebugReportCallbackEXT ( nullptr ),
-    _debugReportCallback ( VK_NULL_HANDLE ),
-    _debugReportCallbackCreateInfoEXT {},
+    vkCreateDebugUtilsMessengerEXT ( nullptr ),
+    vkDestroyDebugUtilsMessengerEXT ( nullptr ),
+    _debugUtilsMessenger ( VK_NULL_HANDLE ),
+    _debugUtilsMessengerCreateInfo {},
 
-#endif
+#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
     _viewportResolution { .width = 0U, .height = 0U },
     _physicalDeviceGroups {},
@@ -851,7 +817,7 @@ bool Renderer::CheckSwapchainStatus () noexcept
     if ( _surfaceTransform != caps.currentTransform )
         tmp = false;
 
-    if ( memcmp ( &_surfaceSize, &caps.currentExtent, sizeof ( _surfaceSize ) ) != 0 )
+    if ( std::memcmp ( &_surfaceSize, &caps.currentExtent, sizeof ( _surfaceSize ) ) != 0 )
         tmp = false;
 
     return tmp;
@@ -1391,55 +1357,18 @@ bool Renderer::CheckRequiredFormats () noexcept
 
 bool Renderer::DeployDebugFeatures () noexcept
 {
-    vkCreateDebugReportCallbackEXT = reinterpret_cast<PFN_vkCreateDebugReportCallbackEXT> (
-        vkGetInstanceProcAddr ( _instance, "vkCreateDebugReportCallbackEXT" )
+    vkCreateDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT> (
+        vkGetInstanceProcAddr ( _instance, "vkCreateDebugUtilsMessengerEXT" )
     );
 
-    AV_ASSERT ( vkCreateDebugReportCallbackEXT )
+    AV_ASSERT ( vkCreateDebugUtilsMessengerEXT )
 
-    vkDestroyDebugReportCallbackEXT = reinterpret_cast<PFN_vkDestroyDebugReportCallbackEXT> (
-        vkGetInstanceProcAddr ( _instance, "vkDestroyDebugReportCallbackEXT" )
-    );
-
-    AV_ASSERT ( vkDestroyDebugReportCallbackEXT )
-
-    _loggerMapper.insert (
-        std::make_pair ( VK_DEBUG_REPORT_INFORMATION_BIT_EXT,
-            std::make_pair ( &LogInfo, "VK_DEBUG_REPORT_INFORMATION_BIT_EXT" )
-        )
-    );
-
-    _loggerMapper.insert (
-        std::make_pair ( VK_DEBUG_REPORT_WARNING_BIT_EXT,
-            std::make_pair ( &LogWarning, "VK_DEBUG_REPORT_WARNING_BIT_EXT" )
-        )
-    );
-
-    _loggerMapper.insert (
-        std::make_pair ( VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT,
-            std::make_pair ( &LogWarning, "VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT" )
-        )
-    );
-
-    _loggerMapper.insert (
-        std::make_pair ( VK_DEBUG_REPORT_ERROR_BIT_EXT,
-            std::make_pair ( &LogError, "VK_DEBUG_REPORT_ERROR_BIT_EXT" )
-        )
-    );
-
-    _loggerMapper.insert (
-        std::make_pair ( VK_DEBUG_REPORT_DEBUG_BIT_EXT,
-            std::make_pair ( &LogDebug, "VK_DEBUG_REPORT_DEBUG_BIT_EXT" )
-        )
+    vkDestroyDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT> (
+        vkGetInstanceProcAddr ( _instance, "vkDestroyDebugUtilsMessengerEXT" )
     );
 
     return CheckVkResult (
-        vkCreateDebugReportCallbackEXT ( _instance,
-            &_debugReportCallbackCreateInfoEXT,
-            nullptr,
-            &_debugReportCallback
-        ),
-
+        vkCreateDebugUtilsMessengerEXT ( _instance, &_debugUtilsMessengerCreateInfo, nullptr, &_debugUtilsMessenger ),
         "DeployDebugFeatures",
         "Can't Vulkan debug callback"
     );
@@ -1447,11 +1376,11 @@ bool Renderer::DeployDebugFeatures () noexcept
 
 void Renderer::DestroyDebugFeatures () noexcept
 {
-    if ( _debugReportCallback == VK_NULL_HANDLE )
+    if ( _debugUtilsMessenger == VK_NULL_HANDLE )
         return;
 
-    vkDestroyDebugReportCallbackEXT ( _instance, _debugReportCallback, nullptr );
-    _debugReportCallback = VK_NULL_HANDLE;
+    vkDestroyDebugUtilsMessengerEXT ( _instance, _debugUtilsMessenger, nullptr );
+    _debugUtilsMessenger = VK_NULL_HANDLE;
 }
 
 #endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
@@ -1635,15 +1564,22 @@ bool Renderer::DeployInstance () noexcept
         .pDisabledValidationFeatures = nullptr
     };
 
-    _debugReportCallbackCreateInfoEXT.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
-    _debugReportCallbackCreateInfoEXT.pNext = &validationInfo;
-    _debugReportCallbackCreateInfoEXT.pUserData = this;
-    _debugReportCallbackCreateInfoEXT.pfnCallback = &Renderer::OnVulkanDebugReport;
+    _debugUtilsMessengerCreateInfo =
+    {
+        .sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
+        .pNext = &validationInfo,
+        .flags = 0U,
 
-    _debugReportCallbackCreateInfoEXT.flags =
-        AV_VK_FLAG ( VK_DEBUG_REPORT_ERROR_BIT_EXT ) |
-        AV_VK_FLAG ( VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT ) |
-        AV_VK_FLAG ( VK_DEBUG_REPORT_WARNING_BIT_EXT );
+        .messageSeverity = AV_VK_FLAG ( VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT ) |
+            AV_VK_FLAG ( VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT ),
+
+        .messageType = AV_VK_FLAG ( VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT ) |
+            AV_VK_FLAG ( VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT ) |
+            AV_VK_FLAG ( VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT ),
+
+        .pfnUserCallback = &Renderer::OnVulkanDebugUtils,
+        .pUserData = nullptr
+    };
 
     constexpr static char const* layers[] =
     {
@@ -1653,11 +1589,11 @@ bool Renderer::DeployInstance () noexcept
     constexpr static char const* extensions[] =
     {
         VK_KHR_ANDROID_SURFACE_EXTENSION_NAME,
-        VK_EXT_DEBUG_REPORT_EXTENSION_NAME,
+        VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
         VK_KHR_SURFACE_EXTENSION_NAME
     };
 
-    instanceCreateInfo.pNext = &_debugReportCallbackCreateInfoEXT;
+    instanceCreateInfo.pNext = &_debugUtilsMessengerCreateInfo;
     instanceCreateInfo.enabledLayerCount = static_cast<uint32_t> ( std::size ( layers ) );
     instanceCreateInfo.ppEnabledLayerNames = layers;
 
@@ -2638,57 +2574,90 @@ bool Renderer::CheckExtensionCommon ( std::set<std::string> const &allExtensions
 
 #ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
-VkBool32 VKAPI_PTR Renderer::OnVulkanDebugReport ( VkDebugReportFlagsEXT flags,
-    VkDebugReportObjectTypeEXT objectType,
-    uint64_t object,
-    size_t location,
-    int32_t messageCode,
-    char const* pLayerPrefix,
-    char const* pMessage,
-    void* pUserData
+VkBool32 VKAPI_PTR Renderer::OnVulkanDebugUtils ( VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+    VkDebugUtilsMessageTypeFlagsEXT messageTypes,
+    VkDebugUtilsMessengerCallbackDataEXT const* pCallbackData,
+    void* /*pUserData*/
 )
 {
-    if ( g_validationFilter.count ( location ) > 0U )
+    if ( g_validationFilter.count ( static_cast<uint32_t> ( pCallbackData->messageIdNumber ) ) > 0U )
         return VK_FALSE;
 
-    Renderer& renderer = *static_cast<Renderer*> ( pUserData );
-    auto const findResult = renderer._loggerMapper.find ( flags );
+    auto const encodeObjects = [] ( std::string &dst,
+        uint32_t count,
+        VkDebugUtilsObjectNameInfoEXT const* objects
+    ) noexcept -> char const* {
+        if ( !count )
+            return "N/A";
 
-    char const* category;
-    LogType logger;
+        dst += objects->pObjectName ? objects->pObjectName : "[nullptr]";
 
-    if ( findResult != renderer._loggerMapper.cend () )
-    {
-        category = findResult->second.second;
-        logger = findResult->second.first;
-    }
-    else
-    {
-        constexpr static char const* unknownCategory = "UNKNOWN";
-        category = unknownCategory;
-        logger = &LogError;
-    }
+        for ( uint32_t i = 1U; i < count; ++i )
+        {
+            VkDebugUtilsObjectNameInfoEXT const& object = objects[ i ];
+            dst += ", ";
+            dst += object.pObjectName ? object.pObjectName : "[nullptr]";
+        }
 
-    constexpr char const* format =
-R"__(Renderer::OnVulkanDebugReport:
-category: %s
-object type: %s
-object: 0x%)__" PRIx64
-R"__(
-location: %zu
-message code: %i
-layer prefix: %s
+        return dst.c_str ();
+    };
+
+    auto const encodeLabel = [] ( std::string &dst,
+        uint32_t count,
+        VkDebugUtilsLabelEXT const* labels
+    ) noexcept -> char const* {
+        if ( !count )
+            return "N/A";
+
+        dst += labels->pLabelName ? labels->pLabelName : "[nullptr]";
+
+        for ( uint32_t i = 1U; i < count; ++i )
+        {
+            VkDebugUtilsLabelEXT const& label = labels[ i ];
+            dst += ", ";
+            dst += label.pLabelName ? label.pLabelName : "[nullptr]";
+        }
+
+        return dst.c_str ();
+    };
+
+    constexpr char const format[] =
+R"(Renderer::OnVulkanDebugReport:
+severity: %s
+type: %s
+message ID name: %s
+message ID: 0x%08x
+queues: %s
+command buffers: %s
+objects: %s
 message: %s
-)__";
+)";
 
-    logger ( format,
-        category,
-        Renderer::ResolveVkDebugReportObjectType ( objectType ),
-        object,
-        location,
-        messageCode,
-        pLayerPrefix,
-        pMessage
+    std::string queues {};
+    std::string commandBuffers {};
+    std::string objects {};
+
+    std::string const severity = StringifyVkFlags ( messageSeverity,
+        g_vkDebugUtilsMessageSeverityFlagBitsEXTMapperItems,
+        g_vkDebugUtilsMessageSeverityFlagBitsEXTMapper
+    );
+
+    std::string const type = StringifyVkFlags ( messageTypes,
+        g_vkDebugUtilsMessageTypeFlagBitsEXTMapperItems,
+        g_vkDebugUtilsMessageTypeFlagBitsEXTMapper
+    );
+
+    constexpr size_t removeFirstSpace = 1U;
+
+    LogError ( format,
+        severity.c_str () + removeFirstSpace,
+        type.c_str () + removeFirstSpace,
+        pCallbackData->pMessageIdName,
+        pCallbackData->messageIdNumber,
+        encodeLabel ( queues, pCallbackData->queueLabelCount, pCallbackData->pQueueLabels ),
+        encodeLabel ( commandBuffers, pCallbackData->cmdBufLabelCount, pCallbackData->pCmdBufLabels ),
+        encodeObjects ( objects, pCallbackData->objectCount, pCallbackData->pObjects ),
+        pCallbackData->pMessage
     );
 
 #ifdef ANDROID_VULKAN_STRICT_MODE
@@ -3030,16 +2999,6 @@ char const* Renderer::ResolvePhysicalDeviceType ( VkPhysicalDeviceType type ) no
     auto const findResult = _vulkanPhysicalDeviceTypeMap.find ( type );
     return findResult == _vulkanPhysicalDeviceTypeMap.cend () ? UNKNOWN_RESULT : findResult->second;
 }
-
-#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
-
-char const* Renderer::ResolveVkDebugReportObjectType ( VkDebugReportObjectTypeEXT type ) noexcept
-{
-    auto const findResult = _vulkanObjectTypeMap.find ( type );
-    return findResult == _vulkanObjectTypeMap.cend () ? UNKNOWN_RESULT : findResult->second;
-}
-
-#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
 char const* Renderer::ResolveVkColorSpaceKHR ( VkColorSpaceKHR colorSpace ) noexcept
 {

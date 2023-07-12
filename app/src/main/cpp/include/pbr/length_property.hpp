@@ -2,8 +2,8 @@
 #define PBR_LENGTH_PROPERTY_HPP
 
 
-#include "length_value.h"
-#include "property.h"
+#include "length_value.hpp"
+#include "property.hpp"
 
 
 namespace pbr {

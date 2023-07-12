@@ -2,7 +2,7 @@
 #define PBR_GEOMETRY_PASS_MATERIAL_HPP
 
 
-#include "types.h"
+#include "types.hpp"
 
 
 namespace pbr {

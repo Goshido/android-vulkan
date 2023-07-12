@@ -4,8 +4,8 @@
 #define GX_MATH_HPP
 
 
-#include "GXTypes.h"
-#include "GXWarning.h"
+#include "GXTypes.hpp"
+#include "GXWarning.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
 

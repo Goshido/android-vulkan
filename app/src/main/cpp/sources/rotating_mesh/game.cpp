@@ -1,4 +1,4 @@
-#include <rotating_mesh/game.h>
+#include <rotating_mesh/game.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -8,8 +8,8 @@ GX_DISABLE_COMMON_WARNINGS
 
 GX_RESTORE_WARNING_STATE
 
-#include <vertex_info.h>
-#include <vulkan_utils.h>
+#include <vertex_info.hpp>
+#include <vulkan_utils.hpp>
 
 
 namespace rotating_mesh {

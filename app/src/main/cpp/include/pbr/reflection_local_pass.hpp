@@ -2,9 +2,9 @@
 #define PBR_REFLECTION_LOCAL_PASS_HPP
 
 
-#include "reflection_local_program.h"
-#include "types.h"
-#include "uniform_buffer_pool_manager.h"
+#include "reflection_local_program.hpp"
+#include "types.hpp"
+#include "uniform_buffer_pool_manager.hpp"
 
 
 namespace pbr {

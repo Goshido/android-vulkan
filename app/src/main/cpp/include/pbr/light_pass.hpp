@@ -2,11 +2,11 @@
 #define PBR_LIGHT_PASS_HPP
 
 
-#include "gbuffer.h"
-#include "lightup_common_descriptor_set.h"
-#include "point_light_pass.h"
-#include "reflection_global_pass.h"
-#include "reflection_local_pass.h"
+#include "gbuffer.hpp"
+#include "lightup_common_descriptor_set.hpp"
+#include "point_light_pass.hpp"
+#include "reflection_global_pass.hpp"
+#include "reflection_local_pass.hpp"
 
 
 namespace pbr {

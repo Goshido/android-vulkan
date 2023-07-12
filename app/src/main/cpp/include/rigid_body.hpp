@@ -2,7 +2,7 @@
 #define ANDROID_VULKAN_RIGID_BODY_HPP
 
 
-#include "shape.h"
+#include "shape.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
 

@@ -1,6 +1,6 @@
-#include <pbr/material_pool.h>
-#include <pbr/geometry_pass_texture_descriptor_set_layout.h>
-#include <vulkan_utils.h>
+#include <pbr/material_pool.hpp>
+#include <pbr/geometry_pass_texture_descriptor_set_layout.hpp>
+#include <vulkan_utils.hpp>
 
 
 namespace pbr {

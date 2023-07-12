@@ -2,8 +2,8 @@
 #define ANDROID_VULKAN_CORE_HPP
 
 
-#include "game.h"
-#include "gamepad.h"
+#include "game.hpp"
+#include "gamepad.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
 

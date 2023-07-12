@@ -2,7 +2,7 @@
 #define PBR_GBUFFER_HPP
 
 
-#include <texture2D.h>
+#include <texture2D.hpp>
 
 
 namespace pbr {

@@ -1,5 +1,5 @@
-#include <file.h>
-#include <logger.h>
+#include <file.hpp>
+#include <logger.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

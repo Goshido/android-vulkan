@@ -1,7 +1,7 @@
-﻿#include <pbr/scriptable_gxmat4.h>
-#include <pbr/scriptable_gxquat.h>
-#include <pbr/scriptable_gxvec3.h>
-#include <pbr/scriptable_gxvec4.h>
+﻿#include <pbr/scriptable_gxmat4.hpp>
+#include <pbr/scriptable_gxquat.hpp>
+#include <pbr/scriptable_gxvec3.hpp>
+#include <pbr/scriptable_gxvec4.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

@@ -2,7 +2,7 @@
 #define PBR_SCRIPTABLE_MATERIAL_HPP
 
 
-#include <pbr/types.h>
+#include <pbr/types.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

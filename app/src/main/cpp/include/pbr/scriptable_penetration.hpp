@@ -2,9 +2,9 @@
 #define PBR_SCRIPTABLE_PENETRATION_HPP
 
 
-#include <physics.h>
-#include "rigid_body_component.h"
-#include "scriptable_gxvec3.h"
+#include <physics.hpp>
+#include "rigid_body_component.hpp"
+#include "scriptable_gxvec3.hpp"
 
 
 namespace pbr {

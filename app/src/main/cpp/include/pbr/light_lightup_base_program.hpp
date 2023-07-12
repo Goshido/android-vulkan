@@ -2,8 +2,8 @@
 #define PBR_LIGHT_LIGHTUP_BASE_PROGRAM_HPP
 
 
-#include <vulkan_utils.h>
-#include "program.h"
+#include <vulkan_utils.hpp>
+#include "program.hpp"
 
 
 namespace pbr {

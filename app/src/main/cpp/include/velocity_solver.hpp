@@ -2,7 +2,7 @@
 #define ANDROID_VULKAN_VELOCITY_SOLVER_HPP
 
 
-#include "contact_manager.h"
+#include "contact_manager.hpp"
 
 
 namespace android_vulkan {

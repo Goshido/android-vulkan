@@ -2,9 +2,9 @@
 #define PBR_HTML5_ELEMENT_HPP
 
 
-#include "css_computed_values.h"
-#include "html5_tag.h"
-#include "stream.h"
+#include "css_computed_values.hpp"
+#include "html5_tag.hpp"
+#include "stream.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
 

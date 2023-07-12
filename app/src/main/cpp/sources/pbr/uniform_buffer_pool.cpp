@@ -1,6 +1,6 @@
-#include <pbr/uniform_buffer_pool.h>
-#include <av_assert.h>
-#include <vulkan_utils.h>
+#include <pbr/uniform_buffer_pool.hpp>
+#include <av_assert.hpp>
+#include <vulkan_utils.hpp>
 
 
 namespace pbr {

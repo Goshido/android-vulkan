@@ -2,9 +2,9 @@
 #define KTX_MEDIA_CONTAINER_HPP
 
 
-#include "file.h"
-#include "ktx_header.h"
-#include "mip_info.h"
+#include "file.hpp"
+#include "ktx_header.hpp"
+#include "mip_info.hpp"
 
 
 namespace android_vulkan {

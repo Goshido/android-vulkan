@@ -1,7 +1,7 @@
-#include <av_assert.h>
-#include <logger.h>
-#include <sound_emitter_spatial.h>
-#include <sound_mixer.h>
+#include <av_assert.hpp>
+#include <logger.hpp>
+#include <sound_emitter_spatial.hpp>
+#include <sound_mixer.hpp>
 
 
 namespace android_vulkan {

@@ -1,4 +1,4 @@
-#include <pbr/html5_element.h>
+#include <pbr/html5_element.hpp>
 
 
 namespace pbr {

@@ -2,7 +2,7 @@
 #define PBR_SCRIPTABLE_GAMEPAD_HPP
 
 
-#include <gamepad.h>
+#include <gamepad.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

@@ -2,8 +2,8 @@
 #define PBR_GEOMETRY_DATA_HPP
 
 
-#include <vulkan_utils.h>
-#include <GXCommon/GXMath.h>
+#include <vulkan_utils.hpp>
+#include <GXCommon/GXMath.hpp>
 
 
 namespace pbr {

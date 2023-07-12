@@ -2,8 +2,8 @@
 #define PBR_TAG_PARSER_HPP
 
 
-#include "html5_tag.h"
-#include "stream.h"
+#include "html5_tag.hpp"
+#include "stream.hpp"
 
 
 namespace pbr {

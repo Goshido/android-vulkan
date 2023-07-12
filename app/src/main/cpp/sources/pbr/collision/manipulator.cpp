@@ -1,6 +1,6 @@
-#include <pbr/collision/manipulator.h>
-#include <gamepad.h>
-#include <logger.h>
+#include <pbr/collision/manipulator.hpp>
+#include <gamepad.hpp>
+#include <logger.hpp>
 
 
 namespace pbr::collision {

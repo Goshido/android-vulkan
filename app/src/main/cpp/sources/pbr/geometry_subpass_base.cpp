@@ -1,4 +1,4 @@
-#include <pbr/geometry_subpass_base.h>
+#include <pbr/geometry_subpass_base.hpp>
 
 
 namespace pbr {

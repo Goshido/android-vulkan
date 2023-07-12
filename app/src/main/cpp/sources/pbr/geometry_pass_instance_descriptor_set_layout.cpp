@@ -1,5 +1,5 @@
-#include <pbr/geometry_pass_instance_descriptor_set_layout.h>
-#include <vulkan_utils.h>
+#include <pbr/geometry_pass_instance_descriptor_set_layout.hpp>
+#include <vulkan_utils.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

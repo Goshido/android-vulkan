@@ -2,10 +2,10 @@
 #define PBR_SOUND_EMITTER_SPATIAL_COMPONENT_HPP
 
 
-#include "actor.h"
-#include "component.h"
-#include <sound_emitter_spatial.h>
-#include "sound_emitter_spatial_component_desc.h"
+#include "actor.hpp"
+#include "component.hpp"
+#include <sound_emitter_spatial.hpp>
+#include "sound_emitter_spatial_component_desc.hpp"
 
 
 namespace pbr {

@@ -1,8 +1,8 @@
 #ifdef ANDROID_VULKAN_DEBUG
 
-#include <av_assert.h>
-#include <vulkan_utils.h>
-#include <GXCommon/GXWarning.h>
+#include <av_assert.hpp>
+#include <vulkan_utils.hpp>
+#include <GXCommon/GXWarning.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -11,7 +11,7 @@ GX_DISABLE_COMMON_WARNINGS
 
 GX_RESTORE_WARNING_STATE
 
-#include "logger.h"
+#include "logger.hpp"
 
 
 namespace android_vulkan {

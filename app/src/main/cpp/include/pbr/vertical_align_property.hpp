@@ -2,7 +2,7 @@
 #define PBR_VERTICAL_ALIGN_PROPERTY_HPP
 
 
-#include "property.h"
+#include "property.hpp"
 
 
 namespace pbr {

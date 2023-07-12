@@ -2,10 +2,10 @@
 #define PBR_POINT_LIGHT_LIGHTUP_PROGRAM_HPP
 
 
-#include "lightup_common_descriptor_set_layout.h"
-#include "light_lightup_base_program.h"
-#include "light_volume_descriptor_set_layout.h"
-#include "point_light_descriptor_set_layout.h"
+#include "lightup_common_descriptor_set_layout.hpp"
+#include "light_lightup_base_program.hpp"
+#include "light_volume_descriptor_set_layout.hpp"
+#include "point_light_descriptor_set_layout.hpp"
 
 
 namespace pbr {

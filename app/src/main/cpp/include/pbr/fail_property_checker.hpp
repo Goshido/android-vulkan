@@ -2,7 +2,7 @@
 #define PBR_FAIL_PROPERTY_CHECKER_HPP
 
 
-#include "property_checker.h"
+#include "property_checker.hpp"
 
 
 namespace pbr {

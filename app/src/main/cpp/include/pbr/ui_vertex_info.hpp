@@ -2,7 +2,7 @@
 #define PBR_UI_VERTEX_INFO_HPP
 
 
-#include <GXCommon/GXMath.h>
+#include <GXCommon/GXMath.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

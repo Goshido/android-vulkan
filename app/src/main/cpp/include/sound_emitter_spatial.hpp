@@ -2,8 +2,8 @@
 #define ANDROID_VULKAN_SOUND_EMITTER_SPATIAL_HPP
 
 
-#include "sound_emitter.h"
-#include <GXCommon/GXMath.h>
+#include "sound_emitter.hpp"
+#include <GXCommon/GXMath.hpp>
 
 
 namespace android_vulkan {

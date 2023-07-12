@@ -2,7 +2,7 @@
 #define PBR_LENGTH_VALUE_PARSER_HPP
 
 
-#include "length_value.h"
+#include "length_value.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
 

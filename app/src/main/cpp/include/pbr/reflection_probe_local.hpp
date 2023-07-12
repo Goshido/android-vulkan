@@ -2,7 +2,7 @@
 #define PBR_REFLECTION_PROBE_LOCAL_HPP
 
 
-#include "reflection_probe.h"
+#include "reflection_probe.hpp"
 
 
 namespace pbr {

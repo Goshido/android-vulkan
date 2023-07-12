@@ -2,7 +2,7 @@
 #define PBR_FONT_STORAGE_HPP
 
 
-#include <renderer.h>
+#include <renderer.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

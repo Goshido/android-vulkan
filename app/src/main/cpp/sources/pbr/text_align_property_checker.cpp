@@ -1,6 +1,6 @@
-#include <logger.h>
-#include <pbr/text_align_property_checker.h>
-#include <pbr/utf8_parser.h>
+#include <logger.hpp>
+#include <pbr/text_align_property_checker.hpp>
+#include <pbr/utf8_parser.hpp>
 
 
 namespace pbr {

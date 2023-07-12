@@ -2,10 +2,10 @@
 #define PBR_STIPPLE_SUBPASS_HPP
 
 
-#include "geometry_subpass_base.h"
-#include "default_texture_manager.h"
-#include "sampler_manager.h"
-#include "stipple_program.h"
+#include "geometry_subpass_base.hpp"
+#include "default_texture_manager.hpp"
+#include "sampler_manager.hpp"
+#include "stipple_program.hpp"
 
 
 namespace pbr {

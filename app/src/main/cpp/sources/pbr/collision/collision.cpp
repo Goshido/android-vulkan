@@ -1,9 +1,9 @@
-#include <pbr/collision/collision.h>
-#include <pbr/coordinate_system.h>
-#include <pbr/material_manager.h>
-#include <pbr/mesh_manager.h>
-#include <pbr/static_mesh_component.h>
-#include <shape_box.h>
+#include <pbr/collision/collision.hpp>
+#include <pbr/coordinate_system.hpp>
+#include <pbr/material_manager.hpp>
+#include <pbr/mesh_manager.hpp>
+#include <pbr/static_mesh_component.hpp>
+#include <shape_box.hpp>
 
 
 namespace pbr::collision {

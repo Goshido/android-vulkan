@@ -2,8 +2,8 @@
 #define PBR_COMPONENT_DESC_HPP
 
 
-#include "component_classes.h"
-#include <primitive_types.h>
+#include "component_classes.hpp"
+#include <primitive_types.hpp>
 
 
 namespace pbr {

@@ -1,4 +1,4 @@
-#include <guid_generator.h>
+#include <guid_generator.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

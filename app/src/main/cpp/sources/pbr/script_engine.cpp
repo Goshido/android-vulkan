@@ -1,25 +1,25 @@
-#include <pbr/script_engine.h>
-#include <pbr/actor.h>
-#include <pbr/camera_component.h>
-#include <pbr/component.h>
-#include <pbr/rigid_body_component.h>
-#include <pbr/script_component.h>
-#include <pbr/scriptable_gxmat3.h>
-#include <pbr/scriptable_gxmat4.h>
-#include <pbr/scriptable_gxquat.h>
-#include <pbr/scriptable_gxvec3.h>
-#include <pbr/scriptable_gxvec4.h>
-#include <pbr/scriptable_logger.h>
-#include <pbr/scriptable_material.h>
-#include <pbr/sound_emitter_global_component.h>
-#include <pbr/sound_emitter_spatial_component.h>
-#include <pbr/static_mesh_component.h>
-#include <pbr/text_ui_element.h>
-#include <pbr/transform_component.h>
-#include <pbr/ui_layer.h>
-#include <av_assert.h>
-#include <file.h>
-#include <logger.h>
+#include <pbr/script_engine.hpp>
+#include <pbr/actor.hpp>
+#include <pbr/camera_component.hpp>
+#include <pbr/component.hpp>
+#include <pbr/rigid_body_component.hpp>
+#include <pbr/script_component.hpp>
+#include <pbr/scriptable_gxmat3.hpp>
+#include <pbr/scriptable_gxmat4.hpp>
+#include <pbr/scriptable_gxquat.hpp>
+#include <pbr/scriptable_gxvec3.hpp>
+#include <pbr/scriptable_gxvec4.hpp>
+#include <pbr/scriptable_logger.hpp>
+#include <pbr/scriptable_material.hpp>
+#include <pbr/sound_emitter_global_component.hpp>
+#include <pbr/sound_emitter_spatial_component.hpp>
+#include <pbr/static_mesh_component.hpp>
+#include <pbr/text_ui_element.hpp>
+#include <pbr/transform_component.hpp>
+#include <pbr/ui_layer.hpp>
+#include <av_assert.hpp>
+#include <file.hpp>
+#include <logger.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

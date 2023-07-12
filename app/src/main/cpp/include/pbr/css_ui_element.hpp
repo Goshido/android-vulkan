@@ -2,8 +2,8 @@
 #define PBR_CSS_UI_ELEMENT_HPP
 
 
-#include "css_computed_values.h"
-#include "ui_element.h"
+#include "css_computed_values.hpp"
+#include "ui_element.hpp"
 
 
 namespace pbr {

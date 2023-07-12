@@ -2,10 +2,10 @@
 #define ANDROID_VULKAN_PHYSICS_HPP
 
 
-#include "contact_detector.h"
-#include "contact_manager.h"
-#include "global_force.h"
-#include "ray_caster.h"
+#include "contact_detector.hpp"
+#include "contact_manager.hpp"
+#include "global_force.hpp"
+#include "ray_caster.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
 

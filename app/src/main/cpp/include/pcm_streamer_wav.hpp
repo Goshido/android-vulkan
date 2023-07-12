@@ -2,7 +2,7 @@
 #define ANDROID_VULKAN_PCM_STREAMER_WAV_HPP
 
 
-#include "pcm_streamer.h"
+#include "pcm_streamer.hpp"
 
 
 namespace android_vulkan {

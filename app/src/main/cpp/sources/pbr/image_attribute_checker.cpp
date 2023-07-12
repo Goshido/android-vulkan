@@ -1,7 +1,7 @@
-#include <file.h>
-#include <logger.h>
-#include <pbr/image_attribute_checker.h>
-#include <pbr/utf8_parser.h>
+#include <file.hpp>
+#include <logger.hpp>
+#include <pbr/image_attribute_checker.hpp>
+#include <pbr/utf8_parser.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

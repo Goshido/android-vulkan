@@ -2,7 +2,7 @@
 #define PBR_TEXT_HTML5_ELEMENT_HPP
 
 
-#include "html5_element.h"
+#include "html5_element.hpp"
 
 
 namespace pbr {

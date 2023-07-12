@@ -2,7 +2,7 @@
 #define PBR_NUMBER_PARSER_HPP
 
 
-#include <GXCommon/GXWarning.h>
+#include <GXCommon/GXWarning.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

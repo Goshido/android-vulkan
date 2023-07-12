@@ -1,12 +1,12 @@
-#include <logger.h>
-#include <pbr/div_html5_element.h>
-#include <pbr/img_html5_element.h>
-#include <pbr/set_attribute_checker.h>
-#include <pbr/tag_parser.h>
-#include <pbr/text_html5_element.h>
-#include <pbr/unique_attribute_checker.h>
-#include <pbr/utf8_parser.h>
-#include <pbr/whitespace.h>
+#include <logger.hpp>
+#include <pbr/div_html5_element.hpp>
+#include <pbr/img_html5_element.hpp>
+#include <pbr/set_attribute_checker.hpp>
+#include <pbr/tag_parser.hpp>
+#include <pbr/text_html5_element.hpp>
+#include <pbr/unique_attribute_checker.hpp>
+#include <pbr/utf8_parser.hpp>
+#include <pbr/whitespace.hpp>
 
 
 namespace pbr {

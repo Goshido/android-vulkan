@@ -2,7 +2,7 @@
 #define ANDROID_VULKAN_SOUND_EMITTER_GLOBAL_HPP
 
 
-#include "sound_emitter.h"
+#include "sound_emitter.hpp"
 
 
 namespace android_vulkan {

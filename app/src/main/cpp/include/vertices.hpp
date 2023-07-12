@@ -2,7 +2,7 @@
 #define ANDROID_VULKAN_VERTICES_HPP
 
 
-#include <GXCommon/GXMath.h>
+#include <GXCommon/GXMath.hpp>
 #include <vector>
 
 

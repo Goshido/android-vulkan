@@ -1,13 +1,13 @@
-#include <pbr/pbr_game.h>
-#include <pbr/actor_desc.h>
-#include <pbr/cube_map_manager.h>
-#include <pbr/material_manager.h>
-#include <pbr/mesh_manager.h>
-#include <pbr/renderable_component.h>
-#include <pbr/scene_desc.h>
-#include <av_assert.h>
-#include <gamepad.h>
-#include <trace.h>
+#include <pbr/pbr_game.hpp>
+#include <pbr/actor_desc.hpp>
+#include <pbr/cube_map_manager.hpp>
+#include <pbr/material_manager.hpp>
+#include <pbr/mesh_manager.hpp>
+#include <pbr/renderable_component.hpp>
+#include <pbr/scene_desc.hpp>
+#include <av_assert.hpp>
+#include <gamepad.hpp>
+#include <trace.hpp>
 
 
 namespace pbr {

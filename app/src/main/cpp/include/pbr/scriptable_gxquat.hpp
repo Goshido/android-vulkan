@@ -2,7 +2,7 @@
 #define PBR_SCRIPTABLE_GXQUAT_HPP
 
 
-#include <GXCommon/GXMath.h>
+#include <GXCommon/GXMath.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

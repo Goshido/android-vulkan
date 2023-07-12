@@ -2,8 +2,8 @@
 #define PBR_STATIC_MESH_COMPONENT_DESC_HPP
 
 
-#include "component_desc.h"
-#include "primitive_types.h"
+#include "component_desc.hpp"
+#include "primitive_types.hpp"
 
 
 namespace pbr {

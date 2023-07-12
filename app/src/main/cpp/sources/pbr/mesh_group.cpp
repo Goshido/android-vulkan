@@ -1,4 +1,4 @@
-#include <pbr/mesh_group.h>
+#include <pbr/mesh_group.hpp>
 
 
 namespace pbr {

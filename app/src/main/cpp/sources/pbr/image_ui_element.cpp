@@ -1,6 +1,6 @@
-#include <pbr/image_ui_element.h>
-#include <av_assert.h>
-#include <logger.h>
+#include <pbr/image_ui_element.hpp>
+#include <av_assert.hpp>
+#include <logger.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

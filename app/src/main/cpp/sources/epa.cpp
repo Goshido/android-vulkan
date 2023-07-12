@@ -1,5 +1,5 @@
-#include <epa.h>
-#include <logger.h>
+#include <epa.hpp>
+#include <logger.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

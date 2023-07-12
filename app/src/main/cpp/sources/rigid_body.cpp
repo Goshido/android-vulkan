@@ -1,7 +1,7 @@
-#include <av_assert.h>
-#include <rigid_body.h>
-#include <logger.h>
-#include <physics.h>
+#include <av_assert.hpp>
+#include <rigid_body.hpp>
+#include <logger.hpp>
+#include <physics.hpp>
 
 
 namespace android_vulkan {

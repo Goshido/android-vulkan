@@ -2,11 +2,11 @@
 #define ANDROID_VULKAN_CONTACT_DETECTOR_HPP
 
 
-#include "contact_manager.h"
-#include "cyrus_beck.h"
-#include "epa.h"
-#include "gjk.h"
-#include "sutherland_hodgman.h"
+#include "contact_manager.hpp"
+#include "cyrus_beck.hpp"
+#include "epa.hpp"
+#include "gjk.hpp"
+#include "sutherland_hodgman.hpp"
 
 
 namespace android_vulkan {

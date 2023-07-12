@@ -2,7 +2,7 @@
 #define TEXTURE_CUBE_HPP
 
 
-#include "renderer.h"
+#include "renderer.hpp"
 
 
 namespace android_vulkan {

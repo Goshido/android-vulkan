@@ -1,18 +1,18 @@
-#include <pbr/actor.h>
-#include <pbr/camera_component.h>
-#include <pbr/point_light_component.h>
-#include <pbr/reflection_component.h>
-#include <pbr/rigid_body_component.h>
-#include <pbr/scene.h>
-#include <pbr/script_component.h>
-#include <pbr/script_engine.h>
-#include <pbr/sound_emitter_global_component.h>
-#include <pbr/sound_emitter_spatial_component.h>
-#include <pbr/static_mesh_component.h>
-#include <pbr/transform_component.h>
-#include <guid_generator.h>
-#include <av_assert.h>
-#include <logger.h>
+#include <pbr/actor.hpp>
+#include <pbr/camera_component.hpp>
+#include <pbr/point_light_component.hpp>
+#include <pbr/reflection_component.hpp>
+#include <pbr/rigid_body_component.hpp>
+#include <pbr/scene.hpp>
+#include <pbr/script_component.hpp>
+#include <pbr/script_engine.hpp>
+#include <pbr/sound_emitter_global_component.hpp>
+#include <pbr/sound_emitter_spatial_component.hpp>
+#include <pbr/static_mesh_component.hpp>
+#include <pbr/transform_component.hpp>
+#include <guid_generator.hpp>
+#include <av_assert.hpp>
+#include <logger.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

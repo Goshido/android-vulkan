@@ -2,12 +2,12 @@
 #define PBR_GEOMETRY_PASS_PROGRAM_HPP
 
 
-#include "geometry_pass_instance_descriptor_set_layout.h"
-#include "geometry_pass_sampler_descriptor_set_layout.h"
-#include "geometry_pass_texture_descriptor_set_layout.h"
+#include "geometry_pass_instance_descriptor_set_layout.hpp"
+#include "geometry_pass_sampler_descriptor_set_layout.hpp"
+#include "geometry_pass_texture_descriptor_set_layout.hpp"
 #include "gpgpu_limits.inc"
-#include "program.h"
-#include <vulkan_utils.h>
+#include "program.hpp"
+#include <vulkan_utils.hpp>
 
 
 namespace pbr {

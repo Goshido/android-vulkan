@@ -1,8 +1,8 @@
-#include <pbr/sweep_testing/actor_body.h>
-#include <pbr/coordinate_system.h>
-#include <pbr/opaque_material.h>
-#include <pbr/static_mesh_component.h>
-#include <shape_box.h>
+#include <pbr/sweep_testing/actor_body.hpp>
+#include <pbr/coordinate_system.hpp>
+#include <pbr/opaque_material.hpp>
+#include <pbr/static_mesh_component.hpp>
+#include <shape_box.hpp>
 
 
 namespace pbr::sweep_testing {

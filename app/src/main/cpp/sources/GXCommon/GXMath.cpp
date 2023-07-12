@@ -1,6 +1,6 @@
 // version 1.78
 
-#include <GXCommon/GXMath.h>
+#include <GXCommon/GXMath.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

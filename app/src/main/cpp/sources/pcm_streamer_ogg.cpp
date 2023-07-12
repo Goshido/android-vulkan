@@ -1,7 +1,7 @@
-#include <av_assert.h>
-#include <logger.h>
-#include <pcm_streamer_ogg.h>
-#include <sound_mixer.h>
+#include <av_assert.hpp>
+#include <logger.hpp>
+#include <pcm_streamer_ogg.hpp>
+#include <sound_mixer.hpp>
 
 
 namespace android_vulkan {

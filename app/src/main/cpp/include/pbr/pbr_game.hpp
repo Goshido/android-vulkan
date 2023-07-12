@@ -2,9 +2,9 @@
 #define PBR_GAME_HPP
 
 
-#include "camera.h"
-#include "render_session.h"
-#include <game.h>
+#include "camera.hpp"
+#include "render_session.hpp"
+#include <game.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

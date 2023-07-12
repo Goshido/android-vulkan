@@ -1,5 +1,5 @@
-#include <contact_detector.h>
-#include <logger.h>
+#include <contact_detector.hpp>
+#include <logger.hpp>
 
 
 namespace android_vulkan {

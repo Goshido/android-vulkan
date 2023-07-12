@@ -1,4 +1,4 @@
-#include <gjk_base.h>
+#include <gjk_base.hpp>
 
 
 namespace android_vulkan {

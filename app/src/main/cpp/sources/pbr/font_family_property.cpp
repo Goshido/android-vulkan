@@ -1,4 +1,4 @@
-#include <pbr/font_family_property.h>
+#include <pbr/font_family_property.hpp>
 
 
 namespace pbr {

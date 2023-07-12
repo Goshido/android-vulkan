@@ -2,7 +2,7 @@
 #define MANDELBROT_ANALYTIC_COLOR_HPP
 
 
-#include "mandelbrot_base.h"
+#include "mandelbrot_base.hpp"
 
 
 namespace mandelbrot {

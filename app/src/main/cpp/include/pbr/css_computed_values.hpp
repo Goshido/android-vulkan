@@ -2,14 +2,14 @@
 #define PBR_CSS_COMPUTED_VALUES_HPP
 
 
-#include "color_value.h"
-#include "css_parser.h"
-#include "display_property.h"
-#include "length_value.h"
-#include "position_property.h"
-#include "text_align_property.h"
-#include "vertical_align_property.h"
-#include <GXCommon/GXMath.h>
+#include "color_value.hpp"
+#include "css_parser.hpp"
+#include "display_property.hpp"
+#include "length_value.hpp"
+#include "position_property.hpp"
+#include "text_align_property.hpp"
+#include "vertical_align_property.hpp"
+#include <GXCommon/GXMath.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

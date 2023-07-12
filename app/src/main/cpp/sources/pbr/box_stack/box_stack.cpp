@@ -1,13 +1,13 @@
-#include <pbr/box_stack/box_stack.h>
-#include <pbr/coordinate_system.h>
-#include <pbr/component.h>
-#include <pbr/material_manager.h>
-#include <pbr/mesh_manager.h>
-#include <pbr/static_mesh_component.h>
-#include <gamepad.h>
-#include <global_force_gravity.h>
-#include <shape_box.h>
-#include <shape_sphere.h>
+#include <pbr/box_stack/box_stack.hpp>
+#include <pbr/coordinate_system.hpp>
+#include <pbr/component.hpp>
+#include <pbr/material_manager.hpp>
+#include <pbr/mesh_manager.hpp>
+#include <pbr/static_mesh_component.hpp>
+#include <gamepad.hpp>
+#include <global_force_gravity.hpp>
+#include <shape_box.hpp>
+#include <shape_sphere.hpp>
 
 
 namespace pbr::box_stack {

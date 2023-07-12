@@ -2,8 +2,8 @@
 #define PBR_COLOR_PROPERTY_HPP
 
 
-#include "color_value.h"
-#include "property.h"
+#include "color_value.hpp"
+#include "property.hpp"
 
 
 namespace pbr {

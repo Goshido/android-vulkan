@@ -2,8 +2,8 @@
 #define PBR_MESH_GROUP_HPP
 
 
-#include "types.h"
-#include "geometry_data.h"
+#include "types.hpp"
+#include "geometry_data.hpp"
 
 
 namespace pbr {

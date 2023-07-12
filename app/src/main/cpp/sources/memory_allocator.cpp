@@ -1,9 +1,9 @@
-#include <av_assert.h>
-#include <memory_allocator.h>
-#include <bitwise.h>
-#include <core.h>
-#include <renderer.h>
-#include <vulkan_utils.h>
+#include <av_assert.hpp>
+#include <memory_allocator.hpp>
+#include <bitwise.hpp>
+#include <core.hpp>
+#include <renderer.hpp>
+#include <vulkan_utils.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

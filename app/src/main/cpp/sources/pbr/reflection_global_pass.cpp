@@ -1,5 +1,5 @@
-#include <pbr/reflection_global_pass.h>
-#include <trace.h>
+#include <pbr/reflection_global_pass.hpp>
+#include <trace.hpp>
 
 
 namespace pbr {

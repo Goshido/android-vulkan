@@ -1,14 +1,14 @@
-#include <pbr/rigid_body_component.h>
-#include <pbr/actor.h>
-#include <pbr/coordinate_system.h>
-#include <pbr/script_engine.h>
-#include <pbr/scriptable_gxmat4.h>
-#include <pbr/scriptable_gxvec3.h>
-#include <guid_generator.h>
-#include <physics.h>
-#include <av_assert.h>
-#include <shape_box.h>
-#include <shape_sphere.h>
+#include <pbr/rigid_body_component.hpp>
+#include <pbr/actor.hpp>
+#include <pbr/coordinate_system.hpp>
+#include <pbr/script_engine.hpp>
+#include <pbr/scriptable_gxmat4.hpp>
+#include <pbr/scriptable_gxvec3.hpp>
+#include <guid_generator.hpp>
+#include <physics.hpp>
+#include <av_assert.hpp>
+#include <shape_box.hpp>
+#include <shape_sphere.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

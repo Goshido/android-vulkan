@@ -1,9 +1,9 @@
-#include <pbr/sweep_testing/actor_sweep.h>
-#include <pbr/coordinate_system.h>
-#include <pbr/static_mesh_component.h>
-#include <pbr/stipple_material.h>
-#include <gamepad.h>
-#include <shape_box.h>
+#include <pbr/sweep_testing/actor_sweep.hpp>
+#include <pbr/coordinate_system.hpp>
+#include <pbr/static_mesh_component.hpp>
+#include <pbr/stipple_material.hpp>
+#include <gamepad.hpp>
+#include <shape_box.hpp>
 
 
 namespace pbr::sweep_testing {

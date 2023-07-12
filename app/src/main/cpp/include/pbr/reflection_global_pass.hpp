@@ -2,8 +2,8 @@
 #define PBR_REFLECTION_GLOBAL_PASS_HPP
 
 
-#include "reflection_global_program.h"
-#include "types.h"
+#include "reflection_global_program.hpp"
+#include "types.hpp"
 
 
 namespace pbr {

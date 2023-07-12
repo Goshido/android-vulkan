@@ -2,7 +2,7 @@
 #define ANDROID_VULKAN_SHAPE_HPP
 
 
-#include <GXCommon/GXMath.h>
+#include <GXCommon/GXMath.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

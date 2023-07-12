@@ -1,7 +1,7 @@
-#include <pbr/material_manager.h>
-#include <pbr/opaque_material.h>
-#include <pbr/stipple_material.h>
-#include <av_assert.h>
+#include <pbr/material_manager.hpp>
+#include <pbr/opaque_material.hpp>
+#include <pbr/stipple_material.hpp>
+#include <av_assert.hpp>
 
 
 namespace pbr {

@@ -2,12 +2,12 @@
 #define PBR_TYPES_HPP
 
 
-#include <mesh_geometry.h>
-#include <texture2D.h>
-#include <texture_cube.h>
-#include "material.h"
-#include "sampler.h"
-#include "light.h"
+#include <mesh_geometry.hpp>
+#include <texture2D.hpp>
+#include <texture_cube.hpp>
+#include "material.hpp"
+#include "sampler.hpp"
+#include "light.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
 

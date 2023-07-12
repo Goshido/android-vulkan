@@ -1,7 +1,7 @@
-#include <pbr/scriptable_material.h>
-#include <pbr/material_manager.h>
-#include <av_assert.h>
-#include <vulkan_utils.h>
+#include <pbr/scriptable_material.hpp>
+#include <pbr/material_manager.hpp>
+#include <av_assert.hpp>
+#include <vulkan_utils.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

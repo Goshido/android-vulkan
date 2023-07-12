@@ -2,7 +2,7 @@
 #define PBR_COLOR_VALUE_HPP
 
 
-#include <GXCommon/GXMath.h>
+#include <GXCommon/GXMath.hpp>
 
 
 namespace pbr {

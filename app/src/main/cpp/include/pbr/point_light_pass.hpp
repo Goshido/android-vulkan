@@ -2,11 +2,11 @@
 #define PBR_POINT_LIGHT_PASS_HPP
 
 
-#include "point_light_lightup.h"
-#include "point_light_shadowmap_generator_program.h"
-#include "scene_data.h"
-#include "shadow_casters.h"
-#include "uniform_buffer_pool_manager.h"
+#include "point_light_lightup.hpp"
+#include "point_light_shadowmap_generator_program.hpp"
+#include "scene_data.hpp"
+#include "shadow_casters.hpp"
+#include "uniform_buffer_pool_manager.hpp"
 
 
 namespace pbr {

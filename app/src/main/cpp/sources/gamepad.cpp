@@ -1,4 +1,4 @@
-#include <gamepad.h>
+#include <gamepad.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

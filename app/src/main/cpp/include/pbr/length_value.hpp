@@ -2,7 +2,7 @@
 #define PBR_LENGTH_VALUE_HPP
 
 
-#include <GXCommon/GXWarning.h>
+#include <GXCommon/GXWarning.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

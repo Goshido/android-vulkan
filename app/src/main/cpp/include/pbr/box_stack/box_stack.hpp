@@ -2,11 +2,11 @@
 #define PBR_BOX_STACK_HPP
 
 
-#include <pbr/camera.h>
-#include <pbr/point_light_component.h>
-#include <pbr/render_session.h>
-#include <game.h>
-#include <physics.h>
+#include <pbr/camera.hpp>
+#include <pbr/point_light_component.hpp>
+#include <pbr/render_session.hpp>
+#include <game.hpp>
+#include <physics.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

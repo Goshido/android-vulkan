@@ -1,4 +1,4 @@
-#include <pbr/opaque_subpass.h>
+#include <pbr/opaque_subpass.hpp>
 
 
 namespace pbr {

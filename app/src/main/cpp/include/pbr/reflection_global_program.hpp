@@ -2,11 +2,11 @@
 #define PBR_REFLECTION_GLOBAL_PROGRAM_HPP
 
 
-#include "light_lightup_base_program.h"
-#include "lightup_common_descriptor_set_layout.h"
-#include "stub_descriptor_set_layout.h"
-#include "reflection_global_descriptor_set_layout.h"
-#include <vulkan_utils.h>
+#include "light_lightup_base_program.hpp"
+#include "lightup_common_descriptor_set_layout.hpp"
+#include "stub_descriptor_set_layout.hpp"
+#include "reflection_global_descriptor_set_layout.hpp"
+#include <vulkan_utils.hpp>
 
 
 namespace pbr {

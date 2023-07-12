@@ -2,7 +2,7 @@
 #define RAINBOW_HPP
 
 
-#include <game.h>
+#include <game.hpp>
 
 
 namespace rainbow {

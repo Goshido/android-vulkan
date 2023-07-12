@@ -1,6 +1,6 @@
-#include <av_assert.h>
-#include <velocity_solver.h>
-#include <logger.h>
+#include <av_assert.hpp>
+#include <velocity_solver.hpp>
+#include <logger.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

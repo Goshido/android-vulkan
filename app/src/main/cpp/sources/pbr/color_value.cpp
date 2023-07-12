@@ -1,4 +1,4 @@
-#include <pbr/color_value.h>
+#include <pbr/color_value.hpp>
 
 
 namespace pbr {

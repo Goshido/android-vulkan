@@ -2,11 +2,11 @@
 #define PBR_RAY_CASTING_HPP
 
 
-#include <pbr/camera.h>
-#include <pbr/opaque_material.h>
-#include <pbr/render_session.h>
-#include <game.h>
-#include <physics.h>
+#include <pbr/camera.hpp>
+#include <pbr/opaque_material.hpp>
+#include <pbr/render_session.hpp>
+#include <game.hpp>
+#include <physics.hpp>
 
 
 namespace pbr::ray_casting {

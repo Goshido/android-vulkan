@@ -2,8 +2,8 @@
 #define PBR_MARIO_WORLD1x1_HPP
 
 
-#include <pbr/scene.h>
-#include <game.h>
+#include <pbr/scene.hpp>
+#include <game.hpp>
 
 
 namespace pbr::mario {

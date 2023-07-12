@@ -1,4 +1,4 @@
-#include <pbr/geometry_call.h>
+#include <pbr/geometry_call.hpp>
 
 
 namespace pbr {

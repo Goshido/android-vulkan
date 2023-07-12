@@ -2,10 +2,10 @@
 #define PBR_POINT_LIGHT_SHADOWMAP_GENERATOR_PROGRAM_HPP
 
 
-#include "geometry_pass_instance_descriptor_set_layout.h"
+#include "geometry_pass_instance_descriptor_set_layout.hpp"
 #include "gpgpu_limits.inc"
-#include "program.h"
-#include <vulkan_utils.h>
+#include "program.hpp"
+#include <vulkan_utils.hpp>
 
 
 namespace pbr {

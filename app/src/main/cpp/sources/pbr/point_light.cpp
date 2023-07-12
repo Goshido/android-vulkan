@@ -1,5 +1,5 @@
-#include <pbr/point_light.h>
-#include <pbr/point_light_component_desc.h>
+#include <pbr/point_light.hpp>
+#include <pbr/point_light_component_desc.hpp>
 
 
 namespace pbr {

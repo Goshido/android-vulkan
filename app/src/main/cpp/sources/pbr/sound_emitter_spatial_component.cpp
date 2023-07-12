@@ -1,8 +1,8 @@
-#include <pbr/sound_emitter_spatial_component.h>
-#include <pbr/script_engine.h>
-#include <pbr/scriptable_gxvec3.h>
-#include <av_assert.h>
-#include <logger.h>
+#include <pbr/sound_emitter_spatial_component.hpp>
+#include <pbr/script_engine.hpp>
+#include <pbr/scriptable_gxvec3.hpp>
+#include <av_assert.hpp>
+#include <logger.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

@@ -1,6 +1,6 @@
-#include <mandelbrot/mandelbrot_base.h>
-#include <file.h>
-#include <vulkan_utils.h>
+#include <mandelbrot/mandelbrot_base.hpp>
+#include <file.hpp>
+#include <vulkan_utils.hpp>
 
 
 namespace mandelbrot {

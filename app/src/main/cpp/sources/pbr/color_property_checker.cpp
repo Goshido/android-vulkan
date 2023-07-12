@@ -1,6 +1,6 @@
-#include <logger.h>
-#include <pbr/color_property_checker.h>
-#include <pbr/whitespace.h>
+#include <logger.hpp>
+#include <pbr/color_property_checker.hpp>
+#include <pbr/whitespace.hpp>
 
 
 namespace pbr {

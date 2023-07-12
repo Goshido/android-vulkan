@@ -2,7 +2,7 @@
 #define PBR_OPAQUE_MATERIAL_HPP
 
 
-#include "geometry_pass_material.h"
+#include "geometry_pass_material.hpp"
 
 
 namespace pbr {

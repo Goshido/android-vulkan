@@ -2,9 +2,9 @@
 #define PBR_COLOR_PROPERTY_CHECKER_HPP
 
 
-#include "color_value.h"
-#include "number_parser.h"
-#include "property_checker.h"
+#include "color_value.hpp"
+#include "number_parser.hpp"
+#include "property_checker.hpp"
 
 
 namespace pbr {

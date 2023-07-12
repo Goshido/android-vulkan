@@ -1,6 +1,6 @@
-#include <pbr/point_light_component.h>
-#include <av_assert.h>
-#include <guid_generator.h>
+#include <pbr/point_light_component.hpp>
+#include <av_assert.hpp>
+#include <guid_generator.hpp>
 
 
 namespace pbr {

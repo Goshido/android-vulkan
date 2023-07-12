@@ -1,5 +1,5 @@
-#include <pbr/scriptable_gxvec3.h>
-#include <logger.h>
+#include <pbr/scriptable_gxvec3.hpp>
+#include <logger.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

@@ -1,5 +1,5 @@
-#include <pbr/point_light_shadowmap_generator_program.h>
-#include <vertex_info.h>
+#include <pbr/point_light_shadowmap_generator_program.hpp>
+#include <vertex_info.hpp>
 
 
 namespace pbr {

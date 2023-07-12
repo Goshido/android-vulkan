@@ -2,10 +2,10 @@
 #define PBR_LIGHTUP_COMMON_DESCRIPTOR_SET_HPP
 
 
-#include "gbuffer.h"
-#include "lightup_common_descriptor_set_layout.h"
-#include "sampler.h"
-#include "uniform_buffer_pool.h"
+#include "gbuffer.hpp"
+#include "lightup_common_descriptor_set_layout.hpp"
+#include "sampler.hpp"
+#include "uniform_buffer_pool.hpp"
 
 
 namespace pbr {

@@ -1,4 +1,4 @@
-#include <pbr/scriptable_gxvec4.h>
+#include <pbr/scriptable_gxvec4.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

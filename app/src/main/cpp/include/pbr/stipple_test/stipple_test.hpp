@@ -2,11 +2,11 @@
 #define PBR_STIPPLE_TEST_HPP
 
 
-#include <game.h>
-#include <pbr/camera.h>
-#include <pbr/point_light_component.h>
-#include <pbr/render_session.h>
-#include <pbr/static_mesh_component.h>
+#include <game.hpp>
+#include <pbr/camera.hpp>
+#include <pbr/point_light_component.hpp>
+#include <pbr/render_session.hpp>
+#include <pbr/static_mesh_component.hpp>
 
 
 namespace pbr::stipple_test {

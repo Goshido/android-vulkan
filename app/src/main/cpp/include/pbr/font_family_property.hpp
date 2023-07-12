@@ -2,7 +2,7 @@
 #define PBR_FONT_FAMILY_PROPERTY_HPP
 
 
-#include "property.h"
+#include "property.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
 

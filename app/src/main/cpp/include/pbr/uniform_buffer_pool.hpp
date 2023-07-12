@@ -2,7 +2,7 @@
 #define PBR_UNIFORM_BUFFER_POOL_HPP
 
 
-#include <renderer.h>
+#include <renderer.hpp>
 
 
 namespace pbr {

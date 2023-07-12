@@ -1,5 +1,5 @@
-#include <pbr/camera.h>
-#include <gamepad.h>
+#include <pbr/camera.hpp>
+#include <gamepad.hpp>
 
 
 namespace pbr {

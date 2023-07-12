@@ -1,8 +1,8 @@
-#include <file.h>
-#include <logger.h>
-#include <pbr/src_property_checker.h>
-#include <pbr/utf8_parser.h>
-#include <pbr/whitespace.h>
+#include <file.hpp>
+#include <logger.hpp>
+#include <pbr/src_property_checker.hpp>
+#include <pbr/utf8_parser.hpp>
+#include <pbr/whitespace.hpp>
 
 
 namespace pbr {

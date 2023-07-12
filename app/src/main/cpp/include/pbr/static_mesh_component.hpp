@@ -2,10 +2,10 @@
 #define PBR_STATIC_MESH_COMPONENT_HPP
 
 
-#include "actor.h"
-#include "renderable_component.h"
-#include "static_mesh_component_desc.h"
-#include "transformable.h"
+#include "actor.hpp"
+#include "renderable_component.hpp"
+#include "static_mesh_component_desc.hpp"
+#include "transformable.hpp"
 
 
 namespace pbr {

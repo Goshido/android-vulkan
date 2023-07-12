@@ -2,11 +2,11 @@
 #define PBR_SWEEP_TESTING_HPP
 
 
-#include "actor_body.h"
-#include "actor_sweep.h"
-#include <pbr/camera.h>
-#include <pbr/point_light_component.h>
-#include <game.h>
+#include "actor_body.hpp"
+#include "actor_sweep.hpp"
+#include <pbr/camera.hpp>
+#include <pbr/point_light_component.hpp>
+#include <game.hpp>
 
 
 namespace pbr::sweep_testing {

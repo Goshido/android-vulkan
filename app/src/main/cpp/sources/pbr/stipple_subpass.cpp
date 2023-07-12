@@ -1,4 +1,4 @@
-#include <pbr/stipple_subpass.h>
+#include <pbr/stipple_subpass.hpp>
 
 
 namespace pbr {

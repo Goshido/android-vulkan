@@ -2,8 +2,8 @@
 #define PBR_GEOMETRY_PASS_HPP
 
 
-#include "opaque_subpass.h"
-#include "stipple_subpass.h"
+#include "opaque_subpass.hpp"
+#include "stipple_subpass.hpp"
 
 
 namespace pbr {

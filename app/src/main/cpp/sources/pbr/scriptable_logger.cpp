@@ -1,5 +1,5 @@
-#include <pbr/scriptable_logger.h>
-#include <logger.h>
+#include <pbr/scriptable_logger.hpp>
+#include <logger.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

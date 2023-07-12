@@ -2,7 +2,7 @@
 #define PBR_MESH_MANAGER_HPP
 
 
-#include <GXCommon/GXWarning.h>
+#include <GXCommon/GXWarning.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -12,7 +12,7 @@ GX_DISABLE_COMMON_WARNINGS
 
 GX_RESTORE_WARNING_STATE
 
-#include "types.h"
+#include "types.hpp"
 
 
 namespace pbr {

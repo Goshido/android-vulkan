@@ -1,4 +1,4 @@
-#include <pbr/cube_map_manager.h>
+#include <pbr/cube_map_manager.hpp>
 
 
 namespace pbr {

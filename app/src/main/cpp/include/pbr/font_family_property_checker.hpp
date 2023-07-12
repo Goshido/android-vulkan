@@ -2,7 +2,7 @@
 #define PBR_FONT_FAMILY_PROPERTY_CHECKER_HPP
 
 
-#include "property_checker.h"
+#include "property_checker.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
 

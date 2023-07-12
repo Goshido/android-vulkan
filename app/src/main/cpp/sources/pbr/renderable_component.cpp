@@ -1,4 +1,4 @@
-#include <pbr/renderable_component.h>
+#include <pbr/renderable_component.hpp>
 
 
 namespace pbr {

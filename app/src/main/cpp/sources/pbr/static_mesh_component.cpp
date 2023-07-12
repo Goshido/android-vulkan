@@ -1,14 +1,14 @@
-#include <pbr/static_mesh_component.h>
-#include <pbr/script_engine.h>
-#include <pbr/scriptable_gxvec3.h>
-#include <pbr/scriptable_gxvec4.h>
-#include <pbr/scriptable_material.h>
-#include <pbr/static_mesh_component_desc.h>
-#include <pbr/material_manager.h>
-#include <pbr/mesh_manager.h>
-#include <pbr/scriptable_gxmat4.h>
-#include <av_assert.h>
-#include <guid_generator.h>
+#include <pbr/static_mesh_component.hpp>
+#include <pbr/script_engine.hpp>
+#include <pbr/scriptable_gxvec3.hpp>
+#include <pbr/scriptable_gxvec4.hpp>
+#include <pbr/scriptable_material.hpp>
+#include <pbr/static_mesh_component_desc.hpp>
+#include <pbr/material_manager.hpp>
+#include <pbr/mesh_manager.hpp>
+#include <pbr/scriptable_gxmat4.hpp>
+#include <av_assert.hpp>
+#include <guid_generator.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

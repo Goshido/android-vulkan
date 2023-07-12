@@ -2,8 +2,8 @@
 #define ANDROID_VULKAN_SOUND_EMITTER_HPP
 
 
-#include "pcm_streamer.h"
-#include "primitive_types.h"
+#include "pcm_streamer.hpp"
+#include "primitive_types.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
 

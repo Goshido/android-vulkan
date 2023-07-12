@@ -2,7 +2,7 @@
 #define ANDROID_VULKAN_SHAPE_SPHERE_HPP
 
 
-#include "shape.h"
+#include "shape.hpp"
 
 
 namespace android_vulkan {

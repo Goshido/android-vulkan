@@ -2,8 +2,8 @@
 #define PBR_UNIFORM_BUFFER_POOL_MANAGER_HPP
 
 
-#include "descriptor_set_layout.h"
-#include "uniform_buffer_pool.h"
+#include "descriptor_set_layout.hpp"
+#include "uniform_buffer_pool.hpp"
 
 
 namespace pbr {

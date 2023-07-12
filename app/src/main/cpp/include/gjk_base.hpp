@@ -2,7 +2,7 @@
 #define ANDROID_VULKAN_GJK_BASE_HPP
 
 
-#include "simplex.h"
+#include "simplex.hpp"
 
 
 namespace android_vulkan {

@@ -1,10 +1,10 @@
-#include <pbr/render_session.h>
-#include <pbr/point_light.h>
-#include <pbr/reflection_probe_global.h>
-#include <pbr/reflection_probe_local.h>
-#include <av_assert.h>
-#include <trace.h>
-#include <vulkan_utils.h>
+#include <pbr/render_session.hpp>
+#include <pbr/point_light.hpp>
+#include <pbr/reflection_probe_global.hpp>
+#include <pbr/reflection_probe_local.hpp>
+#include <av_assert.hpp>
+#include <trace.hpp>
+#include <vulkan_utils.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

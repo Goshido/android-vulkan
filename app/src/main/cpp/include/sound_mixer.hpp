@@ -2,9 +2,9 @@
 #define ANDROID_VULKAN_SOUND_MIXER_HPP
 
 
-#include "sound_emitter.h"
-#include "sound_listener_info.h"
-#include "sound_storage.h"
+#include "sound_emitter.hpp"
+#include "sound_listener_info.hpp"
+#include "sound_storage.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
 

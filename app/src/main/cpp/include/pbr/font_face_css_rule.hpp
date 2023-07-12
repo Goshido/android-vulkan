@@ -2,7 +2,7 @@
 #define PBR_FONT_FACE_CSS_RULE_HPP
 
 
-#include "parse_result.h"
+#include "parse_result.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
 

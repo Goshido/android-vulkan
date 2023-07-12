@@ -1,9 +1,9 @@
-#include <av_assert.h>
-#include <physics.h>
-#include <contact_detector.h>
-#include <logger.h>
-#include <trace.h>
-#include <velocity_solver.h>
+#include <av_assert.hpp>
+#include <physics.hpp>
+#include <contact_detector.hpp>
+#include <logger.hpp>
+#include <trace.hpp>
+#include <velocity_solver.hpp>
 
 
 namespace android_vulkan {

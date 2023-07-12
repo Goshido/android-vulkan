@@ -2,8 +2,8 @@
 #define PBR_COMMON_CSS_RULE_HPP
 
 
-#include "css_rule.h"
-#include "parse_result.h"
+#include "css_rule.hpp"
+#include "parse_result.hpp"
 
 
 namespace pbr {

@@ -2,8 +2,8 @@
 #define PBR_TEXT_UI_ELEMENT_HPP
 
 
-#include "ui_element.h"
-#include <GXCommon/GXMath.h>
+#include "ui_element.hpp"
+#include <GXCommon/GXMath.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

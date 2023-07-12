@@ -1,4 +1,4 @@
-#include <file.h>
+#include <file.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -7,7 +7,7 @@ GX_DISABLE_COMMON_WARNINGS
 
 GX_RESTORE_WARNING_STATE
 
-#include <logger.h>
+#include <logger.hpp>
 
 
 namespace android_vulkan {

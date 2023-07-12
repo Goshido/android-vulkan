@@ -1,5 +1,5 @@
-#include <pbr/default_texture_manager.h>
-#include <half_types.h>
+#include <pbr/default_texture_manager.hpp>
+#include <half_types.hpp>
 
 
 namespace pbr {

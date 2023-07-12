@@ -2,7 +2,7 @@
 #define PBR_LINK_HTML5_ELEMENT_HPP
 
 
-#include "stream.h"
+#include "stream.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
 

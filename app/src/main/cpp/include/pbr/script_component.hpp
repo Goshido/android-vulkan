@@ -2,9 +2,9 @@
 #define PBR_SCRIPT_COMPONENT_HPP
 
 
-#include "actor.h"
-#include "component.h"
-#include "script_component_desc.h"
+#include "actor.hpp"
+#include "component.hpp"
+#include "script_component_desc.hpp"
 
 
 namespace pbr {

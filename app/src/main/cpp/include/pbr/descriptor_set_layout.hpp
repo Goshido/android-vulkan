@@ -2,7 +2,7 @@
 #define PBR_DESCRIPTOR_SET_LAYOUT_HPP
 
 
-#include <renderer.h>
+#include <renderer.hpp>
 
 
 namespace pbr {

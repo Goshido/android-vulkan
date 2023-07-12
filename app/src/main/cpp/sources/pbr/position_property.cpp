@@ -1,4 +1,4 @@
-#include <pbr/position_property.h>
+#include <pbr/position_property.hpp>
 
 
 namespace pbr {

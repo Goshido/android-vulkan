@@ -1,5 +1,5 @@
-#include <rotating_mesh/game_lut.h>
-#include <GXCommon/GXWarning.h>
+#include <rotating_mesh/game_lut.hpp>
+#include <GXCommon/GXWarning.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -9,7 +9,7 @@ GX_DISABLE_COMMON_WARNINGS
 
 GX_RESTORE_WARNING_STATE
 
-#include <half_types.h>
+#include <half_types.hpp>
 
 
 namespace rotating_mesh {

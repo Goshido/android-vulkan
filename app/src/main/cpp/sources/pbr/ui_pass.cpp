@@ -1,7 +1,7 @@
-#include <pbr/ui_pass.h>
+#include <pbr/ui_pass.hpp>
 #include <pbr/ui_program.inc>
-#include <av_assert.h>
-#include <trace.h>
+#include <av_assert.hpp>
+#include <trace.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

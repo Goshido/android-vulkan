@@ -1,19 +1,19 @@
-#include <av_assert.h>
-#include <core.h>
-#include <bitwise.h>
-#include <logger.h>
-#include <mandelbrot/mandelbrot_analytic_color.h>
-#include <mandelbrot/mandelbrot_lut_color.h>
-#include <pbr/pbr_game.h>
-#include <pbr/box_stack/box_stack.h>
-#include <pbr/collision/collision.h>
-#include <pbr/mario/world1x1.h>
-#include <pbr/ray_casting/ray_casting.h>
-#include <pbr/stipple_test/stipple_test.h>
-#include <pbr/sweep_testing/sweep_testing.h>
-#include <rainbow/rainbow.h>
-#include <rotating_mesh/game_analytic.h>
-#include <rotating_mesh/game_lut.h>
+#include <av_assert.hpp>
+#include <core.hpp>
+#include <bitwise.hpp>
+#include <logger.hpp>
+#include <mandelbrot/mandelbrot_analytic_color.hpp>
+#include <mandelbrot/mandelbrot_lut_color.hpp>
+#include <pbr/pbr_game.hpp>
+#include <pbr/box_stack/box_stack.hpp>
+#include <pbr/collision/collision.hpp>
+#include <pbr/mario/world1x1.hpp>
+#include <pbr/ray_casting/ray_casting.hpp>
+#include <pbr/stipple_test/stipple_test.hpp>
+#include <pbr/sweep_testing/sweep_testing.hpp>
+#include <rainbow/rainbow.hpp>
+#include <rotating_mesh/game_analytic.hpp>
+#include <rotating_mesh/game_lut.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -82,7 +82,7 @@ Core::Core ( JNIEnv* env, jobject activity, jobject assetManager, std::string &&
         { android_vulkan::eGame::World1x1, std::make_shared<pbr::mario::World1x1> () }
     };
 
-    _game = games.find ( android_vulkan::eGame::PBR )->second.get ();
+    _game = games.find ( android_vulkan::eGame::World1x1 )->second.get ();
 
     _thread = std::thread (
         [ this, dpi ] () noexcept {

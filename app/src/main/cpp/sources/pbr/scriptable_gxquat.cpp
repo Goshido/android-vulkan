@@ -1,5 +1,5 @@
-#include <pbr/scriptable_gxquat.h>
-#include <pbr/scriptable_gxvec3.h>
+#include <pbr/scriptable_gxquat.hpp>
+#include <pbr/scriptable_gxvec3.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

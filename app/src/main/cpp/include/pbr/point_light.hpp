@@ -2,7 +2,7 @@
 #define PBR_POINT_LIGHT_HPP
 
 
-#include <GXCommon/GXMath.h>
+#include <GXCommon/GXMath.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -10,9 +10,9 @@ GX_DISABLE_COMMON_WARNINGS
 
 GX_RESTORE_WARNING_STATE
 
-#include <vulkan_utils.h>
+#include <vulkan_utils.hpp>
 #include "gpgpu_limits.inc"
-#include "light.h"
+#include "light.hpp"
 
 
 namespace pbr {

@@ -2,8 +2,8 @@
 #define PBR_HTML5_PARSER_HPP
 
 
-#include "html5_element.h"
-#include "parse_result.h"
+#include "html5_element.hpp"
+#include "parse_result.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
 

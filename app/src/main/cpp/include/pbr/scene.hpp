@@ -2,14 +2,14 @@
 #define PBR_SCENE_HPP
 
 
-#include "actor.h"
-#include "camera_component.h"
-#include "font_storage.h"
-#include "render_session.h"
-#include "renderable_component.h"
-#include "scriptable_gamepad.h"
-#include "scriptable_penetration.h"
-#include <sound_mixer.h>
+#include "actor.hpp"
+#include "camera_component.hpp"
+#include "font_storage.hpp"
+#include "render_session.hpp"
+#include "renderable_component.hpp"
+#include "scriptable_gamepad.hpp"
+#include "scriptable_penetration.hpp"
+#include <sound_mixer.hpp>
 
 
 namespace pbr {

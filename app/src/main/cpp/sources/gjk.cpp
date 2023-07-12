@@ -1,5 +1,5 @@
-#include <gjk.h>
-#include <logger.h>
+#include <gjk.hpp>
+#include <logger.hpp>
 
 
 namespace android_vulkan {

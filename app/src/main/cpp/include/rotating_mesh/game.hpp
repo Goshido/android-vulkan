@@ -2,12 +2,12 @@
 #define ROTATING_MESH_GAME_HPP
 
 
-#include <game.h>
-#include <vulkan_utils.h>
-#include <mesh_geometry.h>
-#include <uniform_buffer.h>
-#include <GXCommon/GXMath.h>
-#include "drawcall.h"
+#include <game.hpp>
+#include <vulkan_utils.hpp>
+#include <mesh_geometry.hpp>
+#include <uniform_buffer.hpp>
+#include <GXCommon/GXMath.hpp>
+#include "drawcall.hpp"
 
 
 namespace rotating_mesh {

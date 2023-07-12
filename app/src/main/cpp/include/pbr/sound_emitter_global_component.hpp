@@ -2,10 +2,10 @@
 #define PBR_SOUND_EMITTER_GLOBAL_COMPONENT_HPP
 
 
-#include "actor.h"
-#include "component.h"
-#include <sound_emitter_global.h>
-#include "sound_emitter_global_component_desc.h"
+#include "actor.hpp"
+#include "component.hpp"
+#include <sound_emitter_global.hpp>
+#include "sound_emitter_global_component_desc.hpp"
 
 
 namespace pbr {

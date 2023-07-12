@@ -2,7 +2,7 @@
 #define ANDROID_VULKAN_VERTEX_INFO_HPP
 
 
-#include <GXCommon/GXMath.h>
+#include <GXCommon/GXMath.hpp>
 
 
 namespace android_vulkan {

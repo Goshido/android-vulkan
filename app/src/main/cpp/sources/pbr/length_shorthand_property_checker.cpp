@@ -1,6 +1,6 @@
-#include <logger.h>
-#include <pbr/length_shorthand_property_checker.h>
-#include <pbr/length_value_parser.h>
+#include <logger.hpp>
+#include <pbr/length_shorthand_property_checker.hpp>
+#include <pbr/length_value_parser.hpp>
 
 
 namespace pbr {

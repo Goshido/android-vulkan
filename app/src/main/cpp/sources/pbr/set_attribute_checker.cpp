@@ -1,4 +1,4 @@
-#include <pbr/set_attribute_checker.h>
+#include <pbr/set_attribute_checker.hpp>
 
 
 namespace pbr {

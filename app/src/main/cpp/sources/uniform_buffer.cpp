@@ -1,6 +1,6 @@
-#include <av_assert.h>
-#include <uniform_buffer.h>
-#include <vulkan_utils.h>
+#include <av_assert.hpp>
+#include <uniform_buffer.hpp>
+#include <vulkan_utils.hpp>
 
 
 namespace android_vulkan {

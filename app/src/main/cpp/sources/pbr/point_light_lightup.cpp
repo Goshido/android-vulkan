@@ -1,7 +1,7 @@
-#include <pbr/point_light_lightup.h>
-#include <pbr/coordinate_system.h>
-#include <pbr/point_light_descriptor_set_layout.h>
-#include <pbr/point_light_pass.h>
+#include <pbr/point_light_lightup.hpp>
+#include <pbr/coordinate_system.hpp>
+#include <pbr/point_light_descriptor_set_layout.hpp>
+#include <pbr/point_light_pass.hpp>
 
 
 namespace pbr {

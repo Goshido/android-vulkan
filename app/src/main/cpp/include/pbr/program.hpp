@@ -2,7 +2,7 @@
 #define PBR_PROGRAM_HPP
 
 
-#include <GXCommon/GXWarning.h>
+#include <GXCommon/GXWarning.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -10,7 +10,7 @@ GX_DISABLE_COMMON_WARNINGS
 
 GX_RESTORE_WARNING_STATE
 
-#include <renderer.h>
+#include <renderer.hpp>
 
 
 namespace pbr {

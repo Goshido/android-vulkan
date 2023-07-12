@@ -1,4 +1,4 @@
-#include <pbr/vertical_align_property.h>
+#include <pbr/vertical_align_property.hpp>
 
 
 namespace pbr {

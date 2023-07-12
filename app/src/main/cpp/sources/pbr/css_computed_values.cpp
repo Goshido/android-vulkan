@@ -1,10 +1,10 @@
-#include <av_assert.h>
-#include <logger.h>
-#include <pbr/color_property.h>
-#include <pbr/css_computed_values.h>
-#include <pbr/font_family_property.h>
-#include <pbr/length_property.h>
-#include <pbr/utf8_parser.h>
+#include <av_assert.hpp>
+#include <logger.hpp>
+#include <pbr/color_property.hpp>
+#include <pbr/css_computed_values.hpp>
+#include <pbr/font_family_property.hpp>
+#include <pbr/length_property.hpp>
+#include <pbr/utf8_parser.hpp>
 
 
 namespace pbr {

@@ -1,5 +1,5 @@
-#include <sutherland_hodgman.h>
-#include <logger.h>
+#include <sutherland_hodgman.hpp>
+#include <logger.hpp>
 
 
 namespace android_vulkan {

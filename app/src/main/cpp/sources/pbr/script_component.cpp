@@ -1,6 +1,6 @@
-#include <pbr/script_component.h>
-#include <pbr/script_engine.h>
-#include <av_assert.h>
+#include <pbr/script_component.hpp>
+#include <pbr/script_engine.hpp>
+#include <av_assert.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

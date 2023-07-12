@@ -1,4 +1,4 @@
-#include <pbr/light.h>
+#include <pbr/light.hpp>
 
 
 namespace pbr {

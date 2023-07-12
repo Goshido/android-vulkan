@@ -2,11 +2,11 @@
 #define PBR_POINT_LIGHT_LIGHTUP_HPP
 
 
-#include "mesh_geometry.h"
-#include "point_light.h"
-#include "point_light_lightup_program.h"
-#include "sampler.h"
-#include "uniform_buffer_pool.h"
+#include "mesh_geometry.hpp"
+#include "point_light.hpp"
+#include "point_light_lightup_program.hpp"
+#include "sampler.hpp"
+#include "uniform_buffer_pool.hpp"
 
 
 namespace pbr {

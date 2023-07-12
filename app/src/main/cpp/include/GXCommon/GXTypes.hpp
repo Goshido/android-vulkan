@@ -6,11 +6,11 @@
 
 #ifdef __GNUC__
 
-#include "Posix/GXTypes.h"
+#include "Posix/GXTypes.hpp"
 
 #else
 
-#include "Windows/GXTypes.h"
+#include "Windows/GXTypes.hpp"
 
 #endif // __GNUC__
 

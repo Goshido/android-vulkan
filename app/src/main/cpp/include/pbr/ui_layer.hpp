@@ -2,9 +2,9 @@
 #define PBR_UI_LAYER_HPP
 
 
-#include "div_ui_element.h"
-#include "html5_element.h"
-#include "ui_pass.h"
+#include "div_ui_element.hpp"
+#include "html5_element.hpp"
+#include "ui_pass.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
 

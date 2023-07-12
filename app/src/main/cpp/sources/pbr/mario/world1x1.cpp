@@ -1,9 +1,9 @@
-#include <pbr/mario/world1x1.h>
-#include <pbr/cube_map_manager.h>
-#include <pbr/material_manager.h>
-#include <pbr/mesh_manager.h>
-#include <gamepad.h>
-#include <global_force_gravity.h>
+#include <pbr/mario/world1x1.hpp>
+#include <pbr/cube_map_manager.hpp>
+#include <pbr/material_manager.hpp>
+#include <pbr/mesh_manager.hpp>
+#include <gamepad.hpp>
+#include <global_force_gravity.hpp>
 
 
 namespace pbr::mario {

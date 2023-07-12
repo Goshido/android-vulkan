@@ -2,8 +2,8 @@
 #define PBR_CSS_PARSER_HPP
 
 
-#include "css_rule.h"
-#include "parse_result.h"
+#include "css_rule.hpp"
+#include "parse_result.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
 

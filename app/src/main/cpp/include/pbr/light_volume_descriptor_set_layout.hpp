@@ -2,7 +2,7 @@
 #define PBR_LIGHT_VOLUME_DESCRIPTOR_SET_LAYOUT_HPP
 
 
-#include "descriptor_set_layout.h"
+#include "descriptor_set_layout.hpp"
 
 
 namespace pbr {

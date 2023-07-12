@@ -1,9 +1,9 @@
-#include <logger.h>
-#include <pbr/attribute_parser.h>
-#include <pbr/href_attribute_checker.h>
-#include <pbr/link_html5_element.h>
-#include <pbr/stylesheet_rel_attribute_checker.h>
-#include <pbr/whitespace.h>
+#include <logger.hpp>
+#include <pbr/attribute_parser.hpp>
+#include <pbr/href_attribute_checker.hpp>
+#include <pbr/link_html5_element.hpp>
+#include <pbr/stylesheet_rel_attribute_checker.hpp>
+#include <pbr/whitespace.hpp>
 
 
 namespace pbr {

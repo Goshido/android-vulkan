@@ -2,8 +2,8 @@
 #define PBR_POSITION_PROPERTY_CHECKER_HPP
 
 
-#include "position_property.h"
-#include "property_checker.h"
+#include "position_property.hpp"
+#include "property_checker.hpp"
 
 
 namespace pbr {

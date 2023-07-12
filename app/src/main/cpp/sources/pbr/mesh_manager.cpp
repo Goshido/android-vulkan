@@ -1,4 +1,4 @@
-#include <pbr/mesh_manager.h>
+#include <pbr/mesh_manager.hpp>
 
 
 namespace pbr {

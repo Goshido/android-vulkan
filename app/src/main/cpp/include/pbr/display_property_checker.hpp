@@ -2,8 +2,8 @@
 #define PBR_DISPLAY_PROPERTY_CHECKER_HPP
 
 
-#include "display_property.h"
-#include "property_checker.h"
+#include "display_property.hpp"
+#include "property_checker.hpp"
 
 
 namespace pbr {

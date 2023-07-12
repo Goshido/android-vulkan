@@ -2,7 +2,7 @@
 #define ANDROID_VULKAN_GLOBAL_FORCE_HPP
 
 
-#include "rigid_body.h"
+#include "rigid_body.hpp"
 
 
 namespace android_vulkan {

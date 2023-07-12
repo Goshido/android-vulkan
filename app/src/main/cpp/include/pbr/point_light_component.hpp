@@ -2,10 +2,10 @@
 #define PBR_POINT_LIGHT_COMPONENT_HPP
 
 
-#include "point_light.h"
-#include "point_light_component_desc.h"
-#include "renderable_component.h"
-#include "transformable.h"
+#include "point_light.hpp"
+#include "point_light_component_desc.hpp"
+#include "renderable_component.hpp"
+#include "transformable.hpp"
 
 
 namespace pbr {

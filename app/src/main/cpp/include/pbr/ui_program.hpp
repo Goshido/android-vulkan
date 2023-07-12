@@ -2,11 +2,11 @@
 #define PBR_UI_PROGRAM_HPP
 
 
-#include "program.h"
-#include "ui_pass_common_descriptor_set_layout.h"
-#include "ui_pass_image_descriptor_set_layout.h"
-#include "ui_pass_transform_descriptor_set_layout.h"
-#include <vulkan_utils.h>
+#include "program.hpp"
+#include "ui_pass_common_descriptor_set_layout.hpp"
+#include "ui_pass_image_descriptor_set_layout.hpp"
+#include "ui_pass_transform_descriptor_set_layout.hpp"
+#include <vulkan_utils.hpp>
 
 
 namespace pbr {

@@ -1,6 +1,6 @@
-#include <pbr/light_pass.h>
-#include <trace.h>
-#include <vulkan_utils.h>
+#include <pbr/light_pass.hpp>
+#include <trace.hpp>
+#include <vulkan_utils.hpp>
 
 
 namespace pbr {

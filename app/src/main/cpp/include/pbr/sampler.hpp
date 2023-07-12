@@ -2,7 +2,7 @@
 #define PBR_SAMPLER_HPP
 
 
-#include <renderer.h>
+#include <renderer.hpp>
 
 
 namespace pbr {

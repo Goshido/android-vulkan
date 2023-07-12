@@ -2,9 +2,9 @@
 #define ANDROID_VULKAN_RAY_CASTER_HPP
 
 
-#include "gjk_base.h"
-#include "shape.h"
-#include "contact_detector.h"
+#include "gjk_base.hpp"
+#include "shape.hpp"
+#include "contact_detector.hpp"
 
 
 namespace android_vulkan {

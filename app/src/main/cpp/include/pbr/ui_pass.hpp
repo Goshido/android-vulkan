@@ -2,12 +2,12 @@
 #define PBR_UI_PASS_HPP
 
 
-#include "font_storage.h"
-#include "sampler_manager.h"
-#include "types.h"
-#include "ui_program.h"
-#include "ui_vertex_info.h"
-#include "uniform_buffer_pool_manager.h"
+#include "font_storage.hpp"
+#include "sampler_manager.hpp"
+#include "types.hpp"
+#include "ui_program.hpp"
+#include "ui_vertex_info.hpp"
+#include "uniform_buffer_pool_manager.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
 

@@ -1,4 +1,4 @@
-#include <texture2D.h>
+#include <texture2D.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -23,10 +23,10 @@ GX_DISABLE_COMMON_WARNINGS
 
 GX_RESTORE_WARNING_STATE
 
-#include <file.h>
-#include <ktx_media_container.h>
-#include <logger.h>
-#include <vulkan_utils.h>
+#include <file.hpp>
+#include <ktx_media_container.hpp>
+#include <logger.hpp>
+#include <vulkan_utils.hpp>
 
 
 namespace android_vulkan {

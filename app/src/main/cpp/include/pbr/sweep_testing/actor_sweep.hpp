@@ -2,8 +2,8 @@
 #define PBR_SWEEP_TESTING_ACTOR_SWEEP_HPP
 
 
-#include <pbr/render_session.h>
-#include <shape.h>
+#include <pbr/render_session.hpp>
+#include <shape.hpp>
 
 
 namespace pbr::sweep_testing {

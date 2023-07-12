@@ -2,9 +2,9 @@
 #define PBR_REFLECTION_COMPONENT_HPP
 
 
-#include "renderable_component.h"
-#include "reflection_component_desc.h"
-#include "transformable.h"
+#include "renderable_component.hpp"
+#include "reflection_component_desc.hpp"
+#include "transformable.hpp"
 
 
 namespace pbr {

@@ -1,4 +1,4 @@
-#include <contact_manager.h>
+#include <contact_manager.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

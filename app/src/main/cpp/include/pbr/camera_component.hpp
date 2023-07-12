@@ -2,8 +2,8 @@
 #define PBR_CAMERA_COMPONENT_HPP
 
 
-#include "component.h"
-#include "camera_component_desc.h"
+#include "component.hpp"
+#include "camera_component_desc.hpp"
 
 
 namespace pbr {

@@ -1,4 +1,4 @@
-#include <rotating_mesh/game_analytic.h>
+#include <rotating_mesh/game_analytic.hpp>
 
 
 namespace rotating_mesh {

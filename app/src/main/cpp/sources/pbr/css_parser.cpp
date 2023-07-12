@@ -1,9 +1,9 @@
-#include <logger.h>
-#include <pbr/common_css_rule.h>
-#include <pbr/css_parser.h>
-#include <pbr/font_face_css_rule.h>
-#include <pbr/utf8_parser.h>
-#include <pbr/whitespace.h>
+#include <logger.hpp>
+#include <pbr/common_css_rule.hpp>
+#include <pbr/css_parser.hpp>
+#include <pbr/font_face_css_rule.hpp>
+#include <pbr/utf8_parser.hpp>
+#include <pbr/whitespace.hpp>
 
 
 namespace pbr {

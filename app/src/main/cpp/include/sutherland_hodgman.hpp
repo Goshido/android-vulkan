@@ -2,8 +2,8 @@
 #define ANDROID_VULKAN_SUTHERLAND_HODGMAN_HPP
 
 
-#include <GXCommon/GXMath.h>
-#include "vertices.h"
+#include <GXCommon/GXMath.hpp>
+#include "vertices.hpp"
 #include <vector>
 
 

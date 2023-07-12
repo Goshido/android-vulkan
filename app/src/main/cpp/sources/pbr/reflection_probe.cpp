@@ -1,4 +1,4 @@
-#include <pbr/reflection_probe.h>
+#include <pbr/reflection_probe.hpp>
 
 namespace pbr {
 

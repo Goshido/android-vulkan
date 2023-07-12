@@ -2,7 +2,7 @@
 #define PBR_STYLESHEET_REL_ATTRIBUTE_CHECKER_HPP
 
 
-#include "attribute_checker.h"
+#include "attribute_checker.hpp"
 
 
 namespace pbr {

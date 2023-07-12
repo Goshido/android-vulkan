@@ -1,10 +1,10 @@
-#include <pbr/ray_casting/ray_casting.h>
-#include <pbr/material_manager.h>
-#include <pbr/mesh_manager.h>
-#include <pbr/opaque_material.h>
-#include <pbr/static_mesh_component.h>
-#include <shape_box.h>
-#include <vertex_info.h>
+#include <pbr/ray_casting/ray_casting.hpp>
+#include <pbr/material_manager.hpp>
+#include <pbr/mesh_manager.hpp>
+#include <pbr/opaque_material.hpp>
+#include <pbr/static_mesh_component.hpp>
+#include <shape_box.hpp>
+#include <vertex_info.hpp>
 
 
 namespace pbr::ray_casting {

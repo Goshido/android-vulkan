@@ -1,5 +1,5 @@
-#include <mandelbrot/mandelbrot_analytic_color.h>
-#include <vulkan_utils.h>
+#include <mandelbrot/mandelbrot_analytic_color.hpp>
+#include <vulkan_utils.hpp>
 
 
 namespace mandelbrot {

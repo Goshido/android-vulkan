@@ -2,9 +2,9 @@
 #define PBR_RIGID_BODY_COMPONENT_HPP
 
 
-#include "component.h"
-#include "rigid_body_component_desc.h"
-#include <rigid_body.h>
+#include "component.hpp"
+#include "rigid_body_component_desc.hpp"
+#include <rigid_body.hpp>
 
 
 namespace pbr {

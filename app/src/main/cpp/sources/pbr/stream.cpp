@@ -1,5 +1,5 @@
-#include <logger.h>
-#include <pbr/stream.h>
+#include <logger.hpp>
+#include <pbr/stream.hpp>
 
 
 namespace pbr {

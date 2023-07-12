@@ -1,6 +1,6 @@
-#include <pbr/scriptable_gamepad.h>
-#include <pbr/script_engine.h>
-#include <logger.h>
+#include <pbr/scriptable_gamepad.hpp>
+#include <pbr/script_engine.hpp>
+#include <logger.hpp>
 
 
 namespace pbr {

@@ -2,7 +2,7 @@
 #define PBR_SET_ATTRIBUTE_CHECKER_HPP
 
 
-#include "attribute_checker.h"
+#include "attribute_checker.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
 

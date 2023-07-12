@@ -1,4 +1,4 @@
-#include <pbr/reflection_global_program.h>
+#include <pbr/reflection_global_program.hpp>
 
 
 namespace pbr {

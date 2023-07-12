@@ -2,7 +2,7 @@
 #define PBR_OPAQUE_PROGRAM_HPP
 
 
-#include "geometry_pass_program.h"
+#include "geometry_pass_program.hpp"
 
 
 namespace pbr {

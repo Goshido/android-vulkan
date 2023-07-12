@@ -2,8 +2,8 @@
 #define ANDROID_VULKAN_GJK_HPP
 
 
-#include "gjk_base.h"
-#include "shape.h"
+#include "gjk_base.hpp"
+#include "shape.hpp"
 
 
 namespace android_vulkan {

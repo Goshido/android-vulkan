@@ -4,7 +4,7 @@
 #define GX_NATIVE_MESH_HPP
 
 
-#include "GXMath.h"
+#include "GXMath.hpp"
 
 
 #pragma pack ( push )

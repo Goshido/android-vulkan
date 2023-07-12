@@ -2,12 +2,12 @@
 #define PBR_RENDER_SESSION_HPP
 
 
-#include "default_texture_manager.h"
-#include "geometry_pass.h"
-#include "light_pass.h"
-#include "reflection_global_pass.h"
-#include "shadow_casters.h"
-#include "ui_pass.h"
+#include "default_texture_manager.hpp"
+#include "geometry_pass.hpp"
+#include "light_pass.hpp"
+#include "reflection_global_pass.hpp"
+#include "shadow_casters.hpp"
+#include "ui_pass.hpp"
 
 
 namespace pbr {

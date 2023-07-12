@@ -2,11 +2,11 @@
 #define PBR_GEOMETRY_SUBPASS_BASE_HPP
 
 
-#include "geometry_pass_program.h"
-#include "material_pool.h"
-#include "render_session_stats.h"
-#include "scene_data.h"
-#include "uniform_buffer_pool_manager.h"
+#include "geometry_pass_program.hpp"
+#include "material_pool.hpp"
+#include "render_session_stats.hpp"
+#include "scene_data.hpp"
+#include "uniform_buffer_pool_manager.hpp"
 
 
 namespace pbr {

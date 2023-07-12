@@ -1,4 +1,4 @@
-#include <pbr/length_property.h>
+#include <pbr/length_property.hpp>
 
 
 namespace pbr {

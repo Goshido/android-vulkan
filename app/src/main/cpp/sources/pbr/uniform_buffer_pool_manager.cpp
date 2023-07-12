@@ -1,5 +1,5 @@
-#include <pbr/uniform_buffer_pool_manager.h>
-#include <vulkan_utils.h>
+#include <pbr/uniform_buffer_pool_manager.hpp>
+#include <vulkan_utils.hpp>
 
 
 namespace pbr {

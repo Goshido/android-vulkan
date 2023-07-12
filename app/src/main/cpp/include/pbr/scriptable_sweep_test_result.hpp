@@ -2,7 +2,7 @@
 #define PBR_SCRIPTABLE_SWEEP_TEST_RESULT_HPP
 
 
-#include <physics.h>
+#include <physics.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

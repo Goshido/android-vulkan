@@ -2,7 +2,7 @@
 #define PBR_MATERIAL_INFO_HPP
 
 
-#include <primitive_types.h>
+#include <primitive_types.hpp>
 
 
 namespace pbr {

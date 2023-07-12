@@ -2,7 +2,7 @@
 #define PBR_RENDER_SESSION_STATS_HPP
 
 
-#include <GXCommon/GXWarning.h>
+#include <GXCommon/GXWarning.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

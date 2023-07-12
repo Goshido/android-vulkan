@@ -2,7 +2,7 @@
 #define ROTATING_MESH_GAME_LUT_HPP
 
 
-#include "game.h"
+#include "game.hpp"
 
 
 namespace rotating_mesh {

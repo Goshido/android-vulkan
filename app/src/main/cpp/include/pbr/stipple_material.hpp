@@ -2,7 +2,7 @@
 #define PBR_STIPPLE_MATERIAL_HPP
 
 
-#include "geometry_pass_material.h"
+#include "geometry_pass_material.hpp"
 
 
 namespace pbr {

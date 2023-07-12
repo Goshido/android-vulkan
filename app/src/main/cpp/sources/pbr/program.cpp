@@ -1,4 +1,4 @@
-#include <pbr/program.h>
+#include <pbr/program.hpp>
 
 
 namespace pbr {

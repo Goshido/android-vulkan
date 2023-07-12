@@ -1,21 +1,21 @@
-#include <pbr/color_property.h>
-#include <pbr/color_property_checker.h>
-#include <pbr/common_css_rule.h>
-#include <pbr/display_property_checker.h>
-#include <pbr/fail_property_checker.h>
-#include <pbr/font_family_property.h>
-#include <pbr/font_family_property_checker.h>
-#include <pbr/length_property.h>
-#include <pbr/length_property_checker.h>
-#include <pbr/length_shorthand_property_checker.h>
-#include <pbr/position_property.h>
-#include <pbr/position_property_checker.h>
-#include <pbr/text_align_property_checker.h>
-#include <pbr/utf8_parser.h>
-#include <pbr/vertical_align_property_checker.h>
-#include <pbr/whitespace.h>
-#include <av_assert.h>
-#include <logger.h>
+#include <pbr/color_property.hpp>
+#include <pbr/color_property_checker.hpp>
+#include <pbr/common_css_rule.hpp>
+#include <pbr/display_property_checker.hpp>
+#include <pbr/fail_property_checker.hpp>
+#include <pbr/font_family_property.hpp>
+#include <pbr/font_family_property_checker.hpp>
+#include <pbr/length_property.hpp>
+#include <pbr/length_property_checker.hpp>
+#include <pbr/length_shorthand_property_checker.hpp>
+#include <pbr/position_property.hpp>
+#include <pbr/position_property_checker.hpp>
+#include <pbr/text_align_property_checker.hpp>
+#include <pbr/utf8_parser.hpp>
+#include <pbr/vertical_align_property_checker.hpp>
+#include <pbr/whitespace.hpp>
+#include <av_assert.hpp>
+#include <logger.hpp>
 
 
 namespace pbr {

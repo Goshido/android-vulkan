@@ -1,7 +1,7 @@
-#include <av_assert.h>
-#include <texture_cube.h>
-#include <ktx_media_container.h>
-#include <vulkan_utils.h>
+#include <av_assert.hpp>
+#include <texture_cube.hpp>
+#include <ktx_media_container.hpp>
+#include <vulkan_utils.hpp>
 
 
 namespace android_vulkan {

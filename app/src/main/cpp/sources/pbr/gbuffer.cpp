@@ -1,5 +1,5 @@
-#include <pbr/gbuffer.h>
-#include <vulkan_utils.h>
+#include <pbr/gbuffer.hpp>
+#include <vulkan_utils.hpp>
 
 
 namespace pbr {

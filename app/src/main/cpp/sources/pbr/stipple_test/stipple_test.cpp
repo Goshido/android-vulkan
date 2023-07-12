@@ -1,8 +1,8 @@
-#include <pbr/stipple_test/stipple_test.h>
-#include <pbr/coordinate_system.h>
-#include <pbr/material_manager.h>
-#include <pbr/mesh_manager.h>
-#include <pbr/stipple_material.h>
+#include <pbr/stipple_test/stipple_test.hpp>
+#include <pbr/coordinate_system.hpp>
+#include <pbr/material_manager.hpp>
+#include <pbr/mesh_manager.hpp>
+#include <pbr/stipple_material.hpp>
 
 
 namespace pbr::stipple_test {

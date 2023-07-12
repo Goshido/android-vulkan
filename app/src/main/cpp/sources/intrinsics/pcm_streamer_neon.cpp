@@ -1,5 +1,5 @@
-#include <logger.h>
-#include <pcm_streamer_wav.h>
+#include <logger.hpp>
+#include <pcm_streamer_wav.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

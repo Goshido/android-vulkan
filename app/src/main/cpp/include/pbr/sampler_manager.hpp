@@ -2,7 +2,7 @@
 #define PBR_SAMPLER_MANAGER_HPP
 
 
-#include "types.h"
+#include "types.hpp"
 
 
 namespace pbr {

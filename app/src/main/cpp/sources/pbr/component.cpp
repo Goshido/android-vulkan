@@ -1,14 +1,14 @@
-#include <pbr/component.h>
-#include <pbr/camera_component.h>
-#include <pbr/point_light_component.h>
-#include <pbr/reflection_component.h>
-#include <pbr/rigid_body_component.h>
-#include <pbr/script_component.h>
-#include <pbr/sound_emitter_global_component.h>
-#include <pbr/sound_emitter_spatial_component.h>
-#include <pbr/static_mesh_component.h>
-#include <pbr/transform_component.h>
-#include <av_assert.h>
+#include <pbr/component.hpp>
+#include <pbr/camera_component.hpp>
+#include <pbr/point_light_component.hpp>
+#include <pbr/reflection_component.hpp>
+#include <pbr/rigid_body_component.hpp>
+#include <pbr/script_component.hpp>
+#include <pbr/sound_emitter_global_component.hpp>
+#include <pbr/sound_emitter_spatial_component.hpp>
+#include <pbr/static_mesh_component.hpp>
+#include <pbr/transform_component.hpp>
+#include <av_assert.hpp>
 
 
 namespace pbr {

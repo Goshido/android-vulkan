@@ -2,8 +2,8 @@
 #define PBR_RENDERABLE_COMPONENT_HPP
 
 
-#include "component.h"
-#include "render_session.h"
+#include "component.hpp"
+#include "render_session.hpp"
 
 
 namespace pbr {

@@ -2,7 +2,7 @@
 #define ANDROID_VULKAN_CONTACT_MANAGER_HPP
 
 
-#include "rigid_body.h"
+#include "rigid_body.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
 

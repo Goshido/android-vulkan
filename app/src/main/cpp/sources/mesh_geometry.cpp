@@ -1,4 +1,4 @@
-#include <mesh_geometry.h>
+#include <mesh_geometry.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -8,12 +8,12 @@ GX_DISABLE_COMMON_WARNINGS
 
 GX_RESTORE_WARNING_STATE
 
-#include <file.h>
-#include <logger.h>
-#include <mesh2.h>
-#include <vertex_info.h>
-#include <vulkan_utils.h>
-#include <GXCommon/GXNativeMesh.h>
+#include <file.hpp>
+#include <logger.hpp>
+#include <mesh2.hpp>
+#include <vertex_info.hpp>
+#include <vulkan_utils.hpp>
+#include <GXCommon/GXNativeMesh.hpp>
 
 
 namespace android_vulkan {

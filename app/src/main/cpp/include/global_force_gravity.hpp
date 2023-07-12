@@ -2,7 +2,7 @@
 #define ANDROID_VULKAN_GLOBAL_FORCE_GRAVITY_HPP
 
 
-#include "global_force.h"
+#include "global_force.hpp"
 
 
 namespace android_vulkan {

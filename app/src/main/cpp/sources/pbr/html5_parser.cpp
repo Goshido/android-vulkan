@@ -1,19 +1,19 @@
-#include <file.h>
-#include <logger.h>
-#include <pbr/color_property.h>
-#include <pbr/div_html5_element.h>
-#include <pbr/doctype_parser.h>
-#include <pbr/font_family_property.h>
-#include <pbr/html5_parser.h>
-#include <pbr/img_html5_element.h>
-#include <pbr/length_property.h>
-#include <pbr/link_html5_element.h>
-#include <pbr/set_attribute_checker.h>
-#include <pbr/tag_parser.h>
-#include <pbr/text_html5_element.h>
-#include <pbr/unique_attribute_checker.h>
-#include <pbr/utf8_parser.h>
-#include <pbr/whitespace.h>
+#include <file.hpp>
+#include <logger.hpp>
+#include <pbr/color_property.hpp>
+#include <pbr/div_html5_element.hpp>
+#include <pbr/doctype_parser.hpp>
+#include <pbr/font_family_property.hpp>
+#include <pbr/html5_parser.hpp>
+#include <pbr/img_html5_element.hpp>
+#include <pbr/length_property.hpp>
+#include <pbr/link_html5_element.hpp>
+#include <pbr/set_attribute_checker.hpp>
+#include <pbr/tag_parser.hpp>
+#include <pbr/text_html5_element.hpp>
+#include <pbr/unique_attribute_checker.hpp>
+#include <pbr/utf8_parser.hpp>
+#include <pbr/whitespace.hpp>
 
 
 namespace pbr {

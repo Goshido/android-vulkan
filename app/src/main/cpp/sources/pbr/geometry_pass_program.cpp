@@ -1,5 +1,5 @@
-#include <pbr/geometry_pass_program.h>
-#include <vertex_info.h>
+#include <pbr/geometry_pass_program.hpp>
+#include <vertex_info.hpp>
 
 
 namespace pbr {

@@ -1,9 +1,9 @@
-#include <pbr/reflection_component.h>
-#include <pbr/cube_map_manager.h>
-#include <pbr/reflection_probe_global.h>
-#include <pbr/reflection_probe_local.h>
-#include <av_assert.h>
-#include <guid_generator.h>
+#include <pbr/reflection_component.hpp>
+#include <pbr/cube_map_manager.hpp>
+#include <pbr/reflection_probe_global.hpp>
+#include <pbr/reflection_probe_local.hpp>
+#include <av_assert.hpp>
+#include <guid_generator.hpp>
 
 
 namespace pbr {

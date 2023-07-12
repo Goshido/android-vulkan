@@ -1,7 +1,7 @@
-#include <logger.h>
-#include <pbr/length_value_parser.h>
-#include <pbr/number_parser.h>
-#include <pbr/utf8_parser.h>
+#include <logger.hpp>
+#include <pbr/length_value_parser.hpp>
+#include <pbr/number_parser.hpp>
+#include <pbr/utf8_parser.hpp>
 
 
 namespace pbr {

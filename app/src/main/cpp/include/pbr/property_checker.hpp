@@ -2,7 +2,7 @@
 #define PBR_PROPERTY_CHECKER_HPP
 
 
-#include "property_parser.h"
+#include "property_parser.hpp"
 
 
 namespace pbr {

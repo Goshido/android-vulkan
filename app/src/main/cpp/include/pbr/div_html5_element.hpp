@@ -2,7 +2,7 @@
 #define PBR_DIV_HTML5_ELEMENT_HPP
 
 
-#include "html5_element.h"
+#include "html5_element.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
 

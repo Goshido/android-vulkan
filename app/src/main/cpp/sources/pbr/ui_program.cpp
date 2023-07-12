@@ -1,6 +1,6 @@
-#include <pbr/ui_program.h>
+#include <pbr/ui_program.hpp>
 #include <pbr/ui_program.inc>
-#include <pbr/ui_vertex_info.h>
+#include <pbr/ui_vertex_info.hpp>
 
 
 namespace pbr {

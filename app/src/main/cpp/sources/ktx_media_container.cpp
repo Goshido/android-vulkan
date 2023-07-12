@@ -1,6 +1,6 @@
-#include <av_assert.h>
-#include <ktx_media_container.h>
-#include "logger.h"
+#include <av_assert.hpp>
+#include <ktx_media_container.hpp>
+#include "logger.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
 

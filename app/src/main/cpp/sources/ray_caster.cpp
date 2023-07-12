@@ -1,6 +1,6 @@
-#include <ray_caster.h>
-#include <logger.h>
-#include <simplex.h>
+#include <ray_caster.hpp>
+#include <logger.hpp>
+#include <simplex.hpp>
 
 
 namespace android_vulkan {

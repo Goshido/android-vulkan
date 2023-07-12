@@ -2,9 +2,9 @@
 #define PBR_MATERIAL_MANAGER_HPP
 
 
-#include "material_info.h"
-#include "types.h"
-#include <file.h>
+#include "material_info.hpp"
+#include "types.hpp"
+#include <file.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

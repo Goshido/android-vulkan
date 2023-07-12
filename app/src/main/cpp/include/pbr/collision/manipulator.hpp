@@ -2,7 +2,7 @@
 #define PBR_COLLISION_MANIPULATOR_HPP
 
 
-#include <rigid_body.h>
+#include <rigid_body.hpp>
 
 
 namespace pbr::collision {

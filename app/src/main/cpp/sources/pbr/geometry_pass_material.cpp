@@ -1,5 +1,5 @@
-#include <pbr/geometry_pass_material.h>
-#include <logger.h>
+#include <pbr/geometry_pass_material.hpp>
+#include <logger.hpp>
 
 
 namespace pbr {

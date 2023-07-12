@@ -2,7 +2,7 @@
 #define PBR_ATTRIBUTE_CHECKER_HPP
 
 
-#include "attribute_parser.h"
+#include "attribute_parser.hpp"
 
 
 namespace pbr {

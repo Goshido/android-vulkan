@@ -1,8 +1,8 @@
-#include <av_assert.h>
-#include <renderer.h>
-#include <bitwise.h>
-#include <file.h>
-#include <vulkan_utils.h>
+#include <av_assert.hpp>
+#include <renderer.hpp>
+#include <bitwise.hpp>
+#include <file.hpp>
+#include <vulkan_utils.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

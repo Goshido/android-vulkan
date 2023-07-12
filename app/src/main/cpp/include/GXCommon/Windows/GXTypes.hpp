@@ -6,7 +6,7 @@
 
 #define WIN32_LEAN_AND_MEAN            // to correct include WinSock2.h
 
-#include "GXWarning.h"
+#include "GXWarning.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
 

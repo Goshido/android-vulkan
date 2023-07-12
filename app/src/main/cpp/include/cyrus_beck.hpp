@@ -2,7 +2,7 @@
 #define ANDROID_VULKAN_CYRUS_BECK_HPP
 
 
-#include "vertices.h"
+#include "vertices.hpp"
 
 
 namespace android_vulkan {

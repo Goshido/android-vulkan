@@ -1,5 +1,5 @@
-#include <av_assert.h>
-#include <sound_emitter_global.h>
+#include <av_assert.hpp>
+#include <sound_emitter_global.hpp>
 
 
 namespace android_vulkan {

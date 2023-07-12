@@ -1,21 +1,21 @@
-#include <pbr/scene.h>
-#include <pbr/coordinate_system.h>
-#include <pbr/mesh_manager.h>
-#include <pbr/material_manager.h>
-#include <pbr/renderable_component.h>
-#include <pbr/scene_desc.h>
-#include <pbr/script_engine.h>
-#include <pbr/scriptable_gxmat4.h>
-#include <pbr/scriptable_gxvec3.h>
-#include <pbr/scriptable_material.h>
-#include <pbr/scriptable_sweep_test_result.h>
-#include <pbr/static_mesh_component.h>
-#include <pbr/ui_layer.h>
-#include <av_assert.h>
-#include <core.h>
-#include <file.h>
-#include <shape_box.h>
-#include <trace.h>
+#include <pbr/scene.hpp>
+#include <pbr/coordinate_system.hpp>
+#include <pbr/mesh_manager.hpp>
+#include <pbr/material_manager.hpp>
+#include <pbr/renderable_component.hpp>
+#include <pbr/scene_desc.hpp>
+#include <pbr/script_engine.hpp>
+#include <pbr/scriptable_gxmat4.hpp>
+#include <pbr/scriptable_gxvec3.hpp>
+#include <pbr/scriptable_material.hpp>
+#include <pbr/scriptable_sweep_test_result.hpp>
+#include <pbr/static_mesh_component.hpp>
+#include <pbr/ui_layer.hpp>
+#include <av_assert.hpp>
+#include <core.hpp>
+#include <file.hpp>
+#include <shape_box.hpp>
+#include <trace.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

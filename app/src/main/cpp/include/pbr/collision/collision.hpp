@@ -2,12 +2,12 @@
 #define PBR_COLLISION_HPP
 
 
-#include <pbr/collision/manipulator.h>
-#include <pbr/camera.h>
-#include <pbr/point_light_component.h>
-#include <pbr/render_session.h>
-#include <game.h>
-#include <physics.h>
+#include <pbr/collision/manipulator.hpp>
+#include <pbr/camera.hpp>
+#include <pbr/point_light_component.hpp>
+#include <pbr/render_session.hpp>
+#include <game.hpp>
+#include <physics.hpp>
 
 
 namespace pbr::collision {

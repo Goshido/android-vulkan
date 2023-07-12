@@ -1,6 +1,6 @@
-#include <pbr/point_light_pass.h>
-#include <av_assert.h>
-#include <trace.h>
+#include <pbr/point_light_pass.hpp>
+#include <av_assert.hpp>
+#include <trace.hpp>
 
 
 namespace pbr {

@@ -2,8 +2,8 @@
 #define PBR_SWEEP_TESTING_ACTOR_BODY_HPP
 
 
-#include <pbr/render_session.h>
-#include <physics.h>
+#include <pbr/render_session.hpp>
+#include <physics.hpp>
 
 
 namespace pbr::sweep_testing {

@@ -2,8 +2,8 @@
 #define PBR_COMPONENT_HPP
 
 
-#include "component_desc.h"
-#include "types.h"
+#include "component_desc.hpp"
+#include "types.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
 

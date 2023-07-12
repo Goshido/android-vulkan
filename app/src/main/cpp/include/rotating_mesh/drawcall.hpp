@@ -2,8 +2,8 @@
 #define ROTATING_MESH_DRAWCALL_HPP
 
 
-#include "mesh_geometry.h"
-#include <texture2D.h>
+#include "mesh_geometry.hpp"
+#include <texture2D.hpp>
 
 
 namespace rotating_mesh {

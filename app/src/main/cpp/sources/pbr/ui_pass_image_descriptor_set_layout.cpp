@@ -1,6 +1,6 @@
-#include <pbr/ui_pass_image_descriptor_set_layout.h>
+#include <pbr/ui_pass_image_descriptor_set_layout.hpp>
 #include <pbr/ui_program.inc>
-#include <vulkan_utils.h>
+#include <vulkan_utils.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

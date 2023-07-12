@@ -1,5 +1,5 @@
-#include <pbr/render_session_stats.h>
-#include <logger.h>
+#include <pbr/render_session_stats.hpp>
+#include <logger.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

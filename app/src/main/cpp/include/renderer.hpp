@@ -2,11 +2,11 @@
 #define ANDROID_VULKAN_RENDERER_HPP
 
 
-#include <GXCommon/GXMath.h>
-#include "logger.h"
-#include "memory_allocator.h"
-#include "vulkan_api.h"
-#include "vulkan_loader.h"
+#include <GXCommon/GXMath.hpp>
+#include "logger.hpp"
+#include "memory_allocator.hpp"
+#include "vulkan_api.hpp"
+#include "vulkan_loader.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
 

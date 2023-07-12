@@ -2,10 +2,10 @@
 #define PBR_MATERIAL_POOL_HPP
 
 
-#include "default_texture_manager.h"
-#include "geometry_pass_material.h"
-#include "descriptor_set_layout.h"
-#include "uniform_buffer_pool.h"
+#include "default_texture_manager.hpp"
+#include "geometry_pass_material.hpp"
+#include "descriptor_set_layout.hpp"
+#include "uniform_buffer_pool.hpp"
 
 
 namespace pbr {

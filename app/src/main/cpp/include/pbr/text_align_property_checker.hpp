@@ -2,8 +2,8 @@
 #define PBR_TEXT_ALIGN_PROPERTY_CHECKER_HPP
 
 
-#include "property_checker.h"
-#include "text_align_property.h"
+#include "property_checker.hpp"
+#include "text_align_property.hpp"
 
 
 namespace pbr {

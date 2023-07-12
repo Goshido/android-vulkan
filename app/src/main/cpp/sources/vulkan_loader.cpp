@@ -1,6 +1,6 @@
-#include <logger.h>
-#include <vulkan_loader.h>
-#include <vulkan_utils.h>
+#include <logger.hpp>
+#include <vulkan_loader.hpp>
+#include <vulkan_utils.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

@@ -4,11 +4,11 @@
 
 #ifdef _MSC_VER
 
-#include "Windows/GXWarning.h"
+#include "Windows/GXWarning.hpp"
 
 #elif __GNUC__
 
-#include "Posix/GXWarning.h"
+#include "Posix/GXWarning.hpp"
 
 #else
 

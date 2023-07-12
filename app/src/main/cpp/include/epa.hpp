@@ -2,8 +2,8 @@
 #define ANDROID_VULKAN_EPA_HPP
 
 
-#include "simplex.h"
-#include "vertices.h"
+#include "simplex.hpp"
+#include "vertices.hpp"
 
 
 namespace android_vulkan {

@@ -1,8 +1,8 @@
-#include <pbr/sweep_testing/sweep_testing.h>
-#include <pbr/coordinate_system.h>
-#include <pbr/material_manager.h>
-#include <pbr/mesh_manager.h>
-#include <gamepad.h>
+#include <pbr/sweep_testing/sweep_testing.hpp>
+#include <pbr/coordinate_system.hpp>
+#include <pbr/material_manager.hpp>
+#include <pbr/mesh_manager.hpp>
+#include <gamepad.hpp>
 
 
 namespace pbr::sweep_testing {

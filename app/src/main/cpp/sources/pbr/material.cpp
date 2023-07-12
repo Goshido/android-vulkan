@@ -1,4 +1,4 @@
-#include <pbr/material.h>
+#include <pbr/material.hpp>
 
 
 namespace pbr {

@@ -2,8 +2,8 @@
 #define PBR_PROPERTY_PARSER_HPP
 
 
-#include "property.h"
-#include "stream.h"
+#include "property.hpp"
+#include "stream.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
 

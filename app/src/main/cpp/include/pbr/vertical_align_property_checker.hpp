@@ -2,8 +2,8 @@
 #define PBR_VERTICAL_ALIGN_PROPERTY_CHECKER_HPP
 
 
-#include "property_checker.h"
-#include "vertical_align_property.h"
+#include "property_checker.hpp"
+#include "vertical_align_property.hpp"
 
 
 namespace pbr {

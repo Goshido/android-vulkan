@@ -2,7 +2,7 @@
 #define PBR_GEOMETRY_CALL_HPP
 
 
-#include "mesh_group.h"
+#include "mesh_group.hpp"
 
 
 namespace pbr {

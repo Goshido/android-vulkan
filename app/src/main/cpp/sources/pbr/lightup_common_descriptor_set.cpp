@@ -1,6 +1,6 @@
-#include <vulkan_utils.h>
-#include <pbr/lightup_common_descriptor_set.h>
-#include <pbr/light_lightup_base_program.h>
+#include <vulkan_utils.hpp>
+#include <pbr/lightup_common_descriptor_set.hpp>
+#include <pbr/light_lightup_base_program.hpp>
 
 
 namespace pbr {

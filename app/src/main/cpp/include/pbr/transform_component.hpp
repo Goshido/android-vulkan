@@ -2,8 +2,8 @@
 #define PBR_TRANSFORM_COMPONENT_HPP
 
 
-#include "component.h"
-#include "transform_component_desc.h"
+#include "component.hpp"
+#include "transform_component_desc.hpp"
 
 
 namespace pbr {

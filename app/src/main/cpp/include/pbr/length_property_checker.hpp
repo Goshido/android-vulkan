@@ -2,8 +2,8 @@
 #define PBR_LENGTH_PROPERTY_CHECKER_HPP
 
 
-#include "length_value.h"
-#include "property_checker.h"
+#include "length_value.hpp"
+#include "property_checker.hpp"
 
 
 namespace pbr {

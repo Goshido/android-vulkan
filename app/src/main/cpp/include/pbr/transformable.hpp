@@ -2,7 +2,7 @@
 #define PBR_TRANSFORMABLE_HPP
 
 
-#include <GXCommon/GXMath.h>
+#include <GXCommon/GXMath.hpp>
 
 
 namespace pbr {

@@ -1,4 +1,4 @@
-#include <pbr/stipple_material.h>
+#include <pbr/stipple_material.hpp>
 
 
 namespace pbr {

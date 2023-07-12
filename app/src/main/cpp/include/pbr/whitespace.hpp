@@ -2,7 +2,7 @@
 #define PBR_WHITESPACE_HPP
 
 
-#include "parse_result.h"
+#include "parse_result.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
 

@@ -1,6 +1,6 @@
-#include <logger.h>
-#include <pbr/ascii_string.h>
-#include <pbr/utf8_parser.h>
+#include <logger.hpp>
+#include <pbr/ascii_string.hpp>
+#include <pbr/utf8_parser.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

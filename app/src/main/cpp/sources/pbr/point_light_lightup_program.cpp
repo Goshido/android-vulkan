@@ -1,4 +1,4 @@
-#include <pbr/point_light_lightup_program.h>
+#include <pbr/point_light_lightup_program.hpp>
 
 
 namespace pbr {

@@ -2,11 +2,11 @@
 #define PBR_UI_ELEMENT_HPP
 
 
-#include "css_unit_to_device_pixel.h"
-#include "font_storage.h"
-#include "length_value.h"
-#include "ui_pass.h"
-#include "ui_vertex_info.h"
+#include "css_unit_to_device_pixel.hpp"
+#include "font_storage.hpp"
+#include "length_value.hpp"
+#include "ui_pass.hpp"
+#include "ui_vertex_info.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
 

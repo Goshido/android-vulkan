@@ -2,8 +2,8 @@
 #define PBR_SCENE_DATA_HPP
 
 
-#include "geometry_call.h"
-#include "geometry_pass_material.h"
+#include "geometry_call.hpp"
+#include "geometry_pass_material.hpp"
 
 
 namespace pbr {

@@ -2,8 +2,8 @@
 #define PBR_REFLECTION_PROBE_HPP
 
 
-#include "light.h"
-#include "types.h"
+#include "light.hpp"
+#include "types.hpp"
 
 
 namespace pbr {

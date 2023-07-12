@@ -1,4 +1,4 @@
-#include <pbr/sampler_manager.h>
+#include <pbr/sampler_manager.hpp>
 
 
 namespace pbr {

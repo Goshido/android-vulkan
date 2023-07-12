@@ -2,10 +2,10 @@
 #define PBR_ACTOR_HPP
 
 
-#include "actor_desc.h"
-#include "component_classes.h"
-#include "types.h"
-#include <physics.h>
+#include "actor_desc.hpp"
+#include "component_classes.hpp"
+#include "types.hpp"
+#include <physics.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

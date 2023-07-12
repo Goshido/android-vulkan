@@ -1,8 +1,8 @@
-#include <pbr/camera_component.h>
-#include <pbr/script_engine.h>
-#include <pbr/scriptable_gxmat4.h>
-#include <av_assert.h>
-#include <guid_generator.h>
+#include <pbr/camera_component.hpp>
+#include <pbr/script_engine.hpp>
+#include <pbr/scriptable_gxmat4.hpp>
+#include <av_assert.hpp>
+#include <guid_generator.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

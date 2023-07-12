@@ -1,6 +1,6 @@
-#include <logger.h>
+#include <logger.hpp>
 
-#include <GXCommon/GXWarning.h>
+#include <GXCommon/GXWarning.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

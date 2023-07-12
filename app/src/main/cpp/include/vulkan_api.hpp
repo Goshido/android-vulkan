@@ -2,7 +2,7 @@
 #define ANDROID_VULKAN_API_HPP
 
 
-#include <GXCommon/GXWarning.h>
+#include <GXCommon/GXWarning.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

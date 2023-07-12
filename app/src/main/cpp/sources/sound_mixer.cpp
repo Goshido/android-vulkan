@@ -44,16 +44,16 @@ constexpr auto WORKER_TIMEOUT = std::chrono::microseconds ( 1U );
 class StreamCloser final
 {
     private:
-        AAudioStream&       _stream;
+        AAudioStream        &_stream;
 
     public:
         StreamCloser () = delete;
 
         StreamCloser ( StreamCloser const & ) = delete;
-        StreamCloser& operator = ( StreamCloser const & ) = delete;
+        StreamCloser &operator = ( StreamCloser const & ) = delete;
 
         StreamCloser ( StreamCloser && ) = delete;
-        StreamCloser& operator = ( StreamCloser && ) = delete;
+        StreamCloser &operator = ( StreamCloser && ) = delete;
 
         explicit StreamCloser ( AAudioStream &stream ) noexcept;
 
@@ -87,7 +87,7 @@ SoundMixer::StreamInfo::StreamInfo ( SoundMixer &mixer, StreamList::iterator use
 
 bool SoundMixer::StreamInfo::LockAndReturnFillSilence () noexcept
 {
-    auto& fillLock = *_fillLock;
+    auto &fillLock = *_fillLock;
     bool expected = false;
 
     while ( !fillLock.compare_exchange_weak ( expected, true ) )
@@ -105,7 +105,7 @@ void SoundMixer::StreamInfo::Release () noexcept
 
 void SoundMixer::StreamInfo::Modify ( bool fillSilence ) noexcept
 {
-    auto& fillLock = *_fillLock;
+    auto &fillLock = *_fillLock;
     bool expected = false;
 
     while ( !fillLock.compare_exchange_weak ( expected, true ) ) {}
@@ -181,7 +181,7 @@ bool SoundMixer::Init () noexcept
                 for ( auto* streamer : _decompressors )
                     streamer->OnDecompress ();
 
-                for ( auto const& action : _actionQueue )
+                for ( auto const &action : _actionQueue )
                 {
                     // [2022/12/31] For example play operation could take 6 ms. So moving execution in another thread.
                     std::thread actionThread (
@@ -222,7 +222,7 @@ void SoundMixer::Destroy () noexcept
 
     std::unique_lock<std::mutex> const lock ( _mutex );
 
-    for ( auto& si : _streamInfo )
+    for ( auto &si : _streamInfo )
     {
         SoundMixer::CheckAAudioResult ( AAudioStream_close ( si._stream ),
             "SoundMixer::Destroy",
@@ -240,9 +240,9 @@ R"__(SoundMixer::Destroy - Memory leak detected: %zu
 
         LogError ( format, _streamMap.size () );
 
-        for ( auto const& record : _streamMap )
+        for ( auto const &record : _streamMap )
         {
-            StreamInfo const& si = *record.second;
+            StreamInfo const &si = *record.second;
             LogError ( "    %s", si._emitter->GetFile ().c_str () );
         }
 
@@ -300,7 +300,7 @@ void SoundMixer::SetMasterVolume ( float volume ) noexcept
     }
 }
 
-SoundListenerInfo const& SoundMixer::GetListenerInfo () noexcept
+SoundListenerInfo const &SoundMixer::GetListenerInfo () noexcept
 {
     if ( _listenerTransformChanged )
     {
@@ -322,7 +322,7 @@ void SoundMixer::SetListenerLocation ( GXVec3 const &location ) noexcept
     _listenerTransformChanged = true;
 }
 
-SoundStorage& SoundMixer::GetSoundStorage () noexcept
+SoundStorage &SoundMixer::GetSoundStorage () noexcept
 {
     return _soundStorage;
 }
@@ -337,9 +337,9 @@ void SoundMixer::Pause () noexcept
 {
     std::unique_lock<std::mutex> const lock ( _mutex );
 
-    for ( auto& record : _streamMap )
+    for ( auto &record : _streamMap )
     {
-        StreamInfo const& si = *record.second;
+        StreamInfo const &si = *record.second;
 
         if ( si._emitter->IsPlaying () )
         {
@@ -388,7 +388,7 @@ bool SoundMixer::RequestPause ( SoundEmitter &emitter ) noexcept
         return false;
     }
 
-    StreamInfo& si = *findResult->second;
+    StreamInfo &si = *findResult->second;
     si.Modify ( true );
 
     _free.splice ( _free.begin (), _used, si._used );
@@ -417,7 +417,7 @@ bool SoundMixer::RequestPlay ( SoundEmitter &emitter ) noexcept
 
     _used.splice ( _used.cbegin (), _free, _free.cbegin () );
 
-    StreamInfo& si = *_used.front ();
+    StreamInfo &si = *_used.front ();
     si.Modify ( false );
 
     si._emitter = &emitter;
@@ -447,7 +447,7 @@ bool SoundMixer::RequestStop ( SoundEmitter &emitter ) noexcept
         return false;
     }
 
-    StreamInfo& si = *findResult->second;
+    StreamInfo &si = *findResult->second;
     si.Modify ( true );
 
     _free.splice ( _free.begin (), _used, si._used );
@@ -508,7 +508,7 @@ bool SoundMixer::CreateHardwareStreams () noexcept
 
     for ( ; counter < MAX_HARDWARE_STREAM_CAP; ++counter )
     {
-        StreamInfo& si = _streamInfo.emplace_back ( StreamInfo ( *this, _used.end () ) );
+        StreamInfo &si = _streamInfo.emplace_back ( StreamInfo ( *this, _used.end () ) );
         AAudioStreamBuilder_setDataCallback ( _builder, &SoundMixer::PCMCallback, &si );
 
         if ( AAudioStreamBuilder_openStream ( _builder, &si._stream ) != AAUDIO_OK )
@@ -568,7 +568,7 @@ void SoundMixer::RecreateSoundStream ( AAudioStream &stream ) noexcept
             StreamCloser const closer ( stream );
             StreamInfo* targetStreamInfo = nullptr;
 
-            for ( auto& si : _streamInfo )
+            for ( auto &si : _streamInfo )
             {
                 if ( si._stream == &stream )
                 {
@@ -720,7 +720,7 @@ void SoundMixer::ErrorCallback ( AAudioStream* stream, void* userData, aaudio_re
         return;
 
     LogInfo ( "SoundMixer::ErrorCallback - Main audio endpoint has been disconnected, Trying to restore sound..." );
-    auto& soundMixer = *static_cast<SoundMixer*> ( userData );
+    auto &soundMixer = *static_cast<SoundMixer*> ( userData );
     soundMixer.RecreateSoundStream ( *stream );
 }
 
@@ -754,7 +754,7 @@ aaudio_data_callback_result_t SoundMixer::PCMCallback ( AAudioStream* /*stream*/
     int32_t numFrames
 )
 {
-    auto& si = *static_cast<StreamInfo*> ( userData );
+    auto &si = *static_cast<StreamInfo*> ( userData );
 
     if ( si.LockAndReturnFillSilence () )
     {

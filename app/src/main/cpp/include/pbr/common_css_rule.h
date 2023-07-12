@@ -21,10 +21,10 @@ class CommonCSSRule final
         CommonCSSRule () = delete;
 
         CommonCSSRule ( CommonCSSRule const & ) = delete;
-        CommonCSSRule& operator = ( CommonCSSRule const & ) = delete;
+        CommonCSSRule &operator = ( CommonCSSRule const & ) = delete;
 
         CommonCSSRule ( CommonCSSRule && ) = delete;
-        CommonCSSRule& operator = ( CommonCSSRule && ) = delete;
+        CommonCSSRule &operator = ( CommonCSSRule && ) = delete;
 
         ~CommonCSSRule () = default;
 

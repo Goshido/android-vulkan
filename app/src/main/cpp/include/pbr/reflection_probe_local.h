@@ -19,18 +19,18 @@ class ReflectionProbeLocal final : public ReflectionProbe
         ReflectionProbeLocal () = delete;
 
         ReflectionProbeLocal ( ReflectionProbeLocal const & ) = delete;
-        ReflectionProbeLocal& operator = ( ReflectionProbeLocal const & ) = delete;
+        ReflectionProbeLocal &operator = ( ReflectionProbeLocal const & ) = delete;
 
         ReflectionProbeLocal ( ReflectionProbeLocal && ) = delete;
-        ReflectionProbeLocal& operator = ( ReflectionProbeLocal && ) = delete;
+        ReflectionProbeLocal &operator = ( ReflectionProbeLocal && ) = delete;
 
         explicit ReflectionProbeLocal ( TextureCubeRef prefilter, GXVec3 location, float size ) noexcept;
 
         ~ReflectionProbeLocal () override = default;
 
-        [[nodiscard]] GXAABB const& GetBounds () const noexcept;
+        [[nodiscard]] GXAABB const &GetBounds () const noexcept;
 
-        [[nodiscard]] GXVec3 const& GetLocation () const noexcept;
+        [[nodiscard]] GXVec3 const &GetLocation () const noexcept;
         void SetLocation ( GXVec3 const &location ) noexcept;
 
         [[nodiscard]] float GetSize () const noexcept;

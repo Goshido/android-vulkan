@@ -13,10 +13,10 @@ class PCMStreamerWAV final : public PCMStreamer
         PCMStreamerWAV () = delete;
 
         PCMStreamerWAV ( PCMStreamerWAV const & ) = delete;
-        PCMStreamerWAV& operator = ( PCMStreamerWAV const & ) = delete;
+        PCMStreamerWAV &operator = ( PCMStreamerWAV const & ) = delete;
 
         PCMStreamerWAV ( PCMStreamerWAV && ) = delete;
-        PCMStreamerWAV& operator = ( PCMStreamerWAV && ) = delete;
+        PCMStreamerWAV &operator = ( PCMStreamerWAV && ) = delete;
 
         explicit PCMStreamerWAV ( SoundEmitter &soundEmitter, OnStopRequest callback ) noexcept;
 

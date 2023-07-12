@@ -7,7 +7,7 @@ void ReflectionProbe::FreeTransferResources ( android_vulkan::Renderer &renderer
     _prefilter->FreeTransferResources ( renderer );
 }
 
-TextureCubeRef& ReflectionProbe::GetPrefilter () noexcept
+TextureCubeRef &ReflectionProbe::GetPrefilter () noexcept
 {
     return _prefilter;
 }

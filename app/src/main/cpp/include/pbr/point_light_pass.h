@@ -41,10 +41,10 @@ class PointLightPass final
         PointLightPass () = default;
 
         PointLightPass ( PointLightPass const & ) = delete;
-        PointLightPass& operator = ( PointLightPass const & ) = delete;
+        PointLightPass &operator = ( PointLightPass const & ) = delete;
 
         PointLightPass ( PointLightPass && ) = delete;
-        PointLightPass& operator = ( PointLightPass && ) = delete;
+        PointLightPass &operator = ( PointLightPass && ) = delete;
 
         ~PointLightPass () = default;
 

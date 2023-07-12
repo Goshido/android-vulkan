@@ -27,10 +27,10 @@ class UTF8Parser final
         UTF8Parser () = delete;
 
         UTF8Parser ( UTF8Parser const & ) = delete;
-        UTF8Parser& operator = ( UTF8Parser const & ) = delete;
+        UTF8Parser &operator = ( UTF8Parser const & ) = delete;
 
         UTF8Parser ( UTF8Parser && ) = delete;
-        UTF8Parser& operator = ( UTF8Parser && ) = delete;
+        UTF8Parser &operator = ( UTF8Parser && ) = delete;
 
         ~UTF8Parser () = delete;
 

@@ -13,10 +13,10 @@ class SoundEmitterGlobal final : public SoundEmitter
         SoundEmitterGlobal () = default;
 
         SoundEmitterGlobal ( SoundEmitterGlobal const & ) = delete;
-        SoundEmitterGlobal& operator = ( SoundEmitterGlobal const & ) = delete;
+        SoundEmitterGlobal &operator = ( SoundEmitterGlobal const & ) = delete;
 
         SoundEmitterGlobal ( SoundEmitterGlobal && ) = delete;
-        SoundEmitterGlobal& operator = ( SoundEmitterGlobal && ) = delete;
+        SoundEmitterGlobal &operator = ( SoundEmitterGlobal && ) = delete;
 
         ~SoundEmitterGlobal () override = default;
 

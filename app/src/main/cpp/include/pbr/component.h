@@ -44,17 +44,17 @@ class Component
         Component () = delete;
 
         Component ( Component const & ) = delete;
-        Component& operator = ( Component const & ) = delete;
+        Component &operator = ( Component const & ) = delete;
 
         Component ( Component && ) = delete;
-        Component& operator = ( Component && ) = delete;
+        Component &operator = ( Component && ) = delete;
 
         virtual ~Component () = default;
 
-        [[nodiscard]] virtual ComponentRef& GetReference () noexcept = 0;
+        [[nodiscard]] virtual ComponentRef &GetReference () noexcept = 0;
 
         [[nodiscard]] ClassID GetClassID () const noexcept;
-        [[nodiscard]] std::string const& GetName () const noexcept;
+        [[nodiscard]] std::string const &GetName () const noexcept;
 
         [[nodiscard]] static ComponentRef Create ( android_vulkan::Renderer &renderer,
             size_t &commandBufferConsumed,

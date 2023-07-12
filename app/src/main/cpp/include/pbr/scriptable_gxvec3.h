@@ -35,20 +35,20 @@ class ScriptableGXVec3 final
         ScriptableGXVec3 () = delete;
 
         ScriptableGXVec3 ( ScriptableGXVec3 const & ) = delete;
-        ScriptableGXVec3& operator = ( ScriptableGXVec3 const & ) = delete;
+        ScriptableGXVec3 &operator = ( ScriptableGXVec3 const & ) = delete;
 
         ScriptableGXVec3 ( ScriptableGXVec3 && ) = delete;
-        ScriptableGXVec3& operator = ( ScriptableGXVec3 && ) = delete;
+        ScriptableGXVec3 &operator = ( ScriptableGXVec3 && ) = delete;
 
         ~ScriptableGXVec3 () = delete;
 
         static void Init ( lua_State &vm ) noexcept;
         static void Destroy () noexcept;
 
-        [[nodiscard]] static GXVec3& Extract ( lua_State* state, int idx ) noexcept;
+        [[nodiscard]] static GXVec3 &Extract ( lua_State* state, int idx ) noexcept;
 
     private:
-        static void Insert ( Item* item, Item*& list ) noexcept;
+        static void Insert ( Item* item, Item* &list ) noexcept;
 
         [[nodiscard]] static int OnClone ( lua_State* state );
         [[nodiscard]] static int OnCreate ( lua_State* state );

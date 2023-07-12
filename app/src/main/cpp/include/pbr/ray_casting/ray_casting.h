@@ -39,10 +39,10 @@ class RayCasting final : public android_vulkan::Game
         RayCasting () = default;
 
         RayCasting ( RayCasting const & ) = delete;
-        RayCasting& operator = ( RayCasting const & ) = delete;
+        RayCasting &operator = ( RayCasting const & ) = delete;
 
         RayCasting ( RayCasting && ) = delete;
-        RayCasting& operator = ( RayCasting && ) = delete;
+        RayCasting &operator = ( RayCasting && ) = delete;
 
         ~RayCasting () override = default;
 

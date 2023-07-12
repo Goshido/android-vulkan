@@ -131,27 +131,27 @@ bool MaterialPool::Init ( VkDevice device, DefaultTextureManager const &defaultT
         size_t idx = BIND_PER_SET * i;
         VkDescriptorSet set = _descriptorSets[ i ];
 
-        VkWriteDescriptorSet& diffuse = _writeSets[ idx ];
+        VkWriteDescriptorSet &diffuse = _writeSets[ idx ];
         diffuse.dstSet = set;
         diffuse.dstBinding = static_cast<uint32_t> ( SLOT_DIFFUSE );
         diffuse.pImageInfo = &_imageInfo[ idx++ ];
 
-        VkWriteDescriptorSet& emission = _writeSets[ idx ];
+        VkWriteDescriptorSet &emission = _writeSets[ idx ];
         emission.dstSet = set;
         emission.dstBinding = static_cast<uint32_t> ( SLOT_EMISSION );
         emission.pImageInfo = &_imageInfo[ idx++ ];
 
-        VkWriteDescriptorSet& mask = _writeSets[ idx ];
+        VkWriteDescriptorSet &mask = _writeSets[ idx ];
         mask.dstSet = set;
         mask.dstBinding = static_cast<uint32_t> ( SLOT_MASK );
         mask.pImageInfo = &_imageInfo[ idx++ ];
 
-        VkWriteDescriptorSet& normal = _writeSets[ idx ];
+        VkWriteDescriptorSet &normal = _writeSets[ idx ];
         normal.dstSet = set;
         normal.dstBinding = static_cast<uint32_t> ( SLOT_NORMAL );
         normal.pImageInfo = &_imageInfo[ idx++ ];
 
-        VkWriteDescriptorSet& param = _writeSets[ idx ];
+        VkWriteDescriptorSet &param = _writeSets[ idx ];
         param.dstSet = set;
         param.dstBinding = static_cast<uint32_t> ( SLOT_PARAM );
         param.pImageInfo = &_imageInfo[ idx ];
@@ -213,11 +213,11 @@ void MaterialPool::Push ( GeometryPassMaterial &material ) noexcept
 {
     VkDescriptorImageInfo* images = _imageInfo.data ();
 
-    Texture2DRef const& diffuse = material.GetAlbedo ();
-    Texture2DRef const& emission = material.GetEmission ();
-    Texture2DRef const& mask = material.GetMask ();
-    Texture2DRef const& normal = material.GetNormal ();
-    Texture2DRef const& param = material.GetParam ();
+    Texture2DRef const &diffuse = material.GetAlbedo ();
+    Texture2DRef const &emission = material.GetEmission ();
+    Texture2DRef const &mask = material.GetMask ();
+    Texture2DRef const &normal = material.GetNormal ();
+    Texture2DRef const &param = material.GetParam ();
 
     size_t const base = _itemWriteIndex * BIND_PER_SET;
     images[ base ].imageView = diffuse ? diffuse->GetImageView () : _defaultDiffuse;

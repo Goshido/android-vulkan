@@ -30,10 +30,10 @@ class LightupCommonDescriptorSet final
         LightupCommonDescriptorSet () = default;
 
         LightupCommonDescriptorSet ( LightupCommonDescriptorSet const & ) = delete;
-        LightupCommonDescriptorSet& operator = ( LightupCommonDescriptorSet const & ) = delete;
+        LightupCommonDescriptorSet &operator = ( LightupCommonDescriptorSet const & ) = delete;
 
         LightupCommonDescriptorSet ( LightupCommonDescriptorSet && ) = delete;
-        LightupCommonDescriptorSet& operator = ( LightupCommonDescriptorSet && ) = delete;
+        LightupCommonDescriptorSet &operator = ( LightupCommonDescriptorSet && ) = delete;
 
         ~LightupCommonDescriptorSet () = default;
 

@@ -10,7 +10,7 @@ FontFamilyProperty::FontFamilyProperty ( std::u32string &&value ) noexcept:
     // NOTHING
 }
 
-std::u32string const& FontFamilyProperty::GetValue () const noexcept
+std::u32string const &FontFamilyProperty::GetValue () const noexcept
 {
     return _value;
 }

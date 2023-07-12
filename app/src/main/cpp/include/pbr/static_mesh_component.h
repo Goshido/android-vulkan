@@ -35,10 +35,10 @@ class StaticMeshComponent final : public RenderableComponent, public Transformab
         StaticMeshComponent () = delete;
 
         StaticMeshComponent ( StaticMeshComponent const & ) = delete;
-        StaticMeshComponent& operator = ( StaticMeshComponent const & ) = delete;
+        StaticMeshComponent &operator = ( StaticMeshComponent const & ) = delete;
 
         StaticMeshComponent ( StaticMeshComponent && ) = delete;
-        StaticMeshComponent& operator = ( StaticMeshComponent && ) = delete;
+        StaticMeshComponent &operator = ( StaticMeshComponent && ) = delete;
 
         // "commandBuffer" array MUST contain at least 5 free command buffers.
         explicit StaticMeshComponent ( android_vulkan::Renderer &renderer,
@@ -76,24 +76,24 @@ class StaticMeshComponent final : public RenderableComponent, public Transformab
         void FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept override;
         void Submit ( RenderSession &renderSession ) noexcept override;
 
-        [[maybe_unused, nodiscard]] GXAABB const& GetBoundsWorld () const noexcept;
+        [[maybe_unused, nodiscard]] GXAABB const &GetBoundsWorld () const noexcept;
 
-        [[maybe_unused, nodiscard]] GXColorRGB const& GetColor0 () const noexcept;
+        [[maybe_unused, nodiscard]] GXColorRGB const &GetColor0 () const noexcept;
         [[maybe_unused]] void SetColor0 ( GXColorRGB const &color ) noexcept;
 
-        [[maybe_unused, nodiscard]] GXColorRGB const& GetColor1 () const noexcept;
+        [[maybe_unused, nodiscard]] GXColorRGB const &GetColor1 () const noexcept;
         [[maybe_unused]] void SetColor1 ( GXColorRGB const &color ) noexcept;
 
-        [[maybe_unused, nodiscard]] GXColorRGB const& GetColor2 () const noexcept;
+        [[maybe_unused, nodiscard]] GXColorRGB const &GetColor2 () const noexcept;
         [[maybe_unused]] void SetColor2 ( GXColorRGB const &color ) noexcept;
 
-        [[maybe_unused, nodiscard]] GXColorRGB const& GetEmission () const noexcept;
+        [[maybe_unused, nodiscard]] GXColorRGB const &GetEmission () const noexcept;
         void SetEmission ( GXColorRGB const &emission ) noexcept;
 
-        [[nodiscard]] MaterialRef& GetMaterial () noexcept;
-        [[maybe_unused, nodiscard]] MaterialRef const& GetMaterial () const noexcept;
+        [[nodiscard]] MaterialRef &GetMaterial () noexcept;
+        [[maybe_unused, nodiscard]] MaterialRef const &GetMaterial () const noexcept;
 
-        [[nodiscard]] GXMat4 const& GetTransform () const noexcept;
+        [[nodiscard]] GXMat4 const &GetTransform () const noexcept;
         void SetTransform ( GXMat4 const &transform ) noexcept;
 
         [[nodiscard]] bool RegisterFromNative ( lua_State &vm, Actor &actor ) noexcept;
@@ -106,7 +106,7 @@ class StaticMeshComponent final : public RenderableComponent, public Transformab
         [[nodiscard]] static bool Sync () noexcept;
 
     private:
-        [[nodiscard]] ComponentRef& GetReference () noexcept override;
+        [[nodiscard]] ComponentRef &GetReference () noexcept override;
         void OnTransform ( GXMat4 const &transformWorld ) noexcept override;
 
         [[nodiscard]] static bool AllocateCommandBuffers ( size_t amount ) noexcept;

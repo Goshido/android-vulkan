@@ -60,7 +60,7 @@ RigidBody::RigidBody () noexcept:
     _forceAwake |= forceAwake;
 }
 
-GXVec3 const& RigidBody::GetVelocityAngular () const noexcept
+GXVec3 const &RigidBody::GetVelocityAngular () const noexcept
 {
     return _velocityAngular;
 }
@@ -86,7 +86,7 @@ GXVec3 const& RigidBody::GetVelocityAngular () const noexcept
     _forceAwake |= forceAwake;
 }
 
-GXVec3 const& RigidBody::GetVelocityLinear () const noexcept
+GXVec3 const &RigidBody::GetVelocityLinear () const noexcept
 {
     return _velocityLinear;
 }
@@ -247,12 +247,12 @@ void RigidBody::SetContext ( Context context ) noexcept
     _dampingLinear = damping;
 }
 
-GXMat3 const& RigidBody::GetInertiaTensorInverse () const noexcept
+GXMat3 const &RigidBody::GetInertiaTensorInverse () const noexcept
 {
     return _inertiaTensorInverse;
 }
 
-GXVec3 const& RigidBody::GetLocation () const noexcept
+GXVec3 const &RigidBody::GetLocation () const noexcept
 {
     return _location;
 }
@@ -307,7 +307,7 @@ void RigidBody::SetMass ( float mass, bool forceAwake ) noexcept
     UpdateCacheData ();
 }
 
-GXQuat const& RigidBody::GetRotation () const noexcept
+GXQuat const &RigidBody::GetRotation () const noexcept
 {
     return _rotation;
 }
@@ -324,7 +324,7 @@ void RigidBody::SetRotation ( GXQuat const &rotation, bool forceAwake ) noexcept
     UpdateCacheData ();
 }
 
-Shape& RigidBody::GetShape () noexcept
+Shape &RigidBody::GetShape () noexcept
 {
     AV_ASSERT ( _shape )
     return *_shape;
@@ -347,7 +347,7 @@ bool RigidBody::HasShape () const noexcept
     UpdateCacheData ();
 }
 
-[[maybe_unused]] std::string const& RigidBody::GetTag () const noexcept
+[[maybe_unused]] std::string const &RigidBody::GetTag () const noexcept
 {
     return _tag;
 }
@@ -357,17 +357,17 @@ void RigidBody::SetTag ( std::string &&tag ) noexcept
     _tag = std::move ( tag );
 }
 
-[[maybe_unused]] GXVec3 const& RigidBody::GetTotalForce () const noexcept
+[[maybe_unused]] GXVec3 const &RigidBody::GetTotalForce () const noexcept
 {
     return _totalForce;
 }
 
-[[maybe_unused]] GXVec3 const& RigidBody::GetTotalTorque () const noexcept
+[[maybe_unused]] GXVec3 const &RigidBody::GetTotalTorque () const noexcept
 {
     return _totalTorque;
 }
 
-GXMat4 const& RigidBody::GetTransform () const noexcept
+GXMat4 const &RigidBody::GetTransform () const noexcept
 {
     return _transform;
 }

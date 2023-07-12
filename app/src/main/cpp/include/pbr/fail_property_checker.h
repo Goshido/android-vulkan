@@ -13,10 +13,10 @@ class FailPropertyChecker final : public PropertyChecker
         FailPropertyChecker () = delete;
 
         FailPropertyChecker ( FailPropertyChecker const & ) = delete;
-        FailPropertyChecker& operator = ( FailPropertyChecker const & ) = delete;
+        FailPropertyChecker &operator = ( FailPropertyChecker const & ) = delete;
 
         FailPropertyChecker ( FailPropertyChecker && ) = delete;
-        FailPropertyChecker& operator = ( FailPropertyChecker && ) = delete;
+        FailPropertyChecker &operator = ( FailPropertyChecker && ) = delete;
 
         explicit FailPropertyChecker ( char const* css, Property::eType property ) noexcept;
 

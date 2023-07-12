@@ -18,10 +18,10 @@ class ScriptablePenetration final
         ScriptablePenetration () = default;
 
         ScriptablePenetration ( ScriptablePenetration const & ) = delete;
-        ScriptablePenetration& operator = ( ScriptablePenetration const & ) = delete;
+        ScriptablePenetration &operator = ( ScriptablePenetration const & ) = delete;
 
         ScriptablePenetration ( ScriptablePenetration && ) = delete;
-        ScriptablePenetration& operator = ( ScriptablePenetration && ) = delete;
+        ScriptablePenetration &operator = ( ScriptablePenetration && ) = delete;
 
         ~ScriptablePenetration () = default;
 

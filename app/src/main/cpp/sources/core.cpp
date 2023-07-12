@@ -172,7 +172,7 @@ void Core::OnSurfaceDestroyed () noexcept
     _nativeWindow = nullptr;
 }
 
-std::string const& Core::GetCacheDirectory () noexcept
+std::string const &Core::GetCacheDirectory () noexcept
 {
     AV_ASSERT ( g_Core )
     static std::string const nullDirectory = "fuck!";

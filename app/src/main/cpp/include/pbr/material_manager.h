@@ -44,10 +44,10 @@ class MaterialManager final
 
     public:
         MaterialManager ( MaterialManager const & ) = delete;
-        MaterialManager& operator = ( MaterialManager const & ) = delete;
+        MaterialManager &operator = ( MaterialManager const & ) = delete;
 
         MaterialManager ( MaterialManager && ) = delete;
-        MaterialManager& operator = ( MaterialManager && ) = delete;
+        MaterialManager &operator = ( MaterialManager && ) = delete;
 
         void FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept;
 
@@ -59,7 +59,7 @@ class MaterialManager final
             VkFence const* fences
         ) noexcept;
 
-        [[nodiscard]] static MaterialManager& GetInstance () noexcept;
+        [[nodiscard]] static MaterialManager &GetInstance () noexcept;
         static void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
 
         [[nodiscard]] constexpr static uint32_t MaxCommandBufferPerMaterial () noexcept

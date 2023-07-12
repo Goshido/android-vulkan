@@ -11,16 +11,16 @@ namespace pbr {
 class PositionPropertyChecker final : public PropertyChecker
 {
     private:
-        PositionProperty::eValue&       _target;
+        PositionProperty::eValue        &_target;
 
     public:
         PositionPropertyChecker () = delete;
 
         PositionPropertyChecker ( PositionPropertyChecker const & ) = delete;
-        PositionPropertyChecker& operator = ( PositionPropertyChecker const & ) = delete;
+        PositionPropertyChecker &operator = ( PositionPropertyChecker const & ) = delete;
 
         PositionPropertyChecker ( PositionPropertyChecker && ) = delete;
-        PositionPropertyChecker& operator = ( PositionPropertyChecker && ) = delete;
+        PositionPropertyChecker &operator = ( PositionPropertyChecker && ) = delete;
 
         explicit PositionPropertyChecker ( char const* css, PositionProperty::eValue &target ) noexcept;
 

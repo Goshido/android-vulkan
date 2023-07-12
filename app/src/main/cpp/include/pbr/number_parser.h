@@ -27,10 +27,10 @@ class NumberParser final
         NumberParser () = delete;
 
         NumberParser ( NumberParser const & ) = delete;
-        NumberParser& operator = ( NumberParser const & ) = delete;
+        NumberParser &operator = ( NumberParser const & ) = delete;
 
         NumberParser ( NumberParser && ) = delete;
-        NumberParser& operator = ( NumberParser && ) = delete;
+        NumberParser &operator = ( NumberParser && ) = delete;
 
         ~NumberParser () = delete;
 

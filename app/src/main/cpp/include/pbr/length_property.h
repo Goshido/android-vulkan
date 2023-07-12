@@ -17,10 +17,10 @@ class LengthProperty final : public Property
         LengthProperty () = delete;
 
         LengthProperty ( LengthProperty const & ) = delete;
-        LengthProperty& operator = ( LengthProperty const & ) = delete;
+        LengthProperty &operator = ( LengthProperty const & ) = delete;
 
         LengthProperty ( LengthProperty && ) = delete;
-        LengthProperty& operator = ( LengthProperty && ) = delete;
+        LengthProperty &operator = ( LengthProperty && ) = delete;
 
         explicit LengthProperty ( eType type, LengthValue value ) noexcept;
 

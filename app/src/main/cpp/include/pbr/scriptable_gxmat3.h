@@ -35,10 +35,10 @@ class ScriptableGXMat3 final
         ScriptableGXMat3 () = delete;
 
         ScriptableGXMat3 ( ScriptableGXMat3 const & ) = delete;
-        ScriptableGXMat3& operator = ( ScriptableGXMat3 const & ) = delete;
+        ScriptableGXMat3 &operator = ( ScriptableGXMat3 const & ) = delete;
 
         ScriptableGXMat3 ( ScriptableGXMat3 && ) = delete;
-        ScriptableGXMat3& operator = ( ScriptableGXMat3 && ) = delete;
+        ScriptableGXMat3 &operator = ( ScriptableGXMat3 && ) = delete;
 
         ~ScriptableGXMat3 () = delete;
 
@@ -46,7 +46,7 @@ class ScriptableGXMat3 final
         static void Destroy () noexcept;
 
     private:
-        static void Insert ( Item* item, Item*& list ) noexcept;
+        static void Insert ( Item* item, Item* &list ) noexcept;
 
         [[nodiscard]] static int OnCreate ( lua_State* state );
         [[nodiscard]] static int OnDestroy ( lua_State* state );

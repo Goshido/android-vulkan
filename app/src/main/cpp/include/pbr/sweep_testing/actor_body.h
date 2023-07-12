@@ -24,10 +24,10 @@ class ActorBody final
         ActorBody () = default;
 
         ActorBody ( ActorBody const & ) = delete;
-        ActorBody& operator = ( ActorBody const & ) = delete;
+        ActorBody &operator = ( ActorBody const & ) = delete;
 
         ActorBody ( ActorBody && ) = delete;
-        ActorBody& operator = ( ActorBody && ) = delete;
+        ActorBody &operator = ( ActorBody && ) = delete;
 
         ~ActorBody () = default;
 

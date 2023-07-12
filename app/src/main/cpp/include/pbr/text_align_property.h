@@ -25,10 +25,10 @@ class TextAlignProperty final : public Property
         TextAlignProperty () = delete;
 
         TextAlignProperty ( TextAlignProperty const & ) = default;
-        TextAlignProperty& operator = ( TextAlignProperty const & ) = default;
+        TextAlignProperty &operator = ( TextAlignProperty const & ) = default;
 
         TextAlignProperty ( TextAlignProperty && ) = default;
-        TextAlignProperty& operator = ( TextAlignProperty && ) = default;
+        TextAlignProperty &operator = ( TextAlignProperty && ) = default;
 
         explicit TextAlignProperty ( eValue value ) noexcept;
 

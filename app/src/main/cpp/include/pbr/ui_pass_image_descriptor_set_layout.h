@@ -13,10 +13,10 @@ class UIPassImageDescriptorSetLayout final : public DescriptorSetLayout
         UIPassImageDescriptorSetLayout () = default;
 
         UIPassImageDescriptorSetLayout ( UIPassImageDescriptorSetLayout const & ) = delete;
-        UIPassImageDescriptorSetLayout& operator = ( UIPassImageDescriptorSetLayout const & ) = delete;
+        UIPassImageDescriptorSetLayout &operator = ( UIPassImageDescriptorSetLayout const & ) = delete;
 
         UIPassImageDescriptorSetLayout ( UIPassImageDescriptorSetLayout && ) = delete;
-        UIPassImageDescriptorSetLayout& operator = ( UIPassImageDescriptorSetLayout && ) = delete;
+        UIPassImageDescriptorSetLayout &operator = ( UIPassImageDescriptorSetLayout && ) = delete;
 
         ~UIPassImageDescriptorSetLayout () override = default;
 

@@ -23,10 +23,10 @@ class ReflectionGlobalDescriptorSetLayoutImpl final
         ReflectionGlobalDescriptorSetLayoutImpl () noexcept;
 
         ReflectionGlobalDescriptorSetLayoutImpl ( ReflectionGlobalDescriptorSetLayoutImpl const & ) = delete;
-        ReflectionGlobalDescriptorSetLayoutImpl& operator = ( ReflectionGlobalDescriptorSetLayoutImpl const & ) = delete;
+        ReflectionGlobalDescriptorSetLayoutImpl &operator = ( ReflectionGlobalDescriptorSetLayoutImpl const & ) = delete;
 
         ReflectionGlobalDescriptorSetLayoutImpl ( ReflectionGlobalDescriptorSetLayoutImpl && ) = delete;
-        ReflectionGlobalDescriptorSetLayoutImpl& operator = ( ReflectionGlobalDescriptorSetLayoutImpl && ) = delete;
+        ReflectionGlobalDescriptorSetLayoutImpl &operator = ( ReflectionGlobalDescriptorSetLayoutImpl && ) = delete;
 
         ~ReflectionGlobalDescriptorSetLayoutImpl () = default;
 

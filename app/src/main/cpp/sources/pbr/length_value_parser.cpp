@@ -35,7 +35,7 @@ std::optional<LengthValue> LengthValueParser::Parse ( char const* css,
     constexpr std::string_view separator = " | ";
     constexpr char const* s = separator.data ();
 
-    for ( auto const& item : _types )
+    for ( auto const &item : _types )
         supported += *UTF8Parser::ToUTF8 ( item.first ) + s;
 
     supported.resize ( supported.size () - separator.size () );

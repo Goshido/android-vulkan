@@ -50,7 +50,7 @@ Physics::Physics () noexcept:
 [[maybe_unused]] bool Physics::AddRigidBody ( RigidBodyRef const &rigidBody ) noexcept
 {
     std::unique_lock<std::mutex> const lock ( _mutex );
-    RigidBody& body = *rigidBody.get ();
+    RigidBody &body = *rigidBody.get ();
 
     if ( !body.HasShape() )
     {
@@ -75,7 +75,7 @@ Physics::Physics () noexcept:
 {
     std::unique_lock<std::mutex> const lock ( _mutex );
 
-    RigidBody& body = *rigidBody.get ();
+    RigidBody &body = *rigidBody.get ();
     auto const result = body.IsKinematic () ? _kinematics.erase ( rigidBody ) : _dynamics.erase ( rigidBody );
 
     if ( result > 0U )
@@ -88,7 +88,7 @@ Physics::Physics () noexcept:
     return false;
 }
 
-std::vector<ContactManifold> const& Physics::GetContactManifolds () const noexcept
+std::vector<ContactManifold> const &Physics::GetContactManifolds () const noexcept
 {
     return _contactManager.GetContactManifolds ();
 }
@@ -129,14 +129,14 @@ void Physics::PenetrationTest ( std::vector<Penetration> &result,
 ) const noexcept
 {
     result.clear ();
-    Shape const& s = *shape;
+    Shape const &s = *shape;
 
     auto check = [ &result, &epa, &s, groups ] ( std::unordered_set<RigidBodyRef> const &set ) noexcept {
         GJK gjk {};
 
-        for ( auto& body : set )
+        for ( auto &body : set )
         {
-            Shape const& bodyShape = body->GetShape ();
+            Shape const &bodyShape = body->GetShape ();
             gjk.Reset ();
 
             if ( !( bodyShape.GetCollisionGroups () & groups ) || !gjk.Run ( bodyShape, s ) )
@@ -170,9 +170,9 @@ bool Physics::Raycast ( RaycastResult &result, uint32_t groups, GXVec3 const &fr
     RaycastResult current {};
 
     auto check = [ & ] ( std::unordered_set<RigidBodyRef> const &set ) noexcept {
-        for ( auto& body : set )
+        for ( auto &body : set )
         {
-            Shape const& shape = body->GetShape ();
+            Shape const &shape = body->GetShape ();
 
             if ( !( shape.GetCollisionGroups () & groups ) || !rayCaster.Run ( current, from, to, shape ) )
                 continue;
@@ -250,9 +250,9 @@ void Physics::SweepTest ( std::vector<RigidBodyRef> &result, ShapeRef const &swe
     auto check = [ &result, groups ] ( Shape const &sweep, std::unordered_set<RigidBodyRef> const &set ) noexcept {
         GJK gjk {};
 
-        for ( auto& body : set )
+        for ( auto &body : set )
         {
-            Shape const& bodyShape = body->GetShape ();
+            Shape const &bodyShape = body->GetShape ();
             gjk.Reset ();
 
             if ( ( bodyShape.GetCollisionGroups () & groups ) && gjk.Run ( sweep, bodyShape ) )
@@ -262,7 +262,7 @@ void Physics::SweepTest ( std::vector<RigidBodyRef> &result, ShapeRef const &swe
         }
     };
 
-    Shape const& sweep = *sweepShape;
+    Shape const &sweep = *sweepShape;
     check ( sweep, _kinematics );
     check ( sweep, _dynamics );
 }
@@ -279,7 +279,7 @@ void Physics::CollectContacts () noexcept
 
     for ( auto i = _dynamics.begin (); i != end; ++i )
     {
-        for ( auto& kinematic : _kinematics )
+        for ( auto &kinematic : _kinematics )
             _contactDetector.Check ( _contactManager, *i, kinematic );
 
         for ( auto j = i; ++j != end; )
@@ -291,12 +291,12 @@ void Physics::CollectContacts () noexcept
 
 void Physics::Integrate () noexcept
 {
-    for ( auto& kinematic : _kinematics )
+    for ( auto &kinematic : _kinematics )
         kinematic->UpdatePositionAndRotation ( _fixedTimeStep );
 
-    for ( auto& dynamic : _dynamics )
+    for ( auto &dynamic : _dynamics )
     {
-        for ( auto const& globalForce : _globalForces )
+        for ( auto const &globalForce : _globalForces )
             globalForce->Apply ( dynamic );
 
         dynamic->Integrate ( _fixedTimeStep );

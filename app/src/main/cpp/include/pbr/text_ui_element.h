@@ -85,10 +85,10 @@ class TextUIElement final : public UIElement
         TextUIElement () = delete;
 
         TextUIElement ( TextUIElement const & ) = delete;
-        TextUIElement& operator = ( TextUIElement const & ) = delete;
+        TextUIElement &operator = ( TextUIElement const & ) = delete;
 
         TextUIElement ( TextUIElement && ) = delete;
-        TextUIElement& operator = ( TextUIElement && ) = delete;
+        TextUIElement &operator = ( TextUIElement && ) = delete;
 
         explicit TextUIElement ( bool &success,
             UIElement const* parent,
@@ -106,7 +106,7 @@ class TextUIElement final : public UIElement
         void Submit ( SubmitInfo &info ) noexcept override;
         [[nodiscard]] bool UpdateCache ( UpdateInfo &info ) noexcept override;
 
-        [[nodiscard]] GXColorRGB const& ResolveColor () const noexcept;
+        [[nodiscard]] GXColorRGB const &ResolveColor () const noexcept;
         [[nodiscard]] std::string const* ResolveFont () const noexcept;
 
         [[nodiscard]] static int32_t AlignIntegerToCenter ( int32_t pen,

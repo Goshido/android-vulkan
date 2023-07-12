@@ -49,10 +49,10 @@ class PointLight final : public Light
         PointLight () noexcept;
 
         PointLight ( PointLight const & ) = delete;
-        PointLight& operator = ( PointLight const & ) = delete;
+        PointLight &operator = ( PointLight const & ) = delete;
 
         PointLight ( PointLight && ) = delete;
-        PointLight& operator = ( PointLight && ) = delete;
+        PointLight &operator = ( PointLight && ) = delete;
 
         explicit PointLight ( GXVec3 const &hue,
             float intensity,
@@ -62,21 +62,21 @@ class PointLight final : public Light
 
         ~PointLight () override = default;
 
-        [[nodiscard]] GXAABB const& GetBounds () const noexcept;
+        [[nodiscard]] GXAABB const &GetBounds () const noexcept;
         void SetBoundDimensions ( float width, float height, float depth ) noexcept;
         void SetBoundDimensions ( GXVec3 const &dimensions ) noexcept;
 
-        [[nodiscard]] GXVec3 const& GetHue () const noexcept;
+        [[nodiscard]] GXVec3 const &GetHue () const noexcept;
         void SetHue ( GXColorRGB const &hue ) noexcept;
 
         [[nodiscard]] float GetIntensity () const noexcept;
         void SetIntensity ( float intensity ) noexcept;
 
-        [[nodiscard]] GXVec3 const& GetLocation () const noexcept;
+        [[nodiscard]] GXVec3 const &GetLocation () const noexcept;
         void SetLocation ( GXVec3 const &location ) noexcept;
 
-        [[nodiscard]] Matrices const& GetMatrices () noexcept;
-        [[nodiscard]] GXMat4 const& GetProjection () noexcept;
+        [[nodiscard]] Matrices const &GetMatrices () noexcept;
+        [[nodiscard]] GXMat4 const &GetProjection () noexcept;
 
     private:
         void UpdateMatrices () noexcept;

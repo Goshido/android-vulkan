@@ -11,7 +11,7 @@ GlobalForceGravity::GlobalForceGravity ( GXVec3 const &freeFallAcceleration ) no
 
 void GlobalForceGravity::Apply ( RigidBodyRef const &rigidBody ) const noexcept
 {
-    auto& body = *rigidBody;
+    auto &body = *rigidBody;
 
     GXVec3 force {};
     force.Multiply ( _freeFallAcceleration, body.GetMass () );

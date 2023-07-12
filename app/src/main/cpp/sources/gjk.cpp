@@ -85,8 +85,8 @@ void GJK::TestLine () noexcept
 {
     ++_testLine;
 
-    GXVec3 const& a = _simplex._supportPoints[ 0U ];
-    GXVec3 const& b = _simplex._supportPoints[ 1U ];
+    GXVec3 const &a = _simplex._supportPoints[ 0U ];
+    GXVec3 const &b = _simplex._supportPoints[ 1U ];
 
     GXVec3 ab {};
     ab.Subtract ( b, a );       // NOLINT
@@ -116,10 +116,10 @@ bool GJK::TestTetrahedron () noexcept
 {
     ++_testTetrahedron;
 
-    GXVec3 const& a = _simplex._supportPoints[ 0U ];
-    GXVec3 const& b = _simplex._supportPoints[ 1U ];
-    GXVec3 const& c = _simplex._supportPoints[ 2U ];
-    GXVec3 const& d = _simplex._supportPoints[ 3U ];
+    GXVec3 const &a = _simplex._supportPoints[ 0U ];
+    GXVec3 const &b = _simplex._supportPoints[ 1U ];
+    GXVec3 const &c = _simplex._supportPoints[ 2U ];
+    GXVec3 const &d = _simplex._supportPoints[ 3U ];
 
     // "o" means origin.
     GXVec3 ao ( a );
@@ -193,9 +193,9 @@ void GJK::TestTriangle () noexcept
 {
     ++_testTriangle;
 
-    GXVec3 const& a = _simplex._supportPoints[ 0U ];
-    GXVec3& b = _simplex._supportPoints[ 1U ];
-    GXVec3& c = _simplex._supportPoints[ 2U ];
+    GXVec3 const &a = _simplex._supportPoints[ 0U ];
+    GXVec3 &b = _simplex._supportPoints[ 1U ];
+    GXVec3 &c = _simplex._supportPoints[ 2U ];
 
     // "o" means origin.
     GXVec3 ao ( a );

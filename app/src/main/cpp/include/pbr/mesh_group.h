@@ -16,10 +16,10 @@ struct MeshGroup final
     MeshGroup () = delete;
 
     MeshGroup ( MeshGroup const & ) = delete;
-    MeshGroup& operator = ( MeshGroup const & ) = delete;
+    MeshGroup &operator = ( MeshGroup const & ) = delete;
 
     MeshGroup ( MeshGroup && ) = default;
-    MeshGroup& operator = ( MeshGroup && ) = default;
+    MeshGroup &operator = ( MeshGroup && ) = default;
 
     explicit MeshGroup ( MeshRef &mesh,
         GXMat4 const &local,

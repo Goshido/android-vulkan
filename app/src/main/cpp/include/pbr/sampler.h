@@ -16,10 +16,10 @@ class Sampler final
         Sampler () = default;
 
         Sampler ( Sampler const & ) = delete;
-        Sampler& operator = ( Sampler const & ) = delete;
+        Sampler &operator = ( Sampler const & ) = delete;
 
         Sampler ( Sampler && ) = delete;
-        Sampler& operator = ( Sampler && ) = delete;
+        Sampler &operator = ( Sampler && ) = delete;
 
         ~Sampler () = default;
 

@@ -19,10 +19,10 @@ class PointLightComponent final : public RenderableComponent, public Transformab
         PointLightComponent () noexcept;
 
         PointLightComponent ( PointLightComponent const & ) = delete;
-        PointLightComponent& operator = ( PointLightComponent const & ) = delete;
+        PointLightComponent &operator = ( PointLightComponent const & ) = delete;
 
         PointLightComponent ( PointLightComponent && ) = delete;
-        PointLightComponent& operator = ( PointLightComponent && ) = delete;
+        PointLightComponent &operator = ( PointLightComponent && ) = delete;
 
         explicit PointLightComponent ( PointLightComponentDesc const &desc, uint8_t const* data ) noexcept;
 
@@ -37,7 +37,7 @@ class PointLightComponent final : public RenderableComponent, public Transformab
         void SetLocation ( GXVec3 const &location ) noexcept;
 
     private:
-        [[nodiscard]] ComponentRef& GetReference () noexcept override;
+        [[nodiscard]] ComponentRef &GetReference () noexcept override;
         void OnTransform ( GXMat4 const &transformWorld ) noexcept override;
 };
 

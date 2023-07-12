@@ -21,10 +21,10 @@ class World1x1 final : public android_vulkan::Game
         World1x1 () = default;
 
         World1x1 ( World1x1 const & ) = delete;
-        World1x1& operator = ( World1x1 const & ) = delete;
+        World1x1 &operator = ( World1x1 const & ) = delete;
 
         World1x1 ( World1x1 && ) = delete;
-        World1x1& operator = ( World1x1 && ) = delete;
+        World1x1 &operator = ( World1x1 && ) = delete;
 
         ~World1x1 () override = default;
 

@@ -42,10 +42,10 @@ class BoxStack final : public android_vulkan::Game
         BoxStack () = default;
 
         BoxStack ( BoxStack const & ) = delete;
-        BoxStack& operator = ( BoxStack const & ) = delete;
+        BoxStack &operator = ( BoxStack const & ) = delete;
 
         BoxStack ( BoxStack && ) = delete;
-        BoxStack& operator = ( BoxStack && ) = delete;
+        BoxStack &operator = ( BoxStack && ) = delete;
 
         ~BoxStack () override = default;
 

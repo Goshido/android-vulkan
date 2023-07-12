@@ -13,10 +13,10 @@ class OpaqueProgram final : public GeometryPassProgram
         OpaqueProgram () noexcept;
 
         OpaqueProgram ( OpaqueProgram const & ) = delete;
-        OpaqueProgram& operator = ( OpaqueProgram const & ) = delete;
+        OpaqueProgram &operator = ( OpaqueProgram const & ) = delete;
 
         OpaqueProgram ( OpaqueProgram && ) = delete;
-        OpaqueProgram& operator = ( OpaqueProgram && ) = delete;
+        OpaqueProgram &operator = ( OpaqueProgram && ) = delete;
 
         ~OpaqueProgram () override = default;
 };

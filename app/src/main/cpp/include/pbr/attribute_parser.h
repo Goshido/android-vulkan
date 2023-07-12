@@ -45,10 +45,10 @@ class AttributeParser final
         AttributeParser () = delete;
 
         AttributeParser ( AttributeParser const & ) = delete;
-        AttributeParser& operator = ( AttributeParser const & ) = delete;
+        AttributeParser &operator = ( AttributeParser const & ) = delete;
 
         AttributeParser ( AttributeParser && ) = delete;
-        AttributeParser& operator = ( AttributeParser && ) = delete;
+        AttributeParser &operator = ( AttributeParser && ) = delete;
 
         ~AttributeParser () = delete;
 

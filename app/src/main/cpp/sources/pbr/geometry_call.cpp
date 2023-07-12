@@ -15,12 +15,12 @@ GeometryCall::GeometryCall ( MeshRef &mesh,
     Append ( mesh, local, worldBounds, color0, color1, color2, emission );
 }
 
-GeometryCall::BatchList const& GeometryCall::GetBatchList () const noexcept
+GeometryCall::BatchList const &GeometryCall::GetBatchList () const noexcept
 {
     return _batch;
 }
 
-GeometryCall::UniqueList const& GeometryCall::GetUniqueList () const noexcept
+GeometryCall::UniqueList const &GeometryCall::GetUniqueList () const noexcept
 {
     return _unique;
 }
@@ -52,7 +52,7 @@ void GeometryCall::AddBatch ( MeshRef &mesh,
     GXColorRGB const &emission
 ) noexcept
 {
-    std::string const& name = mesh->GetName ();
+    std::string const &name = mesh->GetName ();
     auto findResult = _batch.find ( name );
 
     if ( findResult == _batch.cend () )

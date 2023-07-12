@@ -44,10 +44,10 @@ class GUID final
         GUID () = delete;
 
         GUID ( GUID const & ) = delete;
-        GUID& operator = ( GUID const & ) = delete;
+        GUID &operator = ( GUID const & ) = delete;
 
         GUID ( GUID && ) = delete;
-        GUID& operator = ( GUID && ) = delete;
+        GUID &operator = ( GUID && ) = delete;
 
         ~GUID () = delete;
 

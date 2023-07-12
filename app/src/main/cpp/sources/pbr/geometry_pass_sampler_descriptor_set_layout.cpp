@@ -24,13 +24,13 @@ class GeometryPassSamplerDescriptorSetLayoutImpl final
 
         GeometryPassSamplerDescriptorSetLayoutImpl ( GeometryPassSamplerDescriptorSetLayoutImpl const & ) = delete;
 
-        GeometryPassSamplerDescriptorSetLayoutImpl& operator = (
+        GeometryPassSamplerDescriptorSetLayoutImpl &operator = (
             GeometryPassSamplerDescriptorSetLayoutImpl const &
         ) = delete;
 
         GeometryPassSamplerDescriptorSetLayoutImpl ( GeometryPassSamplerDescriptorSetLayoutImpl && ) = delete;
 
-        GeometryPassSamplerDescriptorSetLayoutImpl& operator = (
+        GeometryPassSamplerDescriptorSetLayoutImpl &operator = (
             GeometryPassSamplerDescriptorSetLayoutImpl &&
         ) = delete;
 

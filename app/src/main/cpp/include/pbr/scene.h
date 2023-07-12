@@ -53,19 +53,19 @@ class Scene final
         Scene () = default;
 
         Scene ( Scene const & ) = delete;
-        Scene& operator = ( Scene const & ) = delete;
+        Scene &operator = ( Scene const & ) = delete;
 
         Scene ( Scene && ) = delete;
-        Scene& operator = ( Scene && ) = delete;
+        Scene &operator = ( Scene && ) = delete;
 
         ~Scene () = default;
 
         void DetachRenderable ( RenderableComponent const &component ) noexcept;
         [[nodiscard]] bool ExecuteInputEvents () noexcept;
 
-        [[nodiscard]] GXMat4 const& GetActiveCameraLocalMatrix () const noexcept;
-        [[nodiscard]] GXMat4 const& GetActiveCameraProjectionMatrix () const noexcept;
-        [[nodiscard]] android_vulkan::Physics& GetPhysics () noexcept;
+        [[nodiscard]] GXMat4 const &GetActiveCameraLocalMatrix () const noexcept;
+        [[nodiscard]] GXMat4 const &GetActiveCameraProjectionMatrix () const noexcept;
+        [[nodiscard]] android_vulkan::Physics &GetPhysics () noexcept;
 
         [[nodiscard]] bool OnInitDevice ( android_vulkan::Renderer &renderer,
             android_vulkan::Physics &physics

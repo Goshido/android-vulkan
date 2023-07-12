@@ -15,10 +15,10 @@ class DescriptorSetLayout
         DescriptorSetLayout () = default;
 
         DescriptorSetLayout ( DescriptorSetLayout const & ) = delete;
-        DescriptorSetLayout& operator = ( DescriptorSetLayout const & ) = delete;
+        DescriptorSetLayout &operator = ( DescriptorSetLayout const & ) = delete;
 
         DescriptorSetLayout ( DescriptorSetLayout && ) = delete;
-        DescriptorSetLayout& operator = ( DescriptorSetLayout && ) = delete;
+        DescriptorSetLayout &operator = ( DescriptorSetLayout && ) = delete;
 
         virtual ~DescriptorSetLayout () = default;
 

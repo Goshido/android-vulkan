@@ -106,10 +106,10 @@ class FontStorage final
                 Atlas () = default;
 
                 Atlas ( Atlas const & ) = delete;
-                Atlas& operator = ( Atlas const & ) = delete;
+                Atlas &operator = ( Atlas const & ) = delete;
 
                 Atlas ( Atlas && ) = delete;
-                Atlas& operator = ( Atlas && ) = delete;
+                Atlas &operator = ( Atlas && ) = delete;
 
                 ~Atlas () = default;
 
@@ -150,10 +150,10 @@ class FontStorage final
         FontStorage () = default;
 
         FontStorage ( FontStorage const & ) = delete;
-        FontStorage& operator = ( FontStorage const & ) = delete;
+        FontStorage &operator = ( FontStorage const & ) = delete;
 
         FontStorage ( FontStorage && ) = delete;
-        FontStorage& operator = ( FontStorage && ) = delete;
+        FontStorage &operator = ( FontStorage && ) = delete;
 
         ~FontStorage () = default;
 
@@ -163,10 +163,10 @@ class FontStorage final
         [[nodiscard]] VkImageView GetAtlasImageView () const noexcept;
         [[nodiscard]] std::optional<Font> GetFont ( std::string_view font, uint32_t size ) noexcept;
 
-        [[nodiscard]] GlyphInfo const& GetOpaqueGlyphInfo () const noexcept;
-        [[nodiscard]] GlyphInfo const& GetTransparentGlyphInfo () const noexcept;
+        [[nodiscard]] GlyphInfo const &GetOpaqueGlyphInfo () const noexcept;
+        [[nodiscard]] GlyphInfo const &GetTransparentGlyphInfo () const noexcept;
 
-        [[nodiscard]] GlyphInfo const& GetGlyphInfo ( android_vulkan::Renderer &renderer,
+        [[nodiscard]] GlyphInfo const &GetGlyphInfo ( android_vulkan::Renderer &renderer,
             Font font,
             char32_t character
         ) noexcept;
@@ -185,7 +185,7 @@ class FontStorage final
     private:
         void DestroyAtlas ( android_vulkan::Renderer &renderer ) noexcept;
 
-        [[nodiscard]] GlyphInfo const& EmbedGlyph ( android_vulkan::Renderer &renderer,
+        [[nodiscard]] GlyphInfo const &EmbedGlyph ( android_vulkan::Renderer &renderer,
             GlyphStorage &glyphs,
             FT_Face face,
             uint32_t fontSize,

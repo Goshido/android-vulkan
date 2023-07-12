@@ -78,7 +78,7 @@ void PCMStreamerWAV::GetNextBuffer ( std::span<PCMType> buffer, Gain left, Gain 
 
 std::optional<PCMStreamer::Info> PCMStreamerWAV::ResolveInfo ( bool /*looped*/, size_t /*samplesPerBurst*/ ) noexcept
 {
-    auto const& header = *reinterpret_cast<WAVEHeader const*> ( _soundFile->data () );
+    auto const &header = *reinterpret_cast<WAVEHeader const*> ( _soundFile->data () );
     _sampleCount = static_cast<size_t> ( header._dataChunkSize ) / sizeof ( PCMType );
 
     return Info

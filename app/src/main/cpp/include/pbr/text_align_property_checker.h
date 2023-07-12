@@ -17,10 +17,10 @@ class TextAlignPropertyChecker final : public PropertyChecker
         TextAlignPropertyChecker () = delete;
 
         TextAlignPropertyChecker ( TextAlignPropertyChecker const & ) = delete;
-        TextAlignPropertyChecker& operator = ( TextAlignPropertyChecker const & ) = delete;
+        TextAlignPropertyChecker &operator = ( TextAlignPropertyChecker const & ) = delete;
 
         TextAlignPropertyChecker ( TextAlignPropertyChecker && ) = delete;
-        TextAlignPropertyChecker& operator = ( TextAlignPropertyChecker && ) = delete;
+        TextAlignPropertyChecker &operator = ( TextAlignPropertyChecker && ) = delete;
 
         explicit TextAlignPropertyChecker ( char const* css, TextAlignProperty::eValue &target ) noexcept;
 

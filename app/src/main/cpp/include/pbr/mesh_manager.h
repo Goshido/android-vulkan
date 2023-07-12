@@ -28,10 +28,10 @@ class MeshManager final
 
     public:
         MeshManager ( MeshManager const & ) = delete;
-        MeshManager& operator = ( MeshManager const & ) = delete;
+        MeshManager &operator = ( MeshManager const & ) = delete;
 
         MeshManager ( MeshManager && ) = delete;
-        MeshManager& operator = ( MeshManager && ) = delete;
+        MeshManager &operator = ( MeshManager && ) = delete;
 
         void FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept;
 
@@ -42,7 +42,7 @@ class MeshManager final
             VkFence fence
         ) noexcept;
 
-        [[nodiscard]] static MeshManager& GetInstance () noexcept;
+        [[nodiscard]] static MeshManager &GetInstance () noexcept;
         static void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
 
     protected:

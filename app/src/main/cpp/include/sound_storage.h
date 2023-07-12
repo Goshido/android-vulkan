@@ -29,10 +29,10 @@ class SoundStorage final
         SoundStorage () = default;
 
         SoundStorage ( SoundStorage const & ) = delete;
-        SoundStorage& operator = ( SoundStorage const & ) = delete;
+        SoundStorage &operator = ( SoundStorage const & ) = delete;
 
         SoundStorage ( SoundStorage && ) = delete;
-        SoundStorage& operator = ( SoundStorage && ) = delete;
+        SoundStorage &operator = ( SoundStorage && ) = delete;
 
         ~SoundStorage () = default;
 

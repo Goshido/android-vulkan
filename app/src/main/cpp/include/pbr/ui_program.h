@@ -35,10 +35,10 @@ class UIProgram final : public Program
         UIProgram () noexcept;
 
         UIProgram ( UIProgram const & ) = delete;
-        UIProgram& operator = ( UIProgram const & ) = delete;
+        UIProgram &operator = ( UIProgram const & ) = delete;
 
         UIProgram ( UIProgram && ) = delete;
-        UIProgram& operator = ( UIProgram && ) = delete;
+        UIProgram &operator = ( UIProgram && ) = delete;
 
         ~UIProgram () override = default;
 
@@ -49,7 +49,7 @@ class UIProgram final : public Program
         ) noexcept override;
 
         void Destroy ( VkDevice device ) noexcept override;
-        [[nodiscard]] DescriptorSetInfo const& GetResourceInfo () const noexcept override;
+        [[nodiscard]] DescriptorSetInfo const &GetResourceInfo () const noexcept override;
 
         void SetDescriptorSet ( VkCommandBuffer commandBuffer,
             VkDescriptorSet const* sets,

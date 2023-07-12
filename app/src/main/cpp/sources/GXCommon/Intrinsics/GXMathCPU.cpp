@@ -1,4 +1,4 @@
-// version 1.6
+// version 1.7
 
 #include <GXCommon/GXMath.h>
 
@@ -323,7 +323,7 @@ GX_RESTORE_WARNING_STATE
 
 [[maybe_unused]] GXVoid GXMat4::Inverse ( GXMat4 const &sourceMatrix ) noexcept
 {
-    GXMat4 const& m = sourceMatrix;
+    GXMat4 const &m = sourceMatrix;
 
     // 2x2 sub-determinants required to calculate 4x4 determinant
     GXFloat const det2_01_01 = m._m[ 0U ][ 0U ] * m._m[ 1U ][ 1U ] - m._m[ 1U ][ 0U ] * m._m[ 0U ][ 1U ];

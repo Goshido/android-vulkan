@@ -43,10 +43,10 @@ class PointLightLightupProgram final : public LightLightupBaseProgram
         PointLightLightupProgram () noexcept;
 
         PointLightLightupProgram ( PointLightLightupProgram const & ) = delete;
-        PointLightLightupProgram& operator = ( PointLightLightupProgram const & ) = delete;
+        PointLightLightupProgram &operator = ( PointLightLightupProgram const & ) = delete;
 
         PointLightLightupProgram ( PointLightLightupProgram && ) = delete;
-        PointLightLightupProgram& operator = ( PointLightLightupProgram && ) = delete;
+        PointLightLightupProgram &operator = ( PointLightLightupProgram && ) = delete;
 
         ~PointLightLightupProgram () = default;
 
@@ -66,7 +66,7 @@ class PointLightLightupProgram final : public LightLightupBaseProgram
         ) const noexcept;
 
     private:
-        [[nodiscard]] DescriptorSetInfo const& GetResourceInfo () const noexcept override;
+        [[nodiscard]] DescriptorSetInfo const &GetResourceInfo () const noexcept override;
 
         [[nodiscard]] VkPipelineColorBlendStateCreateInfo const* InitColorBlendInfo (
             VkPipelineColorBlendStateCreateInfo &info,

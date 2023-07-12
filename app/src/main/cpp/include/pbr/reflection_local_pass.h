@@ -21,10 +21,10 @@ class ReflectionLocalPass final
             Call () = default;
 
             Call ( Call const & ) = default;
-            Call& operator = ( Call const & ) = default;
+            Call &operator = ( Call const & ) = default;
 
             Call ( Call && ) = default;
-            Call& operator = ( Call && ) = default;
+            Call &operator = ( Call && ) = default;
 
             explicit Call ( GXVec3 const &location, TextureCubeRef &prefilter, float size ) noexcept;
 
@@ -53,10 +53,10 @@ class ReflectionLocalPass final
         ReflectionLocalPass () = default;
 
         ReflectionLocalPass ( ReflectionLocalPass const & ) = delete;
-        ReflectionLocalPass& operator = ( ReflectionLocalPass const & ) = delete;
+        ReflectionLocalPass &operator = ( ReflectionLocalPass const & ) = delete;
 
         ReflectionLocalPass ( ReflectionLocalPass && ) = delete;
-        ReflectionLocalPass& operator = ( ReflectionLocalPass && ) = delete;
+        ReflectionLocalPass &operator = ( ReflectionLocalPass && ) = delete;
 
         ~ReflectionLocalPass () = default;
 

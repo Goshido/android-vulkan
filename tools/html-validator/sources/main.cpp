@@ -45,7 +45,7 @@ constexpr auto RETRY_TIMEOUT = std::chrono::seconds ( 2U );
         if ( !htmlFile.LoadContent () )
             return EXIT_FAILURE;
 
-        std::vector<uint8_t>& data = htmlFile.GetContent ();
+        std::vector<uint8_t> &data = htmlFile.GetContent ();
 
         bool const result = pbr::HTML5Parser ().Parse ( html,
             pbr::Stream ( pbr::Stream::Data ( data.data (), data.size () ), 1U ),

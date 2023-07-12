@@ -22,10 +22,10 @@ class VelocitySolver final
         VelocitySolver () = default;
 
         VelocitySolver ( VelocitySolver const & ) = delete;
-        VelocitySolver& operator = ( VelocitySolver const & ) = delete;
+        VelocitySolver &operator = ( VelocitySolver const & ) = delete;
 
         VelocitySolver ( VelocitySolver && ) = delete;
-        VelocitySolver& operator = ( VelocitySolver && ) = delete;
+        VelocitySolver &operator = ( VelocitySolver && ) = delete;
 
         ~VelocitySolver () = default;
 

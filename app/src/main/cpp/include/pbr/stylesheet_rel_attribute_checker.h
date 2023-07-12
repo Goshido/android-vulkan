@@ -13,10 +13,10 @@ class StylesheetRELAttributeChecker final : public AttributeChecker
         StylesheetRELAttributeChecker () = delete;
 
         StylesheetRELAttributeChecker ( StylesheetRELAttributeChecker const & ) = delete;
-        StylesheetRELAttributeChecker& operator = ( StylesheetRELAttributeChecker const & ) = delete;
+        StylesheetRELAttributeChecker &operator = ( StylesheetRELAttributeChecker const & ) = delete;
 
         StylesheetRELAttributeChecker ( StylesheetRELAttributeChecker && ) = delete;
-        StylesheetRELAttributeChecker& operator = ( StylesheetRELAttributeChecker && ) = delete;
+        StylesheetRELAttributeChecker &operator = ( StylesheetRELAttributeChecker && ) = delete;
 
         explicit StylesheetRELAttributeChecker ( char const *html ) noexcept;
 

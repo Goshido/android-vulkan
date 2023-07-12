@@ -34,7 +34,7 @@ class Material
         virtual ~Material () = default;
 
         Material ( const Material & ) = default;
-        Material& operator = ( const Material & ) = default;
+        Material &operator = ( const Material & ) = default;
 };
 
 } // namespace pbr

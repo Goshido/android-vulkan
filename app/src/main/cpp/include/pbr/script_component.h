@@ -23,10 +23,10 @@ class ScriptComponent final : public Component
         ScriptComponent () = delete;
 
         ScriptComponent ( ScriptComponent const & ) = delete;
-        ScriptComponent& operator = ( ScriptComponent const & ) = delete;
+        ScriptComponent &operator = ( ScriptComponent const & ) = delete;
 
         ScriptComponent ( ScriptComponent && ) = delete;
-        ScriptComponent& operator = ( ScriptComponent && ) = delete;
+        ScriptComponent &operator = ( ScriptComponent && ) = delete;
 
         explicit ScriptComponent ( ScriptComponentDesc const &desc, uint8_t const* data ) noexcept;
         explicit ScriptComponent ( std::string &&name ) noexcept;
@@ -42,7 +42,7 @@ class ScriptComponent final : public Component
         static void Destroy () noexcept;
 
     private:
-        [[nodiscard]] ComponentRef& GetReference () noexcept override;
+        [[nodiscard]] ComponentRef &GetReference () noexcept override;
 
         [[nodiscard]] static int OnCreate ( lua_State* state );
         [[nodiscard]] static int OnDestroy ( lua_State* state );

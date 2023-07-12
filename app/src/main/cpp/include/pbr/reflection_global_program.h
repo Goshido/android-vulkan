@@ -22,10 +22,10 @@ class ReflectionGlobalProgram final : public LightLightupBaseProgram
         ReflectionGlobalProgram () noexcept;
 
         ReflectionGlobalProgram ( ReflectionGlobalProgram const & ) = delete;
-        ReflectionGlobalProgram& operator = ( ReflectionGlobalProgram const & ) = delete;
+        ReflectionGlobalProgram &operator = ( ReflectionGlobalProgram const & ) = delete;
 
         ReflectionGlobalProgram ( ReflectionGlobalProgram && ) = delete;
-        ReflectionGlobalProgram& operator = ( ReflectionGlobalProgram && ) = delete;
+        ReflectionGlobalProgram &operator = ( ReflectionGlobalProgram && ) = delete;
 
         ~ReflectionGlobalProgram () override = default;
 
@@ -38,7 +38,7 @@ class ReflectionGlobalProgram final : public LightLightupBaseProgram
         ) noexcept override;
 
         void Destroy ( VkDevice device ) noexcept override;
-        [[nodiscard]] DescriptorSetInfo const& GetResourceInfo () const noexcept override;
+        [[nodiscard]] DescriptorSetInfo const &GetResourceInfo () const noexcept override;
 
         void SetDescriptorSet ( VkCommandBuffer commandBuffer, VkDescriptorSet set ) const noexcept;
 

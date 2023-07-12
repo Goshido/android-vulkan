@@ -18,10 +18,10 @@ class GeometrySubpassBase
 
     public:
         GeometrySubpassBase ( GeometrySubpassBase const & ) = delete;
-        GeometrySubpassBase& operator = ( GeometrySubpassBase const & ) = delete;
+        GeometrySubpassBase &operator = ( GeometrySubpassBase const & ) = delete;
 
         GeometrySubpassBase ( GeometrySubpassBase && ) = delete;
-        GeometrySubpassBase& operator = ( GeometrySubpassBase && ) = delete;
+        GeometrySubpassBase &operator = ( GeometrySubpassBase && ) = delete;
 
         void Reset () noexcept;
 

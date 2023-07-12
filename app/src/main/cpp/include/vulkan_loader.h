@@ -22,10 +22,10 @@ class VulkanLoader final
         VulkanLoader () = default;
 
         VulkanLoader ( VulkanLoader const & ) = delete;
-        VulkanLoader& operator = ( VulkanLoader const & ) = delete;
+        VulkanLoader &operator = ( VulkanLoader const & ) = delete;
 
         VulkanLoader ( VulkanLoader && ) = delete;
-        VulkanLoader& operator = ( VulkanLoader && ) = delete;
+        VulkanLoader &operator = ( VulkanLoader && ) = delete;
 
         ~VulkanLoader () = default;
 

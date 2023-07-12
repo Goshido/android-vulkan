@@ -11,16 +11,16 @@ namespace pbr {
 class VerticalAlignPropertyChecker final : public PropertyChecker
 {
     private:
-        VerticalAlignProperty::eValue&      _target;
+        VerticalAlignProperty::eValue       &_target;
 
     public:
         VerticalAlignPropertyChecker () = delete;
 
         VerticalAlignPropertyChecker ( VerticalAlignPropertyChecker const & ) = delete;
-        VerticalAlignPropertyChecker& operator = ( VerticalAlignPropertyChecker const & ) = delete;
+        VerticalAlignPropertyChecker &operator = ( VerticalAlignPropertyChecker const & ) = delete;
 
         VerticalAlignPropertyChecker ( VerticalAlignPropertyChecker && ) = delete;
-        VerticalAlignPropertyChecker& operator = ( VerticalAlignPropertyChecker && ) = delete;
+        VerticalAlignPropertyChecker &operator = ( VerticalAlignPropertyChecker && ) = delete;
 
         explicit VerticalAlignPropertyChecker ( char const* css, VerticalAlignProperty::eValue &target ) noexcept;
 

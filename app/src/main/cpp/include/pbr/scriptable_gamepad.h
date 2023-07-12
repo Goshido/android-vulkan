@@ -112,10 +112,10 @@ class ScriptableGamepad final
         ScriptableGamepad () noexcept;
 
         ScriptableGamepad ( ScriptableGamepad const & ) = delete;
-        ScriptableGamepad& operator = ( ScriptableGamepad const & ) = delete;
+        ScriptableGamepad &operator = ( ScriptableGamepad const & ) = delete;
 
         ScriptableGamepad ( ScriptableGamepad && ) = delete;
-        ScriptableGamepad& operator = ( ScriptableGamepad && ) = delete;
+        ScriptableGamepad &operator = ( ScriptableGamepad && ) = delete;
 
         ~ScriptableGamepad () = default;
 

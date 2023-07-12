@@ -28,7 +28,7 @@ bool SweepTesting::OnFrame ( android_vulkan::Renderer &renderer, double deltaTim
     _renderSession.Begin ( _camera.GetLocalMatrix (), _camera.GetProjectionMatrix () );
     _light.Submit ( _renderSession );
 
-    for ( auto& body : _bodies )
+    for ( auto &body : _bodies )
         body.Update ( dt );
 
     _physics.Simulate ( dt );
@@ -37,7 +37,7 @@ bool SweepTesting::OnFrame ( android_vulkan::Renderer &renderer, double deltaTim
 
     DoSweepTest ();
 
-    for ( auto& body : _bodies )
+    for ( auto &body : _bodies )
         body.Submit ( _renderSession );
 
     _sweep.Submit ( _renderSession );
@@ -58,7 +58,7 @@ void SweepTesting::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexce
     _renderSession.OnDestroyDevice ( renderer );
     _sweep.Destroy ();
 
-    for ( auto& body : _bodies )
+    for ( auto &body : _bodies )
         body.Destroy ();
 
     if ( _overlay )
@@ -76,7 +76,7 @@ void SweepTesting::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexce
 
 bool SweepTesting::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept
 {
-    VkExtent2D const& surfaceResolution = renderer.GetViewportResolution ();
+    VkExtent2D const &surfaceResolution = renderer.GetViewportResolution ();
 
     VkExtent2D const resolution
     {
@@ -107,7 +107,7 @@ void SweepTesting::OnSwapchainDestroyed ( android_vulkan::Renderer &renderer ) n
 
 void SweepTesting::BindControls () noexcept
 {
-    android_vulkan::Gamepad& gamepad = android_vulkan::Gamepad::GetInstance ();
+    android_vulkan::Gamepad &gamepad = android_vulkan::Gamepad::GetInstance ();
 
     gamepad.BindKey ( this,
         &SweepTesting::OnSwitchControls,
@@ -126,7 +126,7 @@ void SweepTesting::BindControls () noexcept
 
 void SweepTesting::UnbindControls () noexcept
 {
-    android_vulkan::Gamepad& gamepad = android_vulkan::Gamepad::GetInstance ();
+    android_vulkan::Gamepad &gamepad = android_vulkan::Gamepad::GetInstance ();
     gamepad.UnbindKey ( android_vulkan::eGamepadKey::Y,android_vulkan::eButtonState::Down );
 
     if ( _controlType == eControlType::Camera )
@@ -215,7 +215,7 @@ bool SweepTesting::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
         return false;
 
     _overlay = std::make_shared<android_vulkan::Texture2D> ();
-    android_vulkan::Texture2D& t = *_overlay;
+    android_vulkan::Texture2D &t = *_overlay;
     constexpr uint8_t const color[ 4U ] = { 255U, 255U, 255U, 255U };
 
     result = t.UploadData ( renderer,
@@ -294,7 +294,7 @@ bool SweepTesting::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
 
     t.FreeTransferResources ( renderer );
 
-    for ( auto& body : _bodies )
+    for ( auto &body : _bodies )
     {
         body.FreeTransferResources ( renderer );
         body.SetOverlay ( _overlay );
@@ -309,19 +309,19 @@ void SweepTesting::DoSweepTest () noexcept
     constexpr uint32_t groups = 0b00000000'00000000'00000000'00000110U;
     _physics.SweepTest ( _sweepResult, _sweep.GetShape (), groups );
 
-    for ( auto& body : _bodies )
+    for ( auto &body : _bodies )
         body.DisableOverlay ();
 
-    for ( auto const& s : _sweepResult )
+    for ( auto const &s : _sweepResult )
     {
-        auto& actorBody = *static_cast<ActorBody*> ( s->GetContext () );
+        auto &actorBody = *static_cast<ActorBody*> ( s->GetContext () );
         actorBody.EnableOverlay ();
     }
 }
 
 void SweepTesting::OnSwitchControls ( void* context ) noexcept
 {
-    auto& s = *static_cast<SweepTesting*> ( context );
+    auto &s = *static_cast<SweepTesting*> ( context );
 
     s.UnbindControls ();
     s._controlType = s._controlType == eControlType::Camera ? eControlType::SweepObject : eControlType::Camera;

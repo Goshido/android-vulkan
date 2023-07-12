@@ -63,20 +63,20 @@ class RigidBody final
         RigidBody () noexcept;
 
         RigidBody ( RigidBody const & ) = delete;
-        RigidBody& operator = ( RigidBody const & ) = delete;
+        RigidBody &operator = ( RigidBody const & ) = delete;
 
         RigidBody ( RigidBody && ) = delete;
-        RigidBody& operator = ( RigidBody && ) = delete;
+        RigidBody &operator = ( RigidBody && ) = delete;
 
         ~RigidBody () = default;
 
         [[maybe_unused]] void AddVelocityAngular ( GXVec3 const &velocity, bool forceAwake ) noexcept;
-        [[nodiscard]] GXVec3 const& GetVelocityAngular () const noexcept;
+        [[nodiscard]] GXVec3 const &GetVelocityAngular () const noexcept;
         [[maybe_unused]] void SetVelocityAngular ( GXVec3 const &velocity, bool forceAwake ) noexcept;
         [[maybe_unused]] void SetVelocityAngular ( float wx, float wy, float wz, bool forceAwake ) noexcept;
 
         [[maybe_unused]] void AddVelocityLinear ( GXVec3 const &velocity, bool forceAwake ) noexcept;
-        [[nodiscard]] GXVec3 const& GetVelocityLinear () const noexcept;
+        [[nodiscard]] GXVec3 const &GetVelocityLinear () const noexcept;
         void SetVelocityLinear ( GXVec3 const &velocity, bool forceAwake ) noexcept;
         [[maybe_unused]] void SetVelocityLinear ( float x, float y, float z, bool forceAwake ) noexcept;
 
@@ -110,9 +110,9 @@ class RigidBody final
         [[maybe_unused, nodiscard]] float GetDampingLinear () const noexcept;
         [[maybe_unused]] void SetDampingLinear ( float damping ) noexcept;
 
-        [[nodiscard]] GXMat3 const& GetInertiaTensorInverse () const noexcept;
+        [[nodiscard]] GXMat3 const &GetInertiaTensorInverse () const noexcept;
 
-        [[nodiscard]] GXVec3 const& GetLocation () const noexcept;
+        [[nodiscard]] GXVec3 const &GetLocation () const noexcept;
         void SetLocation ( GXVec3 const &location, bool forceAwake ) noexcept;
         void SetLocation ( float x, float y, float z, bool forceAwake ) noexcept;
 
@@ -120,21 +120,21 @@ class RigidBody final
         [[nodiscard]] float GetMassInverse () const noexcept;
         void SetMass ( float mass, bool forceAwake ) noexcept;
 
-        [[nodiscard]] GXQuat const& GetRotation () const noexcept;
+        [[nodiscard]] GXQuat const &GetRotation () const noexcept;
         void SetRotation ( GXQuat const &rotation, bool forceAwake ) noexcept;
 
-        [[nodiscard]] Shape& GetShape () noexcept;
+        [[nodiscard]] Shape &GetShape () noexcept;
         [[nodiscard]] bool HasShape () const noexcept;
         void SetShape ( ShapeRef &shape, bool forceAwake ) noexcept;
 
         // This feature is primary for debugging purposes.
-        [[maybe_unused, nodiscard]] std::string const& GetTag () const noexcept;
+        [[maybe_unused, nodiscard]] std::string const &GetTag () const noexcept;
         void SetTag ( std::string &&tag ) noexcept;
 
-        [[maybe_unused, nodiscard]] GXVec3 const& GetTotalForce () const noexcept;
-        [[maybe_unused, nodiscard]] GXVec3 const& GetTotalTorque () const noexcept;
+        [[maybe_unused, nodiscard]] GXVec3 const &GetTotalForce () const noexcept;
+        [[maybe_unused, nodiscard]] GXVec3 const &GetTotalTorque () const noexcept;
 
-        [[nodiscard]] GXMat4 const& GetTransform () const noexcept;
+        [[nodiscard]] GXMat4 const &GetTransform () const noexcept;
         void SetTransformUpdateHandler ( TransformUpdateHandler handler ) noexcept;
 
         void Integrate ( float deltaTime ) noexcept;

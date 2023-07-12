@@ -72,7 +72,7 @@ void UniformBufferPoolManager::Push ( VkCommandBuffer commandBuffer, void const*
 {
     _uniformPool.Push ( commandBuffer, item, size );
 
-    VkBufferMemoryBarrier& barrier = _barriers[ _uniformWriteIndex ];
+    VkBufferMemoryBarrier &barrier = _barriers[ _uniformWriteIndex ];
     barrier.size = static_cast<VkDeviceSize> ( size );
 
     _uniformWriteIndex = ( _uniformWriteIndex + 1U ) % _descriptorSets.size ();
@@ -190,11 +190,11 @@ bool UniformBufferPoolManager::Init ( android_vulkan::Renderer &renderer,
     {
         VkBuffer buffer = _uniformPool.GetBuffer ( i );
 
-        VkDescriptorBufferInfo& bufferInfo = _bufferInfo[ i ];
+        VkDescriptorBufferInfo &bufferInfo = _bufferInfo[ i ];
         bufferInfo.buffer = buffer;
         _barriers[ i ].buffer = buffer;
 
-        VkWriteDescriptorSet& uniformWriteSet = _writeSets[ i ];
+        VkWriteDescriptorSet &uniformWriteSet = _writeSets[ i ];
         uniformWriteSet.dstSet = _descriptorSets[ i ];
         uniformWriteSet.pBufferInfo = &bufferInfo;
     }

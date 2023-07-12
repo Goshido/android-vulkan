@@ -19,10 +19,10 @@ class StippleSubpass final : public GeometrySubpassBase
         StippleSubpass () = default;
 
         StippleSubpass ( StippleSubpass const & ) = delete;
-        StippleSubpass& operator = ( StippleSubpass const & ) = delete;
+        StippleSubpass &operator = ( StippleSubpass const & ) = delete;
 
         StippleSubpass ( StippleSubpass && ) = delete;
-        StippleSubpass& operator = ( StippleSubpass && ) = delete;
+        StippleSubpass &operator = ( StippleSubpass && ) = delete;
 
         ~StippleSubpass () = default;
 

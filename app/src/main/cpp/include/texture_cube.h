@@ -40,10 +40,10 @@ class TextureCube final
         TextureCube () = default;
 
         TextureCube ( TextureCube const & ) = delete;
-        TextureCube& operator = ( TextureCube const & ) = delete;
+        TextureCube &operator = ( TextureCube const & ) = delete;
 
         TextureCube ( TextureCube && ) = delete;
-        TextureCube& operator = ( TextureCube && ) = delete;
+        TextureCube &operator = ( TextureCube && ) = delete;
 
         ~TextureCube () = default;
 
@@ -71,7 +71,7 @@ class TextureCube final
         [[maybe_unused, nodiscard]] VkImage GetImage () const noexcept;
         [[nodiscard]] VkImageView GetImageView () const noexcept;
         [[maybe_unused, nodiscard]] uint8_t GetMipLevelCount () const noexcept;
-        [[maybe_unused, nodiscard]] VkExtent2D const& GetResolution () const noexcept;
+        [[maybe_unused, nodiscard]] VkExtent2D const &GetResolution () const noexcept;
 
         [[nodiscard]] constexpr static uint32_t GetLayerCount () noexcept
         {

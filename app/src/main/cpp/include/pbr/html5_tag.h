@@ -40,10 +40,10 @@ class HTML5Tag final
         HTML5Tag () = default;
 
         HTML5Tag ( HTML5Tag const & ) = default;
-        HTML5Tag& operator = ( HTML5Tag const & ) = default;
+        HTML5Tag &operator = ( HTML5Tag const & ) = default;
 
         HTML5Tag ( HTML5Tag && ) = default;
-        HTML5Tag& operator = ( HTML5Tag && ) = default;
+        HTML5Tag &operator = ( HTML5Tag && ) = default;
 
         constexpr explicit HTML5Tag ( eTag tag ) noexcept:
             _tag ( tag )

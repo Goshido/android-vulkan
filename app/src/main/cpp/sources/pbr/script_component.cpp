@@ -118,7 +118,7 @@ bool ScriptComponent::Init ( lua_State &vm ) noexcept
         }
     };
 
-    for ( auto const& extension : extensions )
+    for ( auto const &extension : extensions )
         lua_register ( &vm, extension.name, extension.func );
 
     return true;
@@ -135,7 +135,7 @@ void ScriptComponent::Destroy () noexcept
     _scripts.clear ();
 }
 
-ComponentRef& ScriptComponent::GetReference () noexcept
+ComponentRef &ScriptComponent::GetReference () noexcept
 {
     auto findResult = _scripts.find ( this );
     AV_ASSERT ( findResult != _scripts.end () )
@@ -168,7 +168,7 @@ int ScriptComponent::OnCreate ( lua_State* state )
 
 int ScriptComponent::OnDestroy ( lua_State* state )
 {
-    auto& self = *static_cast<ScriptComponent*> ( lua_touserdata ( state, 1 ) );
+    auto &self = *static_cast<ScriptComponent*> ( lua_touserdata ( state, 1 ) );
     self._actor->DestroyComponent ( self );
     return 0;
 }

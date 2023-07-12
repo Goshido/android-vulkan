@@ -22,10 +22,10 @@ class Rainbow final : public android_vulkan::Game
         Rainbow () = default;
 
         Rainbow ( Rainbow const & ) = delete;
-        Rainbow& operator = ( Rainbow const & ) = delete;
+        Rainbow &operator = ( Rainbow const & ) = delete;
 
         Rainbow ( Rainbow && ) = delete;
-        Rainbow& operator = ( Rainbow && ) = delete;
+        Rainbow &operator = ( Rainbow && ) = delete;
 
         ~Rainbow () override = default;
 

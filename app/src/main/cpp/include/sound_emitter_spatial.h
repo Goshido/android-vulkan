@@ -19,10 +19,10 @@ class SoundEmitterSpatial final : public SoundEmitter
         SoundEmitterSpatial () = default;
 
         SoundEmitterSpatial ( SoundEmitterSpatial const & ) = delete;
-        SoundEmitterSpatial& operator = ( SoundEmitterSpatial const & ) = delete;
+        SoundEmitterSpatial &operator = ( SoundEmitterSpatial const & ) = delete;
 
         SoundEmitterSpatial ( SoundEmitterSpatial && ) = delete;
-        SoundEmitterSpatial& operator = ( SoundEmitterSpatial && ) = delete;
+        SoundEmitterSpatial &operator = ( SoundEmitterSpatial && ) = delete;
 
         ~SoundEmitterSpatial () override = default;
 

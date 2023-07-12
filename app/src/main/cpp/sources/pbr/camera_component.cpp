@@ -61,12 +61,12 @@ CameraComponent::CameraComponent ( std::string &&name ) noexcept:
     _projection.Identity ();
 }
 
-GXMat4 const& CameraComponent::GetLocalMatrix () const noexcept
+GXMat4 const &CameraComponent::GetLocalMatrix () const noexcept
 {
     return _local;
 }
 
-GXMat4 const& CameraComponent::GetProjectionMatrix () const noexcept
+GXMat4 const &CameraComponent::GetProjectionMatrix () const noexcept
 {
     return _projection;
 }
@@ -142,13 +142,13 @@ bool CameraComponent::Init ( lua_State &vm ) noexcept
         }
     };
 
-    for ( auto const& extension : extensions )
+    for ( auto const &extension : extensions )
         lua_register ( &vm, extension.name, extension.func );
 
     return true;
 }
 
-ComponentRef& CameraComponent::GetReference () noexcept
+ComponentRef &CameraComponent::GetReference () noexcept
 {
     // TODO
     static ComponentRef dummy {};
@@ -163,21 +163,21 @@ int CameraComponent::OnCreate ( lua_State* /*state*/ )
 
 int CameraComponent::OnSetAspectRatio ( lua_State* state )
 {
-    auto& self = *static_cast<CameraComponent*> ( lua_touserdata ( state, 1 ) );
+    auto &self = *static_cast<CameraComponent*> ( lua_touserdata ( state, 1 ) );
     self.SetAspectRatio ( static_cast<float> ( lua_tonumber ( state, 2 ) ) );
     return 0;
 }
 
 int CameraComponent::OnSetLocal ( lua_State* state )
 {
-    auto& self = *static_cast<CameraComponent*> ( lua_touserdata ( state, 1 ) );
+    auto &self = *static_cast<CameraComponent*> ( lua_touserdata ( state, 1 ) );
     self._local = ScriptableGXMat4::Extract ( state, 2 );
     return 0;
 }
 
 int CameraComponent::OnSetProjection ( lua_State* state )
 {
-    auto& self = *static_cast<CameraComponent*> ( lua_touserdata ( state, 1 ) );
+    auto &self = *static_cast<CameraComponent*> ( lua_touserdata ( state, 1 ) );
 
     self.SetProjection ( static_cast<float> ( lua_tonumber ( state, 2 ) ),
         static_cast<float> ( lua_tonumber ( state, 3 ) ),

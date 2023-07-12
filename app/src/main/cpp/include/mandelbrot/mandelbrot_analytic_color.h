@@ -13,10 +13,10 @@ class MandelbrotAnalyticColor final : public MandelbrotBase
         MandelbrotAnalyticColor () noexcept;
 
         MandelbrotAnalyticColor ( MandelbrotAnalyticColor const & ) = delete;
-        MandelbrotAnalyticColor& operator = ( MandelbrotAnalyticColor const & ) = delete;
+        MandelbrotAnalyticColor &operator = ( MandelbrotAnalyticColor const & ) = delete;
 
         MandelbrotAnalyticColor ( MandelbrotAnalyticColor && ) = delete;
-        MandelbrotAnalyticColor& operator = ( MandelbrotAnalyticColor && ) = delete;
+        MandelbrotAnalyticColor &operator = ( MandelbrotAnalyticColor && ) = delete;
 
         ~MandelbrotAnalyticColor () override = default;
 

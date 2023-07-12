@@ -11,16 +11,16 @@ namespace pbr {
 class LengthPropertyChecker final : public PropertyChecker
 {
     private:
-        LengthValue&    _target;
+        LengthValue     &_target;
 
     public:
         LengthPropertyChecker () = delete;
 
         LengthPropertyChecker ( LengthPropertyChecker const & ) = delete;
-        LengthPropertyChecker& operator = ( LengthPropertyChecker const & ) = delete;
+        LengthPropertyChecker &operator = ( LengthPropertyChecker const & ) = delete;
 
         LengthPropertyChecker ( LengthPropertyChecker && ) = delete;
-        LengthPropertyChecker& operator = ( LengthPropertyChecker && ) = delete;
+        LengthPropertyChecker &operator = ( LengthPropertyChecker && ) = delete;
 
         explicit LengthPropertyChecker ( char const* css,
             Property::eType property,

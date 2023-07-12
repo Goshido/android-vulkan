@@ -26,10 +26,10 @@ class PropertyChecker
         PropertyChecker () = delete;
 
         PropertyChecker ( PropertyChecker const & ) = delete;
-        PropertyChecker& operator = ( PropertyChecker const & ) = delete;
+        PropertyChecker &operator = ( PropertyChecker const & ) = delete;
 
         PropertyChecker ( PropertyChecker && ) = delete;
-        PropertyChecker& operator = ( PropertyChecker && ) = delete;
+        PropertyChecker &operator = ( PropertyChecker && ) = delete;
 
         // Child classed must call this method. true means that the 'result' should be checked by child implementation.
         [[nodiscard]] virtual Result Process ( PropertyParser::Result &result ) noexcept;

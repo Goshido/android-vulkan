@@ -30,10 +30,10 @@ class PBRGame final : public android_vulkan::Game
         PBRGame () = default;
 
         PBRGame ( PBRGame const & ) = delete;
-        PBRGame& operator = ( PBRGame const & ) = delete;
+        PBRGame &operator = ( PBRGame const & ) = delete;
 
         PBRGame ( PBRGame && ) = delete;
-        PBRGame& operator = ( PBRGame && ) = delete;
+        PBRGame &operator = ( PBRGame && ) = delete;
 
         ~PBRGame () override = default;
 

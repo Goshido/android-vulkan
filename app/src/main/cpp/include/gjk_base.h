@@ -22,12 +22,12 @@ class GJKBase
 
     public:
         GJKBase ( GJKBase const & ) = delete;
-        GJKBase& operator = ( GJKBase const & ) = delete;
+        GJKBase &operator = ( GJKBase const & ) = delete;
 
         GJKBase ( GJKBase && ) = delete;
-        GJKBase& operator = ( GJKBase && ) = delete;
+        GJKBase &operator = ( GJKBase && ) = delete;
 
-        [[nodiscard]] Simplex const& GetSimplex () const noexcept;
+        [[nodiscard]] Simplex const &GetSimplex () const noexcept;
         [[nodiscard]] uint16_t GetSteps () const noexcept;
 
         [[maybe_unused, nodiscard]] uint16_t GetTestLines () const noexcept;

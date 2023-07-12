@@ -38,10 +38,10 @@ class ReflectionLocalProgram final : public LightLightupBaseProgram
         ReflectionLocalProgram () noexcept;
 
         ReflectionLocalProgram ( ReflectionLocalProgram const & ) = delete;
-        ReflectionLocalProgram& operator = ( ReflectionLocalProgram const & ) = delete;
+        ReflectionLocalProgram &operator = ( ReflectionLocalProgram const & ) = delete;
 
         ReflectionLocalProgram ( ReflectionLocalProgram && ) = delete;
-        ReflectionLocalProgram& operator = ( ReflectionLocalProgram && ) = delete;
+        ReflectionLocalProgram &operator = ( ReflectionLocalProgram && ) = delete;
 
         ~ReflectionLocalProgram () override = default;
 
@@ -54,7 +54,7 @@ class ReflectionLocalProgram final : public LightLightupBaseProgram
         ) noexcept override;
 
         void Destroy ( VkDevice device ) noexcept override;
-        [[nodiscard]] DescriptorSetInfo const& GetResourceInfo () const noexcept override;
+        [[nodiscard]] DescriptorSetInfo const &GetResourceInfo () const noexcept override;
 
         void SetLightData ( VkCommandBuffer commandBuffer,
             VkDescriptorSet transform,

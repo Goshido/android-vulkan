@@ -47,10 +47,10 @@ class Physics final
         Physics () noexcept;
 
         Physics ( Physics const & ) = delete;
-        Physics& operator = ( Physics const & ) = delete;
+        Physics &operator = ( Physics const & ) = delete;
 
         Physics ( Physics && ) = delete;
-        Physics& operator = ( Physics && ) = delete;
+        Physics &operator = ( Physics && ) = delete;
 
         ~Physics () = default;
 
@@ -60,7 +60,7 @@ class Physics final
         [[maybe_unused, nodiscard]] bool AddRigidBody ( RigidBodyRef const &rigidBody ) noexcept;
         [[maybe_unused, nodiscard]] bool RemoveRigidBody ( RigidBodyRef const &rigidBody ) noexcept;
 
-        [[nodiscard]] std::vector<ContactManifold> const& GetContactManifolds () const noexcept;
+        [[nodiscard]] std::vector<ContactManifold> const &GetContactManifolds () const noexcept;
 
         [[maybe_unused, nodiscard]] float GetTimeSpeed () const noexcept;
         [[maybe_unused]] void SetTimeSpeed ( float speed ) noexcept;

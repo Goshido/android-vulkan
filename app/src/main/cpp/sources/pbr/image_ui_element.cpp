@@ -45,7 +45,7 @@ bool ImageUIElement::ApplyLayoutCache::Run ( ApplyInfo &info ) noexcept
     info._pen = _penOut;
     info._vertices += UIPass::GetVerticesPerRectangle ();
 
-    std::vector<float>& lines = *info._lineHeights;
+    std::vector<float> &lines = *info._lineHeights;
     lines.pop_back ();
     lines.insert ( lines.cend (), _lineHeights.cbegin (), _lineHeights.cend () );
 
@@ -126,13 +126,13 @@ void ImageUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
         return;
 
     // Method contains a lot of branchless optimizations.
-    std::vector<float>& lineHeights = *info._lineHeights;
+    std::vector<float> &lineHeights = *info._lineHeights;
     _parentLine = lineHeights.size () - 1U;
     _applyLayoutCache._penIn = info._pen;
 
     _parentSize = info._canvasSize;
-    GXVec2 const& canvasSize = info._canvasSize;
-    CSSUnitToDevicePixel const& units = *info._cssUnits;
+    GXVec2 const &canvasSize = info._canvasSize;
+    CSSUnitToDevicePixel const &units = *info._cssUnits;
 
     _marginTopLeft = GXVec2 ( ResolvePixelLength ( _css._marginLeft, canvasSize._data[ 0U ], false, units ),
         ResolvePixelLength ( _css._marginTop, canvasSize._data[ 1U ], true, units )
@@ -153,7 +153,7 @@ void ImageUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
     _canvasTopLeftOffset.Sum ( _marginTopLeft, paddingTopLeft );
 
     GXVec2 pen {};
-    float const& parentWidth = canvasSize._data[ 0U ];
+    float const &parentWidth = canvasSize._data[ 0U ];
     size_t const oldVertices = info._vertices;
 
     auto const newLine = [ & ] () noexcept {
@@ -162,7 +162,7 @@ void ImageUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
         ++_parentLine;
     };
 
-    GXVec2& penOut = info._pen;
+    GXVec2 &penOut = info._pen;
 
     switch ( _css._position )
     {
@@ -272,7 +272,7 @@ void ImageUIElement::Submit ( SubmitInfo &info ) noexcept
     constexpr size_t vertices = UIPass::GetVerticesPerRectangle ();
     constexpr size_t bytes = vertices * sizeof ( UIVertexInfo );
 
-    UIVertexBuffer& uiVertexBuffer = info._vertexBuffer;
+    UIVertexBuffer &uiVertexBuffer = info._vertexBuffer;
     std::memcpy ( uiVertexBuffer.data (), _submitCache._vertices, bytes );
     uiVertexBuffer = uiVertexBuffer.subspan ( vertices );
 
@@ -304,13 +304,13 @@ bool ImageUIElement::UpdateCache ( UpdateInfo &info ) noexcept
     GXVec2 topLeft {};
     topLeft.Sum ( pen, _canvasTopLeftOffset );
 
-    float const& penX = info._pen._data[ 0U ];
-    float const& borderOffsetX = _canvasTopLeftOffset._data[ 0U ];
-    float const& parentLeft = _parentSize._data[ 0U ];
-    float const& blockWidth = _blockSize._data[ 0U ];
+    float const &penX = info._pen._data[ 0U ];
+    float const &borderOffsetX = _canvasTopLeftOffset._data[ 0U ];
+    float const &parentLeft = _parentSize._data[ 0U ];
+    float const &blockWidth = _blockSize._data[ 0U ];
 
     // NOLINTNEXTLINE - downcast.
-    AlignHander const handler = ResolveTextAlignment ( static_cast<CSSUIElement const &> ( *_parent ) );
+    AlignHander const handler = ResolveTextAlignment ( static_cast<CSSUIElement const  &> ( *_parent ) );
     topLeft._data[ 0U ] = handler ( penX, parentLeft, blockWidth ) + borderOffsetX;
 
     GXVec2 bottomRight {};
@@ -320,7 +320,7 @@ bool ImageUIElement::UpdateCache ( UpdateInfo &info ) noexcept
     constexpr GXVec2 imageTopLeft ( 0.0F, 0.0F );
     constexpr GXVec2 imageBottomRight ( 1.0F, 1.0F );
 
-    FontStorage::GlyphInfo const& g = info._fontStorage->GetTransparentGlyphInfo ();
+    FontStorage::GlyphInfo const &g = info._fontStorage->GetTransparentGlyphInfo ();
 
     UIPass::AppendRectangle ( _submitCache._vertices,
         white,
@@ -339,7 +339,7 @@ bool ImageUIElement::UpdateCache ( UpdateInfo &info ) noexcept
     return true;
 }
 
-GXVec2 ImageUIElement::ResolveSize ( GXVec2 const& parentCanvasSize, CSSUnitToDevicePixel const& units ) noexcept
+GXVec2 ImageUIElement::ResolveSize ( GXVec2 const &parentCanvasSize, CSSUnitToDevicePixel const &units ) noexcept
 {
     if ( !_isAutoWidth & _isAutoHeight )
         return ResolveSizeByWidth ( parentCanvasSize._data[ 0U ], units );

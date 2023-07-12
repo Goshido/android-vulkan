@@ -13,10 +13,10 @@ class LightupCommonDescriptorSetLayout final : public DescriptorSetLayout
         LightupCommonDescriptorSetLayout () = default;
 
         LightupCommonDescriptorSetLayout ( LightupCommonDescriptorSetLayout const & ) = delete;
-        LightupCommonDescriptorSetLayout& operator = ( LightupCommonDescriptorSetLayout const & ) = delete;
+        LightupCommonDescriptorSetLayout &operator = ( LightupCommonDescriptorSetLayout const & ) = delete;
 
         LightupCommonDescriptorSetLayout ( LightupCommonDescriptorSetLayout && ) = delete;
-        LightupCommonDescriptorSetLayout& operator = ( LightupCommonDescriptorSetLayout && ) = delete;
+        LightupCommonDescriptorSetLayout &operator = ( LightupCommonDescriptorSetLayout && ) = delete;
 
         ~LightupCommonDescriptorSetLayout () override = default;
 

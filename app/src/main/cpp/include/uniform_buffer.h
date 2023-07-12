@@ -31,10 +31,10 @@ class UniformBuffer final
         UniformBuffer () = default;
 
         UniformBuffer ( UniformBuffer const & ) = delete;
-        UniformBuffer& operator = ( UniformBuffer const & ) = delete;
+        UniformBuffer &operator = ( UniformBuffer const & ) = delete;
 
         UniformBuffer ( UniformBuffer && ) = delete;
-        UniformBuffer& operator = ( UniformBuffer && ) = delete;
+        UniformBuffer &operator = ( UniformBuffer && ) = delete;
 
         ~UniformBuffer () = default;
 

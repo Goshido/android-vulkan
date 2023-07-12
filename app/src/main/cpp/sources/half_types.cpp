@@ -104,7 +104,7 @@ uint16_t Half::Convert ( float value )
     // NOTHING
 }
 
-Half3& Half3::operator = ( GXVec3 const &other )
+Half3 &Half3::operator = ( GXVec3 const &other )
 {
     _data[ 0U ] = Half::Convert ( other._data[ 0U ] );
     _data[ 1U ] = Half::Convert ( other._data[ 0U ] );

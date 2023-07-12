@@ -38,7 +38,7 @@ struct CubeMapID final
             Hasher () = default;
 
             Hasher ( Hasher const & ) = default;
-            Hasher& operator = ( Hasher const & ) = default;
+            Hasher &operator = ( Hasher const & ) = default;
 
             Hasher ( Hasher && ) = default;
             Hasher &operator = ( Hasher && ) = default;
@@ -68,10 +68,10 @@ class CubeMapManager final
 
     public:
         CubeMapManager ( CubeMapManager const & ) = delete;
-        CubeMapManager& operator = ( CubeMapManager const & ) = delete;
+        CubeMapManager &operator = ( CubeMapManager const & ) = delete;
 
         CubeMapManager ( CubeMapManager && ) = delete;
-        CubeMapManager& operator = ( CubeMapManager && ) = delete;
+        CubeMapManager &operator = ( CubeMapManager && ) = delete;
 
         [[nodiscard]] TextureCubeRef LoadCubeMap ( android_vulkan::Renderer &renderer,
             size_t &commandBufferConsumed,
@@ -79,7 +79,7 @@ class CubeMapManager final
             VkCommandBuffer commandBuffer
         ) noexcept;
 
-        [[nodiscard]] static CubeMapManager& GetInstance () noexcept;
+        [[nodiscard]] static CubeMapManager &GetInstance () noexcept;
         static void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
 
     private:

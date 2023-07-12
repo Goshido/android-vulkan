@@ -35,10 +35,10 @@ class StippleTest final : public android_vulkan::Game
         StippleTest () = default;
 
         StippleTest ( StippleTest const & ) = delete;
-        StippleTest& operator = ( StippleTest const & ) = delete;
+        StippleTest &operator = ( StippleTest const & ) = delete;
 
         StippleTest ( StippleTest && ) = delete;
-        StippleTest& operator = ( StippleTest && ) = delete;
+        StippleTest &operator = ( StippleTest && ) = delete;
 
         ~StippleTest () override = default;
 

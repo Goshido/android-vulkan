@@ -13,10 +13,10 @@ class ReflectionProbeGlobal final : public ReflectionProbe
         ReflectionProbeGlobal () = delete;
 
         ReflectionProbeGlobal ( ReflectionProbeGlobal const & ) = delete;
-        ReflectionProbeGlobal& operator = ( ReflectionProbeGlobal const & ) = delete;
+        ReflectionProbeGlobal &operator = ( ReflectionProbeGlobal const & ) = delete;
 
         ReflectionProbeGlobal ( ReflectionProbeGlobal && ) = delete;
-        ReflectionProbeGlobal& operator = ( ReflectionProbeGlobal && ) = delete;
+        ReflectionProbeGlobal &operator = ( ReflectionProbeGlobal && ) = delete;
 
         explicit ReflectionProbeGlobal ( TextureCubeRef prefilter ) noexcept;
 

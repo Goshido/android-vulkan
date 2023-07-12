@@ -10,17 +10,17 @@ namespace pbr {
 class UniqueAttributeChecker final : public AttributeChecker
 {
     private:
-        std::unordered_set<std::u32string>&     _registry;
-        std::u32string&                         _target;
+        std::unordered_set<std::u32string>      &_registry;
+        std::u32string                          &_target;
 
     public:
         UniqueAttributeChecker () = delete;
 
         UniqueAttributeChecker ( UniqueAttributeChecker const & ) = delete;
-        UniqueAttributeChecker& operator = ( UniqueAttributeChecker const & ) = delete;
+        UniqueAttributeChecker &operator = ( UniqueAttributeChecker const & ) = delete;
 
         UniqueAttributeChecker ( UniqueAttributeChecker && ) = delete;
-        UniqueAttributeChecker& operator = ( UniqueAttributeChecker && ) = delete;
+        UniqueAttributeChecker &operator = ( UniqueAttributeChecker && ) = delete;
 
         explicit UniqueAttributeChecker ( char const *html,
             eAttribute attribute,

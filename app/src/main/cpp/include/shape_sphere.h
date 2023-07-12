@@ -16,10 +16,10 @@ class [[maybe_unused]] ShapeSphere final : public Shape
         ShapeSphere () = delete;
 
         ShapeSphere ( ShapeSphere const & ) = delete;
-        ShapeSphere& operator = ( ShapeSphere const & ) = delete;
+        ShapeSphere &operator = ( ShapeSphere const & ) = delete;
 
         ShapeSphere ( ShapeSphere && ) = delete;
-        ShapeSphere& operator = ( ShapeSphere && ) = delete;
+        ShapeSphere &operator = ( ShapeSphere && ) = delete;
 
         [[maybe_unused]] explicit ShapeSphere ( float radius ) noexcept;
 

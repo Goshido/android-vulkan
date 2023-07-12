@@ -157,7 +157,7 @@ void Game::DestroySamplers ( VkDevice device ) noexcept
 
 void Game::DestroyTextures ( android_vulkan::Renderer &renderer ) noexcept
 {
-    for ( auto& item : _drawcalls )
+    for ( auto &item : _drawcalls )
     {
         item._diffuse.FreeResources ( renderer );
         item._normal.FreeResources ( renderer );
@@ -195,7 +195,7 @@ bool Game::CreateCommonTextures ( android_vulkan::Renderer &renderer, VkCommandB
 
     for ( size_t i = 0U; i < MATERIAL_COUNT; ++i )
     {
-        auto& drawcall = _drawcalls[ i ];
+        auto &drawcall = _drawcalls[ i ];
 
         bool const result = drawcall._diffuse.UploadData ( renderer,
             textureFiles[ i ],
@@ -211,7 +211,7 @@ bool Game::CreateCommonTextures ( android_vulkan::Renderer &renderer, VkCommandB
         drawcall._diffuseSampler = selector ( drawcall._diffuse );
     }
 
-    Drawcall& secondMaterial = _drawcalls[ 1U ];
+    Drawcall &secondMaterial = _drawcalls[ 1U ];
 
     bool result = secondMaterial._normal.UploadData ( renderer,
         MATERIAL_2_NORMAL,
@@ -226,7 +226,7 @@ bool Game::CreateCommonTextures ( android_vulkan::Renderer &renderer, VkCommandB
 
     secondMaterial._normalSampler = selector ( secondMaterial._normal );
 
-    Drawcall& thirdMaterial = _drawcalls[ 2U ];
+    Drawcall &thirdMaterial = _drawcalls[ 2U ];
 
     result = thirdMaterial._normal.UploadData ( renderer,
         MATERIAL_3_NORMAL,
@@ -241,7 +241,7 @@ bool Game::CreateCommonTextures ( android_vulkan::Renderer &renderer, VkCommandB
 
     thirdMaterial._normalSampler = selector ( thirdMaterial._normal );
 
-    Drawcall& firstMaterial = _drawcalls[ 0U ];
+    Drawcall &firstMaterial = _drawcalls[ 0U ];
     constexpr uint8_t const defaultNormal[] = { 128U, 128U, 255U, 128U };
 
     result = firstMaterial._normal.UploadData ( renderer,
@@ -290,50 +290,50 @@ bool Game::CreateMeshes ( android_vulkan::Renderer &renderer, VkCommandBuffer* c
 
 void Game::InitDescriptorPoolSizeCommon ( VkDescriptorPoolSize* features ) noexcept
 {
-    VkDescriptorPoolSize& ubFeature = features[ 0U ];
+    VkDescriptorPoolSize &ubFeature = features[ 0U ];
     ubFeature.descriptorCount = static_cast<uint32_t> ( MATERIAL_COUNT );
     ubFeature.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 
-    VkDescriptorPoolSize& diffuseTextureFeature = features[ 1U ];
+    VkDescriptorPoolSize &diffuseTextureFeature = features[ 1U ];
     diffuseTextureFeature.descriptorCount = static_cast<uint32_t> ( MATERIAL_COUNT * 2U );
     diffuseTextureFeature.type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
 
-    VkDescriptorPoolSize& diffuseSamplerFeature = features[ 2U ];
+    VkDescriptorPoolSize &diffuseSamplerFeature = features[ 2U ];
     diffuseSamplerFeature.descriptorCount = static_cast<uint32_t> ( MATERIAL_COUNT * 2U );
     diffuseSamplerFeature.type = VK_DESCRIPTOR_TYPE_SAMPLER;
 }
 
 void Game::InitDescriptorSetLayoutBindingCommon ( VkDescriptorSetLayoutBinding* bindings ) noexcept
 {
-    VkDescriptorSetLayoutBinding& ubInfo = bindings[ 0U ];
+    VkDescriptorSetLayoutBinding &ubInfo = bindings[ 0U ];
     ubInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
     ubInfo.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     ubInfo.descriptorCount = 1U;
     ubInfo.binding = 0U;
     ubInfo.pImmutableSamplers = nullptr;
 
-    VkDescriptorSetLayoutBinding& diffuseImageInfo = bindings[ 1U ];
+    VkDescriptorSetLayoutBinding &diffuseImageInfo = bindings[ 1U ];
     diffuseImageInfo.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
     diffuseImageInfo.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
     diffuseImageInfo.descriptorCount = 1U;
     diffuseImageInfo.binding = 1U;
     diffuseImageInfo.pImmutableSamplers = nullptr;
 
-    VkDescriptorSetLayoutBinding& diffuseSamplerInfo = bindings[ 2U ];
+    VkDescriptorSetLayoutBinding &diffuseSamplerInfo = bindings[ 2U ];
     diffuseSamplerInfo.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
     diffuseSamplerInfo.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
     diffuseSamplerInfo.descriptorCount = 1U;
     diffuseSamplerInfo.binding = 2U;
     diffuseSamplerInfo.pImmutableSamplers = nullptr;
 
-    VkDescriptorSetLayoutBinding& normalImageInfo = bindings[ 3U ];
+    VkDescriptorSetLayoutBinding &normalImageInfo = bindings[ 3U ];
     normalImageInfo.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
     normalImageInfo.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
     normalImageInfo.descriptorCount = 1U;
     normalImageInfo.binding = 3U;
     normalImageInfo.pImmutableSamplers = nullptr;
 
-    VkDescriptorSetLayoutBinding& normalSamplerInfo = bindings[ 4U ];
+    VkDescriptorSetLayoutBinding &normalSamplerInfo = bindings[ 4U ];
     normalSamplerInfo.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
     normalSamplerInfo.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
     normalSamplerInfo.descriptorCount = 1U;
@@ -356,7 +356,7 @@ bool Game::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) noex
     if ( !BeginFrame ( renderer, imageIndex ) )
         return false;
 
-    CommandContext const& commandContext = _commandBuffers[ imageIndex ];
+    CommandContext const &commandContext = _commandBuffers[ imageIndex ];
 
     constexpr VkPipelineStageFlags waitStage =
         AV_VK_FLAG ( VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT ) |
@@ -417,7 +417,7 @@ void Game::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
 
 bool Game::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept
 {
-    VkExtent2D const& resolution = renderer.GetViewportResolution ();
+    VkExtent2D const &resolution = renderer.GetViewportResolution ();
 
     _projectionMatrix.Perspective ( GXDegToRad ( FIELD_OF_VIEW ),
         static_cast<float> ( resolution.width ) / static_cast<float> ( resolution.height ),
@@ -463,7 +463,7 @@ bool Game::BeginFrame ( android_vulkan::Renderer &renderer, size_t &imageIndex )
         return false;
 
     imageIndex = static_cast<size_t> ( i );
-    CommandContext const& commandContext = _commandBuffers[ imageIndex ];
+    CommandContext const &commandContext = _commandBuffers[ imageIndex ];
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkWaitForFences ( device, 1U, &commandContext.second, VK_TRUE, UINT64_MAX ),
@@ -535,7 +535,7 @@ void Game::DestroyCommandPool ( VkDevice device ) noexcept
 {
     if ( !_commandBuffers.empty () )
     {
-        for ( auto const& item : _commandBuffers )
+        for ( auto const &item : _commandBuffers )
         {
             vkDestroyFence ( device, item.second, nullptr );
             AV_UNREGISTER_FENCE ( "Game::_commandBuffers::_fence" )
@@ -564,7 +564,7 @@ void Game::DestroyDescriptorSet ( VkDevice device ) noexcept
 
 void Game::DestroyMeshes ( android_vulkan::Renderer &renderer ) noexcept
 {
-    for ( auto& item : _drawcalls )
+    for ( auto &item : _drawcalls )
     {
         item._mesh.FreeResources ( renderer );
     }
@@ -573,7 +573,7 @@ void Game::DestroyMeshes ( android_vulkan::Renderer &renderer ) noexcept
 bool Game::CreateFramebuffers ( android_vulkan::Renderer &renderer ) noexcept
 {
     VkDevice device = renderer.GetDevice ();
-    VkExtent2D const& resolution = renderer.GetSurfaceSize ();
+    VkExtent2D const &resolution = renderer.GetSurfaceSize ();
 
     bool result = _depthStencilRenderTarget.CreateRenderTarget ( resolution,
         renderer.GetDefaultDepthStencilFormat (),
@@ -643,7 +643,7 @@ void Game::DestroyFramebuffers ( android_vulkan::Renderer &renderer ) noexcept
 bool Game::CreatePipeline ( android_vulkan::Renderer &renderer ) noexcept
 {
     VkPipelineShaderStageCreateInfo stageInfo[ 2U ];
-    VkPipelineShaderStageCreateInfo& vertexStage = stageInfo[ 0U ];
+    VkPipelineShaderStageCreateInfo &vertexStage = stageInfo[ 0U ];
     vertexStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     vertexStage.pNext = nullptr;
     vertexStage.flags = 0U;
@@ -652,7 +652,7 @@ bool Game::CreatePipeline ( android_vulkan::Renderer &renderer ) noexcept
     vertexStage.module = _vertexShaderModule;
     vertexStage.pName = VERTEX_SHADER_ENTRY_POINT;
 
-    VkPipelineShaderStageCreateInfo& fragmentStage = stageInfo[ 1U ];
+    VkPipelineShaderStageCreateInfo &fragmentStage = stageInfo[ 1U ];
     fragmentStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     fragmentStage.pNext = nullptr;
     fragmentStage.flags = 0U;
@@ -669,31 +669,31 @@ bool Game::CreatePipeline ( android_vulkan::Renderer &renderer ) noexcept
     assemblyInfo.primitiveRestartEnable = VK_FALSE;
 
     VkVertexInputAttributeDescription attributeDescriptions[ 5U ];
-    VkVertexInputAttributeDescription& vertexDescription = attributeDescriptions[ 0U ];
+    VkVertexInputAttributeDescription &vertexDescription = attributeDescriptions[ 0U ];
     vertexDescription.location = 0U;
     vertexDescription.binding = 0U;
     vertexDescription.offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _vertex ) );
     vertexDescription.format = VK_FORMAT_R32G32B32_SFLOAT;
 
-    VkVertexInputAttributeDescription& uvDescription = attributeDescriptions[ 1U ];
+    VkVertexInputAttributeDescription &uvDescription = attributeDescriptions[ 1U ];
     uvDescription.location = 1U;
     uvDescription.binding = 0U;
     uvDescription.offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _uv ) );
     uvDescription.format = VK_FORMAT_R32G32_SFLOAT;
 
-    VkVertexInputAttributeDescription& normalDescription = attributeDescriptions[ 2U ];
+    VkVertexInputAttributeDescription &normalDescription = attributeDescriptions[ 2U ];
     normalDescription.location = 2U;
     normalDescription.binding = 0U;
     normalDescription.offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _normal ) );
     normalDescription.format = VK_FORMAT_R32G32B32_SFLOAT;
 
-    VkVertexInputAttributeDescription& tangentDescription = attributeDescriptions[ 3U ];
+    VkVertexInputAttributeDescription &tangentDescription = attributeDescriptions[ 3U ];
     tangentDescription.location = 3U;
     tangentDescription.binding = 0U;
     tangentDescription.offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _tangent ) );
     tangentDescription.format = VK_FORMAT_R32G32B32_SFLOAT;
 
-    VkVertexInputAttributeDescription& bitangentDescription = attributeDescriptions[ 4U ];
+    VkVertexInputAttributeDescription &bitangentDescription = attributeDescriptions[ 4U ];
     bitangentDescription.location = 4U;
     bitangentDescription.binding = 0U;
     bitangentDescription.offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _bitangent ) );
@@ -786,7 +786,7 @@ bool Game::CreatePipeline ( android_vulkan::Renderer &renderer ) noexcept
     rasterizationInfo.cullMode = VK_CULL_MODE_BACK_BIT;
     rasterizationInfo.lineWidth = 1.0F;
 
-    VkExtent2D const& surfaceSize = renderer.GetSurfaceSize ();
+    VkExtent2D const &surfaceSize = renderer.GetSurfaceSize ();
 
     VkRect2D scissor;
     scissor.extent = surfaceSize;
@@ -1156,10 +1156,10 @@ bool Game::CreateCommandBuffers ( android_vulkan::Renderer &renderer ) noexcept
     };
 
     VkClearValue clearValues[ 2U ];
-    VkClearValue& colorTarget = clearValues[ 0U ];
+    VkClearValue &colorTarget = clearValues[ 0U ];
     std::memset ( &colorTarget.color, 0, sizeof ( colorTarget.color ) );
 
-    VkClearValue& depthStencilTarget = clearValues[ 1U ];
+    VkClearValue &depthStencilTarget = clearValues[ 1U ];
     depthStencilTarget.depthStencil.depth = 0.0F;
     depthStencilTarget.depthStencil.stencil = 0x00000000U;
 
@@ -1211,13 +1211,13 @@ bool Game::CreateCommandBuffers ( android_vulkan::Renderer &renderer ) noexcept
         vkCmdBindPipeline ( commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline );
         constexpr VkDeviceSize offset = 0U;
 
-        for ( auto& item : _drawcalls )
+        for ( auto &item : _drawcalls )
         {
             vkCmdBindDescriptorSets ( commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipelineLayout, 0U, 1U,
                 &item._descriptorSet, 0U, nullptr
             );
 
-            android_vulkan::MeshGeometry& mesh = item._mesh;
+            android_vulkan::MeshGeometry &mesh = item._mesh;
 
             vkCmdBindVertexBuffers ( commandBuffer, 0U, 1U, &mesh.GetVertexBuffer (), &offset );
             vkCmdDraw ( commandBuffer, mesh.GetVertexCount (), 1U, 0U, 0U );
@@ -1244,7 +1244,7 @@ void Game::DestroyCommandBuffers ( VkDevice device ) noexcept
     if ( _commandBuffers.empty () )
         return;
 
-    for ( auto const& [commandBuffer, fence] : _commandBuffers )
+    for ( auto const &[commandBuffer, fence] : _commandBuffers )
     {
         vkFreeCommandBuffers ( device, _commandPool, 1U, &commandBuffer );
         vkDestroyFence ( device, fence, nullptr );

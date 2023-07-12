@@ -28,10 +28,10 @@ class RayCaster final : public GJKBase
         RayCaster () = default;
 
         RayCaster ( RayCaster const & ) = delete;
-        RayCaster& operator = ( RayCaster const & ) = delete;
+        RayCaster &operator = ( RayCaster const & ) = delete;
 
         RayCaster ( RayCaster && ) = delete;
-        RayCaster& operator = ( RayCaster && ) = delete;
+        RayCaster &operator = ( RayCaster && ) = delete;
 
         ~RayCaster () override = default;
 

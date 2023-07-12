@@ -37,10 +37,10 @@ class UILayer final
         UILayer () = delete;
 
         UILayer ( UILayer const & ) = delete;
-        UILayer& operator = ( UILayer const & ) = delete;
+        UILayer &operator = ( UILayer const & ) = delete;
 
         UILayer ( UILayer && ) = delete;
-        UILayer& operator = ( UILayer && ) = delete;
+        UILayer &operator = ( UILayer && ) = delete;
 
         explicit UILayer ( bool &success, lua_State &vm ) noexcept;
 

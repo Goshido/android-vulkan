@@ -18,22 +18,22 @@
 
 namespace pbr {
 
-CSSComputedValues& HTML5Parser::GetBodyCSS () noexcept
+CSSComputedValues &HTML5Parser::GetBodyCSS () noexcept
 {
     return _cssComputedValues;
 }
 
-std::u32string& HTML5Parser::GetBodyID () noexcept
+std::u32string &HTML5Parser::GetBodyID () noexcept
 {
     return _bodyID;
 }
 
-HTML5Children& HTML5Parser::GetBodyChildren () noexcept
+HTML5Children &HTML5Parser::GetBodyChildren () noexcept
 {
     return _bodyChildren;
 }
 
-CSSParser& HTML5Parser::GetCSSParser () noexcept
+CSSParser &HTML5Parser::GetCSSParser () noexcept
 {
     return _css;
 }
@@ -457,7 +457,7 @@ bool HTML5Parser::ParseHTMLElement ( char const* html, Stream stream, char const
     if ( !_cssComputedValues.ApplyCSS ( html, _css, _bodyClasses, _bodyID ) )
         return false;
 
-    for ( auto& element : _bodyChildren )
+    for ( auto &element : _bodyChildren )
     {
         if ( !element->ApplyCSS ( html, _css ) )
         {
@@ -566,7 +566,7 @@ ParseResult HTML5Parser::ParseHeadElement ( char const* html, Stream stream, cha
 
     android_vulkan::File file ( f );
     [[maybe_unused]] bool const alwaysTrue = file.LoadContent ();
-    std::vector<uint8_t>& data = file.GetContent ();
+    std::vector<uint8_t> &data = file.GetContent ();
 
     if ( !_css.Parse ( f, Stream ( Stream::Data ( data.data (), data.size () ), 1U ), std::move ( link->_assetRoot ) ) )
         return std::nullopt;

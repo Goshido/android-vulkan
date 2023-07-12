@@ -25,10 +25,10 @@ class VerticalAlignProperty final : public Property
         VerticalAlignProperty () = delete;
 
         VerticalAlignProperty ( VerticalAlignProperty const & ) = default;
-        VerticalAlignProperty& operator = ( VerticalAlignProperty const & ) = default;
+        VerticalAlignProperty &operator = ( VerticalAlignProperty const & ) = default;
 
         VerticalAlignProperty ( VerticalAlignProperty && ) = default;
-        VerticalAlignProperty& operator = ( VerticalAlignProperty && ) = default;
+        VerticalAlignProperty &operator = ( VerticalAlignProperty && ) = default;
 
         explicit VerticalAlignProperty ( eValue value ) noexcept;
 

@@ -30,10 +30,10 @@ class KTXMediaContainer final
         KTXMediaContainer () noexcept;
 
         KTXMediaContainer ( KTXMediaContainer const & ) = delete;
-        KTXMediaContainer& operator = ( KTXMediaContainer const & ) = delete;
+        KTXMediaContainer &operator = ( KTXMediaContainer const & ) = delete;
 
         KTXMediaContainer ( KTXMediaContainer && ) = delete;
-        KTXMediaContainer& operator = ( KTXMediaContainer && ) = delete;
+        KTXMediaContainer &operator = ( KTXMediaContainer && ) = delete;
 
         ~KTXMediaContainer () = default;
 
@@ -41,7 +41,7 @@ class KTXMediaContainer final
         [[nodiscard]] uint8_t GetMipCount () const;
 
         // Note the "mip" with index zero has the maximum resolution.
-        [[nodiscard]]  MipInfo const& GetMip ( uint8_t mip ) const;
+        [[nodiscard]]  MipInfo const &GetMip ( uint8_t mip ) const;
 
         [[nodiscard]] VkDeviceSize GetTotalSize () const;
 

@@ -55,10 +55,10 @@ class ImageUIElement final : public CSSUIElement
         ImageUIElement () = delete;
 
         ImageUIElement ( ImageUIElement const & ) = delete;
-        ImageUIElement& operator = ( ImageUIElement const & ) = delete;
+        ImageUIElement &operator = ( ImageUIElement const & ) = delete;
 
         ImageUIElement ( ImageUIElement && ) = delete;
-        ImageUIElement& operator = ( ImageUIElement && ) = delete;
+        ImageUIElement &operator = ( ImageUIElement && ) = delete;
 
         explicit ImageUIElement ( bool &success,
             UIElement const* parent,
@@ -75,7 +75,7 @@ class ImageUIElement final : public CSSUIElement
         void Submit ( SubmitInfo &info ) noexcept override;
         [[nodiscard]] bool UpdateCache ( UpdateInfo &info ) noexcept override;
 
-        [[nodiscard]] GXVec2 ResolveSize ( GXVec2 const& parentCanvasSize, CSSUnitToDevicePixel const& units ) noexcept;
+        [[nodiscard]] GXVec2 ResolveSize ( GXVec2 const &parentCanvasSize, CSSUnitToDevicePixel const &units ) noexcept;
         [[nodiscard]] GXVec2 ResolveSizeByWidth ( float parentWidth, CSSUnitToDevicePixel const &units ) noexcept;
         [[nodiscard]] GXVec2 ResolveSizeByHeight ( float parentHeight, CSSUnitToDevicePixel const &units ) noexcept;
 };

@@ -37,10 +37,10 @@ class ASCIIString final
         ASCIIString () = default;
 
         ASCIIString ( ASCIIString const & ) = delete;
-        ASCIIString& operator = ( ASCIIString const & ) = delete;
+        ASCIIString &operator = ( ASCIIString const & ) = delete;
 
         ASCIIString ( ASCIIString && ) = delete;
-        ASCIIString& operator = ( ASCIIString && ) = delete;
+        ASCIIString &operator = ( ASCIIString && ) = delete;
 
         ~ASCIIString () = default;
 

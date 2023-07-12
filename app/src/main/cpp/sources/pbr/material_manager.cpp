@@ -17,17 +17,17 @@ class MaterialManager::StaticInitializer final
         StaticInitializer () noexcept;
 
         StaticInitializer ( StaticInitializer const & ) = delete;
-        StaticInitializer& operator = ( StaticInitializer const & ) = delete;
+        StaticInitializer &operator = ( StaticInitializer const & ) = delete;
 
         StaticInitializer ( StaticInitializer && ) = delete;
-        StaticInitializer& operator = ( StaticInitializer && ) = delete;
+        StaticInitializer &operator = ( StaticInitializer && ) = delete;
 
         ~StaticInitializer () = default;
 };
 
 MaterialManager::StaticInitializer::StaticInitializer () noexcept
 {
-    auto& h = MaterialManager::_handlers;
+    auto &h = MaterialManager::_handlers;
 
     h[ static_cast<size_t> ( eMaterialTypeDesc::Opaque ) ] = &MaterialManager::CreateOpaqueMaterial;
     h[ static_cast<size_t> ( eMaterialTypeDesc::Stipple ) ] = &MaterialManager::CreateStippleMaterial;
@@ -72,9 +72,9 @@ MaterialRef MaterialManager::LoadMaterial ( android_vulkan::Renderer &renderer,
     if ( !file.LoadContent () )
         return std::make_shared<OpaqueMaterial> ();
 
-    std::vector<uint8_t> const& content = file.GetContent ();
+    std::vector<uint8_t> const &content = file.GetContent ();
     uint8_t const* data = content.data ();
-    auto const& header = *reinterpret_cast<MaterialHeader const*> ( data );
+    auto const &header = *reinterpret_cast<MaterialHeader const*> ( data );
 
     AV_ASSERT ( header._type < eMaterialTypeDesc::COUNT )
     Handler const handler = _handlers[ static_cast<size_t> ( header._type ) ];
@@ -83,7 +83,7 @@ MaterialRef MaterialManager::LoadMaterial ( android_vulkan::Renderer &renderer,
     return ( this->*handler ) ( renderer, commandBufferConsumed, header, data, commandBuffers, fences );
 }
 
-MaterialManager& MaterialManager::GetInstance () noexcept
+MaterialManager &MaterialManager::GetInstance () noexcept
 {
     std::unique_lock<std::mutex> const lock ( _mutex );
 
@@ -115,13 +115,13 @@ MaterialRef MaterialManager::CreateOpaqueMaterial ( android_vulkan::Renderer &re
 ) noexcept
 {
     // NOLINTNEXTLINE - downcast.
-    auto const& h = static_cast<OpaqueMaterialHeader const &> ( header );
+    auto const &h = static_cast<OpaqueMaterialHeader const &> ( header );
 
     AV_ASSERT ( h._formatVersion == OPAQUE_MATERIAL_FORMAT_VERSION )
     MaterialRef material = std::make_shared<OpaqueMaterial> ();
 
     // NOLINTNEXTLINE - downcast.
-    auto& opaqueMaterial = static_cast<OpaqueMaterial&> ( *material );
+    auto &opaqueMaterial = static_cast<OpaqueMaterial&> ( *material );
 
     if ( h._diffuseOffset != android_vulkan::NO_UTF8_OFFSET )
     {
@@ -220,13 +220,13 @@ MaterialRef MaterialManager::CreateStippleMaterial ( android_vulkan::Renderer &r
 ) noexcept
 {
     // NOLINTNEXTLINE - downcast.
-    auto const& h = static_cast<StippleMaterialHeader const&> ( header );
+    auto const &h = static_cast<StippleMaterialHeader const &> ( header );
 
     AV_ASSERT ( h._formatVersion == STIPPLE_MATERIAL_FORMAT_VERSION )
     MaterialRef material = std::make_shared<StippleMaterial> ();
 
     // NOLINTNEXTLINE - downcast.
-    auto& stippleMaterial = static_cast<StippleMaterial&> ( *material );
+    auto &stippleMaterial = static_cast<StippleMaterial &> ( *material );
 
     if ( h._diffuseOffset != android_vulkan::NO_UTF8_OFFSET )
     {
@@ -318,7 +318,7 @@ MaterialRef MaterialManager::CreateStippleMaterial ( android_vulkan::Renderer &r
 
 void MaterialManager::DestroyInternal ( android_vulkan::Renderer &renderer ) noexcept
 {
-    for ( auto& texture : _textureStorage )
+    for ( auto &texture : _textureStorage )
         texture.second->FreeResources ( renderer );
 
     _textureStorage.clear ();

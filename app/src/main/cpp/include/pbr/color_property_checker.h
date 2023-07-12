@@ -25,16 +25,16 @@ class ColorPropertyChecker final : public PropertyChecker
 
     private:
         static std::unordered_map<std::u32string, GXColorRGB> const     _colorMap;
-        ColorValue&                                                     _target;
+        ColorValue                                                      &_target;
 
     public:
         ColorPropertyChecker () = delete;
 
         ColorPropertyChecker ( ColorPropertyChecker const & ) = delete;
-        ColorPropertyChecker& operator = ( ColorPropertyChecker const & ) = delete;
+        ColorPropertyChecker &operator = ( ColorPropertyChecker const & ) = delete;
 
         ColorPropertyChecker ( ColorPropertyChecker && ) = delete;
-        ColorPropertyChecker& operator = ( ColorPropertyChecker && ) = delete;
+        ColorPropertyChecker &operator = ( ColorPropertyChecker && ) = delete;
 
         explicit ColorPropertyChecker ( char const* css, Property::eType property, ColorValue &target ) noexcept;
 

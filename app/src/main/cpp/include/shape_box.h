@@ -17,10 +17,10 @@ class [[maybe_unused]] ShapeBox final : public Shape
         ShapeBox () = delete;
 
         ShapeBox ( ShapeBox const & ) = delete;
-        ShapeBox& operator = ( ShapeBox const & ) = delete;
+        ShapeBox &operator = ( ShapeBox const & ) = delete;
 
         ShapeBox ( ShapeBox && ) = delete;
-        ShapeBox& operator = ( ShapeBox && ) = delete;
+        ShapeBox &operator = ( ShapeBox && ) = delete;
 
         explicit ShapeBox ( GXVec3 const &size ) noexcept;
         explicit ShapeBox ( float width, float height, float depth ) noexcept;
@@ -31,7 +31,7 @@ class [[maybe_unused]] ShapeBox final : public Shape
         [[nodiscard]] float GetHeight () const noexcept;
         [[nodiscard]] float GetDepth () const noexcept;
 
-        [[nodiscard]] GXVec3 const& GetSize () const noexcept;
+        [[nodiscard]] GXVec3 const &GetSize () const noexcept;
         void Resize ( GXVec3 const &size ) noexcept;
 
     private:

@@ -33,7 +33,7 @@ struct VulkanPhysicalDeviceInfo final
     VulkanPhysicalDeviceInfo () noexcept;
 
     VulkanPhysicalDeviceInfo ( VulkanPhysicalDeviceInfo const & ) = delete;
-    VulkanPhysicalDeviceInfo& operator = ( VulkanPhysicalDeviceInfo const & ) = delete;
+    VulkanPhysicalDeviceInfo &operator = ( VulkanPhysicalDeviceInfo const & ) = delete;
 
     ~VulkanPhysicalDeviceInfo () = default;
 };
@@ -105,10 +105,10 @@ class Renderer final
         Renderer () noexcept;
 
         Renderer ( Renderer const & ) = delete;
-        Renderer& operator = ( Renderer const & ) = delete;
+        Renderer &operator = ( Renderer const & ) = delete;
 
         Renderer ( Renderer && ) = delete;
-        Renderer& operator = ( Renderer && ) = delete;
+        Renderer &operator = ( Renderer && ) = delete;
 
         ~Renderer () = default;
 
@@ -130,24 +130,24 @@ class Renderer final
         [[nodiscard]] size_t GetMaxUniformBufferRange () const noexcept;
 
         [[nodiscard]] size_t GetPresentImageCount () const noexcept;
-        [[nodiscard]] VkImageView const& GetPresentImageView ( size_t imageIndex ) const noexcept;
+        [[nodiscard]] VkImageView const &GetPresentImageView ( size_t imageIndex ) const noexcept;
 
         // Note this transform MUST be applied after projection transform to compensate screen orientation on the
         // mobile device. For more information please reference by links:
         // https://community.arm.com/developer/tools-software/graphics/b/blog/posts/appropriate-use-of-surface-rotation
         // https://github.com/KhronosGroup/Vulkan-Samples/blob/master/samples/performance/surface_rotation/surface_rotation_tutorial.md
-        [[nodiscard]] GXMat4 const& GetPresentationEngineTransform () const noexcept;
+        [[nodiscard]] GXMat4 const &GetPresentationEngineTransform () const noexcept;
 
         [[nodiscard]] VkQueue GetQueue () const noexcept;
         [[nodiscard]] uint32_t GetQueueFamilyIndex () const noexcept;
         [[nodiscard]] VkFormat GetSurfaceFormat () const noexcept;
-        [[nodiscard]] VkExtent2D const& GetSurfaceSize () const noexcept;
-        [[nodiscard]] VkSwapchainKHR& GetSwapchain () noexcept;
+        [[nodiscard]] VkExtent2D const &GetSurfaceSize () const noexcept;
+        [[nodiscard]] VkSwapchainKHR &GetSwapchain () noexcept;
 
         // This resolution must be used by projection matrices. Resolution takes into consideration
         // current device orientation. The actual presentation image resolution can be acquired
         // by Renderer::GetSurfaceSize API.
-        [[nodiscard]] VkExtent2D const& GetViewportResolution () const noexcept;
+        [[nodiscard]] VkExtent2D const &GetViewportResolution () const noexcept;
 
         [[nodiscard]] bool OnCreateSwapchain ( ANativeWindow &nativeWindow, bool vSync ) noexcept;
         void OnDestroySwapchain () noexcept;
@@ -164,7 +164,7 @@ class Renderer final
 
         void FreeMemory ( VkDeviceMemory memory, VkDeviceSize offset ) noexcept;
 
-        [[nodiscard]] bool MapMemory ( void*& ptr,
+        [[nodiscard]] bool MapMemory ( void* &ptr,
             VkDeviceMemory memory,
             VkDeviceSize offset,
             char const* from,

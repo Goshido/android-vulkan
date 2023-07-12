@@ -39,10 +39,10 @@ class PropertyParser final
         PropertyParser () = delete;
 
         PropertyParser ( PropertyParser const & ) = delete;
-        PropertyParser& operator = ( PropertyParser const & ) = delete;
+        PropertyParser &operator = ( PropertyParser const & ) = delete;
 
         PropertyParser ( PropertyParser && ) = delete;
-        PropertyParser& operator = ( PropertyParser && ) = delete;
+        PropertyParser &operator = ( PropertyParser && ) = delete;
 
         ~PropertyParser () = delete;
 

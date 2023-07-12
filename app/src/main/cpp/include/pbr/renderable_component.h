@@ -14,10 +14,10 @@ class RenderableComponent : public Component
         RenderableComponent () = delete;
 
         RenderableComponent ( RenderableComponent const & ) = delete;
-        RenderableComponent& operator = ( RenderableComponent const & ) = delete;
+        RenderableComponent &operator = ( RenderableComponent const & ) = delete;
 
         RenderableComponent ( RenderableComponent && ) = delete;
-        RenderableComponent& operator = ( RenderableComponent && ) = delete;
+        RenderableComponent &operator = ( RenderableComponent && ) = delete;
 
         ~RenderableComponent () override = default;
 

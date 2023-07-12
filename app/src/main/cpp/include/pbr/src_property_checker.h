@@ -25,17 +25,17 @@ class SRCPropertyChecker final : public PropertyChecker
         using ParseResult = std::optional<ParseInfo>;
 
     private:
-        std::string const&          _assetRoot;
-        std::string&                _target;
+        std::string const           &_assetRoot;
+        std::string                 &_target;
 
     public:
         SRCPropertyChecker () = delete;
 
         SRCPropertyChecker ( SRCPropertyChecker const & ) = delete;
-        SRCPropertyChecker& operator = ( SRCPropertyChecker const & ) = delete;
+        SRCPropertyChecker &operator = ( SRCPropertyChecker const & ) = delete;
 
         SRCPropertyChecker ( SRCPropertyChecker && ) = delete;
-        SRCPropertyChecker& operator = ( SRCPropertyChecker && ) = delete;
+        SRCPropertyChecker &operator = ( SRCPropertyChecker && ) = delete;
 
         explicit SRCPropertyChecker ( char const* css, std::string &target, std::string const &assetRoot ) noexcept;
 

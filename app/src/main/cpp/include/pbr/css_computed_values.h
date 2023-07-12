@@ -61,10 +61,10 @@ class CSSComputedValues final
         CSSComputedValues () = default;
 
         CSSComputedValues ( CSSComputedValues const & ) = default;
-        CSSComputedValues& operator = ( CSSComputedValues const & ) = delete;
+        CSSComputedValues &operator = ( CSSComputedValues const & ) = delete;
 
         CSSComputedValues ( CSSComputedValues && ) = default;
-        CSSComputedValues& operator = ( CSSComputedValues && ) = delete;
+        CSSComputedValues &operator = ( CSSComputedValues && ) = delete;
 
         ~CSSComputedValues () = default;
 

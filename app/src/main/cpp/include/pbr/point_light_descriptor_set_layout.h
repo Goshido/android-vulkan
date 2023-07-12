@@ -13,10 +13,10 @@ class PointLightDescriptorSetLayout final : public DescriptorSetLayout
         PointLightDescriptorSetLayout () = default;
 
         PointLightDescriptorSetLayout ( PointLightDescriptorSetLayout const & ) = delete;
-        PointLightDescriptorSetLayout& operator = ( PointLightDescriptorSetLayout const & ) = delete;
+        PointLightDescriptorSetLayout &operator = ( PointLightDescriptorSetLayout const & ) = delete;
 
         PointLightDescriptorSetLayout ( PointLightDescriptorSetLayout && ) = delete;
-        PointLightDescriptorSetLayout& operator = ( PointLightDescriptorSetLayout && ) = delete;
+        PointLightDescriptorSetLayout &operator = ( PointLightDescriptorSetLayout && ) = delete;
 
         ~PointLightDescriptorSetLayout () override = default;
 

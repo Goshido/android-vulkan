@@ -13,10 +13,10 @@ class UIPassCommonDescriptorSetLayout final : public DescriptorSetLayout
         UIPassCommonDescriptorSetLayout () = default;
 
         UIPassCommonDescriptorSetLayout ( UIPassCommonDescriptorSetLayout const & ) = delete;
-        UIPassCommonDescriptorSetLayout& operator = ( UIPassCommonDescriptorSetLayout const & ) = delete;
+        UIPassCommonDescriptorSetLayout &operator = ( UIPassCommonDescriptorSetLayout const & ) = delete;
 
         UIPassCommonDescriptorSetLayout ( UIPassCommonDescriptorSetLayout && ) = delete;
-        UIPassCommonDescriptorSetLayout& operator = ( UIPassCommonDescriptorSetLayout && ) = delete;
+        UIPassCommonDescriptorSetLayout &operator = ( UIPassCommonDescriptorSetLayout && ) = delete;
 
         ~UIPassCommonDescriptorSetLayout () override = default;
 

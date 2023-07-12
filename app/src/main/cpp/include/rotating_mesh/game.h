@@ -69,10 +69,10 @@ class Game : public android_vulkan::Game
         Game () = delete;
 
         Game ( Game const & ) = delete;
-        Game& operator = ( Game const & ) = delete;
+        Game &operator = ( Game const & ) = delete;
 
         Game ( Game && ) = delete;
-        Game& operator = ( Game && ) = delete;
+        Game &operator = ( Game && ) = delete;
 
     protected:
         explicit Game ( char const* fragmentShader ) noexcept;

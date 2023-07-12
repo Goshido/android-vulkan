@@ -34,17 +34,17 @@ class ScriptableMaterial final
         ScriptableMaterial () = delete;
 
         ScriptableMaterial ( ScriptableMaterial const & ) = delete;
-        ScriptableMaterial& operator = ( ScriptableMaterial const & ) = delete;
+        ScriptableMaterial &operator = ( ScriptableMaterial const & ) = delete;
 
         ScriptableMaterial ( ScriptableMaterial && ) = delete;
-        ScriptableMaterial& operator = ( ScriptableMaterial && ) = delete;
+        ScriptableMaterial &operator = ( ScriptableMaterial && ) = delete;
 
         ~ScriptableMaterial () = delete;
 
         [[nodiscard]] static bool Init ( lua_State &vm, android_vulkan::Renderer &renderer ) noexcept;
         static void Destroy () noexcept;
 
-        [[nodiscard]] static MaterialRef& GetReference ( Material const &handle ) noexcept;
+        [[nodiscard]] static MaterialRef &GetReference ( Material const &handle ) noexcept;
 
         // Waiting until all texture data will be uploaded to GPU.
         [[nodiscard]] static bool Sync () noexcept;

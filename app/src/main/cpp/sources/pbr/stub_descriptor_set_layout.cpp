@@ -23,10 +23,10 @@ class StubDescriptorSetLayoutImpl final
         StubDescriptorSetLayoutImpl () noexcept;
 
         StubDescriptorSetLayoutImpl ( StubDescriptorSetLayoutImpl const & ) = delete;
-        StubDescriptorSetLayoutImpl& operator = ( StubDescriptorSetLayoutImpl const & ) = delete;
+        StubDescriptorSetLayoutImpl &operator = ( StubDescriptorSetLayoutImpl const & ) = delete;
 
         StubDescriptorSetLayoutImpl ( StubDescriptorSetLayoutImpl && ) = delete;
-        StubDescriptorSetLayoutImpl& operator = ( StubDescriptorSetLayoutImpl && ) = delete;
+        StubDescriptorSetLayoutImpl &operator = ( StubDescriptorSetLayoutImpl && ) = delete;
 
         ~StubDescriptorSetLayoutImpl () = default;
 

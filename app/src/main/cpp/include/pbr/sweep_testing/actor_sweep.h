@@ -20,10 +20,10 @@ class ActorSweep final
         ActorSweep () = default;
 
         ActorSweep ( ActorSweep const & ) = delete;
-        ActorSweep& operator = ( ActorSweep const & ) = delete;
+        ActorSweep &operator = ( ActorSweep const & ) = delete;
 
         ActorSweep ( ActorSweep && ) = delete;
-        ActorSweep& operator = ( ActorSweep && ) = delete;
+        ActorSweep &operator = ( ActorSweep && ) = delete;
 
         ~ActorSweep () = default;
 
@@ -33,7 +33,7 @@ class ActorSweep final
         void FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept;
 
         void Destroy () noexcept;
-        [[nodiscard]] android_vulkan::ShapeRef const& GetShape () noexcept;
+        [[nodiscard]] android_vulkan::ShapeRef const &GetShape () noexcept;
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
             size_t &commandBufferConsumed,

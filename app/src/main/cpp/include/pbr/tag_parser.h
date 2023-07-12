@@ -21,10 +21,10 @@ class TagParser final
         TagParser () = delete;
 
         TagParser ( TagParser const & ) = delete;
-        TagParser& operator = ( TagParser const & ) = delete;
+        TagParser &operator = ( TagParser const & ) = delete;
 
         TagParser ( TagParser && ) = delete;
-        TagParser& operator = ( TagParser && ) = delete;
+        TagParser &operator = ( TagParser && ) = delete;
 
         ~TagParser () = delete;
 

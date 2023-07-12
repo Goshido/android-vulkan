@@ -29,7 +29,7 @@ void SoundStorage::Trim () noexcept
 
     for ( auto i = _storage.cbegin (); i != _storage.cend (); )
     {
-        auto const& soundFile = i->second;
+        auto const &soundFile = i->second;
 
         if ( soundFile.use_count () > 1 )
         {

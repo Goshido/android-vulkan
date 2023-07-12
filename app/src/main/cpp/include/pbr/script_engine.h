@@ -33,15 +33,15 @@ class ScriptEngine final
 
     public:
         ScriptEngine ( ScriptEngine const & ) = delete;
-        ScriptEngine& operator = ( ScriptEngine const & ) = delete;
+        ScriptEngine &operator = ( ScriptEngine const & ) = delete;
 
         ScriptEngine ( ScriptEngine && ) = delete;
-        ScriptEngine& operator = ( ScriptEngine && ) = delete;
+        ScriptEngine &operator = ( ScriptEngine && ) = delete;
 
-        [[nodiscard]] lua_State& GetVirtualMachine () noexcept;
+        [[nodiscard]] lua_State &GetVirtualMachine () noexcept;
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, android_vulkan::SoundMixer &soundMixer ) noexcept;
 
-        [[nodiscard]] static ScriptEngine& GetInstance () noexcept;
+        [[nodiscard]] static ScriptEngine &GetInstance () noexcept;
         static void Destroy () noexcept;
 
         // Valid if Lua call performed from initial function. No any nested function calls happened.

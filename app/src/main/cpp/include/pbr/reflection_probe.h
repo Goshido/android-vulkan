@@ -17,13 +17,13 @@ class ReflectionProbe : public Light
         ReflectionProbe () = delete;
 
         ReflectionProbe ( ReflectionProbe const & ) = delete;
-        ReflectionProbe& operator = ( ReflectionProbe const & ) = delete;
+        ReflectionProbe &operator = ( ReflectionProbe const & ) = delete;
 
         ReflectionProbe ( ReflectionProbe && ) = delete;
-        ReflectionProbe& operator = ( ReflectionProbe && ) = delete;
+        ReflectionProbe &operator = ( ReflectionProbe && ) = delete;
 
         void FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept;
-        [[nodiscard]] TextureCubeRef& GetPrefilter () noexcept;
+        [[nodiscard]] TextureCubeRef &GetPrefilter () noexcept;
 
     protected:
         explicit ReflectionProbe ( eLightType type, TextureCubeRef &prefilter ) noexcept;

@@ -53,10 +53,10 @@ class Property
         Property () = delete;
 
         Property ( Property const & ) = default;
-        Property& operator = ( Property const & ) = default;
+        Property &operator = ( Property const & ) = default;
 
         Property ( Property && ) = default;
-        Property& operator = ( Property && ) = default;
+        Property &operator = ( Property && ) = default;
 
         virtual ~Property () = default;
 

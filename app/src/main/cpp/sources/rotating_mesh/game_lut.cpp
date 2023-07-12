@@ -66,7 +66,7 @@ bool GameLUT::CreateDescriptorSet ( android_vulkan::Renderer &renderer ) noexcep
     VkDescriptorSetLayout layouts[ MATERIAL_COUNT ];
     VkDescriptorSet sets[ MATERIAL_COUNT ];
 
-    for ( auto& item : layouts )
+    for ( auto &item : layouts )
         item = _descriptorSetLayout;
 
     VkDescriptorSetAllocateInfo const setAllocateInfo
@@ -100,27 +100,27 @@ bool GameLUT::CreateDescriptorSet ( android_vulkan::Renderer &renderer ) noexcep
 
     for ( size_t i = 0U; i < MATERIAL_COUNT; ++i )
     {
-        Drawcall& drawcall = _drawcalls[ i ];
+        Drawcall &drawcall = _drawcalls[ i ];
         drawcall._descriptorSet = sets[ i ];
 
-        VkDescriptorImageInfo& diffuseImage = diffuseInfo[ i ];
+        VkDescriptorImageInfo &diffuseImage = diffuseInfo[ i ];
         diffuseImage.sampler = drawcall._diffuseSampler;
         diffuseImage.imageView = drawcall._diffuse.GetImageView ();
         diffuseImage.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-        VkDescriptorImageInfo& normalImage = normalInfo[ i ];
+        VkDescriptorImageInfo &normalImage = normalInfo[ i ];
         normalImage.sampler = drawcall._normalSampler;
         normalImage.imageView = drawcall._normal.GetImageView ();
         normalImage.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-        VkDescriptorImageInfo& specImage = specInfo[ i ];
+        VkDescriptorImageInfo &specImage = specInfo[ i ];
         specImage.sampler = _specularLUTSampler;
         specImage.imageView = _specularLUTTexture.GetImageView ();
         specImage.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
         size_t const pivotIndex = i * featureCount;
 
-        VkWriteDescriptorSet& ubWriteSet = writeSets[ pivotIndex ];
+        VkWriteDescriptorSet &ubWriteSet = writeSets[ pivotIndex ];
         ubWriteSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         ubWriteSet.pNext = nullptr;
         ubWriteSet.dstSet = drawcall._descriptorSet;
@@ -132,7 +132,7 @@ bool GameLUT::CreateDescriptorSet ( android_vulkan::Renderer &renderer ) noexcep
         ubWriteSet.pImageInfo = nullptr;
         ubWriteSet.pTexelBufferView = nullptr;
 
-        VkWriteDescriptorSet& diffuseImageWriteSet = writeSets[ pivotIndex + 1U ];
+        VkWriteDescriptorSet &diffuseImageWriteSet = writeSets[ pivotIndex + 1U ];
         diffuseImageWriteSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         diffuseImageWriteSet.pNext = nullptr;
         diffuseImageWriteSet.dstSet = drawcall._descriptorSet;
@@ -144,7 +144,7 @@ bool GameLUT::CreateDescriptorSet ( android_vulkan::Renderer &renderer ) noexcep
         diffuseImageWriteSet.pImageInfo = &diffuseImage;
         diffuseImageWriteSet.pTexelBufferView = nullptr;
 
-        VkWriteDescriptorSet& diffuseSamplerWriteSet = writeSets[ pivotIndex + 2U ];
+        VkWriteDescriptorSet &diffuseSamplerWriteSet = writeSets[ pivotIndex + 2U ];
         diffuseSamplerWriteSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         diffuseSamplerWriteSet.pNext = nullptr;
         diffuseSamplerWriteSet.dstSet = drawcall._descriptorSet;
@@ -156,7 +156,7 @@ bool GameLUT::CreateDescriptorSet ( android_vulkan::Renderer &renderer ) noexcep
         diffuseSamplerWriteSet.pImageInfo = &diffuseImage;
         diffuseSamplerWriteSet.pTexelBufferView = nullptr;
 
-        VkWriteDescriptorSet& normalImageWriteSet = writeSets[ pivotIndex + 3U ];
+        VkWriteDescriptorSet &normalImageWriteSet = writeSets[ pivotIndex + 3U ];
         normalImageWriteSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         normalImageWriteSet.pNext = nullptr;
         normalImageWriteSet.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
@@ -168,7 +168,7 @@ bool GameLUT::CreateDescriptorSet ( android_vulkan::Renderer &renderer ) noexcep
         normalImageWriteSet.pImageInfo = &normalImage;
         normalImageWriteSet.pTexelBufferView = nullptr;
 
-        VkWriteDescriptorSet& normalSamplerWriteSet = writeSets[ pivotIndex + 4U ];
+        VkWriteDescriptorSet &normalSamplerWriteSet = writeSets[ pivotIndex + 4U ];
         normalSamplerWriteSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         normalSamplerWriteSet.pNext = nullptr;
         normalSamplerWriteSet.dstSet = drawcall._descriptorSet;
@@ -180,7 +180,7 @@ bool GameLUT::CreateDescriptorSet ( android_vulkan::Renderer &renderer ) noexcep
         normalSamplerWriteSet.pImageInfo = &normalImage;
         normalSamplerWriteSet.pTexelBufferView = nullptr;
 
-        VkWriteDescriptorSet& specImageWriteSet = writeSets[ pivotIndex + 5U ];
+        VkWriteDescriptorSet &specImageWriteSet = writeSets[ pivotIndex + 5U ];
         specImageWriteSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         specImageWriteSet.pNext = nullptr;
         specImageWriteSet.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
@@ -192,7 +192,7 @@ bool GameLUT::CreateDescriptorSet ( android_vulkan::Renderer &renderer ) noexcep
         specImageWriteSet.pImageInfo = &specImage;
         specImageWriteSet.pTexelBufferView = nullptr;
 
-        VkWriteDescriptorSet& specSamplerWriteSet = writeSets[ pivotIndex + 6U ];
+        VkWriteDescriptorSet &specSamplerWriteSet = writeSets[ pivotIndex + 6U ];
         specSamplerWriteSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         specSamplerWriteSet.pNext = nullptr;
         specSamplerWriteSet.dstSet = drawcall._descriptorSet;
@@ -214,14 +214,14 @@ bool GameLUT::CreatePipelineLayout ( android_vulkan::Renderer &renderer ) noexce
     VkDescriptorSetLayoutBinding bindings[ 7U ];
     InitDescriptorSetLayoutBindingCommon ( bindings );
 
-    VkDescriptorSetLayoutBinding& specImageInfo = bindings[ 5U ];
+    VkDescriptorSetLayoutBinding &specImageInfo = bindings[ 5U ];
     specImageInfo.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
     specImageInfo.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
     specImageInfo.descriptorCount = 1U;
     specImageInfo.binding = 5U;
     specImageInfo.pImmutableSamplers = nullptr;
 
-    VkDescriptorSetLayoutBinding& specSamplerInfo = bindings[ 6U ];
+    VkDescriptorSetLayoutBinding &specSamplerInfo = bindings[ 6U ];
     specSamplerInfo.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
     specSamplerInfo.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
     specSamplerInfo.descriptorCount = 1U;
@@ -307,7 +307,7 @@ bool GameLUT::LoadGPUContent ( android_vulkan::Renderer &renderer ) noexcept
     if ( !result )
         return false;
 
-    for ( auto& item : _drawcalls )
+    for ( auto &item : _drawcalls )
     {
         item._mesh.FreeTransferResources ( renderer );
         item._diffuse.FreeTransferResources ( renderer );

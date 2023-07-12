@@ -39,10 +39,10 @@ class DIVUIElement final : public CSSUIElement
         DIVUIElement () = delete;
 
         DIVUIElement ( DIVUIElement const & ) = delete;
-        DIVUIElement& operator = ( DIVUIElement const & ) = delete;
+        DIVUIElement &operator = ( DIVUIElement const & ) = delete;
 
         DIVUIElement ( DIVUIElement && ) = delete;
-        DIVUIElement& operator = ( DIVUIElement && ) = delete;
+        DIVUIElement &operator = ( DIVUIElement && ) = delete;
 
         explicit DIVUIElement ( bool &success,
             UIElement const* parent,

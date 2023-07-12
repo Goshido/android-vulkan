@@ -13,10 +13,10 @@ class StippleProgram final : public GeometryPassProgram
         StippleProgram () noexcept;
 
         StippleProgram ( StippleProgram const & ) = delete;
-        StippleProgram& operator = ( StippleProgram const & ) = delete;
+        StippleProgram &operator = ( StippleProgram const & ) = delete;
 
         StippleProgram ( StippleProgram && ) = delete;
-        StippleProgram& operator = ( StippleProgram && ) = delete;
+        StippleProgram &operator = ( StippleProgram && ) = delete;
 
         ~StippleProgram () override = default;
 };

@@ -21,10 +21,10 @@ class GeometryCall final
         GeometryCall () = delete;
 
         GeometryCall ( GeometryCall const & ) = delete;
-        GeometryCall& operator = ( GeometryCall const & ) = delete;
+        GeometryCall &operator = ( GeometryCall const & ) = delete;
 
         GeometryCall ( GeometryCall && ) = default;
-        GeometryCall& operator = ( GeometryCall && ) = default;
+        GeometryCall &operator = ( GeometryCall && ) = default;
 
         // Note maxBatch will be updated only if it's less than current max unique elements of this drawcall.
         // Note maxUnique will be updated only if it's less than current max unique elements of this drawcall.
@@ -51,8 +51,8 @@ class GeometryCall final
             GXColorRGB const &emission
         ) noexcept;
 
-        [[nodiscard]] BatchList const& GetBatchList () const noexcept;
-        [[nodiscard]] UniqueList const& GetUniqueList () const noexcept;
+        [[nodiscard]] BatchList const &GetBatchList () const noexcept;
+        [[nodiscard]] UniqueList const &GetUniqueList () const noexcept;
 
     private:
         void AddBatch ( MeshRef &mesh,

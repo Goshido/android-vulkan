@@ -46,7 +46,7 @@ bool ScriptableMaterial::Init ( lua_State &vm, android_vulkan::Renderer &rendere
         }
     };
 
-    for ( auto const& extension : extensions )
+    for ( auto const &extension : extensions )
         lua_register ( &vm, extension.name, extension.func );
 
     _renderer = &renderer;
@@ -107,7 +107,7 @@ void ScriptableMaterial::Destroy () noexcept
     _renderer = nullptr;
 }
 
-MaterialRef& ScriptableMaterial::GetReference ( Material const &handle ) noexcept
+MaterialRef &ScriptableMaterial::GetReference ( Material const &handle ) noexcept
 {
     auto findResult = _materials.find ( &handle );
     AV_ASSERT ( findResult != _materials.end () )

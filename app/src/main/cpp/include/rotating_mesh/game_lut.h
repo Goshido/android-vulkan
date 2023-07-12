@@ -17,10 +17,10 @@ class GameLUT final : public Game
         GameLUT () noexcept;
 
         GameLUT ( GameLUT const & ) = delete;
-        GameLUT& operator = ( GameLUT const & ) = delete;
+        GameLUT &operator = ( GameLUT const & ) = delete;
 
         GameLUT ( GameLUT && ) = delete;
-        GameLUT& operator = ( GameLUT && ) = delete;
+        GameLUT &operator = ( GameLUT && ) = delete;
 
         ~GameLUT () override = default;
 

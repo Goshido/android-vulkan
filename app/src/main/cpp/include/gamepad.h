@@ -82,13 +82,13 @@ class Gamepad final
         std::mutex mutable                      _mutex {};
 
     public:
-        [[nodiscard]] static Gamepad& GetInstance () noexcept;
+        [[nodiscard]] static Gamepad &GetInstance () noexcept;
 
         Gamepad ( Gamepad const & ) = delete;
-        Gamepad& operator = ( Gamepad const & ) = delete;
+        Gamepad &operator = ( Gamepad const & ) = delete;
 
         Gamepad ( Gamepad && ) = delete;
-        Gamepad& operator = ( Gamepad && ) = delete;
+        Gamepad &operator = ( Gamepad && ) = delete;
 
         void BindKey ( void* context, KeyHandler handler, eGamepadKey key, eButtonState state ) noexcept;
         void UnbindKey ( eGamepadKey key, eButtonState state ) noexcept;

@@ -104,7 +104,7 @@ bool World1x1::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcep
     resolution.width = resolution.width * RESOLUTION_SCALE_WIDTH / 100U;
     resolution.height = resolution.height * RESOLUTION_SCALE_HEIGHT / 100U;
 
-    VkExtent2D const& surfaceResolution = renderer.GetViewportResolution ();
+    VkExtent2D const &surfaceResolution = renderer.GetViewportResolution ();
 
     if ( !_renderSession.OnSwapchainCreated ( renderer, resolution ) )
         return false;

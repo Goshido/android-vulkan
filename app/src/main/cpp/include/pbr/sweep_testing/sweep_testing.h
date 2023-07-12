@@ -39,10 +39,10 @@ class SweepTesting final : public android_vulkan::Game
         SweepTesting () = default;
 
         SweepTesting ( SweepTesting const & ) = delete;
-        SweepTesting& operator = ( SweepTesting const & ) = delete;
+        SweepTesting &operator = ( SweepTesting const & ) = delete;
 
         SweepTesting ( SweepTesting && ) = delete;
-        SweepTesting& operator = ( SweepTesting && ) = delete;
+        SweepTesting &operator = ( SweepTesting && ) = delete;
 
         ~SweepTesting () override = default;
 

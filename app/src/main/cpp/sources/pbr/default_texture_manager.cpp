@@ -27,7 +27,7 @@ void DefaultTextureManager::FreeTransferResources ( android_vulkan::Renderer &re
         _commandBuffers
     );
 
-    for ( auto& c : _commandBuffers )
+    for ( auto &c : _commandBuffers )
     {
         c = VK_NULL_HANDLE;
     }
@@ -151,32 +151,32 @@ void DefaultTextureManager::Destroy ( android_vulkan::Renderer &renderer ) noexc
     freeJob ( _transparent );
 }
 
-Texture2DRef const& DefaultTextureManager::GetAlbedo () const noexcept
+Texture2DRef const &DefaultTextureManager::GetAlbedo () const noexcept
 {
     return _albedo;
 }
 
-Texture2DRef const& DefaultTextureManager::GetEmission () const noexcept
+Texture2DRef const &DefaultTextureManager::GetEmission () const noexcept
 {
     return _emission;
 }
 
-Texture2DRef const& DefaultTextureManager::GetMask () const noexcept
+Texture2DRef const &DefaultTextureManager::GetMask () const noexcept
 {
     return _mask;
 }
 
-Texture2DRef const& DefaultTextureManager::GetNormal () const noexcept
+Texture2DRef const &DefaultTextureManager::GetNormal () const noexcept
 {
     return _normal;
 }
 
-Texture2DRef const& DefaultTextureManager::GetParams () const noexcept
+Texture2DRef const &DefaultTextureManager::GetParams () const noexcept
 {
     return _params;
 }
 
-Texture2DRef const& DefaultTextureManager::GetTransparent () const noexcept
+Texture2DRef const &DefaultTextureManager::GetTransparent () const noexcept
 {
     return _transparent;
 }

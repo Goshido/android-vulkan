@@ -17,16 +17,16 @@ class HREFAttributeChecker final : public AttributeChecker
 {
     private:
         char const*     _assetRoot = nullptr;
-        std::string&    _target;
+        std::string     &_target;
 
     public:
         HREFAttributeChecker () = delete;
 
         HREFAttributeChecker ( HREFAttributeChecker const & ) = delete;
-        HREFAttributeChecker& operator = ( HREFAttributeChecker const & ) = delete;
+        HREFAttributeChecker &operator = ( HREFAttributeChecker const & ) = delete;
 
         HREFAttributeChecker ( HREFAttributeChecker && ) = delete;
-        HREFAttributeChecker& operator = ( HREFAttributeChecker && ) = delete;
+        HREFAttributeChecker &operator = ( HREFAttributeChecker && ) = delete;
 
         explicit HREFAttributeChecker ( char const *html, std::string &target, char const* assetRoot ) noexcept;
 

@@ -98,18 +98,18 @@ class ContactManager final
         ContactManager () noexcept;
 
         ContactManager ( ContactManager const & ) = delete;
-        ContactManager& operator = ( ContactManager const & ) = delete;
+        ContactManager &operator = ( ContactManager const & ) = delete;
 
         ContactManager ( ContactManager && ) = delete;
-        ContactManager& operator = ( ContactManager && ) = delete;
+        ContactManager &operator = ( ContactManager && ) = delete;
 
         ~ContactManager () = default;
 
-        [[nodiscard]] Contact& AllocateContact ( ContactManifold &contactManifold ) noexcept;
-        [[nodiscard]] ContactManifold& AllocateContactManifold () noexcept;
+        [[nodiscard]] Contact &AllocateContact ( ContactManifold &contactManifold ) noexcept;
+        [[nodiscard]] ContactManifold &AllocateContactManifold () noexcept;
 
-        [[nodiscard]] std::vector<ContactManifold>& GetContactManifolds () noexcept;
-        [[nodiscard]] std::vector<ContactManifold> const& GetContactManifolds () const noexcept;
+        [[nodiscard]] std::vector<ContactManifold> &GetContactManifolds () noexcept;
+        [[nodiscard]] std::vector<ContactManifold> const &GetContactManifolds () const noexcept;
 
         void Reset () noexcept;
         void Warm ( ContactManifold &manifold ) noexcept;

@@ -18,7 +18,7 @@ PointLightComponent::PointLightComponent ( PointLightComponentDesc const &desc, 
 
     _name = reinterpret_cast<char const*> ( data + desc._name );
 
-    android_vulkan::ColorUnorm const& hue = desc._hue;
+    android_vulkan::ColorUnorm const &hue = desc._hue;
 
     GXColorRGB const unorm ( hue._red, hue._green, hue._blue, 255U );
     GXAABB bounds;
@@ -56,39 +56,39 @@ void PointLightComponent::Submit ( RenderSession &renderSession ) noexcept
 void PointLightComponent::SetBoundDimensions ( float width, float height, float depth ) noexcept
 {
     // NOLINTNEXTLINE - downcast.
-    auto& light = static_cast<PointLight&> ( *_pointLight );
+    auto &light = static_cast<PointLight &> ( *_pointLight );
     light.SetBoundDimensions ( width, height, depth );
 }
 
 void PointLightComponent::SetBoundDimensions ( GXVec3 const &dimensions ) noexcept
 {
     // NOLINTNEXTLINE - downcast.
-    auto& light = static_cast<PointLight&> ( *_pointLight );
+    auto &light = static_cast<PointLight &> ( *_pointLight );
     light.SetBoundDimensions ( dimensions );
 }
 
 [[maybe_unused]] void PointLightComponent::SetHue ( GXColorRGB const &hue ) noexcept
 {
     // NOLINTNEXTLINE - downcast.
-    auto& light = static_cast<PointLight&> ( *_pointLight );
+    auto &light = static_cast<PointLight &> ( *_pointLight );
     light.SetHue ( hue );
 }
 
 void PointLightComponent::SetIntensity ( float intensity ) noexcept
 {
     // NOLINTNEXTLINE - downcast.
-    auto& light = static_cast<PointLight&> ( *_pointLight );
+    auto &light = static_cast<PointLight &> ( *_pointLight );
     light.SetIntensity ( intensity );
 }
 
 void PointLightComponent::SetLocation ( GXVec3 const &location ) noexcept
 {
     // NOLINTNEXTLINE - downcast.
-    auto& light = static_cast<PointLight&> ( *_pointLight );
+    auto &light = static_cast<PointLight &> ( *_pointLight );
     light.SetLocation ( location );
 }
 
-ComponentRef& PointLightComponent::GetReference () noexcept
+ComponentRef &PointLightComponent::GetReference () noexcept
 {
     // TODO
     static ComponentRef dummy {};

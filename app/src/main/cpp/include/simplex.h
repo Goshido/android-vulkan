@@ -17,10 +17,10 @@ class Simplex final
         Simplex () = default;
 
         Simplex ( Simplex const & ) = delete;
-        Simplex& operator = ( Simplex const & ) = delete;
+        Simplex &operator = ( Simplex const & ) = delete;
 
         Simplex ( Simplex && ) = delete;
-        Simplex& operator = ( Simplex && ) = delete;
+        Simplex &operator = ( Simplex && ) = delete;
 
         ~Simplex () = default;
 

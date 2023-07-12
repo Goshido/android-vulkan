@@ -67,10 +67,10 @@ class RenderSession final
         RenderSession () = default;
 
         RenderSession ( RenderSession const & ) = delete;
-        RenderSession& operator = ( RenderSession const & ) = delete;
+        RenderSession &operator = ( RenderSession const & ) = delete;
 
         RenderSession ( RenderSession && ) = delete;
-        RenderSession& operator = ( RenderSession && ) = delete;
+        RenderSession &operator = ( RenderSession && ) = delete;
 
         ~RenderSession () = default;
 
@@ -78,7 +78,7 @@ class RenderSession final
         [[nodiscard]] bool End ( android_vulkan::Renderer &renderer, double deltaTime ) noexcept;
 
         void FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept;
-        [[nodiscard]] UIPass& GetUIPass () noexcept;
+        [[nodiscard]] UIPass &GetUIPass () noexcept;
 
         [[nodiscard]] bool OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept;
         void OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept;

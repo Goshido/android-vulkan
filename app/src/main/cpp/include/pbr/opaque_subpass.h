@@ -19,14 +19,14 @@ class OpaqueSubpass final : public GeometrySubpassBase
         OpaqueSubpass () = default;
 
         OpaqueSubpass ( OpaqueSubpass const & ) = delete;
-        OpaqueSubpass& operator = ( OpaqueSubpass const & ) = delete;
+        OpaqueSubpass &operator = ( OpaqueSubpass const & ) = delete;
 
         OpaqueSubpass ( OpaqueSubpass && ) = delete;
-        OpaqueSubpass& operator = ( OpaqueSubpass && ) = delete;
+        OpaqueSubpass &operator = ( OpaqueSubpass && ) = delete;
 
         ~OpaqueSubpass () = default;
 
-        [[nodiscard]] SceneData& GetSceneData () noexcept;
+        [[nodiscard]] SceneData &GetSceneData () noexcept;
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
             VkExtent2D const &resolution,

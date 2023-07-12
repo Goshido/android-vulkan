@@ -33,10 +33,10 @@ class UniformBufferPool final
         UniformBufferPool () = delete;
 
         UniformBufferPool ( UniformBufferPool const & ) = delete;
-        UniformBufferPool& operator = ( UniformBufferPool const & ) = delete;
+        UniformBufferPool &operator = ( UniformBufferPool const & ) = delete;
 
         UniformBufferPool ( UniformBufferPool && ) = delete;
-        UniformBufferPool& operator = ( UniformBufferPool && ) = delete;
+        UniformBufferPool &operator = ( UniformBufferPool && ) = delete;
 
         explicit UniformBufferPool ( eUniformPoolSize size ) noexcept;
         ~UniformBufferPool () = default;

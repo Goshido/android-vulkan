@@ -27,10 +27,10 @@ class LightLightupBaseProgram : public Program
         LightLightupBaseProgram () = delete;
 
         LightLightupBaseProgram ( LightLightupBaseProgram const & ) = delete;
-        LightLightupBaseProgram& operator = ( LightLightupBaseProgram const & ) = delete;
+        LightLightupBaseProgram &operator = ( LightLightupBaseProgram const & ) = delete;
 
         LightLightupBaseProgram ( LightLightupBaseProgram && ) = delete;
-        LightLightupBaseProgram& operator = ( LightLightupBaseProgram && ) = delete;
+        LightLightupBaseProgram &operator = ( LightLightupBaseProgram && ) = delete;
 
     protected:
         explicit LightLightupBaseProgram ( std::string &&name ) noexcept;

@@ -26,10 +26,10 @@ class CSSParser final
         CSSParser () = default;
 
         CSSParser ( CSSParser const & ) = delete;
-        CSSParser& operator = ( CSSParser const & ) = delete;
+        CSSParser &operator = ( CSSParser const & ) = delete;
 
         CSSParser ( CSSParser && ) = default;
-        CSSParser& operator = ( CSSParser && ) = default;
+        CSSParser &operator = ( CSSParser && ) = default;
 
         ~CSSParser () = default;
 
@@ -42,7 +42,7 @@ class CSSParser final
         [[nodiscard]] std::optional<CSSProps const*> FindID ( std::u32string const &id ) const noexcept;
 
         // Method returns source file path from which CSS rules were constructed.
-        [[nodiscard]] std::string const& GetSource () const noexcept;
+        [[nodiscard]] std::string const &GetSource () const noexcept;
 
         [[nodiscard]] bool Parse ( char const* css, Stream stream, std::string &&assetRoot ) noexcept;
 };

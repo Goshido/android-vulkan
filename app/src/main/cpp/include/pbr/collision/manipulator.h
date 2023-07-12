@@ -19,10 +19,10 @@ class Manipulator final
         Manipulator () = default;
 
         Manipulator ( Manipulator const & ) = delete;
-        Manipulator& operator = ( Manipulator const & ) = delete;
+        Manipulator &operator = ( Manipulator const & ) = delete;
 
         Manipulator ( Manipulator && ) = delete;
-        Manipulator& operator = ( Manipulator && ) = delete;
+        Manipulator &operator = ( Manipulator && ) = delete;
 
         ~Manipulator () = default;
 

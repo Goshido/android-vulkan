@@ -23,10 +23,10 @@ class PositionProperty final : public Property
         PositionProperty () = delete;
 
         PositionProperty ( PositionProperty const & ) = delete;
-        PositionProperty& operator = ( PositionProperty const & ) = delete;
+        PositionProperty &operator = ( PositionProperty const & ) = delete;
 
         PositionProperty ( PositionProperty && ) = delete;
-        PositionProperty& operator = ( PositionProperty && ) = delete;
+        PositionProperty &operator = ( PositionProperty && ) = delete;
 
         explicit PositionProperty ( eValue value ) noexcept;
 

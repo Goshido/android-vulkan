@@ -13,10 +13,10 @@ class OpaqueMaterial final : public GeometryPassMaterial
         OpaqueMaterial () noexcept;
 
         OpaqueMaterial ( OpaqueMaterial const & ) = default;
-        OpaqueMaterial& operator = ( OpaqueMaterial const & ) = default;
+        OpaqueMaterial &operator = ( OpaqueMaterial const & ) = default;
 
         OpaqueMaterial ( OpaqueMaterial && ) = default;
-        OpaqueMaterial& operator = ( OpaqueMaterial && ) = default;
+        OpaqueMaterial &operator = ( OpaqueMaterial && ) = default;
 
         ~OpaqueMaterial () override = default;
 };

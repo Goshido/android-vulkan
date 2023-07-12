@@ -16,16 +16,16 @@ namespace pbr {
 class FontFamilyPropertyChecker final : public PropertyChecker
 {
     private:
-        std::u32string&     _target;
+        std::u32string      &_target;
 
     public:
         FontFamilyPropertyChecker () = delete;
 
         FontFamilyPropertyChecker ( FontFamilyPropertyChecker const & ) = delete;
-        FontFamilyPropertyChecker& operator = ( FontFamilyPropertyChecker const & ) = delete;
+        FontFamilyPropertyChecker &operator = ( FontFamilyPropertyChecker const & ) = delete;
 
         FontFamilyPropertyChecker ( FontFamilyPropertyChecker && ) = delete;
-        FontFamilyPropertyChecker& operator = ( FontFamilyPropertyChecker && ) = delete;
+        FontFamilyPropertyChecker &operator = ( FontFamilyPropertyChecker && ) = delete;
 
         explicit FontFamilyPropertyChecker ( char const* css, std::u32string &target ) noexcept;
 

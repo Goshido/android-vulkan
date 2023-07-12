@@ -18,10 +18,10 @@ struct Face final
     Face () = default;
 
     Face ( Face const & ) = default;
-    Face& operator = ( Face const & ) = default;
+    Face &operator = ( Face const & ) = default;
 
     Face ( Face && ) = default;
-    Face& operator = ( Face && ) = default;
+    Face &operator = ( Face && ) = default;
 
     explicit Face ( size_t a, size_t b, size_t c, Vertices const &vertices ) noexcept;
 
@@ -51,17 +51,17 @@ class EPA final
         EPA () noexcept;
 
         EPA ( EPA const & ) = delete;
-        EPA& operator = ( EPA const & ) = delete;
+        EPA &operator = ( EPA const & ) = delete;
 
         EPA ( EPA && ) = delete;
-        EPA& operator = ( EPA && ) = delete;
+        EPA &operator = ( EPA && ) = delete;
 
         ~EPA () = default;
 
         [[nodiscard]] float GetDepth () const noexcept;
 
         // The direction the shape B must be pushed to eliminate collision.
-        [[nodiscard]] GXVec3 const& GetNormal () const noexcept;
+        [[nodiscard]] GXVec3 const &GetNormal () const noexcept;
 
         [[nodiscard]] uint16_t GetSteps () const noexcept;
         [[nodiscard]] uint16_t GetEdgeCount () const noexcept;

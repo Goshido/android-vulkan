@@ -36,18 +36,18 @@ class Camera final
         Camera () noexcept;
 
         Camera ( Camera const &other ) = delete;
-        Camera& operator = ( Camera const &other ) = delete;
+        Camera &operator = ( Camera const &other ) = delete;
 
         Camera ( Camera &&other ) = delete;
-        Camera& operator = ( Camera &&other ) = delete;
+        Camera &operator = ( Camera &&other ) = delete;
 
         ~Camera () = default;
 
         void CaptureInput () noexcept;
         void ReleaseInput () noexcept;
 
-        [[nodiscard]] GXMat4 const& GetLocalMatrix () const noexcept;
-        [[nodiscard]] GXMat4 const& GetProjectionMatrix () const noexcept;
+        [[nodiscard]] GXMat4 const &GetLocalMatrix () const noexcept;
+        [[nodiscard]] GXMat4 const &GetProjectionMatrix () const noexcept;
 
         void SetLocation ( GXVec3 const &location ) noexcept;
 

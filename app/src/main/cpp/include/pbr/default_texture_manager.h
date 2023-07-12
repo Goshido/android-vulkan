@@ -26,10 +26,10 @@ class DefaultTextureManager final
         DefaultTextureManager () = default;
 
         DefaultTextureManager ( DefaultTextureManager const & ) = delete;
-        DefaultTextureManager& operator = ( DefaultTextureManager const & ) = delete;
+        DefaultTextureManager &operator = ( DefaultTextureManager const & ) = delete;
 
         DefaultTextureManager ( DefaultTextureManager && ) = delete;
-        DefaultTextureManager& operator = ( DefaultTextureManager && ) = delete;
+        DefaultTextureManager &operator = ( DefaultTextureManager && ) = delete;
 
         ~DefaultTextureManager () = default;
 
@@ -38,12 +38,12 @@ class DefaultTextureManager final
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, VkCommandPool commandPool ) noexcept;
         void Destroy ( android_vulkan::Renderer &renderer) noexcept;
 
-        [[nodiscard]] Texture2DRef const& GetAlbedo () const noexcept;
-        [[nodiscard]] Texture2DRef const& GetEmission () const noexcept;
-        [[nodiscard]] Texture2DRef const& GetMask () const noexcept;
-        [[nodiscard]] Texture2DRef const& GetNormal () const noexcept;
-        [[nodiscard]] Texture2DRef const& GetParams () const noexcept;
-        [[nodiscard]] Texture2DRef const& GetTransparent () const noexcept;
+        [[nodiscard]] Texture2DRef const &GetAlbedo () const noexcept;
+        [[nodiscard]] Texture2DRef const &GetEmission () const noexcept;
+        [[nodiscard]] Texture2DRef const &GetMask () const noexcept;
+        [[nodiscard]] Texture2DRef const &GetNormal () const noexcept;
+        [[nodiscard]] Texture2DRef const &GetParams () const noexcept;
+        [[nodiscard]] Texture2DRef const &GetTransparent () const noexcept;
 };
 
 } // namespace pbr

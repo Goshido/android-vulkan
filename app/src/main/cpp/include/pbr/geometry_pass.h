@@ -29,10 +29,10 @@ class GeometryPass final
         GeometryPass () = default;
 
         GeometryPass ( GeometryPass const & ) = delete;
-        GeometryPass& operator = ( GeometryPass const & ) = delete;
+        GeometryPass &operator = ( GeometryPass const & ) = delete;
 
         GeometryPass ( GeometryPass && ) = delete;
-        GeometryPass& operator = ( GeometryPass && ) = delete;
+        GeometryPass &operator = ( GeometryPass && ) = delete;
 
         ~GeometryPass () = default;
 
@@ -46,8 +46,8 @@ class GeometryPass final
         void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
         void Execute ( VkCommandBuffer commandBuffer, RenderSessionStats &renderSessionStats ) noexcept;
 
-        [[nodiscard]] OpaqueSubpass& GetOpaqueSubpass () noexcept;
-        [[nodiscard]] StippleSubpass& GetStippleSubpass () noexcept;
+        [[nodiscard]] OpaqueSubpass &GetOpaqueSubpass () noexcept;
+        [[nodiscard]] StippleSubpass &GetStippleSubpass () noexcept;
 
         void Reset () noexcept;
 

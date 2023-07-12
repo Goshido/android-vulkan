@@ -11,19 +11,19 @@ namespace pbr {
 class LengthShorthandPropertyChecker final : public PropertyChecker
 {
     private:
-        LengthValue&    _bottom;
-        LengthValue&    _top;
-        LengthValue&    _left;
-        LengthValue&    _right;
+        LengthValue     &_bottom;
+        LengthValue     &_top;
+        LengthValue     &_left;
+        LengthValue     &_right;
 
     public:
         LengthShorthandPropertyChecker () = delete;
 
         LengthShorthandPropertyChecker ( LengthShorthandPropertyChecker const & ) = delete;
-        LengthShorthandPropertyChecker& operator = ( LengthShorthandPropertyChecker const & ) = delete;
+        LengthShorthandPropertyChecker &operator = ( LengthShorthandPropertyChecker const & ) = delete;
 
         LengthShorthandPropertyChecker ( LengthShorthandPropertyChecker && ) = delete;
-        LengthShorthandPropertyChecker& operator = ( LengthShorthandPropertyChecker && ) = delete;
+        LengthShorthandPropertyChecker &operator = ( LengthShorthandPropertyChecker && ) = delete;
 
         explicit LengthShorthandPropertyChecker ( char const* css,
             Property::eType property,

@@ -29,10 +29,10 @@ class ContactDetector final
         ContactDetector () noexcept;
 
         ContactDetector ( ContactDetector const & ) = delete;
-        ContactDetector& operator = ( ContactDetector const & ) = delete;
+        ContactDetector &operator = ( ContactDetector const & ) = delete;
 
         ContactDetector ( ContactDetector && ) = delete;
-        ContactDetector& operator = ( ContactDetector && ) = delete;
+        ContactDetector &operator = ( ContactDetector && ) = delete;
 
         ~ContactDetector () = default;
 

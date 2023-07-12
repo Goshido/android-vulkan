@@ -23,10 +23,10 @@ class LightupCommonDescriptorSetLayoutImpl final
         LightupCommonDescriptorSetLayoutImpl () = default;
 
         LightupCommonDescriptorSetLayoutImpl ( LightupCommonDescriptorSetLayoutImpl const & ) = delete;
-        LightupCommonDescriptorSetLayoutImpl& operator = ( LightupCommonDescriptorSetLayoutImpl const & ) = delete;
+        LightupCommonDescriptorSetLayoutImpl &operator = ( LightupCommonDescriptorSetLayoutImpl const & ) = delete;
 
         LightupCommonDescriptorSetLayoutImpl ( LightupCommonDescriptorSetLayoutImpl && ) = delete;
-        LightupCommonDescriptorSetLayoutImpl& operator = ( LightupCommonDescriptorSetLayoutImpl && ) = delete;
+        LightupCommonDescriptorSetLayoutImpl &operator = ( LightupCommonDescriptorSetLayoutImpl && ) = delete;
 
         ~LightupCommonDescriptorSetLayoutImpl () = default;
 

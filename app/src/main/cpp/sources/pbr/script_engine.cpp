@@ -43,7 +43,7 @@ constexpr static char const SCRIPT[] = "pbr/engine/scene.lua";
 
 ScriptEngine* ScriptEngine::_instance = nullptr;
 
-lua_State& ScriptEngine::GetVirtualMachine () noexcept
+lua_State &ScriptEngine::GetVirtualMachine () noexcept
 {
     return *_vm;
 }
@@ -59,7 +59,7 @@ bool ScriptEngine::Init ( android_vulkan::Renderer &renderer, android_vulkan::So
     return InitInterfaceFunctions ( renderer, soundMixer );
 }
 
-ScriptEngine& ScriptEngine::GetInstance () noexcept
+ScriptEngine &ScriptEngine::GetInstance () noexcept
 {
     if ( !_instance )
         _instance = new ScriptEngine ();
@@ -86,7 +86,7 @@ bool ScriptEngine::ExtendFrontend ( android_vulkan::Renderer &renderer,
     android_vulkan::SoundMixer &soundMixer
 ) const noexcept
 {
-    lua_State& vm = *_vm;
+    lua_State &vm = *_vm;
 
     ScriptableGXMat3::Init ( vm );
     ScriptableGXMat4::Init ( vm );
@@ -187,7 +187,7 @@ void ScriptEngine::InitLibraries () const noexcept
 
     lua_State* vm = _vm.get ();
 
-    for ( auto const& lib : libs )
+    for ( auto const &lib : libs )
         luaL_requiref ( vm, lib.name, lib.func, 1 );
 
     lua_pop ( vm, static_cast<int> ( std::size ( libs ) ) );
@@ -287,7 +287,7 @@ bool ScriptEngine::LoadScript ( lua_State* vm,
     if ( !file.LoadContent () )
         return false;
 
-    std::vector<uint8_t> const& data = file.GetContent ();
+    std::vector<uint8_t> const &data = file.GetContent ();
 
     int const result = luaL_loadbufferx ( vm,
         reinterpret_cast<char const*> ( data.data () ),

@@ -31,10 +31,10 @@ class LightPass final
         LightPass () = default;
 
         LightPass ( LightPass const & ) = delete;
-        LightPass& operator = ( LightPass const & ) = delete;
+        LightPass &operator = ( LightPass const & ) = delete;
 
         LightPass ( LightPass && ) = delete;
-        LightPass& operator = ( LightPass && ) = delete;
+        LightPass &operator = ( LightPass && ) = delete;
 
         ~LightPass () = default;
 

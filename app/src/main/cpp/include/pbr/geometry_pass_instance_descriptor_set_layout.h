@@ -14,12 +14,12 @@ class GeometryPassInstanceDescriptorSetLayout final : public DescriptorSetLayout
 
         GeometryPassInstanceDescriptorSetLayout ( GeometryPassInstanceDescriptorSetLayout const & ) = delete;
 
-        GeometryPassInstanceDescriptorSetLayout& operator = (
+        GeometryPassInstanceDescriptorSetLayout &operator = (
             GeometryPassInstanceDescriptorSetLayout const &
         ) = delete;
 
         GeometryPassInstanceDescriptorSetLayout ( GeometryPassInstanceDescriptorSetLayout && ) = delete;
-        GeometryPassInstanceDescriptorSetLayout& operator = ( GeometryPassInstanceDescriptorSetLayout && ) = delete;
+        GeometryPassInstanceDescriptorSetLayout &operator = ( GeometryPassInstanceDescriptorSetLayout && ) = delete;
 
         ~GeometryPassInstanceDescriptorSetLayout () override = default;
 

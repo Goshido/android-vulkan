@@ -13,10 +13,10 @@ class ReflectionGlobalDescriptorSetLayout final : public DescriptorSetLayout
         ReflectionGlobalDescriptorSetLayout () = default;
 
         ReflectionGlobalDescriptorSetLayout ( ReflectionGlobalDescriptorSetLayout const & ) = delete;
-        ReflectionGlobalDescriptorSetLayout& operator = ( ReflectionGlobalDescriptorSetLayout const & ) = delete;
+        ReflectionGlobalDescriptorSetLayout &operator = ( ReflectionGlobalDescriptorSetLayout const & ) = delete;
 
         ReflectionGlobalDescriptorSetLayout ( ReflectionGlobalDescriptorSetLayout && ) = delete;
-        ReflectionGlobalDescriptorSetLayout& operator = ( ReflectionGlobalDescriptorSetLayout && ) = delete;
+        ReflectionGlobalDescriptorSetLayout &operator = ( ReflectionGlobalDescriptorSetLayout && ) = delete;
 
         ~ReflectionGlobalDescriptorSetLayout () override = default;
 

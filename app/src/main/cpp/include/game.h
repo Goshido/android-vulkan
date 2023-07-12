@@ -11,10 +11,10 @@ class Game
 {
     public:
         Game ( Game const & ) = delete;
-        Game& operator = ( Game const & ) = delete;
+        Game &operator = ( Game const & ) = delete;
 
         Game ( Game && ) = delete;
-        Game& operator = ( Game && ) = delete;
+        Game &operator = ( Game && ) = delete;
 
         virtual ~Game () = default;
 

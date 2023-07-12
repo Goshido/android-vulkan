@@ -16,10 +16,10 @@ class [[maybe_unused]] GlobalForceGravity final : public GlobalForce
         GlobalForceGravity () = delete;
 
         GlobalForceGravity ( GlobalForceGravity const & ) = delete;
-        GlobalForceGravity& operator = ( GlobalForceGravity const & ) = delete;
+        GlobalForceGravity &operator = ( GlobalForceGravity const & ) = delete;
 
         GlobalForceGravity ( GlobalForceGravity && ) = delete;
-        GlobalForceGravity& operator = ( GlobalForceGravity && ) = delete;
+        GlobalForceGravity &operator = ( GlobalForceGravity && ) = delete;
 
         explicit GlobalForceGravity ( GXVec3 const &freeFallAcceleration ) noexcept;
 

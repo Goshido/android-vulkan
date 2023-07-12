@@ -15,7 +15,7 @@ SutherlandHodgman::SutherlandHodgman () noexcept
     _workingPoints.reserve ( DEFAULT_CAPACITY );
 }
 
-SutherlandHodgmanResult const& SutherlandHodgman::Run ( Vertices const &shapeAPoints,
+SutherlandHodgmanResult const &SutherlandHodgman::Run ( Vertices const &shapeAPoints,
     GXVec3 const &shapeANormal,
     Vertices const &shapeBPoints,
     GXVec3 const &shapeBNormal
@@ -38,7 +38,7 @@ SutherlandHodgmanResult const& SutherlandHodgman::Run ( Vertices const &shapeAPo
         _workingPoints.swap ( _clipPoints );
         _clipPoints.clear ();
 
-        GXVec2 const& clipEdgeOrigin = _windowPoints[ i ];
+        GXVec2 const &clipEdgeOrigin = _windowPoints[ i ];
         GXVec2 clipEdge {};
         clipEdge.Subtract ( _windowPoints[ ( i + 1 ) % windowPoints ], clipEdgeOrigin );
 
@@ -50,8 +50,8 @@ SutherlandHodgmanResult const& SutherlandHodgman::Run ( Vertices const &shapeAPo
 
         for ( size_t j = 0U; j < vertexCount; ++j )
         {
-            GXVec2 const& current = _workingPoints[ j ];
-            GXVec2 const& next = _workingPoints[ ( j + 1U ) % vertexCount ];
+            GXVec2 const &current = _workingPoints[ j ];
+            GXVec2 const &next = _workingPoints[ ( j + 1U ) % vertexCount ];
 
             // Optimization: The operands have been swapped to eliminate minus in denominator later.
             GXVec2 ab {};
@@ -97,9 +97,9 @@ SutherlandHodgmanResult const& SutherlandHodgman::Run ( Vertices const &shapeAPo
     GXVec3 originAOffset {};
     originAOffset.Multiply ( shapeANormal, shapeANormal.DotProduct ( shapeAPoints[ 0U ] ) );
 
-    GXVec3 const& b0 = shapeBPoints[ 0U ];
+    GXVec3 const &b0 = shapeBPoints[ 0U ];
 
-    for ( auto const& v : _clipPoints )
+    for ( auto const &v : _clipPoints )
     {
         // Restoring 3D point on shape A...
         GXVec3 alpha {};
@@ -135,7 +135,7 @@ void SutherlandHodgman::Project ( Projection &dst,
     dst.clear ();
     dst.reserve ( src.size () );
 
-    for ( auto const& v : src )
+    for ( auto const &v : src )
     {
         dst.emplace_back ( xAxis.DotProduct ( v ), yAxis.DotProduct ( v ) );
     }

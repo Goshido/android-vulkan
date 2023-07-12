@@ -59,7 +59,7 @@ void UIElement::InitCommon ( lua_State &vm ) noexcept
         }
     };
 
-    for ( auto const& extension : extensions )
+    for ( auto const &extension : extensions )
     {
         lua_register ( &vm, extension.name, extension.func );
     }
@@ -108,7 +108,7 @@ float UIElement::ResolvePixelLength ( LengthValue const &length,
             if ( _parent )
             {
                 // NOLINTNEXTLINE - downcast.
-                auto const& div = *static_cast<CSSUIElement const*> ( _parent );
+                auto const &div = *static_cast<CSSUIElement const*> ( _parent );
 
                 LengthValue const* cases[] = { &div._css._width, &div._css._height };
                 bool const isAuto = cases[ static_cast<size_t> ( isHeight ) ]->GetType () == LengthValue::eType::Auto;
@@ -143,8 +143,8 @@ float UIElement::ResolveFontSize ( CSSUnitToDevicePixel const &cssUnits,
     for ( UIElement const* p = &startTraverseElement; p; p = p->_parent )
     {
         // NOLINTNEXTLINE - downcast.
-        auto const& div = *static_cast<CSSUIElement const*> ( p );
-        LengthValue const& size = div._css._fontSize;
+        auto const &div = *static_cast<CSSUIElement const*> ( p );
+        LengthValue const &size = div._css._fontSize;
         type = size.GetType ();
 
         if ( type == LengthValue::eType::EM )
@@ -277,7 +277,7 @@ int UIElement::OnGarbageCollected ( lua_State* state )
 
 int UIElement::OnHide ( lua_State* state )
 {
-    auto& item = *static_cast<UIElement*> ( lua_touserdata ( state, 1 ) );
+    auto &item = *static_cast<UIElement*> ( lua_touserdata ( state, 1 ) );
     item._visible = false;
     item._visibilityChanged = true;
     return 0;
@@ -291,14 +291,14 @@ int UIElement::OnIsVisible ( lua_State* state )
         return 0;
     }
 
-    auto const& item = *static_cast<UIElement const*> ( lua_touserdata ( state, 1 ) );
+    auto const &item = *static_cast<UIElement const*> ( lua_touserdata ( state, 1 ) );
     lua_pushboolean ( state, item._visible );
     return 1;
 }
 
 int UIElement::OnShow ( lua_State* state )
 {
-    auto& item = *static_cast<UIElement*> ( lua_touserdata ( state, 1 ) );
+    auto &item = *static_cast<UIElement*> ( lua_touserdata ( state, 1 ) );
     item._visible = true;
     item._visibilityChanged = true;
     return 0;

@@ -50,12 +50,12 @@ IMGHTML5Element::IMGHTML5Element ( std::u32string &&id,
     _cssComputedValues._height = LengthValue ( LengthValue::eType::Auto, 0.0F );
 }
 
-std::string& IMGHTML5Element::GetAssetPath () noexcept
+std::string &IMGHTML5Element::GetAssetPath () noexcept
 {
     return _assetPath;
 }
 
-std::u32string& IMGHTML5Element::GetID () noexcept
+std::u32string &IMGHTML5Element::GetID () noexcept
 {
     return _id;
 }

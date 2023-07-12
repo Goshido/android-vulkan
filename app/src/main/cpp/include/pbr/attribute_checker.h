@@ -26,10 +26,10 @@ class AttributeChecker
         AttributeChecker () = delete;
 
         AttributeChecker ( AttributeChecker const & ) = delete;
-        AttributeChecker& operator = ( AttributeChecker const & ) = delete;
+        AttributeChecker &operator = ( AttributeChecker const & ) = delete;
 
         AttributeChecker ( AttributeChecker && ) = delete;
-        AttributeChecker& operator = ( AttributeChecker && ) = delete;
+        AttributeChecker &operator = ( AttributeChecker && ) = delete;
 
         [[nodiscard]] bool IsDetected () const noexcept;
 

@@ -27,10 +27,10 @@ class IMGHTML5Element final : public HTML5Element
         IMGHTML5Element () = delete;
 
         IMGHTML5Element ( IMGHTML5Element const & ) = delete;
-        IMGHTML5Element& operator = ( IMGHTML5Element const & ) = delete;
+        IMGHTML5Element &operator = ( IMGHTML5Element const & ) = delete;
 
         IMGHTML5Element ( IMGHTML5Element && ) = delete;
-        IMGHTML5Element& operator = ( IMGHTML5Element && ) = delete;
+        IMGHTML5Element &operator = ( IMGHTML5Element && ) = delete;
 
         explicit IMGHTML5Element ( std::u32string &&id,
             std::unordered_set<std::u32string> &&classes,
@@ -39,8 +39,8 @@ class IMGHTML5Element final : public HTML5Element
 
         ~IMGHTML5Element () override = default;
 
-        [[nodiscard]] std::string& GetAssetPath () noexcept;
-        [[nodiscard]] std::u32string& GetID () noexcept;
+        [[nodiscard]] std::string &GetAssetPath () noexcept;
+        [[nodiscard]] std::u32string &GetID () noexcept;
 
         [[nodiscard]] static std::optional<Result> Parse ( char const* html,
             Stream stream,

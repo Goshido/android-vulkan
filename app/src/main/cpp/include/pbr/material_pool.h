@@ -34,10 +34,10 @@ class MaterialPool final
         MaterialPool () = default;
 
         MaterialPool ( MaterialPool const & ) = delete;
-        MaterialPool& operator = ( MaterialPool const & ) = delete;
+        MaterialPool &operator = ( MaterialPool const & ) = delete;
 
         MaterialPool ( MaterialPool && ) = delete;
-        MaterialPool& operator = ( MaterialPool && ) = delete;
+        MaterialPool &operator = ( MaterialPool && ) = delete;
 
         ~MaterialPool () = default;
 

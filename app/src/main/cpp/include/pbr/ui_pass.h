@@ -150,10 +150,10 @@ class UIPass final
         UIPass () = default;
 
         UIPass ( UIPass const & ) = delete;
-        UIPass& operator = ( UIPass const & ) = delete;
+        UIPass &operator = ( UIPass const & ) = delete;
 
         UIPass ( UIPass && ) = delete;
-        UIPass& operator = ( UIPass && ) = delete;
+        UIPass &operator = ( UIPass && ) = delete;
 
         ~UIPass () = default;
 
@@ -166,7 +166,7 @@ class UIPass final
             VkFence fence
         ) noexcept;
 
-        [[nodiscard]] FontStorage& GetFontStorage () noexcept;
+        [[nodiscard]] FontStorage &GetFontStorage () noexcept;
         [[nodiscard]] size_t GetUsedVertexCount () const noexcept;
 
         [[nodiscard]] bool OnInitDevice ( android_vulkan::Renderer &renderer,

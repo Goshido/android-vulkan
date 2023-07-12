@@ -23,10 +23,10 @@ class ReflectionLocalDescriptorSetLayoutImpl final
         ReflectionLocalDescriptorSetLayoutImpl () = default;
     
         ReflectionLocalDescriptorSetLayoutImpl ( ReflectionLocalDescriptorSetLayoutImpl const & ) = delete;
-        ReflectionLocalDescriptorSetLayoutImpl& operator = ( ReflectionLocalDescriptorSetLayoutImpl const & ) = delete;
+        ReflectionLocalDescriptorSetLayoutImpl &operator = ( ReflectionLocalDescriptorSetLayoutImpl const & ) = delete;
     
         ReflectionLocalDescriptorSetLayoutImpl ( ReflectionLocalDescriptorSetLayoutImpl && ) = delete;
-        ReflectionLocalDescriptorSetLayoutImpl& operator = ( ReflectionLocalDescriptorSetLayoutImpl && ) = delete;
+        ReflectionLocalDescriptorSetLayoutImpl &operator = ( ReflectionLocalDescriptorSetLayoutImpl && ) = delete;
     
         ~ReflectionLocalDescriptorSetLayoutImpl () = default;
     

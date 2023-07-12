@@ -29,10 +29,10 @@ class UniformBufferPoolManager final
         UniformBufferPoolManager () = delete;
 
         UniformBufferPoolManager ( UniformBufferPoolManager const & ) = delete;
-        UniformBufferPoolManager& operator = ( UniformBufferPoolManager const & ) = delete;
+        UniformBufferPoolManager &operator = ( UniformBufferPoolManager const & ) = delete;
 
         UniformBufferPoolManager ( UniformBufferPoolManager && ) = delete;
-        UniformBufferPoolManager& operator = ( UniformBufferPoolManager && ) = delete;
+        UniformBufferPoolManager &operator = ( UniformBufferPoolManager && ) = delete;
 
         explicit UniformBufferPoolManager ( eUniformPoolSize size, VkPipelineStageFlags syncFlags ) noexcept;
 

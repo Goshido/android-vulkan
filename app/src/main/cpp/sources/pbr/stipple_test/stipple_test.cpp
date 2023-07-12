@@ -87,7 +87,7 @@ void StippleTest::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcep
 bool StippleTest::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept
 {
     _camera.CaptureInput ();
-    VkExtent2D const& surfaceResolution = renderer.GetViewportResolution ();
+    VkExtent2D const &surfaceResolution = renderer.GetViewportResolution ();
 
     _camera.SetProjection ( GXDegToRad ( FIELD_OF_VIEW ),
         static_cast<float> ( surfaceResolution.width ) / static_cast<float> ( surfaceResolution.height ),
@@ -95,7 +95,7 @@ bool StippleTest::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noex
         Z_FAR
     );
 
-    VkExtent2D const& viewport = renderer.GetViewportResolution ();
+    VkExtent2D const &viewport = renderer.GetViewportResolution ();
 
     VkExtent2D const resolution
     {
@@ -143,13 +143,13 @@ void StippleTest::Animate ( float deltaTime ) noexcept
     GXMat4 transform {};
     transform.From ( r, renderLocation );
 
-    GXVec3& x = *reinterpret_cast<GXVec3*> ( &transform._m[ 0U ][ 0U ] );
+    GXVec3 &x = *reinterpret_cast<GXVec3*> ( &transform._m[ 0U ][ 0U ] );
     x.Multiply ( x, renderScale._data[ 0U ] );
 
-    GXVec3& y = *reinterpret_cast<GXVec3*> ( &transform._m[ 1U ][ 0U ] );
+    GXVec3 &y = *reinterpret_cast<GXVec3*> ( &transform._m[ 1U ][ 0U ] );
     y.Multiply ( y, renderScale._data[ 1U ] );
 
-    GXVec3& z = *reinterpret_cast<GXVec3*> ( &transform._m[ 2U ][ 0U ] );
+    GXVec3 &z = *reinterpret_cast<GXVec3*> ( &transform._m[ 2U ][ 0U ] );
     z.Multiply ( z, renderScale._data[ 2U ] );
 
     _stipple->SetTransform ( transform );

@@ -114,7 +114,7 @@ void UIProgram::Destroy ( VkDevice device ) noexcept
     DestroyShaderModules ( device );
 }
 
-Program::DescriptorSetInfo const& UIProgram::GetResourceInfo () const noexcept
+Program::DescriptorSetInfo const &UIProgram::GetResourceInfo () const noexcept
 {
     static DescriptorSetInfo const info
     {

@@ -19,10 +19,10 @@ class TransformComponent final : public Component
         TransformComponent () noexcept;
 
         TransformComponent ( TransformComponent const & ) = delete;
-        TransformComponent& operator = ( TransformComponent const & ) = delete;
+        TransformComponent &operator = ( TransformComponent const & ) = delete;
 
         TransformComponent ( TransformComponent && ) = delete;
-        TransformComponent& operator = ( TransformComponent && ) = delete;
+        TransformComponent &operator = ( TransformComponent && ) = delete;
 
         explicit TransformComponent ( TransformComponentDesc const &desc, uint8_t const* data ) noexcept;
 
@@ -33,7 +33,7 @@ class TransformComponent final : public Component
         [[nodiscard]] static bool Init ( lua_State &vm ) noexcept;
 
     private:
-        [[nodiscard]] ComponentRef& GetReference () noexcept override;
+        [[nodiscard]] ComponentRef &GetReference () noexcept override;
 
         [[nodiscard]] static int OnCreate ( lua_State* state );
         [[nodiscard]] static int OnGetTransform ( lua_State* state );

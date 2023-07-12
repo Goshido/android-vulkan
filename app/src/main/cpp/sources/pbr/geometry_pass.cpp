@@ -144,12 +144,12 @@ void GeometryPass::Execute ( VkCommandBuffer commandBuffer, RenderSessionStats &
     _materialPool.Commit ();
 }
 
-OpaqueSubpass& GeometryPass::GetOpaqueSubpass () noexcept
+OpaqueSubpass &GeometryPass::GetOpaqueSubpass () noexcept
 {
     return _opaqueSubpass;
 }
 
-StippleSubpass& GeometryPass::GetStippleSubpass () noexcept
+StippleSubpass &GeometryPass::GetStippleSubpass () noexcept
 {
     return _stippleSubpass;
 }

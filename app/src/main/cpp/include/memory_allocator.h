@@ -52,10 +52,10 @@ class MemoryAllocator final
                 Chunk () = default;
 
                 Chunk ( Chunk const & ) = delete;
-                Chunk& operator = ( Chunk const & ) = delete;
+                Chunk &operator = ( Chunk const & ) = delete;
 
                 Chunk ( Chunk && ) = delete;
-                Chunk& operator = ( Chunk && ) = delete;
+                Chunk &operator = ( Chunk && ) = delete;
 
                 ~Chunk () = default;
 
@@ -103,10 +103,10 @@ class MemoryAllocator final
         MemoryAllocator () = default;
 
         MemoryAllocator ( MemoryAllocator const & ) = delete;
-        MemoryAllocator& operator = ( MemoryAllocator const & ) = delete;
+        MemoryAllocator &operator = ( MemoryAllocator const & ) = delete;
 
         MemoryAllocator ( MemoryAllocator && ) = delete;
-        MemoryAllocator& operator = ( MemoryAllocator && ) = delete;
+        MemoryAllocator &operator = ( MemoryAllocator && ) = delete;
 
         ~MemoryAllocator () = default;
 
@@ -117,7 +117,7 @@ class MemoryAllocator final
 
         void MakeSnapshot () noexcept;
 
-        [[nodiscard]] bool MapMemory ( void*& ptr,
+        [[nodiscard]] bool MapMemory ( void* &ptr,
             VkDevice device,
             VkDeviceMemory memory,
             VkDeviceSize offset,

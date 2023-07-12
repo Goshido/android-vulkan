@@ -19,10 +19,10 @@ class ReflectionComponent final : public RenderableComponent, public Transformab
         ReflectionComponent () = delete;
 
         ReflectionComponent ( ReflectionComponent const & ) = delete;
-        ReflectionComponent& operator = ( ReflectionComponent const & ) = delete;
+        ReflectionComponent &operator = ( ReflectionComponent const & ) = delete;
 
         ReflectionComponent ( ReflectionComponent && ) = delete;
-        ReflectionComponent& operator = ( ReflectionComponent && ) = delete;
+        ReflectionComponent &operator = ( ReflectionComponent && ) = delete;
 
         explicit ReflectionComponent ( android_vulkan::Renderer &renderer,
             size_t &commandBufferConsumed,
@@ -37,7 +37,7 @@ class ReflectionComponent final : public RenderableComponent, public Transformab
 
     private:
         void FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept override;
-        [[nodiscard]] ComponentRef& GetReference () noexcept override;
+        [[nodiscard]] ComponentRef &GetReference () noexcept override;
         void Submit ( RenderSession &renderSession ) noexcept override;
         void OnTransform ( GXMat4 const &transformWorld ) noexcept override;
 };

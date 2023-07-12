@@ -118,12 +118,12 @@ uint8_t Texture2D::GetMipLevelCount () const noexcept
     return _mipLevels;
 }
 
-std::string const& Texture2D::GetName () const noexcept
+std::string const &Texture2D::GetName () const noexcept
 {
     return _fileName;
 }
 
-VkExtent2D const& Texture2D::GetResolution () const noexcept
+VkExtent2D const &Texture2D::GetResolution () const noexcept
 {
     return _resolution;
 }
@@ -567,7 +567,7 @@ bool Texture2D::UploadCompressed ( Renderer &renderer,
 
     for ( uint8_t i = 0U; i < mips; ++i )
     {
-        MipInfo const& mip = ktx.GetMip ( i );
+        MipInfo const &mip = ktx.GetMip ( i );
         std::memcpy ( mappedBuffer + offset, mip._data, static_cast<size_t> ( mip._size ) );
         offset += static_cast<size_t> ( mip._size );
     }
@@ -642,7 +642,7 @@ bool Texture2D::UploadCompressed ( Renderer &renderer,
 
     for ( uint8_t i = 0U; i < mips; ++i )
     {
-        MipInfo const& mip = ktx.GetMip ( i );
+        MipInfo const &mip = ktx.GetMip ( i );
 
         copyRegion.imageSubresource.mipLevel = static_cast<uint32_t> ( i );
         copyRegion.imageExtent.width = mip._resolution.width;
@@ -944,8 +944,8 @@ bool Texture2D::UploadDataInternal ( Renderer &renderer,
         }
     };
 
-    VkOffset3D& src = blitInfo.srcOffsets[ 1U ];
-    VkOffset3D& dst = blitInfo.dstOffsets[ 1U ];
+    VkOffset3D &src = blitInfo.srcOffsets[ 1U ];
+    VkOffset3D &dst = blitInfo.dstOffsets[ 1U ];
 
     for ( uint32_t i = 1U; i < imageInfo.mipLevels; ++i )
     {
@@ -1055,18 +1055,18 @@ bool Texture2D::IsCompressed ( std::string const &fileName ) noexcept
 }
 
 bool Texture2D::LoadImage ( std::vector<uint8_t> &pixelData,
-    std::string const& fileName,
+    std::string const &fileName,
     int &width,
     int &height,
     int &channels
 ) noexcept
 {
-    File file ( const_cast<std::string&> ( fileName ) );
+    File file ( const_cast<std::string &> ( fileName ) );
 
     if ( !file.LoadContent () )
         return false;
 
-    std::vector<uint8_t> const& imageContent = file.GetContent ();
+    std::vector<uint8_t> const &imageContent = file.GetContent ();
     stbi_uc const* stbInData = imageContent.data ();
     auto const stbInSize = static_cast<const int> ( imageContent.size () );
 

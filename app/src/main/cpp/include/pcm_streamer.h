@@ -33,10 +33,10 @@ class PCMStreamer
                 Gain () = delete;
 
                 Gain ( Gain const & ) = default;
-                Gain& operator = ( Gain const & ) = default;
+                Gain &operator = ( Gain const & ) = default;
 
                 Gain ( Gain && ) = default;
-                Gain& operator = ( Gain && ) = default;
+                Gain &operator = ( Gain && ) = default;
 
                 constexpr explicit Gain ( float volumeBefore, float volumeCurrent ) noexcept:
                     _before ( static_cast<int32_t> ( volumeBefore * static_cast<float> ( INTEGER_DIVISION_SCALE ) ) ),
@@ -82,7 +82,7 @@ class PCMStreamer
 
     protected:
         OnStopRequest               _onStopRequest = nullptr;
-        SoundEmitter&               _soundEmitter;
+        SoundEmitter                &_soundEmitter;
         SoundStorage::SoundFile     _soundFile {};
 
         size_t                      _offset = 0U;
@@ -94,10 +94,10 @@ class PCMStreamer
         PCMStreamer () = delete;
 
         PCMStreamer ( PCMStreamer const & ) = delete;
-        PCMStreamer& operator = ( PCMStreamer const & ) = delete;
+        PCMStreamer &operator = ( PCMStreamer const & ) = delete;
 
         PCMStreamer ( PCMStreamer && ) = delete;
-        PCMStreamer& operator = ( PCMStreamer && ) = delete;
+        PCMStreamer &operator = ( PCMStreamer && ) = delete;
 
         virtual ~PCMStreamer () = default;
 

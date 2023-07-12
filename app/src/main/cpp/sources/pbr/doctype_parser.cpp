@@ -29,7 +29,7 @@ ParseResult DoctypeParser::Parse ( char const* html, Stream stream ) noexcept
         return std::nullopt;
 
     s = name->_newStream;
-    std::string_view const& n = name->_target;
+    std::string_view const &n = name->_target;
 
     if ( n.empty () )
     {

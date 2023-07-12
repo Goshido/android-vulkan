@@ -13,10 +13,10 @@ class GeometryPassSamplerDescriptorSetLayout final : public DescriptorSetLayout
         GeometryPassSamplerDescriptorSetLayout () = default;
 
         GeometryPassSamplerDescriptorSetLayout ( GeometryPassSamplerDescriptorSetLayout const & ) = delete;
-        GeometryPassSamplerDescriptorSetLayout& operator = ( GeometryPassSamplerDescriptorSetLayout const & ) = delete;
+        GeometryPassSamplerDescriptorSetLayout &operator = ( GeometryPassSamplerDescriptorSetLayout const & ) = delete;
 
         GeometryPassSamplerDescriptorSetLayout ( GeometryPassSamplerDescriptorSetLayout && ) = delete;
-        GeometryPassSamplerDescriptorSetLayout& operator = ( GeometryPassSamplerDescriptorSetLayout && ) = delete;
+        GeometryPassSamplerDescriptorSetLayout &operator = ( GeometryPassSamplerDescriptorSetLayout && ) = delete;
 
         ~GeometryPassSamplerDescriptorSetLayout () override = default;
 

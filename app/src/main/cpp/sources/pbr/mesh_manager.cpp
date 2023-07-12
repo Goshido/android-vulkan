@@ -52,7 +52,7 @@ MeshRef MeshManager::LoadMesh ( android_vulkan::Renderer &renderer,
     return mesh;
 }
 
-MeshManager& MeshManager::GetInstance () noexcept
+MeshManager &MeshManager::GetInstance () noexcept
 {
     std::unique_lock<std::mutex> const lock ( _mutex );
 
@@ -77,7 +77,7 @@ void MeshManager::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 
 void MeshManager::DestroyInternal ( android_vulkan::Renderer &renderer ) noexcept
 {
-    for ( auto& mesh : _meshStorage )
+    for ( auto &mesh : _meshStorage )
         mesh.second->FreeResources ( renderer );
 
     _meshStorage.clear ();

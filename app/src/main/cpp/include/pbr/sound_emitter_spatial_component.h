@@ -24,10 +24,10 @@ class SoundEmitterSpatialComponent final : public Component
         SoundEmitterSpatialComponent () = delete;
 
         SoundEmitterSpatialComponent ( SoundEmitterSpatialComponent const & ) = delete;
-        SoundEmitterSpatialComponent& operator = ( SoundEmitterSpatialComponent const & ) = delete;
+        SoundEmitterSpatialComponent &operator = ( SoundEmitterSpatialComponent const & ) = delete;
 
         SoundEmitterSpatialComponent ( SoundEmitterSpatialComponent && ) = delete;
-        SoundEmitterSpatialComponent& operator = ( SoundEmitterSpatialComponent && ) = delete;
+        SoundEmitterSpatialComponent &operator = ( SoundEmitterSpatialComponent && ) = delete;
 
         explicit SoundEmitterSpatialComponent ( bool &success,
             SoundEmitterSpatialComponentDesc const &desc,
@@ -56,7 +56,7 @@ class SoundEmitterSpatialComponent final : public Component
         static void Destroy () noexcept;
 
     private:
-        [[nodiscard]] ComponentRef& GetReference () noexcept override;
+        [[nodiscard]] ComponentRef &GetReference () noexcept override;
 
         [[nodiscard]] static int OnCreate ( lua_State* state );
         [[nodiscard]] static int OnDestroy ( lua_State* state );

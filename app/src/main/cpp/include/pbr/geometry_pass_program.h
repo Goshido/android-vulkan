@@ -44,10 +44,10 @@ class GeometryPassProgram : public Program
         GeometryPassProgram () = delete;
 
         GeometryPassProgram ( GeometryPassProgram const & ) = delete;
-        GeometryPassProgram& operator = ( GeometryPassProgram const & ) = delete;
+        GeometryPassProgram &operator = ( GeometryPassProgram const & ) = delete;
 
         GeometryPassProgram ( GeometryPassProgram && ) = delete;
-        GeometryPassProgram& operator = ( GeometryPassProgram && ) = delete;
+        GeometryPassProgram &operator = ( GeometryPassProgram && ) = delete;
 
         ~GeometryPassProgram () override = default;
 
@@ -58,7 +58,7 @@ class GeometryPassProgram : public Program
         ) noexcept override;
 
         void Destroy ( VkDevice device ) noexcept override;
-        [[nodiscard]] DescriptorSetInfo const& GetResourceInfo () const noexcept override;
+        [[nodiscard]] DescriptorSetInfo const &GetResourceInfo () const noexcept override;
 
         void SetDescriptorSet ( VkCommandBuffer commandBuffer,
             VkDescriptorSet const* sets,

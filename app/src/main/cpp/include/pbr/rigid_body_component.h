@@ -22,10 +22,10 @@ class RigidBodyComponent final : public Component
         RigidBodyComponent () = delete;
 
         RigidBodyComponent ( RigidBodyComponent const & ) = delete;
-        RigidBodyComponent& operator = ( RigidBodyComponent const & ) = delete;
+        RigidBodyComponent &operator = ( RigidBodyComponent const & ) = delete;
 
         RigidBodyComponent ( RigidBodyComponent && ) = delete;
-        RigidBodyComponent& operator = ( RigidBodyComponent && ) = delete;
+        RigidBodyComponent &operator = ( RigidBodyComponent && ) = delete;
 
         explicit RigidBodyComponent ( size_t &dataRead,
             RigidBodyComponentDesc const &desc,
@@ -50,7 +50,7 @@ class RigidBodyComponent final : public Component
         static void Destroy () noexcept;
 
     private:
-        [[nodiscard]] ComponentRef& GetReference () noexcept override;
+        [[nodiscard]] ComponentRef &GetReference () noexcept override;
 
         void Setup ( android_vulkan::ShapeRef &shape, bool forceAwake ) noexcept;
 

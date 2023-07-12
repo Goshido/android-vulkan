@@ -36,10 +36,10 @@ class SoundEmitter
 
     public:
         SoundEmitter ( SoundEmitter const & ) = delete;
-        SoundEmitter& operator = ( SoundEmitter const & ) = delete;
+        SoundEmitter &operator = ( SoundEmitter const & ) = delete;
 
         SoundEmitter ( SoundEmitter && ) = delete;
-        SoundEmitter& operator = ( SoundEmitter && ) = delete;
+        SoundEmitter &operator = ( SoundEmitter && ) = delete;
 
         virtual void FillPCM ( std::span<PCMStreamer::PCMType> buffer, float channelVolume ) noexcept = 0;
 
@@ -49,7 +49,7 @@ class SoundEmitter
         void Init ( SoundMixer &soundMixer, eSoundChannel channel ) noexcept;
         [[nodiscard]] bool Destroy () noexcept;
 
-        [[nodiscard]] std::string const& GetFile () const noexcept;
+        [[nodiscard]] std::string const &GetFile () const noexcept;
         [[nodiscard]] eSoundChannel GetSoundChannel () const noexcept;
         [[nodiscard]] float GetVolume () const noexcept;
 

@@ -227,7 +227,7 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
     {
         VkDescriptorSet set = _sets[ i ];
 
-        VkWriteDescriptorSet& albedo = write[ idx++ ];
+        VkWriteDescriptorSet &albedo = write[ idx++ ];
         albedo.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         albedo.pNext = nullptr;
         albedo.dstSet = set;
@@ -239,7 +239,7 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
         albedo.pBufferInfo = nullptr;
         albedo.pTexelBufferView = nullptr;
 
-        VkWriteDescriptorSet& normal = write[ idx++ ];
+        VkWriteDescriptorSet &normal = write[ idx++ ];
         normal.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         normal.pNext = nullptr;
         normal.dstSet = set;
@@ -251,7 +251,7 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
         normal.pBufferInfo = nullptr;
         normal.pTexelBufferView = nullptr;
 
-        VkWriteDescriptorSet& params = write[ idx++ ];
+        VkWriteDescriptorSet &params = write[ idx++ ];
         params.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         params.pNext = nullptr;
         params.dstSet = set;
@@ -263,7 +263,7 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
         params.pBufferInfo = nullptr;
         params.pTexelBufferView = nullptr;
 
-        VkWriteDescriptorSet& depthStencil = write[ idx++ ];
+        VkWriteDescriptorSet &depthStencil = write[ idx++ ];
         depthStencil.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         depthStencil.pNext = nullptr;
         depthStencil.dstSet = set;
@@ -275,7 +275,7 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
         depthStencil.pBufferInfo = nullptr;
         depthStencil.pTexelBufferView = nullptr;
 
-        VkWriteDescriptorSet& brdfImage = write[ idx++ ];
+        VkWriteDescriptorSet &brdfImage = write[ idx++ ];
         brdfImage.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         brdfImage.pNext = nullptr;
         brdfImage.dstSet = set;
@@ -287,7 +287,7 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
         brdfImage.pBufferInfo = nullptr;
         brdfImage.pTexelBufferView = nullptr;
 
-        VkWriteDescriptorSet& brdfSampler = write[ idx++ ];
+        VkWriteDescriptorSet &brdfSampler = write[ idx++ ];
         brdfSampler.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         brdfSampler.pNext = nullptr;
         brdfSampler.dstSet = set;
@@ -299,7 +299,7 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
         brdfSampler.pBufferInfo = nullptr;
         brdfSampler.pTexelBufferView = nullptr;
 
-        VkWriteDescriptorSet& prefilterSampler = write[ idx++ ];
+        VkWriteDescriptorSet &prefilterSampler = write[ idx++ ];
         prefilterSampler.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         prefilterSampler.pNext = nullptr;
         prefilterSampler.dstSet = set;

@@ -27,10 +27,10 @@ class LinkHTML5Element final
         LinkHTML5Element () = delete;
 
         LinkHTML5Element ( LinkHTML5Element const & ) = delete;
-        LinkHTML5Element& operator = ( LinkHTML5Element const & ) = delete;
+        LinkHTML5Element &operator = ( LinkHTML5Element const & ) = delete;
 
         LinkHTML5Element ( LinkHTML5Element && ) = delete;
-        LinkHTML5Element& operator = ( LinkHTML5Element && ) = delete;
+        LinkHTML5Element &operator = ( LinkHTML5Element && ) = delete;
 
         ~LinkHTML5Element () = delete;
 

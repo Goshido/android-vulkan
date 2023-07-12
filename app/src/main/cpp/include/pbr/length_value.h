@@ -34,10 +34,10 @@ class LengthValue final
         LengthValue () = default;
 
         LengthValue ( LengthValue const & ) = default;
-        LengthValue& operator = ( LengthValue const & ) = default;
+        LengthValue &operator = ( LengthValue const & ) = default;
 
         LengthValue ( LengthValue && ) = default;
-        LengthValue& operator = ( LengthValue && ) = default;
+        LengthValue &operator = ( LengthValue && ) = default;
 
         explicit LengthValue ( eType type, float value ) noexcept;
 

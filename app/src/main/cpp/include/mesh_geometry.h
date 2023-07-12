@@ -39,20 +39,20 @@ class MeshGeometry final
         MeshGeometry () = default;
 
         MeshGeometry ( MeshGeometry const & ) = delete;
-        MeshGeometry& operator = ( MeshGeometry const & ) = delete;
+        MeshGeometry &operator = ( MeshGeometry const & ) = delete;
 
         MeshGeometry ( MeshGeometry && ) = delete;
-        MeshGeometry& operator = ( MeshGeometry && ) = delete;
+        MeshGeometry &operator = ( MeshGeometry && ) = delete;
 
         ~MeshGeometry () = default;
 
         void FreeResources ( Renderer &renderer ) noexcept;
         void FreeTransferResources ( Renderer &renderer ) noexcept;
 
-        [[nodiscard]] GXAABB const& GetBounds () const noexcept;
-        [[nodiscard]] VkBuffer const& GetVertexBuffer () const noexcept;
-        [[nodiscard]] VkBuffer const& GetIndexBuffer () const noexcept;
-        [[nodiscard]] std::string const& GetName () const noexcept;
+        [[nodiscard]] GXAABB const &GetBounds () const noexcept;
+        [[nodiscard]] VkBuffer const &GetVertexBuffer () const noexcept;
+        [[nodiscard]] VkBuffer const &GetIndexBuffer () const noexcept;
+        [[nodiscard]] std::string const &GetName () const noexcept;
         [[nodiscard]] uint32_t GetVertexCount () const noexcept;
         [[maybe_unused, nodiscard]] bool IsIndexBufferPresent () const noexcept;
 

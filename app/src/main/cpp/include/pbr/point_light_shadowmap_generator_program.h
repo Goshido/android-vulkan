@@ -34,10 +34,10 @@ class PointLightShadowmapGeneratorProgram final : public Program
         PointLightShadowmapGeneratorProgram () noexcept;
 
         PointLightShadowmapGeneratorProgram ( PointLightShadowmapGeneratorProgram const & ) = delete;
-        PointLightShadowmapGeneratorProgram& operator = ( PointLightShadowmapGeneratorProgram const & ) = delete;
+        PointLightShadowmapGeneratorProgram &operator = ( PointLightShadowmapGeneratorProgram const & ) = delete;
 
         PointLightShadowmapGeneratorProgram ( PointLightShadowmapGeneratorProgram && ) = delete;
-        PointLightShadowmapGeneratorProgram& operator = ( PointLightShadowmapGeneratorProgram && ) = delete;
+        PointLightShadowmapGeneratorProgram &operator = ( PointLightShadowmapGeneratorProgram && ) = delete;
 
         ~PointLightShadowmapGeneratorProgram () override = default;
 
@@ -48,7 +48,7 @@ class PointLightShadowmapGeneratorProgram final : public Program
         ) noexcept override;
 
         void Destroy ( VkDevice device ) noexcept override;
-        [[nodiscard]] DescriptorSetInfo const& GetResourceInfo () const noexcept override;
+        [[nodiscard]] DescriptorSetInfo const &GetResourceInfo () const noexcept override;
 
         void SetDescriptorSet ( VkCommandBuffer commandBuffer, VkDescriptorSet sets ) const noexcept;
 

@@ -13,10 +13,10 @@ class Transformable
         Transformable () = default;
 
         Transformable ( Transformable const & ) = delete;
-        Transformable& operator = ( Transformable const & ) = delete;
+        Transformable &operator = ( Transformable const & ) = delete;
 
         Transformable ( Transformable && ) = delete;
-        Transformable& operator = ( Transformable && ) = delete;
+        Transformable &operator = ( Transformable && ) = delete;
 
         ~Transformable () = default;
 

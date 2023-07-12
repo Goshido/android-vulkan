@@ -18,16 +18,16 @@ class SetAttributeChecker final : public AttributeChecker
 {
     private:
         std::unordered_set<std::u32string>      _set {};
-        std::unordered_set<std::u32string>&     _target;
+        std::unordered_set<std::u32string>      &_target;
 
     public:
         SetAttributeChecker () = delete;
 
         SetAttributeChecker ( SetAttributeChecker const & ) = delete;
-        SetAttributeChecker& operator = ( SetAttributeChecker const & ) = delete;
+        SetAttributeChecker &operator = ( SetAttributeChecker const & ) = delete;
 
         SetAttributeChecker ( SetAttributeChecker && ) = delete;
-        SetAttributeChecker& operator = ( SetAttributeChecker && ) = delete;
+        SetAttributeChecker &operator = ( SetAttributeChecker && ) = delete;
 
         explicit SetAttributeChecker ( char const *html,
             eAttribute attribute,

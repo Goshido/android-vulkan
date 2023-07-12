@@ -18,10 +18,10 @@ class Trace final
         Trace () = delete;
 
         Trace ( Trace const & ) = delete;
-        Trace& operator = ( Trace const & ) = delete;
+        Trace &operator = ( Trace const & ) = delete;
 
         Trace ( Trace && ) = delete;
-        Trace& operator = ( Trace && ) = delete;
+        Trace &operator = ( Trace && ) = delete;
 
         explicit Trace ( char const* name ) noexcept;
 

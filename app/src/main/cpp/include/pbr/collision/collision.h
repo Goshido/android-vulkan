@@ -65,10 +65,10 @@ class Collision final : public android_vulkan::Game
         Collision () = default;
 
         Collision ( Collision const & ) = delete;
-        Collision& operator = ( Collision const & ) = delete;
+        Collision &operator = ( Collision const & ) = delete;
 
         Collision ( Collision && ) = delete;
-        Collision& operator = ( Collision && ) = delete;
+        Collision &operator = ( Collision && ) = delete;
 
         ~Collision () override = default;
 

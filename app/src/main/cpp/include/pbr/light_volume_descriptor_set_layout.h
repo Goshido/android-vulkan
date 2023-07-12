@@ -13,10 +13,10 @@ class LightVolumeDescriptorSetLayout final : public DescriptorSetLayout
         LightVolumeDescriptorSetLayout () = default;
 
         LightVolumeDescriptorSetLayout ( LightVolumeDescriptorSetLayout const & ) = delete;
-        LightVolumeDescriptorSetLayout& operator = ( LightVolumeDescriptorSetLayout const & ) = delete;
+        LightVolumeDescriptorSetLayout &operator = ( LightVolumeDescriptorSetLayout const & ) = delete;
 
         LightVolumeDescriptorSetLayout ( LightVolumeDescriptorSetLayout && ) = delete;
-        LightVolumeDescriptorSetLayout& operator = ( LightVolumeDescriptorSetLayout && ) = delete;
+        LightVolumeDescriptorSetLayout &operator = ( LightVolumeDescriptorSetLayout && ) = delete;
 
         ~LightVolumeDescriptorSetLayout () override = default;
 

@@ -28,10 +28,10 @@ class ReflectionGlobalPass final
         ReflectionGlobalPass () = default;
 
         ReflectionGlobalPass ( ReflectionGlobalPass const & ) = delete;
-        ReflectionGlobalPass& operator = ( ReflectionGlobalPass const & ) = delete;
+        ReflectionGlobalPass &operator = ( ReflectionGlobalPass const & ) = delete;
 
         ReflectionGlobalPass ( ReflectionGlobalPass && ) = delete;
-        ReflectionGlobalPass& operator = ( ReflectionGlobalPass && ) = delete;
+        ReflectionGlobalPass &operator = ( ReflectionGlobalPass && ) = delete;
 
         ~ReflectionGlobalPass () = default;
 

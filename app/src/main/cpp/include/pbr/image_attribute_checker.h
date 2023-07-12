@@ -17,16 +17,16 @@ class ImageAttributeChecker final : public AttributeChecker
 {
     private:
         char const*     _assetRoot = nullptr;
-        std::string&    _target;
+        std::string     &_target;
 
     public:
         ImageAttributeChecker () = delete;
 
         ImageAttributeChecker ( ImageAttributeChecker const & ) = delete;
-        ImageAttributeChecker& operator = ( ImageAttributeChecker const & ) = delete;
+        ImageAttributeChecker &operator = ( ImageAttributeChecker const & ) = delete;
 
         ImageAttributeChecker ( ImageAttributeChecker && ) = delete;
-        ImageAttributeChecker& operator = ( ImageAttributeChecker && ) = delete;
+        ImageAttributeChecker &operator = ( ImageAttributeChecker && ) = delete;
 
         explicit ImageAttributeChecker ( char const *html, std::string &target, char const* assetRoot ) noexcept;
 

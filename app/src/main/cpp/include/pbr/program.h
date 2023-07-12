@@ -38,10 +38,10 @@ class Program
         Program () = delete;
 
         Program ( Program const & ) = delete;
-        Program& operator = ( Program const & ) = delete;
+        Program &operator = ( Program const & ) = delete;
 
         Program ( Program && ) = delete;
-        Program& operator = ( Program && ) = delete;
+        Program &operator = ( Program && ) = delete;
 
         // Method return true is success. Otherwise method returns false.
         // The method MUST invoke vkCreateGraphicsPipelines at the end.
@@ -52,7 +52,7 @@ class Program
         ) noexcept = 0;
 
         virtual void Destroy ( VkDevice device ) noexcept = 0;
-        [[nodiscard]] virtual DescriptorSetInfo const& GetResourceInfo () const noexcept = 0;
+        [[nodiscard]] virtual DescriptorSetInfo const &GetResourceInfo () const noexcept = 0;
 
         // The method assigns VkPipeline as active pipeline.
         void Bind ( VkCommandBuffer commandBuffer ) const noexcept;

@@ -3,7 +3,7 @@
 
 namespace android_vulkan {
 
-Simplex const& GJKBase::GetSimplex () const noexcept
+Simplex const &GJKBase::GetSimplex () const noexcept
 {
     return _simplex;
 }

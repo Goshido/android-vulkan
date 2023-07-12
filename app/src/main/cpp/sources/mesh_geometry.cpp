@@ -92,22 +92,22 @@ void MeshGeometry::FreeTransferResources ( Renderer &renderer ) noexcept
     AV_UNREGISTER_DEVICE_MEMORY ( "MeshGeometry::_transferBufferMemory" )
 }
 
-GXAABB const& MeshGeometry::GetBounds () const noexcept
+GXAABB const &MeshGeometry::GetBounds () const noexcept
 {
     return _bounds;
 }
 
-VkBuffer const& MeshGeometry::GetVertexBuffer () const noexcept
+VkBuffer const &MeshGeometry::GetVertexBuffer () const noexcept
 {
     return _vertexBuffer;
 }
 
-VkBuffer const& MeshGeometry::GetIndexBuffer () const noexcept
+VkBuffer const &MeshGeometry::GetIndexBuffer () const noexcept
 {
     return _indexBuffer;
 }
 
-std::string const& MeshGeometry::GetName () const noexcept
+std::string const &MeshGeometry::GetName () const noexcept
 {
     return _fileName;
 }
@@ -249,8 +249,8 @@ bool MeshGeometry::LoadFromMesh ( std::string &&fileName,
     if ( !file.LoadContent () )
         return false;
 
-    std::vector<uint8_t>& content = file.GetContent ();
-    auto const& header = *reinterpret_cast<GXNativeMeshHeader const*> ( content.data () );
+    std::vector<uint8_t> &content = file.GetContent ();
+    auto const &header = *reinterpret_cast<GXNativeMeshHeader const*> ( content.data () );
 
     constexpr size_t skipFactor = UV_THREADS - 1U;
 
@@ -274,7 +274,7 @@ bool MeshGeometry::LoadFromMesh ( std::string &&fileName,
 
             for ( ; currentIndex < limit; ++currentIndex )
             {
-                GXVec2& uv = vertices[ currentIndex ]._uv;
+                GXVec2 &uv = vertices[ currentIndex ]._uv;
                 uv._data[ 1U ] = 1.0F - uv._data[ 1U ];
             }
 
@@ -295,7 +295,7 @@ bool MeshGeometry::LoadFromMesh ( std::string &&fileName,
         );
     }
 
-    for ( auto& item : converters )
+    for ( auto &item : converters )
         item.join ();
 
     bool const result = UploadSimple ( reinterpret_cast<uint8_t const*> ( vertices ),
@@ -326,9 +326,9 @@ bool MeshGeometry::LoadFromMesh2 ( std::string &&fileName,
     if ( !file.LoadContent () )
         return false;
 
-    std::vector<uint8_t> const& content = file.GetContent ();
+    std::vector<uint8_t> const &content = file.GetContent ();
     uint8_t const* rawData = content.data ();
-    auto const& header = *reinterpret_cast<Mesh2Header const*> ( rawData );
+    auto const &header = *reinterpret_cast<Mesh2Header const*> ( rawData );
 
     bool const result = UploadComplex ( rawData + static_cast<size_t> ( header._indexDataOffset ),
         static_cast<size_t> ( header._vertexCount ) * sizeof ( Mesh2Vertex ),
@@ -341,8 +341,8 @@ bool MeshGeometry::LoadFromMesh2 ( std::string &&fileName,
     if ( !result )
         return false;
 
-    Vec3 const& mins = header._bounds._min;
-    Vec3 const& maxs = header._bounds._max;
+    Vec3 const &mins = header._bounds._min;
+    Vec3 const &maxs = header._bounds._max;
     _bounds.Empty ();
     _bounds.AddVertex ( mins[ 0U ], mins[ 1U ], mins[ 2U ] );
     _bounds.AddVertex ( maxs[ 0U ], maxs[ 1U ], maxs[ 2U ] );
@@ -592,7 +592,7 @@ bool MeshGeometry::UploadInternal ( size_t numUploads,
 
     for ( size_t i = 0U; i < numUploads; ++i )
     {
-        VkBufferCopy const& copyBuffer = copyJobs[ i ];
+        VkBufferCopy const &copyBuffer = copyJobs[ i ];
         auto const findResult = g_accessMapper.find ( usages[ i ] );
 
         if ( findResult == g_accessMapper.cend () )
@@ -601,7 +601,7 @@ bool MeshGeometry::UploadInternal ( size_t numUploads,
             return false;
         }
 
-        BufferSyncItem const& syncItem = findResult->second;
+        BufferSyncItem const &syncItem = findResult->second;
         srcStages |= syncItem._srcStage;
         dstStages |= syncItem._dstStage;
 

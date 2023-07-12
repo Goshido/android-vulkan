@@ -23,10 +23,10 @@ class ScriptableSweepTestResult final
         ScriptableSweepTestResult () = delete;
 
         ScriptableSweepTestResult ( ScriptableSweepTestResult const & ) = delete;
-        ScriptableSweepTestResult& operator = ( ScriptableSweepTestResult const & ) = delete;
+        ScriptableSweepTestResult &operator = ( ScriptableSweepTestResult const & ) = delete;
 
         ScriptableSweepTestResult ( ScriptableSweepTestResult && ) = delete;
-        ScriptableSweepTestResult& operator = ( ScriptableSweepTestResult && ) = delete;
+        ScriptableSweepTestResult &operator = ( ScriptableSweepTestResult && ) = delete;
 
         ~ScriptableSweepTestResult () = delete;
 

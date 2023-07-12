@@ -18,17 +18,17 @@ constexpr size_t PCM_SAMPLES_HINT = 1U * 1024U * 1024U / sizeof ( PCMStreamer::P
 class VorbisCloser final
 {
     private:
-        OggVorbis_File&             _file;
-        [[maybe_unused]] bool&      _isFileOpen;
+        OggVorbis_File              &_file;
+        [[maybe_unused]] bool       &_isFileOpen;
 
     public:
         VorbisCloser () = delete;
 
         VorbisCloser ( VorbisCloser const & ) = delete;
-        VorbisCloser& operator = ( VorbisCloser const & ) = delete;
+        VorbisCloser &operator = ( VorbisCloser const & ) = delete;
 
         VorbisCloser ( VorbisCloser && ) = delete;
-        VorbisCloser& operator = ( VorbisCloser && ) = delete;
+        VorbisCloser &operator = ( VorbisCloser && ) = delete;
 
         explicit VorbisCloser ( OggVorbis_File &file, bool &isFileOpen ) noexcept;
 
@@ -114,7 +114,7 @@ bool PCMStreamerOGG::CheckVorbisResult ( int result,
 
 void PCMStreamerOGG::GetNextBuffer ( std::span<PCMType> buffer, Gain left, Gain right ) noexcept
 {
-    PCMData const& data = _pcmBuffers[ _activeBufferIndex ];
+    PCMData const &data = _pcmBuffers[ _activeBufferIndex ];
     PCMType const* pcm = data._samples.data ();
 
     // Spinlock to decompress data.
@@ -326,7 +326,7 @@ bool PCMStreamerOGG::AllocateDecompressBuffers ( size_t channels, size_t samples
     size_t const optimal = samplesPerBurst / ( 3U - channels );
     size_t const sampleCount = PCM_SAMPLES_HINT / optimal * optimal;
 
-    for ( auto& buffer : _pcmBuffers )
+    for ( auto &buffer : _pcmBuffers )
         buffer._samples.resize ( sampleCount );
 
     _activeBufferIndex = 0U;
@@ -388,7 +388,7 @@ long PCMStreamerOGG::TellInternal () const noexcept
 
 int PCMStreamerOGG::Close ( void* datasource )
 {
-    auto& streamer = *static_cast<PCMStreamerOGG*> ( datasource );
+    auto &streamer = *static_cast<PCMStreamerOGG*> ( datasource );
     return streamer.CloseInternal ();
 }
 
@@ -396,19 +396,19 @@ size_t PCMStreamerOGG::Read ( void* ptr, size_t size, size_t count, void* dataso
 {
     // Note return value should be similar to std::fread.
     // https://en.cppreference.com/w/cpp/io/c/fread
-    auto& streamer = *static_cast<PCMStreamerOGG*> ( datasource );
+    auto &streamer = *static_cast<PCMStreamerOGG*> ( datasource );
     return streamer.ReadInternal ( ptr, size, count );
 }
 
 int PCMStreamerOGG::Seek ( void* datasource, ogg_int64_t offset, int whence )
 {
-    auto& streamer = *static_cast<PCMStreamerOGG*> ( datasource );
+    auto &streamer = *static_cast<PCMStreamerOGG*> ( datasource );
     return streamer.SeekInternal ( offset, whence );
 }
 
 long PCMStreamerOGG::Tell ( void* datasource )
 {
-    auto const& streamer = *static_cast<PCMStreamerOGG const*> ( datasource );
+    auto const &streamer = *static_cast<PCMStreamerOGG const*> ( datasource );
     return streamer.TellInternal ();
 }
 

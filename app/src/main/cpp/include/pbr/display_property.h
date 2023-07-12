@@ -24,10 +24,10 @@ class DisplayProperty final : public Property
         DisplayProperty () = delete;
 
         DisplayProperty ( DisplayProperty const & ) = delete;
-        DisplayProperty& operator = ( DisplayProperty const & ) = delete;
+        DisplayProperty &operator = ( DisplayProperty const & ) = delete;
 
         DisplayProperty ( DisplayProperty && ) = delete;
-        DisplayProperty& operator = ( DisplayProperty && ) = delete;
+        DisplayProperty &operator = ( DisplayProperty && ) = delete;
 
         explicit DisplayProperty ( eValue value ) noexcept;
 

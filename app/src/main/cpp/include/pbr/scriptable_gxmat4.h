@@ -35,20 +35,20 @@ class ScriptableGXMat4 final
         ScriptableGXMat4 () = delete;
 
         ScriptableGXMat4 ( ScriptableGXMat4 const & ) = delete;
-        ScriptableGXMat4& operator = ( ScriptableGXMat4 const & ) = delete;
+        ScriptableGXMat4 &operator = ( ScriptableGXMat4 const & ) = delete;
 
         ScriptableGXMat4 ( ScriptableGXMat4 && ) = delete;
-        ScriptableGXMat4& operator = ( ScriptableGXMat4 && ) = delete;
+        ScriptableGXMat4 &operator = ( ScriptableGXMat4 && ) = delete;
 
         ~ScriptableGXMat4 () = delete;
 
         static void Init ( lua_State &vm ) noexcept;
         static void Destroy () noexcept;
 
-        [[nodiscard]] static GXMat4& Extract ( lua_State* state, int idx ) noexcept;
+        [[nodiscard]] static GXMat4 &Extract ( lua_State* state, int idx ) noexcept;
 
     private:
-        static void Insert ( Item* item, Item*& list ) noexcept;
+        static void Insert ( Item* item, Item* &list ) noexcept;
 
         [[nodiscard]] static int OnClone ( lua_State* state );
         [[nodiscard]] static int OnCreate ( lua_State* state );

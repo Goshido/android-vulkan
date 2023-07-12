@@ -11,16 +11,16 @@ namespace pbr {
 class DisplayPropertyChecker final : public PropertyChecker
 {
     private:
-        DisplayProperty::eValue&    _target;
+        DisplayProperty::eValue     &_target;
 
     public:
         DisplayPropertyChecker () = delete;
 
         DisplayPropertyChecker ( DisplayPropertyChecker const & ) = delete;
-        DisplayPropertyChecker& operator = ( DisplayPropertyChecker const & ) = delete;
+        DisplayPropertyChecker &operator = ( DisplayPropertyChecker const & ) = delete;
 
         DisplayPropertyChecker ( DisplayPropertyChecker && ) = delete;
-        DisplayPropertyChecker& operator = ( DisplayPropertyChecker && ) = delete;
+        DisplayPropertyChecker &operator = ( DisplayPropertyChecker && ) = delete;
 
         explicit DisplayPropertyChecker ( char const* css, DisplayProperty::eValue &target ) noexcept;
 

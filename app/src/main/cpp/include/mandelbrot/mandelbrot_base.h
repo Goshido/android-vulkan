@@ -32,10 +32,10 @@ class MandelbrotBase : public android_vulkan::Game
         MandelbrotBase () = delete;
 
         MandelbrotBase ( MandelbrotBase const & ) = delete;
-        MandelbrotBase& operator = ( MandelbrotBase const & ) = delete;
+        MandelbrotBase &operator = ( MandelbrotBase const & ) = delete;
 
         MandelbrotBase ( MandelbrotBase && ) = delete;
-        MandelbrotBase& operator = ( MandelbrotBase && ) = delete;
+        MandelbrotBase &operator = ( MandelbrotBase && ) = delete;
 
     protected:
         explicit MandelbrotBase ( char const* fragmentShaderFile ) noexcept;

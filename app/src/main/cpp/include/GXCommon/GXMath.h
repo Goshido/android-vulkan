@@ -1,4 +1,4 @@
-// version 1.78
+// version 1.79
 
 #ifndef GX_MATH
 #define GX_MATH
@@ -35,10 +35,10 @@ struct [[maybe_unused]] GXVec2 final
     [[maybe_unused]] GXVec2 () = default;
 
     [[maybe_unused]] GXVec2 ( GXVec2 const & ) = default;
-    [[maybe_unused]] GXVec2& operator = ( GXVec2 const & ) = default;
+    [[maybe_unused]] GXVec2 &operator = ( GXVec2 const & ) = default;
 
     [[maybe_unused]] GXVec2 ( GXVec2 && ) = default;
-    [[maybe_unused]] GXVec2& operator = ( GXVec2 && ) = default;
+    [[maybe_unused]] GXVec2 &operator = ( GXVec2 && ) = default;
 
     // constexpr constructor is implicitly inline
     // see https://timsong-cpp.github.io/cppwp/n4140/dcl.constexpr
@@ -105,10 +105,10 @@ struct [[maybe_unused]] GXVec3 final
     [[maybe_unused]] GXVec3 () = default;
 
     [[maybe_unused]] GXVec3 ( GXVec3 const & ) = default;
-    [[maybe_unused]] GXVec3& operator = ( GXVec3 const & ) = default;
+    [[maybe_unused]] GXVec3 &operator = ( GXVec3 const & ) = default;
 
     [[maybe_unused]] GXVec3 ( GXVec3 && ) = default;
-    [[maybe_unused]] GXVec3& operator = ( GXVec3 && ) = default;
+    [[maybe_unused]] GXVec3 &operator = ( GXVec3 && ) = default;
 
     // constexpr constructor is implicitly inline
     // see https://timsong-cpp.github.io/cppwp/n4140/dcl.constexpr
@@ -157,9 +157,9 @@ struct [[maybe_unused]] GXVec3 final
 
     [[maybe_unused, nodiscard]] GXBool IsEqual ( GXVec3 const &other ) noexcept;
 
-    [[maybe_unused, nodiscard]] static GXVec3 const& GetAbsoluteX () noexcept;
-    [[maybe_unused, nodiscard]] static GXVec3 const& GetAbsoluteY () noexcept;
-    [[maybe_unused, nodiscard]] static GXVec3 const& GetAbsoluteZ () noexcept;
+    [[maybe_unused, nodiscard]] static GXVec3 const &GetAbsoluteX () noexcept;
+    [[maybe_unused, nodiscard]] static GXVec3 const &GetAbsoluteY () noexcept;
+    [[maybe_unused, nodiscard]] static GXVec3 const &GetAbsoluteZ () noexcept;
 
     // baseX - correct direction, adjustedY - desirable, adjustedZ - calculated.
     [[maybe_unused]] static GXVoid GXCALL MakeOrthonormalBasis ( GXVec3 &baseX,
@@ -190,10 +190,10 @@ struct [[maybe_unused]] GXEuler final
     [[maybe_unused]] GXEuler () = default;
 
     [[maybe_unused]] GXEuler ( GXEuler const & ) = default;
-    [[maybe_unused]] GXEuler& operator = ( GXEuler const & ) = default;
+    [[maybe_unused]] GXEuler &operator = ( GXEuler const & ) = default;
 
     [[maybe_unused]] GXEuler ( GXEuler && ) = default;
-    [[maybe_unused]] GXEuler& operator = ( GXEuler && ) = default;
+    [[maybe_unused]] GXEuler &operator = ( GXEuler && ) = default;
 
     // constexpr constructor is implicitly inline
     // see https://timsong-cpp.github.io/cppwp/n4140/dcl.constexpr
@@ -222,10 +222,10 @@ struct [[maybe_unused]] GXVec4 final
     [[maybe_unused]] GXVec4 () = default;
 
     [[maybe_unused]] GXVec4 ( GXVec4 const & ) = default;
-    [[maybe_unused]] GXVec4& operator = ( GXVec4 const & ) = default;
+    [[maybe_unused]] GXVec4 &operator = ( GXVec4 const & ) = default;
 
     [[maybe_unused]] GXVec4 ( GXVec4 && ) = default;
-    [[maybe_unused]] GXVec4& operator = ( GXVec4 && ) = default;
+    [[maybe_unused]] GXVec4 &operator = ( GXVec4 && ) = default;
 
     [[maybe_unused]] explicit GXVec4 ( GXVec3 const &vector, GXFloat w ) noexcept;
 
@@ -272,10 +272,10 @@ struct [[maybe_unused]] GXVec6 final
     [[maybe_unused]] GXVec6 () = default;
 
     [[maybe_unused]] GXVec6 ( GXVec6 const & ) = default;
-    [[maybe_unused]] GXVec6& operator = ( GXVec6 const & ) = default;
+    [[maybe_unused]] GXVec6 &operator = ( GXVec6 const & ) = default;
 
     [[maybe_unused]] GXVec6 ( GXVec6 && ) = default;
-    [[maybe_unused]] GXVec6& operator = ( GXVec6 && ) = default;
+    [[maybe_unused]] GXVec6 &operator = ( GXVec6 && ) = default;
 
     // constexpr constructor is implicitly inline
     // see https://timsong-cpp.github.io/cppwp/n4140/dcl.constexpr
@@ -329,10 +329,10 @@ struct [[maybe_unused]] GXColorRGB final
     [[maybe_unused]] GXColorRGB () = default;
 
     [[maybe_unused]] GXColorRGB ( GXColorRGB const & ) = default;
-    [[maybe_unused]] GXColorRGB& operator = ( GXColorRGB const & ) = default;
+    [[maybe_unused]] GXColorRGB &operator = ( GXColorRGB const & ) = default;
 
     [[maybe_unused]] GXColorRGB ( GXColorRGB && ) = default;
-    [[maybe_unused]] GXColorRGB& operator = ( GXColorRGB && ) = default;
+    [[maybe_unused]] GXColorRGB &operator = ( GXColorRGB && ) = default;
 
     // constexpr constructor is implicitly inline
     // see https://timsong-cpp.github.io/cppwp/n4140/dcl.constexpr
@@ -385,10 +385,10 @@ struct [[maybe_unused]] GXColorHSV final
     [[maybe_unused]] GXColorHSV () = default;
 
     [[maybe_unused]] GXColorHSV ( GXColorHSV const & ) = default;
-    [[maybe_unused]] GXColorHSV& operator = ( GXColorHSV const & ) = default;
+    [[maybe_unused]] GXColorHSV &operator = ( GXColorHSV const & ) = default;
 
     [[maybe_unused]] GXColorHSV ( GXColorHSV && ) = default;
-    [[maybe_unused]] GXColorHSV& operator = ( GXColorHSV && ) = default;
+    [[maybe_unused]] GXColorHSV &operator = ( GXColorHSV && ) = default;
 
     // constexpr constructor is implicitly inline
     // see https://timsong-cpp.github.io/cppwp/n4140/dcl.constexpr
@@ -441,10 +441,10 @@ struct [[maybe_unused]] GXPreciseComplex final
         // NOTHING
     }
 
-    [[maybe_unused]] GXPreciseComplex& operator = ( GXPreciseComplex const &other ) = default;
+    [[maybe_unused]] GXPreciseComplex &operator = ( GXPreciseComplex const &other ) = default;
 
     [[maybe_unused]] GXPreciseComplex ( GXPreciseComplex && ) = default;
-    [[maybe_unused]] GXPreciseComplex& operator = ( GXPreciseComplex && ) = default;
+    [[maybe_unused]] GXPreciseComplex &operator = ( GXPreciseComplex && ) = default;
 
     // constexpr constructor is implicitly inline
     // see https://timsong-cpp.github.io/cppwp/n4140/dcl.constexpr
@@ -487,10 +487,10 @@ struct [[maybe_unused]] GXQuat final
     [[maybe_unused]] GXQuat () = default;
 
     [[maybe_unused]] GXQuat ( GXQuat const & ) = default;
-    [[maybe_unused]] GXQuat& operator = ( GXQuat const & ) = default;
+    [[maybe_unused]] GXQuat &operator = ( GXQuat const & ) = default;
 
     [[maybe_unused]] GXQuat ( GXQuat && ) = default;
-    [[maybe_unused]] GXQuat& operator = ( GXQuat && ) = default;
+    [[maybe_unused]] GXQuat &operator = ( GXQuat && ) = default;
 
     // constexpr constructor is implicitly inline
     // see https://timsong-cpp.github.io/cppwp/n4140/dcl.constexpr
@@ -574,10 +574,10 @@ struct [[maybe_unused]] GXMat3 final
     [[maybe_unused]] GXMat3 () = default;
 
     [[maybe_unused]] GXMat3 ( GXMat3 const & ) = default;
-    [[maybe_unused]] GXMat3& operator = ( GXMat3 const & ) = default;
+    [[maybe_unused]] GXMat3 &operator = ( GXMat3 const & ) = default;
 
     [[maybe_unused]] GXMat3 ( GXMat3 && ) = default;
-    [[maybe_unused]] GXMat3& operator = ( GXMat3 && ) = default;
+    [[maybe_unused]] GXMat3 &operator = ( GXMat3 && ) = default;
 
     [[maybe_unused]] explicit GXMat3 ( GXMat4 const &matrix ) noexcept;
 
@@ -646,10 +646,10 @@ struct [[maybe_unused]] GXMat4 final
     [[maybe_unused]] GXMat4 () = default;
 
     [[maybe_unused]] GXMat4 ( GXMat4 const & ) = default;
-    [[maybe_unused]] GXMat4& operator = ( GXMat4 const & ) = default;
+    [[maybe_unused]] GXMat4 &operator = ( GXMat4 const & ) = default;
 
     [[maybe_unused]] GXMat4 ( GXMat4 && ) = default;
-    [[maybe_unused]] GXMat4& operator = ( GXMat4 && ) = default;
+    [[maybe_unused]] GXMat4 &operator = ( GXMat4 && ) = default;
 
     [[maybe_unused]] ~GXMat4 () = default;
 
@@ -753,10 +753,10 @@ struct [[maybe_unused]] GXAABB final
     }
 
     [[maybe_unused]] GXAABB ( GXAABB const & ) = default;
-    [[maybe_unused]] GXAABB& operator = ( GXAABB const & ) = default;
+    [[maybe_unused]] GXAABB &operator = ( GXAABB const & ) = default;
 
     [[maybe_unused]] GXAABB ( GXAABB && ) = default;
-    [[maybe_unused]] GXAABB& operator = ( GXAABB && ) = default;
+    [[maybe_unused]] GXAABB &operator = ( GXAABB && ) = default;
 
     [[maybe_unused]] ~GXAABB () = default;
 
@@ -796,10 +796,10 @@ struct [[maybe_unused]] GXPlane final
     [[maybe_unused]] GXPlane () = default;
 
     [[maybe_unused]] GXPlane ( GXPlane const & ) = default;
-    [[maybe_unused]] GXPlane& operator = ( GXPlane const & ) = default;
+    [[maybe_unused]] GXPlane &operator = ( GXPlane const & ) = default;
 
     [[maybe_unused]] GXPlane ( GXPlane && ) = default;
-    [[maybe_unused]] GXPlane& operator = ( GXPlane && ) = default;
+    [[maybe_unused]] GXPlane &operator = ( GXPlane && ) = default;
 
     [[maybe_unused]] ~GXPlane () = default;
 
@@ -832,10 +832,10 @@ class [[maybe_unused]] GXProjectionClipPlanes final
         [[maybe_unused]] GXProjectionClipPlanes () = default;
 
         [[maybe_unused]] GXProjectionClipPlanes ( GXProjectionClipPlanes const & ) = default;
-        [[maybe_unused]] GXProjectionClipPlanes& operator = ( GXProjectionClipPlanes const & ) = default;
+        [[maybe_unused]] GXProjectionClipPlanes &operator = ( GXProjectionClipPlanes const & ) = default;
 
         [[maybe_unused]] GXProjectionClipPlanes ( GXProjectionClipPlanes && ) = default;
-        [[maybe_unused]] GXProjectionClipPlanes& operator = ( GXProjectionClipPlanes && ) = default;
+        [[maybe_unused]] GXProjectionClipPlanes &operator = ( GXProjectionClipPlanes && ) = default;
 
         [[maybe_unused]] explicit GXProjectionClipPlanes ( GXMat4 const &src ) noexcept;
 

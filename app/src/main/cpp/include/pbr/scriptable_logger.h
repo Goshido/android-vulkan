@@ -23,10 +23,10 @@ class ScriptableLogger final
         ScriptableLogger () = delete;
 
         ScriptableLogger ( ScriptableLogger const & ) = delete;
-        ScriptableLogger& operator = ( ScriptableLogger const & ) = delete;
+        ScriptableLogger &operator = ( ScriptableLogger const & ) = delete;
 
         ScriptableLogger ( ScriptableLogger && ) = delete;
-        ScriptableLogger& operator = ( ScriptableLogger && ) = delete;
+        ScriptableLogger &operator = ( ScriptableLogger && ) = delete;
 
         ~ScriptableLogger () = delete;
 

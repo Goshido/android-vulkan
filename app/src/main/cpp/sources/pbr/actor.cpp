@@ -33,10 +33,10 @@ class Actor::StaticInitializer final
         StaticInitializer () noexcept;
 
         StaticInitializer ( StaticInitializer const & ) = delete;
-        StaticInitializer& operator = ( StaticInitializer const & ) = delete;
+        StaticInitializer &operator = ( StaticInitializer const & ) = delete;
 
         StaticInitializer ( StaticInitializer && ) = delete;
-        StaticInitializer& operator = ( StaticInitializer && ) = delete;
+        StaticInitializer &operator = ( StaticInitializer && ) = delete;
 
         ~StaticInitializer () = default;
 };
@@ -132,14 +132,14 @@ void Actor::DestroyComponent ( Component &component ) noexcept
     ( this->*handler ) ( component );
 }
 
-std::string const& Actor::GetName () const noexcept
+std::string const &Actor::GetName () const noexcept
 {
     return _name;
 }
 
 void Actor::OnTransform ( GXMat4 const &transformWorld ) noexcept
 {
-    for ( auto& component : _transformableComponents )
+    for ( auto &component : _transformableComponents )
     {
         component.get ().OnTransform ( transformWorld );
     }
@@ -168,7 +168,7 @@ void Actor::RegisterComponentsFromNative ( Scene &scene,
 
     _scene = &scene;
 
-    for ( auto& component : _components )
+    for ( auto &component : _components )
     {
         auto const handler = _registerFromNativeHandlers[ static_cast<size_t> ( component->GetClassID () ) ];
 
@@ -184,7 +184,7 @@ void Actor::RegisterComponentsFromScript ( Scene &scene,
 {
     _scene = &scene;
 
-    for ( auto& component : _components )
+    for ( auto &component : _components )
     {
         auto const handler = _registerFromScriptHandlers[ static_cast<size_t> ( component->GetClassID () ) ];
 
@@ -219,7 +219,7 @@ bool Actor::Init ( lua_State &vm ) noexcept
         }
     };
 
-    for ( auto const& extension : extensions )
+    for ( auto const &extension : extensions )
         lua_register ( &vm, extension.name, extension.func );
 
     if ( !lua_checkstack ( &vm, 2 ) )
@@ -256,7 +256,7 @@ void Actor::Destroy () noexcept
     _spawnActors.clear ();
 }
 
-ActorRef& Actor::GetReference ( Actor const &handle ) noexcept
+ActorRef &Actor::GetReference ( Actor const &handle ) noexcept
 {
     auto findResult = _spawnActors.find ( &handle );
     AV_ASSERT ( findResult != _spawnActors.end () )
@@ -271,7 +271,7 @@ void Actor::AppendCameraComponentFromNative ( ComponentRef &component,
 ) noexcept
 {
     // NOLINTNEXTLINE - downcast.
-    auto& cameraComponent = static_cast<CameraComponent&> ( *component );
+    auto &cameraComponent = static_cast<CameraComponent &> ( *component );
 
     lua_pushvalue ( &vm, _appendComponentFromNativeIndex );
     lua_pushvalue ( &vm, -2 );
@@ -313,7 +313,7 @@ void Actor::AppendPointLightComponentFromNative ( ComponentRef &component,
 ) noexcept
 {
     // NOLINTNEXTLINE - downcast.
-    auto& transformable = static_cast<PointLightComponent&> ( *component );
+    auto &transformable = static_cast<PointLightComponent &> ( *component );
 
     renderable.emplace_back ( std::ref ( transformable ) );
     _transformableComponents.emplace_back ( std::ref ( transformable ) );
@@ -336,7 +336,7 @@ void Actor::AppendReflectionComponentFromNative ( ComponentRef &component,
 ) noexcept
 {
     // NOLINTNEXTLINE - downcast.
-    auto& reflection = static_cast<ReflectionComponent&> ( *component );
+    auto &reflection = static_cast<ReflectionComponent  &> ( *component );
 
     renderable.emplace_back ( reflection );
 
@@ -363,7 +363,7 @@ void Actor::AppendRigidBodyComponentFromNative ( ComponentRef &component,
 ) noexcept
 {
     // NOLINTNEXTLINE - downcast.
-    auto& rigidBodyComponent = static_cast<RigidBodyComponent&> ( *component );
+    auto &rigidBodyComponent = static_cast<RigidBodyComponent &> ( *component );
 
     lua_pushvalue ( &vm, _appendComponentFromNativeIndex );
     lua_pushvalue ( &vm, -2 );
@@ -394,7 +394,7 @@ void Actor::AppendRigidBodyComponentFromScript ( ComponentRef &component,
 ) noexcept
 {
     // NOLINTNEXTLINE - downcast.
-    auto& rigidBodyComponent = static_cast<RigidBodyComponent&> ( *component );
+    auto &rigidBodyComponent = static_cast<RigidBodyComponent &> ( *component );
 
     if ( rigidBodyComponent.RegisterFromScript ( *this, physics ) )
         return;
@@ -415,7 +415,7 @@ void Actor::AppendScriptComponentFromNative ( ComponentRef &component,
     lua_pushvalue ( &vm, -2 );
 
     // NOLINTNEXTLINE - downcast.
-    auto& scriptComponent = static_cast<ScriptComponent&> ( *component );
+    auto &scriptComponent = static_cast<ScriptComponent &> ( *component );
 
     if ( !scriptComponent.RegisterFromNative ( vm, *this ) )
     {
@@ -443,7 +443,7 @@ void Actor::AppendScriptComponentFromScript ( ComponentRef &component,
 ) noexcept
 {
     // NOLINTNEXTLINE - downcast.
-    auto& scriptComponent = static_cast<ScriptComponent&> ( *component );
+    auto &scriptComponent = static_cast<ScriptComponent &> ( *component );
     scriptComponent.RegisterFromScript ( *this );
 }
 
@@ -457,7 +457,7 @@ void Actor::AppendSoundEmitterGlobalComponentFromNative ( ComponentRef &componen
     lua_pushvalue ( &vm, -2 );
 
     // NOLINTNEXTLINE - downcast.
-    auto& emitterComponent = static_cast<SoundEmitterGlobalComponent&> ( *component );
+    auto &emitterComponent = static_cast<SoundEmitterGlobalComponent &> ( *component );
 
     if ( !emitterComponent.RegisterFromNative ( vm, *this ) )
     {
@@ -486,7 +486,7 @@ void Actor::AppendSoundEmitterGlobalComponentFromScript ( ComponentRef &componen
 ) noexcept
 {
     // NOLINTNEXTLINE - downcast.
-    auto& emitterComponent = static_cast<SoundEmitterGlobalComponent&> ( *component );
+    auto &emitterComponent = static_cast<SoundEmitterGlobalComponent &> ( *component );
     emitterComponent.RegisterFromScript ( *this );
 }
 
@@ -500,7 +500,7 @@ void Actor::AppendSoundEmitterSpatialComponentFromNative ( ComponentRef &compone
     lua_pushvalue ( &vm, -2 );
 
     // NOLINTNEXTLINE - downcast.
-    auto& emitterComponent = static_cast<SoundEmitterSpatialComponent&> ( *component );
+    auto &emitterComponent = static_cast<SoundEmitterSpatialComponent &> ( *component );
 
     if ( !emitterComponent.RegisterFromNative ( vm, *this ) )
     {
@@ -529,7 +529,7 @@ void Actor::AppendSoundEmitterSpatialComponentFromScript ( ComponentRef &compone
 ) noexcept
 {
     // NOLINTNEXTLINE - downcast.
-    auto& emitterComponent = static_cast<SoundEmitterSpatialComponent&> ( *component );
+    auto &emitterComponent = static_cast<SoundEmitterSpatialComponent &> ( *component );
     emitterComponent.RegisterFromScript ( *this );
 }
 
@@ -540,7 +540,7 @@ void Actor::AppendStaticMeshComponentFromNative ( ComponentRef &component,
 ) noexcept
 {
     // NOLINTNEXTLINE - downcast.
-    auto& transformable = static_cast<StaticMeshComponent&> ( *component );
+    auto &transformable = static_cast<StaticMeshComponent &> ( *component );
 
     renderable.emplace_back ( transformable );
     _transformableComponents.emplace_back ( std::ref ( transformable ) );
@@ -574,7 +574,7 @@ void Actor::AppendStaticMeshComponentFromScript ( ComponentRef &component,
 ) noexcept
 {
     // NOLINTNEXTLINE - downcast.
-    auto& transformable = static_cast<StaticMeshComponent&> ( *component );
+    auto &transformable = static_cast<StaticMeshComponent &> ( *component );
 
     renderable.emplace_back ( transformable );
     _transformableComponents.emplace_back ( std::ref ( transformable ) );
@@ -589,7 +589,7 @@ void Actor::AppendTransformComponentFromNative ( ComponentRef &component,
 ) noexcept
 {
     // NOLINTNEXTLINE - downcast.
-    auto& transformComponent = static_cast<TransformComponent&> ( *component );
+    auto &transformComponent = static_cast<TransformComponent &> ( *component );
 
     lua_pushvalue ( &vm, _appendComponentFromNativeIndex );
     lua_pushvalue ( &vm, -2 );
@@ -648,7 +648,7 @@ void Actor::AppendUnknownComponentFromScript ( ComponentRef &/*component*/,
 void Actor::DestroyRigidBodyComponent ( Component &component ) noexcept
 {
     // NOLINTNEXTLINE - downcast.
-    auto& rigidBodyComponent = static_cast<RigidBodyComponent&> ( component );
+    auto &rigidBodyComponent = static_cast<RigidBodyComponent &> ( component );
     rigidBodyComponent.Unregister ( _scene->GetPhysics () );
     RemoveComponent ( component );
 }
@@ -656,7 +656,7 @@ void Actor::DestroyRigidBodyComponent ( Component &component ) noexcept
 void Actor::DestroyStaticMeshComponent ( Component &component ) noexcept
 {
     // NOLINTNEXTLINE - downcast.
-    _scene->DetachRenderable ( static_cast<RenderableComponent const&> ( component ) );
+    _scene->DetachRenderable ( static_cast<RenderableComponent const &> ( component ) );
     RemoveComponent ( component );
 }
 
@@ -683,8 +683,8 @@ void Actor::RemoveComponent ( Component const &component ) noexcept
 
 int Actor::OnAppendComponent ( lua_State* state )
 {
-    auto& self = *static_cast<Actor*> ( lua_touserdata ( state, 1 ) );
-    auto& component = *static_cast<Component*> ( lua_touserdata ( state, 2 ) );
+    auto &self = *static_cast<Actor*> ( lua_touserdata ( state, 1 ) );
+    auto &component = *static_cast<Component*> ( lua_touserdata ( state, 2 ) );
     self.AppendComponent ( component.GetReference () );
     return 0;
 }
@@ -707,7 +707,7 @@ int Actor::OnCreate ( lua_State* state )
 
 int Actor::OnDestroy ( lua_State* state )
 {
-    auto const& self = *static_cast<Actor const*> ( lua_touserdata ( state, 1 ) );
+    auto const &self = *static_cast<Actor const*> ( lua_touserdata ( state, 1 ) );
     self._scene->RemoveActor ( self );
     return 0;
 }
@@ -726,8 +726,8 @@ int Actor::OnGetName ( lua_State* state )
         return 0;
     }
 
-    auto const& self = *static_cast<Actor const*> ( lua_touserdata ( state, 1 ) );
-    std::string const& n = self._name;
+    auto const &self = *static_cast<Actor const*> ( lua_touserdata ( state, 1 ) );
+    std::string const &n = self._name;
     lua_pushlstring ( state, n.c_str (), n.size () );
     return 1;
 }

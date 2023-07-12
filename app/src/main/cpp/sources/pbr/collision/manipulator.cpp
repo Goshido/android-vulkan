@@ -14,7 +14,7 @@ void Manipulator::Capture ( android_vulkan::RigidBodyRef &body ) noexcept
     _pitch = 0;
     _roll = 0;
 
-    android_vulkan::Gamepad& gamepad = android_vulkan::Gamepad::GetInstance ();
+    android_vulkan::Gamepad &gamepad = android_vulkan::Gamepad::GetInstance ();
 
     gamepad.BindKey ( this,
         &Manipulator::OnBDown,
@@ -91,7 +91,7 @@ void Manipulator::Capture ( android_vulkan::RigidBodyRef &body ) noexcept
 
 void Manipulator::Free () noexcept
 {
-    android_vulkan::Gamepad& gamepad = android_vulkan::Gamepad::GetInstance ();
+    android_vulkan::Gamepad &gamepad = android_vulkan::Gamepad::GetInstance ();
 
     gamepad.UnbindKey ( android_vulkan::eGamepadKey::B, android_vulkan::eButtonState::Down );
     gamepad.UnbindKey ( android_vulkan::eGamepadKey::B, android_vulkan::eButtonState::Up );
@@ -132,7 +132,7 @@ void Manipulator::Update ( GXMat4 const &cameraLocal, float deltaTime ) noexcept
     r.Multiply ( rollRotation, pitchRotation );
 
     GXQuat finalRotation {};
-    android_vulkan::RigidBody& b = *_body.get ();
+    android_vulkan::RigidBody &b = *_body.get ();
     finalRotation.Multiply ( r, b.GetRotation () );
     b.SetRotation ( finalRotation, false );
 
@@ -143,73 +143,73 @@ void Manipulator::Update ( GXMat4 const &cameraLocal, float deltaTime ) noexcept
 
 void Manipulator::OnBDown ( void* context ) noexcept
 {
-    Manipulator& manipulator = *static_cast<Manipulator*> ( context );
+    Manipulator &manipulator = *static_cast<Manipulator*> ( context );
     --manipulator._height;
 }
 
 void Manipulator::OnBUp ( void* context ) noexcept
 {
-    Manipulator& manipulator = *static_cast<Manipulator*> ( context );
+    Manipulator &manipulator = *static_cast<Manipulator*> ( context );
     ++manipulator._height;
 }
 
 void Manipulator::OnDownDown ( void* context ) noexcept
 {
-    Manipulator& manipulator = *static_cast<Manipulator*> ( context );
+    Manipulator &manipulator = *static_cast<Manipulator*> ( context );
     --manipulator._pitch;
 }
 
 void Manipulator::OnDownUp ( void* context ) noexcept
 {
-    Manipulator& manipulator = *static_cast<Manipulator*> ( context );
+    Manipulator &manipulator = *static_cast<Manipulator*> ( context );
     ++manipulator._pitch;
 }
 
 void Manipulator::OnLeftDown ( void* context ) noexcept
 {
-    Manipulator& manipulator = *static_cast<Manipulator*> ( context );
+    Manipulator &manipulator = *static_cast<Manipulator*> ( context );
     --manipulator._roll;
 }
 
 void Manipulator::OnLeftUp ( void* context ) noexcept
 {
-    Manipulator& manipulator = *static_cast<Manipulator*> ( context );
+    Manipulator &manipulator = *static_cast<Manipulator*> ( context );
     ++manipulator._roll;
 }
 
 void Manipulator::OnRightDown ( void* context ) noexcept
 {
-    Manipulator& manipulator = *static_cast<Manipulator*> ( context );
+    Manipulator &manipulator = *static_cast<Manipulator*> ( context );
     ++manipulator._roll;
 }
 
 void Manipulator::OnRightUp ( void* context ) noexcept
 {
-    Manipulator& manipulator = *static_cast<Manipulator*> ( context );
+    Manipulator &manipulator = *static_cast<Manipulator*> ( context );
     --manipulator._roll;
 }
 
 void Manipulator::OnUpDown ( void* context ) noexcept
 {
-    Manipulator& manipulator = *static_cast<Manipulator*> ( context );
+    Manipulator &manipulator = *static_cast<Manipulator*> ( context );
     ++manipulator._pitch;
 }
 
 void Manipulator::OnUpUp ( void* context ) noexcept
 {
-    Manipulator& manipulator = *static_cast<Manipulator*> ( context );
+    Manipulator &manipulator = *static_cast<Manipulator*> ( context );
     --manipulator._pitch;
 }
 
 void Manipulator::OnYDown ( void* context ) noexcept
 {
-    Manipulator& manipulator = *static_cast<Manipulator*> ( context );
+    Manipulator &manipulator = *static_cast<Manipulator*> ( context );
     ++manipulator._height;
 }
 
 void Manipulator::OnYUp ( void* context ) noexcept
 {
-    Manipulator& manipulator = *static_cast<Manipulator*> ( context );
+    Manipulator &manipulator = *static_cast<Manipulator*> ( context );
     --manipulator._height;
 }
 

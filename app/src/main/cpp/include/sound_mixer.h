@@ -54,10 +54,10 @@ class SoundMixer final
                 StreamInfo () = default;
 
                 StreamInfo ( StreamInfo const & ) = delete;
-                StreamInfo& operator = ( StreamInfo const & ) = delete;
+                StreamInfo &operator = ( StreamInfo const & ) = delete;
 
                 StreamInfo ( StreamInfo && ) = default;
-                StreamInfo& operator = ( StreamInfo && ) = delete;
+                StreamInfo &operator = ( StreamInfo && ) = delete;
 
                 explicit StreamInfo ( SoundMixer &mixer, StreamList::iterator used ) noexcept;
 
@@ -107,10 +107,10 @@ class SoundMixer final
         SoundMixer () = default;
 
         SoundMixer ( SoundMixer const & ) = delete;
-        SoundMixer& operator = ( SoundMixer const & ) = delete;
+        SoundMixer &operator = ( SoundMixer const & ) = delete;
 
         SoundMixer ( SoundMixer && ) = delete;
-        SoundMixer& operator = ( SoundMixer && ) = delete;
+        SoundMixer &operator = ( SoundMixer && ) = delete;
 
         ~SoundMixer () = default;
 
@@ -127,11 +127,11 @@ class SoundMixer final
         [[maybe_unused, nodiscard]] float GetMasterVolume () const noexcept;
         void SetMasterVolume ( float volume ) noexcept;
 
-        [[nodiscard]] SoundListenerInfo const& GetListenerInfo () noexcept;
+        [[nodiscard]] SoundListenerInfo const &GetListenerInfo () noexcept;
         void SetListenerLocation ( GXVec3 const &location ) noexcept;
         void SetListenerOrientation ( GXQuat const &orientation ) noexcept;
 
-        [[nodiscard]] SoundStorage& GetSoundStorage () noexcept;
+        [[nodiscard]] SoundStorage &GetSoundStorage () noexcept;
 
         void Pause () noexcept;
         void Resume () noexcept;

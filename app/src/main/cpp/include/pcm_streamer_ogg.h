@@ -40,10 +40,10 @@ class PCMStreamerOGG final : public PCMStreamer
         PCMStreamerOGG () = delete;
 
         PCMStreamerOGG ( PCMStreamerOGG const & ) = delete;
-        PCMStreamerOGG& operator = ( PCMStreamerOGG const & ) = delete;
+        PCMStreamerOGG &operator = ( PCMStreamerOGG const & ) = delete;
 
         PCMStreamerOGG ( PCMStreamerOGG && ) = delete;
-        PCMStreamerOGG& operator = ( PCMStreamerOGG && ) = delete;
+        PCMStreamerOGG &operator = ( PCMStreamerOGG && ) = delete;
 
         explicit PCMStreamerOGG ( SoundEmitter &soundEmitter, OnStopRequest callback ) noexcept;
 

@@ -24,10 +24,10 @@ class SoundEmitterGlobalComponent final : public Component
         SoundEmitterGlobalComponent () = delete;
 
         SoundEmitterGlobalComponent ( SoundEmitterGlobalComponent const & ) = delete;
-        SoundEmitterGlobalComponent& operator = ( SoundEmitterGlobalComponent const & ) = delete;
+        SoundEmitterGlobalComponent &operator = ( SoundEmitterGlobalComponent const & ) = delete;
 
         SoundEmitterGlobalComponent ( SoundEmitterGlobalComponent && ) = delete;
-        SoundEmitterGlobalComponent& operator = ( SoundEmitterGlobalComponent && ) = delete;
+        SoundEmitterGlobalComponent &operator = ( SoundEmitterGlobalComponent && ) = delete;
 
         explicit SoundEmitterGlobalComponent ( bool &success,
             SoundEmitterGlobalComponentDesc const &desc,
@@ -54,7 +54,7 @@ class SoundEmitterGlobalComponent final : public Component
         static void Destroy () noexcept;
 
     private:
-        [[nodiscard]] ComponentRef& GetReference () noexcept override;
+        [[nodiscard]] ComponentRef &GetReference () noexcept override;
 
         [[nodiscard]] static int OnCreate ( lua_State* state );
         [[nodiscard]] static int OnDestroy ( lua_State* state );

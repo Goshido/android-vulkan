@@ -24,10 +24,10 @@ class File final
         File () = default;
 
         File ( File const &other ) = delete;
-        File& operator = ( File const &other ) = delete;
+        File &operator = ( File const &other ) = delete;
 
         File ( File &&other ) = delete;
-        File& operator = ( File &&other ) = delete;
+        File &operator = ( File &&other ) = delete;
 
         explicit File ( std::string &&filePath ) noexcept;
         explicit File ( std::string_view const &filePath ) noexcept;
@@ -35,11 +35,11 @@ class File final
 
         ~File () = default;
 
-        [[nodiscard]] std::vector<uint8_t>& GetContent () noexcept;
-        [[maybe_unused, nodiscard]] std::vector<uint8_t> const& GetContent () const noexcept;
+        [[nodiscard]] std::vector<uint8_t> &GetContent () noexcept;
+        [[maybe_unused, nodiscard]] std::vector<uint8_t> const &GetContent () const noexcept;
 
-        [[maybe_unused, nodiscard]] std::string& GetPath () noexcept;
-        [[maybe_unused, nodiscard]] std::string const& GetPath () const noexcept;
+        [[maybe_unused, nodiscard]] std::string &GetPath () noexcept;
+        [[maybe_unused, nodiscard]] std::string const &GetPath () const noexcept;
 
         [[nodiscard]] bool IsContentLoaded () const noexcept;
         [[nodiscard]] bool IsExist () const noexcept;

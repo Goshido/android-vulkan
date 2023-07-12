@@ -245,7 +245,7 @@ bool MandelbrotBase::CreateFramebuffers ( android_vulkan::Renderer &renderer ) n
     size_t const presentationImageCount = renderer.GetPresentImageCount ();
     _framebuffers.reserve ( presentationImageCount );
 
-    VkExtent2D const& resolution = renderer.GetSurfaceSize ();
+    VkExtent2D const &resolution = renderer.GetSurfaceSize ();
 
     VkFramebufferCreateInfo createInfo;
     createInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
@@ -420,7 +420,7 @@ bool MandelbrotBase::CreatePipeline ( android_vulkan::Renderer &renderer ) noexc
         .primitiveRestartEnable = VK_TRUE
     };
 
-    VkExtent2D const& surfaceSize = renderer.GetSurfaceSize ();
+    VkExtent2D const &surfaceSize = renderer.GetSurfaceSize ();
 
     VkViewport const viewport
     {

@@ -20,20 +20,20 @@ class GBuffer final
         GBuffer () = default;
 
         GBuffer ( GBuffer const & ) = delete;
-        GBuffer& operator = ( GBuffer const & ) = delete;
+        GBuffer &operator = ( GBuffer const & ) = delete;
 
         GBuffer ( GBuffer && ) = delete;
-        GBuffer& operator = ( GBuffer && ) = delete;
+        GBuffer &operator = ( GBuffer && ) = delete;
 
         ~GBuffer () = default;
 
-        [[nodiscard]] android_vulkan::Texture2D& GetAlbedo ()  noexcept;
-        [[nodiscard]] android_vulkan::Texture2D& GetDepthStencil () noexcept;
-        [[nodiscard]] android_vulkan::Texture2D& GetHDRAccumulator () noexcept;
-        [[nodiscard]] android_vulkan::Texture2D& GetNormal () noexcept;
-        [[nodiscard]] android_vulkan::Texture2D& GetParams () noexcept;
+        [[nodiscard]] android_vulkan::Texture2D &GetAlbedo ()  noexcept;
+        [[nodiscard]] android_vulkan::Texture2D &GetDepthStencil () noexcept;
+        [[nodiscard]] android_vulkan::Texture2D &GetHDRAccumulator () noexcept;
+        [[nodiscard]] android_vulkan::Texture2D &GetNormal () noexcept;
+        [[nodiscard]] android_vulkan::Texture2D &GetParams () noexcept;
 
-        [[nodiscard]] VkExtent2D const& GetResolution () const noexcept;
+        [[nodiscard]] VkExtent2D const &GetResolution () const noexcept;
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, VkExtent2D const &resolution ) noexcept;
         void Destroy ( android_vulkan::Renderer &renderer ) noexcept;

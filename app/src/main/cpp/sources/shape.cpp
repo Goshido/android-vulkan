@@ -9,17 +9,17 @@ constexpr static float const DEFAULT_RESTITUTION = 0.25F;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-GXMat3 const& Shape::GetInertiaTensorInverse () const noexcept
+GXMat3 const &Shape::GetInertiaTensorInverse () const noexcept
 {
     return _inertiaTensorInverse;
 }
 
-[[maybe_unused]] GXAABB const& Shape::GetBoundsLocal () const noexcept
+[[maybe_unused]] GXAABB const &Shape::GetBoundsLocal () const noexcept
 {
     return _boundsLocal;
 }
 
-GXAABB const& Shape::GetBoundsWorld () const noexcept
+GXAABB const &Shape::GetBoundsWorld () const noexcept
 {
     return _boundsWorld;
 }
@@ -54,7 +54,7 @@ float Shape::GetRestitution () const noexcept
     _restitution = restitution;
 }
 
-[[maybe_unused]] GXMat4 const& Shape::GetTransformWorld () const noexcept
+[[maybe_unused]] GXMat4 const &Shape::GetTransformWorld () const noexcept
 {
     return _transformWorld;
 }

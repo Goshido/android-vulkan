@@ -47,7 +47,7 @@ PropertyChecker::Result VerticalAlignPropertyChecker::Process ( PropertyParser::
     constexpr std::string_view separator = " | ";
     constexpr char const* s = separator.data ();
 
-    for ( auto const& value : VALUES )
+    for ( auto const &value : VALUES )
         supported += *UTF8Parser::ToUTF8 ( value.first ) + s;
 
     supported.resize ( supported.size () - separator.size () );

@@ -20,10 +20,10 @@ class FontFaceCSSRule final
         FontFaceCSSRule () = delete;
 
         FontFaceCSSRule ( FontFaceCSSRule const & ) = delete;
-        FontFaceCSSRule& operator = ( FontFaceCSSRule const & ) = delete;
+        FontFaceCSSRule &operator = ( FontFaceCSSRule const & ) = delete;
 
         FontFaceCSSRule ( FontFaceCSSRule && ) = delete;
-        FontFaceCSSRule& operator = ( FontFaceCSSRule && ) = delete;
+        FontFaceCSSRule &operator = ( FontFaceCSSRule && ) = delete;
 
         ~FontFaceCSSRule () = default;
 

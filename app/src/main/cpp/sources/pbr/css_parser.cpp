@@ -38,7 +38,7 @@ std::optional<CSSProps const*> CSSParser::FindID ( std::u32string const &id ) co
     return std::nullopt;
 }
 
-std::string const& CSSParser::GetSource () const noexcept
+std::string const &CSSParser::GetSource () const noexcept
 {
     return _cssSource;
 }

@@ -24,10 +24,10 @@ class LengthValueParser final
         LengthValueParser () = delete;
 
         LengthValueParser ( LengthValueParser const & ) = delete;
-        LengthValueParser& operator = ( LengthValueParser const & ) = delete;
+        LengthValueParser &operator = ( LengthValueParser const & ) = delete;
 
         LengthValueParser ( LengthValueParser && ) = delete;
-        LengthValueParser& operator = ( LengthValueParser && ) = delete;
+        LengthValueParser &operator = ( LengthValueParser && ) = delete;
 
         ~LengthValueParser () = delete;
 

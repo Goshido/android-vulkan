@@ -112,11 +112,11 @@ void ReflectionLocalPass::UploadGPUData ( VkDevice device,
     alpha.Identity ();
 
     ReflectionLocalProgram::VolumeData volumeData {};
-    GXMat4& transform = volumeData._transform;
+    GXMat4 &transform = volumeData._transform;
     GXMat4 local {};
     local.Identity ();
 
-    for ( auto const& call : _calls )
+    for ( auto const &call : _calls )
     {
         local._data[ 0U ] = call._size;
         local._data[ 5U ] = call._size;
@@ -262,18 +262,18 @@ bool ReflectionLocalPass::AllocateDescriptorSets ( android_vulkan::Renderer &ren
         VkDescriptorSet set = _descriptorSets[ i ];
         VkBuffer buffer = _uniformPool.GetBuffer ( i );
 
-        VkDescriptorBufferInfo& bufferInfo = _bufferInfo[ i ];
+        VkDescriptorBufferInfo &bufferInfo = _bufferInfo[ i ];
         bufferInfo.buffer = buffer;
 
         _barriers[ i ].buffer = buffer;
 
-        VkWriteDescriptorSet& imageSet = _writeSets[ base ];
+        VkWriteDescriptorSet &imageSet = _writeSets[ base ];
         imageSet.dstSet = set;
         imageSet.dstBinding = 0U;
         imageSet.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
         imageSet.pImageInfo = &_imageInfo[ i ];
 
-        VkWriteDescriptorSet& bufferSet = _writeSets[ base + 1U ];
+        VkWriteDescriptorSet &bufferSet = _writeSets[ base + 1U ];
         bufferSet.dstSet = set;
         bufferSet.dstBinding = 1U;
         bufferSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,

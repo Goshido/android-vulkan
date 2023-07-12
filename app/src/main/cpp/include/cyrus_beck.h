@@ -18,15 +18,15 @@ class CyrusBeck final
         CyrusBeck () noexcept;
 
         CyrusBeck ( CyrusBeck const & ) = delete;
-        CyrusBeck& operator = ( CyrusBeck const & ) = delete;
+        CyrusBeck &operator = ( CyrusBeck const & ) = delete;
 
         CyrusBeck ( CyrusBeck && ) = delete;
-        CyrusBeck& operator = ( CyrusBeck && ) = delete;
+        CyrusBeck &operator = ( CyrusBeck && ) = delete;
 
         ~CyrusBeck () = default;
 
         // The method returns result points on the edge. It could be one or two points.
-        [[nodiscard]] Vertices const& Run ( Vertices const &face,
+        [[nodiscard]] Vertices const &Run ( Vertices const &face,
             GXVec3 const &faceNormal,
             Vertices const &edge,
             GXVec3 const &edgeDir

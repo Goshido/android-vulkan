@@ -32,7 +32,7 @@ bool SoundEmitter::Destroy () noexcept
     return true;
 }
 
-[[maybe_unused]] std::string const& SoundEmitter::GetFile () const noexcept
+[[maybe_unused]] std::string const &SoundEmitter::GetFile () const noexcept
 {
     return _file;
 }

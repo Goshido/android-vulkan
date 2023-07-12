@@ -25,7 +25,7 @@ bool Collision::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime )
     auto const dt = static_cast<float> ( deltaTime );
 
     _camera.Update ( dt );
-    GXMat4 const& cameraLocal = _camera.GetLocalMatrix ();
+    GXMat4 const &cameraLocal = _camera.GetLocalMatrix ();
     _renderSession.Begin ( cameraLocal, _camera.GetProjectionMatrix () );
 
     _manipulator.Update ( cameraLocal, dt );
@@ -34,19 +34,19 @@ bool Collision::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime )
     _contactDetector.Check ( _contactManager, _cubes[ 0U ]._body, _cubes[ 1U ]._body );
 
     // NOLINTNEXTLINE - downcast.
-    auto& light = *static_cast<PointLightComponent*> ( _cameraLight.get () );
+    auto &light = *static_cast<PointLightComponent*> ( _cameraLight.get () );
 
     GXVec3 lightLocation {};
     cameraLocal.GetW ( lightLocation );
     light.SetLocation ( lightLocation );
     light.Submit ( _renderSession );
 
-    for ( auto& cube : _cubes )
+    for ( auto &cube : _cubes )
     {
         UpdateCuboid ( cube );
 
         // NOLINTNEXTLINE - downcast.
-        auto& renderableComponent = static_cast<RenderableComponent&> ( *cube._component );
+        auto &renderableComponent = static_cast<RenderableComponent &> ( *cube._component );
         renderableComponent.Submit ( _renderSession );
     }
 
@@ -79,14 +79,14 @@ bool Collision::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime )
         );
     };
 
-    for ( auto const& manifold : _contactManager.GetContactManifolds () )
+    for ( auto const &manifold : _contactManager.GetContactManifolds () )
     {
         android_vulkan::Contact const* contacts = manifold._contacts;
         size_t const count = manifold._contactCount;
 
         for ( size_t i = 0U; i < count; ++i )
         {
-            android_vulkan::Contact const& contact = contacts[ i ];
+            android_vulkan::Contact const &contact = contacts[ i ];
             submit ( contact._pointA, _aColor );
             submit ( contact._pointB, _bColor );
         }
@@ -114,7 +114,7 @@ void Collision::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
 
 bool Collision::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept
 {
-    VkExtent2D const& surfaceResolution = renderer.GetViewportResolution ();
+    VkExtent2D const &surfaceResolution = renderer.GetViewportResolution ();
 
     VkExtent2D const resolution
     {
@@ -281,7 +281,7 @@ bool Collision::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
     _cameraLight = std::make_shared<PointLightComponent> ();
 
     // NOLINTNEXTLINE
-    auto& light = *static_cast<PointLightComponent*> ( _cameraLight.get () );
+    auto &light = *static_cast<PointLightComponent*> ( _cameraLight.get () );
     light.SetIntensity ( 16.0F );
     light.SetBoundDimensions ( 1600.0F, 1600.0F, 1600.0F );
 
@@ -293,17 +293,17 @@ bool Collision::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
     if ( !result )
         return false;
 
-    for ( auto& cube : _cubes )
+    for ( auto &cube : _cubes )
     {
         // NOLINTNEXTLINE - downcast.
-        auto& renderableComponent = static_cast<RenderableComponent&> ( *cube._component );
+        auto &renderableComponent = static_cast<RenderableComponent &> ( *cube._component );
         renderableComponent.FreeTransferResources ( renderer );
     }
 
     _contactMesh->FreeTransferResources ( renderer );
 
     // NOLINTNEXTLINE - downcast.
-    auto& m = static_cast<GeometryPassMaterial&> ( *_contactMaterial );
+    auto &m = static_cast<GeometryPassMaterial &> ( *_contactMaterial );
 
     if ( m.GetAlbedo () )
         m.GetAlbedo ()->FreeTransferResources ( renderer );
@@ -370,11 +370,11 @@ bool Collision::AppendCuboid ( android_vulkan::Renderer &renderer,
     }
 
     // NOLINTNEXTLINE
-    auto& v = *static_cast<StaticMeshComponent*> ( visual.get () );
+    auto &v = *static_cast<StaticMeshComponent*> ( visual.get () );
     v.SetColor0 ( color );
 
     physical = std::make_shared<android_vulkan::RigidBody> ();
-    android_vulkan::RigidBody& ph = *physical.get ();
+    android_vulkan::RigidBody &ph = *physical.get ();
     ph.SetLocation ( x, y, z, false );
     ph.EnableKinematic ();
     ph.EnableSleep ();
@@ -388,10 +388,10 @@ bool Collision::AppendCuboid ( android_vulkan::Renderer &renderer,
 void Collision::UpdateCuboid ( CubeInfo &cube ) noexcept
 {
     // NOLINTNEXTLINE
-    auto& c = *static_cast<StaticMeshComponent*> ( cube._component.get () );
+    auto &c = *static_cast<StaticMeshComponent*> ( cube._component.get () );
 
     // NOLINTNEXTLINE
-    auto& s = static_cast<android_vulkan::ShapeBox&> ( cube._body->GetShape () );
+    auto &s = static_cast<android_vulkan::ShapeBox &> ( cube._body->GetShape () );
     GXMat4 transform = cube._body->GetTransform ();
 
     GXVec3 dims ( s.GetWidth (), s.GetHeight (), s.GetDepth () );

@@ -13,10 +13,10 @@ class UIPassTransformDescriptorSetLayout final : public DescriptorSetLayout
         UIPassTransformDescriptorSetLayout () = default;
 
         UIPassTransformDescriptorSetLayout ( UIPassTransformDescriptorSetLayout const & ) = delete;
-        UIPassTransformDescriptorSetLayout& operator = ( UIPassTransformDescriptorSetLayout const & ) = delete;
+        UIPassTransformDescriptorSetLayout &operator = ( UIPassTransformDescriptorSetLayout const & ) = delete;
 
         UIPassTransformDescriptorSetLayout ( UIPassTransformDescriptorSetLayout && ) = delete;
-        UIPassTransformDescriptorSetLayout& operator = ( UIPassTransformDescriptorSetLayout && ) = delete;
+        UIPassTransformDescriptorSetLayout &operator = ( UIPassTransformDescriptorSetLayout && ) = delete;
 
         ~UIPassTransformDescriptorSetLayout () override = default;
 

@@ -40,7 +40,7 @@ void ScriptableLogger::Register ( lua_State &vm ) noexcept
         }
     };
 
-    for ( auto const& extension : extensions )
+    for ( auto const &extension : extensions )
     {
         lua_register ( &vm, extension.name, extension.func );
     }

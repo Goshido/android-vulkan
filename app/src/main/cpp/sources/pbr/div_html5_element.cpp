@@ -52,12 +52,12 @@ DIVHTML5Element::DIVHTML5Element ( std::u32string &&id,
     _cssComputedValues._height = LengthValue ( LengthValue::eType::Auto, 0.0F );
 }
 
-HTML5Children& DIVHTML5Element::GetChildren () noexcept
+HTML5Children &DIVHTML5Element::GetChildren () noexcept
 {
     return _children;
 }
 
-std::u32string& DIVHTML5Element::GetID () noexcept
+std::u32string &DIVHTML5Element::GetID () noexcept
 {
     return _id;
 }
@@ -245,7 +245,7 @@ bool DIVHTML5Element::ApplyCSS ( char const* html, CSSParser const &css ) noexce
     if ( !_cssComputedValues.ApplyCSS ( html, css, _classes, _id ) )
         return false;
 
-    for ( auto& element : _children )
+    for ( auto &element : _children )
     {
         if ( !element->ApplyCSS ( html, css ) )
         {

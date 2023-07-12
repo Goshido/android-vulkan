@@ -11,10 +11,10 @@ class GlobalForce
 {
     public:
         GlobalForce ( GlobalForce const & ) = delete;
-        GlobalForce& operator = ( GlobalForce const & ) = delete;
+        GlobalForce &operator = ( GlobalForce const & ) = delete;
 
         GlobalForce ( GlobalForce && ) = delete;
-        GlobalForce& operator = ( GlobalForce && ) = delete;
+        GlobalForce &operator = ( GlobalForce && ) = delete;
 
         virtual ~GlobalForce () = default;
 

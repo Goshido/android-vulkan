@@ -31,17 +31,17 @@ class HTML5Parser final
         HTML5Parser () = default;
 
         HTML5Parser ( HTML5Parser const & ) = delete;
-        HTML5Parser& operator = ( HTML5Parser const & ) = delete;
+        HTML5Parser &operator = ( HTML5Parser const & ) = delete;
 
         HTML5Parser ( HTML5Parser && ) = delete;
-        HTML5Parser& operator = ( HTML5Parser && ) = delete;
+        HTML5Parser &operator = ( HTML5Parser && ) = delete;
 
         ~HTML5Parser () = default;
 
-        [[nodiscard]] CSSComputedValues& GetBodyCSS () noexcept;
-        [[nodiscard]] HTML5Children& GetBodyChildren () noexcept;
-        [[nodiscard]] std::u32string& GetBodyID () noexcept;
-        [[nodiscard]] CSSParser& GetCSSParser () noexcept;
+        [[nodiscard]] CSSComputedValues &GetBodyCSS () noexcept;
+        [[nodiscard]] HTML5Children &GetBodyChildren () noexcept;
+        [[nodiscard]] std::u32string &GetBodyID () noexcept;
+        [[nodiscard]] CSSParser &GetCSSParser () noexcept;
 
         [[nodiscard]] bool Parse ( char const* html, Stream stream, char const* assetRoot ) noexcept;
 

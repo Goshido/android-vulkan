@@ -33,7 +33,7 @@ void ASCIIString::ToLower ( std::string_view string ) noexcept
 
     for ( size_t i = 0U; i < count; ++i )
     {
-        char& s = n[ i ];
+        char &s = n[ i ];
         s = static_cast<char> ( std::tolower ( static_cast<int> ( s ) ) );
     }
 }

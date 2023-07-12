@@ -35,20 +35,20 @@ class ScriptableGXQuat final
         ScriptableGXQuat () = delete;
 
         ScriptableGXQuat ( ScriptableGXQuat const & ) = delete;
-        ScriptableGXQuat& operator = ( ScriptableGXQuat const & ) = delete;
+        ScriptableGXQuat &operator = ( ScriptableGXQuat const & ) = delete;
 
         ScriptableGXQuat ( ScriptableGXQuat && ) = delete;
-        ScriptableGXQuat& operator = ( ScriptableGXQuat && ) = delete;
+        ScriptableGXQuat &operator = ( ScriptableGXQuat && ) = delete;
 
         ~ScriptableGXQuat () = delete;
 
         static void Init ( lua_State &vm ) noexcept;
         static void Destroy () noexcept;
 
-        [[nodiscard]] static GXQuat& Extract ( lua_State* state, int idx ) noexcept;
+        [[nodiscard]] static GXQuat &Extract ( lua_State* state, int idx ) noexcept;
 
     private:
-        static void Insert ( Item* item, Item*& list ) noexcept;
+        static void Insert ( Item* item, Item* &list ) noexcept;
 
         [[nodiscard]] static int OnCreate ( lua_State* state );
         [[nodiscard]] static int OnDestroy ( lua_State* state );

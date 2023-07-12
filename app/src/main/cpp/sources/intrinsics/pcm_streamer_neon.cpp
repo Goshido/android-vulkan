@@ -31,10 +31,10 @@ class NeonConverter final
         NeonConverter () = delete;
 
         NeonConverter ( NeonConverter const & ) = delete;
-        NeonConverter& operator = ( NeonConverter const & ) = delete;
+        NeonConverter &operator = ( NeonConverter const & ) = delete;
 
         NeonConverter ( NeonConverter && ) = delete;
-        NeonConverter& operator = ( NeonConverter && ) = delete;
+        NeonConverter &operator = ( NeonConverter && ) = delete;
 
         ~NeonConverter () = delete;
 

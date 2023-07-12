@@ -25,10 +25,10 @@ class MandelbrotLUTColor final : public MandelbrotBase
         MandelbrotLUTColor () noexcept;
 
         MandelbrotLUTColor ( MandelbrotLUTColor const & ) = delete;
-        MandelbrotLUTColor& operator = ( MandelbrotLUTColor const & ) = delete;
+        MandelbrotLUTColor &operator = ( MandelbrotLUTColor const & ) = delete;
 
         MandelbrotLUTColor ( MandelbrotLUTColor && ) = delete;
-        MandelbrotLUTColor& operator = ( MandelbrotLUTColor && ) = delete;
+        MandelbrotLUTColor &operator = ( MandelbrotLUTColor && ) = delete;
 
         ~MandelbrotLUTColor () override = default;
 

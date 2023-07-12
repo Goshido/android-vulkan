@@ -28,10 +28,10 @@ class VulkanItem final
         VulkanItem () noexcept;
 
         VulkanItem ( VulkanItem const & ) = default;
-        VulkanItem& operator = ( VulkanItem const & ) = delete;
+        VulkanItem &operator = ( VulkanItem const & ) = delete;
 
         VulkanItem ( VulkanItem && ) = default;
-        VulkanItem& operator = ( VulkanItem && ) = default;
+        VulkanItem &operator = ( VulkanItem && ) = default;
 
         explicit VulkanItem ( std::string &&where ) noexcept;
 
@@ -115,7 +115,7 @@ static bool CheckNonDispatchableObjectLeaks ( char const* objectType, std::set<V
     LogError ( ">>>" );
     std::string info;
 
-    for ( auto const& leak : storage )
+    for ( auto const &leak : storage )
     {
         leak.GetInfo ( info );
         LogError ( "%s%s", INDENT, info.c_str () );
@@ -133,7 +133,7 @@ static void RegisterNonDispatchableObject ( std::string &&where, std::set<Vulkan
     if ( result.second )
         return;
 
-    auto& item = const_cast<VulkanItem&> ( *result.first );
+    auto &item = const_cast<VulkanItem &> ( *result.first );
     item.IncrementInstanceCount ();
 }
 
@@ -169,7 +169,7 @@ static void UnregisterNonDispatchableObject ( char const* method,
         return;
     }
 
-    auto& item = const_cast<VulkanItem&> ( *findResult );
+    auto &item = const_cast<VulkanItem &> ( *findResult );
     item.DecrementInstanceCount ();
 }
 

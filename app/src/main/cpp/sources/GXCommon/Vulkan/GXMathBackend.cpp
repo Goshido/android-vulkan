@@ -1,4 +1,4 @@
-// version 1.6
+// version 1.7
 
 #include <GXCommon/GXMath.h>
 
@@ -51,27 +51,27 @@ GX_RESTORE_WARNING_STATE
 }
 
 // NOLINTNEXTLINE
-[[maybe_unused]] GXVoid GXMat4::GetPerspectiveParams ( GXFloat& /*fieldOfViewYRadians*/,
-    GXFloat& /*aspectRatio*/,
-    GXFloat& /*zNear*/,
-    GXFloat& /*zFar*/
+[[maybe_unused]] GXVoid GXMat4::GetPerspectiveParams ( GXFloat &/*fieldOfViewYRadians*/,
+    GXFloat &/*aspectRatio*/,
+    GXFloat &/*zNear*/,
+    GXFloat &/*zFar*/
 ) noexcept
 {
     assert ( !"GXMat4::GetPerspectiveParams - Implement me!" );
 }
 
 // NOLINTNEXTLINE
-[[maybe_unused]] GXVoid GXMat4::GetOrthoParams ( GXFloat& /*width*/,
-    GXFloat& /*height*/,
-    GXFloat& /*zNear*/,
-    GXFloat& /*zFar*/
+[[maybe_unused]] GXVoid GXMat4::GetOrthoParams ( GXFloat &/*width*/,
+    GXFloat &/*height*/,
+    GXFloat &/*zNear*/,
+    GXFloat &/*zFar*/
 ) noexcept
 {
     assert ( !"GXMat4::GetOrthoParams - Implement me!" );
 }
 
 // NOLINTNEXTLINE
-[[maybe_unused]] GXVoid GXMat4::GetRayPerspective ( GXVec3& /*rayView*/, const GXVec2& /*mouseCVV*/ ) const noexcept
+[[maybe_unused]] GXVoid GXMat4::GetRayPerspective ( GXVec3 &/*rayView*/, const GXVec2 &/*mouseCVV*/ ) const noexcept
 {
     assert ( !"GXMat4::GetRayPerspective - Implement me!" );
 }

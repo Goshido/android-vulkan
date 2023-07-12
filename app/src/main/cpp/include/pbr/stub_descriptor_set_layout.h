@@ -13,10 +13,10 @@ class StubDescriptorSetLayout final : public DescriptorSetLayout
         StubDescriptorSetLayout () = default;
 
         StubDescriptorSetLayout ( StubDescriptorSetLayout const & ) = delete;
-        StubDescriptorSetLayout& operator = ( StubDescriptorSetLayout const & ) = delete;
+        StubDescriptorSetLayout &operator = ( StubDescriptorSetLayout const & ) = delete;
 
         StubDescriptorSetLayout ( StubDescriptorSetLayout && ) = delete;
-        StubDescriptorSetLayout& operator = ( StubDescriptorSetLayout && ) = delete;
+        StubDescriptorSetLayout &operator = ( StubDescriptorSetLayout && ) = delete;
 
         ~StubDescriptorSetLayout () override = default;
 

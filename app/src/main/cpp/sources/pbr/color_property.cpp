@@ -10,7 +10,7 @@ ColorProperty::ColorProperty ( eType type, ColorValue const &value ) noexcept:
     // NOTHING
 }
 
-ColorValue const& ColorProperty::GetValue () const noexcept
+ColorValue const &ColorProperty::GetValue () const noexcept
 {
     return _value;
 }

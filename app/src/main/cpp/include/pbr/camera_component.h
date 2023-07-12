@@ -23,18 +23,18 @@ class CameraComponent final : public Component
         CameraComponent () noexcept;
 
         CameraComponent ( CameraComponent const & ) = delete;
-        CameraComponent& operator = ( CameraComponent const & ) = delete;
+        CameraComponent &operator = ( CameraComponent const & ) = delete;
 
         CameraComponent ( CameraComponent && ) = delete;
-        CameraComponent& operator = ( CameraComponent && ) = delete;
+        CameraComponent &operator = ( CameraComponent && ) = delete;
 
         explicit CameraComponent ( CameraComponentDesc const &desc, uint8_t const* data ) noexcept;
         explicit CameraComponent ( std::string &&name ) noexcept;
 
         ~CameraComponent () override = default;
 
-        [[nodiscard]] GXMat4 const& GetLocalMatrix () const noexcept;
-        [[nodiscard]] GXMat4 const& GetProjectionMatrix () const noexcept;
+        [[nodiscard]] GXMat4 const &GetLocalMatrix () const noexcept;
+        [[nodiscard]] GXMat4 const &GetProjectionMatrix () const noexcept;
 
         void SetAspectRatio ( float aspectRatio ) noexcept;
         void SetLocal ( GXMat4 const &local ) noexcept;
@@ -45,7 +45,7 @@ class CameraComponent final : public Component
         [[nodiscard]] static bool Init ( lua_State &vm ) noexcept;
 
     private:
-        [[nodiscard]] ComponentRef& GetReference () noexcept override;
+        [[nodiscard]] ComponentRef &GetReference () noexcept override;
 
         [[nodiscard]] static int OnCreate ( lua_State* state );
         [[nodiscard]] static int OnSetAspectRatio ( lua_State* state );

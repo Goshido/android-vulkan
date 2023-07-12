@@ -44,10 +44,10 @@ class Texture2D final
         Texture2D () = default;
 
         Texture2D ( Texture2D const & ) = delete;
-        Texture2D& operator = ( Texture2D const & ) = delete;
+        Texture2D &operator = ( Texture2D const & ) = delete;
 
         Texture2D ( Texture2D && ) = delete;
-        Texture2D& operator = ( Texture2D && ) = delete;
+        Texture2D &operator = ( Texture2D && ) = delete;
 
         ~Texture2D () = default;
 
@@ -72,8 +72,8 @@ class Texture2D final
         [[maybe_unused, nodiscard]] VkImage GetImage () const noexcept;
         [[nodiscard]] VkImageView GetImageView () const noexcept;
         [[nodiscard]] uint8_t GetMipLevelCount () const noexcept;
-        [[nodiscard]] std::string const& GetName () const noexcept;
-        [[nodiscard]] VkExtent2D const& GetResolution () const noexcept;
+        [[nodiscard]] std::string const &GetName () const noexcept;
+        [[nodiscard]] VkExtent2D const &GetResolution () const noexcept;
 
         // Supported formats: PNG.
         [[nodiscard]] bool UploadData ( Renderer &renderer,

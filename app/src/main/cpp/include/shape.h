@@ -41,18 +41,18 @@ class Shape
         Shape () = delete;
 
         Shape ( Shape const & ) = delete;
-        Shape& operator = ( Shape const & ) = delete;
+        Shape &operator = ( Shape const & ) = delete;
 
         Shape ( Shape && ) = delete;
-        Shape& operator = ( Shape && ) = delete;
+        Shape &operator = ( Shape && ) = delete;
 
         virtual void CalculateInertiaTensor ( float mass ) noexcept = 0;
         [[nodiscard]] virtual GXVec3 GetExtremePointWorld ( GXVec3 const &directionWorld ) const noexcept = 0;
 
-        [[nodiscard]] GXMat3 const& GetInertiaTensorInverse () const noexcept;
+        [[nodiscard]] GXMat3 const &GetInertiaTensorInverse () const noexcept;
 
-        [[maybe_unused, nodiscard]] GXAABB const& GetBoundsLocal () const noexcept;
-        [[nodiscard]] GXAABB const& GetBoundsWorld () const noexcept;
+        [[maybe_unused, nodiscard]] GXAABB const &GetBoundsLocal () const noexcept;
+        [[nodiscard]] GXAABB const &GetBoundsWorld () const noexcept;
 
         [[nodiscard]] uint32_t GetCollisionGroups () const noexcept;
         [[maybe_unused]] void SetCollisionGroups ( uint32_t groups ) noexcept;
@@ -63,7 +63,7 @@ class Shape
         [[nodiscard]] float GetRestitution () const noexcept;
         [[maybe_unused]] void SetRestitution ( float restitution ) noexcept;
 
-        [[maybe_unused, nodiscard]] GXMat4 const& GetTransformWorld () const noexcept;
+        [[maybe_unused, nodiscard]] GXMat4 const &GetTransformWorld () const noexcept;
         [[maybe_unused, nodiscard]] eShapeType GetType () const noexcept;
 
         void UpdateCacheData ( GXMat4 const &transform ) noexcept;

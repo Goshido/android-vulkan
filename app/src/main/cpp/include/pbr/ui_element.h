@@ -83,10 +83,10 @@ class UIElement
         UIElement () = delete;
 
         UIElement ( UIElement const & ) = delete;
-        UIElement& operator = ( UIElement const & ) = delete;
+        UIElement &operator = ( UIElement const & ) = delete;
 
         UIElement ( UIElement && ) = delete;
-        UIElement& operator = ( UIElement && ) = delete;
+        UIElement &operator = ( UIElement && ) = delete;
 
         virtual ~UIElement () = default;
 

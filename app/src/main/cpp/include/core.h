@@ -38,7 +38,7 @@ class Core final
         std::string const           _cacheDirectory {};
 
         Game*                       _game = nullptr;
-        Gamepad&                    _gamepad = Gamepad::GetInstance ();
+        Gamepad                     &_gamepad = Gamepad::GetInstance ();
 
         Renderer                    _renderer {};
         Timestamp                   _fpsTimestamp {};
@@ -65,10 +65,10 @@ class Core final
         Core () = delete;
 
         Core ( Core const & ) = delete;
-        Core& operator = ( Core const & ) = delete;
+        Core &operator = ( Core const & ) = delete;
 
         Core ( Core && ) = delete;
-        Core& operator = ( Core && ) = delete;
+        Core &operator = ( Core && ) = delete;
 
         explicit Core ( JNIEnv* env,
             jobject activity,
@@ -93,7 +93,7 @@ class Core final
         void OnSurfaceCreated ( JNIEnv* env, jobject surface ) noexcept;
         void OnSurfaceDestroyed () noexcept;
 
-        [[nodiscard]] static std::string const& GetCacheDirectory () noexcept;
+        [[nodiscard]] static std::string const &GetCacheDirectory () noexcept;
         static void Quit () noexcept;
 
     private:

@@ -13,10 +13,10 @@ class ReflectionLocalDescriptorSetLayout final : public DescriptorSetLayout
         ReflectionLocalDescriptorSetLayout () = default;
 
         ReflectionLocalDescriptorSetLayout ( ReflectionLocalDescriptorSetLayout const & ) = delete;
-        ReflectionLocalDescriptorSetLayout& operator = ( ReflectionLocalDescriptorSetLayout const & ) = delete;
+        ReflectionLocalDescriptorSetLayout &operator = ( ReflectionLocalDescriptorSetLayout const & ) = delete;
 
         ReflectionLocalDescriptorSetLayout ( ReflectionLocalDescriptorSetLayout && ) = delete;
-        ReflectionLocalDescriptorSetLayout& operator = ( ReflectionLocalDescriptorSetLayout && ) = delete;
+        ReflectionLocalDescriptorSetLayout &operator = ( ReflectionLocalDescriptorSetLayout && ) = delete;
 
         ~ReflectionLocalDescriptorSetLayout () override = default;
 

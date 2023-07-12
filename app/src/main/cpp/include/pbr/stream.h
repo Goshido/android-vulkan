@@ -26,10 +26,10 @@ class Stream final
         Stream () = default;
 
         Stream ( Stream const & ) = default;
-        Stream& operator = ( Stream const & ) = default;
+        Stream &operator = ( Stream const & ) = default;
 
         Stream ( Stream && ) = default;
-        Stream& operator = ( Stream && ) = default;
+        Stream &operator = ( Stream && ) = default;
 
         explicit Stream ( Data data, size_t line ) noexcept;
 

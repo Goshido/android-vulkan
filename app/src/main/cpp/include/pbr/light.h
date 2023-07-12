@@ -29,10 +29,10 @@ class Light
         Light () = delete;
 
         Light ( Light const & ) = delete;
-        Light& operator = ( Light const & ) = delete;
+        Light &operator = ( Light const & ) = delete;
 
         Light ( Light && ) = delete;
-        Light& operator = ( Light && ) = delete;
+        Light &operator = ( Light && ) = delete;
 
         [[nodiscard]] eLightType GetType () const;
 

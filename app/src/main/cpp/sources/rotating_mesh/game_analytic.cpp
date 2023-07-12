@@ -47,7 +47,7 @@ bool GameAnalytic::CreateDescriptorSet ( android_vulkan::Renderer &renderer ) no
     VkDescriptorSetLayout layouts[ MATERIAL_COUNT ];
     VkDescriptorSet sets[ MATERIAL_COUNT ];
 
-    for ( auto& item : layouts )
+    for ( auto &item : layouts )
         item = _descriptorSetLayout;
 
     VkDescriptorSetAllocateInfo const setAllocateInfo
@@ -79,22 +79,22 @@ bool GameAnalytic::CreateDescriptorSet ( android_vulkan::Renderer &renderer ) no
 
     for ( size_t i = 0U; i < MATERIAL_COUNT; ++i )
     {
-        Drawcall& drawcall = _drawcalls[ i ];
+        Drawcall &drawcall = _drawcalls[ i ];
         drawcall._descriptorSet = sets[ i ];
 
-        VkDescriptorImageInfo& diffuseImage = diffuseInfo[ i ];
+        VkDescriptorImageInfo &diffuseImage = diffuseInfo[ i ];
         diffuseImage.sampler = drawcall._diffuseSampler;
         diffuseImage.imageView = drawcall._diffuse.GetImageView ();
         diffuseImage.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-        VkDescriptorImageInfo& normalImage = normalInfo[ i ];
+        VkDescriptorImageInfo &normalImage = normalInfo[ i ];
         normalImage.sampler = drawcall._normalSampler;
         normalImage.imageView = drawcall._normal.GetImageView ();
         normalImage.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
         size_t const pivotIndex = i * featureCount;
 
-        VkWriteDescriptorSet& ubWriteSet = writeSets[ pivotIndex ];
+        VkWriteDescriptorSet &ubWriteSet = writeSets[ pivotIndex ];
         ubWriteSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         ubWriteSet.pNext = nullptr;
         ubWriteSet.dstSet = drawcall._descriptorSet;
@@ -106,7 +106,7 @@ bool GameAnalytic::CreateDescriptorSet ( android_vulkan::Renderer &renderer ) no
         ubWriteSet.pImageInfo = nullptr;
         ubWriteSet.pTexelBufferView = nullptr;
 
-        VkWriteDescriptorSet& diffuseImageWriteSet = writeSets[ pivotIndex + 1U ];
+        VkWriteDescriptorSet &diffuseImageWriteSet = writeSets[ pivotIndex + 1U ];
         diffuseImageWriteSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         diffuseImageWriteSet.pNext = nullptr;
         diffuseImageWriteSet.dstSet = drawcall._descriptorSet;
@@ -118,7 +118,7 @@ bool GameAnalytic::CreateDescriptorSet ( android_vulkan::Renderer &renderer ) no
         diffuseImageWriteSet.pImageInfo = &diffuseImage;
         diffuseImageWriteSet.pTexelBufferView = nullptr;
 
-        VkWriteDescriptorSet& diffuseSamplerWriteSet = writeSets[ pivotIndex + 2U ];
+        VkWriteDescriptorSet &diffuseSamplerWriteSet = writeSets[ pivotIndex + 2U ];
         diffuseSamplerWriteSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         diffuseSamplerWriteSet.pNext = nullptr;
         diffuseSamplerWriteSet.dstSet = drawcall._descriptorSet;
@@ -130,7 +130,7 @@ bool GameAnalytic::CreateDescriptorSet ( android_vulkan::Renderer &renderer ) no
         diffuseSamplerWriteSet.pImageInfo = &diffuseImage;
         diffuseSamplerWriteSet.pTexelBufferView = nullptr;
 
-        VkWriteDescriptorSet& normalImageWriteSet = writeSets[ pivotIndex + 3U ];
+        VkWriteDescriptorSet &normalImageWriteSet = writeSets[ pivotIndex + 3U ];
         normalImageWriteSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         normalImageWriteSet.pNext = nullptr;
         normalImageWriteSet.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
@@ -142,7 +142,7 @@ bool GameAnalytic::CreateDescriptorSet ( android_vulkan::Renderer &renderer ) no
         normalImageWriteSet.pImageInfo = &normalImage;
         normalImageWriteSet.pTexelBufferView = nullptr;
 
-        VkWriteDescriptorSet& normalSamplerWriteSet = writeSets[ pivotIndex + 4U ];
+        VkWriteDescriptorSet &normalSamplerWriteSet = writeSets[ pivotIndex + 4U ];
         normalSamplerWriteSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         normalSamplerWriteSet.pNext = nullptr;
         normalSamplerWriteSet.dstSet = drawcall._descriptorSet;
@@ -244,7 +244,7 @@ bool GameAnalytic::LoadGPUContent ( android_vulkan::Renderer &renderer ) noexcep
     if ( !result )
         return false;
 
-    for ( auto& item : _drawcalls )
+    for ( auto &item : _drawcalls )
     {
         item._mesh.FreeTransferResources ( renderer );
         item._diffuse.FreeTransferResources ( renderer );

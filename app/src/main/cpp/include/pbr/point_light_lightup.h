@@ -35,10 +35,10 @@ class PointLightLightup final
         PointLightLightup () = default;
 
         PointLightLightup ( PointLightLightup const & ) = delete;
-        PointLightLightup& operator = ( PointLightLightup const & ) = delete;
+        PointLightLightup &operator = ( PointLightLightup const & ) = delete;
 
         PointLightLightup ( PointLightLightup && ) = delete;
-        PointLightLightup& operator = ( PointLightLightup && ) = delete;
+        PointLightLightup &operator = ( PointLightLightup && ) = delete;
 
         ~PointLightLightup () = default;
 

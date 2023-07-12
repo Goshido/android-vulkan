@@ -23,10 +23,10 @@ class PointLightDescriptorSetLayoutImpl final
         PointLightDescriptorSetLayoutImpl () noexcept;
 
         PointLightDescriptorSetLayoutImpl ( PointLightDescriptorSetLayoutImpl const & ) = delete;
-        PointLightDescriptorSetLayoutImpl& operator = ( PointLightDescriptorSetLayoutImpl const & ) = delete;
+        PointLightDescriptorSetLayoutImpl &operator = ( PointLightDescriptorSetLayoutImpl const & ) = delete;
 
         PointLightDescriptorSetLayoutImpl ( PointLightDescriptorSetLayoutImpl && ) = delete;
-        PointLightDescriptorSetLayoutImpl& operator = ( PointLightDescriptorSetLayoutImpl && ) = delete;
+        PointLightDescriptorSetLayoutImpl &operator = ( PointLightDescriptorSetLayoutImpl && ) = delete;
 
         ~PointLightDescriptorSetLayoutImpl () = default;
 

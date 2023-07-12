@@ -67,11 +67,11 @@ void ReflectionComponent::FreeTransferResources ( android_vulkan::Renderer &rend
         return;
 
     // NOLINTNEXTLINE - downcast.
-    auto& probe = static_cast<ReflectionProbe&> ( *_probe );
+    auto &probe = static_cast<ReflectionProbe &> ( *_probe );
     probe.FreeTransferResources ( renderer );
 }
 
-ComponentRef& ReflectionComponent::GetReference () noexcept
+ComponentRef &ReflectionComponent::GetReference () noexcept
 {
     // TODO
     static ComponentRef dummy {};
@@ -85,9 +85,8 @@ void ReflectionComponent::Submit ( RenderSession &renderSession ) noexcept
 
 void ReflectionComponent::OnTransform ( GXMat4 const &transformWorld ) noexcept
 {
-
     // NOLINTNEXTLINE - downcast.
-    auto& probe = static_cast<ReflectionProbeLocal&> ( *_probe );
+    auto &probe = static_cast<ReflectionProbeLocal &> ( *_probe );
 
     probe.SetLocation ( *reinterpret_cast<GXVec3 const*> ( &transformWorld._m[ 3U ][ 0U ] ) );
 }

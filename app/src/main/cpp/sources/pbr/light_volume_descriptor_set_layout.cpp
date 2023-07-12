@@ -23,10 +23,10 @@ class LightVolumeDescriptorSetLayoutImpl final
         LightVolumeDescriptorSetLayoutImpl () = default;
 
         LightVolumeDescriptorSetLayoutImpl ( LightVolumeDescriptorSetLayoutImpl const & ) = delete;
-        LightVolumeDescriptorSetLayoutImpl& operator = ( LightVolumeDescriptorSetLayoutImpl const & ) = delete;
+        LightVolumeDescriptorSetLayoutImpl &operator = ( LightVolumeDescriptorSetLayoutImpl const & ) = delete;
 
         LightVolumeDescriptorSetLayoutImpl ( LightVolumeDescriptorSetLayoutImpl && ) = delete;
-        LightVolumeDescriptorSetLayoutImpl& operator = ( LightVolumeDescriptorSetLayoutImpl && ) = delete;
+        LightVolumeDescriptorSetLayoutImpl &operator = ( LightVolumeDescriptorSetLayoutImpl && ) = delete;
 
         ~LightVolumeDescriptorSetLayoutImpl () = default;
 

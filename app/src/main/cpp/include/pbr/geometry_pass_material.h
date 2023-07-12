@@ -20,30 +20,30 @@ class GeometryPassMaterial : public Material
         GeometryPassMaterial () = delete;
 
         GeometryPassMaterial ( GeometryPassMaterial const & ) = default;
-        GeometryPassMaterial& operator = ( GeometryPassMaterial const & ) = default;
+        GeometryPassMaterial &operator = ( GeometryPassMaterial const & ) = default;
 
         GeometryPassMaterial ( GeometryPassMaterial && ) = default;
-        GeometryPassMaterial& operator = ( GeometryPassMaterial && ) = default;
+        GeometryPassMaterial &operator = ( GeometryPassMaterial && ) = default;
 
         ~GeometryPassMaterial () override = default;
 
-        [[nodiscard]] Texture2DRef& GetAlbedo () noexcept;
+        [[nodiscard]] Texture2DRef &GetAlbedo () noexcept;
         void SetAlbedo ( Texture2DRef const &texture ) noexcept;
         [[maybe_unused]] void SetAlbedoDefault () noexcept;
 
-        [[nodiscard]] Texture2DRef& GetEmission () noexcept;
+        [[nodiscard]] Texture2DRef &GetEmission () noexcept;
         void SetEmission ( Texture2DRef const &texture ) noexcept;
         [[maybe_unused]] void SetEmissionDefault () noexcept;
 
-        [[nodiscard]] Texture2DRef& GetMask () noexcept;
+        [[nodiscard]] Texture2DRef &GetMask () noexcept;
         void SetMask ( Texture2DRef const &texture ) noexcept;
         [[maybe_unused]] void SetMaskDefault () noexcept;
 
-        [[nodiscard]] Texture2DRef& GetNormal () noexcept;
+        [[nodiscard]] Texture2DRef &GetNormal () noexcept;
         void SetNormal ( Texture2DRef const &texture ) noexcept;
         [[maybe_unused]] void SetNormalDefault () noexcept;
 
-        [[nodiscard]] Texture2DRef& GetParam () noexcept;
+        [[nodiscard]] Texture2DRef &GetParam () noexcept;
         void SetParam ( Texture2DRef const &texture ) noexcept;
         [[maybe_unused]] void SetParamDefault () noexcept;
 

@@ -16,16 +16,16 @@ class TextHTML5Element final : public HTML5Element
         TextHTML5Element () = delete;
 
         TextHTML5Element ( TextHTML5Element const & ) = delete;
-        TextHTML5Element& operator = ( TextHTML5Element const & ) = delete;
+        TextHTML5Element &operator = ( TextHTML5Element const & ) = delete;
 
         TextHTML5Element ( TextHTML5Element && ) = delete;
-        TextHTML5Element& operator = ( TextHTML5Element && ) = delete;
+        TextHTML5Element &operator = ( TextHTML5Element && ) = delete;
 
         explicit TextHTML5Element ( std::u32string &&text ) noexcept;
 
         ~TextHTML5Element () override = default;
 
-        [[nodiscard]] std::u32string& GetText () noexcept;
+        [[nodiscard]] std::u32string &GetText () noexcept;
 
         [[nodiscard]] static std::optional<Result> Parse ( char const* html, Stream stream ) noexcept;
 };

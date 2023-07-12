@@ -32,10 +32,10 @@ class HTML5Element
         HTML5Element () = delete;
 
         HTML5Element ( HTML5Element const & ) = delete;
-        HTML5Element& operator = ( HTML5Element const & ) = delete;
+        HTML5Element &operator = ( HTML5Element const & ) = delete;
 
         HTML5Element ( HTML5Element && ) = delete;
-        HTML5Element& operator = ( HTML5Element && ) = delete;
+        HTML5Element &operator = ( HTML5Element && ) = delete;
 
         virtual ~HTML5Element () = default;
 

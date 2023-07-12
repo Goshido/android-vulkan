@@ -24,13 +24,13 @@ class GeometryPassTextureDescriptorSetLayoutImpl final
 
         GeometryPassTextureDescriptorSetLayoutImpl ( GeometryPassTextureDescriptorSetLayoutImpl const & ) = delete;
 
-        GeometryPassTextureDescriptorSetLayoutImpl& operator = (
+        GeometryPassTextureDescriptorSetLayoutImpl &operator = (
             GeometryPassTextureDescriptorSetLayoutImpl const &
         ) = delete;
 
         GeometryPassTextureDescriptorSetLayoutImpl ( GeometryPassTextureDescriptorSetLayoutImpl && ) = delete;
 
-        GeometryPassTextureDescriptorSetLayoutImpl& operator = (
+        GeometryPassTextureDescriptorSetLayoutImpl &operator = (
             GeometryPassTextureDescriptorSetLayoutImpl &&
         ) = delete;
 

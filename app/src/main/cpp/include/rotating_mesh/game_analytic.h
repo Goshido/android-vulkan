@@ -14,7 +14,7 @@ class GameAnalytic final : public Game
         ~GameAnalytic () override = default;
 
         GameAnalytic ( const GameAnalytic &other ) = delete;
-        GameAnalytic& operator = ( const GameAnalytic &other ) = delete;
+        GameAnalytic &operator = ( const GameAnalytic &other ) = delete;
 
     private:
         bool CreateDescriptorSet ( android_vulkan::Renderer &renderer ) noexcept override;

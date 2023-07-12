@@ -13,10 +13,10 @@ class StippleMaterial final : public GeometryPassMaterial
         StippleMaterial () noexcept;
 
         StippleMaterial ( StippleMaterial const & ) = default;
-        StippleMaterial& operator = ( StippleMaterial const & ) = default;
+        StippleMaterial &operator = ( StippleMaterial const & ) = default;
 
         StippleMaterial ( StippleMaterial && ) = default;
-        StippleMaterial& operator = ( StippleMaterial && ) = default;
+        StippleMaterial &operator = ( StippleMaterial && ) = default;
 
         ~StippleMaterial () override = default;
 };

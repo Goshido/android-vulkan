@@ -23,10 +23,10 @@ class Whitespace final
         Whitespace () = delete;
 
         Whitespace ( Whitespace const & ) = delete;
-        Whitespace& operator = ( Whitespace const & ) = delete;
+        Whitespace &operator = ( Whitespace const & ) = delete;
 
         Whitespace ( Whitespace && ) = delete;
-        Whitespace& operator = ( Whitespace && ) = delete;
+        Whitespace &operator = ( Whitespace && ) = delete;
 
         ~Whitespace () = delete;
 

@@ -19,10 +19,10 @@ class DoctypeParser final
         DoctypeParser () = default;
 
         DoctypeParser ( DoctypeParser const & ) = delete;
-        DoctypeParser& operator = ( DoctypeParser const & ) = delete;
+        DoctypeParser &operator = ( DoctypeParser const & ) = delete;
 
         DoctypeParser ( DoctypeParser && ) = delete;
-        DoctypeParser& operator = ( DoctypeParser && ) = delete;
+        DoctypeParser &operator = ( DoctypeParser && ) = delete;
 
         ~DoctypeParser () = default;
 

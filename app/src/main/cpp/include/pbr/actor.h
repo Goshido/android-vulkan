@@ -66,10 +66,10 @@ class Actor final
         Actor () = delete;
 
         Actor ( Actor const & ) = delete;
-        Actor& operator = ( Actor const & ) = delete;
+        Actor &operator = ( Actor const & ) = delete;
 
         Actor ( Actor && ) = delete;
-        Actor& operator = ( Actor && ) = delete;
+        Actor &operator = ( Actor && ) = delete;
 
         explicit Actor ( std::string &&name ) noexcept;
         explicit Actor ( ActorDesc const &desc, uint8_t const* data ) noexcept;
@@ -78,7 +78,7 @@ class Actor final
 
         void AppendComponent ( ComponentRef &component ) noexcept;
         void DestroyComponent ( Component &component ) noexcept;
-        [[nodiscard]] std::string const& GetName () const noexcept;
+        [[nodiscard]] std::string const &GetName () const noexcept;
 
         // Note transform must be in render units.
         void OnTransform ( GXMat4 const &transformWorld ) noexcept;
@@ -96,7 +96,7 @@ class Actor final
 
         static bool Init ( lua_State &vm ) noexcept;
         static void Destroy () noexcept;
-        [[nodiscard]] static ActorRef& GetReference ( Actor const &handle ) noexcept;
+        [[nodiscard]] static ActorRef &GetReference ( Actor const &handle ) noexcept;
 
     private:
         void AppendCameraComponentFromNative ( ComponentRef &component,

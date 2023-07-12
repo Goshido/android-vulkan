@@ -36,10 +36,10 @@ class RenderSessionStats final
         RenderSessionStats () noexcept;
 
         RenderSessionStats ( RenderSessionStats const & ) = delete;
-        RenderSessionStats& operator = ( RenderSessionStats const & ) = delete;
+        RenderSessionStats &operator = ( RenderSessionStats const & ) = delete;
 
         RenderSessionStats ( RenderSessionStats && ) = delete;
-        RenderSessionStats& operator = ( RenderSessionStats && ) = delete;
+        RenderSessionStats &operator = ( RenderSessionStats && ) = delete;
 
         ~RenderSessionStats () = default;
 

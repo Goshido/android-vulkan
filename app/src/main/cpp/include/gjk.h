@@ -19,10 +19,10 @@ class GJK final : public GJKBase
         GJK () = default;
 
         GJK ( GJK const & ) = delete;
-        GJK& operator = ( GJK const & ) = delete;
+        GJK &operator = ( GJK const & ) = delete;
 
         GJK ( GJK && ) = delete;
-        GJK& operator = ( GJK && ) = delete;
+        GJK &operator = ( GJK && ) = delete;
 
         ~GJK () override = default;
 

@@ -1,5 +1,5 @@
-#ifndef PBR_SCRIPTABLE_PENETRATION_H
-#define PBR_SCRIPTABLE_PENETRATION_H
+#ifndef PBR_SCRIPTABLE_PENETRATION_HPP
+#define PBR_SCRIPTABLE_PENETRATION_HPP
 
 
 #include <physics.h>
@@ -47,4 +47,4 @@ class ScriptablePenetration final
 } // namespace pbr
 
 
-#endif // PBR_SCRIPTABLE_PENETRATION_H
+#endif // PBR_SCRIPTABLE_PENETRATION_HPP

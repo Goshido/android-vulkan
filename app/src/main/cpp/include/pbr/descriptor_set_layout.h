@@ -1,5 +1,5 @@
-#ifndef PBR_DESCRIPTOR_SET_LAYOUT_H
-#define PBR_DESCRIPTOR_SET_LAYOUT_H
+#ifndef PBR_DESCRIPTOR_SET_LAYOUT_HPP
+#define PBR_DESCRIPTOR_SET_LAYOUT_HPP
 
 
 #include <renderer.h>
@@ -31,4 +31,4 @@ class DescriptorSetLayout
 } // namespace pbr
 
 
-#endif // PBR_DESCRIPTOR_SET_LAYOUT_H
+#endif // PBR_DESCRIPTOR_SET_LAYOUT_HPP

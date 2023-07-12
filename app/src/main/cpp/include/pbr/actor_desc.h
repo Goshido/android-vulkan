@@ -1,5 +1,5 @@
-#ifndef PBR_ACTOR_DESC_H
-#define PBR_ACTOR_DESC_H
+#ifndef PBR_ACTOR_DESC_HPP
+#define PBR_ACTOR_DESC_HPP
 
 
 #include "primitive_types.h"
@@ -22,4 +22,4 @@ struct ActorDesc final
 } // namespace pbr
 
 
-#endif // PBR_ACTOR_DESC_H
+#endif // PBR_ACTOR_DESC_HPP

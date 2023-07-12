@@ -1,5 +1,5 @@
-#ifndef PBR_REFLECTION_LOCAL_PASS_H
-#define PBR_REFLECTION_LOCAL_PASS_H
+#ifndef PBR_REFLECTION_LOCAL_PASS_HPP
+#define PBR_REFLECTION_LOCAL_PASS_HPP
 
 
 #include "reflection_local_program.h"
@@ -94,4 +94,4 @@ class ReflectionLocalPass final
 
 } // namespace pbr
 
-#endif // PBR_REFLECTION_LOCAL_PASS_H
+#endif // PBR_REFLECTION_LOCAL_PASS_HPP

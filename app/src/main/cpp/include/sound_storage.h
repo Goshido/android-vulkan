@@ -1,5 +1,5 @@
-#ifndef ANDROID_VULKAN_SOUND_STORAGE_H
-#define ANDROID_VULKAN_SOUND_STORAGE_H
+#ifndef ANDROID_VULKAN_SOUND_STORAGE_HPP
+#define ANDROID_VULKAN_SOUND_STORAGE_HPP
 
 
 #include <GXCommon/GXWarning.h>
@@ -45,4 +45,4 @@ class SoundStorage final
 } // namespace android_vulkan
 
 
-#endif // ANDROID_VULKAN_SOUND_STORAGE_H
+#endif // ANDROID_VULKAN_SOUND_STORAGE_HPP

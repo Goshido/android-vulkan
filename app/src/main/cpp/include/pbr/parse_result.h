@@ -1,5 +1,5 @@
-#ifndef PBR_PARSE_RESULT_H
-#define PBR_PARSE_RESULT_H
+#ifndef PBR_PARSE_RESULT_HPP
+#define PBR_PARSE_RESULT_HPP
 
 
 #include "stream.h"
@@ -18,4 +18,4 @@ using ParseResult = std::optional<Stream>;
 } // namespace pbr
 
 
-#endif // PBR_PARSE_RESULT_H
+#endif // PBR_PARSE_RESULT_HPP

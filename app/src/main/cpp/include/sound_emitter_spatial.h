@@ -1,5 +1,5 @@
-#ifndef ANDROID_VULKAN_SOUND_EMITTER_SPATIAL_H
-#define ANDROID_VULKAN_SOUND_EMITTER_SPATIAL_H
+#ifndef ANDROID_VULKAN_SOUND_EMITTER_SPATIAL_HPP
+#define ANDROID_VULKAN_SOUND_EMITTER_SPATIAL_HPP
 
 
 #include "sound_emitter.h"
@@ -37,4 +37,4 @@ class SoundEmitterSpatial final : public SoundEmitter
 } // namespace android_vulkan
 
 
-#endif // ANDROID_VULKAN_SOUND_EMITTER_SPATIAL_H
+#endif // ANDROID_VULKAN_SOUND_EMITTER_SPATIAL_HPP

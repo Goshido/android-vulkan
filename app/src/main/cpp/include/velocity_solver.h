@@ -1,5 +1,5 @@
-#ifndef ANDROID_VULKAN_VELOCITY_SOLVER_H
-#define ANDROID_VULKAN_VELOCITY_SOLVER_H
+#ifndef ANDROID_VULKAN_VELOCITY_SOLVER_HPP
+#define ANDROID_VULKAN_VELOCITY_SOLVER_HPP
 
 
 #include "contact_manager.h"
@@ -76,4 +76,4 @@ class VelocitySolver final
 } // namespace android_vulkan
 
 
-#endif // ANDROID_VULKAN_VELOCITY_SOLVER_H
+#endif // ANDROID_VULKAN_VELOCITY_SOLVER_HPP

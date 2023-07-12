@@ -1,5 +1,5 @@
-#ifndef ANDROID_VULKAN_GJK_BASE_H
-#define ANDROID_VULKAN_GJK_BASE_H
+#ifndef ANDROID_VULKAN_GJK_BASE_HPP
+#define ANDROID_VULKAN_GJK_BASE_HPP
 
 
 #include "simplex.h"
@@ -44,4 +44,4 @@ class GJKBase
 } // namespace android_vulkan
 
 
-#endif // ANDROID_VULKAN_GJK_BASE_H
+#endif // ANDROID_VULKAN_GJK_BASE_HPP

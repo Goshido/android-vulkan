@@ -1,5 +1,5 @@
-#ifndef PBR_STIPPLE_PROGRAM_H
-#define PBR_STIPPLE_PROGRAM_H
+#ifndef PBR_STIPPLE_PROGRAM_HPP
+#define PBR_STIPPLE_PROGRAM_HPP
 
 
 #include "geometry_pass_program.h"
@@ -24,4 +24,4 @@ class StippleProgram final : public GeometryPassProgram
 } // namespace pbr
 
 
-#endif // PBR_STIPPLE_PROGRAM_H
+#endif // PBR_STIPPLE_PROGRAM_HPP

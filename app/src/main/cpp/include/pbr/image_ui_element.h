@@ -1,5 +1,5 @@
-#ifndef PBR_IMAGE_UI_ELEMENT_H
-#define PBR_IMAGE_UI_ELEMENT_H
+#ifndef PBR_IMAGE_UI_ELEMENT_HPP
+#define PBR_IMAGE_UI_ELEMENT_HPP
 
 
 #include "css_ui_element.h"
@@ -83,4 +83,4 @@ class ImageUIElement final : public CSSUIElement
 } // namespace pbr
 
 
-#endif // PBR_IMAGE_UI_ELEMENT_H
+#endif // PBR_IMAGE_UI_ELEMENT_HPP

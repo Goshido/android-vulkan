@@ -1,7 +1,7 @@
-// version 1.11
+// version 1.12
 
-#ifndef GX_TYPES
-#define GX_TYPES
+#ifndef GX_TYPES_HPP
+#define GX_TYPES_HPP
 
 
 #ifdef __GNUC__
@@ -23,4 +23,4 @@ enum class eGXCompareResult : GXByte
 };
 
 
-#endif // GX_TYPES
+#endif // GX_TYPES_HPP

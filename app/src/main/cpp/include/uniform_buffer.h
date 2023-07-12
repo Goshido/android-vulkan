@@ -1,5 +1,5 @@
-#ifndef ANDROID_VULKAN_UNIFORM_BUFFER_H
-#define ANDROID_VULKAN_UNIFORM_BUFFER_H
+#ifndef ANDROID_VULKAN_UNIFORM_BUFFER_HPP
+#define ANDROID_VULKAN_UNIFORM_BUFFER_HPP
 
 
 #include "renderer.h"
@@ -67,4 +67,4 @@ class UniformBuffer final
 } // namespace android_vulkan
 
 
-#endif // ANDROID_VULKAN_UNIFORM_BUFFER_H
+#endif // ANDROID_VULKAN_UNIFORM_BUFFER_HPP

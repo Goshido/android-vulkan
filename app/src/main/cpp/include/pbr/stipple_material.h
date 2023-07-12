@@ -1,5 +1,5 @@
-#ifndef PBR_STIPPLE_MATERIAL_H
-#define PBR_STIPPLE_MATERIAL_H
+#ifndef PBR_STIPPLE_MATERIAL_HPP
+#define PBR_STIPPLE_MATERIAL_HPP
 
 
 #include "geometry_pass_material.h"
@@ -24,4 +24,4 @@ class StippleMaterial final : public GeometryPassMaterial
 } // namespace pbr
 
 
-#endif // PBR_STIPPLE_MATERIAL_H
+#endif // PBR_STIPPLE_MATERIAL_HPP

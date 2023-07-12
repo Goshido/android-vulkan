@@ -1,5 +1,5 @@
-#ifndef PBR_POINT_LIGHT_SHADOWMAP_GENERATOR_PROGRAM_H
-#define PBR_POINT_LIGHT_SHADOWMAP_GENERATOR_PROGRAM_H
+#ifndef PBR_POINT_LIGHT_SHADOWMAP_GENERATOR_PROGRAM_HPP
+#define PBR_POINT_LIGHT_SHADOWMAP_GENERATOR_PROGRAM_HPP
 
 
 #include "geometry_pass_instance_descriptor_set_layout.h"
@@ -100,4 +100,4 @@ class PointLightShadowmapGeneratorProgram final : public Program
 } // namespace pbr
 
 
-#endif // PBR_POINT_LIGHT_SHADOWMAP_GENERATOR_PROGRAM_H
+#endif // PBR_POINT_LIGHT_SHADOWMAP_GENERATOR_PROGRAM_HPP

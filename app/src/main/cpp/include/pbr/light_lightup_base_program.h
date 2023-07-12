@@ -1,5 +1,5 @@
-#ifndef PBR_LIGHT_LIGHTUP_BASE_PROGRAM_H
-#define PBR_LIGHT_LIGHTUP_BASE_PROGRAM_H
+#ifndef PBR_LIGHT_LIGHTUP_BASE_PROGRAM_HPP
+#define PBR_LIGHT_LIGHTUP_BASE_PROGRAM_HPP
 
 
 #include <vulkan_utils.h>
@@ -40,4 +40,4 @@ class LightLightupBaseProgram : public Program
 } // namespace pbr
 
 
-#endif // PBR_LIGHT_LIGHTUP_BASE_PROGRAM_H
+#endif // PBR_LIGHT_LIGHTUP_BASE_PROGRAM_HPP

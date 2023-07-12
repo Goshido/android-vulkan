@@ -1,5 +1,5 @@
-#ifndef PBR_VERTICAL_ALIGN_PROPERTY_H
-#define PBR_VERTICAL_ALIGN_PROPERTY_H
+#ifndef PBR_VERTICAL_ALIGN_PROPERTY_HPP
+#define PBR_VERTICAL_ALIGN_PROPERTY_HPP
 
 
 #include "property.h"
@@ -40,4 +40,4 @@ class VerticalAlignProperty final : public Property
 } // namespace pbr
 
 
-#endif // PBR_VERTICAL_ALIGN_PROPERTY_H
+#endif // PBR_VERTICAL_ALIGN_PROPERTY_HPP

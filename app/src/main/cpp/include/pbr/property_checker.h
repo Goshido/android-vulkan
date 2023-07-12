@@ -1,5 +1,5 @@
-#ifndef PBR_PROPERTY_CHECKER_H
-#define PBR_PROPERTY_CHECKER_H
+#ifndef PBR_PROPERTY_CHECKER_HPP
+#define PBR_PROPERTY_CHECKER_HPP
 
 
 #include "property_parser.h"
@@ -44,4 +44,4 @@ class PropertyChecker
 } // namespace pbr
 
 
-#endif // PBR_PROPERTY_CHECKER_H
+#endif // PBR_PROPERTY_CHECKER_HPP

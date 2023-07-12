@@ -1,5 +1,5 @@
-#ifndef PBR_CAMERA_COMPONENT_DESC_H
-#define PBR_CAMERA_COMPONENT_DESC_H
+#ifndef PBR_CAMERA_COMPONENT_DESC_HPP
+#define PBR_CAMERA_COMPONENT_DESC_HPP
 
 
 #include "component_desc.h"
@@ -23,4 +23,4 @@ struct CameraComponentDesc final : public ComponentDesc
 } // namespace pbr
 
 
-#endif // PBR_CAMERA_COMPONENT_DESC_H
+#endif // PBR_CAMERA_COMPONENT_DESC_HPP

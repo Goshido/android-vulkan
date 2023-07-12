@@ -1,5 +1,5 @@
-#ifndef PBR_SWEEP_TESTING_H
-#define PBR_SWEEP_TESTING_H
+#ifndef PBR_SWEEP_TESTING_HPP
+#define PBR_SWEEP_TESTING_HPP
 
 
 #include "actor_body.h"
@@ -71,4 +71,4 @@ class SweepTesting final : public android_vulkan::Game
 } // namespace pbr::sweep_testing
 
 
-#endif // PBR_SWEEP_TESTING_H
+#endif // PBR_SWEEP_TESTING_HPP

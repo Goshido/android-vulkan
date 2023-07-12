@@ -1,5 +1,5 @@
-#ifndef PBR_HREF_ATTRIBUTE_CHECKER_H
-#define PBR_HREF_ATTRIBUTE_CHECKER_H
+#ifndef PBR_HREF_ATTRIBUTE_CHECKER_HPP
+#define PBR_HREF_ATTRIBUTE_CHECKER_HPP
 
 
 #include "attribute_checker.h"
@@ -38,4 +38,4 @@ class HREFAttributeChecker final : public AttributeChecker
 } // namespace pbr
 
 
-#endif // PBR_HREF_ATTRIBUTE_CHECKER_H
+#endif // PBR_HREF_ATTRIBUTE_CHECKER_HPP

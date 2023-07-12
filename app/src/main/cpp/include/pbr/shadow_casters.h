@@ -1,5 +1,5 @@
-#ifndef PBR_SHADOW_CASTERS_H
-#define PBR_SHADOW_CASTERS_H
+#ifndef PBR_SHADOW_CASTERS_HPP
+#define PBR_SHADOW_CASTERS_HPP
 
 
 #include <GXCommon/GXWarning.h>
@@ -24,4 +24,4 @@ struct ShadowCasters final
 } // namespace pbr
 
 
-#endif // PBR_SHADOW_CASTERS_H
+#endif // PBR_SHADOW_CASTERS_HPP

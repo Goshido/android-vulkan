@@ -1,5 +1,5 @@
-#ifndef PBR_DISPLAY_PROPERTY_CHECKER_H
-#define PBR_DISPLAY_PROPERTY_CHECKER_H
+#ifndef PBR_DISPLAY_PROPERTY_CHECKER_HPP
+#define PBR_DISPLAY_PROPERTY_CHECKER_HPP
 
 
 #include "display_property.h"
@@ -32,4 +32,4 @@ class DisplayPropertyChecker final : public PropertyChecker
 } // namespace pbr
 
 
-#endif // PBR_DISPLAY_PROPERTY_CHECKER_H
+#endif // PBR_DISPLAY_PROPERTY_CHECKER_HPP

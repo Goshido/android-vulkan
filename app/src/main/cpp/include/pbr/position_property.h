@@ -1,5 +1,5 @@
-#ifndef PBR_POSITION_PROPERTY_H
-#define PBR_POSITION_PROPERTY_H
+#ifndef PBR_POSITION_PROPERTY_HPP
+#define PBR_POSITION_PROPERTY_HPP
 
 
 #include "property.h"
@@ -38,4 +38,4 @@ class PositionProperty final : public Property
 } // namespace pbr
 
 
-#endif // PBR_POSITION_PROPERTY_H
+#endif // PBR_POSITION_PROPERTY_HPP

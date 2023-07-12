@@ -1,5 +1,5 @@
-#ifndef ANDROID_VULKAN_SHAPE_SPHERE_H
-#define ANDROID_VULKAN_SHAPE_SPHERE_H
+#ifndef ANDROID_VULKAN_SHAPE_SPHERE_HPP
+#define ANDROID_VULKAN_SHAPE_SPHERE_HPP
 
 
 #include "shape.h"
@@ -35,4 +35,4 @@ class [[maybe_unused]] ShapeSphere final : public Shape
 
 } // namespace android_vulkan
 
-#endif // ANDROID_VULKAN_SHAPE_SPHERE_H
+#endif // ANDROID_VULKAN_SHAPE_SPHERE_HPP

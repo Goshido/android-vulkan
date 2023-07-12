@@ -1,5 +1,5 @@
-#ifndef PBR_SOUND_EMITTER_SPATIAL_COMPONENT_H
-#define PBR_SOUND_EMITTER_SPATIAL_COMPONENT_H
+#ifndef PBR_SOUND_EMITTER_SPATIAL_COMPONENT_HPP
+#define PBR_SOUND_EMITTER_SPATIAL_COMPONENT_HPP
 
 
 #include "actor.h"
@@ -75,4 +75,4 @@ class SoundEmitterSpatialComponent final : public Component
 } // namespace pbr
 
 
-#endif // PBR_SOUND_EMITTER_SPATIAL_COMPONENT_H
+#endif // PBR_SOUND_EMITTER_SPATIAL_COMPONENT_HPP

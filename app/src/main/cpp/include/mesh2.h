@@ -1,5 +1,5 @@
-#ifndef ANDROID_VULKAN_MESH2_H
-#define ANDROID_VULKAN_MESH2_H
+#ifndef ANDROID_VULKAN_MESH2_HPP
+#define ANDROID_VULKAN_MESH2_HPP
 
 
 #include <primitive_types.h>
@@ -36,4 +36,4 @@ using Mesh2Index [[maybe_unused]] = uint32_t;
 } // namespace android_vulkan
 
 
-#endif // ANDROID_VULKAN_MESH2_H
+#endif // ANDROID_VULKAN_MESH2_HPP

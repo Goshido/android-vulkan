@@ -1,5 +1,5 @@
-#ifndef ANDROID_VULKAN_RAY_CASTER_H
-#define ANDROID_VULKAN_RAY_CASTER_H
+#ifndef ANDROID_VULKAN_RAY_CASTER_HPP
+#define ANDROID_VULKAN_RAY_CASTER_HPP
 
 
 #include "gjk_base.h"
@@ -51,4 +51,4 @@ class RayCaster final : public GJKBase
 } // namespace android_vulkan
 
 
-#endif // ANDROID_VULKAN_RAY_CASTER_H
+#endif // ANDROID_VULKAN_RAY_CASTER_HPP

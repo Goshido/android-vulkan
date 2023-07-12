@@ -1,5 +1,5 @@
-#ifndef PBR_SET_ATTRIBUTE_CHECKER_H
-#define PBR_SET_ATTRIBUTE_CHECKER_H
+#ifndef PBR_SET_ATTRIBUTE_CHECKER_HPP
+#define PBR_SET_ATTRIBUTE_CHECKER_HPP
 
 
 #include "attribute_checker.h"
@@ -42,4 +42,4 @@ class SetAttributeChecker final : public AttributeChecker
 } // namespace pbr
 
 
-#endif // PBR_SET_ATTRIBUTE_CHECKER_H
+#endif // PBR_SET_ATTRIBUTE_CHECKER_HPP

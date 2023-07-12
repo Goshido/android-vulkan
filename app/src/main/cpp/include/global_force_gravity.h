@@ -1,5 +1,5 @@
-#ifndef ANDROID_VULKAN_GLOBAL_FORCE_GRAVITY_H
-#define ANDROID_VULKAN_GLOBAL_FORCE_GRAVITY_H
+#ifndef ANDROID_VULKAN_GLOBAL_FORCE_GRAVITY_HPP
+#define ANDROID_VULKAN_GLOBAL_FORCE_GRAVITY_HPP
 
 
 #include "global_force.h"
@@ -31,4 +31,4 @@ class [[maybe_unused]] GlobalForceGravity final : public GlobalForce
 } // namespace android_vulkan
 
 
-#endif // ANDROID_VULKAN_GLOBAL_FORCE_GRAVITY_H
+#endif // ANDROID_VULKAN_GLOBAL_FORCE_GRAVITY_HPP

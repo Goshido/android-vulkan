@@ -1,5 +1,5 @@
-#ifndef PBR_CAMERA_H
-#define PBR_CAMERA_H
+#ifndef PBR_CAMERA_HPP
+#define PBR_CAMERA_HPP
 
 
 #include <GXCommon/GXMath.h>
@@ -74,4 +74,4 @@ class Camera final
 } // namespace pbr
 
 
-#endif // PBR_CAMERA_H
+#endif // PBR_CAMERA_HPP

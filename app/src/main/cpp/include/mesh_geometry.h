@@ -1,5 +1,5 @@
-#ifndef MESH_GEOMETRY_H
-#define MESH_GEOMETRY_H
+#ifndef MESH_GEOMETRY_HPP
+#define MESH_GEOMETRY_HPP
 
 
 #include <GXCommon/GXWarning.h>
@@ -134,4 +134,4 @@ class MeshGeometry final
 } // namespace android_vulkan
 
 
-#endif // MESH_GEOMETRY_H
+#endif // MESH_GEOMETRY_HPP

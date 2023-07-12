@@ -1,5 +1,5 @@
-#ifndef PBR_FONT_STORAGE_H
-#define PBR_FONT_STORAGE_H
+#ifndef PBR_FONT_STORAGE_HPP
+#define PBR_FONT_STORAGE_HPP
 
 
 #include <renderer.h>
@@ -205,4 +205,4 @@ class FontStorage final
 } // namespace pbr
 
 
-#endif // PBR_FONT_STORAGE_H
+#endif // PBR_FONT_STORAGE_HPP

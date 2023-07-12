@@ -1,5 +1,5 @@
-#ifndef PBR_POINT_LIGHT_DESCRIPTOR_SET_LAYOUT_H
-#define PBR_POINT_LIGHT_DESCRIPTOR_SET_LAYOUT_H
+#ifndef PBR_POINT_LIGHT_DESCRIPTOR_SET_LAYOUT_HPP
+#define PBR_POINT_LIGHT_DESCRIPTOR_SET_LAYOUT_HPP
 
 
 #include "descriptor_set_layout.h"
@@ -29,4 +29,4 @@ class PointLightDescriptorSetLayout final : public DescriptorSetLayout
 } // namespace pbr
 
 
-#endif // PBR_POINT_LIGHT_DESCRIPTOR_SET_LAYOUT_H
+#endif // PBR_POINT_LIGHT_DESCRIPTOR_SET_LAYOUT_HPP

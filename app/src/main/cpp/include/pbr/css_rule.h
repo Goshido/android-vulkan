@@ -1,5 +1,5 @@
-#ifndef PBR_CSS_RULE_H
-#define PBR_CSS_RULE_H
+#ifndef PBR_CSS_RULE_HPP
+#define PBR_CSS_RULE_HPP
 
 
 #include "property.h"
@@ -22,4 +22,4 @@ using CSSRules = std::unordered_map<std::u32string, CSSProps>;
 } // namespace pbr
 
 
-#endif // PBR_CSS_RULE_H
+#endif // PBR_CSS_RULE_HPP

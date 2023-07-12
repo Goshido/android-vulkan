@@ -1,5 +1,5 @@
-#ifndef PBR_STATIC_MESH_COMPONENT_H
-#define PBR_STATIC_MESH_COMPONENT_H
+#ifndef PBR_STATIC_MESH_COMPONENT_HPP
+#define PBR_STATIC_MESH_COMPONENT_HPP
 
 
 #include "actor.h"
@@ -126,4 +126,4 @@ class StaticMeshComponent final : public RenderableComponent, public Transformab
 } // namespace pbr
 
 
-#endif // PBR_STATIC_MESH_COMPONENT_H
+#endif // PBR_STATIC_MESH_COMPONENT_HPP

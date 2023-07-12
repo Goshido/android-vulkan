@@ -1,7 +1,7 @@
-//version 1.3
+//version 1.4
 
-#ifndef GX_NATIVE_MESH
-#define GX_NATIVE_MESH
+#ifndef GX_NATIVE_MESH_HPP
+#define GX_NATIVE_MESH_HPP
 
 
 #include "GXMath.h"
@@ -32,4 +32,4 @@ struct GXMeshInfo final
 [[maybe_unused]] GXVoid GXCALL GXLoadNativeMesh ( GXMeshInfo &info, const GXWChar* fileName );
 
 
-#endif //GX_NATIVE_MESH
+#endif //GX_NATIVE_MESH_HPP

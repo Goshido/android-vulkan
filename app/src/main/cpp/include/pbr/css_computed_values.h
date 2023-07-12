@@ -1,5 +1,5 @@
-#ifndef PBR_CSS_COMPUTED_VALUES_H
-#define PBR_CSS_COMPUTED_VALUES_H
+#ifndef PBR_CSS_COMPUTED_VALUES_HPP
+#define PBR_CSS_COMPUTED_VALUES_HPP
 
 
 #include "color_value.h"
@@ -78,4 +78,4 @@ class CSSComputedValues final
 } // namespace pbr
 
 
-#endif // PBR_CSS_COMPUTED_VALUES_H
+#endif // PBR_CSS_COMPUTED_VALUES_HPP

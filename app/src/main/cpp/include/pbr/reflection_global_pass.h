@@ -1,5 +1,5 @@
-#ifndef PBR_REFLECTION_GLOBAL_PASS_H
-#define PBR_REFLECTION_GLOBAL_PASS_H
+#ifndef PBR_REFLECTION_GLOBAL_PASS_HPP
+#define PBR_REFLECTION_GLOBAL_PASS_HPP
 
 
 #include "reflection_global_program.h"
@@ -56,4 +56,4 @@ class ReflectionGlobalPass final
 
 } // namespace pbr
 
-#endif // PBR_REFLECTION_GLOBAL_PASS_H
+#endif // PBR_REFLECTION_GLOBAL_PASS_HPP

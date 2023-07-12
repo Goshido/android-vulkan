@@ -1,5 +1,5 @@
-#ifndef PBR_DIV_UI_ELEMENT_H
-#define PBR_DIV_UI_ELEMENT_H
+#ifndef PBR_DIV_UI_ELEMENT_HPP
+#define PBR_DIV_UI_ELEMENT_HPP
 
 
 #include "css_ui_element.h"
@@ -71,4 +71,4 @@ class DIVUIElement final : public CSSUIElement
 } // namespace pbr
 
 
-#endif // PBR_DIV_UI_ELEMENT_H
+#endif // PBR_DIV_UI_ELEMENT_HPP

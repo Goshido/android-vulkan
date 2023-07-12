@@ -1,5 +1,5 @@
-#ifndef PBR_DEFAULT_TEXTURE_MANAGER_H
-#define PBR_DEFAULT_TEXTURE_MANAGER_H
+#ifndef PBR_DEFAULT_TEXTURE_MANAGER_HPP
+#define PBR_DEFAULT_TEXTURE_MANAGER_HPP
 
 
 #include "types.h"
@@ -49,4 +49,4 @@ class DefaultTextureManager final
 } // namespace pbr
 
 
-#endif // PBR_DEFAULT_TEXTURE_MANAGER_H
+#endif // PBR_DEFAULT_TEXTURE_MANAGER_HPP

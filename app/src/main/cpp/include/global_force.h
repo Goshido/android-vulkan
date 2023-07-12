@@ -1,5 +1,5 @@
-#ifndef ANDROID_VULKAN_GLOBAL_FORCE_H
-#define ANDROID_VULKAN_GLOBAL_FORCE_H
+#ifndef ANDROID_VULKAN_GLOBAL_FORCE_HPP
+#define ANDROID_VULKAN_GLOBAL_FORCE_HPP
 
 
 #include "rigid_body.h"
@@ -29,4 +29,4 @@ using GlobalForceRef = std::shared_ptr<GlobalForce>;
 } // namespace android_vulkan
 
 
-#endif // ANDROID_VULKAN_GLOBAL_FORCE_H
+#endif // ANDROID_VULKAN_GLOBAL_FORCE_HPP

@@ -1,5 +1,5 @@
-#ifndef PBR_UI_ELEMENT_H
-#define PBR_UI_ELEMENT_H
+#ifndef PBR_UI_ELEMENT_HPP
+#define PBR_UI_ELEMENT_HPP
 
 
 #include "css_unit_to_device_pixel.h"
@@ -138,4 +138,4 @@ class UIElement
 } // namespace pbr
 
 
-#endif // PBR_UI_ELEMENT_H
+#endif // PBR_UI_ELEMENT_HPP

@@ -1,5 +1,5 @@
-#ifndef PBR_SAMPLER_MANAGER_H
-#define PBR_SAMPLER_MANAGER_H
+#ifndef PBR_SAMPLER_MANAGER_HPP
+#define PBR_SAMPLER_MANAGER_HPP
 
 
 #include "types.h"
@@ -34,4 +34,4 @@ class SamplerManager final
 } // namespace pbr
 
 
-#endif // PBR_SAMPLER_MANAGER_H
+#endif // PBR_SAMPLER_MANAGER_HPP

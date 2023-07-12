@@ -1,5 +1,5 @@
-#ifndef PBR_GEOMETRY_PASS_H
-#define PBR_GEOMETRY_PASS_H
+#ifndef PBR_GEOMETRY_PASS_HPP
+#define PBR_GEOMETRY_PASS_HPP
 
 
 #include "opaque_subpass.h"
@@ -62,4 +62,4 @@ class GeometryPass final
 } // namespace pbr
 
 
-#endif // PBR_GEOMETRY_PASS_H
+#endif // PBR_GEOMETRY_PASS_HPP

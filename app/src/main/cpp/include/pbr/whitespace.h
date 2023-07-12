@@ -1,5 +1,5 @@
-#ifndef PBR_WHITESPACE_H
-#define PBR_WHITESPACE_H
+#ifndef PBR_WHITESPACE_HPP
+#define PBR_WHITESPACE_HPP
 
 
 #include "parse_result.h"
@@ -39,4 +39,4 @@ class Whitespace final
 } // namespace pbr
 
 
-#endif // PBR_WHITESPACE_H
+#endif // PBR_WHITESPACE_HPP

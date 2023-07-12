@@ -1,5 +1,5 @@
-#ifndef PBR_CUBE_MAP_MANAGER_H
-#define PBR_CUBE_MAP_MANAGER_H
+#ifndef PBR_CUBE_MAP_MANAGER_HPP
+#define PBR_CUBE_MAP_MANAGER_HPP
 
 
 #include <GXCommon/GXWarning.h>
@@ -93,4 +93,4 @@ class CubeMapManager final
 } // namespace pbr
 
 
-#endif // PBR_CUBE_MAP_MANAGER_H
+#endif // PBR_CUBE_MAP_MANAGER_HPP

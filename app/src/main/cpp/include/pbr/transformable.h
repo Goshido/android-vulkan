@@ -1,5 +1,5 @@
-#ifndef PBR_TRANSFORMABLE_H
-#define PBR_TRANSFORMABLE_H
+#ifndef PBR_TRANSFORMABLE_HPP
+#define PBR_TRANSFORMABLE_HPP
 
 
 #include <GXCommon/GXMath.h>
@@ -26,4 +26,4 @@ class Transformable
 } // namespace pbr
 
 
-#endif // PBR_TRANSFORMABLE_H
+#endif // PBR_TRANSFORMABLE_HPP

@@ -1,5 +1,5 @@
-#ifndef ANDROID_VULKAN_PCM_STREAMER_OGG_H
-#define ANDROID_VULKAN_PCM_STREAMER_OGG_H
+#ifndef ANDROID_VULKAN_PCM_STREAMER_OGG_HPP
+#define ANDROID_VULKAN_PCM_STREAMER_OGG_HPP
 
 
 #include "pcm_streamer.h"
@@ -75,4 +75,4 @@ class PCMStreamerOGG final : public PCMStreamer
 } // namespace android_vulkan
 
 
-#endif // ANDROID_VULKAN_PCM_STREAMER_OGG_H
+#endif // ANDROID_VULKAN_PCM_STREAMER_OGG_HPP

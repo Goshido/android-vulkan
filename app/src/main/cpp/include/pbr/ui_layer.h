@@ -1,5 +1,5 @@
-#ifndef PBR_UI_LAYER_H
-#define PBR_UI_LAYER_H
+#ifndef PBR_UI_LAYER_HPP
+#define PBR_UI_LAYER_HPP
 
 
 #include "div_ui_element.h"
@@ -84,4 +84,4 @@ class UILayer final
 } // namespace pbr
 
 
-#endif // PBR_UI_LAYER_H
+#endif // PBR_UI_LAYER_HPP

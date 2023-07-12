@@ -1,5 +1,5 @@
-#ifndef ROTATING_MESH_GAME_ANALYTIC_H
-#define ROTATING_MESH_GAME_ANALYTIC_H
+#ifndef ROTATING_MESH_GAME_ANALYTIC_HPP
+#define ROTATING_MESH_GAME_ANALYTIC_HPP
 
 
 #include "game.h"
@@ -25,4 +25,4 @@ class GameAnalytic final : public Game
 } // namespace rotating_mesh
 
 
-#endif // ROTATING_MESH_GAME_ANALYTIC_H
+#endif // ROTATING_MESH_GAME_ANALYTIC_HPP

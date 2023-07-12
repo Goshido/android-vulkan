@@ -1,7 +1,7 @@
-// version 1.79
+// version 1.80
 
-#ifndef GX_MATH
-#define GX_MATH
+#ifndef GX_MATH_HPP
+#define GX_MATH_HPP
 
 
 #include "GXTypes.h"
@@ -900,4 +900,4 @@ class [[maybe_unused]] GXProjectionClipPlanes final
 ) noexcept;
 
 
-#endif // GX_MATH
+#endif // GX_MATH_HPP

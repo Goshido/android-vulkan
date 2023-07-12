@@ -1,5 +1,5 @@
-#ifndef PBR_BOX_STACK_H
-#define PBR_BOX_STACK_H
+#ifndef PBR_BOX_STACK_HPP
+#define PBR_BOX_STACK_HPP
 
 
 #include <pbr/camera.h>
@@ -93,4 +93,4 @@ class BoxStack final : public android_vulkan::Game
 } // namespace pbr::box_stack
 
 
-#endif // PBR_BOX_STACK_H
+#endif // PBR_BOX_STACK_HPP

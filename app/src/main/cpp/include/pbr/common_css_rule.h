@@ -1,5 +1,5 @@
-#ifndef PBR_COMMON_CSS_RULE_H
-#define PBR_COMMON_CSS_RULE_H
+#ifndef PBR_COMMON_CSS_RULE_HPP
+#define PBR_COMMON_CSS_RULE_HPP
 
 
 #include "css_rule.h"
@@ -38,4 +38,4 @@ class CommonCSSRule final
 } // namespace pbr
 
 
-#endif // PBR_COMMON_CSS_RULE_H
+#endif // PBR_COMMON_CSS_RULE_HPP

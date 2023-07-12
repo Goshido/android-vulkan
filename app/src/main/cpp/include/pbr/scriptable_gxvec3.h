@@ -1,5 +1,5 @@
-#ifndef PBR_SCRIPTABLE_GXVEC3_H
-#define PBR_SCRIPTABLE_GXVEC3_H
+#ifndef PBR_SCRIPTABLE_GXVEC3_HPP
+#define PBR_SCRIPTABLE_GXVEC3_HPP
 
 
 #include <GXCommon/GXMath.h>
@@ -79,4 +79,4 @@ class ScriptableGXVec3 final
 } // namespace pbr
 
 
-#endif // PBR_SCRIPTABLE_GXVEC3_H
+#endif // PBR_SCRIPTABLE_GXVEC3_HPP

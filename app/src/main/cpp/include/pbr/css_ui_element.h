@@ -1,5 +1,5 @@
-#ifndef PBR_CSS_UI_ELEMENT_H
-#define PBR_CSS_UI_ELEMENT_H
+#ifndef PBR_CSS_UI_ELEMENT_HPP
+#define PBR_CSS_UI_ELEMENT_HPP
 
 
 #include "css_computed_values.h"
@@ -30,4 +30,4 @@ class CSSUIElement : public UIElement
 } // namespace pbr
 
 
-#endif // PBR_CSS_UI_ELEMENT_H
+#endif // PBR_CSS_UI_ELEMENT_HPP

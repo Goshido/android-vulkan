@@ -1,5 +1,5 @@
-#ifndef PBR_REFLECTION_COMPONENT_DESC_H
-#define PBR_REFLECTION_COMPONENT_DESC_H
+#ifndef PBR_REFLECTION_COMPONENT_DESC_HPP
+#define PBR_REFLECTION_COMPONENT_DESC_HPP
 
 
 #include "component_desc.h"
@@ -31,4 +31,4 @@ struct ReflectionComponentDesc final : public ComponentDesc
 } // namespace pbr 
 
 
-#endif // PBR_REFLECTION_COMPONENT_DESC_H
+#endif // PBR_REFLECTION_COMPONENT_DESC_HPP

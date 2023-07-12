@@ -1,5 +1,5 @@
-#ifndef PBR_FONT_FAMILY_PROPERTY_H
-#define PBR_FONT_FAMILY_PROPERTY_H
+#ifndef PBR_FONT_FAMILY_PROPERTY_HPP
+#define PBR_FONT_FAMILY_PROPERTY_HPP
 
 
 #include "property.h"
@@ -37,4 +37,4 @@ class FontFamilyProperty final : public Property
 } // namespace pbr
 
 
-#endif // PBR_FONT_FAMILY_PROPERTY_H
+#endif // PBR_FONT_FAMILY_PROPERTY_HPP

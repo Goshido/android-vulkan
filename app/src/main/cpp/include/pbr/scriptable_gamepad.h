@@ -1,5 +1,5 @@
-#ifndef PBR_SCRIPTABLE_GAMEPAD_H
-#define PBR_SCRIPTABLE_GAMEPAD_H
+#ifndef PBR_SCRIPTABLE_GAMEPAD_HPP
+#define PBR_SCRIPTABLE_GAMEPAD_HPP
 
 
 #include <gamepad.h>
@@ -144,4 +144,4 @@ class ScriptableGamepad final
 } // namespace pbr
 
 
-#endif // PBR_SCRIPTABLE_GAMEPAD_H
+#endif // PBR_SCRIPTABLE_GAMEPAD_HPP

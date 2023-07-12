@@ -1,5 +1,5 @@
-#ifndef ROTATING_MESH_GAME_H
-#define ROTATING_MESH_GAME_H
+#ifndef ROTATING_MESH_GAME_HPP
+#define ROTATING_MESH_GAME_HPP
 
 
 #include <game.h>
@@ -145,4 +145,4 @@ class Game : public android_vulkan::Game
 } // namespace rotating_mesh
 
 
-#endif // ROTATING_MESH_GAME_H
+#endif // ROTATING_MESH_GAME_HPP

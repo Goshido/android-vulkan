@@ -1,5 +1,5 @@
-#ifndef PBR_COMPONENT_DESC_H
-#define PBR_COMPONENT_DESC_H
+#ifndef PBR_COMPONENT_DESC_HPP
+#define PBR_COMPONENT_DESC_HPP
 
 
 #include "component_classes.h"
@@ -22,4 +22,4 @@ struct ComponentDesc
 } // namespace pbr
 
 
-#endif // PBR_COMPONENT_DESC_H
+#endif // PBR_COMPONENT_DESC_HPP

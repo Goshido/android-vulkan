@@ -1,5 +1,5 @@
-#ifndef PBR_GBUFFER_H
-#define PBR_GBUFFER_H
+#ifndef PBR_GBUFFER_HPP
+#define PBR_GBUFFER_HPP
 
 
 #include <texture2D.h>
@@ -42,4 +42,4 @@ class GBuffer final
 } // namespace pbr
 
 
-#endif // PBR_GBUFFER_H
+#endif // PBR_GBUFFER_HPP

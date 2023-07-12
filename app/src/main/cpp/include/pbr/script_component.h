@@ -1,5 +1,5 @@
-#ifndef PBR_SCRIPT_COMPONENT_H
-#define PBR_SCRIPT_COMPONENT_H
+#ifndef PBR_SCRIPT_COMPONENT_HPP
+#define PBR_SCRIPT_COMPONENT_HPP
 
 
 #include "actor.h"
@@ -52,4 +52,4 @@ class ScriptComponent final : public Component
 } // namespace pbr
 
 
-#endif // PBR_SCRIPT_COMPONENT_H
+#endif // PBR_SCRIPT_COMPONENT_HPP

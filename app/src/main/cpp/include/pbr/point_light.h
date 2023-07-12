@@ -1,5 +1,5 @@
-#ifndef PBR_POINT_LIGHT_H
-#define PBR_POINT_LIGHT_H
+#ifndef PBR_POINT_LIGHT_HPP
+#define PBR_POINT_LIGHT_HPP
 
 
 #include <GXCommon/GXMath.h>
@@ -85,4 +85,4 @@ class PointLight final : public Light
 } // namespace pbr
 
 
-#endif // PBR_POINT_LIGHT_H
+#endif // PBR_POINT_LIGHT_HPP

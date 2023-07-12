@@ -1,5 +1,5 @@
-#ifndef PBR_LENGTH_VALUE_PARSER_H
-#define PBR_LENGTH_VALUE_PARSER_H
+#ifndef PBR_LENGTH_VALUE_PARSER_HPP
+#define PBR_LENGTH_VALUE_PARSER_HPP
 
 
 #include "length_value.h"
@@ -40,4 +40,4 @@ class LengthValueParser final
 } // namespace pbr
 
 
-#endif // PBR_LENGTH_VALUE_PARSER_H
+#endif // PBR_LENGTH_VALUE_PARSER_HPP

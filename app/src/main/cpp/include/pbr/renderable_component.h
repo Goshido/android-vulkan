@@ -1,5 +1,5 @@
-#ifndef PBR_RENDERABLE_COMPONENT_H
-#define PBR_RENDERABLE_COMPONENT_H
+#ifndef PBR_RENDERABLE_COMPONENT_HPP
+#define PBR_RENDERABLE_COMPONENT_HPP
 
 
 #include "component.h"
@@ -32,4 +32,4 @@ class RenderableComponent : public Component
 } // namespace pbr
 
 
-#endif // PBR_RENDERABLE_COMPONENT_H
+#endif // PBR_RENDERABLE_COMPONENT_HPP

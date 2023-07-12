@@ -1,5 +1,5 @@
-#ifndef ANDROID_VULKAN_PCM_STREAMER_WAV_H
-#define ANDROID_VULKAN_PCM_STREAMER_WAV_H
+#ifndef ANDROID_VULKAN_PCM_STREAMER_WAV_HPP
+#define ANDROID_VULKAN_PCM_STREAMER_WAV_HPP
 
 
 #include "pcm_streamer.h"
@@ -30,4 +30,4 @@ class PCMStreamerWAV final : public PCMStreamer
 } // namespace android_vulkan
 
 
-#endif // ANDROID_VULKAN_PCM_STREAMER_WAV_H
+#endif // ANDROID_VULKAN_PCM_STREAMER_WAV_HPP

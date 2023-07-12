@@ -1,5 +1,5 @@
-#ifndef TEXTURE_CUBE_H
-#define TEXTURE_CUBE_H
+#ifndef TEXTURE_CUBE_HPP
+#define TEXTURE_CUBE_HPP
 
 
 #include "renderer.h"
@@ -91,4 +91,4 @@ class TextureCube final
 } // namespace android_vulkan
 
 
-#endif // TEXTURE_CUBE_H
+#endif // TEXTURE_CUBE_HPP

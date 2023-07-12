@@ -1,5 +1,5 @@
-#ifndef ANDROID_VULKAN_SIMPLEX_H
-#define ANDROID_VULKAN_SIMPLEX_H
+#ifndef ANDROID_VULKAN_SIMPLEX_HPP
+#define ANDROID_VULKAN_SIMPLEX_HPP
 
 
 #include <shape.h>
@@ -30,4 +30,4 @@ class Simplex final
 } // namespace android_vulkan
 
 
-#endif // ANDROID_VULKAN_SIMPLEX_H
+#endif // ANDROID_VULKAN_SIMPLEX_HPP

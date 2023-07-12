@@ -1,5 +1,5 @@
-#ifndef ANDROID_VULKAN_LOADER_H
-#define ANDROID_VULKAN_LOADER_H
+#ifndef ANDROID_VULKAN_LOADER_HPP
+#define ANDROID_VULKAN_LOADER_HPP
 
 
 #include <GXCommon/GXWarning.h>
@@ -38,4 +38,4 @@ class VulkanLoader final
 } // namespace android_vulkan
 
 
-#endif // ANDROID_VULKAN_LOADER_H
+#endif // ANDROID_VULKAN_LOADER_HPP

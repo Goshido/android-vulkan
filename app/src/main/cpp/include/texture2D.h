@@ -1,5 +1,5 @@
-#ifndef TEXTURE_2D_H
-#define TEXTURE_2D_H
+#ifndef TEXTURE_2D_HPP
+#define TEXTURE_2D_HPP
 
 
 #include <GXCommon/GXWarning.h>
@@ -177,4 +177,4 @@ class Texture2D final
 } // namespace android_vulkan
 
 
-#endif // TEXTURE_2D_H
+#endif // TEXTURE_2D_HPP

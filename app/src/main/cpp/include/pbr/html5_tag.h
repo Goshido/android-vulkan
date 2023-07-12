@@ -1,5 +1,5 @@
-#ifndef PBR_HTML5_TAG_H
-#define PBR_HTML5_TAG_H
+#ifndef PBR_HTML5_TAG_HPP
+#define PBR_HTML5_TAG_HPP
 
 
 #include <GXCommon/GXWarning.h>
@@ -63,4 +63,4 @@ class HTML5Tag final
 } // namespace pbr
 
 
-#endif // PBR_HTML5_TAG_H
+#endif // PBR_HTML5_TAG_HPP

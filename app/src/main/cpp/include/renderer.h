@@ -1,5 +1,5 @@
-#ifndef ANDROID_VULKAN_RENDERER_H
-#define ANDROID_VULKAN_RENDERER_H
+#ifndef ANDROID_VULKAN_RENDERER_HPP
+#define ANDROID_VULKAN_RENDERER_HPP
 
 
 #include <GXCommon/GXMath.h>
@@ -317,4 +317,4 @@ class Renderer final
 } // namespace android_vulkan
 
 
-#endif // ANDROID_VULKAN_RENDERER_H
+#endif // ANDROID_VULKAN_RENDERER_HPP

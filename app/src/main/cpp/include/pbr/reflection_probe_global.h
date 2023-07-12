@@ -1,5 +1,5 @@
-#ifndef PBR_REFLECTION_PROBE_GLOBAL_H
-#define PBR_REFLECTION_PROBE_GLOBAL_H
+#ifndef PBR_REFLECTION_PROBE_GLOBAL_HPP
+#define PBR_REFLECTION_PROBE_GLOBAL_HPP
 
 
 #include "reflection_probe.h"
@@ -26,5 +26,5 @@ class ReflectionProbeGlobal final : public ReflectionProbe
 } // namespace pbr
 
 
-#endif // PBR_REFLECTION_PROBE_GLOBAL_H
+#endif // PBR_REFLECTION_PROBE_GLOBAL_HPP
 

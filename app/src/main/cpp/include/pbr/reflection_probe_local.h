@@ -1,5 +1,5 @@
-#ifndef PBR_REFLECTION_PROBE_LOCAL_H
-#define PBR_REFLECTION_PROBE_LOCAL_H
+#ifndef PBR_REFLECTION_PROBE_LOCAL_HPP
+#define PBR_REFLECTION_PROBE_LOCAL_HPP
 
 
 #include "reflection_probe.h"
@@ -42,4 +42,4 @@ class ReflectionProbeLocal final : public ReflectionProbe
 } // namespace pbr
 
 
-#endif // PBR_REFLECTION_PROBE_LOCAL_H
+#endif // PBR_REFLECTION_PROBE_LOCAL_HPP

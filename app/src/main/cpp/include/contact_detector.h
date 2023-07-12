@@ -1,5 +1,5 @@
-#ifndef ANDROID_VULKAN_CONTACT_DETECTOR_H
-#define ANDROID_VULKAN_CONTACT_DETECTOR_H
+#ifndef ANDROID_VULKAN_CONTACT_DETECTOR_HPP
+#define ANDROID_VULKAN_CONTACT_DETECTOR_HPP
 
 
 #include "contact_manager.h"
@@ -93,4 +93,4 @@ class ContactDetector final
 } // namespace android_vulkan
 
 
-#endif // ANDROID_VULKAN_CONTACT_DETECTOR_H
+#endif // ANDROID_VULKAN_CONTACT_DETECTOR_HPP

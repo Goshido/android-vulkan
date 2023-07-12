@@ -1,5 +1,5 @@
-#ifndef ANDROID_VULKAN_GAMEPAD_H
-#define ANDROID_VULKAN_GAMEPAD_H
+#ifndef ANDROID_VULKAN_GAMEPAD_HPP
+#define ANDROID_VULKAN_GAMEPAD_HPP
 
 
 #include <GXCommon/GXWarning.h>
@@ -122,4 +122,4 @@ class Gamepad final
 } // namespace android_vulkan
 
 
-#endif // ANDROID_VULKAN_GAMEPAD_H
+#endif // ANDROID_VULKAN_GAMEPAD_HPP

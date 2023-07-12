@@ -1,5 +1,5 @@
-#ifndef ANDROID_VULKAN_PHYSICS_H
-#define ANDROID_VULKAN_PHYSICS_H
+#ifndef ANDROID_VULKAN_PHYSICS_HPP
+#define ANDROID_VULKAN_PHYSICS_HPP
 
 
 #include "contact_detector.h"
@@ -104,4 +104,4 @@ class Physics final
 } // namespace android_vulkan
 
 
-#endif //  ANDROID_VULKAN_PHYSICS_H
+#endif //  ANDROID_VULKAN_PHYSICS_HPP

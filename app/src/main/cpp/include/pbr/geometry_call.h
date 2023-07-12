@@ -1,5 +1,5 @@
-#ifndef PBR_GEOMETRY_CALL_H
-#define PBR_GEOMETRY_CALL_H
+#ifndef PBR_GEOMETRY_CALL_HPP
+#define PBR_GEOMETRY_CALL_HPP
 
 
 #include "mesh_group.h"
@@ -77,4 +77,4 @@ class GeometryCall final
 } // namespace pbr
 
 
-#endif // PBR_GEOMETRY_CALL_H
+#endif // PBR_GEOMETRY_CALL_HPP

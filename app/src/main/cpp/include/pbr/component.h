@@ -1,5 +1,5 @@
-#ifndef PBR_COMPONENT_H
-#define PBR_COMPONENT_H
+#ifndef PBR_COMPONENT_HPP
+#define PBR_COMPONENT_HPP
 
 
 #include "component_desc.h"
@@ -157,4 +157,4 @@ class Component
 } // namespace pbr
 
 
-#endif // PBR_COMPONENT_H
+#endif // PBR_COMPONENT_HPP

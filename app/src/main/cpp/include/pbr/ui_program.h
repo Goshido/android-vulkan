@@ -1,5 +1,5 @@
-#ifndef PBR_UI_PROGRAM_H
-#define PBR_UI_PROGRAM_H
+#ifndef PBR_UI_PROGRAM_HPP
+#define PBR_UI_PROGRAM_HPP
 
 
 #include "program.h"
@@ -105,4 +105,4 @@ class UIProgram final : public Program
 } // namespace pbr
 
 
-#endif // PBR_UI_PROGRAM_H
+#endif // PBR_UI_PROGRAM_HPP

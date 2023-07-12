@@ -1,5 +1,5 @@
-#ifndef PBR_RIGID_BODY_DESC_H
-#define PBR_RIGID_BODY_DESC_H
+#ifndef PBR_RIGID_BODY_DESC_HPP
+#define PBR_RIGID_BODY_DESC_HPP
 
 
 #include "component_desc.h"
@@ -47,4 +47,4 @@ struct RigidBodyComponentDesc final : public ComponentDesc
 } // namespace pbr
 
 
-#endif // PBR_RIGID_BODY_DESC_H
+#endif // PBR_RIGID_BODY_DESC_HPP

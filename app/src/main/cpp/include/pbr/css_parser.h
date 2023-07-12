@@ -1,5 +1,5 @@
-#ifndef PBR_CSS_PARSER_H
-#define PBR_CSS_PARSER_H
+#ifndef PBR_CSS_PARSER_HPP
+#define PBR_CSS_PARSER_HPP
 
 
 #include "css_rule.h"
@@ -50,4 +50,4 @@ class CSSParser final
 } // namespace pbr
 
 
-#endif // PBR_CSS_PARSER_H
+#endif // PBR_CSS_PARSER_HPP

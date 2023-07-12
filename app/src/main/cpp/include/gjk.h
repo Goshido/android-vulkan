@@ -1,5 +1,5 @@
-#ifndef ANDROID_VULKAN_GJK_H
-#define ANDROID_VULKAN_GJK_H
+#ifndef ANDROID_VULKAN_GJK_HPP
+#define ANDROID_VULKAN_GJK_HPP
 
 
 #include "gjk_base.h"
@@ -45,4 +45,4 @@ class GJK final : public GJKBase
 } // namespace android_vulkan
 
 
-#endif // ANDROID_VULKAN_GJK_H
+#endif // ANDROID_VULKAN_GJK_HPP

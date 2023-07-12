@@ -1,5 +1,5 @@
-#ifndef PBR_TYPES_H
-#define PBR_TYPES_H
+#ifndef PBR_TYPES_HPP
+#define PBR_TYPES_HPP
 
 
 #include <mesh_geometry.h>
@@ -41,4 +41,4 @@ using TextureCubeRef = std::shared_ptr<android_vulkan::TextureCube>;
 } // namespace pbr
 
 
-#endif // PBR_TYPES_H
+#endif // PBR_TYPES_HPP

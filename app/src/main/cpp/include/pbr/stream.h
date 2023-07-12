@@ -1,5 +1,5 @@
-#ifndef PBR_STREAM_H
-#define PBR_STREAM_H
+#ifndef PBR_STREAM_HPP
+#define PBR_STREAM_HPP
 
 
 #include <GXCommon/GXWarning.h>
@@ -42,4 +42,4 @@ class Stream final
 } // namespace pbr
 
 
-#endif // PBR_STREAM_H
+#endif // PBR_STREAM_HPP

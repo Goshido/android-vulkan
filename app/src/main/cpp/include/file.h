@@ -1,5 +1,5 @@
-#ifndef ANDROID_VULKAN_FILE_H
-#define ANDROID_VULKAN_FILE_H
+#ifndef ANDROID_VULKAN_FILE_HPP
+#define ANDROID_VULKAN_FILE_HPP
 
 
 #include <GXCommon/GXWarning.h>
@@ -49,4 +49,4 @@ class File final
 } // namespace android_vulkan
 
 
-#endif // ANDROID_VULKAN_FILE_H
+#endif // ANDROID_VULKAN_FILE_HPP

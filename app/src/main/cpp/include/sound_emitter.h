@@ -1,5 +1,5 @@
-#ifndef ANDROID_VULKAN_SOUND_EMITTER_H
-#define ANDROID_VULKAN_SOUND_EMITTER_H
+#ifndef ANDROID_VULKAN_SOUND_EMITTER_HPP
+#define ANDROID_VULKAN_SOUND_EMITTER_HPP
 
 
 #include "pcm_streamer.h"
@@ -71,4 +71,4 @@ class SoundEmitter
 } // namespace android_vulkan
 
 
-#endif // ANDROID_VULKAN_SOUND_EMITTER_H
+#endif // ANDROID_VULKAN_SOUND_EMITTER_HPP

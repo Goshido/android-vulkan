@@ -1,5 +1,5 @@
-#ifndef PBR_SOUND_EMITTER_SPATIAL_COMPONENT_DESC_H
-#define PBR_SOUND_EMITTER_SPATIAL_COMPONENT_DESC_H
+#ifndef PBR_SOUND_EMITTER_SPATIAL_COMPONENT_DESC_HPP
+#define PBR_SOUND_EMITTER_SPATIAL_COMPONENT_DESC_HPP
 
 
 #include "component_desc.h"
@@ -25,4 +25,4 @@ struct SoundEmitterSpatialComponentDesc final : public ComponentDesc
 } // namespace pbr
 
 
-#endif // PBR_SOUND_EMITTER_SPATIAL_COMPONENT_DESC_H
+#endif // PBR_SOUND_EMITTER_SPATIAL_COMPONENT_DESC_HPP

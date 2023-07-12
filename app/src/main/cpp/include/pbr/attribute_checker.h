@@ -1,5 +1,5 @@
-#ifndef PBR_ATTRIBUTE_CHECKER_H
-#define PBR_ATTRIBUTE_CHECKER_H
+#ifndef PBR_ATTRIBUTE_CHECKER_HPP
+#define PBR_ATTRIBUTE_CHECKER_HPP
 
 
 #include "attribute_parser.h"
@@ -44,4 +44,4 @@ class AttributeChecker
 } // namespace pbr
 
 
-#endif // PBR_ATTRIBUTE_CHECKER_H
+#endif // PBR_ATTRIBUTE_CHECKER_HPP

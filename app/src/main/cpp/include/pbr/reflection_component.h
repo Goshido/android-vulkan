@@ -1,5 +1,5 @@
-#ifndef PBR_REFLECTION_COMPONENT_H
-#define PBR_REFLECTION_COMPONENT_H
+#ifndef PBR_REFLECTION_COMPONENT_HPP
+#define PBR_REFLECTION_COMPONENT_HPP
 
 
 #include "renderable_component.h"
@@ -45,4 +45,4 @@ class ReflectionComponent final : public RenderableComponent, public Transformab
 } // namespace pbr
 
 
-#endif // PBR_REFLECTION_COMPONENT_H
+#endif // PBR_REFLECTION_COMPONENT_HPP

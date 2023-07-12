@@ -1,5 +1,5 @@
-#ifndef PBR_UI_VERTEX_INFO_H
-#define PBR_UI_VERTEX_INFO_H
+#ifndef PBR_UI_VERTEX_INFO_HPP
+#define PBR_UI_VERTEX_INFO_HPP
 
 
 #include <GXCommon/GXMath.h>
@@ -30,4 +30,4 @@ using UIVertexBuffer = std::span<UIVertexInfo>;
 } // namespace pbr
 
 
-#endif // PBR_UI_VERTEX_INFO_H
+#endif // PBR_UI_VERTEX_INFO_HPP

@@ -1,5 +1,5 @@
-#ifndef ANDROID_VULKAN_API_H
-#define ANDROID_VULKAN_API_H
+#ifndef ANDROID_VULKAN_API_HPP
+#define ANDROID_VULKAN_API_HPP
 
 
 #include <GXCommon/GXWarning.h>
@@ -23,4 +23,4 @@ X ( vkGetInstanceProcAddr )
 #undef X
 
 
-#endif // ANDROID_VULKAN_API_H
+#endif // ANDROID_VULKAN_API_HPP

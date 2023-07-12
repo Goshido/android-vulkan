@@ -1,5 +1,5 @@
-#ifndef PBR_RENDER_SESSION_STATS_H
-#define PBR_RENDER_SESSION_STATS_H
+#ifndef PBR_RENDER_SESSION_STATS_HPP
+#define PBR_RENDER_SESSION_STATS_HPP
 
 
 #include <GXCommon/GXWarning.h>
@@ -68,4 +68,4 @@ class RenderSessionStats final
 } // namespace pbr
 
 
-#endif // PBR_RENDER_SESSION_STATS_H
+#endif // PBR_RENDER_SESSION_STATS_HPP

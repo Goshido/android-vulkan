@@ -1,5 +1,5 @@
-#ifndef PBR_MATERIAL_INFO_H
-#define PBR_MATERIAL_INFO_H
+#ifndef PBR_MATERIAL_INFO_HPP
+#define PBR_MATERIAL_INFO_HPP
 
 
 #include <primitive_types.h>
@@ -50,4 +50,4 @@ struct StippleMaterialHeader final : public MaterialHeader
 } // namespace pbr
 
 
-#endif // PBR_MATERIAL_INFO_H
+#endif // PBR_MATERIAL_INFO_HPP

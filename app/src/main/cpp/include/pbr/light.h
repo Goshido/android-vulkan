@@ -1,5 +1,5 @@
-#ifndef PBR_LIGHT_H
-#define PBR_LIGHT_H
+#ifndef PBR_LIGHT_HPP
+#define PBR_LIGHT_HPP
 
 
 #include <GXCommon/GXWarning.h>
@@ -44,4 +44,4 @@ class Light
 } // namespace pbr
 
 
-#endif // PBR_LIGHT_H
+#endif // PBR_LIGHT_HPP

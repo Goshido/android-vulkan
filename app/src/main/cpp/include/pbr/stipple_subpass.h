@@ -1,5 +1,5 @@
-#ifndef PBR_STIPPLE_SUBPASS_H
-#define PBR_STIPPLE_SUBPASS_H
+#ifndef PBR_STIPPLE_SUBPASS_HPP
+#define PBR_STIPPLE_SUBPASS_HPP
 
 
 #include "geometry_subpass_base.h"
@@ -58,4 +58,4 @@ class StippleSubpass final : public GeometrySubpassBase
 } // namespace pbr
 
 
-#endif // PBR_STIPPLE_SUBPASS_H
+#endif // PBR_STIPPLE_SUBPASS_HPP

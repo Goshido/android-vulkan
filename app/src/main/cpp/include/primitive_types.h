@@ -1,5 +1,5 @@
-#ifndef PBR_PRIMITIVE_TYPES_H
-#define PBR_PRIMITIVE_TYPES_H
+#ifndef PBR_PRIMITIVE_TYPES_HPP
+#define PBR_PRIMITIVE_TYPES_HPP
 
 
 #include <GXCommon/GXWarning.h>
@@ -53,4 +53,4 @@ enum class eSoundChannel : uint8_t
 } // namespace android_vulkan
 
 
-#endif // PBR_PRIMITIVE_TYPES_H
+#endif // PBR_PRIMITIVE_TYPES_HPP

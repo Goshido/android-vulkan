@@ -1,5 +1,5 @@
-#ifndef PBR_PROPERTY_PARSER_H
-#define PBR_PROPERTY_PARSER_H
+#ifndef PBR_PROPERTY_PARSER_HPP
+#define PBR_PROPERTY_PARSER_HPP
 
 
 #include "property.h"
@@ -54,4 +54,4 @@ class PropertyParser final
 } // namespace pbr
 
 
-#endif // PBR_PROPERTY_PARSER_H
+#endif // PBR_PROPERTY_PARSER_HPP

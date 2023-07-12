@@ -1,5 +1,5 @@
-#ifndef PBR_PROPERTY_H
-#define PBR_PROPERTY_H
+#ifndef PBR_PROPERTY_HPP
+#define PBR_PROPERTY_HPP
 
 
 #include <GXCommon/GXWarning.h>
@@ -74,4 +74,4 @@ class Property
 } // namespace pbr
 
 
-#endif // PBR_PROPERTY_H
+#endif // PBR_PROPERTY_HPP

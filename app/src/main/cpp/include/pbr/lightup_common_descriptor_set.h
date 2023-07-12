@@ -1,5 +1,5 @@
-#ifndef PBR_LIGHTUP_COMMON_DESCRIPTOR_SET_H
-#define PBR_LIGHTUP_COMMON_DESCRIPTOR_SET_H
+#ifndef PBR_LIGHTUP_COMMON_DESCRIPTOR_SET_HPP
+#define PBR_LIGHTUP_COMMON_DESCRIPTOR_SET_HPP
 
 
 #include "gbuffer.h"
@@ -59,4 +59,4 @@ class LightupCommonDescriptorSet final
 } // namespace pbr
 
 
-#endif // PBR_LIGHTUP_COMMON_DESCRIPTOR_SET_H
+#endif // PBR_LIGHTUP_COMMON_DESCRIPTOR_SET_HPP

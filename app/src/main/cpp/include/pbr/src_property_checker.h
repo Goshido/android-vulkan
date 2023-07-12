@@ -1,5 +1,5 @@
-#ifndef PBR_SRC_PROPERTY_CHECKER_H
-#define PBR_SRC_PROPERTY_CHECKER_H
+#ifndef PBR_SRC_PROPERTY_CHECKER_HPP
+#define PBR_SRC_PROPERTY_CHECKER_HPP
 
 
 #include "property_checker.h"
@@ -51,4 +51,4 @@ class SRCPropertyChecker final : public PropertyChecker
 } // namespace pbr
 
 
-#endif // PBR_SRC_PROPERTY_CHECKER_H
+#endif // PBR_SRC_PROPERTY_CHECKER_HPP

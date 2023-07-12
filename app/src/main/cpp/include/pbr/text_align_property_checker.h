@@ -1,5 +1,5 @@
-#ifndef PBR_TEXT_ALIGN_PROPERTY_CHECKER_H
-#define PBR_TEXT_ALIGN_PROPERTY_CHECKER_H
+#ifndef PBR_TEXT_ALIGN_PROPERTY_CHECKER_HPP
+#define PBR_TEXT_ALIGN_PROPERTY_CHECKER_HPP
 
 
 #include "property_checker.h"
@@ -32,4 +32,4 @@ class TextAlignPropertyChecker final : public PropertyChecker
 } // namespace pbr
 
 
-#endif // PBR_TEXT_ALIGN_PROPERTY_CHECKER_H
+#endif // PBR_TEXT_ALIGN_PROPERTY_CHECKER_HPP

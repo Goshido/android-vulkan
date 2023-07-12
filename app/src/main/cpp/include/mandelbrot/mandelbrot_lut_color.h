@@ -1,5 +1,5 @@
-#ifndef MANDELBROT_LUT_COLOR_H
-#define MANDELBROT_LUT_COLOR_H
+#ifndef MANDELBROT_LUT_COLOR_HPP
+#define MANDELBROT_LUT_COLOR_HPP
 
 
 #include "mandelbrot_base.h"
@@ -59,4 +59,4 @@ class MandelbrotLUTColor final : public MandelbrotBase
 } // namespace mandelbrot
 
 
-#endif // MANDELBROT_LUT_COLOR_H
+#endif // MANDELBROT_LUT_COLOR_HPP

@@ -1,5 +1,5 @@
-#ifndef PBR_POINT_LIGHT_PASS_H
-#define PBR_POINT_LIGHT_PASS_H
+#ifndef PBR_POINT_LIGHT_PASS_HPP
+#define PBR_POINT_LIGHT_PASS_HPP
 
 
 #include "point_light_lightup.h"
@@ -107,4 +107,4 @@ class PointLightPass final
 } // namespace pbr
 
 
-#endif // PBR_POINT_LIGHT_PASS_H
+#endif // PBR_POINT_LIGHT_PASS_HPP

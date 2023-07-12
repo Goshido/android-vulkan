@@ -1,5 +1,5 @@
-#ifndef PBR_POINT_LIGHT_LIGHTUP_H
-#define PBR_POINT_LIGHT_LIGHTUP_H
+#ifndef PBR_POINT_LIGHT_LIGHTUP_HPP
+#define PBR_POINT_LIGHT_LIGHTUP_HPP
 
 
 #include "mesh_geometry.h"
@@ -73,4 +73,4 @@ class PointLightLightup final
 } // namespace pbr
 
 
-#endif // PBR_POINT_LIGHT_LIGHTUP_H
+#endif // PBR_POINT_LIGHT_LIGHTUP_HPP

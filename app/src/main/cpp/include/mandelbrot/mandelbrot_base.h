@@ -1,5 +1,5 @@
-#ifndef MANDELBROT_BASE_H
-#define MANDELBROT_BASE_H
+#ifndef MANDELBROT_BASE_HPP
+#define MANDELBROT_BASE_HPP
 
 
 #include <game.h>
@@ -82,4 +82,4 @@ class MandelbrotBase : public android_vulkan::Game
 } // namespace mandelbrot
 
 
-#endif // MANDELBROT_BASE_H
+#endif // MANDELBROT_BASE_HPP

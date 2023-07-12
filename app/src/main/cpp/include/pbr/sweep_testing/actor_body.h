@@ -1,5 +1,5 @@
-#ifndef PBR_SWEEP_TESTING_ACTOR_BODY_H
-#define PBR_SWEEP_TESTING_ACTOR_BODY_H
+#ifndef PBR_SWEEP_TESTING_ACTOR_BODY_HPP
+#define PBR_SWEEP_TESTING_ACTOR_BODY_HPP
 
 
 #include <pbr/render_session.h>
@@ -56,4 +56,4 @@ class ActorBody final
 } // namespace pbr::sweep_testing
 
 
-#endif // PBR_SWEEP_TESTING_ACTOR_BODY_H
+#endif // PBR_SWEEP_TESTING_ACTOR_BODY_HPP

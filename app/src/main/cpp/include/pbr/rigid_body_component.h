@@ -1,5 +1,5 @@
-#ifndef PBR_RIGID_BODY_COMPONENT_H
-#define PBR_RIGID_BODY_COMPONENT_H
+#ifndef PBR_RIGID_BODY_COMPONENT_HPP
+#define PBR_RIGID_BODY_COMPONENT_HPP
 
 
 #include "component.h"
@@ -75,4 +75,4 @@ class RigidBodyComponent final : public Component
 } // namespace pbr
 
 
-#endif // PBR_RIGID_BODY_COMPONENT_H
+#endif // PBR_RIGID_BODY_COMPONENT_HPP

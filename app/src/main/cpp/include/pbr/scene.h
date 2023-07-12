@@ -1,5 +1,5 @@
-#ifndef PBR_SCENE_H
-#define PBR_SCENE_H
+#ifndef PBR_SCENE_HPP
+#define PBR_SCENE_HPP
 
 
 #include "actor.h"
@@ -140,4 +140,4 @@ class Scene final
 } // namespace pbr
 
 
-#endif // PBR_SCENE_H
+#endif // PBR_SCENE_HPP

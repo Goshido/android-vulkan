@@ -1,5 +1,5 @@
-#ifndef PBR_ACTOR_H
-#define PBR_ACTOR_H
+#ifndef PBR_ACTOR_HPP
+#define PBR_ACTOR_HPP
 
 
 #include "actor_desc.h"
@@ -225,4 +225,4 @@ class Actor final
 } // namespace pbr
 
 
-#endif // PBR_ACTOR_H
+#endif // PBR_ACTOR_HPP

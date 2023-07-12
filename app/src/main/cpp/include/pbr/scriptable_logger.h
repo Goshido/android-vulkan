@@ -1,5 +1,5 @@
-#ifndef PBR_SCRIPTABLE_LOGGER_H
-#define PBR_SCRIPTABLE_LOGGER_H
+#ifndef PBR_SCRIPTABLE_LOGGER_HPP
+#define PBR_SCRIPTABLE_LOGGER_HPP
 
 
 #include <GXCommon/GXWarning.h>
@@ -42,4 +42,4 @@ class ScriptableLogger final
 } // namespace pbr
 
 
-#endif // PBR_SCRIPTABLE_LOGGER_H
+#endif // PBR_SCRIPTABLE_LOGGER_HPP

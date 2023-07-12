@@ -1,5 +1,5 @@
-#ifndef PBR_REFLECTION_GLOBAL_PROGRAM_H
-#define PBR_REFLECTION_GLOBAL_PROGRAM_H
+#ifndef PBR_REFLECTION_GLOBAL_PROGRAM_HPP
+#define PBR_REFLECTION_GLOBAL_PROGRAM_HPP
 
 
 #include "light_lightup_base_program.h"
@@ -90,4 +90,4 @@ class ReflectionGlobalProgram final : public LightLightupBaseProgram
 } // namespace pbr
 
 
-#endif // PBR_REFLECTION_GLOBAL_PROGRAM_H
+#endif // PBR_REFLECTION_GLOBAL_PROGRAM_HPP

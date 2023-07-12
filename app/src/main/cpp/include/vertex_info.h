@@ -1,5 +1,5 @@
-#ifndef ANDROID_VULKAN_VERTEX_INFO_H
-#define ANDROID_VULKAN_VERTEX_INFO_H
+#ifndef ANDROID_VULKAN_VERTEX_INFO_HPP
+#define ANDROID_VULKAN_VERTEX_INFO_HPP
 
 
 #include <GXCommon/GXMath.h>
@@ -42,4 +42,4 @@ struct VertexInfo final
 } // namespace android_vulkan
 
 
-#endif // ANDROID_VULKAN_VERTEX_INFO_H
+#endif // ANDROID_VULKAN_VERTEX_INFO_HPP

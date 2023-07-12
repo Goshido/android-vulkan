@@ -1,5 +1,5 @@
-#ifndef PBR_LENGTH_VALUE_H
-#define PBR_LENGTH_VALUE_H
+#ifndef PBR_LENGTH_VALUE_HPP
+#define PBR_LENGTH_VALUE_HPP
 
 
 #include <GXCommon/GXWarning.h>
@@ -50,4 +50,4 @@ class LengthValue final
 } // namespace pbr
 
 
-#endif // PBR_LENGTH_VALUE_H
+#endif // PBR_LENGTH_VALUE_HPP

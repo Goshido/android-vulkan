@@ -1,5 +1,5 @@
-#ifndef ROTATING_MESH_GAME_LUT_H
-#define ROTATING_MESH_GAME_LUT_H
+#ifndef ROTATING_MESH_GAME_LUT_HPP
+#define ROTATING_MESH_GAME_LUT_HPP
 
 
 #include "game.h"
@@ -43,4 +43,4 @@ class GameLUT final : public Game
 } // namespace rotating_mesh
 
 
-#endif // ROTATING_MESH_GAME_LUT_H
+#endif // ROTATING_MESH_GAME_LUT_HPP

@@ -1,5 +1,5 @@
-#ifndef PBR_MESH_MANAGER_H
-#define PBR_MESH_MANAGER_H
+#ifndef PBR_MESH_MANAGER_HPP
+#define PBR_MESH_MANAGER_HPP
 
 
 #include <GXCommon/GXWarning.h>
@@ -55,4 +55,4 @@ class MeshManager final
 } // namespace pbr
 
 
-#endif // PBR_MESH_MANAGER_H
+#endif // PBR_MESH_MANAGER_HPP

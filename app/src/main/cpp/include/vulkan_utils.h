@@ -1,5 +1,5 @@
-#ifndef VULKAN_UTILS_H
-#define VULKAN_UTILS_H
+#ifndef VULKAN_UTILS_HPP
+#define VULKAN_UTILS_HPP
 
 
 #include <GXCommon/GXWarning.h>
@@ -217,4 +217,4 @@ void UnregisterSwapchain ( std::string &&where );
 #endif // ANDROID_VULKAN_DEBUG
 
 
-#endif // VULKAN_UTILS_H
+#endif // VULKAN_UTILS_HPP

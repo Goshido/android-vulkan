@@ -1,5 +1,5 @@
-#ifndef ANDROID_VULKAN_HALF_TYPES_H
-#define ANDROID_VULKAN_HALF_TYPES_H
+#ifndef ANDROID_VULKAN_HALF_TYPES_HPP
+#define ANDROID_VULKAN_HALF_TYPES_HPP
 
 
 #include <GXCommon/GXMath.h>
@@ -110,4 +110,4 @@ struct Half4 final
 } // namespace android_vulkan
 
 
-#endif // ANDROID_VULKAN_HALF_TYPES_H
+#endif // ANDROID_VULKAN_HALF_TYPES_HPP

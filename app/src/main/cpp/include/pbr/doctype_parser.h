@@ -1,5 +1,5 @@
-#ifndef PBR_DOCTYPE_PARSER_H
-#define PBR_DOCTYPE_PARSER_H
+#ifndef PBR_DOCTYPE_PARSER_HPP
+#define PBR_DOCTYPE_PARSER_HPP
 
 
 #include "parse_result.h"
@@ -32,4 +32,4 @@ class DoctypeParser final
 } // namespace pbr
 
 
-#endif // PBR_DOCTYPE_PARSER_H
+#endif // PBR_DOCTYPE_PARSER_HPP

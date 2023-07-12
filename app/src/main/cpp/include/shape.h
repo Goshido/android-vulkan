@@ -1,5 +1,5 @@
-#ifndef ANDROID_VULKAN_SHAPE_H
-#define ANDROID_VULKAN_SHAPE_H
+#ifndef ANDROID_VULKAN_SHAPE_HPP
+#define ANDROID_VULKAN_SHAPE_HPP
 
 
 #include <GXCommon/GXMath.h>
@@ -85,4 +85,4 @@ using ShapeRef = std::shared_ptr<Shape>;
 } // namespace android_vulkan
 
 
-#endif // ANDROID_VULKAN_SHAPE_H
+#endif // ANDROID_VULKAN_SHAPE_HPP

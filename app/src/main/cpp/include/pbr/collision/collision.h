@@ -1,5 +1,5 @@
-#ifndef PBR_COLLISION_H
-#define PBR_COLLISION_H
+#ifndef PBR_COLLISION_HPP
+#define PBR_COLLISION_HPP
 
 
 #include <pbr/collision/manipulator.h>
@@ -110,4 +110,4 @@ class Collision final : public android_vulkan::Game
 } // namespace pbr::collision
 
 
-#endif // PBR_COLLISION_H
+#endif // PBR_COLLISION_HPP

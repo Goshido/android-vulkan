@@ -1,5 +1,5 @@
-#ifndef PBR_POSITION_PROPERTY_CHECKER_H
-#define PBR_POSITION_PROPERTY_CHECKER_H
+#ifndef PBR_POSITION_PROPERTY_CHECKER_HPP
+#define PBR_POSITION_PROPERTY_CHECKER_HPP
 
 
 #include "position_property.h"
@@ -32,4 +32,4 @@ class PositionPropertyChecker final : public PropertyChecker
 } // namespace pbr
 
 
-#endif // PBR_POSITION_PROPERTY_CHECKER_H
+#endif // PBR_POSITION_PROPERTY_CHECKER_HPP

@@ -1,5 +1,5 @@
-#ifndef PBR_FAIL_PROPERTY_CHECKER_H
-#define PBR_FAIL_PROPERTY_CHECKER_H
+#ifndef PBR_FAIL_PROPERTY_CHECKER_HPP
+#define PBR_FAIL_PROPERTY_CHECKER_HPP
 
 
 #include "property_checker.h"
@@ -28,4 +28,4 @@ class FailPropertyChecker final : public PropertyChecker
 } // namespace pbr
 
 
-#endif // PBR_FAIL_PROPERTY_CHECKER_H
+#endif // PBR_FAIL_PROPERTY_CHECKER_HPP

@@ -1,5 +1,5 @@
-#ifndef PBR_LENGTH_SHORTHAND_PROPERTY_CHECKER_H
-#define PBR_LENGTH_SHORTHAND_PROPERTY_CHECKER_H
+#ifndef PBR_LENGTH_SHORTHAND_PROPERTY_CHECKER_HPP
+#define PBR_LENGTH_SHORTHAND_PROPERTY_CHECKER_HPP
 
 
 #include "length_value.h"
@@ -47,4 +47,4 @@ class LengthShorthandPropertyChecker final : public PropertyChecker
 } // namespace pbr
 
 
-#endif // PBR_LENGTH_SHORTHAND_PROPERTY_CHECKER_H
+#endif // PBR_LENGTH_SHORTHAND_PROPERTY_CHECKER_HPP

@@ -1,5 +1,5 @@
-#ifndef PBR_POINT_LIGHT_COMPONENT_DESC_H
-#define PBR_POINT_LIGHT_COMPONENT_DESC_H
+#ifndef PBR_POINT_LIGHT_COMPONENT_DESC_HPP
+#define PBR_POINT_LIGHT_COMPONENT_DESC_HPP
 
 
 #include "component_desc.h"
@@ -23,4 +23,4 @@ struct PointLightComponentDesc final : public ComponentDesc
 } // namespace pbr
 
 
-#endif // PBR_POINT_LIGHT_COMPONENT_DESC_H
+#endif // PBR_POINT_LIGHT_COMPONENT_DESC_HPP

@@ -1,5 +1,5 @@
-#ifndef PBR_TRANSFORM_COMPONENT_DESC_H
-#define PBR_TRANSFORM_COMPONENT_DESC_H
+#ifndef PBR_TRANSFORM_COMPONENT_DESC_HPP
+#define PBR_TRANSFORM_COMPONENT_DESC_HPP
 
 
 #include "component_desc.h"
@@ -20,4 +20,4 @@ struct TransformComponentDesc final : public ComponentDesc
 } // namespace pbr
 
 
-#endif // PBR_TRANSFORM_COMPONENT_DESC_H
+#endif // PBR_TRANSFORM_COMPONENT_DESC_HPP

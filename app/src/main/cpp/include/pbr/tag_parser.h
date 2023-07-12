@@ -1,5 +1,5 @@
-#ifndef PBR_TAG_PARSER_H
-#define PBR_TAG_PARSER_H
+#ifndef PBR_TAG_PARSER_HPP
+#define PBR_TAG_PARSER_HPP
 
 
 #include "html5_tag.h"
@@ -35,4 +35,4 @@ class TagParser final
 } // namespace pbr
 
 
-#endif // PBR_TAG_PARSER_H
+#endif // PBR_TAG_PARSER_HPP

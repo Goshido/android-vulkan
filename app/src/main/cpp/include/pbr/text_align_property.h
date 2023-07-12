@@ -1,5 +1,5 @@
-#ifndef PBR_TEXT_ALIGN_PROPERTY_H
-#define PBR_TEXT_ALIGN_PROPERTY_H
+#ifndef PBR_TEXT_ALIGN_PROPERTY_HPP
+#define PBR_TEXT_ALIGN_PROPERTY_HPP
 
 
 #include "property.h"
@@ -40,4 +40,4 @@ class TextAlignProperty final : public Property
 } // namespace pbr
 
 
-#endif // PBR_TEXT_ALIGN_PROPERTY_H
+#endif // PBR_TEXT_ALIGN_PROPERTY_HPP

@@ -1,5 +1,5 @@
-#ifndef PBR_VERTICAL_ALIGN_PROPERTY_CHECKER_H
-#define PBR_VERTICAL_ALIGN_PROPERTY_CHECKER_H
+#ifndef PBR_VERTICAL_ALIGN_PROPERTY_CHECKER_HPP
+#define PBR_VERTICAL_ALIGN_PROPERTY_CHECKER_HPP
 
 
 #include "property_checker.h"
@@ -32,4 +32,4 @@ class VerticalAlignPropertyChecker final : public PropertyChecker
 } // namespace pbr
 
 
-#endif // PBR_VERTICAL_ALIGN_PROPERTY_CHECKER_H
+#endif // PBR_VERTICAL_ALIGN_PROPERTY_CHECKER_HPP

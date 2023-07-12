@@ -1,5 +1,5 @@
-#ifndef PBR_RENDER_SESSION_H
-#define PBR_RENDER_SESSION_H
+#ifndef PBR_RENDER_SESSION_HPP
+#define PBR_RENDER_SESSION_HPP
 
 
 #include "default_texture_manager.h"
@@ -143,4 +143,4 @@ class RenderSession final
 } // namespace pbr
 
 
-#endif // PBR_RENDER_SESSION_H
+#endif // PBR_RENDER_SESSION_HPP

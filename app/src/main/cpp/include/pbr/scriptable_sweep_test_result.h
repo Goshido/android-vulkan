@@ -1,5 +1,5 @@
-#ifndef PBR_SCRIPTABLE_SWEEP_TEST_RESULT_H
-#define PBR_SCRIPTABLE_SWEEP_TEST_RESULT_H
+#ifndef PBR_SCRIPTABLE_SWEEP_TEST_RESULT_HPP
+#define PBR_SCRIPTABLE_SWEEP_TEST_RESULT_HPP
 
 
 #include <physics.h>
@@ -41,4 +41,4 @@ class ScriptableSweepTestResult final
 } // namespace pbr
 
 
-#endif // PBR_SCRIPTABLE_SWEEP_TEST_RESULT_H
+#endif // PBR_SCRIPTABLE_SWEEP_TEST_RESULT_HPP

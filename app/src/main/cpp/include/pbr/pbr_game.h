@@ -1,5 +1,5 @@
-#ifndef PBR_GAME_H
-#define PBR_GAME_H
+#ifndef PBR_GAME_HPP
+#define PBR_GAME_HPP
 
 
 #include "camera.h"
@@ -54,4 +54,4 @@ class PBRGame final : public android_vulkan::Game
 } // namespace pbr
 
 
-#endif // PBR_GAME_H
+#endif // PBR_GAME_HPP

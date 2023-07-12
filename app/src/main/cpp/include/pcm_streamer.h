@@ -1,5 +1,5 @@
-#ifndef ANDROID_VULKAN_PCM_STREAMER_H
-#define ANDROID_VULKAN_PCM_STREAMER_H
+#ifndef ANDROID_VULKAN_PCM_STREAMER_HPP
+#define ANDROID_VULKAN_PCM_STREAMER_HPP
 
 
 #include "sound_storage.h"
@@ -162,4 +162,4 @@ class PCMStreamer
 } // namespace android_vulkan
 
 
-#endif // ANDROID_VULKAN_PCM_STREAMER_H
+#endif // ANDROID_VULKAN_PCM_STREAMER_HPP

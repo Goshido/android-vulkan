@@ -1,5 +1,5 @@
-#ifndef ANDROID_VULKAN_CORE_H
-#define ANDROID_VULKAN_CORE_H
+#ifndef ANDROID_VULKAN_CORE_HPP
+#define ANDROID_VULKAN_CORE_HPP
 
 
 #include "game.h"
@@ -116,4 +116,4 @@ class Core final
 } // namespace android_vulkan
 
 
-#endif // ANDROID_VULKAN_CORE_H
+#endif // ANDROID_VULKAN_CORE_HPP

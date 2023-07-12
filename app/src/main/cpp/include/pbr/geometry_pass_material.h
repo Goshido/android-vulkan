@@ -1,5 +1,5 @@
-#ifndef PBR_GEOMETRY_PASS_MATERIAL_H
-#define PBR_GEOMETRY_PASS_MATERIAL_H
+#ifndef PBR_GEOMETRY_PASS_MATERIAL_HPP
+#define PBR_GEOMETRY_PASS_MATERIAL_HPP
 
 
 #include "types.h"
@@ -56,4 +56,4 @@ class GeometryPassMaterial : public Material
 } // namespace pbr
 
 
-#endif // PBR_GEOMETRY_PASS_MATERIAL_H
+#endif // PBR_GEOMETRY_PASS_MATERIAL_HPP

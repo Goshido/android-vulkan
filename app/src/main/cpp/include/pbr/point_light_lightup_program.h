@@ -1,5 +1,5 @@
-#ifndef PBR_POINT_LIGHT_LIGHTUP_PROGRAM_H
-#define PBR_POINT_LIGHT_LIGHTUP_PROGRAM_H
+#ifndef PBR_POINT_LIGHT_LIGHTUP_PROGRAM_HPP
+#define PBR_POINT_LIGHT_LIGHTUP_PROGRAM_HPP
 
 
 #include "lightup_common_descriptor_set_layout.h"
@@ -115,4 +115,4 @@ class PointLightLightupProgram final : public LightLightupBaseProgram
 } // namespace pbr
 
 
-#endif // PBR_POINT_LIGHT_LIGHTUP_PROGRAM_H
+#endif // PBR_POINT_LIGHT_LIGHTUP_PROGRAM_HPP

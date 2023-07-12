@@ -1,5 +1,5 @@
-#ifndef PBR_IMAGE_ATTRIBUTE_CHECKER_H
-#define PBR_IMAGE_ATTRIBUTE_CHECKER_H
+#ifndef PBR_IMAGE_ATTRIBUTE_CHECKER_HPP
+#define PBR_IMAGE_ATTRIBUTE_CHECKER_HPP
 
 
 #include "attribute_checker.h"
@@ -38,4 +38,4 @@ class ImageAttributeChecker final : public AttributeChecker
 } // namespace pbr
 
 
-#endif // PBR_IMAGE_ATTRIBUTE_CHECKER_H
+#endif // PBR_IMAGE_ATTRIBUTE_CHECKER_HPP

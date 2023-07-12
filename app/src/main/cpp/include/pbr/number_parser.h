@@ -1,5 +1,5 @@
-#ifndef PBR_NUMBER_PARSER_H
-#define PBR_NUMBER_PARSER_H
+#ifndef PBR_NUMBER_PARSER_HPP
+#define PBR_NUMBER_PARSER_HPP
 
 
 #include <GXCommon/GXWarning.h>
@@ -43,4 +43,4 @@ class NumberParser final
 } // namespace pbr
 
 
-#endif // PBR_NUMBER_PARSER_H
+#endif // PBR_NUMBER_PARSER_HPP

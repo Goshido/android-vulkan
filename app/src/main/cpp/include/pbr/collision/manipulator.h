@@ -1,5 +1,5 @@
-#ifndef PBR_COLLISION_MANIPULATOR_H
-#define PBR_COLLISION_MANIPULATOR_H
+#ifndef PBR_COLLISION_MANIPULATOR_HPP
+#define PBR_COLLISION_MANIPULATOR_HPP
 
 
 #include <rigid_body.h>
@@ -48,4 +48,4 @@ class Manipulator final
 } // namespace pbr::collision
 
 
-#endif // PBR_COLLISION_MANIPULATOR_H
+#endif // PBR_COLLISION_MANIPULATOR_HPP

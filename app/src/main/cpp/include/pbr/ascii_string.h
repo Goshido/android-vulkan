@@ -1,5 +1,5 @@
-#ifndef PBR_ASCII_STRING_H
-#define PBR_ASCII_STRING_H
+#ifndef PBR_ASCII_STRING_HPP
+#define PBR_ASCII_STRING_HPP
 
 
 #include "stream.h"
@@ -56,4 +56,4 @@ class ASCIIString final
 } // namespace pbr
 
 
-#endif // PBR_ASCII_STRING_H
+#endif // PBR_ASCII_STRING_HPP

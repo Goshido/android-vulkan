@@ -1,5 +1,5 @@
-#ifndef PBR_CAMERA_COMPONENT_H
-#define PBR_CAMERA_COMPONENT_H
+#ifndef PBR_CAMERA_COMPONENT_HPP
+#define PBR_CAMERA_COMPONENT_HPP
 
 
 #include "component.h"
@@ -56,4 +56,4 @@ class CameraComponent final : public Component
 } // namespace pbr
 
 
-#endif // PBR_CAMERA_COMPONENT_H
+#endif // PBR_CAMERA_COMPONENT_HPP

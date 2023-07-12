@@ -1,5 +1,5 @@
-#ifndef PBR_STATIC_MESH_COMPONENT_DESC_H
-#define PBR_STATIC_MESH_COMPONENT_DESC_H
+#ifndef PBR_STATIC_MESH_COMPONENT_DESC_HPP
+#define PBR_STATIC_MESH_COMPONENT_DESC_HPP
 
 
 #include "component_desc.h"
@@ -28,4 +28,4 @@ struct StaticMeshComponentDesc final : public ComponentDesc
 } // namespace pbr
 
 
-#endif // PBR_STATIC_MESH_COMPONENT_DESC_H
+#endif // PBR_STATIC_MESH_COMPONENT_DESC_HPP

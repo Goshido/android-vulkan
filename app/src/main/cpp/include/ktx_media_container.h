@@ -1,5 +1,5 @@
-#ifndef KTX_MEDIA_CONTAINER_H
-#define KTX_MEDIA_CONTAINER_H
+#ifndef KTX_MEDIA_CONTAINER_HPP
+#define KTX_MEDIA_CONTAINER_HPP
 
 
 #include "file.h"
@@ -83,4 +83,4 @@ class KTXMediaContainer final
 } // namespace android_vulkan
 
 
-#endif // KTX_MEDIA_CONTAINER_H
+#endif // KTX_MEDIA_CONTAINER_HPP

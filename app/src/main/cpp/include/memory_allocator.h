@@ -1,5 +1,5 @@
-#ifndef ANDROID_VULKAN_MEMORY_ALLOCATOR_H
-#define ANDROID_VULKAN_MEMORY_ALLOCATOR_H
+#ifndef ANDROID_VULKAN_MEMORY_ALLOCATOR_HPP
+#define ANDROID_VULKAN_MEMORY_ALLOCATOR_HPP
 
 
 #include <GXCommon/GXWarning.h>
@@ -146,4 +146,4 @@ class MemoryAllocator final
 } // namespace android_vulkan
 
 
-#endif // ANDROID_VULKAN_MEMORY_ALLOCATOR_H
+#endif // ANDROID_VULKAN_MEMORY_ALLOCATOR_HPP

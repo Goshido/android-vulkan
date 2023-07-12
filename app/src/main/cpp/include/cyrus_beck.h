@@ -1,5 +1,5 @@
-#ifndef ANDROID_VULKAN_CYRUS_BECK_H
-#define ANDROID_VULKAN_CYRUS_BECK_H
+#ifndef ANDROID_VULKAN_CYRUS_BECK_HPP
+#define ANDROID_VULKAN_CYRUS_BECK_HPP
 
 
 #include "vertices.h"
@@ -36,4 +36,4 @@ class CyrusBeck final
 } // namespace android_vulkan
 
 
-#endif // ANDROID_VULKAN_CYRUS_BECK_H
+#endif // ANDROID_VULKAN_CYRUS_BECK_HPP

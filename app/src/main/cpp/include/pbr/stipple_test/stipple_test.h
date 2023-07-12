@@ -1,5 +1,5 @@
-#ifndef PBR_STIPPLE_TEST_H
-#define PBR_STIPPLE_TEST_H
+#ifndef PBR_STIPPLE_TEST_HPP
+#define PBR_STIPPLE_TEST_HPP
 
 
 #include <game.h>
@@ -59,4 +59,4 @@ class StippleTest final : public android_vulkan::Game
 } // namespace pbr::stipple_test
 
 
-#endif // PBR_STIPPLE_TEST_H
+#endif // PBR_STIPPLE_TEST_HPP

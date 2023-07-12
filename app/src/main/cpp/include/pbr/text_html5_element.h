@@ -1,5 +1,5 @@
-#ifndef PBR_TEXT_HTML5_ELEMENT_H
-#define PBR_TEXT_HTML5_ELEMENT_H
+#ifndef PBR_TEXT_HTML5_ELEMENT_HPP
+#define PBR_TEXT_HTML5_ELEMENT_HPP
 
 
 #include "html5_element.h"
@@ -33,4 +33,4 @@ class TextHTML5Element final : public HTML5Element
 } // namespace pbr
 
 
-#endif // PBR_TEXT_HTML5_ELEMENT_H
+#endif // PBR_TEXT_HTML5_ELEMENT_HPP

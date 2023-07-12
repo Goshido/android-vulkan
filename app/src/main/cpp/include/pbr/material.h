@@ -1,5 +1,5 @@
-#ifndef PBR_MATERIAL_H
-#define PBR_MATERIAL_H
+#ifndef PBR_MATERIAL_HPP
+#define PBR_MATERIAL_HPP
 
 
 #include <GXCommon/GXWarning.h>
@@ -40,4 +40,4 @@ class Material
 } // namespace pbr
 
 
-#endif // PBR_MATERIAL_H
+#endif // PBR_MATERIAL_HPP

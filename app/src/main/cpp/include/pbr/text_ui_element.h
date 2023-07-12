@@ -1,5 +1,5 @@
-#ifndef PBR_TEXT_UI_ELEMENT_H
-#define PBR_TEXT_UI_ELEMENT_H
+#ifndef PBR_TEXT_UI_ELEMENT_HPP
+#define PBR_TEXT_UI_ELEMENT_HPP
 
 
 #include "ui_element.h"
@@ -128,4 +128,4 @@ class TextUIElement final : public UIElement
 } // namespace pbr
 
 
-#endif // PBR_TEXT_UI_ELEMENT_H
+#endif // PBR_TEXT_UI_ELEMENT_HPP

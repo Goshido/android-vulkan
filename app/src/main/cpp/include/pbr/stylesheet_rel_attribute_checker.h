@@ -1,5 +1,5 @@
-#ifndef PBR_STYLESHEET_REL_ATTRIBUTE_CHECKER_H
-#define PBR_STYLESHEET_REL_ATTRIBUTE_CHECKER_H
+#ifndef PBR_STYLESHEET_REL_ATTRIBUTE_CHECKER_HPP
+#define PBR_STYLESHEET_REL_ATTRIBUTE_CHECKER_HPP
 
 
 #include "attribute_checker.h"
@@ -28,4 +28,4 @@ class StylesheetRELAttributeChecker final : public AttributeChecker
 } // namespace pbr
 
 
-#endif // PBR_STYLESHEET_REL_ATTRIBUTE_CHECKER_H
+#endif // PBR_STYLESHEET_REL_ATTRIBUTE_CHECKER_HPP

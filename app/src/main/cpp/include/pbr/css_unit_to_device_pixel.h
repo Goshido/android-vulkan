@@ -1,5 +1,5 @@
-#ifndef PBR_CSS_UNIT_TO_DEVICE_PIXEL_H
-#define PBR_CSS_UNIT_TO_DEVICE_PIXEL_H
+#ifndef PBR_CSS_UNIT_TO_DEVICE_PIXEL_HPP
+#define PBR_CSS_UNIT_TO_DEVICE_PIXEL_HPP
 
 
 namespace pbr {
@@ -14,4 +14,4 @@ struct CSSUnitToDevicePixel final
 } // namespace pbr
 
 
-#endif // PBR_CSS_UNIT_TO_DEVICE_PIXEL_H
+#endif // PBR_CSS_UNIT_TO_DEVICE_PIXEL_HPP

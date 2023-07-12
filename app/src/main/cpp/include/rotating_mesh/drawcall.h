@@ -1,5 +1,5 @@
-#ifndef ROTATING_MESH_DRAWCALL_H
-#define ROTATING_MESH_DRAWCALL_H
+#ifndef ROTATING_MESH_DRAWCALL_HPP
+#define ROTATING_MESH_DRAWCALL_HPP
 
 
 #include "mesh_geometry.h"
@@ -24,4 +24,4 @@ struct Drawcall final
 } // namespace rotating_mesh
 
 
-#endif // ROTATING_MESH_DRAWCALL_H
+#endif // ROTATING_MESH_DRAWCALL_HPP

@@ -1,5 +1,5 @@
-#ifndef KTX_HEADER_H
-#define KTX_HEADER_H
+#ifndef KTX_HEADER_HPP
+#define KTX_HEADER_HPP
 
 
 #include <GXCommon/GXWarning.h>
@@ -39,4 +39,4 @@ struct KTXHeader final
 } // namespace android_vulkan
 
 
-#endif // KTX_HEADER_H
+#endif // KTX_HEADER_HPP

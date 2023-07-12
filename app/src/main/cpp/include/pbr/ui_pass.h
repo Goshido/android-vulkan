@@ -1,5 +1,5 @@
-#ifndef PBR_UI_PASS_H
-#define PBR_UI_PASS_H
+#ifndef PBR_UI_PASS_HPP
+#define PBR_UI_PASS_HPP
 
 
 #include "font_storage.h"
@@ -227,4 +227,4 @@ class UIPass final
 } // namespace pbr
 
 
-#endif //  PBR_UI_PASS_H
+#endif //  PBR_UI_PASS_HPP

@@ -1,5 +1,5 @@
-#ifndef PBR_SCENE_DESC_H
-#define PBR_SCENE_DESC_H
+#ifndef PBR_SCENE_DESC_HPP
+#define PBR_SCENE_DESC_HPP
 
 
 #include "primitive_types.h"
@@ -31,4 +31,4 @@ struct SceneDesc final
 } // namespace pbr
 
 
-#endif // PBR_SCENE_DESC_H
+#endif // PBR_SCENE_DESC_HPP

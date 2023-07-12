@@ -1,5 +1,5 @@
-#ifndef PBR_ATTRIBUTE_PARSER_H
-#define PBR_ATTRIBUTE_PARSER_H
+#ifndef PBR_ATTRIBUTE_PARSER_HPP
+#define PBR_ATTRIBUTE_PARSER_HPP
 
 
 #include "stream.h"
@@ -65,4 +65,4 @@ class AttributeParser final
 } // namespace pbr
 
 
-#endif // PBR_ATTRIBUTE_PARSER_H
+#endif // PBR_ATTRIBUTE_PARSER_HPP

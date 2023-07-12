@@ -1,5 +1,5 @@
-#ifndef PBR_UNIQUE_ATTRIBUTE_CHECKER_H
-#define PBR_UNIQUE_ATTRIBUTE_CHECKER_H
+#ifndef PBR_UNIQUE_ATTRIBUTE_CHECKER_HPP
+#define PBR_UNIQUE_ATTRIBUTE_CHECKER_HPP
 
 
 #include "attribute_checker.h"
@@ -36,4 +36,4 @@ class UniqueAttributeChecker final : public AttributeChecker
 } // namespace pbr
 
 
-#endif // PBR_UNIQUE_ATTRIBUTE_CHECKER_H
+#endif // PBR_UNIQUE_ATTRIBUTE_CHECKER_HPP

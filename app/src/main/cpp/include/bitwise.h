@@ -1,5 +1,5 @@
-#ifndef ANDROID_VULKAN_BITWISE_H
-#define ANDROID_VULKAN_BITWISE_H
+#ifndef ANDROID_VULKAN_BITWISE_HPP
+#define ANDROID_VULKAN_BITWISE_HPP
 
 
 // Main purpose of this macro is to allow bitwise logic operations for bool values.
@@ -7,4 +7,4 @@
 #define AV_BITWISE(x) static_cast<uint8_t> ( ( x ) )
 
 
-#endif // ANDROID_VULKAN_BITWISE_H
+#endif // ANDROID_VULKAN_BITWISE_HPP

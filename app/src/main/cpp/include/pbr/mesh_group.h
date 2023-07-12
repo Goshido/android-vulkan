@@ -1,5 +1,5 @@
-#ifndef PBR_MESH_GROUP_H
-#define PBR_MESH_GROUP_H
+#ifndef PBR_MESH_GROUP_HPP
+#define PBR_MESH_GROUP_HPP
 
 
 #include "types.h"
@@ -36,4 +36,4 @@ struct MeshGroup final
 } // namespace pbr
 
 
-#endif // PBR_MESH_GROUP_H
+#endif // PBR_MESH_GROUP_HPP

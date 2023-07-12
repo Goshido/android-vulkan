@@ -1,5 +1,5 @@
-#ifndef PBR_OPAQUE_SUBPASS_H
-#define PBR_OPAQUE_SUBPASS_H
+#ifndef PBR_OPAQUE_SUBPASS_HPP
+#define PBR_OPAQUE_SUBPASS_HPP
 
 
 #include "default_texture_manager.h"
@@ -61,4 +61,4 @@ class OpaqueSubpass final : public GeometrySubpassBase
 } // namespace pbr
 
 
-#endif // PBR_OPAQUE_SUBPASS_H
+#endif // PBR_OPAQUE_SUBPASS_HPP

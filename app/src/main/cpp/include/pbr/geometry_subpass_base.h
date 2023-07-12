@@ -1,5 +1,5 @@
-#ifndef PBR_GEOMETRY_SUBPASS_BASE_H
-#define PBR_GEOMETRY_SUBPASS_BASE_H
+#ifndef PBR_GEOMETRY_SUBPASS_BASE_HPP
+#define PBR_GEOMETRY_SUBPASS_BASE_HPP
 
 
 #include "geometry_pass_program.h"
@@ -55,4 +55,4 @@ class GeometrySubpassBase
 } // namespace pbr
 
 
-#endif // PBR_GEOMETRY_SUBPASS_BASE_H
+#endif // PBR_GEOMETRY_SUBPASS_BASE_HPP

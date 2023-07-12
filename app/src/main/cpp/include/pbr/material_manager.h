@@ -1,5 +1,5 @@
-#ifndef PBR_MATERIAL_MANAGER_H
-#define PBR_MATERIAL_MANAGER_H
+#ifndef PBR_MATERIAL_MANAGER_HPP
+#define PBR_MATERIAL_MANAGER_HPP
 
 
 #include "material_info.h"
@@ -102,4 +102,4 @@ class MaterialManager final
 } // namespace pbr
 
 
-#endif // PBR_MATERIAL_MANAGER_H
+#endif // PBR_MATERIAL_MANAGER_HPP

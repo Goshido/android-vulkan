@@ -1,5 +1,5 @@
-#ifndef PBR_OPAQUE_MATERIAL_H
-#define PBR_OPAQUE_MATERIAL_H
+#ifndef PBR_OPAQUE_MATERIAL_HPP
+#define PBR_OPAQUE_MATERIAL_HPP
 
 
 #include "geometry_pass_material.h"
@@ -24,4 +24,4 @@ class OpaqueMaterial final : public GeometryPassMaterial
 } // namespace pbr
 
 
-#endif // PBR_OPAQUE_MATERIAL_H
+#endif // PBR_OPAQUE_MATERIAL_HPP

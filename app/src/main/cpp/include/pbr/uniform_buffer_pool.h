@@ -1,5 +1,5 @@
-#ifndef PBR_UNIFORM_BUFFER_POOL_H
-#define PBR_UNIFORM_BUFFER_POOL_H
+#ifndef PBR_UNIFORM_BUFFER_POOL_HPP
+#define PBR_UNIFORM_BUFFER_POOL_HPP
 
 
 #include <renderer.h>
@@ -70,4 +70,4 @@ class UniformBufferPool final
 } // namespace pbr
 
 
-#endif // PBR_UNIFORM_BUFFER_POOL_H
+#endif // PBR_UNIFORM_BUFFER_POOL_HPP

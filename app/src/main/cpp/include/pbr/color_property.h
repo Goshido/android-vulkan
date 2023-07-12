@@ -1,5 +1,5 @@
-#ifndef PBR_COLOR_PROPERTY_H
-#define PBR_COLOR_PROPERTY_H
+#ifndef PBR_COLOR_PROPERTY_HPP
+#define PBR_COLOR_PROPERTY_HPP
 
 
 #include "color_value.h"
@@ -32,4 +32,4 @@ class ColorProperty final : public Property
 } // namespace pbr
 
 
-#endif // PBR_COLOR_PROPERTY_H
+#endif // PBR_COLOR_PROPERTY_HPP

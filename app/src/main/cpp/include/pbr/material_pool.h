@@ -1,5 +1,5 @@
-#ifndef PBR_MATERIAL_POOL_H
-#define PBR_MATERIAL_POOL_H
+#ifndef PBR_MATERIAL_POOL_HPP
+#define PBR_MATERIAL_POOL_HPP
 
 
 #include "default_texture_manager.h"
@@ -54,4 +54,4 @@ class MaterialPool final
 } // namespace pbr
 
 
-#endif // PBR_MATERIAL_POOL_H
+#endif // PBR_MATERIAL_POOL_HPP

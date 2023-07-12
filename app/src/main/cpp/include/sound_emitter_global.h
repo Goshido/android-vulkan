@@ -1,5 +1,5 @@
-#ifndef ANDROID_VULKAN_SOUND_EMITTER_GLOBAL_H
-#define ANDROID_VULKAN_SOUND_EMITTER_GLOBAL_H
+#ifndef ANDROID_VULKAN_SOUND_EMITTER_GLOBAL_HPP
+#define ANDROID_VULKAN_SOUND_EMITTER_GLOBAL_HPP
 
 
 #include "sound_emitter.h"
@@ -27,4 +27,4 @@ class SoundEmitterGlobal final : public SoundEmitter
 } // namespace android_vulkan
 
 
-#endif // ANDROID_VULKAN_SOUND_EMITTER_GLOBAL_H
+#endif // ANDROID_VULKAN_SOUND_EMITTER_GLOBAL_HPP

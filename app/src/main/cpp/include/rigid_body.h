@@ -1,5 +1,5 @@
-#ifndef ANDROID_VULKAN_RIGID_BODY_H
-#define ANDROID_VULKAN_RIGID_BODY_H
+#ifndef ANDROID_VULKAN_RIGID_BODY_HPP
+#define ANDROID_VULKAN_RIGID_BODY_HPP
 
 
 #include "shape.h"
@@ -158,4 +158,4 @@ using RigidBodyRef = std::shared_ptr<RigidBody>;
 } // namespace android_vulkan
 
 
-#endif // ANDROID_VULKAN_RIGID_BODY_H
+#endif // ANDROID_VULKAN_RIGID_BODY_HPP

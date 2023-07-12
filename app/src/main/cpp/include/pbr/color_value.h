@@ -1,5 +1,5 @@
-#ifndef PBR_COLOR_VALUE_H
-#define PBR_COLOR_VALUE_H
+#ifndef PBR_COLOR_VALUE_HPP
+#define PBR_COLOR_VALUE_HPP
 
 
 #include <GXCommon/GXMath.h>
@@ -33,4 +33,4 @@ class ColorValue final
 } // namespace pbr
 
 
-#endif // PBR_COLOR_VALUE_H
+#endif // PBR_COLOR_VALUE_HPP

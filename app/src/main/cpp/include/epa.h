@@ -1,5 +1,5 @@
-#ifndef ANDROID_VULKAN_EPA_H
-#define ANDROID_VULKAN_EPA_H
+#ifndef ANDROID_VULKAN_EPA_HPP
+#define ANDROID_VULKAN_EPA_HPP
 
 
 #include "simplex.h"
@@ -80,4 +80,4 @@ class EPA final
 } // namespace android_vulkan
 
 
-#endif // ANDROID_VULKAN_EPA_H
+#endif // ANDROID_VULKAN_EPA_HPP

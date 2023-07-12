@@ -1,5 +1,5 @@
-#ifndef PBR_SCRIPT_COMPONENT_DESC_H
-#define PBR_SCRIPT_COMPONENT_DESC_H
+#ifndef PBR_SCRIPT_COMPONENT_DESC_HPP
+#define PBR_SCRIPT_COMPONENT_DESC_HPP
 
 
 #include "component_desc.h"
@@ -21,4 +21,4 @@ struct ScriptComponentDesc final : public ComponentDesc
 } // namespace pbr
 
 
-#endif // PBR_SCRIPT_COMPONENT_DESC_H
+#endif // PBR_SCRIPT_COMPONENT_DESC_HPP

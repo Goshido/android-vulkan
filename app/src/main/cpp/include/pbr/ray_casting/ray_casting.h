@@ -1,5 +1,5 @@
-#ifndef PBR_RAY_CASTING_H
-#define PBR_RAY_CASTING_H
+#ifndef PBR_RAY_CASTING_HPP
+#define PBR_RAY_CASTING_HPP
 
 
 #include <pbr/camera.h>
@@ -80,5 +80,5 @@ class RayCasting final : public android_vulkan::Game
 } // namespace pbr::ray_casting
 
 
-#endif // PBR_RAY_CASTING_H
+#endif // PBR_RAY_CASTING_HPP
 

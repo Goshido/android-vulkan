@@ -1,5 +1,5 @@
-#ifndef PBR_IMG_HTML5_ELEMENT_H
-#define PBR_IMG_HTML5_ELEMENT_H
+#ifndef PBR_IMG_HTML5_ELEMENT_HPP
+#define PBR_IMG_HTML5_ELEMENT_HPP
 
 
 #include "html5_element.h"
@@ -55,4 +55,4 @@ class IMGHTML5Element final : public HTML5Element
 } // namespace pbr
 
 
-#endif // PBR_IMG_HTML5_ELEMENT_H
+#endif // PBR_IMG_HTML5_ELEMENT_HPP

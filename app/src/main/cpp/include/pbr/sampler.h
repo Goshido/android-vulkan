@@ -1,5 +1,5 @@
-#ifndef PBR_SAMPLER_H
-#define PBR_SAMPLER_H
+#ifndef PBR_SAMPLER_HPP
+#define PBR_SAMPLER_HPP
 
 
 #include <renderer.h>
@@ -32,4 +32,4 @@ class Sampler final
 } // namespace pbr
 
 
-#endif // PBR_SAMPLER_H
+#endif // PBR_SAMPLER_HPP

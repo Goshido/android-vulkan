@@ -1,5 +1,5 @@
-#ifndef PBR_UTF8_PARSER_H
-#define PBR_UTF8_PARSER_H
+#ifndef PBR_UTF8_PARSER_HPP
+#define PBR_UTF8_PARSER_HPP
 
 
 #include "stream.h"
@@ -42,4 +42,4 @@ class UTF8Parser final
 } // namespace pbr
 
 
-#endif // PBR_UTF8_PARSER_H
+#endif // PBR_UTF8_PARSER_HPP

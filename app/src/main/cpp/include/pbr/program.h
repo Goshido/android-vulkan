@@ -1,5 +1,5 @@
-#ifndef PBR_PROGRAM_H
-#define PBR_PROGRAM_H
+#ifndef PBR_PROGRAM_HPP
+#define PBR_PROGRAM_HPP
 
 
 #include <GXCommon/GXWarning.h>
@@ -108,4 +108,4 @@ class Program
 } // namespace pbr
 
 
-#endif // PBR_PROGRAM_H
+#endif // PBR_PROGRAM_HPP

@@ -1,7 +1,7 @@
 //version 1.10
 
-#ifndef GX_TYPES_WINDOWS
-#define GX_TYPES_WINDOWS
+#ifndef GX_TYPES_WINDOWS_HPP
+#define GX_TYPES_WINDOWS_HPP
 
 
 #define WIN32_LEAN_AND_MEAN            // to correct include WinSock2.h
@@ -51,4 +51,4 @@ typedef void                                    GXVoid;
 typedef size_t                                  GXUPointer;
 
 
-#endif // GX_TYPES_WINDOWS
+#endif // GX_TYPES_WINDOWS_HPP

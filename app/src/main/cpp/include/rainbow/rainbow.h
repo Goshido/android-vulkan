@@ -1,5 +1,5 @@
-#ifndef RAINBOW_H
-#define RAINBOW_H
+#ifndef RAINBOW_HPP
+#define RAINBOW_HPP
 
 
 #include <game.h>
@@ -58,4 +58,4 @@ class Rainbow final : public android_vulkan::Game
 } // namespace rainbow
 
 
-#endif // RAINBOW_H
+#endif // RAINBOW_HPP

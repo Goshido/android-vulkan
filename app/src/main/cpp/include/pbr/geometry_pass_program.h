@@ -1,5 +1,5 @@
-#ifndef PBR_GEOMETRY_PASS_PROGRAM_H
-#define PBR_GEOMETRY_PASS_PROGRAM_H
+#ifndef PBR_GEOMETRY_PASS_PROGRAM_HPP
+#define PBR_GEOMETRY_PASS_PROGRAM_HPP
 
 
 #include "geometry_pass_instance_descriptor_set_layout.h"
@@ -117,4 +117,4 @@ class GeometryPassProgram : public Program
 } // namespace pbr
 
 
-#endif // PBR_GEOMETRY_PASS_PROGRAM_H
+#endif // PBR_GEOMETRY_PASS_PROGRAM_HPP

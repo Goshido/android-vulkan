@@ -1,5 +1,5 @@
-#ifndef PBR_MARIO_WORLD1x1_H
-#define PBR_MARIO_WORLD1x1_H
+#ifndef PBR_MARIO_WORLD1x1_HPP
+#define PBR_MARIO_WORLD1x1_HPP
 
 
 #include <pbr/scene.h>
@@ -45,4 +45,4 @@ class World1x1 final : public android_vulkan::Game
 } // namespace pbr::mario
 
 
-#endif // PBR_MARIO_WORLD1x1_H
+#endif // PBR_MARIO_WORLD1x1_HPP

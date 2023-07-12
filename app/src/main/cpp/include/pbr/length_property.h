@@ -1,5 +1,5 @@
-#ifndef PBR_LENGTH_PROPERTY_H
-#define PBR_LENGTH_PROPERTY_H
+#ifndef PBR_LENGTH_PROPERTY_HPP
+#define PBR_LENGTH_PROPERTY_HPP
 
 
 #include "length_value.h"
@@ -32,4 +32,4 @@ class LengthProperty final : public Property
 } // namespace pbr
 
 
-#endif // PBR_LENGTH_PROPERTY_H
+#endif // PBR_LENGTH_PROPERTY_HPP

@@ -1,5 +1,5 @@
-#ifndef PBR_DISPLAY_PROPERTY_H
-#define PBR_DISPLAY_PROPERTY_H
+#ifndef PBR_DISPLAY_PROPERTY_HPP
+#define PBR_DISPLAY_PROPERTY_HPP
 
 
 #include "property.h"
@@ -39,4 +39,4 @@ class DisplayProperty final : public Property
 } // namespace pbr
 
 
-#endif // PBR_DISPLAY_PROPERTY_H
+#endif // PBR_DISPLAY_PROPERTY_HPP

@@ -1,5 +1,5 @@
-#ifndef PBR_COORDINATE_SYSTEM_H
-#define PBR_COORDINATE_SYSTEM_H
+#ifndef PBR_COORDINATE_SYSTEM_HPP
+#define PBR_COORDINATE_SYSTEM_HPP
 
 
 namespace pbr {
@@ -10,4 +10,4 @@ constexpr inline float METERS_IN_UNIT = 1.0F / UNITS_IN_METER;
 } // namespace pbr
 
 
-#endif // PBR_COORDINATE_SYSTEM_H
+#endif // PBR_COORDINATE_SYSTEM_HPP

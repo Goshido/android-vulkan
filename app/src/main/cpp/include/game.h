@@ -1,5 +1,5 @@
-#ifndef ANDROID_VULKAN_GAME_H
-#define ANDROID_VULKAN_GAME_H
+#ifndef ANDROID_VULKAN_GAME_HPP
+#define ANDROID_VULKAN_GAME_HPP
 
 
 #include "renderer.h"
@@ -34,4 +34,4 @@ class Game
 } // namespace android_vulkan
 
 
-#endif // ANDROID_VULKAN_GAME_H
+#endif // ANDROID_VULKAN_GAME_HPP

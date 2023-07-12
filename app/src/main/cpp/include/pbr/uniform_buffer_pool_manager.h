@@ -1,5 +1,5 @@
-#ifndef PBR_UNIFORM_BUFFER_POOL_MANAGER_H
-#define PBR_UNIFORM_BUFFER_POOL_MANAGER_H
+#ifndef PBR_UNIFORM_BUFFER_POOL_MANAGER_HPP
+#define PBR_UNIFORM_BUFFER_POOL_MANAGER_HPP
 
 
 #include "descriptor_set_layout.h"
@@ -56,4 +56,4 @@ class UniformBufferPoolManager final
 } // namespace pbr
 
 
-#endif // PBR_UNIFORM_BUFFER_POOL_MANAGER_H
+#endif // PBR_UNIFORM_BUFFER_POOL_MANAGER_HPP

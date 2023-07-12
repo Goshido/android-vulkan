@@ -1,5 +1,5 @@
-#ifndef PBR_FONT_FACE_CSS_RULE_H
-#define PBR_FONT_FACE_CSS_RULE_H
+#ifndef PBR_FONT_FACE_CSS_RULE_HPP
+#define PBR_FONT_FACE_CSS_RULE_HPP
 
 
 #include "parse_result.h"
@@ -37,4 +37,4 @@ class FontFaceCSSRule final
 } // namespace pbr
 
 
-#endif // PBR_FONT_FACE_CSS_RULE_H
+#endif // PBR_FONT_FACE_CSS_RULE_HPP

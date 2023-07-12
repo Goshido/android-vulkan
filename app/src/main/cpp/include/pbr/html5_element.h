@@ -1,5 +1,5 @@
-#ifndef PBR_HTML5_ELEMENT_H
-#define PBR_HTML5_ELEMENT_H
+#ifndef PBR_HTML5_ELEMENT_HPP
+#define PBR_HTML5_ELEMENT_HPP
 
 
 #include "css_computed_values.h"
@@ -51,4 +51,4 @@ using HTML5Children = std::deque<std::shared_ptr<HTML5Element>>;
 } // namespace pbr
 
 
-#endif // PBR_HTML5_ELEMENT_H
+#endif // PBR_HTML5_ELEMENT_HPP

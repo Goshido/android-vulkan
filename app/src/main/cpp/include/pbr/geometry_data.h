@@ -1,5 +1,5 @@
-#ifndef PBR_GEOMETRY_DATA_H
-#define PBR_GEOMETRY_DATA_H
+#ifndef PBR_GEOMETRY_DATA_HPP
+#define PBR_GEOMETRY_DATA_HPP
 
 
 #include <vulkan_utils.h>
@@ -26,4 +26,4 @@ AV_DX_ALIGNMENT_END
 } // namespace pbr
 
 
-#endif // PBR_GEOMETRY_DATA_H
+#endif // PBR_GEOMETRY_DATA_HPP

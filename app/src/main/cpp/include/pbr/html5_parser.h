@@ -1,5 +1,5 @@
-#ifndef PBR_HTML5_PARSER_H
-#define PBR_HTML5_PARSER_H
+#ifndef PBR_HTML5_PARSER_HPP
+#define PBR_HTML5_PARSER_HPP
 
 
 #include "html5_element.h"
@@ -56,4 +56,4 @@ class HTML5Parser final
 } // namespace pbr
 
 
-#endif // PBR_HTML5_PARSER_H
+#endif // PBR_HTML5_PARSER_HPP

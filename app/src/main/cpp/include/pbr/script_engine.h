@@ -1,5 +1,5 @@
-#ifndef PBR_SCRIPT_ENGINE_H
-#define PBR_SCRIPT_ENGINE_H
+#ifndef PBR_SCRIPT_ENGINE_HPP
+#define PBR_SCRIPT_ENGINE_HPP
 
 
 #include <GXCommon/GXWarning.h>
@@ -93,4 +93,4 @@ class ScriptEngine final
 } // namespace pbr
 
 
-#endif // PBR_SCRIPT_ENGINE_H
+#endif // PBR_SCRIPT_ENGINE_HPP

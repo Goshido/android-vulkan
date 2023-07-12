@@ -1,5 +1,5 @@
-#ifndef PBR_TRANSFORM_COMPONENT_H
-#define PBR_TRANSFORM_COMPONENT_H
+#ifndef PBR_TRANSFORM_COMPONENT_HPP
+#define PBR_TRANSFORM_COMPONENT_HPP
 
 
 #include "component.h"
@@ -42,4 +42,4 @@ class TransformComponent final : public Component
 } // namespace pbr
 
 
-#endif // PBR_TRANSFORM_COMPONENT_H
+#endif // PBR_TRANSFORM_COMPONENT_HPP

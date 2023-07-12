@@ -1,5 +1,5 @@
-#ifndef PBR_SCRIPTABLE_MATERIAL_H
-#define PBR_SCRIPTABLE_MATERIAL_H
+#ifndef PBR_SCRIPTABLE_MATERIAL_HPP
+#define PBR_SCRIPTABLE_MATERIAL_HPP
 
 
 #include <pbr/types.h>
@@ -59,4 +59,4 @@ class ScriptableMaterial final
 } // namespace pbr
 
 
-#endif // PBR_SCRIPTABLE_MATERIAL_H
+#endif // PBR_SCRIPTABLE_MATERIAL_HPP

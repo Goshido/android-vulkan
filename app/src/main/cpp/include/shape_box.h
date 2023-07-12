@@ -1,5 +1,5 @@
-#ifndef ANDROID_VULKAN_SHAPE_BOX_H
-#define ANDROID_VULKAN_SHAPE_BOX_H
+#ifndef ANDROID_VULKAN_SHAPE_BOX_HPP
+#define ANDROID_VULKAN_SHAPE_BOX_HPP
 
 
 #include "shape.h"
@@ -44,4 +44,4 @@ class [[maybe_unused]] ShapeBox final : public Shape
 
 } // namespace android_vulkan
 
-#endif // ANDROID_VULKAN_SHAPE_BOX_H
+#endif // ANDROID_VULKAN_SHAPE_BOX_HPP

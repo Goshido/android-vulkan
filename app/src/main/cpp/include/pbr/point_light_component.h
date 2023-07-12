@@ -1,5 +1,5 @@
-#ifndef PBR_POINT_LIGHT_COMPONENT_H
-#define PBR_POINT_LIGHT_COMPONENT_H
+#ifndef PBR_POINT_LIGHT_COMPONENT_HPP
+#define PBR_POINT_LIGHT_COMPONENT_HPP
 
 
 #include "point_light.h"
@@ -44,4 +44,4 @@ class PointLightComponent final : public RenderableComponent, public Transformab
 } // namespace pbr
 
 
-#endif // PBR_POINT_LIGHT_COMPONENT_H
+#endif // PBR_POINT_LIGHT_COMPONENT_HPP

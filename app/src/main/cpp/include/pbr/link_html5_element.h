@@ -1,5 +1,5 @@
-#ifndef PBR_LINK_HTML5_ELEMENT_H
-#define PBR_LINK_HTML5_ELEMENT_H
+#ifndef PBR_LINK_HTML5_ELEMENT_HPP
+#define PBR_LINK_HTML5_ELEMENT_HPP
 
 
 #include "stream.h"
@@ -43,4 +43,4 @@ class LinkHTML5Element final
 } // namespace pbr
 
 
-#endif // PBR_LINK_HTML5_ELEMENT_H
+#endif // PBR_LINK_HTML5_ELEMENT_HPP

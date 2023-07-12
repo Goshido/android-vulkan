@@ -1,5 +1,5 @@
-#ifndef PBR_COMPONENT_CLASSES_H
-#define PBR_COMPONENT_CLASSES_H
+#ifndef PBR_COMPONENT_CLASSES_HPP
+#define PBR_COMPONENT_CLASSES_HPP
 
 
 #include <GXCommon/GXWarning.h>
@@ -32,4 +32,4 @@ enum class ClassID : uint64_t
 } // namespace pbr
 
 
-#endif // PBR_COMPONENT_CLASSES_H
+#endif // PBR_COMPONENT_CLASSES_HPP

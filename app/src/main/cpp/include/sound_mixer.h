@@ -1,5 +1,5 @@
-#ifndef ANDROID_VULKAN_SOUND_MIXER_H
-#define ANDROID_VULKAN_SOUND_MIXER_H
+#ifndef ANDROID_VULKAN_SOUND_MIXER_HPP
+#define ANDROID_VULKAN_SOUND_MIXER_HPP
 
 
 #include "sound_emitter.h"
@@ -188,4 +188,4 @@ class SoundMixer final
 } // namespace android_vulkan
 
 
-#endif // ANDROID_VULKAN_SOUND_MIXER_H
+#endif // ANDROID_VULKAN_SOUND_MIXER_HPP

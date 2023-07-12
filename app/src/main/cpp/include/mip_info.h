@@ -1,5 +1,5 @@
-#ifndef MIP_INFO_H
-#define MIP_INFO_H
+#ifndef MIP_INFO_HPP
+#define MIP_INFO_HPP
 
 
 #include <GXCommon/GXWarning.h>
@@ -23,4 +23,4 @@ struct MipInfo final
 } // namespace android_vulkan
 
 
-#endif // MIP_INFO_H
+#endif // MIP_INFO_HPP

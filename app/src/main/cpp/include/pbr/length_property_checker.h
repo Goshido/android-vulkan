@@ -1,5 +1,5 @@
-#ifndef PBR_LENGTH_PROPERTY_CHECKER_H
-#define PBR_LENGTH_PROPERTY_CHECKER_H
+#ifndef PBR_LENGTH_PROPERTY_CHECKER_HPP
+#define PBR_LENGTH_PROPERTY_CHECKER_HPP
 
 
 #include "length_value.h"
@@ -35,4 +35,4 @@ class LengthPropertyChecker final : public PropertyChecker
 } // namespace pbr
 
 
-#endif // PBR_LENGTH_PROPERTY_CHECKER_H
+#endif // PBR_LENGTH_PROPERTY_CHECKER_HPP

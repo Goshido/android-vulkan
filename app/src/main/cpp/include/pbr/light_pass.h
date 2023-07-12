@@ -1,5 +1,5 @@
-#ifndef PBR_LIGHT_PASS_H
-#define PBR_LIGHT_PASS_H
+#ifndef PBR_LIGHT_PASS_HPP
+#define PBR_LIGHT_PASS_HPP
 
 
 #include "gbuffer.h"
@@ -75,4 +75,4 @@ class LightPass final
 } // namespace pbr
 
 
-#endif // PBR_LIGHT_PASS_H
+#endif // PBR_LIGHT_PASS_HPP

@@ -1,5 +1,5 @@
-#ifndef PBR_UI_PASS_COMMON_DESCRIPTOR_SET_LAYOUT_H
-#define PBR_UI_PASS_COMMON_DESCRIPTOR_SET_LAYOUT_H
+#ifndef PBR_UI_PASS_COMMON_DESCRIPTOR_SET_LAYOUT_HPP
+#define PBR_UI_PASS_COMMON_DESCRIPTOR_SET_LAYOUT_HPP
 
 
 #include "descriptor_set_layout.h"
@@ -29,4 +29,4 @@ class UIPassCommonDescriptorSetLayout final : public DescriptorSetLayout
 } // namespace pbr
 
 
-#endif // PBR_UI_PASS_COMMON_DESCRIPTOR_SET_LAYOUT_H
+#endif // PBR_UI_PASS_COMMON_DESCRIPTOR_SET_LAYOUT_HPP

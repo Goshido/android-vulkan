@@ -1,5 +1,5 @@
-#ifndef PBR_SCENE_DATA_H
-#define PBR_SCENE_DATA_H
+#ifndef PBR_SCENE_DATA_HPP
+#define PBR_SCENE_DATA_HPP
 
 
 #include "geometry_call.h"
@@ -13,4 +13,4 @@ using SceneData = std::map<GeometryPassMaterial, GeometryCall>;
 } // namespace pbr
 
 
-#endif // PBR_SCENE_DATA_H
+#endif // PBR_SCENE_DATA_HPP

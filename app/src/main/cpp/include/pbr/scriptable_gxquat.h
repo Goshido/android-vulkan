@@ -1,5 +1,5 @@
-#ifndef PBR_SCRIPTABLE_GXQUAT_H
-#define PBR_SCRIPTABLE_GXQUAT_H
+#ifndef PBR_SCRIPTABLE_GXQUAT_HPP
+#define PBR_SCRIPTABLE_GXQUAT_HPP
 
 
 #include <GXCommon/GXMath.h>
@@ -65,4 +65,4 @@ class ScriptableGXQuat final
 } // namespace pbr
 
 
-#endif // PBR_SCRIPTABLE_GXQUAT_H
+#endif // PBR_SCRIPTABLE_GXQUAT_HPP

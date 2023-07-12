@@ -1,5 +1,5 @@
-#ifndef PBR_REFLECTION_PROBE_H
-#define PBR_REFLECTION_PROBE_H
+#ifndef PBR_REFLECTION_PROBE_HPP
+#define PBR_REFLECTION_PROBE_HPP
 
 
 #include "light.h"
@@ -33,4 +33,4 @@ class ReflectionProbe : public Light
 } // namespace pbr
 
 
-#endif // PBR_REFLECTION_PROBE_H
+#endif // PBR_REFLECTION_PROBE_HPP

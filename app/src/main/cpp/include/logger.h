@@ -1,5 +1,5 @@
-#ifndef ANDROID_VULKAN_LOGGER_H
-#define ANDROID_VULKAN_LOGGER_H
+#ifndef ANDROID_VULKAN_LOGGER_HPP
+#define ANDROID_VULKAN_LOGGER_HPP
 
 
 namespace android_vulkan {
@@ -12,4 +12,4 @@ void LogWarning ( char const* format, ... );
 } // namespace android_vulkan
 
 
-#endif // ANDROID_VULKAN_LOGGER_H
+#endif // ANDROID_VULKAN_LOGGER_HPP

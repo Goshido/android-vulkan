@@ -1,7 +1,7 @@
-//version 1.7
+//version 1.8
 
-#ifndef GX_TYPES_POSIX
-#define GX_TYPES_POSIX
+#ifndef GX_TYPES_POSIX_HPP
+#define GX_TYPES_POSIX_HPP
 
 
 #include <stdint.h>
@@ -41,4 +41,4 @@ typedef void                                    GXVoid;
 typedef size_t                                  GXUPointer;
 
 
-#endif // GX_TYPES_POSIX
+#endif // GX_TYPES_POSIX_HPP

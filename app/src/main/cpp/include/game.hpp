@@ -27,6 +27,9 @@ class Game
         [[nodiscard]] virtual bool OnSwapchainCreated ( Renderer &renderer ) noexcept = 0;
         virtual void OnSwapchainDestroyed ( Renderer &renderer ) noexcept = 0;
 
+        [[nodiscard]] virtual bool OnInitSoundSystem () noexcept;
+        virtual void OnDestroySoundSystem () noexcept;
+
     protected:
         Game () = default;
 };

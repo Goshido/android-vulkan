@@ -94,7 +94,6 @@ bool SoundMixer::StreamInfo::LockAndReturnFillSilence () noexcept
     {}
 
     AV_ASSERT ( !expected )
-
     return _fillSilence;
 }
 
@@ -108,7 +107,8 @@ void SoundMixer::StreamInfo::Modify ( bool fillSilence ) noexcept
     auto &fillLock = *_fillLock;
     bool expected = false;
 
-    while ( !fillLock.compare_exchange_weak ( expected, true ) ) {}
+    while ( !fillLock.compare_exchange_weak ( expected, true ) )
+    {}
 
     AV_ASSERT ( !expected )
     _fillSilence = fillSilence;
@@ -116,6 +116,39 @@ void SoundMixer::StreamInfo::Modify ( bool fillSilence ) noexcept
 }
 
 //----------------------------------------------------------------------------------------------------------------------
+
+void SoundMixer::CheckMemoryLeaks () noexcept
+{
+
+#ifdef ANDROID_VULKAN_DEBUG
+
+    if ( !_streamMap.empty () )
+    {
+        constexpr char const format[] = R"__(SoundMixer::Destroy - Memory leak detected: %zu
+>>>)__";
+
+        LogError ( format, _streamMap.size () );
+
+        for ( auto const &record : _streamMap )
+        {
+            StreamInfo const &si = *record.second;
+            LogError ( "    %s", si._emitter->GetFile ().c_str () );
+        }
+
+        LogError ( "<<<" );
+
+#ifdef ANDROID_VULKAN_STRICT_MODE
+
+        AV_ASSERT ( false )
+
+#endif // ANDROID_VULKAN_STRICT_MODE
+
+    }
+
+#endif // ANDROID_VULKAN_DEBUG
+
+    _streamMap.clear ();
+}
 
 bool SoundMixer::Init () noexcept
 {
@@ -230,36 +263,6 @@ void SoundMixer::Destroy () noexcept
         );
     }
 
-#ifdef ANDROID_VULKAN_DEBUG
-
-    if ( !_streamMap.empty () )
-    {
-        constexpr char const format[] =
-R"__(SoundMixer::Destroy - Memory leak detected: %zu
->>>)__";
-
-        LogError ( format, _streamMap.size () );
-
-        for ( auto const &record : _streamMap )
-        {
-            StreamInfo const &si = *record.second;
-            LogError ( "    %s", si._emitter->GetFile ().c_str () );
-        }
-
-        LogError ( "<<<" );
-
-#ifdef ANDROID_VULKAN_STRICT_MODE
-
-        AV_ASSERT ( false )
-
-#endif // ANDROID_VULKAN_STRICT_MODE
-
-    }
-
-#endif // ANDROID_VULKAN_DEBUG
-
-    _streamMap.clear ();
-    _streamInfo.clear ();
     _free.clear ();
     _used.clear ();
 
@@ -333,9 +336,17 @@ void SoundMixer::SetListenerOrientation ( GXQuat const &orientation ) noexcept
     _listenerTransformChanged = true;
 }
 
+bool SoundMixer::IsOffline () const noexcept
+{
+    return !_workerFlag;
+}
+
 void SoundMixer::Pause () noexcept
 {
     std::unique_lock<std::mutex> const lock ( _mutex );
+
+    if ( IsOffline () )
+        return;
 
     for ( auto &record : _streamMap )
     {
@@ -362,6 +373,9 @@ void SoundMixer::Resume () noexcept
 {
     std::unique_lock<std::mutex> const lock ( _mutex );
 
+    if ( IsOffline () )
+        return;
+
     for ( auto* stream : _streamToResume )
     {
         _actionQueue.emplace_back (
@@ -379,6 +393,10 @@ void SoundMixer::Resume () noexcept
 bool SoundMixer::RequestPause ( SoundEmitter &emitter ) noexcept
 {
     std::unique_lock<std::mutex> const lock ( _mutex );
+
+    if ( IsOffline () )
+        return true;
+
     auto findResult = _streamMap.find ( &emitter );
 
     if ( findResult == _streamMap.end () )
@@ -409,6 +427,9 @@ bool SoundMixer::RequestPlay ( SoundEmitter &emitter ) noexcept
 {
     std::unique_lock<std::mutex> const lock ( _mutex );
 
+    if ( IsOffline () )
+        return true;
+
     if ( _free.empty () )
     {
         LogWarning ( "SoundMixer::RequestPlay - No more free streams. Abort..." );
@@ -438,6 +459,7 @@ bool SoundMixer::RequestPlay ( SoundEmitter &emitter ) noexcept
 bool SoundMixer::RequestStop ( SoundEmitter &emitter ) noexcept
 {
     std::unique_lock<std::mutex> const lock ( _mutex );
+
     auto findResult = _streamMap.find ( &emitter );
 
     if ( findResult == _streamMap.end () )
@@ -445,6 +467,12 @@ bool SoundMixer::RequestStop ( SoundEmitter &emitter ) noexcept
         LogWarning ( "SoundMixer::RequestStop - Can't find emitter. Abort..." );
         AV_ASSERT ( false )
         return false;
+    }
+
+    if ( IsOffline () )
+    {
+        _streamMap.erase ( findResult );
+        return true;
     }
 
     StreamInfo &si = *findResult->second;
@@ -755,10 +783,16 @@ aaudio_data_callback_result_t SoundMixer::PCMCallback ( AAudioStream* /*stream*/
 )
 {
     auto &si = *static_cast<StreamInfo*> ( userData );
+    constexpr auto sizeFactor = static_cast<size_t> ( GetChannelCount () ) * sizeof ( PCMStreamer::PCMType );
+
+    if ( si._mixer->IsOffline () )
+    {
+        std::memset ( audioData, 0, static_cast<size_t> ( numFrames * sizeFactor ) );
+        return AAUDIO_CALLBACK_RESULT_STOP;
+    }
 
     if ( si.LockAndReturnFillSilence () )
     {
-        constexpr auto sizeFactor = static_cast<size_t> ( GetChannelCount () ) * sizeof ( PCMStreamer::PCMType );
         std::memset ( audioData, 0,  static_cast<size_t> ( numFrames * sizeFactor ) );
         si.Release ();
         return AAUDIO_CALLBACK_RESULT_CONTINUE;

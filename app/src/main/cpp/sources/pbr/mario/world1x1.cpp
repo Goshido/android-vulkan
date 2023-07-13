@@ -129,6 +129,16 @@ void World1x1::OnSwapchainDestroyed ( android_vulkan::Renderer &renderer ) noexc
     _renderSession.OnSwapchainDestroyed ( renderer.GetDevice () );
 }
 
+bool World1x1::OnInitSoundSystem () noexcept
+{
+    return _scene.OnInitSoundSystem ();
+}
+
+void World1x1::OnDestroySoundSystem () noexcept
+{
+    _scene.OnDestroySoundSystem ();
+}
+
 bool World1x1::CreatePhysics () noexcept
 {
     _physics.SetTimeSpeed ( 1.0F );

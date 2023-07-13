@@ -95,9 +95,6 @@ android_vulkan::Physics &Scene::GetPhysics () noexcept
 
 bool Scene::OnInitDevice ( android_vulkan::Renderer &renderer, android_vulkan::Physics &physics ) noexcept
 {
-    if ( !_soundMixer.Init () )
-        return false;
-
     UILayer::InitCSSUnitConverter ( renderer.GetDPI (), COMFORTABLE_VIEW_DISTANCE_METERS );
 
     _defaultCamera.SetProjection ( GXDegToRad ( DEFAULT_FOV ), DEFAULT_ASPECT_RATIO, DEFAULT_Z_NEAR, DEFAULT_Z_FAR );
@@ -270,6 +267,16 @@ void Scene::OnDestroyDevice () noexcept
     _sceneHandle = std::numeric_limits<int>::max ();
     _vm = nullptr;
 
+    _soundMixer.CheckMemoryLeaks ();
+}
+
+bool Scene::OnInitSoundSystem () noexcept
+{
+    return _soundMixer.Init ();
+}
+
+void Scene::OnDestroySoundSystem () noexcept
+{
     _soundMixer.Destroy ();
 }
 

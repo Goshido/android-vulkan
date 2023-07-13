@@ -114,6 +114,8 @@ class SoundMixer final
 
         ~SoundMixer () = default;
 
+        void CheckMemoryLeaks () noexcept;
+
         [[nodiscard]] bool Init () noexcept;
         void Destroy () noexcept;
 
@@ -132,6 +134,8 @@ class SoundMixer final
         void SetListenerOrientation ( GXQuat const &orientation ) noexcept;
 
         [[nodiscard]] SoundStorage &GetSoundStorage () noexcept;
+
+        [[nodiscard]] bool IsOffline () const noexcept;
 
         void Pause () noexcept;
         void Resume () noexcept;

@@ -86,6 +86,9 @@ Core::Core ( JNIEnv* env, jobject activity, jobject assetManager, std::string &&
 
     _thread = std::thread (
         [ this, dpi ] () noexcept {
+            if ( !_game->OnInitSoundSystem () )
+                return;
+
             if ( !_renderer.OnCreateDevice ( dpi ) || !_game->OnInitDevice ( _renderer ) )
                 return;
 
@@ -247,7 +250,7 @@ bool Core::OnQuit () noexcept
 
 bool Core::OnQuitRequest () noexcept
 {
-    JNIEnv* env = nullptr;
+    _game->OnDestroySoundSystem ();
 
     JavaVMAttachArgs args
     {
@@ -256,6 +259,7 @@ bool Core::OnQuitRequest () noexcept
         .group = nullptr
     };
 
+    JNIEnv* env = nullptr;
     _vm->AttachCurrentThread ( &env, &args );
     env->CallVoidMethod ( _activity, _finishMethod );
     _vm->DetachCurrentThread ();

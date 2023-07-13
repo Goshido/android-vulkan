@@ -73,6 +73,9 @@ class Scene final
 
         void OnDestroyDevice () noexcept;
 
+        [[nodiscard]] bool OnInitSoundSystem () noexcept;
+        void OnDestroySoundSystem () noexcept;
+
         void OnPause () noexcept;
         void OnResume () noexcept;
 

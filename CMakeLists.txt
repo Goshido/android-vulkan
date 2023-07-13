@@ -18,6 +18,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/core.cpp
     app/src/main/cpp/sources/cyrus_beck.cpp
     app/src/main/cpp/sources/epa.cpp
+    app/src/main/cpp/sources/game.cpp
     app/src/main/cpp/sources/gamepad.cpp
     app/src/main/cpp/sources/gjk.cpp
     app/src/main/cpp/sources/gjk_base.cpp

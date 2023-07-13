@@ -38,6 +38,9 @@ class World1x1 final : public android_vulkan::Game
         [[nodiscard]] bool OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept override;
         void OnSwapchainDestroyed ( android_vulkan::Renderer &renderer ) noexcept override;
 
+        [[nodiscard]] bool OnInitSoundSystem () noexcept override;
+        void OnDestroySoundSystem () noexcept override;
+
         [[nodiscard]] bool CreatePhysics () noexcept;
         void DestroyCommandPool ( VkDevice device ) noexcept;
 };

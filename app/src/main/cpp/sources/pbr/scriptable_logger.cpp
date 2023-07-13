@@ -1,5 +1,5 @@
-#include <pbr/scriptable_logger.h>
-#include <logger.h>
+#include <pbr/scriptable_logger.hpp>
+#include <logger.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -40,7 +40,7 @@ void ScriptableLogger::Register ( lua_State &vm ) noexcept
         }
     };
 
-    for ( auto const& extension : extensions )
+    for ( auto const &extension : extensions )
     {
         lua_register ( &vm, extension.name, extension.func );
     }

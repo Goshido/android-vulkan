@@ -1,4 +1,4 @@
-#include <pbr/length_value.h>
+#include <pbr/length_value.hpp>
 
 
 namespace pbr {

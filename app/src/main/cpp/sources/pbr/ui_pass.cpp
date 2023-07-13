@@ -1,7 +1,7 @@
-#include <pbr/ui_pass.h>
+#include <pbr/ui_pass.hpp>
 #include <pbr/ui_program.inc>
-#include <av_assert.h>
-#include <trace.h>
+#include <av_assert.hpp>
+#include <trace.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -42,10 +42,10 @@ class ImageStorage final
         ImageStorage () = delete;
 
         ImageStorage ( ImageStorage const & ) = delete;
-        ImageStorage& operator = ( ImageStorage const & ) = delete;
+        ImageStorage &operator = ( ImageStorage const & ) = delete;
 
         ImageStorage ( ImageStorage && ) = delete;
-        ImageStorage& operator = ( ImageStorage && ) = delete;
+        ImageStorage &operator = ( ImageStorage && ) = delete;
 
         ~ImageStorage () = delete;
 
@@ -79,7 +79,7 @@ void ImageStorage::ReleaseImage ( Texture2DRef const &image ) noexcept
         return;
 
     auto const findResult = _textures.find ( image );
-    Texture2DRef const& t = *findResult;
+    Texture2DRef const &t = *findResult;
     t->FreeResources ( *_renderer );
 
     auto const end = _textureMap.cend ();
@@ -125,7 +125,7 @@ std::optional<Texture2DRef const> ImageStorage::GetImage ( std::string const &as
     _commandBufferIndex += COMMAND_BUFFERS_PER_TEXTURE;
 
     auto status = _textures.emplace ( std::move ( texture ) );
-    Texture2DRef const& t = *status.first;
+    Texture2DRef const &t = *status.first;
     _textureMap.emplace ( asset, &t );
 
     return t;
@@ -538,7 +538,7 @@ bool UIPass::ImageDescriptorSets::Init ( VkDevice device,
 
     for ( size_t i = 0U; i < MAX_IMAGES; ++i )
     {
-        VkWriteDescriptorSet& write = _writeSets[ i ];
+        VkWriteDescriptorSet &write = _writeSets[ i ];
         write.dstSet = ds[ i ];
         write.pImageInfo = imageInfoData + i;
     }
@@ -634,7 +634,7 @@ void UIPass::InUseImageTracker::Init ( size_t swapchainImages ) noexcept
 
 void UIPass::InUseImageTracker::Destroy () noexcept
 {
-    for ( Entry& entry : _registry )
+    for ( Entry &entry : _registry )
     {
         auto const end = entry.cend ();
 
@@ -650,12 +650,12 @@ void UIPass::InUseImageTracker::Destroy () noexcept
 
 void UIPass::InUseImageTracker::CollectGarbage ( size_t swapchainImageIndex ) noexcept
 {
-    Entry& entry = _registry[ swapchainImageIndex ];
+    Entry &entry = _registry[ swapchainImageIndex ];
     auto end = entry.end ();
 
     for ( auto i = entry.begin (); i != end; )
     {
-        size_t& references = i->second;
+        size_t &references = i->second;
 
         if ( --references; references )
         {
@@ -670,7 +670,7 @@ void UIPass::InUseImageTracker::CollectGarbage ( size_t swapchainImageIndex ) no
 
 void UIPass::InUseImageTracker::MarkInUse ( Texture2DRef const &texture, size_t swapchainImageIndex )
 {
-    Entry& entry = _registry[ swapchainImageIndex ];
+    Entry &entry = _registry[ swapchainImageIndex ];
     auto i = entry.find ( texture );
 
     if ( i == entry.end () )
@@ -738,7 +738,7 @@ bool UIPass::Execute ( android_vulkan::Renderer &renderer, VkCommandBuffer comma
     size_t imageIdx = _imageDescriptorSets._commitIndex;
     VkDescriptorSet* ds = _imageDescriptorSets._descriptorSets.data ();
 
-    for ( auto const& job : _jobs )
+    for ( auto const &job : _jobs )
     {
         if ( !job._texture )
         {
@@ -798,7 +798,7 @@ bool UIPass::Execute ( android_vulkan::Renderer &renderer, VkCommandBuffer comma
     );
 }
 
-FontStorage& UIPass::GetFontStorage () noexcept
+FontStorage &UIPass::GetFontStorage () noexcept
 {
     return _fontStorage;
 }
@@ -995,13 +995,13 @@ void UIPass::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
 
 bool UIPass::OnSwapchainCreated ( android_vulkan::Renderer &renderer, VkImageView scene ) noexcept
 {
-    VkExtent2D const& resolution = renderer.GetSurfaceSize ();
+    VkExtent2D const &resolution = renderer.GetSurfaceSize ();
     bool const hasRenderPass = _renderInfo.renderPass != VK_NULL_HANDLE;
 
     if ( hasRenderPass && !CreateFramebuffers ( renderer, resolution ) )
         return false;
 
-    VkExtent2D& r = _renderInfo.renderArea.extent;
+    VkExtent2D &r = _renderInfo.renderArea.extent;
 
     if ( ( r.width == resolution.width ) & ( r.height == resolution.height ) )
         return true;
@@ -1023,7 +1023,7 @@ bool UIPass::OnSwapchainCreated ( android_vulkan::Renderer &renderer, VkImageVie
 
     r = resolution;
 
-    VkExtent2D const& viewport = renderer.GetViewportResolution ();
+    VkExtent2D const &viewport = renderer.GetViewportResolution ();
     _bottomRight = GXVec2 ( static_cast<float> ( viewport.width ), static_cast<float> ( viewport.height ) );
     _imageDescriptorSets.UpdateScene ( device, scene );
 
@@ -1431,7 +1431,7 @@ void UIPass::SubmitNonImage ( size_t usedVertices ) noexcept
         return;
     }
 
-    Job& last = _jobs.back ();
+    Job &last = _jobs.back ();
 
     if ( !last._texture )
     {
@@ -1500,7 +1500,7 @@ bool UIPass::UpdateSceneImage () noexcept
     GXVec2 imageBottomRight {};
     imageBottomRight.Sum ( GXVec2 ( 1.0F, 1.0F ), halfPixelUV );
 
-    FontStorage::GlyphInfo const& g = _fontStorage.GetTransparentGlyphInfo ();
+    FontStorage::GlyphInfo const &g = _fontStorage.GetTransparentGlyphInfo ();
 
     AppendRectangle ( _data + _sceneImageVertexIndex,
         white,
@@ -1521,7 +1521,7 @@ void UIPass::UpdateTransform ( android_vulkan::Renderer &renderer, VkCommandBuff
 {
     float const scaleX = 2.0F / _bottomRight._data[ 0U ];
     float const scaleY = 2.0F / _bottomRight._data[ 1U ];
-    GXMat4 const& orientation = renderer.GetPresentationEngineTransform ();
+    GXMat4 const &orientation = renderer.GetPresentationEngineTransform ();
 
     UIProgram::Transform transform {};
     transform._rotateScaleRow0.Multiply ( *reinterpret_cast<GXVec2 const*> ( &orientation._m[ 0U ][ 0U ] ), scaleX );

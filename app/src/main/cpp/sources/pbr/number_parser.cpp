@@ -1,5 +1,5 @@
-#include <logger.h>
-#include <pbr/number_parser.h>
+#include <logger.hpp>
+#include <pbr/number_parser.hpp>
 
 
 namespace pbr {

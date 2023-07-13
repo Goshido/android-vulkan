@@ -1,7 +1,7 @@
-#include <pbr/point_light_lightup.h>
-#include <pbr/coordinate_system.h>
-#include <pbr/point_light_descriptor_set_layout.h>
-#include <pbr/point_light_pass.h>
+#include <pbr/point_light_lightup.hpp>
+#include <pbr/coordinate_system.hpp>
+#include <pbr/point_light_descriptor_set_layout.hpp>
+#include <pbr/point_light_pass.hpp>
 
 
 namespace pbr {
@@ -118,11 +118,11 @@ void PointLightLightup::UpdateGPUData ( VkDevice device,
         // which is an inverse transform from view matrix. So "view to point light" transform simplifies to
         // one subtraction operation of point light location vector from "w" component of the viewer local matrix.
 
-        GXMat4& viewToPointLight = lightData._viewToLight;
+        GXMat4 &viewToPointLight = lightData._viewToLight;
         viewToPointLight = viewerLocal;
 
         viewToPointLight.GetW ( alpha );
-        GXVec3 const& location = light->GetLocation ();
+        GXVec3 const &location = light->GetLocation ();
         betta.Subtract ( alpha, location );
         viewToPointLight.SetW ( betta );
 
@@ -268,22 +268,22 @@ bool PointLightLightup::AllocateDescriptorSets ( android_vulkan::Renderer &rende
         VkBuffer buffer = _uniformPool.GetBuffer ( i );
         _barriers[ i ].buffer = buffer;
 
-        VkDescriptorBufferInfo& bufferInfo = _bufferInfo[ i ];
+        VkDescriptorBufferInfo &bufferInfo = _bufferInfo[ i ];
         bufferInfo.buffer = buffer;
 
-        VkWriteDescriptorSet& imageSet = _writeSets[ base ];
+        VkWriteDescriptorSet &imageSet = _writeSets[ base ];
         imageSet.dstSet = set;
         imageSet.dstBinding = 0U;
         imageSet.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
         imageSet.pImageInfo = &_imageInfo[ i ];
 
-        VkWriteDescriptorSet& samplerSet = _writeSets[ base + 1U ];
+        VkWriteDescriptorSet &samplerSet = _writeSets[ base + 1U ];
         samplerSet.dstSet = set;
         samplerSet.dstBinding = 1U;
         samplerSet.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
         samplerSet.pImageInfo = &_imageInfo[ i ];
 
-        VkWriteDescriptorSet& bufferSet = _writeSets[ base + 2U ];
+        VkWriteDescriptorSet &bufferSet = _writeSets[ base + 2U ];
         bufferSet.dstSet = set;
         bufferSet.dstBinding = 2U;
         bufferSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,

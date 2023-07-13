@@ -1,5 +1,5 @@
-#include <pbr/camera.h>
-#include <gamepad.h>
+#include <pbr/camera.hpp>
+#include <gamepad.hpp>
 
 
 namespace pbr {
@@ -28,7 +28,7 @@ Camera::Camera () noexcept:
 
 void Camera::CaptureInput () noexcept
 {
-    android_vulkan::Gamepad& gamepad = android_vulkan::Gamepad::GetInstance ();
+    android_vulkan::Gamepad &gamepad = android_vulkan::Gamepad::GetInstance ();
 
     gamepad.BindKey ( this, &Camera::OnADown, android_vulkan::eGamepadKey::A, android_vulkan::eButtonState::Down );
     gamepad.BindKey ( this, &Camera::OnAUp, android_vulkan::eGamepadKey::A, android_vulkan::eButtonState::Up );
@@ -42,7 +42,7 @@ void Camera::CaptureInput () noexcept
 
 void Camera::ReleaseInput () noexcept
 {
-    android_vulkan::Gamepad& gamepad = android_vulkan::Gamepad::GetInstance ();
+    android_vulkan::Gamepad &gamepad = android_vulkan::Gamepad::GetInstance ();
 
     gamepad.UnbindRightTrigger ();
     gamepad.UnbindRightStick ();
@@ -60,12 +60,12 @@ void Camera::ReleaseInput () noexcept
     _angularSpeed = stopRotate;
 }
 
-GXMat4 const& Camera::GetLocalMatrix() const noexcept
+GXMat4 const &Camera::GetLocalMatrix() const noexcept
 {
     return _local;
 }
 
-GXMat4 const& Camera::GetProjectionMatrix () const noexcept
+GXMat4 const &Camera::GetProjectionMatrix () const noexcept
 {
     return _projection;
 }
@@ -160,45 +160,45 @@ void Camera::Update ( float deltaTime ) noexcept
 
 void Camera::OnADown ( void* context ) noexcept
 {
-    auto& camera = *static_cast<Camera*> ( context );
+    auto &camera = *static_cast<Camera*> ( context );
     camera._moveSpeed._data[ 2U ] -= 1.0F;
 }
 
 void Camera::OnAUp ( void* context ) noexcept
 {
-    auto& camera = *static_cast<Camera*> ( context );
+    auto &camera = *static_cast<Camera*> ( context );
     camera._moveSpeed._data[ 2U ] += 1.0F;
 }
 
 void Camera::OnXDown ( void* context ) noexcept
 {
-    auto& camera = *static_cast<Camera*> ( context );
+    auto &camera = *static_cast<Camera*> ( context );
     camera._moveSpeed._data[ 2U ] += 1.0F;
 }
 
 void Camera::OnXUp ( void* context ) noexcept
 {
-    auto& camera = *static_cast<Camera*> ( context );
+    auto &camera = *static_cast<Camera*> ( context );
     camera._moveSpeed._data[ 2U ] -= 1.0F;
 }
 
 void Camera::OnLeftStick ( void* context, float horizontal, float vertical ) noexcept
 {
-    auto& camera = *static_cast<Camera*> ( context );
+    auto &camera = *static_cast<Camera*> ( context );
     camera._moveSpeed._data[ 0U ] = vertical;
     camera._moveSpeed._data[ 1U ] = horizontal;
 }
 
 void Camera::OnRightStick ( void* context, float horizontal, float vertical ) noexcept
 {
-    auto& camera = *static_cast<Camera*> ( context );
+    auto &camera = *static_cast<Camera*> ( context );
     camera._angularSpeed._data[ 0U ] = horizontal;
     camera._angularSpeed._data[ 1U ] = -vertical;
 }
 
 void Camera::OnRightTrigger ( void* context, float push ) noexcept
 {
-    auto& camera = *static_cast<Camera*> ( context );
+    auto &camera = *static_cast<Camera*> ( context );
     camera._moveBoost = push;
 }
 

@@ -1,6 +1,6 @@
-#include <pbr/point_light_pass.h>
-#include <av_assert.h>
-#include <trace.h>
+#include <pbr/point_light_pass.hpp>
+#include <av_assert.hpp>
+#include <trace.hpp>
 
 
 namespace pbr {
@@ -80,7 +80,7 @@ void PointLightPass::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 
     if ( !_shadowmaps.empty () )
     {
-        for ( auto& [image, framebuffer ] : _shadowmaps )
+        for ( auto &[image, framebuffer ] : _shadowmaps )
         {
             if ( framebuffer == VK_NULL_HANDLE )
                 continue;
@@ -156,7 +156,7 @@ PointLightPass::PointLightShadowmapInfo* PointLightPass::AcquirePointLightShadow
         return &_shadowmaps[ _usedShadowmaps++ ];
 
     PointLightShadowmapInfo info;
-    auto& [shadowmap, framebuffer] = info;
+    auto &[shadowmap, framebuffer] = info;
     shadowmap = std::make_shared<android_vulkan::TextureCube> ();
 
     constexpr VkExtent2D resolution
@@ -331,7 +331,7 @@ bool PointLightPass::GenerateShadowmaps ( android_vulkan::Renderer &renderer, Vk
 {
     constexpr VkDeviceSize offset = 0U;
 
-    for ( auto const& [light, casters] : _interacts )
+    for ( auto const &[light, casters] : _interacts )
     {
         PointLightShadowmapInfo const* shadowmapInfo = AcquirePointLightShadowmap ( renderer );
 
@@ -345,7 +345,7 @@ bool PointLightPass::GenerateShadowmaps ( android_vulkan::Renderer &renderer, Vk
         // multiview style rendering. see VkRenderPassMultiviewCreateInfo remarks in Vulkan spec.
         _shadowmapProgram.Bind ( commandBuffer );
 
-        for ( auto const& unique : casters._uniques )
+        for ( auto const &unique : casters._uniques )
         {
             vkCmdBindVertexBuffers ( commandBuffer, 0U, 1U, &unique->GetVertexBuffer (), &offset );
 
@@ -359,9 +359,9 @@ bool PointLightPass::GenerateShadowmaps ( android_vulkan::Renderer &renderer, Vk
             vkCmdDrawIndexed ( commandBuffer, unique->GetVertexCount (), 1U, 0U, 0, 0U );
         }
 
-        for ( auto const& casterInfo : casters._batches )
+        for ( auto const &casterInfo : casters._batches )
         {
-            auto const& [mesh, transforms] = casterInfo.second;
+            auto const &[mesh, transforms] = casterInfo.second;
             vkCmdBindVertexBuffers ( commandBuffer, 0U, 1U, &mesh->GetVertexBuffer (), &offset );
 
             vkCmdBindIndexBuffer ( commandBuffer,
@@ -410,7 +410,7 @@ void PointLightPass::UpdateShadowmapGPUData ( VkDevice device,
     PointLightShadowmapGeneratorProgram::InstanceData instanceData {};
 
     auto append = [ & ] ( PointLight::Matrices const &matrices, size_t instance, GXMat4 const &local ) {
-        PointLightShadowmapGeneratorProgram::ObjectData& objectData = instanceData._instanceData[ instance ];
+        PointLightShadowmapGeneratorProgram::ObjectData &objectData = instanceData._instanceData[ instance ];
 
         for ( size_t i = 0U; i < PBR_POINT_LIGHT_SHADOW_CASTER_PROJECTION_COUNT; ++i )
         {
@@ -418,18 +418,18 @@ void PointLightPass::UpdateShadowmapGPUData ( VkDevice device,
         }
     };
 
-    for ( auto& [light, casters] : _interacts )
+    for ( auto &[light, casters] : _interacts )
     {
         // NOLINTNEXTLINE - downcast.
-        auto& pointLight = static_cast<PointLight &> ( *light );
-        GXAABB const& lightBounds = pointLight.GetBounds ();
-        PointLight::Matrices const& matrices = pointLight.GetMatrices ();
+        auto &pointLight = static_cast<PointLight &> ( *light );
+        GXAABB const &lightBounds = pointLight.GetBounds ();
+        PointLight::Matrices const &matrices = pointLight.GetMatrices ();
 
-        for ( auto const& [material, opaque] : sceneData )
+        for ( auto const &[material, opaque] : sceneData )
         {
             std::vector<MeshRef>* uniques = nullptr;
 
-            for ( auto const& [mesh, opaqueData] : opaque.GetUniqueList () )
+            for ( auto const &[mesh, opaqueData] : opaque.GetUniqueList () )
             {
                 if ( !lightBounds.IsOverlaped ( opaqueData._worldBounds ) )
                     continue;
@@ -457,14 +457,14 @@ void PointLightPass::UpdateShadowmapGPUData ( VkDevice device,
             // material only geometry matters. So to make shadowmap calls most efficiently it's need to collect
             // all instances first and only then fill uniform buffers.
 
-            for ( auto const& [name, meshGroup] : opaque.GetBatchList () )
+            for ( auto const &[name, meshGroup] : opaque.GetBatchList () )
             {
-                for ( auto const& geometryData : meshGroup._geometryData )
+                for ( auto const &geometryData : meshGroup._geometryData )
                 {
                     if ( !lightBounds.IsOverlaped ( geometryData._worldBounds ) )
                         continue;
 
-                    auto& [mesh, locals] = casters._batches[ name ];
+                    auto &[mesh, locals] = casters._batches[ name ];
 
                     if ( !mesh )
                     {
@@ -480,10 +480,10 @@ void PointLightPass::UpdateShadowmapGPUData ( VkDevice device,
         }
 
         // Commit uniform buffers for batch meshes.
-        for ( auto const& batch : casters._batches )
+        for ( auto const &batch : casters._batches )
         {
-            auto const& caster = batch.second;
-            std::vector<GXMat4> const& locals = caster.second;
+            auto const &caster = batch.second;
+            std::vector<GXMat4> const &locals = caster.second;
             size_t remain = locals.size ();
             size_t instance = 0U;
 
@@ -521,16 +521,16 @@ void PointLightPass::UpdateLightGPUData ( VkCommandBuffer commandBuffer,
     size_t const lightCount = _interacts.size ();
 
     PointLightLightupProgram::VolumeData volumeData {};
-    GXMat4& transform = volumeData._transform;
+    GXMat4 &transform = volumeData._transform;
     GXMat4 local {};
     GXVec3 alpha {};
 
     for ( size_t i = 0U; i < lightCount; ++i )
     {
-        auto const& [light, casters] = _interacts[ i ];
+        auto const &[light, casters] = _interacts[ i ];
 
         // NOLINTNEXTLINE - downcast.
-        auto& pointLight = static_cast<PointLight&> ( *light );
+        auto &pointLight = static_cast<PointLight &> ( *light );
         GXAABB const bounds = pointLight.GetBounds ();
 
         local.Scale ( bounds.GetWidth (), bounds.GetHeight (), bounds.GetDepth () );

@@ -1,4 +1,4 @@
-#include <pbr/display_property.h>
+#include <pbr/display_property.hpp>
 
 
 namespace pbr {

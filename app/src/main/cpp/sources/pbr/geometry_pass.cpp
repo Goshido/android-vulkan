@@ -1,6 +1,6 @@
-#include <pbr/geometry_pass.h>
-#include <trace.h>
-#include <vulkan_utils.h>
+#include <pbr/geometry_pass.hpp>
+#include <trace.hpp>
+#include <vulkan_utils.hpp>
 
 
 namespace pbr {
@@ -144,12 +144,12 @@ void GeometryPass::Execute ( VkCommandBuffer commandBuffer, RenderSessionStats &
     _materialPool.Commit ();
 }
 
-OpaqueSubpass& GeometryPass::GetOpaqueSubpass () noexcept
+OpaqueSubpass &GeometryPass::GetOpaqueSubpass () noexcept
 {
     return _opaqueSubpass;
 }
 
-StippleSubpass& GeometryPass::GetStippleSubpass () noexcept
+StippleSubpass &GeometryPass::GetStippleSubpass () noexcept
 {
     return _stippleSubpass;
 }

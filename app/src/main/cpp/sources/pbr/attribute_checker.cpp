@@ -1,5 +1,5 @@
-#include <logger.h>
-#include <pbr/attribute_checker.h>
+#include <logger.hpp>
+#include <pbr/attribute_checker.hpp>
 
 
 namespace pbr {

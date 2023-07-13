@@ -1,4 +1,4 @@
-#include <pbr/property.h>
+#include <pbr/property.hpp>
 
 
 namespace pbr {

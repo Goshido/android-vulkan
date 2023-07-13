@@ -1,4 +1,4 @@
-#include <pbr/cube_map_manager.h>
+#include <pbr/cube_map_manager.hpp>
 
 
 namespace pbr {
@@ -86,7 +86,7 @@ TextureCubeRef CubeMapManager::LoadCubeMap ( android_vulkan::Renderer &renderer,
     return textureCube;
 }
 
-CubeMapManager& CubeMapManager::GetInstance () noexcept
+CubeMapManager &CubeMapManager::GetInstance () noexcept
 {
     std::unique_lock<std::shared_timed_mutex> const lock ( _mutex );
 
@@ -111,7 +111,7 @@ void CubeMapManager::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 
 void CubeMapManager::DestroyInternal ( android_vulkan::Renderer &renderer ) noexcept
 {
-    for ( auto& cubeMap : _cubeMaps )
+    for ( auto &cubeMap : _cubeMaps )
         cubeMap.second->FreeResources ( renderer );
 
     _cubeMaps.clear ();
@@ -126,7 +126,7 @@ std::string_view CubeMapManager::GetStringView ( char const* string ) noexcept
     if ( findResult != _knownFiles.cend () )
         return *findResult;
 
-    auto const& newString = _stringStorage.emplace_back ( string );
+    auto const &newString = _stringStorage.emplace_back ( string );
     std::string_view const view ( newString );
     _knownFiles.insert ( view );
 

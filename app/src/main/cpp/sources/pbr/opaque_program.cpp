@@ -1,4 +1,4 @@
-#include <pbr/opaque_program.h>
+#include <pbr/opaque_program.hpp>
 
 
 namespace pbr {

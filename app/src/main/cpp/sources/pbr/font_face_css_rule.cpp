@@ -1,10 +1,10 @@
-#include <logger.h>
-#include <pbr/font_face_css_rule.h>
-#include <pbr/font_family_property_checker.h>
-#include <pbr/property_parser.h>
-#include <pbr/src_property_checker.h>
-#include <pbr/utf8_parser.h>
-#include <pbr/whitespace.h>
+#include <logger.hpp>
+#include <pbr/font_face_css_rule.hpp>
+#include <pbr/font_family_property_checker.hpp>
+#include <pbr/property_parser.hpp>
+#include <pbr/src_property_checker.hpp>
+#include <pbr/utf8_parser.hpp>
+#include <pbr/whitespace.hpp>
 
 
 namespace pbr {

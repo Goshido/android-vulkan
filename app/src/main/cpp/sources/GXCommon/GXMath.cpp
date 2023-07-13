@@ -1,6 +1,6 @@
-// version 1.77
+// version 1.78
 
-#include <GXCommon/GXMath.h>
+#include <GXCommon/GXMath.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -223,19 +223,19 @@ constexpr static GXUByte SOLUTION_YOTTA = 3U;
     return _data[ 2U ] == other._data[ 2U ];
 }
 
-[[maybe_unused]] GXVec3 const& GXVec3::GetAbsoluteX () noexcept
+[[maybe_unused]] GXVec3 const &GXVec3::GetAbsoluteX () noexcept
 {
     constexpr static GXVec3 absoluteX ( 1.0F, 0.0F, 0.0F );
     return absoluteX;
 }
 
-[[maybe_unused]] GXVec3 const& GXVec3::GetAbsoluteY () noexcept
+[[maybe_unused]] GXVec3 const &GXVec3::GetAbsoluteY () noexcept
 {
     constexpr static GXVec3 absoluteY ( 0.0F, 1.0F, 0.0F );
     return absoluteY;
 }
 
-[[maybe_unused]] GXVec3 const& GXVec3::GetAbsoluteZ () noexcept
+[[maybe_unused]] GXVec3 const &GXVec3::GetAbsoluteZ () noexcept
 {
     constexpr static GXVec3 absoluteZ ( 0.0F, 0.0F, 1.0F );
     return absoluteZ;
@@ -1348,7 +1348,7 @@ constexpr static GXUByte SOLUTION_YOTTA = 3U;
 
 [[maybe_unused]] GXVoid GXMat3::Inverse ( GXMat3 const &sourceMatrix ) noexcept
 {
-    GXMat3 const& m = sourceMatrix;
+    GXMat3 const &m = sourceMatrix;
 
     GXFloat determinant = m._m[ 0U ][ 0U ] *
         ( m._m[ 1U ][ 1U ] * m._m[ 2U ][ 2U ] - m._m[ 2U ][ 1U ] * m._m[ 1U ][ 2U ] );
@@ -1898,7 +1898,7 @@ constexpr static GXUByte SOLUTION_YOTTA = 3U;
 
     bounds.Empty ();
 
-    for ( auto const& v : verticesLocal )
+    for ( auto const &v : verticesLocal )
     {
         GXVec3 vertex {};
         transform.MultiplyAsPoint ( vertex, v );

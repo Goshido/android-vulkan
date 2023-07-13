@@ -1,4 +1,4 @@
-#include <pbr/point_light_lightup_program.h>
+#include <pbr/point_light_lightup_program.hpp>
 
 
 namespace pbr {
@@ -137,7 +137,7 @@ void PointLightLightupProgram::SetLightData ( VkCommandBuffer commandBuffer,
     );
 }
 
-Program::DescriptorSetInfo const& PointLightLightupProgram::GetResourceInfo () const noexcept
+Program::DescriptorSetInfo const &PointLightLightupProgram::GetResourceInfo () const noexcept
 {
     static DescriptorSetInfo const info
     {
@@ -181,7 +181,7 @@ VkPipelineColorBlendStateCreateInfo const* PointLightLightupProgram::InitColorBl
     VkPipelineColorBlendAttachmentState* attachments
 ) const noexcept
 {
-    VkPipelineColorBlendAttachmentState& hdrAccumulator = attachments[ 0U ];
+    VkPipelineColorBlendAttachmentState &hdrAccumulator = attachments[ 0U ];
     hdrAccumulator.blendEnable = VK_TRUE;
     hdrAccumulator.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
     hdrAccumulator.dstColorBlendFactor = VK_BLEND_FACTOR_ONE;
@@ -366,7 +366,7 @@ bool PointLightLightupProgram::InitShaderInfo ( android_vulkan::Renderer &render
 
     AV_REGISTER_SHADER_MODULE ( "PointLightLightupProgram::_fragmentShader" )
 
-    VkPipelineShaderStageCreateInfo& vertexStage = sourceInfo[ 0U ];
+    VkPipelineShaderStageCreateInfo &vertexStage = sourceInfo[ 0U ];
     vertexStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     vertexStage.pNext = nullptr;
     vertexStage.flags = 0U;
@@ -375,7 +375,7 @@ bool PointLightLightupProgram::InitShaderInfo ( android_vulkan::Renderer &render
     vertexStage.pName = VERTEX_SHADER_ENTRY_POINT;
     vertexStage.pSpecializationInfo = nullptr;
 
-    VkPipelineShaderStageCreateInfo& fragmentStage = sourceInfo[ 1U ];
+    VkPipelineShaderStageCreateInfo &fragmentStage = sourceInfo[ 1U ];
     fragmentStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     fragmentStage.pNext = nullptr;
     fragmentStage.flags = 0U;

@@ -1,5 +1,5 @@
-#include <pbr/geometry_pass_program.h>
-#include <vertex_info.h>
+#include <pbr/geometry_pass_program.hpp>
+#include <vertex_info.hpp>
 
 
 namespace pbr {
@@ -109,7 +109,7 @@ void GeometryPassProgram::Destroy ( VkDevice device ) noexcept
     DestroyShaderModules ( device );
 }
 
-Program::DescriptorSetInfo const& GeometryPassProgram::GetResourceInfo () const noexcept
+Program::DescriptorSetInfo const &GeometryPassProgram::GetResourceInfo () const noexcept
 {
     static DescriptorSetInfo const info =
     {

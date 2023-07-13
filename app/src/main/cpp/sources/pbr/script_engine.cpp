@@ -1,25 +1,25 @@
-#include <pbr/script_engine.h>
-#include <pbr/actor.h>
-#include <pbr/camera_component.h>
-#include <pbr/component.h>
-#include <pbr/rigid_body_component.h>
-#include <pbr/script_component.h>
-#include <pbr/scriptable_gxmat3.h>
-#include <pbr/scriptable_gxmat4.h>
-#include <pbr/scriptable_gxquat.h>
-#include <pbr/scriptable_gxvec3.h>
-#include <pbr/scriptable_gxvec4.h>
-#include <pbr/scriptable_logger.h>
-#include <pbr/scriptable_material.h>
-#include <pbr/sound_emitter_global_component.h>
-#include <pbr/sound_emitter_spatial_component.h>
-#include <pbr/static_mesh_component.h>
-#include <pbr/text_ui_element.h>
-#include <pbr/transform_component.h>
-#include <pbr/ui_layer.h>
-#include <av_assert.h>
-#include <file.h>
-#include <logger.h>
+#include <pbr/script_engine.hpp>
+#include <pbr/actor.hpp>
+#include <pbr/camera_component.hpp>
+#include <pbr/component.hpp>
+#include <pbr/rigid_body_component.hpp>
+#include <pbr/script_component.hpp>
+#include <pbr/scriptable_gxmat3.hpp>
+#include <pbr/scriptable_gxmat4.hpp>
+#include <pbr/scriptable_gxquat.hpp>
+#include <pbr/scriptable_gxvec3.hpp>
+#include <pbr/scriptable_gxvec4.hpp>
+#include <pbr/scriptable_logger.hpp>
+#include <pbr/scriptable_material.hpp>
+#include <pbr/sound_emitter_global_component.hpp>
+#include <pbr/sound_emitter_spatial_component.hpp>
+#include <pbr/static_mesh_component.hpp>
+#include <pbr/text_ui_element.hpp>
+#include <pbr/transform_component.hpp>
+#include <pbr/ui_layer.hpp>
+#include <av_assert.hpp>
+#include <file.hpp>
+#include <logger.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -43,7 +43,7 @@ constexpr static char const SCRIPT[] = "pbr/engine/scene.lua";
 
 ScriptEngine* ScriptEngine::_instance = nullptr;
 
-lua_State& ScriptEngine::GetVirtualMachine () noexcept
+lua_State &ScriptEngine::GetVirtualMachine () noexcept
 {
     return *_vm;
 }
@@ -59,7 +59,7 @@ bool ScriptEngine::Init ( android_vulkan::Renderer &renderer, android_vulkan::So
     return InitInterfaceFunctions ( renderer, soundMixer );
 }
 
-ScriptEngine& ScriptEngine::GetInstance () noexcept
+ScriptEngine &ScriptEngine::GetInstance () noexcept
 {
     if ( !_instance )
         _instance = new ScriptEngine ();
@@ -86,7 +86,7 @@ bool ScriptEngine::ExtendFrontend ( android_vulkan::Renderer &renderer,
     android_vulkan::SoundMixer &soundMixer
 ) const noexcept
 {
-    lua_State& vm = *_vm;
+    lua_State &vm = *_vm;
 
     ScriptableGXMat3::Init ( vm );
     ScriptableGXMat4::Init ( vm );
@@ -187,7 +187,7 @@ void ScriptEngine::InitLibraries () const noexcept
 
     lua_State* vm = _vm.get ();
 
-    for ( auto const& lib : libs )
+    for ( auto const &lib : libs )
         luaL_requiref ( vm, lib.name, lib.func, 1 );
 
     lua_pop ( vm, static_cast<int> ( std::size ( libs ) ) );
@@ -287,7 +287,7 @@ bool ScriptEngine::LoadScript ( lua_State* vm,
     if ( !file.LoadContent () )
         return false;
 
-    std::vector<uint8_t> const& data = file.GetContent ();
+    std::vector<uint8_t> const &data = file.GetContent ();
 
     int const result = luaL_loadbufferx ( vm,
         reinterpret_cast<char const*> ( data.data () ),

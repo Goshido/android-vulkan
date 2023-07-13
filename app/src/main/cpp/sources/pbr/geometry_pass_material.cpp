@@ -1,10 +1,10 @@
-#include <pbr/geometry_pass_material.h>
-#include <logger.h>
+#include <pbr/geometry_pass_material.hpp>
+#include <logger.hpp>
 
 
 namespace pbr {
 
-Texture2DRef& GeometryPassMaterial::GetAlbedo () noexcept
+Texture2DRef &GeometryPassMaterial::GetAlbedo () noexcept
 {
     return _albedo;
 }
@@ -19,7 +19,7 @@ void GeometryPassMaterial::SetAlbedo ( Texture2DRef const &texture ) noexcept
     _albedo.reset ();
 }
 
-Texture2DRef& GeometryPassMaterial::GetEmission () noexcept
+Texture2DRef &GeometryPassMaterial::GetEmission () noexcept
 {
     return _emission;
 }
@@ -34,7 +34,7 @@ void GeometryPassMaterial::SetEmission ( Texture2DRef const &texture ) noexcept
     _emission.reset ();
 }
 
-Texture2DRef& GeometryPassMaterial::GetMask () noexcept
+Texture2DRef &GeometryPassMaterial::GetMask () noexcept
 {
     return _mask;
 }
@@ -49,7 +49,7 @@ void GeometryPassMaterial::SetMask ( Texture2DRef const &texture ) noexcept
     _mask.reset ();
 }
 
-Texture2DRef& GeometryPassMaterial::GetNormal () noexcept
+Texture2DRef &GeometryPassMaterial::GetNormal () noexcept
 {
     return _normal;
 }
@@ -64,7 +64,7 @@ void GeometryPassMaterial::SetNormal ( Texture2DRef const &texture ) noexcept
     _normal.reset ();
 }
 
-Texture2DRef& GeometryPassMaterial::GetParam () noexcept
+Texture2DRef &GeometryPassMaterial::GetParam () noexcept
 {
     return _param;
 }

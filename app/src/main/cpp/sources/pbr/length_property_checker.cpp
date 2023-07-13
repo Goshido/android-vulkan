@@ -1,5 +1,5 @@
-#include <pbr/length_property_checker.h>
-#include <pbr/length_value_parser.h>
+#include <pbr/length_property_checker.hpp>
+#include <pbr/length_value_parser.hpp>
 
 
 namespace pbr {

@@ -1,6 +1,6 @@
-#include <pbr/ui_pass_transform_descriptor_set_layout.h>
+#include <pbr/ui_pass_transform_descriptor_set_layout.hpp>
 #include <pbr/ui_program.inc>
-#include <vulkan_utils.h>
+#include <vulkan_utils.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -25,10 +25,10 @@ class DescriptorSetLayout final
         DescriptorSetLayout () = default;
 
         DescriptorSetLayout ( DescriptorSetLayout const & ) = delete;
-        DescriptorSetLayout& operator = ( DescriptorSetLayout const & ) = delete;
+        DescriptorSetLayout &operator = ( DescriptorSetLayout const & ) = delete;
 
         DescriptorSetLayout ( DescriptorSetLayout && ) = delete;
-        DescriptorSetLayout& operator = ( DescriptorSetLayout && ) = delete;
+        DescriptorSetLayout &operator = ( DescriptorSetLayout && ) = delete;
 
         ~DescriptorSetLayout () = default;
 

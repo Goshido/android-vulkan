@@ -1,4 +1,4 @@
-#include <mandelbrot/mandelbrot_lut_color.h>
+#include <mandelbrot/mandelbrot_lut_color.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -8,7 +8,7 @@ GX_DISABLE_COMMON_WARNINGS
 
 GX_RESTORE_WARNING_STATE
 
-#include <vulkan_utils.h>
+#include <vulkan_utils.hpp>
 
 
 namespace mandelbrot {

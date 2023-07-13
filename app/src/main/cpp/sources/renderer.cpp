@@ -1,8 +1,8 @@
-#include <av_assert.h>
-#include <renderer.h>
-#include <bitwise.h>
-#include <file.h>
-#include <vulkan_utils.h>
+#include <av_assert.hpp>
+#include <renderer.hpp>
+#include <bitwise.hpp>
+#include <file.hpp>
+#include <vulkan_utils.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -833,7 +833,7 @@ bool Renderer::CreateShader ( VkShaderModule &shader,
     if ( !vertexShader.LoadContent () )
         return false;
 
-    std::vector<uint8_t> const& spirV = vertexShader.GetContent ();
+    std::vector<uint8_t> const &spirV = vertexShader.GetContent ();
 
     VkShaderModuleCreateInfo const shaderModuleCreateInfo
     {
@@ -888,12 +888,12 @@ size_t Renderer::GetPresentImageCount () const noexcept
     return _swapchainImageViews.size ();
 }
 
-VkImageView const& Renderer::GetPresentImageView ( size_t imageIndex ) const noexcept
+VkImageView const &Renderer::GetPresentImageView ( size_t imageIndex ) const noexcept
 {
     return _swapchainImageViews[ imageIndex ];
 }
 
-GXMat4 const& Renderer::GetPresentationEngineTransform () const noexcept
+GXMat4 const &Renderer::GetPresentationEngineTransform () const noexcept
 {
     return _presentationEngineTransform;
 }
@@ -913,17 +913,17 @@ VkFormat Renderer::GetSurfaceFormat () const noexcept
     return _surfaceFormat;
 }
 
-VkExtent2D const& Renderer::GetSurfaceSize () const noexcept
+VkExtent2D const &Renderer::GetSurfaceSize () const noexcept
 {
     return _surfaceSize;
 }
 
-VkSwapchainKHR& Renderer::GetSwapchain () noexcept
+VkSwapchainKHR &Renderer::GetSwapchain () noexcept
 {
     return _swapchain;
 }
 
-VkExtent2D const& Renderer::GetViewportResolution () const noexcept
+VkExtent2D const &Renderer::GetViewportResolution () const noexcept
 {
     return _viewportResolution;
 }
@@ -1046,7 +1046,7 @@ bool Renderer::OnCreateDevice ( float dpi ) noexcept
     _physicalDeviceGroups.resize ( static_cast<size_t> ( physicalDeviceGroupCount ) );
     VkPhysicalDeviceGroupProperties* groupProps = _physicalDeviceGroups.data ();
 
-    for ( auto& item : _physicalDeviceGroups )
+    for ( auto &item : _physicalDeviceGroups )
         item.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GROUP_PROPERTIES;
 
     result = CheckVkResult ( vkEnumeratePhysicalDeviceGroups ( _instance, &physicalDeviceGroupCount, groupProps ),
@@ -1134,7 +1134,7 @@ void Renderer::FreeMemory ( VkDeviceMemory memory, VkDeviceSize offset ) noexcep
     _memoryAllocator.FreeMemory ( _device, memory, offset );
 }
 
-bool Renderer::MapMemory ( void*& ptr,
+bool Renderer::MapMemory ( void* &ptr,
     VkDeviceMemory memory,
     VkDeviceSize offset,
     char const* from,
@@ -1254,7 +1254,7 @@ bool Renderer::CheckRequiredDeviceExtensions ( std::vector<char const*> const &d
 
 bool Renderer::CheckRequiredFeatures ( VkPhysicalDevice physicalDevice, size_t const* features, size_t count ) noexcept
 {
-    auto const& featureInfo = _physicalDeviceInfo[ physicalDevice ];
+    auto const &featureInfo = _physicalDeviceInfo[ physicalDevice ];
 
     LogInfo ( "Renderer::CheckRequiredFeatures - Checking required features..." );
 
@@ -1270,7 +1270,7 @@ bool Renderer::CheckRequiredFeatures ( VkPhysicalDevice physicalDevice, size_t c
             reinterpret_cast<uint8_t const*> ( &featureInfo._features ) + offset
         );
 
-        auto const& featureName = g_vkFeatureMap.find ( offset )->second;
+        auto const &featureName = g_vkFeatureMap.find ( offset )->second;
 
         if ( enable )
         {
@@ -1281,10 +1281,10 @@ bool Renderer::CheckRequiredFeatures ( VkPhysicalDevice physicalDevice, size_t c
         unsupportedFeatures.emplace ( featureName );
     }
 
-    for ( auto const& feature : supportedFeatures )
+    for ( auto const &feature : supportedFeatures )
         LogInfo ( "%sOK: %s", INDENT_1, feature.data () );
 
-    for ( auto const& feature : unsupportedFeatures )
+    for ( auto const &feature : unsupportedFeatures )
         LogError ( "%sFAIL: %s", INDENT_1, feature.data () );
 
     return unsupportedFeatures.empty ();
@@ -1400,7 +1400,7 @@ bool Renderer::DeployDevice () noexcept
         return false;
 
     deviceQueueCreateInfo.queueFamilyIndex = _queueFamilyIndex;
-    auto const& caps = _physicalDeviceInfo[ _physicalDevice ];
+    auto const &caps = _physicalDeviceInfo[ _physicalDevice ];
 
     if ( !CheckRequiredDeviceExtensions ( caps._extensions ) )
         return false;
@@ -1655,7 +1655,7 @@ bool Renderer::DeploySurface ( ANativeWindow &nativeWindow ) noexcept
 
     AV_REGISTER_SURFACE ( "Renderer::_surface" )
 
-    VkSurfaceCapabilitiesKHR& surfaceCapabilitiesKHR = _physicalDeviceInfo[ _physicalDevice ]._surfaceCapabilities;
+    VkSurfaceCapabilitiesKHR &surfaceCapabilitiesKHR = _physicalDeviceInfo[ _physicalDevice ]._surfaceCapabilities;
 
     result = CheckVkResult (
         vkGetPhysicalDeviceSurfaceCapabilitiesKHR ( _physicalDevice, _surface, &surfaceCapabilitiesKHR ),
@@ -1956,16 +1956,16 @@ bool Renderer::PrintPhysicalDeviceExtensionInfo ( VkPhysicalDevice physicalDevic
     if ( !result )
         return false;
 
-    VulkanPhysicalDeviceInfo& capabilities = _physicalDeviceInfo[ physicalDevice ];
-    std::vector<char const*>& targetExtensions = capabilities._extensions;
-    std::vector<char>& targetExtensionStorage = capabilities._extensionStorage;
+    VulkanPhysicalDeviceInfo &capabilities = _physicalDeviceInfo[ physicalDevice ];
+    std::vector<char const*> &targetExtensions = capabilities._extensions;
+    std::vector<char> &targetExtensionStorage = capabilities._extensionStorage;
 
     targetExtensions.reserve ( static_cast<size_t> ( extensionCount ) );
     size_t offset = 0U;
 
     for ( uint32_t i = 0U; i < extensionCount; ++i )
     {
-        VkExtensionProperties const& prop = extensionList[ i ];
+        VkExtensionProperties const &prop = extensionList[ i ];
         PrintVkExtensionProp ( i, "Physical device", prop );
 
         size_t const size = strlen ( prop.extensionName ) + 1U;
@@ -1983,7 +1983,7 @@ bool Renderer::PrintPhysicalDeviceExtensionInfo ( VkPhysicalDevice physicalDevic
     // Adjusting extension pointers.
     offset = reinterpret_cast<size_t> ( targetExtensionStorage.data () );
 
-    for ( auto& pointer : targetExtensions )
+    for ( auto &pointer : targetExtensions )
         pointer += offset;
 
     return true;
@@ -1993,14 +1993,14 @@ void Renderer::PrintPhysicalDeviceFeatureInfo ( VkPhysicalDevice physicalDevice 
 {
     LogInfo ( ">>> Features:" );
 
-    auto& features = _physicalDeviceInfo[ physicalDevice ];
+    auto &features = _physicalDeviceInfo[ physicalDevice ];
     vkGetPhysicalDeviceFeatures ( physicalDevice, &features._features );
 
     // Note std::set will sort strings too.
     std::set<std::string_view> supportedFeatures;
     std::set<std::string_view> unsupportedFeatures;
 
-    for ( auto const& probe : g_vkFeatureMap )
+    for ( auto const &probe : g_vkFeatureMap )
     {
         auto const enable = *reinterpret_cast<VkBool32 const*> (
             reinterpret_cast<uint8_t const*> ( &features._features ) + probe.first
@@ -2017,12 +2017,12 @@ void Renderer::PrintPhysicalDeviceFeatureInfo ( VkPhysicalDevice physicalDevice 
 
     LogInfo ( "%sSupported:", INDENT_2 );
 
-    for ( auto& item : supportedFeatures )
+    for ( auto &item : supportedFeatures )
         LogInfo ( "%s%s", INDENT_3, item.data () );
 
     LogInfo ( "%sUnsupported:", INDENT_2 );
 
-    for ( auto& item : unsupportedFeatures )
+    for ( auto &item : unsupportedFeatures )
     {
         LogInfo ( "%s%s", INDENT_3, item.data () );
     }
@@ -2256,7 +2256,7 @@ void Renderer::PrintPhysicalDeviceMemoryProperties ( VkPhysicalDevice physicalDe
 
     for ( uint32_t i = 0U; i < _physicalDeviceMemoryProperties.memoryTypeCount; ++i )
     {
-        VkMemoryType const& type = _physicalDeviceMemoryProperties.memoryTypes[ i ];
+        VkMemoryType const &type = _physicalDeviceMemoryProperties.memoryTypes[ i ];
         LogInfo ( "%smemoryType: #%u", INDENT_2, i );
 
         PrintVkFlagsProp ( INDENT_3,
@@ -2273,7 +2273,7 @@ void Renderer::PrintPhysicalDeviceMemoryProperties ( VkPhysicalDevice physicalDe
 
     for ( uint32_t i = 0U; i < _physicalDeviceMemoryProperties.memoryHeapCount; ++i )
     {
-        VkMemoryHeap const& heap = _physicalDeviceMemoryProperties.memoryHeaps[ i ];
+        VkMemoryHeap const &heap = _physicalDeviceMemoryProperties.memoryHeaps[ i ];
 
         LogInfo ( "%smemoryHeap: #%u", INDENT_2, i );
         PrintSizeProp ( INDENT_3, "size", static_cast<size_t> ( heap.size ) );
@@ -2324,13 +2324,13 @@ bool Renderer::PrintPhysicalDeviceInfo ( uint32_t deviceIndex, VkPhysicalDevice 
     VkQueueFamilyProperties* queueFamilyPropList = queueFamilyProps.data ();
     vkGetPhysicalDeviceQueueFamilyProperties ( physicalDevice, &queueFamilyCount, queueFamilyPropList );
 
-    auto& info = _physicalDeviceInfo[ physicalDevice ];
-    auto& queueFamilies = info._queueFamilyInfo;
+    auto &info = _physicalDeviceInfo[ physicalDevice ];
+    auto &queueFamilies = info._queueFamilyInfo;
     queueFamilies.reserve ( static_cast<size_t> ( queueFamilyCount ) );
 
     for ( uint32_t i = 0U; i < queueFamilyCount; ++i )
     {
-        VkQueueFamilyProperties const& familyProps = queueFamilyPropList[ i ];
+        VkQueueFamilyProperties const &familyProps = queueFamilyPropList[ i ];
         PrintPhysicalDeviceQueueFamilyInfo ( i, familyProps );
         queueFamilies.emplace_back ( std::make_pair ( familyProps.queueFlags, familyProps.queueCount ) );
     }
@@ -2344,7 +2344,7 @@ bool Renderer::SelectTargetCompositeAlpha ( VkCompositeAlphaFlagBitsKHR &targetC
     constexpr VkCompositeAlphaFlagBitsKHR const priorityMode = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
 
     auto const findResult = _physicalDeviceInfo.find ( _physicalDevice );
-    VkSurfaceCapabilitiesKHR const& surfaceCapabilitiesKHR = findResult->second._surfaceCapabilities;
+    VkSurfaceCapabilitiesKHR const &surfaceCapabilitiesKHR = findResult->second._surfaceCapabilities;
 
     targetCompositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
 
@@ -2386,9 +2386,9 @@ bool Renderer::SelectTargetHardware ( VkPhysicalDevice &targetPhysicalDevice,
         AV_VK_FLAG ( VK_QUEUE_COMPUTE_BIT ) | AV_VK_FLAG ( VK_QUEUE_GRAPHICS_BIT )
     );
 
-    for ( auto const& device : _physicalDeviceInfo )
+    for ( auto const &device : _physicalDeviceInfo )
     {
-        auto const& queueFamilyInfo = device.second._queueFamilyInfo;
+        auto const &queueFamilyInfo = device.second._queueFamilyInfo;
         size_t const count = queueFamilyInfo.size ();
 
         for ( size_t i = 0U; i < count; ++i )
@@ -2474,7 +2474,7 @@ bool Renderer::SelectTargetSurfaceFormat ( VkFormat &targetColorFormat,
     {
         bool isFound = false;
 
-        for ( auto const& item : _surfaceFormats )
+        for ( auto const &item : _surfaceFormats )
         {
             if ( item.format != VK_FORMAT_R8G8B8A8_SRGB )
                 continue;
@@ -2594,7 +2594,7 @@ VkBool32 VKAPI_PTR Renderer::OnVulkanDebugUtils ( VkDebugUtilsMessageSeverityFla
 
         for ( uint32_t i = 1U; i < count; ++i )
         {
-            VkDebugUtilsObjectNameInfoEXT const& object = objects[ i ];
+            VkDebugUtilsObjectNameInfoEXT const &object = objects[ i ];
             dst += ", ";
             dst += object.pObjectName ? object.pObjectName : "[nullptr]";
         }
@@ -2613,7 +2613,7 @@ VkBool32 VKAPI_PTR Renderer::OnVulkanDebugUtils ( VkDebugUtilsMessageSeverityFla
 
         for ( uint32_t i = 1U; i < count; ++i )
         {
-            VkDebugUtilsLabelEXT const& label = labels[ i ];
+            VkDebugUtilsLabelEXT const &label = labels[ i ];
             dst += ", ";
             dst += label.pLabelName ? label.pLabelName : "[nullptr]";
         }
@@ -3050,7 +3050,7 @@ std::string Renderer::StringifyVkFlags ( VkFlags flags,
 
     for ( size_t i = 0U; i < flagSetCount; ++i )
     {
-        auto const& item = flagSet[ i ];
+        auto const &item = flagSet[ i ];
 
         if ( !( item.first & bitmask ) )
             continue;

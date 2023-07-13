@@ -1,6 +1,6 @@
-#include <av_assert.h>
-#include <ktx_media_container.h>
-#include "logger.h"
+#include <av_assert.hpp>
+#include <ktx_media_container.hpp>
+#include "logger.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -64,7 +64,7 @@ uint8_t KTXMediaContainer::GetMipCount () const
     return _mipCount;
 }
 
-MipInfo const& KTXMediaContainer::GetMip ( uint8_t mip ) const
+MipInfo const &KTXMediaContainer::GetMip ( uint8_t mip ) const
 {
     AV_ASSERT ( _format != VK_FORMAT_UNDEFINED )
     return _mips[ mip ];
@@ -91,7 +91,7 @@ bool KTXMediaContainer::Init ( char const* fileName )
         return false;
 
     uint8_t const* rawData = content.data ();
-    auto const& header = *reinterpret_cast<KTXHeader const*> ( rawData );
+    auto const &header = *reinterpret_cast<KTXHeader const*> ( rawData );
 
     if ( !CheckSignature ( header, fileName ) )
         return false;
@@ -156,7 +156,7 @@ void KTXMediaContainer::ExtractMips ( uint8_t const* rawData, size_t size, KTXHe
         uint32_t const mipSize = reader ( *reinterpret_cast<uint32_t const*> ( view ) );
         view += sizeof ( mipSize );
 
-        MipInfo& mip = _mips[ i ];
+        MipInfo &mip = _mips[ i ];
         mip._size = static_cast<VkDeviceSize> ( mipSize );
         mip._data = view;
         mip._resolution = resolution;

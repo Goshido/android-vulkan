@@ -1,7 +1,7 @@
-#include <pbr/sound_emitter_global_component.h>
-#include <pbr/script_engine.h>
-#include <av_assert.h>
-#include <logger.h>
+#include <pbr/sound_emitter_global_component.hpp>
+#include <pbr/script_engine.hpp>
+#include <av_assert.hpp>
+#include <logger.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -190,7 +190,7 @@ bool SoundEmitterGlobalComponent::Init ( lua_State &vm, android_vulkan::SoundMix
         }
     };
 
-    for ( auto const& extension : extensions )
+    for ( auto const &extension : extensions )
         lua_register ( &vm, extension.name, extension.func );
 
     _soundMixer = &soundMixer;
@@ -208,7 +208,7 @@ void SoundEmitterGlobalComponent::Destroy () noexcept
     _soundEmitters.clear ();
 }
 
-ComponentRef& SoundEmitterGlobalComponent::GetReference () noexcept
+ComponentRef &SoundEmitterGlobalComponent::GetReference () noexcept
 {
     auto findResult = _soundEmitters.find ( this );
     AV_ASSERT ( findResult != _soundEmitters.end () )
@@ -245,7 +245,7 @@ int SoundEmitterGlobalComponent::OnCreate ( lua_State* state )
 
 int SoundEmitterGlobalComponent::OnDestroy ( lua_State* state )
 {
-    auto& self = *static_cast<SoundEmitterGlobalComponent*> ( lua_touserdata ( state, 1 ) );
+    auto &self = *static_cast<SoundEmitterGlobalComponent*> ( lua_touserdata ( state, 1 ) );
     self._actor->DestroyComponent ( self );
     return 0;
 }
@@ -270,7 +270,7 @@ int SoundEmitterGlobalComponent::OnGetVolume ( lua_State* state )
         return 0;
     }
 
-    auto const& self = *static_cast<SoundEmitterGlobalComponent const*> ( lua_touserdata ( state, 1 ) );
+    auto const &self = *static_cast<SoundEmitterGlobalComponent const*> ( lua_touserdata ( state, 1 ) );
     lua_pushnumber ( state, static_cast<lua_Number> ( self.GetVolume () ) );
     return 1;
 }
@@ -283,7 +283,7 @@ int SoundEmitterGlobalComponent::OnIsPlaying ( lua_State* state )
         return 0;
     }
 
-    auto const& self = *static_cast<SoundEmitterGlobalComponent const*> ( lua_touserdata ( state, 1 ) );
+    auto const &self = *static_cast<SoundEmitterGlobalComponent const*> ( lua_touserdata ( state, 1 ) );
     lua_pushboolean ( state, self.IsPlaying () );
     return 1;
 }
@@ -296,7 +296,7 @@ int SoundEmitterGlobalComponent::OnPause ( lua_State* state )
         return 0;
     }
 
-    auto& self = *static_cast<SoundEmitterGlobalComponent*> ( lua_touserdata ( state, 1 ) );
+    auto &self = *static_cast<SoundEmitterGlobalComponent*> ( lua_touserdata ( state, 1 ) );
     lua_pushboolean ( state, self.Pause () );
     return 1;
 }
@@ -309,7 +309,7 @@ int SoundEmitterGlobalComponent::OnPlay ( lua_State* state )
         return 0;
     }
 
-    auto& self = *static_cast<SoundEmitterGlobalComponent*> ( lua_touserdata ( state, 1 ) );
+    auto &self = *static_cast<SoundEmitterGlobalComponent*> ( lua_touserdata ( state, 1 ) );
     lua_pushboolean ( state, self.Play () );
     return 1;
 }
@@ -331,14 +331,14 @@ int SoundEmitterGlobalComponent::OnSetSoundAsset ( lua_State* state )
         return 1;
     }
 
-    auto& self = *static_cast<SoundEmitterGlobalComponent*> ( lua_touserdata ( state, 1 ) );
+    auto &self = *static_cast<SoundEmitterGlobalComponent*> ( lua_touserdata ( state, 1 ) );
     lua_pushboolean ( state, self.SetSoundAsset ( std::string_view ( soundAsset, len ), lua_toboolean ( state, 3 ) ) );
     return 1;
 }
 
 int SoundEmitterGlobalComponent::OnSetVolume ( lua_State* state )
 {
-    auto& self = *static_cast<SoundEmitterGlobalComponent*> ( lua_touserdata ( state, 1 ) );
+    auto &self = *static_cast<SoundEmitterGlobalComponent*> ( lua_touserdata ( state, 1 ) );
     self.SetVolume ( static_cast<float> ( lua_tonumber ( state, 2 ) ) );
     return 0;
 }
@@ -351,7 +351,7 @@ int SoundEmitterGlobalComponent::OnStop ( lua_State* state )
         return 0;
     }
 
-    auto& self = *static_cast<SoundEmitterGlobalComponent*> ( lua_touserdata ( state, 1 ) );
+    auto &self = *static_cast<SoundEmitterGlobalComponent*> ( lua_touserdata ( state, 1 ) );
     lua_pushboolean ( state, self.Stop () );
     return 1;
 }

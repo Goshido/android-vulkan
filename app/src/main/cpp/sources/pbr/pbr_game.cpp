@@ -1,13 +1,13 @@
-#include <pbr/pbr_game.h>
-#include <pbr/actor_desc.h>
-#include <pbr/cube_map_manager.h>
-#include <pbr/material_manager.h>
-#include <pbr/mesh_manager.h>
-#include <pbr/renderable_component.h>
-#include <pbr/scene_desc.h>
-#include <av_assert.h>
-#include <gamepad.h>
-#include <trace.h>
+#include <pbr/pbr_game.hpp>
+#include <pbr/actor_desc.hpp>
+#include <pbr/cube_map_manager.hpp>
+#include <pbr/material_manager.hpp>
+#include <pbr/mesh_manager.hpp>
+#include <pbr/renderable_component.hpp>
+#include <pbr/scene_desc.hpp>
+#include <av_assert.hpp>
+#include <gamepad.hpp>
+#include <trace.hpp>
 
 
 namespace pbr {
@@ -44,13 +44,13 @@ bool PBRGame::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) n
     auto const dt = static_cast<float> ( deltaTime );
 
     _camera.Update ( dt );
-    GXMat4 const& cameraLocal = _camera.GetLocalMatrix ();
+    GXMat4 const &cameraLocal = _camera.GetLocalMatrix ();
     _renderSession.Begin ( cameraLocal, _camera.GetProjectionMatrix () );
 
-    for ( auto& component : _renderableComponents )
+    for ( auto &component : _renderableComponents )
     {
         // NOLINTNEXTLINE - downcast.
-        auto& renderableComponent = static_cast<RenderableComponent&> ( *component.get () );
+        auto &renderableComponent = static_cast<RenderableComponent &> ( *component.get () );
         renderableComponent.Submit ( _renderSession );
     }
 
@@ -106,7 +106,7 @@ bool PBRGame::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept
     resolution.width = ( resolution.width * RESOLUTION_SCALE_WIDTH / 100U );
     resolution.height = ( resolution.height * RESOLUTION_SCALE_HEIGHT / 100U );
 
-    VkExtent2D const& surfaceResolution = renderer.GetViewportResolution ();
+    VkExtent2D const &surfaceResolution = renderer.GetViewportResolution ();
 
     _camera.SetProjection ( GXDegToRad ( FIELD_OF_VIEW ),
         static_cast<float> ( surfaceResolution.width ) / static_cast<float> ( surfaceResolution.height ),
@@ -144,7 +144,7 @@ bool PBRGame::UploadGPUContent ( android_vulkan::Renderer &renderer ) noexcept
     if ( !file.LoadContent () )
         return false;
 
-    std::vector<uint8_t> const& content = file.GetContent ();
+    std::vector<uint8_t> const &content = file.GetContent ();
     uint8_t const* data = content.data ();
     auto const* sceneDesc = reinterpret_cast<SceneDesc const*> ( data );
 
@@ -232,10 +232,10 @@ bool PBRGame::UploadGPUContent ( android_vulkan::Renderer &renderer ) noexcept
     if ( !result )
         return false;
 
-    for ( auto& component : _renderableComponents )
+    for ( auto &component : _renderableComponents )
     {
         // NOLINTNEXTLINE - downcast.
-        auto& renderableComponent = static_cast<RenderableComponent&> ( *component.get () );
+        auto &renderableComponent = static_cast<RenderableComponent &> ( *component.get () );
         renderableComponent.FreeTransferResources ( renderer );
     }
 

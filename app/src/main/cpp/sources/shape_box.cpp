@@ -1,4 +1,4 @@
-#include <shape_box.h>
+#include <shape_box.hpp>
 
 
 namespace android_vulkan {
@@ -34,7 +34,7 @@ float ShapeBox::GetDepth () const noexcept
     return _size._data[ 2U ];
 }
 
-GXVec3 const& ShapeBox::GetSize () const noexcept
+GXVec3 const &ShapeBox::GetSize () const noexcept
 {
     return _size;
 }
@@ -74,7 +74,7 @@ GXVec3 ShapeBox::GetExtremePointWorld ( GXVec3 const &direction ) const noexcept
     GXVec3 alpha {};
     GXVec3 result {};
 
-    for ( auto const& v : _localGeometry )
+    for ( auto const &v : _localGeometry )
     {
         _transformWorld.MultiplyAsPoint ( alpha, v );
         float const dot = direction.DotProduct ( alpha );

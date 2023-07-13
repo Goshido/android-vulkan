@@ -1,4 +1,4 @@
-#include <pbr/reflection_local_program.h>
+#include <pbr/reflection_local_program.hpp>
 
 
 namespace pbr {
@@ -120,7 +120,7 @@ void ReflectionLocalProgram::Destroy ( VkDevice device ) noexcept
     DestroyShaderModules ( device );
 }
 
-Program::DescriptorSetInfo const& ReflectionLocalProgram::GetResourceInfo () const noexcept
+Program::DescriptorSetInfo const &ReflectionLocalProgram::GetResourceInfo () const noexcept
 {
     static DescriptorSetInfo const info
     {
@@ -186,7 +186,7 @@ VkPipelineColorBlendStateCreateInfo const* ReflectionLocalProgram::InitColorBlen
     VkPipelineColorBlendAttachmentState* attachments
 ) const noexcept
 {
-    VkPipelineColorBlendAttachmentState& hdrAccumulator = attachments[ 0U ];
+    VkPipelineColorBlendAttachmentState &hdrAccumulator = attachments[ 0U ];
     hdrAccumulator.blendEnable = VK_TRUE;
     hdrAccumulator.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
     hdrAccumulator.dstColorBlendFactor = VK_BLEND_FACTOR_ONE;
@@ -371,7 +371,7 @@ bool ReflectionLocalProgram::InitShaderInfo ( android_vulkan::Renderer &renderer
 
     AV_REGISTER_SHADER_MODULE ( "pbr::ReflectionLocalProgram::_fragmentShader" )
 
-    VkPipelineShaderStageCreateInfo& vertexStage = sourceInfo[ 0U ];
+    VkPipelineShaderStageCreateInfo &vertexStage = sourceInfo[ 0U ];
     vertexStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     vertexStage.pNext = nullptr;
     vertexStage.flags = 0U;
@@ -380,7 +380,7 @@ bool ReflectionLocalProgram::InitShaderInfo ( android_vulkan::Renderer &renderer
     vertexStage.pName = VERTEX_SHADER_ENTRY_POINT;
     vertexStage.pSpecializationInfo = nullptr;
 
-    VkPipelineShaderStageCreateInfo& fragmentStage = sourceInfo[ 1U ];
+    VkPipelineShaderStageCreateInfo &fragmentStage = sourceInfo[ 1U ];
     fragmentStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     fragmentStage.pNext = nullptr;
     fragmentStage.flags = 0U;

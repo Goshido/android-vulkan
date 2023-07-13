@@ -1,7 +1,7 @@
-#include <av_assert.h>
-#include <texture_cube.h>
-#include <ktx_media_container.h>
-#include <vulkan_utils.h>
+#include <av_assert.hpp>
+#include <texture_cube.hpp>
+#include <ktx_media_container.hpp>
+#include <vulkan_utils.hpp>
 
 
 namespace android_vulkan {
@@ -30,7 +30,7 @@ bool TextureCube::UploadData ( android_vulkan::Renderer &renderer,
     constexpr auto sideCount = static_cast<size_t> ( GetLayerCount () );
 
     KTXMediaContainer sides[ sideCount ];
-    KTXMediaContainer& sideXPlus = sides[ 0U ];
+    KTXMediaContainer &sideXPlus = sides[ 0U ];
 
     char const* files[ sideCount ] =
     {
@@ -49,11 +49,11 @@ bool TextureCube::UploadData ( android_vulkan::Renderer &renderer,
 
     uint8_t const mips = sideXPlus.GetMipCount ();
     VkFormat const format = sideXPlus.GetFormat ();
-    VkExtent2D const& resolution = sideXPlus.GetMip ( 0U )._resolution;
+    VkExtent2D const &resolution = sideXPlus.GetMip ( 0U )._resolution;
 
     for ( size_t i = 1U; i < sideCount; ++i )
     {
-        KTXMediaContainer& container = sides[ i ];
+        KTXMediaContainer &container = sides[ i ];
 
         if ( !container.Init ( files[ i ] ) )
             return false;
@@ -61,7 +61,7 @@ bool TextureCube::UploadData ( android_vulkan::Renderer &renderer,
         if ( mips != container.GetMipCount () || format != container.GetFormat () )
             return false;
 
-        VkExtent2D const& res = container.GetMip ( 0U )._resolution;
+        VkExtent2D const &res = container.GetMip ( 0U )._resolution;
 
         if ( resolution.width != res.width || resolution.height != res.height )
             return false;
@@ -131,11 +131,11 @@ bool TextureCube::UploadData ( android_vulkan::Renderer &renderer,
 
     VkDeviceSize offset = 0U;
 
-    for ( auto const& side : sides )
+    for ( auto const &side : sides )
     {
         for ( uint8_t mipIndex = 0U; mipIndex < mips; ++mipIndex )
         {
-            MipInfo const& mip = side.GetMip ( mipIndex );
+            MipInfo const &mip = side.GetMip ( mipIndex );
 
             std::memcpy ( static_cast<uint8_t*> ( destination ) + static_cast<size_t> ( offset ),
                 mip._data,
@@ -215,11 +215,11 @@ bool TextureCube::UploadData ( android_vulkan::Renderer &renderer,
         .z = 0
     };
 
-    VkImageSubresourceLayers& imageSubresource = copyRegion.imageSubresource;
+    VkImageSubresourceLayers &imageSubresource = copyRegion.imageSubresource;
     imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     imageSubresource.layerCount = 1U;
 
-    VkExtent3D& imageExtent = copyRegion.imageExtent;
+    VkExtent3D &imageExtent = copyRegion.imageExtent;
     imageExtent.depth = 1U;
 
     offset = 0U;
@@ -232,8 +232,8 @@ bool TextureCube::UploadData ( android_vulkan::Renderer &renderer,
         {
             imageSubresource.mipLevel = static_cast<uint32_t> ( mipIndex );
 
-            MipInfo const& mip = sides[ sideIndex ].GetMip ( mipIndex );
-            VkExtent2D const& mipRes = mip._resolution;
+            MipInfo const &mip = sides[ sideIndex ].GetMip ( mipIndex );
+            VkExtent2D const &mipRes = mip._resolution;
 
             imageExtent.width = mipRes.width;
             imageExtent.height = mipRes.height;
@@ -377,7 +377,7 @@ VkImageView TextureCube::GetImageView () const noexcept
     return _mipLevels;
 }
 
-[[maybe_unused]] VkExtent2D const& TextureCube::GetResolution () const noexcept
+[[maybe_unused]] VkExtent2D const &TextureCube::GetResolution () const noexcept
 {
     return _resolution;
 }

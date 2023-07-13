@@ -1,7 +1,7 @@
-#include <av_assert.h>
-#include <logger.h>
-#include <sound_emitter_spatial.h>
-#include <sound_mixer.h>
+#include <av_assert.hpp>
+#include <logger.hpp>
+#include <sound_emitter_spatial.hpp>
+#include <sound_mixer.hpp>
 
 
 namespace android_vulkan {
@@ -27,7 +27,7 @@ void SoundEmitterSpatial::FillPCM ( std::span<PCMStreamer::PCMType> buffer, floa
 {
     AV_ASSERT ( _streamer )
 
-    SoundListenerInfo const& listener = _mixer->GetListenerInfo ();
+    SoundListenerInfo const &listener = _mixer->GetListenerInfo ();
     GXVec3 soundDirection {};
     soundDirection.Subtract ( _location, listener._location );
 

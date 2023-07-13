@@ -1,4 +1,4 @@
-#include <gamepad.h>
+#include <gamepad.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -9,7 +9,7 @@ GX_RESTORE_WARNING_STATE
 
 namespace android_vulkan {
 
-Gamepad& Gamepad::GetInstance () noexcept
+Gamepad &Gamepad::GetInstance () noexcept
 {
     static Gamepad gamepad {};
     return gamepad;
@@ -23,7 +23,7 @@ void Gamepad::BindKey ( void* context, KeyHandler handler, eGamepadKey key, eBut
     {
         case eButtonState::Down:
         {
-            KeyBind& bind = _downKeyBinds[ static_cast<size_t> ( key ) ];
+            KeyBind &bind = _downKeyBinds[ static_cast<size_t> ( key ) ];
             bind._context = context;
             bind._handler = handler;
         }
@@ -31,7 +31,7 @@ void Gamepad::BindKey ( void* context, KeyHandler handler, eGamepadKey key, eBut
 
         case eButtonState::Up:
         {
-            KeyBind& bind = _upKeyBinds[ static_cast<size_t> ( key ) ];
+            KeyBind &bind = _upKeyBinds[ static_cast<size_t> ( key ) ];
             bind._context = context;
             bind._handler = handler;
         }
@@ -51,7 +51,7 @@ void Gamepad::UnbindKey ( eGamepadKey key, eButtonState state ) noexcept
     {
         case eButtonState::Down:
         {
-            KeyBind& bind = _downKeyBinds[ static_cast<size_t> ( key ) ];
+            KeyBind &bind = _downKeyBinds[ static_cast<size_t> ( key ) ];
             bind._context = nullptr;
             bind._handler = nullptr;
         }
@@ -59,7 +59,7 @@ void Gamepad::UnbindKey ( eGamepadKey key, eButtonState state ) noexcept
 
         case eButtonState::Up:
         {
-            KeyBind& bind = _upKeyBinds[ static_cast<size_t> ( key ) ];
+            KeyBind &bind = _upKeyBinds[ static_cast<size_t> ( key ) ];
             bind._context = nullptr;
             bind._handler = nullptr;
         }

@@ -1,6 +1,6 @@
-#include <logger.h>
-#include <pbr/html5_tag.h>
-#include <pbr/ascii_string.h>
+#include <logger.hpp>
+#include <pbr/html5_tag.hpp>
+#include <pbr/ascii_string.hpp>
 
 
 namespace pbr {

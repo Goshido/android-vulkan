@@ -1,4 +1,4 @@
-#include <pbr/stipple_program.h>
+#include <pbr/stipple_program.hpp>
 
 
 namespace pbr {

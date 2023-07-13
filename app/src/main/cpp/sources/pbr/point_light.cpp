@@ -1,5 +1,5 @@
-#include <pbr/point_light.h>
-#include <pbr/point_light_component_desc.h>
+#include <pbr/point_light.hpp>
+#include <pbr/point_light_component_desc.hpp>
 
 
 namespace pbr {
@@ -74,7 +74,7 @@ PointLight::PointLight ( GXVec3 const &hue,
     // NOTHING
 }
 
-GXAABB const& PointLight::GetBounds () const noexcept
+GXAABB const &PointLight::GetBounds () const noexcept
 {
     return _bounds;
 }
@@ -94,7 +94,7 @@ void PointLight::SetBoundDimensions ( GXVec3 const &dimensions ) noexcept
     _isNeedUpdate = true;
 }
 
-GXVec3 const& PointLight::GetHue () const noexcept
+GXVec3 const &PointLight::GetHue () const noexcept
 {
     return _hue;
 }
@@ -114,7 +114,7 @@ void PointLight::SetIntensity ( float intensity ) noexcept
     _intensity = intensity;
 }
 
-GXVec3 const& PointLight::GetLocation () const noexcept
+GXVec3 const &PointLight::GetLocation () const noexcept
 {
     return _location;
 }
@@ -125,7 +125,7 @@ void PointLight::SetLocation ( GXVec3 const &location ) noexcept
     _isNeedUpdate = true;
 }
 
-PointLight::Matrices const& PointLight::GetMatrices () noexcept
+PointLight::Matrices const &PointLight::GetMatrices () noexcept
 {
     if ( _isNeedUpdate )
         UpdateMatrices ();
@@ -133,7 +133,7 @@ PointLight::Matrices const& PointLight::GetMatrices () noexcept
     return _matrices;
 }
 
-GXMat4 const& PointLight::GetProjection () noexcept
+GXMat4 const &PointLight::GetProjection () noexcept
 {
     if ( _isNeedUpdate )
         UpdateMatrices ();

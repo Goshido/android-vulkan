@@ -1,4 +1,4 @@
-#include <pbr/sampler_manager.h>
+#include <pbr/sampler_manager.hpp>
 
 
 namespace pbr {
@@ -81,12 +81,12 @@ void SamplerManager::Destroy ( VkDevice device ) noexcept
     _pointSampler = nullptr;
 }
 
-SamplerRef const& SamplerManager::GetMaterialSampler () const noexcept
+SamplerRef const &SamplerManager::GetMaterialSampler () const noexcept
 {
     return _materialSampler;
 }
 
-SamplerRef const& SamplerManager::GetPointSampler () const noexcept
+SamplerRef const &SamplerManager::GetPointSampler () const noexcept
 {
     return _pointSampler;
 }

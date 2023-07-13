@@ -1,6 +1,6 @@
-#include <pbr/scriptable_gamepad.h>
-#include <pbr/script_engine.h>
-#include <logger.h>
+#include <pbr/scriptable_gamepad.hpp>
+#include <pbr/script_engine.hpp>
+#include <logger.hpp>
 
 
 namespace pbr {
@@ -47,7 +47,7 @@ ScriptableGamepad::ScriptableGamepad () noexcept
     setupKey ( android_vulkan::eGamepadKey::Y );
 
     auto setupAnalog = [ this ] ( eType type, AnalogContext* context, size_t idx ) noexcept {
-        AnalogContext& c = context[ idx ];
+        AnalogContext &c = context[ idx ];
         c._instance = this;
         c._type = type;
     };
@@ -61,9 +61,9 @@ ScriptableGamepad::ScriptableGamepad () noexcept
 
 void ScriptableGamepad::CaptureInput () noexcept
 {
-    android_vulkan::Gamepad& gamepad = android_vulkan::Gamepad::GetInstance ();
+    android_vulkan::Gamepad &gamepad = android_vulkan::Gamepad::GetInstance ();
 
-    for ( auto& c : _keyContexts )
+    for ( auto &c : _keyContexts )
         gamepad.BindKey ( &c, &ScriptableGamepad::OnKey, c._key, c._state );
 
     gamepad.BindLeftStick ( &_stickContexts[ LEFT_INDEX ], &ScriptableGamepad::OnStick );
@@ -75,9 +75,9 @@ void ScriptableGamepad::CaptureInput () noexcept
 
 void ScriptableGamepad::ReleaseInput () const noexcept
 {
-    android_vulkan::Gamepad& gamepad = android_vulkan::Gamepad::GetInstance ();
+    android_vulkan::Gamepad &gamepad = android_vulkan::Gamepad::GetInstance ();
 
-    for ( auto const& c : _keyContexts )
+    for ( auto const &c : _keyContexts )
         gamepad.UnbindKey ( c._key, c._state );
 
     gamepad.UnbindLeftStick ();
@@ -100,7 +100,7 @@ bool ScriptableGamepad::Execute ( lua_State &vm, int sceneHandleIndex, int onInp
         _readQueue.swap ( _writeQueue );
     }
 
-    for ( auto const& action : _readQueue )
+    for ( auto const &action : _readQueue )
     {
         ActionHandler const handler = _actionHandlers[ static_cast<size_t> ( action._type ) ];
 
@@ -292,9 +292,9 @@ bool ScriptableGamepad::AllocateTriggerInputEvent ( int &eventIndex, lua_State &
 
 void ScriptableGamepad::OnKey ( void* context ) noexcept
 {
-    auto const& ctx = *static_cast<KeyContext const*> ( context );
+    auto const &ctx = *static_cast<KeyContext const*> ( context );
 
-    ScriptableGamepad& gamepad = *ctx._instance;
+    ScriptableGamepad &gamepad = *ctx._instance;
     std::unique_lock<std::mutex> const lock ( gamepad._mutex );
 
     gamepad._writeQueue.emplace_back (
@@ -312,9 +312,9 @@ void ScriptableGamepad::OnKey ( void* context ) noexcept
 
 void ScriptableGamepad::OnStick ( void* context, float x, float y ) noexcept
 {
-    auto const& ctx = *static_cast<AnalogContext const*> ( context );
+    auto const &ctx = *static_cast<AnalogContext const*> ( context );
 
-    ScriptableGamepad& gamepad = *ctx._instance;
+    ScriptableGamepad &gamepad = *ctx._instance;
     std::unique_lock<std::mutex> const lock ( gamepad._mutex );
 
     gamepad._writeQueue.emplace_back (
@@ -333,9 +333,9 @@ void ScriptableGamepad::OnStick ( void* context, float x, float y ) noexcept
 
 void ScriptableGamepad::OnTrigger ( void* context, float value ) noexcept
 {
-    auto const& ctx = *static_cast<AnalogContext const*> ( context );
+    auto const &ctx = *static_cast<AnalogContext const*> ( context );
 
-    ScriptableGamepad& gamepad = *ctx._instance;
+    ScriptableGamepad &gamepad = *ctx._instance;
     std::unique_lock<std::mutex> const lock ( gamepad._mutex );
 
     gamepad._writeQueue.emplace_back (

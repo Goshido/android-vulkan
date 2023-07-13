@@ -1,14 +1,14 @@
-#include <pbr/component.h>
-#include <pbr/camera_component.h>
-#include <pbr/point_light_component.h>
-#include <pbr/reflection_component.h>
-#include <pbr/rigid_body_component.h>
-#include <pbr/script_component.h>
-#include <pbr/sound_emitter_global_component.h>
-#include <pbr/sound_emitter_spatial_component.h>
-#include <pbr/static_mesh_component.h>
-#include <pbr/transform_component.h>
-#include <av_assert.h>
+#include <pbr/component.hpp>
+#include <pbr/camera_component.hpp>
+#include <pbr/point_light_component.hpp>
+#include <pbr/reflection_component.hpp>
+#include <pbr/rigid_body_component.hpp>
+#include <pbr/script_component.hpp>
+#include <pbr/sound_emitter_global_component.hpp>
+#include <pbr/sound_emitter_spatial_component.hpp>
+#include <pbr/static_mesh_component.hpp>
+#include <pbr/transform_component.hpp>
+#include <av_assert.hpp>
 
 
 namespace pbr {
@@ -19,10 +19,10 @@ class Component::StaticInitializer final
         StaticInitializer () noexcept;
 
         StaticInitializer ( StaticInitializer const & ) = delete;
-        StaticInitializer& operator = ( StaticInitializer const & ) = delete;
+        StaticInitializer &operator = ( StaticInitializer const & ) = delete;
 
         StaticInitializer ( StaticInitializer && ) = delete;
-        StaticInitializer& operator = ( StaticInitializer && ) = delete;
+        StaticInitializer &operator = ( StaticInitializer && ) = delete;
 
         ~StaticInitializer () = default;
 };
@@ -59,7 +59,7 @@ ClassID Component::GetClassID () const noexcept
     return _classID;
 }
 
-std::string const& Component::GetName () const noexcept
+std::string const &Component::GetName () const noexcept
 {
     return _name;
 }
@@ -108,7 +108,7 @@ ComponentRef Component::CreateCamera ( android_vulkan::Renderer &/*renderer*/,
     dataRead = sizeof ( CameraComponentDesc );
 
     // NOLINTNEXTLINE - downcast.
-    auto const& d = static_cast<CameraComponentDesc const&> ( desc );
+    auto const &d = static_cast<CameraComponentDesc const &> ( desc );
 
     return std::make_shared<CameraComponent> ( d, data );
 }
@@ -124,7 +124,7 @@ ComponentRef Component::CreateStaticMesh ( android_vulkan::Renderer &renderer,
     dataRead = sizeof ( StaticMeshComponentDesc );
 
     // NOLINTNEXTLINE - downcast.
-    auto const& d = static_cast<StaticMeshComponentDesc const&> ( desc );
+    auto const &d = static_cast<StaticMeshComponentDesc const &> ( desc );
 
     bool success;
 
@@ -152,7 +152,7 @@ ComponentRef Component::CreatePointLight ( android_vulkan::Renderer &/*renderer*
     dataRead = sizeof ( PointLightComponentDesc );
 
     // NOLINTNEXTLINE - downcast.
-    auto const& d = static_cast<PointLightComponentDesc const&> ( desc );
+    auto const &d = static_cast<PointLightComponentDesc const &> ( desc );
 
     return std::make_shared<PointLightComponent> ( d, data );
 }
@@ -168,7 +168,7 @@ ComponentRef Component::CreateReflection ( android_vulkan::Renderer &renderer,
     dataRead = sizeof ( ReflectionComponentDesc );
 
     // NOLINTNEXTLINE - downcast.
-    auto const& d = static_cast<ReflectionComponentDesc const&> ( desc );
+    auto const &d = static_cast<ReflectionComponentDesc const &> ( desc );
 
     return std::make_shared<ReflectionComponent> ( renderer, commandBufferConsumed, d, data, commandBuffers );
 }
@@ -185,7 +185,7 @@ ComponentRef Component::CreateRigidBody ( android_vulkan::Renderer &/*renderer*/
     dataRead = sizeof ( RigidBodyComponentDesc );
 
     // NOLINTNEXTLINE - downcast.
-    auto const& d = static_cast<RigidBodyComponentDesc const&> ( desc );
+    auto const &d = static_cast<RigidBodyComponentDesc const &> ( desc );
 
     return std::make_shared<RigidBodyComponent> ( dataRead, d, data );
 }
@@ -202,7 +202,7 @@ ComponentRef Component::CreateScript ( android_vulkan::Renderer &/*renderer*/,
     dataRead = sizeof ( ScriptComponentDesc );
 
     // NOLINTNEXTLINE - downcast.
-    auto const& d = static_cast<ScriptComponentDesc const&> ( desc );
+    auto const &d = static_cast<ScriptComponentDesc const &> ( desc );
 
     return std::make_shared<ScriptComponent> ( d, data );
 }
@@ -219,7 +219,7 @@ ComponentRef Component::CreateSoundEmitterGlobal ( android_vulkan::Renderer &/*r
     dataRead = sizeof ( SoundEmitterGlobalComponentDesc );
 
     // NOLINTNEXTLINE - downcast.
-    auto const& d = static_cast<SoundEmitterGlobalComponentDesc const&> ( desc );
+    auto const &d = static_cast<SoundEmitterGlobalComponentDesc const &> ( desc );
 
     bool success;
     ComponentRef result = std::make_shared<SoundEmitterGlobalComponent> ( success, d, data );
@@ -238,7 +238,7 @@ ComponentRef Component::CreateSoundEmitterSpatial ( android_vulkan::Renderer &/*
     dataRead = sizeof ( SoundEmitterSpatialComponentDesc );
 
     // NOLINTNEXTLINE - downcast.
-    auto const& d = static_cast<SoundEmitterSpatialComponentDesc const&> ( desc );
+    auto const &d = static_cast<SoundEmitterSpatialComponentDesc const &> ( desc );
 
     bool success;
     ComponentRef result = std::make_shared<SoundEmitterSpatialComponent> ( success, d, data );
@@ -257,7 +257,7 @@ ComponentRef Component::CreateTransform ( android_vulkan::Renderer &/*renderer*/
     dataRead = sizeof ( TransformComponentDesc );
 
     // NOLINTNEXTLINE - downcast.
-    auto const& d = static_cast<TransformComponentDesc const&> ( desc );
+    auto const &d = static_cast<TransformComponentDesc const &> ( desc );
 
     return std::make_shared<TransformComponent> ( d, data );
 }
@@ -283,8 +283,8 @@ int Component::OnGetName ( lua_State* state )
         return 0;
     }
 
-    auto const& self = *static_cast<Component const*> ( lua_touserdata ( state, 1 ) );
-    std::string const& n = self._name;
+    auto const &self = *static_cast<Component const*> ( lua_touserdata ( state, 1 ) );
+    std::string const &n = self._name;
     lua_pushlstring ( state, n.c_str (), n.size () );
     return 1;
 }

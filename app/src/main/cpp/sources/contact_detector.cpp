@@ -1,5 +1,5 @@
-#include <contact_detector.h>
-#include <logger.h>
+#include <contact_detector.hpp>
+#include <logger.hpp>
 
 
 namespace android_vulkan {
@@ -29,11 +29,11 @@ ContactDetector::ContactDetector () noexcept:
 
 void ContactDetector::Check ( ContactManager &contactManager, RigidBodyRef const &a, RigidBodyRef const &b ) noexcept
 {
-    RigidBody& bodyA = *a;
-    RigidBody& bodyB = *b;
+    RigidBody &bodyA = *a;
+    RigidBody &bodyB = *b;
 
-    Shape const& shapeA = bodyA.GetShape ();
-    Shape const& shapeB = bodyB.GetShape ();
+    Shape const &shapeA = bodyA.GetShape ();
+    Shape const &shapeB = bodyB.GetShape ();
 
     if ( !( shapeA.GetCollisionGroups () & shapeB.GetCollisionGroups () ) )
         return;
@@ -135,14 +135,14 @@ ContactDetector::FirstContactData ContactDetector::AllocateFirstContact ( Contac
     float restitution
 ) const noexcept
 {
-    ContactManifold& manifold = contactManager.AllocateContactManifold ();
+    ContactManifold &manifold = contactManager.AllocateContactManifold ();
     manifold._bodyA = a;
     manifold._bodyB = b;
 
     manifold._epaSteps = _epa.GetSteps ();
     manifold._gjkSteps = _gjk.GetSteps ();
 
-    Contact& contact = contactManager.AllocateContact ( manifold );
+    Contact &contact = contactManager.AllocateContact ( manifold );
     contact._friction = friction;
     contact._restitution = restitution;
 
@@ -167,7 +167,7 @@ void ContactDetector::CollectForwardExtremePoints ( Vertices &vertices, Shape co
 {
     vertices.clear ();
 
-    for ( auto const& ray : _rays )
+    for ( auto const &ray : _rays )
     {
         AppendExtremePoint ( vertices, shape, tbn, ray );
     }
@@ -187,7 +187,7 @@ void ContactDetector::GenerateRays () noexcept
     for ( uint16_t i = 0U; i < RAY_COUNT; ++i )
     {
         angle = delta * static_cast<float> ( i );
-        GXVec3& ray = _rays.emplace_back ( std::cos ( angle ), std::sin ( angle ), 1.0F );
+        GXVec3 &ray = _rays.emplace_back ( std::cos ( angle ), std::sin ( angle ), 1.0F );
         ray.Multiply ( ray, s );
     }
 }
@@ -251,7 +251,7 @@ void ContactDetector::ManifoldEdgeEdge ( ContactManager &contactManager,
             return;
         }
 
-        Contact& anotherContact = contactManager.AllocateContact ( *manifold );
+        Contact &anotherContact = contactManager.AllocateContact ( *manifold );
         anotherContact._friction = friction;
         anotherContact._restitution = restitution;
         anotherContact._pointA.Sum ( _shapeAPoints[ 0U ], proj._data[ 1U ], aDir );
@@ -275,14 +275,14 @@ void ContactDetector::ManifoldEdgeEdge ( ContactManager &contactManager,
     anotherAxis.CrossProduct ( tmp, aDir );
 
     auto project = [ & ] ( GXVec2* dst, Vertices const &src, GXVec3 const &xAxis, GXVec3 const &yAxis ) noexcept {
-        GXVec3 const& s0 = src[ 0U ];
-        GXVec3 const& s1 = src[ 1U ];
+        GXVec3 const &s0 = src[ 0U ];
+        GXVec3 const &s1 = src[ 1U ];
 
-        GXVec2& d0 = dst[ 0U ];
+        GXVec2 &d0 = dst[ 0U ];
         d0._data[ 0U ] = xAxis.DotProduct ( s0 );
         d0._data[ 1U ] = yAxis.DotProduct ( s0 );
 
-        GXVec2& d1 = dst[ 1U ];
+        GXVec2 &d1 = dst[ 1U ];
         d1._data[ 0U ] = xAxis.DotProduct ( s1 );
         d1._data[ 1U ] = yAxis.DotProduct ( s1 );
     };
@@ -335,10 +335,10 @@ void ContactDetector::ManifoldEdgeFace ( ContactManager &contactManager,
         firstContactData = AllocateFirstContact ( contactManager, b, a, friction, restitution );
     }
 
-    auto& [manifold, firstContact] = firstContactData;
+    auto &[manifold, firstContact] = firstContactData;
 
-    Vertices const& edge = *e;
-    Vertices const& face = *f;
+    Vertices const &edge = *e;
+    Vertices const &face = *f;
 
     GXVec3 edgeDir {};
     edgeDir.Subtract ( edge[ 1U ], edge[ 0U ] );
@@ -353,7 +353,7 @@ void ContactDetector::ManifoldEdgeFace ( ContactManager &contactManager,
     faceNormal.CrossProduct ( ab, ac );
     faceNormal.Normalize ();
 
-    Vertices const& vertices = _cyrusBeck.Run ( face, faceNormal, edge, edgeDir );
+    Vertices const &vertices = _cyrusBeck.Run ( face, faceNormal, edge, edgeDir );
 
     GXVec3 alpha {};
     alpha.Subtract ( face[ 0U ], vertices[ 0U ] );
@@ -366,7 +366,7 @@ void ContactDetector::ManifoldEdgeFace ( ContactManager &contactManager,
         contact._pointB.Sum ( v, penetration, faceNormal );
         contact._penetration = penetration;
 
-        GXVec3& normal = contact._normal;
+        GXVec3 &normal = contact._normal;
         normal = faceNormal;
         normal.Reverse ();
 
@@ -398,7 +398,7 @@ void ContactDetector::ManifoldEdgeFace ( ContactManager &contactManager,
         return;
     }
 
-    Contact& targetContact = firstContactUsed ?
+    Contact &targetContact = firstContactUsed ?
         contactManager.AllocateContact ( *firstContactData.first ) : *firstContact;
 
     targetContact._friction = friction;
@@ -432,7 +432,7 @@ void ContactDetector::ManifoldFaceFace ( ContactManager &contactManager,
     bNormal.CrossProduct ( ab, ac );
     bNormal.Normalize();
 
-    SutherlandHodgmanResult const& result = _sutherlandHodgman.Run ( _shapeAPoints, aNormal, _shapeBPoints, bNormal );
+    SutherlandHodgmanResult const &result = _sutherlandHodgman.Run ( _shapeAPoints, aNormal, _shapeBPoints, bNormal );
 
     if ( result.empty () )
     {
@@ -444,7 +444,7 @@ void ContactDetector::ManifoldFaceFace ( ContactManager &contactManager,
     bool isFirst = true;
 
     auto makeBasis = [] ( Contact &contact, GXVec3 const &aPoint, GXVec3 const &bPoint ) noexcept {
-        GXVec3& normal = contact._normal;
+        GXVec3 &normal = contact._normal;
         normal.Subtract ( aPoint, bPoint );
         normal.Normalize ();
 
@@ -454,7 +454,7 @@ void ContactDetector::ManifoldFaceFace ( ContactManager &contactManager,
         basis.GetY ( contact._bitangent );
     };
 
-    for ( auto const& [aPoint, bPoint] : result )
+    for ( auto const &[aPoint, bPoint] : result )
     {
         if ( isFirst )
         {
@@ -466,7 +466,7 @@ void ContactDetector::ManifoldFaceFace ( ContactManager &contactManager,
             continue;
         }
 
-        Contact& anotherContact = contactManager.AllocateContact ( *manifold );
+        Contact &anotherContact = contactManager.AllocateContact ( *manifold );
         anotherContact._friction = friction;
         anotherContact._restitution = restitution;
         anotherContact._pointA = aPoint;

@@ -1,4 +1,4 @@
-#include <pbr/font_family_property.h>
+#include <pbr/font_family_property.hpp>
 
 
 namespace pbr {
@@ -10,7 +10,7 @@ FontFamilyProperty::FontFamilyProperty ( std::u32string &&value ) noexcept:
     // NOTHING
 }
 
-std::u32string const& FontFamilyProperty::GetValue () const noexcept
+std::u32string const &FontFamilyProperty::GetValue () const noexcept
 {
     return _value;
 }

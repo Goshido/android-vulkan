@@ -1,4 +1,4 @@
-#include <pbr/light_lightup_base_program.h>
+#include <pbr/light_lightup_base_program.hpp>
 
 
 namespace pbr {

@@ -1,4 +1,4 @@
-#include <pbr/color_value.h>
+#include <pbr/color_value.hpp>
 
 
 namespace pbr {
@@ -10,7 +10,7 @@ ColorValue::ColorValue ( bool inherit, GXColorRGB const &value ) noexcept:
     // NOTHING
 }
 
-GXColorRGB const& ColorValue::GetValue () const noexcept
+GXColorRGB const &ColorValue::GetValue () const noexcept
 {
     return _value;
 }

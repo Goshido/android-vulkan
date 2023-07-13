@@ -1,8 +1,8 @@
-#include <pbr/transform_component.h>
-#include <pbr/script_engine.h>
-#include <pbr/scriptable_gxmat4.h>
-#include <av_assert.h>
-#include <guid_generator.h>
+#include <pbr/transform_component.hpp>
+#include <pbr/script_engine.hpp>
+#include <pbr/scriptable_gxmat4.hpp>
+#include <av_assert.hpp>
+#include <guid_generator.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -83,13 +83,13 @@ bool TransformComponent::Init ( lua_State &vm ) noexcept
         }
     };
 
-    for ( auto const& extension : extensions )
+    for ( auto const &extension : extensions )
         lua_register ( &vm, extension.name, extension.func );
 
     return true;
 }
 
-ComponentRef& TransformComponent::GetReference () noexcept
+ComponentRef &TransformComponent::GetReference () noexcept
 {
     // TODO
     static ComponentRef dummy {};
@@ -104,7 +104,7 @@ int TransformComponent::OnCreate ( lua_State* /*state*/ )
 
 int TransformComponent::OnGetTransform ( lua_State* state )
 {
-    auto const& self = *static_cast<TransformComponent const*> ( lua_touserdata ( state, 1 ) );
+    auto const &self = *static_cast<TransformComponent const*> ( lua_touserdata ( state, 1 ) );
     ScriptableGXMat4::Extract ( state, 2 ) = self._local;
     return 0;
 }

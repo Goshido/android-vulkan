@@ -1,9 +1,9 @@
-#include <pbr/opaque_subpass.h>
+#include <pbr/opaque_subpass.hpp>
 
 
 namespace pbr {
 
-SceneData& OpaqueSubpass::GetSceneData () noexcept
+SceneData &OpaqueSubpass::GetSceneData () noexcept
 {
     return _sceneData;
 }
@@ -52,20 +52,20 @@ void OpaqueSubpass::UpdateGPUData ( VkCommandBuffer commandBuffer,
     if ( _sceneData.empty () )
         return;
 
-    for ( auto const& [material, call] : _sceneData )
-        materialPool.Push ( const_cast<GeometryPassMaterial&> ( material ) );
+    for ( auto const &[material, call] : _sceneData )
+        materialPool.Push ( const_cast<GeometryPassMaterial &> ( material ) );
 
     GeometryPassProgram::InstanceData instanceData {};
 
-    for ( auto const& call : _sceneData )
+    for ( auto const &call : _sceneData )
     {
-        GeometryCall const& geometryCall = call.second;
+        GeometryCall const &geometryCall = call.second;
 
-        for ( auto const& [mesh, geometryData] : geometryCall.GetUniqueList () )
+        for ( auto const &[mesh, geometryData] : geometryCall.GetUniqueList () )
         {
-            GeometryPassProgram::ObjectData& objectData = instanceData._instanceData[ 0U ];
-            GXMat4 const& local = geometryData._local;
-            auto& uniqueGeometryData = const_cast<GeometryData&> ( geometryData );
+            GeometryPassProgram::ObjectData &objectData = instanceData._instanceData[ 0U ];
+            GXMat4 const &local = geometryData._local;
+            auto &uniqueGeometryData = const_cast<GeometryData &> ( geometryData );
 
             if ( !frustum.IsVisible ( uniqueGeometryData._worldBounds ) )
             {
@@ -84,12 +84,12 @@ void OpaqueSubpass::UpdateGPUData ( VkCommandBuffer commandBuffer,
             uniformPool.Push ( commandBuffer, instanceData._instanceData, sizeof ( GeometryPassProgram::ObjectData ) );
         }
 
-        for ( auto const& item : geometryCall.GetBatchList () )
+        for ( auto const &item : geometryCall.GetBatchList () )
         {
-            MeshGroup const& group = item.second;
+            MeshGroup const &group = item.second;
             size_t instanceIndex = 0U;
 
-            for ( auto const& opaqueData : group._geometryData )
+            for ( auto const &opaqueData : group._geometryData )
             {
                 if ( instanceIndex >= PBR_OPAQUE_MAX_INSTANCE_COUNT )
                 {
@@ -97,7 +97,7 @@ void OpaqueSubpass::UpdateGPUData ( VkCommandBuffer commandBuffer,
                     instanceIndex = 0U;
                 }
 
-                auto& batchGeometryData = const_cast<GeometryData&> ( opaqueData );
+                auto &batchGeometryData = const_cast<GeometryData &> ( opaqueData );
 
                 if ( !frustum.IsVisible ( batchGeometryData._worldBounds ) )
                 {
@@ -105,8 +105,8 @@ void OpaqueSubpass::UpdateGPUData ( VkCommandBuffer commandBuffer,
                     continue;
                 }
 
-                GeometryPassProgram::ObjectData& objectData = instanceData._instanceData[ instanceIndex++ ];
-                GXMat4 const& local = opaqueData._local;
+                GeometryPassProgram::ObjectData &objectData = instanceData._instanceData[ instanceIndex++ ];
+                GXMat4 const &local = opaqueData._local;
                 batchGeometryData._isVisible = true;
 
                 objectData._localView.Multiply ( local, view );

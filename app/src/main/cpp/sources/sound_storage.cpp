@@ -1,5 +1,5 @@
-#include <file.h>
-#include <sound_storage.h>
+#include <file.hpp>
+#include <sound_storage.hpp>
 
 
 namespace android_vulkan {
@@ -29,7 +29,7 @@ void SoundStorage::Trim () noexcept
 
     for ( auto i = _storage.cbegin (); i != _storage.cend (); )
     {
-        auto const& soundFile = i->second;
+        auto const &soundFile = i->second;
 
         if ( soundFile.use_count () > 1 )
         {

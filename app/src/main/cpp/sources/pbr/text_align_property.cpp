@@ -1,4 +1,4 @@
-#include <pbr/text_align_property.h>
+#include <pbr/text_align_property.hpp>
 
 
 namespace pbr {

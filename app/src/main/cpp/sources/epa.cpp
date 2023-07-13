@@ -1,5 +1,5 @@
-#include <epa.h>
-#include <logger.h>
+#include <epa.hpp>
+#include <logger.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -24,7 +24,7 @@ Face::Face ( size_t a, size_t b, size_t c, Vertices const &vertices ) noexcept:
     _c ( c ),
     _normal {}
 {
-    GXVec3 const& pointA = vertices[ a ];
+    GXVec3 const &pointA = vertices[ a ];
 
     GXVec3 ab {};
     ab.Subtract ( vertices[ b ], pointA );
@@ -56,7 +56,7 @@ float EPA::GetDepth () const noexcept
     return _depth;
 }
 
-GXVec3 const& EPA::GetNormal () const noexcept
+GXVec3 const &EPA::GetNormal () const noexcept
 {
     return _normal;
 }
@@ -95,7 +95,7 @@ bool EPA::Run ( Simplex const &simplex, Shape const &shapeA, Shape const &shapeB
 
     for ( ; _steps < MAXIMUM_STEPS; ++_steps )
     {
-        Face const& face = _faces[ closestFace ];
+        Face const &face = _faces[ closestFace ];
         GXVec3 const supportPoint = Shape::FindSupportPoint ( face._normal, shapeA, shapeB );
 
         GXVec3 sp {};
@@ -123,7 +123,7 @@ bool EPA::Run ( Simplex const &simplex, Shape const &shapeA, Shape const &shapeB
 
         for ( size_t i = 0U; i < _faces.size (); )
         {
-            Face& f = _faces[ i ];
+            Face &f = _faces[ i ];
 
             GXVec3 probe {};
             probe.Subtract ( supportPoint, _vertices[ f._a ] );
@@ -170,8 +170,8 @@ bool EPA::Run ( Simplex const &simplex, Shape const &shapeA, Shape const &shapeB
 
         for ( size_t i = 0U; i < edgeCount; ++i )
         {
-            Edge const& edge = _edges[ i ];
-            Face const& f = _faces.emplace_back ( edge.first, edge.second, idx, _vertices );
+            Edge const &edge = _edges[ i ];
+            Face const &f = _faces.emplace_back ( edge.first, edge.second, idx, _vertices );
             float const d = f._normal.DotProduct ( _vertices[ f._a ] );
 
             if ( d >= distance )
@@ -260,14 +260,14 @@ EPA::FindResult EPA::FindClosestFace () noexcept
     Face const* faces = _faces.data ();
     size_t const faceCount = _faces.size ();
 
-    Face const& firstFace = faces[ 0U ];
+    Face const &firstFace = faces[ 0U ];
 
     FindResult result = std::make_pair ( 0U, firstFace._normal.DotProduct ( vertices[ firstFace._a ] ) );
-    auto& [closestFace, distance] = result;
+    auto &[closestFace, distance] = result;
 
     for ( size_t i = 1U; i < faceCount; ++i )
     {
-        Face const& face = faces[ i ];
+        Face const &face = faces[ i ];
         float const d = face._normal.DotProduct ( vertices[ face._a ] );
 
         if ( d >= distance )

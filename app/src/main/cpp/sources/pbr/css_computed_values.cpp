@@ -1,10 +1,10 @@
-#include <av_assert.h>
-#include <logger.h>
-#include <pbr/color_property.h>
-#include <pbr/css_computed_values.h>
-#include <pbr/font_family_property.h>
-#include <pbr/length_property.h>
-#include <pbr/utf8_parser.h>
+#include <av_assert.hpp>
+#include <logger.hpp>
+#include <pbr/color_property.hpp>
+#include <pbr/css_computed_values.hpp>
+#include <pbr/font_family_property.hpp>
+#include <pbr/length_property.hpp>
+#include <pbr/utf8_parser.hpp>
 
 
 namespace pbr {
@@ -16,7 +16,7 @@ class ApplyHandlers final
     private:
         using Handler = bool ( * ) ( char const* html,
             CSSComputedValues &target,
-            Property const& property,
+            Property const &property,
             char const* kind,
             std::u32string const &name,
             CSSParser const &css
@@ -29,16 +29,16 @@ class ApplyHandlers final
         ApplyHandlers () noexcept;
 
         ApplyHandlers ( ApplyHandlers const & ) = delete;
-        ApplyHandlers& operator = ( ApplyHandlers const & ) = delete;
+        ApplyHandlers &operator = ( ApplyHandlers const & ) = delete;
 
         ApplyHandlers ( ApplyHandlers && ) = delete;
-        ApplyHandlers& operator = ( ApplyHandlers && ) = delete;
+        ApplyHandlers &operator = ( ApplyHandlers && ) = delete;
 
         ~ApplyHandlers () = default;
 
         [[nodiscard]] static bool Handle ( char const* html,
             CSSComputedValues &target,
-            Property const& property,
+            Property const &property,
             char const* kind,
             std::u32string const &name,
             CSSParser const &css
@@ -272,7 +272,7 @@ ApplyHandlers::ApplyHandlers () noexcept
 
 bool ApplyHandlers::Handle ( char const* html,
     CSSComputedValues &target,
-    Property const& property,
+    Property const &property,
     char const* kind,
     std::u32string const &name,
     CSSParser const &css
@@ -290,7 +290,7 @@ bool ApplyHandlers::HandleBackgroundColor ( char const* /*html*/,
 ) noexcept
 {
     // NOLINTNEXTLINE - downcast.
-    target._backgroundColor = static_cast<ColorProperty const&> ( property ).GetValue ();
+    target._backgroundColor = static_cast<ColorProperty const &> ( property ).GetValue ();
     return true;
 }
 
@@ -303,7 +303,7 @@ bool ApplyHandlers::HandleBackgroundSize ( char const* /*html*/,
 ) noexcept
 {
     // NOLINTNEXTLINE - downcast.
-    target._backgroundSize = static_cast<LengthProperty const&> ( property ).GetValue ();
+    target._backgroundSize = static_cast<LengthProperty const &> ( property ).GetValue ();
     return true;
 }
 
@@ -316,7 +316,7 @@ bool ApplyHandlers::HandleBottom ( char const* /*html*/,
 ) noexcept
 {
     // NOLINTNEXTLINE - downcast.
-    target._bottom = static_cast<LengthProperty const&> ( property ).GetValue ();
+    target._bottom = static_cast<LengthProperty const &> ( property ).GetValue ();
     return true;
 }
 
@@ -329,7 +329,7 @@ bool ApplyHandlers::HandleColor ( char const* /*html*/,
 ) noexcept
 {
     // NOLINTNEXTLINE - downcast.
-    target._color = static_cast<ColorProperty const&> ( property ).GetValue ();
+    target._color = static_cast<ColorProperty const &> ( property ).GetValue ();
     return true;
 }
 
@@ -342,7 +342,7 @@ bool ApplyHandlers::HandleDisplay ( char const* /*html*/,
 ) noexcept
 {
     // NOLINTNEXTLINE - downcast.
-    target._display = static_cast<DisplayProperty const&> ( property ).GetValue ();
+    target._display = static_cast<DisplayProperty const &> ( property ).GetValue ();
     return true;
 }
 
@@ -377,9 +377,9 @@ bool ApplyHandlers::HandleFontFamily ( char const* html,
 ) noexcept
 {
     // NOLINTNEXTLINE - downcast.
-    std::u32string const& fontFamily = static_cast<FontFamilyProperty const&> ( property ).GetValue ();
+    std::u32string const &fontFamily = static_cast<FontFamilyProperty const &> ( property ).GetValue ();
 
-    auto const& fontFile = css.FindFontFile ( fontFamily );
+    auto const &fontFile = css.FindFontFile ( fontFamily );
 
     if ( !fontFile )
     {
@@ -408,7 +408,7 @@ bool ApplyHandlers::HandleFontSize ( char const* /*html*/,
 ) noexcept
 {
     // NOLINTNEXTLINE - downcast.
-    target._fontSize = static_cast<LengthProperty const&> ( property ).GetValue ();
+    target._fontSize = static_cast<LengthProperty const &> ( property ).GetValue ();
     return true;
 }
 
@@ -421,7 +421,7 @@ bool ApplyHandlers::HandleHeight ( char const* /*html*/,
 ) noexcept
 {
     // NOLINTNEXTLINE - downcast.
-    target._height = static_cast<LengthProperty const&> ( property ).GetValue ();
+    target._height = static_cast<LengthProperty const &> ( property ).GetValue ();
     return true;
 }
 
@@ -434,7 +434,7 @@ bool ApplyHandlers::HandleLeft ( char const* /*html*/,
 ) noexcept
 {
     // NOLINTNEXTLINE - downcast.
-    target._left = static_cast<LengthProperty const&> ( property ).GetValue ();
+    target._left = static_cast<LengthProperty const &> ( property ).GetValue ();
     return true;
 }
 
@@ -447,7 +447,7 @@ bool ApplyHandlers::HandleMarginBottom ( char const* /*html*/,
 ) noexcept
 {
     // NOLINTNEXTLINE - downcast.
-    target._marginBottom = static_cast<LengthProperty const&> ( property ).GetValue ();
+    target._marginBottom = static_cast<LengthProperty const &> ( property ).GetValue ();
     return true;
 }
 
@@ -460,7 +460,7 @@ bool ApplyHandlers::HandleMarginLeft ( char const* /*html*/,
 ) noexcept
 {
     // NOLINTNEXTLINE - downcast.
-    target._marginLeft = static_cast<LengthProperty const&> ( property ).GetValue ();
+    target._marginLeft = static_cast<LengthProperty const &> ( property ).GetValue ();
     return true;
 }
 
@@ -473,7 +473,7 @@ bool ApplyHandlers::HandleMarginRight ( char const* /*html*/,
 ) noexcept
 {
     // NOLINTNEXTLINE - downcast.
-    target._marginRight = static_cast<LengthProperty const&> ( property ).GetValue ();
+    target._marginRight = static_cast<LengthProperty const &> ( property ).GetValue ();
     return true;
 }
 
@@ -486,7 +486,7 @@ bool ApplyHandlers::HandleMarginTop ( char const* /*html*/,
 ) noexcept
 {
     // NOLINTNEXTLINE - downcast.
-    target._marginTop = static_cast<LengthProperty const&> ( property ).GetValue ();
+    target._marginTop = static_cast<LengthProperty const &> ( property ).GetValue ();
     return true;
 }
 
@@ -499,7 +499,7 @@ bool ApplyHandlers::HandlePaddingBottom ( char const* /*html*/,
 ) noexcept
 {
     // NOLINTNEXTLINE - downcast.
-    target._paddingBottom = static_cast<LengthProperty const&> ( property ).GetValue ();
+    target._paddingBottom = static_cast<LengthProperty const &> ( property ).GetValue ();
     return true;
 }
 
@@ -512,7 +512,7 @@ bool ApplyHandlers::HandlePaddingLeft ( char const* /*html*/,
 ) noexcept
 {
     // NOLINTNEXTLINE - downcast.
-    target._paddingLeft = static_cast<LengthProperty const&> ( property ).GetValue ();
+    target._paddingLeft = static_cast<LengthProperty const &> ( property ).GetValue ();
     return true;
 }
 
@@ -525,7 +525,7 @@ bool ApplyHandlers::HandlePaddingRight ( char const* /*html*/,
 ) noexcept
 {
     // NOLINTNEXTLINE - downcast.
-    target._paddingRight = static_cast<LengthProperty const&> ( property ).GetValue ();
+    target._paddingRight = static_cast<LengthProperty const &> ( property ).GetValue ();
     return true;
 }
 
@@ -538,7 +538,7 @@ bool ApplyHandlers::HandlePaddingTop ( char const* /*html*/,
 ) noexcept
 {
     // NOLINTNEXTLINE - downcast.
-    target._paddingTop = static_cast<LengthProperty const&> ( property ).GetValue ();
+    target._paddingTop = static_cast<LengthProperty const &> ( property ).GetValue ();
     return true;
 }
 
@@ -551,7 +551,7 @@ bool ApplyHandlers::HandlePosition ( char const* /*html*/,
 ) noexcept
 {
     // NOLINTNEXTLINE - downcast.
-    target._position = static_cast<PositionProperty const&> ( property ).GetValue ();
+    target._position = static_cast<PositionProperty const &> ( property ).GetValue ();
     return true;
 }
 
@@ -564,7 +564,7 @@ bool ApplyHandlers::HandleRight ( char const* /*html*/,
 ) noexcept
 {
     // NOLINTNEXTLINE - downcast.
-    target._right = static_cast<LengthProperty const&> ( property ).GetValue ();
+    target._right = static_cast<LengthProperty const &> ( property ).GetValue ();
     return true;
 }
 
@@ -577,7 +577,7 @@ bool ApplyHandlers::HandleTextAlign ( char const* /*html*/,
 ) noexcept
 {
     // NOLINTNEXTLINE - downcast.
-    target._textAlign = static_cast<TextAlignProperty const&> ( property ).GetValue ();
+    target._textAlign = static_cast<TextAlignProperty const &> ( property ).GetValue ();
     return true;
 }
 
@@ -590,7 +590,7 @@ bool ApplyHandlers::HandleTop ( char const* /*html*/,
 ) noexcept
 {
     // NOLINTNEXTLINE - downcast.
-    target._top = static_cast<LengthProperty const&> ( property ).GetValue ();
+    target._top = static_cast<LengthProperty const &> ( property ).GetValue ();
     return true;
 }
 
@@ -603,7 +603,7 @@ bool ApplyHandlers::HandleVerticalAlign ( char const* /*html*/,
 ) noexcept
 {
     // NOLINTNEXTLINE - downcast.
-    target._verticalAlign = static_cast<VerticalAlignProperty const&> ( property ).GetValue ();
+    target._verticalAlign = static_cast<VerticalAlignProperty const &> ( property ).GetValue ();
     return true;
 }
 
@@ -616,7 +616,7 @@ bool ApplyHandlers::HandleWidth ( char const* /*html*/,
 ) noexcept
 {
     // NOLINTNEXTLINE - downcast.
-    target._width = static_cast<LengthProperty const&> ( property ).GetValue ();
+    target._width = static_cast<LengthProperty const &> ( property ).GetValue ();
     return true;
 }
 
@@ -632,7 +632,7 @@ bool CSSComputedValues::ApplyCSS ( char const* html,
     std::u32string const &id
 ) noexcept
 {
-    for ( auto const& cls : classes )
+    for ( auto const &cls : classes )
     {
         auto const target = css.FindClass ( cls );
 
@@ -648,9 +648,9 @@ bool CSSComputedValues::ApplyCSS ( char const* html,
             return false;
         }
 
-        auto const& props = *target.value ();
+        auto const &props = *target.value ();
 
-        for ( auto const& prop : props )
+        for ( auto const &prop : props )
         {
             if ( !g_ApplyHandlers.Handle ( html, *this, *prop, "class", cls, css ) )
             {
@@ -664,10 +664,10 @@ bool CSSComputedValues::ApplyCSS ( char const* html,
     if ( !target )
         return true;
 
-    auto const& props = *target.value ();
+    auto const &props = *target.value ();
 
     // NOLINTNEXTLINE - replace loop by range-for.
-    for ( auto const& prop : props )
+    for ( auto const &prop : props )
     {
         if ( !g_ApplyHandlers.Handle ( html, *this, *prop, "ID", id, css ) )
         {

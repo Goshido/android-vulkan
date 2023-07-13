@@ -1,7 +1,7 @@
 #ifdef ANDROID_ENABLE_TRACE
 
-#include <trace.h>
-#include <GXCommon/GXWarning.h>
+#include <trace.hpp>
+#include <GXCommon/GXWarning.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

@@ -1,7 +1,7 @@
-#include <pbr/font_storage.h>
-#include <file.h>
-#include <logger.h>
-#include <vulkan_utils.h>
+#include <pbr/font_storage.hpp>
+#include <file.hpp>
+#include <logger.hpp>
+#include <vulkan_utils.hpp>
 
 
 namespace pbr {
@@ -130,7 +130,7 @@ bool FontStorage::Atlas::AddLayers ( android_vulkan::Renderer &renderer,
     uint32_t layers
 ) noexcept
 {
-    ImageResource& oldResource = _dyingResources[ swapchainImageIndex ];
+    ImageResource &oldResource = _dyingResources[ swapchainImageIndex ];
     oldResource = _resource;
     uint32_t const layerCount = _layers + layers;
 
@@ -253,7 +253,7 @@ void FontStorage::Atlas::Init ( uint32_t side, size_t swapchainImages ) noexcept
 
 void FontStorage::Atlas::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 {
-    for ( ImageResource& imageResource : _dyingResources )
+    for ( ImageResource &imageResource : _dyingResources )
         FreeImageResource ( renderer, imageResource );
 
     FreeImageResource ( renderer, _resource );
@@ -572,23 +572,23 @@ std::optional<FontStorage::Font> FontStorage::GetFont ( std::string_view font, u
     return status.first;
 }
 
-FontStorage::GlyphInfo const& FontStorage::GetOpaqueGlyphInfo () const noexcept
+FontStorage::GlyphInfo const &FontStorage::GetOpaqueGlyphInfo () const noexcept
 {
     return _opaqueGlyph;
 }
 
-FontStorage::GlyphInfo const& FontStorage::GetTransparentGlyphInfo () const noexcept
+FontStorage::GlyphInfo const &FontStorage::GetTransparentGlyphInfo () const noexcept
 {
     return _transparentGlyph;
 }
 
-FontStorage::GlyphInfo const& FontStorage::GetGlyphInfo ( android_vulkan::Renderer &renderer,
+FontStorage::GlyphInfo const &FontStorage::GetGlyphInfo ( android_vulkan::Renderer &renderer,
     Font font,
     char32_t character
 ) noexcept
 {
-    FontData& fontData = font->second;
-    GlyphStorage& glyphs = fontData._glyphs;
+    FontData &fontData = font->second;
+    GlyphStorage &glyphs = fontData._glyphs;
 
     if ( auto const glyph = glyphs.find ( character ); glyph != glyphs.cend () )
         return glyph->second;
@@ -646,8 +646,8 @@ bool FontStorage::UploadGPUData ( android_vulkan::Renderer &renderer,
     else
     {
         // It's needed to add one more layer if full buffer in the front starts from top left corner.
-        StagingBuffer const& sb = _fullStagingBuffers.front ();
-        Line const& l = sb._startLine;
+        StagingBuffer const &sb = _fullStagingBuffers.front ();
+        Line const &l = sb._startLine;
         newLayers += _fullStagingBuffers.size () + static_cast<size_t> ( l._x == 0U & l._y == 0U );
     }
 
@@ -776,7 +776,7 @@ void FontStorage::DestroyAtlas ( android_vulkan::Renderer &renderer ) noexcept
     _atlas.Destroy ( renderer );
 
     auto const clear = [ & ] ( auto &buffers ) noexcept {
-        for ( auto& buffer : buffers )
+        for ( auto &buffer : buffers )
             buffer.Destroy ( renderer );
 
         buffers.clear ();
@@ -789,7 +789,7 @@ void FontStorage::DestroyAtlas ( android_vulkan::Renderer &renderer ) noexcept
     _fonts.clear ();
 }
 
-FontStorage::GlyphInfo const& FontStorage::EmbedGlyph ( android_vulkan::Renderer &renderer,
+FontStorage::GlyphInfo const &FontStorage::EmbedGlyph ( android_vulkan::Renderer &renderer,
     GlyphStorage &glyphs,
     FT_Face face,
     uint32_t fontSize,
@@ -966,7 +966,7 @@ std::optional<FontStorage::FontResource*> FontStorage::GetFontResource ( std::st
         }
     );
 
-    FontResource& resource = status.first->second;
+    FontResource &resource = status.first->second;
 
     bool const init = CheckFTResult (
         FT_New_Memory_Face ( _library,
@@ -1004,7 +1004,7 @@ std::optional<FontStorage::StagingBuffer*> FontStorage::GetStagingBuffer (
         return &_activeStagingBuffer.front ();
     }
 
-    StagingBuffer& stagingBuffer = _activeStagingBuffer.emplace_front ();
+    StagingBuffer &stagingBuffer = _activeStagingBuffer.emplace_front ();
 
     if ( stagingBuffer.Init ( renderer, _atlas._side ) )
         return &stagingBuffer;
@@ -1058,7 +1058,7 @@ GXVec3 FontStorage::PixToUV ( uint32_t x, uint32_t y, float layer ) const noexce
     GXVec3 result {};
     result._data[ 2U ] = layer;
 
-    auto& uv = *reinterpret_cast<GXVec2*> ( &result );
+    auto &uv = *reinterpret_cast<GXVec2*> ( &result );
     uv.Sum ( _pointSamplerUVThreshold, _pixToUV, GXVec2 ( static_cast<float> ( x ), static_cast<float> ( y ) ) );
 
     return result;

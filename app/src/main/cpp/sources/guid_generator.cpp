@@ -1,4 +1,4 @@
-#include <guid_generator.h>
+#include <guid_generator.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -94,7 +94,7 @@ GUID::UUID GUID::GenerateUUID () noexcept
     dst[ 2U ] = random ();
     dst[ 3U ] = random ();
 
-    for ( auto& b : result._data )
+    for ( auto &b : result._data )
     {
         // NOLINTNEXTLINE - limited randomness, use C++ 11 instead. But the original algorithm requires it.
         b ^= ( static_cast<uint32_t> ( std::rand () ) >> 7U );

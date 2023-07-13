@@ -1,15 +1,15 @@
-#include <pbr/div_html5_element.h>
-#include <pbr/html5_parser.h>
-#include <pbr/img_html5_element.h>
-#include <pbr/image_ui_element.h>
-#include <pbr/script_engine.h>
-#include <pbr/text_html5_element.h>
-#include <pbr/text_ui_element.h>
-#include <pbr/ui_layer.h>
-#include <pbr/utf8_parser.h>
-#include <av_assert.h>
-#include <file.h>
-#include <logger.h>
+#include <pbr/div_html5_element.hpp>
+#include <pbr/html5_parser.hpp>
+#include <pbr/img_html5_element.hpp>
+#include <pbr/image_ui_element.hpp>
+#include <pbr/script_engine.hpp>
+#include <pbr/text_html5_element.hpp>
+#include <pbr/text_ui_element.hpp>
+#include <pbr/ui_layer.hpp>
+#include <pbr/utf8_parser.hpp>
+#include <av_assert.hpp>
+#include <file.hpp>
+#include <logger.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -46,7 +46,7 @@ UILayer::UILayer ( bool &success, lua_State &vm ) noexcept
     if ( success = asset.LoadContent (); !success )
         return;
 
-    std::vector<uint8_t>& content = asset.GetContent ();
+    std::vector<uint8_t> &content = asset.GetContent ();
     HTML5Parser html {};
 
     success = html.Parse ( uiAsset,
@@ -114,7 +114,7 @@ UILayer::UILayer ( bool &success, lua_State &vm ) noexcept
     lua_rotate ( &vm, -2, 1 );
     int const appendChildElementIdx = lua_gettop ( &vm ) - 1;
 
-    for ( HTML5Children& children = html.GetBodyChildren (); auto& child : children )
+    for ( HTML5Children &children = html.GetBodyChildren (); auto &child : children )
     {
         success = AppendChild ( vm,
             errorHandlerIdx,
@@ -231,7 +231,7 @@ void UILayer::InitLuaFrontend ( lua_State &vm ) noexcept
         }
     };
 
-    for ( auto const& extension : extensions )
+    for ( auto const &extension : extensions )
     {
         lua_register ( &vm, extension.name, extension.func );
     }
@@ -264,7 +264,7 @@ bool UILayer::AppendChild ( lua_State &vm,
     if ( tag == HTML5Tag::eTag::Text )
     {
         // NOLINTNEXTLINE - downcast.
-        auto& text = static_cast<TextHTML5Element&> ( htmlChild );
+        auto &text = static_cast<TextHTML5Element &> ( htmlChild );
 
         auto* t = new TextUIElement ( success, &parent, vm, errorHandlerIdx, std::move ( text.GetText () ) );
 
@@ -281,7 +281,7 @@ bool UILayer::AppendChild ( lua_State &vm,
     if ( tag == HTML5Tag::eTag::IMG )
     {
         // NOLINTNEXTLINE - downcast.
-        auto& img = static_cast<IMGHTML5Element&> ( htmlChild );
+        auto &img = static_cast<IMGHTML5Element &> ( htmlChild );
 
         auto* i = new ImageUIElement ( success,
             &parent,
@@ -315,7 +315,7 @@ bool UILayer::AppendChild ( lua_State &vm,
     }
 
     // NOLINTNEXTLINE - downcast.
-    auto& div = static_cast<DIVHTML5Element&> ( htmlChild );
+    auto &div = static_cast<DIVHTML5Element &> ( htmlChild );
 
     auto* d = new DIVUIElement ( success, &parent, vm, errorHandlerIdx, std::move ( div._cssComputedValues ) );
 
@@ -327,7 +327,7 @@ bool UILayer::AppendChild ( lua_State &vm,
 
     UIElement::AppendElement ( *d );
 
-    for ( HTML5Children& children = div.GetChildren (); auto& child : children )
+    for ( HTML5Children &children = div.GetChildren (); auto &child : children )
     {
         success = AppendChild ( vm,
             errorHandlerIdx,
@@ -369,7 +369,7 @@ bool UILayer::RegisterNamedElement ( lua_State &vm,
     lua_pushvalue ( &vm, -3 );
 
     auto const name = UTF8Parser::ToUTF8 ( id );
-    std::string const& n = *name;
+    std::string const &n = *name;
     lua_pushlstring ( &vm, n.c_str (), n.size () );
 
     if ( lua_pcall ( &vm, 3, 0, errorHandlerIdx ) == LUA_OK )
@@ -406,7 +406,7 @@ int UILayer::OnGarbageCollected ( lua_State* state )
 
 int UILayer::OnHide ( lua_State* state )
 {
-    auto& layer = *static_cast<UILayer*> ( lua_touserdata ( state, 1 ) );
+    auto &layer = *static_cast<UILayer*> ( lua_touserdata ( state, 1 ) );
 
     if ( layer._body )
     {
@@ -427,14 +427,14 @@ int UILayer::OnIsVisible ( lua_State* state )
         return 0;
     }
 
-    auto const& layer = *static_cast<UILayer const*> ( lua_touserdata ( state, 1 ) );
+    auto const &layer = *static_cast<UILayer const*> ( lua_touserdata ( state, 1 ) );
     lua_pushboolean ( state, layer._body != nullptr && layer._body->IsVisible () );
     return 1;
 }
 
 int UILayer::OnShow ( lua_State* state )
 {
-    auto& layer = *static_cast<UILayer*> ( lua_touserdata ( state, 1 ) );
+    auto &layer = *static_cast<UILayer*> ( lua_touserdata ( state, 1 ) );
 
     if ( layer._body )
     {

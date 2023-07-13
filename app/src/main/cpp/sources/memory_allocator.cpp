@@ -1,9 +1,9 @@
-#include <av_assert.h>
-#include <memory_allocator.h>
-#include <bitwise.h>
-#include <core.h>
-#include <renderer.h>
-#include <vulkan_utils.h>
+#include <av_assert.hpp>
+#include <memory_allocator.hpp>
+#include <bitwise.hpp>
+#include <core.hpp>
+#include <renderer.hpp>
+#include <vulkan_utils.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -441,7 +441,7 @@ void MemoryAllocator::FreeMemory ( VkDevice device,
     auto findResult = _chunkMap.find ( memory );
     AV_ASSERT ( findResult != _chunkMap.end () )
 
-    ChunkInfo& chunkInfo = findResult->second;
+    ChunkInfo &chunkInfo = findResult->second;
     chunkInfo._chunk->FreeMemory ( offset );
 
     // Optimization: preserving last staging chunk...
@@ -463,7 +463,7 @@ void MemoryAllocator::Init ( VkPhysicalDeviceMemoryProperties const &properties 
 
     for ( uint32_t i = 0U; i < properties.memoryTypeCount; ++i )
     {
-        VkMemoryType const& memoryType = properties.memoryTypes[ i ];
+        VkMemoryType const &memoryType = properties.memoryTypes[ i ];
 
         if ( memoryType.propertyFlags & STAGING_MEMORY_MASK )
         {
@@ -522,7 +522,7 @@ void MemoryAllocator::MakeSnapshot () noexcept
         MakeJSONChunks ( json, memoryIndex, idChunks, flags, type );
         size_t id = 0U;
 
-        for ( Chunk const& chunk : chunks )
+        for ( Chunk const &chunk : chunks )
         {
             chunk.MakeJSONChunk ( json, idChunks, id++ );
         }
@@ -545,7 +545,7 @@ void MemoryAllocator::MakeSnapshot () noexcept
     json.append ( end.data (), end.size () );
 
     auto const timeStamp = std::chrono::system_clock::to_time_t ( std::chrono::system_clock::now () );
-    std::tm const& timeInfo = *std::localtime ( &timeStamp );
+    std::tm const &timeInfo = *std::localtime ( &timeStamp );
 
     char path[ 1024U ];
 
@@ -566,7 +566,7 @@ void MemoryAllocator::MakeSnapshot () noexcept
     report.write ( json.data (), static_cast<std::streamsize> ( json.size () ) );
 }
 
-bool MemoryAllocator::MapMemory ( void*& ptr,
+bool MemoryAllocator::MapMemory ( void* &ptr,
     VkDevice device,
     VkDeviceMemory memory,
     VkDeviceSize offset,
@@ -578,7 +578,7 @@ bool MemoryAllocator::MapMemory ( void*& ptr,
 
     auto findResult = _chunkMap.find ( memory );
     AV_ASSERT ( findResult != _chunkMap.end () )
-    ChunkInfo& chunkInfo = findResult->second;
+    ChunkInfo &chunkInfo = findResult->second;
 
     if ( ++chunkInfo._mapCounter > 1U )
     {
@@ -605,7 +605,7 @@ void MemoryAllocator::UnmapMemory ( VkDevice device, VkDeviceMemory memory ) noe
 
     auto findResult = _chunkMap.find ( memory );
     AV_ASSERT ( findResult != _chunkMap.end () )
-    ChunkInfo& chunkInfo = findResult->second;
+    ChunkInfo &chunkInfo = findResult->second;
 
     if ( --chunkInfo._mapCounter > 0U )
         return;
@@ -628,7 +628,7 @@ bool MemoryAllocator::TryAllocateMemory ( VkDeviceMemory &memory,
         if ( !( requirements.memoryTypeBits & ( 1U << i ) ) )
             continue;
 
-        VkMemoryType const& memoryType = _properties.memoryTypes[ i ];
+        VkMemoryType const &memoryType = _properties.memoryTypes[ i ];
 
         if ( ( memoryType.propertyFlags & properties ) != properties )
             continue;
@@ -643,9 +643,9 @@ bool MemoryAllocator::TryAllocateMemory ( VkDeviceMemory &memory,
     std::unique_lock<std::mutex> const lock ( _mutex );
 
     bool const isStaging = ( properties & STAGING_MEMORY_MASK ) == STAGING_MEMORY_MASK;
-    auto& chunks = isStaging ? _stagingMemory : _notStagedMemory[ memoryTypeIndex ];
+    auto &chunks = isStaging ? _stagingMemory : _notStagedMemory[ memoryTypeIndex ];
 
-    for ( auto& chunk : chunks )
+    for ( auto &chunk : chunks )
     {
         if ( chunk.TryAllocateMemory ( memory, offset, requirements ) )
         {
@@ -653,7 +653,7 @@ bool MemoryAllocator::TryAllocateMemory ( VkDeviceMemory &memory,
         }
     }
 
-    Chunk& chunk = chunks.emplace_front ();
+    Chunk &chunk = chunks.emplace_front ();
 
     bool const result = chunk.Init ( device, memoryTypeIndex ) &&
         chunk.TryAllocateMemory ( memory, offset, requirements );
@@ -708,7 +708,7 @@ void MemoryAllocator::MakeJSONChunks ( std::string &json,
 
 #undef AV_ENTRY
 
-    for ( auto const& [prop, name] : cases )
+    for ( auto const &[prop, name] : cases )
     {
         if ( prop & props )
         {

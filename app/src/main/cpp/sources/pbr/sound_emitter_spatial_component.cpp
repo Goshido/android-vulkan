@@ -1,8 +1,8 @@
-#include <pbr/sound_emitter_spatial_component.h>
-#include <pbr/script_engine.h>
-#include <pbr/scriptable_gxvec3.h>
-#include <av_assert.h>
-#include <logger.h>
+#include <pbr/sound_emitter_spatial_component.hpp>
+#include <pbr/script_engine.hpp>
+#include <pbr/scriptable_gxvec3.hpp>
+#include <av_assert.hpp>
+#include <logger.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -213,7 +213,7 @@ bool SoundEmitterSpatialComponent::Init ( lua_State &vm, android_vulkan::SoundMi
         }
     };
 
-    for ( auto const& extension : extensions )
+    for ( auto const &extension : extensions )
         lua_register ( &vm, extension.name, extension.func );
 
     _soundMixer = &soundMixer;
@@ -231,7 +231,7 @@ void SoundEmitterSpatialComponent::Destroy () noexcept
     _soundEmitters.clear ();
 }
 
-ComponentRef& SoundEmitterSpatialComponent::GetReference () noexcept
+ComponentRef &SoundEmitterSpatialComponent::GetReference () noexcept
 {
     auto findResult = _soundEmitters.find ( this );
     AV_ASSERT ( findResult != _soundEmitters.end () )
@@ -268,7 +268,7 @@ int SoundEmitterSpatialComponent::OnCreate ( lua_State* state )
 
 int SoundEmitterSpatialComponent::OnDestroy ( lua_State* state )
 {
-    auto& self = *static_cast<SoundEmitterSpatialComponent*> ( lua_touserdata ( state, 1 ) );
+    auto &self = *static_cast<SoundEmitterSpatialComponent*> ( lua_touserdata ( state, 1 ) );
     self._actor->DestroyComponent ( self );
     return 0;
 }
@@ -293,7 +293,7 @@ int SoundEmitterSpatialComponent::OnGetVolume ( lua_State* state )
         return 0;
     }
 
-    auto const& self = *static_cast<SoundEmitterSpatialComponent const*> ( lua_touserdata ( state, 1 ) );
+    auto const &self = *static_cast<SoundEmitterSpatialComponent const*> ( lua_touserdata ( state, 1 ) );
     lua_pushnumber ( state, static_cast<lua_Number> ( self.GetVolume () ) );
     return 1;
 }
@@ -306,7 +306,7 @@ int SoundEmitterSpatialComponent::OnIsPlaying ( lua_State* state )
         return 0;
     }
 
-    auto const& self = *static_cast<SoundEmitterSpatialComponent const*> ( lua_touserdata ( state, 1 ) );
+    auto const &self = *static_cast<SoundEmitterSpatialComponent const*> ( lua_touserdata ( state, 1 ) );
     lua_pushboolean ( state, self.IsPlaying () );
     return 1;
 }
@@ -319,7 +319,7 @@ int SoundEmitterSpatialComponent::OnPause ( lua_State* state )
         return 0;
     }
 
-    auto& self = *static_cast<SoundEmitterSpatialComponent*> ( lua_touserdata ( state, 1 ) );
+    auto &self = *static_cast<SoundEmitterSpatialComponent*> ( lua_touserdata ( state, 1 ) );
     lua_pushboolean ( state, self.Pause () );
     return 1;
 }
@@ -332,21 +332,21 @@ int SoundEmitterSpatialComponent::OnPlay ( lua_State* state )
         return 0;
     }
 
-    auto& self = *static_cast<SoundEmitterSpatialComponent*> ( lua_touserdata ( state, 1 ) );
+    auto &self = *static_cast<SoundEmitterSpatialComponent*> ( lua_touserdata ( state, 1 ) );
     lua_pushboolean ( state, self.Play () );
     return 1;
 }
 
 int SoundEmitterSpatialComponent::OnSetDistance ( lua_State* state )
 {
-    auto& self = *static_cast<SoundEmitterSpatialComponent*> ( lua_touserdata ( state, 1 ) );
+    auto &self = *static_cast<SoundEmitterSpatialComponent*> ( lua_touserdata ( state, 1 ) );
     self.SetDistance ( static_cast<float> ( lua_tonumber ( state, 2 ) ) );
     return 0;
 }
 
 int SoundEmitterSpatialComponent::OnSetLocation ( lua_State* state )
 {
-    auto& self = *static_cast<SoundEmitterSpatialComponent*> ( lua_touserdata ( state, 1 ) );
+    auto &self = *static_cast<SoundEmitterSpatialComponent*> ( lua_touserdata ( state, 1 ) );
     self.SetLocation ( ScriptableGXVec3::Extract ( state, 2 ) );
     return 0;
 }
@@ -368,14 +368,14 @@ int SoundEmitterSpatialComponent::OnSetSoundAsset ( lua_State* state )
         return 1;
     }
 
-    auto& self = *static_cast<SoundEmitterSpatialComponent*> ( lua_touserdata ( state, 1 ) );
+    auto &self = *static_cast<SoundEmitterSpatialComponent*> ( lua_touserdata ( state, 1 ) );
     lua_pushboolean ( state, self.SetSoundAsset ( std::string_view ( soundAsset, len ), lua_toboolean ( state, 3 ) ) );
     return 1;
 }
 
 int SoundEmitterSpatialComponent::OnSetVolume ( lua_State* state )
 {
-    auto& self = *static_cast<SoundEmitterSpatialComponent*> ( lua_touserdata ( state, 1 ) );
+    auto &self = *static_cast<SoundEmitterSpatialComponent*> ( lua_touserdata ( state, 1 ) );
     self.SetVolume ( static_cast<float> ( lua_tonumber ( state, 2 ) ) );
     return 0;
 }
@@ -388,7 +388,7 @@ int SoundEmitterSpatialComponent::OnStop ( lua_State* state )
         return 0;
     }
 
-    auto& self = *static_cast<SoundEmitterSpatialComponent*> ( lua_touserdata ( state, 1 ) );
+    auto &self = *static_cast<SoundEmitterSpatialComponent*> ( lua_touserdata ( state, 1 ) );
     lua_pushboolean ( state, self.Stop () );
     return 1;
 }

@@ -1,4 +1,4 @@
-#include <pbr/reflection_local_descriptor_set_layout.h>
+#include <pbr/reflection_local_descriptor_set_layout.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -6,7 +6,7 @@ GX_DISABLE_COMMON_WARNINGS
 
 GX_RESTORE_WARNING_STATE
 
-#include <vulkan_utils.h>
+#include <vulkan_utils.hpp>
 
 
 namespace pbr {
@@ -23,10 +23,10 @@ class ReflectionLocalDescriptorSetLayoutImpl final
         ReflectionLocalDescriptorSetLayoutImpl () = default;
     
         ReflectionLocalDescriptorSetLayoutImpl ( ReflectionLocalDescriptorSetLayoutImpl const & ) = delete;
-        ReflectionLocalDescriptorSetLayoutImpl& operator = ( ReflectionLocalDescriptorSetLayoutImpl const & ) = delete;
+        ReflectionLocalDescriptorSetLayoutImpl &operator = ( ReflectionLocalDescriptorSetLayoutImpl const & ) = delete;
     
         ReflectionLocalDescriptorSetLayoutImpl ( ReflectionLocalDescriptorSetLayoutImpl && ) = delete;
-        ReflectionLocalDescriptorSetLayoutImpl& operator = ( ReflectionLocalDescriptorSetLayoutImpl && ) = delete;
+        ReflectionLocalDescriptorSetLayoutImpl &operator = ( ReflectionLocalDescriptorSetLayoutImpl && ) = delete;
     
         ~ReflectionLocalDescriptorSetLayoutImpl () = default;
     

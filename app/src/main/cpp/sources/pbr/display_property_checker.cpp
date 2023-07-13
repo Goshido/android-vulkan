@@ -1,6 +1,6 @@
-#include <logger.h>
-#include <pbr/display_property_checker.h>
-#include <pbr/utf8_parser.h>
+#include <logger.hpp>
+#include <pbr/display_property_checker.hpp>
+#include <pbr/utf8_parser.hpp>
 
 
 namespace pbr {
@@ -44,7 +44,7 @@ PropertyChecker::Result DisplayPropertyChecker::Process ( PropertyParser::Result
     constexpr std::string_view separator = " | ";
     constexpr char const* s = separator.data ();
 
-    for ( auto const& value : VALUES )
+    for ( auto const &value : VALUES )
         supported += *UTF8Parser::ToUTF8 ( value.first ) + s;
 
     supported.resize ( supported.size () - separator.size () );

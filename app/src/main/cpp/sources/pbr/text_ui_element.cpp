@@ -1,8 +1,8 @@
-#include <pbr/div_ui_element.h>
-#include <pbr/text_ui_element.h>
-#include <pbr/utf8_parser.h>
-#include <av_assert.h>
-#include <logger.h>
+#include <pbr/div_ui_element.hpp>
+#include <pbr/text_ui_element.hpp>
+#include <pbr/utf8_parser.hpp>
+#include <av_assert.hpp>
+#include <logger.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -34,7 +34,7 @@ bool TextUIElement::ApplyLayoutCache::Run ( ApplyInfo &info ) noexcept
     info._pen = _penOut;
     info._vertices += _vertices;
 
-    std::vector<float>& lines = *info._lineHeights;
+    std::vector<float> &lines = *info._lineHeights;
     lines.pop_back ();
     lines.insert ( lines.cend (), _lineHeights.cbegin (), _lineHeights.cend () );
 
@@ -114,7 +114,7 @@ void TextUIElement::Init ( lua_State &vm ) noexcept
         }
     };
 
-    for ( auto const& extension : extensions )
+    for ( auto const &extension : extensions )
     {
         lua_register ( &vm, extension.name, extension.func );
     }
@@ -139,9 +139,9 @@ void TextUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
     _glyphs.clear ();
     _glyphs.reserve ( glyphCount );
 
-    FontStorage& fontStorage = *info._fontStorage;
+    FontStorage &fontStorage = *info._fontStorage;
 
-    std::string const& fontAsset = *ResolveFont ();
+    std::string const &fontAsset = *ResolveFont ();
     auto const size = static_cast<uint32_t> ( ResolveFontSize ( *info._cssUnits, *_parent ) );
     auto font = fontStorage.GetFont ( fontAsset, size );
 
@@ -151,7 +151,7 @@ void TextUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
     auto f = *font;
     constexpr size_t firstLineHeightIdx = 1U;
 
-    std::vector<float>& divLineHeights = *info._lineHeights;
+    std::vector<float> &divLineHeights = *info._lineHeights;
     size_t const startLine = divLineHeights.size () - 1U;
     size_t parentLine = startLine;
 
@@ -166,7 +166,7 @@ void TextUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
     int32_t const lineHeights[] = { _fontSize, std::max ( _fontSize, currentLineHeightInteger ) };
     float const lineHeightsF[] = { fontSizeF, std::max ( fontSizeF, currentLineHeight ) };
 
-    GXVec2& pen = info._pen;
+    GXVec2 &pen = info._pen;
     _applyLayoutCache._penIn = pen;
 
     float const canvasWidth = info._canvasSize._data[ 0U ];
@@ -184,7 +184,7 @@ void TextUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
     std::u32string_view text = _text;
 
     char32_t leftCharacter = 0;
-    android_vulkan::Renderer& renderer = *info._renderer;
+    android_vulkan::Renderer &renderer = *info._renderer;
 
     auto const appendGlyph = [ this ] ( size_t line, FontStorage::GlyphInfo const &glyphInfo ) noexcept {
         _glyphs.emplace_back (
@@ -312,7 +312,7 @@ void TextUIElement::Submit ( SubmitInfo &info ) noexcept
         return;
 
     size_t const vertices = _submitCache._vertices.size ();
-    UIVertexBuffer& uiVertexBuffer = info._vertexBuffer;
+    UIVertexBuffer &uiVertexBuffer = info._vertexBuffer;
     std::memcpy ( uiVertexBuffer.data (), _submitCache._vertices.data (), _submitCache._vertexBufferBytes );
     uiVertexBuffer = uiVertexBuffer.subspan ( vertices );
 
@@ -331,7 +331,7 @@ bool TextUIElement::UpdateCache ( UpdateInfo &info ) noexcept
     _submitCache._parenTopLeft = info._parentTopLeft;
     _submitCache._penIn = info._pen;
 
-    std::vector<UIVertexInfo>& vertexBuffer = _submitCache._vertices;
+    std::vector<UIVertexInfo> &vertexBuffer = _submitCache._vertices;
     vertexBuffer.clear ();
 
     constexpr size_t verticesPerGlyph = UIPass::GetVerticesPerRectangle ();
@@ -341,7 +341,7 @@ bool TextUIElement::UpdateCache ( UpdateInfo &info ) noexcept
     UIVertexInfo* v = begin;
 
     Glyph const* glyphs = _glyphs.data ();
-    GXColorRGB const& color = ResolveColor ();
+    GXColorRGB const &color = ResolveColor ();
     constexpr GXVec2 imageUV ( 0.5F, 0.5F );
 
     size_t limit = 0U;
@@ -367,7 +367,7 @@ bool TextUIElement::UpdateCache ( UpdateInfo &info ) noexcept
     auto const parentLeft = static_cast<int32_t> ( info._parentTopLeft._data[ 0U ] );
     auto const parentWidth =  static_cast<int32_t> ( info._parentSize._data[ 0U ] );
 
-    for ( Line const& line : _lines )
+    for ( Line const &line : _lines )
     {
         x = textAlignment ( x, parentWidth, line._length );
         y = verticalAlignment ( y, static_cast<int32_t> ( *height ), _fontSize );
@@ -375,7 +375,7 @@ bool TextUIElement::UpdateCache ( UpdateInfo &info ) noexcept
 
         for ( ; i < limit; ++i )
         {
-            Glyph const& g = glyphs[ i ];
+            Glyph const &g = glyphs[ i ];
 
             int32_t const glyphTop = y + g._offsetY;
             int32_t const glyphBottom = glyphTop + g._height;
@@ -410,7 +410,7 @@ bool TextUIElement::UpdateCache ( UpdateInfo &info ) noexcept
     return true;
 }
 
-GXColorRGB const& TextUIElement::ResolveColor () const noexcept
+GXColorRGB const &TextUIElement::ResolveColor () const noexcept
 {
     if ( _color )
         return _color.value ();
@@ -418,8 +418,8 @@ GXColorRGB const& TextUIElement::ResolveColor () const noexcept
     for ( UIElement const* p = _parent; p; p = p->_parent )
     {
         // NOLINTNEXTLINE - downcast.
-        auto const& div = *static_cast<DIVUIElement const*> ( p );
-        ColorValue const& color = div._css._color;
+        auto const &div = *static_cast<DIVUIElement const*> ( p );
+        ColorValue const &color = div._css._color;
 
         if ( !color.IsInherit () )
         {
@@ -439,8 +439,8 @@ std::string const* TextUIElement::ResolveFont () const noexcept
     for ( UIElement const* p = _parent; p; p = p->_parent )
     {
         // NOLINTNEXTLINE - downcast.
-        auto const& div = *static_cast<DIVUIElement const*> ( p );
-        std::string const& fontFile = div._css._fontFile;
+        auto const &div = *static_cast<DIVUIElement const*> ( p );
+        std::string const &fontFile = div._css._fontFile;
 
         if ( !fontFile.empty () )
         {
@@ -472,7 +472,7 @@ TextUIElement::AlignIntegerHander TextUIElement::ResolveIntegerTextAlignment ( U
     while ( parent )
     {
         // NOLINTNEXTLINE - downcast
-        auto const& div = static_cast<DIVUIElement const&> ( *parent );
+        auto const &div = static_cast<DIVUIElement const &> ( *parent );
 
         switch ( div._css._textAlign )
         {
@@ -500,7 +500,7 @@ TextUIElement::AlignIntegerHander TextUIElement::ResolveIntegerVerticalAlignment
     while ( parent )
     {
         // NOLINTNEXTLINE - downcast
-        auto const& div = static_cast<DIVUIElement const&> ( *parent );
+        auto const &div = static_cast<DIVUIElement const &> ( *parent );
 
         switch ( div._css._verticalAlign )
         {
@@ -530,7 +530,7 @@ int TextUIElement::OnSetColorHSV ( lua_State* state )
     auto const v = static_cast<float> ( lua_tonumber ( state, 4 ) );
     auto const a = static_cast<float> ( lua_tonumber ( state, 5 ) );
 
-    auto& self = *static_cast<TextUIElement*> ( lua_touserdata ( state, 1 ) );
+    auto &self = *static_cast<TextUIElement*> ( lua_touserdata ( state, 1 ) );
     self._color = GXColorRGB ( GXColorHSV ( h, s, v, a ) );
     self._submitCache._isColorChanged = true;
     return 0;
@@ -543,7 +543,7 @@ int TextUIElement::OnSetColorRGB ( lua_State* state )
     auto const b = static_cast<GXUByte> ( lua_tonumber ( state, 4 ) );
     auto const a = static_cast<GXUByte> ( lua_tonumber ( state, 5 ) );
 
-    auto& self = *static_cast<TextUIElement*> ( lua_touserdata ( state, 1 ) );
+    auto &self = *static_cast<TextUIElement*> ( lua_touserdata ( state, 1 ) );
     self._color = GXColorRGB ( r, g, b, a );
     self._submitCache._isColorChanged = true;
     return 0;
@@ -552,7 +552,7 @@ int TextUIElement::OnSetColorRGB ( lua_State* state )
 int TextUIElement::OnSetText ( lua_State* state )
 {
     auto str = UTF8Parser::ToU32String ( lua_tostring ( state, 2 ) );
-    auto& self = *static_cast<TextUIElement*> ( lua_touserdata ( state, 1 ) );
+    auto &self = *static_cast<TextUIElement*> ( lua_touserdata ( state, 1 ) );
 
     if ( !str || str == self._text )
         return 0;

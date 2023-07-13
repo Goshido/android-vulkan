@@ -1,14 +1,14 @@
-#include <pbr/static_mesh_component.h>
-#include <pbr/script_engine.h>
-#include <pbr/scriptable_gxvec3.h>
-#include <pbr/scriptable_gxvec4.h>
-#include <pbr/scriptable_material.h>
-#include <pbr/static_mesh_component_desc.h>
-#include <pbr/material_manager.h>
-#include <pbr/mesh_manager.h>
-#include <pbr/scriptable_gxmat4.h>
-#include <av_assert.h>
-#include <guid_generator.h>
+#include <pbr/static_mesh_component.hpp>
+#include <pbr/script_engine.hpp>
+#include <pbr/scriptable_gxvec3.hpp>
+#include <pbr/scriptable_gxvec4.hpp>
+#include <pbr/scriptable_material.hpp>
+#include <pbr/static_mesh_component_desc.hpp>
+#include <pbr/material_manager.hpp>
+#include <pbr/mesh_manager.hpp>
+#include <pbr/scriptable_gxmat4.hpp>
+#include <av_assert.hpp>
+#include <guid_generator.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -191,7 +191,7 @@ void StaticMeshComponent::FreeTransferResources ( android_vulkan::Renderer &rend
         return;
 
     // NOLINTNEXTLINE - downcast.
-    auto& m = static_cast<GeometryPassMaterial&> ( *_material );
+    auto &m = static_cast<GeometryPassMaterial &> ( *_material );
 
     if ( m.GetAlbedo () )
         m.GetAlbedo ()->FreeTransferResources ( renderer );
@@ -213,12 +213,12 @@ void StaticMeshComponent::Submit ( RenderSession &renderSession ) noexcept
     renderSession.SubmitMesh ( _mesh, _material, _localMatrix, _worldBounds, _color0, _color1, _color2, _emission );
 }
 
-[[maybe_unused]] GXAABB const& StaticMeshComponent::GetBoundsWorld () const noexcept
+[[maybe_unused]] GXAABB const &StaticMeshComponent::GetBoundsWorld () const noexcept
 {
     return _worldBounds;
 }
 
-[[maybe_unused]] GXColorRGB const& StaticMeshComponent::GetColor0 () const noexcept
+[[maybe_unused]] GXColorRGB const &StaticMeshComponent::GetColor0 () const noexcept
 {
     return _color0;
 }
@@ -228,7 +228,7 @@ void StaticMeshComponent::Submit ( RenderSession &renderSession ) noexcept
     _color0 = color;
 }
 
-[[maybe_unused]] GXColorRGB const& StaticMeshComponent::GetColor1 () const noexcept
+[[maybe_unused]] GXColorRGB const &StaticMeshComponent::GetColor1 () const noexcept
 {
     return _color1;
 }
@@ -238,7 +238,7 @@ void StaticMeshComponent::Submit ( RenderSession &renderSession ) noexcept
     _color1 = color;
 }
 
-[[maybe_unused]] GXColorRGB const& StaticMeshComponent::GetColor2 () const noexcept
+[[maybe_unused]] GXColorRGB const &StaticMeshComponent::GetColor2 () const noexcept
 {
     return _color2;
 }
@@ -248,7 +248,7 @@ void StaticMeshComponent::Submit ( RenderSession &renderSession ) noexcept
     _color2 = color;
 }
 
-[[maybe_unused]] GXColorRGB const& StaticMeshComponent::GetEmission () const noexcept
+[[maybe_unused]] GXColorRGB const &StaticMeshComponent::GetEmission () const noexcept
 {
     return _emission;
 }
@@ -258,17 +258,17 @@ void StaticMeshComponent::SetEmission ( GXColorRGB const &emission ) noexcept
     _emission = emission;
 }
 
-MaterialRef& StaticMeshComponent::GetMaterial () noexcept
+MaterialRef &StaticMeshComponent::GetMaterial () noexcept
 {
     return _material;
 }
 
-[[maybe_unused]] MaterialRef const& StaticMeshComponent::GetMaterial () const noexcept
+[[maybe_unused]] MaterialRef const &StaticMeshComponent::GetMaterial () const noexcept
 {
     return _material;
 }
 
-[[maybe_unused]] GXMat4 const& StaticMeshComponent::GetTransform () const noexcept
+[[maybe_unused]] GXMat4 const &StaticMeshComponent::GetTransform () const noexcept
 {
     return _localMatrix;
 }
@@ -360,7 +360,7 @@ bool StaticMeshComponent::Init ( lua_State &vm, android_vulkan::Renderer &render
         }
     };
 
-    for ( auto const& extension : extensions )
+    for ( auto const &extension : extensions )
         lua_register ( &vm, extension.name, extension.func );
 
     _renderer = &renderer;
@@ -462,7 +462,7 @@ bool StaticMeshComponent::Sync () noexcept
     return true;
 }
 
-ComponentRef& StaticMeshComponent::GetReference () noexcept
+ComponentRef &StaticMeshComponent::GetReference () noexcept
 {
     auto findResult = _staticMeshes.find ( this );
     AV_ASSERT ( findResult != _staticMeshes.end () )
@@ -591,7 +591,7 @@ int StaticMeshComponent::OnCreate ( lua_State* state )
 
 int StaticMeshComponent::OnDestroy ( lua_State* state )
 {
-    auto& self = *static_cast<StaticMeshComponent*> ( lua_touserdata ( state, 1 ) );
+    auto &self = *static_cast<StaticMeshComponent*> ( lua_touserdata ( state, 1 ) );
     self._actor->DestroyComponent ( self );
     return 0;
 }
@@ -604,53 +604,53 @@ int StaticMeshComponent::OnGarbageCollected ( lua_State* state )
 
 int StaticMeshComponent::OnSetColor0 ( lua_State* state )
 {
-    auto& self = *static_cast<StaticMeshComponent*> ( lua_touserdata ( state, 1 ) );
-    GXVec4 const& color = ScriptableGXVec4::Extract ( state, 2 );
+    auto &self = *static_cast<StaticMeshComponent*> ( lua_touserdata ( state, 1 ) );
+    GXVec4 const &color = ScriptableGXVec4::Extract ( state, 2 );
     self.SetColor0 ( GXColorRGB ( color._data[ 0U ], color._data[ 1U ], color._data[ 2U ], color._data[ 3U ] ) );
     return 0;
 }
 
 int StaticMeshComponent::OnSetColor1 ( lua_State* state )
 {
-    auto& self = *static_cast<StaticMeshComponent*> ( lua_touserdata ( state, 1 ) );
-    GXVec3 const& color = ScriptableGXVec3::Extract ( state, 2 );
+    auto &self = *static_cast<StaticMeshComponent*> ( lua_touserdata ( state, 1 ) );
+    GXVec3 const &color = ScriptableGXVec3::Extract ( state, 2 );
     self.SetColor1 ( GXColorRGB ( color._data[ 0U ], color._data[ 1U ], color._data[ 2U ], 1.0F ) );
     return 0;
 }
 
 int StaticMeshComponent::OnSetColor2 ( lua_State* state )
 {
-    auto& self = *static_cast<StaticMeshComponent*> ( lua_touserdata ( state, 1 ) );
-    GXVec3 const& color = ScriptableGXVec3::Extract ( state, 2 );
+    auto &self = *static_cast<StaticMeshComponent*> ( lua_touserdata ( state, 1 ) );
+    GXVec3 const &color = ScriptableGXVec3::Extract ( state, 2 );
     self.SetColor2 ( GXColorRGB ( color._data[ 0U ], color._data[ 1U ], color._data[ 2U ], 1.0F ) );
     return 0;
 }
 
 int StaticMeshComponent::OnSetEmission ( lua_State* state )
 {
-    auto& self = *static_cast<StaticMeshComponent*> ( lua_touserdata ( state, 1 ) );
-    GXVec3 const& emission = ScriptableGXVec3::Extract ( state, 2 );
+    auto &self = *static_cast<StaticMeshComponent*> ( lua_touserdata ( state, 1 ) );
+    GXVec3 const &emission = ScriptableGXVec3::Extract ( state, 2 );
     self.SetEmission ( GXColorRGB ( emission._data[ 0U ], emission._data[ 1U ], emission._data[ 2U ], 1.0F ) );
     return 0;
 }
 
 int StaticMeshComponent::OnGetLocal ( lua_State* state )
 {
-    auto const& self = *static_cast<StaticMeshComponent const*> ( lua_touserdata ( state, 1 ) );
+    auto const &self = *static_cast<StaticMeshComponent const*> ( lua_touserdata ( state, 1 ) );
     ScriptableGXMat4::Extract ( state, 2 ) = self._localMatrix;
     return 0;
 }
 
 int StaticMeshComponent::OnSetLocal ( lua_State* state )
 {
-    auto& self = *static_cast<StaticMeshComponent*> ( lua_touserdata ( state, 1 ) );
+    auto &self = *static_cast<StaticMeshComponent*> ( lua_touserdata ( state, 1 ) );
     self.SetTransform ( ScriptableGXMat4::Extract ( state, 2 ) );
     return 0;
 }
 
 int StaticMeshComponent::OnSetMaterial ( lua_State* state )
 {
-    auto& self = *static_cast<StaticMeshComponent*> ( lua_touserdata ( state, 1 ) );
+    auto &self = *static_cast<StaticMeshComponent*> ( lua_touserdata ( state, 1 ) );
 
     self._material = ScriptableMaterial::GetReference (
         *static_cast<Material const *> ( lua_touserdata ( state, 2 ) )

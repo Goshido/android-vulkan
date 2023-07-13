@@ -1,6 +1,6 @@
-#include <pbr/text_html5_element.h>
-#include <pbr/utf8_parser.h>
-#include <pbr/whitespace.h>
+#include <pbr/text_html5_element.hpp>
+#include <pbr/utf8_parser.hpp>
+#include <pbr/whitespace.hpp>
 
 
 namespace pbr {
@@ -12,7 +12,7 @@ TextHTML5Element::TextHTML5Element ( std::u32string &&text ) noexcept:
     // NOTHING
 }
 
-std::u32string& TextHTML5Element::GetText () noexcept
+std::u32string &TextHTML5Element::GetText () noexcept
 {
     return _text;
 }

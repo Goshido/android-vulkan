@@ -1,6 +1,6 @@
-#include <logger.h>
-#include <pbr/font_family_property_checker.h>
-#include <pbr/whitespace.h>
+#include <logger.hpp>
+#include <pbr/font_family_property_checker.hpp>
+#include <pbr/whitespace.hpp>
 
 
 namespace pbr {

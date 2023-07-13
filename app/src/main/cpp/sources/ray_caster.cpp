@@ -1,6 +1,6 @@
-#include <ray_caster.h>
-#include <logger.h>
-#include <simplex.h>
+#include <ray_caster.hpp>
+#include <logger.hpp>
+#include <simplex.hpp>
 
 
 namespace android_vulkan {
@@ -11,7 +11,7 @@ constexpr float const THRESHOLD = 1.0e-3F;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-bool RayCaster::Run ( RaycastResult& result, GXVec3 const &from, GXVec3 const &to, Shape const &shape ) noexcept
+bool RayCaster::Run ( RaycastResult &result, GXVec3 const &from, GXVec3 const &to, Shape const &shape ) noexcept
 {
     constexpr GXVec3 const initialDirection ( 1.0F, 0.0F, 0.0F );
     ResetInternal ();
@@ -111,8 +111,8 @@ GXVec3 RayCaster::TestLine () noexcept
 
     ++_testLine;
 
-    GXVec3 const& a = _simplex._supportPoints[ 0U ];
-    GXVec3 const& b = _simplex._supportPoints[ 1U ];
+    GXVec3 const &a = _simplex._supportPoints[ 0U ];
+    GXVec3 const &b = _simplex._supportPoints[ 1U ];
 
     GXVec3 ab {};
     // NOLINTNEXTLINE - false positively operand order.
@@ -146,10 +146,10 @@ GXVec3 RayCaster::TestTetrahedron ( GXVec3 const &bcdClosest, float bcdClosestDi
 
     ++_testTetrahedron;
 
-    GXVec3 const& a = _simplex._supportPoints[ 0U ];
-    GXVec3 const& b = _simplex._supportPoints[ 1U ];
-    GXVec3 const& c = _simplex._supportPoints[ 2U ];
-    GXVec3 const& d = _simplex._supportPoints[ 3U ];
+    GXVec3 const &a = _simplex._supportPoints[ 0U ];
+    GXVec3 const &b = _simplex._supportPoints[ 1U ];
+    GXVec3 const &c = _simplex._supportPoints[ 2U ];
+    GXVec3 const &d = _simplex._supportPoints[ 3U ];
 
     // "o" means origin.
     GXVec3 ao ( a );
@@ -288,9 +288,9 @@ GXVec3 RayCaster::TestTriangle () noexcept
 
     ++_testTriangle;
 
-    GXVec3 const& a = _simplex._supportPoints[ 0U ];
-    GXVec3& b = _simplex._supportPoints[ 1U ];
-    GXVec3& c = _simplex._supportPoints[ 2U ];
+    GXVec3 const &a = _simplex._supportPoints[ 0U ];
+    GXVec3 &b = _simplex._supportPoints[ 1U ];
+    GXVec3 &c = _simplex._supportPoints[ 2U ];
 
     // "o" means origin.
     GXVec3 ao ( a );

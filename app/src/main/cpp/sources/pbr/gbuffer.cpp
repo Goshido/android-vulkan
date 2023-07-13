@@ -1,35 +1,35 @@
-#include <pbr/gbuffer.h>
-#include <vulkan_utils.h>
+#include <pbr/gbuffer.hpp>
+#include <vulkan_utils.hpp>
 
 
 namespace pbr {
 
-android_vulkan::Texture2D& GBuffer::GetAlbedo () noexcept
+android_vulkan::Texture2D &GBuffer::GetAlbedo () noexcept
 {
     return _albedo;
 }
 
-android_vulkan::Texture2D& GBuffer::GetDepthStencil () noexcept
+android_vulkan::Texture2D &GBuffer::GetDepthStencil () noexcept
 {
     return _depthStencil;
 }
 
-android_vulkan::Texture2D& GBuffer::GetHDRAccumulator () noexcept
+android_vulkan::Texture2D &GBuffer::GetHDRAccumulator () noexcept
 {
     return _hdrAccumulator;
 }
 
-android_vulkan::Texture2D& GBuffer::GetNormal () noexcept
+android_vulkan::Texture2D &GBuffer::GetNormal () noexcept
 {
     return _normal;
 }
 
-android_vulkan::Texture2D& GBuffer::GetParams () noexcept
+android_vulkan::Texture2D &GBuffer::GetParams () noexcept
 {
     return _params;
 }
 
-const VkExtent2D& GBuffer::GetResolution () const noexcept
+const VkExtent2D &GBuffer::GetResolution () const noexcept
 {
     return _hdrAccumulator.GetResolution ();
 }

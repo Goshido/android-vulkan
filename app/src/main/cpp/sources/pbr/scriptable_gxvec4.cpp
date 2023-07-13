@@ -1,4 +1,4 @@
-#include <pbr/scriptable_gxvec4.h>
+#include <pbr/scriptable_gxvec4.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -52,7 +52,7 @@ void ScriptableGXVec4::Init ( lua_State &vm ) noexcept
         }
     };
 
-    for ( auto const& extension : extensions )
+    for ( auto const &extension : extensions )
     {
         lua_register ( &vm, extension.name, extension.func );
     }
@@ -60,7 +60,7 @@ void ScriptableGXVec4::Init ( lua_State &vm ) noexcept
 
 void ScriptableGXVec4::Destroy () noexcept
 {
-    auto free = [] ( Item*& head ) noexcept {
+    auto free = [] ( Item* &head ) noexcept {
         Item* item = head;
 
         while ( item )
@@ -77,13 +77,13 @@ void ScriptableGXVec4::Destroy () noexcept
     free ( _used );
 }
 
-GXVec4& ScriptableGXVec4::Extract ( lua_State* state, int idx ) noexcept
+GXVec4 &ScriptableGXVec4::Extract ( lua_State* state, int idx ) noexcept
 {
-    auto& item = *static_cast<Item*> ( lua_touserdata ( state, idx ) );
+    auto &item = *static_cast<Item*> ( lua_touserdata ( state, idx ) );
     return item._vec4;
 }
 
-void ScriptableGXVec4::Insert ( Item* item, Item*& list ) noexcept
+void ScriptableGXVec4::Insert ( Item* item, Item* &list ) noexcept
 {
     item->_previous = nullptr;
     item->_next = list;
@@ -137,7 +137,7 @@ int ScriptableGXVec4::OnDestroy ( lua_State* state )
 
 int ScriptableGXVec4::OnInit ( lua_State* state )
 {
-    auto& item = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    auto &item = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
 
     item._vec4.Init ( static_cast<float> ( lua_tonumber ( state, 2 ) ),
         static_cast<float> ( lua_tonumber ( state, 3 ) ),
@@ -150,8 +150,8 @@ int ScriptableGXVec4::OnInit ( lua_State* state )
 
 int ScriptableGXVec4::OnToString ( lua_State* state )
 {
-    auto const& item = *static_cast<Item const*> ( lua_touserdata ( state, 1 ) );
-    GXVec4 const& v = item._vec4;
+    auto const &item = *static_cast<Item const*> ( lua_touserdata ( state, 1 ) );
+    GXVec4 const &v = item._vec4;
 
     char result[ 128U ];
 

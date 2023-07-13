@@ -1,5 +1,5 @@
-#include <pbr/reflection_global_pass.h>
-#include <trace.h>
+#include <pbr/reflection_global_pass.hpp>
+#include <trace.hpp>
 
 
 namespace pbr {
@@ -161,7 +161,7 @@ bool ReflectionGlobalPass::AllocateDescriptorSets ( VkDevice device ) noexcept
 
     for ( size_t i = 0U; i < REFLECTIONS; ++i )
     {
-        VkWriteDescriptorSet& write = _writeSets[ i ];
+        VkWriteDescriptorSet &write = _writeSets[ i ];
         write.dstSet = _descriptorSets[ i ];
         write.pImageInfo = &_imageInfo[ i ];
     }

@@ -1,4 +1,4 @@
-#include <rainbow/rainbow.h>
+#include <rainbow/rainbow.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -6,7 +6,7 @@ GX_DISABLE_COMMON_WARNINGS
 
 GX_RESTORE_WARNING_STATE
 
-#include <vulkan_utils.h>
+#include <vulkan_utils.hpp>
 
 
 namespace rainbow {
@@ -302,7 +302,7 @@ bool Rainbow::CreateFramebuffers ( android_vulkan::Renderer &renderer ) noexcept
     size_t const framebufferCount = renderer.GetPresentImageCount ();
     _framebuffers.reserve ( framebufferCount );
 
-    VkExtent2D const& resolution = renderer.GetSurfaceSize ();
+    VkExtent2D const &resolution = renderer.GetSurfaceSize ();
 
     VkFramebufferCreateInfo createInfo;
     createInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;

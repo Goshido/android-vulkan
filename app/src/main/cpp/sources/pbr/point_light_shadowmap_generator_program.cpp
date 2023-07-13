@@ -1,5 +1,5 @@
-#include <pbr/point_light_shadowmap_generator_program.h>
-#include <vertex_info.h>
+#include <pbr/point_light_shadowmap_generator_program.hpp>
+#include <vertex_info.hpp>
 
 
 namespace pbr {
@@ -119,7 +119,7 @@ void PointLightShadowmapGeneratorProgram::Destroy ( VkDevice device ) noexcept
     DestroyShaderModules ( device );
 }
 
-Program::DescriptorSetInfo const& PointLightShadowmapGeneratorProgram::GetResourceInfo () const noexcept
+Program::DescriptorSetInfo const &PointLightShadowmapGeneratorProgram::GetResourceInfo () const noexcept
 {
     static DescriptorSetInfo const info
     {
@@ -300,7 +300,7 @@ bool PointLightShadowmapGeneratorProgram::InitShaderInfo ( android_vulkan::Rende
 
     AV_REGISTER_SHADER_MODULE ( "pbr::PointLightShadowmapGeneratorProgram::_fragmentShader" )
 
-    VkPipelineShaderStageCreateInfo& vertexStage = sourceInfo[ 0U ];
+    VkPipelineShaderStageCreateInfo &vertexStage = sourceInfo[ 0U ];
     vertexStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     vertexStage.pNext = nullptr;
     vertexStage.flags = 0U;
@@ -309,7 +309,7 @@ bool PointLightShadowmapGeneratorProgram::InitShaderInfo ( android_vulkan::Rende
     vertexStage.pName = VERTEX_SHADER_ENTRY_POINT;
     vertexStage.pSpecializationInfo = nullptr;
 
-    VkPipelineShaderStageCreateInfo& fragmentStage = sourceInfo[ 1U ];
+    VkPipelineShaderStageCreateInfo &fragmentStage = sourceInfo[ 1U ];
     fragmentStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     fragmentStage.pNext = nullptr;
     fragmentStage.flags = 0U;

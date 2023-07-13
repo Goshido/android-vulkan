@@ -1,12 +1,12 @@
-#include <logger.h>
-#include <pbr/div_html5_element.h>
-#include <pbr/img_html5_element.h>
-#include <pbr/set_attribute_checker.h>
-#include <pbr/tag_parser.h>
-#include <pbr/text_html5_element.h>
-#include <pbr/unique_attribute_checker.h>
-#include <pbr/utf8_parser.h>
-#include <pbr/whitespace.h>
+#include <logger.hpp>
+#include <pbr/div_html5_element.hpp>
+#include <pbr/img_html5_element.hpp>
+#include <pbr/set_attribute_checker.hpp>
+#include <pbr/tag_parser.hpp>
+#include <pbr/text_html5_element.hpp>
+#include <pbr/unique_attribute_checker.hpp>
+#include <pbr/utf8_parser.hpp>
+#include <pbr/whitespace.hpp>
 
 
 namespace pbr {
@@ -52,12 +52,12 @@ DIVHTML5Element::DIVHTML5Element ( std::u32string &&id,
     _cssComputedValues._height = LengthValue ( LengthValue::eType::Auto, 0.0F );
 }
 
-HTML5Children& DIVHTML5Element::GetChildren () noexcept
+HTML5Children &DIVHTML5Element::GetChildren () noexcept
 {
     return _children;
 }
 
-std::u32string& DIVHTML5Element::GetID () noexcept
+std::u32string &DIVHTML5Element::GetID () noexcept
 {
     return _id;
 }
@@ -245,7 +245,7 @@ bool DIVHTML5Element::ApplyCSS ( char const* html, CSSParser const &css ) noexce
     if ( !_cssComputedValues.ApplyCSS ( html, css, _classes, _id ) )
         return false;
 
-    for ( auto& element : _children )
+    for ( auto &element : _children )
     {
         if ( !element->ApplyCSS ( html, css ) )
         {

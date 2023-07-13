@@ -1,21 +1,21 @@
-#include <pbr/scene.h>
-#include <pbr/coordinate_system.h>
-#include <pbr/mesh_manager.h>
-#include <pbr/material_manager.h>
-#include <pbr/renderable_component.h>
-#include <pbr/scene_desc.h>
-#include <pbr/script_engine.h>
-#include <pbr/scriptable_gxmat4.h>
-#include <pbr/scriptable_gxvec3.h>
-#include <pbr/scriptable_material.h>
-#include <pbr/scriptable_sweep_test_result.h>
-#include <pbr/static_mesh_component.h>
-#include <pbr/ui_layer.h>
-#include <av_assert.h>
-#include <core.h>
-#include <file.h>
-#include <shape_box.h>
-#include <trace.h>
+#include <pbr/scene.hpp>
+#include <pbr/coordinate_system.hpp>
+#include <pbr/mesh_manager.hpp>
+#include <pbr/material_manager.hpp>
+#include <pbr/renderable_component.hpp>
+#include <pbr/scene_desc.hpp>
+#include <pbr/script_engine.hpp>
+#include <pbr/scriptable_gxmat4.hpp>
+#include <pbr/scriptable_gxvec3.hpp>
+#include <pbr/scriptable_material.hpp>
+#include <pbr/scriptable_sweep_test_result.hpp>
+#include <pbr/static_mesh_component.hpp>
+#include <pbr/ui_layer.hpp>
+#include <av_assert.hpp>
+#include <core.hpp>
+#include <file.hpp>
+#include <shape_box.hpp>
+#include <trace.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -77,17 +77,17 @@ bool Scene::ExecuteInputEvents () noexcept
     return _gamepad.Execute ( *_vm, _sceneHandle, _onInputIndex );
 }
 
-GXMat4 const& Scene::GetActiveCameraLocalMatrix () const noexcept
+GXMat4 const &Scene::GetActiveCameraLocalMatrix () const noexcept
 {
     return _camera->GetLocalMatrix ();
 }
 
-GXMat4 const& Scene::GetActiveCameraProjectionMatrix () const noexcept
+GXMat4 const &Scene::GetActiveCameraProjectionMatrix () const noexcept
 {
     return _camera->GetProjectionMatrix ();
 }
 
-android_vulkan::Physics& Scene::GetPhysics () noexcept
+android_vulkan::Physics &Scene::GetPhysics () noexcept
 {
     AV_ASSERT ( _physics )
     return *_physics;
@@ -112,7 +112,7 @@ bool Scene::OnInitDevice ( android_vulkan::Renderer &renderer, android_vulkan::P
     _camera = &_defaultCamera;
 
     _physics = &physics;
-    ScriptEngine& scriptEngine = ScriptEngine::GetInstance ();
+    ScriptEngine &scriptEngine = ScriptEngine::GetInstance ();
 
     if ( !scriptEngine.Init ( renderer, _soundMixer ) )
         return false;
@@ -201,7 +201,7 @@ bool Scene::OnInitDevice ( android_vulkan::Renderer &renderer, android_vulkan::P
         }
     };
 
-    for ( auto const& extension : extensions )
+    for ( auto const &extension : extensions )
         lua_register ( _vm, extension.name, extension.func );
 
     _sceneHandle = lua_gettop ( _vm );
@@ -371,9 +371,9 @@ bool Scene::LoadScene ( android_vulkan::Renderer &renderer, char const* scene, V
     if ( !file.LoadContent () )
         return false;
 
-    std::vector<uint8_t> const& content = file.GetContent ();
+    std::vector<uint8_t> const &content = file.GetContent ();
     uint8_t const* data = content.data ();
-    auto const& desc = *reinterpret_cast<pbr::SceneDesc const*> ( data );
+    auto const &desc = *reinterpret_cast<pbr::SceneDesc const*> ( data );
 
     // Sanity checks.
     static_assert ( sizeof ( GXVec3 ) == sizeof ( desc._viewerLocation ) );
@@ -412,7 +412,7 @@ bool Scene::LoadScene ( android_vulkan::Renderer &renderer, char const* scene, V
 
     for ( size_t actorIdx = 0U; actorIdx < actors; ++actorIdx )
     {
-        auto const& actorDesc = *reinterpret_cast<ActorDesc const*> ( readPointer );
+        auto const &actorDesc = *reinterpret_cast<ActorDesc const*> ( readPointer );
         readPointer += sizeof ( ActorDesc );
         auto const components = static_cast<size_t> ( actorDesc._components );
 
@@ -500,12 +500,12 @@ int Scene::DoOverlapTestBoxBox ( lua_State &vm,
         return 0;
     }
 
-    android_vulkan::Shape& shapeA = *_shapeBoxes[ 0U ];
-    android_vulkan::Shape& shapeB = *_shapeBoxes[ 1U ];
+    android_vulkan::Shape &shapeA = *_shapeBoxes[ 0U ];
+    android_vulkan::Shape &shapeB = *_shapeBoxes[ 1U ];
 
     auto const setup = [] ( android_vulkan::Shape &shape, GXMat4 const &local, GXVec3 const &size ) noexcept {
         // NOLINTNEXTLINE - downcast.
-        auto& boxShape = static_cast<android_vulkan::ShapeBox&> ( shape );
+        auto &boxShape = static_cast<android_vulkan::ShapeBox &> ( shape );
 
         boxShape.Resize ( size );
         boxShape.UpdateCacheData ( local );
@@ -528,10 +528,10 @@ int Scene::DoOverlapTestBoxBox ( lua_State &vm,
 
 int Scene::DoPenetrationBox ( lua_State &vm, GXMat4 const &local, GXVec3 const &size, uint32_t groups ) noexcept
 {
-    android_vulkan::ShapeRef& shape = _shapeBoxes[ 0U ];
+    android_vulkan::ShapeRef &shape = _shapeBoxes[ 0U ];
 
     // NOLINTNEXTLINE - downcast.
-    auto& boxShape = static_cast<android_vulkan::ShapeBox&> ( *shape );
+    auto &boxShape = static_cast<android_vulkan::ShapeBox &> ( *shape );
 
     boxShape.Resize ( size );
     boxShape.UpdateCacheData ( local );
@@ -541,10 +541,10 @@ int Scene::DoPenetrationBox ( lua_State &vm, GXMat4 const &local, GXVec3 const &
 
 int Scene::DoSweepTestBox ( lua_State &vm, GXMat4 const &local, GXVec3 const &size, uint32_t groups ) noexcept
 {
-    android_vulkan::ShapeRef& shape = _shapeBoxes[ 0U ];
+    android_vulkan::ShapeRef &shape = _shapeBoxes[ 0U ];
 
     // NOLINTNEXTLINE - downcast.
-    auto& boxShape = static_cast<android_vulkan::ShapeBox&> ( *shape );
+    auto &boxShape = static_cast<android_vulkan::ShapeBox &> ( *shape );
 
     boxShape.Resize ( size );
     boxShape.UpdateCacheData ( local );
@@ -558,10 +558,10 @@ void Scene::SubmitComponents ( android_vulkan::Renderer &renderer, RenderSession
 
     FreeTransferResources ( renderer );
 
-    for ( auto& component : _renderableList )
+    for ( auto &component : _renderableList )
     {
         // NOLINTNEXTLINE - downcast.
-        auto& renderableComponent = static_cast<RenderableComponent&> ( component.get () );
+        auto &renderableComponent = static_cast<RenderableComponent &> ( component.get () );
         renderableComponent.Submit ( renderSession );
     }
 }
@@ -570,13 +570,13 @@ void Scene::SubmitUI ( android_vulkan::Renderer &renderer, RenderSession &render
 {
     AV_TRACE ( "UI" )
 
-    UIPass& uiPass = renderSession.GetUIPass ();
-    FontStorage& fontStorage = uiPass.GetFontStorage ();
+    UIPass &uiPass = renderSession.GetUIPass ();
+    FontStorage &fontStorage = uiPass.GetFontStorage ();
 
     bool needRefill = false;
     size_t neededUIVertices = 0U;
 
-    for ( auto& uiLayer : _uiLayerList )
+    for ( auto &uiLayer : _uiLayerList )
     {
         UILayer::LayoutStatus const status = uiLayer.get ().ApplyLayout ( renderer, fontStorage );
         needRefill |= status._hasChanges;
@@ -589,9 +589,9 @@ void Scene::SubmitUI ( android_vulkan::Renderer &renderer, RenderSession &render
         return;
     }
 
-    VkExtent2D const& viewport = renderer.GetViewportResolution ();
+    VkExtent2D const &viewport = renderer.GetViewportResolution ();
 
-    for ( auto& uiLayer : _uiLayerList )
+    for ( auto &uiLayer : _uiLayerList )
         needRefill |= uiLayer.get ().UpdateCache ( fontStorage, viewport );
 
     if ( !needRefill )
@@ -611,7 +611,7 @@ void Scene::SubmitUI ( android_vulkan::Renderer &renderer, RenderSession &render
         ._vertexBuffer = *response
     };
 
-    for ( auto& uiLayer : _uiLayerList )
+    for ( auto &uiLayer : _uiLayerList )
     {
         uiLayer.get ().Submit ( info );
     }
@@ -625,7 +625,7 @@ void Scene::FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcep
 
 int Scene::OnAppendActor ( lua_State* state )
 {
-    auto& self = *static_cast<Scene*> ( lua_touserdata ( state, 1 ) );
+    auto &self = *static_cast<Scene*> ( lua_touserdata ( state, 1 ) );
     self._actors.push_back ( Actor::GetReference ( *static_cast<Actor const*> ( lua_touserdata ( state, 2 ) ) ) );
     self._actors.back ()->RegisterComponentsFromScript ( self, self._renderableList, *self._physics );
     return 0;
@@ -633,17 +633,17 @@ int Scene::OnAppendActor ( lua_State* state )
 
 int Scene::OnAppendUILayer ( lua_State* state )
 {
-    auto& self = *static_cast<Scene*> ( lua_touserdata ( state, 1 ) );
+    auto &self = *static_cast<Scene*> ( lua_touserdata ( state, 1 ) );
     self._uiLayerList.emplace_back ( *static_cast<UILayer*> ( lua_touserdata ( state, 2 ) ) );
     return 0;
 }
 
 int Scene::OnDetachUILayer ( lua_State* state )
 {
-    auto& self = *static_cast<Scene*> ( lua_touserdata ( state, 1 ) );
-    auto& uiLayer = *static_cast<UILayer*> ( lua_touserdata ( state, 2 ) );
+    auto &self = *static_cast<Scene*> ( lua_touserdata ( state, 1 ) );
+    auto &uiLayer = *static_cast<UILayer*> ( lua_touserdata ( state, 2 ) );
 
-    UILayerList& list = self._uiLayerList;
+    UILayerList &list = self._uiLayerList;
     auto const end = list.cend ();
 
     auto const findResult = std::find_if ( list.cbegin (),
@@ -667,7 +667,7 @@ int Scene::OnDetachUILayer ( lua_State* state )
 
 int Scene::OnGetPenetrationBox ( lua_State* state )
 {
-    auto& self = *static_cast<Scene*> ( lua_touserdata ( state, 1 ) );
+    auto &self = *static_cast<Scene*> ( lua_touserdata ( state, 1 ) );
 
     return self.DoPenetrationBox ( *state,
         ScriptableGXMat4::Extract ( state, 2 ),
@@ -710,7 +710,7 @@ int Scene::OnGetRenderTargetAspectRatio ( lua_State* state )
         return 0;
     }
 
-    auto const& self = *static_cast<Scene const*> ( lua_touserdata ( state, 1 ) );
+    auto const &self = *static_cast<Scene const*> ( lua_touserdata ( state, 1 ) );
     lua_pushnumber ( state, self._aspectRatio );
     return 1;
 }
@@ -723,7 +723,7 @@ int Scene::OnGetRenderTargetWidth ( lua_State* state )
         return 0;
     }
 
-    auto const& self = *static_cast<Scene const*> ( lua_touserdata ( state, 1 ) );
+    auto const &self = *static_cast<Scene const*> ( lua_touserdata ( state, 1 ) );
     lua_pushinteger ( state, self._width );
     return 1;
 }
@@ -736,14 +736,14 @@ int Scene::OnGetRenderTargetHeight ( lua_State* state )
         return 0;
     }
 
-    auto const& self = *static_cast<Scene const*> ( lua_touserdata ( state, 1 ) );
+    auto const &self = *static_cast<Scene const*> ( lua_touserdata ( state, 1 ) );
     lua_pushinteger ( state, self._height );
     return 1;
 }
 
 int Scene::OnOverlapTestBoxBox ( lua_State* state )
 {
-    auto& self = *static_cast<Scene*> ( lua_touserdata ( state, 1 ) );
+    auto &self = *static_cast<Scene*> ( lua_touserdata ( state, 1 ) );
 
     return self.DoOverlapTestBoxBox ( *state,
         ScriptableGXMat4::Extract ( state, 2 ),
@@ -761,14 +761,14 @@ int Scene::OnQuit ( lua_State* /*state*/ )
 
 int Scene::OnSetActiveCamera ( lua_State* state )
 {
-    auto& self = *static_cast<Scene*> ( lua_touserdata ( state, 1 ) );
+    auto &self = *static_cast<Scene*> ( lua_touserdata ( state, 1 ) );
     self._camera = static_cast<CameraComponent*> ( lua_touserdata ( state, 2 ) );
     return 0;
 }
 
 int Scene::OnSetSoundChannelVolume ( lua_State* state )
 {
-    auto& self = *static_cast<Scene*> ( lua_touserdata ( state, 1 ) );
+    auto &self = *static_cast<Scene*> ( lua_touserdata ( state, 1 ) );
 
     self._soundMixer.SetChannelVolume ( static_cast<android_vulkan::eSoundChannel> ( lua_tointeger ( state, 2 ) ),
         static_cast<float> ( lua_tonumber ( state, 3 ) )
@@ -779,8 +779,8 @@ int Scene::OnSetSoundChannelVolume ( lua_State* state )
 
 int Scene::OnSetSoundListenerTransform ( lua_State* state )
 {
-    auto& self = *static_cast<Scene*> ( lua_touserdata ( state, 1 ) );
-    GXMat4 const& transform = ScriptableGXMat4::Extract ( state, 2 );
+    auto &self = *static_cast<Scene*> ( lua_touserdata ( state, 1 ) );
+    GXMat4 const &transform = ScriptableGXMat4::Extract ( state, 2 );
     self._soundMixer.SetListenerLocation ( *reinterpret_cast<GXVec3 const*> ( &transform._m[ 3U ][ 0U ] ) );
 
     GXQuat orientation {};
@@ -792,14 +792,14 @@ int Scene::OnSetSoundListenerTransform ( lua_State* state )
 
 int Scene::OnSetSoundMasterVolume ( lua_State* state )
 {
-    auto& self = *static_cast<Scene*> ( lua_touserdata ( state, 1 ) );
+    auto &self = *static_cast<Scene*> ( lua_touserdata ( state, 1 ) );
     self._soundMixer.SetMasterVolume ( static_cast<float> ( lua_tonumber ( state, 2 ) ) );
     return 0;
 }
 
 int Scene::OnSweepTestBox ( lua_State* state )
 {
-    auto& self = *static_cast<Scene*> ( lua_touserdata ( state, 1 ) );
+    auto &self = *static_cast<Scene*> ( lua_touserdata ( state, 1 ) );
 
     return self.DoSweepTestBox ( *state,
         ScriptableGXMat4::Extract ( state, 2 ),

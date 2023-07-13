@@ -1,8 +1,8 @@
-#include <logger.h>
-#include <pbr/doctype_parser.h>
-#include <pbr/ascii_string.h>
-#include <pbr/utf8_parser.h>
-#include <pbr/whitespace.h>
+#include <logger.hpp>
+#include <pbr/doctype_parser.hpp>
+#include <pbr/ascii_string.hpp>
+#include <pbr/utf8_parser.hpp>
+#include <pbr/whitespace.hpp>
 
 
 namespace pbr {
@@ -29,7 +29,7 @@ ParseResult DoctypeParser::Parse ( char const* html, Stream stream ) noexcept
         return std::nullopt;
 
     s = name->_newStream;
-    std::string_view const& n = name->_target;
+    std::string_view const &n = name->_target;
 
     if ( n.empty () )
     {

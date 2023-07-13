@@ -1,13 +1,13 @@
-#include <pbr/box_stack/box_stack.h>
-#include <pbr/coordinate_system.h>
-#include <pbr/component.h>
-#include <pbr/material_manager.h>
-#include <pbr/mesh_manager.h>
-#include <pbr/static_mesh_component.h>
-#include <gamepad.h>
-#include <global_force_gravity.h>
-#include <shape_box.h>
-#include <shape_sphere.h>
+#include <pbr/box_stack/box_stack.hpp>
+#include <pbr/coordinate_system.hpp>
+#include <pbr/component.hpp>
+#include <pbr/material_manager.hpp>
+#include <pbr/mesh_manager.hpp>
+#include <pbr/static_mesh_component.hpp>
+#include <gamepad.hpp>
+#include <global_force_gravity.hpp>
+#include <shape_box.hpp>
+#include <shape_sphere.hpp>
 
 
 namespace pbr::box_stack {
@@ -39,11 +39,11 @@ bool BoxStack::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) 
     UpdatePhysicsActors ();
 
     _camera.Update ( dt );
-    GXMat4 const& cameraLocal = _camera.GetLocalMatrix ();
+    GXMat4 const &cameraLocal = _camera.GetLocalMatrix ();
     _renderSession.Begin ( cameraLocal, _camera.GetProjectionMatrix () );
 
     // NOLINTNEXTLINE - downcast.
-    auto& light = static_cast<PointLightComponent&> ( *_cameraLight );
+    auto &light = static_cast<PointLightComponent &> ( *_cameraLight );
 
     GXVec3 lightLocation {};
     cameraLocal.GetW ( lightLocation );
@@ -78,22 +78,22 @@ bool BoxStack::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) 
         );
     };
 
-    for ( auto const& manifold : _physics.GetContactManifolds () )
+    for ( auto const &manifold : _physics.GetContactManifolds () )
     {
         android_vulkan::Contact* contact = manifold._contacts;
 
         for ( size_t i = 0U; i < manifold._contactCount; ++i )
         {
-            android_vulkan::Contact const& c = contact[ i ];
+            android_vulkan::Contact const &c = contact[ i ];
             submit ( c._pointA, _colors[ 0U ] );
             submit ( c._pointB, _colors[ 2U ] );
         }
     }
 
-    for ( auto& component : _components )
+    for ( auto &component : _components )
     {
         // NOLINTNEXTLINE - downcast.
-        auto& renderableComponent = static_cast<RenderableComponent&> ( *component );
+        auto &renderableComponent = static_cast<RenderableComponent &> ( *component );
         renderableComponent.Submit ( _renderSession );
     }
 
@@ -149,7 +149,7 @@ void BoxStack::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
 
 bool BoxStack::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept
 {
-    VkExtent2D const& surfaceResolution = renderer.GetViewportResolution ();
+    VkExtent2D const &surfaceResolution = renderer.GetViewportResolution ();
 
     VkExtent2D const resolution
     {
@@ -168,7 +168,7 @@ bool BoxStack::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcep
 
     _camera.CaptureInput ();
 
-    android_vulkan::Gamepad& gamepad = android_vulkan::Gamepad::GetInstance ();
+    android_vulkan::Gamepad &gamepad = android_vulkan::Gamepad::GetInstance ();
 
     gamepad.BindKey ( this,
         &BoxStack::OnLeftBumper,
@@ -188,7 +188,7 @@ bool BoxStack::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcep
 
 void BoxStack::OnSwapchainDestroyed ( android_vulkan::Renderer &renderer ) noexcept
 {
-    android_vulkan::Gamepad& gamepad = android_vulkan::Gamepad::GetInstance ();
+    android_vulkan::Gamepad &gamepad = android_vulkan::Gamepad::GetInstance ();
     gamepad.UnbindKey ( android_vulkan::eGamepadKey::LeftBumper, android_vulkan::eButtonState::Down );
     gamepad.UnbindKey ( android_vulkan::eGamepadKey::RightBumper, android_vulkan::eButtonState::Down );
 
@@ -233,13 +233,13 @@ bool BoxStack::AppendCuboid ( android_vulkan::Renderer &renderer,
     }
 
     // NOLINTNEXTLINE
-    auto& v = *static_cast<StaticMeshComponent*> ( visual.get () );
+    auto &v = *static_cast<StaticMeshComponent*> ( visual.get () );
     v.SetColor0 ( color );
 
     _components.push_back ( visual );
 
     physical = std::make_shared<android_vulkan::RigidBody> ();
-    android_vulkan::RigidBody& ph = *physical.get ();
+    android_vulkan::RigidBody &ph = *physical.get ();
     ph.SetLocation ( x, y, z, true );
     ph.DisableKinematic ( true );
     ph.EnableSleep ();
@@ -366,7 +366,7 @@ bool BoxStack::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
 
         commandBuffers += consumed;
 
-        android_vulkan::RigidBody& b = *_cubeBodies[ i ].get ();
+        android_vulkan::RigidBody &b = *_cubeBodies[ i ].get ();
         b.SetMass ( 7.77F, true );
     }
 
@@ -389,7 +389,7 @@ bool BoxStack::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
     _cameraLight = std::make_shared<PointLightComponent> ();
 
     // NOLINTNEXTLINE
-    auto& light = *static_cast<PointLightComponent*> ( _cameraLight.get () );
+    auto &light = *static_cast<PointLightComponent*> ( _cameraLight.get () );
     light.SetIntensity ( 16.0F );
     light.SetBoundDimensions ( 1600.0F, 1600.0F, 1600.0F );
     _components.push_back ( _cameraLight );
@@ -402,10 +402,10 @@ bool BoxStack::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
     if ( !result )
         return false;
 
-    for ( auto& component : _components )
+    for ( auto &component : _components )
     {
         // NOLINTNEXTLINE - downcast.
-        auto& renderableComponent = static_cast<RenderableComponent&> ( *component );
+        auto &renderableComponent = static_cast<RenderableComponent &> ( *component );
         renderableComponent.FreeTransferResources ( renderer );
     }
 
@@ -453,8 +453,8 @@ void BoxStack::InitColors () noexcept
 
 void BoxStack::OnLeftBumper ( void* context ) noexcept
 {
-    auto& sandbox = *static_cast<BoxStack*> ( context );
-    android_vulkan::Physics& p = sandbox._physics;
+    auto &sandbox = *static_cast<BoxStack*> ( context );
+    android_vulkan::Physics &p = sandbox._physics;
 
     if ( p.IsPaused () )
     {
@@ -467,17 +467,17 @@ void BoxStack::OnLeftBumper ( void* context ) noexcept
 
 void BoxStack::OnRightBumper ( void* context ) noexcept
 {
-    auto& sandbox = *static_cast<BoxStack*> ( context );
+    auto &sandbox = *static_cast<BoxStack*> ( context );
     sandbox._physics.OnDebugRun ();
 }
 
 void BoxStack::UpdateCuboid ( ComponentRef &cuboid, android_vulkan::RigidBodyRef &body ) noexcept
 {
     // NOLINTNEXTLINE
-    auto& c = *static_cast<StaticMeshComponent*> ( cuboid.get () );
+    auto &c = *static_cast<StaticMeshComponent*> ( cuboid.get () );
 
     // NOLINTNEXTLINE
-    auto& s = static_cast<android_vulkan::ShapeBox&> ( body->GetShape () );
+    auto &s = static_cast<android_vulkan::ShapeBox &> ( body->GetShape () );
     GXMat4 transform = body->GetTransform ();
 
     GXVec3 dims ( s.GetWidth (), s.GetHeight (), s.GetDepth () );

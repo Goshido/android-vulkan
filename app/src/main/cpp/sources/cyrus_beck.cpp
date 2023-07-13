@@ -1,4 +1,4 @@
-#include <cyrus_beck.h>
+#include <cyrus_beck.hpp>
 
 
 namespace android_vulkan {
@@ -12,14 +12,14 @@ CyrusBeck::CyrusBeck () noexcept:
     _vertices.reserve ( 2U );
 }
 
-Vertices const& CyrusBeck::Run ( Vertices const &face,
+Vertices const &CyrusBeck::Run ( Vertices const &face,
     GXVec3 const &faceNormal,
     Vertices const &edge,
     GXVec3 const &edgeDir
 ) noexcept
 {
     size_t const facePoints = face.size ();
-    GXVec3 const& edgeOrigin = edge[ 0U ];
+    GXVec3 const &edgeOrigin = edge[ 0U ];
     GXVec3 edgeUnitVector ( edgeDir );
     edgeUnitVector.Normalize ();
 
@@ -31,7 +31,7 @@ Vertices const& CyrusBeck::Run ( Vertices const &face,
 
     for ( size_t i = 0U; i < facePoints; ++i )
     {
-        GXVec3 const& aPoint = face[ i ];
+        GXVec3 const &aPoint = face[ i ];
         alpha.Subtract ( face[ ( i + 1U ) % facePoints ], aPoint );
 
         // The normal should point away from the face inner area. So changing cross product order.

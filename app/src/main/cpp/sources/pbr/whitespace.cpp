@@ -1,5 +1,5 @@
-#include <pbr/whitespace.h>
-#include <pbr/utf8_parser.h>
+#include <pbr/whitespace.hpp>
+#include <pbr/utf8_parser.hpp>
 
 
 namespace pbr {

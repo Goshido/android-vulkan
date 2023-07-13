@@ -1,10 +1,10 @@
-#include <pbr/ray_casting/ray_casting.h>
-#include <pbr/material_manager.h>
-#include <pbr/mesh_manager.h>
-#include <pbr/opaque_material.h>
-#include <pbr/static_mesh_component.h>
-#include <shape_box.h>
-#include <vertex_info.h>
+#include <pbr/ray_casting/ray_casting.hpp>
+#include <pbr/material_manager.hpp>
+#include <pbr/mesh_manager.hpp>
+#include <pbr/opaque_material.hpp>
+#include <pbr/static_mesh_component.hpp>
+#include <shape_box.hpp>
+#include <vertex_info.hpp>
 
 
 namespace pbr::ray_casting {
@@ -77,7 +77,7 @@ void RayCasting::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
 
 bool RayCasting::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept
 {
-    VkExtent2D const& surfaceResolution = renderer.GetViewportResolution ();
+    VkExtent2D const &surfaceResolution = renderer.GetViewportResolution ();
 
     VkExtent2D const resolution
     {
@@ -123,7 +123,7 @@ void RayCasting::Animate ( float deltaTime ) noexcept
     GXVec3 a {};
     a.LinearInterpolation ( _angular0, _angular1, _angularSlider );
 
-    android_vulkan::RigidBody& b = *_body.get ();
+    android_vulkan::RigidBody &b = *_body.get ();
     b.SetVelocityAngular ( a, false );
 
     GXMat4 transform {};
@@ -131,10 +131,10 @@ void RayCasting::Animate ( float deltaTime ) noexcept
     transform.FromFast ( b.GetRotation (), l );
 
     // NOLINTNEXTLINE - downcast.
-    auto& c = static_cast<StaticMeshComponent&> ( *_cube );
+    auto &c = static_cast<StaticMeshComponent &> ( *_cube );
 
     // NOLINTNEXTLINE - downcast.
-    auto const& boxShape = static_cast<android_vulkan::ShapeBox&> ( b.GetShape () );
+    auto const &boxShape = static_cast<android_vulkan::ShapeBox &> ( b.GetShape () );
 
     GXMat4 local {};
     local.Scale ( boxShape.GetWidth (), boxShape.GetHeight (), boxShape.GetDepth () );
@@ -247,7 +247,7 @@ bool RayCasting::LoadResources ( android_vulkan::Renderer &renderer ) noexcept
     _angularSlider = 0.0F;
 
     _body = std::make_shared<android_vulkan::RigidBody> ();
-    android_vulkan::RigidBody& ph = *_body.get ();
+    android_vulkan::RigidBody &ph = *_body.get ();
     ph.SetLocation ( 0.0F, 0.0F, 0.0F, false );
     ph.EnableKinematic ();
     ph.SetTag ( "Cube" );
@@ -377,7 +377,7 @@ bool RayCasting::LoadResources ( android_vulkan::Renderer &renderer ) noexcept
         return false;
 
     // NOLINTNEXTLINE - downcast.
-    auto& cube = static_cast<StaticMeshComponent&> ( *_cube );
+    auto &cube = static_cast<StaticMeshComponent &> ( *_cube );
     cube.FreeTransferResources ( renderer );
 
     _rayTextureHit->FreeTransferResources ( renderer );
@@ -524,7 +524,7 @@ GXVec3 RayCasting::GenerateAngular () noexcept
 void RayCasting::SwitchEmission ( MaterialRef &material, Texture2DRef &emission ) noexcept
 {
     // NOLINTNEXTLINE - downcast.
-    auto& m = static_cast<OpaqueMaterial&> ( *material );
+    auto &m = static_cast<OpaqueMaterial &> ( *material );
     m.SetEmission ( emission );
 }
 

@@ -1,5 +1,5 @@
-#include <logger.h>
-#include <pbr/utf8_parser.h>
+#include <logger.hpp>
+#include <pbr/utf8_parser.hpp>
 
 
 namespace pbr {

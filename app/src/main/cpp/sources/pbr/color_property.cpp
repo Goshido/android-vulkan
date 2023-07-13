@@ -1,4 +1,4 @@
-#include <pbr/color_property.h>
+#include <pbr/color_property.hpp>
 
 
 namespace pbr {
@@ -10,7 +10,7 @@ ColorProperty::ColorProperty ( eType type, ColorValue const &value ) noexcept:
     // NOTHING
 }
 
-ColorValue const& ColorProperty::GetValue () const noexcept
+ColorValue const &ColorProperty::GetValue () const noexcept
 {
     return _value;
 }

@@ -1,4 +1,4 @@
-#include <pbr/geometry_pass_texture_descriptor_set_layout.h>
+#include <pbr/geometry_pass_texture_descriptor_set_layout.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -6,7 +6,7 @@ GX_DISABLE_COMMON_WARNINGS
 
 GX_RESTORE_WARNING_STATE
 
-#include <vulkan_utils.h>
+#include <vulkan_utils.hpp>
 
 
 namespace pbr {
@@ -24,13 +24,13 @@ class GeometryPassTextureDescriptorSetLayoutImpl final
 
         GeometryPassTextureDescriptorSetLayoutImpl ( GeometryPassTextureDescriptorSetLayoutImpl const & ) = delete;
 
-        GeometryPassTextureDescriptorSetLayoutImpl& operator = (
+        GeometryPassTextureDescriptorSetLayoutImpl &operator = (
             GeometryPassTextureDescriptorSetLayoutImpl const &
         ) = delete;
 
         GeometryPassTextureDescriptorSetLayoutImpl ( GeometryPassTextureDescriptorSetLayoutImpl && ) = delete;
 
-        GeometryPassTextureDescriptorSetLayoutImpl& operator = (
+        GeometryPassTextureDescriptorSetLayoutImpl &operator = (
             GeometryPassTextureDescriptorSetLayoutImpl &&
         ) = delete;
 

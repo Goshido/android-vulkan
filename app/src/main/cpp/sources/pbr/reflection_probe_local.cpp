@@ -1,4 +1,4 @@
-#include <pbr/reflection_probe_local.h>
+#include <pbr/reflection_probe_local.hpp>
 
 
 namespace pbr {
@@ -11,12 +11,12 @@ ReflectionProbeLocal::ReflectionProbeLocal ( TextureCubeRef prefilter, GXVec3 lo
     UpdateBounds ();
 }
 
-GXAABB const& ReflectionProbeLocal::GetBounds () const noexcept
+GXAABB const &ReflectionProbeLocal::GetBounds () const noexcept
 {
     return _bounds;
 }
 
-GXVec3 const& ReflectionProbeLocal::GetLocation () const noexcept
+GXVec3 const &ReflectionProbeLocal::GetLocation () const noexcept
 {
     return _location;
 }

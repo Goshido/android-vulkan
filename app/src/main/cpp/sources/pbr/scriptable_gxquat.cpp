@@ -1,5 +1,5 @@
-#include <pbr/scriptable_gxquat.h>
-#include <pbr/scriptable_gxvec3.h>
+#include <pbr/scriptable_gxquat.hpp>
+#include <pbr/scriptable_gxvec3.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -83,7 +83,7 @@ void ScriptableGXQuat::Init ( lua_State &vm ) noexcept
         }
     };
 
-    for ( auto const& extension : extensions )
+    for ( auto const &extension : extensions )
     {
         lua_register ( &vm, extension.name, extension.func );
     }
@@ -91,7 +91,7 @@ void ScriptableGXQuat::Init ( lua_State &vm ) noexcept
 
 void ScriptableGXQuat::Destroy () noexcept
 {
-    auto free = [] ( Item*& head ) noexcept {
+    auto free = [] ( Item* &head ) noexcept {
         Item* item = head;
 
         while ( item )
@@ -108,13 +108,13 @@ void ScriptableGXQuat::Destroy () noexcept
     free ( _used );
 }
 
-GXQuat& ScriptableGXQuat::Extract ( lua_State* state, int idx ) noexcept
+GXQuat &ScriptableGXQuat::Extract ( lua_State* state, int idx ) noexcept
 {
-    auto& item = *static_cast<Item*> ( lua_touserdata ( state, idx ) );
+    auto &item = *static_cast<Item*> ( lua_touserdata ( state, idx ) );
     return item._quaternion;
 }
 
-void ScriptableGXQuat::Insert ( Item* item, Item*& list ) noexcept
+void ScriptableGXQuat::Insert ( Item* item, Item* &list ) noexcept
 {
     item->_previous = nullptr;
     item->_next = list;
@@ -168,7 +168,7 @@ int ScriptableGXQuat::OnDestroy ( lua_State* state )
 
 int ScriptableGXQuat::OnFromAxisAngle ( lua_State* state )
 {
-    auto& item = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    auto &item = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
 
     item._quaternion.FromAxisAngle ( ScriptableGXVec3::Extract ( state, 2 ),
         static_cast<float> ( lua_tonumber ( state, 3 ) )
@@ -179,8 +179,8 @@ int ScriptableGXQuat::OnFromAxisAngle ( lua_State* state )
 
 int ScriptableGXQuat::OnInverse ( lua_State* state )
 {
-    auto& self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
-    auto const& q = *static_cast<Item const*> ( lua_touserdata ( state, 2 ) );
+    auto &self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    auto const &q = *static_cast<Item const*> ( lua_touserdata ( state, 2 ) );
     self._quaternion.Inverse ( q._quaternion );
 
     return 0;
@@ -188,8 +188,8 @@ int ScriptableGXQuat::OnInverse ( lua_State* state )
 
 int ScriptableGXQuat::OnInverseFast ( lua_State* state )
 {
-    auto& self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
-    auto const& unitQuaternion = *static_cast<Item const*> ( lua_touserdata ( state, 2 ) );
+    auto &self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    auto const &unitQuaternion = *static_cast<Item const*> ( lua_touserdata ( state, 2 ) );
     self._quaternion.InverseFast ( unitQuaternion._quaternion );
 
     return 0;
@@ -197,9 +197,9 @@ int ScriptableGXQuat::OnInverseFast ( lua_State* state )
 
 int ScriptableGXQuat::OnMultiply ( lua_State* state )
 {
-    auto& self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
-    auto const& a = *static_cast<Item const*> ( lua_touserdata ( state, 2 ) );
-    auto const& b = *static_cast<Item const*> ( lua_touserdata ( state, 3 ) );
+    auto &self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    auto const &a = *static_cast<Item const*> ( lua_touserdata ( state, 2 ) );
+    auto const &b = *static_cast<Item const*> ( lua_touserdata ( state, 3 ) );
     self._quaternion.Multiply ( a._quaternion, b._quaternion );
 
     return 0;
@@ -207,16 +207,16 @@ int ScriptableGXQuat::OnMultiply ( lua_State* state )
 
 int ScriptableGXQuat::OnNormalize ( lua_State* state )
 {
-    auto& item = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    auto &item = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
     item._quaternion.Normalize ();
     return 0;
 }
 
 int ScriptableGXQuat::OnSphericalLinearInterpolation ( lua_State* state )
 {
-    auto& self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
-    auto const& start = *static_cast<Item const*> ( lua_touserdata ( state, 2 ) );
-    auto const& finish = *static_cast<Item const*> ( lua_touserdata ( state, 3 ) );
+    auto &self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    auto const &start = *static_cast<Item const*> ( lua_touserdata ( state, 2 ) );
+    auto const &finish = *static_cast<Item const*> ( lua_touserdata ( state, 3 ) );
 
     self._quaternion.SphericalLinearInterpolation ( start._quaternion,
         finish._quaternion,
@@ -228,8 +228,8 @@ int ScriptableGXQuat::OnSphericalLinearInterpolation ( lua_State* state )
 
 int ScriptableGXQuat::OnToString ( lua_State* state )
 {
-    auto const& item = *static_cast<Item const*> ( lua_touserdata ( state, 1 ) );
-    GXQuat const& q = item._quaternion;
+    auto const &item = *static_cast<Item const*> ( lua_touserdata ( state, 1 ) );
+    GXQuat const &q = item._quaternion;
 
     char result[ 128U ];
 
@@ -248,7 +248,7 @@ int ScriptableGXQuat::OnToString ( lua_State* state )
 
 int ScriptableGXQuat::OnTransformFast ( lua_State* state )
 {
-    auto const& self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    auto const &self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
     self._quaternion.TransformFast ( ScriptableGXVec3::Extract ( state, 2 ), ScriptableGXVec3::Extract ( state, 3 ) );
     return 0;
 }

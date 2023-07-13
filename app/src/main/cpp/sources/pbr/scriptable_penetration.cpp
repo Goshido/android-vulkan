@@ -1,6 +1,6 @@
-#include <pbr/scriptable_penetration.h>
-#include <pbr/script_engine.h>
-#include <logger.h>
+#include <pbr/scriptable_penetration.hpp>
+#include <pbr/script_engine.hpp>
+#include <logger.hpp>
 
 
 namespace pbr {
@@ -118,7 +118,7 @@ bool ScriptablePenetration::PublishResult ( lua_State &vm,
 
     for ( size_t i = 0U; i < available; ++i )
     {
-        android_vulkan::Penetration const& p = pens[ i ];
+        android_vulkan::Penetration const &p = pens[ i ];
         _normals[ i ].get ()._vec3 = p._normal;
 
         lua_pushinteger ( &vm, static_cast<int> ( i ) + 1 );
@@ -168,7 +168,7 @@ bool ScriptablePenetration::PublishResult ( lua_State &vm,
 
     for ( size_t i = available; i < count; ++i )
     {
-        android_vulkan::Penetration const& p = pens[ i ];
+        android_vulkan::Penetration const &p = pens[ i ];
 
         lua_pushvalue ( &vm, -2 );
         lua_pushlightuserdata ( &vm, p._body.get () );
@@ -237,7 +237,7 @@ bool ScriptablePenetration::Append ( lua_State &vm,
         return false;
     }
 
-    auto& n = *static_cast<ScriptableGXVec3::Item*> ( lua_touserdata ( &vm, -1 ) );
+    auto &n = *static_cast<ScriptableGXVec3::Item*> ( lua_touserdata ( &vm, -1 ) );
     n._vec3 = normal;
     _normals.emplace_back ( std::ref ( n ) );
     lua_pop ( &vm, 1 );

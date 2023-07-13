@@ -1,6 +1,6 @@
-#include <pbr/light_pass.h>
-#include <trace.h>
-#include <vulkan_utils.h>
+#include <pbr/light_pass.hpp>
+#include <trace.hpp>
+#include <vulkan_utils.hpp>
 
 
 namespace pbr {
@@ -29,7 +29,7 @@ bool LightPass::Init ( android_vulkan::Renderer &renderer,
 
     AV_REGISTER_COMMAND_POOL ( "pbr::LightPass::_commandPool" )
 
-    VkExtent2D const& resolution = gBuffer.GetResolution ();
+    VkExtent2D const &resolution = gBuffer.GetResolution ();
 
     return _pointLightPass.Init ( renderer, resolution, renderPass ) &&
         _reflectionGlobalPass.Init ( renderer, renderPass, 1U, resolution ) &&

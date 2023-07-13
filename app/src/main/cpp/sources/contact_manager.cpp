@@ -1,4 +1,4 @@
-#include <contact_manager.h>
+#include <contact_manager.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -58,10 +58,10 @@ class Grabber final
         Grabber () = delete;
 
         Grabber ( Grabber const & ) = delete;
-        Grabber& operator = ( Grabber const & ) = delete;
+        Grabber &operator = ( Grabber const & ) = delete;
 
         Grabber ( Grabber && ) = delete;
-        Grabber& operator = ( Grabber && ) = delete;
+        Grabber &operator = ( Grabber && ) = delete;
 
         explicit Grabber ( Contact const &contact ) noexcept:
             _pointA ( contact._pointA ),
@@ -91,7 +91,7 @@ class Grabber final
 
 ContactManager::ContactManager () noexcept
 {
-    for ( auto& [contactManifolds, contacts] : _sets )
+    for ( auto &[contactManifolds, contacts] : _sets )
     {
         contacts.reserve ( INITIAL_CONTACTS );
         contactManifolds.reserve ( INITIAL_CONTACT_MANIFOLDS );
@@ -100,9 +100,9 @@ ContactManager::ContactManager () noexcept
     _indices.reserve ( INITIAL_INDICES );
 }
 
-Contact& ContactManager::AllocateContact ( ContactManifold &contactManifold ) noexcept
+Contact &ContactManager::AllocateContact ( ContactManifold &contactManifold ) noexcept
 {
-    Contact& contact = _sets.front ().second.emplace_back ();
+    Contact &contact = _sets.front ().second.emplace_back ();
 
     if ( !contactManifold._contacts )
         contactManifold._contacts = &contact;
@@ -111,17 +111,17 @@ Contact& ContactManager::AllocateContact ( ContactManifold &contactManifold ) no
     return contact;
 }
 
-ContactManifold& ContactManager::AllocateContactManifold () noexcept
+ContactManifold &ContactManager::AllocateContactManifold () noexcept
 {
     return _sets.front ().first.emplace_back ();
 }
 
-std::vector<ContactManifold>& ContactManager::GetContactManifolds () noexcept
+std::vector<ContactManifold> &ContactManager::GetContactManifolds () noexcept
 {
     return _sets.front ().first;
 }
 
-std::vector<ContactManifold> const& ContactManager::GetContactManifolds () const noexcept
+std::vector<ContactManifold> const &ContactManager::GetContactManifolds () const noexcept
 {
     return _sets.front ().first;
 }
@@ -132,7 +132,7 @@ void ContactManager::RemoveOutdatedWarmRecords () noexcept
 
     for ( auto i = _warmStartMapper.begin (); i != end; )
     {
-        ContactManifold& manifold = *i->second;
+        ContactManifold &manifold = *i->second;
 
         if ( !manifold._warmStartIsUsed )
         {
@@ -172,7 +172,7 @@ void ContactManager::Warm ( ContactManifold &manifold ) noexcept
         }
     }
 
-    ContactManifold const& cache = *findResult->second;
+    ContactManifold const &cache = *findResult->second;
     Contact const* cacheContacts = cache._contacts;
 
     _indices.clear ();
@@ -184,12 +184,12 @@ void ContactManager::Warm ( ContactManifold &manifold ) noexcept
 
     for ( size_t i = 0U; i < contactCount; ++i )
     {
-        Contact& contact = contacts[ i ];
+        Contact &contact = contacts[ i ];
 
         for ( auto cacheIndex = _indices.begin (); cacheIndex != _indices.end (); )
         {
-            size_t& ind = *cacheIndex;
-            Contact const& cacheContact = cacheContacts[ ind ];
+            size_t &ind = *cacheIndex;
+            Contact const &cacheContact = cacheContacts[ ind ];
 
             // Note this is rough approximation. Main assumption that both contact point pairs on previous step and
             // current step are relatively close to each other but relative far away from another pairs in
@@ -226,7 +226,7 @@ void ContactManager::Warm ( ContactManifold &manifold ) noexcept
 
 void ContactManager::ResetFrontSet () noexcept
 {
-    auto& [contactManifolds, contacts] = _sets.front ();
+    auto &[contactManifolds, contacts] = _sets.front ();
     contactManifolds.clear ();
     contacts.clear ();
 }
@@ -268,7 +268,7 @@ void ContactManager::SimplifyManifold ( ContactManifold &manifold ) noexcept
 
     // Second point: the line must have maximum distance.
 
-    GXVec3 const& contactAPoint = contactA._pointA;
+    GXVec3 const &contactAPoint = contactA._pointA;
     search = _indices.begin ();
     float distance = contacts[ *search ]._pointA.SquaredDistance ( contactAPoint );
 
@@ -288,11 +288,11 @@ void ContactManager::SimplifyManifold ( ContactManifold &manifold ) noexcept
 
     // Third point: the triangle must have maximum area.
 
-    GXVec3 const& contactBPoint = contactB._pointA;
+    GXVec3 const &contactBPoint = contactB._pointA;
 
     // Note you might guess why don't just use normal from the first contact point. But unfortunately we can't do that
     // reliably. We have to recalculate normal because it's unknown which in winding order contact points are.
-    GXVec3 const& o = contacts[ 0U ]._pointA;
+    GXVec3 const &o = contacts[ 0U ]._pointA;
 
     GXVec3 ab {};
     ab.Subtract ( contacts[ 1U ]._pointA, o );
@@ -335,7 +335,7 @@ void ContactManager::SimplifyManifold ( ContactManifold &manifold ) noexcept
 
     // Forth point: Minimum signed area of remaining points with sides of the ABC triangle.
 
-    GXVec3 const& contactCPoint = contactC._pointA;
+    GXVec3 const &contactCPoint = contactC._pointA;
     search = _indices.end ();
     auto const end = search;
     areaFactor = std::numeric_limits<float>::max ();
@@ -369,8 +369,8 @@ void ContactManager::SimplifyManifold ( ContactManifold &manifold ) noexcept
 
 void ContactManager::SwapSets () noexcept
 {
-    auto& [frontContactManifolds, frontContacts] = _sets.front ();
-    auto& [backContactManifolds, backContacts] = _sets.back ();
+    auto &[frontContactManifolds, frontContacts] = _sets.front ();
+    auto &[backContactManifolds, backContacts] = _sets.back ();
 
     backContactManifolds.swap ( frontContactManifolds );
     backContacts.swap ( frontContacts );

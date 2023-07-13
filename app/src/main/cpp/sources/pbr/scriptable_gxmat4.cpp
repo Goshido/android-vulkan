@@ -1,7 +1,7 @@
-﻿#include <pbr/scriptable_gxmat4.h>
-#include <pbr/scriptable_gxquat.h>
-#include <pbr/scriptable_gxvec3.h>
-#include <pbr/scriptable_gxvec4.h>
+﻿#include <pbr/scriptable_gxmat4.hpp>
+#include <pbr/scriptable_gxquat.hpp>
+#include <pbr/scriptable_gxvec3.hpp>
+#include <pbr/scriptable_gxvec4.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -144,7 +144,7 @@ void ScriptableGXMat4::Init ( lua_State &vm ) noexcept
         }
     };
 
-    for ( auto const& extension : extensions )
+    for ( auto const &extension : extensions )
     {
         lua_register ( &vm, extension.name, extension.func );
     }
@@ -152,7 +152,7 @@ void ScriptableGXMat4::Init ( lua_State &vm ) noexcept
 
 void ScriptableGXMat4::Destroy () noexcept
 {
-    auto free = [] ( Item*& head ) noexcept {
+    auto free = [] ( Item* &head ) noexcept {
         Item* item = head;
 
         while ( item )
@@ -169,13 +169,13 @@ void ScriptableGXMat4::Destroy () noexcept
     free ( _used );
 }
 
-GXMat4& ScriptableGXMat4::Extract ( lua_State* state, int idx ) noexcept
+GXMat4 &ScriptableGXMat4::Extract ( lua_State* state, int idx ) noexcept
 {
-    auto& item = *static_cast<Item*> ( lua_touserdata ( state, idx ) );
+    auto &item = *static_cast<Item*> ( lua_touserdata ( state, idx ) );
     return item._matrix;
 }
 
-void ScriptableGXMat4::Insert ( Item* item, Item*& list ) noexcept
+void ScriptableGXMat4::Insert ( Item* item, Item* &list ) noexcept
 {
     item->_previous = nullptr;
     item->_next = list;
@@ -188,7 +188,7 @@ void ScriptableGXMat4::Insert ( Item* item, Item*& list ) noexcept
 
 int ScriptableGXMat4::OnClone ( lua_State* state )
 {
-    auto& self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    auto &self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
     self._matrix = ScriptableGXMat4::Extract ( state, 2 );
     return 0;
 }
@@ -236,50 +236,50 @@ int ScriptableGXMat4::OnDestroy ( lua_State* state )
 
 int ScriptableGXMat4::OnFromFast ( lua_State* state )
 {
-    auto& self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    auto &self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
     self._matrix.FromFast ( ScriptableGXQuat::Extract ( state, 2 ), ScriptableGXVec3::Extract ( state, 3 ) );
     return 0;
 }
 
 int ScriptableGXMat4::OnGetX ( lua_State* state )
 {
-    auto const& self = *static_cast<Item const*> ( lua_touserdata ( state, 1 ) );
+    auto const &self = *static_cast<Item const*> ( lua_touserdata ( state, 1 ) );
     self._matrix.GetX ( ScriptableGXVec3::Extract ( state, 2 ) );
     return 0;
 }
 
 int ScriptableGXMat4::OnGetY ( lua_State* state )
 {
-    auto const& self = *static_cast<Item const*> ( lua_touserdata ( state, 1 ) );
+    auto const &self = *static_cast<Item const*> ( lua_touserdata ( state, 1 ) );
     self._matrix.GetY ( ScriptableGXVec3::Extract ( state, 2 ) );
     return 0;
 }
 
 int ScriptableGXMat4::OnGetZ ( lua_State* state )
 {
-    auto const& self = *static_cast<Item const*> ( lua_touserdata ( state, 1 ) );
+    auto const &self = *static_cast<Item const*> ( lua_touserdata ( state, 1 ) );
     self._matrix.GetZ ( ScriptableGXVec3::Extract ( state, 2 ) );
     return 0;
 }
 
 int ScriptableGXMat4::OnGetW ( lua_State* state )
 {
-    auto const& self = *static_cast<Item const*> ( lua_touserdata ( state, 1 ) );
+    auto const &self = *static_cast<Item const*> ( lua_touserdata ( state, 1 ) );
     self._matrix.GetW ( ScriptableGXVec3::Extract ( state, 2 ) );
     return 0;
 }
 
 int ScriptableGXMat4::OnIdentity ( lua_State* state )
 {
-    auto& item = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    auto &item = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
     item._matrix.Identity ();
     return 0;
 }
 
 int ScriptableGXMat4::OnInverse ( lua_State* state )
 {
-    auto& self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
-    auto const& sourceMatrix = *static_cast<Item const*> ( lua_touserdata ( state, 2 ) );
+    auto &self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    auto const &sourceMatrix = *static_cast<Item const*> ( lua_touserdata ( state, 2 ) );
     self._matrix.Inverse ( sourceMatrix._matrix );
 
     return 0;
@@ -287,9 +287,9 @@ int ScriptableGXMat4::OnInverse ( lua_State* state )
 
 int ScriptableGXMat4::OnMultiply ( lua_State* state )
 {
-    auto& self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
-    auto const& a = *static_cast<Item const*> ( lua_touserdata ( state, 2 ) );
-    auto const& b = *static_cast<Item const*> ( lua_touserdata ( state, 3 ) );
+    auto &self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    auto const &a = *static_cast<Item const*> ( lua_touserdata ( state, 2 ) );
+    auto const &b = *static_cast<Item const*> ( lua_touserdata ( state, 3 ) );
     self._matrix.Multiply ( a._matrix, b._matrix );
 
     return 0;
@@ -297,7 +297,7 @@ int ScriptableGXMat4::OnMultiply ( lua_State* state )
 
 int ScriptableGXMat4::OnMultiplyMatrixVector ( lua_State* state )
 {
-    auto& self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    auto &self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
 
     self._matrix.MultiplyMatrixVector ( ScriptableGXVec4::Extract ( state, 2 ),
         ScriptableGXVec4::Extract ( state, 3 )
@@ -308,21 +308,21 @@ int ScriptableGXMat4::OnMultiplyMatrixVector ( lua_State* state )
 
 int ScriptableGXMat4::OnMultiplyAsNormal ( lua_State* state )
 {
-    auto& self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    auto &self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
     self._matrix.MultiplyAsNormal ( ScriptableGXVec3::Extract ( state, 2 ), ScriptableGXVec3::Extract ( state, 3 ) );
     return 0;
 }
 
 int ScriptableGXMat4::OnMultiplyAsPoint ( lua_State* state )
 {
-    auto& self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    auto &self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
     self._matrix.MultiplyAsPoint ( ScriptableGXVec3::Extract ( state, 2 ), ScriptableGXVec3::Extract ( state, 3 ) );
     return 0;
 }
 
 int ScriptableGXMat4::OnMultiplyVectorMatrix ( lua_State* state )
 {
-    auto& self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    auto &self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
 
     self._matrix.MultiplyVectorMatrix ( ScriptableGXVec4::Extract ( state, 2 ),
         ScriptableGXVec4::Extract ( state, 3 )
@@ -333,7 +333,7 @@ int ScriptableGXMat4::OnMultiplyVectorMatrix ( lua_State* state )
 
 int ScriptableGXMat4::OnPerspective ( lua_State* state )
 {
-    auto& item = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    auto &item = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
 
     item._matrix.Perspective ( static_cast<float> ( lua_tonumber ( state, 2 ) ),
         static_cast<float> ( lua_tonumber ( state, 3 ) ),
@@ -346,28 +346,28 @@ int ScriptableGXMat4::OnPerspective ( lua_State* state )
 
 int ScriptableGXMat4::OnRotationX ( lua_State* state )
 {
-    auto& item = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    auto &item = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
     item._matrix.RotationX ( static_cast<float> ( lua_tonumber ( state, 2 ) ) );
     return 0;
 }
 
 int ScriptableGXMat4::OnRotationY ( lua_State* state )
 {
-    auto& item = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    auto &item = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
     item._matrix.RotationY ( static_cast<float> ( lua_tonumber ( state, 2 ) ) );
     return 0;
 }
 
 int ScriptableGXMat4::OnRotationZ ( lua_State* state )
 {
-    auto& item = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    auto &item = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
     item._matrix.RotationZ ( static_cast<float> ( lua_tonumber ( state, 2 ) ) );
     return 0;
 }
 
 int ScriptableGXMat4::OnScale ( lua_State* state )
 {
-    auto& item = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    auto &item = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
 
     item._matrix.Scale ( static_cast<float> ( lua_tonumber ( state, 2 ) ),
         static_cast<float> ( lua_tonumber ( state, 3 ) ),
@@ -379,36 +379,36 @@ int ScriptableGXMat4::OnScale ( lua_State* state )
 
 int ScriptableGXMat4::OnSetX ( lua_State* state )
 {
-    auto& self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    auto &self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
     self._matrix.SetX ( ScriptableGXVec3::Extract ( state, 2 ) );
     return 0;
 }
 
 int ScriptableGXMat4::OnSetY ( lua_State* state )
 {
-    auto& self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    auto &self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
     self._matrix.SetY ( ScriptableGXVec3::Extract ( state, 2 ) );
     return 0;
 }
 
 int ScriptableGXMat4::OnSetZ ( lua_State* state )
 {
-    auto& self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    auto &self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
     self._matrix.SetZ ( ScriptableGXVec3::Extract ( state, 2 ) );
     return 0;
 }
 
 int ScriptableGXMat4::OnSetW ( lua_State* state )
 {
-    auto& self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    auto &self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
     self._matrix.SetW ( ScriptableGXVec3::Extract ( state, 2 ) );
     return 0;
 }
 
 int ScriptableGXMat4::OnToString ( lua_State* state )
 {
-    auto const& item = *static_cast<Item const*> ( lua_touserdata ( state, 1 ) );
-    GXMat4 const& m = item._matrix;
+    auto const &item = *static_cast<Item const*> ( lua_touserdata ( state, 1 ) );
+    GXMat4 const &m = item._matrix;
 
     constexpr char const format[] =
 R"__(%14g %14g %14g %14g
@@ -445,7 +445,7 @@ R"__(%14g %14g %14g %14g
 
 int ScriptableGXMat4::OnTranslation ( lua_State* state )
 {
-    auto& item = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    auto &item = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
 
     item._matrix.Translation ( static_cast<float> ( lua_tonumber ( state, 2 ) ),
         static_cast<float> ( lua_tonumber ( state, 3 ) ),

@@ -1,4 +1,4 @@
-#include "..\\..\\include\\version.h"
+#include "..\\..\\include\\version.hpp"
 
 #define STR(x) #x
 #define STRINGAZE(x) STR(x)

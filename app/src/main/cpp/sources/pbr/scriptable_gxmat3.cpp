@@ -1,5 +1,5 @@
-#include <pbr/scriptable_gxmat3.h>
-#include <pbr/scriptable_gxvec3.h>
+#include <pbr/scriptable_gxmat3.hpp>
+#include <pbr/scriptable_gxvec3.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -108,7 +108,7 @@ void ScriptableGXMat3::Init ( lua_State &vm ) noexcept
         }
     };
 
-    for ( auto const& extension : extensions )
+    for ( auto const &extension : extensions )
     {
         lua_register ( &vm, extension.name, extension.func );
     }
@@ -116,7 +116,7 @@ void ScriptableGXMat3::Init ( lua_State &vm ) noexcept
 
 void ScriptableGXMat3::Destroy () noexcept
 {
-    auto free = [] ( Item*& head ) noexcept {
+    auto free = [] ( Item* &head ) noexcept {
         Item* item = head;
 
         while ( item )
@@ -133,7 +133,7 @@ void ScriptableGXMat3::Destroy () noexcept
     free ( _used );
 }
 
-void ScriptableGXMat3::Insert ( Item* item, Item*& list ) noexcept
+void ScriptableGXMat3::Insert ( Item* item, Item* &list ) noexcept
 {
     item->_previous = nullptr;
     item->_next = list;
@@ -187,36 +187,36 @@ int ScriptableGXMat3::OnDestroy ( lua_State* state )
 
 int ScriptableGXMat3::OnGetX ( lua_State* state )
 {
-    auto const& self = *static_cast<Item const*> ( lua_touserdata ( state, 1 ) );
+    auto const &self = *static_cast<Item const*> ( lua_touserdata ( state, 1 ) );
     self._matrix.GetX ( ScriptableGXVec3::Extract ( state, 2 ) );
     return 0;
 }
 
 int ScriptableGXMat3::OnGetY ( lua_State* state )
 {
-    auto const& self = *static_cast<Item const*> ( lua_touserdata ( state, 1 ) );
+    auto const &self = *static_cast<Item const*> ( lua_touserdata ( state, 1 ) );
     self._matrix.GetY ( ScriptableGXVec3::Extract ( state, 2 ) );
     return 0;
 }
 
 int ScriptableGXMat3::OnGetZ ( lua_State* state )
 {
-    auto const& self = *static_cast<Item const*> ( lua_touserdata ( state, 1 ) );
+    auto const &self = *static_cast<Item const*> ( lua_touserdata ( state, 1 ) );
     self._matrix.GetZ ( ScriptableGXVec3::Extract ( state, 2 ) );
     return 0;
 }
 
 int ScriptableGXMat3::OnIdentity ( lua_State* state )
 {
-    auto& item = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    auto &item = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
     item._matrix.Identity ();
     return 0;
 }
 
 int ScriptableGXMat3::OnInverse ( lua_State* state )
 {
-    auto& self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
-    auto const& sourceMatrix = *static_cast<Item const*> ( lua_touserdata ( state, 2 ) );
+    auto &self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    auto const &sourceMatrix = *static_cast<Item const*> ( lua_touserdata ( state, 2 ) );
     self._matrix.Inverse ( sourceMatrix._matrix );
 
     return 0;
@@ -224,9 +224,9 @@ int ScriptableGXMat3::OnInverse ( lua_State* state )
 
 int ScriptableGXMat3::OnMultiply ( lua_State* state )
 {
-    auto& self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
-    auto const& b = *static_cast<Item const*> ( lua_touserdata ( state, 3 ) );
-    auto const& a = *static_cast<Item const*> ( lua_touserdata ( state, 2 ) );
+    auto &self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    auto const &b = *static_cast<Item const*> ( lua_touserdata ( state, 3 ) );
+    auto const &a = *static_cast<Item const*> ( lua_touserdata ( state, 2 ) );
     self._matrix.Multiply ( a._matrix, b._matrix );
 
     return 0;
@@ -234,7 +234,7 @@ int ScriptableGXMat3::OnMultiply ( lua_State* state )
 
 int ScriptableGXMat3::OnMultiplyMatrixVector ( lua_State* state )
 {
-    auto& self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    auto &self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
 
     self._matrix.MultiplyMatrixVector ( ScriptableGXVec3::Extract ( state, 2 ),
         ScriptableGXVec3::Extract ( state, 3 )
@@ -245,7 +245,7 @@ int ScriptableGXMat3::OnMultiplyMatrixVector ( lua_State* state )
 
 int ScriptableGXMat3::OnMultiplyVectorMatrix ( lua_State* state )
 {
-    auto& self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    auto &self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
 
     self._matrix.MultiplyVectorMatrix ( ScriptableGXVec3::Extract ( state, 2 ),
         ScriptableGXVec3::Extract ( state, 3 )
@@ -256,29 +256,29 @@ int ScriptableGXMat3::OnMultiplyVectorMatrix ( lua_State* state )
 
 int ScriptableGXMat3::OnSetX ( lua_State* state )
 {
-    auto& self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    auto &self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
     self._matrix.SetX ( ScriptableGXVec3::Extract ( state, 2 ) );
     return 0;
 }
 
 int ScriptableGXMat3::OnSetY ( lua_State* state )
 {
-    auto& self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    auto &self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
     self._matrix.SetY ( ScriptableGXVec3::Extract ( state, 2 ) );
     return 0;
 }
 
 int ScriptableGXMat3::OnSetZ ( lua_State* state )
 {
-    auto& self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    auto &self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
     self._matrix.SetZ ( ScriptableGXVec3::Extract ( state, 2 ) );
     return 0;
 }
 
 int ScriptableGXMat3::OnTranspose ( lua_State* state )
 {
-    auto& self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
-    auto const& sourceMatrix = *static_cast<Item const*> ( lua_touserdata ( state, 2 ) );
+    auto &self = *static_cast<Item*> ( lua_touserdata ( state, 1 ) );
+    auto const &sourceMatrix = *static_cast<Item const*> ( lua_touserdata ( state, 2 ) );
     self._matrix.Transpose ( sourceMatrix._matrix );
 
     return 0;
@@ -287,7 +287,7 @@ int ScriptableGXMat3::OnTranspose ( lua_State* state )
 int ScriptableGXMat3::OnToString ( lua_State* state )
 {
     auto const* item = static_cast<Item const*> ( lua_touserdata ( state, 1 ) );
-    GXMat3 const& m = item->_matrix;
+    GXMat3 const &m = item->_matrix;
 
     constexpr char const format[] =
 R"__(%14g %14g %14g

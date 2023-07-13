@@ -1,6 +1,6 @@
-#include <pbr/scriptable_sweep_test_result.h>
-#include <pbr/script_engine.h>
-#include <logger.h>
+#include <pbr/scriptable_sweep_test_result.hpp>
+#include <pbr/script_engine.hpp>
+#include <logger.hpp>
 
 
 namespace pbr {
@@ -91,7 +91,7 @@ bool ScriptableSweepTestResult::PublishResult ( lua_State &vm,
 
     for ( size_t i = 0U; i < count; ++i )
     {
-        android_vulkan::RigidBodyRef const& body = sweepTestResult[ i ];
+        android_vulkan::RigidBodyRef const &body = sweepTestResult[ i ];
         lua_pushinteger ( &vm, static_cast<int> ( i + 1U ) );
 
         lua_pushvalue ( &vm, -2 );

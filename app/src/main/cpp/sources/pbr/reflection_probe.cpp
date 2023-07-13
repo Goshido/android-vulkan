@@ -1,4 +1,4 @@
-#include <pbr/reflection_probe.h>
+#include <pbr/reflection_probe.hpp>
 
 namespace pbr {
 
@@ -7,7 +7,7 @@ void ReflectionProbe::FreeTransferResources ( android_vulkan::Renderer &renderer
     _prefilter->FreeTransferResources ( renderer );
 }
 
-TextureCubeRef& ReflectionProbe::GetPrefilter () noexcept
+TextureCubeRef &ReflectionProbe::GetPrefilter () noexcept
 {
     return _prefilter;
 }

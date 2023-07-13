@@ -1,10 +1,10 @@
-#include <pbr/render_session.h>
-#include <pbr/point_light.h>
-#include <pbr/reflection_probe_global.h>
-#include <pbr/reflection_probe_local.h>
-#include <av_assert.h>
-#include <trace.h>
-#include <vulkan_utils.h>
+#include <pbr/render_session.hpp>
+#include <pbr/point_light.hpp>
+#include <pbr/reflection_probe_global.hpp>
+#include <pbr/reflection_probe_local.hpp>
+#include <av_assert.hpp>
+#include <trace.hpp>
+#include <vulkan_utils.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -38,8 +38,8 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
     if ( !_uiPass.AcquirePresentTarget ( renderer, swapchainImageIndex ) )
         return false;
 
-    CommandInfo& commandInfo = _commandInfo[ swapchainImageIndex ];
-    VkFence& fence = commandInfo._fence;
+    CommandInfo &commandInfo = _commandInfo[ swapchainImageIndex ];
+    VkFence &fence = commandInfo._fence;
     VkDevice device = renderer.GetDevice ();
 
     bool result = android_vulkan::Renderer::CheckVkResult (
@@ -129,7 +129,7 @@ void RenderSession::FreeTransferResources ( android_vulkan::Renderer &renderer )
     _defaultTextureManager.FreeTransferResources ( renderer, _commandInfo[ 0U ]._pool );
 }
 
-UIPass& RenderSession::GetUIPass () noexcept
+UIPass &RenderSession::GetUIPass () noexcept
 {
     return _uiPass;
 }
@@ -144,7 +144,7 @@ bool RenderSession::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
     _meshHandlers[ static_cast<size_t> ( eMaterialType::Stipple ) ] = &RenderSession::SubmitStippleCall;
 
     _commandInfo.resize ( 1U );
-    CommandInfo& commandInfo = _commandInfo[ 0U ];
+    CommandInfo &commandInfo = _commandInfo[ 0U ];
 
     VkDevice device = renderer.GetDevice ();
 
@@ -174,7 +174,7 @@ void RenderSession::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexc
         AV_UNREGISTER_RENDER_PASS ( "pbr::RenderSession::_renderPass" )
     }
 
-    for ( auto& commandInfo : _commandInfo )
+    for ( auto &commandInfo : _commandInfo )
     {
         if ( commandInfo._pool != VK_NULL_HANDLE )
         {
@@ -199,7 +199,7 @@ bool RenderSession::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
     VkExtent2D const &resolution
 ) noexcept
 {
-    VkExtent2D const& currentResolution = _gBuffer.GetResolution ();
+    VkExtent2D const &currentResolution = _gBuffer.GetResolution ();
 
     if ( ( currentResolution.width != resolution.width ) | ( currentResolution.height != resolution.height ) )
     {
@@ -282,7 +282,7 @@ void RenderSession::SubmitMesh ( MeshRef &mesh,
 
 bool RenderSession::CreateFramebuffer ( android_vulkan::Renderer &renderer ) noexcept
 {
-    VkExtent2D const& resolution = _gBuffer.GetResolution ();
+    VkExtent2D const &resolution = _gBuffer.GetResolution ();
 
     VkImageView const attachments[] =
     {
@@ -701,7 +701,7 @@ void RenderSession::SubmitPointLight ( LightRef &light ) noexcept
     _renderSessionStats.SubmitPointLight ();
 
     // NOLINTNEXTLINE - downcast
-    auto const& pointLight = static_cast<PointLight const&> ( *light );
+    auto const &pointLight = static_cast<PointLight const &> ( *light );
 
     if ( !_frustum.IsVisible ( pointLight.GetBounds () ) )
         return;
@@ -714,7 +714,7 @@ void RenderSession::SubmitReflectionGlobal ( LightRef &light ) noexcept
     _renderSessionStats.RenderReflectionGlobal ();
 
     // NOLINTNEXTLINE - downcast
-    auto& probe = static_cast<ReflectionProbeGlobal&> ( *light );
+    auto &probe = static_cast<ReflectionProbeGlobal &> ( *light );
 
     _lightPass.SubmitReflectionGlobal ( probe.GetPrefilter () );
 }
@@ -724,7 +724,7 @@ void RenderSession::SubmitReflectionLocal ( LightRef &light ) noexcept
     _renderSessionStats.SubmitReflectionLocal ();
 
     // NOLINTNEXTLINE - downcast
-    auto& probe = static_cast<ReflectionProbeLocal&> ( *light );
+    auto &probe = static_cast<ReflectionProbeLocal &> ( *light );
 
     if ( !_frustum.IsVisible ( probe.GetBounds () ) )
         return;
@@ -734,7 +734,7 @@ void RenderSession::SubmitReflectionLocal ( LightRef &light ) noexcept
 
 bool RenderSession::AllocateCommandInfo ( CommandInfo &info, VkDevice device, uint32_t queueIndex ) noexcept
 {
-    VkCommandPool& pool = info._pool;
+    VkCommandPool &pool = info._pool;
 
     constexpr VkFenceCreateInfo fenceInfo
     {

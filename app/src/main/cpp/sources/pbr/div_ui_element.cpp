@@ -1,7 +1,7 @@
-#include <pbr/div_ui_element.h>
-#include <av_assert.h>
-#include <file.h>
-#include <logger.h>
+#include <pbr/div_ui_element.hpp>
+#include <av_assert.hpp>
+#include <file.hpp>
+#include <logger.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -59,12 +59,12 @@ void DIVUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
         return;
 
     // Method contains a lot of branchless optimizations.
-    std::vector<float>& lineHeights = *info._lineHeights;
+    std::vector<float> &lineHeights = *info._lineHeights;
     _parentLine = lineHeights.size () - 1U;
 
     size_t const oldVertices = info._vertices;
-    GXVec2 const& canvasSize = info._canvasSize;
-    CSSUnitToDevicePixel const& units = *info._cssUnits;
+    GXVec2 const &canvasSize = info._canvasSize;
+    CSSUnitToDevicePixel const &units = *info._cssUnits;
 
     _marginTopLeft = GXVec2 ( ResolvePixelLength ( _css._marginLeft, canvasSize._data[ 0U ], false, units ),
         ResolvePixelLength ( _css._marginTop, canvasSize._data[ 1U ], true, units )
@@ -91,7 +91,7 @@ void DIVUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
         ++_parentLine;
     };
 
-    GXVec2& penOut = info._pen;
+    GXVec2 &penOut = info._pen;
 
     switch ( _css._position )
     {
@@ -123,9 +123,9 @@ void DIVUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
         return;
     }
 
-    float const& parentWidth = canvasSize._data[ 0U ];
-    float const& paddingRight = paddingBottomRight._data[ 0U ];
-    float const& marginRight = marginBottomRight._data[ 0U ];
+    float const &parentWidth = canvasSize._data[ 0U ];
+    float const &paddingRight = paddingBottomRight._data[ 0U ];
+    float const &marginRight = marginBottomRight._data[ 0U ];
 
     float const widthCases[] =
     {
@@ -265,7 +265,7 @@ void DIVUIElement::Submit ( SubmitInfo &info ) noexcept
         constexpr size_t vertices = UIPass::GetVerticesPerRectangle ();
         constexpr size_t bytes = vertices * sizeof ( UIVertexInfo );
 
-        UIVertexBuffer& uiVertexBuffer = info._vertexBuffer;
+        UIVertexBuffer &uiVertexBuffer = info._vertexBuffer;
         std::memcpy ( uiVertexBuffer.data (), _vertices, bytes );
         uiVertexBuffer = uiVertexBuffer.subspan ( vertices );
 
@@ -340,7 +340,7 @@ bool DIVUIElement::UpdateCache ( UpdateInfo &info ) noexcept
 
     if ( _hasBackground )
     {
-        GXColorRGB const& color = _css._backgroundColor.GetValue ();
+        GXColorRGB const &color = _css._backgroundColor.GetValue ();
         constexpr GXVec2 imageUV ( 0.5F, 0.5F );
 
         GXVec2 topLeft {};
@@ -349,7 +349,7 @@ bool DIVUIElement::UpdateCache ( UpdateInfo &info ) noexcept
         GXVec2 bottomRight {};
         bottomRight.Sum ( topLeft, _borderSize );
 
-        FontStorage::GlyphInfo const& glyphInfo = info._fontStorage->GetOpaqueGlyphInfo ();
+        FontStorage::GlyphInfo const &glyphInfo = info._fontStorage->GetOpaqueGlyphInfo ();
 
         UIPass::AppendRectangle ( _vertices,
             color,

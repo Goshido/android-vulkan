@@ -1,4 +1,4 @@
-#include <pbr/opaque_material.h>
+#include <pbr/opaque_material.hpp>
 
 
 namespace pbr {

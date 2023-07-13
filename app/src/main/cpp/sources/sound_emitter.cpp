@@ -1,9 +1,9 @@
-#include <av_assert.h>
-#include <logger.h>
-#include <pcm_streamer_ogg.h>
-#include <pcm_streamer_wav.h>
-#include <sound_emitter.h>
-#include <sound_mixer.h>
+#include <av_assert.hpp>
+#include <logger.hpp>
+#include <pcm_streamer_ogg.hpp>
+#include <pcm_streamer_wav.hpp>
+#include <sound_emitter.hpp>
+#include <sound_mixer.hpp>
 
 
 namespace android_vulkan {
@@ -32,7 +32,7 @@ bool SoundEmitter::Destroy () noexcept
     return true;
 }
 
-[[maybe_unused]] std::string const& SoundEmitter::GetFile () const noexcept
+[[maybe_unused]] std::string const &SoundEmitter::GetFile () const noexcept
 {
     return _file;
 }

@@ -1,4 +1,4 @@
-#include <pbr/geometry_subpass_base.h>
+#include <pbr/geometry_subpass_base.hpp>
 
 
 namespace pbr {
@@ -19,7 +19,7 @@ void GeometrySubpassBase::Submit ( MeshRef &mesh,
 ) noexcept
 {
     // NOLINTNEXTLINE - downcast.
-    auto& m = static_cast<GeometryPassMaterial&> ( *material );
+    auto &m = static_cast<GeometryPassMaterial &> ( *material );
     auto findResult = _sceneData.find ( m );
 
     if ( findResult != _sceneData.cend () )
@@ -43,9 +43,9 @@ void GeometrySubpassBase::AppendDrawcalls ( VkCommandBuffer commandBuffer,
     bool isProgramBind = false;
     constexpr VkDeviceSize offset = 0U;
 
-    for ( auto const& call : _sceneData )
+    for ( auto const &call : _sceneData )
     {
-        GeometryCall const& geometryCall = call.second;
+        GeometryCall const &geometryCall = call.second;
         VkDescriptorSet textureSet = materialPool.Acquire ();
 
         if ( !isProgramBind )
@@ -89,7 +89,7 @@ void GeometrySubpassBase::AppendDrawcalls ( VkCommandBuffer commandBuffer,
             ReportGeometry ( renderSessionStats, mesh->GetVertexCount (), batches );
         };
 
-        for ( auto const& [mesh, geometryData] : geometryCall.GetUniqueList () )
+        for ( auto const &[mesh, geometryData] : geometryCall.GetUniqueList () )
         {
             if ( geometryData._isVisible )
             {
@@ -97,13 +97,13 @@ void GeometrySubpassBase::AppendDrawcalls ( VkCommandBuffer commandBuffer,
             }
         }
 
-        for ( auto const& item : geometryCall.GetBatchList () )
+        for ( auto const &item : geometryCall.GetBatchList () )
         {
-            MeshGroup const& group = item.second;
-            MeshRef const& mesh = group._mesh;
+            MeshGroup const &group = item.second;
+            MeshRef const &mesh = group._mesh;
             size_t instanceCount = 0U;
 
-            for ( auto const& geometryData : group._geometryData )
+            for ( auto const &geometryData : group._geometryData )
             {
                 if ( geometryData._isVisible )
                 {

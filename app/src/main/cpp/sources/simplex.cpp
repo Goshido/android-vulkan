@@ -1,4 +1,4 @@
-#include <simplex.h>
+#include <simplex.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

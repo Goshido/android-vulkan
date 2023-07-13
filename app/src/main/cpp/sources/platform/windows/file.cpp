@@ -1,5 +1,5 @@
-#include <file.h>
-#include <logger.h>
+#include <file.hpp>
+#include <logger.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -29,22 +29,22 @@ File::File ( char const* filePath ) noexcept:
     // NOTHING
 }
 
-std::vector<uint8_t>& File::GetContent () noexcept
+std::vector<uint8_t> &File::GetContent () noexcept
 {
     return _content;
 }
 
-[[maybe_unused]] std::vector<uint8_t> const& File::GetContent () const noexcept
+[[maybe_unused]] std::vector<uint8_t> const &File::GetContent () const noexcept
 {
     return _content;
 }
 
-[[maybe_unused]] std::string& File::GetPath () noexcept
+[[maybe_unused]] std::string &File::GetPath () noexcept
 {
     return _filePath;
 }
 
-[[maybe_unused]] std::string const& File::GetPath () const noexcept
+[[maybe_unused]] std::string const &File::GetPath () const noexcept
 {
     return _filePath;
 }

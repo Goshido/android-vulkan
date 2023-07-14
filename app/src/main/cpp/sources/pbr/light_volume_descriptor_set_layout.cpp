@@ -1,3 +1,4 @@
+#include <pbr/light_volume.inc>
 #include <pbr/light_volume_descriptor_set_layout.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
@@ -11,7 +12,9 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-class LightVolumeDescriptorSetLayoutImpl final
+namespace {
+
+class DescriptorSetLayout final
 {
     public:
         VkDescriptorSetLayout       _layout = VK_NULL_HANDLE;
@@ -20,21 +23,21 @@ class LightVolumeDescriptorSetLayoutImpl final
         std::atomic_size_t          _references = 0U;
 
     public:
-        LightVolumeDescriptorSetLayoutImpl () = default;
+        DescriptorSetLayout () = default;
 
-        LightVolumeDescriptorSetLayoutImpl ( LightVolumeDescriptorSetLayoutImpl const & ) = delete;
-        LightVolumeDescriptorSetLayoutImpl &operator = ( LightVolumeDescriptorSetLayoutImpl const & ) = delete;
+        DescriptorSetLayout ( DescriptorSetLayout const & ) = delete;
+        DescriptorSetLayout &operator = ( DescriptorSetLayout const & ) = delete;
 
-        LightVolumeDescriptorSetLayoutImpl ( LightVolumeDescriptorSetLayoutImpl && ) = delete;
-        LightVolumeDescriptorSetLayoutImpl &operator = ( LightVolumeDescriptorSetLayoutImpl && ) = delete;
+        DescriptorSetLayout ( DescriptorSetLayout && ) = delete;
+        DescriptorSetLayout &operator = ( DescriptorSetLayout && ) = delete;
 
-        ~LightVolumeDescriptorSetLayoutImpl () = default;
+        ~DescriptorSetLayout () = default;
 
         void Destroy ( VkDevice device ) noexcept;
         [[nodiscard]] bool Init ( VkDevice device ) noexcept;
 };
 
-void LightVolumeDescriptorSetLayoutImpl::Destroy ( VkDevice device ) noexcept
+void DescriptorSetLayout::Destroy ( VkDevice device ) noexcept
 {
     if ( !_references )
         return;
@@ -46,10 +49,10 @@ void LightVolumeDescriptorSetLayoutImpl::Destroy ( VkDevice device ) noexcept
 
     vkDestroyDescriptorSetLayout ( device, _layout, nullptr );
     _layout = VK_NULL_HANDLE;
-    AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::LightVolumeDescriptorSetLayoutImpl::_layout" )
+    AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::LightVolumeDescriptorSetLayout::_layout" )
 }
 
-bool LightVolumeDescriptorSetLayoutImpl::Init ( VkDevice device ) noexcept
+bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
 {
     if ( _references )
     {
@@ -57,58 +60,59 @@ bool LightVolumeDescriptorSetLayoutImpl::Init ( VkDevice device ) noexcept
         return true;
     }
 
-    constexpr static VkDescriptorSetLayoutBinding const bindings[] =
+    constexpr static VkDescriptorSetLayoutBinding const binding
     {
-        {
-            .binding = 0U,
-            .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            .descriptorCount = 1U,
-            .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
-            .pImmutableSamplers = nullptr
-        }
+        .binding = BIND_VOLUME_DATA,
+        .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        .descriptorCount = 1U,
+        .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
+        .pImmutableSamplers = nullptr
     };
 
-    constexpr VkDescriptorSetLayoutCreateInfo descriptorSetLayoutInfo
+
+    constexpr VkDescriptorSetLayoutCreateInfo info
     {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0U,
-        .bindingCount = static_cast<uint32_t> ( std::size ( bindings ) ),
-        .pBindings = bindings
+        .bindingCount = 1U,
+        .pBindings = &binding
     };
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateDescriptorSetLayout ( device, &descriptorSetLayoutInfo, nullptr, &_layout ),
-        "pbr::LightVolumeDescriptorSetLayoutImpl::Init",
+        vkCreateDescriptorSetLayout ( device, &info, nullptr, &_layout ),
+        "pbr::LightVolumeDescriptorSetLayout::Init",
         "Can't create descriptor set layout"
     );
 
     if ( !result )
         return false;
 
-    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::LightVolumeDescriptorSetLayoutImpl::_layout" )
+    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::LightVolumeDescriptorSetLayout::_layout" )
 
     ++_references;
     return true;
 }
 
-static LightVolumeDescriptorSetLayoutImpl g_lightVolumeDescriptorSetLayout;
+DescriptorSetLayout g_descriptorSetLayout;
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 
 void LightVolumeDescriptorSetLayout::Destroy ( VkDevice device ) noexcept
 {
-    g_lightVolumeDescriptorSetLayout.Destroy ( device );
+    g_descriptorSetLayout.Destroy ( device );
 }
 
 bool LightVolumeDescriptorSetLayout::Init ( VkDevice device ) noexcept
 {
-    return g_lightVolumeDescriptorSetLayout.Init ( device );
+    return g_descriptorSetLayout.Init ( device );
 }
 
 VkDescriptorSetLayout LightVolumeDescriptorSetLayout::GetLayout () const noexcept
 {
-    return g_lightVolumeDescriptorSetLayout._layout;
+    return g_descriptorSetLayout._layout;
 }
 
 } // namespace pbr

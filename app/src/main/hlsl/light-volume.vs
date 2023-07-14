@@ -1,4 +1,7 @@
-[[vk::binding ( 0, 1 )]]
+#include "light_volume.inc"
+
+
+[[vk::binding ( BIND_VOLUME_DATA, SET_VOLUME_DATA )]]
 cbuffer VolumeData:             register ( b1 )
 {
     float32_t4x4    _transform;
@@ -6,7 +9,7 @@ cbuffer VolumeData:             register ( b1 )
 
 struct InputData
 {
-    [[vk::location ( 0 )]]
+    [[vk::location ( IN_SLOT_VERTEX )]]
     float32_t3      _vertex:    VERTEX;
 };
 

@@ -1,4 +1,5 @@
 #include "gpgpu_limits.inc"
+#include "point_light_shadowmap_generator.inc"
 
 
 struct ObjectData
@@ -6,7 +7,7 @@ struct ObjectData
     float32_t4x4    _transform[ PBR_POINT_LIGHT_SHADOW_CASTER_PROJECTION_COUNT ];
 };
 
-[[vk::binding ( 0, 0 )]]
+[[vk::binding ( BIND_INSTANCE, SET_INSTANCE )]]
 cbuffer InstanceData:               register ( b0 )
 {
     // sizeof ( ObjectData ) = 384 bytes
@@ -17,7 +18,7 @@ cbuffer InstanceData:               register ( b0 )
 
 struct InputData
 {
-    [[vk::location ( 0 )]]
+    [[vk::location ( IN_SLOT_VERTEX )]]
     float32_t3      _vertex:        VERTEX;
 
     uint32_t        _instanceID:    SV_InstanceID;

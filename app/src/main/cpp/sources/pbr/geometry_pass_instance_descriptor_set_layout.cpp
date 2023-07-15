@@ -1,4 +1,5 @@
 #include <pbr/geometry_pass_instance_descriptor_set_layout.hpp>
+#include <pbr/point_light_shadowmap_generator.inc>
 #include <vulkan_utils.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
@@ -15,7 +16,7 @@ namespace {
 class DescriptorSetLayout final
 {
     public:
-        VkDescriptorSetLayout       _descriptorSetLayout = VK_NULL_HANDLE;
+        VkDescriptorSetLayout       _layout = VK_NULL_HANDLE;
 
     private:
         std::atomic_size_t          _references = 0U;
@@ -45,9 +46,9 @@ void DescriptorSetLayout::Destroy ( VkDevice device ) noexcept
     if ( _references )
         return;
 
-    vkDestroyDescriptorSetLayout ( device, _descriptorSetLayout, nullptr );
-    _descriptorSetLayout = VK_NULL_HANDLE;
-    AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::GeometryPassInstanceDescriptorSetLayout::_descriptorSetLayout" )
+    vkDestroyDescriptorSetLayout ( device, _layout, nullptr );
+    _layout = VK_NULL_HANDLE;
+    AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::GeometryPassInstanceDescriptorSetLayout::_layout" )
 }
 
 bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
@@ -60,7 +61,7 @@ bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
 
     constexpr static VkDescriptorSetLayoutBinding binding
     {
-        .binding = 0U,
+        .binding = BIND_INSTANCE,
         .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
         .descriptorCount = 1U,
         .stageFlags = AV_VK_FLAG ( VK_SHADER_STAGE_VERTEX_BIT ) | AV_VK_FLAG ( VK_SHADER_STAGE_FRAGMENT_BIT ),
@@ -77,7 +78,7 @@ bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
     };
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateDescriptorSetLayout ( device, &info, nullptr, &_descriptorSetLayout ),
+        vkCreateDescriptorSetLayout ( device, &info, nullptr, &_layout ),
         "pbr::GeometryPassInstanceDescriptorSetLayout::Init",
         "Can't create descriptor set layout"
     );
@@ -85,7 +86,7 @@ bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
     if ( !result )
         return false;
 
-    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::GeometryPassInstanceDescriptorSetLayout::_descriptorSetLayout" )
+    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::GeometryPassInstanceDescriptorSetLayout::_layout" )
 
     ++_references;
     return true;
@@ -109,7 +110,7 @@ bool GeometryPassInstanceDescriptorSetLayout::Init ( VkDevice device ) noexcept
 
 VkDescriptorSetLayout GeometryPassInstanceDescriptorSetLayout::GetLayout () const noexcept
 {
-    return g_descriptorSetLayout._descriptorSetLayout;
+    return g_descriptorSetLayout._layout;
 }
 
 } // namespace pbr

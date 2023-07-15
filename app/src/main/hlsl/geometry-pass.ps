@@ -5,39 +5,39 @@
 #include "object-data.inc"
 
 
-[[vk::binding ( 0, 0 )]]
+[[vk::binding ( BIND_SAMPLER, SET_SAMPLER )]]
 SamplerState                        g_sampler:              register ( s0 );
 
-[[vk::binding ( 0, 1 )]]
+[[vk::binding ( BIND_DIFFUSE_TEXTURE, SET_MATERIAL )]]
 Texture2D<float32_t4>               g_diffuseTexture:       register ( t0 );
 
-[[vk::binding ( 1, 1 )]]
+[[vk::binding ( BIND_EMISSION_TEXTURE, SET_MATERIAL )]]
 Texture2D<float32_t4>               g_emissionTexture:      register ( t1 );
 
-[[vk::binding ( 2, 1 )]]
+[[vk::binding ( BIND_MASK_TEXTURE, SET_MATERIAL )]]
 Texture2D<float32_t4>               g_maskTexture:          register ( t2 );
 
-[[vk::binding ( 3, 1 )]]
+[[vk::binding ( BIND_NORMAL_TEXTURE, SET_MATERIAL )]]
 Texture2D<float32_t4>               g_normalTexture:        register ( t3 );
 
-[[vk::binding ( 4, 1 )]]
+[[vk::binding ( BIND_PARAMS_TEXTURE, SET_MATERIAL )]]
 Texture2D<float32_t4>               g_paramTexture:         register ( t4 );
 
 struct InputData
 {
-    [[vk::location ( 0 )]]
+    [[vk::location ( ATT_SLOT_UV )]]
     linear float32_t2               _uv:                    UV;
 
-    [[vk::location ( 1 )]]
+    [[vk::location ( ATT_SLOT_NORMAL_VIEW )]]
     linear float32_t3               _normalView:            NORMAL;
 
-    [[vk::location ( 2 )]]
+    [[vk::location ( ATT_SLOT_TANGENT_VIEW )]]
     linear float32_t3               _tangentView:           TANGENT;
 
-    [[vk::location ( 3 )]]
+    [[vk::location ( ATT_SLOT_BITANGENT_VIEW )]]
     linear float32_t3               _bitangentView:         BITANGENT;
 
-    [[vk::location ( 4 )]]
+    [[vk::location ( ATT_SLOT_INSTANCE_INDEX )]]
     nointerpolation uint32_t        _instanceIndex:         INSTANCE_INDEX;
 
     linear float4                   _vertexH:               SV_Position;

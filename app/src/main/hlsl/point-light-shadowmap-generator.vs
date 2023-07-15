@@ -7,7 +7,7 @@ struct ObjectData
     float32_t4x4    _transform[ PBR_POINT_LIGHT_SHADOW_CASTER_PROJECTION_COUNT ];
 };
 
-[[vk::binding ( BIND_INSTANCE, SET_INSTANCE )]]
+[[vk::binding ( BIND_INSTANCE_DATA, SET_INSTANCE_DATA )]]
 cbuffer InstanceData:               register ( b0 )
 {
     // sizeof ( ObjectData ) = 384 bytes

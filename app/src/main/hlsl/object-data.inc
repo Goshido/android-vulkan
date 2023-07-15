@@ -2,6 +2,7 @@
 #define OBJECT_DATA_INC
 
 
+#include "geometry_pass_bindings.inc"
 #include "gpgpu_limits.inc"
 
 
@@ -15,7 +16,7 @@ struct ObjectData
     float32_t4      _emission;
 };
 
-[[vk::binding ( 0, 2 )]]
+[[vk::binding ( BIND_INSTANCE_DATA, SET_INSTANCE_DATA )]]
 cbuffer InstanceData:       register ( b0 )
 {
     // sizeof ( ObjectData ) = 192 bytes

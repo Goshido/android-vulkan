@@ -2,8 +2,8 @@
 #define PBR_POINT_LIGHT_SHADOWMAP_GENERATOR_PROGRAM_HPP
 
 
-#include "geometry_pass_instance_descriptor_set_layout.hpp"
 #include "gpgpu_limits.inc"
+#include "point_light_shadowmap_generator_descriptor_set_layout.hpp"
 #include "program.hpp"
 #include <vulkan_utils.hpp>
 
@@ -17,18 +17,18 @@ class PointLightShadowmapGeneratorProgram final : public Program
 
         struct ObjectData final
         {
-            GXMat4                                  _transform[ PBR_POINT_LIGHT_SHADOW_CASTER_PROJECTION_COUNT ];
+            GXMat4          _transform[ PBR_POINT_LIGHT_SHADOW_CASTER_PROJECTION_COUNT ];
         };
 
         struct InstanceData final
         {
-            ObjectData                              _instanceData[ PBR_POINT_LIGHT_MAX_SHADOW_CASTER_INSTANCE_COUNT ];
+            ObjectData      _instanceData[ PBR_POINT_LIGHT_MAX_SHADOW_CASTER_INSTANCE_COUNT ];
         };
 
         AV_DX_ALIGNMENT_END
 
     private:
-        GeometryPassInstanceDescriptorSetLayout     _instanceLayout {};
+        PointLightShadowmapGeneratorDescriptorSetLayout     _instanceLayout {};
 
     public:
         PointLightShadowmapGeneratorProgram () noexcept;

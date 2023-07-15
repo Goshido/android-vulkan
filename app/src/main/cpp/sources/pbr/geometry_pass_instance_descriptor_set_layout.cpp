@@ -1,5 +1,5 @@
+#include <pbr/geometry_pass_bindings.inc>
 #include <pbr/geometry_pass_instance_descriptor_set_layout.hpp>
-#include <pbr/point_light_shadowmap_generator.inc>
 #include <vulkan_utils.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
@@ -61,7 +61,7 @@ bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
 
     constexpr static VkDescriptorSetLayoutBinding binding
     {
-        .binding = BIND_INSTANCE,
+        .binding = BIND_INSTANCE_DATA,
         .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
         .descriptorCount = 1U,
         .stageFlags = AV_VK_FLAG ( VK_SHADER_STAGE_VERTEX_BIT ) | AV_VK_FLAG ( VK_SHADER_STAGE_FRAGMENT_BIT ),

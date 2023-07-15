@@ -1,13 +1,12 @@
-#include <pbr/geometry_pass_bindings.inc> 
-#include <pbr/geometry_pass_sampler_descriptor_set_layout.hpp>
+#include <pbr/point_light_shadowmap_generator.inc>
+#include <pbr/point_light_shadowmap_generator_descriptor_set_layout.hpp>
+#include <vulkan_utils.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
 #include <atomic>
 
 GX_RESTORE_WARNING_STATE
-
-#include <vulkan_utils.hpp>
 
 
 namespace pbr {
@@ -20,7 +19,7 @@ class DescriptorSetLayout final
         VkDescriptorSetLayout       _layout = VK_NULL_HANDLE;
 
     private:
-        std::atomic<size_t>         _references = 0U;
+        std::atomic_size_t          _references = 0U;
 
     public:
         DescriptorSetLayout () = default;
@@ -49,7 +48,7 @@ void DescriptorSetLayout::Destroy ( VkDevice device ) noexcept
 
     vkDestroyDescriptorSetLayout ( device, _layout, nullptr );
     _layout = VK_NULL_HANDLE;
-    AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::GeometryPassSamplerDescriptorSetLayout::_layout" )
+    AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::PointLightShadowmapGeneratorDescriptorSetLayout::_layout" )
 }
 
 bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
@@ -60,16 +59,16 @@ bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
         return true;
     }
 
-    constexpr static VkDescriptorSetLayoutBinding const binding =
+    constexpr static VkDescriptorSetLayoutBinding binding
     {
-        .binding = BIND_SAMPLER,
-        .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
+        .binding = BIND_INSTANCE_DATA,
+        .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
         .descriptorCount = 1U,
-        .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+        .stageFlags = AV_VK_FLAG ( VK_SHADER_STAGE_VERTEX_BIT ),
         .pImmutableSamplers = nullptr
     };
 
-    constexpr VkDescriptorSetLayoutCreateInfo descriptorSetLayoutInfo
+    constexpr VkDescriptorSetLayoutCreateInfo info
     {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
         .pNext = nullptr,
@@ -79,15 +78,15 @@ bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
     };
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateDescriptorSetLayout ( device, &descriptorSetLayoutInfo, nullptr, &_layout ),
-        "pbr::GeometryPassSamplerDescriptorSetLayout::Init",
+        vkCreateDescriptorSetLayout ( device, &info, nullptr, &_layout ),
+        "pbr::PointLightShadowmapGeneratorDescriptorSetLayout::Init",
         "Can't create descriptor set layout"
     );
 
     if ( !result )
         return false;
 
-    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::GeometryPassSamplerDescriptorSetLayout::_layout" )
+    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::PointLightShadowmapGeneratorDescriptorSetLayout::_layout" )
 
     ++_references;
     return true;
@@ -99,17 +98,17 @@ DescriptorSetLayout g_descriptorSetLayout {};
 
 //----------------------------------------------------------------------------------------------------------------------
 
-void GeometryPassSamplerDescriptorSetLayout::Destroy ( VkDevice device ) noexcept
+void PointLightShadowmapGeneratorDescriptorSetLayout::Destroy ( VkDevice device ) noexcept
 {
     g_descriptorSetLayout.Destroy ( device );
 }
 
-bool GeometryPassSamplerDescriptorSetLayout::Init ( VkDevice device ) noexcept
+bool PointLightShadowmapGeneratorDescriptorSetLayout::Init ( VkDevice device ) noexcept
 {
     return g_descriptorSetLayout.Init ( device );
 }
 
-VkDescriptorSetLayout GeometryPassSamplerDescriptorSetLayout::GetLayout () const noexcept
+VkDescriptorSetLayout PointLightShadowmapGeneratorDescriptorSetLayout::GetLayout () const noexcept
 {
     return g_descriptorSetLayout._layout;
 }

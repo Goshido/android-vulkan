@@ -2,10 +2,10 @@
 #define POINT_LIGHT_SHADOWMAP_GENERATOR_INC
 
 
-#define IN_SLOT_VERTEX      0
+#define IN_SLOT_VERTEX              0
 
-#define SET_INSTANCE        0
-#define BIND_INSTANCE       0
+#define SET_INSTANCE_DATA           0
+#define BIND_INSTANCE_DATA          0
 
 
 #endif // POINT_LIGHT_SHADOWMAP_GENERATOR_INC

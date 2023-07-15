@@ -129,6 +129,7 @@ add_library ( android-vulkan
     app/src/main/cpp/sources/pbr/point_light_lightup.cpp
     app/src/main/cpp/sources/pbr/point_light_lightup_program.cpp
     app/src/main/cpp/sources/pbr/point_light_pass.cpp
+    app/src/main/cpp/sources/pbr/point_light_shadowmap_generator_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/point_light_shadowmap_generator_program.cpp
     app/src/main/cpp/sources/pbr/position_property.cpp
     app/src/main/cpp/sources/pbr/position_property_checker.cpp

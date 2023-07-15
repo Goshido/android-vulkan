@@ -1,3 +1,4 @@
+#include <pbr/reflection_common.inc>
 #include <pbr/reflection_global_descriptor_set_layout.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
@@ -11,37 +12,32 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-class ReflectionGlobalDescriptorSetLayoutImpl final
+namespace {
+
+class DescriptorSetLayout final
 {
     public:
-        VkDescriptorSetLayout       _layout;
+        VkDescriptorSetLayout       _layout = VK_NULL_HANDLE;
 
     private:
-        std::atomic_size_t          _references;
+        std::atomic_size_t          _references = 0U;
 
     public:
-        ReflectionGlobalDescriptorSetLayoutImpl () noexcept;
+        DescriptorSetLayout () = default;
 
-        ReflectionGlobalDescriptorSetLayoutImpl ( ReflectionGlobalDescriptorSetLayoutImpl const & ) = delete;
-        ReflectionGlobalDescriptorSetLayoutImpl &operator = ( ReflectionGlobalDescriptorSetLayoutImpl const & ) = delete;
+        DescriptorSetLayout ( DescriptorSetLayout const & ) = delete;
+        DescriptorSetLayout &operator = ( DescriptorSetLayout const & ) = delete;
 
-        ReflectionGlobalDescriptorSetLayoutImpl ( ReflectionGlobalDescriptorSetLayoutImpl && ) = delete;
-        ReflectionGlobalDescriptorSetLayoutImpl &operator = ( ReflectionGlobalDescriptorSetLayoutImpl && ) = delete;
+        DescriptorSetLayout ( DescriptorSetLayout && ) = delete;
+        DescriptorSetLayout &operator = ( DescriptorSetLayout && ) = delete;
 
-        ~ReflectionGlobalDescriptorSetLayoutImpl () = default;
+        ~DescriptorSetLayout () = default;
 
         void Destroy ( VkDevice device ) noexcept;
         [[nodiscard]] bool Init ( VkDevice device ) noexcept;
 };
 
-ReflectionGlobalDescriptorSetLayoutImpl::ReflectionGlobalDescriptorSetLayoutImpl () noexcept:
-    _layout ( VK_NULL_HANDLE ),
-    _references ( 0U )
-{
-    // NOTHING
-}
-
-void ReflectionGlobalDescriptorSetLayoutImpl::Destroy ( VkDevice device ) noexcept
+void DescriptorSetLayout::Destroy ( VkDevice device ) noexcept
 {
     if ( !_references )
         return;
@@ -53,10 +49,10 @@ void ReflectionGlobalDescriptorSetLayoutImpl::Destroy ( VkDevice device ) noexce
 
     vkDestroyDescriptorSetLayout ( device, _layout, nullptr );
     _layout = VK_NULL_HANDLE;
-    AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::ReflectionGlobalDescriptorSetLayoutImpl::_layout" )
+    AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::ReflectionGlobalDescriptorSetLayout::_layout" )
 }
 
-bool ReflectionGlobalDescriptorSetLayoutImpl::Init ( VkDevice device ) noexcept
+bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
 {
     if ( _references )
     {
@@ -64,15 +60,13 @@ bool ReflectionGlobalDescriptorSetLayoutImpl::Init ( VkDevice device ) noexcept
         return true;
     }
 
-    constexpr static VkDescriptorSetLayoutBinding const bindings[] =
+    constexpr static VkDescriptorSetLayoutBinding const binding
     {
-        {
-            .binding = 0U,
-            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-            .descriptorCount = 1U,
-            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
-            .pImmutableSamplers = nullptr
-        }
+        .binding = BIND_PREFILTER_TEXTURE,
+        .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+        .descriptorCount = 1U,
+        .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+        .pImmutableSamplers = nullptr
     };
 
     constexpr VkDescriptorSetLayoutCreateInfo const descriptorSetLayoutInfo
@@ -80,42 +74,44 @@ bool ReflectionGlobalDescriptorSetLayoutImpl::Init ( VkDevice device ) noexcept
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0U,
-        .bindingCount = static_cast<uint32_t> ( std::size ( bindings ) ),
-        .pBindings = bindings
+        .bindingCount = 1U,
+        .pBindings = &binding
     };
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateDescriptorSetLayout ( device, &descriptorSetLayoutInfo, nullptr, &_layout ),
-        "pbr::ReflectionGlobalDescriptorSetLayoutImpl::Init",
+        "pbr::ReflectionGlobalDescriptorSetLayout::Init",
         "Can't create descriptor set layout"
     );
 
     if ( !result )
         return false;
 
-    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::ReflectionGlobalDescriptorSetLayoutImpl::_layout" )
+    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::ReflectionGlobalDescriptorSetLayout::_layout" )
 
     ++_references;
     return true;
 }
 
-static ReflectionGlobalDescriptorSetLayoutImpl g_reflectionGlobalDescriptorSetLayout;
+DescriptorSetLayout g_descriptorSetLayout;
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 
 void ReflectionGlobalDescriptorSetLayout::Destroy ( VkDevice device ) noexcept
 {
-    g_reflectionGlobalDescriptorSetLayout.Destroy ( device );
+    g_descriptorSetLayout.Destroy ( device );
 }
 
 bool ReflectionGlobalDescriptorSetLayout::Init ( VkDevice device ) noexcept
 {
-    return g_reflectionGlobalDescriptorSetLayout.Init ( device );
+    return g_descriptorSetLayout.Init ( device );
 }
 
 VkDescriptorSetLayout ReflectionGlobalDescriptorSetLayout::GetLayout () const noexcept
 {
-    return g_reflectionGlobalDescriptorSetLayout._layout;
+    return g_descriptorSetLayout._layout;
 }
 
 } // namespace pbr

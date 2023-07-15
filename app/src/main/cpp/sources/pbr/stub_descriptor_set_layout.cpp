@@ -11,37 +11,32 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-class StubDescriptorSetLayoutImpl final
+namespace {
+
+class DescriptorSetLayout final
 {
     public:
-        VkDescriptorSetLayout       _layout;
+        VkDescriptorSetLayout       _layout = VK_NULL_HANDLE;
 
     private:
-        std::atomic_size_t          _references;
+        std::atomic_size_t          _references = 0U;
 
     public:
-        StubDescriptorSetLayoutImpl () noexcept;
+        DescriptorSetLayout () = default;
 
-        StubDescriptorSetLayoutImpl ( StubDescriptorSetLayoutImpl const & ) = delete;
-        StubDescriptorSetLayoutImpl &operator = ( StubDescriptorSetLayoutImpl const & ) = delete;
+        DescriptorSetLayout ( DescriptorSetLayout const & ) = delete;
+        DescriptorSetLayout &operator = ( DescriptorSetLayout const & ) = delete;
 
-        StubDescriptorSetLayoutImpl ( StubDescriptorSetLayoutImpl && ) = delete;
-        StubDescriptorSetLayoutImpl &operator = ( StubDescriptorSetLayoutImpl && ) = delete;
+        DescriptorSetLayout ( DescriptorSetLayout && ) = delete;
+        DescriptorSetLayout &operator = ( DescriptorSetLayout && ) = delete;
 
-        ~StubDescriptorSetLayoutImpl () = default;
+        ~DescriptorSetLayout () = default;
 
         void Destroy ( VkDevice device ) noexcept;
         [[nodiscard]] bool Init ( VkDevice device ) noexcept;
 };
 
-StubDescriptorSetLayoutImpl::StubDescriptorSetLayoutImpl () noexcept:
-    _layout ( VK_NULL_HANDLE ),
-    _references ( 0U )
-{
-    // NOTHING
-}
-
-void StubDescriptorSetLayoutImpl::Destroy ( VkDevice device ) noexcept
+void DescriptorSetLayout::Destroy ( VkDevice device ) noexcept
 {
     if ( !_references )
         return;
@@ -53,10 +48,10 @@ void StubDescriptorSetLayoutImpl::Destroy ( VkDevice device ) noexcept
 
     vkDestroyDescriptorSetLayout ( device, _layout, nullptr );
     _layout = VK_NULL_HANDLE;
-    AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::StubDescriptorSetLayoutImpl::_layout" )
+    AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::StubDescriptorSetLayout::_layout" )
 }
 
-bool StubDescriptorSetLayoutImpl::Init ( VkDevice device ) noexcept
+bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
 {
     if ( _references )
     {
@@ -75,36 +70,38 @@ bool StubDescriptorSetLayoutImpl::Init ( VkDevice device ) noexcept
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateDescriptorSetLayout ( device, &descriptorSetLayoutInfo, nullptr, &_layout ),
-        "pbr::StubDescriptorSetLayoutImpl::Init",
+        "pbr::StubDescriptorSetLayout::Init",
         "Can't create descriptor set layout"
     );
 
     if ( !result )
         return false;
 
-    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::StubDescriptorSetLayoutImpl::_layout" )
+    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::StubDescriptorSetLayout::_layout" )
 
     ++_references;
     return true;
 }
 
-static StubDescriptorSetLayoutImpl g_stubDescriptorSetLayout;
+DescriptorSetLayout g_descriptorSetLayout;
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 
 void StubDescriptorSetLayout::Destroy ( VkDevice device ) noexcept
 {
-    g_stubDescriptorSetLayout.Destroy ( device );
+    g_descriptorSetLayout.Destroy ( device );
 }
 
 bool StubDescriptorSetLayout::Init ( VkDevice device ) noexcept
 {
-    return g_stubDescriptorSetLayout.Init ( device );
+    return g_descriptorSetLayout.Init ( device );
 }
 
 VkDescriptorSetLayout StubDescriptorSetLayout::GetLayout () const noexcept
 {
-    return g_stubDescriptorSetLayout._layout;
+    return g_descriptorSetLayout._layout;
 }
 
 } // namespace pbr

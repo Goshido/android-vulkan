@@ -27,7 +27,7 @@ Useful documentation is located [here](docs/documentation.md).
 * _Android NDK 25.2.9519653 (side by side)_
 * _Android SDK 11.0 (API level 30)_
 * _Android SDK Build-Tools 34.0.0_
-* _Android SDK Platform-Tools 34.0.3_
+* _Android SDK Platform-Tools 34.0.4_
 * _Kotlin 1.8.20_
 * _Kotlin Gradle plugin 1.8.20_
 * _CMake 3.22.1_

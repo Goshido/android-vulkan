@@ -1,4 +1,5 @@
 #include "lightup-common.ps"
+#include "point_light.inc"
 
 
 // The implementation is based on ideas from LearnOpenGL resource
@@ -13,13 +14,13 @@
 // It was set by empirical test.
 #define SHADOW_MAP_BIAS     9.9e-1F
 
-[[vk::binding ( 0, 2 )]]
+[[vk::binding ( BIND_SHADOWMAP_TEXTURE, SET_LIGHT_DATA )]]
 TextureCube<float32_t>      g_shadowmap:    register ( t0 );
 
-[[vk::binding ( 1, 2 )]]
+[[vk::binding ( BIND_SHADOWMAP_SAMPLER, SET_LIGHT_DATA )]]
 SamplerComparisonState      g_sampler:      register ( s0 );
 
-[[vk::binding ( 2, 2 )]]
+[[vk::binding ( BIND_LIGHT_DATA, SET_LIGHT_DATA )]]
 cbuffer LightData:                          register ( b2 )
 {
     float32_t4x4            _lightProjection;

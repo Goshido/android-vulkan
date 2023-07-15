@@ -1,3 +1,4 @@
+#include <pbr/point_light.inc>
 #include <pbr/point_light_descriptor_set_layout.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
@@ -11,37 +12,32 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-class PointLightDescriptorSetLayoutImpl final
+namespace {
+
+class DescriptorSetLayout final
 {
     public:
-        VkDescriptorSetLayout       _descriptorSetLayout;
+        VkDescriptorSetLayout       _layout = VK_NULL_HANDLE;
 
     private:
-        std::atomic_size_t          _references;
+        std::atomic_size_t          _references = 0U;
 
     public:
-        PointLightDescriptorSetLayoutImpl () noexcept;
+        DescriptorSetLayout () = default;
 
-        PointLightDescriptorSetLayoutImpl ( PointLightDescriptorSetLayoutImpl const & ) = delete;
-        PointLightDescriptorSetLayoutImpl &operator = ( PointLightDescriptorSetLayoutImpl const & ) = delete;
+        DescriptorSetLayout ( DescriptorSetLayout const & ) = delete;
+        DescriptorSetLayout &operator = ( DescriptorSetLayout const & ) = delete;
 
-        PointLightDescriptorSetLayoutImpl ( PointLightDescriptorSetLayoutImpl && ) = delete;
-        PointLightDescriptorSetLayoutImpl &operator = ( PointLightDescriptorSetLayoutImpl && ) = delete;
+        DescriptorSetLayout ( DescriptorSetLayout && ) = delete;
+        DescriptorSetLayout &operator = ( DescriptorSetLayout && ) = delete;
 
-        ~PointLightDescriptorSetLayoutImpl () = default;
+        ~DescriptorSetLayout () = default;
 
         void Destroy ( VkDevice device ) noexcept;
         [[nodiscard]] bool Init ( VkDevice device ) noexcept;
 };
 
-PointLightDescriptorSetLayoutImpl::PointLightDescriptorSetLayoutImpl () noexcept:
-    _descriptorSetLayout ( VK_NULL_HANDLE ),
-    _references ( 0U )
-{
-    // NOTHING
-}
-
-void PointLightDescriptorSetLayoutImpl::Destroy ( VkDevice device ) noexcept
+void DescriptorSetLayout::Destroy ( VkDevice device ) noexcept
 {
     if ( !_references )
         return;
@@ -51,12 +47,12 @@ void PointLightDescriptorSetLayoutImpl::Destroy ( VkDevice device ) noexcept
     if ( _references )
         return;
 
-    vkDestroyDescriptorSetLayout ( device, _descriptorSetLayout, nullptr );
-    _descriptorSetLayout = VK_NULL_HANDLE;
-    AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::PointLightDescriptorSetLayoutImpl::_descriptorSetLayout" )
+    vkDestroyDescriptorSetLayout ( device, _layout, nullptr );
+    _layout = VK_NULL_HANDLE;
+    AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::PointLightDescriptorSetLayout::_layout" )
 }
 
-bool PointLightDescriptorSetLayoutImpl::Init ( VkDevice device ) noexcept
+bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
 {
     if ( _references )
     {
@@ -67,21 +63,21 @@ bool PointLightDescriptorSetLayoutImpl::Init ( VkDevice device ) noexcept
     constexpr static VkDescriptorSetLayoutBinding const bindings[] =
     {
         {
-            .binding = 0U,
+            .binding = BIND_SHADOWMAP_TEXTURE,
             .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
             .descriptorCount = 1U,
             .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
             .pImmutableSamplers = nullptr
         },
         {
-            .binding = 1U,
+            .binding = BIND_SHADOWMAP_SAMPLER,
             .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
             .descriptorCount = 1U,
             .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
             .pImmutableSamplers = nullptr
         },
         {
-            .binding = 2U,
+            .binding = BIND_LIGHT_DATA,
             .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
             .descriptorCount = 1U,
             .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
@@ -99,37 +95,39 @@ bool PointLightDescriptorSetLayoutImpl::Init ( VkDevice device ) noexcept
     };
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateDescriptorSetLayout ( device, &descriptorSetLayoutInfo, nullptr, &_descriptorSetLayout ),
-        "pbr::PointLightDescriptorSetLayoutImpl::Init",
+        vkCreateDescriptorSetLayout ( device, &descriptorSetLayoutInfo, nullptr, &_layout ),
+        "pbr::PointLightDescriptorSetLayout::Init",
         "Can't create descriptor set layout"
     );
 
     if ( !result )
         return false;
 
-    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::PointLightDescriptorSetLayoutImpl::_descriptorSetLayout" )
+    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::PointLightDescriptorSetLayout::_layout" )
 
     ++_references;
     return true;
 }
 
-static PointLightDescriptorSetLayoutImpl g_pointLightDescriptorSetLayout;
+DescriptorSetLayout g_descriptorSetLayout {};
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 
 void PointLightDescriptorSetLayout::Destroy ( VkDevice device ) noexcept
 {
-    g_pointLightDescriptorSetLayout.Destroy ( device );
+    g_descriptorSetLayout.Destroy ( device );
 }
 
 bool PointLightDescriptorSetLayout::Init ( VkDevice device ) noexcept
 {
-    return g_pointLightDescriptorSetLayout.Init ( device );
+    return g_descriptorSetLayout.Init ( device );
 }
 
 VkDescriptorSetLayout PointLightDescriptorSetLayout::GetLayout () const noexcept
 {
-    return g_pointLightDescriptorSetLayout._descriptorSetLayout;
+    return g_descriptorSetLayout._layout;
 }
 
 } // namespace pbr

@@ -5,8 +5,8 @@ namespace pbr {
 
 namespace {
 
-constexpr char const* VERTEX_SHADER = "shaders/reflection-global-vs.spv";
-constexpr char const* FRAGMENT_SHADER = "shaders/reflection-global-ps.spv";
+constexpr char const* VERTEX_SHADER = "shaders/reflection_global.vs.spv";
+constexpr char const* FRAGMENT_SHADER = "shaders/reflection_global.ps.spv";
 
 constexpr size_t COLOR_RENDER_TARGET_COUNT = 1U;
 constexpr size_t STAGE_COUNT = 2U;

@@ -14,7 +14,7 @@ GX_RESTORE_WARNING_STATE
 
 namespace rotating_mesh {
 
-constexpr static char const* VERTEX_SHADER = "shaders/static-mesh-vs.spv";
+constexpr static char const* VERTEX_SHADER = "shaders/static_mesh.vs.spv";
 constexpr static char const* VERTEX_SHADER_ENTRY_POINT = "VS";
 
 constexpr static char const* FRAGMENT_SHADER_ENTRY_POINT = "PS";

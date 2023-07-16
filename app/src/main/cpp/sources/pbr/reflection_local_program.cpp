@@ -10,8 +10,8 @@ constexpr size_t COLOR_RENDER_TARGET_COUNT = 1U;
 constexpr size_t STAGE_COUNT = 2U;
 constexpr size_t VERTEX_ATTRIBUTE_COUNT = 1U;
 
-constexpr char const* VERTEX_SHADER = "shaders/light-volume-vs.spv";
-constexpr char const* FRAGMENT_SHADER = "shaders/reflection-local-ps.spv";
+constexpr char const* VERTEX_SHADER = "shaders/light_volume.vs.spv";
+constexpr char const* FRAGMENT_SHADER = "shaders/reflection_local.ps.spv";
 
 } // end of anonymous namespace
 

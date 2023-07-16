@@ -1,4 +1,4 @@
-#include "object-data.inc"
+#include "object_data.inc"
 
 
 struct InputData

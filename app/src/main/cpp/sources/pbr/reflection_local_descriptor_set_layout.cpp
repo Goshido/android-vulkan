@@ -1,3 +1,5 @@
+#include <pbr/reflection_common.inc>
+#include <pbr/reflection_local.inc>
 #include <pbr/reflection_local_descriptor_set_layout.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
@@ -11,7 +13,9 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-class ReflectionLocalDescriptorSetLayoutImpl final
+namespace {
+
+class DescriptorSetLayout final
 {
     public:
         VkDescriptorSetLayout       _layout = VK_NULL_HANDLE;
@@ -20,21 +24,21 @@ class ReflectionLocalDescriptorSetLayoutImpl final
         std::atomic_size_t          _references = 0U;
 
     public:
-        ReflectionLocalDescriptorSetLayoutImpl () = default;
-    
-        ReflectionLocalDescriptorSetLayoutImpl ( ReflectionLocalDescriptorSetLayoutImpl const & ) = delete;
-        ReflectionLocalDescriptorSetLayoutImpl &operator = ( ReflectionLocalDescriptorSetLayoutImpl const & ) = delete;
-    
-        ReflectionLocalDescriptorSetLayoutImpl ( ReflectionLocalDescriptorSetLayoutImpl && ) = delete;
-        ReflectionLocalDescriptorSetLayoutImpl &operator = ( ReflectionLocalDescriptorSetLayoutImpl && ) = delete;
-    
-        ~ReflectionLocalDescriptorSetLayoutImpl () = default;
-    
+        DescriptorSetLayout () = default;
+
+        DescriptorSetLayout ( DescriptorSetLayout const & ) = delete;
+        DescriptorSetLayout &operator = ( DescriptorSetLayout const & ) = delete;
+
+        DescriptorSetLayout ( DescriptorSetLayout && ) = delete;
+        DescriptorSetLayout &operator = ( DescriptorSetLayout && ) = delete;
+
+        ~DescriptorSetLayout () = default;
+
         void Destroy ( VkDevice device ) noexcept;
         [[nodiscard]] bool Init ( VkDevice device ) noexcept;
 };
 
-void ReflectionLocalDescriptorSetLayoutImpl::Destroy ( VkDevice device ) noexcept
+void DescriptorSetLayout::Destroy ( VkDevice device ) noexcept
 {
     if ( !_references )
         return;
@@ -46,10 +50,10 @@ void ReflectionLocalDescriptorSetLayoutImpl::Destroy ( VkDevice device ) noexcep
 
     vkDestroyDescriptorSetLayout ( device, _layout, nullptr );
     _layout = VK_NULL_HANDLE;
-    AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::ReflectionLocalDescriptorSetLayoutImpl::_layout" )
+    AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::ReflectionLocalDescriptorSetLayout::_layout" )
 }
 
-bool ReflectionLocalDescriptorSetLayoutImpl::Init ( VkDevice device ) noexcept
+bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
 {
     if ( _references )
     {
@@ -60,14 +64,14 @@ bool ReflectionLocalDescriptorSetLayoutImpl::Init ( VkDevice device ) noexcept
     constexpr static VkDescriptorSetLayoutBinding const bindings[] =
     {
         {
-            .binding = 0U,
+            .binding = BIND_PREFILTER_TEXTURE,
             .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
             .descriptorCount = 1U,
             .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
             .pImmutableSamplers = nullptr
         },
         {
-            .binding = 1U,
+            .binding = BIND_LIGHT_DATA,
             .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
             .descriptorCount = 1U,
             .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
@@ -86,36 +90,38 @@ bool ReflectionLocalDescriptorSetLayoutImpl::Init ( VkDevice device ) noexcept
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateDescriptorSetLayout ( device, &descriptorSetLayoutInfo, nullptr, &_layout ),
-        "pbr::ReflectionLocalDescriptorSetLayoutImpl::Init",
+        "pbr::ReflectionLocalDescriptorSetLayout::Init",
         "Can't create descriptor set layout"
     );
 
     if ( !result )
         return false;
 
-    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::ReflectionLocalDescriptorSetLayoutImpl::_layout" )
+    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::ReflectionLocalDescriptorSetLayout::_layout" )
 
     ++_references;
     return true;
 }
 
-static ReflectionLocalDescriptorSetLayoutImpl g_reflectionLocalDescriptorSetLayout;
+DescriptorSetLayout g_descriptorSetLayout {};
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 
 void ReflectionLocalDescriptorSetLayout::Destroy ( VkDevice device ) noexcept
 {
-    g_reflectionLocalDescriptorSetLayout.Destroy ( device );
+    g_descriptorSetLayout.Destroy ( device );
 }
 
 bool ReflectionLocalDescriptorSetLayout::Init ( VkDevice device ) noexcept
 {
-    return g_reflectionLocalDescriptorSetLayout.Init ( device );
+    return g_descriptorSetLayout.Init ( device );
 }
 
 VkDescriptorSetLayout ReflectionLocalDescriptorSetLayout::GetLayout () const noexcept
 {
-    return g_reflectionLocalDescriptorSetLayout._layout;
+    return g_descriptorSetLayout._layout;
 }
 
 } // namespace pbr

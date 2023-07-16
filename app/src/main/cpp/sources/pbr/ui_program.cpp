@@ -7,8 +7,8 @@ namespace pbr {
 
 namespace {
 
-constexpr char const* VERTEX_SHADER = "shaders/ui-vs.spv";
-constexpr char const* FRAGMENT_SHADER = "shaders/ui-ps.spv";
+constexpr char const* VERTEX_SHADER = "shaders/ui.vs.spv";
+constexpr char const* FRAGMENT_SHADER = "shaders/ui.ps.spv";
 
 constexpr uint32_t COLOR_RENDER_TARGET_COUNT = 1U;
 constexpr size_t STAGE_COUNT = 2U;

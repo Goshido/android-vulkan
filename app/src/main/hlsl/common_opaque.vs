@@ -1,26 +1,21 @@
-#include "object-data.inc"
+#include "object_data.inc"
 
-
-// 1.0F / 255.0F
-#define UNORM_FACTOR                3.922e-3F
-
-//----------------------------------------------------------------------------------------------------------------------
 
 struct InputData
 {
-    [[vk::location ( 0 )]]
+    [[vk::location ( IN_SLOT_VERTEX )]]
     float32_t3                      _vertex:            VERTEX;
 
-    [[vk::location ( 1 )]]
+    [[vk::location ( IN_SLOT_UV )]]
     float32_t2                      _uv:                UV;
 
-    [[vk::location ( 2 )]]
+    [[vk::location ( IN_SLOT_NORMAL )]]
     float32_t3                      _normal:            NORMAL;
 
-    [[vk::location ( 3 )]]
+    [[vk::location ( IN_SLOT_TANGENT )]]
     float32_t3                      _tangent:           TANGENT;
 
-    [[vk::location ( 4 )]]
+    [[vk::location ( IN_SLOT_BITANGENT )]]
     float32_t3                      _bitangent:         BITANGENT;
 
     uint32_t                        _instanceIndex:     SV_InstanceID;
@@ -30,19 +25,19 @@ struct OutputData
 {
     linear float32_t4               _vertexH:           SV_Position;
 
-    [[vk::location ( 0 )]]
+    [[vk::location ( ATT_SLOT_UV )]]
     linear float32_t2               _uv:                UV;
 
-    [[vk::location ( 1 )]]
+    [[vk::location ( ATT_SLOT_NORMAL_VIEW )]]
     linear float32_t3               _normalView:        NORMAL;
 
-    [[vk::location ( 2 )]]
+    [[vk::location ( ATT_SLOT_TANGENT_VIEW )]]
     linear float32_t3               _tangentView:       TANGENT;
 
-    [[vk::location ( 3 )]]
+    [[vk::location ( ATT_SLOT_BITANGENT_VIEW )]]
     linear float32_t3               _bitangentView:     BITANGENT;
 
-    [[vk::location ( 4 )]]
+    [[vk::location ( ATT_SLOT_INSTANCE_INDEX )]]
     nointerpolation uint32_t        _instanceIndex:     INSTANCE_INDEX;
 };
 

@@ -1,0 +1,9 @@
+#ifndef REFLECTION_COMMON_INC
+#define REFLECTION_COMMON_INC
+
+
+#define SET_REFLECTION              2
+#define BIND_PREFILTER_TEXTURE      0
+
+
+#endif // REFLECTION_COMMON_INC

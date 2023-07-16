@@ -679,7 +679,7 @@ void UIPass::InUseImageTracker::MarkInUse ( Texture2DRef const &texture, size_t 
         i = result.first;
     }
 
-    ++( i->second );
+    i->second = 2U;
 }
 
 //----------------------------------------------------------------------------------------------------------------------

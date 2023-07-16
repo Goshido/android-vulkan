@@ -1,3 +1,4 @@
+#include <pbr/geometry_pass_bindings.inc>
 #include <pbr/geometry_pass_program.hpp>
 #include <vertex_info.hpp>
 
@@ -6,7 +7,7 @@ namespace pbr {
 
 namespace {
 
-constexpr char const* VERTEX_SHADER = "shaders/common-opaque-vs.spv";
+constexpr char const* VERTEX_SHADER = "shaders/common_opaque.vs.spv";
 
 constexpr size_t COLOR_RENDER_TARGET_COUNT = 4U;
 constexpr size_t STAGE_COUNT = 2U;
@@ -518,7 +519,7 @@ VkPipelineVertexInputStateCreateInfo const* GeometryPassProgram::InitVertexInput
 
     attributes[ 0U ] =
     {
-        .location = 0U,
+        .location = IN_SLOT_VERTEX,
         .binding = 0U,
         .format = VK_FORMAT_R32G32B32_SFLOAT,
         .offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _vertex ) )
@@ -526,7 +527,7 @@ VkPipelineVertexInputStateCreateInfo const* GeometryPassProgram::InitVertexInput
 
     attributes[ 1U ] =
     {
-        .location = 1U,
+        .location = IN_SLOT_UV,
         .binding = 0U,
         .format = VK_FORMAT_R32G32_SFLOAT,
         .offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _uv ) )
@@ -534,7 +535,7 @@ VkPipelineVertexInputStateCreateInfo const* GeometryPassProgram::InitVertexInput
 
     attributes[ 2U ] =
     {
-        .location = 2U,
+        .location = IN_SLOT_NORMAL,
         .binding = 0U,
         .format = VK_FORMAT_R32G32B32_SFLOAT,
         .offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _normal ) )
@@ -542,7 +543,7 @@ VkPipelineVertexInputStateCreateInfo const* GeometryPassProgram::InitVertexInput
 
     attributes[ 3U ] =
     {
-        .location = 3U,
+        .location = IN_SLOT_TANGENT,
         .binding = 0U,
         .format = VK_FORMAT_R32G32B32_SFLOAT,
         .offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _tangent ) )
@@ -550,7 +551,7 @@ VkPipelineVertexInputStateCreateInfo const* GeometryPassProgram::InitVertexInput
 
     attributes[ 4U ] =
     {
-        .location = 4U,
+        .location = IN_SLOT_BITANGENT,
         .binding = 0U,
         .format = VK_FORMAT_R32G32B32_SFLOAT,
         .offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _bitangent ) )

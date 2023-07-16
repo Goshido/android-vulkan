@@ -16,7 +16,7 @@ namespace {
 class DescriptorSetLayout final
 {
     public:
-        VkDescriptorSetLayout       _descriptorSetLayout = VK_NULL_HANDLE;
+        VkDescriptorSetLayout       _layout = VK_NULL_HANDLE;
 
     private:
         std::atomic_size_t          _references = 0U;
@@ -46,9 +46,9 @@ void DescriptorSetLayout::Destroy ( VkDevice device ) noexcept
     if ( _references )
         return;
 
-    vkDestroyDescriptorSetLayout ( device, _descriptorSetLayout, nullptr );
-    _descriptorSetLayout = VK_NULL_HANDLE;
-    AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::UIPassTransformDescriptorSetLayout::_descriptorSetLayout" )
+    vkDestroyDescriptorSetLayout ( device, _layout, nullptr );
+    _layout = VK_NULL_HANDLE;
+    AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::UIPassTransformDescriptorSetLayout::_layout" )
 }
 
 bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
@@ -78,7 +78,7 @@ bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
     };
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateDescriptorSetLayout ( device, &info, nullptr, &_descriptorSetLayout ),
+        vkCreateDescriptorSetLayout ( device, &info, nullptr, &_layout ),
         "pbr::UIPassTransformDescriptorSetLayout::Init",
         "Can't create descriptor set layout"
     );
@@ -86,7 +86,7 @@ bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
     if ( !result )
         return false;
 
-    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::UIPassTransformDescriptorSetLayout::_descriptorSetLayout" )
+    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::UIPassTransformDescriptorSetLayout::_layout" )
 
     ++_references;
     return true;
@@ -110,7 +110,7 @@ bool UIPassTransformDescriptorSetLayout::Init ( VkDevice device ) noexcept
 
 VkDescriptorSetLayout UIPassTransformDescriptorSetLayout::GetLayout () const noexcept
 {
-    return g_descriptorSetLayout._descriptorSetLayout;
+    return g_descriptorSetLayout._layout;
 }
 
 } // namespace pbr

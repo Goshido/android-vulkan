@@ -5,7 +5,7 @@
 
 namespace mandelbrot {
 
-constexpr static char const* VERTEX_SHADER = "shaders/mandelbrot-vs.spv";
+constexpr static char const* VERTEX_SHADER = "shaders/mandelbrot.vs.spv";
 
 constexpr static char const* VERTEX_SHADER_ENTRY_POINT = "VS";
 constexpr static char const* FRAGMENT_SHADER_ENTRY_POINT = "PS";

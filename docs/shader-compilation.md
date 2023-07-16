@@ -1,3 +1,4 @@
+
 # Shader compilation
 
 ## Compile tool
@@ -71,4 +72,4 @@ Variable name | Value
 Name | Link | Status
 --- | --- | ---
 SPIR-V degradation 1.7.2207.10069 compare to 1.7.2207.10036 | [#4714](https://github.com/microsoft/DirectXShaderCompiler/issues/4714) | ✔️ Fixed
-SPIR-V degradation 1.7.2212.10204 compare to 1.7.2212.10142 | [#5342](https://github.com/microsoft/DirectXShaderCompiler/issues/5342) | ✔️ Submitted
+SPIR-V degradation 1.7.2212.10204 compare to 1.7.2212.10142 | [#5342](https://github.com/microsoft/DirectXShaderCompiler/issues/5342) | ✔️ Fixed

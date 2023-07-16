@@ -4,7 +4,7 @@
 
 namespace mandelbrot {
 
-constexpr static char const* FRAGMENT_SHADER = "shaders/mandelbrot-analytic-color-ps.spv";
+constexpr static char const* FRAGMENT_SHADER = "shaders/mandelbrot_analytic_color.ps.spv";
 
 MandelbrotAnalyticColor::MandelbrotAnalyticColor () noexcept:
     MandelbrotBase ( FRAGMENT_SHADER )

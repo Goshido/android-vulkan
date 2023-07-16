@@ -1,14 +1,19 @@
+#include <pbr/light_volume.inc>
 #include <pbr/reflection_local_program.hpp>
 
 
 namespace pbr {
 
-constexpr static size_t COLOR_RENDER_TARGET_COUNT = 1U;
-constexpr static size_t STAGE_COUNT = 2U;
-constexpr static size_t VERTEX_ATTRIBUTE_COUNT = 1U;
+namespace {
 
-constexpr static char const* VERTEX_SHADER = "shaders/light-volume-vs.spv";
-constexpr static char const* FRAGMENT_SHADER = "shaders/reflection-local-ps.spv";
+constexpr size_t COLOR_RENDER_TARGET_COUNT = 1U;
+constexpr size_t STAGE_COUNT = 2U;
+constexpr size_t VERTEX_ATTRIBUTE_COUNT = 1U;
+
+constexpr char const* VERTEX_SHADER = "shaders/light_volume.vs.spv";
+constexpr char const* FRAGMENT_SHADER = "shaders/reflection_local.ps.spv";
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -186,27 +191,32 @@ VkPipelineColorBlendStateCreateInfo const* ReflectionLocalProgram::InitColorBlen
     VkPipelineColorBlendAttachmentState* attachments
 ) const noexcept
 {
-    VkPipelineColorBlendAttachmentState &hdrAccumulator = attachments[ 0U ];
-    hdrAccumulator.blendEnable = VK_TRUE;
-    hdrAccumulator.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
-    hdrAccumulator.dstColorBlendFactor = VK_BLEND_FACTOR_ONE;
-    hdrAccumulator.colorBlendOp = VK_BLEND_OP_ADD;
-    hdrAccumulator.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-    hdrAccumulator.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-    hdrAccumulator.alphaBlendOp = VK_BLEND_OP_ADD;
+    attachments[ 0U ] =
+    {
+        .blendEnable = VK_TRUE,
+        .srcColorBlendFactor = VK_BLEND_FACTOR_ONE,
+        .dstColorBlendFactor = VK_BLEND_FACTOR_ONE,
+        .colorBlendOp = VK_BLEND_OP_ADD,
+        .srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
+        .dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
+        .alphaBlendOp = VK_BLEND_OP_ADD,
 
-    hdrAccumulator.colorWriteMask = AV_VK_FLAG ( VK_COLOR_COMPONENT_R_BIT ) |
-        AV_VK_FLAG ( VK_COLOR_COMPONENT_G_BIT ) |
-        AV_VK_FLAG ( VK_COLOR_COMPONENT_B_BIT );
+        .colorWriteMask = AV_VK_FLAG ( VK_COLOR_COMPONENT_R_BIT ) |
+            AV_VK_FLAG ( VK_COLOR_COMPONENT_G_BIT ) |
+            AV_VK_FLAG ( VK_COLOR_COMPONENT_B_BIT )
+    };
 
-    info.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-    info.pNext = nullptr;
-    info.flags = 0U;
-    info.logicOpEnable = VK_FALSE;
-    info.logicOp = VK_LOGIC_OP_NO_OP;
-    info.attachmentCount = COLOR_RENDER_TARGET_COUNT;
-    info.pAttachments = attachments;
-    std::memset ( info.blendConstants, 0, sizeof ( info.blendConstants ) );
+    info =
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .logicOpEnable = VK_FALSE,
+        .logicOp = VK_LOGIC_OP_NO_OP,
+        .attachmentCount = COLOR_RENDER_TARGET_COUNT,
+        .pAttachments = attachments,
+        .blendConstants = { 0.0F, 0.0F, 0.0F, 0.0F }
+    };
 
     return &info;
 }
@@ -215,39 +225,42 @@ VkPipelineDepthStencilStateCreateInfo const* ReflectionLocalProgram::InitDepthSt
     VkPipelineDepthStencilStateCreateInfo &info
 ) const noexcept
 {
-    info.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-    info.pNext = nullptr;
-    info.flags = 0U;
-    info.depthTestEnable = VK_FALSE;
-    info.depthWriteEnable = VK_FALSE;
-    info.depthCompareOp = VK_COMPARE_OP_ALWAYS;
-    info.depthBoundsTestEnable = VK_FALSE;
-    info.stencilTestEnable = VK_FALSE;
-
-    info.front =
+    info =
     {
-        .failOp = VK_STENCIL_OP_KEEP,
-        .passOp = VK_STENCIL_OP_KEEP,
-        .depthFailOp = VK_STENCIL_OP_KEEP,
-        .compareOp = VK_COMPARE_OP_ALWAYS,
-        .compareMask = std::numeric_limits<uint32_t>::max (),
-        .writeMask = 0U,
-        .reference = 0U
-    };
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .depthTestEnable = VK_FALSE,
+        .depthWriteEnable = VK_FALSE,
+        .depthCompareOp = VK_COMPARE_OP_ALWAYS,
+        .depthBoundsTestEnable = VK_FALSE,
+        .stencilTestEnable = VK_FALSE,
 
-    info.back =
-    {
-        .failOp = VK_STENCIL_OP_KEEP,
-        .passOp = VK_STENCIL_OP_KEEP,
-        .depthFailOp = VK_STENCIL_OP_KEEP,
-        .compareOp = VK_COMPARE_OP_ALWAYS,
-        .compareMask = std::numeric_limits<uint32_t>::max (),
-        .writeMask = 0U,
-        .reference = 0U
-    };
+        .front =
+        {
+            .failOp = VK_STENCIL_OP_KEEP,
+            .passOp = VK_STENCIL_OP_KEEP,
+            .depthFailOp = VK_STENCIL_OP_KEEP,
+            .compareOp = VK_COMPARE_OP_ALWAYS,
+            .compareMask = std::numeric_limits<uint32_t>::max (),
+            .writeMask = 0U,
+            .reference = 0U
+        },
 
-    info.minDepthBounds = 0.0F;
-    info.maxDepthBounds = 1.0F;
+        .back =
+        {
+            .failOp = VK_STENCIL_OP_KEEP,
+            .passOp = VK_STENCIL_OP_KEEP,
+            .depthFailOp = VK_STENCIL_OP_KEEP,
+            .compareOp = VK_COMPARE_OP_ALWAYS,
+            .compareMask = std::numeric_limits<uint32_t>::max (),
+            .writeMask = 0U,
+            .reference = 0U
+        },
+
+        .minDepthBounds = 0.0F,
+        .maxDepthBounds = 1.0F
+    };
 
     return &info;
 }
@@ -256,11 +269,14 @@ VkPipelineInputAssemblyStateCreateInfo const* ReflectionLocalProgram::InitInputA
     VkPipelineInputAssemblyStateCreateInfo &info
 ) const noexcept
 {
-    info.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-    info.pNext = nullptr;
-    info.flags = 0U;
-    info.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-    info.primitiveRestartEnable = VK_FALSE;
+    info =
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+        .primitiveRestartEnable = VK_FALSE
+    };
 
     return &info;
 }
@@ -312,15 +328,18 @@ VkPipelineMultisampleStateCreateInfo const* ReflectionLocalProgram::InitMultisam
     VkPipelineMultisampleStateCreateInfo &info
 ) const noexcept
 {
-    info.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-    info.pNext = nullptr;
-    info.flags = 0U;
-    info.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
-    info.sampleShadingEnable = VK_FALSE;
-    info.minSampleShading = 0.0F;
-    info.pSampleMask = nullptr;
-    info.alphaToCoverageEnable = VK_FALSE;
-    info.alphaToOneEnable = VK_FALSE;
+    info =
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
+        .sampleShadingEnable = VK_FALSE,
+        .minSampleShading = 0.0F,
+        .pSampleMask = nullptr,
+        .alphaToCoverageEnable = VK_FALSE,
+        .alphaToOneEnable = VK_FALSE
+    };
 
     return &info;
 }
@@ -329,19 +348,22 @@ VkPipelineRasterizationStateCreateInfo const* ReflectionLocalProgram::InitRaster
     VkPipelineRasterizationStateCreateInfo &info
 ) const noexcept
 {
-    info.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-    info.pNext = nullptr;
-    info.flags = 0U;
-    info.depthClampEnable = VK_FALSE;
-    info.rasterizerDiscardEnable = VK_FALSE;
-    info.polygonMode = VK_POLYGON_MODE_FILL;
-    info.cullMode = VK_CULL_MODE_FRONT_BIT;
-    info.frontFace = VK_FRONT_FACE_CLOCKWISE;
-    info.depthBiasEnable = VK_FALSE;
-    info.depthBiasConstantFactor = 0.0F;
-    info.depthBiasClamp = 0.0F;
-    info.depthBiasSlopeFactor = 0.0F;
-    info.lineWidth = 1.0F;
+    info =
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .depthClampEnable = VK_FALSE,
+        .rasterizerDiscardEnable = VK_FALSE,
+        .polygonMode = VK_POLYGON_MODE_FILL,
+        .cullMode = VK_CULL_MODE_FRONT_BIT,
+        .frontFace = VK_FRONT_FACE_CLOCKWISE,
+        .depthBiasEnable = VK_FALSE,
+        .depthBiasConstantFactor = 0.0F,
+        .depthBiasClamp = 0.0F,
+        .depthBiasSlopeFactor = 0.0F,
+        .lineWidth = 1.0F
+    };
 
     return &info;
 }
@@ -371,23 +393,27 @@ bool ReflectionLocalProgram::InitShaderInfo ( android_vulkan::Renderer &renderer
 
     AV_REGISTER_SHADER_MODULE ( "pbr::ReflectionLocalProgram::_fragmentShader" )
 
-    VkPipelineShaderStageCreateInfo &vertexStage = sourceInfo[ 0U ];
-    vertexStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    vertexStage.pNext = nullptr;
-    vertexStage.flags = 0U;
-    vertexStage.stage = VK_SHADER_STAGE_VERTEX_BIT;
-    vertexStage.module = _vertexShader;
-    vertexStage.pName = VERTEX_SHADER_ENTRY_POINT;
-    vertexStage.pSpecializationInfo = nullptr;
+    sourceInfo[ 0U ] =
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .stage = VK_SHADER_STAGE_VERTEX_BIT,
+        .module = _vertexShader,
+        .pName = VERTEX_SHADER_ENTRY_POINT,
+        .pSpecializationInfo = nullptr
+    };
 
-    VkPipelineShaderStageCreateInfo &fragmentStage = sourceInfo[ 1U ];
-    fragmentStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    fragmentStage.pNext = nullptr;
-    fragmentStage.flags = 0U;
-    fragmentStage.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-    fragmentStage.module = _fragmentShader;
-    fragmentStage.pName = FRAGMENT_SHADER_ENTRY_POINT;
-    fragmentStage.pSpecializationInfo = nullptr;
+    sourceInfo[ 1U ] =
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
+        .module = _fragmentShader,
+        .pName = FRAGMENT_SHADER_ENTRY_POINT,
+        .pSpecializationInfo = nullptr
+    };
 
     targetInfo = sourceInfo;
     return true;
@@ -417,24 +443,37 @@ VkPipelineViewportStateCreateInfo const* ReflectionLocalProgram::InitViewportInf
     VkExtent2D const &viewport
 ) const noexcept
 {
-    viewportInfo.x = 0.0F;
-    viewportInfo.y = 0.0F;
-    viewportInfo.width = static_cast<float> ( viewport.width );
-    viewportInfo.height = static_cast<float> ( viewport.height );
-    viewportInfo.minDepth = 0.0F;
-    viewportInfo.maxDepth = 1.0F;
+    viewportInfo =
+    {
+        .x = 0.0F,
+        .y = 0.0F,
+        .width = static_cast<float> ( viewport.width ),
+        .height = static_cast<float> ( viewport.height ),
+        .minDepth = 0.0F,
+        .maxDepth = 1.0F
+    };
 
-    scissorInfo.offset.x = 0;
-    scissorInfo.offset.y = 0;
-    scissorInfo.extent = viewport;
+    scissorInfo =
+    {
+        .offset =
+        {
+            .x = 0,
+            .y = 0,
+        },
 
-    info.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-    info.pNext = nullptr;
-    info.flags = 0U;
-    info.viewportCount = 1U;
-    info.pViewports = &viewportInfo;
-    info.scissorCount = 1U;
-    info.pScissors = &scissorInfo;
+        .extent = viewport
+    };
+
+    info =
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .viewportCount = 1U,
+        .pViewports = &viewportInfo,
+        .scissorCount = 1U,
+        .pScissors = &scissorInfo
+    };
 
     return &info;
 }
@@ -445,22 +484,31 @@ VkPipelineVertexInputStateCreateInfo const* ReflectionLocalProgram::InitVertexIn
     VkVertexInputBindingDescription* binds
 ) const noexcept
 {
-    binds->binding = 0U;
-    binds->stride = static_cast<uint32_t> ( sizeof ( GXVec3 ) );
-    binds->inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+    binds[ 0U ] =
+    {
+        .binding = 0U,
+        .stride = static_cast<uint32_t> ( sizeof ( GXVec3 ) ),
+        .inputRate = VK_VERTEX_INPUT_RATE_VERTEX
+    };
 
-    attributes->location = 0U;
-    attributes->binding = 0U;
-    attributes->format = VK_FORMAT_R32G32B32_SFLOAT;
-    attributes->offset = 0U;
+    attributes[ 0U ] =
+    {
+        .location = IN_SLOT_VERTEX,
+        .binding = 0U,
+        .format = VK_FORMAT_R32G32B32_SFLOAT,
+        .offset = 0U
+    };
 
-    info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    info.pNext = nullptr;
-    info.flags = 0U;
-    info.vertexBindingDescriptionCount = 1U;
-    info.pVertexBindingDescriptions = binds;
-    info.vertexAttributeDescriptionCount = static_cast<uint32_t> ( VERTEX_ATTRIBUTE_COUNT );
-    info.pVertexAttributeDescriptions = attributes;
+    info =
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .vertexBindingDescriptionCount = 1U,
+        .pVertexBindingDescriptions = binds,
+        .vertexAttributeDescriptionCount = static_cast<uint32_t> ( VERTEX_ATTRIBUTE_COUNT ),
+        .pVertexAttributeDescriptions = attributes
+    };
 
     return &info;
 }

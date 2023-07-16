@@ -21,10 +21,10 @@ class GeometryPassProgram : public Program
         {
             GXMat4                                  _localView;
             GXMat4                                  _localViewProjection;
-            [[maybe_unused]] GXColorRGB             _color0;
-            [[maybe_unused]] GXColorRGB             _color1;
-            [[maybe_unused]] GXColorRGB             _color2;
-            [[maybe_unused]] GXColorRGB             _emission;
+            GXColorRGB                              _color0;
+            GXColorRGB                              _color1;
+            GXColorRGB                              _color2;
+            GXColorRGB                              _emission;
         };
 
         struct InstanceData final

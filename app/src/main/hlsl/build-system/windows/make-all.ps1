@@ -3,23 +3,23 @@ Clear-Host
 .\make-env.ps1
 
 # vertex shaders
-.\make-vs.ps1 common-opaque
-.\make-vs.ps1 light-volume
+.\make-vs.ps1 common_opaque
+.\make-vs.ps1 light_volume
 .\make-vs.ps1 mandelbrot
-.\make-vs.ps1 point-light-shadowmap-generator
-.\make-vs.ps1 reflection-global
-.\make-vs.ps1 static-mesh
+.\make-vs.ps1 point_light_shadowmap_generator
+.\make-vs.ps1 reflection_global
+.\make-vs.ps1 static_mesh
 .\make-vs.ps1 ui
 
 # pixel shaders
-.\make-ps.ps1 blinn-phong-analytic
-.\make-ps.ps1 blinn-phong-lut
-.\make-ps.ps1 mandelbrot-analytic-color
-.\make-ps.ps1 mandelbrot-lut-color
+.\make-ps.ps1 blinn_phong_analytic
+.\make-ps.ps1 blinn_phong_lut
+.\make-ps.ps1 mandelbrot_analytic_color
+.\make-ps.ps1 mandelbrot_lut_color
 .\make-ps.ps1 null
 .\make-ps.ps1 opaque
-.\make-ps.ps1 point-light
-.\make-ps.ps1 reflection-global
-.\make-ps.ps1 reflection-local
+.\make-ps.ps1 point_light
+.\make-ps.ps1 reflection_global
+.\make-ps.ps1 reflection_local
 .\make-ps.ps1 stipple
 .\make-ps.ps1 ui

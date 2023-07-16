@@ -1,8 +1,9 @@
-#include "reflection-common.ps"
+#include "reflection_common.ps"
+#include "reflection_local.inc"
 
 
-[[vk::binding ( 1, 2 )]]
-cbuffer LightData:      register ( b2 )
+[[vk::binding ( BIND_LIGHT_DATA, SET_REFLECTION )]]
+cbuffer LightData:      register ( b1 )
 {
     float32_t3      _locationView;
     float32_t       _invSize;

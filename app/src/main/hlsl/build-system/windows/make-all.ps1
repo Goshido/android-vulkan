@@ -1,6 +1,11 @@
-Clear-Host
+param
+(
+    [Switch]
+    $shaderSource
+)
 
-.\make-env.ps1
+Clear-Host
+.\make-env.ps1 $shaderSource
 
 # vertex shaders
 .\make-vs.ps1 common_opaque

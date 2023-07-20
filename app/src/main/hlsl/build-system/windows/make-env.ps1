@@ -1,3 +1,5 @@
+$embedSources = $args[ 0 ]
+
 $global:PIVOT_DIRECTORY = ".\..\..\.."
 $global:DXC = "${Env:ANDROID_VULKAN_DXC_ROOT}\dxc.exe"
 
@@ -12,6 +14,13 @@ $global:FLAGS =
     "-fspv-target-env=vulkan1.1",
     "-enable-16bit-types",
     "-WX",
-    "-O3",
     "-I", "${PIVOT_DIRECTORY}\hlsl",
     "-I", "${PIVOT_DIRECTORY}\cpp\include\pbr"
+
+if ( $embedSources )
+{
+    $global:FLAGS += "-Od", "-fspv-debug=vulkan-with-source"
+    return
+}
+
+$global:FLAGS += "-O3"

@@ -1,7 +1,7 @@
 $source = $args[ 0 ]
 
 Clear-Host
-.\make-env.ps1
+.\make-env.ps1 $false
 
 $params =
     "-E", "VS",

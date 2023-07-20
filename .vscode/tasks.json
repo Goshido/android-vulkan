@@ -34,6 +34,27 @@
             }
         },
         {
+            "label": "Compile SPIR-V [with sources]",
+            "type": "shell",
+            "group": "build",
+
+            "options": {
+                "cwd": "${workspaceFolder}/app/src/main/hlsl/build-system/windows"
+            },
+
+            "command": {
+                "quoting": "weak",
+                "value" : "${workspaceFolder}/app/src/main/hlsl/build-system/windows/make-all.ps1"
+            },
+
+            "args": [
+                {
+                    "quoting": "escape",
+                    "value": "-ShaderSource"
+                }
+            ]
+        },
+        {
             "label": "Validate Vertex Shader",
             "type": "shell",
             "group": "build",

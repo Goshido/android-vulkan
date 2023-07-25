@@ -377,19 +377,19 @@ VulkanPhysicalDeviceInfo::VulkanPhysicalDeviceInfo () noexcept:
 // MessageID list of the ignored messages.
 static std::unordered_set<uint32_t> const g_validationFilter =
 {
-    // Attempting to enable deprecated extension VK_EXT_debug_report, but this extension has been deprecated by
-    // VK_EXT_debug_utils.
-    // [2022/07/26] There is no alternative on Android 11 platform.
-    0x9111e735U,
+    // The following warning was triggered: VKDBGUTILWARN003.
+    // Please refer to the Adreno Game Developer Guide for more information:
+    // https://developer.qualcomm.com/docs/adreno-gpu/developer-guide/index.html
+    // [2023/07/24] Caused by Vulkan Adreno Layer which presents when VK_EXT_debug_utils is enabled.
+    // https://developer.qualcomm.com/sites/default/files/docs/adreno-gpu/snapdragon-game-toolkit/gdg/components/vk_adreno_layer.html
+    // Qualcomm description: Renderpass is not qualified for multipass due to a given subpass.
+    // It happens at UI composition renderpass which can not be multipass by design.
+    0x00000000U,
 
-    // Attempting to enable extension VK_EXT_debug_report, but this extension is intended to support use by applications
-    // when debugging and it is strongly recommended that it be otherwise avoided.
+    // Attempting to enable extension VK_EXT_debug_utils, but this extension is intended to support use
+    // by applications when debugging and it is strongly recommended that it be otherwise avoided.
     // [2022/07/26] Yeah. I'm pretty aware about that. Thank you.
-    0x822806faU,
-
-    // VALIDATION LAYERS WARNING: Using debug builds of the validation layers *will* adversely affect performance.
-    // [2022/09/15] Yeah. I'm pretty aware about that. Thank you.
-    0x26ac7233U
+    0x822806FAU
 };
 
 constexpr static std::pair<uint32_t, char const*> const g_vkDebugUtilsMessageSeverityFlagBitsEXTMapper[] =
@@ -2647,12 +2647,17 @@ message: %s
         g_vkDebugUtilsMessageTypeFlagBitsEXTMapper
     );
 
+    auto const prettyMessage = [] ( char const* message ) noexcept -> char const* {
+        char const* cases[] = { message, "N/A" };
+        return cases[ static_cast<size_t> ( message == nullptr ) ];
+    };
+
     constexpr size_t removeFirstSpace = 1U;
 
     LogError ( format,
         severity.c_str () + removeFirstSpace,
         type.c_str () + removeFirstSpace,
-        pCallbackData->pMessageIdName,
+        prettyMessage ( pCallbackData->pMessageIdName ),
         pCallbackData->messageIdNumber,
         encodeLabel ( queues, pCallbackData->queueLabelCount, pCallbackData->pQueueLabels ),
         encodeLabel ( commandBuffers, pCallbackData->cmdBufLabelCount, pCallbackData->pCmdBufLabels ),

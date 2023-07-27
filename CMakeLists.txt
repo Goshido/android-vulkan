@@ -11,8 +11,7 @@ string ( APPEND CMAKE_CXX_FLAGS_RELEASE " -flto=thin" )
 find_library ( log-lib log REQUIRED )
 
 # Main app
-add_library ( android-vulkan
-    SHARED
+add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/contact_detector.cpp
     app/src/main/cpp/sources/contact_manager.cpp
     app/src/main/cpp/sources/core.cpp
@@ -216,8 +215,7 @@ add_library ( android-vulkan
 
 # ARM Neon support: All ARMv8-based devices support Neon. So no any additional compile flags need to specify.
 # See https://developer.android.com/ndk/guides/cpu-arm-neon#cmake_2
-target_include_directories ( android-vulkan
-    PRIVATE
+target_include_directories ( android-vulkan PRIVATE
     app/src/main/cpp/include
     app/src/main/cpp/include/freetype2
 )
@@ -239,8 +237,7 @@ target_compile_options ( android-vulkan PRIVATE
 )
 
 # See docs/preprocessor-macros.md
-target_compile_definitions ( android-vulkan
-    PRIVATE
+target_compile_definitions ( android-vulkan PRIVATE
 #    -DANDROID_ENABLE_TRACE
     -DANDROID_NATIVE_MODE_PORTRAIT
     -DANDROID_VULKAN_DEBUG

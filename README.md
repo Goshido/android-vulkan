@@ -22,8 +22,8 @@ Useful documentation is located [here](docs/documentation.md).
 ### Requirements
 
 * _Windows Vista_+ or _Monjaro KDE_
-* [_Android Studio Flamingo | 2022.2.1 Patch 2_](https://developer.android.com/studio)
-* _Android Studio Gradle Plugin 8.0.2_
+* [_Android Studio Giraffe | 2022.3.1_](https://developer.android.com/studio)
+* _Android Studio Gradle Plugin 8.1.0_
 * _Android NDK 25.2.9519653 (side by side)_
 * _Android SDK 11.0 (API level 30)_
 * _Android SDK Build-Tools 34.0.0_
@@ -31,7 +31,7 @@ Useful documentation is located [here](docs/documentation.md).
 * _Kotlin 1.8.20_
 * _Kotlin Gradle plugin 1.8.20_
 * _CMake 3.22.1_
-* [_Gradle 8.0.2-bin_](https://services.gradle.org/distributions/)
+* [_Gradle 8.2.1-bin_](https://services.gradle.org/distributions/)
 * [_DirectX Shader Compiler 1.7.2212.10216_](https://github.com/microsoft/DirectXShaderCompiler) `2096d1b8054d1de864924ef0c5009f533597b9d4`
 * [_libfreetype 2.13.1_](https://gitlab.freedesktop.org/freetype/freetype) `e4586d960f339cf75e2e0b34aee30a0ed8353c0d`
 * [_libogg 1.3.5_](https://gitlab.xiph.org/xiph/ogg) `db5c7a49ce7ebda47b15b78471e78fb7f2483e22`

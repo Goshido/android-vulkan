@@ -4,7 +4,7 @@
 require "av://engine/logger.lua"
 ```
 
-## Table of content
+## <a id="table-of-content">Table of content</a>
 
 - [_Brief_](#brief)
 - [_Metamethods_](#metamethods)
@@ -16,6 +16,8 @@ require "av://engine/logger.lua"
 ## <a id="brief">Brief</a>
 
 The module provides log utilities for _Lua_ scripts.
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="metamethods">Metamethods</a>
 
@@ -49,6 +51,8 @@ Metamethod | Used
 `__tostring` | ❌
 `__unm` | ❌
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="function-logd">`LogD ( format, ... )`</a>
 
 Function prints the message to log with _debug_ tag. The function supports formatting string [technique](https://en.cppreference.com/w/cpp/io/c/fprintf).
@@ -73,6 +77,8 @@ local s = "Hello world"
 LogD ( "Message from log." )
 LogD ( "The values: %s, %f", s, 77.7 )
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="function-loge">`LogE ( format, ... )`</a>
 
@@ -99,6 +105,8 @@ LogE ( "Message from log." )
 LogE ( "The values: %s, %f", s, 77.7 )
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="function-logi">`LogI ( format, ... )`</a>
 
 Function prints the message to log with _info_ tag. The function supports formatting string [technique](https://en.cppreference.com/w/cpp/io/c/fprintf).
@@ -124,6 +132,8 @@ LogI ( "Message from log." )
 LogI ( "The values: %s, %f", s, 77.7 )
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="function-logw">`LogW ( format, ... )`</a>
 
 Function prints the message to log with _warning_ tag. The function supports formatting string [technique](https://en.cppreference.com/w/cpp/io/c/fprintf).
@@ -148,3 +158,5 @@ local s = "Hello world"
 LogW ( "Message from log." )
 LogW ( "The values: %s, %f", s, 77.7 )
 ```
+
+[↬ table of content ⇧](#table-of-content)

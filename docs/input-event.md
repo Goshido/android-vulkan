@@ -4,7 +4,7 @@
 require "av://engine/input_event.lua"
 ```
 
-## Table of content
+## <a id="table-of-content">Table of content</a>
 
 - [_Brief_](#brief)
 - [_Key event_](#key-event)
@@ -27,6 +27,8 @@ As you can see there are several types of events which controller could produce:
 - Digital events
 
 The analog events are the stick events and trigger events. They contain the state which is described by floating point values. The digital events are button events. They contain state which is described by boolean values.
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="key-event">Key event</a>
 
@@ -59,6 +61,8 @@ The `_key` state could be one of the following values:
 - `eKey.Menu`
 - `eKey.View`
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="stick-event">Stick event</a>
 
 The stick event is an _analog_ event and is described by the following table:
@@ -77,6 +81,8 @@ The `_x` state could contain the floating point value in range from `-1.0` to `1
 
 The `_y` state could contain the floating point value in range from `-1.0` to `1.0`. The physical direction of the _Y_ axis from bottom to top.
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="trigger-event">Trigger event</a>
 
 The trigger event is an _analog_ event and is described by the following table:
@@ -91,3 +97,5 @@ InputEvent = {
 The `_type` could be `eEventType.LeftTrigger` or `eEventType.RightTrigger`.
 
 The `_value` state could contain the floating point value in range from `0.0` to `1.0`. The `0.0` value corresponds fully neutral trigger state. The `1.0` corresponds fully pressed trigger state.
+
+[↬ table of content ⇧](#table-of-content)

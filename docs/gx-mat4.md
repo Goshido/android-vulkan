@@ -4,7 +4,7 @@
 require "av://engine/gx_mat4.lua"
 ```
 
-## Table of content
+## <a id="table-of-content">Table of content</a>
 
 - [_Brief_](#brief)
 - [_Metamethods_](#metamethods)
@@ -77,6 +77,8 @@ local vertexCVV = GXVec4 ()
 mvp:MultiplyVectorMatrix ( vertexCVV, vertexLocal )
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="metamethods">Metamethods</a>
 
 Metamethod | Used
@@ -109,6 +111,8 @@ Metamethod | Used
 `__tostring` | ✔️
 `__unm` | ❌
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="constructor">`Constructor`</a>
 
 Constructor creates new object with undefined initial values.
@@ -125,6 +129,8 @@ require "av://engine/gx_mat4.lua"
 
 local m = GXMat4 ()
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-clone">`Clone ( other )`</a>
 
@@ -161,6 +167,8 @@ local transformCopy = GXMat4 ()
 transformCopy:Clone ( transform )
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-from-fast">`FromFast ( unitQuaternion, origin )`</a>
 
 Method initializes the matrix with composite rotation and translation transformation.
@@ -196,6 +204,8 @@ local transform = GXMat4 ()
 transform:FromFast ( rotation, origin )
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-get-x">`GetX ( x )`</a>
 
 Method writes first three components of the [_X_ row](#brief) of current matrix to the supplied `x` vector of the [_GXVec3_](./gx-vec3.md) type.
@@ -220,6 +230,8 @@ m:RotationX ( math.rad ( 33.3 ) )
 local v = GXVec3 ()
 m:GetX ( v )
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-get-y">`GetY ( y )`</a>
 
@@ -246,6 +258,8 @@ local v = GXVec3 ()
 m:GetY ( v )
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-get-z">`GetZ ( z )`</a>
 
 Method writes first three components of the [_Z_ row](#brief) of current matrix to the supplied `z` vector of the [_GXVec3_](./gx-vec3.md) type.
@@ -270,6 +284,8 @@ m:RotationX ( math.rad ( 33.3 ) )
 local v = GXVec3 ()
 m:GetZ ( v )
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-get-w">`GetW ( w )`</a>
 
@@ -296,6 +312,8 @@ local v = GXVec3 ()
 m:GetW ( v )
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-identity">`Identity ()`</a>
 
 Method initializes the matrix as [identity matrix](https://en.wikipedia.org/wiki/Identity_matrix).
@@ -317,6 +335,8 @@ require "av://engine/gx_mat4.lua"
 local p = GXMat4 ()
 p:Identity ()
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-inverse">`Inverse ( sourceMatrix )`</a>
 
@@ -342,6 +362,8 @@ m:RotationX ( math.rad ( 77.7 ) )
 local i = GXMat4 ()
 i:Inverse ( m )
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-multiply">`Multiply ( a, b )`</a>
 
@@ -376,6 +398,8 @@ local m = GXMat4 ()
 m:Multiply ( a, b )
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-multiply-matrix-vector">`MultiplyMatrixVector ( out, v )`</a>
 
 Method performs matrix-vector multiplication of current matrix `self` and `v` [column-vector](https://en.wikipedia.org/wiki/Row_and_column_vectors): `self` x `v`. The result is written to the `out` [column-vector](https://en.wikipedia.org/wiki/Row_and_column_vectors).
@@ -405,6 +429,8 @@ local v1 = GXVec4 ()
 m:MultiplyMatrixVector ( v1, v0 )
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-multiply-as-normal">`MultiplyAsNormal ( out, v )`</a>
 
 Method applies rotation and scale transforms of current matrix to vector `v` and writes the result to vector `out`. 
@@ -433,6 +459,8 @@ r:RotationX ( math.rad ( 77.7 ) )
 local n = GXVec3 ()
 r:MultiplyAsNormal ( n, v )
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-multiply-as-point">`MultiplyAsPoint ( out, v )`</a>
 
@@ -471,6 +499,8 @@ mv:Multiply ( m, v )
 local vView = GXVec3 ()
 mv:MultiplyAsPoint ( vView, vLocal )
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-multiply-vector-matrix">`MultiplyVectorMatrix ( out, v )`</a>
 
@@ -519,6 +549,8 @@ local vertexCVV = GXVec4 ()
 mvp:MultiplyVectorMatrix ( vertexCVV, vertexLocal )
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-perspective">`Perspective ( fieldOfViewYRadians, aspectRatio, zNear, zFar )`</a>
 
 Method initializes the matrix with _Vulkan CVV_ perspective transformation.
@@ -548,6 +580,8 @@ local p = GXMat4 ()
 p:Perspective ( math.rad ( fov ), width / height, 1.0, 77777.77 )
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-rotation-x">`RotationX ( angle )`</a>
 
 Method initializes the current matrix as rotation transform about _X_-axis.
@@ -569,6 +603,8 @@ require "av://engine/gx_mat4.lua"
 local r = GXMat4 ()
 r:RotationX ( math.rad ( 33.3 ) )
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-rotation-y">`RotationY ( angle )`</a>
 
@@ -592,6 +628,8 @@ local r = GXMat4 ()
 r:RotationY ( math.rad ( 33.3 ) )
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-rotation-z">`RotationZ ( angle )`</a>
 
 Method initializes the current matrix as rotation transform about _Z_-axis.
@@ -613,6 +651,8 @@ require "av://engine/gx_mat4.lua"
 local r = GXMat4 ()
 r:RotationZ ( math.rad ( 33.3 ) )
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-scale">`Scale ( x, y, z )`</a>
 
@@ -637,6 +677,8 @@ require "av://engine/gx_mat4.lua"
 local s = GXMat4 ()
 s:Scale ( 77.7, 3.33, 1.0 )
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-set-x">`SetX ( x )`</a>
 
@@ -664,6 +706,8 @@ m:RotationX ( math.rad ( 33.3 ) )
 m:SetX ( v )
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-set-y">`SetY ( y )`</a>
 
 Method sets first three components of the [_Y_ row](#brief) of current matrix from the supplied `y` vector of the [_GXVec3_](./gx-vec3.md) type.
@@ -689,6 +733,8 @@ local m = GXMat4 ()
 m:RotationX ( math.rad ( 33.3 ) )
 m:SetY ( v )
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-set-z">`SetZ ( z )`</a>
 
@@ -716,6 +762,8 @@ m:RotationX ( math.rad ( 33.3 ) )
 m:SetZ ( v )
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-set-w">`SetW ( w )`</a>
 
 Method sets first three components of the [_W_ row](#brief) of current matrix from the supplied `w` vector of the [_GXVec3_](./gx-vec3.md) type.
@@ -742,6 +790,8 @@ m:RotationX ( math.rad ( 33.3 ) )
 m:SetW ( v )
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-translation">`Translation ( x, y, z )`</a>
 
 Method initializes the current matrix as translation transformation.
@@ -765,3 +815,5 @@ require "av://engine/gx_mat4.lua"
 local s = GXMat4 ()
 s:Translation ( 77.7, 3.33, 1.0 )
 ```
+
+[↬ table of content ⇧](#table-of-content)

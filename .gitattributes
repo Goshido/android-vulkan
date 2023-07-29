@@ -1,2 +1,2 @@
-*.ps text diff
-*.vs text diff
+*.ps text eol=lf diff
+*.vs text eol=lf diff

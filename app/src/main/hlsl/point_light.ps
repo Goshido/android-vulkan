@@ -43,9 +43,9 @@ struct OutputData
 
 //----------------------------------------------------------------------------------------------------------------------
 
-float16_t3 GetDiffuseK ( in float16_t3 fesnelFactor, in float16_t metallic )
+float16_t3 GetDiffuseK ( in float16_t3 fresnelFactor, in float16_t metallic )
 {
-    return ( 1.0H - fesnelFactor ) * ( 1.0H - metallic );
+    return ( 1.0H - fresnelFactor ) * ( 1.0H - metallic );
 }
 
 float16_t GetDirectK ( in float16_t roughness )
@@ -127,7 +127,7 @@ OutputData PS ( in linear float32_t4 pixel: SV_Position )
     const float16_t shadow = GetShadowFactor ( locationView );
     const float16_t3 kD = GetDiffuseK ( f, metallic );
 
-    const float16_t3 specular = f * d * ga / ( max ( EPSILON, 4.0H * nL * nV ) );
+    const float16_t3 specular = f * d * ga / max ( EPSILON, 4.0H * nL * nV );
     const float16_t3 color = shadow * nL * attenuation * (float16_t3)_hue * mad ( kD * albedo, INVERSE_PI, specular );
 
     OutputData result;

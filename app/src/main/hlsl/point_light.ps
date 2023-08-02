@@ -63,6 +63,10 @@ float16_t GetAttenuation ( in float32_t3 fragToLight )
 
 float16_t GetDistribution ( in float16_t nH, in float16_t aa )
 {
+    // This is very special part which is never explained in literature.
+    // The D term could go to the infinity at very low roughness and glazing angles.
+    // The solution is to use clamping function.
+    // see https://github.com/Goshido/android-vulkan/issues/59
     const float16_t alpha = mad ( nH * nH, aa - 1.0H, 1.0H );
     return min ( 1.0H, aa / ( PI * alpha * alpha ) );
 }
@@ -122,8 +126,8 @@ OutputData PS ( in linear float32_t4 pixel: SV_Position )
     const float16_t shadow = GetShadowFactor ( locationView );
     const float16_t3 kD = GetDiffuseK ( f, metallic );
 
-    const float16_t3 specular = f * d * ga / max ( EPSILON, 4.0H * nL * nV );
-    const float16_t3 color = shadow * nL * attenuation * (float16_t3)_hue * mad ( kD * albedo, INVERSE_PI, specular );
+    const float16_t s = d * ga / max ( EPSILON, 4.0H * nL * nV );
+    const float16_t3 color = shadow * nL * attenuation * (float16_t3)_hue * mad ( kD * albedo, INVERSE_PI, f * s );
 
     OutputData result;
     result._color = float32_t4 ( (float32_t3)color, 1.0F );

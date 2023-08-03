@@ -43,9 +43,6 @@ struct VulkanPhysicalDeviceInfo final
 class Renderer final
 {
     private:
-        using LogType = void ( * ) ( char const* format, ... );
-
-    private:
         VkFormat                                                            _depthImageFormat;
         VkFormat                                                            _depthStencilImageFormat;
         VkDevice                                                            _device;

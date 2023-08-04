@@ -4,15 +4,16 @@ plugins {
 }
 
 android {
-    compileSdkVersion 31
+    // It's deprecated now. But I have no clue how to specify explicit build tool version.
     buildToolsVersion "34.0.0"
+
     ndkVersion "25.2.9519653"
     namespace 'com.goshidoInc.androidVulkan'
 
     defaultConfig {
         applicationId "com.goshidoInc.androidVulkan"
+        compileSdk 33
         minSdkVersion 30
-        targetSdkVersion 31
         versionCode 1
         versionName "1.0"
     }
@@ -68,13 +69,12 @@ android {
 
     sourceSets {
         main {
-            ext.makePrebuildLibraryPath = { ->
+            ext.makePrebuildLibraryPath = { _ ->
                 return project.rootDir.toString() + "/third-party/jniLibs"
             }
 
             jniLibs {
-                // noinspection GroovyImplicitNullArgumentCall
-                srcDir makePrebuildLibraryPath()
+                srcDir makePrebuildLibraryPath(null)
 
             }
 

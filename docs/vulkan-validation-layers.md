@@ -6,7 +6,7 @@ Starting from _Android NDK_ `23.0.7599858` the _Vulkan_ validation layers have b
 
 ## Compatible version
 
-The manual is based on `766e34d398895f430377701b6e9354e4774007c4` commit of the [_Vulkan-ValidationLayers_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) repo. The manual is primary aimed for _Windows OS_ users.
+The manual is based on `eca34aae4cc04eb32035a7b1770a276933f37327` commit of the [_Vulkan-ValidationLayers_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) repo. The manual is primary aimed for _Windows OS_ users.
 
 ## Requirements
 
@@ -28,99 +28,68 @@ After installing the _Python_ you have to disable _Windows 11_ aliases for pytho
 
 It's needed because bootstrap scripts of the _Vulkan-ValidationLayers_ project are using `python3` calls. So the next obvious step is to create symbolic link `python3.exe` which will be connected with `python.exe`. Yes. It's possible on _Windows OS_. Run _cmd.exe_ with administrative rights and call
 
-```batch
-cd <python directory>
-mklink python3.exe python.exe
-```
-
-At this point we able to download source code dependencies of the _Vulkan-ValidationLayers_ project. Go the project directory and run
-
-```batch
-cd build-android
-python3 ../scripts/update_deps.py --no-build --config release
-```
-
-At this point it's time to build dependencies: `glslang`, `SPIRV-Tools` and `SPIRV-Tools-opt`.
-
-### Building `glslang`
-
-To build `glslang` go to `build-android/glslang` and run
-
-```cmake
-mkdir install
-
-set ANDROID_NDK_ROOT=<Path to Android NDK v25.2.9519653>
-set ANDROID_CMAKE_DIR=<Path to Android's CMake v3.22.1>
-
-"%ANDROID_CMAKE_DIR%\cmake" . -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=./install -DANDROID_ABI=arm64-v8a -DCMAKE_BUILD_TYPE=Release -DANDROID_STL=c++_static -DANDROID_PLATFORM=android-30 -DCMAKE_SYSTEM_NAME=Android -DANDROID_TOOLCHAIN=clang -DANDROID_ARM_MODE=arm -DCMAKE_MAKE_PROGRAM=%ANDROID_NDK_ROOT%/prebuilt/windows-x86_64/bin/make -DCMAKE_TOOLCHAIN_FILE=%ANDROID_NDK_ROOT%/build/cmake/android.toolchain.cmake
-"%ANDROID_CMAKE_DIR%\cmake" --build . -j16
-```
-
-The artifact will be here:
-
-`<repo>/build-android/glslang/glslang/libglslang.a`
-
-### Building `SPIRV-Tools` and `SPIRV-Tools-opt`
-
-First it's needed to change target _Android_ platform and compiler. So modify the `<repo>/build-android/SPIRV-Tools/android_test/jni/Application.mk`:
-
-```txt
-// Line 1
-APP_ABI := arm64-v8a
-
-// Line 4
-APP_PLATFORM := android-30
-
-// Line 5
-NDK_TOOLCHAIN_VERSION := clang
-```
-
-To build `SPIRV-Tools` and `SPIRV-Tools-opt` go to `build-android/SPIRV-Tools` and run
-
-```txt
-python utils/git-sync-deps
-set ANDROID_NDK=<Path to Android NDK v25.2.9519653>
-
-mkdir build && cd build
-mkdir libs
-mkdir app
-
-%ANDROID_NDK%/ndk-build -C ../android_test NDK_PROJECT_PATH=. NDK_LIBS_OUT=%CD%\libs NDK_APP_OUT=%CD%\app -j16
-```
-
-The artifacts will be here:
-
-`<repo>/build-android/SPIRV-Tools/build/app/local/arm64-v8a/libSPIRV-Tools.a`
-
-`<repo>/build-android/SPIRV-Tools/build/app/local/arm64-v8a/libSPIRV-Tools-opt.a`
-
 ### Building `libVkLayer_khronos_validation.so`
 
-At this point we able to build _Vulkan_ validation layers for _Android_. Unfortunately stock building process via `Android.mk` files does not work out of the box. There are two reasons:
+Starting from _VVL_ `eca34aae4cc04eb32035a7b1770a276933f37327` building process is significantly simplified:
 
-1) Force autotests with dependencies
-2) Mess with linking of the static libraries: `layer_utils`, `SPIRV-Tools` and `SPIRV-Tools-opt`
+```PowerShell
+Clear-Host
 
-Good news is the legacy `Android.mk` could be written to _CMakeLists_ + _Ninja_ systems.
+# Preparing sources...
 
-So the last building process for _Windows OS_ is automated via script `<repo>/third-party/vulkan-validation-layers/windows-host/x-build.bat`
+$ndk = "D:/Programs/Android/Sdk/ndk/25.2.9519653"
 
-In order to use it you have to specify two environment variables:
+$androidVulkanDir = "D:/Development/android-vulkan"
+$vvlDir = "D:/Development/Vulkan-ValidationLayers"
 
-Variable name | Meaning | Example
---- | --- | ---
-`NDK_DIR` | Directory where Android NDK is installed | `D:\Development\android-sdk\ndk\25.2.9519653`
-`ANDROID_CMAKE_DIR` | Directory where Android CMake is installed | `D:\Programs\Android\Sdk\cmake\3.22.1\bin`
-`VK_LAYER_DIR` | directory where Vulkan validation layer source code is located for Android | `D:\Development\Vulkan-ValidationLayers\build-android`
+$abi = "arm64-v8a"
+$androidAPI = 30
+$buildThreads = 16
 
+$buildDir = "${vvlDir}/build-android/obj/${abi}"
+$libDir = "third-party/jniLibs/${abi}"
 
-Next what you should to do is to double click `x-build.bat` file.
+# Cleaning repo...
 
-The artifact will be here:
+Set-Location "${vvlDir}"
+git clean -d -fx -f
 
-`<repo>/build-android/build/arm64-v8a/Release/stripped/libVkLayer_khronos_validation.so`
+# Making project files...
 
-**Note:** At this moment there is no overwriting support for _CMake_/_Ninja_ files. So you have to manually delete `VK_LAYER_DIR/build` directory.
+$api = "android-${androidAPI}"
+
+cmake                                                                       `
+    -S .                                                                    `
+    -B "${buildDir}"                                                        `
+    -G Ninja                                                                `
+    -D ANDROID_PLATFORM=$api                                                `
+    -D ANDROID_USE_LEGACY_TOOLCHAIN_FILE=NO                                 `
+    -D CMAKE_ANDROID_ARCH_ABI=${abi}                                        `
+    -D CMAKE_ANDROID_STL_TYPE=c++_static                                    `
+    -D CMAKE_INSTALL_LIBDIR="${libDir}"                                     `
+    -D CMAKE_TOOLCHAIN_FILE="${ndk}/build/cmake/android.toolchain.cmake"    `
+    -D CMAKE_BUILD_TYPE=Release                                             `
+    -D UPDATE_DEPS=ON                                                       `
+    -D UPDATE_DEPS_DIR="${buildDir}"
+
+# Building projects...
+
+$threads = "-j${buidThreads}"
+
+cmake                                                                       `
+    --build "${buildDir}"                                                   `
+    $threads
+
+# Stripping binaries and copying them into android-vulkan project...
+
+cmake                                                                       `
+    --install "${buildDir}"                                                 `
+    --strip                                                                 `
+    --prefix "${androidVulkanDir}"
+
+Write-Host "Done"
+
+```
 
 That's all!
 

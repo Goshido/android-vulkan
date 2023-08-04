@@ -2,7 +2,8 @@
 #include "point_light.inc"
 
 
-// The implementation is based on ideas from LearnOpenGL resource
+// The implementation is based on ideas from following resources:
+// see https://www.trentreed.net/blog/physically-based-shading-and-image-based-lighting/
 // see https://learnopengl.com/PBR/Theory
 // see https://learnopengl.com/PBR/Lighting
 
@@ -10,6 +11,7 @@
 
 #define PI                  3.141592H
 #define INVERSE_PI          0.31830H
+#define SQRT_PI             1.77245H
 
 // It was set by empirical test.
 #define SHADOW_MAP_BIAS     9.9e-1F
@@ -43,15 +45,9 @@ struct OutputData
 
 //----------------------------------------------------------------------------------------------------------------------
 
-float16_t3 GetDiffuseK ( in float16_t3 fesnelFactor, in float16_t metallic )
+float16_t3 GetDiffuseK ( in float16_t3 fresnelFactor, in float16_t metallic )
 {
-    return ( 1.0H - fesnelFactor ) * ( 1.0H - metallic );
-}
-
-float16_t GetDirectK ( in float16_t roughness )
-{
-    const float16_t alpha = roughness + 1.0H;
-    return alpha * alpha * 0.125H;
+    return ( 1.0H - fresnelFactor ) * ( 1.0H - metallic );
 }
 
 float16_t GGXSchlick ( in float16_t dotFactor, in float16_t k )
@@ -65,19 +61,19 @@ float16_t GetAttenuation ( in float32_t3 fragToLight )
     return (float16_t)_intensity / ( beta * beta );
 }
 
-float16_t GetDistribution ( in float16_t nH, in float16_t roughness )
+float16_t GetDistribution ( in float16_t nH, in float16_t aa )
 {
-    const float16_t alpha = roughness * roughness;
-    const float16_t beta = alpha * alpha;
-    const float16_t gamma = nH * nH;
-    const float16_t zeta = mad ( gamma, beta - 1.0H, 1.0H );
-
-    return beta / ( PI * zeta * zeta );
+    // This is very special part which is never explained in literature.
+    // The D term could go to the infinity at very low roughness and glazing angles.
+    // The solution is to use clamping function.
+    // see https://github.com/Goshido/android-vulkan/issues/59
+    const float16_t alpha = mad ( nH * nH, aa - 1.0H, 1.0H );
+    return min ( 1.0H, aa / ( PI * alpha * alpha ) );
 }
 
-float16_t GetGeometryAttenuation ( in float16_t nL, in float16_t nV, in float16_t roughness )
+float16_t GetGeometryAttenuation ( in float16_t nL, in float16_t nV, in float16_t aa )
 {
-    const float16_t k = GetDirectK ( roughness );
+    const float16_t k = aa * SQRT_PI;
     return GGXSchlick ( nL, k ) * GGXSchlick ( nV, k );
 }
 
@@ -115,20 +111,23 @@ OutputData PS ( in linear float32_t4 pixel: SV_Position )
     float16_t metallic;
     GetParams ( roughness, metallic );
 
+    const float16_t a = roughness * roughness;
+    const float16_t aa = a * a;
     const float16_t3 albedo = GetAlbedo ();
 
     const float16_t nL = max ( 0.0H, dot ( normalView, toLightView ) );
     const float16_t nH = max ( 0.0H, dot ( normalView, halfVectorView ) );
     const float16_t nV = max ( 0.0H, dot ( normalView, toViewerView ) );
+    const float16_t vH = max ( 0.0H, dot ( toViewerView, halfVectorView ) );
 
-    const float16_t d = GetDistribution ( nH, roughness );
-    const float16_t3 f = GetFresnel ( nH, metallic, albedo );
-    const float16_t ga = GetGeometryAttenuation ( nL, nV, roughness );
+    const float16_t d = GetDistribution ( nH, aa );
+    const float16_t3 f = GetFresnel ( vH, metallic, albedo );
+    const float16_t ga = GetGeometryAttenuation ( nL, nV, aa );
     const float16_t shadow = GetShadowFactor ( locationView );
     const float16_t3 kD = GetDiffuseK ( f, metallic );
 
-    const float16_t3 specular = f * d * ga / ( max ( EPSILON, 4.0H * nL * nV ) );
-    const float16_t3 color = shadow * nL * attenuation * (float16_t3)_hue * mad ( kD * albedo, INVERSE_PI, specular );
+    const float16_t s = d * ga / max ( EPSILON, 4.0H * nL * nV );
+    const float16_t3 color = shadow * nL * attenuation * (float16_t3)_hue * mad ( kD * albedo, INVERSE_PI, f * s );
 
     OutputData result;
     result._color = float32_t4 ( (float32_t3)color, 1.0F );

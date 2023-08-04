@@ -97,6 +97,27 @@
             ]
         },
         {
+            "label": "Validate Compute Shader",
+            "type": "shell",
+            "group": "build",
+
+            "options": {
+                "cwd": "${workspaceFolder}/app/src/main/hlsl/build-system/windows"
+            },
+
+            "command": {
+                "quoting": "weak",
+                "value" : "${workspaceFolder}/app/src/main/hlsl/build-system/windows/validate-cs.ps1"
+            },
+
+            "args": [
+                {
+                    "quoting": "strong",
+                    "value": "${file}"
+                }
+            ]
+        },
+        {
             "label": "Disassemble Vertex Shader",
             "type": "shell",
             "group": "build",
@@ -129,6 +150,27 @@
             "command": {
                 "quoting": "weak",
                 "value" : "${workspaceFolder}/app/src/main/hlsl/build-system/windows/disassm-ps.ps1"
+            },
+
+            "args": [
+                {
+                    "quoting": "strong",
+                    "value": "${file}"
+                }
+            ]
+        },
+        {
+            "label": "Disassemble Compute Shader",
+            "type": "shell",
+            "group": "build",
+
+            "options": {
+                "cwd": "${workspaceFolder}/app/src/main/hlsl/build-system/windows"
+            },
+
+            "command": {
+                "quoting": "weak",
+                "value" : "${workspaceFolder}/app/src/main/hlsl/build-system/windows/disassm-cs.ps1"
             },
 
             "args": [

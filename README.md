@@ -25,7 +25,8 @@ Useful documentation is located [here](docs/documentation.md).
 * [_Android Studio Giraffe | 2022.3.1_](https://developer.android.com/studio)
 * _Android Studio Gradle Plugin 8.1.0_
 * _Android NDK 25.2.9519653 (side by side)_
-* _Android SDK 11.0 (API level 30)_
+* _Minumum Android SDK 11.0 (API level 30)_
+* _Compile Android SDK 14.0 (API level 34)_
 * _Android SDK Build-Tools 34.0.0_
 * _Android SDK Platform-Tools 34.0.4_
 * _Kotlin 1.8.20_

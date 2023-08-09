@@ -1,2 +1,4 @@
+*.inc text eol=lf diff
+*.cs text eol=lf diff
 *.ps text eol=lf diff
 *.vs text eol=lf diff

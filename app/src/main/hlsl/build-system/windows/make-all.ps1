@@ -28,3 +28,8 @@ Clear-Host
 .\make-ps.ps1 reflection_local
 .\make-ps.ps1 stipple
 .\make-ps.ps1 ui
+
+# compute shaders
+.\make-cs.ps1 spd_12_mips
+.\make-cs.ps1 spd_11_mips
+.\make-cs.ps1 spd_10_mips

@@ -2,6 +2,7 @@
 #define PBR_RENDER_SESSION_HPP
 
 
+#include "average_brightness_pass.hpp"
 #include "default_texture_manager.hpp"
 #include "geometry_pass.hpp"
 #include "light_pass.hpp"
@@ -36,6 +37,8 @@ class RenderSession final
         };
 
     private:
+        AverageBrightnessPass                   _averageBrightnessPass {};
+
         std::vector<CommandInfo>                _commandInfo {};
 
         GXMat4                                  _cvvToView {};

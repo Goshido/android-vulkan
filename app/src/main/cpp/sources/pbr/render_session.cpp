@@ -151,7 +151,8 @@ bool RenderSession::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
     if ( !AllocateCommandInfo ( commandInfo, device, renderer.GetQueueFamilyIndex () ) )
         return false;
 
-    return _defaultTextureManager.Init ( renderer, commandInfo._pool ) &&
+    return _averageBrightnessPass.Init ( renderer ) &&
+        _defaultTextureManager.Init ( renderer, commandInfo._pool ) &&
         _samplerManager.Init ( device ) &&
         _uiPass.OnInitDevice ( renderer, _samplerManager, _defaultTextureManager.GetTransparent ()->GetImageView () );
 }
@@ -163,6 +164,7 @@ void RenderSession::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexc
 
     VkDevice device = renderer.GetDevice ();
 
+    _averageBrightnessPass.Destroy ( renderer );
     _samplerManager.Destroy ( device );
     _defaultTextureManager.Destroy ( renderer );
     DestroyGBufferResources ( renderer );
@@ -199,21 +201,22 @@ bool RenderSession::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
     VkExtent2D const &resolution
 ) noexcept
 {
+    VkExtent2D const newResolution = AverageBrightnessPass::AdjustResolution ( resolution );
     VkExtent2D const &currentResolution = _gBuffer.GetResolution ();
 
-    if ( ( currentResolution.width != resolution.width ) | ( currentResolution.height != resolution.height ) )
+    if ( ( currentResolution.width != newResolution.width ) | ( currentResolution.height != newResolution.height ) )
     {
         DestroyGBufferResources ( renderer );
 
-        if ( !CreateGBufferResources ( renderer, resolution ) )
+        if ( !CreateGBufferResources ( renderer, newResolution ) )
         {
             OnSwapchainDestroyed ( renderer.GetDevice () );
             return false;
         }
 
         android_vulkan::LogInfo ( "pbr::RenderSession::OnSwapchainCreated - G-buffer resolution is %u x %u.",
-            resolution.width,
-            resolution.height
+            newResolution.width,
+            newResolution.height
         );
     }
 
@@ -634,6 +637,7 @@ bool RenderSession::CreateGBufferResources ( android_vulkan::Renderer &renderer,
         ) &&
 
         _lightPass.Init ( renderer, _renderPass, _gBuffer ) &&
+        _averageBrightnessPass.SetTarget ( renderer, _gBuffer.GetHDRAccumulator () ) &&
 
         android_vulkan::Renderer::CheckVkResult ( vkDeviceWaitIdle ( device ),
             "pbr::RenderSession::CreateGBufferResources",

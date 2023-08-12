@@ -102,11 +102,13 @@ void PBRGame::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
 
 bool PBRGame::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept
 {
-    VkExtent2D resolution = renderer.GetViewportResolution ();
-    resolution.width = ( resolution.width * RESOLUTION_SCALE_WIDTH / 100U );
-    resolution.height = ( resolution.height * RESOLUTION_SCALE_HEIGHT / 100U );
-
     VkExtent2D const &surfaceResolution = renderer.GetViewportResolution ();
+
+    VkExtent2D const resolution
+    {
+        .width = surfaceResolution.width * RESOLUTION_SCALE_WIDTH / 100U,
+        .height = surfaceResolution.height * RESOLUTION_SCALE_HEIGHT / 100U
+    };
 
     _camera.SetProjection ( GXDegToRad ( FIELD_OF_VIEW ),
         static_cast<float> ( surfaceResolution.width ) / static_cast<float> ( surfaceResolution.height ),

@@ -307,6 +307,15 @@ bool Texture2D::UploadData ( Renderer &renderer,
     return UploadDataInternal ( renderer, data, size, isGenerateMipmaps, imageInfo, commandBuffer, fence );
 }
 
+uint8_t Texture2D::CountMipLevels ( VkExtent2D const &resolution ) noexcept
+{
+    // Note Android NDK 25.2.9519653 does not have std::bit_width implementation yet. So it is used the alternative.
+    // See https://en.cppreference.com/w/cpp/numeric/bit_width
+    return static_cast<uint8_t> (
+        std::numeric_limits<uint32_t>::digits - std::countl_zero ( std::max ( resolution.width, resolution.height ) )
+    );
+}
+
 bool Texture2D::CreateCommonResources ( VkImageCreateInfo &imageInfo,
     VkExtent2D const &resolution,
     VkFormat format,
@@ -1149,15 +1158,6 @@ bool Texture2D::LoadImage ( std::vector<uint8_t> &pixelData,
     channels = static_cast<int> ( RGBA_BYTES_PER_PIXEL );
 
     return true;
-}
-
-uint8_t Texture2D::CountMipLevels ( VkExtent2D const &resolution ) noexcept
-{
-    // Note Android NDK 25.2.9519653 does not have std::bit_width implementation yet. So it is used the alternative.
-    // See https://en.cppreference.com/w/cpp/numeric/bit_width
-    return static_cast<uint8_t> (
-        std::numeric_limits<uint32_t>::digits - std::countl_zero ( std::max ( resolution.width, resolution.height ) )
-    );
 }
 
 VkFormat Texture2D::PickupFormat ( int channels ) noexcept

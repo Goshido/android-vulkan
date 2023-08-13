@@ -126,7 +126,9 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
 
 void RenderSession::FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept
 {
-    _defaultTextureManager.FreeTransferResources ( renderer, _commandInfo[ 0U ]._pool );
+    VkCommandPool pool = _commandInfo[ 0U ]._pool;
+    _defaultTextureManager.FreeTransferResources ( renderer, pool );
+    _averageBrightnessPass.FreeTransferResources ( renderer, pool );
 }
 
 UIPass &RenderSession::GetUIPass () noexcept
@@ -151,7 +153,7 @@ bool RenderSession::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
     if ( !AllocateCommandInfo ( commandInfo, device, renderer.GetQueueFamilyIndex () ) )
         return false;
 
-    return _averageBrightnessPass.Init ( renderer ) &&
+    return _averageBrightnessPass.Init ( renderer, commandInfo._pool ) &&
         _defaultTextureManager.Init ( renderer, commandInfo._pool ) &&
         _samplerManager.Init ( device ) &&
         _uiPass.OnInitDevice ( renderer, _samplerManager, _defaultTextureManager.GetTransparent ()->GetImageView () );

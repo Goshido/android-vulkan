@@ -127,6 +127,8 @@ class Texture2D final
             VkFence fence
         ) noexcept;
 
+        [[nodiscard]] static uint8_t CountMipLevels ( VkExtent2D const &resolution ) noexcept;
+
     private:
         [[nodiscard]] bool CreateCommonResources ( VkImageCreateInfo &imageInfo,
             VkExtent2D const &resolution,
@@ -169,7 +171,6 @@ class Texture2D final
             int &channels
         ) noexcept;
 
-        [[nodiscard]] static uint8_t CountMipLevels ( VkExtent2D const &resolution ) noexcept;
         [[nodiscard]] static VkFormat PickupFormat ( int channels ) noexcept;
         [[nodiscard]] static VkFormat ResolveFormat ( VkFormat baseFormat, eFormat format ) noexcept;
 };

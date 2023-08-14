@@ -14,11 +14,8 @@ struct Atomic
     uint32_t                                    _counter;
 };
 
-cbuffer WorkgroupInfo:                                                  register ( b0 )
-{
-    uint32_t                                    _lastWorkgroupIdx;
-    uint32_t3                                   _padding0_0;
-};
+[[vk::constant_id ( CONST_WORKGROUP_COUNT )]]
+const uint32_t                                  g_WorkgroupCount = 256U;
 
 [[vk::binding ( BIND_HDR_IMAGE, SET_RESOURCE )]]
 Texture2D<float32_t4>                           g_HDRImage:             register ( t0 );
@@ -133,7 +130,7 @@ bool ExitWorkgroup ( in uint32_t threadID )
         InterlockedAdd ( g_GlobalAtomic[ 0U ]._counter, 1U, s_Counter );
 
     GroupMemoryBarrierWithGroupSync ();
-    return s_Counter != _lastWorkgroupIdx;
+    return s_Counter != g_WorkgroupCount;
 }
 
 void DownsampleMips01 ( in uint32_t x, in uint32_t y, in uint32_t2 workGroupID, in uint32_t threadID )

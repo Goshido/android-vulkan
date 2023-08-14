@@ -9,6 +9,7 @@ GX_DISABLE_COMMON_WARNINGS
 #include <cinttypes>
 #include <string>
 #include <string_view>
+#include <thread>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -1327,6 +1328,9 @@ bool Renderer::CheckRequiredFormats () noexcept
             g_vkFormatFeatureFlagBitsMapperItems,
             g_vkFormatFeatureFlagBitsMapper
         );
+
+        constexpr auto logcatAntispamDelay = std::chrono::milliseconds ( 1U );
+        std::this_thread::sleep_for ( logcatAntispamDelay );
     };
 
     probe ( VK_FORMAT_A2R10G10B10_UNORM_PACK32, "VK_FORMAT_A2R10G10B10_UNORM_PACK32" );
@@ -1343,6 +1347,7 @@ bool Renderer::CheckRequiredFormats () noexcept
     probe ( VK_FORMAT_R8_UNORM, "VK_FORMAT_R8_UNORM" );
     probe ( VK_FORMAT_S8_UINT, "VK_FORMAT_S8_UINT" );
     probe ( VK_FORMAT_X8_D24_UNORM_PACK32, "VK_FORMAT_X8_D24_UNORM_PACK32" );
+    probe ( VK_FORMAT_R16_SFLOAT, "VK_FORMAT_R16_SFLOAT" );
 
     if ( unsupportedFormats.empty () )
         return true;

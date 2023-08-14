@@ -17,7 +17,10 @@ void AverageBrightnessPass::FreeTransferResources ( android_vulkan::Renderer &re
 bool AverageBrightnessPass::Init ( android_vulkan::Renderer &renderer, VkCommandPool commandPool ) noexcept
 {
     VkDevice device = renderer.GetDevice ();
-    return CreateGlobalCounter ( renderer, device, commandPool ) && CreateMips ( renderer, device );
+
+    return CreateGlobalCounter ( renderer, device, commandPool ) &&
+        _layout.Init ( device ) &&
+        CreateDescriptorSet ( device );
 }
 
 void AverageBrightnessPass::Destroy ( android_vulkan::Renderer &renderer ) noexcept
@@ -39,6 +42,14 @@ void AverageBrightnessPass::Destroy ( android_vulkan::Renderer &renderer ) noexc
         AV_UNREGISTER_DEVICE_MEMORY ( "pbr::AverageBrightnessPass::_globalCounterMemory" )
     }
 
+    if ( _descriptorPool != VK_NULL_HANDLE )
+    {
+        vkDestroyDescriptorPool ( device, _descriptorPool, nullptr );
+        _descriptorPool = VK_NULL_HANDLE;
+        AV_UNREGISTER_DESCRIPTOR_POOL ( "pbr::AverageBrightnessPass::_descriptorPool" )
+    }
+
+    _layout.Destroy ( device );
     FreeTransferBuffer ( renderer, device );
 }
 
@@ -64,6 +75,69 @@ VkExtent2D AverageBrightnessPass::AdjustResolution ( VkExtent2D const &desiredRe
         .width = adjust ( desiredResolution.width ),
         .height = adjust ( desiredResolution.height )
     };
+}
+
+bool AverageBrightnessPass::CreateDescriptorSet ( VkDevice device ) noexcept
+{
+    constexpr static VkDescriptorPoolSize const poolSizes[] =
+    {
+        {
+            .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+            .descriptorCount = 1U
+        },
+        {
+            .type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
+            .descriptorCount = 2U
+        },
+        {
+            .type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+            .descriptorCount = 1U
+        }
+    };
+
+    constexpr VkDescriptorPoolCreateInfo poolInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .maxSets = 1U,
+        .poolSizeCount = static_cast<uint32_t> ( std::size ( poolSizes ) ),
+        .pPoolSizes = poolSizes
+    };
+
+    bool result = android_vulkan::Renderer::CheckVkResult (
+        vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_descriptorPool ),
+        "pbr::AverageBrightnessPass::CreateDescriptorSet",
+        "Can't create descriptor pool"
+    );
+
+    if ( !result )
+        return false;
+
+    AV_REGISTER_DESCRIPTOR_POOL ( "pbr::AverageBrightnessPass::_descriptorPool" )
+    VkDescriptorSetLayout layout = _layout.GetLayout ();
+
+    VkDescriptorSetAllocateInfo const allocateInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+        .pNext = nullptr,
+        .descriptorPool = _descriptorPool,
+        .descriptorSetCount = 1U,
+        .pSetLayouts = &layout
+    };
+
+    result = android_vulkan::Renderer::CheckVkResult (
+        vkAllocateDescriptorSets ( device, &allocateInfo, &_descriptorSet ),
+        "pbr::AverageBrightnessPass::CreateDescriptorSet",
+        "Can't create descriptor set"
+    );
+
+    if ( !result )
+        return false;
+
+    // TODO
+
+    return true;
 }
 
 bool AverageBrightnessPass::CreateGlobalCounter ( android_vulkan::Renderer &renderer,

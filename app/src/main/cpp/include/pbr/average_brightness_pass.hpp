@@ -2,6 +2,7 @@
 #define PBR_AVERAGE_BRIGHTNESS_PASS_HPP
 
 
+#include "average_brightness_descriptor_set_layout.hpp"
 #include <texture2D.hpp>
 
 
@@ -20,14 +21,16 @@ class AverageBrightnessPass final
         VkCommandBuffer                         _commandBuffer = VK_NULL_HANDLE;
 
         [[maybe_unused]] VkExtent3D             _dispatch {};
-        [[maybe_unused]] VkDescriptorPool       _descriptorPool = VK_NULL_HANDLE;
-        [[maybe_unused]] VkDescriptorSet        _descriptorSet = VK_NULL_HANDLE;
+        VkDescriptorPool                        _descriptorPool = VK_NULL_HANDLE;
+        VkDescriptorSet                         _descriptorSet = VK_NULL_HANDLE;
 
         [[maybe_unused]] VkImage                _mips = VK_NULL_HANDLE;
         [[maybe_unused]] Memory                 _mipsMemory {};
 
         VkBuffer                                _globalCounter = VK_NULL_HANDLE;
         Memory                                  _globalCounterMemory {};
+
+        AverageBrightnessDescriptorSetLayout    _layout {};
 
         VkBuffer                                _transferBuffer = VK_NULL_HANDLE;
         Memory                                  _transferBufferMemory {};
@@ -57,6 +60,8 @@ class AverageBrightnessPass final
         [[nodiscard]] static VkExtent2D AdjustResolution ( VkExtent2D const &desiredResolution ) noexcept;
 
     private:
+        [[nodiscard]] bool CreateDescriptorSet ( VkDevice device ) noexcept;
+
         [[nodiscard]] bool CreateGlobalCounter ( android_vulkan::Renderer &renderer,
             VkDevice device,
             VkCommandPool commandPool

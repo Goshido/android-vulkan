@@ -1,4 +1,5 @@
 #include <pbr/average_brightness_pass.hpp>
+#include <pbr/spd.inc>
 #include <vulkan_utils.hpp>
 
 
@@ -53,11 +54,28 @@ void AverageBrightnessPass::Destroy ( android_vulkan::Renderer &renderer ) noexc
     FreeTransferBuffer ( renderer, device );
 }
 
-bool AverageBrightnessPass::SetTarget ( android_vulkan::Renderer &/*renderer*/,
-    android_vulkan::Texture2D const &/*hdrImage*/
+bool AverageBrightnessPass::SetTarget ( android_vulkan::Renderer &renderer,
+    android_vulkan::Texture2D const &hdrImage
 ) noexcept
 {
-    // TODO
+    // TODO do nothing if mip chain is the same.
+
+    VkExtent2D resolution = hdrImage.GetResolution ();
+    constexpr uint32_t multipleOf64 = 6U;
+
+    _dispatch =
+    {
+        .width = resolution.width >> multipleOf64,
+        .height = resolution.height >> multipleOf64,
+        .depth = 1U
+    };
+
+    VkDevice device = renderer.GetDevice ();
+
+    if ( !CreateMips ( renderer, device, resolution ) )
+        return false;
+
+    BindTargetToDescriptorSet ( hdrImage );
     return true;
 }
 
@@ -135,8 +153,28 @@ bool AverageBrightnessPass::CreateDescriptorSet ( VkDevice device ) noexcept
     if ( !result )
         return false;
 
-    // TODO
+    VkDescriptorBufferInfo const bufferInfo
+    {
+        .buffer = _globalCounter,
+        .offset = 0U,
+        .range = static_cast<VkDeviceSize> ( sizeof ( uint32_t ) )
+    };
 
+    VkWriteDescriptorSet const write
+    {
+        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        .pNext = nullptr,
+        .dstSet = _descriptorSet,
+        .dstBinding = BIND_GLOBAL_ATOMIC,
+        .dstArrayElement = 0U,
+        .descriptorCount = 1U,
+        .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+        .pImageInfo = nullptr,
+        .pBufferInfo = &bufferInfo,
+        .pTexelBufferView = nullptr
+    };
+
+    vkUpdateDescriptorSets ( device, 1U, &write, 0U, nullptr );
     return true;
 }
 
@@ -349,7 +387,15 @@ bool AverageBrightnessPass::CreateGlobalCounter ( android_vulkan::Renderer &rend
     );
 }
 
-bool AverageBrightnessPass::CreateMips ( android_vulkan::Renderer &/*renderer*/, VkDevice /*device*/ ) noexcept
+void AverageBrightnessPass::BindTargetToDescriptorSet ( android_vulkan::Texture2D const &/*hdrImage*/ ) noexcept
+{
+    // TODO
+}
+
+bool AverageBrightnessPass::CreateMips ( android_vulkan::Renderer &/*renderer*/,
+    VkDevice /*device*/,
+    VkExtent2D /*resolution*/
+) noexcept
 {
     // TODO
     return true;

@@ -37,7 +37,11 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-constexpr static char const SCRIPT[] = "pbr/engine/scene.lua";
+namespace {
+
+constexpr char const SCRIPT[] = "pbr/engine/scene.lua";
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 

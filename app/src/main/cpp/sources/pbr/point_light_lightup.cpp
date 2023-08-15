@@ -6,7 +6,11 @@
 
 namespace pbr {
 
-constexpr static size_t BIND_PER_SET = 3U;
+namespace {
+
+constexpr size_t BIND_PER_SET = 3U;
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 

@@ -5,11 +5,15 @@
 
 namespace pbr {
 
-constexpr static char const BRDF_LUT[] = "pbr/system/brdf-lut.png";
+namespace {
+
+constexpr char const BRDF_LUT[] = "pbr/system/brdf-lut.png";
 
 // 256 128 64 32 16 8 4 2 1
 // counting from 0.0F
-constexpr static float MAX_PREFILTER_LOD = 8.0F;
+constexpr float MAX_PREFILTER_LOD = 8.0F;
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 

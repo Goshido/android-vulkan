@@ -1,4 +1,4 @@
-// version 1.78
+// version 1.79
 
 #include <GXCommon/GXMath.hpp>
 
@@ -12,19 +12,23 @@ GX_DISABLE_COMMON_WARNINGS
 GX_RESTORE_WARNING_STATE
 
 
-constexpr static GXFloat HSVA_FACTOR = 0.016666F;
-constexpr static GXFloat HSVA_TO_RGBA_FLOAT = 0.01F;
-constexpr static GXFloat RGBA_TO_UBYTE_FACTOR = 255.0F;
+namespace {
 
-constexpr static GXFloat DEGREES_TO_RADIANS_FACTOR = 0.0174533F;
-constexpr static GXFloat RADIANS_TO_DEGREES_FACTOR = 57.295779F;
+constexpr GXFloat HSVA_FACTOR = 0.016666F;
+constexpr GXFloat HSVA_TO_RGBA_FLOAT = 0.01F;
+constexpr GXFloat RGBA_TO_UBYTE_FACTOR = 255.0F;
 
-constexpr static GXFloat INVERSE_RAND_MAX = 3.05185e-5F;
+constexpr GXFloat DEGREES_TO_RADIANS_FACTOR = 0.0174533F;
+constexpr GXFloat RADIANS_TO_DEGREES_FACTOR = 57.295779F;
 
-constexpr static GXUByte SOLUTION_ALPHA = 0U;
-constexpr static GXUByte SOLUTION_BETTA = 1U;
-constexpr static GXUByte SOLUTION_GAMMA = 2U;
-constexpr static GXUByte SOLUTION_YOTTA = 3U;
+constexpr GXFloat INVERSE_RAND_MAX = 3.05185e-5F;
+
+constexpr GXUByte SOLUTION_ALPHA = 0U;
+constexpr GXUByte SOLUTION_BETTA = 1U;
+constexpr GXUByte SOLUTION_GAMMA = 2U;
+constexpr GXUByte SOLUTION_YOTTA = 3U;
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 

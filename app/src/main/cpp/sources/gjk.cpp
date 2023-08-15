@@ -4,8 +4,12 @@
 
 namespace android_vulkan {
 
-constexpr static uint16_t const MAXIMUM_STEPS = 16U;
-constexpr static GXVec3 const INITIAL_DIRECTION ( 0.0F, 0.0F, 1.0F );
+namespace {
+
+constexpr uint16_t MAXIMUM_STEPS = 16U;
+constexpr GXVec3 INITIAL_DIRECTION ( 0.0F, 0.0F, 1.0F );
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 

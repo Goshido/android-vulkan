@@ -5,7 +5,11 @@
 
 namespace pbr {
 
-constexpr static uint32_t SHADOWMAP_RESOLUTION = 512U;
+namespace {
+
+constexpr uint32_t SHADOWMAP_RESOLUTION = 512U;
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 

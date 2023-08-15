@@ -22,7 +22,11 @@ X ( vkGetInstanceProcAddr )
 
 namespace android_vulkan {
 
-constexpr static char const VULKAN_LIBRARY[] = "libvulkan.so";
+namespace {
+
+constexpr char const VULKAN_LIBRARY[] = "libvulkan.so";
+
+} // end of anonymous namespace
 
 bool VulkanLoader::AcquireBootstrapFunctions () noexcept
 {

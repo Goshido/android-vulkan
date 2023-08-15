@@ -8,12 +8,16 @@
 
 namespace pbr::mario {
 
-constexpr static char const SCENE[] = "pbr/assets/world-1-1.scene";
+namespace {
 
-constexpr static GXVec3 FREE_FALL_ACCELERATION ( 0.0F, -9.81F, 0.0F );
+constexpr char const SCENE[] = "pbr/assets/world-1-1.scene";
 
-constexpr static uint32_t RESOLUTION_SCALE_WIDTH = 80U;
-constexpr static uint32_t RESOLUTION_SCALE_HEIGHT = 70U;
+constexpr GXVec3 FREE_FALL_ACCELERATION ( 0.0F, -9.81F, 0.0F );
+
+constexpr uint32_t RESOLUTION_SCALE_WIDTH = 80U;
+constexpr uint32_t RESOLUTION_SCALE_HEIGHT = 70U;
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 

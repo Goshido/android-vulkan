@@ -67,7 +67,13 @@ class AverageBrightnessPass final
             VkCommandPool commandPool
         ) noexcept;
 
-        [[nodiscard]] bool CreateMips ( android_vulkan::Renderer &renderer, VkDevice device ) noexcept;
+        void BindTargetToDescriptorSet ( android_vulkan::Texture2D const &hdrImage ) noexcept;
+
+        [[nodiscard]] bool CreateMips ( android_vulkan::Renderer &renderer,
+            VkDevice device,
+            VkExtent2D resolution
+        ) noexcept;
+
         void FreeTransferBuffer ( android_vulkan::Renderer &renderer, VkDevice device ) noexcept;
 };
 

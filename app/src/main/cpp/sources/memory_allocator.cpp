@@ -15,17 +15,21 @@ GX_RESTORE_WARNING_STATE
 
 namespace android_vulkan {
 
-constexpr static VkDeviceSize BYTES_PER_KILOBYTE = 1024U;
-constexpr static VkDeviceSize BYTES_PER_MEGABYTE = 1024U * BYTES_PER_KILOBYTE;
-constexpr static VkDeviceSize BYTES_PER_GIGABYTE = 1024U * BYTES_PER_MEGABYTE;
+namespace {
 
-constexpr static VkDeviceSize MEGABYTES_PER_CHUNK = 128U;
-constexpr static VkDeviceSize BYTES_PER_CHUNK = MEGABYTES_PER_CHUNK * BYTES_PER_MEGABYTE;
+constexpr VkDeviceSize BYTES_PER_KILOBYTE = 1024U;
+constexpr VkDeviceSize BYTES_PER_MEGABYTE = 1024U * BYTES_PER_KILOBYTE;
+constexpr VkDeviceSize BYTES_PER_GIGABYTE = 1024U * BYTES_PER_MEGABYTE;
 
-constexpr static size_t SNAPSHOT_INITIAL_SIZE_MEGABYTES = 16U;
+constexpr VkDeviceSize MEGABYTES_PER_CHUNK = 128U;
+constexpr VkDeviceSize BYTES_PER_CHUNK = MEGABYTES_PER_CHUNK * BYTES_PER_MEGABYTE;
+
+constexpr size_t SNAPSHOT_INITIAL_SIZE_MEGABYTES = 16U;
 
 constexpr uint32_t STAGING_MEMORY_MASK = AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_COHERENT_BIT ) |
     AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT );
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 

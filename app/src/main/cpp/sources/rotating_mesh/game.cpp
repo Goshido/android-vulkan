@@ -14,26 +14,30 @@ GX_RESTORE_WARNING_STATE
 
 namespace rotating_mesh {
 
-constexpr static char const* VERTEX_SHADER = "shaders/static_mesh.vs.spv";
-constexpr static char const* VERTEX_SHADER_ENTRY_POINT = "VS";
+namespace {
 
-constexpr static char const* FRAGMENT_SHADER_ENTRY_POINT = "PS";
+constexpr char const* VERTEX_SHADER = "shaders/static_mesh.vs.spv";
+constexpr char const* VERTEX_SHADER_ENTRY_POINT = "VS";
 
-constexpr static std::string_view MATERIAL_1_DIFFUSE = "textures/rotating_mesh/sonic-material-1-diffuse.ktx";
-constexpr static char const* MATERIAL_1_MESH = "meshes/rotating_mesh/sonic-material-1.mesh";
+constexpr char const* FRAGMENT_SHADER_ENTRY_POINT = "PS";
 
-constexpr static std::string_view MATERIAL_2_DIFFUSE = "textures/rotating_mesh/sonic-material-2-diffuse.ktx";
-constexpr static char const* MATERIAL_2_MESH = "meshes/rotating_mesh/sonic-material-2.mesh";
-constexpr static std::string_view MATERIAL_2_NORMAL = "textures/rotating_mesh/sonic-material-2-normal.png";
+constexpr std::string_view MATERIAL_1_DIFFUSE = "textures/rotating_mesh/sonic-material-1-diffuse.ktx";
+constexpr char const* MATERIAL_1_MESH = "meshes/rotating_mesh/sonic-material-1.mesh";
 
-constexpr static std::string_view MATERIAL_3_DIFFUSE = "textures/rotating_mesh/sonic-material-3-diffuse.ktx";
-constexpr static char const* MATERIAL_3_MESH = "meshes/rotating_mesh/sonic-material-3.mesh";
-constexpr static std::string_view MATERIAL_3_NORMAL = "textures/rotating_mesh/sonic-material-3-normal.png";
+constexpr std::string_view MATERIAL_2_DIFFUSE = "textures/rotating_mesh/sonic-material-2-diffuse.ktx";
+constexpr char const* MATERIAL_2_MESH = "meshes/rotating_mesh/sonic-material-2.mesh";
+constexpr std::string_view MATERIAL_2_NORMAL = "textures/rotating_mesh/sonic-material-2-normal.png";
 
-constexpr static float ROTATION_SPEED = GX_MATH_HALF_PI;
-constexpr static float FIELD_OF_VIEW = 60.0F;
-constexpr static float Z_NEAR = 0.1F;
-constexpr static float Z_FAR = 1.0e+3F;
+constexpr std::string_view MATERIAL_3_DIFFUSE = "textures/rotating_mesh/sonic-material-3-diffuse.ktx";
+constexpr char const* MATERIAL_3_MESH = "meshes/rotating_mesh/sonic-material-3.mesh";
+constexpr std::string_view MATERIAL_3_NORMAL = "textures/rotating_mesh/sonic-material-3-normal.png";
+
+constexpr float ROTATION_SPEED = GX_MATH_HALF_PI;
+constexpr float FIELD_OF_VIEW = 60.0F;
+constexpr float Z_NEAR = 0.1F;
+constexpr float Z_FAR = 1.0e+3F;
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 

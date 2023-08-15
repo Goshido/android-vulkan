@@ -5,10 +5,14 @@
 
 namespace mandelbrot {
 
-constexpr static char const* VERTEX_SHADER = "shaders/mandelbrot.vs.spv";
+namespace {
 
-constexpr static char const* VERTEX_SHADER_ENTRY_POINT = "VS";
-constexpr static char const* FRAGMENT_SHADER_ENTRY_POINT = "PS";
+constexpr char const* VERTEX_SHADER = "shaders/mandelbrot.vs.spv";
+
+constexpr char const* VERTEX_SHADER_ENTRY_POINT = "VS";
+constexpr char const* FRAGMENT_SHADER_ENTRY_POINT = "PS";
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 

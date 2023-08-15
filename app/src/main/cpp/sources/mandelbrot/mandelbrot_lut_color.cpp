@@ -13,11 +13,15 @@ GX_RESTORE_WARNING_STATE
 
 namespace mandelbrot {
 
-constexpr static char const* FRAGMENT_SHADER = "shaders/mandelbrot_lut_color.ps.spv";
-constexpr static uint32_t LUT_SAMPLE_COUNT = 512U;
-constexpr static VkDeviceSize LUT_SAMPLE_SIZE = 4U;
-constexpr static VkDeviceSize LUT_SIZE = LUT_SAMPLE_COUNT * LUT_SAMPLE_SIZE;
-constexpr static size_t INIT_THREADS = 4U;
+namespace {
+
+constexpr char const* FRAGMENT_SHADER = "shaders/mandelbrot_lut_color.ps.spv";
+constexpr uint32_t LUT_SAMPLE_COUNT = 512U;
+constexpr VkDeviceSize LUT_SAMPLE_SIZE = 4U;
+constexpr VkDeviceSize LUT_SIZE = LUT_SAMPLE_COUNT * LUT_SAMPLE_SIZE;
+constexpr size_t INIT_THREADS = 4U;
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 

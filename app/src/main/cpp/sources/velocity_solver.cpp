@@ -11,13 +11,17 @@ GX_RESTORE_WARNING_STATE
 
 namespace android_vulkan {
 
-constexpr static uint16_t ITERATIONS = 7U;
-constexpr static float STABILIZATION_FACTOR = 0.21F;
-constexpr static float PENETRATION_SLOPE = 5.0e-4F;
-constexpr static float RESTITUTION_SLOPE = 5.0e-1F;
+namespace {
+
+constexpr uint16_t ITERATIONS = 7U;
+constexpr float STABILIZATION_FACTOR = 0.21F;
+constexpr float PENETRATION_SLOPE = 5.0e-4F;
+constexpr float RESTITUTION_SLOPE = 5.0e-1F;
 
 static_assert ( STABILIZATION_FACTOR >= 0.0F && STABILIZATION_FACTOR <= 1.0F,
     "The stabilization factor must be in range [0.0F, 1.0F]" );
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 

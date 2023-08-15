@@ -5,8 +5,12 @@
 
 namespace pbr::collision {
 
-constexpr static float const VELOCITY_ANGULAR = 1.0F;
-constexpr static float const VELOCITY_LINEAR = 0.2F;
+namespace {
+
+constexpr float VELOCITY_ANGULAR = 1.0F;
+constexpr float VELOCITY_LINEAR = 0.2F;
+
+} // end of anonymous namespace
 
 void Manipulator::Capture ( android_vulkan::RigidBodyRef &body ) noexcept
 {

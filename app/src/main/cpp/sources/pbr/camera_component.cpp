@@ -17,11 +17,15 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-[[maybe_unused]] constexpr static uint32_t CAMERA_COMPONENT_DESC_FORMAT_VERSION = 1U;
+namespace {
 
-constexpr static float DEFAULT_FIELD_OF_VIEW = 60.0F;
-constexpr static float DEFAULT_Z_NEAR = 1.0e-1F;
-constexpr static float DEFAULT_Z_FAR = 1.0e+4F;
+[[maybe_unused]] constexpr uint32_t CAMERA_COMPONENT_DESC_FORMAT_VERSION = 1U;
+
+constexpr float DEFAULT_FIELD_OF_VIEW = 60.0F;
+constexpr float DEFAULT_Z_NEAR = 1.0e-1F;
+constexpr float DEFAULT_Z_FAR = 1.0e+4F;
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 

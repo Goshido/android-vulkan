@@ -31,20 +31,24 @@ GX_RESTORE_WARNING_STATE
 
 namespace android_vulkan {
 
-constexpr static const size_t EXPANDER_THREADS = 4U;
-constexpr static const size_t RGB_BYTES_PER_PIXEL = 3U;
-constexpr static const size_t RGBA_BYTES_PER_PIXEL = 4U;
+namespace {
 
-constexpr static VkImageUsageFlags const IMMUTABLE_TEXTURE_USAGE = AV_VK_FLAG ( VK_IMAGE_USAGE_SAMPLED_BIT ) |
+constexpr const size_t EXPANDER_THREADS = 4U;
+constexpr const size_t RGB_BYTES_PER_PIXEL = 3U;
+constexpr const size_t RGBA_BYTES_PER_PIXEL = 4U;
+
+constexpr VkImageUsageFlags IMMUTABLE_TEXTURE_USAGE = AV_VK_FLAG ( VK_IMAGE_USAGE_SAMPLED_BIT ) |
     AV_VK_FLAG ( VK_IMAGE_USAGE_TRANSFER_DST_BIT ) |
     AV_VK_FLAG ( VK_IMAGE_USAGE_TRANSFER_SRC_BIT );
 
-static std::unordered_map<VkFormat, VkFormat> const g_FormatMapper =
+std::unordered_map<VkFormat, VkFormat> const g_FormatMapper =
 {
     { VK_FORMAT_ASTC_6x6_UNORM_BLOCK, VK_FORMAT_ASTC_6x6_UNORM_BLOCK },
     { VK_FORMAT_ASTC_6x6_SRGB_BLOCK, VK_FORMAT_ASTC_6x6_SRGB_BLOCK },
     { VK_FORMAT_R8G8B8A8_UNORM, VK_FORMAT_R8G8B8A8_SRGB }
 };
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 

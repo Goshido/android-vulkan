@@ -8,12 +8,18 @@
 
 namespace pbr::collision {
 
-constexpr static float FIELD_OF_VIEW = 75.0F;
-constexpr static float Z_NEAR = 0.1F;
-constexpr static float Z_FAR = 1.0e+4F;
+namespace {
 
-constexpr static uint32_t RESOLUTION_SCALE_WIDTH = 100U;
-constexpr static uint32_t RESOLUTION_SCALE_HEIGHT = 100U;
+constexpr float FIELD_OF_VIEW = 75.0F;
+constexpr float Z_NEAR = 0.1F;
+constexpr float Z_FAR = 1.0e+4F;
+
+constexpr uint32_t RESOLUTION_SCALE_WIDTH = 100U;
+constexpr uint32_t RESOLUTION_SCALE_HEIGHT = 100U;
+
+} // end of anonymous namespace
+
+//----------------------------------------------------------------------------------------------------------------------
 
 bool Collision::IsReady () noexcept
 {

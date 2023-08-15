@@ -18,7 +18,9 @@ GX_RESTORE_WARNING_STATE
 
 namespace android_vulkan {
 
-constexpr static size_t UV_THREADS = 4U;
+namespace {
+
+constexpr size_t UV_THREADS = 4U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -43,7 +45,7 @@ struct BufferSyncItem final
     }
 };
 
-static std::map<VkBufferUsageFlags, BufferSyncItem> const g_accessMapper =
+std::map<VkBufferUsageFlags, BufferSyncItem> const g_accessMapper =
 {
     {
         VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
@@ -64,6 +66,8 @@ static std::map<VkBufferUsageFlags, BufferSyncItem> const g_accessMapper =
         )
     }
 };
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 

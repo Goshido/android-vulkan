@@ -23,8 +23,12 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-[[maybe_unused]] constexpr static uint32_t RIGID_BODY_COMPONENT_DESC_FORMAT_VERSION = 1U;
-[[maybe_unused]] constexpr static uint32_t BOX_SHAPE_DESC_FORMAT_VERSION = 1U;
+namespace {
+
+[[maybe_unused]] constexpr uint32_t RIGID_BODY_COMPONENT_DESC_FORMAT_VERSION = 1U;
+[[maybe_unused]] constexpr uint32_t BOX_SHAPE_DESC_FORMAT_VERSION = 1U;
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 

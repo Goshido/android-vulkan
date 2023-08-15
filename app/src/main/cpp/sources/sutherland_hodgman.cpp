@@ -4,8 +4,14 @@
 
 namespace android_vulkan {
 
-constexpr static size_t const DEFAULT_CAPACITY = 16U;
-constexpr static float const MINIMUM_PENETRATION = 1.0e-4F;
+namespace {
+
+constexpr size_t DEFAULT_CAPACITY = 16U;
+constexpr float MINIMUM_PENETRATION = 1.0e-4F;
+
+} // end of anonymous namespace
+
+//----------------------------------------------------------------------------------------------------------------------
 
 SutherlandHodgman::SutherlandHodgman () noexcept
 {

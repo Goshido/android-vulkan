@@ -17,8 +17,12 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
+namespace {
+
 // ~2 Mb of data at 64bit system
-constexpr static size_t INITIAL_CAPACITY = 40'329U;
+constexpr size_t INITIAL_CAPACITY = 40'329U;
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 

@@ -12,23 +12,27 @@
 
 namespace pbr {
 
-constexpr static char const* SCENES[] =
+namespace {
+
+constexpr char const* SCENES[] =
 {
     "pbr/assets/N7_ADM_Reception.scene",
     "pbr/assets/N7_ENG_Injection.scene"
 };
 
-constexpr static size_t ACTIVE_SCENE = 0U;
+constexpr size_t ACTIVE_SCENE = 0U;
 static_assert ( std::size ( SCENES ) > ACTIVE_SCENE );
 
-[[maybe_unused]] constexpr static uint32_t SCENE_DESC_FORMAT_VERSION = 3U;
+[[maybe_unused]] constexpr uint32_t SCENE_DESC_FORMAT_VERSION = 3U;
 
-constexpr static float FIELD_OF_VIEW = 75.0F;
-constexpr static float Z_NEAR = 0.1F;
-constexpr static float Z_FAR = 1.0e+4F;
+constexpr float FIELD_OF_VIEW = 75.0F;
+constexpr float Z_NEAR = 0.1F;
+constexpr float Z_FAR = 1.0e+4F;
 
-constexpr static uint32_t RESOLUTION_SCALE_WIDTH = 80U;
-constexpr static uint32_t RESOLUTION_SCALE_HEIGHT = 70U;
+constexpr uint32_t RESOLUTION_SCALE_WIDTH = 80U;
+constexpr uint32_t RESOLUTION_SCALE_HEIGHT = 70U;
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 

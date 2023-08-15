@@ -5,9 +5,13 @@
 
 namespace android_vulkan {
 
-constexpr uint16_t const MAXIMUM_STEPS = 32U;
-constexpr static float const SAME_POINT_TOLERANCE = 5.0e-4F;
-constexpr float const THRESHOLD = 1.0e-3F;
+namespace {
+
+constexpr uint16_t MAXIMUM_STEPS = 32U;
+constexpr float SAME_POINT_TOLERANCE = 5.0e-4F;
+constexpr float THRESHOLD = 1.0e-3F;
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 

@@ -19,6 +19,9 @@ constexpr static char const* COMPUTE_SHADER_ENTRY_POINT = "CS";
 
 class ComputeProgram
 {
+    public:
+        using SpecializationData = void const*;
+
     protected:
         VkShaderModule                              _computeShader = VK_NULL_HANDLE;
 
@@ -35,7 +38,10 @@ class ComputeProgram
         ComputeProgram ( ComputeProgram && ) = delete;
         ComputeProgram &operator = ( ComputeProgram && ) = delete;
 
-        [[nodiscard]] virtual bool Init ( android_vulkan::Renderer &renderer ) noexcept = 0;
+        [[nodiscard]] virtual bool Init ( android_vulkan::Renderer &renderer,
+            SpecializationData specializationData
+        ) noexcept = 0;
+
         virtual void Destroy ( VkDevice device ) noexcept = 0;
 
         // The method assigns VkPipeline as active pipeline.
@@ -45,9 +51,12 @@ class ComputeProgram
         explicit ComputeProgram ( std::string_view &&name ) noexcept;
         virtual ~ComputeProgram () = default;
 
+        virtual void DestroyShaderModule ( VkDevice device ) noexcept = 0;
         [[nodiscard]] virtual bool InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept = 0;
 
         [[nodiscard]] virtual bool InitShaderInfo ( android_vulkan::Renderer &renderer,
+            SpecializationData specializationData,
+            VkSpecializationInfo* specializationInfo,
             VkPipelineShaderStageCreateInfo &targetInfo
         ) noexcept = 0;
 };

@@ -2,7 +2,8 @@
 #define PBR_AVERAGE_BRIGHTNESS_PASS_HPP
 
 
-#include "average_brightness_descriptor_set_layout.hpp"
+#include "spd_12_mips_descriptor_set_layout.hpp"
+#include "spd_12_mips_program.hpp"
 #include <texture2D.hpp>
 
 
@@ -17,22 +18,30 @@ class AverageBrightnessPass final
             VkDeviceSize                        _offset = std::numeric_limits<VkDeviceSize>::max ();
         };
 
+        constexpr static size_t MAX_MIPS = 12U;
+
+        // Max detailed mip is not used and skipped.
+        // Mip 5 uses dedicated view because of internal sync operation.
+        constexpr static size_t MAX_VIEWS = MAX_MIPS - 2U;
+
     private:
         VkCommandBuffer                         _commandBuffer = VK_NULL_HANDLE;
 
-        [[maybe_unused]] VkExtent3D             _dispatch {};
+        VkExtent3D                              _dispatch {};
         VkDescriptorPool                        _descriptorPool = VK_NULL_HANDLE;
         VkDescriptorSet                         _descriptorSet = VK_NULL_HANDLE;
 
         VkImage                                 _mips = VK_NULL_HANDLE;
         Memory                                  _mipsMemory {};
-        VkImageView                             _mipView = VK_NULL_HANDLE;
+        uint32_t                                _mipCount = 0U;
+        VkImageView                             _mipViews[ MAX_VIEWS ];
         VkImageView                             _syncMip5 = VK_NULL_HANDLE;
 
         VkBuffer                                _globalCounter = VK_NULL_HANDLE;
         Memory                                  _globalCounterMemory {};
 
-        AverageBrightnessDescriptorSetLayout    _layout {};
+        std::unique_ptr<DescriptorSetLayout>    _layout {};
+        SPD12MipsProgram                        _program {};
 
         VkBuffer                                _transferBuffer = VK_NULL_HANDLE;
         Memory                                  _transferBufferMemory {};
@@ -69,7 +78,9 @@ class AverageBrightnessPass final
             VkCommandPool commandPool
         ) noexcept;
 
-        void BindTargetToDescriptorSet ( VkDevice device, android_vulkan::Texture2D const &hdrImage ) noexcept;
+        [[nodiscard]] bool BindTargetToDescriptorSet ( VkDevice device,
+            android_vulkan::Texture2D const &hdrImage
+        ) noexcept;
 
         [[nodiscard]] bool CreateMips ( android_vulkan::Renderer &renderer,
             VkDevice device,

@@ -122,6 +122,8 @@ uint32_t2 GetThreadTarget ( in uint32_t threadID )
     return subXY + alpha * 8U;
 }
 
+// Increase the global atomic counter for the given slice and check if it's the last remaining thread group:
+// terminate if not, continue if yes.
 // Only last active workgroup should proceed
 bool ExitWorkgroup ( in uint32_t threadID )
 {
@@ -186,7 +188,7 @@ void DownsampleMips01 ( in uint32_t x, in uint32_t y, in uint32_t2 workGroupID, 
     StoreIntermediate ( gamma.x, gamma.y, v[ 3U ] );
 }
 
-void DownsampleMip2 ( in uint32_t x, in uint32_t y, in uint32_t2 workGroupID, in uint32_t threadID, in uint32_t mip )
+void DownsampleMip2 ( in uint32_t x, in uint32_t y, in uint32_t2 workGroupID, in uint32_t threadID )
 {
     if ( threadID >= 64U )
         return;
@@ -200,7 +202,7 @@ void DownsampleMip2 ( in uint32_t x, in uint32_t y, in uint32_t2 workGroupID, in
         base + uint32_t2 ( 1U, 1U )
     );
 
-    Store ( workGroupID * 8U + xy, v, mip );
+    Store ( workGroupID * 8U + xy, v, 2U );
 
     // store to LDS, try to reduce bank conflicts
     // x 0 x 0 x 0 x 0 x 0 x 0 x 0 x 0
@@ -213,7 +215,7 @@ void DownsampleMip2 ( in uint32_t x, in uint32_t y, in uint32_t2 workGroupID, in
     StoreIntermediate ( base.x + y % 2U, base.y, v );
 }
 
-void DownsampleMip3 ( in uint32_t x, in uint32_t y, in uint32_t2 workGroupID, in uint32_t threadID, in uint32_t mip )
+void DownsampleMip3 ( in uint32_t x, in uint32_t y, in uint32_t2 workGroupID, in uint32_t threadID )
 {
     if ( threadID >= 16U )
         return;
@@ -231,7 +233,7 @@ void DownsampleMip3 ( in uint32_t x, in uint32_t y, in uint32_t2 workGroupID, in
         base + uint32_t2 ( 3U, 2U )
     );
 
-    Store ( workGroupID.xy * 4U + xy, v, mip );
+    Store ( workGroupID.xy * 4U + xy, v, 3U );
 
     // store to LDS
     // x 0 0 0 x 0 0 0 x 0 0 0 x 0 0 0
@@ -247,7 +249,7 @@ void DownsampleMip3 ( in uint32_t x, in uint32_t y, in uint32_t2 workGroupID, in
     StoreIntermediate ( base.x + y, base.y, v );
 }
 
-void DownsampleMip4 ( in uint32_t x, in uint32_t y, in uint32_t2 workGroupID, in uint32_t threadID, in uint32_t mip )
+void DownsampleMip4 ( in uint32_t x, in uint32_t y, in uint32_t2 workGroupID, in uint32_t threadID )
 {
     if ( threadID >= 4U )
         return;
@@ -266,7 +268,7 @@ void DownsampleMip4 ( in uint32_t x, in uint32_t y, in uint32_t2 workGroupID, in
         alpha + uint32_t2 ( 5U, 4U )
     );
 
-    Store ( workGroupID.xy + workGroupID.xy + xy, v, mip );
+    Store ( workGroupID.xy + workGroupID.xy + xy, v, 4U );
 
     // store to LDS
     // x x x x 0 ...
@@ -274,7 +276,7 @@ void DownsampleMip4 ( in uint32_t x, in uint32_t y, in uint32_t2 workGroupID, in
     StoreIntermediate ( x + yy, 0U, v );
 }
 
-void DownsampleMip5 ( in uint32_t2 workGroupID, in uint32_t threadID, in uint32_t mip )
+void DownsampleMip5 ( in uint32_t2 workGroupID, in uint32_t threadID )
 {
     if ( threadID >= 1U )
         return;
@@ -301,21 +303,149 @@ void DownsampleMips67 ( in uint32_t x, in uint32_t y )
     const uint32_t2 texBase = pixBase + pixBase;
 
     const float16_t v0 = ReduceLoad4 ( texBase );
-    Store ( pixBase, v0, 6U );
+
+    // TODO strict!
+    Store ( pixBase, v0, 5U );
 
     const float16_t v1 = ReduceLoad4 ( texBase + uint32_t2 ( 2U, 0U ) );
-    Store ( pixBase + uint32_t2 ( 1U, 0U ), v1, 6U );
+    Store ( pixBase + uint32_t2 ( 1U, 0U ), v1, 5U );
 
     const float16_t v2 = ReduceLoad4 ( texBase + uint32_t2 ( 0U, 2U ) );
-    Store ( pixBase + uint32_t2 ( 0U, 1U ), v2, 6U );
+    Store ( pixBase + uint32_t2 ( 0U, 1U ), v2, 5U );
 
     const float16_t v3 = ReduceLoad4 ( texBase + uint32_t2 ( 2U, 2U ) );
-    Store ( pixBase + uint32_t2 ( 1U, 1U ), v3, 6U );
+    Store ( pixBase + uint32_t2 ( 1U, 1U ), v3, 5U );
 
     // no barrier needed, working on values only from the same thread
     const float16_t v = Reduce4 ( v0, v1, v2, v3 );
-    Store ( xy, v, 7U );
+    Store ( xy, v, 6U );
     StoreIntermediate ( x, y, v );
+}
+
+void DownsampleMip8 ( in uint32_t x, in uint32_t y, in uint32_t2 workGroupID, in uint32_t threadID )
+{
+    if ( threadID >= 64U )
+        return;
+
+    const uint32_t2 xy = uint32_t2 ( x, y );
+    const uint32_t2 base = xy + xy;
+
+    const float16_t v = ReduceIntermediate ( base,
+        base + uint32_t2 ( 1U, 0U ),
+        base + uint32_t2 ( 0U, 1U ),
+        base + uint32_t2 ( 1U, 1U )
+    );
+
+    // TODO strict!
+    Store ( workGroupID * 8U + xy, v, 7U );
+
+    // store to LDS, try to reduce bank conflicts
+    // x 0 x 0 x 0 x 0 x 0 x 0 x 0 x 0
+    // 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+    // 0 x 0 x 0 x 0 x 0 x 0 x 0 x 0 x
+    // 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+    // x 0 x 0 x 0 x 0 x 0 x 0 x 0 x 0
+    // ...
+    // x 0 x 0 x 0 x 0 x 0 x 0 x 0 x 0
+    StoreIntermediate ( base.x + y % 2U, base.y, v );
+}
+
+void DownsampleMip8Last ( in uint32_t x, in uint32_t y, in uint32_t2 workGroupID, in uint32_t threadID )
+{
+    if ( threadID >= 64U )
+        return;
+
+    const uint32_t2 xy = uint32_t2 ( x, y );
+    const uint32_t2 base = xy + xy;
+
+    const float16_t v = ReduceIntermediate ( base,
+        base + uint32_t2 ( 1U, 0U ),
+        base + uint32_t2 ( 0U, 1U ),
+        base + uint32_t2 ( 1U, 1U )
+    );
+
+    // TODO strict!
+    Store ( workGroupID * 8U + xy, v, 7U );
+}
+
+void DownsampleMip9 ( in uint32_t x, in uint32_t y, in uint32_t2 workGroupID, in uint32_t threadID )
+{
+    if ( threadID >= 16U )
+        return;
+
+    const uint32_t2 xy = uint32_t2 ( x, y );
+    const uint32_t2 base = xy * 4U;
+
+    // x 0 x 0
+    // 0 0 0 0
+    // 0 x 0 x
+    // 0 0 0 0
+    const float16_t v = ReduceIntermediate ( base,
+        base + uint32_t2 ( 2U, 0U ),
+        base + uint32_t2 ( 1U, 2U ),
+        base + uint32_t2 ( 3U, 2U )
+    );
+
+    // TODO strict!
+    Store ( workGroupID.xy * 4U + xy, v, 8U );
+
+    // store to LDS
+    // x 0 0 0 x 0 0 0 x 0 0 0 x 0 0 0
+    // 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+    // 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+    // 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+    // 0 x 0 0 0 x 0 0 0 x 0 0 0 x 0 0
+    // ...
+    // 0 0 x 0 0 0 x 0 0 0 x 0 0 0 x 0
+    // ...
+    // 0 0 0 x 0 0 0 x 0 0 0 x 0 0 0 x
+    // ...
+    StoreIntermediate ( base.x + y, base.y, v );
+}
+
+void DownsampleMip9Last ( in uint32_t x, in uint32_t y, in uint32_t2 workGroupID, in uint32_t threadID )
+{
+    if ( threadID >= 16U )
+        return;
+
+    const uint32_t2 xy = uint32_t2 ( x, y );
+    const uint32_t2 base = xy * 4U;
+
+    // x 0 x 0
+    // 0 0 0 0
+    // 0 x 0 x
+    // 0 0 0 0
+    const float16_t v = ReduceIntermediate ( base,
+        base + uint32_t2 ( 2U, 0U ),
+        base + uint32_t2 ( 1U, 2U ),
+        base + uint32_t2 ( 3U, 2U )
+    );
+
+    // TODO strict!
+    Store ( workGroupID.xy * 4U + xy, v, 8U );
+}
+
+void DownsampleMip10 ( in uint32_t x, in uint32_t y, in uint32_t2 workGroupID, in uint32_t threadID )
+{
+    if ( threadID >= 4U )
+        return;
+
+    const uint32_t2 xy = uint32_t2 ( x, y );
+    const uint32_t yy = y + y;
+    uint32_t2 alpha = xy * 8U;
+    alpha.x += yy;
+
+    // x 0 0 0 x 0 0 0
+    // ...
+    // 0 x 0 0 0 x 0 0
+    const float16_t v = ReduceIntermediate ( alpha,
+        alpha + uint32_t2 ( 4U, 0U ),
+        alpha + uint32_t2 ( 1U, 4U ),
+        alpha + uint32_t2 ( 5U, 4U )
+    );
+
+    // TODO strict!
+    Store ( workGroupID.xy + workGroupID.xy + xy, v, 9U );
 }
 
 

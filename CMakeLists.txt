@@ -62,7 +62,6 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/ascii_string.cpp
     app/src/main/cpp/sources/pbr/attribute_checker.cpp
     app/src/main/cpp/sources/pbr/attribute_parser.cpp
-    app/src/main/cpp/sources/pbr/average_brightness_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/average_brightness_pass.cpp
     app/src/main/cpp/sources/pbr/camera.cpp
     app/src/main/cpp/sources/pbr/camera_component.cpp
@@ -171,6 +170,7 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/set_attribute_checker.cpp
     app/src/main/cpp/sources/pbr/sound_emitter_global_component.cpp
     app/src/main/cpp/sources/pbr/sound_emitter_spatial_component.cpp
+    app/src/main/cpp/sources/pbr/spd_12_mips_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/spd_12_mips_program.cpp
     app/src/main/cpp/sources/pbr/src_property_checker.cpp
     app/src/main/cpp/sources/pbr/static_mesh_component.cpp

@@ -1,4 +1,4 @@
-#include <pbr/average_brightness_descriptor_set_layout.hpp>
+#include <pbr/spd_12_mips_descriptor_set_layout.hpp>
 #include <pbr/spd.inc>
 
 GX_DISABLE_COMMON_WARNINGS
@@ -49,7 +49,7 @@ void DescriptorSetLayout::Destroy ( VkDevice device ) noexcept
 
     vkDestroyDescriptorSetLayout ( device, _layout, nullptr );
     _layout = VK_NULL_HANDLE;
-    AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::AverageBrightnessDescriptorSetLayout::_layout" )
+    AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::SPD12MipsDescriptorSetLayout::_layout" )
 }
 
 bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
@@ -66,28 +66,28 @@ bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
             .binding = BIND_HDR_IMAGE,
             .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
             .descriptorCount = 1U,
-            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+            .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
             .pImmutableSamplers = nullptr
         },
         {
             .binding = BIND_SYNC_MIP_5,
             .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
             .descriptorCount = 1U,
-            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+            .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
             .pImmutableSamplers = nullptr
         },
         {
             .binding = BIND_MIPS,
             .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
-            .descriptorCount = 1U,
-            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+            .descriptorCount = 10U,
+            .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
             .pImmutableSamplers = nullptr
         },
         {
             .binding = BIND_GLOBAL_ATOMIC,
             .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
             .descriptorCount = 1U,
-            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+            .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
             .pImmutableSamplers = nullptr
         }
     };
@@ -103,14 +103,14 @@ bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateDescriptorSetLayout ( device, &info, nullptr, &_layout ),
-        "pbr::AverageBrightnessDescriptorSetLayout::Init",
+        "pbr::SPD12MipsDescriptorSetLayout::Init",
         "Can't create descriptor set layout"
     );
 
     if ( !result )
         return false;
 
-    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::AverageBrightnessDescriptorSetLayout::_layout" )
+    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::SPD12MipsDescriptorSetLayout::_layout" )
 
     ++_references;
     return true;
@@ -122,17 +122,17 @@ DescriptorSetLayout g_descriptorSetLayout {};
 
 //----------------------------------------------------------------------------------------------------------------------
 
-void AverageBrightnessDescriptorSetLayout::Destroy ( VkDevice device ) noexcept
+void SPD12MipsDescriptorSetLayout::Destroy ( VkDevice device ) noexcept
 {
     g_descriptorSetLayout.Destroy ( device );
 }
 
-bool AverageBrightnessDescriptorSetLayout::Init ( VkDevice device ) noexcept
+bool SPD12MipsDescriptorSetLayout::Init ( VkDevice device ) noexcept
 {
     return g_descriptorSetLayout.Init ( device );
 }
 
-VkDescriptorSetLayout AverageBrightnessDescriptorSetLayout::GetLayout () const noexcept
+VkDescriptorSetLayout SPD12MipsDescriptorSetLayout::GetLayout () const noexcept
 {
     return g_descriptorSetLayout._layout;
 }

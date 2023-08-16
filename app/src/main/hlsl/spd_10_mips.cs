@@ -3,7 +3,8 @@
 
 // Note: The most detailed mip is skipped.
 // Luma values are calculated inplace from HDR image during calculation of first mip level.
-#define MIP_COUNT       9U
+// Mip 5 is using dedicated UAV. That's why it's needed to remove 2 elements.
+#define MIP_COUNT       8U
 
 #include "spd_common.cs"
 
@@ -15,19 +16,17 @@ void CS ( in uint32_t threadID: SV_GroupIndex, in uint32_t3 workGroupID: SV_Grou
     DownsampleMips01 ( base.x, base.y, workGroupID.xy, threadID );
 
     GroupMemoryBarrierWithGroupSync ();
-    DownsampleMip2 ( base.x, base.y, workGroupID.xy, threadID, 2U );
+    DownsampleMip2 ( base.x, base.y, workGroupID.xy, threadID );
 
     GroupMemoryBarrierWithGroupSync ();
-    DownsampleMip3 ( base.x, base.y, workGroupID.xy, threadID, 3U );
+    DownsampleMip3 ( base.x, base.y, workGroupID.xy, threadID );
 
     GroupMemoryBarrierWithGroupSync ();
-    DownsampleMip4 ( base.x, base.y, workGroupID.xy, threadID, 4U );
+    DownsampleMip4 ( base.x, base.y, workGroupID.xy, threadID );
 
     GroupMemoryBarrierWithGroupSync ();
-    DownsampleMip5 ( workGroupID.xy, threadID, 5U );
+    DownsampleMip5 ( workGroupID.xy, threadID );
 
-    // increase the global atomic counter for the given slice and check if it's the last remaining thread group:
-    // terminate if not, continue if yes.
     if ( ExitWorkgroup ( threadID ) )
         return;
 
@@ -37,5 +36,5 @@ void CS ( in uint32_t threadID: SV_GroupIndex, in uint32_t3 workGroupID: SV_Grou
     DownsampleMips67 ( base.x, base.y );
 
     GroupMemoryBarrierWithGroupSync ();
-    DownsampleMip2 ( base.x, base.y, workGroupID.xy, threadID, 8U );
+    DownsampleMip8Last ( base.x, base.y, workGroupID.xy, threadID );
 }

@@ -5,6 +5,14 @@
 
 namespace pbr {
 
+namespace {
+
+constexpr uint32_t REJECT_SYNC_MIP_5 = 1U;
+
+} // end of anonymous namespace
+
+//----------------------------------------------------------------------------------------------------------------------
+
 void AverageBrightnessPass::FreeTransferResources ( android_vulkan::Renderer &renderer,
     VkCommandPool commandPool
 ) noexcept
@@ -18,10 +26,7 @@ void AverageBrightnessPass::FreeTransferResources ( android_vulkan::Renderer &re
 bool AverageBrightnessPass::Init ( android_vulkan::Renderer &renderer, VkCommandPool commandPool ) noexcept
 {
     VkDevice device = renderer.GetDevice ();
-
-    return CreateGlobalCounter ( renderer, device, commandPool ) &&
-        _layout.Init ( device ) &&
-        CreateDescriptorSet ( device );
+    return CreateGlobalCounter ( renderer, device, commandPool ) && CreateDescriptorSet ( device );
 }
 
 void AverageBrightnessPass::Destroy ( android_vulkan::Renderer &renderer ) noexcept
@@ -50,11 +55,12 @@ void AverageBrightnessPass::Destroy ( android_vulkan::Renderer &renderer ) noexc
         AV_UNREGISTER_DESCRIPTOR_POOL ( "pbr::AverageBrightnessPass::_descriptorPool" )
     }
 
-    if ( _mipView != VK_NULL_HANDLE )
+    uint32_t const limit = _mipCount - REJECT_SYNC_MIP_5;
+
+    for ( uint32_t i = 0U; i < limit; ++i )
     {
-        vkDestroyImageView ( device, _mipView, nullptr );
-        _mipView = VK_NULL_HANDLE;
-        AV_UNREGISTER_IMAGE_VIEW ( "pbr::AverageBrightnessPass::_mipView" )
+        vkDestroyImageView ( device, _mipViews[ i ], nullptr );
+        AV_UNREGISTER_IMAGE_VIEW ( "pbr::AverageBrightnessPass::_mipViews" )
     }
 
     if ( _syncMip5 != VK_NULL_HANDLE )
@@ -79,7 +85,9 @@ void AverageBrightnessPass::Destroy ( android_vulkan::Renderer &renderer ) noexc
         AV_UNREGISTER_DEVICE_MEMORY ( "pbr::AverageBrightnessPass::_mipsMemory" )
     }
 
-    _layout.Destroy ( device );
+    if ( _layout )
+        _layout->Destroy ( device );
+
     FreeTransferBuffer ( renderer, device );
 }
 
@@ -89,33 +97,30 @@ bool AverageBrightnessPass::SetTarget ( android_vulkan::Renderer &renderer,
 {
     // TODO do nothing if mip chain is the same.
     // TODO don't forget to transfer to general layout.
-
+    // TODO destroy image, memory and image views in case of resolution change.
     VkExtent2D resolution = hdrImage.GetResolution ();
-    constexpr uint32_t multipleOf64 = 6U;
 
-    _dispatch =
-    {
-        .width = resolution.width >> multipleOf64,
-        .height = resolution.height >> multipleOf64,
-        .depth = 1U
-    };
+    SPD12MipsProgram::SpecializationInfo specData {};
+    SPD12MipsProgram::GetMetaInfo ( _dispatch, specData, resolution );
+
+    if ( !_program.Init ( renderer, &specData ) )
+        return false;
 
     VkDevice device = renderer.GetDevice ();
 
     if ( !CreateMips ( renderer, device, resolution ) )
         return false;
 
-    BindTargetToDescriptorSet ( device, hdrImage );
-    return true;
+    return BindTargetToDescriptorSet ( device, hdrImage );
 }
 
 VkExtent2D AverageBrightnessPass::AdjustResolution ( VkExtent2D const &desiredResolution ) noexcept
 {
     auto const adjust = [] ( uint32_t size ) constexpr -> uint32_t {
-        constexpr uint32_t blockSizeShift = 6U;
-        constexpr uint32_t roundUP = ( 1U << blockSizeShift ) - 1U;
+        constexpr uint32_t blockSize64Shift = 6U;
+        constexpr uint32_t roundUP = ( 1U << blockSize64Shift ) - 1U;
 
-        return std::min ( 2048U, std::max ( 1U, ( size + roundUP ) >> blockSizeShift ) << blockSizeShift );
+        return std::min ( 2048U, std::max ( 1U, ( size + roundUP ) >> blockSize64Shift ) << blockSize64Shift );
     };
 
     return VkExtent2D
@@ -127,6 +132,9 @@ VkExtent2D AverageBrightnessPass::AdjustResolution ( VkExtent2D const &desiredRe
 
 bool AverageBrightnessPass::CreateDescriptorSet ( VkDevice device ) noexcept
 {
+    constexpr uint32_t syncMip5Item = 1U;
+    constexpr uint32_t maxStorageImages = static_cast<uint32_t> ( MAX_VIEWS ) + syncMip5Item;
+
     constexpr static VkDescriptorPoolSize const poolSizes[] =
     {
         {
@@ -135,7 +143,7 @@ bool AverageBrightnessPass::CreateDescriptorSet ( VkDevice device ) noexcept
         },
         {
             .type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
-            .descriptorCount = 2U
+            .descriptorCount = maxStorageImages
         },
         {
             .type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
@@ -153,7 +161,7 @@ bool AverageBrightnessPass::CreateDescriptorSet ( VkDevice device ) noexcept
         .pPoolSizes = poolSizes
     };
 
-    bool result = android_vulkan::Renderer::CheckVkResult (
+    bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_descriptorPool ),
         "pbr::AverageBrightnessPass::CreateDescriptorSet",
         "Can't create descriptor pool"
@@ -163,48 +171,6 @@ bool AverageBrightnessPass::CreateDescriptorSet ( VkDevice device ) noexcept
         return false;
 
     AV_REGISTER_DESCRIPTOR_POOL ( "pbr::AverageBrightnessPass::_descriptorPool" )
-    VkDescriptorSetLayout layout = _layout.GetLayout ();
-
-    VkDescriptorSetAllocateInfo const allocateInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-        .pNext = nullptr,
-        .descriptorPool = _descriptorPool,
-        .descriptorSetCount = 1U,
-        .pSetLayouts = &layout
-    };
-
-    result = android_vulkan::Renderer::CheckVkResult (
-        vkAllocateDescriptorSets ( device, &allocateInfo, &_descriptorSet ),
-        "pbr::AverageBrightnessPass::CreateDescriptorSet",
-        "Can't create descriptor set"
-    );
-
-    if ( !result )
-        return false;
-
-    VkDescriptorBufferInfo const bufferInfo
-    {
-        .buffer = _globalCounter,
-        .offset = 0U,
-        .range = static_cast<VkDeviceSize> ( sizeof ( uint32_t ) )
-    };
-
-    VkWriteDescriptorSet const write
-    {
-        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-        .pNext = nullptr,
-        .dstSet = _descriptorSet,
-        .dstBinding = BIND_GLOBAL_ATOMIC,
-        .dstArrayElement = 0U,
-        .descriptorCount = 1U,
-        .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-        .pImageInfo = nullptr,
-        .pBufferInfo = &bufferInfo,
-        .pTexelBufferView = nullptr
-    };
-
-    vkUpdateDescriptorSets ( device, 1U, &write, 0U, nullptr );
     return true;
 }
 
@@ -417,10 +383,44 @@ bool AverageBrightnessPass::CreateGlobalCounter ( android_vulkan::Renderer &rend
     );
 }
 
-void AverageBrightnessPass::BindTargetToDescriptorSet ( VkDevice device,
+bool AverageBrightnessPass::BindTargetToDescriptorSet ( VkDevice device,
     android_vulkan::Texture2D const &hdrImage
 ) noexcept
 {
+    if ( _descriptorSet != VK_NULL_HANDLE )
+    {
+        bool const result = android_vulkan::Renderer::CheckVkResult (
+            vkFreeDescriptorSets ( device, _descriptorPool, 1U, &_descriptorSet ),
+            "pbr::AverageBrightnessPass::BindTargetToDescriptorSet",
+            "Can't free descriptor set"
+        );
+
+        if ( !result )
+        {
+            return false;
+        }
+    }
+
+    VkDescriptorSetLayout layout = _layout->GetLayout ();
+
+    VkDescriptorSetAllocateInfo const allocateInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+        .pNext = nullptr,
+        .descriptorPool = _descriptorPool,
+        .descriptorSetCount = 1U,
+        .pSetLayouts = &layout
+    };
+
+    bool const result = android_vulkan::Renderer::CheckVkResult (
+        vkAllocateDescriptorSets ( device, &allocateInfo, &_descriptorSet ),
+        "pbr::AverageBrightnessPass::BindTargetToDescriptorSet",
+        "Can't create descriptor set"
+    );
+
+    if ( !result )
+        return false;
+
     VkDescriptorImageInfo const hrdImageInfo
     {
         .sampler = VK_NULL_HANDLE,
@@ -435,11 +435,24 @@ void AverageBrightnessPass::BindTargetToDescriptorSet ( VkDevice device,
         .imageLayout = VK_IMAGE_LAYOUT_GENERAL
     };
 
-    VkDescriptorImageInfo const mipInfo
+    uint32_t const limit = _mipCount - REJECT_SYNC_MIP_5;
+    VkDescriptorImageInfo mipInfo[ MAX_VIEWS ];
+
+    for ( uint32_t i = 0U; i < limit; ++i )
     {
-        .sampler = VK_NULL_HANDLE,
-        .imageView = _mipView,
-        .imageLayout = VK_IMAGE_LAYOUT_GENERAL
+        mipInfo[ i ] =
+        {
+            .sampler = VK_NULL_HANDLE,
+            .imageView = _mipViews[ i ],
+            .imageLayout = VK_IMAGE_LAYOUT_GENERAL
+        };
+    }
+
+    VkDescriptorBufferInfo const bufferInfo
+    {
+        .buffer = _globalCounter,
+        .offset = 0U,
+        .range = static_cast<VkDeviceSize> ( sizeof ( uint32_t ) )
     };
 
     VkWriteDescriptorSet const writes[] =
@@ -474,15 +487,28 @@ void AverageBrightnessPass::BindTargetToDescriptorSet ( VkDevice device,
             .dstSet = _descriptorSet,
             .dstBinding = BIND_MIPS,
             .dstArrayElement = 0U,
-            .descriptorCount = 1U,
+            .descriptorCount = limit,
             .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
-            .pImageInfo = &mipInfo,
+            .pImageInfo = mipInfo,
             .pBufferInfo = nullptr,
+            .pTexelBufferView = nullptr
+        },
+        {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .pNext = nullptr,
+            .dstSet = _descriptorSet,
+            .dstBinding = BIND_GLOBAL_ATOMIC,
+            .dstArrayElement = 0U,
+            .descriptorCount = 1U,
+            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+            .pImageInfo = nullptr,
+            .pBufferInfo = &bufferInfo,
             .pTexelBufferView = nullptr
         }
     };
 
     vkUpdateDescriptorSets ( device, static_cast<uint32_t> ( std::size ( writes ) ), writes, 0U, nullptr );
+    return true;
 }
 
 bool AverageBrightnessPass::CreateMips ( android_vulkan::Renderer &renderer,
@@ -494,8 +520,23 @@ bool AverageBrightnessPass::CreateMips ( android_vulkan::Renderer &renderer,
     VkExtent2D const r
     {
         .width = resolution.width >> 1U,
-        .height = resolution.width >> 1U,
+        .height = resolution.height >> 1U,
     };
+
+    _mipCount = static_cast<uint32_t> ( android_vulkan::Texture2D::CountMipLevels ( r ) );
+
+    switch ( _mipCount )
+    {
+        case 10U:
+            _layout = std::make_unique<SPD12MipsDescriptorSetLayout> ();
+        break;
+
+        default:
+        return false;
+    }
+
+    if ( !_layout->Init ( device ) )
+        return false;
 
     VkImageCreateInfo const imageInfo
     {
@@ -512,7 +553,7 @@ bool AverageBrightnessPass::CreateMips ( android_vulkan::Renderer &renderer,
             .depth = 1U
         },
 
-        .mipLevels = static_cast<uint32_t> ( android_vulkan::Texture2D::CountMipLevels ( r ) ),
+        .mipLevels = _mipCount,
         .arrayLayers = 1U,
         .samples = VK_SAMPLE_COUNT_1_BIT,
         .tiling = VK_IMAGE_TILING_OPTIMAL,
@@ -581,25 +622,34 @@ bool AverageBrightnessPass::CreateMips ( android_vulkan::Renderer &renderer,
         {
             .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
             .baseMipLevel = 0U,
-            .levelCount = imageInfo.mipLevels,
+            .levelCount = 1U,
             .baseArrayLayer = 0U,
             .layerCount = 1U
         }
     };
 
-    result = android_vulkan::Renderer::CheckVkResult ( vkCreateImageView ( device, &viewInfo, nullptr, &_mipView ),
-        "pbr::AverageBrightnessPass::CreateMips",
-        "Can't create mip view"
-    );
+    uint32_t &baseMip = viewInfo.subresourceRange.baseMipLevel;
+    constexpr uint32_t syncMip5Idx = 5U;
+    uint32_t const limit = _mipCount - REJECT_SYNC_MIP_5;
 
-    if ( !result )
-        return false;
+    for ( uint32_t i = 0U; i < limit; ++i )
+    {
+        // Mip 5 should be skipped.
+        baseMip = i + static_cast<uint32_t> ( i >= syncMip5Idx );
 
-    AV_REGISTER_IMAGE_VIEW ( "pbr::AverageBrightnessPass::_mipView" )
+        result = android_vulkan::Renderer::CheckVkResult (
+            vkCreateImageView ( device, &viewInfo, nullptr, _mipViews + i ),
+            "pbr::AverageBrightnessPass::CreateMips",
+            "Can't create mip view"
+        );
 
-    // Note mip 0 from original image is not present in mip chain. So real mip 5 is 4th mip.
-    viewInfo.subresourceRange.baseMipLevel = 4U;
-    viewInfo.subresourceRange.levelCount = 1U;
+        if ( !result )
+            return false;
+
+        AV_REGISTER_IMAGE_VIEW ( "pbr::AverageBrightnessPass::_mipViews" )
+    }
+
+    baseMip = syncMip5Idx;
 
     result = android_vulkan::Renderer::CheckVkResult ( vkCreateImageView ( device, &viewInfo, nullptr, &_syncMip5 ),
         "pbr::AverageBrightnessPass::CreateMips",

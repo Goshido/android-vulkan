@@ -24,8 +24,10 @@ class AverageBrightnessPass final
         VkDescriptorPool                        _descriptorPool = VK_NULL_HANDLE;
         VkDescriptorSet                         _descriptorSet = VK_NULL_HANDLE;
 
-        [[maybe_unused]] VkImage                _mips = VK_NULL_HANDLE;
-        [[maybe_unused]] Memory                 _mipsMemory {};
+        VkImage                                 _mips = VK_NULL_HANDLE;
+        Memory                                  _mipsMemory {};
+        VkImageView                             _mipView = VK_NULL_HANDLE;
+        VkImageView                             _syncMip5 = VK_NULL_HANDLE;
 
         VkBuffer                                _globalCounter = VK_NULL_HANDLE;
         Memory                                  _globalCounterMemory {};
@@ -67,7 +69,7 @@ class AverageBrightnessPass final
             VkCommandPool commandPool
         ) noexcept;
 
-        void BindTargetToDescriptorSet ( android_vulkan::Texture2D const &hdrImage ) noexcept;
+        void BindTargetToDescriptorSet ( VkDevice device, android_vulkan::Texture2D const &hdrImage ) noexcept;
 
         [[nodiscard]] bool CreateMips ( android_vulkan::Renderer &renderer,
             VkDevice device,

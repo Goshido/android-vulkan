@@ -19,7 +19,7 @@ constexpr size_t VERTEX_ATTRIBUTE_COUNT = 4U;
 //----------------------------------------------------------------------------------------------------------------------
 
 UIProgram::UIProgram () noexcept:
-    Program ( "pbr::UIProgram" )
+    GraphicsProgram ( "pbr::UIProgram" )
 {
     // NOTHING
 }
@@ -114,7 +114,7 @@ void UIProgram::Destroy ( VkDevice device ) noexcept
     DestroyShaderModules ( device );
 }
 
-Program::DescriptorSetInfo const &UIProgram::GetResourceInfo () const noexcept
+GraphicsProgram::DescriptorSetInfo const &UIProgram::GetResourceInfo () const noexcept
 {
     static DescriptorSetInfo const info
     {

@@ -117,7 +117,7 @@ void ReflectionGlobalProgram::Destroy ( VkDevice device ) noexcept
     DestroyShaderModules ( device );
 }
 
-Program::DescriptorSetInfo const &ReflectionGlobalProgram::GetResourceInfo () const noexcept
+GraphicsProgram::DescriptorSetInfo const &ReflectionGlobalProgram::GetResourceInfo () const noexcept
 {
     static DescriptorSetInfo const info
     {

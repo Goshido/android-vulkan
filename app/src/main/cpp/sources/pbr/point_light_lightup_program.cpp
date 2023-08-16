@@ -143,7 +143,7 @@ void PointLightLightupProgram::SetLightData ( VkCommandBuffer commandBuffer,
     );
 }
 
-Program::DescriptorSetInfo const &PointLightLightupProgram::GetResourceInfo () const noexcept
+GraphicsProgram::DescriptorSetInfo const &PointLightLightupProgram::GetResourceInfo () const noexcept
 {
     static DescriptorSetInfo const info
     {

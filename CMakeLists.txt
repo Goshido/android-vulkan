@@ -71,6 +71,7 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/color_value.cpp
     app/src/main/cpp/sources/pbr/common_css_rule.cpp
     app/src/main/cpp/sources/pbr/component.cpp
+    app/src/main/cpp/sources/pbr/compute_program.cpp
     app/src/main/cpp/sources/pbr/css_computed_values.cpp
     app/src/main/cpp/sources/pbr/css_parser.cpp
     app/src/main/cpp/sources/pbr/css_ui_element.cpp
@@ -95,6 +96,7 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/geometry_pass_sampler_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/geometry_pass_texture_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/geometry_subpass_base.cpp
+    app/src/main/cpp/sources/pbr/graphics_program.cpp
     app/src/main/cpp/sources/pbr/href_attribute_checker.cpp
     app/src/main/cpp/sources/pbr/html5_element.cpp
     app/src/main/cpp/sources/pbr/html5_parser.cpp
@@ -134,7 +136,6 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/point_light_shadowmap_generator_program.cpp
     app/src/main/cpp/sources/pbr/position_property.cpp
     app/src/main/cpp/sources/pbr/position_property_checker.cpp
-    app/src/main/cpp/sources/pbr/program.cpp
     app/src/main/cpp/sources/pbr/property.cpp
     app/src/main/cpp/sources/pbr/property_checker.cpp
     app/src/main/cpp/sources/pbr/property_parser.cpp
@@ -170,6 +171,7 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/set_attribute_checker.cpp
     app/src/main/cpp/sources/pbr/sound_emitter_global_component.cpp
     app/src/main/cpp/sources/pbr/sound_emitter_spatial_component.cpp
+    app/src/main/cpp/sources/pbr/spd_12_mips_program.cpp
     app/src/main/cpp/sources/pbr/src_property_checker.cpp
     app/src/main/cpp/sources/pbr/static_mesh_component.cpp
     app/src/main/cpp/sources/pbr/stipple_material.cpp

@@ -2,7 +2,7 @@
 #define PBR_UI_PROGRAM_HPP
 
 
-#include "program.hpp"
+#include "graphics_program.hpp"
 #include "ui_pass_common_descriptor_set_layout.hpp"
 #include "ui_pass_image_descriptor_set_layout.hpp"
 #include "ui_pass_transform_descriptor_set_layout.hpp"
@@ -11,7 +11,7 @@
 
 namespace pbr {
 
-class UIProgram final : public Program
+class UIProgram final : public GraphicsProgram
 {
     public:
         AV_DX_ALIGNMENT_BEGIN

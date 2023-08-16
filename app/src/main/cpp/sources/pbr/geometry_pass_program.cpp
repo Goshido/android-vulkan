@@ -110,7 +110,7 @@ void GeometryPassProgram::Destroy ( VkDevice device ) noexcept
     DestroyShaderModules ( device );
 }
 
-Program::DescriptorSetInfo const &GeometryPassProgram::GetResourceInfo () const noexcept
+GraphicsProgram::DescriptorSetInfo const &GeometryPassProgram::GetResourceInfo () const noexcept
 {
     static DescriptorSetInfo const info =
     {
@@ -155,7 +155,7 @@ void GeometryPassProgram::SetDescriptorSet ( VkCommandBuffer commandBuffer,
 }
 
 GeometryPassProgram::GeometryPassProgram ( std::string_view &&name, std::string_view &&fragmentShader ) noexcept:
-    Program ( std::forward<std::string_view> ( name ) ),
+    GraphicsProgram ( std::forward<std::string_view> ( name ) ),
     _fragmentShaderSource ( fragmentShader )
 {
     // NOTHING

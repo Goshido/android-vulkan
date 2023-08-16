@@ -230,7 +230,7 @@ bool FontStorage::Atlas::AddLayers ( android_vulkan::Renderer &renderer,
     result = android_vulkan::Renderer::CheckVkResult (
         vkCreateImageView ( device, &viewInfo, nullptr, &_resource._view ),
         "pbr::FontStorage::Atlas::AddLayer",
-        "Can't create image"
+        "Can't create image view"
     );
 
     if ( !result )

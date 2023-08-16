@@ -523,18 +523,18 @@ void Texture2D::FreeResourceInternal ( Renderer &renderer ) noexcept
     _mipLevels = 0U;
     VkDevice device = renderer.GetDevice ();
 
-    if ( _image != VK_NULL_HANDLE )
-    {
-        vkDestroyImage ( device, _image, nullptr );
-        _image = VK_NULL_HANDLE;
-        AV_UNREGISTER_IMAGE ( "Texture2D::_image" )
-    }
-
     if ( _imageView != VK_NULL_HANDLE )
     {
         vkDestroyImageView ( device, _imageView, nullptr );
         _imageView = VK_NULL_HANDLE;
         AV_UNREGISTER_IMAGE_VIEW ( "Texture2D::_imageView" )
+    }
+
+    if ( _image != VK_NULL_HANDLE )
+    {
+        vkDestroyImage ( device, _image, nullptr );
+        _image = VK_NULL_HANDLE;
+        AV_UNREGISTER_IMAGE ( "Texture2D::_image" )
     }
 
     if ( _imageDeviceMemory == VK_NULL_HANDLE )

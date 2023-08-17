@@ -2,8 +2,7 @@
 #define PBR_AVERAGE_BRIGHTNESS_PASS_HPP
 
 
-#include "spd_12_mips_descriptor_set_layout.hpp"
-#include "spd_12_mips_program.hpp"
+#include "spd_program.hpp"
 #include <texture2D.hpp>
 
 
@@ -41,7 +40,7 @@ class AverageBrightnessPass final
         Memory                                  _globalCounterMemory {};
 
         std::unique_ptr<DescriptorSetLayout>    _layout {};
-        SPD12MipsProgram                        _program {};
+        std::unique_ptr<SPDProgram>             _program {};
 
         VkBuffer                                _transferBuffer = VK_NULL_HANDLE;
         Memory                                  _transferBufferMemory {};
@@ -84,7 +83,7 @@ class AverageBrightnessPass final
 
         [[nodiscard]] bool CreateMips ( android_vulkan::Renderer &renderer,
             VkDevice device,
-            VkExtent2D resolution
+            VkExtent2D mipResolution
         ) noexcept;
 
         [[nodiscard]] bool FreeTargetResources ( android_vulkan::Renderer &renderer, VkDevice device ) noexcept;

@@ -1,5 +1,12 @@
 #include <pbr/average_brightness_pass.hpp>
 #include <pbr/spd.inc>
+#include <pbr/spd_10_mips_descriptor_set_layout.hpp>
+#include <pbr/spd_10_mips_program.hpp>
+#include <pbr/spd_11_mips_descriptor_set_layout.hpp>
+#include <pbr/spd_11_mips_program.hpp>
+#include <pbr/spd_12_mips_descriptor_set_layout.hpp>
+#include <pbr/spd_12_mips_program.hpp>
+#include <av_assert.hpp>
 #include <vulkan_utils.hpp>
 
 
@@ -48,6 +55,8 @@ void AverageBrightnessPass::Destroy ( android_vulkan::Renderer &renderer ) noexc
         AV_UNREGISTER_DEVICE_MEMORY ( "pbr::AverageBrightnessPass::_globalCounterMemory" )
     }
 
+    [[maybe_unused]] bool const status = FreeTargetResources ( renderer, device );
+
     if ( _descriptorPool != VK_NULL_HANDLE )
     {
         vkDestroyDescriptorPool ( device, _descriptorPool, nullptr );
@@ -55,7 +64,6 @@ void AverageBrightnessPass::Destroy ( android_vulkan::Renderer &renderer ) noexc
         AV_UNREGISTER_DESCRIPTOR_POOL ( "pbr::AverageBrightnessPass::_descriptorPool" )
     }
 
-    [[maybe_unused]] bool const status = FreeTargetResources ( renderer, device );
     FreeTransferBuffer ( renderer, device );
 }
 
@@ -68,12 +76,38 @@ bool AverageBrightnessPass::SetTarget ( android_vulkan::Renderer &renderer,
     if ( !FreeTargetResources ( renderer, device ) )
         return false;
 
-    VkExtent2D resolution = hdrImage.GetResolution ();
-    SPD12MipsProgram::SpecializationInfo specData {};
-    SPD12MipsProgram::GetMetaInfo ( _dispatch, specData, resolution );
+    VkExtent2D mipResolution;
+    SPDProgram::SpecializationInfo specData {};
+    SPDProgram::GetMetaInfo ( _dispatch, mipResolution, specData, hdrImage.GetResolution () );
 
-    return _program.Init ( renderer, &specData ) &&
-        CreateMips ( renderer, device, resolution ) &&
+    _mipCount = static_cast<uint32_t> ( android_vulkan::Texture2D::CountMipLevels ( mipResolution ) );
+
+    switch ( _mipCount )
+    {
+        case 11U:
+            _layout = std::make_unique<SPD12MipsDescriptorSetLayout> ();
+            _program = std::make_unique<SPD12MipsProgram> ();
+        break;
+
+        case 10U:
+            _layout = std::make_unique<SPD11MipsDescriptorSetLayout> ();
+            _program = std::make_unique<SPD11MipsProgram> ();
+        break;
+
+        case 9U:
+            _layout = std::make_unique<SPD10MipsDescriptorSetLayout> ();
+            _program = std::make_unique<SPD10MipsProgram> ();
+        break;
+
+        default:
+            android_vulkan::LogError ( "pbr::AverageBrightnessPass::SetTarget - Unexpected mip count %u.", _mipCount );
+            AV_ASSERT ( false )
+        return false;
+    }
+
+    return _layout->Init ( device ) &&
+        _program->Init ( renderer, &specData ) &&
+        CreateMips ( renderer, device, mipResolution ) &&
         BindTargetToDescriptorSet ( device, hdrImage );
 }
 
@@ -120,7 +154,7 @@ bool AverageBrightnessPass::CreateDescriptorSet ( VkDevice device ) noexcept
     {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
         .pNext = nullptr,
-        .flags = 0U,
+        .flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
         .maxSets = 1U,
         .poolSizeCount = static_cast<uint32_t> ( std::size ( poolSizes ) ),
         .pPoolSizes = poolSizes
@@ -464,31 +498,9 @@ bool AverageBrightnessPass::BindTargetToDescriptorSet ( VkDevice device,
 
 bool AverageBrightnessPass::CreateMips ( android_vulkan::Renderer &renderer,
     VkDevice device,
-    VkExtent2D resolution
+    VkExtent2D mipResolution
 ) noexcept
 {
-    // The most detailed mip is 2 times smaller than original image.
-    VkExtent2D const r
-    {
-        .width = resolution.width >> 1U,
-        .height = resolution.height >> 1U,
-    };
-
-    _mipCount = static_cast<uint32_t> ( android_vulkan::Texture2D::CountMipLevels ( r ) );
-
-    switch ( _mipCount )
-    {
-        case 10U:
-            _layout = std::make_unique<SPD12MipsDescriptorSetLayout> ();
-        break;
-
-        default:
-        return false;
-    }
-
-    if ( !_layout->Init ( device ) )
-        return false;
-
     VkImageCreateInfo const imageInfo
     {
         .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
@@ -499,8 +511,8 @@ bool AverageBrightnessPass::CreateMips ( android_vulkan::Renderer &renderer,
 
         .extent
         {
-            .width = r.width,
-            .height = r.width,
+            .width = mipResolution.width,
+            .height = mipResolution.width,
             .depth = 1U
         },
 
@@ -651,6 +663,9 @@ bool AverageBrightnessPass::FreeTargetResources ( android_vulkan::Renderer &rend
 
     if ( _layout )
         _layout->Destroy ( device );
+
+    if ( _program )
+        _program->Destroy ( device );
 
     if ( _descriptorSet == VK_NULL_HANDLE )
         return true;

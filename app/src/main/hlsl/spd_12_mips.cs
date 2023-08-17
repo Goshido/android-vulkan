@@ -6,7 +6,7 @@
 // Mip 5 is using dedicated UAV. That's why it's needed to remove 2 elements.
 #define MIP_COUNT       10U
 
-#include "spd_common.cs"
+#include "spd_handle_mip_10.cs"
 
 
 [numthreads ( THREAD_X, THREAD_Y, THREAD_Z )]
@@ -42,5 +42,5 @@ void CS ( in uint32_t threadID: SV_GroupIndex, in uint32_t3 workGroupID: SV_Grou
     DownsampleMip9 ( base.x, base.y, workGroupID.xy, threadID );
 
     GroupMemoryBarrierWithGroupSync ();
-    DownsampleMip10 ( base.x, base.y, workGroupID.xy, threadID );
+    DownsampleMip10Last ( base.x, base.y, workGroupID.xy, threadID );
 }

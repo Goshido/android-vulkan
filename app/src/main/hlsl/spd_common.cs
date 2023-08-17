@@ -9,13 +9,27 @@
 #define THREAD_Y    1
 #define THREAD_Z    1
 
-struct Atomic
-{
-    uint32_t                                    _counter;
-};
 
 [[vk::constant_id ( CONST_WORKGROUP_COUNT )]]
 const uint32_t                                  g_WorkgroupCount = 256U;
+
+[[vk::constant_id ( CONST_MIP_5_W )]]
+const uint32_t                                  g_Mip5W = 32U;
+
+[[vk::constant_id ( CONST_MIP_5_H )]]
+const uint32_t                                  g_Mip5H = 14U;
+
+[[vk::constant_id ( CONST_MIP_6_W )]]
+const uint32_t                                  g_Mip6W = 16U;
+
+[[vk::constant_id ( CONST_MIP_6_H )]]
+const uint32_t                                  g_Mip6H = 7U;
+
+[[vk::constant_id ( CONST_MIP_7_W )]]
+const uint32_t                                  g_Mip7W = 8U;
+
+[[vk::constant_id ( CONST_MIP_7_H )]]
+const uint32_t                                  g_Mip7H = 3U;
 
 [[vk::binding ( BIND_HDR_IMAGE, SET_RESOURCE )]]
 Texture2D<float32_t4>                           g_HDRImage:             register ( t0 );
@@ -25,6 +39,11 @@ globallycoherent RWTexture2D<float32_t4>        g_SyncMip5:             register
 
 [[vk::binding ( BIND_MIPS, SET_RESOURCE )]]
 RWTexture2D<float32_t4>                         g_Mips[ MIP_COUNT ]:    register ( u2 );
+
+struct Atomic
+{
+    uint32_t                                    _counter;
+};
 
 [[vk::binding ( BIND_GLOBAL_ATOMIC, SET_RESOURCE )]]
 globallycoherent RWStructuredBuffer<Atomic>     g_GlobalAtomic:         register ( u3 );
@@ -40,13 +59,46 @@ float16_t Reduce4 ( in float16_t v0, in float16_t v1, in float16_t v2, in float1
     return ( alpha.x + alpha.y ) * 0.25H;
 }
 
-float16_t ReduceLoad4 ( in uint32_t2 base )
+float16_t ReduceStrict4 ( in float16_t v0, in float16_t v1, in float16_t v2, in float16_t v3, in float16_t w )
 {
+    const float16_t2 alpha = float16_t2 ( v0, v1 ) + float16_t2 ( v2, v3 );
+    return ( alpha.x + alpha.y ) * w;
+}
+
+float16_t ReduceStrictLoad4 ( in uint32_t2 base )
+{
+    const uint32_t2 m = base + 1U;
+    uint16_t counter = 0U;
+
     const float16_t v0 = (float16_t)g_SyncMip5[ base ].x;
-    const float16_t v1 = (float16_t)g_SyncMip5[ base + uint32_t2 ( 0U, 1U ) ].x;
-    const float16_t v2 = (float16_t)g_SyncMip5[ base + uint32_t2 ( 1U, 0U ) ].x;
-    const float16_t v3 = (float16_t)g_SyncMip5[ base + uint32_t2 ( 1U, 1U ) ].x;
-    return Reduce4 ( v0, v1, v2, v3 );
+
+    float16_t v1 = 0.0H;
+
+    if ( m.y < g_Mip5H )
+    {
+        v1 = (float16_t)g_SyncMip5[ base + uint32_t2 ( 0U, 1U ) ].x;
+        ++counter;
+    }
+
+    float16_t v2 = 0.0H;
+
+    if ( m.x < g_Mip5W )
+    {
+        v2 = (float16_t)g_SyncMip5[ base + uint32_t2 ( 1U, 0U ) ].x;
+        ++counter;
+    }
+
+    float16_t v3 = 0.0H;
+
+    if ( all ( m < uint32_t2 ( g_Mip5W, g_Mip5H ) ) )
+    {
+        v3 = (float16_t)g_SyncMip5[ m ].x;
+        ++counter;
+    }
+
+    // Scale coeffient which depeds how many members existed.
+    static const float16_t weights[ 4U ] = { 1.0H, 0.5H, 3.33333e-1H, 0.25H };
+    return ReduceStrict4 ( v0, v1, v2, v3, weights[ counter ] );
 }
 
 float16_t ReduceLoadSourceImage ( in uint32_t2 base )
@@ -73,6 +125,14 @@ float16_t ReduceIntermediate ( in uint32_t2 i0, in uint32_t2 i1, in uint32_t2 i2
 void Store ( in uint32_t2 pix, in float16_t value, in uint32_t mip )
 {
     g_Mips[ mip ][ pix ] = (float32_t)value;
+}
+
+void StoreStrict ( in uint32_t2 pix, in float16_t value, in uint32_t mip, in uint32_t2 resolution )
+{
+    if ( all ( pix < resolution ) )
+    {
+        g_Mips[ mip ][ pix ] = (float32_t)value;
+    }
 }
 
 void StoreSync ( in uint32_t2 pix, in float16_t value )
@@ -301,53 +361,24 @@ void DownsampleMips67 ( in uint32_t x, in uint32_t y )
     // texBase = xy * 4U
     const uint32_t2 pixBase = xy + xy;
     const uint32_t2 texBase = pixBase + pixBase;
+    const uint32_t2 resolution = uint32_t2 ( g_Mip6W, g_Mip6H );
 
-    const float16_t v0 = ReduceLoad4 ( texBase );
+    const float16_t v0 = ReduceStrictLoad4 ( texBase );
+    StoreStrict ( pixBase, v0, 5U, resolution );
 
-    // TODO strict!
-    Store ( pixBase, v0, 5U );
+    const float16_t v1 = ReduceStrictLoad4 ( texBase + uint32_t2 ( 2U, 0U ) );
+    StoreStrict ( pixBase + uint32_t2 ( 1U, 0U ), v1, 5U, resolution );
 
-    const float16_t v1 = ReduceLoad4 ( texBase + uint32_t2 ( 2U, 0U ) );
-    Store ( pixBase + uint32_t2 ( 1U, 0U ), v1, 5U );
+    const float16_t v2 = ReduceStrictLoad4 ( texBase + uint32_t2 ( 0U, 2U ) );
+    StoreStrict ( pixBase + uint32_t2 ( 0U, 1U ), v2, 5U, resolution );
 
-    const float16_t v2 = ReduceLoad4 ( texBase + uint32_t2 ( 0U, 2U ) );
-    Store ( pixBase + uint32_t2 ( 0U, 1U ), v2, 5U );
-
-    const float16_t v3 = ReduceLoad4 ( texBase + uint32_t2 ( 2U, 2U ) );
-    Store ( pixBase + uint32_t2 ( 1U, 1U ), v3, 5U );
+    const float16_t v3 = ReduceStrictLoad4 ( texBase + uint32_t2 ( 2U, 2U ) );
+    StoreStrict ( pixBase + uint32_t2 ( 1U, 1U ), v3, 5U, resolution );
 
     // no barrier needed, working on values only from the same thread
     const float16_t v = Reduce4 ( v0, v1, v2, v3 );
-    Store ( xy, v, 6U );
+    StoreStrict ( xy, v, 6U, uint32_t2 ( g_Mip7W, g_Mip7H ) );
     StoreIntermediate ( x, y, v );
-}
-
-void DownsampleMip8 ( in uint32_t x, in uint32_t y, in uint32_t2 workGroupID, in uint32_t threadID )
-{
-    if ( threadID >= 64U )
-        return;
-
-    const uint32_t2 xy = uint32_t2 ( x, y );
-    const uint32_t2 base = xy + xy;
-
-    const float16_t v = ReduceIntermediate ( base,
-        base + uint32_t2 ( 1U, 0U ),
-        base + uint32_t2 ( 0U, 1U ),
-        base + uint32_t2 ( 1U, 1U )
-    );
-
-    // TODO strict!
-    Store ( workGroupID * 8U + xy, v, 7U );
-
-    // store to LDS, try to reduce bank conflicts
-    // x 0 x 0 x 0 x 0 x 0 x 0 x 0 x 0
-    // 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-    // 0 x 0 x 0 x 0 x 0 x 0 x 0 x 0 x
-    // 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-    // x 0 x 0 x 0 x 0 x 0 x 0 x 0 x 0
-    // ...
-    // x 0 x 0 x 0 x 0 x 0 x 0 x 0 x 0
-    StoreIntermediate ( base.x + y % 2U, base.y, v );
 }
 
 void DownsampleMip8Last ( in uint32_t x, in uint32_t y, in uint32_t2 workGroupID, in uint32_t threadID )
@@ -364,88 +395,7 @@ void DownsampleMip8Last ( in uint32_t x, in uint32_t y, in uint32_t2 workGroupID
         base + uint32_t2 ( 1U, 1U )
     );
 
-    // TODO strict!
-    Store ( workGroupID * 8U + xy, v, 7U );
-}
-
-void DownsampleMip9 ( in uint32_t x, in uint32_t y, in uint32_t2 workGroupID, in uint32_t threadID )
-{
-    if ( threadID >= 16U )
-        return;
-
-    const uint32_t2 xy = uint32_t2 ( x, y );
-    const uint32_t2 base = xy * 4U;
-
-    // x 0 x 0
-    // 0 0 0 0
-    // 0 x 0 x
-    // 0 0 0 0
-    const float16_t v = ReduceIntermediate ( base,
-        base + uint32_t2 ( 2U, 0U ),
-        base + uint32_t2 ( 1U, 2U ),
-        base + uint32_t2 ( 3U, 2U )
-    );
-
-    // TODO strict!
-    Store ( workGroupID.xy * 4U + xy, v, 8U );
-
-    // store to LDS
-    // x 0 0 0 x 0 0 0 x 0 0 0 x 0 0 0
-    // 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-    // 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-    // 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-    // 0 x 0 0 0 x 0 0 0 x 0 0 0 x 0 0
-    // ...
-    // 0 0 x 0 0 0 x 0 0 0 x 0 0 0 x 0
-    // ...
-    // 0 0 0 x 0 0 0 x 0 0 0 x 0 0 0 x
-    // ...
-    StoreIntermediate ( base.x + y, base.y, v );
-}
-
-void DownsampleMip9Last ( in uint32_t x, in uint32_t y, in uint32_t2 workGroupID, in uint32_t threadID )
-{
-    if ( threadID >= 16U )
-        return;
-
-    const uint32_t2 xy = uint32_t2 ( x, y );
-    const uint32_t2 base = xy * 4U;
-
-    // x 0 x 0
-    // 0 0 0 0
-    // 0 x 0 x
-    // 0 0 0 0
-    const float16_t v = ReduceIntermediate ( base,
-        base + uint32_t2 ( 2U, 0U ),
-        base + uint32_t2 ( 1U, 2U ),
-        base + uint32_t2 ( 3U, 2U )
-    );
-
-    // TODO strict!
-    Store ( workGroupID.xy * 4U + xy, v, 8U );
-}
-
-void DownsampleMip10 ( in uint32_t x, in uint32_t y, in uint32_t2 workGroupID, in uint32_t threadID )
-{
-    if ( threadID >= 4U )
-        return;
-
-    const uint32_t2 xy = uint32_t2 ( x, y );
-    const uint32_t yy = y + y;
-    uint32_t2 alpha = xy * 8U;
-    alpha.x += yy;
-
-    // x 0 0 0 x 0 0 0
-    // ...
-    // 0 x 0 0 0 x 0 0
-    const float16_t v = ReduceIntermediate ( alpha,
-        alpha + uint32_t2 ( 4U, 0U ),
-        alpha + uint32_t2 ( 1U, 4U ),
-        alpha + uint32_t2 ( 5U, 4U )
-    );
-
-    // TODO strict!
-    Store ( workGroupID.xy + workGroupID.xy + xy, v, 9U );
+    StoreStrict ( workGroupID * 8U + xy, v, 7U, uint32_t2 ( 1U, 1U ) );
 }
 
 

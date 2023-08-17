@@ -7,7 +7,7 @@
 
 namespace pbr {
 
-class [[maybe_unused]] SPD11MipsDescriptorSetLayout final : public DescriptorSetLayout
+class SPD11MipsDescriptorSetLayout final : public DescriptorSetLayout
 {
     public:
         SPD11MipsDescriptorSetLayout () = default;

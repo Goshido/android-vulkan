@@ -1,12 +1,12 @@
 #include <pbr/spd_10_mips_descriptor_set_layout.hpp>
-#include <pbr/spd_mip_descriptor_set_layout.hpp>
+#include <pbr/spd_descriptor_set_layout.hpp>
 
 
 namespace pbr {
 
 namespace {
 
-SPDMipDescriptorSetLayout g_descriptorSetLayout ( 8U );
+SPDDescriptorSetLayout g_descriptorSetLayout ( 8U );
 
 } // end of anonymous namespace
 

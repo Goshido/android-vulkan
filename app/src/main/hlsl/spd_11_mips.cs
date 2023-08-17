@@ -6,7 +6,7 @@
 // Mip 5 is using dedicated UAV. That's why it's needed to remove 2 elements.
 #define MIP_COUNT       9U
 
-#include "spd_common.cs"
+#include "spd_handle_mip_9.cs"
 
 
 [numthreads ( THREAD_X, THREAD_Y, THREAD_Z )]

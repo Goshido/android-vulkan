@@ -1,24 +1,14 @@
-#ifndef PBR_SPD_MIP12_PROGRAM_HPP
-#define PBR_SPD_MIP12_PROGRAM_HPP
+#ifndef PBR_SPD_12_MIPS_PROGRAM_HPP
+#define PBR_SPD_12_MIPS_PROGRAM_HPP
 
 
-#include "compute_program.hpp"
-#include "spd_12_mips_descriptor_set_layout.hpp"
+#include "spd_program.hpp"
 
 
 namespace pbr {
 
-class SPD12MipsProgram final : public ComputeProgram
+class SPD12MipsProgram final : public SPDProgram
 {
-    public:
-        struct SpecializationInfo final
-        {
-            [[maybe_unused]] uint32_t           _workgroupCount;
-        };
-
-    private:
-        SPD12MipsDescriptorSetLayout            _layout {};
-
     public:
         explicit SPD12MipsProgram () noexcept;
 
@@ -29,32 +19,9 @@ class SPD12MipsProgram final : public ComputeProgram
         SPD12MipsProgram &operator = ( SPD12MipsProgram && ) = delete;
 
         ~SPD12MipsProgram () override = default;
-
-        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
-            SpecializationData specializationData
-        ) noexcept override;
-
-        void Destroy ( VkDevice device ) noexcept override;
-
-        void SetDescriptorSet ( VkCommandBuffer commandBuffer, VkDescriptorSet set ) const noexcept;
-
-        static void GetMetaInfo ( VkExtent3D &dispatch,
-            SpecializationInfo &specializationInfo,
-            VkExtent2D const &imageResolution
-        ) noexcept;
-
-    private:
-        void DestroyShaderModule ( VkDevice device ) noexcept override;
-        [[nodiscard]] bool InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept override;
-
-        [[nodiscard]] bool InitShaderInfo ( android_vulkan::Renderer &renderer,
-            SpecializationData specializationData,
-            VkSpecializationInfo* specializationInfo,
-            VkPipelineShaderStageCreateInfo &targetInfo
-        ) noexcept override;
 };
 
 } // namespace pbr
 
 
-#endif // PBR_SPD_MIP12_PROGRAM_HPP
+#endif // PBR_SPD_12_MIPS_PROGRAM_HPP

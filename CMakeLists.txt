@@ -171,10 +171,13 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/sound_emitter_global_component.cpp
     app/src/main/cpp/sources/pbr/sound_emitter_spatial_component.cpp
     app/src/main/cpp/sources/pbr/spd_10_mips_descriptor_set_layout.cpp
+    app/src/main/cpp/sources/pbr/spd_10_mips_program.cpp
     app/src/main/cpp/sources/pbr/spd_11_mips_descriptor_set_layout.cpp
+    app/src/main/cpp/sources/pbr/spd_11_mips_program.cpp
     app/src/main/cpp/sources/pbr/spd_12_mips_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/spd_12_mips_program.cpp
-    app/src/main/cpp/sources/pbr/spd_mip_descriptor_set_layout.cpp
+    app/src/main/cpp/sources/pbr/spd_descriptor_set_layout.cpp
+    app/src/main/cpp/sources/pbr/spd_program.cpp
     app/src/main/cpp/sources/pbr/src_property_checker.cpp
     app/src/main/cpp/sources/pbr/static_mesh_component.cpp
     app/src/main/cpp/sources/pbr/stipple_material.cpp

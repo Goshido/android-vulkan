@@ -1,17 +1,17 @@
 #include <pbr/spd.inc>
-#include <pbr/spd_mip_descriptor_set_layout.hpp>
+#include <pbr/spd_descriptor_set_layout.hpp>
 #include <vulkan_utils.hpp>
 
 
 namespace pbr {
 
-SPDMipDescriptorSetLayout::SPDMipDescriptorSetLayout ( uint32_t relaxedMipViews ) noexcept:
+SPDDescriptorSetLayout::SPDDescriptorSetLayout ( uint32_t relaxedMipViews ) noexcept:
     _relaxedMipViews ( relaxedMipViews )
 {
     // NOTHING
 }
 
-void SPDMipDescriptorSetLayout::Destroy ( VkDevice device ) noexcept
+void SPDDescriptorSetLayout::Destroy ( VkDevice device ) noexcept
 {
     if ( !_references )
         return;
@@ -29,7 +29,7 @@ void SPDMipDescriptorSetLayout::Destroy ( VkDevice device ) noexcept
     )
 }
 
-bool SPDMipDescriptorSetLayout::Init ( VkDevice device ) noexcept
+bool SPDDescriptorSetLayout::Init ( VkDevice device ) noexcept
 {
     if ( _references )
     {

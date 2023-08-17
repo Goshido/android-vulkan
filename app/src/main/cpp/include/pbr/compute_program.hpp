@@ -48,7 +48,7 @@ class ComputeProgram
         void Bind ( VkCommandBuffer commandBuffer ) const noexcept;
 
     protected:
-        explicit ComputeProgram ( std::string_view &&name ) noexcept;
+        explicit ComputeProgram ( std::string_view name ) noexcept;
         virtual ~ComputeProgram () = default;
 
         virtual void DestroyShaderModule ( VkDevice device ) noexcept = 0;

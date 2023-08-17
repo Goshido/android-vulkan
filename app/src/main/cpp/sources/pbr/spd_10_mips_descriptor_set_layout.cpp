@@ -1,4 +1,4 @@
-#include <pbr/spd_12_mips_descriptor_set_layout.hpp>
+#include <pbr/spd_10_mips_descriptor_set_layout.hpp>
 #include <pbr/spd_mip_descriptor_set_layout.hpp>
 
 
@@ -6,23 +6,23 @@ namespace pbr {
 
 namespace {
 
-SPDMipDescriptorSetLayout g_descriptorSetLayout ( 10U );
+SPDMipDescriptorSetLayout g_descriptorSetLayout ( 8U );
 
 } // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 
-void SPD12MipsDescriptorSetLayout::Destroy ( VkDevice device ) noexcept
+void SPD10MipsDescriptorSetLayout::Destroy ( VkDevice device ) noexcept
 {
     g_descriptorSetLayout.Destroy ( device );
 }
 
-bool SPD12MipsDescriptorSetLayout::Init ( VkDevice device ) noexcept
+bool SPD10MipsDescriptorSetLayout::Init ( VkDevice device ) noexcept
 {
     return g_descriptorSetLayout.Init ( device );
 }
 
-VkDescriptorSetLayout SPD12MipsDescriptorSetLayout::GetLayout () const noexcept
+VkDescriptorSetLayout SPD10MipsDescriptorSetLayout::GetLayout () const noexcept
 {
     return g_descriptorSetLayout._layout;
 }

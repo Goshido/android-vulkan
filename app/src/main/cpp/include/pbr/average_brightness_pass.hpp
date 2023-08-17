@@ -22,7 +22,7 @@ class AverageBrightnessPass final
 
         // Max detailed mip is not used and skipped.
         // Mip 5 uses dedicated view because of internal sync operation.
-        constexpr static size_t MAX_VIEWS = MAX_MIPS - 2U;
+        constexpr static size_t MAX_RELAXED_VIEWS = MAX_MIPS - 2U;
 
     private:
         VkCommandBuffer                         _commandBuffer = VK_NULL_HANDLE;
@@ -34,7 +34,7 @@ class AverageBrightnessPass final
         VkImage                                 _mips = VK_NULL_HANDLE;
         Memory                                  _mipsMemory {};
         uint32_t                                _mipCount = 0U;
-        VkImageView                             _mipViews[ MAX_VIEWS ];
+        VkImageView                             _mipViews[ MAX_RELAXED_VIEWS ];
         VkImageView                             _syncMip5 = VK_NULL_HANDLE;
 
         VkBuffer                                _globalCounter = VK_NULL_HANDLE;
@@ -67,7 +67,7 @@ class AverageBrightnessPass final
         ) noexcept;
 
         // This method makes sure that target resolution will be compatible with internal implementation.
-        // Hint: Resolution should be multiple of 64 pixels and not bigger that 2048.
+        // Hint: Resolution should be multiple of 64 pixels, not less than 512 and not bigger that 2048.
         [[nodiscard]] static VkExtent2D AdjustResolution ( VkExtent2D const &desiredResolution ) noexcept;
 
     private:
@@ -87,6 +87,7 @@ class AverageBrightnessPass final
             VkExtent2D resolution
         ) noexcept;
 
+        [[nodiscard]] bool FreeTargetResources ( android_vulkan::Renderer &renderer, VkDevice device ) noexcept;
         void FreeTransferBuffer ( android_vulkan::Renderer &renderer, VkDevice device ) noexcept;
 };
 

@@ -70,7 +70,7 @@ class AverageBrightnessPass final
         [[nodiscard]] static VkExtent2D AdjustResolution ( VkExtent2D const &desiredResolution ) noexcept;
 
     private:
-        [[nodiscard]] bool CreateDescriptorSet ( VkDevice device ) noexcept;
+        [[nodiscard]] bool CreateDescriptorPool ( VkDevice device ) noexcept;
 
         [[nodiscard]] bool CreateGlobalCounter ( android_vulkan::Renderer &renderer,
             VkDevice device,
@@ -86,8 +86,14 @@ class AverageBrightnessPass final
             VkExtent2D mipResolution
         ) noexcept;
 
-        [[nodiscard]] bool FreeTargetResources ( android_vulkan::Renderer &renderer, VkDevice device ) noexcept;
+        void FreeTargetResources ( android_vulkan::Renderer &renderer, VkDevice device ) noexcept;
         void FreeTransferBuffer ( android_vulkan::Renderer &renderer, VkDevice device ) noexcept;
+
+        [[nodiscard]] bool UpdateMipCount ( android_vulkan::Renderer &renderer,
+            VkDevice device,
+            uint32_t mipCount,
+            SPDProgram::SpecializationInfo const &specInfo
+        ) noexcept;
 };
 
 } // namespace pbr

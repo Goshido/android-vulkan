@@ -3,7 +3,7 @@
 ## <a id="table-of-content">Table of content</a>
 
 - [_Brief_](#brief)
-- [_Optimizations for average brighness calculation_](#average-brightness-optimizations)
+- [_Optimizations for average brightness calculation_](#average-brightness-optimizations)
 - [_Stock implementation patterns_](#stock-patterns)
   - [_Mip 0_](#mip-0)
     - [_Thread mapping pattern_](#mip-0-thread-mappings)
@@ -57,7 +57,7 @@ To reduce big amount of branching it's resonable to have several modifications o
 
 Last mip level pass does not need to write into shared memory.
 
-For brighness computation it's possible to convert image to luma using [_BT.601_](https://en.wikipedia.org/wiki/Luma_(video)#Rec._601_luma_versus_Rec._709_luma_coefficients) at generation of internal mip 0. This allows to use `float16_t` instead of `float16_t4` for shared memory. This also allows to use `VK_FORMAT_R16_SFLOAT` format for final image.
+For brightness computation it's possible to convert image to luma using [_BT.601_](https://en.wikipedia.org/wiki/Luma_(video)#Rec._601_luma_versus_Rec._709_luma_coefficients) at generation of internal mip 0. This allows to use `float16_t` instead of `float16_t4` for shared memory. This also allows to use `VK_FORMAT_R16_SFLOAT` format for final image.
 
 [↬ table of content ⇧](#table-of-content)
 

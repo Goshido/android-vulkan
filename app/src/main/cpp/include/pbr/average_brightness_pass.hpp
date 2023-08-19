@@ -66,7 +66,7 @@ class AverageBrightnessPass final
         ) noexcept;
 
         // This method makes sure that target resolution will be compatible with internal implementation.
-        // Hint: Resolution should be multiple of 64 pixels, not less than 512 and not bigger that 2048.
+        // Hint: Resolution should be multiple of 64 pixels, not less than 512 and not bigger that 4095.
         [[nodiscard]] static VkExtent2D AdjustResolution ( VkExtent2D const &desiredResolution ) noexcept;
 
     private:

@@ -1,5 +1,4 @@
-// It's modified AMD SPD algorithm.
-// See https://gpuopen.com/fidelityfx-spd/
+// See <repo/docs/spd-algorithm.md>
 
 // Note: The most detailed mip is skipped.
 // Luma values are calculated inplace from HDR image during calculation of first mip level.

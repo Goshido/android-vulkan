@@ -95,7 +95,7 @@ VkExtent2D AverageBrightnessPass::AdjustResolution ( VkExtent2D const &desiredRe
         constexpr uint32_t roundUP = ( 1U << blockSize64Shift ) - 1U;
 
         return std::max ( 512U,
-            std::min ( 2048U, std::max ( 1U, ( size + roundUP ) >> blockSize64Shift ) << blockSize64Shift )
+            std::min ( 4095U, std::max ( 1U, ( size + roundUP ) >> blockSize64Shift ) << blockSize64Shift )
         );
     };
 

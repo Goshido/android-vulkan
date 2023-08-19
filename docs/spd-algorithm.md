@@ -45,7 +45,7 @@ Original implementation is universal. Because of that there are a lot of branchi
 
 [↬ table of content ⇧](#table-of-content)
 
-## <a id="average-brightness-optimizations">Optimizations for average brighness calculation</a>
+## <a id="average-brightness-optimizations">Optimizations for average brightness calculation</a>
 
 Square and non power of two limitations could be resolved. This requires to modify compute shader. First it's resonable to add requirement for input image to be multiple of 64 pixels. This allows to avoid bound checking up to internal mip 5. For internal mip level greater that 5 it's needed to do bound checking before writing to mip images.
 

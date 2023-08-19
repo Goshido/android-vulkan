@@ -168,8 +168,6 @@ For brightness computation it's possible to convert image to luma using [_BT.601
 [06 04] [07 04] [06 05] [07 05] [06 06] [07 06] [06 07] [07 07]
 ```
 
-Each thread computes and stores 4 average values from 2x2 original pixels.
-
 #### <a id="mip-2-shared-memory">Shared memory status</a>
 
 ```txt

@@ -197,6 +197,7 @@ bool ExitWorkgroup ( in uint32_t threadID )
 
 void DownsampleMips01 ( in uint32_t x, in uint32_t y, in uint32_t2 workGroupID, in uint32_t threadID )
 {
+    // See <repo>/docs/spd-algorithm.md#mip-0
     float16_t v[ 4U ];
 
     const uint32_t2 xy = uint32_t2 ( x, y );
@@ -217,6 +218,8 @@ void DownsampleMips01 ( in uint32_t x, in uint32_t y, in uint32_t2 workGroupID, 
 
     const uint32_t2 alpha = xy + xy;
     const uint32_t2 betta = workGroupID * 16U + xy;
+
+    // See <repo>/docs/spd-algorithm.md#mip-1
 
     [unroll]
     for ( uint32_t i = 0U; i < 4U; ++i )
@@ -248,6 +251,7 @@ void DownsampleMips01 ( in uint32_t x, in uint32_t y, in uint32_t2 workGroupID, 
     StoreIntermediate ( gamma.x, gamma.y, v[ 3U ] );
 }
 
+// See <repo>/docs/spd-algorithm.md#mip-2
 void DownsampleMip2 ( in uint32_t x, in uint32_t y, in uint32_t2 workGroupID, in uint32_t threadID )
 {
     if ( threadID >= 64U )
@@ -263,18 +267,10 @@ void DownsampleMip2 ( in uint32_t x, in uint32_t y, in uint32_t2 workGroupID, in
     );
 
     Store ( workGroupID * 8U + xy, v, 2U );
-
-    // store to LDS, try to reduce bank conflicts
-    // x 0 x 0 x 0 x 0 x 0 x 0 x 0 x 0
-    // 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-    // 0 x 0 x 0 x 0 x 0 x 0 x 0 x 0 x
-    // 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-    // x 0 x 0 x 0 x 0 x 0 x 0 x 0 x 0
-    // ...
-    // x 0 x 0 x 0 x 0 x 0 x 0 x 0 x 0
     StoreIntermediate ( base.x + y % 2U, base.y, v );
 }
 
+// See <repo>/docs/spd-algorithm.md#mip-3
 void DownsampleMip3 ( in uint32_t x, in uint32_t y, in uint32_t2 workGroupID, in uint32_t threadID )
 {
     if ( threadID >= 16U )
@@ -283,10 +279,6 @@ void DownsampleMip3 ( in uint32_t x, in uint32_t y, in uint32_t2 workGroupID, in
     const uint32_t2 xy = uint32_t2 ( x, y );
     const uint32_t2 base = xy * 4U;
 
-    // x 0 x 0
-    // 0 0 0 0
-    // 0 x 0 x
-    // 0 0 0 0
     const float16_t v = ReduceIntermediate ( base,
         base + uint32_t2 ( 2U, 0U ),
         base + uint32_t2 ( 1U, 2U ),
@@ -294,21 +286,10 @@ void DownsampleMip3 ( in uint32_t x, in uint32_t y, in uint32_t2 workGroupID, in
     );
 
     Store ( workGroupID.xy * 4U + xy, v, 3U );
-
-    // store to LDS
-    // x 0 0 0 x 0 0 0 x 0 0 0 x 0 0 0
-    // 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-    // 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-    // 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-    // 0 x 0 0 0 x 0 0 0 x 0 0 0 x 0 0
-    // ...
-    // 0 0 x 0 0 0 x 0 0 0 x 0 0 0 x 0
-    // ...
-    // 0 0 0 x 0 0 0 x 0 0 0 x 0 0 0 x
-    // ...
     StoreIntermediate ( base.x + y, base.y, v );
 }
 
+// See <repo>/docs/spd-algorithm.md#mip-4
 void DownsampleMip4 ( in uint32_t x, in uint32_t y, in uint32_t2 workGroupID, in uint32_t threadID )
 {
     if ( threadID >= 4U )
@@ -319,9 +300,6 @@ void DownsampleMip4 ( in uint32_t x, in uint32_t y, in uint32_t2 workGroupID, in
     uint32_t2 alpha = xy * 8U;
     alpha.x += yy;
 
-    // x 0 0 0 x 0 0 0
-    // ...
-    // 0 x 0 0 0 x 0 0
     const float16_t v = ReduceIntermediate ( alpha,
         alpha + uint32_t2 ( 4U, 0U ),
         alpha + uint32_t2 ( 1U, 4U ),
@@ -329,20 +307,15 @@ void DownsampleMip4 ( in uint32_t x, in uint32_t y, in uint32_t2 workGroupID, in
     );
 
     Store ( workGroupID.xy + workGroupID.xy + xy, v, 4U );
-
-    // store to LDS
-    // x x x x 0 ...
-    // 0 ...
     StoreIntermediate ( x + yy, 0U, v );
 }
 
+// See <repo>/docs/spd-algorithm.md#mip-5
 void DownsampleMip5 ( in uint32_t2 workGroupID, in uint32_t threadID )
 {
     if ( threadID >= 1U )
         return;
 
-    // x x x x 0 ...
-    // 0 ...
     const float16_t v = ReduceIntermediate ( (uint32_t2)0U,
         uint32_t2 ( 1U, 0U ),
         uint32_t2 ( 2U, 0U ),
@@ -381,6 +354,7 @@ void DownsampleMips67 ( in uint32_t x, in uint32_t y )
     StoreIntermediate ( x, y, v );
 }
 
+// See <repo>/docs/spd-algorithm.md#mip-2
 void DownsampleMip8Last ( in uint32_t x, in uint32_t y, in uint32_t2 workGroupID, in uint32_t threadID )
 {
     if ( threadID >= 64U )

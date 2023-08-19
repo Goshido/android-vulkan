@@ -13,6 +13,7 @@ const uint32_t      g_Mip9H = 1U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
+// See <repo>/docs/spd-algorithm.md#mip-3
 void DownsampleMip9 ( in uint32_t x, in uint32_t y, in uint32_t2 workGroupID, in uint32_t threadID )
 {
     if ( threadID >= 16U )
@@ -21,10 +22,6 @@ void DownsampleMip9 ( in uint32_t x, in uint32_t y, in uint32_t2 workGroupID, in
     const uint32_t2 xy = uint32_t2 ( x, y );
     const uint32_t2 base = xy * 4U;
 
-    // x 0 x 0
-    // 0 0 0 0
-    // 0 x 0 x
-    // 0 0 0 0
     const float16_t v = ReduceIntermediate ( base,
         base + uint32_t2 ( 2U, 0U ),
         base + uint32_t2 ( 1U, 2U ),
@@ -32,21 +29,10 @@ void DownsampleMip9 ( in uint32_t x, in uint32_t y, in uint32_t2 workGroupID, in
     );
 
     StoreStrict ( workGroupID.xy * 4U + xy, v, 8U, uint32_t2 ( g_Mip9W, g_Mip9H ) );
-
-    // store to LDS
-    // x 0 0 0 x 0 0 0 x 0 0 0 x 0 0 0
-    // 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-    // 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-    // 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-    // 0 x 0 0 0 x 0 0 0 x 0 0 0 x 0 0
-    // ...
-    // 0 0 x 0 0 0 x 0 0 0 x 0 0 0 x 0
-    // ...
-    // 0 0 0 x 0 0 0 x 0 0 0 x 0 0 0 x
-    // ...
     StoreIntermediate ( base.x + y, base.y, v );
 }
 
+// See <repo>/docs/spd-algorithm.md#mip-4
 void DownsampleMip10Last ( in uint32_t x, in uint32_t y, in uint32_t2 workGroupID, in uint32_t threadID )
 {
     if ( threadID >= 4U )
@@ -57,9 +43,6 @@ void DownsampleMip10Last ( in uint32_t x, in uint32_t y, in uint32_t2 workGroupI
     uint32_t2 alpha = xy * 8U;
     alpha.x += yy;
 
-    // x 0 0 0 x 0 0 0
-    // ...
-    // 0 x 0 0 0 x 0 0
     const float16_t v = ReduceIntermediate ( alpha,
         alpha + uint32_t2 ( 4U, 0U ),
         alpha + uint32_t2 ( 1U, 4U ),

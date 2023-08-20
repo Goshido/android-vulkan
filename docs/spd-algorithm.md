@@ -32,8 +32,8 @@ To syncronize whole process algorithm uses:
 
 - shared memory
 - [`GroupMemoryBarrierWithGroupSync` barriers](https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/groupmemorybarrierwithgroupsync)
-- special _UAV_ view for image's internal mip 5
-- global atomic counter in _VRAM_
+- special _UAV_ view for image's internal mip 5 which has [`globallycoherent`](https://microsoft.github.io/DirectX-Specs/d3d/archive/D3D11_3_FunctionalSpec.htm#7.14.4%20Global%20vs%20Group/Local%20Coherency%20on%20Non-Atomic%20UAV%20Reads) specifier
+- global atomic counter in _VRAM_ with [`globallycoherent`](https://microsoft.github.io/DirectX-Specs/d3d/archive/D3D11_3_FunctionalSpec.htm#7.14.4%20Global%20vs%20Group/Local%20Coherency%20on%20Non-Atomic%20UAV%20Reads) specifier
 
 Limitations for _Vulkan_:
 

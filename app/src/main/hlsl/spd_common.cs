@@ -51,6 +51,9 @@ globallycoherent RWStructuredBuffer<Atomic>     g_GlobalAtomic:         register
 groupshared float16_t                           s_Luma[ 16U ][ 16U ];
 groupshared uint32_t                            s_Counter;
 
+// Scale coeffient which depeds how many members existed.
+static const float16_t WEIGHTS[ 4U ] = { 1.0H, 0.5H, 3.33333e-1H, 0.25H };
+
 //----------------------------------------------------------------------------------------------------------------------
 
 float16_t Reduce4 ( in float16_t v0, in float16_t v1, in float16_t v2, in float16_t v3 )
@@ -74,17 +77,17 @@ float16_t ReduceStrictLoad4 ( in uint32_t2 base )
 
     float16_t v1 = 0.0H;
 
-    if ( m.y < g_Mip5H )
+    if ( m.x < g_Mip5W )
     {
-        v1 = (float16_t)g_SyncMip5[ base + uint32_t2 ( 0U, 1U ) ].x;
+        v1 = (float16_t)g_SyncMip5[ base + uint32_t2 ( 1U, 0U ) ].x;
         ++counter;
     }
 
     float16_t v2 = 0.0H;
 
-    if ( m.x < g_Mip5W )
+    if ( m.y < g_Mip5H )
     {
-        v2 = (float16_t)g_SyncMip5[ base + uint32_t2 ( 1U, 0U ) ].x;
+        v2 = (float16_t)g_SyncMip5[ base + uint32_t2 ( 0U, 1U ) ].x;
         ++counter;
     }
 
@@ -96,9 +99,7 @@ float16_t ReduceStrictLoad4 ( in uint32_t2 base )
         ++counter;
     }
 
-    // Scale coeffient which depeds how many members existed.
-    static const float16_t weights[ 4U ] = { 1.0H, 0.5H, 3.33333e-1H, 0.25H };
-    return ReduceStrict4 ( v0, v1, v2, v3, weights[ counter ] );
+    return ReduceStrict4 ( v0, v1, v2, v3, WEIGHTS[ counter ] );
 }
 
 float16_t ReduceLoadSourceImage ( in uint32_t2 base )
@@ -120,6 +121,46 @@ float16_t ReduceIntermediate ( in uint32_t2 i0, in uint32_t2 i1, in uint32_t2 i2
     const float16_t v2 = s_Luma[ i2.x ][ i2.y ];
     const float16_t v3 = s_Luma[ i3.x ][ i3.y ];
     return Reduce4 ( v0, v1, v2, v3 );
+}
+
+float16_t ReduceIntermediateStrict ( in uint32_t2 base,
+    in uint32_t2 resolution,
+    in uint32_t2 i0,
+    in uint32_t2 i1,
+    in uint32_t2 i2,
+    in uint32_t2 i3
+)
+{
+    const uint32_t2 m = base + 1U;
+    uint16_t counter = 0U;
+
+    const float16_t v0 = s_Luma[ i0.x ][ i0.y ];
+
+    float16_t v1 = 0.0H;
+
+    if ( m.x < resolution.x )
+    {
+        v1 = s_Luma[ i1.x ][ i1.y ];
+        ++counter;
+    }
+
+    float16_t v2 = 0.0H;
+
+    if ( m.y < resolution.y )
+    {
+        v2 = s_Luma[ i2.x ][ i2.y ];
+        ++counter;
+    }
+
+    float16_t v3 = 0.0H;
+
+    if ( all ( m < resolution ) )
+    {
+        v3 = s_Luma[ i3.x ][ i3.y ];
+        ++counter;
+    }
+
+    return ReduceStrict4 ( v0, v1, v2, v3, WEIGHTS[ counter ] );
 }
 
 void Store ( in uint32_t2 pix, in float16_t value, in uint32_t mip )
@@ -355,7 +396,7 @@ void DownsampleMips67 ( in uint32_t x, in uint32_t y )
 }
 
 // See <repo>/docs/spd-algorithm.md#mip-2
-void DownsampleMip8Last ( in uint32_t x, in uint32_t y, in uint32_t2 workGroupID, in uint32_t threadID )
+void DownsampleMip8Last ( in uint32_t x, in uint32_t y, in uint32_t threadID )
 {
     if ( threadID >= 64U )
         return;
@@ -363,13 +404,15 @@ void DownsampleMip8Last ( in uint32_t x, in uint32_t y, in uint32_t2 workGroupID
     const uint32_t2 xy = uint32_t2 ( x, y );
     const uint32_t2 base = xy + xy;
 
-    const float16_t v = ReduceIntermediate ( base,
+    const float16_t v = ReduceIntermediateStrict ( base,
+        uint32_t2 ( g_Mip7W, g_Mip7H ),
+        base,
         base + uint32_t2 ( 1U, 0U ),
         base + uint32_t2 ( 0U, 1U ),
         base + uint32_t2 ( 1U, 1U )
     );
 
-    StoreStrict ( workGroupID * 8U + xy, v, 7U, uint32_t2 ( 1U, 1U ) );
+    StoreStrict ( xy, v, 7U, uint32_t2 ( 1U, 1U ) );
 }
 
 

@@ -20,6 +20,45 @@ constexpr uint32_t REJECT_SYNC_MIP_5 = 1U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
+void AverageBrightnessPass::Execute ( VkCommandBuffer commandBuffer ) noexcept
+{
+    if ( _isNeedTransitLayout )
+    {
+        TransitAllMips ( commandBuffer );
+    }
+    else
+    {
+        vkCmdPipelineBarrier ( commandBuffer,
+            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+            VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+            VK_DEPENDENCY_BY_REGION_BIT,
+            0U,
+            nullptr,
+            0U,
+            nullptr,
+            1U,
+            &_lastMipBarrierBefore
+        );
+    }
+
+    SPDProgram &program = *_program;
+    program.Bind ( commandBuffer );
+    program.SetDescriptorSet ( commandBuffer, _descriptorSet );
+    vkCmdDispatch ( commandBuffer, _dispatch.width, _dispatch.height, _dispatch.depth );
+
+    vkCmdPipelineBarrier ( commandBuffer,
+        VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+        VK_DEPENDENCY_BY_REGION_BIT,
+        0U,
+        nullptr,
+        0U,
+        nullptr,
+        1U,
+        &_lastMipBarrierAfter
+    );
+}
+
 void AverageBrightnessPass::FreeTransferResources ( android_vulkan::Renderer &renderer,
     VkCommandPool commandPool
 ) noexcept
@@ -469,7 +508,7 @@ bool AverageBrightnessPass::CreateMips ( android_vulkan::Renderer &renderer,
         .extent
         {
             .width = mipResolution.width,
-            .height = mipResolution.width,
+            .height = mipResolution.height,
             .depth = 1U
         },
 
@@ -477,9 +516,7 @@ bool AverageBrightnessPass::CreateMips ( android_vulkan::Renderer &renderer,
         .arrayLayers = 1U,
         .samples = VK_SAMPLE_COUNT_1_BIT,
         .tiling = VK_IMAGE_TILING_OPTIMAL,
-
-        .usage = VK_IMAGE_USAGE_STORAGE_BIT,
-
+        .usage = AV_VK_FLAG ( VK_IMAGE_USAGE_STORAGE_BIT ) | AV_VK_FLAG ( VK_IMAGE_USAGE_SAMPLED_BIT ),
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
         .queueFamilyIndexCount = 0U,
         .pQueueFamilyIndices = nullptr,
@@ -580,6 +617,52 @@ bool AverageBrightnessPass::CreateMips ( android_vulkan::Renderer &renderer,
         return false;
 
     AV_REGISTER_IMAGE_VIEW ( "pbr::AverageBrightnessPass::_syncMip5" )
+    _isNeedTransitLayout = true;
+
+    _lastMipBarrierBefore =
+    {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+        .pNext = nullptr,
+        .srcAccessMask = VK_ACCESS_SHADER_READ_BIT,
+        .dstAccessMask = VK_ACCESS_SHADER_WRITE_BIT,
+        .oldLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+        .newLayout = VK_IMAGE_LAYOUT_GENERAL,
+        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .image = _mips,
+
+        .subresourceRange
+        {
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .baseMipLevel = _mipCount - 1U,
+            .levelCount = 1U,
+            .baseArrayLayer = 0U,
+            .layerCount = 1U
+        }
+    };
+
+    _lastMipBarrierAfter =
+    {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+        .pNext = nullptr,
+        .srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT,
+        .dstAccessMask = VK_ACCESS_SHADER_READ_BIT,
+        .oldLayout = VK_IMAGE_LAYOUT_GENERAL,
+        .newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .image = _mips,
+
+        .subresourceRange
+        {
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .baseMipLevel = _mipCount - 1U,
+            .levelCount = 1U,
+            .baseArrayLayer = 0U,
+            .layerCount = 1U
+        }
+    };
+
     return true;
 }
 
@@ -643,6 +726,45 @@ void AverageBrightnessPass::FreeTransferBuffer ( android_vulkan::Renderer &rende
     _transferBufferMemory._memory = VK_NULL_HANDLE;
     _transferBufferMemory._offset = std::numeric_limits<VkDeviceSize>::max ();
     AV_UNREGISTER_DEVICE_MEMORY ( "pbr::AverageBrightnessPass::_transferBufferMemory" )
+}
+
+void AverageBrightnessPass::TransitAllMips ( VkCommandBuffer commandBuffer ) noexcept
+{
+    VkImageMemoryBarrier const barrier
+    {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+        .pNext = nullptr,
+        .srcAccessMask = 0U,
+        .dstAccessMask = VK_ACCESS_SHADER_WRITE_BIT,
+        .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+        .newLayout = VK_IMAGE_LAYOUT_GENERAL,
+        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .image = _mips,
+
+        .subresourceRange
+        {
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .baseMipLevel = 0U,
+            .levelCount = _mipCount,
+            .baseArrayLayer = 0U,
+            .layerCount = 1U
+        }
+    };
+
+    vkCmdPipelineBarrier ( commandBuffer,
+        VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+        VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+        VK_DEPENDENCY_BY_REGION_BIT,
+        0U,
+        nullptr,
+        0U,
+        nullptr,
+        1U,
+        &barrier
+    );
+
+    _isNeedTransitLayout = false;
 }
 
 bool AverageBrightnessPass::UpdateMipCount ( android_vulkan::Renderer &renderer,

@@ -29,11 +29,12 @@ void CS ( in uint32_t threadID: SV_GroupIndex, in uint32_t3 workGroupID: SV_Grou
     if ( ExitWorkgroup ( threadID ) )
         return;
 
-    // reset the global atomic counter back to 0 for the next spd dispatch
-    g_GlobalAtomic[ 0U ]._counter = 0U;
+    // Reset the global atomic counter back to 0 for the next spd dispatch.
+    if ( threadID == 0U )
+        g_GlobalAtomic[ 0U ]._counter = 0U;
 
     DownsampleMips67 ( base.x, base.y );
 
     GroupMemoryBarrierWithGroupSync ();
-    DownsampleMip8Last ( base.x, base.y, workGroupID.xy, threadID );
+    DownsampleMip8Last ( base.x, base.y, threadID );
 }

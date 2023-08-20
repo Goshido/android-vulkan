@@ -35,9 +35,13 @@ class AverageBrightnessPass final
         uint32_t                                _mipCount = 0U;
         VkImageView                             _mipViews[ MAX_RELAXED_VIEWS ];
         VkImageView                             _syncMip5 = VK_NULL_HANDLE;
+        bool                                    _isNeedTransitLayout = true;
 
         VkBuffer                                _globalCounter = VK_NULL_HANDLE;
         Memory                                  _globalCounterMemory {};
+
+        VkImageMemoryBarrier                    _lastMipBarrierBefore {};
+        VkImageMemoryBarrier                    _lastMipBarrierAfter {};
 
         std::unique_ptr<DescriptorSetLayout>    _layout {};
         std::unique_ptr<SPDProgram>             _program {};
@@ -56,6 +60,7 @@ class AverageBrightnessPass final
 
         ~AverageBrightnessPass () = default;
 
+        void Execute ( VkCommandBuffer commandBuffer ) noexcept;
         void FreeTransferResources ( android_vulkan::Renderer &renderer, VkCommandPool commandPool ) noexcept;
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, VkCommandPool commandPool ) noexcept;
@@ -88,6 +93,8 @@ class AverageBrightnessPass final
 
         void FreeTargetResources ( android_vulkan::Renderer &renderer, VkDevice device ) noexcept;
         void FreeTransferBuffer ( android_vulkan::Renderer &renderer, VkDevice device ) noexcept;
+
+        void TransitAllMips ( VkCommandBuffer commandBuffer ) noexcept;
 
         [[nodiscard]] bool UpdateMipCount ( android_vulkan::Renderer &renderer,
             VkDevice device,

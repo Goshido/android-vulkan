@@ -48,6 +48,9 @@ struct Atomic
 [[vk::binding ( BIND_GLOBAL_ATOMIC, SET_RESOURCE )]]
 globallycoherent RWStructuredBuffer<Atomic>     g_GlobalAtomic:         register ( u3 );
 
+[[vk::binding ( BIND_BRIGHTNESS, SET_RESOURCE )]]
+RWStructuredBuffer<float32_t>                   g_Brightness:           register ( u4 );
+
 groupshared float16_t                           s_Luma[ 16U ][ 16U ];
 groupshared uint32_t                            s_Counter;
 
@@ -398,21 +401,18 @@ void DownsampleMips67 ( in uint32_t x, in uint32_t y )
 // See <repo>/docs/spd-algorithm.md#mip-2
 void DownsampleMip8Last ( in uint32_t x, in uint32_t y, in uint32_t threadID )
 {
-    if ( threadID >= 64U )
+    if ( threadID > 0U )
         return;
 
-    const uint32_t2 xy = uint32_t2 ( x, y );
-    const uint32_t2 base = xy + xy;
-
-    const float16_t v = ReduceIntermediateStrict ( base,
+    const float16_t v = ReduceIntermediateStrict ( uint32_t2 ( 0U, 0U ),
         uint32_t2 ( g_Mip7W, g_Mip7H ),
-        base,
-        base + uint32_t2 ( 1U, 0U ),
-        base + uint32_t2 ( 0U, 1U ),
-        base + uint32_t2 ( 1U, 1U )
+        uint32_t2 ( 0U, 0U ),
+        uint32_t2 ( 1U, 0U ),
+        uint32_t2 ( 0U, 1U ),
+        uint32_t2 ( 1U, 1U )
     );
 
-    StoreStrict ( xy, v, 7U, uint32_t2 ( 1U, 1U ) );
+    g_Brightness[ 0U ] = (float32_t)v;
 }
 
 

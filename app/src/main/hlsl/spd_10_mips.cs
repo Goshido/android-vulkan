@@ -2,8 +2,10 @@
 
 // Note: The most detailed mip is skipped.
 // Luma values are calculated inplace from HDR image during calculation of first mip level.
-// Mip 5 is using dedicated UAV. That's why it's needed to remove 2 elements.
-#define MIP_COUNT       8U
+// Mip 5 is using dedicated UAV.
+// Result will be stored in buffer instead of mip level.
+// That's why it's needed to remove 3 elements.
+#define MIP_COUNT       7U
 
 #include "spd_common.cs"
 

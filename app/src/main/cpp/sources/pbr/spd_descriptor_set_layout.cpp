@@ -25,7 +25,7 @@ void SPDDescriptorSetLayout::Destroy ( VkDevice device ) noexcept
     _layout = VK_NULL_HANDLE;
 
     AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT (
-        "pbr::SPD" + std::to_string ( _relaxedMipViews + 2U ) + "MipsDescriptorSetLayout::_layout"
+        "pbr::SPD" + std::to_string ( _relaxedMipViews + 3U ) + "MipsDescriptorSetLayout::_layout"
     )
 }
 
@@ -66,6 +66,13 @@ bool SPDDescriptorSetLayout::Init ( VkDevice device ) noexcept
             .descriptorCount = 1U,
             .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
             .pImmutableSamplers = nullptr
+        },
+        {
+            .binding = BIND_BRIGHTNESS,
+            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+            .descriptorCount = 1U,
+            .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
+            .pImmutableSamplers = nullptr
         }
     };
 
@@ -88,7 +95,7 @@ bool SPDDescriptorSetLayout::Init ( VkDevice device ) noexcept
         return false;
 
     AV_REGISTER_DESCRIPTOR_SET_LAYOUT (
-        "pbr::SPD" + std::to_string ( _relaxedMipViews + 2U ) + "MipsDescriptorSetLayout::_layout"
+        "pbr::SPD" + std::to_string ( _relaxedMipViews + 3U ) + "MipsDescriptorSetLayout::_layout"
     )
 
     ++_references;

@@ -21,9 +21,13 @@ class AverageBrightnessPass final
 
         // Max detailed mip is not used and skipped.
         // Mip 5 uses dedicated view because of internal sync operation.
-        constexpr static size_t MAX_RELAXED_VIEWS = MAX_MIPS - 2U;
+        // Average brightness will be stored into buffer instead of mip.
+        constexpr static size_t MAX_RELAXED_VIEWS = MAX_MIPS - 3U;
 
     private:
+        VkBuffer                                _brightness = VK_NULL_HANDLE;
+        Memory                                  _brightnessMemory {};
+
         VkCommandBuffer                         _commandBuffer = VK_NULL_HANDLE;
 
         VkExtent3D                              _dispatch {};
@@ -39,9 +43,6 @@ class AverageBrightnessPass final
 
         VkBuffer                                _globalCounter = VK_NULL_HANDLE;
         Memory                                  _globalCounterMemory {};
-
-        VkImageMemoryBarrier                    _lastMipBarrierBefore {};
-        VkImageMemoryBarrier                    _lastMipBarrierAfter {};
 
         std::unique_ptr<DescriptorSetLayout>    _layout {};
         std::unique_ptr<SPDProgram>             _program {};
@@ -75,6 +76,7 @@ class AverageBrightnessPass final
         [[nodiscard]] static VkExtent2D AdjustResolution ( VkExtent2D const &desiredResolution ) noexcept;
 
     private:
+        [[nodiscard]] bool CreateBrightnessResources ( android_vulkan::Renderer &renderer, VkDevice device ) noexcept;
         [[nodiscard]] bool CreateDescriptorPool ( VkDevice device ) noexcept;
 
         [[nodiscard]] bool CreateGlobalCounter ( android_vulkan::Renderer &renderer,

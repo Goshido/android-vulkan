@@ -6,7 +6,7 @@ namespace pbr {
 
 namespace {
 
-SPDDescriptorSetLayout g_descriptorSetLayout ( 9U );
+SPDDescriptorSetLayout g_descriptorSetLayout ( 8U );
 
 } // end of anonymous namespace
 

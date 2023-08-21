@@ -20,6 +20,7 @@
 #define BIND_SYNC_MIP_5             1
 #define BIND_MIPS                   2
 #define BIND_GLOBAL_ATOMIC          3
+#define BIND_BRIGHTNESS             4
 
 
 #endif // SPD_INC

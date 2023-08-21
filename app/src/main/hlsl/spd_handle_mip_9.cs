@@ -37,23 +37,18 @@ void DownsampleMip8 ( in uint32_t x, in uint32_t y, in uint32_t threadID )
 // See <repo>/docs/spd-algorithm.md#mip-3
 void DownsampleMip9Last ( in uint32_t x, in uint32_t y, in uint32_t threadID )
 {
-    if ( threadID >= 16U )
+    if ( threadID > 0U )
         return;
 
-    const uint32_t2 xy = uint32_t2 ( x, y );
-    const uint32_t2 resolution = xy + xy;
-    const uint32_t2 base = xy * 4U;
-
-    const float16_t v = ReduceIntermediateStrict ( resolution,
+    const float16_t v = ReduceIntermediateStrict ( uint32_t2 ( 0U, 0U ),
         uint32_t2 ( g_Mip8W, g_Mip8H ),
-        base,
-        base + uint32_t2 ( 2U, 0U ),
-        base + uint32_t2 ( 1U, 2U ),
-        base + uint32_t2 ( 3U, 2U )
+        uint32_t2 ( 0U, 0U ),
+        uint32_t2 ( 2U, 0U ),
+        uint32_t2 ( 1U, 2U ),
+        uint32_t2 ( 3U, 2U )
     );
 
-    // It's last mip level. So resolution is 1x1.
-    StoreStrict ( xy, v, 8U, uint32_t2 ( 1U, 1U ) );
+    g_Brightness[ 0U ] = (float32_t)v;
 }
 
 

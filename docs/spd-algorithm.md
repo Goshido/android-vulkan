@@ -57,9 +57,9 @@ For brightness computation it's possible to convert image to luma using [_BT.601
 
 Fundamental flaw of _SPD_: Usage _Average of Averages_ during the computation. It's incorrect:
 
-<img src="./images/average-of-average.png"/>
+<img src="./images/average-of-averages.png"/>
 
-Real example: Mip level before last, 3x1:
+Real example: Mip before last mip - 3x1:
 
 <img src="./images/3x1-example.png"/>
 

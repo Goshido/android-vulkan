@@ -47,7 +47,7 @@ Original implementation is universal. Because of that there are a lot of branchi
 
 ## <a id="average-brightness-optimizations">Optimizations for average brightness calculation</a>
 
-Final goal is a single value: average brightness. So intermidiate mip levels do not matter for algorithm. This allows to remove all unnecessary memory traffic with storing intermedite mip maps **except mip 5 of course**. Mip 5 is special because it syncronizes workng groups via [`globallycoherent`](https://microsoft.github.io/DirectX-Specs/d3d/archive/D3D11_3_FunctionalSpec.htm#7.14.4%20Global%20vs%20Group/Local%20Coherency%20on%20Non-Atomic%20UAV%20Reads) specifier. Keep in mind that most of the operations happen in shared memory. Removing storing operations into global _VRAM_ is a big optimization for original algorithm.
+Final goal is a single value: average brightness. So intermidiate mip levels do not matter for algorithm. This allows to remove all unnecessary memory traffic with storing intermedite mips **except mip 5 of course**. Mip 5 is special because it syncronizes workng groups via [`globallycoherent`](https://microsoft.github.io/DirectX-Specs/d3d/archive/D3D11_3_FunctionalSpec.htm#7.14.4%20Global%20vs%20Group/Local%20Coherency%20on%20Non-Atomic%20UAV%20Reads) specifier. Keep in mind that most of the operations happen in shared memory. Removing storing operations into global _VRAM_ is a big optimization for original algorithm.
 
 Resulting average brightness will be stored in storage buffer rather than last mip level of the image.
 
@@ -61,7 +61,7 @@ To reduce big amount of branching it's resonable to have several modifications o
 
 Last mip level pass does not need to write into shared memory.
 
-For brightness computation it's possible to convert image to luma using [_BT.601_](https://en.wikipedia.org/wiki/Luma_(video)#Rec._601_luma_versus_Rec._709_luma_coefficients) at generation of internal mip 0. This allows to use `float16_t` instead of `float16_t4` for shared memory. This also allows to use `VK_FORMAT_R16_SFLOAT` format for final image.
+For brightness computation it's possible to convert image to luma using [_BT.601_](https://en.wikipedia.org/wiki/Luma_(video)#Rec._601_luma_versus_Rec._709_luma_coefficients) at generation of internal mip 0. This allows to use `float16_t` instead of `float16_t4` for shared memory. This also allows to use `VK_FORMAT_R16_SFLOAT` format for internal mip 5.
 
 [↬ table of content ⇧](#table-of-content)
 

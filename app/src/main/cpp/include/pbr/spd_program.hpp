@@ -3,7 +3,7 @@
 
 
 #include "compute_program.hpp"
-#include "descriptor_set_layout.hpp"
+#include "spd_descriptor_set_layout.hpp"
 
 
 namespace pbr {
@@ -13,19 +13,19 @@ class SPDProgram : public ComputeProgram
     public:
         struct SpecializationInfo final
         {
-            [[maybe_unused]] uint32_t           _workgroupCount;
-            [[maybe_unused]] VkExtent2D         _mip5Resolution;
-            [[maybe_unused]] VkExtent2D         _mip6Resolution;
-            [[maybe_unused]] VkExtent2D         _mip7Resolution;
-            [[maybe_unused]] VkExtent2D         _mip8Resolution;
-            [[maybe_unused]] VkExtent2D         _mip9Resolution;
+            [[maybe_unused]] uint32_t       _workgroupCount;
+            [[maybe_unused]] VkExtent2D     _mip5Resolution;
+            [[maybe_unused]] VkExtent2D     _mip6Resolution;
+            [[maybe_unused]] VkExtent2D     _mip7Resolution;
+            [[maybe_unused]] VkExtent2D     _mip8Resolution;
+            [[maybe_unused]] VkExtent2D     _mip9Resolution;
         };
 
     protected:
-        std::unique_ptr<DescriptorSetLayout>    _layout {};
+        SPDDescriptorSetLayout              _layout {};
 
     private:
-        char const*                             _shaderFile;
+        char const*                         _shaderFile;
 
     public:
         explicit SPDProgram () = delete;
@@ -53,10 +53,7 @@ class SPDProgram : public ComputeProgram
         ) noexcept;
 
     protected:
-        explicit SPDProgram ( std::string_view name,
-            std::unique_ptr<DescriptorSetLayout> &&layout,
-            char const* shaderFile
-        ) noexcept;
+        explicit SPDProgram ( std::string_view name, char const* shaderFile ) noexcept;
 
     private:
         void DestroyShaderModule ( VkDevice device ) noexcept override final;

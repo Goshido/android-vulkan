@@ -1,10 +1,7 @@
 #include <pbr/average_brightness_pass.hpp>
 #include <pbr/spd.inc>
-#include <pbr/spd_10_mips_descriptor_set_layout.hpp>
 #include <pbr/spd_10_mips_program.hpp>
-#include <pbr/spd_11_mips_descriptor_set_layout.hpp>
 #include <pbr/spd_11_mips_program.hpp>
-#include <pbr/spd_12_mips_descriptor_set_layout.hpp>
 #include <pbr/spd_12_mips_program.hpp>
 #include <av_assert.hpp>
 #include <vulkan_utils.hpp>
@@ -12,19 +9,12 @@
 
 namespace pbr {
 
-namespace {
-
-constexpr uint32_t REJECT_LAST_MIP = 1U;
-constexpr uint32_t REJECT_SYNC_MIP_5 = 1U;
-
-} // end of anonymous namespace
-
 //----------------------------------------------------------------------------------------------------------------------
 
 void AverageBrightnessPass::Execute ( VkCommandBuffer commandBuffer ) noexcept
 {
     if ( _isNeedTransitLayout )
-        TransitAllMips ( commandBuffer );
+        TransitSync5Mip ( commandBuffer );
 
     SPDProgram &program = *_program;
     program.Bind ( commandBuffer );
@@ -114,7 +104,7 @@ bool AverageBrightnessPass::SetTarget ( android_vulkan::Renderer &renderer,
             specData
         ) &&
 
-        CreateMips ( renderer, device, mipResolution ) &&
+        CreateSyncMip5 ( renderer, device, specData._mip5Resolution ) &&
         BindTargetToDescriptorSet ( device, hdrImage );
 }
 
@@ -187,9 +177,6 @@ bool AverageBrightnessPass::CreateBrightnessResources ( android_vulkan::Renderer
 
 bool AverageBrightnessPass::CreateDescriptorPool ( VkDevice device ) noexcept
 {
-    constexpr uint32_t syncMip5Item = 1U;
-    constexpr uint32_t maxStorageImages = static_cast<uint32_t> ( MAX_RELAXED_VIEWS ) + syncMip5Item;
-
     constexpr static VkDescriptorPoolSize const poolSizes[] =
     {
         {
@@ -198,7 +185,7 @@ bool AverageBrightnessPass::CreateDescriptorPool ( VkDevice device ) noexcept
         },
         {
             .type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
-            .descriptorCount = maxStorageImages
+            .descriptorCount = 1U,
         },
         {
             .type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
@@ -438,6 +425,112 @@ bool AverageBrightnessPass::CreateGlobalCounter ( android_vulkan::Renderer &rend
     );
 }
 
+bool AverageBrightnessPass::CreateSyncMip5 ( android_vulkan::Renderer &renderer,
+    VkDevice device,
+    VkExtent2D resolution
+) noexcept
+{
+    VkImageCreateInfo const imageInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .imageType = VK_IMAGE_TYPE_2D,
+        .format = VK_FORMAT_R16_SFLOAT,
+
+        .extent
+        {
+            .width = resolution.width,
+            .height = resolution.height,
+            .depth = 1U
+        },
+
+        .mipLevels = 1U,
+        .arrayLayers = 1U,
+        .samples = VK_SAMPLE_COUNT_1_BIT,
+        .tiling = VK_IMAGE_TILING_OPTIMAL,
+        .usage = AV_VK_FLAG ( VK_IMAGE_USAGE_STORAGE_BIT ),
+        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+        .queueFamilyIndexCount = 0U,
+        .pQueueFamilyIndices = nullptr,
+        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED
+    };
+
+    bool result = android_vulkan::Renderer::CheckVkResult (
+        vkCreateImage ( device, &imageInfo, nullptr, &_syncMip5 ),
+        "pbr::AverageBrightnessPass::CreateSyncMip5",
+        "Can't create image"
+    );
+
+    if ( !result )
+        return false;
+
+    AV_REGISTER_IMAGE ( "pbr::AverageBrightnessPass::_syncMip5" )
+
+    VkMemoryRequirements memoryRequirements;
+    vkGetImageMemoryRequirements ( device, _syncMip5, &memoryRequirements );
+
+    result = renderer.TryAllocateMemory ( _syncMip5Memory._memory,
+        _syncMip5Memory._offset,
+        memoryRequirements,
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+        "Can't allocate image memory (pbr::AverageBrightnessPass::CreateSyncMip5)"
+    );
+
+    if ( !result )
+        return false;
+
+    AV_REGISTER_DEVICE_MEMORY ( "pbr::AverageBrightnessPass::_syncMip5Memory" )
+
+    result = android_vulkan::Renderer::CheckVkResult (
+        vkBindImageMemory ( device, _syncMip5, _syncMip5Memory._memory, _syncMip5Memory._offset ),
+        "pbr::AverageBrightnessPass::CreateSyncMip5",
+        "Can't bind image memory"
+    );
+
+    if ( !result )
+        return false;
+
+    VkImageViewCreateInfo viewInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .image = _syncMip5,
+        .viewType = VK_IMAGE_VIEW_TYPE_2D,
+        .format = imageInfo.format,
+
+        .components
+        {
+            .r = VK_COMPONENT_SWIZZLE_IDENTITY,
+            .g = VK_COMPONENT_SWIZZLE_IDENTITY,
+            .b = VK_COMPONENT_SWIZZLE_IDENTITY,
+            .a = VK_COMPONENT_SWIZZLE_IDENTITY
+        },
+
+        .subresourceRange
+        {
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .baseMipLevel = 0U,
+            .levelCount = 1U,
+            .baseArrayLayer = 0U,
+            .layerCount = 1U
+        }
+    };
+
+    result = android_vulkan::Renderer::CheckVkResult ( vkCreateImageView ( device, &viewInfo, nullptr, &_syncMip5View ),
+        "pbr::AverageBrightnessPass::CreateMips",
+        "Can't create view"
+    );
+
+    if ( !result )
+        return false;
+
+    AV_REGISTER_IMAGE_VIEW ( "pbr::AverageBrightnessPass::_syncMip5View" )
+    _isNeedTransitLayout = true;
+    return true;
+}
+
 bool AverageBrightnessPass::BindTargetToDescriptorSet ( VkDevice device,
     android_vulkan::Texture2D const &hdrImage
 ) noexcept
@@ -452,22 +545,9 @@ bool AverageBrightnessPass::BindTargetToDescriptorSet ( VkDevice device,
     VkDescriptorImageInfo const syncMip5Info
     {
         .sampler = VK_NULL_HANDLE,
-        .imageView = _syncMip5,
+        .imageView = _syncMip5View,
         .imageLayout = VK_IMAGE_LAYOUT_GENERAL
     };
-
-    uint32_t const limit = _mipCount - REJECT_SYNC_MIP_5 - REJECT_LAST_MIP;
-    VkDescriptorImageInfo mipInfo[ MAX_RELAXED_VIEWS ];
-
-    for ( uint32_t i = 0U; i < limit; ++i )
-    {
-        mipInfo[ i ] =
-        {
-            .sampler = VK_NULL_HANDLE,
-            .imageView = _mipViews[ i ],
-            .imageLayout = VK_IMAGE_LAYOUT_GENERAL
-        };
-    }
 
     VkDescriptorBufferInfo const counterCounterBufferInfo
     {
@@ -513,18 +593,6 @@ bool AverageBrightnessPass::BindTargetToDescriptorSet ( VkDevice device,
             .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             .pNext = nullptr,
             .dstSet = _descriptorSet,
-            .dstBinding = BIND_MIPS,
-            .dstArrayElement = 0U,
-            .descriptorCount = limit,
-            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
-            .pImageInfo = mipInfo,
-            .pBufferInfo = nullptr,
-            .pTexelBufferView = nullptr
-        },
-        {
-            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-            .pNext = nullptr,
-            .dstSet = _descriptorSet,
             .dstBinding = BIND_GLOBAL_ATOMIC,
             .dstArrayElement = 0U,
             .descriptorCount = 1U,
@@ -551,174 +619,31 @@ bool AverageBrightnessPass::BindTargetToDescriptorSet ( VkDevice device,
     return true;
 }
 
-bool AverageBrightnessPass::CreateMips ( android_vulkan::Renderer &renderer,
-    VkDevice device,
-    VkExtent2D mipResolution
-) noexcept
-{
-    VkImageCreateInfo const imageInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0U,
-        .imageType = VK_IMAGE_TYPE_2D,
-        .format = VK_FORMAT_R16_SFLOAT,
-
-        .extent
-        {
-            .width = mipResolution.width,
-            .height = mipResolution.height,
-            .depth = 1U
-        },
-
-        // Result will be stored in buffer instead of last mip.
-        .mipLevels = _mipCount - REJECT_LAST_MIP,
-
-        .arrayLayers = 1U,
-        .samples = VK_SAMPLE_COUNT_1_BIT,
-        .tiling = VK_IMAGE_TILING_OPTIMAL,
-        .usage = AV_VK_FLAG ( VK_IMAGE_USAGE_STORAGE_BIT ) | AV_VK_FLAG ( VK_IMAGE_USAGE_SAMPLED_BIT ),
-        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
-        .queueFamilyIndexCount = 0U,
-        .pQueueFamilyIndices = nullptr,
-        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED
-    };
-
-    bool result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateImage ( device, &imageInfo, nullptr, &_mips ),
-        "pbr::AverageBrightnessPass::CreateMips",
-        "Can't create image"
-    );
-
-    if ( !result )
-        return false;
-
-    AV_REGISTER_IMAGE ( "pbr::AverageBrightnessPass::_mips" )
-
-    VkMemoryRequirements memoryRequirements;
-    vkGetImageMemoryRequirements ( device, _mips, &memoryRequirements );
-
-    result = renderer.TryAllocateMemory ( _mipsMemory._memory,
-        _mipsMemory._offset,
-        memoryRequirements,
-        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-        "Can't allocate image memory (pbr::AverageBrightnessPass::CreateMips)"
-    );
-
-    if ( !result )
-        return false;
-
-    AV_REGISTER_DEVICE_MEMORY ( "pbr::AverageBrightnessPass::_mipsMemory" )
-
-    result = android_vulkan::Renderer::CheckVkResult (
-        vkBindImageMemory ( device, _mips, _mipsMemory._memory, _mipsMemory._offset ),
-        "pbr::AverageBrightnessPass::CreateMips",
-        "Can't bind image memory"
-    );
-
-    if ( !result )
-        return false;
-
-    VkImageViewCreateInfo viewInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0U,
-        .image = _mips,
-        .viewType = VK_IMAGE_VIEW_TYPE_2D,
-        .format = imageInfo.format,
-
-        .components
-        {
-            .r = VK_COMPONENT_SWIZZLE_IDENTITY,
-            .g = VK_COMPONENT_SWIZZLE_IDENTITY,
-            .b = VK_COMPONENT_SWIZZLE_IDENTITY,
-            .a = VK_COMPONENT_SWIZZLE_IDENTITY
-        },
-
-        .subresourceRange
-        {
-            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-            .baseMipLevel = 0U,
-            .levelCount = 1U,
-            .baseArrayLayer = 0U,
-            .layerCount = 1U
-        }
-    };
-
-    uint32_t &baseMip = viewInfo.subresourceRange.baseMipLevel;
-    constexpr uint32_t syncMip5Idx = 5U;
-    uint32_t const limit = _mipCount - REJECT_SYNC_MIP_5 - REJECT_LAST_MIP;
-
-    for ( uint32_t i = 0U; i < limit; ++i )
-    {
-        // Mip 5 should be skipped.
-        baseMip = i + static_cast<uint32_t> ( i >= syncMip5Idx );
-
-        result = android_vulkan::Renderer::CheckVkResult (
-            vkCreateImageView ( device, &viewInfo, nullptr, _mipViews + i ),
-            "pbr::AverageBrightnessPass::CreateMips",
-            "Can't create mip view"
-        );
-
-        if ( !result )
-            return false;
-
-        AV_REGISTER_IMAGE_VIEW ( "pbr::AverageBrightnessPass::_mipViews" )
-    }
-
-    baseMip = syncMip5Idx;
-
-    result = android_vulkan::Renderer::CheckVkResult ( vkCreateImageView ( device, &viewInfo, nullptr, &_syncMip5 ),
-        "pbr::AverageBrightnessPass::CreateMips",
-        "Can't create sync mip 5 view"
-    );
-
-    if ( !result )
-        return false;
-
-    AV_REGISTER_IMAGE_VIEW ( "pbr::AverageBrightnessPass::_syncMip5" )
-    _isNeedTransitLayout = true;
-    return true;
-}
-
 void AverageBrightnessPass::FreeTargetResources ( android_vulkan::Renderer &renderer, VkDevice device ) noexcept
 {
-    if ( _mipCount > 0U )
+    if ( _syncMip5View != VK_NULL_HANDLE )
     {
-        uint32_t const limit = _mipCount - REJECT_SYNC_MIP_5;
-
-        for ( uint32_t i = 0U; i < limit; ++i )
-        {
-            vkDestroyImageView ( device, _mipViews[ i ], nullptr );
-            AV_UNREGISTER_IMAGE_VIEW ( "pbr::AverageBrightnessPass::_mipViews" )
-        }
+        vkDestroyImageView ( device, _syncMip5View, nullptr );
+        _syncMip5View = VK_NULL_HANDLE;
+        AV_UNREGISTER_IMAGE_VIEW ( "pbr::AverageBrightnessPass::_syncMip5View" )
     }
 
     if ( _syncMip5 != VK_NULL_HANDLE )
     {
-        vkDestroyImageView ( device, _syncMip5, nullptr );
+        vkDestroyImage ( device, _syncMip5, nullptr );
         _syncMip5 = VK_NULL_HANDLE;
-        AV_UNREGISTER_IMAGE_VIEW ( "pbr::AverageBrightnessPass::_syncMip5" )
+        AV_UNREGISTER_IMAGE ( "pbr::AverageBrightnessPass::_syncMip5" )
     }
 
-    if ( _mips != VK_NULL_HANDLE )
+    if ( _syncMip5Memory._memory != VK_NULL_HANDLE )
     {
-        vkDestroyImage ( device, _mips, nullptr );
-        _mips = VK_NULL_HANDLE;
-        AV_UNREGISTER_IMAGE ( "pbr::AverageBrightnessPass::_mips" )
+        renderer.FreeMemory ( _syncMip5Memory._memory, _syncMip5Memory._offset );
+        _syncMip5Memory._memory = VK_NULL_HANDLE;
+        _syncMip5Memory._offset = std::numeric_limits<VkDeviceSize>::max ();
+        AV_UNREGISTER_DEVICE_MEMORY ( "pbr::AverageBrightnessPass::_syncMip5Memory" )
     }
 
-    if ( _mipsMemory._memory != VK_NULL_HANDLE )
-    {
-        renderer.FreeMemory ( _mipsMemory._memory, _mipsMemory._offset );
-        _mipsMemory._memory = VK_NULL_HANDLE;
-        _mipsMemory._offset = std::numeric_limits<VkDeviceSize>::max ();
-        AV_UNREGISTER_DEVICE_MEMORY ( "pbr::AverageBrightnessPass::_mipsMemory" )
-    }
-
-    if ( _layout )
-        _layout->Destroy ( device );
+    _layout.Destroy ( device );
 
     if ( _program )
     {
@@ -744,7 +669,7 @@ void AverageBrightnessPass::FreeTransferBuffer ( android_vulkan::Renderer &rende
     AV_UNREGISTER_DEVICE_MEMORY ( "pbr::AverageBrightnessPass::_transferBufferMemory" )
 }
 
-void AverageBrightnessPass::TransitAllMips ( VkCommandBuffer commandBuffer ) noexcept
+void AverageBrightnessPass::TransitSync5Mip ( VkCommandBuffer commandBuffer ) noexcept
 {
     VkImageMemoryBarrier const barrier
     {
@@ -756,13 +681,13 @@ void AverageBrightnessPass::TransitAllMips ( VkCommandBuffer commandBuffer ) noe
         .newLayout = VK_IMAGE_LAYOUT_GENERAL,
         .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
         .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .image = _mips,
+        .image = _syncMip5,
 
         .subresourceRange
         {
             .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
             .baseMipLevel = 0U,
-            .levelCount = _mipCount - REJECT_LAST_MIP,
+            .levelCount = 1U,
             .baseArrayLayer = 0U,
             .layerCount = 1U
         }
@@ -811,17 +736,14 @@ bool AverageBrightnessPass::UpdateMipCount ( android_vulkan::Renderer &renderer,
     switch ( mipCount )
     {
         case 11U:
-            _layout = std::make_unique<SPD12MipsDescriptorSetLayout> ();
             _program = std::make_unique<SPD12MipsProgram> ();
         break;
 
         case 10U:
-            _layout = std::make_unique<SPD11MipsDescriptorSetLayout> ();
             _program = std::make_unique<SPD11MipsProgram> ();
         break;
 
         case 9U:
-            _layout = std::make_unique<SPD10MipsDescriptorSetLayout> ();
             _program = std::make_unique<SPD10MipsProgram> ();
         break;
 
@@ -834,10 +756,10 @@ bool AverageBrightnessPass::UpdateMipCount ( android_vulkan::Renderer &renderer,
         return false;
     }
 
-    if ( !_layout->Init ( device ) )
+    if ( !_layout.Init ( device ) )
         return false;
 
-    VkDescriptorSetLayout layout = _layout->GetLayout ();
+    VkDescriptorSetLayout layout = _layout.GetLayout ();
 
     VkDescriptorSetAllocateInfo const allocateInfo
     {

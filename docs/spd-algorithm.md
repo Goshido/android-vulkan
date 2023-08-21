@@ -47,6 +47,10 @@ Original implementation is universal. Because of that there are a lot of branchi
 
 ## <a id="average-brightness-optimizations">Optimizations for average brightness calculation</a>
 
+Final goal is a single value: average brightness. So intermidiate mip levels do not matter for algorithm. This allows to remove all unnecessary memory traffic with storing intermedite mip maps **except mip 5 of course**. Mip 5 is special because it syncronizes workng groups via [`globallycoherent`](https://microsoft.github.io/DirectX-Specs/d3d/archive/D3D11_3_FunctionalSpec.htm#7.14.4%20Global%20vs%20Group/Local%20Coherency%20on%20Non-Atomic%20UAV%20Reads) specifier. Keep in mind that most of the operations happen in shared memory. Removing storing operations into global _VRAM_ is a big optimization for original algorithm.
+
+Resulting average brightness will be stored in storage buffer rather than last mip level of the image.
+
 Square and non power of two limitations could be resolved. This requires to modify compute shader. First it's resonable to add requirement for input image to be multiple of 64 pixels. This allows to avoid bound checking up to internal mip 5. For internal mip level greater that 5 it's needed to do bound checking before writing to mip images.
 
 To reduce big amount of branching it's resonable to have several modifications of the algorithm. Main difference between versions - compatibility with fixed amout of mip levels:

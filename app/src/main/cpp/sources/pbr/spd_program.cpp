@@ -47,7 +47,7 @@ void SPDProgram::Destroy ( VkDevice device ) noexcept
         AV_UNREGISTER_PIPELINE_LAYOUT ( "pbr::SPDProgram::_pipelineLayout" )
     }
 
-    _layout->Destroy ( device );
+    _layout.Destroy ( device );
     DestroyShaderModule ( device );
 
     if ( _pipeline == VK_NULL_HANDLE )
@@ -122,12 +122,8 @@ void SPDProgram::GetMetaInfo ( VkExtent3D &dispatch,
     specializationInfo._mip9Resolution = nextMip ( specializationInfo._mip8Resolution );
 }
 
-SPDProgram::SPDProgram ( std::string_view name,
-    std::unique_ptr<DescriptorSetLayout> &&layout,
-    char const* shaderFile
-) noexcept:
+SPDProgram::SPDProgram ( std::string_view name, char const* shaderFile ) noexcept:
     ComputeProgram ( name ),
-    _layout ( std::move ( layout ) ),
     _shaderFile ( shaderFile )
 {
     // NOTHING
@@ -145,10 +141,10 @@ void SPDProgram::DestroyShaderModule ( VkDevice device ) noexcept
 
 bool SPDProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept
 {
-    if ( !_layout->Init ( device ) )
+    if ( !_layout.Init ( device ) )
         return false;
 
-    VkDescriptorSetLayout dsLayout = _layout->GetLayout ();
+    VkDescriptorSetLayout dsLayout = _layout.GetLayout ();
 
     VkPipelineLayoutCreateInfo const layoutInfo
     {

@@ -7,17 +7,10 @@
 
 namespace pbr {
 
-class SPDDescriptorSetLayout final
+class SPDDescriptorSetLayout final : public DescriptorSetLayout
 {
     public:
-        VkDescriptorSetLayout       _layout = VK_NULL_HANDLE;
-
-    private:
-        std::atomic<size_t>         _references = 0U;
-        uint32_t                    _relaxedMipViews;
-
-    public:
-        SPDDescriptorSetLayout () = delete;
+        SPDDescriptorSetLayout () = default;
 
         SPDDescriptorSetLayout ( SPDDescriptorSetLayout const & ) = delete;
         SPDDescriptorSetLayout &operator = ( SPDDescriptorSetLayout const & ) = delete;
@@ -25,12 +18,12 @@ class SPDDescriptorSetLayout final
         SPDDescriptorSetLayout ( SPDDescriptorSetLayout && ) = delete;
         SPDDescriptorSetLayout &operator = ( SPDDescriptorSetLayout && ) = delete;
 
-        explicit SPDDescriptorSetLayout ( uint32_t relaxedMipViews ) noexcept;
+        ~SPDDescriptorSetLayout () override = default;
 
-        ~SPDDescriptorSetLayout () = default;
+        void Destroy ( VkDevice device ) noexcept override;
+        [[nodiscard]] bool Init ( VkDevice device ) noexcept override;
 
-        void Destroy ( VkDevice device ) noexcept;
-        [[nodiscard]] bool Init ( VkDevice device ) noexcept;
+        [[nodiscard]] VkDescriptorSetLayout GetLayout () const noexcept override;
 };
 
 } // namespace pbr

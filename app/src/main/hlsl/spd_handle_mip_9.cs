@@ -30,7 +30,6 @@ void DownsampleMip8 ( in uint32_t x, in uint32_t y, in uint32_t threadID )
         base + uint32_t2 ( 1U, 1U )
     );
 
-    StoreStrict ( xy, v, 7U, uint32_t2 ( g_Mip8W, g_Mip8H ) );
     StoreIntermediate ( base.x + y % 2U, base.y, v );
 }
 

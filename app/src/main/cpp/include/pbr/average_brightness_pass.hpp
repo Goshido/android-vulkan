@@ -2,6 +2,7 @@
 #define PBR_AVERAGE_BRIGHTNESS_PASS_HPP
 
 
+#include "spd_descriptor_set_layout.hpp"
 #include "spd_program.hpp"
 #include <texture2D.hpp>
 
@@ -17,13 +18,6 @@ class AverageBrightnessPass final
             VkDeviceSize                        _offset = std::numeric_limits<VkDeviceSize>::max ();
         };
 
-        constexpr static size_t MAX_MIPS = 12U;
-
-        // Max detailed mip is not used and skipped.
-        // Mip 5 uses dedicated view because of internal sync operation.
-        // Average brightness will be stored into buffer instead of mip.
-        constexpr static size_t MAX_RELAXED_VIEWS = MAX_MIPS - 3U;
-
     private:
         VkBuffer                                _brightness = VK_NULL_HANDLE;
         Memory                                  _brightnessMemory {};
@@ -34,17 +28,16 @@ class AverageBrightnessPass final
         VkDescriptorPool                        _descriptorPool = VK_NULL_HANDLE;
         VkDescriptorSet                         _descriptorSet = VK_NULL_HANDLE;
 
-        VkImage                                 _mips = VK_NULL_HANDLE;
-        Memory                                  _mipsMemory {};
         uint32_t                                _mipCount = 0U;
-        VkImageView                             _mipViews[ MAX_RELAXED_VIEWS ];
-        VkImageView                             _syncMip5 = VK_NULL_HANDLE;
+        VkImage                                 _syncMip5 = VK_NULL_HANDLE;
+        VkImageView                             _syncMip5View = VK_NULL_HANDLE;
+        Memory                                  _syncMip5Memory {};
         bool                                    _isNeedTransitLayout = true;
 
         VkBuffer                                _globalCounter = VK_NULL_HANDLE;
         Memory                                  _globalCounterMemory {};
 
-        std::unique_ptr<DescriptorSetLayout>    _layout {};
+        SPDDescriptorSetLayout                  _layout {};
         std::unique_ptr<SPDProgram>             _program {};
 
         VkBuffer                                _transferBuffer = VK_NULL_HANDLE;
@@ -84,19 +77,19 @@ class AverageBrightnessPass final
             VkCommandPool commandPool
         ) noexcept;
 
-        [[nodiscard]] bool BindTargetToDescriptorSet ( VkDevice device,
-            android_vulkan::Texture2D const &hdrImage
+        [[nodiscard]] bool CreateSyncMip5 ( android_vulkan::Renderer &renderer,
+            VkDevice device,
+            VkExtent2D resolution
         ) noexcept;
 
-        [[nodiscard]] bool CreateMips ( android_vulkan::Renderer &renderer,
-            VkDevice device,
-            VkExtent2D mipResolution
+        [[nodiscard]] bool BindTargetToDescriptorSet ( VkDevice device,
+            android_vulkan::Texture2D const &hdrImage
         ) noexcept;
 
         void FreeTargetResources ( android_vulkan::Renderer &renderer, VkDevice device ) noexcept;
         void FreeTransferBuffer ( android_vulkan::Renderer &renderer, VkDevice device ) noexcept;
 
-        void TransitAllMips ( VkCommandBuffer commandBuffer ) noexcept;
+        void TransitSync5Mip ( VkCommandBuffer commandBuffer ) noexcept;
 
         [[nodiscard]] bool UpdateMipCount ( android_vulkan::Renderer &renderer,
             VkDevice device,

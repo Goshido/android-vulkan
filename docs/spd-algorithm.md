@@ -51,17 +51,24 @@ Final goal is a single value: average brightness. So intermidiate mip levels do 
 
 Resulting average brightness will be stored in storage buffer rather than last mip level of the image.
 
-Square and non power of two limitations could be resolved. This requires to modify compute shader. First it's resonable to add requirement for input image to be multiple of 64 pixels. This allows to avoid bound checking up to internal mip 5. For internal mip level greater that 5 it's needed to do bound checking before writing to mip images.
-
-To reduce big amount of branching it's resonable to have several modifications of the algorithm. Main difference between versions - compatibility with fixed amout of mip levels:
-
-- for 12 mips: 2048 - 4095 resolution range
-- for 11 mips: 1024 - 2047 resolution range
-- for 10 mips: 512 - 1023 resolution range
-
-Last mip level pass does not need to write into shared memory.
+Square and non power of two limitations could be resolved. This requires to modify compute shader. First it's resonable to add requirement for input image to be multiple of 64 pixels. This allows to avoid bound checking up to internal mip 5. For internal mip level greater that 5 it's needed to do bound checking before reading data.
 
 For brightness computation it's possible to convert image to luma using [_BT.601_](https://en.wikipedia.org/wiki/Luma_(video)#Rec._601_luma_versus_Rec._709_luma_coefficients) at generation of internal mip 0. This allows to use `float16_t` instead of `float16_t4` for shared memory. This also allows to use `VK_FORMAT_R16_SFLOAT` format for internal mip 5.
+
+Fundamental flaw of _SPD_: Usage _Average of Averages_ during the computation. It's incorrect:
+
+<img src="./images/average-of-average.png"/>
+
+Real example: Mip level before last, 3x1:
+
+<img src="./images/3x1-example.png"/>
+
+In addition original _SPD_ works such way that last mip will ignore pixel from the right. It's 1/3 of the image information! The following [_video_](https://drive.google.com/file/d/1ruK1Ni5tTbLKrKzhHA8JppNw79Pw9_uW/view?usp=drive_link) shows how inaccurate such assumption:
+
+- true value `0.1504`
+- _SPD_ value `0.10791`
+
+Because of that the logic after mip 5 was completely rewritten.
 
 [↬ table of content ⇧](#table-of-content)
 

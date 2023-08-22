@@ -16,6 +16,18 @@ void AverageBrightnessPass::Execute ( VkCommandBuffer commandBuffer ) noexcept
     _program.Bind ( commandBuffer );
     _program.SetDescriptorSet ( commandBuffer, _descriptorSet );
     vkCmdDispatch ( commandBuffer, _dispatch.width, _dispatch.height, _dispatch.depth );
+
+    vkCmdPipelineBarrier ( commandBuffer,
+        VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+        VK_DEPENDENCY_BY_REGION_BIT,
+        0U,
+        nullptr,
+        1U,
+        &_brightnessBarrier,
+        0U,
+        nullptr
+    );
 }
 
 void AverageBrightnessPass::FreeTransferResources ( android_vulkan::Renderer &renderer,
@@ -57,10 +69,10 @@ void AverageBrightnessPass::Destroy ( android_vulkan::Renderer &renderer ) noexc
         AV_UNREGISTER_DEVICE_MEMORY ( "pbr::AverageBrightnessPass::_globalCounterMemory" )
     }
 
-    if ( _brightness != VK_NULL_HANDLE )
+    if ( _brightnessBarrier.buffer != VK_NULL_HANDLE )
     {
-        vkDestroyBuffer ( device, _brightness, nullptr );
-        _brightness = VK_NULL_HANDLE;
+        vkDestroyBuffer ( device, _brightnessBarrier.buffer, nullptr );
+        _brightnessBarrier.buffer = VK_NULL_HANDLE;
         AV_UNREGISTER_BUFFER ( "pbr::AverageBrightnessPass::_brightness" )
     }
 
@@ -128,20 +140,33 @@ bool AverageBrightnessPass::CreateBrightnessResources ( android_vulkan::Renderer
     VkDevice device
 ) noexcept
 {
-    VkBufferCreateInfo const bufferInfo
+    _brightnessBarrier =
+    {
+        .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
+        .pNext = nullptr,
+        .srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT,
+        .dstAccessMask = VK_ACCESS_UNIFORM_READ_BIT,
+        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .buffer = VK_NULL_HANDLE,
+        .offset = 0U,
+        .size = static_cast<VkDeviceSize> ( sizeof ( float ) )
+    };
+
+    constexpr VkBufferCreateInfo bufferInfo
     {
         .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0U,
         .size = sizeof ( float ),
-        .usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+        .usage = AV_VK_FLAG ( VK_BUFFER_USAGE_STORAGE_BUFFER_BIT ) | AV_VK_FLAG ( VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT ),
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
         .queueFamilyIndexCount = 0U,
         .pQueueFamilyIndices = nullptr
     };
 
     bool result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateBuffer ( device, &bufferInfo, nullptr, &_brightness ),
+        vkCreateBuffer ( device, &bufferInfo, nullptr, &_brightnessBarrier.buffer ),
         "pbr::AverageBrightnessPass::CreateBrightnessResources",
         "Can't create buffer"
     );
@@ -152,7 +177,7 @@ bool AverageBrightnessPass::CreateBrightnessResources ( android_vulkan::Renderer
     AV_REGISTER_BUFFER ( "pbr::AverageBrightnessPass::_brightness" )
 
     VkMemoryRequirements memoryRequirements {};
-    vkGetBufferMemoryRequirements ( device, _brightness, &memoryRequirements );
+    vkGetBufferMemoryRequirements ( device, _brightnessBarrier.buffer, &memoryRequirements );
 
     result = renderer.TryAllocateMemory ( _brightnessMemory._memory,
         _brightnessMemory._offset,
@@ -167,7 +192,7 @@ bool AverageBrightnessPass::CreateBrightnessResources ( android_vulkan::Renderer
     AV_REGISTER_DEVICE_MEMORY ( "pbr::AverageBrightnessPass::_brightnessMemory" )
 
     return android_vulkan::Renderer::CheckVkResult (
-        vkBindBufferMemory ( device, _brightness, _brightnessMemory._memory, _brightnessMemory._offset ),
+        vkBindBufferMemory ( device, _brightnessBarrier.buffer, _brightnessMemory._memory, _brightnessMemory._offset ),
         "pbr::AverageBrightnessPass::CreateBrightnessResources",
         "Can't memory"
     );
@@ -489,7 +514,7 @@ bool AverageBrightnessPass::CreateSyncMip5 ( android_vulkan::Renderer &renderer,
     if ( !result )
         return false;
 
-    VkImageViewCreateInfo viewInfo
+    VkImageViewCreateInfo const viewInfo
     {
         .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
         .pNext = nullptr,
@@ -556,7 +581,7 @@ bool AverageBrightnessPass::BindTargetToDescriptorSet ( VkDevice device,
 
     VkDescriptorBufferInfo const brightnessBufferInfo
     {
-        .buffer = _brightness,
+        .buffer = _brightnessBarrier.buffer,
         .offset = 0U,
         .range = static_cast<VkDeviceSize> ( sizeof ( float ) )
     };

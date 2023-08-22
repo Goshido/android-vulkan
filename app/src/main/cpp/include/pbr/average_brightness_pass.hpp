@@ -19,7 +19,7 @@ class AverageBrightnessPass final
         };
 
     private:
-        VkBuffer                                _brightness = VK_NULL_HANDLE;
+        VkBufferMemoryBarrier                   _brightnessBarrier {};
         Memory                                  _brightnessMemory {};
 
         VkCommandBuffer                         _commandBuffer = VK_NULL_HANDLE;

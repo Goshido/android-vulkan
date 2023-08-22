@@ -282,9 +282,7 @@ void CS ( in uint32_t threadID: SV_GroupIndex, in uint32_t3 workGroupID: SV_Grou
         return;
 
     ReduceRows ( threadID );
-
-    // Note: less strict barrier is intentional here.
-    GroupMemoryBarrier ();
+    GroupMemoryBarrierWithGroupSync ();
 
     if ( threadID > 0U )
         return;

@@ -1,42 +1,37 @@
-#ifndef PBR_SPD_PROGRAM_HPP
-#define PBR_SPD_PROGRAM_HPP
+#ifndef PBR_AVERAGE_BRIGHTNESS_PROGRAM_HPP
+#define PBR_AVERAGE_BRIGHTNESS_PROGRAM_HPP
 
 
+#include "average_brightness_descriptor_set_layout.hpp"
 #include "compute_program.hpp"
-#include "spd_descriptor_set_layout.hpp"
 
 
 namespace pbr {
 
-class SPDProgram : public ComputeProgram
+class AverageBrightnessProgram : public ComputeProgram
 {
     public:
         struct SpecializationInfo final
         {
-            [[maybe_unused]] uint32_t       _workgroupCount;
-            [[maybe_unused]] VkExtent2D     _mip5Resolution;
-            [[maybe_unused]] VkExtent2D     _mip6Resolution;
-            [[maybe_unused]] VkExtent2D     _mip7Resolution;
-            [[maybe_unused]] VkExtent2D     _mip8Resolution;
-            [[maybe_unused]] VkExtent2D     _mip9Resolution;
+            [[maybe_unused]] uint32_t           _workgroupCount;
+            [[maybe_unused]] VkExtent2D         _mip5Resolution;
+            [[maybe_unused]] float              _normalizeW;
+            [[maybe_unused]] float              _normalizeH;
         };
 
-    protected:
-        SPDDescriptorSetLayout              _layout {};
-
     private:
-        char const*                         _shaderFile;
+        AverageBrightnessDescriptorSetLayout    _layout {};
 
     public:
-        explicit SPDProgram () = delete;
+        explicit AverageBrightnessProgram () noexcept;
 
-        SPDProgram ( SPDProgram const & ) = delete;
-        SPDProgram &operator = ( SPDProgram const & ) = delete;
+        AverageBrightnessProgram ( AverageBrightnessProgram const & ) = delete;
+        AverageBrightnessProgram &operator = ( AverageBrightnessProgram const & ) = delete;
 
-        SPDProgram ( SPDProgram && ) = delete;
-        SPDProgram &operator = ( SPDProgram && ) = delete;
+        AverageBrightnessProgram ( AverageBrightnessProgram && ) = delete;
+        AverageBrightnessProgram &operator = ( AverageBrightnessProgram && ) = delete;
 
-        ~SPDProgram () override = default;
+        ~AverageBrightnessProgram () override = default;
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
             SpecializationData specializationData
@@ -52,9 +47,6 @@ class SPDProgram : public ComputeProgram
             VkExtent2D const &imageResolution
         ) noexcept;
 
-    protected:
-        explicit SPDProgram ( std::string_view name, char const* shaderFile ) noexcept;
-
     private:
         void DestroyShaderModule ( VkDevice device ) noexcept override final;
         [[nodiscard]] bool InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept override final;
@@ -69,4 +61,4 @@ class SPDProgram : public ComputeProgram
 } // namespace pbr
 
 
-#endif // PBR_SPD_PROGRAM_HPP
+#endif // PBR_AVERAGE_BRIGHTNESS_PROGRAM_HPP

@@ -1,11 +1,27 @@
-#include <pbr/spd.inc>
-#include <pbr/spd_program.hpp>
+#include <pbr/average_brightness.inc>
+#include <pbr/average_brightness_program.hpp>
 #include <vulkan_utils.hpp>
 
 
 namespace pbr {
 
-bool SPDProgram::Init ( android_vulkan::Renderer &renderer, SpecializationData specializationData ) noexcept
+namespace {
+
+constexpr char const* SHADER = "shaders/average_brightness.cs.spv";
+
+} // end of anonymous namespace
+
+//----------------------------------------------------------------------------------------------------------------------
+
+AverageBrightnessProgram::AverageBrightnessProgram () noexcept:
+    ComputeProgram ( "pbr::AverageBrightnessProgram" )
+{
+    // NOTHING
+}
+
+bool AverageBrightnessProgram::Init ( android_vulkan::Renderer &renderer,
+    SpecializationData specializationData
+) noexcept
 {
     VkDevice device = renderer.GetDevice ();
     VkSpecializationInfo specInfo {};
@@ -26,25 +42,25 @@ bool SPDProgram::Init ( android_vulkan::Renderer &renderer, SpecializationData s
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkCreateComputePipelines ( device, VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
-        "pbr::SPDProgram::Init",
+        "pbr::AverageBrightnessProgram::Init",
         "Can't create pipeline"
     );
 
     if ( !result )
         return false;
 
-    AV_REGISTER_PIPELINE ( "pbr::SPDProgram::_pipeline" )
+    AV_REGISTER_PIPELINE ( "pbr::AverageBrightnessProgram::_pipeline" )
     DestroyShaderModule ( device );
     return true;
 }
 
-void SPDProgram::Destroy ( VkDevice device ) noexcept
+void AverageBrightnessProgram::Destroy ( VkDevice device ) noexcept
 {
     if ( _pipelineLayout != VK_NULL_HANDLE )
     {
         vkDestroyPipelineLayout ( device, _pipelineLayout, nullptr );
         _pipelineLayout = VK_NULL_HANDLE;
-        AV_UNREGISTER_PIPELINE_LAYOUT ( "pbr::SPDProgram::_pipelineLayout" )
+        AV_UNREGISTER_PIPELINE_LAYOUT ( "pbr::AverageBrightnessProgram::_pipelineLayout" )
     }
 
     _layout.Destroy ( device );
@@ -55,10 +71,10 @@ void SPDProgram::Destroy ( VkDevice device ) noexcept
 
     vkDestroyPipeline ( device, _pipeline, nullptr );
     _pipeline = VK_NULL_HANDLE;
-    AV_UNREGISTER_PIPELINE ( "pbr::SPDProgram::_pipeline" )
+    AV_UNREGISTER_PIPELINE ( "pbr::AverageBrightnessProgram::_pipeline" )
 }
 
-void SPDProgram::SetDescriptorSet ( VkCommandBuffer commandBuffer, VkDescriptorSet set ) const noexcept
+void AverageBrightnessProgram::SetDescriptorSet ( VkCommandBuffer commandBuffer, VkDescriptorSet set ) const noexcept
 {
     vkCmdBindDescriptorSets ( commandBuffer,
         VK_PIPELINE_BIND_POINT_COMPUTE,
@@ -71,7 +87,7 @@ void SPDProgram::SetDescriptorSet ( VkCommandBuffer commandBuffer, VkDescriptorS
     );
 }
 
-void SPDProgram::GetMetaInfo ( VkExtent3D &dispatch,
+void AverageBrightnessProgram::GetMetaInfo ( VkExtent3D &dispatch,
     VkExtent2D &mipChainResolution,
     SpecializationInfo &specializationInfo,
     VkExtent2D const &imageResolution
@@ -114,32 +130,21 @@ void SPDProgram::GetMetaInfo ( VkExtent3D &dispatch,
         r = nextMip ( r );
 
     specializationInfo._mip5Resolution = r;
-    specializationInfo._mip6Resolution = nextMip ( specializationInfo._mip5Resolution );
-    specializationInfo._mip7Resolution = nextMip ( specializationInfo._mip6Resolution );
-
-    // Intentionally don't care about non-existing mips. They will be 1x1 and not used anyway.
-    specializationInfo._mip8Resolution = nextMip ( specializationInfo._mip7Resolution );
-    specializationInfo._mip9Resolution = nextMip ( specializationInfo._mip8Resolution );
+    specializationInfo._normalizeW = 1.0F / static_cast<float> ( r.width );
+    specializationInfo._normalizeH = 1.0F / static_cast<float> ( r.height );
 }
 
-SPDProgram::SPDProgram ( std::string_view name, char const* shaderFile ) noexcept:
-    ComputeProgram ( name ),
-    _shaderFile ( shaderFile )
-{
-    // NOTHING
-}
-
-void SPDProgram::DestroyShaderModule ( VkDevice device ) noexcept
+void AverageBrightnessProgram::DestroyShaderModule ( VkDevice device ) noexcept
 {
     if ( _computeShader == VK_NULL_HANDLE )
         return;
 
     vkDestroyShaderModule ( device, _computeShader, nullptr );
     _computeShader = VK_NULL_HANDLE;
-    AV_UNREGISTER_SHADER_MODULE ( "pbr::SPDProgram::_computeShader" )
+    AV_UNREGISTER_SHADER_MODULE ( "pbr::AverageBrightnessProgram::_computeShader" )
 }
 
-bool SPDProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept
+bool AverageBrightnessProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept
 {
     if ( !_layout.Init ( device ) )
         return false;
@@ -159,33 +164,33 @@ bool SPDProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexce
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreatePipelineLayout ( device, &layoutInfo, nullptr, &_pipelineLayout ),
-        "pbr::SPDProgram::InitLayout",
+        "pbr::AverageBrightnessProgram::InitLayout",
         "Can't create pipeline layout"
     );
 
     if ( !result )
         return false;
 
-    AV_REGISTER_PIPELINE_LAYOUT ( "pbr::SPDProgram::_pipelineLayout" )
+    AV_REGISTER_PIPELINE_LAYOUT ( "pbr::AverageBrightnessProgram::_pipelineLayout" )
     layout = _pipelineLayout;
     return true;
 }
 
-bool SPDProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
+bool AverageBrightnessProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
     SpecializationData specializationData,
     VkSpecializationInfo* specializationInfo,
     VkPipelineShaderStageCreateInfo &targetInfo
 ) noexcept
 {
     bool const result = renderer.CreateShader ( _computeShader,
-        _shaderFile,
-        "Can't create shader (pbr::SPDProgram)"
+        SHADER,
+        "Can't create shader (pbr::AverageBrightnessProgram)"
     );
 
     if ( !result )
         return false;
 
-    AV_REGISTER_SHADER_MODULE ( "pbr::SPDProgram::_computeShader" )
+    AV_REGISTER_SHADER_MODULE ( "pbr::AverageBrightnessProgram::_computeShader" )
     constexpr size_t w = offsetof ( VkExtent2D, width );
     constexpr size_t h = offsetof ( VkExtent2D, height );
 
@@ -209,44 +214,14 @@ bool SPDProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
             .size = sizeof ( VkExtent2D::height )
         },
         {
-            .constantID = CONST_MIP_6_W,
-            .offset = static_cast<uint32_t> ( offsetof ( SpecializationInfo, _mip6Resolution ) + w ),
-            .size = sizeof ( VkExtent2D::width )
+            .constantID = CONST_NORMALIZE_W,
+            .offset = static_cast<uint32_t> ( offsetof ( SpecializationInfo, _normalizeW ) ),
+            .size = sizeof ( SpecializationInfo::_normalizeW )
         },
         {
-            .constantID = CONST_MIP_6_H,
-            .offset = static_cast<uint32_t> ( offsetof ( SpecializationInfo, _mip6Resolution ) + h ),
-            .size = sizeof ( VkExtent2D::height )
-        },
-        {
-            .constantID = CONST_MIP_7_W,
-            .offset = static_cast<uint32_t> ( offsetof ( SpecializationInfo, _mip7Resolution ) + w ),
-            .size = sizeof ( VkExtent2D::width )
-        },
-        {
-            .constantID = CONST_MIP_7_H,
-            .offset = static_cast<uint32_t> ( offsetof ( SpecializationInfo, _mip7Resolution ) + h ),
-            .size = sizeof ( VkExtent2D::height )
-        },
-        {
-            .constantID = CONST_MIP_8_W,
-            .offset = static_cast<uint32_t> ( offsetof ( SpecializationInfo, _mip8Resolution ) + w ),
-            .size = sizeof ( VkExtent2D::width )
-        },
-        {
-            .constantID = CONST_MIP_8_H,
-            .offset = static_cast<uint32_t> ( offsetof ( SpecializationInfo, _mip8Resolution ) + h ),
-            .size = sizeof ( VkExtent2D::height )
-        },
-        {
-            .constantID = CONST_MIP_9_W,
-            .offset = static_cast<uint32_t> ( offsetof ( SpecializationInfo, _mip9Resolution ) + w ),
-            .size = sizeof ( VkExtent2D::width )
-        },
-        {
-            .constantID = CONST_MIP_9_H,
-            .offset = static_cast<uint32_t> ( offsetof ( SpecializationInfo, _mip9Resolution ) + h ),
-            .size = sizeof ( VkExtent2D::height )
+            .constantID = CONST_NORMALIZE_H,
+            .offset = static_cast<uint32_t> ( offsetof ( SpecializationInfo, _normalizeH ) ),
+            .size = sizeof ( SpecializationInfo::_normalizeH )
         }
     };
 

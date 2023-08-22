@@ -1,8 +1,6 @@
-#ifndef SPD_COMMON_CS
-#define SPD_COMMON_CS
+// See <repo/docs/spd-algorithm.md>
 
-
-#include "spd.inc"
+#include "average_brightness.inc"
 
 
 #define THREAD_X    256
@@ -19,19 +17,11 @@ const uint32_t                                  g_Mip5W = 32U;
 [[vk::constant_id ( CONST_MIP_5_H )]]
 const uint32_t                                  g_Mip5H = 14U;
 
-// FUCK NOT USED
-[[vk::constant_id ( CONST_MIP_6_W )]]
-const uint32_t                                  g_Mip6W = 16U;
+[[vk::constant_id ( CONST_NORMALIZE_W )]]
+const float32_t                                 g_NormalizeW = 3.125e-2H;
 
-// FUCK NOT USED
-[[vk::constant_id ( CONST_MIP_6_H )]]
-const uint32_t                                  g_Mip6H = 7U;
-
-[[vk::constant_id ( CONST_MIP_7_W )]]
-const uint32_t                                  g_Mip7W = 8U;
-
-[[vk::constant_id ( CONST_MIP_7_H )]]
-const uint32_t                                  g_Mip7H = 3U;
+[[vk::constant_id ( CONST_NORMALIZE_H )]]
+const float32_t                                 g_NormalizeH = 7.142e-2H;
 
 [[vk::binding ( BIND_HDR_IMAGE, SET_RESOURCE )]]
 Texture2D<float32_t4>                           g_HDRImage:             register ( t0 );
@@ -53,55 +43,12 @@ RWStructuredBuffer<float32_t>                   g_Brightness:           register
 groupshared float16_t                           s_Luma[ 16U ][ 16U ];
 groupshared uint32_t                            s_Counter;
 
-// Scale coeffient which depeds how many members existed.
-static const float16_t WEIGHTS[ 4U ] = { 1.0H, 0.5H, 3.33333e-1H, 0.25H };
-
 //----------------------------------------------------------------------------------------------------------------------
 
 float16_t Reduce4 ( in float16_t v0, in float16_t v1, in float16_t v2, in float16_t v3 )
 {
     const float16_t2 alpha = float16_t2 ( v0, v1 ) + float16_t2 ( v2, v3 );
     return ( alpha.x + alpha.y ) * 0.25H;
-}
-
-float16_t ReduceStrict4 ( in float16_t v0, in float16_t v1, in float16_t v2, in float16_t v3, in float16_t w )
-{
-    const float16_t2 alpha = float16_t2 ( v0, v1 ) + float16_t2 ( v2, v3 );
-    return ( alpha.x + alpha.y ) * w;
-}
-
-float16_t ReduceStrictLoad4 ( in uint32_t2 base )
-{
-    const uint32_t2 m = base + 1U;
-    uint16_t counter = 0U;
-
-    const float16_t v0 = (float16_t)g_SyncMip5[ base ].x;
-
-    float16_t v1 = 0.0H;
-
-    if ( m.x < g_Mip5W )
-    {
-        v1 = (float16_t)g_SyncMip5[ base + uint32_t2 ( 1U, 0U ) ].x;
-        ++counter;
-    }
-
-    float16_t v2 = 0.0H;
-
-    if ( m.y < g_Mip5H )
-    {
-        v2 = (float16_t)g_SyncMip5[ base + uint32_t2 ( 0U, 1U ) ].x;
-        ++counter;
-    }
-
-    float16_t v3 = 0.0H;
-
-    if ( all ( m < uint32_t2 ( g_Mip5W, g_Mip5H ) ) )
-    {
-        v3 = (float16_t)g_SyncMip5[ m ].x;
-        ++counter;
-    }
-
-    return ReduceStrict4 ( v0, v1, v2, v3, WEIGHTS[ counter ] );
 }
 
 float16_t ReduceLoadSourceImage ( in uint32_t2 base )
@@ -125,54 +72,27 @@ float16_t ReduceIntermediate ( in uint32_t2 i0, in uint32_t2 i1, in uint32_t2 i2
     return Reduce4 ( v0, v1, v2, v3 );
 }
 
-float16_t ReduceIntermediateStrict ( in uint32_t2 base,
-    in uint32_t2 resolution,
-    in uint32_t2 i0,
-    in uint32_t2 i1,
-    in uint32_t2 i2,
-    in uint32_t2 i3
-)
+void ReduceRows ( in uint32_t threadID )
 {
-    const uint32_t2 m = base + 1U;
-    uint16_t counter = 0U;
+    if ( threadID >= g_Mip5H )
+        return;
 
-    const float16_t v0 = s_Luma[ i0.x ][ i0.y ];
+    float16_t acc = 0.0H;
 
-    float16_t v1 = 0.0H;
+    for ( uint32_t x = 0U; x < g_Mip5W; ++x )
+        acc += (float16_t)g_SyncMip5[ uint32_t2 ( x, threadID ) ].x;
 
-    if ( m.x < resolution.x )
-    {
-        v1 = s_Luma[ i1.x ][ i1.y ];
-        ++counter;
-    }
-
-    float16_t v2 = 0.0H;
-
-    if ( m.y < resolution.y )
-    {
-        v2 = s_Luma[ i2.x ][ i2.y ];
-        ++counter;
-    }
-
-    float16_t v3 = 0.0H;
-
-    if ( all ( m < resolution ) )
-    {
-        v3 = s_Luma[ i3.x ][ i3.y ];
-        ++counter;
-    }
-
-    return ReduceStrict4 ( v0, v1, v2, v3, WEIGHTS[ counter ] );
+    s_Luma[ threadID >> 4U ][ threadID & 0x0000000FU ] = acc * (float16_t)g_NormalizeW;
 }
 
-void StoreSync ( in uint32_t2 pix, in float16_t value )
+float32_t ReduceToAverage ()
 {
-    g_SyncMip5[ pix ] = (float32_t)value;
-}
+    float16_t acc = s_Luma[ 0U ][ 0U ];
 
-void StoreIntermediate ( in uint32_t x, in uint32_t y, in float16_t value )
-{
-    s_Luma[ x ][ y ] = value;
+    for ( uint32_t i = 1U; i < g_Mip5H; ++i )
+        acc += s_Luma[ i >> 4U ][ i & 0x0000000FU ];
+
+    return (float32_t)acc * g_NormalizeH;
 }
 
 uint32_t BitfieldExtract ( in uint32_t src, in uint32_t off, in uint32_t bits )
@@ -197,8 +117,11 @@ uint32_t2 RemapForWaveReduction ( in uint32_t a )
 
 uint32_t2 GetThreadTarget ( in uint32_t threadID )
 {
-    const uint32_t2 subXY = RemapForWaveReduction ( threadID % 64U );
-    const uint32_t2 alpha = uint32_t2 ( ( threadID >> 6U ) % 2U, threadID >> 7U );
+    // Optimization: "threadID & 0x0000003FU" equals "threadID % 64U" equals.
+    const uint32_t2 subXY = RemapForWaveReduction ( threadID & 0x0000003FU );
+
+    // Optimization: "( threadID >> 6U ) & 0x00000001U" equals "( threadID >> 6U ) % 2U".
+    const uint32_t2 alpha = uint32_t2 ( ( threadID >> 6U ) & 0x00000001U, threadID >> 7U );
     return subXY + alpha * 8U;
 }
 
@@ -237,7 +160,7 @@ void DownsampleMips01 ( in uint32_t x, in uint32_t y, in uint32_t2 workGroupID, 
     [unroll]
     for ( uint32_t i = 0U; i < 4U; ++i )
     {
-        StoreIntermediate ( x, y, v[ i ] );
+        s_Luma[ x ][ y ] = v[ i ];
         GroupMemoryBarrierWithGroupSync ();
 
         if ( threadID < 64U )
@@ -256,10 +179,11 @@ void DownsampleMips01 ( in uint32_t x, in uint32_t y, in uint32_t2 workGroupID, 
         return;
 
     const uint32_t2 gamma = xy + 8U;
-    StoreIntermediate ( x, y, v[ 0U ] );
-    StoreIntermediate ( gamma.x, y, v[ 1U ] );
-    StoreIntermediate ( x, gamma.y, v[ 2U ] );
-    StoreIntermediate ( gamma.x, gamma.y, v[ 3U ] );
+
+    s_Luma[ x ][ y ] = v[ 0U ];
+    s_Luma[ gamma.x ][ y ] = v[ 1U ];
+    s_Luma[ x ][ gamma.y ] = v[ 2U ];
+    s_Luma[ gamma.x ][ gamma.y ] = v[ 3U ];
 }
 
 // See <repo>/docs/spd-algorithm.md#mip-2
@@ -277,7 +201,8 @@ void DownsampleMip2 ( in uint32_t x, in uint32_t y, in uint32_t2 workGroupID, in
         base + uint32_t2 ( 1U, 1U )
     );
 
-    StoreIntermediate ( base.x + y % 2U, base.y, v );
+    // Optimization: "base.x + ( y & 0x00000001U )" equals "base.x + y % 2U".
+    s_Luma[ base.x + ( y & 0x00000001U ) ][ base.y ] = v;
 }
 
 // See <repo>/docs/spd-algorithm.md#mip-3
@@ -295,7 +220,7 @@ void DownsampleMip3 ( in uint32_t x, in uint32_t y, in uint32_t2 workGroupID, in
         base + uint32_t2 ( 3U, 2U )
     );
 
-    StoreIntermediate ( base.x + y, base.y, v );
+    s_Luma[ base.x + y ][ base.y ] = v;
 }
 
 // See <repo>/docs/spd-algorithm.md#mip-4
@@ -315,7 +240,7 @@ void DownsampleMip4 ( in uint32_t x, in uint32_t y, in uint32_t2 workGroupID, in
         alpha + uint32_t2 ( 5U, 4U )
     );
 
-    StoreIntermediate ( x + yy, 0U, v );
+    s_Luma[ x + yy ][ 0U ] = v;
 }
 
 // See <repo>/docs/spd-algorithm.md#mip-5
@@ -330,45 +255,42 @@ void DownsampleMip5 ( in uint32_t2 workGroupID, in uint32_t threadID )
         uint32_t2 ( 3U, 0U )
     );
 
-    StoreSync ( workGroupID.xy, v );
+    g_SyncMip5[ workGroupID.xy ] = (float32_t)v;
 }
 
-void DownsampleMips67 ( in uint32_t x, in uint32_t y )
+//----------------------------------------------------------------------------------------------------------------------
+
+[numthreads ( THREAD_X, THREAD_Y, THREAD_Z )]
+void CS ( in uint32_t threadID: SV_GroupIndex, in uint32_t3 workGroupID: SV_GroupID )
 {
-    const uint32_t2 xy = uint32_t2 ( x, y );
+    const uint32_t2 base = GetThreadTarget ( threadID );
+    DownsampleMips01 ( base.x, base.y, workGroupID.xy, threadID );
 
-    // Optimization: Replacing multiplication by addition:
-    // pixBase = xy * 2U
-    // texBase = xy * 4U
-    const uint32_t2 pixBase = xy + xy;
-    const uint32_t2 texBase = pixBase + pixBase;
+    GroupMemoryBarrierWithGroupSync ();
+    DownsampleMip2 ( base.x, base.y, workGroupID.xy, threadID );
 
-    const float16_t v0 = ReduceStrictLoad4 ( texBase );
-    const float16_t v1 = ReduceStrictLoad4 ( texBase + uint32_t2 ( 2U, 0U ) );
-    const float16_t v2 = ReduceStrictLoad4 ( texBase + uint32_t2 ( 0U, 2U ) );
-    const float16_t v3 = ReduceStrictLoad4 ( texBase + uint32_t2 ( 2U, 2U ) );
+    GroupMemoryBarrierWithGroupSync ();
+    DownsampleMip3 ( base.x, base.y, workGroupID.xy, threadID );
 
-    // no barrier needed, working on values only from the same thread
-    const float16_t v = Reduce4 ( v0, v1, v2, v3 );
-    StoreIntermediate ( x, y, v );
-}
+    GroupMemoryBarrierWithGroupSync ();
+    DownsampleMip4 ( base.x, base.y, workGroupID.xy, threadID );
 
-// See <repo>/docs/spd-algorithm.md#mip-2
-void DownsampleMip8Last ( in uint32_t x, in uint32_t y, in uint32_t threadID )
-{
+    GroupMemoryBarrierWithGroupSync ();
+    DownsampleMip5 ( workGroupID.xy, threadID );
+
+    if ( ExitWorkgroup ( threadID ) )
+        return;
+
+    ReduceRows ( threadID );
+
+    // Note: less strict barrier is intentional here.
+    GroupMemoryBarrier ();
+
     if ( threadID > 0U )
         return;
 
-    const float16_t v = ReduceIntermediateStrict ( uint32_t2 ( 0U, 0U ),
-        uint32_t2 ( g_Mip7W, g_Mip7H ),
-        uint32_t2 ( 0U, 0U ),
-        uint32_t2 ( 1U, 0U ),
-        uint32_t2 ( 0U, 1U ),
-        uint32_t2 ( 1U, 1U )
-    );
+    g_Brightness[ 0U ] = ReduceToAverage ();
 
-    g_Brightness[ 0U ] = (float32_t)v;
+    // Reset the global atomic counter back to 0 for the next spd dispatch.
+    g_GlobalAtomic[ 0U ]._counter = 0U;
 }
-
-
-#endif // SPD_COMMON_CS

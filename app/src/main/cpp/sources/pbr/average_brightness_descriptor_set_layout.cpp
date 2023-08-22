@@ -1,5 +1,5 @@
-#include <pbr/spd.inc>
-#include <pbr/spd_descriptor_set_layout.hpp>
+#include <pbr/average_brightness.inc>
+#include <pbr/average_brightness_descriptor_set_layout.hpp>
 #include <vulkan_utils.hpp>
 
 
@@ -43,7 +43,7 @@ void DescriptorSetLayout::Destroy ( VkDevice device ) noexcept
     vkDestroyDescriptorSetLayout ( device, _layout, nullptr );
     _layout = VK_NULL_HANDLE;
 
-    AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::SPDDescriptorSetLayout::_layout" )
+    AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::AverageBrightnessDescriptorSetLayout::_layout" )
 }
 
 bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
@@ -97,14 +97,14 @@ bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateDescriptorSetLayout ( device, &info, nullptr, &_layout ),
-        "pbr::SPD12MipsDescriptorSetLayout::Init",
+        "pbr::AverageBrightnessDescriptorSetLayout::Init",
         "Can't create descriptor set layout"
     );
 
     if ( !result )
         return false;
 
-    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::SPDDescriptorSetLayout::_layout" )
+    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::AverageBrightnessDescriptorSetLayout::_layout" )
 
     ++_references;
     return true;
@@ -114,17 +114,17 @@ DescriptorSetLayout g_descriptorSetLayout {};
 
 } // end of anonymous namespace
 
-void SPDDescriptorSetLayout::Destroy ( VkDevice device ) noexcept
+void AverageBrightnessDescriptorSetLayout::Destroy ( VkDevice device ) noexcept
 {
     g_descriptorSetLayout.Destroy ( device );
 }
 
-bool SPDDescriptorSetLayout::Init ( VkDevice device ) noexcept
+bool AverageBrightnessDescriptorSetLayout::Init ( VkDevice device ) noexcept
 {
     return g_descriptorSetLayout.Init ( device );
 }
 
-VkDescriptorSetLayout SPDDescriptorSetLayout::GetLayout () const noexcept
+VkDescriptorSetLayout AverageBrightnessDescriptorSetLayout::GetLayout () const noexcept
 {
     return g_descriptorSetLayout._layout;
 }

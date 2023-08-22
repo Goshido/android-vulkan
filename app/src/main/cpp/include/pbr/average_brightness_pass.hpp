@@ -2,8 +2,8 @@
 #define PBR_AVERAGE_BRIGHTNESS_PASS_HPP
 
 
-#include "spd_descriptor_set_layout.hpp"
-#include "spd_program.hpp"
+#include "average_brightness_descriptor_set_layout.hpp"
+#include "average_brightness_program.hpp"
 #include <texture2D.hpp>
 
 
@@ -37,8 +37,8 @@ class AverageBrightnessPass final
         VkBuffer                                _globalCounter = VK_NULL_HANDLE;
         Memory                                  _globalCounterMemory {};
 
-        SPDDescriptorSetLayout                  _layout {};
-        std::unique_ptr<SPDProgram>             _program {};
+        AverageBrightnessDescriptorSetLayout    _layout {};
+        AverageBrightnessProgram                _program {};
 
         VkBuffer                                _transferBuffer = VK_NULL_HANDLE;
         Memory                                  _transferBufferMemory {};
@@ -94,7 +94,7 @@ class AverageBrightnessPass final
         [[nodiscard]] bool UpdateMipCount ( android_vulkan::Renderer &renderer,
             VkDevice device,
             uint32_t mipCount,
-            SPDProgram::SpecializationInfo const &specInfo
+            AverageBrightnessProgram::SpecializationInfo const &specInfo
         ) noexcept;
 };
 

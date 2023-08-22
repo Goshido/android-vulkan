@@ -1,8 +1,5 @@
+#include <pbr/average_brightness.inc>
 #include <pbr/average_brightness_pass.hpp>
-#include <pbr/spd.inc>
-#include <pbr/spd_10_mips_program.hpp>
-#include <pbr/spd_11_mips_program.hpp>
-#include <pbr/spd_12_mips_program.hpp>
 #include <av_assert.hpp>
 #include <vulkan_utils.hpp>
 
@@ -16,9 +13,8 @@ void AverageBrightnessPass::Execute ( VkCommandBuffer commandBuffer ) noexcept
     if ( _isNeedTransitLayout )
         TransitSync5Mip ( commandBuffer );
 
-    SPDProgram &program = *_program;
-    program.Bind ( commandBuffer );
-    program.SetDescriptorSet ( commandBuffer, _descriptorSet );
+    _program.Bind ( commandBuffer );
+    _program.SetDescriptorSet ( commandBuffer, _descriptorSet );
     vkCmdDispatch ( commandBuffer, _dispatch.width, _dispatch.height, _dispatch.depth );
 }
 
@@ -38,7 +34,8 @@ bool AverageBrightnessPass::Init ( android_vulkan::Renderer &renderer, VkCommand
 
     return CreateGlobalCounter ( renderer, device, commandPool ) &&
         CreateDescriptorPool ( device ) &&
-        CreateBrightnessResources ( renderer, device );
+        CreateBrightnessResources ( renderer, device ) &&
+        _layout.Init ( device );
 }
 
 void AverageBrightnessPass::Destroy ( android_vulkan::Renderer &renderer ) noexcept
@@ -84,6 +81,7 @@ void AverageBrightnessPass::Destroy ( android_vulkan::Renderer &renderer ) noexc
         AV_UNREGISTER_DESCRIPTOR_POOL ( "pbr::AverageBrightnessPass::_descriptorPool" )
     }
 
+    _layout.Destroy ( device );
     FreeTransferBuffer ( renderer, device );
 }
 
@@ -94,8 +92,8 @@ bool AverageBrightnessPass::SetTarget ( android_vulkan::Renderer &renderer,
     VkDevice device = renderer.GetDevice ();
 
     VkExtent2D mipResolution;
-    SPDProgram::SpecializationInfo specData {};
-    SPDProgram::GetMetaInfo ( _dispatch, mipResolution, specData, hdrImage.GetResolution () );
+    AverageBrightnessProgram::SpecializationInfo specData {};
+    AverageBrightnessProgram::GetMetaInfo ( _dispatch, mipResolution, specData, hdrImage.GetResolution () );
 
     return
         UpdateMipCount ( renderer,
@@ -643,12 +641,7 @@ void AverageBrightnessPass::FreeTargetResources ( android_vulkan::Renderer &rend
         AV_UNREGISTER_DEVICE_MEMORY ( "pbr::AverageBrightnessPass::_syncMip5Memory" )
     }
 
-    _layout.Destroy ( device );
-
-    if ( _program )
-    {
-        _program->Destroy ( device );
-    }
+    _program.Destroy ( device );
 }
 
 void AverageBrightnessPass::FreeTransferBuffer ( android_vulkan::Renderer &renderer, VkDevice device ) noexcept
@@ -711,7 +704,7 @@ void AverageBrightnessPass::TransitSync5Mip ( VkCommandBuffer commandBuffer ) no
 bool AverageBrightnessPass::UpdateMipCount ( android_vulkan::Renderer &renderer,
     VkDevice device,
     uint32_t mipCount,
-    SPDProgram::SpecializationInfo const &specInfo
+    AverageBrightnessProgram::SpecializationInfo const &specInfo
 ) noexcept
 {
     if ( mipCount == _mipCount )
@@ -733,30 +726,7 @@ bool AverageBrightnessPass::UpdateMipCount ( android_vulkan::Renderer &renderer,
         }
     }
 
-    switch ( mipCount )
-    {
-        case 11U:
-            _program = std::make_unique<SPD12MipsProgram> ();
-        break;
-
-        case 10U:
-            _program = std::make_unique<SPD11MipsProgram> ();
-        break;
-
-        case 9U:
-            _program = std::make_unique<SPD10MipsProgram> ();
-        break;
-
-        default:
-            android_vulkan::LogError ( "pbr::AverageBrightnessPass::UpdateMipCount - Unexpected mip count %u.",
-                mipCount
-            );
-
-            AV_ASSERT ( false )
-        return false;
-    }
-
-    if ( !_layout.Init ( device ) )
+    if ( !_program.Init ( renderer, &specInfo ) )
         return false;
 
     VkDescriptorSetLayout layout = _layout.GetLayout ();
@@ -776,7 +746,7 @@ bool AverageBrightnessPass::UpdateMipCount ( android_vulkan::Renderer &renderer,
         "Can't create descriptor set"
     );
 
-    if ( !result || !_program->Init ( renderer, &specInfo ) )
+    if ( !result )
         return false;
 
     _mipCount = mipCount;

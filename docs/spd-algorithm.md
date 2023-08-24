@@ -53,7 +53,7 @@ Resulting average brightness will be stored in storage buffer rather than last m
 
 Square and non power of two limitations could be resolved. This requires to modify compute shader. First it's resonable to add requirement for input image to be multiple of 64 pixels. This allows to avoid bound checking up to internal mip 5. For internal mip level greater that 5 it's needed to do bound checking before reading data.
 
-For brightness computation it's possible to convert image to luma using [_BT.601_](https://en.wikipedia.org/wiki/Luma_(video)#Rec._601_luma_versus_Rec._709_luma_coefficients) at generation of internal mip 0. This allows to use `float16_t` instead of `float16_t4` for shared memory. This also allows to use `VK_FORMAT_R16_SFLOAT` format for internal mip 5.
+For brightness computation it's possible to convert image to [_log2 luma_](./auto-exposure.md) using [_BT.709_](https://en.wikipedia.org/wiki/Relative_luminance#Relative_luminance_and_%22gamma_encoded%22_colorspaces) at generation of internal mip 0. This allows to use `float16_t` instead of `float16_t4` for shared memory. This also allows to use `VK_FORMAT_R16_SFLOAT` format for internal mip 5.
 
 Fundamental flaw of _SPD_: Usage _Average of Averages_ during the computation. It's incorrect:
 

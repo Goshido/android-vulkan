@@ -22,7 +22,7 @@ The idea behind average luminance of image is geometric mean. But not a strait f
 
 1. Convert all pixels of _HDR_ to log2 luminance using [_BT.709_](https://en.wikipedia.org/wiki/Relative_luminance#Relative_luminance_and_%22gamma_encoded%22_colorspaces):
 
-$$l = log2(dot(pixel_{xyz}, [0.2126, 0.7152, 0.0722])$$
+$$l = log2(dot(pixel_{xyz}, [0.2126, 0.7152, 0.0722]))$$
 
 2. Make sure to not feed 0 values into _log2_! Clamp to mimum value:
 

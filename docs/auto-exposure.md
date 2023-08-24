@@ -32,7 +32,7 @@ $$log2(\dfrac{0.25}{256}) = -10$$
 
 $$L_{log2}$$
 
-4. Uncocompress arithmetic mean to get geometric mean:
+4. Uncompress arithmetic mean to get geometric mean:
 
 $$L_{average} = exp2(L_{log2})$$
 

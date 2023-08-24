@@ -18,7 +18,7 @@ Implementation is based on paper [_Automatic Exposure by Krzysztof Narkowicz, Ja
 
 $$L = \dfrac{2^{EV}}{8}$$
 
-The idea behing average luminance of image is geometric mean. But not a strait forward. Rather that is using [_log2_ trick](https://en.wikipedia.org/wiki/Geometric_mean):
+The idea behind average luminance of image is geometric mean. But not a strait forward. Rather that is using [_log2_ trick](https://en.wikipedia.org/wiki/Geometric_mean):
 
 1. Convert all pixels of _HDR_ to log2 luminance using [_BT.709_](https://en.wikipedia.org/wiki/Relative_luminance#Relative_luminance_and_%22gamma_encoded%22_colorspaces):
 
@@ -42,9 +42,9 @@ $$Exposure = \dfrac{0.18}{clamp(L_{average}, L_{min}, L_{max}) - L_{EC}}$$
 
 Where:
 
-$$L_{min}, L_{max} - \text{expected values of maximum and minimum brightness of scene. Set up by artist.}$$
+$$L_{min}, L_{max} - \text{expected values of maximum and minimum brightness of scene. Scalars. Set up by artist.}$$
 
-$$L_{EC} - \text{Scalar controll which allows the artist to bias exposure. Calculated on CPU using the first formula.}$$
+$$L_{EC} - \text{Scalar value which allows the artist to bias exposure. Calculated on CPU using the first formula.}$$
 
 To make eye adaptation it's needed to use exponental decay function which should be applied to average luminance:
 

@@ -1,27 +1,31 @@
-// See <repo/docs/spd-algorithm.md>
+// See <repo>/docs/spd-algorithm.md
+// See <repo>/docs/auto-exposure.md
 
 #include "average_brightness.inc"
 
 
-#define THREAD_X    256
-#define THREAD_Y    1
-#define THREAD_Z    1
+#define THREAD_X        256
+#define THREAD_Y        1
+#define THREAD_Z        1
+
+// It prevents log2 ( 0.0H ).
+#define SAFE_LUMA       9.7656e-4H
 
 
 [[vk::constant_id ( CONST_WORKGROUP_COUNT )]]
-const uint32_t                                  g_WorkgroupCount = 256U;
+uint32_t const                                  g_WorkgroupCount = 256U;
 
 [[vk::constant_id ( CONST_MIP_5_W )]]
-const uint32_t                                  g_Mip5W = 32U;
+uint32_t const                                  g_Mip5W = 32U;
 
 [[vk::constant_id ( CONST_MIP_5_H )]]
-const uint32_t                                  g_Mip5H = 14U;
+uint32_t const                                  g_Mip5H = 14U;
 
 [[vk::constant_id ( CONST_NORMALIZE_W )]]
-const float32_t                                 g_NormalizeW = 3.125e-2H;
+float32_t const                                 g_NormalizeW = 3.125e-2H;
 
 [[vk::constant_id ( CONST_NORMALIZE_H )]]
-const float32_t                                 g_NormalizeH = 7.142e-2H;
+float32_t const                                 g_NormalizeH = 7.142e-2H;
 
 [[vk::binding ( BIND_HDR_IMAGE, SET_RESOURCE )]]
 Texture2D<float32_t4>                           g_HDRImage:             register ( t0 );
@@ -47,28 +51,35 @@ groupshared uint32_t                            s_Counter;
 
 float16_t Reduce4 ( in float16_t v0, in float16_t v1, in float16_t v2, in float16_t v3 )
 {
-    const float16_t2 alpha = float16_t2 ( v0, v1 ) + float16_t2 ( v2, v3 );
+    float16_t2 const alpha = float16_t2 ( v0, v1 ) + float16_t2 ( v2, v3 );
     return ( alpha.x + alpha.y ) * 0.25H;
 }
 
 float16_t ReduceLoadSourceImage ( in uint32_t2 base )
 {
-    // Converting to RGB to luma using BT.601:
-    const float16_t3 bt601 = float16_t3 ( 0.299H, 0.587H, 0.114H );
+    // Converting to RGB to luma using BT.709:
+    float16_t3 const bt709 = float16_t3 ( 0.2126H, 0.7152H, 0.0722H );
 
-    const float16_t v0 = dot ( bt601, (float16_t3)g_HDRImage[ base ].xyz );
-    const float16_t v1 = dot ( bt601, (float16_t3)g_HDRImage[ base + uint32_t2 ( 0U, 1U ) ].xyz );
-    const float16_t v2 = dot ( bt601, (float16_t3)g_HDRImage[ base + uint32_t2 ( 1U, 0U ) ].xyz );
-    const float16_t v3 = dot ( bt601, (float16_t3)g_HDRImage[ base + uint32_t2 ( 1U, 1U ) ].xyz );
-    return Reduce4 ( v0, v1, v2, v3 );
+    float16_t4 const luma = float16_t4 ( dot ( bt709, (float16_t3)g_HDRImage[ base ].xyz ),
+        dot ( bt709, (float16_t3)g_HDRImage[ base + uint32_t2 ( 0U, 1U ) ].xyz ),
+        dot ( bt709, (float16_t3)g_HDRImage[ base + uint32_t2 ( 1U, 0U ) ].xyz ),
+        dot ( bt709, (float16_t3)g_HDRImage[ base + uint32_t2 ( 1U, 1U ) ].xyz )
+    );
+
+    // Using log2|exp2 trick to calculate geometric mean brighness.
+    // Making sure to not take log2 ( 0.0H ). Replacing it by minimal luma...
+    // See <repo/docs/auto-exposure.md>
+    float16_t4 const log2Luma = log2 ( max ( (float16_t4)SAFE_LUMA, luma ) );
+
+    return Reduce4 ( log2Luma.x, log2Luma.y, log2Luma.z, log2Luma.w );
 }
 
 float16_t ReduceIntermediate ( in uint32_t2 i0, in uint32_t2 i1, in uint32_t2 i2, in uint32_t2 i3 )
 {
-    const float16_t v0 = s_Luma[ i0.x ][ i0.y ];
-    const float16_t v1 = s_Luma[ i1.x ][ i1.y ];
-    const float16_t v2 = s_Luma[ i2.x ][ i2.y ];
-    const float16_t v3 = s_Luma[ i3.x ][ i3.y ];
+    float16_t const v0 = s_Luma[ i0.x ][ i0.y ];
+    float16_t const v1 = s_Luma[ i1.x ][ i1.y ];
+    float16_t const v2 = s_Luma[ i2.x ][ i2.y ];
+    float16_t const v3 = s_Luma[ i3.x ][ i3.y ];
     return Reduce4 ( v0, v1, v2, v3 );
 }
 
@@ -92,18 +103,20 @@ float32_t ReduceToAverage ()
     for ( uint32_t i = 1U; i < g_Mip5H; ++i )
         acc += s_Luma[ i >> 4U ][ i & 0x0000000FU ];
 
-    return (float32_t)acc * g_NormalizeH;
+    // Using log2|exp2 trick to calculate geometric mean brighness. Uncompressing value...
+    // See <repo>/docs/auto-exposure.md
+    return exp2 ( (float32_t)acc * g_NormalizeH );
 }
 
 uint32_t BitfieldExtract ( in uint32_t src, in uint32_t off, in uint32_t bits )
 {
-    const uint32_t mask = ( 1U << bits ) - 1U;
+    uint32_t const mask = ( 1U << bits ) - 1U;
     return ( src >> off ) & mask;
 }
 
 uint32_t BitfieldInsertMask ( in uint32_t src, in uint32_t ins, in uint32_t bits )
 {
-    const uint32_t mask = ( 1U << bits ) - 1U;
+    uint32_t const mask = ( 1U << bits ) - 1U;
     return ( ins & mask ) | ( src & ( ~mask ) );
 }
 
@@ -118,10 +131,10 @@ uint32_t2 RemapForWaveReduction ( in uint32_t a )
 uint32_t2 GetThreadTarget ( in uint32_t threadID )
 {
     // Optimization: "threadID & 0x0000003FU" equals "threadID % 64U" equals.
-    const uint32_t2 subXY = RemapForWaveReduction ( threadID & 0x0000003FU );
+    uint32_t2 const subXY = RemapForWaveReduction ( threadID & 0x0000003FU );
 
     // Optimization: "( threadID >> 6U ) & 0x00000001U" equals "( threadID >> 6U ) % 2U".
-    const uint32_t2 alpha = uint32_t2 ( ( threadID >> 6U ) & 0x00000001U, threadID >> 7U );
+    uint32_t2 const alpha = uint32_t2 ( ( threadID >> 6U ) & 0x00000001U, threadID >> 7U );
     return subXY + alpha * 8U;
 }
 
@@ -143,18 +156,18 @@ void DownsampleMips01 ( in uint32_t x, in uint32_t y, in uint32_t2 workGroupID, 
     // See <repo>/docs/spd-algorithm.md#mip-0
     float16_t v[ 4U ];
 
-    const uint32_t2 xy = uint32_t2 ( x, y );
-    const uint32_t2 pixBase = workGroupID.xy * 32U + xy;
-    const uint32_t2 texBase = pixBase + pixBase;
+    uint32_t2 const xy = uint32_t2 ( x, y );
+    uint32_t2 const pixBase = workGroupID.xy * 32U + xy;
+    uint32_t2 const texBase = pixBase + pixBase;
 
     v[ 0U ] = ReduceLoadSourceImage ( texBase );
     v[ 1U ] = ReduceLoadSourceImage ( texBase + uint32_t2 ( 32U, 0U ) );
     v[ 2U ] = ReduceLoadSourceImage ( texBase + uint32_t2 ( 0U, 32U ) );
     v[ 3U ] = ReduceLoadSourceImage ( texBase + uint32_t2 ( 32U, 32U ) );
 
-    const uint32_t2 alpha = xy + xy;
-    const uint32_t2 betta = workGroupID * 16U + xy;
-
+    uint32_t2 const alpha = xy + xy;
+    uint32_t2 const betta = workGroupID * 16U + xy;
+ 
     // See <repo>/docs/spd-algorithm.md#mip-1
 
     [unroll]
@@ -178,7 +191,7 @@ void DownsampleMips01 ( in uint32_t x, in uint32_t y, in uint32_t2 workGroupID, 
     if ( threadID >= 64U )
         return;
 
-    const uint32_t2 gamma = xy + 8U;
+    uint32_t2 const gamma = xy + 8U;
 
     s_Luma[ x ][ y ] = v[ 0U ];
     s_Luma[ gamma.x ][ y ] = v[ 1U ];
@@ -192,10 +205,10 @@ void DownsampleMip2 ( in uint32_t x, in uint32_t y, in uint32_t2 workGroupID, in
     if ( threadID >= 64U )
         return;
 
-    const uint32_t2 xy = uint32_t2 ( x, y );
-    const uint32_t2 base = xy + xy;
+    uint32_t2 const xy = uint32_t2 ( x, y );
+    uint32_t2 const base = xy + xy;
 
-    const float16_t v = ReduceIntermediate ( base,
+    float16_t const v = ReduceIntermediate ( base,
         base + uint32_t2 ( 1U, 0U ),
         base + uint32_t2 ( 0U, 1U ),
         base + uint32_t2 ( 1U, 1U )
@@ -211,10 +224,10 @@ void DownsampleMip3 ( in uint32_t x, in uint32_t y, in uint32_t2 workGroupID, in
     if ( threadID >= 16U )
         return;
 
-    const uint32_t2 xy = uint32_t2 ( x, y );
-    const uint32_t2 base = xy * 4U;
+    uint32_t2 const xy = uint32_t2 ( x, y );
+    uint32_t2 const base = xy * 4U;
 
-    const float16_t v = ReduceIntermediate ( base,
+    float16_t const v = ReduceIntermediate ( base,
         base + uint32_t2 ( 2U, 0U ),
         base + uint32_t2 ( 1U, 2U ),
         base + uint32_t2 ( 3U, 2U )
@@ -229,12 +242,12 @@ void DownsampleMip4 ( in uint32_t x, in uint32_t y, in uint32_t2 workGroupID, in
     if ( threadID >= 4U )
         return;
 
-    const uint32_t2 xy = uint32_t2 ( x, y );
-    const uint32_t yy = y + y;
+    uint32_t2 const xy = uint32_t2 ( x, y );
+    uint32_t const yy = y + y;
     uint32_t2 alpha = xy * 8U;
     alpha.x += yy;
 
-    const float16_t v = ReduceIntermediate ( alpha,
+    float16_t const v = ReduceIntermediate ( alpha,
         alpha + uint32_t2 ( 4U, 0U ),
         alpha + uint32_t2 ( 1U, 4U ),
         alpha + uint32_t2 ( 5U, 4U )
@@ -249,7 +262,7 @@ void DownsampleMip5 ( in uint32_t2 workGroupID, in uint32_t threadID )
     if ( threadID >= 1U )
         return;
 
-    const float16_t v = ReduceIntermediate ( (uint32_t2)0U,
+    float16_t const v = ReduceIntermediate ( (uint32_t2)0U,
         uint32_t2 ( 1U, 0U ),
         uint32_t2 ( 2U, 0U ),
         uint32_t2 ( 3U, 0U )
@@ -263,7 +276,7 @@ void DownsampleMip5 ( in uint32_t2 workGroupID, in uint32_t threadID )
 [numthreads ( THREAD_X, THREAD_Y, THREAD_Z )]
 void CS ( in uint32_t threadID: SV_GroupIndex, in uint32_t3 workGroupID: SV_GroupID )
 {
-    const uint32_t2 base = GetThreadTarget ( threadID );
+    uint32_t2 const base = GetThreadTarget ( threadID );
     DownsampleMips01 ( base.x, base.y, workGroupID.xy, threadID );
 
     GroupMemoryBarrierWithGroupSync ();

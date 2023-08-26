@@ -30,4 +30,4 @@ Clear-Host
 .\make-ps.ps1 ui
 
 # compute shaders
-.\make-cs.ps1 average_brightness
+.\make-cs.ps1 exposure

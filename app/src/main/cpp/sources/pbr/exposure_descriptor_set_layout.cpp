@@ -1,5 +1,5 @@
-#include <pbr/average_brightness.inc>
-#include <pbr/average_brightness_descriptor_set_layout.hpp>
+#include <pbr/exposure.inc>
+#include <pbr/exposure_descriptor_set_layout.hpp>
 #include <vulkan_utils.hpp>
 
 
@@ -43,7 +43,7 @@ void DescriptorSetLayout::Destroy ( VkDevice device ) noexcept
     vkDestroyDescriptorSetLayout ( device, _layout, nullptr );
     _layout = VK_NULL_HANDLE;
 
-    AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::AverageBrightnessDescriptorSetLayout::_layout" )
+    AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::ExposureDescriptorSetLayout::_layout" )
 }
 
 bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
@@ -54,7 +54,7 @@ bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
         return true;
     }
 
-    VkDescriptorSetLayoutBinding const bindings[] =
+    constexpr static VkDescriptorSetLayoutBinding const bindings[] =
     {
         {
             .binding = BIND_HDR_IMAGE,
@@ -71,6 +71,13 @@ bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
             .pImmutableSamplers = nullptr
         },
         {
+            .binding = BIND_EXPOSURE,
+            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+            .descriptorCount = 1U,
+            .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
+            .pImmutableSamplers = nullptr
+        },
+        {
             .binding = BIND_GLOBAL_ATOMIC,
             .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
             .descriptorCount = 1U,
@@ -78,7 +85,7 @@ bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
             .pImmutableSamplers = nullptr
         },
         {
-            .binding = BIND_BRIGHTNESS,
+            .binding = BIND_TEMPORAL_LUMA,
             .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
             .descriptorCount = 1U,
             .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
@@ -86,7 +93,7 @@ bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
         }
     };
 
-    VkDescriptorSetLayoutCreateInfo const info
+    constexpr VkDescriptorSetLayoutCreateInfo info
     {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
         .pNext = nullptr,
@@ -97,14 +104,14 @@ bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateDescriptorSetLayout ( device, &info, nullptr, &_layout ),
-        "pbr::AverageBrightnessDescriptorSetLayout::Init",
+        "pbr::ExposureDescriptorSetLayout::Init",
         "Can't create descriptor set layout"
     );
 
     if ( !result )
         return false;
 
-    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::AverageBrightnessDescriptorSetLayout::_layout" )
+    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::ExposureDescriptorSetLayout::_layout" )
 
     ++_references;
     return true;
@@ -114,17 +121,17 @@ DescriptorSetLayout g_descriptorSetLayout {};
 
 } // end of anonymous namespace
 
-void AverageBrightnessDescriptorSetLayout::Destroy ( VkDevice device ) noexcept
+void ExposureDescriptorSetLayout::Destroy ( VkDevice device ) noexcept
 {
     g_descriptorSetLayout.Destroy ( device );
 }
 
-bool AverageBrightnessDescriptorSetLayout::Init ( VkDevice device ) noexcept
+bool ExposureDescriptorSetLayout::Init ( VkDevice device ) noexcept
 {
     return g_descriptorSetLayout.Init ( device );
 }
 
-VkDescriptorSetLayout AverageBrightnessDescriptorSetLayout::GetLayout () const noexcept
+VkDescriptorSetLayout ExposureDescriptorSetLayout::GetLayout () const noexcept
 {
     return g_descriptorSetLayout._layout;
 }

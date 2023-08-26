@@ -2,8 +2,8 @@
 #define PBR_RENDER_SESSION_HPP
 
 
-#include "average_brightness_pass.hpp"
 #include "default_texture_manager.hpp"
+#include "exposure_pass.hpp"
 #include "geometry_pass.hpp"
 #include "light_pass.hpp"
 #include "reflection_global_pass.hpp"
@@ -37,8 +37,6 @@ class RenderSession final
         };
 
     private:
-        AverageBrightnessPass                   _averageBrightnessPass {};
-
         std::vector<CommandInfo>                _commandInfo {};
 
         GXMat4                                  _cvvToView {};
@@ -47,6 +45,7 @@ class RenderSession final
         GXMat4                                  _viewerLocal {};
 
         DefaultTextureManager                   _defaultTextureManager {};
+        ExposurePass                            _exposurePass {};
         VkFramebuffer                           _framebuffer = VK_NULL_HANDLE;
         GXProjectionClipPlanes                  _frustum {};
 

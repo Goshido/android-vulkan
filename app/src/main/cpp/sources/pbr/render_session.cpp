@@ -113,7 +113,7 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
 
     vkCmdEndRenderPass ( commandBuffer );
 
-    _averageBrightnessPass.Execute ( commandBuffer );
+    _exposurePass.Execute ( commandBuffer, static_cast<float> ( deltaTime ) );
 
     if ( !_uiPass.Execute ( renderer, commandBuffer, fence ) )
         return false;
@@ -130,7 +130,7 @@ void RenderSession::FreeTransferResources ( android_vulkan::Renderer &renderer )
 {
     VkCommandPool pool = _commandInfo[ 0U ]._pool;
     _defaultTextureManager.FreeTransferResources ( renderer, pool );
-    _averageBrightnessPass.FreeTransferResources ( renderer, pool );
+    _exposurePass.FreeTransferResources ( renderer, pool );
 }
 
 UIPass &RenderSession::GetUIPass () noexcept
@@ -155,7 +155,7 @@ bool RenderSession::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
     if ( !AllocateCommandInfo ( commandInfo, device, renderer.GetQueueFamilyIndex () ) )
         return false;
 
-    return _averageBrightnessPass.Init ( renderer, commandInfo._pool ) &&
+    return _exposurePass.Init ( renderer, commandInfo._pool ) &&
         _defaultTextureManager.Init ( renderer, commandInfo._pool ) &&
         _samplerManager.Init ( device ) &&
         _uiPass.OnInitDevice ( renderer, _samplerManager, _defaultTextureManager.GetTransparent ()->GetImageView () );
@@ -168,7 +168,7 @@ void RenderSession::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexc
 
     VkDevice device = renderer.GetDevice ();
 
-    _averageBrightnessPass.Destroy ( renderer );
+    _exposurePass.Destroy ( renderer );
     _samplerManager.Destroy ( device );
     _defaultTextureManager.Destroy ( renderer );
     DestroyGBufferResources ( renderer );
@@ -205,7 +205,7 @@ bool RenderSession::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
     VkExtent2D const &resolution
 ) noexcept
 {
-    VkExtent2D const newResolution = AverageBrightnessPass::AdjustResolution ( resolution );
+    VkExtent2D const newResolution = ExposurePass::AdjustResolution ( resolution );
     VkExtent2D const &currentResolution = _gBuffer.GetResolution ();
 
     if ( ( currentResolution.width != newResolution.width ) | ( currentResolution.height != newResolution.height ) )
@@ -642,7 +642,7 @@ bool RenderSession::CreateGBufferResources ( android_vulkan::Renderer &renderer,
         ) &&
 
         _lightPass.Init ( renderer, _renderPass, _gBuffer ) &&
-        _averageBrightnessPass.SetTarget ( renderer, _gBuffer.GetHDRAccumulator () ) &&
+        _exposurePass.SetTarget ( renderer, _gBuffer.GetHDRAccumulator () ) &&
 
         android_vulkan::Renderer::CheckVkResult ( vkDeviceWaitIdle ( device ),
             "pbr::RenderSession::CreateGBufferResources",

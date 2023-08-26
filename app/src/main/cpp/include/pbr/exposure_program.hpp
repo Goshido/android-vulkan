@@ -2,13 +2,14 @@
 #define PBR_AVERAGE_BRIGHTNESS_PROGRAM_HPP
 
 
-#include "average_brightness_descriptor_set_layout.hpp"
 #include "compute_program.hpp"
+#include "exposure_descriptor_set_layout.hpp"
+#include <vulkan_utils.hpp>
 
 
 namespace pbr {
 
-class AverageBrightnessProgram : public ComputeProgram
+class ExposureProgram : public ComputeProgram
 {
     public:
         struct SpecializationInfo final
@@ -19,19 +20,31 @@ class AverageBrightnessProgram : public ComputeProgram
             [[maybe_unused]] float              _normalizeH;
         };
 
+        AV_DX_ALIGNMENT_BEGIN
+
+        struct PushConstants final
+        {
+            [[maybe_unused]] float              _exposureCompensation;
+            [[maybe_unused]] float              _eyeAdaptation;
+            [[maybe_unused]] float              _maxLuma;
+            [[maybe_unused]] float              _minLuma;
+        };
+
+        AV_DX_ALIGNMENT_END
+
     private:
-        AverageBrightnessDescriptorSetLayout    _layout {};
+        ExposureDescriptorSetLayout    _layout {};
 
     public:
-        explicit AverageBrightnessProgram () noexcept;
+        explicit ExposureProgram () noexcept;
 
-        AverageBrightnessProgram ( AverageBrightnessProgram const & ) = delete;
-        AverageBrightnessProgram &operator = ( AverageBrightnessProgram const & ) = delete;
+        ExposureProgram ( ExposureProgram const & ) = delete;
+        ExposureProgram &operator = ( ExposureProgram const & ) = delete;
 
-        AverageBrightnessProgram ( AverageBrightnessProgram && ) = delete;
-        AverageBrightnessProgram &operator = ( AverageBrightnessProgram && ) = delete;
+        ExposureProgram ( ExposureProgram && ) = delete;
+        ExposureProgram &operator = ( ExposureProgram && ) = delete;
 
-        ~AverageBrightnessProgram () override = default;
+        ~ExposureProgram () override = default;
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
             SpecializationData specializationData

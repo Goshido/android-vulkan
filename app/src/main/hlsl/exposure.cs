@@ -1,7 +1,7 @@
 // See <repo>/docs/spd-algorithm.md
 // See <repo>/docs/auto-exposure.md
 
-#include "average_brightness.inc"
+#include "exposure.inc"
 
 
 #define THREAD_X        256
@@ -13,39 +13,48 @@
 
 
 [[vk::constant_id ( CONST_WORKGROUP_COUNT )]]
-uint32_t const                                  g_WorkgroupCount = 256U;
+uint32_t const                                      g_WorkgroupCount = 256U;
 
 [[vk::constant_id ( CONST_MIP_5_W )]]
-uint32_t const                                  g_Mip5W = 32U;
+uint32_t const                                      g_Mip5W = 32U;
 
 [[vk::constant_id ( CONST_MIP_5_H )]]
-uint32_t const                                  g_Mip5H = 14U;
+uint32_t const                                      g_Mip5H = 14U;
 
 [[vk::constant_id ( CONST_NORMALIZE_W )]]
-float32_t const                                 g_NormalizeW = 3.125e-2H;
+float32_t const                                     g_NormalizeW = 3.125e-2H;
 
 [[vk::constant_id ( CONST_NORMALIZE_H )]]
-float32_t const                                 g_NormalizeH = 7.142e-2H;
+float32_t const                                     g_NormalizeH = 7.142e-2H;
 
-[[vk::binding ( BIND_HDR_IMAGE, SET_RESOURCE )]]
-Texture2D<float32_t4>                           g_HDRImage:             register ( t0 );
-
-[[vk::binding ( BIND_SYNC_MIP_5, SET_RESOURCE )]]
-globallycoherent RWTexture2D<float32_t4>        g_SyncMip5:             register ( u0 );
-
-struct Atomic
+struct ExposureInfo
 {
-    uint32_t                                    _counter;
+    float                                           _exposureCompensation;
+    float                                           _eyeAdaptation;
+    float                                           _maxLuma;
+    float                                           _minLuma;
 };
 
+[[vk::push_constant]]
+ExposureInfo                                        g_ExposureInfo;
+
+[[vk::binding ( BIND_HDR_IMAGE, SET_RESOURCE )]]
+Texture2D<float32_t4>                               g_HDRImage:         register ( t0 );
+
+[[vk::binding ( BIND_SYNC_MIP_5, SET_RESOURCE )]]
+globallycoherent RWTexture2D<float32_t4>            g_SyncMip5:         register ( u0 );
+
+[[vk::binding ( BIND_EXPOSURE, SET_RESOURCE )]]
+RWStructuredBuffer<float32_t>                       g_Exposure:         register ( u1 );
+
 [[vk::binding ( BIND_GLOBAL_ATOMIC, SET_RESOURCE )]]
-globallycoherent RWStructuredBuffer<Atomic>     g_GlobalAtomic:         register ( u1 );
+globallycoherent RWStructuredBuffer<uint32_t>       g_GlobalAtomic:     register ( u2 );
 
-[[vk::binding ( BIND_BRIGHTNESS, SET_RESOURCE )]]
-RWStructuredBuffer<float32_t>                   g_Brightness:           register ( u2 );
+[[vk::binding ( BIND_TEMPORAL_LUMA, SET_RESOURCE )]]
+RWStructuredBuffer<float32_t>                       g_TemporalLuma:     register ( u3 );
 
-groupshared float16_t                           s_Luma[ 16U ][ 16U ];
-groupshared uint32_t                            s_Counter;
+groupshared float16_t                               s_Luma[ 16U ][ 16U ];
+groupshared uint32_t                                s_Counter;
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -145,7 +154,7 @@ bool ExitWorkgroup ( in uint32_t threadID )
 {
     // global atomic counter
     if ( threadID == 0U )
-        InterlockedAdd ( g_GlobalAtomic[ 0U ]._counter, 1U, s_Counter );
+        InterlockedAdd ( g_GlobalAtomic[ 0U ], 1U, s_Counter );
 
     GroupMemoryBarrierWithGroupSync ();
     return s_Counter != g_WorkgroupCount;
@@ -300,8 +309,18 @@ void CS ( in uint32_t threadID: SV_GroupIndex, in uint32_t3 workGroupID: SV_Grou
     if ( threadID > 0U )
         return;
 
-    g_Brightness[ 0U ] = ReduceToAverage ();
+    // Can't use float16_t types because of DXC issue:
+    // https://github.com/microsoft/DirectXShaderCompiler/issues/5608
+
+    float32_t const prevLuma = g_TemporalLuma[ 0U ];
+    float32_t const deltaLuma = ReduceToAverage () - prevLuma;
+    float32_t const eyeLuma = mad ( deltaLuma, g_ExposureInfo._eyeAdaptation, prevLuma );
+    g_TemporalLuma[ 0U ] = eyeLuma;
+
+    float32_t const keyValue = 1.03F + ( -2.0F / ( log10 ( eyeLuma + 1.0F ) + 2.0F ) );
+    float32_t const luma = clamp ( eyeLuma, g_ExposureInfo._minLuma, g_ExposureInfo._maxLuma );
+    g_Exposure[ 0U ] = keyValue / ( luma - g_ExposureInfo._exposureCompensation );
 
     // Reset the global atomic counter back to 0 for the next spd dispatch.
-    g_GlobalAtomic[ 0U ]._counter = 0U;
+    g_GlobalAtomic[ 0U ] = 0U;
 }

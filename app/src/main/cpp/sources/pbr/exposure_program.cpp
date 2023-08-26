@@ -1,5 +1,5 @@
-#include <pbr/average_brightness.inc>
-#include <pbr/average_brightness_program.hpp>
+#include <pbr/exposure.inc>
+#include <pbr/exposure_program.hpp>
 #include <vulkan_utils.hpp>
 
 
@@ -7,19 +7,19 @@ namespace pbr {
 
 namespace {
 
-constexpr char const* SHADER = "shaders/average_brightness.cs.spv";
+constexpr char const* SHADER = "shaders/exposure.cs.spv";
 
 } // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 
-AverageBrightnessProgram::AverageBrightnessProgram () noexcept:
-    ComputeProgram ( "pbr::AverageBrightnessProgram" )
+ExposureProgram::ExposureProgram () noexcept:
+    ComputeProgram ( "pbr::ExposureProgram", sizeof ( ExposureProgram::PushConstants ) )
 {
     // NOTHING
 }
 
-bool AverageBrightnessProgram::Init ( android_vulkan::Renderer &renderer,
+bool ExposureProgram::Init ( android_vulkan::Renderer &renderer,
     SpecializationData specializationData
 ) noexcept
 {
@@ -42,25 +42,25 @@ bool AverageBrightnessProgram::Init ( android_vulkan::Renderer &renderer,
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkCreateComputePipelines ( device, VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
-        "pbr::AverageBrightnessProgram::Init",
+        "pbr::ExposureProgram::Init",
         "Can't create pipeline"
     );
 
     if ( !result )
         return false;
 
-    AV_REGISTER_PIPELINE ( "pbr::AverageBrightnessProgram::_pipeline" )
+    AV_REGISTER_PIPELINE ( "pbr::ExposureProgram::_pipeline" )
     DestroyShaderModule ( device );
     return true;
 }
 
-void AverageBrightnessProgram::Destroy ( VkDevice device ) noexcept
+void ExposureProgram::Destroy ( VkDevice device ) noexcept
 {
     if ( _pipelineLayout != VK_NULL_HANDLE )
     {
         vkDestroyPipelineLayout ( device, _pipelineLayout, nullptr );
         _pipelineLayout = VK_NULL_HANDLE;
-        AV_UNREGISTER_PIPELINE_LAYOUT ( "pbr::AverageBrightnessProgram::_pipelineLayout" )
+        AV_UNREGISTER_PIPELINE_LAYOUT ( "pbr::ExposureProgram::_pipelineLayout" )
     }
 
     _layout.Destroy ( device );
@@ -71,10 +71,10 @@ void AverageBrightnessProgram::Destroy ( VkDevice device ) noexcept
 
     vkDestroyPipeline ( device, _pipeline, nullptr );
     _pipeline = VK_NULL_HANDLE;
-    AV_UNREGISTER_PIPELINE ( "pbr::AverageBrightnessProgram::_pipeline" )
+    AV_UNREGISTER_PIPELINE ( "pbr::ExposureProgram::_pipeline" )
 }
 
-void AverageBrightnessProgram::SetDescriptorSet ( VkCommandBuffer commandBuffer, VkDescriptorSet set ) const noexcept
+void ExposureProgram::SetDescriptorSet ( VkCommandBuffer commandBuffer, VkDescriptorSet set ) const noexcept
 {
     vkCmdBindDescriptorSets ( commandBuffer,
         VK_PIPELINE_BIND_POINT_COMPUTE,
@@ -87,7 +87,7 @@ void AverageBrightnessProgram::SetDescriptorSet ( VkCommandBuffer commandBuffer,
     );
 }
 
-void AverageBrightnessProgram::GetMetaInfo ( VkExtent3D &dispatch,
+void ExposureProgram::GetMetaInfo ( VkExtent3D &dispatch,
     VkExtent2D &mipChainResolution,
     SpecializationInfo &specializationInfo,
     VkExtent2D const &imageResolution
@@ -134,22 +134,29 @@ void AverageBrightnessProgram::GetMetaInfo ( VkExtent3D &dispatch,
     specializationInfo._normalizeH = 1.0F / static_cast<float> ( r.height );
 }
 
-void AverageBrightnessProgram::DestroyShaderModule ( VkDevice device ) noexcept
+void ExposureProgram::DestroyShaderModule ( VkDevice device ) noexcept
 {
     if ( _computeShader == VK_NULL_HANDLE )
         return;
 
     vkDestroyShaderModule ( device, _computeShader, nullptr );
     _computeShader = VK_NULL_HANDLE;
-    AV_UNREGISTER_SHADER_MODULE ( "pbr::AverageBrightnessProgram::_computeShader" )
+    AV_UNREGISTER_SHADER_MODULE ( "pbr::ExposureProgram::_computeShader" )
 }
 
-bool AverageBrightnessProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept
+bool ExposureProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept
 {
     if ( !_layout.Init ( device ) )
         return false;
 
     VkDescriptorSetLayout dsLayout = _layout.GetLayout ();
+
+    constexpr VkPushConstantRange pushConstantRange
+    {
+        .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
+        .offset = 0U,
+        .size = static_cast<uint32_t> ( sizeof ( ExposureProgram::PushConstants ) )
+    };
 
     VkPipelineLayoutCreateInfo const layoutInfo
     {
@@ -158,25 +165,25 @@ bool AverageBrightnessProgram::InitLayout ( VkDevice device, VkPipelineLayout &l
         .flags = 0U,
         .setLayoutCount = 1U,
         .pSetLayouts = &dsLayout,
-        .pushConstantRangeCount = 0U,
-        .pPushConstantRanges = nullptr
+        .pushConstantRangeCount = 1U,
+        .pPushConstantRanges = &pushConstantRange
     };
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreatePipelineLayout ( device, &layoutInfo, nullptr, &_pipelineLayout ),
-        "pbr::AverageBrightnessProgram::InitLayout",
+        "pbr::ExposureProgram::InitLayout",
         "Can't create pipeline layout"
     );
 
     if ( !result )
         return false;
 
-    AV_REGISTER_PIPELINE_LAYOUT ( "pbr::AverageBrightnessProgram::_pipelineLayout" )
+    AV_REGISTER_PIPELINE_LAYOUT ( "pbr::ExposureProgram::_pipelineLayout" )
     layout = _pipelineLayout;
     return true;
 }
 
-bool AverageBrightnessProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
+bool ExposureProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
     SpecializationData specializationData,
     VkSpecializationInfo* specializationInfo,
     VkPipelineShaderStageCreateInfo &targetInfo
@@ -184,13 +191,13 @@ bool AverageBrightnessProgram::InitShaderInfo ( android_vulkan::Renderer &render
 {
     bool const result = renderer.CreateShader ( _computeShader,
         SHADER,
-        "Can't create shader (pbr::AverageBrightnessProgram)"
+        "Can't create shader (pbr::ExposureProgram)"
     );
 
     if ( !result )
         return false;
 
-    AV_REGISTER_SHADER_MODULE ( "pbr::AverageBrightnessProgram::_computeShader" )
+    AV_REGISTER_SHADER_MODULE ( "pbr::ExposureProgram::_computeShader" )
     constexpr size_t w = offsetof ( VkExtent2D, width );
     constexpr size_t h = offsetof ( VkExtent2D, height );
 

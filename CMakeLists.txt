@@ -62,9 +62,6 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/ascii_string.cpp
     app/src/main/cpp/sources/pbr/attribute_checker.cpp
     app/src/main/cpp/sources/pbr/attribute_parser.cpp
-    app/src/main/cpp/sources/pbr/average_brightness_descriptor_set_layout.cpp
-    app/src/main/cpp/sources/pbr/average_brightness_pass.cpp
-    app/src/main/cpp/sources/pbr/average_brightness_program.cpp
     app/src/main/cpp/sources/pbr/camera.cpp
     app/src/main/cpp/sources/pbr/camera_component.cpp
     app/src/main/cpp/sources/pbr/color_property.cpp
@@ -83,6 +80,9 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/div_html5_element.cpp
     app/src/main/cpp/sources/pbr/div_ui_element.cpp
     app/src/main/cpp/sources/pbr/doctype_parser.cpp
+    app/src/main/cpp/sources/pbr/exposure_descriptor_set_layout.cpp
+    app/src/main/cpp/sources/pbr/exposure_pass.cpp
+    app/src/main/cpp/sources/pbr/exposure_program.cpp
     app/src/main/cpp/sources/pbr/fail_property_checker.cpp
     app/src/main/cpp/sources/pbr/font_face_css_rule.cpp
     app/src/main/cpp/sources/pbr/font_family_property.cpp

@@ -28,6 +28,7 @@ class ComputeProgram
         [[maybe_unused]] std::string_view const     _name;
         VkPipeline                                  _pipeline = VK_NULL_HANDLE;
         VkPipelineLayout                            _pipelineLayout = VK_NULL_HANDLE;
+        uint32_t                                    _pushConstantSize;
 
     public:
         ComputeProgram () = delete;
@@ -47,8 +48,10 @@ class ComputeProgram
         // The method assigns VkPipeline as active pipeline.
         void Bind ( VkCommandBuffer commandBuffer ) const noexcept;
 
+        void SetPushConstants ( VkCommandBuffer commandBuffer, void const* constants ) const noexcept;
+
     protected:
-        explicit ComputeProgram ( std::string_view name ) noexcept;
+        explicit ComputeProgram ( std::string_view name, size_t pushConstantSize ) noexcept;
         virtual ~ComputeProgram () = default;
 
         virtual void DestroyShaderModule ( VkDevice device ) noexcept = 0;

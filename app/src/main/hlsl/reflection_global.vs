@@ -1,4 +1,4 @@
-static const float32_t4 g_vertices[ 4U ] =
+static float32_t4 const g_vertices[ 4U ] =
 {
     float32_t4 ( 1.0F, -1.0F, 0.5F, 1.0F ),
     float32_t4 ( 1.0F, 1.0F, 0.5F, 1.0F ),

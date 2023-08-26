@@ -7,7 +7,7 @@
 
 OutputData PS ( in linear float32_t4 pixel: SV_Position )
 {
-    const float32_t depth = GetDepth ();
+    float32_t const depth = GetDepth ();
     OutputData result;
 
     if ( depth == VOID_SPACE_DEPTH )
@@ -17,7 +17,7 @@ OutputData PS ( in linear float32_t4 pixel: SV_Position )
         return result;
     }
 
-    const float32_t4 alpha = RestoreLocationViewUnnormalized ( pixel.xy, depth );
+    float32_t4 const alpha = RestoreLocationViewUnnormalized ( pixel.xy, depth );
     result._color = float32_t4 ( (float32_t3)GetReflection ( (float16_t3)normalize ( alpha.xyz ) ), 0.0F );
     return result;
 }

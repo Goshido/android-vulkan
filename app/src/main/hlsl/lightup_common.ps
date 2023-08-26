@@ -58,20 +58,20 @@ float32_t GetDepth ()
 
 float16_t3 GetFresnel ( in float16_t dotFactor, in float16_t metallic, in float16_t3 albedo )
 {
-    const float16_t3 f0 = lerp ( (float16_t3)MINIMUM_F0, albedo, (float16_t3)metallic );
+    float16_t3 const f0 = lerp ( (float16_t3)MINIMUM_F0, albedo, (float16_t3)metallic );
     return mad ( 1.0H - f0, pow ( max ( 0.0H, 1.0H - dotFactor ), 5.0H ), f0 );
 }
 
 void GetParams ( out float16_t roughness, out float16_t metallic )
 {
-    const float32_t4 paramSample = (float32_t4)g_params.SubpassLoad ();
+    float32_t4 const paramSample = (float32_t4)g_params.SubpassLoad ();
     roughness = (float16_t)paramSample.x;
     metallic = (float16_t)paramSample.z;
 }
 
 float16_t3 RestoreNormalView ()
 {
-    const float16_t3 alpha = (float16_t3)g_normal.SubpassLoad ().xyz;
+    float16_t3 const alpha = (float16_t3)g_normal.SubpassLoad ().xyz;
     return mad ( alpha, (float16_t3)2.0H, (float16_t3)( -1.0H ) );
 }
 

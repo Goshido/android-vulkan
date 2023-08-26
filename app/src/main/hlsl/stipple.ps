@@ -6,7 +6,7 @@
 // It is used modified Bayer matrix 4x4 which is used in HLSL::clip and HLSL::mad intrinsics
 // from https://en.wikipedia.org/wiki/Ordered_dithering
 // Basically it was added 1.0F to numerator and denominator and taking negative value.
-static const float32_t4x4 g_bayerMatrix = 
+static float32_t4x4 const g_bayerMatrix = 
 {
     -0.05882F, -0.52941F, -0.17647F, -0.64705F,
     -0.76470F, -0.29411F, -0.88235F, -0.41176F,
@@ -16,9 +16,9 @@ static const float32_t4x4 g_bayerMatrix =
 
 OutputData PS ( in InputData inputData )
 {
-    const ObjectData objectData = g_instanceData[ inputData._instanceIndex ];
-    const float32_t4 diffuseSample = g_diffuseTexture.Sample ( g_sampler, inputData._uv );
-    const uint32_t2 bayerCoord = (uint32_t2)inputData._vertexH.xy % (uint32_t2)4U;
+    ObjectData const objectData = g_instanceData[ inputData._instanceIndex ];
+    float32_t4 const diffuseSample = g_diffuseTexture.Sample ( g_sampler, inputData._uv );
+    uint32_t2 const bayerCoord = (uint32_t2)inputData._vertexH.xy % (uint32_t2)4U;
 
     // Applying stipple pattern...
     clip ( mad ( diffuseSample.w, objectData._color0.w, g_bayerMatrix[ bayerCoord.x ][ bayerCoord.y ] ) );

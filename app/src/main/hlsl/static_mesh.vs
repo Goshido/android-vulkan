@@ -47,12 +47,12 @@ struct OutputData
 
 OutputData VS ( in InputData inputData )
 {
-    const float32_t4 vertex = float32_t4 ( inputData._vertex, 1.0F );
+    float32_t4 const vertex = float32_t4 ( inputData._vertex, 1.0F );
 
     OutputData result;
     result._vertexH = mul ( _transform, vertex );
 
-    const float32_t3x3 normalTransform = (float32_t3x3)_normalTransform;
+    float32_t3x3 const normalTransform = (float32_t3x3)_normalTransform;
     result._fragmentView = ( mul ( _normalTransform, vertex ) ).xyz;
     result._uv = inputData._uv;
 

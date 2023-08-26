@@ -50,12 +50,12 @@ float32_t3 GetFinalNormalView ( in float32_t3 tangentView,
     in float32_t2 uv
 )
 {
-    const float32_t3 normalData = mad ( g_normalTexture.Sample ( g_normalSampler, uv ).xyz,
+    float32_t3 const normalData = mad ( g_normalTexture.Sample ( g_normalSampler, uv ).xyz,
         (float32_t3)2.0F,
         (float32_t3)( -1.0F )
     );
 
-    const float32_t3x3 tbnView = float32_t3x3 ( tangentView, bitangentView, normalView );
+    float32_t3x3 const tbnView = float32_t3x3 ( tangentView, bitangentView, normalView );
     return normalize ( mul ( normalData, tbnView ) );
 }
 
@@ -67,28 +67,28 @@ float32_t GetSpecular ( in float32_t3 finalNormalView,
 {
     // See https://en.wikipedia.org/wiki/Blinn%E2%80%93Phong_reflection_model
 
-    const float32_t3 halfVector = normalize ( toViewerView + toLightView );
-    const float32_t angleFactor = max ( dot ( halfVector, finalNormalView ), 0.0F );
-    const float32_t2 uv = float32_t2 ( angleFactor, shininess * SHININESS_CONVERT );
+    float32_t3 const halfVector = normalize ( toViewerView + toLightView );
+    float32_t const angleFactor = max ( dot ( halfVector, finalNormalView ), 0.0F );
+    float32_t2 const uv = float32_t2 ( angleFactor, shininess * SHININESS_CONVERT );
 
     return g_specLUTTexture.SampleLevel ( g_specLUTSampler, uv, 0.0F ).x;
 }
 
 float32_t4 PS ( in InputData inputData ): SV_Target0
 {
-    const float32_t4 diffuseData = g_diffuseTexture.Sample ( g_textureSampler, inputData._uv );
+    float32_t4 const diffuseData = g_diffuseTexture.Sample ( g_textureSampler, inputData._uv );
 
-    const float32_t3 normalView = GetFinalNormalView ( inputData._tangentView,
+    float32_t3 const normalView = GetFinalNormalView ( inputData._tangentView,
         inputData._bitangentView,
         inputData._normalView,
         inputData._uv
     );
 
-    const float32_t3 toView = -normalize ( inputData._fragmentView );
-    const float32_t lambertian = max ( 0.0F, dot ( toView, normalView ) );
+    float32_t3 const toView = -normalize ( inputData._fragmentView );
+    float32_t const lambertian = max ( 0.0F, dot ( toView, normalView ) );
 
-    const float32_t3 toLight = normalize ( TARGET_LIGHT_SOURCE_ORIGIN - inputData._fragmentView );
-    const float32_t specularFactor = GetSpecular ( normalView, toView, toLight, TARGET_SHININESS );
+    float32_t3 const toLight = normalize ( TARGET_LIGHT_SOURCE_ORIGIN - inputData._fragmentView );
+    float32_t const specularFactor = GetSpecular ( normalView, toView, toLight, TARGET_SHININESS );
 
     return mad ( diffuseData, (float32_t4)lambertian, specularFactor );
 }

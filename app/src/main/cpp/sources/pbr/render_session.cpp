@@ -156,6 +156,7 @@ bool RenderSession::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
         return false;
 
     return _exposurePass.Init ( renderer, commandInfo._pool ) &&
+        _toneMapperPass.Init ( device ) &&
         _defaultTextureManager.Init ( renderer, commandInfo._pool ) &&
         _samplerManager.Init ( device ) &&
         _uiPass.OnInitDevice ( renderer, _samplerManager, _defaultTextureManager.GetTransparent ()->GetImageView () );
@@ -168,6 +169,7 @@ void RenderSession::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexc
 
     VkDevice device = renderer.GetDevice ();
 
+    _toneMapperPass.Destroy ( device );
     _exposurePass.Destroy ( renderer );
     _samplerManager.Destroy ( device );
     _defaultTextureManager.Destroy ( renderer );
@@ -208,15 +210,15 @@ bool RenderSession::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
     VkExtent2D const newResolution = ExposurePass::AdjustResolution ( resolution );
     VkExtent2D const &currentResolution = _gBuffer.GetResolution ();
 
-    if ( ( currentResolution.width != newResolution.width ) | ( currentResolution.height != newResolution.height ) )
+    bool const hasChanges = ( currentResolution.width != newResolution.width ) |
+        ( currentResolution.height != newResolution.height );
+
+    if ( hasChanges )
     {
         DestroyGBufferResources ( renderer );
 
         if ( !CreateGBufferResources ( renderer, newResolution ) )
-        {
-            OnSwapchainDestroyed ( renderer.GetDevice () );
             return false;
-        }
 
         android_vulkan::LogInfo ( "pbr::RenderSession::OnSwapchainCreated - G-buffer resolution is %u x %u.",
             newResolution.width,
@@ -242,18 +244,26 @@ bool RenderSession::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
         }
     }
 
-    if ( _uiPass.OnSwapchainCreated ( renderer, _gBuffer.GetHDRAccumulator ().GetImageView () ) )
+    VkImageView hdrView = _gBuffer.GetHDRAccumulator ().GetImageView ();
+
+    if ( !_uiPass.OnSwapchainCreated ( renderer, hdrView ) )
+        return false;
+
+    if ( !hasChanges )
         return true;
 
-    DestroyGBufferResources ( renderer );
-    OnSwapchainDestroyed ( device );
-
-    return false;
+    return _toneMapperPass.SetTarget ( renderer,
+        _uiPass.GetRenderPass (),
+        0U,
+        resolution,
+        hdrView,
+        _exposurePass.GetExposure (),
+        _samplerManager.GetPointSampler ()->GetSampler ()
+    );
 }
 
 void RenderSession::OnSwapchainDestroyed ( VkDevice device ) noexcept
 {
-    //_presentPass.Destroy ( device );
     _uiPass.OnSwapchainDestroyed ( device );
 }
 

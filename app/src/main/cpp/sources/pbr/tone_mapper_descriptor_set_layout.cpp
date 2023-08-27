@@ -1,5 +1,5 @@
-#include <pbr/exposure.inc>
-#include <pbr/exposure_descriptor_set_layout.hpp>
+#include <pbr/tone_mapper.inc>
+#include <pbr/tone_mapper_descriptor_set_layout.hpp>
 #include <vulkan_utils.hpp>
 
 
@@ -43,7 +43,7 @@ void DescriptorSetLayout::Destroy ( VkDevice device ) noexcept
     vkDestroyDescriptorSetLayout ( device, _layout, nullptr );
     _layout = VK_NULL_HANDLE;
 
-    AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::ExposureDescriptorSetLayout::_layout" )
+    AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::ToneMapperDescriptorSetLayout::_layout" )
 }
 
 bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
@@ -60,35 +60,21 @@ bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
             .binding = BIND_HDR_IMAGE,
             .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
             .descriptorCount = 1U,
-            .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
+            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
             .pImmutableSamplers = nullptr
         },
         {
-            .binding = BIND_SYNC_MIP_5,
-            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
+            .binding = BIND_POINT_SAMPLER,
+            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
             .descriptorCount = 1U,
-            .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
+            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
             .pImmutableSamplers = nullptr
         },
         {
             .binding = BIND_EXPOSURE,
-            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+            .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
             .descriptorCount = 1U,
-            .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
-            .pImmutableSamplers = nullptr
-        },
-        {
-            .binding = BIND_GLOBAL_ATOMIC,
-            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-            .descriptorCount = 1U,
-            .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
-            .pImmutableSamplers = nullptr
-        },
-        {
-            .binding = BIND_TEMPORAL_LUMA,
-            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-            .descriptorCount = 1U,
-            .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
+            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
             .pImmutableSamplers = nullptr
         }
     };
@@ -104,14 +90,14 @@ bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateDescriptorSetLayout ( device, &info, nullptr, &_layout ),
-        "pbr::ExposureDescriptorSetLayout::Init",
+        "pbr::ToneMapperDescriptorSetLayout::Init",
         "Can't create descriptor set layout"
     );
 
     if ( !result )
         return false;
 
-    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::ExposureDescriptorSetLayout::_layout" )
+    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::ToneMapperDescriptorSetLayout::_layout" )
 
     ++_references;
     return true;
@@ -121,7 +107,7 @@ DescriptorSetLayout g_descriptorSetLayout {};
 
 } // end of anonymous namespace
 
-void ExposureDescriptorSetLayout::Destroy ( VkDevice device ) noexcept
+void ToneMapperDescriptorSetLayout::Destroy ( VkDevice device ) noexcept
 {
     if ( _init )
     {
@@ -130,13 +116,13 @@ void ExposureDescriptorSetLayout::Destroy ( VkDevice device ) noexcept
     }
 }
 
-bool ExposureDescriptorSetLayout::Init ( VkDevice device ) noexcept
+bool ToneMapperDescriptorSetLayout::Init ( VkDevice device ) noexcept
 {
     _init = true;
     return g_descriptorSetLayout.Init ( device );
 }
 
-VkDescriptorSetLayout ExposureDescriptorSetLayout::GetLayout () const noexcept
+VkDescriptorSetLayout ToneMapperDescriptorSetLayout::GetLayout () const noexcept
 {
     return g_descriptorSetLayout._layout;
 }

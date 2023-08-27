@@ -14,43 +14,44 @@ class ExposurePass final
     private:
         struct Memory final
         {
-            VkDeviceMemory                          _memory = VK_NULL_HANDLE;
-            VkDeviceSize                            _offset = std::numeric_limits<VkDeviceSize>::max ();
+            VkDeviceMemory                  _memory = VK_NULL_HANDLE;
+            VkDeviceSize                    _offset = std::numeric_limits<VkDeviceSize>::max ();
         };
 
     private:
-        VkBufferMemoryBarrier                       _exposureBarrier {};
-        Memory                                      _exposureMemory {};
+        VkBufferMemoryBarrier               _exposureBarrier {};
+        Memory                              _exposureMemory {};
 
-        VkCommandBuffer                             _commandBuffer = VK_NULL_HANDLE;
+        VkCommandBuffer                     _commandBuffer = VK_NULL_HANDLE;
 
-        VkExtent3D                                  _dispatch {};
-        VkDescriptorPool                            _descriptorPool = VK_NULL_HANDLE;
-        VkDescriptorSet                             _descriptorSet = VK_NULL_HANDLE;
+        VkExtent3D                          _dispatch {};
+        VkDescriptorPool                    _descriptorPool = VK_NULL_HANDLE;
+        VkDescriptorSet                     _descriptorSet = VK_NULL_HANDLE;
 
-        uint32_t                                    _mipCount = 0U;
-        VkImage                                     _syncMip5 = VK_NULL_HANDLE;
-        VkImageView                                 _syncMip5View = VK_NULL_HANDLE;
-        Memory                                      _syncMip5Memory {};
-        bool                                        _isNeedTransitLayout = true;
+        ExposureProgram::PushConstants      _exposureInfo {};
+        float                               _eyeAdaptationSpeed = 1.0F;
 
-        VkBuffer                                    _globalCounter = VK_NULL_HANDLE;
-        Memory                                      _globalCounterMemory {};
+        uint32_t                            _mipCount = 0U;
+        VkImage                             _syncMip5 = VK_NULL_HANDLE;
+        VkImageView                         _syncMip5View = VK_NULL_HANDLE;
+        Memory                              _syncMip5Memory {};
+        bool                                _isNeedTransitLayout = true;
 
-        ExposureDescriptorSetLayout        _layout {};
+        VkBuffer                            _globalCounter = VK_NULL_HANDLE;
+        Memory                              _globalCounterMemory {};
 
-        VkBuffer                                    _luma = VK_NULL_HANDLE;
-        Memory                                      _lumaMemory {};
+        ExposureDescriptorSetLayout         _layout {};
 
-        ExposureProgram                    _program {};
-        ExposureProgram::PushConstants     _exposureInfo {};
-        float                                       _eyeAdaptationSpeed = 1.0F;
+        VkBuffer                            _luma = VK_NULL_HANDLE;
+        Memory                              _lumaMemory {};
 
-        VkBuffer                                    _transferGlobalCounter = VK_NULL_HANDLE;
-        Memory                                      _transferGlobalCounterMemory {};
+        ExposureProgram                     _program {};
 
-        VkBuffer                                    _transferLuma = VK_NULL_HANDLE;
-        Memory                                      _transferLumaMemory {};
+        VkBuffer                            _transferGlobalCounter = VK_NULL_HANDLE;
+        Memory                              _transferGlobalCounterMemory {};
+
+        VkBuffer                            _transferLuma = VK_NULL_HANDLE;
+        Memory                              _transferLumaMemory {};
 
     public:
         ExposurePass () = default;
@@ -65,6 +66,7 @@ class ExposurePass final
 
         void Execute ( VkCommandBuffer commandBuffer, float deltaTime ) noexcept;
         void FreeTransferResources ( android_vulkan::Renderer &renderer, VkCommandPool commandPool ) noexcept;
+        [[nodiscard]] VkBuffer GetExposure () const noexcept;
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, VkCommandPool commandPool ) noexcept;
         void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
@@ -78,7 +80,7 @@ class ExposurePass final
         [[nodiscard]] static VkExtent2D AdjustResolution ( VkExtent2D const &desiredResolution ) noexcept;
 
     private:
-        [[nodiscard]] bool CreateDescriptorPool ( VkDevice device ) noexcept;
+        [[nodiscard]] bool CreateDescriptorSet ( VkDevice device ) noexcept;
         [[nodiscard]] bool CreateExposureResources ( android_vulkan::Renderer &renderer, VkDevice device ) noexcept;
         [[nodiscard]] bool CreateGlobalCounter ( android_vulkan::Renderer &renderer, VkDevice device ) noexcept;
         [[nodiscard]] bool CreateLumaResources ( android_vulkan::Renderer &renderer, VkDevice device ) noexcept;

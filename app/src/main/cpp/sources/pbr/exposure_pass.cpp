@@ -53,6 +53,11 @@ void ExposurePass::FreeTransferResources ( android_vulkan::Renderer &renderer, V
     FreeTransferBuffer ( renderer, device );
 }
 
+VkBuffer ExposurePass::GetExposure () const noexcept
+{
+    return _exposureBarrier.buffer;
+}
+
 bool ExposurePass::Init ( android_vulkan::Renderer &renderer, VkCommandPool commandPool ) noexcept
 {
     VkDevice device = renderer.GetDevice ();
@@ -65,11 +70,10 @@ bool ExposurePass::Init ( android_vulkan::Renderer &renderer, VkCommandPool comm
 
     return StartCommandBuffer ( commandPool, device ) &&
         CreateGlobalCounter ( renderer, device ) &&
-        CreateDescriptorPool ( device ) &&
+        CreateDescriptorSet ( device ) &&
         CreateExposureResources ( renderer, device ) &&
         CreateLumaResources ( renderer, device ) &&
-        SubmitCommandBuffer ( renderer ) &&
-        _layout.Init ( device );
+        SubmitCommandBuffer ( renderer );
 }
 
 void ExposurePass::Destroy ( android_vulkan::Renderer &renderer ) noexcept
@@ -171,7 +175,7 @@ VkExtent2D ExposurePass::AdjustResolution ( VkExtent2D const &desiredResolution 
     };
 }
 
-bool ExposurePass::CreateDescriptorPool ( VkDevice device ) noexcept
+bool ExposurePass::CreateDescriptorSet ( VkDevice device ) noexcept
 {
     constexpr static VkDescriptorPoolSize const poolSizes[] =
     {
@@ -193,7 +197,7 @@ bool ExposurePass::CreateDescriptorPool ( VkDevice device ) noexcept
     {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
         .pNext = nullptr,
-        .flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
+        .flags = 0U,
         .maxSets = 1U,
         .poolSizeCount = static_cast<uint32_t> ( std::size ( poolSizes ) ),
         .pPoolSizes = poolSizes
@@ -209,7 +213,26 @@ bool ExposurePass::CreateDescriptorPool ( VkDevice device ) noexcept
         return false;
 
     AV_REGISTER_DESCRIPTOR_POOL ( "pbr::ExposurePass::_descriptorPool" )
-    return true;
+
+    if ( !_layout.Init ( device ) )
+        return false;
+
+    VkDescriptorSetLayout layout = _layout.GetLayout ();
+
+    VkDescriptorSetAllocateInfo const allocateInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+        .pNext = nullptr,
+        .descriptorPool = _descriptorPool,
+        .descriptorSetCount = 1U,
+        .pSetLayouts = &layout
+    };
+
+    return android_vulkan::Renderer::CheckVkResult (
+        vkAllocateDescriptorSets ( device, &allocateInfo, &_descriptorSet ),
+        "pbr::ExposurePass::CreateDescriptorSet",
+        "Can't create descriptor set"
+    );
 }
 
 bool ExposurePass::CreateExposureResources ( android_vulkan::Renderer &renderer, VkDevice device ) noexcept
@@ -961,41 +984,7 @@ bool ExposurePass::UpdateMipCount ( android_vulkan::Renderer &renderer,
 
     FreeTargetResources ( renderer, device );
 
-    if ( _descriptorSet != VK_NULL_HANDLE )
-    {
-        bool const result = android_vulkan::Renderer::CheckVkResult (
-            vkFreeDescriptorSets ( device, _descriptorPool, 1U, &_descriptorSet ),
-            "pbr::ExposurePass::UpdateMipCount",
-            "Can't free descriptor set"
-        );
-
-        if ( !result )
-        {
-            return false;
-        }
-    }
-
     if ( !_program.Init ( renderer, &specInfo ) )
-        return false;
-
-    VkDescriptorSetLayout layout = _layout.GetLayout ();
-
-    VkDescriptorSetAllocateInfo const allocateInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-        .pNext = nullptr,
-        .descriptorPool = _descriptorPool,
-        .descriptorSetCount = 1U,
-        .pSetLayouts = &layout
-    };
-
-    bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkAllocateDescriptorSets ( device, &allocateInfo, &_descriptorSet ),
-        "pbr::ExposurePass::UpdateMipCount",
-        "Can't create descriptor set"
-    );
-
-    if ( !result )
         return false;
 
     _mipCount = mipCount;

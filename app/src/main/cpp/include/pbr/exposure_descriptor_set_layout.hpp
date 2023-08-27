@@ -9,6 +9,9 @@ namespace pbr {
 
 class ExposureDescriptorSetLayout final : public DescriptorSetLayout
 {
+    private:
+        bool    _init = false;
+
     public:
         ExposureDescriptorSetLayout () = default;
 

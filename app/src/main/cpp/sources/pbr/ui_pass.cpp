@@ -803,6 +803,11 @@ FontStorage &UIPass::GetFontStorage () noexcept
     return _fontStorage;
 }
 
+VkRenderPass UIPass::GetRenderPass () const noexcept
+{
+    return _renderInfo.renderPass;
+}
+
 size_t UIPass::GetUsedVertexCount () const noexcept
 {
     return _writeVertexIndex - _sceneImageVertexIndex;

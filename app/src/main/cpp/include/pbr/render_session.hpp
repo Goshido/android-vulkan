@@ -8,6 +8,7 @@
 #include "light_pass.hpp"
 #include "reflection_global_pass.hpp"
 #include "shadow_casters.hpp"
+#include "tone_mapper_pass.hpp"
 #include "ui_pass.hpp"
 
 
@@ -62,6 +63,7 @@ class RenderSession final
         VkRenderPassBeginInfo                   _renderPassInfo {};
         RenderSessionStats                      _renderSessionStats {};
         SamplerManager                          _samplerManager {};
+        ToneMapperPass                          _toneMapperPass {};
 
         UIPass                                  _uiPass;
 

@@ -9,6 +9,7 @@ Clear-Host
 
 # vertex shaders
 .\make-vs.ps1 common_opaque
+.\make-vs.ps1 full_screen_triangle
 .\make-vs.ps1 light_volume
 .\make-vs.ps1 mandelbrot
 .\make-vs.ps1 point_light_shadowmap_generator
@@ -27,6 +28,7 @@ Clear-Host
 .\make-ps.ps1 reflection_global
 .\make-ps.ps1 reflection_local
 .\make-ps.ps1 stipple
+.\make-ps.ps1 tone_mapper
 .\make-ps.ps1 ui
 
 # compute shaders

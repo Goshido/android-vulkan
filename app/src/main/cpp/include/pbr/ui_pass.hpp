@@ -167,6 +167,7 @@ class UIPass final
         ) noexcept;
 
         [[nodiscard]] FontStorage &GetFontStorage () noexcept;
+        [[nodiscard]] VkRenderPass GetRenderPass () const noexcept;
         [[nodiscard]] size_t GetUsedVertexCount () const noexcept;
 
         [[nodiscard]] bool OnInitDevice ( android_vulkan::Renderer &renderer,

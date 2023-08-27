@@ -185,6 +185,9 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/text_align_property_checker.cpp
     app/src/main/cpp/sources/pbr/text_html5_element.cpp
     app/src/main/cpp/sources/pbr/text_ui_element.cpp
+    app/src/main/cpp/sources/pbr/tone_mapper_descriptor_set_layout.cpp
+    app/src/main/cpp/sources/pbr/tone_mapper_pass.cpp
+    app/src/main/cpp/sources/pbr/tone_mapper_program.cpp
     app/src/main/cpp/sources/pbr/transform_component.cpp
     app/src/main/cpp/sources/pbr/ui_element.cpp
     app/src/main/cpp/sources/pbr/ui_layer.cpp

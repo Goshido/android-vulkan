@@ -105,6 +105,13 @@ class UIPass final
     private:
         GXVec2                                      _bottomRight {};
         VkBufferMemoryBarrier                       _bufferBarrier {};
+
+        VkExtent2D                                  _currentResolution
+        {
+            .width = 0U,
+            .height = 0U
+        };
+
         UIPassTransformDescriptorSetLayout          _transformLayout {};
 
         UIVertexInfo*                               _data = nullptr;
@@ -119,25 +126,15 @@ class UIPass final
 
         FontStorage                                 _fontStorage {};
 
-        uint32_t                                    _framebufferIndex = std::numeric_limits<uint32_t>::max ();
-        std::vector<VkFramebuffer>                  _framebuffers {};
-
         bool                                        _hasChanges = false;
         bool                                        _isSceneImageEmbedded = false;
         bool                                        _isTransformChanged = false;
         std::vector<Job>                            _jobs {};
 
-        VkPresentInfoKHR                            _presentInfo {};
         UIProgram                                   _program {};
-        VkSemaphore                                 _renderEndSemaphore = VK_NULL_HANDLE;
-        VkRenderPassBeginInfo                       _renderInfo {};
-
-        VkSubmitInfo                                _submitInfo {};
-
         Buffer                                      _staging {};
         Buffer                                      _vertex {};
 
-        VkSemaphore                                 _targetAcquiredSemaphore = VK_NULL_HANDLE;
         VkDescriptorSet                             _transformDescriptorSet = VK_NULL_HANDLE;
 
         UniformBufferPoolManager                    _uniformPool
@@ -157,17 +154,9 @@ class UIPass final
 
         ~UIPass () = default;
 
-        [[nodiscard]] bool AcquirePresentTarget ( android_vulkan::Renderer &renderer,
-            size_t &swapchainImageIndex
-        ) noexcept;
-
-        [[nodiscard]] bool Execute ( android_vulkan::Renderer &renderer,
-            VkCommandBuffer commandBuffer,
-            VkFence fence
-        ) noexcept;
+        [[nodiscard]] bool Execute ( VkCommandBuffer commandBuffer, size_t framebufferIndex ) noexcept;
 
         [[nodiscard]] FontStorage &GetFontStorage () noexcept;
-        [[nodiscard]] VkRenderPass GetRenderPass () const noexcept;
         [[nodiscard]] size_t GetUsedVertexCount () const noexcept;
 
         [[nodiscard]] bool OnInitDevice ( android_vulkan::Renderer &renderer,
@@ -177,8 +166,12 @@ class UIPass final
 
         void OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept;
 
-        [[nodiscard]] bool OnSwapchainCreated ( android_vulkan::Renderer &renderer, VkImageView scene ) noexcept;
-        void OnSwapchainDestroyed ( VkDevice device ) noexcept;
+        [[nodiscard]] bool OnSwapchainCreated ( android_vulkan::Renderer &renderer,
+            VkRenderPass renderPass,
+            VkImageView scene
+        ) noexcept;
+
+        void OnSwapchainDestroyed () noexcept;
 
         void RequestEmptyUI () noexcept;
         [[nodiscard]] UIBufferResponse RequestUIBuffer ( size_t neededVertices ) noexcept;
@@ -187,7 +180,10 @@ class UIPass final
         void SubmitRectangle () noexcept;
         void SubmitText ( size_t usedVertices ) noexcept;
 
-        [[nodiscard]] bool UploadGPUData ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept;
+        [[nodiscard]] bool UploadGPUData ( android_vulkan::Renderer &renderer,
+            VkCommandBuffer commandBuffer,
+            size_t framebufferIndex
+        ) noexcept;
 
         [[nodiscard]] constexpr static size_t GetVerticesPerRectangle () noexcept
         {
@@ -208,18 +204,7 @@ class UIPass final
         [[nodiscard]] static std::optional<Texture2DRef const> RequestImage ( std::string const &asset ) noexcept;
 
     private:
-        [[nodiscard]] bool CreateFramebuffers ( android_vulkan::Renderer &renderer,
-            VkExtent2D const &resolution
-        ) noexcept;
-
-        void DestroyFramebuffers ( VkDevice device ) noexcept;
-
-        [[nodiscard]] bool CreateRenderPass ( android_vulkan::Renderer &renderer ) noexcept;
-        void DestroyRenderPass ( VkDevice device ) noexcept;
-
-        void InitCommonStructures () noexcept;
         void SubmitNonImage ( size_t usedVertices ) noexcept;
-
         void UpdateGeometry ( VkCommandBuffer commandBuffer ) noexcept;
         [[nodiscard]] bool UpdateSceneImage () noexcept;
         void UpdateTransform ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept;

@@ -684,39 +684,13 @@ void UIPass::InUseImageTracker::MarkInUse ( Texture2DRef const &texture, size_t 
 
 //----------------------------------------------------------------------------------------------------------------------
 
-bool UIPass::AcquirePresentTarget ( android_vulkan::Renderer &renderer, size_t &swapchainImageIndex ) noexcept
-{
-    AV_TRACE ( "Acquire swapchain image" )
-
-    _framebufferIndex = std::numeric_limits<uint32_t>::max ();
-
-    bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkAcquireNextImageKHR ( renderer.GetDevice (),
-            renderer.GetSwapchain (),
-            std::numeric_limits<uint64_t>::max (),
-            _targetAcquiredSemaphore,
-            VK_NULL_HANDLE,
-            &_framebufferIndex
-        ),
-
-        "pbr::UIPass::AcquirePresentTarget",
-        "Can't get presentation image index"
-    );
-
-    swapchainImageIndex = _framebufferIndex;
-    return result;
-}
-
-bool UIPass::Execute ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer, VkFence fence ) noexcept
+bool UIPass::Execute ( VkCommandBuffer commandBuffer, size_t framebufferIndex ) noexcept
 {
     AV_TRACE ( "UI pass: Execute" )
 
     if ( !ImageStorage::SyncGPU () )
         return false;
 
-    _renderInfo.framebuffer = _framebuffers[ _framebufferIndex ];
-
-    vkCmdBeginRenderPass ( commandBuffer, &_renderInfo, VK_SUBPASS_CONTENTS_INLINE );
     _program.Bind ( commandBuffer );
 
     VkDescriptorSet const sets[] =
@@ -746,7 +720,7 @@ bool UIPass::Execute ( android_vulkan::Renderer &renderer, VkCommandBuffer comma
         }
         else
         {
-            _inUseImageTracker.MarkInUse ( *job._texture, _framebufferIndex );
+            _inUseImageTracker.MarkInUse ( *job._texture, framebufferIndex );
             _program.SetDescriptorSet ( commandBuffer, ds + imageIdx, 2U, 1U );
             imageIdx = ( imageIdx + 1U ) % MAX_IMAGES;
         }
@@ -755,57 +729,13 @@ bool UIPass::Execute ( android_vulkan::Renderer &renderer, VkCommandBuffer comma
         start += job._vertices;
     }
 
-    vkCmdEndRenderPass ( commandBuffer );
-
-    bool result = android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
-        "pbr::UIPass::Execute",
-        "Can't end command buffer"
-    );
-
-    if ( !result )
-        return false;
-
-    _submitInfo.pCommandBuffers = &commandBuffer;
-
-    result = android_vulkan::Renderer::CheckVkResult (
-        vkQueueSubmit ( renderer.GetQueue (), 1U, &_submitInfo, fence ),
-        "pbr::UIPass::End",
-        "Can't submit command buffer"
-    );
-
-    if ( !result )
-        return false;
-
-    _inUseImageTracker.CollectGarbage ( _framebufferIndex );
-
-    VkResult presentResult = VK_ERROR_DEVICE_LOST;
-
-    _presentInfo.pResults = &presentResult;
-    _presentInfo.pSwapchains = &renderer.GetSwapchain ();
-    _presentInfo.pImageIndices = &_framebufferIndex;
-
-    result = android_vulkan::Renderer::CheckVkResult ( vkQueuePresentKHR ( renderer.GetQueue (), &_presentInfo ),
-        "pbr::UIPass::EndFrame",
-        "Can't present frame"
-    );
-
-    if ( !result )
-        return false;
-
-    return android_vulkan::Renderer::CheckVkResult ( presentResult,
-        "pbr::UIPass::EndFrame",
-        "Present queue has been failed"
-    );
+    _inUseImageTracker.CollectGarbage ( framebufferIndex );
+    return true;
 }
 
 FontStorage &UIPass::GetFontStorage () noexcept
 {
     return _fontStorage;
-}
-
-VkRenderPass UIPass::GetRenderPass () const noexcept
-{
-    return _renderInfo.renderPass;
 }
 
 size_t UIPass::GetUsedVertexCount () const noexcept
@@ -842,37 +772,6 @@ bool UIPass::OnInitDevice ( android_vulkan::Renderer &renderer,
 
     _data = static_cast<UIVertexInfo*> ( data );
 
-    constexpr VkSemaphoreCreateInfo const semaphoreInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0U
-    };
-
-    VkDevice device = renderer.GetDevice ();
-
-    result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateSemaphore ( device, &semaphoreInfo, nullptr, &_renderEndSemaphore ),
-        "pbr::UIPass::OnInitDevice",
-        "Can't create render pass end semaphore"
-    );
-
-    if ( !result )
-        return false;
-
-    AV_REGISTER_SEMAPHORE ( "pbr::UIPass::_renderEndSemaphore" )
-
-    result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateSemaphore ( device, &semaphoreInfo, nullptr, &_targetAcquiredSemaphore ),
-        "pbr::UIPass::OnInitDevice",
-        "Can't create render target acquired semaphore"
-    );
-
-    if ( !result )
-        return false;
-
-    AV_REGISTER_SEMAPHORE ( "pbr::UIPass::_targetAcquiredSemaphore" )
-
     result = _vertex.Init ( renderer,
         AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT ) | AV_VK_FLAG ( VK_BUFFER_USAGE_VERTEX_BUFFER_BIT ),
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
@@ -882,7 +781,18 @@ bool UIPass::OnInitDevice ( android_vulkan::Renderer &renderer,
     if ( !result )
         return false;
 
-    InitCommonStructures ();
+    _bufferBarrier =
+    {
+        .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
+        .pNext = nullptr,
+        .srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
+        .dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT,
+        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .buffer = _vertex._buffer,
+        .offset = 0U,
+        .size = 0U
+    };
 
     constexpr size_t commonDescriptorSetCount = 1U;
 
@@ -910,6 +820,8 @@ bool UIPass::OnInitDevice ( android_vulkan::Renderer &renderer,
         .poolSizeCount = static_cast<uint32_t> ( std::size ( poolSizes ) ),
         .pPoolSizes = poolSizes
     };
+
+    VkDevice device = renderer.GetDevice ();
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_descriptorPool ),
@@ -951,20 +863,6 @@ void UIPass::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
         AV_UNREGISTER_DESCRIPTOR_POOL ( "pbr::UIPass::_descriptorPool" )
     }
 
-    if ( _targetAcquiredSemaphore != VK_NULL_HANDLE )
-    {
-        vkDestroySemaphore ( device, _targetAcquiredSemaphore, nullptr );
-        _targetAcquiredSemaphore = VK_NULL_HANDLE;
-        AV_UNREGISTER_SEMAPHORE ( "pbr::UIPass::_targetAcquiredSemaphore" )
-    }
-
-    if ( _renderEndSemaphore != VK_NULL_HANDLE )
-    {
-        vkDestroySemaphore ( device, _renderEndSemaphore, nullptr );
-        _renderEndSemaphore = VK_NULL_HANDLE;
-        AV_UNREGISTER_SEMAPHORE ( "pbr::UIPass::_renderEndSemaphore" )
-    }
-
     _program.Destroy ( device );
 
     if ( _data )
@@ -973,15 +871,7 @@ void UIPass::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
         _data = nullptr;
     }
 
-    DestroyFramebuffers ( device );
-    DestroyRenderPass ( device );
-
-    _renderInfo.renderArea.extent =
-    {
-        .width = 0U,
-        .height = 0U
-    };
-
+    _inUseImageTracker.Destroy ();
     _staging.Destroy ( renderer );
     _vertex.Destroy ( renderer );
     _fontStorage.Destroy ( renderer );
@@ -998,34 +888,27 @@ void UIPass::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
     ImageStorage::OnDestroyDevice ();
 }
 
-bool UIPass::OnSwapchainCreated ( android_vulkan::Renderer &renderer, VkImageView scene ) noexcept
+bool UIPass::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
+    VkRenderPass renderPass,
+    VkImageView scene
+) noexcept
 {
     VkExtent2D const &resolution = renderer.GetSurfaceSize ();
-    bool const hasRenderPass = _renderInfo.renderPass != VK_NULL_HANDLE;
-
-    if ( hasRenderPass && !CreateFramebuffers ( renderer, resolution ) )
-        return false;
-
-    VkExtent2D &r = _renderInfo.renderArea.extent;
+    VkExtent2D &r = _currentResolution;
 
     if ( ( r.width == resolution.width ) & ( r.height == resolution.height ) )
         return true;
 
     VkDevice device = renderer.GetDevice ();
-
-    if ( hasRenderPass )
-        _program.Destroy ( device );
+    _program.Destroy ( device );
 
     bool const result = _fontStorage.SetMediaResolution ( renderer, resolution ) &&
-        CreateRenderPass ( renderer ) &&
-        _program.Init ( renderer, _renderInfo.renderPass, 0U, resolution );
+        _program.Init ( renderer, renderPass, 0U, resolution );
 
     if ( !result )
         return false;
 
-    if ( _framebuffers.empty () && !CreateFramebuffers ( renderer, resolution ) )
-        return false;
-
+    _inUseImageTracker.Init ( renderer.GetPresentImageCount () );
     r = resolution;
 
     VkExtent2D const &viewport = renderer.GetViewportResolution ();
@@ -1036,9 +919,9 @@ bool UIPass::OnSwapchainCreated ( android_vulkan::Renderer &renderer, VkImageVie
     return true;
 }
 
-void UIPass::OnSwapchainDestroyed ( VkDevice device ) noexcept
+void UIPass::OnSwapchainDestroyed () noexcept
 {
-    DestroyFramebuffers ( device );
+    _inUseImageTracker.Destroy ();
 }
 
 void UIPass::RequestEmptyUI () noexcept
@@ -1107,14 +990,17 @@ void UIPass::SubmitText ( size_t usedVertices ) noexcept
     SubmitNonImage ( usedVertices );
 }
 
-bool UIPass::UploadGPUData ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept
+bool UIPass::UploadGPUData ( android_vulkan::Renderer &renderer,
+    VkCommandBuffer commandBuffer,
+    size_t framebufferIndex
+) noexcept
 {
     AV_TRACE ( "UI pass: Upload GPU data" )
 
     VkDevice device = renderer.GetDevice ();
     _imageDescriptorSets.Commit ( device );
 
-    if ( !_fontStorage.UploadGPUData ( renderer, commandBuffer, static_cast<size_t> ( _framebufferIndex ) ) )
+    if ( !_fontStorage.UploadGPUData ( renderer, commandBuffer, framebufferIndex ) )
         return false;
 
     _commonDescriptorSet.Update ( device, _fontStorage.GetAtlasImageView () );
@@ -1198,225 +1084,6 @@ void UIPass::ReleaseImage ( Texture2DRef const &image ) noexcept
 std::optional<Texture2DRef const> UIPass::RequestImage ( std::string const &asset ) noexcept
 {
     return ImageStorage::GetImage ( asset );
-}
-
-bool UIPass::CreateFramebuffers ( android_vulkan::Renderer &renderer, VkExtent2D const &resolution ) noexcept
-{
-    size_t const framebufferCount = renderer.GetPresentImageCount ();
-    _framebuffers.reserve ( framebufferCount );
-
-    VkFramebufferCreateInfo framebufferInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0U,
-        .renderPass = _renderInfo.renderPass,
-        .attachmentCount = 1U,
-        .pAttachments = nullptr,
-        .width = resolution.width,
-        .height = resolution.height,
-        .layers = 1U
-    };
-
-    VkDevice device = renderer.GetDevice ();
-
-    for ( size_t i = 0U; i < framebufferCount; ++i )
-    {
-        framebufferInfo.pAttachments = &renderer.GetPresentImageView ( i );
-        VkFramebuffer framebuffer;
-
-        bool const result = android_vulkan::Renderer::CheckVkResult (
-            vkCreateFramebuffer ( device, &framebufferInfo, nullptr, &framebuffer ),
-            "pbr::UIPass::CreateFramebuffers",
-            "Can't create a framebuffer"
-        );
-
-        if ( !result )
-            return false;
-
-        _framebuffers.push_back ( framebuffer );
-        AV_REGISTER_FRAMEBUFFER ( "pbr::UIPass::_framebuffers" )
-    }
-
-    _inUseImageTracker.Init ( framebufferCount );
-    return true;
-}
-
-void UIPass::DestroyFramebuffers ( VkDevice device ) noexcept
-{
-    if ( _framebuffers.empty () )
-        return;
-
-    for ( auto framebuffer : _framebuffers )
-    {
-        vkDestroyFramebuffer ( device, framebuffer, nullptr );
-        AV_UNREGISTER_FRAMEBUFFER ( "pbr::UIPass::_framebuffers" )
-    }
-
-    _framebuffers.clear ();
-    _inUseImageTracker.Destroy ();
-}
-
-bool UIPass::CreateRenderPass ( android_vulkan::Renderer &renderer ) noexcept
-{
-    if ( _renderInfo.renderPass != VK_NULL_HANDLE )
-        return true;
-
-    VkAttachmentDescription const attachment
-    {
-        .flags = 0U,
-        .format = renderer.GetSurfaceFormat (),
-        .samples = VK_SAMPLE_COUNT_1_BIT,
-        .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-        .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-        .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
-        .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-        .finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
-    };
-
-    constexpr static VkAttachmentReference reference
-    {
-        .attachment = 0U,
-        .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
-    };
-
-    constexpr VkSubpassDescription subpass
-    {
-        .flags = 0U,
-        .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
-        .inputAttachmentCount = 0U,
-        .pInputAttachments = nullptr,
-        .colorAttachmentCount = 1U,
-        .pColorAttachments = &reference,
-        .pResolveAttachments = nullptr,
-        .pDepthStencilAttachment = nullptr,
-        .preserveAttachmentCount = 0U,
-        .pPreserveAttachments = nullptr
-    };
-
-    constexpr VkSubpassDependency dependency
-    {
-        .srcSubpass = 0U,
-        .dstSubpass = VK_SUBPASS_EXTERNAL,
-        .srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-        .dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-        .srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-        .dstAccessMask = VK_ACCESS_NONE,
-        .dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
-    };
-
-    VkRenderPassCreateInfo const info
-    {
-        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0U,
-        .attachmentCount = 1U,
-        .pAttachments = &attachment,
-        .subpassCount = 1U,
-        .pSubpasses = &subpass,
-        .dependencyCount = 1U,
-        .pDependencies = &dependency
-    };
-
-    bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateRenderPass ( renderer.GetDevice (), &info, nullptr, &_renderInfo.renderPass ),
-        "pbr::UIPass::CreateRenderPass",
-        "Can't create render pass"
-    );
-
-    if ( !result )
-        return false;
-
-    AV_REGISTER_RENDER_PASS ( "pbr::UIPass::_renderPass" )
-    return true;
-}
-
-void UIPass::DestroyRenderPass ( VkDevice device ) noexcept
-{
-    if ( _renderInfo.renderPass == VK_NULL_HANDLE )
-        return;
-
-    vkDestroyRenderPass ( device, _renderInfo.renderPass, nullptr );
-    _renderInfo.renderPass = VK_NULL_HANDLE;
-    AV_UNREGISTER_RENDER_PASS ( "pbr::UIPass::_renderPass" )
-}
-
-void UIPass::InitCommonStructures () noexcept
-{
-    _bufferBarrier =
-    {
-        .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
-        .pNext = nullptr,
-        .srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
-        .dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT,
-        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .buffer = _vertex._buffer,
-        .offset = 0U,
-        .size = 0U
-    };
-
-    constexpr VkClearValue clearColor
-    {
-        .color
-        {
-            .float32 { 0.0F, 0.0F, 0.0F, 1.0F }
-        }
-    };
-
-    _renderInfo =
-    {
-        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
-        .pNext = nullptr,
-        .renderPass = VK_NULL_HANDLE,
-        .framebuffer = VK_NULL_HANDLE,
-
-        .renderArea =
-        {
-            .offset
-            {
-                .x = 0,
-                .y = 0
-            },
-
-            .extent =
-            {
-                .width = 0U,
-                .height = 0U
-            }
-        },
-
-        .clearValueCount = 1U,
-        .pClearValues = &clearColor
-    };
-
-    _presentInfo =
-    {
-        .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
-        .pNext = nullptr,
-        .waitSemaphoreCount = 1U,
-        .pWaitSemaphores = &_renderEndSemaphore,
-        .swapchainCount = 1U,
-        .pSwapchains = nullptr,
-        .pImageIndices = nullptr,
-        .pResults = nullptr
-    };
-
-    constexpr static VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-
-    _submitInfo =
-    {
-        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-        .pNext = nullptr,
-        .waitSemaphoreCount = 1U,
-        .pWaitSemaphores = &_targetAcquiredSemaphore,
-        .pWaitDstStageMask = &waitStage,
-        .commandBufferCount = 1U,
-        .pCommandBuffers = nullptr,
-        .signalSemaphoreCount = 1U,
-        .pSignalSemaphores = &_renderEndSemaphore
-    };
 }
 
 void UIPass::SubmitNonImage ( size_t usedVertices ) noexcept

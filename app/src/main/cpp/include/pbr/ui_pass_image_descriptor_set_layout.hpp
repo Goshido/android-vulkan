@@ -9,6 +9,9 @@ namespace pbr {
 
 class UIPassImageDescriptorSetLayout final : public DescriptorSetLayout
 {
+    private:
+        bool    _init = false;
+
     public:
         UIPassImageDescriptorSetLayout () = default;
 

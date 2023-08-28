@@ -35,7 +35,7 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
 
     size_t swapchainImageIndex;
 
-    if ( !_uiPass.AcquirePresentTarget ( renderer, swapchainImageIndex ) )
+    if ( !_presentRenderPass.AcquirePresentTarget ( renderer, swapchainImageIndex ) )
         return false;
 
     CommandInfo &commandInfo = _commandInfo[ swapchainImageIndex ];
@@ -83,7 +83,7 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
         "Can't begin main render pass"
     );
 
-    if ( !result || !_uiPass.UploadGPUData ( renderer, commandBuffer ) )
+    if ( !result || !_uiPass.UploadGPUData ( renderer, commandBuffer, swapchainImageIndex ) )
         return false;
 
     result = _lightPass.OnPreGeometryPass ( renderer,
@@ -115,7 +115,12 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
 
     _exposurePass.Execute ( commandBuffer, static_cast<float> ( deltaTime ) );
 
-    if ( !_uiPass.Execute ( renderer, commandBuffer, fence ) )
+    _presentRenderPass.Begin ( commandBuffer );
+
+    result = _uiPass.Execute ( commandBuffer, swapchainImageIndex ) &&
+        _presentRenderPass.End ( renderer, commandBuffer, fence );
+
+    if ( !result )
         return false;
 
     _renderSessionStats.RenderPointLights ( _lightPass.GetPointLightCount () );
@@ -159,6 +164,7 @@ bool RenderSession::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
         _toneMapperPass.Init ( device ) &&
         _defaultTextureManager.Init ( renderer, commandInfo._pool ) &&
         _samplerManager.Init ( device ) &&
+        _presentRenderPass.OnInitDevice ( renderer ) &&
         _uiPass.OnInitDevice ( renderer, _samplerManager, _defaultTextureManager.GetTransparent ()->GetImageView () );
 }
 
@@ -201,6 +207,7 @@ void RenderSession::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexc
     _commandInfo.shrink_to_fit ();
 
     _uiPass.OnDestroyDevice ( renderer );
+    _presentRenderPass.OnDestroyDevice ( device );
 }
 
 bool RenderSession::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
@@ -244,16 +251,19 @@ bool RenderSession::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
         }
     }
 
+    if ( !_presentRenderPass.OnSwapchainCreated ( renderer ) )
+        return false;
+
     VkImageView hdrView = _gBuffer.GetHDRAccumulator ().GetImageView ();
 
-    if ( !_uiPass.OnSwapchainCreated ( renderer, hdrView ) )
+    if ( !_uiPass.OnSwapchainCreated ( renderer, _presentRenderPass.GetRenderPass (), hdrView ) )
         return false;
 
     if ( !hasChanges )
         return true;
 
     return _toneMapperPass.SetTarget ( renderer,
-        _uiPass.GetRenderPass (),
+        _presentRenderPass.GetRenderPass (),
         0U,
         resolution,
         hdrView,
@@ -264,7 +274,8 @@ bool RenderSession::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
 
 void RenderSession::OnSwapchainDestroyed ( VkDevice device ) noexcept
 {
-    _uiPass.OnSwapchainDestroyed ( device );
+    _presentRenderPass.OnSwapchainDestroyed ( device );
+    _uiPass.OnSwapchainDestroyed ();
 }
 
 void RenderSession::SubmitLight ( LightRef &light ) noexcept

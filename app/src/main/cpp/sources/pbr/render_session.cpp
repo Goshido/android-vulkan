@@ -86,6 +86,8 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
     if ( !result || !_uiPass.UploadGPUData ( renderer, commandBuffer, swapchainImageIndex ) )
         return false;
 
+    _toneMapperPass.UploadGPUData ( renderer, commandBuffer );
+
     result = _lightPass.OnPreGeometryPass ( renderer,
         commandBuffer,
         swapchainImageIndex,
@@ -116,6 +118,8 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
     _exposurePass.Execute ( commandBuffer, static_cast<float> ( deltaTime ) );
 
     _presentRenderPass.Begin ( commandBuffer );
+
+    _toneMapperPass.Execute ( commandBuffer );
 
     result = _uiPass.Execute ( commandBuffer, swapchainImageIndex ) &&
         _presentRenderPass.End ( renderer, commandBuffer, fence );
@@ -161,7 +165,7 @@ bool RenderSession::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
         return false;
 
     return _exposurePass.Init ( renderer, commandInfo._pool ) &&
-        _toneMapperPass.Init ( device ) &&
+        _toneMapperPass.Init ( renderer ) &&
         _defaultTextureManager.Init ( renderer, commandInfo._pool ) &&
         _samplerManager.Init ( device ) &&
         _presentRenderPass.OnInitDevice ( renderer ) &&
@@ -255,20 +259,20 @@ bool RenderSession::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
         return false;
 
     VkImageView hdrView = _gBuffer.GetHDRAccumulator ().GetImageView ();
+    VkRenderPass renderPass = _presentRenderPass.GetRenderPass ();
 
-    if ( !_uiPass.OnSwapchainCreated ( renderer, _presentRenderPass.GetRenderPass (), hdrView ) )
+    if ( !_uiPass.OnSwapchainCreated ( renderer, renderPass, hdrView ) )
         return false;
 
     if ( !hasChanges )
         return true;
 
     return _toneMapperPass.SetTarget ( renderer,
-        _presentRenderPass.GetRenderPass (),
+        renderPass,
         0U,
-        resolution,
         hdrView,
         _exposurePass.GetExposure (),
-        _samplerManager.GetPointSampler ()->GetSampler ()
+        _samplerManager.GetMaterialSampler ()->GetSampler ()
     );
 }
 

@@ -92,7 +92,8 @@ void ToneMapperProgram::Destroy ( VkDevice device ) noexcept
         AV_UNREGISTER_PIPELINE_LAYOUT ( "pbr::ToneMapperProgram::_pipelineLayout" )
     }
 
-    _layout.Destroy ( device );
+    _fullScreenTriangleLayout.Destroy ( device );
+    _toneMapperLayout.Destroy ( device );
 
     if ( _pipeline != VK_NULL_HANDLE )
     {
@@ -127,14 +128,14 @@ GraphicsProgram::DescriptorSetInfo const &ToneMapperProgram::GetResourceInfo () 
     return info;
 }
 
-void ToneMapperProgram::SetDescriptorSet ( VkCommandBuffer commandBuffer, VkDescriptorSet set ) const noexcept
+void ToneMapperProgram::SetDescriptorSets ( VkCommandBuffer commandBuffer, VkDescriptorSet const* sets ) const noexcept
 {
     vkCmdBindDescriptorSets ( commandBuffer,
         VK_PIPELINE_BIND_POINT_GRAPHICS,
         _pipelineLayout,
         0U,
-        1,
-        &set,
+        2U,
+        sets,
         0U,
         nullptr
     );
@@ -239,18 +240,22 @@ VkPipelineInputAssemblyStateCreateInfo const* ToneMapperProgram::InitInputAssemb
 
 bool ToneMapperProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept
 {
-    if ( !_layout.Init ( device ) )
+    if ( !_fullScreenTriangleLayout.Init ( device ) || !_toneMapperLayout.Init ( device ) )
         return false;
 
-    VkDescriptorSetLayout dsLayout = _layout.GetLayout ();
+    VkDescriptorSetLayout const layouts[] =
+    {
+        _fullScreenTriangleLayout.GetLayout (),
+        _toneMapperLayout.GetLayout ()
+    };
 
     VkPipelineLayoutCreateInfo const layoutInfo
     {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0U,
-        .setLayoutCount = 1U,
-        .pSetLayouts = &dsLayout,
+        .setLayoutCount = static_cast<uint32_t> ( std::size ( layouts ) ),
+        .pSetLayouts = layouts,
         .pushConstantRangeCount = 0U,
         .pPushConstantRanges = nullptr
     };

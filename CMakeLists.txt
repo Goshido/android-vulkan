@@ -88,6 +88,7 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/font_family_property.cpp
     app/src/main/cpp/sources/pbr/font_family_property_checker.cpp
     app/src/main/cpp/sources/pbr/font_storage.cpp
+    app/src/main/cpp/sources/pbr/full_screen_triangle_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/gbuffer.cpp
     app/src/main/cpp/sources/pbr/geometry_call.cpp
     app/src/main/cpp/sources/pbr/geometry_pass.cpp

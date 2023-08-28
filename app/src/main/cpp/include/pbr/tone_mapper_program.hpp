@@ -2,16 +2,31 @@
 #define PBR_TONE_MAPPER_PROGRAM_HPP
 
 
+#include "full_screen_triangle_descriptor_set_layout.hpp"
 #include "graphics_program.hpp"
 #include "tone_mapper_descriptor_set_layout.hpp"
+#include <vulkan_utils.hpp>
 
 
 namespace pbr {
 
 class ToneMapperProgram final : public GraphicsProgram
 {
+    public:
+        AV_DX_ALIGNMENT_BEGIN
+
+        struct Transform final
+        {
+            GXVec2                                  _transformRow0;
+            GXVec2                                  _padding0;
+            GXVec2                                  _transformRow1;
+        };
+
+        AV_DX_ALIGNMENT_END
+
     private:
-        ToneMapperDescriptorSetLayout       _layout {};
+        FullScreenTriangleDescriptorSetLayout       _fullScreenTriangleLayout {};
+        ToneMapperDescriptorSetLayout               _toneMapperLayout {};
 
     public:
         ToneMapperProgram () noexcept;
@@ -33,7 +48,7 @@ class ToneMapperProgram final : public GraphicsProgram
         void Destroy ( VkDevice device ) noexcept override;
 
         [[nodiscard]] DescriptorSetInfo const &GetResourceInfo () const noexcept override;
-        void SetDescriptorSet ( VkCommandBuffer commandBuffer, VkDescriptorSet set ) const noexcept;
+        void SetDescriptorSets ( VkCommandBuffer commandBuffer, VkDescriptorSet const* sets ) const noexcept;
 
     private:
         [[nodiscard]] VkPipelineColorBlendStateCreateInfo const* InitColorBlendInfo (

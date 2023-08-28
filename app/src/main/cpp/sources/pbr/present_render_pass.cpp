@@ -245,7 +245,7 @@ bool PresentRenderPass::CreateRenderPass ( android_vulkan::Renderer &renderer,
         .flags = 0U,
         .format = renderer.GetSurfaceFormat (),
         .samples = VK_SAMPLE_COUNT_1_BIT,
-        .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+        .loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
         .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
         .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
         .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
@@ -313,14 +313,6 @@ bool PresentRenderPass::CreateRenderPass ( android_vulkan::Renderer &renderer,
 
 void PresentRenderPass::InitCommonStructures () noexcept
 {
-    constexpr static VkClearValue clearColor
-    {
-        .color
-        {
-            .float32 { 0.0F, 0.0F, 0.0F, 1.0F }
-        }
-    };
-
     _renderInfo =
     {
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
@@ -343,8 +335,8 @@ void PresentRenderPass::InitCommonStructures () noexcept
             }
         },
 
-        .clearValueCount = 1U,
-        .pClearValues = &clearColor
+        .clearValueCount = 0U,
+        .pClearValues = nullptr
     };
 
     _presentInfo =

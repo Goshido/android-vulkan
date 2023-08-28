@@ -706,7 +706,10 @@ bool UIPass::Execute ( VkCommandBuffer commandBuffer, size_t framebufferIndex ) 
     vkCmdBindVertexBuffers ( commandBuffer, 0U, 1U, &_vertex._buffer, &offset );
 
     auto start = static_cast<uint32_t> ( _sceneImageVertexIndex );
-    vkCmdDraw ( commandBuffer, GetVerticesPerRectangle (), 1U, start, 0U );
+
+    // FUCK: optimize it. Tone mapper will output scene image.
+    //vkCmdDraw ( commandBuffer, GetVerticesPerRectangle (), 1U, start, 0U );
+
     start += GetVerticesPerRectangle ();
 
     size_t imageIdx = _imageDescriptorSets._commitIndex;

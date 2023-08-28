@@ -1,5 +1,5 @@
-#include <pbr/tone_mapper.inc>
-#include <pbr/tone_mapper_descriptor_set_layout.hpp>
+#include <pbr/full_screen_triangle.inc>
+#include <pbr/full_screen_triangle_descriptor_set_layout.hpp>
 #include <vulkan_utils.hpp>
 
 
@@ -43,7 +43,7 @@ void DescriptorSetLayout::Destroy ( VkDevice device ) noexcept
     vkDestroyDescriptorSetLayout ( device, _layout, nullptr );
     _layout = VK_NULL_HANDLE;
 
-    AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::ToneMapperDescriptorSetLayout::_layout" )
+    AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::FullScreenTriangleDescriptorSetLayout::_layout" )
 }
 
 bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
@@ -54,29 +54,13 @@ bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
         return true;
     }
 
-    constexpr static VkDescriptorSetLayoutBinding const bindings[] =
+    constexpr static VkDescriptorSetLayoutBinding const binding =
     {
-        {
-            .binding = BIND_HDR_IMAGE,
-            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-            .descriptorCount = 1U,
-            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
-            .pImmutableSamplers = nullptr
-        },
-        {
-            .binding = BIND_LINEAR_SAMPLER,
-            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
-            .descriptorCount = 1U,
-            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
-            .pImmutableSamplers = nullptr
-        },
-        {
-            .binding = BIND_EXPOSURE,
-            .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            .descriptorCount = 1U,
-            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
-            .pImmutableSamplers = nullptr
-        }
+        .binding = BIND_TRANSFORM,
+        .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        .descriptorCount = 1U,
+        .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
+        .pImmutableSamplers = nullptr
     };
 
     constexpr VkDescriptorSetLayoutCreateInfo info
@@ -84,20 +68,20 @@ bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0U,
-        .bindingCount = static_cast<uint32_t> ( std::size ( bindings ) ),
-        .pBindings = bindings
+        .bindingCount = 1U,
+        .pBindings = &binding
     };
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateDescriptorSetLayout ( device, &info, nullptr, &_layout ),
-        "pbr::ToneMapperDescriptorSetLayout::Init",
+        "pbr::FullScreenTriangleDescriptorSetLayout::Init",
         "Can't create descriptor set layout"
     );
 
     if ( !result )
         return false;
 
-    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::ToneMapperDescriptorSetLayout::_layout" )
+    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::FullScreenTriangleDescriptorSetLayout::_layout" )
 
     ++_references;
     return true;
@@ -107,7 +91,7 @@ DescriptorSetLayout g_descriptorSetLayout {};
 
 } // end of anonymous namespace
 
-void ToneMapperDescriptorSetLayout::Destroy ( VkDevice device ) noexcept
+void FullScreenTriangleDescriptorSetLayout::Destroy ( VkDevice device ) noexcept
 {
     if ( _init )
     {
@@ -116,13 +100,13 @@ void ToneMapperDescriptorSetLayout::Destroy ( VkDevice device ) noexcept
     }
 }
 
-bool ToneMapperDescriptorSetLayout::Init ( VkDevice device ) noexcept
+bool FullScreenTriangleDescriptorSetLayout::Init ( VkDevice device ) noexcept
 {
     _init = true;
     return g_descriptorSetLayout.Init ( device );
 }
 
-VkDescriptorSetLayout ToneMapperDescriptorSetLayout::GetLayout () const noexcept
+VkDescriptorSetLayout FullScreenTriangleDescriptorSetLayout::GetLayout () const noexcept
 {
     return g_descriptorSetLayout._layout;
 }

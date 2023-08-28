@@ -2,7 +2,9 @@
 #define PBR_TONE_MAPPER_PASS_HPP
 
 
+#include "full_screen_triangle_descriptor_set_layout.hpp"
 #include "tone_mapper_program.hpp"
+#include "uniform_buffer_pool_manager.hpp"
 
 
 namespace pbr {
@@ -10,10 +12,21 @@ namespace pbr {
 class ToneMapperPass final
 {
     private:
-        VkDescriptorPool                    _descriptorPool = VK_NULL_HANDLE;
-        VkDescriptorSet                     _descriptorSet = VK_NULL_HANDLE;
-        ToneMapperDescriptorSetLayout       _layout {};
-        ToneMapperProgram                   _program {};
+        VkDescriptorSet                             _descriptorSets[ 2U ] = { VK_NULL_HANDLE, VK_NULL_HANDLE };
+
+        ToneMapperProgram                           _program {};
+        ToneMapperDescriptorSetLayout               _resourceLayout {};
+        FullScreenTriangleDescriptorSetLayout       _transformLayout {};
+
+        VkDescriptorPool                            _resourceDescriptorPool = VK_NULL_HANDLE;
+
+        UniformBufferPoolManager                    _transformUniformPool
+        {
+            eUniformPoolSize::Nanoscopic_64KB,
+            VK_PIPELINE_STAGE_VERTEX_SHADER_BIT
+        };
+
+        bool                                        _transformUpdated = true;
 
     public:
         ToneMapperPass () = default;
@@ -26,7 +39,7 @@ class ToneMapperPass final
 
         ~ToneMapperPass () = default;
 
-        [[nodiscard]] bool Init ( VkDevice device ) noexcept;
+        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer ) noexcept;
         void Destroy ( VkDevice device ) noexcept;
 
         [[maybe_unused]] void Execute ( VkCommandBuffer commandBuffer ) noexcept;
@@ -34,11 +47,12 @@ class ToneMapperPass final
         [[nodiscard]] bool SetTarget ( android_vulkan::Renderer &renderer,
             VkRenderPass renderPass,
             uint32_t subpass,
-            VkExtent2D const &viewport,
             VkImageView hdrView,
             VkBuffer exposure,
-            VkSampler pointSampler
+            VkSampler linearSampler
         ) noexcept;
+
+        void UploadGPUData ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept;
 };
 
 } // namespace pbr

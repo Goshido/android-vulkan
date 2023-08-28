@@ -1,0 +1,17 @@
+#ifndef COLOR_SPACE_PS
+#define COLOR_SPACE_PS
+
+
+// 1.0H / 2.4H
+#define INVERSE_GAMMA           4.16667e-1H
+
+float32_t3 LinearToSRGB ( in float16_t3 ldr )
+{
+    // See https://entropymine.com/imageworsener/srgbformula/
+    float16_t3 const a = ldr * 12.92H;
+    float16_t3 const b = 1.055H * pow ( ldr, INVERSE_GAMMA ) - 0.055H;
+    return (float32_t3)lerp ( a, b, (float16_t3)( ldr > 3.1308e-3H ) );
+}
+
+
+#endif // COLOR_SPACE_PS

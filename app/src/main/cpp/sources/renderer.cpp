@@ -2468,11 +2468,11 @@ bool Renderer::SelectTargetSurfaceFormat ( VkFormat &targetColorFormat,
     VkFormat &targetDepthStencilFormat
 ) const noexcept
 {
-    // Find sRGBA8 format.
+    // Find RGBA8_UNORM format.
 
     if ( _surfaceFormats.size () == 1U && _surfaceFormats[ 0U ].format == VK_FORMAT_UNDEFINED )
     {
-        targetColorFormat = VK_FORMAT_R8G8B8A8_SRGB;
+        targetColorFormat = VK_FORMAT_R8G8B8A8_UNORM;
         targetColorSpace = _surfaceFormats[ 0U ].colorSpace;
     }
     else
@@ -2481,10 +2481,10 @@ bool Renderer::SelectTargetSurfaceFormat ( VkFormat &targetColorFormat,
 
         for ( auto const &item : _surfaceFormats )
         {
-            if ( item.format != VK_FORMAT_R8G8B8A8_SRGB )
+            if ( item.format != VK_FORMAT_R8G8B8A8_UNORM )
                 continue;
 
-            targetColorFormat = VK_FORMAT_R8G8B8A8_SRGB;
+            targetColorFormat = VK_FORMAT_R8G8B8A8_UNORM;
             targetColorSpace = _surfaceFormats[ 0U ].colorSpace;
             isFound = true;
 

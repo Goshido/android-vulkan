@@ -179,7 +179,7 @@ void RenderSession::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexc
 
     VkDevice device = renderer.GetDevice ();
 
-    _toneMapperPass.Destroy ( device );
+    _toneMapperPass.Destroy ( renderer );
     _exposurePass.Destroy ( renderer );
     _samplerManager.Destroy ( device );
     _defaultTextureManager.Destroy ( renderer );

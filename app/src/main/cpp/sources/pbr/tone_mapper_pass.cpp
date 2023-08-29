@@ -76,8 +76,10 @@ bool ToneMapperPass::Init ( android_vulkan::Renderer &renderer ) noexcept
         );
 }
 
-void ToneMapperPass::Destroy ( VkDevice device ) noexcept
+void ToneMapperPass::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 {
+    VkDevice device = renderer.GetDevice ();
+
     if ( _resourceDescriptorPool != VK_NULL_HANDLE )
     {
         vkDestroyDescriptorPool ( device, _resourceDescriptorPool, nullptr );
@@ -88,6 +90,7 @@ void ToneMapperPass::Destroy ( VkDevice device ) noexcept
     _program.Destroy ( device );
     _transformLayout.Destroy ( device );
     _resourceLayout.Destroy ( device );
+    _transformUniformPool.Destroy ( renderer, "pbr::ToneMapperPass::_transformUniformPool" );
 }
 
 void ToneMapperPass::Execute ( VkCommandBuffer commandBuffer ) noexcept
@@ -178,11 +181,17 @@ void ToneMapperPass::UploadGPUData ( android_vulkan::Renderer &renderer, VkComma
         return;
 
     GXMat4 const &orientation = renderer.GetPresentationEngineTransform ();
+    VkExtent2D const &viewport = renderer.GetViewportResolution ();
 
     ToneMapperProgram::Transform const transform
     {
         ._transformRow0 = *reinterpret_cast<GXVec2 const*> ( &orientation._m[ 0U ][ 0U ] ),
-        ._transformRow1 = *reinterpret_cast<GXVec2 const*> ( &orientation._m[ 1U ][ 0U ] )
+        ._padding0 {},
+        ._transformRow1 = *reinterpret_cast<GXVec2 const*> ( &orientation._m[ 1U ][ 0U ] ),
+
+        ._halfPixelOffset = GXVec2 ( 0.5F / static_cast<float> ( viewport.width ),
+            -0.5F / static_cast<float> ( viewport.height )
+        )
     };
 
     _transformUniformPool.Push ( commandBuffer, &transform, sizeof ( transform ) );

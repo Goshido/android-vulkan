@@ -121,13 +121,12 @@ class UIPass final
         ImageDescriptorSets                         _imageDescriptorSets {};
         InUseImageTracker                           _inUseImageTracker {};
 
-        size_t                                      _sceneImageVertexIndex = 0U;
+        size_t                                      _readVertexIndex = 0U;
         size_t                                      _writeVertexIndex = 0U;
 
         FontStorage                                 _fontStorage {};
 
         bool                                        _hasChanges = false;
-        bool                                        _isSceneImageEmbedded = false;
         bool                                        _isTransformChanged = false;
         std::vector<Job>                            _jobs {};
 
@@ -206,7 +205,6 @@ class UIPass final
     private:
         void SubmitNonImage ( size_t usedVertices ) noexcept;
         void UpdateGeometry ( VkCommandBuffer commandBuffer ) noexcept;
-        [[nodiscard]] bool UpdateSceneImage () noexcept;
         void UpdateTransform ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept;
 };
 

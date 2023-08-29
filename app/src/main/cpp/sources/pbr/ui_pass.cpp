@@ -705,13 +705,7 @@ bool UIPass::Execute ( VkCommandBuffer commandBuffer, size_t framebufferIndex ) 
     constexpr VkDeviceSize offset = 0U;
     vkCmdBindVertexBuffers ( commandBuffer, 0U, 1U, &_vertex._buffer, &offset );
 
-    auto start = static_cast<uint32_t> ( _sceneImageVertexIndex );
-
-    // FUCK: optimize it. Tone mapper will output scene image.
-    //vkCmdDraw ( commandBuffer, GetVerticesPerRectangle (), 1U, start, 0U );
-
-    start += GetVerticesPerRectangle ();
-
+    auto start = static_cast<uint32_t> ( _readVertexIndex );
     size_t imageIdx = _imageDescriptorSets._commitIndex;
     VkDescriptorSet* ds = _imageDescriptorSets._descriptorSets.data ();
 
@@ -743,7 +737,7 @@ FontStorage &UIPass::GetFontStorage () noexcept
 
 size_t UIPass::GetUsedVertexCount () const noexcept
 {
-    return _writeVertexIndex - _sceneImageVertexIndex;
+    return _writeVertexIndex - _readVertexIndex;
 }
 
 bool UIPass::OnInitDevice ( android_vulkan::Renderer &renderer,
@@ -880,12 +874,11 @@ void UIPass::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
     _fontStorage.Destroy ( renderer );
 
     _writeVertexIndex = 0U;
-    _sceneImageVertexIndex = 0U;
+    _readVertexIndex = 0U;
 
     _jobs.clear ();
     _jobs.shrink_to_fit ();
 
-    _isSceneImageEmbedded = false;
     _hasChanges = false;
 
     ImageStorage::OnDestroyDevice ();
@@ -896,6 +889,7 @@ bool UIPass::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
     VkImageView scene
 ) noexcept
 {
+    _inUseImageTracker.Init ( renderer.GetPresentImageCount () );
     VkExtent2D const &resolution = renderer.GetSurfaceSize ();
     VkExtent2D &r = _currentResolution;
 
@@ -911,7 +905,6 @@ bool UIPass::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
     if ( !result )
         return false;
 
-    _inUseImageTracker.Init ( renderer.GetPresentImageCount () );
     r = resolution;
 
     VkExtent2D const &viewport = renderer.GetViewportResolution ();
@@ -930,10 +923,7 @@ void UIPass::OnSwapchainDestroyed () noexcept
 void UIPass::RequestEmptyUI () noexcept
 {
     if ( !_jobs.empty () )
-    {
         _hasChanges = true;
-        _isSceneImageEmbedded = false;
-    }
 
     _jobs.clear ();
 }
@@ -942,10 +932,7 @@ UIPass::UIBufferResponse UIPass::RequestUIBuffer ( size_t neededVertices ) noexc
 {
     RequestEmptyUI ();
 
-    constexpr size_t sceneImageVertices = GetVerticesPerRectangle ();
-    size_t const actualVertices = neededVertices + sceneImageVertices;
-
-    if ( actualVertices > MAX_VERTICES )
+    if ( neededVertices > MAX_VERTICES )
     {
         android_vulkan::LogWarning ( "pbr::UIPass::RequestUIBuffer - Too many vertices was requested: %zu + %zu.",
             neededVertices,
@@ -957,14 +944,12 @@ UIPass::UIBufferResponse UIPass::RequestUIBuffer ( size_t neededVertices ) noexc
     }
 
     size_t const cases[] = { 0U, _writeVertexIndex };
-    size_t const nextIdx = cases[ _writeVertexIndex + actualVertices <= MAX_VERTICES ];
+    size_t const nextIdx = cases[ _writeVertexIndex + neededVertices <= MAX_VERTICES ];
 
-    _sceneImageVertexIndex = nextIdx;
-    UIVertexBuffer const result = UIVertexBuffer ( _data + nextIdx + sceneImageVertices, neededVertices );
+    _readVertexIndex = nextIdx;
+    UIVertexBuffer const result = UIVertexBuffer ( _data + nextIdx, neededVertices );
 
-    _writeVertexIndex = nextIdx + actualVertices;
-    _isSceneImageEmbedded = false;
-
+    _writeVertexIndex = nextIdx + neededVertices;
     return result;
 }
 
@@ -1010,9 +995,6 @@ bool UIPass::UploadGPUData ( android_vulkan::Renderer &renderer,
 
     if ( _isTransformChanged )
         UpdateTransform ( renderer, commandBuffer );
-
-    if ( !_isSceneImageEmbedded && !UpdateSceneImage () )
-        return false;
 
     if ( _hasChanges )
         UpdateGeometry ( commandBuffer );
@@ -1126,8 +1108,8 @@ void UIPass::SubmitNonImage ( size_t usedVertices ) noexcept
 void UIPass::UpdateGeometry ( VkCommandBuffer commandBuffer ) noexcept
 {
     constexpr size_t const elementSize = sizeof ( UIVertexInfo );
-    auto const offset = static_cast<VkDeviceSize> ( elementSize * _sceneImageVertexIndex );
-    auto const size = static_cast<VkDeviceSize> ( elementSize * ( _writeVertexIndex - _sceneImageVertexIndex ) );
+    auto const offset = static_cast<VkDeviceSize> ( elementSize * _readVertexIndex );
+    auto const size = static_cast<VkDeviceSize> ( elementSize * ( _writeVertexIndex - _readVertexIndex ) );
 
     VkBufferCopy const copy
     {
@@ -1154,42 +1136,6 @@ void UIPass::UpdateGeometry ( VkCommandBuffer commandBuffer ) noexcept
     );
 
     _hasChanges = false;
-}
-
-bool UIPass::UpdateSceneImage () noexcept
-{
-    if ( !_hasChanges )
-    {
-        // Passing zero vertices because "RequestUIBuffer" implicitly adds 6 vertices for scene image rectangle needs.
-        if ( UIBufferResponse const response = RequestUIBuffer ( 0U ); !response )
-        {
-            return false;
-        }
-    }
-
-    GXVec2 const halfPixelUV ( 0.5F / _bottomRight._data[ 0U ], 0.5F / _bottomRight._data[ 1U ] );
-
-    constexpr GXColorRGB white ( 1.0F, 1.0F, 1.0F, 1.0F );
-    constexpr GXVec2 topLeft ( 0.0F, 0.0F );
-
-    GXVec2 imageBottomRight {};
-    imageBottomRight.Sum ( GXVec2 ( 1.0F, 1.0F ), halfPixelUV );
-
-    FontStorage::GlyphInfo const &g = _fontStorage.GetTransparentGlyphInfo ();
-
-    AppendRectangle ( _data + _sceneImageVertexIndex,
-        white,
-        topLeft,
-        _bottomRight,
-        g._topLeft,
-        g._bottomRight,
-        halfPixelUV,
-        imageBottomRight
-    );
-
-    _isSceneImageEmbedded = true;
-    _hasChanges = true;
-    return true;
 }
 
 void UIPass::UpdateTransform ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept

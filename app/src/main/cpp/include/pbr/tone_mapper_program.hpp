@@ -20,6 +20,7 @@ class ToneMapperProgram final : public GraphicsProgram
             GXVec2                                  _transformRow0;
             GXVec2                                  _padding0;
             GXVec2                                  _transformRow1;
+            GXVec2                                  _halfPixelOffset;
         };
 
         AV_DX_ALIGNMENT_END

@@ -13,11 +13,9 @@ class ToneMapperPass final
 {
     private:
         VkDescriptorSet                             _descriptorSets[ 2U ] = { VK_NULL_HANDLE, VK_NULL_HANDLE };
-
         ToneMapperProgram                           _program {};
         ToneMapperDescriptorSetLayout               _resourceLayout {};
         FullScreenTriangleDescriptorSetLayout       _transformLayout {};
-
         VkDescriptorPool                            _resourceDescriptorPool = VK_NULL_HANDLE;
 
         UniformBufferPoolManager                    _transformUniformPool

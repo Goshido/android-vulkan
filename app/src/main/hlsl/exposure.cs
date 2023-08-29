@@ -4,13 +4,14 @@
 #include "exposure.inc"
 
 
-#define THREAD_X        256
-#define THREAD_Y        1
-#define THREAD_Z        1
+#define THREAD_X            256
+#define THREAD_Y            1
+#define THREAD_Z            1
+
+#define SAFE_EXPOSURE       1.0e-3F
 
 // It prevents log2 ( 0.0H ).
-#define SAFE_LUMA       9.7656e-4H
-
+#define SAFE_LUMA           9.7656e-4H
 
 [[vk::constant_id ( CONST_WORKGROUP_COUNT )]]
 uint32_t const                                      g_workgroupCount = 256U;
@@ -317,9 +318,12 @@ void CS ( in uint32_t threadID: SV_GroupIndex, in uint32_t3 workGroupID: SV_Grou
     float32_t const eyeLuma = mad ( deltaLuma, g_exposureInfo._eyeAdaptation, prevLuma );
     g_temporalLuma[ 0U ] = eyeLuma;
 
-    float32_t const keyValue = 1.03F + ( -2.0F / ( log10 ( eyeLuma + 1.0F ) + 2.0F ) );
-    float32_t const luma = clamp ( eyeLuma, g_exposureInfo._minLuma, g_exposureInfo._maxLuma );
-    g_exposure[ 0U ] = keyValue / ( luma - g_exposureInfo._exposureCompensation );
+    float32_t const luma = clamp ( eyeLuma - g_exposureInfo._exposureCompensation,
+        g_exposureInfo._minLuma,
+        g_exposureInfo._maxLuma
+    );
+
+    g_exposure[ 0U ] = max ( 0.18F / luma, SAFE_EXPOSURE );
 
     // Reset the global atomic counter back to 0 for the next spd dispatch.
     g_globalAtomic[ 0U ] = 0U;

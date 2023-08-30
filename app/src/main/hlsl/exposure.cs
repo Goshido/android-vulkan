@@ -323,7 +323,8 @@ void CS ( in uint32_t threadID: SV_GroupIndex, in uint32_t3 workGroupID: SV_Grou
         g_exposureInfo._maxLuma
     );
 
-    g_exposure[ 0U ] = max ( 0.18F / luma, SAFE_EXPOSURE );
+    float32_t const keyValue = 1.03F + ( -2.0F / ( log10 ( eyeLuma + 1.0F ) + 2.0F ) );
+    g_exposure[ 0U ] = max ( keyValue / luma, SAFE_EXPOSURE );
 
     // Reset the global atomic counter back to 0 for the next spd dispatch.
     g_globalAtomic[ 0U ] = 0U;

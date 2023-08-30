@@ -11,7 +11,7 @@ namespace {
 constexpr float DEFAULT_EYE_ADAPTATION_SPEED = 1.0F;
 
 constexpr float DEFAULT_EXPOSURE_COMPENSATION_EV = -10.0F;
-constexpr float DEFAULT_MIN_LUMA_EV = -6.0F;
+constexpr float DEFAULT_MIN_LUMA_EV = 0.52F;
 constexpr float DEFAULT_MAX_LUMA_EV = 15.0F;
 
 } // end of anonymous

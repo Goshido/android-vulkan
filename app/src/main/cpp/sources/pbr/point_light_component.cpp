@@ -37,7 +37,7 @@ PointLightComponent::PointLightComponent ( PointLightComponentDesc const &desc, 
             *reinterpret_cast<GXVec3 const*> ( unorm._data ),
 
             // TODO remove this multiplier in the future.
-            desc._intensity * 7.77F,
+            desc._intensity * 28.0F,
 
             reinterpret_cast<GXVec3 const &> ( desc._location ),
             bounds

@@ -40,7 +40,7 @@ class ToneMapperPass final
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer ) noexcept;
         void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
 
-        [[maybe_unused]] void Execute ( VkCommandBuffer commandBuffer ) noexcept;
+        void Execute ( VkCommandBuffer commandBuffer ) noexcept;
 
         [[nodiscard]] bool SetTarget ( android_vulkan::Renderer &renderer,
             VkRenderPass renderPass,

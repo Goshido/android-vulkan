@@ -201,8 +201,6 @@ bool ExposureProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
     constexpr size_t w = offsetof ( VkExtent2D, width );
     constexpr size_t h = offsetof ( VkExtent2D, height );
 
-    // It's OK to pass constants with unknown 'constantID'. They will be ignored.
-    // Vulkan spec 1.3.214 - 10.8. Specialization Constants.
     constexpr static VkSpecializationMapEntry const entries[] =
     {
         {

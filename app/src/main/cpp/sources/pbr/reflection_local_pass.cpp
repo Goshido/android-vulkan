@@ -63,7 +63,7 @@ bool ReflectionLocalPass::Init ( android_vulkan::Renderer &renderer,
     VkExtent2D const &viewport
 ) noexcept
 {
-    return _program.Init ( renderer, renderPass, subpass, viewport ) && AllocateDescriptorSets ( renderer );
+    return _program.Init ( renderer, renderPass, subpass, nullptr, viewport ) && AllocateDescriptorSets ( renderer );
 }
 
 void ReflectionLocalPass::Destroy ( android_vulkan::Renderer &renderer ) noexcept

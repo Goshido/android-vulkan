@@ -66,7 +66,7 @@ bool GeometryPass::Init ( android_vulkan::Renderer &renderer,
 
     VkDescriptorImageInfo const samplerInfo
     {
-        .sampler = samplerManager.GetMaterialSampler ()->GetSampler (),
+        .sampler = samplerManager.GetMaterialSampler (),
         .imageView = VK_NULL_HANDLE,
         .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
     };

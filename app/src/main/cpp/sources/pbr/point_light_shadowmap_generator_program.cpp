@@ -27,6 +27,7 @@ PointLightShadowmapGeneratorProgram::PointLightShadowmapGeneratorProgram () noex
 bool PointLightShadowmapGeneratorProgram::Init ( android_vulkan::Renderer &renderer,
     VkRenderPass renderPass,
     uint32_t subpass,
+    SpecializationData /*specializationData*/,
     VkExtent2D const &viewport
 ) noexcept
 {
@@ -51,7 +52,7 @@ bool PointLightShadowmapGeneratorProgram::Init ( android_vulkan::Renderer &rende
 
     VkDevice device = renderer.GetDevice ();
 
-    if ( !InitShaderInfo ( renderer, pipelineInfo.pStages, stageInfo ) )
+    if ( !InitShaderInfo ( renderer, pipelineInfo.pStages, nullptr, nullptr, stageInfo ) )
         return false;
 
     pipelineInfo.pVertexInputState = InitVertexInputInfo ( vertexInputInfo,
@@ -299,6 +300,8 @@ VkPipelineRasterizationStateCreateInfo const* PointLightShadowmapGeneratorProgra
 
 bool PointLightShadowmapGeneratorProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
     VkPipelineShaderStageCreateInfo const* &targetInfo,
+    SpecializationData /*specializationData*/,
+    VkSpecializationInfo* /*specializationInfo*/,
     VkPipelineShaderStageCreateInfo* sourceInfo
 ) noexcept
 {

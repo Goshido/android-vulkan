@@ -3,14 +3,14 @@
 
 
 #include "full_screen_triangle_descriptor_set_layout.hpp"
-#include "graphics_program.hpp"
+#include "srgb_program.hpp"
 #include "tone_mapper_descriptor_set_layout.hpp"
 #include <vulkan_utils.hpp>
 
 
 namespace pbr {
 
-class ToneMapperProgram final : public GraphicsProgram
+class ToneMapperProgram final : public SRGBProgram
 {
     public:
         AV_DX_ALIGNMENT_BEGIN
@@ -20,7 +20,6 @@ class ToneMapperProgram final : public GraphicsProgram
             GXVec2                                  _transformRow0;
             GXVec2                                  _padding0;
             GXVec2                                  _transformRow1;
-            GXVec2                                  _halfPixelOffset;
         };
 
         AV_DX_ALIGNMENT_END
@@ -43,6 +42,7 @@ class ToneMapperProgram final : public GraphicsProgram
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
             VkRenderPass renderPass,
             uint32_t subpass,
+            SpecializationData specializationData,
             VkExtent2D const &viewport
         ) noexcept override;
 
@@ -77,6 +77,8 @@ class ToneMapperProgram final : public GraphicsProgram
 
         [[nodiscard]] bool InitShaderInfo ( android_vulkan::Renderer &renderer,
             VkPipelineShaderStageCreateInfo const* &targetInfo,
+            SpecializationData specializationData,
+            VkSpecializationInfo* specializationInfo,
             VkPipelineShaderStageCreateInfo* sourceInfo
         ) noexcept override;
 

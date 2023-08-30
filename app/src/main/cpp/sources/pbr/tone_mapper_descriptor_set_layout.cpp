@@ -64,7 +64,7 @@ bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
             .pImmutableSamplers = nullptr
         },
         {
-            .binding = BIND_LINEAR_SAMPLER,
+            .binding = BIND_CLAMP_TO_EDGE_SAMPLER,
             .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
             .descriptorCount = 1U,
             .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,

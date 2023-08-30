@@ -100,23 +100,41 @@ void ToneMapperPass::Execute ( VkCommandBuffer commandBuffer ) noexcept
     vkCmdDraw ( commandBuffer, 3U, 1U, 0U, 0U );
 }
 
+[[maybe_unused]] bool ToneMapperPass::SetBrightness ( android_vulkan::Renderer &renderer,
+    VkRenderPass renderPass,
+    uint32_t subpass,
+    float brightnessBalance
+) noexcept
+{
+    _program.Destroy ( renderer.GetDevice () );
+    SRGBProgram::SpecializationInfo const specData = SRGBProgram::GetGammaInfo ( _brightnessBalance );
+
+    if ( !_program.Init ( renderer, renderPass, subpass, &specData, renderer.GetSurfaceSize () ) )
+        return false;
+
+    _brightnessBalance = brightnessBalance;
+    return true;
+}
+
 bool ToneMapperPass::SetTarget ( android_vulkan::Renderer &renderer,
     VkRenderPass renderPass,
     uint32_t subpass,
     VkImageView hdrView,
     VkBuffer exposure,
-    VkSampler linearSampler
+    VkSampler clampToEdgeSampler
 ) noexcept
 {
     VkDevice device = renderer.GetDevice ();
     _program.Destroy ( device );
 
-    if ( !_program.Init ( renderer, renderPass, subpass, renderer.GetSurfaceSize () ) )
+    SRGBProgram::SpecializationInfo const specData = SRGBProgram::GetGammaInfo ( _brightnessBalance );
+
+    if ( !_program.Init ( renderer, renderPass, subpass, &specData, renderer.GetSurfaceSize () ) )
         return false;
 
     VkDescriptorImageInfo const imageInfo
     {
-        .sampler = linearSampler,
+        .sampler = clampToEdgeSampler,
         .imageView = hdrView,
         .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
     };
@@ -148,7 +166,7 @@ bool ToneMapperPass::SetTarget ( android_vulkan::Renderer &renderer,
             .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             .pNext = nullptr,
             .dstSet = resourceDescriptorSet,
-            .dstBinding = BIND_LINEAR_SAMPLER,
+            .dstBinding = BIND_CLAMP_TO_EDGE_SAMPLER,
             .dstArrayElement = 0U,
             .descriptorCount = 1U,
             .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
@@ -181,17 +199,12 @@ void ToneMapperPass::UploadGPUData ( android_vulkan::Renderer &renderer, VkComma
         return;
 
     GXMat4 const &orientation = renderer.GetPresentationEngineTransform ();
-    VkExtent2D const &viewport = renderer.GetViewportResolution ();
 
     ToneMapperProgram::Transform const transform
     {
         ._transformRow0 = *reinterpret_cast<GXVec2 const*> ( &orientation._m[ 0U ][ 0U ] ),
         ._padding0 {},
-        ._transformRow1 = *reinterpret_cast<GXVec2 const*> ( &orientation._m[ 1U ][ 0U ] ),
-
-        ._halfPixelOffset = GXVec2 ( 0.5F / static_cast<float> ( viewport.width ),
-            -0.5F / static_cast<float> ( viewport.height )
-        )
+        ._transformRow1 = *reinterpret_cast<GXVec2 const*> ( &orientation._m[ 1U ][ 0U ] )
     };
 
     _transformUniformPool.Push ( commandBuffer, &transform, sizeof ( transform ) );

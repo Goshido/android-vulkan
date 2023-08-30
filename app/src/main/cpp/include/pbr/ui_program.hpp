@@ -2,7 +2,7 @@
 #define PBR_UI_PROGRAM_HPP
 
 
-#include "graphics_program.hpp"
+#include "srgb_program.hpp"
 #include "ui_pass_common_descriptor_set_layout.hpp"
 #include "ui_pass_image_descriptor_set_layout.hpp"
 #include "ui_pass_transform_descriptor_set_layout.hpp"
@@ -11,7 +11,7 @@
 
 namespace pbr {
 
-class UIProgram final : public GraphicsProgram
+class UIProgram final : public SRGBProgram
 {
     public:
         AV_DX_ALIGNMENT_BEGIN
@@ -45,6 +45,7 @@ class UIProgram final : public GraphicsProgram
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
             VkRenderPass renderPass,
             uint32_t subpass,
+            SpecializationData specializationData,
             VkExtent2D const &viewport
         ) noexcept override;
 
@@ -83,6 +84,8 @@ class UIProgram final : public GraphicsProgram
 
         [[nodiscard]] bool InitShaderInfo ( android_vulkan::Renderer &renderer,
             VkPipelineShaderStageCreateInfo const* &targetInfo,
+            SpecializationData specializationData,
+            VkSpecializationInfo* specializationInfo,
             VkPipelineShaderStageCreateInfo* sourceInfo
         ) noexcept override;
 

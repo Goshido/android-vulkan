@@ -27,6 +27,7 @@ ReflectionGlobalProgram::ReflectionGlobalProgram () noexcept:
 bool ReflectionGlobalProgram::Init ( android_vulkan::Renderer &renderer,
     VkRenderPass renderPass,
     uint32_t subpass,
+    SpecializationData /*specializationData*/,
     VkExtent2D const &viewport
 ) noexcept
 {
@@ -50,7 +51,7 @@ bool ReflectionGlobalProgram::Init ( android_vulkan::Renderer &renderer,
 
     VkDevice device = renderer.GetDevice ();
 
-    if ( !InitShaderInfo ( renderer, pipelineInfo.pStages, stageInfo ) )
+    if ( !InitShaderInfo ( renderer, pipelineInfo.pStages, nullptr, nullptr, stageInfo ) )
     {
         Destroy ( device );
         return false;
@@ -350,6 +351,8 @@ VkPipelineRasterizationStateCreateInfo const* ReflectionGlobalProgram::InitRaste
 
 bool ReflectionGlobalProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
     VkPipelineShaderStageCreateInfo const* &targetInfo,
+    SpecializationData /*specializationData*/,
+    VkSpecializationInfo* /*specializationInfo*/,
     VkPipelineShaderStageCreateInfo* sourceInfo
 ) noexcept
 {

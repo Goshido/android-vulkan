@@ -1,3 +1,4 @@
+#include <pbr/srgb_program.inc>
 #include <pbr/tone_mapper_program.hpp>
 #include <vulkan_utils.hpp>
 
@@ -17,7 +18,7 @@ constexpr size_t STAGE_COUNT = 2U;
 //----------------------------------------------------------------------------------------------------------------------
 
 ToneMapperProgram::ToneMapperProgram () noexcept:
-    GraphicsProgram ( "pbr::ToneMapperProgram" )
+    SRGBProgram ( "pbr::ToneMapperProgram" )
 {
     // NOTHING
 }
@@ -25,18 +26,20 @@ ToneMapperProgram::ToneMapperProgram () noexcept:
 bool ToneMapperProgram::Init ( android_vulkan::Renderer &renderer,
     VkRenderPass renderPass,
     uint32_t subpass,
+    SpecializationData specializationData,
     VkExtent2D const &viewport
 ) noexcept
 {
     VkPipelineInputAssemblyStateCreateInfo assemblyInfo {};
     VkPipelineColorBlendAttachmentState attachmentInfo[ COLOR_RENDER_TARGET_COUNT ];
-    VkPipelineShaderStageCreateInfo stageInfo[ STAGE_COUNT ];
-    VkPipelineVertexInputStateCreateInfo vertexInputInfo {};
     VkPipelineColorBlendStateCreateInfo blendInfo {};
     VkPipelineDepthStencilStateCreateInfo depthStencilInfo {};
     VkPipelineMultisampleStateCreateInfo multisampleInfo {};
     VkPipelineRasterizationStateCreateInfo rasterizationInfo {};
     VkRect2D scissorDescription {};
+    VkPipelineShaderStageCreateInfo stageInfo[ STAGE_COUNT ];
+    VkSpecializationInfo specInfo {};
+    VkPipelineVertexInputStateCreateInfo vertexInputInfo {};
     VkViewport viewportDescription {};
     VkPipelineViewportStateCreateInfo viewportInfo {};
 
@@ -48,7 +51,7 @@ bool ToneMapperProgram::Init ( android_vulkan::Renderer &renderer,
 
     VkDevice device = renderer.GetDevice ();
 
-    if ( !InitShaderInfo ( renderer, pipelineInfo.pStages, stageInfo ) )
+    if ( !InitShaderInfo ( renderer, pipelineInfo.pStages, specializationData, &specInfo, stageInfo ) )
         return false;
 
     pipelineInfo.pVertexInputState = InitVertexInputInfo ( vertexInputInfo, nullptr, nullptr );
@@ -320,6 +323,8 @@ VkPipelineRasterizationStateCreateInfo const* ToneMapperProgram::InitRasterizati
 
 bool ToneMapperProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
     VkPipelineShaderStageCreateInfo const* &targetInfo,
+    SpecializationData specializationData,
+    VkSpecializationInfo* specializationInfo,
     VkPipelineShaderStageCreateInfo* sourceInfo
 ) noexcept
 {
@@ -354,6 +359,21 @@ bool ToneMapperProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
         .pSpecializationInfo = nullptr
     };
 
+    constexpr static VkSpecializationMapEntry entry
+    {
+        .constantID = CONST_INVERSE_GAMMA,
+        .offset = static_cast<uint32_t> ( offsetof ( SpecializationInfo, _inverseGamma ) ),
+        .size = sizeof ( SpecializationInfo::_inverseGamma )
+    };
+
+    *specializationInfo =
+    {
+        .mapEntryCount = 1U,
+        .pMapEntries = &entry,
+        .dataSize = sizeof ( SpecializationInfo ),
+        .pData = specializationData
+    };
+
     sourceInfo[ 1U ] =
     {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
@@ -362,7 +382,7 @@ bool ToneMapperProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
         .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
         .module = _fragmentShader,
         .pName = FRAGMENT_SHADER_ENTRY_POINT,
-        .pSpecializationInfo = nullptr
+        .pSpecializationInfo = specializationInfo
     };
 
     targetInfo = sourceInfo;

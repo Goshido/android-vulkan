@@ -64,7 +64,7 @@ bool PointLightPass::Init ( android_vulkan::Renderer &renderer,
         .height = SHADOWMAP_RESOLUTION
     };
 
-    if ( !_shadowmapProgram.Init ( renderer, _shadowmapRenderPass, 0U, shadowmapResolution ) )
+    if ( !_shadowmapProgram.Init ( renderer, _shadowmapRenderPass, 0U, nullptr, shadowmapResolution ) )
         return false;
 
     bool const result = _shadowmapBufferPool.Init ( renderer,

@@ -319,12 +319,12 @@ bool UIPass::CommonDescriptorSet::Init ( VkDevice device,
     VkDescriptorImageInfo const imageInfo[] =
     {
         {
-            .sampler = samplerManager.GetPointSampler ()->GetSampler (),
+            .sampler = samplerManager.GetPointSampler (),
             .imageView = VK_NULL_HANDLE,
             .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
         },
         {
-            .sampler = samplerManager.GetMaterialSampler ()->GetSampler (),
+            .sampler = samplerManager.GetMaterialSampler (),
             .imageView = VK_NULL_HANDLE,
             .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
         }
@@ -899,8 +899,10 @@ bool UIPass::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
     VkDevice device = renderer.GetDevice ();
     _program.Destroy ( device );
 
+    SRGBProgram::SpecializationInfo const specData = SRGBProgram::GetGammaInfo ( _brightnessBalance );
+
     bool const result = _fontStorage.SetMediaResolution ( renderer, resolution ) &&
-        _program.Init ( renderer, renderPass, 0U, resolution );
+        _program.Init ( renderer, renderPass, 0U, &specData, resolution );
 
     if ( !result )
         return false;
@@ -951,6 +953,22 @@ UIPass::UIBufferResponse UIPass::RequestUIBuffer ( size_t neededVertices ) noexc
 
     _writeVertexIndex = nextIdx + neededVertices;
     return result;
+}
+
+[[maybe_unused]] bool UIPass::SetBrightness ( android_vulkan::Renderer &renderer,
+    VkRenderPass renderPass,
+    uint32_t subpass,
+    float brightnessBalance
+) noexcept
+{
+    _program.Destroy ( renderer.GetDevice () );
+    SRGBProgram::SpecializationInfo const specData = SRGBProgram::GetGammaInfo ( _brightnessBalance );
+
+    if ( !_program.Init ( renderer, renderPass, subpass, &specData, _currentResolution ) )
+        return false;
+
+    _brightnessBalance = brightnessBalance;
+    return true;
 }
 
 void UIPass::SubmitImage ( Texture2DRef const &texture ) noexcept

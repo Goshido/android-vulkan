@@ -105,6 +105,7 @@ class UIPass final
     private:
         GXVec2                                      _bottomRight {};
         VkBufferMemoryBarrier                       _bufferBarrier {};
+        float                                       _brightnessBalance = 0.0F;
 
         VkExtent2D                                  _currentResolution
         {
@@ -174,6 +175,12 @@ class UIPass final
 
         void RequestEmptyUI () noexcept;
         [[nodiscard]] UIBufferResponse RequestUIBuffer ( size_t neededVertices ) noexcept;
+
+        [[maybe_unused, nodiscard]] bool SetBrightness ( android_vulkan::Renderer &renderer,
+            VkRenderPass renderPass,
+            uint32_t subpass,
+            float brightnessBalance
+        ) noexcept;
 
         void SubmitImage ( Texture2DRef const &texture ) noexcept;
         void SubmitRectangle () noexcept;

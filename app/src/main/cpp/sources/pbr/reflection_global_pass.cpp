@@ -47,7 +47,7 @@ bool ReflectionGlobalPass::Init ( android_vulkan::Renderer &renderer,
     VkExtent2D const &viewport
 ) noexcept
 {
-    return _program.Init ( renderer, renderPass, subpass, viewport ) &&
+    return _program.Init ( renderer, renderPass, subpass, nullptr, viewport ) &&
         AllocateDescriptorSets ( renderer.GetDevice () );
 }
 

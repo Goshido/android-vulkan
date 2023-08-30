@@ -20,6 +20,7 @@ constexpr size_t VERTEX_ATTRIBUTE_COUNT = 5U;
 bool GeometryPassProgram::Init ( android_vulkan::Renderer &renderer,
     VkRenderPass renderPass,
     uint32_t subpass,
+    SpecializationData /*specializationData*/,
     VkExtent2D const &viewport
 ) noexcept
 {
@@ -45,7 +46,7 @@ bool GeometryPassProgram::Init ( android_vulkan::Renderer &renderer,
 
     VkDevice device = renderer.GetDevice ();
 
-    if ( !InitShaderInfo ( renderer, pipelineInfo.pStages, stageInfo ) )
+    if ( !InitShaderInfo ( renderer, pipelineInfo.pStages, nullptr, nullptr, stageInfo ) )
         return false;
 
     pipelineInfo.pVertexInputState = InitVertexInputInfo ( vertexInputInfo,
@@ -402,6 +403,8 @@ VkPipelineRasterizationStateCreateInfo const* GeometryPassProgram::InitRasteriza
 
 bool GeometryPassProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
     VkPipelineShaderStageCreateInfo const* &targetInfo,
+    SpecializationData /*specializationData*/,
+    VkSpecializationInfo* /*specializationInfo*/,
     VkPipelineShaderStageCreateInfo* sourceInfo
 ) noexcept
 {

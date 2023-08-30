@@ -272,7 +272,7 @@ bool RenderSession::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
         0U,
         hdrView,
         _exposurePass.GetExposure (),
-        _samplerManager.GetMaterialSampler ()->GetSampler ()
+        _samplerManager.GetClampToEdgeSampler ()
     );
 }
 

@@ -175,6 +175,7 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/sound_emitter_global_component.cpp
     app/src/main/cpp/sources/pbr/sound_emitter_spatial_component.cpp
     app/src/main/cpp/sources/pbr/src_property_checker.cpp
+    app/src/main/cpp/sources/pbr/srgb_program.cpp
     app/src/main/cpp/sources/pbr/static_mesh_component.cpp
     app/src/main/cpp/sources/pbr/stipple_material.cpp
     app/src/main/cpp/sources/pbr/stipple_program.cpp

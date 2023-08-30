@@ -12,6 +12,7 @@ namespace pbr {
 class ToneMapperPass final
 {
     private:
+        float                                       _brightnessBalance = 0.0F;
         VkDescriptorSet                             _descriptorSets[ 2U ] = { VK_NULL_HANDLE, VK_NULL_HANDLE };
         ToneMapperProgram                           _program {};
         ToneMapperDescriptorSetLayout               _resourceLayout {};
@@ -42,12 +43,18 @@ class ToneMapperPass final
 
         void Execute ( VkCommandBuffer commandBuffer ) noexcept;
 
+        [[maybe_unused, nodiscard]] bool SetBrightness ( android_vulkan::Renderer &renderer,
+            VkRenderPass renderPass,
+            uint32_t subpass,
+            float brightnessBalance
+        ) noexcept;
+
         [[nodiscard]] bool SetTarget ( android_vulkan::Renderer &renderer,
             VkRenderPass renderPass,
             uint32_t subpass,
             VkImageView hdrView,
             VkBuffer exposure,
-            VkSampler linearSampler
+            VkSampler clampToEdgeSampler
         ) noexcept;
 
         void UploadGPUData ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept;

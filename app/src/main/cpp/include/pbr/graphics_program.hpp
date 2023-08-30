@@ -23,6 +23,7 @@ class GraphicsProgram
     public:
         using SetItem = std::vector<VkDescriptorPoolSize>;
         using DescriptorSetInfo = std::vector<SetItem>;
+        using SpecializationData = void const*;
 
     protected:
         VkShaderModule                              _fragmentShader = VK_NULL_HANDLE;
@@ -46,6 +47,7 @@ class GraphicsProgram
         [[nodiscard]] virtual bool Init ( android_vulkan::Renderer &renderer,
             VkRenderPass renderPass,
             uint32_t subpass,
+            SpecializationData specializationData,
             VkExtent2D const &viewport
         ) noexcept = 0;
 
@@ -56,7 +58,7 @@ class GraphicsProgram
         void Bind ( VkCommandBuffer commandBuffer ) const noexcept;
 
     protected:
-        explicit GraphicsProgram ( std::string_view &&name ) noexcept;
+        explicit GraphicsProgram ( std::string_view name ) noexcept;
         virtual ~GraphicsProgram () = default;
 
         [[nodiscard]] virtual VkPipelineColorBlendStateCreateInfo const* InitColorBlendInfo (
@@ -84,6 +86,8 @@ class GraphicsProgram
 
         [[nodiscard]] virtual bool InitShaderInfo ( android_vulkan::Renderer &renderer,
             VkPipelineShaderStageCreateInfo const* &targetInfo,
+            SpecializationData specializationData,
+            VkSpecializationInfo* specializationInfo,
             VkPipelineShaderStageCreateInfo* sourceInfo
         ) noexcept = 0;
 

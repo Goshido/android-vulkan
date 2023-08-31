@@ -168,6 +168,7 @@ class UIPass final
 
         [[nodiscard]] bool OnSwapchainCreated ( android_vulkan::Renderer &renderer,
             VkRenderPass renderPass,
+            uint32_t subpass,
             VkImageView scene
         ) noexcept;
 
@@ -176,7 +177,7 @@ class UIPass final
         void RequestEmptyUI () noexcept;
         [[nodiscard]] UIBufferResponse RequestUIBuffer ( size_t neededVertices ) noexcept;
 
-        [[maybe_unused, nodiscard]] bool SetBrightness ( android_vulkan::Renderer &renderer,
+        [[nodiscard]] bool SetBrightness ( android_vulkan::Renderer &renderer,
             VkRenderPass renderPass,
             uint32_t subpass,
             float brightnessBalance

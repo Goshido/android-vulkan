@@ -43,7 +43,7 @@ class ToneMapperPass final
 
         void Execute ( VkCommandBuffer commandBuffer ) noexcept;
 
-        [[maybe_unused, nodiscard]] bool SetBrightness ( android_vulkan::Renderer &renderer,
+        [[nodiscard]] bool SetBrightness ( android_vulkan::Renderer &renderer,
             VkRenderPass renderPass,
             uint32_t subpass,
             float brightnessBalance

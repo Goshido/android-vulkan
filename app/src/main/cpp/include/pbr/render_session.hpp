@@ -39,6 +39,9 @@ class RenderSession final
         };
 
     private:
+        float                                   _brightnessBalance = 0.0F;
+        bool                                    _brightnessChanged = false;
+
         std::vector<CommandInfo>                _commandInfo {};
 
         GXMat4                                  _cvvToView {};
@@ -95,6 +98,10 @@ class RenderSession final
         ) noexcept;
 
         void OnSwapchainDestroyed ( VkDevice device ) noexcept;
+
+        // Brightness balance should be in range [-1.0F, 1.0F].
+        [[maybe_unused]] void SetBrightness ( float brightnessBalance ) noexcept;
+
         void SubmitLight ( LightRef &light ) noexcept;
 
         void SubmitMesh ( MeshRef &mesh,
@@ -140,6 +147,8 @@ class RenderSession final
         void SubmitPointLight ( LightRef &light ) noexcept;
         void SubmitReflectionGlobal ( LightRef &light ) noexcept;
         void SubmitReflectionLocal ( LightRef &light ) noexcept;
+
+        [[nodiscard]] bool UpdateBrightness ( android_vulkan::Renderer &renderer ) noexcept;
 
         [[nodiscard]] static bool AllocateCommandInfo ( CommandInfo &info,
             VkDevice device,

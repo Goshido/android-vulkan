@@ -48,6 +48,11 @@ class PresentRenderPass final
             VkFence fence
         ) noexcept;
 
+        [[nodiscard]] constexpr static uint32_t GetSubpass () noexcept
+        {
+            return 0U;
+        }
+
     private:
         [[nodiscard]] bool CreateFramebuffers ( android_vulkan::Renderer &renderer,
             VkDevice device,

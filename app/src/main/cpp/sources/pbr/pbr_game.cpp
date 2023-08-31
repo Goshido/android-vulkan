@@ -44,7 +44,6 @@ bool PBRGame::IsReady () noexcept
 bool PBRGame::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) noexcept
 {
     AV_TRACE ( "OnFrame" )
-
     auto const dt = static_cast<float> ( deltaTime );
 
     _camera.Update ( dt );

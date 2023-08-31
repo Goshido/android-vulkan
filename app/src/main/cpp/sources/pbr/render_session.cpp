@@ -83,7 +83,10 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
         "Can't begin main render pass"
     );
 
-    if ( !result || !_uiPass.UploadGPUData ( renderer, commandBuffer, swapchainImageIndex ) )
+    if ( !result || ( _brightnessChanged && !UpdateBrightness ( renderer ) ) )
+        return false;
+
+    if ( !_uiPass.UploadGPUData ( renderer, commandBuffer, swapchainImageIndex ) )
         return false;
 
     _toneMapperPass.UploadGPUData ( renderer, commandBuffer );
@@ -258,10 +261,11 @@ bool RenderSession::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
     if ( !_presentRenderPass.OnSwapchainCreated ( renderer ) )
         return false;
 
+    constexpr uint32_t subpass = PresentRenderPass::GetSubpass ();
     VkImageView hdrView = _gBuffer.GetHDRAccumulator ().GetImageView ();
     VkRenderPass renderPass = _presentRenderPass.GetRenderPass ();
 
-    if ( !_uiPass.OnSwapchainCreated ( renderer, renderPass, hdrView ) )
+    if ( !_uiPass.OnSwapchainCreated ( renderer, renderPass, subpass, hdrView ) )
         return false;
 
     if ( !hasChanges )
@@ -269,7 +273,7 @@ bool RenderSession::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
 
     return _toneMapperPass.SetTarget ( renderer,
         renderPass,
-        0U,
+        subpass,
         hdrView,
         _exposurePass.GetExposure (),
         _samplerManager.GetClampToEdgeSampler ()
@@ -280,6 +284,12 @@ void RenderSession::OnSwapchainDestroyed ( VkDevice device ) noexcept
 {
     _presentRenderPass.OnSwapchainDestroyed ( device );
     _uiPass.OnSwapchainDestroyed ();
+}
+
+[[maybe_unused]] void RenderSession::SetBrightness ( float brightnessBalance ) noexcept
+{
+    _brightnessChanged = true;
+    _brightnessBalance = brightnessBalance;
 }
 
 void RenderSession::SubmitLight ( LightRef &light ) noexcept
@@ -764,6 +774,29 @@ void RenderSession::SubmitReflectionLocal ( LightRef &light ) noexcept
         return;
 
     _lightPass.SubmitReflectionLocal ( probe.GetPrefilter (), probe.GetLocation (), probe.GetSize () );
+}
+
+bool RenderSession::UpdateBrightness ( android_vulkan::Renderer &renderer ) noexcept
+{
+    bool result = android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( renderer.GetQueue () ),
+        "pbr::RenderSession::UpdateBrightness",
+        "Can't wait queue idle"
+    );
+
+    if ( !result )
+        return false;
+
+    VkRenderPass renderPass = _presentRenderPass.GetRenderPass ();
+    constexpr uint32_t subpass = PresentRenderPass::GetSubpass ();
+
+    result = _toneMapperPass.SetBrightness ( renderer, renderPass, subpass, _brightnessBalance ) &&
+        _uiPass.SetBrightness ( renderer, renderPass, subpass, _brightnessBalance );
+
+    if ( !result )
+        return false;
+
+    _brightnessChanged = false;
+    return true;
 }
 
 bool RenderSession::AllocateCommandInfo ( CommandInfo &info, VkDevice device, uint32_t queueIndex ) noexcept

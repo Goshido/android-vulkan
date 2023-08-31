@@ -886,6 +886,7 @@ void UIPass::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
 
 bool UIPass::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
     VkRenderPass renderPass,
+    uint32_t subpass,
     VkImageView scene
 ) noexcept
 {
@@ -902,7 +903,7 @@ bool UIPass::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
     SRGBProgram::SpecializationInfo const specData = SRGBProgram::GetGammaInfo ( _brightnessBalance );
 
     bool const result = _fontStorage.SetMediaResolution ( renderer, resolution ) &&
-        _program.Init ( renderer, renderPass, 0U, &specData, resolution );
+        _program.Init ( renderer, renderPass, subpass, &specData, resolution );
 
     if ( !result )
         return false;
@@ -955,7 +956,7 @@ UIPass::UIBufferResponse UIPass::RequestUIBuffer ( size_t neededVertices ) noexc
     return result;
 }
 
-[[maybe_unused]] bool UIPass::SetBrightness ( android_vulkan::Renderer &renderer,
+bool UIPass::SetBrightness ( android_vulkan::Renderer &renderer,
     VkRenderPass renderPass,
     uint32_t subpass,
     float brightnessBalance

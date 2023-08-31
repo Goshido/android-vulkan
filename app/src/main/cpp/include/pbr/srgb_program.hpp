@@ -24,7 +24,7 @@ class SRGBProgram : public GraphicsProgram
         SRGBProgram ( SRGBProgram && ) = delete;
         SRGBProgram &operator = ( SRGBProgram && ) = delete;
 
-        // Brightness should be from in range [-1.0F, 1.0F].
+        // Brightness balance should be in range [-1.0F, 1.0F].
         [[nodiscard]] static SpecializationInfo GetGammaInfo ( float brightnessBalance ) noexcept;
 
     protected:

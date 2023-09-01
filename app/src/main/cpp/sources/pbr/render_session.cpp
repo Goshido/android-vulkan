@@ -286,7 +286,7 @@ void RenderSession::OnSwapchainDestroyed ( VkDevice device ) noexcept
     _uiPass.OnSwapchainDestroyed ();
 }
 
-[[maybe_unused]] void RenderSession::SetBrightness ( float brightnessBalance ) noexcept
+void RenderSession::SetBrightness ( float brightnessBalance ) noexcept
 {
     _brightnessChanged = true;
     _brightnessBalance = brightnessBalance;

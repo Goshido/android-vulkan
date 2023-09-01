@@ -21,6 +21,7 @@
 - [`OverlapTestBoxBox ( localMatrixA, sizeA, localMatrixB, sizeB )`](#method-overlap-test-box-box)
 - [`Quit ()`](#method-quit)
 - [`SetActiveCamera ( camera )`](#method-set-active-camera)
+- [`SetBrightness ( brightnessBalance )`](#method-set-brightness)
 - [`SetSoundChannelVolume ( soundChannel, volume )`](#method-set-sound-channel-volume)
 - [`SetSoundListenerTransform ( localMatrix )`](#method-set-sound-listener-transform)
 - [`SetSoundMasterVolume ( volume )`](#method-set-sound-master-volume)
@@ -439,7 +440,7 @@ Method sets active camera of [_CameraComponent_](./camera-component.md) type.
 
 **Parameters:**
 
-- `camera` [_required, readonly,  [_CameraComponent_](./camera-component.md)_]: future active camera
+- `camera` [_required, readonly, [_CameraComponent_](./camera-component.md)_]: future active camera
 
 **Return values:**
 
@@ -476,6 +477,29 @@ local height = 1080.0
 cameraComponent:SetProjection ( math.rad ( 60.0 ), width / height, 1.0e-1, 1.0e+4 )
 
 g_scene:SetActiveCamera ( cameraComponent )
+```
+
+[↬ table of content ⇧](#table-of-content)
+
+## <a id="method-set-brightness">`SetBrightness ( brightnessBalance )`</a>
+
+Method sets relative brightness of the final image.
+
+**Parameters:**
+
+- `brightnessBalance` [_required, readonly, number_]: should be in range from `-1.0` to `1.0`. `-1.0` means dark image, `1.0` means bright image
+
+**Return values:**
+
+- none
+
+**Example:**
+
+```lua
+require "av://engine/scene.lua"
+
+
+g_scene:SetBrightness ( 0.777 )
 ```
 
 [↬ table of content ⇧](#table-of-content)

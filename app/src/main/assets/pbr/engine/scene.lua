@@ -261,6 +261,15 @@ local function SetActiveCamera ( self, camera )
     av_SceneSetActiveCamera ( self._handle, camera._handle )
 end
 
+local function SetBrightness ( self, brightnessBalance )
+    assert ( type ( self ) == "table" and self._type == eObjectType.Scene,
+        [[Scene:SetBrightness - Calling not via ":" syntax.]]
+    )
+
+    assert ( type ( brightnessBalance ) == "number", [[Scene:SetBrightness - "brightnessBalance" is not a number.]] )
+    av_SceneSetBrightness ( self._handle, brightnessBalance )
+end
+
 local function SetSoundChannelVolume ( self, soundChannel, volume )
     assert ( type ( self ) == "table" and self._type == eObjectType.Scene,
         [[Scene:SetSoundChannelVolume - Calling not via ":" syntax.]]
@@ -350,6 +359,7 @@ local function Constructor ( self, handle )
     obj.OverlapTestBoxBox = OverlapTestBoxBox
     obj.Quit = Quit
     obj.SetActiveCamera = SetActiveCamera
+    obj.SetBrightness = SetBrightness
     obj.SetSoundChannelVolume = SetSoundChannelVolume
     obj.SetSoundListenerTransform = SetSoundListenerTransform
     obj.SetSoundMasterVolume = SetSoundMasterVolume

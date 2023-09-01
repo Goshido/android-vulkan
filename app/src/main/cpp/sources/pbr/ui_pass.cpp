@@ -963,7 +963,7 @@ bool UIPass::SetBrightness ( android_vulkan::Renderer &renderer,
 ) noexcept
 {
     _program.Destroy ( renderer.GetDevice () );
-    SRGBProgram::SpecializationInfo const specData = SRGBProgram::GetGammaInfo ( _brightnessBalance );
+    SRGBProgram::SpecializationInfo const specData = SRGBProgram::GetGammaInfo ( brightnessBalance );
 
     if ( !_program.Init ( renderer, renderPass, subpass, &specData, _currentResolution ) )
         return false;

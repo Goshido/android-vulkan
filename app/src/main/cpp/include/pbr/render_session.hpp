@@ -100,7 +100,7 @@ class RenderSession final
         void OnSwapchainDestroyed ( VkDevice device ) noexcept;
 
         // Brightness balance should be in range [-1.0F, 1.0F].
-        [[maybe_unused]] void SetBrightness ( float brightnessBalance ) noexcept;
+        void SetBrightness ( float brightnessBalance ) noexcept;
 
         void SubmitLight ( LightRef &light ) noexcept;
 

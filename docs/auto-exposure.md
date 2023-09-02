@@ -1,4 +1,4 @@
-# Auto exposure
+# Auto-exposure
 
 ## <a id="table-of-content">Table of content</a>
 

@@ -71,6 +71,11 @@ class ExposurePass final
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, VkCommandPool commandPool ) noexcept;
         void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
 
+        void SetMaximumBrightness ( float exposureValue ) noexcept;
+        void SetMinimumBrightness ( float exposureValue ) noexcept;
+        void SetExposureCompensation ( float exposureValue ) noexcept;
+        void SetEyeAdaptationSpeed ( float speed ) noexcept;
+
         [[nodiscard]] bool SetTarget ( android_vulkan::Renderer &renderer,
             android_vulkan::Texture2D const &hdrImage
         ) noexcept;

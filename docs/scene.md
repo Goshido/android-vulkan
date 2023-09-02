@@ -22,6 +22,10 @@
 - [`Quit ()`](#method-quit)
 - [`SetActiveCamera ( camera )`](#method-set-active-camera)
 - [`SetBrightness ( brightnessBalance )`](#method-set-brightness)
+- [`SetExposureCompensation ( exposureValue )`](#method-set-exposure-compensation)
+- [`SetExposureMaximumBrightness ( exposureValue )`](#method-set-exposure-maximum-brightness)
+- [`SetExposureMinimumBrightness ( exposureValue )`](#method-set-exposure-minimum-brightness)
+- [`SetEyeAdaptationSpeed ( speed )`](#method-set-eye-adaptation-speed)
 - [`SetSoundChannelVolume ( soundChannel, volume )`](#method-set-sound-channel-volume)
 - [`SetSoundListenerTransform ( localMatrix )`](#method-set-sound-listener-transform)
 - [`SetSoundMasterVolume ( volume )`](#method-set-sound-master-volume)
@@ -500,6 +504,102 @@ require "av://engine/scene.lua"
 
 
 g_scene:SetBrightness ( 0.777 )
+```
+
+[↬ table of content ⇧](#table-of-content)
+
+## <a id="method-set-exposure-compensation">`SetExposureCompensation ( exposureValue )`</a>
+
+Method sets exposure compensation value for auto-exposure metering. For more details about internal implementation please refer to [_auto-exposure_](./auto-exposure.md) documentation page.
+
+**Parameters:**
+
+- `exposureValue` [_required, readonly, number_]: compensation value in [_EV_](./auto-exposure.md) units. Range from `-∞` to `∞`. `-10.0` is default value
+
+**Return values:**
+
+- none
+
+**Example:**
+
+```lua
+require "av://engine/scene.lua"
+
+
+g_scene:SetExposureCompensation ( -7.77 )
+```
+
+[↬ table of content ⇧](#table-of-content)
+
+## <a id="method-set-exposure-maximum-brightness">`SetExposureMaximumBrightness ( exposureValue )`</a>
+
+Method sets maximum brightness value for auto-exposure metering. For more details about internal implementation please refer to [_auto-exposure_](./auto-exposure.md) documentation page.
+
+**Parameters:**
+
+- `exposureValue` [_required, readonly, number_]: maximum brightness in [_EV_](./auto-exposure.md) units. Range from `-∞` to `∞`. `15.0` is default value
+
+**Return values:**
+
+- none
+
+**Example:**
+
+```lua
+require "av://engine/scene.lua"
+
+
+g_scene:SetExposureMaximumBrightness ( 10.0 )
+```
+
+[↬ table of content ⇧](#table-of-content)
+
+## <a id="method-set-exposure-minimum-brightness">`SetExposureMinimumBrightness ( exposureValue )`</a>
+
+Method sets minimum brightness value for auto-exposure metering. For more details about internal implementation please refer to [_auto-exposure_](./auto-exposure.md) documentation page.
+
+**Practical example:** Minimum brightness affects auto-exposure. For scene with small average brightness the effect will be the following:
+
+<img src="./images/min-brightness-influence.png"/>
+
+**Parameters:**
+
+- `exposureValue` [_required, readonly, number_]: minimum brightness in [_EV_](./auto-exposure.md) units. Range from `-∞` to `∞`. `-1.28` is default value
+
+**Return values:**
+
+- none
+
+**Example:**
+
+```lua
+require "av://engine/scene.lua"
+
+
+g_scene:SetExposureMinimumBrightness ( 1.0 )
+```
+
+[↬ table of content ⇧](#table-of-content)
+
+## <a id="method-set-eye-adaptation-speed">`SetEyeAdaptationSpeed ( speed )`</a>
+
+Method sets eye adaptation speed. For more details about internal implementation please refer to [_auto-exposure_](./auto-exposure.md) documentation page.
+
+**Parameters:**
+
+- `speed` [_required, readonly, number_]: range from `-∞` to `∞`. `1.0` is default value
+
+**Return values:**
+
+- none
+
+**Example:**
+
+```lua
+require "av://engine/scene.lua"
+
+
+g_scene:SetEyeAdaptationSpeed ( 3.33 )
 ```
 
 [↬ table of content ⇧](#table-of-content)

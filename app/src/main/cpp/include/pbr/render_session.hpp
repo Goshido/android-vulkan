@@ -33,45 +33,45 @@ class RenderSession final
 
         struct CommandInfo final
         {
-            VkCommandBuffer                     _buffer = VK_NULL_HANDLE;
-            VkFence                             _fence = VK_NULL_HANDLE;
-            VkCommandPool                       _pool = VK_NULL_HANDLE;
+            VkCommandBuffer         _buffer = VK_NULL_HANDLE;
+            VkFence                 _fence = VK_NULL_HANDLE;
+            VkCommandPool           _pool = VK_NULL_HANDLE;
         };
 
     private:
-        float                                   _brightnessBalance = 0.0F;
-        bool                                    _brightnessChanged = false;
+        float                       _brightnessBalance = 0.0F;
+        bool                        _brightnessChanged = false;
 
-        std::vector<CommandInfo>                _commandInfo {};
+        std::vector<CommandInfo>    _commandInfo {};
 
-        GXMat4                                  _cvvToView {};
-        GXMat4                                  _view {};
-        GXMat4                                  _viewProjection {};
-        GXMat4                                  _viewerLocal {};
+        GXMat4                      _cvvToView {};
+        GXMat4                      _view {};
+        GXMat4                      _viewProjection {};
+        GXMat4                      _viewerLocal {};
 
-        DefaultTextureManager                   _defaultTextureManager {};
-        ExposurePass                            _exposurePass {};
-        VkFramebuffer                           _framebuffer = VK_NULL_HANDLE;
-        GXProjectionClipPlanes                  _frustum {};
+        DefaultTextureManager       _defaultTextureManager {};
+        ExposurePass                _exposurePass {};
+        VkFramebuffer               _framebuffer = VK_NULL_HANDLE;
+        GXProjectionClipPlanes      _frustum {};
 
-        GBuffer                                 _gBuffer {};
-        GeometryPass                            _geometryPass {};
+        GBuffer                     _gBuffer {};
+        GeometryPass                _geometryPass {};
 
-        LightHandler                            _lightHandlers[ 3U ] {};
-        LightPass                               _lightPass {};
+        LightHandler                _lightHandlers[ 3U ] {};
+        LightPass                   _lightPass {};
 
-        MeshHandler                             _meshHandlers[ 2U ] {};
-        size_t                                  _opaqueMeshCount = 0U;
+        MeshHandler                 _meshHandlers[ 2U ] {};
+        size_t                      _opaqueMeshCount = 0U;
 
-        PresentRenderPass                       _presentRenderPass {};
+        PresentRenderPass           _presentRenderPass {};
 
-        VkRenderPass                            _renderPass = VK_NULL_HANDLE;
-        VkRenderPassBeginInfo                   _renderPassInfo {};
-        RenderSessionStats                      _renderSessionStats {};
-        SamplerManager                          _samplerManager {};
-        ToneMapperPass                          _toneMapperPass {};
+        VkRenderPass                _renderPass = VK_NULL_HANDLE;
+        VkRenderPassBeginInfo       _renderPassInfo {};
+        RenderSessionStats          _renderSessionStats {};
+        SamplerManager              _samplerManager {};
+        ToneMapperPass              _toneMapperPass {};
 
-        UIPass                                  _uiPass;
+        UIPass                      _uiPass {};
 
     public:
         RenderSession () = default;
@@ -102,6 +102,13 @@ class RenderSession final
         // Brightness balance should be in range [-1.0F, 1.0F].
         void SetBrightness ( float brightnessBalance ) noexcept;
 
+        // More about exposure value:
+        // See <repo>/docs/auto-exposure.md
+        void SetExposureCompensation ( float exposureValue ) noexcept;
+        void SetExposureMaximumBrightness ( float exposureValue ) noexcept;
+        void SetExposureMinimumBrightness ( float exposureValue ) noexcept;
+
+        void SetEyeAdaptationSpeed ( float speed ) noexcept;
         void SubmitLight ( LightRef &light ) noexcept;
 
         void SubmitMesh ( MeshRef &mesh,

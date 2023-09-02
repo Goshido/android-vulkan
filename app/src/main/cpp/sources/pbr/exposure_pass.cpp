@@ -11,7 +11,7 @@ namespace {
 constexpr float DEFAULT_EYE_ADAPTATION_SPEED = 1.0F;
 
 constexpr float DEFAULT_EXPOSURE_COMPENSATION_EV = -10.0F;
-constexpr float DEFAULT_MIN_LUMA_EV = 0.52F;
+constexpr float DEFAULT_MIN_LUMA_EV = -1.28F;
 constexpr float DEFAULT_MAX_LUMA_EV = 15.0F;
 
 } // end of anonymous
@@ -136,6 +136,26 @@ void ExposurePass::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 
     _layout.Destroy ( device );
     FreeTransferBuffer ( renderer, device );
+}
+
+void ExposurePass::SetMaximumBrightness ( float exposureValue ) noexcept
+{
+    _exposureInfo._maxLuma = ExposureValueToLuma ( exposureValue );
+}
+
+void ExposurePass::SetMinimumBrightness ( float exposureValue ) noexcept
+{
+    _exposureInfo._minLuma = ExposureValueToLuma ( exposureValue );
+}
+
+void ExposurePass::SetExposureCompensation ( float exposureValue ) noexcept
+{
+    _exposureInfo._exposureCompensation = ExposureValueToLuma ( exposureValue );
+}
+
+void ExposurePass::SetEyeAdaptationSpeed ( float speed ) noexcept
+{
+    _eyeAdaptationSpeed = speed;
 }
 
 bool ExposurePass::SetTarget ( android_vulkan::Renderer &renderer, android_vulkan::Texture2D const &hdrImage ) noexcept

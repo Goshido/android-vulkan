@@ -292,6 +292,26 @@ void RenderSession::SetBrightness ( float brightnessBalance ) noexcept
     _brightnessBalance = brightnessBalance;
 }
 
+void RenderSession::SetExposureCompensation ( float exposureValue ) noexcept
+{
+    _exposurePass.SetExposureCompensation ( exposureValue );
+}
+
+void RenderSession::SetExposureMaximumBrightness ( float exposureValues ) noexcept
+{
+    _exposurePass.SetMaximumBrightness ( exposureValues );
+}
+
+void RenderSession::SetExposureMinimumBrightness ( float exposureValues ) noexcept
+{
+    _exposurePass.SetMinimumBrightness ( exposureValues );
+}
+
+void RenderSession::SetEyeAdaptationSpeed ( float speed ) noexcept
+{
+    _exposurePass.SetEyeAdaptationSpeed ( speed );
+}
+
 void RenderSession::SubmitLight ( LightRef &light ) noexcept
 {
     auto const idx = static_cast<size_t> ( light->GetType () );

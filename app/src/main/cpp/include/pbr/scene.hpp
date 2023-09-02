@@ -137,6 +137,10 @@ class Scene final
         [[nodiscard]] static int OnQuit ( lua_State* state );
         [[nodiscard]] static int OnSetActiveCamera ( lua_State* state );
         [[nodiscard]] static int OnSetBrightness ( lua_State* state );
+        [[nodiscard]] static int OnSetExposureCompensation ( lua_State* state );
+        [[nodiscard]] static int OnSetExposureMaximumBrightness ( lua_State* state );
+        [[nodiscard]] static int OnSetExposureMinimumBrightness ( lua_State* state );
+        [[nodiscard]] static int OnSetEyeAdaptationSpeed ( lua_State* state );
         [[nodiscard]] static int OnSetSoundChannelVolume ( lua_State* state );
         [[nodiscard]] static int OnSetSoundListenerTransform ( lua_State* state );
         [[nodiscard]] static int OnSetSoundMasterVolume ( lua_State* state );

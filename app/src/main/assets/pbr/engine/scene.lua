@@ -270,6 +270,48 @@ local function SetBrightness ( self, brightnessBalance )
     av_SceneSetBrightness ( self._handle, brightnessBalance )
 end
 
+local function SetExposureCompensation ( self, exposureValue )
+    assert ( type ( self ) == "table" and self._type == eObjectType.Scene,
+        [[Scene:SetExposureCompensation - Calling not via ":" syntax.]]
+    )
+
+    assert ( type ( exposureValue ) == "number", [[Scene:SetExposureCompensation - "exposureValue" is not a number.]] )
+    av_SceneSetExposureCompensation ( self._handle, exposureValue )
+end
+
+local function SetExposureMaximumBrightness ( self, exposureValue )
+    assert ( type ( self ) == "table" and self._type == eObjectType.Scene,
+        [[Scene:SetExposureMaximumBrightness - Calling not via ":" syntax.]]
+    )
+
+    assert ( type ( exposureValue ) == "number",
+        [[Scene:SetExposureMaximumBrightness - "exposureValue" is not a number.]]
+    )
+
+    av_SceneSetExposureMaximumBrightness ( self._handle, exposureValue )
+end
+
+local function SetExposureMinimumBrightness ( self, exposureValue )
+    assert ( type ( self ) == "table" and self._type == eObjectType.Scene,
+        [[Scene:SetExposureMinimumBrightness - Calling not via ":" syntax.]]
+    )
+
+    assert ( type ( exposureValue ) == "number",
+        [[Scene:SetExposureMinimumBrightness - "exposureValue" is not a number.]]
+    )
+
+    av_SceneSetExposureMinimumBrightness ( self._handle, exposureValue )
+end
+
+local function SetEyeAdaptationSpeed ( self, speed )
+    assert ( type ( self ) == "table" and self._type == eObjectType.Scene,
+        [[Scene:SetEyeAdaptationSpeed - Calling not via ":" syntax.]]
+    )
+
+    assert ( type ( speed ) == "number", [[Scene:SetEyeAdaptationSpeed - "speed" is not a number.]] )
+    av_SceneSetEyeAdaptationSpeed ( self._handle, speed )
+end
+
 local function SetSoundChannelVolume ( self, soundChannel, volume )
     assert ( type ( self ) == "table" and self._type == eObjectType.Scene,
         [[Scene:SetSoundChannelVolume - Calling not via ":" syntax.]]
@@ -360,6 +402,10 @@ local function Constructor ( self, handle )
     obj.Quit = Quit
     obj.SetActiveCamera = SetActiveCamera
     obj.SetBrightness = SetBrightness
+    obj.SetExposureCompensation = SetExposureCompensation
+    obj.SetExposureMaximumBrightness = SetExposureMaximumBrightness
+    obj.SetExposureMinimumBrightness = SetExposureMinimumBrightness
+    obj.SetEyeAdaptationSpeed = SetEyeAdaptationSpeed
     obj.SetSoundChannelVolume = SetSoundChannelVolume
     obj.SetSoundListenerTransform = SetSoundListenerTransform
     obj.SetSoundMasterVolume = SetSoundMasterVolume

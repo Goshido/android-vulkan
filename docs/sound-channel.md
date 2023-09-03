@@ -4,7 +4,7 @@
 require "av://engine/sound_channel.lua"
 ```
 
-## Table of content
+## <a id="table-of-content">Table of content</a>
 
 - [_Brief_](#brief)
 
@@ -22,3 +22,5 @@ eSoundChannel = {
     Speech = 3
 }
 ```
+
+[↬ table of content ⇧](#table-of-content)

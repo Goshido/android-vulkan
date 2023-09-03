@@ -4,7 +4,7 @@
 require "av://engine/static_mesh_component.lua"
 ```
 
-## Table of content
+## <a id="table-of-content">Table of content</a>
 
 - [_Brief_](#brief)
 - [_Metamethods_](#metamethods)
@@ -20,6 +20,8 @@ require "av://engine/static_mesh_component.lua"
 ## <a id="brief">Brief</a>
 
 Class represents static mesh component entity on the scene.
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="metamethods">Metamethods</a>
 
@@ -53,6 +55,8 @@ Metamethod | Used
 `__tostring` | ❌
 `__unm` | ❌
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="constructor">`Constructor`</a>
 
 Constructor creates new static mesh component with default properties.
@@ -74,6 +78,8 @@ local mesh = StaticMeshComponent ( "Mesh", "pbr/assets/System/Default.mesh2" )
 rock:AppendComponent ( mesh )
 g_scene:AppendActor ( rock )
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-set-color-0">`SetColor0 ( color )`</a>
 
@@ -104,6 +110,8 @@ color:Init ( 0.45, 0.72, 0.0, 1.0 )
 mesh:SetColor0 ( color )
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-set-color-1">`SetColor1 ( color )`</a>
 
 Method sets material's [_Color1_](./material.md#blend-mask) value.
@@ -132,6 +140,8 @@ local color = GXVec3 ()
 color:Init ( 0.45, 0.72, 0.0 )
 mesh:SetColor1 ( color )
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-set-color-2">`SetColor2 ( color )`</a>
 
@@ -162,6 +172,8 @@ color:Init ( 0.45, 0.72, 0.0 )
 mesh:SetColor2 ( color )
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-set-emission">`SetEmission ( emission )`</a>
 
 Method sets material's [_Emission_](./material.md#emisson) value.
@@ -191,6 +203,8 @@ emission:Init ( 0.45, 0.72, 0.0 )
 mesh:SetEmission ( emission )
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-get-local">`GetLocal ( localMatrix )`</a>
 
 Method returns local transform of the component.
@@ -218,6 +232,8 @@ g_scene:AppendActor ( rock )
 local m = GXMat4 ()
 mesh:GetLocal ( m )
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-set-local">`SetLocal ( localMatrix )`</a>
 
@@ -252,6 +268,8 @@ m:SetW ( v )
 mesh:SetLocal ( m )
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-set-material">`SetMaterial ( material )`</a>
 
 Method sets material to component.
@@ -278,3 +296,5 @@ mesh:SetMaterial ( Material ( "pbr/assets/System/Default.mtl" ) )
 rock:AppendComponent ( mesh )
 g_scene:AppendActor ( rock )
 ```
+
+[↬ table of content ⇧](#table-of-content)

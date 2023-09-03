@@ -4,7 +4,7 @@
 require "av://engine/gx_quat.lua"
 ```
 
-## Table of content
+## <a id="table-of-content">Table of content</a>
 
 - [_Brief_](#brief)
 - [_Metamethods_](#metamethods)
@@ -22,6 +22,8 @@ require "av://engine/gx_quat.lua"
 The class represents [quaternion](https://en.wikipedia.org/wiki/Quaternion): `r` + `a`_i_ + `b`_j_ + `c`_k_. The quaternion layout looks like this:
 
 <img src="./images/gx-quat-layout.png"/>
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="metamethods">Metamethods</a>
 
@@ -55,6 +57,8 @@ Metamethod | Used
 `__tostring` | ✔️
 `__unm` | ❌
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="constructor">`Constructor`</a>
 
 Constructor creates new object with undefined initial values.
@@ -71,6 +75,8 @@ require "av://engine/gx_quat.lua"
 
 local q = GXQuat ()
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-from-axis-angle">`FromAxisAngle ( axis, angle )`</a>
 
@@ -101,6 +107,8 @@ local q = GXQuat ()
 q:FromAxisAngle ( v, math.rad ( 77.7 ) )
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-inverse">`Inverse ( q )`</a>
 
 Method initializes the [quaternion](https://en.wikipedia.org/wiki/Quaternion) as [inverse quaternion](https://en.wikipedia.org/wiki/Quaternion#Unit_quaternion) to `q` [quaternion](https://en.wikipedia.org/wiki/Quaternion). `q` [quaternion](https://en.wikipedia.org/wiki/Quaternion) is not changed during the operation.
@@ -129,6 +137,8 @@ q:FromAxisAngle ( axis, math.rad ( 77.7 ) )
 local i = GXQuat ()
 i:Inverse ( q )
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-inverse-fast">`InverseFast ( unitQuaternion )`</a>
 
@@ -162,6 +172,8 @@ unitQuaternion:FromAxisAngle ( axis, math.rad ( 77.7 ) )
 local i = GXQuat ()
 i:InverseFast ( unitQuaternion )
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-multiply">`Multiply ( a, b )`</a>
 
@@ -200,6 +212,8 @@ local q2 = GXQuat ()
 q2:Multiply ( q1, q0 )
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-normalize">`Normalize ()`</a>
 
 Method normalizes the current [quaternion](https://en.wikipedia.org/wiki/Quaternion).
@@ -236,6 +250,8 @@ local q2 = GXQuat ()
 q2:Multiply ( q1, q0 )
 q2:Normalize ()
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-spherical-linear-interpolation">`SphericalLinearInterpolation ( start, finish, interpolationFactor )`</a>
 
@@ -275,6 +291,8 @@ local q2 = GXQuat ()
 q2:SphericalLinearInterpolation ( q0, q1, 0.777 )
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-transfrom-fast">`TransformFast ( out, v )`</a>
 
 Method applies current [quaternion](https://en.wikipedia.org/wiki/Quaternion) transformation to specified `v` vector of the [_GXVec3_](./gx-vec3.md) type according to [_sandwich rule_](https://en.wikipedia.org/wiki/Quaternions_and_spatial_rotation#Using_quaternions_as_rotations). The result is written to `out` vector of the [_GXVec3_](./gx-vec3.md) type.
@@ -309,3 +327,5 @@ v0:Init ( -1.0, 0.77, -3.0 )
 local v1 = GXVec3 ()
 q:TransformFast ( v1, v0 )
 ```
+
+[↬ table of content ⇧](#table-of-content)

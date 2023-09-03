@@ -4,7 +4,7 @@
 require "av://engine/rigid_body_component.lua"
 ```
 
-## Table of content
+## <a id="table-of-content">Table of content</a>
 
 - [_Brief_](#brief)
 - [_Metamethods_](#metamethods)
@@ -35,6 +35,8 @@ _Z_ | viewer sight direction
 _Unit length_ | 1 [meter](https://en.wikipedia.org/wiki/Metre)
 
 See [`Scene:GetPhysicsToRenderScaleFactor`](./scene.md#method-get-physics-to-renderer-scale-factor) and [`Scene:GetRenderToPhysicsScaleFactor`](./scene.md#method-get-renderer-to-physics-scale-factor)
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="metamethods">Metamethods</a>
 
@@ -68,6 +70,8 @@ Metamethod | Used
 `__tostring` | ❌
 `__unm` | ❌
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="constructor">`Constructor`</a>
 
 Constructor creates new rigid body component with default properties.
@@ -87,6 +91,8 @@ local actor = Actor ( "Box" )
 actor:AppendComponent ( RigidBodyComponent ( "RigidBody" ) )
 g_scene:AppendActor ( actor )
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-add-force">`AddForce ( force, point, forceAwake )`</a>
 
@@ -124,6 +130,8 @@ point:Init ( 0.0, 0.0, 0.0 )
 body:AddForce ( force, point, true )
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-get-location">`GetLocation ( location )`</a>
 
 Method writes the body location in world space to the supplied `location` vector of the [_GXVec3_](./gx-vec3.md) type.
@@ -152,6 +160,8 @@ g_scene:AppendActor ( actor )
 local location = GXVec3 ()
 body:GetLocation ( location )
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-set-location">`SetLocation ( location )`</a>
 
@@ -186,6 +196,8 @@ location:Init ( 777.0, 3.33, 1.0 )
 body:SetLocation ( location )
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-get-name">`GetName ()`</a>
 
 Method returns name of the component.
@@ -212,6 +224,8 @@ g_scene:AppendActor ( actor )
 local rigidBody = actor:FindComponent ( "RigidBody" )
 local name = rigidBody:GetName ()
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-set-shape-box">`SetShapeBox ( size, forceAwake )`</a>
 
@@ -245,6 +259,8 @@ actor:AppendComponent ( body )
 g_scene:AppendActor ( actor )
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-set-shape-sphere">`SetShapeSphere ( radius, forceAwake )`</a>
 
 Method sets sphere shape with supplied `radius` to the rigid body.
@@ -275,6 +291,8 @@ actor:AppendComponent ( body )
 g_scene:AppendActor ( actor )
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-get-transform">`GetTransform ( transform )`</a>
 
 Method returns current rigid body transformation matrix.
@@ -303,6 +321,8 @@ g_scene:AppendActor ( actor )
 local transform = GXMat4 ()
 body:GetTransform ( transform )
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-get-velocity-linear">`GetVelocityLinear ( velocity )`</a>
 
@@ -333,6 +353,8 @@ local velocity = GXVec3 ()
 body:GetVelocityLinear ( velocity )
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-set-velocity-linear">`SetVelocityLinear ( velocity, forceAwake )`</a>
 
 Method sets linear velocity to the body.
@@ -362,3 +384,5 @@ g_scene:AppendActor ( actor )
 local velocity = GXVec3 ()
 body:SetVelocityLinear ( velocity, true )
 ```
+
+[↬ table of content ⇧](#table-of-content)

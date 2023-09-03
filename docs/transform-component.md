@@ -4,7 +4,7 @@
 require "av://engine/transform_component.lua"
 ```
 
-## Table of content
+## <a id="table-of-content">Table of content</a>
 
 - [_Brief_](#brief)
 - [_Metamethods_](#metamethods)
@@ -14,6 +14,8 @@ require "av://engine/transform_component.lua"
 ## <a id="brief">Brief</a>
 
 The class holds transformation in world space. Usually the class is used as building block for game logic.
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="metamethods">Metamethods</a>
 
@@ -47,6 +49,8 @@ Metamethod | Used
 `__tostring` | ❌
 `__unm` | ❌
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="constructor">`Constructor`</a>
 
 Constructor creates new object.
@@ -69,6 +73,8 @@ local transform = TransformComponent ( "Transform" )
 platform:AppendComponent ( transform )
 g_scene:AppendActor ( platform )
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-get-transform">`GetTransform ( transform )`</a>
 
@@ -97,3 +103,5 @@ g_scene:AppendActor ( platform )
 local t = GXMat4 ()
 transform:GetTransform ( t )
 ```
+
+[↬ table of content ⇧](#table-of-content)

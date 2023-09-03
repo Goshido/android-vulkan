@@ -536,7 +536,7 @@ bool SoundMixer::CreateHardwareStreams () noexcept
 
     for ( ; counter < MAX_HARDWARE_STREAM_CAP; ++counter )
     {
-        StreamInfo &si = _streamInfo.emplace_back ( StreamInfo ( *this, _used.end () ) );
+        StreamInfo &si = _streamInfo.emplace_back ( *this, _used.end () );
         AAudioStreamBuilder_setDataCallback ( _builder, &SoundMixer::PCMCallback, &si );
 
         if ( AAudioStreamBuilder_openStream ( _builder, &si._stream ) != AAUDIO_OK )

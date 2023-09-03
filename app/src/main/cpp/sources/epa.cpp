@@ -10,11 +10,15 @@ GX_RESTORE_WARNING_STATE
 
 namespace android_vulkan {
 
-constexpr static size_t const INITIAL_VERTICES = 1024U;
-constexpr static size_t const INITIAL_EDGES = INITIAL_VERTICES * 4U;
-constexpr static size_t const INITIAL_FACES = INITIAL_VERTICES * 4U;
-constexpr static uint16_t const MAXIMUM_STEPS = 16U;
-constexpr static float const TOLERANCE = 1.0e-3F;
+namespace {
+
+constexpr size_t INITIAL_VERTICES = 1024U;
+constexpr size_t INITIAL_EDGES = INITIAL_VERTICES * 4U;
+constexpr size_t INITIAL_FACES = INITIAL_VERTICES * 4U;
+constexpr uint16_t MAXIMUM_STEPS = 16U;
+constexpr float TOLERANCE = 1.0e-3F;
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 

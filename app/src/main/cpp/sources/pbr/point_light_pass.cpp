@@ -5,7 +5,11 @@
 
 namespace pbr {
 
-constexpr static uint32_t SHADOWMAP_RESOLUTION = 512U;
+namespace {
+
+constexpr uint32_t SHADOWMAP_RESOLUTION = 512U;
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -60,7 +64,7 @@ bool PointLightPass::Init ( android_vulkan::Renderer &renderer,
         .height = SHADOWMAP_RESOLUTION
     };
 
-    if ( !_shadowmapProgram.Init ( renderer, _shadowmapRenderPass, 0U, shadowmapResolution ) )
+    if ( !_shadowmapProgram.Init ( renderer, _shadowmapRenderPass, 0U, nullptr, shadowmapResolution ) )
         return false;
 
     bool const result = _shadowmapBufferPool.Init ( renderer,
@@ -130,7 +134,7 @@ void PointLightPass::Reset () noexcept
 
 void PointLightPass::Submit ( LightRef const &light ) noexcept
 {
-    _interacts.emplace_back ( std::make_pair ( light, ShadowCasters () ) );
+    _interacts.emplace_back ( light, ShadowCasters () );
 }
 
 void PointLightPass::UploadGPUData ( VkDevice device,

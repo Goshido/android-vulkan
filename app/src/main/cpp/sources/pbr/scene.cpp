@@ -93,8 +93,12 @@ android_vulkan::Physics &Scene::GetPhysics () noexcept
     return *_physics;
 }
 
-bool Scene::OnInitDevice ( android_vulkan::Renderer &renderer, android_vulkan::Physics &physics ) noexcept
+bool Scene::OnInitDevice ( android_vulkan::Renderer &renderer,
+    RenderSession &renderSession,
+    android_vulkan::Physics &physics
+) noexcept
 {
+    _renderSession = &renderSession;
     UILayer::InitCSSUnitConverter ( renderer.GetDPI (), COMFORTABLE_VIEW_DISTANCE_METERS );
 
     _defaultCamera.SetProjection ( GXDegToRad ( DEFAULT_FOV ), DEFAULT_ASPECT_RATIO, DEFAULT_Z_NEAR, DEFAULT_Z_FAR );
@@ -179,6 +183,26 @@ bool Scene::OnInitDevice ( android_vulkan::Renderer &renderer, android_vulkan::P
         {
             .name = "av_SceneSetActiveCamera",
             .func = &Scene::OnSetActiveCamera
+        },
+        {
+            .name = "av_SceneSetBrightness",
+            .func = &Scene::OnSetBrightness
+        },
+        {
+            .name = "av_SceneSetExposureCompensation",
+            .func = &Scene::OnSetExposureCompensation
+        },
+        {
+            .name = "av_SceneSetExposureMaximumBrightness",
+            .func = &Scene::OnSetExposureMaximumBrightness
+        },
+        {
+            .name = "av_SceneSetExposureMinimumBrightness",
+            .func = &Scene::OnSetExposureMinimumBrightness
+        },
+        {
+            .name = "av_SceneSetEyeAdaptationSpeed",
+            .func = &Scene::OnSetEyeAdaptationSpeed
         },
         {
             .name = "av_SceneSetSoundChannelVolume",
@@ -470,11 +494,11 @@ void Scene::RemoveActor ( Actor const &actor ) noexcept
     _actors.erase ( findResult );
 }
 
-void Scene::Submit ( android_vulkan::Renderer &renderer, RenderSession &renderSession ) noexcept
+void Scene::Submit ( android_vulkan::Renderer &renderer ) noexcept
 {
     AV_TRACE ( "Scene submit" )
-    SubmitComponents ( renderer, renderSession );
-    SubmitUI ( renderer, renderSession );
+    SubmitComponents ( renderer, *_renderSession );
+    SubmitUI ( renderer, *_renderSession );
 }
 
 void Scene::AppendActor ( ActorRef &actor ) noexcept
@@ -770,6 +794,41 @@ int Scene::OnSetActiveCamera ( lua_State* state )
 {
     auto &self = *static_cast<Scene*> ( lua_touserdata ( state, 1 ) );
     self._camera = static_cast<CameraComponent*> ( lua_touserdata ( state, 2 ) );
+    return 0;
+}
+
+int Scene::OnSetBrightness ( lua_State* state )
+{
+    auto &self = *static_cast<Scene*> ( lua_touserdata ( state, 1 ) );
+    self._renderSession->SetBrightness ( static_cast<float> ( lua_tonumber ( state, 2 ) ) );
+    return 0;
+}
+
+int Scene::OnSetExposureCompensation ( lua_State* state )
+{
+    auto &self = *static_cast<Scene*> ( lua_touserdata ( state, 1 ) );
+    self._renderSession->SetExposureCompensation ( static_cast<float> ( lua_tonumber ( state, 2 ) ) );
+    return 0;
+}
+
+int Scene::OnSetExposureMaximumBrightness ( lua_State* state )
+{
+    auto &self = *static_cast<Scene*> ( lua_touserdata ( state, 1 ) );
+    self._renderSession->SetExposureMaximumBrightness ( static_cast<float> ( lua_tonumber ( state, 2 ) ) );
+    return 0;
+}
+
+int Scene::OnSetExposureMinimumBrightness ( lua_State* state )
+{
+    auto &self = *static_cast<Scene*> ( lua_touserdata ( state, 1 ) );
+    self._renderSession->SetExposureMinimumBrightness ( static_cast<float> ( lua_tonumber ( state, 2 ) ) );
+    return 0;
+}
+
+int Scene::OnSetEyeAdaptationSpeed ( lua_State* state )
+{
+    auto &self = *static_cast<Scene*> ( lua_touserdata ( state, 1 ) );
+    self._renderSession->SetEyeAdaptationSpeed ( static_cast<float> ( lua_tonumber ( state, 2 ) ) );
     return 0;
 }
 

@@ -11,7 +11,11 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-constexpr static double TIMEOUT = 3.0;
+namespace {
+
+constexpr double TIMEOUT = 3.0;
+
+} // end of anonymous namespace
 
 RenderSessionStats::RenderSessionStats () noexcept:
     _timeout ( TIMEOUT )

@@ -31,20 +31,24 @@ GX_RESTORE_WARNING_STATE
 
 namespace android_vulkan {
 
-constexpr static const size_t EXPANDER_THREADS = 4U;
-constexpr static const size_t RGB_BYTES_PER_PIXEL = 3U;
-constexpr static const size_t RGBA_BYTES_PER_PIXEL = 4U;
+namespace {
 
-constexpr static VkImageUsageFlags const IMMUTABLE_TEXTURE_USAGE = AV_VK_FLAG ( VK_IMAGE_USAGE_SAMPLED_BIT ) |
+constexpr const size_t EXPANDER_THREADS = 4U;
+constexpr const size_t RGB_BYTES_PER_PIXEL = 3U;
+constexpr const size_t RGBA_BYTES_PER_PIXEL = 4U;
+
+constexpr VkImageUsageFlags IMMUTABLE_TEXTURE_USAGE = AV_VK_FLAG ( VK_IMAGE_USAGE_SAMPLED_BIT ) |
     AV_VK_FLAG ( VK_IMAGE_USAGE_TRANSFER_DST_BIT ) |
     AV_VK_FLAG ( VK_IMAGE_USAGE_TRANSFER_SRC_BIT );
 
-static std::unordered_map<VkFormat, VkFormat> const g_FormatMapper =
+std::unordered_map<VkFormat, VkFormat> const g_FormatMapper =
 {
     { VK_FORMAT_ASTC_6x6_UNORM_BLOCK, VK_FORMAT_ASTC_6x6_UNORM_BLOCK },
     { VK_FORMAT_ASTC_6x6_SRGB_BLOCK, VK_FORMAT_ASTC_6x6_SRGB_BLOCK },
     { VK_FORMAT_R8G8B8A8_UNORM, VK_FORMAT_R8G8B8A8_SRGB }
 };
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -307,6 +311,15 @@ bool Texture2D::UploadData ( Renderer &renderer,
     return UploadDataInternal ( renderer, data, size, isGenerateMipmaps, imageInfo, commandBuffer, fence );
 }
 
+uint8_t Texture2D::CountMipLevels ( VkExtent2D const &resolution ) noexcept
+{
+    // Note Android NDK 25.2.9519653 does not have std::bit_width implementation yet. So it is used the alternative.
+    // See https://en.cppreference.com/w/cpp/numeric/bit_width
+    return static_cast<uint8_t> (
+        std::numeric_limits<uint32_t>::digits - std::countl_zero ( std::max ( resolution.width, resolution.height ) )
+    );
+}
+
 bool Texture2D::CreateCommonResources ( VkImageCreateInfo &imageInfo,
     VkExtent2D const &resolution,
     VkFormat format,
@@ -510,18 +523,18 @@ void Texture2D::FreeResourceInternal ( Renderer &renderer ) noexcept
     _mipLevels = 0U;
     VkDevice device = renderer.GetDevice ();
 
-    if ( _image != VK_NULL_HANDLE )
-    {
-        vkDestroyImage ( device, _image, nullptr );
-        _image = VK_NULL_HANDLE;
-        AV_UNREGISTER_IMAGE ( "Texture2D::_image" )
-    }
-
     if ( _imageView != VK_NULL_HANDLE )
     {
         vkDestroyImageView ( device, _imageView, nullptr );
         _imageView = VK_NULL_HANDLE;
         AV_UNREGISTER_IMAGE_VIEW ( "Texture2D::_imageView" )
+    }
+
+    if ( _image != VK_NULL_HANDLE )
+    {
+        vkDestroyImage ( device, _image, nullptr );
+        _image = VK_NULL_HANDLE;
+        AV_UNREGISTER_IMAGE ( "Texture2D::_image" )
     }
 
     if ( _imageDeviceMemory == VK_NULL_HANDLE )
@@ -1149,15 +1162,6 @@ bool Texture2D::LoadImage ( std::vector<uint8_t> &pixelData,
     channels = static_cast<int> ( RGBA_BYTES_PER_PIXEL );
 
     return true;
-}
-
-uint8_t Texture2D::CountMipLevels ( VkExtent2D const &resolution ) noexcept
-{
-    // Note Android NDK 25.2.9519653 does not have std::bit_width implementation yet. So it is used the alternative.
-    // See https://en.cppreference.com/w/cpp/numeric/bit_width
-    return static_cast<uint8_t> (
-        std::numeric_limits<uint32_t>::digits - std::countl_zero ( std::max ( resolution.width, resolution.height ) )
-    );
 }
 
 VkFormat Texture2D::PickupFormat ( int channels ) noexcept

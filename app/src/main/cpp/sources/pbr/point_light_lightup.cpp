@@ -6,7 +6,11 @@
 
 namespace pbr {
 
-constexpr static size_t BIND_PER_SET = 3U;
+namespace {
+
+constexpr size_t BIND_PER_SET = 3U;
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -50,7 +54,7 @@ bool PointLightLightup::Init ( android_vulkan::Renderer &renderer,
         .unnormalizedCoordinates = VK_FALSE
     };
 
-    return _program.Init ( renderer, renderPass, subpass, resolution ) &&
+    return _program.Init ( renderer, renderPass, subpass, nullptr, resolution ) &&
         _sampler.Init ( renderer.GetDevice (), samplerInfo ) &&
         AllocateDescriptorSets ( renderer );
 }

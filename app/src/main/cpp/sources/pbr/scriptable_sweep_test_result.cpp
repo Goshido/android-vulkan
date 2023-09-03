@@ -5,13 +5,17 @@
 
 namespace pbr {
 
-constexpr static std::string_view FIELD_COUNT = "_count";
-constexpr static std::string_view FIELD_BODIES = "_bodies";
+namespace {
 
-constexpr static char const GLOBAL_FUNCTION[] = "FindRigidBodyComponent";
-constexpr static char const GLOBAL_TABLE[] = "av_scriptableSweepTestResult";
+constexpr std::string_view FIELD_COUNT = "_count";
+constexpr std::string_view FIELD_BODIES = "_bodies";
 
-constexpr static int INITIAL_CAPACITY = 128;
+constexpr char const GLOBAL_FUNCTION[] = "FindRigidBodyComponent";
+constexpr char const GLOBAL_TABLE[] = "av_scriptableSweepTestResult";
+
+constexpr int INITIAL_CAPACITY = 128;
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 

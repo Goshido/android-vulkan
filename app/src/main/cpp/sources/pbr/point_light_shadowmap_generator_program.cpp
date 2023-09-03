@@ -19,7 +19,7 @@ constexpr size_t VERTEX_ATTRIBUTE_COUNT = 1U;
 //----------------------------------------------------------------------------------------------------------------------
 
 PointLightShadowmapGeneratorProgram::PointLightShadowmapGeneratorProgram () noexcept:
-    Program ( "pbr::PointLightShadowmapGeneratorProgram" )
+    GraphicsProgram ( "pbr::PointLightShadowmapGeneratorProgram" )
 {
     // NOTHING
 }
@@ -27,6 +27,7 @@ PointLightShadowmapGeneratorProgram::PointLightShadowmapGeneratorProgram () noex
 bool PointLightShadowmapGeneratorProgram::Init ( android_vulkan::Renderer &renderer,
     VkRenderPass renderPass,
     uint32_t subpass,
+    SpecializationData /*specializationData*/,
     VkExtent2D const &viewport
 ) noexcept
 {
@@ -51,11 +52,8 @@ bool PointLightShadowmapGeneratorProgram::Init ( android_vulkan::Renderer &rende
 
     VkDevice device = renderer.GetDevice ();
 
-    if ( !InitShaderInfo ( renderer, pipelineInfo.pStages, stageInfo ) )
-    {
-        Destroy ( device );
+    if ( !InitShaderInfo ( renderer, pipelineInfo.pStages, nullptr, nullptr, stageInfo ) )
         return false;
-    }
 
     pipelineInfo.pVertexInputState = InitVertexInputInfo ( vertexInputInfo,
         &attributeDescriptions,
@@ -72,10 +70,7 @@ bool PointLightShadowmapGeneratorProgram::Init ( android_vulkan::Renderer &rende
     pipelineInfo.pDynamicState = nullptr;
 
     if ( !InitLayout ( device, pipelineInfo.layout ) )
-    {
-        Destroy ( device );
         return false;
-    }
 
     pipelineInfo.renderPass = renderPass;
     pipelineInfo.subpass = subpass;
@@ -89,10 +84,7 @@ bool PointLightShadowmapGeneratorProgram::Init ( android_vulkan::Renderer &rende
     );
 
     if ( !result )
-    {
-        Destroy ( device );
         return false;
-    }
 
     AV_REGISTER_PIPELINE ( "pbr::PointLightShadowmapGeneratorProgram::_pipeline" )
     DestroyShaderModules ( device );
@@ -120,7 +112,7 @@ void PointLightShadowmapGeneratorProgram::Destroy ( VkDevice device ) noexcept
     DestroyShaderModules ( device );
 }
 
-Program::DescriptorSetInfo const &PointLightShadowmapGeneratorProgram::GetResourceInfo () const noexcept
+GraphicsProgram::DescriptorSetInfo const &PointLightShadowmapGeneratorProgram::GetResourceInfo () const noexcept
 {
     static DescriptorSetInfo const info
     {
@@ -136,7 +128,7 @@ Program::DescriptorSetInfo const &PointLightShadowmapGeneratorProgram::GetResour
 }
 
 void PointLightShadowmapGeneratorProgram::SetDescriptorSet ( VkCommandBuffer commandBuffer,
-    VkDescriptorSet sets
+    VkDescriptorSet set
 ) const noexcept
 {
     vkCmdBindDescriptorSets ( commandBuffer,
@@ -144,7 +136,7 @@ void PointLightShadowmapGeneratorProgram::SetDescriptorSet ( VkCommandBuffer com
         _pipelineLayout,
         0U,
         1U,
-        &sets,
+        &set,
         0U,
         nullptr
     );
@@ -308,6 +300,8 @@ VkPipelineRasterizationStateCreateInfo const* PointLightShadowmapGeneratorProgra
 
 bool PointLightShadowmapGeneratorProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
     VkPipelineShaderStageCreateInfo const* &targetInfo,
+    SpecializationData /*specializationData*/,
+    VkSpecializationInfo* /*specializationInfo*/,
     VkPipelineShaderStageCreateInfo* sourceInfo
 ) noexcept
 {

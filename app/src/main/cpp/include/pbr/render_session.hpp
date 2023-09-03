@@ -3,10 +3,13 @@
 
 
 #include "default_texture_manager.hpp"
+#include "exposure_pass.hpp"
 #include "geometry_pass.hpp"
 #include "light_pass.hpp"
+#include "present_render_pass.hpp"
 #include "reflection_global_pass.hpp"
 #include "shadow_casters.hpp"
+#include "tone_mapper_pass.hpp"
 #include "ui_pass.hpp"
 
 
@@ -30,38 +33,45 @@ class RenderSession final
 
         struct CommandInfo final
         {
-            VkCommandBuffer                     _buffer = VK_NULL_HANDLE;
-            VkFence                             _fence = VK_NULL_HANDLE;
-            VkCommandPool                       _pool = VK_NULL_HANDLE;
+            VkCommandBuffer         _buffer = VK_NULL_HANDLE;
+            VkFence                 _fence = VK_NULL_HANDLE;
+            VkCommandPool           _pool = VK_NULL_HANDLE;
         };
 
     private:
-        std::vector<CommandInfo>                _commandInfo {};
+        float                       _brightnessBalance = 0.0F;
+        bool                        _brightnessChanged = false;
 
-        GXMat4                                  _cvvToView {};
-        GXMat4                                  _view {};
-        GXMat4                                  _viewProjection {};
-        GXMat4                                  _viewerLocal {};
+        std::vector<CommandInfo>    _commandInfo {};
 
-        DefaultTextureManager                   _defaultTextureManager {};
-        VkFramebuffer                           _framebuffer = VK_NULL_HANDLE;
-        GXProjectionClipPlanes                  _frustum {};
+        GXMat4                      _cvvToView {};
+        GXMat4                      _view {};
+        GXMat4                      _viewProjection {};
+        GXMat4                      _viewerLocal {};
 
-        GBuffer                                 _gBuffer {};
-        GeometryPass                            _geometryPass {};
+        DefaultTextureManager       _defaultTextureManager {};
+        ExposurePass                _exposurePass {};
+        VkFramebuffer               _framebuffer = VK_NULL_HANDLE;
+        GXProjectionClipPlanes      _frustum {};
 
-        LightHandler                            _lightHandlers[ 3U ] {};
-        LightPass                               _lightPass {};
+        GBuffer                     _gBuffer {};
+        GeometryPass                _geometryPass {};
 
-        MeshHandler                             _meshHandlers[ 2U ] {};
-        size_t                                  _opaqueMeshCount = 0U;
+        LightHandler                _lightHandlers[ 3U ] {};
+        LightPass                   _lightPass {};
 
-        VkRenderPass                            _renderPass = VK_NULL_HANDLE;
-        VkRenderPassBeginInfo                   _renderPassInfo {};
-        RenderSessionStats                      _renderSessionStats {};
-        SamplerManager                          _samplerManager {};
+        MeshHandler                 _meshHandlers[ 2U ] {};
+        size_t                      _opaqueMeshCount = 0U;
 
-        UIPass                                  _uiPass;
+        PresentRenderPass           _presentRenderPass {};
+
+        VkRenderPass                _renderPass = VK_NULL_HANDLE;
+        VkRenderPassBeginInfo       _renderPassInfo {};
+        RenderSessionStats          _renderSessionStats {};
+        SamplerManager              _samplerManager {};
+        ToneMapperPass              _toneMapperPass {};
+
+        UIPass                      _uiPass {};
 
     public:
         RenderSession () = default;
@@ -88,6 +98,17 @@ class RenderSession final
         ) noexcept;
 
         void OnSwapchainDestroyed ( VkDevice device ) noexcept;
+
+        // Brightness balance should be in range [-1.0F, 1.0F].
+        void SetBrightness ( float brightnessBalance ) noexcept;
+
+        // More about exposure value:
+        // See <repo>/docs/auto-exposure.md
+        void SetExposureCompensation ( float exposureValue ) noexcept;
+        void SetExposureMaximumBrightness ( float exposureValue ) noexcept;
+        void SetExposureMinimumBrightness ( float exposureValue ) noexcept;
+
+        void SetEyeAdaptationSpeed ( float speed ) noexcept;
         void SubmitLight ( LightRef &light ) noexcept;
 
         void SubmitMesh ( MeshRef &mesh,
@@ -133,6 +154,8 @@ class RenderSession final
         void SubmitPointLight ( LightRef &light ) noexcept;
         void SubmitReflectionGlobal ( LightRef &light ) noexcept;
         void SubmitReflectionLocal ( LightRef &light ) noexcept;
+
+        [[nodiscard]] bool UpdateBrightness ( android_vulkan::Renderer &renderer ) noexcept;
 
         [[nodiscard]] static bool AllocateCommandInfo ( CommandInfo &info,
             VkDevice device,

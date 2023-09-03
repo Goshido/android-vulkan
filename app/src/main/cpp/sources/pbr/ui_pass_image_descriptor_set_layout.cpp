@@ -100,11 +100,16 @@ DescriptorSetLayout g_descriptorSetLayout {};
 
 void UIPassImageDescriptorSetLayout::Destroy ( VkDevice device ) noexcept
 {
-    g_descriptorSetLayout.Destroy ( device );
+    if ( _init )
+    {
+        g_descriptorSetLayout.Destroy ( device );
+        _init = false;
+    }
 }
 
 bool UIPassImageDescriptorSetLayout::Init ( VkDevice device ) noexcept
 {
+    _init = true;
     return g_descriptorSetLayout.Init ( device );
 }
 

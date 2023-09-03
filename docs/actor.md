@@ -4,7 +4,7 @@
 require "av://engine/actor.lua"
 ```
 
-## Table of content
+## <a id="table-of-content">Table of content</a>
 
 - [_Brief_](#brief)
 - [_Metamethods_](#metamethods)
@@ -18,6 +18,8 @@ require "av://engine/actor.lua"
 ## <a id="brief">Brief</a>
 
 Class represents actor entity which is used as building block for game scene. Actor is extended via component entities which actually do all job.
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="metamethods">Metamethods</a>
 
@@ -51,6 +53,8 @@ Metamethod | Used
 `__tostring` | ❌
 `__unm` | ❌
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="constructor">`Constructor`</a>
 
 Constructor creates new object.
@@ -69,6 +73,8 @@ require "av://engine/actor.lua"
 
 local actor = Actor ( "Actor #1" )
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-append-component">`AppendComponent ( component )`</a>
 
@@ -93,6 +99,8 @@ local actor = Actor ( "Actor" )
 actor:AppendComponent ( PointLightComponent ( "Light" ) )
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-destroy">`Destroy ()`</a>
 
 Method destroys actor with all attached components.
@@ -116,6 +124,8 @@ g_scene:AppendActor ( actor )
 
 actor:Destroy ()
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-find-component">`FindComponent ( name )`</a>
 
@@ -142,6 +152,8 @@ actor:AppendComponent ( PointLightComponent ( "Light #2" ) )
 
 local light = actor:FindComponent ( "Light #1" )
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-find-components">`FindComponents ( name )`</a>
 
@@ -171,6 +183,8 @@ local lights = actor:FindComponents ( "Light" )
 local secondLight = lights[ 2 ]
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-get-name">`GetName ()`</a>
 
 Method returns name of the actor.
@@ -192,3 +206,5 @@ require "av://engine/actor.lua"
 local actor = Actor ( "Sun" )
 local name = actor:GetName ()
 ```
+
+[↬ table of content ⇧](#table-of-content)

@@ -3,12 +3,12 @@
 
 
 #include <vulkan_utils.hpp>
-#include "program.hpp"
+#include "graphics_program.hpp"
 
 
 namespace pbr {
 
-class LightLightupBaseProgram : public Program
+class LightLightupBaseProgram : public GraphicsProgram
 {
     public:
         AV_DX_ALIGNMENT_BEGIN

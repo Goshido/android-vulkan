@@ -59,12 +59,12 @@ float32_t3 GetFinalNormalView ( in float32_t3 tangentView,
     in float32_t2 uv
 )
 {
-    const float32_t2 normalData = mad ( g_normalTexture.Sample ( g_sampler, uv ).xw,
+    float32_t2 const normalData = mad ( g_normalTexture.Sample ( g_sampler, uv ).xw,
         (float32_t2)2.0F,
         (float32_t2)( -1.0F )
     );
 
-    const float32_t3x3 tbnView = float32_t3x3 ( tangentView, bitangentView, normalView );
+    float32_t3x3 const tbnView = float32_t3x3 ( tangentView, bitangentView, normalView );
 
     // DISCLAIMER: You might guess it's a good idea for optimization to not perform normalize operation here.
     // In reality it's bad idea. In fact you will see noticeable artifacts with specular on the light-up pass.
@@ -81,7 +81,7 @@ float32_t4 PackUnitVector ( in float32_t3 v )
 OutputData FillGBuffer ( in InputData inputData, in ObjectData objectData, in float32_t3 diffuseSample )
 {
     float32_t3 maskSample = g_maskTexture.Sample ( g_sampler, inputData._uv ).xyz;
-    const float32_t maskSum = maskSample.x + maskSample.y + maskSample.z;
+    float32_t const maskSum = maskSample.x + maskSample.y + maskSample.z;
 
     if ( maskSum > 1.0F )
         maskSample *= 1.0F / maskSum;

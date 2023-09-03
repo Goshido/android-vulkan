@@ -3,14 +3,14 @@
 
 
 #include "gpgpu_limits.inc"
+#include "graphics_program.hpp"
 #include "point_light_shadowmap_generator_descriptor_set_layout.hpp"
-#include "program.hpp"
 #include <vulkan_utils.hpp>
 
 
 namespace pbr {
 
-class PointLightShadowmapGeneratorProgram final : public Program
+class PointLightShadowmapGeneratorProgram final : public GraphicsProgram
 {
     public:
         AV_DX_ALIGNMENT_BEGIN
@@ -31,7 +31,7 @@ class PointLightShadowmapGeneratorProgram final : public Program
         PointLightShadowmapGeneratorDescriptorSetLayout     _instanceLayout {};
 
     public:
-        PointLightShadowmapGeneratorProgram () noexcept;
+        explicit PointLightShadowmapGeneratorProgram () noexcept;
 
         PointLightShadowmapGeneratorProgram ( PointLightShadowmapGeneratorProgram const & ) = delete;
         PointLightShadowmapGeneratorProgram &operator = ( PointLightShadowmapGeneratorProgram const & ) = delete;
@@ -44,13 +44,14 @@ class PointLightShadowmapGeneratorProgram final : public Program
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
             VkRenderPass renderPass,
             uint32_t subpass,
+            SpecializationData specializationData,
             VkExtent2D const &viewport
         ) noexcept override;
 
         void Destroy ( VkDevice device ) noexcept override;
         [[nodiscard]] DescriptorSetInfo const &GetResourceInfo () const noexcept override;
 
-        void SetDescriptorSet ( VkCommandBuffer commandBuffer, VkDescriptorSet sets ) const noexcept;
+        void SetDescriptorSet ( VkCommandBuffer commandBuffer, VkDescriptorSet set ) const noexcept;
 
     private:
         [[nodiscard]] VkPipelineColorBlendStateCreateInfo const* InitColorBlendInfo (
@@ -78,6 +79,8 @@ class PointLightShadowmapGeneratorProgram final : public Program
 
         [[nodiscard]] bool InitShaderInfo ( android_vulkan::Renderer &renderer,
             VkPipelineShaderStageCreateInfo const* &targetInfo,
+            SpecializationData specializationData,
+            VkSpecializationInfo* specializationInfo,
             VkPipelineShaderStageCreateInfo* sourceInfo
         ) noexcept override;
 

@@ -32,6 +32,7 @@ class Scene final
         std::vector<android_vulkan::RigidBodyRef>       _sweepTestResult {};
 
         ComponentList                                   _renderableList {};
+        RenderSession*                                  _renderSession = nullptr;
         UILayerList                                     _uiLayerList {};
 
         lua_Number                                      _aspectRatio = 1.0;
@@ -68,6 +69,7 @@ class Scene final
         [[nodiscard]] android_vulkan::Physics &GetPhysics () noexcept;
 
         [[nodiscard]] bool OnInitDevice ( android_vulkan::Renderer &renderer,
+            RenderSession &renderSession,
             android_vulkan::Physics &physics
         ) noexcept;
 
@@ -90,7 +92,7 @@ class Scene final
         ) noexcept;
 
         void RemoveActor ( Actor const &actor ) noexcept;
-        void Submit ( android_vulkan::Renderer &renderer, RenderSession &renderSession ) noexcept;
+        void Submit ( android_vulkan::Renderer &renderer ) noexcept;
 
     private:
         void AppendActor ( ActorRef &actor ) noexcept;
@@ -134,6 +136,11 @@ class Scene final
 
         [[nodiscard]] static int OnQuit ( lua_State* state );
         [[nodiscard]] static int OnSetActiveCamera ( lua_State* state );
+        [[nodiscard]] static int OnSetBrightness ( lua_State* state );
+        [[nodiscard]] static int OnSetExposureCompensation ( lua_State* state );
+        [[nodiscard]] static int OnSetExposureMaximumBrightness ( lua_State* state );
+        [[nodiscard]] static int OnSetExposureMinimumBrightness ( lua_State* state );
+        [[nodiscard]] static int OnSetEyeAdaptationSpeed ( lua_State* state );
         [[nodiscard]] static int OnSetSoundChannelVolume ( lua_State* state );
         [[nodiscard]] static int OnSetSoundListenerTransform ( lua_State* state );
         [[nodiscard]] static int OnSetSoundMasterVolume ( lua_State* state );

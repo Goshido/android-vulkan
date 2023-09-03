@@ -4,11 +4,15 @@
 
 namespace android_vulkan {
 
-constexpr static float const COLLINEAR_TOLERANCE = 5.0e-4F;
-constexpr static size_t const INITIAL_SHAPE_POINTS = 16U;
-constexpr static uint16_t const RAY_COUNT = 8U;
-constexpr static float const RAY_DEVIATION_DEGREES = 6.0F;
-constexpr static float const SAME_POINT_TOLERANCE = 1.0e-3F;
+namespace {
+
+constexpr float COLLINEAR_TOLERANCE = 5.0e-4F;
+constexpr size_t INITIAL_SHAPE_POINTS = 16U;
+constexpr uint16_t RAY_COUNT = 8U;
+constexpr float RAY_DEVIATION_DEGREES = 6.0F;
+constexpr float SAME_POINT_TOLERANCE = 1.0e-3F;
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 

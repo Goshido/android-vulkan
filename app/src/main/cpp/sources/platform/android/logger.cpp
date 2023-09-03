@@ -10,7 +10,13 @@ GX_RESTORE_WARNING_STATE
 
 namespace android_vulkan {
 
-constexpr static char const* TAG = "android_vulkan::C++";
+namespace {
+
+constexpr char const* TAG = "android_vulkan::C++";
+
+} // end of anonymous namespace
+
+//----------------------------------------------------------------------------------------------------------------------
 
 void LogDebug ( char const* format, ... )
 {

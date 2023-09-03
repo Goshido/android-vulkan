@@ -29,6 +29,7 @@ PointLightLightupProgram::PointLightLightupProgram () noexcept:
 bool PointLightLightupProgram::Init ( android_vulkan::Renderer &renderer,
     VkRenderPass renderPass,
     uint32_t subpass,
+    SpecializationData /*specializationData*/,
     VkExtent2D const &viewport
 ) noexcept
 {
@@ -54,7 +55,7 @@ bool PointLightLightupProgram::Init ( android_vulkan::Renderer &renderer,
 
     VkDevice device = renderer.GetDevice ();
 
-    if ( !InitShaderInfo ( renderer, pipelineInfo.pStages, stageInfo ) )
+    if ( !InitShaderInfo ( renderer, pipelineInfo.pStages, nullptr, nullptr, stageInfo ) )
     {
         Destroy ( device );
         return false;
@@ -143,7 +144,7 @@ void PointLightLightupProgram::SetLightData ( VkCommandBuffer commandBuffer,
     );
 }
 
-Program::DescriptorSetInfo const &PointLightLightupProgram::GetResourceInfo () const noexcept
+GraphicsProgram::DescriptorSetInfo const &PointLightLightupProgram::GetResourceInfo () const noexcept
 {
     static DescriptorSetInfo const info
     {
@@ -360,6 +361,8 @@ VkPipelineRasterizationStateCreateInfo const* PointLightLightupProgram::InitRast
 
 bool PointLightLightupProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
     VkPipelineShaderStageCreateInfo const* &targetInfo,
+    SpecializationData /*specializationData*/,
+    VkSpecializationInfo* /*specializationInfo*/,
     VkPipelineShaderStageCreateInfo* sourceInfo
 ) noexcept
 {

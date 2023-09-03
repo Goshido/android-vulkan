@@ -9,6 +9,9 @@ namespace pbr {
 
 class UIPassCommonDescriptorSetLayout final : public DescriptorSetLayout
 {
+    private:
+        bool    _init = false;
+
     public:
         UIPassCommonDescriptorSetLayout () = default;
 

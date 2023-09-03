@@ -1,0 +1,77 @@
+#ifndef PBR_AVERAGE_BRIGHTNESS_PROGRAM_HPP
+#define PBR_AVERAGE_BRIGHTNESS_PROGRAM_HPP
+
+
+#include "compute_program.hpp"
+#include "exposure_descriptor_set_layout.hpp"
+#include <vulkan_utils.hpp>
+
+
+namespace pbr {
+
+class ExposureProgram : public ComputeProgram
+{
+    public:
+        struct SpecializationInfo final
+        {
+            [[maybe_unused]] uint32_t           _workgroupCount;
+            [[maybe_unused]] VkExtent2D         _mip5Resolution;
+            [[maybe_unused]] float              _normalizeW;
+            [[maybe_unused]] float              _normalizeH;
+        };
+
+        AV_DX_ALIGNMENT_BEGIN
+
+        struct PushConstants final
+        {
+            [[maybe_unused]] float              _exposureCompensation;
+            [[maybe_unused]] float              _eyeAdaptation;
+            [[maybe_unused]] float              _maxLuma;
+            [[maybe_unused]] float              _minLuma;
+        };
+
+        AV_DX_ALIGNMENT_END
+
+    private:
+        ExposureDescriptorSetLayout    _layout {};
+
+    public:
+        explicit ExposureProgram () noexcept;
+
+        ExposureProgram ( ExposureProgram const & ) = delete;
+        ExposureProgram &operator = ( ExposureProgram const & ) = delete;
+
+        ExposureProgram ( ExposureProgram && ) = delete;
+        ExposureProgram &operator = ( ExposureProgram && ) = delete;
+
+        ~ExposureProgram () override = default;
+
+        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
+            SpecializationData specializationData
+        ) noexcept override final;
+
+        void Destroy ( VkDevice device ) noexcept override final;
+
+        void SetDescriptorSet ( VkCommandBuffer commandBuffer, VkDescriptorSet set ) const noexcept;
+
+        static void GetMetaInfo ( VkExtent3D &dispatch,
+            VkExtent2D &mipChainResolution,
+            SpecializationInfo &specializationInfo,
+            VkExtent2D const &imageResolution
+        ) noexcept;
+
+    private:
+        void DestroyShaderModule ( VkDevice device ) noexcept override final;
+        [[nodiscard]] bool InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept override final;
+
+        [[nodiscard]] bool InitShaderInfo ( android_vulkan::Renderer &renderer,
+            SpecializationData specializationData,
+            VkSpecializationInfo* specializationInfo,
+            VkPipelineShaderStageCreateInfo &targetInfo
+        ) noexcept override final;
+};
+
+} // namespace pbr
+
+
+#endif // PBR_AVERAGE_BRIGHTNESS_PROGRAM_HPP

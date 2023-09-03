@@ -2,15 +2,13 @@
 #define PBR_PROGRAM_HPP
 
 
-#include <GXCommon/GXWarning.hpp>
+#include <renderer.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
 #include <string>
 
 GX_RESTORE_WARNING_STATE
-
-#include <renderer.hpp>
 
 
 namespace pbr {
@@ -20,34 +18,36 @@ constexpr static char const* FRAGMENT_SHADER_ENTRY_POINT = "PS";
 
 //----------------------------------------------------------------------------------------------------------------------
 
-class Program
+class GraphicsProgram
 {
     public:
         using SetItem = std::vector<VkDescriptorPoolSize>;
         using DescriptorSetInfo = std::vector<SetItem>;
+        using SpecializationData = void const*;
 
     protected:
-        VkShaderModule                              _fragmentShader;
-        VkShaderModule                              _vertexShader;
+        VkShaderModule                              _fragmentShader = VK_NULL_HANDLE;
+        VkShaderModule                              _vertexShader = VK_NULL_HANDLE;
 
         [[maybe_unused]] std::string_view const     _name;
-        VkPipeline                                  _pipeline;
-        VkPipelineLayout                            _pipelineLayout;
+        VkPipeline                                  _pipeline = VK_NULL_HANDLE;
+        VkPipelineLayout                            _pipelineLayout = VK_NULL_HANDLE;
 
     public:
-        Program () = delete;
+        GraphicsProgram () = delete;
 
-        Program ( Program const & ) = delete;
-        Program &operator = ( Program const & ) = delete;
+        GraphicsProgram ( GraphicsProgram const & ) = delete;
+        GraphicsProgram &operator = ( GraphicsProgram const & ) = delete;
 
-        Program ( Program && ) = delete;
-        Program &operator = ( Program && ) = delete;
+        GraphicsProgram ( GraphicsProgram && ) = delete;
+        GraphicsProgram &operator = ( GraphicsProgram && ) = delete;
 
         // Method return true is success. Otherwise method returns false.
         // The method MUST invoke vkCreateGraphicsPipelines at the end.
         [[nodiscard]] virtual bool Init ( android_vulkan::Renderer &renderer,
             VkRenderPass renderPass,
             uint32_t subpass,
+            SpecializationData specializationData,
             VkExtent2D const &viewport
         ) noexcept = 0;
 
@@ -58,8 +58,8 @@ class Program
         void Bind ( VkCommandBuffer commandBuffer ) const noexcept;
 
     protected:
-        explicit Program ( std::string_view &&name ) noexcept;
-        virtual ~Program () = default;
+        explicit GraphicsProgram ( std::string_view name ) noexcept;
+        virtual ~GraphicsProgram () = default;
 
         [[nodiscard]] virtual VkPipelineColorBlendStateCreateInfo const* InitColorBlendInfo (
             VkPipelineColorBlendStateCreateInfo &info,
@@ -86,6 +86,8 @@ class Program
 
         [[nodiscard]] virtual bool InitShaderInfo ( android_vulkan::Renderer &renderer,
             VkPipelineShaderStageCreateInfo const* &targetInfo,
+            SpecializationData specializationData,
+            VkSpecializationInfo* specializationInfo,
             VkPipelineShaderStageCreateInfo* sourceInfo
         ) noexcept = 0;
 

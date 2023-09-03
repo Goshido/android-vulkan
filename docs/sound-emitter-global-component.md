@@ -4,7 +4,7 @@
 require "av://engine/sound_emitter_global_component.lua"
 ```
 
-## Table of content
+## <a id="table-of-content">Table of content</a>
 
 - [_Brief_](#brief)
 - [_Metamethods_](#metamethods)
@@ -20,6 +20,8 @@ require "av://engine/sound_emitter_global_component.lua"
 ## <a id="brief">Brief</a>
 
 Class represents global sound emitter entity on the scene. It's kinda sound inside player's head. Such sound has no any real position on the scene.
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="metamethods">Metamethods</a>
 
@@ -53,6 +55,8 @@ Metamethod | Used
 `__tostring` | ❌
 `__unm` | ❌
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="constructor">`Constructor`</a>
 
 Constructor creates new global sound emitter component.
@@ -73,6 +77,8 @@ local actor = Actor ( "Actor" )
 actor:AppendComponent ( SoundEmitterGlobalComponent ( "Music", eSoundChannel.Music ) )
 g_scene:AppendActor ( actor )
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-get-volume">`GetVolume ()`</a>
 
@@ -102,6 +108,8 @@ g_scene:AppendActor ( actor )
 local volume = music:GetVolume ()
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-set-volume">`SetVolume ( volume )`</a>
 
 Method sets the volume of the emitter.
@@ -130,6 +138,8 @@ g_scene:AppendActor ( actor )
 music:SetVolume ( 0.42 )
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-is-playing">`IsPlaying ()`</a>
 
 Method tells if the emitter is playing sound or not.
@@ -157,6 +167,8 @@ g_scene:AppendActor ( actor )
 
 local isPlaying = music:IsPlaying ()
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-pause">`Pause ()`</a>
 
@@ -188,6 +200,8 @@ music:Play ()
 local success = music:Pause ()
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-play">`Play ()`</a>
 
 Method begins sound playing.
@@ -216,6 +230,8 @@ g_scene:AppendActor ( actor )
 music:SetSoundAsset ( "sounds/Credits.ogg", true )
 local success = music:Play ()
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-set-sound-asset">`SetSoundAsset ( asset, looped )`</a>
 
@@ -246,6 +262,8 @@ g_scene:AppendActor ( actor )
 local success = music:SetSoundAsset ( "sounds/Credits.ogg", true )
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-stop">`Stop ()`</a>
 
 Method stops the playing of sound.
@@ -275,3 +293,5 @@ music:SetSoundAsset ( "sounds/Credits.ogg", true )
 music:Play ()
 local success = music:Stop ()
 ```
+
+[↬ table of content ⇧](#table-of-content)

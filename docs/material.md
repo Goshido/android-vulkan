@@ -4,7 +4,7 @@
 require "av://engine/material.lua"
 ```
 
-## Table of content
+## <a id="table-of-content">Table of content</a>
 
 - [_Brief_](#brief)
 - [_Metamethods_](#metamethods)
@@ -25,6 +25,8 @@ The geometry has exact same material in terms of texture set. The only differenc
 Material supports dedicated color for <a id="emisson">emission</a>. By convention this color is called `Emission`. This value will be multiplied with sample value from actual emission texture.
 
 _Opaque_ and _stipple_ material types have only one significant difference: transparency support. _Opaque_ material does not support transparency but way more optimal from _GPU_ perspective. The alpha values from `Color0` and albedo texture are ignored for _opaque_ material. From other hand _stipple_ material supports so called [_screen door transparency_](https://digitalrune.github.io/DigitalRune-Documentation/html/fa431d48-b457-4c70-a590-d44b0840ab1e.htm). The alpha values from `Color0` and albedo texture are used for final transparency computation of the _stipple_ material.
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="metamethods">Metamethods</a>
 
@@ -58,6 +60,8 @@ Metamethod | Used
 `__tostring` | ❌
 `__unm` | ❌
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="constructor">`Constructor`</a>
 
 Constructor creates new material instance from `*.mtl` asset.
@@ -80,3 +84,5 @@ mesh:SetMaterial ( Material ( "pbr/assets/System/Default.mtl" ) )
 rock:AppendComponent ( mesh )
 g_scene:AppendActor ( rock )
 ```
+
+[↬ table of content ⇧](#table-of-content)

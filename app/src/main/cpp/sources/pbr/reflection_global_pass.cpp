@@ -4,9 +4,13 @@
 
 namespace pbr {
 
-constexpr static size_t FRAMES = 5U;
-constexpr static size_t REFLECTION_PER_FRAME = 16384U;
-constexpr static size_t REFLECTIONS = FRAMES * REFLECTION_PER_FRAME;
+namespace {
+
+constexpr size_t FRAMES = 5U;
+constexpr size_t REFLECTION_PER_FRAME = 16384U;
+constexpr size_t REFLECTIONS = FRAMES * REFLECTION_PER_FRAME;
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -43,7 +47,7 @@ bool ReflectionGlobalPass::Init ( android_vulkan::Renderer &renderer,
     VkExtent2D const &viewport
 ) noexcept
 {
-    return _program.Init ( renderer, renderPass, subpass, viewport ) &&
+    return _program.Init ( renderer, renderPass, subpass, nullptr, viewport ) &&
         AllocateDescriptorSets ( renderer.GetDevice () );
 }
 

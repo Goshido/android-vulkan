@@ -12,23 +12,27 @@
 
 namespace pbr {
 
-constexpr static char const* SCENES[] =
+namespace {
+
+constexpr char const* SCENES[] =
 {
     "pbr/assets/N7_ADM_Reception.scene",
     "pbr/assets/N7_ENG_Injection.scene"
 };
 
-constexpr static size_t ACTIVE_SCENE = 0U;
+constexpr size_t ACTIVE_SCENE = 0U;
 static_assert ( std::size ( SCENES ) > ACTIVE_SCENE );
 
-[[maybe_unused]] constexpr static uint32_t SCENE_DESC_FORMAT_VERSION = 3U;
+[[maybe_unused]] constexpr uint32_t SCENE_DESC_FORMAT_VERSION = 3U;
 
-constexpr static float FIELD_OF_VIEW = 75.0F;
-constexpr static float Z_NEAR = 0.1F;
-constexpr static float Z_FAR = 1.0e+4F;
+constexpr float FIELD_OF_VIEW = 75.0F;
+constexpr float Z_NEAR = 0.1F;
+constexpr float Z_FAR = 1.0e+4F;
 
-constexpr static uint32_t RESOLUTION_SCALE_WIDTH = 80U;
-constexpr static uint32_t RESOLUTION_SCALE_HEIGHT = 70U;
+constexpr uint32_t RESOLUTION_SCALE_WIDTH = 80U;
+constexpr uint32_t RESOLUTION_SCALE_HEIGHT = 70U;
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -40,7 +44,6 @@ bool PBRGame::IsReady () noexcept
 bool PBRGame::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) noexcept
 {
     AV_TRACE ( "OnFrame" )
-
     auto const dt = static_cast<float> ( deltaTime );
 
     _camera.Update ( dt );
@@ -102,11 +105,13 @@ void PBRGame::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
 
 bool PBRGame::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept
 {
-    VkExtent2D resolution = renderer.GetViewportResolution ();
-    resolution.width = ( resolution.width * RESOLUTION_SCALE_WIDTH / 100U );
-    resolution.height = ( resolution.height * RESOLUTION_SCALE_HEIGHT / 100U );
-
     VkExtent2D const &surfaceResolution = renderer.GetViewportResolution ();
+
+    VkExtent2D const resolution
+    {
+        .width = surfaceResolution.width * RESOLUTION_SCALE_WIDTH / 100U,
+        .height = surfaceResolution.height * RESOLUTION_SCALE_HEIGHT / 100U
+    };
 
     _camera.SetProjection ( GXDegToRad ( FIELD_OF_VIEW ),
         static_cast<float> ( surfaceResolution.width ) / static_cast<float> ( surfaceResolution.height ),
@@ -213,9 +218,7 @@ bool PBRGame::UploadGPUContent ( android_vulkan::Renderer &renderer ) noexcept
 
                 if ( classID == ClassID::PointLight | classID == ClassID::Reflection | classID == ClassID::StaticMesh )
                 {
-                    _renderableComponents.emplace_back (
-                        std::reference_wrapper<ComponentRef> { _allComponents.back () }
-                    );
+                    _renderableComponents.emplace_back ( _allComponents.back () );
                 }
             }
 

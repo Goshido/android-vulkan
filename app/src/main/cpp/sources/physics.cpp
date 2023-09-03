@@ -8,10 +8,14 @@
 
 namespace android_vulkan {
 
-constexpr static uint16_t const STEPS_PER_SECOND = 60U;
-constexpr static float const DEFAULT_TIME_SPEED = 1.0F;
-constexpr static float const FIXED_TIME_STEP = DEFAULT_TIME_SPEED / static_cast<float> ( STEPS_PER_SECOND );
-constexpr static float const FIXED_TIME_STEP_INVERSE = 1.0F / FIXED_TIME_STEP;
+namespace {
+
+constexpr uint16_t STEPS_PER_SECOND = 60U;
+constexpr float DEFAULT_TIME_SPEED = 1.0F;
+constexpr float FIXED_TIME_STEP = DEFAULT_TIME_SPEED / static_cast<float> ( STEPS_PER_SECOND );
+constexpr float FIXED_TIME_STEP_INVERSE = 1.0F / FIXED_TIME_STEP;
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 

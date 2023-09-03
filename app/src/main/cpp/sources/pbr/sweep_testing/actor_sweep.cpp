@@ -8,8 +8,12 @@
 
 namespace pbr::sweep_testing {
 
-constexpr static float MOVING_SPEED = 1.25F;
-constexpr static float STICK_DEAD_ZONE = 0.2F;
+namespace {
+
+constexpr float MOVING_SPEED = 1.25F;
+constexpr float STICK_DEAD_ZONE = 0.2F;
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 

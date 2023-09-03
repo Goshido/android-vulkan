@@ -26,11 +26,10 @@ GX_RESTORE_WARNING_STATE
 
 namespace android_vulkan {
 
-constexpr static double FPS_PERIOD = 3.0;
-constexpr static auto TIMEOUT = std::chrono::milliseconds ( 10U );
+namespace {
 
-AAssetManager* g_AssetManager = nullptr;
-static Core* g_Core = nullptr;
+constexpr double FPS_PERIOD = 3.0;
+constexpr auto TIMEOUT = std::chrono::milliseconds ( 10U );
 
 enum class eGame : uint16_t
 {
@@ -47,6 +46,11 @@ enum class eGame : uint16_t
     SweepTesting,
     World1x1
 };
+
+} // end of anonymous namespace
+
+AAssetManager* g_AssetManager = nullptr;
+static Core* g_Core = nullptr;
 
 //----------------------------------------------------------------------------------------------------------------------
 

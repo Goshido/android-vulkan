@@ -8,7 +8,11 @@
 
 namespace pbr {
 
-[[maybe_unused]] constexpr static uint32_t const REFLECTION_COMPONENT_DESC_FORMAT_VERSION = 2U;
+namespace {
+
+[[maybe_unused]] constexpr uint32_t REFLECTION_COMPONENT_DESC_FORMAT_VERSION = 2U;
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 

@@ -5,10 +5,14 @@
 
 namespace pbr {
 
-constexpr static size_t KILOBYTES_TO_BYTES = 1024U;
+namespace {
+
+constexpr size_t KILOBYTES_TO_BYTES = 1024U;
 
 // see https://vulkan.lunarg.com/doc/view/1.1.108.0/mac/chunked_spec/chap18.html#vkCmdUpdateBuffer
-[[maybe_unused]] constexpr static size_t UPDATE_BUFFER_MAX_SIZE = 65536U;
+[[maybe_unused]] constexpr size_t UPDATE_BUFFER_MAX_SIZE = 65536U;
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 

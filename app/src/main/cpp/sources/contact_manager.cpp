@@ -9,14 +9,18 @@ GX_RESTORE_WARNING_STATE
 
 namespace android_vulkan {
 
-constexpr static size_t INITIAL_CONTACT_MANIFOLDS = 1024U;
-constexpr static size_t INITIAL_CONTACTS = INITIAL_CONTACT_MANIFOLDS * 4U;
-constexpr static size_t INITIAL_INDICES = 32U;
+namespace {
 
-constexpr static float WARM_FINDER_TOLERANCE = 4.0e-3F;
-constexpr static float WARM_FINDER_FACTOR = WARM_FINDER_TOLERANCE * WARM_FINDER_TOLERANCE;
+constexpr size_t INITIAL_CONTACT_MANIFOLDS = 1024U;
+constexpr size_t INITIAL_CONTACTS = INITIAL_CONTACT_MANIFOLDS * 4U;
+constexpr size_t INITIAL_INDICES = 32U;
 
-constexpr static float WARM_TRANSFER_FACTOR = 0.85F;
+constexpr float WARM_FINDER_TOLERANCE = 4.0e-3F;
+constexpr float WARM_FINDER_FACTOR = WARM_FINDER_TOLERANCE * WARM_FINDER_TOLERANCE;
+
+constexpr float WARM_TRANSFER_FACTOR = 0.85F;
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 

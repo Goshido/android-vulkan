@@ -16,12 +16,14 @@ GX_RESTORE_WARNING_STATE
 
 namespace android_vulkan {
 
-constexpr static char const* INDENT = "    ";
+namespace {
+
+constexpr char const* INDENT = "    ";
 
 class VulkanItem final
 {
     private:
-        size_t          _instances;
+        size_t          _instances = 1U;
         std::string     _where;
 
     public:
@@ -42,18 +44,16 @@ class VulkanItem final
         void GetInfo ( std::string &info ) const noexcept;
         [[nodiscard]] bool IsLastInstance () const noexcept;
 
-        bool operator < ( VulkanItem const &other ) const noexcept;
+        [[nodiscard]] bool operator < ( VulkanItem const &other ) const noexcept;
 };
 
 VulkanItem::VulkanItem () noexcept:
-    _instances ( 1U ),
     _where {}
 {
     // NOTHING
 }
 
 VulkanItem::VulkanItem ( std::string &&where ) noexcept:
-    _instances ( 1U ),
     _where ( std::move ( where ) )
 {
     // NOTHING
@@ -86,25 +86,27 @@ bool VulkanItem::operator < ( const VulkanItem &other ) const noexcept
 
 //----------------------------------------------------------------------------------------------------------------------
 
-static std::shared_timed_mutex      g_Lock;
-static std::set<VulkanItem>         g_Buffers;
-static std::set<VulkanItem>         g_CommandPools;
-static std::set<VulkanItem>         g_DescriptorPools;
-static std::set<VulkanItem>         g_DescriptorSetLayouts;
-static std::set<VulkanItem>         g_Devices;
-static std::set<VulkanItem>         g_DeviceMemory;
-static std::set<VulkanItem>         g_Fences;
-static std::set<VulkanItem>         g_Framebuffers;
-static std::set<VulkanItem>         g_Images;
-static std::set<VulkanItem>         g_ImageViews;
-static std::set<VulkanItem>         g_Pipelines;
-static std::set<VulkanItem>         g_PipelineLayouts;
-static std::set<VulkanItem>         g_RenderPasses;
-static std::set<VulkanItem>         g_Samplers;
-static std::set<VulkanItem>         g_Semaphores;
-static std::set<VulkanItem>         g_ShaderModules;
-static std::set<VulkanItem>         g_Surfaces;
-static std::set<VulkanItem>         g_Swapchains;
+std::shared_timed_mutex     g_Lock;
+std::set<VulkanItem>        g_Buffers;
+std::set<VulkanItem>        g_CommandPools;
+std::set<VulkanItem>        g_DescriptorPools;
+std::set<VulkanItem>        g_DescriptorSetLayouts;
+std::set<VulkanItem>        g_Devices;
+std::set<VulkanItem>        g_DeviceMemory;
+std::set<VulkanItem>        g_Fences;
+std::set<VulkanItem>        g_Framebuffers;
+std::set<VulkanItem>        g_Images;
+std::set<VulkanItem>        g_ImageViews;
+std::set<VulkanItem>        g_Pipelines;
+std::set<VulkanItem>        g_PipelineLayouts;
+std::set<VulkanItem>        g_RenderPasses;
+std::set<VulkanItem>        g_Samplers;
+std::set<VulkanItem>        g_Semaphores;
+std::set<VulkanItem>        g_ShaderModules;
+std::set<VulkanItem>        g_Surfaces;
+std::set<VulkanItem>        g_Swapchains;
+
+} // end of anonymous namespace
 
 static bool CheckNonDispatchableObjectLeaks ( char const* objectType, std::set<VulkanItem> &storage )
 {

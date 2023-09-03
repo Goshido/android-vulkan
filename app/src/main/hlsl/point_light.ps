@@ -57,7 +57,7 @@ float16_t GGXSchlick ( in float16_t dotFactor, in float16_t k )
 
 float16_t GetAttenuation ( in float32_t3 fragToLight )
 {
-    const float16_t beta = (float16_t)max ( 1.0F, _sceneScaleFactor * length ( fragToLight ) );
+    float16_t const beta = (float16_t)max ( 1.0F, _sceneScaleFactor * length ( fragToLight ) );
     return (float16_t)_intensity / ( beta * beta );
 }
 
@@ -67,30 +67,30 @@ float16_t GetDistribution ( in float16_t nH, in float16_t aa )
     // The D term could go to the infinity at very low roughness and glazing angles.
     // The solution is to use clamping function.
     // see https://github.com/Goshido/android-vulkan/issues/59
-    const float16_t alpha = mad ( nH * nH, aa - 1.0H, 1.0H );
+    float16_t const alpha = mad ( nH * nH, aa - 1.0H, 1.0H );
     return min ( 1.0H, aa / ( PI * alpha * alpha ) );
 }
 
 float16_t GetGeometryAttenuation ( in float16_t nL, in float16_t nV, in float16_t aa )
 {
-    const float16_t k = aa * SQRT_PI;
+    float16_t const k = aa * SQRT_PI;
     return GGXSchlick ( nL, k ) * GGXSchlick ( nV, k );
 }
 
 float16_t GetShadowFactor ( in float32_t3 locationView )
 {
-    const float32_t3 dir = mul ( _viewToLight, float32_t4 ( locationView, 1.0F ) ).xyz * SHADOW_MAP_BIAS;
-    const float32_t3 faceSelector = abs ( dir );
-    const float32_t z = max ( faceSelector.x, max ( faceSelector.y, faceSelector.z ) );
-    const float32_t4 cvv = mul ( _lightProjection, float32_t4 ( 0.0F, 0.0F, z, 1.0F ) );
+    float32_t3 const dir = mul ( _viewToLight, float32_t4 ( locationView, 1.0F ) ).xyz * SHADOW_MAP_BIAS;
+    float32_t3 const faceSelector = abs ( dir );
+    float32_t const z = max ( faceSelector.x, max ( faceSelector.y, faceSelector.z ) );
+    float32_t4 const cvv = mul ( _lightProjection, float32_t4 ( 0.0F, 0.0F, z, 1.0F ) );
 
     return (float16_t)g_shadowmap.SampleCmpLevelZero ( g_sampler, dir, cvv.z / cvv.w );
 }
 
 float32_t3 RestoreLocationView ( in float32_t2 locationImage )
 {
-    const float32_t2 alpha = mad ( locationImage, _invResolutionFactor, (float32_t2)( -1.0F ) );
-    const float32_t4 v = mul ( _cvvToView, float32_t4 ( alpha, GetDepth (), 1.0F ) );
+    float32_t2 const alpha = mad ( locationImage, _invResolutionFactor, (float32_t2)( -1.0F ) );
+    float32_t4 const v = mul ( _cvvToView, float32_t4 ( alpha, GetDepth (), 1.0F ) );
     return v.xyz * ( 1.0F / v.w );
 }
 
@@ -98,36 +98,36 @@ float32_t3 RestoreLocationView ( in float32_t2 locationImage )
 
 OutputData PS ( in linear float32_t4 pixel: SV_Position )
 {
-    const float32_t3 locationView = RestoreLocationView ( pixel.xy );
-    const float32_t3 fragToLight = _lightLocationView - locationView;
+    float32_t3 const locationView = RestoreLocationView ( pixel.xy );
+    float32_t3 const fragToLight = _lightLocationView - locationView;
 
-    const float16_t attenuation = GetAttenuation ( fragToLight );
-    const float16_t3 toViewerView = -normalize ( (float16_t3)locationView );
-    const float16_t3 toLightView = normalize ( (float16_t3)fragToLight );
-    const float16_t3 halfVectorView = normalize ( toLightView + toViewerView );
-    const float16_t3 normalView = RestoreNormalView ();
+    float16_t const attenuation = GetAttenuation ( fragToLight );
+    float16_t3 const toViewerView = -normalize ( (float16_t3)locationView );
+    float16_t3 const toLightView = normalize ( (float16_t3)fragToLight );
+    float16_t3 const halfVectorView = normalize ( toLightView + toViewerView );
+    float16_t3 const normalView = RestoreNormalView ();
 
     float16_t roughness;
     float16_t metallic;
     GetParams ( roughness, metallic );
 
-    const float16_t a = roughness * roughness;
-    const float16_t aa = a * a;
-    const float16_t3 albedo = GetAlbedo ();
+    float16_t const a = roughness * roughness;
+    float16_t const aa = a * a;
+    float16_t3 const albedo = GetAlbedo ();
 
-    const float16_t nL = max ( 0.0H, dot ( normalView, toLightView ) );
-    const float16_t nH = max ( 0.0H, dot ( normalView, halfVectorView ) );
-    const float16_t nV = max ( 0.0H, dot ( normalView, toViewerView ) );
-    const float16_t vH = max ( 0.0H, dot ( toViewerView, halfVectorView ) );
+    float16_t const nL = max ( 0.0H, dot ( normalView, toLightView ) );
+    float16_t const nH = max ( 0.0H, dot ( normalView, halfVectorView ) );
+    float16_t const nV = max ( 0.0H, dot ( normalView, toViewerView ) );
+    float16_t const vH = max ( 0.0H, dot ( toViewerView, halfVectorView ) );
 
-    const float16_t d = GetDistribution ( nH, aa );
-    const float16_t3 f = GetFresnel ( vH, metallic, albedo );
-    const float16_t ga = GetGeometryAttenuation ( nL, nV, aa );
-    const float16_t shadow = GetShadowFactor ( locationView );
-    const float16_t3 kD = GetDiffuseK ( f, metallic );
+    float16_t const d = GetDistribution ( nH, aa );
+    float16_t3 const f = GetFresnel ( vH, metallic, albedo );
+    float16_t const ga = GetGeometryAttenuation ( nL, nV, aa );
+    float16_t const shadow = GetShadowFactor ( locationView );
+    float16_t3 const kD = GetDiffuseK ( f, metallic );
 
-    const float16_t s = d * ga / max ( EPSILON, 4.0H * nL * nV );
-    const float16_t3 color = shadow * nL * attenuation * (float16_t3)_hue * mad ( kD * albedo, INVERSE_PI, f * s );
+    float16_t const s = d * ga / max ( EPSILON, 4.0H * nL * nV );
+    float16_t3 const color = shadow * nL * attenuation * (float16_t3)_hue * mad ( kD * albedo, INVERSE_PI, f * s );
 
     OutputData result;
     result._color = float32_t4 ( (float32_t3)color, 1.0F );

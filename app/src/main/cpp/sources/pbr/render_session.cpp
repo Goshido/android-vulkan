@@ -35,7 +35,7 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
 
     size_t swapchainImageIndex;
 
-    if ( !_uiPass.AcquirePresentTarget ( renderer, swapchainImageIndex ) )
+    if ( !_presentRenderPass.AcquirePresentTarget ( renderer, swapchainImageIndex ) )
         return false;
 
     CommandInfo &commandInfo = _commandInfo[ swapchainImageIndex ];
@@ -83,8 +83,13 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
         "Can't begin main render pass"
     );
 
-    if ( !result || !_uiPass.UploadGPUData ( renderer, commandBuffer ) )
+    if ( !result || ( _brightnessChanged && !UpdateBrightness ( renderer ) ) )
         return false;
+
+    if ( !_uiPass.UploadGPUData ( renderer, commandBuffer, swapchainImageIndex ) )
+        return false;
+
+    _toneMapperPass.UploadGPUData ( renderer, commandBuffer );
 
     result = _lightPass.OnPreGeometryPass ( renderer,
         commandBuffer,
@@ -113,7 +118,16 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
 
     vkCmdEndRenderPass ( commandBuffer );
 
-    if ( !_uiPass.Execute ( renderer, commandBuffer, fence ) )
+    _exposurePass.Execute ( commandBuffer, static_cast<float> ( deltaTime ) );
+
+    _presentRenderPass.Begin ( commandBuffer );
+
+    _toneMapperPass.Execute ( commandBuffer );
+
+    result = _uiPass.Execute ( commandBuffer, swapchainImageIndex ) &&
+        _presentRenderPass.End ( renderer, commandBuffer, fence );
+
+    if ( !result )
         return false;
 
     _renderSessionStats.RenderPointLights ( _lightPass.GetPointLightCount () );
@@ -126,7 +140,9 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
 
 void RenderSession::FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept
 {
-    _defaultTextureManager.FreeTransferResources ( renderer, _commandInfo[ 0U ]._pool );
+    VkCommandPool pool = _commandInfo[ 0U ]._pool;
+    _defaultTextureManager.FreeTransferResources ( renderer, pool );
+    _exposurePass.FreeTransferResources ( renderer, pool );
 }
 
 UIPass &RenderSession::GetUIPass () noexcept
@@ -151,8 +167,11 @@ bool RenderSession::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
     if ( !AllocateCommandInfo ( commandInfo, device, renderer.GetQueueFamilyIndex () ) )
         return false;
 
-    return _defaultTextureManager.Init ( renderer, commandInfo._pool ) &&
+    return _exposurePass.Init ( renderer, commandInfo._pool ) &&
+        _toneMapperPass.Init ( renderer ) &&
+        _defaultTextureManager.Init ( renderer, commandInfo._pool ) &&
         _samplerManager.Init ( device ) &&
+        _presentRenderPass.OnInitDevice ( renderer ) &&
         _uiPass.OnInitDevice ( renderer, _samplerManager, _defaultTextureManager.GetTransparent ()->GetImageView () );
 }
 
@@ -163,6 +182,8 @@ void RenderSession::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexc
 
     VkDevice device = renderer.GetDevice ();
 
+    _toneMapperPass.Destroy ( renderer );
+    _exposurePass.Destroy ( renderer );
     _samplerManager.Destroy ( device );
     _defaultTextureManager.Destroy ( renderer );
     DestroyGBufferResources ( renderer );
@@ -193,27 +214,29 @@ void RenderSession::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexc
     _commandInfo.shrink_to_fit ();
 
     _uiPass.OnDestroyDevice ( renderer );
+    _presentRenderPass.OnDestroyDevice ( device );
 }
 
 bool RenderSession::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
     VkExtent2D const &resolution
 ) noexcept
 {
+    VkExtent2D const newResolution = ExposurePass::AdjustResolution ( resolution );
     VkExtent2D const &currentResolution = _gBuffer.GetResolution ();
 
-    if ( ( currentResolution.width != resolution.width ) | ( currentResolution.height != resolution.height ) )
+    bool const hasChanges = ( currentResolution.width != newResolution.width ) |
+        ( currentResolution.height != newResolution.height );
+
+    if ( hasChanges )
     {
         DestroyGBufferResources ( renderer );
 
-        if ( !CreateGBufferResources ( renderer, resolution ) )
-        {
-            OnSwapchainDestroyed ( renderer.GetDevice () );
+        if ( !CreateGBufferResources ( renderer, newResolution ) )
             return false;
-        }
 
         android_vulkan::LogInfo ( "pbr::RenderSession::OnSwapchainCreated - G-buffer resolution is %u x %u.",
-            resolution.width,
-            resolution.height
+            newResolution.width,
+            newResolution.height
         );
     }
 
@@ -235,19 +258,58 @@ bool RenderSession::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
         }
     }
 
-    if ( _uiPass.OnSwapchainCreated ( renderer, _gBuffer.GetHDRAccumulator ().GetImageView () ) )
+    if ( !_presentRenderPass.OnSwapchainCreated ( renderer ) )
+        return false;
+
+    constexpr uint32_t subpass = PresentRenderPass::GetSubpass ();
+    VkImageView hdrView = _gBuffer.GetHDRAccumulator ().GetImageView ();
+    VkRenderPass renderPass = _presentRenderPass.GetRenderPass ();
+
+    if ( !_uiPass.OnSwapchainCreated ( renderer, renderPass, subpass, hdrView ) )
+        return false;
+
+    if ( !hasChanges )
         return true;
 
-    DestroyGBufferResources ( renderer );
-    OnSwapchainDestroyed ( device );
-
-    return false;
+    return _toneMapperPass.SetTarget ( renderer,
+        renderPass,
+        subpass,
+        hdrView,
+        _exposurePass.GetExposure (),
+        _samplerManager.GetClampToEdgeSampler ()
+    );
 }
 
 void RenderSession::OnSwapchainDestroyed ( VkDevice device ) noexcept
 {
-    //_presentPass.Destroy ( device );
-    _uiPass.OnSwapchainDestroyed ( device );
+    _presentRenderPass.OnSwapchainDestroyed ( device );
+    _uiPass.OnSwapchainDestroyed ();
+}
+
+void RenderSession::SetBrightness ( float brightnessBalance ) noexcept
+{
+    _brightnessChanged = true;
+    _brightnessBalance = brightnessBalance;
+}
+
+void RenderSession::SetExposureCompensation ( float exposureValue ) noexcept
+{
+    _exposurePass.SetExposureCompensation ( exposureValue );
+}
+
+void RenderSession::SetExposureMaximumBrightness ( float exposureValues ) noexcept
+{
+    _exposurePass.SetMaximumBrightness ( exposureValues );
+}
+
+void RenderSession::SetExposureMinimumBrightness ( float exposureValues ) noexcept
+{
+    _exposurePass.SetMinimumBrightness ( exposureValues );
+}
+
+void RenderSession::SetEyeAdaptationSpeed ( float speed ) noexcept
+{
+    _exposurePass.SetEyeAdaptationSpeed ( speed );
 }
 
 void RenderSession::SubmitLight ( LightRef &light ) noexcept
@@ -496,7 +558,8 @@ bool RenderSession::CreateRenderPass ( android_vulkan::Renderer &renderer ) noex
             .srcSubpass = 0U,
             .dstSubpass = 1U,
 
-            .srcStageMask = AV_VK_FLAG ( VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT ) |
+            .srcStageMask = AV_VK_FLAG ( VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT ) |
+                AV_VK_FLAG ( VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT ) |
                 AV_VK_FLAG ( VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT ),
 
             .dstStageMask = AV_VK_FLAG ( VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT ) |
@@ -505,6 +568,7 @@ bool RenderSession::CreateRenderPass ( android_vulkan::Renderer &renderer ) noex
                 AV_VK_FLAG ( VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT ),
 
             .srcAccessMask = AV_VK_FLAG ( VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT ) |
+                AV_VK_FLAG ( VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT ) |
                 AV_VK_FLAG ( VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT ),
 
             .dstAccessMask = AV_VK_FLAG ( VK_ACCESS_INPUT_ATTACHMENT_READ_BIT ) |
@@ -524,7 +588,8 @@ bool RenderSession::CreateRenderPass ( android_vulkan::Renderer &renderer ) noex
 
             .dstStageMask = AV_VK_FLAG ( VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT ) |
                 AV_VK_FLAG ( VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT ) |
-                AV_VK_FLAG ( VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT ),
+                AV_VK_FLAG ( VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT ) |
+                AV_VK_FLAG ( VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT ),
 
             .srcAccessMask = AV_VK_FLAG ( VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT ) |
                 AV_VK_FLAG ( VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT ),
@@ -634,6 +699,7 @@ bool RenderSession::CreateGBufferResources ( android_vulkan::Renderer &renderer,
         ) &&
 
         _lightPass.Init ( renderer, _renderPass, _gBuffer ) &&
+        _exposurePass.SetTarget ( renderer, _gBuffer.GetHDRAccumulator () ) &&
 
         android_vulkan::Renderer::CheckVkResult ( vkDeviceWaitIdle ( device ),
             "pbr::RenderSession::CreateGBufferResources",
@@ -730,6 +796,29 @@ void RenderSession::SubmitReflectionLocal ( LightRef &light ) noexcept
         return;
 
     _lightPass.SubmitReflectionLocal ( probe.GetPrefilter (), probe.GetLocation (), probe.GetSize () );
+}
+
+bool RenderSession::UpdateBrightness ( android_vulkan::Renderer &renderer ) noexcept
+{
+    bool result = android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( renderer.GetQueue () ),
+        "pbr::RenderSession::UpdateBrightness",
+        "Can't wait queue idle"
+    );
+
+    if ( !result )
+        return false;
+
+    VkRenderPass renderPass = _presentRenderPass.GetRenderPass ();
+    constexpr uint32_t subpass = PresentRenderPass::GetSubpass ();
+
+    result = _toneMapperPass.SetBrightness ( renderer, renderPass, subpass, _brightnessBalance ) &&
+        _uiPass.SetBrightness ( renderer, renderPass, subpass, _brightnessBalance );
+
+    if ( !result )
+        return false;
+
+    _brightnessChanged = false;
+    return true;
 }
 
 bool RenderSession::AllocateCommandInfo ( CommandInfo &info, VkDevice device, uint32_t queueIndex ) noexcept

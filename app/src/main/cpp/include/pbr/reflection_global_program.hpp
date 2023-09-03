@@ -34,6 +34,7 @@ class ReflectionGlobalProgram final : public LightLightupBaseProgram
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
             VkRenderPass renderPass,
             uint32_t subpass,
+            SpecializationData specializationData,
             VkExtent2D const &viewport
         ) noexcept override;
 
@@ -68,6 +69,8 @@ class ReflectionGlobalProgram final : public LightLightupBaseProgram
 
         [[nodiscard]] bool InitShaderInfo ( android_vulkan::Renderer &renderer,
             VkPipelineShaderStageCreateInfo const* &targetInfo,
+            SpecializationData specializationData,
+            VkSpecializationInfo* specializationInfo,
             VkPipelineShaderStageCreateInfo* sourceInfo
         ) noexcept override;
 

@@ -20,6 +20,7 @@ constexpr size_t VERTEX_ATTRIBUTE_COUNT = 5U;
 bool GeometryPassProgram::Init ( android_vulkan::Renderer &renderer,
     VkRenderPass renderPass,
     uint32_t subpass,
+    SpecializationData /*specializationData*/,
     VkExtent2D const &viewport
 ) noexcept
 {
@@ -45,7 +46,7 @@ bool GeometryPassProgram::Init ( android_vulkan::Renderer &renderer,
 
     VkDevice device = renderer.GetDevice ();
 
-    if ( !InitShaderInfo ( renderer, pipelineInfo.pStages, stageInfo ) )
+    if ( !InitShaderInfo ( renderer, pipelineInfo.pStages, nullptr, nullptr, stageInfo ) )
         return false;
 
     pipelineInfo.pVertexInputState = InitVertexInputInfo ( vertexInputInfo,
@@ -110,7 +111,7 @@ void GeometryPassProgram::Destroy ( VkDevice device ) noexcept
     DestroyShaderModules ( device );
 }
 
-Program::DescriptorSetInfo const &GeometryPassProgram::GetResourceInfo () const noexcept
+GraphicsProgram::DescriptorSetInfo const &GeometryPassProgram::GetResourceInfo () const noexcept
 {
     static DescriptorSetInfo const info =
     {
@@ -155,7 +156,7 @@ void GeometryPassProgram::SetDescriptorSet ( VkCommandBuffer commandBuffer,
 }
 
 GeometryPassProgram::GeometryPassProgram ( std::string_view &&name, std::string_view &&fragmentShader ) noexcept:
-    Program ( std::forward<std::string_view> ( name ) ),
+    GraphicsProgram ( std::forward<std::string_view> ( name ) ),
     _fragmentShaderSource ( fragmentShader )
 {
     // NOTHING
@@ -402,6 +403,8 @@ VkPipelineRasterizationStateCreateInfo const* GeometryPassProgram::InitRasteriza
 
 bool GeometryPassProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
     VkPipelineShaderStageCreateInfo const* &targetInfo,
+    SpecializationData /*specializationData*/,
+    VkSpecializationInfo* /*specializationInfo*/,
     VkPipelineShaderStageCreateInfo* sourceInfo
 ) noexcept
 {

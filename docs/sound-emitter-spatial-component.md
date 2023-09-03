@@ -4,7 +4,7 @@
 require "av://engine/sound_emitter_spatial_component.lua"
 ```
 
-## Table of content
+## <a id="table-of-content">Table of content</a>
 
 - [_Brief_](#brief)
 - [_Metamethods_](#metamethods)
@@ -22,6 +22,8 @@ require "av://engine/sound_emitter_spatial_component.lua"
 ## <a id="brief">Brief</a>
 
 Class represents spatial sound emitter entity. It's sound with real position and distance in [physics coordinate system](./rigid-body-component.md#note-physics-coordinate-system).
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="metamethods">Metamethods</a>
 
@@ -55,6 +57,8 @@ Metamethod | Used
 `__tostring` | ❌
 `__unm` | ❌
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="constructor">`Constructor`</a>
 
 Constructor creates new spatial sound emitter component.
@@ -75,6 +79,8 @@ local actor = Actor ( "Actor" )
 actor:AppendComponent ( SoundEmitterSpatialComponent ( "SFX", eSoundChannel.SFX ) ) )
 g_scene:AppendActor ( actor )
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-get-volume">`GetVolume ()`</a>
 
@@ -104,6 +110,8 @@ g_scene:AppendActor ( actor )
 local volume = voice:GetVolume ()
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-set-volume">`SetVolume ( volume )`</a>
 
 Method sets the volume of the emitter.
@@ -132,6 +140,8 @@ g_scene:AppendActor ( actor )
 sfx:SetVolume ()
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-is-playing">`IsPlaying ()`</a>
 
 Method tells if the emitter is playing sound or not.
@@ -159,6 +169,8 @@ g_scene:AppendActor ( actor )
 
 local isPlaying = sfx:IsPlaying ()
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-pause">`Pause ()`</a>
 
@@ -190,6 +202,8 @@ sfx:Play ()
 local success = sfx:Pause ()
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-play">`Play ()`</a>
 
 Method begins sound playing.
@@ -219,6 +233,8 @@ sfx:SetSoundAsset ( "sounds/sine.ogg", true )
 local success = sfx:Play ()
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-set-distance">`SetDistance ( distance )`</a>
 
 Method sets emitter distance in [physics coordinate system](./rigid-body-component.md#note-physics-coordinate-system) units.
@@ -246,6 +262,8 @@ g_scene:AppendActor ( actor )
 
 sfx:SetDistance ( 42.0 )
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-set-location">`SetLocation ( location )`</a>
 
@@ -277,6 +295,8 @@ location:Init ( 777.0, 3.33, 1.0 )
 sfx:SetLocation ( location )
 ```
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="method-set-sound-asset">`SetSoundAsset ( asset, looped )`</a>
 
 Method sets sound asset for playing.
@@ -305,6 +325,8 @@ g_scene:AppendActor ( actor )
 
 local success = sfx:SetSoundAsset ( "sounds/sine.ogg", true )
 ```
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="method-stop">`Stop ()`</a>
 
@@ -335,3 +357,5 @@ sfx:SetSoundAsset ( "sounds/sine.ogg", true )
 sfx:Play ()
 local success = sfx:Stop ()
 ```
+
+[↬ table of content ⇧](#table-of-content)

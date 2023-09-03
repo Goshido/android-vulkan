@@ -51,11 +51,11 @@ OutputData VS ( in InputData inputData )
 
     OutputData result;
 
-    const ObjectData objectData = g_instanceData[ inputData._instanceIndex ];
+    ObjectData const objectData = g_instanceData[ inputData._instanceIndex ];
     result._vertexH = mul ( objectData._localViewProjection, float32_t4 ( inputData._vertex, 1.0F ) );
     result._uv = inputData._uv;
 
-    const float32_t3x3 orientation = (float32_t3x3)objectData._localView;
+    float32_t3x3 const orientation = (float32_t3x3)objectData._localView;
     result._normalView = mul ( orientation, inputData._normal );
     result._tangentView = mul ( orientation, inputData._tangent );
     result._bitangentView = mul ( orientation, inputData._bitangent );

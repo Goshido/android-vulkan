@@ -1,3 +1,4 @@
+#include <pbr/srgb_program.inc>
 #include <pbr/ui_program.hpp>
 #include <pbr/ui_program.inc>
 #include <pbr/ui_vertex_info.hpp>
@@ -19,7 +20,7 @@ constexpr size_t VERTEX_ATTRIBUTE_COUNT = 4U;
 //----------------------------------------------------------------------------------------------------------------------
 
 UIProgram::UIProgram () noexcept:
-    Program ( "pbr::UIProgram" )
+    SRGBProgram ( "pbr::UIProgram" )
 {
     // NOTHING
 }
@@ -27,6 +28,7 @@ UIProgram::UIProgram () noexcept:
 bool UIProgram::Init ( android_vulkan::Renderer &renderer,
     VkRenderPass renderPass,
     uint32_t subpass,
+    SpecializationData specializationData,
     VkExtent2D const &viewport
 ) noexcept
 {
@@ -40,6 +42,7 @@ bool UIProgram::Init ( android_vulkan::Renderer &renderer,
     VkPipelineRasterizationStateCreateInfo rasterizationInfo {};
     VkRect2D scissorDescription {};
     VkPipelineShaderStageCreateInfo stageInfo[ STAGE_COUNT ];
+    VkSpecializationInfo specInfo {};
     VkPipelineVertexInputStateCreateInfo vertexInputInfo {};
     VkViewport viewportDescription {};
     VkPipelineViewportStateCreateInfo viewportInfo {};
@@ -52,7 +55,7 @@ bool UIProgram::Init ( android_vulkan::Renderer &renderer,
 
     VkDevice device = renderer.GetDevice ();
 
-    if ( !InitShaderInfo ( renderer, pipelineInfo.pStages, stageInfo ) )
+    if ( !InitShaderInfo ( renderer, pipelineInfo.pStages, specializationData, &specInfo, stageInfo ) )
         return false;
 
     pipelineInfo.pVertexInputState = InitVertexInputInfo ( vertexInputInfo,
@@ -114,7 +117,7 @@ void UIProgram::Destroy ( VkDevice device ) noexcept
     DestroyShaderModules ( device );
 }
 
-Program::DescriptorSetInfo const &UIProgram::GetResourceInfo () const noexcept
+GraphicsProgram::DescriptorSetInfo const &UIProgram::GetResourceInfo () const noexcept
 {
     static DescriptorSetInfo const info
     {
@@ -342,6 +345,8 @@ VkPipelineRasterizationStateCreateInfo const* UIProgram::InitRasterizationInfo (
 
 bool UIProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
     VkPipelineShaderStageCreateInfo const* &targetInfo,
+    SpecializationData specializationData,
+    VkSpecializationInfo* specializationInfo,
     VkPipelineShaderStageCreateInfo* sourceInfo
 ) noexcept
 {
@@ -376,6 +381,21 @@ bool UIProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
         .pSpecializationInfo = nullptr
     };
 
+    constexpr static VkSpecializationMapEntry entry
+    {
+        .constantID = CONST_INVERSE_GAMMA,
+        .offset = static_cast<uint32_t> ( offsetof ( SpecializationInfo, _inverseGamma ) ),
+        .size = sizeof ( SpecializationInfo::_inverseGamma )
+    };
+
+    *specializationInfo =
+    {
+        .mapEntryCount = 1U,
+        .pMapEntries = &entry,
+        .dataSize = sizeof ( SpecializationInfo ),
+        .pData = specializationData
+    };
+
     sourceInfo[ 1U ] =
     {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
@@ -384,7 +404,7 @@ bool UIProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
         .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
         .module = _fragmentShader,
         .pName = FRAGMENT_SHADER_ENTRY_POINT,
-        .pSpecializationInfo = nullptr
+        .pSpecializationInfo = specializationInfo
     };
 
     targetInfo = sourceInfo;

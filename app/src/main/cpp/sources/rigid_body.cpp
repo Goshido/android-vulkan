@@ -6,21 +6,25 @@
 
 namespace android_vulkan {
 
-constexpr static float const DEFAULT_DAMPING_ANGULAR = 0.85F;
-constexpr static float const DEFAULT_DAMPING_LINEAR = 0.85F;
+namespace {
 
-constexpr static GXVec3 const DEFAULT_LOCATION ( 0.0F, -777.777F, 0.0F );
+constexpr float DEFAULT_DAMPING_ANGULAR = 0.85F;
+constexpr float DEFAULT_DAMPING_LINEAR = 0.85F;
 
-constexpr static float const DEFAULT_MASS = 1.0F;
-constexpr static float const DEFAULT_MASS_INVERSE = 1.0F / DEFAULT_MASS;
+constexpr GXVec3 DEFAULT_LOCATION ( 0.0F, -777.777F, 0.0F );
 
-constexpr static GXVec3 const DEFAULT_ROTATION_AXIS ( 0.0F, 0.0F, 1.0F );
+constexpr float DEFAULT_MASS = 1.0F;
+constexpr float DEFAULT_MASS_INVERSE = 1.0F / DEFAULT_MASS;
 
-constexpr static float const LOCATION_SLEEP_THRESHOLD = 8.0e-1F;
-constexpr static float const ROTATION_SLEEP_THRESHOLD = 1.0e+0F;
-constexpr static float const SLEEP_TIMEOUT = 2.0F;
+constexpr GXVec3 DEFAULT_ROTATION_AXIS ( 0.0F, 0.0F, 1.0F );
 
-constexpr static GXVec3 const ZERO ( 0.0F, 0.0F, 0.0F );
+constexpr float LOCATION_SLEEP_THRESHOLD = 8.0e-1F;
+constexpr float ROTATION_SLEEP_THRESHOLD = 1.0e+0F;
+constexpr float SLEEP_TIMEOUT = 2.0F;
+
+constexpr GXVec3 ZERO ( 0.0F, 0.0F, 0.0F );
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 

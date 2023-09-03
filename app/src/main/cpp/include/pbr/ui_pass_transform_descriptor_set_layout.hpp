@@ -9,6 +9,9 @@ namespace pbr {
 
 class UIPassTransformDescriptorSetLayout final : public DescriptorSetLayout
 {
+    private:
+        bool    _init = false;
+
     public:
         UIPassTransformDescriptorSetLayout () = default;
 

@@ -3,9 +3,13 @@
 
 namespace android_vulkan {
 
-constexpr static uint32_t const DEFAULT_COLLISION_GROUPS = 0b11111111'11111111'11111111'11111111U;
-constexpr static float const DEFAULT_FRICTION = 0.8F;
-constexpr static float const DEFAULT_RESTITUTION = 0.25F;
+namespace {
+
+constexpr uint32_t DEFAULT_COLLISION_GROUPS = 0b11111111'11111111'11111111'11111111U;
+constexpr float DEFAULT_FRICTION = 0.8F;
+constexpr float DEFAULT_RESTITUTION = 0.25F;
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 

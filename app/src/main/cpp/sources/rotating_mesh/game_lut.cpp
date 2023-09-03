@@ -14,13 +14,17 @@ GX_RESTORE_WARNING_STATE
 
 namespace rotating_mesh {
 
-constexpr static char const* FRAGMENT_SHADER = "shaders/blinn_phong_lut.ps.spv";
+namespace {
 
-constexpr static size_t SPECULAR_ANGLE_SAMPLES = 512U;
-constexpr static size_t SPECULAR_EXPONENT_SAMPLES = 150U;
-constexpr static size_t SPECULAR_GENERATOR_THREADS = 4U;
+constexpr char const* FRAGMENT_SHADER = "shaders/blinn_phong_lut.ps.spv";
 
-constexpr static size_t TEXTURE_COMMAND_BUFFERS = 7U;
+constexpr size_t SPECULAR_ANGLE_SAMPLES = 512U;
+constexpr size_t SPECULAR_EXPONENT_SAMPLES = 150U;
+constexpr size_t SPECULAR_GENERATOR_THREADS = 4U;
+
+constexpr size_t TEXTURE_COMMAND_BUFFERS = 7U;
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 

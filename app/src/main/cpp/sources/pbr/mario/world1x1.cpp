@@ -8,12 +8,16 @@
 
 namespace pbr::mario {
 
-constexpr static char const SCENE[] = "pbr/assets/world-1-1.scene";
+namespace {
 
-constexpr static GXVec3 FREE_FALL_ACCELERATION ( 0.0F, -9.81F, 0.0F );
+constexpr char const SCENE[] = "pbr/assets/world-1-1.scene";
 
-constexpr static uint32_t RESOLUTION_SCALE_WIDTH = 80U;
-constexpr static uint32_t RESOLUTION_SCALE_HEIGHT = 70U;
+constexpr GXVec3 FREE_FALL_ACCELERATION ( 0.0F, -9.81F, 0.0F );
+
+constexpr uint32_t RESOLUTION_SCALE_WIDTH = 80U;
+constexpr uint32_t RESOLUTION_SCALE_HEIGHT = 70U;
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -39,7 +43,7 @@ bool World1x1::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) 
 
     _renderSession.Begin ( _scene.GetActiveCameraLocalMatrix (), _scene.GetActiveCameraProjectionMatrix () );
 
-    _scene.Submit ( renderer, _renderSession );
+    _scene.Submit ( renderer );
 
     if ( !_scene.OnUpdate ( deltaTime ) )
         return false;
@@ -70,7 +74,7 @@ bool World1x1::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 
     AV_REGISTER_COMMAND_POOL ( "pbr::mario::World1x1::_commandPool" )
 
-    if ( !_renderSession.OnInitDevice ( renderer ) || !_scene.OnInitDevice ( renderer, _physics ) )
+    if ( !_renderSession.OnInitDevice ( renderer ) || !_scene.OnInitDevice ( renderer, _renderSession, _physics ) )
         return false;
 
     if ( !_scene.LoadScene ( renderer, SCENE, _commandPool ) )
@@ -78,7 +82,6 @@ bool World1x1::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 
     _isReady = true;
     _renderSession.FreeTransferResources ( renderer );
-
     return CreatePhysics ();
 }
 

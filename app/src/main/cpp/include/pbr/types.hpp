@@ -34,7 +34,6 @@ using UILayerList = std::list<std::reference_wrapper<UILayer>>;
 using LightRef = std::shared_ptr<Light>;
 using MaterialRef = std::shared_ptr<Material>;
 using MeshRef = std::shared_ptr<android_vulkan::MeshGeometry>;
-using SamplerRef = std::shared_ptr<Sampler>;
 using Texture2DRef = std::shared_ptr<android_vulkan::Texture2D>;
 using TextureCubeRef = std::shared_ptr<android_vulkan::TextureCube>;
 

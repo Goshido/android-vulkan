@@ -4,7 +4,11 @@
 
 namespace pbr {
 
-constexpr static size_t BIND_PER_SET = 2U;
+namespace {
+
+constexpr size_t BIND_PER_SET = 2U;
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -27,7 +31,7 @@ void ReflectionLocalPass::Commit () noexcept
 
 void ReflectionLocalPass::Append ( TextureCubeRef &prefilter, GXVec3 const &location, float size ) noexcept
 {
-    _calls.emplace_back ( Call ( location, prefilter, size ) );
+    _calls.emplace_back ( location, prefilter, size );
 }
 
 void ReflectionLocalPass::Execute ( VkCommandBuffer commandBuffer,
@@ -59,7 +63,7 @@ bool ReflectionLocalPass::Init ( android_vulkan::Renderer &renderer,
     VkExtent2D const &viewport
 ) noexcept
 {
-    return _program.Init ( renderer, renderPass, subpass, viewport ) && AllocateDescriptorSets ( renderer );
+    return _program.Init ( renderer, renderPass, subpass, nullptr, viewport ) && AllocateDescriptorSets ( renderer );
 }
 
 void ReflectionLocalPass::Destroy ( android_vulkan::Renderer &renderer ) noexcept

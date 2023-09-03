@@ -14,7 +14,9 @@ GX_RESTORE_WARNING_STATE
 
 namespace android_vulkan {
 
-constexpr static uint8_t const SIGNATURE[ sizeof ( KTXHeader::_identifier ) ] =
+namespace {
+
+constexpr uint8_t const SIGNATURE[ sizeof ( KTXHeader::_identifier ) ] =
 {
     0xABU,
     'K', 'T', 'X', ' ', '1', '1',
@@ -24,21 +26,23 @@ constexpr static uint8_t const SIGNATURE[ sizeof ( KTXHeader::_identifier ) ] =
     '\n'
 };
 
-constexpr static uint32_t const CONVERT_ENDIANNESS = 0x01020304U;
-constexpr static uint32_t const NATIVE_ENDIANNESS = 0x04030201U;
+constexpr uint32_t CONVERT_ENDIANNESS = 0x01020304U;
+constexpr uint32_t NATIVE_ENDIANNESS = 0x04030201U;
 
-constexpr static uint32_t const TARGET_GL_TYPE = 0U;
-constexpr static uint32_t const TARGET_GL_TYPE_SIZE = 1U;
-constexpr static uint32_t const TARGET_GL_FORMAT = 0U;
-constexpr static uint32_t const TARGET_NUMBER_OF_ARRAY_ELEMENTS = 0U;
-constexpr static uint32_t const TARGET_NUMBER_OF_FACES = 1U;
-constexpr static uint32_t const TARGET_PIXEL_DEPTH = 0U;
+constexpr uint32_t TARGET_GL_TYPE = 0U;
+constexpr uint32_t TARGET_GL_TYPE_SIZE = 1U;
+constexpr uint32_t TARGET_GL_FORMAT = 0U;
+constexpr uint32_t TARGET_NUMBER_OF_ARRAY_ELEMENTS = 0U;
+constexpr uint32_t TARGET_NUMBER_OF_FACES = 1U;
+constexpr uint32_t TARGET_PIXEL_DEPTH = 0U;
 
-static std::unordered_map<uint32_t, VkFormat> const g_FormatMapper =
+std::unordered_map<uint32_t, VkFormat> g_FormatMapper =
 {
     { GL_COMPRESSED_RGBA_ASTC_6x6_KHR, VK_FORMAT_ASTC_6x6_UNORM_BLOCK },
     { GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x6_KHR, VK_FORMAT_ASTC_6x6_SRGB_BLOCK }
 };
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 

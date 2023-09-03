@@ -5,7 +5,11 @@
 
 namespace pbr {
 
-[[maybe_unused]] constexpr static uint32_t POINT_LIGHT_COMPONENT_DESC_FORMAT_VERSION = 2U;
+namespace {
+
+[[maybe_unused]] constexpr uint32_t POINT_LIGHT_COMPONENT_DESC_FORMAT_VERSION = 2U;
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -33,7 +37,7 @@ PointLightComponent::PointLightComponent ( PointLightComponentDesc const &desc, 
             *reinterpret_cast<GXVec3 const*> ( unorm._data ),
 
             // TODO remove this multiplier in the future.
-            desc._intensity * 14.1414F,
+            desc._intensity * 28.0F,
 
             reinterpret_cast<GXVec3 const &> ( desc._location ),
             bounds

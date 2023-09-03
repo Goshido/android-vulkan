@@ -6,13 +6,13 @@
 #include "geometry_pass_sampler_descriptor_set_layout.hpp"
 #include "geometry_pass_texture_descriptor_set_layout.hpp"
 #include "gpgpu_limits.inc"
-#include "program.hpp"
+#include "graphics_program.hpp"
 #include <vulkan_utils.hpp>
 
 
 namespace pbr {
 
-class GeometryPassProgram : public Program
+class GeometryPassProgram : public GraphicsProgram
 {
     public:
         AV_DX_ALIGNMENT_BEGIN
@@ -54,6 +54,7 @@ class GeometryPassProgram : public Program
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
             VkRenderPass renderPass,
             uint32_t subpass,
+            SpecializationData specializationData,
             VkExtent2D const &viewport
         ) noexcept override;
 
@@ -95,6 +96,8 @@ class GeometryPassProgram : public Program
 
         [[nodiscard]] bool InitShaderInfo ( android_vulkan::Renderer &renderer,
             VkPipelineShaderStageCreateInfo const* &targetInfo,
+            SpecializationData specializationData,
+            VkSpecializationInfo* specializationInfo,
             VkPipelineShaderStageCreateInfo* sourceInfo
         ) noexcept override;
 

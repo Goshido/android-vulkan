@@ -12,17 +12,21 @@
 
 namespace pbr::box_stack {
 
-constexpr static float FIELD_OF_VIEW = 75.0F;
-constexpr static float Z_NEAR = 0.1F;
-constexpr static float Z_FAR = 1.0e+4F;
+namespace {
 
-constexpr static uint32_t RESOLUTION_SCALE_WIDTH = 80U;
-constexpr static uint32_t RESOLUTION_SCALE_HEIGHT = 70U;
+constexpr float FIELD_OF_VIEW = 75.0F;
+constexpr float Z_NEAR = 0.1F;
+constexpr float Z_FAR = 1.0e+4F;
 
-constexpr static GXVec3 FREE_FALL_ACCELERATION ( 0.0F, -9.81F, 0.0F );
-constexpr static float TIME_SPEED = 1.0F;
+constexpr uint32_t RESOLUTION_SCALE_WIDTH = 80U;
+constexpr uint32_t RESOLUTION_SCALE_HEIGHT = 70U;
 
-constexpr static size_t CUBES = 6U;
+constexpr GXVec3 FREE_FALL_ACCELERATION ( 0.0F, -9.81F, 0.0F );
+constexpr float TIME_SPEED = 1.0F;
+
+constexpr size_t CUBES = 6U;
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 

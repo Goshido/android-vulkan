@@ -1,0 +1,11 @@
+#ifndef FULL_SCREEN_TRIANGLE_INC
+#define FULL_SCREEN_TRIANGLE_INC
+
+
+#define ATT_SLOT_UV         0
+
+#define SET_TRANSFORM       0
+#define BIND_TRANSFORM      0
+
+
+#endif // FULL_SCREEN_TRIANGLE_INC

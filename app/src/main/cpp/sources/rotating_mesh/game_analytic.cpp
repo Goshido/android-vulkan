@@ -3,8 +3,12 @@
 
 namespace rotating_mesh {
 
-constexpr static char const* FRAGMENT_SHADER = "shaders/blinn_phong_analytic.ps.spv";
-constexpr static size_t TEXTURE_COMMAND_BUFFERS = 6U;
+namespace {
+
+constexpr char const* FRAGMENT_SHADER = "shaders/blinn_phong_analytic.ps.spv";
+constexpr size_t TEXTURE_COMMAND_BUFFERS = 6U;
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 

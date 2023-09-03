@@ -28,7 +28,7 @@
 
 _SPD_ means single pass downsampler. Algorithm is published by _AMD_ [here](https://gpuopen.com/fidelityfx-spd/). It uses compute shader to build full mip chain using single pass compute shader.
 
-To syncronize whole process algorithm uses:
+To synchronize whole process algorithm uses:
 
 - shared memory
 - [`GroupMemoryBarrierWithGroupSync` barriers](https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/groupmemorybarrierwithgroupsync)
@@ -47,11 +47,11 @@ Original implementation is universal. Because of that there are a lot of branchi
 
 ## <a id="average-brightness-optimizations">Optimizations for average brightness calculation</a>
 
-Final goal is a single value: average brightness. So intermidiate mip levels do not matter for algorithm. This allows to remove all unnecessary memory traffic with storing intermedite mips **except mip 5 of course**. Mip 5 is special because it syncronizes workng groups via [`globallycoherent`](https://microsoft.github.io/DirectX-Specs/d3d/archive/D3D11_3_FunctionalSpec.htm#7.14.4%20Global%20vs%20Group/Local%20Coherency%20on%20Non-Atomic%20UAV%20Reads) specifier. Keep in mind that most of the operations happen in shared memory. Removing storing operations into global _VRAM_ is a big optimization for original algorithm.
+Final goal is a single value: average brightness. So intermediate mip levels do not matter for algorithm. This allows to remove all unnecessary memory traffic with storing intermediate mips **except mip 5 of course**. Mip 5 is special because it synchronizes working groups via [`globallycoherent`](https://microsoft.github.io/DirectX-Specs/d3d/archive/D3D11_3_FunctionalSpec.htm#7.14.4%20Global%20vs%20Group/Local%20Coherency%20on%20Non-Atomic%20UAV%20Reads) specifier. Keep in mind that most of the operations happen in shared memory. Removing storing operations into global _VRAM_ is a big optimization for original algorithm.
 
 Resulting average brightness will be stored in storage buffer rather than last mip level of the image.
 
-Square and non power of two limitations could be resolved. This requires to modify compute shader. First it's resonable to add requirement for input image to be multiple of 64 pixels. This allows to avoid bound checking up to internal mip 5. For internal mip level greater that 5 it's needed to do bound checking before reading data.
+Square and non power of two limitations could be resolved. This requires to modify compute shader. First it's reasonable to add requirement for input image to be multiple of 64 pixels. This allows to avoid bound checking up to internal mip 5. For internal mip level greater that 5 it's needed to do bound checking before reading data.
 
 For brightness computation it's possible to convert image to [_log2 luma_](./auto-exposure.md) using [_BT.709_](https://en.wikipedia.org/wiki/Relative_luminance#Relative_luminance_and_%22gamma_encoded%22_colorspaces) at generation of internal mip 0. This allows to use `float16_t` instead of `float16_t4` for shared memory. This also allows to use `VK_FORMAT_R16_SFLOAT` format for internal mip 5.
 

@@ -6,7 +6,7 @@ Starting from _Android NDK_ `23.0.7599858` the _Vulkan_ validation layers have b
 
 ## Compatible version
 
-The manual is based on `eca34aae4cc04eb32035a7b1770a276933f37327` commit of the [_Vulkan-ValidationLayers_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) repo. The manual is primary aimed for _Windows OS_ users.
+The manual is based on `dd26138bcff1cf7a46b856f954db9305ff63b30f` commit of the [_Vulkan-ValidationLayers_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) repo. The manual is primary aimed for _Windows OS_ users.
 
 ## Requirements
 
@@ -70,7 +70,8 @@ cmake                                                                       `
     -D CMAKE_TOOLCHAIN_FILE="${ndk}/build/cmake/android.toolchain.cmake"    `
     -D CMAKE_BUILD_TYPE=Release                                             `
     -D UPDATE_DEPS=ON                                                       `
-    -D UPDATE_DEPS_DIR="${buildDir}"
+    -D UPDATE_DEPS_DIR="${buildDir}"                                        `
+    -D VVL_CPP_STANDARD=20
 
 # Building projects...
 

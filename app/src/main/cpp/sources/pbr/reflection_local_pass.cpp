@@ -31,7 +31,7 @@ void ReflectionLocalPass::Commit () noexcept
 
 void ReflectionLocalPass::Append ( TextureCubeRef &prefilter, GXVec3 const &location, float size ) noexcept
 {
-    _calls.emplace_back ( Call ( location, prefilter, size ) );
+    _calls.emplace_back ( location, prefilter, size );
 }
 
 void ReflectionLocalPass::Execute ( VkCommandBuffer commandBuffer,

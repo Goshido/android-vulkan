@@ -1237,7 +1237,7 @@ bool Game::CreateCommandBuffers ( android_vulkan::Renderer &renderer ) noexcept
         if ( !result )
             return false;
 
-        _commandBuffers.emplace_back ( std::make_pair ( commandBuffer, fence ) );
+        _commandBuffers.emplace_back ( commandBuffer, fence );
     }
 
     return true;

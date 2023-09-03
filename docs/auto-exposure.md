@@ -27,7 +27,7 @@ The idea behind average luminance of image is geometric mean. But not a strait f
 
 $$l = log_2(dot(pixel_{xyz}, [0.2126, 0.7152, 0.0722]))$$
 
-2. Make sure to not feed 0 values into _log2_! Clamp to mimum value:
+2. Make sure to not feed 0 values into _log2_! Clamp to minimum value:
 
 $$log_2(\dfrac{0.25}{256}) = -10$$
 
@@ -49,7 +49,7 @@ $$L_{min}, L_{max} - \text{expected values of maximum and minimum brightness of 
 
 $$L_{EC} - \text{Scalar value which allows the artist to bias exposure. Calculated on CPU using the first formula.}$$
 
-To make eye adaptation it's needed to use exponental decay function which should be applied to average luminance:
+To make eye adaptation it's needed to use exponential decay function which should be applied to average luminance:
 
 $$L_{current} = L_{previous} + (L_{average} - L_{previous}) \cdot (1 - e^{\Delta time \cdot \tau})$$
 
@@ -59,7 +59,7 @@ $$L_{previous} -\text{Average luminance computed on previous frame. Initially eq
 
 $$\Delta time -\text{Frame time in seconds. Uniform value from CPU.}$$
 
-$$\tau -\text{Speed of eye adoptation. Positive float. Artistic scalar. Uniform value from CPU.}$$
+$$\tau -\text{Speed of eye adaptation. Positive float. Artistic scalar. Uniform value from CPU.}$$
 
 The article is using adaptive _KeyValue_ instead of using fixed [_middle gray_](https://en.wikipedia.org/wiki/Middle_gray) value of _18%_:
 

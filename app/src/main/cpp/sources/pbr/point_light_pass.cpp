@@ -134,7 +134,7 @@ void PointLightPass::Reset () noexcept
 
 void PointLightPass::Submit ( LightRef const &light ) noexcept
 {
-    _interacts.emplace_back ( std::make_pair ( light, ShadowCasters () ) );
+    _interacts.emplace_back ( light, ShadowCasters () );
 }
 
 void PointLightPass::UploadGPUData ( VkDevice device,

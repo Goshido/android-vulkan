@@ -3,7 +3,7 @@
 
 ## Compile tool
 
-Current project is using [_DXC_ compiler](https://github.com/microsoft/DirectXShaderCompiler) to produce _SPIR-V_ binary representations. The manual is valid against **_DXC v1.7.2308.10061_**.
+Current project is using [_DXC_ compiler](https://github.com/microsoft/DirectXShaderCompiler) to produce _SPIR-V_ binary representations. The manual is valid against **_DXC v1.7.2308.10075_**.
 
 The _android-vulkan_ project is using _HLSL_ shader language as high level programming language. All shader sources are located in the following directory:
 
@@ -71,7 +71,7 @@ For example:
 
 Variable name | Value
 --- | ---
-`ANDROID_VULKAN_DXC_ROOT` | `D:\Development\DXC-builds\Release-2023-08-03\bin`
+`ANDROID_VULKAN_DXC_ROOT` | `D:\Development\DXC-builds\Release-2023-09-08\bin`
 
 ### Reported issues
 
@@ -80,4 +80,4 @@ Name | Link | Status
 SPIR-V degradation 1.7.2207.10069 compare to 1.7.2207.10036 | [#4714](https://github.com/microsoft/DirectXShaderCompiler/issues/4714) | ✔️ Fixed
 SPIR-V degradation 1.7.2212.10204 compare to 1.7.2212.10142 | [#5342](https://github.com/microsoft/DirectXShaderCompiler/issues/5342) | ✔️ Fixed
 -fspv-debug=vulkan-with-source crash issue | [#5441](https://github.com/microsoft/DirectXShaderCompiler/issues/5441) | ⚠️ Submitted
-Problem with mad intrinsic | [#5608](https://github.com/microsoft/DirectXShaderCompiler/issues/5608) | ⚠️ Submitted
+Problem with mad intrinsic | [#5608](https://github.com/microsoft/DirectXShaderCompiler/issues/5608) | ✔️ Fixed

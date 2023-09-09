@@ -310,9 +310,6 @@ void CS ( in uint32_t threadID: SV_GroupIndex, in uint32_t3 workGroupID: SV_Grou
     if ( threadID > 0U )
         return;
 
-    // Can't use float16_t types because of DXC issue:
-    // https://github.com/microsoft/DirectXShaderCompiler/issues/5608
-
     float32_t const prevLuma = g_temporalLuma[ 0U ];
     float32_t const deltaLuma = ReduceToAverage () - prevLuma;
     float32_t const eyeLuma = mad ( deltaLuma, g_exposureInfo._eyeAdaptation, prevLuma );

@@ -3,15 +3,15 @@
 
 namespace avp {
 
-ClassDesc* Plugin::GetClassDesc ( int /*idx*/ ) noexcept
+ClassDesc* Plugin::GetClassDesc ( int idx ) noexcept
 {
-    // TODO
-    return nullptr;
+    ClassDesc* cases[] = { &_classDesc, nullptr };
+    return cases[ static_cast<size_t> ( idx >= GetNumberClasses () ) ];
 }
 
 void Plugin::Init ( HINSTANCE instance ) noexcept
 {
-    _instance = instance;
+    _classDesc.Init ( instance );
 }
 
 } // namespace avp

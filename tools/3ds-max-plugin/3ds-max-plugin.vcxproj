@@ -50,7 +50,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <ExceptionHandling>false</ExceptionHandling>
       <AdditionalIncludeDirectories>$(SolutionDir)include\;$(SolutionDir)include\3ds_max_sdk\;$(SolutionDir)..\..\app\src\main\cpp\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalOptions>/wd4514 /wd4577 /wd4711 /wd4820 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/wd4514 /wd4577 /wd4711 /wd4820 /wd5045 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -58,13 +58,17 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ModuleDefinitionFile>$(SolutionDir)src\plugin.def</ModuleDefinitionFile>
+      <AdditionalLibraryDirectories>$(SolutionDir)lib\3ds_max_sdk_2023\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>core.lib;maxutil.lib;Paramblk2.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\class_desc.cpp" />
     <ClCompile Include="src\dll_main.cpp" />
     <ClCompile Include="src\plugin.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\class_desc.hpp" />
     <ClInclude Include="include\plugin.hpp" />
   </ItemGroup>
   <ItemGroup>

@@ -24,9 +24,15 @@
     <ClCompile Include="src\plugin.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\class_desc.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\plugin.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\class_desc.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

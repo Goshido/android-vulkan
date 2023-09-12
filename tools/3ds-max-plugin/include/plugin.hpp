@@ -2,13 +2,7 @@
 #define AVP_PLUGIN_HPP
 
 
-#include <GXCommon/GXWarning.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <plugapi.h>
-
-GX_RESTORE_WARNING_STATE
+#include <class_desc.hpp>
 
 
 namespace avp {
@@ -16,7 +10,7 @@ namespace avp {
 class Plugin final
 {
     private:
-        [[maybe_unused]] HINSTANCE      _instance = nullptr;
+        ClassDesc       _classDesc {};
 
     public:
         Plugin () = default;
@@ -39,7 +33,7 @@ class Plugin final
 
         [[nodiscard]] constexpr static TCHAR const* GetDescription () noexcept
         {
-            return TEXT ( "android-vulkan" );
+            return _T ( "android-vulkan" );
         }
 
         [[nodiscard]] constexpr static int GetNumberClasses () noexcept

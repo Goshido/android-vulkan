@@ -2,7 +2,7 @@
 #define AVP_CLASS_DESC_HPP
 
 
-#include <GXCommon/GXWarning.hpp>
+#include "utility.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -17,6 +17,7 @@ class ClassDesc : public ClassDesc2
 {
     private:
         [[maybe_unused]] HINSTANCE      _instance = nullptr;
+        Utility                         _utility {};
 
     public:
         ClassDesc () = default;

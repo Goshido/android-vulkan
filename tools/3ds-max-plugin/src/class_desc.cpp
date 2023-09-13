@@ -6,6 +6,7 @@ namespace avp {
 void ClassDesc::Init ( HINSTANCE instance ) noexcept
 {
     _instance = instance;
+    _utility.Init ( instance );
 }
 
 int ClassDesc::IsPublic ()
@@ -15,8 +16,7 @@ int ClassDesc::IsPublic ()
 
 void* ClassDesc::Create ( BOOL /*loading*/ )
 {
-    // TODO
-    return nullptr;
+    return &_utility;
 }
 
 MCHAR const* ClassDesc::ClassName ()

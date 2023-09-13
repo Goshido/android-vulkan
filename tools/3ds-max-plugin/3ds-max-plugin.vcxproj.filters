@@ -35,10 +35,18 @@
     <ClInclude Include="include\class_desc.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\resource.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="src\plugin.def">
       <Filter>Linker</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="src\resource.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
   </ItemGroup>
 </Project>

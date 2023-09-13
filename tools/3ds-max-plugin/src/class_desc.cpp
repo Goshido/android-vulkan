@@ -31,7 +31,7 @@ MCHAR const* ClassDesc::NonLocalizedClassName ()
 
 MCHAR const* ClassDesc::InternalName ()
 {
-    constexpr static MCHAR const* nonExportableToScripts = nullptr;
+    constexpr MCHAR const* nonExportableToScripts = nullptr;
     return nonExportableToScripts;
 }
 

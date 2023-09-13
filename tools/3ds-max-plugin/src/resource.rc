@@ -1,0 +1,132 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.hpp"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "winres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// Russian (Russia) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_RUS)
+LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.hpp\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""winres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+#endif    // Russian (Russia) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
+// English (United States) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+AVP_IDD_DIALOG DIALOGEX 0, 0, 107, 371
+STYLE DS_SETFONT | DS_3DLOOK | DS_CENTER | WS_CHILD | WS_VISIBLE | WS_SYSMENU
+FONT 8, "Ms Shell Dlg", 0, 0, 0x0
+BEGIN
+    GROUPBOX        "Mesh",AVP_UI_FRAME_MESH,5,5,97,84
+    LTEXT           "File",AVP_UI_LABEL_MESH_FILE,9,21,12,8
+    CONTROL         "",AVP_UI_EDITBOX_MESH_FILE,"CustEdit",WS_GROUP,9,34,70,14
+    DEFPUSHBUTTON   "...",AVP_UI_BUTTON_BROWSE_MESH_FILE,81,34,18,14
+    CONTROL         "Export in current pose",AVP_UI_CHECKBOX_CURRENT_POSE,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,9,51,83,13
+    DEFPUSHBUTTON   "Export",AVP_UI_BUTTON_EXPORT_MESH,42,69,37,14
+    GROUPBOX        "Skin",AVP_UI_FRAME_SKIN,5,101,97,67
+    LTEXT           "File",AVP_UI_LABEL_SKIN_FILE,9,117,12,8
+    CONTROL         "",AVP_UI_EDITBOX_SKIN_FILE,"CustEdit",WS_GROUP,9,131,70,14
+    DEFPUSHBUTTON   "...",AVP_UI_BUTTON_BROWSE_SKIN_FILE,81,131,18,14
+    DEFPUSHBUTTON   "Export",AVP_UI_BUTTON_EXPORT_SKIN,42,147,37,14
+    GROUPBOX        "Skeleton",AVP_UI_FRAME_SKELETON,5,180,97,67
+    LTEXT           "File",AVP_UI_LABEL_SKELETON_FILE,9,196,12,8
+    CONTROL         "",AVP_UI_EDITBOX_SKELETON_FILE,"CustEdit",WS_GROUP,9,210,70,14
+    DEFPUSHBUTTON   "...",AVP_UI_BUTTON_BROWSE_SKELETON_FILE,81,210,18,14
+    DEFPUSHBUTTON   "Export",AVP_UI_BUTTON_EXPORT_SKELETON,42,226,37,14
+    GROUPBOX        "Animation",AVP_UI_FRAME_ANIMATION,5,259,97,107
+    LTEXT           "File",AVP_UI_LABEL_ANIMATION_FILE,9,275,12,8
+    CONTROL         "",AVP_UI_EDITBOX_ANIMATION_FILE,"CustEdit",WS_GROUP,9,289,70,14
+    DEFPUSHBUTTON   "...",AVP_UI_BUTTON_BROWSE_ANIMATION_FILE,81,289,18,14
+    LTEXT           "Start frame",AVP_UI_LABEL_ANIMATION_START_FRAME,9,312,44,8
+    CONTROL         "",AVP_UI_EDITBOX_ANIMATION_START_FRAME,"CustEdit",WS_GROUP,54,310,38,14
+    LTEXT           "Last frame",AVP_UI_LABEL_ANIMATION_LAST_FRAME,9,332,34,8
+    CONTROL         "",AVP_UI_EDITBOX_ANIMATION_LAST_FRAME,"CustEdit",WS_GROUP,54,330,38,14
+    DEFPUSHBUTTON   "Export",AVP_UI_BUTTON_EXPORT_ANIMATION,42,347,37,14
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO
+BEGIN
+    AVP_IDD_DIALOG, DIALOG
+    BEGIN
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// AFX_DIALOG_LAYOUT
+//
+
+AVP_IDD_DIALOG AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+#endif    // English (United States) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED

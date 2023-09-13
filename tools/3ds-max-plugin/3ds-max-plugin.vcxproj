@@ -61,6 +61,9 @@
       <AdditionalLibraryDirectories>$(SolutionDir)lib\3ds_max_sdk_2023\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>core.lib;maxutil.lib;Paramblk2.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <ResourceCompile>
+      <AdditionalIncludeDirectories>$(SolutionDir)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\class_desc.cpp" />
@@ -70,9 +73,13 @@
   <ItemGroup>
     <ClInclude Include="include\class_desc.hpp" />
     <ClInclude Include="include\plugin.hpp" />
+    <ClInclude Include="include\resource.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="src\plugin.def" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="src\resource.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

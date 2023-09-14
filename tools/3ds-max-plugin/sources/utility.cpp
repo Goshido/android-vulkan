@@ -1,5 +1,6 @@
 #include <resource.hpp>
 #include <utility.hpp>
+#include <version.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -8,6 +9,21 @@ GX_DISABLE_COMMON_WARNINGS
 
 GX_RESTORE_WARNING_STATE
 
+
+#define AVP_STR( x )            L#x
+#define AVP_STRINGAZE( x )      AVP_STR ( x )
+
+#define AVP_CAPTION                         \
+    L"android-vulkan v"                     \
+    AVP_STRINGAZE ( AVP_VERSION_MAJOR )     \
+    L"."                                    \
+    AVP_STRINGAZE ( AVP_VERSION_MINOR )     \
+    L"."                                    \
+    AVP_STRINGAZE ( AVP_VERSION_RELEASE )   \
+    L"."                                    \
+    AVP_STRINGAZE ( AVP_VERSION_BUILD )
+
+//----------------------------------------------------------------------------------------------------------------------
 
 namespace avp {
 
@@ -82,7 +98,7 @@ void Utility::BeginEditParams ( Interface* interfacePointer, IUtil* /*util*/ )
     _ui = interfacePointer->AddRollupPage ( _instance,
         MAKEINTRESOURCE ( AVP_IDD_DIALOG ),
         &Utility::DialogProc,
-        L"android-vulkan exporter",
+        AVP_CAPTION,
         reinterpret_cast<LPARAM> ( this )
     );
 }

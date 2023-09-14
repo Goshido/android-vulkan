@@ -37,7 +37,7 @@ END
 
 3 TEXTINCLUDE 
 BEGIN
-    "\r\n"
+    "#include ""version.rc""\r\n"
     "\0"
 END
 
@@ -126,7 +126,7 @@ END
 //
 // Generated from the TEXTINCLUDE 3 resource.
 //
-
+#include "version.rc"
 
 /////////////////////////////////////////////////////////////////////////////
 #endif    // not APSTUDIO_INVOKED

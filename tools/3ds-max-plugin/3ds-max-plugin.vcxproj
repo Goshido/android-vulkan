@@ -57,7 +57,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <ModuleDefinitionFile>$(SolutionDir)src\plugin.def</ModuleDefinitionFile>
+      <ModuleDefinitionFile>$(SolutionDir)sources\plugin.def</ModuleDefinitionFile>
       <AdditionalLibraryDirectories>$(SolutionDir)lib\3ds_max_sdk_2023\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>core.lib;maxutil.lib;Paramblk2.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
@@ -66,22 +66,23 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src\class_desc.cpp" />
-    <ClCompile Include="src\dll_main.cpp" />
-    <ClCompile Include="src\plugin.cpp" />
-    <ClCompile Include="src\utility.cpp" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="include\class_desc.hpp" />
     <ClInclude Include="include\plugin.hpp" />
     <ClInclude Include="include\resource.hpp" />
     <ClInclude Include="include\utility.hpp" />
+    <ClInclude Include="include\version.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="src\plugin.def" />
+    <ClCompile Include="sources\class_desc.cpp" />
+    <ClCompile Include="sources\dll_main.cpp" />
+    <ClCompile Include="sources\plugin.cpp" />
+    <ClCompile Include="sources\utility.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="src\resource.rc" />
+    <None Include="sources\plugin.def" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="sources\resource.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

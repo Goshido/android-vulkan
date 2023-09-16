@@ -16,6 +16,15 @@
     <Filter Include="Linker">
       <UniqueIdentifier>{3aafded4-fa61-48de-bcd4-6dbe6de563f9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\GXCommon">
+      <UniqueIdentifier>{8c0aedea-5781-491f-a38e-1cbdc971c43a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\GXCommon">
+      <UniqueIdentifier>{7a44c00b-9173-4883-9f8f-d066340a3e3f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\GXCommon\Intrinsics">
+      <UniqueIdentifier>{be866ed2-4ab3-4530-ba49-af29c34b605c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\plugin.hpp">
@@ -36,6 +45,9 @@
     <ClInclude Include="include\mesh_exporter.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\GXCommon\GXMath.hpp">
+      <Filter>Header Files\GXCommon</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sources\class_desc.cpp">
@@ -52,6 +64,12 @@
     </ClCompile>
     <ClCompile Include="sources\mesh_exporter.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\GXCommon\GXMath.cpp">
+      <Filter>Source Files\GXCommon</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\GXCommon\Intrinsics\GXMathCPU.cpp">
+      <Filter>Source Files\GXCommon\Intrinsics</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

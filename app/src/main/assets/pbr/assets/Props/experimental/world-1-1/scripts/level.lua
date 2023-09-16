@@ -84,6 +84,23 @@ local function OnActorConstructed ( self, actor )
     self._uiX = uiDebug:Find ( "x-value" ):GetTextElement ()
     self._uiY = uiDebug:Find ( "y-value" ):GetTextElement ()
     self._uiZ = uiDebug:Find ( "z-value" ):GetTextElement ()
+
+    local test = Actor ( "TEST" )
+    local mesh = StaticMeshComponent ( "Mesh", "pbr/assets/Props/experimental/exporter/cube.mesh2" )
+    mesh:SetMaterial ( Material ( "pbr/assets/Props/experimental/exporter/material.mtl" ) )
+
+    local v = GXVec3 ()
+    v:Init ( -24.32, 65.19, 286.18 )
+
+    local m = GXMat4 ()
+    m:Scale ( 2.0, 2.0, 2.0 )
+    m:SetW ( v )
+    mesh:SetLocal ( m )
+
+    test:AppendComponent ( mesh )
+    g_scene:AppendActor ( test )
+
+    self._test = test
 end
 
 -- Metamethods

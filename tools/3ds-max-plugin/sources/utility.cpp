@@ -267,11 +267,7 @@ void Utility::OnExportMesh () noexcept
 
     MSTR path {};
     edit->GetText ( path );
-
-    MeshExporter const exporter ( _ui,
-        path,
-        static_cast<bool> ( IsDlgButtonChecked ( _ui, AVP_UI_CHECKBOX_CURRENT_POSE ) )
-    );
+    MeshExporter::Run ( _ui, path, static_cast<bool> ( IsDlgButtonChecked ( _ui, AVP_UI_CHECKBOX_CURRENT_POSE ) ) );
 
     ReleaseICustEdit ( edit );
 }

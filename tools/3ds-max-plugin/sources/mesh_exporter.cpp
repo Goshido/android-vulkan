@@ -1,12 +1,29 @@
 #include <mesh_exporter.hpp>
+#include <GXCommon/GXMath.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
+#include <filesystem>
+#include <fstream>
 #include <maxapi.h>
+#include <unordered_map>
+#include <vector>
 #include <IGame/IGame.h>
 #include <IGame/IGameModifier.h>
 
 GX_RESTORE_WARNING_STATE
+
+// This stuff is defined in Windows SDK headers as macro. Same time such members exist
+// in android_vulkan namespace as constants. Solution - undef TRUE and FALSE.
+#if defined ( TRUE )
+#undef TRUE
+#endif
+
+#if defined ( FALSE )
+#undef FALSE
+#endif
+
+#include <mesh2.hpp>
 
 
 namespace avp {
@@ -62,7 +79,7 @@ bool AutoReleaseIGameScene::Init ( HWND parent ) noexcept
     _scene = GetIGameInterface ();
 
     bool const result = CheckResult ( _scene != nullptr, parent, "Can't get IGameScene.", MB_ICONWARNING ) &&
-        CheckResult ( _scene->InitialiseIGame (), parent, "Can't init IGameScene.", MB_ICONWARNING );
+        CheckResult ( _scene->InitialiseIGame ( true ), parent, "Can't init IGameScene.", MB_ICONWARNING );
 
     if ( !result )
         return false;
@@ -75,7 +92,7 @@ bool AutoReleaseIGameScene::Init ( HWND parent ) noexcept
             .rotation = 0,
             .xAxis = 1,
             .yAxis = 2,
-            .zAxis = 5,
+            .zAxis = 4,
             .uAxis = 1,
             .vAxis = 1
         }
@@ -139,12 +156,72 @@ bool AutoReleaseIGameNode::Init ( HWND parent, IGameScene &scene, INode &node ) 
         );
 }
 
+//----------------------------------------------------------------------------------------------------------------------
+
+struct Attributes final
+{
+    int     _normal;
+    int     _position;
+    int     _tangentBitangent;
+    int     _uv;
+
+    [[nodiscard]] bool operator == ( Attributes const &other ) const noexcept;
+};
+
+bool Attributes::operator == ( Attributes const &other ) const noexcept
+{
+    bool const c0 = _normal == other._normal;
+    bool const c1 = _position == other._position;
+    bool const c2 = _tangentBitangent == other._tangentBitangent;
+    bool const c3 = _uv == other._uv;
+    return c0 & c1 & c2 & c3;
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+class Hasher final
+{
+    private:
+        std::hash<uint64_t> const       _hashServer {};
+
+    public:
+        Hasher () = default;
+
+        Hasher ( Hasher const & ) = default;
+        Hasher &operator = ( Hasher const & ) = delete;
+
+        Hasher ( Hasher && ) = delete;
+        Hasher &operator = ( Hasher && ) = delete;
+
+        ~Hasher () = default;
+
+        [[nodiscard]] size_t operator () ( Attributes const &item ) const noexcept;
+};
+
+size_t Hasher::operator () ( Attributes const &item ) const noexcept
+{
+    // Hash function is based on Boost implementation:
+    // https://www.boost.org/doc/libs/1_55_0/doc/html/hash/reference.html#boost.hash_combine
+
+    size_t hash = 0U;
+
+    auto hashCombine = [ & ] ( uint64_t v ) noexcept
+    {
+        constexpr size_t magic = 0x9E3779B9U;
+        hash ^= _hashServer ( v ) + magic + ( hash << 6U ) + ( hash >> 2U );
+    };
+
+    hashCombine ( static_cast<uint64_t> ( item._normal ) | ( static_cast<uint64_t> ( item._position ) << 32U ) );
+    hashCombine ( static_cast<uint64_t> ( item._tangentBitangent ) | ( static_cast<uint64_t> ( item._uv ) << 32U ) );
+
+    return hash;
+}
+
 } // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 
-MeshExporter::MeshExporter ( HWND parent, MSTR const &/*path*/, bool exportInCurrentPose ) noexcept:
-    _parent ( parent )
+void MeshExporter::Run ( HWND parent, MSTR const &path, bool exportInCurrentPose ) noexcept
 {
     Interface17 &core = *GetCOREInterface17 ();
 
@@ -171,50 +248,102 @@ MeshExporter::MeshExporter ( HWND parent, MSTR const &/*path*/, bool exportInCur
         return;
 
     int const uvChannel = mapper[ 0 ];
-    PumpLowLevelData ( mesh, uvChannel );
-}
+    int const faceCount = mesh.GetNumberOfFaces ();
+    constexpr int faceCorners = 3;
 
-void MeshExporter::PumpLowLevelData ( IGameMesh &mesh, int uvChannel ) noexcept
-{
-    int count = mesh.GetNumberOfVerts ();
-    _positions.resize ( static_cast<size_t> ( count ) );
-    Point3* v3 = _positions.data ();
+    std::unordered_map<Attributes, android_vulkan::Mesh2Index, Hasher> uniqueMapper {};
 
-    for ( int i = 0; i < count; ++i )
-        mesh.GetVertex ( i, v3[ i ], true );
+    std::vector<android_vulkan::Mesh2Index> indices {};
+    auto const indexCount = static_cast<size_t> ( faceCount * faceCorners );
+    indices.reserve ( indexCount );
+    android_vulkan::Mesh2Index idx = 0U;
 
-    count = mesh.GetNumberOfNormals ();
-    _normals.resize ( static_cast<size_t> ( count ) );
-    v3 = _normals.data ();
+    // Estimation from top.
+    std::vector<android_vulkan::Mesh2Vertex> vertices ( indexCount );
+    android_vulkan::Mesh2Vertex* v = vertices.data ();
 
-    for ( int i = 0; i < count; ++i )
-        mesh.GetNormal ( i, v3[ i ], true );
+    auto const uvToVec2 = [] ( Point3 p3, android_vulkan::Vec2 &v2 ) noexcept {
+        v2[ 0U ] = p3.x;
 
-    count = mesh.GetNumberOfTangents ( uvChannel );
-    _tangents.resize ( static_cast<size_t> ( count ) );
-    v3 = _tangents.data ();
+        // [2023/09/16] For some reason 3ds Max 2023 SDK completely ignores 'V' direction in UserCoord.
+        // Patching V coordinate by ourself...
+        v2[ 1U ] = 1.0F - p3.y;
+    };
 
-    for ( int i = 0; i < count; ++i )
-        mesh.GetTangent ( i, v3[ i ], true );
+    auto const p3ToVec3 = [] ( Point3 p3, android_vulkan::Vec3 &v3 ) noexcept {
+        v3[ 0U ] = p3.x;
+        v3[ 1U ] = p3.y;
+        v3[ 2U ] = p3.z;
+    };
 
-    count = mesh.GetNumberOfBinormals ( uvChannel );
-    _bitangents.resize ( static_cast<size_t> ( count ) );
-    v3 = _bitangents.data ();
+    GXAABB bounds {};
 
-    for ( int i = 0; i < count; ++i )
-        mesh.GetBinormal ( i, v3[ i ], true );
-
-    count = mesh.GetNumberOfMapVerts ( uvChannel );
-    _uvs.resize ( static_cast<size_t> ( count ) );
-    Point2* v2 = _uvs.data ();
-
-    for ( int i = 0; i < count; ++i )
+    for ( int faceIdx = 0; faceIdx < faceCount; ++faceIdx )
     {
-        Point3 const uvw = mesh.GetMapVertex ( uvChannel, i );
-        Point2 &target = v2[ i ];
-        target.x = uvw.x;
-        target.y = uvw.y;
+        for ( int cornerIdx = 0; cornerIdx < faceCorners; ++cornerIdx )
+        {
+            Attributes const attributes
+            {
+                ._normal = mesh.GetFaceVertexNormal ( faceIdx, cornerIdx ),
+                ._position = mesh.GetFaceVertex ( faceIdx, cornerIdx ),
+                ._tangentBitangent = mesh.GetFaceVertexTangentBinormal ( faceIdx, cornerIdx, uvChannel ),
+                ._uv = mesh.GetFaceTextureVertex ( faceIdx, cornerIdx, uvChannel )
+            };
+
+            if ( auto const findResult = uniqueMapper.find ( attributes ); findResult != uniqueMapper.cend () )
+            {
+                indices.push_back ( findResult->second );
+                continue;
+            }
+
+            android_vulkan::Mesh2Vertex &vertex = v[ idx ];
+
+            Point3 const p = mesh.GetVertex ( attributes._position, true );
+            p3ToVec3 ( p, vertex._vertex );
+            bounds.AddVertex ( p.x, p.y, p.z );
+
+            p3ToVec3 ( mesh.GetTangent ( attributes._tangentBitangent, true ), vertex._tangent );
+            p3ToVec3 ( mesh.GetBinormal ( attributes._tangentBitangent, true ), vertex._bitangent );
+            p3ToVec3 ( mesh.GetNormal ( attributes._normal, true ), vertex._normal );
+            uvToVec2 ( mesh.GetMapVertex ( uvChannel, attributes._uv ), vertex._uv );
+
+            indices.push_back ( idx );
+            uniqueMapper.emplace ( attributes, idx++ );
+        }
     }
+
+    auto file = OpenFile ( parent, path );
+
+    if ( !file )
+        return;
+
+    std::ofstream &f = *file;
+    float const* bMin = bounds._min._data;
+    float const* bMax = bounds._min._data;
+    size_t const indexSize = indexCount * sizeof ( android_vulkan::Mesh2Index );
+
+    android_vulkan::Mesh2Header const header
+    {
+        ._bounds = 
+        {
+            ._min = { bMin[ 0U ], bMin[ 1U ], bMin[ 2U ] },
+            ._max = { bMax[ 0U ], bMax[ 1U ], bMax[ 2U ] }
+        },
+
+        ._indexCount = static_cast<uint64_t> ( indexCount ),
+        ._indexDataOffset = static_cast<uint64_t> ( sizeof ( android_vulkan::Mesh2Header ) ),
+        ._vertexCount = static_cast<uint64_t> ( idx ),
+        ._vertexDataOffset = static_cast<uint64_t> ( sizeof ( android_vulkan::Mesh2Header ) + indexSize )
+    };
+
+    f.write ( reinterpret_cast<char const*> ( &header ), sizeof ( header ) );
+    f.write ( reinterpret_cast<char const*> ( indices.data () ), static_cast<std::streamsize> ( indexSize ) );
+
+    f.write ( reinterpret_cast<char const*> ( v ),
+        static_cast<std::streamsize> ( idx * sizeof ( android_vulkan::Mesh2Vertex ) )
+    );
+
+    MessageBoxA ( parent, "Done.", "android-vulkan", MB_ICONINFORMATION );
 }
 
 IGameMesh &MeshExporter::GetMesh ( IGameObject &object, bool exportInCurrentPose ) noexcept
@@ -228,6 +357,37 @@ IGameMesh &MeshExporter::GetMesh ( IGameObject &object, bool exportInCurrentPose
     }
 
     return *skin->GetInitialPose ();
+}
+
+std::optional<std::ofstream> MeshExporter::OpenFile ( HWND parent, MSTR const &path ) noexcept
+{
+    std::filesystem::path const filePath ( path.data () );
+
+    if ( filePath.has_parent_path () )
+    {
+        std::filesystem::path const parentDirectory = filePath.parent_path ();
+
+        if ( !std::filesystem::exists ( parentDirectory ) )
+        {
+            bool const result = CheckResult ( std::filesystem::create_directories ( parentDirectory ),
+                parent,
+                "Can't create file directory",
+                MB_ICONWARNING
+            );
+
+            if ( !result )
+            {
+                return std::nullopt;
+            }
+        }
+    }
+
+    std::ofstream f ( filePath, std::ios::binary );
+
+    if ( !CheckResult ( f.is_open (), parent, "Can't open file", MB_ICONWARNING ) )
+        return std::nullopt;
+
+    return std::move ( f );
 }
 
 } // namespace avp

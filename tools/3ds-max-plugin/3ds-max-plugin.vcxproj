@@ -118,6 +118,7 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\app\src\main\cpp\include\GXCommon\GXMath.hpp" />
     <ClInclude Include="include\class_desc.hpp" />
     <ClInclude Include="include\mesh_exporter.hpp" />
     <ClInclude Include="include\plugin.hpp" />
@@ -126,6 +127,8 @@
     <ClInclude Include="include\version.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\GXCommon\GXMath.cpp" />
+    <ClCompile Include="..\..\app\src\main\cpp\sources\GXCommon\Intrinsics\GXMathCPU.cpp" />
     <ClCompile Include="sources\class_desc.cpp" />
     <ClCompile Include="sources\dll_main.cpp" />
     <ClCompile Include="sources\mesh_exporter.cpp" />

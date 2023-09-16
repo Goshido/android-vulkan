@@ -6,8 +6,7 @@
 
 GX_DISABLE_COMMON_WARNINGS
 
-#include <custcont.h>
-#include <vector>
+#include <optional>
 #include <IGame/IGameObject.h>
 
 GX_RESTORE_WARNING_STATE
@@ -17,16 +16,6 @@ namespace avp {
 
 class MeshExporter final
 {
-    private:
-        std::vector<Point3>     _bitangents {};
-        std::vector<Point3>     _normals {};
-        std::vector<Point3>     _tangents {};
-
-        std::vector<Point3>     _positions {};
-        std::vector<Point2>     _uvs {};
-
-        HWND                    _parent = nullptr;
-
     public:
         MeshExporter () = delete;
 
@@ -36,13 +25,13 @@ class MeshExporter final
         MeshExporter ( MeshExporter && ) = delete;
         MeshExporter &operator = ( MeshExporter && ) = delete;
 
-        explicit MeshExporter ( HWND parent, MSTR const &path, bool exportInCurrentPose ) noexcept;
+        ~MeshExporter () = delete;
 
-        ~MeshExporter () = default;
+        static void Run ( HWND parent, MSTR const &path, bool exportInCurrentPose ) noexcept;
 
     private:
-        void PumpLowLevelData ( IGameMesh &mesh, int uvChannel ) noexcept;
         [[nodiscard]] static IGameMesh &GetMesh ( IGameObject &object, bool exportInCurrentPose ) noexcept;
+        [[nodiscard]] static std::optional<std::ofstream> OpenFile ( HWND parent, MSTR const &path ) noexcept;
 };
 
 } // namespace avp

@@ -1,4 +1,4 @@
-// version 1.80
+// version 1.81
 
 #ifndef GX_MATH_HPP
 #define GX_MATH_HPP
@@ -10,6 +10,7 @@
 GX_DISABLE_COMMON_WARNINGS
 
 #include <cmath>
+#include <float.h>
 #include <limits.h>
 
 GX_RESTORE_WARNING_STATE

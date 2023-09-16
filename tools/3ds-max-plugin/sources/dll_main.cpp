@@ -2,9 +2,8 @@
 
 GX_DISABLE_COMMON_WARNINGS
 
-#include <Windows.h>
-#include <3ds_max_sdk/plugin.h>
-#include <3ds_max_sdk/plugapi.h>
+#include <plugin.h>
+#include <plugapi.h>
 
 GX_RESTORE_WARNING_STATE
 

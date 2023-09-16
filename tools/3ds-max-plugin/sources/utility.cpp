@@ -1,11 +1,12 @@
+#include <mesh_exporter.hpp>
 #include <resource.hpp>
 #include <utility.hpp>
 #include <version.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
+#include <maxapi.h>
 #include <Shobjidl.h>
-#include <3ds_max_sdk/maxapi.h>
 
 GX_RESTORE_WARNING_STATE
 
@@ -257,14 +258,22 @@ void Utility::OnBrowseSkinFile () noexcept
 
 void Utility::OnExportAnimation () noexcept
 {
-    // TODO
     MessageBoxA ( _ui, "OnExportAnimation", "android-vulkan", MB_ICONINFORMATION );
 }
 
 void Utility::OnExportMesh () noexcept
 {
-    // TODO
-    MessageBoxA ( _ui, "OnExportMesh", "android-vulkan", MB_ICONINFORMATION );
+    ICustEdit* edit = GetICustEdit ( GetDlgItem ( _ui, AVP_UI_EDITBOX_MESH_FILE ) );
+
+    MSTR path {};
+    edit->GetText ( path );
+
+    MeshExporter const exporter ( _ui,
+        path,
+        static_cast<bool> ( IsDlgButtonChecked ( _ui, AVP_UI_CHECKBOX_CURRENT_POSE ) )
+    );
+
+    ReleaseICustEdit ( edit );
 }
 
 void Utility::OnExportSkeleton () noexcept

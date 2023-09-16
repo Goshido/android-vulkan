@@ -6,7 +6,7 @@
 
 GX_DISABLE_COMMON_WARNINGS
 
-#include <3ds_max_sdk/iparamb2.h>
+#include <iparamb2.h>
 
 GX_RESTORE_WARNING_STATE
 

@@ -48,6 +48,15 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\GXCommon\GXMath.hpp">
       <Filter>Header Files\GXCommon</Filter>
     </ClInclude>
+    <ClInclude Include="include\exporter.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\result_checker.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\skin_exporter.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sources\class_desc.cpp">
@@ -70,6 +79,15 @@
     </ClCompile>
     <ClCompile Include="..\..\app\src\main\cpp\sources\GXCommon\Intrinsics\GXMathCPU.cpp">
       <Filter>Source Files\GXCommon\Intrinsics</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\exporter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\result_checker.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\skin_exporter.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

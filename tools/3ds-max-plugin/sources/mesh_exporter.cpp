@@ -1,14 +1,12 @@
 #include <mesh_exporter.hpp>
+#include <result_checker.hpp>
 #include <GXCommon/GXMath.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
-#include <filesystem>
-#include <fstream>
 #include <maxapi.h>
 #include <unordered_map>
 #include <vector>
-#include <IGame/IGame.h>
 #include <IGame/IGameModifier.h>
 
 GX_RESTORE_WARNING_STATE
@@ -27,199 +25,6 @@ GX_RESTORE_WARNING_STATE
 
 
 namespace avp {
-
-namespace {
-
-[[nodiscard]] bool CheckResult ( bool result, HWND parent, char const *message, UINT icon ) noexcept
-{
-    if ( result )
-        return true;
-
-    MessageBoxA ( parent, message, "android-vulkan", icon );
-    return false;
-}
-
-//----------------------------------------------------------------------------------------------------------------------
-
-class AutoReleaseIGameScene final
-{
-    private:
-        IGameScene*     _scene = nullptr;
-
-    public:
-        AutoReleaseIGameScene () = default;
-
-        AutoReleaseIGameScene ( AutoReleaseIGameScene const & ) = delete;
-        AutoReleaseIGameScene &operator = ( AutoReleaseIGameScene const & ) = delete;
-
-        AutoReleaseIGameScene ( AutoReleaseIGameScene && ) = delete;
-        AutoReleaseIGameScene &operator = ( AutoReleaseIGameScene && ) = delete;
-
-        ~AutoReleaseIGameScene () noexcept;
-
-        [[nodiscard]] IGameScene &GetScene () noexcept;
-        [[nodiscard]] bool Init ( HWND parent ) noexcept;
-};
-
-AutoReleaseIGameScene::~AutoReleaseIGameScene () noexcept
-{
-    if ( _scene )
-    {
-        _scene->ReleaseIGame ();
-    }
-}
-
-IGameScene &AutoReleaseIGameScene::GetScene () noexcept
-{
-    return *_scene;
-}
-
-bool AutoReleaseIGameScene::Init ( HWND parent ) noexcept
-{
-    _scene = GetIGameInterface ();
-
-    bool const result = CheckResult ( _scene != nullptr, parent, "Can't get IGameScene.", MB_ICONWARNING ) &&
-        CheckResult ( _scene->InitialiseIGame ( true ), parent, "Can't init IGameScene.", MB_ICONWARNING );
-
-    if ( !result )
-        return false;
-
-    IGameConversionManager &conventions = *GetConversionManager ();
-
-    conventions.SetUserCoordSystem (
-        UserCoord
-        {
-            .rotation = 0,
-            .xAxis = 1,
-            .yAxis = 2,
-            .zAxis = 4,
-            .uAxis = 1,
-            .vAxis = 1
-        }
-    );
-
-    conventions.SetCoordSystem ( IGameConversionManager::CoordSystem::IGAME_USER );
-    return true;
-}
-
-//----------------------------------------------------------------------------------------------------------------------
-
-class AutoReleaseIGameNode final
-{
-    private:
-        IGameNode*      _node = nullptr;
-        IGameObject*    _object = nullptr;
-
-    public:
-        AutoReleaseIGameNode () = default;
-
-        AutoReleaseIGameNode ( AutoReleaseIGameNode const & ) = delete;
-        AutoReleaseIGameNode &operator = ( AutoReleaseIGameNode const & ) = delete;
-
-        AutoReleaseIGameNode ( AutoReleaseIGameNode && ) = delete;
-        AutoReleaseIGameNode &operator = ( AutoReleaseIGameNode && ) = delete;
-
-        ~AutoReleaseIGameNode () noexcept;
-
-        [[nodiscard]] IGameObject &GetGameObject () noexcept;
-        [[nodiscard]] bool Init ( HWND parent, IGameScene &scene, INode &node ) noexcept;
-};
-
-AutoReleaseIGameNode::~AutoReleaseIGameNode () noexcept
-{
-    if ( _object )
-    {
-        _node->ReleaseIGameObject ();
-    }
-}
-
-IGameObject &AutoReleaseIGameNode::GetGameObject () noexcept
-{
-    return *_object;
-}
-
-bool AutoReleaseIGameNode::Init ( HWND parent, IGameScene &scene, INode &node ) noexcept
-{
-    _node = scene.GetIGameNode ( &node );
-
-    if ( !CheckResult ( _node != nullptr, parent, "Can't init IGameNode.", MB_ICONWARNING ) )
-        return false;
-
-    _object = _node->GetIGameObject ();
-
-    return CheckResult ( _object->InitializeData (), parent, "Can't init IGameObject.", MB_ICONWARNING ) &&
-
-        CheckResult ( _object->GetIGameType () == IGameMesh::IGAME_MESH,
-            parent, 
-            "Please select mesh to export.",
-            MB_ICONINFORMATION
-        );
-}
-
-//----------------------------------------------------------------------------------------------------------------------
-
-struct Attributes final
-{
-    int     _normal;
-    int     _position;
-    int     _tangentBitangent;
-    int     _uv;
-
-    [[nodiscard]] bool operator == ( Attributes const &other ) const noexcept;
-};
-
-bool Attributes::operator == ( Attributes const &other ) const noexcept
-{
-    bool const c0 = _normal == other._normal;
-    bool const c1 = _position == other._position;
-    bool const c2 = _tangentBitangent == other._tangentBitangent;
-    bool const c3 = _uv == other._uv;
-    return c0 & c1 & c2 & c3;
-}
-
-//----------------------------------------------------------------------------------------------------------------------
-
-class Hasher final
-{
-    private:
-        std::hash<uint64_t> const       _hashServer {};
-
-    public:
-        Hasher () = default;
-
-        Hasher ( Hasher const & ) = default;
-        Hasher &operator = ( Hasher const & ) = delete;
-
-        Hasher ( Hasher && ) = delete;
-        Hasher &operator = ( Hasher && ) = delete;
-
-        ~Hasher () = default;
-
-        [[nodiscard]] size_t operator () ( Attributes const &item ) const noexcept;
-};
-
-size_t Hasher::operator () ( Attributes const &item ) const noexcept
-{
-    // Hash function is based on Boost implementation:
-    // https://www.boost.org/doc/libs/1_55_0/doc/html/hash/reference.html#boost.hash_combine
-
-    size_t hash = 0U;
-
-    auto hashCombine = [ & ] ( uint64_t v ) noexcept
-    {
-        constexpr size_t magic = 0x9E3779B9U;
-        hash ^= _hashServer ( v ) + magic + ( hash << 6U ) + ( hash >> 2U );
-    };
-
-    hashCombine ( static_cast<uint64_t> ( item._normal ) | ( static_cast<uint64_t> ( item._position ) << 32U ) );
-    hashCombine ( static_cast<uint64_t> ( item._tangentBitangent ) | ( static_cast<uint64_t> ( item._uv ) << 32U ) );
-
-    return hash;
-}
-
-} // end of anonymous namespace
-
-//----------------------------------------------------------------------------------------------------------------------
 
 void MeshExporter::Run ( HWND parent, MSTR const &path, bool exportInCurrentPose ) noexcept
 {
@@ -249,12 +54,10 @@ void MeshExporter::Run ( HWND parent, MSTR const &path, bool exportInCurrentPose
 
     int const uvChannel = mapper[ 0 ];
     int const faceCount = mesh.GetNumberOfFaces ();
-    constexpr int faceCorners = 3;
-
-    std::unordered_map<Attributes, android_vulkan::Mesh2Index, Hasher> uniqueMapper {};
+    std::unordered_map<Attributes, android_vulkan::Mesh2Index, Attributes::Hasher> uniqueMapper {};
 
     std::vector<android_vulkan::Mesh2Index> indices {};
-    auto const indexCount = static_cast<size_t> ( faceCount * faceCorners );
+    auto const indexCount = static_cast<size_t> ( faceCount * FACE_CORNERS );
     indices.reserve ( indexCount );
     android_vulkan::Mesh2Index idx = 0U;
 
@@ -280,7 +83,7 @@ void MeshExporter::Run ( HWND parent, MSTR const &path, bool exportInCurrentPose
 
     for ( int faceIdx = 0; faceIdx < faceCount; ++faceIdx )
     {
-        for ( int cornerIdx = 0; cornerIdx < faceCorners; ++cornerIdx )
+        for ( int cornerIdx = 0; cornerIdx < FACE_CORNERS; ++cornerIdx )
         {
             Attributes const attributes
             {
@@ -348,7 +151,7 @@ void MeshExporter::Run ( HWND parent, MSTR const &path, bool exportInCurrentPose
 
 IGameMesh &MeshExporter::GetMesh ( IGameObject &object, bool exportInCurrentPose ) noexcept
 {
-    IGameSkin *skin = object.GetIGameSkin ();
+    IGameSkin* skin = object.GetIGameSkin ();
 
     if ( exportInCurrentPose | !skin )
     {
@@ -357,37 +160,6 @@ IGameMesh &MeshExporter::GetMesh ( IGameObject &object, bool exportInCurrentPose
     }
 
     return *skin->GetInitialPose ();
-}
-
-std::optional<std::ofstream> MeshExporter::OpenFile ( HWND parent, MSTR const &path ) noexcept
-{
-    std::filesystem::path const filePath ( path.data () );
-
-    if ( filePath.has_parent_path () )
-    {
-        std::filesystem::path const parentDirectory = filePath.parent_path ();
-
-        if ( !std::filesystem::exists ( parentDirectory ) )
-        {
-            bool const result = CheckResult ( std::filesystem::create_directories ( parentDirectory ),
-                parent,
-                "Can't create file directory",
-                MB_ICONWARNING
-            );
-
-            if ( !result )
-            {
-                return std::nullopt;
-            }
-        }
-    }
-
-    std::ofstream f ( filePath, std::ios::binary );
-
-    if ( !CheckResult ( f.is_open (), parent, "Can't open file", MB_ICONWARNING ) )
-        return std::nullopt;
-
-    return std::move ( f );
 }
 
 } // namespace avp

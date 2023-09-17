@@ -2,11 +2,10 @@
 #define AVP_MESH_EXPORTER_HPP
 
 
-#include <GXCommon/GXWarning.hpp>
+#include "exporter.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
 
-#include <optional>
 #include <IGame/IGameObject.h>
 
 GX_RESTORE_WARNING_STATE
@@ -14,7 +13,7 @@ GX_RESTORE_WARNING_STATE
 
 namespace avp {
 
-class MeshExporter final
+class MeshExporter final : public Exporter
 {
     public:
         MeshExporter () = delete;
@@ -31,7 +30,6 @@ class MeshExporter final
 
     private:
         [[nodiscard]] static IGameMesh &GetMesh ( IGameObject &object, bool exportInCurrentPose ) noexcept;
-        [[nodiscard]] static std::optional<std::ofstream> OpenFile ( HWND parent, MSTR const &path ) noexcept;
 };
 
 } // namespace avp

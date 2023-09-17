@@ -16,15 +16,15 @@ namespace android_vulkan {
 #pragma pack ( push, 1 )
 
 using Boolean = uint8_t;
-[[maybe_unused]] constexpr Boolean const TRUE = 1U;
-[[maybe_unused]] constexpr Boolean const FALSE = 0U;
+[[maybe_unused]] constexpr static Boolean TRUE = 1U;
+[[maybe_unused]] constexpr static Boolean FALSE = 0U;
 
 using Mat4x4 = float[ 16U ];
 using Vec2 = float[ 2U ];
 using Vec3 = float[ 3U ];
 
 using UTF8Offset = uint64_t;
-constexpr UTF8Offset const NO_UTF8_OFFSET = 0U;
+constexpr static UTF8Offset NO_UTF8_OFFSET = 0U;
 
 struct ColorUnorm final
 {

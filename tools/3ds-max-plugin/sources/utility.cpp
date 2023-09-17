@@ -1,5 +1,6 @@
 #include <mesh_exporter.hpp>
 #include <resource.hpp>
+#include <skin_exporter.hpp>
 #include <utility.hpp>
 #include <version.hpp>
 
@@ -280,8 +281,13 @@ void Utility::OnExportSkeleton () noexcept
 
 void Utility::OnExportSkin () noexcept
 {
-    // TODO
-    MessageBoxA ( _ui, "OnExportSkin", "android-vulkan", MB_ICONINFORMATION );
+    ICustEdit* edit = GetICustEdit ( GetDlgItem ( _ui, AVP_UI_EDITBOX_SKIN_FILE ) );
+
+    MSTR path {};
+    edit->GetText ( path );
+    SkinExporter::Run ( _ui, path );
+
+    ReleaseICustEdit ( edit );
 }
 
 INT_PTR CALLBACK Utility::DialogProc ( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )

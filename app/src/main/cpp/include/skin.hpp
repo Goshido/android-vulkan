@@ -9,6 +9,23 @@ namespace android_vulkan {
 
 #pragma pack ( push, 1 )
 
+struct SkinHeader final
+{
+    AABB        _bounds;
+
+    uint32_t    _skinVertexCount;
+    uint64_t    _skinVertexDataOffset;
+
+    uint32_t    _boneCount;
+    uint64_t    _boneDataOffset;
+};
+
+struct SkinBone final
+{
+    uint32_t                        _index;
+    android_vulkan::UTF8Offset      _name;
+};
+
 struct SkinInfluence final
 {
     uint32_t    _boneIndex;

@@ -121,7 +121,7 @@ std::optional<android_vulkan::SkinVertex> SkinBuilder::Compute ( HWND parent ) n
 
 void SkinExporter::Run ( HWND parent, MSTR const &path ) noexcept
 {
-    Interface7 &core = *GetCOREInterface7 ();
+    Interface17 &core = *GetCOREInterface17 ();
 
     if ( !CheckResult ( core.GetSelNodeCount () == 1, parent, "Please select single mesh", MB_ICONINFORMATION ) )
         return;
@@ -163,7 +163,7 @@ void SkinExporter::Run ( HWND parent, MSTR const &path ) noexcept
     std::vector<android_vulkan::SkinVertex> skinVertices {};
     skinVertices.reserve ( indexCount );
 
-    std::unordered_map<IGameNode*, int> boneMap {};
+    std::unordered_map<IGameNode*, uint32_t> boneMap {};
     std::unordered_set<Attributes, Attributes::Hasher> uniqueMapper {};
 
     for ( int faceIdx = 0; faceIdx < faceCount; ++faceIdx )
@@ -193,7 +193,7 @@ void SkinExporter::Run ( HWND parent, MSTR const &path ) noexcept
             for ( int boneIdx = 0; boneIdx < boneCount; ++boneIdx )
             {
                 IGameNode* bone = skin->GetIGameBone ( positionIndex, boneIdx );
-                int targetBoneIndex;
+                uint32_t targetBoneIndex;
 
                 if ( auto const findResult = boneMap.find ( bone ); findResult != boneMap.cend () )
                 {
@@ -201,14 +201,14 @@ void SkinExporter::Run ( HWND parent, MSTR const &path ) noexcept
                 }
                 else
                 {
-                    targetBoneIndex = skin->GetBoneIndex ( bone, true );
+                    targetBoneIndex = static_cast<uint32_t> ( skin->GetBoneIndex ( bone, true ) );
                     boneMap.emplace ( bone, targetBoneIndex );
                 }
 
                 skinBuilder.Add (
                     android_vulkan::SkinInfluence
                     {
-                        ._boneIndex = static_cast<uint32_t> ( targetBoneIndex ),
+                        ._boneIndex = targetBoneIndex,
                         ._boneWeight = skin->GetWeight ( positionIndex, boneIdx )
                     }
                 );
@@ -233,9 +233,64 @@ void SkinExporter::Run ( HWND parent, MSTR const &path ) noexcept
         return;
 
     std::ofstream &f = *file;
+
+    // TODO user must setup this from UI.
+    float const* bMin = bounds._min._data;
+    float const* bMax = bounds._max._data;
+
+    size_t const skinVertexCount = skinVertices.size ();
+    size_t const skinVertexSize = skinVertexCount * sizeof ( android_vulkan::SkinVertex );
+
+    android_vulkan::SkinHeader const header
+    {
+        ._bounds = 
+        {
+            ._min = { bMin[ 0U ], bMin[ 1U ], bMin[ 2U ] },
+            ._max = { bMax[ 0U ], bMax[ 1U ], bMax[ 2U ] }
+        },
+
+        ._skinVertexCount = static_cast<uint32_t> ( skinVertexCount ),
+        ._skinVertexDataOffset = static_cast<uint64_t> ( sizeof ( android_vulkan::SkinHeader ) ),
+        ._boneCount = static_cast<uint32_t> ( boneMap.size () ),
+        ._boneDataOffset = static_cast<uint64_t> ( sizeof ( android_vulkan::SkinHeader ) + skinVertexSize )
+    };
+
+    f.write ( reinterpret_cast<char const*> ( &header ), sizeof ( header ) );
+    f.write ( reinterpret_cast<char const*> ( skinVertices.data () ), static_cast<std::streamsize> ( skinVertexSize ) );
+
+    uint64_t offset = header._boneDataOffset + header._boneCount * sizeof ( android_vulkan::SkinBone );
+    std::unordered_set<std::string> uniqueNames {};
+
+    for ( auto const &bone : boneMap )
+    {
+        android_vulkan::SkinBone const skinBone
+        {
+            ._index = bone.second,
+            ._name = offset
+        };
+
+        f.write ( reinterpret_cast<char const*> ( &skinBone ), sizeof ( skinBone ) );
+        IGameNode* b = bone.first;
+        MSTR const name = b->GetName ();
+
+        if ( !CheckResult ( !name.isNull (), parent, "Bone name must not be empty.", MB_ICONINFORMATION ) )
+            return;
+
+        std::string utf8 ( name.ToUTF8 () );
+
+        if ( !CheckResult ( !uniqueNames.contains ( utf8 ), parent, "Bone name must be unique.", MB_ICONINFORMATION) )
+            return;
+
+        // Strings must be null terminated.
+        offset += static_cast<uint64_t> ( utf8.size () + 1U );
+
+        uniqueNames.insert ( std::move ( utf8 ) );
+    }
+
+    // TODO write sting names.
     (void)f;
 
-    // TODO
+    MessageBoxA ( parent, "Done.", "android-vulkan", MB_ICONINFORMATION );
 }
 
 } // namespace avp

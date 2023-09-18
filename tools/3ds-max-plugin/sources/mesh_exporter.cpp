@@ -122,7 +122,7 @@ void MeshExporter::Run ( HWND parent, MSTR const &path, bool exportInCurrentPose
 
     std::ofstream &f = *file;
     float const* bMin = bounds._min._data;
-    float const* bMax = bounds._min._data;
+    float const* bMax = bounds._max._data;
     size_t const indexSize = indexCount * sizeof ( android_vulkan::Mesh2Index );
 
     android_vulkan::Mesh2Header const header

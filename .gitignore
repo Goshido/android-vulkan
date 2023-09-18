@@ -27,4 +27,4 @@
 /tools/3ds-max-plugin/build/
 
 /tools/3ds-max-plugin/3ds-max-plugin.vcxproj.user
-/tools/3ds-max-plugin/src/resource.aps
+/tools/3ds-max-plugin/sources/resource.aps

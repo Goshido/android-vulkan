@@ -115,12 +115,12 @@ void MeshExporter::Run ( HWND parent, MSTR const &path, bool exportInCurrentPose
         }
     }
 
-    auto file = OpenFile ( parent, path );
+    auto f = OpenFile ( parent, path );
 
-    if ( !file )
+    if ( !f )
         return;
 
-    std::ofstream &f = *file;
+    std::ofstream &file = *f;
     float const* bMin = bounds._min._data;
     float const* bMax = bounds._max._data;
     size_t const indexSize = indexCount * sizeof ( android_vulkan::Mesh2Index );
@@ -139,10 +139,10 @@ void MeshExporter::Run ( HWND parent, MSTR const &path, bool exportInCurrentPose
         ._vertexDataOffset = static_cast<uint64_t> ( sizeof ( android_vulkan::Mesh2Header ) + indexSize )
     };
 
-    f.write ( reinterpret_cast<char const*> ( &header ), sizeof ( header ) );
-    f.write ( reinterpret_cast<char const*> ( indices.data () ), static_cast<std::streamsize> ( indexSize ) );
+    file.write ( reinterpret_cast<char const*> ( &header ), sizeof ( header ) );
+    file.write ( reinterpret_cast<char const*> ( indices.data () ), static_cast<std::streamsize> ( indexSize ) );
 
-    f.write ( reinterpret_cast<char const*> ( v ),
+    file.write ( reinterpret_cast<char const*> ( v ),
         static_cast<std::streamsize> ( idx * sizeof ( android_vulkan::Mesh2Vertex ) )
     );
 

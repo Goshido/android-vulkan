@@ -282,12 +282,40 @@ void Utility::OnExportSkeleton () noexcept
 void Utility::OnExportSkin () noexcept
 {
     ICustEdit* edit = GetICustEdit ( GetDlgItem ( _ui, AVP_UI_EDITBOX_SKIN_FILE ) );
-
     MSTR path {};
     edit->GetText ( path );
-    SkinExporter::Run ( _ui, path );
-
     ReleaseICustEdit ( edit );
+
+    auto const extract = [ this ] ( float &v, int id ) noexcept -> bool {
+        ICustEdit* control = GetICustEdit ( GetDlgItem ( _ui, id ) );
+        
+        if ( control->GetTextLength () < 1 )
+        {
+            ReleaseICustEdit ( control );
+            return false;
+        }
+
+        BOOL status;
+        v = control->GetFloat ( &status );
+
+        ReleaseICustEdit ( control );
+        return status == TRUE;
+    };
+
+    GXAABB bounds {};
+    bounds._vertices = 2U;
+
+    bool const status = extract ( bounds._min._data[ 0U ], AVP_UI_EDITBOX_SKIN_BOUNDS_MIN_X ) &&
+        extract ( bounds._min._data[ 1U ], AVP_UI_EDITBOX_SKIN_BOUNDS_MIN_Y ) &&
+        extract ( bounds._min._data[ 2U ], AVP_UI_EDITBOX_SKIN_BOUNDS_MIN_Z ) &&
+        extract ( bounds._max._data[ 0U ], AVP_UI_EDITBOX_SKIN_BOUNDS_MAX_X ) &&
+        extract ( bounds._max._data[ 1U ], AVP_UI_EDITBOX_SKIN_BOUNDS_MAX_Y ) &&
+        extract ( bounds._max._data[ 2U ], AVP_UI_EDITBOX_SKIN_BOUNDS_MAX_Z );
+
+    if ( !status )
+        bounds.Empty ();
+
+    SkinExporter::Run ( _ui, path, bounds );
 }
 
 INT_PTR CALLBACK Utility::DialogProc ( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )

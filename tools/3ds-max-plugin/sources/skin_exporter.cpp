@@ -27,6 +27,10 @@ namespace avp {
 
 namespace {
 
+constexpr float AUTO_BOUNDS_SCALER = 4.0F;
+
+//----------------------------------------------------------------------------------------------------------------------
+
 class SkinBuilder final
 {
     private:
@@ -119,7 +123,7 @@ std::optional<android_vulkan::SkinVertex> SkinBuilder::Compute ( HWND parent ) n
 
 //----------------------------------------------------------------------------------------------------------------------
 
-void SkinExporter::Run ( HWND parent, MSTR const &path ) noexcept
+void SkinExporter::Run ( HWND parent, MSTR const &path, GXAABB bounds ) noexcept
 {
     Interface17 &core = *GetCOREInterface17 ();
 
@@ -155,8 +159,8 @@ void SkinExporter::Run ( HWND parent, MSTR const &path ) noexcept
     int const uvChannel = mapper[ 0 ];
     int const faceCount = mesh.GetNumberOfFaces ();
     auto const indexCount = static_cast<size_t> ( faceCount * FACE_CORNERS );
+    bool const needComputeBounds = bounds._vertices < 2U;
 
-    GXAABB bounds {};
     SkinBuilder skinBuilder {};
 
     // Estimation from top.
@@ -219,22 +223,34 @@ void SkinExporter::Run ( HWND parent, MSTR const &path ) noexcept
             if ( !skinVertex )
                 return;
 
-            Point3 const p = mesh.GetVertex ( positionIndex, true );
-            bounds.AddVertex ( p.x, p.y, p.z );
+            if ( needComputeBounds )
+            {
+                Point3 const p = mesh.GetVertex ( positionIndex, true );
+                bounds.AddVertex ( p.x, p.y, p.z );
+            }
 
             uniqueMapper.emplace ( attributes );
             skinVertices.push_back ( std::move ( *skinVertex ) );
         }
     }
 
-    auto file = OpenFile ( parent, path );
+    auto f = OpenFile ( parent, path );
 
-    if ( !file )
+    if ( !f )
         return;
 
-    std::ofstream &f = *file;
+    std::ofstream &file = *f;
 
-    // TODO user must setup this from UI.
+    if ( needComputeBounds )
+    {
+        // TODO
+        (void)AUTO_BOUNDS_SCALER;
+    }
+    else
+    {
+        // TODO
+    }
+
     float const* bMin = bounds._min._data;
     float const* bMax = bounds._max._data;
 
@@ -255,11 +271,13 @@ void SkinExporter::Run ( HWND parent, MSTR const &path ) noexcept
         ._boneDataOffset = static_cast<uint64_t> ( sizeof ( android_vulkan::SkinHeader ) + skinVertexSize )
     };
 
-    f.write ( reinterpret_cast<char const*> ( &header ), sizeof ( header ) );
-    f.write ( reinterpret_cast<char const*> ( skinVertices.data () ), static_cast<std::streamsize> ( skinVertexSize ) );
+    file.write ( reinterpret_cast<char const*> ( &header ), sizeof ( header ) );
+    file.write ( reinterpret_cast<char const*> ( skinVertices.data () ), static_cast<std::streamsize> ( skinVertexSize ) );
 
     uint64_t offset = header._boneDataOffset + header._boneCount * sizeof ( android_vulkan::SkinBone );
     std::unordered_set<std::string> uniqueNames {};
+
+    constexpr size_t NULL_TERMINATOR_CHARACTER = 1U;
 
     for ( auto const &bone : boneMap )
     {
@@ -269,7 +287,7 @@ void SkinExporter::Run ( HWND parent, MSTR const &path ) noexcept
             ._name = offset
         };
 
-        f.write ( reinterpret_cast<char const*> ( &skinBone ), sizeof ( skinBone ) );
+        file.write ( reinterpret_cast<char const*> ( &skinBone ), sizeof ( skinBone ) );
         IGameNode* b = bone.first;
         MSTR const name = b->GetName ();
 
@@ -282,13 +300,16 @@ void SkinExporter::Run ( HWND parent, MSTR const &path ) noexcept
             return;
 
         // Strings must be null terminated.
-        offset += static_cast<uint64_t> ( utf8.size () + 1U );
+        offset += static_cast<uint64_t> ( utf8.size () + NULL_TERMINATOR_CHARACTER );
 
         uniqueNames.insert ( std::move ( utf8 ) );
     }
 
-    // TODO write sting names.
-    (void)f;
+    for ( auto const &bone : boneMap )
+    {
+        std::string const utf8 ( MSTR ( bone.first->GetName () ).ToUTF8 () );
+        file.write ( utf8.c_str (), static_cast<std::streamsize> ( utf8.size () + NULL_TERMINATOR_CHARACTER ) );
+    }
 
     MessageBoxA ( parent, "Done.", "android-vulkan", MB_ICONINFORMATION );
 }

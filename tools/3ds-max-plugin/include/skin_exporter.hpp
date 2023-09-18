@@ -3,6 +3,7 @@
 
 
 #include "exporter.hpp"
+#include <GXCommon/GXMath.hpp>
 
 
 namespace avp {
@@ -20,7 +21,7 @@ class SkinExporter final : public Exporter
 
         ~SkinExporter () = delete;
 
-        static void Run ( HWND parent, MSTR const &path ) noexcept;
+        static void Run ( HWND parent, MSTR const &path, GXAABB bounds ) noexcept;
 };
 
 } // namespace avp

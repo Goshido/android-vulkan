@@ -1,4 +1,4 @@
-// version 1.79
+// version 1.80
 
 #include <GXCommon/GXMath.hpp>
 
@@ -2239,17 +2239,6 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
 [[maybe_unused]] GXFloat GXCALL GXRadToDeg ( GXFloat radians ) noexcept
 {
     return radians * RADIANS_TO_DEGREES_FACTOR;
-}
-
-[[maybe_unused]] GXVoid GXCALL GXConvert3DSMaxToGXEngine ( GXVec3 &gx_out,
-    GXFloat max_x,
-    GXFloat max_y,
-    GXFloat max_z
-) noexcept
-{
-    gx_out._data[ 0U ] = -max_x;
-    gx_out._data[ 1U ] = max_z;
-    gx_out._data[ 2U ] = -max_y;
 }
 
 [[maybe_unused]] GXVoid GXCALL GXRandomize () noexcept

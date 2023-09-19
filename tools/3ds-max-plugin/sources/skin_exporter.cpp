@@ -225,7 +225,7 @@ void SkinExporter::Run ( HWND parent, MSTR const &path, GXAABB bounds ) noexcept
 
             if ( needComputeBounds )
             {
-                Point3 const p = mesh.GetVertex ( positionIndex, true );
+                Point3 const p = mesh.GetVertex ( positionIndex, false );
                 bounds.AddVertex ( p.x, p.y, p.z );
             }
 
@@ -240,19 +240,42 @@ void SkinExporter::Run ( HWND parent, MSTR const &path, GXAABB bounds ) noexcept
         return;
 
     std::ofstream &file = *f;
+    float* bMin = bounds._min._data;
+    float* bMax = bounds._max._data;
 
-    if ( needComputeBounds )
+    if ( !needComputeBounds )
     {
-        // TODO
-        (void)AUTO_BOUNDS_SCALER;
+        // 3ds Max -> android-vulkan coordinate system transition:
+        // x -> x
+        // y -> z
+        // z -> y
+        // In other words it's needed to swap y and z coordinates in user provided AABB.
+        std::swap ( bMin[ 1U ], bMin[ 2U ] );
+        std::swap ( bMax[ 1U ], bMax[ 2U ] );
     }
     else
     {
-        // TODO
-    }
+        // Find the biggest deviation from zero by length metric.
+        // Make AABB with lenght, height and depth equal deviation and center in zero.
+        // Enlarge the AABB by factor of AUTO_BOUNDS_SCALER.
+        float d = std::abs ( bMin[ 0U ] );
+        d = std::max ( d, std::abs ( bMin[ 1U ] ) );
+        d = std::max ( d, std::abs ( bMin[ 2U ] ) );
+        d = std::max ( d, std::abs ( bMax[ 0U ] ) );
+        d = std::max ( d, std::abs ( bMax[ 1U ] ) );
+        d = std::max ( d, std::abs ( bMax[ 2U ] ) );
 
-    float const* bMin = bounds._min._data;
-    float const* bMax = bounds._max._data;
+        d *= AUTO_BOUNDS_SCALER;
+
+        bMax[ 0U ] = d;
+        bMax[ 1U ] = d;
+        bMax[ 2U ] = d;
+
+        d = -d;
+        bMin[ 0U ] = d;
+        bMin[ 1U ] = d;
+        bMin[ 2U ] = d;
+    }
 
     size_t const skinVertexCount = skinVertices.size ();
     size_t const skinVertexSize = skinVertexCount * sizeof ( android_vulkan::SkinVertex );
@@ -272,7 +295,10 @@ void SkinExporter::Run ( HWND parent, MSTR const &path, GXAABB bounds ) noexcept
     };
 
     file.write ( reinterpret_cast<char const*> ( &header ), sizeof ( header ) );
-    file.write ( reinterpret_cast<char const*> ( skinVertices.data () ), static_cast<std::streamsize> ( skinVertexSize ) );
+
+    file.write ( reinterpret_cast<char const*> ( skinVertices.data () ),
+        static_cast<std::streamsize> ( skinVertexSize )
+    );
 
     uint64_t offset = header._boneDataOffset + header._boneCount * sizeof ( android_vulkan::SkinBone );
     std::unordered_set<std::string> uniqueNames {};

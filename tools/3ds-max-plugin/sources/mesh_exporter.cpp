@@ -101,13 +101,13 @@ void MeshExporter::Run ( HWND parent, MSTR const &path, bool exportInCurrentPose
 
             android_vulkan::Mesh2Vertex &vertex = v[ idx ];
 
-            Point3 const p = mesh.GetVertex ( attributes._position, true );
+            Point3 const p = mesh.GetVertex ( attributes._position, false );
             p3ToVec3 ( p, vertex._vertex );
             bounds.AddVertex ( p.x, p.y, p.z );
 
-            p3ToVec3 ( mesh.GetTangent ( attributes._tangentBitangent, true ), vertex._tangent );
-            p3ToVec3 ( mesh.GetBinormal ( attributes._tangentBitangent, true ), vertex._bitangent );
-            p3ToVec3 ( mesh.GetNormal ( attributes._normal, true ), vertex._normal );
+            p3ToVec3 ( mesh.GetTangent ( attributes._tangentBitangent, uvChannel ), vertex._tangent );
+            p3ToVec3 ( mesh.GetBinormal ( attributes._tangentBitangent, uvChannel ), vertex._bitangent );
+            p3ToVec3 ( mesh.GetNormal ( attributes._normal, false ), vertex._normal );
             uvToVec2 ( mesh.GetMapVertex ( uvChannel, attributes._uv ), vertex._uv );
 
             indices.push_back ( idx );

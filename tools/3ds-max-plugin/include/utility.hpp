@@ -25,13 +25,13 @@ class Utility final : public UtilityObj
         using MessageHandlers = std::unordered_map<UINT, MessageHandler>;
 
     private:
-        ButtonHandlers                              _buttonHandlers {};
-        LPARAM                                      _currentPoseState = BST_UNCHECKED;
-        std::unordered_map<int, std::wstring>       _editStates {};
-        HINSTANCE                                   _instance = nullptr;
-        Interface*                                  _interfacePointer = nullptr;
-        MessageHandlers                             _messageHandlers {};
-        HWND                                        _ui = nullptr;
+        ButtonHandlers                                          _buttonHandlers {};
+        LPARAM                                                  _currentPoseState = BST_UNCHECKED;
+        std::unordered_map<int, std::basic_string<MCHAR>>       _editStates {};
+        HINSTANCE                                               _instance = nullptr;
+        Interface*                                              _interfacePointer = nullptr;
+        MessageHandlers                                         _messageHandlers {};
+        HWND                                                    _ui = nullptr;
 
     public:
         Utility () = default;

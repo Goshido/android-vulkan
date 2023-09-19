@@ -31,6 +31,24 @@ namespace avp {
 
 namespace {
 
+constexpr int const EDIT_CONTROLS[] =
+{
+    AVP_UI_EDITBOX_ANIMATION_FILE,
+    AVP_UI_EDITBOX_ANIMATION_LAST_FRAME,
+    AVP_UI_EDITBOX_ANIMATION_START_FRAME,
+    AVP_UI_EDITBOX_MESH_FILE,
+    AVP_UI_EDITBOX_SKELETON_FILE,
+    AVP_UI_EDITBOX_SKIN_BOUNDS_MAX_X,
+    AVP_UI_EDITBOX_SKIN_BOUNDS_MAX_Y,
+    AVP_UI_EDITBOX_SKIN_BOUNDS_MAX_Z,
+    AVP_UI_EDITBOX_SKIN_BOUNDS_MIN_X,
+    AVP_UI_EDITBOX_SKIN_BOUNDS_MIN_Y,
+    AVP_UI_EDITBOX_SKIN_BOUNDS_MIN_Z,
+    AVP_UI_EDITBOX_SKIN_FILE
+};
+
+//----------------------------------------------------------------------------------------------------------------------
+
 class AutoRelease final
 {
     private:
@@ -103,10 +121,13 @@ void Utility::BeginEditParams ( Interface* interfacePointer, IUtil* /*util*/ )
         AVP_CAPTION,
         reinterpret_cast<LPARAM> ( this )
     );
+
+    RestoreState ();
 }
 
 void Utility::EndEditParams ( Interface* interfacePointer, IUtil* /*util*/ )
 {
+    SaveState ();
     interfacePointer->DeleteRollupPage ( _ui );
 }
 
@@ -318,6 +339,45 @@ void Utility::OnExportSkin () noexcept
     SkinExporter::Run ( _ui, path, bounds );
 }
 
+void Utility::RestoreState () noexcept
+{
+    SendDlgItemMessage ( _ui, AVP_UI_CHECKBOX_CURRENT_POSE, BM_SETCHECK, static_cast<WPARAM> ( _currentPoseState ), 0 );
+    auto const end = _editStates.cend ();
+
+    for ( int id : EDIT_CONTROLS )
+    {
+        auto const findResult = _editStates.find ( id );
+
+        if ( findResult == end )
+            continue;
+
+        ICustEdit* edit = GetICustEdit ( GetDlgItem ( _ui, id ) );
+        edit->SetText ( findResult->second.c_str () );
+        ReleaseICustEdit ( edit );
+    }
+}
+
+void Utility::SaveState () noexcept
+{
+    _currentPoseState = SendDlgItemMessage ( _ui, AVP_UI_CHECKBOX_CURRENT_POSE, BM_GETCHECK, 0U, 0 );
+
+    for ( int id : EDIT_CONTROLS )
+    {
+        ICustEdit* edit = GetICustEdit ( GetDlgItem ( _ui, id ) );
+        MSTR path {};
+        edit->GetText ( path );
+
+        auto const findResult = _editStates.find ( id );
+
+        if ( findResult == _editStates.cend () )
+            _editStates.emplace ( id, path.data () );
+        else
+            findResult->second = path.data ();
+
+        ReleaseICustEdit ( edit );
+    }
+}
+
 INT_PTR CALLBACK Utility::DialogProc ( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     auto* userData = reinterpret_cast<void*> ( GetWindowLongPtr ( hwnd, GWLP_USERDATA ) );
@@ -329,7 +389,6 @@ INT_PTR CALLBACK Utility::DialogProc ( HWND hwnd, UINT msg, WPARAM wParam, LPARA
 
         //  Finishing initialization. 'lParam' contains pointer to Utility instance.
         SetWindowLongPtr ( hwnd, GWLP_USERDATA, static_cast<LONG_PTR> ( lParam ) );
-        SendDlgItemMessage ( hwnd, AVP_UI_CHECKBOX_CURRENT_POSE, BM_SETCHECK, BST_UNCHECKED, 0 );
         return TRUE;
     }
 

@@ -25,11 +25,13 @@ class Utility final : public UtilityObj
         using MessageHandlers = std::unordered_map<UINT, MessageHandler>;
 
     private:
-        ButtonHandlers      _buttonHandlers {};
-        HINSTANCE           _instance = nullptr;
-        Interface*          _interfacePointer = nullptr;
-        MessageHandlers     _messageHandlers {};
-        HWND                _ui = nullptr;
+        ButtonHandlers                              _buttonHandlers {};
+        LPARAM                                      _currentPoseState = BST_UNCHECKED;
+        std::unordered_map<int, std::wstring>       _editStates {};
+        HINSTANCE                                   _instance = nullptr;
+        Interface*                                  _interfacePointer = nullptr;
+        MessageHandlers                             _messageHandlers {};
+        HWND                                        _ui = nullptr;
 
     public:
         Utility () = default;
@@ -65,6 +67,9 @@ class Utility final : public UtilityObj
         void OnExportMesh () noexcept;
         void OnExportSkeleton () noexcept;
         void OnExportSkin () noexcept;
+
+        void RestoreState () noexcept;
+        void SaveState () noexcept;
 
         [[nodiscard]] static INT_PTR CALLBACK DialogProc ( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
 };

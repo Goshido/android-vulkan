@@ -1,5 +1,6 @@
 #include <mesh_exporter.hpp>
 #include <resource.hpp>
+#include <skeleton_exporter.hpp>
 #include <skin_exporter.hpp>
 #include <utility.hpp>
 #include <version.hpp>
@@ -296,8 +297,13 @@ void Utility::OnExportMesh () noexcept
 
 void Utility::OnExportSkeleton () noexcept
 {
-    // TODO
-    MessageBoxA ( _ui, "OnExportSkeleton", "android-vulkan", MB_ICONINFORMATION );
+    ICustEdit* edit = GetICustEdit ( GetDlgItem ( _ui, AVP_UI_EDITBOX_SKELETON_FILE ) );
+
+    MSTR path {};
+    edit->GetText ( path );
+    SkeletonExporter::Run ( _ui, path );
+
+    ReleaseICustEdit ( edit );
 }
 
 void Utility::OnExportSkin () noexcept

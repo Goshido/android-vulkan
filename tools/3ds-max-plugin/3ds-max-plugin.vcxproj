@@ -125,6 +125,7 @@
     <ClInclude Include="include\plugin.hpp" />
     <ClInclude Include="include\resource.hpp" />
     <ClInclude Include="include\result_checker.hpp" />
+    <ClInclude Include="include\skeleton_exporter.hpp" />
     <ClInclude Include="include\skin_exporter.hpp" />
     <ClInclude Include="include\utility.hpp" />
     <ClInclude Include="include\version.hpp" />
@@ -138,6 +139,7 @@
     <ClCompile Include="sources\mesh_exporter.cpp" />
     <ClCompile Include="sources\plugin.cpp" />
     <ClCompile Include="sources\result_checker.cpp" />
+    <ClCompile Include="sources\skeleton_exporter.cpp" />
     <ClCompile Include="sources\skin_exporter.cpp" />
     <ClCompile Include="sources\utility.cpp" />
   </ItemGroup>

@@ -1,4 +1,5 @@
 #include <mesh_exporter.hpp>
+#include <mesh2.hpp>
 #include <result_checker.hpp>
 #include <GXCommon/GXMath.hpp>
 
@@ -10,18 +11,6 @@ GX_DISABLE_COMMON_WARNINGS
 #include <IGame/IGameModifier.h>
 
 GX_RESTORE_WARNING_STATE
-
-// This stuff is defined in Windows SDK headers as macro. Same time such members exist
-// in android_vulkan namespace as constants. Solution - undef TRUE and FALSE.
-#if defined ( TRUE )
-#undef TRUE
-#endif
-
-#if defined ( FALSE )
-#undef FALSE
-#endif
-
-#include <mesh2.hpp>
 
 
 namespace avp {

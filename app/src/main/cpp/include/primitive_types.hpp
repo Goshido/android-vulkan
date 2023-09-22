@@ -16,12 +16,21 @@ namespace android_vulkan {
 #pragma pack ( push, 1 )
 
 using Boolean = uint8_t;
-[[maybe_unused]] constexpr static Boolean TRUE = 1U;
-[[maybe_unused]] constexpr static Boolean FALSE = 0U;
+[[maybe_unused]] constexpr static Boolean AV_TRUE = 1U;
+[[maybe_unused]] constexpr static Boolean AV_FALSE = 0U;
 
 using Mat4x4 = float[ 16U ];
 using Vec2 = float[ 2U ];
 using Vec3 = float[ 3U ];
+
+// Mapping for indices:
+//      0 - r
+//      1 - a
+//      2 - b
+//      3 - c
+//
+// q = r + ai + bj + ck
+using Quat = float[ 4U ];
 
 using UTF8Offset = uint64_t;
 constexpr static UTF8Offset NO_UTF8_OFFSET = 0U;

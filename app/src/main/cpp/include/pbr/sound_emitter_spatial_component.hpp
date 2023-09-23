@@ -5,7 +5,7 @@
 #include "actor.hpp"
 #include "component.hpp"
 #include <sound_emitter_spatial.hpp>
-#include "sound_emitter_spatial_component_desc.hpp"
+#include <android_vulkan_sdk/pbr/sound_emitter_spatial_component_desc.hpp>
 
 
 namespace pbr {

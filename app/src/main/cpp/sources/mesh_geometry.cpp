@@ -10,9 +10,9 @@ GX_RESTORE_WARNING_STATE
 
 #include <file.hpp>
 #include <logger.hpp>
-#include <mesh2.hpp>
 #include <vertex_info.hpp>
 #include <vulkan_utils.hpp>
+#include <android_vulkan_sdk/mesh2.hpp>
 #include <GXCommon/GXNativeMesh.hpp>
 
 

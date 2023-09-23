@@ -4,8 +4,8 @@
 
 #include "actor.hpp"
 #include "renderable_component.hpp"
-#include "static_mesh_component_desc.hpp"
 #include "transformable.hpp"
+#include <android_vulkan_sdk/pbr/static_mesh_component_desc.hpp>
 
 
 namespace pbr {

@@ -1,6 +1,6 @@
 #include <mesh_exporter.hpp>
-#include <mesh2.hpp>
 #include <result_checker.hpp>
+#include <android_vulkan_sdk/mesh2.hpp>
 #include <GXCommon/GXMath.hpp>
 
 GX_DISABLE_COMMON_WARNINGS

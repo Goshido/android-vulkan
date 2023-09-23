@@ -1,6 +1,6 @@
-#include <skin.hpp>
 #include <skin_exporter.hpp>
 #include <result_checker.hpp>
+#include <android_vulkan_sdk/skin.hpp>
 #include <GXCommon/GXMath.hpp>
 
 GX_DISABLE_COMMON_WARNINGS

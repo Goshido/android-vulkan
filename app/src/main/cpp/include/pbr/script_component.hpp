@@ -4,7 +4,7 @@
 
 #include "actor.hpp"
 #include "component.hpp"
-#include "script_component_desc.hpp"
+#include <android_vulkan_sdk/pbr/script_component_desc.hpp>
 
 
 namespace pbr {

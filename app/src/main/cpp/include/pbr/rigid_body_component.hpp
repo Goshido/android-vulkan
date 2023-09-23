@@ -3,8 +3,8 @@
 
 
 #include "component.hpp"
-#include "rigid_body_component_desc.hpp"
 #include <rigid_body.hpp>
+#include <android_vulkan_sdk/pbr/rigid_body_component_desc.hpp>
 
 
 namespace pbr {

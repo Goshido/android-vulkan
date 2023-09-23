@@ -2,7 +2,7 @@
 #define PBR_ACTOR_DESC_HPP
 
 
-#include "primitive_types.hpp"
+#include <android_vulkan_sdk/primitive_types.hpp>
 
 
 namespace pbr {

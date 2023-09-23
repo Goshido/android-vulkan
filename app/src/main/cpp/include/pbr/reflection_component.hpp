@@ -3,8 +3,8 @@
 
 
 #include "renderable_component.hpp"
-#include "reflection_component_desc.hpp"
 #include "transformable.hpp"
+#include <android_vulkan_sdk/pbr/reflection_component_desc.hpp>
 
 
 namespace pbr {

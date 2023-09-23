@@ -2,10 +2,10 @@
 #define PBR_ACTOR_HPP
 
 
-#include "actor_desc.hpp"
-#include "component_classes.hpp"
 #include "types.hpp"
 #include <physics.hpp>
+#include <android_vulkan_sdk/pbr/actor_desc.hpp>
+#include <android_vulkan_sdk/pbr/component_classes.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

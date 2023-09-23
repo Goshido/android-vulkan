@@ -3,7 +3,7 @@
 
 
 #include "component_classes.hpp"
-#include <primitive_types.hpp>
+#include <android_vulkan_sdk/primitive_types.hpp>
 
 
 namespace pbr {

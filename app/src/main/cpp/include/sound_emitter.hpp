@@ -3,7 +3,7 @@
 
 
 #include "pcm_streamer.hpp"
-#include "primitive_types.hpp"
+#include <android_vulkan_sdk/primitive_types.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

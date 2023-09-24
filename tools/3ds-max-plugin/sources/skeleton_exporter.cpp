@@ -11,6 +11,14 @@ GX_RESTORE_WARNING_STATE
 
 namespace avp {
 
+namespace {
+
+constexpr float BONE_SCALING_THRESHOLD = 1.0e-3F;
+
+} // end of anonymous namespace
+
+//----------------------------------------------------------------------------------------------------------------------
+
 void SkeletonExporter::Run ( HWND parent, MSTR const &path ) noexcept
 {
     Interface17 &core = *GetCOREInterface17 ();
@@ -171,30 +179,53 @@ bool SkeletonExporter::ProcessBone ( Bone &bone, WriteInfo &writeInfo, int32_t p
     *writeInfo._parent = parentIdx;
     ++writeInfo._parent;
 
+    auto const extractTransform = [] ( HWND parentWindow,
+        GMatrix &scratch,
+        IGameNode &bone,
+        IGameSkin &skin 
+    ) noexcept -> std::optional<GXMat4 const *> {
+        skin.GetInitBoneTM ( &bone, scratch );
+        Point3 const scaling = scratch.Scaling ();
+
+        bool const c0 = std::abs ( scaling.x - 1.0F ) < BONE_SCALING_THRESHOLD;
+        bool const c1 = std::abs ( scaling.y - 1.0F ) < BONE_SCALING_THRESHOLD;
+        bool const c2 = std::abs ( scaling.z - 1.0F ) < BONE_SCALING_THRESHOLD;
+
+        if ( !CheckResult ( c0 & c1 & c2, parentWindow, "Bone scaling has been detected.", MB_ICONINFORMATION ) )
+            return std::nullopt;
+
+        return reinterpret_cast<GXMat4 const*> ( &scratch );
+    };
+
+    auto const writeBoneJoint = [] ( android_vulkan::BoneJoint &joint, GXMat4 const &transform ) noexcept {
+        auto &orientation = *reinterpret_cast<GXQuat*> ( &joint._orientation );
+        auto &location = *reinterpret_cast<GXVec3*> ( &joint._location );
+        orientation.From ( transform );
+        orientation.Normalize ();
+        transform.GetW ( location );
+    };
+
+    IGameSkin &skin = *writeInfo._skin;
+    HWND parentWindow = writeInfo._parentWindow;
+
     GMatrix worldTransformNative {};
-    writeInfo._skin->GetInitBoneTM ( bone._bone, worldTransformNative );
-    auto const &worldTransform = *reinterpret_cast<GXMat4 const*> ( &worldTransformNative );
+    auto probe = extractTransform ( parentWindow, worldTransformNative, *bone._bone, skin );
+
+    if ( !probe )
+        return false;
+
+    GXMat4 const &worldTransform = *probe.value ();
 
     GXMat4 inverseBindTransform {};
     inverseBindTransform.Inverse ( worldTransform );
-
-    android_vulkan::BoneJoint &ib = *writeInfo._inverseBindTransform;
-    auto &inverseBindOrientation = *reinterpret_cast<GXQuat*> ( &ib._orientation );
-    auto &inverseBindLocation = *reinterpret_cast<GXVec3*> ( &ib._location );
-    inverseBindOrientation.From ( inverseBindTransform );
-    inverseBindOrientation.Normalize ();
-    inverseBindTransform.GetW ( inverseBindLocation );
+    writeBoneJoint ( *writeInfo._inverseBindTransform, inverseBindTransform );
     ++writeInfo._inverseBindTransform;
 
     android_vulkan::BoneJoint &ref = *writeInfo._referenceTransform;
-    auto &referenceOrientation = *reinterpret_cast<GXQuat*> ( &ref._orientation );
-    auto &referenceLocation = *reinterpret_cast<GXVec3*> ( &ref._location );
 
     if ( !bone._parentBone )
     {
-        referenceOrientation.From ( worldTransform );
-        referenceOrientation.Normalize ();
-        worldTransform.GetW ( referenceLocation );
+        writeBoneJoint ( ref, worldTransform );
     }
     else
     {
@@ -207,18 +238,19 @@ bool SkeletonExporter::ProcessBone ( Bone &bone, WriteInfo &writeInfo, int32_t p
         //      X * P * P^(-1) = G * P^(-1)
         //=>    X = G * P^(-1)
         GMatrix parentWorldTransformNative {};
-        writeInfo._skin->GetInitBoneTM ( bone._parentBone, parentWorldTransformNative );
-        auto const &parentWorldTransform = *reinterpret_cast<GXMat4 const*> ( &parentWorldTransformNative );
+        probe = extractTransform ( parentWindow, parentWorldTransformNative, *bone._parentBone, skin );
+
+        if ( !probe )
+            return false;
+
+        GXMat4 const &parentWorldTransform = *probe.value ();
 
         GXMat4 inverseParentTransform {};
         inverseParentTransform.Inverse ( parentWorldTransform );
 
         GXMat4 referenceTransform {};
         referenceTransform.Multiply ( worldTransform, inverseParentTransform );
-
-        referenceOrientation.From ( referenceTransform );
-        referenceOrientation.Normalize ();
-        referenceTransform.GetW ( referenceLocation );
+        writeBoneJoint ( ref, referenceTransform );
     }
 
     ++writeInfo._referenceTransform;

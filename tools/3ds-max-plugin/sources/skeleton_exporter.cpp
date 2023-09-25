@@ -11,14 +11,6 @@ GX_RESTORE_WARNING_STATE
 
 namespace avp {
 
-namespace {
-
-constexpr float BONE_SCALING_THRESHOLD = 1.0e-3F;
-
-} // end of anonymous namespace
-
-//----------------------------------------------------------------------------------------------------------------------
-
 void SkeletonExporter::Run ( HWND parent, MSTR const &path ) noexcept
 {
     Interface17 &core = *GetCOREInterface17 ();
@@ -128,12 +120,11 @@ void SkeletonExporter::Run ( HWND parent, MSTR const &path ) noexcept
         ._inverseBindTransform = reinterpret_cast<android_vulkan::BoneJoint*> ( d + jointSize ),
         ._parent = reinterpret_cast<android_vulkan::BoneParent*> ( d + jointSize + jointSize ),
         ._nameOffset = reinterpret_cast<android_vulkan::UTF8Offset*> ( d + jointSize + jointSize + parentSize ),
+        ._boneCollector { parent },
         ._boneIdx = 0,
         ._currentNameOffset = header._nameInfoOffset + nameInfoSize,
-        ._names {},
         ._parentWindow = parent,
-        ._skin = skin,
-        ._uniqueNames {}
+        ._skin = skin
     };
 
     for ( Bone* bone : rootBones )
@@ -146,7 +137,7 @@ void SkeletonExporter::Run ( HWND parent, MSTR const &path ) noexcept
 
     file.write ( reinterpret_cast<char const*> ( d ), static_cast<std::streamsize> ( dataSize ) );
 
-    for ( auto const &name : writeInfo._names )
+    for ( auto const &name : writeInfo._boneCollector._names )
         file.write ( name.c_str (), static_cast<std::streamsize> ( name.size () + 1U ) );
 
     MessageBoxA ( parent, "Done.", "android-vulkan", MB_ICONINFORMATION );
@@ -154,62 +145,23 @@ void SkeletonExporter::Run ( HWND parent, MSTR const &path ) noexcept
 
 bool SkeletonExporter::ProcessBone ( Bone &bone, WriteInfo &writeInfo, int32_t parentIdx ) noexcept
 {
-    MSTR const name = bone._bone->GetName ();
+    BoneCollector &boneCollector = writeInfo._boneCollector;
 
-    if ( !CheckResult ( !name.isNull (), writeInfo._parentWindow, "Bone name must not be empty.", MB_ICONINFORMATION ) )
-        return false;
-
-    std::string utf8 ( name.ToUTF8 () );
-    bool const result = writeInfo._uniqueNames.contains ( utf8 );
-
-    if ( !CheckResult ( !result, writeInfo._parentWindow, "Bone name must be unique.", MB_ICONINFORMATION) )
+    if ( !boneCollector.AddBone ( *bone._bone ) )
         return false;
 
     *writeInfo._nameOffset = writeInfo._currentNameOffset;
     ++writeInfo._nameOffset;
-
-    // Strings must be null terminated.
-    constexpr size_t NULL_TERMINATOR_CHARACTER = 1U;
-    auto const nameSize = static_cast<android_vulkan::UTF8Offset> ( utf8.size () + NULL_TERMINATOR_CHARACTER );
-    writeInfo._currentNameOffset += nameSize;
-
-    writeInfo._names.push_back ( utf8 );
-    writeInfo._uniqueNames.insert ( std::move ( utf8 ) );
+    writeInfo._currentNameOffset += boneCollector.GetLastNameSize ();
 
     *writeInfo._parent = parentIdx;
     ++writeInfo._parent;
-
-    auto const extractTransform = [] ( HWND parentWindow,
-        GMatrix &scratch,
-        IGameNode &bone,
-        IGameSkin &skin 
-    ) noexcept -> std::optional<GXMat4 const *> {
-        skin.GetInitBoneTM ( &bone, scratch );
-        Point3 const scaling = scratch.Scaling ();
-
-        bool const c0 = std::abs ( scaling.x - 1.0F ) < BONE_SCALING_THRESHOLD;
-        bool const c1 = std::abs ( scaling.y - 1.0F ) < BONE_SCALING_THRESHOLD;
-        bool const c2 = std::abs ( scaling.z - 1.0F ) < BONE_SCALING_THRESHOLD;
-
-        if ( !CheckResult ( c0 & c1 & c2, parentWindow, "Bone scaling has been detected.", MB_ICONINFORMATION ) )
-            return std::nullopt;
-
-        return reinterpret_cast<GXMat4 const*> ( &scratch );
-    };
-
-    auto const writeBoneJoint = [] ( android_vulkan::BoneJoint &joint, GXMat4 const &transform ) noexcept {
-        auto &orientation = *reinterpret_cast<GXQuat*> ( &joint._orientation );
-        auto &location = *reinterpret_cast<GXVec3*> ( &joint._location );
-        orientation.From ( transform );
-        orientation.Normalize ();
-        transform.GetW ( location );
-    };
 
     IGameSkin &skin = *writeInfo._skin;
     HWND parentWindow = writeInfo._parentWindow;
 
     GMatrix worldTransformNative {};
-    auto probe = extractTransform ( parentWindow, worldTransformNative, *bone._bone, skin );
+    auto probe = ExtractTransform ( parentWindow, worldTransformNative, *bone._bone, skin );
 
     if ( !probe )
         return false;
@@ -218,14 +170,14 @@ bool SkeletonExporter::ProcessBone ( Bone &bone, WriteInfo &writeInfo, int32_t p
 
     GXMat4 inverseBindTransform {};
     inverseBindTransform.Inverse ( worldTransform );
-    writeBoneJoint ( *writeInfo._inverseBindTransform, inverseBindTransform );
+    WriteBoneJoint ( *writeInfo._inverseBindTransform, inverseBindTransform );
     ++writeInfo._inverseBindTransform;
 
     android_vulkan::BoneJoint &ref = *writeInfo._referenceTransform;
 
     if ( !bone._parentBone )
     {
-        writeBoneJoint ( ref, worldTransform );
+        WriteBoneJoint ( ref, worldTransform );
     }
     else
     {
@@ -238,7 +190,7 @@ bool SkeletonExporter::ProcessBone ( Bone &bone, WriteInfo &writeInfo, int32_t p
         //      X * P * P^(-1) = G * P^(-1)
         //=>    X = G * P^(-1)
         GMatrix parentWorldTransformNative {};
-        probe = extractTransform ( parentWindow, parentWorldTransformNative, *bone._parentBone, skin );
+        probe = ExtractTransform ( parentWindow, parentWorldTransformNative, *bone._parentBone, skin );
 
         if ( !probe )
             return false;
@@ -250,7 +202,7 @@ bool SkeletonExporter::ProcessBone ( Bone &bone, WriteInfo &writeInfo, int32_t p
 
         GXMat4 referenceTransform {};
         referenceTransform.Multiply ( worldTransform, inverseParentTransform );
-        writeBoneJoint ( ref, referenceTransform );
+        WriteBoneJoint ( ref, referenceTransform );
     }
 
     ++writeInfo._referenceTransform;

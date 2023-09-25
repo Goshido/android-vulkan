@@ -119,6 +119,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\app\src\main\cpp\include\GXCommon\GXMath.hpp" />
+    <ClInclude Include="include\animation_exporter.hpp" />
+    <ClInclude Include="include\bone_data_exporter.hpp" />
     <ClInclude Include="include\class_desc.hpp" />
     <ClInclude Include="include\exporter.hpp" />
     <ClInclude Include="include\mesh_exporter.hpp" />
@@ -133,6 +135,8 @@
   <ItemGroup>
     <ClCompile Include="..\..\app\src\main\cpp\sources\GXCommon\GXMath.cpp" />
     <ClCompile Include="..\..\app\src\main\cpp\sources\GXCommon\Intrinsics\GXMathCPU.cpp" />
+    <ClCompile Include="sources\animation_exporter.cpp" />
+    <ClCompile Include="sources\bone_data_exporter.cpp" />
     <ClCompile Include="sources\class_desc.cpp" />
     <ClCompile Include="sources\dll_main.cpp" />
     <ClCompile Include="sources\exporter.cpp" />

@@ -2,22 +2,13 @@
 #define AVP_SKELETON_EXPORTER_HPP
 
 
-#include "exporter.hpp"
-#include <android_vulkan_sdk/bone_joint.hpp>
+#include "bone_data_exporter.hpp"
 #include <android_vulkan_sdk/skeleton.hpp>
-#include <GXCommon/GXMath.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <list>
-#include <unordered_set>
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace avp {
 
-class SkeletonExporter final : public Exporter
+class SkeletonExporter final : public BoneDataExporter
 {
     private:
         struct Bone final
@@ -37,12 +28,11 @@ class SkeletonExporter final : public Exporter
             android_vulkan::BoneParent*         _parent;
             android_vulkan::UTF8Offset*         _nameOffset;
 
+            BoneCollector                       _boneCollector;
             android_vulkan::BoneParent          _boneIdx;
             android_vulkan::UTF8Offset          _currentNameOffset;
-            std::list<std::string>              _names;
             HWND                                _parentWindow;
             IGameSkin*                          _skin;
-            std::unordered_set<std::string>     _uniqueNames;
         };
 
     public:

@@ -1,5 +1,7 @@
+#include <animation_exporter.hpp>
 #include <mesh_exporter.hpp>
 #include <resource.hpp>
+#include <result_checker.hpp>
 #include <skeleton_exporter.hpp>
 #include <skin_exporter.hpp>
 #include <utility.hpp>
@@ -281,7 +283,47 @@ void Utility::OnBrowseSkinFile () noexcept
 
 void Utility::OnExportAnimation () noexcept
 {
-    MessageBoxA ( _ui, "OnExportAnimation", "android-vulkan", MB_ICONINFORMATION );
+    ICustEdit* edit = GetICustEdit ( GetDlgItem ( _ui, AVP_UI_EDITBOX_ANIMATION_FILE ) );
+    MSTR path {};
+    edit->GetText ( path );
+    ReleaseICustEdit ( edit );
+
+    auto const extract = [ this ] ( int &v, int id ) noexcept -> bool {
+        ICustEdit* control = GetICustEdit ( GetDlgItem ( _ui, id ) );
+
+        if ( control->GetTextLength () < 1 )
+        {
+            ReleaseICustEdit ( control );
+            return false;
+        }
+
+        BOOL status;
+        v = control->GetInt ( &status );
+
+        ReleaseICustEdit ( control );
+        return status == TRUE;
+    };
+
+    int startFrame = 0;
+    int lastFrame = 0;
+
+    bool const result =
+        CheckResult ( extract ( startFrame, AVP_UI_EDITBOX_ANIMATION_START_FRAME ),
+            _ui,
+            "Please set start frame.",
+            MB_ICONINFORMATION
+        ) &&
+
+        CheckResult ( extract ( lastFrame, AVP_UI_EDITBOX_ANIMATION_LAST_FRAME ),
+            _ui,
+            "Please set last frame.",
+            MB_ICONINFORMATION
+        );
+
+    if ( !result )
+        return;
+
+    AnimationExporter::Run ( _ui, path, startFrame, lastFrame );
 }
 
 void Utility::OnExportMesh () noexcept

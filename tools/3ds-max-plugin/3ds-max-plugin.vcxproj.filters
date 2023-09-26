@@ -25,6 +25,9 @@
     <Filter Include="Source Files\GXCommon\Intrinsics">
       <UniqueIdentifier>{be866ed2-4ab3-4530-ba49-af29c34b605c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\android_vulkan_sdk">
+      <UniqueIdentifier>{4112004a-e10a-4415-8054-521bedc7401b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\plugin.hpp">
@@ -65,6 +68,24 @@
     </ClInclude>
     <ClInclude Include="include\bone_data_exporter.hpp">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\animation.hpp">
+      <Filter>Header Files\android_vulkan_sdk</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\bone_joint.hpp">
+      <Filter>Header Files\android_vulkan_sdk</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\mesh2.hpp">
+      <Filter>Header Files\android_vulkan_sdk</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\primitive_types.hpp">
+      <Filter>Header Files\android_vulkan_sdk</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\skeleton.hpp">
+      <Filter>Header Files\android_vulkan_sdk</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\skin.hpp">
+      <Filter>Header Files\android_vulkan_sdk</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

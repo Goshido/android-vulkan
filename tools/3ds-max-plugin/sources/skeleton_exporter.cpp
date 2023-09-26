@@ -112,7 +112,7 @@ void SkeletonExporter::Run ( HWND parent, MSTR const &path ) noexcept
         ._nameInfoOffset = sizeof ( android_vulkan::SkeletonHeader ) + jointSize + jointSize + parentSize,
     };
 
-    file.write ( reinterpret_cast<char const*> ( &header ), sizeof ( android_vulkan::SkeletonHeader ) );
+    file.write ( reinterpret_cast<char const*> ( &header ), sizeof ( header ) );
 
     WriteInfo writeInfo
     {

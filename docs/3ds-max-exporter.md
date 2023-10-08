@@ -27,7 +27,7 @@ The _android-vulkan_ rendering system relies on the bounding box information to 
 
 <img src="./images/skin-bounds.png"/>
 
-Take a note that exporter will calculate approximate bounds if the artist will ignore this values. The exporter will find the biggest distance from coordinate origin in the skin vertices. This distance will be multiplied by `8`. The the final bounds will be considered as cube with side as calculated at previous step. Obviously the approximation could produce incorrect results in some cases of skin data and animation data. The objects could dissapear.
+Take a note that exporter will calculate approximate bounds if the artist will ignore this values. The exporter will find the biggest distance from coordinate origin in the skin vertices. This distance will be multiplied by `8`. The final bounds will be considered as cube with side as calculated at previous step. Obviously the approximation could produce incorrect results in some cases of skin data and animation data. The objects could dissapear.
 
 [↬ table of content ⇧](#table-of-content)
 

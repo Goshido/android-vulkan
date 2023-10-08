@@ -172,6 +172,7 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/scriptable_penetration.cpp
     app/src/main/cpp/sources/pbr/scriptable_sweep_test_result.cpp
     app/src/main/cpp/sources/pbr/set_attribute_checker.cpp
+    app/src/main/cpp/sources/pbr/skeletal_mesh_component.cpp
     app/src/main/cpp/sources/pbr/sound_emitter_global_component.cpp
     app/src/main/cpp/sources/pbr/sound_emitter_spatial_component.cpp
     app/src/main/cpp/sources/pbr/src_property_checker.cpp

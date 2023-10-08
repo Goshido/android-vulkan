@@ -2,6 +2,7 @@
 #include <pbr/point_light.hpp>
 #include <pbr/reflection_probe_global.hpp>
 #include <pbr/reflection_probe_local.hpp>
+#include <pbr/skeletal_mesh_component.hpp>
 #include <av_assert.hpp>
 #include <trace.hpp>
 #include <vulkan_utils.hpp>
@@ -135,6 +136,7 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
     _renderSessionStats.SubmitUIVertices ( _uiPass.GetUsedVertexCount () );
 
     _renderSessionStats.PrintStats ( deltaTime );
+    SkeletalMeshComponent::FreeUnusedResources ( swapchainImageIndex );
     return true;
 }
 

@@ -25,8 +25,9 @@ enum class ClassID : uint64_t
     Transform = 7U,
     SoundEmitterGlobal = 8U,
     SoundEmitterSpatial = 9U,
+    SkeletalMesh = 10U,
 
-    COUNT = 10U
+    COUNT = 11U
 };
 
 } // namespace pbr

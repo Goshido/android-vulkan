@@ -45,6 +45,11 @@ class MeshManager final
         [[nodiscard]] static MeshManager &GetInstance () noexcept;
         static void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
 
+        [[nodiscard]] constexpr static uint32_t MaxCommandBufferPerMesh () noexcept
+        {
+            return 1U;
+        }
+
     protected:
         MeshManager () = default;
         ~MeshManager () = default;

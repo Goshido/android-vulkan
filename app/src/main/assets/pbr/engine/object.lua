@@ -22,6 +22,7 @@ eObjectType = {
     RigidBodyComponent = MakeUniqueID (),
     Scene = MakeUniqueID (),
     ScriptComponent = MakeUniqueID (),
+    SkeletalMeshComponent = MakeUniqueID (),
     SoundEmitterGlobalComponent = MakeUniqueID (),
     SoundEmitterSpatialComponent = MakeUniqueID (),
     StaticMeshComponent = MakeUniqueID (),

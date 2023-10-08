@@ -79,13 +79,13 @@ class StaticMeshComponent final : public RenderableComponent, public Transformab
         [[maybe_unused, nodiscard]] GXAABB const &GetBoundsWorld () const noexcept;
 
         [[maybe_unused, nodiscard]] GXColorRGB const &GetColor0 () const noexcept;
-        [[maybe_unused]] void SetColor0 ( GXColorRGB const &color ) noexcept;
+        void SetColor0 ( GXColorRGB const &color ) noexcept;
 
         [[maybe_unused, nodiscard]] GXColorRGB const &GetColor1 () const noexcept;
-        [[maybe_unused]] void SetColor1 ( GXColorRGB const &color ) noexcept;
+        void SetColor1 ( GXColorRGB const &color ) noexcept;
 
         [[maybe_unused, nodiscard]] GXColorRGB const &GetColor2 () const noexcept;
-        [[maybe_unused]] void SetColor2 ( GXColorRGB const &color ) noexcept;
+        void SetColor2 ( GXColorRGB const &color ) noexcept;
 
         [[maybe_unused, nodiscard]] GXColorRGB const &GetEmission () const noexcept;
         void SetEmission ( GXColorRGB const &emission ) noexcept;

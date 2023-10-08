@@ -53,28 +53,23 @@ bool PointLightPass::Init ( android_vulkan::Renderer &renderer,
     VkRenderPass lightupRenderPass
 ) noexcept
 {
-    VkDevice device = renderer.GetDevice ();
-
-    if ( !CreateShadowmapRenderPass ( device ) )
-        return false;
-
     constexpr VkExtent2D shadowmapResolution
     {
         .width = SHADOWMAP_RESOLUTION,
         .height = SHADOWMAP_RESOLUTION
     };
 
-    if ( !_shadowmapProgram.Init ( renderer, _shadowmapRenderPass, 0U, nullptr, shadowmapResolution ) )
-        return false;
+    return CreateShadowmapRenderPass ( renderer.GetDevice () ) &&
+        _shadowmapProgram.Init ( renderer, _shadowmapRenderPass, 0U, nullptr, shadowmapResolution ) &&
 
-    bool const result = _shadowmapBufferPool.Init ( renderer,
-        PointLightShadowmapGeneratorDescriptorSetLayout {},
-        sizeof ( PointLightShadowmapGeneratorProgram::InstanceData ),
-        0U,
-        "pbr::PointLightPass::_shadowmapBufferPool"
-    );
+        _shadowmapBufferPool.Init ( renderer,
+            PointLightShadowmapGeneratorDescriptorSetLayout {},
+            sizeof ( PointLightShadowmapGeneratorProgram::InstanceData ),
+            0U,
+            "pbr::PointLightPass::_shadowmapBufferPool"
+        ) &&
 
-    return result && _lightup.Init ( renderer, lightupRenderPass, 1U, resolution );
+        _lightup.Init ( renderer, lightupRenderPass, 1U, resolution );
 }
 
 void PointLightPass::Destroy ( android_vulkan::Renderer &renderer ) noexcept

@@ -6,6 +6,7 @@
 #include <pbr/scene.hpp>
 #include <pbr/script_component.hpp>
 #include <pbr/script_engine.hpp>
+#include <pbr/skeletal_mesh_component.hpp>
 #include <pbr/sound_emitter_global_component.hpp>
 #include <pbr/sound_emitter_spatial_component.hpp>
 #include <pbr/static_mesh_component.hpp>
@@ -51,6 +52,7 @@ Actor::StaticInitializer::StaticInitializer () noexcept
     destroy[ static_cast<size_t> ( ClassID::Script ) ] = &Actor::DestroyComponentStub;
     destroy[ static_cast<size_t> ( ClassID::SoundEmitterGlobal ) ] = &Actor::DestroyComponentStub;
     destroy[ static_cast<size_t> ( ClassID::SoundEmitterSpatial ) ] = &Actor::DestroyComponentStub;
+    destroy[ static_cast<size_t> ( ClassID::SkeletalMesh ) ] = &Actor::DestroySkeletalMeshComponent;
     destroy[ static_cast<size_t> ( ClassID::StaticMesh ) ] = &Actor::DestroyStaticMeshComponent;
     destroy[ static_cast<size_t> ( ClassID::Transform ) ] = &Actor::DestroyComponentStub;
     destroy[ static_cast<size_t> ( ClassID::Unknown ) ] = &Actor::DestroyComponentStub;
@@ -650,6 +652,14 @@ void Actor::DestroyRigidBodyComponent ( Component &component ) noexcept
     // NOLINTNEXTLINE - downcast.
     auto &rigidBodyComponent = static_cast<RigidBodyComponent &> ( component );
     rigidBodyComponent.Unregister ( _scene->GetPhysics () );
+    RemoveComponent ( component );
+}
+
+void Actor::DestroySkeletalMeshComponent ( Component &component ) noexcept
+{
+    // NOLINTNEXTLINE - downcast.
+    auto &skeletalMeshComponent = static_cast<SkeletalMeshComponent &> ( component );
+    skeletalMeshComponent.Unregister ();
     RemoveComponent ( component );
 }
 

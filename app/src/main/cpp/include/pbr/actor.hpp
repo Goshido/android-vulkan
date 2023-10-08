@@ -210,6 +210,7 @@ class Actor final
         ) noexcept;
 
         void DestroyRigidBodyComponent ( Component &component ) noexcept;
+        void DestroySkeletalMeshComponent ( Component &component ) noexcept;
         void DestroyStaticMeshComponent ( Component &component ) noexcept;
         void DestroyComponentStub ( Component &component ) noexcept;
 

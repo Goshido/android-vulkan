@@ -46,6 +46,8 @@ class MeshGeometry final
 
         ~MeshGeometry () = default;
 
+        [[nodiscard]] bool Clone ( Renderer &renderer, MeshGeometry &source ) noexcept;
+
         void FreeResources ( Renderer &renderer ) noexcept;
         void FreeTransferResources ( Renderer &renderer ) noexcept;
 

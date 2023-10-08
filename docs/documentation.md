@@ -2,6 +2,7 @@
 
 ## Table of reference
 
+1) [_3ds Max exporter_](./3ds-max-exporter.md)
 1) [About _C++ 20_, `-Wpedantic` support and _Android Studio_ integration](./about-c++20-and-pedantic.md)
 1) [About _NDK 25.0.8775105_ and _Android Studio_ debugger](./about-NDK-25.0.8775105.md)
 1) [_AAudio_ issues](./aaudio-issues.md)

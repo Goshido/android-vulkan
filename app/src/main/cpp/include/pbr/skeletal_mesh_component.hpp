@@ -49,6 +49,7 @@ class SkeletalMeshComponent final : public RenderableComponent, public Transform
             size_t &commandBufferConsumed,
             char const* mesh,
             char const* skin,
+            char const* skeleton,
             char const* material,
             VkCommandBuffer const* commandBuffers,
             VkFence const* fences,

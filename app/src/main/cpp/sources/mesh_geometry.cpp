@@ -71,12 +71,6 @@ std::map<VkBufferUsageFlags, BufferSyncItem> const g_accessMapper =
 
 //----------------------------------------------------------------------------------------------------------------------
 
-bool MeshGeometry::Clone ( Renderer &/*renderer*/, MeshGeometry &/*source*/ ) noexcept
-{
-    // TODO
-    return true;
-}
-
 void MeshGeometry::FreeResources ( Renderer &renderer ) noexcept
 {
     FreeTransferResources ( renderer );

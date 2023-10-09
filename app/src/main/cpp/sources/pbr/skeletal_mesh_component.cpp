@@ -27,9 +27,14 @@ constexpr size_t INITIAL_COMMAND_BUFFERS = 32U;
 constexpr GXColorRGB DEFAULT_COLOR ( 1.0F, 1.0F, 1.0F, 1.0F );
 constexpr GXColorRGB DEFAULT_EMISSION ( 1.0F, 1.0F, 1.0F, 1.0F );
 
-static_assert ( ALLOCATE_COMMAND_BUFFERS >=
-    MaterialManager::MaxCommandBufferPerMaterial () + MeshManager::MaxCommandBufferPerMesh ()
-);
+// clang-format off
+constexpr auto MIN_COMMAND_BUFFERS =
+    static_cast<size_t> ( MaterialManager::MaxCommandBufferPerMaterial () ) +
+    static_cast<size_t> ( MeshManager::MaxCommandBufferPerMesh () ) +
+    static_cast<size_t> ( MeshManager::MaxCommandBufferPerMesh () );
+// clang-format on
+
+static_assert ( ALLOCATE_COMMAND_BUFFERS >= MIN_COMMAND_BUFFERS );
 
 } // end of anonymous namespace
 
@@ -49,6 +54,7 @@ SkeletalMeshComponent::SkeletalMeshComponent ( bool &success,
     size_t &commandBufferConsumed,
     char const* mesh,
     char const* /*skin*/,
+    char const* /*skeleton*/,
     char const* material,
     VkCommandBuffer const* commandBuffers,
     VkFence const* fences,
@@ -83,10 +89,15 @@ SkeletalMeshComponent::SkeletalMeshComponent ( bool &success,
     if ( !_referenceMesh )
         return;
 
-    MeshRef skinMesh = std::make_shared<android_vulkan::MeshGeometry> ();
-    success = skinMesh->Clone ( *_renderer, *_referenceMesh );
 
-    if ( !success )
+    MeshRef skinMesh = MeshManager::GetInstance ().LoadMesh ( *_renderer,
+        commandBufferConsumed,
+        mesh,
+        commandBuffers[ commandBufferConsumed ],
+        fences[ commandBufferConsumed ]
+    );
+
+    if ( !skinMesh )
     {
         skinMesh = nullptr;
         return;
@@ -365,23 +376,31 @@ int SkeletalMeshComponent::OnCreate ( lua_State* state )
         return 1;
     }
 
-    char const* meshFile = lua_tostring ( state, 2 );
+    char const* mesh = lua_tostring ( state, 2 );
 
-    if ( !meshFile )
+    if ( !mesh )
     {
         lua_pushnil ( state );
         return 1;
     }
 
-    char const* skinFile = lua_tostring ( state, 3 );
+    char const* skin = lua_tostring ( state, 3 );
 
-    if ( !skinFile )
+    if ( !skin )
     {
         lua_pushnil ( state );
         return 1;
     }
 
-    char const* materialFile = lua_tostring ( state, 4 );
+    char const* skeleton = lua_tostring ( state, 4 );
+
+    if ( !skeleton )
+    {
+        lua_pushnil ( state );
+        return 1;
+    }
+
+    char const* materialFile = lua_tostring ( state, 5 );
 
     if ( !materialFile )
     {
@@ -390,9 +409,8 @@ int SkeletalMeshComponent::OnCreate ( lua_State* state )
     }
 
     size_t const available = _commandBuffers.size () - _commandBufferIndex;
-    constexpr size_t needed = MeshManager::MaxCommandBufferPerMesh () + MaterialManager::MaxCommandBufferPerMaterial ();
 
-    if ( available < needed )
+    if ( available < MIN_COMMAND_BUFFERS )
     {
         if ( !AllocateCommandBuffers ( ALLOCATE_COMMAND_BUFFERS ) )
         {
@@ -406,8 +424,9 @@ int SkeletalMeshComponent::OnCreate ( lua_State* state )
 
     ComponentRef referenceMesh = std::make_shared<SkeletalMeshComponent> ( success,
         consumed,
-        meshFile,
-        skinFile,
+        mesh,
+        skin,
+        skeleton,
         materialFile,
         &_commandBuffers[ _commandBufferIndex ],
         &_fences[ _commandBufferIndex ],

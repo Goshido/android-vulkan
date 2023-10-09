@@ -38,6 +38,7 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/shape_box.cpp
     app/src/main/cpp/sources/shape_sphere.cpp
     app/src/main/cpp/sources/simplex.cpp
+    app/src/main/cpp/sources/skin_data.cpp
     app/src/main/cpp/sources/sound_emitter.cpp
     app/src/main/cpp/sources/sound_emitter_global.cpp
     app/src/main/cpp/sources/sound_emitter_spatial.cpp

@@ -1,16 +1,14 @@
-#ifndef MESH_GEOMETRY_HPP
-#define MESH_GEOMETRY_HPP
+#ifndef ANDROID_VULKAN_MESH_GEOMETRY_HPP
+#define ANDROID_VULKAN_MESH_GEOMETRY_HPP
 
 
-#include <GXCommon/GXWarning.hpp>
+#include "renderer.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
 
 #include <string>
 
 GX_RESTORE_WARNING_STATE
-
-#include "renderer.hpp"
 
 
 namespace android_vulkan {
@@ -45,8 +43,6 @@ class MeshGeometry final
         MeshGeometry &operator = ( MeshGeometry && ) = delete;
 
         ~MeshGeometry () = default;
-
-        [[nodiscard]] bool Clone ( Renderer &renderer, MeshGeometry &source ) noexcept;
 
         void FreeResources ( Renderer &renderer ) noexcept;
         void FreeTransferResources ( Renderer &renderer ) noexcept;
@@ -136,4 +132,4 @@ class MeshGeometry final
 } // namespace android_vulkan
 
 
-#endif // MESH_GEOMETRY_HPP
+#endif // ANDROID_VULKAN_MESH_GEOMETRY_HPP

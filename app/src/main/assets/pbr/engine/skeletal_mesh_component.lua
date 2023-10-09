@@ -76,9 +76,9 @@ local mt = {
     end
 }
 
-local function Constructor ( self, name, meshFile, skinFile, materialFile )
+local function Constructor ( self, name, meshFile, skinFile, skeletonFile, materialFile )
     local obj = Component ( eObjectType.SkeletalMeshComponent,
-        av_SkeletalMeshComponentCreate ( name, meshFile, skinFile, materialFile )
+        av_SkeletalMeshComponentCreate ( name, meshFile, skinFile, skeletonFile, materialFile )
     )
 
     -- Methods

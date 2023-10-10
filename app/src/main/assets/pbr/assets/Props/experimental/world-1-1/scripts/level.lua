@@ -1,5 +1,6 @@
 require "av://engine/scene.lua"
 require "av://engine/script_component.lua"
+require "av://engine/skeletal_mesh_component.lua"
 require "av://engine/sound_emitter_global_component.lua"
 require "av://engine/ui_layer.lua"
 
@@ -86,8 +87,13 @@ local function OnActorConstructed ( self, actor )
     self._uiZ = uiDebug:Find ( "z-value" ):GetTextElement ()
 
     local test = Actor ( "TEST" )
-    local mesh = StaticMeshComponent ( "Mesh", "pbr/assets/Props/experimental/exporter/cube.mesh2" )
-    mesh:SetMaterial ( Material ( "pbr/assets/Props/experimental/exporter/material.mtl" ) )
+
+    local mesh = SkeletalMeshComponent ( "Mesh",
+        "pbr/assets/Props/experimental/exporter/leg.mesh2",
+        "pbr/assets/Props/experimental/exporter/leg.skin",
+        "pbr/assets/Props/experimental/exporter/leg.skeleton",
+        "pbr/assets/Props/experimental/exporter/material.mtl"
+    )
 
     local v = GXVec3 ()
     v:Init ( -24.32, 65.19, 286.18 )

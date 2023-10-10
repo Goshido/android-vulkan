@@ -3,10 +3,10 @@
 #include <pbr/mesh_manager.hpp>
 #include <pbr/static_mesh_component.hpp>
 #include <pbr/script_engine.hpp>
+#include <pbr/scriptable_gxmat4.hpp>
 #include <pbr/scriptable_gxvec3.hpp>
 #include <pbr/scriptable_gxvec4.hpp>
 #include <pbr/scriptable_material.hpp>
-#include <pbr/scriptable_gxmat4.hpp>
 #include <av_assert.hpp>
 #include <guid_generator.hpp>
 

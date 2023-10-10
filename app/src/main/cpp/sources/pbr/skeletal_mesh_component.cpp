@@ -1,5 +1,6 @@
 #include <pbr/material_manager.hpp>
 #include <pbr/mesh_manager.hpp>
+#include <pbr/scriptable_gxmat4.hpp>
 #include <pbr/scriptable_gxvec3.hpp>
 #include <pbr/scriptable_gxvec4.hpp>
 #include <pbr/scriptable_material.hpp>
@@ -53,8 +54,8 @@ std::list<SkeletalMeshComponent::Usage> SkeletalMeshComponent::_toDelete {};
 SkeletalMeshComponent::SkeletalMeshComponent ( bool &success,
     size_t &commandBufferConsumed,
     char const* mesh,
-    char const* /*skin*/,
-    char const* /*skeleton*/,
+    char const* skin,
+    char const* skeleton,
     char const* material,
     VkCommandBuffer const* commandBuffers,
     VkFence const* fences,
@@ -105,6 +106,18 @@ SkeletalMeshComponent::SkeletalMeshComponent ( bool &success,
 
     _usage._skinMesh = std::move ( skinMesh );
     _usage._frameIds.resize ( _renderer->GetPresentImageCount (), false );
+
+    success = _skinData.LoadSkin ( skin,
+        skeleton,
+        *_renderer,
+        commandBuffers[ commandBufferConsumed ],
+        fences[ commandBufferConsumed ]
+    );
+
+    if ( success )
+    {
+        ++commandBufferConsumed;
+    }
 }
 
 void SkeletalMeshComponent::RegisterFromScript ( Actor &actor ) noexcept
@@ -177,6 +190,10 @@ bool SkeletalMeshComponent::Init ( lua_State &vm, android_vulkan::Renderer &rend
         {
             .name = "av_SkeletalMeshComponentSetEmission",
             .func = &SkeletalMeshComponent::OnSetEmission
+        },
+        {
+            .name = "av_SkeletalMeshComponentSetLocal",
+            .func = &SkeletalMeshComponent::OnSetLocal
         },
         {
             .name = "av_SkeletalMeshComponentSetMaterial",
@@ -305,6 +322,12 @@ void SkeletalMeshComponent::SetColor2 ( GXColorRGB const &color ) noexcept
 void SkeletalMeshComponent::SetEmission ( GXColorRGB const &emission ) noexcept
 {
     _emission = emission;
+}
+
+void SkeletalMeshComponent::SetTransform ( GXMat4 const &transform ) noexcept
+{
+    _localMatrix = transform;
+    _usage._skinMesh->GetBounds ().Transform ( _worldBounds, transform );
 }
 
 bool SkeletalMeshComponent::AllocateCommandBuffers ( size_t amount ) noexcept
@@ -489,6 +512,13 @@ int SkeletalMeshComponent::OnSetEmission ( lua_State* state )
     auto &self = *static_cast<SkeletalMeshComponent*> ( lua_touserdata ( state, 1 ) );
     GXVec3 const &emission = ScriptableGXVec3::Extract ( state, 2 );
     self.SetEmission ( GXColorRGB ( emission._data[ 0U ], emission._data[ 1U ], emission._data[ 2U ], 1.0F ) );
+    return 0;
+}
+
+int SkeletalMeshComponent::OnSetLocal ( lua_State* state )
+{
+    auto &self = *static_cast<SkeletalMeshComponent*> ( lua_touserdata ( state, 1 ) );
+    self.SetTransform ( ScriptableGXMat4::Extract ( state, 2 ) );
     return 0;
 }
 

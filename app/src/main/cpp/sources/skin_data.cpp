@@ -59,13 +59,63 @@ bool SkinData::LoadSkin ( std::string &&skinFilename,
     if ( !skinFile.LoadContent () || !skeletonFile.LoadContent () )
         return false;
 
-    uint8_t const* skin = skinFile.GetContent ().data ();
+    uint8_t* skin = skinFile.GetContent ().data ();
     uint8_t const* skeleton = skeletonFile.GetContent ().data ();
 
-    auto const &skinHeader = reinterpret_cast<android_vulkan::SkinHeader const*> ( skin );
-    auto const &skeletonHeader = reinterpret_cast<android_vulkan::SkeletonHeader const*> ( skeleton );
-    (void)skinHeader;
-    (void)skeletonHeader;
+    auto const &skinHeader = *reinterpret_cast<android_vulkan::SkinHeader const*> ( skin );
+    auto const &skeletonHeader = *reinterpret_cast<android_vulkan::SkeletonHeader const*> ( skeleton );
+
+    std::unordered_map<std::string_view, int32_t> skeletonBones {};
+    auto boneCount = static_cast<int32_t> ( skeletonHeader._boneCount );
+
+    auto const* nameOffset = reinterpret_cast<android_vulkan::UTF8Offset const*> (
+        skeleton + skeletonHeader._nameInfoOffset
+    );
+
+    for ( int32_t i = 0; i < boneCount; ++i )
+    {
+        skeletonBones.emplace ( reinterpret_cast<char const*> ( skeleton + *nameOffset ), i );
+        ++nameOffset;
+    }
+
+    std::unordered_map<uint32_t, uint32_t> boneMapper {};
+    boneCount = static_cast<int32_t> ( skinHeader._boneCount );
+    auto const* skinBone = reinterpret_cast<android_vulkan::SkinBone const*> ( skin + skinHeader._boneDataOffset );
+    auto const end = skeletonBones.cend ();
+
+    for ( int32_t i = 0; i < boneCount; ++i )
+    {
+        auto const* name = reinterpret_cast<char const*> ( skin + skinBone->_name );
+        auto const findResult = skeletonBones.find ( name );
+
+        if ( findResult != end )
+        {
+            boneMapper.emplace ( skinBone->_index, static_cast<uint32_t> ( findResult->second ) );
+            ++skinBone;
+            continue;
+        }
+
+        LogWarning ( "SkinData::LoadSkin - Can't find bone '%s'. Skin: '%s'. Skeleton: '%s'.",
+            name,
+            skinFile.GetPath ().c_str (),
+            skeletonFile.GetPath ().c_str ()
+        );
+
+        return false;
+    }
+
+    uint32_t const skinVertexCount = skinHeader._skinVertexCount;
+    auto* skinInfluence = reinterpret_cast<android_vulkan::SkinInfluence*> ( skin + skinHeader._skinVertexDataOffset );
+
+    for ( uint32_t i = 0U; i < skinVertexCount; ++i )
+    {
+        skinInfluence->_boneIndex = boneMapper.find ( skinInfluence->_boneIndex )->second;
+        ++skinInfluence;
+    }
+
+    std::memcpy ( &_bounds._min, skinHeader._bounds._min, sizeof ( _bounds._min ) );
+    std::memcpy ( &_bounds._max, skinHeader._bounds._max, sizeof ( _bounds._max ) );
+    _bounds._vertices = 2U;
 
     // TODO
     _fileName = std::move ( skinFile.GetPath () );

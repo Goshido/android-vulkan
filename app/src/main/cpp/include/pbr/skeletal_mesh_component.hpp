@@ -5,6 +5,7 @@
 #include "actor.hpp"
 #include "renderable_component.hpp"
 #include "transformable.hpp"
+#include <skin_data.hpp>
 
 
 namespace pbr {
@@ -28,11 +29,10 @@ class SkeletalMeshComponent final : public RenderableComponent, public Transform
         MaterialRef                                                     _material;
 
         GXMat4                                                          _localMatrix;
-
-        GXAABB                                                          _localBounds;
         GXAABB                                                          _worldBounds;
 
         MeshRef                                                         _referenceMesh;
+        android_vulkan::SkinData                                        _skinData {};
         Usage                                                           _usage;
 
         static std::list<Usage>                                         _aboutDelete;
@@ -83,6 +83,8 @@ class SkeletalMeshComponent final : public RenderableComponent, public Transform
         void SetColor2 ( GXColorRGB const &color ) noexcept;
         void SetEmission ( GXColorRGB const &emission ) noexcept;
 
+        void SetTransform ( GXMat4 const &transform ) noexcept;
+
         [[nodiscard]] static bool AllocateCommandBuffers ( size_t amount ) noexcept;
 
         [[nodiscard]] static int OnCreate ( lua_State* state );
@@ -92,6 +94,7 @@ class SkeletalMeshComponent final : public RenderableComponent, public Transform
         [[nodiscard]] static int OnSetColor1 ( lua_State* state );
         [[nodiscard]] static int OnSetColor2 ( lua_State* state );
         [[nodiscard]] static int OnSetEmission ( lua_State* state );
+        [[nodiscard]] static int OnSetLocal ( lua_State* state );
         [[nodiscard]] static int OnSetMaterial ( lua_State* state );
 };
 

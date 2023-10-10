@@ -72,6 +72,9 @@ class SkeletalMeshComponent final : public RenderableComponent, public Transform
         [[nodiscard]] static bool Init ( lua_State &vm, android_vulkan::Renderer &renderer ) noexcept;
         static void Destroy () noexcept;
 
+        // Waiting until all mesh data will be uploaded to GPU.
+        [[nodiscard]] static bool Sync () noexcept;
+
     private:
         [[nodiscard]] ComponentRef &GetReference () noexcept override;
         void FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept override;

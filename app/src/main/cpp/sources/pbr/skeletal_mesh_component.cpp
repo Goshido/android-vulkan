@@ -32,7 +32,8 @@ constexpr GXColorRGB DEFAULT_EMISSION ( 1.0F, 1.0F, 1.0F, 1.0F );
 constexpr auto MIN_COMMAND_BUFFERS =
     static_cast<size_t> ( MaterialManager::MaxCommandBufferPerMaterial () ) +
     static_cast<size_t> ( MeshManager::MaxCommandBufferPerMesh () ) +
-    static_cast<size_t> ( MeshManager::MaxCommandBufferPerMesh () );
+    static_cast<size_t> ( MeshManager::MaxCommandBufferPerMesh () ) +
+    static_cast<size_t> ( android_vulkan::SkinData::MaxCommandBufferPerSkin () );
 // clang-format on
 
 static_assert ( ALLOCATE_COMMAND_BUFFERS >= MIN_COMMAND_BUFFERS );
@@ -80,22 +81,29 @@ SkeletalMeshComponent::SkeletalMeshComponent ( bool &success,
     if ( !_material )
         return;
 
+    size_t consumed;
+    commandBuffers += commandBufferConsumed;
+    fences += commandBufferConsumed;
+
     _referenceMesh = MeshManager::GetInstance ().LoadMesh ( *_renderer,
-        commandBufferConsumed,
+        consumed,
         mesh,
-        commandBuffers[ commandBufferConsumed ],
-        fences[ commandBufferConsumed ]
+        *commandBuffers,
+        *fences
     );
 
     if ( !_referenceMesh )
         return;
 
+    commandBufferConsumed += consumed;
+    commandBuffers += consumed;
+    fences += consumed;
 
     MeshRef skinMesh = MeshManager::GetInstance ().LoadMesh ( *_renderer,
-        commandBufferConsumed,
+        consumed,
         mesh,
-        commandBuffers[ commandBufferConsumed ],
-        fences[ commandBufferConsumed ]
+        *commandBuffers,
+        *fences
     );
 
     if ( !skinMesh )
@@ -104,14 +112,17 @@ SkeletalMeshComponent::SkeletalMeshComponent ( bool &success,
         return;
     }
 
+    commandBufferConsumed += consumed;
+    commandBuffers += consumed;
+    fences += consumed;
+
     _usage._skinMesh = std::move ( skinMesh );
-    _usage._frameIds.resize ( _renderer->GetPresentImageCount (), false );
 
     success = _skinData.LoadSkin ( skin,
         skeleton,
         *_renderer,
-        commandBuffers[ commandBufferConsumed ],
-        fences[ commandBufferConsumed ]
+        *commandBuffers,
+        *fences
     );
 
     if ( success )
@@ -132,6 +143,12 @@ void SkeletalMeshComponent::Unregister () noexcept
 
 [[maybe_unused]] void SkeletalMeshComponent::UpdatePose ( size_t swapchainImageIndex ) noexcept
 {
+    _usage._skinMesh->FreeTransferResources ( *_renderer );
+    size_t const c = _renderer->GetPresentImageCount ();
+
+    if ( c != _usage._frameIds.size () )
+        _usage._frameIds.resize ( c );
+
     _usage._frameIds[ swapchainImageIndex ] = true;
     // TODO
 }
@@ -262,10 +279,50 @@ void SkeletalMeshComponent::Destroy () noexcept
     _renderer = nullptr;
 }
 
+bool SkeletalMeshComponent::Sync () noexcept
+{
+    if ( !_commandBufferIndex )
+        return true;
+
+    VkDevice device = _renderer->GetDevice ();
+    auto const fenceCount = static_cast<uint32_t> ( _commandBufferIndex );
+    VkFence* fences = _fences.data ();
+
+    bool result = android_vulkan::Renderer::CheckVkResult (
+        vkWaitForFences ( device, fenceCount, fences, VK_TRUE, std::numeric_limits<uint64_t>::max () ),
+        "pbr::SkeletalMeshComponent::Sync",
+        "Can't wait fence"
+    );
+
+    if ( !result )
+        return false;
+
+    result = android_vulkan::Renderer::CheckVkResult ( vkResetFences ( device, fenceCount, fences ),
+        "pbr::SkeletalMeshComponent::Sync",
+        "Can't reset fence"
+    );
+
+    if ( !result )
+        return false;
+
+    result = android_vulkan::Renderer::CheckVkResult (
+        vkResetCommandPool ( device, _commandPool, 0U ),
+        "pbr::SkeletalMeshComponent::Sync",
+        "Can't reset command pool"
+    );
+
+    if ( !result )
+        return false;
+
+    _commandBufferIndex = 0U;
+    return true;
+}
+
 ComponentRef &SkeletalMeshComponent::GetReference () noexcept
 {
-    static ComponentRef dummy {};
-    return dummy;
+    auto findResult = _referenceMeshes.find ( this );
+    AV_ASSERT ( findResult != _referenceMeshes.end () )
+    return findResult->second;
 }
 
 void SkeletalMeshComponent::FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept
@@ -294,14 +351,22 @@ void SkeletalMeshComponent::FreeTransferResources ( android_vulkan::Renderer &re
     m.GetParam ()->FreeTransferResources ( renderer );
 }
 
-void SkeletalMeshComponent::Submit ( RenderSession &/*renderSession*/ ) noexcept
+void SkeletalMeshComponent::Submit ( RenderSession &renderSession ) noexcept
 {
-    // TODO
+    renderSession.SubmitMesh ( _usage._skinMesh,
+        _material,
+        _localMatrix,
+        _worldBounds,
+        _color0,
+        _color1,
+        _color2,
+        _emission
+    );
 }
 
-void SkeletalMeshComponent::OnTransform ( GXMat4 const &/*transformWorld*/ ) noexcept
+void SkeletalMeshComponent::OnTransform ( GXMat4 const &transformWorld ) noexcept
 {
-    // TODO
+    SetTransform ( transformWorld );
 }
 
 void SkeletalMeshComponent::SetColor0 ( GXColorRGB const &color ) noexcept

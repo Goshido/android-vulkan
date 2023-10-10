@@ -47,12 +47,17 @@ class [[maybe_unused]] SkinData final
         [[nodiscard]] VkBuffer const &GetBuffer () const noexcept;
         [[nodiscard]] std::string const &GetName () const noexcept;
 
-        [[maybe_unused, nodiscard]] bool LoadSkin ( std::string &&skinFilename,
+        [[nodiscard]] bool LoadSkin ( std::string &&skinFilename,
             std::string &&skeletonFilename,
             Renderer &renderer,
             VkCommandBuffer commandBuffer,
             VkFence fence
         ) noexcept;
+
+        [[nodiscard]] constexpr static uint32_t MaxCommandBufferPerSkin () noexcept
+        {
+            return 1U;
+        }
 
     private:
         void FreeResourceInternal ( Renderer &renderer ) noexcept;

@@ -78,6 +78,7 @@ Actor::StaticInitializer::StaticInitializer () noexcept
     script[ static_cast<size_t> ( ClassID::Reflection ) ] = &Actor::AppendReflectionComponentFromScript;
     script[ static_cast<size_t> ( ClassID::RigidBody ) ] = &Actor::AppendRigidBodyComponentFromScript;
     script[ static_cast<size_t> ( ClassID::Script ) ] = &Actor::AppendScriptComponentFromScript;
+    script[ static_cast<size_t> ( ClassID::SkeletalMesh ) ] = &Actor::AppendSkeletalMeshComponentFromScript;
     script[ static_cast<size_t> ( ClassID::SoundEmitterGlobal ) ] = &Actor::AppendSoundEmitterGlobalComponentFromScript;
 
     script[ static_cast<size_t> ( ClassID::SoundEmitterSpatial ) ] =
@@ -447,6 +448,19 @@ void Actor::AppendScriptComponentFromScript ( ComponentRef &component,
     // NOLINTNEXTLINE - downcast.
     auto &scriptComponent = static_cast<ScriptComponent &> ( *component );
     scriptComponent.RegisterFromScript ( *this );
+}
+
+void Actor::AppendSkeletalMeshComponentFromScript ( ComponentRef &component,
+    ComponentList &renderable,
+    android_vulkan::Physics &/*physics*/
+) noexcept
+{
+    // NOLINTNEXTLINE - downcast.
+    auto &transformable = static_cast<SkeletalMeshComponent &> ( *component );
+
+    renderable.emplace_back ( transformable );
+    _transformableComponents.emplace_back ( std::ref ( transformable ) );
+    transformable.RegisterFromScript ( *this );
 }
 
 void Actor::AppendSoundEmitterGlobalComponentFromNative ( ComponentRef &component,

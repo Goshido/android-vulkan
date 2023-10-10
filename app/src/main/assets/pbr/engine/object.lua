@@ -47,5 +47,20 @@ end
 
 setmetatable ( Object, { __call = Constructor } )
 
+------------------------------------------------------------------------------------------------------------------------
+
+function IsComponent ( objectType )
+    return objectType == eObjectType.CameraComponent or
+        objectType == eObjectType.RigidBodyComponent or
+        objectType == eObjectType.ScriptComponent or
+        objectType == eObjectType.StaticMeshComponent or
+        objectType == eObjectType.TransformComponent or
+        objectType == eObjectType.SoundEmitterGlobalComponent or
+        objectType == eObjectType.SoundEmitterSpatialComponent or
+        objectType == eObjectType.SkeletalMeshComponent
+end
+
+------------------------------------------------------------------------------------------------------------------------
+
 -- Module contract
 return nil

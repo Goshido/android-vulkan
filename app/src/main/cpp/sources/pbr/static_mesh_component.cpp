@@ -451,7 +451,7 @@ bool StaticMeshComponent::Sync () noexcept
         return false;
 
     result = android_vulkan::Renderer::CheckVkResult (
-        vkResetCommandPool ( _renderer->GetDevice (), _commandPool, 0U ),
+        vkResetCommandPool ( device, _commandPool, 0U ),
         "pbr::StaticMeshComponent::Sync",
         "Can't reset command pool"
     );

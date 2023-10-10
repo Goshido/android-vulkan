@@ -534,7 +534,7 @@ bool MeshGeometry::UploadInternal ( size_t numUploads,
     VkMemoryRequirements transferMemoryRequirements;
     vkGetBufferMemoryRequirements ( device, _transferBuffer, &transferMemoryRequirements );
 
-    constexpr VkMemoryPropertyFlags const flags = AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_COHERENT_BIT ) |
+    constexpr VkMemoryPropertyFlags flags = AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_COHERENT_BIT ) |
         AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT );
 
     result = renderer.TryAllocateMemory ( _transferBufferMemory,
@@ -619,7 +619,7 @@ bool MeshGeometry::UploadInternal ( size_t numUploads,
             .dstAccessMask = syncItem._dstAccessMask,
             .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
             .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-            .buffer = dstBuffers[ i ],
+            .buffer = buffer,
             .offset = 0U,
             .size = copyBuffer.size
         };

@@ -25,18 +25,8 @@ local function AppendComponent ( self, component )
     )
 
     assert ( type ( component ) == "table", [[Actor:AppendComponent - "component" is not component object.]] )
+    assert ( IsComponent ( component._type ), [[Actor:AppendComponent - "component" is not compatible entity.]] )
 
-    local t = component._type
-
-    local isComponent = t == eObjectType.StaticMeshComponent or
-        t == eObjectType.TransformComponent or
-        t == eObjectType.ScriptComponent or
-        t == eObjectType.RigidBodyComponent or
-        t == eObjectType.CameraComponent or
-        t == eObjectType.SoundEmitterGlobalComponent or
-        t == eObjectType.SoundEmitterSpatialComponent
-
-    assert ( isComponent, [[Actor:AppendComponent - "component" is not compatible entity.]] )
     av_ActorAppendComponent ( self._handle, component._handle )
     AppendComponentFromNative ( self, component )
 end

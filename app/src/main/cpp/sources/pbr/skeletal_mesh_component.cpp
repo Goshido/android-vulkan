@@ -43,13 +43,11 @@ static_assert ( ALLOCATE_COMMAND_BUFFERS >= MIN_COMMAND_BUFFERS );
 //----------------------------------------------------------------------------------------------------------------------
 
 std::list<SkeletalMeshComponent::Usage> SkeletalMeshComponent::_aboutDelete {};
-size_t SkeletalMeshComponent::_commandBufferIndex = 0U;
-std::vector<VkCommandBuffer> SkeletalMeshComponent::_commandBuffers {};
-VkCommandPool SkeletalMeshComponent::_commandPool {};
-std::vector<VkFence> SkeletalMeshComponent::_fences {};
+SkeletalMeshComponent::CommandBufferInfo SkeletalMeshComponent::_cbInfo {};
 android_vulkan::Renderer* SkeletalMeshComponent::_renderer = nullptr;
-std::unordered_map<Component const*, ComponentRef> SkeletalMeshComponent::_referenceMeshes {};
+std::unordered_map<Component const*, ComponentRef> SkeletalMeshComponent::_skeletalMeshes {};
 std::list<SkeletalMeshComponent::Usage> SkeletalMeshComponent::_toDelete {};
+std::deque<SkeletalMeshComponent::Usage*> SkeletalMeshComponent::_transferQueue {};
 
 // NOLINTNEXTLINE - no initialization for some fields
 SkeletalMeshComponent::SkeletalMeshComponent ( bool &success,
@@ -99,36 +97,29 @@ SkeletalMeshComponent::SkeletalMeshComponent ( bool &success,
     commandBuffers += consumed;
     fences += consumed;
 
-    MeshRef skinMesh = MeshManager::GetInstance ().LoadMesh ( *_renderer,
-        consumed,
-        mesh,
-        *commandBuffers,
-        *fences
-    );
+    MeshRef skinMesh = std::make_shared<android_vulkan::MeshGeometry> ();
 
-    if ( !skinMesh )
-    {
-        skinMesh = nullptr;
+    if ( !skinMesh->LoadMesh ( mesh, *_renderer, *commandBuffers, *fences ) )
         return;
-    }
 
-    commandBufferConsumed += consumed;
-    commandBuffers += consumed;
-    fences += consumed;
+    ++commandBufferConsumed;
+    ++commandBuffers;
+    ++fences;
 
     _usage._skinMesh = std::move ( skinMesh );
 
-    success = _skinData.LoadSkin ( skin,
+    success = _usage._skinData.LoadSkin ( skin,
         skeleton,
         *_renderer,
         *commandBuffers,
         *fences
     );
 
-    if ( success )
-    {
-        ++commandBufferConsumed;
-    }
+    if ( !success )
+        return;
+
+    ++commandBufferConsumed;
+    _transferQueue.push_back ( &_usage );
 }
 
 void SkeletalMeshComponent::RegisterFromScript ( Actor &actor ) noexcept
@@ -138,7 +129,10 @@ void SkeletalMeshComponent::RegisterFromScript ( Actor &actor ) noexcept
 
 void SkeletalMeshComponent::Unregister () noexcept
 {
-    _aboutDelete.emplace_back ( std::move ( _usage ) );
+    if ( _usage._skinMesh )
+    {
+        _aboutDelete.emplace_back ( std::move ( _usage ) );
+    }
 }
 
 [[maybe_unused]] void SkeletalMeshComponent::UpdatePose ( size_t swapchainImageIndex ) noexcept
@@ -170,6 +164,7 @@ void SkeletalMeshComponent::FreeUnusedResources ( size_t swapchainImageIndex ) n
         }
 
         usage._skinMesh->FreeResources ( *_renderer );
+        usage._skinData.FreeResources ( *_renderer );
         it = _toDelete.erase ( it );
     }
 
@@ -232,7 +227,7 @@ bool SkeletalMeshComponent::Init ( lua_State &vm, android_vulkan::Renderer &rend
     };
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateCommandPool ( renderer.GetDevice (), &createInfo, nullptr, &_commandPool ),
+        vkCreateCommandPool ( renderer.GetDevice (), &createInfo, nullptr, &_cbInfo._commandPool ),
         "pbr::SkeletalMeshComponent::Init",
         "Can't create command pool"
     );
@@ -246,19 +241,19 @@ bool SkeletalMeshComponent::Init ( lua_State &vm, android_vulkan::Renderer &rend
 
 void SkeletalMeshComponent::Destroy () noexcept
 {
-    if ( !_referenceMeshes.empty () )
+    if ( !_skeletalMeshes.empty () )
     {
         android_vulkan::LogWarning ( "pbr::SkeletalMeshComponent::Destroy - Memory leak." );
         AV_ASSERT ( false )
     }
 
-    _referenceMeshes.clear ();
+    _skeletalMeshes.clear ();
     VkDevice device = _renderer->GetDevice ();
 
-    if ( _commandPool != VK_NULL_HANDLE )
+    if ( _cbInfo._commandPool != VK_NULL_HANDLE )
     {
-        vkDestroyCommandPool ( device, _commandPool, nullptr );
-        _commandPool = VK_NULL_HANDLE;
+        vkDestroyCommandPool ( device, _cbInfo._commandPool, nullptr );
+        _cbInfo._commandPool = VK_NULL_HANDLE;
         AV_UNREGISTER_COMMAND_POOL ( "pbr::SkeletalMeshComponent::_commandPool" )
     }
 
@@ -267,26 +262,36 @@ void SkeletalMeshComponent::Destroy () noexcept
         v.shrink_to_fit ();
     };
 
-    clean ( _commandBuffers );
+    clean ( _cbInfo._buffers );
 
-    for ( auto fence : _fences )
+    for ( auto fence : _cbInfo._fences )
     {
         vkDestroyFence ( device, fence, nullptr );
         AV_UNREGISTER_FENCE ( "pbr::SkeletalMeshComponent::_fences" )
     }
 
-    clean ( _fences );
+    clean ( _cbInfo._fences );
+
+    _toDelete.splice ( _toDelete.cend (), _aboutDelete );
+
+    for ( auto &item : _toDelete )
+    {
+        item._skinMesh->FreeResources ( *_renderer );
+        item._skinData.FreeResources ( *_renderer );
+    }
+
+    _toDelete.clear ();
     _renderer = nullptr;
 }
 
 bool SkeletalMeshComponent::Sync () noexcept
 {
-    if ( !_commandBufferIndex )
+    if ( !_cbInfo._index )
         return true;
 
     VkDevice device = _renderer->GetDevice ();
-    auto const fenceCount = static_cast<uint32_t> ( _commandBufferIndex );
-    VkFence* fences = _fences.data ();
+    auto const fenceCount = static_cast<uint32_t> ( _cbInfo._index );
+    VkFence* fences = _cbInfo._fences.data ();
 
     bool result = android_vulkan::Renderer::CheckVkResult (
         vkWaitForFences ( device, fenceCount, fences, VK_TRUE, std::numeric_limits<uint64_t>::max () ),
@@ -306,7 +311,7 @@ bool SkeletalMeshComponent::Sync () noexcept
         return false;
 
     result = android_vulkan::Renderer::CheckVkResult (
-        vkResetCommandPool ( device, _commandPool, 0U ),
+        vkResetCommandPool ( device, _cbInfo._commandPool, 0U ),
         "pbr::SkeletalMeshComponent::Sync",
         "Can't reset command pool"
     );
@@ -314,14 +319,22 @@ bool SkeletalMeshComponent::Sync () noexcept
     if ( !result )
         return false;
 
-    _commandBufferIndex = 0U;
+    _cbInfo._index = 0U;
+
+    for ( auto* item : _transferQueue )
+    {
+        item->_skinData.FreeTransferResources ( *_renderer );
+        item->_skinMesh->FreeTransferResources ( *_renderer );
+    }
+
+    _transferQueue.clear ();
     return true;
 }
 
 ComponentRef &SkeletalMeshComponent::GetReference () noexcept
 {
-    auto findResult = _referenceMeshes.find ( this );
-    AV_ASSERT ( findResult != _referenceMeshes.end () )
+    auto findResult = _skeletalMeshes.find ( this );
+    AV_ASSERT ( findResult != _skeletalMeshes.end () )
     return findResult->second;
 }
 
@@ -397,15 +410,15 @@ void SkeletalMeshComponent::SetTransform ( GXMat4 const &transform ) noexcept
 
 bool SkeletalMeshComponent::AllocateCommandBuffers ( size_t amount ) noexcept
 {
-    size_t const current = _commandBuffers.size ();
+    size_t const current = _cbInfo._buffers.size ();
     size_t const size = current + amount;
-    _commandBuffers.resize ( size );
+    _cbInfo._buffers.resize ( size );
 
     VkCommandBufferAllocateInfo const allocateInfo
     {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
         .pNext = nullptr,
-        .commandPool = _commandPool,
+        .commandPool = _cbInfo._commandPool,
         .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
         .commandBufferCount = static_cast<uint32_t> ( amount )
     };
@@ -413,7 +426,7 @@ bool SkeletalMeshComponent::AllocateCommandBuffers ( size_t amount ) noexcept
     VkDevice device = _renderer->GetDevice ();
 
     bool result = android_vulkan::Renderer::CheckVkResult (
-        vkAllocateCommandBuffers ( device, &allocateInfo, &_commandBuffers[ current ] ),
+        vkAllocateCommandBuffers ( device, &allocateInfo, &_cbInfo._buffers[ current ] ),
         "pbr::SkeletalMeshComponent::AllocateCommandBuffers",
         "Can't allocate command buffer"
     );
@@ -421,7 +434,7 @@ bool SkeletalMeshComponent::AllocateCommandBuffers ( size_t amount ) noexcept
     if ( !result )
         return false;
 
-    _fences.resize ( size );
+    _cbInfo._fences.resize ( size );
 
     constexpr VkFenceCreateInfo fenceInfo
     {
@@ -430,7 +443,7 @@ bool SkeletalMeshComponent::AllocateCommandBuffers ( size_t amount ) noexcept
         .flags = 0U
     };
 
-    VkFence* fences = _fences.data ();
+    VkFence* fences = _cbInfo._fences.data ();
 
     for ( size_t i = current; i < size; ++i )
     {
@@ -496,7 +509,7 @@ int SkeletalMeshComponent::OnCreate ( lua_State* state )
         return 1;
     }
 
-    size_t const available = _commandBuffers.size () - _commandBufferIndex;
+    size_t const available = _cbInfo._buffers.size () - _cbInfo._index;
 
     if ( available < MIN_COMMAND_BUFFERS )
     {
@@ -516,8 +529,8 @@ int SkeletalMeshComponent::OnCreate ( lua_State* state )
         skin,
         skeleton,
         materialFile,
-        &_commandBuffers[ _commandBufferIndex ],
-        &_fences[ _commandBufferIndex ],
+        &_cbInfo._buffers[ _cbInfo._index ],
+        &_cbInfo._fences[ _cbInfo._index ],
         name
     );
 
@@ -528,9 +541,9 @@ int SkeletalMeshComponent::OnCreate ( lua_State* state )
     }
 
     Component* handle = referenceMesh.get ();
-    _referenceMeshes.emplace ( handle, std::move ( referenceMesh ) );
+    _skeletalMeshes.emplace ( handle, std::move ( referenceMesh ) );
 
-    _commandBufferIndex += consumed;
+    _cbInfo._index += consumed;
     lua_pushlightuserdata ( state, handle );
     return 1;
 }
@@ -544,7 +557,13 @@ int SkeletalMeshComponent::OnDestroy ( lua_State* state )
 
 int SkeletalMeshComponent::OnGarbageCollected ( lua_State* state )
 {
-    _referenceMeshes.erase ( static_cast<Component*> ( lua_touserdata ( state, 1 ) ) );
+    auto findResult = _skeletalMeshes.find ( static_cast<Component*> ( lua_touserdata ( state, 1 ) ) );
+
+    // NOLINTNEXTLINE - downcast.
+    auto &self = static_cast<SkeletalMeshComponent &> ( *findResult->second );
+    self.Unregister ();
+
+    _skeletalMeshes.erase ( findResult );
     return 0;
 }
 

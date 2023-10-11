@@ -38,7 +38,7 @@ MeshRef MeshManager::LoadMesh ( android_vulkan::Renderer &renderer,
     if ( findResult != _meshStorage.cend () )
         return findResult->second;
 
-    if ( !mesh->LoadMesh ( fileName, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, renderer, commandBuffer, fence ) )
+    if ( !mesh->LoadMesh ( fileName, renderer, commandBuffer, fence ) )
     {
         mesh = nullptr;
     }

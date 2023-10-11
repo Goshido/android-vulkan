@@ -39,6 +39,10 @@ local function UpdateTimer ( self, deltaTime )
     self._timerNow = now
     self._timerLast = now
     self._uiTimer:SetText ( string.format ( "%d", now ) )
+
+    if now == 378 then
+        self:QuitGame ()
+    end
 end
 
 -- Engine event handlers

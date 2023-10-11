@@ -22,6 +22,9 @@ namespace {
 
 constexpr size_t UV_THREADS = 4U;
 
+constexpr VkFlags VERTEX_BUFFER_USAGE = AV_VK_FLAG ( VK_BUFFER_USAGE_VERTEX_BUFFER_BIT ) |
+    AV_VK_FLAG ( VK_BUFFER_USAGE_STORAGE_BUFFER_BIT );
+
 //----------------------------------------------------------------------------------------------------------------------
 
 struct BufferSyncItem final
@@ -48,12 +51,12 @@ struct BufferSyncItem final
 std::map<VkBufferUsageFlags, BufferSyncItem> const g_accessMapper =
 {
     {
-        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+        VERTEX_BUFFER_USAGE,
 
         BufferSyncItem ( VK_ACCESS_TRANSFER_WRITE_BIT,
             VK_PIPELINE_STAGE_TRANSFER_BIT,
-            VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT,
-            VK_PIPELINE_STAGE_VERTEX_INPUT_BIT
+            AV_VK_FLAG ( VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT ) | AV_VK_FLAG ( VK_ACCESS_SHADER_READ_BIT ),
+            AV_VK_FLAG ( VK_PIPELINE_STAGE_VERTEX_INPUT_BIT ) | AV_VK_FLAG ( VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT )
         )
     },
     {
@@ -132,7 +135,6 @@ bool MeshGeometry::IsUnique () const noexcept
 }
 
 bool MeshGeometry::LoadMesh ( std::string &&fileName,
-    VkBufferUsageFlags usage,
     Renderer &renderer,
     VkCommandBuffer commandBuffer,
     VkFence fence
@@ -153,7 +155,7 @@ bool MeshGeometry::LoadMesh ( std::string &&fileName,
     static std::regex const isMesh ( R"__(^.+?\.mesh$)__" );
 
     if ( std::regex_match ( fileName, match, isMesh ) )
-        return LoadFromMesh ( std::move ( fileName ), usage, renderer, commandBuffer, fence );
+        return LoadFromMesh ( std::move ( fileName ), renderer, commandBuffer, fence );
 
     return false;
 }
@@ -161,14 +163,13 @@ bool MeshGeometry::LoadMesh ( std::string &&fileName,
 [[maybe_unused]] bool MeshGeometry::LoadMesh ( uint8_t const* data,
     size_t size,
     uint32_t vertexCount,
-    VkBufferUsageFlags usage,
     Renderer &renderer,
     VkCommandBuffer commandBuffer,
     VkFence fence
 ) noexcept
 {
     FreeResources ( renderer );
-    return UploadSimple ( data, size, vertexCount, usage, renderer, commandBuffer, fence );
+    return UploadSimple ( data, size, vertexCount, VERTEX_BUFFER_USAGE, renderer, commandBuffer, fence );
 }
 
 bool MeshGeometry::LoadMesh ( uint8_t const* vertexData,
@@ -240,7 +241,6 @@ void MeshGeometry::FreeResourceInternal ( Renderer &renderer ) noexcept
 }
 
 bool MeshGeometry::LoadFromMesh ( std::string &&fileName,
-    VkBufferUsageFlags usage,
     Renderer &renderer,
     VkCommandBuffer commandBuffer,
     VkFence fence
@@ -305,7 +305,7 @@ bool MeshGeometry::LoadFromMesh ( std::string &&fileName,
     bool const result = UploadSimple ( reinterpret_cast<uint8_t const*> ( vertices ),
         header.totalVertices * sizeof ( VertexInfo ),
         header.totalVertices,
-        usage,
+        VERTEX_BUFFER_USAGE,
         renderer,
         commandBuffer,
         fence
@@ -418,6 +418,7 @@ bool MeshGeometry::UploadComplex ( uint8_t const* data,
         return false;
 
     constexpr VkBufferUsageFlags vertexBufferUsageFlags = AV_VK_FLAG ( VK_BUFFER_USAGE_VERTEX_BUFFER_BIT ) |
+        AV_VK_FLAG ( VK_BUFFER_USAGE_STORAGE_BUFFER_BIT ) |
         AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT );
 
     bufferInfo.size = static_cast<VkDeviceSize> ( vertexDataSize );
@@ -473,7 +474,7 @@ bool MeshGeometry::UploadComplex ( uint8_t const* data,
     constexpr VkBufferUsageFlags const usages[ std::size ( copyInfo ) ] =
     {
         VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT
+        AV_VK_FLAG ( VK_BUFFER_USAGE_VERTEX_BUFFER_BIT ) | AV_VK_FLAG ( VK_BUFFER_USAGE_STORAGE_BUFFER_BIT )
     };
 
     VkBuffer const dstBuffers[ std::size ( copyInfo ) ] = { _indexBuffer, _vertexBuffer };

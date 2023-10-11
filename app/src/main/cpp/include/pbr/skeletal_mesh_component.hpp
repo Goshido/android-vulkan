@@ -7,6 +7,10 @@
 #include "transformable.hpp"
 #include <skin_data.hpp>
 
+GX_DISABLE_COMMON_WARNINGS
+
+GX_RESTORE_WARNING_STATE
+
 
 namespace pbr {
 
@@ -15,8 +19,17 @@ class SkeletalMeshComponent final : public RenderableComponent, public Transform
     private:
         struct Usage final
         {
+            android_vulkan::SkinData                                    _skinData {};
             MeshRef                                                     _skinMesh {};
             std::vector<bool>                                           _frameIds {};
+        };
+
+        struct CommandBufferInfo final
+        {
+            std::vector<VkCommandBuffer>                                _buffers {};
+            VkCommandPool                                               _commandPool = VK_NULL_HANDLE;
+            size_t                                                      _index = 0U;
+            std::vector<VkFence>                                        _fences {};
         };
 
     private:
@@ -27,24 +40,28 @@ class SkeletalMeshComponent final : public RenderableComponent, public Transform
         GXColorRGB                                                      _emission;
 
         MaterialRef                                                     _material;
-
         GXMat4                                                          _localMatrix;
         GXAABB                                                          _worldBounds;
 
         MeshRef                                                         _referenceMesh;
-        android_vulkan::SkinData                                        _skinData {};
         Usage                                                           _usage;
 
         static std::list<Usage>                                         _aboutDelete;
-        static size_t                                                   _commandBufferIndex;
-        static std::vector<VkCommandBuffer>                             _commandBuffers;
-        static VkCommandPool                                            _commandPool;
-        static std::vector<VkFence>                                     _fences;
+        static CommandBufferInfo                                        _cbInfo;
         static android_vulkan::Renderer*                                _renderer;
-        static std::unordered_map<Component const*, ComponentRef>       _referenceMeshes;
+        static std::unordered_map<Component const*, ComponentRef>       _skeletalMeshes;
         static std::list<Usage>                                         _toDelete;
+        static std::deque<Usage*>                                       _transferQueue;
 
     public:
+        SkeletalMeshComponent () = delete;
+
+        SkeletalMeshComponent ( SkeletalMeshComponent const & ) = delete;
+        SkeletalMeshComponent &operator = ( SkeletalMeshComponent const & ) = delete;
+
+        SkeletalMeshComponent ( SkeletalMeshComponent && ) = delete;
+        SkeletalMeshComponent &operator = ( SkeletalMeshComponent && ) = delete;
+
         SkeletalMeshComponent ( bool &success,
             size_t &commandBufferConsumed,
             char const* mesh,
@@ -55,12 +72,6 @@ class SkeletalMeshComponent final : public RenderableComponent, public Transform
             VkFence const* fences,
             std::string &&name
         ) noexcept;
-
-        SkeletalMeshComponent ( SkeletalMeshComponent const & ) = delete;
-        SkeletalMeshComponent &operator = ( SkeletalMeshComponent const & ) = delete;
-
-        SkeletalMeshComponent ( SkeletalMeshComponent && ) = delete;
-        SkeletalMeshComponent &operator = ( SkeletalMeshComponent && ) = delete;
 
         ~SkeletalMeshComponent () override = default;
 

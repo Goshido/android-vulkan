@@ -59,7 +59,6 @@ class MeshGeometry final
         [[nodiscard]] bool IsUnique () const noexcept;
 
         [[nodiscard]] bool LoadMesh ( std::string &&fileName,
-            VkBufferUsageFlags usage,
             Renderer &renderer,
             VkCommandBuffer commandBuffer,
             VkFence fence
@@ -68,7 +67,6 @@ class MeshGeometry final
         [[maybe_unused, nodiscard]] bool LoadMesh ( uint8_t const* data,
             size_t size,
             uint32_t vertexCount,
-            VkBufferUsageFlags usage,
             Renderer &renderer,
             VkCommandBuffer commandBuffer,
             VkFence fence
@@ -88,7 +86,6 @@ class MeshGeometry final
         void FreeResourceInternal ( Renderer &renderer ) noexcept;
 
         [[nodiscard]] bool LoadFromMesh ( std::string &&fileName,
-            VkBufferUsageFlags usage,
             Renderer &renderer,
             VkCommandBuffer commandBuffer,
             VkFence fence

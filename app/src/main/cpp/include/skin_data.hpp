@@ -13,21 +13,21 @@ GX_RESTORE_WARNING_STATE
 
 namespace android_vulkan {
 
-class [[maybe_unused]] SkinData final
+class SkinData final
 {
     private:
         struct Buffer final
         {
-            VkBuffer                _buffer = VK_NULL_HANDLE;
-            VkDeviceMemory          _memory = VK_NULL_HANDLE;
-            VkDeviceSize            _offset = std::numeric_limits<VkDeviceSize>::max ();
+            VkBuffer            _buffer = VK_NULL_HANDLE;
+            VkDeviceMemory      _memory = VK_NULL_HANDLE;
+            VkDeviceSize        _offset = std::numeric_limits<VkDeviceSize>::max ();
         };
 
     private:
-        GXAABB                      _bounds {};
-        std::string                 _fileName {};
-        Buffer                      _skin {};
-        [[maybe_unused]] Buffer     _transfer {};
+        GXAABB                  _bounds {};
+        std::string             _fileName {};
+        Buffer                  _skin {};
+        Buffer                  _transfer {};
 
     public:
         SkinData () = default;
@@ -35,8 +35,8 @@ class [[maybe_unused]] SkinData final
         SkinData ( SkinData const & ) = delete;
         SkinData &operator = ( SkinData const & ) = delete;
 
-        SkinData ( SkinData && ) = delete;
-        SkinData &operator = ( SkinData && ) = delete;
+        SkinData ( SkinData && ) = default;
+        SkinData &operator = ( SkinData && ) = default;
 
         ~SkinData () = default;
 

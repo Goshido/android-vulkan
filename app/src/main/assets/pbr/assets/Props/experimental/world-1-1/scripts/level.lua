@@ -1,3 +1,4 @@
+require "av://engine/animation_graph.lua"
 require "av://engine/scene.lua"
 require "av://engine/script_component.lua"
 require "av://engine/skeletal_mesh_component.lua"
@@ -109,8 +110,9 @@ local function OnActorConstructed ( self, actor )
 
     test:AppendComponent ( mesh )
     g_scene:AppendActor ( test )
-
     self._test = test
+
+    self._animationGraph = AnimationGraph ( "pbr/assets/Props/experimental/exporter/leg.skeleton" )
 end
 
 -- Metamethods

@@ -59,6 +59,7 @@ void AnimationExporter::Run ( HWND parent, MSTR const &path, int startFrame, int
     android_vulkan::AnimationHeader const header
     {
         ._fps = static_cast<float> ( GetFrameRate () ),
+        ._boneCount = static_cast<uint32_t> ( boneCount ),
         ._frameCount = frameCount,
         ._animationDataOffset = static_cast<uint64_t> ( sizeof ( android_vulkan::AnimationHeader ) ),
         ._boneNameInfoOffset = static_cast<uint64_t> ( sizeof ( android_vulkan::AnimationHeader ) + animationDataSize )
@@ -85,15 +86,17 @@ void AnimationExporter::Run ( HWND parent, MSTR const &path, int startFrame, int
     }
 
     auto* joint = reinterpret_cast<android_vulkan::BoneJoint*> ( d );
+    int const ticksPerFrame = GetTicksPerFrame ();
 
     for ( int frameIdx = startFrame; frameIdx <= lastFrame; ++frameIdx )
     {
+        TimeValue const time = static_cast<TimeValue> ( frameIdx * ticksPerFrame );
+
         for ( int boneIdx = 0; boneIdx < boneCount; ++boneIdx )
         {
             IGameNode* bone = skin->GetIGameBone ( boneIdx, false );
-
-            GMatrix worldTransformNative {};
-            auto probe = ExtractTransform ( parent, worldTransformNative, *bone, *skin );
+            GMatrix const worldTransformNative = bone->GetObjectTM ( time );
+            auto probe = ExtractTransform ( parent, worldTransformNative );
 
             if ( !probe )
                 return;
@@ -115,8 +118,8 @@ void AnimationExporter::Run ( HWND parent, MSTR const &path, int startFrame, int
                 //We know P and G, so:
                 //      X * P * P^(-1) = G * P^(-1)
                 //=>    X = G * P^(-1)
-                GMatrix parentWorldTransformNative {};
-                probe = ExtractTransform ( parent, parentWorldTransformNative, *parentBone, *skin );
+                GMatrix const parentWorldTransformNative = parentBone->GetObjectTM ( time );
+                probe = ExtractTransform ( parent, parentWorldTransformNative );
 
                 if ( !probe )
                     return;

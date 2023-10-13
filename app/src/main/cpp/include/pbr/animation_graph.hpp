@@ -59,5 +59,4 @@ class AnimationGraph final
 } // namespace pbr
 
 
-
 #endif // PBR_ANIMATION_GRAPH_HPP

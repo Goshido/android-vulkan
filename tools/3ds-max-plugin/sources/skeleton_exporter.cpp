@@ -161,7 +161,8 @@ bool SkeletonExporter::ProcessBone ( Bone &bone, WriteInfo &writeInfo, int32_t p
     HWND parentWindow = writeInfo._parentWindow;
 
     GMatrix worldTransformNative {};
-    auto probe = ExtractTransform ( parentWindow, worldTransformNative, *bone._bone, skin );
+    skin.GetInitBoneTM ( bone._bone, worldTransformNative );
+    auto probe = ExtractTransform ( parentWindow, worldTransformNative );
 
     if ( !probe )
         return false;
@@ -190,7 +191,8 @@ bool SkeletonExporter::ProcessBone ( Bone &bone, WriteInfo &writeInfo, int32_t p
         //      X * P * P^(-1) = G * P^(-1)
         //=>    X = G * P^(-1)
         GMatrix parentWorldTransformNative {};
-        probe = ExtractTransform ( parentWindow, parentWorldTransformNative, *bone._parentBone, skin );
+        skin.GetInitBoneTM ( bone._parentBone, parentWorldTransformNative );
+        probe = ExtractTransform ( parentWindow, parentWorldTransformNative );
 
         if ( !probe )
             return false;

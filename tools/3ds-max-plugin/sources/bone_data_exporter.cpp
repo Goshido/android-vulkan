@@ -50,13 +50,8 @@ android_vulkan::UTF8Offset BoneDataExporter::BoneCollector::GetLastNameSize () c
 
 //----------------------------------------------------------------------------------------------------------------------
 
-std::optional<GXMat4 const*> BoneDataExporter::ExtractTransform ( HWND parentWindow,
-    GMatrix &scratch,
-    IGameNode &bone,
-    IGameSkin &skin
-) noexcept
+std::optional<GXMat4 const*> BoneDataExporter::ExtractTransform ( HWND parentWindow, GMatrix const &scratch ) noexcept
 {
-    skin.GetInitBoneTM ( &bone, scratch );
     Point3 const scaling = scratch.Scaling ();
 
     bool const c0 = std::abs ( scaling.x - 1.0F ) < BONE_SCALING_THRESHOLD;

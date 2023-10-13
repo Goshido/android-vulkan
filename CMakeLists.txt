@@ -12,6 +12,7 @@ find_library ( log-lib log REQUIRED )
 
 # Main app
 add_library ( android-vulkan SHARED
+    app/src/main/cpp/sources/animation_track.cpp
     app/src/main/cpp/sources/contact_detector.cpp
     app/src/main/cpp/sources/contact_manager.cpp
     app/src/main/cpp/sources/core.cpp
@@ -61,6 +62,7 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/mandelbrot/mandelbrot_lut_color.cpp
     app/src/main/cpp/sources/pbr/actor.cpp
     app/src/main/cpp/sources/pbr/animation_graph.cpp
+    app/src/main/cpp/sources/pbr/animation_player.cpp
     app/src/main/cpp/sources/pbr/ascii_string.cpp
     app/src/main/cpp/sources/pbr/attribute_checker.cpp
     app/src/main/cpp/sources/pbr/attribute_parser.cpp

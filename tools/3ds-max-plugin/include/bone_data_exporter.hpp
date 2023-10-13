@@ -57,9 +57,7 @@ class BoneDataExporter : public Exporter
         ~BoneDataExporter () = delete;
 
         [[nodiscard]] static std::optional<GXMat4 const*> ExtractTransform ( HWND parentWindow,
-            GMatrix &scratch,
-            IGameNode &bone,
-            IGameSkin &skin
+            GMatrix const &scratch
         ) noexcept;
 
         static void WriteBoneJoint ( android_vulkan::BoneJoint &joint, GXMat4 const &transform ) noexcept;

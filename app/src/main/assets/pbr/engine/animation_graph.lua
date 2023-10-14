@@ -3,6 +3,37 @@ require "av://engine/object.lua"
 
 AnimationGraph = {}
 
+-- Methods
+local function Awake ( self )
+    assert ( type ( self ) == "table" and self._type == eObjectType.AnimationGraph,
+        [[AnimationGraph:Awake - Calling not via ":" syntax.]]
+    )
+
+    av_AnimationGraphAwake ( self._handle )
+end
+
+local function SetInput ( self, inputNode )
+    assert ( type ( self ) == "table" and self._type == eObjectType.AnimationGraph,
+        [[AnimationGraph:SetInput - Calling not via ":" syntax.]]
+    )
+
+    assert ( type ( inputNode ) == "table", [[AnimationPlayerNode:SetInput - "inputNode" is not an object.]] )
+
+    assert ( inputNode._type == eObjectType.AnimationPlayerNode,
+        [[AnimationPlayerNode:SetInput - "inputNode" incompatible with input requirements.]]
+    )
+
+    av_AnimationGraphSetInput ( self._handle, inputNode._handle )
+end
+
+local function Sleep ( self )
+    assert ( type ( self ) == "table" and self._type == eObjectType.AnimationGraph,
+        [[AnimationGraph:Sleep - Calling not via ":" syntax.]]
+    )
+
+    av_AnimationGraphSleep ( self._handle )
+end
+
 -- Metamethods
 local mt = {
     __gc = function ( self )
@@ -22,6 +53,11 @@ local function Constructor ( self, skeletonFile )
 
     -- Data
     obj._handle = handle
+
+    -- Methods
+    obj.Awake = Awake
+    obj.SetInput = SetInput
+    obj.Sleep = Sleep
 
     return setmetatable ( obj, mt )
 end

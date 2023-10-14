@@ -6,6 +6,7 @@
 
 GX_DISABLE_COMMON_WARNINGS
 
+#include <optional>
 #include <string>
 
 GX_RESTORE_WARNING_STATE
@@ -16,6 +17,9 @@ namespace pbr {
 class JointProviderNode
 {
     public:
+        using Result = std::optional<android_vulkan::Joint>;
+
+    public:
         JointProviderNode ( JointProviderNode const& ) = default;
         JointProviderNode& operator= ( JointProviderNode const& ) = default;
 
@@ -24,7 +28,7 @@ class JointProviderNode
 
         virtual ~JointProviderNode () = default;
 
-        [[nodiscard]] virtual android_vulkan::Joint GetJoint ( std::string const &name, uint32_t frame ) noexcept = 0;
+        [[nodiscard]] virtual Result GetJoint ( std::string const &name ) noexcept = 0;
         virtual void Update ( float deltaTime ) noexcept = 0;
 
     protected:

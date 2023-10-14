@@ -6,29 +6,29 @@
 
 namespace android_vulkan {
 
-[[maybe_unused]] float AnimationTrack::GetFPS () const noexcept
+float AnimationTrack::GetFPS () const noexcept
 {
     return _fps;
 }
 
-[[maybe_unused]] size_t AnimationTrack::GetFrames () const noexcept
+size_t AnimationTrack::GetFrameCount () const noexcept
 {
-    return _frames.size ();
+    return _frameCount;
 }
 
-[[maybe_unused]] Joint const &AnimationTrack::GetJoint ( std::string const &/*bone*/, size_t /*frame*/ ) const noexcept
+Joint const &AnimationTrack::GetJoint ( std::string const &bone, size_t frame ) const noexcept
 {
-    // TODO
-    static Joint const dummy{};
-    return dummy;
+    size_t const bonesPerFrame = _mapper.size ();
+    size_t const boneIdx = _mapper.find ( bone )->second;
+    return _frameData[ bonesPerFrame * frame + boneIdx ];
 }
 
-[[maybe_unused]] bool AnimationTrack::HasBone ( std::string const &bone ) const noexcept
+bool AnimationTrack::HasBone ( std::string const &bone ) const noexcept
 {
     return _mapper.contains ( bone );
 }
 
-[[maybe_unused]] bool AnimationTrack::Load ( std::string &&file ) noexcept
+bool AnimationTrack::Load ( std::string &&file ) noexcept
 {
     File animationFile ( std::move ( file ) );
 
@@ -39,9 +39,11 @@ namespace android_vulkan {
     auto const &header = *reinterpret_cast<android_vulkan::AnimationHeader const*> ( content );
 
     _fps = header._fps;
+    _frameCount = static_cast<size_t> ( header._frameCount );
+
     uint32_t const frameCount = header._frameCount;
     uint32_t const boneCount = header._boneCount;
-    _frames.reserve ( static_cast<size_t> ( boneCount ) * static_cast<size_t> ( frameCount ) );
+    _frameData.reserve ( static_cast<size_t> ( boneCount ) * static_cast<size_t> ( frameCount ) );
 
     auto const* frame = reinterpret_cast<android_vulkan::BoneJoint const*> ( content + header._animationDataOffset );
 
@@ -52,7 +54,7 @@ namespace android_vulkan {
             Joint j {};
             std::memcpy ( &j._location, &frame->_location, sizeof ( android_vulkan::Vec3 ) );
             std::memcpy ( &j._orientation, &frame->_orientation, sizeof ( android_vulkan::Quat ) );
-            _frames.push_back ( j );
+            _frameData.push_back ( j );
             ++frame;
         }
     }

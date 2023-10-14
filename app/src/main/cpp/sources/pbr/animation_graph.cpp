@@ -61,12 +61,24 @@ void AnimationGraph::Init ( lua_State &vm ) noexcept
     constexpr luaL_Reg const extensions[] =
     {
         {
+            .name = "av_AnimationGraphAwake",
+            .func = &AnimationGraph::OnAwake
+        },
+        {
             .name = "av_AnimationGraphCreate",
             .func = &AnimationGraph::OnCreate
         },
         {
             .name = "av_AnimationGraphDestroy",
             .func = &AnimationGraph::OnDestroy
+        },
+        {
+            .name = "av_AnimationGraphSetInput",
+            .func = &AnimationGraph::OnSetInput
+        },
+        {
+            .name = "av_AnimationGraphSleep",
+            .func = &AnimationGraph::OnSleep
         }
     };
 
@@ -79,6 +91,13 @@ void AnimationGraph::Init ( lua_State &vm ) noexcept
 void AnimationGraph::Destroy () noexcept
 {
     _graphs.clear ();
+}
+
+int AnimationGraph::OnAwake ( lua_State* state )
+{
+    auto &self = *static_cast<AnimationGraph*> ( lua_touserdata ( state, 1 ) );
+    self._isSleep = false;
+    return 0;
 }
 
 int AnimationGraph::OnCreate ( lua_State* state )
@@ -119,6 +138,19 @@ int AnimationGraph::OnDestroy ( lua_State* state )
     auto const* handle = static_cast<AnimationGraph const*> ( lua_touserdata ( state, 1 ) );
     [[maybe_unused]] auto const result = _graphs.erase ( handle );
     AV_ASSERT ( result > 0U )
+    return 0;
+}
+
+int AnimationGraph::OnSetInput ( lua_State* /*state*/ )
+{
+    // TODO
+    return 0;
+}
+
+int AnimationGraph::OnSleep ( lua_State* state )
+{
+    auto &self = *static_cast<AnimationGraph*> ( lua_touserdata ( state, 1 ) );
+    self._isSleep = true;
     return 0;
 }
 

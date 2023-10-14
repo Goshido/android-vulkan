@@ -15,10 +15,11 @@ GX_RESTORE_WARNING_STATE
 
 namespace android_vulkan {
 
-class [[maybe_unused]] AnimationTrack final
+class AnimationTrack final
 {
     private:
-        std::vector<Joint>                          _frames {};
+        size_t                                      _frameCount = 0U;
+        std::vector<Joint>                          _frameData {};
         float                                       _fps = 60.0F;
         std::unordered_map<std::string, size_t>     _mapper {};
 
@@ -33,11 +34,11 @@ class [[maybe_unused]] AnimationTrack final
 
         ~AnimationTrack () = default;
 
-        [[maybe_unused, nodiscard]] float GetFPS () const noexcept;
-        [[maybe_unused, nodiscard]] size_t GetFrames () const noexcept;
-        [[maybe_unused, nodiscard]] Joint const &GetJoint ( std::string const &bone, size_t frame ) const noexcept;
-        [[maybe_unused, nodiscard]] bool HasBone ( std::string const &bone ) const noexcept;
-        [[maybe_unused, nodiscard]] bool Load ( std::string &&file ) noexcept;
+        [[nodiscard]] float GetFPS () const noexcept;
+        [[nodiscard]] size_t GetFrameCount () const noexcept;
+        [[nodiscard]] Joint const &GetJoint ( std::string const &bone, size_t frame ) const noexcept;
+        [[nodiscard]] bool HasBone ( std::string const &bone ) const noexcept;
+        [[nodiscard]] bool Load ( std::string &&file ) noexcept;
 };
 
 } // namespace android_vulkan

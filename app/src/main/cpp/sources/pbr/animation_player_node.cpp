@@ -50,38 +50,47 @@ void AnimationPlayerNode::Destroy () noexcept
     _nodes.clear ();
 }
 
-android_vulkan::Joint AnimationPlayerNode::GetJoint ( std::string const &/*name*/, uint32_t /*frame*/ ) noexcept
+JointProviderNode::Result AnimationPlayerNode::GetJoint ( std::string const &name ) noexcept
 {
-    constexpr android_vulkan::Joint nullJoint
-    {
-        ._location = GXVec3 ( 0.0F, 0.0F, 0.0F ),
-        ._orientation = GXQuat ( 1.0F, 0.0F, 0.0F, 0.0F )
-    };
+    if ( !_hasTrack || !_track.HasBone ( name ) )
+        return std::nullopt;
 
-    // TODO
-    return nullJoint;
+    android_vulkan::Joint const &p = _track.GetJoint ( name, _prevFrame );
+    android_vulkan::Joint const &n = _track.GetJoint ( name, _nextFrame );
+
+    android_vulkan::Joint result {};
+    result._location.LinearInterpolation ( p._location, n._location, _interpolation );
+    result._orientation.SphericalLinearInterpolation ( p._orientation, n._orientation, _interpolation );
+
+    return result;
 }
 
 void AnimationPlayerNode::Update ( float deltaTime ) noexcept
 {
     _time += deltaTime * _playbackSpeed;
 
-    while ( _time > _trackDuration )
+    while ( _time >= _trackDuration )
         _time -= _trackDuration;
 
     while ( _time < 0.0F )
-    {
         _time += _trackDuration;
-    }
+
+    float p;
+    _interpolation = std::modf ( _time * _timeToFrame, &p );
+    auto const intP = static_cast<size_t> ( p );
+    _prevFrame = intP;
+    _nextFrame = intP + 1U;
 }
 
-[[maybe_unused]] bool AnimationPlayerNode::LoadAnimation ( std::string &&animationTrack ) noexcept
+bool AnimationPlayerNode::LoadAnimation ( std::string &&animationTrack ) noexcept
 {
     if ( _hasTrack = _track.Load ( std::move ( animationTrack ) ); !_hasTrack )
         return false;
 
     _time = 0.0F;
-    _trackDuration = static_cast<float> ( _track.GetFrames () ) / _track.GetFPS ();
+    auto const f = static_cast<float> ( _track.GetFrameCount () );
+    _trackDuration = f / _track.GetFPS ();
+    _timeToFrame = f / _trackDuration;
     return true;
 }
 

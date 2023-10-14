@@ -28,6 +28,7 @@ class AnimationGraph final
 
     private:
         Joints                                                          _inverseBindTransforms {};
+        [[maybe_unused]] bool                                           _isSleep = true;
         std::vector<std::string>                                        _names {};
         Joints                                                          _referenceTransforms {};
         std::vector<int32_t>                                            _parents {};
@@ -52,8 +53,11 @@ class AnimationGraph final
         static void Destroy () noexcept;
 
     private:
+        [[nodiscard]] static int OnAwake ( lua_State* state );
         [[nodiscard]] static int OnCreate ( lua_State* state );
         [[nodiscard]] static int OnDestroy ( lua_State* state );
+        [[nodiscard]] static int OnSetInput ( lua_State* state );
+        [[nodiscard]] static int OnSleep ( lua_State* state );
 };
 
 } // namespace pbr

@@ -2,9 +2,9 @@
 #define PBR_MATERIAL_MANAGER_HPP
 
 
-#include "material_info.hpp"
 #include "types.hpp"
 #include <file.hpp>
+#include <android_vulkan_sdk/pbr/material_info.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

@@ -44,12 +44,26 @@ namespace android_vulkan {
     _frames.reserve ( static_cast<size_t> ( boneCount ) * static_cast<size_t> ( frameCount ) );
 
     auto const* frame = reinterpret_cast<android_vulkan::BoneJoint const*> ( content + header._animationDataOffset );
-    (void)frame;
-    // TODO
+
+    for ( uint32_t frameIdx = 0U; frameIdx < frameCount; ++frameIdx )
+    {
+        for ( uint32_t boneIdx = 0U; boneIdx < boneCount; ++boneIdx )
+        {
+            Joint j {};
+            std::memcpy ( &j._location, &frame->_location, sizeof ( android_vulkan::Vec3 ) );
+            std::memcpy ( &j._orientation, &frame->_orientation, sizeof ( android_vulkan::Quat ) );
+            _frames.push_back ( j );
+            ++frame;
+        }
+    }
 
     auto const* name = reinterpret_cast<android_vulkan::UTF8Offset const*> ( content + header._boneNameInfoOffset );
-    (void)name;
-    // TODO
+
+    for ( uint32_t i = 0U; i < boneCount; ++i )
+    {
+        _mapper.emplace ( reinterpret_cast<char const*> ( content + *name ), i );
+        ++name;
+    }
 
     return true;
 }

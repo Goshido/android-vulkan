@@ -17,7 +17,7 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-std::unordered_map<AnimationGraph const*, AnimationGraph::AnimationGraphRef> AnimationGraph::_animationGraphs {};
+std::unordered_map<AnimationGraph const*, AnimationGraph::Reference> AnimationGraph::_graphs {};
 
 AnimationGraph::AnimationGraph ( bool &success, std::string &&skeletonFile ) noexcept
 {
@@ -78,7 +78,7 @@ void AnimationGraph::Init ( lua_State &vm ) noexcept
 
 void AnimationGraph::Destroy () noexcept
 {
-    _animationGraphs.clear ();
+    _graphs.clear ();
 }
 
 int AnimationGraph::OnCreate ( lua_State* state )
@@ -93,6 +93,7 @@ int AnimationGraph::OnCreate ( lua_State* state )
 
     if ( !skeleton )
     {
+        android_vulkan::LogWarning ( "pbr::AnimationGraph::OnCreate - Skeleton file is not specified." );
         lua_pushnil ( state );
         return 1;
     }
@@ -107,7 +108,7 @@ int AnimationGraph::OnCreate ( lua_State* state )
     }
 
     AnimationGraph* handle = ag.get ();
-    _animationGraphs.emplace ( handle, std::move ( ag ) );
+    _graphs.emplace ( handle, std::move ( ag ) );
 
     lua_pushlightuserdata ( state, handle );
     return 1;
@@ -116,7 +117,7 @@ int AnimationGraph::OnCreate ( lua_State* state )
 int AnimationGraph::OnDestroy ( lua_State* state )
 {
     auto const* handle = static_cast<AnimationGraph const*> ( lua_touserdata ( state, 1 ) );
-    [[maybe_unused]] auto const result = _animationGraphs.erase ( handle );
+    [[maybe_unused]] auto const result = _graphs.erase ( handle );
     AV_ASSERT ( result > 0U )
     return 0;
 }

@@ -23,17 +23,17 @@ namespace pbr {
 class AnimationGraph final
 {
     private:
-        using AnimationGraphRef = std::unique_ptr<AnimationGraph>;
+        using Reference = std::unique_ptr<AnimationGraph>;
         using Joints = std::vector<android_vulkan::BoneJoint>;
 
     private:
-        Joints                                                                  _inverseBindTransforms {};
-        std::vector<std::string>                                                _names {};
-        Joints                                                                  _referenceTransforms {};
-        std::vector<int32_t>                                                    _parents {};
-        Joints                                                                  _pose {};
+        Joints                                                          _inverseBindTransforms {};
+        std::vector<std::string>                                        _names {};
+        Joints                                                          _referenceTransforms {};
+        std::vector<int32_t>                                            _parents {};
+        Joints                                                          _pose {};
 
-        static std::unordered_map<AnimationGraph const*, AnimationGraphRef>     _animationGraphs;
+        static std::unordered_map<AnimationGraph const*, Reference>     _graphs;
 
     public:
         AnimationGraph () = delete;

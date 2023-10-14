@@ -62,7 +62,7 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/mandelbrot/mandelbrot_lut_color.cpp
     app/src/main/cpp/sources/pbr/actor.cpp
     app/src/main/cpp/sources/pbr/animation_graph.cpp
-    app/src/main/cpp/sources/pbr/animation_player.cpp
+    app/src/main/cpp/sources/pbr/animation_player_node.cpp
     app/src/main/cpp/sources/pbr/ascii_string.cpp
     app/src/main/cpp/sources/pbr/attribute_checker.cpp
     app/src/main/cpp/sources/pbr/attribute_parser.cpp

@@ -220,6 +220,7 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/sweep_testing/actor_body.cpp
     app/src/main/cpp/sources/pbr/sweep_testing/actor_sweep.cpp
     app/src/main/cpp/sources/pbr/sweep_testing/sweep_testing.cpp
+    app/src/main/cpp/sources/pbr/universal/universal.cpp
     app/src/main/cpp/sources/platform/android/file.cpp
     app/src/main/cpp/sources/platform/android/logger.cpp
     app/src/main/cpp/sources/rainbow/rainbow.cpp

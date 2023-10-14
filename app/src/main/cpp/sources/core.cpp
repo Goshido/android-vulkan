@@ -11,6 +11,7 @@
 #include <pbr/ray_casting/ray_casting.hpp>
 #include <pbr/stipple_test/stipple_test.hpp>
 #include <pbr/sweep_testing/sweep_testing.hpp>
+#include <pbr/universal/universal.hpp>
 #include <rainbow/rainbow.hpp>
 #include <rotating_mesh/game_analytic.hpp>
 #include <rotating_mesh/game_lut.hpp>
@@ -44,6 +45,7 @@ enum class eGame : uint16_t
     RotatingMeshLUT,
     StippleTest,
     SweepTesting,
+    Universal,
     World1x1
 };
 
@@ -83,10 +85,16 @@ Core::Core ( JNIEnv* env, jobject activity, jobject assetManager, std::string &&
         { android_vulkan::eGame::RotatingMeshLUT, std::make_shared<rotating_mesh::GameLUT> () },
         { android_vulkan::eGame::StippleTest, std::make_shared<pbr::stipple_test::StippleTest> () },
         { android_vulkan::eGame::SweepTesting, std::make_shared<pbr::sweep_testing::SweepTesting> () },
+
+        {
+            android_vulkan::eGame::Universal,
+            std::make_shared<pbr::universal::Universal> ( "pbr/assets/skeletal-mesh-sandbox.scene" )
+        },
+
         { android_vulkan::eGame::World1x1, std::make_shared<pbr::mario::World1x1> () }
     };
 
-    _game = games.find ( android_vulkan::eGame::World1x1 )->second.get ();
+    _game = games.find ( android_vulkan::eGame::Universal )->second.get ();
 
     _thread = std::thread (
         [ this, dpi ] () noexcept {

@@ -1,7 +1,5 @@
-require "av://engine/animation_graph.lua"
 require "av://engine/scene.lua"
 require "av://engine/script_component.lua"
-require "av://engine/skeletal_mesh_component.lua"
 require "av://engine/sound_emitter_global_component.lua"
 require "av://engine/ui_layer.lua"
 
@@ -40,10 +38,6 @@ local function UpdateTimer ( self, deltaTime )
     self._timerNow = now
     self._timerLast = now
     self._uiTimer:SetText ( string.format ( "%d", now ) )
-
-    if now == 378 then
-        self:QuitGame ()
-    end
 end
 
 -- Engine event handlers
@@ -90,29 +84,6 @@ local function OnActorConstructed ( self, actor )
     self._uiX = uiDebug:Find ( "x-value" ):GetTextElement ()
     self._uiY = uiDebug:Find ( "y-value" ):GetTextElement ()
     self._uiZ = uiDebug:Find ( "z-value" ):GetTextElement ()
-
-    local test = Actor ( "TEST" )
-
-    local mesh = SkeletalMeshComponent ( "Mesh",
-        "pbr/assets/Props/experimental/exporter/leg.mesh2",
-        "pbr/assets/Props/experimental/exporter/leg.skin",
-        "pbr/assets/Props/experimental/exporter/leg.skeleton",
-        "pbr/assets/Props/experimental/exporter/material.mtl"
-    )
-
-    local v = GXVec3 ()
-    v:Init ( -24.32, 65.19, 286.18 )
-
-    local m = GXMat4 ()
-    m:Scale ( 2.0, 2.0, 2.0 )
-    m:SetW ( v )
-    mesh:SetLocal ( m )
-
-    test:AppendComponent ( mesh )
-    g_scene:AppendActor ( test )
-    self._test = test
-
-    self._animationGraph = AnimationGraph ( "pbr/assets/Props/experimental/exporter/leg.skeleton" )
 end
 
 -- Metamethods

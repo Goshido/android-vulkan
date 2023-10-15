@@ -4,6 +4,7 @@
 #include <shape_box.hpp>
 #include <trace.hpp>
 #include <android_vulkan_sdk/pbr/scene_desc.hpp>
+#include <pbr/animation_graph.hpp>
 #include <pbr/coordinate_system.hpp>
 #include <pbr/mesh_manager.hpp>
 #include <pbr/material_manager.hpp>
@@ -394,6 +395,12 @@ bool Scene::OnUpdate ( double deltaTime ) noexcept
     lua_pcall ( _vm, 2, 0, ScriptEngine::GetErrorHandlerIndex () );
 
     return true;
+}
+
+void Scene::OnUpdateAnimations ( double deltaTime ) noexcept
+{
+    AV_TRACE ( "Update animations" )
+    AnimationGraph::Update ( deltaTime );
 }
 
 bool Scene::LoadScene ( android_vulkan::Renderer &renderer, char const* scene, VkCommandPool commandPool ) noexcept

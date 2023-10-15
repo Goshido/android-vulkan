@@ -127,6 +127,7 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/material_pool.cpp
     app/src/main/cpp/sources/pbr/mesh_group.cpp
     app/src/main/cpp/sources/pbr/mesh_manager.cpp
+    app/src/main/cpp/sources/pbr/node_link.cpp
     app/src/main/cpp/sources/pbr/number_parser.cpp
     app/src/main/cpp/sources/pbr/opaque_material.cpp
     app/src/main/cpp/sources/pbr/opaque_program.cpp

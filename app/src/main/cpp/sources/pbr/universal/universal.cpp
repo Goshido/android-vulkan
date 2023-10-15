@@ -45,6 +45,7 @@ bool Universal::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime )
     if ( !_scene.OnPostPhysics ( deltaTime ) )
         return false;
 
+    _scene.OnUpdateAnimations ( deltaTime );
     _renderSession.Begin ( _scene.GetActiveCameraLocalMatrix (), _scene.GetActiveCameraProjectionMatrix () );
 
     _scene.Submit ( renderer );

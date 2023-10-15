@@ -88,9 +88,26 @@ void AnimationGraph::Init ( lua_State &vm ) noexcept
     }
 }
 
+void AnimationGraph::Update ( float deltaTime ) noexcept
+{
+    for ( auto &item : _graphs )
+    {
+        item.second->UpdateInternal ( deltaTime );
+    }
+}
+
 void AnimationGraph::Destroy () noexcept
 {
     _graphs.clear ();
+}
+
+void AnimationGraph::UpdateInternal ( float deltaTime ) noexcept
+{
+    if ( _isSleep | ( _inputNode == nullptr ) )
+        return;
+
+    _inputNode->Update ( deltaTime );
+    // TODO
 }
 
 int AnimationGraph::OnAwake ( lua_State* state )
@@ -135,15 +152,27 @@ int AnimationGraph::OnCreate ( lua_State* state )
 
 int AnimationGraph::OnDestroy ( lua_State* state )
 {
-    auto const* handle = static_cast<AnimationGraph const*> ( lua_touserdata ( state, 1 ) );
+    auto* handle = static_cast<AnimationGraph*> ( lua_touserdata ( state, 1 ) );
+    handle->UnregisterSelf ();
+
     [[maybe_unused]] auto const result = _graphs.erase ( handle );
     AV_ASSERT ( result > 0U )
     return 0;
 }
 
-int AnimationGraph::OnSetInput ( lua_State* /*state*/ )
+int AnimationGraph::OnSetInput ( lua_State* state )
 {
-    // TODO
+    auto* handle = static_cast<AnimationGraph*> ( lua_touserdata ( state, 1 ) );
+    JointProviderNode* &selfInputNode = handle->_inputNode;
+
+    if ( selfInputNode )
+        selfInputNode->UnregisterNode ( handle );
+
+    auto* inputNode = static_cast<JointProviderNode*> ( lua_touserdata ( state, 2 ) );
+    inputNode->RegisterNode ( handle );
+    handle->RegisterNode ( inputNode );
+
+    selfInputNode = inputNode;
     return 0;
 }
 

@@ -2,10 +2,12 @@
 #define PBR_JOINT_PROVIDER_NODE_HPP
 
 
+#include "node_link.hpp"
 #include <joint.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
+#include <list>
 #include <optional>
 #include <string>
 
@@ -14,7 +16,7 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-class JointProviderNode
+class JointProviderNode : public NodeLink
 {
     public:
         using Result = std::optional<android_vulkan::Joint>;

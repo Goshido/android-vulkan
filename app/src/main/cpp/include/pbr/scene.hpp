@@ -85,6 +85,7 @@ class Scene final
         [[nodiscard]] bool OnPostPhysics ( double deltaTime ) noexcept;
         [[nodiscard]] bool OnResolutionChanged ( VkExtent2D const &resolution, double aspectRatio ) noexcept;
         [[nodiscard]] bool OnUpdate ( double deltaTime ) noexcept;
+        void OnUpdateAnimations ( double deltaTime ) noexcept;
 
         [[nodiscard]] bool LoadScene ( android_vulkan::Renderer &renderer,
             char const* scene,

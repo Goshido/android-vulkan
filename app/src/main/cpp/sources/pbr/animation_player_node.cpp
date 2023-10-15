@@ -67,6 +67,9 @@ JointProviderNode::Result AnimationPlayerNode::GetJoint ( std::string const &nam
 
 void AnimationPlayerNode::Update ( float deltaTime ) noexcept
 {
+    if ( !_hasTrack )
+        return;
+
     _time += deltaTime * _playbackSpeed;
 
     while ( _time >= _trackDuration )
@@ -78,8 +81,11 @@ void AnimationPlayerNode::Update ( float deltaTime ) noexcept
     float p;
     _interpolation = std::modf ( _time * _timeToFrame, &p );
     auto const intP = static_cast<size_t> ( p );
+
     _prevFrame = intP;
-    _nextFrame = intP + 1U;
+
+    size_t const cases[] = { intP + 1U, 0U };
+    _nextFrame = cases[ static_cast<size_t> ( _lastFrame == intP ) ];
 }
 
 bool AnimationPlayerNode::LoadAnimation ( std::string &&animationTrack ) noexcept
@@ -88,7 +94,10 @@ bool AnimationPlayerNode::LoadAnimation ( std::string &&animationTrack ) noexcep
         return false;
 
     _time = 0.0F;
-    auto const f = static_cast<float> ( _track.GetFrameCount () );
+    size_t const frameCount = _track.GetFrameCount ();
+    _lastFrame = frameCount - 1U;
+
+    auto const f = static_cast<float> ( frameCount );
     _trackDuration = f / _track.GetFPS ();
     _timeToFrame = f / _trackDuration;
     return true;
@@ -112,7 +121,9 @@ int AnimationPlayerNode::OnCreate ( lua_State* state )
 
 int AnimationPlayerNode::OnDestroy ( lua_State* state )
 {
-    auto const* handle = static_cast<AnimationPlayerNode const*> ( lua_touserdata ( state, 1 ) );
+    auto* handle = static_cast<AnimationPlayerNode*> ( lua_touserdata ( state, 1 ) );
+    handle->UnregisterSelf ();
+
     [[maybe_unused]] auto const result = _nodes.erase ( handle );
     AV_ASSERT ( result > 0U )
     return 0;

@@ -30,6 +30,7 @@ class AnimationPlayerNode final : public JointProviderNode
         float                                                               _interpolation = 0.0F;
         size_t                                                              _nextFrame = 0U;
         size_t                                                              _prevFrame = 0U;
+        size_t                                                              _lastFrame = 0U;
 
         float                                                               _time = 0.0F;
         float                                                               _trackDuration = 1.0F;

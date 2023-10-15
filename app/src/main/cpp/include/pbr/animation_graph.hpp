@@ -2,6 +2,8 @@
 #define PBR_ANIMATION_GRAPH_HPP
 
 
+#include "joint_provider_node.hpp"
+#include "node_link.hpp"
 #include <android_vulkan_sdk/bone_joint.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
@@ -20,15 +22,16 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-class AnimationGraph final
+class AnimationGraph final : public NodeLink
 {
     private:
         using Reference = std::unique_ptr<AnimationGraph>;
         using Joints = std::vector<android_vulkan::BoneJoint>;
 
     private:
+        JointProviderNode*                                              _inputNode = nullptr;
         Joints                                                          _inverseBindTransforms {};
-        [[maybe_unused]] bool                                           _isSleep = true;
+        bool                                                            _isSleep = true;
         std::vector<std::string>                                        _names {};
         Joints                                                          _referenceTransforms {};
         std::vector<int32_t>                                            _parents {};
@@ -51,8 +54,11 @@ class AnimationGraph final
 
         static void Init ( lua_State &vm ) noexcept;
         static void Destroy () noexcept;
+        static void Update ( float deltaTime ) noexcept;
 
     private:
+        void UpdateInternal ( float deltaTime ) noexcept;
+
         [[nodiscard]] static int OnAwake ( lua_State* state );
         [[nodiscard]] static int OnCreate ( lua_State* state );
         [[nodiscard]] static int OnDestroy ( lua_State* state );

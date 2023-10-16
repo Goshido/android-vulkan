@@ -627,11 +627,6 @@ void UIPass::ImageDescriptorSets::UpdateScene ( VkDevice device, VkImageView sce
 
 //----------------------------------------------------------------------------------------------------------------------
 
-void UIPass::InUseImageTracker::Init ( size_t swapchainImages ) noexcept
-{
-    _registry.resize ( swapchainImages );
-}
-
 void UIPass::InUseImageTracker::Destroy () noexcept
 {
     for ( Entry &entry : _registry )
@@ -644,13 +639,11 @@ void UIPass::InUseImageTracker::Destroy () noexcept
             e = entry.erase ( e );
         }
     }
-
-    _registry.clear ();
 }
 
-void UIPass::InUseImageTracker::CollectGarbage ( size_t swapchainImageIndex ) noexcept
+void UIPass::InUseImageTracker::CollectGarbage ( size_t commandBufferIndex ) noexcept
 {
-    Entry &entry = _registry[ swapchainImageIndex ];
+    Entry &entry = _registry[ commandBufferIndex ];
     auto end = entry.end ();
 
     for ( auto i = entry.begin (); i != end; )
@@ -668,9 +661,9 @@ void UIPass::InUseImageTracker::CollectGarbage ( size_t swapchainImageIndex ) no
     }
 }
 
-void UIPass::InUseImageTracker::MarkInUse ( Texture2DRef const &texture, size_t swapchainImageIndex )
+void UIPass::InUseImageTracker::MarkInUse ( Texture2DRef const &texture, size_t commandBufferIndex )
 {
-    Entry &entry = _registry[ swapchainImageIndex ];
+    Entry &entry = _registry[ commandBufferIndex ];
     auto i = entry.find ( texture );
 
     if ( i == entry.end () )
@@ -684,7 +677,7 @@ void UIPass::InUseImageTracker::MarkInUse ( Texture2DRef const &texture, size_t 
 
 //----------------------------------------------------------------------------------------------------------------------
 
-bool UIPass::Execute ( VkCommandBuffer commandBuffer, size_t framebufferIndex ) noexcept
+bool UIPass::Execute ( VkCommandBuffer commandBuffer, size_t commandBufferIndex ) noexcept
 {
     AV_TRACE ( "UI pass: Execute" )
 
@@ -717,7 +710,7 @@ bool UIPass::Execute ( VkCommandBuffer commandBuffer, size_t framebufferIndex ) 
         }
         else
         {
-            _inUseImageTracker.MarkInUse ( *job._texture, framebufferIndex );
+            _inUseImageTracker.MarkInUse ( *job._texture, commandBufferIndex );
             _program.SetDescriptorSet ( commandBuffer, ds + imageIdx, 2U, 1U );
             imageIdx = ( imageIdx + 1U ) % MAX_IMAGES;
         }
@@ -726,7 +719,7 @@ bool UIPass::Execute ( VkCommandBuffer commandBuffer, size_t framebufferIndex ) 
         start += job._vertices;
     }
 
-    _inUseImageTracker.CollectGarbage ( framebufferIndex );
+    _inUseImageTracker.CollectGarbage ( commandBufferIndex );
     return true;
 }
 
@@ -890,7 +883,6 @@ bool UIPass::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
     VkImageView scene
 ) noexcept
 {
-    _inUseImageTracker.Init ( renderer.GetPresentImageCount () );
     VkExtent2D const &resolution = renderer.GetSurfaceSize ();
     VkExtent2D &r = _currentResolution;
 

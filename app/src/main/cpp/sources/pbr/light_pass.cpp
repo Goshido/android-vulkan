@@ -90,7 +90,7 @@ void LightPass::OnFreeTransferResources ( android_vulkan::Renderer &renderer ) n
 
 bool LightPass::OnPreGeometryPass ( android_vulkan::Renderer &renderer,
     VkCommandBuffer commandBuffer,
-    size_t swapchainImageIndex,
+    size_t commandBufferIndex,
     VkExtent2D const &resolution,
     SceneData const &sceneData,
     size_t opaqueMeshCount,
@@ -106,7 +106,7 @@ bool LightPass::OnPreGeometryPass ( android_vulkan::Renderer &renderer,
 
     _lightupCommonDescriptorSet.Update ( device,
         commandBuffer,
-        swapchainImageIndex,
+        commandBufferIndex,
         resolution,
         viewerLocal,
         cvvToView
@@ -131,7 +131,7 @@ bool LightPass::OnPreGeometryPass ( android_vulkan::Renderer &renderer,
 
 void LightPass::OnPostGeometryPass ( VkDevice device,
     VkCommandBuffer commandBuffer,
-    size_t swapchainImageIndex
+    size_t commandBufferIndex
 ) noexcept
 {
     AV_TRACE ( "Light post-geometry" )
@@ -144,7 +144,7 @@ void LightPass::OnPostGeometryPass ( VkDevice device,
     if ( lightVolumes + globalReflections == 0U )
         return;
 
-    _lightupCommonDescriptorSet.Bind ( commandBuffer, swapchainImageIndex );
+    _lightupCommonDescriptorSet.Bind ( commandBuffer, commandBufferIndex );
 
     if ( pointLights )
         _pointLightPass.ExecuteLightupPhase ( commandBuffer, _unitCube, _volumeBufferPool );

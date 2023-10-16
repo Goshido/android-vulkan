@@ -3,13 +3,10 @@
 
 
 #include "actor.hpp"
+#include "command_buffer_count.hpp"
 #include "renderable_component.hpp"
 #include "transformable.hpp"
 #include <skin_data.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace pbr {
@@ -19,39 +16,41 @@ class SkeletalMeshComponent final : public RenderableComponent, public Transform
     private:
         struct Usage final
         {
-            android_vulkan::SkinData                                    _skinData {};
-            MeshRef                                                     _skinMesh {};
-            std::vector<bool>                                           _frameIds {};
+            android_vulkan::SkinData        _skinData {};
+            MeshRef                         _skinMesh {};
+            bool                            _frameIds[ COMMAND_BUFFER_COUNT ];
         };
 
         struct CommandBufferInfo final
         {
-            std::vector<VkCommandBuffer>                                _buffers {};
-            VkCommandPool                                               _commandPool = VK_NULL_HANDLE;
-            size_t                                                      _index = 0U;
-            std::vector<VkFence>                                        _fences {};
+            std::vector<VkCommandBuffer>    _buffers {};
+            VkCommandPool                   _commandPool = VK_NULL_HANDLE;
+            size_t                          _index = 0U;
+            std::vector<VkFence>            _fences {};
         };
 
+        using SkeletalMeshes = std::unordered_map<Component const*, ComponentRef>;
+
     private:
-        Actor*                                                          _actor = nullptr;
-        GXColorRGB                                                      _color0;
-        GXColorRGB                                                      _color1;
-        GXColorRGB                                                      _color2;
-        GXColorRGB                                                      _emission;
+        Actor*                              _actor = nullptr;
+        GXColorRGB                          _color0;
+        GXColorRGB                          _color1;
+        GXColorRGB                          _color2;
+        GXColorRGB                          _emission;
 
-        MaterialRef                                                     _material;
-        GXMat4                                                          _localMatrix;
-        GXAABB                                                          _worldBounds;
+        MaterialRef                         _material;
+        GXMat4                              _localMatrix;
+        GXAABB                              _worldBounds;
 
-        MeshRef                                                         _referenceMesh;
-        Usage                                                           _usage;
+        MeshRef                             _referenceMesh;
+        Usage                               _usage;
 
-        static std::list<Usage>                                         _aboutDelete;
-        static CommandBufferInfo                                        _cbInfo;
-        static android_vulkan::Renderer*                                _renderer;
-        static std::unordered_map<Component const*, ComponentRef>       _skeletalMeshes;
-        static std::list<Usage>                                         _toDelete;
-        static std::deque<Usage*>                                       _transferQueue;
+        static std::list<Usage>             _aboutDelete;
+        static CommandBufferInfo            _cbInfo;
+        static android_vulkan::Renderer*    _renderer;
+        static SkeletalMeshes               _skeletalMeshes;
+        static std::list<Usage>             _toDelete;
+        static std::deque<Usage*>           _transferQueue;
 
     public:
         SkeletalMeshComponent () = delete;
@@ -77,9 +76,9 @@ class SkeletalMeshComponent final : public RenderableComponent, public Transform
 
         void RegisterFromScript ( Actor &actor ) noexcept;
         void Unregister () noexcept;
-        [[maybe_unused]] void UpdatePose ( size_t swapchainImageIndex ) noexcept;
+        [[maybe_unused]] void UpdatePose ( size_t commandBufferIndex ) noexcept;
 
-        static void FreeUnusedResources ( size_t swapchainImageIndex ) noexcept;
+        static void FreeUnusedResources ( size_t commandBufferIndex ) noexcept;
         [[nodiscard]] static bool Init ( lua_State &vm, android_vulkan::Renderer &renderer ) noexcept;
         static void Destroy () noexcept;
 

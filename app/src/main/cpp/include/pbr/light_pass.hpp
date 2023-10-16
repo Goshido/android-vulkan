@@ -51,7 +51,7 @@ class LightPass final
 
         [[nodiscard]] bool OnPreGeometryPass ( android_vulkan::Renderer &renderer,
             VkCommandBuffer commandBuffer,
-            size_t swapchainImageIndex,
+            size_t commandBufferIndex,
             VkExtent2D const &resolution,
             SceneData const &sceneData,
             size_t opaqueMeshCount,
@@ -61,7 +61,7 @@ class LightPass final
             GXMat4 const &cvvToView
         ) noexcept;
 
-        void OnPostGeometryPass ( VkDevice device, VkCommandBuffer commandBuffer, size_t swapchainImageIndex ) noexcept;
+        void OnPostGeometryPass ( VkDevice device, VkCommandBuffer commandBuffer, size_t commandBufferIndex ) noexcept;
         void Reset () noexcept;
 
         void SubmitPointLight ( LightRef const &light ) noexcept;

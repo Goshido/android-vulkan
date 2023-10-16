@@ -2,7 +2,8 @@
 #define PBR_FONT_STORAGE_HPP
 
 
-#include <renderer.hpp>
+#include "command_buffer_count.hpp"
+#include "renderer.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -10,7 +11,6 @@ GX_DISABLE_COMMON_WARNINGS
 #include FT_FREETYPE_H
 
 #include <forward_list>
-#include <string>
 
 GX_RESTORE_WARNING_STATE
 
@@ -93,7 +93,7 @@ class FontStorage final
         class Atlas final
         {
             private:
-                std::vector<ImageResource>      _dyingResources {};
+                ImageResource                   _dyingResources[ COMMAND_BUFFER_COUNT ];
             
             public:
                 ImageResource                   _resource {};
@@ -115,13 +115,13 @@ class FontStorage final
 
                 [[nodiscard]] bool AddLayers ( android_vulkan::Renderer &renderer,
                     VkCommandBuffer commandBuffer,
-                    size_t swapchainImageIndex,
+                    size_t commandBufferIndex,
                     uint32_t layers
                 ) noexcept;
 
-                void Init ( uint32_t side, size_t swapchainImages ) noexcept;
+                void Init ( uint32_t side ) noexcept;
                 void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
-                void Cleanup ( android_vulkan::Renderer &renderer, size_t swapchainImageIndex ) noexcept;
+                void Cleanup ( android_vulkan::Renderer &renderer, size_t commandBufferIndex ) noexcept;
 
             private:
                 void Copy ( VkCommandBuffer commandBuffer, ImageResource &oldResource, uint32_t newLayers ) noexcept;
@@ -177,7 +177,7 @@ class FontStorage final
 
         [[nodiscard]] bool UploadGPUData ( android_vulkan::Renderer &renderer,
             VkCommandBuffer commandBuffer,
-            size_t swapchainImageIndex
+            size_t commandBufferIndex
         ) noexcept;
 
         [[nodiscard]] static int32_t GetKerning ( Font font, char32_t left, char32_t right ) noexcept;

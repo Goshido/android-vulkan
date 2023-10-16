@@ -7,12 +7,6 @@
 #include <trace.hpp>
 #include <vulkan_utils.hpp>
 
-GX_DISABLE_COMMON_WARNINGS
-
-#include <algorithm>
-
-GX_RESTORE_WARNING_STATE
-
 
 namespace pbr {
 
@@ -34,12 +28,13 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
 {
     AV_TRACE ( "End render session" )
 
-    size_t swapchainImageIndex;
-
-    if ( !_presentRenderPass.AcquirePresentTarget ( renderer, swapchainImageIndex ) )
+    if ( !_presentRenderPass.AcquirePresentTarget ( renderer ) )
         return false;
 
-    CommandInfo &commandInfo = _commandInfo[ swapchainImageIndex ];
+    size_t const commandBufferIndex = _writingCommandInfo;
+    CommandInfo &commandInfo = _commandInfo[ _writingCommandInfo ];
+    _writingCommandInfo = ++_writingCommandInfo % COMMAND_BUFFER_COUNT;
+
     VkFence &fence = commandInfo._fence;
     VkDevice device = renderer.GetDevice ();
 
@@ -87,14 +82,14 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
     if ( !result || ( _brightnessChanged && !UpdateBrightness ( renderer ) ) )
         return false;
 
-    if ( !_uiPass.UploadGPUData ( renderer, commandBuffer, swapchainImageIndex ) )
+    if ( !_uiPass.UploadGPUData ( renderer, commandBuffer, commandBufferIndex ) )
         return false;
 
     _toneMapperPass.UploadGPUData ( renderer, commandBuffer );
 
     result = _lightPass.OnPreGeometryPass ( renderer,
         commandBuffer,
-        swapchainImageIndex,
+        commandBufferIndex,
         _gBuffer.GetResolution (),
         _geometryPass.GetOpaqueSubpass ().GetSceneData (),
         _opaqueMeshCount,
@@ -115,7 +110,7 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
 
     vkCmdNextSubpass ( commandBuffer, VK_SUBPASS_CONTENTS_INLINE );
 
-    _lightPass.OnPostGeometryPass ( device, commandBuffer, swapchainImageIndex );
+    _lightPass.OnPostGeometryPass ( device, commandBuffer, commandBufferIndex );
 
     vkCmdEndRenderPass ( commandBuffer );
 
@@ -125,7 +120,7 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
 
     _toneMapperPass.Execute ( commandBuffer );
 
-    result = _uiPass.Execute ( commandBuffer, swapchainImageIndex ) &&
+    result = _uiPass.Execute ( commandBuffer, commandBufferIndex ) &&
         _presentRenderPass.End ( renderer, commandBuffer, fence );
 
     if ( !result )
@@ -136,7 +131,7 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
     _renderSessionStats.SubmitUIVertices ( _uiPass.GetUsedVertexCount () );
 
     _renderSessionStats.PrintStats ( deltaTime );
-    SkeletalMeshComponent::FreeUnusedResources ( swapchainImageIndex );
+    SkeletalMeshComponent::FreeUnusedResources ( commandBufferIndex );
     return true;
 }
 
@@ -161,9 +156,7 @@ bool RenderSession::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
     _meshHandlers[ static_cast<size_t> ( eMaterialType::Opaque ) ] = &RenderSession::SubmitOpaqueCall;
     _meshHandlers[ static_cast<size_t> ( eMaterialType::Stipple ) ] = &RenderSession::SubmitStippleCall;
 
-    _commandInfo.resize ( 1U );
     CommandInfo &commandInfo = _commandInfo[ 0U ];
-
     VkDevice device = renderer.GetDevice ();
 
     if ( !AllocateCommandInfo ( commandInfo, device, renderer.GetQueueFamilyIndex () ) )
@@ -212,9 +205,6 @@ void RenderSession::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexc
         AV_UNREGISTER_FENCE ( "pbr::RenderSession::_fence" )
     }
 
-    _commandInfo.clear ();
-    _commandInfo.shrink_to_fit ();
-
     _uiPass.OnDestroyDevice ( renderer );
     _presentRenderPass.OnDestroyDevice ( device );
 }
@@ -242,21 +232,17 @@ bool RenderSession::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
         );
     }
 
-    size_t const imageCount = renderer.GetPresentImageCount ();
-    size_t const commandPoolCount = _commandInfo.size ();
     VkDevice device = renderer.GetDevice ();
+    uint32_t const queueIndex = renderer.GetQueueFamilyIndex ();
 
-    if ( commandPoolCount < imageCount )
+    for ( auto &commandInfo : _commandInfo )
     {
-        _commandInfo.resize ( imageCount );
-        uint32_t const queueIndex = renderer.GetQueueFamilyIndex ();
+        if ( commandInfo._pool != VK_NULL_HANDLE )
+            continue;
 
-        for ( size_t i = commandPoolCount; i < imageCount; ++i )
+        if ( !AllocateCommandInfo ( commandInfo, device, queueIndex ) )
         {
-            if ( !AllocateCommandInfo ( _commandInfo[ i ], device, queueIndex ) )
-            {
-                return false;
-            }
+            return false;
         }
     }
 

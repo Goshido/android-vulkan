@@ -45,7 +45,7 @@ static_assert ( ALLOCATE_COMMAND_BUFFERS >= MIN_COMMAND_BUFFERS );
 std::list<SkeletalMeshComponent::Usage> SkeletalMeshComponent::_aboutDelete {};
 SkeletalMeshComponent::CommandBufferInfo SkeletalMeshComponent::_cbInfo {};
 android_vulkan::Renderer* SkeletalMeshComponent::_renderer = nullptr;
-std::unordered_map<Component const*, ComponentRef> SkeletalMeshComponent::_skeletalMeshes {};
+SkeletalMeshComponent::SkeletalMeshes SkeletalMeshComponent::_skeletalMeshes {};
 std::list<SkeletalMeshComponent::Usage> SkeletalMeshComponent::_toDelete {};
 std::deque<SkeletalMeshComponent::Usage*> SkeletalMeshComponent::_transferQueue {};
 
@@ -135,29 +135,33 @@ void SkeletalMeshComponent::Unregister () noexcept
     }
 }
 
-[[maybe_unused]] void SkeletalMeshComponent::UpdatePose ( size_t swapchainImageIndex ) noexcept
+[[maybe_unused]] void SkeletalMeshComponent::UpdatePose ( size_t commandBufferIndex ) noexcept
 {
     _usage._skinMesh->FreeTransferResources ( *_renderer );
-    size_t const c = _renderer->GetPresentImageCount ();
-
-    if ( c != _usage._frameIds.size () )
-        _usage._frameIds.resize ( c );
-
-    _usage._frameIds[ swapchainImageIndex ] = true;
+    _usage._frameIds[ commandBufferIndex ] = true;
     // TODO
 }
 
-void SkeletalMeshComponent::FreeUnusedResources ( size_t swapchainImageIndex ) noexcept
+void SkeletalMeshComponent::FreeUnusedResources ( size_t commandBufferIndex ) noexcept
 {
     for ( auto it = _toDelete.begin (); it != _toDelete.end (); )
     {
         Usage &usage = *it;
-        std::vector<bool> &frameIds = usage._frameIds;
-        frameIds[ swapchainImageIndex ] = false;
+        auto &frameIds = usage._frameIds;
+        frameIds[ commandBufferIndex ] = false;
 
-        auto const end = frameIds.cend ();
+        bool hasUsage = false;
 
-        if ( auto const findResult = std::find ( frameIds.cbegin (), end, true ); findResult != end )
+        for ( bool v : frameIds )
+        {
+            if ( v )
+            {
+                hasUsage = true;
+                break;
+            }
+        }
+
+        if ( hasUsage )
         {
             ++it;
             continue;

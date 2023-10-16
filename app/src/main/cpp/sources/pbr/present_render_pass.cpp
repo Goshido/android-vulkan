@@ -5,9 +5,7 @@
 
 namespace pbr {
 
-bool PresentRenderPass::AcquirePresentTarget ( android_vulkan::Renderer &renderer,
-    size_t &swapchainImageIndex
-) noexcept
+bool PresentRenderPass::AcquirePresentTarget ( android_vulkan::Renderer &renderer ) noexcept
 {
     AV_TRACE ( "Acquire swapchain image" )
 
@@ -26,7 +24,6 @@ bool PresentRenderPass::AcquirePresentTarget ( android_vulkan::Renderer &rendere
         "Can't get presentation image index"
     );
 
-    swapchainImageIndex = _framebufferIndex;
     return result;
 }
 

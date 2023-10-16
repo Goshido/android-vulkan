@@ -17,14 +17,14 @@ constexpr float MAX_PREFILTER_LOD = 8.0F;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-void LightupCommonDescriptorSet::Bind ( VkCommandBuffer commandBuffer, size_t swapchainImageIndex ) noexcept
+void LightupCommonDescriptorSet::Bind ( VkCommandBuffer commandBuffer, size_t commandBufferIndex ) noexcept
 {
     vkCmdBindDescriptorSets ( commandBuffer,
         VK_PIPELINE_BIND_POINT_GRAPHICS,
         _pipelineLayout,
         0U,
         1U,
-        &_sets[ swapchainImageIndex ],
+        &_sets[ commandBufferIndex ],
         0U,
         nullptr
     );
@@ -36,25 +36,24 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
 ) noexcept
 {
     VkDevice device = renderer.GetDevice ();
-    auto const swapchainImages = static_cast<uint32_t> ( renderer.GetPresentImageCount () );
 
-    VkDescriptorPoolSize const poolSizes[] =
+    constexpr VkDescriptorPoolSize const poolSizes[] =
     {
         {
             .type = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
-            .descriptorCount = 4U * swapchainImages
+            .descriptorCount = static_cast<uint32_t> ( 4U * COMMAND_BUFFER_COUNT )
         },
         {
             .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-            .descriptorCount = swapchainImages
+            .descriptorCount = static_cast<uint32_t> ( COMMAND_BUFFER_COUNT )
         },
         {
             .type = VK_DESCRIPTOR_TYPE_SAMPLER,
-            .descriptorCount = 2U * swapchainImages
+            .descriptorCount = static_cast<uint32_t> ( 2U * COMMAND_BUFFER_COUNT )
         },
         {
             .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            .descriptorCount = swapchainImages
+            .descriptorCount = static_cast<uint32_t> ( COMMAND_BUFFER_COUNT )
         }
     };
 
@@ -63,7 +62,7 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0U,
-        .maxSets = swapchainImages,
+        .maxSets = static_cast<uint32_t> ( COMMAND_BUFFER_COUNT ),
         .poolSizeCount = static_cast<uint32_t> ( std::size ( poolSizes ) ),
         .pPoolSizes = poolSizes
     };
@@ -83,22 +82,19 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
         return false;
 
     VkDescriptorSetLayout layout = _layout.GetLayout ();
-    std::vector<VkDescriptorSetLayout> layouts ( static_cast<size_t> ( swapchainImages ), layout );
+    std::vector<VkDescriptorSetLayout> layouts ( COMMAND_BUFFER_COUNT, layout );
 
     VkDescriptorSetAllocateInfo const descriptorSetAllocateInfo
     {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
         .pNext = nullptr,
         .descriptorPool = _descriptorPool,
-        .descriptorSetCount = swapchainImages,
+        .descriptorSetCount = static_cast<uint32_t> ( COMMAND_BUFFER_COUNT ),
         .pSetLayouts = layouts.data ()
     };
 
-    _sets.resize ( static_cast<size_t> ( swapchainImages ) );
-    VkDescriptorSet* sets = _sets.data ();
-
     result = android_vulkan::Renderer::CheckVkResult (
-        vkAllocateDescriptorSets ( device, &descriptorSetAllocateInfo, sets ),
+        vkAllocateDescriptorSets ( device, &descriptorSetAllocateInfo, _sets ),
         "pbr::LightupCommonDescriptorSet::Init",
         "Can't allocate descriptor set"
     );
@@ -224,99 +220,125 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
         }
     };
 
-    std::vector<VkWriteDescriptorSet> write ( 7U * static_cast<size_t> ( swapchainImages ) );
+    VkWriteDescriptorSet write[ 7U * COMMAND_BUFFER_COUNT ];
     size_t idx = 0U;
 
-    for ( uint32_t i = 0U; i < swapchainImages; ++i )
+    for ( auto &set : _sets )
     {
-        VkDescriptorSet set = _sets[ i ];
-
         VkWriteDescriptorSet &albedo = write[ idx++ ];
-        albedo.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        albedo.pNext = nullptr;
-        albedo.dstSet = set;
-        albedo.dstBinding = 0U;
-        albedo.dstArrayElement = 0U;
-        albedo.descriptorCount = 1U;
-        albedo.descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
-        albedo.pImageInfo = images;
-        albedo.pBufferInfo = nullptr;
-        albedo.pTexelBufferView = nullptr;
+
+        albedo = VkWriteDescriptorSet
+        {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .pNext = nullptr,
+            .dstSet = set,
+            .dstBinding = 0U,
+            .dstArrayElement = 0U,
+            .descriptorCount = 1U,
+            .descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
+            .pImageInfo = images,
+            .pBufferInfo = nullptr,
+            .pTexelBufferView = nullptr
+        };
 
         VkWriteDescriptorSet &normal = write[ idx++ ];
-        normal.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        normal.pNext = nullptr;
-        normal.dstSet = set;
-        normal.dstBinding = 1U;
-        normal.dstArrayElement = 0U;
-        normal.descriptorCount = 1U;
-        normal.descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
-        normal.pImageInfo = images + 1U;
-        normal.pBufferInfo = nullptr;
-        normal.pTexelBufferView = nullptr;
+
+        normal = VkWriteDescriptorSet
+        {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .pNext = nullptr,
+            .dstSet = set,
+            .dstBinding = 1U,
+            .dstArrayElement = 0U,
+            .descriptorCount = 1U,
+            .descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
+            .pImageInfo = images + 1U,
+            .pBufferInfo = nullptr,
+            .pTexelBufferView = nullptr
+        };
 
         VkWriteDescriptorSet &params = write[ idx++ ];
-        params.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        params.pNext = nullptr;
-        params.dstSet = set;
-        params.dstBinding = 2U;
-        params.dstArrayElement = 0U;
-        params.descriptorCount = 1U;
-        params.descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
-        params.pImageInfo = images + 2U;
-        params.pBufferInfo = nullptr;
-        params.pTexelBufferView = nullptr;
+
+        params = VkWriteDescriptorSet
+        {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .pNext = nullptr,
+            .dstSet = set,
+            .dstBinding = 2U,
+            .dstArrayElement = 0U,
+            .descriptorCount = 1U,
+            .descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
+            .pImageInfo = images + 2U,
+            .pBufferInfo = nullptr,
+            .pTexelBufferView = nullptr
+        };
 
         VkWriteDescriptorSet &depthStencil = write[ idx++ ];
-        depthStencil.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        depthStencil.pNext = nullptr;
-        depthStencil.dstSet = set;
-        depthStencil.dstBinding = 3U;
-        depthStencil.dstArrayElement = 0U;
-        depthStencil.descriptorCount = 1U;
-        depthStencil.descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
-        depthStencil.pImageInfo = images + 3U;
-        depthStencil.pBufferInfo = nullptr;
-        depthStencil.pTexelBufferView = nullptr;
+
+        depthStencil = VkWriteDescriptorSet
+        {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .pNext = nullptr,
+            .dstSet = set,
+            .dstBinding = 3U,
+            .dstArrayElement = 0U,
+            .descriptorCount = 1U,
+            .descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
+            .pImageInfo = images + 3U,
+            .pBufferInfo = nullptr,
+            .pTexelBufferView = nullptr
+        };
 
         VkWriteDescriptorSet &brdfImage = write[ idx++ ];
-        brdfImage.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        brdfImage.pNext = nullptr;
-        brdfImage.dstSet = set;
-        brdfImage.dstBinding = 4U;
-        brdfImage.dstArrayElement = 0U;
-        brdfImage.descriptorCount = 1U;
-        brdfImage.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-        brdfImage.pImageInfo = images + 4U;
-        brdfImage.pBufferInfo = nullptr;
-        brdfImage.pTexelBufferView = nullptr;
+
+        brdfImage = VkWriteDescriptorSet
+        {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .pNext = nullptr,
+            .dstSet = set,
+            .dstBinding = 4U,
+            .dstArrayElement = 0U,
+            .descriptorCount = 1U,
+            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+            .pImageInfo = images + 4U,
+            .pBufferInfo = nullptr,
+            .pTexelBufferView = nullptr
+        };
 
         VkWriteDescriptorSet &brdfSampler = write[ idx++ ];
-        brdfSampler.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        brdfSampler.pNext = nullptr;
-        brdfSampler.dstSet = set;
-        brdfSampler.dstBinding = 5U;
-        brdfSampler.dstArrayElement = 0U;
-        brdfSampler.descriptorCount = 1U;
-        brdfSampler.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
-        brdfSampler.pImageInfo = images + 4U;
-        brdfSampler.pBufferInfo = nullptr;
-        brdfSampler.pTexelBufferView = nullptr;
+
+        brdfSampler = VkWriteDescriptorSet
+        {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .pNext = nullptr,
+            .dstSet = set,
+            .dstBinding = 5U,
+            .dstArrayElement = 0U,
+            .descriptorCount = 1U,
+            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
+            .pImageInfo = images + 4U,
+            .pBufferInfo = nullptr,
+            .pTexelBufferView = nullptr
+        };
 
         VkWriteDescriptorSet &prefilterSampler = write[ idx++ ];
-        prefilterSampler.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        prefilterSampler.pNext = nullptr;
-        prefilterSampler.dstSet = set;
-        prefilterSampler.dstBinding = 6U;
-        prefilterSampler.dstArrayElement = 0U;
-        prefilterSampler.descriptorCount = 1U;
-        prefilterSampler.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
-        prefilterSampler.pImageInfo = images + 5U;
-        prefilterSampler.pBufferInfo = nullptr;
-        prefilterSampler.pTexelBufferView = nullptr;
+
+        prefilterSampler = VkWriteDescriptorSet
+        {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .pNext = nullptr,
+            .dstSet = set,
+            .dstBinding = 6U,
+            .dstArrayElement = 0U,
+            .descriptorCount = 1U,
+            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
+            .pImageInfo = images + 5U,
+            .pBufferInfo = nullptr,
+            .pTexelBufferView = nullptr
+        };
     }
 
-    vkUpdateDescriptorSets ( device, static_cast<uint32_t> ( write.size () ), write.data (), 0U, nullptr );
+    vkUpdateDescriptorSets ( device, static_cast<uint32_t> ( std::size ( write ) ), write, 0U, nullptr );
 
     VkPipelineLayoutCreateInfo const layoutInfo
     {
@@ -397,7 +419,7 @@ void LightupCommonDescriptorSet::OnFreeTransferResources ( android_vulkan::Rende
 
 void LightupCommonDescriptorSet::Update ( VkDevice device,
     VkCommandBuffer commandBuffer,
-    size_t swapchainImageIndex,
+    size_t commandBufferIndex,
     VkExtent2D const &resolution,
     GXMat4 const &viewerLocal,
     GXMat4 const &cvvToView
@@ -423,7 +445,7 @@ void LightupCommonDescriptorSet::Update ( VkDevice device,
     VkBuffer buffer = _uniforms.Push ( commandBuffer, &viewData, sizeof ( viewData ) );
 
     _bufferInfo.buffer = buffer;
-    _writeInfo.dstSet = _sets[ swapchainImageIndex ];
+    _writeInfo.dstSet = _sets[ commandBufferIndex ];
     vkUpdateDescriptorSets ( device, 1U, &_writeInfo, 0U, nullptr );
 
     _barrier.buffer = buffer;

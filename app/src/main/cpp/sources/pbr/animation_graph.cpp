@@ -52,8 +52,16 @@ AnimationGraph::AnimationGraph ( bool &success, std::string &&skeletonFile ) noe
         ++offset;
     }
 
-    _pose.resize ( count );
+    _poseLocal.resize ( count );
+    _poseGlobal.resize ( count );
+    _poseSkin.resize ( count );
+
     success = true;
+}
+
+[[maybe_unused]] AnimationGraph::Joints const &AnimationGraph::GetPose () const noexcept
+{
+    return _poseSkin;
 }
 
 void AnimationGraph::Init ( lua_State &vm ) noexcept
@@ -107,7 +115,87 @@ void AnimationGraph::UpdateInternal ( float deltaTime ) noexcept
         return;
 
     _inputNode->Update ( deltaTime );
-    // TODO
+
+    size_t const boneCount = _poseSkin.size ();
+    std::string const* names = _names.data ();
+    android_vulkan::BoneJoint* poseLocal = _poseLocal.data ();
+    android_vulkan::BoneJoint const* referencePose = _referenceTransforms.data ();
+
+    for ( size_t i = 0U; i < boneCount; ++i )
+    {
+        JointProviderNode::Result const joint = _inputNode->GetJoint ( names[ i ] );
+        android_vulkan::BoneJoint &local = poseLocal[ i ];
+
+        if ( !joint )
+        {
+            std::memcpy ( &local, &referencePose[ i ], sizeof ( android_vulkan::BoneJoint ) );
+            continue;
+        }
+
+        android_vulkan::Joint const &j = *joint;
+        std::memcpy ( &local._location, &j._location, sizeof ( local._location ) );
+        std::memcpy ( &local._orientation, &j._orientation, sizeof ( local._orientation ) );
+    }
+
+    // Note: Quaternion mathematics simular to column-major notation matrix mathematics.
+    // So we need to do multiplication in reverse order to calculate skin transform.
+
+    android_vulkan::BoneJoint const* inverseBind = _inverseBindTransforms.data ();
+    android_vulkan::BoneJoint* poseGlobal = _poseGlobal.data ();
+    android_vulkan::BoneJoint* poseSkin = _poseSkin.data ();
+
+    auto const &rootOrientationInvBind = *reinterpret_cast<GXQuat const*> ( &inverseBind->_orientation );
+    auto const &rootLocationInvBind = *reinterpret_cast<GXVec3 const*> ( &inverseBind->_location );
+
+    auto &rootOrientationGlobal = *reinterpret_cast<GXQuat*> ( &poseGlobal->_orientation );
+    auto const &rootLocationGlobal = *reinterpret_cast<GXVec3 const*> ( &poseGlobal->_location );
+
+    auto &rootOrientationSkin = *reinterpret_cast<GXQuat*> ( &poseSkin->_orientation );
+    auto &rootLocationSkin = *reinterpret_cast<GXVec3*> ( &poseSkin->_location );
+
+    // Skin transform of the root bone...
+    std::memcpy ( poseGlobal, poseLocal, sizeof ( android_vulkan::BoneJoint ) );
+    rootOrientationSkin.Multiply ( rootOrientationGlobal, rootOrientationInvBind );
+
+    GXVec3 v3 {};
+    rootOrientationGlobal.TransformFast ( v3, rootLocationInvBind );
+    rootLocationSkin.Sum ( rootLocationGlobal, v3 );
+
+    // Root bone was calculated already. Starting from next bone...
+    int32_t const* parentIdx = _parents.data ();
+
+    for ( size_t i = 1U; i < boneCount; ++i )
+    {
+        android_vulkan::BoneJoint const &parent = poseGlobal[ static_cast<size_t> ( parentIdx[ i ] ) ];
+        auto const &orientationParent = *reinterpret_cast<GXQuat const*> ( &parent._orientation );
+        auto const &locationParent = *reinterpret_cast<GXVec3 const*> ( &parent._location );
+
+        android_vulkan::BoneJoint const &invBind = inverseBind[ i ];
+        auto const &orientationInvBind = *reinterpret_cast<GXQuat const*> ( &invBind._orientation );
+        auto const &locationInvBind = *reinterpret_cast<GXVec3 const*> ( &invBind._location );
+
+        android_vulkan::BoneJoint const &local = poseLocal[ i ];
+        auto const &orientationLocal = *reinterpret_cast<GXQuat const*> ( &local._orientation );
+        auto const &locationLocal = *reinterpret_cast<GXVec3 const*> ( &local._location );
+
+        android_vulkan::BoneJoint &global = poseGlobal[ i ];
+        auto &orientationGlobal = *reinterpret_cast<GXQuat*> ( &global._orientation );
+        auto &locationGlobal = *reinterpret_cast<GXVec3*> ( &global._location );
+
+        android_vulkan::BoneJoint &skin = poseSkin[ i ];
+        auto &orientationSkin = *reinterpret_cast<GXQuat*> ( &skin._orientation );
+        auto &locationSkin = *reinterpret_cast<GXVec3*> ( &skin._location );
+
+        // Global transform of the bone...
+        orientationGlobal.Multiply ( orientationParent, orientationLocal );
+        orientationParent.TransformFast ( v3, locationLocal );
+        locationGlobal.Sum ( locationParent, v3 );
+
+        // Skin transform of the bone...
+        orientationSkin.Multiply ( orientationGlobal, orientationInvBind );
+        orientationGlobal.TransformFast ( v3, locationInvBind );
+        locationSkin.Sum ( locationGlobal, v3 );
+    }
 }
 
 int AnimationGraph::OnAwake ( lua_State* state )

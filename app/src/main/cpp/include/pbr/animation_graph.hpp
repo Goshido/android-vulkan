@@ -24,9 +24,12 @@ namespace pbr {
 
 class AnimationGraph final : public NodeLink
 {
+    public:
+        // Making sure that array will be tightly packed. It's important for upload to GPU side.
+        using Joints = std::vector<android_vulkan::BoneJoint>;
+
     private:
         using Reference = std::unique_ptr<AnimationGraph>;
-        using Joints = std::vector<android_vulkan::BoneJoint>;
 
     private:
         JointProviderNode*                                              _inputNode = nullptr;
@@ -35,7 +38,9 @@ class AnimationGraph final : public NodeLink
         std::vector<std::string>                                        _names {};
         Joints                                                          _referenceTransforms {};
         std::vector<int32_t>                                            _parents {};
-        Joints                                                          _pose {};
+        Joints                                                          _poseLocal {};
+        Joints                                                          _poseGlobal {};
+        Joints                                                          _poseSkin {};
 
         static std::unordered_map<AnimationGraph const*, Reference>     _graphs;
 
@@ -51,6 +56,8 @@ class AnimationGraph final : public NodeLink
         explicit AnimationGraph ( bool &success, std::string &&skeletonFile ) noexcept;
 
         ~AnimationGraph () = default;
+
+        [[maybe_unused, nodiscard]] Joints const &GetPose () const noexcept;
 
         static void Init ( lua_State &vm ) noexcept;
         static void Destroy () noexcept;

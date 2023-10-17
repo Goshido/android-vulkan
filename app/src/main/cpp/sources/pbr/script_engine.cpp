@@ -95,7 +95,7 @@ bool ScriptEngine::ExtendFrontend ( android_vulkan::Renderer &renderer,
 {
     lua_State &vm = *_vm;
 
-    AnimationGraph::Init ( vm );
+    AnimationGraph::Init ( vm, renderer );
     AnimationPlayerNode::Init ( vm ),
     ScriptableGXMat3::Init ( vm );
     ScriptableGXMat4::Init ( vm );

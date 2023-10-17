@@ -1,3 +1,4 @@
+#include <pbr/animation_graph.hpp>
 #include <pbr/render_session.hpp>
 #include <pbr/point_light.hpp>
 #include <pbr/reflection_probe_global.hpp>
@@ -82,6 +83,8 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
     if ( !result || ( _brightnessChanged && !UpdateBrightness ( renderer ) ) )
         return false;
 
+    AnimationGraph::UploadGPUData ( commandBuffer, commandBufferIndex );
+
     if ( !_uiPass.UploadGPUData ( renderer, commandBuffer, commandBufferIndex ) )
         return false;
 
@@ -145,6 +148,11 @@ void RenderSession::FreeTransferResources ( android_vulkan::Renderer &renderer )
 UIPass &RenderSession::GetUIPass () noexcept
 {
     return _uiPass;
+}
+
+size_t RenderSession::GetWritingCommandBufferIndex () const noexcept
+{
+    return _writingCommandInfo;
 }
 
 bool RenderSession::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept

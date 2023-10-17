@@ -26,6 +26,7 @@ local function AppendActorFromNative ( self, actor )
 
     table.insert ( list, actor )
 
+    local animationUpdateScripts = self._animationUpdateScripts
     local inputScripts = self._inputScripts
     local postPhysicsScripts = self._postPhysicsScripts
     local prePhysicsScripts = self._prePhysicsScripts
@@ -35,6 +36,10 @@ local function AppendActorFromNative ( self, actor )
     for groupKey, group in pairs ( actor._components ) do
         for k, v in pairs ( group ) do
             if v._type == eObjectType.ScriptComponent then
+                if type ( v.OnAnimationUpdated ) == "function" then
+                    animationUpdateScripts[ v ] = v
+                end
+
                 if type ( v.OnInput ) == "function" then
                     inputScripts[ v ] = v
                 end
@@ -146,6 +151,12 @@ local function GetRenderTargetHeight ( self )
     return av_SceneGetRenderTargetHeight ( self._handle )
 end
 
+local function OnAnimationUpdated ( self, inputEvent )
+    for k, v in pairs ( self._animationUpdateScripts ) do
+        v:OnAnimationUpdated ( inputEvent )
+    end
+end
+
 local function OnInput ( self, inputEvent )
     for k, v in pairs ( self._inputScripts ) do
         v:OnInput ( inputEvent )
@@ -181,6 +192,7 @@ local function OnUpdate ( self, deltaTime )
         return
     end
 
+    local animationUpdateScripts = self._animationUpdateScripts
     local inputScripts = self._inputScripts
     local postPhysicsScripts = self._postPhysicsScripts
     local prePhysicsScripts = self._prePhysicsScripts
@@ -192,6 +204,7 @@ local function OnUpdate ( self, deltaTime )
         for groupKey, group in pairs ( actor._components ) do
             for k, v in pairs ( group ) do
                 if v._type == eObjectType.ScriptComponent then
+                    animationUpdateScripts[ v ] = nil
                     inputScripts[ v ] = nil
                     postPhysicsScripts[ v ] = nil
                     prePhysicsScripts[ v ] = nil
@@ -372,6 +385,7 @@ local function Constructor ( self, handle )
     -- Data
     obj._actors = {}
     obj._actorToDestroy = {}
+    obj._animationUpdateScripts = {}
     obj._handle = handle
     obj._inputScripts = {}
     obj._postPhysicsScripts = {}
@@ -393,6 +407,7 @@ local function Constructor ( self, handle )
     obj.GetRenderTargetAspectRatio = GetRenderTargetAspectRatio
     obj.GetRenderTargetWidth = GetRenderTargetWidth
     obj.GetRenderTargetHeight = GetRenderTargetHeight
+    obj.OnAnimationUpdated = OnAnimationUpdated
     obj.OnInput = OnInput
     obj.OnPostPhysics = OnPostPhysics
     obj.OnPrePhysics = OnPrePhysics

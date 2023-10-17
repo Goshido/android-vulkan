@@ -91,6 +91,7 @@ class RenderSession final
 
         void FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept;
         [[nodiscard]] UIPass &GetUIPass () noexcept;
+        [[nodiscard]] size_t GetWritingCommandBufferIndex () const noexcept;
 
         [[nodiscard]] bool OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept;
         void OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept;

@@ -40,6 +40,7 @@ class Scene final
         lua_Integer                                     _height = -1;
 
         int                                             _appendActorFromNativeIndex = std::numeric_limits<int>::max ();
+        int                                             _onAnimationUpdateIndex = std::numeric_limits<int>::max ();
         int                                             _onInputIndex = std::numeric_limits<int>::max ();
         int                                             _onPostPhysicsIndex = std::numeric_limits<int>::max ();
         int                                             _onPrePhysicsIndex = std::numeric_limits<int>::max ();
@@ -68,6 +69,8 @@ class Scene final
         [[nodiscard]] GXMat4 const &GetActiveCameraProjectionMatrix () const noexcept;
         [[nodiscard]] android_vulkan::Physics &GetPhysics () noexcept;
 
+        [[nodiscard]] bool OnAnimationUpdated ( double deltaTime ) noexcept;
+
         [[nodiscard]] bool OnInitDevice ( android_vulkan::Renderer &renderer,
             RenderSession &renderSession,
             android_vulkan::Physics &physics
@@ -85,7 +88,6 @@ class Scene final
         [[nodiscard]] bool OnPostPhysics ( double deltaTime ) noexcept;
         [[nodiscard]] bool OnResolutionChanged ( VkExtent2D const &resolution, double aspectRatio ) noexcept;
         [[nodiscard]] bool OnUpdate ( double deltaTime ) noexcept;
-        void OnUpdateAnimations ( double deltaTime ) noexcept;
 
         [[nodiscard]] bool LoadScene ( android_vulkan::Renderer &renderer,
             char const* scene,
@@ -94,6 +96,8 @@ class Scene final
 
         void RemoveActor ( Actor const &actor ) noexcept;
         void Submit ( android_vulkan::Renderer &renderer ) noexcept;
+
+        static void OnUpdateAnimations ( double deltaTime, size_t commandBufferIndex ) noexcept;
 
     private:
         void AppendActor ( ActorRef &actor ) noexcept;

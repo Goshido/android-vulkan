@@ -12,6 +12,7 @@ require "av://engine/script_component.lua"
 - [`GetName ()`](#method-get-name)
 - [`OnAboutToDestroy ( self )`](#method-on-about-to-destroy)
 - [`OnActorConstructed ( self, actor )`](#method-on-actor-constructed)
+- [`OnAnimationUpdated ( self, deltaTime )`](#method-on-animation-updated)
 - [`OnInput ( self, inputEvent )`](#method-on-input)
 - [`OnPostPhysics ( self, deltaTime )`](#method-on-post-physics)
 - [`OnPrePhysics ( self, deltaTime )`](#method-on-pre-physics)
@@ -36,6 +37,10 @@ local function OnAboutToDestroy ( self )
 end
 
 local function OnActorConstructed ( self, actor )
+    -- Some implementation
+end
+
+local function OnAnimationUpdated ( self, actor )
     -- Some implementation
 end
 
@@ -70,6 +75,7 @@ local function Constructor ( self, handle, params )
     -- Engine events (all optional)
     obj.OnAboutToDestroy = OnAboutToDestroy
     obj.OnActorConstructed = OnActorConstructed
+    obj.OnAnimationUpdated = OnAnimationUpdated
     obj.OnInput = OnInput
     obj.OnPostPhysics = OnPostPhysics
     obj.OnPrePhysics = OnPrePhysics
@@ -287,6 +293,50 @@ local function Constructor ( self, handle, params )
 
     -- Engine events
     obj.OnAboutToDestroy = OnAboutToDestroy
+    return obj
+end
+
+setmetatable ( Player, { __call = Constructor } )
+
+-- Module function: fabric callable for Player class.
+return Player
+```
+
+[↬ table of content ⇧](#table-of-content)
+
+## <a id="method-on-animation-updated">`OnAnimationUpdated ( self, deltaTime )`</a>
+
+Optional user provided event handler in the subclass implementation. The method will be called by the engine right after all animation graphs have been updated. The event graph is presented [here](#event-calling-order).
+
+**Parameters:**
+
+- `self` [_required, read/write, [ScriptComponent](./script-component.md)_]: part of _Lua OOP_ convention required to invoke method via `:` syntax
+- `deltaTime` [_required, readonly, number_]: delta time in seconds between frames
+
+**Return values:**
+
+- none
+
+**Example:**
+
+```lua
+require "av://engine/logger.lua"
+require "av://engine/script_component.lua"
+
+
+local Player = {}
+
+-- Engine events
+local function OnAnimationUpdated ( self, deltaTime )
+    LogD ( "My name is %s, delta time is %.3f", self:GetName (), deltaTime )
+end
+
+-- Metamethods
+local function Constructor ( self, handle, params )
+    local obj = ScriptComponent ( handle )
+
+    -- Engine events
+    obj.OnAnimationUpdated = OnAnimationUpdated
     return obj
 end
 

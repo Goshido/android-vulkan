@@ -95,6 +95,24 @@ android_vulkan::Physics &Scene::GetPhysics () noexcept
     return *_physics;
 }
 
+bool Scene::OnAnimationUpdated ( double deltaTime ) noexcept
+{
+    AV_TRACE ( "Lua: animation updated" )
+
+    if ( !lua_checkstack ( _vm, 3 ) )
+    {
+        android_vulkan::LogError ( "pbr::Scene::OnAnimationUpdated - Stack is too small." );
+        return false;
+    }
+
+    lua_pushvalue ( _vm, _onAnimationUpdateIndex );
+    lua_pushvalue ( _vm, _sceneHandle );
+    lua_pushnumber ( _vm, deltaTime );
+    lua_pcall ( _vm, 2, 0, ScriptEngine::GetErrorHandlerIndex () );
+
+    return true;
+}
+
 bool Scene::OnInitDevice ( android_vulkan::Renderer &renderer,
     RenderSession &renderSession,
     android_vulkan::Physics &physics
@@ -245,6 +263,9 @@ bool Scene::OnInitDevice ( android_vulkan::Renderer &renderer,
     if ( !bind ( "AppendActorFromNative", _appendActorFromNativeIndex ) )
         return false;
 
+    if ( !bind ( "OnAnimationUpdated", _onAnimationUpdateIndex ) )
+        return false;
+
     if ( !bind ( "OnInput", _onInputIndex ) )
         return false;
 
@@ -284,6 +305,7 @@ void Scene::OnDestroyDevice () noexcept
     _shapeBoxes[ 1U ] = nullptr;
 
     _appendActorFromNativeIndex = std::numeric_limits<int>::max ();
+    _onAnimationUpdateIndex = std::numeric_limits<int>::max ();
     _onInputIndex = std::numeric_limits<int>::max ();
     _onPostPhysicsIndex = std::numeric_limits<int>::max ();
     _onPrePhysicsIndex = std::numeric_limits<int>::max ();
@@ -397,12 +419,6 @@ bool Scene::OnUpdate ( double deltaTime ) noexcept
     return true;
 }
 
-void Scene::OnUpdateAnimations ( double deltaTime ) noexcept
-{
-    AV_TRACE ( "Update animations" )
-    AnimationGraph::Update ( deltaTime );
-}
-
 bool Scene::LoadScene ( android_vulkan::Renderer &renderer, char const* scene, VkCommandPool commandPool ) noexcept
 {
     android_vulkan::File file ( scene );
@@ -507,6 +523,12 @@ void Scene::Submit ( android_vulkan::Renderer &renderer ) noexcept
     AV_TRACE ( "Scene submit" )
     SubmitComponents ( renderer, *_renderSession );
     SubmitUI ( renderer, *_renderSession );
+}
+
+void Scene::OnUpdateAnimations ( double deltaTime, size_t commandBufferIndex ) noexcept
+{
+    AV_TRACE ( "Update animations" )
+    AnimationGraph::Update ( static_cast<float> ( deltaTime ), commandBufferIndex );
 }
 
 void Scene::AppendActor ( ActorRef &actor ) noexcept

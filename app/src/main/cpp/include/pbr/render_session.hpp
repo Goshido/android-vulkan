@@ -43,7 +43,7 @@ class RenderSession final
         float                       _brightnessBalance = 0.0F;
         bool                        _brightnessChanged = false;
 
-        CommandInfo                 _commandInfo[ COMMAND_BUFFER_COUNT ];
+        CommandInfo                 _commandInfo[ DUAL_COMMAND_BUFFER ];
         size_t                      _writingCommandInfo = 0U;
 
         GXMat4                      _cvvToView {};

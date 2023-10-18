@@ -34,7 +34,7 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
 
     size_t const commandBufferIndex = _writingCommandInfo;
     CommandInfo &commandInfo = _commandInfo[ _writingCommandInfo ];
-    _writingCommandInfo = ++_writingCommandInfo % COMMAND_BUFFER_COUNT;
+    _writingCommandInfo = ++_writingCommandInfo % DUAL_COMMAND_BUFFER;
 
     VkFence &fence = commandInfo._fence;
     VkDevice device = renderer.GetDevice ();

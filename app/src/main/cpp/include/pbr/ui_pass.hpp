@@ -87,7 +87,7 @@ class UIPass final
         {
             using Entry = std::unordered_map<Texture2DRef, size_t>;
 
-            Entry                                   _registry[ COMMAND_BUFFER_COUNT ];
+            Entry                                   _registry[ DUAL_COMMAND_BUFFER ];
 
             void Destroy () noexcept;
 

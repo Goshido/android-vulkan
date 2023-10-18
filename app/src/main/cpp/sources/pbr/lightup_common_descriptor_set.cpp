@@ -41,19 +41,19 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
     {
         {
             .type = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
-            .descriptorCount = static_cast<uint32_t> ( 4U * COMMAND_BUFFER_COUNT )
+            .descriptorCount = static_cast<uint32_t> ( 4U * DUAL_COMMAND_BUFFER )
         },
         {
             .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-            .descriptorCount = static_cast<uint32_t> ( COMMAND_BUFFER_COUNT )
+            .descriptorCount = static_cast<uint32_t> ( DUAL_COMMAND_BUFFER )
         },
         {
             .type = VK_DESCRIPTOR_TYPE_SAMPLER,
-            .descriptorCount = static_cast<uint32_t> ( 2U * COMMAND_BUFFER_COUNT )
+            .descriptorCount = static_cast<uint32_t> ( 2U * DUAL_COMMAND_BUFFER )
         },
         {
             .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            .descriptorCount = static_cast<uint32_t> ( COMMAND_BUFFER_COUNT )
+            .descriptorCount = static_cast<uint32_t> ( DUAL_COMMAND_BUFFER )
         }
     };
 
@@ -62,7 +62,7 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0U,
-        .maxSets = static_cast<uint32_t> ( COMMAND_BUFFER_COUNT ),
+        .maxSets = static_cast<uint32_t> ( DUAL_COMMAND_BUFFER ),
         .poolSizeCount = static_cast<uint32_t> ( std::size ( poolSizes ) ),
         .pPoolSizes = poolSizes
     };
@@ -82,14 +82,14 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
         return false;
 
     VkDescriptorSetLayout layout = _layout.GetLayout ();
-    std::vector<VkDescriptorSetLayout> layouts ( COMMAND_BUFFER_COUNT, layout );
+    std::vector<VkDescriptorSetLayout> layouts ( DUAL_COMMAND_BUFFER, layout );
 
     VkDescriptorSetAllocateInfo const descriptorSetAllocateInfo
     {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
         .pNext = nullptr,
         .descriptorPool = _descriptorPool,
-        .descriptorSetCount = static_cast<uint32_t> ( COMMAND_BUFFER_COUNT ),
+        .descriptorSetCount = static_cast<uint32_t> ( DUAL_COMMAND_BUFFER ),
         .pSetLayouts = layouts.data ()
     };
 
@@ -220,7 +220,7 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
         }
     };
 
-    VkWriteDescriptorSet write[ 7U * COMMAND_BUFFER_COUNT ];
+    VkWriteDescriptorSet write[ 7U * DUAL_COMMAND_BUFFER ];
     size_t idx = 0U;
 
     for ( auto &set : _sets )

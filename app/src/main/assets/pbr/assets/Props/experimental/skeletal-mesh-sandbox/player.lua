@@ -39,6 +39,7 @@ local function InitSkeletalMesh ( self, actor )
         "pbr/assets/Props/experimental/exporter/leg.skin",
         "pbr/assets/Props/experimental/exporter/leg.skeleton",
         "pbr/assets/Props/experimental/exporter/material.mtl"
+        --"pbr/assets/System/DefaultCSG.mtl"
     )
 
     local m = GXMat4 ()

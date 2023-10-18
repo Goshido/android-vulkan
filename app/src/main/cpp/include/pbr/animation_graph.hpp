@@ -37,9 +37,9 @@ class AnimationGraph final : public NodeLink
         class Buffer final
         {
             public:
-                VkBuffer                    _buffer = VK_NULL_HANDLE;
-                VkDeviceMemory              _memory = VK_NULL_HANDLE;
-                VkDeviceSize                _offset = std::numeric_limits<VkDeviceSize>::max ();
+                VkBuffer                                _buffer = VK_NULL_HANDLE;
+                VkDeviceMemory                          _memory = VK_NULL_HANDLE;
+                VkDeviceSize                            _offset = std::numeric_limits<VkDeviceSize>::max ();
 
             public:
                 Buffer () = default;
@@ -53,7 +53,7 @@ class AnimationGraph final : public NodeLink
                 ~Buffer () = default;
 
                 [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
-                    size_t size,
+                    VkDeviceSize size,
                     VkBufferUsageFlags usage,
                     VkMemoryPropertyFlags memoryFlags
                 ) noexcept;
@@ -64,9 +64,9 @@ class AnimationGraph final : public NodeLink
         class BufferSet final
         {
             public:
-                Buffer                              _gpuPoseSkin {};
-                Buffer                              _transferPoseSkin {};
-                android_vulkan::BoneJoint*          _poseSkin = nullptr;
+                Buffer                                  _gpuPoseSkin {};
+                Buffer                                  _transferPoseSkin {};
+                android_vulkan::BoneJoint*              _poseSkin = nullptr;
 
             public:
                 BufferSet () = default;
@@ -79,26 +79,29 @@ class AnimationGraph final : public NodeLink
 
                 ~BufferSet () = default;
 
-                [[nodiscard]] bool Init ( size_t size ) noexcept;
+                [[nodiscard]] bool Init ( VkDeviceSize size ) noexcept;
                 void Destroy () noexcept;
         };
 
     private:
-        JointProviderNode*                  _inputNode = nullptr;
-        Joints                              _inverseBindTransforms {};
-        bool                                _isSleep = true;
-        std::vector<std::string>            _names {};
-        Joints                              _referenceTransforms {};
-        std::vector<int32_t>                _parents {};
-        Joints                              _poseLocal {};
-        Joints                              _poseGlobal {};
-        VkBuffer                            _poseSkin = VK_NULL_HANDLE;
+        JointProviderNode*                              _inputNode = nullptr;
+        Joints                                          _inverseBindTransforms {};
+        bool                                            _isSleep = true;
+        VkDeviceSize                                    _jointSize = 0U;
+        std::vector<std::string>                        _names {};
+        Joints                                          _referenceTransforms {};
+        std::vector<int32_t>                            _parents {};
+        Joints                                          _poseLocal {};
+        Joints                                          _poseGlobal {};
+        VkBuffer                                        _poseSkin = VK_NULL_HANDLE;
 
-        BufferSet                           _bufferSets[ COMMAND_BUFFER_COUNT ];
+        BufferSet                                       _bufferSets[ DUAL_COMMAND_BUFFER ];
 
-        static size_t                       _changedGraphCount;
-        static Graphs                       _graphs;
-        static android_vulkan::Renderer*    _renderer;
+        static std::vector<VkBufferMemoryBarrier>       _barriers;
+        static size_t                                   _changedGraphCount;
+        static Graphs                                   _graphs;
+        static android_vulkan::Renderer*                _renderer;
+        static std::list<Reference>                     _toDelete;
 
     public:
         AnimationGraph () = delete;
@@ -121,11 +124,15 @@ class AnimationGraph final : public NodeLink
         static void UploadGPUData ( VkCommandBuffer commandBuffer,  size_t commandBufferIndex ) noexcept;
 
     private:
+        void FreeResources () noexcept;
         void UpdateInternal ( float deltaTime, size_t commandBufferIndex ) noexcept;
+
+        static void AllocateVulkanStructures ( size_t needed ) noexcept;
+        static void CollectGarbage () noexcept;
 
         [[nodiscard]] static int OnAwake ( lua_State* state );
         [[nodiscard]] static int OnCreate ( lua_State* state );
-        [[nodiscard]] static int OnDestroy ( lua_State* state );
+        [[nodiscard]] static int OnGarbageCollected ( lua_State* state );
         [[nodiscard]] static int OnSetInput ( lua_State* state );
         [[nodiscard]] static int OnSleep ( lua_State* state );
 };

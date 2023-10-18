@@ -68,9 +68,10 @@ SkeletalMeshComponent::SkeletalMeshComponent ( bool &success,
 {
     success = false;
     _localMatrix.Identity ();
+    size_t consumed;
 
     _material = MaterialManager::GetInstance ().LoadMaterial ( *_renderer,
-        commandBufferConsumed,
+        consumed,
         material,
         commandBuffers,
         fences
@@ -79,9 +80,9 @@ SkeletalMeshComponent::SkeletalMeshComponent ( bool &success,
     if ( !_material )
         return;
 
-    size_t consumed;
-    commandBuffers += commandBufferConsumed;
-    fences += commandBufferConsumed;
+    commandBufferConsumed += consumed;
+    commandBuffers += consumed;
+    fences += consumed;
 
     _referenceMesh = MeshManager::GetInstance ().LoadMesh ( *_renderer,
         consumed,

@@ -37,7 +37,7 @@ end
 -- Metamethods
 local mt = {
     __gc = function ( self )
-        av_AnimationGraphDestroy ( self._handle )
+        av_AnimationGraphCollectGarbage ( self._handle )
     end
 }
 

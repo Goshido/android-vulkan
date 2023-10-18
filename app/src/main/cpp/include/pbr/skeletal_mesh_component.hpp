@@ -18,7 +18,7 @@ class SkeletalMeshComponent final : public RenderableComponent, public Transform
         {
             android_vulkan::SkinData        _skinData {};
             MeshRef                         _skinMesh {};
-            bool                            _frameIds[ COMMAND_BUFFER_COUNT ];
+            bool                            _frameIds[ DUAL_COMMAND_BUFFER ];
         };
 
         struct CommandBufferInfo final

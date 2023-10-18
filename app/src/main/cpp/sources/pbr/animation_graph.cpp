@@ -18,8 +18,16 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
+namespace {
+
+constexpr size_t INITIAL_GRAPH_COUNT = 64U;
+
+} // end of anonymous namespace
+
+//----------------------------------------------------------------------------------------------------------------------
+
 bool AnimationGraph::Buffer::Init ( android_vulkan::Renderer &renderer,
-    size_t size,
+    VkDeviceSize size,
     VkBufferUsageFlags usage,
     VkMemoryPropertyFlags memoryFlags
 ) noexcept
@@ -29,7 +37,7 @@ bool AnimationGraph::Buffer::Init ( android_vulkan::Renderer &renderer,
         .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0U,
-        .size = static_cast<VkDeviceSize> ( size ),
+        .size = size,
         .usage = usage,
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
         .queueFamilyIndexCount = 0U,
@@ -96,7 +104,7 @@ void AnimationGraph::Buffer::Destroy ( bool isMapped ) noexcept
 
 //----------------------------------------------------------------------------------------------------------------------
 
-bool AnimationGraph::BufferSet::Init ( size_t size ) noexcept
+bool AnimationGraph::BufferSet::Init ( VkDeviceSize size ) noexcept
 {
     constexpr VkBufferUsageFlags gpuFlags = AV_VK_FLAG ( VK_BUFFER_USAGE_STORAGE_BUFFER_BIT ) |
         AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT );
@@ -109,7 +117,7 @@ bool AnimationGraph::BufferSet::Init ( size_t size ) noexcept
 
     if ( !_transferPoseSkin.Init ( *_renderer, size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, transferMemoryFlags ) )
     {
-        _gpuPoseSkin.Destroy ( /**_renderer*/ false );
+        _gpuPoseSkin.Destroy ( false );
         return false;
     }
 
@@ -140,9 +148,11 @@ void AnimationGraph::BufferSet::Destroy () noexcept
 
 //----------------------------------------------------------------------------------------------------------------------
 
+std::vector<VkBufferMemoryBarrier> AnimationGraph::_barriers {};
 size_t AnimationGraph::_changedGraphCount = 0U;
 AnimationGraph::Graphs AnimationGraph::_graphs {};
 android_vulkan::Renderer* AnimationGraph::_renderer = nullptr;
+std::list<AnimationGraph::Reference> AnimationGraph::_toDelete {};
 
 AnimationGraph::AnimationGraph ( bool &success, std::string &&skeletonFile ) noexcept
 {
@@ -155,11 +165,11 @@ AnimationGraph::AnimationGraph ( bool &success, std::string &&skeletonFile ) noe
     uint8_t const* content = file.GetContent ().data ();
     auto const &header = *reinterpret_cast<android_vulkan::SkeletonHeader const*> ( content );
     auto const count = static_cast<size_t> ( header._boneCount );
-    size_t const jointSize = count * sizeof ( android_vulkan::BoneJoint );
+    _jointSize = static_cast<VkDeviceSize> ( count * sizeof ( android_vulkan::BoneJoint ) );
 
     auto const pumpJoints = [ & ] ( Joints &joints, uint64_t offset ) noexcept {
         joints.resize ( count );
-        std::memcpy ( joints.data (), content + offset, jointSize );
+        std::memcpy ( joints.data (), content + offset, static_cast<size_t> ( _jointSize ) );
     };
 
     pumpJoints ( _inverseBindTransforms, header._inverseBindTransformOffset );
@@ -184,17 +194,19 @@ AnimationGraph::AnimationGraph ( bool &success, std::string &&skeletonFile ) noe
 
     for ( BufferSet &bufferSet : _bufferSets )
     {
-        if ( !bufferSet.Init ( jointSize ) )
+        if ( !bufferSet.Init ( _jointSize ) )
             break;
 
         ++init;
     }
 
-    success = init == COMMAND_BUFFER_COUNT;
-    // TODO don't forget to destroy Vulkan resources.
+    success = init == DUAL_COMMAND_BUFFER;
 
     if ( success )
+    {
+        AllocateVulkanStructures ( INITIAL_GRAPH_COUNT );
         return;
+    }
 
     for ( size_t i = 0U; i < init; ++i )
     {
@@ -222,8 +234,8 @@ void AnimationGraph::Init ( lua_State &vm, android_vulkan::Renderer &renderer ) 
             .func = &AnimationGraph::OnCreate
         },
         {
-            .name = "av_AnimationGraphDestroy",
-            .func = &AnimationGraph::OnDestroy
+            .name = "av_AnimationGraphCollectGarbage",
+            .func = &AnimationGraph::OnGarbageCollected
         },
         {
             .name = "av_AnimationGraphSetInput",
@@ -251,17 +263,70 @@ void AnimationGraph::Update ( float deltaTime, size_t commandBufferIndex ) noexc
     }
 }
 
+
 void AnimationGraph::Destroy () noexcept
 {
+    for ( auto &graph : _graphs )
+        graph.second->FreeResources ();
+
+    CollectGarbage ();
+
+    _barriers.clear ();
+    _barriers.shrink_to_fit ();
+
     _graphs.clear ();
+    _renderer = nullptr;
 }
 
-void AnimationGraph::UploadGPUData ( VkCommandBuffer /*commandBuffer*/, size_t /*commandBufferIndex*/ ) noexcept
+void AnimationGraph::UploadGPUData ( VkCommandBuffer commandBuffer, size_t commandBufferIndex ) noexcept
 {
+    CollectGarbage ();
+
     if ( !_changedGraphCount )
         return;
 
-    // TODO
+    AllocateVulkanStructures ( _changedGraphCount );
+    VkBufferMemoryBarrier* barriers = _barriers.data ();
+    size_t i = 0U;
+
+    VkBufferCopy copy
+    {
+        .srcOffset = 0U,
+        .dstOffset = 0U,
+        .size = 0U
+    };
+
+    for ( auto const &item : _graphs )
+    {
+        AnimationGraph const &graph = *item.second;
+
+        if ( graph._isSleep | ( graph._inputNode == nullptr ) )
+            continue;
+
+        VkBufferMemoryBarrier &barrier = barriers[ i++ ];
+        BufferSet const &bufferSet = graph._bufferSets[ commandBufferIndex ];
+
+        VkBuffer skinBuffer = bufferSet._gpuPoseSkin._buffer;
+        VkDeviceSize const size = graph._jointSize;
+
+        barrier.buffer = skinBuffer;
+        barrier.size = size;
+
+        copy.size = size;
+        vkCmdCopyBuffer ( commandBuffer, bufferSet._transferPoseSkin._buffer, skinBuffer, 1U, &copy );
+    }
+
+    vkCmdPipelineBarrier ( commandBuffer,
+        VK_PIPELINE_STAGE_TRANSFER_BIT,
+        VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+        0U,
+        0U,
+        nullptr,
+        static_cast<uint32_t> ( _changedGraphCount ),
+        barriers,
+        0U,
+        nullptr
+    );
 }
 
 void AnimationGraph::UpdateInternal ( float deltaTime, size_t commandBufferIndex ) noexcept
@@ -357,6 +422,50 @@ void AnimationGraph::UpdateInternal ( float deltaTime, size_t commandBufferIndex
     }
 }
 
+void AnimationGraph::FreeResources () noexcept
+{
+    for ( auto &set : _bufferSets )
+    {
+        set.Destroy ();
+    }
+}
+
+void AnimationGraph::AllocateVulkanStructures ( size_t needed ) noexcept
+{
+    size_t const count = _barriers.size ();
+
+    if ( count >= needed )
+        return;
+
+    _barriers.reserve ( needed );
+
+    constexpr VkBufferMemoryBarrier memoryTemplate
+    {
+        .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
+        .pNext = nullptr,
+        .srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
+        .dstAccessMask = VK_ACCESS_SHADER_READ_BIT,
+        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .buffer = VK_NULL_HANDLE,
+        .offset = 0U,
+        .size = 0U
+    };
+
+    for ( size_t i = count; i < needed; ++i )
+    {
+        _barriers.push_back ( memoryTemplate );
+    }
+}
+
+void AnimationGraph::CollectGarbage () noexcept
+{
+    for ( auto &graph : _toDelete )
+        graph->FreeResources ();
+
+    _toDelete.clear ();
+}
+
 int AnimationGraph::OnAwake ( lua_State* state )
 {
     auto &self = *static_cast<AnimationGraph*> ( lua_touserdata ( state, 1 ) );
@@ -397,13 +506,17 @@ int AnimationGraph::OnCreate ( lua_State* state )
     return 1;
 }
 
-int AnimationGraph::OnDestroy ( lua_State* state )
+int AnimationGraph::OnGarbageCollected ( lua_State* state )
 {
     auto* handle = static_cast<AnimationGraph*> ( lua_touserdata ( state, 1 ) );
     handle->UnregisterSelf ();
 
-    [[maybe_unused]] auto const result = _graphs.erase ( handle );
-    AV_ASSERT ( result > 0U )
+    auto findResult = _graphs.find ( handle );
+    AV_ASSERT ( findResult != _graphs.end () )
+
+    _toDelete.emplace_back ( std::move ( findResult->second ) );
+    _graphs.erase ( findResult );
+
     return 0;
 }
 

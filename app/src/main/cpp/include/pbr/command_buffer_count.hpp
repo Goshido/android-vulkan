@@ -13,7 +13,7 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-constexpr static size_t COMMAND_BUFFER_COUNT = 2U;
+constexpr static size_t DUAL_COMMAND_BUFFER = 2U;
 
 } // namespace pbr
 

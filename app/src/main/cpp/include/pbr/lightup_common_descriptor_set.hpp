@@ -23,7 +23,7 @@ class LightupCommonDescriptorSet final
 
         VkPipelineLayout                    _pipelineLayout = VK_NULL_HANDLE;
         Sampler                             _prefilterSampler {};
-        VkDescriptorSet                     _sets[ COMMAND_BUFFER_COUNT ];
+        VkDescriptorSet                     _sets[ DUAL_COMMAND_BUFFER ];
         UniformBufferPool                   _uniforms { eUniformPoolSize::Nanoscopic_64KB };
         VkWriteDescriptorSet                _writeInfo {};
 

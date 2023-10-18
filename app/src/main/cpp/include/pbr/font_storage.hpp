@@ -93,7 +93,7 @@ class FontStorage final
         class Atlas final
         {
             private:
-                ImageResource                   _dyingResources[ COMMAND_BUFFER_COUNT ];
+                ImageResource                   _dyingResources[ DUAL_COMMAND_BUFFER ];
             
             public:
                 ImageResource                   _resource {};

@@ -18,7 +18,6 @@ class SkeletalMeshComponent final : public RenderableComponent, public Transform
         {
             android_vulkan::SkinData        _skinData {};
             MeshRef                         _skinMesh {};
-            bool                            _frameIds[ DUAL_COMMAND_BUFFER ];
         };
 
         struct CommandBufferInfo final
@@ -45,11 +44,11 @@ class SkeletalMeshComponent final : public RenderableComponent, public Transform
         MeshRef                             _referenceMesh;
         Usage                               _usage;
 
-        static std::list<Usage>             _aboutDelete;
         static CommandBufferInfo            _cbInfo;
+        static size_t                       _lastCommandBufferIndex;
         static android_vulkan::Renderer*    _renderer;
         static SkeletalMeshes               _skeletalMeshes;
-        static std::list<Usage>             _toDelete;
+        static std::list<Usage>             _toDelete[ DUAL_COMMAND_BUFFER ];
         static std::deque<Usage*>           _transferQueue;
 
     public:
@@ -76,14 +75,10 @@ class SkeletalMeshComponent final : public RenderableComponent, public Transform
 
         void RegisterFromScript ( Actor &actor ) noexcept;
         void Unregister () noexcept;
-        [[maybe_unused]] void UpdatePose ( size_t commandBufferIndex ) noexcept;
 
-        static void FreeUnusedResources ( size_t commandBufferIndex ) noexcept;
+        [[nodiscard]] static bool ApplySkin ( VkCommandBuffer commandBuffer, size_t commandBufferIndex ) noexcept;
         [[nodiscard]] static bool Init ( lua_State &vm, android_vulkan::Renderer &renderer ) noexcept;
         static void Destroy () noexcept;
-
-        // Waiting until all mesh data will be uploaded to GPU.
-        [[nodiscard]] static bool Sync () noexcept;
 
     private:
         [[nodiscard]] ComponentRef &GetReference () noexcept override;
@@ -99,6 +94,8 @@ class SkeletalMeshComponent final : public RenderableComponent, public Transform
         void SetTransform ( GXMat4 const &transform ) noexcept;
 
         [[nodiscard]] static bool AllocateCommandBuffers ( size_t amount ) noexcept;
+        static void FreeUnusedResources ( size_t commandBufferIndex ) noexcept;
+        [[nodiscard]] static bool WaitGPUUploadComplete () noexcept;
 
         [[nodiscard]] static int OnCreate ( lua_State* state );
         [[nodiscard]] static int OnDestroy ( lua_State* state );

@@ -15,7 +15,6 @@
 #include <pbr/scriptable_gxvec3.hpp>
 #include <pbr/scriptable_material.hpp>
 #include <pbr/scriptable_sweep_test_result.hpp>
-#include <pbr/skeletal_mesh_component.hpp>
 #include <pbr/static_mesh_component.hpp>
 #include <pbr/ui_layer.hpp>
 
@@ -373,7 +372,7 @@ bool Scene::OnPostPhysics ( double deltaTime ) noexcept
     lua_pushnumber ( _vm, deltaTime );
     lua_pcall ( _vm, 2, 0, ScriptEngine::GetErrorHandlerIndex () );
 
-    return ScriptableMaterial::Sync () && StaticMeshComponent::Sync () && SkeletalMeshComponent::Sync ();
+    return ScriptableMaterial::Sync () && StaticMeshComponent::Sync ();
 }
 
 bool Scene::OnResolutionChanged ( VkExtent2D const &resolution, double aspectRatio ) noexcept

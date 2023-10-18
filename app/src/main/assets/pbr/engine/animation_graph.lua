@@ -32,6 +32,7 @@ local function Sleep ( self )
     )
 
     av_AnimationGraphSleep ( self._handle )
+    self._inputNode = inputNode
 end
 
 -- Metamethods

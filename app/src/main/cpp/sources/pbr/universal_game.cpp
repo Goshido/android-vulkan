@@ -47,16 +47,11 @@ bool UniversalGame::OnFrame ( android_vulkan::Renderer &renderer, double deltaTi
 
     Scene::OnUpdateAnimations ( deltaTime, _renderSession.GetWritingCommandBufferIndex () );
 
-    if ( !_scene.OnAnimationUpdated ( deltaTime ) )
+    if ( !_scene.OnAnimationUpdated ( deltaTime ) || !_scene.OnUpdate ( deltaTime ) )
         return false;
 
     _renderSession.Begin ( _scene.GetActiveCameraLocalMatrix (), _scene.GetActiveCameraProjectionMatrix () );
-
     _scene.Submit ( renderer );
-
-    if ( !_scene.OnUpdate ( deltaTime ) )
-        return false;
-
     return _renderSession.End ( renderer, deltaTime );
 }
 

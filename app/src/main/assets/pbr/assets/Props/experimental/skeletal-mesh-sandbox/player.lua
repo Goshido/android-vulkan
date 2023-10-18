@@ -38,8 +38,7 @@ local function InitSkeletalMesh ( self, actor )
         "pbr/assets/Props/experimental/exporter/leg.mesh2",
         "pbr/assets/Props/experimental/exporter/leg.skin",
         "pbr/assets/Props/experimental/exporter/leg.skeleton",
-        "pbr/assets/Props/experimental/exporter/material.mtl"
-        --"pbr/assets/System/DefaultCSG.mtl"
+        "pbr/assets/Props/Scrap/StashBox.mtl"
     )
 
     local m = GXMat4 ()
@@ -54,6 +53,12 @@ local function InitSkeletalMesh ( self, actor )
 end
 
 -- Engine event handlers
+local function OnInput ( self, inputEvent )
+    if inputEvent._type == eEventType.KeyUp and inputEvent._key == eKey.Home then
+        g_scene:Quit ()
+    end
+end
+
 local function OnActorConstructed ( self, actor )
     self:InitSkeletalMesh ( actor )
     self:InitAnimationGraph ()
@@ -69,6 +74,7 @@ local function Constructor ( self, handle, params )
 
     -- Engine events
     obj.OnActorConstructed = OnActorConstructed
+    obj.OnInput = OnInput
 
     return obj
 end

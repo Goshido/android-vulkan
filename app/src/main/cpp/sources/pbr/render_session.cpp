@@ -88,6 +88,9 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
     if ( !_uiPass.UploadGPUData ( renderer, commandBuffer, commandBufferIndex ) )
         return false;
 
+    if ( !SkeletalMeshComponent::ApplySkin ( commandBuffer, commandBufferIndex ) )
+        return false;
+
     _toneMapperPass.UploadGPUData ( renderer, commandBuffer );
 
     result = _lightPass.OnPreGeometryPass ( renderer,
@@ -134,7 +137,6 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
     _renderSessionStats.SubmitUIVertices ( _uiPass.GetUsedVertexCount () );
 
     _renderSessionStats.PrintStats ( deltaTime );
-    SkeletalMeshComponent::FreeUnusedResources ( commandBufferIndex );
     return true;
 }
 

@@ -30,7 +30,7 @@ void NodeLink::UnregisterSelf () noexcept
 {
     for ( auto* node : _nodes )
     {
-        node->RegisterNode ( this );
+        node->UnregisterNode ( this );
     }
 }
 

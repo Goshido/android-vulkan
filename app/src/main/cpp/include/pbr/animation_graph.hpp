@@ -100,8 +100,9 @@ class AnimationGraph final : public NodeLink
         static std::vector<VkBufferMemoryBarrier>       _barriers;
         static size_t                                   _changedGraphCount;
         static Graphs                                   _graphs;
+        static size_t                                   _lastCommandBufferIndex;
         static android_vulkan::Renderer*                _renderer;
-        static std::list<Reference>                     _toDelete;
+        static std::list<Reference>                     _toDelete[ DUAL_COMMAND_BUFFER ];
 
     public:
         AnimationGraph () = delete;
@@ -128,7 +129,7 @@ class AnimationGraph final : public NodeLink
         void UpdateInternal ( float deltaTime, size_t commandBufferIndex ) noexcept;
 
         static void AllocateVulkanStructures ( size_t needed ) noexcept;
-        static void CollectGarbage () noexcept;
+        static void FreeUnusedResources ( size_t commandBufferIndex ) noexcept;
 
         [[nodiscard]] static int OnAwake ( lua_State* state );
         [[nodiscard]] static int OnCreate ( lua_State* state );

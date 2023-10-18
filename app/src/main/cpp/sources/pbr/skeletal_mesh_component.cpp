@@ -42,11 +42,11 @@ static_assert ( ALLOCATE_COMMAND_BUFFERS >= MIN_COMMAND_BUFFERS );
 
 //----------------------------------------------------------------------------------------------------------------------
 
-std::list<SkeletalMeshComponent::Usage> SkeletalMeshComponent::_aboutDelete {};
 SkeletalMeshComponent::CommandBufferInfo SkeletalMeshComponent::_cbInfo {};
+size_t SkeletalMeshComponent::_lastCommandBufferIndex = 0U;
 android_vulkan::Renderer* SkeletalMeshComponent::_renderer = nullptr;
 SkeletalMeshComponent::SkeletalMeshes SkeletalMeshComponent::_skeletalMeshes {};
-std::list<SkeletalMeshComponent::Usage> SkeletalMeshComponent::_toDelete {};
+std::list<SkeletalMeshComponent::Usage> SkeletalMeshComponent::_toDelete[ DUAL_COMMAND_BUFFER ] {};
 std::deque<SkeletalMeshComponent::Usage*> SkeletalMeshComponent::_transferQueue {};
 
 // NOLINTNEXTLINE - no initialization for some fields
@@ -132,48 +132,42 @@ void SkeletalMeshComponent::Unregister () noexcept
 {
     if ( _usage._skinMesh )
     {
-        _aboutDelete.emplace_back ( std::move ( _usage ) );
+        _toDelete[ _lastCommandBufferIndex ].emplace_back ( std::move ( _usage ) );
     }
 }
 
-[[maybe_unused]] void SkeletalMeshComponent::UpdatePose ( size_t commandBufferIndex ) noexcept
+bool SkeletalMeshComponent::ApplySkin ( VkCommandBuffer /*commandBuffer*/, size_t commandBufferIndex ) noexcept
 {
-    _usage._skinMesh->FreeTransferResources ( *_renderer );
-    _usage._frameIds[ commandBufferIndex ] = true;
-    // TODO
+    _lastCommandBufferIndex = commandBufferIndex;
+
+    if ( !WaitGPUUploadComplete () )
+        return false;
+
+    FreeUnusedResources ( commandBufferIndex );
+
+    for ( auto &item : _skeletalMeshes )
+    {
+        // NOLINTNEXTLINE - downcast.
+        auto &mesh = *const_cast<SkeletalMeshComponent*> ( static_cast<SkeletalMeshComponent const*> ( item.first ) );
+
+        // TODO skin transformation.
+        (void)mesh;
+    }
+
+    return true;
 }
 
 void SkeletalMeshComponent::FreeUnusedResources ( size_t commandBufferIndex ) noexcept
 {
-    for ( auto it = _toDelete.begin (); it != _toDelete.end (); )
+    auto &toDelete = _toDelete[ commandBufferIndex ];
+
+    for ( Usage &usage : toDelete )
     {
-        Usage &usage = *it;
-        auto &frameIds = usage._frameIds;
-        frameIds[ commandBufferIndex ] = false;
-
-        bool hasUsage = false;
-
-        for ( bool v : frameIds )
-        {
-            if ( v )
-            {
-                hasUsage = true;
-                break;
-            }
-        }
-
-        if ( hasUsage )
-        {
-            ++it;
-            continue;
-        }
-
         usage._skinMesh->FreeResources ( *_renderer );
         usage._skinData.FreeResources ( *_renderer );
-        it = _toDelete.erase ( it );
     }
 
-    _toDelete.splice ( _toDelete.cend (), std::move ( _aboutDelete ) );
+    toDelete.clear ();
 }
 
 bool SkeletalMeshComponent::Init ( lua_State &vm, android_vulkan::Renderer &renderer ) noexcept
@@ -252,7 +246,15 @@ void SkeletalMeshComponent::Destroy () noexcept
         AV_ASSERT ( false )
     }
 
-    _skeletalMeshes.clear ();
+    if ( !WaitGPUUploadComplete () )
+    {
+        android_vulkan::LogWarning ( "pbr::SkeletalMeshComponent::Destroy - Can't wait upload complete." );
+        AV_ASSERT ( false )
+    }
+
+    FreeUnusedResources ( 0U );
+    FreeUnusedResources ( 1U );
+
     VkDevice device = _renderer->GetDevice ();
 
     if ( _cbInfo._commandPool != VK_NULL_HANDLE )
@@ -276,64 +278,8 @@ void SkeletalMeshComponent::Destroy () noexcept
     }
 
     clean ( _cbInfo._fences );
-
-    _toDelete.splice ( _toDelete.cend (), _aboutDelete );
-
-    for ( auto &item : _toDelete )
-    {
-        item._skinMesh->FreeResources ( *_renderer );
-        item._skinData.FreeResources ( *_renderer );
-    }
-
-    _toDelete.clear ();
+    _lastCommandBufferIndex = 0U;
     _renderer = nullptr;
-}
-
-bool SkeletalMeshComponent::Sync () noexcept
-{
-    if ( !_cbInfo._index )
-        return true;
-
-    VkDevice device = _renderer->GetDevice ();
-    auto const fenceCount = static_cast<uint32_t> ( _cbInfo._index );
-    VkFence* fences = _cbInfo._fences.data ();
-
-    bool result = android_vulkan::Renderer::CheckVkResult (
-        vkWaitForFences ( device, fenceCount, fences, VK_TRUE, std::numeric_limits<uint64_t>::max () ),
-        "pbr::SkeletalMeshComponent::Sync",
-        "Can't wait fence"
-    );
-
-    if ( !result )
-        return false;
-
-    result = android_vulkan::Renderer::CheckVkResult ( vkResetFences ( device, fenceCount, fences ),
-        "pbr::SkeletalMeshComponent::Sync",
-        "Can't reset fence"
-    );
-
-    if ( !result )
-        return false;
-
-    result = android_vulkan::Renderer::CheckVkResult (
-        vkResetCommandPool ( device, _cbInfo._commandPool, 0U ),
-        "pbr::SkeletalMeshComponent::Sync",
-        "Can't reset command pool"
-    );
-
-    if ( !result )
-        return false;
-
-    _cbInfo._index = 0U;
-
-    for ( auto* item : _transferQueue )
-    {
-        item->_skinData.FreeTransferResources ( *_renderer );
-        item->_skinMesh->FreeTransferResources ( *_renderer );
-    }
-
-    _transferQueue.clear ();
-    return true;
 }
 
 ComponentRef &SkeletalMeshComponent::GetReference () noexcept
@@ -463,6 +409,53 @@ bool SkeletalMeshComponent::AllocateCommandBuffers ( size_t amount ) noexcept
         AV_REGISTER_FENCE ( "pbr::SkeletalMeshComponent::_fences" )
     }
 
+    return true;
+}
+
+bool SkeletalMeshComponent::WaitGPUUploadComplete () noexcept
+{
+    if ( !_cbInfo._index )
+        return true;
+
+    VkDevice device = _renderer->GetDevice ();
+    auto const fenceCount = static_cast<uint32_t> ( _cbInfo._index );
+    VkFence* fences = _cbInfo._fences.data ();
+
+    bool result = android_vulkan::Renderer::CheckVkResult (
+        vkWaitForFences ( device, fenceCount, fences, VK_TRUE, std::numeric_limits<uint64_t>::max () ),
+        "pbr::SkeletalMeshComponent::WaitGPUUploadComplete",
+        "Can't wait fence"
+    );
+
+    if ( !result )
+        return false;
+
+    result = android_vulkan::Renderer::CheckVkResult ( vkResetFences ( device, fenceCount, fences ),
+        "pbr::SkeletalMeshComponent::WaitGPUUploadComplete",
+        "Can't reset fence"
+    );
+
+    if ( !result )
+        return false;
+
+    result = android_vulkan::Renderer::CheckVkResult (
+        vkResetCommandPool ( device, _cbInfo._commandPool, 0U ),
+        "pbr::SkeletalMeshComponent::WaitGPUUploadComplete",
+        "Can't reset command pool"
+    );
+
+    if ( !result )
+        return false;
+
+    _cbInfo._index = 0U;
+
+    for ( auto* item : _transferQueue )
+    {
+        item->_skinData.FreeTransferResources ( *_renderer );
+        item->_skinMesh->FreeTransferResources ( *_renderer );
+    }
+
+    _transferQueue.clear ();
     return true;
 }
 

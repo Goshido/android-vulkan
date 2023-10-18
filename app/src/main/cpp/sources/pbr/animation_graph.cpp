@@ -151,8 +151,9 @@ void AnimationGraph::BufferSet::Destroy () noexcept
 std::vector<VkBufferMemoryBarrier> AnimationGraph::_barriers {};
 size_t AnimationGraph::_changedGraphCount = 0U;
 AnimationGraph::Graphs AnimationGraph::_graphs {};
+size_t AnimationGraph::_lastCommandBufferIndex = 0U;
 android_vulkan::Renderer* AnimationGraph::_renderer = nullptr;
-std::list<AnimationGraph::Reference> AnimationGraph::_toDelete {};
+std::list<AnimationGraph::Reference> AnimationGraph::_toDelete[ DUAL_COMMAND_BUFFER ] {};
 
 AnimationGraph::AnimationGraph ( bool &success, std::string &&skeletonFile ) noexcept
 {
@@ -263,29 +264,35 @@ void AnimationGraph::Update ( float deltaTime, size_t commandBufferIndex ) noexc
     }
 }
 
-
 void AnimationGraph::Destroy () noexcept
 {
-    for ( auto &graph : _graphs )
-        graph.second->FreeResources ();
+    if ( !_graphs.empty () )
+    {
+        android_vulkan::LogWarning ( "pbr::AnimationGraph::Destroy - Memory leak." );
+        AV_ASSERT ( false )
+    }
 
-    CollectGarbage ();
+    FreeUnusedResources ( 0U );
+    FreeUnusedResources ( 1U );
 
     _barriers.clear ();
     _barriers.shrink_to_fit ();
 
     _graphs.clear ();
+    _lastCommandBufferIndex = 0U;
     _renderer = nullptr;
 }
 
 void AnimationGraph::UploadGPUData ( VkCommandBuffer commandBuffer, size_t commandBufferIndex ) noexcept
 {
-    CollectGarbage ();
+    _lastCommandBufferIndex = commandBufferIndex;
 
     if ( !_changedGraphCount )
         return;
 
+    FreeUnusedResources ( commandBufferIndex );
     AllocateVulkanStructures ( _changedGraphCount );
+
     VkBufferMemoryBarrier* barriers = _barriers.data ();
     size_t i = 0U;
 
@@ -458,12 +465,14 @@ void AnimationGraph::AllocateVulkanStructures ( size_t needed ) noexcept
     }
 }
 
-void AnimationGraph::CollectGarbage () noexcept
+void AnimationGraph::FreeUnusedResources ( size_t commandBufferIndex ) noexcept
 {
-    for ( auto &graph : _toDelete )
+    auto &toDelete = _toDelete[ commandBufferIndex ];
+
+    for ( auto &graph : toDelete )
         graph->FreeResources ();
 
-    _toDelete.clear ();
+    toDelete.clear ();
 }
 
 int AnimationGraph::OnAwake ( lua_State* state )
@@ -514,7 +523,7 @@ int AnimationGraph::OnGarbageCollected ( lua_State* state )
     auto findResult = _graphs.find ( handle );
     AV_ASSERT ( findResult != _graphs.end () )
 
-    _toDelete.emplace_back ( std::move ( findResult->second ) );
+    _toDelete[ _lastCommandBufferIndex ].emplace_back ( std::move ( findResult->second ) );
     _graphs.erase ( findResult );
 
     return 0;

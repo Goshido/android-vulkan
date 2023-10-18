@@ -150,7 +150,8 @@ class Texture2D final
         [[nodiscard]] bool UploadCompressed ( Renderer &renderer,
             std::string const &fileName,
             eFormat format,
-            VkCommandBuffer commandBuffer
+            VkCommandBuffer commandBuffer,
+            VkFence fence
         ) noexcept;
 
         [[nodiscard]] bool UploadDataInternal ( Renderer &renderer,

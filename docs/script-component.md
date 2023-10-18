@@ -537,7 +537,7 @@ return Camera
 
 ## <a id="method-on-update">`OnUpdate ( self, deltaTime )`</a>
 
-Optional user provided event handler in the subclass implementation. The method will be called by the engine right after render object submissions and before end of the frame. The event graph is presented [here](#event-calling-order).
+Optional user provided event handler in the subclass implementation. The method will be called by the engine right after [`OnAnimationUpdated`](#method-on-animation-updated) handlers and before render object submissions. The event graph is presented [here](#event-calling-order).
 
 **Parameters:**
 

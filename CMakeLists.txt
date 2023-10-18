@@ -208,6 +208,7 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/uniform_buffer_pool.cpp
     app/src/main/cpp/sources/pbr/uniform_buffer_pool_manager.cpp
     app/src/main/cpp/sources/pbr/unique_attribute_checker.cpp
+    app/src/main/cpp/sources/pbr/universal_game.cpp
     app/src/main/cpp/sources/pbr/utf8_parser.cpp
     app/src/main/cpp/sources/pbr/vertical_align_property.cpp
     app/src/main/cpp/sources/pbr/vertical_align_property_checker.cpp
@@ -215,13 +216,11 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/box_stack/box_stack.cpp
     app/src/main/cpp/sources/pbr/collision/collision.cpp
     app/src/main/cpp/sources/pbr/collision/manipulator.cpp
-    app/src/main/cpp/sources/pbr/mario/world1x1.cpp
     app/src/main/cpp/sources/pbr/ray_casting/ray_casting.cpp
     app/src/main/cpp/sources/pbr/stipple_test/stipple_test.cpp
     app/src/main/cpp/sources/pbr/sweep_testing/actor_body.cpp
     app/src/main/cpp/sources/pbr/sweep_testing/actor_sweep.cpp
     app/src/main/cpp/sources/pbr/sweep_testing/sweep_testing.cpp
-    app/src/main/cpp/sources/pbr/universal/universal.cpp
     app/src/main/cpp/sources/platform/android/file.cpp
     app/src/main/cpp/sources/platform/android/logger.cpp
     app/src/main/cpp/sources/rainbow/rainbow.cpp

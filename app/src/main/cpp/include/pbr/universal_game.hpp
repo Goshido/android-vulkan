@@ -1,14 +1,14 @@
-#ifndef PBR_MARIO_WORLD1x1_HPP
-#define PBR_MARIO_WORLD1x1_HPP
+#ifndef PBR_UNIVERSAL_GAME_HPP
+#define PBR_UNIVERSAL_GAME_HPP
 
 
-#include <pbr/scene.hpp>
+#include "scene.hpp"
 #include <game.hpp>
 
 
-namespace pbr::mario {
+namespace pbr {
 
-class World1x1 final : public android_vulkan::Game
+class UniversalGame final : public android_vulkan::Game
 {
     private:
         VkCommandPool                   _commandPool = VK_NULL_HANDLE;
@@ -16,17 +16,20 @@ class World1x1 final : public android_vulkan::Game
         android_vulkan::Physics         _physics {};
         RenderSession                   _renderSession {};
         Scene                           _scene {};
+        std::string const               _sceneFile {};
 
     public:
-        World1x1 () = default;
+        UniversalGame () = delete;
 
-        World1x1 ( World1x1 const & ) = delete;
-        World1x1 &operator = ( World1x1 const & ) = delete;
+        UniversalGame ( UniversalGame const & ) = delete;
+        UniversalGame &operator = ( UniversalGame const & ) = delete;
 
-        World1x1 ( World1x1 && ) = delete;
-        World1x1 &operator = ( World1x1 && ) = delete;
+        UniversalGame ( UniversalGame && ) = delete;
+        UniversalGame &operator = ( UniversalGame && ) = delete;
 
-        ~World1x1 () override = default;
+        explicit UniversalGame ( std::string &&sceneFile ) noexcept;
+
+        ~UniversalGame () override = default;
 
     private:
         [[nodiscard]] bool IsReady () noexcept override;
@@ -45,7 +48,7 @@ class World1x1 final : public android_vulkan::Game
         void DestroyCommandPool ( VkDevice device ) noexcept;
 };
 
-} // namespace pbr::mario
+} // namespace pbr::universal
 
 
-#endif // PBR_MARIO_WORLD1x1_HPP
+#endif // PBR_UNIVERSAL_GAME_HPP

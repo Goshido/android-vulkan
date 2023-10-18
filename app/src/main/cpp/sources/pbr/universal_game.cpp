@@ -1,16 +1,14 @@
-#include <pbr/mario/world1x1.hpp>
 #include <pbr/cube_map_manager.hpp>
 #include <pbr/material_manager.hpp>
 #include <pbr/mesh_manager.hpp>
+#include <pbr/universal_game.hpp>
 #include <gamepad.hpp>
 #include <global_force_gravity.hpp>
 
 
-namespace pbr::mario {
+namespace pbr {
 
 namespace {
-
-constexpr char const SCENE[] = "pbr/assets/world-1-1.scene";
 
 constexpr GXVec3 FREE_FALL_ACCELERATION ( 0.0F, -9.81F, 0.0F );
 
@@ -21,12 +19,18 @@ constexpr uint32_t RESOLUTION_SCALE_HEIGHT = 70U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-bool World1x1::IsReady () noexcept
+UniversalGame::UniversalGame ( std::string &&sceneFile ) noexcept:
+    _sceneFile ( std::move ( sceneFile ) )
+{
+    // NOTHING
+}
+
+bool UniversalGame::IsReady () noexcept
 {
     return _isReady;
 }
 
-bool World1x1::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) noexcept
+bool UniversalGame::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) noexcept
 {
     if ( !_scene.ExecuteInputEvents () )
         return false;
@@ -56,7 +60,7 @@ bool World1x1::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) 
     return _renderSession.End ( renderer, deltaTime );
 }
 
-bool World1x1::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
+bool UniversalGame::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 {
     VkCommandPoolCreateInfo const createInfo
     {
@@ -70,19 +74,19 @@ bool World1x1::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 
     bool result = android_vulkan::Renderer::CheckVkResult (
         vkCreateCommandPool ( device, &createInfo, nullptr, &_commandPool ),
-        "pbr::mario::World1x1::OnInit",
+        "pbr::universal::UniversalGame::OnInit",
         "Can't create command pool"
     );
 
     if ( !result )
         return false;
 
-    AV_REGISTER_COMMAND_POOL ( "pbr::mario::World1x1::_commandPool" )
+    AV_REGISTER_COMMAND_POOL ( "pbr::universal::UniversalGame::_commandPool" )
 
     if ( !_renderSession.OnInitDevice ( renderer ) || !_scene.OnInitDevice ( renderer, _renderSession, _physics ) )
         return false;
 
-    if ( !_scene.LoadScene ( renderer, SCENE, _commandPool ) )
+    if ( !_scene.LoadScene ( renderer, _sceneFile.c_str (), _commandPool ) )
         return false;
 
     _isReady = true;
@@ -90,7 +94,7 @@ bool World1x1::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
     return CreatePhysics ();
 }
 
-void World1x1::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
+void UniversalGame::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
 {
     _scene.OnDestroyDevice ();
     _renderSession.OnDestroyDevice ( renderer );
@@ -105,7 +109,7 @@ void World1x1::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
     _isReady = false;
 }
 
-bool World1x1::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept
+bool UniversalGame::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept
 {
     VkExtent2D resolution = renderer.GetViewportResolution ();
 
@@ -130,42 +134,42 @@ bool World1x1::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcep
     return true;
 }
 
-void World1x1::OnSwapchainDestroyed ( android_vulkan::Renderer &renderer ) noexcept
+void UniversalGame::OnSwapchainDestroyed ( android_vulkan::Renderer &renderer ) noexcept
 {
     _scene.OnPause ();
     _physics.Pause ();
     _renderSession.OnSwapchainDestroyed ( renderer.GetDevice () );
 }
 
-bool World1x1::OnInitSoundSystem () noexcept
+bool UniversalGame::OnInitSoundSystem () noexcept
 {
     return _scene.OnInitSoundSystem ();
 }
 
-void World1x1::OnDestroySoundSystem () noexcept
+void UniversalGame::OnDestroySoundSystem () noexcept
 {
     _scene.OnDestroySoundSystem ();
 }
 
-bool World1x1::CreatePhysics () noexcept
+bool UniversalGame::CreatePhysics () noexcept
 {
     _physics.SetTimeSpeed ( 1.0F );
 
     if ( _physics.AddGlobalForce ( std::make_shared<android_vulkan::GlobalForceGravity> ( FREE_FALL_ACCELERATION ) ) )
         return true;
 
-    android_vulkan::LogError ( "pbr::mario::World1x1::CreatePhysics - Can't add gravity." );
+    android_vulkan::LogError ( "pbr::universal::UniversalGame::CreatePhysics - Can't add gravity." );
     return false;
 }
 
-void World1x1::DestroyCommandPool ( VkDevice device ) noexcept
+void UniversalGame::DestroyCommandPool ( VkDevice device ) noexcept
 {
     if ( _commandPool == VK_NULL_HANDLE )
         return;
 
     vkDestroyCommandPool ( device, _commandPool, nullptr );
     _commandPool = VK_NULL_HANDLE;
-    AV_UNREGISTER_COMMAND_POOL ( "pbr::mario::World1x1::_commandPool" )
+    AV_UNREGISTER_COMMAND_POOL ( "pbr::universal::UniversalGame::_commandPool" )
 }
 
-} // namespace pbr::mario
+} // namespace pbr::universal

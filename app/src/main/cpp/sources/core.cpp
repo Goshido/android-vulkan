@@ -7,11 +7,10 @@
 #include <pbr/pbr_game.hpp>
 #include <pbr/box_stack/box_stack.hpp>
 #include <pbr/collision/collision.hpp>
-#include <pbr/mario/world1x1.hpp>
 #include <pbr/ray_casting/ray_casting.hpp>
 #include <pbr/stipple_test/stipple_test.hpp>
 #include <pbr/sweep_testing/sweep_testing.hpp>
-#include <pbr/universal/universal.hpp>
+#include <pbr/universal_game.hpp>
 #include <rainbow/rainbow.hpp>
 #include <rotating_mesh/game_analytic.hpp>
 #include <rotating_mesh/game_lut.hpp>
@@ -43,9 +42,9 @@ enum class eGame : uint16_t
     RayCasting,
     RotatingMeshAnalytic,
     RotatingMeshLUT,
+    SkeletalMeshSandbox,
     StippleTest,
     SweepTesting,
-    Universal,
     World1x1
 };
 
@@ -83,18 +82,22 @@ Core::Core ( JNIEnv* env, jobject activity, jobject assetManager, std::string &&
         { android_vulkan::eGame::RayCasting, std::make_shared<pbr::ray_casting::RayCasting> () },
         { android_vulkan::eGame::RotatingMeshAnalytic, std::make_shared<rotating_mesh::GameAnalytic> () },
         { android_vulkan::eGame::RotatingMeshLUT, std::make_shared<rotating_mesh::GameLUT> () },
+
+        {
+            android_vulkan::eGame::SkeletalMeshSandbox,
+            std::make_shared<pbr::UniversalGame> ( "pbr/assets/skeletal-mesh-sandbox.scene" )
+        },
+
         { android_vulkan::eGame::StippleTest, std::make_shared<pbr::stipple_test::StippleTest> () },
         { android_vulkan::eGame::SweepTesting, std::make_shared<pbr::sweep_testing::SweepTesting> () },
 
         {
-            android_vulkan::eGame::Universal,
-            std::make_shared<pbr::universal::Universal> ( "pbr/assets/skeletal-mesh-sandbox.scene" )
-        },
-
-        { android_vulkan::eGame::World1x1, std::make_shared<pbr::mario::World1x1> () }
+            android_vulkan::eGame::World1x1,
+            std::make_shared<pbr::UniversalGame> ( "pbr/assets/world-1-1.scene" )
+        }
     };
 
-    _game = games.find ( android_vulkan::eGame::Universal )->second.get ();
+    _game = games.find ( android_vulkan::eGame::SkeletalMeshSandbox )->second.get ();
 
     _thread = std::thread (
         [ this, dpi ] () noexcept {

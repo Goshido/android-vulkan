@@ -14,6 +14,7 @@ end
 
 -- Metamethods
 local function Constructor ( self, objectType, handle )
+    assert ( type ( handle ) == "userdata", [[Component:Constructor - "handle" is not native object.]] )
     local obj = Object ( objectType )
 
     -- Data

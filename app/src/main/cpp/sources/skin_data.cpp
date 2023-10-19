@@ -38,9 +38,18 @@ GXAABB const &SkinData::GetBounds () const noexcept
     return _bounds;
 }
 
-VkBuffer const &SkinData::GetBuffer () const noexcept
+BufferInfo SkinData::GetSkinInfo () const noexcept
 {
-    return _skin._buffer;
+    return
+    {
+        ._buffer = _skin._buffer,
+        ._range = _minPoseRange
+    };
+}
+
+VkDeviceSize SkinData::GetMinPoseRange () const noexcept
+{
+    return _minPoseRange;
 }
 
 std::string const &SkinData::GetName () const noexcept
@@ -78,11 +87,12 @@ bool SkinData::LoadSkin ( std::string &&skinFilename,
     uint8_t* skin = skinFile.GetContent ().data ();
     uint8_t const* skeleton = skeletonFile.GetContent ().data ();
 
-    auto const &skinHeader = *reinterpret_cast<android_vulkan::SkinHeader const*> ( skin );
-    auto const &skeletonHeader = *reinterpret_cast<android_vulkan::SkeletonHeader const*> ( skeleton );
+    auto const &skinHeader = *reinterpret_cast<SkinHeader const*> ( skin );
+    auto const &skeletonHeader = *reinterpret_cast<SkeletonHeader const*> ( skeleton );
 
     std::unordered_map<std::string_view, int32_t> skeletonBones {};
     auto boneCount = static_cast<int32_t> ( skeletonHeader._boneCount );
+    _minPoseRange = static_cast<VkDeviceSize> ( skeletonHeader._boneCount * sizeof ( SkinVertex ) );
 
     auto const* nameOffset = reinterpret_cast<android_vulkan::UTF8Offset const*> (
         skeleton + skeletonHeader._nameInfoOffset
@@ -96,7 +106,7 @@ bool SkinData::LoadSkin ( std::string &&skinFilename,
 
     std::unordered_map<uint32_t, uint32_t> boneMapper {};
     boneCount = static_cast<int32_t> ( skinHeader._boneCount );
-    auto const* skinBone = reinterpret_cast<android_vulkan::SkinBone const*> ( skin + skinHeader._boneDataOffset );
+    auto const* skinBone = reinterpret_cast<SkinBone const*> ( skin + skinHeader._boneDataOffset );
     auto const end = skeletonBones.cend ();
 
     for ( int32_t i = 0; i < boneCount; ++i )
@@ -121,8 +131,8 @@ bool SkinData::LoadSkin ( std::string &&skinFilename,
     }
 
     uint32_t const skinVertexCount = skinHeader._skinVertexCount;
-    auto* skinVertices = reinterpret_cast<android_vulkan::SkinVertex*> ( skin + skinHeader._skinVertexDataOffset );
-    android_vulkan::SkinVertex* sv = skinVertices;
+    auto* skinVertices = reinterpret_cast<SkinVertex*> ( skin + skinHeader._skinVertexDataOffset );
+    SkinVertex* sv = skinVertices;
 
     for ( uint32_t i = 0U; i < skinVertexCount; ++i )
     {
@@ -146,7 +156,7 @@ bool SkinData::LoadSkin ( std::string &&skinFilename,
         .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0U,
-        .size = static_cast<VkDeviceSize> ( skinVertexCount * sizeof ( android_vulkan::SkinVertex ) ),
+        .size = static_cast<VkDeviceSize> ( skinVertexCount * sizeof ( SkinVertex ) ),
         .usage = dstFlags,
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
         .queueFamilyIndexCount = 0U,

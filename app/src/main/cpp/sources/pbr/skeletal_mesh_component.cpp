@@ -46,6 +46,7 @@ SkeletalMeshComponent::CommandBufferInfo SkeletalMeshComponent::_cbInfo {};
 size_t SkeletalMeshComponent::_lastCommandBufferIndex = 0U;
 android_vulkan::Renderer* SkeletalMeshComponent::_renderer = nullptr;
 SkeletalMeshComponent::SkeletalMeshes SkeletalMeshComponent::_skeletalMeshes {};
+SkinPool SkeletalMeshComponent::_skinPool {};
 std::list<SkeletalMeshComponent::Usage> SkeletalMeshComponent::_toDelete[ DUAL_COMMAND_BUFFER ] {};
 std::deque<SkeletalMeshComponent::Usage*> SkeletalMeshComponent::_transferQueue {};
 
@@ -144,16 +145,40 @@ bool SkeletalMeshComponent::ApplySkin ( VkCommandBuffer /*commandBuffer*/, size_
         return false;
 
     FreeUnusedResources ( commandBufferIndex );
+    VkDevice device = _renderer->GetDevice ();
 
     for ( auto &item : _skeletalMeshes )
     {
         // NOLINTNEXTLINE - downcast.
         auto &mesh = *const_cast<SkeletalMeshComponent*> ( static_cast<SkeletalMeshComponent const*> ( item.first ) );
 
-        // TODO skin transformation.
+        if ( !mesh._animationGraph )
+            continue;
+
+        Usage &usage = mesh._usage;
+
+        _skinPool.Push ( mesh._animationGraph->GetPoseInfo (),
+            usage._skinData.GetSkinInfo (),
+            mesh._referenceMesh->GetVertexBufferInfo (),
+            usage._skinMesh->GetVertexBuffer ()
+        );
+    }
+
+    _skinPool.UpdateDescriptorSets ( device );
+
+    for ( auto &item : _skeletalMeshes )
+    {
+        // NOLINTNEXTLINE - downcast.
+        auto &mesh = *const_cast<SkeletalMeshComponent*> ( static_cast<SkeletalMeshComponent const*> ( item.first ) );
+
+        if ( !mesh._animationGraph )
+            continue;
+
+        // TODO make compute dispatches.
         (void)mesh;
     }
 
+    _skinPool.SubmitPipelineBarriers ( device );
     return true;
 }
 
@@ -187,6 +212,10 @@ bool SkeletalMeshComponent::Init ( lua_State &vm, android_vulkan::Renderer &rend
             .func = &SkeletalMeshComponent::OnGarbageCollected
         },
         {
+            .name = "av_SkeletalMeshComponentSetAnimationGraph",
+            .func = &SkeletalMeshComponent::OnSetAnimationGraph
+        },
+        {
             .name = "av_SkeletalMeshComponentSetColor0",
             .func = &SkeletalMeshComponent::OnSetColor0
         },
@@ -217,7 +246,7 @@ bool SkeletalMeshComponent::Init ( lua_State &vm, android_vulkan::Renderer &rend
 
     _renderer = &renderer;
 
-    VkCommandPoolCreateInfo createInfo
+    VkCommandPoolCreateInfo const createInfo
     {
         .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
         .pNext = nullptr,
@@ -225,8 +254,10 @@ bool SkeletalMeshComponent::Init ( lua_State &vm, android_vulkan::Renderer &rend
         .queueFamilyIndex = renderer.GetQueueFamilyIndex ()
     };
 
+    VkDevice device = renderer.GetDevice ();
+
     bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateCommandPool ( renderer.GetDevice (), &createInfo, nullptr, &_cbInfo._commandPool ),
+        vkCreateCommandPool ( device, &createInfo, nullptr, &_cbInfo._commandPool ),
         "pbr::SkeletalMeshComponent::Init",
         "Can't create command pool"
     );
@@ -235,7 +266,7 @@ bool SkeletalMeshComponent::Init ( lua_State &vm, android_vulkan::Renderer &rend
         return false;
 
     AV_REGISTER_COMMAND_POOL ( "pbr::SkeletalMeshComponent::_commandPool" )
-    return AllocateCommandBuffers ( INITIAL_COMMAND_BUFFERS );
+    return AllocateCommandBuffers ( INITIAL_COMMAND_BUFFERS ) && _skinPool.Init ( device );
 }
 
 void SkeletalMeshComponent::Destroy () noexcept
@@ -276,6 +307,8 @@ void SkeletalMeshComponent::Destroy () noexcept
         vkDestroyFence ( device, fence, nullptr );
         AV_UNREGISTER_FENCE ( "pbr::SkeletalMeshComponent::_fences" )
     }
+
+    _skinPool.Destroy ( device );
 
     clean ( _cbInfo._fences );
     _lastCommandBufferIndex = 0U;
@@ -331,6 +364,23 @@ void SkeletalMeshComponent::Submit ( RenderSession &renderSession ) noexcept
 void SkeletalMeshComponent::OnTransform ( GXMat4 const &transformWorld ) noexcept
 {
     SetTransform ( transformWorld );
+}
+
+bool SkeletalMeshComponent::SetAnimationGraph ( AnimationGraph &animationGraph ) noexcept
+{
+    if ( _usage._skinData.GetMinPoseRange () <= animationGraph.GetPoseRange () )
+    {
+        _animationGraph = &animationGraph;
+        return true;
+    }
+
+    android_vulkan::LogWarning ( "pbr::SkeletalMeshComponent::SetAnimationGraph - Can't set animation graph. "
+        "Skeletal mesh '%s' is incompatible with '%s' skeleton.",
+        _referenceMesh->GetName ().c_str (),
+        animationGraph.GetSkeletonName ().c_str ()
+    );
+
+    return false;
 }
 
 void SkeletalMeshComponent::SetColor0 ( GXColorRGB const &color ) noexcept
@@ -521,7 +571,7 @@ int SkeletalMeshComponent::OnCreate ( lua_State* state )
     size_t consumed;
     bool success;
 
-    ComponentRef referenceMesh = std::make_shared<SkeletalMeshComponent> ( success,
+    ComponentRef component = std::make_shared<SkeletalMeshComponent> ( success,
         consumed,
         mesh,
         skin,
@@ -538,8 +588,8 @@ int SkeletalMeshComponent::OnCreate ( lua_State* state )
         return 1;
     }
 
-    Component* handle = referenceMesh.get ();
-    _skeletalMeshes.emplace ( handle, std::move ( referenceMesh ) );
+    Component* handle = component.get ();
+    _skeletalMeshes.emplace ( handle, std::move ( component ) );
 
     _cbInfo._index += consumed;
     lua_pushlightuserdata ( state, handle );
@@ -563,6 +613,19 @@ int SkeletalMeshComponent::OnGarbageCollected ( lua_State* state )
 
     _skeletalMeshes.erase ( findResult );
     return 0;
+}
+
+int SkeletalMeshComponent::OnSetAnimationGraph ( lua_State* state )
+{
+    if ( !lua_checkstack ( state, 1 ) )
+    {
+        android_vulkan::LogWarning ( "pbr::SkeletalMeshComponent::OnSetAnimationGraph - Stack is too small." );
+        return 0;
+    }
+
+    auto &self = *static_cast<SkeletalMeshComponent*> ( lua_touserdata ( state, 1 ) );
+    lua_pushboolean ( state, self.SetAnimationGraph ( *static_cast<AnimationGraph*> ( lua_touserdata ( state, 2 ) ) ) );
+    return 1;
 }
 
 int SkeletalMeshComponent::OnSetColor0 ( lua_State* state )

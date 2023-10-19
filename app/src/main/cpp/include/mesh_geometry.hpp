@@ -2,6 +2,7 @@
 #define ANDROID_VULKAN_MESH_GEOMETRY_HPP
 
 
+#include "buffer_info.hpp"
 #include "renderer.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
@@ -25,6 +26,7 @@ class MeshGeometry final
         VkBuffer            _vertexBuffer = VK_NULL_HANDLE;
         VkDeviceMemory      _vertexBufferMemory = VK_NULL_HANDLE;
         VkDeviceSize        _vertexBufferOffset = std::numeric_limits<VkDeviceSize>::max ();
+        VkDeviceSize        _vertexBufferRange = 0U;
 
         VkBuffer            _transferBuffer = VK_NULL_HANDLE;
         VkDeviceMemory      _transferBufferMemory = VK_NULL_HANDLE;
@@ -49,6 +51,7 @@ class MeshGeometry final
 
         [[nodiscard]] GXAABB const &GetBounds () const noexcept;
         [[nodiscard]] VkBuffer const &GetVertexBuffer () const noexcept;
+        [[nodiscard]] BufferInfo GetVertexBufferInfo () const noexcept;
         [[nodiscard]] VkBuffer const &GetIndexBuffer () const noexcept;
         [[nodiscard]] std::string const &GetName () const noexcept;
         [[nodiscard]] uint32_t GetVertexCount () const noexcept;

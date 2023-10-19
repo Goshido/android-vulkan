@@ -203,21 +203,35 @@ AnimationGraph::AnimationGraph ( bool &success, std::string &&skeletonFile ) noe
 
     success = init == DUAL_COMMAND_BUFFER;
 
-    if ( success )
+    if ( !success )
     {
-        AllocateVulkanStructures ( INITIAL_GRAPH_COUNT );
+        for ( size_t i = 0U; i < init; ++i )
+            _bufferSets[ i ].Destroy ();
+
         return;
     }
 
-    for ( size_t i = 0U; i < init; ++i )
-    {
-        _bufferSets[ i ].Destroy ();
-    }
+    _skeletonName = std::move ( file.GetPath () );
+    AllocateVulkanStructures ( INITIAL_GRAPH_COUNT );
 }
 
-[[maybe_unused]] VkBuffer AnimationGraph::GetPose () const noexcept
+android_vulkan::BufferInfo AnimationGraph::GetPoseInfo () const noexcept
 {
-    return _poseSkin;
+    return
+    {
+        ._buffer = _bufferSets[ _lastCommandBufferIndex ]._gpuPoseSkin._buffer,
+        ._range = _jointSize
+    };
+}
+
+VkDeviceSize AnimationGraph::GetPoseRange () const noexcept
+{
+    return _jointSize;
+}
+
+std::string const &AnimationGraph::GetSkeletonName () const noexcept
+{
+    return _skeletonName;
 }
 
 void AnimationGraph::Init ( lua_State &vm, android_vulkan::Renderer &renderer ) noexcept
@@ -369,7 +383,6 @@ void AnimationGraph::UpdateInternal ( float deltaTime, size_t commandBufferIndex
     // So we need to do multiplication in reverse order to calculate skin transform.
 
     BufferSet &bufferSet = _bufferSets[ commandBufferIndex ];
-    _poseSkin = bufferSet._gpuPoseSkin._buffer;
 
     android_vulkan::BoneJoint const* inverseBind = _inverseBindTransforms.data ();
     android_vulkan::BoneJoint* poseGlobal = _poseGlobal.data ();

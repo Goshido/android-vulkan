@@ -4,8 +4,6 @@
 
 #include "default_texture_manager.hpp"
 #include "geometry_pass_material.hpp"
-#include "descriptor_set_layout.hpp"
-#include "uniform_buffer_pool.hpp"
 
 
 namespace pbr {

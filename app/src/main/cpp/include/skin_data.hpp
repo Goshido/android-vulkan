@@ -2,6 +2,7 @@
 #define ANDROID_VULKAN_SKIN_DATA_HPP
 
 
+#include "buffer_info.hpp"
 #include "renderer.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
@@ -28,6 +29,7 @@ class SkinData final
         std::string             _fileName {};
         Buffer                  _skin {};
         Buffer                  _transfer {};
+        VkDeviceSize            _minPoseRange = 0U;
 
     public:
         SkinData () = default;
@@ -44,7 +46,8 @@ class SkinData final
         void FreeTransferResources ( Renderer &renderer ) noexcept;
 
         [[nodiscard]] GXAABB const &GetBounds () const noexcept;
-        [[nodiscard]] VkBuffer const &GetBuffer () const noexcept;
+        [[nodiscard]] BufferInfo GetSkinInfo () const noexcept;
+        [[nodiscard]] VkDeviceSize GetMinPoseRange () const noexcept;
         [[nodiscard]] std::string const &GetName () const noexcept;
 
         [[nodiscard]] bool LoadSkin ( std::string &&skinFilename,

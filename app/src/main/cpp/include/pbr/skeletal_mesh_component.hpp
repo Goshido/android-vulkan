@@ -3,8 +3,10 @@
 
 
 #include "actor.hpp"
+#include "animation_graph.hpp"
 #include "command_buffer_count.hpp"
 #include "renderable_component.hpp"
+#include "skin_pool.hpp"
 #include "transformable.hpp"
 #include <skin_data.hpp>
 
@@ -32,6 +34,8 @@ class SkeletalMeshComponent final : public RenderableComponent, public Transform
 
     private:
         Actor*                              _actor = nullptr;
+        AnimationGraph*                     _animationGraph = nullptr;
+
         GXColorRGB                          _color0;
         GXColorRGB                          _color1;
         GXColorRGB                          _color2;
@@ -48,6 +52,7 @@ class SkeletalMeshComponent final : public RenderableComponent, public Transform
         static size_t                       _lastCommandBufferIndex;
         static android_vulkan::Renderer*    _renderer;
         static SkeletalMeshes               _skeletalMeshes;
+        static SkinPool                     _skinPool;
         static std::list<Usage>             _toDelete[ DUAL_COMMAND_BUFFER ];
         static std::deque<Usage*>           _transferQueue;
 
@@ -86,6 +91,8 @@ class SkeletalMeshComponent final : public RenderableComponent, public Transform
         void Submit ( RenderSession &renderSession ) noexcept override;
         void OnTransform ( GXMat4 const &transformWorld ) noexcept override;
 
+        [[nodiscard]] bool SetAnimationGraph ( AnimationGraph &animationGraph ) noexcept;
+
         void SetColor0 ( GXColorRGB const &color ) noexcept;
         void SetColor1 ( GXColorRGB const &color ) noexcept;
         void SetColor2 ( GXColorRGB const &color ) noexcept;
@@ -100,6 +107,7 @@ class SkeletalMeshComponent final : public RenderableComponent, public Transform
         [[nodiscard]] static int OnCreate ( lua_State* state );
         [[nodiscard]] static int OnDestroy ( lua_State* state );
         [[nodiscard]] static int OnGarbageCollected ( lua_State* state );
+        [[nodiscard]] static int OnSetAnimationGraph ( lua_State* state );
         [[nodiscard]] static int OnSetColor0 ( lua_State* state );
         [[nodiscard]] static int OnSetColor1 ( lua_State* state );
         [[nodiscard]] static int OnSetColor2 ( lua_State* state );

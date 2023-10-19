@@ -109,6 +109,15 @@ VkBuffer const &MeshGeometry::GetVertexBuffer () const noexcept
     return _vertexBuffer;
 }
 
+BufferInfo MeshGeometry::GetVertexBufferInfo () const noexcept
+{
+    return
+    {
+        ._buffer = _vertexBuffer,
+        ._range = _vertexBufferRange
+    };
+}
+
 VkBuffer const &MeshGeometry::GetIndexBuffer () const noexcept
 {
     return _indexBuffer;
@@ -432,6 +441,7 @@ bool MeshGeometry::UploadComplex ( uint8_t const* data,
     if ( !result )
         return false;
 
+    _vertexBufferRange = bufferInfo.size;
     AV_REGISTER_BUFFER ( "MeshGeometry::_vertexBuffer" )
 
     vkGetBufferMemoryRequirements ( device, _vertexBuffer, &memoryRequirements );
@@ -700,6 +710,7 @@ bool MeshGeometry::UploadSimple ( uint8_t const* data,
     if ( !result )
         return false;
 
+    _vertexBufferRange = bufferInfo.size;
     AV_REGISTER_BUFFER ( "MeshGeometry::_vertexBuffer" )
 
     VkMemoryRequirements memoryRequirements;

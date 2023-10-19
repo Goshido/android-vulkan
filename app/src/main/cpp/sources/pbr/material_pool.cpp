@@ -71,6 +71,7 @@ bool MaterialPool::Init ( VkDevice device, DefaultTextureManager const &defaultT
     AV_REGISTER_DESCRIPTOR_POOL ( "pbr::MaterialPool::_descriptorPool" )
 
     _descriptorSets.resize ( MATERIALS );
+    VkDescriptorSet* descriptorSets = _descriptorSets.data ();
 
     std::vector<VkDescriptorSetLayout> const layouts ( MATERIALS,
         GeometryPassTextureDescriptorSetLayout ().GetLayout ()
@@ -86,7 +87,7 @@ bool MaterialPool::Init ( VkDevice device, DefaultTextureManager const &defaultT
     };
 
     result = android_vulkan::Renderer::CheckVkResult (
-        vkAllocateDescriptorSets ( device, &allocateInfo, _descriptorSets.data () ),
+        vkAllocateDescriptorSets ( device, &allocateInfo, descriptorSets ),
         "pbr::MaterialPool::Init",
         "Can't allocate descriptor sets"
     );
@@ -96,7 +97,7 @@ bool MaterialPool::Init ( VkDevice device, DefaultTextureManager const &defaultT
 
     // Initialize all immutable constant fields.
 
-    VkDescriptorImageInfo const image
+    constexpr VkDescriptorImageInfo image
     {
         .sampler = VK_NULL_HANDLE,
         .imageView = VK_NULL_HANDLE,
@@ -104,6 +105,7 @@ bool MaterialPool::Init ( VkDevice device, DefaultTextureManager const &defaultT
     };
 
     _imageInfo.resize ( totalImages, image );
+    VkDescriptorImageInfo* imageInfo = _imageInfo.data ();
 
     constexpr VkWriteDescriptorSet writeSet
     {
@@ -120,36 +122,37 @@ bool MaterialPool::Init ( VkDevice device, DefaultTextureManager const &defaultT
     };
 
     _writeSets.resize ( totalImages, writeSet );
+    VkWriteDescriptorSet* writeSets = _writeSets.data ();
+    size_t idx = 0U;
 
     for ( size_t i = 0U; i < MATERIALS; ++i )
     {
-        size_t idx = BIND_PER_SET * i;
-        VkDescriptorSet set = _descriptorSets[ i ];
+        VkDescriptorSet set = descriptorSets[ i ];
 
-        VkWriteDescriptorSet &diffuse = _writeSets[ idx ];
+        VkWriteDescriptorSet &diffuse = writeSets[ idx ];
         diffuse.dstSet = set;
         diffuse.dstBinding = static_cast<uint32_t> ( BIND_DIFFUSE_TEXTURE );
-        diffuse.pImageInfo = &_imageInfo[ idx++ ];
+        diffuse.pImageInfo = imageInfo + idx++;
 
-        VkWriteDescriptorSet &emission = _writeSets[ idx ];
+        VkWriteDescriptorSet &emission = writeSets[ idx ];
         emission.dstSet = set;
         emission.dstBinding = static_cast<uint32_t> ( BIND_EMISSION_TEXTURE );
-        emission.pImageInfo = &_imageInfo[ idx++ ];
+        emission.pImageInfo = imageInfo + idx++;
 
-        VkWriteDescriptorSet &mask = _writeSets[ idx ];
+        VkWriteDescriptorSet &mask = writeSets[ idx ];
         mask.dstSet = set;
         mask.dstBinding = static_cast<uint32_t> ( BIND_MASK_TEXTURE );
-        mask.pImageInfo = &_imageInfo[ idx++ ];
+        mask.pImageInfo = imageInfo + idx++;
 
-        VkWriteDescriptorSet &normal = _writeSets[ idx ];
+        VkWriteDescriptorSet &normal = writeSets[ idx ];
         normal.dstSet = set;
         normal.dstBinding = static_cast<uint32_t> ( BIND_NORMAL_TEXTURE );
-        normal.pImageInfo = &_imageInfo[ idx++ ];
+        normal.pImageInfo = imageInfo + idx++;
 
-        VkWriteDescriptorSet &param = _writeSets[ idx ];
+        VkWriteDescriptorSet &param = writeSets[ idx ];
         param.dstSet = set;
         param.dstBinding = static_cast<uint32_t> ( BIND_PARAMS_TEXTURE );
-        param.pImageInfo = &_imageInfo[ idx ];
+        param.pImageInfo = imageInfo + idx++;
     }
 
     // Now all what is needed to do is to init "_imageInfo::imageView".
@@ -215,7 +218,7 @@ void MaterialPool::Push ( GeometryPassMaterial &material ) noexcept
     Texture2DRef const &param = material.GetParam ();
 
     size_t const base = _itemWriteIndex * BIND_PER_SET;
-    images[ base ].imageView = diffuse ? diffuse->GetImageView () : _defaultDiffuse;
+    images[ base + BIND_DIFFUSE_TEXTURE ].imageView = diffuse ? diffuse->GetImageView () : _defaultDiffuse;
     images[ base + BIND_EMISSION_TEXTURE ].imageView = emission ? emission->GetImageView () : _defaultEmission;
     images[ base + BIND_MASK_TEXTURE ].imageView = mask ? mask->GetImageView () : _defaultMask;
     images[ base + BIND_NORMAL_TEXTURE ].imageView = normal ? normal->GetImageView () : _defaultNormal;

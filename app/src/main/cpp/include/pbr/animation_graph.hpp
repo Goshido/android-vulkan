@@ -5,6 +5,7 @@
 #include "command_buffer_count.hpp"
 #include "joint_provider_node.hpp"
 #include "node_link.hpp"
+#include <buffer_info.hpp>
 #include <renderer.hpp>
 #include <android_vulkan_sdk/bone_joint.hpp>
 
@@ -93,9 +94,9 @@ class AnimationGraph final : public NodeLink
         std::vector<int32_t>                            _parents {};
         Joints                                          _poseLocal {};
         Joints                                          _poseGlobal {};
-        VkBuffer                                        _poseSkin = VK_NULL_HANDLE;
 
         BufferSet                                       _bufferSets[ DUAL_COMMAND_BUFFER ];
+        std::string                                     _skeletonName {};
 
         static std::vector<VkBufferMemoryBarrier>       _barriers;
         static size_t                                   _changedGraphCount;
@@ -117,7 +118,9 @@ class AnimationGraph final : public NodeLink
 
         ~AnimationGraph () = default;
 
-        [[maybe_unused, nodiscard]] VkBuffer GetPose () const noexcept;
+        [[nodiscard]] android_vulkan::BufferInfo GetPoseInfo () const noexcept;
+        [[nodiscard]] VkDeviceSize GetPoseRange () const noexcept;
+        [[nodiscard]] std::string const &GetSkeletonName () const noexcept;
 
         static void Init ( lua_State &vm, android_vulkan::Renderer &renderer ) noexcept;
         static void Destroy () noexcept;

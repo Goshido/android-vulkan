@@ -4,6 +4,18 @@ require "av://engine/component.lua"
 SkeletalMeshComponent = {}
 
 -- Methods
+local function SetAnimationGraph ( self, animationGraph )
+    assert ( type ( self ) == "table" and self._type == eObjectType.SkeletalMeshComponent,
+        [[SkeletalMeshComponent:SetAnimationGraph - Calling not via ":" syntax.]]
+    )
+
+    assert ( type ( animationGraph ) == "table" and animationGraph._type == eObjectType.AnimationGraph,
+        [[SkeletalMeshComponent:SetAnimationGraph - "animationGraph" is not AnimationGraph.]]
+    )
+
+    av_SkeletalMeshComponentSetAnimationGraph ( self._handle, animationGraph._handle )
+end
+
 local function SetColor0 ( self, color )
     assert ( type ( self ) == "table" and self._type == eObjectType.SkeletalMeshComponent,
         [[SkeletalMeshComponent:SetColor0 - Calling not via ":" syntax.]]
@@ -94,6 +106,7 @@ local function Constructor ( self, name, meshFile, skinFile, skeletonFile, mater
     )
 
     -- Methods
+    obj.SetAnimationGraph = SetAnimationGraph
     obj.SetColor0 = SetColor0
     obj.SetColor1 = SetColor1
     obj.SetColor2 = SetColor2

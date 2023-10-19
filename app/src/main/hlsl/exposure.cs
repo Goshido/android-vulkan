@@ -30,10 +30,10 @@ float32_t const                                     g_normalizeH = 7.142e-2H;
 
 struct ExposureInfo
 {
-    float                                           _exposureCompensation;
-    float                                           _eyeAdaptation;
-    float                                           _maxLuma;
-    float                                           _minLuma;
+    float32_t                                       _exposureCompensation;
+    float32_t                                       _eyeAdaptation;
+    float32_t                                       _maxLuma;
+    float32_t                                       _minLuma;
 };
 
 [[vk::push_constant]]

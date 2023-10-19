@@ -33,3 +33,4 @@ Clear-Host
 
 # compute shaders
 .\make-cs.ps1 exposure
+.\make-cs.ps1 skin

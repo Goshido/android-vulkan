@@ -13,7 +13,7 @@ local function SetAnimationGraph ( self, animationGraph )
         [[SkeletalMeshComponent:SetAnimationGraph - "animationGraph" is not AnimationGraph.]]
     )
 
-    av_SkeletalMeshComponentSetAnimationGraph ( self._handle, animationGraph._handle )
+    return av_SkeletalMeshComponentSetAnimationGraph ( self._handle, animationGraph._handle )
 end
 
 local function SetColor0 ( self, color )

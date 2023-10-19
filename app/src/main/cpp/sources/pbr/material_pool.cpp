@@ -1,5 +1,7 @@
-#include <pbr/material_pool.hpp>
+#include <pbr/command_buffer_count.hpp>
+#include <pbr/geometry_pass_bindings.inc>
 #include <pbr/geometry_pass_texture_descriptor_set_layout.hpp>
+#include <pbr/material_pool.hpp>
 #include <vulkan_utils.hpp>
 
 
@@ -7,16 +9,9 @@ namespace pbr {
 
 namespace {
 
-constexpr size_t FRAMES = 5U;
-constexpr size_t MATERIALS_PER_FRAME = 16384U;
+constexpr size_t MAX_MATERIALS_PER_FRAME = 16384U;
 constexpr size_t BIND_PER_SET = 5U;
-constexpr size_t MATERIALS = FRAMES * MATERIALS_PER_FRAME;
-
-constexpr size_t SLOT_DIFFUSE = 0U;
-constexpr size_t SLOT_EMISSION = 1U;
-constexpr size_t SLOT_MASK = 2U;
-constexpr size_t SLOT_NORMAL = 3U;
-constexpr size_t SLOT_PARAM = 4U;
+constexpr size_t MATERIALS = DUAL_COMMAND_BUFFER * MAX_MATERIALS_PER_FRAME;
 
 } // end of anonymous namespace
 
@@ -133,27 +128,27 @@ bool MaterialPool::Init ( VkDevice device, DefaultTextureManager const &defaultT
 
         VkWriteDescriptorSet &diffuse = _writeSets[ idx ];
         diffuse.dstSet = set;
-        diffuse.dstBinding = static_cast<uint32_t> ( SLOT_DIFFUSE );
+        diffuse.dstBinding = static_cast<uint32_t> ( BIND_DIFFUSE_TEXTURE );
         diffuse.pImageInfo = &_imageInfo[ idx++ ];
 
         VkWriteDescriptorSet &emission = _writeSets[ idx ];
         emission.dstSet = set;
-        emission.dstBinding = static_cast<uint32_t> ( SLOT_EMISSION );
+        emission.dstBinding = static_cast<uint32_t> ( BIND_EMISSION_TEXTURE );
         emission.pImageInfo = &_imageInfo[ idx++ ];
 
         VkWriteDescriptorSet &mask = _writeSets[ idx ];
         mask.dstSet = set;
-        mask.dstBinding = static_cast<uint32_t> ( SLOT_MASK );
+        mask.dstBinding = static_cast<uint32_t> ( BIND_MASK_TEXTURE );
         mask.pImageInfo = &_imageInfo[ idx++ ];
 
         VkWriteDescriptorSet &normal = _writeSets[ idx ];
         normal.dstSet = set;
-        normal.dstBinding = static_cast<uint32_t> ( SLOT_NORMAL );
+        normal.dstBinding = static_cast<uint32_t> ( BIND_NORMAL_TEXTURE );
         normal.pImageInfo = &_imageInfo[ idx++ ];
 
         VkWriteDescriptorSet &param = _writeSets[ idx ];
         param.dstSet = set;
-        param.dstBinding = static_cast<uint32_t> ( SLOT_PARAM );
+        param.dstBinding = static_cast<uint32_t> ( BIND_PARAMS_TEXTURE );
         param.pImageInfo = &_imageInfo[ idx ];
     }
 
@@ -221,10 +216,10 @@ void MaterialPool::Push ( GeometryPassMaterial &material ) noexcept
 
     size_t const base = _itemWriteIndex * BIND_PER_SET;
     images[ base ].imageView = diffuse ? diffuse->GetImageView () : _defaultDiffuse;
-    images[ base + SLOT_EMISSION ].imageView = emission ? emission->GetImageView () : _defaultEmission;
-    images[ base + SLOT_MASK ].imageView = mask ? mask->GetImageView () : _defaultMask;
-    images[ base + SLOT_NORMAL ].imageView = normal ? normal->GetImageView () : _defaultNormal;
-    images[ base + SLOT_PARAM ].imageView = param ? param->GetImageView () : _defaultParam;
+    images[ base + BIND_EMISSION_TEXTURE ].imageView = emission ? emission->GetImageView () : _defaultEmission;
+    images[ base + BIND_MASK_TEXTURE ].imageView = mask ? mask->GetImageView () : _defaultMask;
+    images[ base + BIND_NORMAL_TEXTURE ].imageView = normal ? normal->GetImageView () : _defaultNormal;
+    images[ base + BIND_PARAMS_TEXTURE ].imageView = param ? param->GetImageView () : _defaultParam;
 
     _itemWriteIndex = ( _itemWriteIndex + 1U ) % MATERIALS;
     ++_itemWritten;

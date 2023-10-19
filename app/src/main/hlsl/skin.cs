@@ -122,17 +122,12 @@ void CS ( in uint32_t localThreadIndex: SV_GroupIndex, in uint32_t3 globalThread
     if ( idx >= g_vertexCount )
         return;
 
-    Mesh2Vertex const srcVertex = g_referenceMesh[ idx ];
     float32_t4x4 const skinTransform = ComputeSkinTransform ( idx );
+    float32_t3x3 const orientation = (float32_t3x3)skinTransform;
 
     // Note UV data is already baked into skin mesh data and it's constant. So no any actions are needed for that data.
-    Mesh2Vertex skinVertex;
-    skinVertex._vertex = mul ( skinTransform, float32_t4 ( srcVertex._vertex, 1.0F ) ).xyz;
-
-    float32_t3x3 const orientation = (float32_t3x3)skinTransform;
-    skinVertex._normal = mul ( orientation, srcVertex._normal );
-    skinVertex._tangent = mul ( orientation, srcVertex._tangent );
-    skinVertex._bitangent = mul ( orientation, srcVertex._bitangent );
-
-    g_skinMesh[ idx ] = skinVertex;
+    g_skinMesh[ idx ]._vertex = mul ( skinTransform, float32_t4 ( g_referenceMesh[ idx ]._vertex, 1.0F ) ).xyz;
+    g_skinMesh[ idx ]._normal = mul ( orientation, g_referenceMesh[ idx ]._normal );
+    g_skinMesh[ idx ]._tangent = mul ( orientation, g_referenceMesh[ idx ]._tangent );
+    g_skinMesh[ idx ]._bitangent = mul ( orientation, g_referenceMesh[ idx ]._bitangent );
 }

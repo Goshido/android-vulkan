@@ -106,6 +106,8 @@ SkeletalMeshComponent::SkeletalMeshComponent ( bool &success,
     if ( !skinMesh->LoadMesh ( mesh, *_renderer, *commandBuffers, *fences ) )
         return;
 
+    skinMesh->MakeUnique ();
+
     ++commandBufferConsumed;
     ++commandBuffers;
     ++fences;

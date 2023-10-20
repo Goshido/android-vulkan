@@ -148,6 +148,11 @@ bool MeshGeometry::IsUnique () const noexcept
     return _fileName.empty ();
 }
 
+void MeshGeometry::MakeUnique () noexcept
+{
+    _fileName.clear ();
+}
+
 bool MeshGeometry::LoadMesh ( std::string &&fileName,
     Renderer &renderer,
     VkCommandBuffer commandBuffer,

@@ -62,6 +62,7 @@ class MeshGeometry final
         // Mesh geometry is not unique if it was loaded from .mesh file.
         // Mesh geometry is unique if it was created from raw data.
         [[nodiscard]] bool IsUnique () const noexcept;
+        void MakeUnique () noexcept;
 
         [[nodiscard]] bool LoadMesh ( std::string &&fileName,
             Renderer &renderer,

@@ -33,6 +33,7 @@ class MeshGeometry final
         VkDeviceSize        _transferBufferOffset = std::numeric_limits<VkDeviceSize>::max ();
 
         uint32_t            _vertexCount = 0U;
+        uint32_t            _vertexBufferVertexCount = 0U;
         std::string         _fileName {};
 
     public:
@@ -52,6 +53,7 @@ class MeshGeometry final
         [[nodiscard]] GXAABB const &GetBounds () const noexcept;
         [[nodiscard]] VkBuffer const &GetVertexBuffer () const noexcept;
         [[nodiscard]] BufferInfo GetVertexBufferInfo () const noexcept;
+        [[nodiscard]] uint32_t GetVertexBufferVertexCount () const noexcept;
         [[nodiscard]] VkBuffer const &GetIndexBuffer () const noexcept;
         [[nodiscard]] std::string const &GetName () const noexcept;
         [[nodiscard]] uint32_t GetVertexCount () const noexcept;
@@ -77,6 +79,7 @@ class MeshGeometry final
 
         [[nodiscard]] bool LoadMesh ( uint8_t const* vertexData,
             size_t vertexDataSize,
+            uint32_t vertexCount,
             uint32_t const* indices,
             uint32_t indexCount,
             GXAABB const &bounds,

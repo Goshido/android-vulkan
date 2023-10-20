@@ -240,6 +240,7 @@ bool LightPass::CreateUnitCube ( android_vulkan::Renderer &renderer ) noexcept
 
     return _unitCube.LoadMesh ( reinterpret_cast<uint8_t const*> ( vertices ),
         sizeof ( vertices ),
+        static_cast<uint32_t> ( std::size ( vertices ) ),
         indices,
         static_cast<uint32_t> ( std::size ( indices ) ),
         bounds,

@@ -26,6 +26,7 @@ class SkinData final
 
     private:
         GXAABB                  _bounds {};
+        VkDeviceSize            _bufferSize = 0U;
         std::string             _fileName {};
         Buffer                  _skin {};
         Buffer                  _transfer {};

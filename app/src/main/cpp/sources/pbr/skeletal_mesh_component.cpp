@@ -4,6 +4,7 @@
 #include <pbr/scriptable_gxvec3.hpp>
 #include <pbr/scriptable_gxvec4.hpp>
 #include <pbr/scriptable_material.hpp>
+#include <pbr/skin.inc>
 #include <pbr/skeletal_mesh_component.hpp>
 #include <av_assert.hpp>
 
@@ -44,6 +45,7 @@ static_assert ( ALLOCATE_COMMAND_BUFFERS >= MIN_COMMAND_BUFFERS );
 
 SkeletalMeshComponent::CommandBufferInfo SkeletalMeshComponent::_cbInfo {};
 size_t SkeletalMeshComponent::_lastCommandBufferIndex = 0U;
+SkinProgram SkeletalMeshComponent::_program {};
 android_vulkan::Renderer* SkeletalMeshComponent::_renderer = nullptr;
 SkeletalMeshComponent::SkeletalMeshes SkeletalMeshComponent::_skeletalMeshes {};
 SkinPool SkeletalMeshComponent::_skinPool {};
@@ -110,18 +112,56 @@ SkeletalMeshComponent::SkeletalMeshComponent ( bool &success,
 
     _usage._skinMesh = std::move ( skinMesh );
 
-    success = _usage._skinData.LoadSkin ( skin,
+    bool const result = _usage._skinData.LoadSkin ( skin,
         skeleton,
         *_renderer,
         *commandBuffers,
         *fences
     );
 
-    if ( !success )
+    if ( !result )
         return;
 
     ++commandBufferConsumed;
     _transferQueue.push_back ( &_usage );
+
+    VkExtent3D const &maxDispatch = _renderer->GetMaxComputeDispatchSize ();
+    uint32_t const vertices = _referenceMesh->GetVertexCount ();
+    uint32_t const totalGroups = ( vertices + THREADS_PER_GROUP ) / THREADS_PER_GROUP;
+
+    uint32_t rest = totalGroups / maxDispatch.width;
+    rest /= maxDispatch.height;
+    rest /= maxDispatch.depth;
+
+    if ( rest > 0U )
+    {
+        android_vulkan::LogWarning ( "pbr::SkeletalMeshComponent::SkeletalMeshComponent - Mesh '%s' can't fit to "
+             "skin dispatch call. Too many vertices %u for hardware.",
+            _referenceMesh->GetName ().c_str (),
+            vertices
+        );
+
+        return;
+    }
+
+    if ( totalGroups < maxDispatch.width )
+    {
+        _dispatch = VkExtent3D
+        {
+            .width = totalGroups,
+            .height = 1U,
+            .depth = 1U
+        };
+
+        success = true;
+        return;
+    }
+
+    android_vulkan::LogWarning ( "pbr::SkeletalMeshComponent::SkeletalMeshComponent - More that on group row! "
+        "Figure out how to implement this!"
+    );
+
+    assert ( false );
 }
 
 void SkeletalMeshComponent::RegisterFromScript ( Actor &actor ) noexcept
@@ -137,8 +177,11 @@ void SkeletalMeshComponent::Unregister () noexcept
     }
 }
 
-bool SkeletalMeshComponent::ApplySkin ( VkCommandBuffer /*commandBuffer*/, size_t commandBufferIndex ) noexcept
+bool SkeletalMeshComponent::ApplySkin ( VkCommandBuffer commandBuffer, size_t commandBufferIndex ) noexcept
 {
+    if ( !_renderer )
+        return true;
+
     _lastCommandBufferIndex = commandBufferIndex;
 
     if ( !WaitGPUUploadComplete () )
@@ -146,6 +189,7 @@ bool SkeletalMeshComponent::ApplySkin ( VkCommandBuffer /*commandBuffer*/, size_
 
     FreeUnusedResources ( commandBufferIndex );
     VkDevice device = _renderer->GetDevice ();
+    bool hasUpdates = false;
 
     for ( auto &item : _skeletalMeshes )
     {
@@ -155,6 +199,7 @@ bool SkeletalMeshComponent::ApplySkin ( VkCommandBuffer /*commandBuffer*/, size_
         if ( !mesh._animationGraph )
             continue;
 
+        hasUpdates = true;
         Usage &usage = mesh._usage;
 
         _skinPool.Push ( mesh._animationGraph->GetPoseInfo (),
@@ -164,7 +209,12 @@ bool SkeletalMeshComponent::ApplySkin ( VkCommandBuffer /*commandBuffer*/, size_
         );
     }
 
+    if ( !hasUpdates )
+        return true;
+
     _skinPool.UpdateDescriptorSets ( device );
+    _program.Bind ( commandBuffer );
+    SkinProgram::PushConstants pushConstants {};
 
     for ( auto &item : _skeletalMeshes )
     {
@@ -174,11 +224,15 @@ bool SkeletalMeshComponent::ApplySkin ( VkCommandBuffer /*commandBuffer*/, size_
         if ( !mesh._animationGraph )
             continue;
 
-        // TODO make compute dispatches.
-        (void)mesh;
+        pushConstants._vertexCount = mesh._referenceMesh->GetVertexBufferVertexCount ();
+        _program.SetPushConstants ( commandBuffer, &pushConstants );
+        _program.SetDescriptorSet ( commandBuffer, _skinPool.Acquire () );
+
+        VkExtent3D const &d = mesh._dispatch;
+        vkCmdDispatch ( commandBuffer, d.width, d.height, d.depth );
     }
 
-    _skinPool.SubmitPipelineBarriers ( device );
+    _skinPool.SubmitPipelineBarriers ( commandBuffer );
     return true;
 }
 
@@ -246,6 +300,9 @@ bool SkeletalMeshComponent::Init ( lua_State &vm, android_vulkan::Renderer &rend
 
     _renderer = &renderer;
 
+    if ( !_program.Init ( renderer, nullptr ) )
+        return false;
+
     VkCommandPoolCreateInfo const createInfo
     {
         .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
@@ -309,6 +366,7 @@ void SkeletalMeshComponent::Destroy () noexcept
     }
 
     _skinPool.Destroy ( device );
+    _program.Destroy ( device );
 
     clean ( _cbInfo._fences );
     _lastCommandBufferIndex = 0U;

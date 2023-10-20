@@ -20,6 +20,7 @@ local function InitAnimationGraph ( self )
 
     animationGraph:SetInput ( bendAnimationPlayer )
     animationGraph:Awake ()
+    self._meshComponent:SetAnimationGraph ( animationGraph )
 
     self._bendAnimationPlayer = bendAnimationPlayer
     self._animationGraph = animationGraph
@@ -49,6 +50,7 @@ local function InitSkeletalMesh ( self, actor )
     meshActor:AppendComponent ( meshComponent )
     g_scene:AppendActor ( meshActor )
 
+    self._meshComponent = meshComponent
     self._meshActor = meshActor
 end
 

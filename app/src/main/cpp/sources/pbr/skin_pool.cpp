@@ -31,7 +31,7 @@ bool SkinPool::Init ( VkDevice device ) noexcept
     VkDescriptorPoolSize const poolSizes[] =
     {
         {
-            .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+            .type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
             .descriptorCount = static_cast<uint32_t> ( totalBuffers )
         }
     };
@@ -57,11 +57,12 @@ bool SkinPool::Init ( VkDevice device ) noexcept
 
     AV_REGISTER_DESCRIPTOR_POOL ( "pbr::SkinPool::_descriptorPool" )
 
+    if ( !_layout.Init ( device ) )
+        return false;
+
     _descriptorSets.resize ( SKIN_MESHES );
     VkDescriptorSet* descriptorSets = _descriptorSets.data ();
-
-    // TODO set correct handle.
-    std::vector<VkDescriptorSetLayout> const layouts ( SKIN_MESHES, VK_NULL_HANDLE );
+    std::vector<VkDescriptorSetLayout> const layouts ( SKIN_MESHES, _layout.GetLayout () );
 
     VkDescriptorSetAllocateInfo const allocateInfo
     {
@@ -139,6 +140,24 @@ bool SkinPool::Init ( VkDevice device ) noexcept
     // Now all what is needed to do is to init "_bufferInfo::buffer" and "_bufferInfo::range".
     // Then to invoke vkUpdateDescriptorSets.
 
+    constexpr VkBufferMemoryBarrier barrier
+    {
+        .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
+        .pNext = nullptr,
+        .srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT,
+        .dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT,
+        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .buffer = VK_NULL_HANDLE,
+        .offset = 0U,
+        .size = 0U
+    };
+
+    _barriers.resize ( SKIN_MESHES, barrier );
+
+    // Now all what is needed to do is to init "_barriers::buffer" and "_barriers::size".
+    // Then to invoke vkCmdPipelineBarrier.
+
     _itemBaseIndex = 0U;
     _itemReadIndex = 0U;
     _itemWriteIndex = 0U;
@@ -149,6 +168,8 @@ bool SkinPool::Init ( VkDevice device ) noexcept
 
 void SkinPool::Destroy ( VkDevice device ) noexcept
 {
+    _layout.Destroy ( device );
+
     if ( _descriptorPool != VK_NULL_HANDLE )
     {
         vkDestroyDescriptorPool ( device, _descriptorPool, nullptr );
@@ -161,6 +182,7 @@ void SkinPool::Destroy ( VkDevice device ) noexcept
         vector.shrink_to_fit ();
     };
 
+    clean ( _barriers );
     clean ( _bufferInfo );
     clean ( _descriptorSets );
     clean ( _writeSets );
@@ -191,13 +213,50 @@ void SkinPool::Push ( android_vulkan::BufferInfo pose,
     skinMeshInfo.buffer = skinMesh;
     skinMeshInfo.range = referenceMesh._range;
 
+    VkBufferMemoryBarrier &barrier = _barriers[ _itemWriteIndex ];
+    barrier.buffer = skinMesh;
+    barrier.size = referenceMesh._range;
+
     _itemWriteIndex = ( _itemWriteIndex + 1U ) % SKIN_MESHES;
     ++_itemWritten;
 }
 
-void SkinPool::SubmitPipelineBarriers ( VkDevice /*device*/ ) noexcept
+void SkinPool::SubmitPipelineBarriers ( VkCommandBuffer commandBuffer ) noexcept
 {
-    // TODO
+    size_t const idx = _itemBaseIndex + _itemWritten;
+    size_t const cases[] = { 0U, idx - SKIN_MESHES };
+    size_t const more = cases[ static_cast<size_t> ( idx > SKIN_MESHES ) ];
+    size_t const available = _itemWritten - more;
+
+    VkBufferMemoryBarrier const* barriers = _barriers.data ();
+
+    vkCmdPipelineBarrier ( commandBuffer,
+        VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+        VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
+        VK_DEPENDENCY_BY_REGION_BIT,
+        0U,
+        nullptr,
+        static_cast<uint32_t> ( available ),
+        barriers + _itemBaseIndex,
+        0U,
+        nullptr
+    );
+
+    if ( more > 0U )
+    {
+        vkCmdPipelineBarrier ( commandBuffer,
+            VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+            VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
+            VK_DEPENDENCY_BY_REGION_BIT,
+            0U,
+            nullptr,
+            static_cast<uint32_t> ( more ),
+            barriers,
+            0U,
+            nullptr
+        );
+    }
+
     _itemBaseIndex = _itemWriteIndex;
     _itemReadIndex = _itemWriteIndex;
     _itemWritten = 0U;

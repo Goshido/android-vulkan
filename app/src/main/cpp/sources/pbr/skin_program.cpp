@@ -1,0 +1,167 @@
+#include <pbr/skin.inc>
+#include <pbr/skin_program.hpp>
+
+
+namespace pbr {
+
+namespace {
+
+constexpr char const* SHADER = "shaders/skin.cs.spv";
+
+} // end of anonymous namespace
+
+//----------------------------------------------------------------------------------------------------------------------
+
+SkinProgram::SkinProgram () noexcept:
+    ComputeProgram ( "pbr::SkinProgram", sizeof ( SkinProgram::PushConstants ) )
+{
+    // NOTHING
+}
+
+bool SkinProgram::Init ( android_vulkan::Renderer &renderer,
+    SpecializationData /*specializationData*/
+) noexcept
+{
+    VkDevice device = renderer.GetDevice ();
+
+    VkComputePipelineCreateInfo pipelineInfo;
+    pipelineInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
+    pipelineInfo.pNext = nullptr;
+    pipelineInfo.flags = 0U;
+
+    bool result = InitShaderInfo ( renderer, nullptr, nullptr, pipelineInfo.stage ) &&
+        InitLayout ( device, pipelineInfo.layout );
+
+    if ( !result )
+        return false;
+
+    pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
+    pipelineInfo.basePipelineIndex = -1;
+
+    result = android_vulkan::Renderer::CheckVkResult (
+        vkCreateComputePipelines ( device, VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
+        "pbr::SkinProgram::Init",
+        "Can't create pipeline"
+    );
+
+    if ( !result )
+        return false;
+
+    AV_REGISTER_PIPELINE ( "pbr::SkinProgram::_pipeline" )
+    DestroyShaderModule ( device );
+    return true;
+}
+
+void SkinProgram::Destroy ( VkDevice device ) noexcept
+{
+    if ( _pipelineLayout != VK_NULL_HANDLE )
+    {
+        vkDestroyPipelineLayout ( device, _pipelineLayout, nullptr );
+        _pipelineLayout = VK_NULL_HANDLE;
+        AV_UNREGISTER_PIPELINE_LAYOUT ( "pbr::SkinProgram::_pipelineLayout" )
+    }
+
+    _layout.Destroy ( device );
+    DestroyShaderModule ( device );
+
+    if ( _pipeline == VK_NULL_HANDLE )
+        return;
+
+    vkDestroyPipeline ( device, _pipeline, nullptr );
+    _pipeline = VK_NULL_HANDLE;
+    AV_UNREGISTER_PIPELINE ( "pbr::SkinProgram::_pipeline" )
+}
+
+void SkinProgram::SetDescriptorSet ( VkCommandBuffer commandBuffer, VkDescriptorSet set ) const noexcept
+{
+    vkCmdBindDescriptorSets ( commandBuffer,
+        VK_PIPELINE_BIND_POINT_COMPUTE,
+        _pipelineLayout,
+        0U,
+        1U,
+        &set,
+        0U,
+        nullptr
+    );
+}
+
+void SkinProgram::DestroyShaderModule ( VkDevice device ) noexcept
+{
+    if ( _computeShader == VK_NULL_HANDLE )
+        return;
+
+    vkDestroyShaderModule ( device, _computeShader, nullptr );
+    _computeShader = VK_NULL_HANDLE;
+    AV_UNREGISTER_SHADER_MODULE ( "pbr::SkinProgram::_computeShader" )
+}
+
+bool SkinProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept
+{
+    if ( !_layout.Init ( device ) )
+        return false;
+
+    VkDescriptorSetLayout dsLayout = _layout.GetLayout ();
+
+    constexpr VkPushConstantRange pushConstantRange
+    {
+        .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
+        .offset = 0U,
+        .size = static_cast<uint32_t> ( sizeof ( SkinProgram::PushConstants ) )
+    };
+
+    VkPipelineLayoutCreateInfo const layoutInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .setLayoutCount = 1U,
+        .pSetLayouts = &dsLayout,
+        .pushConstantRangeCount = 1U,
+        .pPushConstantRanges = &pushConstantRange
+    };
+
+    bool const result = android_vulkan::Renderer::CheckVkResult (
+        vkCreatePipelineLayout ( device, &layoutInfo, nullptr, &_pipelineLayout ),
+        "pbr::SkinProgram::InitLayout",
+        "Can't create pipeline layout"
+    );
+
+    if ( !result )
+        return false;
+
+    AV_REGISTER_PIPELINE_LAYOUT ( "pbr::SkinProgram::_pipelineLayout" )
+    layout = _pipelineLayout;
+    return true;
+}
+
+bool SkinProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
+    SpecializationData /*specializationData*/,
+    VkSpecializationInfo* /*specializationInfo*/,
+    VkPipelineShaderStageCreateInfo &targetInfo
+) noexcept
+{
+    bool const result = renderer.CreateShader ( _computeShader,
+        SHADER,
+        "Can't create shader (pbr::SkinProgram)"
+    );
+
+    if ( !result )
+        return false;
+
+    AV_REGISTER_SHADER_MODULE ( "pbr::SkinProgram::_computeShader" )
+
+    targetInfo =
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .stage = VK_SHADER_STAGE_COMPUTE_BIT,
+        .module = _computeShader,
+        .pName = COMPUTE_SHADER_ENTRY_POINT,
+        .pSpecializationInfo = nullptr
+    };
+
+    return true;
+}
+
+} // namespace pbr

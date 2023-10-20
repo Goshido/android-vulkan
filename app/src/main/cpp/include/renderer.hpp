@@ -52,6 +52,7 @@ class Renderer final
         bool                                                                _isDeviceExtensionChecked;
         bool                                                                _isDeviceExtensionSupported;
 
+        VkExtent3D                                                          _maxComputeDispatchSize;
         size_t                                                              _maxUniformBufferRange;
         MemoryAllocator                                                     _memoryAllocator;
 
@@ -124,6 +125,7 @@ class Renderer final
         [[nodiscard]] VkFormat GetDefaultDepthStencilFormat () const noexcept;
         [[nodiscard]] VkDevice GetDevice () const noexcept;
         [[nodiscard]] float GetDPI () const noexcept;
+        [[nodiscard]] VkExtent3D const &GetMaxComputeDispatchSize () const noexcept;
         [[nodiscard]] size_t GetMaxUniformBufferRange () const noexcept;
 
         [[nodiscard]] size_t GetPresentImageCount () const noexcept;
@@ -180,6 +182,7 @@ class Renderer final
         [[nodiscard]] static char const* ResolveVkFormat ( VkFormat format ) noexcept;
 
     private:
+        [[nodiscard]] bool CheckExtensionScalarBlockLayout ( std::set<std::string> const &allExtensions ) noexcept;
         [[nodiscard]] bool CheckExtensionShaderFloat16Int8 ( std::set<std::string> const &allExtensions ) noexcept;
         [[nodiscard]] bool CheckRequiredDeviceExtensions ( std::vector<char const*> const &deviceExtensions ) noexcept;
 

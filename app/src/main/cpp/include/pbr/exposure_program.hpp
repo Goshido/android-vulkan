@@ -1,5 +1,5 @@
-#ifndef PBR_AVERAGE_BRIGHTNESS_PROGRAM_HPP
-#define PBR_AVERAGE_BRIGHTNESS_PROGRAM_HPP
+#ifndef PBR_EXPOSURE_PROGRAM_HPP
+#define PBR_EXPOSURE_PROGRAM_HPP
 
 
 #include "compute_program.hpp"
@@ -74,4 +74,4 @@ class ExposureProgram : public ComputeProgram
 } // namespace pbr
 
 
-#endif // PBR_AVERAGE_BRIGHTNESS_PROGRAM_HPP
+#endif // PBR_EXPOSURE_PROGRAM_HPP

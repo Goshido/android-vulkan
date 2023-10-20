@@ -2,6 +2,7 @@
 #include <logger.hpp>
 #include <skin_data.hpp>
 #include <vulkan_utils.hpp>
+#include <android_vulkan_sdk/bone_joint.hpp>
 #include <android_vulkan_sdk/skeleton.hpp>
 #include <android_vulkan_sdk/skin.hpp>
 
@@ -43,7 +44,7 @@ BufferInfo SkinData::GetSkinInfo () const noexcept
     return
     {
         ._buffer = _skin._buffer,
-        ._range = _minPoseRange
+        ._range = _bufferSize
     };
 }
 
@@ -92,7 +93,7 @@ bool SkinData::LoadSkin ( std::string &&skinFilename,
 
     std::unordered_map<std::string_view, int32_t> skeletonBones {};
     auto boneCount = static_cast<int32_t> ( skeletonHeader._boneCount );
-    _minPoseRange = static_cast<VkDeviceSize> ( skeletonHeader._boneCount * sizeof ( SkinVertex ) );
+    _minPoseRange = static_cast<VkDeviceSize> ( skeletonHeader._boneCount * sizeof ( BoneJoint ) );
 
     auto const* nameOffset = reinterpret_cast<android_vulkan::UTF8Offset const*> (
         skeleton + skeletonHeader._nameInfoOffset
@@ -334,6 +335,7 @@ bool SkinData::LoadSkin ( std::string &&skinFilename,
     if ( !result )
         return false;
 
+    _bufferSize = bufferInfo.size;
     _fileName = std::move ( skinFile.GetPath () );
     return true;
 }

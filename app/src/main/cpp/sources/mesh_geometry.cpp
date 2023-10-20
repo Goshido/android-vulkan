@@ -118,6 +118,11 @@ BufferInfo MeshGeometry::GetVertexBufferInfo () const noexcept
     };
 }
 
+uint32_t MeshGeometry::GetVertexBufferVertexCount () const noexcept
+{
+    return _vertexBufferVertexCount;
+}
+
 VkBuffer const &MeshGeometry::GetIndexBuffer () const noexcept
 {
     return _indexBuffer;
@@ -183,6 +188,7 @@ bool MeshGeometry::LoadMesh ( std::string &&fileName,
 
 bool MeshGeometry::LoadMesh ( uint8_t const* vertexData,
     size_t vertexDataSize,
+    uint32_t vertexCount,
     uint32_t const* indices,
     uint32_t indexCount,
     GXAABB const &bounds,
@@ -208,7 +214,11 @@ bool MeshGeometry::LoadMesh ( uint8_t const* vertexData,
     );
 
     if ( result )
+    {
+        _vertexCount = indexCount,
+        _vertexBufferVertexCount = vertexCount;
         _bounds = bounds;
+    }
 
     return result;
 }
@@ -360,6 +370,8 @@ bool MeshGeometry::LoadFromMesh2 ( std::string &&fileName,
     _bounds.AddVertex ( mins[ 0U ], mins[ 1U ], mins[ 2U ] );
     _bounds.AddVertex ( maxs[ 0U ], maxs[ 1U ], maxs[ 2U ] );
 
+    _vertexCount = static_cast<uint32_t> ( header._indexCount );
+    _vertexBufferVertexCount = header._vertexCount;
     _fileName = std::move ( fileName );
     return true;
 }
@@ -489,7 +501,7 @@ bool MeshGeometry::UploadComplex ( uint8_t const* data,
 
     VkBuffer const dstBuffers[ std::size ( copyInfo ) ] = { _indexBuffer, _vertexBuffer };
 
-    result = UploadInternal ( std::size ( usages ),
+    return UploadInternal ( std::size ( usages ),
         copyInfo,
         usages,
         dstBuffers,
@@ -499,11 +511,6 @@ bool MeshGeometry::UploadComplex ( uint8_t const* data,
         commandBuffer,
         fence
     );
-
-    if ( result )
-        _vertexCount = indexCount;
-
-    return result;
 }
 
 bool MeshGeometry::UploadInternal ( size_t numUploads,
@@ -759,6 +766,7 @@ bool MeshGeometry::UploadSimple ( uint8_t const* data,
         return false;
 
     _vertexCount = vertexCount;
+    _vertexBufferVertexCount = vertexCount;
     return true;
 }
 

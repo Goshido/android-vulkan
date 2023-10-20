@@ -2,6 +2,7 @@
 #define PBR_SKIN_POOL_HPP
 
 
+#include "skin_descriptor_set_layout.hpp"
 #include <buffer_info.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
@@ -16,6 +17,7 @@ namespace pbr {
 class SkinPool final
 {
     private:
+        std::vector<VkBufferMemoryBarrier>      _barriers {};
         std::vector<VkDescriptorBufferInfo>     _bufferInfo {};
         VkDescriptorPool                        _descriptorPool = VK_NULL_HANDLE;
         std::vector<VkDescriptorSet>            _descriptorSets {};
@@ -25,6 +27,7 @@ class SkinPool final
         size_t                                  _itemWriteIndex = 0U;
         size_t                                  _itemWritten = 0U;
 
+        SkinDescriptorSetLayout                 _layout {};
         std::vector<VkWriteDescriptorSet>       _writeSets {};
 
     public:
@@ -49,7 +52,7 @@ class SkinPool final
             VkBuffer skinMesh
         ) noexcept;
 
-        void SubmitPipelineBarriers ( VkDevice device ) noexcept;
+        void SubmitPipelineBarriers ( VkCommandBuffer commandBuffer ) noexcept;
         void UpdateDescriptorSets ( VkDevice device ) const noexcept;
 };
 

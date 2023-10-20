@@ -7,6 +7,7 @@
 #include "command_buffer_count.hpp"
 #include "renderable_component.hpp"
 #include "skin_pool.hpp"
+#include "skin_program.hpp"
 #include "transformable.hpp"
 #include <skin_data.hpp>
 
@@ -41,6 +42,8 @@ class SkeletalMeshComponent final : public RenderableComponent, public Transform
         GXColorRGB                          _color2;
         GXColorRGB                          _emission;
 
+        VkExtent3D                          _dispatch {};
+
         MaterialRef                         _material;
         GXMat4                              _localMatrix;
         GXAABB                              _worldBounds;
@@ -50,6 +53,7 @@ class SkeletalMeshComponent final : public RenderableComponent, public Transform
 
         static CommandBufferInfo            _cbInfo;
         static size_t                       _lastCommandBufferIndex;
+        static SkinProgram                  _program;
         static android_vulkan::Renderer*    _renderer;
         static SkeletalMeshes               _skeletalMeshes;
         static SkinPool                     _skinPool;

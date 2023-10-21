@@ -5,9 +5,10 @@
 #define THREADS_PER_GROUP           64U
 
 // Must be equal THREADS_PER_GROUP * THREADS_PER_GROUP.
-#define THREADS_PER_Z               4096U
+#define THREADS_PER_PLANE           4096U
 
-#define PUSH_VERTEX_COUNT           0
+// Must be equal THREADS_PER_GROUP * THREADS_PER_PLANE.
+#define THREADS_PER_SLICE           262144U
 
 #define SET_RESOURCE                0
 #define BIND_POSE                   0

@@ -28,7 +28,7 @@ float32_t const                                     g_normalizeW = 3.125e-2H;
 [[vk::constant_id ( CONST_NORMALIZE_H )]]
 float32_t const                                     g_normalizeH = 7.142e-2H;
 
-struct ExposureInfo
+struct PushConstants
 {
     float32_t                                       _exposureCompensation;
     float32_t                                       _eyeAdaptation;
@@ -37,7 +37,7 @@ struct ExposureInfo
 };
 
 [[vk::push_constant]]
-ExposureInfo                                        g_exposureInfo;
+PushConstants                                       g_exposureInfo;
 
 [[vk::binding ( BIND_HDR_IMAGE, SET_RESOURCE )]]
 Texture2D<float32_t4>                               g_hdrImage:         register ( t0 );

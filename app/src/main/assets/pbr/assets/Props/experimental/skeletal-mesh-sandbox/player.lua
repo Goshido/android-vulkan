@@ -10,11 +10,10 @@ local Player = {}
 
 -- Methods
 local function InitAnimationGraph ( self )
-    local animationGraph = AnimationGraph ( "pbr/assets/Props/experimental/exporter/leg.skeleton" )
-
+    local animationGraph = AnimationGraph ( "pbr/assets/Props/experimental/skeletal-mesh-sandbox/human//human.skeleton" )
     local bendAnimationPlayer = AnimationPlayerNode ()
 
-    if not bendAnimationPlayer:LoadAnimation ( "pbr/assets/Props/experimental/exporter/bend.animation" ) then
+    if not bendAnimationPlayer:LoadAnimation ( "pbr/assets/Props/experimental/skeletal-mesh-sandbox/human/walk.animation" ) then
         return
     end
 
@@ -36,14 +35,15 @@ local function InitSkeletalMesh ( self, actor )
     local meshActor = Actor ( "PlayerMesh" )
 
     local meshComponent = SkeletalMeshComponent ( "Mesh",
-        "pbr/assets/Props/experimental/exporter/leg.mesh2",
-        "pbr/assets/Props/experimental/exporter/leg.skin",
-        "pbr/assets/Props/experimental/exporter/leg.skeleton",
-        "pbr/assets/Props/Scrap/StashBox.mtl"
+        "pbr/assets/Props/experimental/skeletal-mesh-sandbox/human/human.mesh2",
+        "pbr/assets/Props/experimental/skeletal-mesh-sandbox/human/human.skin",
+        "pbr/assets/Props/experimental/skeletal-mesh-sandbox/human/human.skeleton",
+        "pbr/assets/Props/experimental/skeletal-mesh-sandbox/human/human.mtl"
     )
 
     local m = GXMat4 ()
     m:Scale ( 0.5, 0.5, 0.5 )
+
     m:SetW ( origin )
     meshComponent:SetLocal ( m )
 

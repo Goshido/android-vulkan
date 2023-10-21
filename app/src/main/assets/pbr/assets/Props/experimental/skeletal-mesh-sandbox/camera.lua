@@ -6,7 +6,13 @@ local Camera = {}
 
 -- Engine event handlers
 local function OnActorConstructed ( self, actor )
-    g_scene:SetActiveCamera ( actor:FindComponent ( "Camera" ) )
+    local camera = actor:FindComponent ( "Camera" )
+    g_scene:SetActiveCamera ( camera )
+    self._camera = camera
+end
+
+local function OnRenderTargetChanged ( self )
+    self._camera:SetAspectRatio ( g_scene:GetRenderTargetAspectRatio () )
 end
 
 -- Metamethods
@@ -15,6 +21,7 @@ local function Constructor ( self, handle, params )
 
     -- Engine events
     obj.OnActorConstructed = OnActorConstructed
+    obj.OnRenderTargetChanged = OnRenderTargetChanged
 
     return obj
 end

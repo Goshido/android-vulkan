@@ -163,7 +163,7 @@ SkeletalMeshComponent::SkeletalMeshComponent ( bool &success,
         "Figure out how to implement this!"
     );
 
-    assert ( false );
+    AV_ASSERT ( false );
 }
 
 void SkeletalMeshComponent::RegisterFromScript ( Actor &actor ) noexcept
@@ -227,8 +227,8 @@ bool SkeletalMeshComponent::ApplySkin ( VkCommandBuffer commandBuffer, size_t co
             continue;
 
         pushConstants._vertexCount = mesh._referenceMesh->GetVertexBufferVertexCount ();
-        _program.SetPushConstants ( commandBuffer, &pushConstants );
         _program.SetDescriptorSet ( commandBuffer, _skinPool.Acquire () );
+        _program.SetPushConstants ( commandBuffer, &pushConstants );
 
         VkExtent3D const &d = mesh._dispatch;
         vkCmdDispatch ( commandBuffer, d.width, d.height, d.depth );

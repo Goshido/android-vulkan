@@ -125,7 +125,7 @@ bool AnimationGraph::BufferSet::Init ( VkDeviceSize size ) noexcept
 
     bool const result = _renderer->MapMemory ( data,
         _transferPoseSkin._memory,
-        0U,
+        _transferPoseSkin._offset,
         "pbr::AnimationGraph::BufferSet::Init", "Can't map memory"
     );
 

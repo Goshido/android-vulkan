@@ -60,6 +60,7 @@ bool AnimationTrack::Load ( std::string &&file ) noexcept
     }
 
     auto const* name = reinterpret_cast<android_vulkan::UTF8Offset const*> ( content + header._boneNameInfoOffset );
+    _mapper.reserve ( static_cast<size_t> ( boneCount ) );
 
     for ( uint32_t i = 0U; i < boneCount; ++i )
     {

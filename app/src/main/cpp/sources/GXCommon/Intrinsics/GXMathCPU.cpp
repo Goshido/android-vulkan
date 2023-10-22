@@ -1,4 +1,4 @@
-// version 1.7
+// version 1.8
 
 #include <GXCommon/GXMath.hpp>
 
@@ -110,6 +110,16 @@ GX_RESTORE_WARNING_STATE
     _data[ 0U ] = a._data[ 1U ] * b._data[ 2U ] - a._data[ 2U ] * b._data[ 1U ];
     _data[ 1U ] = a._data[ 2U ] * b._data[ 0U ] - a._data[ 0U ] * b._data[ 2U ];
     _data[ 2U ] = a._data[ 0U ] * b._data[ 1U ] - a._data[ 1U ] * b._data[ 0U ];
+}
+
+[[maybe_unused]] GXVoid GXVec3::LinearInterpolation ( GXVec3 const &start,
+    GXVec3 const &finish,
+    GXFloat interpolationFactor
+) noexcept
+{
+    GXVec3 difference {};
+    difference.Subtract ( finish, start );
+    Sum ( start, interpolationFactor, difference );
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -262,6 +272,41 @@ GX_RESTORE_WARNING_STATE
     _data[ 1U ] = a._data[ 1U ] - b._data[ 1U ];
     _data[ 2U ] = a._data[ 2U ] - b._data[ 2U ];
     _data[ 3U ] = a._data[ 3U ] - b._data[ 3U ];
+}
+
+[[maybe_unused]] GXVoid GXQuat::SphericalLinearInterpolation ( GXQuat const &start,
+    GXQuat const &finish,
+    GXFloat interpolationFactor
+) noexcept
+{
+    GXFloat cosom = start._data[ 0U ] * finish._data[ 0U ] +
+        start._data[ 1U ] * finish._data[ 1U ] +
+        start._data[ 2U ] * finish._data[ 2U ] +
+        start._data[ 3U ] * finish._data[ 3U ];
+
+    float const* d = finish._data;
+    GXQuat const casesQuat[] = { finish, GXQuat ( -d[ 0U ], -d[ 1U ], -d[ 2U ], -d[ 3U ] ) };
+    float const casesCosom[] = { cosom, -cosom };
+
+    auto const idx = static_cast<size_t> ( cosom < 0.0F );
+    GXQuat const temp ( casesQuat[ idx ] );
+    cosom = casesCosom[ idx ];
+
+    GXFloat scale0 = 1.0F - interpolationFactor;
+    GXFloat scale1 = interpolationFactor;
+
+    if ( 1.0F - cosom > GX_MATH_FLOAT_EPSILON ) [[likely]]
+    {
+        GXFloat const omega = std::acos ( cosom );
+        GXFloat const sinom = 1.0F / std::sin ( omega );
+        scale0 = sinom * std::sin ( omega * scale0 );
+        scale1 = sinom * std::sin ( omega * interpolationFactor );
+    }
+
+    _data[ 0U ] = start._data[ 0U ] * scale0 + temp._data[ 0U ] * scale1;
+    _data[ 1U ] = start._data[ 1U ] * scale0 + temp._data[ 1U ] * scale1;
+    _data[ 2U ] = start._data[ 2U ] * scale0 + temp._data[ 2U ] * scale1;
+    _data[ 3U ] = start._data[ 3U ] * scale0 + temp._data[ 3U ] * scale1;
 }
 
 //----------------------------------------------------------------------------------------------------------------------

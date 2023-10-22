@@ -80,9 +80,9 @@ local function Init ( self, x, y, z )
         [[GXVec3:Init - Calling not via ":" syntax.]]
     )
 
-    assert ( type ( x ) == "number", [[GXVec3:Init - "x" is not a number.]] )
-    assert ( type ( y ) == "number", [[GXVec3:Init - "y" is not a number.]] )
-    assert ( type ( z ) == "number", [[GXVec3:Init - "z" is not a number.]] )
+    assert ( type ( x ) == "number", [[GXVec3:Init - "x" is not number.]] )
+    assert ( type ( y ) == "number", [[GXVec3:Init - "y" is not number.]] )
+    assert ( type ( z ) == "number", [[GXVec3:Init - "z" is not number.]] )
 
     av_GXVec3Init ( self._handle, x, y, z )
 end
@@ -101,7 +101,7 @@ local function MultiplyScalar ( self, a, scale )
     )
 
     assert ( type ( a ) == "table" and a._type == eObjectType.GXVec3, [[GXVec3:MultiplyScalar - "a" is not a GXVec3.]] )
-    assert ( type ( scale ) == "number", [[GXVec3:MultiplyScalar - "scale" is not a number.]] )
+    assert ( type ( scale ) == "number", [[GXVec3:MultiplyScalar - "scale" is not number.]] )
 
     av_GXVec3MultiplyScalar ( self._handle, a._handle, scale )
 end
@@ -138,7 +138,7 @@ local function SetX ( self, x )
         [[GXVec3:SetX - Calling not via ":" syntax.]]
     )
 
-    assert ( type ( x ) == "number", [[GXVec3:SetX - "x" is not a number.]] )
+    assert ( type ( x ) == "number", [[GXVec3:SetX - "x" is not number.]] )
     return av_GXVec3SetX ( self._handle, x )
 end
 
@@ -147,7 +147,7 @@ local function SetY ( self, y )
         [[GXVec3:SetY - Calling not via ":" syntax.]]
     )
 
-    assert ( type ( y ) == "number", [[GXVec3:SetY - "y" is not a number.]] )
+    assert ( type ( y ) == "number", [[GXVec3:SetY - "y" is not number.]] )
     return av_GXVec3SetY ( self._handle, y )
 end
 
@@ -156,7 +156,7 @@ local function SetZ ( self, z )
         [[GXVec3:SetZ - Calling not via ":" syntax.]]
     )
 
-    assert ( type ( z ) == "number", [[GXVec3:SetZ - "z" is not a number.]] )
+    assert ( type ( z ) == "number", [[GXVec3:SetZ - "z" is not number.]] )
     return av_GXVec3SetZ ( self._handle, z )
 end
 
@@ -208,7 +208,7 @@ local function SumScaled ( self, a, bScale, b )
     )
 
     assert ( type ( a ) == "table" and a._type == eObjectType.GXVec3, [[GXVec3:SumScaled - "a" is not a GXVec3.]] )
-    assert ( type ( bScale ) == "number", [[GXVec3:SumScaled - "bScale" is not a number.]] )
+    assert ( type ( bScale ) == "number", [[GXVec3:SumScaled - "bScale" is not number.]] )
     assert ( type ( b ) == "table" and b._type == eObjectType.GXVec3, [[GXVec3:SumScaled - "b" is not a GXVec3.]] )
 
     av_GXVec3SumScaled ( self._handle, a._handle, bScale, b._handle )

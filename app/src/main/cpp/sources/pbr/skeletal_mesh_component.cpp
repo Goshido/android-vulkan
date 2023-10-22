@@ -29,9 +29,10 @@ constexpr size_t INITIAL_COMMAND_BUFFERS = 32U;
 constexpr GXColorRGB DEFAULT_COLOR ( 1.0F, 1.0F, 1.0F, 1.0F );
 constexpr GXColorRGB DEFAULT_EMISSION ( 1.0F, 1.0F, 1.0F, 1.0F );
 
+constexpr char const DEFAULT_MATERIAL[] = "pbr/assets/System/Default.mtl";
+
 // clang-format off
 constexpr auto MIN_COMMAND_BUFFERS =
-    static_cast<size_t> ( MaterialManager::MaxCommandBufferPerMaterial () ) +
     static_cast<size_t> ( MeshManager::MaxCommandBufferPerMesh () ) +
     static_cast<size_t> ( MeshManager::MaxCommandBufferPerMesh () ) +
     static_cast<size_t> ( android_vulkan::SkinData::MaxCommandBufferPerSkin () );
@@ -58,7 +59,6 @@ SkeletalMeshComponent::SkeletalMeshComponent ( bool &success,
     char const* mesh,
     char const* skin,
     char const* skeleton,
-    char const* material,
     VkCommandBuffer const* commandBuffers,
     VkFence const* fences,
     std::string &&name
@@ -75,7 +75,7 @@ SkeletalMeshComponent::SkeletalMeshComponent ( bool &success,
 
     _material = MaterialManager::GetInstance ().LoadMaterial ( *_renderer,
         consumed,
-        material,
+        DEFAULT_MATERIAL,
         commandBuffers,
         fences
     );
@@ -83,7 +83,7 @@ SkeletalMeshComponent::SkeletalMeshComponent ( bool &success,
     if ( !_material )
         return;
 
-    commandBufferConsumed += consumed;
+    commandBufferConsumed = consumed;
     commandBuffers += consumed;
     fences += consumed;
 
@@ -163,7 +163,7 @@ SkeletalMeshComponent::SkeletalMeshComponent ( bool &success,
         "Figure out how to implement this!"
     );
 
-    AV_ASSERT ( false );
+    AV_ASSERT ( false )
 }
 
 void SkeletalMeshComponent::RegisterFromScript ( Actor &actor ) noexcept
@@ -266,6 +266,10 @@ bool SkeletalMeshComponent::Init ( lua_State &vm, android_vulkan::Renderer &rend
         {
             .name = "av_SkeletalMeshComponentCollectGarbage",
             .func = &SkeletalMeshComponent::OnGarbageCollected
+        },
+        {
+            .name = "av_SkeletalMeshComponentGetLocal",
+            .func = &SkeletalMeshComponent::OnGetLocal
         },
         {
             .name = "av_SkeletalMeshComponentSetAnimationGraph",
@@ -609,14 +613,6 @@ int SkeletalMeshComponent::OnCreate ( lua_State* state )
         return 1;
     }
 
-    char const* materialFile = lua_tostring ( state, 5 );
-
-    if ( !materialFile )
-    {
-        lua_pushnil ( state );
-        return 1;
-    }
-
     size_t const available = _cbInfo._buffers.size () - _cbInfo._index;
 
     if ( available < MIN_COMMAND_BUFFERS )
@@ -636,7 +632,6 @@ int SkeletalMeshComponent::OnCreate ( lua_State* state )
         mesh,
         skin,
         skeleton,
-        materialFile,
         &_cbInfo._buffers[ _cbInfo._index ],
         &_cbInfo._fences[ _cbInfo._index ],
         name
@@ -717,6 +712,13 @@ int SkeletalMeshComponent::OnSetEmission ( lua_State* state )
     auto &self = *static_cast<SkeletalMeshComponent*> ( lua_touserdata ( state, 1 ) );
     GXVec3 const &emission = ScriptableGXVec3::Extract ( state, 2 );
     self.SetEmission ( GXColorRGB ( emission._data[ 0U ], emission._data[ 1U ], emission._data[ 2U ], 1.0F ) );
+    return 0;
+}
+
+int SkeletalMeshComponent::OnGetLocal ( lua_State* state )
+{
+    auto const &self = *static_cast<SkeletalMeshComponent const*> ( lua_touserdata ( state, 1 ) );
+    ScriptableGXMat4::Extract ( state, 2 ) = self._localMatrix;
     return 0;
 }
 

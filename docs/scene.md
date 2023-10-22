@@ -625,30 +625,6 @@ g_scene:SetSoundChannelVolume ( eSoundChannel.SFX, 0.42 )
 
 [↬ table of content ⇧](#table-of-content)
 
-## <a id="method-sweep-test-box">`SweepTestBox ( localMatrix, size, groups )`</a>
-
-Method performs sweep test of box shape against physical scene. As a result method returns all objects which are covered by the box shape.
-
-The test result is described by the following <a id="table-sweep-test-result">`SweepTestResult`</a> table:
-
-```lua
-local SweepTestResult = {
-    _count = ... as integer,
-
-    _bodies = ... as array of tables,
-    {
-        1 = ... as RigidBodyComponent,
-        2 = ... as RigidBodyComponent,
-
-        ...
-
-        n = ... as RigidBodyComponent
-    }
-}
-```
-
-[↬ table of content ⇧](#table-of-content)
-
 ## <a id="method-set-sound-listener-transform">`SetSoundListenerTransform ( localMatrix )`</a>
 
 Method sets sound listener transformation.

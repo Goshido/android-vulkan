@@ -64,13 +64,25 @@ local function SetEmission ( self, emission )
     av_SkeletalMeshComponentSetEmission ( self._handle, emission._handle )
 end
 
+local function GetLocal ( self, localMatrix )
+    assert ( type ( self ) == "table" and self._type == eObjectType.SkeletalMeshComponent,
+        [[SkeletalMeshComponent:GetLocal - Calling not via ":" syntax.]]
+    )
+
+    assert ( type ( localMatrix ) == "table" and localMatrix._type == eObjectType.GXMat4,
+        [[SkeletalMeshComponent:GetLocal - "localMatrix" is not GXMat4.]]
+    )
+
+    av_SkeletalMeshComponentGetLocal ( self._handle, localMatrix._handle )
+end
+
 local function SetLocal ( self, localMatrix )
     assert ( type ( self ) == "table" and self._type == eObjectType.SkeletalMeshComponent,
         [[SkeletalMeshComponent:SetLocal - Calling not via ":" syntax.]]
     )
 
     assert ( type ( localMatrix ) == "table" and localMatrix._type == eObjectType.GXMat4,
-        [[SkeletalMeshComponent:SetLocal - "localMatrix" is not a GXMat4.]]
+        [[SkeletalMeshComponent:SetLocal - "localMatrix" is not GXMat4.]]
     )
 
     av_SkeletalMeshComponentSetLocal ( self._handle, localMatrix._handle )
@@ -100,9 +112,9 @@ local mt = {
     end
 }
 
-local function Constructor ( self, name, meshFile, skinFile, skeletonFile, materialFile )
+local function Constructor ( self, name, meshFile, skinFile, skeletonFile )
     local obj = Component ( eObjectType.SkeletalMeshComponent,
-        av_SkeletalMeshComponentCreate ( name, meshFile, skinFile, skeletonFile, materialFile )
+        av_SkeletalMeshComponentCreate ( name, meshFile, skinFile, skeletonFile )
     )
 
     -- Methods
@@ -111,6 +123,7 @@ local function Constructor ( self, name, meshFile, skinFile, skeletonFile, mater
     obj.SetColor1 = SetColor1
     obj.SetColor2 = SetColor2
     obj.SetEmission = SetEmission
+    obj.GetLocal = GetLocal
     obj.SetLocal = SetLocal
     obj.SetMaterial = SetMaterial
 

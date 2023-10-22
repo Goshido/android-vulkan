@@ -18,8 +18,8 @@ local function SetPlaybackSpeed ( self, speed )
         [[AnimationPlayerNode:SetPlaybackSpeed - Calling not via ":" syntax.]]
     )
 
-    assert ( type ( speed ) == "number", [[AnimationPlayerNode:SetPlaybackSpeed - "speed" is not a number.]] )
-    return av_AnimationPlayerNodeSetPlaybackSpeed ( self._handle, speed )
+    assert ( type ( speed ) == "number", [[AnimationPlayerNode:SetPlaybackSpeed - "speed" is not number.]] )
+    av_AnimationPlayerNodeSetPlaybackSpeed ( self._handle, speed )
 end
 
 -- Metamethods

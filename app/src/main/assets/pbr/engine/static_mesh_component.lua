@@ -59,7 +59,7 @@ local function GetLocal ( self, localMatrix )
     )
 
     assert ( type ( localMatrix ) == "table" and localMatrix._type == eObjectType.GXMat4,
-        [[StaticMeshComponent:GetLocal - "localMatrix" is not a GXMat4.]]
+        [[StaticMeshComponent:GetLocal - "localMatrix" is not GXMat4.]]
     )
 
     av_StaticMeshComponentGetLocal ( self._handle, localMatrix._handle )
@@ -71,7 +71,7 @@ local function SetLocal ( self, localMatrix )
     )
 
     assert ( type ( localMatrix ) == "table" and localMatrix._type == eObjectType.GXMat4,
-        [[StaticMeshComponent:SetLocal - "localMatrix" is not a GXMat4.]]
+        [[StaticMeshComponent:SetLocal - "localMatrix" is not GXMat4.]]
     )
 
     av_StaticMeshComponentSetLocal ( self._handle, localMatrix._handle )

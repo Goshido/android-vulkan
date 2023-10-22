@@ -334,6 +334,10 @@ bool StaticMeshComponent::Init ( lua_State &vm, android_vulkan::Renderer &render
             .func = &StaticMeshComponent::OnGarbageCollected
         },
         {
+            .name = "av_StaticMeshComponentGetLocal",
+            .func = &StaticMeshComponent::OnGetLocal
+        },
+        {
             .name = "av_StaticMeshComponentSetColor0",
             .func = &StaticMeshComponent::OnSetColor0
         },
@@ -348,10 +352,6 @@ bool StaticMeshComponent::Init ( lua_State &vm, android_vulkan::Renderer &render
         {
             .name = "av_StaticMeshComponentSetEmission",
             .func = &StaticMeshComponent::OnSetEmission
-        },
-        {
-            .name = "av_StaticMeshComponentGetLocal",
-            .func = &StaticMeshComponent::OnGetLocal
         },
         {
             .name = "av_StaticMeshComponentSetLocal",

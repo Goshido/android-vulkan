@@ -1,6 +1,6 @@
 require "av://engine/animation_graph.lua"
 require "av://engine/animation_player_node.lua"
-require "av://engine/logger.lua"
+require "av://engine/material.lua"
 require "av://engine/script_component.lua"
 require "av://engine/skeletal_mesh_component.lua"
 
@@ -10,18 +10,24 @@ local Player = {}
 
 -- Methods
 local function InitAnimationGraph ( self )
-    local animationGraph = AnimationGraph ( "pbr/assets/Props/experimental/skeletal-mesh-sandbox/human//human.skeleton" )
-    local bendAnimationPlayer = AnimationPlayerNode ()
+    local animationGraph = AnimationGraph ( "pbr/assets/Props/experimental/skeletal-mesh-sandbox/human/human.skeleton" )
+    local walkAnimationPlayer = AnimationPlayerNode ()
 
-    if not bendAnimationPlayer:LoadAnimation ( "pbr/assets/Props/experimental/skeletal-mesh-sandbox/human/walk.animation" ) then
+    local success = walkAnimationPlayer:LoadAnimation (
+        "pbr/assets/Props/experimental/skeletal-mesh-sandbox/human/walk.animation"
+    )
+
+    if not success then
         return
     end
 
-    animationGraph:SetInput ( bendAnimationPlayer )
-    animationGraph:Awake ()
-    self._meshComponent:SetAnimationGraph ( animationGraph )
+    walkAnimationPlayer:SetPlaybackSpeed ( 0.777 )
 
-    self._bendAnimationPlayer = bendAnimationPlayer
+    animationGraph:SetInput ( walkAnimationPlayer )
+    animationGraph:Awake ()
+
+    self._meshComponent:SetAnimationGraph ( animationGraph )
+    self._walkAnimationPlayer = walkAnimationPlayer
     self._animationGraph = animationGraph
 end
 
@@ -37,8 +43,7 @@ local function InitSkeletalMesh ( self, actor )
     local meshComponent = SkeletalMeshComponent ( "Mesh",
         "pbr/assets/Props/experimental/skeletal-mesh-sandbox/human/human.mesh2",
         "pbr/assets/Props/experimental/skeletal-mesh-sandbox/human/human.skin",
-        "pbr/assets/Props/experimental/skeletal-mesh-sandbox/human/human.skeleton",
-        "pbr/assets/Props/experimental/skeletal-mesh-sandbox/human/human.mtl"
+        "pbr/assets/Props/experimental/skeletal-mesh-sandbox/human/human.skeleton"
     )
 
     local m = GXMat4 ()
@@ -46,6 +51,7 @@ local function InitSkeletalMesh ( self, actor )
 
     m:SetW ( origin )
     meshComponent:SetLocal ( m )
+    meshComponent:SetMaterial ( Material ( "pbr/assets/Props/experimental/skeletal-mesh-sandbox/human/human.mtl" ) )
 
     meshActor:AppendComponent ( meshComponent )
     g_scene:AppendActor ( meshActor )

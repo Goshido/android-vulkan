@@ -10,7 +10,7 @@ local function SetAspectRatio ( self, aspectRatio )
         [[CameraComponent:SetAspectRatio - Calling not via ":" syntax.]]
     )
 
-    assert ( type ( aspectRatio ) == "number", [[CameraComponent:SetAspectRatio - "aspectRatio" is not a number.]] )
+    assert ( type ( aspectRatio ) == "number", [[CameraComponent:SetAspectRatio - "aspectRatio" is not number.]] )
     av_CameraComponentSetAspectRatio ( self._handle, aspectRatio )
 end
 
@@ -20,7 +20,7 @@ local function SetLocal ( self, localMatrix )
     )
 
     assert ( type ( localMatrix ) == "table" and localMatrix._type == eObjectType.GXMat4,
-        [[CameraComponent:SetLocal - "localMatrix" is not a GXMat4.]]
+        [[CameraComponent:SetLocal - "localMatrix" is not GXMat4.]]
     )
 
     av_CameraComponentSetLocal ( self._handle, localMatrix._handle )
@@ -32,12 +32,12 @@ local function SetProjection ( self, fieldOfViewRadians, aspectRatio, zNear, zFa
     )
 
     assert ( type ( fieldOfViewRadians ) == "number",
-        [[CameraComponent:SetProjection - "fieldOfViewRadians" is not a number.]]
+        [[CameraComponent:SetProjection - "fieldOfViewRadians" is not number.]]
     )
 
-    assert ( type ( aspectRatio ) == "number", [[CameraComponent:SetProjection - "aspectRatio" is not a number.]] )
-    assert ( type ( zNear ) == "number", [[CameraComponent:SetProjection - "zNear" is not a number.]] )
-    assert ( type ( zFar ) == "number", [[CameraComponent:SetProjection - "zFar" is not a number.]] )
+    assert ( type ( aspectRatio ) == "number", [[CameraComponent:SetProjection - "aspectRatio" is not number.]] )
+    assert ( type ( zNear ) == "number", [[CameraComponent:SetProjection - "zNear" is not number.]] )
+    assert ( type ( zFar ) == "number", [[CameraComponent:SetProjection - "zFar" is not number.]] )
 
     av_CameraComponentSetProjection ( self._handle, fieldOfViewRadians, aspectRatio, zNear, zFar )
 end

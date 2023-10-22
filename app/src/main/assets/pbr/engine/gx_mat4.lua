@@ -12,7 +12,7 @@ local function Clone ( self, other )
     )
 
     assert ( type ( other ) == "table" and other._type == eObjectType.GXMat4,
-        [[GXMat4:Clone - "other" is not a GXMat4.]]
+        [[GXMat4:Clone - "other" is not GXMat4.]]
     )
 
     av_GXMat4Clone ( self._handle, other._handle )
@@ -84,7 +84,7 @@ local function Inverse ( self, sourceMatrix )
     )
 
     assert ( type ( sourceMatrix ) == "table" and sourceMatrix._type == eObjectType.GXMat4,
-        [[GXMat4:Inverse - "sourceMatrix" is not a GXMat4.]]
+        [[GXMat4:Inverse - "sourceMatrix" is not GXMat4.]]
     )
 
     av_GXMat4Inverse ( self._handle, sourceMatrix._handle )
@@ -95,8 +95,8 @@ local function Multiply ( self, a, b )
         [[GXMat4:Multiply - Calling not via ":" syntax.]]
     )
 
-    assert ( type ( a ) == "table" and a._type == eObjectType.GXMat4, [[GXMat4:Multiply - "a" is not a GXMat4.]] )
-    assert ( type ( b ) == "table" and b._type == eObjectType.GXMat4, [[GXMat4:Multiply - "b" is not a GXMat4.]] )
+    assert ( type ( a ) == "table" and a._type == eObjectType.GXMat4, [[GXMat4:Multiply - "a" is not GXMat4.]] )
+    assert ( type ( b ) == "table" and b._type == eObjectType.GXMat4, [[GXMat4:Multiply - "b" is not GXMat4.]] )
 
     av_GXMat4Multiply ( self._handle, a._handle, b._handle )
 end
@@ -171,12 +171,12 @@ local function Perspective ( self, fieldOfViewYRadians, aspectRatio, zNear, zFar
     )
 
     assert ( type ( fieldOfViewYRadians ) == "number",
-        [[GXMat4:Perspective - "fieldOfViewYRadians"" is not a number.]]
+        [[GXMat4:Perspective - "fieldOfViewYRadians"" is not number.]]
     )
 
-    assert ( type ( aspectRatio ) == "number", [[GXMat4:Perspective - "aspectRatio" is not a number.]] )
-    assert ( type ( zNear ) == "number", [[GXMat4:Perspective - "zNear" is not a number.]] )
-    assert ( type ( zFar ) == "number", [[GXMat4:Perspective - "zFar" is not a number.]] )
+    assert ( type ( aspectRatio ) == "number", [[GXMat4:Perspective - "aspectRatio" is not number.]] )
+    assert ( type ( zNear ) == "number", [[GXMat4:Perspective - "zNear" is not number.]] )
+    assert ( type ( zFar ) == "number", [[GXMat4:Perspective - "zFar" is not number.]] )
 
     av_GXMat4Perspective ( self._handle, fieldOfViewYRadians, aspectRatio, zNear, zFar )
 end
@@ -186,7 +186,7 @@ local function RotationX ( self, angle )
         [[GXMat4:RotationX - Calling not via ":" syntax.]]
     )
 
-    assert ( type ( angle ) == "number", [[GXMat4:RotationX - "angle" is not a number.]] )
+    assert ( type ( angle ) == "number", [[GXMat4:RotationX - "angle" is not number.]] )
     av_GXMat4RotationX ( self._handle, angle )
 end
 
@@ -195,7 +195,7 @@ local function RotationY ( self, angle )
         [[GXMat4:RotationY - Calling not via ":" syntax.]]
     )
 
-    assert ( type ( angle ) == "number", [[GXMat4:RotationY - "angle" is not a number.]] )
+    assert ( type ( angle ) == "number", [[GXMat4:RotationY - "angle" is not number.]] )
     av_GXMat4RotationY ( self._handle, angle )
 end
 
@@ -204,7 +204,7 @@ local function RotationZ ( self, angle )
         [[GXMat4:RotationZ - Calling not via ":" syntax.]]
     )
 
-    assert ( type ( angle ) == "number", [[GXMat4:RotationZ - "angle" is not a number.]] )
+    assert ( type ( angle ) == "number", [[GXMat4:RotationZ - "angle" is not number.]] )
     av_GXMat4RotationZ ( self._handle, angle )
 end
 
@@ -213,9 +213,9 @@ local function Scale ( self, x, y, z )
         [[GXMat4:Scale - Calling not via ":" syntax]]
     )
 
-    assert ( type ( x ) == "number", [[GXMat4:Scale - "x" is not a number.]] )
-    assert ( type ( y ) == "number", [[GXMat4:Scale - "y" is not a number.]] )
-    assert ( type ( z ) == "number", [[GXMat4:Scale - "z" is not a number.]] )
+    assert ( type ( x ) == "number", [[GXMat4:Scale - "x" is not number.]] )
+    assert ( type ( y ) == "number", [[GXMat4:Scale - "y" is not number.]] )
+    assert ( type ( z ) == "number", [[GXMat4:Scale - "z" is not number.]] )
 
     av_GXMat4Scale ( self._handle, x, y, z )
 end
@@ -261,9 +261,9 @@ local function Translation ( self, x, y, z )
         [[GXMat4:Translation - Calling not via ":" syntax]]
     )
 
-    assert ( type ( x ) == "number", [[GXMat4:Translation - "x" is not a number.]] )
-    assert ( type ( y ) == "number", [[GXMat4:Translation - "y" is not a number.]] )
-    assert ( type ( z ) == "number", [[GXMat4:Translation - "z" is not a number.]] )
+    assert ( type ( x ) == "number", [[GXMat4:Translation - "x" is not number.]] )
+    assert ( type ( y ) == "number", [[GXMat4:Translation - "y" is not number.]] )
+    assert ( type ( z ) == "number", [[GXMat4:Translation - "z" is not number.]] )
 
     av_GXMat4Translation ( self._handle, x, y, z )
 end

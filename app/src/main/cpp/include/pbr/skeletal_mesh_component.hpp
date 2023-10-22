@@ -74,7 +74,6 @@ class SkeletalMeshComponent final : public RenderableComponent, public Transform
             char const* mesh,
             char const* skin,
             char const* skeleton,
-            char const* material,
             VkCommandBuffer const* commandBuffers,
             VkFence const* fences,
             std::string &&name
@@ -116,6 +115,7 @@ class SkeletalMeshComponent final : public RenderableComponent, public Transform
         [[nodiscard]] static int OnSetColor1 ( lua_State* state );
         [[nodiscard]] static int OnSetColor2 ( lua_State* state );
         [[nodiscard]] static int OnSetEmission ( lua_State* state );
+        [[nodiscard]] static int OnGetLocal ( lua_State* state );
         [[nodiscard]] static int OnSetLocal ( lua_State* state );
         [[nodiscard]] static int OnSetMaterial ( lua_State* state );
 };

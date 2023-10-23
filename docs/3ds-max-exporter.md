@@ -33,8 +33,6 @@ Take a note that exporter will calculate approximate bounds if the artist will i
 
 ## <a id="build">Build</a>
 
-[↬ table of content ⇧](#table-of-content)
-
 **Requirements**
 
 - [_3ds Max 2023 SDK_](https://aps.autodesk.com/developer/overview/3ds-max#3dsmax-sdk)

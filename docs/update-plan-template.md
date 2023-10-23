@@ -63,6 +63,8 @@
 ## Commit messages
 
 Documentation:
+- VVL compilation page has been updated
+- shader compilation page has been updated
 - build requirements have been updated
 
 Project:

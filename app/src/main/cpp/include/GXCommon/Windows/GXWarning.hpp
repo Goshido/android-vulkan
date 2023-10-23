@@ -1,4 +1,4 @@
-// version 1.3
+// version 1.5
 // No include guard allowed
 // Not include this explicitly! Use GXCommon/GXWarning.h instead.
 
@@ -30,6 +30,12 @@
     GX_DISABLE_WARNING ( 4917 )     /* 'declarator' : a GUID can only be associated with a class, interface or namespace */ \
     GX_DISABLE_WARNING ( 5026 )     /* move constructor was implicitly defined as deleted */ \
     GX_DISABLE_WARNING ( 5027 )     /* move assignment operator was implicitly defined as deleted */ \
+    GX_DISABLE_WARNING ( 5038 )     /* data member 'member1' will be initialized after data member 'member2' */ \
     GX_DISABLE_WARNING ( 5039 )     /* 'function': pointer or reference to potentially throwing function passed to extern C function under -EHc. Undefined behavior may occur if this function throws an exception */ \
+    GX_DISABLE_WARNING ( 5040 )     /* dynamic exception specifications are valid only in C++14 and earlier; treating as noexcept(false) */ \
+    GX_DISABLE_WARNING ( 5204 )     /* class has virtual functions, but its trivial destructor is not virtual; instances of objects derived from this class may not be destructed correctly */ \
+    GX_DISABLE_WARNING ( 5219 )     /* implicit conversion from 'type' to 'float', possible loss of data */ \
     GX_DISABLE_WARNING ( 5262 )     /* implicit fall-through occurs here; are you missing a break statement? Use [[fallthrough]] when a break statement is intentionally omitted between cases */ \
-    GX_DISABLE_WARNING ( 5264 )     /* 'variable-name': 'const' variable is not used */
+    GX_DISABLE_WARNING ( 5264 )     /* 'variable-name': 'const' variable is not used */ \
+    GX_DISABLE_WARNING ( 5266 )     /* 'const' qualifier on return type has no effect */ \
+    GX_DISABLE_WARNING ( 5267 )     /* definition of implicit copy constructor for 'type' is deprecated because it has a user-provided assignment operator */

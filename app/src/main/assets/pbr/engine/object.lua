@@ -10,6 +10,8 @@ end ) ()
 
 eObjectType = {
     Actor = MakeUniqueID (),
+    AnimationGraph = MakeUniqueID (),
+    AnimationPlayerNode = MakeUniqueID (),
     CameraComponent = MakeUniqueID (),
     DIVUIElement = MakeUniqueID (),
     GXMat3 = MakeUniqueID (),
@@ -22,6 +24,7 @@ eObjectType = {
     RigidBodyComponent = MakeUniqueID (),
     Scene = MakeUniqueID (),
     ScriptComponent = MakeUniqueID (),
+    SkeletalMeshComponent = MakeUniqueID (),
     SoundEmitterGlobalComponent = MakeUniqueID (),
     SoundEmitterSpatialComponent = MakeUniqueID (),
     StaticMeshComponent = MakeUniqueID (),
@@ -45,6 +48,21 @@ local function Constructor ( self, objectType )
 end
 
 setmetatable ( Object, { __call = Constructor } )
+
+------------------------------------------------------------------------------------------------------------------------
+
+function IsComponent ( objectType )
+    return objectType == eObjectType.CameraComponent or
+        objectType == eObjectType.RigidBodyComponent or
+        objectType == eObjectType.ScriptComponent or
+        objectType == eObjectType.StaticMeshComponent or
+        objectType == eObjectType.TransformComponent or
+        objectType == eObjectType.SoundEmitterGlobalComponent or
+        objectType == eObjectType.SoundEmitterSpatialComponent or
+        objectType == eObjectType.SkeletalMeshComponent
+end
+
+------------------------------------------------------------------------------------------------------------------------
 
 -- Module contract
 return nil

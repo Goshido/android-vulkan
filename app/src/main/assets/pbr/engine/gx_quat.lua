@@ -13,7 +13,7 @@ local function FromAxisAngle ( self, axis, angle )
         [[GXQuat:FromAxisAngle - "axis" is not a GXVec3.]]
     )
 
-    assert ( type ( angle ) == "number", [[GXVec3:FromAxisAngle - "angle" is not a number.]] )
+    assert ( type ( angle ) == "number", [[GXVec3:FromAxisAngle - "angle" is not number.]] )
 
     av_GXQuatFromAxisAngle ( self._handle, axis._handle, angle )
 end
@@ -73,7 +73,7 @@ local function SphericalLinearInterpolation ( self, start, finish, interpolation
     )
 
     assert ( type ( interpolationFactor ) == "number",
-        [[GXVec3:SphericalLinearInterpolation - "interpolationFactor" is not a number.]]
+        [[GXVec3:SphericalLinearInterpolation - "interpolationFactor" is not number.]]
     )
 
     av_GXQuatSphericalLinearInterpolation ( self._handle, start._handle, finish._handle, interpolationFactor );

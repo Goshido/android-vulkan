@@ -87,13 +87,12 @@ class UIPass final
         {
             using Entry = std::unordered_map<Texture2DRef, size_t>;
 
-            std::vector<Entry>                      _registry {};
+            Entry                                   _registry[ DUAL_COMMAND_BUFFER ];
 
-            void Init ( size_t swapchainImages ) noexcept;
             void Destroy () noexcept;
 
-            void CollectGarbage ( size_t swapchainImageIndex ) noexcept;
-            void MarkInUse ( Texture2DRef const &texture, size_t swapchainImageIndex );
+            void CollectGarbage ( size_t commandBufferIndex ) noexcept;
+            void MarkInUse ( Texture2DRef const &texture, size_t commandBufferIndex );
         };
 
         struct Job final
@@ -154,7 +153,7 @@ class UIPass final
 
         ~UIPass () = default;
 
-        [[nodiscard]] bool Execute ( VkCommandBuffer commandBuffer, size_t framebufferIndex ) noexcept;
+        [[nodiscard]] bool Execute ( VkCommandBuffer commandBuffer, size_t commandBufferIndex ) noexcept;
 
         [[nodiscard]] FontStorage &GetFontStorage () noexcept;
         [[nodiscard]] size_t GetUsedVertexCount () const noexcept;

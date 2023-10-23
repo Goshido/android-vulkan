@@ -1,9 +1,15 @@
-#include <pbr/scene.hpp>
+#include <av_assert.hpp>
+#include <core.hpp>
+#include <file.hpp>
+#include <shape_box.hpp>
+#include <trace.hpp>
+#include <android_vulkan_sdk/pbr/scene_desc.hpp>
+#include <pbr/animation_graph.hpp>
 #include <pbr/coordinate_system.hpp>
 #include <pbr/mesh_manager.hpp>
 #include <pbr/material_manager.hpp>
 #include <pbr/renderable_component.hpp>
-#include <pbr/scene_desc.hpp>
+#include <pbr/scene.hpp>
 #include <pbr/script_engine.hpp>
 #include <pbr/scriptable_gxmat4.hpp>
 #include <pbr/scriptable_gxvec3.hpp>
@@ -11,11 +17,6 @@
 #include <pbr/scriptable_sweep_test_result.hpp>
 #include <pbr/static_mesh_component.hpp>
 #include <pbr/ui_layer.hpp>
-#include <av_assert.hpp>
-#include <core.hpp>
-#include <file.hpp>
-#include <shape_box.hpp>
-#include <trace.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -91,6 +92,24 @@ android_vulkan::Physics &Scene::GetPhysics () noexcept
 {
     AV_ASSERT ( _physics )
     return *_physics;
+}
+
+bool Scene::OnAnimationUpdated ( double deltaTime ) noexcept
+{
+    AV_TRACE ( "Lua: animation updated" )
+
+    if ( !lua_checkstack ( _vm, 3 ) )
+    {
+        android_vulkan::LogError ( "pbr::Scene::OnAnimationUpdated - Stack is too small." );
+        return false;
+    }
+
+    lua_pushvalue ( _vm, _onAnimationUpdateIndex );
+    lua_pushvalue ( _vm, _sceneHandle );
+    lua_pushnumber ( _vm, deltaTime );
+    lua_pcall ( _vm, 2, 0, ScriptEngine::GetErrorHandlerIndex () );
+
+    return true;
 }
 
 bool Scene::OnInitDevice ( android_vulkan::Renderer &renderer,
@@ -243,6 +262,9 @@ bool Scene::OnInitDevice ( android_vulkan::Renderer &renderer,
     if ( !bind ( "AppendActorFromNative", _appendActorFromNativeIndex ) )
         return false;
 
+    if ( !bind ( "OnAnimationUpdated", _onAnimationUpdateIndex ) )
+        return false;
+
     if ( !bind ( "OnInput", _onInputIndex ) )
         return false;
 
@@ -282,6 +304,7 @@ void Scene::OnDestroyDevice () noexcept
     _shapeBoxes[ 1U ] = nullptr;
 
     _appendActorFromNativeIndex = std::numeric_limits<int>::max ();
+    _onAnimationUpdateIndex = std::numeric_limits<int>::max ();
     _onInputIndex = std::numeric_limits<int>::max ();
     _onPostPhysicsIndex = std::numeric_limits<int>::max ();
     _onPrePhysicsIndex = std::numeric_limits<int>::max ();
@@ -499,6 +522,12 @@ void Scene::Submit ( android_vulkan::Renderer &renderer ) noexcept
     AV_TRACE ( "Scene submit" )
     SubmitComponents ( renderer, *_renderSession );
     SubmitUI ( renderer, *_renderSession );
+}
+
+void Scene::OnUpdateAnimations ( double deltaTime, size_t commandBufferIndex ) noexcept
+{
+    AV_TRACE ( "Update animations" )
+    AnimationGraph::Update ( static_cast<float> ( deltaTime ), commandBufferIndex );
 }
 
 void Scene::AppendActor ( ActorRef &actor ) noexcept

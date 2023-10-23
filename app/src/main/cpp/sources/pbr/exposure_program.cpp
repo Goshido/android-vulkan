@@ -1,6 +1,5 @@
 #include <pbr/exposure.inc>
 #include <pbr/exposure_program.hpp>
-#include <vulkan_utils.hpp>
 
 
 namespace pbr {

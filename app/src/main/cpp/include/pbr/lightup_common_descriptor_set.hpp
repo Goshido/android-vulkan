@@ -2,6 +2,7 @@
 #define PBR_LIGHTUP_COMMON_DESCRIPTOR_SET_HPP
 
 
+#include "command_buffer_count.hpp"
 #include "gbuffer.hpp"
 #include "lightup_common_descriptor_set_layout.hpp"
 #include "sampler.hpp"
@@ -22,7 +23,7 @@ class LightupCommonDescriptorSet final
 
         VkPipelineLayout                    _pipelineLayout = VK_NULL_HANDLE;
         Sampler                             _prefilterSampler {};
-        std::vector<VkDescriptorSet>        _sets {};
+        VkDescriptorSet                     _sets[ DUAL_COMMAND_BUFFER ];
         UniformBufferPool                   _uniforms { eUniformPoolSize::Nanoscopic_64KB };
         VkWriteDescriptorSet                _writeInfo {};
 
@@ -37,7 +38,7 @@ class LightupCommonDescriptorSet final
 
         ~LightupCommonDescriptorSet () = default;
 
-        void Bind ( VkCommandBuffer commandBuffer, size_t swapchainImageIndex ) noexcept;
+        void Bind ( VkCommandBuffer commandBuffer, size_t commandBufferIndex ) noexcept;
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
             VkCommandPool commandPool,
@@ -49,7 +50,7 @@ class LightupCommonDescriptorSet final
 
         void Update ( VkDevice device,
             VkCommandBuffer commandBuffer,
-            size_t swapchainImageIndex,
+            size_t commandBufferIndex,
             VkExtent2D const &resolution,
             GXMat4 const &viewerLocal,
             GXMat4 const &cvvToView

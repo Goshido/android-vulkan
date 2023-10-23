@@ -12,6 +12,7 @@ find_library ( log-lib log REQUIRED )
 
 # Main app
 add_library ( android-vulkan SHARED
+    app/src/main/cpp/sources/animation_track.cpp
     app/src/main/cpp/sources/contact_detector.cpp
     app/src/main/cpp/sources/contact_manager.cpp
     app/src/main/cpp/sources/core.cpp
@@ -38,6 +39,7 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/shape_box.cpp
     app/src/main/cpp/sources/shape_sphere.cpp
     app/src/main/cpp/sources/simplex.cpp
+    app/src/main/cpp/sources/skin_data.cpp
     app/src/main/cpp/sources/sound_emitter.cpp
     app/src/main/cpp/sources/sound_emitter_global.cpp
     app/src/main/cpp/sources/sound_emitter_spatial.cpp
@@ -59,6 +61,8 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/mandelbrot/mandelbrot_base.cpp
     app/src/main/cpp/sources/mandelbrot/mandelbrot_lut_color.cpp
     app/src/main/cpp/sources/pbr/actor.cpp
+    app/src/main/cpp/sources/pbr/animation_graph.cpp
+    app/src/main/cpp/sources/pbr/animation_player_node.cpp
     app/src/main/cpp/sources/pbr/ascii_string.cpp
     app/src/main/cpp/sources/pbr/attribute_checker.cpp
     app/src/main/cpp/sources/pbr/attribute_parser.cpp
@@ -123,6 +127,7 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/material_pool.cpp
     app/src/main/cpp/sources/pbr/mesh_group.cpp
     app/src/main/cpp/sources/pbr/mesh_manager.cpp
+    app/src/main/cpp/sources/pbr/node_link.cpp
     app/src/main/cpp/sources/pbr/number_parser.cpp
     app/src/main/cpp/sources/pbr/opaque_material.cpp
     app/src/main/cpp/sources/pbr/opaque_program.cpp
@@ -172,6 +177,10 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/scriptable_penetration.cpp
     app/src/main/cpp/sources/pbr/scriptable_sweep_test_result.cpp
     app/src/main/cpp/sources/pbr/set_attribute_checker.cpp
+    app/src/main/cpp/sources/pbr/skeletal_mesh_component.cpp
+    app/src/main/cpp/sources/pbr/skin_descriptor_set_layout.cpp
+    app/src/main/cpp/sources/pbr/skin_pool.cpp
+    app/src/main/cpp/sources/pbr/skin_program.cpp
     app/src/main/cpp/sources/pbr/sound_emitter_global_component.cpp
     app/src/main/cpp/sources/pbr/sound_emitter_spatial_component.cpp
     app/src/main/cpp/sources/pbr/src_property_checker.cpp
@@ -202,6 +211,7 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/uniform_buffer_pool.cpp
     app/src/main/cpp/sources/pbr/uniform_buffer_pool_manager.cpp
     app/src/main/cpp/sources/pbr/unique_attribute_checker.cpp
+    app/src/main/cpp/sources/pbr/universal_game.cpp
     app/src/main/cpp/sources/pbr/utf8_parser.cpp
     app/src/main/cpp/sources/pbr/vertical_align_property.cpp
     app/src/main/cpp/sources/pbr/vertical_align_property_checker.cpp
@@ -209,7 +219,6 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/box_stack/box_stack.cpp
     app/src/main/cpp/sources/pbr/collision/collision.cpp
     app/src/main/cpp/sources/pbr/collision/manipulator.cpp
-    app/src/main/cpp/sources/pbr/mario/world1x1.cpp
     app/src/main/cpp/sources/pbr/ray_casting/ray_casting.cpp
     app/src/main/cpp/sources/pbr/stipple_test/stipple_test.cpp
     app/src/main/cpp/sources/pbr/sweep_testing/actor_body.cpp

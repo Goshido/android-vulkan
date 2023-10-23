@@ -126,11 +126,11 @@ void FontStorage::StagingBuffer::Reset () noexcept
 
 bool FontStorage::Atlas::AddLayers ( android_vulkan::Renderer &renderer,
     VkCommandBuffer commandBuffer,
-    size_t swapchainImageIndex,
+    size_t commandBufferIndex,
     uint32_t layers
 ) noexcept
 {
-    ImageResource &oldResource = _dyingResources[ swapchainImageIndex ];
+    ImageResource &oldResource = _dyingResources[ commandBufferIndex ];
     oldResource = _resource;
     uint32_t const layerCount = _layers + layers;
 
@@ -245,10 +245,9 @@ bool FontStorage::Atlas::AddLayers ( android_vulkan::Renderer &renderer,
     return true;
 }
 
-void FontStorage::Atlas::Init ( uint32_t side, size_t swapchainImages ) noexcept
+void FontStorage::Atlas::Init ( uint32_t side ) noexcept
 {
     _side = side;
-    _dyingResources.resize ( swapchainImages, {} );
 }
 
 void FontStorage::Atlas::Destroy ( android_vulkan::Renderer &renderer ) noexcept
@@ -259,9 +258,9 @@ void FontStorage::Atlas::Destroy ( android_vulkan::Renderer &renderer ) noexcept
     FreeImageResource ( renderer, _resource );
 }
 
-void FontStorage::Atlas::Cleanup ( android_vulkan::Renderer &renderer, size_t swapchainImageIndex ) noexcept
+void FontStorage::Atlas::Cleanup ( android_vulkan::Renderer &renderer, size_t commandBufferIndex ) noexcept
 {
-    FreeImageResource ( renderer, _dyingResources[ swapchainImageIndex ] );
+    FreeImageResource ( renderer, _dyingResources[ commandBufferIndex ] );
 }
 
 void FontStorage::Atlas::FreeImageResource ( android_vulkan::Renderer &renderer, ImageResource &resource ) noexcept
@@ -596,9 +595,7 @@ FontStorage::GlyphInfo const &FontStorage::GetGlyphInfo ( android_vulkan::Render
     return EmbedGlyph ( renderer, glyphs, fontData._fontResource->_face, fontData._fontSize, character );
 }
 
-bool FontStorage::SetMediaResolution ( android_vulkan::Renderer &renderer,
-    VkExtent2D const &nativeViewport
-) noexcept
+bool FontStorage::SetMediaResolution ( android_vulkan::Renderer &renderer, VkExtent2D const &nativeViewport ) noexcept
 {
     uint32_t const side = std::min ( nativeViewport.width, nativeViewport.height );
 
@@ -615,7 +612,7 @@ bool FontStorage::SetMediaResolution ( android_vulkan::Renderer &renderer,
 
     DestroyAtlas ( renderer );
 
-    _atlas.Init ( side, renderer.GetPresentImageCount () );
+    _atlas.Init ( side );
     _pixToUV = 1.0F / static_cast<float> ( side );
 
     float const threshold = _pixToUV * 0.25F;
@@ -627,10 +624,10 @@ bool FontStorage::SetMediaResolution ( android_vulkan::Renderer &renderer,
 
 bool FontStorage::UploadGPUData ( android_vulkan::Renderer &renderer,
     VkCommandBuffer commandBuffer,
-    size_t swapchainImageIndex
+    size_t commandBufferIndex
 ) noexcept
 {
-    _atlas.Cleanup ( renderer, swapchainImageIndex );
+    _atlas.Cleanup ( renderer, commandBufferIndex );
 
     if ( _activeStagingBuffer.empty () )
         return true;
@@ -653,7 +650,7 @@ bool FontStorage::UploadGPUData ( android_vulkan::Renderer &renderer,
 
     if ( newLayers )
     {
-        if ( !_atlas.AddLayers ( renderer, commandBuffer, swapchainImageIndex, static_cast<uint32_t> ( newLayers ) ) )
+        if ( !_atlas.AddLayers ( renderer, commandBuffer, commandBufferIndex, static_cast<uint32_t> ( newLayers ) ) )
         {
             return false;
         }

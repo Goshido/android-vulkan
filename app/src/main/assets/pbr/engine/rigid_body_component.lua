@@ -70,7 +70,7 @@ local function SetShapeSphere ( self, radius, forceAwake )
         [[RigidBodyComponent:SetShapeSphere - Calling not via ":" syntax.]]
     )
 
-    assert ( type ( radius ) == "number", [[RigidBodyComponent:SetShapeSphere - "radius" is not a number.]] )
+    assert ( type ( radius ) == "number", [[RigidBodyComponent:SetShapeSphere - "radius" is not number.]] )
     assert ( type ( forceAwake ) == "boolean", [[RigidBodyComponent:SetShapeSphere - "forceAwake" is not a boolean.]] )
     av_RigidBodyComponentSetShapeSphere ( self._handle, radius, forceAwake )
 end
@@ -81,7 +81,7 @@ local function GetTransform ( self, transform )
     )
 
     assert ( type ( transform ) == "table" and transform._type == eObjectType.GXMat4,
-        [[RigidBodyComponent:GetTransform - "transform" is not a GXMat4.]]
+        [[RigidBodyComponent:GetTransform - "transform" is not GXMat4.]]
     )
 
     av_RigidBodyComponentGetTransform ( self._handle, transform._handle )

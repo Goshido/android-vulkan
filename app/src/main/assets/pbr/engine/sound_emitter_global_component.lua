@@ -53,7 +53,7 @@ local function SetVolume ( self, volume )
         [[SoundEmitterGlobalComponent:SetVolume - Calling not via ":" syntax.]]
     )
 
-    assert ( type ( volume ) == "number", [[SoundEmitterGlobalComponent:SetVolume - "volume" is not a number.]] )
+    assert ( type ( volume ) == "number", [[SoundEmitterGlobalComponent:SetVolume - "volume" is not number.]] )
     return av_SoundEmitterGlobalComponentSetVolume ( self._handle, volume )
 end
 
@@ -98,7 +98,7 @@ end
 
 local function Constructor ( self, name, soundChannel )
     assert ( type ( name ) == "string", [[SoundEmitterGlobalComponent - "name" is not a string."]] )
-    assert ( type ( soundChannel ) == "number", [[SoundEmitterGlobalComponent - "soundChannel" is not a number."]] )
+    assert ( type ( soundChannel ) == "number", [[SoundEmitterGlobalComponent - "soundChannel" is not number."]] )
 
     assert ( soundChannel >= 0 and soundChannel < eSoundChannel.TOTAL,
         "SoundEmitterGlobalComponent - Incorrect sound channel. Component name: " .. name

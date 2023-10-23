@@ -9,10 +9,10 @@ local function Init ( self, x, y, z, w )
         [[GXVec4:Init - Calling not via ":" syntax.]]
     )
 
-    assert ( type ( x ) == "number", [[GXVec4:Init - "x" is not a number.]] )
-    assert ( type ( y ) == "number", [[GXVec4:Init - "y" is not a number.]] )
-    assert ( type ( z ) == "number", [[GXVec4:Init - "z" is not a number.]] )
-    assert ( type ( w ) == "number", [[GXVec4:Init - "w" is not a number.]] )
+    assert ( type ( x ) == "number", [[GXVec4:Init - "x" is not number.]] )
+    assert ( type ( y ) == "number", [[GXVec4:Init - "y" is not number.]] )
+    assert ( type ( z ) == "number", [[GXVec4:Init - "z" is not number.]] )
+    assert ( type ( w ) == "number", [[GXVec4:Init - "w" is not number.]] )
 
     av_GXVec4Init ( self._handle, x, y, z, w )
 end

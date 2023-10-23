@@ -3,6 +3,8 @@
 ## Modules
 
 - [_Actor_](./actor.md)
+- [_AnimationGraph_](./animation-graph.md)
+- [_AnimationPlayerNode_](./animation-player-node.md)
 - [_CameraComponent_](./camera-component.md)
 - [_DIVUIElement_](./div_ui_element.md)
 - [_GXMat3_](./gx-mat3.md)
@@ -17,6 +19,7 @@
 - [_RigidBodyComponent_](./rigid-body-component.md)
 - [_Scene_](./scene.md)
 - [_ScriptComponent_](./script-component.md)
+- [_SkeletalMeshComponent_](./skeletal-mesh-component.md)
 - [_SoundEmitterGlobalComponent_](./sound-emitter-global-component.md)
 - [_SoundEmitterSpatialComponent_](./sound-emitter-spatial-component.md)
 - [_StaticMeshComponent_](./static-mesh-component.md)

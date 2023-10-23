@@ -1,4 +1,4 @@
-// version 1.79
+// version 1.81
 
 #include <GXCommon/GXMath.hpp>
 
@@ -199,15 +199,6 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
     return difference.SquaredLength ();
 }
 
-[[maybe_unused]] GXVoid GXVec3::LinearInterpolation ( GXVec3 const &start,
-    GXVec3 const &finish,
-    GXFloat interpolationFactor
-) noexcept
-{
-    GXVec3 difference {};
-    difference.Subtract ( finish, start );
-    Sum ( start, interpolationFactor, difference );
-}
 
 [[maybe_unused]] GXVoid GXVec3::Project ( GXVec3 const &vector, GXVec3 const &axis ) noexcept
 {
@@ -1064,65 +1055,6 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
         a._data[ 1U ] * b._data[ 2U ] -
         a._data[ 2U ] * b._data[ 1U ] +
         a._data[ 3U ] * b._data[ 0U ];
-}
-
-[[maybe_unused]] GXVoid GXQuat::SphericalLinearInterpolation ( GXQuat const &start,
-    GXQuat const &finish,
-    GXFloat interpolationFactor
-) noexcept
-{
-    if ( interpolationFactor <= 0.0F )
-    {
-        *this = start;
-        return;
-    }
-
-    if ( interpolationFactor >= 1.0F )
-    {
-        *this = finish;
-        return;
-    }
-
-    GXFloat cosom = start._data[ 0U ] * finish._data[ 0U ] +
-        start._data[ 1U ] * finish._data[ 1U ] +
-        start._data[ 2U ] * finish._data[ 2U ] +
-        start._data[ 3U ] * finish._data[ 3U ];
-
-    GXQuat temp {};
-
-    if ( cosom < 0.0f )
-    {
-        temp._data[ 0U ] = -finish._data[ 0U ];
-        temp._data[ 1U ] = -finish._data[ 1U ];
-        temp._data[ 2U ] = -finish._data[ 2U ];
-        temp._data[ 3U ] = -finish._data[ 3U ];
-        cosom = -cosom;
-    }
-    else
-    {
-        temp = finish;
-    }
-
-    GXFloat scale0;
-    GXFloat scale1;
-
-    if ( ( 1.0F - cosom ) > GX_MATH_FLOAT_EPSILON )
-    {
-        GXFloat const omega = std::acos ( cosom );
-        GXFloat const sinom = 1.0F / std::sin ( omega );
-        scale0 = std::sin ( ( 1.0F - interpolationFactor ) * omega ) * sinom;
-        scale1 = std::sin ( interpolationFactor * omega ) * sinom;
-    }
-    else
-    {
-        scale0 = 1.0F - interpolationFactor;
-        scale1 = interpolationFactor;
-    }
-
-    _data[ 0U ] = start._data[ 0U ] * scale0 + temp._data[ 0U ] * scale1;
-    _data[ 1U ] = start._data[ 1U ] * scale0 + temp._data[ 1U ] * scale1;
-    _data[ 2U ] = start._data[ 2U ] * scale0 + temp._data[ 2U ] * scale1;
-    _data[ 3U ] = start._data[ 3U ] * scale0 + temp._data[ 3U ] * scale1;
 }
 
 [[maybe_unused]] GXVoid GXQuat::GetAxisAngle ( GXVec3 &axis, GXFloat &angle ) const noexcept
@@ -2239,17 +2171,6 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
 [[maybe_unused]] GXFloat GXCALL GXRadToDeg ( GXFloat radians ) noexcept
 {
     return radians * RADIANS_TO_DEGREES_FACTOR;
-}
-
-[[maybe_unused]] GXVoid GXCALL GXConvert3DSMaxToGXEngine ( GXVec3 &gx_out,
-    GXFloat max_x,
-    GXFloat max_y,
-    GXFloat max_z
-) noexcept
-{
-    gx_out._data[ 0U ] = -max_x;
-    gx_out._data[ 1U ] = max_z;
-    gx_out._data[ 2U ] = -max_y;
 }
 
 [[maybe_unused]] GXVoid GXCALL GXRandomize () noexcept

@@ -769,6 +769,15 @@ Renderer::Renderer () noexcept:
     _instance ( VK_NULL_HANDLE ),
     _isDeviceExtensionChecked ( false ),
     _isDeviceExtensionSupported ( false ),
+
+    // Minimum supported value from Vulkan spec 1.3.227
+    _maxComputeDispatchSize
+    {
+        .width = 65535U,
+        .height = 65535U,
+        .depth = 65535U
+    },
+
     _maxUniformBufferRange {},
     _memoryAllocator {},
     _physicalDevice ( VK_NULL_HANDLE ),
@@ -877,6 +886,11 @@ VkDevice Renderer::GetDevice () const noexcept
 float Renderer::GetDPI () const noexcept
 {
     return _dpi;
+}
+
+VkExtent3D const &Renderer::GetMaxComputeDispatchSize () const noexcept
+{
+    return _maxComputeDispatchSize;
 }
 
 size_t Renderer::GetMaxUniformBufferRange () const noexcept
@@ -1200,6 +1214,37 @@ char const* Renderer::ResolveVkFormat ( VkFormat format ) noexcept
     return findResult == _vulkanFormatMap.cend () ? UNKNOWN_RESULT : findResult->second;
 }
 
+bool Renderer::CheckExtensionScalarBlockLayout ( std::set<std::string> const &allExtensions ) noexcept
+{
+    if ( !CheckExtensionCommon ( allExtensions, VK_EXT_SCALAR_BLOCK_LAYOUT_EXTENSION_NAME ) )
+        return false;
+
+    VkPhysicalDeviceScalarBlockLayoutFeaturesEXT hardwareSupport
+    {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES_EXT,
+        .pNext = nullptr,
+        .scalarBlockLayout = VK_FALSE
+    };
+
+    VkPhysicalDeviceFeatures2 probe
+    {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
+        .pNext = &hardwareSupport,
+        .features {}
+    };
+
+    vkGetPhysicalDeviceFeatures2 ( _physicalDevice, &probe );
+
+    if ( hardwareSupport.scalarBlockLayout )
+    {
+        LogInfo ( "%sOK: scalarBlockLayout", INDENT_2 );
+        return true;
+    }
+
+    LogError ( "%sFAIL: scalarBlockLayout", INDENT_2 );
+    return false;
+}
+
 bool Renderer::CheckExtensionShaderFloat16Int8 ( std::set<std::string> const &allExtensions ) noexcept
 {
     if ( !CheckExtensionCommon ( allExtensions, VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME ) )
@@ -1244,7 +1289,8 @@ bool Renderer::CheckRequiredDeviceExtensions ( std::vector<char const*> const &d
 
     // Note bitwise '&' is intentional. All checks must be done to view whole picture.
 
-    _isDeviceExtensionSupported = AV_BITWISE ( CheckExtensionShaderFloat16Int8 ( allExtensions ) ) &
+    _isDeviceExtensionSupported = AV_BITWISE ( CheckExtensionScalarBlockLayout ( allExtensions ) ) &
+        AV_BITWISE ( CheckExtensionShaderFloat16Int8 ( allExtensions ) ) &
         AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_SEPARATE_DEPTH_STENCIL_LAYOUTS_EXTENSION_NAME ) ) &
         AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME ) ) &
         AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_SWAPCHAIN_EXTENSION_NAME ) );
@@ -1404,6 +1450,17 @@ bool Renderer::DeployDevice () noexcept
     if ( !SelectTargetHardware ( _physicalDevice, _queueFamilyIndex ) )
         return false;
 
+    VkPhysicalDeviceProperties props;
+    vkGetPhysicalDeviceProperties ( _physicalDevice, &props );
+    auto const &maxComputeWorkGroupCount = props.limits.maxComputeWorkGroupCount;
+
+    _maxComputeDispatchSize = VkExtent3D
+    {
+        .width = maxComputeWorkGroupCount[ 0U ],
+        .height = maxComputeWorkGroupCount[ 1U ],
+        .depth = maxComputeWorkGroupCount[ 2U ]
+    };
+
     deviceQueueCreateInfo.queueFamilyIndex = _queueFamilyIndex;
     auto const &caps = _physicalDeviceInfo[ _physicalDevice ];
 
@@ -1445,8 +1502,16 @@ bool Renderer::DeployDevice () noexcept
         .shaderInt8 = VK_FALSE
     };
 
+    constexpr static VkPhysicalDeviceScalarBlockLayoutFeaturesEXT scalarBlockFeatures
+    {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES_EXT,
+        .pNext = const_cast<VkPhysicalDeviceFloat16Int8FeaturesKHR*> ( &float16Int8Features ),
+        .scalarBlockLayout = VK_TRUE
+    };
+
     constexpr char const* extensions[] =
     {
+        VK_EXT_SCALAR_BLOCK_LAYOUT_EXTENSION_NAME,
         VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME,
         VK_KHR_SEPARATE_DEPTH_STENCIL_LAYOUTS_EXTENSION_NAME,
         VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME,
@@ -1456,7 +1521,7 @@ bool Renderer::DeployDevice () noexcept
     VkDeviceCreateInfo const deviceCreateInfo
     {
         .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-        .pNext = &float16Int8Features,
+        .pNext = &scalarBlockFeatures,
         .flags = 0U,
         .queueCreateInfoCount = 1U,
         .pQueueCreateInfos = &deviceQueueCreateInfo,

@@ -3,17 +3,6 @@ require "av://engine/object.lua"
 
 Component = {}
 
--- Utils
-local function IsComponent ( objectType )
-    return objectType == eObjectType.CameraComponent or
-        objectType == eObjectType.RigidBodyComponent or
-        objectType == eObjectType.ScriptComponent or
-        objectType == eObjectType.StaticMeshComponent or
-        objectType == eObjectType.TransformComponent or
-        objectType == eObjectType.SoundEmitterGlobalComponent or
-        objectType == eObjectType.SoundEmitterSpatialComponent
-end
-
 -- Methods
 local function GetName ( self )
     assert ( type ( self ) == "table" and IsComponent ( self._type ),
@@ -25,6 +14,7 @@ end
 
 -- Metamethods
 local function Constructor ( self, objectType, handle )
+    assert ( type ( handle ) == "userdata", [[Component:Constructor - "handle" is not native object.]] )
     local obj = Object ( objectType )
 
     -- Data

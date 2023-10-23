@@ -2,8 +2,8 @@
 #define PBR_COMPONENT_HPP
 
 
-#include "component_desc.hpp"
 #include "types.hpp"
+#include <android_vulkan_sdk/pbr/component_desc.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

@@ -1,4 +1,4 @@
-// version 1.80
+// version 1.82
 
 #ifndef GX_MATH_HPP
 #define GX_MATH_HPP
@@ -10,6 +10,7 @@
 GX_DISABLE_COMMON_WARNINGS
 
 #include <cmath>
+#include <float.h>
 #include <limits.h>
 
 GX_RESTORE_WARNING_STATE
@@ -855,12 +856,6 @@ class [[maybe_unused]] GXProjectionClipPlanes final
 
 [[maybe_unused, nodiscard]] GXFloat GXCALL GXDegToRad ( GXFloat degrees ) noexcept;
 [[maybe_unused, nodiscard]] GXFloat GXCALL GXRadToDeg ( GXFloat radians ) noexcept;
-
-[[maybe_unused]] GXVoid GXCALL GXConvert3DSMaxToGXEngine ( GXVec3 &gx_out,
-    GXFloat max_x,
-    GXFloat max_y,
-    GXFloat max_z
-) noexcept;
 
 [[maybe_unused]] GXVoid GXCALL GXRandomize () noexcept;
 [[maybe_unused, nodiscard]] GXFloat GXCALL GXRandomNormalize () noexcept;

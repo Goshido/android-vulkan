@@ -1,16 +1,15 @@
-#ifndef MESH_GEOMETRY_HPP
-#define MESH_GEOMETRY_HPP
+#ifndef ANDROID_VULKAN_MESH_GEOMETRY_HPP
+#define ANDROID_VULKAN_MESH_GEOMETRY_HPP
 
 
-#include <GXCommon/GXWarning.hpp>
+#include "buffer_info.hpp"
+#include "renderer.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
 
 #include <string>
 
 GX_RESTORE_WARNING_STATE
-
-#include "renderer.hpp"
 
 
 namespace android_vulkan {
@@ -27,12 +26,14 @@ class MeshGeometry final
         VkBuffer            _vertexBuffer = VK_NULL_HANDLE;
         VkDeviceMemory      _vertexBufferMemory = VK_NULL_HANDLE;
         VkDeviceSize        _vertexBufferOffset = std::numeric_limits<VkDeviceSize>::max ();
+        VkDeviceSize        _vertexBufferRange = 0U;
 
         VkBuffer            _transferBuffer = VK_NULL_HANDLE;
         VkDeviceMemory      _transferBufferMemory = VK_NULL_HANDLE;
         VkDeviceSize        _transferBufferOffset = std::numeric_limits<VkDeviceSize>::max ();
 
         uint32_t            _vertexCount = 0U;
+        uint32_t            _vertexBufferVertexCount = 0U;
         std::string         _fileName {};
 
     public:
@@ -51,6 +52,8 @@ class MeshGeometry final
 
         [[nodiscard]] GXAABB const &GetBounds () const noexcept;
         [[nodiscard]] VkBuffer const &GetVertexBuffer () const noexcept;
+        [[nodiscard]] BufferInfo GetVertexBufferInfo () const noexcept;
+        [[nodiscard]] uint32_t GetVertexBufferVertexCount () const noexcept;
         [[nodiscard]] VkBuffer const &GetIndexBuffer () const noexcept;
         [[nodiscard]] std::string const &GetName () const noexcept;
         [[nodiscard]] uint32_t GetVertexCount () const noexcept;
@@ -59,9 +62,9 @@ class MeshGeometry final
         // Mesh geometry is not unique if it was loaded from .mesh file.
         // Mesh geometry is unique if it was created from raw data.
         [[nodiscard]] bool IsUnique () const noexcept;
+        void MakeUnique () noexcept;
 
         [[nodiscard]] bool LoadMesh ( std::string &&fileName,
-            VkBufferUsageFlags usage,
             Renderer &renderer,
             VkCommandBuffer commandBuffer,
             VkFence fence
@@ -70,7 +73,6 @@ class MeshGeometry final
         [[maybe_unused, nodiscard]] bool LoadMesh ( uint8_t const* data,
             size_t size,
             uint32_t vertexCount,
-            VkBufferUsageFlags usage,
             Renderer &renderer,
             VkCommandBuffer commandBuffer,
             VkFence fence
@@ -78,6 +80,7 @@ class MeshGeometry final
 
         [[nodiscard]] bool LoadMesh ( uint8_t const* vertexData,
             size_t vertexDataSize,
+            uint32_t vertexCount,
             uint32_t const* indices,
             uint32_t indexCount,
             GXAABB const &bounds,
@@ -90,7 +93,6 @@ class MeshGeometry final
         void FreeResourceInternal ( Renderer &renderer ) noexcept;
 
         [[nodiscard]] bool LoadFromMesh ( std::string &&fileName,
-            VkBufferUsageFlags usage,
             Renderer &renderer,
             VkCommandBuffer commandBuffer,
             VkFence fence
@@ -134,4 +136,4 @@ class MeshGeometry final
 } // namespace android_vulkan
 
 
-#endif // MESH_GEOMETRY_HPP
+#endif // ANDROID_VULKAN_MESH_GEOMETRY_HPP

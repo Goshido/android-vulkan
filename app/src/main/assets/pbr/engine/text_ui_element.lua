@@ -9,10 +9,10 @@ local function SetColorHSV ( self, h, s, v, a )
         [[TextUIElement:SetColorHSV - Calling not via ":" syntax.]]
     )
 
-    assert ( type ( h ) == "number", [[TextUIElement:SetColorHSV - "h" is not a number.]] )
-    assert ( type ( s ) == "number", [[TextUIElement:SetColorHSV - "s" is not a number.]] )
-    assert ( type ( v ) == "number", [[TextUIElement:SetColorHSV - "v" is not a number.]] )
-    assert ( type ( a ) == "number", [[TextUIElement:SetColorHSV - "a" is not a number.]] )
+    assert ( type ( h ) == "number", [[TextUIElement:SetColorHSV - "h" is not number.]] )
+    assert ( type ( s ) == "number", [[TextUIElement:SetColorHSV - "s" is not number.]] )
+    assert ( type ( v ) == "number", [[TextUIElement:SetColorHSV - "v" is not number.]] )
+    assert ( type ( a ) == "number", [[TextUIElement:SetColorHSV - "a" is not number.]] )
 
     av_TextUIElementSetColorHSV ( self._handle, h, s, v, a )
 end
@@ -22,10 +22,10 @@ local function SetColorRGB ( self, r, g, b, a )
         [[TextUIElement:SetColorRGB - Calling not via ":" syntax.]]
     )
 
-    assert ( type ( r ) == "number", [[TextUIElement:SetColorRGB - "r" is not a number.]] )
-    assert ( type ( g ) == "number", [[TextUIElement:SetColorRGB - "g" is not a number.]] )
-    assert ( type ( b ) == "number", [[TextUIElement:SetColorRGB - "b" is not a number.]] )
-    assert ( type ( a ) == "number", [[TextUIElement:SetColorRGB - "a" is not a number.]] )
+    assert ( type ( r ) == "number", [[TextUIElement:SetColorRGB - "r" is not number.]] )
+    assert ( type ( g ) == "number", [[TextUIElement:SetColorRGB - "g" is not number.]] )
+    assert ( type ( b ) == "number", [[TextUIElement:SetColorRGB - "b" is not number.]] )
+    assert ( type ( a ) == "number", [[TextUIElement:SetColorRGB - "a" is not number.]] )
 
     av_TextUIElementSetColorRGB ( self._handle, r, g, b, a )
 end

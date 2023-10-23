@@ -51,7 +51,7 @@ bool TextUIElement::SubmitCache::Run ( UpdateInfo &info, std::vector<float> cons
     bool const c3 = !_parenTopLeft.IsEqual ( info._parentTopLeft );
 
     std::span<float const> dst ( info._parentLineHeights + info._line, cachedLineHeight.size () );
-    bool const c4 = !std::equal ( dst.cbegin (), dst.cend (), cachedLineHeight.cbegin () );
+    bool const c4 = !std::equal ( dst.begin (), dst.end (), cachedLineHeight.cbegin () );
 
     _isTextChanged = false;
     _isColorChanged = false;

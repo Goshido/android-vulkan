@@ -1,12 +1,12 @@
+#include <android_vulkan_sdk/pbr/static_mesh_component_desc.hpp>
+#include <pbr/material_manager.hpp>
+#include <pbr/mesh_manager.hpp>
 #include <pbr/static_mesh_component.hpp>
 #include <pbr/script_engine.hpp>
+#include <pbr/scriptable_gxmat4.hpp>
 #include <pbr/scriptable_gxvec3.hpp>
 #include <pbr/scriptable_gxvec4.hpp>
 #include <pbr/scriptable_material.hpp>
-#include <pbr/static_mesh_component_desc.hpp>
-#include <pbr/material_manager.hpp>
-#include <pbr/mesh_manager.hpp>
-#include <pbr/scriptable_gxmat4.hpp>
 #include <av_assert.hpp>
 #include <guid_generator.hpp>
 
@@ -33,6 +33,8 @@ constexpr size_t ALLOCATE_COMMAND_BUFFERS = 8U;
 constexpr size_t INITIAL_COMMAND_BUFFERS = 32U;
 
 constexpr char const DEFAULT_MATERIAL[] = "pbr/assets/System/Default.mtl";
+
+static_assert ( ALLOCATE_COMMAND_BUFFERS >= MeshManager::MaxCommandBufferPerMesh () );
 
 } // end of anonymous namespace
 
@@ -185,7 +187,8 @@ StaticMeshComponent::StaticMeshComponent ( android_vulkan::Renderer &renderer,
 
 void StaticMeshComponent::FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept
 {
-    _mesh->FreeTransferResources ( renderer );
+    if ( _mesh )
+        _mesh->FreeTransferResources ( renderer );
 
     if ( !_material )
         return;
@@ -223,7 +226,7 @@ void StaticMeshComponent::Submit ( RenderSession &renderSession ) noexcept
     return _color0;
 }
 
-[[maybe_unused]] void StaticMeshComponent::SetColor0 ( GXColorRGB const &color ) noexcept
+void StaticMeshComponent::SetColor0 ( GXColorRGB const &color ) noexcept
 {
     _color0 = color;
 }
@@ -233,7 +236,7 @@ void StaticMeshComponent::Submit ( RenderSession &renderSession ) noexcept
     return _color1;
 }
 
-[[maybe_unused]] void StaticMeshComponent::SetColor1 ( GXColorRGB const &color ) noexcept
+void StaticMeshComponent::SetColor1 ( GXColorRGB const &color ) noexcept
 {
     _color1 = color;
 }
@@ -243,7 +246,7 @@ void StaticMeshComponent::Submit ( RenderSession &renderSession ) noexcept
     return _color2;
 }
 
-[[maybe_unused]] void StaticMeshComponent::SetColor2 ( GXColorRGB const &color ) noexcept
+void StaticMeshComponent::SetColor2 ( GXColorRGB const &color ) noexcept
 {
     _color2 = color;
 }
@@ -331,6 +334,10 @@ bool StaticMeshComponent::Init ( lua_State &vm, android_vulkan::Renderer &render
             .func = &StaticMeshComponent::OnGarbageCollected
         },
         {
+            .name = "av_StaticMeshComponentGetLocal",
+            .func = &StaticMeshComponent::OnGetLocal
+        },
+        {
             .name = "av_StaticMeshComponentSetColor0",
             .func = &StaticMeshComponent::OnSetColor0
         },
@@ -345,10 +352,6 @@ bool StaticMeshComponent::Init ( lua_State &vm, android_vulkan::Renderer &render
         {
             .name = "av_StaticMeshComponentSetEmission",
             .func = &StaticMeshComponent::OnSetEmission
-        },
-        {
-            .name = "av_StaticMeshComponentGetLocal",
-            .func = &StaticMeshComponent::OnGetLocal
         },
         {
             .name = "av_StaticMeshComponentSetLocal",
@@ -373,10 +376,8 @@ bool StaticMeshComponent::Init ( lua_State &vm, android_vulkan::Renderer &render
         .queueFamilyIndex = renderer.GetQueueFamilyIndex ()
     };
 
-    VkDevice device = renderer.GetDevice ();
-
     bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateCommandPool ( device, &createInfo, nullptr, &_commandPool ),
+        vkCreateCommandPool ( renderer.GetDevice (), &createInfo, nullptr, &_commandPool ),
         "pbr::StaticMeshComponent::Init",
         "Can't create command pool"
     );
@@ -450,7 +451,7 @@ bool StaticMeshComponent::Sync () noexcept
         return false;
 
     result = android_vulkan::Renderer::CheckVkResult (
-        vkResetCommandPool ( _renderer->GetDevice (), _commandPool, 0U ),
+        vkResetCommandPool ( device, _commandPool, 0U ),
         "pbr::StaticMeshComponent::Sync",
         "Can't reset command pool"
     );
@@ -553,7 +554,7 @@ int StaticMeshComponent::OnCreate ( lua_State* state )
 
     size_t const available = _commandBuffers.size () - _commandBufferIndex;
 
-    if ( available < 1U )
+    if ( available < MeshManager::MaxCommandBufferPerMesh () )
     {
         if ( !AllocateCommandBuffers ( ALLOCATE_COMMAND_BUFFERS ) )
         {

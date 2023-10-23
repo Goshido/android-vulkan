@@ -1,10 +1,10 @@
+#include <android_vulkan_sdk/pbr/actor_desc.hpp>
+#include <android_vulkan_sdk/pbr/scene_desc.hpp>
 #include <pbr/pbr_game.hpp>
-#include <pbr/actor_desc.hpp>
 #include <pbr/cube_map_manager.hpp>
 #include <pbr/material_manager.hpp>
 #include <pbr/mesh_manager.hpp>
 #include <pbr/renderable_component.hpp>
-#include <pbr/scene_desc.hpp>
 #include <av_assert.hpp>
 #include <gamepad.hpp>
 #include <trace.hpp>

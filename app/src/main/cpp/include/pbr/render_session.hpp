@@ -2,6 +2,7 @@
 #define PBR_RENDER_SESSION_HPP
 
 
+#include "command_buffer_count.hpp"
 #include "default_texture_manager.hpp"
 #include "exposure_pass.hpp"
 #include "geometry_pass.hpp"
@@ -42,7 +43,8 @@ class RenderSession final
         float                       _brightnessBalance = 0.0F;
         bool                        _brightnessChanged = false;
 
-        std::vector<CommandInfo>    _commandInfo {};
+        CommandInfo                 _commandInfo[ DUAL_COMMAND_BUFFER ];
+        size_t                      _writingCommandInfo = 0U;
 
         GXMat4                      _cvvToView {};
         GXMat4                      _view {};
@@ -89,6 +91,7 @@ class RenderSession final
 
         void FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept;
         [[nodiscard]] UIPass &GetUIPass () noexcept;
+        [[nodiscard]] size_t GetWritingCommandBufferIndex () const noexcept;
 
         [[nodiscard]] bool OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept;
         void OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept;

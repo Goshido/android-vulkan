@@ -3,9 +3,9 @@
 
 
 #include "point_light.hpp"
-#include "point_light_component_desc.hpp"
 #include "renderable_component.hpp"
 #include "transformable.hpp"
+#include <android_vulkan_sdk/pbr/point_light_component_desc.hpp>
 
 
 namespace pbr {

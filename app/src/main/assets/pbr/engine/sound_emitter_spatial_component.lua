@@ -42,7 +42,7 @@ local function SetDistance ( self, distance )
         [[SoundEmitterSpatialComponent:SetDistance - Calling not via ":" syntax.]]
     )
 
-    assert ( type ( distance ) == "number", [[SoundEmitterSpatialComponent:SetDistance - "distance" is not a number.]] )
+    assert ( type ( distance ) == "number", [[SoundEmitterSpatialComponent:SetDistance - "distance" is not number.]] )
     av_SoundEmitterSpatialComponentSetDistance ( self._handle, distance )
 end
 
@@ -74,7 +74,7 @@ local function SetVolume ( self, volume )
         [[SoundEmitterSpatialComponent:SetVolume - Calling not via ":" syntax.]]
     )
 
-    assert ( type ( volume ) == "number", [[SoundEmitterSpatialComponent:SetVolume - "volume" is not a number.]] )
+    assert ( type ( volume ) == "number", [[SoundEmitterSpatialComponent:SetVolume - "volume" is not number.]] )
     return av_SoundEmitterSpatialComponentSetVolume ( self._handle, volume )
 end
 
@@ -121,7 +121,7 @@ end
 
 local function Constructor ( self, name, soundChannel )
     assert ( type ( name ) == "string", [[SoundEmitterSpatialComponent - "name" is not a string."]] )
-    assert ( type ( soundChannel ) == "number", [[SoundEmitterSpatialComponent - "soundChannel" is not a number."]] )
+    assert ( type ( soundChannel ) == "number", [[SoundEmitterSpatialComponent - "soundChannel" is not number."]] )
 
     assert ( soundChannel >= 0 and soundChannel < eSoundChannel.TOTAL,
         "SoundEmitterSpatialComponent - Incorrect sound channel. Component name: " .. name

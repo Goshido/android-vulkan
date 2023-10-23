@@ -6,12 +6,6 @@
 #include "render_session.hpp"
 #include <game.hpp>
 
-GX_DISABLE_COMMON_WARNINGS
-
-#include <list>
-
-GX_RESTORE_WARNING_STATE
-
 
 namespace pbr {
 

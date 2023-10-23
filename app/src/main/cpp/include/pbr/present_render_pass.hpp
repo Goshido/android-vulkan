@@ -29,10 +29,7 @@ class PresentRenderPass final
 
         ~PresentRenderPass () = default;
 
-        [[nodiscard]] bool AcquirePresentTarget ( android_vulkan::Renderer &renderer,
-            size_t &swapchainImageIndex
-        ) noexcept;
-
+        [[nodiscard]] bool AcquirePresentTarget ( android_vulkan::Renderer &renderer ) noexcept;
         [[nodiscard]] VkRenderPass GetRenderPass () const noexcept;
 
         [[nodiscard]] bool OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept;

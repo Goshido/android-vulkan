@@ -2,10 +2,10 @@
 #define PBR_ACTOR_HPP
 
 
-#include "actor_desc.hpp"
-#include "component_classes.hpp"
 #include "types.hpp"
 #include <physics.hpp>
+#include <android_vulkan_sdk/pbr/actor_desc.hpp>
+#include <android_vulkan_sdk/pbr/component_classes.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -154,6 +154,11 @@ class Actor final
             android_vulkan::Physics &physics
         ) noexcept;
 
+        void AppendSkeletalMeshComponentFromScript ( ComponentRef &component,
+            ComponentList &renderable,
+            android_vulkan::Physics &physics
+        ) noexcept;
+
         void AppendSoundEmitterGlobalComponentFromNative ( ComponentRef &component,
             ComponentList &renderable,
             android_vulkan::Physics &physics,
@@ -210,6 +215,7 @@ class Actor final
         ) noexcept;
 
         void DestroyRigidBodyComponent ( Component &component ) noexcept;
+        void DestroySkeletalMeshComponent ( Component &component ) noexcept;
         void DestroyStaticMeshComponent ( Component &component ) noexcept;
         void DestroyComponentStub ( Component &component ) noexcept;
 

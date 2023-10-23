@@ -54,13 +54,13 @@ bool ImageUIElement::ApplyLayoutCache::Run ( ApplyInfo &info ) noexcept
 
 //----------------------------------------------------------------------------------------------------------------------
 
-bool ImageUIElement::SubmitCache::Run ( UpdateInfo &info, std::vector<float> const &cachedLineHeight ) noexcept
+bool ImageUIElement::SubmitCache::Run ( UpdateInfo &info, std::vector<float> const &cachedLineHeight ) const noexcept
 {
     bool const c0 = !_penIn.IsEqual ( info._pen );
     bool const c1 = !_parenTopLeft.IsEqual ( info._parentTopLeft );
 
     std::span<float const> dst ( info._parentLineHeights + info._line, cachedLineHeight.size () );
-    bool const c2 = !std::equal ( dst.cbegin (), dst.cend (), cachedLineHeight.cbegin () );
+    bool const c2 = !std::equal ( dst.begin (), dst.end (), cachedLineHeight.cbegin () );
 
     if ( c0 | c1 | c2 )
         return false;

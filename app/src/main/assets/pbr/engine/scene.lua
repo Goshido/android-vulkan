@@ -26,6 +26,7 @@ local function AppendActorFromNative ( self, actor )
 
     table.insert ( list, actor )
 
+    local animationUpdateScripts = self._animationUpdateScripts
     local inputScripts = self._inputScripts
     local postPhysicsScripts = self._postPhysicsScripts
     local prePhysicsScripts = self._prePhysicsScripts
@@ -35,6 +36,10 @@ local function AppendActorFromNative ( self, actor )
     for groupKey, group in pairs ( actor._components ) do
         for k, v in pairs ( group ) do
             if v._type == eObjectType.ScriptComponent then
+                if type ( v.OnAnimationUpdated ) == "function" then
+                    animationUpdateScripts[ v ] = v
+                end
+
                 if type ( v.OnInput ) == "function" then
                     inputScripts[ v ] = v
                 end
@@ -103,14 +108,14 @@ local function GetPenetrationBox ( self, localMatrix, size, groups )
     )
 
     assert ( type ( localMatrix ) == "table" and localMatrix._type == eObjectType.GXMat4,
-        [[Scene:GetPenetrationBox - "localMatrix" is not a GXMat4.]]
+        [[Scene:GetPenetrationBox - "localMatrix" is not GXMat4.]]
     )
 
     assert ( type ( size ) == "table" and size._type == eObjectType.GXVec3,
         [[Scene:GetPenetrationBox - "size" is not a GXVec3.]]
     )
 
-    assert ( type ( groups ) == "number", [[Scene:GetPenetrationBox - "groups" is not a number.]] )
+    assert ( type ( groups ) == "number", [[Scene:GetPenetrationBox - "groups" is not number.]] )
     return av_SceneGetPenetrationBox ( self._handle, localMatrix._handle, size._handle, groups )
 end
 
@@ -144,6 +149,12 @@ local function GetRenderTargetHeight ( self )
     )
 
     return av_SceneGetRenderTargetHeight ( self._handle )
+end
+
+local function OnAnimationUpdated ( self, inputEvent )
+    for k, v in pairs ( self._animationUpdateScripts ) do
+        v:OnAnimationUpdated ( inputEvent )
+    end
 end
 
 local function OnInput ( self, inputEvent )
@@ -181,6 +192,7 @@ local function OnUpdate ( self, deltaTime )
         return
     end
 
+    local animationUpdateScripts = self._animationUpdateScripts
     local inputScripts = self._inputScripts
     local postPhysicsScripts = self._postPhysicsScripts
     local prePhysicsScripts = self._prePhysicsScripts
@@ -192,6 +204,7 @@ local function OnUpdate ( self, deltaTime )
         for groupKey, group in pairs ( actor._components ) do
             for k, v in pairs ( group ) do
                 if v._type == eObjectType.ScriptComponent then
+                    animationUpdateScripts[ v ] = nil
                     inputScripts[ v ] = nil
                     postPhysicsScripts[ v ] = nil
                     prePhysicsScripts[ v ] = nil
@@ -222,7 +235,7 @@ local function OverlapTestBoxBox ( self, localMatrixA, sizeA, localMatrixB, size
     )
 
     assert ( type ( localMatrixA ) == "table" and localMatrixA._type == eObjectType.GXMat4,
-        [[Scene:OverlapTestBoxBox - "localMatrixA" is not a GXMat4.]]
+        [[Scene:OverlapTestBoxBox - "localMatrixA" is not GXMat4.]]
     )
 
     assert ( type ( sizeA ) == "table" and sizeA._type == eObjectType.GXVec3,
@@ -230,7 +243,7 @@ local function OverlapTestBoxBox ( self, localMatrixA, sizeA, localMatrixB, size
     )
 
     assert ( type ( localMatrixB ) == "table" and localMatrixB._type == eObjectType.GXMat4,
-        [[Scene:OverlapTestBoxBox - "localMatrixB" is not a GXMat4.]]
+        [[Scene:OverlapTestBoxBox - "localMatrixB" is not GXMat4.]]
     )
 
     assert ( type ( sizeB ) == "table" and sizeB._type == eObjectType.GXVec3,
@@ -266,7 +279,7 @@ local function SetBrightness ( self, brightnessBalance )
         [[Scene:SetBrightness - Calling not via ":" syntax.]]
     )
 
-    assert ( type ( brightnessBalance ) == "number", [[Scene:SetBrightness - "brightnessBalance" is not a number.]] )
+    assert ( type ( brightnessBalance ) == "number", [[Scene:SetBrightness - "brightnessBalance" is not number.]] )
     av_SceneSetBrightness ( self._handle, brightnessBalance )
 end
 
@@ -275,7 +288,7 @@ local function SetExposureCompensation ( self, exposureValue )
         [[Scene:SetExposureCompensation - Calling not via ":" syntax.]]
     )
 
-    assert ( type ( exposureValue ) == "number", [[Scene:SetExposureCompensation - "exposureValue" is not a number.]] )
+    assert ( type ( exposureValue ) == "number", [[Scene:SetExposureCompensation - "exposureValue" is not number.]] )
     av_SceneSetExposureCompensation ( self._handle, exposureValue )
 end
 
@@ -285,7 +298,7 @@ local function SetExposureMaximumBrightness ( self, exposureValue )
     )
 
     assert ( type ( exposureValue ) == "number",
-        [[Scene:SetExposureMaximumBrightness - "exposureValue" is not a number.]]
+        [[Scene:SetExposureMaximumBrightness - "exposureValue" is not number.]]
     )
 
     av_SceneSetExposureMaximumBrightness ( self._handle, exposureValue )
@@ -297,7 +310,7 @@ local function SetExposureMinimumBrightness ( self, exposureValue )
     )
 
     assert ( type ( exposureValue ) == "number",
-        [[Scene:SetExposureMinimumBrightness - "exposureValue" is not a number.]]
+        [[Scene:SetExposureMinimumBrightness - "exposureValue" is not number.]]
     )
 
     av_SceneSetExposureMinimumBrightness ( self._handle, exposureValue )
@@ -308,7 +321,7 @@ local function SetEyeAdaptationSpeed ( self, speed )
         [[Scene:SetEyeAdaptationSpeed - Calling not via ":" syntax.]]
     )
 
-    assert ( type ( speed ) == "number", [[Scene:SetEyeAdaptationSpeed - "speed" is not a number.]] )
+    assert ( type ( speed ) == "number", [[Scene:SetEyeAdaptationSpeed - "speed" is not number.]] )
     av_SceneSetEyeAdaptationSpeed ( self._handle, speed )
 end
 
@@ -317,13 +330,13 @@ local function SetSoundChannelVolume ( self, soundChannel, volume )
         [[Scene:SetSoundChannelVolume - Calling not via ":" syntax.]]
     )
 
-    assert ( type ( soundChannel ) == "number", [[Scene:SetSoundChannelVolume - "soundChannel" is not a number."]] )
+    assert ( type ( soundChannel ) == "number", [[Scene:SetSoundChannelVolume - "soundChannel" is not number."]] )
 
     assert ( soundChannel >= 0 and soundChannel < eSoundChannel.TOTAL,
         [[Scene:SetSoundChannelVolume - Incorrect sound channel.]]
     )
 
-    assert ( type ( volume ) == "number", [[Scene:SetSoundChannelVolume - "volume" is not a number.]] )
+    assert ( type ( volume ) == "number", [[Scene:SetSoundChannelVolume - "volume" is not number.]] )
     av_SceneSetSoundChannelVolume ( self._handle, soundChannel, volume )
 end
 
@@ -333,7 +346,7 @@ local function SetSoundListenerTransform ( self, localMatrix )
     )
 
     assert ( type ( localMatrix ) == "table" and localMatrix._type == eObjectType.GXMat4,
-        [[Scene:SetSoundListenerTransform - "localMatrix" is not a GXMat4.]]
+        [[Scene:SetSoundListenerTransform - "localMatrix" is not GXMat4.]]
     )
 
     av_SceneSetSoundListenerTransform ( self._handle, localMatrix._handle )
@@ -344,7 +357,7 @@ local function SetSoundMasterVolume ( self, volume )
         [[Scene:SetSoundMasterVolume - Calling not via ":" syntax.]]
     )
 
-    assert ( type ( volume ) == "number", [[Scene:SetSoundMasterVolume - "volume" is not a number.]] )
+    assert ( type ( volume ) == "number", [[Scene:SetSoundMasterVolume - "volume" is not number.]] )
     av_SceneSetSoundMasterVolume ( self._handle, volume )
 end
 
@@ -354,14 +367,14 @@ local function SweepTestBox ( self, localMatrix, size, groups )
     )
 
     assert ( type ( localMatrix ) == "table" and localMatrix._type == eObjectType.GXMat4,
-        [[Scene:SweepTestBox - "localMatrix" is not a GXMat4.]]
+        [[Scene:SweepTestBox - "localMatrix" is not GXMat4.]]
     )
 
     assert ( type ( size ) == "table" and size._type == eObjectType.GXVec3,
         [[Scene:SweepTestBox - "size" is not a GXVec3.]]
     )
 
-    assert ( type ( groups ) == "number", [[Scene:SweepTestBox - "groups" is not a number.]] )
+    assert ( type ( groups ) == "number", [[Scene:SweepTestBox - "groups" is not number.]] )
     return av_SceneSweepTestBox ( self._handle, localMatrix._handle, size._handle, groups )
 end
 
@@ -372,6 +385,7 @@ local function Constructor ( self, handle )
     -- Data
     obj._actors = {}
     obj._actorToDestroy = {}
+    obj._animationUpdateScripts = {}
     obj._handle = handle
     obj._inputScripts = {}
     obj._postPhysicsScripts = {}
@@ -393,6 +407,7 @@ local function Constructor ( self, handle )
     obj.GetRenderTargetAspectRatio = GetRenderTargetAspectRatio
     obj.GetRenderTargetWidth = GetRenderTargetWidth
     obj.GetRenderTargetHeight = GetRenderTargetHeight
+    obj.OnAnimationUpdated = OnAnimationUpdated
     obj.OnInput = OnInput
     obj.OnPostPhysics = OnPostPhysics
     obj.OnPrePhysics = OnPrePhysics

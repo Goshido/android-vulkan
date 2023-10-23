@@ -281,7 +281,7 @@ bool RayCasting::LoadResources ( android_vulkan::Renderer &renderer ) noexcept
 
     SwitchEmission ( _normalMaterial, _normalTexture );
 
-    constexpr android_vulkan::VertexInfo const vertices[ 6U ]
+    constexpr android_vulkan::VertexInfo const vertices[]
     {
         android_vulkan::VertexInfo
         (
@@ -359,6 +359,7 @@ bool RayCasting::LoadResources ( android_vulkan::Renderer &renderer ) noexcept
 
     result = lineMesh.LoadMesh ( reinterpret_cast<uint8_t const*> ( vertices ),
         sizeof ( vertices ),
+        static_cast<uint32_t> ( std::size ( vertices ) ),
         indices,
         static_cast<uint32_t> ( std::size ( indices ) ),
         bounds,

@@ -3,7 +3,7 @@
 
 
 #include "component.hpp"
-#include "transform_component_desc.hpp"
+#include <android_vulkan_sdk/pbr/transform_component_desc.hpp>
 
 
 namespace pbr {

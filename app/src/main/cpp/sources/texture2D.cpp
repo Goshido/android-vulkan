@@ -210,7 +210,7 @@ bool Texture2D::UploadData ( Renderer &renderer,
 
     if ( IsCompressed ( fileName ) )
     {
-        if ( !UploadCompressed ( renderer, fileName, format, commandBuffer ) )
+        if ( !UploadCompressed ( renderer, fileName, format, commandBuffer, fence ) )
             return false;
 
         _fileName = std::move ( fileName );
@@ -549,7 +549,8 @@ void Texture2D::FreeResourceInternal ( Renderer &renderer ) noexcept
 bool Texture2D::UploadCompressed ( Renderer &renderer,
     std::string const &fileName,
     eFormat format,
-    VkCommandBuffer commandBuffer
+    VkCommandBuffer commandBuffer,
+    VkFence fence
 ) noexcept
 {
     KTXMediaContainer ktx;
@@ -715,7 +716,7 @@ bool Texture2D::UploadCompressed ( Renderer &renderer,
         .pSignalSemaphores = nullptr
     };
 
-    result = Renderer::CheckVkResult ( vkQueueSubmit ( renderer.GetQueue (), 1U, &submitInfo, VK_NULL_HANDLE ),
+    result = Renderer::CheckVkResult ( vkQueueSubmit ( renderer.GetQueue (), 1U, &submitInfo, fence ),
         "Texture2D::UploadCompressed",
         "Can't submit command"
     );

@@ -21,3 +21,10 @@
 # Tools
 /tools/html-validator/.vscode/
 /tools/html-validator/build/
+
+/tools/3ds-max-plugin/.vs/
+/tools/3ds-max-plugin/bin/
+/tools/3ds-max-plugin/build/
+
+/tools/3ds-max-plugin/3ds-max-plugin.vcxproj.user
+/tools/3ds-max-plugin/sources/resource.aps

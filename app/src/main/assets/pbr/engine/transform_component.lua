@@ -11,7 +11,7 @@ local function GetTransform ( self, transform )
     )
 
     assert ( type ( transform ) == "table" and transform._type == eObjectType.GXMat4,
-        [[TransformComponent:GetTransform - "transform" is not a GXMat4.]]
+        [[TransformComponent:GetTransform - "transform" is not GXMat4.]]
     )
 
     av_TransformComponentGetTransform ( self._handle, transform._handle )

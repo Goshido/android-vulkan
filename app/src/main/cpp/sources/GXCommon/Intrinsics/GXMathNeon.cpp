@@ -1,4 +1,4 @@
-// version 1.7
+// version 1.8
 
 #include <GXCommon/GXMath.hpp>
 
@@ -157,6 +157,20 @@ GX_RESTORE_WARNING_STATE
     vst1_lane_f32 ( _data + 2U, vget_high_f32 ( result ), 0 );
 }
 
+[[maybe_unused]] GXVoid GXVec3::LinearInterpolation ( GXVec3 const &start,
+    GXVec3 const &finish,
+    GXFloat interpolationFactor
+) noexcept
+{
+    // Note vld1q_f32 expects float32_t[ 4U ] array as input. So the 4-th component is garbage but it's not used in
+    // computation anyway.
+    float32x4_t const s = vld1q_f32 ( start._data );
+    float32x4_t const tmp = vfmaq_n_f32 ( s, vsubq_f32 ( vld1q_f32 ( finish._data ), s ), interpolationFactor );
+
+    vst1_f32 ( _data, vget_low_f32 ( tmp ) );
+    vst1_lane_s32 ( _data + 2U, vget_high_f32 ( tmp ), 0 );
+}
+
 //----------------------------------------------------------------------------------------------------------------------
 
 [[maybe_unused]] GXVoid GXVec4::Sum ( GXVec4 const &a, GXVec4 const &b ) noexcept
@@ -274,6 +288,38 @@ GX_RESTORE_WARNING_STATE
 [[maybe_unused]] GXVoid GXQuat::Subtract ( GXQuat const &a, GXQuat const &b ) noexcept
 {
     vst1q_f32 ( _data, vsubq_f32 ( vld1q_f32 ( a._data ), vld1q_f32 ( b._data ) ) );
+}
+
+[[maybe_unused]] GXVoid GXQuat::SphericalLinearInterpolation ( GXQuat const &start,
+    GXQuat const &finish,
+    GXFloat interpolationFactor
+) noexcept
+{
+    float32x4_t const s = vld1q_f32 ( start._data );
+    float32x4_t const f = vld1q_f32 ( finish._data );
+    float cosom = vaddvq_f32 ( vmulq_f32 ( s, f ) );
+
+    float32x4_t const casesQuat[] = { f, vnegq_f32 ( f ) };
+    float const casesCosom[] = { cosom, -cosom };
+
+    auto const idx = static_cast<size_t> ( cosom < 0.0F );
+    float32x4_t const temp ( casesQuat[ idx ] );
+    cosom = casesCosom[ idx ];
+
+    float32_t scale[] = { 1.0F - interpolationFactor, interpolationFactor };
+
+    if ( 1.0F - cosom > GX_MATH_FLOAT_EPSILON ) [[likely]]
+    {
+        float const angle = std::acos ( cosom );
+
+        float32_t alphaValues[ 2U ];
+        vst1_f32 ( alphaValues, vmul_f32 ( vdup_n_f32 ( angle ), vld1_f32 ( scale ) ) );
+
+        float32_t const beta[] = { std::sin ( alphaValues[ 0U ] ), std::sin ( alphaValues[ 1U ] ) };
+        vst1_f32 ( scale, vmul_f32 ( vdup_n_f32 ( 1.0F / std::sin ( angle ) ), vld1_f32 ( beta ) ) );
+    }
+
+    vst1q_f32 ( _data, vfmaq_n_f32 ( vmulq_n_f32 ( s, scale[ 0U ] ), temp, scale[ 1U ] ) );
 }
 
 //----------------------------------------------------------------------------------------------------------------------

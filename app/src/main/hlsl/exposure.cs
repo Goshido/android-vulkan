@@ -28,16 +28,16 @@ float32_t const                                     g_normalizeW = 3.125e-2H;
 [[vk::constant_id ( CONST_NORMALIZE_H )]]
 float32_t const                                     g_normalizeH = 7.142e-2H;
 
-struct ExposureInfo
+struct PushConstants
 {
-    float                                           _exposureCompensation;
-    float                                           _eyeAdaptation;
-    float                                           _maxLuma;
-    float                                           _minLuma;
+    float32_t                                       _exposureCompensation;
+    float32_t                                       _eyeAdaptation;
+    float32_t                                       _maxLuma;
+    float32_t                                       _minLuma;
 };
 
 [[vk::push_constant]]
-ExposureInfo                                        g_exposureInfo;
+PushConstants                                       g_exposureInfo;
 
 [[vk::binding ( BIND_HDR_IMAGE, SET_RESOURCE )]]
 Texture2D<float32_t4>                               g_hdrImage:         register ( t0 );
@@ -76,7 +76,7 @@ float16_t ReduceLoadSourceImage ( in uint32_t2 base )
         dot ( bt709, (float16_t3)g_hdrImage[ base + uint32_t2 ( 1U, 1U ) ].xyz )
     );
 
-    // Using log2|exp2 trick to calculate geometric mean brighness.
+    // Using log2|exp2 trick to calculate geometric mean brightness.
     // Making sure to not take log2 ( 0.0H ). Replacing it by minimal luma...
     // See <repo/docs/auto-exposure.md>
     float16_t4 const log2Luma = log2 ( max ( (float16_t4)SAFE_LUMA, luma ) );

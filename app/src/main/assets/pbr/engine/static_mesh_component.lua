@@ -43,14 +43,14 @@ end
 
 local function SetEmission ( self, emission )
     assert ( type ( self ) == "table" and self._type == eObjectType.StaticMeshComponent,
-        [[StaticMeshComponent:SetColor2 - Calling not via ":" syntax.]]
+        [[StaticMeshComponent:SetEmission - Calling not via ":" syntax.]]
     )
 
     assert ( type ( emission ) == "table" and emission._type == eObjectType.GXVec3,
-        [[StaticMeshComponent:SetColor2 - "emission" is not GXVec3.]]
+        [[StaticMeshComponent:SetEmission - "emission" is not GXVec3.]]
     )
 
-    av_StaticMeshComponentSetColor2 ( self._handle, emission._handle )
+    av_StaticMeshComponentSetEmission ( self._handle, emission._handle )
 end
 
 local function GetLocal ( self, localMatrix )
@@ -59,7 +59,7 @@ local function GetLocal ( self, localMatrix )
     )
 
     assert ( type ( localMatrix ) == "table" and localMatrix._type == eObjectType.GXMat4,
-        [[StaticMeshComponent:GetLocal - "localMatrix" is not a GXMat4.]]
+        [[StaticMeshComponent:GetLocal - "localMatrix" is not GXMat4.]]
     )
 
     av_StaticMeshComponentGetLocal ( self._handle, localMatrix._handle )
@@ -71,7 +71,7 @@ local function SetLocal ( self, localMatrix )
     )
 
     assert ( type ( localMatrix ) == "table" and localMatrix._type == eObjectType.GXMat4,
-        [[StaticMeshComponent:SetLocal - "localMatrix" is not a GXMat4.]]
+        [[StaticMeshComponent:SetLocal - "localMatrix" is not GXMat4.]]
     )
 
     av_StaticMeshComponentSetLocal ( self._handle, localMatrix._handle )

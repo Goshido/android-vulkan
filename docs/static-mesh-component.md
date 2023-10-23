@@ -59,12 +59,12 @@ Metamethod | Used
 
 ## <a id="constructor">`Constructor`</a>
 
-Constructor creates new static mesh component with default properties.
+Constructor creates new static mesh component.
 
 **Parameters:**
 
 - `name` [_required, readonly, string_]: name of the component
-- `meshFile` [_required, readonly, string_]: file path to mesh asset
+- `meshFile` [_required, readonly, string_]: file path to `*.mesh2` asset which could be created via [_3ds Max plugin_](./3ds-max-exporter.md)
 
 **Example:**
 

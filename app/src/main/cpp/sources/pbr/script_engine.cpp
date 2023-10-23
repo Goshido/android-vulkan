@@ -1,4 +1,6 @@
 #include <pbr/script_engine.hpp>
+#include <pbr/animation_graph.hpp>
+#include <pbr/animation_player_node.hpp>
 #include <pbr/actor.hpp>
 #include <pbr/camera_component.hpp>
 #include <pbr/component.hpp>
@@ -11,6 +13,7 @@
 #include <pbr/scriptable_gxvec4.hpp>
 #include <pbr/scriptable_logger.hpp>
 #include <pbr/scriptable_material.hpp>
+#include <pbr/skeletal_mesh_component.hpp>
 #include <pbr/sound_emitter_global_component.hpp>
 #include <pbr/sound_emitter_spatial_component.hpp>
 #include <pbr/static_mesh_component.hpp>
@@ -92,6 +95,8 @@ bool ScriptEngine::ExtendFrontend ( android_vulkan::Renderer &renderer,
 {
     lua_State &vm = *_vm;
 
+    AnimationGraph::Init ( vm, renderer );
+    AnimationPlayerNode::Init ( vm ),
     ScriptableGXMat3::Init ( vm );
     ScriptableGXMat4::Init ( vm );
     ScriptableGXQuat::Init ( vm );
@@ -113,7 +118,8 @@ bool ScriptEngine::ExtendFrontend ( android_vulkan::Renderer &renderer,
         StaticMeshComponent::Init ( vm, renderer ) &&
         ScriptableMaterial::Init ( vm, renderer ) &&
         SoundEmitterGlobalComponent::Init ( vm, soundMixer ) &&
-        SoundEmitterSpatialComponent::Init ( vm, soundMixer );
+        SoundEmitterSpatialComponent::Init ( vm, soundMixer ) &&
+        SkeletalMeshComponent::Init ( vm, renderer );
 }
 
 bool ScriptEngine::InitInterfaceFunctions ( android_vulkan::Renderer &renderer,
@@ -265,6 +271,9 @@ void ScriptEngine::Free ( lua_State* state ) noexcept
 {
     lua_close ( state );
 
+    AnimationPlayerNode::Destroy ();
+    AnimationGraph::Destroy ();
+    SkeletalMeshComponent::Destroy ();
     SoundEmitterSpatialComponent::Destroy ();
     SoundEmitterGlobalComponent::Destroy ();
     ScriptableGXVec4::Destroy ();

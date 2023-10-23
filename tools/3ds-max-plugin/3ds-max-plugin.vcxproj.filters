@@ -1,0 +1,142 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Linker">
+      <UniqueIdentifier>{3aafded4-fa61-48de-bcd4-6dbe6de563f9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\GXCommon">
+      <UniqueIdentifier>{8c0aedea-5781-491f-a38e-1cbdc971c43a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\GXCommon">
+      <UniqueIdentifier>{7a44c00b-9173-4883-9f8f-d066340a3e3f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\GXCommon\Intrinsics">
+      <UniqueIdentifier>{be866ed2-4ab3-4530-ba49-af29c34b605c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\android_vulkan_sdk">
+      <UniqueIdentifier>{4112004a-e10a-4415-8054-521bedc7401b}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\plugin.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\class_desc.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\resource.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\utility.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\version.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\mesh_exporter.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\GXCommon\GXMath.hpp">
+      <Filter>Header Files\GXCommon</Filter>
+    </ClInclude>
+    <ClInclude Include="include\exporter.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\result_checker.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\skin_exporter.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\skeleton_exporter.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\animation_exporter.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\bone_data_exporter.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\animation.hpp">
+      <Filter>Header Files\android_vulkan_sdk</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\bone_joint.hpp">
+      <Filter>Header Files\android_vulkan_sdk</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\mesh2.hpp">
+      <Filter>Header Files\android_vulkan_sdk</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\primitive_types.hpp">
+      <Filter>Header Files\android_vulkan_sdk</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\skeleton.hpp">
+      <Filter>Header Files\android_vulkan_sdk</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\skin.hpp">
+      <Filter>Header Files\android_vulkan_sdk</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="sources\class_desc.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\dll_main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\plugin.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\utility.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\mesh_exporter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\GXCommon\GXMath.cpp">
+      <Filter>Source Files\GXCommon</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\GXCommon\Intrinsics\GXMathCPU.cpp">
+      <Filter>Source Files\GXCommon\Intrinsics</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\exporter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\result_checker.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\skin_exporter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\skeleton_exporter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\animation_exporter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\bone_data_exporter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="sources\plugin.def">
+      <Filter>Linker</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="sources\resource.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>

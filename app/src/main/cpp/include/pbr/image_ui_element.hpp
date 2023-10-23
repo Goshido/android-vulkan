@@ -31,7 +31,7 @@ class ImageUIElement final : public CSSUIElement
 
             UIVertexInfo            _vertices[ UIPass::GetVerticesPerRectangle() ];
 
-            [[nodiscard]] bool Run ( UpdateInfo &info, std::vector<float> const &cachedLineHeight ) noexcept;
+            [[nodiscard]] bool Run ( UpdateInfo &info, std::vector<float> const &cachedLineHeight ) const noexcept;
         };
 
     private:

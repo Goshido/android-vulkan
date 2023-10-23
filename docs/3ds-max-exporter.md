@@ -9,7 +9,7 @@
 
 ## <a id="installation">Installation</a>
 
-**Warning:** Current manual is applicable for _3ds Max 2023_ only. There is no any guarantee to work with other versions of _3ds Max_ due to rules how native pluggins are written.
+**Warning:** Current manual is applicable for _3ds Max 2023_ only. There is no any guarantee to work with other versions of _3ds Max_ due to rules how native plugins are written.
 
 Copy `android-vulkan.dle` from `<repo>/tools/bin` directory to the _3ds Max 2023_ plugin directory. For example here:
 
@@ -27,7 +27,7 @@ The _android-vulkan_ rendering system relies on the bounding box information to 
 
 <img src="./images/skin-bounds.png"/>
 
-Take a note that exporter will calculate approximate bounds if the artist will ignore this values. The exporter will find the biggest distance from coordinate origin in the skin vertices. This distance will be multiplied by `8`. The final bounds will be considered as cube with side as calculated at previous step. Obviously the approximation could produce incorrect results in some cases of skin data and animation data. The objects could dissapear.
+Take a note that exporter will calculate approximate bounds if the artist will ignore this values. The exporter will find the biggest distance from coordinate origin in the skin vertices. This distance will be multiplied by `8`. The final bounds will be considered as cube with side as calculated at previous step. Obviously the approximation could produce incorrect results in some cases of skin data and animation data. The objects could disappear.
 
 [↬ table of content ⇧](#table-of-content)
 
@@ -38,7 +38,7 @@ Take a note that exporter will calculate approximate bounds if the artist will i
 **Requirements**
 
 - [_3ds Max 2023 SDK_](https://aps.autodesk.com/developer/overview/3ds-max#3dsmax-sdk)
-- _Visual Studio 2022 Community_
+- _Visual Studio 2022 Community 17.7.5_
   - Workloads: Desktop development with C++
   - Individual components
     - MSBuild
@@ -70,7 +70,7 @@ In oder to debug plugin from _Visual Studio_ you should select _Debug_ configura
 
 `D:\Programs\Autodesk\3ds Max 2023\Plugins\android-vulkan.dle`
 
-At this point you should tell _Visual Studio_ to lanch debug session for _3ds Max_ instead of plugin binary. You should set run configuration in the project settings like this:
+At this point you should tell _Visual Studio_ to launch debug session for _3ds Max_ instead of plugin binary. You should set run configuration in the project settings like this:
 
 <img src="./images/3ds-max-debug.png"/>
 

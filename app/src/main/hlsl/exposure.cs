@@ -76,7 +76,7 @@ float16_t ReduceLoadSourceImage ( in uint32_t2 base )
         dot ( bt709, (float16_t3)g_hdrImage[ base + uint32_t2 ( 1U, 1U ) ].xyz )
     );
 
-    // Using log2|exp2 trick to calculate geometric mean brighness.
+    // Using log2|exp2 trick to calculate geometric mean brightness.
     // Making sure to not take log2 ( 0.0H ). Replacing it by minimal luma...
     // See <repo/docs/auto-exposure.md>
     float16_t4 const log2Luma = log2 ( max ( (float16_t4)SAFE_LUMA, luma ) );

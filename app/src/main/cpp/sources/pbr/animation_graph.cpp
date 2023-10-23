@@ -379,7 +379,7 @@ void AnimationGraph::UpdateInternal ( float deltaTime, size_t commandBufferIndex
         std::memcpy ( &local._orientation, &j._orientation, sizeof ( local._orientation ) );
     }
 
-    // Note: Quaternion mathematics is simular to column-major notation of the matrix mathematics.
+    // Note: Quaternion mathematics is similar to column-major notation of the matrix mathematics.
     // So we need to do multiplication in reverse order to calculate skin transform.
 
     BufferSet &bufferSet = _bufferSets[ commandBufferIndex ];

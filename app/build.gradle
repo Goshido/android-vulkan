@@ -5,9 +5,10 @@ plugins {
 
 android {
     // It's deprecated now. But I have no clue how to specify explicit build tool version.
+    // noinspection GrDeprecatedAPIUsage
     buildToolsVersion "34.0.0"
 
-    ndkVersion "25.2.9519653"
+    ndkVersion "26.1.10909125"
     namespace 'com.goshidoInc.androidVulkan'
 
     defaultConfig {

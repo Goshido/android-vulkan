@@ -769,6 +769,15 @@ Renderer::Renderer () noexcept:
     _instance ( VK_NULL_HANDLE ),
     _isDeviceExtensionChecked ( false ),
     _isDeviceExtensionSupported ( false ),
+
+    // Minimum supported value from Vulkan spec 1.3.227
+    _maxComputeDispatchSize
+    {
+        .width = 65535U,
+        .height = 65535U,
+        .depth = 65535U
+    },
+
     _maxUniformBufferRange {},
     _memoryAllocator {},
     _physicalDevice ( VK_NULL_HANDLE ),

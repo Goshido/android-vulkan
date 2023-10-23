@@ -9,7 +9,7 @@ namespace android_vulkan {
 
 #pragma pack ( push, 1 )
 
-constexpr static int32_t ROOT_BONE = -1;
+[[maybe_unused]] constexpr static int32_t ROOT_BONE = -1;
 using BoneParent = int32_t;
 
 struct SkeletonHeader final

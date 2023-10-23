@@ -28,8 +28,8 @@ struct SkinBone final
 
 struct SkinInfluence final
 {
-    uint32_t    _boneIndex;
-    float       _boneWeight;
+    uint32_t                    _boneIndex;
+    [[maybe_unused]] float      _boneWeight;
 };
 
 constexpr static size_t BONES_PER_VERTEX = 4U;

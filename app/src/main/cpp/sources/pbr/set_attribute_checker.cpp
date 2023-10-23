@@ -31,6 +31,6 @@ AttributeChecker::Result SetAttributeChecker::Process ( AttributeParser::Result 
 
     _target = std::move ( *t );
     return true;
-};
+}
 
 } // namespace pbr

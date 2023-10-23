@@ -137,7 +137,7 @@ void CS ( in uint32_t localThreadIndex: SV_GroupIndex, in uint32_t3 dispatch: SV
 
     // Note matrix multiplication order is in reverse order compare to the rest of engine code.
     // The reason is that quaternion unpacks to matrix with column-major behaviour.
-    // Same time the engige has row-major matrix convention.
+    // Same time the engine has row-major matrix convention.
     skin._vertex = mul ( float32_t4 ( reference._vertex, 1.0F ), skinTransform ).xyz;
     skin._normal = mul ( reference._normal, orientation );
     skin._tangent = mul ( reference._tangent, orientation );

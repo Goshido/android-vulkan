@@ -245,7 +245,7 @@ void SkinExporter::Run ( HWND parent, MSTR const &path, GXAABB bounds ) noexcept
     else
     {
         // Find the biggest deviation from zero by length metric.
-        // Make AABB with lenght, height and depth equal deviation and center in zero.
+        // Make AABB with length, height and depth equal deviation and center in zero.
         // Enlarge the AABB by factor of AUTO_BOUNDS_SCALER.
         float d = std::abs ( bMin[ 0U ] );
         d = std::max ( d, std::abs ( bMin[ 1U ] ) );

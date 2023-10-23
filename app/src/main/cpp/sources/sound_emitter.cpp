@@ -77,7 +77,7 @@ bool SoundEmitter::Play () noexcept
     if ( _mixer->RequestPlay ( *this ) )
     {
         _isPlaying = true;
-        return false;
+        return true;
     }
 
     return false;

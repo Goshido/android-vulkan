@@ -55,7 +55,7 @@ bool UIProgram::Init ( android_vulkan::Renderer &renderer,
 
     VkDevice device = renderer.GetDevice ();
 
-    if ( !InitShaderInfo ( renderer, pipelineInfo.pStages, specializationData, &specInfo, stageInfo ) )
+    if ( !InitShaderInfo ( renderer, pipelineInfo.pStages, specializationData, &specInfo, stageInfo ) ) [[unlikely]]
         return false;
 
     pipelineInfo.pVertexInputState = InitVertexInputInfo ( vertexInputInfo,
@@ -72,7 +72,7 @@ bool UIProgram::Init ( android_vulkan::Renderer &renderer,
     pipelineInfo.pColorBlendState = InitColorBlendInfo ( blendInfo, attachmentInfo );
     pipelineInfo.pDynamicState = nullptr;
 
-    if ( !InitLayout ( device, pipelineInfo.layout ) )
+    if ( !InitLayout ( device, pipelineInfo.layout ) ) [[unlikely]]
         return false;
 
     pipelineInfo.renderPass = renderPass;
@@ -86,7 +86,7 @@ bool UIProgram::Init ( android_vulkan::Renderer &renderer,
         "Can't create pipeline"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_PIPELINE ( "pbr::UIProgram::_pipeline" )
@@ -265,7 +265,10 @@ VkPipelineInputAssemblyStateCreateInfo const* UIProgram::InitInputAssemblyInfo (
 bool UIProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept
 {
     if ( !_transformLayout.Init ( device ) || !_commonLayout.Init ( device ) || !_imageLayout.Init ( device ) )
+    {
+        [[unlikely]]
         return false;
+    }
 
     VkDescriptorSetLayout const layouts[] =
     {
@@ -291,7 +294,7 @@ bool UIProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcep
         "Can't create pipeline layout"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_PIPELINE_LAYOUT ( "pbr::UIProgram::_pipelineLayout" )
@@ -355,7 +358,7 @@ bool UIProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
         "Can't create vertex shader (pbr::UIProgram)"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_SHADER_MODULE ( "pbr::UIProgram::_vertexShader" )
@@ -365,7 +368,7 @@ bool UIProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
         "Can't create fragment shader (pbr::UIProgram)"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_SHADER_MODULE ( "pbr::UIProgram::_fragmentShader" )

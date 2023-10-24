@@ -42,7 +42,7 @@ bool TextureCube::UploadData ( android_vulkan::Renderer &renderer,
         data._zMinusFile
     };
 
-    if ( !sideXPlus.Init ( files[ 0U ] ) )
+    if ( !sideXPlus.Init ( files[ 0U ] ) ) [[unlikely]]
         return false;
 
     VkDeviceSize mappedSize = sideXPlus.GetTotalSize();
@@ -55,15 +55,15 @@ bool TextureCube::UploadData ( android_vulkan::Renderer &renderer,
     {
         KTXMediaContainer &container = sides[ i ];
 
-        if ( !container.Init ( files[ i ] ) )
+        if ( !container.Init ( files[ i ] ) ) [[unlikely]]
             return false;
 
-        if ( mips != container.GetMipCount () || format != container.GetFormat () )
+        if ( mips != container.GetMipCount () || format != container.GetFormat () ) [[unlikely]]
             return false;
 
         VkExtent2D const &res = container.GetMip ( 0U )._resolution;
 
-        if ( resolution.width != res.width || resolution.height != res.height )
+        if ( resolution.width != res.width || resolution.height != res.height ) [[unlikely]]
             return false;
 
         mappedSize += container.GetTotalSize ();
@@ -88,7 +88,7 @@ bool TextureCube::UploadData ( android_vulkan::Renderer &renderer,
         "Can't create transfer buffer"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_BUFFER ( "TextureCube::_transfer" )
@@ -103,7 +103,7 @@ bool TextureCube::UploadData ( android_vulkan::Renderer &renderer,
         "Can't allocate transfer device memory (TextureCube::UploadData)"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_DEVICE_MEMORY ( "TextureCube::_transferMemory" )
@@ -114,7 +114,7 @@ bool TextureCube::UploadData ( android_vulkan::Renderer &renderer,
         "Can't bind transfer memory"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     void* destination;
@@ -126,7 +126,7 @@ bool TextureCube::UploadData ( android_vulkan::Renderer &renderer,
         "Can't map transfer memory"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     VkDeviceSize offset = 0U;
@@ -151,7 +151,7 @@ bool TextureCube::UploadData ( android_vulkan::Renderer &renderer,
     constexpr VkImageUsageFlags const flags = AV_VK_FLAG ( VK_IMAGE_USAGE_SAMPLED_BIT ) |
         AV_VK_FLAG ( VK_IMAGE_USAGE_TRANSFER_DST_BIT );
 
-    if ( !CreateImageResources ( renderer, resolution, format, flags, static_cast<uint32_t> ( mips ) ) )
+    if ( !CreateImageResources ( renderer, resolution, format, flags, static_cast<uint32_t> ( mips ) ) ) [[unlikely]]
         return false;
 
     VkCommandBufferBeginInfo const beginInfo
@@ -167,7 +167,7 @@ bool TextureCube::UploadData ( android_vulkan::Renderer &renderer,
         "Can't begin command buffer"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     VkImageMemoryBarrier barrierInfo
@@ -275,7 +275,7 @@ bool TextureCube::UploadData ( android_vulkan::Renderer &renderer,
         "Can't end command buffer"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     VkSubmitInfo const submitInfo
@@ -296,7 +296,7 @@ bool TextureCube::UploadData ( android_vulkan::Renderer &renderer,
         "Can't submit command"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     _mipLevels = mips;
@@ -422,7 +422,7 @@ bool TextureCube::CreateImageResources ( Renderer &renderer,
         "Can't create image"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_IMAGE ( "TextureCube::_image" )
@@ -437,7 +437,7 @@ bool TextureCube::CreateImageResources ( Renderer &renderer,
         "Can't allocate image memory (TextureCube::CreateImageResources)"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_DEVICE_MEMORY ( "TextureCube::_imageMemory" )
@@ -447,7 +447,7 @@ bool TextureCube::CreateImageResources ( Renderer &renderer,
         "Can't bind image memory"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     VkImageViewCreateInfo const viewInfo
@@ -482,7 +482,7 @@ bool TextureCube::CreateImageResources ( Renderer &renderer,
         "Can't create image view"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_IMAGE_VIEW ( "TextureCube::_imageView" )

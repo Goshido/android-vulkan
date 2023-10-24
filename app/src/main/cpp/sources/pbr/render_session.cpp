@@ -29,7 +29,7 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
 {
     AV_TRACE ( "End render session" )
 
-    if ( !_presentRenderPass.AcquirePresentTarget ( renderer ) )
+    if ( !_presentRenderPass.AcquirePresentTarget ( renderer ) ) [[unlikely]]
         return false;
 
     size_t const commandBufferIndex = _writingCommandInfo;
@@ -45,7 +45,7 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
         "Can't wait fence"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     result = android_vulkan::Renderer::CheckVkResult ( vkResetFences ( device, 1U, &fence ),
@@ -53,7 +53,7 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
         "Can't reset fence"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     result = android_vulkan::Renderer::CheckVkResult (
@@ -62,7 +62,7 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
         "Can't reset command pool"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     VkCommandBuffer commandBuffer = commandInfo._buffer;
@@ -80,15 +80,15 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
         "Can't begin main render pass"
     );
 
-    if ( !result || ( _brightnessChanged && !UpdateBrightness ( renderer ) ) )
+    if ( !result || ( _brightnessChanged && !UpdateBrightness ( renderer ) ) ) [[unlikely]]
         return false;
 
     AnimationGraph::UploadGPUData ( commandBuffer, commandBufferIndex );
 
-    if ( !_uiPass.UploadGPUData ( renderer, commandBuffer, commandBufferIndex ) )
+    if ( !_uiPass.UploadGPUData ( renderer, commandBuffer, commandBufferIndex ) ) [[unlikely]]
         return false;
 
-    if ( !SkeletalMeshComponent::ApplySkin ( commandBuffer, commandBufferIndex ) )
+    if ( !SkeletalMeshComponent::ApplySkin ( commandBuffer, commandBufferIndex ) ) [[unlikely]]
         return false;
 
     _toneMapperPass.UploadGPUData ( renderer, commandBuffer );
@@ -105,7 +105,7 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
         _cvvToView
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     _geometryPass.UploadGPUData ( device, commandBuffer, _frustum, _view, _viewProjection );
@@ -129,7 +129,7 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
     result = _uiPass.Execute ( commandBuffer, commandBufferIndex ) &&
         _presentRenderPass.End ( renderer, commandBuffer, fence );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     _renderSessionStats.RenderPointLights ( _lightPass.GetPointLightCount () );
@@ -169,7 +169,7 @@ bool RenderSession::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
     CommandInfo &commandInfo = _commandInfo[ 0U ];
     VkDevice device = renderer.GetDevice ();
 
-    if ( !AllocateCommandInfo ( commandInfo, device, renderer.GetQueueFamilyIndex () ) )
+    if ( !AllocateCommandInfo ( commandInfo, device, renderer.GetQueueFamilyIndex () ) ) [[unlikely]]
         return false;
 
     return _exposurePass.Init ( renderer, commandInfo._pool ) &&
@@ -233,7 +233,7 @@ bool RenderSession::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
     {
         DestroyGBufferResources ( renderer );
 
-        if ( !CreateGBufferResources ( renderer, newResolution ) )
+        if ( !CreateGBufferResources ( renderer, newResolution ) ) [[unlikely]]
             return false;
 
         android_vulkan::LogInfo ( "pbr::RenderSession::OnSwapchainCreated - G-buffer resolution is %u x %u.",
@@ -250,7 +250,7 @@ bool RenderSession::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
         if ( commandInfo._pool != VK_NULL_HANDLE )
             continue;
 
-        if ( !AllocateCommandInfo ( commandInfo, device, queueIndex ) )
+        if ( !AllocateCommandInfo ( commandInfo, device, queueIndex ) ) [[unlikely]]
         {
             return false;
         }
@@ -263,10 +263,10 @@ bool RenderSession::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
     VkImageView hdrView = _gBuffer.GetHDRAccumulator ().GetImageView ();
     VkRenderPass renderPass = _presentRenderPass.GetRenderPass ();
 
-    if ( !_uiPass.OnSwapchainCreated ( renderer, renderPass, subpass, hdrView ) )
+    if ( !_uiPass.OnSwapchainCreated ( renderer, renderPass, subpass, hdrView ) ) [[unlikely]]
         return false;
 
-    if ( !hasChanges )
+    if ( !hasChanges ) [[likely]]
         return true;
 
     return _toneMapperPass.SetTarget ( renderer,
@@ -372,7 +372,7 @@ bool RenderSession::CreateFramebuffer ( android_vulkan::Renderer &renderer ) noe
         "Can't create GBuffer framebuffer"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     _renderPassInfo.framebuffer = _framebuffer;
@@ -619,7 +619,7 @@ bool RenderSession::CreateRenderPass ( android_vulkan::Renderer &renderer ) noex
         "Can't create render pass"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_RENDER_PASS ( "pbr::RenderSession::_renderPass" )
@@ -803,7 +803,7 @@ bool RenderSession::UpdateBrightness ( android_vulkan::Renderer &renderer ) noex
         "Can't wait queue idle"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     VkRenderPass renderPass = _presentRenderPass.GetRenderPass ();
@@ -812,7 +812,7 @@ bool RenderSession::UpdateBrightness ( android_vulkan::Renderer &renderer ) noex
     result = _toneMapperPass.SetBrightness ( renderer, renderPass, subpass, _brightnessBalance ) &&
         _uiPass.SetBrightness ( renderer, renderPass, subpass, _brightnessBalance );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     _brightnessChanged = false;
@@ -835,7 +835,7 @@ bool RenderSession::AllocateCommandInfo ( CommandInfo &info, VkDevice device, ui
         "Can't create fence"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_FENCE ( "pbr::RenderSession::_fence" )
@@ -854,7 +854,7 @@ bool RenderSession::AllocateCommandInfo ( CommandInfo &info, VkDevice device, ui
         "Can't create lead command pool"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_COMMAND_POOL ( "pbr::RenderSession::_commandInfo::_pool" )

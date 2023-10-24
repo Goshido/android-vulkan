@@ -100,7 +100,7 @@ void ScriptableGXVec4::Insert ( Item* item, Item* &list ) noexcept
 
 int ScriptableGXVec4::OnCreate ( lua_State* state )
 {
-    if ( !_free )
+    if ( !_free ) [[unlikely]]
     {
         Insert ( new Item {}, _used );
         lua_pushlightuserdata ( state, _used );

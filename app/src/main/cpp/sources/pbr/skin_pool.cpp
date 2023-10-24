@@ -52,12 +52,12 @@ bool SkinPool::Init ( VkDevice device ) noexcept
         "Can't create descriptor pool"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_DESCRIPTOR_POOL ( "pbr::SkinPool::_descriptorPool" )
 
-    if ( !_layout.Init ( device ) )
+    if ( !_layout.Init ( device ) ) [[unlikely]]
         return false;
 
     _descriptorSets.resize ( SKIN_MESHES );
@@ -79,7 +79,7 @@ bool SkinPool::Init ( VkDevice device ) noexcept
         "Can't allocate descriptor sets"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     // Initialize all immutable constant fields.
@@ -242,7 +242,7 @@ void SkinPool::SubmitPipelineBarriers ( VkCommandBuffer commandBuffer ) noexcept
         nullptr
     );
 
-    if ( more > 0U )
+    if ( more > 0U ) [[unlikely]]
     {
         vkCmdPipelineBarrier ( commandBuffer,
             VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
@@ -278,7 +278,7 @@ void SkinPool::UpdateDescriptorSets ( VkDevice device ) const noexcept
         nullptr
     );
 
-    if ( more > 0U )
+    if ( more > 0U ) [[unlikely]]
     {
         vkUpdateDescriptorSets ( device, static_cast<uint32_t> ( BIND_PER_SET * more ), writeSets, 0U, nullptr );
     }

@@ -64,7 +64,7 @@ ScriptComponent::ScriptComponent ( std::string &&script, std::string &&params, s
 
 bool ScriptComponent::RegisterFromNative ( lua_State &vm, Actor &actor ) noexcept
 {
-    if ( !lua_checkstack ( &vm, 5 ) )
+    if ( !lua_checkstack ( &vm, 5 ) ) [[unlikely]]
     {
         android_vulkan::LogError ( "pbr::ScriptComponent::RegisterFromNative - Stack is too small." );
         return false;
@@ -91,13 +91,13 @@ void ScriptComponent::RegisterFromScript ( Actor &actor ) noexcept
 
 bool ScriptComponent::Init ( lua_State &vm ) noexcept
 {
-    if ( !lua_checkstack ( &vm, 1 ) )
+    if ( !lua_checkstack ( &vm, 1 ) ) [[unlikely]]
     {
         android_vulkan::LogError ( "pbr::ScriptComponent::Init - Stack is too small." );
         return false;
     }
 
-    if ( lua_getglobal ( &vm, "RegisterScriptComponent" ) != LUA_TFUNCTION )
+    if ( lua_getglobal ( &vm, "RegisterScriptComponent" ) != LUA_TFUNCTION ) [[unlikely]]
     {
         android_vulkan::LogError ( "pbr::ScriptComponent::Init - Can't find register function." );
         return false;
@@ -130,7 +130,7 @@ bool ScriptComponent::Init ( lua_State &vm ) noexcept
 
 void ScriptComponent::Destroy () noexcept
 {
-    if ( !_scripts.empty () )
+    if ( !_scripts.empty () ) [[unlikely]]
     {
         android_vulkan::LogWarning ( "pbr::ScriptComponent::Destroy - Memory leak." );
         AV_ASSERT ( false )
@@ -148,7 +148,7 @@ ComponentRef &ScriptComponent::GetReference () noexcept
 
 int ScriptComponent::OnCreate ( lua_State* state )
 {
-    if ( !lua_checkstack ( state, 1 ) )
+    if ( !lua_checkstack ( state, 1 ) ) [[unlikely]]
     {
         android_vulkan::LogWarning ( "pbr::ScriptComponent::OnCreate - Stack is too small." );
         return 0;
@@ -156,7 +156,7 @@ int ScriptComponent::OnCreate ( lua_State* state )
 
     char const* name = lua_tostring ( state, 1 );
 
-    if ( !name )
+    if ( !name ) [[unlikely]]
     {
         lua_pushnil ( state );
         return 1;

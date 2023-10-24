@@ -2,6 +2,7 @@
 #include <pbr/animation_graph.hpp>
 #include <pbr/animation_player_node.hpp>
 #include <pbr/actor.hpp>
+#include <pbr/bit_field.hpp>
 #include <pbr/camera_component.hpp>
 #include <pbr/component.hpp>
 #include <pbr/rigid_body_component.hpp>
@@ -97,6 +98,7 @@ bool ScriptEngine::ExtendFrontend ( android_vulkan::Renderer &renderer,
 
     AnimationGraph::Init ( vm, renderer );
     AnimationPlayerNode::Init ( vm ),
+    BitField::Init ( vm );
     ScriptableGXMat3::Init ( vm );
     ScriptableGXMat4::Init ( vm );
     ScriptableGXQuat::Init ( vm );
@@ -281,6 +283,7 @@ void ScriptEngine::Free ( lua_State* state ) noexcept
     ScriptableGXQuat::Destroy ();
     ScriptableGXMat4::Destroy ();
     ScriptableGXMat3::Destroy ();
+    BitField::Destroy ();
     RigidBodyComponent::Destroy ();
     StaticMeshComponent::Destroy ();
     ScriptComponent::Destroy ();

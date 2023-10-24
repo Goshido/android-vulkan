@@ -54,7 +54,7 @@ SoundEmitterSpatialComponent::SoundEmitterSpatialComponent ( bool &success,
 
     auto const* asset = reinterpret_cast<char const *> ( desc._soundAsset );
 
-    if ( _soundEmitter.SetSoundAsset ( asset, static_cast<bool> ( desc._looped ) ) )
+    if ( _soundEmitter.SetSoundAsset ( asset, static_cast<bool> ( desc._looped ) ) ) [[likely]]
     {
         success = true;
         return;
@@ -128,7 +128,7 @@ bool SoundEmitterSpatialComponent::RegisterFromNative ( lua_State &vm, Actor &ac
 {
     _actor = &actor;
 
-    if ( !lua_checkstack ( &vm, 2 ) )
+    if ( !lua_checkstack ( &vm, 2 ) ) [[unlikely]]
     {
         android_vulkan::LogError ( "pbr::SoundEmitterSpatialComponent::RegisterFromNative - Stack is too small." );
         return false;
@@ -147,13 +147,13 @@ void SoundEmitterSpatialComponent::RegisterFromScript ( Actor &actor ) noexcept
 
 bool SoundEmitterSpatialComponent::Init ( lua_State &vm, android_vulkan::SoundMixer &soundMixer ) noexcept
 {
-    if ( !lua_checkstack ( &vm, 1 ) )
+    if ( !lua_checkstack ( &vm, 1 ) ) [[unlikely]]
     {
         android_vulkan::LogError ( "pbr::SoundEmitterSpatialComponent::Init - Stack is too small." );
         return false;
     }
 
-    if ( lua_getglobal ( &vm, "RegisterSoundEmitterSpatialComponent" ) != LUA_TFUNCTION )
+    if ( lua_getglobal ( &vm, "RegisterSoundEmitterSpatialComponent" ) != LUA_TFUNCTION ) [[unlikely]]
     {
         android_vulkan::LogError ( "pbr::SoundEmitterSpatialComponent::Init - Can't find register function." );
         return false;
@@ -222,7 +222,7 @@ bool SoundEmitterSpatialComponent::Init ( lua_State &vm, android_vulkan::SoundMi
 
 void SoundEmitterSpatialComponent::Destroy () noexcept
 {
-    if ( !_soundEmitters.empty () )
+    if ( !_soundEmitters.empty () ) [[unlikely]]
     {
         android_vulkan::LogWarning ( "pbr::SoundEmitterSpatialComponent::Destroy - Memory leak." );
         AV_ASSERT ( false )
@@ -240,7 +240,7 @@ ComponentRef &SoundEmitterSpatialComponent::GetReference () noexcept
 
 int SoundEmitterSpatialComponent::OnCreate ( lua_State* state )
 {
-    if ( !lua_checkstack ( state, 1 ) )
+    if ( !lua_checkstack ( state, 1 ) ) [[unlikely]]
     {
         android_vulkan::LogWarning ( "pbr::SoundEmitterSpatialComponent::OnCreate - Stack is too small." );
         return 0;
@@ -278,7 +278,7 @@ int SoundEmitterSpatialComponent::OnGarbageCollected ( lua_State* state )
     // NOLINTNEXTLINE - downcast.
     auto* component = static_cast<SoundEmitterSpatialComponent*> ( lua_touserdata ( state, 1 ) );
 
-    if ( !component->_soundEmitter.Destroy () )
+    if ( !component->_soundEmitter.Destroy () ) [[unlikely]]
         android_vulkan::LogWarning ( "SoundEmitterSpatialComponent::OnGarbageCollected - Can't destroy emitter." );
 
     _soundEmitters.erase ( component );
@@ -287,7 +287,7 @@ int SoundEmitterSpatialComponent::OnGarbageCollected ( lua_State* state )
 
 int SoundEmitterSpatialComponent::OnGetVolume ( lua_State* state )
 {
-    if ( !lua_checkstack ( state, 1 ) )
+    if ( !lua_checkstack ( state, 1 ) ) [[unlikely]]
     {
         android_vulkan::LogWarning ( "pbr::SoundEmitterSpatialComponent::OnGetVolume - Stack is too small." );
         return 0;
@@ -300,7 +300,7 @@ int SoundEmitterSpatialComponent::OnGetVolume ( lua_State* state )
 
 int SoundEmitterSpatialComponent::OnIsPlaying ( lua_State* state )
 {
-    if ( !lua_checkstack ( state, 1 ) )
+    if ( !lua_checkstack ( state, 1 ) ) [[unlikely]]
     {
         android_vulkan::LogWarning ( "pbr::SoundEmitterSpatialComponent::OnIsPlaying - Stack is too small." );
         return 0;
@@ -313,7 +313,7 @@ int SoundEmitterSpatialComponent::OnIsPlaying ( lua_State* state )
 
 int SoundEmitterSpatialComponent::OnPause ( lua_State* state )
 {
-    if ( !lua_checkstack ( state, 1 ) )
+    if ( !lua_checkstack ( state, 1 ) ) [[unlikely]]
     {
         android_vulkan::LogWarning ( "pbr::SoundEmitterSpatialComponent::OnPause - Stack is too small." );
         return 0;
@@ -326,7 +326,7 @@ int SoundEmitterSpatialComponent::OnPause ( lua_State* state )
 
 int SoundEmitterSpatialComponent::OnPlay ( lua_State* state )
 {
-    if ( !lua_checkstack ( state, 1 ) )
+    if ( !lua_checkstack ( state, 1 ) ) [[unlikely]]
     {
         android_vulkan::LogWarning ( "pbr::SoundEmitterSpatialComponent::OnPlay - Stack is too small." );
         return 0;
@@ -353,7 +353,7 @@ int SoundEmitterSpatialComponent::OnSetLocation ( lua_State* state )
 
 int SoundEmitterSpatialComponent::OnSetSoundAsset ( lua_State* state )
 {
-    if ( !lua_checkstack ( state, 1 ) )
+    if ( !lua_checkstack ( state, 1 ) ) [[unlikely]]
     {
         android_vulkan::LogWarning ( "pbr::OnSetSoundAsset::OnStop - Stack is too small." );
         return 0;
@@ -362,7 +362,7 @@ int SoundEmitterSpatialComponent::OnSetSoundAsset ( lua_State* state )
     size_t len;
     char const* soundAsset = lua_tolstring ( state, 2, &len );
 
-    if ( !soundAsset )
+    if ( !soundAsset ) [[unlikely]]
     {
         lua_pushboolean ( state, false );
         return 1;
@@ -382,7 +382,7 @@ int SoundEmitterSpatialComponent::OnSetVolume ( lua_State* state )
 
 int SoundEmitterSpatialComponent::OnStop ( lua_State* state )
 {
-    if ( !lua_checkstack ( state, 1 ) )
+    if ( !lua_checkstack ( state, 1 ) ) [[unlikely]]
     {
         android_vulkan::LogWarning ( "pbr::SoundEmitterSpatialComponent::OnStop - Stack is too small." );
         return 0;

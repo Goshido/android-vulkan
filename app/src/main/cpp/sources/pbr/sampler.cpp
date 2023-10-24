@@ -15,7 +15,7 @@ bool Sampler::Init ( VkDevice device, VkSamplerCreateInfo const &info ) noexcept
         "Can't create sampler"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_SAMPLER ( "pbr::Sampler::_sampler" )

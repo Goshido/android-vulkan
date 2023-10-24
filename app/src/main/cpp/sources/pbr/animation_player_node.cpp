@@ -67,15 +67,15 @@ JointProviderNode::Result AnimationPlayerNode::GetJoint ( std::string const &nam
 
 void AnimationPlayerNode::Update ( float deltaTime ) noexcept
 {
-    if ( !_hasTrack )
+    if ( !_hasTrack ) [[unlikely]]
         return;
 
     _time += deltaTime * _playbackSpeed;
 
-    while ( _time >= _trackDuration )
+    while ( _time >= _trackDuration ) [[unlikely]]
         _time -= _trackDuration;
 
-    while ( _time < 0.0F )
+    while ( _time < 0.0F ) [[unlikely]]
         _time += _trackDuration;
 
     float p;
@@ -90,7 +90,7 @@ void AnimationPlayerNode::Update ( float deltaTime ) noexcept
 
 bool AnimationPlayerNode::LoadAnimation ( std::string &&animationTrack ) noexcept
 {
-    if ( _hasTrack = _track.Load ( std::move ( animationTrack ) ); !_hasTrack )
+    if ( _hasTrack = _track.Load ( std::move ( animationTrack ) ); !_hasTrack ) [[unlikely]]
         return false;
 
     _time = 0.0F;
@@ -105,7 +105,7 @@ bool AnimationPlayerNode::LoadAnimation ( std::string &&animationTrack ) noexcep
 
 int AnimationPlayerNode::OnCreate ( lua_State* state )
 {
-    if ( !lua_checkstack ( state, 1 ) )
+    if ( !lua_checkstack ( state, 1 ) ) [[unlikely]]
     {
         android_vulkan::LogWarning ( "pbr::AnimationPlayerNode::OnCreate - Stack is too small." );
         return 0;
@@ -131,7 +131,7 @@ int AnimationPlayerNode::OnDestroy ( lua_State* state )
 
 int AnimationPlayerNode::OnLoadAnimation ( lua_State* state )
 {
-    if ( !lua_checkstack ( state, 1 ) )
+    if ( !lua_checkstack ( state, 1 ) ) [[unlikely]]
     {
         android_vulkan::LogWarning ( "pbr::AnimationPlayerNode::OnLoadAnimation - Stack is too small." );
         return 0;
@@ -139,7 +139,7 @@ int AnimationPlayerNode::OnLoadAnimation ( lua_State* state )
 
     char const* animation = lua_tostring ( state, 2 );
 
-    if ( !animation )
+    if ( !animation ) [[unlikely]]
     {
         android_vulkan::LogWarning ( "pbr::AnimationPlayerNode::OnLoadAnimation - Animation file is not specified." );
         lua_pushboolean ( state, false );

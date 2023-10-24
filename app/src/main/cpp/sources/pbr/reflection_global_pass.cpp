@@ -107,7 +107,7 @@ bool ReflectionGlobalPass::AllocateDescriptorSets ( VkDevice device ) noexcept
         "Can't create descriptor pool"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_DESCRIPTOR_POOL ( "pbr::ReflectionGlobalPass::_descriptorPool" )
@@ -133,7 +133,7 @@ bool ReflectionGlobalPass::AllocateDescriptorSets ( VkDevice device ) noexcept
         "Can't allocate descriptor sets"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     // Initialize all immutable constant fields.
@@ -196,7 +196,7 @@ void ReflectionGlobalPass::UpdateGPUData ( VkDevice device, size_t count ) noexc
     VkWriteDescriptorSet const* writeSets = _writeSets.data ();
     vkUpdateDescriptorSets ( device, static_cast<uint32_t> ( available ), writeSets + _itemBaseIndex, 0U, nullptr );
 
-    if ( more > 0U )
+    if ( more > 0U ) [[unlikely]]
     {
         vkUpdateDescriptorSets ( device, static_cast<uint32_t> ( more ), writeSets, 0U, nullptr );
     }

@@ -35,7 +35,7 @@ UILayer::UILayer ( bool &success, lua_State &vm ) noexcept
     constexpr int uiAssetIdx = 2;
     char const* uiAsset = lua_tostring ( &vm, uiAssetIdx );
 
-    if ( !uiAsset )
+    if ( !uiAsset ) [[unlikely]]
     {
         success = false;
         return;
@@ -43,7 +43,7 @@ UILayer::UILayer ( bool &success, lua_State &vm ) noexcept
 
     android_vulkan::File asset ( uiAsset );
 
-    if ( success = asset.LoadContent (); !success )
+    if ( success = asset.LoadContent (); !success ) [[unlikely]]
         return;
 
     std::vector<uint8_t> &content = asset.GetContent ();
@@ -54,10 +54,10 @@ UILayer::UILayer ( bool &success, lua_State &vm ) noexcept
         std::filesystem::path ( uiAsset ).parent_path ().string ().c_str ()
     );
 
-    if ( !success )
+    if ( !success ) [[unlikely]]
         return;
 
-    if ( !lua_checkstack ( &vm, 7 ) )
+    if ( !lua_checkstack ( &vm, 7 ) ) [[unlikely]]
     {
         android_vulkan::LogWarning ( "pbr::UILayer::UILayer - Stack is too small." );
         success = false;
@@ -67,7 +67,7 @@ UILayer::UILayer ( bool &success, lua_State &vm ) noexcept
     constexpr std::string_view registerNamedElement = "RegisterNamedElement";
     lua_pushlstring ( &vm, registerNamedElement.data (), registerNamedElement.size () );
 
-    if ( success = lua_rawget ( &vm, uiLayerIdx ) == LUA_TFUNCTION; !success )
+    if ( success = lua_rawget ( &vm, uiLayerIdx ) == LUA_TFUNCTION; !success ) [[unlikely]]
     {
         android_vulkan::LogWarning ( "pbr::UILayer::UILayer - Can't find 'UILayer:RegisterNamedElement' method." );
         return;
@@ -95,7 +95,7 @@ UILayer::UILayer ( bool &success, lua_State &vm ) noexcept
 
     success = RegisterNamedElement ( vm, errorHandlerIdx, uiLayerIdx, registerNamedElementIdx, html.GetBodyID () );
 
-    if ( !success )
+    if ( !success ) [[unlikely]]
     {
         lua_pop ( &vm, 3 );
         return;
@@ -104,7 +104,7 @@ UILayer::UILayer ( bool &success, lua_State &vm ) noexcept
     constexpr std::string_view appendChildElement = "AppendChildElement";
     lua_pushlstring ( &vm, appendChildElement.data (), appendChildElement.size () );
 
-    if ( success = lua_rawget ( &vm, -2 ) == LUA_TFUNCTION; !success )
+    if ( success = lua_rawget ( &vm, -2 ) == LUA_TFUNCTION; !success ) [[unlikely]]
     {
         android_vulkan::LogWarning ( "pbr::UILayer::UILayer - Can't find 'DIVUIElement:AppendChildElement' method." );
         lua_pop ( &vm, 3 );
@@ -268,7 +268,7 @@ bool UILayer::AppendChild ( lua_State &vm,
 
         auto* t = new TextUIElement ( success, &parent, vm, errorHandlerIdx, std::move ( text.GetText () ) );
 
-        if ( !success )
+        if ( !success ) [[unlikely]]
         {
             delete t;
             return false;
@@ -291,7 +291,7 @@ bool UILayer::AppendChild ( lua_State &vm,
             std::move ( img._cssComputedValues )
         );
 
-        if ( !success )
+        if ( !success ) [[unlikely]]
         {
             delete i;
             return false;
@@ -301,6 +301,7 @@ bool UILayer::AppendChild ( lua_State &vm,
 
         if ( !RegisterNamedElement ( vm, errorHandlerIdx, uiLayerIdx, registerNamedElementIdx, img.GetID () ) )
         {
+            [[unlikely]]
             lua_pop ( &vm, 1 );
             return false;
         }
@@ -308,7 +309,7 @@ bool UILayer::AppendChild ( lua_State &vm,
         return parent.AppendChildElement ( vm, errorHandlerIdx, appendChildElementIdx, *i );
     }
 
-    if ( tag != HTML5Tag::eTag::DIV )
+    if ( tag != HTML5Tag::eTag::DIV ) [[unlikely]]
     {
         android_vulkan::LogWarning ( "pbr::UILayer::AppendChild - Unexpected tag '%s',", tag.ToString () );
         return false;
@@ -319,7 +320,7 @@ bool UILayer::AppendChild ( lua_State &vm,
 
     auto* d = new DIVUIElement ( success, &parent, vm, errorHandlerIdx, std::move ( div._cssComputedValues ) );
 
-    if ( !success )
+    if ( !success ) [[unlikely]]
     {
         delete d;
         return false;
@@ -338,14 +339,14 @@ bool UILayer::AppendChild ( lua_State &vm,
             *child
         );
 
-        if ( !success )
+        if ( !success ) [[unlikely]]
         {
             lua_pop ( &vm, 1 );
             return false;
         }
     }
 
-    if ( !RegisterNamedElement ( vm, errorHandlerIdx, uiLayerIdx, registerNamedElementIdx, div.GetID () ) )
+    if ( !RegisterNamedElement ( vm, errorHandlerIdx, uiLayerIdx, registerNamedElementIdx, div.GetID () ) ) [[unlikely]]
     {
         lua_pop ( &vm, 1 );
         return false;
@@ -372,7 +373,7 @@ bool UILayer::RegisterNamedElement ( lua_State &vm,
     std::string const &n = *name;
     lua_pushlstring ( &vm, n.c_str (), n.size () );
 
-    if ( lua_pcall ( &vm, 3, 0, errorHandlerIdx ) == LUA_OK )
+    if ( lua_pcall ( &vm, 3, 0, errorHandlerIdx ) == LUA_OK ) [[likely]]
         return true;
 
     android_vulkan::LogWarning ( "pbr::UILayer::RegisterNamedElement - Can't register element '%s'.", n.c_str () );
@@ -385,7 +386,7 @@ int UILayer::OnCreate ( lua_State* state )
     bool success;
     auto* layer = new UILayer ( success, *state );
 
-    if ( success )
+    if ( success ) [[likely]]
     {
         _uiLayers.insert ( layer );
         lua_pushlightuserdata ( state, layer );
@@ -408,7 +409,7 @@ int UILayer::OnHide ( lua_State* state )
 {
     auto &layer = *static_cast<UILayer*> ( lua_touserdata ( state, 1 ) );
 
-    if ( layer._body )
+    if ( layer._body ) [[likely]]
     {
         layer._body->Hide ();
         return 0;
@@ -421,7 +422,7 @@ int UILayer::OnHide ( lua_State* state )
 
 int UILayer::OnIsVisible ( lua_State* state )
 {
-    if ( !lua_checkstack ( state, 1 ) )
+    if ( !lua_checkstack ( state, 1 ) ) [[unlikely]]
     {
         android_vulkan::LogWarning ( "pbr::UILayer::OnIsVisible - Stack is too small." );
         return 0;
@@ -436,7 +437,7 @@ int UILayer::OnShow ( lua_State* state )
 {
     auto &layer = *static_cast<UILayer*> ( lua_touserdata ( state, 1 ) );
 
-    if ( layer._body )
+    if ( layer._body ) [[likely]]
     {
         layer._body->Show ();
         return 0;

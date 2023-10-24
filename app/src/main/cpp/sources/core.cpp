@@ -97,14 +97,15 @@ Core::Core ( JNIEnv* env, jobject activity, jobject assetManager, std::string &&
         }
     };
 
-    _game = games.find ( android_vulkan::eGame::World1x1 )->second.get ();
+    _game = games.find ( android_vulkan::eGame::PBR )->second.get ();
 
     _thread = std::thread (
         [ this, dpi ] () noexcept {
-            if ( !_game->OnInitSoundSystem () )
-                return;
+            bool const result = _game->OnInitSoundSystem () &&
+                _renderer.OnCreateDevice ( dpi ) &&
+                _game->OnInitDevice ( _renderer );
 
-            if ( !_renderer.OnCreateDevice ( dpi ) || !_game->OnInitDevice ( _renderer ) )
+            if ( !result ) [[unlikely]]
                 return;
 
             while ( ExecuteMessageQueue () )

@@ -67,7 +67,7 @@ bool UniformBufferPool::Init ( android_vulkan::Renderer &renderer, size_t itemSi
 
     VkMemoryRequirements requirements;
 
-    if ( !ResolveMemoryRequirements ( renderer, requirements, bufferInfo ) )
+    if ( !ResolveMemoryRequirements ( renderer, requirements, bufferInfo ) ) [[unlikely]]
         return false;
 
     auto const alignment = static_cast<size_t> ( requirements.alignment );
@@ -119,7 +119,7 @@ bool UniformBufferPool::AllocateBuffers ( android_vulkan::Renderer &renderer,
         "Can't allocate GPU memory (pbr::UniformBufferPool::AllocateBuffers)"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_DEVICE_MEMORY ( "pbr::UniformBufferPool::_memory" )
@@ -135,7 +135,7 @@ bool UniformBufferPool::AllocateBuffers ( android_vulkan::Renderer &renderer,
             "Can't create uniform buffer"
         );
 
-        if ( !result )
+        if ( !result ) [[unlikely]]
             return false;
 
         AV_REGISTER_BUFFER ( "pbr::UniformBufferPool::_buffer::item" )
@@ -148,7 +148,7 @@ bool UniformBufferPool::AllocateBuffers ( android_vulkan::Renderer &renderer,
             "Can't bind uniform buffer memory"
         );
 
-        if ( !result )
+        if ( !result ) [[unlikely]]
             return false;
 
         offset += alignedBlockSize;
@@ -173,7 +173,7 @@ bool UniformBufferPool::ResolveMemoryRequirements ( android_vulkan::Renderer &re
         "Can't create uniform buffer"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     vkGetBufferMemoryRequirements ( device, buffer, &requirements );

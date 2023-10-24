@@ -150,7 +150,7 @@ void ScriptableGXMat3::Insert ( Item* item, Item* &list ) noexcept
 
 int ScriptableGXMat3::OnCreate ( lua_State* state )
 {
-    if ( !_free )
+    if ( !_free ) [[unlikely]]
     {
         Insert ( new Item {}, _used );
         lua_pushlightuserdata ( state, _used );

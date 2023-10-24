@@ -57,20 +57,26 @@ bool GBuffer::Init ( android_vulkan::Renderer &renderer, VkExtent2D const &resol
 
 #endif // ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
 
-    if ( !_albedo.CreateRenderTarget ( resolution, VK_FORMAT_R8G8B8A8_SRGB, usageColor, renderer ) )
+    if ( !_albedo.CreateRenderTarget ( resolution, VK_FORMAT_R8G8B8A8_SRGB, usageColor, renderer ) ) [[unlikely]]
         return false;
 
     if ( !_normal.CreateRenderTarget ( resolution, VK_FORMAT_A2R10G10B10_UNORM_PACK32, usageColor, renderer ) )
+    {
+        [[unlikely]]
         return false;
+    }
 
-    if ( !_params.CreateRenderTarget ( resolution, VK_FORMAT_R8G8B8A8_UNORM, usageColor, renderer ) )
+    if ( !_params.CreateRenderTarget ( resolution, VK_FORMAT_R8G8B8A8_UNORM, usageColor, renderer ) ) [[unlikely]]
         return false;
 
     constexpr VkImageUsageFlags usageAccumulator = AV_VK_FLAG ( VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT ) |
         AV_VK_FLAG ( VK_IMAGE_USAGE_SAMPLED_BIT );
 
     if ( !_hdrAccumulator.CreateRenderTarget ( resolution, VK_FORMAT_R16G16B16A16_SFLOAT, usageAccumulator, renderer ) )
+    {
+        [[unlikely]]
         return false;
+    }
 
     return _depthStencil.CreateRenderTarget ( resolution,
         renderer.GetDefaultDepthFormat (),

@@ -21,7 +21,7 @@ constexpr int INITIAL_CAPACITY = 128;
 
 bool ScriptableSweepTestResult::Init ( lua_State &vm ) noexcept
 {
-    if ( !lua_checkstack ( &vm, 4 ) )
+    if ( !lua_checkstack ( &vm, 4 ) ) [[unlikely]]
     {
         android_vulkan::LogError ( "pbr::ScriptableSweepTestResult::Init - Stack is too small." );
         return false;
@@ -58,7 +58,7 @@ bool ScriptableSweepTestResult::Init ( lua_State &vm ) noexcept
 
 void ScriptableSweepTestResult::Destroy ( lua_State &vm ) noexcept
 {
-    if ( !lua_checkstack ( &vm, 1 ) )
+    if ( !lua_checkstack ( &vm, 1 ) ) [[unlikely]]
     {
         android_vulkan::LogError ( "pbr::ScriptableSweepTestResult::Init - Stack is too small." );
         return;
@@ -72,7 +72,7 @@ bool ScriptableSweepTestResult::PublishResult ( lua_State &vm,
     std::vector<android_vulkan::RigidBodyRef> const &sweepTestResult
 ) noexcept
 {
-    if ( !lua_checkstack ( &vm, 6 ) )
+    if ( !lua_checkstack ( &vm, 6 ) ) [[unlikely]]
     {
         android_vulkan::LogError ( "pbr::ScriptableSweepTestResult::PublishResult - Stack is too small." );
         return false;
@@ -101,7 +101,7 @@ bool ScriptableSweepTestResult::PublishResult ( lua_State &vm,
         lua_pushvalue ( &vm, -2 );
         lua_pushlightuserdata ( &vm, body.get () );
 
-        if ( lua_pcall ( &vm, 1, 1, ScriptEngine::GetErrorHandlerIndex () ) != LUA_OK )
+        if ( lua_pcall ( &vm, 1, 1, ScriptEngine::GetErrorHandlerIndex () ) != LUA_OK ) [[unlikely]]
         {
             lua_pop ( &vm, 5 );
             return false;

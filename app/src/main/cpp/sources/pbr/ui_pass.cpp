@@ -149,7 +149,7 @@ bool ImageStorage::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
         "Can't create command pool"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_COMMAND_POOL ( "pbr::ImageStorage::_commandPool" )
@@ -158,7 +158,7 @@ bool ImageStorage::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 
 void ImageStorage::OnDestroyDevice () noexcept
 {
-    if ( !_textures.empty () )
+    if ( !_textures.empty () ) [[unlikely]]
     {
         android_vulkan::LogWarning ( "pbr::ImageStorage::OnDestroyDevice - Memory leak." );
         AV_ASSERT ( false )
@@ -194,7 +194,7 @@ void ImageStorage::OnDestroyDevice () noexcept
 
 bool ImageStorage::SyncGPU () noexcept
 {
-    if ( !_commandBufferIndex )
+    if ( !_commandBufferIndex ) [[likely]]
         return true;
 
     VkDevice device = _renderer->GetDevice ();
@@ -207,7 +207,7 @@ bool ImageStorage::SyncGPU () noexcept
         "Can't wait fence"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     result = android_vulkan::Renderer::CheckVkResult ( vkResetFences ( device, fenceCount, fences ),
@@ -215,7 +215,7 @@ bool ImageStorage::SyncGPU () noexcept
         "Can't reset fence"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     result = android_vulkan::Renderer::CheckVkResult (
@@ -224,7 +224,7 @@ bool ImageStorage::SyncGPU () noexcept
         "Can't reset command pool"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     _commandBufferIndex = 0U;
@@ -254,7 +254,7 @@ bool ImageStorage::AllocateCommandBuffers ( size_t amount ) noexcept
         "Can't allocate command buffer"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     _fences.resize ( size );
@@ -275,7 +275,7 @@ bool ImageStorage::AllocateCommandBuffers ( size_t amount ) noexcept
             "Can't create fence"
         );
 
-        if ( !result )
+        if ( !result ) [[unlikely]]
             return false;
 
         AV_REGISTER_FENCE ( "pbr::ImageStorage::_fences" )
@@ -313,7 +313,7 @@ bool UIPass::CommonDescriptorSet::Init ( VkDevice device,
         "Can't allocate descriptor sets"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     VkDescriptorImageInfo const imageInfo[] =
@@ -426,7 +426,7 @@ bool UIPass::Buffer::Init ( android_vulkan::Renderer &renderer,
         ( std::string ( "Can't create buffer: " ) + _name ).c_str ()
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_BUFFER ( _name )
@@ -441,7 +441,7 @@ bool UIPass::Buffer::Init ( android_vulkan::Renderer &renderer,
         ( std::string ( "pbr::UIPass::Init - Can't allocate device memory: " ) + _name ).c_str ()
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_DEVICE_MEMORY ( _name )
@@ -501,7 +501,7 @@ bool UIPass::ImageDescriptorSets::Init ( VkDevice device,
         "Can't allocate descriptor sets"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     _transparent = _descriptorSets.back ();
@@ -587,7 +587,7 @@ void UIPass::ImageDescriptorSets::Commit ( VkDevice device ) noexcept
     _startIndex = idx % MAX_IMAGES;
     _written = 0U;
 
-    if ( more >= 1U )
+    if ( more >= 1U ) [[unlikely]]
     {
         vkUpdateDescriptorSets ( device, static_cast<uint32_t> ( more ), writeSets, 0U, nullptr );
     }
@@ -681,7 +681,7 @@ bool UIPass::Execute ( VkCommandBuffer commandBuffer, size_t commandBufferIndex 
 {
     AV_TRACE ( "UI pass: Execute" )
 
-    if ( !ImageStorage::SyncGPU () )
+    if ( !ImageStorage::SyncGPU () ) [[unlikely]]
         return false;
 
     _program.Bind ( commandBuffer );
@@ -746,7 +746,10 @@ bool UIPass::OnInitDevice ( android_vulkan::Renderer &renderer,
     );
 
     if ( !_staging.Init ( renderer, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, stagingProps, "pbr::UIPass::_staging" ) )
+    {
+        [[unlikely]]
         return false;
+    }
 
     void* data;
 
@@ -757,7 +760,7 @@ bool UIPass::OnInitDevice ( android_vulkan::Renderer &renderer,
         "Can't map memory"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     _data = static_cast<UIVertexInfo*> ( data );
@@ -768,7 +771,7 @@ bool UIPass::OnInitDevice ( android_vulkan::Renderer &renderer,
         "pbr::UIPass::_vertex"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     _bufferBarrier =
@@ -819,7 +822,7 @@ bool UIPass::OnInitDevice ( android_vulkan::Renderer &renderer,
         "Can't create descriptor pool"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_DESCRIPTOR_POOL ( "pbr::UIPass::_descriptorPool" )
@@ -897,7 +900,7 @@ bool UIPass::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
     bool const result = _fontStorage.SetMediaResolution ( renderer, resolution ) &&
         _program.Init ( renderer, renderPass, subpass, &specData, resolution );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     r = resolution;
@@ -957,7 +960,7 @@ bool UIPass::SetBrightness ( android_vulkan::Renderer &renderer,
     _program.Destroy ( renderer.GetDevice () );
     SRGBProgram::SpecializationInfo const specData = SRGBProgram::GetGammaInfo ( brightnessBalance );
 
-    if ( !_program.Init ( renderer, renderPass, subpass, &specData, _currentResolution ) )
+    if ( !_program.Init ( renderer, renderPass, subpass, &specData, _currentResolution ) ) [[unlikely]]
         return false;
 
     _brightnessBalance = brightnessBalance;
@@ -999,7 +1002,7 @@ bool UIPass::UploadGPUData ( android_vulkan::Renderer &renderer,
     VkDevice device = renderer.GetDevice ();
     _imageDescriptorSets.Commit ( device );
 
-    if ( !_fontStorage.UploadGPUData ( renderer, commandBuffer, framebufferIndex ) )
+    if ( !_fontStorage.UploadGPUData ( renderer, commandBuffer, framebufferIndex ) ) [[unlikely]]
         return false;
 
     _commonDescriptorSet.Update ( device, _fontStorage.GetAtlasImageView () );

@@ -49,7 +49,7 @@ bool PresentRenderPass::OnInitDevice ( android_vulkan::Renderer &renderer ) noex
         "Can't create render pass end semaphore"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_SEMAPHORE ( "pbr::PresentRenderPass::_renderEndSemaphore" )
@@ -60,7 +60,7 @@ bool PresentRenderPass::OnInitDevice ( android_vulkan::Renderer &renderer ) noex
         "Can't create render target acquired semaphore"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_SEMAPHORE ( "pbr::PresentRenderPass::_targetAcquiredSemaphore" )
@@ -107,10 +107,10 @@ bool PresentRenderPass::OnSwapchainCreated ( android_vulkan::Renderer &renderer 
     VkExtent2D const &resolution = renderer.GetSurfaceSize ();
     bool const hasRenderPass = _renderInfo.renderPass != VK_NULL_HANDLE;
 
-    if ( hasRenderPass && !CreateFramebuffers ( renderer, device, resolution ) )
+    if ( hasRenderPass && !CreateFramebuffers ( renderer, device, resolution ) ) [[unlikely]]
         return false;
 
-    if ( !CreateRenderPass ( renderer, device, resolution ) )
+    if ( !CreateRenderPass ( renderer, device, resolution ) ) [[unlikely]]
         return false;
 
     return !_framebuffers.empty () || CreateFramebuffers ( renderer, device, resolution );
@@ -139,7 +139,7 @@ bool PresentRenderPass::End ( android_vulkan::Renderer &renderer,
         "Can't end command buffer"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     _submitInfo.pCommandBuffers = &commandBuffer;
@@ -150,7 +150,7 @@ bool PresentRenderPass::End ( android_vulkan::Renderer &renderer,
         "Can't submit command buffer"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     VkResult presentResult = VK_ERROR_DEVICE_LOST;
@@ -164,7 +164,7 @@ bool PresentRenderPass::End ( android_vulkan::Renderer &renderer,
         "Can't present frame"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     return android_vulkan::Renderer::CheckVkResult ( presentResult,
@@ -205,7 +205,7 @@ bool PresentRenderPass::CreateFramebuffers ( android_vulkan::Renderer &renderer,
             "Can't create a framebuffer"
         );
 
-        if ( !result )
+        if ( !result ) [[unlikely]]
             return false;
 
         _framebuffers.push_back ( framebuffer );
@@ -300,7 +300,7 @@ bool PresentRenderPass::CreateRenderPass ( android_vulkan::Renderer &renderer,
         "Can't create render pass"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_RENDER_PASS ( "pbr::PresentRenderPass::_renderPass" )

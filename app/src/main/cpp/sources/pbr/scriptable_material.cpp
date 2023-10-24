@@ -74,7 +74,7 @@ bool ScriptableMaterial::Init ( lua_State &vm, android_vulkan::Renderer &rendere
 
 void ScriptableMaterial::Destroy () noexcept
 {
-    if ( !_materials.empty () )
+    if ( !_materials.empty () ) [[unlikely]]
     {
         android_vulkan::LogWarning ( "pbr::ScriptableMaterial::Destroy - Memory leak." );
         AV_ASSERT ( false )
@@ -129,7 +129,7 @@ bool ScriptableMaterial::Sync () noexcept
         "Can't wait fence"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     result = android_vulkan::Renderer::CheckVkResult ( vkResetFences ( device, fenceCount, fences ),
@@ -137,7 +137,7 @@ bool ScriptableMaterial::Sync () noexcept
         "Can't reset fence"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     result = android_vulkan::Renderer::CheckVkResult (
@@ -146,7 +146,7 @@ bool ScriptableMaterial::Sync () noexcept
         "Can't reset command pool"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     _commandBufferIndex = 0U;
@@ -176,7 +176,7 @@ bool ScriptableMaterial::AllocateCommandBuffers ( size_t amount ) noexcept
         "Can't allocate command buffer"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     _fences.resize ( size );
@@ -197,7 +197,7 @@ bool ScriptableMaterial::AllocateCommandBuffers ( size_t amount ) noexcept
             "Can't create fence"
         );
 
-        if ( !result )
+        if ( !result ) [[unlikely]]
             return false;
 
         AV_REGISTER_FENCE ( "pbr::ScriptableMaterial::_fences" )
@@ -216,7 +216,7 @@ int ScriptableMaterial::OnCreate ( lua_State* state )
 
     char const* materialFile = lua_tostring ( state, 1 );
 
-    if ( !materialFile )
+    if ( !materialFile ) [[unlikely]]
     {
         lua_pushnil ( state );
         return 1;
@@ -226,7 +226,7 @@ int ScriptableMaterial::OnCreate ( lua_State* state )
 
     if ( available < MaterialManager::MaxCommandBufferPerMaterial () )
     {
-        if ( !AllocateCommandBuffers ( ALLOCATE_COMMAND_BUFFERS ) )
+        if ( !AllocateCommandBuffers ( ALLOCATE_COMMAND_BUFFERS ) ) [[unlikely]]
         {
             lua_pushnil ( state );
             return 1;
@@ -242,7 +242,7 @@ int ScriptableMaterial::OnCreate ( lua_State* state )
         &_fences[ _commandBufferIndex ]
     );
 
-    if ( !material )
+    if ( !material ) [[unlikely]]
     {
         lua_pushnil ( state );
         return 1;

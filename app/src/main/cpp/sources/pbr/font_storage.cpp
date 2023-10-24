@@ -35,7 +35,7 @@ bool FontStorage::StagingBuffer::Init ( android_vulkan::Renderer &renderer, uint
         "Can't create buffer"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_BUFFER ( "pbr::FontStorage::StagingBuffer::_buffer" )
@@ -50,7 +50,7 @@ bool FontStorage::StagingBuffer::Init ( android_vulkan::Renderer &renderer, uint
         "Can't allocate device memory (pbr::FontStorage::StagingBuffer::Init)"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_DEVICE_MEMORY ( "pbr::FontStorage::StagingBuffer::_memory" )
@@ -60,7 +60,7 @@ bool FontStorage::StagingBuffer::Init ( android_vulkan::Renderer &renderer, uint
         "Can't bind memory"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     void* data;
@@ -72,7 +72,7 @@ bool FontStorage::StagingBuffer::Init ( android_vulkan::Renderer &renderer, uint
         "Can't map memory"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     _data = static_cast<uint8_t*> ( data );
@@ -171,7 +171,7 @@ bool FontStorage::Atlas::AddLayers ( android_vulkan::Renderer &renderer,
         "Can't create image"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_IMAGE ( "pbr::FontStorage::Atlas::_image" )
@@ -186,7 +186,7 @@ bool FontStorage::Atlas::AddLayers ( android_vulkan::Renderer &renderer,
         "Can't allocate image memory (pbr::FontStorage::Atlas::AddLayer)"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_DEVICE_MEMORY ( "pbr::FontStorage::Atlas::_memory" )
@@ -197,7 +197,7 @@ bool FontStorage::Atlas::AddLayers ( android_vulkan::Renderer &renderer,
         "Can't bind image memory"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     VkImageViewCreateInfo const viewInfo
@@ -233,7 +233,7 @@ bool FontStorage::Atlas::AddLayers ( android_vulkan::Renderer &renderer,
         "Can't create image view"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_IMAGE_VIEW ( "pbr::FontStorage::Atlas::_view" )
@@ -517,7 +517,7 @@ void FontStorage::Destroy ( android_vulkan::Renderer &renderer ) noexcept
         "Can't close FreeType"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return;
 
     _library = nullptr;
@@ -607,7 +607,7 @@ bool FontStorage::SetMediaResolution ( android_vulkan::Renderer &renderer, VkExt
         "Can't wait device idle"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     DestroyAtlas ( renderer );
@@ -652,6 +652,7 @@ bool FontStorage::UploadGPUData ( android_vulkan::Renderer &renderer,
     {
         if ( !_atlas.AddLayers ( renderer, commandBuffer, commandBufferIndex, static_cast<uint32_t> ( newLayers ) ) )
         {
+            [[unlikely]]
             return false;
         }
     }
@@ -839,7 +840,7 @@ FontStorage::GlyphInfo const &FontStorage::EmbedGlyph ( android_vulkan::Renderer
 
     uint32_t const side = _atlas._side;
 
-    if ( ( rows > side ) | ( width > side ) )
+    if ( ( rows > side ) | ( width > side ) ) [[unlikely]]
     {
         android_vulkan::LogWarning ( "FontStorage::EmbedGlyph - Font size is way too big: %u", fontSize );
         return nullGlyph;
@@ -1327,7 +1328,7 @@ void FontStorage::TransferPixels ( VkCommandBuffer commandBuffer ) noexcept
 
 bool FontStorage::CheckFTResult ( FT_Error result, char const* from, char const* message ) noexcept
 {
-    if ( result == FT_Err_Ok )
+    if ( result == FT_Err_Ok ) [[likely]]
         return true;
 
     android_vulkan::LogError ( "%s - %s. Error: %s.", from, message, FT_Error_String ( result ) );

@@ -840,7 +840,7 @@ bool Renderer::CreateShader ( VkShaderModule &shader,
 {
     File vertexShader ( shaderFile );
 
-    if ( !vertexShader.LoadContent () )
+    if ( !vertexShader.LoadContent () ) [[unlikely]]
         return false;
 
     std::vector<uint8_t> const &spirV = vertexShader.GetContent ();
@@ -945,10 +945,10 @@ VkExtent2D const &Renderer::GetViewportResolution () const noexcept
 
 bool Renderer::OnCreateSwapchain ( ANativeWindow &nativeWindow, bool vSync ) noexcept
 {
-    if ( !DeploySurface ( nativeWindow ) )
+    if ( !DeploySurface ( nativeWindow ) ) [[unlikely]]
         return false;
 
-    if ( DeploySwapchain ( vSync ) )
+    if ( DeploySwapchain ( vSync ) ) [[likely]]
         return true;
 
     DestroySurface ();
@@ -963,18 +963,18 @@ void Renderer::OnDestroySwapchain () noexcept
 
 bool Renderer::OnCreateDevice ( float dpi ) noexcept
 {
-    if ( !_vulkanLoader.AcquireBootstrapFunctions () )
+    if ( !_vulkanLoader.AcquireBootstrapFunctions () ) [[unlikely]]
         return false;
 
-    if ( !PrintInstanceLayerInfo () )
+    if ( !PrintInstanceLayerInfo () ) [[unlikely]]
         return false;
 
-    if ( !DeployInstance () )
+    if ( !DeployInstance () ) [[unlikely]]
         return false;
 
 #ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
-    if ( !DeployDebugFeatures () )
+    if ( !DeployDebugFeatures () ) [[unlikely]]
         return false;
 
 #endif
@@ -982,7 +982,7 @@ bool Renderer::OnCreateDevice ( float dpi ) noexcept
     uint32_t physicalDeviceCount = 0U;
     vkEnumeratePhysicalDevices ( _instance, &physicalDeviceCount, nullptr );
 
-    if ( !physicalDeviceCount )
+    if ( !physicalDeviceCount ) [[unlikely]]
     {
 
 #ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
@@ -1007,7 +1007,7 @@ bool Renderer::OnCreateDevice ( float dpi ) noexcept
         "Can't get Vulkan physical devices"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
     {
 
 #ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
@@ -1022,7 +1022,7 @@ bool Renderer::OnCreateDevice ( float dpi ) noexcept
 
     for ( uint32_t i = 0U; i < physicalDeviceCount; ++i )
     {
-        if ( PrintPhysicalDeviceInfo ( i, deviceList[ i ] ) )
+        if ( PrintPhysicalDeviceInfo ( i, deviceList[ i ] ) ) [[likely]]
             continue;
 
         _physicalDeviceInfo.clear ();
@@ -1040,7 +1040,7 @@ bool Renderer::OnCreateDevice ( float dpi ) noexcept
     uint32_t physicalDeviceGroupCount = 0U;
     vkEnumeratePhysicalDeviceGroups ( _instance, &physicalDeviceGroupCount, nullptr );
 
-    if ( !physicalDeviceGroupCount )
+    if ( !physicalDeviceGroupCount ) [[unlikely]]
     {
         _physicalDeviceInfo.clear ();
 
@@ -1069,7 +1069,7 @@ bool Renderer::OnCreateDevice ( float dpi ) noexcept
         "Can't get Vulkan physical device groups"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
     {
         _physicalDeviceGroups.clear ();
         _physicalDeviceInfo.clear ();
@@ -1087,7 +1087,7 @@ bool Renderer::OnCreateDevice ( float dpi ) noexcept
     for ( uint32_t i = 0U; i < physicalDeviceGroupCount; ++i )
         PrintPhysicalDeviceGroupInfo ( i, groupProps[ i ] );
 
-    if ( DeployDevice () )
+    if ( DeployDevice () ) [[likely]]
     {
         _dpi = dpi;
         return true;
@@ -1109,7 +1109,10 @@ bool Renderer::OnCreateDevice ( float dpi ) noexcept
 void Renderer::OnDestroyDevice () noexcept
 {
     if ( !CheckVkResult ( vkDeviceWaitIdle ( _device ), "Renderer::OnDestroyDevice", "Can't wait device idle" ) )
+    {
+        [[unlikely]]
         return;
+    }
 
     _physicalDeviceGroups.clear ();
     _physicalDeviceInfo.clear ();
@@ -1124,7 +1127,7 @@ void Renderer::OnDestroyDevice () noexcept
 
     DestroyInstance ();
 
-    if ( !_vulkanLoader.Unload () )
+    if ( !_vulkanLoader.Unload () ) [[unlikely]]
     {
         LogError ( "Renderer::OnDestroyDevice - Can't unload Vulkan functions." );
     }
@@ -1137,7 +1140,7 @@ bool Renderer::TryAllocateMemory ( VkDeviceMemory &memory,
     char const* errorMessage
 ) noexcept
 {
-    if ( _memoryAllocator.TryAllocateMemory ( memory, offset, _device, requirements, memoryProperties ) )
+    if ( _memoryAllocator.TryAllocateMemory ( memory, offset, _device, requirements, memoryProperties ) ) [[likely]]
         return true;
 
     LogError ( "Renderer::TryAllocateMemory - %s.", errorMessage );
@@ -1171,7 +1174,7 @@ void Renderer::UnmapMemory ( VkDeviceMemory memory ) noexcept
 
 bool Renderer::CheckVkResult ( VkResult result, char const* from, char const* message ) noexcept
 {
-    if ( result == VK_SUCCESS )
+    if ( result == VK_SUCCESS ) [[likely]]
         return true;
 
     LogError ( "%s - %s. Error: %s.", from, message, ResolveVkResult ( result ) );
@@ -1216,7 +1219,7 @@ char const* Renderer::ResolveVkFormat ( VkFormat format ) noexcept
 
 bool Renderer::CheckExtensionScalarBlockLayout ( std::set<std::string> const &allExtensions ) noexcept
 {
-    if ( !CheckExtensionCommon ( allExtensions, VK_EXT_SCALAR_BLOCK_LAYOUT_EXTENSION_NAME ) )
+    if ( !CheckExtensionCommon ( allExtensions, VK_EXT_SCALAR_BLOCK_LAYOUT_EXTENSION_NAME ) ) [[unlikely]]
         return false;
 
     VkPhysicalDeviceScalarBlockLayoutFeaturesEXT hardwareSupport
@@ -1235,7 +1238,7 @@ bool Renderer::CheckExtensionScalarBlockLayout ( std::set<std::string> const &al
 
     vkGetPhysicalDeviceFeatures2 ( _physicalDevice, &probe );
 
-    if ( hardwareSupport.scalarBlockLayout )
+    if ( hardwareSupport.scalarBlockLayout ) [[likely]]
     {
         LogInfo ( "%sOK: scalarBlockLayout", INDENT_2 );
         return true;
@@ -1247,7 +1250,7 @@ bool Renderer::CheckExtensionScalarBlockLayout ( std::set<std::string> const &al
 
 bool Renderer::CheckExtensionShaderFloat16Int8 ( std::set<std::string> const &allExtensions ) noexcept
 {
-    if ( !CheckExtensionCommon ( allExtensions, VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME ) )
+    if ( !CheckExtensionCommon ( allExtensions, VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME ) ) [[unlikely]]
         return false;
 
     VkPhysicalDeviceFloat16Int8FeaturesKHR hardwareSupport
@@ -1267,7 +1270,7 @@ bool Renderer::CheckExtensionShaderFloat16Int8 ( std::set<std::string> const &al
 
     vkGetPhysicalDeviceFeatures2 ( _physicalDevice, &probe );
 
-    if ( hardwareSupport.shaderFloat16 )
+    if ( hardwareSupport.shaderFloat16 ) [[likely]]
     {
         LogInfo ( "%sOK: shaderFloat16", INDENT_2 );
         return true;
@@ -1319,7 +1322,7 @@ bool Renderer::CheckRequiredFeatures ( VkPhysicalDevice physicalDevice, size_t c
 
         auto const &featureName = g_vkFeatureMap.find ( offset )->second;
 
-        if ( enable )
+        if ( enable ) [[likely]]
         {
             supportedFeatures.emplace ( featureName );
             continue;
@@ -1395,7 +1398,7 @@ bool Renderer::CheckRequiredFormats () noexcept
     probe ( VK_FORMAT_X8_D24_UNORM_PACK32, "VK_FORMAT_X8_D24_UNORM_PACK32" );
     probe ( VK_FORMAT_R16_SFLOAT, "VK_FORMAT_R16_SFLOAT" );
 
-    if ( unsupportedFormats.empty () )
+    if ( unsupportedFormats.empty () ) [[likely]]
         return true;
 
     for ( char const* format : unsupportedFormats )
@@ -1447,7 +1450,7 @@ bool Renderer::DeployDevice () noexcept
     deviceQueueCreateInfo.queueCount = 1U;
     deviceQueueCreateInfo.pQueuePriorities = &priorities;
 
-    if ( !SelectTargetHardware ( _physicalDevice, _queueFamilyIndex ) )
+    if ( !SelectTargetHardware ( _physicalDevice, _queueFamilyIndex ) ) [[unlikely]]
         return false;
 
     VkPhysicalDeviceProperties props;
@@ -1464,7 +1467,7 @@ bool Renderer::DeployDevice () noexcept
     deviceQueueCreateInfo.queueFamilyIndex = _queueFamilyIndex;
     auto const &caps = _physicalDeviceInfo[ _physicalDevice ];
 
-    if ( !CheckRequiredDeviceExtensions ( caps._extensions ) )
+    if ( !CheckRequiredDeviceExtensions ( caps._extensions ) ) [[unlikely]]
         return false;
 
     constexpr size_t const features[] =
@@ -1472,10 +1475,10 @@ bool Renderer::DeployDevice () noexcept
         offsetof ( VkPhysicalDeviceFeatures, textureCompressionASTC_LDR )
     };
 
-    if ( !CheckRequiredFeatures ( _physicalDevice, features, std::size ( features ) ) )
+    if ( !CheckRequiredFeatures ( _physicalDevice, features, std::size ( features ) ) ) [[unlikely]]
         return false;
 
-    if ( !CheckRequiredFormats () )
+    if ( !CheckRequiredFormats () ) [[unlikely]]
         return false;
 
     constexpr static VkPhysicalDeviceSeparateDepthStencilLayoutsFeatures separateDSLayoutFeatures
@@ -1537,12 +1540,12 @@ bool Renderer::DeployDevice () noexcept
         "Can't create device"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_DEVICE ( "Renderer::_device" )
 
-    if ( !_vulkanLoader.AcquireDeviceFunctions ( _device ) )
+    if ( !_vulkanLoader.AcquireDeviceFunctions ( _device ) ) [[unlikely]]
         return false;
 
     vkGetDeviceQueue ( _device, _queueFamilyIndex, 0U, &_queue );
@@ -1578,7 +1581,7 @@ bool Renderer::DeployInstance () noexcept
         "Can't query instance version"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     //                                                                            major      minor      patch
@@ -1689,7 +1692,7 @@ bool Renderer::DeployInstance () noexcept
         "Can't create Vulkan instance"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     return _vulkanLoader.AcquireInstanceFunctions ( _instance );
@@ -1720,7 +1723,7 @@ bool Renderer::DeploySurface ( ANativeWindow &nativeWindow ) noexcept
         "Can't create Vulkan surface"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_SURFACE ( "Renderer::_surface" )
@@ -1733,7 +1736,7 @@ bool Renderer::DeploySurface ( ANativeWindow &nativeWindow ) noexcept
         "Can't get Vulkan surface capabilities"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
     {
         DestroySurface ();
         return false;
@@ -1743,7 +1746,7 @@ bool Renderer::DeploySurface ( ANativeWindow &nativeWindow ) noexcept
     _surfaceSize = surfaceCapabilitiesKHR.currentExtent;
     _surfaceTransform = surfaceCapabilitiesKHR.currentTransform;
 
-    if ( _surfaceTransform != VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR )
+    if ( _surfaceTransform != VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR ) [[unlikely]]
     {
         LogError ( "Renderer::DeploySurface - Unexpected surface transform: %s",
             ResolveVkSurfaceTransform ( _surfaceTransform )
@@ -1778,13 +1781,13 @@ bool Renderer::DeploySurface ( ANativeWindow &nativeWindow ) noexcept
         "Can't check Vulkan surface support by physical device"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
     {
         DestroySurface ();
         return false;
     }
 
-    if ( !isSupported )
+    if ( !isSupported ) [[unlikely]]
     {
         DestroySurface ();
 
@@ -1795,7 +1798,7 @@ bool Renderer::DeploySurface ( ANativeWindow &nativeWindow ) noexcept
     uint32_t formatCount = 0U;
     vkGetPhysicalDeviceSurfaceFormatsKHR ( _physicalDevice, _surface, &formatCount, nullptr );
 
-    if ( !formatCount )
+    if ( !formatCount ) [[unlikely]]
     {
         DestroySurface ();
 
@@ -1814,7 +1817,7 @@ bool Renderer::DeploySurface ( ANativeWindow &nativeWindow ) noexcept
         "Can't get Vulkan surface formats"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
     {
         DestroySurface ();
         return false;
@@ -1837,7 +1840,7 @@ bool Renderer::DeploySwapchain ( bool vSync ) noexcept
 {
     VkPresentModeKHR presentMode;
 
-    if ( !SelectTargetPresentMode ( presentMode, vSync ) )
+    if ( !SelectTargetPresentMode ( presentMode, vSync ) ) [[unlikely]]
     {
         LogError ( "Renderer::DeploySwapchain - Can't select present mode." );
         return false;
@@ -1845,7 +1848,7 @@ bool Renderer::DeploySwapchain ( bool vSync ) noexcept
 
     VkCompositeAlphaFlagBitsKHR compositeAlpha;
 
-    if ( !SelectTargetCompositeAlpha ( compositeAlpha ) )
+    if ( !SelectTargetCompositeAlpha ( compositeAlpha ) ) [[unlikely]]
     {
         LogError ( "Renderer::DeploySwapchain - Can't select composite alpha mode." );
         return false;
@@ -1855,6 +1858,7 @@ bool Renderer::DeploySwapchain ( bool vSync ) noexcept
 
     if ( !SelectTargetSurfaceFormat ( _surfaceFormat, colorSpace, _depthImageFormat, _depthStencilImageFormat ) )
     {
+        [[unlikely]]
         LogError ( "Renderer::DeploySwapchain - Can't select image format and color space." );
         return false;
     }
@@ -1892,7 +1896,7 @@ bool Renderer::DeploySwapchain ( bool vSync ) noexcept
         "Can't create swapchain"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_SWAPCHAIN ( "Renderer::_swapchain" )
@@ -1900,7 +1904,7 @@ bool Renderer::DeploySwapchain ( bool vSync ) noexcept
     uint32_t imageCount = 0U;
     vkGetSwapchainImagesKHR ( _device, _swapchain, &imageCount, nullptr );
 
-    if ( !imageCount )
+    if ( !imageCount ) [[unlikely]]
     {
         DestroySwapchain ();
 
@@ -1917,7 +1921,7 @@ bool Renderer::DeploySwapchain ( bool vSync ) noexcept
         "Can't create swapchain"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     _swapchainImageViews.clear ();
@@ -1960,7 +1964,7 @@ bool Renderer::DeploySwapchain ( bool vSync ) noexcept
             "Can't create swapchain image view"
         );
 
-        if ( result )
+        if ( result ) [[likely]]
         {
             _swapchainImageViews.push_back ( imageView );
 
@@ -2001,7 +2005,7 @@ bool Renderer::PrintPhysicalDeviceExtensionInfo ( VkPhysicalDevice physicalDevic
     uint32_t extensionCount = 0U;
     vkEnumerateDeviceExtensionProperties ( physicalDevice, nullptr, &extensionCount, nullptr );
 
-    if ( !extensionCount )
+    if ( !extensionCount ) [[unlikely]]
     {
         LogError ( "Renderer::PrintPhysicalDeviceExtensionInfo - There is no any physical device extensions." );
         return false;
@@ -2023,7 +2027,7 @@ bool Renderer::PrintPhysicalDeviceExtensionInfo ( VkPhysicalDevice physicalDevic
         "Can't get physical device extensions"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     VulkanPhysicalDeviceInfo &capabilities = _physicalDeviceInfo[ physicalDevice ];
@@ -2371,10 +2375,10 @@ bool Renderer::PrintPhysicalDeviceInfo ( uint32_t deviceIndex, VkPhysicalDevice 
     PrintPhysicalDeviceSparse ( props.sparseProperties );
     PrintPhysicalDeviceFeatureInfo ( physicalDevice );
 
-    if ( !PrintPhysicalDeviceExtensionInfo ( physicalDevice ) )
+    if ( !PrintPhysicalDeviceExtensionInfo ( physicalDevice ) ) [[unlikely]]
         return false;
 
-    if ( !PrintPhysicalDeviceLayerInfo ( physicalDevice ) )
+    if ( !PrintPhysicalDeviceLayerInfo ( physicalDevice ) ) [[unlikely]]
         return false;
 
     PrintPhysicalDeviceMemoryProperties ( physicalDevice );
@@ -2382,7 +2386,7 @@ bool Renderer::PrintPhysicalDeviceInfo ( uint32_t deviceIndex, VkPhysicalDevice 
     uint32_t queueFamilyCount = 0U;
     vkGetPhysicalDeviceQueueFamilyProperties ( physicalDevice, &queueFamilyCount, nullptr );
 
-    if ( !queueFamilyCount )
+    if ( !queueFamilyCount ) [[unlikely]]
     {
         LogError ( "Renderer::PrintPhysicalDeviceInfo - There is no any Vulkan physical device queue families." );
         return false;
@@ -2498,7 +2502,7 @@ bool Renderer::SelectTargetPresentMode ( VkPresentModeKHR &targetPresentMode, bo
         "Can't get Vulkan present modes"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     LogInfo ( "Renderer::SelectTargetPresentMode - Present modes detected: %u.", modeCount );
@@ -2556,7 +2560,7 @@ bool Renderer::SelectTargetSurfaceFormat ( VkFormat &targetColorFormat,
             break;
         }
 
-        if ( !isFound )
+        if ( !isFound ) [[unlikely]]
         {
             return false;
         }
@@ -2599,11 +2603,14 @@ bool Renderer::SelectTargetSurfaceFormat ( VkFormat &targetColorFormat,
         VK_FORMAT_D16_UNORM
     };
 
-    if ( !check ( targetDepthFormat, depthOptions, std::size ( depthOptions ), "depth" ) )
+    if ( !check ( targetDepthFormat, depthOptions, std::size ( depthOptions ), "depth" ) ) [[unlikely]]
         return false;
 
     if ( !check ( targetDepthStencilFormat, depthStencilOptions, std::size ( depthStencilOptions ), "depth|stencil" ) )
+    {
+        [[unlikely]]
         return false;
+    }
 
     constexpr char const format[] = R"__(Renderer::SelectTargetSurfaceFormat - Surface format selected:
 %sColor format: %s
@@ -2632,7 +2639,7 @@ bool Renderer::CheckExtensionCommon ( std::set<std::string> const &allExtensions
 {
     LogInfo ( "%sChecking %s...", INDENT_1, extension );
 
-    if ( allExtensions.count ( extension ) < 1U )
+    if ( allExtensions.count ( extension ) < 1U ) [[unlikely]]
     {
         LogError ( "%sFAIL: unsupported", INDENT_2 );
         return false;
@@ -2751,7 +2758,7 @@ bool Renderer::PrintCoreExtensions () noexcept
     uint32_t extensionCount = 0U;
     vkEnumerateInstanceExtensionProperties ( nullptr, &extensionCount, nullptr );
 
-    if ( !extensionCount )
+    if ( !extensionCount ) [[unlikely]]
     {
         LogError ( "Renderer::PrintCoreExtensions - There is no any core extensions!" );
         return false;
@@ -2768,7 +2775,7 @@ bool Renderer::PrintCoreExtensions () noexcept
         "Can't get instance core extensions"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     for ( uint32_t i = 0U; i < extensionCount; ++i )
@@ -2813,7 +2820,7 @@ bool Renderer::PrintInstanceLayerInfo () noexcept
         "Can't get instance core extensions"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     for ( uint32_t i = 0U; i < layerCount; ++i )
@@ -2886,7 +2893,7 @@ bool Renderer::PrintPhysicalDeviceLayerInfo ( VkPhysicalDevice physicalDevice ) 
         "Can't get physical device layers"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     for ( uint32_t i = 0U; i < layerCount; ++i )
@@ -3127,7 +3134,7 @@ std::string Renderer::StringifyVkFlags ( VkFlags flags,
     {
         auto const &item = flagSet[ i ];
 
-        if ( !( item.first & bitmask ) )
+        if ( !( item.first & bitmask ) ) [[unlikely]]
             continue;
 
         result += " ";

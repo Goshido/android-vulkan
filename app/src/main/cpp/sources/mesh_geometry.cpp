@@ -159,7 +159,7 @@ bool MeshGeometry::LoadMesh ( std::string &&fileName,
     VkFence fence
 ) noexcept
 {
-    if ( fileName.empty () )
+    if ( fileName.empty () ) [[unlikely]]
     {
         LogError ( "MeshGeometry::LoadMesh - Can't upload data. Filename is empty." );
         return false;
@@ -173,7 +173,7 @@ bool MeshGeometry::LoadMesh ( std::string &&fileName,
 
     static std::regex const isMesh ( R"__(^.+?\.mesh$)__" );
 
-    if ( std::regex_match ( fileName, match, isMesh ) )
+    if ( std::regex_match ( fileName, match, isMesh ) ) [[likely]]
         return LoadFromMesh ( std::move ( fileName ), renderer, commandBuffer, fence );
 
     return false;
@@ -218,7 +218,7 @@ bool MeshGeometry::LoadMesh ( uint8_t const* vertexData,
         fence
     );
 
-    if ( result )
+    if ( result ) [[likely]]
     {
         _vertexCount = indexCount,
         _vertexBufferVertexCount = vertexCount;
@@ -274,7 +274,7 @@ bool MeshGeometry::LoadFromMesh ( std::string &&fileName,
 
     File file ( fileName );
 
-    if ( !file.LoadContent () )
+    if ( !file.LoadContent () ) [[unlikely]]
         return false;
 
     std::vector<uint8_t> &content = file.GetContent ();
@@ -335,7 +335,7 @@ bool MeshGeometry::LoadFromMesh ( std::string &&fileName,
         fence
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     _fileName = std::move ( fileName );
@@ -366,7 +366,7 @@ bool MeshGeometry::LoadFromMesh2 ( std::string &&fileName,
         fence
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     Vec3 const &mins = header._bounds._min;
@@ -414,7 +414,7 @@ bool MeshGeometry::UploadComplex ( uint8_t const* data,
         "Can't create index buffer"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_BUFFER ( "MeshGeometry::_indexBuffer" )
@@ -429,7 +429,7 @@ bool MeshGeometry::UploadComplex ( uint8_t const* data,
         "Can't allocate index buffer memory (MeshGeometry::UploadComplex)"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_DEVICE_MEMORY ( "MeshGeometry::_indexBufferMemory" )
@@ -440,7 +440,7 @@ bool MeshGeometry::UploadComplex ( uint8_t const* data,
         "Can't bind index buffer memory"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     constexpr VkBufferUsageFlags vertexBufferUsageFlags = AV_VK_FLAG ( VK_BUFFER_USAGE_VERTEX_BUFFER_BIT ) |
@@ -455,7 +455,7 @@ bool MeshGeometry::UploadComplex ( uint8_t const* data,
         "Can't create vertex buffer"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     _vertexBufferRange = bufferInfo.size;
@@ -470,7 +470,7 @@ bool MeshGeometry::UploadComplex ( uint8_t const* data,
         "Can't allocate vertex buffer memory (MeshGeometry::UploadComplex)"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_DEVICE_MEMORY ( "MeshGeometry::_vertexBufferMemory" )
@@ -481,7 +481,7 @@ bool MeshGeometry::UploadComplex ( uint8_t const* data,
         "Can't bind vertex buffer memory"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     VkBufferCopy const copyInfo[] =
@@ -549,7 +549,7 @@ bool MeshGeometry::UploadInternal ( size_t numUploads,
         "Can't create transfer buffer"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_BUFFER ( "MeshGeometry::_transferBuffer" )
@@ -567,7 +567,7 @@ bool MeshGeometry::UploadInternal ( size_t numUploads,
         "Can't allocate transfer memory (MeshGeometry::UploadInternal)"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_DEVICE_MEMORY ( "MeshGeometry::_transferBufferMemory" )
@@ -578,7 +578,7 @@ bool MeshGeometry::UploadInternal ( size_t numUploads,
         "Can't bind transfer memory"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     void* transferData = nullptr;
@@ -590,7 +590,7 @@ bool MeshGeometry::UploadInternal ( size_t numUploads,
         "Can't map data"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     std::memcpy ( transferData, data, dataSize );
@@ -609,7 +609,7 @@ bool MeshGeometry::UploadInternal ( size_t numUploads,
         "Can't begin command buffer"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     // Note most extreme case is 2 upload jobs (vertex buffer and index buffer).
@@ -667,7 +667,7 @@ bool MeshGeometry::UploadInternal ( size_t numUploads,
         "Can't end command buffer"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     VkSubmitInfo const submitInfo
@@ -719,7 +719,7 @@ bool MeshGeometry::UploadSimple ( uint8_t const* data,
         "Can't create buffer"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     _vertexBufferRange = bufferInfo.size;
@@ -735,7 +735,7 @@ bool MeshGeometry::UploadSimple ( uint8_t const* data,
         "Can't allocate buffer memory (MeshGeometry::LoadMeshInternal)"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_DEVICE_MEMORY ( "MeshGeometry::_vertexBufferMemory" )
@@ -746,7 +746,7 @@ bool MeshGeometry::UploadSimple ( uint8_t const* data,
         "Can't bind buffer memory"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     VkBufferCopy const copyInfo
@@ -767,7 +767,7 @@ bool MeshGeometry::UploadSimple ( uint8_t const* data,
         fence
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     _vertexCount = vertexCount;

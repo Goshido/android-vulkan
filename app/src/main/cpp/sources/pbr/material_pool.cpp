@@ -65,7 +65,7 @@ bool MaterialPool::Init ( VkDevice device, DefaultTextureManager const &defaultT
         "Can't create descriptor pool"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_DESCRIPTOR_POOL ( "pbr::MaterialPool::_descriptorPool" )
@@ -92,7 +92,7 @@ bool MaterialPool::Init ( VkDevice device, DefaultTextureManager const &defaultT
         "Can't allocate descriptor sets"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     // Initialize all immutable constant fields.

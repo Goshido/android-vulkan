@@ -73,12 +73,12 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
         "Can't create descriptor pool"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_DESCRIPTOR_POOL ( "pbr::LightupCommonDescriptorSet::_descriptorPool" )
 
-    if ( !_layout.Init ( device ) )
+    if ( !_layout.Init ( device ) ) [[unlikely]]
         return false;
 
     VkDescriptorSetLayout layout = _layout.GetLayout ();
@@ -99,10 +99,10 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
         "Can't allocate descriptor set"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
-    if ( !_uniforms.Init ( renderer, sizeof ( LightLightupBaseProgram::ViewData ) ) )
+    if ( !_uniforms.Init ( renderer, sizeof ( LightLightupBaseProgram::ViewData ) ) ) [[unlikely]]
         return false;
 
     VkCommandBufferAllocateInfo const bufferAllocateInfo
@@ -122,7 +122,7 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
         "Can't allocate command buffer"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     result = _brdfLUT.UploadData ( renderer,
@@ -133,7 +133,7 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
         VK_NULL_HANDLE
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     constexpr VkSamplerCreateInfo brdfSamplerInfo
@@ -158,7 +158,7 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
         .unnormalizedCoordinates = VK_FALSE
     };
 
-    if ( !_brdfLUTSampler.Init ( device, brdfSamplerInfo ) )
+    if ( !_brdfLUTSampler.Init ( device, brdfSamplerInfo ) ) [[unlikely]]
         return false;
 
     constexpr VkSamplerCreateInfo prefilterSamplerInfo
@@ -183,7 +183,7 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
         .unnormalizedCoordinates = VK_FALSE
     };
 
-    if ( !_prefilterSampler.Init ( device, prefilterSamplerInfo ) )
+    if ( !_prefilterSampler.Init ( device, prefilterSamplerInfo ) ) [[unlikely]]
         return false;
 
     VkDescriptorImageInfo const images[] =
@@ -357,7 +357,7 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
         "Can't create pipeline layout"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_PIPELINE_LAYOUT ( "pbr::LightupCommonDescriptorSet::_pipelineLayout" )

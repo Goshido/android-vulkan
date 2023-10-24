@@ -24,7 +24,7 @@ bool LightPass::Init ( android_vulkan::Renderer &renderer,
         "Can't create lead command pool"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_COMMAND_POOL ( "pbr::LightPass::_commandPool" )
@@ -112,7 +112,7 @@ bool LightPass::OnPreGeometryPass ( android_vulkan::Renderer &renderer,
         cvvToView
     );
 
-    if ( !_pointLightPass.ExecuteShadowPhase ( renderer, commandBuffer, sceneData, opaqueMeshCount ) )
+    if ( !_pointLightPass.ExecuteShadowPhase ( renderer, commandBuffer, sceneData, opaqueMeshCount ) ) [[unlikely]]
         return false;
 
     _pointLightPass.UploadGPUData ( device,
@@ -235,7 +235,7 @@ bool LightPass::CreateUnitCube ( android_vulkan::Renderer &renderer ) noexcept
         "Can't allocate command buffer"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     return _unitCube.LoadMesh ( reinterpret_cast<uint8_t const*> ( vertices ),

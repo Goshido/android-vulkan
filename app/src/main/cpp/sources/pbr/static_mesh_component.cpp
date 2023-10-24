@@ -79,7 +79,7 @@ StaticMeshComponent::StaticMeshComponent ( android_vulkan::Renderer &renderer,
         nullptr
     );
 
-    if ( !_material )
+    if ( !_material ) [[unlikely]]
     {
         success = false;
         return;
@@ -94,7 +94,7 @@ StaticMeshComponent::StaticMeshComponent ( android_vulkan::Renderer &renderer,
         fences ? fences[ commandBufferConsumed ] : VK_NULL_HANDLE
     );
 
-    if ( !_mesh )
+    if ( !_mesh ) [[unlikely]]
         success = false;
     else
         _mesh->GetBounds ().Transform ( _worldBounds, _localMatrix );
@@ -128,7 +128,7 @@ StaticMeshComponent::StaticMeshComponent ( android_vulkan::Renderer &renderer,
         nullptr
     );
 
-    if ( !_material )
+    if ( !_material ) [[unlikely]]
     {
         success = false;
         return;
@@ -143,7 +143,7 @@ StaticMeshComponent::StaticMeshComponent ( android_vulkan::Renderer &renderer,
         fences ? fences[ commandBufferConsumed ] : VK_NULL_HANDLE
     );
 
-    if ( !_mesh )
+    if ( !_mesh ) [[unlikely]]
         success = false;
     else
         _mesh->GetBounds ().Transform ( _worldBounds, _localMatrix );
@@ -179,7 +179,7 @@ StaticMeshComponent::StaticMeshComponent ( android_vulkan::Renderer &renderer,
 
     success = static_cast<bool> ( _mesh );
 
-    if ( success )
+    if ( success ) [[likely]]
     {
         _mesh->GetBounds ().Transform ( _worldBounds, _localMatrix );
     }
@@ -286,7 +286,7 @@ bool StaticMeshComponent::RegisterFromNative ( lua_State &vm, Actor &actor ) noe
 {
     _actor = &actor;
 
-    if ( !lua_checkstack ( &vm, 2 ) )
+    if ( !lua_checkstack ( &vm, 2 ) ) [[unlikely]]
     {
         android_vulkan::LogError ( "pbr::StaticMeshComponent::RegisterFromNative - Stack is too small." );
         return false;
@@ -305,13 +305,13 @@ void StaticMeshComponent::RegisterFromScript ( Actor &actor ) noexcept
 
 bool StaticMeshComponent::Init ( lua_State &vm, android_vulkan::Renderer &renderer ) noexcept
 {
-    if ( !lua_checkstack ( &vm, 1 ) )
+    if ( !lua_checkstack ( &vm, 1 ) ) [[unlikely]]
     {
         android_vulkan::LogError ( "pbr::StaticMeshComponent::Init - Stack is too small." );
         return false;
     }
 
-    if ( lua_getglobal ( &vm, "RegisterStaticMeshComponent" ) != LUA_TFUNCTION )
+    if ( lua_getglobal ( &vm, "RegisterStaticMeshComponent" ) != LUA_TFUNCTION ) [[unlikely]]
     {
         android_vulkan::LogError ( "pbr::StaticMeshComponent::Init - Can't find register function." );
         return false;
@@ -382,7 +382,7 @@ bool StaticMeshComponent::Init ( lua_State &vm, android_vulkan::Renderer &render
         "Can't create command pool"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_COMMAND_POOL ( "pbr::StaticMeshComponent::_commandPool" )
@@ -391,7 +391,7 @@ bool StaticMeshComponent::Init ( lua_State &vm, android_vulkan::Renderer &render
 
 void StaticMeshComponent::Destroy () noexcept
 {
-    if ( !_staticMeshes.empty () )
+    if ( !_staticMeshes.empty () ) [[unlikely]]
     {
         android_vulkan::LogWarning ( "pbr::StaticMeshComponent::Destroy - Memory leak." );
         AV_ASSERT ( false )
@@ -439,7 +439,7 @@ bool StaticMeshComponent::Sync () noexcept
         "Can't wait fence"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     result = android_vulkan::Renderer::CheckVkResult ( vkResetFences ( device, fenceCount, fences ),
@@ -447,7 +447,7 @@ bool StaticMeshComponent::Sync () noexcept
         "Can't reset fence"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     result = android_vulkan::Renderer::CheckVkResult (
@@ -456,7 +456,7 @@ bool StaticMeshComponent::Sync () noexcept
         "Can't reset command pool"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     _commandBufferIndex = 0U;
@@ -498,7 +498,7 @@ bool StaticMeshComponent::AllocateCommandBuffers ( size_t amount ) noexcept
         "Can't allocate command buffer"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     _fences.resize ( size );
@@ -519,7 +519,7 @@ bool StaticMeshComponent::AllocateCommandBuffers ( size_t amount ) noexcept
             "Can't create fence"
         );
 
-        if ( !result )
+        if ( !result ) [[unlikely]]
             return false;
 
         AV_REGISTER_FENCE ( "pbr::StaticMeshComponent::_fences" )
@@ -530,7 +530,7 @@ bool StaticMeshComponent::AllocateCommandBuffers ( size_t amount ) noexcept
 
 int StaticMeshComponent::OnCreate ( lua_State* state )
 {
-    if ( !lua_checkstack ( state, 1 ) )
+    if ( !lua_checkstack ( state, 1 ) ) [[unlikely]]
     {
         android_vulkan::LogWarning ( "pbr::StaticMeshComponent::OnCreate - Stack is too small." );
         return 0;
@@ -538,7 +538,7 @@ int StaticMeshComponent::OnCreate ( lua_State* state )
 
     char const* name = lua_tostring ( state, 1 );
 
-    if ( !name )
+    if ( !name ) [[unlikely]]
     {
         lua_pushnil ( state );
         return 1;
@@ -546,7 +546,7 @@ int StaticMeshComponent::OnCreate ( lua_State* state )
 
     char const* meshFile = lua_tostring ( state, 2 );
 
-    if ( !meshFile )
+    if ( !meshFile ) [[unlikely]]
     {
         lua_pushnil ( state );
         return 1;
@@ -556,7 +556,7 @@ int StaticMeshComponent::OnCreate ( lua_State* state )
 
     if ( available < MeshManager::MaxCommandBufferPerMesh () )
     {
-        if ( !AllocateCommandBuffers ( ALLOCATE_COMMAND_BUFFERS ) )
+        if ( !AllocateCommandBuffers ( ALLOCATE_COMMAND_BUFFERS ) ) [[unlikely]]
         {
             lua_pushnil ( state );
             return 1;
@@ -576,7 +576,7 @@ int StaticMeshComponent::OnCreate ( lua_State* state )
         name
     );
 
-    if ( !success )
+    if ( !success ) [[unlikely]]
     {
         lua_pushnil ( state );
         return 1;

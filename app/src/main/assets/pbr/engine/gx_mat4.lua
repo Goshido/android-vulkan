@@ -6,16 +6,16 @@ require "av://engine/gx_vec4.lua"
 GXMat4 = {}
 
 -- Methods
-local function Clone ( self, other )
+local function Clone ( self, source )
     assert ( type ( self ) == "table" and self._type == eObjectType.GXMat4,
         [[GXMat4:Clone - Calling not via ":" syntax.]]
     )
 
-    assert ( type ( other ) == "table" and other._type == eObjectType.GXMat4,
-        [[GXMat4:Clone - "other" is not GXMat4.]]
+    assert ( type ( source ) == "table" and source._type == eObjectType.GXMat4,
+        [[GXMat4:Clone - "source" is not GXMat4.]]
     )
 
-    av_GXMat4Clone ( self._handle, other._handle )
+    av_GXMat4Clone ( self._handle, source._handle )
 end
 
 local function FromFast ( self, unitQuaternion, origin )

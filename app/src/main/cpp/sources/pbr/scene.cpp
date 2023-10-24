@@ -732,7 +732,7 @@ int Scene::OnGetPenetrationBox ( lua_State* state )
     return self.DoPenetrationBox ( *state,
         ScriptableGXMat4::Extract ( state, 2 ),
         ScriptableGXVec3::Extract ( state, 3 ),
-        lua_tointeger ( state, 4 )
+        static_cast<uint32_t> ( lua_tointeger ( state, 4 ) )
     );
 }
 
@@ -899,7 +899,7 @@ int Scene::OnSweepTestBox ( lua_State* state )
     return self.DoSweepTestBox ( *state,
         ScriptableGXMat4::Extract ( state, 2 ),
         ScriptableGXVec3::Extract ( state, 3 ),
-        lua_tointeger ( state, 4 )
+        static_cast<uint32_t> ( lua_tointeger ( state, 4 ) )
     );
 }
 

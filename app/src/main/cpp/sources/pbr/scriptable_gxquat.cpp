@@ -1,5 +1,6 @@
 #include <pbr/scriptable_gxquat.hpp>
 #include <pbr/scriptable_gxvec3.hpp>
+#include <logger.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -131,6 +132,12 @@ void ScriptableGXQuat::Insert ( Item* item, Item* &list ) noexcept
 
 int ScriptableGXQuat::OnCreate ( lua_State* state )
 {
+    if ( !lua_checkstack ( state, 1 ) ) [[unlikely]]
+    {
+        android_vulkan::LogWarning ( "pbr::ScriptableGXQuat::OnCreate - Stack is too small." );
+        return 0;
+    }
+
     if ( !_free ) [[unlikely]]
     {
         Insert ( new Item {}, _used );

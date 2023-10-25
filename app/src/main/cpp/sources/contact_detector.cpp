@@ -541,7 +541,7 @@ void ContactDetector::AppendExtremePoint ( Vertices &vertices,
     GXVec3 const p = shape.GetExtremePointWorld ( d );
     auto const end = vertices.crend ();
 
-    auto findResult = std::find_if ( vertices.crbegin(),
+    auto const findResult = std::find_if ( vertices.crbegin (),
         end,
         [ & ] ( GXVec3 const &v ) noexcept -> bool {
             return std::memcmp ( &p, &v, sizeof ( p ) ) == 0;

@@ -185,6 +185,12 @@ int ScriptableGXVec3::OnClone ( lua_State* state )
 
 int ScriptableGXVec3::OnCreate ( lua_State* state )
 {
+    if ( !lua_checkstack ( state, 1 ) ) [[unlikely]]
+    {
+        android_vulkan::LogWarning ( "pbr::ScriptableGXVec3::OnCreate - Stack is too small." );
+        return 0;
+    }
+
     if ( !_free ) [[unlikely]]
     {
         Insert ( new Item {}, _used );

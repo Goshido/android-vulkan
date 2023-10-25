@@ -54,7 +54,7 @@ end
 local mt = {
     __band = function ( left, right )
         assert ( type ( right ) == "table" and right._type == eObjectType.BitField,
-            [[BitField:__band - "right" is not BitField.]]
+            [[BitField:__band - operand from right is not BitField.]]
         )
 
         return av_BitFieldAnd ( left._handle, right._handle )
@@ -62,7 +62,7 @@ local mt = {
 
     __eq = function ( left, right )
         assert ( type ( right ) == "table" and right._type == eObjectType.BitField,
-            [[BitField:__eq - "right" is not BitField.]]
+            [[BitField:__eq - operand from right is not BitField.]]
         )
 
         return av_BitFieldEqual ( left._handle, right._handle )
@@ -74,7 +74,7 @@ local mt = {
 
     __bor = function ( left, right )
         assert ( type ( right ) == "table" and right._type == eObjectType.BitField,
-            [[BitField:__bor - "right" is not BitField.]]
+            [[BitField:__bor - operand from right is not BitField.]]
         )
 
         return av_BitFieldOr ( left._handle, right._handle )
@@ -82,7 +82,7 @@ local mt = {
 
     __bxor = function ( left, right )
         assert ( type ( right ) == "table" and right._type == eObjectType.BitField,
-            [[BitField:__bxor - "right" is not BitField.]]
+            [[BitField:__bxor - operand from right is not BitField.]]
         )
 
         return av_BitFieldXor ( left._handle, right._handle )

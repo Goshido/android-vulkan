@@ -1,3 +1,4 @@
+require "av://engine/bit_field.lua"
 require "av://engine/script_component.lua"
 require "av://engine/sound_channel.lua"
 
@@ -31,7 +32,7 @@ local function CheckMoveSensor ( self, size, offset, localMatrix, origin, veloci
     m:Clone ( localMatrix )
     m:SetW ( alpha )
 
-    local sweep = g_scene:SweepTestBox ( m, size, 0xFFFFFFFF )
+    local sweep = g_scene:SweepTestBox ( m, size, self._collisionGroups )
     local count = sweep._count
 
     if count == 0 then
@@ -169,6 +170,10 @@ local function OnActorConstructed ( self, actor )
 
     self._horizontalVelocity:Init ( 0.0, 0.0, SPEED )
     self._verticalVelocity:Init ( 0.0, 0.0, 0.0 )
+
+    local collisionGroups = BitField ()
+    collisionGroups:SetAllBits ()
+    self._collisionGroups = collisionGroups
 end
 
 local function OnPostPhysicsAct ( self, deltaTime )
@@ -180,7 +185,7 @@ local function OnPostPhysicsAct ( self, deltaTime )
     m:Clone ( self._localMatrix )
     m:SetW ( origin )
 
-    local p = g_scene:GetPenetrationBox ( m, self._bodySize, 0xFFFFFFFF )
+    local p = g_scene:GetPenetrationBox ( m, self._bodySize, self._collisionGroups )
     local count = p._count
     local pns = p._penetrations
 

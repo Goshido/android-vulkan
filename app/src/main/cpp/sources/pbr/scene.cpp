@@ -5,6 +5,7 @@
 #include <trace.hpp>
 #include <android_vulkan_sdk/pbr/scene_desc.hpp>
 #include <pbr/animation_graph.hpp>
+#include <pbr/bit_field.hpp>
 #include <pbr/coordinate_system.hpp>
 #include <pbr/mesh_manager.hpp>
 #include <pbr/material_manager.hpp>
@@ -94,7 +95,7 @@ android_vulkan::Physics &Scene::GetPhysics () noexcept
     return *_physics;
 }
 
-bool Scene::OnAnimationUpdated ( double deltaTime ) noexcept
+bool Scene::OnAnimationUpdated ( float deltaTime ) noexcept
 {
     AV_TRACE ( "Lua: animation updated" )
 
@@ -339,7 +340,7 @@ void Scene::OnResume () noexcept
     _gamepad.CaptureInput ();
 }
 
-bool Scene::OnPrePhysics ( double deltaTime ) noexcept
+bool Scene::OnPrePhysics ( float deltaTime ) noexcept
 {
     AV_TRACE ( "Lua: pre-physics" )
 
@@ -357,7 +358,7 @@ bool Scene::OnPrePhysics ( double deltaTime ) noexcept
     return true;
 }
 
-bool Scene::OnPostPhysics ( double deltaTime ) noexcept
+bool Scene::OnPostPhysics ( float deltaTime ) noexcept
 {
     AV_TRACE ( "Lua: post-physics" )
 
@@ -375,7 +376,7 @@ bool Scene::OnPostPhysics ( double deltaTime ) noexcept
     return ScriptableMaterial::Sync () && StaticMeshComponent::Sync ();
 }
 
-bool Scene::OnResolutionChanged ( VkExtent2D const &resolution, double aspectRatio ) noexcept
+bool Scene::OnResolutionChanged ( VkExtent2D const &resolution, float aspectRatio ) noexcept
 {
     auto const w = static_cast<lua_Integer> ( resolution.width );
     auto const h = static_cast<lua_Integer> ( resolution.height );
@@ -400,7 +401,7 @@ bool Scene::OnResolutionChanged ( VkExtent2D const &resolution, double aspectRat
     return true;
 }
 
-bool Scene::OnUpdate ( double deltaTime ) noexcept
+bool Scene::OnUpdate ( float deltaTime ) noexcept
 {
     AV_TRACE ( "Lua: update" )
 
@@ -524,10 +525,10 @@ void Scene::Submit ( android_vulkan::Renderer &renderer ) noexcept
     SubmitUI ( renderer, *_renderSession );
 }
 
-void Scene::OnUpdateAnimations ( double deltaTime, size_t commandBufferIndex ) noexcept
+void Scene::OnUpdateAnimations ( float deltaTime, size_t commandBufferIndex ) noexcept
 {
     AV_TRACE ( "Update animations" )
-    AnimationGraph::Update ( static_cast<float> ( deltaTime ), commandBufferIndex );
+    AnimationGraph::Update ( deltaTime, commandBufferIndex );
 }
 
 void Scene::AppendActor ( ActorRef &actor ) noexcept
@@ -714,7 +715,7 @@ int Scene::OnDetachUILayer ( lua_State* state )
         }
     );
 
-    if ( findResult != end )
+    if ( findResult != end ) [[likely]]
     {
         list.erase ( findResult );
         return 0;
@@ -732,7 +733,7 @@ int Scene::OnGetPenetrationBox ( lua_State* state )
     return self.DoPenetrationBox ( *state,
         ScriptableGXMat4::Extract ( state, 2 ),
         ScriptableGXVec3::Extract ( state, 3 ),
-        static_cast<uint32_t> ( lua_tointeger ( state, 4 ) )
+        BitField::Extract ( state, 4 )
     );
 }
 
@@ -899,7 +900,7 @@ int Scene::OnSweepTestBox ( lua_State* state )
     return self.DoSweepTestBox ( *state,
         ScriptableGXMat4::Extract ( state, 2 ),
         ScriptableGXVec3::Extract ( state, 3 ),
-        static_cast<uint32_t> ( lua_tointeger ( state, 4 ) )
+        BitField::Extract ( state, 4 )
     );
 }
 

@@ -1,5 +1,6 @@
 #include <pbr/scriptable_gxmat3.hpp>
 #include <pbr/scriptable_gxvec3.hpp>
+#include <logger.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -150,6 +151,12 @@ void ScriptableGXMat3::Insert ( Item* item, Item* &list ) noexcept
 
 int ScriptableGXMat3::OnCreate ( lua_State* state )
 {
+    if ( !lua_checkstack ( state, 1 ) ) [[unlikely]]
+    {
+        android_vulkan::LogWarning ( "pbr::ScriptableGXMat3::OnCreate - Stack is too small." );
+        return 0;
+    }
+
     if ( !_free ) [[unlikely]]
     {
         Insert ( new Item {}, _used );

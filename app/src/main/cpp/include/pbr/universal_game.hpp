@@ -11,12 +11,12 @@ namespace pbr {
 class UniversalGame final : public android_vulkan::Game
 {
     private:
-        VkCommandPool                   _commandPool = VK_NULL_HANDLE;
-        bool                            _isReady = false;
-        android_vulkan::Physics         _physics {};
-        RenderSession                   _renderSession {};
-        Scene                           _scene {};
-        std::string const               _sceneFile {};
+        VkCommandPool               _commandPool = VK_NULL_HANDLE;
+        bool                        _isReady = false;
+        android_vulkan::Physics     _physics {};
+        RenderSession               _renderSession {};
+        Scene                       _scene {};
+        std::string const           _sceneFile {};
 
     public:
         UniversalGame () = delete;
@@ -48,7 +48,7 @@ class UniversalGame final : public android_vulkan::Game
         void DestroyCommandPool ( VkDevice device ) noexcept;
 };
 
-} // namespace pbr::universal
+} // namespace pbr
 
 
 #endif // PBR_UNIVERSAL_GAME_HPP

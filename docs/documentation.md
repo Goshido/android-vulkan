@@ -11,7 +11,7 @@
 1) [_CPU_ tracing](./cpu-tracing.md)
 1) [_HTML_ validator](./html-validator.md)
 1) [_Logcat™_ best practices](./logcat.md)
-1) [_Lua scripting frontend_](./lua-scripting-frontend.md)
+1) [_Lua_ scripting frontend](./lua-scripting-frontend.md)
 1) [Preprocessor macros](./preprocessor-macros.md)
 1) [Release build](./release-build.md)
 1) [_RenderDoc_ integration](./renderdoc-integration.md)

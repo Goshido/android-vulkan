@@ -149,7 +149,7 @@ void ReflectionLocalPass::UploadGPUData ( VkDevice device,
 
 bool ReflectionLocalPass::AllocateDescriptorSets ( android_vulkan::Renderer &renderer ) noexcept
 {
-    if ( !_uniformPool.Init ( renderer, sizeof ( ReflectionLocalProgram::LightData ) ) )
+    if ( !_uniformPool.Init ( renderer, sizeof ( ReflectionLocalProgram::LightData ) ) ) [[unlikely]]
         return false;
 
     size_t const setCount = _uniformPool.GetAvailableItemCount ();
@@ -183,7 +183,7 @@ bool ReflectionLocalPass::AllocateDescriptorSets ( android_vulkan::Renderer &ren
         "Can't create descriptor pool"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_DESCRIPTOR_POOL ( "pbr::ReflectionLocalPass::_descriptorPool" )
@@ -206,7 +206,7 @@ bool ReflectionLocalPass::AllocateDescriptorSets ( android_vulkan::Renderer &ren
         "Can't allocate descriptor sets"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     // Initialize all immutable constant fields.
@@ -326,7 +326,7 @@ void ReflectionLocalPass::IssueSync ( VkDevice device, VkCommandBuffer commandBu
         nullptr
     );
 
-    if ( more < 1U )
+    if ( more < 1U ) [[likely]]
         return;
 
     vkCmdPipelineBarrier ( commandBuffer,

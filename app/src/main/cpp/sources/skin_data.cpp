@@ -65,13 +65,13 @@ bool SkinData::LoadSkin ( std::string &&skinFilename,
     VkFence fence
 ) noexcept
 {
-    if ( skinFilename.empty () )
+    if ( skinFilename.empty () ) [[unlikely]]
     {
         LogError ( "SkinData::LoadSkin - Can't upload data. Skin filename is empty." );
         return false;
     }
 
-    if ( skeletonFilename.empty () )
+    if ( skeletonFilename.empty () ) [[unlikely]]
     {
         LogError ( "SkinData::LoadSkin - Can't upload data. Skeleton filename is empty." );
         return false;
@@ -82,7 +82,7 @@ bool SkinData::LoadSkin ( std::string &&skinFilename,
     File skinFile ( std::move ( skinFilename ) );
     File skeletonFile ( std::move ( skeletonFilename ) );
 
-    if ( !skinFile.LoadContent () || !skeletonFile.LoadContent () )
+    if ( !skinFile.LoadContent () || !skeletonFile.LoadContent () ) [[unlikely]]
         return false;
 
     uint8_t* skin = skinFile.GetContent ().data ();
@@ -115,7 +115,7 @@ bool SkinData::LoadSkin ( std::string &&skinFilename,
         auto const* name = reinterpret_cast<char const*> ( skin + skinBone->_name );
         auto const findResult = skeletonBones.find ( name );
 
-        if ( findResult != end )
+        if ( findResult != end ) [[likely]]
         {
             boneMapper.emplace ( skinBone->_index, static_cast<uint32_t> ( findResult->second ) );
             ++skinBone;
@@ -172,7 +172,7 @@ bool SkinData::LoadSkin ( std::string &&skinFilename,
         "Can't create buffer"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_BUFFER ( "SkinData::_skin::_buffer" )
@@ -187,7 +187,7 @@ bool SkinData::LoadSkin ( std::string &&skinFilename,
         "Can't allocate buffer memory (SkinData::LoadSkin)"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_DEVICE_MEMORY ( "SkinData::_skin::_memory" )
@@ -198,7 +198,7 @@ bool SkinData::LoadSkin ( std::string &&skinFilename,
         "Can't bind buffer memory"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     bufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
@@ -209,7 +209,7 @@ bool SkinData::LoadSkin ( std::string &&skinFilename,
         "Can't create transfer buffer"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_BUFFER ( "SkinData::_transfer::_buffer" )
@@ -226,7 +226,7 @@ bool SkinData::LoadSkin ( std::string &&skinFilename,
         "Can't allocate transfer memory (SkinData::LoadSkin)"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_DEVICE_MEMORY ( "SkinData::_transfer::_memory" )
@@ -237,7 +237,7 @@ bool SkinData::LoadSkin ( std::string &&skinFilename,
         "Can't bind transfer memory"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     void* transferData = nullptr;
@@ -249,7 +249,7 @@ bool SkinData::LoadSkin ( std::string &&skinFilename,
         "Can't map data"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     std::memcpy ( transferData, skinVertices, bufferInfo.size );
@@ -268,7 +268,7 @@ bool SkinData::LoadSkin ( std::string &&skinFilename,
         "Can't begin command buffer"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     VkBufferCopy const copyInfo
@@ -310,7 +310,7 @@ bool SkinData::LoadSkin ( std::string &&skinFilename,
         "Can't end command buffer"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     VkSubmitInfo const submitInfo
@@ -332,7 +332,7 @@ bool SkinData::LoadSkin ( std::string &&skinFilename,
         "Can't submit command"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     _bufferSize = bufferInfo.size;

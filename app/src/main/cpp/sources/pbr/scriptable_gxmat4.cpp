@@ -2,6 +2,7 @@
 #include <pbr/scriptable_gxquat.hpp>
 #include <pbr/scriptable_gxvec3.hpp>
 #include <pbr/scriptable_gxvec4.hpp>
+#include <logger.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -152,7 +153,7 @@ void ScriptableGXMat4::Init ( lua_State &vm ) noexcept
 
 void ScriptableGXMat4::Destroy () noexcept
 {
-    auto free = [] ( Item* &head ) noexcept {
+    auto const free = [] ( Item* &head ) noexcept {
         Item* item = head;
 
         while ( item )
@@ -195,7 +196,13 @@ int ScriptableGXMat4::OnClone ( lua_State* state )
 
 int ScriptableGXMat4::OnCreate ( lua_State* state )
 {
-    if ( !_free )
+    if ( !lua_checkstack ( state, 1 ) ) [[unlikely]]
+    {
+        android_vulkan::LogWarning ( "pbr::ScriptableGXMat4::OnCreate - Stack is too small." );
+        return 0;
+    }
+
+    if ( !_free ) [[unlikely]]
     {
         Insert ( new Item {}, _used );
         lua_pushlightuserdata ( state, _used );

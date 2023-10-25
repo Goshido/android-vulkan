@@ -52,7 +52,7 @@ bool PointLightShadowmapGeneratorProgram::Init ( android_vulkan::Renderer &rende
 
     VkDevice device = renderer.GetDevice ();
 
-    if ( !InitShaderInfo ( renderer, pipelineInfo.pStages, nullptr, nullptr, stageInfo ) )
+    if ( !InitShaderInfo ( renderer, pipelineInfo.pStages, nullptr, nullptr, stageInfo ) ) [[unlikely]]
         return false;
 
     pipelineInfo.pVertexInputState = InitVertexInputInfo ( vertexInputInfo,
@@ -69,7 +69,7 @@ bool PointLightShadowmapGeneratorProgram::Init ( android_vulkan::Renderer &rende
     pipelineInfo.pColorBlendState = InitColorBlendInfo ( blendInfo, nullptr );
     pipelineInfo.pDynamicState = nullptr;
 
-    if ( !InitLayout ( device, pipelineInfo.layout ) )
+    if ( !InitLayout ( device, pipelineInfo.layout ) ) [[unlikely]]
         return false;
 
     pipelineInfo.renderPass = renderPass;
@@ -83,7 +83,7 @@ bool PointLightShadowmapGeneratorProgram::Init ( android_vulkan::Renderer &rende
         "Can't create pipeline"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_PIPELINE ( "pbr::PointLightShadowmapGeneratorProgram::_pipeline" )
@@ -224,7 +224,7 @@ VkPipelineInputAssemblyStateCreateInfo const* PointLightShadowmapGeneratorProgra
 
 bool PointLightShadowmapGeneratorProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept
 {
-    if ( !_instanceLayout.Init ( device ) )
+    if ( !_instanceLayout.Init ( device ) ) [[unlikely]]
         return false;
 
     VkDescriptorSetLayout layouts = _instanceLayout.GetLayout ();
@@ -246,7 +246,7 @@ bool PointLightShadowmapGeneratorProgram::InitLayout ( VkDevice device, VkPipeli
         "Can't create pipeline layout"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_PIPELINE_LAYOUT ( "pbr::PointLightShadowmapGeneratorProgram::_pipelineLayout" )
@@ -310,7 +310,7 @@ bool PointLightShadowmapGeneratorProgram::InitShaderInfo ( android_vulkan::Rende
         "Can't create vertex shader (pbr::PointLightShadowmapGeneratorProgram)"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_SHADER_MODULE ( "pbr::PointLightShadowmapGeneratorProgram::_vertexShader" )
@@ -320,7 +320,7 @@ bool PointLightShadowmapGeneratorProgram::InitShaderInfo ( android_vulkan::Rende
         "Can't create fragment shader (pbr::PointLightShadowmapGeneratorProgram)"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_SHADER_MODULE ( "pbr::PointLightShadowmapGeneratorProgram::_fragmentShader" )

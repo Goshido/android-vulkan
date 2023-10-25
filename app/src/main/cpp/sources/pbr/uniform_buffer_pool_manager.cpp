@@ -90,7 +90,7 @@ bool UniformBufferPoolManager::Init ( android_vulkan::Renderer &renderer,
     [[maybe_unused]] char const* name
 ) noexcept
 {
-    if ( !_uniformPool.Init ( renderer, itemSize ) )
+    if ( !_uniformPool.Init ( renderer, itemSize ) ) [[unlikely]]
         return false;
 
     size_t const setCount = _uniformPool.GetAvailableItemCount ();
@@ -118,7 +118,7 @@ bool UniformBufferPoolManager::Init ( android_vulkan::Renderer &renderer,
         "Can't create descriptor pool"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_DESCRIPTOR_POOL ( name )
@@ -141,7 +141,7 @@ bool UniformBufferPoolManager::Init ( android_vulkan::Renderer &renderer,
         "Can't allocate descriptor sets"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     // Initialize all immutable constant fields.

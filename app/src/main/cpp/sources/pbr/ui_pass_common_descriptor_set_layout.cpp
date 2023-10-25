@@ -99,7 +99,7 @@ bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
         "Can't create descriptor set layout"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::UIPassCommonDescriptorSetLayout::_layout" )

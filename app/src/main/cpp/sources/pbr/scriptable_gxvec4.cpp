@@ -1,4 +1,5 @@
 #include <pbr/scriptable_gxvec4.hpp>
+#include <logger.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -100,7 +101,13 @@ void ScriptableGXVec4::Insert ( Item* item, Item* &list ) noexcept
 
 int ScriptableGXVec4::OnCreate ( lua_State* state )
 {
-    if ( !_free )
+    if ( !lua_checkstack ( state, 1 ) ) [[unlikely]]
+    {
+        android_vulkan::LogWarning ( "pbr::ScriptableGXVec4::OnCreate - Stack is too small." );
+        return 0;
+    }
+
+    if ( !_free ) [[unlikely]]
     {
         Insert ( new Item {}, _used );
         lua_pushlightuserdata ( state, _used );

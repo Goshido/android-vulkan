@@ -205,7 +205,7 @@ local Penetration = {
 
 - `localMatrix` [_required, readonly, [GXMat4](./gx-mat4.md)_]: transformation matrix for box shape in [physics coordinate system](./rigid-body-component.md#note-physics-coordinate-system). Origin is in the centre of the box shape
 - `size` [_required, readonly, [GXVec3](./gx-vec3.md)_]: width, height and depth of the box in [physics coordinate system](./rigid-body-component.md#note-physics-coordinate-system)
-- `groups` [_required, readonly, integer_]: 32-bitmask with collision groups which will be used during the test
+- `groups` [_required, readonly, [BitField](./bit-field.md)_]: collision groups which will be used during the test
 
 **Return values:**
 
@@ -709,7 +709,7 @@ local SweepTestResult = {
 
 - `localMatrix` [_required, readonly, [GXMat4](./gx-mat4.md)_]: transformation matrix for box shape in [physics coordinate system](./rigid-body-component.md#note-physics-coordinate-system). Origin is in the centre of the box shape
 - `size` [_required, readonly, [GXVec3](./gx-vec3.md)_]: width, height and depth of the box in [physics coordinate system](./rigid-body-component.md#note-physics-coordinate-system)
-- `groups` [_required, readonly, integer_]: 32-bitmask with collision groups which will be used during the test
+- `groups` [_required, readonly, [BitField](./bit-field.md)_]: collision groups which will be used during the test
 
 **Return values:**
 

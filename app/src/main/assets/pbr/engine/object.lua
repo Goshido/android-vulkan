@@ -12,6 +12,7 @@ eObjectType = {
     Actor = MakeUniqueID (),
     AnimationGraph = MakeUniqueID (),
     AnimationPlayerNode = MakeUniqueID (),
+    BitField = MakeUniqueID (),
     CameraComponent = MakeUniqueID (),
     DIVUIElement = MakeUniqueID (),
     GXMat3 = MakeUniqueID (),

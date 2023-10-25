@@ -52,7 +52,7 @@ bool AnimationGraph::Buffer::Init ( android_vulkan::Renderer &renderer,
         "Can't create buffer"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_BUFFER ( "pbr::AnimationGraph::Buffer::_buffer" )
@@ -67,7 +67,7 @@ bool AnimationGraph::Buffer::Init ( android_vulkan::Renderer &renderer,
         "Can't allocate buffer memory (pbr::AnimationGraph::Buffer::Init)"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_DEVICE_MEMORY ( "pbr::AnimationGraph::Buffer::_memory" )
@@ -117,6 +117,7 @@ bool AnimationGraph::BufferSet::Init ( VkDeviceSize size ) noexcept
 
     if ( !_transferPoseSkin.Init ( *_renderer, size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, transferMemoryFlags ) )
     {
+        [[unlikely]]
         _gpuPoseSkin.Destroy ( false );
         return false;
     }
@@ -129,7 +130,7 @@ bool AnimationGraph::BufferSet::Init ( VkDeviceSize size ) noexcept
         "pbr::AnimationGraph::BufferSet::Init", "Can't map memory"
     );
 
-    if ( result )
+    if ( result ) [[likely]]
     {
         _poseSkin = static_cast<android_vulkan::BoneJoint*> ( data );
         return true;
@@ -160,7 +161,7 @@ AnimationGraph::AnimationGraph ( bool &success, std::string &&skeletonFile ) noe
     success = false;
     android_vulkan::File file ( std::move ( skeletonFile ) );
 
-    if ( !file.LoadContent () )
+    if ( !file.LoadContent () ) [[unlikely]]
         return;
 
     uint8_t const* content = file.GetContent ().data ();
@@ -195,7 +196,7 @@ AnimationGraph::AnimationGraph ( bool &success, std::string &&skeletonFile ) noe
 
     for ( BufferSet &bufferSet : _bufferSets )
     {
-        if ( !bufferSet.Init ( _jointSize ) )
+        if ( !bufferSet.Init ( _jointSize ) ) [[unlikely]]
             break;
 
         ++init;
@@ -203,7 +204,7 @@ AnimationGraph::AnimationGraph ( bool &success, std::string &&skeletonFile ) noe
 
     success = init == DUAL_COMMAND_BUFFER;
 
-    if ( !success )
+    if ( !success ) [[unlikely]]
     {
         for ( size_t i = 0U; i < init; ++i )
             _bufferSets[ i ].Destroy ();
@@ -280,7 +281,7 @@ void AnimationGraph::Update ( float deltaTime, size_t commandBufferIndex ) noexc
 
 void AnimationGraph::Destroy () noexcept
 {
-    if ( !_graphs.empty () )
+    if ( !_graphs.empty () ) [[unlikely]]
     {
         android_vulkan::LogWarning ( "pbr::AnimationGraph::Destroy - Memory leak." );
         AV_ASSERT ( false )
@@ -454,7 +455,7 @@ void AnimationGraph::AllocateVulkanStructures ( size_t needed ) noexcept
 {
     size_t const count = _barriers.size ();
 
-    if ( count >= needed )
+    if ( count >= needed ) [[likely]]
         return;
 
     _barriers.reserve ( needed );
@@ -497,7 +498,7 @@ int AnimationGraph::OnAwake ( lua_State* state )
 
 int AnimationGraph::OnCreate ( lua_State* state )
 {
-    if ( !lua_checkstack ( state, 1 ) )
+    if ( !lua_checkstack ( state, 1 ) ) [[unlikely]]
     {
         android_vulkan::LogWarning ( "pbr::AnimationGraph::OnCreate - Stack is too small." );
         return 0;
@@ -505,7 +506,7 @@ int AnimationGraph::OnCreate ( lua_State* state )
 
     char const* skeleton = lua_tostring ( state, 1 );
 
-    if ( !skeleton )
+    if ( !skeleton ) [[unlikely]]
     {
         android_vulkan::LogWarning ( "pbr::AnimationGraph::OnCreate - Skeleton file is not specified." );
         lua_pushnil ( state );
@@ -515,7 +516,7 @@ int AnimationGraph::OnCreate ( lua_State* state )
     bool success;
     auto ag = std::make_unique<AnimationGraph> ( success, skeleton );
 
-    if ( !success )
+    if ( !success ) [[unlikely]]
     {
         lua_pushnil ( state );
         return 1;
@@ -547,7 +548,7 @@ int AnimationGraph::OnSetInput ( lua_State* state )
     auto* handle = static_cast<AnimationGraph*> ( lua_touserdata ( state, 1 ) );
     JointProviderNode* &selfInputNode = handle->_inputNode;
 
-    if ( selfInputNode )
+    if ( selfInputNode ) [[likely]]
         selfInputNode->UnregisterNode ( handle );
 
     auto* inputNode = static_cast<JointProviderNode*> ( lua_touserdata ( state, 2 ) );

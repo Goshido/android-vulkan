@@ -23,7 +23,7 @@ constexpr int INITIAL_CAPACITY = 128;
 
 bool ScriptablePenetration::Init ( lua_State &vm ) noexcept
 {
-    if ( !lua_checkstack ( &vm, 5 ) )
+    if ( !lua_checkstack ( &vm, 5 ) ) [[unlikely]]
     {
         android_vulkan::LogError ( "pbr::ScriptablePenetration::Init - Stack is too small." );
         return false;
@@ -45,7 +45,7 @@ bool ScriptablePenetration::Init ( lua_State &vm ) noexcept
     lua_rawget ( &vm, -2 );
     int const penetrationIndex = lua_gettop ( &vm );
 
-    if ( !FindVec3Constructor ( vm ) )
+    if ( !FindVec3Constructor ( vm ) ) [[unlikely]]
     {
         lua_pop ( &vm, 2 );
         return false;
@@ -63,7 +63,7 @@ bool ScriptablePenetration::Init ( lua_State &vm ) noexcept
 
     for ( int i = 1; i <= INITIAL_CAPACITY; ++i )
     {
-        if ( !Append ( vm, vec3Constructor, penetrationIndex, 0.0, normal, rigidBodyComponentStack ) )
+        if ( !Append ( vm, vec3Constructor, penetrationIndex, 0.0, normal, rigidBodyComponentStack ) ) [[unlikely]]
         {
             lua_pop ( &vm, 4 );
             return false;
@@ -79,7 +79,7 @@ void ScriptablePenetration::Destroy ( lua_State &vm ) noexcept
     _normals.clear ();
     _normals.shrink_to_fit ();
 
-    if ( !lua_checkstack ( &vm, 1 ) )
+    if ( !lua_checkstack ( &vm, 1 ) ) [[unlikely]]
     {
         android_vulkan::LogError ( "pbr::ScriptablePenetration::Init - Stack is too small." );
         return;
@@ -93,7 +93,7 @@ bool ScriptablePenetration::PublishResult ( lua_State &vm,
     std::vector<android_vulkan::Penetration> const &penetrations
 ) noexcept
 {
-    if ( !lua_checkstack ( &vm, 7 ) )
+    if ( !lua_checkstack ( &vm, 7 ) ) [[unlikely]]
     {
         android_vulkan::LogError ( "pbr::ScriptablePenetration::PublishResult - Stack is too small." );
         return false;
@@ -127,7 +127,7 @@ bool ScriptablePenetration::PublishResult ( lua_State &vm,
 
         lua_pushinteger ( &vm, static_cast<int> ( i ) + 1 );
 
-        if ( lua_rawget ( &vm, -3 ) != LUA_TTABLE )
+        if ( lua_rawget ( &vm, -3 ) != LUA_TTABLE ) [[unlikely]]
         {
             android_vulkan::LogError ( "pbr::ScriptablePenetration::PublishResult - Can't find array item %zu.",
                 i + 1U
@@ -146,7 +146,7 @@ bool ScriptablePenetration::PublishResult ( lua_State &vm,
         lua_pushvalue ( &vm, -3 );
         lua_pushlightuserdata ( &vm, p._body.get () );
 
-        if ( lua_pcall ( &vm, 1, 1, ScriptEngine::GetErrorHandlerIndex () ) != LUA_OK )
+        if ( lua_pcall ( &vm, 1, 1, ScriptEngine::GetErrorHandlerIndex () ) != LUA_OK ) [[unlikely]]
         {
             lua_pop ( &vm, 6 );
             return false;
@@ -162,7 +162,7 @@ bool ScriptablePenetration::PublishResult ( lua_State &vm,
         return true;
     }
 
-    if ( !FindVec3Constructor ( vm ) )
+    if ( !FindVec3Constructor ( vm ) ) [[unlikely]]
     {
         lua_pop ( &vm, 3 );
         return false;
@@ -177,13 +177,13 @@ bool ScriptablePenetration::PublishResult ( lua_State &vm,
         lua_pushvalue ( &vm, -2 );
         lua_pushlightuserdata ( &vm, p._body.get () );
 
-        if ( lua_pcall ( &vm, 1, 1, ScriptEngine::GetErrorHandlerIndex () ) != LUA_OK )
+        if ( lua_pcall ( &vm, 1, 1, ScriptEngine::GetErrorHandlerIndex () ) != LUA_OK ) [[unlikely]]
         {
             lua_pop ( &vm, 5 );
             return false;
         }
 
-        if ( !Append ( vm, vec3Constructor, penetrationIndex, p._depth, p._normal, lua_gettop ( &vm ) ) )
+        if ( !Append ( vm, vec3Constructor, penetrationIndex, p._depth, p._normal, lua_gettop ( &vm ) ) ) [[unlikely]]
         {
             lua_pop ( &vm, 5 );
             return false;
@@ -204,7 +204,7 @@ bool ScriptablePenetration::Append ( lua_State &vm,
     int rigidBodyComponentStack
 ) noexcept
 {
-    if ( !lua_checkstack ( &vm, 5 ) )
+    if ( !lua_checkstack ( &vm, 5 ) ) [[unlikely]]
     {
         android_vulkan::LogError ( "pbr::ScriptablePenetration::Append - Stack is too small." );
         return false;
@@ -226,7 +226,7 @@ bool ScriptablePenetration::Append ( lua_State &vm,
 
     lua_pushvalue ( &vm, vec3Constructor );
 
-    if ( lua_pcall ( &vm, 0, 1, ScriptEngine::GetErrorHandlerIndex () ) != LUA_OK )
+    if ( lua_pcall ( &vm, 0, 1, ScriptEngine::GetErrorHandlerIndex () ) != LUA_OK ) [[unlikely]]
     {
         lua_pop ( &vm, 4 );
         return false;
@@ -234,7 +234,7 @@ bool ScriptablePenetration::Append ( lua_State &vm,
 
     lua_pushlstring ( &vm, fieldHandle.data (), fieldHandle.size () );
 
-    if ( lua_rawget ( &vm, -2 ) != LUA_TLIGHTUSERDATA )
+    if ( lua_rawget ( &vm, -2 ) != LUA_TLIGHTUSERDATA ) [[unlikely]]
     {
         android_vulkan::LogError ( "pbr::ScriptablePenetration::Append - Can't find GXVec3 handle." );
         lua_pop ( &vm, 5 );
@@ -261,20 +261,20 @@ bool ScriptablePenetration::Append ( lua_State &vm,
 
 bool ScriptablePenetration::FindVec3Constructor ( lua_State &vm ) noexcept
 {
-    if ( !lua_checkstack ( &vm, 3 ) )
+    if ( !lua_checkstack ( &vm, 3 ) ) [[unlikely]]
     {
         android_vulkan::LogError ( "pbr::ScriptablePenetration::FindVec3Constructor - Stack is too small." );
         return false;
     }
 
-    if ( lua_getglobal ( &vm, "GXVec3" ) != LUA_TTABLE )
+    if ( lua_getglobal ( &vm, "GXVec3" ) != LUA_TTABLE ) [[unlikely]]
     {
         android_vulkan::LogError ( "pbr::ScriptablePenetration::FindVec3Constructor - Can't find GXVec3 table." );
         lua_pop ( &vm, 1 );
         return false;
     }
 
-    if ( lua_getmetatable ( &vm, -1 ) != 1 )
+    if ( lua_getmetatable ( &vm, -1 ) != 1 ) [[unlikely]]
     {
         android_vulkan::LogError ( "pbr::ScriptablePenetration::FindVec3Constructor - Can't find GXVec3 metatable." );
         lua_pop ( &vm, 2 );
@@ -284,7 +284,7 @@ bool ScriptablePenetration::FindVec3Constructor ( lua_State &vm ) noexcept
     constexpr std::string_view metamethodCall = "__call";
     lua_pushlstring ( &vm, metamethodCall.data (), metamethodCall.size () );
 
-    if ( lua_rawget ( &vm, -2 ) != LUA_TFUNCTION )
+    if ( lua_rawget ( &vm, -2 ) != LUA_TFUNCTION ) [[unlikely]]
     {
         android_vulkan::LogError ( "pbr::ScriptablePenetration::FindVec3Constructor - Can't find GXVec3 constructor." );
         lua_pop ( &vm, 3 );

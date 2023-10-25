@@ -55,11 +55,8 @@ bool PointLightLightupProgram::Init ( android_vulkan::Renderer &renderer,
 
     VkDevice device = renderer.GetDevice ();
 
-    if ( !InitShaderInfo ( renderer, pipelineInfo.pStages, nullptr, nullptr, stageInfo ) )
-    {
-        Destroy ( device );
+    if ( !InitShaderInfo ( renderer, pipelineInfo.pStages, nullptr, nullptr, stageInfo ) ) [[unlikely]]
         return false;
-    }
 
     pipelineInfo.pVertexInputState = InitVertexInputInfo ( vertexInputInfo,
         attributeDescriptions,
@@ -75,11 +72,8 @@ bool PointLightLightupProgram::Init ( android_vulkan::Renderer &renderer,
     pipelineInfo.pColorBlendState = InitColorBlendInfo ( blendInfo, attachmentInfo );
     pipelineInfo.pDynamicState = nullptr;
 
-    if ( !InitLayout ( device, pipelineInfo.layout ) )
-    {
-        Destroy ( device );
+    if ( !InitLayout ( device, pipelineInfo.layout ) ) [[unlikely]]
         return false;
-    }
 
     pipelineInfo.renderPass = renderPass;
     pipelineInfo.subpass = subpass;
@@ -92,11 +86,8 @@ bool PointLightLightupProgram::Init ( android_vulkan::Renderer &renderer,
         "Can't create pipeline"
     );
 
-    if ( !result )
-    {
-        Destroy ( device );
+    if ( !result ) [[unlikely]]
         return false;
-    }
 
     AV_REGISTER_PIPELINE ( "PointLightLightupProgram::_pipeline" )
     DestroyShaderModules ( device );
@@ -281,7 +272,10 @@ VkPipelineInputAssemblyStateCreateInfo const* PointLightLightupProgram::InitInpu
 bool PointLightLightupProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept
 {
     if ( !_commonLayout.Init ( device ) || !_lightVolumeLayout.Init ( device ) || !_pointLightLayout.Init ( device ) )
+    {
+        [[unlikely]]
         return false;
+    }
 
     VkDescriptorSetLayout const layouts[] =
     {
@@ -307,7 +301,7 @@ bool PointLightLightupProgram::InitLayout ( VkDevice device, VkPipelineLayout &l
         "Can't create pipeline layout"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_PIPELINE_LAYOUT ( "PointLightLightupProgram::_pipelineLayout" )
@@ -371,7 +365,7 @@ bool PointLightLightupProgram::InitShaderInfo ( android_vulkan::Renderer &render
         "Can't create vertex shader (pbr::PointLightLightupProgram)"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_SHADER_MODULE ( "PointLightLightupProgram::_vertexShader" )
@@ -381,7 +375,7 @@ bool PointLightLightupProgram::InitShaderInfo ( android_vulkan::Renderer &render
         "Can't create fragment shader (pbr::PointLightLightupProgram)"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_SHADER_MODULE ( "PointLightLightupProgram::_fragmentShader" )

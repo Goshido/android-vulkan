@@ -51,7 +51,7 @@ bool ToneMapperProgram::Init ( android_vulkan::Renderer &renderer,
 
     VkDevice device = renderer.GetDevice ();
 
-    if ( !InitShaderInfo ( renderer, pipelineInfo.pStages, specializationData, &specInfo, stageInfo ) )
+    if ( !InitShaderInfo ( renderer, pipelineInfo.pStages, specializationData, &specInfo, stageInfo ) ) [[unlikely]]
         return false;
 
     pipelineInfo.pVertexInputState = InitVertexInputInfo ( vertexInputInfo, nullptr, nullptr );
@@ -64,7 +64,7 @@ bool ToneMapperProgram::Init ( android_vulkan::Renderer &renderer,
     pipelineInfo.pColorBlendState = InitColorBlendInfo ( blendInfo, attachmentInfo );
     pipelineInfo.pDynamicState = nullptr;
 
-    if ( !InitLayout ( device, pipelineInfo.layout ) )
+    if ( !InitLayout ( device, pipelineInfo.layout ) ) [[unlikely]]
         return false;
 
     pipelineInfo.renderPass = renderPass;
@@ -78,7 +78,7 @@ bool ToneMapperProgram::Init ( android_vulkan::Renderer &renderer,
         "Can't create pipeline"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_PIPELINE ( "pbr::ToneMapperProgram::_pipeline" )
@@ -243,7 +243,7 @@ VkPipelineInputAssemblyStateCreateInfo const* ToneMapperProgram::InitInputAssemb
 
 bool ToneMapperProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept
 {
-    if ( !_fullScreenTriangleLayout.Init ( device ) || !_toneMapperLayout.Init ( device ) )
+    if ( !_fullScreenTriangleLayout.Init ( device ) || !_toneMapperLayout.Init ( device ) ) [[unlikely]]
         return false;
 
     VkDescriptorSetLayout const layouts[] =
@@ -269,7 +269,7 @@ bool ToneMapperProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout )
         "Can't create pipeline layout"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_PIPELINE_LAYOUT ( "pbr::ToneMapperProgram::_pipelineLayout" )
@@ -333,7 +333,7 @@ bool ToneMapperProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
         "Can't create vertex shader (pbr::ToneMapperProgram)"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_SHADER_MODULE ( "pbr::ToneMapperProgram::_vertexShader" )
@@ -343,7 +343,7 @@ bool ToneMapperProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
         "Can't create fragment shader (pbr::ToneMapperProgram)"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_SHADER_MODULE ( "pbr::ToneMapperProgram::_fragmentShader" )

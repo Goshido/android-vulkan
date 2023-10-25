@@ -154,7 +154,7 @@ void Actor::RegisterComponentsFromNative ( Scene &scene,
     lua_State &vm
 ) noexcept
 {
-    if ( !lua_checkstack ( &vm, 4 ) )
+    if ( !lua_checkstack ( &vm, 4 ) ) [[unlikely]]
     {
         android_vulkan::LogWarning ( "pbr::Actor::RegisterComponentsFromNative - Stack is too small." );
         return;
@@ -163,7 +163,7 @@ void Actor::RegisterComponentsFromNative ( Scene &scene,
     lua_pushvalue ( &vm, _makeActorIndex );
     lua_pushlightuserdata ( &vm, this );
 
-    if ( lua_pcall ( &vm, 1, 1, ScriptEngine::GetErrorHandlerIndex () ) != LUA_OK )
+    if ( lua_pcall ( &vm, 1, 1, ScriptEngine::GetErrorHandlerIndex () ) != LUA_OK ) [[unlikely]]
     {
         android_vulkan::LogWarning ( "pbr::Actor::RegisterComponentsFromNative - Can't register actor inside Lua VM." );
         return;
@@ -225,14 +225,14 @@ bool Actor::Init ( lua_State &vm ) noexcept
     for ( auto const &extension : extensions )
         lua_register ( &vm, extension.name, extension.func );
 
-    if ( !lua_checkstack ( &vm, 2 ) )
+    if ( !lua_checkstack ( &vm, 2 ) ) [[unlikely]]
     {
         android_vulkan::LogError ( "pbr::Actor::Init - Stack is too small." );
         return false;
     }
 
     auto bind = [ & ] ( char const* function, int &ind ) noexcept -> bool {
-        if ( lua_getglobal ( &vm, function ) == LUA_TFUNCTION )
+        if ( lua_getglobal ( &vm, function ) == LUA_TFUNCTION ) [[likely]]
         {
             ind = lua_gettop ( &vm );
             return true;
@@ -250,7 +250,7 @@ bool Actor::Init ( lua_State &vm ) noexcept
 
 void Actor::Destroy () noexcept
 {
-    if ( !_spawnActors.empty () )
+    if ( !_spawnActors.empty () ) [[unlikely]]
     {
         android_vulkan::LogWarning ( "pbr::Actor::Destroy - Memory leak." );
         AV_ASSERT ( false )
@@ -279,7 +279,7 @@ void Actor::AppendCameraComponentFromNative ( ComponentRef &component,
     lua_pushvalue ( &vm, _appendComponentFromNativeIndex );
     lua_pushvalue ( &vm, -2 );
 
-    if ( !cameraComponent.Register ( vm ) )
+    if ( !cameraComponent.Register ( vm ) ) [[unlikely]]
     {
         android_vulkan::LogWarning (
             "pbr::Actor::AppendCameraComponentFromNative - Can't register camera component %s.",
@@ -290,7 +290,7 @@ void Actor::AppendCameraComponentFromNative ( ComponentRef &component,
         return;
     }
 
-    if ( lua_pcall ( &vm, 2, 0, ScriptEngine::GetErrorHandlerIndex () ) == LUA_OK )
+    if ( lua_pcall ( &vm, 2, 0, ScriptEngine::GetErrorHandlerIndex () ) == LUA_OK ) [[likely]]
         return;
 
     android_vulkan::LogWarning (
@@ -371,7 +371,7 @@ void Actor::AppendRigidBodyComponentFromNative ( ComponentRef &component,
     lua_pushvalue ( &vm, _appendComponentFromNativeIndex );
     lua_pushvalue ( &vm, -2 );
 
-    if ( !rigidBodyComponent.RegisterFromNative ( *this, physics, vm ) )
+    if ( !rigidBodyComponent.RegisterFromNative ( *this, physics, vm ) ) [[unlikely]]
     {
         android_vulkan::LogWarning (
             "pbr::Actor::AppendRigidBodyComponentFromNative - Can't register rigid body component %s.",
@@ -382,7 +382,7 @@ void Actor::AppendRigidBodyComponentFromNative ( ComponentRef &component,
         return;
     }
 
-    if ( lua_pcall ( &vm, 2, 0, ScriptEngine::GetErrorHandlerIndex () ) == LUA_OK )
+    if ( lua_pcall ( &vm, 2, 0, ScriptEngine::GetErrorHandlerIndex () ) == LUA_OK ) [[likely]]
         return;
 
     android_vulkan::LogWarning (
@@ -399,7 +399,7 @@ void Actor::AppendRigidBodyComponentFromScript ( ComponentRef &component,
     // NOLINTNEXTLINE - downcast.
     auto &rigidBodyComponent = static_cast<RigidBodyComponent &> ( *component );
 
-    if ( rigidBodyComponent.RegisterFromScript ( *this, physics ) )
+    if ( rigidBodyComponent.RegisterFromScript ( *this, physics ) ) [[likely]]
         return;
 
     android_vulkan::LogWarning (
@@ -420,7 +420,7 @@ void Actor::AppendScriptComponentFromNative ( ComponentRef &component,
     // NOLINTNEXTLINE - downcast.
     auto &scriptComponent = static_cast<ScriptComponent &> ( *component );
 
-    if ( !scriptComponent.RegisterFromNative ( vm, *this ) )
+    if ( !scriptComponent.RegisterFromNative ( vm, *this ) ) [[unlikely]]
     {
         android_vulkan::LogWarning (
             "pbr::Actor::AppendScriptComponentFromNative - Can't register script component %s.",
@@ -431,7 +431,7 @@ void Actor::AppendScriptComponentFromNative ( ComponentRef &component,
         return;
     }
 
-    if ( lua_pcall ( &vm, 2, 0, ScriptEngine::GetErrorHandlerIndex () ) == LUA_OK )
+    if ( lua_pcall ( &vm, 2, 0, ScriptEngine::GetErrorHandlerIndex () ) == LUA_OK ) [[likely]]
         return;
 
     android_vulkan::LogWarning (
@@ -475,7 +475,7 @@ void Actor::AppendSoundEmitterGlobalComponentFromNative ( ComponentRef &componen
     // NOLINTNEXTLINE - downcast.
     auto &emitterComponent = static_cast<SoundEmitterGlobalComponent &> ( *component );
 
-    if ( !emitterComponent.RegisterFromNative ( vm, *this ) )
+    if ( !emitterComponent.RegisterFromNative ( vm, *this ) ) [[unlikely]]
     {
         android_vulkan::LogWarning (
             "pbr::Actor::AppendSoundEmitterGlobalComponentFromNative - Can't register sound emitter component %s.",
@@ -486,7 +486,7 @@ void Actor::AppendSoundEmitterGlobalComponentFromNative ( ComponentRef &componen
         return;
     }
 
-    if ( lua_pcall ( &vm, 2, 0, ScriptEngine::GetErrorHandlerIndex () ) == LUA_OK )
+    if ( lua_pcall ( &vm, 2, 0, ScriptEngine::GetErrorHandlerIndex () ) == LUA_OK ) [[likely]]
         return;
 
     android_vulkan::LogWarning (
@@ -518,7 +518,7 @@ void Actor::AppendSoundEmitterSpatialComponentFromNative ( ComponentRef &compone
     // NOLINTNEXTLINE - downcast.
     auto &emitterComponent = static_cast<SoundEmitterSpatialComponent &> ( *component );
 
-    if ( !emitterComponent.RegisterFromNative ( vm, *this ) )
+    if ( !emitterComponent.RegisterFromNative ( vm, *this ) ) [[unlikely]]
     {
         android_vulkan::LogWarning (
             "pbr::Actor::AppendSoundEmitterSpatialComponentFromNative - Can't register sound emitter component %s.",
@@ -529,7 +529,7 @@ void Actor::AppendSoundEmitterSpatialComponentFromNative ( ComponentRef &compone
         return;
     }
 
-    if ( lua_pcall ( &vm, 2, 0, ScriptEngine::GetErrorHandlerIndex () ) == LUA_OK )
+    if ( lua_pcall ( &vm, 2, 0, ScriptEngine::GetErrorHandlerIndex () ) == LUA_OK ) [[likely]]
         return;
 
     android_vulkan::LogWarning (
@@ -564,7 +564,7 @@ void Actor::AppendStaticMeshComponentFromNative ( ComponentRef &component,
     lua_pushvalue ( &vm, _appendComponentFromNativeIndex );
     lua_pushvalue ( &vm, -2 );
 
-    if ( !transformable.RegisterFromNative ( vm, *this ) )
+    if ( !transformable.RegisterFromNative ( vm, *this ) ) [[unlikely]]
     {
         android_vulkan::LogWarning (
             "pbr::Actor::AppendStaticMeshComponentFromNative - Can't register static mesh component %s.",
@@ -575,7 +575,7 @@ void Actor::AppendStaticMeshComponentFromNative ( ComponentRef &component,
         return;
     }
 
-    if ( lua_pcall ( &vm, 2, 0, ScriptEngine::GetErrorHandlerIndex () ) == LUA_OK )
+    if ( lua_pcall ( &vm, 2, 0, ScriptEngine::GetErrorHandlerIndex () ) == LUA_OK ) [[likely]]
         return;
 
     android_vulkan::LogWarning (
@@ -610,7 +610,7 @@ void Actor::AppendTransformComponentFromNative ( ComponentRef &component,
     lua_pushvalue ( &vm, _appendComponentFromNativeIndex );
     lua_pushvalue ( &vm, -2 );
 
-    if ( !transformComponent.Register ( vm ) )
+    if ( !transformComponent.Register ( vm ) ) [[unlikely]]
     {
         android_vulkan::LogWarning (
             "pbr::Actor::AppendTransformComponentFromNative - Can't register transform component %s.",
@@ -621,7 +621,7 @@ void Actor::AppendTransformComponentFromNative ( ComponentRef &component,
         return;
     }
 
-    if ( lua_pcall ( &vm, 2, 0, ScriptEngine::GetErrorHandlerIndex () ) == LUA_OK )
+    if ( lua_pcall ( &vm, 2, 0, ScriptEngine::GetErrorHandlerIndex () ) == LUA_OK ) [[likely]]
         return;
 
     android_vulkan::LogWarning (
@@ -715,7 +715,7 @@ int Actor::OnAppendComponent ( lua_State* state )
 
 int Actor::OnCreate ( lua_State* state )
 {
-    if ( !lua_checkstack ( state, 1 ) )
+    if ( !lua_checkstack ( state, 1 ) ) [[unlikely]]
     {
         android_vulkan::LogWarning ( "pbr::Actor::OnCreate - Stack is too small." );
         return 0;
@@ -744,7 +744,7 @@ int Actor::OnGarbageCollected ( lua_State* state )
 
 int Actor::OnGetName ( lua_State* state )
 {
-    if ( !lua_checkstack ( state, 1 ) )
+    if ( !lua_checkstack ( state, 1 ) ) [[unlikely]]
     {
         android_vulkan::LogWarning ( "pbr::Actor::OnGetName - Stack is too small." );
         return 0;

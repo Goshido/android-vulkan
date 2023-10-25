@@ -9,7 +9,6 @@
 
 - ❌ Android Studio
   - ❌ IDE
-  - ❌ Readme
   - ❌ Wrapper
   - ❌ NDK
   - ❌ Readme
@@ -58,7 +57,7 @@
   - ❌ Header
   - ❌ Readme
 - ❌ Code checks
-- ❌ Set starting project as _PBR_
+- ❌ Set starting project as PBR
 
 ## Commit messages
 
@@ -74,10 +73,10 @@ Project:
 - Kotlin has been updated to 1.9.10
 - Kotlin Gradle plugin has been updated to 1.9.10
 - Gradle has been updated to 8.4-bin
-- DirectX Shader Compiler has been updated to 1.7.2308.10173
+- DirectX Shader Compiler has been updated to 1.7.2308.10184, ea4ff2972b32fe005e91ddb336b2471d6ab3bdd6
 - SPIR-V shader blobs have been recompiled (no changes)
-- FreeType has been updated to 2.13.2, 4e61303a3b0e6656c38dd9da9f70d18d7e30585b
-- VVL has been updated to 6aff75b8564393e3fb52f592f65d16f32517637a
+- FreeType has been updated to 2.13.2, 8c5ec8dd63ffd3f76ba0531dda15d2993ab0f20b
+- VVL has been updated to 0117636eacfae8ae978b34618dd9f37614efd973
 - Lua 5.4.6 has been updated to 6baee9ef9d5657ab582c8a4b9f885ec58ed502d0
 - stb_image 2.28 has been updated to beebb24b945efdea3b9bba23affb8eb3ba8982e7
 

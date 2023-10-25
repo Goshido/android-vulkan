@@ -32,22 +32,22 @@ bool UniversalGame::IsReady () noexcept
 
 bool UniversalGame::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) noexcept
 {
-    if ( !_scene.ExecuteInputEvents () )
+    if ( !_scene.ExecuteInputEvents () ) [[unlikely]]
         return false;
 
     auto const dt = static_cast<float> ( deltaTime );
 
-    if ( !_scene.OnPrePhysics ( deltaTime ) )
+    if ( !_scene.OnPrePhysics ( dt ) ) [[unlikely]]
         return false;
 
     _physics.Simulate ( dt );
 
-    if ( !_scene.OnPostPhysics ( deltaTime ) )
+    if ( !_scene.OnPostPhysics ( dt ) ) [[unlikely]]
         return false;
 
-    Scene::OnUpdateAnimations ( deltaTime, _renderSession.GetWritingCommandBufferIndex () );
+    Scene::OnUpdateAnimations ( dt, _renderSession.GetWritingCommandBufferIndex () );
 
-    if ( !_scene.OnAnimationUpdated ( deltaTime ) || !_scene.OnUpdate ( deltaTime ) )
+    if ( !_scene.OnAnimationUpdated ( dt ) || !_scene.OnUpdate ( dt ) ) [[unlikely]]
         return false;
 
     _renderSession.Begin ( _scene.GetActiveCameraLocalMatrix (), _scene.GetActiveCameraProjectionMatrix () );
@@ -69,19 +69,20 @@ bool UniversalGame::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 
     bool result = android_vulkan::Renderer::CheckVkResult (
         vkCreateCommandPool ( device, &createInfo, nullptr, &_commandPool ),
-        "pbr::universal::UniversalGame::OnInit",
+        "pbr::UniversalGame::OnInit",
         "Can't create command pool"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_COMMAND_POOL ( "pbr::universal::UniversalGame::_commandPool" )
+    AV_REGISTER_COMMAND_POOL ( "pbr::UniversalGame::_commandPool" )
 
-    if ( !_renderSession.OnInitDevice ( renderer ) || !_scene.OnInitDevice ( renderer, _renderSession, _physics ) )
-        return false;
+    result = _renderSession.OnInitDevice ( renderer ) &&
+        _scene.OnInitDevice ( renderer, _renderSession, _physics ) &&
+        _scene.LoadScene ( renderer, _sceneFile.c_str (), _commandPool );
 
-    if ( !_scene.LoadScene ( renderer, _sceneFile.c_str (), _commandPool ) )
+    if ( !result ) [[unlikely]]
         return false;
 
     _isReady = true;
@@ -113,14 +114,14 @@ bool UniversalGame::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) no
 
     VkExtent2D const &surfaceResolution = renderer.GetViewportResolution ();
 
-    if ( !_renderSession.OnSwapchainCreated ( renderer, resolution ) )
+    if ( !_renderSession.OnSwapchainCreated ( renderer, resolution ) ) [[unlikely]]
         return false;
 
     bool const result = _scene.OnResolutionChanged ( resolution,
-        static_cast<double> ( surfaceResolution.width ) / static_cast<double> ( surfaceResolution.height )
+        static_cast<float> ( surfaceResolution.width ) / static_cast<float> ( surfaceResolution.height )
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     _physics.Resume ();
@@ -151,9 +152,12 @@ bool UniversalGame::CreatePhysics () noexcept
     _physics.SetTimeSpeed ( 1.0F );
 
     if ( _physics.AddGlobalForce ( std::make_shared<android_vulkan::GlobalForceGravity> ( FREE_FALL_ACCELERATION ) ) )
+    {
+        [[likely]]
         return true;
+    }
 
-    android_vulkan::LogError ( "pbr::universal::UniversalGame::CreatePhysics - Can't add gravity." );
+    android_vulkan::LogError ( "pbr::UniversalGame::CreatePhysics - Can't add gravity." );
     return false;
 }
 
@@ -164,7 +168,7 @@ void UniversalGame::DestroyCommandPool ( VkDevice device ) noexcept
 
     vkDestroyCommandPool ( device, _commandPool, nullptr );
     _commandPool = VK_NULL_HANDLE;
-    AV_UNREGISTER_COMMAND_POOL ( "pbr::universal::UniversalGame::_commandPool" )
+    AV_UNREGISTER_COMMAND_POOL ( "pbr::UniversalGame::_commandPool" )
 }
 
-} // namespace pbr::universal
+} // namespace pbr

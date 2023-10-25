@@ -185,7 +185,13 @@ int ScriptableGXVec3::OnClone ( lua_State* state )
 
 int ScriptableGXVec3::OnCreate ( lua_State* state )
 {
-    if ( !_free )
+    if ( !lua_checkstack ( state, 1 ) ) [[unlikely]]
+    {
+        android_vulkan::LogWarning ( "pbr::ScriptableGXVec3::OnCreate - Stack is too small." );
+        return 0;
+    }
+
+    if ( !_free ) [[unlikely]]
     {
         Insert ( new Item {}, _used );
         lua_pushlightuserdata ( state, _used );
@@ -236,7 +242,7 @@ int ScriptableGXVec3::OnDestroy ( lua_State* state )
 
 int ScriptableGXVec3::OnDistance ( lua_State* state )
 {
-    if ( !lua_checkstack ( state, 1 ) )
+    if ( !lua_checkstack ( state, 1 ) ) [[unlikely]]
     {
         android_vulkan::LogWarning ( "pbr::ScriptableGXVec3::OnDistance - Stack is too small." );
         return 0;
@@ -251,7 +257,7 @@ int ScriptableGXVec3::OnDistance ( lua_State* state )
 
 int ScriptableGXVec3::OnDotProduct ( lua_State* state )
 {
-    if ( !lua_checkstack ( state, 1 ) )
+    if ( !lua_checkstack ( state, 1 ) ) [[unlikely]]
     {
         android_vulkan::LogWarning ( "pbr::ScriptableGXVec3::OnDotProduct - Stack is too small." );
         return 0;
@@ -266,7 +272,7 @@ int ScriptableGXVec3::OnDotProduct ( lua_State* state )
 
 int ScriptableGXVec3::OnGetX ( lua_State* state )
 {
-    if ( !lua_checkstack ( state, 1 ) )
+    if ( !lua_checkstack ( state, 1 ) ) [[unlikely]]
     {
         android_vulkan::LogWarning ( "pbr::ScriptableGXVec3::OnGetX - Stack is too small." );
         return 0;
@@ -279,7 +285,7 @@ int ScriptableGXVec3::OnGetX ( lua_State* state )
 
 int ScriptableGXVec3::OnGetY ( lua_State* state )
 {
-    if ( !lua_checkstack ( state, 1 ) )
+    if ( !lua_checkstack ( state, 1 ) ) [[unlikely]]
     {
         android_vulkan::LogWarning ( "pbr::ScriptableGXVec3::OnGetY - Stack is too small." );
         return 0;
@@ -292,7 +298,7 @@ int ScriptableGXVec3::OnGetY ( lua_State* state )
 
 int ScriptableGXVec3::OnGetZ ( lua_State* state )
 {
-    if ( !lua_checkstack ( state, 1 ) )
+    if ( !lua_checkstack ( state, 1 ) ) [[unlikely]]
     {
         android_vulkan::LogWarning ( "pbr::ScriptableGXVec3::OnGetZ - Stack is too small." );
         return 0;
@@ -317,7 +323,7 @@ int ScriptableGXVec3::OnInit ( lua_State* state )
 
 int ScriptableGXVec3::OnLength ( lua_State* state )
 {
-    if ( !lua_checkstack ( state, 1 ) )
+    if ( !lua_checkstack ( state, 1 ) ) [[unlikely]]
     {
         android_vulkan::LogWarning ( "pbr::ScriptableGXVec3::OnLength - Stack is too small." );
         return 0;
@@ -384,7 +390,7 @@ int ScriptableGXVec3::OnSetZ ( lua_State* state )
 
 int ScriptableGXVec3::OnSquaredDistance ( lua_State* state )
 {
-    if ( !lua_checkstack ( state, 1 ) )
+    if ( !lua_checkstack ( state, 1 ) ) [[unlikely]]
     {
         android_vulkan::LogWarning ( "pbr::ScriptableGXVec3::OnSquaredDistance - Stack is too small." );
         return 0;

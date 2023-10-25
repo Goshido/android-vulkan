@@ -9,7 +9,7 @@ require "av://engine/gx_mat4.lua"
 - [_Brief_](#brief)
 - [_Metamethods_](#metamethods)
 - [`Constructor`](#constructor)
-- [`Clone ( other )`](#method-clone)
+- [`Clone ( source )`](#method-clone)
 - [`FromFast ( unitQuaternion, origin )`](#method-from-fast)
 - [`GetX ( x )`](#method-get-x)
 - [`GetY ( y )`](#method-get-y)
@@ -132,13 +132,13 @@ local m = GXMat4 ()
 
 [↬ table of content ⇧](#table-of-content)
 
-## <a id="method-clone">`Clone ( other )`</a>
+## <a id="method-clone">`Clone ( source )`</a>
 
 Method clones content of matrix to the current matrix.
 
 **Parameters:**
 
-- `other` [_required, readonly, [GXMat4](./gx-mat4.md)_]: matrix to clone
+- `source` [_required, readonly, [GXMat4](./gx-mat4.md)_]: matrix to clone
 
 **Return values:**
 

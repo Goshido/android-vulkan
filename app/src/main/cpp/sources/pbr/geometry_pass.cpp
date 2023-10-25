@@ -14,7 +14,7 @@ bool GeometryPass::Init ( android_vulkan::Renderer &renderer,
 {
     VkDevice device = renderer.GetDevice ();
 
-    if ( !_descriptorSetLayout.Init ( device ) )
+    if ( !_descriptorSetLayout.Init ( device ) ) [[unlikely]]
         return false;
 
     constexpr VkDescriptorPoolSize poolSize
@@ -39,7 +39,7 @@ bool GeometryPass::Init ( android_vulkan::Renderer &renderer,
         "Can't create descriptor pool"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_DESCRIPTOR_POOL ( "pbr::GeometryPass::_descriptorPool" )
@@ -61,7 +61,7 @@ bool GeometryPass::Init ( android_vulkan::Renderer &renderer,
         "Can't allocate descriptor set"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     VkDescriptorImageInfo const samplerInfo

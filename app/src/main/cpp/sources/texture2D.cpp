@@ -66,7 +66,7 @@ bool Texture2D::CreateRenderTarget ( VkExtent2D const &resolution,
     FreeResources ( renderer );
     VkImageCreateInfo imageInfo;
 
-    if ( !CreateCommonResources ( imageInfo, resolution, format, usage, 1U, renderer ) )
+    if ( !CreateCommonResources ( imageInfo, resolution, format, usage, 1U, renderer ) ) [[unlikely]]
         return false;
 
     _mipLevels = 1U;
@@ -140,7 +140,7 @@ bool Texture2D::UploadData ( Renderer &renderer,
     VkFence fence
 ) noexcept
 {
-    if ( fileName.empty () )
+    if ( fileName.empty () ) [[unlikely]]
     {
         LogError ( "Texture2D::UploadData - Can't upload data. Filename is empty." );
         return false;
@@ -153,7 +153,7 @@ bool Texture2D::UploadData ( Renderer &renderer,
     int height = 0;
     int channels = 0;
 
-    if ( !LoadImage ( pixelData, fileName, width, height, channels ) )
+    if ( !LoadImage ( pixelData, fileName, width, height, channels ) ) [[unlikely]]
         return false;
 
     const VkFormat actualFormat = PickupFormat ( channels );
@@ -173,7 +173,7 @@ bool Texture2D::UploadData ( Renderer &renderer,
         renderer
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     result = UploadDataInternal ( renderer,
@@ -185,7 +185,7 @@ bool Texture2D::UploadData ( Renderer &renderer,
         fence
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     _fileName = fileName;
@@ -200,7 +200,7 @@ bool Texture2D::UploadData ( Renderer &renderer,
     VkFence fence
 ) noexcept
 {
-    if ( fileName.empty () )
+    if ( fileName.empty () ) [[unlikely]]
     {
         LogError ( "Texture2D::UploadData - Can't upload data. Filename is empty." );
         return false;
@@ -210,7 +210,7 @@ bool Texture2D::UploadData ( Renderer &renderer,
 
     if ( IsCompressed ( fileName ) )
     {
-        if ( !UploadCompressed ( renderer, fileName, format, commandBuffer, fence ) )
+        if ( !UploadCompressed ( renderer, fileName, format, commandBuffer, fence ) ) [[unlikely]]
             return false;
 
         _fileName = std::move ( fileName );
@@ -223,7 +223,7 @@ bool Texture2D::UploadData ( Renderer &renderer,
     int height = 0;
     int channels = 0;
 
-    if ( !LoadImage ( pixelData, fileName, width, height, channels ) )
+    if ( !LoadImage ( pixelData, fileName, width, height, channels ) ) [[unlikely]]
         return false;
 
     VkFormat const actualFormat = PickupFormat ( channels );
@@ -243,7 +243,7 @@ bool Texture2D::UploadData ( Renderer &renderer,
         renderer
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     result = UploadDataInternal ( renderer,
@@ -255,7 +255,7 @@ bool Texture2D::UploadData ( Renderer &renderer,
         fence
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     _fileName = std::move ( fileName );
@@ -305,7 +305,7 @@ bool Texture2D::UploadData ( Renderer &renderer,
         renderer
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     return UploadDataInternal ( renderer, data, size, isGenerateMipmaps, imageInfo, commandBuffer, fence );
@@ -356,7 +356,7 @@ bool Texture2D::CreateCommonResources ( VkImageCreateInfo &imageInfo,
         "Can't create image"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_IMAGE ( "Texture2D::_image" )
@@ -379,7 +379,7 @@ bool Texture2D::CreateCommonResources ( VkImageCreateInfo &imageInfo,
         "Can't allocate image memory (Texture2D::CreateCommonResources)"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
     {
         FreeResources ( renderer );
         return false;
@@ -392,7 +392,7 @@ bool Texture2D::CreateCommonResources ( VkImageCreateInfo &imageInfo,
         "Can't bind image memory"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
     {
         FreeResources ( renderer );
         return false;
@@ -430,7 +430,7 @@ bool Texture2D::CreateCommonResources ( VkImageCreateInfo &imageInfo,
         "Can't create image view"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
     {
         FreeResources ( renderer );
         return false;
@@ -461,7 +461,7 @@ bool Texture2D::CreateTransferResources ( uint8_t* &mappedBuffer, VkDeviceSize s
         "Can't create transfer buffer"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
     {
         FreeResources ( renderer );
         return false;
@@ -479,7 +479,7 @@ bool Texture2D::CreateTransferResources ( uint8_t* &mappedBuffer, VkDeviceSize s
         "Can't allocate transfer device memory (Texture2D::CreateTransferResources)"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
     {
         FreeResources ( renderer );
         return false;
@@ -493,7 +493,7 @@ bool Texture2D::CreateTransferResources ( uint8_t* &mappedBuffer, VkDeviceSize s
         "Can't bind transfer memory"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
     {
         FreeResources ( renderer );
         return false;
@@ -508,7 +508,7 @@ bool Texture2D::CreateTransferResources ( uint8_t* &mappedBuffer, VkDeviceSize s
         "Can't map transfer memory"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
     {
         FreeResources ( renderer );
         return false;
@@ -555,7 +555,7 @@ bool Texture2D::UploadCompressed ( Renderer &renderer,
 {
     KTXMediaContainer ktx;
 
-    if ( !ktx.Init ( fileName ) )
+    if ( !ktx.Init ( fileName ) ) [[unlikely]]
         return false;
 
     VkImageCreateInfo imageInfo;
@@ -568,12 +568,12 @@ bool Texture2D::UploadCompressed ( Renderer &renderer,
         renderer
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     uint8_t* mappedBuffer = nullptr;
 
-    if ( !CreateTransferResources ( mappedBuffer, ktx.GetTotalSize (), renderer ) )
+    if ( !CreateTransferResources ( mappedBuffer, ktx.GetTotalSize (), renderer ) ) [[unlikely]]
         return false;
 
     size_t offset = 0U;
@@ -601,7 +601,7 @@ bool Texture2D::UploadCompressed ( Renderer &renderer,
         "Can't begin command buffer"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
     {
         FreeResources ( renderer );
         return false;
@@ -697,7 +697,7 @@ bool Texture2D::UploadCompressed ( Renderer &renderer,
         "Can't end command buffer"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
     {
         FreeResources ( renderer );
         return false;
@@ -721,7 +721,7 @@ bool Texture2D::UploadCompressed ( Renderer &renderer,
         "Can't submit command"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
     {
         FreeResources ( renderer );
         return false;
@@ -742,7 +742,7 @@ bool Texture2D::UploadDataInternal ( Renderer &renderer,
 {
     uint8_t* mappedBuffer = nullptr;
 
-    if ( !CreateTransferResources ( mappedBuffer, static_cast<VkDeviceSize> ( size ), renderer ) )
+    if ( !CreateTransferResources ( mappedBuffer, static_cast<VkDeviceSize> ( size ), renderer ) ) [[unlikely]]
         return false;
 
     std::memcpy ( mappedBuffer, data, size );
@@ -761,7 +761,7 @@ bool Texture2D::UploadDataInternal ( Renderer &renderer,
         "Can't begin command buffer"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
     {
         FreeResources ( renderer );
         return false;
@@ -856,7 +856,7 @@ bool Texture2D::UploadDataInternal ( Renderer &renderer,
             "Can't end command buffer"
         );
 
-        if ( !result )
+        if ( !result ) [[unlikely]]
         {
             FreeResources ( renderer );
             return false;
@@ -881,7 +881,7 @@ bool Texture2D::UploadDataInternal ( Renderer &renderer,
             "Can't submit command"
         );
 
-        if ( !result )
+        if ( !result ) [[unlikely]]
         {
             FreeResources ( renderer );
             return false;
@@ -1026,7 +1026,7 @@ bool Texture2D::UploadDataInternal ( Renderer &renderer,
         "Can't end command buffer"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
     {
         FreeResources ( renderer );
         return false;
@@ -1051,7 +1051,7 @@ bool Texture2D::UploadDataInternal ( Renderer &renderer,
         "Can't submit command"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
     {
         FreeResources ( renderer );
         return false;
@@ -1077,7 +1077,7 @@ bool Texture2D::LoadImage ( std::vector<uint8_t> &pixelData,
 {
     File file ( const_cast<std::string &> ( fileName ) );
 
-    if ( !file.LoadContent () )
+    if ( !file.LoadContent () ) [[unlikely]]
         return false;
 
     std::vector<uint8_t> const &imageContent = file.GetContent ();

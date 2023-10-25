@@ -35,7 +35,7 @@ class Scene final
         RenderSession*                                  _renderSession = nullptr;
         UILayerList                                     _uiLayerList {};
 
-        lua_Number                                      _aspectRatio = 1.0;
+        lua_Number                                      _aspectRatio = 1.0F;
         lua_Integer                                     _width = -1;
         lua_Integer                                     _height = -1;
 
@@ -69,7 +69,7 @@ class Scene final
         [[nodiscard]] GXMat4 const &GetActiveCameraProjectionMatrix () const noexcept;
         [[nodiscard]] android_vulkan::Physics &GetPhysics () noexcept;
 
-        [[nodiscard]] bool OnAnimationUpdated ( double deltaTime ) noexcept;
+        [[nodiscard]] bool OnAnimationUpdated ( float deltaTime ) noexcept;
 
         [[nodiscard]] bool OnInitDevice ( android_vulkan::Renderer &renderer,
             RenderSession &renderSession,
@@ -84,10 +84,10 @@ class Scene final
         void OnPause () noexcept;
         void OnResume () noexcept;
 
-        [[nodiscard]] bool OnPrePhysics ( double deltaTime ) noexcept;
-        [[nodiscard]] bool OnPostPhysics ( double deltaTime ) noexcept;
-        [[nodiscard]] bool OnResolutionChanged ( VkExtent2D const &resolution, double aspectRatio ) noexcept;
-        [[nodiscard]] bool OnUpdate ( double deltaTime ) noexcept;
+        [[nodiscard]] bool OnPrePhysics ( float deltaTime ) noexcept;
+        [[nodiscard]] bool OnPostPhysics ( float deltaTime ) noexcept;
+        [[nodiscard]] bool OnResolutionChanged ( VkExtent2D const &resolution, float aspectRatio ) noexcept;
+        [[nodiscard]] bool OnUpdate ( float deltaTime ) noexcept;
 
         [[nodiscard]] bool LoadScene ( android_vulkan::Renderer &renderer,
             char const* scene,
@@ -97,7 +97,7 @@ class Scene final
         void RemoveActor ( Actor const &actor ) noexcept;
         void Submit ( android_vulkan::Renderer &renderer ) noexcept;
 
-        static void OnUpdateAnimations ( double deltaTime, size_t commandBufferIndex ) noexcept;
+        static void OnUpdateAnimations ( float deltaTime, size_t commandBufferIndex ) noexcept;
 
     private:
         void AppendActor ( ActorRef &actor ) noexcept;

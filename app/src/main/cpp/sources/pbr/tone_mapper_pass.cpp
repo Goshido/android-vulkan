@@ -42,12 +42,12 @@ bool ToneMapperPass::Init ( android_vulkan::Renderer &renderer ) noexcept
         "Can't create descriptor pool"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_DESCRIPTOR_POOL ( "pbr::ToneMapperPass::_resourceDescriptorPool" )
 
-    if ( !_transformLayout.Init ( device ) || !_resourceLayout.Init ( device ) )
+    if ( !_transformLayout.Init ( device ) || !_resourceLayout.Init ( device ) ) [[unlikely]]
         return false;
 
     VkDescriptorSetLayout layout = _resourceLayout.GetLayout ();
@@ -109,7 +109,7 @@ bool ToneMapperPass::SetBrightness ( android_vulkan::Renderer &renderer,
     _program.Destroy ( renderer.GetDevice () );
     SRGBProgram::SpecializationInfo const specData = SRGBProgram::GetGammaInfo ( brightnessBalance );
 
-    if ( !_program.Init ( renderer, renderPass, subpass, &specData, renderer.GetSurfaceSize () ) )
+    if ( !_program.Init ( renderer, renderPass, subpass, &specData, renderer.GetSurfaceSize () ) ) [[unlikely]]
         return false;
 
     _brightnessBalance = brightnessBalance;
@@ -129,7 +129,7 @@ bool ToneMapperPass::SetTarget ( android_vulkan::Renderer &renderer,
 
     SRGBProgram::SpecializationInfo const specData = SRGBProgram::GetGammaInfo ( _brightnessBalance );
 
-    if ( !_program.Init ( renderer, renderPass, subpass, &specData, renderer.GetSurfaceSize () ) )
+    if ( !_program.Init ( renderer, renderPass, subpass, &specData, renderer.GetSurfaceSize () ) ) [[unlikely]]
         return false;
 
     VkDescriptorImageInfo const imageInfo

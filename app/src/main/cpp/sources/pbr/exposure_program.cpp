@@ -33,7 +33,7 @@ bool ExposureProgram::Init ( android_vulkan::Renderer &renderer,
     bool result = InitShaderInfo ( renderer, specializationData, &specInfo, pipelineInfo.stage ) &&
         InitLayout ( device, pipelineInfo.layout );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
@@ -45,7 +45,7 @@ bool ExposureProgram::Init ( android_vulkan::Renderer &renderer,
         "Can't create pipeline"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_PIPELINE ( "pbr::ExposureProgram::_pipeline" )
@@ -145,7 +145,7 @@ void ExposureProgram::DestroyShaderModule ( VkDevice device ) noexcept
 
 bool ExposureProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept
 {
-    if ( !_layout.Init ( device ) )
+    if ( !_layout.Init ( device ) ) [[unlikely]]
         return false;
 
     VkDescriptorSetLayout dsLayout = _layout.GetLayout ();
@@ -174,7 +174,7 @@ bool ExposureProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) n
         "Can't create pipeline layout"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_PIPELINE_LAYOUT ( "pbr::ExposureProgram::_pipelineLayout" )
@@ -193,7 +193,7 @@ bool ExposureProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
         "Can't create shader (pbr::ExposureProgram)"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_SHADER_MODULE ( "pbr::ExposureProgram::_computeShader" )

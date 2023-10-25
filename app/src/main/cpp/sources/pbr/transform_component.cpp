@@ -46,7 +46,7 @@ TransformComponent::TransformComponent ( TransformComponentDesc const &desc, uin
 
 bool TransformComponent::Register ( lua_State &vm ) noexcept
 {
-    if ( !lua_checkstack ( &vm, 2 ) )
+    if ( !lua_checkstack ( &vm, 2 ) ) [[unlikely]]
     {
         android_vulkan::LogError ( "pbr::TransformComponent::Register - Stack is too small." );
         return false;
@@ -60,13 +60,13 @@ bool TransformComponent::Register ( lua_State &vm ) noexcept
 
 bool TransformComponent::Init ( lua_State &vm ) noexcept
 {
-    if ( !lua_checkstack ( &vm, 1 ) )
+    if ( !lua_checkstack ( &vm, 1 ) ) [[unlikely]]
     {
         android_vulkan::LogError ( "pbr::TransformComponent::Init - Stack is too small." );
         return false;
     }
 
-    if ( lua_getglobal ( &vm, "RegisterTransformComponent" ) != LUA_TFUNCTION )
+    if ( lua_getglobal ( &vm, "RegisterTransformComponent" ) != LUA_TFUNCTION ) [[unlikely]]
     {
         android_vulkan::LogError ( "pbr::TransformComponent::Init - Can't find register function." );
         return false;

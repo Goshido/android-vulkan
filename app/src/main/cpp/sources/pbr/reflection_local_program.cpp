@@ -55,11 +55,8 @@ bool ReflectionLocalProgram::Init ( android_vulkan::Renderer &renderer,
 
     VkDevice device = renderer.GetDevice ();
 
-    if ( !InitShaderInfo ( renderer, pipelineInfo.pStages, nullptr, nullptr, stageInfo ) )
-    {
-        Destroy ( device );
+    if ( !InitShaderInfo ( renderer, pipelineInfo.pStages, nullptr, nullptr, stageInfo ) ) [[unlikely]]
         return false;
-    }
 
     pipelineInfo.pVertexInputState = InitVertexInputInfo ( vertexInputInfo,
         attributeDescriptions,
@@ -75,11 +72,8 @@ bool ReflectionLocalProgram::Init ( android_vulkan::Renderer &renderer,
     pipelineInfo.pColorBlendState = InitColorBlendInfo ( blendInfo, attachmentInfo );
     pipelineInfo.pDynamicState = nullptr;
 
-    if ( !InitLayout ( device, pipelineInfo.layout ) )
-    {
-        Destroy ( device );
+    if ( !InitLayout ( device, pipelineInfo.layout ) ) [[unlikely]]
         return false;
-    }
 
     pipelineInfo.renderPass = renderPass;
     pipelineInfo.subpass = subpass;
@@ -92,11 +86,8 @@ bool ReflectionLocalProgram::Init ( android_vulkan::Renderer &renderer,
         "Can't create pipeline"
     );
 
-    if ( !result )
-    {
-        Destroy ( device );
+    if ( !result ) [[unlikely]]
         return false;
-    }
 
     AV_REGISTER_PIPELINE ( "pbr::ReflectionLocalProgram::_pipeline" )
     DestroyShaderModules ( device );
@@ -284,14 +275,11 @@ VkPipelineInputAssemblyStateCreateInfo const* ReflectionLocalProgram::InitInputA
 
 bool ReflectionLocalProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept
 {
-    if ( !_commonLayout.Init ( device ) )
+    if ( !_commonLayout.Init ( device ) || !_lightVolumeLayout.Init ( device ) || !_reflectionLayout.Init ( device ) )
+    {
+        [[unlikely]]
         return false;
-
-    if ( !_lightVolumeLayout.Init ( device ) )
-        return false;
-
-    if ( !_reflectionLayout.Init ( device ) )
-        return false;
+    }
 
     VkDescriptorSetLayout const layouts[] =
     {
@@ -317,7 +305,7 @@ bool ReflectionLocalProgram::InitLayout ( VkDevice device, VkPipelineLayout &lay
         "Can't create pipeline layout"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_PIPELINE_LAYOUT ( "pbr::ReflectionLocalProgram::_pipelineLayout" )
@@ -381,7 +369,7 @@ bool ReflectionLocalProgram::InitShaderInfo ( android_vulkan::Renderer &renderer
         "Can't create vertex shader (pbr::ReflectionLocalProgram)"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_SHADER_MODULE ( "pbr::ReflectionLocalProgram::_vertexShader" )
@@ -391,7 +379,7 @@ bool ReflectionLocalProgram::InitShaderInfo ( android_vulkan::Renderer &renderer
         "Can't create fragment shader (pbr::ReflectionLocalProgram)"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_SHADER_MODULE ( "pbr::ReflectionLocalProgram::_fragmentShader" )

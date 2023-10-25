@@ -80,7 +80,7 @@ SkeletalMeshComponent::SkeletalMeshComponent ( bool &success,
         fences
     );
 
-    if ( !_material )
+    if ( !_material ) [[unlikely]]
         return;
 
     commandBufferConsumed = consumed;
@@ -94,7 +94,7 @@ SkeletalMeshComponent::SkeletalMeshComponent ( bool &success,
         *fences
     );
 
-    if ( !_referenceMesh )
+    if ( !_referenceMesh ) [[unlikely]]
         return;
 
     commandBufferConsumed += consumed;
@@ -103,7 +103,7 @@ SkeletalMeshComponent::SkeletalMeshComponent ( bool &success,
 
     MeshRef skinMesh = std::make_shared<android_vulkan::MeshGeometry> ();
 
-    if ( !skinMesh->LoadMesh ( mesh, *_renderer, *commandBuffers, *fences ) )
+    if ( !skinMesh->LoadMesh ( mesh, *_renderer, *commandBuffers, *fences ) ) [[unlikely]]
         return;
 
     skinMesh->MakeUnique ();
@@ -121,7 +121,7 @@ SkeletalMeshComponent::SkeletalMeshComponent ( bool &success,
         *fences
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return;
 
     ++commandBufferConsumed;
@@ -135,7 +135,7 @@ SkeletalMeshComponent::SkeletalMeshComponent ( bool &success,
     rest /= maxDispatch.height;
     rest /= maxDispatch.depth;
 
-    if ( rest > 0U )
+    if ( rest > 0U ) [[unlikely]]
     {
         android_vulkan::LogWarning ( "pbr::SkeletalMeshComponent::SkeletalMeshComponent - Mesh '%s' can't fit to "
              "skin dispatch call. Too many vertices %u for hardware.",
@@ -146,7 +146,7 @@ SkeletalMeshComponent::SkeletalMeshComponent ( bool &success,
         return;
     }
 
-    if ( totalGroups < maxDispatch.width )
+    if ( totalGroups < maxDispatch.width ) [[likely]]
     {
         _dispatch = VkExtent3D
         {
@@ -181,12 +181,12 @@ void SkeletalMeshComponent::Unregister () noexcept
 
 bool SkeletalMeshComponent::ApplySkin ( VkCommandBuffer commandBuffer, size_t commandBufferIndex ) noexcept
 {
-    if ( !_renderer )
+    if ( !_renderer ) [[unlikely]]
         return true;
 
     _lastCommandBufferIndex = commandBufferIndex;
 
-    if ( !WaitGPUUploadComplete () )
+    if ( !WaitGPUUploadComplete () ) [[unlikely]]
         return false;
 
     FreeUnusedResources ( commandBufferIndex );
@@ -306,7 +306,7 @@ bool SkeletalMeshComponent::Init ( lua_State &vm, android_vulkan::Renderer &rend
 
     _renderer = &renderer;
 
-    if ( !_program.Init ( renderer, nullptr ) )
+    if ( !_program.Init ( renderer, nullptr ) ) [[unlikely]]
         return false;
 
     VkCommandPoolCreateInfo const createInfo
@@ -325,7 +325,7 @@ bool SkeletalMeshComponent::Init ( lua_State &vm, android_vulkan::Renderer &rend
         "Can't create command pool"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_COMMAND_POOL ( "pbr::SkeletalMeshComponent::_commandPool" )
@@ -432,7 +432,7 @@ void SkeletalMeshComponent::OnTransform ( GXMat4 const &transformWorld ) noexcep
 
 bool SkeletalMeshComponent::SetAnimationGraph ( AnimationGraph &animationGraph ) noexcept
 {
-    if ( _usage._skinData.GetMinPoseRange () <= animationGraph.GetPoseRange () )
+    if ( _usage._skinData.GetMinPoseRange () <= animationGraph.GetPoseRange () ) [[likely]]
     {
         _animationGraph = &animationGraph;
         return true;
@@ -496,7 +496,7 @@ bool SkeletalMeshComponent::AllocateCommandBuffers ( size_t amount ) noexcept
         "Can't allocate command buffer"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     _cbInfo._fences.resize ( size );
@@ -517,7 +517,7 @@ bool SkeletalMeshComponent::AllocateCommandBuffers ( size_t amount ) noexcept
             "Can't create fence"
         );
 
-        if ( !result )
+        if ( !result ) [[unlikely]]
             return false;
 
         AV_REGISTER_FENCE ( "pbr::SkeletalMeshComponent::_fences" )
@@ -528,7 +528,7 @@ bool SkeletalMeshComponent::AllocateCommandBuffers ( size_t amount ) noexcept
 
 bool SkeletalMeshComponent::WaitGPUUploadComplete () noexcept
 {
-    if ( !_cbInfo._index )
+    if ( !_cbInfo._index ) [[likely]]
         return true;
 
     VkDevice device = _renderer->GetDevice ();
@@ -541,7 +541,7 @@ bool SkeletalMeshComponent::WaitGPUUploadComplete () noexcept
         "Can't wait fence"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     result = android_vulkan::Renderer::CheckVkResult ( vkResetFences ( device, fenceCount, fences ),
@@ -549,7 +549,7 @@ bool SkeletalMeshComponent::WaitGPUUploadComplete () noexcept
         "Can't reset fence"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     result = android_vulkan::Renderer::CheckVkResult (
@@ -558,7 +558,7 @@ bool SkeletalMeshComponent::WaitGPUUploadComplete () noexcept
         "Can't reset command pool"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     _cbInfo._index = 0U;
@@ -583,7 +583,7 @@ int SkeletalMeshComponent::OnCreate ( lua_State* state )
 
     char const* name = lua_tostring ( state, 1 );
 
-    if ( !name )
+    if ( !name ) [[unlikely]]
     {
         lua_pushnil ( state );
         return 1;
@@ -591,7 +591,7 @@ int SkeletalMeshComponent::OnCreate ( lua_State* state )
 
     char const* mesh = lua_tostring ( state, 2 );
 
-    if ( !mesh )
+    if ( !mesh ) [[unlikely]]
     {
         lua_pushnil ( state );
         return 1;
@@ -599,7 +599,7 @@ int SkeletalMeshComponent::OnCreate ( lua_State* state )
 
     char const* skin = lua_tostring ( state, 3 );
 
-    if ( !skin )
+    if ( !skin ) [[unlikely]]
     {
         lua_pushnil ( state );
         return 1;
@@ -607,7 +607,7 @@ int SkeletalMeshComponent::OnCreate ( lua_State* state )
 
     char const* skeleton = lua_tostring ( state, 4 );
 
-    if ( !skeleton )
+    if ( !skeleton ) [[unlikely]]
     {
         lua_pushnil ( state );
         return 1;
@@ -615,9 +615,9 @@ int SkeletalMeshComponent::OnCreate ( lua_State* state )
 
     size_t const available = _cbInfo._buffers.size () - _cbInfo._index;
 
-    if ( available < MIN_COMMAND_BUFFERS )
+    if ( available < MIN_COMMAND_BUFFERS ) [[likely]]
     {
-        if ( !AllocateCommandBuffers ( ALLOCATE_COMMAND_BUFFERS ) )
+        if ( !AllocateCommandBuffers ( ALLOCATE_COMMAND_BUFFERS ) ) [[unlikely]]
         {
             lua_pushnil ( state );
             return 1;
@@ -637,7 +637,7 @@ int SkeletalMeshComponent::OnCreate ( lua_State* state )
         name
     );
 
-    if ( !success )
+    if ( !success ) [[unlikely]]
     {
         lua_pushnil ( state );
         return 1;
@@ -672,7 +672,7 @@ int SkeletalMeshComponent::OnGarbageCollected ( lua_State* state )
 
 int SkeletalMeshComponent::OnSetAnimationGraph ( lua_State* state )
 {
-    if ( !lua_checkstack ( state, 1 ) )
+    if ( !lua_checkstack ( state, 1 ) ) [[unlikely]]
     {
         android_vulkan::LogWarning ( "pbr::SkeletalMeshComponent::OnSetAnimationGraph - Stack is too small." );
         return 0;

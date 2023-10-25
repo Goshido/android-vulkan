@@ -4,16 +4,16 @@ require "av://engine/object.lua"
 GXVec3 = {}
 
 -- Methods
-local function Clone ( self, other )
+local function Clone ( self, source )
     assert ( type ( self ) == "table" and self._type == eObjectType.GXVec3,
         [[GXVec3:Clone - Calling not via ":" syntax.]]
     )
 
-    assert ( type ( other ) == "table" and other._type == eObjectType.GXVec3,
-        [[GXVec3:Clone - "other" is not a GXVec3.]]
+    assert ( type ( source ) == "table" and source._type == eObjectType.GXVec3,
+        [[GXVec3:Clone - "source" is not a GXVec3.]]
     )
 
-    av_GXVec3Clone ( self._handle, other._handle )
+    av_GXVec3Clone ( self._handle, source._handle )
 end
 
 local function CrossProduct ( self, a, b )

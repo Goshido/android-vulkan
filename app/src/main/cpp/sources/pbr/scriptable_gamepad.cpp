@@ -89,7 +89,7 @@ void ScriptableGamepad::ReleaseInput () const noexcept
 
 bool ScriptableGamepad::Execute ( lua_State &vm, int sceneHandleIndex, int onInputIndex ) noexcept
 {
-    if ( !lua_checkstack ( &vm, 3 ) )
+    if ( !lua_checkstack ( &vm, 3 ) ) [[unlikely]]
     {
         android_vulkan::LogError ( "pbr::ScriptableGamepad::Execute - Stack is too small." );
         return false;
@@ -114,22 +114,12 @@ bool ScriptableGamepad::Execute ( lua_State &vm, int sceneHandleIndex, int onInp
 
 bool ScriptableGamepad::Init ( lua_State &vm ) noexcept
 {
-    if ( !AllocateKeyInputEvent ( _keyDownIndex, vm, eType::KeyDown ) )
-        return false;
-
-    if ( !AllocateKeyInputEvent ( _keyUpIndex, vm, eType::KeyUp ) )
-        return false;
-
-    if ( !AllocateStickInputEvent ( _leftStickIndex, vm, eType::LeftStick ) )
-        return false;
-
-    if ( !AllocateStickInputEvent ( _rightStickIndex, vm, eType::RightStick ) )
-        return false;
-
-    if ( !AllocateTriggerInputEvent ( _leftTriggerIndex, vm, eType::LeftTrigger ) )
-        return false;
-
-    return AllocateTriggerInputEvent ( _rightTriggerIndex, vm, eType::RightTrigger );
+    return AllocateKeyInputEvent ( _keyDownIndex, vm, eType::KeyDown ) &&
+        AllocateKeyInputEvent ( _keyUpIndex, vm, eType::KeyUp ) &&
+        AllocateStickInputEvent ( _leftStickIndex, vm, eType::LeftStick ) &&
+        AllocateStickInputEvent ( _rightStickIndex, vm, eType::RightStick ) &&
+        AllocateTriggerInputEvent ( _leftTriggerIndex, vm, eType::LeftTrigger ) &&
+        AllocateTriggerInputEvent ( _rightTriggerIndex, vm, eType::RightTrigger );
 }
 
 void ScriptableGamepad::Destroy () noexcept
@@ -162,7 +152,7 @@ void ScriptableGamepad::KeyAction ( Action const &action,
     lua_pushvalue ( &vm, sceneHandleIndex );
     lua_pushvalue ( &vm, idx );
 
-    if ( lua_pcall ( &vm, 2, 0, ScriptEngine::GetErrorHandlerIndex () ) != LUA_OK )
+    if ( lua_pcall ( &vm, 2, 0, ScriptEngine::GetErrorHandlerIndex () ) != LUA_OK ) [[unlikely]]
     {
         android_vulkan::LogWarning ( "pbr::ScriptableGamepad::KeyAction - Can't send input event to Lua VM." );
     }
@@ -190,7 +180,7 @@ void ScriptableGamepad::StickAction ( Action const &action,
     lua_pushvalue ( &vm, sceneHandleIndex );
     lua_pushvalue ( &vm, idx );
 
-    if ( lua_pcall ( &vm, 2, 0, ScriptEngine::GetErrorHandlerIndex () ) != LUA_OK )
+    if ( lua_pcall ( &vm, 2, 0, ScriptEngine::GetErrorHandlerIndex () ) != LUA_OK ) [[unlikely]]
     {
         android_vulkan::LogWarning ( "pbr::ScriptableGamepad::StickAction - Can't send input event to Lua VM." );
     }
@@ -214,7 +204,7 @@ void ScriptableGamepad::TriggerAction ( Action const &action,
     lua_pushvalue ( &vm, sceneHandleIndex );
     lua_pushvalue ( &vm, idx );
 
-    if ( lua_pcall ( &vm, 2, 0, ScriptEngine::GetErrorHandlerIndex () ) != LUA_OK )
+    if ( lua_pcall ( &vm, 2, 0, ScriptEngine::GetErrorHandlerIndex () ) != LUA_OK ) [[unlikely]]
     {
         android_vulkan::LogWarning ( "pbr::ScriptableGamepad::TriggerAction - Can't send input event to Lua VM." );
     }
@@ -222,7 +212,7 @@ void ScriptableGamepad::TriggerAction ( Action const &action,
 
 bool ScriptableGamepad::AllocateKeyInputEvent ( int &eventIndex, lua_State &vm, eType type ) noexcept
 {
-    if ( !lua_checkstack ( &vm, 3 ) )
+    if ( !lua_checkstack ( &vm, 3 ) ) [[unlikely]]
     {
         android_vulkan::LogError ( "pbr::ScriptableGamepad::AllocateKeyInputEvent - Stack is too small." );
         return false;
@@ -244,7 +234,7 @@ bool ScriptableGamepad::AllocateKeyInputEvent ( int &eventIndex, lua_State &vm, 
 
 bool ScriptableGamepad::AllocateStickInputEvent ( int &eventIndex, lua_State &vm, eType type ) noexcept
 {
-    if ( !lua_checkstack ( &vm, 3 ) )
+    if ( !lua_checkstack ( &vm, 3 ) ) [[unlikely]]
     {
         android_vulkan::LogError ( "pbr::ScriptableGamepad::AllocateStickInputEvent - Stack is too small." );
         return false;
@@ -270,7 +260,7 @@ bool ScriptableGamepad::AllocateStickInputEvent ( int &eventIndex, lua_State &vm
 
 bool ScriptableGamepad::AllocateTriggerInputEvent ( int &eventIndex, lua_State &vm, eType type ) noexcept
 {
-    if ( !lua_checkstack ( &vm, 3 ) )
+    if ( !lua_checkstack ( &vm, 3 ) ) [[unlikely]]
     {
         android_vulkan::LogError ( "pbr::ScriptableGamepad::AllocateTriggerInputEvent - Stack is too small." );
         return false;

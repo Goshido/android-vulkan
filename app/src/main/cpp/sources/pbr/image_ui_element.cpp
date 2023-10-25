@@ -84,13 +84,13 @@ ImageUIElement::ImageUIElement ( bool &success,
     _isAutoHeight ( _css._height.GetType () == LengthValue::eType::Auto ),
     _isInlineBlock ( _css._display == DisplayProperty::eValue::InlineBlock )
 {
-    if ( success = lua_checkstack ( &vm, 2 ); !success )
+    if ( success = lua_checkstack ( &vm, 2 ); !success ) [[unlikely]]
     {
         android_vulkan::LogError ( "pbr::ImageUIElement::ImageUIElement - Stack is too small." );
         return;
     }
 
-    if ( success = lua_getglobal ( &vm, "RegisterImageUIElement" ) == LUA_TFUNCTION; !success )
+    if ( success = lua_getglobal ( &vm, "RegisterImageUIElement" ) == LUA_TFUNCTION; !success ) [[unlikely]]
     {
         android_vulkan::LogError ( "pbr::ImageUIElement::ImageUIElement - Can't find register function." );
         return;
@@ -98,7 +98,7 @@ ImageUIElement::ImageUIElement ( bool &success,
 
     lua_pushlightuserdata ( &vm, this );
 
-    if ( success = lua_pcall ( &vm, 1, 1, errorHandlerIdx ) == LUA_OK; !success )
+    if ( success = lua_pcall ( &vm, 1, 1, errorHandlerIdx ) == LUA_OK; !success ) [[unlikely]]
     {
         android_vulkan::LogWarning ( "pbr::ImageUIElement::ImageUIElement - Can't append element inside Lua VM." );
         return;

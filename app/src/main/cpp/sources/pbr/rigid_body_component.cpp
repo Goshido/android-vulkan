@@ -133,7 +133,7 @@ bool RigidBodyComponent::RegisterFromNative ( Actor &actor, android_vulkan::Phys
     if ( !physics.AddRigidBody ( _rigidBody ) )
         return false;
 
-    if ( !lua_checkstack ( &vm, 3 ) )
+    if ( !lua_checkstack ( &vm, 3 ) ) [[unlikely]]
     {
         android_vulkan::LogError ( "pbr::ScriptComponent::Register - Stack is too small." );
         return false;
@@ -154,7 +154,7 @@ bool RigidBodyComponent::RegisterFromScript ( Actor &actor, android_vulkan::Phys
 
 void RigidBodyComponent::Unregister ( android_vulkan::Physics &physics ) noexcept
 {
-    if ( !physics.RemoveRigidBody ( _rigidBody ) )
+    if ( !physics.RemoveRigidBody ( _rigidBody ) ) [[unlikely]]
     {
         android_vulkan::LogWarning ( "pbr::RigidBodyComponent::Unregister - Can't remove body %s.", _name.c_str () );
     }
@@ -162,13 +162,13 @@ void RigidBodyComponent::Unregister ( android_vulkan::Physics &physics ) noexcep
 
 bool RigidBodyComponent::Init ( lua_State &vm ) noexcept
 {
-    if ( !lua_checkstack ( &vm, 1 ) )
+    if ( !lua_checkstack ( &vm, 1 ) ) [[unlikely]]
     {
         android_vulkan::LogError ( "pbr::RigidBodyComponent::Init - Stack is too small." );
         return false;
     }
 
-    if ( lua_getglobal ( &vm, "RegisterRigidBodyComponent" ) != LUA_TFUNCTION )
+    if ( lua_getglobal ( &vm, "RegisterRigidBodyComponent" ) != LUA_TFUNCTION ) [[unlikely]]
     {
         android_vulkan::LogError ( "pbr::RigidBodyComponent::Init - Can't find register function." );
         return false;
@@ -232,7 +232,7 @@ bool RigidBodyComponent::Init ( lua_State &vm ) noexcept
 
 void RigidBodyComponent::Destroy () noexcept
 {
-    if ( !_rigidBodies.empty () )
+    if ( !_rigidBodies.empty () ) [[unlikely]]
     {
         android_vulkan::LogWarning ( "pbr::RigidBodyComponent::Destroy - Memory leak." );
         AV_ASSERT ( false )
@@ -270,7 +270,7 @@ int RigidBodyComponent::OnAddForce ( lua_State* state )
 
 int RigidBodyComponent::OnCreate ( lua_State* state )
 {
-    if ( !lua_checkstack ( state, 2 ) )
+    if ( !lua_checkstack ( state, 2 ) ) [[unlikely]]
     {
         android_vulkan::LogWarning ( "pbr::RigidBodyComponent::OnCreate - Stack is too small." );
         return 0;
@@ -278,7 +278,7 @@ int RigidBodyComponent::OnCreate ( lua_State* state )
 
     char const* name = lua_tostring ( state, 1 );
 
-    if ( !name )
+    if ( !name ) [[unlikely]]
     {
         lua_pushnil ( state );
         return 1;

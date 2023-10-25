@@ -94,7 +94,7 @@ bool MemoryAllocator::Chunk::Init ( VkDevice device, size_t memoryTypeIndex ) no
         "Can't allocate memory"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_DEVICE_MEMORY ( "MemoryAllocator::Chunk::_memory" )
@@ -245,7 +245,7 @@ bool MemoryAllocator::Chunk::TryAllocateMemory ( VkDeviceMemory &memory,
     VkMemoryRequirements const &requirements
 ) noexcept
 {
-    if ( !_freeBlocks._tail || requirements.size > _freeBlocks._tail->_size )
+    if ( !_freeBlocks._tail || requirements.size > _freeBlocks._tail->_size ) [[unlikely]]
     {
         // Free blocks are sorted by size. So the biggest possible block should be at list tail.
         // The biggest block is less than requested. Early exit.
@@ -596,7 +596,7 @@ bool MemoryAllocator::MapMemory ( void* &ptr,
         message
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     ptr = static_cast<uint8_t*> ( chunkInfo._mapPointer ) + offset;
@@ -641,7 +641,7 @@ bool MemoryAllocator::TryAllocateMemory ( VkDeviceMemory &memory,
         break;
     }
 
-    if ( memoryTypeIndex > VK_MAX_MEMORY_TYPES )
+    if ( memoryTypeIndex > VK_MAX_MEMORY_TYPES ) [[unlikely]]
         return false;
 
     std::unique_lock<std::mutex> const lock ( _mutex );
@@ -662,7 +662,7 @@ bool MemoryAllocator::TryAllocateMemory ( VkDeviceMemory &memory,
     bool const result = chunk.Init ( device, memoryTypeIndex ) &&
         chunk.TryAllocateMemory ( memory, offset, requirements );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     _chunkMap.emplace ( memory,

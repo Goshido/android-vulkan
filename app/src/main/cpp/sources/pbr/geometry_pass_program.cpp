@@ -46,7 +46,7 @@ bool GeometryPassProgram::Init ( android_vulkan::Renderer &renderer,
 
     VkDevice device = renderer.GetDevice ();
 
-    if ( !InitShaderInfo ( renderer, pipelineInfo.pStages, nullptr, nullptr, stageInfo ) )
+    if ( !InitShaderInfo ( renderer, pipelineInfo.pStages, nullptr, nullptr, stageInfo ) ) [[unlikely]]
         return false;
 
     pipelineInfo.pVertexInputState = InitVertexInputInfo ( vertexInputInfo,
@@ -63,7 +63,7 @@ bool GeometryPassProgram::Init ( android_vulkan::Renderer &renderer,
     pipelineInfo.pColorBlendState = InitColorBlendInfo ( blendInfo, attachmentInfo );
     pipelineInfo.pDynamicState = nullptr;
 
-    if ( !InitLayout ( device, pipelineInfo.layout ) )
+    if ( !InitLayout ( device, pipelineInfo.layout ) ) [[unlikely]]
         return false;
 
     pipelineInfo.renderPass = renderPass;
@@ -80,7 +80,7 @@ bool GeometryPassProgram::Init ( android_vulkan::Renderer &renderer,
         "Can't create pipeline"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_PIPELINE ( std::string ( _name ) + "::_pipeline" )
@@ -313,14 +313,11 @@ VkPipelineInputAssemblyStateCreateInfo const* GeometryPassProgram::InitInputAsse
 bool GeometryPassProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept
 {
 
-    if ( !_samplerLayout.Init ( device ) )
+    if ( !_samplerLayout.Init ( device ) || !_textureLayout.Init ( device ) || !_instanceLayout.Init ( device ) )
+    {
+        [[unlikely]]
         return false;
-
-    if ( !_textureLayout.Init ( device ) )
-        return false;
-
-    if ( !_instanceLayout.Init ( device ) )
-        return false;
+    }
 
     VkDescriptorSetLayout const layouts[] =
     {
@@ -349,7 +346,7 @@ bool GeometryPassProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout
         "Can't create pipeline layout"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_PIPELINE_LAYOUT ( std::string ( _name ) + "::_pipelineLayout" )
@@ -411,13 +408,13 @@ bool GeometryPassProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
     char where[ 512U ];
     std::snprintf ( where, std::size ( where ), "Can't create vertex shader (pbr::%s)", _name.data () );
 
-    if ( !renderer.CreateShader ( _vertexShader, VERTEX_SHADER, where ) )
+    if ( !renderer.CreateShader ( _vertexShader, VERTEX_SHADER, where ) ) [[unlikely]]
         return false;
 
     AV_REGISTER_SHADER_MODULE ( std::string ( _name ) + "::_vertexShader" )
     std::snprintf ( where, std::size ( where ), "Can't create fragment shader (pbr::%s)", _name.data () );
 
-    if ( !renderer.CreateShader ( _fragmentShader, std::string ( _fragmentShaderSource ), where ) )
+    if ( !renderer.CreateShader ( _fragmentShader, std::string ( _fragmentShaderSource ), where ) ) [[unlikely]]
         return false;
 
     AV_REGISTER_SHADER_MODULE ( std::string ( _name ) + "::_fragmentShader" )

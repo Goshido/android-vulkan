@@ -113,7 +113,7 @@ float32_t ReduceToAverage ()
     for ( uint32_t i = 1U; i < g_mip5H; ++i )
         acc += s_luma[ i >> 4U ][ i & 0x0000000FU ];
 
-    // Using log2|exp2 trick to calculate geometric mean brighness. Uncompressing value...
+    // Using log2|exp2 trick to calculate geometric mean brightness. Uncompressing value...
     // See <repo>/docs/auto-exposure.md
     return exp2 ( (float32_t)acc * g_normalizeH );
 }

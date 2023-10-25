@@ -115,8 +115,11 @@ local function GetPenetrationBox ( self, localMatrix, size, groups )
         [[Scene:GetPenetrationBox - "size" is not a GXVec3.]]
     )
 
-    assert ( type ( groups ) == "number", [[Scene:GetPenetrationBox - "groups" is not number.]] )
-    return av_SceneGetPenetrationBox ( self._handle, localMatrix._handle, size._handle, groups )
+    assert ( type ( groups ) == "table" and groups._type == eObjectType.BitField,
+        [[Scene:GetPenetrationBox - "groups" is not BitField.]]
+    )
+
+    return av_SceneGetPenetrationBox ( self._handle, localMatrix._handle, size._handle, groups._handle )
 end
 
 local function GetPhysicsToRendererScaleFactor ( self )
@@ -374,8 +377,11 @@ local function SweepTestBox ( self, localMatrix, size, groups )
         [[Scene:SweepTestBox - "size" is not a GXVec3.]]
     )
 
-    assert ( type ( groups ) == "number", [[Scene:SweepTestBox - "groups" is not number.]] )
-    return av_SceneSweepTestBox ( self._handle, localMatrix._handle, size._handle, groups )
+    assert ( type ( groups ) == "table" and groups._type == eObjectType.BitField,
+        [[Scene:SweepTestBox - "groups" is not BitField.]]
+    )
+
+    return av_SceneSweepTestBox ( self._handle, localMatrix._handle, size._handle, groups._handle )
 end
 
 -- Metamethods

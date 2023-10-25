@@ -66,6 +66,7 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/ascii_string.cpp
     app/src/main/cpp/sources/pbr/attribute_checker.cpp
     app/src/main/cpp/sources/pbr/attribute_parser.cpp
+    app/src/main/cpp/sources/pbr/bit_field.cpp
     app/src/main/cpp/sources/pbr/camera.cpp
     app/src/main/cpp/sources/pbr/camera_component.cpp
     app/src/main/cpp/sources/pbr/color_property.cpp

@@ -33,6 +33,7 @@ constexpr auto TIMEOUT = std::chrono::milliseconds ( 10U );
 
 enum class eGame : uint16_t
 {
+    CharacterSandbox,
     Collision,
     BoxStack,
     MandelbrotAnalyticColor,
@@ -73,6 +74,11 @@ Core::Core ( JNIEnv* env, jobject activity, jobject assetManager, std::string &&
 
     static std::map<android_vulkan::eGame, std::shared_ptr<android_vulkan::Game>> const games =
     {
+        {
+            android_vulkan::eGame::CharacterSandbox,
+            std::make_shared<pbr::UniversalGame> ( "pbr/assets/character-sandbox.scene" )
+        },
+
         { android_vulkan::eGame::Collision, std::make_shared<pbr::collision::Collision> () },
         { android_vulkan::eGame::BoxStack, std::make_shared<pbr::box_stack::BoxStack> () },
         { android_vulkan::eGame::MandelbrotAnalyticColor, std::make_shared<mandelbrot::MandelbrotAnalyticColor> () },
@@ -97,7 +103,7 @@ Core::Core ( JNIEnv* env, jobject activity, jobject assetManager, std::string &&
         }
     };
 
-    _game = games.find ( android_vulkan::eGame::PBR )->second.get ();
+    _game = games.find ( android_vulkan::eGame::CharacterSandbox )->second.get ();
 
     _thread = std::thread (
         [ this, dpi ] () noexcept {

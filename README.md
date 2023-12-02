@@ -22,17 +22,17 @@ Useful documentation is located [here](docs/documentation.md).
 ### Requirements
 
 * _Windows Vista_+ or _Monjaro KDE_
-* [_Android Studio Giraffe | 2022.3.1 Patch 2_](https://developer.android.com/studio)
-* _Android Studio Gradle Plugin 8.1.2_
+* [_Android Studio Hedgehog | 2023.1.1_](https://developer.android.com/studio)
+* _Android Studio Gradle Plugin 8.2_
 * _Android NDK 26.1.10909125 (side by side)_
 * _Minimum _Android SDK_ version: Android 11 (API level 30)_
-* _Compile _Android SDK_ version: Android 13 (API level 33)_
+* _Compile _Android SDK_ version: Android 13 (API level 34)_
 * _Android SDK Build-Tools 34.0.0_
 * _Android SDK Platform-Tools 34.0.5_
-* _Kotlin 1.9.10_
-* _Kotlin Gradle plugin 1.9.10_
+* _Kotlin 1.9.20_
+* _Kotlin Gradle plugin 1.9.20_
 * _CMake 3.22.1_
-* [_Gradle 8.4-bin_](https://services.gradle.org/distributions/)
+* [_Gradle 8.5-bin_](https://services.gradle.org/distributions/)
 * [_DirectX Shader Compiler 1.7.2308.10184_](https://github.com/microsoft/DirectXShaderCompiler) `ea4ff2972b32fe005e91ddb336b2471d6ab3bdd6`
 * [_libfreetype 2.13.2_](https://gitlab.freedesktop.org/freetype/freetype) `8c5ec8dd63ffd3f76ba0531dda15d2993ab0f20b`
 * [_libogg 1.3.5_](https://gitlab.xiph.org/xiph/ogg) `db5c7a49ce7ebda47b15b78471e78fb7f2483e22`

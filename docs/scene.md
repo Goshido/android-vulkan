@@ -265,7 +265,7 @@ local locationPhysics = GXVec3 ()
 body:GetLocation ( locationPhysics )
 
 local locationRender = GXVec3 ()
-locationRender:MultiplyScalar ( locationPhysics, g_scene:GetPhysicsToRenderScaleFactor () )
+locationRender:MultiplyScalar ( locationPhysics, g_scene:GetPhysicsToRendererScaleFactor () )
 ```
 
 [↬ table of content ⇧](#table-of-content)

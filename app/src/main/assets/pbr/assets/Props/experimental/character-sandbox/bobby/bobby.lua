@@ -16,6 +16,15 @@ local SCALE = 32.0
 local UP = GXVec3 ()
 UP:Init ( 0.0, 1.0, 0.0 )
 
+-- Methods
+local function GetForward ( self )
+    return self._forward
+end
+
+local function GetPosition ( self )
+    return self._position
+end
+
 -- Engine events
 local function OnActorConstructed ( self, actor )
     local visual = Actor ( "Bobby Visual" )
@@ -92,6 +101,10 @@ end
 -- Metamethods
 local function Constructor ( self, handle, params )
     local obj = ScriptComponent ( handle )
+
+    -- Methods
+    obj.GetForward = GetForward
+    obj.GetPosition = GetPosition
 
     -- Engine events
     obj.OnActorConstructed = OnActorConstructed

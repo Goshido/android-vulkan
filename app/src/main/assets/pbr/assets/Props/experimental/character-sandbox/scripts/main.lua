@@ -18,8 +18,9 @@ local function FindActor ( self, actorName, field )
         return false
     end
 
-    self[ field ] = a
-    return a
+    local script = a:FindComponent ( "Script" )
+    self[ field ] = script
+    return script
 end
 
 -- Forward declarations
@@ -31,10 +32,6 @@ local function OnActorConstructed ( self, actor )
     self.OnPrePhysics = OnPrePhysicsActive
 end
 
-OnPrePhysicsIdle = function ( self, deltaTime )
-    -- NOTHING
-end
-
 OnPrePhysicsActive = function ( self, deltaTime )
     local bobby = self:FindActor ( "Bobby", "_bobby" )
     local camera = self:FindActor ( "Camera", "_camera" )
@@ -43,8 +40,12 @@ OnPrePhysicsActive = function ( self, deltaTime )
         return
     end
 
-    camera:FindComponent ( "Script" ):Activate ()
+    camera:Activate ( bobby:GetPosition (), bobby:GetForward () )
     self.OnPrePhysics = OnPrePhysicsIdle
+end
+
+OnPrePhysicsIdle = function ( self, deltaTime )
+    -- NOTHING
 end
 
 -- Metamethods

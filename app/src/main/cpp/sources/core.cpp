@@ -291,7 +291,7 @@ bool Core::OnQuitRequest () noexcept
 
 bool Core::OnSwapchainCreated () noexcept
 {
-    if ( !_renderer.OnCreateSwapchain ( *_nativeWindow, false ) || !_game->OnSwapchainCreated ( _renderer ) )
+    if ( !_renderer.OnCreateSwapchain ( *_nativeWindow, true ) || !_game->OnSwapchainCreated ( _renderer ) )
         return false;
 
     _fpsTimestamp = std::chrono::system_clock::now ();

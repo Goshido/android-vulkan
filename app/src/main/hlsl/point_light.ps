@@ -102,8 +102,8 @@ OutputData PS ( in linear float32_t4 pixel: SV_Position )
     float32_t3 const fragToLight = _lightLocationView - locationView;
 
     float16_t const attenuation = GetAttenuation ( fragToLight );
-    float16_t3 const toViewerView = -normalize ( (float16_t3)locationView );
-    float16_t3 const toLightView = normalize ( (float16_t3)fragToLight );
+    float16_t3 const toViewerView = -(float16_t3)normalize ( locationView );
+    float16_t3 const toLightView = (float16_t3)normalize ( fragToLight );
     float16_t3 const halfVectorView = normalize ( toLightView + toViewerView );
     float16_t3 const normalView = RestoreNormalView ();
 

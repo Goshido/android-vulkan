@@ -29,10 +29,11 @@ local RIGHT_DEAD_ZONE = 0.2
 local RIGHT_SPEED = 3.777
 
 -- Forward declaration
+local OnInput
 local OnUpdate
 
 -- Methods
-local function Activate ( self, playerPosition, playerForward )
+local function Activate ( self, playerLocation, playerForward )
     local right = GXVec3 ()
     right:CrossProduct ( UP, playerForward )
     self._right = right
@@ -41,7 +42,7 @@ local function Activate ( self, playerPosition, playerForward )
     self._pitchDir = 0.0
 
     self._rightDir = 0.0
-    self._playerPosition = playerPosition
+    self._playerLocation = playerLocation
     self._distance = DISTANCE_CLOSE
 
     local c = self._camera
@@ -49,6 +50,7 @@ local function Activate ( self, playerPosition, playerForward )
     g_scene:SetActiveCamera ( c )
 
     self.OnUpdate = OnUpdate
+    self.OnInput = OnInput
 end
 
 local function AdjustPitch ( self, deltaTime )
@@ -80,6 +82,10 @@ local function AdjustRight ( self, deltaTime )
     return right
 end
 
+local function GetRight ( self )
+    return self._right
+end
+
 local function HandleDirection ( self, value, field, deadZone )
     if math.abs ( value ) < deadZone then
         value = 0.0
@@ -93,13 +99,17 @@ local function OnActorConstructed ( self, actor )
     self._camera = actor:FindComponent ( "Camera" )
 end
 
-local function OnInput ( self, inputEvent )
+OnInput = function ( self, inputEvent )
     if inputEvent._type ~= eEventType.RightStick then
         return
     end
 
     self:HandleDirection ( -inputEvent._y, "_pitchDir", PITCH_DEAD_ZONE )
     self:HandleDirection ( inputEvent._x, "_rightDir", RIGHT_DEAD_ZONE )
+end
+
+local function OnInputIdle ( self, inputEvent )
+    -- NOTHING
 end
 
 local function OnRenderTargetChanged ( self )
@@ -126,7 +136,7 @@ OnUpdate = function ( self, deltaTime )
 
     local target = GXVec3 ()
     m:MultiplyVectorMatrix ( target, TARGET_OFFSET )
-    target:Sum ( target, self._playerPosition )
+    target:Sum ( target, self._playerLocation )
 
     local r = GXQuat ()
     r:FromAxisAngle ( RIGHT, pitch )
@@ -158,11 +168,12 @@ local function Constructor ( self, handle, params )
     obj.Activate = Activate
     obj.AdjustPitch = AdjustPitch
     obj.AdjustRight = AdjustRight
+    obj.GetRight = GetRight
     obj.HandleDirection = HandleDirection
 
     -- Engine events
     obj.OnActorConstructed = OnActorConstructed
-    obj.OnInput = OnInput
+    obj.OnInput = OnInputIdle
     obj.OnRenderTargetChanged = OnRenderTargetChanged
     obj.OnUpdate = OnUpdateIdle
 

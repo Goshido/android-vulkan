@@ -20,12 +20,12 @@ RIGHT:Init ( 1.0, 0.0, 0.0 )
 
 local DISTANCE_CLOSE = 2.5
 
-local PITCH_DEAD_ZONE = 0.2
+local PITCH_DEAD_ZONE = 0.25
 local PITCH_SPEED = 3.777
 local PITCH_MIN = math.rad ( -45.0 )
 local PITCH_MAX = math.rad ( 75.0 )
 
-local RIGHT_DEAD_ZONE = 0.2
+local RIGHT_DEAD_ZONE = 0.25
 local RIGHT_SPEED = 3.777
 
 -- Forward declaration
@@ -42,8 +42,11 @@ local function Activate ( self, playerLocation, playerForward )
     self._pitchDir = 0.0
 
     self._rightDir = 0.0
+    self._playerForward = playerForward
     self._playerLocation = playerLocation
     self._distance = DISTANCE_CLOSE
+    self._isLookBack = false
+    self._oldLookBack = false
 
     local c = self._camera
     c:SetAspectRatio ( g_scene:GetRenderTargetAspectRatio () )
@@ -71,6 +74,18 @@ end
 
 local function AdjustRight ( self, deltaTime )
     local right = self._right
+    local isLookBack = self._isLookBack
+
+    if isLookBack ~= self._oldLookBack then
+        if isLookBack then
+            right:CrossProduct ( self._playerForward, UP )
+        else
+            right:CrossProduct ( UP, self._playerForward )
+        end
+
+        self._pitch = 0.0
+        self._oldLookBack = isLookBack
+    end
 
     local r = GXQuat ()
     r:FromAxisAngle ( UP, self._rightDir * deltaTime * RIGHT_SPEED )
@@ -100,7 +115,15 @@ local function OnActorConstructed ( self, actor )
 end
 
 OnInput = function ( self, inputEvent )
-    if inputEvent._type ~= eEventType.RightStick then
+    local t = inputEvent._type
+    local down = t == eEventType.KeyDown
+
+    if ( down or t == eEventType.KeyUp ) and inputEvent._key == eKey.RightStick then
+        self._isLookBack = down
+        return
+    end
+
+    if t ~= eEventType.RightStick then
         return
     end
 

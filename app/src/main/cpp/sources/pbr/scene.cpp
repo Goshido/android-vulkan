@@ -201,6 +201,10 @@ bool Scene::OnInitDevice ( android_vulkan::Renderer &renderer,
             .func = &Scene::OnQuit
         },
         {
+            .name = "av_SceneRaycast",
+            .func = &Scene::OnRaycast
+        },
+        {
             .name = "av_SceneSetActiveCamera",
             .func = &Scene::OnSetActiveCamera
         },
@@ -600,6 +604,12 @@ int Scene::DoPenetrationBox ( lua_State &vm, GXMat4 const &local, GXVec3 const &
     return static_cast<int> ( _scriptablePenetration.PublishResult ( vm, _penetrations ) );
 }
 
+int Scene::DoRaycast ( lua_State &/*vm*/, GXVec3 const &/*from*/, GXVec3 const &/*to*/, uint32_t /*groups*/ ) noexcept
+{
+    // TODO
+    return 0;
+}
+
 int Scene::DoSweepTestBox ( lua_State &vm, GXMat4 const &local, GXVec3 const &size, uint32_t groups ) noexcept
 {
     android_vulkan::ShapeRef &shape = _shapeBoxes[ 0U ];
@@ -818,6 +828,17 @@ int Scene::OnQuit ( lua_State* /*state*/ )
 {
     android_vulkan::Core::Quit ();
     return 0;
+}
+
+int Scene::OnRaycast ( lua_State* state )
+{
+    auto &self = *static_cast<Scene*> ( lua_touserdata ( state, 1 ) );
+
+    return self.DoRaycast ( *state,
+        ScriptableGXVec3::Extract ( state, 2 ),
+        ScriptableGXVec3::Extract ( state, 3 ),
+        BitField::Extract ( state, 4 )
+    );
 }
 
 int Scene::OnSetActiveCamera ( lua_State* state )

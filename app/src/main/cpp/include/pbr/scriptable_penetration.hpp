@@ -3,7 +3,6 @@
 
 
 #include <physics.hpp>
-#include "rigid_body_component.hpp"
 #include "scriptable_gxvec3.hpp"
 
 

@@ -1,7 +1,12 @@
+require "av://engine/gx_vec3.lua"
 require "av://engine/script_component.lua"
 
 
 local Main = {}
+
+-- Constants
+local GRAVITY = GXVec3 ()
+GRAVITY:Init ( 0.0, -9.81, 0.0 )
 
 -- Forward declarations
 local OnPrePhysicsIdle
@@ -35,7 +40,7 @@ local function OnPrePhysics ( self, deltaTime )
     end
 
     camera:Activate ( bobby:GetLocation (), bobby:GetForward () )
-    bobby:Activate ( camera:GetRight () )
+    bobby:Activate ( camera:GetRight (), GRAVITY )
     self.OnPrePhysics = OnPrePhysicsIdle
 end
 

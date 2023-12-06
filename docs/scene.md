@@ -20,6 +20,7 @@
 - [`GetRenderTargetHeight ()`](#method-get-render-target-height)
 - [`OverlapTestBoxBox ( localMatrixA, sizeA, localMatrixB, sizeB )`](#method-overlap-test-box-box)
 - [`Quit ()`](#method-quit)
+- [`Raycast ( from, to, groups )`](#method-raycast)
 - [`SetActiveCamera ( camera )`](#method-set-active-camera)
 - [`SetBrightness ( brightnessBalance )`](#method-set-brightness)
 - [`SetExposureCompensation ( exposureValue )`](#method-set-exposure-compensation)
@@ -209,12 +210,15 @@ local Penetration = {
 
 **Return values:**
 
-- `#1` [_required, readonly, [Penetration](#table-penetration)_]: penetration test result. You **MUST NOT** modify any field of this table because it's tightly connected with internal engine implementation for performance reasons. You **SHOULD** copy any data from the structure if needed. Caching results could trigger **undefined behaviour**
+- `#1` [_required, readonly, [Penetration](#table-penetration)_]: penetration test result. You **MUST NOT** modify any field of this table because it's tightly connected with internal engine implementation for performance reasons. You **SHOULD** copy any data from the table if needed. Caching results could trigger **undefined behaviour**
 
 **Example:**
 
 ```lua
+require "av://engine/bit_field.lua"
+require "av://engine/gx_mat4.lua"
 require "av://engine/gx_quat.lua"
+require "av://engine/gx_vec3.lua"
 
 
 local axis = GXVec3 ()
@@ -233,7 +237,10 @@ transform:FromFast ( rotation, origin )
 local size = GXVec3 ()
 size:Init ( 7.0, 3.0, 15.0 )
 
-local penetrations = g_scene:GetPenetrationBox ( transform, size, 0xFFFFFFFF )
+local groups = BitField ()
+groups:SetAllBits ()
+
+local penetrations = g_scene:GetPenetrationBox ( transform, size, groups )
 ```
 
 [↬ table of content ⇧](#table-of-content)
@@ -434,6 +441,51 @@ Method closes application.
 require "av://engine/scene.lua"
 
 g_scene:Quit ()
+```
+
+[↬ table of content ⇧](#table-of-content)
+
+## <a id="method-raycast">`Raycast ( from, to, groups )`</a>
+
+Method performs raycast against physical scene. As a result method returns the closest object which intersects the ray.
+
+The result is described by the following <a id="table-raycast-result">`RaycastResult`</a> table:
+
+```lua
+local RaycastResult = {
+    _body = ... as RigidBodyComponent,
+    _point = ... as GXVec3,
+    _normal = ... as GXVec3
+}
+```
+
+**Parameters:**
+
+- `from` [_required, readonly, [GXVec3](./gx-vec3.md)_]: starting point of the ray in [physics coordinate system](./rigid-body-component.md#note-physics-coordinate-system)
+- `to` [_required, readonly, [GXVec3](./gx-vec3.md)_]: end point of the ray in [physics coordinate system](./rigid-body-component.md#note-physics-coordinate-system)
+- `groups` [_required, readonly, [BitField](./bit-field.md)_]: collision groups which will be used during the raycast
+
+**Return values:**
+
+- `#1` [_required, readonly, [RaycastResult](#table-raycast-result) or nil_]: raycast hit result if it exists. Otherwise method returns `nil`. You **MUST NOT** modify any field of result table because it's tightly connected with internal engine implementation for performance reasons. You **SHOULD** copy any data from the table if needed. Caching results could trigger **undefined behaviour**
+
+**Example:**
+
+```lua
+require "av://engine/bit_field.lua"
+require "av://engine/gx_quat.lua"
+
+
+local from = GXVec3 ()
+origin:Init ( 1.0, 333.0, 0.0 )
+
+local to = GXVec3 ()
+origin:Init ( 77.7, 0.0, -33.0 )
+
+local groups = BitField ()
+groups:SetAllBits ()
+
+local raycast = g_scene:Raycast ( from, to, groups )
 ```
 
 [↬ table of content ⇧](#table-of-content)
@@ -713,11 +765,12 @@ local SweepTestResult = {
 
 **Return values:**
 
-- `#1` [_required, readonly, [SweepTestResult](#table-sweep-test-result)_]: sweep test result. You **MUST NOT** modify any field of this table because it's tightly connected with internal engine implementation for performance reasons. You **SHOULD** copy any data from the structure if needed. Caching results could trigger **undefined behaviour**
+- `#1` [_required, readonly, [SweepTestResult](#table-sweep-test-result)_]: sweep test result. You **MUST NOT** modify any field of this table because it's tightly connected with internal engine implementation for performance reasons. You **SHOULD** copy any data from the table if needed. Caching results could trigger **undefined behaviour**
 
 **Example:**
 
 ```lua
+require "av://engine/bit_field.lua"
 require "av://engine/gx_quat.lua"
 
 
@@ -737,7 +790,10 @@ transform:FromFast ( rotation, origin )
 local size = GXVec3 ()
 size:Init ( 7.0, 3.0, 15.0 )
 
-local sweep = g_scene:SweepTestBox ( transform, size, 0xFFFFFFFF )
+local groups = BitField ()
+groups:SetAllBits ()
+
+local sweep = g_scene:SweepTestBox ( transform, size, groups )
 ```
 
 [↬ table of content ⇧](#table-of-content)

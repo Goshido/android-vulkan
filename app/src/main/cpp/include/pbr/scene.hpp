@@ -115,6 +115,8 @@ class Scene final
             uint32_t groups
         ) noexcept;
 
+        [[nodiscard]] int DoRaycast ( lua_State &vm, GXVec3 const &from, GXVec3 const &to, uint32_t groups ) noexcept;
+
         [[nodiscard]] int DoSweepTestBox ( lua_State &vm,
             GXMat4 const &local,
             GXVec3 const &size,
@@ -140,6 +142,7 @@ class Scene final
         [[nodiscard]] static int OnOverlapTestBoxBox ( lua_State* state );
 
         [[nodiscard]] static int OnQuit ( lua_State* state );
+        [[nodiscard]] static int OnRaycast ( lua_State* state );
         [[nodiscard]] static int OnSetActiveCamera ( lua_State* state );
         [[nodiscard]] static int OnSetBrightness ( lua_State* state );
         [[nodiscard]] static int OnSetExposureCompensation ( lua_State* state );

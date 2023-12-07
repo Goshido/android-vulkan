@@ -11,6 +11,7 @@ extern "C" {
 
 #include <cstdio>
 #include <memory>
+#include <string_view>
 
 GX_RESTORE_WARNING_STATE
 
@@ -163,6 +164,69 @@ GXVec3 &ScriptableGXVec3::Extract ( lua_State* state, int idx ) noexcept
 {
     auto &item = *static_cast<Item*> ( lua_touserdata ( state, idx ) );
     return item._vec3;
+}
+
+std::optional<GXVec3*> ScriptableGXVec3::ExtractFromLua ( lua_State &vm, int idx ) noexcept
+{
+    if ( !lua_checkstack ( &vm, 2 ) ) [[unlikely]]
+    {
+        android_vulkan::LogError ( "pbr::ScriptableGXVec3::ExtractFromLua - Stack is too small." );
+        return std::nullopt;
+    }
+
+    lua_pushvalue ( &vm, idx );
+
+    constexpr std::string_view fieldHandle = "_handle";
+    lua_pushlstring ( &vm, fieldHandle.data (), fieldHandle.size () );
+
+    if ( lua_rawget ( &vm, -2 ) != LUA_TLIGHTUSERDATA ) [[unlikely]]
+    {
+        android_vulkan::LogError ( "pbr::ScriptableGXVec3::ExtractFromLua - Can't find GXVec3 handle." );
+        lua_pop ( &vm, 2 );
+        return std::nullopt;
+    }
+
+    auto &item = *static_cast<ScriptableGXVec3::Item*> ( lua_touserdata ( &vm, -1 ) );
+    lua_pop ( &vm, 2 );
+    return &item._vec3;
+}
+
+bool ScriptableGXVec3::PrepareLuaConstructor ( lua_State &vm ) noexcept
+{
+    if ( !lua_checkstack ( &vm, 3 ) ) [[unlikely]]
+    {
+        android_vulkan::LogError ( "pbr::ScriptableGXVec3::PrepareLuaConstructor - Stack is too small." );
+        return false;
+    }
+
+    if ( lua_getglobal ( &vm, "GXVec3" ) != LUA_TTABLE ) [[unlikely]]
+    {
+        android_vulkan::LogError ( "pbr::ScriptableGXVec3::PrepareLuaConstructor - Can't find GXVec3 table." );
+        lua_pop ( &vm, 1 );
+        return false;
+    }
+
+    if ( lua_getmetatable ( &vm, -1 ) != 1 ) [[unlikely]]
+    {
+        android_vulkan::LogError ( "pbr::ScriptableGXVec3::PrepareLuaConstructor - Can't find GXVec3 metatable." );
+        lua_pop ( &vm, 2 );
+        return false;
+    }
+
+    constexpr std::string_view metamethodCall = "__call";
+    lua_pushlstring ( &vm, metamethodCall.data (), metamethodCall.size () );
+
+    if ( lua_rawget ( &vm, -2 ) != LUA_TFUNCTION ) [[unlikely]]
+    {
+        android_vulkan::LogError ( "pbr::ScriptableGXVec3::PrepareLuaConstructor - Can't find GXVec3 constructor." );
+        lua_pop ( &vm, 3 );
+        return false;
+    }
+
+    lua_replace ( &vm, -3 );
+    lua_pop ( &vm, 1 );
+
+    return true;
 }
 
 void ScriptableGXVec3::Insert ( Item* item, Item* &list ) noexcept

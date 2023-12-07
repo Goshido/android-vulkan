@@ -165,7 +165,7 @@ void Physics::PenetrationTest ( std::vector<Penetration> &result,
     check ( _dynamics );
 }
 
-bool Physics::Raycast ( RaycastResult &result, uint32_t groups, GXVec3 const &from, GXVec3 const &to ) const noexcept
+bool Physics::Raycast ( RaycastResult &result, GXVec3 const &from, GXVec3 const &to, uint32_t groups ) const noexcept
 {
     float dist = std::numeric_limits<float>::max ();
 

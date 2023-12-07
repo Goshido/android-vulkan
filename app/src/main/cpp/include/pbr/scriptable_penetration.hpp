@@ -3,7 +3,7 @@
 
 
 #include <physics.hpp>
-#include "scriptable_gxvec3.hpp"
+//#include "scriptable_gxvec3.hpp"
 
 
 namespace pbr {
@@ -11,7 +11,7 @@ namespace pbr {
 class ScriptablePenetration final
 {
     private:
-        std::vector<std::reference_wrapper<ScriptableGXVec3::Item>>     _normals {};
+        std::vector<GXVec3*>    _normals {};
 
     public:
         ScriptablePenetration () = default;
@@ -33,14 +33,13 @@ class ScriptablePenetration final
 
     private:
         [[nodiscard]] bool Append ( lua_State &vm,
+            int errorHandlerIdx,
             int vec3Constructor,
             int penetrationIndex,
+            int rigidBodyComponentIdx,
             lua_Number depth,
-            GXVec3 const &normal,
-            int rigidBodyComponentStack
+            GXVec3 const &normal
         ) noexcept;
-
-        [[nodiscard]] static bool FindVec3Constructor ( lua_State &vm ) noexcept;
 };
 
 } // namespace pbr

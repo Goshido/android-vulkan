@@ -12,6 +12,8 @@ extern "C" {
 
 } // extern "C"
 
+#include <optional>
+
 GX_RESTORE_WARNING_STATE
 
 
@@ -45,7 +47,15 @@ class ScriptableGXVec3 final
         static void Init ( lua_State &vm ) noexcept;
         static void Destroy () noexcept;
 
+        // Method expects light user data handle in the Lua stack.
         [[nodiscard]] static GXVec3 &Extract ( lua_State* state, int idx ) noexcept;
+
+        // Method expects Lua table representation of the GXVec3 in the Lua stack.
+        [[nodiscard]] static std::optional<GXVec3*> ExtractFromLua ( lua_State &vm, int idx ) noexcept;
+
+        // Method inserts Lua's GXVec3 constructor function on top of the Lua's stack and returns true.
+        // Otherwise method returns false.
+        [[nodiscard]] static bool PrepareLuaConstructor ( lua_State &vm ) noexcept;
 
     private:
         static void Insert ( Item* item, Item* &list ) noexcept;

@@ -242,7 +242,7 @@ local function OverlapTestBoxBox ( self, localMatrixA, sizeA, localMatrixB, size
     )
 
     assert ( type ( sizeA ) == "table" and sizeA._type == eObjectType.GXVec3,
-        [[Scene:OverlapTestBoxBox - "sizeA" is not a GXVec3.]]
+        [[Scene:OverlapTestBoxBox - "sizeA" is not GXVec3.]]
     )
 
     assert ( type ( localMatrixB ) == "table" and localMatrixB._type == eObjectType.GXMat4,
@@ -271,11 +271,11 @@ local function Raycast ( self, from, to, groups )
     )
 
     assert ( type ( from ) == "table" and from._type == eObjectType.GXVec3,
-        [[Scene:Raycast - "from" is not a GXVec3.]]
+        [[Scene:Raycast - "from" is not GXVec3.]]
     )
 
     assert ( type ( to ) == "table" and to._type == eObjectType.GXVec3,
-        [[Scene:Raycast - "to" is not a GXVec3.]]
+        [[Scene:Raycast - "to" is not GXVec3.]]
     )
 
     assert ( type ( groups ) == "table" and groups._type == eObjectType.BitField,
@@ -291,7 +291,7 @@ local function SetActiveCamera ( self, camera )
     )
 
     assert ( type ( camera ) == "table" and camera._type == eObjectType.CameraComponent,
-        [[Scene:SetActiveCamera - "camera" is not a CameraComponent.]]
+        [[Scene:SetActiveCamera - "camera" is not CameraComponent.]]
     )
 
     av_SceneSetActiveCamera ( self._handle, camera._handle )

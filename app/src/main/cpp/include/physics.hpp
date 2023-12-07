@@ -80,9 +80,9 @@ class Physics final
         // "groups" will be used as filter during the ray casting.
         // The closest hit point will be returned.
         [[nodiscard]] bool Raycast ( RaycastResult &result,
-            uint32_t groups,
             GXVec3 const &from,
-            GXVec3 const &to
+            GXVec3 const &to,
+            uint32_t groups
         ) const noexcept;
 
         void Resume () noexcept;

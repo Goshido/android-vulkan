@@ -251,7 +251,7 @@ bool Scene::OnInitDevice ( android_vulkan::Renderer &renderer,
 
     _sceneHandle = lua_gettop ( _vm );
 
-    auto bind = [ & ] ( std::string_view const &&method, int &ind ) noexcept -> bool {
+    auto const bind = [ & ] ( std::string_view const &&method, int &ind ) noexcept -> bool {
         lua_pushlstring ( _vm, method.data (), method.size () );
 
         if ( lua_rawget ( _vm, _sceneHandle ) == LUA_TFUNCTION ) [[likely]]
@@ -285,13 +285,15 @@ bool Scene::OnInitDevice ( android_vulkan::Renderer &renderer,
     if ( !bind ( "OnUpdate", _onUpdateIndex ) ) [[unlikely]]
         return false;
 
-    return _scriptablePenetration.Init ( *_vm ) && ScriptableSweepTestResult::Init ( *_vm ) && _gamepad.Init ( *_vm );
+    return _scriptablePenetration.Init ( *_vm ) && _scriptableRaycastResult.Init ( *_vm ) &&
+        ScriptableSweepTestResult::Init ( *_vm ) && _gamepad.Init ( *_vm );
 }
 
 void Scene::OnDestroyDevice () noexcept
 {
     ScriptEngine::Destroy ();
     ScriptableSweepTestResult::Destroy ( *_vm );
+    _scriptableRaycastResult.Destroy ( *_vm );
     _scriptablePenetration.Destroy ( *_vm );
     _gamepad.Destroy ();
     _renderableList.clear ();
@@ -604,10 +606,17 @@ int Scene::DoPenetrationBox ( lua_State &vm, GXMat4 const &local, GXVec3 const &
     return static_cast<int> ( _scriptablePenetration.PublishResult ( vm, _penetrations ) );
 }
 
-int Scene::DoRaycast ( lua_State &/*vm*/, GXVec3 const &/*from*/, GXVec3 const &/*to*/, uint32_t /*groups*/ ) noexcept
+int Scene::DoRaycast ( lua_State &vm, GXVec3 const &from, GXVec3 const &to, uint32_t groups ) noexcept
 {
-    // TODO
-    return 0;
+    android_vulkan::RaycastResult result {};
+
+    if ( !_physics->Raycast ( result, from, to, groups ) )
+    {
+        lua_pushnil ( &vm );
+        return 1;
+    }
+
+    return static_cast<int> ( _scriptableRaycastResult.PublishResult ( vm, result ) );
 }
 
 int Scene::DoSweepTestBox ( lua_State &vm, GXMat4 const &local, GXVec3 const &size, uint32_t groups ) noexcept

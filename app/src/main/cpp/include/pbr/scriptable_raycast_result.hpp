@@ -2,7 +2,7 @@
 #define PBR_SCRIPTABLE_RAYCAST_RESULT_HPP
 
 
-#include <rigid_body.hpp>
+#include <ray_caster.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -17,11 +17,11 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-class [[maybe_unused]] ScriptableRaycastResult final
+class ScriptableRaycastResult final
 {
     private:
-        [[maybe_unused]] GXVec3*    _normal = nullptr;
-        [[maybe_unused]] GXVec3*    _position = nullptr;
+        GXVec3*     _normal = nullptr;
+        GXVec3*     _point = nullptr;
 
     public:
         ScriptableRaycastResult () = default;
@@ -37,11 +37,7 @@ class [[maybe_unused]] ScriptableRaycastResult final
         [[nodiscard]] bool Init ( lua_State &vm ) noexcept;
         void Destroy ( lua_State &vm ) noexcept;
 
-        [[nodiscard]] bool PublishResult ( lua_State &vm,
-            android_vulkan::RigidBodyRef &body,
-            GXVec3 const &position,
-            GXVec3 const &normal
-        ) noexcept;
+        [[nodiscard]] bool PublishResult ( lua_State &vm, android_vulkan::RaycastResult const &result ) noexcept;
 };
 
 } // namespace pbr

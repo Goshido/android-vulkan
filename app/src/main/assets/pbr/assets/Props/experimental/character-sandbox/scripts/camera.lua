@@ -1,3 +1,4 @@
+require "av://engine/bit_field.lua"
 require "av://engine/gx_mat3.lua"
 require "av://engine/gx_mat4.lua"
 require "av://engine/gx_quat.lua"
@@ -47,6 +48,10 @@ local function Activate ( self, playerLocation, playerForward )
     self._distance = DISTANCE_CLOSE
     self._isLookBack = false
     self._oldLookBack = false
+
+    local hitGroups = BitField ()
+    hitGroups:SetAllBits ()
+    self._hitGroups = hitGroups
 
     local c = self._camera
     c:SetAspectRatio ( g_scene:GetRenderTargetAspectRatio () )
@@ -173,9 +178,15 @@ OnUpdate = function ( self, deltaTime )
     transform:SetZ ( alpha )
 
     beta:SumScaled ( target, -self._distance, alpha )
-    beta:MultiplyScalar ( beta, g_scene:GetPhysicsToRendererScaleFactor () )
-    transform:SetW ( beta )
+    local hit = g_scene:Raycast ( target, beta, self._hitGroups )
 
+    if hit then
+        beta:MultiplyScalar ( hit._point, g_scene:GetPhysicsToRendererScaleFactor () )
+    else
+        beta:MultiplyScalar ( beta, g_scene:GetPhysicsToRendererScaleFactor () )
+    end
+
+    transform:SetW ( beta )
     self._camera:SetLocal ( transform )
 end
 

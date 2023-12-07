@@ -9,6 +9,7 @@
 #include "renderable_component.hpp"
 #include "scriptable_gamepad.hpp"
 #include "scriptable_penetration.hpp"
+#include "scriptable_raycast_result.hpp"
 #include <sound_mixer.hpp>
 
 
@@ -27,6 +28,7 @@ class Scene final
         std::vector<android_vulkan::Penetration>        _penetrations {};
         android_vulkan::Physics*                        _physics = nullptr;
         ScriptablePenetration                           _scriptablePenetration {};
+        ScriptableRaycastResult                         _scriptableRaycastResult {};
         android_vulkan::ShapeRef                        _shapeBoxes[ 2U ] = {};
         android_vulkan::SoundMixer                      _soundMixer {};
         std::vector<android_vulkan::RigidBodyRef>       _sweepTestResult {};

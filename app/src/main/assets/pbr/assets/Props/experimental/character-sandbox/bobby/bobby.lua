@@ -31,6 +31,7 @@ local MOVE_DEAD_ZONE = 0.25
 local MOVE_SPEED = 5.0
 
 local ROTATE_SPEED = 5.0
+local RUN_ANIMATION_SPEED = 4.0
 
 local UP = GXVec3 ()
 UP:Init ( 0.0, 1.0, 0.0 )
@@ -198,6 +199,7 @@ local function OnActorConstructed ( self, actor )
     local runAnimationPlayer = AnimationPlayerNode ()
     self._runAnimationPlayer = runAnimationPlayer
     runAnimationPlayer:LoadAnimation ( "pbr/assets/Props/experimental/character-sandbox/bobby/run.animation" )
+    runAnimationPlayer:SetPlaybackSpeed ( RUN_ANIMATION_SPEED )
 
     animationGraph:SetInput ( runAnimationPlayer )
     animationGraph:Awake ()

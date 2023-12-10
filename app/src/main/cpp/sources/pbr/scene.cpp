@@ -425,6 +425,12 @@ bool Scene::OnUpdate ( float deltaTime ) noexcept
     return true;
 }
 
+void Scene::OnUpdateAnimations ( float deltaTime, size_t commandBufferIndex ) noexcept
+{
+    AV_TRACE ( "Update animations" )
+    AnimationGraph::Update ( *_vm, deltaTime, commandBufferIndex );
+}
+
 bool Scene::LoadScene ( android_vulkan::Renderer &renderer, char const* scene, VkCommandPool commandPool ) noexcept
 {
     android_vulkan::File file ( scene );
@@ -529,12 +535,6 @@ void Scene::Submit ( android_vulkan::Renderer &renderer ) noexcept
     AV_TRACE ( "Scene submit" )
     SubmitComponents ( renderer, *_renderSession );
     SubmitUI ( renderer, *_renderSession );
-}
-
-void Scene::OnUpdateAnimations ( float deltaTime, size_t commandBufferIndex ) noexcept
-{
-    AV_TRACE ( "Update animations" )
-    AnimationGraph::Update ( deltaTime, commandBufferIndex );
 }
 
 void Scene::AppendActor ( ActorRef &actor ) noexcept

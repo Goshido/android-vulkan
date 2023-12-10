@@ -76,7 +76,7 @@ require "av://engine/sound_emitter_spatial_component.lua"
 
 
 local actor = Actor ( "Actor" )
-actor:AppendComponent ( SoundEmitterSpatialComponent ( "SFX", eSoundChannel.SFX ) ) )
+actor:AppendComponent ( SoundEmitterSpatialComponent ( "SFX", eSoundChannel.SFX ) )
 g_scene:AppendActor ( actor )
 ```
 
@@ -103,7 +103,7 @@ require "av://engine/sound_emitter_spatial_component.lua"
 
 local actor = Actor ( "Actor" )
 
-local sfx = SoundEmitterSpatialComponent ( "SFX", eSoundChannel.SFX ) )
+local sfx = SoundEmitterSpatialComponent ( "SFX", eSoundChannel.SFX )
 actor:AppendComponent ( voice )
 g_scene:AppendActor ( actor )
 
@@ -133,11 +133,11 @@ require "av://engine/sound_emitter_spatial_component.lua"
 
 local actor = Actor ( "Actor" )
 
-local sfx = SoundEmitterSpatialComponent ( "SFX", eSoundChannel.SFX ) )
+local sfx = SoundEmitterSpatialComponent ( "SFX", eSoundChannel.SFX )
 actor:AppendComponent ( sfx )
 g_scene:AppendActor ( actor )
 
-sfx:SetVolume ()
+sfx:SetVolume ( 0.777 )
 ```
 
 [↬ table of content ⇧](#table-of-content)
@@ -163,7 +163,7 @@ require "av://engine/sound_emitter_spatial_component.lua"
 
 local actor = Actor ( "Actor" )
 
-local sfx = SoundEmitterSpatialComponent ( "SFX", eSoundChannel.SFX ) )
+local sfx = SoundEmitterSpatialComponent ( "SFX", eSoundChannel.SFX )
 actor:AppendComponent ( sfx )
 g_scene:AppendActor ( actor )
 
@@ -193,7 +193,7 @@ require "av://engine/sound_emitter_spatial_component.lua"
 
 local actor = Actor ( "Actor" )
 
-local sfx = SoundEmitterSpatialComponent ( "SFX", eSoundChannel.SFX ) )
+local sfx = SoundEmitterSpatialComponent ( "SFX", eSoundChannel.SFX )
 actor:AppendComponent ( sfx )
 g_scene:AppendActor ( actor )
 
@@ -225,7 +225,7 @@ require "av://engine/sound_emitter_spatial_component.lua"
 
 local actor = Actor ( "Actor" )
 
-local sfx = SoundEmitterSpatialComponent ( "SFX", eSoundChannel.SFX ) )
+local sfx = SoundEmitterSpatialComponent ( "SFX", eSoundChannel.SFX )
 actor:AppendComponent ( sfx )
 g_scene:AppendActor ( actor )
 
@@ -256,7 +256,7 @@ require "av://engine/sound_emitter_spatial_component.lua"
 
 local actor = Actor ( "Actor" )
 
-local sfx = SoundEmitterSpatialComponent ( "SFX", eSoundChannel.SFX ) )
+local sfx = SoundEmitterSpatialComponent ( "SFX", eSoundChannel.SFX )
 actor:AppendComponent ( sfx )
 g_scene:AppendActor ( actor )
 
@@ -286,7 +286,7 @@ require "av://engine/sound_emitter_spatial_component.lua"
 
 local actor = Actor ( "Actor" )
 
-local sfx = SoundEmitterSpatialComponent ( "SFX", eSoundChannel.SFX ) )
+local sfx = SoundEmitterSpatialComponent ( "SFX", eSoundChannel.SFX )
 actor:AppendComponent ( sfx )
 g_scene:AppendActor ( actor )
 
@@ -319,7 +319,7 @@ require "av://engine/sound_emitter_spatial_component.lua"
 
 local actor = Actor ( "Actor" )
 
-local sfx = SoundEmitterSpatialComponent ( "SFX", eSoundChannel.SFX ) )
+local sfx = SoundEmitterSpatialComponent ( "SFX", eSoundChannel.SFX )
 actor:AppendComponent ( sfx )
 g_scene:AppendActor ( actor )
 
@@ -349,7 +349,7 @@ require "av://engine/sound_emitter_spatial_component.lua"
 
 local actor = Actor ( "Actor" )
 
-local sfx = SoundEmitterSpatialComponent ( "SFX", eSoundChannel.SFX ) )
+local sfx = SoundEmitterSpatialComponent ( "SFX", eSoundChannel.SFX )
 actor:AppendComponent ( sfx )
 g_scene:AppendActor ( actor )
 

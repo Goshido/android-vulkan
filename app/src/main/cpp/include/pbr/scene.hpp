@@ -90,6 +90,7 @@ class Scene final
         [[nodiscard]] bool OnPostPhysics ( float deltaTime ) noexcept;
         [[nodiscard]] bool OnResolutionChanged ( VkExtent2D const &resolution, float aspectRatio ) noexcept;
         [[nodiscard]] bool OnUpdate ( float deltaTime ) noexcept;
+        void OnUpdateAnimations ( float deltaTime, size_t commandBufferIndex ) noexcept;
 
         [[nodiscard]] bool LoadScene ( android_vulkan::Renderer &renderer,
             char const* scene,
@@ -98,8 +99,6 @@ class Scene final
 
         void RemoveActor ( Actor const &actor ) noexcept;
         void Submit ( android_vulkan::Renderer &renderer ) noexcept;
-
-        static void OnUpdateAnimations ( float deltaTime, size_t commandBufferIndex ) noexcept;
 
     private:
         void AppendActor ( ActorRef &actor ) noexcept;

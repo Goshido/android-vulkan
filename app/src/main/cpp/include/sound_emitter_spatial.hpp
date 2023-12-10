@@ -14,6 +14,7 @@ class SoundEmitterSpatial final : public SoundEmitter
         float       _distanceFactor = 1.0F;
         GXVec3      _location { 0.0F, 0.0F, 0.0F };
         GXVec2      _previousVolume { 1.0F, 1.0F };
+        bool        _isNeedResetPreviousVolume = true;
 
     public:
         SoundEmitterSpatial () = default;
@@ -26,7 +27,9 @@ class SoundEmitterSpatial final : public SoundEmitter
 
         ~SoundEmitterSpatial () override = default;
 
+        [[nodiscard]] bool Play () noexcept override;
         void SetVolume ( float volume ) noexcept override;
+
         void SetDistance ( float distance ) noexcept;
         void SetLocation ( GXVec3 const &location ) noexcept;
 

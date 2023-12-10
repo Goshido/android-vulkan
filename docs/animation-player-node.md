@@ -10,6 +10,7 @@ require "av://engine/animation_player_node.lua"
 - [_Metamethods_](#metamethods)
 - [`Constructor`](#constructor)
 - [`LoadAnimation ( animation )`](#method-load-animation)
+- [`SetEvent ( context, frameIndex, callback )`](#method-set-event)
 - [`SetPlaybackSpeed ( speed )`](#method-set-playback-speed)
 
 ## <a id="brief">Brief</a>
@@ -91,6 +92,52 @@ require "av://engine/animation_player_node.lua"
 
 local animationPlayerNone = AnimationPlayerNode ()
 local success = animationPlayerNone:LoadAnimation ( "pbr/assets/Props/experimental/skeletal-mesh-sandbox/human/walk.animation" )
+```
+
+[↬ table of content ⇧](#table-of-content)
+
+## <a id="method-set-event">`SetEvent ( context, frameIndex, callback )`</a>
+
+Methods sets event on frame with `frameIndex`. Only single event could be set for each frame index.
+
+`callback` MUST be function with <a id="set-event-callabck">signature</a>:
+
+```lua
+function Callback ( context, frameIndex )
+```
+
+`context` is the same parameter which was passed via `SetEvent`.
+
+`frameIndex` is zero based event frame index which is provided via `SetEvent`. **Note** this index **IS NOT** real animation position. Ofter real frame index is slightly bigger that event frame index. For example in situations when animation speed is high and hardware framerate is low.
+
+Callback function **MUST NOT** return.
+
+According to [event handler calling order](./script-component.md#event-calling-order) animation event will be called during _Animation update_ step.
+
+**Parameters:**
+
+- `context` [_required, readonly, any_]: user provided data which will be passed to callback when ever occurs
+- `frameIndex` [_required, readonly, number_]: zero based frame index which must be in range from `0` to `animation frames - 1`
+- `callback` [_required, readonly, function_] callack function with signature [above](#set-event-callabck)
+
+**Return values:**
+
+- `#1` [_required, boolean_]: `true` if event is set successfully, otherwise `false`
+
+**Example:**
+
+```lua
+require "av://engine/animation_player_node.lua"
+require "av://engine/logger.lua"
+
+
+local function OnStepEvent ( context, frameIndex )
+    LogD ( "Step happened." )
+end
+
+local animationPlayerNone = AnimationPlayerNode ()
+animationPlayerNone:LoadAnimation ( "pbr/assets/Props/experimental/skeletal-mesh-sandbox/human/walk.animation" )
+animationPlayerNone:SetEvent ( animationPlayerNode, 42, OnStepEvent )
 ```
 
 [↬ table of content ⇧](#table-of-content)

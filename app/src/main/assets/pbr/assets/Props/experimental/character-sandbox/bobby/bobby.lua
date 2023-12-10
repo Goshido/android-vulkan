@@ -9,6 +9,7 @@ require "av://engine/input_event.lua"
 require "av://engine/material.lua"
 require "av://engine/script_component.lua"
 require "av://engine/skeletal_mesh_component.lua"
+require "av://engine/sound_emitter_spatial_component.lua"
 
 
 local Bobby = {}
@@ -36,9 +37,19 @@ local RUN_ANIMATION_SPEED = 4.0
 local UP = GXVec3 ()
 UP:Init ( 0.0, 1.0, 0.0 )
 
+local FOOTSTEP_DISTANCE = 5.0
+local FOOTSTEP_VOLUME = 0.25
+local EVENT_RIGHT_FOOTSTEP = 10
+local EVENT_LEFT_FOOTSTEP = 48
+
 -- Forward declaration
 local OnInput
 local OnPostPhysics
+
+-- Animation events
+local function OnAnimationEvent ( context, frameIdx )
+    context._isFootstep = true
+end
 
 -- Methods
 local function Activate ( self, cameraRight, gravity )
@@ -48,6 +59,8 @@ local function Activate ( self, cameraRight, gravity )
     local velocity = GXVec3 ()
     velocity:Init ( 0.0, 0.0, 0.0 )
     self._velocity = velocity
+
+    self._animationGraph:Awake ()
 
     self.OnInput = OnInput
     self.OnPostPhysics = OnPostPhysics
@@ -59,6 +72,19 @@ end
 
 local function GetLocation ( self )
     return self._location
+end
+
+local function ProcessFootstep ( self )
+    if not self._isFootstep then
+        return
+    end
+
+    local s = self._footstep
+    s:SetLocation ( self._location )
+    s:Stop ()
+    s:Play ()
+
+    self._isFootstep = false
 end
 
 local function ResolveCollisions ( self )
@@ -181,10 +207,10 @@ local function OnActorConstructed ( self, actor )
     local t = GXMat4 ()
     actor:FindComponent ( "Origin" ):GetTransform ( t )
 
-    local position = GXVec3 ()
-    t:GetW ( position )
-    position:MultiplyScalar ( position, g_scene:GetRendererToPhysicsScaleFactor () )
-    self._location = position
+    local location = GXVec3 ()
+    t:GetW ( location )
+    location:MultiplyScalar ( location, g_scene:GetRendererToPhysicsScaleFactor () )
+    self._location = location
 
     local forward = GXVec3 ()
     t:GetZ ( forward )
@@ -200,11 +226,21 @@ local function OnActorConstructed ( self, actor )
     self._runAnimationPlayer = runAnimationPlayer
     runAnimationPlayer:LoadAnimation ( "pbr/assets/Props/experimental/character-sandbox/bobby/run.animation" )
     runAnimationPlayer:SetPlaybackSpeed ( RUN_ANIMATION_SPEED )
+    runAnimationPlayer:SetEvent ( self, EVENT_RIGHT_FOOTSTEP, OnAnimationEvent )
+    runAnimationPlayer:SetEvent ( self, EVENT_LEFT_FOOTSTEP, OnAnimationEvent )
 
     animationGraph:SetInput ( runAnimationPlayer )
-    animationGraph:Awake ()
-
     mesh:SetAnimationGraph ( animationGraph )
+
+    local footstep = SoundEmitterSpatialComponent ( "Footstep", eSoundChannel.SFX )
+    visual:AppendComponent ( footstep )
+    footstep:SetSoundAsset ( "pbr/assets/Props/experimental/character-sandbox/bobby/step.ogg", false )
+    footstep:SetDistance ( FOOTSTEP_DISTANCE )
+    footstep:SetLocation ( location )
+    footstep:SetVolume ( FOOTSTEP_VOLUME )
+    self._footstep = footstep
+    self._isFootstep = false
+
     visual:AppendComponent ( mesh )
     g_scene:AppendActor ( visual )
 end
@@ -235,6 +271,7 @@ OnPostPhysics = function ( self, deltaTime )
     self:UpdateLocation ( deltaTime )
     self:ResolveCollisions ()
     self:UpdateVisual ()
+    self:ProcessFootstep ()
 end
 
 local function OnPostPhysicsIdle ( self, deltaTime )
@@ -249,6 +286,7 @@ local function Constructor ( self, handle, params )
     obj.Activate = Activate
     obj.GetForward = GetForward
     obj.GetLocation = GetLocation
+    obj.ProcessFootstep = ProcessFootstep
     obj.ResolveCollisions = ResolveCollisions
     obj.UpdateLocation = UpdateLocation
     obj.UpdateVisual = UpdateVisual

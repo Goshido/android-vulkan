@@ -58,6 +58,8 @@ local function Activate ( self, playerLocation, playerForward )
     g_scene:SetActiveCamera ( c )
 
     self.OnUpdate = OnUpdate
+    self:OnUpdate ( 0.0 )
+
     self.OnInput = OnInput
 end
 
@@ -181,11 +183,13 @@ OnUpdate = function ( self, deltaTime )
     local hit = g_scene:Raycast ( target, beta, self._hitGroups )
 
     if hit then
-        beta:MultiplyScalar ( hit._point, g_scene:GetPhysicsToRendererScaleFactor () )
-    else
-        beta:MultiplyScalar ( beta, g_scene:GetPhysicsToRendererScaleFactor () )
+        beta:Clone ( hit._point )
     end
 
+    transform:SetW ( beta )
+    g_scene:SetSoundListenerTransform ( transform )
+
+    beta:MultiplyScalar ( beta, g_scene:GetPhysicsToRendererScaleFactor () )
     transform:SetW ( beta )
     self._camera:SetLocal ( transform )
 end

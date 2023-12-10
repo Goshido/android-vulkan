@@ -23,7 +23,15 @@ class AnimationPlayerNode final : public JointProviderNode
     private:
         using Reference = std::unique_ptr<AnimationPlayerNode>;
 
+        struct Event final
+        {
+            size_t                                                          _frameIdx;
+            float                                                           _time;
+        };
+
     private:
+        std::list<Event>                                                    _events {};
+
         bool                                                                _hasTrack = false;
         android_vulkan::AnimationTrack                                      _track {};
 
@@ -55,13 +63,15 @@ class AnimationPlayerNode final : public JointProviderNode
 
     private:
         [[nodiscard]] Result GetJoint ( std::string const &name ) noexcept override;
-        void Update ( float deltaTime ) noexcept override;
+        void Update ( lua_State &vm, float deltaTime ) noexcept override;
 
         [[nodiscard]] bool LoadAnimation ( std::string &&animationTrack ) noexcept;
+        [[nodiscard]] int SetEvent ( lua_State* state ) noexcept;
 
         [[nodiscard]] static int OnCreate ( lua_State* state );
         [[nodiscard]] static int OnDestroy ( lua_State* state );
         [[nodiscard]] static int OnLoadAnimation ( lua_State* state );
+        [[nodiscard]] static int OnSetEvent ( lua_State* state );
         [[nodiscard]] static int OnSetPlaybackSpeed ( lua_State* state );
 };
 

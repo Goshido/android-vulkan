@@ -47,6 +47,17 @@ float SoundEmitter::GetVolume () const noexcept
     return _volume;
 }
 
+bool SoundEmitter::Play () noexcept
+{
+    AV_ASSERT ( ( _mixer != nullptr ) & static_cast<bool> ( _streamer ) )
+
+    if ( !_mixer->RequestPlay ( *this ) ) [[unlikely]]
+        return false;
+
+    _isPlaying = true;
+    return true;
+}
+
 void SoundEmitter::SetVolume ( float volume ) noexcept
 {
     _volume = std::clamp ( volume, 0.0F, 1.0F );
@@ -61,26 +72,11 @@ bool SoundEmitter::Pause () noexcept
 {
     AV_ASSERT ( ( _mixer != nullptr ) & static_cast<bool> ( _streamer ) )
 
-    if ( _mixer->RequestPause ( *this ) )
-    {
-        _isPlaying = false;
-        return true;
-    }
+    if ( !_mixer->RequestPause ( *this ) ) [[unlikely]]
+        return false;
 
-    return false;
-}
-
-bool SoundEmitter::Play () noexcept
-{
-    AV_ASSERT ( ( _mixer != nullptr ) & static_cast<bool> ( _streamer ) )
-
-    if ( _mixer->RequestPlay ( *this ) )
-    {
-        _isPlaying = true;
-        return true;
-    }
-
-    return false;
+    _isPlaying = false;
+    return true;
 }
 
 bool SoundEmitter::Stop () noexcept
@@ -90,9 +86,9 @@ bool SoundEmitter::Stop () noexcept
     if ( !_isPlaying )
         return true;
 
-    if ( _mixer->RequestStop ( *this ) )
+    if ( _mixer->RequestStop ( *this ) ) [[likely]]
     {
-        if ( !_streamer->Reset () )
+        if ( !_streamer->Reset () ) [[unlikely]]
             return false;
 
         _isPlaying = false;
@@ -129,7 +125,7 @@ bool SoundEmitter::SetSoundAsset ( std::string_view const file, bool looped ) no
         _mixer->GetBufferSampleCount ()
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
     {
         _streamer = nullptr;
         return false;
@@ -147,7 +143,7 @@ SoundEmitter::eStreamerType SoundEmitter::GetStreamerType ( std::string_view con
 {
     auto const findResult = asset.find_last_of ( '.' );
 
-    if ( findResult == std::string_view::npos )
+    if ( findResult == std::string_view::npos ) [[unlikely]]
     {
         LogError ( "SoundEmitter::GetStreamerType - Unknown format (branch 1). Asset: %s", asset.data () );
         AV_ASSERT ( false )
@@ -159,7 +155,7 @@ SoundEmitter::eStreamerType SoundEmitter::GetStreamerType ( std::string_view con
     if ( ext == "ogg" )
         return eStreamerType::OGG;
 
-    if ( ext == "wav" )
+    if ( ext == "wav" ) [[likely]]
         return eStreamerType::WAV;
 
     LogError ( "SoundEmitter::GetStreamerType - Unknown format (branch 2). Asset: %s", asset.data () );

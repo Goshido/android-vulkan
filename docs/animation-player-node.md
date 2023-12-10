@@ -108,7 +108,7 @@ function Callback ( context, frameIndex )
 
 `context` is the same parameter which was passed via `SetEvent`.
 
-`frameIndex` is zero based event frame index which is provided via `SetEvent`. **Note** this index **IS NOT** real animation position. Ofter real frame index is slightly bigger that event frame index. For example in situations when animation speed is high and hardware framerate is low.
+`frameIndex` is zero based event frame index which is provided via `SetEvent`. **Note** this index **IS NOT** real animation position. Often real frame index is slightly bigger that event frame index. For example in situations when animation speed is high and hardware framerate is low.
 
 Callback function **MUST NOT** return.
 
@@ -118,7 +118,7 @@ According to [event handler calling order](./script-component.md#event-calling-o
 
 - `context` [_required, readonly, any_]: user provided data which will be passed to callback when ever occurs
 - `frameIndex` [_required, readonly, number_]: zero based frame index which must be in range from `0` to `animation frames - 1`
-- `callback` [_required, readonly, function_] callack function with signature [above](#set-event-callabck)
+- `callback` [_required, readonly, function_] callback function with signature [above](#set-event-callabck)
 
 **Return values:**
 
@@ -132,7 +132,7 @@ require "av://engine/logger.lua"
 
 
 local function OnStepEvent ( context, frameIndex )
-    LogD ( "Step happened." )
+    LogD ( "Footstep event happened." )
 end
 
 local animationPlayerNone = AnimationPlayerNode ()

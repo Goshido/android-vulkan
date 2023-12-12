@@ -12,7 +12,7 @@ GRAVITY:Init ( 0.0, -9.81, 0.0 )
 local OnPrePhysicsIdle
 
 -- Methods
-local function FindActor ( self, actorName, field )
+local function FindScript ( self, actorName, field )
     local a = self[ field ]
 
     if a then
@@ -32,8 +32,8 @@ end
 
 -- Engine events
 local function OnPrePhysics ( self, deltaTime )
-    local bobby = self:FindActor ( "Bobby", "_bobby" )
-    local camera = self:FindActor ( "Camera", "_camera" )
+    local bobby = self:FindScript ( "Bobby", "_bobby" )
+    local camera = self:FindScript ( "Camera", "_camera" )
 
     if not bobby or not camera then
         return
@@ -53,7 +53,7 @@ local function Constructor ( self, handle, params )
     local obj = ScriptComponent ( handle )
 
     -- Methods
-    obj.FindActor = FindActor
+    obj.FindScript = FindScript
 
     -- Engine events
     obj.OnPrePhysics = OnPrePhysics

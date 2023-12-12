@@ -81,8 +81,8 @@ local function ProcessFootstep ( self )
 
     local s = self._footstep
     s:SetLocation ( self._location )
-    s:Stop ()
-    s:Play ()
+    -- s:Stop ()
+    -- s:Play ()
 
     self._isFootstep = false
 end

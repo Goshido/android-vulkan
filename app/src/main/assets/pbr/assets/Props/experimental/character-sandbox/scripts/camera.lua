@@ -29,9 +29,28 @@ local PITCH_MAX = math.rad ( 75.0 )
 local RIGHT_DEAD_ZONE = 0.25
 local RIGHT_SPEED = 3.777
 
+local Z_NEAR = 6.4
+local Z_FAR = 10000.0
+local FOV_Y = math.rad ( 55.0 )
+
+-- Optimization: the value should be negative.
+local DELAY_CAMERA_SPEED = -4.0
+
 -- Forward declaration
 local OnInput
 local OnUpdate
+
+-- Free functions
+local function MakePivotOrientation ( right )
+    local m = GXMat3 ()
+    m:SetX ( right )
+    m:SetY ( UP )
+
+    local alpha = GXVec3 ()
+    alpha:CrossProduct ( right, UP )
+    m:SetZ ( alpha )
+    return m
+end
 
 -- Methods
 local function Activate ( self, playerLocation, playerForward )
@@ -39,7 +58,8 @@ local function Activate ( self, playerLocation, playerForward )
     right:CrossProduct ( UP, playerForward )
     self._right = right
 
-    self._pitch = 0.0
+    local pitch = 0.0
+    self._pitch = pitch
     self._pitchDir = 0.0
 
     self._rightDir = 0.0
@@ -53,9 +73,11 @@ local function Activate ( self, playerLocation, playerForward )
     hitGroups:SetAllBits ()
     self._hitGroups = hitGroups
 
-    local c = self._camera
-    c:SetAspectRatio ( g_scene:GetRenderTargetAspectRatio () )
-    g_scene:SetActiveCamera ( c )
+    local pivotOrientation = MakePivotOrientation ( right )
+    self._location = self:GetIdealLocation ( pitch, right, self:GetTarget ( pivotOrientation ), pivotOrientation )
+
+    self:OnRenderTargetChanged ()
+    g_scene:SetActiveCamera ( self._camera )
 
     self.OnUpdate = OnUpdate
     self:OnUpdate ( 0.0 )
@@ -79,33 +101,61 @@ local function AdjustPitch ( self, deltaTime )
     return pitch
 end
 
-local function AdjustRight ( self, deltaTime )
-    local right = self._right
-    local isLookBack = self._isLookBack
-
-    if isLookBack ~= self._oldLookBack then
-        if isLookBack then
-            right:CrossProduct ( self._playerForward, UP )
-        else
-            right:CrossProduct ( UP, self._playerForward )
-        end
-
-        self._pitch = 0.0
-        self._oldLookBack = isLookBack
-    end
+local function GetIdealLocation ( self, pitch, right, target, pivotOrientation )
+    local transform = GXMat4 ()
+    transform:Identity ()
+    transform:SetX ( right )
+    transform:SetW ( target )
 
     local r = GXQuat ()
-    r:FromAxisAngle ( UP, self._rightDir * deltaTime * RIGHT_SPEED )
+    r:FromAxisAngle ( RIGHT, pitch )
 
     local alpha = GXVec3 ()
-    r:TransformFast ( alpha, right )
-    right:Clone ( alpha )
+    r:TransformFast ( alpha, UP )
 
-    return right
+    local beta = GXVec3 ()
+    pivotOrientation:MultiplyVectorMatrix ( beta, alpha )
+    transform:SetY ( beta )
+
+    alpha:CrossProduct ( right, beta )
+    transform:SetZ ( alpha )
+
+    local d = self._distance
+    local negD = -d
+    d = d * d
+
+    local gamma = GXVec3 ()
+    local hitGroups = self._hitGroups
+    local corners = self._corners
+
+    for i = 1, 4 do
+        transform:MultiplyAsPoint ( beta, corners[ i ] )
+        gamma:SumScaled ( beta, negD, alpha )
+
+        local hit = g_scene:Raycast ( beta, gamma, hitGroups )
+
+        if hit then
+            local newD = beta:SquaredDistance ( hit._point )
+
+            if d > newD then
+                d = newD
+            end
+        end
+    end
+
+    beta:SumScaled ( target, -math.sqrt ( d ), alpha )
+    return beta
 end
 
 local function GetRight ( self )
     return self._right
+end
+
+local function GetTarget ( self, pivotOrientation )
+    local target = GXVec3 ()
+    pivotOrientation:MultiplyVectorMatrix ( target, TARGET_OFFSET )
+    target:Sum ( target, self._playerLocation )
+    return target
 end
 
 local function HandleDirection ( self, value, field, deadZone )
@@ -118,7 +168,17 @@ end
 
 -- Engine events
 local function OnActorConstructed ( self, actor )
-    self._camera = actor:FindComponent ( "Camera" )
+    local camera = actor:FindComponent ( "Camera" )
+    self._camera = camera
+
+    camera:SetProjection ( FOV_Y, g_scene:GetRenderTargetAspectRatio (), Z_NEAR, Z_FAR )
+
+    local corners = {}
+    table.insert ( corners, GXVec3 () )
+    table.insert ( corners, GXVec3 () )
+    table.insert ( corners, GXVec3 () )
+    table.insert ( corners, GXVec3 () )
+    self._corners = corners
 end
 
 OnInput = function ( self, inputEvent )
@@ -143,54 +203,68 @@ local function OnInputIdle ( self, inputEvent )
 end
 
 local function OnRenderTargetChanged ( self )
-    self._camera:SetAspectRatio ( g_scene:GetRenderTargetAspectRatio () )
+    local aspect = g_scene:GetRenderTargetAspectRatio ()
+    self._camera:SetAspectRatio ( aspect )
+
+    local dY = Z_NEAR * math.tan ( FOV_Y * 0.5 ) * g_scene:GetRendererToPhysicsScaleFactor ()
+    local dX = dY * aspect
+
+    local corners = self._corners
+    corners[ 1 ]:Init ( -dX, -dY, 0.0 )
+    corners[ 2 ]:Init ( dX, -dY, 0.0 )
+    corners[ 3 ]:Init ( dX, dY, 0.0 )
+    corners[ 4 ]:Init ( -dX, dY, 0.0 )
 end
 
 OnUpdate = function ( self, deltaTime )
-    local pitch = self:AdjustPitch ( deltaTime )
-    local right = self:AdjustRight ( deltaTime )
+    local right = self._right
+    local isLookBack = self._isLookBack
+    local isLookBackChanged = isLookBack ~= self._oldLookBack
 
-    local m = GXMat3 ()
+    if isLookBackChanged then
+        if isLookBack then
+            right:CrossProduct ( self._playerForward, UP )
+        else
+            right:CrossProduct ( UP, self._playerForward )
+        end
+
+        self._pitch = 0.0
+    end
+
+    local pivotOrientation = MakePivotOrientation ( right )
+    local target = self:GetTarget ( pivotOrientation )
+
+    local location = self._location
+    local alpha = self:GetIdealLocation ( self:AdjustPitch ( deltaTime ), right, target, pivotOrientation )
+
+    if isLookBackChanged then
+        location:Clone ( alpha )
+        self._oldLookBack = isLookBack
+    else
+        alpha:Subtract ( alpha, location )
+        location:SumScaled ( location, 1.0 - math.exp ( DELAY_CAMERA_SPEED * deltaTime ), alpha )
+    end
+
+    alpha:Subtract ( target, location )
+    alpha:Normalize ()
 
     local transform = GXMat4 ()
     transform:Identity ()
-
-    transform:SetX ( right )
-    m:SetX ( right )
-
-    m:SetY ( UP )
-
-    local alpha = GXVec3 ()
-    alpha:CrossProduct ( right, UP )
-    m:SetZ ( alpha )
-
-    local target = GXVec3 ()
-    m:MultiplyVectorMatrix ( target, TARGET_OFFSET )
-    target:Sum ( target, self._playerLocation )
-
-    local r = GXQuat ()
-    r:FromAxisAngle ( RIGHT, pitch )
-    r:TransformFast ( alpha, UP )
-
-    local beta = GXVec3 ()
-    m:MultiplyVectorMatrix ( beta, alpha )
-    transform:SetY ( beta )
-
-    alpha:CrossProduct ( right, beta )
     transform:SetZ ( alpha )
 
-    beta:SumScaled ( target, -self._distance, alpha )
-    local hit = g_scene:Raycast ( target, beta, self._hitGroups )
+    right:CrossProduct ( UP, alpha )
+    right:Normalize ()
+    transform:SetX ( right )
 
-    if hit then
-        beta:Clone ( hit._point )
-    end
+    local beta = GXVec3 ()
+    beta:CrossProduct ( alpha, right )
+    transform:SetY ( beta )
+    transform:SetW ( location )
 
-    transform:SetW ( beta )
     g_scene:SetSoundListenerTransform ( transform )
 
-    beta:MultiplyScalar ( beta, g_scene:GetPhysicsToRendererScaleFactor () )
-    transform:SetW ( beta )
+    alpha:MultiplyScalar ( location, g_scene:GetPhysicsToRendererScaleFactor () )
+    transform:SetW ( alpha )
     self._camera:SetLocal ( transform )
 end
 
@@ -205,8 +279,9 @@ local function Constructor ( self, handle, params )
     -- Methods
     obj.Activate = Activate
     obj.AdjustPitch = AdjustPitch
-    obj.AdjustRight = AdjustRight
+    obj.GetIdealLocation = GetIdealLocation
     obj.GetRight = GetRight
+    obj.GetTarget = GetTarget
     obj.HandleDirection = HandleDirection
 
     -- Engine events

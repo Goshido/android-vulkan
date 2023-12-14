@@ -23,8 +23,13 @@ local DISTANCE_CLOSE = 2.5
 
 local PITCH_DEAD_ZONE = 0.25
 local PITCH_SPEED = 3.777
-local PITCH_MIN = math.rad ( -45.0 )
-local PITCH_MAX = math.rad ( 75.0 )
+
+-- Camera forward direction relative global Y axis.
+local PITCH_LOW = math.rad ( 45.0 )
+local PITCH_HIGH = math.rad ( 165.0 )
+
+local PITCH_LOW_DOT = math.cos ( PITCH_LOW )
+local PITCH_HIGH_DOT = math.cos ( PITCH_HIGH )
 
 local RIGHT_DEAD_ZONE = 0.25
 local RIGHT_SPEED = 3.777
@@ -58,10 +63,11 @@ local function Activate ( self, playerLocation, playerForward )
     right:CrossProduct ( UP, playerForward )
     self._right = right
 
-    local pitch = 0.0
-    self._pitch = pitch
-    self._pitchDir = 0.0
+    local forward = GXVec3 ()
+    forward:Clone ( playerForward )
+    self._forward = forward
 
+    self._pitchDir = 0.0
     self._rightDir = 0.0
     self._playerForward = playerForward
     self._playerLocation = playerLocation
@@ -73,8 +79,27 @@ local function Activate ( self, playerLocation, playerForward )
     hitGroups:SetAllBits ()
     self._hitGroups = hitGroups
 
-    local pivotOrientation = MakePivotOrientation ( right )
-    self._location = self:GetIdealLocation ( pitch, right, self:GetTarget ( pivotOrientation ), pivotOrientation )
+    local r = GXQuat ()
+    r:FromAxisAngle ( RIGHT, PITCH_LOW )
+    local pitchLowLimit = GXVec3 ()
+    r:TransformFast ( pitchLowLimit, UP )
+    self._pitchLowLimit = pitchLowLimit
+
+    local pitchHighLimit = GXVec3 ()
+    r:FromAxisAngle ( RIGHT, PITCH_HIGH )
+    r:TransformFast ( pitchHighLimit, UP )
+    self._pitchHighLimit = pitchHighLimit
+
+    local transform = GXMat4 ()
+    transform:Identity ()
+    transform:SetX ( right )
+    transform:SetY ( UP )
+    transform:SetZ ( playerForward )
+    transform:SetW ( self:GetTarget ( MakePivotOrientation ( right ) ) )
+
+    local location = GXVec3 ()
+    self:GetIdealLocation ( location, transform, DISTANCE_CLOSE )
+    self._location = location
 
     self:OnRenderTargetChanged ()
     g_scene:SetActiveCamera ( self._camera )
@@ -85,57 +110,26 @@ local function Activate ( self, playerLocation, playerForward )
     self.OnInput = OnInput
 end
 
-local function AdjustPitch ( self, deltaTime )
-    local pitch = self._pitch
-    pitch = pitch + self._pitchDir * deltaTime * PITCH_SPEED
+local function GetIdealLocation ( self, idealLocation, targetTransform, distance )
+    local negD = -distance
+    local d = distance * distance
 
-    if pitch > PITCH_MAX then
-        pitch = PITCH_MAX
-    end
-
-    if pitch < PITCH_MIN then
-        pitch = PITCH_MIN
-    end
-
-    self._pitch = pitch
-    return pitch
-end
-
-local function GetIdealLocation ( self, pitch, right, target, pivotOrientation )
-    local transform = GXMat4 ()
-    transform:Identity ()
-    transform:SetX ( right )
-    transform:SetW ( target )
-
-    local r = GXQuat ()
-    r:FromAxisAngle ( RIGHT, pitch )
+    local forward = GXVec3 ()
+    targetTransform:GetZ ( forward )
 
     local alpha = GXVec3 ()
-    r:TransformFast ( alpha, UP )
-
     local beta = GXVec3 ()
-    pivotOrientation:MultiplyVectorMatrix ( beta, alpha )
-    transform:SetY ( beta )
-
-    alpha:CrossProduct ( right, beta )
-    transform:SetZ ( alpha )
-
-    local d = self._distance
-    local negD = -d
-    d = d * d
-
-    local gamma = GXVec3 ()
     local hitGroups = self._hitGroups
     local corners = self._corners
 
     for i = 1, 4 do
-        transform:MultiplyAsPoint ( beta, corners[ i ] )
-        gamma:SumScaled ( beta, negD, alpha )
+        targetTransform:MultiplyAsPoint ( alpha, corners[ i ] )
+        beta:SumScaled ( alpha, negD, forward )
 
-        local hit = g_scene:Raycast ( beta, gamma, hitGroups )
+        local hit = g_scene:Raycast ( alpha, beta, hitGroups )
 
         if hit then
-            local newD = beta:SquaredDistance ( hit._point )
+            local newD = alpha:SquaredDistance ( hit._point )
 
             if d > newD then
                 d = newD
@@ -143,8 +137,8 @@ local function GetIdealLocation ( self, pitch, right, target, pivotOrientation )
         end
     end
 
-    beta:SumScaled ( target, -math.sqrt ( d ), alpha )
-    return beta
+    targetTransform:GetW ( alpha )
+    idealLocation:SumScaled ( alpha, -math.sqrt ( d ), forward )
 end
 
 local function GetRight ( self )
@@ -227,15 +221,25 @@ OnUpdate = function ( self, deltaTime )
         else
             right:CrossProduct ( UP, self._playerForward )
         end
-
-        self._pitch = 0.0
     end
 
-    local pivotOrientation = MakePivotOrientation ( right )
-    local target = self:GetTarget ( pivotOrientation )
+    local target = self:GetTarget ( MakePivotOrientation ( right ) )
+
+    local transform = GXMat4 ()
+    transform:Identity ()
+    transform:SetW ( target )
+
+    local forward = self._forward
+
+    local alpha = GXVec3 ()
+    alpha:SumScaled ( target, -self._distance, forward )
+    local hit = g_scene:Raycast ( target, alpha, self._hitGroups )
+
+    if hit then
+        alpha:Clone ( hit._point )
+    end
 
     local location = self._location
-    local alpha = self:GetIdealLocation ( self:AdjustPitch ( deltaTime ), right, target, pivotOrientation )
 
     if isLookBackChanged then
         location:Clone ( alpha )
@@ -246,19 +250,43 @@ OnUpdate = function ( self, deltaTime )
     end
 
     alpha:Subtract ( target, location )
-    alpha:Normalize ()
+    local distance = alpha:Length ()
+    alpha:MultiplyScalar ( alpha, 1.0 / distance )
 
-    local transform = GXMat4 ()
-    transform:Identity ()
-    transform:SetZ ( alpha )
+    local dYaw = GXQuat ()
+    dYaw:FromAxisAngle ( UP, self._rightDir * deltaTime * RIGHT_SPEED )
 
-    right:CrossProduct ( UP, alpha )
+    local dPitch = GXQuat ()
+    dPitch:FromAxisAngle ( right, self._pitchDir * deltaTime * PITCH_SPEED )
+
+    local r = GXQuat ()
+    r:Multiply ( dPitch, dYaw )
+    r:TransformFast ( forward, alpha )
+
+    right:CrossProduct ( UP, forward )
     right:Normalize ()
     transform:SetX ( right )
 
-    local beta = GXVec3 ()
-    beta:CrossProduct ( alpha, right )
-    transform:SetY ( beta )
+    local dot = forward:DotProduct ( UP )
+
+    if dot < PITCH_HIGH_DOT then
+        transform:SetY ( UP )
+        alpha:CrossProduct ( right, UP )
+        transform:SetZ ( alpha )
+        transform:MultiplyAsNormal ( forward, self._pitchHighLimit )
+    elseif dot > PITCH_LOW_DOT then
+        transform:SetY ( UP )
+        alpha:CrossProduct ( right, UP )
+        transform:SetZ ( alpha )
+        transform:MultiplyAsNormal ( forward, self._pitchLowLimit )
+    end
+
+    transform:SetZ ( forward )
+
+    alpha:CrossProduct ( forward, right )
+    transform:SetY ( alpha )
+
+    self:GetIdealLocation ( location, transform, distance )
     transform:SetW ( location )
 
     g_scene:SetSoundListenerTransform ( transform )
@@ -278,7 +306,6 @@ local function Constructor ( self, handle, params )
 
     -- Methods
     obj.Activate = Activate
-    obj.AdjustPitch = AdjustPitch
     obj.GetIdealLocation = GetIdealLocation
     obj.GetRight = GetRight
     obj.GetTarget = GetTarget

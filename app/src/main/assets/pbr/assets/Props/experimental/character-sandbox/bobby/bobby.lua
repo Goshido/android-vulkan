@@ -1,7 +1,7 @@
-require "av://engine/bit_field.lua"
 require "av://engine/actor.lua"
 require "av://engine/animation_graph.lua"
 require "av://engine/animation_player_node.lua"
+require "av://engine/bit_field.lua"
 require "av://engine/gx_mat4.lua"
 require "av://engine/gx_quat.lua"
 require "av://engine/gx_vec3.lua"
@@ -55,10 +55,7 @@ end
 local function Activate ( self, cameraRight, gravity )
     self._cameraRight = cameraRight
     self._gravity = gravity
-
-    local velocity = GXVec3 ()
-    velocity:Init ( 0.0, 0.0, 0.0 )
-    self._velocity = velocity
+    self._velocity:Init ( 0.0, 0.0, 0.0 )
 
     self._animationGraph:Awake ()
 
@@ -207,17 +204,11 @@ local function OnActorConstructed ( self, actor )
     local t = GXMat4 ()
     actor:FindComponent ( "Origin" ):GetTransform ( t )
 
-    local location = GXVec3 ()
+    local location = self._location
     t:GetW ( location )
     location:MultiplyScalar ( location, g_scene:GetRendererToPhysicsScaleFactor () )
-    self._location = location
 
-    local forward = GXVec3 ()
-    t:GetZ ( forward )
-    self._forward = forward
-    self._isMoving = false
-    self._moveX = 0.0
-    self._moveY = 0.0
+    t:GetZ ( self._forward )
 
     local animationGraph = AnimationGraph ( skeletonFile )
     self._animationGraph = animationGraph
@@ -239,7 +230,6 @@ local function OnActorConstructed ( self, actor )
     footstep:SetLocation ( location )
     footstep:SetVolume ( FOOTSTEP_VOLUME )
     self._footstep = footstep
-    self._isFootstep = false
 
     visual:AppendComponent ( mesh )
     g_scene:AppendActor ( visual )
@@ -281,6 +271,17 @@ end
 -- Metamethods
 local function Constructor ( self, handle, params )
     local obj = ScriptComponent ( handle )
+
+    -- Data
+    obj._forward = GXVec3 ()
+    obj._location = GXVec3 ()
+    obj._velocity = GXVec3 ()
+
+    obj._isMoving = false
+    obj._moveX = 0.0
+    obj._moveY = 0.0
+
+    obj._isFootstep = false
 
     -- Methods
     obj.Activate = Activate

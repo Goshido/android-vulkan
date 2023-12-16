@@ -19,7 +19,12 @@ UP:Init ( 0.0, 1.0, 0.0 )
 local RIGHT = GXVec3 ()
 RIGHT:Init ( 1.0, 0.0, 0.0 )
 
-local DISTANCE_CLOSE = 2.5
+local DISTANCES = {}
+table.insert ( DISTANCES, 2.5 )
+table.insert ( DISTANCES, 4.5 )
+table.insert ( DISTANCES, 6.5 )
+local DISTANCE_COUNT = #DISTANCES
+local DISTANCE_INDEX = 1
 
 local PITCH_DEAD_ZONE = 0.25
 local PITCH_SPEED = 3.777
@@ -41,65 +46,35 @@ local FOV_Y = math.rad ( 55.0 )
 -- Optimization: the value should be negative.
 local DELAY_CAMERA_SPEED = -4.0
 
--- Forward declaration
+-- Forward declarations
 local OnInput
 local OnUpdate
 
--- Free functions
-local function MakePivotOrientation ( right )
-    local m = GXMat3 ()
-    m:SetX ( right )
-    m:SetY ( UP )
-
-    local alpha = GXVec3 ()
-    alpha:CrossProduct ( right, UP )
-    m:SetZ ( alpha )
-    return m
-end
-
 -- Methods
 local function Activate ( self, playerLocation, playerForward )
-    local right = GXVec3 ()
+    local right = self._right
     right:CrossProduct ( UP, playerForward )
-    self._right = right
+    self._logicalRight:Clone ( right )
 
-    local forward = GXVec3 ()
-    forward:Clone ( playerForward )
-    self._forward = forward
+    self._forward:Clone ( playerForward )
 
-    self._pitchDir = 0.0
-    self._rightDir = 0.0
     self._playerForward = playerForward
     self._playerLocation = playerLocation
-    self._distance = DISTANCE_CLOSE
-    self._isLookBack = false
-    self._oldLookBack = false
-
-    local hitGroups = BitField ()
-    hitGroups:SetAllBits ()
-    self._hitGroups = hitGroups
 
     local r = GXQuat ()
     r:FromAxisAngle ( RIGHT, PITCH_LOW )
-    local pitchLowLimit = GXVec3 ()
-    r:TransformFast ( pitchLowLimit, UP )
-    self._pitchLowLimit = pitchLowLimit
+    r:TransformFast ( self._pitchLowLimit, UP )
 
-    local pitchHighLimit = GXVec3 ()
     r:FromAxisAngle ( RIGHT, PITCH_HIGH )
-    r:TransformFast ( pitchHighLimit, UP )
-    self._pitchHighLimit = pitchHighLimit
+    r:TransformFast ( self._pitchHighLimit, UP )
 
     local transform = GXMat4 ()
     transform:Identity ()
     transform:SetX ( right )
     transform:SetY ( UP )
     transform:SetZ ( playerForward )
-    transform:SetW ( self:GetTarget ( MakePivotOrientation ( right ) ) )
-
-    local location = GXVec3 ()
-    self:GetIdealLocation ( location, transform, DISTANCE_CLOSE )
-    self._location = location
+    transform:SetW ( self:GetTarget () )
+    self:GetIdealLocation ( self._location, transform, self._distance )
 
     self:OnRenderTargetChanged ()
     g_scene:SetActiveCamera ( self._camera )
@@ -142,14 +117,33 @@ local function GetIdealLocation ( self, idealLocation, targetTransform, distance
 end
 
 local function GetRight ( self )
-    return self._right
+    return self._logicalRight
 end
 
-local function GetTarget ( self, pivotOrientation )
-    local target = GXVec3 ()
-    pivotOrientation:MultiplyVectorMatrix ( target, TARGET_OFFSET )
-    target:Sum ( target, self._playerLocation )
-    return target
+local function GetTarget ( self )
+    local right = self._right
+
+    local m = GXMat3 ()
+    m:SetX ( right )
+    m:SetY ( UP )
+
+    local alpha = GXVec3 ()
+    alpha:CrossProduct ( right, UP )
+    m:SetZ ( alpha )
+
+    m:MultiplyVectorMatrix ( alpha, TARGET_OFFSET )
+    alpha:Sum ( alpha, self._playerLocation )
+    return alpha
+end
+
+local function HandleCamera ( self, eventType, inputEvent )
+    if eventType ~= eEventType.RightStick then
+        return false
+    end
+
+    self:HandleDirection ( -inputEvent._y, "_pitchDir", PITCH_DEAD_ZONE )
+    self:HandleDirection ( inputEvent._x, "_rightDir", RIGHT_DEAD_ZONE )
+    return true
 end
 
 local function HandleDirection ( self, value, field, deadZone )
@@ -160,36 +154,45 @@ local function HandleDirection ( self, value, field, deadZone )
     self[ field ] = value
 end
 
+local function HandleDistance ( self, eventType, key )
+    local down = eventType == eEventType.KeyDown
+
+    if not down or key ~= eKey.View then
+        return false
+    end
+
+    local idx = 1 + self._distanceIndex % DISTANCE_COUNT
+    self._distanceIndex = idx
+    self._distance = DISTANCES[ idx ]
+    return true
+end
+
+local function HandleLookBack ( self, eventType, key )
+    local down = eventType == eEventType.KeyDown
+
+    if ( not down and eventType ~= eEventType.KeyUp ) or key ~= eKey.RightStick then
+        return false
+    end
+
+    self._isLookBack = down
+    return true
+end
+
 -- Engine events
 local function OnActorConstructed ( self, actor )
     local camera = actor:FindComponent ( "Camera" )
     self._camera = camera
 
     camera:SetProjection ( FOV_Y, g_scene:GetRenderTargetAspectRatio (), Z_NEAR, Z_FAR )
-
-    local corners = {}
-    table.insert ( corners, GXVec3 () )
-    table.insert ( corners, GXVec3 () )
-    table.insert ( corners, GXVec3 () )
-    table.insert ( corners, GXVec3 () )
-    self._corners = corners
 end
 
 OnInput = function ( self, inputEvent )
-    local t = inputEvent._type
-    local down = t == eEventType.KeyDown
+    local eventType = inputEvent._type
+    local key = inputEvent._key
 
-    if ( down or t == eEventType.KeyUp ) and inputEvent._key == eKey.RightStick then
-        self._isLookBack = down
-        return
-    end
-
-    if t ~= eEventType.RightStick then
-        return
-    end
-
-    self:HandleDirection ( -inputEvent._y, "_pitchDir", PITCH_DEAD_ZONE )
-    self:HandleDirection ( inputEvent._x, "_rightDir", RIGHT_DEAD_ZONE )
+    local shortCircuitEvaluation = self:HandleCamera ( eventType, inputEvent ) or
+        self:HandleLookBack ( eventType, key ) or
+        self:HandleDistance ( eventType, key )
 end
 
 local function OnInputIdle ( self, inputEvent )
@@ -212,6 +215,7 @@ end
 
 OnUpdate = function ( self, deltaTime )
     local right = self._right
+    local forward = self._forward
     local isLookBack = self._isLookBack
     local isLookBackChanged = isLookBack ~= self._oldLookBack
 
@@ -221,15 +225,15 @@ OnUpdate = function ( self, deltaTime )
         else
             right:CrossProduct ( UP, self._playerForward )
         end
+
+        forward:CrossProduct ( right, UP )
     end
 
-    local target = self:GetTarget ( MakePivotOrientation ( right ) )
+    local target = self:GetTarget ()
 
     local transform = GXMat4 ()
     transform:Identity ()
     transform:SetW ( target )
-
-    local forward = self._forward
 
     local alpha = GXVec3 ()
     alpha:SumScaled ( target, -self._distance, forward )
@@ -266,6 +270,13 @@ OnUpdate = function ( self, deltaTime )
     right:CrossProduct ( UP, forward )
     right:Normalize ()
     transform:SetX ( right )
+
+    local logicalRight = self._logicalRight
+    logicalRight:Clone ( right )
+
+    if isLookBack then
+        logicalRight:Reverse ()
+    end
 
     local dot = forward:DotProduct ( UP )
 
@@ -304,12 +315,44 @@ end
 local function Constructor ( self, handle, params )
     local obj = ScriptComponent ( handle )
 
+    -- Data
+    obj._forward = GXVec3 ()
+    obj._location = GXVec3 ()
+
+    obj._right = GXVec3 ()
+    obj._logicalRight = GXVec3 ()
+    obj._rightDir = 0.0
+
+    obj._pitchLowLimit = GXVec3 ()
+    obj._pitchHighLimit = GXVec3 ()
+    obj._pitchDir = 0.0
+
+    obj._distance = DISTANCES[ DISTANCE_INDEX ]
+    obj._distanceIndex = DISTANCE_INDEX
+
+    obj._isLookBack = false
+    obj._oldLookBack = false
+
+    local hitGroups = BitField ()
+    hitGroups:SetAllBits ()
+    obj._hitGroups = hitGroups
+
+    local corners = {}
+    table.insert ( corners, GXVec3 () )
+    table.insert ( corners, GXVec3 () )
+    table.insert ( corners, GXVec3 () )
+    table.insert ( corners, GXVec3 () )
+    obj._corners = corners
+
     -- Methods
     obj.Activate = Activate
     obj.GetIdealLocation = GetIdealLocation
     obj.GetRight = GetRight
     obj.GetTarget = GetTarget
+    obj.HandleCamera = HandleCamera
     obj.HandleDirection = HandleDirection
+    obj.HandleDistance = HandleDistance
+    obj.HandleLookBack = HandleLookBack
 
     -- Engine events
     obj.OnActorConstructed = OnActorConstructed

@@ -1,4 +1,3 @@
-require "av://engine/gx_vec3.lua"
 require "av://engine/script_component.lua"
 
 

@@ -1,5 +1,4 @@
 require "av://engine/bit_field.lua"
-require "av://engine/gx_mat3.lua"
 require "av://engine/gx_mat4.lua"
 require "av://engine/gx_quat.lua"
 require "av://engine/gx_vec3.lua"
@@ -123,7 +122,8 @@ end
 local function GetTarget ( self )
     local right = self._right
 
-    local m = GXMat3 ()
+    local m = GXMat4 ()
+    m:SetW ( self._playerLocation )
     m:SetX ( right )
     m:SetY ( UP )
 
@@ -131,8 +131,7 @@ local function GetTarget ( self )
     alpha:CrossProduct ( right, UP )
     m:SetZ ( alpha )
 
-    m:MultiplyVectorMatrix ( alpha, TARGET_OFFSET )
-    alpha:Sum ( alpha, self._playerLocation )
+    m:MultiplyAsPoint ( alpha, TARGET_OFFSET )
     return alpha
 end
 

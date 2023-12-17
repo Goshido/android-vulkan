@@ -8,6 +8,23 @@
 
 namespace android_vulkan {
 
+bool SoundEmitter::Play () noexcept
+{
+    AV_ASSERT ( ( _mixer != nullptr ) & static_cast<bool> ( _streamer ) )
+
+    if ( !_mixer->RequestPlay ( *this ) ) [[unlikely]]
+        return false;
+
+    _isPlaying = true;
+    _hasStream = true;
+    return true;
+}
+
+void SoundEmitter::SetVolume ( float volume ) noexcept
+{
+    _volume = std::clamp ( volume, 0.0F, 1.0F );
+}
+
 void SoundEmitter::Init ( SoundMixer &soundMixer, eSoundChannel channel ) noexcept
 {
     _channel = channel;
@@ -16,7 +33,7 @@ void SoundEmitter::Init ( SoundMixer &soundMixer, eSoundChannel channel ) noexce
 
 bool SoundEmitter::Destroy () noexcept
 {
-    if ( _isPlaying && !Stop () )
+    if ( _isPlaying && !Stop () ) [[unlikely]]
         LogWarning ( "SoundEmitter::Destroy - Can't stop." );
 
     if ( _streamer )
@@ -47,22 +64,6 @@ float SoundEmitter::GetVolume () const noexcept
     return _volume;
 }
 
-bool SoundEmitter::Play () noexcept
-{
-    AV_ASSERT ( ( _mixer != nullptr ) & static_cast<bool> ( _streamer ) )
-
-    if ( !_mixer->RequestPlay ( *this ) ) [[unlikely]]
-        return false;
-
-    _isPlaying = true;
-    return true;
-}
-
-void SoundEmitter::SetVolume ( float volume ) noexcept
-{
-    _volume = std::clamp ( volume, 0.0F, 1.0F );
-}
-
 bool SoundEmitter::IsPlaying () const noexcept
 {
     return _isPlaying;
@@ -71,6 +72,9 @@ bool SoundEmitter::IsPlaying () const noexcept
 bool SoundEmitter::Pause () noexcept
 {
     AV_ASSERT ( ( _mixer != nullptr ) & static_cast<bool> ( _streamer ) )
+
+    if ( !_hasStream )
+        return true;
 
     if ( !_mixer->RequestPause ( *this ) ) [[unlikely]]
         return false;
@@ -83,19 +87,15 @@ bool SoundEmitter::Stop () noexcept
 {
     AV_ASSERT ( ( _mixer != nullptr ) & static_cast<bool> ( _streamer ) )
 
-    if ( !_isPlaying )
+    if ( !_isPlaying | !_hasStream )
         return true;
 
-    if ( _mixer->RequestStop ( *this ) ) [[likely]]
-    {
-        if ( !_streamer->Reset () ) [[unlikely]]
-            return false;
+    if ( !_mixer->RequestStop ( *this ) ) [[unlikely]]
+        return false;
 
-        _isPlaying = false;
-        return true;
-    }
-
-    return false;
+    _hasStream = false;
+    _isPlaying = false;
+    return _streamer->Reset ();
 }
 
 bool SoundEmitter::SetSoundAsset ( std::string_view const file, bool looped ) noexcept
@@ -167,7 +167,7 @@ void SoundEmitter::OnStopRequested ( SoundEmitter &soundEmitter ) noexcept
 {
     std::thread thread (
         [ &soundEmitter ] () noexcept {
-            if ( !soundEmitter.Stop () )
+            if ( !soundEmitter.Stop () ) [[unlikely]]
             {
                 LogWarning ( "SoundEmitter::OnStopRequested - Can't stop." );
             }

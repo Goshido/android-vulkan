@@ -30,6 +30,12 @@ local function FindScript ( self, actorName, field )
 end
 
 -- Engine events
+local function OnInput ( self, inputEvent )
+    if inputEvent._type == eEventType.KeyUp and inputEvent._key == eKey.Home then
+        g_scene:Quit ()
+    end
+end
+
 local function OnPrePhysics ( self, deltaTime )
     local bobby = self:FindScript ( "Bobby", "_bobby" )
     local camera = self:FindScript ( "Camera", "_camera" )
@@ -55,6 +61,7 @@ local function Constructor ( self, handle, params )
     obj.FindScript = FindScript
 
     -- Engine events
+    obj.OnInput = OnInput
     obj.OnPrePhysics = OnPrePhysics
 
     return obj

@@ -97,7 +97,9 @@ class SoundMixer final
         StreamMap                                       _streamMap {};
         std::vector<StreamInfo>                         _streamInfo {};
         std::deque<AAudioStream*>                       _streamToResume {};
+
         StreamList                                      _free {};
+        StreamList                                      _stopping {};
         StreamList                                      _used {};
 
         bool                                            _workerFlag = true;

@@ -89,7 +89,7 @@ float32_t4x3 ExtractBoneTransform ( in uint32_t boneIdx )
     );
 }
 
-float32_t4x4 ComputeSkinTransform ( in uint32_t vertexIndex )
+float32_t4x3 ComputeSkinTransform ( in uint32_t vertexIndex )
 {
     SkinVertex const skin = g_skin[ vertexIndex ];
 
@@ -106,15 +106,8 @@ float32_t4x4 ComputeSkinTransform ( in uint32_t vertexIndex )
     float32_t4x3 const w2 = t2 * skin._influences[ 2U ]._boneWeight;
     float32_t4x3 const w3 = t3 * skin._influences[ 3U ]._boneWeight;
     float32_t4x3 const w012 = w01 + w2;
-    float32_t4x3 const w0123 = w012 + w3;
 
-    return float32_t4x4
-    (
-        float32_t4 ( w0123[ 0U ], 0.0F ),
-        float32_t4 ( w0123[ 1U ], 0.0F ),
-        float32_t4 ( w0123[ 2U ], 0.0F ),
-        float32_t4 ( w0123[ 3U ], 1.0F )
-    );
+    return w012 + w3;
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -129,7 +122,7 @@ void CS ( in uint32_t localThreadIndex: SV_GroupIndex, in uint32_t3 dispatch: SV
         return;
 
     Mesh2Vertex const reference = g_referenceMesh[ idx ];
-    float32_t4x4 const skinTransform = ComputeSkinTransform ( idx );
+    float32_t4x3 const skinTransform = ComputeSkinTransform ( idx );
     float32_t3x3 const orientation = (float32_t3x3)skinTransform;
 
     Mesh2Vertex skin;
@@ -138,7 +131,7 @@ void CS ( in uint32_t localThreadIndex: SV_GroupIndex, in uint32_t3 dispatch: SV
     // Note matrix multiplication order is in reverse order compare to the rest of engine code.
     // The reason is that quaternion unpacks to matrix with column-major behaviour.
     // Same time the engine has row-major matrix convention.
-    skin._vertex = mul ( float32_t4 ( reference._vertex, 1.0F ), skinTransform ).xyz;
+    skin._vertex = mul ( float32_t4 ( reference._vertex, 1.0F ), skinTransform );
     skin._normal = mul ( reference._normal, orientation );
     skin._tangent = mul ( reference._tangent, orientation );
     skin._bitangent = mul ( reference._bitangent, orientation );

@@ -22,8 +22,8 @@ Useful documentation is located [here](docs/documentation.md).
 ### Requirements
 
 * _Windows Vista_+ or _Monjaro KDE_
-* [_Android Studio Hedgehog | 2023.1.1_](https://developer.android.com/studio)
-* _Android Studio Gradle Plugin 8.2_
+* [_Android Studio Hedgehog | 2023.1.1 Patch 1_](https://developer.android.com/studio)
+* _Android Studio Gradle Plugin 8.2.1_
 * _Android NDK 26.1.10909125 (side by side)_
 * _Minimum _Android SDK_ version: Android 11 (API level 30)_
 * _Compile _Android SDK_ version: Android 13 (API level 34)_

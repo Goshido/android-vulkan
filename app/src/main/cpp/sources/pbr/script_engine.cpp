@@ -1,4 +1,5 @@
 #include <pbr/script_engine.hpp>
+#include <pbr/animation_blend_node.hpp>
 #include <pbr/animation_graph.hpp>
 #include <pbr/animation_player_node.hpp>
 #include <pbr/actor.hpp>
@@ -97,7 +98,8 @@ bool ScriptEngine::ExtendFrontend ( android_vulkan::Renderer &renderer,
     lua_State &vm = *_vm;
 
     AnimationGraph::Init ( vm, renderer );
-    AnimationPlayerNode::Init ( vm ),
+    AnimationPlayerNode::Init ( vm );
+    AnimationBlendNode::Init ( vm );
     BitField::Init ( vm );
     ScriptableGXMat3::Init ( vm );
     ScriptableGXMat4::Init ( vm );
@@ -273,6 +275,7 @@ void ScriptEngine::Free ( lua_State* state ) noexcept
 {
     lua_close ( state );
 
+    AnimationBlendNode::Destroy ();
     AnimationPlayerNode::Destroy ();
     AnimationGraph::Destroy ();
     SkeletalMeshComponent::Destroy ();

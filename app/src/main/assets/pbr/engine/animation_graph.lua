@@ -19,7 +19,7 @@ local function SetInput ( self, inputNode )
 
     assert ( type ( inputNode ) == "table", [[AnimationPlayerNode:SetInput - "inputNode" is not an object.]] )
 
-    assert ( inputNode._type == eObjectType.AnimationPlayerNode,
+    assert ( inputNode._type == eObjectType.AnimationPlayerNode or inputNode._type == eObjectType.AnimationBlendNode,
         [[AnimationPlayerNode:SetInput - "inputNode" incompatible with input requirements.]]
     )
 

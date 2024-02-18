@@ -10,6 +10,7 @@ end ) ()
 
 eObjectType = {
     Actor = MakeUniqueID (),
+    AnimationBlendNode = MakeUniqueID (),
     AnimationGraph = MakeUniqueID (),
     AnimationPlayerNode = MakeUniqueID (),
     BitField = MakeUniqueID (),

@@ -1,4 +1,5 @@
 require "av://engine/actor.lua"
+require "av://engine/animation_blend_node.lua"
 require "av://engine/animation_graph.lua"
 require "av://engine/animation_player_node.lua"
 require "av://engine/bit_field.lua"
@@ -32,6 +33,7 @@ local MOVE_DEAD_ZONE = 0.25
 local MOVE_SPEED = 5.0
 
 local ROTATE_SPEED = 5.0
+local IDLE_ANIMATION_SPEED = 1.0
 local RUN_ANIMATION_SPEED = 4.0
 
 local UP = GXVec3 ()
@@ -220,7 +222,18 @@ local function OnActorConstructed ( self, actor )
     runAnimationPlayer:SetEvent ( self, EVENT_RIGHT_FOOTSTEP, OnAnimationEvent )
     runAnimationPlayer:SetEvent ( self, EVENT_LEFT_FOOTSTEP, OnAnimationEvent )
 
-    animationGraph:SetInput ( runAnimationPlayer )
+    local idleAnimationPlayer = AnimationPlayerNode ()
+    self._idleAnimationPlayer = idleAnimationPlayer
+    idleAnimationPlayer:LoadAnimation ( "pbr/assets/Props/experimental/character-sandbox/bobby/idle.animation" )
+    idleAnimationPlayer:SetPlaybackSpeed ( IDLE_ANIMATION_SPEED )
+
+    local animationBlend = AnimationBlendNode ()
+    self._animationBlend = animationBlend
+    animationBlend:SetBlendFactor ( 0.0 )
+    animationBlend:SetInputA ( idleAnimationPlayer )
+    animationBlend:SetInputB ( runAnimationPlayer )
+
+    animationGraph:SetInput ( animationBlend )
     mesh:SetAnimationGraph ( animationGraph )
 
     local footstep = SoundEmitterSpatialComponent ( "Footstep", eSoundChannel.SFX )

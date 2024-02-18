@@ -47,6 +47,7 @@ Here is an example of _Lua **call stack**_. Error occurred in `goomba.lua` scrip
 ## <a id="api-reference">_API_ reference</a>
 
 - [_Actor_](./actor.md)
+- [_AnimationBlendNode_](./animation-blend-node.md)
 - [_AnimationGraph_](./animation-graph.md)
 - [_AnimationPlayerNode_](./animation-player-node.md)
 - [_BitField_](./bit-field.md)

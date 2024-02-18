@@ -37,6 +37,8 @@ constexpr uint32_t TARGET_VULKAN_VERSION = VK_MAKE_VERSION ( MAJOR, MINOR, PATCH
 
 constexpr char const* UNKNOWN_RESULT = "UNKNOWN";
 
+constexpr auto LOGCAT_ANISPAM_DELAY = std::chrono::milliseconds ( 1U );
+
 //----------------------------------------------------------------------------------------------------------------------
 
 constexpr std::pair<uint32_t, char const*> const g_vkCompositeAlphaFlagBitsKHRMapper[] =
@@ -1378,8 +1380,7 @@ bool Renderer::CheckRequiredFormats () noexcept
             g_vkFormatFeatureFlagBitsMapper
         );
 
-        constexpr auto logcatAntispamDelay = std::chrono::milliseconds ( 1U );
-        std::this_thread::sleep_for ( logcatAntispamDelay );
+        std::this_thread::sleep_for ( LOGCAT_ANISPAM_DELAY );
     };
 
     probe ( VK_FORMAT_A2R10G10B10_UNORM_PACK32, "VK_FORMAT_A2R10G10B10_UNORM_PACK32" );
@@ -2115,6 +2116,7 @@ void Renderer::PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits 
 
     _maxUniformBufferRange = static_cast<size_t> ( limits.maxUniformBufferRange );
     PrintUINT32Prop ( INDENT_1, "maxUniformBufferRange", limits.maxUniformBufferRange );
+    std::this_thread::sleep_for ( LOGCAT_ANISPAM_DELAY );
 
     PrintUINT32Prop ( INDENT_1, "maxStorageBufferRange", limits.maxStorageBufferRange );
     PrintUINT32Prop ( INDENT_1, "maxPushConstantsSize", limits.maxPushConstantsSize );
@@ -2129,6 +2131,8 @@ void Renderer::PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits 
     PrintUINT32Prop ( INDENT_1, "maxPerStageDescriptorSampledImages", limits.maxPerStageDescriptorSampledImages );
     PrintUINT32Prop ( INDENT_1, "maxPerStageDescriptorStorageImages", limits.maxPerStageDescriptorStorageImages );
     PrintUINT32Prop ( INDENT_1, "maxPerStageDescriptorInputAttachments", limits.maxPerStageDescriptorInputAttachments );
+    std::this_thread::sleep_for ( LOGCAT_ANISPAM_DELAY );
+
     PrintUINT32Prop ( INDENT_1, "maxPerStageResources", limits.maxPerStageResources );
     PrintUINT32Prop ( INDENT_1, "maxDescriptorSetSamplers", limits.maxDescriptorSetSamplers );
     PrintUINT32Prop ( INDENT_1, "maxDescriptorSetUniformBuffers", limits.maxDescriptorSetUniformBuffers );
@@ -2143,6 +2147,8 @@ void Renderer::PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits 
     PrintUINT32Prop ( INDENT_1, "maxVertexInputAttributeOffset", limits.maxVertexInputAttributeOffset );
     PrintUINT32Prop ( INDENT_1, "maxVertexInputBindingStride", limits.maxVertexInputBindingStride );
     PrintUINT32Prop ( INDENT_1, "maxVertexOutputComponents", limits.maxVertexOutputComponents );
+    std::this_thread::sleep_for ( LOGCAT_ANISPAM_DELAY );
+
     PrintUINT32Prop ( INDENT_1, "maxTessellationGenerationLevel", limits.maxTessellationGenerationLevel );
     PrintUINT32Prop ( INDENT_1, "maxTessellationPatchSize", limits.maxTessellationPatchSize );
 
@@ -2176,6 +2182,8 @@ void Renderer::PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits 
         limits.maxTessellationEvaluationOutputComponents
     );
 
+    std::this_thread::sleep_for ( LOGCAT_ANISPAM_DELAY );
+
     PrintUINT32Prop ( INDENT_1, "maxGeometryShaderInvocations", limits.maxGeometryShaderInvocations );
     PrintUINT32Prop ( INDENT_1, "maxGeometryInputComponents", limits.maxGeometryInputComponents );
     PrintUINT32Prop ( INDENT_1, "maxGeometryOutputComponents", limits.maxGeometryOutputComponents );
@@ -2186,6 +2194,7 @@ void Renderer::PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits 
     PrintUINT32Prop ( INDENT_1, "maxFragmentDualSrcAttachments", limits.maxFragmentDualSrcAttachments );
     PrintUINT32Prop ( INDENT_1, "maxFragmentCombinedOutputResources", limits.maxFragmentCombinedOutputResources );
     PrintUINT32Prop ( INDENT_1, "maxComputeSharedMemorySize", limits.maxComputeSharedMemorySize );
+    std::this_thread::sleep_for ( LOGCAT_ANISPAM_DELAY );
 
     PrintUINT32Vec3Prop ( INDENT_1, "maxComputeWorkGroupCount", limits.maxComputeWorkGroupCount );
     PrintUINT32Prop ( INDENT_1, "maxComputeWorkGroupInvocations", limits.maxComputeWorkGroupInvocations );
@@ -2202,6 +2211,7 @@ void Renderer::PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits 
     PrintFloatVec2Prop ( INDENT_1, "viewportBoundsRange", limits.viewportBoundsRange );
     PrintUINT32Prop ( INDENT_1, "viewportSubPixelBits", limits.viewportSubPixelBits );
     PrintSizeProp ( INDENT_1, "minMemoryMapAlignment", limits.minMemoryMapAlignment );
+    std::this_thread::sleep_for ( LOGCAT_ANISPAM_DELAY );
 
     PrintSizeProp ( INDENT_1,
         "minTexelBufferOffsetAlignment",
@@ -2217,6 +2227,7 @@ void Renderer::PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits 
         "minStorageBufferOffsetAlignment",
         static_cast<size_t> ( limits.minStorageBufferOffsetAlignment )
     );
+    std::this_thread::sleep_for ( LOGCAT_ANISPAM_DELAY );
 
     PrintINT32Prop ( INDENT_1, "minTexelOffset", limits.minTexelOffset );
     PrintUINT32Prop ( INDENT_1, "maxTexelOffset", limits.maxTexelOffset );
@@ -2228,6 +2239,7 @@ void Renderer::PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits 
     PrintUINT32Prop ( INDENT_1, "maxFramebufferWidth", limits.maxFramebufferWidth );
     PrintUINT32Prop ( INDENT_1, "maxFramebufferHeight", limits.maxFramebufferHeight );
     PrintUINT32Prop ( INDENT_1, "maxFramebufferLayers", limits.maxFramebufferLayers );
+    std::this_thread::sleep_for ( LOGCAT_ANISPAM_DELAY );
 
     PrintVkFlagsProp ( INDENT_1,
         "framebufferColorSampleCounts",
@@ -2266,6 +2278,8 @@ void Renderer::PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits 
         g_vkSampleCountFlagMapper
     );
 
+    std::this_thread::sleep_for ( LOGCAT_ANISPAM_DELAY );
+
     PrintVkFlagsProp ( INDENT_1,
         "sampledImageIntegerSampleCounts",
         limits.sampledImageIntegerSampleCounts,
@@ -2294,6 +2308,8 @@ void Renderer::PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits 
         g_vkSampleCountFlagMapper
     );
 
+    std::this_thread::sleep_for ( LOGCAT_ANISPAM_DELAY );
+
     PrintUINT32Prop ( INDENT_1, "maxSampleMaskWords", limits.maxSampleMaskWords );
     PrintVkBool32Prop ( INDENT_1, "timestampComputeAndGraphics", limits.timestampComputeAndGraphics );
     PrintFloatProp ( INDENT_1, "timestampPeriod", limits.timestampPeriod );
@@ -2307,6 +2323,7 @@ void Renderer::PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits 
     PrintFloatProp ( INDENT_1, "lineWidthGranularity", limits.lineWidthGranularity );
     PrintVkBool32Prop ( INDENT_1, "strictLines", limits.strictLines );
     PrintVkBool32Prop ( INDENT_1, "standardSampleLocations", limits.standardSampleLocations );
+    std::this_thread::sleep_for ( LOGCAT_ANISPAM_DELAY );
 
     PrintSizeProp ( INDENT_1,
         "optimalBufferCopyOffsetAlignment",

@@ -45,7 +45,7 @@ class AnimationPlayerNode final : public JointProviderNode
         float                                                               _timeToFrame = 0.0F;
         float                                                               _playbackSpeed = 1.0F;
 
-        static std::unordered_map<AnimationPlayerNode const*, Reference>    _nodes;
+        static std::unordered_map<AnimationPlayerNode const*, Reference>    _apNodes;
 
     public:
         AnimationPlayerNode () = default;

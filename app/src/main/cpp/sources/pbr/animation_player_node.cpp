@@ -24,7 +24,7 @@ namespace {
 
 } // end of anonymous namespace
 
-std::unordered_map<AnimationPlayerNode const*, AnimationPlayerNode::Reference> AnimationPlayerNode::_nodes {};
+std::unordered_map<AnimationPlayerNode const*, AnimationPlayerNode::Reference> AnimationPlayerNode::_apNodes {};
 
 void AnimationPlayerNode::Init ( lua_State &vm ) noexcept
 {
@@ -63,7 +63,7 @@ void AnimationPlayerNode::Init ( lua_State &vm ) noexcept
 
 void AnimationPlayerNode::Destroy () noexcept
 {
-    _nodes.clear ();
+    _apNodes.clear ();
 }
 
 JointProviderNode::Result AnimationPlayerNode::GetJoint ( std::string const &name ) noexcept
@@ -272,7 +272,7 @@ int AnimationPlayerNode::OnCreate ( lua_State* state )
 
     auto ap = std::make_unique<AnimationPlayerNode> ();
     AnimationPlayerNode* handle = ap.get ();
-    _nodes.emplace ( handle, std::move ( ap ) );
+    _apNodes.emplace ( handle, std::move ( ap ) );
 
     lua_pushlightuserdata ( state, handle );
     return 1;
@@ -283,7 +283,7 @@ int AnimationPlayerNode::OnDestroy ( lua_State* state )
     auto* handle = static_cast<AnimationPlayerNode*> ( lua_touserdata ( state, 1 ) );
     handle->UnregisterSelf ();
 
-    [[maybe_unused]] auto const result = _nodes.erase ( handle );
+    [[maybe_unused]] auto const result = _apNodes.erase ( handle );
     AV_ASSERT ( result > 0U )
 
     lua_getglobal ( state, GLOBAL_TABLE );

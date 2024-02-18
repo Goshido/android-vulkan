@@ -112,7 +112,7 @@ Method sets input node as joint provider for pose calculation.
 
 **Parameters:**
 
-- `inputNode` [_required, readonly, [AnimationPlayerNode](./animation-player-node.md)_]: input node
+- `inputNode` [_required, readonly, [AnimationPlayerNode](./animation-player-node.md) or [AnimationBlendNode](./animation-blend-node.md)_]: input node
 
 **Return values:**
 

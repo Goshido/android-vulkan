@@ -44,6 +44,9 @@ local FOOTSTEP_VOLUME = 0.25
 local EVENT_RIGHT_FOOTSTEP = 10
 local EVENT_LEFT_FOOTSTEP = 48
 
+local MOVE_TRANSITION = 0.5
+local MOVE_TRANSITION_FACTOR = 1.0 / MOVE_TRANSITION
+
 -- Forward declaration
 local OnInput
 local OnPostPhysics
@@ -117,7 +120,7 @@ local function ResolveCollisions ( self )
     end
 end
 
-local function UpdateVisual ( self )
+local function UpdateVisual ( self, deltaTime )
     local t = GXMat4 ()
     t:Identity ()
 
@@ -139,6 +142,20 @@ local function UpdateVisual ( self )
 
     v:MultiplyScalar ( self._location, g_scene:GetPhysicsToRendererScaleFactor () )
     t:SetW ( v )
+
+    local f = self._moveAnimFactor
+    f = f + deltaTime * MOVE_TRANSITION_FACTOR * ( self._isMoving and 1.0 or -1.0 )
+
+    if f > 1.0 then 
+        f = 1.0
+    end
+
+    if f < 0.0 then
+        f = 0.0
+    end
+
+    self._moveAnimFactor = f
+    self._animationBlend:SetBlendFactor ( f )
 
     self._mesh:SetLocal ( t )
 end
@@ -273,7 +290,7 @@ end
 OnPostPhysics = function ( self, deltaTime )
     self:UpdateLocation ( deltaTime )
     self:ResolveCollisions ()
-    self:UpdateVisual ()
+    self:UpdateVisual ( deltaTime )
     self:ProcessFootstep ()
 end
 
@@ -291,6 +308,7 @@ local function Constructor ( self, handle, params )
     obj._velocity = GXVec3 ()
 
     obj._isMoving = false
+    obj._moveAnimFactor = 0.0
     obj._moveX = 0.0
     obj._moveY = 0.0
 

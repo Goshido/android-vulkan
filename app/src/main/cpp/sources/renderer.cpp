@@ -375,10 +375,10 @@ std::unordered_set<uint32_t> g_validationFilter =
     // It happens at UI composition renderpass which can not be multipass by design.
     0x00000000U,
 
-    // Attempting to enable extension VK_EXT_debug_utils, but this extension is intended to support use
-    // by applications when debugging and it is strongly recommended that it be otherwise avoided.
-    // [2022/07/26] Yeah. I'm pretty aware about that. Thank you.
-    0x822806FAU
+    // Attempting to enable extension VK_EXT_debug_utils, but this extension is intended to support use by
+    // applications when debugging and it is strongly recommended that it be otherwise avoided.
+    // [2024/02/19] Yeah. I'm pretty aware about that. Thank you.
+    0x0675DC32E
 };
 
 constexpr std::pair<uint32_t, char const*> const g_vkDebugUtilsMessageSeverityFlagBitsEXTMapper[] =

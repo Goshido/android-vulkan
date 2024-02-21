@@ -18,11 +18,6 @@ bool Rainbow::IsReady () noexcept
 
 bool Rainbow::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) noexcept
 {
-    uint32_t framebufferIndex = UINT32_MAX;
-
-    if ( !BeginFrame ( renderer, framebufferIndex ) )
-        return true;
-
     VkDevice device = renderer.GetDevice ();
 
     bool result = android_vulkan::Renderer::CheckVkResult (
@@ -67,6 +62,11 @@ bool Rainbow::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) n
     );
 
     if ( !result )
+        return true;
+
+    uint32_t framebufferIndex = UINT32_MAX;
+
+    if ( !BeginFrame ( renderer, framebufferIndex ) )
         return true;
 
     constexpr float CIRCLE_THIRD = GX_MATH_DOUBLE_PI / 3.0F;
@@ -443,6 +443,16 @@ bool Rainbow::CreateRenderPass ( android_vulkan::Renderer &renderer ) noexcept
         .pPreserveAttachments = nullptr
     };
 
+    constexpr VkSubpassDependency dependency {
+        .srcSubpass = VK_SUBPASS_EXTERNAL,
+        .dstSubpass = 0U,
+        .srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+        .dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+        .srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+        .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+        .dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
+    };
+
     VkRenderPassCreateInfo const renderPassCreateInfo
     {
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
@@ -452,8 +462,8 @@ bool Rainbow::CreateRenderPass ( android_vulkan::Renderer &renderer ) noexcept
         .pAttachments = &attachment0,
         .subpassCount = 1U,
         .pSubpasses = &subpassDescription,
-        .dependencyCount = 0U,
-        .pDependencies = nullptr
+        .dependencyCount = 1U,
+        .pDependencies = &dependency
     };
 
     const bool result = android_vulkan::Renderer::CheckVkResult (

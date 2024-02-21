@@ -24,7 +24,7 @@ Useful documentation is located [here](docs/documentation.md).
 * _Windows Vista_+ or _Monjaro KDE_
 * [_Android Studio Hedgehog | 2023.1.1 Patch 2_](https://developer.android.com/studio)
 * _Android Studio Gradle Plugin 8.2.2_
-* _Android NDK 26.1.10909125 (side by side)_
+* _Android NDK 26.2.11394342 (side by side)_
 * _Minimum _Android SDK_ version: Android 11 (API level 30)_
 * _Compile _Android SDK_ version: Android 13 (API level 34)_
 * _Android SDK Build-Tools 34.0.0_
@@ -32,14 +32,14 @@ Useful documentation is located [here](docs/documentation.md).
 * _Kotlin 1.9.20_
 * _Kotlin Gradle plugin 1.9.20_
 * _CMake 3.22.1_
-* [_Gradle 8.5-bin_](https://services.gradle.org/distributions/)
+* [_Gradle 8.6-bin_](https://services.gradle.org/distributions/)
 * [_DirectX Shader Compiler 1.7.2308.10184_](https://github.com/microsoft/DirectXShaderCompiler) `ea4ff2972b32fe005e91ddb336b2471d6ab3bdd6`
 * [_libfreetype 2.13.2_](https://gitlab.freedesktop.org/freetype/freetype) `8c5ec8dd63ffd3f76ba0531dda15d2993ab0f20b`
 * [_libogg 1.3.5_](https://gitlab.xiph.org/xiph/ogg) `db5c7a49ce7ebda47b15b78471e78fb7f2483e22`
 * [_libvorbis 1.3.7_](https://gitlab.xiph.org/xiph/vorbis) `84c023699cdf023a32fa4ded32019f194afcdad0`
 * [_libvorbisfile 1.3.7_](https://gitlab.xiph.org/xiph/vorbis) `84c023699cdf023a32fa4ded32019f194afcdad0`
 * [_stb_image 2.28_](https://github.com/nothings/stb) `beebb24b945efdea3b9bba23affb8eb3ba8982e7`
-* [_Vulkan Validation Layers_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) `0117636eacfae8ae978b34618dd9f37614efd973`
+* [_Vulkan Validation Layers_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) `82be16cb105068820a02962395fff3e81036254c`
 * [_Lua 5.4.6_](https://github.com/lua/lua) `6baee9ef9d5657ab582c8a4b9f885ec58ed502d0`
 * Real _Android 11_ device with _Vulkan 1.1.131_ support
 * [_ARM Neon A64_](https://developer.arm.com/architectures/instruction-sets/simd-isas/neon/neon-programmers-guide-for-armv8-a/introducing-neon-for-armv8-a) native support

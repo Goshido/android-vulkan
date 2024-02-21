@@ -74,7 +74,7 @@ local animationBlendNode = AnimationBlendNode ()
 
 ## <a id="method-set-blend-factor">`SetBlendFactor ( factor )`</a>
 
-Method set blend factor between input animations. `0.0` factor corresponds input animation _A_. `1.0` factor corresponds input animation _B_. Values between range will produce various mixes between input animations.
+Method sets blend factor between input animations. `0.0` factor corresponds input animation _A_. `1.0` factor corresponds input animation _B_. Values between range will produce various mixes between input animations.
 
 **Parameters:**
 

@@ -17,9 +17,12 @@ class GameAnalytic final : public Game
         GameAnalytic &operator = ( const GameAnalytic &other ) = delete;
 
     private:
-        bool CreateDescriptorSet ( android_vulkan::Renderer &renderer ) noexcept override;
-        bool CreatePipelineLayout ( android_vulkan::Renderer &renderer ) noexcept override;
-        bool LoadGPUContent ( android_vulkan::Renderer &renderer ) noexcept override;
+        [[nodiscard]] bool CreateMaterialDescriptorSetLayout ( android_vulkan::Renderer &renderer ) noexcept override;
+        [[nodiscard]] bool CreateDescriptorSet ( android_vulkan::Renderer &renderer ) noexcept override;
+
+        [[nodiscard]] bool LoadGPUContent ( android_vulkan::Renderer &renderer,
+            VkCommandPool commandPool
+        ) noexcept override;
 };
 
 } // namespace rotating_mesh

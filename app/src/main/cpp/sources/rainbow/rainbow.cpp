@@ -446,9 +446,9 @@ bool Rainbow::CreateRenderPass ( android_vulkan::Renderer &renderer ) noexcept
     constexpr VkSubpassDependency dependency {
         .srcSubpass = VK_SUBPASS_EXTERNAL,
         .dstSubpass = 0U,
-        .srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+        .srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
         .dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-        .srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+        .srcAccessMask = VK_ACCESS_NONE,
         .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
         .dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
     };

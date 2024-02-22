@@ -68,7 +68,7 @@ Documentation:
 
 Project:
 - Android Studio Giraffe | 2022.3.1 Patch 2 support
-- Android Studio Gradle Plugin has been updated to 8.1.2
+- Android Studio Gradle Plugin has been updated to 8.2.2
 - Android NDK has been updated to 26.2.11394342
 - Kotlin has been updated to 1.9.20
 - Kotlin Gradle plugin has been updated to 1.9.20

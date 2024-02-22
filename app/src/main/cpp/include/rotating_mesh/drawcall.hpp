@@ -13,12 +13,8 @@ struct Drawcall final
     VkDescriptorSet                 _descriptorSet;
 
     android_vulkan::Texture2D       _diffuse;
-    VkSampler                       _diffuseSampler;
-
-    android_vulkan::MeshGeometry    _mesh;
-
     android_vulkan::Texture2D       _normal;
-    VkSampler                       _normalSampler;
+    android_vulkan::MeshGeometry    _mesh;
 };
 
 } // namespace rotating_mesh

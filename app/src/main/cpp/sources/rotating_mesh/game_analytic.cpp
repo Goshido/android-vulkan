@@ -18,24 +18,78 @@ GameAnalytic::GameAnalytic () noexcept:
     // NOTHING
 }
 
+bool GameAnalytic::CreateMaterialDescriptorSetLayout ( android_vulkan::Renderer &renderer ) noexcept
+{
+    constexpr VkDescriptorSetLayoutBinding const materialBindings[] = {
+        {
+            .binding = 0U,
+            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+            .descriptorCount = 1U,
+            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+            .pImmutableSamplers = nullptr
+        },
+        {
+            .binding = 1U,
+            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+            .descriptorCount = 1U,
+            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+            .pImmutableSamplers = nullptr
+        }
+    };
+
+    VkDescriptorSetLayoutCreateInfo dsInfo {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .bindingCount = static_cast<uint32_t> ( std::size ( materialBindings ) ),
+        .pBindings = materialBindings
+    };
+
+    VkDevice device = renderer.GetDevice ();
+
+    bool result = android_vulkan::Renderer::CheckVkResult (
+        vkCreateDescriptorSetLayout ( device, &dsInfo, nullptr, &_materialDSLayout ),
+        "GameLUT::CreateMaterialDescriptorSetLayout",
+        "Can't create material descriptor set layout"
+    );
+
+    if ( !result ) [[unlikely]]
+        return false;
+
+    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "Game::_materialDSLayout" )
+    return true;
+}
+
 bool GameAnalytic::CreateDescriptorSet ( android_vulkan::Renderer &renderer ) noexcept
 {
-    VkDevice device = renderer.GetDevice ();
-    constexpr size_t uniqueFeatureCount = 3U;
-    constexpr size_t featureCount = 5U;
+    size_t const materialEntries = MATERIAL_COUNT * 2U;
 
-    VkDescriptorPoolSize features[ uniqueFeatureCount ];
-    InitDescriptorPoolSizeCommon ( features );
+    VkDescriptorPoolSize const poolSizes[] = {
+        {
+            .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            .descriptorCount = DUAL_COMMAND_BUFFER
+        },
+        {
+            .type = VK_DESCRIPTOR_TYPE_SAMPLER,
+            .descriptorCount = 1U,
+        },
+        {
+            .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+            .descriptorCount = static_cast<uint32_t> ( materialEntries )
+        }
+    };
 
     VkDescriptorPoolCreateInfo const poolInfo
     {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0U,
-        .maxSets = static_cast<uint32_t> ( MATERIAL_COUNT ),
-        .poolSizeCount = static_cast<uint32_t> ( std::size ( features ) ),
-        .pPoolSizes = features
+        .maxSets = static_cast<uint32_t> ( MATERIAL_COUNT ) + DUAL_COMMAND_BUFFER + 1U,
+        .poolSizeCount = static_cast<uint32_t> ( std::size ( poolSizes ) ),
+        .pPoolSizes = poolSizes
     };
+
+    VkDevice device = renderer.GetDevice ();
 
     bool result = android_vulkan::Renderer::CheckVkResult (
         vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_descriptorPool ),
@@ -48,22 +102,16 @@ bool GameAnalytic::CreateDescriptorSet ( android_vulkan::Renderer &renderer ) no
 
     AV_REGISTER_DESCRIPTOR_POOL ( "Game::_descriptorPool" )
 
-    VkDescriptorSetLayout layouts[ MATERIAL_COUNT ];
-    VkDescriptorSet sets[ MATERIAL_COUNT ];
-
-    for ( auto &item : layouts )
-        item = _descriptorSetLayout;
-
-    VkDescriptorSetAllocateInfo const setAllocateInfo
+    VkDescriptorSetAllocateInfo setAllocateInfo
     {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
         .pNext = nullptr,
         .descriptorPool = _descriptorPool,
-        .descriptorSetCount = poolInfo.maxSets,
-        .pSetLayouts = layouts
+        .descriptorSetCount = 1U,
+        .pSetLayouts = &_fixedDSLayout
     };
 
-    result = android_vulkan::Renderer::CheckVkResult ( vkAllocateDescriptorSets ( device, &setAllocateInfo, sets ),
+    result = android_vulkan::Renderer::CheckVkResult ( vkAllocateDescriptorSets ( device, &setAllocateInfo, &_fixedDS ),
         "GameAnalytic::CreateDescriptorSet",
         "Can't allocate descriptor set"
     );
@@ -71,150 +119,102 @@ bool GameAnalytic::CreateDescriptorSet ( android_vulkan::Renderer &renderer ) no
     if ( !result )
         return false;
 
-    constexpr size_t writeSetCount = featureCount * MATERIAL_COUNT;
-    VkWriteDescriptorSet writeSets[ writeSetCount ];
-    VkDescriptorImageInfo diffuseInfo[ MATERIAL_COUNT ];
-    VkDescriptorImageInfo normalInfo[ MATERIAL_COUNT ];
+    VkDescriptorImageInfo const samplerInfo {
+        .sampler = _sampler,
+        .imageView = VK_NULL_HANDLE,
+        .imageLayout = VK_IMAGE_LAYOUT_UNDEFINED
+    };
 
-    VkDescriptorBufferInfo bufferInfo;
-    bufferInfo.buffer = _transformBuffer.GetBuffer ();
-    bufferInfo.range = _transformBuffer.GetSize ();
-    bufferInfo.offset = 0U;
+    VkWriteDescriptorSet const fixedWrite {
+        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        .pNext = nullptr,
+        .dstSet = _fixedDS,
+        .dstBinding = 0U,
+        .dstArrayElement = 0U,
+        .descriptorCount = 1U,
+        .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
+        .pImageInfo = &samplerInfo,
+        .pBufferInfo = nullptr,
+        .pTexelBufferView = nullptr
+    };
+
+    vkUpdateDescriptorSets ( device, 1U, &fixedWrite, 0U, nullptr );
+
+    std::vector<VkDescriptorSetLayout> materialLayouts ( MATERIAL_COUNT, _materialDSLayout );
+    setAllocateInfo.descriptorSetCount = static_cast<uint32_t> ( MATERIAL_COUNT );
+    setAllocateInfo.pSetLayouts = materialLayouts.data ();
+
+    result = android_vulkan::Renderer::CheckVkResult (
+        vkAllocateDescriptorSets ( device, &setAllocateInfo, _materialDS ),
+        "GameAnalytic::CreateDescriptorSet",
+        "Can't allocate material descriptor sets"
+    );
+
+    if ( !result )
+        return false;
+
+    constexpr VkDescriptorImageInfo templateImageInfo {
+        .sampler = VK_NULL_HANDLE,
+        .imageView = VK_NULL_HANDLE,
+        .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+    };
+
+    std::vector<VkDescriptorImageInfo> imageInfo ( materialEntries, templateImageInfo );
+
+    constexpr VkWriteDescriptorSet writeTemplate {
+        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        .pNext = nullptr,
+        .dstSet = VK_NULL_HANDLE,
+        .dstBinding = 0U,
+        .dstArrayElement = 0U,
+        .descriptorCount = 1U,
+        .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+        .pImageInfo = nullptr,
+        .pBufferInfo = nullptr,
+        .pTexelBufferView = nullptr
+    };
+
+    std::vector<VkWriteDescriptorSet> writes ( materialEntries, writeTemplate );
 
     for ( size_t i = 0U; i < MATERIAL_COUNT; ++i )
     {
-        Drawcall &drawcall = _drawcalls[ i ];
-        drawcall._descriptorSet = sets[ i ];
+        Drawcall& drawcall = _drawcalls[ i ];
 
-        VkDescriptorImageInfo &diffuseImage = diffuseInfo[ i ];
-        diffuseImage.sampler = drawcall._diffuseSampler;
+        VkDescriptorSet ds = _materialDS[ i ];
+        drawcall._descriptorSet = ds;
+
+        size_t idx = i * 2U;
+        VkDescriptorImageInfo &diffuseImage = imageInfo[ idx ];
         diffuseImage.imageView = drawcall._diffuse.GetImageView ();
-        diffuseImage.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-        VkDescriptorImageInfo &normalImage = normalInfo[ i ];
-        normalImage.sampler = drawcall._normalSampler;
+        VkWriteDescriptorSet &materialDiffuseWrite = writes[ idx ];
+        materialDiffuseWrite.dstSet = ds;
+        materialDiffuseWrite.dstBinding = 0U;
+        materialDiffuseWrite.pImageInfo = &diffuseImage;
+
+        VkDescriptorImageInfo &normalImage = imageInfo[ ++idx ];
         normalImage.imageView = drawcall._normal.GetImageView ();
-        normalImage.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-        size_t const pivotIndex = i * featureCount;
-
-        VkWriteDescriptorSet &ubWriteSet = writeSets[ pivotIndex ];
-        ubWriteSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        ubWriteSet.pNext = nullptr;
-        ubWriteSet.dstSet = drawcall._descriptorSet;
-        ubWriteSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        ubWriteSet.dstBinding = 0U;
-        ubWriteSet.dstArrayElement = 0U;
-        ubWriteSet.descriptorCount = 1U;
-        ubWriteSet.pBufferInfo = &bufferInfo;
-        ubWriteSet.pImageInfo = nullptr;
-        ubWriteSet.pTexelBufferView = nullptr;
-
-        VkWriteDescriptorSet &diffuseImageWriteSet = writeSets[ pivotIndex + 1U ];
-        diffuseImageWriteSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        diffuseImageWriteSet.pNext = nullptr;
-        diffuseImageWriteSet.dstSet = drawcall._descriptorSet;
-        diffuseImageWriteSet.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-        diffuseImageWriteSet.dstBinding = 1U;
-        diffuseImageWriteSet.dstArrayElement = 0U;
-        diffuseImageWriteSet.descriptorCount = 1U;
-        diffuseImageWriteSet.pBufferInfo = nullptr;
-        diffuseImageWriteSet.pImageInfo = &diffuseImage;
-        diffuseImageWriteSet.pTexelBufferView = nullptr;
-
-        VkWriteDescriptorSet &diffuseSamplerWriteSet = writeSets[ pivotIndex + 2U ];
-        diffuseSamplerWriteSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        diffuseSamplerWriteSet.pNext = nullptr;
-        diffuseSamplerWriteSet.dstSet = drawcall._descriptorSet;
-        diffuseSamplerWriteSet.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
-        diffuseSamplerWriteSet.dstBinding = 2U;
-        diffuseSamplerWriteSet.dstArrayElement = 0U;
-        diffuseSamplerWriteSet.descriptorCount = 1U;
-        diffuseSamplerWriteSet.pBufferInfo = nullptr;
-        diffuseSamplerWriteSet.pImageInfo = &diffuseImage;
-        diffuseSamplerWriteSet.pTexelBufferView = nullptr;
-
-        VkWriteDescriptorSet &normalImageWriteSet = writeSets[ pivotIndex + 3U ];
-        normalImageWriteSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        normalImageWriteSet.pNext = nullptr;
-        normalImageWriteSet.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-        normalImageWriteSet.dstSet = drawcall._descriptorSet;
-        normalImageWriteSet.dstBinding = 3U;
-        normalImageWriteSet.dstArrayElement = 0U;
-        normalImageWriteSet.descriptorCount = 1U;
-        normalImageWriteSet.pBufferInfo = nullptr;
-        normalImageWriteSet.pImageInfo = &normalImage;
-        normalImageWriteSet.pTexelBufferView = nullptr;
-
-        VkWriteDescriptorSet &normalSamplerWriteSet = writeSets[ pivotIndex + 4U ];
-        normalSamplerWriteSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        normalSamplerWriteSet.pNext = nullptr;
-        normalSamplerWriteSet.dstSet = drawcall._descriptorSet;
-        normalSamplerWriteSet.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
-        normalSamplerWriteSet.dstBinding = 4U;
-        normalSamplerWriteSet.dstArrayElement = 0U;
-        normalSamplerWriteSet.descriptorCount = 1U;
-        normalSamplerWriteSet.pBufferInfo = nullptr;
-        normalSamplerWriteSet.pImageInfo = &normalImage;
-        normalSamplerWriteSet.pTexelBufferView = nullptr;
+        VkWriteDescriptorSet &materialNormalWrite = writes[ idx ];
+        materialNormalWrite.dstSet = ds;
+        materialNormalWrite.dstBinding = 1U;
+        materialNormalWrite.pImageInfo = &normalImage;
     }
 
-    vkUpdateDescriptorSets ( device, static_cast<uint32_t> ( writeSetCount ), writeSets, 0U, nullptr );
-    return true;
+    vkUpdateDescriptorSets ( device, static_cast<uint32_t> ( materialEntries ), writes.data (), 0U, nullptr );
+
+    std::vector<VkDescriptorSetLayout> onceLayouts ( DUAL_COMMAND_BUFFER, _onceDSLayout );
+    setAllocateInfo.descriptorSetCount = static_cast<uint32_t> ( DUAL_COMMAND_BUFFER );
+    setAllocateInfo.pSetLayouts = onceLayouts.data ();
+
+    return android_vulkan::Renderer::CheckVkResult (
+        vkAllocateDescriptorSets ( device, &setAllocateInfo, _onceDS ),
+        "GameAnalytic::CreateDescriptorSet",
+        "Can't allocate once descriptor sets"
+    );
 }
 
-bool GameAnalytic::CreatePipelineLayout ( android_vulkan::Renderer &renderer ) noexcept
-{
-    VkDescriptorSetLayoutBinding bindings[ 5U ];
-    InitDescriptorSetLayoutBindingCommon ( bindings );
-
-    VkDescriptorSetLayoutCreateInfo const descriptorSetInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0U,
-        .bindingCount = static_cast<uint32_t> ( std::size ( bindings ) ),
-        .pBindings = bindings
-    };
-
-    VkDevice device = renderer.GetDevice ();
-
-    bool result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateDescriptorSetLayout ( device, &descriptorSetInfo, nullptr, &_descriptorSetLayout ),
-        "GameAnalytic::CreatePipelineLayout",
-        "Can't create descriptor set layout"
-    );
-
-    if ( !result )
-        return false;
-
-    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "Game::_descriptorSetLayout" )
-
-    VkPipelineLayoutCreateInfo const pipelineLayoutInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0U,
-        .setLayoutCount = 1U,
-        .pSetLayouts = &_descriptorSetLayout,
-        .pushConstantRangeCount = 0U,
-        .pPushConstantRanges = nullptr
-    };
-
-    result = android_vulkan::Renderer::CheckVkResult (
-        vkCreatePipelineLayout ( device, &pipelineLayoutInfo, nullptr, &_pipelineLayout ),
-        "GameAnalytic::CreatePipelineLayout",
-        "Can't create pipeline layout"
-    );
-
-    if ( !result )
-        return false;
-
-    AV_REGISTER_PIPELINE_LAYOUT ( "Game::_pipelineLayout" )
-    return true;
-}
-
-bool GameAnalytic::LoadGPUContent ( android_vulkan::Renderer &renderer ) noexcept
+bool GameAnalytic::LoadGPUContent ( android_vulkan::Renderer &renderer, VkCommandPool commandPool ) noexcept
 {
     constexpr size_t commandBufferCount = TEXTURE_COMMAND_BUFFERS + MATERIAL_COUNT;
     VkCommandBuffer commandBuffers[ commandBufferCount ] = { VK_NULL_HANDLE };
@@ -223,7 +223,7 @@ bool GameAnalytic::LoadGPUContent ( android_vulkan::Renderer &renderer ) noexcep
     {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
         .pNext = nullptr,
-        .commandPool = _commandPool,
+        .commandPool = commandPool,
         .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
         .commandBufferCount = static_cast<uint32_t> ( commandBufferCount )
     };
@@ -255,7 +255,7 @@ bool GameAnalytic::LoadGPUContent ( android_vulkan::Renderer &renderer ) noexcep
         item._normal.FreeTransferResources ( renderer );
     }
 
-    vkFreeCommandBuffers ( renderer.GetDevice (), _commandPool, allocateInfo.commandBufferCount, commandBuffers );
+    vkFreeCommandBuffers ( renderer.GetDevice (), commandPool, allocateInfo.commandBufferCount, commandBuffers );
     return true;
 }
 

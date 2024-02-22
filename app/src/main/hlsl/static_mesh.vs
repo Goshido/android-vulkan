@@ -1,4 +1,4 @@
-[[vk::binding ( 0 )]]
+[[vk::binding ( 0, 1 )]]
 cbuffer Transform:                              register ( b0 )
 {
     float32_t4x4            _transform;

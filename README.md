@@ -33,7 +33,7 @@ Useful documentation is located [here](docs/documentation.md).
 * _Kotlin Gradle plugin 1.9.20_
 * _CMake 3.22.1_
 * [_Gradle 8.6-bin_](https://services.gradle.org/distributions/)
-* [_DirectX Shader Compiler 1.7.2308.10184_](https://github.com/microsoft/DirectXShaderCompiler) `ea4ff2972b32fe005e91ddb336b2471d6ab3bdd6`
+* [_DirectX Shader Compiler 1.8.2403.10063_](https://github.com/microsoft/DirectXShaderCompiler) `fdbecd30f80b9538dae8fee1efd48612c5c6a703`
 * [_libfreetype 2.13.2_](https://gitlab.freedesktop.org/freetype/freetype) `8c5ec8dd63ffd3f76ba0531dda15d2993ab0f20b`
 * [_libogg 1.3.5_](https://gitlab.xiph.org/xiph/ogg) `db5c7a49ce7ebda47b15b78471e78fb7f2483e22`
 * [_libvorbis 1.3.7_](https://gitlab.xiph.org/xiph/vorbis) `84c023699cdf023a32fa4ded32019f194afcdad0`

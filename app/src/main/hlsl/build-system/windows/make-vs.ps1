@@ -2,7 +2,7 @@ $base = $args[ 0 ]
 
 $params =
     "-E", "VS",
-    "-T", "vs_6_7",
+    "-T", "vs_6_8",
     "-Fo", "${BASE_DST}\${base}.vs.spv",
     "${BASE_SRC}\${base}.vs"
 

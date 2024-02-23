@@ -22,7 +22,7 @@
   - ✅ Readme
 - ✅ VVL
   - ✅ Binary
-  - ❌ Check new validation errors
+  - ✅ Check new validation errors
   - ✅ Compilation script repo
   - ✅ VVL docs
   - ✅ Readme

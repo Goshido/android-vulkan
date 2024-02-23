@@ -157,7 +157,7 @@ bool ScriptEngine::InitInterfaceFunctions ( android_vulkan::Renderer &renderer,
 
 bool ScriptEngine::InitLua () noexcept
 {
-    _vm.reset ( lua_newstate ( &ScriptEngine::OnAlloc, nullptr ) );
+    _vm.reset ( lua_newstate ( &ScriptEngine::OnAlloc, nullptr, 0U ) );
 
     if ( !_vm )
     {

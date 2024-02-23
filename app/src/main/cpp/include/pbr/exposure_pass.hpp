@@ -35,6 +35,7 @@ class ExposurePass final
         VkImage                             _syncMip5 = VK_NULL_HANDLE;
         VkImageView                         _syncMip5View = VK_NULL_HANDLE;
         Memory                              _syncMip5Memory {};
+
         bool                                _isNeedTransitLayout = true;
 
         VkBuffer                            _globalCounter = VK_NULL_HANDLE;

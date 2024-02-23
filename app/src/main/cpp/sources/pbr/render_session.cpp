@@ -29,9 +29,6 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
 {
     AV_TRACE ( "End render session" )
 
-    if ( !_presentRenderPass.AcquirePresentTarget ( renderer ) ) [[unlikely]]
-        return false;
-
     size_t const commandBufferIndex = _writingCommandInfo;
     CommandInfo &commandInfo = _commandInfo[ _writingCommandInfo ];
     _writingCommandInfo = ++_writingCommandInfo % DUAL_COMMAND_BUFFER;
@@ -46,6 +43,9 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
     );
 
     if ( !result ) [[unlikely]]
+        return false;
+
+    if ( !_presentRenderPass.AcquirePresentTarget ( renderer, commandInfo._acquire ) ) [[unlikely]]
         return false;
 
     result = android_vulkan::Renderer::CheckVkResult ( vkResetFences ( device, 1U, &fence ),
@@ -127,7 +127,7 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
     _toneMapperPass.Execute ( commandBuffer );
 
     result = _uiPass.Execute ( commandBuffer, commandBufferIndex ) &&
-        _presentRenderPass.End ( renderer, commandBuffer, fence );
+        _presentRenderPass.End ( renderer, commandBuffer, commandInfo._acquire, fence );
 
     if ( !result ) [[unlikely]]
         return false;
@@ -176,7 +176,7 @@ bool RenderSession::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
         _toneMapperPass.Init ( renderer ) &&
         _defaultTextureManager.Init ( renderer, commandInfo._pool ) &&
         _samplerManager.Init ( device ) &&
-        _presentRenderPass.OnInitDevice ( renderer ) &&
+        _presentRenderPass.OnInitDevice () &&
         _uiPass.OnInitDevice ( renderer, _samplerManager, _defaultTextureManager.GetTransparent ()->GetImageView () );
 }
 
@@ -206,6 +206,12 @@ void RenderSession::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexc
         {
             vkDestroyCommandPool ( device, commandInfo._pool, nullptr );
             AV_UNREGISTER_COMMAND_POOL ( "pbr::RenderSession::_commandInfo::_pool" )
+        }
+
+        if ( commandInfo._acquire != VK_NULL_HANDLE )
+        {
+            vkDestroySemaphore ( device, commandInfo._acquire, nullptr );
+            AV_UNREGISTER_SEMAPHORE ( "pbr::RenderSession::_acquire" )
         }
 
         if ( commandInfo._fence == VK_NULL_HANDLE )
@@ -553,6 +559,26 @@ bool RenderSession::CreateRenderPass ( android_vulkan::Renderer &renderer ) noex
     constexpr VkSubpassDependency const dependencies[] =
     {
         {
+            .srcSubpass = VK_SUBPASS_EXTERNAL,
+            .dstSubpass = 0U,
+
+            .srcStageMask = AV_VK_FLAG ( VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT ) |
+                AV_VK_FLAG ( VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT ) |
+                AV_VK_FLAG ( VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT ),
+
+            .dstStageMask = AV_VK_FLAG ( VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT ) |
+                AV_VK_FLAG ( VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT ) |
+                AV_VK_FLAG ( VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT ),
+
+            .srcAccessMask = AV_VK_FLAG ( VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT ) |
+                AV_VK_FLAG ( VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT ),
+
+            .dstAccessMask = AV_VK_FLAG ( VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT ) |
+                 AV_VK_FLAG ( VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT ),
+
+            .dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
+        },
+        {
             .srcSubpass = 0U,
             .dstSubpass = 1U,
 
@@ -582,6 +608,7 @@ bool RenderSession::CreateRenderPass ( android_vulkan::Renderer &renderer ) noex
             .dstSubpass = VK_SUBPASS_EXTERNAL,
 
             .srcStageMask = AV_VK_FLAG ( VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT ) |
+                AV_VK_FLAG ( VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT ) |
                 AV_VK_FLAG ( VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT ),
 
             .dstStageMask = AV_VK_FLAG ( VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT ) |
@@ -594,6 +621,7 @@ bool RenderSession::CreateRenderPass ( android_vulkan::Renderer &renderer ) noex
 
             .dstAccessMask = AV_VK_FLAG ( VK_ACCESS_SHADER_READ_BIT ) |
                 AV_VK_FLAG ( VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT ) |
+                AV_VK_FLAG ( VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT ) |
                 AV_VK_FLAG ( VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT ),
 
             .dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
@@ -821,8 +849,6 @@ bool RenderSession::UpdateBrightness ( android_vulkan::Renderer &renderer ) noex
 
 bool RenderSession::AllocateCommandInfo ( CommandInfo &info, VkDevice device, uint32_t queueIndex ) noexcept
 {
-    VkCommandPool &pool = info._pool;
-
     constexpr VkFenceCreateInfo fenceInfo
     {
         .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
@@ -840,6 +866,24 @@ bool RenderSession::AllocateCommandInfo ( CommandInfo &info, VkDevice device, ui
 
     AV_REGISTER_FENCE ( "pbr::RenderSession::_fence" )
 
+    constexpr VkSemaphoreCreateInfo semaphoreInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U
+    };
+
+    result = android_vulkan::Renderer::CheckVkResult (
+        vkCreateSemaphore ( device, &semaphoreInfo, nullptr, &info._acquire ),
+        "Game::CreateCommandPool",
+        "Can't create render target acquired semaphore"
+    );
+
+    if ( !result ) [[unlikely]]
+        return false;
+
+    AV_REGISTER_SEMAPHORE ( "pbr::RenderSession::_acquire" )
+
     VkCommandPoolCreateInfo const createInfo
     {
         .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
@@ -849,7 +893,7 @@ bool RenderSession::AllocateCommandInfo ( CommandInfo &info, VkDevice device, ui
     };
 
     result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateCommandPool ( device, &createInfo, nullptr, &pool ),
+        vkCreateCommandPool ( device, &createInfo, nullptr, &info._pool ),
         "pbr::RenderSession::AllocateCommandInfo",
         "Can't create lead command pool"
     );
@@ -863,7 +907,7 @@ bool RenderSession::AllocateCommandInfo ( CommandInfo &info, VkDevice device, ui
     {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
         .pNext = nullptr,
-        .commandPool = pool,
+        .commandPool = info._pool,
         .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
         .commandBufferCount = 1U
     };

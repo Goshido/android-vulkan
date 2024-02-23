@@ -255,15 +255,29 @@ bool PointLightPass::CreateShadowmapRenderPass ( VkDevice device ) noexcept
         .pCorrelationMasks = &correlationMask
     };
 
-    constexpr static VkSubpassDependency dependency
+    constexpr static VkSubpassDependency const dependencies[] =
     {
-        .srcSubpass = 0U,
-        .dstSubpass = VK_SUBPASS_EXTERNAL,
-        .srcStageMask = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
-        .dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-        .srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
-        .dstAccessMask = VK_ACCESS_SHADER_READ_BIT,
-        .dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
+        {
+            .srcSubpass = VK_SUBPASS_EXTERNAL,
+            .dstSubpass = 0U,
+            .srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+
+            .dstStageMask = AV_VK_FLAG ( VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT ) |
+                AV_VK_FLAG ( VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT ),
+
+            .srcAccessMask = VK_ACCESS_NONE,
+            .dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+            .dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
+        },
+        {
+            .srcSubpass = 0U,
+            .dstSubpass = VK_SUBPASS_EXTERNAL,
+            .srcStageMask = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+            .dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+            .srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+            .dstAccessMask = VK_ACCESS_SHADER_READ_BIT,
+            .dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
+        }
     };
 
     constexpr VkRenderPassCreateInfo renderPassInfo
@@ -275,8 +289,8 @@ bool PointLightPass::CreateShadowmapRenderPass ( VkDevice device ) noexcept
         .pAttachments = &depthAttachment,
         .subpassCount = 1U,
         .pSubpasses = &subpass,
-        .dependencyCount = 1U,
-        .pDependencies = &dependency
+        .dependencyCount = static_cast<uint32_t> ( std::size ( dependencies ) ),
+        .pDependencies = dependencies
     };
 
     bool const result = android_vulkan::Renderer::CheckVkResult (

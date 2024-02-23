@@ -10,13 +10,17 @@ namespace pbr {
 class PresentRenderPass final
 {
     private:
+        struct FramebufferInfo final
+        {
+            VkFramebuffer               _framebuffer = VK_NULL_HANDLE;
+            VkSemaphore                 _renderEnd = VK_NULL_HANDLE;
+        };
+
         uint32_t                        _framebufferIndex = std::numeric_limits<uint32_t>::max ();
-        std::vector<VkFramebuffer>      _framebuffers {};
+        std::vector<FramebufferInfo>    _framebufferInfo {};
         VkPresentInfoKHR                _presentInfo {};
-        VkSemaphore                     _renderEndSemaphore = VK_NULL_HANDLE;
         VkRenderPassBeginInfo           _renderInfo {};
         VkSubmitInfo                    _submitInfo {};
-        VkSemaphore                     _targetAcquiredSemaphore = VK_NULL_HANDLE;
 
     public:
         PresentRenderPass () = default;
@@ -29,10 +33,10 @@ class PresentRenderPass final
 
         ~PresentRenderPass () = default;
 
-        [[nodiscard]] bool AcquirePresentTarget ( android_vulkan::Renderer &renderer ) noexcept;
+        [[nodiscard]] bool AcquirePresentTarget ( android_vulkan::Renderer &renderer, VkSemaphore acquire ) noexcept;
         [[nodiscard]] VkRenderPass GetRenderPass () const noexcept;
 
-        [[nodiscard]] bool OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept;
+        [[nodiscard]] bool OnInitDevice () noexcept;
         void OnDestroyDevice ( VkDevice device ) noexcept;
 
         [[nodiscard]] bool OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept;
@@ -42,6 +46,7 @@ class PresentRenderPass final
 
         [[nodiscard]] bool End ( android_vulkan::Renderer &renderer,
             VkCommandBuffer commandBuffer,
+            VkSemaphore acquire,
             VkFence fence
         ) noexcept;
 

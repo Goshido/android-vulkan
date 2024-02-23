@@ -43,16 +43,16 @@
   - ✅ Compilation script repo
   - ✅ Header
   - ✅ Readme
-- ❌ Ogg
-  - ❌ Binary
+- ✅ Ogg
+  - ✅ Binary
   - ❌ Compilation script repo
-  - ❌ Header
-  - ❌ Readme
-- ❌ Vorbis|Vorbisfile
-  - ❌ Binary
+  - ✅ Header
+  - ✅ Readme
+- ✅ Vorbis|Vorbisfile
+  - ✅ Binary
   - ❌ Compilation script repo
-  - ❌ Header
-  - ❌ Readme
+  - ✅ Header
+  - ✅ Readme
 - ❌ STB
   - ❌ Header
   - ❌ Readme
@@ -78,7 +78,7 @@ Project:
 - FreeType has been updated to 2.13.2, 546237e1bbbb1269b5f76a878ea5eed3c8e268b5
 - VVL has been updated to 82be16cb105068820a02962395fff3e81036254c
 - Lua 5.5.0 has been updated to c31d6774ac7db4cfbc548ce507ae65ab6036f873
-- stb_image 2.28 has been updated to beebb24b945efdea3b9bba23affb8eb3ba8982e7
+- stb_image 2.29 has been updated to ae721c50eaf761660b4f90cc590453cdb0c2acd0
 
 3rd-party:
 - FreeType headers have been updated

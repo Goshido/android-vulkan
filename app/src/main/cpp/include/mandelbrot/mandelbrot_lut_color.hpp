@@ -36,14 +36,13 @@ class MandelbrotLUTColor final : public MandelbrotBase
         [[nodiscard]] bool OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept override;
         void OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept override;
 
-        [[nodiscard]] bool OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept override;
-        void OnSwapchainDestroyed ( android_vulkan::Renderer &renderer ) noexcept override;
-
         [[nodiscard]] bool CreatePipelineLayout ( android_vulkan::Renderer &renderer ) noexcept override;
         void DestroyPipelineLayout ( VkDevice device ) noexcept override;
 
-        [[nodiscard]] bool CreateCommandBuffer ( android_vulkan::Renderer &renderer ) noexcept;
-        void DestroyCommandBuffer ( VkDevice device ) noexcept;
+        [[nodiscard]] bool RecordCommandBuffer ( android_vulkan::Renderer &renderer,
+            VkCommandBuffer commandBuffer,
+            VkFramebuffer framebuffer
+        ) noexcept override;
 
         [[nodiscard]] bool CreateDescriptorSet ( android_vulkan::Renderer &renderer ) noexcept;
         void DestroyDescriptorSet ( VkDevice device ) noexcept;

@@ -201,6 +201,10 @@ bool Scene::OnInitDevice ( android_vulkan::Renderer &renderer,
             .func = &Scene::OnQuit
         },
         {
+            .name = "av_SceneRaycast",
+            .func = &Scene::OnRaycast
+        },
+        {
             .name = "av_SceneSetActiveCamera",
             .func = &Scene::OnSetActiveCamera
         },
@@ -247,7 +251,7 @@ bool Scene::OnInitDevice ( android_vulkan::Renderer &renderer,
 
     _sceneHandle = lua_gettop ( _vm );
 
-    auto bind = [ & ] ( std::string_view const &&method, int &ind ) noexcept -> bool {
+    auto const bind = [ & ] ( std::string_view const &&method, int &ind ) noexcept -> bool {
         lua_pushlstring ( _vm, method.data (), method.size () );
 
         if ( lua_rawget ( _vm, _sceneHandle ) == LUA_TFUNCTION ) [[likely]]
@@ -281,13 +285,15 @@ bool Scene::OnInitDevice ( android_vulkan::Renderer &renderer,
     if ( !bind ( "OnUpdate", _onUpdateIndex ) ) [[unlikely]]
         return false;
 
-    return _scriptablePenetration.Init ( *_vm ) && ScriptableSweepTestResult::Init ( *_vm ) && _gamepad.Init ( *_vm );
+    return _scriptablePenetration.Init ( *_vm ) && _scriptableRaycastResult.Init ( *_vm ) &&
+        ScriptableSweepTestResult::Init ( *_vm ) && _gamepad.Init ( *_vm );
 }
 
 void Scene::OnDestroyDevice () noexcept
 {
     ScriptEngine::Destroy ();
     ScriptableSweepTestResult::Destroy ( *_vm );
+    _scriptableRaycastResult.Destroy ( *_vm );
     _scriptablePenetration.Destroy ( *_vm );
     _gamepad.Destroy ();
     _renderableList.clear ();
@@ -419,6 +425,12 @@ bool Scene::OnUpdate ( float deltaTime ) noexcept
     return true;
 }
 
+void Scene::OnUpdateAnimations ( float deltaTime, size_t commandBufferIndex ) noexcept
+{
+    AV_TRACE ( "Update animations" )
+    AnimationGraph::Update ( *_vm, deltaTime, commandBufferIndex );
+}
+
 bool Scene::LoadScene ( android_vulkan::Renderer &renderer, char const* scene, VkCommandPool commandPool ) noexcept
 {
     android_vulkan::File file ( scene );
@@ -525,12 +537,6 @@ void Scene::Submit ( android_vulkan::Renderer &renderer ) noexcept
     SubmitUI ( renderer, *_renderSession );
 }
 
-void Scene::OnUpdateAnimations ( float deltaTime, size_t commandBufferIndex ) noexcept
-{
-    AV_TRACE ( "Update animations" )
-    AnimationGraph::Update ( deltaTime, commandBufferIndex );
-}
-
 void Scene::AppendActor ( ActorRef &actor ) noexcept
 {
     if ( !lua_checkstack ( _vm, 2 ) ) [[unlikely]]
@@ -598,6 +604,19 @@ int Scene::DoPenetrationBox ( lua_State &vm, GXMat4 const &local, GXVec3 const &
     boxShape.UpdateCacheData ( local );
     _physics->PenetrationTest ( _penetrations, _epa, shape, groups );
     return static_cast<int> ( _scriptablePenetration.PublishResult ( vm, _penetrations ) );
+}
+
+int Scene::DoRaycast ( lua_State &vm, GXVec3 const &from, GXVec3 const &to, uint32_t groups ) noexcept
+{
+    android_vulkan::RaycastResult result {};
+
+    if ( !_physics->Raycast ( result, from, to, groups ) )
+    {
+        lua_pushnil ( &vm );
+        return 1;
+    }
+
+    return static_cast<int> ( _scriptableRaycastResult.PublishResult ( vm, result ) );
 }
 
 int Scene::DoSweepTestBox ( lua_State &vm, GXMat4 const &local, GXVec3 const &size, uint32_t groups ) noexcept
@@ -818,6 +837,17 @@ int Scene::OnQuit ( lua_State* /*state*/ )
 {
     android_vulkan::Core::Quit ();
     return 0;
+}
+
+int Scene::OnRaycast ( lua_State* state )
+{
+    auto &self = *static_cast<Scene*> ( lua_touserdata ( state, 1 ) );
+
+    return self.DoRaycast ( *state,
+        ScriptableGXVec3::Extract ( state, 2 ),
+        ScriptableGXVec3::Extract ( state, 3 ),
+        BitField::Extract ( state, 4 )
+    );
 }
 
 int Scene::OnSetActiveCamera ( lua_State* state )

@@ -8,6 +8,23 @@
 
 namespace android_vulkan {
 
+bool SoundEmitter::Play () noexcept
+{
+    AV_ASSERT ( ( _mixer != nullptr ) & static_cast<bool> ( _streamer ) )
+
+    if ( !_mixer->RequestPlay ( *this ) ) [[unlikely]]
+        return false;
+
+    _isPlaying = true;
+    _hasStream = true;
+    return true;
+}
+
+void SoundEmitter::SetVolume ( float volume ) noexcept
+{
+    _volume = std::clamp ( volume, 0.0F, 1.0F );
+}
+
 void SoundEmitter::Init ( SoundMixer &soundMixer, eSoundChannel channel ) noexcept
 {
     _channel = channel;
@@ -16,7 +33,7 @@ void SoundEmitter::Init ( SoundMixer &soundMixer, eSoundChannel channel ) noexce
 
 bool SoundEmitter::Destroy () noexcept
 {
-    if ( _isPlaying && !Stop () )
+    if ( _isPlaying && !Stop () ) [[unlikely]]
         LogWarning ( "SoundEmitter::Destroy - Can't stop." );
 
     if ( _streamer )
@@ -47,11 +64,6 @@ float SoundEmitter::GetVolume () const noexcept
     return _volume;
 }
 
-void SoundEmitter::SetVolume ( float volume ) noexcept
-{
-    _volume = std::clamp ( volume, 0.0F, 1.0F );
-}
-
 bool SoundEmitter::IsPlaying () const noexcept
 {
     return _isPlaying;
@@ -61,45 +73,29 @@ bool SoundEmitter::Pause () noexcept
 {
     AV_ASSERT ( ( _mixer != nullptr ) & static_cast<bool> ( _streamer ) )
 
-    if ( _mixer->RequestPause ( *this ) )
-    {
-        _isPlaying = false;
+    if ( !_hasStream )
         return true;
-    }
 
-    return false;
-}
+    if ( !_mixer->RequestPause ( *this ) ) [[unlikely]]
+        return false;
 
-bool SoundEmitter::Play () noexcept
-{
-    AV_ASSERT ( ( _mixer != nullptr ) & static_cast<bool> ( _streamer ) )
-
-    if ( _mixer->RequestPlay ( *this ) )
-    {
-        _isPlaying = true;
-        return true;
-    }
-
-    return false;
+    _isPlaying = false;
+    return true;
 }
 
 bool SoundEmitter::Stop () noexcept
 {
     AV_ASSERT ( ( _mixer != nullptr ) & static_cast<bool> ( _streamer ) )
 
-    if ( !_isPlaying )
+    if ( !_isPlaying | !_hasStream )
         return true;
 
-    if ( _mixer->RequestStop ( *this ) )
-    {
-        if ( !_streamer->Reset () )
-            return false;
+    if ( !_mixer->RequestStop ( *this ) ) [[unlikely]]
+        return false;
 
-        _isPlaying = false;
-        return true;
-    }
-
-    return false;
+    _hasStream = false;
+    _isPlaying = false;
+    return _streamer->Reset ();
 }
 
 bool SoundEmitter::SetSoundAsset ( std::string_view const file, bool looped ) noexcept
@@ -129,7 +125,7 @@ bool SoundEmitter::SetSoundAsset ( std::string_view const file, bool looped ) no
         _mixer->GetBufferSampleCount ()
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
     {
         _streamer = nullptr;
         return false;
@@ -147,7 +143,7 @@ SoundEmitter::eStreamerType SoundEmitter::GetStreamerType ( std::string_view con
 {
     auto const findResult = asset.find_last_of ( '.' );
 
-    if ( findResult == std::string_view::npos )
+    if ( findResult == std::string_view::npos ) [[unlikely]]
     {
         LogError ( "SoundEmitter::GetStreamerType - Unknown format (branch 1). Asset: %s", asset.data () );
         AV_ASSERT ( false )
@@ -159,7 +155,7 @@ SoundEmitter::eStreamerType SoundEmitter::GetStreamerType ( std::string_view con
     if ( ext == "ogg" )
         return eStreamerType::OGG;
 
-    if ( ext == "wav" )
+    if ( ext == "wav" ) [[likely]]
         return eStreamerType::WAV;
 
     LogError ( "SoundEmitter::GetStreamerType - Unknown format (branch 2). Asset: %s", asset.data () );
@@ -171,7 +167,7 @@ void SoundEmitter::OnStopRequested ( SoundEmitter &soundEmitter ) noexcept
 {
     std::thread thread (
         [ &soundEmitter ] () noexcept {
-            if ( !soundEmitter.Stop () )
+            if ( !soundEmitter.Stop () ) [[unlikely]]
             {
                 LogWarning ( "SoundEmitter::OnStopRequested - Can't stop." );
             }

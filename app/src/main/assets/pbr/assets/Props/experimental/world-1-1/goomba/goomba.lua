@@ -190,7 +190,7 @@ local function OnPostPhysicsAct ( self, deltaTime )
     local pns = p._penetrations
 
     for i = 1, count do
-        local pn = pns[i];
+        local pn = pns[ i ];
 
         if pn._body ~= kinematic then
             origin:SumScaled ( origin, pn._depth, pn._normal )

@@ -16,6 +16,12 @@ Minimum value | Maximum value
 --- | ---
 `-16'777'215` | `16'777'216`
 
+Script side `integer` type has been changed from `int64_t` to `int32_t`. This means that safe range for integer operations has been reduced:
+
+Minimum value | Maximum value
+--- | ---
+`-2'147'483'648` | `2'147'483'647`
+
 The following standard modules have been excluded from _Lua_ environment:
 
 - `dofile`
@@ -41,6 +47,7 @@ Here is an example of _Lua **call stack**_. Error occurred in `goomba.lua` scrip
 ## <a id="api-reference">_API_ reference</a>
 
 - [_Actor_](./actor.md)
+- [_AnimationBlendNode_](./animation-blend-node.md)
 - [_AnimationGraph_](./animation-graph.md)
 - [_AnimationPlayerNode_](./animation-player-node.md)
 - [_BitField_](./bit-field.md)

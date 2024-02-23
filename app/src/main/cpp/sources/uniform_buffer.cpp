@@ -9,287 +9,145 @@ void UniformBuffer::FreeResources ( android_vulkan::Renderer &renderer ) noexcep
 {
     VkDevice device = renderer.GetDevice ();
 
-    if ( _transfer != VK_NULL_HANDLE )
+    for ( VkBuffer buffer : _buffers )
     {
-        vkDestroyBuffer ( device, _transfer, nullptr );
-        _transfer = VK_NULL_HANDLE;
-        AV_UNREGISTER_BUFFER ( "UniformBuffer::_transfer" )
+        vkDestroyBuffer ( device, buffer, nullptr );
+        AV_UNREGISTER_BUFFER ( "UniformBuffer::_buffers::item" )
     }
 
-    if ( _transferMemory != VK_NULL_HANDLE )
+    if ( _memory != VK_NULL_HANDLE )
     {
-        renderer.FreeMemory ( _transferMemory, _transferOffset );
-        _transferMemory = VK_NULL_HANDLE;
-        _transferOffset = std::numeric_limits<VkDeviceSize>::max ();
-        AV_UNREGISTER_DEVICE_MEMORY ( "UniformBuffer::_transferMemory" )
-    }
-
-    if ( _buffer != VK_NULL_HANDLE )
-    {
-        vkDestroyBuffer ( device, _buffer, nullptr );
-        _buffer = VK_NULL_HANDLE;
-        AV_UNREGISTER_BUFFER ( "UniformBuffer::_buffer" )
-    }
-
-    if ( _bufferMemory != VK_NULL_HANDLE )
-    {
-        renderer.FreeMemory ( _bufferMemory, _bufferOffset );
-        _bufferMemory = VK_NULL_HANDLE;
-        _bufferOffset = std::numeric_limits<VkDeviceSize>::max ();
-        AV_UNREGISTER_DEVICE_MEMORY ( "UniformBuffer::_bufferMemory" )
-    }
-
-    if ( _commandBuffer != VK_NULL_HANDLE )
-    {
-        vkFreeCommandBuffers ( device, _commandPool, 1U, &_commandBuffer );
-        _commandBuffer = VK_NULL_HANDLE;
+        renderer.FreeMemory ( _memory, _offset );
+        _memory = VK_NULL_HANDLE;
+        _offset = std::numeric_limits<VkDeviceSize>::max ();
+        AV_UNREGISTER_DEVICE_MEMORY ( "UniformBuffer::_memory" )
     }
 
     _size = 0U;
-    _commandPool = VK_NULL_HANDLE;
-    _targetStages = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+    _index = 0U;
 }
 
-VkBuffer UniformBuffer::GetBuffer () const noexcept
+VkDeviceSize UniformBuffer::GetSize () const noexcept
 {
-    return _buffer;
+    return static_cast<VkDeviceSize> ( _size );
 }
 
-size_t UniformBuffer::GetSize () const noexcept
+bool UniformBuffer::Init ( android_vulkan::Renderer &renderer, size_t size, size_t amount ) noexcept
 {
-    return _size;
-}
+    _size = static_cast<VkDeviceSize> ( size );
 
-bool UniformBuffer::Init ( android_vulkan::Renderer &renderer,
-    VkCommandPool commandPool,
-    VkPipelineStageFlags targetStages
-) noexcept
-{
-    if ( _commandPool != VK_NULL_HANDLE )
-        return true;
-
-    _commandPool = commandPool;
-    _targetStages = targetStages;
-
-    VkCommandBufferAllocateInfo const allocateInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-        .pNext = nullptr,
-        .commandPool = commandPool,
-        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-        .commandBufferCount = 1U
-    };
-
-    return Renderer::CheckVkResult (
-        vkAllocateCommandBuffers ( renderer.GetDevice (), &allocateInfo, &_commandBuffer ),
-        "UniformBuffer::Init",
-        "Can't allocate command buffer"
-    );
-}
-
-bool UniformBuffer::Update ( android_vulkan::Renderer &renderer,
-    VkFence fence,
-    uint8_t const* data,
-    size_t size
-) noexcept
-{
-    AV_ASSERT ( size )
-
-    if ( !_size && !InitResources ( renderer, size ) )
-        return false;
-
-    if ( !data )
-        return true;
-
-    void* dst = nullptr;
-
-    bool const result = renderer.MapMemory ( dst,
-        _transferMemory,
-        _transferOffset,
-        "UniformBuffer::Update",
-        "Can't map transfer memory"
-    );
-
-    if ( !result )
-        return false;
-
-    std::memcpy ( dst, data, size );
-    renderer.UnmapMemory ( _transferMemory );
-
-    VkSubmitInfo const submitInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-        .pNext = nullptr,
-        .waitSemaphoreCount = 0U,
-        .pWaitSemaphores = nullptr,
-        .pWaitDstStageMask = nullptr,
-        .commandBufferCount = 1U,
-        .pCommandBuffers = &_commandBuffer,
-        .signalSemaphoreCount = 0U,
-        .pSignalSemaphores = nullptr
-    };
-
-    return Renderer::CheckVkResult (
-        vkQueueSubmit ( renderer.GetQueue (), 1U, &submitInfo, fence ),
-        "UniformBuffer::Update",
-        "Can't submit upload command"
-    );
-}
-
-bool UniformBuffer::InitResources ( android_vulkan::Renderer &renderer, size_t size ) noexcept
-{
-    VkBufferCreateInfo bufferInfo
+    VkBufferCreateInfo const bufferInfo
     {
         .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0U,
-        .size = size,
+        .size = _size,
         .usage = AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT ) | AV_VK_FLAG ( VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT ),
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
         .queueFamilyIndexCount = 0U,
         .pQueueFamilyIndices = nullptr
     };
 
+    VkMemoryRequirements requirements;
     VkDevice device = renderer.GetDevice ();
+    VkBuffer buffer;
 
-    bool result = Renderer::CheckVkResult ( vkCreateBuffer ( device, &bufferInfo, nullptr, &_buffer ),
-        "UniformBuffer::InitResources",
-        "Can't create buffer"
+    bool result = android_vulkan::Renderer::CheckVkResult (
+        vkCreateBuffer ( device, &bufferInfo, nullptr, &buffer ),
+        "UniformBuffer::Init",
+        "Can't create uniform buffer"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_BUFFER ( "UniformBuffer::_buffer" )
+    vkGetBufferMemoryRequirements ( device, buffer, &requirements );
+    vkDestroyBuffer ( device, buffer, nullptr );
 
-    VkMemoryRequirements requirements;
-    vkGetBufferMemoryRequirements ( device, _buffer, &requirements );
+    auto const alignment = static_cast<size_t> ( requirements.alignment );
+    size_t const alignMultiplier = ( size + alignment - 1U ) / alignment;
+    size_t const alignedBlockSize = alignMultiplier * alignment;
+    requirements.size = static_cast<VkDeviceSize> ( alignedBlockSize );
 
-    result = renderer.TryAllocateMemory ( _bufferMemory,
-        _bufferOffset,
+    _index = 0U;
+    _buffers.reserve ( amount );
+    requirements.size *= static_cast<VkDeviceSize> ( amount );
+
+    result = renderer.TryAllocateMemory ( _memory,
+        _offset,
         requirements,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-        "Can't allocate buffer memory (UniformBuffer::InitResources)"
+        "Can't allocate GPU memory (UniformBuffer::Init)"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_DEVICE_MEMORY ( "UniformBuffer::_bufferMemory" )
+    AV_REGISTER_DEVICE_MEMORY ( "pbr::UniformBufferPool::_memory" )
+    VkDeviceSize offset = _offset;
 
-    result = Renderer::CheckVkResult ( vkBindBufferMemory ( device, _buffer, _bufferMemory, _bufferOffset ),
-        "UniformBuffer::InitResources",
-        "Can't bind buffer memory"
-    );
-
-    if ( !result )
-        return false;
-
-    bufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-
-    result = Renderer::CheckVkResult ( vkCreateBuffer ( device, &bufferInfo, nullptr, &_transfer ),
-        "UniformBuffer::InitResources",
-        "Can't create transfer buffer"
-    );
-
-    if ( !result )
-        return false;
-
-    AV_REGISTER_BUFFER ( "UniformBuffer::_transfer" )
-    vkGetBufferMemoryRequirements ( device, _transfer, &requirements );
-
-    result = renderer.TryAllocateMemory ( _transferMemory,
-        _transferOffset,
-        requirements,
-        AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT ) | AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_COHERENT_BIT ),
-        "Can't allocate transfer memory (UniformBuffer::InitResources)"
-    );
-
-    if ( !result )
-        return false;
-
-    AV_REGISTER_DEVICE_MEMORY ( "UniformBuffer::_transferMemory" )
-
-    result = Renderer::CheckVkResult ( vkBindBufferMemory ( device, _transfer, _transferMemory, _transferOffset ),
-        "UniformBuffer::InitResources",
-        "Can't bind transfer memory"
-    );
-
-    if ( !result )
-        return false;
-
-    constexpr VkCommandBufferBeginInfo beginInfo
+    for ( size_t i = 0U; i < amount; ++i )
     {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-        .pNext = nullptr,
-        .flags = 0U,
-        .pInheritanceInfo = nullptr
-    };
+        result = android_vulkan::Renderer::CheckVkResult (
+            vkCreateBuffer ( device, &bufferInfo, nullptr, &buffer ),
+            "UniformBuffer::Init",
+            "Can't create uniform buffer"
+        );
 
-    result = Renderer::CheckVkResult ( vkBeginCommandBuffer ( _commandBuffer, &beginInfo ),
-        "UniformBuffer::InitResources",
-        "Can't begin command buffer"
-    );
+        if ( !result ) [[unlikely]]
+            return false;
 
-    if ( !result )
-        return false;
+        AV_REGISTER_BUFFER ( "UniformBuffer::_buffers::item" )
 
-    VkBufferMemoryBarrier barrier
-    {
+        vkGetBufferMemoryRequirements ( device, buffer, &requirements );
+
+        result = android_vulkan::Renderer::CheckVkResult (
+            vkBindBufferMemory ( device, buffer, _memory, offset ),
+            "UniformBuffer::Init",
+            "Can't bind uniform buffer memory"
+        );
+
+        if ( !result ) [[unlikely]]
+            return false;
+
+        offset += alignedBlockSize;
+        _buffers.push_back ( buffer );
+    }
+
+    return true;
+}
+
+VkBuffer UniformBuffer::Update ( VkCommandBuffer commandBuffer, uint8_t const* data ) noexcept
+{
+    VkBuffer buffer = _buffers[ _index ];
+
+    VkBufferMemoryBarrier bufferBarrier {
         .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
         .pNext = nullptr,
-        .srcAccessMask = 0U,
+        .srcAccessMask = VK_ACCESS_NONE,
         .dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
         .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
         .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .buffer = _buffer,
+        .buffer = buffer,
         .offset = 0U,
-        .size = size
+        .size = _size
     };
 
-    vkCmdPipelineBarrier ( _commandBuffer,
-        VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+    vkCmdPipelineBarrier ( commandBuffer,
+        VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
         VK_PIPELINE_STAGE_TRANSFER_BIT,
         0U,
         0U,
         nullptr,
         1U,
-        &barrier,
+        &bufferBarrier,
         0U,
         nullptr
     );
 
-    VkBufferCopy copyInfo;
-    copyInfo.size = size;
-    copyInfo.srcOffset = copyInfo.dstOffset = 0U;
-
-    vkCmdCopyBuffer ( _commandBuffer, _transfer, _buffer, 1U, &copyInfo );
-
-    barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-    barrier.dstAccessMask = VK_ACCESS_UNIFORM_READ_BIT;
-
-    vkCmdPipelineBarrier ( _commandBuffer,
-        VK_PIPELINE_STAGE_TRANSFER_BIT,
-        _targetStages,
-        0U,
-        0U,
-        nullptr,
-        1U,
-        &barrier,
-        0U,
-        nullptr
-    );
-
-    result = Renderer::CheckVkResult ( vkEndCommandBuffer ( _commandBuffer ),
-        "UniformBuffer::InitResources",
-        "Can't end command buffer"
-    );
-
-    if ( !result )
-        return false;
-
-    _size = size;
-    return true;
+    vkCmdUpdateBuffer ( commandBuffer, buffer, 0U, _size, data );
+    _index = ( _index + 1U ) % _buffers.size ();
+    return buffer;
 }
 
 } // namespace android_vulkan

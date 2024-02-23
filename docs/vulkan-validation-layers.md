@@ -6,12 +6,12 @@ Starting from _Android NDK_ `23.0.7599858` the _Vulkan_ validation layers have b
 
 ## Compatible version
 
-The manual is based on `0117636eacfae8ae978b34618dd9f37614efd973` commit of the [_Vulkan-ValidationLayers_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) repo. The manual is primary aimed for _Windows OS_ users.
+The manual is based on `82be16cb105068820a02962395fff3e81036254c` commit of the [_Vulkan-ValidationLayers_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) repo. The manual is primary aimed for _Windows OS_ users.
 
 ## Requirements
 
 - _Windows 11_
-- _Android NDK 26.1.10909125_
+- _Android NDK 26.2.11394342_
 - _CMake 3.22.1_
 - _Ninja 1.10.2_
 - _Python 3.11.1_
@@ -37,7 +37,7 @@ Clear-Host
 
 # Preparing sources...
 
-$ndk = "D:/Programs/Android/Sdk/ndk/26.1.10909125"
+$ndk = "D:/Programs/Android/Sdk/ndk/26.2.11394342"
 
 $androidVulkanDir = "D:/Development/android-vulkan"
 $vvlDir = "D:/Development/Vulkan-ValidationLayers"

@@ -45,7 +45,7 @@ bool UniversalGame::OnFrame ( android_vulkan::Renderer &renderer, double deltaTi
     if ( !_scene.OnPostPhysics ( dt ) ) [[unlikely]]
         return false;
 
-    Scene::OnUpdateAnimations ( dt, _renderSession.GetWritingCommandBufferIndex () );
+    _scene.OnUpdateAnimations ( dt, _renderSession.GetWritingCommandBufferIndex () );
 
     if ( !_scene.OnAnimationUpdated ( dt ) || !_scene.OnUpdate ( dt ) ) [[unlikely]]
         return false;

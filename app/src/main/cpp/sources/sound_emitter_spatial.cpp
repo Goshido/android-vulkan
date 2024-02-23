@@ -6,6 +6,12 @@
 
 namespace android_vulkan {
 
+bool SoundEmitterSpatial::Play () noexcept
+{
+    _isNeedResetPreviousVolume = true;
+    return SoundEmitter::Play ();
+}
+
 void SoundEmitterSpatial::SetVolume ( float volume ) noexcept
 {
     SoundEmitter::SetVolume ( volume );
@@ -37,7 +43,7 @@ void SoundEmitterSpatial::FillPCM ( std::span<PCMStreamer::PCMType> buffer, floa
 
     soundDirection.Normalize ();
 
-    if ( std::isnan ( soundDirection._data[ 0U ] ) )
+    if ( std::isnan ( soundDirection._data[ 0U ] ) ) [[unlikely]]
     {
         // Sound source is located directly in sound listener. Rare but possible.
         constexpr GXVec3 fallbackDirection ( 0.0F, 0.0F, 1.0F );
@@ -52,6 +58,9 @@ void SoundEmitterSpatial::FillPCM ( std::span<PCMStreamer::PCMType> buffer, floa
     constexpr GXVec2 factor ( 0.5F, 0.5F );
     volume.Sum ( factor, 0.5F, volume );
     volume.Multiply ( volume, attenuation );
+
+    if ( _isNeedResetPreviousVolume ) [[unlikely]]
+        _previousVolume = volume;
 
     _streamer->GetNextBuffer ( buffer,
         PCMStreamer::Gain ( _previousVolume._data[ 0U ], volume._data[ 0U ] ),

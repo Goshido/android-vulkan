@@ -269,16 +269,6 @@ void AnimationGraph::Init ( lua_State &vm, android_vulkan::Renderer &renderer ) 
     }
 }
 
-void AnimationGraph::Update ( float deltaTime, size_t commandBufferIndex ) noexcept
-{
-    _changedGraphCount = 0U;
-
-    for ( auto &item : _graphs )
-    {
-        item.second->UpdateInternal ( deltaTime, commandBufferIndex );
-    }
-}
-
 void AnimationGraph::Destroy () noexcept
 {
     if ( !_graphs.empty () ) [[unlikely]]
@@ -296,6 +286,16 @@ void AnimationGraph::Destroy () noexcept
     _graphs.clear ();
     _lastCommandBufferIndex = 0U;
     _renderer = nullptr;
+}
+
+void AnimationGraph::Update ( lua_State &vm, float deltaTime, size_t commandBufferIndex ) noexcept
+{
+    _changedGraphCount = 0U;
+
+    for ( auto &item : _graphs )
+    {
+        item.second->UpdateInternal ( vm, deltaTime, commandBufferIndex );
+    }
 }
 
 void AnimationGraph::UploadGPUData ( VkCommandBuffer commandBuffer, size_t commandBufferIndex ) noexcept
@@ -351,13 +351,13 @@ void AnimationGraph::UploadGPUData ( VkCommandBuffer commandBuffer, size_t comma
     );
 }
 
-void AnimationGraph::UpdateInternal ( float deltaTime, size_t commandBufferIndex ) noexcept
+void AnimationGraph::UpdateInternal ( lua_State &vm, float deltaTime, size_t commandBufferIndex ) noexcept
 {
     if ( _isSleep | ( _inputNode == nullptr ) )
         return;
 
     ++_changedGraphCount;
-    _inputNode->Update ( deltaTime );
+    _inputNode->Update ( vm, deltaTime );
 
     size_t const boneCount = _poseLocal.size ();
     std::string const* names = _names.data ();

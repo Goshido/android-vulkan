@@ -20,8 +20,7 @@ constexpr float DEFAULT_MAX_LUMA_EV = 15.0F;
 
 void ExposurePass::Execute ( VkCommandBuffer commandBuffer, float deltaTime ) noexcept
 {
-    if ( _isNeedTransitLayout )
-        TransitSync5Mip ( commandBuffer );
+    TransitSync5Mip ( commandBuffer );
 
     _program.Bind ( commandBuffer );
 
@@ -455,7 +454,7 @@ bool ExposurePass::CreateGlobalCounter ( android_vulkan::Renderer &renderer, VkD
     vkCmdPipelineBarrier ( _commandBuffer,
         VK_PIPELINE_STAGE_TRANSFER_BIT,
         VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-        VK_DEPENDENCY_BY_REGION_BIT,
+        0U,
         0U,
         nullptr,
         1U,
@@ -956,13 +955,17 @@ bool ExposurePass::SubmitCommandBuffer ( android_vulkan::Renderer &renderer ) no
 
 void ExposurePass::TransitSync5Mip ( VkCommandBuffer commandBuffer ) noexcept
 {
+    constexpr VkAccessFlags const srcAccess[] = { VK_ACCESS_SHADER_WRITE_BIT, 0U };
+    constexpr VkImageLayout const oldImageLayout[] = { VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_UNDEFINED };
+    auto const selector = static_cast<size_t> ( _isNeedTransitLayout );
+
     VkImageMemoryBarrier const barrier
     {
         .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
         .pNext = nullptr,
-        .srcAccessMask = 0U,
+        .srcAccessMask = srcAccess[ selector ],
         .dstAccessMask = VK_ACCESS_SHADER_WRITE_BIT,
-        .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+        .oldLayout = oldImageLayout[ selector ],
         .newLayout = VK_IMAGE_LAYOUT_GENERAL,
         .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
         .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
@@ -978,8 +981,13 @@ void ExposurePass::TransitSync5Mip ( VkCommandBuffer commandBuffer ) noexcept
         }
     };
 
+    constexpr VkPipelineStageFlagBits const srcStage[] = {
+        VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+        VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT
+    };
+
     vkCmdPipelineBarrier ( commandBuffer,
-        VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+        srcStage[ selector ],
         VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
         VK_DEPENDENCY_BY_REGION_BIT,
         0U,

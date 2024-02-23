@@ -3,7 +3,7 @@
 
 ## Compile tool
 
-Current project is using [_DXC_ compiler](https://github.com/microsoft/DirectXShaderCompiler) to produce _SPIR-V_ binary representations. The manual is valid against **_DXC v1.7.2308.10184_**.
+Current project is using [_DXC_ compiler](https://github.com/microsoft/DirectXShaderCompiler) to produce _SPIR-V_ binary representations. The manual is valid against **_DXC v1.8.2403.10063_**.
 
 The _android-vulkan_ project is using _HLSL_ shader language as high level programming language. All shader sources are located in the following directory:
 
@@ -34,19 +34,19 @@ The _android-vulkan_ project is using _HLSL_ shader language as high level progr
 ## Compile and deploy vertex shader module
 
 ```txt
-dxc.exe -HV 2021 -spirv -fvk-use-dx-layout -fspv-reduce-load-size -fspv-target-env=vulkan1.1 -enable-16bit-types -WX -O3 -T vs_6_7 -E VS -I <android-vulkan directory>\app\src\main\hlsl -I <android-vulkan directory>\app\src\main\cpp\include\pbr -Fo <android-vulkan directory>\app\src\main\assets\shaders\<file name>.vs.spv <file name>.vs
+dxc.exe -HV 2021 -spirv -fvk-use-dx-layout -fspv-reduce-load-size -fspv-target-env=vulkan1.1 -enable-16bit-types -WX -O3 -T vs_6_8 -E VS -I <android-vulkan directory>\app\src\main\hlsl -I <android-vulkan directory>\app\src\main\cpp\include\pbr -Fo <android-vulkan directory>\app\src\main\assets\shaders\<file name>.vs.spv <file name>.vs
 ```
 
 ## Compile and deploy fragment shader module
 
 ```txt
-dxc.exe -HV 2021 -spirv -fvk-use-dx-layout -fspv-reduce-load-size -fspv-target-env=vulkan1.1 -enable-16bit-types -WX -O3 -T ps_6_7 -E PS -I <android-vulkan directory>\app\src\main\hlsl -Fo <android-vulkan directory>\app\src\main\assets\shaders\<file name>.ps.spv <file name>.ps
+dxc.exe -HV 2021 -spirv -fvk-use-dx-layout -fspv-reduce-load-size -fspv-target-env=vulkan1.1 -enable-16bit-types -WX -O3 -T ps_6_8 -E PS -I <android-vulkan directory>\app\src\main\hlsl -Fo <android-vulkan directory>\app\src\main\assets\shaders\<file name>.ps.spv <file name>.ps
 ```
 
 ## Compile and deploy compute shader module
 
 ```txt
-dxc.exe -HV 2021 -spirv -fvk-use-dx-layout -fspv-reduce-load-size -fspv-target-env=vulkan1.1 -enable-16bit-types -WX -O3 -T cs_6_7 -E CS -I <android-vulkan directory>\app\src\main\hlsl -Fo <android-vulkan directory>\app\src\main\assets\shaders\<file name>.cs.spv <file name>.cs
+dxc.exe -HV 2021 -spirv -fvk-use-dx-layout -fspv-reduce-load-size -fspv-target-env=vulkan1.1 -enable-16bit-types -WX -O3 -T cs_6_8 -E CS -I <android-vulkan directory>\app\src\main\hlsl -Fo <android-vulkan directory>\app\src\main\assets\shaders\<file name>.cs.spv <file name>.cs
 ```
 
 ## _SPIR-V_ disassembler via _DXC_
@@ -71,7 +71,7 @@ For example:
 
 Variable name | Value
 --- | ---
-`ANDROID_VULKAN_DXC_ROOT` | `D:\Development\DXC-builds\Release-2023-10-25\bin`
+`ANDROID_VULKAN_DXC_ROOT` | `D:\Development\DXC-builds\Release-2024-02-23\bin`
 
 ### Reported issues
 

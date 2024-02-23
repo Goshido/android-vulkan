@@ -7,6 +7,12 @@
 
 GX_DISABLE_COMMON_WARNINGS
 
+extern "C" {
+
+#include <lua/lstate.h>
+
+} // extern "C"
+
 #include <list>
 #include <optional>
 #include <string>
@@ -31,7 +37,7 @@ class JointProviderNode : public NodeLink
         virtual ~JointProviderNode () = default;
 
         [[nodiscard]] virtual Result GetJoint ( std::string const &name ) noexcept = 0;
-        virtual void Update ( float deltaTime ) noexcept = 0;
+        virtual void Update ( lua_State &vm, float deltaTime ) noexcept = 0;
 
     protected:
         JointProviderNode () = default;

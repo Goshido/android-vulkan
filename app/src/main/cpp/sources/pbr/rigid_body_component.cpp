@@ -241,6 +241,21 @@ void RigidBodyComponent::Destroy () noexcept
     _rigidBodies.clear ();
 }
 
+bool RigidBodyComponent::PrepareLuaFindRigidBodyComponent ( lua_State &vm ) noexcept
+{
+    if ( !lua_checkstack ( &vm, 1 ) ) [[unlikely]]
+    {
+        android_vulkan::LogError ( "pbr::RigidBodyComponent::PrepareLuaFindRigidBodyComponent - Stack is too small." );
+        return false;
+    }
+
+    if ( lua_getglobal ( &vm, "FindRigidBodyComponent" ) == LUA_TFUNCTION ) [[likely]]
+        return true;
+
+    lua_pop ( &vm, 1 );
+    return false;
+}
+
 ComponentRef &RigidBodyComponent::GetReference () noexcept
 {
     auto findResult = _rigidBodies.find ( this );

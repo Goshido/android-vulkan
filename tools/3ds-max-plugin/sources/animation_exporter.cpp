@@ -72,6 +72,8 @@ void AnimationExporter::Run ( HWND parent, MSTR const &path, int startFrame, int
     android_vulkan::UTF8Offset currentNameOffset = header._boneNameInfoOffset + nameInfoSize;
 
     BoneCollector boneCollector ( parent );
+    std::unordered_set<IGameNode*> knownBones {};
+    knownBones.reserve ( static_cast<size_t> ( boneCount ) );
 
     for ( int boneIdx = 0; boneIdx < boneCount; ++boneIdx )
     {
@@ -79,6 +81,8 @@ void AnimationExporter::Run ( HWND parent, MSTR const &path, int startFrame, int
 
         if ( !boneCollector.AddBone ( *bone ) )
             return;
+
+        knownBones.insert ( bone );
 
         *nameInfoOffset = currentNameOffset;
         ++nameInfoOffset;
@@ -95,7 +99,7 @@ void AnimationExporter::Run ( HWND parent, MSTR const &path, int startFrame, int
         for ( int boneIdx = 0; boneIdx < boneCount; ++boneIdx )
         {
             IGameNode* bone = skin->GetIGameBone ( boneIdx, false );
-            GMatrix const worldTransformNative = bone->GetObjectTM ( time );
+            GMatrix const worldTransformNative = bone->GetWorldTM ( time );
             auto probe = ExtractTransform ( parent, worldTransformNative );
 
             if ( !probe )
@@ -104,7 +108,7 @@ void AnimationExporter::Run ( HWND parent, MSTR const &path, int startFrame, int
             GXMat4 const &worldTransform = *probe.value ();
             IGameNode* parentBone = bone->GetNodeParent ();
 
-            if ( !parentBone )
+            if ( !knownBones.contains ( parentBone ) )
             {
                 WriteBoneJoint ( *joint, worldTransform );
             }
@@ -118,7 +122,7 @@ void AnimationExporter::Run ( HWND parent, MSTR const &path, int startFrame, int
                 //We know P and G, so:
                 //      X * P * P^(-1) = G * P^(-1)
                 //=>    X = G * P^(-1)
-                GMatrix const parentWorldTransformNative = parentBone->GetObjectTM ( time );
+                GMatrix const parentWorldTransformNative = parentBone->GetWorldTM ( time );
                 probe = ExtractTransform ( parent, parentWorldTransformNative );
 
                 if ( !probe )

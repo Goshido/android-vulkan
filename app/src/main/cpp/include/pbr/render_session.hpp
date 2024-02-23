@@ -37,6 +37,7 @@ class RenderSession final
             VkCommandBuffer         _buffer = VK_NULL_HANDLE;
             VkFence                 _fence = VK_NULL_HANDLE;
             VkCommandPool           _pool = VK_NULL_HANDLE;
+            VkSemaphore             _acquire = VK_NULL_HANDLE;
         };
 
     private:

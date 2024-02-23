@@ -9,6 +9,7 @@
 #include "renderable_component.hpp"
 #include "scriptable_gamepad.hpp"
 #include "scriptable_penetration.hpp"
+#include "scriptable_raycast_result.hpp"
 #include <sound_mixer.hpp>
 
 
@@ -27,6 +28,7 @@ class Scene final
         std::vector<android_vulkan::Penetration>        _penetrations {};
         android_vulkan::Physics*                        _physics = nullptr;
         ScriptablePenetration                           _scriptablePenetration {};
+        ScriptableRaycastResult                         _scriptableRaycastResult {};
         android_vulkan::ShapeRef                        _shapeBoxes[ 2U ] = {};
         android_vulkan::SoundMixer                      _soundMixer {};
         std::vector<android_vulkan::RigidBodyRef>       _sweepTestResult {};
@@ -88,6 +90,7 @@ class Scene final
         [[nodiscard]] bool OnPostPhysics ( float deltaTime ) noexcept;
         [[nodiscard]] bool OnResolutionChanged ( VkExtent2D const &resolution, float aspectRatio ) noexcept;
         [[nodiscard]] bool OnUpdate ( float deltaTime ) noexcept;
+        void OnUpdateAnimations ( float deltaTime, size_t commandBufferIndex ) noexcept;
 
         [[nodiscard]] bool LoadScene ( android_vulkan::Renderer &renderer,
             char const* scene,
@@ -96,8 +99,6 @@ class Scene final
 
         void RemoveActor ( Actor const &actor ) noexcept;
         void Submit ( android_vulkan::Renderer &renderer ) noexcept;
-
-        static void OnUpdateAnimations ( float deltaTime, size_t commandBufferIndex ) noexcept;
 
     private:
         void AppendActor ( ActorRef &actor ) noexcept;
@@ -114,6 +115,8 @@ class Scene final
             GXVec3 const &size,
             uint32_t groups
         ) noexcept;
+
+        [[nodiscard]] int DoRaycast ( lua_State &vm, GXVec3 const &from, GXVec3 const &to, uint32_t groups ) noexcept;
 
         [[nodiscard]] int DoSweepTestBox ( lua_State &vm,
             GXMat4 const &local,
@@ -140,6 +143,7 @@ class Scene final
         [[nodiscard]] static int OnOverlapTestBoxBox ( lua_State* state );
 
         [[nodiscard]] static int OnQuit ( lua_State* state );
+        [[nodiscard]] static int OnRaycast ( lua_State* state );
         [[nodiscard]] static int OnSetActiveCamera ( lua_State* state );
         [[nodiscard]] static int OnSetBrightness ( lua_State* state );
         [[nodiscard]] static int OnSetExposureCompensation ( lua_State* state );

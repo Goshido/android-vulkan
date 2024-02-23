@@ -49,6 +49,10 @@ class RigidBodyComponent final : public Component
         [[nodiscard]] static bool Init ( lua_State &vm ) noexcept;
         static void Destroy () noexcept;
 
+        // Method places Lua FindRigidBodyComponent function on top of the stack and returns true.
+        // Otherwise method returns false.
+        [[nodiscard]] static bool PrepareLuaFindRigidBodyComponent ( lua_State &vm ) noexcept;
+
     private:
         [[nodiscard]] ComponentRef &GetReference () noexcept override;
 

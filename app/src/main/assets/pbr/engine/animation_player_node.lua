@@ -13,6 +13,17 @@ local function LoadAnimation ( self, animation )
     return av_AnimationPlayerNodeLoadAnimation ( self._handle, animation )
 end
 
+local function SetEvent ( self, context, frameIndex, callback )
+    assert ( type ( self ) == "table" and self._type == eObjectType.AnimationPlayerNode,
+        [[AnimationPlayerNode:SetEvent - Calling not via ":" syntax.]]
+    )
+
+    assert ( type ( frameIndex ) == "number", [[AnimationPlayerNode:SetEvent - "frameIndex" is not number.]] )
+    assert ( type ( callback ) == "function", [[AnimationPlayerNode:SetEvent - "callback" is not function.]] )
+
+    av_AnimationPlayerNodeSetEvent ( self._handle, context, frameIndex, callback )
+end
+
 local function SetPlaybackSpeed ( self, speed )
     assert ( type ( self ) == "table" and self._type == eObjectType.AnimationPlayerNode,
         [[AnimationPlayerNode:SetPlaybackSpeed - Calling not via ":" syntax.]]
@@ -43,6 +54,7 @@ local function Constructor ( self )
 
     -- Methods
     obj.LoadAnimation = LoadAnimation
+    obj.SetEvent = SetEvent
     obj.SetPlaybackSpeed = SetPlaybackSpeed
 
     return setmetatable ( obj, mt )

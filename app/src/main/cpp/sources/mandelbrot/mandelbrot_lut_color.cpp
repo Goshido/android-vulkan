@@ -43,17 +43,6 @@ void MandelbrotLUTColor::OnDestroyDevice ( android_vulkan::Renderer &renderer ) 
     MandelbrotBase::OnDestroyDevice ( renderer );
 }
 
-bool MandelbrotLUTColor::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept
-{
-    return MandelbrotBase::OnSwapchainCreated ( renderer ) && CreateCommandBuffer ( renderer );
-}
-
-void MandelbrotLUTColor::OnSwapchainDestroyed ( android_vulkan::Renderer &renderer ) noexcept
-{
-    DestroyCommandBuffer ( renderer.GetDevice () );
-    MandelbrotBase::OnSwapchainDestroyed ( renderer );
-}
-
 bool MandelbrotLUTColor::CreatePipelineLayout ( android_vulkan::Renderer &renderer ) noexcept
 {
     constexpr VkDescriptorSetLayoutBinding const binding[]
@@ -130,29 +119,11 @@ void MandelbrotLUTColor::DestroyPipelineLayout ( VkDevice device ) noexcept
     AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "MandelbrotLUTColor::_descriptorSetLayout" )
 }
 
-bool MandelbrotLUTColor::CreateCommandBuffer ( android_vulkan::Renderer &renderer ) noexcept
+bool MandelbrotLUTColor::RecordCommandBuffer ( android_vulkan::Renderer &renderer,
+    VkCommandBuffer commandBuffer,
+    VkFramebuffer framebuffer
+) noexcept
 {
-    size_t const framebufferCount = _framebuffers.size ();
-    _commandBuffer.resize ( framebufferCount );
-
-    VkCommandBufferAllocateInfo const commandBufferInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-        .pNext = nullptr,
-        .commandPool = _commandPool,
-        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-        .commandBufferCount = static_cast<uint32_t> ( framebufferCount )
-    };
-
-    bool result = android_vulkan::Renderer::CheckVkResult (
-        vkAllocateCommandBuffers ( renderer.GetDevice (), &commandBufferInfo, _commandBuffer.data () ),
-        "MandelbrotLUTColor::CreateCommandBuffer",
-        "Can't allocate command buffer"
-    );
-
-    if ( !result )
-        return false;
-
     constexpr VkCommandBufferBeginInfo commandBufferBeginInfo
     {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
@@ -191,59 +162,39 @@ bool MandelbrotLUTColor::CreateCommandBuffer ( android_vulkan::Renderer &rendere
         .pClearValues = &colorClearValue,
     };
 
-    for ( size_t i = 0U; i < framebufferCount; ++i )
-    {
-        VkCommandBuffer commandBuffer = _commandBuffer[ i ];
-
-        result = android_vulkan::Renderer::CheckVkResult (
-            vkBeginCommandBuffer ( commandBuffer, &commandBufferBeginInfo ),
-            "MandelbrotLUTColor::CreateCommandBuffer",
-            "Can't begin command buffer"
-        );
-
-        if ( !result )
-            return false;
-
-        renderPassBeginInfo.framebuffer = _framebuffers[ i ];
-
-        vkCmdBeginRenderPass ( commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE );
-        vkCmdBindPipeline ( commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline );
-
-        vkCmdBindDescriptorSets ( commandBuffer,
-            VK_PIPELINE_BIND_POINT_GRAPHICS,
-            _pipelineLayout,
-            0U,
-            1U,
-            &_descriptorSet,
-            0U,
-            nullptr
-        );
-
-        vkCmdDraw ( commandBuffer, 4U, 1U, 0U, 0U );
-        vkCmdEndRenderPass ( commandBuffer );
-
-        result = android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
-            "MandelbrotLUTColor::CreateCommandBuffer",
-            "Can't end command buffer"
-        );
-    }
-
-    return result;
-}
-
-void MandelbrotLUTColor::DestroyCommandBuffer ( VkDevice device ) noexcept
-{
-    if ( _commandBuffer.empty () )
-        return;
-
-    vkFreeCommandBuffers ( device,
-        _commandPool,
-        static_cast<uint32_t> ( _commandBuffer.size () ),
-        _commandBuffer.data ()
+    bool result = android_vulkan::Renderer::CheckVkResult (
+        vkBeginCommandBuffer ( commandBuffer, &commandBufferBeginInfo ),
+        "MandelbrotLUTColor::RecordCommandBuffer",
+        "Can't begin command buffer"
     );
 
-    _commandBuffer.clear ();
-    _commandBuffer.shrink_to_fit ();
+    if ( !result )
+        return false;
+
+    renderPassBeginInfo.framebuffer = framebuffer;
+
+    vkCmdBeginRenderPass ( commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE );
+    vkCmdBindPipeline ( commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline );
+
+    vkCmdBindDescriptorSets ( commandBuffer,
+        VK_PIPELINE_BIND_POINT_GRAPHICS,
+        _pipelineLayout,
+        0U,
+        1U,
+        &_descriptorSet,
+        0U,
+        nullptr
+    );
+
+    vkCmdDraw ( commandBuffer, 4U, 1U, 0U, 0U );
+    vkCmdEndRenderPass ( commandBuffer );
+
+    result = android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
+        "MandelbrotLUTColor::CreateCommandBuffer",
+        "Can't end command buffer"
+    );
+
+    return result;
 }
 
 bool MandelbrotLUTColor::CreateDescriptorSet (  android_vulkan::Renderer &renderer ) noexcept
@@ -611,7 +562,7 @@ bool MandelbrotLUTColor::UploadLUTSamples ( android_vulkan::Renderer &renderer )
     {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
         .pNext = nullptr,
-        .commandPool = _commandPool,
+        .commandPool = _commandInfo[ 0U ]._pool,
         .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
         .commandBufferCount = 1U
     };

@@ -21,14 +21,13 @@ class MandelbrotAnalyticColor final : public MandelbrotBase
         ~MandelbrotAnalyticColor () override = default;
 
     private:
-        [[nodiscard]] bool OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept override;
-        void OnSwapchainDestroyed ( android_vulkan::Renderer &renderer ) noexcept override;
-
         [[nodiscard]] bool CreatePipelineLayout ( android_vulkan::Renderer &renderer ) noexcept override;
         void DestroyPipelineLayout ( VkDevice device ) noexcept override;
 
-        [[nodiscard]] bool CreateCommandBuffer ( android_vulkan::Renderer &renderer ) noexcept;
-        void DestroyCommandBuffer ( VkDevice device ) noexcept;
+        [[nodiscard]] bool RecordCommandBuffer ( android_vulkan::Renderer &renderer,
+            VkCommandBuffer commandBuffer,
+            VkFramebuffer framebuffer
+        ) noexcept override;
 };
 
 } // namespace mandelbrot

@@ -61,6 +61,7 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/mandelbrot/mandelbrot_base.cpp
     app/src/main/cpp/sources/mandelbrot/mandelbrot_lut_color.cpp
     app/src/main/cpp/sources/pbr/actor.cpp
+    app/src/main/cpp/sources/pbr/animation_blend_node.cpp
     app/src/main/cpp/sources/pbr/animation_graph.cpp
     app/src/main/cpp/sources/pbr/animation_player_node.cpp
     app/src/main/cpp/sources/pbr/ascii_string.cpp
@@ -176,6 +177,7 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/scriptable_logger.cpp
     app/src/main/cpp/sources/pbr/scriptable_material.cpp
     app/src/main/cpp/sources/pbr/scriptable_penetration.cpp
+    app/src/main/cpp/sources/pbr/scriptable_raycast_result.cpp
     app/src/main/cpp/sources/pbr/scriptable_sweep_test_result.cpp
     app/src/main/cpp/sources/pbr/set_attribute_checker.cpp
     app/src/main/cpp/sources/pbr/skeletal_mesh_component.cpp

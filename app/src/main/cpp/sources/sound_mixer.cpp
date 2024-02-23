@@ -91,7 +91,7 @@ bool SoundMixer::StreamInfo::LockAndReturnFillSilence () noexcept
     bool expected = false;
 
     while ( !fillLock.compare_exchange_weak ( expected, true ) )
-    {}
+        expected = false;
 
     AV_ASSERT ( !expected )
     return _fillSilence;
@@ -108,7 +108,7 @@ void SoundMixer::StreamInfo::Modify ( bool fillSilence ) noexcept
     bool expected = false;
 
     while ( !fillLock.compare_exchange_weak ( expected, true ) )
-    {}
+        expected = false;
 
     AV_ASSERT ( !expected )
     _fillSilence = fillSilence;
@@ -159,6 +159,7 @@ bool SoundMixer::Init () noexcept
 
     if ( !CheckAAudioResult ( AAudio_createStreamBuilder ( &_builder ), "SoundMixer::Init", "Can't create builder" ) )
     {
+        [[unlikely]]
         Destroy ();
         return false;
     }
@@ -166,7 +167,7 @@ bool SoundMixer::Init () noexcept
     AAudioStream* probe = nullptr;
     aaudio_result_t result = AAudioStreamBuilder_openStream ( _builder, &probe );
 
-    if ( !CheckAAudioResult ( result, "SoundMixer::Init", "Can't open system probe stream" ) )
+    if ( !CheckAAudioResult ( result, "SoundMixer::Init", "Can't open system probe stream" ) ) [[unlikely]]
         return false;
 
     {
@@ -185,13 +186,13 @@ bool SoundMixer::Init () noexcept
     AAudioStreamBuilder_setSharingMode ( _builder, AAUDIO_SHARING_MODE_SHARED );
     AAudioStreamBuilder_setUsage ( _builder, AAUDIO_USAGE_GAME );
 
-    if ( !ResolveBufferSize () )
+    if ( !ResolveBufferSize () ) [[unlikely]]
     {
         Destroy ();
         return false;
     }
 
-    if ( !CreateHardwareStreams () )
+    if ( !CreateHardwareStreams () ) [[unlikely]]
     {
         Destroy ();
         return false;
@@ -231,9 +232,32 @@ bool SoundMixer::Init () noexcept
 
                 _actionQueue.clear ();
 
-                auto const now = std::chrono::system_clock::now ();
+                for ( auto i = _stopping.begin (); i != _stopping.end (); )
+                {
+                    StreamInfo* si = *i++;
+                    aaudio_stream_state_t state;
 
-                if ( std::chrono::duration<double> const delta = now - last; delta.count () < TRIM_TIMEOUT_SECONDS )
+                    aaudio_result_t const result = CheckAAudioResult (
+                        AAudioStream_waitForStateChange ( si->_stream,
+                            AAUDIO_STREAM_STATE_STOPPING,
+                            &state,
+                            0
+                        ),
+
+                        "SoundMixer::Init::_thread",
+                        "Can't update state of stopping stream"
+                    );
+
+                    if ( !result | ( state != AAUDIO_STREAM_STATE_STOPPED ) )
+                        continue;
+
+                    _free.splice ( _free.cbegin (), _stopping, si->_used );
+                }
+
+                auto const now = std::chrono::system_clock::now ();
+                std::chrono::duration<double> const delta = now - last;
+
+                if ( delta.count () < TRIM_TIMEOUT_SECONDS ) [[likely]]
                     continue;
 
                 last = now;
@@ -247,7 +271,7 @@ bool SoundMixer::Init () noexcept
 
 void SoundMixer::Destroy () noexcept
 {
-    if ( _workerThread.joinable () )
+    if ( _workerThread.joinable () ) [[likely]]
     {
         _workerFlag = false;
         _workerThread.join ();
@@ -264,9 +288,14 @@ void SoundMixer::Destroy () noexcept
     }
 
     _free.clear ();
+    _stopping.clear ();
     _used.clear ();
 
-    if ( !_builder )
+    _streamMap.clear ();
+    _streamInfo.clear ();
+    _streamToResume.clear ();
+
+    if ( !_builder ) [[unlikely]]
         return;
 
     CheckAAudioResult ( AAudioStreamBuilder_delete ( _builder ), "SoundMixer::Destroy", "Can't destroy builder" );
@@ -295,7 +324,8 @@ void SoundMixer::SetChannelVolume ( eSoundChannel channel, float volume ) noexce
 
 void SoundMixer::SetMasterVolume ( float volume ) noexcept
 {
-    _masterVolume = std::clamp ( volume, 0.0F, 1.0F );
+    volume = std::clamp ( volume, 0.0F, 1.0F );
+    _masterVolume = volume;
 
     for ( size_t i = 0U; i < TOTAL_SOUND_CHANNELS; ++i )
     {
@@ -305,7 +335,7 @@ void SoundMixer::SetMasterVolume ( float volume ) noexcept
 
 SoundListenerInfo const &SoundMixer::GetListenerInfo () noexcept
 {
-    if ( _listenerTransformChanged )
+    if ( _listenerTransformChanged ) [[unlikely]]
     {
         constexpr GXVec3 le ( -1.0F, 0.0F, 0.0F );
 
@@ -345,7 +375,7 @@ void SoundMixer::Pause () noexcept
 {
     std::unique_lock<std::mutex> const lock ( _mutex );
 
-    if ( IsOffline () )
+    if ( IsOffline () ) [[unlikely]]
         return;
 
     for ( auto &record : _streamMap )
@@ -373,7 +403,7 @@ void SoundMixer::Resume () noexcept
 {
     std::unique_lock<std::mutex> const lock ( _mutex );
 
-    if ( IsOffline () )
+    if ( IsOffline () ) [[unlikely]]
         return;
 
     for ( auto* stream : _streamToResume )
@@ -394,12 +424,12 @@ bool SoundMixer::RequestPause ( SoundEmitter &emitter ) noexcept
 {
     std::unique_lock<std::mutex> const lock ( _mutex );
 
-    if ( IsOffline () )
+    if ( IsOffline () ) [[unlikely]]
         return true;
 
     auto findResult = _streamMap.find ( &emitter );
 
-    if ( findResult == _streamMap.end () )
+    if ( findResult == _streamMap.end () ) [[unlikely]]
     {
         LogWarning ( "SoundMixer::RequestPause - Can't find emitter. Abort..." );
         AV_ASSERT ( false )
@@ -409,7 +439,7 @@ bool SoundMixer::RequestPause ( SoundEmitter &emitter ) noexcept
     StreamInfo &si = *findResult->second;
     si.Modify ( true );
 
-    _free.splice ( _free.begin (), _used, si._used );
+    _free.splice ( _free.cbegin (), _used, si._used );
     _streamMap.erase ( findResult );
 
     _actionQueue.emplace_back (
@@ -427,10 +457,10 @@ bool SoundMixer::RequestPlay ( SoundEmitter &emitter ) noexcept
 {
     std::unique_lock<std::mutex> const lock ( _mutex );
 
-    if ( IsOffline () )
+    if ( IsOffline () ) [[unlikely]]
         return true;
 
-    if ( _free.empty () )
+    if ( _free.empty () ) [[unlikely]]
     {
         LogWarning ( "SoundMixer::RequestPlay - No more free streams. Abort..." );
         return false;
@@ -460,16 +490,19 @@ bool SoundMixer::RequestStop ( SoundEmitter &emitter ) noexcept
 {
     std::unique_lock<std::mutex> const lock ( _mutex );
 
+    if ( IsOffline () ) [[unlikely]]
+        return true;
+
     auto findResult = _streamMap.find ( &emitter );
 
-    if ( findResult == _streamMap.end () )
+    if ( findResult == _streamMap.end () ) [[unlikely]]
     {
         LogWarning ( "SoundMixer::RequestStop - Can't find emitter. Abort..." );
         AV_ASSERT ( false )
         return false;
     }
 
-    if ( IsOffline () )
+    if ( IsOffline () ) [[unlikely]]
     {
         _streamMap.erase ( findResult );
         return true;
@@ -478,7 +511,7 @@ bool SoundMixer::RequestStop ( SoundEmitter &emitter ) noexcept
     StreamInfo &si = *findResult->second;
     si.Modify ( true );
 
-    _free.splice ( _free.begin (), _used, si._used );
+    _stopping.splice ( _stopping.cbegin (), _used, si._used );
     _streamMap.erase ( findResult );
 
     _actionQueue.emplace_back (
@@ -496,7 +529,7 @@ void SoundMixer::RegisterDecompressor ( PCMStreamer &streamer ) noexcept
 {
     std::unique_lock<std::mutex> const lock ( _mutex );
 
-    if ( _decompressors.contains ( &streamer ) )
+    if ( _decompressors.contains ( &streamer ) ) [[unlikely]]
     {
         LogError ( "SoundMixer::RegisterDecompressor - Decompressor already registered. Please check business logic." );
         AV_ASSERT ( false )
@@ -510,7 +543,7 @@ void SoundMixer::UnregisterDecompressor ( PCMStreamer &streamer ) noexcept
 {
     std::unique_lock<std::mutex> const lock ( _mutex );
 
-    if ( _decompressors.erase ( &streamer ) > 0U )
+    if ( _decompressors.erase ( &streamer ) > 0U ) [[likely]]
         return;
 
     LogError ( "SoundMixer::UnregisterDecompressor - Can't find decompressor. Please check business logic." );
@@ -519,7 +552,7 @@ void SoundMixer::UnregisterDecompressor ( PCMStreamer &streamer ) noexcept
 
 bool SoundMixer::CheckAAudioResult ( aaudio_result_t result, char const* from, char const* message ) noexcept
 {
-    if ( result == AAUDIO_OK )
+    if ( result == AAUDIO_OK ) [[likely]]
         return true;
 
     // Positive value. This case should be process differently by AAudio design.
@@ -539,25 +572,25 @@ bool SoundMixer::CreateHardwareStreams () noexcept
         StreamInfo &si = _streamInfo.emplace_back ( *this, _used.end () );
         AAudioStreamBuilder_setDataCallback ( _builder, &SoundMixer::PCMCallback, &si );
 
-        if ( AAudioStreamBuilder_openStream ( _builder, &si._stream ) != AAUDIO_OK )
+        if ( AAudioStreamBuilder_openStream ( _builder, &si._stream ) != AAUDIO_OK ) [[unlikely]]
         {
             _streamInfo.pop_back ();
             break;
         }
 
-        if ( !SetStreamBufferSize ( *si._stream, "SoundMixer::CreateHardwareStreams" ) )
+        if ( !SetStreamBufferSize ( *si._stream, "SoundMixer::CreateHardwareStreams" ) ) [[unlikely]]
         {
             AV_ASSERT ( false )
             return false;
         }
 
-        if ( !ValidateStream ( *si._stream ) )
+        if ( !ValidateStream ( *si._stream ) ) [[unlikely]]
             return false;
 
         _free.push_back ( &si );
     }
 
-    if ( counter < 1U )
+    if ( counter < 1U ) [[unlikely]]
     {
         LogError ( "SoundMixer::CreateHardwareStreams - No available hardware streams!" );
         AV_ASSERT ( false )
@@ -568,20 +601,20 @@ bool SoundMixer::CreateHardwareStreams () noexcept
     return true;
 }
 
-std::optional<AAudioStream*> SoundMixer::CreateStream ( StreamInfo &streamInfo) noexcept
+std::optional<AAudioStream*> SoundMixer::CreateStream ( StreamInfo &streamInfo ) noexcept
 {
     AAudioStreamBuilder_setDataCallback ( _builder, &SoundMixer::PCMCallback, &streamInfo );
 
     AAudioStream* stream = nullptr;
-    aaudio_result_t result = AAudioStreamBuilder_openStream ( _builder, &stream );
+    aaudio_result_t const result = AAudioStreamBuilder_openStream ( _builder, &stream );
 
-    if ( !CheckAAudioResult ( result, "SoundMixer::CreateStream", "Can't open stream" ) )
+    if ( !CheckAAudioResult ( result, "SoundMixer::CreateStream", "Can't open stream" ) ) [[unlikely]]
         return std::nullopt;
 
-    if ( !SetStreamBufferSize ( *stream, "SoundMixer::CreateStream" ) )
+    if ( !SetStreamBufferSize ( *stream, "SoundMixer::CreateStream" ) ) [[unlikely]]
         return std::nullopt;
 
-    if ( !ValidateStream ( *stream ) )
+    if ( !ValidateStream ( *stream ) ) [[unlikely]]
         return std::nullopt;
 
     return stream;
@@ -605,14 +638,14 @@ void SoundMixer::RecreateSoundStream ( AAudioStream &stream ) noexcept
                 }
             }
 
-            if ( !targetStreamInfo )
+            if ( !targetStreamInfo ) [[unlikely]]
             {
                 LogError ( "SoundMixer::RecreateSoundStream - Can't find stream." );
                 AV_ASSERT ( false )
                 return;
             }
 
-            if ( auto result = CreateStream ( *targetStreamInfo ); result != std::nullopt )
+            if ( auto result = CreateStream ( *targetStreamInfo ); result != std::nullopt ) [[likely]]
             {
                 targetStreamInfo->_stream = *result;
                 return;
@@ -632,7 +665,10 @@ bool SoundMixer::ResolveBufferSize () noexcept
     aaudio_result_t result = AAudioStreamBuilder_openStream ( _builder, &probe );
 
     if ( !CheckAAudioResult ( result, "SoundMixer::ResolveBufferSize", "Can't open probe stream (branch 1)" ) )
+    {
+        [[unlikely]]
         return false;
+    }
 
     // IIFE pattern.
     int32_t const burst = [] ( AAudioStream &p ) noexcept -> int32_t {
@@ -645,12 +681,15 @@ bool SoundMixer::ResolveBufferSize () noexcept
     result = AAudioStreamBuilder_openStream ( _builder, &probe );
 
     if ( !CheckAAudioResult ( result, "SoundMixer::ResolveBufferSize", "Can't open probe stream (branch 2)" ) )
+    {
+        [[unlikely]]
         return false;
+    }
 
     StreamCloser const streamCloser ( *probe );
     result = AAudioStream_setBufferSizeInFrames ( probe, burst );
 
-    if ( result < 0 )
+    if ( result < 0 ) [[unlikely]]
     {
         // Error happens.
         char msg[ 128U ];
@@ -668,7 +707,7 @@ bool SoundMixer::SetStreamBufferSize ( AAudioStream &stream, char const* where )
 {
     aaudio_result_t const result = AAudioStream_setBufferSizeInFrames ( &stream, _bufferFrameCount );
 
-    if ( result > 0 )
+    if ( result > 0 ) [[likely]]
         return true;
 
     // Error happened.
@@ -691,10 +730,12 @@ bool SoundMixer::ValidateStream ( AAudioStream &stream ) const noexcept
         );
 
         AV_ASSERT ( false )
+
+        [[unlikely]]
         return false;
     }
 
-    if ( aaudio_format_t const format = AAudioStream_getFormat ( &stream ); format != GetFormat () )
+    if ( aaudio_format_t const format = AAudioStream_getFormat ( &stream ); format != GetFormat () ) [[unlikely]]
     {
         StreamCloser const streamCloser ( stream );
 
@@ -721,12 +762,14 @@ bool SoundMixer::ValidateStream ( AAudioStream &stream ) const noexcept
         );
 
         AV_ASSERT ( false )
+
+        [[unlikely]]
         return false;
     }
 
     int32_t const frames = AAudioStream_setBufferSizeInFrames ( &stream, _bufferFrameCount );
 
-    if ( frames == _bufferFrameCount )
+    if ( frames == _bufferFrameCount ) [[likely]]
         return true;
 
     StreamCloser const streamCloser ( stream );
@@ -744,7 +787,7 @@ void SoundMixer::ErrorCallback ( AAudioStream* stream, void* userData, aaudio_re
 {
     CheckAAudioResult ( err, "SoundMixer::ErrorCallback", "Got error from AAudio subsystem" );
 
-    if ( err != AAUDIO_ERROR_DISCONNECTED )
+    if ( err != AAUDIO_ERROR_DISCONNECTED ) [[unlikely]]
         return;
 
     LogInfo ( "SoundMixer::ErrorCallback - Main audio endpoint has been disconnected, Trying to restore sound..." );
@@ -785,7 +828,7 @@ aaudio_data_callback_result_t SoundMixer::PCMCallback ( AAudioStream* /*stream*/
     auto &si = *static_cast<StreamInfo*> ( userData );
     constexpr auto sizeFactor = static_cast<size_t> ( GetChannelCount () ) * sizeof ( PCMStreamer::PCMType );
 
-    if ( si._mixer->IsOffline () )
+    if ( si._mixer->IsOffline () ) [[unlikely]]
     {
         std::memset ( audioData, 0, static_cast<size_t> ( numFrames * sizeFactor ) );
         return AAUDIO_CALLBACK_RESULT_STOP;
@@ -814,26 +857,6 @@ aaudio_data_callback_result_t SoundMixer::PCMCallback ( AAudioStream* /*stream*/
 
 void SoundMixer::PrintStreamInfo ( AAudioStream &stream, char const* header ) noexcept
 {
-    constexpr char const format[] =
-R"__(SoundMixer::PrintStreamInfo - %s:
->>>
-    Stream: %p
-    Buffer size in frames: %d
-    Frames per burst: %d
-    Buffer capacity in frames: %d
-    Frames per data callback: %d
-    Sample rate: %d
-    Channel count: %d
-    Device ID: %d
-    Format: %s
-    Sharing mode: %s
-    Performance mode: %s
-    Direction: %s
-    Session ID: %s
-    Usage: %s
-    Content type: %s
-<<<)__";
-
     constexpr size_t size = 128U;
     char unknownSharingMode[ size ];
 
@@ -844,7 +867,7 @@ R"__(SoundMixer::PrintStreamInfo - %s:
             { AAUDIO_SHARING_MODE_SHARED, "AAUDIO_SHARING_MODE_SHARED" }
         };
 
-        if ( auto const findResult = map.find ( mode ); findResult != map.cend () )
+        if ( auto const findResult = map.find ( mode ); findResult != map.cend () ) [[likely]]
             return findResult->second;
 
         std::snprintf ( unknownSharingMode, size, "UNKNOWN [%d]", static_cast<int> ( mode ) );
@@ -861,7 +884,7 @@ R"__(SoundMixer::PrintStreamInfo - %s:
             { AAUDIO_PERFORMANCE_MODE_LOW_LATENCY, "AAUDIO_PERFORMANCE_MODE_LOW_LATENCY" }
         };
 
-        if ( auto const findResult = map.find ( performance ); findResult != map.cend () )
+        if ( auto const findResult = map.find ( performance ); findResult != map.cend () ) [[likely]]
             return findResult->second;
 
         std::snprintf ( unknownPerf, size, "UNKNOWN [%d]", static_cast<int> ( performance ) );
@@ -877,7 +900,7 @@ R"__(SoundMixer::PrintStreamInfo - %s:
             { AAUDIO_DIRECTION_INPUT, "AAUDIO_DIRECTION_INPUT" }
         };
 
-        if ( auto const findResult = map.find ( direction ); findResult != map.cend () )
+        if ( auto const findResult = map.find ( direction ); findResult != map.cend () ) [[likely]]
             return findResult->second;
 
         std::snprintf ( unknownDirection, size, "UNKNOWN [%d]", static_cast<int> ( direction ) );
@@ -893,7 +916,7 @@ R"__(SoundMixer::PrintStreamInfo - %s:
             { AAUDIO_SESSION_ID_ALLOCATE, "AAUDIO_SESSION_ID_ALLOCATE" }
         };
 
-        if ( auto const findResult = map.find ( sessionID ); findResult != map.cend () )
+        if ( auto const findResult = map.find ( sessionID ); findResult != map.cend () ) [[likely]]
             return findResult->second;
 
         std::snprintf ( unknownSessionID, size, "UNKNOWN [%d]", static_cast<int> ( sessionID ) );
@@ -923,7 +946,7 @@ R"__(SoundMixer::PrintStreamInfo - %s:
             { AAUDIO_SYSTEM_USAGE_ANNOUNCEMENT, "AAUDIO_SYSTEM_USAGE_ANNOUNCEMENT" }
         };
 
-        if ( auto const findResult = map.find ( usage ); findResult != map.cend () )
+        if ( auto const findResult = map.find ( usage ); findResult != map.cend () ) [[likely]]
             return findResult->second;
 
         std::snprintf ( unknownUsage, size, "UNKNOWN [%d]", static_cast<int> ( usage ) );
@@ -941,7 +964,7 @@ R"__(SoundMixer::PrintStreamInfo - %s:
             { AAUDIO_CONTENT_TYPE_SONIFICATION, "AAUDIO_CONTENT_TYPE_SONIFICATION" }
         };
 
-        if ( auto const findResult = map.find ( contentType ); findResult != map.cend () )
+        if ( auto const findResult = map.find ( contentType ); findResult != map.cend () ) [[likely]]
             return findResult->second;
 
         std::snprintf ( unknownContentType, size, "UNKNOWN [%d]", static_cast<int> ( contentType ) );
@@ -949,6 +972,25 @@ R"__(SoundMixer::PrintStreamInfo - %s:
     };
 
     char unknownFormat[ size ];
+
+    constexpr char const format[] = R"__(SoundMixer::PrintStreamInfo - %s:
+>>>
+    Stream: %p
+    Buffer size in frames: %d
+    Frames per burst: %d
+    Buffer capacity in frames: %d
+    Frames per data callback: %d
+    Sample rate: %d
+    Channel count: %d
+    Device ID: %d
+    Format: %s
+    Sharing mode: %s
+    Performance mode: %s
+    Direction: %s
+    Session ID: %s
+    Usage: %s
+    Content type: %s
+<<<)__";
 
     LogInfo ( format,
         header,

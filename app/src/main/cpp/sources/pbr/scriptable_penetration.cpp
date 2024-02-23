@@ -1,5 +1,7 @@
-#include <pbr/scriptable_penetration.hpp>
+#include "pbr/rigid_body_component.hpp"
 #include <pbr/script_engine.hpp>
+#include <pbr/scriptable_gxvec3.hpp>
+#include <pbr/scriptable_penetration.hpp>
 #include <logger.hpp>
 
 
@@ -11,8 +13,8 @@ constexpr std::string_view FIELD_BODY = "_body";
 constexpr std::string_view FIELD_COUNT = "_count";
 constexpr std::string_view FIELD_DEPTH = "_depth";
 constexpr std::string_view FIELD_PENETRATIONS = "_penetrations";
+constexpr std::string_view FIELD_NORMAL = "_normal";
 
-constexpr char const GLOBAL_FUNCTION[] = "FindRigidBodyComponent";
 constexpr char const GLOBAL_TABLE[] = "av_scriptablePenetration";
 
 constexpr int INITIAL_CAPACITY = 128;
@@ -45,13 +47,14 @@ bool ScriptablePenetration::Init ( lua_State &vm ) noexcept
     lua_rawget ( &vm, -2 );
     int const penetrationIndex = lua_gettop ( &vm );
 
-    if ( !FindVec3Constructor ( vm ) ) [[unlikely]]
+    if ( !ScriptableGXVec3::PrepareLuaConstructor ( vm ) ) [[unlikely]]
     {
         lua_pop ( &vm, 2 );
         return false;
     }
 
     int const vec3Constructor = lua_gettop ( &vm );
+    constexpr int errorHandlerIdx = ScriptEngine::GetErrorHandlerIndex ();
     constexpr GXVec3 normal ( 0.0F, 1.0F, 0.0F );
 
     _normals.reserve ( static_cast<size_t> ( INITIAL_CAPACITY ) );
@@ -59,11 +62,20 @@ bool ScriptablePenetration::Init ( lua_State &vm ) noexcept
     // Don't care about actual value. Main task is to allocate internal Lua array with something.
     constexpr lua_Integer proxyRigidBody = 777;
     lua_pushinteger ( &vm, proxyRigidBody );
-    int const rigidBodyComponentStack = lua_gettop ( &vm );
+    int const rigidBodyComponentIdx = lua_gettop ( &vm );
 
     for ( int i = 1; i <= INITIAL_CAPACITY; ++i )
     {
-        if ( !Append ( vm, vec3Constructor, penetrationIndex, 0.0, normal, rigidBodyComponentStack ) ) [[unlikely]]
+        bool const result = Append ( vm,
+            errorHandlerIdx,
+            vec3Constructor,
+            penetrationIndex,
+            rigidBodyComponentIdx,
+            0.0F,
+            normal
+        );
+
+        if ( !result ) [[unlikely]]
         {
             lua_pop ( &vm, 4 );
             return false;
@@ -81,7 +93,7 @@ void ScriptablePenetration::Destroy ( lua_State &vm ) noexcept
 
     if ( !lua_checkstack ( &vm, 1 ) ) [[unlikely]]
     {
-        android_vulkan::LogError ( "pbr::ScriptablePenetration::Init - Stack is too small." );
+        android_vulkan::LogError ( "pbr::ScriptablePenetration::Destroy - Stack is too small." );
         return;
     }
 
@@ -103,7 +115,7 @@ bool ScriptablePenetration::PublishResult ( lua_State &vm,
 
     lua_getglobal ( &vm, GLOBAL_TABLE );
     lua_pushlstring ( &vm, FIELD_COUNT.data (), FIELD_COUNT.size () );
-    lua_pushinteger ( &vm, static_cast<int> ( count ) );
+    lua_pushinteger ( &vm, static_cast<lua_Integer> ( count ) );
     lua_rawset ( &vm, -3 );
 
     if ( count == 0U )
@@ -118,22 +130,29 @@ bool ScriptablePenetration::PublishResult ( lua_State &vm,
     size_t const available = cases[ static_cast<size_t> ( count <= capacity ) ];
     android_vulkan::Penetration const* pens = penetrations.data ();
 
-    lua_getglobal ( &vm, GLOBAL_FUNCTION );
+    if ( !RigidBodyComponent::PrepareLuaFindRigidBodyComponent ( vm ) ) [[unlikely]]
+    {
+        lua_pop ( &vm, 2 );
+        return false;
+    }
+
+    int const findRigidBodyIdx = lua_gettop ( &vm );
+    int const errorHandlerIdx = ScriptEngine::PushErrorHandlerToStack ( vm );
 
     for ( size_t i = 0U; i < available; ++i )
     {
         android_vulkan::Penetration const &p = pens[ i ];
-        _normals[ i ].get ()._vec3 = p._normal;
+        *( _normals[ i ] ) = p._normal;
 
         lua_pushinteger ( &vm, static_cast<int> ( i ) + 1 );
 
-        if ( lua_rawget ( &vm, -3 ) != LUA_TTABLE ) [[unlikely]]
+        if ( lua_rawget ( &vm, penetrationIndex ) != LUA_TTABLE ) [[unlikely]]
         {
             android_vulkan::LogError ( "pbr::ScriptablePenetration::PublishResult - Can't find array item %zu.",
                 i + 1U
             );
 
-            lua_pop ( &vm, 4 );
+            lua_pop ( &vm, 5 );
             return false;
         }
 
@@ -143,10 +162,10 @@ bool ScriptablePenetration::PublishResult ( lua_State &vm,
 
         lua_pushlstring ( &vm, FIELD_BODY.data (), FIELD_BODY.size () );
 
-        lua_pushvalue ( &vm, -3 );
+        lua_pushvalue ( &vm, findRigidBodyIdx );
         lua_pushlightuserdata ( &vm, p._body.get () );
 
-        if ( lua_pcall ( &vm, 1, 1, ScriptEngine::GetErrorHandlerIndex () ) != LUA_OK ) [[unlikely]]
+        if ( lua_pcall ( &vm, 1, 1, errorHandlerIdx ) != LUA_OK ) [[unlikely]]
         {
             lua_pop ( &vm, 6 );
             return false;
@@ -158,13 +177,13 @@ bool ScriptablePenetration::PublishResult ( lua_State &vm,
 
     if ( count - available == 0U )
     {
-        lua_pop ( &vm, 2 );
+        lua_pop ( &vm, 3 );
         return true;
     }
 
-    if ( !FindVec3Constructor ( vm ) ) [[unlikely]]
+    if ( !ScriptableGXVec3::PrepareLuaConstructor ( vm ) ) [[unlikely]]
     {
-        lua_pop ( &vm, 3 );
+        lua_pop ( &vm, 4 );
         return false;
     }
 
@@ -174,34 +193,44 @@ bool ScriptablePenetration::PublishResult ( lua_State &vm,
     {
         android_vulkan::Penetration const &p = pens[ i ];
 
-        lua_pushvalue ( &vm, -2 );
+        lua_pushvalue ( &vm, findRigidBodyIdx );
         lua_pushlightuserdata ( &vm, p._body.get () );
 
-        if ( lua_pcall ( &vm, 1, 1, ScriptEngine::GetErrorHandlerIndex () ) != LUA_OK ) [[unlikely]]
+        if ( lua_pcall ( &vm, 1, 1, errorHandlerIdx ) != LUA_OK ) [[unlikely]]
         {
-            lua_pop ( &vm, 5 );
+            lua_pop ( &vm, 6 );
             return false;
         }
 
-        if ( !Append ( vm, vec3Constructor, penetrationIndex, p._depth, p._normal, lua_gettop ( &vm ) ) ) [[unlikely]]
+        bool const result = Append ( vm,
+            errorHandlerIdx,
+            vec3Constructor,
+            penetrationIndex,
+            lua_gettop ( &vm ),
+            p._depth,
+            p._normal
+        );
+
+        if ( !result ) [[unlikely]]
         {
-            lua_pop ( &vm, 5 );
+            lua_pop ( &vm, 6 );
             return false;
         }
 
         lua_pop ( &vm, 1 );
     }
 
-    lua_pop ( &vm, 3 );
+    lua_pop ( &vm, 4 );
     return true;
 }
 
 bool ScriptablePenetration::Append ( lua_State &vm,
+    int errorHandlerIdx,
     int vec3Constructor,
     int penetrationIndex,
+    int rigidBodyComponentIdx,
     lua_Number depth,
-    GXVec3 const &normal,
-    int rigidBodyComponentStack
+    GXVec3 const &normal
 ) noexcept
 {
     if ( !lua_checkstack ( &vm, 5 ) ) [[unlikely]]
@@ -213,87 +242,44 @@ bool ScriptablePenetration::Append ( lua_State &vm,
     lua_pushinteger ( &vm, static_cast<int> ( _normals.size () ) + 1 );
     lua_createtable ( &vm, 0, 2 );
 
-    constexpr std::string_view fieldNormal = "_normal";
-    constexpr std::string_view fieldHandle = "_handle";
-
     // Depth field append.
     lua_pushlstring ( &vm, FIELD_DEPTH.data (), FIELD_DEPTH.size () );
     lua_pushnumber ( &vm, depth );
     lua_rawset ( &vm, -3 );
 
     // Normal field init.
-    lua_pushlstring ( &vm, fieldNormal.data (), fieldNormal.size () );
+    lua_pushlstring ( &vm, FIELD_NORMAL.data (), FIELD_NORMAL.size () );
 
     lua_pushvalue ( &vm, vec3Constructor );
 
-    if ( lua_pcall ( &vm, 0, 1, ScriptEngine::GetErrorHandlerIndex () ) != LUA_OK ) [[unlikely]]
+    if ( lua_pcall ( &vm, 0, 1, errorHandlerIdx ) != LUA_OK ) [[unlikely]]
     {
         lua_pop ( &vm, 4 );
         return false;
     }
 
-    lua_pushlstring ( &vm, fieldHandle.data (), fieldHandle.size () );
+    auto probe = ScriptableGXVec3::ExtractFromLua ( vm, -1 );
 
-    if ( lua_rawget ( &vm, -2 ) != LUA_TLIGHTUSERDATA ) [[unlikely]]
+    if ( !probe ) [[unlikely]]
     {
-        android_vulkan::LogError ( "pbr::ScriptablePenetration::Append - Can't find GXVec3 handle." );
-        lua_pop ( &vm, 5 );
+        lua_pop ( &vm, 4 );
         return false;
     }
 
-    auto &n = *static_cast<ScriptableGXVec3::Item*> ( lua_touserdata ( &vm, -1 ) );
-    n._vec3 = normal;
-    _normals.emplace_back ( std::ref ( n ) );
-    lua_pop ( &vm, 1 );
+    GXVec3* n = *probe;
+    *n = normal;
+    _normals.emplace_back ( n );
 
     // Normal field append.
     lua_rawset ( &vm, -3 );
 
     // Rigid body component append.
     lua_pushlstring ( &vm, FIELD_BODY.data (), FIELD_BODY.size () );
-    lua_pushvalue ( &vm, rigidBodyComponentStack );
+    lua_pushvalue ( &vm, rigidBodyComponentIdx );
     lua_rawset ( &vm, -3 );
 
     // Depth + Normal + Rigid body component append to _penetrations.
     lua_rawset ( &vm, penetrationIndex );
-    return true;
-}
-
-bool ScriptablePenetration::FindVec3Constructor ( lua_State &vm ) noexcept
-{
-    if ( !lua_checkstack ( &vm, 3 ) ) [[unlikely]]
-    {
-        android_vulkan::LogError ( "pbr::ScriptablePenetration::FindVec3Constructor - Stack is too small." );
-        return false;
-    }
-
-    if ( lua_getglobal ( &vm, "GXVec3" ) != LUA_TTABLE ) [[unlikely]]
-    {
-        android_vulkan::LogError ( "pbr::ScriptablePenetration::FindVec3Constructor - Can't find GXVec3 table." );
-        lua_pop ( &vm, 1 );
-        return false;
-    }
-
-    if ( lua_getmetatable ( &vm, -1 ) != 1 ) [[unlikely]]
-    {
-        android_vulkan::LogError ( "pbr::ScriptablePenetration::FindVec3Constructor - Can't find GXVec3 metatable." );
-        lua_pop ( &vm, 2 );
-        return false;
-    }
-
-    constexpr std::string_view metamethodCall = "__call";
-    lua_pushlstring ( &vm, metamethodCall.data (), metamethodCall.size () );
-
-    if ( lua_rawget ( &vm, -2 ) != LUA_TFUNCTION ) [[unlikely]]
-    {
-        android_vulkan::LogError ( "pbr::ScriptablePenetration::FindVec3Constructor - Can't find GXVec3 constructor." );
-        lua_pop ( &vm, 3 );
-        return false;
-    }
-
-    lua_replace ( &vm, -3 );
-    lua_pop ( &vm, 1 );
-
     return true;
 }
 

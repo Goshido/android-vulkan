@@ -51,7 +51,7 @@ $$L_{EC} - \text{Scalar value which allows the artist to bias exposure. Calculat
 
 To make eye adaptation it's needed to use exponential decay function which should be applied to average luminance:
 
-$$L_{current} = L_{previous} + (L_{average} - L_{previous}) \cdot (1 - e^{\Delta time \cdot \tau})$$
+$$L_{current} = L_{previous} + (L_{average} - L_{previous}) \cdot (1 - e^{-\Delta time \cdot \tau})$$
 
 Where:
 

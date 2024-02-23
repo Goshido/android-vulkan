@@ -124,12 +124,12 @@ class AnimationGraph final : public NodeLink
 
         static void Init ( lua_State &vm, android_vulkan::Renderer &renderer ) noexcept;
         static void Destroy () noexcept;
-        static void Update ( float deltaTime, size_t commandBufferIndex ) noexcept;
+        static void Update ( lua_State &vm, float deltaTime, size_t commandBufferIndex ) noexcept;
         static void UploadGPUData ( VkCommandBuffer commandBuffer,  size_t commandBufferIndex ) noexcept;
 
     private:
         void FreeResources () noexcept;
-        void UpdateInternal ( float deltaTime, size_t commandBufferIndex ) noexcept;
+        void UpdateInternal ( lua_State &vm, float deltaTime, size_t commandBufferIndex ) noexcept;
 
         static void AllocateVulkanStructures ( size_t needed ) noexcept;
         static void FreeUnusedResources ( size_t commandBufferIndex ) noexcept;

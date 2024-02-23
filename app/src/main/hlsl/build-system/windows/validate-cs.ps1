@@ -5,7 +5,7 @@ Clear-Host
 
 $params =
     "-E", "CS",
-    "-T", "cs_6_7",
+    "-T", "cs_6_8",
     "-Fo", "${BASE_SRC}\validation\cs.spv",
     "${source}"
 

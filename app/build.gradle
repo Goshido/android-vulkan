@@ -8,12 +8,12 @@ android {
     // noinspection GrDeprecatedAPIUsage
     buildToolsVersion "34.0.0"
 
-    ndkVersion "26.1.10909125"
+    ndkVersion "26.2.11394342"
     namespace 'com.goshidoInc.androidVulkan'
 
     defaultConfig {
         applicationId "com.goshidoInc.androidVulkan"
-        compileSdk 33
+        compileSdk 34
         minSdkVersion 30
         versionCode 1
         versionName "1.0"

@@ -103,7 +103,7 @@ Core::Core ( JNIEnv* env, jobject activity, jobject assetManager, std::string &&
         }
     };
 
-    _game = games.find ( android_vulkan::eGame::RotatingMeshLUT )->second.get ();
+    _game = games.find ( android_vulkan::eGame::MandelbrotLutColor )->second.get ();
 
     _thread = std::thread (
         [ this, dpi ] () noexcept {

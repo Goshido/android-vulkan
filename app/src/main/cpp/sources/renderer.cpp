@@ -378,7 +378,7 @@ std::unordered_set<uint32_t> g_validationFilter =
     // Attempting to enable extension VK_EXT_debug_utils, but this extension is intended to support use by
     // applications when debugging and it is strongly recommended that it be otherwise avoided.
     // [2024/02/19] Yeah. I'm pretty aware about that. Thank you.
-    0x0675DC32E
+    0x675DC32EU
 };
 
 constexpr std::pair<uint32_t, char const*> const g_vkDebugUtilsMessageSeverityFlagBitsEXTMapper[] =

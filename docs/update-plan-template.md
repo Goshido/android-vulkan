@@ -7,52 +7,52 @@
 
 ## Steps
 
-- ✅ Android Studio
-  - ✅ IDE
-  - ✅ Wrapper
-  - ✅ NDK
-  - ✅ Readme
-- ✅ Kotlin
-  - ✅ Kotlin
-  - ✅ Kotlin plugin
-  - ✅ Readme
-- ✅ Gradle
-  - ✅ Binary
-  - ✅ Gradle plugin
-  - ✅ Readme
-- ✅ VVL
-  - ✅ Binary
-  - ✅ Check new validation errors
-  - ✅ Compilation script repo
-  - ✅ VVL docs
-  - ✅ Readme
-- ✅ Lua
-  - ✅ Binary
-  - ✅ Compilation script repo
-  - ✅ Header
-  - ✅ Readme
-- ✅ DXC
-  - ✅ Binary
-  - ✅ Compilation script repo
-  - ✅ Shader blobs
-  - ✅ External archive
-  - ✅ Shader compilation docs
-  - ✅ Readme
-- ✅ FreeType
-  - ✅ Binary
-  - ✅ Compilation script repo
-  - ✅ Header
-  - ✅ Readme
-- ✅ Ogg
-  - ✅ Binary
+- ❌ Android Studio
+  - ❌ IDE
+  - ❌ Wrapper
+  - ❌ NDK
+  - ❌ Readme
+- ❌ Kotlin
+  - ❌ Kotlin
+  - ❌ Kotlin plugin
+  - ❌ Readme
+- ❌ Gradle
+  - ❌ Binary
+  - ❌ Gradle plugin
+  - ❌ Readme
+- ❌ VVL
+  - ❌ Binary
+  - ❌ Check new validation errors
   - ❌ Compilation script repo
-  - ✅ Header
-  - ✅ Readme
-- ✅ Vorbis|Vorbisfile
-  - ✅ Binary
+  - ❌ VVL docs
+  - ❌ Readme
+- ❌ Lua
+  - ❌ Binary
   - ❌ Compilation script repo
-  - ✅ Header
-  - ✅ Readme
+  - ❌ Header
+  - ❌ Readme
+- ❌ DXC
+  - ❌ Binary
+  - ❌ Compilation script repo
+  - ❌ Shader blobs
+  - ❌ External archive
+  - ❌ Shader compilation docs
+  - ❌ Readme
+- ❌ FreeType
+  - ❌ Binary
+  - ❌ Compilation script repo
+  - ❌ Header
+  - ❌ Readme
+- ❌ Ogg
+  - ❌ Binary
+  - ❌ Compilation script repo
+  - ❌ Header
+  - ❌ Readme
+- ❌ Vorbis|Vorbisfile
+  - ❌ Binary
+  - ❌ Compilation script repo
+  - ❌ Header
+  - ❌ Readme
 - ❌ STB
   - ❌ Header
   - ❌ Readme
@@ -87,3 +87,5 @@ Project:
 - Lua binary has been updated
 - VVL binary has been updated
 - gradlew has been updated
+- libogg has been recompiled
+- libvorbis and libvorbisfile have been recompiled

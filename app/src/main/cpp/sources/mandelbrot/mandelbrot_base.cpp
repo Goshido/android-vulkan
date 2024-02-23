@@ -35,6 +35,9 @@ bool MandelbrotBase::OnFrame ( android_vulkan::Renderer &renderer, double /*delt
         "Can't wait fence"
     );
 
+    if ( !result ) [[unlikely]]
+        return false;
+
     uint32_t presentationImageIndex = std::numeric_limits<uint32_t>::max ();
 
     if ( !BeginFrame ( renderer, commandInfo._acquire, presentationImageIndex ) ) [[unlikely]]
@@ -52,6 +55,9 @@ bool MandelbrotBase::OnFrame ( android_vulkan::Renderer &renderer, double /*delt
         "mandelbrot::MandelbrotBase::OnFrame",
         "Can't reset command pool"
     );
+
+    if ( !result ) [[unlikely]]
+        return false;
 
     VkCommandBuffer commandBuffer = commandInfo._buffer;
 

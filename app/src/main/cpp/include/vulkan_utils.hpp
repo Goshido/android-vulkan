@@ -28,7 +28,7 @@ GX_RESTORE_WARNING_STATE
 // See https://vulkan.lunarg.com/doc/view/1.1.108.0/mac/chunked_spec/chap2.html#fundamentals-objectmodel-overview
 
 
-#ifndef ANDROID_VULKAN_DEBUG
+#ifndef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
 #define AV_CHECK_VULKAN_LEAKS()
 
@@ -80,11 +80,17 @@ GX_RESTORE_WARNING_STATE
 #define AV_REGISTER_SHADER_MODULE(where)
 #define AV_UNREGISTER_SHADER_MODULE(where)
 
-#define AV_REGISTER_SURFACE(where)
-#define AV_UNREGISTER_SURFACE(where)
-
 #define AV_REGISTER_SWAPCHAIN(where)
 #define AV_UNREGISTER_SWAPCHAIN(where)
+
+
+
+
+
+
+
+
+#define AV_SET_VULKAN_OBJECT_NAME(device, handle, type, ...)
 
 #else
 
@@ -148,11 +154,20 @@ GX_RESTORE_WARNING_STATE
 #define AV_REGISTER_SHADER_MODULE(where) android_vulkan::RegisterShaderModule ( where );
 #define AV_UNREGISTER_SHADER_MODULE(where) android_vulkan::UnregisterShaderModule ( where );
 
-#define AV_REGISTER_SURFACE(where) android_vulkan::RegisterSurface ( where );
-#define AV_UNREGISTER_SURFACE(where) android_vulkan::UnregisterSurface ( where );
-
 #define AV_REGISTER_SWAPCHAIN(where) android_vulkan::RegisterSwapchain ( where );
 #define AV_UNREGISTER_SWAPCHAIN(where) android_vulkan::UnregisterSwapchain ( where );
+
+
+
+
+
+
+#define AV_SET_VULKAN_OBJECT_NAME(device, handle, type, ...)                                                    \
+{                                                                                                               \
+    char nameBuffer[ 256U ];                                                                                    \
+    std::snprintf ( nameBuffer, std::size ( nameBuffer ), __VA_ARGS__ );                                        \
+    android_vulkan::SetVulkanObjectName ( device, reinterpret_cast<uint64_t> ( handle ), type, nameBuffer );    \
+}
 
 namespace android_vulkan {
 
@@ -206,15 +221,26 @@ void UnregisterSemaphore ( std::string &&where );
 void RegisterShaderModule ( std::string &&where );
 void UnregisterShaderModule ( std::string &&where );
 
-void RegisterSurface ( std::string &&where );
-void UnregisterSurface ( std::string &&where );
-
 void RegisterSwapchain ( std::string &&where );
 void UnregisterSwapchain ( std::string &&where );
 
+
+
+
+
+
+
+
+
+
+
+
+void InitVulkanDebugUtils ( VkInstance instance ) noexcept;
+void SetVulkanObjectName ( VkDevice device, uint64_t handle, VkObjectType type, char const *name ) noexcept;
+
 } // namespace android_vulkan
 
-#endif // ANDROID_VULKAN_DEBUG
+#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
 
 #endif // VULKAN_UTILS_HPP

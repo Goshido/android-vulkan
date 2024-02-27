@@ -58,6 +58,7 @@
   - ❌ Readme
 - ❌ Code checks
 - ❌ Set starting project as PBR
+- ❌ Create archive tag with direct link to issue
 
 ## Commit messages
 

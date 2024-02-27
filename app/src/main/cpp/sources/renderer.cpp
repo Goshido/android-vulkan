@@ -1422,11 +1422,19 @@ bool Renderer::DeployDebugFeatures () noexcept
         vkGetInstanceProcAddr ( _instance, "vkDestroyDebugUtilsMessengerEXT" )
     );
 
-    return CheckVkResult (
+    AV_ASSERT ( vkDestroyDebugUtilsMessengerEXT )
+
+    bool const result = CheckVkResult (
         vkCreateDebugUtilsMessengerEXT ( _instance, &_debugUtilsMessengerCreateInfo, nullptr, &_debugUtilsMessenger ),
         "DeployDebugFeatures",
         "Can't Vulkan debug callback"
     );
+
+    if ( !result )
+        return false;
+
+    InitVulkanDebugUtils ( _instance );
+    return true;
 }
 
 void Renderer::DestroyDebugFeatures () noexcept
@@ -1727,7 +1735,7 @@ bool Renderer::DeploySurface ( ANativeWindow &nativeWindow ) noexcept
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_SURFACE ( "Renderer::_surface" )
+    AV_SET_VULKAN_OBJECT_NAME ( _device, _surface, VK_OBJECT_TYPE_SURFACE_KHR, "Main surface" )
 
     VkSurfaceCapabilitiesKHR &surfaceCapabilitiesKHR = _physicalDeviceInfo[ _physicalDevice ]._surfaceCapabilities;
 
@@ -1834,7 +1842,6 @@ void Renderer::DestroySurface () noexcept
 {
     vkDestroySurfaceKHR ( _instance, _surface, nullptr );
     _surface = VK_NULL_HANDLE;
-    AV_UNREGISTER_SURFACE ( "Renderer::_surface" )
 }
 
 bool Renderer::DeploySwapchain ( bool vSync ) noexcept

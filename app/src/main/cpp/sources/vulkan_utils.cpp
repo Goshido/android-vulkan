@@ -1,6 +1,9 @@
-#ifdef ANDROID_VULKAN_DEBUG
+#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
 #include <av_assert.hpp>
+#include <logger.hpp>
+#include <renderer.hpp>
+#include <vulkan_api.hpp>
 #include <vulkan_utils.hpp>
 #include <GXCommon/GXWarning.hpp>
 
@@ -10,8 +13,6 @@ GX_DISABLE_COMMON_WARNINGS
 #include <shared_mutex>
 
 GX_RESTORE_WARNING_STATE
-
-#include "logger.hpp"
 
 
 namespace android_vulkan {
@@ -103,8 +104,42 @@ std::set<VulkanItem>        g_RenderPasses;
 std::set<VulkanItem>        g_Samplers;
 std::set<VulkanItem>        g_Semaphores;
 std::set<VulkanItem>        g_ShaderModules;
-std::set<VulkanItem>        g_Surfaces;
 std::set<VulkanItem>        g_Swapchains;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+PFN_vkCmdBeginDebugUtilsLabelEXT    vkCmdBeginDebugUtilsLabelEXT = nullptr;
+PFN_vkCmdEndDebugUtilsLabelEXT      vkCmdEndDebugUtilsLabelEXT = nullptr;
+PFN_vkSetDebugUtilsObjectNameEXT    vkSetDebugUtilsObjectNameEXT = nullptr;
 
 } // end of anonymous namespace
 
@@ -195,7 +230,6 @@ void CheckVulkanLeaks ()
     result &= CheckNonDispatchableObjectLeaks ( "Sampler", g_Samplers );
     result &= CheckNonDispatchableObjectLeaks ( "Semaphore", g_Semaphores );
     result &= CheckNonDispatchableObjectLeaks ( "Shader module", g_ShaderModules );
-    result &= CheckNonDispatchableObjectLeaks ( "Surface", g_Surfaces );
     result &= CheckNonDispatchableObjectLeaks ( "Swapchain", g_Swapchains );
 
 #if defined ( ANDROID_VULKAN_STRICT_MODE ) && !defined ( NDEBUG )
@@ -431,20 +465,6 @@ void UnregisterShaderModule ( std::string &&where )
     );
 }
 
-void RegisterSurface ( std::string &&where )
-{
-    RegisterNonDispatchableObject ( std::move ( where ), g_Surfaces );
-}
-
-void UnregisterSurface ( std::string &&where )
-{
-    UnregisterNonDispatchableObject ( "AV_UNREGISTER_SURFACE",
-        "surface",
-        std::move ( where ),
-        g_Surfaces
-    );
-}
-
 void RegisterSwapchain ( std::string &&where )
 {
     RegisterNonDispatchableObject ( std::move ( where ), g_Swapchains );
@@ -459,7 +479,68 @@ void UnregisterSwapchain ( std::string &&where )
     );
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+void InitVulkanDebugUtils ( VkInstance instance ) noexcept
+{
+    vkCmdBeginDebugUtilsLabelEXT = reinterpret_cast<PFN_vkCmdBeginDebugUtilsLabelEXT> (
+        vkGetInstanceProcAddr ( instance, "vkCmdBeginDebugUtilsLabelEXT" )
+    );
+
+    AV_ASSERT ( vkCmdBeginDebugUtilsLabelEXT )
+
+    vkCmdEndDebugUtilsLabelEXT = reinterpret_cast<PFN_vkCmdEndDebugUtilsLabelEXT> (
+        vkGetInstanceProcAddr ( instance, "vkCmdEndDebugUtilsLabelEXT" )
+    );
+
+    AV_ASSERT ( vkCmdEndDebugUtilsLabelEXT )
+
+    vkSetDebugUtilsObjectNameEXT = reinterpret_cast<PFN_vkSetDebugUtilsObjectNameEXT> (
+        vkGetInstanceProcAddr ( instance, "vkSetDebugUtilsObjectNameEXT" )
+    );
+
+    AV_ASSERT ( vkSetDebugUtilsObjectNameEXT )
+}
+
+void SetVulkanObjectName ( VkDevice device, uint64_t handle, VkObjectType type, char const *name ) noexcept
+{
+    VkDebugUtilsObjectNameInfoEXT const info {
+        .sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT,
+        .pNext = nullptr,
+        .objectType = type,
+        .objectHandle = handle,
+        .pObjectName = name
+    };
+
+    [[maybe_unused]] bool const result = Renderer::CheckVkResult ( vkSetDebugUtilsObjectNameEXT ( device, &info ),
+        "SetVulkanObjectName",
+        "Can't set Vulkan object name"
+    );
+
+    AV_ASSERT ( result )
+}
+
 } // namespace android_vulkan
 
 
-#endif // ANDROID_VULKAN_DEBUG
+#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS

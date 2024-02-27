@@ -70,8 +70,7 @@ cmake                                                                       `
     -D CMAKE_TOOLCHAIN_FILE="${ndk}/build/cmake/android.toolchain.cmake"    `
     -D CMAKE_BUILD_TYPE=Release                                             `
     -D UPDATE_DEPS=ON                                                       `
-    -D UPDATE_DEPS_DIR="${buildDir}"                                        `
-    -D VVL_CPP_STANDARD=20
+    -D UPDATE_DEPS_DIR="${buildDir}"
 
 # Building projects...
 

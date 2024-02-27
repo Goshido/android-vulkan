@@ -8,7 +8,7 @@
 
 ## <a id="lua-environment">_Lua_ environment</a>
 
-Project is using _Lua 5.4.6_.
+Project is using _Lua 5.5.0_.
 
 Script side `number` type has been changed from `double` to `float32_t`. This means that according to [_source_](https://betterprogramming.pub/compute-without-floating-point-errors-7b92695bde4) safe range for integer operations has been reduced:
 

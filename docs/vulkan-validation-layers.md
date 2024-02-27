@@ -28,6 +28,11 @@ After installing the _Python_ you have to disable _Windows 11_ aliases for pytho
 
 It's needed because bootstrap scripts of the _Vulkan-ValidationLayers_ project are using `python3` calls. So the next obvious step is to create symbolic link `python3.exe` which will be connected with `python.exe`. Yes. It's possible on _Windows OS_. Run _cmd.exe_ with administrative rights and call
 
+```batch
+cd <python directory>
+mklink python3.exe python.exe
+```
+
 ### Building `libVkLayer_khronos_validation.so`
 
 Starting from _VVL_ `eca34aae4cc04eb32035a7b1770a276933f37327` building process is significantly simplified:

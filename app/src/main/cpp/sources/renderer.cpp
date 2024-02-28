@@ -1424,17 +1424,11 @@ bool Renderer::DeployDebugFeatures () noexcept
 
     AV_ASSERT ( vkDestroyDebugUtilsMessengerEXT )
 
-    bool const result = CheckVkResult (
+    return CheckVkResult (
         vkCreateDebugUtilsMessengerEXT ( _instance, &_debugUtilsMessengerCreateInfo, nullptr, &_debugUtilsMessenger ),
         "DeployDebugFeatures",
         "Can't Vulkan debug callback"
     );
-
-    if ( !result )
-        return false;
-
-    InitVulkanDebugUtils ( _instance );
-    return true;
 }
 
 void Renderer::DestroyDebugFeatures () noexcept
@@ -1521,7 +1515,21 @@ bool Renderer::DeployDevice () noexcept
         .scalarBlockLayout = VK_TRUE
     };
 
-    constexpr char const* extensions[] =
+#ifdef ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
+
+    constexpr char const* const extensions[] =
+    {
+        VK_EXT_DEBUG_MARKER_EXTENSION_NAME,
+        VK_EXT_SCALAR_BLOCK_LAYOUT_EXTENSION_NAME,
+        VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME,
+        VK_KHR_SEPARATE_DEPTH_STENCIL_LAYOUTS_EXTENSION_NAME,
+        VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME,
+        VK_KHR_SWAPCHAIN_EXTENSION_NAME
+    };
+
+#else
+
+    constexpr char const* const extensions[] =
     {
         VK_EXT_SCALAR_BLOCK_LAYOUT_EXTENSION_NAME,
         VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME,
@@ -1529,6 +1537,8 @@ bool Renderer::DeployDevice () noexcept
         VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME,
         VK_KHR_SWAPCHAIN_EXTENSION_NAME
     };
+
+#endif // ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
 
     VkDeviceCreateInfo const deviceCreateInfo
     {
@@ -1553,6 +1563,13 @@ bool Renderer::DeployDevice () noexcept
         return false;
 
     AV_REGISTER_DEVICE ( "Renderer::_device" )
+
+#if defined ( ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS ) ||       \
+    defined ( ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION )
+
+    InitVulkanDebugUtils ( _instance );
+
+#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS || ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
 
     if ( !_vulkanLoader.AcquireDeviceFunctions ( _device ) ) [[unlikely]]
         return false;
@@ -1663,7 +1680,7 @@ bool Renderer::DeployInstance () noexcept
         .pUserData = nullptr
     };
 
-    constexpr static char const* layers[] =
+    constexpr static char const* const layers[] =
     {
         "VK_LAYER_KHRONOS_validation"
     };
@@ -1671,8 +1688,8 @@ bool Renderer::DeployInstance () noexcept
     constexpr static char const* extensions[] =
     {
         VK_KHR_ANDROID_SURFACE_EXTENSION_NAME,
-        VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
-        VK_KHR_SURFACE_EXTENSION_NAME
+        VK_KHR_SURFACE_EXTENSION_NAME,
+        VK_EXT_DEBUG_UTILS_EXTENSION_NAME
     };
 
     instanceCreateInfo.pNext = &_debugUtilsMessengerCreateInfo;
@@ -1681,7 +1698,7 @@ bool Renderer::DeployInstance () noexcept
 
 #else
 
-    constexpr static const char* extensions[] =
+    constexpr static char const* const extensions[] =
     {
         VK_KHR_ANDROID_SURFACE_EXTENSION_NAME,
         VK_KHR_SURFACE_EXTENSION_NAME
@@ -1691,7 +1708,7 @@ bool Renderer::DeployInstance () noexcept
     instanceCreateInfo.enabledLayerCount = 0U;
     instanceCreateInfo.ppEnabledLayerNames = nullptr;
 
-#endif
+#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
     instanceCreateInfo.enabledExtensionCount = static_cast<uint32_t const> ( std::size ( extensions ) );
     instanceCreateInfo.ppEnabledExtensionNames = extensions;
@@ -1907,7 +1924,7 @@ bool Renderer::DeploySwapchain ( bool vSync ) noexcept
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_SWAPCHAIN ( "Renderer::_swapchain" )
+    AV_SET_VULKAN_OBJECT_NAME ( _device, _swapchain, VK_OBJECT_TYPE_SWAPCHAIN_KHR, "Main swapchain" )
 
     uint32_t imageCount = 0U;
     vkGetSwapchainImagesKHR ( _device, _swapchain, &imageCount, nullptr );
@@ -2005,7 +2022,6 @@ void Renderer::DestroySwapchain () noexcept
 
     vkDestroySwapchainKHR ( _device, _swapchain, nullptr );
     _swapchain = VK_NULL_HANDLE;
-    AV_UNREGISTER_SWAPCHAIN ( "Renderer::_swapchain" )
 }
 
 bool Renderer::PrintPhysicalDeviceExtensionInfo ( VkPhysicalDevice physicalDevice ) noexcept

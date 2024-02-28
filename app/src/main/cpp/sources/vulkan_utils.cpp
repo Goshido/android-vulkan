@@ -1,4 +1,5 @@
-#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+#if defined ( ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS ) ||       \
+    defined ( ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION )
 
 #include <av_assert.hpp>
 #include <logger.hpp>
@@ -104,7 +105,6 @@ std::set<VulkanItem>        g_RenderPasses;
 std::set<VulkanItem>        g_Samplers;
 std::set<VulkanItem>        g_Semaphores;
 std::set<VulkanItem>        g_ShaderModules;
-std::set<VulkanItem>        g_Swapchains;
 
 
 
@@ -230,7 +230,6 @@ void CheckVulkanLeaks ()
     result &= CheckNonDispatchableObjectLeaks ( "Sampler", g_Samplers );
     result &= CheckNonDispatchableObjectLeaks ( "Semaphore", g_Semaphores );
     result &= CheckNonDispatchableObjectLeaks ( "Shader module", g_ShaderModules );
-    result &= CheckNonDispatchableObjectLeaks ( "Swapchain", g_Swapchains );
 
 #if defined ( ANDROID_VULKAN_STRICT_MODE ) && !defined ( NDEBUG )
 
@@ -465,19 +464,6 @@ void UnregisterShaderModule ( std::string &&where )
     );
 }
 
-void RegisterSwapchain ( std::string &&where )
-{
-    RegisterNonDispatchableObject ( std::move ( where ), g_Swapchains );
-}
-
-void UnregisterSwapchain ( std::string &&where )
-{
-    UnregisterNonDispatchableObject ( "AV_UNREGISTER_SWAPCHAIN",
-        "swapchain",
-        std::move ( where ),
-        g_Swapchains
-    );
-}
 
 
 
@@ -503,6 +489,9 @@ void UnregisterSwapchain ( std::string &&where )
 
 void InitVulkanDebugUtils ( VkInstance instance ) noexcept
 {
+    // [2024/02/28] It's important to acquire functions via VkInstance for RenderDoc only integration.
+    // It means without VVL presence. Trying to use VkDevice way to get functions will fail.
+
     vkCmdBeginDebugUtilsLabelEXT = reinterpret_cast<PFN_vkCmdBeginDebugUtilsLabelEXT> (
         vkGetInstanceProcAddr ( instance, "vkCmdBeginDebugUtilsLabelEXT" )
     );
@@ -543,4 +532,4 @@ void SetVulkanObjectName ( VkDevice device, uint64_t handle, VkObjectType type, 
 } // namespace android_vulkan
 
 
-#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS || ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION

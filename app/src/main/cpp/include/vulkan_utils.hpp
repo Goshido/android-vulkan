@@ -2,6 +2,15 @@
 #define VULKAN_UTILS_HPP
 
 
+// Sanity check
+#if defined ( ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS ) && \
+    defined ( ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION )
+
+#error ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS and ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION \
+macro are mutually exclusive. Please check build configuration in the CMakeLists.txt file.
+
+#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS && ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
+
 #include <GXCommon/GXWarning.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
@@ -28,7 +37,8 @@ GX_RESTORE_WARNING_STATE
 // See https://vulkan.lunarg.com/doc/view/1.1.108.0/mac/chunked_spec/chap2.html#fundamentals-objectmodel-overview
 
 
-#ifndef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+#if !defined ( ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS ) &&      \
+    !defined ( ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION )
 
 #define AV_CHECK_VULKAN_LEAKS()
 
@@ -80,8 +90,6 @@ GX_RESTORE_WARNING_STATE
 #define AV_REGISTER_SHADER_MODULE(where)
 #define AV_UNREGISTER_SHADER_MODULE(where)
 
-#define AV_REGISTER_SWAPCHAIN(where)
-#define AV_UNREGISTER_SWAPCHAIN(where)
 
 
 
@@ -154,8 +162,6 @@ GX_RESTORE_WARNING_STATE
 #define AV_REGISTER_SHADER_MODULE(where) android_vulkan::RegisterShaderModule ( where );
 #define AV_UNREGISTER_SHADER_MODULE(where) android_vulkan::UnregisterShaderModule ( where );
 
-#define AV_REGISTER_SWAPCHAIN(where) android_vulkan::RegisterSwapchain ( where );
-#define AV_UNREGISTER_SWAPCHAIN(where) android_vulkan::UnregisterSwapchain ( where );
 
 
 
@@ -221,8 +227,6 @@ void UnregisterSemaphore ( std::string &&where );
 void RegisterShaderModule ( std::string &&where );
 void UnregisterShaderModule ( std::string &&where );
 
-void RegisterSwapchain ( std::string &&where );
-void UnregisterSwapchain ( std::string &&where );
 
 
 
@@ -234,8 +238,10 @@ void UnregisterSwapchain ( std::string &&where );
 
 
 
-
+// Initialization is based on article
+// https://www.saschawillems.de/blog/2016/05/28/tutorial-on-using-vulkans-vk_ext_debug_marker-with-renderdoc/
 void InitVulkanDebugUtils ( VkInstance instance ) noexcept;
+
 void SetVulkanObjectName ( VkDevice device, uint64_t handle, VkObjectType type, char const *name ) noexcept;
 
 } // namespace android_vulkan

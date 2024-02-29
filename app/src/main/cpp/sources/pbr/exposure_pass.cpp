@@ -83,7 +83,6 @@ void ExposurePass::Destroy ( android_vulkan::Renderer &renderer ) noexcept
     {
         vkDestroyBuffer ( device, _globalCounter, nullptr );
         _globalCounter = VK_NULL_HANDLE;
-        AV_UNREGISTER_BUFFER ( "pbr::ExposurePass::_globalCounter" )
     }
 
     if ( _globalCounterMemory._memory != VK_NULL_HANDLE )
@@ -98,7 +97,6 @@ void ExposurePass::Destroy ( android_vulkan::Renderer &renderer ) noexcept
     {
         vkDestroyBuffer ( device, _exposureBarrier.buffer, nullptr );
         _exposureBarrier.buffer = VK_NULL_HANDLE;
-        AV_UNREGISTER_BUFFER ( "pbr::ExposurePass::_exposure" )
     }
 
     if ( _exposureMemory._memory != VK_NULL_HANDLE )
@@ -113,7 +111,6 @@ void ExposurePass::Destroy ( android_vulkan::Renderer &renderer ) noexcept
     {
         vkDestroyBuffer ( device, _luma, nullptr );
         _luma = VK_NULL_HANDLE;
-        AV_UNREGISTER_BUFFER ( "pbr::ExposurePass::_luma" )
     }
 
     if ( _lumaMemory._memory != VK_NULL_HANDLE )
@@ -290,7 +287,7 @@ bool ExposurePass::CreateExposureResources ( android_vulkan::Renderer &renderer,
     if ( !result )
         return false;
 
-    AV_REGISTER_BUFFER ( "pbr::ExposurePass::_exposure" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _exposureBarrier.buffer, VK_OBJECT_TYPE_BUFFER, "pbr::ExposurePass::_exposure" )
 
     VkMemoryRequirements memoryRequirements {};
     vkGetBufferMemoryRequirements ( device, _exposureBarrier.buffer, &memoryRequirements );
@@ -340,7 +337,7 @@ bool ExposurePass::CreateGlobalCounter ( android_vulkan::Renderer &renderer, VkD
     if ( !result )
         return false;
 
-    AV_REGISTER_BUFFER ( "pbr::ExposurePass::_globalCounter" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _globalCounter, VK_OBJECT_TYPE_BUFFER, "pbr::ExposurePass::_globalCounter" )
 
     VkMemoryRequirements memoryRequirements {};
     vkGetBufferMemoryRequirements ( device, _globalCounter, &memoryRequirements );
@@ -377,7 +374,11 @@ bool ExposurePass::CreateGlobalCounter ( android_vulkan::Renderer &renderer, VkD
     if ( !result )
         return false;
 
-    AV_REGISTER_BUFFER ( "pbr::ExposurePass::_transferGlobalCounter" )
+    AV_SET_VULKAN_OBJECT_NAME ( device,
+        _transferGlobalCounter,
+        VK_OBJECT_TYPE_BUFFER,
+        "pbr::ExposurePass::_transferGlobalCounter"
+    )
 
     vkGetBufferMemoryRequirements ( device, _transferGlobalCounter, &memoryRequirements );
 
@@ -492,7 +493,7 @@ bool ExposurePass::CreateLumaResources ( android_vulkan::Renderer &renderer, VkD
     if ( !result )
         return false;
 
-    AV_REGISTER_BUFFER ( "pbr::ExposurePass::_luma" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _luma, VK_OBJECT_TYPE_BUFFER, "pbr::ExposurePass::_luma" )
 
     VkMemoryRequirements memoryRequirements {};
     vkGetBufferMemoryRequirements ( device, _luma, &memoryRequirements );
@@ -529,7 +530,7 @@ bool ExposurePass::CreateLumaResources ( android_vulkan::Renderer &renderer, VkD
     if ( !result )
         return false;
 
-    AV_REGISTER_BUFFER ( "pbr::ExposurePass::_transferLuma" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _transferLuma, VK_OBJECT_TYPE_BUFFER, "pbr::ExposurePass::_transferLuma" )
 
     vkGetBufferMemoryRequirements ( device, _transferLuma, &memoryRequirements );
 
@@ -862,7 +863,6 @@ void ExposurePass::FreeTransferBuffer ( android_vulkan::Renderer &renderer, VkDe
     {
         vkDestroyBuffer ( device, _transferGlobalCounter, nullptr );
         _transferGlobalCounter = VK_NULL_HANDLE;
-        AV_UNREGISTER_BUFFER ( "pbr::ExposurePass::_transferGlobalCounter" )
     }
 
     if ( _transferGlobalCounterMemory._memory != VK_NULL_HANDLE )
@@ -877,7 +877,6 @@ void ExposurePass::FreeTransferBuffer ( android_vulkan::Renderer &renderer, VkDe
     {
         vkDestroyBuffer ( device, _transferLuma, nullptr );
         _transferLuma = VK_NULL_HANDLE;
-        AV_UNREGISTER_BUFFER ( "pbr::ExposurePass::_transferLuma" )
     }
 
     if ( _transferLumaMemory._memory == VK_NULL_HANDLE )

@@ -91,7 +91,7 @@ bool TextureCube::UploadData ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_BUFFER ( "TextureCube::_transfer" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _transfer, VK_OBJECT_TYPE_BUFFER, "TextureCube::_transfer" )
 
     VkMemoryRequirements memoryRequirements;
     vkGetBufferMemoryRequirements ( device, _transfer, &memoryRequirements );
@@ -344,7 +344,6 @@ void TextureCube::FreeTransferResources ( Renderer &renderer ) noexcept
     {
         vkDestroyBuffer ( renderer.GetDevice (), _transfer, nullptr );
         _transfer = VK_NULL_HANDLE;
-        AV_UNREGISTER_BUFFER ( "TextureCube::_transfer" )
     }
 
     if ( _transferMemory == VK_NULL_HANDLE )

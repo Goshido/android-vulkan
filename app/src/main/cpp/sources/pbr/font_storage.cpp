@@ -38,7 +38,7 @@ bool FontStorage::StagingBuffer::Init ( android_vulkan::Renderer &renderer, uint
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_BUFFER ( "pbr::FontStorage::StagingBuffer::_buffer" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _buffer, VK_OBJECT_TYPE_BUFFER, "pbr::FontStorage::StagingBuffer::_buffer" )
 
     VkMemoryRequirements memoryRequirements;
     vkGetBufferMemoryRequirements ( device, _buffer, &memoryRequirements );
@@ -91,7 +91,6 @@ void FontStorage::StagingBuffer::Destroy ( android_vulkan::Renderer &renderer ) 
     {
         vkDestroyBuffer ( renderer.GetDevice (), _buffer, nullptr );
         _buffer = VK_NULL_HANDLE;
-        AV_UNREGISTER_BUFFER ( "pbr::FontStorage::StagingBuffer::_buffer" )
     }
 
     if ( _memory == VK_NULL_HANDLE )

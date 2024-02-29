@@ -84,10 +84,7 @@ void UniformBufferPool::Destroy ( android_vulkan::Renderer &renderer ) noexcept
     VkDevice device = renderer.GetDevice ();
 
     for ( VkBuffer buffer : _buffers )
-    {
         vkDestroyBuffer ( device, buffer, nullptr );
-        AV_UNREGISTER_BUFFER ( "pbr::UniformBufferPool::_buffer::item" )
-    }
 
     _buffers.clear ();
 
@@ -138,7 +135,7 @@ bool UniformBufferPool::AllocateBuffers ( android_vulkan::Renderer &renderer,
         if ( !result ) [[unlikely]]
             return false;
 
-        AV_REGISTER_BUFFER ( "pbr::UniformBufferPool::_buffer::item" )
+        AV_SET_VULKAN_OBJECT_NAME ( device, buffer, VK_OBJECT_TYPE_BUFFER, "pbr::UniformBufferPool::_buffer::item" )
 
         vkGetBufferMemoryRequirements ( device, buffer, &requirements );
 

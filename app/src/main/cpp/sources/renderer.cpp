@@ -1581,17 +1581,13 @@ bool Renderer::DeployDevice () noexcept
 
 void Renderer::DestroyDevice () noexcept
 {
-    _memoryAllocator.Destroy ( _device );
-
-    if ( !_device )
-    {
-        AV_CHECK_VULKAN_LEAKS ()
+    if ( _device == VK_NULL_HANDLE ) [[unlikely]]
         return;
-    }
+
+    _memoryAllocator.Destroy ( _device );
 
     // Note it's intentional to unregister device BEFORE destruction for correct memory leak check stuff.
     AV_UNREGISTER_DEVICE ( "Renderer::_device" )
-    AV_CHECK_VULKAN_LEAKS ()
 
     vkDestroyDevice ( _device, nullptr );
     _device = VK_NULL_HANDLE;

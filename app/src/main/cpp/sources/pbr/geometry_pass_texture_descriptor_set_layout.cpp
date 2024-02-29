@@ -49,7 +49,6 @@ void DescriptorSetLayout::Destroy ( VkDevice device ) noexcept
 
     vkDestroyDescriptorSetLayout ( device, _layout, nullptr );
     _layout = VK_NULL_HANDLE;
-    AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::GeometryPassTextureDescriptorSetLayout::_layout" )
 }
 
 bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
@@ -117,7 +116,11 @@ bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::GeometryPassTextureDescriptorSetLayout::_layout" )
+    AV_SET_VULKAN_OBJECT_NAME ( device,
+        _layout,
+        VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT,
+        "pbr::GeometryPassTextureDescriptorSetLayout::_layout"
+    )
 
     ++_references;
     return true;

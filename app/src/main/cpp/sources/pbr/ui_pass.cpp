@@ -429,7 +429,7 @@ bool UIPass::Buffer::Init ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_BUFFER ( _name )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _buffer, VK_OBJECT_TYPE_BUFFER, "%s", _name )
 
     VkMemoryRequirements memoryRequirements;
     vkGetBufferMemoryRequirements ( device, _buffer, &memoryRequirements );
@@ -458,7 +458,6 @@ void UIPass::Buffer::Destroy ( android_vulkan::Renderer &renderer ) noexcept
     {
         vkDestroyBuffer ( renderer.GetDevice (), _buffer, nullptr );
         _buffer = VK_NULL_HANDLE;
-        AV_UNREGISTER_BUFFER ( _name )
     }
 
     if ( _memory == VK_NULL_HANDLE )

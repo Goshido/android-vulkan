@@ -79,7 +79,12 @@ bool GameLUT::CreateMaterialDescriptorSetLayout ( android_vulkan::Renderer &rend
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "Game::_materialDSLayout" )
+    AV_SET_VULKAN_OBJECT_NAME ( device,
+        _materialDSLayout,
+        VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT,
+        "Game::_materialDSLayout"
+    )
+
     return true;
 }
 

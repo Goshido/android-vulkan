@@ -22,7 +22,6 @@ void SkinData::FreeTransferResources ( Renderer &renderer ) noexcept
     {
         vkDestroyBuffer ( renderer.GetDevice (), _transfer._buffer, nullptr );
         _transfer._buffer = VK_NULL_HANDLE;
-        AV_UNREGISTER_BUFFER ( "SkinData::_transfer::_buffer" )
     }
 
     if ( _transfer._memory == VK_NULL_HANDLE )
@@ -175,7 +174,7 @@ bool SkinData::LoadSkin ( std::string &&skinFilename,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_BUFFER ( "SkinData::_skin::_buffer" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _skin._buffer, VK_OBJECT_TYPE_BUFFER, "SkinData::_skin::_buffer" )
 
     VkMemoryRequirements memoryRequirements;
     vkGetBufferMemoryRequirements ( device, _skin._buffer, &memoryRequirements );
@@ -212,7 +211,7 @@ bool SkinData::LoadSkin ( std::string &&skinFilename,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_BUFFER ( "SkinData::_transfer::_buffer" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _transfer._buffer, VK_OBJECT_TYPE_BUFFER, "SkinData::_transfer::_buffer" )
 
     vkGetBufferMemoryRequirements ( device, _transfer._buffer, &memoryRequirements );
 
@@ -346,7 +345,6 @@ void SkinData::FreeResourceInternal ( Renderer &renderer ) noexcept
     {
         vkDestroyBuffer ( renderer.GetDevice (), _skin._buffer, nullptr );
         _skin._buffer = VK_NULL_HANDLE;
-        AV_UNREGISTER_BUFFER ( "SkinData::_skin::_buffer" )
     }
 
     if ( _skin._memory == VK_NULL_HANDLE )

@@ -20,8 +20,6 @@ namespace android_vulkan {
 
 namespace {
 
-constexpr char const* INDENT = "    ";
-
 class VulkanItem final
 {
     private:
@@ -89,10 +87,8 @@ bool VulkanItem::operator < ( const VulkanItem &other ) const noexcept
 //----------------------------------------------------------------------------------------------------------------------
 
 std::shared_timed_mutex     g_Lock;
-std::set<VulkanItem>        g_Buffers;
 std::set<VulkanItem>        g_CommandPools;
 std::set<VulkanItem>        g_DescriptorPools;
-std::set<VulkanItem>        g_DescriptorSetLayouts;
 std::set<VulkanItem>        g_Devices;
 std::set<VulkanItem>        g_DeviceMemory;
 std::set<VulkanItem>        g_Fences;
@@ -143,25 +139,6 @@ PFN_vkSetDebugUtilsObjectNameEXT    vkSetDebugUtilsObjectNameEXT = nullptr;
 
 } // end of anonymous namespace
 
-static bool CheckNonDispatchableObjectLeaks ( char const* objectType, std::set<VulkanItem> &storage )
-{
-    if ( storage.empty () )
-        return true;
-
-    LogError ( "AV_CHECK_VULKAN_LEAKS - %s objects were leaked: %zu", objectType, storage.size () );
-    LogError ( ">>>" );
-    std::string info;
-
-    for ( auto const &leak : storage )
-    {
-        leak.GetInfo ( info );
-        LogError ( "%s%s", INDENT, info.c_str () );
-    }
-
-    LogError ( "<<<" );
-    return false;
-}
-
 static void RegisterNonDispatchableObject ( std::string &&where, std::set<VulkanItem> &storage )
 {
     std::unique_lock<std::shared_timed_mutex> lock ( g_Lock );
@@ -210,50 +187,6 @@ static void UnregisterNonDispatchableObject ( char const* method,
     item.DecrementInstanceCount ();
 }
 
-void CheckVulkanLeaks ()
-{
-    std::shared_lock<std::shared_timed_mutex> lock ( g_Lock );
-
-    [[maybe_unused]] bool result = CheckNonDispatchableObjectLeaks ( "Buffer", g_Buffers );
-    result &= CheckNonDispatchableObjectLeaks ( "Command pool", g_CommandPools );
-    result &= CheckNonDispatchableObjectLeaks ( "Descriptor pool", g_DescriptorPools );
-    result &= CheckNonDispatchableObjectLeaks ( "Descriptor set layout", g_DescriptorSetLayouts );
-    result &= CheckNonDispatchableObjectLeaks ( "Device", g_Devices );
-    result &= CheckNonDispatchableObjectLeaks ( "Device memory", g_DeviceMemory );
-    result &= CheckNonDispatchableObjectLeaks ( "Fence", g_Fences );
-    result &= CheckNonDispatchableObjectLeaks ( "Framebuffer", g_Framebuffers );
-    result &= CheckNonDispatchableObjectLeaks ( "Image", g_Images );
-    result &= CheckNonDispatchableObjectLeaks ( "Image view", g_ImageViews );
-    result &= CheckNonDispatchableObjectLeaks ( "Pipeline", g_Pipelines );
-    result &= CheckNonDispatchableObjectLeaks ( "Pipeline layout", g_PipelineLayouts );
-    result &= CheckNonDispatchableObjectLeaks ( "Render pass", g_RenderPasses );
-    result &= CheckNonDispatchableObjectLeaks ( "Sampler", g_Samplers );
-    result &= CheckNonDispatchableObjectLeaks ( "Semaphore", g_Semaphores );
-    result &= CheckNonDispatchableObjectLeaks ( "Shader module", g_ShaderModules );
-
-#if defined ( ANDROID_VULKAN_STRICT_MODE ) && !defined ( NDEBUG )
-
-    if ( !result )
-        AV_ASSERT ( false )
-
-#endif
-
-}
-
-void RegisterBuffer ( std::string &&where )
-{
-    RegisterNonDispatchableObject ( std::move ( where ), g_Buffers );
-}
-
-void UnregisterBuffer ( std::string &&where )
-{
-    UnregisterNonDispatchableObject ( "AV_UNREGISTER_BUFFER",
-        "buffer",
-        std::move ( where ),
-        g_Buffers
-    );
-}
-
 void RegisterCommandPool ( std::string &&where )
 {
     RegisterNonDispatchableObject ( std::move ( where ), g_CommandPools );
@@ -279,20 +212,6 @@ void UnregisterDescriptorPool ( std::string &&where )
         "descriptor pool",
         std::move ( where ),
         g_DescriptorPools
-    );
-}
-
-void RegisterDescriptorSetLayout ( std::string &&where )
-{
-    RegisterNonDispatchableObject ( std::move ( where ), g_DescriptorSetLayouts );
-}
-
-void UnregisterDescriptorSetLayout ( std::string &&where )
-{
-    UnregisterNonDispatchableObject ( "AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT",
-        "descriptor set layout",
-        std::move ( where ),
-        g_DescriptorSetLayouts
     );
 }
 

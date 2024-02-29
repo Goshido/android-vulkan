@@ -24,35 +24,14 @@ GX_RESTORE_WARNING_STATE
 
 #define AV_VK_FLAG(x) ( static_cast<uint32_t> ( x ) )
 
-
-// Note there is two types Vulkan handles:
-// VK_DEFINE_HANDLE
-// VK_DEFINE_NON_DISPATCHABLE_HANDLE
-//
-// VK_DEFINE_NON_DISPATCHABLE_HANDLE could be packed structure so in theory some Vulkan create API could return
-// identical VK_DEFINE_NON_DISPATCHABLE_HANDLE for different objects. It is implementation dependent. Because of that
-// user have to figure out unique ID for Vulkan objects. Good practice is to use source code file name or class name
-// with property name to figure out what Vulkan resource is leaked.
-// From another hand VK_DEFINE_HANDLE must be unique.
-// See https://vulkan.lunarg.com/doc/view/1.1.108.0/mac/chunked_spec/chap2.html#fundamentals-objectmodel-overview
-
-
 #if !defined ( ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS ) &&      \
     !defined ( ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION )
-
-#define AV_CHECK_VULKAN_LEAKS()
-
-#define AV_REGISTER_BUFFER(where)
-#define AV_UNREGISTER_BUFFER(where)
 
 #define AV_REGISTER_COMMAND_POOL(where)
 #define AV_UNREGISTER_COMMAND_POOL(where)
 
 #define AV_REGISTER_DESCRIPTOR_POOL(where)
 #define AV_UNREGISTER_DESCRIPTOR_POOL(where)
-
-#define AV_REGISTER_DESCRIPTOR_SET_LAYOUT(where)
-#define AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT(where)
 
 #define AV_REGISTER_DEVICE(where)
 #define AV_UNREGISTER_DEVICE(where)
@@ -112,19 +91,11 @@ GX_DISABLE_COMMON_WARNINGS
 GX_RESTORE_WARNING_STATE
 
 
-#define AV_CHECK_VULKAN_LEAKS() android_vulkan::CheckVulkanLeaks ();
-
-#define AV_REGISTER_BUFFER(where) android_vulkan::RegisterBuffer ( where );
-#define AV_UNREGISTER_BUFFER(where) android_vulkan::UnregisterBuffer ( where );
-
 #define AV_REGISTER_COMMAND_POOL(where) android_vulkan::RegisterCommandPool ( where );
 #define AV_UNREGISTER_COMMAND_POOL(where) android_vulkan::UnregisterCommandPool ( where );
 
 #define AV_REGISTER_DESCRIPTOR_POOL(where) android_vulkan::RegisterDescriptorPool ( where );
 #define AV_UNREGISTER_DESCRIPTOR_POOL(where) android_vulkan::UnregisterDescriptorPool ( where );
-
-#define AV_REGISTER_DESCRIPTOR_SET_LAYOUT(where) android_vulkan::RegisterDescriptorSetLayout ( where );
-#define AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT(where) android_vulkan::UnregisterDescriptorSetLayout ( where );
 
 #define AV_REGISTER_DEVICE(where) android_vulkan::RegisterDevice ( where );
 #define AV_UNREGISTER_DEVICE(where) android_vulkan::UnregisterDevice ( where );
@@ -168,28 +139,20 @@ GX_RESTORE_WARNING_STATE
 
 
 
-#define AV_SET_VULKAN_OBJECT_NAME(device, handle, type, ...)                                                    \
-{                                                                                                               \
-    char nameBuffer[ 256U ];                                                                                    \
-    std::snprintf ( nameBuffer, std::size ( nameBuffer ), __VA_ARGS__ );                                        \
-    android_vulkan::SetVulkanObjectName ( device, reinterpret_cast<uint64_t> ( handle ), type, nameBuffer );    \
+#define AV_SET_VULKAN_OBJECT_NAME(device, handle, type, ...)                                                        \
+{                                                                                                                   \
+    char _FuCk_NaMe_[ 256U ];                                                                                       \
+    std::snprintf ( _FuCk_NaMe_, std::size ( _FuCk_NaMe_ ), __VA_ARGS__ );                                          \
+    android_vulkan::SetVulkanObjectName ( device, reinterpret_cast<uint64_t> ( handle ), type, _FuCk_NaMe_ );       \
 }
 
 namespace android_vulkan {
-
-void CheckVulkanLeaks ();
-
-void RegisterBuffer ( std::string &&where );
-void UnregisterBuffer ( std::string &&where );
 
 void RegisterCommandPool ( std::string &&where );
 void UnregisterCommandPool ( std::string &&where );
 
 void RegisterDescriptorPool ( std::string &&where );
 void UnregisterDescriptorPool ( std::string &&where );
-
-void RegisterDescriptorSetLayout ( std::string &&where );
-void UnregisterDescriptorSetLayout ( std::string &&where );
 
 void RegisterDevice ( std::string &&where );
 void UnregisterDevice ( std::string &&where );
@@ -246,7 +209,7 @@ void SetVulkanObjectName ( VkDevice device, uint64_t handle, VkObjectType type, 
 
 } // namespace android_vulkan
 
-#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS || ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
 
 
 #endif // VULKAN_UTILS_HPP

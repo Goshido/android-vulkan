@@ -606,7 +606,7 @@ bool Game::CreateCommonDescriptorSetLayouts ( android_vulkan::Renderer &renderer
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "Game::_fixedDSLayout" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _fixedDSLayout, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, "Game::_fixedDSLayout" )
 
     constexpr VkDescriptorSetLayoutBinding onceBinding
     {
@@ -629,7 +629,7 @@ bool Game::CreateCommonDescriptorSetLayouts ( android_vulkan::Renderer &renderer
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "Game::_onceDSLayout" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _onceDSLayout, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, "Game::_onceDSLayout" )
     return CreateMaterialDescriptorSetLayout ( renderer );
 }
 
@@ -639,14 +639,12 @@ void Game::DestroyCommonDescriptorSetLayouts ( VkDevice device ) noexcept
     {
         vkDestroyDescriptorSetLayout ( device, _fixedDSLayout, nullptr );
         _fixedDSLayout = VK_NULL_HANDLE;
-        AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "Game::_fixedDSLayout" )
     }
 
     if ( _materialDSLayout != VK_NULL_HANDLE )
     {
         vkDestroyDescriptorSetLayout ( device, _materialDSLayout, nullptr );
         _materialDSLayout = VK_NULL_HANDLE;
-        AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "Game::_materialDSLayout" )
     }
 
     if ( _onceDSLayout == VK_NULL_HANDLE )
@@ -654,7 +652,6 @@ void Game::DestroyCommonDescriptorSetLayouts ( VkDevice device ) noexcept
 
     vkDestroyDescriptorSetLayout ( device, _onceDSLayout, nullptr );
     _onceDSLayout = VK_NULL_HANDLE;
-    AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "Game::_onceDSLayout" )
 }
 
 void Game::DestroyDescriptorSet ( VkDevice device ) noexcept

@@ -89,7 +89,6 @@ void Texture2D::FreeTransferResources ( Renderer &renderer ) noexcept
     {
         vkDestroyBuffer ( renderer.GetDevice (), _transfer, nullptr );
         _transfer = VK_NULL_HANDLE;
-        AV_UNREGISTER_BUFFER ( "Texture2D::_transfer" )
     }
 
     if ( _transferDeviceMemory == VK_NULL_HANDLE )
@@ -467,7 +466,7 @@ bool Texture2D::CreateTransferResources ( uint8_t* &mappedBuffer, VkDeviceSize s
         return false;
     }
 
-    AV_REGISTER_BUFFER ( "Texture2D::_transfer" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _transfer, VK_OBJECT_TYPE_BUFFER, "Texture2D::_transfer" )
 
     VkMemoryRequirements memoryRequirements;
     vkGetBufferMemoryRequirements ( device, _transfer, &memoryRequirements );

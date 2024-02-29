@@ -68,7 +68,7 @@ bool MandelbrotLUTColor::CreatePipelineLayout ( android_vulkan::Renderer &render
     VkDevice device = renderer.GetDevice ();
 
     bool result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateDescriptorSetLayout ( renderer.GetDevice (), &descriptorSetInfo, nullptr, &_descriptorSetLayout ),
+        vkCreateDescriptorSetLayout ( device, &descriptorSetInfo, nullptr, &_descriptorSetLayout ),
         "MandelbrotLUTColor::CreatePipelineLayout",
         "Can't create descriptor set layout"
     );
@@ -76,7 +76,11 @@ bool MandelbrotLUTColor::CreatePipelineLayout ( android_vulkan::Renderer &render
     if ( !result )
         return false;
 
-    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "MandelbrotLUTColor::_descriptorSetLayout" )
+    AV_SET_VULKAN_OBJECT_NAME ( device,
+        _descriptorSetLayout,
+        VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT,
+        "MandelbrotLUTColor::_descriptorSetLayout"
+    )
 
     VkPipelineLayoutCreateInfo const pipelineLayoutInfo
     {
@@ -116,7 +120,6 @@ void MandelbrotLUTColor::DestroyPipelineLayout ( VkDevice device ) noexcept
 
     vkDestroyDescriptorSetLayout ( device, _descriptorSetLayout, nullptr );
     _descriptorSetLayout = VK_NULL_HANDLE;
-    AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "MandelbrotLUTColor::_descriptorSetLayout" )
 }
 
 bool MandelbrotLUTColor::RecordCommandBuffer ( android_vulkan::Renderer &renderer,
@@ -488,7 +491,11 @@ bool MandelbrotLUTColor::UploadLUTSamples ( android_vulkan::Renderer &renderer )
     if ( !result )
         return false;
 
-    AV_REGISTER_BUFFER ( "MandelbrotLUTColor::UploadLUTSamples::transfer" )
+    AV_SET_VULKAN_OBJECT_NAME ( device,
+        transfer,
+        VK_OBJECT_TYPE_BUFFER,
+        "MandelbrotLUTColor::UploadLUTSamples::transfer"
+    )
 
     VkMemoryRequirements requirements;
     vkGetBufferMemoryRequirements ( device, transfer, &requirements );
@@ -506,10 +513,7 @@ bool MandelbrotLUTColor::UploadLUTSamples ( android_vulkan::Renderer &renderer )
 
     auto const freeTransferResource = [ & ] () noexcept {
         if ( transfer != VK_NULL_HANDLE )
-        {
             vkDestroyBuffer ( device, transfer, nullptr );
-            AV_UNREGISTER_BUFFER ( "MandelbrotLUTColor::UploadLUTSamples::transfer" )
-        }
 
         if ( transferMemory != VK_NULL_HANDLE )
         {

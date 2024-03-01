@@ -18,7 +18,7 @@ bool Sampler::Init ( VkDevice device, VkSamplerCreateInfo const &info ) noexcept
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_SAMPLER ( "pbr::Sampler::_sampler" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _sampler, VK_OBJECT_TYPE_SAMPLER, "pbr::Sampler::_sampler" )
     return true;
 }
 
@@ -29,7 +29,6 @@ void Sampler::Destroy ( VkDevice device ) noexcept
 
     vkDestroySampler ( device, _sampler, nullptr );
     _sampler = VK_NULL_HANDLE;
-    AV_UNREGISTER_SAMPLER ( "pbr::Sampler::_sampler" )
 }
 
 VkSampler Sampler::GetSampler () const noexcept

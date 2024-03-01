@@ -101,7 +101,6 @@ void PointLightPass::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 
     vkDestroyRenderPass ( device, _shadowmapRenderPass, nullptr );
     _shadowmapRenderPass = VK_NULL_HANDLE;
-    AV_UNREGISTER_RENDER_PASS ( "PointLightPass::_shadowmapRenderPass" )
 }
 
 size_t PointLightPass::GetPointLightCount () const noexcept
@@ -302,7 +301,11 @@ bool PointLightPass::CreateShadowmapRenderPass ( VkDevice device ) noexcept
     if ( !result )
         return false;
 
-    AV_REGISTER_RENDER_PASS ( "PointLightPass::_shadowmapRenderPass" )
+    AV_SET_VULKAN_OBJECT_NAME ( device,
+        _shadowmapRenderPass,
+        VK_OBJECT_TYPE_RENDER_PASS,
+        "PointLightPass::_shadowmapRenderPass"
+    )
 
     // Must be static as well because it lose the function scope [read as garbage in debug builds].
     constexpr static VkClearValue clearValues

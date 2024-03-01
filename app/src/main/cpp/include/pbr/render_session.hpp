@@ -54,7 +54,6 @@ class RenderSession final
 
         DefaultTextureManager       _defaultTextureManager {};
         ExposurePass                _exposurePass {};
-        VkFramebuffer               _framebuffer = VK_NULL_HANDLE;
         GXProjectionClipPlanes      _frustum {};
 
         GBuffer                     _gBuffer {};
@@ -68,7 +67,6 @@ class RenderSession final
 
         PresentRenderPass           _presentRenderPass {};
 
-        VkRenderPass                _renderPass = VK_NULL_HANDLE;
         VkRenderPassBeginInfo       _renderPassInfo {};
         RenderSessionStats          _renderSessionStats {};
         SamplerManager              _samplerManager {};
@@ -127,7 +125,7 @@ class RenderSession final
 
     private:
         [[nodiscard]] bool CreateFramebuffer ( android_vulkan::Renderer &renderer ) noexcept;
-        [[nodiscard]] bool CreateRenderPass ( android_vulkan::Renderer &renderer ) noexcept;
+        [[nodiscard]] bool CreateRenderPass ( VkDevice device ) noexcept;
 
         [[nodiscard]] bool CreateGBufferResources ( android_vulkan::Renderer &renderer,
             VkExtent2D const &resolution

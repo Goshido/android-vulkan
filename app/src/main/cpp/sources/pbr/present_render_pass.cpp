@@ -53,7 +53,6 @@ void PresentRenderPass::OnDestroyDevice ( VkDevice device ) noexcept
 
     vkDestroyRenderPass ( device, _renderInfo.renderPass, nullptr );
     _renderInfo.renderPass = VK_NULL_HANDLE;
-    AV_UNREGISTER_RENDER_PASS ( "pbr::PresentRenderPass::_renderPass" )
 }
 
 bool PresentRenderPass::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept
@@ -290,7 +289,12 @@ bool PresentRenderPass::CreateRenderPass ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_RENDER_PASS ( "pbr::PresentRenderPass::_renderPass" )
+    AV_SET_VULKAN_OBJECT_NAME ( device,
+        _renderInfo.renderPass,
+        VK_OBJECT_TYPE_RENDER_PASS,
+        "pbr::PresentRenderPass::_renderPass"
+    )
+
     _renderInfo.renderArea.extent = resolution;
     return true;
 }

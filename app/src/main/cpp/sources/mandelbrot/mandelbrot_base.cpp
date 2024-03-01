@@ -689,8 +689,10 @@ bool MandelbrotBase::CreateRenderPass ( android_vulkan::Renderer &renderer ) noe
         .pDependencies = &dependency
     };
 
+    VkDevice device = renderer.GetDevice ();
+
     bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateRenderPass ( renderer.GetDevice (), &renderPassCreateInfo, nullptr, &_renderPass ),
+        vkCreateRenderPass ( device, &renderPassCreateInfo, nullptr, &_renderPass ),
         "MandelbrotBase::CreateRenderPass",
         "Can't create render pass"
     );
@@ -698,7 +700,7 @@ bool MandelbrotBase::CreateRenderPass ( android_vulkan::Renderer &renderer ) noe
     if ( !result )
         return false;
 
-    AV_REGISTER_RENDER_PASS ( "MandelbrotBase::_renderPass" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _renderPass, VK_OBJECT_TYPE_RENDER_PASS, "MandelbrotBase::_renderPass" )
     return true;
 }
 
@@ -709,7 +711,6 @@ void MandelbrotBase::DestroyRenderPass ( VkDevice device ) noexcept
 
     vkDestroyRenderPass ( device, _renderPass, nullptr );
     _renderPass = VK_NULL_HANDLE;
-    AV_UNREGISTER_RENDER_PASS ( "MandelbrotBase::_renderPass" )
 }
 
 void MandelbrotBase::DestroyShaderModules ( VkDevice device ) noexcept

@@ -57,12 +57,6 @@ GX_RESTORE_WARNING_STATE
 #define AV_REGISTER_PIPELINE_LAYOUT(where)
 #define AV_UNREGISTER_PIPELINE_LAYOUT(where)
 
-#define AV_REGISTER_RENDER_PASS(where)
-#define AV_UNREGISTER_RENDER_PASS(where)
-
-#define AV_REGISTER_SAMPLER(where)
-#define AV_UNREGISTER_SAMPLER(where)
-
 #define AV_REGISTER_SEMAPHORE(where)
 #define AV_UNREGISTER_SEMAPHORE(where)
 
@@ -121,12 +115,6 @@ GX_RESTORE_WARNING_STATE
 #define AV_REGISTER_PIPELINE_LAYOUT(where) android_vulkan::RegisterPipelineLayout ( where );
 #define AV_UNREGISTER_PIPELINE_LAYOUT(where) android_vulkan::UnregisterPipelineLayout ( where );
 
-#define AV_REGISTER_RENDER_PASS(where) android_vulkan::RegisterRenderPass ( where );
-#define AV_UNREGISTER_RENDER_PASS(where) android_vulkan::UnregisterRenderPass ( where );
-
-#define AV_REGISTER_SAMPLER(where) android_vulkan::RegisterSampler ( where );
-#define AV_UNREGISTER_SAMPLER(where) android_vulkan::UnregisterSampler ( where );
-
 #define AV_REGISTER_SEMAPHORE(where) android_vulkan::RegisterSemaphore ( where );
 #define AV_UNREGISTER_SEMAPHORE(where) android_vulkan::UnregisterSemaphore ( where );
 
@@ -177,12 +165,6 @@ void UnregisterPipeline ( std::string &&where );
 
 void RegisterPipelineLayout ( std::string &&where );
 void UnregisterPipelineLayout ( std::string &&where );
-
-void RegisterRenderPass ( std::string &&where );
-void UnregisterRenderPass ( std::string &&where );
-
-void RegisterSampler ( std::string &&where );
-void UnregisterSampler ( std::string &&where );
 
 void RegisterSemaphore ( std::string &&where );
 void UnregisterSemaphore ( std::string &&where );

@@ -97,8 +97,6 @@ std::set<VulkanItem>        g_Images;
 std::set<VulkanItem>        g_ImageViews;
 std::set<VulkanItem>        g_Pipelines;
 std::set<VulkanItem>        g_PipelineLayouts;
-std::set<VulkanItem>        g_RenderPasses;
-std::set<VulkanItem>        g_Samplers;
 std::set<VulkanItem>        g_Semaphores;
 std::set<VulkanItem>        g_ShaderModules;
 
@@ -324,34 +322,6 @@ void UnregisterPipelineLayout ( std::string &&where )
         "pipeline layout",
         std::move ( where ),
         g_PipelineLayouts
-    );
-}
-
-void RegisterRenderPass ( std::string &&where )
-{
-    RegisterNonDispatchableObject ( std::move ( where ), g_RenderPasses );
-}
-
-void UnregisterRenderPass ( std::string &&where )
-{
-    UnregisterNonDispatchableObject ( "AV_UNREGISTER_RENDER_PASS",
-        "render pass",
-        std::move ( where ),
-        g_RenderPasses
-    );
-}
-
-void RegisterSampler ( std::string &&where )
-{
-    RegisterNonDispatchableObject ( std::move ( where ), g_Samplers );
-}
-
-void UnregisterSampler ( std::string &&where )
-{
-    UnregisterNonDispatchableObject ( "AV_UNREGISTER_SAMPLER",
-        "sampler",
-        std::move ( where ),
-        g_Samplers
     );
 }
 

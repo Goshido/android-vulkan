@@ -101,7 +101,7 @@ class Game : public android_vulkan::Game
         ) noexcept = 0;
 
         virtual void DestroyTextures ( android_vulkan::Renderer &renderer ) noexcept;
-        [[nodiscard]] bool CreateSamplers ( android_vulkan::Renderer &renderer ) noexcept;
+        [[nodiscard]] bool CreateSamplers ( VkDevice device ) noexcept;
         void DestroySamplers ( VkDevice device ) noexcept;
 
         [[nodiscard]] bool CreateCommonTextures ( android_vulkan::Renderer &renderer,

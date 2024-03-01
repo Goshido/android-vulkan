@@ -466,8 +466,10 @@ bool Rainbow::CreateRenderPass ( android_vulkan::Renderer &renderer ) noexcept
         .pDependencies = &dependency
     };
 
+    VkDevice device = renderer.GetDevice ();
+
     const bool result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateRenderPass ( renderer.GetDevice (), &renderPassCreateInfo, nullptr, &_renderPass ),
+        vkCreateRenderPass ( device, &renderPassCreateInfo, nullptr, &_renderPass ),
         "Rainbow::CreateRenderPass",
         "Can't create render pass"
     );
@@ -475,7 +477,7 @@ bool Rainbow::CreateRenderPass ( android_vulkan::Renderer &renderer ) noexcept
     if ( !result )
         return false;
 
-    AV_REGISTER_RENDER_PASS ( "Rainbow::_renderPass" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _renderPass, VK_OBJECT_TYPE_RENDER_PASS, "Rainbow::_renderPass" )
     return true;
 }
 
@@ -486,7 +488,6 @@ void Rainbow::DestroyRenderPass ( VkDevice device ) noexcept
 
     vkDestroyRenderPass ( device, _renderPass, nullptr );
     _renderPass = VK_NULL_HANDLE;
-    AV_UNREGISTER_RENDER_PASS ( "Rainbow::_renderPass" )
 }
 
 } // namespace rainbow

@@ -422,7 +422,7 @@ bool MandelbrotLUTColor::CreateLUT ( android_vulkan::Renderer &renderer ) noexce
     if ( !result )
         return false;
 
-    AV_REGISTER_SAMPLER ( "MandelbrotLUTColor::_sampler" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _sampler, VK_OBJECT_TYPE_SAMPLER, "MandelbrotLUTColor::_sampler" )
 
     if ( UploadLUTSamples ( renderer ) )
         return true;
@@ -439,7 +439,6 @@ void MandelbrotLUTColor::DestroyLUT ( android_vulkan::Renderer &renderer  ) noex
     {
         vkDestroySampler ( device, _sampler, nullptr );
         _sampler = VK_NULL_HANDLE;
-        AV_UNREGISTER_SAMPLER ( "MandelbrotLUTColor::_sampler" )
     }
 
     if ( _lutView != VK_NULL_HANDLE )

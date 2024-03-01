@@ -47,7 +47,7 @@ Game::Game ( char const* fragmentShader ) noexcept:
     // NOTHING
 }
 
-bool Game::CreateSamplers ( android_vulkan::Renderer &renderer ) noexcept
+bool Game::CreateSamplers ( VkDevice device ) noexcept
 {
     VkSamplerCreateInfo samplerInfo
     {
@@ -71,8 +71,6 @@ bool Game::CreateSamplers ( android_vulkan::Renderer &renderer ) noexcept
         .unnormalizedCoordinates = VK_FALSE
     };
 
-    VkDevice device = renderer.GetDevice ();
-
     bool result = android_vulkan::Renderer::CheckVkResult (
         vkCreateSampler ( device, &samplerInfo, nullptr, &_sampler ),
         "Game::CreateSamplers",
@@ -82,7 +80,7 @@ bool Game::CreateSamplers ( android_vulkan::Renderer &renderer ) noexcept
     if ( !result )
         return false;
 
-    AV_REGISTER_SAMPLER ( "Game::_sampler" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _sampler, VK_OBJECT_TYPE_SAMPLER, "Game::_sampler" )
     return true;
 }
 
@@ -92,7 +90,6 @@ void Game::DestroySamplers ( VkDevice device ) noexcept
     {
         vkDestroySampler ( device, _sampler, nullptr );
         _sampler = VK_NULL_HANDLE;
-        AV_UNREGISTER_SAMPLER ( "Game::_sampler" )
     }
 }
 
@@ -366,7 +363,7 @@ bool Game::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 {
     return CreateCommandPool ( renderer ) &&
         CreateUniformBuffer ( renderer ) &&
-        CreateSamplers ( renderer ) &&
+        CreateSamplers ( renderer.GetDevice () ) &&
         LoadGPUContent ( renderer, _commandInfo->_pool ) &&
         CreateShaderModules ( renderer ) &&
         CreateCommonDescriptorSetLayouts ( renderer ) &&
@@ -1124,8 +1121,10 @@ bool Game::CreateRenderPass ( android_vulkan::Renderer &renderer ) noexcept
         .pDependencies = dependencies
     };
 
+    VkDevice device = renderer.GetDevice ();
+
     bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateRenderPass ( renderer.GetDevice (), &renderPassInfo, nullptr, &_renderPass ),
+        vkCreateRenderPass ( device, &renderPassInfo, nullptr, &_renderPass ),
         "Game::CreateRenderPass",
         "Can't create render pass"
     );
@@ -1133,7 +1132,7 @@ bool Game::CreateRenderPass ( android_vulkan::Renderer &renderer ) noexcept
     if ( !result )
         return false;
 
-    AV_REGISTER_RENDER_PASS ( "Game::_renderPass" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _renderPass, VK_OBJECT_TYPE_RENDER_PASS, "Game::_renderPass" )
     return true;
 }
 
@@ -1144,7 +1143,6 @@ void Game::DestroyRenderPass ( VkDevice device ) noexcept
 
     vkDestroyRenderPass ( device, _renderPass, nullptr );
     _renderPass = VK_NULL_HANDLE;
-    AV_UNREGISTER_RENDER_PASS ( "Game::_renderPass" )
 }
 
 bool Game::CreateShaderModules ( android_vulkan::Renderer &renderer ) noexcept

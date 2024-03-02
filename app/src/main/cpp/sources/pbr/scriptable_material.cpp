@@ -102,10 +102,7 @@ void ScriptableMaterial::Destroy () noexcept
     clean ( _commandBuffers );
 
     for ( auto fence : _fences )
-    {
         vkDestroyFence ( device, fence, nullptr );
-        AV_UNREGISTER_FENCE ( "pbr::ScriptableMaterial::_fences" )
-    }
 
     clean ( _fences );
     _renderer = nullptr;
@@ -204,7 +201,7 @@ bool ScriptableMaterial::AllocateCommandBuffers ( size_t amount ) noexcept
         if ( !result ) [[unlikely]]
             return false;
 
-        AV_REGISTER_FENCE ( "pbr::ScriptableMaterial::_fences" )
+        AV_SET_VULKAN_OBJECT_NAME ( device, fences[ i ], VK_OBJECT_TYPE_FENCE, "Material #%zu", i )
     }
 
 #if defined ( ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS ) ||       \

@@ -30,17 +30,8 @@ GX_RESTORE_WARNING_STATE
 #define AV_REGISTER_DESCRIPTOR_POOL(where)
 #define AV_UNREGISTER_DESCRIPTOR_POOL(where)
 
-#define AV_REGISTER_DEVICE(where)
-#define AV_UNREGISTER_DEVICE(where)
-
 #define AV_REGISTER_DEVICE_MEMORY(where)
 #define AV_UNREGISTER_DEVICE_MEMORY(where)
-
-#define AV_REGISTER_FENCE(where)
-#define AV_UNREGISTER_FENCE(where)
-
-#define AV_REGISTER_FRAMEBUFFER(where)
-#define AV_UNREGISTER_FRAMEBUFFER(where)
 
 #define AV_REGISTER_IMAGE(where)
 #define AV_UNREGISTER_IMAGE(where)
@@ -48,8 +39,6 @@ GX_RESTORE_WARNING_STATE
 #define AV_REGISTER_IMAGE_VIEW(where)
 #define AV_UNREGISTER_IMAGE_VIEW(where)
 
-#define AV_REGISTER_SEMAPHORE(where)
-#define AV_UNREGISTER_SEMAPHORE(where)
 
 
 
@@ -75,17 +64,8 @@ GX_RESTORE_WARNING_STATE
 #define AV_REGISTER_DESCRIPTOR_POOL(where) android_vulkan::RegisterDescriptorPool ( where );
 #define AV_UNREGISTER_DESCRIPTOR_POOL(where) android_vulkan::UnregisterDescriptorPool ( where );
 
-#define AV_REGISTER_DEVICE(where) android_vulkan::RegisterDevice ( where );
-#define AV_UNREGISTER_DEVICE(where) android_vulkan::UnregisterDevice ( where );
-
 #define AV_REGISTER_DEVICE_MEMORY(where) android_vulkan::RegisterDeviceMemory ( where );
 #define AV_UNREGISTER_DEVICE_MEMORY(where) android_vulkan::UnregisterDeviceMemory ( where );
-
-#define AV_REGISTER_FENCE(where) android_vulkan::RegisterFence ( where );
-#define AV_UNREGISTER_FENCE(where) android_vulkan::UnregisterFence ( where );
-
-#define AV_REGISTER_FRAMEBUFFER(where) android_vulkan::RegisterFramebuffer ( where );
-#define AV_UNREGISTER_FRAMEBUFFER(where) android_vulkan::UnregisterFramebuffer ( where );
 
 #define AV_REGISTER_IMAGE(where) android_vulkan::RegisterImage ( where );
 #define AV_UNREGISTER_IMAGE(where) android_vulkan::UnregisterImage ( where );
@@ -93,8 +73,6 @@ GX_RESTORE_WARNING_STATE
 #define AV_REGISTER_IMAGE_VIEW(where) android_vulkan::RegisterImageView ( where );
 #define AV_UNREGISTER_IMAGE_VIEW(where) android_vulkan::UnregisterImageView ( where );
 
-#define AV_REGISTER_SEMAPHORE(where) android_vulkan::RegisterSemaphore ( where );
-#define AV_UNREGISTER_SEMAPHORE(where) android_vulkan::UnregisterSemaphore ( where );
 
 
 
@@ -114,17 +92,8 @@ namespace android_vulkan {
 void RegisterDescriptorPool ( std::string &&where );
 void UnregisterDescriptorPool ( std::string &&where );
 
-void RegisterDevice ( std::string &&where );
-void UnregisterDevice ( std::string &&where );
-
 void RegisterDeviceMemory ( std::string &&where );
 void UnregisterDeviceMemory ( std::string &&where );
-
-void RegisterFence ( std::string &&where );
-void UnregisterFence ( std::string &&where );
-
-void RegisterFramebuffer ( std::string &&where );
-void UnregisterFramebuffer ( std::string &&where );
 
 void RegisterImage ( std::string &&where );
 void UnregisterImage ( std::string &&where );
@@ -132,8 +101,6 @@ void UnregisterImage ( std::string &&where );
 void RegisterImageView ( std::string &&where );
 void UnregisterImageView ( std::string &&where );
 
-void RegisterSemaphore ( std::string &&where );
-void UnregisterSemaphore ( std::string &&where );
 
 
 

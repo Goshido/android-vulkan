@@ -6,7 +6,6 @@
 #include <renderer.hpp>
 #include <vulkan_api.hpp>
 #include <vulkan_utils.hpp>
-#include <GXCommon/GXWarning.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -88,13 +87,9 @@ bool VulkanItem::operator < ( const VulkanItem &other ) const noexcept
 
 std::shared_timed_mutex     g_Lock;
 std::set<VulkanItem>        g_DescriptorPools;
-std::set<VulkanItem>        g_Devices;
 std::set<VulkanItem>        g_DeviceMemory;
-std::set<VulkanItem>        g_Fences;
-std::set<VulkanItem>        g_Framebuffers;
 std::set<VulkanItem>        g_Images;
 std::set<VulkanItem>        g_ImageViews;
-std::set<VulkanItem>        g_Semaphores;
 
 
 
@@ -195,20 +190,6 @@ void UnregisterDescriptorPool ( std::string &&where )
     );
 }
 
-void RegisterDevice ( std::string &&where )
-{
-    RegisterNonDispatchableObject ( std::move ( where ), g_Devices );
-}
-
-void UnregisterDevice ( std::string &&where )
-{
-    UnregisterNonDispatchableObject ( "AV_UNREGISTER_DEVICE",
-        "device",
-        std::move ( where ),
-        g_Devices
-    );
-}
-
 void RegisterDeviceMemory ( std::string &&where )
 {
     RegisterNonDispatchableObject ( std::move ( where ), g_DeviceMemory );
@@ -220,34 +201,6 @@ void UnregisterDeviceMemory ( std::string &&where )
         "device memory",
         std::move ( where ),
         g_DeviceMemory
-    );
-}
-
-void RegisterFence ( std::string &&where )
-{
-    RegisterNonDispatchableObject ( std::move ( where ), g_Fences );
-}
-
-void UnregisterFence ( std::string &&where )
-{
-    UnregisterNonDispatchableObject ( "AV_UNREGISTER_FENCE",
-        "fence",
-        std::move ( where ),
-        g_Fences
-    );
-}
-
-void RegisterFramebuffer ( std::string &&where )
-{
-    RegisterNonDispatchableObject ( std::move ( where ), g_Framebuffers );
-}
-
-void UnregisterFramebuffer ( std::string &&where )
-{
-    UnregisterNonDispatchableObject ( "AV_UNREGISTER_FRAMEBUFFER",
-        "framebuffer",
-        std::move ( where ),
-        g_Framebuffers
     );
 }
 
@@ -279,19 +232,6 @@ void UnregisterImageView ( std::string &&where )
     );
 }
 
-void RegisterSemaphore ( std::string &&where )
-{
-    RegisterNonDispatchableObject ( std::move ( where ), g_Semaphores );
-}
-
-void UnregisterSemaphore ( std::string &&where )
-{
-    UnregisterNonDispatchableObject ( "AV_UNREGISTER_SEMAPHORE",
-        "semaphore",
-        std::move ( where ),
-        g_Semaphores
-    );
-}
 
 
 

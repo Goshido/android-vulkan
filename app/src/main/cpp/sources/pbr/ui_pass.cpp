@@ -187,10 +187,7 @@ void ImageStorage::OnDestroyDevice () noexcept
     clean ( _commandBuffers );
 
     for ( auto fence : _fences )
-    {
         vkDestroyFence ( device, fence, nullptr );
-        AV_UNREGISTER_FENCE ( "pbr::ImageStorage::_fences" )
-    }
 
     clean ( _fences );
     _renderer = nullptr;
@@ -282,7 +279,7 @@ bool ImageStorage::AllocateCommandBuffers ( size_t amount ) noexcept
         if ( !result ) [[unlikely]]
             return false;
 
-        AV_REGISTER_FENCE ( "pbr::ImageStorage::_fences" )
+        AV_SET_VULKAN_OBJECT_NAME ( device, fences[ i ], VK_OBJECT_TYPE_FENCE, "UI #%zu", i )
     }
 
 #if defined ( ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS ) ||       \

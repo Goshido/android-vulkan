@@ -1562,12 +1562,11 @@ bool Renderer::DeployDevice () noexcept
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_DEVICE ( "Renderer::_device" )
-
 #if defined ( ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS ) ||       \
     defined ( ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION )
 
     InitVulkanDebugUtils ( _instance );
+    AV_SET_VULKAN_OBJECT_NAME ( _device, _device, VK_OBJECT_TYPE_DEVICE, "Main device" )
 
 #endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS || ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
 
@@ -1587,8 +1586,6 @@ void Renderer::DestroyDevice () noexcept
     _memoryAllocator.Destroy ( _device );
 
     // Note it's intentional to unregister device BEFORE destruction for correct memory leak check stuff.
-    AV_UNREGISTER_DEVICE ( "Renderer::_device" )
-
     vkDestroyDevice ( _device, nullptr );
     _device = VK_NULL_HANDLE;
     _queue = VK_NULL_HANDLE;

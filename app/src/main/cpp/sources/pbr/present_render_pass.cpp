@@ -48,7 +48,7 @@ void PresentRenderPass::OnDestroyDevice ( VkDevice device ) noexcept
         .height = 0U
     };
 
-    if ( _renderInfo.renderPass == VK_NULL_HANDLE )
+    if ( _renderInfo.renderPass == VK_NULL_HANDLE ) [[unlikely]]
         return;
 
     vkDestroyRenderPass ( device, _renderInfo.renderPass, nullptr );
@@ -154,12 +154,12 @@ bool PresentRenderPass::CreateFramebuffers ( android_vulkan::Renderer &renderer,
 
     for ( size_t i = 0U; i < framebufferCount; ++i )
     {
-        FramebufferInfo &fbInfo = _framebufferInfo[ i ];
+        FramebufferInfo &info = _framebufferInfo[ i ];
 
         framebufferInfo.pAttachments = &renderer.GetPresentImageView ( i );
 
         bool result = android_vulkan::Renderer::CheckVkResult (
-            vkCreateFramebuffer ( device, &framebufferInfo, nullptr, &fbInfo._framebuffer ),
+            vkCreateFramebuffer ( device, &framebufferInfo, nullptr, &info._framebuffer ),
             "pbr::PresentRenderPass::CreateFramebuffers",
             "Can't create a framebuffer"
         );
@@ -167,7 +167,7 @@ bool PresentRenderPass::CreateFramebuffers ( android_vulkan::Renderer &renderer,
         if ( !result ) [[unlikely]]
             return false;
 
-        AV_REGISTER_FRAMEBUFFER ( "pbr::PresentRenderPass::_framebuffers" )
+        AV_SET_VULKAN_OBJECT_NAME ( device, info._framebuffer, VK_OBJECT_TYPE_FRAMEBUFFER, "Swapchain image #%zu", i )
 
         constexpr VkSemaphoreCreateInfo semaphoreInfo
         {
@@ -177,15 +177,15 @@ bool PresentRenderPass::CreateFramebuffers ( android_vulkan::Renderer &renderer,
         };
 
         result = android_vulkan::Renderer::CheckVkResult (
-            vkCreateSemaphore ( device, &semaphoreInfo, nullptr, &fbInfo._renderEnd ),
+            vkCreateSemaphore ( device, &semaphoreInfo, nullptr, &info._renderEnd ),
             "pbr::PresentRenderPass::CreateFramebuffers",
             "Can't create render target acquired semaphore"
         );
 
-        if ( !result )
+        if ( !result ) [[unlikely]]
             return false;
 
-        AV_REGISTER_SEMAPHORE ( "pbr::PresentRenderPass::_renderEnd" )
+        AV_SET_VULKAN_OBJECT_NAME ( device, info._renderEnd, VK_OBJECT_TYPE_SEMAPHORE, "Swapchain image #%zu", i )
     }
 
     return true;
@@ -198,16 +198,12 @@ void PresentRenderPass::DestroyFramebuffers ( VkDevice device ) noexcept
 
     for ( auto &fbInfo : _framebufferInfo )
     {
-        if ( fbInfo._framebuffer != VK_NULL_HANDLE )
-        {
+        if ( fbInfo._framebuffer != VK_NULL_HANDLE ) [[likely]]
             vkDestroyFramebuffer ( device, fbInfo._framebuffer, nullptr );
-            AV_UNREGISTER_FRAMEBUFFER ( "pbr::PresentRenderPass::_framebuffers" )
-        }
 
-        if ( fbInfo._renderEnd != VK_NULL_HANDLE )
+        if ( fbInfo._renderEnd != VK_NULL_HANDLE ) [[likely]]
         {
             vkDestroySemaphore ( device, fbInfo._renderEnd, nullptr );
-            AV_UNREGISTER_SEMAPHORE ( "pbr::PresentRenderPass::_renderEnd" )
         }
     }
 

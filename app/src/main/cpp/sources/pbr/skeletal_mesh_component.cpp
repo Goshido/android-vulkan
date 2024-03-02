@@ -370,10 +370,7 @@ void SkeletalMeshComponent::Destroy () noexcept
     clean ( _cbInfo._buffers );
 
     for ( auto fence : _cbInfo._fences )
-    {
         vkDestroyFence ( device, fence, nullptr );
-        AV_UNREGISTER_FENCE ( "pbr::SkeletalMeshComponent::_fences" )
-    }
 
     _skinPool.Destroy ( device );
     _program.Destroy ( device );
@@ -524,7 +521,7 @@ bool SkeletalMeshComponent::AllocateCommandBuffers ( size_t amount ) noexcept
         if ( !result ) [[unlikely]]
             return false;
 
-        AV_REGISTER_FENCE ( "pbr::SkeletalMeshComponent::_fences" )
+        AV_SET_VULKAN_OBJECT_NAME ( device, fences[ i ], VK_OBJECT_TYPE_FENCE, "Skeletal mesh #%zu", i )
     }
 
 #if defined ( ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS ) ||       \
@@ -533,14 +530,7 @@ bool SkeletalMeshComponent::AllocateCommandBuffers ( size_t amount ) noexcept
     VkCommandBuffer* const buffer = _cbInfo._buffers.data ();
 
     for ( size_t i = current; i < size; ++i )
-    {
-        AV_SET_VULKAN_OBJECT_NAME ( device,
-            buffer[ i ],
-            VK_OBJECT_TYPE_COMMAND_BUFFER,
-            "Skeletal mesh component #%zu",
-            i
-        )
-    }
+        AV_SET_VULKAN_OBJECT_NAME ( device, buffer[ i ], VK_OBJECT_TYPE_COMMAND_BUFFER, "Skeletal mesh #%zu", i )
 
 #endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS || ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
 

@@ -85,9 +85,7 @@ void PointLightPass::Destroy ( android_vulkan::Renderer &renderer ) noexcept
                 continue;
 
             image->FreeResources ( renderer );
-
             vkDestroyFramebuffer ( device, framebuffer, nullptr );
-            AV_UNREGISTER_FRAMEBUFFER ( "PointLightPass::_shadowmaps" )
         }
 
         _shadowmaps.clear ();
@@ -192,13 +190,13 @@ PointLightPass::PointLightShadowmapInfo* PointLightPass::AcquirePointLightShadow
         "Can't create framebuffer"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
     {
         shadowmap->FreeResources ( renderer );
         return nullptr;
     }
 
-    AV_REGISTER_FRAMEBUFFER ( "PointLightPass::_shadowmaps" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, framebuffer, VK_OBJECT_TYPE_FRAMEBUFFER, "Point light #%zu", _usedShadowmaps )
 
     ++_usedShadowmaps;
     return &_shadowmaps.emplace_back ( std::move ( info ) );

@@ -90,8 +90,8 @@ bool MandelbrotBase::OnFrame ( android_vulkan::Renderer &renderer, double /*delt
         "Can't submit command buffer"
     );
 
-    if ( !result )
-        return true;
+    if ( !result ) [[unlikely]]
+        return false;
 
     return EndFrame ( renderer, presentationImageIndex );
 }
@@ -170,7 +170,7 @@ bool MandelbrotBase::EndFrame ( android_vulkan::Renderer &renderer, uint32_t pre
         "Can't present frame"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     return android_vulkan::Renderer::CheckVkResult ( presentResult,
@@ -250,7 +250,7 @@ bool MandelbrotBase::CreateCommandBuffers ( android_vulkan::Renderer &renderer )
         if ( !result ) [[unlikely]]
             return false;
 
-        AV_REGISTER_SEMAPHORE ( "MandelbrotBase::_acquire" )
+        AV_SET_VULKAN_OBJECT_NAME ( device, commandInfo._acquire, VK_OBJECT_TYPE_SEMAPHORE, "Frame in flight #%zu", i )
 
         constexpr VkFenceCreateInfo fenceInfo
         {
@@ -268,7 +268,7 @@ bool MandelbrotBase::CreateCommandBuffers ( android_vulkan::Renderer &renderer )
         if ( !result ) [[unlikely]]
             return false;
 
-        AV_REGISTER_FENCE ( "MandelbrotBase::_fence" )
+        AV_SET_VULKAN_OBJECT_NAME ( device, commandInfo._fence, VK_OBJECT_TYPE_FENCE, "Frame in flight #%zu", i )
     }
 
     return true;
@@ -279,19 +279,21 @@ void MandelbrotBase::DestroyCommandBuffers ( VkDevice device ) noexcept
     for ( auto &commandInfo : _commandInfo )
     {
         if ( commandInfo._pool != VK_NULL_HANDLE ) [[likely]]
+        {
             vkDestroyCommandPool ( device, commandInfo._pool, nullptr );
+            commandInfo._pool = VK_NULL_HANDLE;
+        }
 
         if ( commandInfo._acquire != VK_NULL_HANDLE ) [[likely]]
         {
             vkDestroySemaphore ( device, commandInfo._acquire, nullptr );
-            AV_UNREGISTER_SEMAPHORE ( "MandelbrotBase::_acquire" )
+            commandInfo._acquire = VK_NULL_HANDLE;
         }
 
         if ( commandInfo._fence == VK_NULL_HANDLE ) [[unlikely]]
             continue;
 
         vkDestroyFence ( device, commandInfo._fence, nullptr );
-        AV_UNREGISTER_FENCE ( "MandelbrotBase::_fence" )
     }
 }
 
@@ -319,20 +321,20 @@ bool MandelbrotBase::CreateFramebuffers ( android_vulkan::Renderer &renderer ) n
 
     for ( size_t i = 0U; i < presentationImageCount; ++i )
     {
-        FramebufferInfo &fbInfo = _framebufferInfo[ i ];
+        FramebufferInfo &info = _framebufferInfo[ i ];
 
         createInfo.pAttachments = &renderer.GetPresentImageView ( i );
 
         bool result = android_vulkan::Renderer::CheckVkResult (
-            vkCreateFramebuffer ( device, &createInfo, nullptr, &fbInfo._framebuffer ),
+            vkCreateFramebuffer ( device, &createInfo, nullptr, &info._framebuffer ),
             "MandelbrotBase::CreateFramebuffers",
             "Can't create framebuffer"
         );
 
-        if ( !result )
+        if ( !result ) [[unlikely]]
             return false;
 
-        AV_REGISTER_FRAMEBUFFER ( "MandelbrotBase::_framebuffer" )
+        AV_SET_VULKAN_OBJECT_NAME ( device, info._framebuffer, VK_OBJECT_TYPE_FRAMEBUFFER, "Swapchain image #%zu", i )
 
         constexpr VkSemaphoreCreateInfo semaphoreInfo
         {
@@ -342,15 +344,15 @@ bool MandelbrotBase::CreateFramebuffers ( android_vulkan::Renderer &renderer ) n
         };
 
         result = android_vulkan::Renderer::CheckVkResult (
-            vkCreateSemaphore ( device, &semaphoreInfo, nullptr, &fbInfo._renderEnd ),
+            vkCreateSemaphore ( device, &semaphoreInfo, nullptr, &info._renderEnd ),
             "MandelbrotBase::CreateFramebuffers",
             "Can't create render end semaphore"
         );
 
-        if ( !result )
+        if ( !result ) [[unlikely]]
             return false;
 
-        AV_REGISTER_SEMAPHORE ( "MandelbrotBase::_renderEnd" )
+        AV_SET_VULKAN_OBJECT_NAME ( device, info._renderEnd, VK_OBJECT_TYPE_SEMAPHORE, "Swapchain image #%zu", i )
     }
 
     return true;
@@ -360,16 +362,12 @@ void MandelbrotBase::DestroyFramebuffers ( VkDevice device ) noexcept
 {
     for ( auto const fbInfo : _framebufferInfo )
     {
-        if ( fbInfo._framebuffer != VK_NULL_HANDLE )
-        {
+        if ( fbInfo._framebuffer != VK_NULL_HANDLE ) [[likely]]
             vkDestroyFramebuffer ( device, fbInfo._framebuffer, nullptr );
-            AV_UNREGISTER_FRAMEBUFFER ( "MandelbrotBase::_framebuffer" )
-        }
 
-        if ( fbInfo._renderEnd != VK_NULL_HANDLE )
+        if ( fbInfo._renderEnd != VK_NULL_HANDLE ) [[likely]]
         {
             vkDestroySemaphore ( device, fbInfo._renderEnd, nullptr );
-            AV_UNREGISTER_SEMAPHORE ( "MandelbrotBase::_renderEnd" )
         }
     }
 
@@ -607,7 +605,7 @@ bool MandelbrotBase::CreatePipeline ( android_vulkan::Renderer &renderer ) noexc
         "Can't create pipeline"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
     {
         DestroyPipeline ( device );
         return false;
@@ -701,7 +699,7 @@ bool MandelbrotBase::CreateRenderPass ( android_vulkan::Renderer &renderer ) noe
         "Can't create render pass"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_SET_VULKAN_OBJECT_NAME ( device, _renderPass, VK_OBJECT_TYPE_RENDER_PASS, "MandelbrotBase::_renderPass" )
@@ -710,7 +708,7 @@ bool MandelbrotBase::CreateRenderPass ( android_vulkan::Renderer &renderer ) noe
 
 void MandelbrotBase::DestroyRenderPass ( VkDevice device ) noexcept
 {
-    if ( _renderPass == VK_NULL_HANDLE )
+    if ( _renderPass == VK_NULL_HANDLE ) [[unlikely]]
         return;
 
     vkDestroyRenderPass ( device, _renderPass, nullptr );
@@ -719,13 +717,13 @@ void MandelbrotBase::DestroyRenderPass ( VkDevice device ) noexcept
 
 void MandelbrotBase::DestroyShaderModules ( VkDevice device ) noexcept
 {
-    if ( _vertexShader != VK_NULL_HANDLE )
+    if ( _vertexShader != VK_NULL_HANDLE ) [[likely]]
     {
         vkDestroyShaderModule ( device, _vertexShader, nullptr );
         _vertexShader = VK_NULL_HANDLE;
     }
 
-    if ( _fragmentShader == VK_NULL_HANDLE )
+    if ( _fragmentShader == VK_NULL_HANDLE ) [[unlikely]]
         return;
 
     vkDestroyShaderModule ( device, _fragmentShader, nullptr );

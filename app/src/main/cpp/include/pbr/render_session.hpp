@@ -124,7 +124,7 @@ class RenderSession final
         ) noexcept;
 
     private:
-        [[nodiscard]] bool CreateFramebuffer ( android_vulkan::Renderer &renderer ) noexcept;
+        [[nodiscard]] bool CreateFramebuffer ( VkDevice device ) noexcept;
         [[nodiscard]] bool CreateRenderPass ( VkDevice device ) noexcept;
 
         [[nodiscard]] bool CreateGBufferResources ( android_vulkan::Renderer &renderer,

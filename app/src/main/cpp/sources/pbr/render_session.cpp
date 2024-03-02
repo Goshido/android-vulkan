@@ -206,19 +206,22 @@ void RenderSession::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexc
     for ( auto &commandInfo : _commandInfo )
     {
         if ( commandInfo._pool != VK_NULL_HANDLE ) [[likely]]
+        {
             vkDestroyCommandPool ( device, commandInfo._pool, nullptr );
+            commandInfo._pool = VK_NULL_HANDLE;
+        }
 
         if ( commandInfo._acquire != VK_NULL_HANDLE ) [[likely]]
         {
             vkDestroySemaphore ( device, commandInfo._acquire, nullptr );
-            AV_UNREGISTER_SEMAPHORE ( "pbr::RenderSession::_acquire" )
+            commandInfo._acquire = VK_NULL_HANDLE;
         }
 
         if ( commandInfo._fence == VK_NULL_HANDLE ) [[unlikely]]
             continue;
 
         vkDestroyFence ( device, commandInfo._fence, nullptr );
-        AV_UNREGISTER_FENCE ( "pbr::RenderSession::_fence" )
+        commandInfo._fence = VK_NULL_HANDLE;
     }
 
     _uiPass.OnDestroyDevice ( renderer );
@@ -348,7 +351,7 @@ void RenderSession::SubmitMesh ( MeshRef &mesh,
     ( this->*handler ) ( mesh, material, local, worldBounds, color0, color1, color2, emission );
 }
 
-bool RenderSession::CreateFramebuffer ( android_vulkan::Renderer &renderer ) noexcept
+bool RenderSession::CreateFramebuffer ( VkDevice device ) noexcept
 {
     VkExtent2D const &resolution = _gBuffer.GetResolution ();
 
@@ -375,7 +378,7 @@ bool RenderSession::CreateFramebuffer ( android_vulkan::Renderer &renderer ) noe
     };
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateFramebuffer ( renderer.GetDevice (), &framebufferInfo, nullptr, &_renderPassInfo.framebuffer ),
+        vkCreateFramebuffer ( device, &framebufferInfo, nullptr, &_renderPassInfo.framebuffer ),
         "pbr::RenderSession::CreateFramebuffer",
         "Can't create GBuffer framebuffer"
     );
@@ -385,7 +388,7 @@ bool RenderSession::CreateFramebuffer ( android_vulkan::Renderer &renderer ) noe
 
     _renderPassInfo.renderArea.extent = resolution;
 
-    AV_REGISTER_FRAMEBUFFER ( "pbr::RenderSession::_framebuffer" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _renderPassInfo.framebuffer, VK_OBJECT_TYPE_FRAMEBUFFER, "G-Buffer" )
     return true;
 }
 
@@ -715,7 +718,7 @@ bool RenderSession::CreateGBufferResources ( android_vulkan::Renderer &renderer,
 
     bool const result = _gBuffer.Init ( renderer, resolution ) &&
         CreateRenderPass ( device ) &&
-        CreateFramebuffer ( renderer ) &&
+        CreateFramebuffer ( device ) &&
 
         _geometryPass.Init ( renderer,
             _gBuffer.GetResolution (),
@@ -732,7 +735,7 @@ bool RenderSession::CreateGBufferResources ( android_vulkan::Renderer &renderer,
             "Can't wait device idle"
         );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     _lightPass.OnFreeTransferResources ( renderer );
@@ -743,11 +746,10 @@ void RenderSession::DestroyGBufferResources ( android_vulkan::Renderer &renderer
 {
     VkDevice device = renderer.GetDevice ();
 
-    if ( _renderPassInfo.framebuffer != VK_NULL_HANDLE )
+    if ( _renderPassInfo.framebuffer != VK_NULL_HANDLE ) [[likely]]
     {
         vkDestroyFramebuffer ( device, _renderPassInfo.framebuffer, nullptr );
         _renderPassInfo.framebuffer = VK_NULL_HANDLE;
-        AV_UNREGISTER_FRAMEBUFFER ( "pbr::RenderSession::_framebuffer" )
     }
 
     _lightPass.Destroy ( renderer );
@@ -868,7 +870,7 @@ bool RenderSession::AllocateCommandInfo ( CommandInfo &info,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_FENCE ( "pbr::RenderSession::_fence" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, info._fence, VK_OBJECT_TYPE_FENCE, "Frame in flight #%zu", frameInFlightIndex )
 
     constexpr VkSemaphoreCreateInfo semaphoreInfo
     {
@@ -886,7 +888,12 @@ bool RenderSession::AllocateCommandInfo ( CommandInfo &info,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_SEMAPHORE ( "pbr::RenderSession::_acquire" )
+    AV_SET_VULKAN_OBJECT_NAME ( device,
+        info._acquire,
+        VK_OBJECT_TYPE_SEMAPHORE,
+        "Frame in flight #%zu",
+        frameInFlightIndex
+    )
 
     VkCommandPoolCreateInfo const createInfo
     {

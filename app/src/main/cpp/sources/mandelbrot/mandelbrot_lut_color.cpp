@@ -43,7 +43,7 @@ void MandelbrotLUTColor::OnDestroyDevice ( android_vulkan::Renderer &renderer ) 
     MandelbrotBase::OnDestroyDevice ( renderer );
 }
 
-bool MandelbrotLUTColor::CreatePipelineLayout ( android_vulkan::Renderer &renderer ) noexcept
+bool MandelbrotLUTColor::CreatePipelineLayout ( VkDevice device ) noexcept
 {
     constexpr VkDescriptorSetLayoutBinding const binding[]
     {
@@ -64,8 +64,6 @@ bool MandelbrotLUTColor::CreatePipelineLayout ( android_vulkan::Renderer &render
         .bindingCount = static_cast<uint32_t> ( std::size ( binding ) ),
         .pBindings = binding
     };
-
-    VkDevice device = renderer.GetDevice ();
 
     bool result = android_vulkan::Renderer::CheckVkResult (
         vkCreateDescriptorSetLayout ( device, &descriptorSetInfo, nullptr, &_descriptorSetLayout ),
@@ -102,7 +100,12 @@ bool MandelbrotLUTColor::CreatePipelineLayout ( android_vulkan::Renderer &render
     if ( !result )
         return false;
 
-    AV_REGISTER_PIPELINE_LAYOUT ( "MandelbrotLUTColor::_pipelineLayout" )
+    AV_SET_VULKAN_OBJECT_NAME ( device,
+        _pipelineLayout,
+        VK_OBJECT_TYPE_PIPELINE_LAYOUT,
+        "MandelbrotLUTColor::_pipelineLayout"
+    )
+
     return true;
 }
 
@@ -112,7 +115,6 @@ void MandelbrotLUTColor::DestroyPipelineLayout ( VkDevice device ) noexcept
     {
         vkDestroyPipelineLayout ( device, _pipelineLayout, nullptr );
         _pipelineLayout = VK_NULL_HANDLE;
-        AV_UNREGISTER_PIPELINE_LAYOUT ( "MandelbrotLUTColor::_pipelineLayout" )
     }
 
     if ( _descriptorSetLayout == VK_NULL_HANDLE )

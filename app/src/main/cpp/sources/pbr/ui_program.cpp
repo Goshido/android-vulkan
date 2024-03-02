@@ -89,7 +89,7 @@ bool UIProgram::Init ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_PIPELINE ( "pbr::UIProgram::_pipeline" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _pipeline, VK_OBJECT_TYPE_PIPELINE, "pbr::UIProgram::_pipeline" )
     DestroyShaderModules ( device );
     return true;
 }
@@ -100,7 +100,6 @@ void UIProgram::Destroy ( VkDevice device ) noexcept
     {
         vkDestroyPipelineLayout ( device, _pipelineLayout, nullptr );
         _pipelineLayout = VK_NULL_HANDLE;
-        AV_UNREGISTER_PIPELINE_LAYOUT ( "pbr::UIProgram::_pipelineLayout" )
     }
 
     _imageLayout.Destroy ( device );
@@ -111,7 +110,6 @@ void UIProgram::Destroy ( VkDevice device ) noexcept
     {
         vkDestroyPipeline ( device, _pipeline, nullptr );
         _pipeline = VK_NULL_HANDLE;
-        AV_UNREGISTER_PIPELINE ( "pbr::UIProgram::_pipeline" )
     }
 
     DestroyShaderModules ( device );
@@ -297,7 +295,12 @@ bool UIProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcep
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_PIPELINE_LAYOUT ( "pbr::UIProgram::_pipelineLayout" )
+    AV_SET_VULKAN_OBJECT_NAME ( device,
+        _pipelineLayout,
+        VK_OBJECT_TYPE_PIPELINE_LAYOUT,
+        "pbr::UIProgram::_pipelineLayout"
+    )
+
     layout = _pipelineLayout;
     return true;
 }
@@ -361,7 +364,7 @@ bool UIProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_SHADER_MODULE ( "pbr::UIProgram::_vertexShader" )
+    AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (), _vertexShader, VK_OBJECT_TYPE_SHADER_MODULE, VERTEX_SHADER )
 
     result = renderer.CreateShader ( _fragmentShader,
         FRAGMENT_SHADER,
@@ -371,7 +374,7 @@ bool UIProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_SHADER_MODULE ( "pbr::UIProgram::_fragmentShader" )
+    AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (), _fragmentShader, VK_OBJECT_TYPE_SHADER_MODULE, FRAGMENT_SHADER )
 
     sourceInfo[ 0U ] =
     {
@@ -416,19 +419,17 @@ bool UIProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
 
 void UIProgram::DestroyShaderModules ( VkDevice device ) noexcept
 {
-    if ( _fragmentShader != VK_NULL_HANDLE )
+    if ( _fragmentShader != VK_NULL_HANDLE ) [[likely]]
     {
         vkDestroyShaderModule ( device, _fragmentShader, nullptr );
         _fragmentShader = VK_NULL_HANDLE;
-        AV_UNREGISTER_SHADER_MODULE ( "pbr::UIProgram::_fragmentShader" )
     }
 
-    if ( _vertexShader == VK_NULL_HANDLE )
+    if ( _vertexShader == VK_NULL_HANDLE ) [[unlikely]]
         return;
 
     vkDestroyShaderModule ( device, _vertexShader, nullptr );
     _vertexShader = VK_NULL_HANDLE;
-    AV_UNREGISTER_SHADER_MODULE ( "pbr::UIProgram::_vertexShader" )
 }
 
 VkPipelineViewportStateCreateInfo const* UIProgram::InitViewportInfo (

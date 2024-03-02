@@ -98,8 +98,7 @@ bool MandelbrotBase::OnFrame ( android_vulkan::Renderer &renderer, double /*delt
 
 bool MandelbrotBase::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 {
-    return CreateCommandBuffers ( renderer ) &&
-        CreatePipelineLayout ( renderer );
+    return CreateCommandBuffers ( renderer ) && CreatePipelineLayout ( renderer.GetDevice () );
 }
 
 void MandelbrotBase::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
@@ -203,18 +202,20 @@ bool MandelbrotBase::CreateCommandBuffers ( android_vulkan::Renderer &renderer )
 
     VkDevice device = renderer.GetDevice ();
 
-    for ( auto &commandInfo : _commandInfo )
+    for ( size_t i = 0U; i < DUAL_COMMAND_BUFFER; ++i )
     {
+        CommandInfo &commandInfo = _commandInfo[ i ];
+
         bool result = android_vulkan::Renderer::CheckVkResult (
             vkCreateCommandPool ( device, &commandPoolInfo, nullptr, &commandInfo._pool ),
             "MandelbrotBase::CreateCommandBuffers",
             "Can't create command pool"
         );
 
-        if ( !result )
+        if ( !result ) [[unlikely]]
             return false;
 
-        AV_REGISTER_COMMAND_POOL ( "MandelbrotBase::_pool" )
+        AV_SET_VULKAN_OBJECT_NAME ( device, commandInfo._pool, VK_OBJECT_TYPE_COMMAND_POOL, "Frame in flight #%zu", i )
 
         commandBufferInfo.commandPool = commandInfo._pool;
 
@@ -224,8 +225,14 @@ bool MandelbrotBase::CreateCommandBuffers ( android_vulkan::Renderer &renderer )
             "Can't allocate command buffer"
         );
 
-        if ( !result )
+        if ( !result ) [[unlikely]]
             return false;
+
+        AV_SET_VULKAN_OBJECT_NAME ( device,
+            commandInfo._buffer,
+            VK_OBJECT_TYPE_COMMAND_BUFFER,
+            "Frame in flight #%zu", i
+        )
 
         constexpr VkSemaphoreCreateInfo semaphoreInfo
         {
@@ -240,7 +247,7 @@ bool MandelbrotBase::CreateCommandBuffers ( android_vulkan::Renderer &renderer )
             "Can't create render target acquired semaphore"
         );
 
-        if ( !result )
+        if ( !result ) [[unlikely]]
             return false;
 
         AV_REGISTER_SEMAPHORE ( "MandelbrotBase::_acquire" )
@@ -271,19 +278,16 @@ void MandelbrotBase::DestroyCommandBuffers ( VkDevice device ) noexcept
 {
     for ( auto &commandInfo : _commandInfo )
     {
-        if ( commandInfo._pool != VK_NULL_HANDLE )
-        {
+        if ( commandInfo._pool != VK_NULL_HANDLE ) [[likely]]
             vkDestroyCommandPool ( device, commandInfo._pool, nullptr );
-            AV_UNREGISTER_COMMAND_POOL ( "MandelbrotBase::_pool" )
-        }
 
-        if ( commandInfo._acquire != VK_NULL_HANDLE )
+        if ( commandInfo._acquire != VK_NULL_HANDLE ) [[likely]]
         {
             vkDestroySemaphore ( device, commandInfo._acquire, nullptr );
             AV_UNREGISTER_SEMAPHORE ( "MandelbrotBase::_acquire" )
         }
 
-        if ( commandInfo._fence == VK_NULL_HANDLE )
+        if ( commandInfo._fence == VK_NULL_HANDLE ) [[unlikely]]
             continue;
 
         vkDestroyFence ( device, commandInfo._fence, nullptr );
@@ -380,25 +384,26 @@ bool MandelbrotBase::CreatePipeline ( android_vulkan::Renderer &renderer ) noexc
         "Can't create vertex shader (MandelbrotBase::CreatePipeline)"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_SHADER_MODULE ( "MandelbrotBase::_vertexShader" )
+    VkDevice device = renderer.GetDevice ();
+
+    AV_SET_VULKAN_OBJECT_NAME ( device, _vertexShader, VK_OBJECT_TYPE_SHADER_MODULE, VERTEX_SHADER )
 
     result = renderer.CreateShader ( _fragmentShader,
         _fragmentShaderSpirV,
         "Can't create fragment shader (MandelbrotBase::CreatePipeline)"
     );
 
-    VkDevice device = renderer.GetDevice ();
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
     {
         DestroyPipeline ( device );
         return false;
     }
 
-    AV_REGISTER_SHADER_MODULE ( "MandelbrotBase::_fragmentShader" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _fragmentShader, VK_OBJECT_TYPE_SHADER_MODULE, "%s", _fragmentShaderSpirV )
 
     VkPipelineShaderStageCreateInfo const shaderStageInfo[] =
     {
@@ -608,7 +613,7 @@ bool MandelbrotBase::CreatePipeline ( android_vulkan::Renderer &renderer ) noexc
         return false;
     }
 
-    AV_REGISTER_PIPELINE ( "MandelbrotBase::_pipeline" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _pipeline, VK_OBJECT_TYPE_PIPELINE, "MandelbrotBase::_pipeline" )
     DestroyShaderModules ( device );
     return true;
 }
@@ -619,7 +624,6 @@ void MandelbrotBase::DestroyPipeline ( VkDevice device ) noexcept
     {
         vkDestroyPipeline ( device, _pipeline, nullptr );
         _pipeline = VK_NULL_HANDLE;
-        AV_UNREGISTER_PIPELINE ( "MandelbrotBase::_pipeline" )
     }
 
     DestroyShaderModules ( device );
@@ -719,7 +723,6 @@ void MandelbrotBase::DestroyShaderModules ( VkDevice device ) noexcept
     {
         vkDestroyShaderModule ( device, _vertexShader, nullptr );
         _vertexShader = VK_NULL_HANDLE;
-        AV_UNREGISTER_SHADER_MODULE ( "MandelbrotBase::_vertexShader" )
     }
 
     if ( _fragmentShader == VK_NULL_HANDLE )
@@ -727,7 +730,6 @@ void MandelbrotBase::DestroyShaderModules ( VkDevice device ) noexcept
 
     vkDestroyShaderModule ( device, _fragmentShader, nullptr );
     _fragmentShader = VK_NULL_HANDLE;
-    AV_UNREGISTER_SHADER_MODULE ( "MandelbrotBase::_fragmentShader" )
 }
 
 } // namespace mandelbrot

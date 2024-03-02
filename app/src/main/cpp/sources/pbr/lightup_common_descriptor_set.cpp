@@ -125,6 +125,8 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
+    AV_SET_VULKAN_OBJECT_NAME ( device, textureCommandBuffer, VK_OBJECT_TYPE_COMMAND_BUFFER, "BRDF LUT" )
+
     result = _brdfLUT.UploadData ( renderer,
         BRDF_LUT,
         android_vulkan::eFormat::Unorm,
@@ -360,7 +362,11 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_PIPELINE_LAYOUT ( "pbr::LightupCommonDescriptorSet::_pipelineLayout" )
+    AV_SET_VULKAN_OBJECT_NAME ( device,
+        _pipelineLayout,
+        VK_OBJECT_TYPE_PIPELINE_LAYOUT,
+        "pbr::LightupCommonDescriptorSet::_pipelineLayout"
+    )
 
     _bufferInfo.offset = 0U;
     _bufferInfo.range = static_cast<VkDeviceSize> ( sizeof ( LightLightupBaseProgram::ViewData ) );
@@ -399,7 +405,6 @@ void LightupCommonDescriptorSet::Destroy ( android_vulkan::Renderer &renderer ) 
     {
         vkDestroyPipelineLayout ( device, _pipelineLayout, nullptr );
         _pipelineLayout = VK_NULL_HANDLE;
-        AV_UNREGISTER_PIPELINE_LAYOUT ( "pbr::LightupCommonDescriptorSet::_pipelineLayout" )
     }
 
     _layout.Destroy ( device );

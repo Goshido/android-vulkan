@@ -51,7 +51,10 @@ bool SweepTesting::OnFrame ( android_vulkan::Renderer &renderer, double deltaTim
 bool SweepTesting::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 {
     if ( !CreateCommandPool ( renderer ) || !_renderSession.OnInitDevice ( renderer ) || !CreateScene ( renderer ) )
+    {
+        [[unlikely]]
         return false;
+    }
 
     _renderSession.FreeTransferResources ( renderer );
     return true;
@@ -94,7 +97,7 @@ bool SweepTesting::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noe
         Z_FAR
     );
 
-    if ( !_renderSession.OnSwapchainCreated ( renderer, resolution ) )
+    if ( !_renderSession.OnSwapchainCreated ( renderer, resolution ) ) [[unlikely]]
         return false;
 
     BindControls ();
@@ -158,21 +161,25 @@ bool SweepTesting::CreateCommandPool ( android_vulkan::Renderer &renderer ) noex
         "Can't create command pool"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_COMMAND_POOL ( "pbr::sweep_testing::SweepTesting::_commandPool" )
+    AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (),
+        _commandPool,
+        VK_OBJECT_TYPE_COMMAND_POOL,
+        "pbr::sweep_testing::SweepTesting::_commandPool"
+    )
+
     return true;
 }
 
 void SweepTesting::DestroyCommandPool ( VkDevice device ) noexcept
 {
-    if ( _commandPool == VK_NULL_HANDLE )
+    if ( _commandPool == VK_NULL_HANDLE ) [[unlikely]]
         return;
 
     vkDestroyCommandPool ( device, _commandPool, nullptr );
     _commandPool = VK_NULL_HANDLE;
-    AV_UNREGISTER_COMMAND_POOL ( "pbr::sweep_testing::SweepTesting::_commandPool" )
 }
 
 bool SweepTesting::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
@@ -215,8 +222,16 @@ bool SweepTesting::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
         "Can't allocate command buffers"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
+
+#if defined ( ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS ) ||       \
+    defined ( ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION )
+
+    for ( size_t i = 0U; i < comBuffs; ++i )
+        AV_SET_VULKAN_OBJECT_NAME ( device, cb[ i ], VK_OBJECT_TYPE_COMMAND_BUFFER, "Asset #%zu", i )
+
+#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS || ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
 
     _overlay = std::make_shared<android_vulkan::Texture2D> ();
     android_vulkan::Texture2D &t = *_overlay;
@@ -238,7 +253,7 @@ bool SweepTesting::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
         VK_NULL_HANDLE
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     ++cb;
@@ -283,14 +298,17 @@ bool SweepTesting::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
     }
 
     if ( !_sweep.Init ( renderer, consumed, cb, GXVec3 ( 0.0F, 0.5F, 0.0F ), GXVec3 ( 0.6F, 0.2F, 0.7F ) ) )
+    {
+        [[unlikely]]
         return false;
+    }
 
     result = android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( renderer.GetQueue () ),
         "SweepTesting::CreateScene",
         "Can't run upload commands"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     _sweep.FreeTransferResources ( renderer );

@@ -161,7 +161,8 @@ class RenderSession final
 
         [[nodiscard]] static bool AllocateCommandInfo ( CommandInfo &info,
             VkDevice device,
-            uint32_t queueIndex
+            uint32_t queueIndex,
+            size_t frameInFlightIndex
         ) noexcept;
 };
 

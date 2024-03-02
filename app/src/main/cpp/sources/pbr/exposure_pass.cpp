@@ -905,8 +905,10 @@ bool ExposurePass::StartCommandBuffer ( VkCommandPool commandPool, VkDevice devi
         "Can't allocate command buffer"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
+
+    AV_SET_VULKAN_OBJECT_NAME ( device, _commandBuffer, VK_OBJECT_TYPE_COMMAND_BUFFER, "Exposure pass resource init" )
 
     constexpr VkCommandBufferBeginInfo beginInfo
     {

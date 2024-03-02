@@ -87,7 +87,6 @@ bool VulkanItem::operator < ( const VulkanItem &other ) const noexcept
 //----------------------------------------------------------------------------------------------------------------------
 
 std::shared_timed_mutex     g_Lock;
-std::set<VulkanItem>        g_CommandPools;
 std::set<VulkanItem>        g_DescriptorPools;
 std::set<VulkanItem>        g_Devices;
 std::set<VulkanItem>        g_DeviceMemory;
@@ -95,10 +94,7 @@ std::set<VulkanItem>        g_Fences;
 std::set<VulkanItem>        g_Framebuffers;
 std::set<VulkanItem>        g_Images;
 std::set<VulkanItem>        g_ImageViews;
-std::set<VulkanItem>        g_Pipelines;
-std::set<VulkanItem>        g_PipelineLayouts;
 std::set<VulkanItem>        g_Semaphores;
-std::set<VulkanItem>        g_ShaderModules;
 
 
 
@@ -183,20 +179,6 @@ static void UnregisterNonDispatchableObject ( char const* method,
 
     auto &item = const_cast<VulkanItem &> ( *findResult );
     item.DecrementInstanceCount ();
-}
-
-void RegisterCommandPool ( std::string &&where )
-{
-    RegisterNonDispatchableObject ( std::move ( where ), g_CommandPools );
-}
-
-void UnregisterCommandPool ( std::string &&where )
-{
-    UnregisterNonDispatchableObject ( "AV_UNREGISTER_COMMAND_POOL",
-        "command pool",
-        std::move ( where ),
-        g_CommandPools
-    );
 }
 
 void RegisterDescriptorPool ( std::string &&where )
@@ -297,34 +279,6 @@ void UnregisterImageView ( std::string &&where )
     );
 }
 
-void RegisterPipeline ( std::string &&where )
-{
-    RegisterNonDispatchableObject ( std::move ( where ), g_Pipelines );
-}
-
-void UnregisterPipeline ( std::string &&where )
-{
-    UnregisterNonDispatchableObject ( "AV_UNREGISTER_PIPELINE",
-        "pipeline",
-        std::move ( where ),
-        g_Pipelines
-    );
-}
-
-void RegisterPipelineLayout ( std::string &&where )
-{
-    RegisterNonDispatchableObject ( std::move ( where ), g_PipelineLayouts );
-}
-
-void UnregisterPipelineLayout ( std::string &&where )
-{
-    UnregisterNonDispatchableObject ( "AV_UNREGISTER_PIPELINE_LAYOUT",
-        "pipeline layout",
-        std::move ( where ),
-        g_PipelineLayouts
-    );
-}
-
 void RegisterSemaphore ( std::string &&where )
 {
     RegisterNonDispatchableObject ( std::move ( where ), g_Semaphores );
@@ -336,20 +290,6 @@ void UnregisterSemaphore ( std::string &&where )
         "semaphore",
         std::move ( where ),
         g_Semaphores
-    );
-}
-
-void RegisterShaderModule ( std::string &&where )
-{
-    RegisterNonDispatchableObject ( std::move ( where ), g_ShaderModules );
-}
-
-void UnregisterShaderModule ( std::string &&where )
-{
-    UnregisterNonDispatchableObject ( "AV_UNREGISTER_SHADER_MODULE",
-        "shader module",
-        std::move ( where ),
-        g_ShaderModules
     );
 }
 

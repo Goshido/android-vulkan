@@ -81,7 +81,7 @@ bool ToneMapperProgram::Init ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_PIPELINE ( "pbr::ToneMapperProgram::_pipeline" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _pipeline, VK_OBJECT_TYPE_PIPELINE, "pbr::ToneMapperProgram::_pipeline" )
     DestroyShaderModules ( device );
     return true;
 }
@@ -92,7 +92,6 @@ void ToneMapperProgram::Destroy ( VkDevice device ) noexcept
     {
         vkDestroyPipelineLayout ( device, _pipelineLayout, nullptr );
         _pipelineLayout = VK_NULL_HANDLE;
-        AV_UNREGISTER_PIPELINE_LAYOUT ( "pbr::ToneMapperProgram::_pipelineLayout" )
     }
 
     _fullScreenTriangleLayout.Destroy ( device );
@@ -102,7 +101,6 @@ void ToneMapperProgram::Destroy ( VkDevice device ) noexcept
     {
         vkDestroyPipeline ( device, _pipeline, nullptr );
         _pipeline = VK_NULL_HANDLE;
-        AV_UNREGISTER_PIPELINE ( "pbr::ToneMapperProgram::_pipeline" )
     }
 
     DestroyShaderModules ( device );
@@ -272,7 +270,12 @@ bool ToneMapperProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout )
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_PIPELINE_LAYOUT ( "pbr::ToneMapperProgram::_pipelineLayout" )
+    AV_SET_VULKAN_OBJECT_NAME ( device,
+        _pipelineLayout,
+        VK_OBJECT_TYPE_PIPELINE_LAYOUT,
+        "pbr::ToneMapperProgram::_pipelineLayout"
+    )
+
     layout = _pipelineLayout;
     return true;
 }
@@ -336,7 +339,7 @@ bool ToneMapperProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_SHADER_MODULE ( "pbr::ToneMapperProgram::_vertexShader" )
+    AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (), _vertexShader, VK_OBJECT_TYPE_SHADER_MODULE, VERTEX_SHADER )
 
     result = renderer.CreateShader ( _fragmentShader,
         FRAGMENT_SHADER,
@@ -346,7 +349,7 @@ bool ToneMapperProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_SHADER_MODULE ( "pbr::ToneMapperProgram::_fragmentShader" )
+    AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (), _fragmentShader, VK_OBJECT_TYPE_SHADER_MODULE, FRAGMENT_SHADER )
 
     sourceInfo[ 0U ] =
     {
@@ -391,19 +394,17 @@ bool ToneMapperProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
 
 void ToneMapperProgram::DestroyShaderModules ( VkDevice device ) noexcept
 {
-    if ( _fragmentShader != VK_NULL_HANDLE )
+    if ( _fragmentShader != VK_NULL_HANDLE ) [[likely]]
     {
         vkDestroyShaderModule ( device, _fragmentShader, nullptr );
         _fragmentShader = VK_NULL_HANDLE;
-        AV_UNREGISTER_SHADER_MODULE ( "pbr::ToneMapperProgram::_fragmentShader" )
     }
 
-    if ( _vertexShader == VK_NULL_HANDLE )
+    if ( _vertexShader == VK_NULL_HANDLE ) [[unlikely]]
         return;
 
     vkDestroyShaderModule ( device, _vertexShader, nullptr );
     _vertexShader = VK_NULL_HANDLE;
-    AV_UNREGISTER_SHADER_MODULE ( "pbr::ToneMapperProgram::_vertexShader" )
 }
 
 VkPipelineViewportStateCreateInfo const* ToneMapperProgram::InitViewportInfo ( VkPipelineViewportStateCreateInfo &info,

@@ -89,7 +89,7 @@ bool PointLightLightupProgram::Init ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_PIPELINE ( "PointLightLightupProgram::_pipeline" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _pipeline, VK_OBJECT_TYPE_PIPELINE, "PointLightLightupProgram::_pipeline" )
     DestroyShaderModules ( device );
     return true;
 }
@@ -100,7 +100,6 @@ void PointLightLightupProgram::Destroy ( VkDevice device ) noexcept
     {
         vkDestroyPipeline ( device, _pipeline, nullptr );
         _pipeline = VK_NULL_HANDLE;
-        AV_UNREGISTER_PIPELINE ( "PointLightLightupProgram::_pipeline" )
     }
 
     _pointLightLayout.Destroy ( device );
@@ -111,7 +110,6 @@ void PointLightLightupProgram::Destroy ( VkDevice device ) noexcept
     {
         vkDestroyPipelineLayout ( device, _pipelineLayout, nullptr );
         _pipelineLayout = VK_NULL_HANDLE;
-        AV_UNREGISTER_PIPELINE_LAYOUT ( "PointLightLightupProgram::_pipelineLayout" )
     }
 
     DestroyShaderModules ( device );
@@ -304,7 +302,12 @@ bool PointLightLightupProgram::InitLayout ( VkDevice device, VkPipelineLayout &l
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_PIPELINE_LAYOUT ( "PointLightLightupProgram::_pipelineLayout" )
+    AV_SET_VULKAN_OBJECT_NAME ( device,
+        _pipelineLayout,
+        VK_OBJECT_TYPE_PIPELINE_LAYOUT,
+        "PointLightLightupProgram::_pipelineLayout"
+    )
+
     layout = _pipelineLayout;
     return true;
 }
@@ -368,7 +371,7 @@ bool PointLightLightupProgram::InitShaderInfo ( android_vulkan::Renderer &render
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_SHADER_MODULE ( "PointLightLightupProgram::_vertexShader" )
+    AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (), _vertexShader, VK_OBJECT_TYPE_SHADER_MODULE, VERTEX_SHADER )
 
     result = renderer.CreateShader ( _fragmentShader,
         FRAGMENT_SHADER,
@@ -378,7 +381,7 @@ bool PointLightLightupProgram::InitShaderInfo ( android_vulkan::Renderer &render
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_SHADER_MODULE ( "PointLightLightupProgram::_fragmentShader" )
+    AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (), _fragmentShader, VK_OBJECT_TYPE_SHADER_MODULE, FRAGMENT_SHADER )
 
     sourceInfo[ 0U ] =
     {
@@ -412,7 +415,6 @@ void PointLightLightupProgram::DestroyShaderModules ( VkDevice device ) noexcept
     {
         vkDestroyShaderModule ( device, _fragmentShader, nullptr );
         _fragmentShader = VK_NULL_HANDLE;
-        AV_UNREGISTER_SHADER_MODULE ( "PointLightLightupProgram::_fragmentShader" )
     }
 
     if ( _vertexShader == VK_NULL_HANDLE )
@@ -420,7 +422,6 @@ void PointLightLightupProgram::DestroyShaderModules ( VkDevice device ) noexcept
 
     vkDestroyShaderModule ( device, _vertexShader, nullptr );
     _vertexShader = VK_NULL_HANDLE;
-    AV_UNREGISTER_SHADER_MODULE ( "PointLightLightupProgram::_vertexShader" )
 }
 
 VkPipelineViewportStateCreateInfo const* PointLightLightupProgram::InitViewportInfo (

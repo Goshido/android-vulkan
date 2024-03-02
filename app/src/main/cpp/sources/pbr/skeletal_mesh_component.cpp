@@ -328,7 +328,12 @@ bool SkeletalMeshComponent::Init ( lua_State &vm, android_vulkan::Renderer &rend
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_COMMAND_POOL ( "pbr::SkeletalMeshComponent::_commandPool" )
+    AV_SET_VULKAN_OBJECT_NAME ( device,
+        _cbInfo._commandPool,
+        VK_OBJECT_TYPE_COMMAND_POOL,
+        "pbr::SkeletalMeshComponent::_commandPool"
+    )
+
     return AllocateCommandBuffers ( INITIAL_COMMAND_BUFFERS ) && _skinPool.Init ( device );
 }
 
@@ -355,7 +360,6 @@ void SkeletalMeshComponent::Destroy () noexcept
     {
         vkDestroyCommandPool ( device, _cbInfo._commandPool, nullptr );
         _cbInfo._commandPool = VK_NULL_HANDLE;
-        AV_UNREGISTER_COMMAND_POOL ( "pbr::SkeletalMeshComponent::_commandPool" )
     }
 
     auto const clean = [] ( auto &v ) noexcept {
@@ -508,7 +512,7 @@ bool SkeletalMeshComponent::AllocateCommandBuffers ( size_t amount ) noexcept
         .flags = 0U
     };
 
-    VkFence* fences = _cbInfo._fences.data ();
+    VkFence* const fences = _cbInfo._fences.data ();
 
     for ( size_t i = current; i < size; ++i )
     {
@@ -522,6 +526,23 @@ bool SkeletalMeshComponent::AllocateCommandBuffers ( size_t amount ) noexcept
 
         AV_REGISTER_FENCE ( "pbr::SkeletalMeshComponent::_fences" )
     }
+
+#if defined ( ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS ) ||       \
+    defined ( ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION )
+
+    VkCommandBuffer* const buffer = _cbInfo._buffers.data ();
+
+    for ( size_t i = current; i < size; ++i )
+    {
+        AV_SET_VULKAN_OBJECT_NAME ( device,
+            buffer[ i ],
+            VK_OBJECT_TYPE_COMMAND_BUFFER,
+            "Skeletal mesh component #%zu",
+            i
+        )
+    }
+
+#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS || ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
 
     return true;
 }

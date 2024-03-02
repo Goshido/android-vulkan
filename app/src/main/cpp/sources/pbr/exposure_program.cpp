@@ -48,7 +48,7 @@ bool ExposureProgram::Init ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_PIPELINE ( "pbr::ExposureProgram::_pipeline" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _pipeline, VK_OBJECT_TYPE_PIPELINE, "pbr::ExposureProgram::_pipeline" )
     DestroyShaderModule ( device );
     return true;
 }
@@ -59,7 +59,6 @@ void ExposureProgram::Destroy ( VkDevice device ) noexcept
     {
         vkDestroyPipelineLayout ( device, _pipelineLayout, nullptr );
         _pipelineLayout = VK_NULL_HANDLE;
-        AV_UNREGISTER_PIPELINE_LAYOUT ( "pbr::ExposureProgram::_pipelineLayout" )
     }
 
     _layout.Destroy ( device );
@@ -70,7 +69,6 @@ void ExposureProgram::Destroy ( VkDevice device ) noexcept
 
     vkDestroyPipeline ( device, _pipeline, nullptr );
     _pipeline = VK_NULL_HANDLE;
-    AV_UNREGISTER_PIPELINE ( "pbr::ExposureProgram::_pipeline" )
 }
 
 void ExposureProgram::SetDescriptorSet ( VkCommandBuffer commandBuffer, VkDescriptorSet set ) const noexcept
@@ -140,7 +138,6 @@ void ExposureProgram::DestroyShaderModule ( VkDevice device ) noexcept
 
     vkDestroyShaderModule ( device, _computeShader, nullptr );
     _computeShader = VK_NULL_HANDLE;
-    AV_UNREGISTER_SHADER_MODULE ( "pbr::ExposureProgram::_computeShader" )
 }
 
 bool ExposureProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept
@@ -177,7 +174,12 @@ bool ExposureProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) n
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_PIPELINE_LAYOUT ( "pbr::ExposureProgram::_pipelineLayout" )
+    AV_SET_VULKAN_OBJECT_NAME ( device,
+        _pipelineLayout,
+        VK_OBJECT_TYPE_PIPELINE_LAYOUT,
+        "pbr::ExposureProgram::_pipelineLayout"
+    )
+
     layout = _pipelineLayout;
     return true;
 }
@@ -196,7 +198,8 @@ bool ExposureProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_SHADER_MODULE ( "pbr::ExposureProgram::_computeShader" )
+    AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (), _computeShader, VK_OBJECT_TYPE_SHADER_MODULE, SHADER )
+
     constexpr size_t w = offsetof ( VkExtent2D, width );
     constexpr size_t h = offsetof ( VkExtent2D, height );
 

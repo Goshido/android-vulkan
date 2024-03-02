@@ -166,11 +166,15 @@ bool RenderSession::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
     _meshHandlers[ static_cast<size_t> ( eMaterialType::Opaque ) ] = &RenderSession::SubmitOpaqueCall;
     _meshHandlers[ static_cast<size_t> ( eMaterialType::Stipple ) ] = &RenderSession::SubmitStippleCall;
 
-    CommandInfo &commandInfo = _commandInfo[ 0U ];
+    constexpr size_t initFrameInFlightIndex = 0U;
+    CommandInfo &commandInfo = _commandInfo[ initFrameInFlightIndex ];
     VkDevice device = renderer.GetDevice ();
 
-    if ( !AllocateCommandInfo ( commandInfo, device, renderer.GetQueueFamilyIndex () ) ) [[unlikely]]
+    if ( !AllocateCommandInfo ( commandInfo, device, renderer.GetQueueFamilyIndex (), initFrameInFlightIndex ) )
+    {
+        [[unlikely]]
         return false;
+    }
 
     return _exposurePass.Init ( renderer, commandInfo._pool ) &&
         _toneMapperPass.Init ( renderer ) &&
@@ -201,19 +205,16 @@ void RenderSession::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexc
 
     for ( auto &commandInfo : _commandInfo )
     {
-        if ( commandInfo._pool != VK_NULL_HANDLE )
-        {
+        if ( commandInfo._pool != VK_NULL_HANDLE ) [[likely]]
             vkDestroyCommandPool ( device, commandInfo._pool, nullptr );
-            AV_UNREGISTER_COMMAND_POOL ( "pbr::RenderSession::_commandInfo::_pool" )
-        }
 
-        if ( commandInfo._acquire != VK_NULL_HANDLE )
+        if ( commandInfo._acquire != VK_NULL_HANDLE ) [[likely]]
         {
             vkDestroySemaphore ( device, commandInfo._acquire, nullptr );
             AV_UNREGISTER_SEMAPHORE ( "pbr::RenderSession::_acquire" )
         }
 
-        if ( commandInfo._fence == VK_NULL_HANDLE )
+        if ( commandInfo._fence == VK_NULL_HANDLE ) [[unlikely]]
             continue;
 
         vkDestroyFence ( device, commandInfo._fence, nullptr );
@@ -250,18 +251,20 @@ bool RenderSession::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
     VkDevice device = renderer.GetDevice ();
     uint32_t const queueIndex = renderer.GetQueueFamilyIndex ();
 
-    for ( auto &commandInfo : _commandInfo )
+    for ( size_t i = 0U; i < DUAL_COMMAND_BUFFER; ++i )
     {
+        CommandInfo &commandInfo = _commandInfo[ i ];
+
         if ( commandInfo._pool != VK_NULL_HANDLE )
             continue;
 
-        if ( !AllocateCommandInfo ( commandInfo, device, queueIndex ) ) [[unlikely]]
+        if ( !AllocateCommandInfo ( commandInfo, device, queueIndex, i ) ) [[unlikely]]
         {
             return false;
         }
     }
 
-    if ( !_presentRenderPass.OnSwapchainCreated ( renderer ) )
+    if ( !_presentRenderPass.OnSwapchainCreated ( renderer ) ) [[unlikely]]
         return false;
 
     constexpr uint32_t subpass = PresentRenderPass::GetSubpass ();
@@ -844,7 +847,11 @@ bool RenderSession::UpdateBrightness ( android_vulkan::Renderer &renderer ) noex
     return true;
 }
 
-bool RenderSession::AllocateCommandInfo ( CommandInfo &info, VkDevice device, uint32_t queueIndex ) noexcept
+bool RenderSession::AllocateCommandInfo ( CommandInfo &info,
+    VkDevice device,
+    uint32_t queueIndex,
+    [[maybe_unused]] size_t frameInFlightIndex
+) noexcept
 {
     constexpr VkFenceCreateInfo fenceInfo
     {
@@ -898,7 +905,12 @@ bool RenderSession::AllocateCommandInfo ( CommandInfo &info, VkDevice device, ui
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_COMMAND_POOL ( "pbr::RenderSession::_commandInfo::_pool" )
+    AV_SET_VULKAN_OBJECT_NAME ( device,
+        info._pool,
+        VK_OBJECT_TYPE_COMMAND_POOL,
+        "Frame in flight #%zu",
+        frameInFlightIndex
+    )
 
     VkCommandBufferAllocateInfo const bufferAllocateInfo
     {
@@ -909,11 +921,23 @@ bool RenderSession::AllocateCommandInfo ( CommandInfo &info, VkDevice device, ui
         .commandBufferCount = 1U
     };
 
-    return android_vulkan::Renderer::CheckVkResult (
+    result = android_vulkan::Renderer::CheckVkResult (
         vkAllocateCommandBuffers ( device, &bufferAllocateInfo, &info._buffer ),
         "pbr::RenderSession::AllocateCommandInfo",
         "Can't allocate command buffer"
     );
+
+    if ( !result ) [[unlikely]]
+        return false;
+
+    AV_SET_VULKAN_OBJECT_NAME ( device,
+        info._buffer,
+        VK_OBJECT_TYPE_COMMAND_BUFFER,
+        "Frame in flight #%zu",
+        frameInFlightIndex
+    )
+
+    return true;
 }
 
 } // namespace pbr

@@ -1,5 +1,6 @@
-#include <pbr/default_texture_manager.hpp>
 #include <half_types.hpp>
+#include <pbr/default_texture_manager.hpp>
+#include <vulkan_utils.hpp>
 
 
 namespace pbr {
@@ -50,8 +51,58 @@ bool DefaultTextureManager::Init ( android_vulkan::Renderer &renderer, VkCommand
         "Can't allocate command buffers"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
+
+    constexpr size_t albedoIdx = 0U;
+    constexpr size_t emissionIdx = 1U;
+    constexpr size_t maskIdx = 2U;
+    constexpr size_t normalIdx = 3U;
+    constexpr size_t paramIdx = 4U;
+    constexpr size_t transparentIdx = 5U;
+
+#if defined ( ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS ) ||       \
+    defined ( ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION )
+
+    VkDevice device = renderer.GetDevice ();
+
+    AV_SET_VULKAN_OBJECT_NAME ( device,
+        _commandBuffers[ albedoIdx ],
+        VK_OBJECT_TYPE_COMMAND_BUFFER,
+        "Default albedo iamge"
+    )
+
+    AV_SET_VULKAN_OBJECT_NAME ( device,
+        _commandBuffers[ emissionIdx ],
+        VK_OBJECT_TYPE_COMMAND_BUFFER,
+        "Default emission image"
+    )
+
+    AV_SET_VULKAN_OBJECT_NAME ( device,
+        _commandBuffers[ maskIdx ],
+        VK_OBJECT_TYPE_COMMAND_BUFFER,
+        "Default mask image"
+    )
+
+    AV_SET_VULKAN_OBJECT_NAME ( device,
+        _commandBuffers[ normalIdx ],
+        VK_OBJECT_TYPE_COMMAND_BUFFER,
+        "Default normal image"
+    )
+
+    AV_SET_VULKAN_OBJECT_NAME ( device,
+        _commandBuffers[ paramIdx ],
+        VK_OBJECT_TYPE_COMMAND_BUFFER,
+        "Default params image"
+    )
+
+    AV_SET_VULKAN_OBJECT_NAME ( device,
+        _commandBuffers[ transparentIdx ],
+        VK_OBJECT_TYPE_COMMAND_BUFFER,
+        "Default transparent image"
+    )
+
+#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS || ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
 
     auto const textureLoader = [ &renderer ] ( Texture2DRef &texture,
         uint8_t const* data,
@@ -77,7 +128,7 @@ bool DefaultTextureManager::Init ( android_vulkan::Renderer &renderer, VkCommand
             VK_NULL_HANDLE
         );
 
-        if ( result )
+        if ( result ) [[likely]]
             return true;
 
         texture = nullptr;
@@ -86,7 +137,14 @@ bool DefaultTextureManager::Init ( android_vulkan::Renderer &renderer, VkCommand
 
     constexpr uint8_t const albedoData[ 4U ] = { 255U, 255U, 255U, 255U };
 
-    if ( !textureLoader ( _albedo, albedoData, sizeof ( albedoData ), VK_FORMAT_R8G8B8A8_SRGB, _commandBuffers[ 0U ] ) )
+    result = textureLoader ( _albedo,
+        albedoData,
+        sizeof ( albedoData ),
+        VK_FORMAT_R8G8B8A8_SRGB,
+        _commandBuffers[ albedoIdx ]
+    );
+
+    if ( !result ) [[unlikely]]
         return false;
 
     android_vulkan::Half4 const emissionData ( 0.0F, 0.0F, 0.0F, 0.0F );
@@ -95,16 +153,19 @@ bool DefaultTextureManager::Init ( android_vulkan::Renderer &renderer, VkCommand
         reinterpret_cast<const uint8_t*> ( emissionData._data ),
         sizeof ( emissionData ),
         VK_FORMAT_R16G16B16A16_SFLOAT,
-        _commandBuffers[ 1U ]
+        _commandBuffers[ emissionIdx ]
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     constexpr uint8_t const maskData[ 4U ] = { 255U, 0U, 0U, 0U };
 
-    if ( !textureLoader ( _mask, maskData, sizeof ( maskData ), VK_FORMAT_R8G8B8A8_UNORM, _commandBuffers[ 2U ] ) )
+    if ( !textureLoader ( _mask, maskData, sizeof ( maskData ), VK_FORMAT_R8G8B8A8_UNORM, _commandBuffers[ maskIdx ] ) )
+    {
+        [[unlikely]]
         return false;
+    }
 
     constexpr uint8_t const normalData[ 4U ] = { 128U, 0U, 0U, 128U };
 
@@ -112,15 +173,22 @@ bool DefaultTextureManager::Init ( android_vulkan::Renderer &renderer, VkCommand
         normalData,
         sizeof ( normalData ),
         VK_FORMAT_R8G8B8A8_UNORM,
-        _commandBuffers[ 3U ]
+        _commandBuffers[ normalIdx ]
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     constexpr uint8_t const paramData[ 4U ] = { 128U, 128U, 128U, 128U };
 
-    if ( !textureLoader ( _params, paramData, sizeof ( paramData ), VK_FORMAT_R8G8B8A8_UNORM, _commandBuffers[ 4U ] ) )
+    result = textureLoader ( _params,
+        paramData,
+        sizeof ( paramData ),
+        VK_FORMAT_R8G8B8A8_UNORM,
+        _commandBuffers[ paramIdx ]
+    );
+
+    if ( !result ) [[unlikely]]
         return false;
 
     constexpr uint8_t const transparentData[ 4U ] = { 0U, 0U, 0U, 0U };
@@ -129,7 +197,7 @@ bool DefaultTextureManager::Init ( android_vulkan::Renderer &renderer, VkCommand
         transparentData,
         sizeof ( transparentData ),
         VK_FORMAT_R8G8B8A8_UNORM,
-        _commandBuffers[ 5U ]
+        _commandBuffers[ transparentIdx ]
     );
 }
 

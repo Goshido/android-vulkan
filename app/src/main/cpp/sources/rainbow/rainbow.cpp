@@ -26,7 +26,7 @@ bool Rainbow::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) n
         "Can't wait command buffer fence"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     result = android_vulkan::Renderer::CheckVkResult (
@@ -35,7 +35,7 @@ bool Rainbow::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) n
         "Can't reset command buffer fence"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     result = android_vulkan::Renderer::CheckVkResult (
@@ -44,7 +44,7 @@ bool Rainbow::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) n
         "Can't reset command pool"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     constexpr VkCommandBufferBeginInfo commandBufferBeginInfo
@@ -61,13 +61,13 @@ bool Rainbow::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) n
         "Can't begin command buffer"
     );
 
-    if ( !result )
-        return true;
+    if ( !result ) [[unlikely]]
+        return false;
 
     uint32_t framebufferIndex = UINT32_MAX;
 
-    if ( !BeginFrame ( renderer, framebufferIndex ) )
-        return true;
+    if ( !BeginFrame ( renderer, framebufferIndex ) ) [[unlikely]]
+        return false;
 
     constexpr float CIRCLE_THIRD = GX_MATH_DOUBLE_PI / 3.0F;
     constexpr float CIRCLE_TWO_THIRD = 2.0F * CIRCLE_THIRD;
@@ -118,8 +118,8 @@ bool Rainbow::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) n
         "Can't end command buffer"
     );
 
-    if ( !result )
-        return true;
+    if ( !result ) [[unlikely]]
+        return false;
 
     constexpr VkPipelineStageFlags waitFlags = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 
@@ -142,8 +142,8 @@ bool Rainbow::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) n
         "Can't submit command buffer"
     );
 
-    if ( !result )
-        return true;
+    if ( !result ) [[unlikely]]
+        return false;
 
     return EndFrame ( renderer, framebufferIndex );
 }
@@ -209,7 +209,7 @@ bool Rainbow::EndFrame ( android_vulkan::Renderer &renderer, uint32_t presentati
         "Can't present frame"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     return android_vulkan::Renderer::CheckVkResult ( presentResult,
@@ -236,10 +236,10 @@ bool Rainbow::CreateCommandBuffer ( android_vulkan::Renderer &renderer ) noexcep
         "Can't create command pool"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_COMMAND_POOL ( "Rainbow::_commandPool" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _commandPool, VK_OBJECT_TYPE_COMMAND_POOL, "Rainbow::_commandPool" )
 
     VkCommandBufferAllocateInfo const commandBufferAllocateInfo
     {
@@ -256,8 +256,10 @@ bool Rainbow::CreateCommandBuffer ( android_vulkan::Renderer &renderer ) noexcep
         "Can't allocate command buffers"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
+
+    AV_SET_VULKAN_OBJECT_NAME ( device, _commandBuffer, VK_OBJECT_TYPE_COMMAND_BUFFER, "Render" )
 
     constexpr VkFenceCreateInfo fenceInfo
     {
@@ -272,7 +274,7 @@ bool Rainbow::CreateCommandBuffer ( android_vulkan::Renderer &renderer ) noexcep
         "Can't create fence"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_REGISTER_FENCE ( "Rainbow::_fence" )
@@ -281,19 +283,18 @@ bool Rainbow::CreateCommandBuffer ( android_vulkan::Renderer &renderer ) noexcep
 
 void Rainbow::DestroyCommandBuffer ( VkDevice device ) noexcept
 {
-    if ( _fence != VK_NULL_HANDLE )
+    if ( _fence != VK_NULL_HANDLE ) [[likely]]
     {
         vkDestroyFence ( device, _fence, nullptr );
         AV_UNREGISTER_FENCE ( "Rainbow::_fence" )
         _fence = VK_NULL_HANDLE;
     }
 
-    if ( _commandPool == VK_NULL_HANDLE )
+    if ( _commandPool == VK_NULL_HANDLE ) [[unlikely]]
         return;
 
     vkDestroyCommandPool ( device, _commandPool, nullptr );
     _commandPool = VK_NULL_HANDLE;
-    AV_UNREGISTER_COMMAND_POOL ( "Rainbow::_commandPool" )
 }
 
 bool Rainbow::CreateFramebuffers ( android_vulkan::Renderer &renderer ) noexcept
@@ -326,7 +327,7 @@ bool Rainbow::CreateFramebuffers ( android_vulkan::Renderer &renderer ) noexcept
             "Can't create framebuffer"
         );
 
-        if ( !result )
+        if ( !result ) [[unlikely]]
             return false;
 
         _framebuffers.push_back ( framebuffer );
@@ -338,7 +339,7 @@ bool Rainbow::CreateFramebuffers ( android_vulkan::Renderer &renderer ) noexcept
 
 void Rainbow::DestroyFramebuffers ( VkDevice device ) noexcept
 {
-    if ( _framebuffers.empty () )
+    if ( _framebuffers.empty () ) [[unlikely]]
         return;
 
     for ( const auto framebuffer : _framebuffers )
@@ -367,7 +368,7 @@ bool Rainbow::CreatePresentationSyncPrimitive ( android_vulkan::Renderer &render
         "Can't create render target acquired semaphore"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
     {
         DestroyPresentationSyncPrimitive ( renderer.GetDevice () );
         return false;
@@ -381,7 +382,7 @@ bool Rainbow::CreatePresentationSyncPrimitive ( android_vulkan::Renderer &render
         "Can't create render pass ended semaphore"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
     {
         DestroyPresentationSyncPrimitive ( renderer.GetDevice () );
         return false;
@@ -400,7 +401,7 @@ void Rainbow::DestroyPresentationSyncPrimitive ( VkDevice device ) noexcept
         AV_UNREGISTER_SEMAPHORE ( "Rainbow::_renderTargetAcquiredSemaphore" )
     }
 
-    if ( _renderPassEndedSemaphore == VK_NULL_HANDLE )
+    if ( _renderPassEndedSemaphore == VK_NULL_HANDLE ) [[unlikely]]
         return;
 
     vkDestroySemaphore ( device, _renderPassEndedSemaphore, nullptr );
@@ -474,7 +475,7 @@ bool Rainbow::CreateRenderPass ( android_vulkan::Renderer &renderer ) noexcept
         "Can't create render pass"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_SET_VULKAN_OBJECT_NAME ( device, _renderPass, VK_OBJECT_TYPE_RENDER_PASS, "Rainbow::_renderPass" )
@@ -483,7 +484,7 @@ bool Rainbow::CreateRenderPass ( android_vulkan::Renderer &renderer ) noexcept
 
 void Rainbow::DestroyRenderPass ( VkDevice device ) noexcept
 {
-    if ( _renderPass == VK_NULL_HANDLE )
+    if ( _renderPass == VK_NULL_HANDLE ) [[unlikely]]
         return;
 
     vkDestroyRenderPass ( device, _renderPass, nullptr );

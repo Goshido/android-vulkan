@@ -470,6 +470,16 @@ bool Scene::LoadScene ( android_vulkan::Renderer &renderer, char const* scene, V
         return false;
 
     VkCommandBuffer const* cb = commandBuffers.data ();
+
+#if defined ( ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS ) ||       \
+    defined ( ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION )
+
+    for ( size_t i = 0U; i < comBuffs; ++i )
+        AV_SET_VULKAN_OBJECT_NAME ( device, cb[ i ], VK_OBJECT_TYPE_COMMAND_BUFFER, "Asset #%zu", i )
+
+#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS || ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
+
+
     uint8_t const* readPointer = data + sizeof ( pbr::SceneDesc );
 
     size_t consumed = 0U;

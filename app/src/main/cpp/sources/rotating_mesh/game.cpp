@@ -367,7 +367,7 @@ bool Game::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
         LoadGPUContent ( renderer, _commandInfo->_pool ) &&
         CreateShaderModules ( renderer ) &&
         CreateCommonDescriptorSetLayouts ( renderer ) &&
-        CreatePipelineLayout ( renderer ) &&
+        CreatePipelineLayout ( renderer.GetDevice () ) &&
         CreateDescriptorSet ( renderer );
 }
 
@@ -483,8 +483,10 @@ bool Game::CreateCommandPool ( android_vulkan::Renderer &renderer ) noexcept
         .commandBufferCount = 1U
     };
 
-    for ( auto &commandInfo : _commandInfo )
+    for ( size_t i = 0U; i < DUAL_COMMAND_BUFFER; ++i )
     {
+        CommandInfo &commandInfo = _commandInfo[ i ];
+
         constexpr VkSemaphoreCreateInfo semaphoreInfo
         {
             .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
@@ -530,7 +532,7 @@ bool Game::CreateCommandPool ( android_vulkan::Renderer &renderer ) noexcept
         if ( !result ) [[unlikely]]
             return false;
 
-        AV_REGISTER_COMMAND_POOL ( "Game::_commandInfo::_pool" )
+        AV_SET_VULKAN_OBJECT_NAME ( device, commandInfo._pool, VK_OBJECT_TYPE_COMMAND_POOL, "Frame in flight #%zu", i )
 
         bufferAllocateInfo.commandPool = commandInfo._pool;
 
@@ -540,10 +542,15 @@ bool Game::CreateCommandPool ( android_vulkan::Renderer &renderer ) noexcept
             "Can't allocate command buffer"
         );
 
-        if ( !result )
-        {
+        if ( !result ) [[unlikely]]
             return false;
-        }
+
+        AV_SET_VULKAN_OBJECT_NAME ( device,
+            commandInfo._buffer,
+            VK_OBJECT_TYPE_COMMAND_BUFFER,
+            "Frame in flight #%zu",
+            i
+        )
     }
 
     return true;
@@ -554,10 +561,7 @@ void Game::DestroyCommandPool ( VkDevice device ) noexcept
     for ( auto &commandInfo : _commandInfo )
     {
         if ( commandInfo._pool != VK_NULL_HANDLE )
-        {
             vkDestroyCommandPool ( device, commandInfo._pool, nullptr );
-            AV_UNREGISTER_COMMAND_POOL ( "Game::_commandInfo::_pool" )
-        }
 
         if ( commandInfo._acquire != VK_NULL_HANDLE )
         {
@@ -768,7 +772,7 @@ void Game::DestroyFramebuffers ( android_vulkan::Renderer &renderer ) noexcept
     _depthStencilRenderTarget.FreeResources ( renderer );
 }
 
-bool Game::CreatePipelineLayout ( android_vulkan::Renderer &renderer ) noexcept
+bool Game::CreatePipelineLayout ( VkDevice device ) noexcept
 {
     VkDescriptorSetLayout const layouts[] =
     {
@@ -789,7 +793,7 @@ bool Game::CreatePipelineLayout ( android_vulkan::Renderer &renderer ) noexcept
     };
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreatePipelineLayout ( renderer.GetDevice (), &layoutInfo, nullptr, &_pipelineLayout ),
+        vkCreatePipelineLayout ( device, &layoutInfo, nullptr, &_pipelineLayout ),
         "Game::CreatePipelineLayout",
         "Can't create pipeline layout"
     );
@@ -797,7 +801,12 @@ bool Game::CreatePipelineLayout ( android_vulkan::Renderer &renderer ) noexcept
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_PIPELINE_LAYOUT ( "PointLightLightupProgram::_pipelineLayout" )
+    AV_SET_VULKAN_OBJECT_NAME ( device,
+        _pipelineLayout,
+        VK_OBJECT_TYPE_PIPELINE_LAYOUT,
+        "PointLightLightupProgram::_pipelineLayout"
+    )
+
     return true;
 }
 
@@ -1003,7 +1012,7 @@ bool Game::CreatePipeline ( android_vulkan::Renderer &renderer ) noexcept
     if ( !result )
         return false;
 
-    AV_REGISTER_PIPELINE ( "Game::_pipeline" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _pipeline, VK_OBJECT_TYPE_PIPELINE, "Game::_pipeline" )
     return true;
 }
 
@@ -1014,7 +1023,6 @@ void Game::DestroyPipeline ( VkDevice device ) noexcept
 
     vkDestroyPipeline ( device, _pipeline, nullptr );
     _pipeline = VK_NULL_HANDLE;
-    AV_UNREGISTER_PIPELINE ( "Game::_pipeline" )
 }
 
 void Game::DestroyPipelineLayout ( VkDevice device ) noexcept
@@ -1024,7 +1032,6 @@ void Game::DestroyPipelineLayout ( VkDevice device ) noexcept
 
     vkDestroyPipelineLayout ( device, _pipelineLayout, nullptr );
     _pipelineLayout = VK_NULL_HANDLE;
-    AV_UNREGISTER_PIPELINE_LAYOUT ( "Game::_pipelineLayout" )
 }
 
 bool Game::CreateRenderPass ( android_vulkan::Renderer &renderer ) noexcept
@@ -1152,38 +1159,46 @@ bool Game::CreateShaderModules ( android_vulkan::Renderer &renderer ) noexcept
         "Can't create vertex shader (Game::CreateShaderModules)"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_SHADER_MODULE ( "Game::_vertexShaderModule" )
+    AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (),
+        _vertexShaderModule,
+        VK_OBJECT_TYPE_SHADER_MODULE,
+        VERTEX_SHADER
+    )
 
     result = renderer.CreateShader ( _fragmentShaderModule,
         _fragmentShader,
         "Can't create fragment shader (Game::CreateShaderModules)"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_SHADER_MODULE ( "Game::_fragmentShaderModule" )
+    AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (),
+        _fragmentShaderModule,
+        VK_OBJECT_TYPE_SHADER_MODULE,
+        "%s",
+        _fragmentShader
+    )
+
     return true;
 }
 
 void Game::DestroyShaderModules ( VkDevice device ) noexcept
 {
-    if ( _fragmentShaderModule != VK_NULL_HANDLE )
+    if ( _fragmentShaderModule != VK_NULL_HANDLE ) [[likely]]
     {
         vkDestroyShaderModule ( device, _fragmentShaderModule, nullptr );
         _fragmentShaderModule = VK_NULL_HANDLE;
-        AV_UNREGISTER_SHADER_MODULE ( "Game::_fragmentShaderModule" )
     }
 
-    if ( _vertexShaderModule == VK_NULL_HANDLE )
+    if ( _vertexShaderModule == VK_NULL_HANDLE ) [[unlikely]]
         return;
 
     vkDestroyShaderModule ( device, _vertexShaderModule, nullptr );
     _vertexShaderModule = VK_NULL_HANDLE;
-    AV_UNREGISTER_SHADER_MODULE ( "Game::_vertexShaderModule" )
 }
 
 bool Game::CreateUniformBuffer ( android_vulkan::Renderer &renderer ) noexcept

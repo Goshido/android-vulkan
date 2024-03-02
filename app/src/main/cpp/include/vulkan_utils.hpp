@@ -27,9 +27,6 @@ GX_RESTORE_WARNING_STATE
 #if !defined ( ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS ) &&      \
     !defined ( ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION )
 
-#define AV_REGISTER_COMMAND_POOL(where)
-#define AV_UNREGISTER_COMMAND_POOL(where)
-
 #define AV_REGISTER_DESCRIPTOR_POOL(where)
 #define AV_UNREGISTER_DESCRIPTOR_POOL(where)
 
@@ -51,17 +48,8 @@ GX_RESTORE_WARNING_STATE
 #define AV_REGISTER_IMAGE_VIEW(where)
 #define AV_UNREGISTER_IMAGE_VIEW(where)
 
-#define AV_REGISTER_PIPELINE(where)
-#define AV_UNREGISTER_PIPELINE(where)
-
-#define AV_REGISTER_PIPELINE_LAYOUT(where)
-#define AV_UNREGISTER_PIPELINE_LAYOUT(where)
-
 #define AV_REGISTER_SEMAPHORE(where)
 #define AV_UNREGISTER_SEMAPHORE(where)
-
-#define AV_REGISTER_SHADER_MODULE(where)
-#define AV_UNREGISTER_SHADER_MODULE(where)
 
 
 
@@ -84,10 +72,6 @@ GX_DISABLE_COMMON_WARNINGS
 
 GX_RESTORE_WARNING_STATE
 
-
-#define AV_REGISTER_COMMAND_POOL(where) android_vulkan::RegisterCommandPool ( where );
-#define AV_UNREGISTER_COMMAND_POOL(where) android_vulkan::UnregisterCommandPool ( where );
-
 #define AV_REGISTER_DESCRIPTOR_POOL(where) android_vulkan::RegisterDescriptorPool ( where );
 #define AV_UNREGISTER_DESCRIPTOR_POOL(where) android_vulkan::UnregisterDescriptorPool ( where );
 
@@ -109,17 +93,8 @@ GX_RESTORE_WARNING_STATE
 #define AV_REGISTER_IMAGE_VIEW(where) android_vulkan::RegisterImageView ( where );
 #define AV_UNREGISTER_IMAGE_VIEW(where) android_vulkan::UnregisterImageView ( where );
 
-#define AV_REGISTER_PIPELINE(where) android_vulkan::RegisterPipeline ( where );
-#define AV_UNREGISTER_PIPELINE(where) android_vulkan::UnregisterPipeline ( where );
-
-#define AV_REGISTER_PIPELINE_LAYOUT(where) android_vulkan::RegisterPipelineLayout ( where );
-#define AV_UNREGISTER_PIPELINE_LAYOUT(where) android_vulkan::UnregisterPipelineLayout ( where );
-
 #define AV_REGISTER_SEMAPHORE(where) android_vulkan::RegisterSemaphore ( where );
 #define AV_UNREGISTER_SEMAPHORE(where) android_vulkan::UnregisterSemaphore ( where );
-
-#define AV_REGISTER_SHADER_MODULE(where) android_vulkan::RegisterShaderModule ( where );
-#define AV_UNREGISTER_SHADER_MODULE(where) android_vulkan::UnregisterShaderModule ( where );
 
 
 
@@ -135,9 +110,6 @@ GX_RESTORE_WARNING_STATE
 }
 
 namespace android_vulkan {
-
-void RegisterCommandPool ( std::string &&where );
-void UnregisterCommandPool ( std::string &&where );
 
 void RegisterDescriptorPool ( std::string &&where );
 void UnregisterDescriptorPool ( std::string &&where );
@@ -160,17 +132,9 @@ void UnregisterImage ( std::string &&where );
 void RegisterImageView ( std::string &&where );
 void UnregisterImageView ( std::string &&where );
 
-void RegisterPipeline ( std::string &&where );
-void UnregisterPipeline ( std::string &&where );
-
-void RegisterPipelineLayout ( std::string &&where );
-void UnregisterPipelineLayout ( std::string &&where );
-
 void RegisterSemaphore ( std::string &&where );
 void UnregisterSemaphore ( std::string &&where );
 
-void RegisterShaderModule ( std::string &&where );
-void UnregisterShaderModule ( std::string &&where );
 
 
 

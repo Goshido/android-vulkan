@@ -1984,7 +1984,7 @@ bool Renderer::DeploySwapchain ( bool vSync ) noexcept
 
         if ( result ) [[likely]]
         {
-            AV_SET_VULKAN_OBJECT_NAME ( _device, imageView, VK_OBJECT_TYPE_IMAGE_VIEW, "Swapchin #%u", i )
+            AV_SET_VULKAN_OBJECT_NAME ( _device, imageView, VK_OBJECT_TYPE_IMAGE_VIEW, "Swapchain #%u", i )
             _swapchainImageViews.push_back ( imageView );
             continue;
         }

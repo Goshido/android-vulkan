@@ -102,6 +102,7 @@ void ToneMapperPass::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 
 void ToneMapperPass::Execute ( VkCommandBuffer commandBuffer ) noexcept
 {
+    AV_VULKAN_GROUP ( commandBuffer, "Tone mapping" )
     _program.Bind ( commandBuffer );
     _program.SetDescriptorSets ( commandBuffer, _descriptorSets );
     vkCmdDraw ( commandBuffer, 3U, 1U, 0U, 0U );
@@ -202,6 +203,8 @@ bool ToneMapperPass::SetTarget ( android_vulkan::Renderer &renderer,
 
 void ToneMapperPass::UploadGPUData ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept
 {
+    AV_VULKAN_GROUP ( commandBuffer, "Upload tone mapper data" )
+
     if ( !_transformUpdated )
         return;
 

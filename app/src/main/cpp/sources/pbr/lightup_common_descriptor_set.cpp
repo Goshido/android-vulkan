@@ -76,11 +76,7 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device,
-        _descriptorPool,
-        VK_OBJECT_TYPE_DESCRIPTOR_POOL,
-        "pbr::LightupCommonDescriptorSet::_descriptorPool"
-    )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _descriptorPool, VK_OBJECT_TYPE_DESCRIPTOR_POOL, "Lightup common" )
 
     if ( !_layout.Init ( device ) ) [[unlikely]]
         return false;
@@ -374,11 +370,7 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device,
-        _pipelineLayout,
-        VK_OBJECT_TYPE_PIPELINE_LAYOUT,
-        "pbr::LightupCommonDescriptorSet::_pipelineLayout"
-    )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _pipelineLayout, VK_OBJECT_TYPE_PIPELINE_LAYOUT, "Lightup common" )
 
     _bufferInfo.offset = 0U;
     _bufferInfo.range = static_cast<VkDeviceSize> ( sizeof ( LightLightupBaseProgram::ViewData ) );
@@ -441,6 +433,8 @@ void LightupCommonDescriptorSet::Update ( VkDevice device,
     GXMat4 const &cvvToView
 ) noexcept
 {
+    AV_VULKAN_GROUP ( commandBuffer, "Upload light data" )
+
     LightLightupBaseProgram::ViewData const viewData
     {
         ._cvvToView = cvvToView,

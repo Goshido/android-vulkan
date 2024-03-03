@@ -140,6 +140,7 @@ void PointLightPass::UploadGPUData ( VkDevice device,
     if ( _interacts.empty () )
         return;
 
+    AV_VULKAN_GROUP ( commandBuffer, "Upload point light result data" )
     _lightup.UpdateGPUData ( device, commandBuffer, *this, viewerLocal, view );
     UpdateLightGPUData ( commandBuffer, volumeBufferPool, viewProjection );
 }
@@ -299,11 +300,7 @@ bool PointLightPass::CreateShadowmapRenderPass ( VkDevice device ) noexcept
     if ( !result )
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device,
-        _shadowmapRenderPass,
-        VK_OBJECT_TYPE_RENDER_PASS,
-        "PointLightPass::_shadowmapRenderPass"
-    )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _shadowmapRenderPass, VK_OBJECT_TYPE_RENDER_PASS, "Point light shadowmap" )
 
     // Must be static as well because it lose the function scope [read as garbage in debug builds].
     constexpr static VkClearValue clearValues
@@ -351,6 +348,8 @@ bool PointLightPass::GenerateShadowmaps ( android_vulkan::Renderer &renderer, Vk
 
         if ( !shadowmapInfo )
             return false;
+
+        AV_VULKAN_GROUP ( commandBuffer, "Point light shadowmap" )
 
         _shadowmapRenderPassInfo.framebuffer = shadowmapInfo->second;
         vkCmdBeginRenderPass ( commandBuffer, &_shadowmapRenderPassInfo, VK_SUBPASS_CONTENTS_INLINE );
@@ -421,6 +420,7 @@ void PointLightPass::UpdateShadowmapGPUData ( VkDevice device,
     size_t opaqueMeshCount
 ) noexcept
 {
+    AV_VULKAN_GROUP ( commandBuffer, "Upload point light shadowmap data" )
     PointLightShadowmapGeneratorProgram::InstanceData instanceData {};
 
     auto append = [ & ] ( PointLight::Matrices const &matrices, size_t instance, GXMat4 const &local ) {

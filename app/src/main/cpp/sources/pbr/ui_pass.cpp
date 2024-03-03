@@ -693,6 +693,7 @@ void UIPass::InUseImageTracker::MarkInUse ( Texture2DRef const &texture, size_t 
 bool UIPass::Execute ( VkCommandBuffer commandBuffer, size_t commandBufferIndex ) noexcept
 {
     AV_TRACE ( "UI pass: Execute" )
+    AV_VULKAN_GROUP ( commandBuffer, "UI" )
 
     if ( !ImageStorage::SyncGPU () ) [[unlikely]]
         return false;
@@ -758,7 +759,7 @@ bool UIPass::OnInitDevice ( android_vulkan::Renderer &renderer,
         AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT ) | AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_COHERENT_BIT )
     );
 
-    if ( !_staging.Init ( renderer, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, stagingProps, "pbr::UIPass::_staging" ) )
+    if ( !_staging.Init ( renderer, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, stagingProps, "UI pass staging" ) )
     {
         [[unlikely]]
         return false;
@@ -781,7 +782,7 @@ bool UIPass::OnInitDevice ( android_vulkan::Renderer &renderer,
     result = _vertex.Init ( renderer,
         AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT ) | AV_VK_FLAG ( VK_BUFFER_USAGE_VERTEX_BUFFER_BIT ),
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-        "pbr::UIPass::_vertex"
+        "UI pass"
     );
 
     if ( !result ) [[unlikely]]
@@ -1004,6 +1005,7 @@ bool UIPass::UploadGPUData ( android_vulkan::Renderer &renderer,
 ) noexcept
 {
     AV_TRACE ( "UI pass: Upload GPU data" )
+    AV_VULKAN_GROUP ( commandBuffer, "Upload UI data" )
 
     VkDevice device = renderer.GetDevice ();
     _imageDescriptorSets.Commit ( device );

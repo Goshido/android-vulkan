@@ -42,12 +42,7 @@ bool GeometryPass::Init ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device,
-        _descriptorPool,
-        VK_OBJECT_TYPE_DESCRIPTOR_POOL,
-        "pbr::GeometryPass::_descriptorPool"
-    )
-
+    AV_SET_VULKAN_OBJECT_NAME ( device, _descriptorPool, VK_OBJECT_TYPE_DESCRIPTOR_POOL, "Geometry pass" )
     VkDescriptorSetLayout layout = _descriptorSetLayout.GetLayout ();
 
     VkDescriptorSetAllocateInfo const setAllocateInfo
@@ -126,6 +121,7 @@ void GeometryPass::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 void GeometryPass::Execute ( VkCommandBuffer commandBuffer, RenderSessionStats &renderSessionStats ) noexcept
 {
     AV_TRACE ( "Geometry pass: Execute" )
+    AV_VULKAN_GROUP ( commandBuffer, "Geometry pass" )
 
     bool isSamplerUsed = false;
 
@@ -173,6 +169,7 @@ void GeometryPass::UploadGPUData ( VkDevice device,
 ) noexcept
 {
     AV_TRACE ( "Geometry pass: Upload GPU data" )
+    AV_VULKAN_GROUP ( commandBuffer, "Upload geometry data" )
 
     _opaqueSubpass.UpdateGPUData ( commandBuffer,
         _materialPool,

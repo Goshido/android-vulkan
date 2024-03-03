@@ -8,7 +8,7 @@
 
 #else
 
-#define AV_TRACE(name) android_vulkan::Trace const trace ( name );
+#define AV_TRACE(name) android_vulkan::Trace const _FuCk_TrAcE_ ( name );
 
 namespace android_vulkan {
 

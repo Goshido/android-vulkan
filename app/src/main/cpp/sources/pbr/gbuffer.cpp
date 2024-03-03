@@ -60,14 +60,23 @@ bool GBuffer::Init ( android_vulkan::Renderer &renderer, VkExtent2D const &resol
     if ( !_albedo.CreateRenderTarget ( resolution, VK_FORMAT_R8G8B8A8_SRGB, usageColor, renderer ) ) [[unlikely]]
         return false;
 
+    AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (), _albedo.GetImage (), VK_OBJECT_TYPE_IMAGE, "Albedo" )
+    AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (), _albedo.GetImageView (), VK_OBJECT_TYPE_IMAGE_VIEW, "Albedo" )
+
     if ( !_normal.CreateRenderTarget ( resolution, VK_FORMAT_A2R10G10B10_UNORM_PACK32, usageColor, renderer ) )
     {
         [[unlikely]]
         return false;
     }
 
+    AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (), _normal.GetImage (), VK_OBJECT_TYPE_IMAGE, "Normal" )
+    AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (), _normal.GetImageView (), VK_OBJECT_TYPE_IMAGE_VIEW, "Normal" )
+
     if ( !_params.CreateRenderTarget ( resolution, VK_FORMAT_R8G8B8A8_UNORM, usageColor, renderer ) ) [[unlikely]]
         return false;
+
+    AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (), _params.GetImage (), VK_OBJECT_TYPE_IMAGE, "Params" )
+    AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (), _params.GetImageView (), VK_OBJECT_TYPE_IMAGE_VIEW, "Params" )
 
     constexpr VkImageUsageFlags usageAccumulator = AV_VK_FLAG ( VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT ) |
         AV_VK_FLAG ( VK_IMAGE_USAGE_SAMPLED_BIT );
@@ -78,11 +87,40 @@ bool GBuffer::Init ( android_vulkan::Renderer &renderer, VkExtent2D const &resol
         return false;
     }
 
-    return _depthStencil.CreateRenderTarget ( resolution,
+    AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (),
+        _hdrAccumulator.GetImage (),
+        VK_OBJECT_TYPE_IMAGE,
+        "HDR accumulator"
+    )
+
+    AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (),
+        _hdrAccumulator.GetImageView (),
+        VK_OBJECT_TYPE_IMAGE_VIEW,
+        "HDR accumulator"
+    )
+
+    bool const result = _depthStencil.CreateRenderTarget ( resolution,
         renderer.GetDefaultDepthFormat (),
         usageDepthStencil,
         renderer
     );
+
+    if ( !result ) [[unlikely]]
+        return false;
+
+    AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (),
+        _depthStencil.GetImage (),
+        VK_OBJECT_TYPE_IMAGE,
+        "Depth | Stencil"
+    )
+
+    AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (),
+        _depthStencil.GetImageView (),
+        VK_OBJECT_TYPE_IMAGE_VIEW,
+        "Depth | Stencil"
+    )
+
+    return true;
 }
 
 void GBuffer::Destroy ( android_vulkan::Renderer &renderer ) noexcept

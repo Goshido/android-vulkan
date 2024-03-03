@@ -192,11 +192,7 @@ bool PointLightLightup::AllocateDescriptorSets ( android_vulkan::Renderer &rende
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device,
-        _descriptorPool,
-        VK_OBJECT_TYPE_DESCRIPTOR_POOL,
-        "pbr::PointLightLightup::_descriptorPool"
-    )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _descriptorPool, VK_OBJECT_TYPE_DESCRIPTOR_POOL, "Point light lightup" )
 
     _descriptorSets.resize ( setCount );
     VkDescriptorSet* descriptorSets = _descriptorSets.data ();

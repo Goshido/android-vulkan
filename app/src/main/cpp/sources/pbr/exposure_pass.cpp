@@ -20,6 +20,7 @@ constexpr float DEFAULT_MAX_LUMA_EV = 15.0F;
 
 void ExposurePass::Execute ( VkCommandBuffer commandBuffer, float deltaTime ) noexcept
 {
+    AV_VULKAN_GROUP ( commandBuffer, "Exposure" )
     TransitSync5Mip ( commandBuffer );
 
     _program.Bind ( commandBuffer );
@@ -485,7 +486,7 @@ bool ExposurePass::CreateLumaResources ( android_vulkan::Renderer &renderer, VkD
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device, _luma, VK_OBJECT_TYPE_BUFFER, "pbr::ExposurePass::_luma" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _luma, VK_OBJECT_TYPE_BUFFER, "Luma" )
 
     VkMemoryRequirements memoryRequirements {};
     vkGetBufferMemoryRequirements ( device, _luma, &memoryRequirements );
@@ -520,7 +521,7 @@ bool ExposurePass::CreateLumaResources ( android_vulkan::Renderer &renderer, VkD
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device, _transferLuma, VK_OBJECT_TYPE_BUFFER, "pbr::ExposurePass::_transferLuma" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _transferLuma, VK_OBJECT_TYPE_BUFFER, "Luma staging" )
 
     vkGetBufferMemoryRequirements ( device, _transferLuma, &memoryRequirements );
 
@@ -642,7 +643,7 @@ bool ExposurePass::CreateSyncMip5 ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device, _syncMip5, VK_OBJECT_TYPE_IMAGE, "pbr::ExposurePass::_syncMip5" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _syncMip5, VK_OBJECT_TYPE_IMAGE, "Exposure mip #5" )
 
     VkMemoryRequirements memoryRequirements;
     vkGetImageMemoryRequirements ( device, _syncMip5, &memoryRequirements );
@@ -701,7 +702,7 @@ bool ExposurePass::CreateSyncMip5 ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device, _syncMip5View, VK_OBJECT_TYPE_IMAGE_VIEW, "pbr::ExposurePass::_syncMip5View" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _syncMip5View, VK_OBJECT_TYPE_IMAGE_VIEW, "Exposure mip #5" )
     _isNeedTransitLayout = true;
     return true;
 }

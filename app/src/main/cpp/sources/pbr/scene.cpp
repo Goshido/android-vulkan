@@ -479,7 +479,6 @@ bool Scene::LoadScene ( android_vulkan::Renderer &renderer, char const* scene, V
 
 #endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS || ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
 
-
     uint8_t const* readPointer = data + sizeof ( pbr::SceneDesc );
 
     size_t consumed = 0U;

@@ -56,7 +56,9 @@ class AnimationGraph final : public NodeLink
                 [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
                     VkDeviceSize size,
                     VkBufferUsageFlags usage,
-                    VkMemoryPropertyFlags memoryFlags
+                    VkMemoryPropertyFlags memoryFlags,
+                    size_t frameInFlightIndex,
+                    char const* name
                 ) noexcept;
 
                 void Destroy ( bool isMapped ) noexcept;
@@ -80,7 +82,7 @@ class AnimationGraph final : public NodeLink
 
                 ~BufferSet () = default;
 
-                [[nodiscard]] bool Init ( VkDeviceSize size ) noexcept;
+                [[nodiscard]] bool Init ( VkDeviceSize size, size_t frameInFlightIndex ) noexcept;
                 void Destroy () noexcept;
         };
 

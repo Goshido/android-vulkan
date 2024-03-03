@@ -181,6 +181,8 @@ void SkeletalMeshComponent::Unregister () noexcept
 
 bool SkeletalMeshComponent::ApplySkin ( VkCommandBuffer commandBuffer, size_t commandBufferIndex ) noexcept
 {
+    AV_VULKAN_GROUP ( commandBuffer, "Skinning" )
+
     if ( !_renderer ) [[unlikely]]
         return true;
 

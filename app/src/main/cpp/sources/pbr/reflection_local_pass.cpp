@@ -110,6 +110,8 @@ void ReflectionLocalPass::UploadGPUData ( VkDevice device,
     if ( !callCount )
         return;
 
+    AV_VULKAN_GROUP ( commandBuffer, "Upload reflection local data" )
+
     ReflectionLocalProgram::LightData lightData {};
     GXMat4 alpha {};
     alpha.Identity ();

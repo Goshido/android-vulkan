@@ -24,6 +24,8 @@ void StippleSubpass::Execute ( VkCommandBuffer commandBuffer,
     bool &isSamplerUsed
 ) noexcept
 {
+    AV_VULKAN_GROUP ( commandBuffer, "Stipple geometry" )
+
     if ( _sceneData.empty () )
         return;
 
@@ -43,6 +45,8 @@ void StippleSubpass::UpdateGPUData ( VkCommandBuffer commandBuffer,
     GXMat4 const &viewProjection
 ) noexcept
 {
+    AV_VULKAN_GROUP ( commandBuffer, "Upload stipple data" )
+
     // Note all stipple objects already pass frustum test at RenderSession::SubmitMesh call.
     // So all meshes are visible.
 

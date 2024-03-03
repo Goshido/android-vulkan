@@ -99,6 +99,7 @@ bool LightPass::OnPreGeometryPass ( android_vulkan::Renderer &renderer,
 ) noexcept
 {
     AV_TRACE ( "Light pre-geometry" )
+    AV_VULKAN_GROUP ( commandBuffer, "Light pre-geometry" )
 
     VkDevice device = renderer.GetDevice ();
 
@@ -133,6 +134,7 @@ void LightPass::OnPostGeometryPass ( VkDevice device,
 ) noexcept
 {
     AV_TRACE ( "Light post-geometry" )
+    AV_VULKAN_GROUP ( commandBuffer, "Light post-geometry" )
 
     size_t const pointLights = _pointLightPass.GetPointLightCount ();
     size_t const localReflections = _reflectionLocalPass.GetReflectionLocalCount ();

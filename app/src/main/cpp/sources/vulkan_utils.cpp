@@ -16,6 +16,8 @@ PFN_vkCmdBeginDebugUtilsLabelEXT vkCmdBeginDebugUtilsLabelEXT = nullptr;
 PFN_vkCmdEndDebugUtilsLabelEXT vkCmdEndDebugUtilsLabelEXT = nullptr;
 PFN_vkSetDebugUtilsObjectNameEXT vkSetDebugUtilsObjectNameEXT = nullptr;
 
+constexpr GXVec4 GROUP_COLOR ( 115.0F / 255.0F, 185.0F / 255.0F, 0.0F, 1.0F );
+
 } // end of anonymous namespace
 
 void InitVulkanDebugUtils ( VkInstance instance ) noexcept
@@ -44,7 +46,8 @@ void InitVulkanDebugUtils ( VkInstance instance ) noexcept
 
 void SetVulkanObjectName ( VkDevice device, uint64_t handle, VkObjectType type, char const *name ) noexcept
 {
-    VkDebugUtilsObjectNameInfoEXT const info {
+    VkDebugUtilsObjectNameInfoEXT const info
+    {
         .sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT,
         .pNext = nullptr,
         .objectType = type,
@@ -58,6 +61,30 @@ void SetVulkanObjectName ( VkDevice device, uint64_t handle, VkObjectType type, 
     );
 
     AV_ASSERT ( result )
+}
+
+VulkanGroup::VulkanGroup ( VkCommandBuffer commandBuffer ) noexcept:
+    _commandBuffer ( commandBuffer )
+{
+    // NOTHING
+}
+
+VulkanGroup::~VulkanGroup () noexcept
+{
+    vkCmdEndDebugUtilsLabelEXT ( _commandBuffer );
+}
+
+void VulkanGroup::IssueGroup ( char const* name ) noexcept
+{
+    VkDebugUtilsLabelEXT const info
+    {
+        .sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT,
+        .pNext = nullptr,
+        .pLabelName = name,
+        .color = { GROUP_COLOR._data[ 0U ], GROUP_COLOR._data[ 1U ], GROUP_COLOR._data[ 2U ], GROUP_COLOR._data[ 3U ] }
+    };
+
+    vkCmdBeginDebugUtilsLabelEXT ( _commandBuffer, &info );
 }
 
 } // namespace android_vulkan

@@ -170,7 +170,7 @@ bool FontStorage::Atlas::AddLayers ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device, _resource._image, VK_OBJECT_TYPE_IMAGE, "pbr::FontStorage::Atlas::_image" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _resource._image, VK_OBJECT_TYPE_IMAGE, "Font storage atlas" )
 
     VkMemoryRequirements memoryRequirements;
     vkGetImageMemoryRequirements ( device, _resource._image, &memoryRequirements );
@@ -230,7 +230,7 @@ bool FontStorage::Atlas::AddLayers ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device, _resource._view, VK_OBJECT_TYPE_IMAGE_VIEW, "pbr::FontStorage::Atlas::_view" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _resource._view, VK_OBJECT_TYPE_IMAGE_VIEW, "Font storage atlas" )
 
     if ( oldResource._image != VK_NULL_HANDLE )
         Copy ( commandBuffer, oldResource, layerCount );

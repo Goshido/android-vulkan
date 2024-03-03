@@ -91,7 +91,7 @@ bool TextureCube::UploadData ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device, _transfer, VK_OBJECT_TYPE_BUFFER, "TextureCube::_transfer" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _transfer, VK_OBJECT_TYPE_BUFFER, "TextureCube staging" )
 
     VkMemoryRequirements memoryRequirements;
     vkGetBufferMemoryRequirements ( device, _transfer, &memoryRequirements );
@@ -418,7 +418,7 @@ bool TextureCube::CreateImageResources ( Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device, _image, VK_OBJECT_TYPE_IMAGE, "TextureCube::_image" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _image, VK_OBJECT_TYPE_IMAGE, "TextureCube" )
 
     VkMemoryRequirements memoryRequirements;
     vkGetImageMemoryRequirements ( device, _image, &memoryRequirements );
@@ -476,7 +476,7 @@ bool TextureCube::CreateImageResources ( Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device, _imageView, VK_OBJECT_TYPE_IMAGE_VIEW, "TextureCube::_imageView" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _imageView, VK_OBJECT_TYPE_IMAGE_VIEW, "TextureCube" )
     return true;
 }
 

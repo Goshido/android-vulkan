@@ -148,8 +148,11 @@ void ReflectionLocalPass::UploadGPUData ( VkDevice device,
 
 bool ReflectionLocalPass::AllocateDescriptorSets ( android_vulkan::Renderer &renderer ) noexcept
 {
-    if ( !_uniformPool.Init ( renderer, sizeof ( ReflectionLocalProgram::LightData ) ) ) [[unlikely]]
+    if ( !_uniformPool.Init ( renderer, sizeof ( ReflectionLocalProgram::LightData ), "Reflection local" ) )
+    {
+        [[unlikely]]
         return false;
+    }
 
     size_t const setCount = _uniformPool.GetAvailableItemCount ();
     VkDevice device = renderer.GetDevice ();
@@ -185,11 +188,7 @@ bool ReflectionLocalPass::AllocateDescriptorSets ( android_vulkan::Renderer &ren
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device,
-        _descriptorPool,
-        VK_OBJECT_TYPE_DESCRIPTOR_POOL,
-        "pbr::ReflectionLocalPass::_descriptorPool"
-    )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _descriptorPool, VK_OBJECT_TYPE_DESCRIPTOR_POOL, "Reflection local" )
 
     _descriptorSets.resize ( setCount );
     VkDescriptorSet* descriptorSets = _descriptorSets.data ();

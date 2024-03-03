@@ -89,7 +89,7 @@ bool PointLightLightupProgram::Init ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device, _pipeline, VK_OBJECT_TYPE_PIPELINE, "PointLightLightupProgram::_pipeline" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _pipeline, VK_OBJECT_TYPE_PIPELINE, "Point light lightup" )
     DestroyShaderModules ( device );
     return true;
 }
@@ -302,11 +302,7 @@ bool PointLightLightupProgram::InitLayout ( VkDevice device, VkPipelineLayout &l
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device,
-        _pipelineLayout,
-        VK_OBJECT_TYPE_PIPELINE_LAYOUT,
-        "PointLightLightupProgram::_pipelineLayout"
-    )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _pipelineLayout, VK_OBJECT_TYPE_PIPELINE_LAYOUT, "Point light lightup" )
 
     layout = _pipelineLayout;
     return true;

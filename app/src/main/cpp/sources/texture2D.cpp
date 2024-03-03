@@ -357,7 +357,7 @@ bool Texture2D::CreateCommonResources ( VkImageCreateInfo &imageInfo,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device, _image, VK_OBJECT_TYPE_IMAGE, "Texture2D::_image" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _image, VK_OBJECT_TYPE_IMAGE, "Texture2D" )
 
     VkMemoryRequirements memoryRequirements;
     vkGetImageMemoryRequirements ( device, _image, &memoryRequirements );
@@ -432,7 +432,7 @@ bool Texture2D::CreateCommonResources ( VkImageCreateInfo &imageInfo,
         return false;
     }
 
-    AV_SET_VULKAN_OBJECT_NAME ( device, _imageView, VK_OBJECT_TYPE_IMAGE_VIEW, "Texture2D::_imageView" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _imageView, VK_OBJECT_TYPE_IMAGE_VIEW, "Texture2D" )
     return true;
 }
 
@@ -463,7 +463,7 @@ bool Texture2D::CreateTransferResources ( uint8_t* &mappedBuffer, VkDeviceSize s
         return false;
     }
 
-    AV_SET_VULKAN_OBJECT_NAME ( device, _transfer, VK_OBJECT_TYPE_BUFFER, "Texture2D::_transfer" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _transfer, VK_OBJECT_TYPE_BUFFER, "Texture2D staging" )
 
     VkMemoryRequirements memoryRequirements;
     vkGetBufferMemoryRequirements ( device, _transfer, &memoryRequirements );

@@ -55,7 +55,7 @@ bool AnimationGraph::Buffer::Init ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device, _buffer, VK_OBJECT_TYPE_BUFFER, "pbr::AnimationGraph::Buffer::_buffer" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _buffer, VK_OBJECT_TYPE_BUFFER, "Pose" )
 
     VkMemoryRequirements memoryRequirements;
     vkGetBufferMemoryRequirements ( device, _buffer, &memoryRequirements );

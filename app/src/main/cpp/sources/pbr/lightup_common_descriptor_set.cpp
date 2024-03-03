@@ -114,7 +114,7 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
 
 #endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS || ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
 
-    if ( !_uniforms.Init ( renderer, sizeof ( LightLightupBaseProgram::ViewData ) ) ) [[unlikely]]
+    if ( !_uniforms.Init ( renderer, sizeof ( LightLightupBaseProgram::ViewData ), "Light common" ) ) [[unlikely]]
         return false;
 
     VkCommandBufferAllocateInfo const bufferAllocateInfo
@@ -172,7 +172,7 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
         .unnormalizedCoordinates = VK_FALSE
     };
 
-    if ( !_brdfLUTSampler.Init ( device, brdfSamplerInfo ) ) [[unlikely]]
+    if ( !_brdfLUTSampler.Init ( device, brdfSamplerInfo, "BRDF LUT" ) ) [[unlikely]]
         return false;
 
     constexpr VkSamplerCreateInfo prefilterSamplerInfo
@@ -197,7 +197,7 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
         .unnormalizedCoordinates = VK_FALSE
     };
 
-    if ( !_prefilterSampler.Init ( device, prefilterSamplerInfo ) ) [[unlikely]]
+    if ( !_prefilterSampler.Init ( device, prefilterSamplerInfo, "Prefilter" ) ) [[unlikely]]
         return false;
 
     VkDescriptorImageInfo const images[] =

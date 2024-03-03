@@ -86,12 +86,7 @@ bool PointLightShadowmapGeneratorProgram::Init ( android_vulkan::Renderer &rende
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device,
-        _pipeline,
-        VK_OBJECT_TYPE_PIPELINE,
-        "pbr::PointLightShadowmapGeneratorProgram::_pipeline"
-    )
-
+    AV_SET_VULKAN_OBJECT_NAME ( device, _pipeline, VK_OBJECT_TYPE_PIPELINE, "Point light shadowmap generator" )
     DestroyShaderModules ( device );
     return true;
 }
@@ -255,7 +250,7 @@ bool PointLightShadowmapGeneratorProgram::InitLayout ( VkDevice device, VkPipeli
     AV_SET_VULKAN_OBJECT_NAME ( device,
         _pipelineLayout,
         VK_OBJECT_TYPE_PIPELINE_LAYOUT,
-        "pbr::PointLightShadowmapGeneratorProgram::_pipelineLayout"
+        "Point light shadowmap generator"
     )
 
     layout = _pipelineLayout;

@@ -71,9 +71,9 @@ bool SamplerManager::Init ( VkDevice device ) noexcept
         .unnormalizedCoordinates = VK_FALSE
     };
 
-    return _clampToEdgeSampler.Init ( device, clampToEdgeSamplerInfo ) &&
-        _pointSampler.Init ( device, pointSamplerInfo ) &&
-        _materialSampler.Init ( device, materialSamplerInfo );
+    return _clampToEdgeSampler.Init ( device, clampToEdgeSamplerInfo, "Clamp to edge" ) &&
+        _pointSampler.Init ( device, pointSamplerInfo, "Point" ) &&
+        _materialSampler.Init ( device, materialSamplerInfo, "Material" );
 }
 
 void SamplerManager::Destroy ( VkDevice device ) noexcept

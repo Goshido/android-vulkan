@@ -100,7 +100,7 @@ bool GeometryPass::Init ( android_vulkan::Renderer &renderer,
             GeometryPassInstanceDescriptorSetLayout (),
             sizeof ( GeometryPassProgram::InstanceData ),
             0U,
-            "pbr::GeometryPass::_uniformPool"
+            "Geometry pass uniform"
         ) &&
 
         _materialPool.Init ( device, defaultTextureManager );

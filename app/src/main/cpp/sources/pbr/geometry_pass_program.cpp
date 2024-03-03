@@ -83,7 +83,7 @@ bool GeometryPassProgram::Init ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device, _pipeline, VK_OBJECT_TYPE_PIPELINE, "%s::_pipeline", _name.data () )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _pipeline, VK_OBJECT_TYPE_PIPELINE, "%s", _name.data () )
 
     DestroyShaderModules ( device );
     return true;
@@ -348,12 +348,7 @@ bool GeometryPassProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device,
-        _pipelineLayout,
-        VK_OBJECT_TYPE_PIPELINE_LAYOUT,
-        "%s::_pipelineLayout",
-        _name.data ()
-    )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _pipelineLayout, VK_OBJECT_TYPE_PIPELINE_LAYOUT, "%s", _name.data () )
 
     layout = _pipelineLayout;
     return true;

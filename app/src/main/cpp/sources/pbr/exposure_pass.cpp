@@ -224,11 +224,7 @@ bool ExposurePass::CreateDescriptorSet ( VkDevice device ) noexcept
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device,
-        _descriptorPool,
-        VK_OBJECT_TYPE_DESCRIPTOR_POOL,
-        "pbr::ExposurePass::_descriptorPool"
-    )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _descriptorPool, VK_OBJECT_TYPE_DESCRIPTOR_POOL, "Exposure" )
 
     if ( !_layout.Init ( device ) ) [[unlikely]]
         return false;
@@ -293,7 +289,7 @@ bool ExposurePass::CreateExposureResources ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device, _exposureBarrier.buffer, VK_OBJECT_TYPE_BUFFER, "pbr::ExposurePass::_exposure" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _exposureBarrier.buffer, VK_OBJECT_TYPE_BUFFER, "Exposure" )
 
     VkMemoryRequirements memoryRequirements {};
     vkGetBufferMemoryRequirements ( device, _exposureBarrier.buffer, &memoryRequirements );
@@ -341,7 +337,7 @@ bool ExposurePass::CreateGlobalCounter ( android_vulkan::Renderer &renderer, VkD
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device, _globalCounter, VK_OBJECT_TYPE_BUFFER, "pbr::ExposurePass::_globalCounter" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _globalCounter, VK_OBJECT_TYPE_BUFFER, "Exposure SPD global counter" )
 
     VkMemoryRequirements memoryRequirements {};
     vkGetBufferMemoryRequirements ( device, _globalCounter, &memoryRequirements );
@@ -376,11 +372,7 @@ bool ExposurePass::CreateGlobalCounter ( android_vulkan::Renderer &renderer, VkD
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device,
-        _transferGlobalCounter,
-        VK_OBJECT_TYPE_BUFFER,
-        "pbr::ExposurePass::_transferGlobalCounter"
-    )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _transferGlobalCounter, VK_OBJECT_TYPE_BUFFER, "Exposure SPD staging buffer" )
 
     vkGetBufferMemoryRequirements ( device, _transferGlobalCounter, &memoryRequirements );
 

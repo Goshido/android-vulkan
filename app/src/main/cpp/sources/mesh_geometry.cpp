@@ -411,7 +411,7 @@ bool MeshGeometry::UploadComplex ( uint8_t const* data,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device, _indexBuffer, VK_OBJECT_TYPE_BUFFER, "MeshGeometry::_indexBuffer" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _indexBuffer, VK_OBJECT_TYPE_BUFFER, "Mesh indices" )
 
     VkMemoryRequirements memoryRequirements;
     vkGetBufferMemoryRequirements ( device, _indexBuffer, &memoryRequirements );
@@ -451,7 +451,7 @@ bool MeshGeometry::UploadComplex ( uint8_t const* data,
         return false;
 
     _vertexBufferRange = bufferInfo.size;
-    AV_SET_VULKAN_OBJECT_NAME ( device, _vertexBuffer, VK_OBJECT_TYPE_BUFFER, "MeshGeometry::_vertexBuffer" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _vertexBuffer, VK_OBJECT_TYPE_BUFFER, "Mesh vertices" )
 
     vkGetBufferMemoryRequirements ( device, _vertexBuffer, &memoryRequirements );
 
@@ -542,7 +542,7 @@ bool MeshGeometry::UploadInternal ( size_t numUploads,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device, _transferBuffer, VK_OBJECT_TYPE_BUFFER, "MeshGeometry::_transferBuffer" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _transferBuffer, VK_OBJECT_TYPE_BUFFER, "Mesh staging buffer" )
 
     VkMemoryRequirements transferMemoryRequirements;
     vkGetBufferMemoryRequirements ( device, _transferBuffer, &transferMemoryRequirements );
@@ -711,7 +711,7 @@ bool MeshGeometry::UploadSimple ( uint8_t const* data,
         return false;
 
     _vertexBufferRange = bufferInfo.size;
-    AV_SET_VULKAN_OBJECT_NAME ( device, _vertexBuffer, VK_OBJECT_TYPE_BUFFER, "MeshGeometry::_vertexBuffer" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _vertexBuffer, VK_OBJECT_TYPE_BUFFER, "Mesh verticies" )
 
     VkMemoryRequirements memoryRequirements;
     vkGetBufferMemoryRequirements ( device, _vertexBuffer, &memoryRequirements );

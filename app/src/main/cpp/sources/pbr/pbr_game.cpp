@@ -81,7 +81,7 @@ bool PBRGame::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device, _commandPool, VK_OBJECT_TYPE_COMMAND_POOL, "Asset loading" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _commandPool, VK_OBJECT_TYPE_COMMAND_POOL, "Asset pool" )
 
     if ( !_renderSession.OnInitDevice ( renderer ) || !UploadGPUContent ( renderer ) ) [[unlikely]]
        return false;

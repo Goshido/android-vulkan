@@ -92,7 +92,7 @@ bool UniformBuffer::Init ( android_vulkan::Renderer &renderer, size_t size, size
         if ( !result ) [[unlikely]]
             return false;
 
-        AV_SET_VULKAN_OBJECT_NAME ( device, buffer, VK_OBJECT_TYPE_BUFFER, "UniformBuffer::_buffers::item" )
+        AV_SET_VULKAN_OBJECT_NAME ( device, buffer, VK_OBJECT_TYPE_BUFFER, "Uniform buffer #%zu", i )
 
         vkGetBufferMemoryRequirements ( device, buffer, &requirements );
 

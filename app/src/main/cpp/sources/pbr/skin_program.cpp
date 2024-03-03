@@ -47,7 +47,7 @@ bool SkinProgram::Init ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device, _pipeline, VK_OBJECT_TYPE_PIPELINE, "pbr::SkinProgram::_pipeline" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _pipeline, VK_OBJECT_TYPE_PIPELINE, "Skin" )
     DestroyShaderModule ( device );
     return true;
 }
@@ -126,12 +126,7 @@ bool SkinProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexc
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device,
-        _pipelineLayout,
-        VK_OBJECT_TYPE_PIPELINE_LAYOUT,
-        "pbr::SkinProgram::_pipelineLayout"
-    )
-
+    AV_SET_VULKAN_OBJECT_NAME ( device, _pipelineLayout, VK_OBJECT_TYPE_PIPELINE_LAYOUT, "Skin" )
     layout = _pipelineLayout;
     return true;
 }

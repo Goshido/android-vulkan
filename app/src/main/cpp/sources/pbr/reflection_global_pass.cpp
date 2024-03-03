@@ -109,11 +109,7 @@ bool ReflectionGlobalPass::AllocateDescriptorSets ( VkDevice device ) noexcept
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device,
-        _descriptorPool,
-        VK_OBJECT_TYPE_DESCRIPTOR_POOL,
-        "pbr::ReflectionGlobalPass::_descriptorPool"
-    )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _descriptorPool, VK_OBJECT_TYPE_DESCRIPTOR_POOL, "Reflection global" )
 
     _descriptorSets.resize ( REFLECTIONS );
     VkDescriptorSet* descriptorSets = _descriptorSets.data ();

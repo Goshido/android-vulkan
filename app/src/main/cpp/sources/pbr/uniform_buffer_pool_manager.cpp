@@ -87,10 +87,10 @@ bool UniformBufferPoolManager::Init ( android_vulkan::Renderer &renderer,
     DescriptorSetLayout const &descriptorSetLayout,
     size_t itemSize,
     uint32_t bind,
-    [[maybe_unused]] char const* name
+    char const* name
 ) noexcept
 {
-    if ( !_uniformPool.Init ( renderer, itemSize ) ) [[unlikely]]
+    if ( !_uniformPool.Init ( renderer, itemSize, name ) ) [[unlikely]]
         return false;
 
     size_t const setCount = _uniformPool.GetAvailableItemCount ();

@@ -152,11 +152,7 @@ bool ImageStorage::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (),
-        _commandPool,
-        VK_OBJECT_TYPE_COMMAND_POOL,
-        "pbr::ImageStorage::_commandPool"
-    )
+    AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (), _commandPool, VK_OBJECT_TYPE_COMMAND_POOL, "UI image storage" )
 
     return AllocateCommandBuffers ( INITIAL_COMMAND_BUFFERS );
 }
@@ -842,23 +838,13 @@ bool UIPass::OnInitDevice ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device,
-        _descriptorPool,
-        VK_OBJECT_TYPE_DESCRIPTOR_POOL,
-        "pbr::UIPass::_descriptorPool"
-    )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _descriptorPool, VK_OBJECT_TYPE_DESCRIPTOR_POOL, "UI pass" )
 
     return _commonDescriptorSet.Init ( device, _descriptorPool, samplerManager ) &&
         _imageDescriptorSets.Init ( device, _descriptorPool, transparent ) &&
         _transformLayout.Init ( device ) &&
         ImageStorage::OnInitDevice ( renderer ) &&
-
-        _uniformPool.Init ( renderer,
-            _transformLayout,
-            sizeof ( UIProgram::Transform ),
-            BIND_TRANSFORM,
-            "pbr::UIPass::_uniformPool"
-        );
+        _uniformPool.Init ( renderer, _transformLayout, sizeof ( UIProgram::Transform ), BIND_TRANSFORM, "UI pass" );
 }
 
 void UIPass::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept

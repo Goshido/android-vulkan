@@ -55,7 +55,7 @@ bool PointLightLightup::Init ( android_vulkan::Renderer &renderer,
     };
 
     return _program.Init ( renderer, renderPass, subpass, nullptr, resolution ) &&
-        _sampler.Init ( renderer.GetDevice (), samplerInfo ) &&
+        _sampler.Init ( renderer.GetDevice (), samplerInfo, "Point light lightup" ) &&
         AllocateDescriptorSets ( renderer );
 }
 
@@ -148,8 +148,11 @@ void PointLightLightup::UpdateGPUData ( VkDevice device,
 
 bool PointLightLightup::AllocateDescriptorSets ( android_vulkan::Renderer &renderer ) noexcept
 {
-    if ( !_uniformPool.Init ( renderer, sizeof ( PointLightLightupProgram::LightData ) ) )
+    if ( !_uniformPool.Init ( renderer, sizeof ( PointLightLightupProgram::LightData ), "Point light lightup" ) )
+    {
+        [[unlikely]]
         return false;
+    }
 
     size_t const setCount = _uniformPool.GetAvailableItemCount ();
     VkDevice device = renderer.GetDevice ();

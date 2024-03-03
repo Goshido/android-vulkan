@@ -285,11 +285,7 @@ bool PresentRenderPass::CreateRenderPass ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device,
-        _renderInfo.renderPass,
-        VK_OBJECT_TYPE_RENDER_PASS,
-        "pbr::PresentRenderPass::_renderPass"
-    )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _renderInfo.renderPass, VK_OBJECT_TYPE_RENDER_PASS, "Present" )
 
     _renderInfo.renderArea.extent = resolution;
     return true;

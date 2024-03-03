@@ -51,14 +51,15 @@ class UniformBufferPool final
         // The method return all items to the pool.
         void Reset () noexcept;
 
-        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, size_t itemSize ) noexcept;
+        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, size_t itemSize, char const* name ) noexcept;
         void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
 
     private:
         [[nodiscard]] bool AllocateBuffers ( android_vulkan::Renderer &renderer,
             VkMemoryRequirements &requirements,
             size_t itemCount,
-            VkBufferCreateInfo const &bufferInfo
+            VkBufferCreateInfo const &bufferInfo,
+            char const* name
         ) noexcept;
 
         [[nodiscard]] static bool ResolveMemoryRequirements ( android_vulkan::Renderer &renderer,

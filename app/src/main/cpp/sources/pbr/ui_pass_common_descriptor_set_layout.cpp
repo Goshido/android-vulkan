@@ -101,11 +101,7 @@ bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device,
-        _layout,
-        VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT,
-        "pbr::UIPassCommonDescriptorSetLayout::_layout"
-    )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _layout, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, "UI pass common" )
 
     ++_references;
     return true;

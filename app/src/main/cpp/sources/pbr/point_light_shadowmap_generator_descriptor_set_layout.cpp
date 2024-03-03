@@ -88,7 +88,7 @@ bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
     AV_SET_VULKAN_OBJECT_NAME ( device,
         _layout,
         VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT,
-        "pbr::PointLightShadowmapGeneratorDescriptorSetLayout::_layout"
+        "Point light shadowmap generator"
     )
 
     ++_references;

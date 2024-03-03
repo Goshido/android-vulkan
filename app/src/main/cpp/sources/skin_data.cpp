@@ -173,7 +173,7 @@ bool SkinData::LoadSkin ( std::string &&skinFilename,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device, _skin._buffer, VK_OBJECT_TYPE_BUFFER, "SkinData::_skin::_buffer" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _skin._buffer, VK_OBJECT_TYPE_BUFFER, "Skin data" )
 
     VkMemoryRequirements memoryRequirements;
     vkGetBufferMemoryRequirements ( device, _skin._buffer, &memoryRequirements );
@@ -208,7 +208,7 @@ bool SkinData::LoadSkin ( std::string &&skinFilename,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device, _transfer._buffer, VK_OBJECT_TYPE_BUFFER, "SkinData::_transfer::_buffer" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _transfer._buffer, VK_OBJECT_TYPE_BUFFER, "Skin data staging" )
 
     vkGetBufferMemoryRequirements ( device, _transfer._buffer, &memoryRequirements );
 

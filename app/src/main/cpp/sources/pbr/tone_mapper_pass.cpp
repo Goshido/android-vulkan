@@ -45,11 +45,7 @@ bool ToneMapperPass::Init ( android_vulkan::Renderer &renderer ) noexcept
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device,
-        _resourceDescriptorPool,
-        VK_OBJECT_TYPE_DESCRIPTOR_POOL,
-        "pbr::ToneMapperPass::_resourceDescriptorPool"
-    )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _resourceDescriptorPool, VK_OBJECT_TYPE_DESCRIPTOR_POOL, "Tone mapper" )
 
     if ( !_transformLayout.Init ( device ) || !_resourceLayout.Init ( device ) ) [[unlikely]]
         return false;
@@ -84,7 +80,7 @@ bool ToneMapperPass::Init ( android_vulkan::Renderer &renderer ) noexcept
         _transformLayout,
         sizeof ( ToneMapperProgram::Transform ),
         BIND_TRANSFORM,
-        "pbr::ToneMapperPass::_transformUniformPool"
+        "Tone mapper transform uniform"
     );
 }
 

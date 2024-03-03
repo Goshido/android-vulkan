@@ -4,7 +4,7 @@
 namespace pbr {
 
 OpaqueProgram::OpaqueProgram () noexcept:
-    GeometryPassProgram ( "pbr::OpaqueProgram", "shaders/opaque.ps.spv" )
+    GeometryPassProgram ( "Opaque", "shaders/opaque.ps.spv" )
 {
     // NOTHING
 }

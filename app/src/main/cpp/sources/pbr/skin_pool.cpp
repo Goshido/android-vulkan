@@ -55,11 +55,7 @@ bool SkinPool::Init ( VkDevice device ) noexcept
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device,
-        _descriptorPool,
-        VK_OBJECT_TYPE_DESCRIPTOR_POOL,
-        "pbr::SkinPool::_descriptorPool"
-    )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _descriptorPool, VK_OBJECT_TYPE_DESCRIPTOR_POOL, "Skin pool" )
 
     if ( !_layout.Init ( device ) ) [[unlikely]]
         return false;

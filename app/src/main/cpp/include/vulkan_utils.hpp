@@ -31,7 +31,7 @@ GX_RESTORE_WARNING_STATE
 
 #else
 
-#include <vulkan/vulkan.h>
+#include <vulkan/vulkan_core.h>
 
 
 #define AV_SET_VULKAN_OBJECT_NAME(device, handle, type, ...)                                                        \

@@ -27,11 +27,7 @@ bool LightPass::Init ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (),
-        _commandPool,
-        VK_OBJECT_TYPE_COMMAND_POOL,
-        "pbr::LightPass::_commandPool"
-    )
+    AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (), _commandPool, VK_OBJECT_TYPE_COMMAND_POOL, "Light pass" )
 
     VkExtent2D const &resolution = gBuffer.GetResolution ();
 
@@ -45,7 +41,7 @@ bool LightPass::Init ( android_vulkan::Renderer &renderer,
             LightVolumeDescriptorSetLayout {},
             sizeof ( PointLightLightupProgram::VolumeData ),
             0U,
-            "pbr::LightPass::_lightVolumeBufferPool"
+            "Light pass light volume"
         );
 }
 

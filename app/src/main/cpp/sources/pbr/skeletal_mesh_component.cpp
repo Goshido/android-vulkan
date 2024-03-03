@@ -328,12 +328,7 @@ bool SkeletalMeshComponent::Init ( lua_State &vm, android_vulkan::Renderer &rend
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device,
-        _cbInfo._commandPool,
-        VK_OBJECT_TYPE_COMMAND_POOL,
-        "pbr::SkeletalMeshComponent::_commandPool"
-    )
-
+    AV_SET_VULKAN_OBJECT_NAME ( device, _cbInfo._commandPool, VK_OBJECT_TYPE_COMMAND_POOL, "Skeletal mesh component" )
     return AllocateCommandBuffers ( INITIAL_COMMAND_BUFFERS ) && _skinPool.Init ( device );
 }
 

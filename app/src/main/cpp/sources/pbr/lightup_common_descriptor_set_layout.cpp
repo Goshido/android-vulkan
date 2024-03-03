@@ -137,11 +137,7 @@ bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device,
-        _layout,
-        VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT,
-        "pbr::LightupCommonDescriptorSetLayout::_layout"
-    )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _layout, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, "Lightup common" )
 
     ++_references;
     return true;

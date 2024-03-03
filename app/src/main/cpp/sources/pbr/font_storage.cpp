@@ -38,7 +38,7 @@ bool FontStorage::StagingBuffer::Init ( android_vulkan::Renderer &renderer, uint
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device, _buffer, VK_OBJECT_TYPE_BUFFER, "pbr::FontStorage::StagingBuffer::_buffer" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _buffer, VK_OBJECT_TYPE_BUFFER, "Font storage staging" )
 
     VkMemoryRequirements memoryRequirements;
     vkGetBufferMemoryRequirements ( device, _buffer, &memoryRequirements );

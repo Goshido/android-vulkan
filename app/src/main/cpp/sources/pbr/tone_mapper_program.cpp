@@ -81,7 +81,7 @@ bool ToneMapperProgram::Init ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device, _pipeline, VK_OBJECT_TYPE_PIPELINE, "pbr::ToneMapperProgram::_pipeline" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _pipeline, VK_OBJECT_TYPE_PIPELINE, "Tone mapper" )
     DestroyShaderModules ( device );
     return true;
 }
@@ -270,12 +270,7 @@ bool ToneMapperProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout )
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device,
-        _pipelineLayout,
-        VK_OBJECT_TYPE_PIPELINE_LAYOUT,
-        "pbr::ToneMapperProgram::_pipelineLayout"
-    )
-
+    AV_SET_VULKAN_OBJECT_NAME ( device, _pipelineLayout, VK_OBJECT_TYPE_PIPELINE_LAYOUT, "Tone mapper" )
     layout = _pipelineLayout;
     return true;
 }

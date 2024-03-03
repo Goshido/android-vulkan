@@ -68,11 +68,7 @@ bool MaterialPool::Init ( VkDevice device, DefaultTextureManager const &defaultT
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device,
-        _descriptorPool,
-        VK_OBJECT_TYPE_DESCRIPTOR_POOL,
-        "pbr::MaterialPool::_descriptorPool"
-    )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _descriptorPool, VK_OBJECT_TYPE_DESCRIPTOR_POOL, "Material pool" )
 
     _descriptorSets.resize ( MATERIALS );
     VkDescriptorSet* descriptorSets = _descriptorSets.data ();

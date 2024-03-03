@@ -89,7 +89,7 @@ bool UIProgram::Init ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device, _pipeline, VK_OBJECT_TYPE_PIPELINE, "pbr::UIProgram::_pipeline" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _pipeline, VK_OBJECT_TYPE_PIPELINE, "UI" )
     DestroyShaderModules ( device );
     return true;
 }
@@ -295,12 +295,7 @@ bool UIProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcep
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device,
-        _pipelineLayout,
-        VK_OBJECT_TYPE_PIPELINE_LAYOUT,
-        "pbr::UIProgram::_pipelineLayout"
-    )
-
+    AV_SET_VULKAN_OBJECT_NAME ( device, _pipelineLayout, VK_OBJECT_TYPE_PIPELINE_LAYOUT, "UI" )
     layout = _pipelineLayout;
     return true;
 }

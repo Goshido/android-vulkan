@@ -66,7 +66,7 @@ bool PointLightPass::Init ( android_vulkan::Renderer &renderer,
             PointLightShadowmapGeneratorDescriptorSetLayout {},
             sizeof ( PointLightShadowmapGeneratorProgram::InstanceData ),
             0U,
-            "pbr::PointLightPass::_shadowmapBufferPool"
+            "Point light pass shadowmap"
         ) &&
 
         _lightup.Init ( renderer, lightupRenderPass, 1U, resolution );

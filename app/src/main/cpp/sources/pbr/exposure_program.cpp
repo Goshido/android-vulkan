@@ -48,7 +48,7 @@ bool ExposureProgram::Init ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device, _pipeline, VK_OBJECT_TYPE_PIPELINE, "pbr::ExposureProgram::_pipeline" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _pipeline, VK_OBJECT_TYPE_PIPELINE, "Exposure" )
     DestroyShaderModule ( device );
     return true;
 }
@@ -174,11 +174,7 @@ bool ExposureProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) n
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device,
-        _pipelineLayout,
-        VK_OBJECT_TYPE_PIPELINE_LAYOUT,
-        "pbr::ExposureProgram::_pipelineLayout"
-    )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _pipelineLayout, VK_OBJECT_TYPE_PIPELINE_LAYOUT, "Exposure" )
 
     layout = _pipelineLayout;
     return true;

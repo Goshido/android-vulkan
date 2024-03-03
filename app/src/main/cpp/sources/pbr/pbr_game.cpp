@@ -248,7 +248,7 @@ bool PBRGame::UploadGPUContent ( android_vulkan::Renderer &renderer ) noexcept
         "Can't run upload commands"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     for ( auto &component : _renderableComponents )

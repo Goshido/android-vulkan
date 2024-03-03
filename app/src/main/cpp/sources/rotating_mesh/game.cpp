@@ -77,7 +77,7 @@ bool Game::CreateSamplers ( VkDevice device ) noexcept
         "Can't create sampler"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_SET_VULKAN_OBJECT_NAME ( device, _sampler, VK_OBJECT_TYPE_SAMPLER, "Game::_sampler" )
@@ -123,7 +123,7 @@ bool Game::CreateCommonTextures ( android_vulkan::Renderer &renderer, VkCommandB
             VK_NULL_HANDLE
         );
 
-        if ( !result )
+        if ( !result ) [[unlikely]]
         {
             return false;
         }
@@ -139,7 +139,7 @@ bool Game::CreateCommonTextures ( android_vulkan::Renderer &renderer, VkCommandB
         VK_NULL_HANDLE
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     Drawcall &thirdMaterial = _drawcalls[ 2U ];
@@ -152,7 +152,7 @@ bool Game::CreateCommonTextures ( android_vulkan::Renderer &renderer, VkCommandB
         VK_NULL_HANDLE
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     Drawcall &firstMaterial = _drawcalls[ 0U ];
@@ -171,12 +171,7 @@ bool Game::CreateCommonTextures ( android_vulkan::Renderer &renderer, VkCommandB
 
 bool Game::CreateMeshes ( android_vulkan::Renderer &renderer, VkCommandBuffer* commandBuffers ) noexcept
 {
-    constexpr char const* meshFiles[ MATERIAL_COUNT ] =
-        {
-            MATERIAL_1_MESH,
-            MATERIAL_2_MESH,
-            MATERIAL_3_MESH,
-        };
+    constexpr char const* meshFiles[ MATERIAL_COUNT ] = { MATERIAL_1_MESH, MATERIAL_2_MESH, MATERIAL_3_MESH };
 
     for ( size_t i = 0U; i < MATERIAL_COUNT; ++i )
     {
@@ -186,7 +181,7 @@ bool Game::CreateMeshes ( android_vulkan::Renderer &renderer, VkCommandBuffer* c
             VK_NULL_HANDLE
         );
 
-        if ( result )
+        if ( result ) [[likely]]
             continue;
 
         return false;
@@ -284,7 +279,7 @@ bool Game::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) noex
         "Can't begin command buffer"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     VkDescriptorSet onceDS = _onceDS[ commandBufferIndex ];
@@ -326,7 +321,7 @@ bool Game::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) noex
         "Can't end command buffer"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     constexpr VkPipelineStageFlags waitStage =
@@ -353,7 +348,7 @@ bool Game::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) noex
         "Can't submit command buffer"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     return EndFrame ( renderer, static_cast<uint32_t> ( imageIndex ) );
@@ -427,7 +422,7 @@ bool Game::BeginFrame ( android_vulkan::Renderer &renderer, size_t &imageIndex, 
         "Can't get presentation image index"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     imageIndex = static_cast<size_t> ( i );
@@ -500,7 +495,7 @@ bool Game::CreateCommandPool ( android_vulkan::Renderer &renderer ) noexcept
             "Can't create render target acquired semaphore"
         );
 
-        if ( !result )
+        if ( !result ) [[unlikely]]
             return false;
 
         AV_SET_VULKAN_OBJECT_NAME ( device, info._acquire, VK_OBJECT_TYPE_SEMAPHORE, "Frame in flight #%zu", i )
@@ -634,19 +629,19 @@ bool Game::CreateCommonDescriptorSetLayouts ( android_vulkan::Renderer &renderer
 
 void Game::DestroyCommonDescriptorSetLayouts ( VkDevice device ) noexcept
 {
-    if ( _fixedDSLayout != VK_NULL_HANDLE )
+    if ( _fixedDSLayout != VK_NULL_HANDLE ) [[likely]]
     {
         vkDestroyDescriptorSetLayout ( device, _fixedDSLayout, nullptr );
         _fixedDSLayout = VK_NULL_HANDLE;
     }
 
-    if ( _materialDSLayout != VK_NULL_HANDLE )
+    if ( _materialDSLayout != VK_NULL_HANDLE ) [[likely]]
     {
         vkDestroyDescriptorSetLayout ( device, _materialDSLayout, nullptr );
         _materialDSLayout = VK_NULL_HANDLE;
     }
 
-    if ( _onceDSLayout == VK_NULL_HANDLE )
+    if ( _onceDSLayout == VK_NULL_HANDLE ) [[unlikely]]
         return;
 
     vkDestroyDescriptorSetLayout ( device, _onceDSLayout, nullptr );
@@ -660,7 +655,6 @@ void Game::DestroyDescriptorSet ( VkDevice device ) noexcept
 
     vkDestroyDescriptorPool ( device, _descriptorPool, nullptr );
     _descriptorPool = VK_NULL_HANDLE;
-    AV_UNREGISTER_DESCRIPTOR_POOL ( "Game::_descriptorPool" )
 }
 
 void Game::DestroyMeshes ( android_vulkan::Renderer &renderer ) noexcept

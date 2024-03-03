@@ -42,7 +42,11 @@ bool GeometryPass::Init ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_DESCRIPTOR_POOL ( "pbr::GeometryPass::_descriptorPool" )
+    AV_SET_VULKAN_OBJECT_NAME ( device,
+        _descriptorPool,
+        VK_OBJECT_TYPE_DESCRIPTOR_POOL,
+        "pbr::GeometryPass::_descriptorPool"
+    )
 
     VkDescriptorSetLayout layout = _descriptorSetLayout.GetLayout ();
 
@@ -63,6 +67,8 @@ bool GeometryPass::Init ( android_vulkan::Renderer &renderer,
 
     if ( !result ) [[unlikely]]
         return false;
+
+    AV_SET_VULKAN_OBJECT_NAME ( device, _descriptorSet, VK_OBJECT_TYPE_DESCRIPTOR_SET, "Geometry pass sampler" )
 
     VkDescriptorImageInfo const samplerInfo
     {
@@ -107,14 +113,13 @@ void GeometryPass::Destroy ( android_vulkan::Renderer &renderer ) noexcept
     _descriptorSetLayout.Destroy ( device );
     _stippleSubpass.Destroy ( device );
     _opaqueSubpass.Destroy ( device );
-    _uniformPool.Destroy ( renderer, "pbr::GeometryPass::_uniformPool" );
+    _uniformPool.Destroy ( renderer );
     _materialPool.Destroy ( device );
 
     if ( _descriptorPool == VK_NULL_HANDLE )
         return;
 
     vkDestroyDescriptorPool ( device, _descriptorPool, nullptr );
-    AV_UNREGISTER_DESCRIPTOR_POOL ( "pbr::GeometryPass::_descriptorPool" )
     _descriptorPool = VK_NULL_HANDLE;
 }
 

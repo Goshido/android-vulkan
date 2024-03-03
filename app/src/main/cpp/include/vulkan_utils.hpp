@@ -3,7 +3,7 @@
 
 
 // Sanity check
-#if defined ( ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS ) && \
+#if defined ( ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS ) &&       \
     defined ( ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION )
 
 #error ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS and ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION \
@@ -27,57 +27,11 @@ GX_RESTORE_WARNING_STATE
 #if !defined ( ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS ) &&      \
     !defined ( ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION )
 
-#define AV_REGISTER_DESCRIPTOR_POOL(where)
-#define AV_UNREGISTER_DESCRIPTOR_POOL(where)
-
-#define AV_REGISTER_DEVICE_MEMORY(where)
-#define AV_UNREGISTER_DEVICE_MEMORY(where)
-
-#define AV_REGISTER_IMAGE(where)
-#define AV_UNREGISTER_IMAGE(where)
-
-#define AV_REGISTER_IMAGE_VIEW(where)
-#define AV_UNREGISTER_IMAGE_VIEW(where)
-
-
-
-
-
-
-
-
-
-
 #define AV_SET_VULKAN_OBJECT_NAME(device, handle, type, ...)
 
 #else
 
-#include <GXCommon/GXWarning.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <string>
 #include <vulkan/vulkan.h>
-
-GX_RESTORE_WARNING_STATE
-
-#define AV_REGISTER_DESCRIPTOR_POOL(where) android_vulkan::RegisterDescriptorPool ( where );
-#define AV_UNREGISTER_DESCRIPTOR_POOL(where) android_vulkan::UnregisterDescriptorPool ( where );
-
-#define AV_REGISTER_DEVICE_MEMORY(where) android_vulkan::RegisterDeviceMemory ( where );
-#define AV_UNREGISTER_DEVICE_MEMORY(where) android_vulkan::UnregisterDeviceMemory ( where );
-
-#define AV_REGISTER_IMAGE(where) android_vulkan::RegisterImage ( where );
-#define AV_UNREGISTER_IMAGE(where) android_vulkan::UnregisterImage ( where );
-
-#define AV_REGISTER_IMAGE_VIEW(where) android_vulkan::RegisterImageView ( where );
-#define AV_UNREGISTER_IMAGE_VIEW(where) android_vulkan::UnregisterImageView ( where );
-
-
-
-
-
-
 
 
 #define AV_SET_VULKAN_OBJECT_NAME(device, handle, type, ...)                                                        \
@@ -88,31 +42,6 @@ GX_RESTORE_WARNING_STATE
 }
 
 namespace android_vulkan {
-
-void RegisterDescriptorPool ( std::string &&where );
-void UnregisterDescriptorPool ( std::string &&where );
-
-void RegisterDeviceMemory ( std::string &&where );
-void UnregisterDeviceMemory ( std::string &&where );
-
-void RegisterImage ( std::string &&where );
-void UnregisterImage ( std::string &&where );
-
-void RegisterImageView ( std::string &&where );
-void UnregisterImageView ( std::string &&where );
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // Initialization is based on article
 // https://www.saschawillems.de/blog/2016/05/28/tutorial-on-using-vulkans-vk_ext_debug_marker-with-renderdoc/

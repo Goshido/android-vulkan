@@ -50,7 +50,7 @@ void UniformBufferPoolManager::IssueSync ( VkDevice device, VkCommandBuffer comm
     VkWriteDescriptorSet const* writeSets = _writeSets.data ();
     vkUpdateDescriptorSets ( device, static_cast<uint32_t> ( available ), writeSets + _uniformBaseIndex, 0U, nullptr );
 
-    if ( more < 1U )
+    if ( more < 1U ) [[unlikely]]
         return;
 
     vkCmdPipelineBarrier ( commandBuffer,
@@ -121,9 +121,10 @@ bool UniformBufferPoolManager::Init ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_DESCRIPTOR_POOL ( name )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _descriptorPool, VK_OBJECT_TYPE_DESCRIPTOR_POOL, "%s", name )
 
     _descriptorSets.resize ( setCount, VK_NULL_HANDLE );
+    VkDescriptorSet* descriptorSet = _descriptorSets.data ();
     std::vector<VkDescriptorSetLayout> const layouts ( setCount, descriptorSetLayout.GetLayout () );
 
     VkDescriptorSetAllocateInfo const allocateInfo
@@ -136,13 +137,29 @@ bool UniformBufferPoolManager::Init ( android_vulkan::Renderer &renderer,
     };
 
     result = android_vulkan::Renderer::CheckVkResult (
-        vkAllocateDescriptorSets ( device, &allocateInfo, _descriptorSets.data () ),
+        vkAllocateDescriptorSets ( device, &allocateInfo, descriptorSet ),
         "pbr::UniformBufferPoolManager::Init",
         "Can't allocate descriptor sets"
     );
 
     if ( !result ) [[unlikely]]
         return false;
+
+#if defined ( ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS ) ||       \
+    defined ( ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION )
+
+    for ( size_t i = 0U; i < setCount; ++i )
+    {
+        AV_SET_VULKAN_OBJECT_NAME ( device,
+            descriptorSet[ i ],
+            VK_OBJECT_TYPE_DESCRIPTOR_SET,
+            "%s #%zu",
+            name,
+            i
+        )
+    }
+
+#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS || ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
 
     // Initialize all immutable constant fields.
 
@@ -195,7 +212,7 @@ bool UniformBufferPoolManager::Init ( android_vulkan::Renderer &renderer,
         _barriers[ i ].buffer = buffer;
 
         VkWriteDescriptorSet &uniformWriteSet = _writeSets[ i ];
-        uniformWriteSet.dstSet = _descriptorSets[ i ];
+        uniformWriteSet.dstSet = descriptorSet[ i ];
         uniformWriteSet.pBufferInfo = &bufferInfo;
     }
 
@@ -204,14 +221,12 @@ bool UniformBufferPoolManager::Init ( android_vulkan::Renderer &renderer,
     return true;
 }
 
-void UniformBufferPoolManager::Destroy ( android_vulkan::Renderer &renderer,
-    [[maybe_unused]] char const* name ) noexcept
+void UniformBufferPoolManager::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 {
-    if ( _descriptorPool != VK_NULL_HANDLE )
+    if ( _descriptorPool != VK_NULL_HANDLE ) [[likely]]
     {
         vkDestroyDescriptorPool ( renderer.GetDevice (), _descriptorPool, nullptr );
         _descriptorPool = VK_NULL_HANDLE;
-        AV_UNREGISTER_DESCRIPTOR_POOL ( name )
     }
 
     auto const clean = [] ( auto &vector ) noexcept {

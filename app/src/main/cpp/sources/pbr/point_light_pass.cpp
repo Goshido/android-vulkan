@@ -91,7 +91,7 @@ void PointLightPass::Destroy ( android_vulkan::Renderer &renderer ) noexcept
         _shadowmaps.clear ();
     }
 
-    _shadowmapBufferPool.Destroy ( renderer, "pbr::PointLightPass::_shadowmapBufferPool" );
+    _shadowmapBufferPool.Destroy ( renderer );
     _shadowmapProgram.Destroy ( device );
 
     if ( _shadowmapRenderPass == VK_NULL_HANDLE )

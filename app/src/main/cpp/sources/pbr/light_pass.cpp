@@ -53,7 +53,7 @@ void LightPass::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 {
     VkDevice device = renderer.GetDevice ();
 
-    _volumeBufferPool.Destroy ( renderer, "pbr::LightPass::_lightVolumeBufferPool" );
+    _volumeBufferPool.Destroy ( renderer );
     _unitCube.FreeResources ( renderer );
 
     _reflectionLocalPass.Destroy ( renderer );

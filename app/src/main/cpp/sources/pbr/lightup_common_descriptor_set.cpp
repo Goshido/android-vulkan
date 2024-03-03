@@ -76,7 +76,11 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_DESCRIPTOR_POOL ( "pbr::LightupCommonDescriptorSet::_descriptorPool" )
+    AV_SET_VULKAN_OBJECT_NAME ( device,
+        _descriptorPool,
+        VK_OBJECT_TYPE_DESCRIPTOR_POOL,
+        "pbr::LightupCommonDescriptorSet::_descriptorPool"
+    )
 
     if ( !_layout.Init ( device ) ) [[unlikely]]
         return false;
@@ -101,6 +105,14 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
 
     if ( !result ) [[unlikely]]
         return false;
+
+#if defined ( ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS ) ||       \
+    defined ( ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION )
+
+    for ( size_t i = 0U; i < DUAL_COMMAND_BUFFER; ++i )
+        AV_SET_VULKAN_OBJECT_NAME ( device, _sets[ i ], VK_OBJECT_TYPE_DESCRIPTOR_SET, "Lightup common [FIF ##%zu]", i )
+
+#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS || ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
 
     if ( !_uniforms.Init ( renderer, sizeof ( LightLightupBaseProgram::ViewData ) ) ) [[unlikely]]
         return false;
@@ -401,7 +413,7 @@ void LightupCommonDescriptorSet::Destroy ( android_vulkan::Renderer &renderer ) 
     _brdfLUT.FreeResources ( renderer );
     _uniforms.Destroy ( renderer );
 
-    if ( _pipelineLayout != VK_NULL_HANDLE )
+    if ( _pipelineLayout != VK_NULL_HANDLE ) [[likely]]
     {
         vkDestroyPipelineLayout ( device, _pipelineLayout, nullptr );
         _pipelineLayout = VK_NULL_HANDLE;
@@ -409,12 +421,11 @@ void LightupCommonDescriptorSet::Destroy ( android_vulkan::Renderer &renderer ) 
 
     _layout.Destroy ( device );
 
-    if ( _descriptorPool == VK_NULL_HANDLE )
+    if ( _descriptorPool == VK_NULL_HANDLE ) [[unlikely]]
         return;
 
     vkDestroyDescriptorPool ( device, _descriptorPool, nullptr );
     _descriptorPool = VK_NULL_HANDLE;
-    AV_UNREGISTER_DESCRIPTOR_POOL ( "pbr::LightupCommonDescriptorSet::_descriptorPool" )
 }
 
 void LightupCommonDescriptorSet::OnFreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept

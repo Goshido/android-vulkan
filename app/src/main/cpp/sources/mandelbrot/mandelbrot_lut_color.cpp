@@ -45,15 +45,13 @@ void MandelbrotLUTColor::OnDestroyDevice ( android_vulkan::Renderer &renderer ) 
 
 bool MandelbrotLUTColor::CreatePipelineLayout ( VkDevice device ) noexcept
 {
-    constexpr VkDescriptorSetLayoutBinding const binding[]
+    constexpr VkDescriptorSetLayoutBinding binding
     {
-        {
-            .binding = 0U,
-            .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-            .descriptorCount = 1U,
-            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
-            .pImmutableSamplers = nullptr
-        }
+        .binding = 0U,
+        .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+        .descriptorCount = 1U,
+        .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+        .pImmutableSamplers = nullptr
     };
 
     VkDescriptorSetLayoutCreateInfo const descriptorSetInfo
@@ -61,8 +59,8 @@ bool MandelbrotLUTColor::CreatePipelineLayout ( VkDevice device ) noexcept
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0U,
-        .bindingCount = static_cast<uint32_t> ( std::size ( binding ) ),
-        .pBindings = binding
+        .bindingCount = 1U,
+        .pBindings = &binding
     };
 
     bool result = android_vulkan::Renderer::CheckVkResult (
@@ -71,7 +69,7 @@ bool MandelbrotLUTColor::CreatePipelineLayout ( VkDevice device ) noexcept
         "Can't create descriptor set layout"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_SET_VULKAN_OBJECT_NAME ( device,
@@ -97,7 +95,7 @@ bool MandelbrotLUTColor::CreatePipelineLayout ( VkDevice device ) noexcept
         "Can't create pipeline layout"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_SET_VULKAN_OBJECT_NAME ( device,
@@ -111,13 +109,13 @@ bool MandelbrotLUTColor::CreatePipelineLayout ( VkDevice device ) noexcept
 
 void MandelbrotLUTColor::DestroyPipelineLayout ( VkDevice device ) noexcept
 {
-    if ( _pipelineLayout != VK_NULL_HANDLE )
+    if ( _pipelineLayout != VK_NULL_HANDLE ) [[likely]]
     {
         vkDestroyPipelineLayout ( device, _pipelineLayout, nullptr );
         _pipelineLayout = VK_NULL_HANDLE;
     }
 
-    if ( _descriptorSetLayout == VK_NULL_HANDLE )
+    if ( _descriptorSetLayout == VK_NULL_HANDLE ) [[unlikely]]
         return;
 
     vkDestroyDescriptorSetLayout ( device, _descriptorSetLayout, nullptr );
@@ -173,7 +171,7 @@ bool MandelbrotLUTColor::RecordCommandBuffer ( android_vulkan::Renderer &rendere
         "Can't begin command buffer"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     renderPassBeginInfo.framebuffer = framebuffer;
@@ -204,12 +202,10 @@ bool MandelbrotLUTColor::RecordCommandBuffer ( android_vulkan::Renderer &rendere
 
 bool MandelbrotLUTColor::CreateDescriptorSet (  android_vulkan::Renderer &renderer ) noexcept
 {
-    constexpr static VkDescriptorPoolSize const poolSize[]
+    constexpr static VkDescriptorPoolSize poolSize
     {
-        {
-            .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-            .descriptorCount = 1U
-        }
+        .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+        .descriptorCount = 1U
     };
 
     constexpr VkDescriptorPoolCreateInfo poolInfo
@@ -218,8 +214,8 @@ bool MandelbrotLUTColor::CreateDescriptorSet (  android_vulkan::Renderer &render
         .pNext = nullptr,
         .flags = 0U,
         .maxSets = 1U,
-        .poolSizeCount = static_cast<uint32_t> ( std::size ( poolSize ) ),
-        .pPoolSizes = poolSize
+        .poolSizeCount = 1U,
+        .pPoolSizes = &poolSize
     };
 
     VkDevice device = renderer.GetDevice ();
@@ -230,10 +226,14 @@ bool MandelbrotLUTColor::CreateDescriptorSet (  android_vulkan::Renderer &render
         "Can't create descriptor pool"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_DESCRIPTOR_POOL ( "MandelbrotLUTColor::_descriptorPool" )
+    AV_SET_VULKAN_OBJECT_NAME  ( device,
+        _descriptorPool,
+        VK_OBJECT_TYPE_DESCRIPTOR_POOL,
+        "MandelbrotLUTColor::_descriptorPool"
+    )
 
     VkDescriptorSetAllocateInfo const allocateInfo
     {
@@ -250,8 +250,10 @@ bool MandelbrotLUTColor::CreateDescriptorSet (  android_vulkan::Renderer &render
         "Can't create descriptor set"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
+
+    AV_SET_VULKAN_OBJECT_NAME ( device, _descriptorSet, VK_OBJECT_TYPE_DESCRIPTOR_SET, "Main" )
 
     VkDescriptorImageInfo const imageInfo
     {
@@ -280,14 +282,11 @@ bool MandelbrotLUTColor::CreateDescriptorSet (  android_vulkan::Renderer &render
 
 void MandelbrotLUTColor::DestroyDescriptorSet ( VkDevice device ) noexcept
 {
-    if ( _descriptorPool == VK_NULL_HANDLE )
+    if ( _descriptorPool == VK_NULL_HANDLE ) [[unlikely]]
         return;
 
     vkDestroyDescriptorPool ( device, _descriptorPool, nullptr );
-
     _descriptorPool = VK_NULL_HANDLE;
-    AV_UNREGISTER_DESCRIPTOR_POOL ( "MandelbrotLUTColor::_descriptorPool" )
-
     _descriptorSet = VK_NULL_HANDLE;
 }
 
@@ -329,10 +328,10 @@ bool MandelbrotLUTColor::CreateLUT ( android_vulkan::Renderer &renderer ) noexce
         "Can't create image"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_IMAGE ( "MandelbrotLUTColor::_lut" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _lut, VK_OBJECT_TYPE_IMAGE, "MandelbrotLUTColor::_lut" )
 
     VkMemoryRequirements requirements;
     vkGetImageMemoryRequirements ( device, _lut, &requirements );
@@ -344,17 +343,15 @@ bool MandelbrotLUTColor::CreateLUT ( android_vulkan::Renderer &renderer ) noexce
         "Can't allocate LUT memory (MandelbrotLUTColor::CreateLUT)"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
-
-    AV_REGISTER_DEVICE_MEMORY ( "MandelbrotLUTColor::_lutMemory" )
 
     result = android_vulkan::Renderer::CheckVkResult ( vkBindImageMemory ( device, _lut, _lutMemory, _lutOffset ),
         "MandelbrotLUTColor::_lutDeviceMemory",
         "Can't bind LUT memory to the image"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     VkImageViewCreateInfo const imageViewInfo
@@ -389,10 +386,10 @@ bool MandelbrotLUTColor::CreateLUT ( android_vulkan::Renderer &renderer ) noexce
         "Can't create image view"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_IMAGE_VIEW ( "MandelbrotLUTColor::_lutView" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _lutView, VK_OBJECT_TYPE_IMAGE_VIEW, "MandelbrotLUTColor::_lutView" )
 
     constexpr VkSamplerCreateInfo samplerInfo
     {
@@ -421,12 +418,12 @@ bool MandelbrotLUTColor::CreateLUT ( android_vulkan::Renderer &renderer ) noexce
         "Can't create sampler"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_SET_VULKAN_OBJECT_NAME ( device, _sampler, VK_OBJECT_TYPE_SAMPLER, "MandelbrotLUTColor::_sampler" )
 
-    if ( UploadLUTSamples ( renderer ) )
+    if ( UploadLUTSamples ( renderer ) ) [[likely]]
         return true;
 
     DestroyLUT ( renderer );
@@ -437,33 +434,30 @@ void MandelbrotLUTColor::DestroyLUT ( android_vulkan::Renderer &renderer  ) noex
 {
     VkDevice device = renderer.GetDevice ();
 
-    if ( _sampler != VK_NULL_HANDLE )
+    if ( _sampler != VK_NULL_HANDLE ) [[likely]]
     {
         vkDestroySampler ( device, _sampler, nullptr );
         _sampler = VK_NULL_HANDLE;
     }
 
-    if ( _lutView != VK_NULL_HANDLE )
+    if ( _lutView != VK_NULL_HANDLE ) [[likely]]
     {
         vkDestroyImageView ( device, _lutView, nullptr );
         _lutView = VK_NULL_HANDLE;
-        AV_UNREGISTER_IMAGE_VIEW ( "MandelbrotLUTColor::_lutView" )
     }
 
-    if ( _lut != VK_NULL_HANDLE )
+    if ( _lut != VK_NULL_HANDLE ) [[likely]]
     {
         vkDestroyImage ( device, _lut, nullptr );
         _lut = VK_NULL_HANDLE;
-        AV_UNREGISTER_IMAGE ( "MandelbrotLUTColor::_lut" )
     }
 
-    if ( _lutMemory == VK_NULL_HANDLE )
+    if ( _lutMemory == VK_NULL_HANDLE ) [[unlikely]]
         return;
 
     renderer.FreeMemory ( _lutMemory, _lutOffset );
     _lutMemory = VK_NULL_HANDLE;
     _lutOffset = std::numeric_limits<VkDeviceSize>::max ();
-    AV_UNREGISTER_DEVICE_MEMORY ( "MandelbrotLUTColor::_lutMemory" )
 }
 
 bool MandelbrotLUTColor::UploadLUTSamples ( android_vulkan::Renderer &renderer ) noexcept
@@ -489,7 +483,7 @@ bool MandelbrotLUTColor::UploadLUTSamples ( android_vulkan::Renderer &renderer )
         "Can't create buffer"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     AV_SET_VULKAN_OBJECT_NAME ( device,
@@ -519,17 +513,14 @@ bool MandelbrotLUTColor::UploadLUTSamples ( android_vulkan::Renderer &renderer )
         if ( transferMemory != VK_NULL_HANDLE )
         {
             renderer.FreeMemory ( transferMemory, transferOffset );
-            AV_UNREGISTER_DEVICE_MEMORY ( "MandelbrotLUTColor::UploadLUTSamples::transferMemory" )
         }
     };
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
     {
         freeTransferResource ();
         return false;
     }
-
-    AV_REGISTER_DEVICE_MEMORY ( "MandelbrotLUTColor::UploadLUTSamples::transferMemory" )
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkBindBufferMemory ( device, transfer, transferMemory, transferOffset ),
@@ -537,7 +528,7 @@ bool MandelbrotLUTColor::UploadLUTSamples ( android_vulkan::Renderer &renderer )
         "Can't bind memory to the transfer buffer"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
     {
         freeTransferResource ();
         return false;
@@ -552,7 +543,7 @@ bool MandelbrotLUTColor::UploadLUTSamples ( android_vulkan::Renderer &renderer )
         "Can't map transfer memory"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
     {
         freeTransferResource ();
         return false;
@@ -578,7 +569,7 @@ bool MandelbrotLUTColor::UploadLUTSamples ( android_vulkan::Renderer &renderer )
         "Can't create common buffer"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
     {
         freeTransferResource ();
         return false;
@@ -597,7 +588,7 @@ bool MandelbrotLUTColor::UploadLUTSamples ( android_vulkan::Renderer &renderer )
         "Can't begin command buffer"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
     {
         freeTransferResource ();
         return false;
@@ -699,7 +690,7 @@ bool MandelbrotLUTColor::UploadLUTSamples ( android_vulkan::Renderer &renderer )
         "Can't finish command buffer"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
     {
         freeTransferResource ();
         return false;
@@ -726,7 +717,7 @@ bool MandelbrotLUTColor::UploadLUTSamples ( android_vulkan::Renderer &renderer )
         "Can't submit command buffer"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
     {
         freeTransferResource ();
         return false;

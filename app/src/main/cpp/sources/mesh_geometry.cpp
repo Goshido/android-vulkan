@@ -95,7 +95,6 @@ void MeshGeometry::FreeTransferResources ( Renderer &renderer ) noexcept
     renderer.FreeMemory ( _transferBufferMemory, _transferBufferOffset );
     _transferBufferMemory = VK_NULL_HANDLE;
     _transferBufferOffset = std::numeric_limits<VkDeviceSize>::max ();
-    AV_UNREGISTER_DEVICE_MEMORY ( "MeshGeometry::_transferBufferMemory" )
 }
 
 GXAABB const &MeshGeometry::GetBounds () const noexcept
@@ -249,7 +248,6 @@ void MeshGeometry::FreeResourceInternal ( Renderer &renderer ) noexcept
         renderer.FreeMemory ( _indexBufferMemory, _indexBufferOffset );
         _indexBufferMemory = VK_NULL_HANDLE;
         _indexBufferOffset = std::numeric_limits<VkDeviceSize>::max ();
-        AV_UNREGISTER_DEVICE_MEMORY ( "MeshGeometry::_indexBufferMemory" )
     }
 
     if ( _vertexBufferMemory == VK_NULL_HANDLE )
@@ -258,7 +256,6 @@ void MeshGeometry::FreeResourceInternal ( Renderer &renderer ) noexcept
     renderer.FreeMemory ( _vertexBufferMemory, _vertexBufferOffset );
     _vertexBufferMemory = VK_NULL_HANDLE;
     _vertexBufferOffset = std::numeric_limits<VkDeviceSize>::max ();
-    AV_UNREGISTER_DEVICE_MEMORY ( "MeshGeometry::_vertexBufferMemory" )
 }
 
 bool MeshGeometry::LoadFromMesh ( std::string &&fileName,
@@ -429,8 +426,6 @@ bool MeshGeometry::UploadComplex ( uint8_t const* data,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_DEVICE_MEMORY ( "MeshGeometry::_indexBufferMemory" )
-
     result = Renderer::CheckVkResult (
         vkBindBufferMemory ( device, _indexBuffer, _indexBufferMemory, _indexBufferOffset ),
         "MeshGeometry::UploadComplex",
@@ -469,8 +464,6 @@ bool MeshGeometry::UploadComplex ( uint8_t const* data,
 
     if ( !result ) [[unlikely]]
         return false;
-
-    AV_REGISTER_DEVICE_MEMORY ( "MeshGeometry::_vertexBufferMemory" )
 
     result = Renderer::CheckVkResult (
         vkBindBufferMemory ( device, _vertexBuffer, _vertexBufferMemory, _vertexBufferOffset ),
@@ -566,8 +559,6 @@ bool MeshGeometry::UploadInternal ( size_t numUploads,
 
     if ( !result ) [[unlikely]]
         return false;
-
-    AV_REGISTER_DEVICE_MEMORY ( "MeshGeometry::_transferBufferMemory" )
 
     result = Renderer::CheckVkResult (
         vkBindBufferMemory ( device, _transferBuffer, _transferBufferMemory, _transferBufferOffset ),
@@ -734,8 +725,6 @@ bool MeshGeometry::UploadSimple ( uint8_t const* data,
 
     if ( !result ) [[unlikely]]
         return false;
-
-    AV_REGISTER_DEVICE_MEMORY ( "MeshGeometry::_vertexBufferMemory" )
 
     result = Renderer::CheckVkResult (
         vkBindBufferMemory ( device, _vertexBuffer, _vertexBufferMemory, _vertexBufferOffset ),

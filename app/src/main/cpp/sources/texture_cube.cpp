@@ -106,8 +106,6 @@ bool TextureCube::UploadData ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_DEVICE_MEMORY ( "TextureCube::_transferMemory" )
-
     result = Renderer::CheckVkResult (
         vkBindBufferMemory ( device, _transfer, _transferMemory, _transferOffset ),
         "TextureCube::UploadData",
@@ -315,27 +313,24 @@ void TextureCube::FreeResources ( Renderer &renderer ) noexcept
     FreeTransferResources ( renderer );
     VkDevice device = renderer.GetDevice ();
 
-    if ( _imageView != VK_NULL_HANDLE )
+    if ( _imageView != VK_NULL_HANDLE ) [[likely]]
     {
         vkDestroyImageView ( device, _imageView, nullptr );
         _imageView = VK_NULL_HANDLE;
-        AV_UNREGISTER_IMAGE_VIEW ( "TextureCube::_imageView" )
     }
 
-    if ( _image != VK_NULL_HANDLE )
+    if ( _image != VK_NULL_HANDLE ) [[likely]]
     {
         vkDestroyImage ( device, _image, nullptr );
         _image = VK_NULL_HANDLE;
-        AV_UNREGISTER_IMAGE ( "TextureCube::_image" )
     }
 
-    if ( _imageMemory == VK_NULL_HANDLE )
+    if ( _imageMemory == VK_NULL_HANDLE ) [[unlikely]]
         return;
 
     renderer.FreeMemory ( _imageMemory, _imageOffset );
     _imageMemory = VK_NULL_HANDLE;
     _imageOffset = std::numeric_limits<VkDeviceSize>::max ();
-    AV_UNREGISTER_DEVICE_MEMORY ( "TextureCube::_imageMemory" )
 }
 
 void TextureCube::FreeTransferResources ( Renderer &renderer ) noexcept
@@ -352,7 +347,6 @@ void TextureCube::FreeTransferResources ( Renderer &renderer ) noexcept
     renderer.FreeMemory ( _transferMemory, _transferOffset );
     _transferMemory = VK_NULL_HANDLE;
     _transferOffset = std::numeric_limits<VkDeviceSize>::max ();
-    AV_UNREGISTER_DEVICE_MEMORY ( "TextureCube::_transferMemory" )
 }
 
 [[maybe_unused]] VkFormat TextureCube::GetFormat () const noexcept
@@ -424,7 +418,7 @@ bool TextureCube::CreateImageResources ( Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_IMAGE ( "TextureCube::_image" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _image, VK_OBJECT_TYPE_IMAGE, "TextureCube::_image" )
 
     VkMemoryRequirements memoryRequirements;
     vkGetImageMemoryRequirements ( device, _image, &memoryRequirements );
@@ -438,8 +432,6 @@ bool TextureCube::CreateImageResources ( Renderer &renderer,
 
     if ( !result ) [[unlikely]]
         return false;
-
-    AV_REGISTER_DEVICE_MEMORY ( "TextureCube::_imageMemory" )
 
     result = Renderer::CheckVkResult ( vkBindImageMemory ( device, _image, _imageMemory, _imageOffset ),
         "TextureCube::CreateImageResources",
@@ -484,7 +476,7 @@ bool TextureCube::CreateImageResources ( Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_IMAGE_VIEW ( "TextureCube::_imageView" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _imageView, VK_OBJECT_TYPE_IMAGE_VIEW, "TextureCube::_imageView" )
     return true;
 }
 

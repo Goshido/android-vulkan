@@ -70,8 +70,6 @@ bool AnimationGraph::Buffer::Init ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_DEVICE_MEMORY ( "pbr::AnimationGraph::Buffer::_memory" )
-
     return android_vulkan::Renderer::CheckVkResult (
         vkBindBufferMemory ( device, _buffer, _memory, _offset ),
         "pbr::AnimationGraph::Buffer::Init",
@@ -98,7 +96,6 @@ void AnimationGraph::Buffer::Destroy ( bool isMapped ) noexcept
     _renderer->FreeMemory ( _memory, _offset );
     _memory = VK_NULL_HANDLE;
     _offset = std::numeric_limits<VkDeviceSize>::max ();
-    AV_UNREGISTER_DEVICE_MEMORY ( "pbr::AnimationGraph::Buffer::_memory" )
 }
 
 //----------------------------------------------------------------------------------------------------------------------

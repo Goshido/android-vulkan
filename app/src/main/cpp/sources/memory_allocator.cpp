@@ -97,7 +97,7 @@ bool MemoryAllocator::Chunk::Init ( VkDevice device, size_t memoryTypeIndex ) no
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_DEVICE_MEMORY ( "MemoryAllocator::Chunk::_memory" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _memory, VK_OBJECT_TYPE_DEVICE_MEMORY, "Device memory" )
 
     _blockChain = new Block
     {
@@ -122,8 +122,6 @@ void MemoryAllocator::Chunk::Destroy ( VkDevice device ) noexcept
 
     vkFreeMemory ( device, _memory, nullptr );
     _memory = VK_NULL_HANDLE;
-    AV_UNREGISTER_DEVICE_MEMORY ( "MemoryAllocator::Chunk::_memory" )
-
     Block* b = _blockChain;
 
     while ( b )

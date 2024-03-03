@@ -102,10 +102,10 @@ bool GameAnalytic::CreateDescriptorSet ( android_vulkan::Renderer &renderer ) no
         "Can't create descriptor pool"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_DESCRIPTOR_POOL ( "Game::_descriptorPool" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _descriptorPool, VK_OBJECT_TYPE_DESCRIPTOR_POOL, "Game::_descriptorPool" )
 
     VkDescriptorSetAllocateInfo setAllocateInfo
     {
@@ -121,8 +121,10 @@ bool GameAnalytic::CreateDescriptorSet ( android_vulkan::Renderer &renderer ) no
         "Can't allocate descriptor set"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
+
+    AV_SET_VULKAN_OBJECT_NAME ( device, _fixedDS, VK_OBJECT_TYPE_DESCRIPTOR_SET, "Fixed" )
 
     VkDescriptorImageInfo const samplerInfo {
         .sampler = _sampler,
@@ -155,8 +157,16 @@ bool GameAnalytic::CreateDescriptorSet ( android_vulkan::Renderer &renderer ) no
         "Can't allocate material descriptor sets"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
+
+#if defined ( ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS ) ||       \
+    defined ( ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION )
+
+    for ( size_t i = 0U; i < MATERIAL_COUNT; ++i )
+        AV_SET_VULKAN_OBJECT_NAME ( device, _materialDS[ i ], VK_OBJECT_TYPE_DESCRIPTOR_SET, "Material #%zu", i )
+
+#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS || ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
 
     constexpr VkDescriptorImageInfo templateImageInfo {
         .sampler = VK_NULL_HANDLE,
@@ -183,7 +193,7 @@ bool GameAnalytic::CreateDescriptorSet ( android_vulkan::Renderer &renderer ) no
 
     for ( size_t i = 0U; i < MATERIAL_COUNT; ++i )
     {
-        Drawcall& drawcall = _drawcalls[ i ];
+        Drawcall &drawcall = _drawcalls[ i ];
 
         VkDescriptorSet ds = _materialDS[ i ];
         drawcall._descriptorSet = ds;
@@ -212,11 +222,24 @@ bool GameAnalytic::CreateDescriptorSet ( android_vulkan::Renderer &renderer ) no
     setAllocateInfo.descriptorSetCount = static_cast<uint32_t> ( DUAL_COMMAND_BUFFER );
     setAllocateInfo.pSetLayouts = onceLayouts.data ();
 
-    return android_vulkan::Renderer::CheckVkResult (
+    result =  android_vulkan::Renderer::CheckVkResult (
         vkAllocateDescriptorSets ( device, &setAllocateInfo, _onceDS ),
         "GameAnalytic::CreateDescriptorSet",
         "Can't allocate once descriptor sets"
     );
+
+    if ( !result ) [[unlikely]]
+        return false;
+
+#if defined ( ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS ) ||       \
+    defined ( ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION )
+
+    for ( size_t i = 0U; i < DUAL_COMMAND_BUFFER; ++i )
+        AV_SET_VULKAN_OBJECT_NAME ( device, _onceDS[ i ], VK_OBJECT_TYPE_DESCRIPTOR_SET, "Once [FIF #%zu]", i )
+
+#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS || ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
+
+    return true;
 }
 
 bool GameAnalytic::LoadGPUContent ( android_vulkan::Renderer &renderer, VkCommandPool commandPool ) noexcept
@@ -239,10 +262,10 @@ bool GameAnalytic::LoadGPUContent ( android_vulkan::Renderer &renderer, VkComman
         "Can't allocate command buffers"
     );
 
-    if ( !result || !CreateCommonTextures ( renderer, commandBuffers ) )
+    if ( !result || !CreateCommonTextures ( renderer, commandBuffers ) ) [[unlikely]]
         return false;
 
-    if ( !CreateMeshes ( renderer, commandBuffers + TEXTURE_COMMAND_BUFFERS ) )
+    if ( !CreateMeshes ( renderer, commandBuffers + TEXTURE_COMMAND_BUFFERS ) ) [[unlikely]]
         return false;
 
     result = android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( renderer.GetQueue () ),
@@ -250,7 +273,7 @@ bool GameAnalytic::LoadGPUContent ( android_vulkan::Renderer &renderer, VkComman
         "Can't run upload commands"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     for ( auto &item : _drawcalls )

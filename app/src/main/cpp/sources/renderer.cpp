@@ -1984,12 +1984,8 @@ bool Renderer::DeploySwapchain ( bool vSync ) noexcept
 
         if ( result ) [[likely]]
         {
+            AV_SET_VULKAN_OBJECT_NAME ( _device, imageView, VK_OBJECT_TYPE_IMAGE_VIEW, "Swapchin #%u", i )
             _swapchainImageViews.push_back ( imageView );
-
-            AV_REGISTER_IMAGE_VIEW (
-                "Renderer::_swapchainImageViews[ " + std::to_string ( static_cast<int> ( i ) ) + "U ]"
-            )
-
             continue;
         }
 
@@ -2005,13 +2001,7 @@ void Renderer::DestroySwapchain () noexcept
     size_t const count = _swapchainImageViews.size ();
 
     for ( size_t i = 0U; i < count; ++i )
-    {
         vkDestroyImageView ( _device, _swapchainImageViews[ i ], nullptr );
-
-        AV_UNREGISTER_IMAGE_VIEW (
-            "Renderer::_swapchainImageViews[ " + std::to_string ( static_cast<int> ( i ) ) + "U ]"
-        )
-    }
 
     vkDestroySwapchainKHR ( _device, _swapchain, nullptr );
     _swapchain = VK_NULL_HANDLE;

@@ -41,7 +41,7 @@ bool MaterialPool::Init ( VkDevice device, DefaultTextureManager const &defaultT
 
     constexpr size_t totalImages = MATERIALS * BIND_PER_SET;
 
-    VkDescriptorPoolSize const poolSizes[] =
+    constexpr VkDescriptorPoolSize const poolSizes[] =
     {
         {
             .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
@@ -68,7 +68,11 @@ bool MaterialPool::Init ( VkDevice device, DefaultTextureManager const &defaultT
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_DESCRIPTOR_POOL ( "pbr::MaterialPool::_descriptorPool" )
+    AV_SET_VULKAN_OBJECT_NAME ( device,
+        _descriptorPool,
+        VK_OBJECT_TYPE_DESCRIPTOR_POOL,
+        "pbr::MaterialPool::_descriptorPool"
+    )
 
     _descriptorSets.resize ( MATERIALS );
     VkDescriptorSet* descriptorSets = _descriptorSets.data ();
@@ -94,6 +98,14 @@ bool MaterialPool::Init ( VkDevice device, DefaultTextureManager const &defaultT
 
     if ( !result ) [[unlikely]]
         return false;
+
+#if defined ( ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS ) ||       \
+    defined ( ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION )
+
+    for ( size_t i = 0U; i < MATERIALS; ++i )
+        AV_SET_VULKAN_OBJECT_NAME ( device, descriptorSets[ i ], VK_OBJECT_TYPE_DESCRIPTOR_SET, "Material #%zu", i )
+
+#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS || ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
 
     // Initialize all immutable constant fields.
 
@@ -168,11 +180,10 @@ bool MaterialPool::Init ( VkDevice device, DefaultTextureManager const &defaultT
 
 void MaterialPool::Destroy ( VkDevice device ) noexcept
 {
-    if ( _descriptorPool != VK_NULL_HANDLE )
+    if ( _descriptorPool != VK_NULL_HANDLE ) [[likely]]
     {
         vkDestroyDescriptorPool ( device, _descriptorPool, nullptr );
         _descriptorPool = VK_NULL_HANDLE;
-        AV_UNREGISTER_DESCRIPTOR_POOL ( "pbr::MaterialPool::_descriptorPool" )
     }
 
     auto const clean = [] ( auto &vector ) noexcept {
@@ -201,7 +212,7 @@ void MaterialPool::IssueSync ( VkDevice device ) const noexcept
         nullptr
     );
 
-    if ( more > 0U )
+    if ( more > 0U ) [[unlikely]]
     {
         vkUpdateDescriptorSets ( device, static_cast<uint32_t> ( BIND_PER_SET * more ), writeSets, 0U, nullptr );
     }

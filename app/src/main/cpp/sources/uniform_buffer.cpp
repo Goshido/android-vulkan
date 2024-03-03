@@ -17,7 +17,6 @@ void UniformBuffer::FreeResources ( android_vulkan::Renderer &renderer ) noexcep
         renderer.FreeMemory ( _memory, _offset );
         _memory = VK_NULL_HANDLE;
         _offset = std::numeric_limits<VkDeviceSize>::max ();
-        AV_UNREGISTER_DEVICE_MEMORY ( "UniformBuffer::_memory" )
     }
 
     _size = 0U;
@@ -80,7 +79,6 @@ bool UniformBuffer::Init ( android_vulkan::Renderer &renderer, size_t size, size
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_DEVICE_MEMORY ( "pbr::UniformBufferPool::_memory" )
     VkDeviceSize offset = _offset;
 
     for ( size_t i = 0U; i < amount; ++i )

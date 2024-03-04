@@ -63,6 +63,8 @@ void SetVulkanObjectName ( VkDevice device, uint64_t handle, VkObjectType type, 
     AV_ASSERT ( result )
 }
 
+//----------------------------------------------------------------------------------------------------------------------
+
 VulkanGroup::VulkanGroup ( VkCommandBuffer commandBuffer ) noexcept:
     _commandBuffer ( commandBuffer )
 {

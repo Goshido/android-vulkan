@@ -947,14 +947,7 @@ VkExtent2D const &Renderer::GetViewportResolution () const noexcept
 
 bool Renderer::OnCreateSwapchain ( ANativeWindow &nativeWindow, bool vSync ) noexcept
 {
-    if ( !DeploySurface ( nativeWindow ) ) [[unlikely]]
-        return false;
-
-    if ( DeploySwapchain ( vSync ) ) [[likely]]
-        return true;
-
-    DestroySurface ();
-    return false;
+    return DeploySurface ( nativeWindow ) && DeploySwapchain ( vSync );
 }
 
 void Renderer::OnDestroySwapchain () noexcept
@@ -986,15 +979,6 @@ bool Renderer::OnCreateDevice ( float dpi ) noexcept
 
     if ( !physicalDeviceCount ) [[unlikely]]
     {
-
-#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
-
-        DestroyDebugFeatures ();
-
-#endif
-
-        DestroyInstance ();
-
         LogError ( "Renderer::OnCreateDevice - There is no any Vulkan physical device." );
         return false;
     }
@@ -1010,33 +994,14 @@ bool Renderer::OnCreateDevice ( float dpi ) noexcept
     );
 
     if ( !result ) [[unlikely]]
-    {
-
-#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
-
-        DestroyDebugFeatures ();
-
-#endif
-
-        DestroyInstance ();
         return false;
-    }
 
     for ( uint32_t i = 0U; i < physicalDeviceCount; ++i )
     {
-        if ( PrintPhysicalDeviceInfo ( i, deviceList[ i ] ) ) [[likely]]
-            continue;
-
-        _physicalDeviceInfo.clear ();
-
-#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
-
-        DestroyDebugFeatures ();
-
-#endif
-
-        DestroyInstance ();
-        return false;
+        if ( !PrintPhysicalDeviceInfo ( i, deviceList[ i ] ) ) [[unlikely]]
+        {
+            return false;
+        }
     }
 
     uint32_t physicalDeviceGroupCount = 0U;
@@ -1044,16 +1009,6 @@ bool Renderer::OnCreateDevice ( float dpi ) noexcept
 
     if ( !physicalDeviceGroupCount ) [[unlikely]]
     {
-        _physicalDeviceInfo.clear ();
-
-#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
-
-        DestroyDebugFeatures ();
-
-#endif
-
-        DestroyInstance ();
-
         LogError ( "Renderer::OnCreateDevice - There is no any Vulkan physical device groups." );
         return false;
     }
@@ -1072,48 +1027,27 @@ bool Renderer::OnCreateDevice ( float dpi ) noexcept
     );
 
     if ( !result ) [[unlikely]]
-    {
-        _physicalDeviceGroups.clear ();
-        _physicalDeviceInfo.clear ();
-
-#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
-
-        DestroyDebugFeatures ();
-
-#endif
-
-        DestroyInstance ();
         return false;
-    }
 
     for ( uint32_t i = 0U; i < physicalDeviceGroupCount; ++i )
         PrintPhysicalDeviceGroupInfo ( i, groupProps[ i ] );
 
-    if ( DeployDevice () ) [[likely]]
-    {
-        _dpi = dpi;
-        return true;
-    }
+    if ( !DeployDevice () ) [[unlikely]]
+        return false;
 
-    _physicalDeviceGroups.clear ();
-    _physicalDeviceInfo.clear ();
-
-#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
-
-    DestroyDebugFeatures ();
-
-#endif
-
-    DestroyInstance ();
-    return false;
+    _dpi = dpi;
+    return true;
 }
 
 void Renderer::OnDestroyDevice () noexcept
 {
-    if ( !CheckVkResult ( vkDeviceWaitIdle ( _device ), "Renderer::OnDestroyDevice", "Can't wait device idle" ) )
+    if ( _device != VK_NULL_HANDLE) [[likely]]
     {
-        [[unlikely]]
-        return;
+        if ( !CheckVkResult ( vkDeviceWaitIdle ( _device ), "Renderer::OnDestroyDevice", "Can't wait device idle" ) )
+        {
+            [[unlikely]]
+            return;
+        }
     }
 
     _physicalDeviceGroups.clear ();
@@ -1719,7 +1653,7 @@ bool Renderer::DeployInstance () noexcept
 
 void Renderer::DestroyInstance () noexcept
 {
-    if ( !_instance )
+    if ( _instance == VK_NULL_HANDLE ) [[unlikely]]
         return;
 
     vkDestroyInstance ( _instance, nullptr );
@@ -1756,10 +1690,7 @@ bool Renderer::DeploySurface ( ANativeWindow &nativeWindow ) noexcept
     );
 
     if ( !result ) [[unlikely]]
-    {
-        DestroySurface ();
         return false;
-    }
 
     PrintVkSurfaceCapabilities ( surfaceCapabilitiesKHR );
     _surfaceSize = surfaceCapabilitiesKHR.currentExtent;
@@ -1771,7 +1702,6 @@ bool Renderer::DeploySurface ( ANativeWindow &nativeWindow ) noexcept
             ResolveVkSurfaceTransform ( _surfaceTransform )
         );
 
-        DestroySurface ();
         return false;
     }
 
@@ -1801,15 +1731,10 @@ bool Renderer::DeploySurface ( ANativeWindow &nativeWindow ) noexcept
     );
 
     if ( !result ) [[unlikely]]
-    {
-        DestroySurface ();
         return false;
-    }
 
     if ( !isSupported ) [[unlikely]]
     {
-        DestroySurface ();
-
         LogError ( "Renderer::DeploySurface - Physical device does not support by Vulkan surface." );
         return false;
     }
@@ -1819,8 +1744,6 @@ bool Renderer::DeploySurface ( ANativeWindow &nativeWindow ) noexcept
 
     if ( !formatCount ) [[unlikely]]
     {
-        DestroySurface ();
-
         LogError ( "Renderer::DeploySurface - There is not any Vulkan surface formats." );
         return false;
     }
@@ -1837,10 +1760,7 @@ bool Renderer::DeploySurface ( ANativeWindow &nativeWindow ) noexcept
     );
 
     if ( !result ) [[unlikely]]
-    {
-        DestroySurface ();
         return false;
-    }
 
     for ( uint32_t i = 0U; i < formatCount; ++i )
         PrintVkSurfaceFormatKHRProp ( i, formatList[ i ] );
@@ -1850,6 +1770,9 @@ bool Renderer::DeploySurface ( ANativeWindow &nativeWindow ) noexcept
 
 void Renderer::DestroySurface () noexcept
 {
+    if ( _surface == VK_NULL_HANDLE ) [[unlikely]]
+        return;
+
     vkDestroySurfaceKHR ( _instance, _surface, nullptr );
     _surface = VK_NULL_HANDLE;
 }
@@ -1924,8 +1847,6 @@ bool Renderer::DeploySwapchain ( bool vSync ) noexcept
 
     if ( !imageCount ) [[unlikely]]
     {
-        DestroySwapchain ();
-
         LogError ( "Renderer::DeploySwapchain - There is no any swapchain images." );
         return false;
     }
@@ -1975,7 +1896,7 @@ bool Renderer::DeploySwapchain ( bool vSync ) noexcept
     for ( uint32_t i = 0U; i < imageCount; ++i )
     {
         imageViewCreateInfo.image = _swapchainImages[ i ];
-        VkImageView imageView = VK_NULL_HANDLE;
+        VkImageView imageView;
 
         result = CheckVkResult ( vkCreateImageView ( _device, &imageViewCreateInfo, nullptr, &imageView ),
             "Renderer::DeploySwapchain",
@@ -1989,7 +1910,6 @@ bool Renderer::DeploySwapchain ( bool vSync ) noexcept
             continue;
         }
 
-        DestroySwapchain ();
         return false;
     }
 
@@ -2002,6 +1922,9 @@ void Renderer::DestroySwapchain () noexcept
 
     for ( size_t i = 0U; i < count; ++i )
         vkDestroyImageView ( _device, _swapchainImageViews[ i ], nullptr );
+
+    if ( _swapchain == VK_NULL_HANDLE ) [[unlikely]]
+        return;
 
     vkDestroySwapchainKHR ( _device, _swapchain, nullptr );
     _swapchain = VK_NULL_HANDLE;

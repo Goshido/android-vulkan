@@ -58,6 +58,8 @@ void InitVulkanDebugUtils ( VkInstance instance ) noexcept;
 
 void SetVulkanObjectName ( VkDevice device, uint64_t handle, VkObjectType type, char const *name ) noexcept;
 
+//----------------------------------------------------------------------------------------------------------------------
+
 class VulkanGroup final
 {
     private:

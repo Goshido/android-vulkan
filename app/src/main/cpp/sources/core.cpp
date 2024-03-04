@@ -30,6 +30,7 @@ namespace {
 
 constexpr double FPS_PERIOD = 3.0;
 constexpr auto TIMEOUT = std::chrono::milliseconds ( 10U );
+constexpr bool VSYNC = true;
 
 enum class eGame : uint16_t
 {
@@ -107,12 +108,26 @@ Core::Core ( JNIEnv* env, jobject activity, jobject assetManager, std::string &&
 
     _thread = std::thread (
         [ this, dpi ] () noexcept {
-            bool const result = _game->OnInitSoundSystem () &&
-                _renderer.OnCreateDevice ( dpi ) &&
-                _game->OnInitDevice ( _renderer );
-
-            if ( !result ) [[unlikely]]
+            if ( !_game->OnInitSoundSystem () ) [[unlikely]]
+            {
+                _game->OnDestroySoundSystem ();
                 return;
+            }
+
+            if ( !_renderer.OnCreateDevice ( dpi ) ) [[unlikely]]
+            {
+                _renderer.OnDestroyDevice ();
+                _game->OnDestroySoundSystem ();
+                return;
+            }
+
+            if ( !_game->OnInitDevice ( _renderer ) ) [[unlikely]]
+            {
+                _game->OnDestroyDevice ( _renderer );
+                _renderer.OnDestroyDevice ();
+                _game->OnDestroySoundSystem ();
+                return;
+            }
 
             while ( ExecuteMessageQueue () )
             {
@@ -291,8 +306,18 @@ bool Core::OnQuitRequest () noexcept
 
 bool Core::OnSwapchainCreated () noexcept
 {
-    if ( !_renderer.OnCreateSwapchain ( *_nativeWindow, true ) || !_game->OnSwapchainCreated ( _renderer ) )
+    if ( !_renderer.OnCreateSwapchain ( *_nativeWindow, VSYNC ) ) [[unlikely]]
+    {
+        _renderer.OnDestroySwapchain ();
         return false;
+    }
+
+    if ( !_game->OnSwapchainCreated ( _renderer ) ) [[unlikely]]
+    {
+        _game->OnSwapchainDestroyed ( _renderer );
+        _renderer.OnDestroySwapchain ();
+        return false;
+    }
 
     _fpsTimestamp = std::chrono::system_clock::now ();
     _frameTimestamp = _fpsTimestamp;

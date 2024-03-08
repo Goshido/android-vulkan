@@ -67,7 +67,7 @@ class MandelbrotBase : public android_vulkan::Game
             VkFramebuffer framebuffer
         ) noexcept = 0;
 
-        [[nodiscard]] virtual bool CreatePipelineLayout ( android_vulkan::Renderer &renderer ) noexcept = 0;
+        [[nodiscard]] virtual bool CreatePipelineLayout ( VkDevice device ) noexcept = 0;
         virtual void DestroyPipelineLayout ( VkDevice device ) noexcept = 0;
 
     private:

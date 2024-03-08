@@ -36,7 +36,7 @@ bool ToneMapperPass::Init ( android_vulkan::Renderer &renderer ) noexcept
 
     VkDevice device = renderer.GetDevice ();
 
-    bool const result = android_vulkan::Renderer::CheckVkResult (
+    bool result = android_vulkan::Renderer::CheckVkResult (
         vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_resourceDescriptorPool ),
         "pbr::ToneMapperPass::Init",
         "Can't create descriptor pool"
@@ -45,7 +45,7 @@ bool ToneMapperPass::Init ( android_vulkan::Renderer &renderer ) noexcept
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_DESCRIPTOR_POOL ( "pbr::ToneMapperPass::_resourceDescriptorPool" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _resourceDescriptorPool, VK_OBJECT_TYPE_DESCRIPTOR_POOL, "Tone mapper" )
 
     if ( !_transformLayout.Init ( device ) || !_resourceLayout.Init ( device ) ) [[unlikely]]
         return false;
@@ -61,40 +61,48 @@ bool ToneMapperPass::Init ( android_vulkan::Renderer &renderer ) noexcept
         .pSetLayouts = &layout
     };
 
-    return
-        android_vulkan::Renderer::CheckVkResult (
-            vkAllocateDescriptorSets ( device, &allocateInfo, _descriptorSets + SET_RESOURCE ),
-            "pbr::ToneMapperPass::Init",
-            "Can't create descriptor set"
-        ) &&
+    result = android_vulkan::Renderer::CheckVkResult (
+        vkAllocateDescriptorSets ( device, &allocateInfo, _descriptorSets + SET_RESOURCE ),
+        "pbr::ToneMapperPass::Init",
+        "Can't create descriptor set"
+    );
 
-        _transformUniformPool.Init ( renderer,
-            _transformLayout,
-            sizeof ( ToneMapperProgram::Transform ),
-            BIND_TRANSFORM,
-            "pbr::ToneMapperPass::_transformUniformPool"
-        );
+    if ( !result ) [[unlikely]]
+        return false;
+
+    AV_SET_VULKAN_OBJECT_NAME ( device,
+        _descriptorSets[ SET_RESOURCE ],
+        VK_OBJECT_TYPE_DESCRIPTOR_SET,
+        "Tone mapper resource"
+    )
+
+    return _transformUniformPool.Init ( renderer,
+        _transformLayout,
+        sizeof ( ToneMapperProgram::Transform ),
+        BIND_TRANSFORM,
+        "Tone mapper transform uniform"
+    );
 }
 
 void ToneMapperPass::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 {
     VkDevice device = renderer.GetDevice ();
 
-    if ( _resourceDescriptorPool != VK_NULL_HANDLE )
+    if ( _resourceDescriptorPool != VK_NULL_HANDLE ) [[likely]]
     {
         vkDestroyDescriptorPool ( device, _resourceDescriptorPool, nullptr );
         _resourceDescriptorPool = VK_NULL_HANDLE;
-        AV_UNREGISTER_DESCRIPTOR_POOL ( "pbr::ToneMapperPass::_resourceDescriptorPool" )
     }
 
     _program.Destroy ( device );
     _transformLayout.Destroy ( device );
     _resourceLayout.Destroy ( device );
-    _transformUniformPool.Destroy ( renderer, "pbr::ToneMapperPass::_transformUniformPool" );
+    _transformUniformPool.Destroy ( renderer );
 }
 
 void ToneMapperPass::Execute ( VkCommandBuffer commandBuffer ) noexcept
 {
+    AV_VULKAN_GROUP ( commandBuffer, "Tone mapping" )
     _program.Bind ( commandBuffer );
     _program.SetDescriptorSets ( commandBuffer, _descriptorSets );
     vkCmdDraw ( commandBuffer, 3U, 1U, 0U, 0U );
@@ -195,6 +203,8 @@ bool ToneMapperPass::SetTarget ( android_vulkan::Renderer &renderer,
 
 void ToneMapperPass::UploadGPUData ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept
 {
+    AV_VULKAN_GROUP ( commandBuffer, "Upload tone mapper data" )
+
     if ( !_transformUpdated )
         return;
 

@@ -16,7 +16,7 @@ namespace {
 class DescriptorSetLayout final
 {
     public:
-        VkDescriptorSetLayout       _descriptorSetLayout = VK_NULL_HANDLE;
+        VkDescriptorSetLayout       _layout = VK_NULL_HANDLE;
 
     private:
         std::atomic_size_t          _references = 0U;
@@ -46,9 +46,8 @@ void DescriptorSetLayout::Destroy ( VkDevice device ) noexcept
     if ( _references )
         return;
 
-    vkDestroyDescriptorSetLayout ( device, _descriptorSetLayout, nullptr );
-    _descriptorSetLayout = VK_NULL_HANDLE;
-    AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::UIPassImageDescriptorSetLayout::_descriptorSetLayout" )
+    vkDestroyDescriptorSetLayout ( device, _layout, nullptr );
+    _layout = VK_NULL_HANDLE;
 }
 
 bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
@@ -78,7 +77,7 @@ bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
     };
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateDescriptorSetLayout ( device, &info, nullptr, &_descriptorSetLayout ),
+        vkCreateDescriptorSetLayout ( device, &info, nullptr, &_layout ),
         "pbr::UIPassImageDescriptorSetLayout::Init",
         "Can't create descriptor set layout"
     );
@@ -86,7 +85,7 @@ bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "pbr::UIPassImageDescriptorSetLayout::_descriptorSetLayout" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _layout, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, "UI pass image" )
 
     ++_references;
     return true;
@@ -115,7 +114,7 @@ bool UIPassImageDescriptorSetLayout::Init ( VkDevice device ) noexcept
 
 VkDescriptorSetLayout UIPassImageDescriptorSetLayout::GetLayout () const noexcept
 {
-    return g_descriptorSetLayout._descriptorSetLayout;
+    return g_descriptorSetLayout._layout;
 }
 
 } // namespace pbr

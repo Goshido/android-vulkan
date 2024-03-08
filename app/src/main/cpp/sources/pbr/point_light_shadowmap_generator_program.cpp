@@ -86,7 +86,7 @@ bool PointLightShadowmapGeneratorProgram::Init ( android_vulkan::Renderer &rende
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_PIPELINE ( "pbr::PointLightShadowmapGeneratorProgram::_pipeline" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _pipeline, VK_OBJECT_TYPE_PIPELINE, "Point light shadowmap generator" )
     DestroyShaderModules ( device );
     return true;
 }
@@ -97,7 +97,6 @@ void PointLightShadowmapGeneratorProgram::Destroy ( VkDevice device ) noexcept
     {
         vkDestroyPipelineLayout ( device, _pipelineLayout, nullptr );
         _pipelineLayout = VK_NULL_HANDLE;
-        AV_UNREGISTER_PIPELINE_LAYOUT ( "pbr::PointLightShadowmapGeneratorProgram::_pipelineLayout" )
     }
 
     _instanceLayout.Destroy ( device );
@@ -106,7 +105,6 @@ void PointLightShadowmapGeneratorProgram::Destroy ( VkDevice device ) noexcept
     {
         vkDestroyPipeline ( device, _pipeline, nullptr );
         _pipeline = VK_NULL_HANDLE;
-        AV_UNREGISTER_PIPELINE ( "pbr::PointLightShadowmapGeneratorProgram::_pipeline" )
     }
 
     DestroyShaderModules ( device );
@@ -249,7 +247,12 @@ bool PointLightShadowmapGeneratorProgram::InitLayout ( VkDevice device, VkPipeli
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_PIPELINE_LAYOUT ( "pbr::PointLightShadowmapGeneratorProgram::_pipelineLayout" )
+    AV_SET_VULKAN_OBJECT_NAME ( device,
+        _pipelineLayout,
+        VK_OBJECT_TYPE_PIPELINE_LAYOUT,
+        "Point light shadowmap generator"
+    )
+
     layout = _pipelineLayout;
     return true;
 }
@@ -313,7 +316,7 @@ bool PointLightShadowmapGeneratorProgram::InitShaderInfo ( android_vulkan::Rende
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_SHADER_MODULE ( "pbr::PointLightShadowmapGeneratorProgram::_vertexShader" )
+    AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (), _vertexShader, VK_OBJECT_TYPE_SHADER_MODULE, VERTEX_SHADER )
 
     result = renderer.CreateShader ( _fragmentShader,
         FRAGMENT_SHADER,
@@ -323,7 +326,7 @@ bool PointLightShadowmapGeneratorProgram::InitShaderInfo ( android_vulkan::Rende
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_SHADER_MODULE ( "pbr::PointLightShadowmapGeneratorProgram::_fragmentShader" )
+    AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (), _fragmentShader, VK_OBJECT_TYPE_SHADER_MODULE, FRAGMENT_SHADER )
 
     sourceInfo[ 0U ] =
     {
@@ -357,7 +360,6 @@ void PointLightShadowmapGeneratorProgram::DestroyShaderModules ( VkDevice device
     {
         vkDestroyShaderModule ( device, _fragmentShader, nullptr );
         _fragmentShader = VK_NULL_HANDLE;
-        AV_UNREGISTER_SHADER_MODULE ( "pbr::PointLightShadowmapGeneratorProgram::_fragmentShader" )
     }
 
     if ( _vertexShader == VK_NULL_HANDLE )
@@ -365,7 +367,6 @@ void PointLightShadowmapGeneratorProgram::DestroyShaderModules ( VkDevice device
 
     vkDestroyShaderModule ( device, _vertexShader, nullptr );
     _vertexShader = VK_NULL_HANDLE;
-    AV_UNREGISTER_SHADER_MODULE ( "pbr::PointLightShadowmapGeneratorProgram::_vertexShader" )
 }
 
 VkPipelineViewportStateCreateInfo const* PointLightShadowmapGeneratorProgram::InitViewportInfo (

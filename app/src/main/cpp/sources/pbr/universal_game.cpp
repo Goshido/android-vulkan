@@ -76,7 +76,7 @@ bool UniversalGame::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_COMMAND_POOL ( "pbr::UniversalGame::_commandPool" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _commandPool, VK_OBJECT_TYPE_COMMAND_POOL, "Scene loader" )
 
     result = _renderSession.OnInitDevice ( renderer ) &&
         _scene.OnInitDevice ( renderer, _renderSession, _physics ) &&
@@ -168,7 +168,6 @@ void UniversalGame::DestroyCommandPool ( VkDevice device ) noexcept
 
     vkDestroyCommandPool ( device, _commandPool, nullptr );
     _commandPool = VK_NULL_HANDLE;
-    AV_UNREGISTER_COMMAND_POOL ( "pbr::UniversalGame::_commandPool" )
 }
 
 } // namespace pbr

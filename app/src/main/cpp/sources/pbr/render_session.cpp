@@ -166,11 +166,15 @@ bool RenderSession::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
     _meshHandlers[ static_cast<size_t> ( eMaterialType::Opaque ) ] = &RenderSession::SubmitOpaqueCall;
     _meshHandlers[ static_cast<size_t> ( eMaterialType::Stipple ) ] = &RenderSession::SubmitStippleCall;
 
-    CommandInfo &commandInfo = _commandInfo[ 0U ];
+    constexpr size_t initFrameInFlightIndex = 0U;
+    CommandInfo &commandInfo = _commandInfo[ initFrameInFlightIndex ];
     VkDevice device = renderer.GetDevice ();
 
-    if ( !AllocateCommandInfo ( commandInfo, device, renderer.GetQueueFamilyIndex () ) ) [[unlikely]]
+    if ( !AllocateCommandInfo ( commandInfo, device, renderer.GetQueueFamilyIndex (), initFrameInFlightIndex ) )
+    {
+        [[unlikely]]
         return false;
+    }
 
     return _exposurePass.Init ( renderer, commandInfo._pool ) &&
         _toneMapperPass.Init ( renderer ) &&
@@ -193,32 +197,31 @@ void RenderSession::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexc
     _defaultTextureManager.Destroy ( renderer );
     DestroyGBufferResources ( renderer );
 
-    if ( _renderPass != VK_NULL_HANDLE )
+    if ( _renderPassInfo.renderPass != VK_NULL_HANDLE )
     {
-        vkDestroyRenderPass ( device, _renderPass, nullptr );
-        _renderPass = VK_NULL_HANDLE;
-        AV_UNREGISTER_RENDER_PASS ( "pbr::RenderSession::_renderPass" )
+        vkDestroyRenderPass ( device, _renderPassInfo.renderPass, nullptr );
+        _renderPassInfo.renderPass = VK_NULL_HANDLE;
     }
 
     for ( auto &commandInfo : _commandInfo )
     {
-        if ( commandInfo._pool != VK_NULL_HANDLE )
+        if ( commandInfo._pool != VK_NULL_HANDLE ) [[likely]]
         {
             vkDestroyCommandPool ( device, commandInfo._pool, nullptr );
-            AV_UNREGISTER_COMMAND_POOL ( "pbr::RenderSession::_commandInfo::_pool" )
+            commandInfo._pool = VK_NULL_HANDLE;
         }
 
-        if ( commandInfo._acquire != VK_NULL_HANDLE )
+        if ( commandInfo._acquire != VK_NULL_HANDLE ) [[likely]]
         {
             vkDestroySemaphore ( device, commandInfo._acquire, nullptr );
-            AV_UNREGISTER_SEMAPHORE ( "pbr::RenderSession::_acquire" )
+            commandInfo._acquire = VK_NULL_HANDLE;
         }
 
-        if ( commandInfo._fence == VK_NULL_HANDLE )
+        if ( commandInfo._fence == VK_NULL_HANDLE ) [[unlikely]]
             continue;
 
         vkDestroyFence ( device, commandInfo._fence, nullptr );
-        AV_UNREGISTER_FENCE ( "pbr::RenderSession::_fence" )
+        commandInfo._fence = VK_NULL_HANDLE;
     }
 
     _uiPass.OnDestroyDevice ( renderer );
@@ -251,18 +254,20 @@ bool RenderSession::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
     VkDevice device = renderer.GetDevice ();
     uint32_t const queueIndex = renderer.GetQueueFamilyIndex ();
 
-    for ( auto &commandInfo : _commandInfo )
+    for ( size_t i = 0U; i < DUAL_COMMAND_BUFFER; ++i )
     {
+        CommandInfo &commandInfo = _commandInfo[ i ];
+
         if ( commandInfo._pool != VK_NULL_HANDLE )
             continue;
 
-        if ( !AllocateCommandInfo ( commandInfo, device, queueIndex ) ) [[unlikely]]
+        if ( !AllocateCommandInfo ( commandInfo, device, queueIndex, i ) ) [[unlikely]]
         {
             return false;
         }
     }
 
-    if ( !_presentRenderPass.OnSwapchainCreated ( renderer ) )
+    if ( !_presentRenderPass.OnSwapchainCreated ( renderer ) ) [[unlikely]]
         return false;
 
     constexpr uint32_t subpass = PresentRenderPass::GetSubpass ();
@@ -346,7 +351,7 @@ void RenderSession::SubmitMesh ( MeshRef &mesh,
     ( this->*handler ) ( mesh, material, local, worldBounds, color0, color1, color2, emission );
 }
 
-bool RenderSession::CreateFramebuffer ( android_vulkan::Renderer &renderer ) noexcept
+bool RenderSession::CreateFramebuffer ( VkDevice device ) noexcept
 {
     VkExtent2D const &resolution = _gBuffer.GetResolution ();
 
@@ -364,7 +369,7 @@ bool RenderSession::CreateFramebuffer ( android_vulkan::Renderer &renderer ) noe
         .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0U,
-        .renderPass = _renderPass,
+        .renderPass = _renderPassInfo.renderPass,
         .attachmentCount = std::size ( attachments ),
         .pAttachments = attachments,
         .width = resolution.width,
@@ -373,7 +378,7 @@ bool RenderSession::CreateFramebuffer ( android_vulkan::Renderer &renderer ) noe
     };
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateFramebuffer ( renderer.GetDevice (), &framebufferInfo, nullptr, &_framebuffer ),
+        vkCreateFramebuffer ( device, &framebufferInfo, nullptr, &_renderPassInfo.framebuffer ),
         "pbr::RenderSession::CreateFramebuffer",
         "Can't create GBuffer framebuffer"
     );
@@ -381,14 +386,13 @@ bool RenderSession::CreateFramebuffer ( android_vulkan::Renderer &renderer ) noe
     if ( !result ) [[unlikely]]
         return false;
 
-    _renderPassInfo.framebuffer = _framebuffer;
     _renderPassInfo.renderArea.extent = resolution;
 
-    AV_REGISTER_FRAMEBUFFER ( "pbr::RenderSession::_framebuffer" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _renderPassInfo.framebuffer, VK_OBJECT_TYPE_FRAMEBUFFER, "G-Buffer" )
     return true;
 }
 
-bool RenderSession::CreateRenderPass ( android_vulkan::Renderer &renderer ) noexcept
+bool RenderSession::CreateRenderPass ( VkDevice device ) noexcept
 {
     VkAttachmentDescription const attachments[]
     {
@@ -642,7 +646,7 @@ bool RenderSession::CreateRenderPass ( android_vulkan::Renderer &renderer ) noex
     };
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateRenderPass ( renderer.GetDevice (), &renderPassInfo, nullptr, &_renderPass ),
+        vkCreateRenderPass ( device, &renderPassInfo, nullptr, &_renderPassInfo.renderPass ),
         "pbr::RenderSession::CreateRenderPass",
         "Can't create render pass"
     );
@@ -650,7 +654,7 @@ bool RenderSession::CreateRenderPass ( android_vulkan::Renderer &renderer ) noex
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_RENDER_PASS ( "pbr::RenderSession::_renderPass" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _renderPassInfo.renderPass, VK_OBJECT_TYPE_RENDER_PASS, "Render session" )
 
     constexpr static VkClearValue const clearValues[] =
     {
@@ -698,7 +702,6 @@ bool RenderSession::CreateRenderPass ( android_vulkan::Renderer &renderer ) noex
 
     _renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     _renderPassInfo.pNext = nullptr;
-    _renderPassInfo.renderPass = _renderPass;
     _renderPassInfo.clearValueCount = static_cast<uint32_t> ( std::size ( clearValues ) );
     _renderPassInfo.pClearValues = clearValues;
     _renderPassInfo.renderArea.offset.x = 0;
@@ -714,17 +717,17 @@ bool RenderSession::CreateGBufferResources ( android_vulkan::Renderer &renderer,
     VkDevice device = renderer.GetDevice ();
 
     bool const result = _gBuffer.Init ( renderer, resolution ) &&
-        CreateRenderPass ( renderer ) &&
-        CreateFramebuffer ( renderer ) &&
+        CreateRenderPass ( device ) &&
+        CreateFramebuffer ( device ) &&
 
         _geometryPass.Init ( renderer,
             _gBuffer.GetResolution (),
-            _renderPass,
+            _renderPassInfo.renderPass,
             _samplerManager,
             _defaultTextureManager
         ) &&
 
-        _lightPass.Init ( renderer, _renderPass, _gBuffer ) &&
+        _lightPass.Init ( renderer, _renderPassInfo.renderPass, _gBuffer ) &&
         _exposurePass.SetTarget ( renderer, _gBuffer.GetHDRAccumulator () ) &&
 
         android_vulkan::Renderer::CheckVkResult ( vkDeviceWaitIdle ( device ),
@@ -732,7 +735,7 @@ bool RenderSession::CreateGBufferResources ( android_vulkan::Renderer &renderer,
             "Can't wait device idle"
         );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     _lightPass.OnFreeTransferResources ( renderer );
@@ -743,11 +746,10 @@ void RenderSession::DestroyGBufferResources ( android_vulkan::Renderer &renderer
 {
     VkDevice device = renderer.GetDevice ();
 
-    if ( _framebuffer != VK_NULL_HANDLE )
+    if ( _renderPassInfo.framebuffer != VK_NULL_HANDLE ) [[likely]]
     {
-        vkDestroyFramebuffer ( device, _framebuffer, nullptr );
-        _framebuffer = VK_NULL_HANDLE;
-        AV_UNREGISTER_FRAMEBUFFER ( "pbr::RenderSession::_framebuffer" )
+        vkDestroyFramebuffer ( device, _renderPassInfo.framebuffer, nullptr );
+        _renderPassInfo.framebuffer = VK_NULL_HANDLE;
     }
 
     _lightPass.Destroy ( renderer );
@@ -847,7 +849,11 @@ bool RenderSession::UpdateBrightness ( android_vulkan::Renderer &renderer ) noex
     return true;
 }
 
-bool RenderSession::AllocateCommandInfo ( CommandInfo &info, VkDevice device, uint32_t queueIndex ) noexcept
+bool RenderSession::AllocateCommandInfo ( CommandInfo &info,
+    VkDevice device,
+    uint32_t queueIndex,
+    [[maybe_unused]] size_t frameInFlightIndex
+) noexcept
 {
     constexpr VkFenceCreateInfo fenceInfo
     {
@@ -864,7 +870,7 @@ bool RenderSession::AllocateCommandInfo ( CommandInfo &info, VkDevice device, ui
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_FENCE ( "pbr::RenderSession::_fence" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, info._fence, VK_OBJECT_TYPE_FENCE, "Frame in flight #%zu", frameInFlightIndex )
 
     constexpr VkSemaphoreCreateInfo semaphoreInfo
     {
@@ -882,7 +888,12 @@ bool RenderSession::AllocateCommandInfo ( CommandInfo &info, VkDevice device, ui
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_SEMAPHORE ( "pbr::RenderSession::_acquire" )
+    AV_SET_VULKAN_OBJECT_NAME ( device,
+        info._acquire,
+        VK_OBJECT_TYPE_SEMAPHORE,
+        "Frame in flight #%zu",
+        frameInFlightIndex
+    )
 
     VkCommandPoolCreateInfo const createInfo
     {
@@ -901,7 +912,12 @@ bool RenderSession::AllocateCommandInfo ( CommandInfo &info, VkDevice device, ui
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_COMMAND_POOL ( "pbr::RenderSession::_commandInfo::_pool" )
+    AV_SET_VULKAN_OBJECT_NAME ( device,
+        info._pool,
+        VK_OBJECT_TYPE_COMMAND_POOL,
+        "Frame in flight #%zu",
+        frameInFlightIndex
+    )
 
     VkCommandBufferAllocateInfo const bufferAllocateInfo
     {
@@ -912,11 +928,23 @@ bool RenderSession::AllocateCommandInfo ( CommandInfo &info, VkDevice device, ui
         .commandBufferCount = 1U
     };
 
-    return android_vulkan::Renderer::CheckVkResult (
+    result = android_vulkan::Renderer::CheckVkResult (
         vkAllocateCommandBuffers ( device, &bufferAllocateInfo, &info._buffer ),
         "pbr::RenderSession::AllocateCommandInfo",
         "Can't allocate command buffer"
     );
+
+    if ( !result ) [[unlikely]]
+        return false;
+
+    AV_SET_VULKAN_OBJECT_NAME ( device,
+        info._buffer,
+        VK_OBJECT_TYPE_COMMAND_BUFFER,
+        "Frame in flight #%zu",
+        frameInFlightIndex
+    )
+
+    return true;
 }
 
 } // namespace pbr

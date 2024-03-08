@@ -55,7 +55,7 @@ bool SkinPool::Init ( VkDevice device ) noexcept
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_DESCRIPTOR_POOL ( "pbr::SkinPool::_descriptorPool" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _descriptorPool, VK_OBJECT_TYPE_DESCRIPTOR_POOL, "Skin pool" )
 
     if ( !_layout.Init ( device ) ) [[unlikely]]
         return false;
@@ -81,6 +81,14 @@ bool SkinPool::Init ( VkDevice device ) noexcept
 
     if ( !result ) [[unlikely]]
         return false;
+
+#if defined ( ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS ) ||       \
+    defined ( ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION )
+
+    for ( size_t i = 0U; i < SKIN_MESHES; ++i )
+        AV_SET_VULKAN_OBJECT_NAME ( device, descriptorSets[ i ], VK_OBJECT_TYPE_DESCRIPTOR_SET, "Skin #%zu", i )
+
+#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS || ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
 
     // Initialize all immutable constant fields.
 
@@ -174,7 +182,6 @@ void SkinPool::Destroy ( VkDevice device ) noexcept
     {
         vkDestroyDescriptorPool ( device, _descriptorPool, nullptr );
         _descriptorPool = VK_NULL_HANDLE;
-        AV_UNREGISTER_DESCRIPTOR_POOL ( "pbr::SkinPool::_descriptorPool" )
     }
 
     auto const clean = [] ( auto &vector ) noexcept {

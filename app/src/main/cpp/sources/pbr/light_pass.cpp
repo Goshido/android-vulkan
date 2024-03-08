@@ -27,7 +27,7 @@ bool LightPass::Init ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_COMMAND_POOL ( "pbr::LightPass::_commandPool" )
+    AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (), _commandPool, VK_OBJECT_TYPE_COMMAND_POOL, "Light pass" )
 
     VkExtent2D const &resolution = gBuffer.GetResolution ();
 
@@ -41,7 +41,7 @@ bool LightPass::Init ( android_vulkan::Renderer &renderer,
             LightVolumeDescriptorSetLayout {},
             sizeof ( PointLightLightupProgram::VolumeData ),
             0U,
-            "pbr::LightPass::_lightVolumeBufferPool"
+            "Light pass light volume"
         );
 }
 
@@ -49,7 +49,7 @@ void LightPass::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 {
     VkDevice device = renderer.GetDevice ();
 
-    _volumeBufferPool.Destroy ( renderer, "pbr::LightPass::_lightVolumeBufferPool" );
+    _volumeBufferPool.Destroy ( renderer );
     _unitCube.FreeResources ( renderer );
 
     _reflectionLocalPass.Destroy ( renderer );
@@ -62,7 +62,6 @@ void LightPass::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 
     vkDestroyCommandPool ( device, _commandPool, nullptr );
     _commandPool = VK_NULL_HANDLE;
-    AV_UNREGISTER_COMMAND_POOL ( "pbr::LightPass::_commandPool" )
 }
 
 size_t LightPass::GetPointLightCount () const noexcept
@@ -85,7 +84,6 @@ void LightPass::OnFreeTransferResources ( android_vulkan::Renderer &renderer ) n
 
     vkDestroyCommandPool ( renderer.GetDevice (), _commandPool, nullptr );
     _commandPool = VK_NULL_HANDLE;
-    AV_UNREGISTER_COMMAND_POOL ( "pbr::LightPass::_commandPool" )
 }
 
 bool LightPass::OnPreGeometryPass ( android_vulkan::Renderer &renderer,
@@ -101,6 +99,7 @@ bool LightPass::OnPreGeometryPass ( android_vulkan::Renderer &renderer,
 ) noexcept
 {
     AV_TRACE ( "Light pre-geometry" )
+    AV_VULKAN_GROUP ( commandBuffer, "Light pre-geometry" )
 
     VkDevice device = renderer.GetDevice ();
 
@@ -135,6 +134,7 @@ void LightPass::OnPostGeometryPass ( VkDevice device,
 ) noexcept
 {
     AV_TRACE ( "Light post-geometry" )
+    AV_VULKAN_GROUP ( commandBuffer, "Light post-geometry" )
 
     size_t const pointLights = _pointLightPass.GetPointLightCount ();
     size_t const localReflections = _reflectionLocalPass.GetReflectionLocalCount ();
@@ -237,6 +237,12 @@ bool LightPass::CreateUnitCube ( android_vulkan::Renderer &renderer ) noexcept
 
     if ( !result ) [[unlikely]]
         return false;
+
+    AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (),
+        commandBuffer,
+        VK_OBJECT_TYPE_COMMAND_BUFFER,
+        "Light pass Unit cube"
+    )
 
     return _unitCube.LoadMesh ( reinterpret_cast<uint8_t const*> ( vertices ),
         sizeof ( vertices ),

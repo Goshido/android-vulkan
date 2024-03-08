@@ -79,7 +79,12 @@ bool GameLUT::CreateMaterialDescriptorSetLayout ( android_vulkan::Renderer &rend
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_DESCRIPTOR_SET_LAYOUT ( "Game::_materialDSLayout" )
+    AV_SET_VULKAN_OBJECT_NAME ( device,
+        _materialDSLayout,
+        VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT,
+        "Game::_materialDSLayout"
+    )
+
     return true;
 }
 
@@ -120,27 +125,29 @@ bool GameLUT::CreateDescriptorSet ( android_vulkan::Renderer &renderer ) noexcep
         "Can't create descriptor pool"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_DESCRIPTOR_POOL ( "Game::_descriptorPool" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _descriptorPool, VK_OBJECT_TYPE_DESCRIPTOR_POOL, "Game::_descriptorPool" )
 
     VkDescriptorSetAllocateInfo setAllocateInfo
-        {
-            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-            .pNext = nullptr,
-            .descriptorPool = _descriptorPool,
-            .descriptorSetCount = 1U,
-            .pSetLayouts = &_fixedDSLayout
-        };
+    {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+        .pNext = nullptr,
+        .descriptorPool = _descriptorPool,
+        .descriptorSetCount = 1U,
+        .pSetLayouts = &_fixedDSLayout
+    };
 
     result = android_vulkan::Renderer::CheckVkResult ( vkAllocateDescriptorSets ( device, &setAllocateInfo, &_fixedDS ),
         "GameLUT::CreateDescriptorSet",
         "Can't allocate descriptor set"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
+
+    AV_SET_VULKAN_OBJECT_NAME ( device, _fixedDS, VK_OBJECT_TYPE_DESCRIPTOR_SET, "Fixed" )
 
     VkDescriptorImageInfo const samplerInfo {
         .sampler = _sampler,
@@ -173,8 +180,16 @@ bool GameLUT::CreateDescriptorSet ( android_vulkan::Renderer &renderer ) noexcep
         "Can't allocate material descriptor sets"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
+
+#if defined ( ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS ) ||       \
+    defined ( ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION )
+
+    for ( size_t i = 0U; i < MATERIAL_COUNT; ++i )
+        AV_SET_VULKAN_OBJECT_NAME ( device, _materialDS[ i ], VK_OBJECT_TYPE_DESCRIPTOR_SET, "Material #%zu", i )
+
+#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS || ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
 
     constexpr VkDescriptorImageInfo templateImageInfo {
         .sampler = VK_NULL_HANDLE,
@@ -265,13 +280,13 @@ bool GameLUT::LoadGPUContent ( android_vulkan::Renderer &renderer, VkCommandPool
         "Can't allocate command buffers"
     );
 
-    if ( !result || !CreateCommonTextures ( renderer, commandBuffers ) )
+    if ( !result || !CreateCommonTextures ( renderer, commandBuffers ) ) [[unlikely]]
         return false;
 
-    if ( !CreateSpecularLUTTexture ( renderer, commandBuffers[ 6U ] ) )
+    if ( !CreateSpecularLUTTexture ( renderer, commandBuffers[ 6U ] ) ) [[unlikely]]
         return false;
 
-    if ( !CreateMeshes ( renderer, commandBuffers + TEXTURE_COMMAND_BUFFERS ) )
+    if ( !CreateMeshes ( renderer, commandBuffers + TEXTURE_COMMAND_BUFFERS ) ) [[unlikely]]
         return false;
 
     result = android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( renderer.GetQueue () ),
@@ -279,7 +294,7 @@ bool GameLUT::LoadGPUContent ( android_vulkan::Renderer &renderer, VkCommandPool
         "Can't run upload commands"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     for ( auto &item : _drawcalls )

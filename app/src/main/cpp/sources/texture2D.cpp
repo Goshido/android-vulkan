@@ -89,7 +89,6 @@ void Texture2D::FreeTransferResources ( Renderer &renderer ) noexcept
     {
         vkDestroyBuffer ( renderer.GetDevice (), _transfer, nullptr );
         _transfer = VK_NULL_HANDLE;
-        AV_UNREGISTER_BUFFER ( "Texture2D::_transfer" )
     }
 
     if ( _transferDeviceMemory == VK_NULL_HANDLE )
@@ -98,7 +97,6 @@ void Texture2D::FreeTransferResources ( Renderer &renderer ) noexcept
     renderer.FreeMemory ( _transferDeviceMemory, _transferMemoryOffset );
     _transferDeviceMemory = VK_NULL_HANDLE;
     _transferMemoryOffset = 0U;
-    AV_UNREGISTER_DEVICE_MEMORY ( "Texture2D::_transferDeviceMemory" )
 }
 
 VkFormat Texture2D::GetFormat () const noexcept
@@ -359,7 +357,7 @@ bool Texture2D::CreateCommonResources ( VkImageCreateInfo &imageInfo,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_IMAGE ( "Texture2D::_image" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _image, VK_OBJECT_TYPE_IMAGE, "Image2D" )
 
     VkMemoryRequirements memoryRequirements;
     vkGetImageMemoryRequirements ( device, _image, &memoryRequirements );
@@ -384,8 +382,6 @@ bool Texture2D::CreateCommonResources ( VkImageCreateInfo &imageInfo,
         FreeResources ( renderer );
         return false;
     }
-
-    AV_REGISTER_DEVICE_MEMORY ( "Texture2D::_imageDeviceMemory" )
 
     result = Renderer::CheckVkResult ( vkBindImageMemory ( device, _image, _imageDeviceMemory, _imageMemoryOffset ),
         "Texture2D::CreateCommonResources",
@@ -436,7 +432,7 @@ bool Texture2D::CreateCommonResources ( VkImageCreateInfo &imageInfo,
         return false;
     }
 
-    AV_REGISTER_IMAGE_VIEW ( "Texture2D::_imageView" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _imageView, VK_OBJECT_TYPE_IMAGE_VIEW, "Image2D" )
     return true;
 }
 
@@ -467,7 +463,7 @@ bool Texture2D::CreateTransferResources ( uint8_t* &mappedBuffer, VkDeviceSize s
         return false;
     }
 
-    AV_REGISTER_BUFFER ( "Texture2D::_transfer" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _transfer, VK_OBJECT_TYPE_BUFFER, "Texture2D staging" )
 
     VkMemoryRequirements memoryRequirements;
     vkGetBufferMemoryRequirements ( device, _transfer, &memoryRequirements );
@@ -484,8 +480,6 @@ bool Texture2D::CreateTransferResources ( uint8_t* &mappedBuffer, VkDeviceSize s
         FreeResources ( renderer );
         return false;
     }
-
-    AV_REGISTER_DEVICE_MEMORY ( "Texture2D::_transferDeviceMemory" )
 
     result = Renderer::CheckVkResult (
         vkBindBufferMemory ( device, _transfer, _transferDeviceMemory, _transferMemoryOffset ),
@@ -527,14 +521,12 @@ void Texture2D::FreeResourceInternal ( Renderer &renderer ) noexcept
     {
         vkDestroyImageView ( device, _imageView, nullptr );
         _imageView = VK_NULL_HANDLE;
-        AV_UNREGISTER_IMAGE_VIEW ( "Texture2D::_imageView" )
     }
 
     if ( _image != VK_NULL_HANDLE )
     {
         vkDestroyImage ( device, _image, nullptr );
         _image = VK_NULL_HANDLE;
-        AV_UNREGISTER_IMAGE ( "Texture2D::_image" )
     }
 
     if ( _imageDeviceMemory == VK_NULL_HANDLE )
@@ -543,7 +535,6 @@ void Texture2D::FreeResourceInternal ( Renderer &renderer ) noexcept
     renderer.FreeMemory ( _imageDeviceMemory, _imageMemoryOffset );
     _imageDeviceMemory = VK_NULL_HANDLE;
     _imageMemoryOffset = 0U;
-    AV_UNREGISTER_DEVICE_MEMORY ( "Texture2D::_imageDeviceMemory" )
 }
 
 bool Texture2D::UploadCompressed ( Renderer &renderer,

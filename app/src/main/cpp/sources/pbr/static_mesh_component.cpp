@@ -385,7 +385,7 @@ bool StaticMeshComponent::Init ( lua_State &vm, android_vulkan::Renderer &render
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_COMMAND_POOL ( "pbr::StaticMeshComponent::_commandPool" )
+    AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (), _commandPool, VK_OBJECT_TYPE_COMMAND_POOL, "Static mesh" )
     return AllocateCommandBuffers ( INITIAL_COMMAND_BUFFERS );
 }
 
@@ -404,7 +404,6 @@ void StaticMeshComponent::Destroy () noexcept
     {
         vkDestroyCommandPool ( device, _commandPool, nullptr );
         _commandPool = VK_NULL_HANDLE;
-        AV_UNREGISTER_COMMAND_POOL ( "pbr::StaticMeshComponent::_commandPool" )
     }
 
     auto const clean = [] ( auto &v ) noexcept {
@@ -415,10 +414,7 @@ void StaticMeshComponent::Destroy () noexcept
     clean ( _commandBuffers );
 
     for ( auto fence : _fences )
-    {
         vkDestroyFence ( device, fence, nullptr );
-        AV_UNREGISTER_FENCE ( "pbr::StaticMeshComponent::_fences" )
-    }
 
     clean ( _fences );
     _renderer = nullptr;
@@ -522,8 +518,18 @@ bool StaticMeshComponent::AllocateCommandBuffers ( size_t amount ) noexcept
         if ( !result ) [[unlikely]]
             return false;
 
-        AV_REGISTER_FENCE ( "pbr::StaticMeshComponent::_fences" )
+        AV_SET_VULKAN_OBJECT_NAME ( device, fences[ i ], VK_OBJECT_TYPE_FENCE, "Static mesh #%zu", i )
     }
+
+#if defined ( ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS ) ||       \
+    defined ( ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION )
+
+    VkCommandBuffer* const buffers = _commandBuffers.data ();
+
+    for ( size_t i = current; i < size; ++i )
+        AV_SET_VULKAN_OBJECT_NAME ( device, buffers[ i ], VK_OBJECT_TYPE_COMMAND_BUFFER, "Static mesh #%zu", i )
+
+#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS || ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
 
     return true;
 }

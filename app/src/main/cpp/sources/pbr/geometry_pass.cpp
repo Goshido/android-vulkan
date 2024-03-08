@@ -42,8 +42,7 @@ bool GeometryPass::Init ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_DESCRIPTOR_POOL ( "pbr::GeometryPass::_descriptorPool" )
-
+    AV_SET_VULKAN_OBJECT_NAME ( device, _descriptorPool, VK_OBJECT_TYPE_DESCRIPTOR_POOL, "Geometry pass" )
     VkDescriptorSetLayout layout = _descriptorSetLayout.GetLayout ();
 
     VkDescriptorSetAllocateInfo const setAllocateInfo
@@ -63,6 +62,8 @@ bool GeometryPass::Init ( android_vulkan::Renderer &renderer,
 
     if ( !result ) [[unlikely]]
         return false;
+
+    AV_SET_VULKAN_OBJECT_NAME ( device, _descriptorSet, VK_OBJECT_TYPE_DESCRIPTOR_SET, "Geometry pass sampler" )
 
     VkDescriptorImageInfo const samplerInfo
     {
@@ -94,7 +95,7 @@ bool GeometryPass::Init ( android_vulkan::Renderer &renderer,
             GeometryPassInstanceDescriptorSetLayout (),
             sizeof ( GeometryPassProgram::InstanceData ),
             0U,
-            "pbr::GeometryPass::_uniformPool"
+            "Geometry pass uniform"
         ) &&
 
         _materialPool.Init ( device, defaultTextureManager );
@@ -107,20 +108,20 @@ void GeometryPass::Destroy ( android_vulkan::Renderer &renderer ) noexcept
     _descriptorSetLayout.Destroy ( device );
     _stippleSubpass.Destroy ( device );
     _opaqueSubpass.Destroy ( device );
-    _uniformPool.Destroy ( renderer, "pbr::GeometryPass::_uniformPool" );
+    _uniformPool.Destroy ( renderer );
     _materialPool.Destroy ( device );
 
     if ( _descriptorPool == VK_NULL_HANDLE )
         return;
 
     vkDestroyDescriptorPool ( device, _descriptorPool, nullptr );
-    AV_UNREGISTER_DESCRIPTOR_POOL ( "pbr::GeometryPass::_descriptorPool" )
     _descriptorPool = VK_NULL_HANDLE;
 }
 
 void GeometryPass::Execute ( VkCommandBuffer commandBuffer, RenderSessionStats &renderSessionStats ) noexcept
 {
     AV_TRACE ( "Geometry pass: Execute" )
+    AV_VULKAN_GROUP ( commandBuffer, "Geometry pass" )
 
     bool isSamplerUsed = false;
 
@@ -168,6 +169,7 @@ void GeometryPass::UploadGPUData ( VkDevice device,
 ) noexcept
 {
     AV_TRACE ( "Geometry pass: Upload GPU data" )
+    AV_VULKAN_GROUP ( commandBuffer, "Upload geometry data" )
 
     _opaqueSubpass.UpdateGPUData ( commandBuffer,
         _materialPool,

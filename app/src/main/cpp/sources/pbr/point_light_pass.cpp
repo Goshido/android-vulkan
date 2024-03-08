@@ -66,7 +66,7 @@ bool PointLightPass::Init ( android_vulkan::Renderer &renderer,
             PointLightShadowmapGeneratorDescriptorSetLayout {},
             sizeof ( PointLightShadowmapGeneratorProgram::InstanceData ),
             0U,
-            "pbr::PointLightPass::_shadowmapBufferPool"
+            "Point light pass shadowmap"
         ) &&
 
         _lightup.Init ( renderer, lightupRenderPass, 1U, resolution );
@@ -85,15 +85,13 @@ void PointLightPass::Destroy ( android_vulkan::Renderer &renderer ) noexcept
                 continue;
 
             image->FreeResources ( renderer );
-
             vkDestroyFramebuffer ( device, framebuffer, nullptr );
-            AV_UNREGISTER_FRAMEBUFFER ( "PointLightPass::_shadowmaps" )
         }
 
         _shadowmaps.clear ();
     }
 
-    _shadowmapBufferPool.Destroy ( renderer, "pbr::PointLightPass::_shadowmapBufferPool" );
+    _shadowmapBufferPool.Destroy ( renderer );
     _shadowmapProgram.Destroy ( device );
 
     if ( _shadowmapRenderPass == VK_NULL_HANDLE )
@@ -101,7 +99,6 @@ void PointLightPass::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 
     vkDestroyRenderPass ( device, _shadowmapRenderPass, nullptr );
     _shadowmapRenderPass = VK_NULL_HANDLE;
-    AV_UNREGISTER_RENDER_PASS ( "PointLightPass::_shadowmapRenderPass" )
 }
 
 size_t PointLightPass::GetPointLightCount () const noexcept
@@ -143,6 +140,7 @@ void PointLightPass::UploadGPUData ( VkDevice device,
     if ( _interacts.empty () )
         return;
 
+    AV_VULKAN_GROUP ( commandBuffer, "Upload point light result data" )
     _lightup.UpdateGPUData ( device, commandBuffer, *this, viewerLocal, view );
     UpdateLightGPUData ( commandBuffer, volumeBufferPool, viewProjection );
 }
@@ -193,13 +191,13 @@ PointLightPass::PointLightShadowmapInfo* PointLightPass::AcquirePointLightShadow
         "Can't create framebuffer"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
     {
         shadowmap->FreeResources ( renderer );
         return nullptr;
     }
 
-    AV_REGISTER_FRAMEBUFFER ( "PointLightPass::_shadowmaps" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, framebuffer, VK_OBJECT_TYPE_FRAMEBUFFER, "Point light #%zu", _usedShadowmaps )
 
     ++_usedShadowmaps;
     return &_shadowmaps.emplace_back ( std::move ( info ) );
@@ -302,7 +300,7 @@ bool PointLightPass::CreateShadowmapRenderPass ( VkDevice device ) noexcept
     if ( !result )
         return false;
 
-    AV_REGISTER_RENDER_PASS ( "PointLightPass::_shadowmapRenderPass" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _shadowmapRenderPass, VK_OBJECT_TYPE_RENDER_PASS, "Point light shadowmap" )
 
     // Must be static as well because it lose the function scope [read as garbage in debug builds].
     constexpr static VkClearValue clearValues
@@ -350,6 +348,8 @@ bool PointLightPass::GenerateShadowmaps ( android_vulkan::Renderer &renderer, Vk
 
         if ( !shadowmapInfo )
             return false;
+
+        AV_VULKAN_GROUP ( commandBuffer, "Point light shadowmap" )
 
         _shadowmapRenderPassInfo.framebuffer = shadowmapInfo->second;
         vkCmdBeginRenderPass ( commandBuffer, &_shadowmapRenderPassInfo, VK_SUBPASS_CONTENTS_INLINE );
@@ -420,6 +420,7 @@ void PointLightPass::UpdateShadowmapGPUData ( VkDevice device,
     size_t opaqueMeshCount
 ) noexcept
 {
+    AV_VULKAN_GROUP ( commandBuffer, "Upload point light shadowmap data" )
     PointLightShadowmapGeneratorProgram::InstanceData instanceData {};
 
     auto append = [ & ] ( PointLight::Matrices const &matrices, size_t instance, GXMat4 const &local ) {

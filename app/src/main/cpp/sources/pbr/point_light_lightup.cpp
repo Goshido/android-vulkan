@@ -55,7 +55,7 @@ bool PointLightLightup::Init ( android_vulkan::Renderer &renderer,
     };
 
     return _program.Init ( renderer, renderPass, subpass, nullptr, resolution ) &&
-        _sampler.Init ( renderer.GetDevice (), samplerInfo ) &&
+        _sampler.Init ( renderer.GetDevice (), samplerInfo, "Point light lightup" ) &&
         AllocateDescriptorSets ( renderer );
 }
 
@@ -67,7 +67,6 @@ void PointLightLightup::Destroy ( android_vulkan::Renderer &renderer ) noexcept
     {
         vkDestroyDescriptorPool ( device, _descriptorPool, nullptr );
         _descriptorPool = VK_NULL_HANDLE;
-        AV_UNREGISTER_DESCRIPTOR_POOL ( "pbr::PointLightLightup::_descriptorPool" )
     }
 
     auto const clean = [] ( auto &vector ) noexcept {
@@ -149,8 +148,11 @@ void PointLightLightup::UpdateGPUData ( VkDevice device,
 
 bool PointLightLightup::AllocateDescriptorSets ( android_vulkan::Renderer &renderer ) noexcept
 {
-    if ( !_uniformPool.Init ( renderer, sizeof ( PointLightLightupProgram::LightData ) ) )
+    if ( !_uniformPool.Init ( renderer, sizeof ( PointLightLightupProgram::LightData ), "Point light lightup" ) )
+    {
+        [[unlikely]]
         return false;
+    }
 
     size_t const setCount = _uniformPool.GetAvailableItemCount ();
     VkDevice device = renderer.GetDevice ();
@@ -187,12 +189,13 @@ bool PointLightLightup::AllocateDescriptorSets ( android_vulkan::Renderer &rende
         "Can't create descriptor pool"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_DESCRIPTOR_POOL ( "pbr::PointLightLightup::_descriptorPool" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _descriptorPool, VK_OBJECT_TYPE_DESCRIPTOR_POOL, "Point light lightup" )
 
     _descriptorSets.resize ( setCount );
+    VkDescriptorSet* descriptorSets = _descriptorSets.data ();
     std::vector<VkDescriptorSetLayout> const layouts ( setCount, PointLightDescriptorSetLayout ().GetLayout () );
 
     VkDescriptorSetAllocateInfo const allocateInfo
@@ -205,13 +208,21 @@ bool PointLightLightup::AllocateDescriptorSets ( android_vulkan::Renderer &rende
     };
 
     result = android_vulkan::Renderer::CheckVkResult (
-        vkAllocateDescriptorSets ( device, &allocateInfo, _descriptorSets.data () ),
+        vkAllocateDescriptorSets ( device, &allocateInfo, descriptorSets ),
         "pbr::PointLightLightup::AllocateDescriptorSets",
         "Can't allocate descriptor sets"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
+
+#if defined ( ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS ) ||       \
+    defined ( ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION )
+
+    for ( size_t i = 0U; i < setCount; ++i )
+        AV_SET_VULKAN_OBJECT_NAME ( device, descriptorSets[ i ], VK_OBJECT_TYPE_DESCRIPTOR_SET, "Point light #%zu", i )
+
+#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS || ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
 
     // Initialize all immutable constant fields.
 
@@ -267,7 +278,7 @@ bool PointLightLightup::AllocateDescriptorSets ( android_vulkan::Renderer &rende
     for ( size_t i = 0U; i < setCount; ++i )
     {
         size_t const base = BIND_PER_SET * i;
-        VkDescriptorSet set = _descriptorSets[ i ];
+        VkDescriptorSet set = descriptorSets[ i ];
 
         VkBuffer buffer = _uniformPool.GetBuffer ( i );
         _barriers[ i ].buffer = buffer;

@@ -5,7 +5,7 @@
 
 namespace pbr {
 
-bool Sampler::Init ( VkDevice device, VkSamplerCreateInfo const &info ) noexcept
+bool Sampler::Init ( VkDevice device, VkSamplerCreateInfo const &info, [[maybe_unused]] char const* name ) noexcept
 {
     AV_ASSERT ( _sampler == VK_NULL_HANDLE )
 
@@ -18,7 +18,7 @@ bool Sampler::Init ( VkDevice device, VkSamplerCreateInfo const &info ) noexcept
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_SAMPLER ( "pbr::Sampler::_sampler" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _sampler, VK_OBJECT_TYPE_SAMPLER, "%s", name )
     return true;
 }
 
@@ -29,7 +29,6 @@ void Sampler::Destroy ( VkDevice device ) noexcept
 
     vkDestroySampler ( device, _sampler, nullptr );
     _sampler = VK_NULL_HANDLE;
-    AV_UNREGISTER_SAMPLER ( "pbr::Sampler::_sampler" )
 }
 
 VkSampler Sampler::GetSampler () const noexcept

@@ -38,7 +38,7 @@ bool FontStorage::StagingBuffer::Init ( android_vulkan::Renderer &renderer, uint
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_BUFFER ( "pbr::FontStorage::StagingBuffer::_buffer" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _buffer, VK_OBJECT_TYPE_BUFFER, "Font storage staging" )
 
     VkMemoryRequirements memoryRequirements;
     vkGetBufferMemoryRequirements ( device, _buffer, &memoryRequirements );
@@ -52,8 +52,6 @@ bool FontStorage::StagingBuffer::Init ( android_vulkan::Renderer &renderer, uint
 
     if ( !result ) [[unlikely]]
         return false;
-
-    AV_REGISTER_DEVICE_MEMORY ( "pbr::FontStorage::StagingBuffer::_memory" )
 
     result = android_vulkan::Renderer::CheckVkResult ( vkBindBufferMemory ( device, _buffer, _memory, _memoryOffset ),
         "pbr::FontStorage::StagingBuffer",
@@ -91,7 +89,6 @@ void FontStorage::StagingBuffer::Destroy ( android_vulkan::Renderer &renderer ) 
     {
         vkDestroyBuffer ( renderer.GetDevice (), _buffer, nullptr );
         _buffer = VK_NULL_HANDLE;
-        AV_UNREGISTER_BUFFER ( "pbr::FontStorage::StagingBuffer::_buffer" )
     }
 
     if ( _memory == VK_NULL_HANDLE )
@@ -100,7 +97,6 @@ void FontStorage::StagingBuffer::Destroy ( android_vulkan::Renderer &renderer ) 
     renderer.FreeMemory ( _memory, _memoryOffset );
     _memory = VK_NULL_HANDLE;
     _memoryOffset = 0U;
-    AV_UNREGISTER_DEVICE_MEMORY ( "pbr::FontStorage::StagingBuffer::_memory" )
 }
 
 void FontStorage::StagingBuffer::Reset () noexcept
@@ -174,7 +170,7 @@ bool FontStorage::Atlas::AddLayers ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_IMAGE ( "pbr::FontStorage::Atlas::_image" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _resource._image, VK_OBJECT_TYPE_IMAGE, "Font storage atlas" )
 
     VkMemoryRequirements memoryRequirements;
     vkGetImageMemoryRequirements ( device, _resource._image, &memoryRequirements );
@@ -188,8 +184,6 @@ bool FontStorage::Atlas::AddLayers ( android_vulkan::Renderer &renderer,
 
     if ( !result ) [[unlikely]]
         return false;
-
-    AV_REGISTER_DEVICE_MEMORY ( "pbr::FontStorage::Atlas::_memory" )
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkBindImageMemory ( device, _resource._image, _resource._memory, _resource._memoryOffset ),
@@ -236,7 +230,7 @@ bool FontStorage::Atlas::AddLayers ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_IMAGE_VIEW ( "pbr::FontStorage::Atlas::_view" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _resource._view, VK_OBJECT_TYPE_IMAGE_VIEW, "Font storage atlas" )
 
     if ( oldResource._image != VK_NULL_HANDLE )
         Copy ( commandBuffer, oldResource, layerCount );
@@ -265,28 +259,25 @@ void FontStorage::Atlas::Cleanup ( android_vulkan::Renderer &renderer, size_t co
 
 void FontStorage::Atlas::FreeImageResource ( android_vulkan::Renderer &renderer, ImageResource &resource ) noexcept
 {
-    if ( resource._image == VK_NULL_HANDLE )
+    if ( resource._image == VK_NULL_HANDLE ) [[unlikely]]
         return;
 
     VkDevice device = renderer.GetDevice ();
     vkDestroyImage ( device, resource._image, nullptr );
     resource._image = VK_NULL_HANDLE;
-    AV_UNREGISTER_IMAGE ( "pbr::FontStorage::Atlas::_image" )
 
-    if ( resource._view != VK_NULL_HANDLE )
+    if ( resource._view != VK_NULL_HANDLE ) [[likely]]
     {
         vkDestroyImageView ( device, resource._view, nullptr );
         resource._view = VK_NULL_HANDLE;
-        AV_UNREGISTER_IMAGE_VIEW ( "pbr::FontStorage::Atlas::_view" )
     }
 
-    if ( resource._memory == VK_NULL_HANDLE )
+    if ( resource._memory == VK_NULL_HANDLE ) [[unlikely]]
         return;
 
     renderer.FreeMemory ( resource._memory, resource._memoryOffset );
     resource._memory = VK_NULL_HANDLE;
     resource._memoryOffset = 0U;
-    AV_UNREGISTER_DEVICE_MEMORY ( "pbr::FontStorage::Atlas::_memory" )
 }
 
 void FontStorage::Atlas::Copy ( VkCommandBuffer commandBuffer, ImageResource &oldResource, uint32_t newLayers ) noexcept

@@ -58,12 +58,12 @@ bool StippleTest::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
         "Can't create command buffer"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_COMMAND_POOL ( "StippleTest::_commandPool" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _commandPool, VK_OBJECT_TYPE_COMMAND_POOL, "StippleTest::_commandPool" )
 
-    if ( !_renderSession.OnInitDevice ( renderer ) || !CreateScene ( renderer ) )
+    if ( !_renderSession.OnInitDevice ( renderer ) || !CreateScene ( renderer ) ) [[unlikely]]
         return false;
 
     _renderSession.FreeTransferResources ( renderer );
@@ -74,11 +74,10 @@ void StippleTest::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcep
 {
     _renderSession.OnDestroyDevice ( renderer );
 
-    if ( _commandPool != VK_NULL_HANDLE )
+    if ( _commandPool != VK_NULL_HANDLE ) [[likely]]
     {
         vkDestroyCommandPool ( renderer.GetDevice (), _commandPool, nullptr );
         _commandPool = VK_NULL_HANDLE;
-        AV_UNREGISTER_COMMAND_POOL ( "StippleTest::_commandPool" )
     }
 
     _floor = nullptr;
@@ -188,8 +187,16 @@ bool StippleTest::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
         "Can't allocate command buffers"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
+
+#if defined ( ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS ) ||       \
+    defined ( ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION )
+
+    for ( size_t i = 0U; i < commandBufferCount; ++i )
+        AV_SET_VULKAN_OBJECT_NAME ( device, cb[ i ], VK_OBJECT_TYPE_COMMAND_BUFFER, "Asset #%zu", i )
+
+#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS || ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
 
     size_t consumed;
     bool success;
@@ -204,7 +211,7 @@ bool StippleTest::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
         "Floor"
     );
 
-    if ( !success )
+    if ( !success ) [[unlikely]]
         return false;
 
     constexpr GXVec3 floorLocation ( 0.0F, -0.25F, 0.0F );
@@ -241,7 +248,7 @@ bool StippleTest::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
         nullptr
     );
 
-    if ( !success )
+    if ( !success ) [[unlikely]]
         return false;
 
     _stipple->SetColor0 ( _stippleColor );
@@ -251,7 +258,7 @@ bool StippleTest::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
         "Can't run upload commands"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     _floor->FreeTransferResources ( renderer );

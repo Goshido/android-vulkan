@@ -47,29 +47,27 @@ bool SkinProgram::Init ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_PIPELINE ( "pbr::SkinProgram::_pipeline" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _pipeline, VK_OBJECT_TYPE_PIPELINE, "Skin" )
     DestroyShaderModule ( device );
     return true;
 }
 
 void SkinProgram::Destroy ( VkDevice device ) noexcept
 {
-    if ( _pipelineLayout != VK_NULL_HANDLE )
+    if ( _pipelineLayout != VK_NULL_HANDLE ) [[likely]]
     {
         vkDestroyPipelineLayout ( device, _pipelineLayout, nullptr );
         _pipelineLayout = VK_NULL_HANDLE;
-        AV_UNREGISTER_PIPELINE_LAYOUT ( "pbr::SkinProgram::_pipelineLayout" )
     }
 
     _layout.Destroy ( device );
     DestroyShaderModule ( device );
 
-    if ( _pipeline == VK_NULL_HANDLE )
+    if ( _pipeline == VK_NULL_HANDLE ) [[unlikely]]
         return;
 
     vkDestroyPipeline ( device, _pipeline, nullptr );
     _pipeline = VK_NULL_HANDLE;
-    AV_UNREGISTER_PIPELINE ( "pbr::SkinProgram::_pipeline" )
 }
 
 void SkinProgram::SetDescriptorSet ( VkCommandBuffer commandBuffer, VkDescriptorSet set ) const noexcept
@@ -87,12 +85,11 @@ void SkinProgram::SetDescriptorSet ( VkCommandBuffer commandBuffer, VkDescriptor
 
 void SkinProgram::DestroyShaderModule ( VkDevice device ) noexcept
 {
-    if ( _computeShader == VK_NULL_HANDLE )
+    if ( _computeShader == VK_NULL_HANDLE ) [[unlikely]]
         return;
 
     vkDestroyShaderModule ( device, _computeShader, nullptr );
     _computeShader = VK_NULL_HANDLE;
-    AV_UNREGISTER_SHADER_MODULE ( "pbr::SkinProgram::_computeShader" )
 }
 
 bool SkinProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept
@@ -129,7 +126,7 @@ bool SkinProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexc
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_PIPELINE_LAYOUT ( "pbr::SkinProgram::_pipelineLayout" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _pipelineLayout, VK_OBJECT_TYPE_PIPELINE_LAYOUT, "Skin" )
     layout = _pipelineLayout;
     return true;
 }
@@ -148,7 +145,7 @@ bool SkinProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_SHADER_MODULE ( "pbr::SkinProgram::_computeShader" )
+    AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (), _computeShader, VK_OBJECT_TYPE_SHADER_MODULE, SHADER )
 
     targetInfo =
     {

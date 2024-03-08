@@ -83,7 +83,8 @@ bool GeometryPassProgram::Init ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_PIPELINE ( std::string ( _name ) + "::_pipeline" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _pipeline, VK_OBJECT_TYPE_PIPELINE, "%s", _name.data () )
+
     DestroyShaderModules ( device );
     return true;
 }
@@ -94,7 +95,6 @@ void GeometryPassProgram::Destroy ( VkDevice device ) noexcept
     {
         vkDestroyPipelineLayout ( device, _pipelineLayout, nullptr );
         _pipelineLayout = VK_NULL_HANDLE;
-        AV_UNREGISTER_PIPELINE_LAYOUT ( std::string ( _name ) + "::_pipelineLayout" )
     }
 
     _samplerLayout.Destroy ( device );
@@ -105,7 +105,6 @@ void GeometryPassProgram::Destroy ( VkDevice device ) noexcept
     {
         vkDestroyPipeline ( device, _pipeline, nullptr );
         _pipeline = VK_NULL_HANDLE;
-        AV_UNREGISTER_PIPELINE ( std::string ( _name ) + "::_pipeline" )
     }
 
     DestroyShaderModules ( device );
@@ -349,7 +348,8 @@ bool GeometryPassProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_PIPELINE_LAYOUT ( std::string ( _name ) + "::_pipelineLayout" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _pipelineLayout, VK_OBJECT_TYPE_PIPELINE_LAYOUT, "%s", _name.data () )
+
     layout = _pipelineLayout;
     return true;
 }
@@ -411,13 +411,19 @@ bool GeometryPassProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
     if ( !renderer.CreateShader ( _vertexShader, VERTEX_SHADER, where ) ) [[unlikely]]
         return false;
 
-    AV_REGISTER_SHADER_MODULE ( std::string ( _name ) + "::_vertexShader" )
+    AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (), _vertexShader, VK_OBJECT_TYPE_SHADER_MODULE, VERTEX_SHADER )
+
     std::snprintf ( where, std::size ( where ), "Can't create fragment shader (pbr::%s)", _name.data () );
 
     if ( !renderer.CreateShader ( _fragmentShader, std::string ( _fragmentShaderSource ), where ) ) [[unlikely]]
         return false;
 
-    AV_REGISTER_SHADER_MODULE ( std::string ( _name ) + "::_fragmentShader" )
+    AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (),
+        _fragmentShader,
+        VK_OBJECT_TYPE_SHADER_MODULE,
+        "%s",
+        _fragmentShaderSource.data ()
+    )
 
     sourceInfo[ 0U ] =
     {
@@ -451,7 +457,6 @@ void GeometryPassProgram::DestroyShaderModules ( VkDevice device ) noexcept
     {
         vkDestroyShaderModule ( device, _fragmentShader, nullptr );
         _fragmentShader = VK_NULL_HANDLE;
-        AV_UNREGISTER_SHADER_MODULE ( std::string ( _name ) + "::_fragmentShader" )
     }
 
     if ( _vertexShader == VK_NULL_HANDLE )
@@ -459,7 +464,6 @@ void GeometryPassProgram::DestroyShaderModules ( VkDevice device ) noexcept
 
     vkDestroyShaderModule ( device, _vertexShader, nullptr );
     _vertexShader = VK_NULL_HANDLE;
-    AV_UNREGISTER_SHADER_MODULE ( std::string ( _name ) + "::_vertexShader" )
 }
 
 VkPipelineViewportStateCreateInfo const* GeometryPassProgram::InitViewportInfo (

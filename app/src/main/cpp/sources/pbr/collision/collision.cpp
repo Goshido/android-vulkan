@@ -134,7 +134,7 @@ bool Collision::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexce
         Z_FAR
     );
 
-    if ( !_renderSession.OnSwapchainCreated ( renderer, resolution ) )
+    if ( !_renderSession.OnSwapchainCreated ( renderer, resolution ) ) [[unlikely]]
         return false;
 
     _camera.CaptureInput ();
@@ -165,21 +165,25 @@ bool Collision::CreateCommandPool ( android_vulkan::Renderer &renderer ) noexcep
         "Can't create command pool"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_COMMAND_POOL ( "pbr::collision::Collision::_commandPool" )
+    AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (),
+        _commandPool,
+        VK_OBJECT_TYPE_COMMAND_POOL,
+        "pbr::collision::Collision::_commandPool"
+    )
+
     return true;
 }
 
 void Collision::DestroyCommandPool ( VkDevice device ) noexcept
 {
-    if ( _commandPool == VK_NULL_HANDLE )
+    if ( _commandPool == VK_NULL_HANDLE ) [[unlikely]]
         return;
 
     vkDestroyCommandPool ( device, _commandPool, nullptr );
     _commandPool = VK_NULL_HANDLE;
-    AV_UNREGISTER_COMMAND_POOL ( "pbr::collision::Collision::_commandPool" )
 }
 
 bool Collision::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
@@ -211,8 +215,18 @@ bool Collision::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
         "Can't allocate command buffers"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
+
+#if defined ( ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS ) ||       \
+    defined ( ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION )
+
+    VkDevice device = renderer.GetDevice ();
+
+    for ( size_t i = 0U; i < totalBuffers; ++i )
+    AV_SET_VULKAN_OBJECT_NAME ( device, commandBuffers[ i ], VK_OBJECT_TYPE_COMMAND_BUFFER, "Asset #%zu", i )
+
+#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS || ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
 
     size_t consumed = 0U;
     _cubes.resize ( 2U );
@@ -233,7 +247,7 @@ bool Collision::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
         32.0F
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     commandBuffers += consumed;
@@ -260,7 +274,7 @@ bool Collision::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
         0.7F
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     commandBuffers += consumed;
@@ -272,7 +286,7 @@ bool Collision::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
         VK_NULL_HANDLE
     );
 
-    if ( !_contactMesh )
+    if ( !_contactMesh ) [[unlikely]]
         return false;
 
     consumed += consumed;
@@ -296,7 +310,7 @@ bool Collision::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
         "Can't run upload commands"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     for ( auto &cube : _cubes )

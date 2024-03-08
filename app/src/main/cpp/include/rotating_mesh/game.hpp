@@ -101,7 +101,7 @@ class Game : public android_vulkan::Game
         ) noexcept = 0;
 
         virtual void DestroyTextures ( android_vulkan::Renderer &renderer ) noexcept;
-        [[nodiscard]] bool CreateSamplers ( android_vulkan::Renderer &renderer ) noexcept;
+        [[nodiscard]] bool CreateSamplers ( VkDevice device ) noexcept;
         void DestroySamplers ( VkDevice device ) noexcept;
 
         [[nodiscard]] bool CreateCommonTextures ( android_vulkan::Renderer &renderer,
@@ -141,7 +141,7 @@ class Game : public android_vulkan::Game
         [[nodiscard]] bool CreateFramebuffers ( android_vulkan::Renderer &renderer ) noexcept;
         void DestroyFramebuffers ( android_vulkan::Renderer &renderer ) noexcept;
 
-        [[nodiscard]] bool CreatePipelineLayout ( android_vulkan::Renderer &renderer ) noexcept;
+        [[nodiscard]] bool CreatePipelineLayout ( VkDevice device ) noexcept;
 
         [[nodiscard]] bool CreatePipeline ( android_vulkan::Renderer &renderer ) noexcept;
         void DestroyPipeline ( VkDevice device ) noexcept;

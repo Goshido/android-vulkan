@@ -123,7 +123,11 @@ bool BoxStack::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
     if ( !result )
         return false;
 
-    AV_REGISTER_COMMAND_POOL ( "pbr::box_stack::BoxStack::_commandPool" )
+    AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (),
+        _commandPool,
+        VK_OBJECT_TYPE_COMMAND_POOL,
+        "pbr::box_stack::BoxStack::_commandPool"
+    )
 
     if ( !_renderSession.OnInitDevice ( renderer ) )
         return false;
@@ -264,12 +268,11 @@ bool BoxStack::AppendCuboid ( android_vulkan::Renderer &renderer,
 
 void BoxStack::DestroyCommandPool ( VkDevice device ) noexcept
 {
-    if ( _commandPool == VK_NULL_HANDLE )
+    if ( _commandPool == VK_NULL_HANDLE ) [[unlikely]]
         return;
 
     vkDestroyCommandPool ( device, _commandPool, nullptr );
     _commandPool = VK_NULL_HANDLE;
-    AV_UNREGISTER_COMMAND_POOL ( "pbr::box_stack::BoxStack::_commandPool" )
 }
 
 bool BoxStack::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
@@ -281,6 +284,7 @@ bool BoxStack::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
 
     if ( !_physics.AddGlobalForce ( std::make_shared<android_vulkan::GlobalForceGravity> ( FREE_FALL_ACCELERATION ) ) )
     {
+        [[unlikely]]
         android_vulkan::LogError ( "BoxStack::CreateSceneManual - Can't add gravity." );
         return false;
     }
@@ -311,8 +315,18 @@ bool BoxStack::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
         "Can't allocate command buffers"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
+
+#if defined ( ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS ) ||       \
+    defined ( ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION )
+
+    VkDevice device = renderer.GetDevice ();
+
+    for ( size_t i = 0U; i < comBuffs; ++i )
+        AV_SET_VULKAN_OBJECT_NAME ( device, commandBuffers[ i ], VK_OBJECT_TYPE_COMMAND_BUFFER, "Asset #%zu", i )
+
+#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS || ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
 
     size_t consumed = 0U;
     _defaultColor.From ( 255U, 255U, 255U, 255U );
@@ -336,7 +350,7 @@ bool BoxStack::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
         32.0F
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     body->EnableKinematic ();
@@ -365,7 +379,7 @@ bool BoxStack::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
             0.7F
         );
 
-        if ( !result )
+        if ( !result ) [[unlikely]]
             return false;
 
         commandBuffers += consumed;
@@ -403,7 +417,7 @@ bool BoxStack::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
         "Can't run upload commands"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     for ( auto &component : _components )

@@ -45,7 +45,10 @@ bool RayCasting::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime 
 bool RayCasting::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 {
     if ( !CreateCommandPool ( renderer ) || !_renderSession.OnInitDevice ( renderer ) || !LoadResources ( renderer ) )
+    {
+        [[unlikely]]
         return false;
+    }
 
     _renderSession.FreeTransferResources ( renderer );
     return true;
@@ -95,7 +98,7 @@ bool RayCasting::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexc
         Z_FAR
     );
 
-    if ( !_renderSession.OnSwapchainCreated ( renderer, resolution ) )
+    if ( !_renderSession.OnSwapchainCreated ( renderer, resolution ) ) [[unlikely]]
         return false;
 
     _camera.CaptureInput ();
@@ -166,21 +169,25 @@ bool RayCasting::CreateCommandPool ( android_vulkan::Renderer &renderer ) noexce
         "Can't create command pool"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_COMMAND_POOL ( "pbr::ray_casting::RayCasting::_commandPool" )
+    AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (),
+        _commandPool,
+        VK_OBJECT_TYPE_COMMAND_POOL,
+        "pbr::ray_casting::RayCasting::_commandPool"
+    )
+
     return true;
 }
 
 void RayCasting::DestroyCommandPool ( VkDevice device ) noexcept
 {
-    if ( _commandPool == VK_NULL_HANDLE )
+    if ( _commandPool == VK_NULL_HANDLE ) [[unlikely]]
         return;
 
     vkDestroyCommandPool ( device, _commandPool, nullptr );
     _commandPool = VK_NULL_HANDLE;
-    AV_UNREGISTER_COMMAND_POOL ( "pbr::ray_casting::RayCasting::_commandPool" )
 }
 
 bool RayCasting::LoadResources ( android_vulkan::Renderer &renderer ) noexcept
@@ -221,8 +228,18 @@ bool RayCasting::LoadResources ( android_vulkan::Renderer &renderer ) noexcept
         "Can't allocate command buffers"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
+
+#if defined ( ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS ) ||       \
+    defined ( ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION )
+
+    VkDevice device = renderer.GetDevice ();
+
+    for ( size_t i = 0U; i < comBuffs; ++i )
+        AV_SET_VULKAN_OBJECT_NAME ( device, cb[ i ], VK_OBJECT_TYPE_COMMAND_BUFFER, "Asset #%zu", i )
+
+#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS || ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
 
     size_t consumed;
     bool success;
@@ -237,7 +254,7 @@ bool RayCasting::LoadResources ( android_vulkan::Renderer &renderer ) noexcept
         "Mesh"
     );
 
-    if ( !success )
+    if ( !success ) [[unlikely]]
     {
         _cube.reset ();
         return false;
@@ -261,19 +278,19 @@ bool RayCasting::LoadResources ( android_vulkan::Renderer &renderer ) noexcept
 
     ph.SetVelocityAngular ( _angular0, false );
 
-    if ( !_physics.AddRigidBody ( _body ) )
+    if ( !_physics.AddRigidBody ( _body ) ) [[unlikely]]
     {
         android_vulkan::LogError ( "RayCasting::LoadResources - Cant' add rigid body." );
         return false;
     }
 
-    if ( !CreateTexture ( renderer, _rayTextureHit, cb, 115U, 185U, 0U, "rayHit" ) )
+    if ( !CreateTexture ( renderer, _rayTextureHit, cb, 115U, 185U, 0U, "rayHit" ) ) [[unlikely]]
         return false;
 
-    if ( !CreateTexture ( renderer, _rayTextureNoHit, cb, 70U, 185U, 225U, "rayNoHit" ) )
+    if ( !CreateTexture ( renderer, _rayTextureNoHit, cb, 70U, 185U, 225U, "rayNoHit" ) ) [[unlikely]]
         return false;
 
-    if ( !CreateTexture ( renderer, _normalTexture, cb, 220U, 70U, 225U, "normal" ) )
+    if ( !CreateTexture ( renderer, _normalTexture, cb, 220U, 70U, 225U, "normal" ) ) [[unlikely]]
         return false;
 
     _rayMaterial = std::make_shared<OpaqueMaterial> ();
@@ -368,7 +385,7 @@ bool RayCasting::LoadResources ( android_vulkan::Renderer &renderer ) noexcept
         VK_NULL_HANDLE
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     cb += 1U;
@@ -378,7 +395,7 @@ bool RayCasting::LoadResources ( android_vulkan::Renderer &renderer ) noexcept
         "Can't run upload commands"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     // NOLINTNEXTLINE - downcast.
@@ -495,7 +512,7 @@ bool RayCasting::CreateTexture ( android_vulkan::Renderer &renderer,
         VK_NULL_HANDLE
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     commandBuffers += 1U;
@@ -513,7 +530,7 @@ GXVec3 RayCasting::GenerateAngular () noexcept
 
     v.Normalize ();
 
-    if ( std::isnan ( v._data[ 0U ] ) )
+    if ( std::isnan ( v._data[ 0U ] ) ) [[unlikely]]
     {
         // Vector is too small to normalize. Re-rolling with fixing of x component.
         v._data[ 0U ] = 1.0F;

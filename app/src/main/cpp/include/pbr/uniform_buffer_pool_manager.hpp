@@ -50,7 +50,7 @@ class UniformBufferPoolManager final
             char const* name
         ) noexcept;
 
-        void Destroy ( android_vulkan::Renderer &renderer, char const* name ) noexcept;
+        void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
 };
 
 } // namespace pbr

@@ -13,39 +13,49 @@ namespace rainbow {
 
 bool Rainbow::IsReady () noexcept
 {
-    return _renderPassEndedSemaphore != VK_NULL_HANDLE;
+    return !_swapchainInfo.empty ();
 }
 
 bool Rainbow::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) noexcept
 {
     VkDevice device = renderer.GetDevice ();
 
+    FrameInFlight const &fif = _framesInFlight[ _writeFrameIndex++ ];
+    _writeFrameIndex %= FRAMES_IN_FLIGHT;
+
     bool result = android_vulkan::Renderer::CheckVkResult (
-        vkWaitForFences ( device, 1U, &_fence, VK_TRUE, UINT64_MAX ),
+        vkWaitForFences ( device, 1U, &fif._fence, VK_TRUE, UINT64_MAX ),
         "Rainbow::OnFrame",
         "Can't wait command buffer fence"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
+        return false;
+
+    uint32_t swapchainImageIdx;
+
+    if ( !BeginFrame ( renderer, swapchainImageIdx, fif._acquire ) ) [[unlikely]]
         return false;
 
     result = android_vulkan::Renderer::CheckVkResult (
-        vkResetFences ( device, 1U, &_fence ),
+        vkResetFences ( device, 1U, &fif._fence ),
         "Rainbow::OnFrame",
         "Can't reset command buffer fence"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     result = android_vulkan::Renderer::CheckVkResult (
-        vkResetCommandPool ( device, _commandPool, 0U ),
+        vkResetCommandPool ( device, fif._pool, 0U ),
         "Rainbow::OnFrame",
         "Can't reset command pool"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
+
+    SwapchainInfo const &swapchainInfo = _swapchainInfo[ static_cast<size_t> ( swapchainImageIdx ) ];
 
     constexpr VkCommandBufferBeginInfo commandBufferBeginInfo
     {
@@ -56,18 +66,13 @@ bool Rainbow::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) n
     };
 
     result = android_vulkan::Renderer::CheckVkResult (
-        vkBeginCommandBuffer ( _commandBuffer, &commandBufferBeginInfo ),
+        vkBeginCommandBuffer ( fif._buffer, &commandBufferBeginInfo ),
         "Rainbow::OnFrame",
         "Can't begin command buffer"
     );
 
-    if ( !result )
-        return true;
-
-    uint32_t framebufferIndex = UINT32_MAX;
-
-    if ( !BeginFrame ( renderer, framebufferIndex ) )
-        return true;
+    if ( !result ) [[unlikely]]
+        return false;
 
     constexpr float CIRCLE_THIRD = GX_MATH_DOUBLE_PI / 3.0F;
     constexpr float CIRCLE_TWO_THIRD = 2.0F * CIRCLE_THIRD;
@@ -88,38 +93,21 @@ bool Rainbow::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) n
         }
     };
 
-    VkRenderPassBeginInfo const renderPassBeginInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
-        .pNext = nullptr,
-        .renderPass = _renderPass,
-        .framebuffer = _framebuffers[ framebufferIndex ],
+    _renderPassBeginInfo.pClearValues = &colorClearValue;
+    _renderPassBeginInfo.framebuffer = swapchainInfo._framebuffer;
 
-        .renderArea
-        {
-            .offset
-            {
-                .x = 0,
-                .y = 0
-            },
+    VkCommandBuffer commandBuffer = fif._buffer;
 
-            .extent = renderer.GetSurfaceSize ()
-        },
+    vkCmdBeginRenderPass ( commandBuffer, &_renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE );
+    vkCmdEndRenderPass ( commandBuffer );
 
-        .clearValueCount = 1U,
-        .pClearValues = &colorClearValue
-    };
-
-    vkCmdBeginRenderPass ( _commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE );
-    vkCmdEndRenderPass ( _commandBuffer );
-
-    result = android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( _commandBuffer ),
+    result = android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
         "Rainbow::OnFrame",
         "Can't end command buffer"
     );
 
-    if ( !result )
-        return true;
+    if ( !result ) [[unlikely]]
+        return false;
 
     constexpr VkPipelineStageFlags waitFlags = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 
@@ -128,97 +116,27 @@ bool Rainbow::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) n
         .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
         .pNext = nullptr,
         .waitSemaphoreCount = 1U,
-        .pWaitSemaphores = &_renderTargetAcquiredSemaphore,
+        .pWaitSemaphores = &fif._acquire,
         .pWaitDstStageMask = &waitFlags,
         .commandBufferCount = 1U,
-        .pCommandBuffers = &_commandBuffer,
+        .pCommandBuffers = &commandBuffer,
         .signalSemaphoreCount = 1U,
-        .pSignalSemaphores = &_renderPassEndedSemaphore
+        .pSignalSemaphores = &swapchainInfo._renderEnd
     };
 
     result = android_vulkan::Renderer::CheckVkResult (
-        vkQueueSubmit ( renderer.GetQueue (), 1U, &submitInfo, _fence ),
+        vkQueueSubmit ( renderer.GetQueue (), 1U, &submitInfo, fif._fence ),
         "Rainbow::OnFrame",
         "Can't submit command buffer"
     );
 
-    if ( !result )
-        return true;
+    if ( !result ) [[unlikely]]
+        return false;
 
-    return EndFrame ( renderer, framebufferIndex );
+    return EndFrame ( renderer, swapchainImageIdx, swapchainInfo._renderEnd );
 }
 
 bool Rainbow::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
-{
-    return CreatePresentationSyncPrimitive ( renderer );
-}
-
-void Rainbow::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
-{
-    DestroyPresentationSyncPrimitive ( renderer.GetDevice () );
-}
-
-bool Rainbow::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept
-{
-    return CreateRenderPass ( renderer ) && CreateFramebuffers ( renderer ) && CreateCommandBuffer ( renderer );
-}
-
-void Rainbow::OnSwapchainDestroyed ( android_vulkan::Renderer &renderer ) noexcept
-{
-    VkDevice device = renderer.GetDevice ();
-    DestroyCommandBuffer ( device );
-    DestroyFramebuffers ( device );
-    DestroyRenderPass ( device );
-}
-
-bool Rainbow::BeginFrame ( android_vulkan::Renderer &renderer, uint32_t &presentationFramebufferIndex ) noexcept
-{
-    return android_vulkan::Renderer::CheckVkResult (
-        vkAcquireNextImageKHR ( renderer.GetDevice (),
-            renderer.GetSwapchain (),
-            UINT64_MAX,
-            _renderTargetAcquiredSemaphore,
-            VK_NULL_HANDLE,
-            &presentationFramebufferIndex
-        ),
-
-        "Rainbow::BeginFrame",
-        "Can't acquire next image"
-    );
-}
-
-bool Rainbow::EndFrame ( android_vulkan::Renderer &renderer, uint32_t presentationFramebufferIndex ) noexcept
-{
-    VkResult presentResult = VK_ERROR_DEVICE_LOST;
-
-    VkPresentInfoKHR const presentInfoKHR
-    {
-        .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
-        .pNext = nullptr,
-        .waitSemaphoreCount = 1U,
-        .pWaitSemaphores = &_renderPassEndedSemaphore,
-        .swapchainCount = 1U,
-        .pSwapchains = &renderer.GetSwapchain (),
-        .pImageIndices = &presentationFramebufferIndex,
-        .pResults = &presentResult
-    };
-
-    bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkQueuePresentKHR ( renderer.GetQueue (), &presentInfoKHR ),
-        "Rainbow::EndFrame",
-        "Can't present frame"
-    );
-
-    if ( !result )
-        return false;
-
-    return android_vulkan::Renderer::CheckVkResult ( presentResult,
-        "Rainbow::EndFrame",
-        "Present queue has been failed"
-    );
-}
-
-bool Rainbow::CreateCommandBuffer ( android_vulkan::Renderer &renderer ) noexcept
 {
     VkCommandPoolCreateInfo const commandPoolCreateInfo
     {
@@ -228,36 +146,14 @@ bool Rainbow::CreateCommandBuffer ( android_vulkan::Renderer &renderer ) noexcep
         .queueFamilyIndex = renderer.GetQueueFamilyIndex ()
     };
 
-    VkDevice device = renderer.GetDevice ();
-
-    bool result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateCommandPool ( device, &commandPoolCreateInfo, nullptr, &_commandPool ),
-        "Rainbow::CreateCommandBuffer",
-        "Can't create command pool"
-    );
-
-    if ( !result )
-        return false;
-
-    AV_REGISTER_COMMAND_POOL ( "Rainbow::_commandPool" )
-
-    VkCommandBufferAllocateInfo const commandBufferAllocateInfo
+    VkCommandBufferAllocateInfo commandBufferAllocateInfo
     {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
         .pNext = nullptr,
-        .commandPool = _commandPool,
+        .commandPool = VK_NULL_HANDLE,
         .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
         .commandBufferCount = 1U
     };
-
-    result = android_vulkan::Renderer::CheckVkResult (
-        vkAllocateCommandBuffers ( device, &commandBufferAllocateInfo, &_commandBuffer ),
-        "Rainbow::CreateCommandBuffer",
-        "Can't allocate command buffers"
-    );
-
-    if ( !result )
-        return false;
 
     constexpr VkFenceCreateInfo fenceInfo
     {
@@ -266,93 +162,183 @@ bool Rainbow::CreateCommandBuffer ( android_vulkan::Renderer &renderer ) noexcep
         .flags = VK_FENCE_CREATE_SIGNALED_BIT
     };
 
-    result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateFence ( device, &fenceInfo, nullptr, &_fence ),
-        "Rainbow::CreateCommandBuffer",
-        "Can't create fence"
-    );
-
-    if ( !result )
-        return false;
-
-    AV_REGISTER_FENCE ( "Rainbow::_fence" )
-    return true;
-}
-
-void Rainbow::DestroyCommandBuffer ( VkDevice device ) noexcept
-{
-    if ( _fence != VK_NULL_HANDLE )
+    constexpr VkSemaphoreCreateInfo const semaphoreCreateInfo
     {
-        vkDestroyFence ( device, _fence, nullptr );
-        AV_UNREGISTER_FENCE ( "Rainbow::_fence" )
-        _fence = VK_NULL_HANDLE;
-    }
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U
+    };
 
-    if ( _commandPool == VK_NULL_HANDLE )
-        return;
-
-    vkDestroyCommandPool ( device, _commandPool, nullptr );
-    _commandPool = VK_NULL_HANDLE;
-    AV_UNREGISTER_COMMAND_POOL ( "Rainbow::_commandPool" )
-}
-
-bool Rainbow::CreateFramebuffers ( android_vulkan::Renderer &renderer ) noexcept
-{
     VkDevice device = renderer.GetDevice ();
-    size_t const framebufferCount = renderer.GetPresentImageCount ();
-    _framebuffers.reserve ( framebufferCount );
 
-    VkExtent2D const &resolution = renderer.GetSurfaceSize ();
-
-    VkFramebufferCreateInfo createInfo;
-    createInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-    createInfo.flags = 0U;
-    createInfo.pNext = nullptr;
-    createInfo.renderPass = _renderPass;
-    createInfo.width = resolution.width;
-    createInfo.height = resolution.height;
-    createInfo.layers = 1U;
-    createInfo.attachmentCount = 1U;
-
-    VkFramebuffer framebuffer = VK_NULL_HANDLE;
-
-    for ( size_t i = 0U; i < framebufferCount; ++i )
+    for ( size_t i = 0U; i < FRAMES_IN_FLIGHT; ++i )
     {
-        createInfo.pAttachments = &renderer.GetPresentImageView ( i );
+        FrameInFlight &info = _framesInFlight[ i ];
 
-        bool const result = android_vulkan::Renderer::CheckVkResult (
-            vkCreateFramebuffer ( device, &createInfo, nullptr, &framebuffer ),
-            "Rainbow::CreateFramebuffers",
-            "Can't create framebuffer"
+        bool result = android_vulkan::Renderer::CheckVkResult (
+            vkCreateCommandPool ( device, &commandPoolCreateInfo, nullptr, &info._pool ),
+            "Rainbow::OnInitDevice",
+            "Can't create command pool"
         );
 
-        if ( !result )
+        if ( !result ) [[unlikely]]
             return false;
 
-        _framebuffers.push_back ( framebuffer );
-        AV_REGISTER_FRAMEBUFFER ( "Rainbow::_framebuffers" )
+        AV_SET_VULKAN_OBJECT_NAME ( device, info._pool, VK_OBJECT_TYPE_COMMAND_POOL, "Frame in flight #%zu", i )
+
+        commandBufferAllocateInfo.commandPool = info._pool;
+
+        result = android_vulkan::Renderer::CheckVkResult (
+            vkAllocateCommandBuffers ( device, &commandBufferAllocateInfo, &info._buffer ),
+            "Rainbow::OnInitDevice",
+            "Can't allocate command buffers"
+        );
+
+        if ( !result ) [[unlikely]]
+            return false;
+
+        AV_SET_VULKAN_OBJECT_NAME ( device, info._buffer, VK_OBJECT_TYPE_COMMAND_BUFFER, "Frame in flight #%zu", i )
+
+        result = android_vulkan::Renderer::CheckVkResult (
+            vkCreateSemaphore ( device, &semaphoreCreateInfo, nullptr, &info._acquire ),
+            "Rainbow::OnInitDevice",
+            "Can't create render target acquired semaphore"
+        );
+
+        if ( !result ) [[unlikely]]
+            return false;
+
+        AV_SET_VULKAN_OBJECT_NAME ( device, info._acquire, VK_OBJECT_TYPE_SEMAPHORE, "Frame in flight #%zu", i )
+
+        result = android_vulkan::Renderer::CheckVkResult (
+            vkCreateFence ( device, &fenceInfo, nullptr, &info._fence ),
+            "Rainbow::OnInitDevice",
+            "Can't create fence"
+        );
+
+        if ( !result ) [[unlikely]]
+            return false;
+
+        AV_SET_VULKAN_OBJECT_NAME ( device, info._fence, VK_OBJECT_TYPE_FENCE, "Frame in flight #%zu", i )
     }
 
     return true;
 }
 
-void Rainbow::DestroyFramebuffers ( VkDevice device ) noexcept
-{
-    if ( _framebuffers.empty () )
-        return;
-
-    for ( const auto framebuffer : _framebuffers )
-    {
-        vkDestroyFramebuffer ( device, framebuffer, nullptr );
-        AV_UNREGISTER_FRAMEBUFFER ( "Rainbow::_framebuffers" )
-    }
-
-    _framebuffers.clear ();
-}
-
-bool Rainbow::CreatePresentationSyncPrimitive ( android_vulkan::Renderer &renderer ) noexcept
+void Rainbow::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
 {
     VkDevice device = renderer.GetDevice ();
+
+    for ( auto &info : _framesInFlight )
+    {
+        if ( info._fence != VK_NULL_HANDLE ) [[likely]]
+        {
+            vkDestroyFence ( device, info._fence, nullptr );
+            info._fence = VK_NULL_HANDLE;
+        }
+
+        if ( info._acquire != VK_NULL_HANDLE ) [[likely]]
+        {
+            vkDestroySemaphore ( device, info._acquire, nullptr );
+            info._acquire = VK_NULL_HANDLE;
+        }
+
+        if ( info._pool == VK_NULL_HANDLE ) [[unlikely]]
+            return;
+
+        vkDestroyCommandPool ( device, info._pool, nullptr );
+        info._pool = VK_NULL_HANDLE;
+        info._buffer = VK_NULL_HANDLE;
+    }
+}
+
+bool Rainbow::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept
+{
+    return CreateRenderPass ( renderer ) && CreateSwapchainInfo ( renderer );
+}
+
+void Rainbow::OnSwapchainDestroyed ( android_vulkan::Renderer &renderer ) noexcept
+{
+    VkDevice device = renderer.GetDevice ();
+    DestroySwapchainInfo ( device );
+    DestroyRenderPass ( device );
+}
+
+bool Rainbow::BeginFrame ( android_vulkan::Renderer &renderer,
+    uint32_t &swapchainImageIndex,
+    VkSemaphore acquire
+) noexcept
+{
+    return android_vulkan::Renderer::CheckVkResult (
+        vkAcquireNextImageKHR ( renderer.GetDevice (),
+            renderer.GetSwapchain (),
+            UINT64_MAX,
+            acquire,
+            VK_NULL_HANDLE,
+            &swapchainImageIndex
+        ),
+
+        "Rainbow::BeginFrame",
+        "Can't acquire next image"
+    );
+}
+
+bool Rainbow::EndFrame ( android_vulkan::Renderer &renderer,
+    uint32_t swapchainImageIndex,
+    VkSemaphore renderEnd
+) noexcept
+{
+    VkResult presentResult = VK_ERROR_DEVICE_LOST;
+
+    VkPresentInfoKHR const presentInfoKHR
+    {
+        .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+        .pNext = nullptr,
+        .waitSemaphoreCount = 1U,
+        .pWaitSemaphores = &renderEnd,
+        .swapchainCount = 1U,
+        .pSwapchains = &renderer.GetSwapchain (),
+        .pImageIndices = &swapchainImageIndex,
+        .pResults = &presentResult
+    };
+
+    bool const result = android_vulkan::Renderer::CheckVkResult (
+        vkQueuePresentKHR ( renderer.GetQueue (), &presentInfoKHR ),
+        "Rainbow::EndFrame",
+        "Can't present frame"
+    );
+
+    if ( !result ) [[unlikely]]
+        return false;
+
+    return android_vulkan::Renderer::CheckVkResult ( presentResult,
+        "Rainbow::EndFrame",
+        "Present queue has been failed"
+    );
+}
+
+bool Rainbow::CreateSwapchainInfo ( android_vulkan::Renderer &renderer ) noexcept
+{
+    VkDevice device = renderer.GetDevice ();
+    size_t const imageCount = renderer.GetPresentImageCount ();
+
+    _swapchainInfo.resize ( imageCount );
+    SwapchainInfo* swapchainInfo = _swapchainInfo.data ();
+
+    VkExtent2D const &resolution = renderer.GetSurfaceSize ();
+    _renderPassBeginInfo.renderArea.extent = resolution;
+
+    VkFramebufferCreateInfo createInfo {
+        .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .renderPass = _renderPassBeginInfo.renderPass,
+        .attachmentCount = 1U,
+        .pAttachments = nullptr,
+        .width = resolution.width,
+        .height = resolution.height,
+        .layers = 1U,
+    };
 
     constexpr VkSemaphoreCreateInfo const semaphoreCreateInfo
     {
@@ -361,51 +347,54 @@ bool Rainbow::CreatePresentationSyncPrimitive ( android_vulkan::Renderer &render
         .flags = 0U
     };
 
-    bool result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateSemaphore ( device, &semaphoreCreateInfo, nullptr, &_renderTargetAcquiredSemaphore ),
-        "Rainbow::CreatePresentationSyncPrimitive",
-        "Can't create render target acquired semaphore"
-    );
-
-    if ( !result )
+    for ( size_t i = 0U; i < imageCount; ++i )
     {
-        DestroyPresentationSyncPrimitive ( renderer.GetDevice () );
-        return false;
+        SwapchainInfo &info = swapchainInfo[ i ];
+
+        bool result = android_vulkan::Renderer::CheckVkResult (
+            vkCreateSemaphore ( device, &semaphoreCreateInfo, nullptr, &info._renderEnd ),
+            "Rainbow::CreateSwapchainInfo",
+            "Can't create render target acquired semaphore"
+        );
+
+        if ( !result ) [[unlikely]]
+            return false;
+
+        AV_SET_VULKAN_OBJECT_NAME ( device, info._renderEnd, VK_OBJECT_TYPE_SEMAPHORE, "Swapchain image #%zu", i )
+
+        createInfo.pAttachments = &renderer.GetPresentImageView ( i );
+
+        result = android_vulkan::Renderer::CheckVkResult (
+            vkCreateFramebuffer ( device, &createInfo, nullptr, &info._framebuffer ),
+            "Rainbow::CreateSwapchainInfo",
+            "Can't create framebuffer"
+        );
+
+        if ( !result ) [[unlikely]]
+            return false;
+
+        AV_SET_VULKAN_OBJECT_NAME ( device, info._framebuffer, VK_OBJECT_TYPE_FRAMEBUFFER, "Swapchain image #%zu", i )
     }
 
-    AV_REGISTER_SEMAPHORE ( "Rainbow::_renderTargetAcquiredSemaphore" )
-
-    result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateSemaphore ( device, &semaphoreCreateInfo, nullptr, &_renderPassEndedSemaphore ),
-        "Rainbow::CreatePresentationSyncPrimitive",
-        "Can't create render pass ended semaphore"
-    );
-
-    if ( !result )
-    {
-        DestroyPresentationSyncPrimitive ( renderer.GetDevice () );
-        return false;
-    }
-
-    AV_REGISTER_SEMAPHORE ( "Rainbow::_renderPassEndedSemaphore" )
     return true;
 }
 
-void Rainbow::DestroyPresentationSyncPrimitive ( VkDevice device ) noexcept
+void Rainbow::DestroySwapchainInfo ( VkDevice device ) noexcept
 {
-    if ( _renderTargetAcquiredSemaphore != VK_NULL_HANDLE )
+    for ( auto const &info : _swapchainInfo )
     {
-        vkDestroySemaphore ( device, _renderTargetAcquiredSemaphore, nullptr );
-        _renderTargetAcquiredSemaphore = VK_NULL_HANDLE;
-        AV_UNREGISTER_SEMAPHORE ( "Rainbow::_renderTargetAcquiredSemaphore" )
+        if ( info._framebuffer != VK_NULL_HANDLE ) [[likely]]
+            vkDestroyFramebuffer ( device, info._framebuffer, nullptr );
+
+        if ( info._renderEnd != VK_NULL_HANDLE ) [[likely]]
+        {
+            vkDestroySemaphore ( device, info._renderEnd, nullptr );
+        }
     }
 
-    if ( _renderPassEndedSemaphore == VK_NULL_HANDLE )
-        return;
+    _swapchainInfo.clear ();
+    _swapchainInfo.shrink_to_fit ();
 
-    vkDestroySemaphore ( device, _renderPassEndedSemaphore, nullptr );
-    _renderPassEndedSemaphore = VK_NULL_HANDLE;
-    AV_UNREGISTER_SEMAPHORE ( "Rainbow::_renderPassEndedSemaphore" )
 }
 
 bool Rainbow::CreateRenderPass ( android_vulkan::Renderer &renderer ) noexcept
@@ -466,27 +455,33 @@ bool Rainbow::CreateRenderPass ( android_vulkan::Renderer &renderer ) noexcept
         .pDependencies = &dependency
     };
 
+    VkDevice device = renderer.GetDevice ();
+
     const bool result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateRenderPass ( renderer.GetDevice (), &renderPassCreateInfo, nullptr, &_renderPass ),
+        vkCreateRenderPass ( device, &renderPassCreateInfo, nullptr, &_renderPassBeginInfo.renderPass ),
         "Rainbow::CreateRenderPass",
         "Can't create render pass"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_RENDER_PASS ( "Rainbow::_renderPass" )
+    AV_SET_VULKAN_OBJECT_NAME ( device,
+        _renderPassBeginInfo.renderPass,
+        VK_OBJECT_TYPE_RENDER_PASS,
+        "Rainbow::_renderPass"
+    )
+
     return true;
 }
 
 void Rainbow::DestroyRenderPass ( VkDevice device ) noexcept
 {
-    if ( _renderPass == VK_NULL_HANDLE )
+    if ( _renderPassBeginInfo.renderPass == VK_NULL_HANDLE ) [[unlikely]]
         return;
 
-    vkDestroyRenderPass ( device, _renderPass, nullptr );
-    _renderPass = VK_NULL_HANDLE;
-    AV_UNREGISTER_RENDER_PASS ( "Rainbow::_renderPass" )
+    vkDestroyRenderPass ( device, _renderPassBeginInfo.renderPass, nullptr );
+    _renderPassBeginInfo.renderPass = VK_NULL_HANDLE;
 }
 
 } // namespace rainbow

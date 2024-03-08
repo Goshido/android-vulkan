@@ -78,12 +78,12 @@ bool PBRGame::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
         "Can't create command pool"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_COMMAND_POOL ( "pbr::PBRGame::_commandPool" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _commandPool, VK_OBJECT_TYPE_COMMAND_POOL, "Asset pool" )
 
-    if ( !_renderSession.OnInitDevice ( renderer ) || !UploadGPUContent ( renderer ) )
+    if ( !_renderSession.OnInitDevice ( renderer ) || !UploadGPUContent ( renderer ) ) [[unlikely]]
        return false;
 
     _renderSession.FreeTransferResources ( renderer );
@@ -119,7 +119,7 @@ bool PBRGame::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept
         Z_FAR
     );
 
-    if ( !_renderSession.OnSwapchainCreated ( renderer, resolution ) )
+    if ( !_renderSession.OnSwapchainCreated ( renderer, resolution ) ) [[unlikely]]
         return false;
 
     _camera.CaptureInput ();
@@ -134,19 +134,18 @@ void PBRGame::OnSwapchainDestroyed ( android_vulkan::Renderer &renderer ) noexce
 
 void PBRGame::DestroyCommandPool ( VkDevice device ) noexcept
 {
-    if ( _commandPool == VK_NULL_HANDLE )
+    if ( _commandPool == VK_NULL_HANDLE ) [[unlikely]]
         return;
 
     vkDestroyCommandPool ( device, _commandPool, nullptr );
     _commandPool = VK_NULL_HANDLE;
-    AV_UNREGISTER_COMMAND_POOL ( "pbr::PBRGame::_commandPool" )
 }
 
 bool PBRGame::UploadGPUContent ( android_vulkan::Renderer &renderer ) noexcept
 {
     android_vulkan::File file ( SCENES[ ACTIVE_SCENE ] );
 
-    if ( !file.LoadContent () )
+    if ( !file.LoadContent () ) [[unlikely]]
         return false;
 
     std::vector<uint8_t> const &content = file.GetContent ();
@@ -185,10 +184,27 @@ bool PBRGame::UploadGPUContent ( android_vulkan::Renderer &renderer ) noexcept
         "Can't allocate command buffers"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     VkCommandBuffer const* commandBuffers = _commandBuffers.data ();
+
+#if defined ( ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS ) ||       \
+    defined ( ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION )
+
+    for ( size_t i = 0U; i < comBuffs; ++i )
+    {
+        AV_SET_VULKAN_OBJECT_NAME ( device,
+            commandBuffers[ i ],
+            VK_OBJECT_TYPE_COMMAND_BUFFER,
+            "Asset loading #%zu",
+            i
+        )
+    }
+
+#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS || ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
+
+
     uint8_t const* readPointer = data + sizeof ( SceneDesc );
 
     size_t consumed = 0U;
@@ -232,7 +248,7 @@ bool PBRGame::UploadGPUContent ( android_vulkan::Renderer &renderer ) noexcept
         "Can't run upload commands"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
     for ( auto &component : _renderableComponents )

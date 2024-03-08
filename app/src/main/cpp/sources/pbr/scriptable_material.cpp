@@ -65,10 +65,15 @@ bool ScriptableMaterial::Init ( lua_State &vm, android_vulkan::Renderer &rendere
         "Can't create command pool"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_COMMAND_POOL ( "pbr::ScriptableMaterial::_commandPool" )
+    AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (),
+        _commandPool,
+        VK_OBJECT_TYPE_COMMAND_POOL,
+        "pbr::ScriptableMaterial::_commandPool"
+    )
+
     return AllocateCommandBuffers ( INITIAL_COMMAND_BUFFERS );
 }
 
@@ -87,7 +92,6 @@ void ScriptableMaterial::Destroy () noexcept
     {
         vkDestroyCommandPool ( device, _commandPool, nullptr );
         _commandPool = VK_NULL_HANDLE;
-        AV_UNREGISTER_COMMAND_POOL ( "pbr::ScriptableMaterial::_commandPool" )
     }
 
     auto const clean = [] ( auto &v ) noexcept {
@@ -98,10 +102,7 @@ void ScriptableMaterial::Destroy () noexcept
     clean ( _commandBuffers );
 
     for ( auto fence : _fences )
-    {
         vkDestroyFence ( device, fence, nullptr );
-        AV_UNREGISTER_FENCE ( "pbr::ScriptableMaterial::_fences" )
-    }
 
     clean ( _fences );
     _renderer = nullptr;
@@ -188,7 +189,7 @@ bool ScriptableMaterial::AllocateCommandBuffers ( size_t amount ) noexcept
         .flags = 0U
     };
 
-    VkFence* fences = _fences.data ();
+    VkFence* const fences = _fences.data ();
 
     for ( size_t i = current; i < size; ++i )
     {
@@ -200,8 +201,18 @@ bool ScriptableMaterial::AllocateCommandBuffers ( size_t amount ) noexcept
         if ( !result ) [[unlikely]]
             return false;
 
-        AV_REGISTER_FENCE ( "pbr::ScriptableMaterial::_fences" )
+        AV_SET_VULKAN_OBJECT_NAME ( device, fences[ i ], VK_OBJECT_TYPE_FENCE, "Material #%zu", i )
     }
+
+#if defined ( ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS ) ||       \
+    defined ( ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION )
+
+    VkCommandBuffer* const buffers = _commandBuffers.data ();
+
+    for ( size_t i = current; i < size; ++i )
+        AV_SET_VULKAN_OBJECT_NAME ( device, buffers[ i ], VK_OBJECT_TYPE_COMMAND_BUFFER, "Material #%zu", i )
+
+#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS || ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
 
     return true;
 }

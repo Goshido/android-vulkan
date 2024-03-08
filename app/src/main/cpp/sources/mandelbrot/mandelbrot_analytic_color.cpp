@@ -18,7 +18,7 @@ MandelbrotAnalyticColor::MandelbrotAnalyticColor () noexcept:
     // NOTHING
 }
 
-bool MandelbrotAnalyticColor::CreatePipelineLayout ( android_vulkan::Renderer &renderer ) noexcept
+bool MandelbrotAnalyticColor::CreatePipelineLayout ( VkDevice device ) noexcept
 {
     constexpr VkPipelineLayoutCreateInfo pipelineLayoutInfo
     {
@@ -32,15 +32,20 @@ bool MandelbrotAnalyticColor::CreatePipelineLayout ( android_vulkan::Renderer &r
     };
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreatePipelineLayout ( renderer.GetDevice (), &pipelineLayoutInfo, nullptr, &_pipelineLayout ),
+        vkCreatePipelineLayout ( device, &pipelineLayoutInfo, nullptr, &_pipelineLayout ),
         "MandelbrotAnalyticColor::CreatePipeline",
         "Can't create pipeline layout"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_PIPELINE_LAYOUT ( "MandelbrotAnalyticColor::_pipelineLayout" )
+    AV_SET_VULKAN_OBJECT_NAME ( device,
+        _pipelineLayout,
+        VK_OBJECT_TYPE_PIPELINE_LAYOUT,
+        "MandelbrotAnalyticColor::_pipelineLayout"
+    )
+
     return true;
 }
 
@@ -51,7 +56,6 @@ void MandelbrotAnalyticColor::DestroyPipelineLayout ( VkDevice device ) noexcept
 
     vkDestroyPipelineLayout ( device, _pipelineLayout, nullptr );
     _pipelineLayout = VK_NULL_HANDLE;
-    AV_UNREGISTER_PIPELINE_LAYOUT ( "MandelbrotAnalyticColor::_pipelineLayout" )
 }
 
 bool MandelbrotAnalyticColor::RecordCommandBuffer ( android_vulkan::Renderer &renderer,

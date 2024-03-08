@@ -152,7 +152,8 @@ bool ImageStorage::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_COMMAND_POOL ( "pbr::ImageStorage::_commandPool" )
+    AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (), _commandPool, VK_OBJECT_TYPE_COMMAND_POOL, "UI image storage" )
+
     return AllocateCommandBuffers ( INITIAL_COMMAND_BUFFERS );
 }
 
@@ -172,7 +173,6 @@ void ImageStorage::OnDestroyDevice () noexcept
     {
         vkDestroyCommandPool ( device, _commandPool, nullptr );
         _commandPool = VK_NULL_HANDLE;
-        AV_UNREGISTER_COMMAND_POOL ( "pbr::ImageStorage::_commandPool" )
     }
 
     auto const clean = [] ( auto &v ) noexcept {
@@ -183,10 +183,7 @@ void ImageStorage::OnDestroyDevice () noexcept
     clean ( _commandBuffers );
 
     for ( auto fence : _fences )
-    {
         vkDestroyFence ( device, fence, nullptr );
-        AV_UNREGISTER_FENCE ( "pbr::ImageStorage::_fences" )
-    }
 
     clean ( _fences );
     _renderer = nullptr;
@@ -266,7 +263,7 @@ bool ImageStorage::AllocateCommandBuffers ( size_t amount ) noexcept
         .flags = 0U
     };
 
-    VkFence* fences = _fences.data ();
+    VkFence* const fences = _fences.data ();
 
     for ( size_t i = current; i < size; ++i )
     {
@@ -278,8 +275,18 @@ bool ImageStorage::AllocateCommandBuffers ( size_t amount ) noexcept
         if ( !result ) [[unlikely]]
             return false;
 
-        AV_REGISTER_FENCE ( "pbr::ImageStorage::_fences" )
+        AV_SET_VULKAN_OBJECT_NAME ( device, fences[ i ], VK_OBJECT_TYPE_FENCE, "UI #%zu", i )
     }
+
+#if defined ( ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS ) ||       \
+    defined ( ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION )
+
+    VkCommandBuffer* const buffers = _commandBuffers.data ();
+
+    for ( size_t i = current; i < size; ++i )
+        AV_SET_VULKAN_OBJECT_NAME ( device, buffers[ i ], VK_OBJECT_TYPE_COMMAND_BUFFER, "UI #%zu", i )
+
+#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS || ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
 
     return true;
 }
@@ -293,7 +300,7 @@ bool UIPass::CommonDescriptorSet::Init ( VkDevice device,
     SamplerManager const &samplerManager
 ) noexcept
 {
-    if ( !_layout.Init ( device ) )
+    if ( !_layout.Init ( device ) ) [[unlikely]]
         return false;
 
     VkDescriptorSetLayout layout = _layout.GetLayout ();
@@ -315,6 +322,8 @@ bool UIPass::CommonDescriptorSet::Init ( VkDevice device,
 
     if ( !result ) [[unlikely]]
         return false;
+
+    AV_SET_VULKAN_OBJECT_NAME ( device, _descriptorSet, VK_OBJECT_TYPE_DESCRIPTOR_SET, "UI common" )
 
     VkDescriptorImageInfo const imageInfo[] =
     {
@@ -429,7 +438,7 @@ bool UIPass::Buffer::Init ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_BUFFER ( _name )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _buffer, VK_OBJECT_TYPE_BUFFER, "%s", _name )
 
     VkMemoryRequirements memoryRequirements;
     vkGetBufferMemoryRequirements ( device, _buffer, &memoryRequirements );
@@ -444,8 +453,6 @@ bool UIPass::Buffer::Init ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_DEVICE_MEMORY ( _name )
-
     return android_vulkan::Renderer::CheckVkResult ( vkBindBufferMemory ( device, _buffer, _memory, _memoryOffset ),
         "pbr::UIPass::Init",
         ( std::string ( "Can't bind memory: " ) + _name ).c_str ()
@@ -458,7 +465,6 @@ void UIPass::Buffer::Destroy ( android_vulkan::Renderer &renderer ) noexcept
     {
         vkDestroyBuffer ( renderer.GetDevice (), _buffer, nullptr );
         _buffer = VK_NULL_HANDLE;
-        AV_UNREGISTER_BUFFER ( _name )
     }
 
     if ( _memory == VK_NULL_HANDLE )
@@ -467,7 +473,6 @@ void UIPass::Buffer::Destroy ( android_vulkan::Renderer &renderer ) noexcept
     renderer.FreeMemory ( _memory, _memoryOffset );
     _memory = VK_NULL_HANDLE;
     _memoryOffset = 0U;
-    AV_UNREGISTER_DEVICE_MEMORY ( _name )
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -477,7 +482,7 @@ bool UIPass::ImageDescriptorSets::Init ( VkDevice device,
     VkImageView transparent
 ) noexcept
 {
-    if ( !_layout.Init ( device ) )
+    if ( !_layout.Init ( device ) ) [[unlikely]]
         return false;
 
     constexpr size_t count = MAX_IMAGES + SCENE_DESCRIPTOR_SET_COUNT + TRANSPARENT_DESCRIPTOR_SET_COUNT;
@@ -503,6 +508,14 @@ bool UIPass::ImageDescriptorSets::Init ( VkDevice device,
 
     if ( !result ) [[unlikely]]
         return false;
+
+#if defined ( ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS ) ||       \
+    defined ( ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION )
+
+    for ( size_t i = 0U; i < count; ++i )
+        AV_SET_VULKAN_OBJECT_NAME ( device, ds[ i ], VK_OBJECT_TYPE_DESCRIPTOR_SET, "UI image #%zu", i )
+
+#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS || ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
 
     _transparent = _descriptorSets.back ();
     _descriptorSets.pop_back ();
@@ -680,6 +693,7 @@ void UIPass::InUseImageTracker::MarkInUse ( Texture2DRef const &texture, size_t 
 bool UIPass::Execute ( VkCommandBuffer commandBuffer, size_t commandBufferIndex ) noexcept
 {
     AV_TRACE ( "UI pass: Execute" )
+    AV_VULKAN_GROUP ( commandBuffer, "UI" )
 
     if ( !ImageStorage::SyncGPU () ) [[unlikely]]
         return false;
@@ -738,14 +752,14 @@ bool UIPass::OnInitDevice ( android_vulkan::Renderer &renderer,
     VkImageView transparent
 ) noexcept
 {
-    if ( !_fontStorage.Init () )
+    if ( !_fontStorage.Init () ) [[unlikely]]
         return false;
 
     constexpr auto stagingProps = static_cast<VkMemoryPropertyFlags> (
         AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT ) | AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_COHERENT_BIT )
     );
 
-    if ( !_staging.Init ( renderer, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, stagingProps, "pbr::UIPass::_staging" ) )
+    if ( !_staging.Init ( renderer, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, stagingProps, "UI pass staging" ) )
     {
         [[unlikely]]
         return false;
@@ -768,7 +782,7 @@ bool UIPass::OnInitDevice ( android_vulkan::Renderer &renderer,
     result = _vertex.Init ( renderer,
         AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT ) | AV_VK_FLAG ( VK_BUFFER_USAGE_VERTEX_BUFFER_BIT ),
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-        "pbr::UIPass::_vertex"
+        "UI pass"
     );
 
     if ( !result ) [[unlikely]]
@@ -825,35 +839,28 @@ bool UIPass::OnInitDevice ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_DESCRIPTOR_POOL ( "pbr::UIPass::_descriptorPool" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _descriptorPool, VK_OBJECT_TYPE_DESCRIPTOR_POOL, "UI pass" )
 
     return _commonDescriptorSet.Init ( device, _descriptorPool, samplerManager ) &&
         _imageDescriptorSets.Init ( device, _descriptorPool, transparent ) &&
         _transformLayout.Init ( device ) &&
         ImageStorage::OnInitDevice ( renderer ) &&
-
-        _uniformPool.Init ( renderer,
-            _transformLayout,
-            sizeof ( UIProgram::Transform ),
-            BIND_TRANSFORM,
-            "pbr::UIPass::_uniformPool"
-        );
+        _uniformPool.Init ( renderer, _transformLayout, sizeof ( UIProgram::Transform ), BIND_TRANSFORM, "UI pass" );
 }
 
 void UIPass::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
 {
-    _uniformPool.Destroy ( renderer, "pbr::UIPass::_uniformPool" );
+    _uniformPool.Destroy ( renderer );
 
     VkDevice device = renderer.GetDevice ();
     _imageDescriptorSets.Destroy ( device );
     _commonDescriptorSet.Destroy ( device );
     _transformLayout.Destroy ( device );
 
-    if ( _descriptorPool != VK_NULL_HANDLE )
+    if ( _descriptorPool != VK_NULL_HANDLE ) [[likely]]
     {
         vkDestroyDescriptorPool ( renderer.GetDevice (), _descriptorPool, nullptr );
         _descriptorPool = VK_NULL_HANDLE;
-        AV_UNREGISTER_DESCRIPTOR_POOL ( "pbr::UIPass::_descriptorPool" )
     }
 
     _program.Destroy ( device );
@@ -998,6 +1005,7 @@ bool UIPass::UploadGPUData ( android_vulkan::Renderer &renderer,
 ) noexcept
 {
     AV_TRACE ( "UI pass: Upload GPU data" )
+    AV_VULKAN_GROUP ( commandBuffer, "Upload UI data" )
 
     VkDevice device = renderer.GetDevice ();
     _imageDescriptorSets.Commit ( device );

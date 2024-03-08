@@ -37,7 +37,7 @@ constexpr uint32_t TARGET_VULKAN_VERSION = VK_MAKE_VERSION ( MAJOR, MINOR, PATCH
 
 constexpr char const* UNKNOWN_RESULT = "UNKNOWN";
 
-constexpr auto LOGCAT_ANISPAM_DELAY = std::chrono::milliseconds ( 1U );
+constexpr auto LOGCAT_ANTISPAM_DELAY = std::chrono::milliseconds ( 1U );
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -372,13 +372,17 @@ std::unordered_set<uint32_t> g_validationFilter =
     // [2023/07/24] Caused by Vulkan Adreno Layer which presents when VK_EXT_debug_utils is enabled.
     // https://developer.qualcomm.com/sites/default/files/docs/adreno-gpu/snapdragon-game-toolkit/gdg/components/vk_adreno_layer.html
     // Qualcomm description: Renderpass is not qualified for multipass due to a given subpass.
-    // It happens at UI composition renderpass which can not be multipass by design.
+    // It happens at UI composition render pass which can not be multipass by design.
     0x00000000U,
 
     // Attempting to enable extension VK_EXT_debug_utils, but this extension is intended to support use by
     // applications when debugging and it is strongly recommended that it be otherwise avoided.
     // [2024/02/19] Yeah. I'm pretty aware about that. Thank you.
-    0x675DC32EU
+    0x675DC32EU,
+
+    // [2024/03/05] Issue:
+    // https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/7636
+    0x86A454D4U
 };
 
 constexpr std::pair<uint32_t, char const*> const g_vkDebugUtilsMessageSeverityFlagBitsEXTMapper[] =
@@ -947,14 +951,7 @@ VkExtent2D const &Renderer::GetViewportResolution () const noexcept
 
 bool Renderer::OnCreateSwapchain ( ANativeWindow &nativeWindow, bool vSync ) noexcept
 {
-    if ( !DeploySurface ( nativeWindow ) ) [[unlikely]]
-        return false;
-
-    if ( DeploySwapchain ( vSync ) ) [[likely]]
-        return true;
-
-    DestroySurface ();
-    return false;
+    return DeploySurface ( nativeWindow ) && DeploySwapchain ( vSync );
 }
 
 void Renderer::OnDestroySwapchain () noexcept
@@ -986,15 +983,6 @@ bool Renderer::OnCreateDevice ( float dpi ) noexcept
 
     if ( !physicalDeviceCount ) [[unlikely]]
     {
-
-#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
-
-        DestroyDebugFeatures ();
-
-#endif
-
-        DestroyInstance ();
-
         LogError ( "Renderer::OnCreateDevice - There is no any Vulkan physical device." );
         return false;
     }
@@ -1010,33 +998,14 @@ bool Renderer::OnCreateDevice ( float dpi ) noexcept
     );
 
     if ( !result ) [[unlikely]]
-    {
-
-#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
-
-        DestroyDebugFeatures ();
-
-#endif
-
-        DestroyInstance ();
         return false;
-    }
 
     for ( uint32_t i = 0U; i < physicalDeviceCount; ++i )
     {
-        if ( PrintPhysicalDeviceInfo ( i, deviceList[ i ] ) ) [[likely]]
-            continue;
-
-        _physicalDeviceInfo.clear ();
-
-#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
-
-        DestroyDebugFeatures ();
-
-#endif
-
-        DestroyInstance ();
-        return false;
+        if ( !PrintPhysicalDeviceInfo ( i, deviceList[ i ] ) ) [[unlikely]]
+        {
+            return false;
+        }
     }
 
     uint32_t physicalDeviceGroupCount = 0U;
@@ -1044,16 +1013,6 @@ bool Renderer::OnCreateDevice ( float dpi ) noexcept
 
     if ( !physicalDeviceGroupCount ) [[unlikely]]
     {
-        _physicalDeviceInfo.clear ();
-
-#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
-
-        DestroyDebugFeatures ();
-
-#endif
-
-        DestroyInstance ();
-
         LogError ( "Renderer::OnCreateDevice - There is no any Vulkan physical device groups." );
         return false;
     }
@@ -1072,48 +1031,27 @@ bool Renderer::OnCreateDevice ( float dpi ) noexcept
     );
 
     if ( !result ) [[unlikely]]
-    {
-        _physicalDeviceGroups.clear ();
-        _physicalDeviceInfo.clear ();
-
-#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
-
-        DestroyDebugFeatures ();
-
-#endif
-
-        DestroyInstance ();
         return false;
-    }
 
     for ( uint32_t i = 0U; i < physicalDeviceGroupCount; ++i )
         PrintPhysicalDeviceGroupInfo ( i, groupProps[ i ] );
 
-    if ( DeployDevice () ) [[likely]]
-    {
-        _dpi = dpi;
-        return true;
-    }
+    if ( !DeployDevice () ) [[unlikely]]
+        return false;
 
-    _physicalDeviceGroups.clear ();
-    _physicalDeviceInfo.clear ();
-
-#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
-
-    DestroyDebugFeatures ();
-
-#endif
-
-    DestroyInstance ();
-    return false;
+    _dpi = dpi;
+    return true;
 }
 
 void Renderer::OnDestroyDevice () noexcept
 {
-    if ( !CheckVkResult ( vkDeviceWaitIdle ( _device ), "Renderer::OnDestroyDevice", "Can't wait device idle" ) )
+    if ( _device != VK_NULL_HANDLE) [[likely]]
     {
-        [[unlikely]]
-        return;
+        if ( !CheckVkResult ( vkDeviceWaitIdle ( _device ), "Renderer::OnDestroyDevice", "Can't wait device idle" ) )
+        {
+            [[unlikely]]
+            return;
+        }
     }
 
     _physicalDeviceGroups.clear ();
@@ -1380,7 +1318,7 @@ bool Renderer::CheckRequiredFormats () noexcept
             g_vkFormatFeatureFlagBitsMapper
         );
 
-        std::this_thread::sleep_for ( LOGCAT_ANISPAM_DELAY );
+        std::this_thread::sleep_for ( LOGCAT_ANTISPAM_DELAY );
     };
 
     probe ( VK_FORMAT_A2R10G10B10_UNORM_PACK32, "VK_FORMAT_A2R10G10B10_UNORM_PACK32" );
@@ -1421,6 +1359,8 @@ bool Renderer::DeployDebugFeatures () noexcept
     vkDestroyDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT> (
         vkGetInstanceProcAddr ( _instance, "vkDestroyDebugUtilsMessengerEXT" )
     );
+
+    AV_ASSERT ( vkDestroyDebugUtilsMessengerEXT )
 
     return CheckVkResult (
         vkCreateDebugUtilsMessengerEXT ( _instance, &_debugUtilsMessengerCreateInfo, nullptr, &_debugUtilsMessenger ),
@@ -1513,7 +1453,21 @@ bool Renderer::DeployDevice () noexcept
         .scalarBlockLayout = VK_TRUE
     };
 
-    constexpr char const* extensions[] =
+#ifdef ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
+
+    constexpr char const* const extensions[] =
+    {
+        VK_EXT_DEBUG_MARKER_EXTENSION_NAME,
+        VK_EXT_SCALAR_BLOCK_LAYOUT_EXTENSION_NAME,
+        VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME,
+        VK_KHR_SEPARATE_DEPTH_STENCIL_LAYOUTS_EXTENSION_NAME,
+        VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME,
+        VK_KHR_SWAPCHAIN_EXTENSION_NAME
+    };
+
+#else
+
+    constexpr char const* const extensions[] =
     {
         VK_EXT_SCALAR_BLOCK_LAYOUT_EXTENSION_NAME,
         VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME,
@@ -1521,6 +1475,8 @@ bool Renderer::DeployDevice () noexcept
         VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME,
         VK_KHR_SWAPCHAIN_EXTENSION_NAME
     };
+
+#endif // ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
 
     VkDeviceCreateInfo const deviceCreateInfo
     {
@@ -1544,7 +1500,13 @@ bool Renderer::DeployDevice () noexcept
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_DEVICE ( "Renderer::_device" )
+#if defined ( ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS ) ||       \
+    defined ( ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION )
+
+    InitVulkanDebugUtils ( _instance );
+    AV_SET_VULKAN_OBJECT_NAME ( _device, _device, VK_OBJECT_TYPE_DEVICE, "Main device" )
+
+#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS || ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
 
     if ( !_vulkanLoader.AcquireDeviceFunctions ( _device ) ) [[unlikely]]
         return false;
@@ -1556,18 +1518,12 @@ bool Renderer::DeployDevice () noexcept
 
 void Renderer::DestroyDevice () noexcept
 {
+    if ( _device == VK_NULL_HANDLE ) [[unlikely]]
+        return;
+
     _memoryAllocator.Destroy ( _device );
 
-    if ( !_device )
-    {
-        AV_CHECK_VULKAN_LEAKS ()
-        return;
-    }
-
     // Note it's intentional to unregister device BEFORE destruction for correct memory leak check stuff.
-    AV_UNREGISTER_DEVICE ( "Renderer::_device" )
-    AV_CHECK_VULKAN_LEAKS ()
-
     vkDestroyDevice ( _device, nullptr );
     _device = VK_NULL_HANDLE;
     _queue = VK_NULL_HANDLE;
@@ -1655,7 +1611,7 @@ bool Renderer::DeployInstance () noexcept
         .pUserData = nullptr
     };
 
-    constexpr static char const* layers[] =
+    constexpr static char const* const layers[] =
     {
         "VK_LAYER_KHRONOS_validation"
     };
@@ -1663,8 +1619,8 @@ bool Renderer::DeployInstance () noexcept
     constexpr static char const* extensions[] =
     {
         VK_KHR_ANDROID_SURFACE_EXTENSION_NAME,
-        VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
-        VK_KHR_SURFACE_EXTENSION_NAME
+        VK_KHR_SURFACE_EXTENSION_NAME,
+        VK_EXT_DEBUG_UTILS_EXTENSION_NAME
     };
 
     instanceCreateInfo.pNext = &_debugUtilsMessengerCreateInfo;
@@ -1673,7 +1629,7 @@ bool Renderer::DeployInstance () noexcept
 
 #else
 
-    constexpr static const char* extensions[] =
+    constexpr static char const* const extensions[] =
     {
         VK_KHR_ANDROID_SURFACE_EXTENSION_NAME,
         VK_KHR_SURFACE_EXTENSION_NAME
@@ -1683,7 +1639,7 @@ bool Renderer::DeployInstance () noexcept
     instanceCreateInfo.enabledLayerCount = 0U;
     instanceCreateInfo.ppEnabledLayerNames = nullptr;
 
-#endif
+#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
     instanceCreateInfo.enabledExtensionCount = static_cast<uint32_t const> ( std::size ( extensions ) );
     instanceCreateInfo.ppEnabledExtensionNames = extensions;
@@ -1701,7 +1657,7 @@ bool Renderer::DeployInstance () noexcept
 
 void Renderer::DestroyInstance () noexcept
 {
-    if ( !_instance )
+    if ( _instance == VK_NULL_HANDLE ) [[unlikely]]
         return;
 
     vkDestroyInstance ( _instance, nullptr );
@@ -1727,7 +1683,7 @@ bool Renderer::DeploySurface ( ANativeWindow &nativeWindow ) noexcept
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_SURFACE ( "Renderer::_surface" )
+    AV_SET_VULKAN_OBJECT_NAME ( _device, _surface, VK_OBJECT_TYPE_SURFACE_KHR, "Main surface" )
 
     VkSurfaceCapabilitiesKHR &surfaceCapabilitiesKHR = _physicalDeviceInfo[ _physicalDevice ]._surfaceCapabilities;
 
@@ -1738,10 +1694,7 @@ bool Renderer::DeploySurface ( ANativeWindow &nativeWindow ) noexcept
     );
 
     if ( !result ) [[unlikely]]
-    {
-        DestroySurface ();
         return false;
-    }
 
     PrintVkSurfaceCapabilities ( surfaceCapabilitiesKHR );
     _surfaceSize = surfaceCapabilitiesKHR.currentExtent;
@@ -1753,7 +1706,6 @@ bool Renderer::DeploySurface ( ANativeWindow &nativeWindow ) noexcept
             ResolveVkSurfaceTransform ( _surfaceTransform )
         );
 
-        DestroySurface ();
         return false;
     }
 
@@ -1783,15 +1735,10 @@ bool Renderer::DeploySurface ( ANativeWindow &nativeWindow ) noexcept
     );
 
     if ( !result ) [[unlikely]]
-    {
-        DestroySurface ();
         return false;
-    }
 
     if ( !isSupported ) [[unlikely]]
     {
-        DestroySurface ();
-
         LogError ( "Renderer::DeploySurface - Physical device does not support by Vulkan surface." );
         return false;
     }
@@ -1801,8 +1748,6 @@ bool Renderer::DeploySurface ( ANativeWindow &nativeWindow ) noexcept
 
     if ( !formatCount ) [[unlikely]]
     {
-        DestroySurface ();
-
         LogError ( "Renderer::DeploySurface - There is not any Vulkan surface formats." );
         return false;
     }
@@ -1819,10 +1764,7 @@ bool Renderer::DeploySurface ( ANativeWindow &nativeWindow ) noexcept
     );
 
     if ( !result ) [[unlikely]]
-    {
-        DestroySurface ();
         return false;
-    }
 
     for ( uint32_t i = 0U; i < formatCount; ++i )
         PrintVkSurfaceFormatKHRProp ( i, formatList[ i ] );
@@ -1832,9 +1774,11 @@ bool Renderer::DeploySurface ( ANativeWindow &nativeWindow ) noexcept
 
 void Renderer::DestroySurface () noexcept
 {
+    if ( _surface == VK_NULL_HANDLE ) [[unlikely]]
+        return;
+
     vkDestroySurfaceKHR ( _instance, _surface, nullptr );
     _surface = VK_NULL_HANDLE;
-    AV_UNREGISTER_SURFACE ( "Renderer::_surface" )
 }
 
 bool Renderer::DeploySwapchain ( bool vSync ) noexcept
@@ -1900,15 +1844,13 @@ bool Renderer::DeploySwapchain ( bool vSync ) noexcept
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_SWAPCHAIN ( "Renderer::_swapchain" )
+    AV_SET_VULKAN_OBJECT_NAME ( _device, _swapchain, VK_OBJECT_TYPE_SWAPCHAIN_KHR, "Main swapchain" )
 
     uint32_t imageCount = 0U;
     vkGetSwapchainImagesKHR ( _device, _swapchain, &imageCount, nullptr );
 
     if ( !imageCount ) [[unlikely]]
     {
-        DestroySwapchain ();
-
         LogError ( "Renderer::DeploySwapchain - There is no any swapchain images." );
         return false;
     }
@@ -1958,7 +1900,7 @@ bool Renderer::DeploySwapchain ( bool vSync ) noexcept
     for ( uint32_t i = 0U; i < imageCount; ++i )
     {
         imageViewCreateInfo.image = _swapchainImages[ i ];
-        VkImageView imageView = VK_NULL_HANDLE;
+        VkImageView imageView;
 
         result = CheckVkResult ( vkCreateImageView ( _device, &imageViewCreateInfo, nullptr, &imageView ),
             "Renderer::DeploySwapchain",
@@ -1967,16 +1909,11 @@ bool Renderer::DeploySwapchain ( bool vSync ) noexcept
 
         if ( result ) [[likely]]
         {
+            AV_SET_VULKAN_OBJECT_NAME ( _device, imageView, VK_OBJECT_TYPE_IMAGE_VIEW, "Swapchain #%u", i )
             _swapchainImageViews.push_back ( imageView );
-
-            AV_REGISTER_IMAGE_VIEW (
-                "Renderer::_swapchainImageViews[ " + std::to_string ( static_cast<int> ( i ) ) + "U ]"
-            )
-
             continue;
         }
 
-        DestroySwapchain ();
         return false;
     }
 
@@ -1988,17 +1925,13 @@ void Renderer::DestroySwapchain () noexcept
     size_t const count = _swapchainImageViews.size ();
 
     for ( size_t i = 0U; i < count; ++i )
-    {
         vkDestroyImageView ( _device, _swapchainImageViews[ i ], nullptr );
 
-        AV_UNREGISTER_IMAGE_VIEW (
-            "Renderer::_swapchainImageViews[ " + std::to_string ( static_cast<int> ( i ) ) + "U ]"
-        )
-    }
+    if ( _swapchain == VK_NULL_HANDLE ) [[unlikely]]
+        return;
 
     vkDestroySwapchainKHR ( _device, _swapchain, nullptr );
     _swapchain = VK_NULL_HANDLE;
-    AV_UNREGISTER_SWAPCHAIN ( "Renderer::_swapchain" )
 }
 
 bool Renderer::PrintPhysicalDeviceExtensionInfo ( VkPhysicalDevice physicalDevice ) noexcept
@@ -2116,7 +2049,7 @@ void Renderer::PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits 
 
     _maxUniformBufferRange = static_cast<size_t> ( limits.maxUniformBufferRange );
     PrintUINT32Prop ( INDENT_1, "maxUniformBufferRange", limits.maxUniformBufferRange );
-    std::this_thread::sleep_for ( LOGCAT_ANISPAM_DELAY );
+    std::this_thread::sleep_for ( LOGCAT_ANTISPAM_DELAY );
 
     PrintUINT32Prop ( INDENT_1, "maxStorageBufferRange", limits.maxStorageBufferRange );
     PrintUINT32Prop ( INDENT_1, "maxPushConstantsSize", limits.maxPushConstantsSize );
@@ -2131,7 +2064,7 @@ void Renderer::PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits 
     PrintUINT32Prop ( INDENT_1, "maxPerStageDescriptorSampledImages", limits.maxPerStageDescriptorSampledImages );
     PrintUINT32Prop ( INDENT_1, "maxPerStageDescriptorStorageImages", limits.maxPerStageDescriptorStorageImages );
     PrintUINT32Prop ( INDENT_1, "maxPerStageDescriptorInputAttachments", limits.maxPerStageDescriptorInputAttachments );
-    std::this_thread::sleep_for ( LOGCAT_ANISPAM_DELAY );
+    std::this_thread::sleep_for ( LOGCAT_ANTISPAM_DELAY );
 
     PrintUINT32Prop ( INDENT_1, "maxPerStageResources", limits.maxPerStageResources );
     PrintUINT32Prop ( INDENT_1, "maxDescriptorSetSamplers", limits.maxDescriptorSetSamplers );
@@ -2147,7 +2080,7 @@ void Renderer::PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits 
     PrintUINT32Prop ( INDENT_1, "maxVertexInputAttributeOffset", limits.maxVertexInputAttributeOffset );
     PrintUINT32Prop ( INDENT_1, "maxVertexInputBindingStride", limits.maxVertexInputBindingStride );
     PrintUINT32Prop ( INDENT_1, "maxVertexOutputComponents", limits.maxVertexOutputComponents );
-    std::this_thread::sleep_for ( LOGCAT_ANISPAM_DELAY );
+    std::this_thread::sleep_for ( LOGCAT_ANTISPAM_DELAY );
 
     PrintUINT32Prop ( INDENT_1, "maxTessellationGenerationLevel", limits.maxTessellationGenerationLevel );
     PrintUINT32Prop ( INDENT_1, "maxTessellationPatchSize", limits.maxTessellationPatchSize );
@@ -2182,7 +2115,7 @@ void Renderer::PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits 
         limits.maxTessellationEvaluationOutputComponents
     );
 
-    std::this_thread::sleep_for ( LOGCAT_ANISPAM_DELAY );
+    std::this_thread::sleep_for ( LOGCAT_ANTISPAM_DELAY );
 
     PrintUINT32Prop ( INDENT_1, "maxGeometryShaderInvocations", limits.maxGeometryShaderInvocations );
     PrintUINT32Prop ( INDENT_1, "maxGeometryInputComponents", limits.maxGeometryInputComponents );
@@ -2194,7 +2127,7 @@ void Renderer::PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits 
     PrintUINT32Prop ( INDENT_1, "maxFragmentDualSrcAttachments", limits.maxFragmentDualSrcAttachments );
     PrintUINT32Prop ( INDENT_1, "maxFragmentCombinedOutputResources", limits.maxFragmentCombinedOutputResources );
     PrintUINT32Prop ( INDENT_1, "maxComputeSharedMemorySize", limits.maxComputeSharedMemorySize );
-    std::this_thread::sleep_for ( LOGCAT_ANISPAM_DELAY );
+    std::this_thread::sleep_for ( LOGCAT_ANTISPAM_DELAY );
 
     PrintUINT32Vec3Prop ( INDENT_1, "maxComputeWorkGroupCount", limits.maxComputeWorkGroupCount );
     PrintUINT32Prop ( INDENT_1, "maxComputeWorkGroupInvocations", limits.maxComputeWorkGroupInvocations );
@@ -2211,7 +2144,7 @@ void Renderer::PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits 
     PrintFloatVec2Prop ( INDENT_1, "viewportBoundsRange", limits.viewportBoundsRange );
     PrintUINT32Prop ( INDENT_1, "viewportSubPixelBits", limits.viewportSubPixelBits );
     PrintSizeProp ( INDENT_1, "minMemoryMapAlignment", limits.minMemoryMapAlignment );
-    std::this_thread::sleep_for ( LOGCAT_ANISPAM_DELAY );
+    std::this_thread::sleep_for ( LOGCAT_ANTISPAM_DELAY );
 
     PrintSizeProp ( INDENT_1,
         "minTexelBufferOffsetAlignment",
@@ -2227,7 +2160,7 @@ void Renderer::PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits 
         "minStorageBufferOffsetAlignment",
         static_cast<size_t> ( limits.minStorageBufferOffsetAlignment )
     );
-    std::this_thread::sleep_for ( LOGCAT_ANISPAM_DELAY );
+    std::this_thread::sleep_for ( LOGCAT_ANTISPAM_DELAY );
 
     PrintINT32Prop ( INDENT_1, "minTexelOffset", limits.minTexelOffset );
     PrintUINT32Prop ( INDENT_1, "maxTexelOffset", limits.maxTexelOffset );
@@ -2239,7 +2172,7 @@ void Renderer::PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits 
     PrintUINT32Prop ( INDENT_1, "maxFramebufferWidth", limits.maxFramebufferWidth );
     PrintUINT32Prop ( INDENT_1, "maxFramebufferHeight", limits.maxFramebufferHeight );
     PrintUINT32Prop ( INDENT_1, "maxFramebufferLayers", limits.maxFramebufferLayers );
-    std::this_thread::sleep_for ( LOGCAT_ANISPAM_DELAY );
+    std::this_thread::sleep_for ( LOGCAT_ANTISPAM_DELAY );
 
     PrintVkFlagsProp ( INDENT_1,
         "framebufferColorSampleCounts",
@@ -2278,7 +2211,7 @@ void Renderer::PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits 
         g_vkSampleCountFlagMapper
     );
 
-    std::this_thread::sleep_for ( LOGCAT_ANISPAM_DELAY );
+    std::this_thread::sleep_for ( LOGCAT_ANTISPAM_DELAY );
 
     PrintVkFlagsProp ( INDENT_1,
         "sampledImageIntegerSampleCounts",
@@ -2308,7 +2241,7 @@ void Renderer::PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits 
         g_vkSampleCountFlagMapper
     );
 
-    std::this_thread::sleep_for ( LOGCAT_ANISPAM_DELAY );
+    std::this_thread::sleep_for ( LOGCAT_ANTISPAM_DELAY );
 
     PrintUINT32Prop ( INDENT_1, "maxSampleMaskWords", limits.maxSampleMaskWords );
     PrintVkBool32Prop ( INDENT_1, "timestampComputeAndGraphics", limits.timestampComputeAndGraphics );
@@ -2323,7 +2256,7 @@ void Renderer::PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits 
     PrintFloatProp ( INDENT_1, "lineWidthGranularity", limits.lineWidthGranularity );
     PrintVkBool32Prop ( INDENT_1, "strictLines", limits.strictLines );
     PrintVkBool32Prop ( INDENT_1, "standardSampleLocations", limits.standardSampleLocations );
-    std::this_thread::sleep_for ( LOGCAT_ANISPAM_DELAY );
+    std::this_thread::sleep_for ( LOGCAT_ANTISPAM_DELAY );
 
     PrintSizeProp ( INDENT_1,
         "optimalBufferCopyOffsetAlignment",

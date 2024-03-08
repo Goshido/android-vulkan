@@ -155,7 +155,7 @@ bool Utility::CheckCOMResult ( HRESULT result, char const *message ) const noexc
     return false;
 }
 
-void Utility::GetPath ( COMDLG_FILTERSPEC filter, wchar_t const* extention, int targetID ) noexcept
+void Utility::GetPath ( COMDLG_FILTERSPEC filter, wchar_t const* extension, int targetID ) noexcept
 {
     IFileSaveDialog* fileSaveDialog = nullptr;
 
@@ -176,7 +176,7 @@ void Utility::GetPath ( COMDLG_FILTERSPEC filter, wchar_t const* extention, int 
             "Can't setup save dialog settings"
         ) &&
 
-        CheckCOMResult ( fileSaveDialog->SetDefaultExtension ( extention ), "Can't setup save dialog extension" ) &&
+        CheckCOMResult ( fileSaveDialog->SetDefaultExtension ( extension ), "Can't setup save dialog extension" ) &&
         CheckCOMResult ( fileSaveDialog->SetFileTypes ( 1U, &filter ), "Can't setup save dialog filter" );
 
     if ( !result )

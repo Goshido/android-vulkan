@@ -48,7 +48,7 @@ VkBuffer UniformBufferPool::GetBuffer ( size_t bufferIndex ) const noexcept
     return _buffers[ bufferIndex ];
 }
 
-bool UniformBufferPool::Init ( android_vulkan::Renderer &renderer, size_t itemSize ) noexcept
+bool UniformBufferPool::Init ( android_vulkan::Renderer &renderer, size_t itemSize, char const* name ) noexcept
 {
     AV_ASSERT ( itemSize <= renderer.GetMaxUniformBufferRange () )
     AV_ASSERT ( itemSize <= UPDATE_BUFFER_MAX_SIZE )
@@ -76,7 +76,7 @@ bool UniformBufferPool::Init ( android_vulkan::Renderer &renderer, size_t itemSi
     requirements.size = static_cast<VkDeviceSize> ( alignedBlockSize );
 
     _index = 0U;
-    return AllocateBuffers ( renderer, requirements, _size / alignedBlockSize, bufferInfo );
+    return AllocateBuffers ( renderer, requirements, _size / alignedBlockSize, bufferInfo, name );
 }
 
 void UniformBufferPool::Destroy ( android_vulkan::Renderer &renderer ) noexcept
@@ -84,10 +84,7 @@ void UniformBufferPool::Destroy ( android_vulkan::Renderer &renderer ) noexcept
     VkDevice device = renderer.GetDevice ();
 
     for ( VkBuffer buffer : _buffers )
-    {
         vkDestroyBuffer ( device, buffer, nullptr );
-        AV_UNREGISTER_BUFFER ( "pbr::UniformBufferPool::_buffer::item" )
-    }
 
     _buffers.clear ();
 
@@ -97,13 +94,13 @@ void UniformBufferPool::Destroy ( android_vulkan::Renderer &renderer ) noexcept
     renderer.FreeMemory ( _memory, _offset );
     _memory = VK_NULL_HANDLE;
     _offset = std::numeric_limits<VkDeviceSize>::max ();
-    AV_UNREGISTER_DEVICE_MEMORY ( "pbr::UniformBufferPool::_memory" )
 }
 
 bool UniformBufferPool::AllocateBuffers ( android_vulkan::Renderer &renderer,
     VkMemoryRequirements &requirements,
     size_t itemCount,
-    VkBufferCreateInfo const &bufferInfo
+    VkBufferCreateInfo const &bufferInfo,
+    [[maybe_unused]] char const* name
 ) noexcept
 {
     VkDevice device = renderer.GetDevice ();
@@ -122,7 +119,6 @@ bool UniformBufferPool::AllocateBuffers ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_DEVICE_MEMORY ( "pbr::UniformBufferPool::_memory" )
     VkDeviceSize offset = _offset;
 
     for ( size_t i = 0U; i < itemCount; ++i )
@@ -138,7 +134,7 @@ bool UniformBufferPool::AllocateBuffers ( android_vulkan::Renderer &renderer,
         if ( !result ) [[unlikely]]
             return false;
 
-        AV_REGISTER_BUFFER ( "pbr::UniformBufferPool::_buffer::item" )
+        AV_SET_VULKAN_OBJECT_NAME ( device, buffer, VK_OBJECT_TYPE_BUFFER, "%s #%zu", name, i )
 
         vkGetBufferMemoryRequirements ( device, buffer, &requirements );
 

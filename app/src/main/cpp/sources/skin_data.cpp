@@ -22,7 +22,6 @@ void SkinData::FreeTransferResources ( Renderer &renderer ) noexcept
     {
         vkDestroyBuffer ( renderer.GetDevice (), _transfer._buffer, nullptr );
         _transfer._buffer = VK_NULL_HANDLE;
-        AV_UNREGISTER_BUFFER ( "SkinData::_transfer::_buffer" )
     }
 
     if ( _transfer._memory == VK_NULL_HANDLE )
@@ -31,7 +30,6 @@ void SkinData::FreeTransferResources ( Renderer &renderer ) noexcept
     renderer.FreeMemory ( _transfer._memory, _transfer._offset );
     _transfer._memory = VK_NULL_HANDLE;
     _transfer._offset = std::numeric_limits<VkDeviceSize>::max ();
-    AV_UNREGISTER_DEVICE_MEMORY ( "SkinData::_transfer::_memory" )
 }
 
 GXAABB const &SkinData::GetBounds () const noexcept
@@ -175,7 +173,7 @@ bool SkinData::LoadSkin ( std::string &&skinFilename,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_BUFFER ( "SkinData::_skin::_buffer" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _skin._buffer, VK_OBJECT_TYPE_BUFFER, "Skin data" )
 
     VkMemoryRequirements memoryRequirements;
     vkGetBufferMemoryRequirements ( device, _skin._buffer, &memoryRequirements );
@@ -189,8 +187,6 @@ bool SkinData::LoadSkin ( std::string &&skinFilename,
 
     if ( !result ) [[unlikely]]
         return false;
-
-    AV_REGISTER_DEVICE_MEMORY ( "SkinData::_skin::_memory" )
 
     result = Renderer::CheckVkResult (
         vkBindBufferMemory ( device, _skin._buffer, _skin._memory, _skin._offset ),
@@ -212,7 +208,7 @@ bool SkinData::LoadSkin ( std::string &&skinFilename,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_BUFFER ( "SkinData::_transfer::_buffer" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _transfer._buffer, VK_OBJECT_TYPE_BUFFER, "Skin data staging" )
 
     vkGetBufferMemoryRequirements ( device, _transfer._buffer, &memoryRequirements );
 
@@ -228,8 +224,6 @@ bool SkinData::LoadSkin ( std::string &&skinFilename,
 
     if ( !result ) [[unlikely]]
         return false;
-
-    AV_REGISTER_DEVICE_MEMORY ( "SkinData::_transfer::_memory" )
 
     result = Renderer::CheckVkResult (
         vkBindBufferMemory ( device, _transfer._buffer, _transfer._memory, _transfer._offset ),
@@ -342,20 +336,18 @@ bool SkinData::LoadSkin ( std::string &&skinFilename,
 
 void SkinData::FreeResourceInternal ( Renderer &renderer ) noexcept
 {
-    if ( _skin._buffer != VK_NULL_HANDLE )
+    if ( _skin._buffer != VK_NULL_HANDLE ) [[likely]]
     {
         vkDestroyBuffer ( renderer.GetDevice (), _skin._buffer, nullptr );
         _skin._buffer = VK_NULL_HANDLE;
-        AV_UNREGISTER_BUFFER ( "SkinData::_skin::_buffer" )
     }
 
-    if ( _skin._memory == VK_NULL_HANDLE )
+    if ( _skin._memory == VK_NULL_HANDLE ) [[unlikely]]
         return;
 
     renderer.FreeMemory ( _skin._memory, _skin._offset );
     _skin._memory = VK_NULL_HANDLE;
     _skin._offset = std::numeric_limits<VkDeviceSize>::max ();
-    AV_UNREGISTER_DEVICE_MEMORY ( "SkinData::_skin::_memory" )
 }
 
 } // namespace android_vulkan

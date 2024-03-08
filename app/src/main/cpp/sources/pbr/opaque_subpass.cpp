@@ -29,6 +29,8 @@ void OpaqueSubpass::Execute ( VkCommandBuffer commandBuffer,
     bool &isSamplerUsed
 ) noexcept
 {
+    AV_VULKAN_GROUP ( commandBuffer, "Opaque geometry" )
+
     if ( _sceneData.empty () )
         return;
 
@@ -49,6 +51,8 @@ void OpaqueSubpass::UpdateGPUData ( VkCommandBuffer commandBuffer,
     GXMat4 const &viewProjection
 ) noexcept
 {
+    AV_VULKAN_GROUP ( commandBuffer, "Upload opaque data" )
+
     if ( _sceneData.empty () )
         return;
 

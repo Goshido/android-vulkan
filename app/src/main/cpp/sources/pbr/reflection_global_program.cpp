@@ -81,7 +81,7 @@ bool ReflectionGlobalProgram::Init ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_PIPELINE ( "pbr::ReflectionGlobalProgram::_pipeline" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _pipeline, VK_OBJECT_TYPE_PIPELINE, "Reflection global" )
     DestroyShaderModules ( device );
     return true;
 }
@@ -92,14 +92,12 @@ void ReflectionGlobalProgram::Destroy ( VkDevice device ) noexcept
     {
         vkDestroyPipeline ( device, _pipeline, nullptr );
         _pipeline = VK_NULL_HANDLE;
-        AV_UNREGISTER_PIPELINE ( "pbr::ReflectionGlobalProgram::_pipeline" )
     }
 
     if ( _pipelineLayout != VK_NULL_HANDLE )
     {
         vkDestroyPipelineLayout ( device, _pipelineLayout, nullptr );
         _pipelineLayout = VK_NULL_HANDLE;
-        AV_UNREGISTER_PIPELINE_LAYOUT ( "pbr::ReflectionGlobalProgram::_pipelineLayout" )
     }
 
     _reflectionLayout.Destroy ( device );
@@ -288,7 +286,7 @@ bool ReflectionGlobalProgram::InitLayout ( VkDevice device, VkPipelineLayout &la
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_PIPELINE_LAYOUT ( "pbr::ReflectionGlobalProgram::_pipelineLayout" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _pipelineLayout, VK_OBJECT_TYPE_PIPELINE_LAYOUT, "Reflection global" )
     layout = _pipelineLayout;
     return true;
 }
@@ -352,7 +350,7 @@ bool ReflectionGlobalProgram::InitShaderInfo ( android_vulkan::Renderer &rendere
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_SHADER_MODULE ( "pbr::ReflectionGlobalProgram::_vertexShader" )
+    AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (), _vertexShader, VK_OBJECT_TYPE_SHADER_MODULE, VERTEX_SHADER )
 
     result = renderer.CreateShader ( _fragmentShader,
         FRAGMENT_SHADER,
@@ -362,7 +360,7 @@ bool ReflectionGlobalProgram::InitShaderInfo ( android_vulkan::Renderer &rendere
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_SHADER_MODULE ( "pbr::ReflectionGlobalProgram::_fragmentShader" )
+    AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (), _fragmentShader, VK_OBJECT_TYPE_SHADER_MODULE, FRAGMENT_SHADER )
 
     sourceInfo[ 0U ] =
     {
@@ -396,7 +394,6 @@ void ReflectionGlobalProgram::DestroyShaderModules ( VkDevice device ) noexcept
     {
         vkDestroyShaderModule ( device, _fragmentShader, nullptr );
         _fragmentShader = VK_NULL_HANDLE;
-        AV_UNREGISTER_SHADER_MODULE ( "pbr::ReflectionGlobalProgram::_fragmentShader" )
     }
 
     if ( _vertexShader == VK_NULL_HANDLE )
@@ -404,7 +401,6 @@ void ReflectionGlobalProgram::DestroyShaderModules ( VkDevice device ) noexcept
 
     vkDestroyShaderModule ( device, _vertexShader, nullptr );
     _vertexShader = VK_NULL_HANDLE;
-    AV_UNREGISTER_SHADER_MODULE ( "pbr::ReflectionGlobalProgram::_vertexShader" )
 }
 
 VkPipelineViewportStateCreateInfo const* ReflectionGlobalProgram::InitViewportInfo (

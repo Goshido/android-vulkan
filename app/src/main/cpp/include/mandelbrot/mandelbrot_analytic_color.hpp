@@ -21,7 +21,7 @@ class MandelbrotAnalyticColor final : public MandelbrotBase
         ~MandelbrotAnalyticColor () override = default;
 
     private:
-        [[nodiscard]] bool CreatePipelineLayout ( android_vulkan::Renderer &renderer ) noexcept override;
+        [[nodiscard]] bool CreatePipelineLayout ( VkDevice device ) noexcept override;
         void DestroyPipelineLayout ( VkDevice device ) noexcept override;
 
         [[nodiscard]] bool RecordCommandBuffer ( android_vulkan::Renderer &renderer,

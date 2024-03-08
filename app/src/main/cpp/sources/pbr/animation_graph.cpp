@@ -29,7 +29,9 @@ constexpr size_t INITIAL_GRAPH_COUNT = 64U;
 bool AnimationGraph::Buffer::Init ( android_vulkan::Renderer &renderer,
     VkDeviceSize size,
     VkBufferUsageFlags usage,
-    VkMemoryPropertyFlags memoryFlags
+    VkMemoryPropertyFlags memoryFlags,
+    [[maybe_unused]] size_t frameInFlightIndex,
+    [[maybe_unused]] char const* name
 ) noexcept
 {
     VkBufferCreateInfo const bufferInfo
@@ -55,7 +57,7 @@ bool AnimationGraph::Buffer::Init ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_BUFFER ( "pbr::AnimationGraph::Buffer::_buffer" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _buffer, VK_OBJECT_TYPE_BUFFER, "%s {FIF #%zu}", name, frameInFlightIndex )
 
     VkMemoryRequirements memoryRequirements;
     vkGetBufferMemoryRequirements ( device, _buffer, &memoryRequirements );
@@ -69,8 +71,6 @@ bool AnimationGraph::Buffer::Init ( android_vulkan::Renderer &renderer,
 
     if ( !result ) [[unlikely]]
         return false;
-
-    AV_REGISTER_DEVICE_MEMORY ( "pbr::AnimationGraph::Buffer::_memory" )
 
     return android_vulkan::Renderer::CheckVkResult (
         vkBindBufferMemory ( device, _buffer, _memory, _offset ),
@@ -87,7 +87,6 @@ void AnimationGraph::Buffer::Destroy ( bool isMapped ) noexcept
     {
         vkDestroyBuffer ( device, _buffer, nullptr );
         _buffer = VK_NULL_HANDLE;
-        AV_UNREGISTER_BUFFER ( "pbr::AnimationGraph::Buffer::_buffer" )
     }
 
     if ( _memory == VK_NULL_HANDLE )
@@ -99,32 +98,46 @@ void AnimationGraph::Buffer::Destroy ( bool isMapped ) noexcept
     _renderer->FreeMemory ( _memory, _offset );
     _memory = VK_NULL_HANDLE;
     _offset = std::numeric_limits<VkDeviceSize>::max ();
-    AV_UNREGISTER_DEVICE_MEMORY ( "pbr::AnimationGraph::Buffer::_memory" )
 }
 
 //----------------------------------------------------------------------------------------------------------------------
 
-bool AnimationGraph::BufferSet::Init ( VkDeviceSize size ) noexcept
+bool AnimationGraph::BufferSet::Init ( VkDeviceSize size, size_t frameInFlightIndex ) noexcept
 {
     constexpr VkBufferUsageFlags gpuFlags = AV_VK_FLAG ( VK_BUFFER_USAGE_STORAGE_BUFFER_BIT ) |
         AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT );
 
-    if ( !_gpuPoseSkin.Init ( *_renderer, size, gpuFlags, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT ) )
+    bool result = _gpuPoseSkin.Init ( *_renderer,
+        size,
+        gpuFlags,
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+        frameInFlightIndex,
+        "Pose"
+    );
+
+    if ( !result )
         return false;
 
     constexpr VkMemoryPropertyFlags transferMemoryFlags = AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT ) |
         AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_COHERENT_BIT );
 
-    if ( !_transferPoseSkin.Init ( *_renderer, size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, transferMemoryFlags ) )
+    result = _transferPoseSkin.Init ( *_renderer,
+        size,
+        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        transferMemoryFlags,
+        frameInFlightIndex,
+        "Pose staging"
+    );
+
+    if ( !result ) [[unlikely]]
     {
-        [[unlikely]]
         _gpuPoseSkin.Destroy ( false );
         return false;
     }
 
     void* data;
 
-    bool const result = _renderer->MapMemory ( data,
+    result = _renderer->MapMemory ( data,
         _transferPoseSkin._memory,
         _transferPoseSkin._offset,
         "pbr::AnimationGraph::BufferSet::Init", "Can't map memory"
@@ -194,9 +207,9 @@ AnimationGraph::AnimationGraph ( bool &success, std::string &&skeletonFile ) noe
 
     size_t init = 0U;
 
-    for ( BufferSet &bufferSet : _bufferSets )
+    for ( size_t i = 0U; i < DUAL_COMMAND_BUFFER; ++i )
     {
-        if ( !bufferSet.Init ( _jointSize ) ) [[unlikely]]
+        if ( !_bufferSets[ i ].Init ( _jointSize, i ) ) [[unlikely]]
             break;
 
         ++init;
@@ -300,6 +313,8 @@ void AnimationGraph::Update ( lua_State &vm, float deltaTime, size_t commandBuff
 
 void AnimationGraph::UploadGPUData ( VkCommandBuffer commandBuffer, size_t commandBufferIndex ) noexcept
 {
+    AV_VULKAN_GROUP ( commandBuffer, "Upload poses" )
+
     _lastCommandBufferIndex = commandBufferIndex;
 
     if ( !_changedGraphCount )

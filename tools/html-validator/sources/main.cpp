@@ -8,6 +8,7 @@ GX_DISABLE_COMMON_WARNINGS
 #include <filesystem>
 #include <locale>
 #include <stdlib.h>
+#include <thread>
 
 GX_RESTORE_WARNING_STATE
 

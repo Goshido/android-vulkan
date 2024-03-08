@@ -74,7 +74,6 @@ void ReflectionLocalPass::Destroy ( android_vulkan::Renderer &renderer ) noexcep
     {
         vkDestroyDescriptorPool ( device, _descriptorPool, nullptr );
         _descriptorPool = VK_NULL_HANDLE;
-        AV_UNREGISTER_DESCRIPTOR_POOL ( "pbr::ReflectionLocalPass::_descriptorPool" )
     }
 
     auto const clean = [] ( auto &vector ) noexcept {
@@ -110,6 +109,8 @@ void ReflectionLocalPass::UploadGPUData ( VkDevice device,
 
     if ( !callCount )
         return;
+
+    AV_VULKAN_GROUP ( commandBuffer, "Upload reflection local data" )
 
     ReflectionLocalProgram::LightData lightData {};
     GXMat4 alpha {};
@@ -149,8 +150,11 @@ void ReflectionLocalPass::UploadGPUData ( VkDevice device,
 
 bool ReflectionLocalPass::AllocateDescriptorSets ( android_vulkan::Renderer &renderer ) noexcept
 {
-    if ( !_uniformPool.Init ( renderer, sizeof ( ReflectionLocalProgram::LightData ) ) ) [[unlikely]]
+    if ( !_uniformPool.Init ( renderer, sizeof ( ReflectionLocalProgram::LightData ), "Reflection local" ) )
+    {
+        [[unlikely]]
         return false;
+    }
 
     size_t const setCount = _uniformPool.GetAvailableItemCount ();
     VkDevice device = renderer.GetDevice ();
@@ -186,9 +190,10 @@ bool ReflectionLocalPass::AllocateDescriptorSets ( android_vulkan::Renderer &ren
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_REGISTER_DESCRIPTOR_POOL ( "pbr::ReflectionLocalPass::_descriptorPool" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _descriptorPool, VK_OBJECT_TYPE_DESCRIPTOR_POOL, "Reflection local" )
 
     _descriptorSets.resize ( setCount );
+    VkDescriptorSet* descriptorSets = _descriptorSets.data ();
     std::vector<VkDescriptorSetLayout> const layouts ( setCount, ReflectionLocalDescriptorSetLayout ().GetLayout () );
 
     VkDescriptorSetAllocateInfo const allocateInfo
@@ -201,13 +206,28 @@ bool ReflectionLocalPass::AllocateDescriptorSets ( android_vulkan::Renderer &ren
     };
 
     result = android_vulkan::Renderer::CheckVkResult (
-        vkAllocateDescriptorSets ( device, &allocateInfo, _descriptorSets.data () ),
+        vkAllocateDescriptorSets ( device, &allocateInfo, descriptorSets ),
         "pbr::PointLightLightup::AllocateNativeDescriptorSets",
         "Can't allocate descriptor sets"
     );
 
     if ( !result ) [[unlikely]]
         return false;
+
+#if defined ( ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS ) ||       \
+    defined ( ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION )
+
+    for ( size_t i = 0U; i < setCount; ++i )
+    {
+        AV_SET_VULKAN_OBJECT_NAME ( device,
+            descriptorSets[ i ],
+            VK_OBJECT_TYPE_DESCRIPTOR_SET,
+            "Reflection local #%zu",
+            i
+        )
+    }
+
+#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS || ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
 
     // Initialize all immutable constant fields.
 
@@ -263,7 +283,7 @@ bool ReflectionLocalPass::AllocateDescriptorSets ( android_vulkan::Renderer &ren
     for ( size_t i = 0U; i < setCount; ++i )
     {
         size_t const base = BIND_PER_SET * i;
-        VkDescriptorSet set = _descriptorSets[ i ];
+        VkDescriptorSet set = descriptorSets[ i ];
         VkBuffer buffer = _uniformPool.GetBuffer ( i );
 
         VkDescriptorBufferInfo &bufferInfo = _bufferInfo[ i ];

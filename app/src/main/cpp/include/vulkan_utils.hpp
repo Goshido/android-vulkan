@@ -2,6 +2,15 @@
 #define VULKAN_UTILS_HPP
 
 
+// Sanity check
+#if defined ( ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS ) &&                                                      \
+    defined ( ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION )
+
+#error ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS and ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION \
+macro are mutually exclusive. Please check build configuration in the CMakeLists.txt file.
+
+#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS && ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
+
 #include <GXCommon/GXWarning.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
@@ -15,206 +24,66 @@ GX_RESTORE_WARNING_STATE
 
 #define AV_VK_FLAG(x) ( static_cast<uint32_t> ( x ) )
 
+#if !defined ( ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS ) &&                                                     \
+    !defined ( ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION )
 
-// Note there is two types Vulkan handles:
-// VK_DEFINE_HANDLE
-// VK_DEFINE_NON_DISPATCHABLE_HANDLE
-//
-// VK_DEFINE_NON_DISPATCHABLE_HANDLE could be packed structure so in theory some Vulkan create API could return
-// identical VK_DEFINE_NON_DISPATCHABLE_HANDLE for different objects. It is implementation dependent. Because of that
-// user have to figure out unique ID for Vulkan objects. Good practice is to use source code file name or class name
-// with property name to figure out what Vulkan resource is leaked.
-// From another hand VK_DEFINE_HANDLE must be unique.
-// See https://vulkan.lunarg.com/doc/view/1.1.108.0/mac/chunked_spec/chap2.html#fundamentals-objectmodel-overview
-
-
-#ifndef ANDROID_VULKAN_DEBUG
-
-#define AV_CHECK_VULKAN_LEAKS()
-
-#define AV_REGISTER_BUFFER(where)
-#define AV_UNREGISTER_BUFFER(where)
-
-#define AV_REGISTER_COMMAND_POOL(where)
-#define AV_UNREGISTER_COMMAND_POOL(where)
-
-#define AV_REGISTER_DESCRIPTOR_POOL(where)
-#define AV_UNREGISTER_DESCRIPTOR_POOL(where)
-
-#define AV_REGISTER_DESCRIPTOR_SET_LAYOUT(where)
-#define AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT(where)
-
-#define AV_REGISTER_DEVICE(where)
-#define AV_UNREGISTER_DEVICE(where)
-
-#define AV_REGISTER_DEVICE_MEMORY(where)
-#define AV_UNREGISTER_DEVICE_MEMORY(where)
-
-#define AV_REGISTER_FENCE(where)
-#define AV_UNREGISTER_FENCE(where)
-
-#define AV_REGISTER_FRAMEBUFFER(where)
-#define AV_UNREGISTER_FRAMEBUFFER(where)
-
-#define AV_REGISTER_IMAGE(where)
-#define AV_UNREGISTER_IMAGE(where)
-
-#define AV_REGISTER_IMAGE_VIEW(where)
-#define AV_UNREGISTER_IMAGE_VIEW(where)
-
-#define AV_REGISTER_PIPELINE(where)
-#define AV_UNREGISTER_PIPELINE(where)
-
-#define AV_REGISTER_PIPELINE_LAYOUT(where)
-#define AV_UNREGISTER_PIPELINE_LAYOUT(where)
-
-#define AV_REGISTER_RENDER_PASS(where)
-#define AV_UNREGISTER_RENDER_PASS(where)
-
-#define AV_REGISTER_SAMPLER(where)
-#define AV_UNREGISTER_SAMPLER(where)
-
-#define AV_REGISTER_SEMAPHORE(where)
-#define AV_UNREGISTER_SEMAPHORE(where)
-
-#define AV_REGISTER_SHADER_MODULE(where)
-#define AV_UNREGISTER_SHADER_MODULE(where)
-
-#define AV_REGISTER_SURFACE(where)
-#define AV_UNREGISTER_SURFACE(where)
-
-#define AV_REGISTER_SWAPCHAIN(where)
-#define AV_UNREGISTER_SWAPCHAIN(where)
+#define AV_SET_VULKAN_OBJECT_NAME(device, handle, type, ...)
+#define AV_VULKAN_GROUP(commandBuffer, ...)
 
 #else
 
-#include <GXCommon/GXWarning.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <string>
-#include <vulkan/vulkan.h>
-
-GX_RESTORE_WARNING_STATE
+#include <vulkan/vulkan_core.h>
 
 
-#define AV_CHECK_VULKAN_LEAKS() android_vulkan::CheckVulkanLeaks ();
+#define AV_SET_VULKAN_OBJECT_NAME(device, handle, type, ...)                                                           \
+{                                                                                                                      \
+    char _FuCk_NaMe_[ 256U ];                                                                                          \
+    std::snprintf ( _FuCk_NaMe_, std::size ( _FuCk_NaMe_ ), __VA_ARGS__ );                                             \
+    android_vulkan::SetVulkanObjectName ( device, reinterpret_cast<uint64_t> ( handle ), type, _FuCk_NaMe_ );          \
+}
 
-#define AV_REGISTER_BUFFER(where) android_vulkan::RegisterBuffer ( where );
-#define AV_UNREGISTER_BUFFER(where) android_vulkan::UnregisterBuffer ( where );
-
-#define AV_REGISTER_COMMAND_POOL(where) android_vulkan::RegisterCommandPool ( where );
-#define AV_UNREGISTER_COMMAND_POOL(where) android_vulkan::UnregisterCommandPool ( where );
-
-#define AV_REGISTER_DESCRIPTOR_POOL(where) android_vulkan::RegisterDescriptorPool ( where );
-#define AV_UNREGISTER_DESCRIPTOR_POOL(where) android_vulkan::UnregisterDescriptorPool ( where );
-
-#define AV_REGISTER_DESCRIPTOR_SET_LAYOUT(where) android_vulkan::RegisterDescriptorSetLayout ( where );
-#define AV_UNREGISTER_DESCRIPTOR_SET_LAYOUT(where) android_vulkan::UnregisterDescriptorSetLayout ( where );
-
-#define AV_REGISTER_DEVICE(where) android_vulkan::RegisterDevice ( where );
-#define AV_UNREGISTER_DEVICE(where) android_vulkan::UnregisterDevice ( where );
-
-#define AV_REGISTER_DEVICE_MEMORY(where) android_vulkan::RegisterDeviceMemory ( where );
-#define AV_UNREGISTER_DEVICE_MEMORY(where) android_vulkan::UnregisterDeviceMemory ( where );
-
-#define AV_REGISTER_FENCE(where) android_vulkan::RegisterFence ( where );
-#define AV_UNREGISTER_FENCE(where) android_vulkan::UnregisterFence ( where );
-
-#define AV_REGISTER_FRAMEBUFFER(where) android_vulkan::RegisterFramebuffer ( where );
-#define AV_UNREGISTER_FRAMEBUFFER(where) android_vulkan::UnregisterFramebuffer ( where );
-
-#define AV_REGISTER_IMAGE(where) android_vulkan::RegisterImage ( where );
-#define AV_UNREGISTER_IMAGE(where) android_vulkan::UnregisterImage ( where );
-
-#define AV_REGISTER_IMAGE_VIEW(where) android_vulkan::RegisterImageView ( where );
-#define AV_UNREGISTER_IMAGE_VIEW(where) android_vulkan::UnregisterImageView ( where );
-
-#define AV_REGISTER_PIPELINE(where) android_vulkan::RegisterPipeline ( where );
-#define AV_UNREGISTER_PIPELINE(where) android_vulkan::UnregisterPipeline ( where );
-
-#define AV_REGISTER_PIPELINE_LAYOUT(where) android_vulkan::RegisterPipelineLayout ( where );
-#define AV_UNREGISTER_PIPELINE_LAYOUT(where) android_vulkan::UnregisterPipelineLayout ( where );
-
-#define AV_REGISTER_RENDER_PASS(where) android_vulkan::RegisterRenderPass ( where );
-#define AV_UNREGISTER_RENDER_PASS(where) android_vulkan::UnregisterRenderPass ( where );
-
-#define AV_REGISTER_SAMPLER(where) android_vulkan::RegisterSampler ( where );
-#define AV_UNREGISTER_SAMPLER(where) android_vulkan::UnregisterSampler ( where );
-
-#define AV_REGISTER_SEMAPHORE(where) android_vulkan::RegisterSemaphore ( where );
-#define AV_UNREGISTER_SEMAPHORE(where) android_vulkan::UnregisterSemaphore ( where );
-
-#define AV_REGISTER_SHADER_MODULE(where) android_vulkan::RegisterShaderModule ( where );
-#define AV_UNREGISTER_SHADER_MODULE(where) android_vulkan::UnregisterShaderModule ( where );
-
-#define AV_REGISTER_SURFACE(where) android_vulkan::RegisterSurface ( where );
-#define AV_UNREGISTER_SURFACE(where) android_vulkan::UnregisterSurface ( where );
-
-#define AV_REGISTER_SWAPCHAIN(where) android_vulkan::RegisterSwapchain ( where );
-#define AV_UNREGISTER_SWAPCHAIN(where) android_vulkan::UnregisterSwapchain ( where );
+#define AV_VULKAN_GROUP(commandBuffer, ...)                                                                            \
+android_vulkan::VulkanGroup _FuCk_VuLkAn_GrOuP_ ( commandBuffer );                                                     \
+{                                                                                                                      \
+    char _FuCk_NaMe_[ 256U ];                                                                                          \
+    std::snprintf ( _FuCk_NaMe_, std::size ( _FuCk_NaMe_ ), __VA_ARGS__ );                                             \
+    _FuCk_VuLkAn_GrOuP_.IssueGroup ( _FuCk_NaMe_ );                                                                    \
+}
 
 namespace android_vulkan {
 
-void CheckVulkanLeaks ();
+// Initialization is based on article
+// https://www.saschawillems.de/blog/2016/05/28/tutorial-on-using-vulkans-vk_ext_debug_marker-with-renderdoc/
+void InitVulkanDebugUtils ( VkInstance instance ) noexcept;
 
-void RegisterBuffer ( std::string &&where );
-void UnregisterBuffer ( std::string &&where );
+void SetVulkanObjectName ( VkDevice device, uint64_t handle, VkObjectType type, char const *name ) noexcept;
 
-void RegisterCommandPool ( std::string &&where );
-void UnregisterCommandPool ( std::string &&where );
+//----------------------------------------------------------------------------------------------------------------------
 
-void RegisterDescriptorPool ( std::string &&where );
-void UnregisterDescriptorPool ( std::string &&where );
+class VulkanGroup final
+{
+    private:
+        VkCommandBuffer     _commandBuffer = VK_NULL_HANDLE;
 
-void RegisterDescriptorSetLayout ( std::string &&where );
-void UnregisterDescriptorSetLayout ( std::string &&where );
+    public:
+        VulkanGroup () = delete;
 
-void RegisterDevice ( std::string &&where );
-void UnregisterDevice ( std::string &&where );
+        VulkanGroup ( VulkanGroup const & ) = delete;
+        VulkanGroup &operator = ( VulkanGroup const & ) = delete;
 
-void RegisterDeviceMemory ( std::string &&where );
-void UnregisterDeviceMemory ( std::string &&where );
+        VulkanGroup ( VulkanGroup && ) = delete;
+        VulkanGroup &operator = ( VulkanGroup && ) = delete;
 
-void RegisterFence ( std::string &&where );
-void UnregisterFence ( std::string &&where );
+        explicit VulkanGroup ( VkCommandBuffer commandBuffer ) noexcept;
 
-void RegisterFramebuffer ( std::string &&where );
-void UnregisterFramebuffer ( std::string &&where );
+        ~VulkanGroup () noexcept;
 
-void RegisterImage ( std::string &&where );
-void UnregisterImage ( std::string &&where );
-
-void RegisterImageView ( std::string &&where );
-void UnregisterImageView ( std::string &&where );
-
-void RegisterPipeline ( std::string &&where );
-void UnregisterPipeline ( std::string &&where );
-
-void RegisterPipelineLayout ( std::string &&where );
-void UnregisterPipelineLayout ( std::string &&where );
-
-void RegisterRenderPass ( std::string &&where );
-void UnregisterRenderPass ( std::string &&where );
-
-void RegisterSampler ( std::string &&where );
-void UnregisterSampler ( std::string &&where );
-
-void RegisterSemaphore ( std::string &&where );
-void UnregisterSemaphore ( std::string &&where );
-
-void RegisterShaderModule ( std::string &&where );
-void UnregisterShaderModule ( std::string &&where );
-
-void RegisterSurface ( std::string &&where );
-void UnregisterSurface ( std::string &&where );
-
-void RegisterSwapchain ( std::string &&where );
-void UnregisterSwapchain ( std::string &&where );
+        void IssueGroup ( char const* name ) noexcept;
+};
 
 } // namespace android_vulkan
 
-#endif // ANDROID_VULKAN_DEBUG
+#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS || ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
 
 
 #endif // VULKAN_UTILS_HPP

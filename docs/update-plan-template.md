@@ -69,6 +69,7 @@
   - ❌ Header
   - ❌ Readme
 - ❌ Code checks
+- ❌ Update RenderDoc version in documentation
 - ❌ Set starting project as PBR
 - ❌ Create archive tag with direct link to issue
 

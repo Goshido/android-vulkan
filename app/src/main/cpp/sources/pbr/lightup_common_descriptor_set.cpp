@@ -146,6 +146,9 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
+    AV_SET_VULKAN_OBJECT_NAME ( device, _brdfLUT.GetImage (), VK_OBJECT_TYPE_IMAGE, "BRDF LUT" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _brdfLUT.GetImageView (), VK_OBJECT_TYPE_IMAGE_VIEW, "BRDF LUT" )
+
     constexpr VkSamplerCreateInfo brdfSamplerInfo
     {
         .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,

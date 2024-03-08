@@ -711,7 +711,7 @@ bool MeshGeometry::UploadSimple ( uint8_t const* data,
         return false;
 
     _vertexBufferRange = bufferInfo.size;
-    AV_SET_VULKAN_OBJECT_NAME ( device, _vertexBuffer, VK_OBJECT_TYPE_BUFFER, "Mesh verticies" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _vertexBuffer, VK_OBJECT_TYPE_BUFFER, "Mesh vertices" )
 
     VkMemoryRequirements memoryRequirements;
     vkGetBufferMemoryRequirements ( device, _vertexBuffer, &memoryRequirements );

@@ -20,8 +20,8 @@ bool Rainbow::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) n
 {
     VkDevice device = renderer.GetDevice ();
 
-    FrameInFlight const &fif = _framesInFlight[ _writeFrameIdndex++ ];
-    _writeFrameIdndex %= FRAMES_IN_FLIGHT;
+    FrameInFlight const &fif = _framesInFlight[ _writeFrameIndex++ ];
+    _writeFrameIndex %= FRAMES_IN_FLIGHT;
 
     bool result = android_vulkan::Renderer::CheckVkResult (
         vkWaitForFences ( device, 1U, &fif._fence, VK_TRUE, UINT64_MAX ),
@@ -35,9 +35,6 @@ bool Rainbow::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) n
     uint32_t swapchainImageIdx;
 
     if ( !BeginFrame ( renderer, swapchainImageIdx, fif._acquire ) ) [[unlikely]]
-        return false;
-
-    if ( !result ) [[unlikely]]
         return false;
 
     result = android_vulkan::Renderer::CheckVkResult (
@@ -73,6 +70,9 @@ bool Rainbow::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) n
         "Rainbow::OnFrame",
         "Can't begin command buffer"
     );
+
+    if ( !result ) [[unlikely]]
+        return false;
 
     constexpr float CIRCLE_THIRD = GX_MATH_DOUBLE_PI / 3.0F;
     constexpr float CIRCLE_TWO_THIRD = 2.0F * CIRCLE_THIRD;

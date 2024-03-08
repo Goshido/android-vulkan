@@ -33,7 +33,7 @@ BEGIN
             VALUE "FileDescription", "android-vulkan exporter"
             VALUE "FileVersion", VERSION_STRING
             VALUE "InternalName", "android-vulkan.dle"
-            VALUE "LegalCopyright", "2023 - 2023 © Goshido Inc. All rights reserved."
+            VALUE "LegalCopyright", "2023 - 2024. Goshido Inc. All rights reserved."
             VALUE "OriginalFilename", "android-vulkan.dle"
             VALUE "ProductName", "android-vulkan exporter"
             VALUE "ProductVersion", VERSION_STRING

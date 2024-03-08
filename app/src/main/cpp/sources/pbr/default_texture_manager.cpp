@@ -69,7 +69,7 @@ bool DefaultTextureManager::Init ( android_vulkan::Renderer &renderer, VkCommand
     AV_SET_VULKAN_OBJECT_NAME ( device,
         _commandBuffers[ albedoIdx ],
         VK_OBJECT_TYPE_COMMAND_BUFFER,
-        "Default albedo iamge"
+        "Default albedo image"
     )
 
     AV_SET_VULKAN_OBJECT_NAME ( device,
@@ -147,6 +147,9 @@ bool DefaultTextureManager::Init ( android_vulkan::Renderer &renderer, VkCommand
     if ( !result ) [[unlikely]]
         return false;
 
+    AV_SET_VULKAN_OBJECT_NAME ( device, _albedo->GetImage (), VK_OBJECT_TYPE_IMAGE, "Default albedo" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _albedo->GetImageView (), VK_OBJECT_TYPE_IMAGE_VIEW, "Default albedo" )
+
     android_vulkan::Half4 const emissionData ( 0.0F, 0.0F, 0.0F, 0.0F );
 
     result = textureLoader ( _emission,
@@ -159,6 +162,9 @@ bool DefaultTextureManager::Init ( android_vulkan::Renderer &renderer, VkCommand
     if ( !result ) [[unlikely]]
         return false;
 
+    AV_SET_VULKAN_OBJECT_NAME ( device, _emission->GetImage (), VK_OBJECT_TYPE_IMAGE, "Default emission" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _emission->GetImageView (), VK_OBJECT_TYPE_IMAGE_VIEW, "Default emission" )
+
     constexpr uint8_t const maskData[ 4U ] = { 255U, 0U, 0U, 0U };
 
     if ( !textureLoader ( _mask, maskData, sizeof ( maskData ), VK_FORMAT_R8G8B8A8_UNORM, _commandBuffers[ maskIdx ] ) )
@@ -166,6 +172,9 @@ bool DefaultTextureManager::Init ( android_vulkan::Renderer &renderer, VkCommand
         [[unlikely]]
         return false;
     }
+
+    AV_SET_VULKAN_OBJECT_NAME ( device, _mask->GetImage (), VK_OBJECT_TYPE_IMAGE, "Default mask" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _mask->GetImageView (), VK_OBJECT_TYPE_IMAGE_VIEW, "Default mask" )
 
     constexpr uint8_t const normalData[ 4U ] = { 128U, 0U, 0U, 128U };
 
@@ -179,6 +188,9 @@ bool DefaultTextureManager::Init ( android_vulkan::Renderer &renderer, VkCommand
     if ( !result ) [[unlikely]]
         return false;
 
+    AV_SET_VULKAN_OBJECT_NAME ( device, _normal->GetImage (), VK_OBJECT_TYPE_IMAGE, "Default normal" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _normal->GetImageView (), VK_OBJECT_TYPE_IMAGE_VIEW, "Default normal" )
+
     constexpr uint8_t const paramData[ 4U ] = { 128U, 128U, 128U, 128U };
 
     result = textureLoader ( _params,
@@ -190,6 +202,9 @@ bool DefaultTextureManager::Init ( android_vulkan::Renderer &renderer, VkCommand
 
     if ( !result ) [[unlikely]]
         return false;
+
+    AV_SET_VULKAN_OBJECT_NAME ( device, _params->GetImage (), VK_OBJECT_TYPE_IMAGE, "Default params" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _params->GetImageView (), VK_OBJECT_TYPE_IMAGE_VIEW, "Default params" )
 
     constexpr uint8_t const transparentData[ 4U ] = { 0U, 0U, 0U, 0U };
 

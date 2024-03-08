@@ -37,7 +37,7 @@ constexpr uint32_t TARGET_VULKAN_VERSION = VK_MAKE_VERSION ( MAJOR, MINOR, PATCH
 
 constexpr char const* UNKNOWN_RESULT = "UNKNOWN";
 
-constexpr auto LOGCAT_ANISPAM_DELAY = std::chrono::milliseconds ( 1U );
+constexpr auto LOGCAT_ANTISPAM_DELAY = std::chrono::milliseconds ( 1U );
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -372,13 +372,17 @@ std::unordered_set<uint32_t> g_validationFilter =
     // [2023/07/24] Caused by Vulkan Adreno Layer which presents when VK_EXT_debug_utils is enabled.
     // https://developer.qualcomm.com/sites/default/files/docs/adreno-gpu/snapdragon-game-toolkit/gdg/components/vk_adreno_layer.html
     // Qualcomm description: Renderpass is not qualified for multipass due to a given subpass.
-    // It happens at UI composition renderpass which can not be multipass by design.
+    // It happens at UI composition render pass which can not be multipass by design.
     0x00000000U,
 
     // Attempting to enable extension VK_EXT_debug_utils, but this extension is intended to support use by
     // applications when debugging and it is strongly recommended that it be otherwise avoided.
     // [2024/02/19] Yeah. I'm pretty aware about that. Thank you.
-    0x675DC32EU
+    0x675DC32EU,
+
+    // [2024/03/05] Issue:
+    // https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/7636
+    0x86A454D4U
 };
 
 constexpr std::pair<uint32_t, char const*> const g_vkDebugUtilsMessageSeverityFlagBitsEXTMapper[] =
@@ -1314,7 +1318,7 @@ bool Renderer::CheckRequiredFormats () noexcept
             g_vkFormatFeatureFlagBitsMapper
         );
 
-        std::this_thread::sleep_for ( LOGCAT_ANISPAM_DELAY );
+        std::this_thread::sleep_for ( LOGCAT_ANTISPAM_DELAY );
     };
 
     probe ( VK_FORMAT_A2R10G10B10_UNORM_PACK32, "VK_FORMAT_A2R10G10B10_UNORM_PACK32" );
@@ -2045,7 +2049,7 @@ void Renderer::PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits 
 
     _maxUniformBufferRange = static_cast<size_t> ( limits.maxUniformBufferRange );
     PrintUINT32Prop ( INDENT_1, "maxUniformBufferRange", limits.maxUniformBufferRange );
-    std::this_thread::sleep_for ( LOGCAT_ANISPAM_DELAY );
+    std::this_thread::sleep_for ( LOGCAT_ANTISPAM_DELAY );
 
     PrintUINT32Prop ( INDENT_1, "maxStorageBufferRange", limits.maxStorageBufferRange );
     PrintUINT32Prop ( INDENT_1, "maxPushConstantsSize", limits.maxPushConstantsSize );
@@ -2060,7 +2064,7 @@ void Renderer::PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits 
     PrintUINT32Prop ( INDENT_1, "maxPerStageDescriptorSampledImages", limits.maxPerStageDescriptorSampledImages );
     PrintUINT32Prop ( INDENT_1, "maxPerStageDescriptorStorageImages", limits.maxPerStageDescriptorStorageImages );
     PrintUINT32Prop ( INDENT_1, "maxPerStageDescriptorInputAttachments", limits.maxPerStageDescriptorInputAttachments );
-    std::this_thread::sleep_for ( LOGCAT_ANISPAM_DELAY );
+    std::this_thread::sleep_for ( LOGCAT_ANTISPAM_DELAY );
 
     PrintUINT32Prop ( INDENT_1, "maxPerStageResources", limits.maxPerStageResources );
     PrintUINT32Prop ( INDENT_1, "maxDescriptorSetSamplers", limits.maxDescriptorSetSamplers );
@@ -2076,7 +2080,7 @@ void Renderer::PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits 
     PrintUINT32Prop ( INDENT_1, "maxVertexInputAttributeOffset", limits.maxVertexInputAttributeOffset );
     PrintUINT32Prop ( INDENT_1, "maxVertexInputBindingStride", limits.maxVertexInputBindingStride );
     PrintUINT32Prop ( INDENT_1, "maxVertexOutputComponents", limits.maxVertexOutputComponents );
-    std::this_thread::sleep_for ( LOGCAT_ANISPAM_DELAY );
+    std::this_thread::sleep_for ( LOGCAT_ANTISPAM_DELAY );
 
     PrintUINT32Prop ( INDENT_1, "maxTessellationGenerationLevel", limits.maxTessellationGenerationLevel );
     PrintUINT32Prop ( INDENT_1, "maxTessellationPatchSize", limits.maxTessellationPatchSize );
@@ -2111,7 +2115,7 @@ void Renderer::PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits 
         limits.maxTessellationEvaluationOutputComponents
     );
 
-    std::this_thread::sleep_for ( LOGCAT_ANISPAM_DELAY );
+    std::this_thread::sleep_for ( LOGCAT_ANTISPAM_DELAY );
 
     PrintUINT32Prop ( INDENT_1, "maxGeometryShaderInvocations", limits.maxGeometryShaderInvocations );
     PrintUINT32Prop ( INDENT_1, "maxGeometryInputComponents", limits.maxGeometryInputComponents );
@@ -2123,7 +2127,7 @@ void Renderer::PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits 
     PrintUINT32Prop ( INDENT_1, "maxFragmentDualSrcAttachments", limits.maxFragmentDualSrcAttachments );
     PrintUINT32Prop ( INDENT_1, "maxFragmentCombinedOutputResources", limits.maxFragmentCombinedOutputResources );
     PrintUINT32Prop ( INDENT_1, "maxComputeSharedMemorySize", limits.maxComputeSharedMemorySize );
-    std::this_thread::sleep_for ( LOGCAT_ANISPAM_DELAY );
+    std::this_thread::sleep_for ( LOGCAT_ANTISPAM_DELAY );
 
     PrintUINT32Vec3Prop ( INDENT_1, "maxComputeWorkGroupCount", limits.maxComputeWorkGroupCount );
     PrintUINT32Prop ( INDENT_1, "maxComputeWorkGroupInvocations", limits.maxComputeWorkGroupInvocations );
@@ -2140,7 +2144,7 @@ void Renderer::PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits 
     PrintFloatVec2Prop ( INDENT_1, "viewportBoundsRange", limits.viewportBoundsRange );
     PrintUINT32Prop ( INDENT_1, "viewportSubPixelBits", limits.viewportSubPixelBits );
     PrintSizeProp ( INDENT_1, "minMemoryMapAlignment", limits.minMemoryMapAlignment );
-    std::this_thread::sleep_for ( LOGCAT_ANISPAM_DELAY );
+    std::this_thread::sleep_for ( LOGCAT_ANTISPAM_DELAY );
 
     PrintSizeProp ( INDENT_1,
         "minTexelBufferOffsetAlignment",
@@ -2156,7 +2160,7 @@ void Renderer::PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits 
         "minStorageBufferOffsetAlignment",
         static_cast<size_t> ( limits.minStorageBufferOffsetAlignment )
     );
-    std::this_thread::sleep_for ( LOGCAT_ANISPAM_DELAY );
+    std::this_thread::sleep_for ( LOGCAT_ANTISPAM_DELAY );
 
     PrintINT32Prop ( INDENT_1, "minTexelOffset", limits.minTexelOffset );
     PrintUINT32Prop ( INDENT_1, "maxTexelOffset", limits.maxTexelOffset );
@@ -2168,7 +2172,7 @@ void Renderer::PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits 
     PrintUINT32Prop ( INDENT_1, "maxFramebufferWidth", limits.maxFramebufferWidth );
     PrintUINT32Prop ( INDENT_1, "maxFramebufferHeight", limits.maxFramebufferHeight );
     PrintUINT32Prop ( INDENT_1, "maxFramebufferLayers", limits.maxFramebufferLayers );
-    std::this_thread::sleep_for ( LOGCAT_ANISPAM_DELAY );
+    std::this_thread::sleep_for ( LOGCAT_ANTISPAM_DELAY );
 
     PrintVkFlagsProp ( INDENT_1,
         "framebufferColorSampleCounts",
@@ -2207,7 +2211,7 @@ void Renderer::PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits 
         g_vkSampleCountFlagMapper
     );
 
-    std::this_thread::sleep_for ( LOGCAT_ANISPAM_DELAY );
+    std::this_thread::sleep_for ( LOGCAT_ANTISPAM_DELAY );
 
     PrintVkFlagsProp ( INDENT_1,
         "sampledImageIntegerSampleCounts",
@@ -2237,7 +2241,7 @@ void Renderer::PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits 
         g_vkSampleCountFlagMapper
     );
 
-    std::this_thread::sleep_for ( LOGCAT_ANISPAM_DELAY );
+    std::this_thread::sleep_for ( LOGCAT_ANTISPAM_DELAY );
 
     PrintUINT32Prop ( INDENT_1, "maxSampleMaskWords", limits.maxSampleMaskWords );
     PrintVkBool32Prop ( INDENT_1, "timestampComputeAndGraphics", limits.timestampComputeAndGraphics );
@@ -2252,7 +2256,7 @@ void Renderer::PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits 
     PrintFloatProp ( INDENT_1, "lineWidthGranularity", limits.lineWidthGranularity );
     PrintVkBool32Prop ( INDENT_1, "strictLines", limits.strictLines );
     PrintVkBool32Prop ( INDENT_1, "standardSampleLocations", limits.standardSampleLocations );
-    std::this_thread::sleep_for ( LOGCAT_ANISPAM_DELAY );
+    std::this_thread::sleep_for ( LOGCAT_ANTISPAM_DELAY );
 
     PrintSizeProp ( INDENT_1,
         "optimalBufferCopyOffsetAlignment",

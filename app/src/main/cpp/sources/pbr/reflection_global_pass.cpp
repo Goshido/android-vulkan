@@ -29,11 +29,10 @@ void ReflectionGlobalPass::Execute ( VkDevice device, VkCommandBuffer commandBuf
     UpdateGPUData ( device, count );
 
     _program.Bind ( commandBuffer );
-
     for ( size_t i = 0U; i < count; ++i )
     {
         _program.SetDescriptorSet ( commandBuffer, _descriptorSets[ _itemReadIndex ] );
-        vkCmdDraw ( commandBuffer, 4U, 1U, 0U, 0U );
+        vkCmdDraw ( commandBuffer, 3U, 1U, 0U, 0U );
         _itemReadIndex = ( _itemReadIndex + 1U ) % REFLECTIONS;
     }
 
@@ -144,7 +143,7 @@ bool ReflectionGlobalPass::AllocateDescriptorSets ( VkDevice device ) noexcept
         AV_SET_VULKAN_OBJECT_NAME ( device,
             descriptorSets[ i ],
             VK_OBJECT_TYPE_DESCRIPTOR_SET,
-            "Reglection global #%zu",
+            "Reflection global #%zu",
             i
         )
     }

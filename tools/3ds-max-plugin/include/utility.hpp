@@ -53,7 +53,7 @@ class Utility final : public UtilityObj
         void DeleteThis () override;
 
         [[nodiscard]] bool CheckCOMResult ( HRESULT result, char const* message ) const noexcept;
-        void GetPath ( COMDLG_FILTERSPEC filter, wchar_t const* extention, int targetID ) noexcept;
+        void GetPath ( COMDLG_FILTERSPEC filter, wchar_t const* extension, int targetID ) noexcept;
 
         [[nodiscard]] INT_PTR OnCommand ( UINT msg, WPARAM wParam, LPARAM lParam ) noexcept;
         [[nodiscard]] INT_PTR OnMouseEvent ( UINT msg, WPARAM wParam, LPARAM lParam ) noexcept;

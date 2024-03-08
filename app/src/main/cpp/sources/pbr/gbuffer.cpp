@@ -111,13 +111,13 @@ bool GBuffer::Init ( android_vulkan::Renderer &renderer, VkExtent2D const &resol
     AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (),
         _depthStencil.GetImage (),
         VK_OBJECT_TYPE_IMAGE,
-        "Depth | Stencil"
+        "Depth"
     )
 
     AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (),
         _depthStencil.GetImageView (),
         VK_OBJECT_TYPE_IMAGE_VIEW,
-        "Depth | Stencil"
+        "Depth"
     )
 
     return true;

@@ -108,7 +108,7 @@ function Callback ( context, frameIndex )
 
 `context` is the same parameter which was passed via `SetEvent`.
 
-`frameIndex` is zero based event frame index which is provided via `SetEvent`. **Note** this index **IS NOT** real animation position. Often real frame index is slightly bigger that event frame index. For example in situations when animation speed is high and hardware framerate is low.
+`frameIndex` is zero based event frame index which is provided via `SetEvent`. **Note** this index **IS NOT** real animation position. Often real frame index is slightly bigger that event frame index. For example in situations when animation speed is high and hardware frame rate is low.
 
 Callback function **MUST NOT** return.
 

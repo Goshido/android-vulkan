@@ -28,7 +28,7 @@ class Rainbow final : public android_vulkan::Game
         constexpr static size_t         FRAMES_IN_FLIGHT = 2U;
 
         FrameInFlight                   _framesInFlight[ FRAMES_IN_FLIGHT ];
-        size_t                          _writeFrameIdndex = 0U;
+        size_t                          _writeFrameIndex = 0U;
 
         std::vector<SwapchainInfo>      _swapchainInfo{};
 

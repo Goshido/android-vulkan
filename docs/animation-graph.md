@@ -15,7 +15,7 @@ require "av://engine/animation_graph.lua"
 
 ## <a id="brief">Brief</a>
 
-_Animation graph_ is the central part of the skeletal animation system. _Animation graph_ job is to compute pose for skeletal meshes. _Animation graph_ could be attached to multiple [_SkeletalMeshComponents_](./skeletal-mesh-conponent.md). _Animation graph_ has single input which must provide joints for pose computation. The following entities could be inputs for _Animation graph_:
+_Animation graph_ is the central part of the skeletal animation system. _Animation graph_ job is to compute pose for skeletal meshes. _Animation graph_ could be attached to multiple [_SkeletalMeshComponents_](./skeletal-mesh-component.md). _Animation graph_ has single input which must provide joints for pose computation. The following entities could be inputs for _Animation graph_:
 
 - [_AnimationPlayerNode_](./animation-player-node.md)
 

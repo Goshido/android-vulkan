@@ -89,11 +89,7 @@ Also the macro is used for additional debug output in the [_Logcat™_](logcat.m
 
 This macro enables integration with [_RenderDoc_](https://renderdoc.org/). Note that macro is not compatible with [`ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS`](#macro-android-vulkan-enable-vulkan-validation-layers) macro.
 
-**Note:** it's expected that application could work only from [_RenderDoc_](https://renderdoc.org/). Running application outside [_RenderDoc_](https://renderdoc.org/) could produce the following error:
-
-```txt
-07:49:34.021  E  Renderer::DeployDevice - Can't create device. Error: VK_ERROR_EXTENSION_NOT_PRESENT.
-```
+**Note:** it's expected that application could work only from [_RenderDoc_](https://renderdoc.org/). Running application outside [_RenderDoc_](https://renderdoc.org/) could produce crash. For more information look [_RenderDoc_ integration](./renderdoc-integration.md).
 
 ## <a id="macro-android-vulkan-enable-vulkan-validation-layers">`ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS`</a>
 

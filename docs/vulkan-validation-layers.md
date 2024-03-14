@@ -6,7 +6,7 @@ Starting from _Android NDK_ `23.0.7599858` the _Vulkan_ validation layers have b
 
 ## Compatible version
 
-The manual is based on `831cedf792c4992d2e19dd7f6494aa971894cfd4` commit of the [_Vulkan-ValidationLayers_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) repo. The manual is primary aimed for _Windows OS_ users.
+The manual is based on `07999bb64f56bbc3b6e67a42b0bde5f1dfc66341` commit of the [_Vulkan-ValidationLayers_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) repo. The manual is primary aimed for _Windows OS_ users.
 
 ## Requirements
 
@@ -108,4 +108,4 @@ Input attachment descriptor image view is not a subpass input attachment | [#455
 master build broken for some time | [#5014](https://github.com/KhronosGroup/SPIRV-Tools/issues/5014) | ✔️ Fixed
 Broken Android build | [#4947](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/4947) | ✔️ Fixed
 `vkCmdNextSubpass` validation issue | [#5853](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/5853) | 🛡️ Not an issue
-Full screen triangle `VkPipeline` issue | [#7636](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/7636) | ⚠️ Submitted
+Full screen triangle `VkPipeline` issue | [#7636](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/7636) | ✔️ Fixed

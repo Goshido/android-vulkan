@@ -378,11 +378,7 @@ std::unordered_set<uint32_t> g_validationFilter =
     // Attempting to enable extension VK_EXT_debug_utils, but this extension is intended to support use by
     // applications when debugging and it is strongly recommended that it be otherwise avoided.
     // [2024/02/19] Yeah. I'm pretty aware about that. Thank you.
-    0x675DC32EU,
-
-    // [2024/03/05] Issue:
-    // https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/7636
-    0x86A454D4U
+    0x675DC32EU
 };
 
 constexpr std::pair<uint32_t, char const*> const g_vkDebugUtilsMessageSeverityFlagBitsEXTMapper[] =
@@ -1453,20 +1449,6 @@ bool Renderer::DeployDevice () noexcept
         .scalarBlockLayout = VK_TRUE
     };
 
-#ifdef ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
-
-    constexpr char const* const extensions[] =
-    {
-        VK_EXT_DEBUG_MARKER_EXTENSION_NAME,
-        VK_EXT_SCALAR_BLOCK_LAYOUT_EXTENSION_NAME,
-        VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME,
-        VK_KHR_SEPARATE_DEPTH_STENCIL_LAYOUTS_EXTENSION_NAME,
-        VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME,
-        VK_KHR_SWAPCHAIN_EXTENSION_NAME
-    };
-
-#else
-
     constexpr char const* const extensions[] =
     {
         VK_EXT_SCALAR_BLOCK_LAYOUT_EXTENSION_NAME,
@@ -1475,8 +1457,6 @@ bool Renderer::DeployDevice () noexcept
         VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME,
         VK_KHR_SWAPCHAIN_EXTENSION_NAME
     };
-
-#endif // ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
 
     VkDeviceCreateInfo const deviceCreateInfo
     {

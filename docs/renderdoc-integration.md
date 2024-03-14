@@ -5,7 +5,7 @@ The project supports integration with [_RenderDoc v1.31_](https://renderdoc.org/
 - `VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT`
 - `VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT`
 
- You could refer to [this thread](https://github.com/baldurk/renderdoc/issues/2681) which covers example of such limitations.
+You could refer to [this thread](https://github.com/baldurk/renderdoc/issues/2681) which covers example of such limitations.
 
 So it's needed to make proper build of the project:
 
@@ -32,5 +32,7 @@ target_compile_definitions ( android-vulkan
 
 ...
 ```
+
+**Note:** The application will crash without _RenderDoc_ after using `ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION`. It's expected. The reason for this is that application will try to find and call _Vulkan_ debug marker and debug group functions. Most likely they will not be available on device.
 
 That's it.

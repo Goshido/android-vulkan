@@ -3,7 +3,6 @@
 
 
 #include <physics.hpp>
-//#include "scriptable_gxvec3.hpp"
 
 
 namespace pbr {

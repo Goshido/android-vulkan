@@ -1,4 +1,4 @@
-// version 1.81
+// version 1.83
 
 #include <GXCommon/GXMath.hpp>
 
@@ -1910,56 +1910,10 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
     }
 }
 
-[[maybe_unused]] GXBool GXAABB::IsOverlaped ( GXAABB const &other ) const noexcept
-{
-    if ( _min._data[ 0U ] > other._max._data[ 0U ] )
-        return GX_FALSE;
-
-    if ( _min._data[ 1U ] > other._max._data[ 1U ] )
-        return GX_FALSE;
-
-    if ( _min._data[ 2U ] > other._max._data[ 2U ] )
-        return GX_FALSE;
-
-    if ( other._min._data[ 0U ] > _max._data[ 0U ] )
-        return GX_FALSE;
-
-    if ( other._min._data[ 1U ] > _max._data[ 1U ] )
-        return GX_FALSE;
-
-    return other._min._data[ 2U ] <= _max._data[ 2U ];
-}
-
-[[maybe_unused]] GXBool GXAABB::IsOverlaped ( GXVec3 const &point ) const noexcept
-{
-    return IsOverlaped ( point._data[ 0U ], point._data[ 1U ], point._data[ 2U ] );
-}
-
-[[maybe_unused]] GXBool GXAABB::IsOverlaped ( GXFloat x, GXFloat y, GXFloat z ) const noexcept
-{
-    if ( _min._data[ 0U ] > x )
-        return GX_FALSE;
-
-    if ( _min._data[ 1U ] > y )
-        return GX_FALSE;
-
-    if ( _min._data[ 2U ] > z )
-        return GX_FALSE;
-
-    if ( _max._data[ 0U ] < x )
-        return GX_FALSE;
-
-    if ( _max._data[ 1U ] < y )
-        return GX_FALSE;
-
-    return _max._data[ 2U ] >= z;
-}
-
 [[maybe_unused]] GXVoid GXAABB::GetCenter ( GXVec3 &center ) const noexcept
 {
-    center._data[ 0U ] = 0.5F * ( _min._data[ 0U ] + _max._data[ 0U ] );
-    center._data[ 1U ] = 0.5F * ( _min._data[ 1U ] + _max._data[ 1U ] );
-    center._data[ 2U ] = 0.5F * ( _min._data[ 2U ] + _max._data[ 2U ] );
+    center.Sum ( _min, _max );
+    center.Multiply ( center, 0.5F );
 }
 
 [[maybe_unused]] GXFloat GXAABB::GetWidth () const noexcept

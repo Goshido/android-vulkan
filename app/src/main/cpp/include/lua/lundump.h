@@ -7,6 +7,8 @@
 #ifndef lundump_h
 #define lundump_h
 
+#include <limits.h>
+
 #include "llimits.h"
 #include "lobject.h"
 #include "lzio.h"
@@ -24,6 +26,7 @@
 #define LUAC_VERSION	(LUA_VERSION_MAJOR_N*16+LUA_VERSION_MINOR_N)
 
 #define LUAC_FORMAT	0	/* this is the official format */
+
 
 /* load one chunk; from lundump.c */
 LUAI_FUNC LClosure* luaU_undump (lua_State* L, ZIO* Z, const char* name,

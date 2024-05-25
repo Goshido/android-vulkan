@@ -1,4 +1,4 @@
-// version 1.8
+// version 1.9
 
 #include <GXCommon/GXMath.hpp>
 
@@ -10,6 +10,36 @@ GX_DISABLE_COMMON_WARNINGS
 
 GX_RESTORE_WARNING_STATE
 
+
+namespace {
+
+[[nodiscard]] bool AABBIsOverlapped ( float32x4_t const &leftA,
+    float32x2_t const &leftB,
+    float32x4_t const &rightA,
+    float32x2_t const &rightB
+) noexcept
+{
+    uint32x4_t const cmp4 = vcleq_f32 ( leftA, rightA );
+    uint32x2_t const cmp2 = vcle_f32 ( leftB, rightB );
+
+    uint32x4_t const cmp4Bits = vshrq_n_u32 ( cmp4, 31 );
+    uint32x2_t const cmp2Bits = vshr_n_u32 ( cmp2, 31 );
+
+    constexpr int const shift4[] = { 0, 1, 2, 3 };
+    uint32x4_t const cmp4Lines = vshlq_u32 ( cmp4Bits, vld1q_s32 ( shift4 ) );
+
+    constexpr int const shift2[] = { 4, 5 };
+    uint32x2_t const cmp2Lines = vshl_u32 ( cmp2Bits, vld1_s32 ( shift2 ) );
+
+    uint32_t const gather4 = vaddvq_u32 ( cmp4Lines );
+    uint32_t const gather2 = vaddv_u32 ( cmp2Lines );
+
+    return ( gather4 | gather2 ) == 0b0011'1111U;
+}
+
+} // end of anonymous namespace
+
+//----------------------------------------------------------------------------------------------------------------------
 
 [[maybe_unused]] GXVoid GXVec2::Reverse () noexcept
 {
@@ -721,4 +751,65 @@ GX_RESTORE_WARNING_STATE
 
     vst1_f32 ( out._data, vget_low_f32 ( c ) );
     vst1_lane_s32 ( out._data + 2U, vget_high_f32 ( c ), 0 );
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+[[maybe_unused]] GXBool GXAABB::IsOverlapped ( GXAABB const &other ) const noexcept
+{
+    float const *minBounds = _min._data;
+    float const *maxBounds = _max._data;
+
+    float const *otherMinBounds = other._min._data;
+    float const *otherMaxBounds = other._max._data;
+
+    float const leftAData[] = { minBounds[ 0U ], minBounds[ 1U ], minBounds[ 2U ], otherMinBounds[ 0U ] };
+    float const leftBData[] = { otherMinBounds[ 1U ], otherMinBounds[ 2U ] };
+
+    float const rightAData[] = { otherMaxBounds[ 0U ], otherMaxBounds[ 1U ], otherMaxBounds[ 2U ], maxBounds[ 0U ] };
+    float const rightBData[] = { maxBounds[ 1U ], maxBounds[ 2U ] };
+
+    return AABBIsOverlapped ( vld1q_f32 ( leftAData ),
+        vld1_f32 ( leftBData ),
+        vld1q_f32 ( rightAData ),
+        vld1_f32 ( rightBData )
+    );
+}
+
+[[maybe_unused]] GXBool GXAABB::IsOverlapped ( GXVec3 const &point ) const noexcept
+{
+    float const *minBounds = _min._data;
+    float const *maxBounds = _max._data;
+
+    float const *p = point._data;
+
+    float const leftAData[] = { minBounds[ 0U ], minBounds[ 1U ], minBounds[ 2U ], p[ 0U ] };
+    float const leftBData[] = { p[ 1U ], p[ 2U ] };
+
+    float const rightAData[] = { p[ 0U ], p[ 1U ], p[ 2U ], maxBounds[ 0U ] };
+    float const rightBData[] = { maxBounds[ 1U ], maxBounds[ 2U ] };
+
+    return AABBIsOverlapped ( vld1q_f32 ( leftAData ),
+        vld1_f32 ( leftBData ),
+        vld1q_f32 ( rightAData ),
+        vld1_f32 ( rightBData )
+    );
+}
+
+[[maybe_unused]] GXBool GXAABB::IsOverlapped ( GXFloat x, GXFloat y, GXFloat z ) const noexcept
+{
+    float const *minBounds = _min._data;
+    float const *maxBounds = _max._data;
+
+    float const leftAData[] = { minBounds[ 0U ], minBounds[ 1U ], minBounds[ 2U ], x };
+    float const leftBData[] = { y, z };
+
+    float const rightAData[] = { x, y, z, maxBounds[ 0U ] };
+    float const rightBData[] = { maxBounds[ 1U ], maxBounds[ 2U ] };
+
+    return AABBIsOverlapped ( vld1q_f32 ( leftAData ),
+        vld1_f32 ( leftBData ),
+        vld1q_f32 ( rightAData ),
+        vld1_f32 ( rightBData )
+    );
 }

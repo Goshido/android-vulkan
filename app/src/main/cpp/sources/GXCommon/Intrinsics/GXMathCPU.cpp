@@ -1,4 +1,4 @@
-// version 1.8
+// version 1.9
 
 #include <GXCommon/GXMath.hpp>
 
@@ -589,4 +589,42 @@ GX_RESTORE_WARNING_STATE
         v._data[ 1U ] * _m[ 1U ][ 2U ] +
         v._data[ 2U ] * _m[ 2U ][ 2U ] +
         _m[ 3U ][ 2U ];
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+[[maybe_unused]] GXBool GXAABB::IsOverlapped ( GXAABB const &other ) const noexcept
+{
+    float const *minBounds = _min._data;
+    float const *maxBounds = _max._data;
+
+    float const *otherMinBounds = other._min._data;
+    float const *otherMaxBounds = other._max._data;
+
+    // Branchless optimization.
+    return ( minBounds[ 0U ] <= otherMaxBounds[ 0U ] ) &
+        ( minBounds[ 1U ] <= otherMaxBounds[ 1U ] ) &
+        ( minBounds[ 2U ] <= otherMaxBounds[ 2U ] ) &
+        ( otherMinBounds[ 0U ] <= maxBounds[ 0U ] ) &
+        ( otherMinBounds[ 1U ] <= maxBounds[ 1U ] ) &
+        ( otherMinBounds[ 2U ] <= maxBounds[ 2U ] );
+}
+
+[[maybe_unused]] GXBool GXAABB::IsOverlapped ( GXVec3 const &point ) const noexcept
+{
+    return IsOverlapped ( point._data[ 0U ], point._data[ 1U ], point._data[ 2U ] );
+}
+
+[[maybe_unused]] GXBool GXAABB::IsOverlapped ( GXFloat x, GXFloat y, GXFloat z ) const noexcept
+{
+    float const *minBounds = _min._data;
+    float const *maxBounds = _max._data;
+
+    // Branchless optimization.
+    return ( minBounds[ 0U ] <= x ) &
+        ( minBounds[ 1U ] <= y ) &
+        ( minBounds[ 2U ] <= z ) &
+        ( x <= maxBounds[ 0U ] ) &
+        ( y <= maxBounds[ 1U ] ) &
+        ( z <= maxBounds[ 2U ] );
 }

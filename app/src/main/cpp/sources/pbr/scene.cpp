@@ -590,7 +590,7 @@ int Scene::DoOverlapTestBoxBox ( lua_State &vm,
     setup ( shapeA, localA, sizeA );
     setup ( shapeB, localB, sizeB );
 
-    if ( !shapeA.GetBoundsWorld ().IsOverlaped ( shapeB.GetBoundsWorld () ) )
+    if ( !shapeA.GetBoundsWorld ().IsOverlapped ( shapeB.GetBoundsWorld () ) )
     {
         lua_pushboolean ( &vm, static_cast<int> ( false ) );
         return 1;

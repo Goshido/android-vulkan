@@ -1,4 +1,4 @@
-// version 1.82
+// version 1.83
 
 #ifndef GX_MATH_HPP
 #define GX_MATH_HPP
@@ -767,9 +767,9 @@ struct [[maybe_unused]] GXAABB final
     [[maybe_unused]] GXVoid AddVertex ( GXVec3 const &vertex ) noexcept;
     [[maybe_unused]] GXVoid AddVertex ( GXFloat x, GXFloat y, GXFloat z ) noexcept;
 
-    [[maybe_unused, nodiscard]] GXBool IsOverlaped ( GXAABB const &other ) const noexcept;
-    [[maybe_unused, nodiscard]] GXBool IsOverlaped ( GXVec3 const &point ) const noexcept;
-    [[maybe_unused, nodiscard]] GXBool IsOverlaped ( GXFloat x, GXFloat y, GXFloat z ) const noexcept;
+    [[maybe_unused, nodiscard]] GXBool IsOverlapped ( GXAABB const &other ) const noexcept;
+    [[maybe_unused, nodiscard]] GXBool IsOverlapped ( GXVec3 const &point ) const noexcept;
+    [[maybe_unused, nodiscard]] GXBool IsOverlapped ( GXFloat x, GXFloat y, GXFloat z ) const noexcept;
 
     [[maybe_unused]] GXVoid GetCenter ( GXVec3 &center ) const noexcept;
     [[maybe_unused, nodiscard]] GXFloat GetWidth () const noexcept;

@@ -445,7 +445,7 @@ void PointLightPass::UpdateShadowmapGPUData ( VkDevice device,
 
             for ( auto const &[mesh, opaqueData] : opaque.GetUniqueList () )
             {
-                if ( !lightBounds.IsOverlaped ( opaqueData._worldBounds ) )
+                if ( !lightBounds.IsOverlapped ( opaqueData._worldBounds ) )
                     continue;
 
                 if ( !uniques )
@@ -475,7 +475,7 @@ void PointLightPass::UpdateShadowmapGPUData ( VkDevice device,
             {
                 for ( auto const &geometryData : meshGroup._geometryData )
                 {
-                    if ( !lightBounds.IsOverlaped ( geometryData._worldBounds ) )
+                    if ( !lightBounds.IsOverlapped ( geometryData._worldBounds ) )
                         continue;
 
                     auto &[mesh, locals] = casters._batches[ name ];

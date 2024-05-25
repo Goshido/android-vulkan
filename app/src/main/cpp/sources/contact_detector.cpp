@@ -42,7 +42,7 @@ void ContactDetector::Check ( ContactManager &contactManager, RigidBodyRef const
     if ( !( shapeA.GetCollisionGroups () & shapeB.GetCollisionGroups () ) )
         return;
 
-    if ( !shapeA.GetBoundsWorld ().IsOverlaped ( shapeB.GetBoundsWorld () ) )
+    if ( !shapeA.GetBoundsWorld ().IsOverlapped ( shapeB.GetBoundsWorld () ) )
         return;
 
     _gjk.Reset ();

@@ -1,6 +1,7 @@
 # Android studio
-/.gradle
-/.idea
+/.gradle/
+/.idea/
+/.kotlin/
 /app/release/
 /build/
 

@@ -5,7 +5,7 @@ Clear-Host
 
 $params =
     "-E", "CS",
-    "-T", "cs_6_7",
+    "-T", "cs_6_8",
     "-Fc", "${BASE_SRC}\disassm\blob.txt",
     "${source}"
 

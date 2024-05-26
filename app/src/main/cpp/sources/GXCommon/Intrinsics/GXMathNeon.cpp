@@ -13,7 +13,7 @@ GX_RESTORE_WARNING_STATE
 
 namespace {
 
-[[nodiscard]] bool AABBIsOverlapped ( float32x4_t const &leftA,
+[[nodiscard]] GXBool AABBIsOverlapped ( float32x4_t const &leftA,
     float32x2_t const &leftB,
     float32x4_t const &rightA,
     float32x2_t const &rightB
@@ -25,10 +25,10 @@ namespace {
     uint32x4_t const cmp4Bits = vshrq_n_u32 ( cmp4, 31 );
     uint32x2_t const cmp2Bits = vshr_n_u32 ( cmp2, 31 );
 
-    constexpr int const shift4[] = { 0, 1, 2, 3 };
+    constexpr int const shift4[ 4U ] = { 0, 1, 2, 3 };
     uint32x4_t const cmp4Lines = vshlq_u32 ( cmp4Bits, vld1q_s32 ( shift4 ) );
 
-    constexpr int const shift2[] = { 4, 5 };
+    constexpr int const shift2[ 2U ] = { 4, 5 };
     uint32x2_t const cmp2Lines = vshl_u32 ( cmp2Bits, vld1_s32 ( shift2 ) );
 
     uint32_t const gather4 = vaddvq_u32 ( cmp4Lines );
@@ -757,59 +757,58 @@ namespace {
 
 [[maybe_unused]] GXBool GXAABB::IsOverlapped ( GXAABB const &other ) const noexcept
 {
-    float const *minBounds = _min._data;
-    float const *maxBounds = _max._data;
+    float32_t const *minBounds = _min._data;
+    float32_t const *maxBounds = _max._data;
 
-    float const *otherMinBounds = other._min._data;
-    float const *otherMaxBounds = other._max._data;
+    float32_t const *otherMinBounds = other._min._data;
+    float32_t const *otherMaxBounds = other._max._data;
 
-    float const leftAData[] = { minBounds[ 0U ], minBounds[ 1U ], minBounds[ 2U ], otherMinBounds[ 0U ] };
-    float const leftBData[] = { otherMinBounds[ 1U ], otherMinBounds[ 2U ] };
+    float32_t const leftAData[ 4U ] = { minBounds[ 0U ], minBounds[ 1U ], minBounds[ 2U ], otherMinBounds[ 0U ] };
 
-    float const rightAData[] = { otherMaxBounds[ 0U ], otherMaxBounds[ 1U ], otherMaxBounds[ 2U ], maxBounds[ 0U ] };
-    float const rightBData[] = { maxBounds[ 1U ], maxBounds[ 2U ] };
+    float32_t const rightAData[ 4U ] =
+    {
+        otherMaxBounds[ 0U ],
+        otherMaxBounds[ 1U ],
+        otherMaxBounds[ 2U ],
+        maxBounds[ 0U ]
+    };
 
     return AABBIsOverlapped ( vld1q_f32 ( leftAData ),
-        vld1_f32 ( leftBData ),
+        vld1_f32 ( otherMinBounds + 1U ),
         vld1q_f32 ( rightAData ),
-        vld1_f32 ( rightBData )
+        vld1_f32 ( maxBounds + 1U )
     );
 }
 
 [[maybe_unused]] GXBool GXAABB::IsOverlapped ( GXVec3 const &point ) const noexcept
 {
-    float const *minBounds = _min._data;
-    float const *maxBounds = _max._data;
+    float32_t const *minBounds = _min._data;
+    float32_t const *maxBounds = _max._data;
 
-    float const *p = point._data;
+    float32_t const *p = point._data;
 
-    float const leftAData[] = { minBounds[ 0U ], minBounds[ 1U ], minBounds[ 2U ], p[ 0U ] };
-    float const leftBData[] = { p[ 1U ], p[ 2U ] };
-
-    float const rightAData[] = { p[ 0U ], p[ 1U ], p[ 2U ], maxBounds[ 0U ] };
-    float const rightBData[] = { maxBounds[ 1U ], maxBounds[ 2U ] };
+    float32_t const leftAData[ 4U ] = { minBounds[ 0U ], minBounds[ 1U ], minBounds[ 2U ], p[ 0U ] };
+    float32_t const rightAData[ 4U ] = { p[ 0U ], p[ 1U ], p[ 2U ], maxBounds[ 0U ] };
 
     return AABBIsOverlapped ( vld1q_f32 ( leftAData ),
-        vld1_f32 ( leftBData ),
+        vld1_f32 ( p + 1U ),
         vld1q_f32 ( rightAData ),
-        vld1_f32 ( rightBData )
+        vld1_f32 ( maxBounds + 1U )
     );
 }
 
 [[maybe_unused]] GXBool GXAABB::IsOverlapped ( GXFloat x, GXFloat y, GXFloat z ) const noexcept
 {
-    float const *minBounds = _min._data;
-    float const *maxBounds = _max._data;
+    float32_t const *minBounds = _min._data;
+    float32_t const *maxBounds = _max._data;
 
-    float const leftAData[] = { minBounds[ 0U ], minBounds[ 1U ], minBounds[ 2U ], x };
-    float const leftBData[] = { y, z };
-
-    float const rightAData[] = { x, y, z, maxBounds[ 0U ] };
-    float const rightBData[] = { maxBounds[ 1U ], maxBounds[ 2U ] };
+    float32_t const leftAData[ 4U ] = { minBounds[ 0U ], minBounds[ 1U ], minBounds[ 2U ], x };
+    float32_t const leftBData[ 4U ] = { y, z };
+    float32_t const rightAData[ 4U ] = { x, y, z, maxBounds[ 0U ] };
 
     return AABBIsOverlapped ( vld1q_f32 ( leftAData ),
         vld1_f32 ( leftBData ),
         vld1q_f32 ( rightAData ),
-        vld1_f32 ( rightBData )
+        vld1_f32 ( maxBounds + 1U )
     );
 }

@@ -2515,7 +2515,7 @@ bool Renderer::SelectTargetSurfaceFormat ( VkFormat &targetColorFormat,
             return true;
         }
 
-        LogError ( "Renderer::SelectTargetSurfaceFormat - Can't select % format.", type );
+        LogError ( "Renderer::SelectTargetSurfaceFormat - Can't select %s format.", type );
         return false;
     };
 

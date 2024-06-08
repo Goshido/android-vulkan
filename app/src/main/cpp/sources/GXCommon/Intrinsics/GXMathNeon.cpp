@@ -1,4 +1,4 @@
-// version 1.9
+// version 1.10
 
 #include <GXCommon/GXMath.hpp>
 
@@ -147,7 +147,8 @@ namespace {
 
 [[maybe_unused]] GXFloat GXVec3::DotProduct ( GXVec3 const &other ) const noexcept
 {
-    constexpr uint32_t const maskData[ 4U ] = { UINT32_MAX, UINT32_MAX, UINT32_MAX, 0U };
+    constexpr uint32_t max32U = std::numeric_limits<uint32_t>::max ();
+    constexpr uint32_t const maskData[ 4U ] = { max32U, max32U, max32U, 0U };
     uint32x4_t const mask = vld1q_u32 ( maskData );
 
     uint32x4_t const tmpA = vld1q_u32 ( reinterpret_cast<uint32_t const*> ( _data ) );
@@ -233,7 +234,8 @@ namespace {
     // but they are not used in computation anyway because of masking later.
     float32x4_t const part2Dirty = vmulq_f32 ( vld1q_f32 ( _data + 4U ), vld1q_f32 ( other._data + 4U ) );
 
-    constexpr uint32_t const mask[ 4U ] = { UINT32_MAX, UINT32_MAX, 0U, 0U };
+    constexpr uint32_t max32U = std::numeric_limits<uint32_t>::max ();
+    constexpr uint32_t const mask[ 4U ] = { max32U, max32U, 0U, 0U };
     uint32x4_t const part2 = vandq_u32 ( vld1q_u32 ( mask ), vreinterpretq_f32_u32 ( part2Dirty ) );
 
     return vaddvq_f32 ( vaddq_f32 ( part1, vreinterpretq_u32_f32 ( part2 ) ) );
@@ -356,44 +358,37 @@ namespace {
 
 [[maybe_unused]] GXVoid GXMat3::Multiply ( GXMat3 const &a, GXMat3 const &b ) noexcept
 {
-    constexpr uint32_t const maskData[ 4U ] = { UINT32_MAX, UINT32_MAX, UINT32_MAX, 0U };
+    constexpr uint32_t max32U = std::numeric_limits<uint32_t>::max ();
+    constexpr uint32_t const maskData[ 4U ] = { max32U, max32U, max32U, 0U };
     uint32x4_t const mask = vld1q_u32 ( maskData );
 
     float32x4_t const tmpA0 = vld1q_f32 ( a._data );
     float32x4_t const a0 = vreinterpretq_u32_f32 ( vandq_u32 ( tmpA0, mask ) );
+    float32x4_t const tmpB0 = vld1q_f32 ( b._data );
+    float32x4_t const b0 = vreinterpretq_u32_f32 ( vandq_u32 ( tmpB0, mask ) );
+    float32x4_t c0 = vmulq_laneq_f32 ( b0, a0, 0 );
 
     float32x4_t const tmpA1 = vld1q_f32 ( a._data + 3U );
     float32x4_t const a1 = vreinterpretq_u32_f32 ( vandq_u32 ( tmpA1, mask ) );
-
-    float32x4_t const tmpA2 = vld1q_f32 ( a._data + 6U );
-    float32x4_t const a2 = vreinterpretq_u32_f32 ( vandq_u32 ( tmpA2, mask ) );
-
-    float32x4_t const tmpB0 = vld1q_f32 ( b._data );
-    float32x4_t const b0 = vreinterpretq_u32_f32 ( vandq_u32 ( tmpB0, mask ) );
+    float32x4_t c1 = vmulq_laneq_f32 ( b0, a1, 0 );
 
     float32x4_t const tmpB1 = vld1q_f32 ( b._data + 3U );
     float32x4_t const b1 = vreinterpretq_u32_f32 ( vandq_u32 ( tmpB1, mask ) );
+    c0 = vfmaq_laneq_f32 ( c0, b1, a0, 1 );
+    c1 = vfmaq_laneq_f32 ( c1, b1, a1, 1 );
+
+    float32x4_t const tmpA2 = vld1q_f32 ( a._data + 6U );
+    float32x4_t const a2 = vreinterpretq_u32_f32 ( vandq_u32 ( tmpA2, mask ) );
+    float32x4_t c2 = vmulq_laneq_f32 ( b0, a2, 0 );
+    c2 = vfmaq_laneq_f32 ( c2, b1, a2, 1 );
 
     float32x4_t const tmpB2 = vld1q_f32 ( b._data + 6U );
     float32x4_t const b2 = vreinterpretq_u32_f32 ( vandq_u32 ( tmpB2, mask ) );
-
-    float32x4_t c0 = vmovq_n_f32 ( 0.0F );
-    float32x4_t c1 = vmovq_n_f32 ( 0.0F );
-    float32x4_t c2 = vmovq_n_f32 ( 0.0F );
-
-    c0 = vfmaq_laneq_f32 ( c0, b0, a0, 0 );
-    c1 = vfmaq_laneq_f32 ( c1, b0, a1, 0 );
-    c2 = vfmaq_laneq_f32 ( c2, b0, a2, 0 );
-
-    c0 = vfmaq_laneq_f32 ( c0, b1, a0, 1 );
-    c1 = vfmaq_laneq_f32 ( c1, b1, a1, 1 );
-    c2 = vfmaq_laneq_f32 ( c2, b1, a2, 1 );
-
     c0 = vfmaq_laneq_f32 ( c0, b2, a0, 2 );
     c1 = vfmaq_laneq_f32 ( c1, b2, a1, 2 );
-    c2 = vfmaq_laneq_f32 ( c2, b2, a2, 2 );
-
     vst1q_f32 ( _data, c0 );
+
+    c2 = vfmaq_laneq_f32 ( c2, b2, a2, 2 );
     vst1q_f32 ( _data + 3U, c1 );
 
     vst1_f32 ( _data + 6U, vget_low_f32 ( c2 ) );
@@ -415,7 +410,8 @@ namespace {
 
 [[maybe_unused]] GXVoid GXMat3::MultiplyMatrixVector ( GXVec3 &out, GXVec3 const &v ) const noexcept
 {
-    constexpr uint32_t const maskData[ 4U ] = { UINT32_MAX, UINT32_MAX, UINT32_MAX, 0U };
+    constexpr uint32_t max32U = std::numeric_limits<uint32_t>::max ();
+    constexpr uint32_t const maskData[ 4U ] = { max32U, max32U, max32U, 0U };
     uint32x4_t const mask = vld1q_u32 ( maskData );
 
     float32x4_t const tmpM0 = vld1q_f32 ( _data );
@@ -662,42 +658,39 @@ namespace {
     // see docs/arm-neon/matrix-multiplication.odt
 
     float32x4_t const a0 = vld1q_f32 ( a._data );
-    float32x4_t const a1 = vld1q_f32 ( a._data + 4U );
-    float32x4_t const a2 = vld1q_f32 ( a._data + 8U );
-    float32x4_t const a3 = vld1q_f32 ( a._data + 12U );
-
     float32x4_t const b0 = vld1q_f32 ( b._data );
+    float32x4_t c0 = vmulq_laneq_f32 ( b0, a0, 0 );
+
+    float32x4_t const a1 = vld1q_f32 ( a._data + 4U );
+    float32x4_t c1 = vmulq_laneq_f32 ( b0, a1, 0 );
+
     float32x4_t const b1 = vld1q_f32 ( b._data + 4U );
-    float32x4_t const b2 = vld1q_f32 ( b._data + 8U );
-    float32x4_t const b3 = vld1q_f32 ( b._data + 12U );
-
-    float32x4_t c0 = vmovq_n_f32 ( 0.0F );
-    float32x4_t c1 = vmovq_n_f32 ( 0.0F );
-    float32x4_t c2 = vmovq_n_f32 ( 0.0F );
-    float32x4_t c3 = vmovq_n_f32 ( 0.0F );
-
-    c0 = vfmaq_laneq_f32 ( c0, b0, a0, 0 );
-    c1 = vfmaq_laneq_f32 ( c1, b0, a1, 0 );
-    c2 = vfmaq_laneq_f32 ( c2, b0, a2, 0 );
-    c3 = vfmaq_laneq_f32 ( c3, b0, a3, 0 );
-
     c0 = vfmaq_laneq_f32 ( c0, b1, a0, 1 );
     c1 = vfmaq_laneq_f32 ( c1, b1, a1, 1 );
-    c2 = vfmaq_laneq_f32 ( c2, b1, a2, 1 );
-    c3 = vfmaq_laneq_f32 ( c3, b1, a3, 1 );
 
+    float32x4_t const a2 = vld1q_f32 ( a._data + 8U );
+    float32x4_t c2 = vmulq_laneq_f32 ( b0, a2, 0 );
+    c2 = vfmaq_laneq_f32 ( c2, b1, a2, 1 );
+
+    float32x4_t const b2 = vld1q_f32 ( b._data + 8U );
     c0 = vfmaq_laneq_f32 ( c0, b2, a0, 2 );
     c1 = vfmaq_laneq_f32 ( c1, b2, a1, 2 );
     c2 = vfmaq_laneq_f32 ( c2, b2, a2, 2 );
+
+    float32x4_t const a3 = vld1q_f32 ( a._data + 12U );
+    float32x4_t c3 = vmulq_laneq_f32 ( b0, a3, 0 );
+    c3 = vfmaq_laneq_f32 ( c3, b1, a3, 1 );
     c3 = vfmaq_laneq_f32 ( c3, b2, a3, 2 );
 
+    float32x4_t const b3 = vld1q_f32 ( b._data + 12U );
     c0 = vfmaq_laneq_f32 ( c0, b3, a0, 3 );
     c1 = vfmaq_laneq_f32 ( c1, b3, a1, 3 );
-    c2 = vfmaq_laneq_f32 ( c2, b3, a2, 3 );
-    c3 = vfmaq_laneq_f32 ( c3, b3, a3, 3 );
-
     vst1q_f32 ( _data, c0 );
+
+    c2 = vfmaq_laneq_f32 ( c2, b3, a2, 3 );
     vst1q_f32 ( _data + 4U, c1 );
+
+    c3 = vfmaq_laneq_f32 ( c3, b3, a3, 3 );
     vst1q_f32 ( _data + 8U, c2 );
     vst1q_f32 ( _data + 12U, c3 );
 }

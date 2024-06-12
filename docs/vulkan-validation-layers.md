@@ -6,7 +6,7 @@ Starting from _Android NDK_ `23.0.7599858` the _Vulkan_ validation layers have b
 
 ## Compatible version
 
-The manual is based on `df717cc614855e2b81660798da349043bb37472a` commit of the [_Vulkan-ValidationLayers_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) repo. The manual is primary aimed for _Windows OS_ users.
+The manual is based on `15ba84ba94ff2ed473474deba2b4f2af4705b1fb` commit of the [_Vulkan-ValidationLayers_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) repo. The manual is primary aimed for _Windows OS_ users.
 
 ## Requirements
 
@@ -109,3 +109,5 @@ master build broken for some time | [#5014](https://github.com/KhronosGroup/SPIR
 Broken Android build | [#4947](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/4947) | ✔️ Fixed
 `vkCmdNextSubpass` validation issue | [#5853](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/5853) | 🛡️ Not an issue
 Full screen triangle `VkPipeline` issue | [#7636](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/7636) | ✔️ Fixed
+First `vkGetSwapchainImagesKHR` false positive | [#8138](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/8138) | ⚠️ Submitted
+No resource type and name in error message | [#8139](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/8139) | ⚠️ Submitted

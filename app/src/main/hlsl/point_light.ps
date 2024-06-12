@@ -63,7 +63,7 @@ float16_t GetAttenuation ( in float32_t3 fragToLight )
 
 float16_t GetDistribution ( in float16_t nH, in float16_t aa )
 {
-    // float16 precision is not enouph here. We need more precision.
+    // float16_t precision is not enough here. We need more precision.
     float32_t const nHF = (float32_t)nH;
     float32_t const aaF = (float32_t)aa;
 

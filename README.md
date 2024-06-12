@@ -33,14 +33,14 @@ Useful documentation is located [here](docs/documentation.md).
 * _Kotlin Gradle plugin 2.0.0_
 * _CMake 3.22.1_
 * [_Gradle 8.8-bin_](https://services.gradle.org/distributions/)
-* [_DirectX Shader Compiler 1.8.2405.10035_](https://github.com/microsoft/DirectXShaderCompiler) `128e6ce2be8f09539c97cf28d6066d9a6b32b15c`
-* [_libfreetype 2.13.2_](https://gitlab.freedesktop.org/freetype/freetype) `b6dbbd963097afd9f90cc02f1c6c6d2b98ca4fd4`
+* [_DirectX Shader Compiler 1.8.2405.10047_](https://github.com/microsoft/DirectXShaderCompiler) `80f6e46bf8cd0e193f90040168e4e48f4e0576aa`
+* [_libfreetype 2.13.2_](https://gitlab.freedesktop.org/freetype/freetype) `d41a855aab6d8ce131c465ce01f0f536e0fb2269`
 * [_libogg 1.3.5_](https://gitlab.xiph.org/xiph/ogg) `db5c7a49ce7ebda47b15b78471e78fb7f2483e22`
 * [_libvorbis 1.3.7_](https://gitlab.xiph.org/xiph/vorbis) `84c023699cdf023a32fa4ded32019f194afcdad0`
 * [_libvorbisfile 1.3.7_](https://gitlab.xiph.org/xiph/vorbis) `84c023699cdf023a32fa4ded32019f194afcdad0`
-* [_stb_image 2.29_](https://github.com/nothings/stb) `ae721c50eaf761660b4f90cc590453cdb0c2acd0`
-* [_Vulkan Validation Layers 1.3.285_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) `df717cc614855e2b81660798da349043bb37472a`
-* [_Lua 5.5.0_](https://github.com/lua/lua) `262dc5729a28b2bad0b6413d4eab2290d14395cf`
+* [_stb_image 2.30_](https://github.com/nothings/stb) `013ac3beddff3dbffafd5177e7972067cd2b5083`
+* [_Vulkan Validation Layers 1.3.287_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) `15ba84ba94ff2ed473474deba2b4f2af4705b1fb`
+* [_Lua 5.5.0_](https://github.com/lua/lua) `bdc85357aa41a9610498232c2cffe7aa191e5cf6`
 * Real _Android 11_ device with _Vulkan 1.1.131_ support
 * [_ARM Neon A64_](https://developer.arm.com/architectures/instruction-sets/simd-isas/neon/neon-programmers-guide-for-armv8-a/introducing-neon-for-armv8-a) native support
 

@@ -147,7 +147,7 @@ void Core::OnAboutDestroy ( JNIEnv* env ) noexcept
         _writeQueue.push_back ( eCommand::Quit );
     }
 
-    if ( _thread.joinable () )
+    if ( _thread.joinable () ) [[likely]]
         _thread.join ();
 
     env->DeleteGlobalRef ( _assetManager );
@@ -221,7 +221,7 @@ std::string const &Core::GetCacheDirectory () noexcept
 
 void Core::Quit () noexcept
 {
-    if ( !g_Core )
+    if ( !g_Core ) [[unlikely]]
         return;
 
     std::unique_lock<std::mutex> const lock ( g_Core->_mutex );
@@ -265,7 +265,7 @@ void Core::OnFrame () noexcept
     Timestamp const now = std::chrono::system_clock::now ();
     std::chrono::duration<double> const delta = now - _frameTimestamp;
 
-    if ( _renderer.CheckSwapchainStatus () && !_game->OnFrame ( _renderer, delta.count () ) )
+    if ( _renderer.CheckSwapchainStatus () && !_game->OnFrame ( _renderer, delta.count () ) ) [[unlikely]]
         LogError ( "Core::OnFrame - Frame rendering failed." );
 
     _frameTimestamp = now;
@@ -330,7 +330,7 @@ bool Core::OnSwapchainDestroyed () noexcept
 {
     _rendererBodyHandler = &Core::OnIdle;
 
-    if ( !_renderer.FinishAllJobs () )
+    if ( !_renderer.FinishAllJobs () ) [[unlikely]]
         return false;
 
     _game->OnSwapchainDestroyed ( _renderer );
@@ -346,7 +346,7 @@ void Core::UpdateFPS ( Timestamp now )
     const std::chrono::duration<double> seconds = now - _fpsTimestamp;
     const double delta = seconds.count ();
 
-    if ( delta < FPS_PERIOD )
+    if ( delta < FPS_PERIOD ) [[likely]]
         return;
 
     LogInfo ( "FPS: %g", _frameCount / delta );
@@ -376,7 +376,7 @@ JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doCreate ( JNIEnv* env
 
 JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doDestroy ( JNIEnv* env, jobject /*obj*/ )
 {
-    if ( !g_Core )
+    if ( !g_Core ) [[unlikely]]
         return;
 
     g_Core->OnAboutDestroy ( env );
@@ -388,7 +388,7 @@ JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doDestroy ( JNIEnv* en
 
 JNIEXPORT jboolean Java_com_goshidoInc_androidVulkan_Activity_doKeyDown ( JNIEnv* /*env*/, jobject /*obj*/, jint keyCode )
 {
-    if ( !g_Core )
+    if ( !g_Core ) [[unlikely]]
         return JNI_FALSE;
 
     constexpr jboolean const cases[] = { JNI_FALSE, JNI_TRUE };
@@ -397,7 +397,7 @@ JNIEXPORT jboolean Java_com_goshidoInc_androidVulkan_Activity_doKeyDown ( JNIEnv
 
 JNIEXPORT jboolean Java_com_goshidoInc_androidVulkan_Activity_doKeyUp ( JNIEnv* /*env*/, jobject /*obj*/, jint keyCode )
 {
-    if ( !g_Core )
+    if ( !g_Core ) [[unlikely]]
         return JNI_FALSE;
 
     constexpr jboolean const cases[] = { JNI_FALSE, JNI_TRUE };
@@ -410,7 +410,7 @@ JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doLeftStick ( JNIEnv* 
     jfloat y
 )
 {
-    if ( !g_Core )
+    if ( !g_Core ) [[unlikely]]
         return;
 
     g_Core->OnLeftStick ( x, y );
@@ -422,7 +422,7 @@ JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doRightStick ( JNIEnv*
     jfloat y
 )
 {
-    if ( !g_Core )
+    if ( !g_Core ) [[unlikely]]
         return;
 
     g_Core->OnRightStick ( x, y );
@@ -433,7 +433,7 @@ JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doLeftTrigger ( JNIEnv
     jfloat value
 )
 {
-    if ( !g_Core )
+    if ( !g_Core ) [[unlikely]]
         return;
 
     g_Core->OnLeftTrigger ( value );
@@ -444,7 +444,7 @@ JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doRightTrigger ( JNIEn
     jfloat value
 )
 {
-    if ( !g_Core )
+    if ( !g_Core ) [[unlikely]]
         return;
 
     g_Core->OnRightTrigger ( value );
@@ -455,7 +455,7 @@ JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doSurfaceCreated ( JNI
     jobject surface
 )
 {
-    if ( !g_Core )
+    if ( !g_Core ) [[unlikely]]
         return;
 
     g_Core->OnSurfaceCreated ( env, surface );
@@ -463,7 +463,7 @@ JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doSurfaceCreated ( JNI
 
 JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doSurfaceDestroyed ( JNIEnv* /*env*/, jobject /*obj*/ )
 {
-    if ( !g_Core )
+    if ( !g_Core ) [[unlikely]]
         return;
 
     g_Core->OnSurfaceDestroyed ();

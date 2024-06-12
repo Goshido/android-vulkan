@@ -5,7 +5,7 @@
 #define AVP_VERSION_MAJOR        1
 #define AVP_VERSION_MINOR        0
 #define AVP_VERSION_RELEASE      1
-#define AVP_VERSION_BUILD        4
+#define AVP_VERSION_BUILD        5
 
 
 #endif // AVP_VERSION_HPP
